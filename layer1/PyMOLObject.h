@@ -22,6 +22,7 @@ Z* -------------------------------------------------------------------
 #include"Ray.h"
 #include"Rep.h"
 #include"Setting.h"
+#include"PyMOLGlobals.h"
 
 #define ObjNameMax        255
 #define cObjectMolecule     1
@@ -42,6 +43,7 @@ Z* -------------------------------------------------------------------
  */
 
 typedef struct CObject {
+  PyMOLGlobals *G;
   void (*fUpdate)(struct CObject *I); /* update representations */
   void (*fRender)(struct CObject *I,int frame,CRay *ray,Pickable **pick,int pass);
   void (*fFree)(struct CObject *I);
@@ -62,7 +64,7 @@ typedef struct CObject {
   int Context; /* 0 = Camera, 1 = Unit Window, 2 = Scaled Window */
 } CObject;
 
-void ObjectInit(CObject *I);
+void ObjectInit(PyMOLGlobals *G,CObject *I);
 void ObjectPurge(CObject *I);
 void ObjectSetName(CObject *I,char *name);
 void ObjectFree(CObject *I);
@@ -74,7 +76,7 @@ void ObjectCombineTTT(CObject *I,float *ttt);
 void ObjectSetTTTOrigin(CObject *I,float *origin);
 void ObjectResetTTT(CObject *I);
 PyObject *ObjectAsPyList(CObject *I);
-int ObjectFromPyList(PyObject *list,CObject *I);
+int ObjectFromPyList(PyMOLGlobals *G,PyObject *list,CObject *I);
 int ObjectGetCurrentState(CObject *I,int ignore_all_states);
 
 #endif

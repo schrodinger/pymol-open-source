@@ -50,7 +50,7 @@ void RepNonbondedSphereInit(void)
 void RepNonbondedSphereFree(RepNonbondedSphere *I)
 {
   FreeP(I->VP);
-  RepFree(&I->R);
+  RepPurge(&I->R);
   FreeP(I->VC);
   FreeP(I->V);
   OOFreeP(I);
@@ -146,12 +146,13 @@ void RepNonbondedSphereRender(RepNonbondedSphere *I,CRay *ray,Pickable **pick)
 
 Rep *RepNonbondedSphereNew(CoordSet *cs)
 {
+  PyMOLGlobals *G=cs->G;
   ObjectMolecule *obj;
   int a,c,d,c1;
   float *v,*v0,*vc;
   float nonbonded_size;
   int *q, *s;
-  SphereRec *sp = TempPyMOLGlobals->Sphere->Sphere[0];
+  SphereRec *sp = G->Sphere->Sphere[0];
   int ds;
   int *active=NULL;
   AtomInfoType *ai;
@@ -159,7 +160,7 @@ Rep *RepNonbondedSphereNew(CoordSet *cs)
   int a1;
   float *v1;
   float tmpColor[3];
-  OOAlloc(RepNonbondedSphere);
+  OOAlloc(G,RepNonbondedSphere);
   obj = cs->Obj;
 
   active = Alloc(int,cs->NIndex);
@@ -181,16 +182,16 @@ Rep *RepNonbondedSphereNew(CoordSet *cs)
     return(NULL); /* skip if no dots are visible */
   }
   
-  nonbonded_size = SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_nonbonded_size);
+  nonbonded_size = SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_nonbonded_size);
   
   /* get current dot sampling */
-  ds = SettingGet_i(cs->Setting,obj->Obj.Setting,cSetting_dot_density);
+  ds = SettingGet_i(G,cs->Setting,obj->Obj.Setting,cSetting_dot_density);
   ds=1;
   if(ds<0) ds=0;
   if(ds>3) ds=3;
-  sp = TempPyMOLGlobals->Sphere->Sphere[ds];
+  sp = G->Sphere->Sphere[ds];
 
-  RepInit(&I->R);
+  RepInit(G,&I->R);
   I->R.fRender=(void (*)(struct Rep *, CRay *, Pickable **))RepNonbondedSphereRender;
   I->R.fFree=(void (*)(struct Rep *))RepNonbondedSphereFree;
   I->R.fRecolor=NULL;
@@ -206,7 +207,7 @@ Rep *RepNonbondedSphereNew(CoordSet *cs)
   /* raytracing primitives */
 
   I->VC=(float*)mmalloc(sizeof(float)*nSphere*7);
-  ErrChkPtr(I->VC);
+  ErrChkPtr(G,I->VC);
   I->NC=0;
 
   v=I->VC; 
@@ -218,11 +219,11 @@ Rep *RepNonbondedSphereNew(CoordSet *cs)
 			 I->NC++;
 			 c1=*(cs->Color+a);
 			 v0 = cs->Coord+3*a;			 
-          if(ColorCheckRamped(c1)) {
-            ColorGetRamped(c1,v0,tmpColor);
+          if(ColorCheckRamped(G,c1)) {
+            ColorGetRamped(G,c1,v0,tmpColor);
             vc = tmpColor;
           } else {
-            vc = ColorGet(c1);
+            vc = ColorGet(G,c1);
           }
 			 *(v++)=*(vc++);
 			 *(v++)=*(vc++);
@@ -240,7 +241,7 @@ Rep *RepNonbondedSphereNew(CoordSet *cs)
 	 I->VC=ReallocForSure(I->VC,float,1);
 
   I->V=(float*)mmalloc(sizeof(float)*nSphere*(3+sp->NVertTot*6));
-  ErrChkPtr(I->V);
+  ErrChkPtr(G,I->V);
 
   /* rendering primitives */
 
@@ -254,13 +255,13 @@ Rep *RepNonbondedSphereNew(CoordSet *cs)
 		  {
 			 c1=*(cs->Color+a);
 			 v0 = cs->Coord+3*a;
-			 vc = ColorGet(c1);
+			 vc = ColorGet(G,c1);
 
-          if(ColorCheckRamped(c1)) {
-            ColorGetRamped(c1,v0,tmpColor);
+          if(ColorCheckRamped(G,c1)) {
+            ColorGetRamped(G,c1,v0,tmpColor);
             vc = tmpColor;
           } else {
-            vc = ColorGet(c1);
+            vc = ColorGet(G,c1);
           }
 
 			 *(v++)=*(vc++);
@@ -294,12 +295,12 @@ Rep *RepNonbondedSphereNew(CoordSet *cs)
     I->V=ReallocForSure(I->V,float,1);
 
   /* use pickable representation from nonbonded */
-  if(SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_pickable)) {
+  if(SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_pickable)) {
     I->VP=(float*)mmalloc(sizeof(float)*nSphere*18);
-    ErrChkPtr(I->VP);
+    ErrChkPtr(G,I->VP);
     
     I->R.P=Alloc(Pickable,cs->NIndex+1);
-    ErrChkPtr(I->R.P);
+    ErrChkPtr(G,I->R.P);
     
     v=I->VP;
     

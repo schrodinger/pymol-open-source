@@ -16,9 +16,11 @@ Z* -------------------------------------------------------------------
 #ifndef _H_Err
 #define _H_Err
 
-void ErrFatal(const char *where,const char *what);
-void ErrPointer(const char *file,int line);
-int ErrMessage(const char *where,const char *what);
+#include "PyMOLGlobals.h"
 
-#define ErrChkPtr(p) {if(!p) ErrPointer(__FILE__,__LINE__);}
+void ErrFatal(PyMOLGlobals *G,const char *where,const char *what);
+void ErrPointer(PyMOLGlobals *G,const char *file,int line);
+int ErrMessage(PyMOLGlobals *G,const char *where,const char *what);
+
+#define ErrChkPtr(G,p) {if(!p) ErrPointer(G,__FILE__,__LINE__);}
 #endif

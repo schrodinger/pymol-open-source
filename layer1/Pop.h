@@ -18,10 +18,10 @@ Z* -------------------------------------------------------------------
 
 #include"Block.h"
 
-void PopInit(void);
-void PopFree(void);
+int PopInit(PyMOLGlobals *G);
+void PopFree(PyMOLGlobals *G);
 void PopFitBlock(Block *block);
-Block *PopGetBlock(void);
+Block *PopGetBlock(PyMOLGlobals *G);
 void PopPlaceChild(Block *block,int left_x,int right_x,int row_y);
 
 #endif

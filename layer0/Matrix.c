@@ -340,18 +340,18 @@ int *MatrixFilter(float cutoff,int window,int n_pass,int nv,float *v1,float *v2)
 }
 
 /*========================================================================*/
-void MatrixDump44f(float *m,char *prefix)
+void MatrixDump44f(PyMOLGlobals *G,float *m,char *prefix)
 {
   if(prefix) {
-    PRINTF "%s %12.5f %12.5f %12.5f %12.5f\n",prefix,m[ 0],m[ 1],m[ 2],m[ 3] ENDF;
-    PRINTF "%s %12.5f %12.5f %12.5f %12.5f\n",prefix,m[ 4],m[ 5],m[ 6],m[ 7] ENDF;
-    PRINTF "%s %12.5f %12.5f %12.5f %12.5f\n",prefix,m[ 8],m[ 9],m[10],m[11] ENDF;
-    PRINTF "%s %12.5f %12.5f %12.5f %12.5f\n",prefix,m[12],m[13],m[14],m[15] ENDF;
+    PRINTF "%s %12.5f %12.5f %12.5f %12.5f\n",prefix,m[ 0],m[ 1],m[ 2],m[ 3] ENDF(G);
+    PRINTF "%s %12.5f %12.5f %12.5f %12.5f\n",prefix,m[ 4],m[ 5],m[ 6],m[ 7] ENDF(G);
+    PRINTF "%s %12.5f %12.5f %12.5f %12.5f\n",prefix,m[ 8],m[ 9],m[10],m[11] ENDF(G);
+    PRINTF "%s %12.5f %12.5f %12.5f %12.5f\n",prefix,m[12],m[13],m[14],m[15] ENDF(G);
   } else {
-    PRINTF "%12.5f %12.5f %12.5f %12.5f\n",m[ 0],m[ 1],m[ 2],m[ 3] ENDF;
-    PRINTF "%12.5f %12.5f %12.5f %12.5f\n",m[ 4],m[ 5],m[ 6],m[ 7] ENDF;
-    PRINTF "%12.5f %12.5f %12.5f %12.5f\n",m[ 8],m[ 9],m[10],m[11] ENDF;
-    PRINTF "%12.5f %12.5f %12.5f %12.5f\n",m[12],m[13],m[14],m[15] ENDF;
+    PRINTF "%12.5f %12.5f %12.5f %12.5f\n",m[ 0],m[ 1],m[ 2],m[ 3] ENDF(G);
+    PRINTF "%12.5f %12.5f %12.5f %12.5f\n",m[ 4],m[ 5],m[ 6],m[ 7] ENDF(G);
+    PRINTF "%12.5f %12.5f %12.5f %12.5f\n",m[ 8],m[ 9],m[10],m[11] ENDF(G);
+    PRINTF "%12.5f %12.5f %12.5f %12.5f\n",m[12],m[13],m[14],m[15] ENDF(G);
   }
 }
 /*========================================================================*/
@@ -516,7 +516,7 @@ void MatrixTransform44fAs33f3f(float *m, float *q, float *p)
   *(p++) = m[ 2]*q0+m[ 6]*q1+m[10]*q2;
 }
 /*========================================================================*/
-float MatrixGetRMS(int n,float *v1,float *v2,float *wt)
+float MatrixGetRMS(PyMOLGlobals *G,int n,float *v1,float *v2,float *wt)
 {
   /* Just Compute RMS given current coordinates */
 
@@ -560,7 +560,7 @@ float MatrixGetRMS(int n,float *v1,float *v2,float *wt)
 }
 
 /*========================================================================*/
-float MatrixFitRMS(int n,float *v1,float *v2,float *wt,float *ttt)
+float MatrixFitRMS(PyMOLGlobals *G,int n,float *v1,float *v2,float *wt,float *ttt)
 {
   /*
 	Subroutine to do the actual RMS fitting of two sets of vector coordinates
@@ -590,8 +590,8 @@ float MatrixFitRMS(int n,float *v1,float *v2,float *wt,float *ttt)
   }
 
   sumwt = 0.0F;
-  tol = SettingGet(cSetting_fit_tolerance);
-  maxiter = (int)SettingGet(cSetting_fit_iterations);
+  tol = SettingGet(G,cSetting_fit_tolerance);
+  maxiter = (int)SettingGet(G,cSetting_fit_iterations);
 
   /* Calculate center-of-mass vectors */
 
@@ -680,9 +680,9 @@ float MatrixFitRMS(int n,float *v1,float *v2,float *wt,float *ttt)
 
       if(iters>=maxiter) 
         {
-          PRINTFB(FB_Matrix,FB_Details)
+          PRINTFB(G,FB_Matrix,FB_Details)
             " Matrix: Warning: no convergence (%1.8f<%1.8f after %d iterations).\n",(float)tol,(float)gam,iters
-            ENDFB;
+            ENDFB(G);
           break;
         }
 
@@ -1007,7 +1007,7 @@ integer *ierr);
 
 /*========================================================================*/
 
-int MatrixEigensolve33d(double *a, double *wr, double *wi, double *v)
+int MatrixEigensolve33d(PyMOLGlobals *G,double *a, double *wr, double *wi, double *v)
 {
   integer n,nm;
   integer iv1[3];
@@ -1032,7 +1032,7 @@ int MatrixEigensolve33d(double *a, double *wr, double *wi, double *v)
      IS that because we're actually solving the transpose?
   */
 
-  if(Feedback(FB_Matrix,FB_Blather)) {
+  if(Feedback(G,FB_Matrix,FB_Blather)) {
     printf(" Eigensolve: eigenvectors %8.3f %8.3f %8.3f\n",v[0],v[1],v[2]);
     printf(" Eigensolve:              %8.3f %8.3f %8.3f\n",v[3],v[4],v[5]);
     printf(" Eigensolve:              %8.3f %8.3f %8.3f\n",v[6],v[7],v[8]);
@@ -1787,8 +1787,8 @@ integer *ierr;
 
     /* Local variables */
      doublereal norm;
-     integer i__, j, k, l, m;
-     doublereal p, q, r__, s, t, w, x, y;
+     integer i__, j, k, l=0, m=0;
+     doublereal p, q=0.0, r__=0.0, s, t, w, x, y;
      integer na, en, ll, mm;
      doublereal zz;
      logical notlas;
@@ -2141,8 +2141,8 @@ integer *ierr;
 
     /* Local variables */
      doublereal norm;
-     integer i__, j, k, l, m;
-     doublereal p, q, r__, s, t, w, x, y;
+     integer i__, j, k, l=0, m=0;
+     doublereal p, q, r__=0.0, s=0.0, t, w, x, y;
      integer na, ii, en, jj;
      doublereal ra, sa;
      integer ll, mm, nn;

@@ -35,92 +35,92 @@ typedef float SceneViewType[cSceneViewSize];
    24    = orthoscopic flag 
 */
 
-void SceneInit(void);
-void SceneDone(void);
-void SceneUpdate(void);
-int SceneRenderCached(void);
-void SceneRender(Pickable *pick,int x,int y,Multipick *smp);
-void SceneSetFrame(int mode,int frame);
-int SceneGetFrame(void);
-int SceneGetState(void);
-void SceneDirty(void); /* must update transformation */
-void SceneChanged(void); /* must actually update 3D objects */
-void SceneCountFrames(void) ;
-int SceneGetNFrame(void);
-void SceneSetMatrix(float *);
-float *SceneGetMatrix(void);
+int SceneInit(PyMOLGlobals *G);
+void SceneDone(PyMOLGlobals *G);
+void SceneUpdate(PyMOLGlobals *G);
+int SceneRenderCached(PyMOLGlobals *G);
+void SceneRender(PyMOLGlobals *G,Pickable *pick,int x,int y,Multipick *smp);
+void SceneSetFrame(PyMOLGlobals *G,int mode,int frame);
+int SceneGetFrame(PyMOLGlobals *G);
+int SceneGetState(PyMOLGlobals *G);
+void SceneDirty(PyMOLGlobals *G); /* must update transformation */
+void SceneChanged(PyMOLGlobals *G); /* must actually update 3D objects */
+void SceneCountFrames(PyMOLGlobals *G) ;
+int SceneGetNFrame(PyMOLGlobals *G);
+void SceneSetMatrix(PyMOLGlobals *G,float *);
+float *SceneGetMatrix(PyMOLGlobals *G);
 
 void SceneReshape(Block *block,int width,int height);
-float SceneGetScreenVertexScale(float *v1);
+float SceneGetScreenVertexScale(PyMOLGlobals *G,float *v1);
 
-void SceneTest(void);
-void SceneIdle(void);
-void SceneFree(void);
-void SceneRay(int width,int height,int mode,
+void SceneTest(PyMOLGlobals *G);
+void SceneIdle(PyMOLGlobals *G);
+void SceneFree(PyMOLGlobals *G);
+void SceneRay(PyMOLGlobals *G,int width,int height,int mode,
               char **headerVLA,char **charVLA,
               float angle,float shift,int quiet);
-void SceneMakeMovieImage(void);
+void SceneMakeMovieImage(PyMOLGlobals *G);
 
-void ScenePNG(char *png,int quiet);
-int SceneCopyExternal(int width, int height,int rowbytes,unsigned char *dest);
+void ScenePNG(PyMOLGlobals *G,char *png,int quiet);
+int SceneCopyExternal(PyMOLGlobals *G,int width, int height,int rowbytes,unsigned char *dest);
 
-void SceneResetMatrix(void);
+void SceneResetMatrix(PyMOLGlobals *G);
 
-void SceneRestartTimers(void);
+void SceneRestartTimers(PyMOLGlobals *G);
 
-void ScenePerspective(int flag);
+void ScenePerspective(PyMOLGlobals *G,int flag);
 
-void SceneRotate(float angle,float x,float y,float z);
-void SceneTranslate(float x,float y, float z);
-void SceneClip(int plane,float movement,char *sele,int state);
+void SceneRotate(PyMOLGlobals *G,float angle,float x,float y,float z);
+void SceneTranslate(PyMOLGlobals *G,float x,float y, float z);
+void SceneClip(PyMOLGlobals *G,int plane,float movement,char *sele,int state);
 
-void SceneScale(float scale);
-void SceneResetNormal(int lines);
+void SceneScale(PyMOLGlobals *G,float scale);
+void SceneResetNormal(PyMOLGlobals *G,int lines);
 
-void SceneObjectAdd(CObject *obj);
-void SceneObjectDel(CObject *obj);
-void SceneOriginSet(float *origin,int preserve);
-void SceneOriginGet(float *origin);
-void SceneWindowSphere(float *location,float radius);
-void SceneRelocate(float *location);
-Block *SceneGetBlock(void);
-void SceneApplyMatrix(float *m);
-void SceneSetStereo(int flag);
-int SceneGetStereo(void);
-void ScenePurgeCopy(void);
-void SceneDontCopyNext(void);
-void ScenePrepareExit(void);
-void SceneGetViewNormal(float *v);
-void SceneClipSet(float front,float back);
-void SceneGetView(SceneViewType view);
-void SceneSetView(SceneViewType view,int quiet);
+void SceneObjectAdd(PyMOLGlobals *G,CObject *obj);
+void SceneObjectDel(PyMOLGlobals *G,CObject *obj);
+void SceneOriginSet(PyMOLGlobals *G,float *origin,int preserve);
+void SceneOriginGet(PyMOLGlobals *G,float *origin);
+void SceneWindowSphere(PyMOLGlobals *G,float *location,float radius);
+void SceneRelocate(PyMOLGlobals *G,float *location);
+Block *SceneGetBlock(PyMOLGlobals *G);
+void SceneApplyMatrix(PyMOLGlobals *G,float *m);
+void SceneSetStereo(PyMOLGlobals *G,int flag);
+int SceneGetStereo(PyMOLGlobals *G);
+void ScenePurgeCopy(PyMOLGlobals *G);
+void SceneDontCopyNext(PyMOLGlobals *G);
+void ScenePrepareExit(PyMOLGlobals *G);
+void SceneGetViewNormal(PyMOLGlobals *G,float *v);
+void SceneClipSet(PyMOLGlobals *G,float front,float back);
+void SceneGetView(PyMOLGlobals *G,SceneViewType view);
+void SceneSetView(PyMOLGlobals *G,SceneViewType view,int quiet);
 
-void SceneToViewElem(CViewElem *elem);
-void SceneFromViewElem(CViewElem *elem);
-void SceneGetPos(float *pos);
-void SceneGetWidthHeight(int *width,int *height);
-int SceneMultipick(Multipick *smp);
+void SceneToViewElem(PyMOLGlobals *G,CViewElem *elem);
+void SceneFromViewElem(PyMOLGlobals *G,CViewElem *elem);
+void SceneGetPos(PyMOLGlobals *G,float *pos);
+void SceneGetWidthHeight(PyMOLGlobals *G,int *width,int *height);
+int SceneMultipick(PyMOLGlobals *G,Multipick *smp);
 
-void SceneSetCardInfo(char *vendor,char *renderer,char *version);
-void SceneGetCardInfo(char **vendor,char **renderer,char **version);
-int SceneLoadPNG(char *fname,int movie_flag,int quiet);
+void SceneSetCardInfo(PyMOLGlobals *G,char *vendor,char *renderer,char *version);
+void SceneGetCardInfo(PyMOLGlobals *G,char **vendor,char **renderer,char **version);
+int SceneLoadPNG(PyMOLGlobals *G,char *fname,int movie_flag,int quiet);
 
-void SceneSetDefaultView(void);
-void SceneApplyRotMatrix(float *src,float *dst);
-void SceneRovingDirty(void);
-int SceneRovingCheckDirty(void);
-void SceneRovingUpdate(void);
-void SceneRovingChanged(void);
-void SceneRovingPostpone(void);
-void SceneCleanupStereo(void);
-int SceneReinitialize(void);
-void SceneUpdateStereoMode(void);
-void SceneSuppressMovieFrame(void);
+void SceneSetDefaultView(PyMOLGlobals *G);
+void SceneApplyRotMatrix(PyMOLGlobals *G,float *src,float *dst);
+void SceneRovingDirty(PyMOLGlobals *G);
+int SceneRovingCheckDirty(PyMOLGlobals *G);
+void SceneRovingUpdate(PyMOLGlobals *G);
+void SceneRovingChanged(PyMOLGlobals *G);
+void SceneRovingPostpone(PyMOLGlobals *G);
+void SceneCleanupStereo(PyMOLGlobals *G);
+int SceneReinitialize(PyMOLGlobals *G);
+void SceneUpdateStereoMode(PyMOLGlobals *G);
+void SceneSuppressMovieFrame(PyMOLGlobals *G);
 int SceneClick(Block *block,int button,int x,int y,int mod);
 int SceneRelease(Block *block,int button,int x,int y,int mod);
 int SceneDrag(Block *block,int x,int y,int mod);
-char *SceneGetSeleModeKeyword(void);
-void SceneUpdateStereo(void);
+char *SceneGetSeleModeKeyword(PyMOLGlobals *G);
+void SceneUpdateStereo(PyMOLGlobals *G);
 #endif
 
 

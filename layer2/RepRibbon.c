@@ -50,12 +50,13 @@ void RepRibbonInit(void)
 void RepRibbonFree(RepRibbon *I)
 {
   FreeP(I->V);
-  RepFree(&I->R);
+  RepPurge(&I->R);
   OOFreeP(I);
 }
 
 void RepRibbonRender(RepRibbon *I,CRay *ray,Pickable **pick)
 {
+  PyMOLGlobals *G=I->R.G;
   float *v=I->V;
   int c=I->N;
   Pickable *p;
@@ -84,7 +85,7 @@ void RepRibbonRender(RepRibbon *I,CRay *ray,Pickable **pick)
       radius = I->radius;
     }
 
-    PRINTFD(FB_RepRibbon)
+    PRINTFD(G,FB_RepRibbon)
       " RepRibbonRender: rendering raytracable...\n"
       ENDFD;
 
@@ -96,7 +97,7 @@ void RepRibbonRender(RepRibbon *I,CRay *ray,Pickable **pick)
     }
   } else if(pick&&PMGUI) {
 
-    PRINTFD(FB_RepRibbon)
+    PRINTFD(G,FB_RepRibbon)
       " RepRibbonRender: rendering pickable...\n"
       ENDFD;
 
@@ -151,12 +152,12 @@ void RepRibbonRender(RepRibbon *I,CRay *ray,Pickable **pick)
   } else if(PMGUI) {
     
     int use_dlst;
-    use_dlst = (int)SettingGet(cSetting_use_display_lists);
+    use_dlst = (int)SettingGet(G,cSetting_use_display_lists);
     if(use_dlst&&I->R.displayList) {
       glCallList(I->R.displayList);
     } else { 
 
-      SceneResetNormal(true);
+      SceneResetNormal(G,true);
       if(use_dlst) {
         if(!I->R.displayList) {
           I->R.displayList = glGenLists(1);
@@ -166,7 +167,7 @@ void RepRibbonRender(RepRibbon *I,CRay *ray,Pickable **pick)
         }
       }
       
-      PRINTFD(FB_RepRibbon)
+      PRINTFD(G,FB_RepRibbon)
         " RepRibbonRender: rendering GL...\n"
         ENDFD;
       
@@ -177,7 +178,7 @@ void RepRibbonRender(RepRibbon *I,CRay *ray,Pickable **pick)
         int ribbon_smooth;
         int first = true;
         
-        ribbon_smooth=SettingGet_i(NULL,I->R.obj->Setting,cSetting_ribbon_smooth);
+        ribbon_smooth=SettingGet_i(G,NULL,I->R.obj->Setting,cSetting_ribbon_smooth);
         if(!ribbon_smooth)
           glDisable(GL_LINE_SMOOTH);
         glDisable(GL_LIGHTING);
@@ -203,7 +204,7 @@ void RepRibbonRender(RepRibbon *I,CRay *ray,Pickable **pick)
           }
         glEnd();
         glEnable(GL_LIGHTING);
-        if(SettingGet(cSetting_line_smooth))
+        if(SettingGet(G,cSetting_line_smooth))
           glEnable(GL_LINE_SMOOTH);
       }
       if(use_dlst&&I->R.displayList) {
@@ -227,6 +228,7 @@ static float smooth(float x,float power)
 
 Rep *RepRibbonNew(CoordSet *cs)
 {
+  PyMOLGlobals *G=cs->G;
   ObjectMolecule *obj;
   int a,b,a1,a2,c1,c2,*i,*s,*at,*seg,nAt,*atp;
   float *v,*v0,*v1,*v2,*v3;
@@ -250,7 +252,7 @@ Rep *RepRibbonNew(CoordSet *cs)
   AtomInfoType *ai,*last_ai=NULL;
 
   Pickable *rp=NULL;
-  OOAlloc(RepRibbon);
+  OOAlloc(G,RepRibbon);
 
   obj = cs->Obj;
   visFlag=false;
@@ -266,23 +268,23 @@ Rep *RepRibbonNew(CoordSet *cs)
     return(NULL); /* skip if not visible */
   }
 
-  RepInit(&I->R);
-  power_a=SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_ribbon_power);
-  power_b=SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_ribbon_power_b);
-  throw=SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_ribbon_throw);
-  trace=SettingGet_i(cs->Setting,obj->Obj.Setting,cSetting_ribbon_trace);
+  RepInit(G,&I->R);
+  power_a=SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_ribbon_power);
+  power_b=SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_ribbon_power_b);
+  throw=SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_ribbon_throw);
+  trace=SettingGet_i(G,cs->Setting,obj->Obj.Setting,cSetting_ribbon_trace);
 
-  ribbon_color=SettingGet_color(cs->Setting,obj->Obj.Setting,cSetting_ribbon_color);
+  ribbon_color=SettingGet_color(G,cs->Setting,obj->Obj.Setting,cSetting_ribbon_color);
 
-  sampling=SettingGet_i(cs->Setting,obj->Obj.Setting,cSetting_ribbon_sampling);
+  sampling=SettingGet_i(G,cs->Setting,obj->Obj.Setting,cSetting_ribbon_sampling);
   if(sampling<1) sampling=1;
-  I->radius=SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_ribbon_radius);
+  I->radius=SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_ribbon_radius);
 
   I->R.fRender=(void (*)(struct Rep *, CRay *, Pickable **))RepRibbonRender;
   I->R.fFree=(void (*)(struct Rep *))RepRibbonFree;
   I->R.fRecolor=NULL;
   I->R.obj = (CObject*)obj;
-  I->linewidth = SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_ribbon_width);
+  I->linewidth = SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_ribbon_width);
 
 
   /* find all of the CA points */
@@ -311,25 +313,25 @@ Rep *RepRibbonNew(CoordSet *cs)
         ai = obj->AtomInfo+a1;
 		  if(obj->AtomInfo[a1].visRep[cRepRibbon]) {
           if(trace||((obj->AtomInfo[a1].protons==cAN_C)&&
-                     (WordMatch("CA",obj->AtomInfo[a1].name,1)<0)&&
-                     !AtomInfoSameResidueP(last_ai,ai))) {
-            PRINTFD(FB_RepRibbon)
+                     (WordMatch(G,"CA",obj->AtomInfo[a1].name,1)<0)&&
+                     !AtomInfoSameResidueP(G,last_ai,ai))) {
+            PRINTFD(G,FB_RepRibbon)
               " RepRibbon: found atom in %s; a1 %d a2 %d\n",obj->AtomInfo[a1].resi,a1,a2
               ENDFD;
             
             if(a2>=0) {
               /*						if((abs(obj->AtomInfo[a1].resv-obj->AtomInfo[a2].resv)>1)||
                 (obj->AtomInfo[a1].chain[0]!=obj->AtomInfo[a2].chain[0])||
-                (!WordMatch(obj->AtomInfo[a1].segi,obj->AtomInfo[a2].segi,1)))*/
+                (!WordMatch(G,obj->AtomInfo[a1].segi,obj->AtomInfo[a2].segi,1)))*/
               if(trace) {
-                if(!AtomInfoSequential(obj->AtomInfo+a2,obj->AtomInfo+a1))
+                if(!AtomInfoSequential(G,obj->AtomInfo+a2,obj->AtomInfo+a1))
                   a2=-1;
               } else {
                 if(!ObjectMoleculeCheckBondSep(obj,a1,a2,3)) /* CA->N->C->CA = 3 bonds */
                   a2=-1;
               }
             }
-            PRINTFD(FB_RepRibbon)
+            PRINTFD(G,FB_RepRibbon)
               " RepRibbon: found atom in %s; a1 %d a2 %d\n",obj->AtomInfo[a1].resi,a1,a2
               ENDFD;
             last_ai = ai;
@@ -344,8 +346,8 @@ Rep *RepRibbonNew(CoordSet *cs)
             
             a2=a1;
           } else if(trace||(((ai->protons==cAN_P)&&
-                             (WordMatch("P",ai->name,1)<0))&&
-                            !AtomInfoSameResidueP(last_ai,ai))) {
+                             (WordMatch(G,"P",ai->name,1)<0))&&
+                            !AtomInfoSameResidueP(G,last_ai,ai))) {
             if(!trace) 
               if(a2>=0) {
                 if(!ObjectMoleculeCheckBondSep(obj,a1,a2,6)) /* six bonds between phosphates */
@@ -366,7 +368,7 @@ Rep *RepRibbonNew(CoordSet *cs)
         }
       }
     }
-  PRINTFD(FB_RepRibbon)
+  PRINTFD(G,FB_RepRibbon)
     " RepRibbon: nAt %d\n",nAt
     ENDFD;
 
@@ -455,13 +457,13 @@ Rep *RepRibbonNew(CoordSet *cs)
 
   if(nAt) {
     I->R.P=Alloc(Pickable,2*nAt+2);
-    ErrChkPtr(I->R.P);
+    ErrChkPtr(G,I->R.P);
     I->R.P[0].index=nAt;
     rp = I->R.P + 1; /* skip first record! */
   }
 
   I->V=(float*)mmalloc(sizeof(float)*2*cs->NIndex*18*sampling);
-  ErrChkPtr(I->V);
+  ErrChkPtr(G,I->V);
 
   I->N=0;
   I->NP=0;
@@ -490,7 +492,7 @@ Rep *RepRibbonNew(CoordSet *cs)
         rp++;
         I->NP++;
 
-        PRINTFD(FB_RepRibbon)
+        PRINTFD(G,FB_RepRibbon)
           " RepRibbon: seg %d *s %d , *(s+1) %d\n",a,*s,*(s+1)
           ENDFD;
 
@@ -512,9 +514,9 @@ Rep *RepRibbonNew(CoordSet *cs)
                 f0 = smooth(f0,power_a);  /* bias sampling towards the center of the curve */
 
 					 if(f0<0.5) {
-						v0 = ColorGet(c1);
+						v0 = ColorGet(G,c1);
 					 } else {
-						v0 = ColorGet(c2);
+						v0 = ColorGet(G,c2);
 					 }
 
                 /* store index */
@@ -549,9 +551,9 @@ Rep *RepRibbonNew(CoordSet *cs)
                 f0 = smooth(f0,power_a);
 
 					 if(f0<0.5) {
-						v0 = ColorGet(c1);
+						v0 = ColorGet(G,c1);
 					 } else {
-						v0 = ColorGet(c2);
+						v0 = ColorGet(G,c2);
 					 }
 
                 /* store index */

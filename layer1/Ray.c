@@ -54,9 +54,43 @@ Z* -------------------------------------------------------------------
 typedef float float3[3];
 typedef float float4[4];
 
+struct _CRayThreadInfo {
+  CRay *ray;
+  int width,height;
+  unsigned int *image;
+  float front,back;
+  unsigned int fore_mask;
+  float *bkrd;
+  unsigned int background;
+  int border;
+  int phase, n_thread;
+  float spec_vector[3];
+  int x_start,x_stop;
+  int y_start,y_stop;
+  unsigned int *edging;
+  unsigned int edging_cutoff;
+};
 
-static int RandomFlag=0;
-static float Random[256];
+ struct _CRayHashThreadInfo {
+  CBasis *basis;
+  int *vert2prim;
+  CPrimitive *prim;
+  float *clipBox;
+  unsigned int *image;
+  unsigned int background;
+  unsigned int bytes;
+  int phase;
+  CRay *ray;
+};
+
+ struct _CRayAntiThreadInfo {
+  unsigned int *image;
+  unsigned int *image_copy;
+  unsigned int width,height;
+  int mag;
+  int phase,n_thread;
+  CRay *ray;
+};
 
 void RayRelease(CRay *I);
 void RayWobble(CRay *I,int mode,float *v);
@@ -234,9 +268,9 @@ void RayReflectAndTexture(CRay *I,RayInfo *r)
         float *tp = I->WobbleParam;
         copy3f(r->impact,v);
         RayApplyMatrixInverse33(1,&v,I->ModelView,&v);
-        n[0]=Random[0xFF&(int)((cos((v[0])*tp[1])*256*tp[2]))];
-        n[1]=Random[0xFF&(int)((cos((v[1])*tp[1])*256*tp[2]+96))];
-        n[2]=Random[0xFF&(int)((cos((v[2])*tp[1])*256*tp[2]+148))];
+        n[0]=I->Random[0xFF&(int)((cos((v[0])*tp[1])*256*tp[2]))];
+        n[1]=I->Random[0xFF&(int)((cos((v[1])*tp[1])*256*tp[2]+96))];
+        n[2]=I->Random[0xFF&(int)((cos((v[2])*tp[1])*256*tp[2]+148))];
         RayTransformNormals33(1,&n,I->ModelView,&n);
         scale3f(n,tp[0],n);
         add3f(n,r->surfnormal,r->surfnormal);
@@ -250,41 +284,41 @@ void RayReflectAndTexture(CRay *I,RayInfo *r)
         float *tp = I->WobbleParam;
         copy3f(r->impact,v);
         RayApplyMatrixInverse33(1,&v,I->ModelView,&v);
-        n[0]=Random[0xFF&(int)((v[0]*tp[1])+0)]+
-          Random[0xFF&(int)((v[1]*tp[1])+20)]+
-          Random[0xFF&(int)((v[2]*tp[1])+40)];
-        n[1]=Random[0xFF&(int)((-v[0]*tp[1])+90)]+
-          Random[0xFF&(int)((v[1]*tp[1])+100)]+
-          Random[0xFF&(int)((-v[2]*tp[1])+120)];
-        n[2]=Random[0xFF&(int)((v[0]*tp[1])+200)]+
-          Random[0xFF&(int)((-v[1]*tp[1])+70)]+
-          Random[0xFF&(int)((v[2]*tp[1])+30)];
+        n[0]=I->Random[0xFF&(int)((v[0]*tp[1])+0)]+
+          I->Random[0xFF&(int)((v[1]*tp[1])+20)]+
+          I->Random[0xFF&(int)((v[2]*tp[1])+40)];
+        n[1]=I->Random[0xFF&(int)((-v[0]*tp[1])+90)]+
+          I->Random[0xFF&(int)((v[1]*tp[1])+100)]+
+          I->Random[0xFF&(int)((-v[2]*tp[1])+120)];
+        n[2]=I->Random[0xFF&(int)((v[0]*tp[1])+200)]+
+          I->Random[0xFF&(int)((-v[1]*tp[1])+70)]+
+          I->Random[0xFF&(int)((v[2]*tp[1])+30)];
         
         n[0]+=
-          Random[0xFF&((int)((v[0]-v[1])*tp[1])+0)] +
-          Random[0xFF&((int)((v[1]-v[2])*tp[1])+20)] +
-          Random[0xFF&((int)((v[2]-v[0])*tp[1])+40)];
+          I->Random[0xFF&((int)((v[0]-v[1])*tp[1])+0)] +
+          I->Random[0xFF&((int)((v[1]-v[2])*tp[1])+20)] +
+          I->Random[0xFF&((int)((v[2]-v[0])*tp[1])+40)];
         n[1]+=
-          Random[0xFF&((int)((v[0]+v[1])*tp[1])+10)]+
-          Random[0xFF&((int)((v[1]+v[2])*tp[1])+90)]+
-          Random[0xFF&((int)((v[2]+v[0])*tp[1])+30)];
+          I->Random[0xFF&((int)((v[0]+v[1])*tp[1])+10)]+
+          I->Random[0xFF&((int)((v[1]+v[2])*tp[1])+90)]+
+          I->Random[0xFF&((int)((v[2]+v[0])*tp[1])+30)];
         n[2]+=
-          Random[0xFF&((int)((-v[0]+v[1])*tp[1])+220)]+
-          Random[0xFF&((int)((-v[1]+v[2])*tp[1])+20)]+
-          Random[0xFF&((int)((-v[2]+v[0])*tp[1])+50)];
+          I->Random[0xFF&((int)((-v[0]+v[1])*tp[1])+220)]+
+          I->Random[0xFF&((int)((-v[1]+v[2])*tp[1])+20)]+
+          I->Random[0xFF&((int)((-v[2]+v[0])*tp[1])+50)];
         
         n[0]+=
-          Random[0xFF&((int)((v[0]+v[1]+v[2])*tp[1])+5)]+
-          Random[0xFF&((int)((v[0]+v[1]+v[2])*tp[1])+25)]+
-          Random[0xFF&((int)((v[0]+v[1]+v[2])*tp[1])+46)];
+          I->Random[0xFF&((int)((v[0]+v[1]+v[2])*tp[1])+5)]+
+          I->Random[0xFF&((int)((v[0]+v[1]+v[2])*tp[1])+25)]+
+          I->Random[0xFF&((int)((v[0]+v[1]+v[2])*tp[1])+46)];
         n[1]+=
-          Random[0xFF&((int)((-v[0]-v[1]+v[2])*tp[1])+90)]+
-          Random[0xFF&((int)((-v[0]-v[1]+v[2])*tp[1])+45)]+
-          Random[0xFF&((int)((-v[0]-v[1]+v[2])*tp[1])+176)];
+          I->Random[0xFF&((int)((-v[0]-v[1]+v[2])*tp[1])+90)]+
+          I->Random[0xFF&((int)((-v[0]-v[1]+v[2])*tp[1])+45)]+
+          I->Random[0xFF&((int)((-v[0]-v[1]+v[2])*tp[1])+176)];
         n[2]+=
-          Random[0xFF&((int)((v[0]+v[1]-v[2])*tp[1])+192)]+
-          Random[0xFF&((int)((v[0]+v[1]-v[2])*tp[1])+223)]+
-          Random[0xFF&((int)((v[0]+v[1]-v[2])*tp[1])+250)];
+          I->Random[0xFF&((int)((v[0]+v[1]-v[2])*tp[1])+192)]+
+          I->Random[0xFF&((int)((v[0]+v[1]-v[2])*tp[1])+223)]+
+          I->Random[0xFF&((int)((v[0]+v[1]-v[2])*tp[1])+250)];
 
         RayTransformNormals33(1,&n,I->ModelView,&n);
         scale3f(n,tp[0],n);
@@ -330,13 +364,13 @@ void RayExpandPrimitives(CRay *I)
 
   basis = I->Basis;
   
-  VLACacheCheck(basis->Vertex,float,3*nVert,0,cCache_basis_vertex);
-  VLACacheCheck(basis->Radius,float,nVert,0,cCache_basis_radius);
-  VLACacheCheck(basis->Radius2,float,nVert,0,cCache_basis_radius2);
-  VLACacheCheck(basis->Vert2Normal,int,nVert,0,cCache_basis_vert2normal);
-  VLACacheCheck(basis->Normal,float,3*nNorm,0,cCache_basis_normal);
+  VLACacheCheck(I->G,basis->Vertex,float,3*nVert,0,cCache_basis_vertex);
+  VLACacheCheck(I->G,basis->Radius,float,nVert,0,cCache_basis_radius);
+  VLACacheCheck(I->G,basis->Radius2,float,nVert,0,cCache_basis_radius2);
+  VLACacheCheck(I->G,basis->Vert2Normal,int,nVert,0,cCache_basis_vert2normal);
+  VLACacheCheck(I->G,basis->Normal,float,3*nNorm,0,cCache_basis_normal);
 
-  VLACacheCheck(I->Vert2Prim,int,nVert,0,cCache_ray_vert2prim);
+  VLACacheCheck(I->G,I->Vert2Prim,int,nVert,0,cCache_ray_vert2prim);
 
   basis->MaxRadius = 0.0F;
   basis->MinVoxel = I->PixelRadius/2.0F;
@@ -514,22 +548,22 @@ void RayTransformFirst(CRay *I)
   float *v0;
   int backface_cull;
 
-  backface_cull = (int)SettingGet(cSetting_backface_cull);
+  backface_cull = (int)SettingGet(I->G,cSetting_backface_cull);
   
-  if((SettingGet(cSetting_two_sided_lighting)||
-      (SettingGet(cSetting_transparency_mode)==1)||
-      SettingGet(cSetting_ray_interior_color)>=0))
+  if((SettingGet(I->G,cSetting_two_sided_lighting)||
+      (SettingGet(I->G,cSetting_transparency_mode)==1)||
+      SettingGet(I->G,cSetting_ray_interior_color)>=0))
     backface_cull=0;
 
   basis0 = I->Basis;
   basis1 = I->Basis+1;
   
-  VLACacheCheck(basis1->Vertex,float,3*basis0->NVertex,1,cCache_basis_vertex);
-  VLACacheCheck(basis1->Normal,float,3*basis0->NNormal,1,cCache_basis_normal);
-  VLACacheCheck(basis1->Precomp,float,3*basis0->NNormal,1,cCache_basis_precomp);
-  VLACacheCheck(basis1->Vert2Normal,int,basis0->NVertex,1,cCache_basis_vert2normal);
-  VLACacheCheck(basis1->Radius,float,basis0->NVertex,1,cCache_basis_radius);
-  VLACacheCheck(basis1->Radius2,float,basis0->NVertex,1,cCache_basis_radius2);
+  VLACacheCheck(I->G,basis1->Vertex,float,3*basis0->NVertex,1,cCache_basis_vertex);
+  VLACacheCheck(I->G,basis1->Normal,float,3*basis0->NNormal,1,cCache_basis_normal);
+  VLACacheCheck(I->G,basis1->Precomp,float,3*basis0->NNormal,1,cCache_basis_precomp);
+  VLACacheCheck(I->G,basis1->Vert2Normal,int,basis0->NVertex,1,cCache_basis_vert2normal);
+  VLACacheCheck(I->G,basis1->Radius,float,basis0->NVertex,1,cCache_basis_radius);
+  VLACacheCheck(I->G,basis1->Radius2,float,basis0->NVertex,1,cCache_basis_radius2);
   
   RayApplyMatrix33(basis0->NVertex,(float3*)basis1->Vertex,
 					  I->ModelView,(float3*)basis0->Vertex);
@@ -581,12 +615,12 @@ void RayTransformBasis(CRay *I,CBasis *basis1,int group_id)
 
   basis0 = I->Basis+1;
 
-  VLACacheCheck(basis1->Vertex,float,3*basis0->NVertex,group_id,cCache_basis_vertex);
-  VLACacheCheck(basis1->Normal,float,3*basis0->NNormal,group_id,cCache_basis_normal);
-  VLACacheCheck(basis1->Precomp,float,3*basis0->NNormal,group_id,cCache_basis_precomp);
-  VLACacheCheck(basis1->Vert2Normal,int,basis0->NVertex,group_id,cCache_basis_vert2normal);
-  VLACacheCheck(basis1->Radius,float,basis0->NVertex,group_id,cCache_basis_radius);
-  VLACacheCheck(basis1->Radius2,float,basis0->NVertex,group_id,cCache_basis_radius2);
+  VLACacheCheck(I->G,basis1->Vertex,float,3*basis0->NVertex,group_id,cCache_basis_vertex);
+  VLACacheCheck(I->G,basis1->Normal,float,3*basis0->NNormal,group_id,cCache_basis_normal);
+  VLACacheCheck(I->G,basis1->Precomp,float,3*basis0->NNormal,group_id,cCache_basis_precomp);
+  VLACacheCheck(I->G,basis1->Vert2Normal,int,basis0->NVertex,group_id,cCache_basis_vert2normal);
+  VLACacheCheck(I->G,basis1->Radius,float,basis0->NVertex,group_id,cCache_basis_radius);
+  VLACacheCheck(I->G,basis1->Radius2,float,basis0->NVertex,group_id,cCache_basis_radius2);
   v0=basis0->Vertex;
   v1=basis1->Vertex;
   for(a=0;a<basis0->NVertex;a++)
@@ -637,9 +671,9 @@ void RayTransformBasis(CRay *I,CBasis *basis1,int group_id)
 void RayRenderTest(CRay *I,int width,int height,float front,float back,float fov)
 {
 
-  PRINTFB(FB_Ray,FB_Details)
+  PRINTFB(I->G,FB_Ray,FB_Details)
     " RayRenderTest: obtained %i graphics primitives.\n",I->NPrimitive 
-    ENDFB;
+    ENDFB(I->G);
 }
 
 /*========================================================================*/
@@ -670,28 +704,28 @@ void RayRenderPOV(CRay *I,int width,int height,char **headerVLA_ptr,
 
   charVLA=*charVLA_ptr;
   headerVLA=*headerVLA_ptr;
-  smooth_color_triangle=(int)SettingGet(cSetting_smooth_color_triangle);
-  PRINTFB(FB_Ray,FB_Details)
+  smooth_color_triangle=(int)SettingGet(I->G,cSetting_smooth_color_triangle);
+  PRINTFB(I->G,FB_Ray,FB_Details)
     " RayRenderPOV: w %d h %d f %8.3f b %8.3f\n",width,height,front,back
-    ENDFB;
-  if(Feedback(FB_Ray,FB_Details)) {
+    ENDFB(I->G);
+  if(Feedback(I->G,FB_Ray,FB_Details)) {
     dump3f(I->Volume," RayRenderPOV: vol");
     dump3f(I->Volume+3," RayRenderPOV: vol");
   }
   cc=0;
   hc=0;
-  gamma = SettingGet(cSetting_gamma);
+  gamma = SettingGet(I->G,cSetting_gamma);
   if(gamma>R_SMALL4)
     gamma=1.0F/gamma;
   else
     gamma=1.0F;
 
-  fog = SettingGet(cSetting_ray_trace_fog);
+  fog = SettingGet(I->G,cSetting_ray_trace_fog);
   if(fog<0.0F)
-    fog = SettingGet(cSetting_depth_cue);
+    fog = SettingGet(I->G,cSetting_depth_cue);
   if(fog!=0.0F) {
     fogFlag=true;
-    fog_start = SettingGet(cSetting_ray_trace_fog_start);
+    fog_start = SettingGet(I->G,cSetting_ray_trace_fog_start);
     if(fog_start>R_SMALL4) {
       fogRangeFlag=true;
       if(fabs(fog_start-1.0F)<R_SMALL4) /* prevent div/0 */
@@ -700,18 +734,18 @@ void RayRenderPOV(CRay *I,int width,int height,char **headerVLA_ptr,
   }
   /* SETUP */
   
-  antialias = (int)SettingGet(cSetting_antialias);
-  bkrd=SettingGetfv(cSetting_bg_rgb);
+  antialias = (int)SettingGet(I->G,cSetting_antialias);
+  bkrd=SettingGetfv(I->G,cSetting_bg_rgb);
 
   RayExpandPrimitives(I);
   RayTransformFirst(I);
 
-  PRINTFB(FB_Ray,FB_Details)
+  PRINTFB(I->G,FB_Ray,FB_Details)
     " RayRenderPovRay: processed %i graphics primitives.\n",I->NPrimitive 
-    ENDFB;
+    ENDFB(I->G);
   base = I->Basis+1;
 
-  if(!SettingGet(cSetting_ortho)) {
+  if(!SettingGet(I->G,cSetting_ortho)) {
     sprintf(buffer,"camera {direction<0.0,0.0,%8.3f>\n location <0.0 , 0.0 , 0.0>\n right %12.10f*x up y \n }\n",
             -56.6/fov,/* by trial and error */
             I->Range[0]/I->Range[1]);
@@ -722,13 +756,13 @@ void RayRenderPOV(CRay *I,int width,int height,char **headerVLA_ptr,
   UtilConcatVLA(&headerVLA,&hc,buffer);
 
   sprintf(buffer,"#default { finish{phong %8.3f ambient %8.3f diffuse %8.3f phong_size %8.6f}}\n",
-          SettingGet(cSetting_spec_reflect),
-          SettingGet(cSetting_ambient),
-          SettingGet(cSetting_reflect)*1.2,
-          SettingGet(cSetting_spec_power)/4.0F);
+          SettingGet(I->G,cSetting_spec_reflect),
+          SettingGet(I->G,cSetting_ambient),
+          SettingGet(I->G,cSetting_reflect)*1.2,
+          SettingGet(I->G,cSetting_spec_power)/4.0F);
   UtilConcatVLA(&headerVLA,&hc,buffer);
 
-  lightv = SettingGet_3fv(NULL,NULL,cSetting_light);
+  lightv = SettingGet_3fv(I->G,NULL,NULL,cSetting_light);
   copy3f(lightv,light);
   if(angle) {
     float temp[16];
@@ -918,11 +952,13 @@ static void RayHashSpawn(CRayHashThreadInfo *Thread,int n_thread)
   int blocked;
   PyObject *info_list;
   int a;
+  CRay *I = Thread->ray;
+
   blocked = PAutoBlock();
 
-  PRINTFB(FB_Ray,FB_Blather)
+  PRINTFB(I->G,FB_Ray,FB_Blather)
     " Ray: filling voxels with %d threads...\n",n_thread
-  ENDFB;
+  ENDFB(I->G);
   info_list = PyList_New(n_thread);
   for(a=0;a<n_thread;a++) {
     PyList_SetItem(info_list,a,PyCObject_FromVoidPtr(Thread+a,NULL));
@@ -937,11 +973,14 @@ static void RayAntiSpawn(CRayAntiThreadInfo *Thread,int n_thread)
   int blocked;
   PyObject *info_list;
   int a;
+  CRay *I = Thread->ray;
+
   blocked = PAutoBlock();
 
-  PRINTFB(FB_Ray,FB_Blather)
+
+  PRINTFB(I->G,FB_Ray,FB_Blather)
     " Ray: antialiasing with %d threads...\n",n_thread
-  ENDFB;
+  ENDFB(I->G);
   info_list = PyList_New(n_thread);
   for(a=0;a<n_thread;a++) {
     PyList_SetItem(info_list,a,PyCObject_FromVoidPtr(Thread+a,NULL));
@@ -970,10 +1009,11 @@ static void RayTraceSpawn(CRayThreadInfo *Thread,int n_thread)
   PyObject *info_list;
   int a;
   blocked = PAutoBlock();
+  CRay *I=Thread->ray;
 
-  PRINTFB(FB_Ray,FB_Blather)
+  PRINTFB(I->G,FB_Ray,FB_Blather)
     " Ray: rendering with %d threads...\n",n_thread
-  ENDFB;
+  ENDFB(I->G);
   info_list = PyList_New(n_thread);
   for(a=0;a<n_thread;a++) {
     PyList_SetItem(info_list,a,PyCObject_FromVoidPtr(Thread+a,NULL));
@@ -983,41 +1023,6 @@ static void RayTraceSpawn(CRayThreadInfo *Thread,int n_thread)
   PAutoUnblock(blocked);
   
 }
-
-#if 0 
-static void RayTraceStitch(CRayThreadInfo *Thread,int n_thread,unsigned int *image)
-{
-	int cnt,start_at,done_at;
-	CRayThreadInfo *T;
-	unsigned int *p;
-	int phase;
-	int x,y;
-	unsigned int n_pixel;
-	int	wid, hgt, row, col, found, cPhase, threadCnt;
-	
-	n_pixel = Thread->width * Thread->height;
-
-	for(phase = 0; phase < n_thread; phase++)
-	{
-		T			= Thread + phase;
-		p			= T->image;
-		cPhase		= T->phase;
-		threadCnt	= T->n_thread;
-		wid			= T->width;
-		hgt			= T->height;
-		
-		for(y = 0; (y < hgt); y++)
-		{				
-			if((y % threadCnt) == cPhase) 
-			{
-				unsigned int	*pDst	= image + (wid*y);
-				for(x = 0; (x < wid); x++)
-					*(pDst++) = *(p++);
-			}
-		}
-	}
-}
-#endif
 
 static int find_edge(unsigned int *ptr,unsigned int width,int threshold)
 {
@@ -1127,6 +1132,16 @@ int RayTraceThread(CRayThreadInfo *T)
    int trans_cont_flag = false;
    int blend_colors;
    int max_pass;
+   float BasisFudge0,BasisFudge1;
+
+	I = T->ray;
+
+   {
+     float fudge = SettingGet(I->G,cSetting_ray_triangle_fudge);
+   
+     BasisFudge0 = 0.0F-fudge;
+     BasisFudge1 = 1.0F+fudge;
+   }
 
 	_0		= 0.0F;
 	_1		= 1.0F;
@@ -1140,35 +1155,34 @@ int RayTraceThread(CRayThreadInfo *T)
 	/*  if(T->n_thread>1)
 	printf(" Ray: Thread %d: Spawned.\n",T->phase+1);
 	*/
-	I = T->ray;
 	
-	interior_shadows	= SettingGetGlobal_i(cSetting_ray_interior_shadows);
-	interior_wobble	= SettingGetGlobal_i(cSetting_ray_interior_texture);
-	interior_color		= SettingGetGlobal_i(cSetting_ray_interior_color);
-   interior_reflect  = 1.0F - SettingGet(cSetting_ray_interior_reflect);
+	interior_shadows	= SettingGetGlobal_i(I->G,cSetting_ray_interior_shadows);
+	interior_wobble	= SettingGetGlobal_i(I->G,cSetting_ray_interior_texture);
+	interior_color		= SettingGetGlobal_i(I->G,cSetting_ray_interior_color);
+   interior_reflect  = 1.0F - SettingGet(I->G,cSetting_ray_interior_reflect);
 
-	project_triangle	= SettingGet(cSetting_ray_improve_shadows);
-	shadows				= SettingGetGlobal_i(cSetting_ray_shadows);
-	trans_shadows		= SettingGetGlobal_i(cSetting_ray_transparency_shadows);
-	backface_cull		= SettingGetGlobal_i(cSetting_backface_cull);
-	opaque_back			= SettingGetGlobal_i(cSetting_ray_opaque_background);
-	two_sided_lighting	= SettingGetGlobal_i(cSetting_two_sided_lighting);
-	ray_trans_spec		= SettingGet(cSetting_ray_transparency_specular);
-   trans_cont        = SettingGetGlobal_f(cSetting_ray_transparency_contrast);
-   trans_mode        = SettingGetGlobal_i(cSetting_transparency_mode);
+	project_triangle	= SettingGet(I->G,cSetting_ray_improve_shadows);
+	shadows				= SettingGetGlobal_i(I->G,cSetting_ray_shadows);
+	trans_shadows		= SettingGetGlobal_i(I->G,cSetting_ray_transparency_shadows);
+	backface_cull		= SettingGetGlobal_i(I->G,cSetting_backface_cull);
+	opaque_back			= SettingGetGlobal_i(I->G,cSetting_ray_opaque_background);
+	two_sided_lighting	= SettingGetGlobal_i(I->G,cSetting_two_sided_lighting);
+	ray_trans_spec		= SettingGet(I->G,cSetting_ray_transparency_specular);
+   trans_cont        = SettingGetGlobal_f(I->G,cSetting_ray_transparency_contrast);
+   trans_mode        = SettingGetGlobal_i(I->G,cSetting_transparency_mode);
    if(trans_mode==1) two_sided_lighting = true;
    if(trans_cont>1.0F)
      trans_cont_flag = true;
-	ambient				= SettingGet(cSetting_ambient);
-	lreflect			= SettingGet(cSetting_reflect);
-	direct				= SettingGet(cSetting_direct);
-   trans_spec_cut = SettingGet(cSetting_ray_transparency_spec_cut);
-   blend_colors    = SettingGetGlobal_i(cSetting_ray_blend_colors);
-   max_pass = SettingGetGlobal_i(cSetting_ray_max_passes);
+	ambient				= SettingGet(I->G,cSetting_ambient);
+	lreflect			= SettingGet(I->G,cSetting_reflect);
+	direct				= SettingGet(I->G,cSetting_direct);
+   trans_spec_cut = SettingGet(I->G,cSetting_ray_transparency_spec_cut);
+   blend_colors    = SettingGetGlobal_i(I->G,cSetting_ray_blend_colors);
+   max_pass = SettingGetGlobal_i(I->G,cSetting_ray_max_passes);
    if(blend_colors) {
-     red_blend = SettingGet(cSetting_ray_blend_red);
-     green_blend = SettingGet(cSetting_ray_blend_green);
-     blue_blend = SettingGet(cSetting_ray_blend_blue);
+     red_blend = SettingGet(I->G,cSetting_ray_blend_red);
+     green_blend = SettingGet(I->G,cSetting_ray_blend_green);
+     blue_blend = SettingGet(I->G,cSetting_ray_blend_blue);
    }
 
    if(trans_spec_cut<_1)
@@ -1177,22 +1191,22 @@ int RayTraceThread(CRayThreadInfo *T)
      trans_spec_scale = _0;
 
 	/* COOP */
-	settingPower		= SettingGet(cSetting_power);
-	settingReflectPower	= SettingGet(cSetting_reflect_power);
-	settingSpecPower	= SettingGet(cSetting_spec_power);
+	settingPower		= SettingGet(I->G,cSetting_power);
+	settingReflectPower	= SettingGet(I->G,cSetting_reflect_power);
+	settingSpecPower	= SettingGet(I->G,cSetting_spec_power);
 
-	settingSpecReflect	= SettingGet(cSetting_spec_reflect);
+	settingSpecReflect	= SettingGet(I->G,cSetting_spec_reflect);
    if(settingSpecReflect>1.0F) settingSpecReflect = 1.0F;
-	if(SettingGet(cSetting_specular)<R_SMALL4) {
+	if(SettingGet(I->G,cSetting_specular)<R_SMALL4) {
      settingSpecReflect = 0.0F;
    }
     
 	if((interior_color>=0)||(two_sided_lighting)||(trans_mode==1))
 		backface_cull	= 0;
 
-	shadow_fudge = SettingGet(cSetting_ray_shadow_fudge);
+	shadow_fudge = SettingGet(I->G,cSetting_ray_shadow_fudge);
 	
-   /*	gamma = SettingGet(cSetting_gamma);
+   /*	gamma = SettingGet(I->G,cSetting_gamma);
 	if(gamma > R_SMALL4)
 		gamma	= _1/gamma;
 	else
@@ -1201,10 +1215,10 @@ int RayTraceThread(CRayThreadInfo *T)
 
 	inv1minusFogStart	= _1;
 	
-	fog = SettingGet(cSetting_ray_trace_fog);
+	fog = SettingGet(I->G,cSetting_ray_trace_fog);
    if(fog<0.0F) {
-     if(SettingGet(cSetting_depth_cue)) {
-       fog = SettingGet(cSetting_fog);
+     if(SettingGet(I->G,cSetting_depth_cue)) {
+       fog = SettingGet(I->G,cSetting_fog);
      } else 
        fog = _0;
    }
@@ -1212,7 +1226,7 @@ int RayTraceThread(CRayThreadInfo *T)
 	if(fog != _0) 
 	{
 		fogFlag	= true;
-		fog_start = SettingGet(cSetting_ray_trace_fog_start);
+		fog_start = SettingGet(I->G,cSetting_ray_trace_fog_start);
 		if(fog_start>R_SMALL4) 
 		{
 			fogRangeFlag=true;
@@ -1252,7 +1266,7 @@ int RayTraceThread(CRayThreadInfo *T)
    }
 
 	if(interior_color>=0) {
-		inter = ColorGet(interior_color);
+		inter = ColorGet(I->G,interior_color);
       interior_normal[0] = interior_reflect*bp2->LightNormal[0];
       interior_normal[1] = interior_reflect*bp2->LightNormal[1];
       interior_normal[2] = 1.0F+interior_reflect*bp2->LightNormal[2];
@@ -1269,6 +1283,9 @@ int RayTraceThread(CRayThreadInfo *T)
    SceneCall.back = T->back;
    SceneCall.trans_shadows = trans_shadows;
    SceneCall.check_interior = (interior_color >= 0);
+   SceneCall.fudge0 = BasisFudge0;
+   SceneCall.fudge1 = BasisFudge1;
+
 	MapCacheInit(&SceneCall.cache,I->Basis[1].Map,T->phase,cCache_map_scene_cache);
 
    if(shadows&&(I->NBasis>1)) {
@@ -1282,6 +1299,8 @@ int RayTraceThread(CRayThreadInfo *T)
      ShadeCall.excl_trans = _0;
      ShadeCall.trans_shadows = trans_shadows;
      ShadeCall.check_interior = false;
+     ShadeCall.fudge0 = BasisFudge0;
+     ShadeCall.fudge1 = BasisFudge1;
      MapCacheInit(&ShadeCall.cache,I->Basis[2].Map,T->phase,cCache_map_shadow_cache);     
    }
 
@@ -1298,12 +1317,12 @@ int RayTraceThread(CRayThreadInfo *T)
 		if((!T->phase)&&!(yy & 0xF)) { /* don't slow down rendering too much */
         if(T->edging_cutoff) {
           if(T->edging) {
-            OrthoBusyFast((int)(2.5F*T->height/3 + 0.5F*y),4*T->height/3); 
+            OrthoBusyFast(I->G,(int)(2.5F*T->height/3 + 0.5F*y),4*T->height/3); 
           } else {
-            OrthoBusyFast((int)(T->height/3 + 0.5F*y),4*T->height/3); 
+            OrthoBusyFast(I->G,(int)(T->height/3 + 0.5F*y),4*T->height/3); 
           }
         } else {
-			OrthoBusyFast(T->height/3 + y,4*T->height/3); 
+			OrthoBusyFast(I->G,T->height/3 + y,4*T->height/3); 
         }
       }
 		pixel = T->image + (T->width * y) + T->x_start;
@@ -1446,7 +1465,7 @@ int RayTraceThread(CRayThreadInfo *T)
                           else if(r1.prim->type==cPrimCharacter) {
                             BasisGetTriangleNormal(bp1,&r1,i,fc);
                             
-                            r1.trans = CharacterInterpolate(r1.prim->char_id,fc);
+                            r1.trans = CharacterInterpolate(I->G,r1.prim->char_id,fc);
 
                             RayReflectAndTexture(I,&r1);
                             BasisGetTriangleFlatDotgle(bp1,&r1,i);
@@ -1969,8 +1988,9 @@ int RayAntiThread(CRayAntiThreadInfo *T)
 	int x,y,yy;
 	unsigned int *p;
 	int offset = 0;
-	
-	OrthoBusyFast(9,10);
+	CRay *I = T->ray;
+
+	OrthoBusyFast(I->G,9,10);
 	width	= (T->width/T->mag) - 2;
 	height = (T->height/T->mag) - 2;
 	
@@ -2258,15 +2278,14 @@ void RayRender(CRay *I,int width,int height,unsigned int *image,
   n_skipped = 0;
 #endif
 
-  n_thread  = SettingGetGlobal_i(cSetting_max_threads);
+  n_thread  = SettingGetGlobal_i(I->G,cSetting_max_threads);
   if(n_thread<1)
     n_thread=1;
   if(n_thread>MAX_RAY_THREADS)
     n_thread = MAX_RAY_THREADS;
-  opaque_back = SettingGetGlobal_i(cSetting_ray_opaque_background);
-  BasisSetFudge(SettingGet(cSetting_ray_triangle_fudge));
-  shadows = SettingGetGlobal_i(cSetting_ray_shadows);
-  antialias = SettingGetGlobal_i(cSetting_antialias);
+  opaque_back = SettingGetGlobal_i(I->G,cSetting_ray_opaque_background);
+  shadows = SettingGetGlobal_i(I->G,cSetting_ray_shadows);
+  antialias = SettingGetGlobal_i(I->G,cSetting_antialias);
   if(antialias<0) antialias=0;
   if(antialias>4) antialias=4;
   mag = antialias;
@@ -2277,15 +2296,15 @@ void RayRender(CRay *I,int width,int height,unsigned int *image,
     height=(height+2)*mag;
     image_copy = image;
     buffer_size = mag*mag*width*height;
-    image = CacheAlloc(unsigned int,buffer_size,0,cCache_ray_antialias_buffer);
-    ErrChkPtr(image);
+    image = CacheAlloc(I->G,unsigned int,buffer_size,0,cCache_ray_antialias_buffer);
+    ErrChkPtr(I->G,image);
   } else {
     buffer_size = width*height;
   }
-  bkrd_ptr=SettingGetfv(cSetting_bg_rgb);
+  bkrd_ptr=SettingGetfv(I->G,cSetting_bg_rgb);
   copy3f(bkrd_ptr,bkrd);
   { /* adjust bkrd to offset the effect of gamma correction */
-    float gamma = SettingGet(cSetting_gamma);
+    float gamma = SettingGet(I->G,cSetting_gamma);
     register float inp;
     register float sig;
 
@@ -2327,12 +2346,12 @@ void RayRender(CRay *I,int width,int height,unsigned int *image,
       ((0xFF& ((unsigned int)(bkrd[0]*255+0.499))) );
   }
 
-  OrthoBusyFast(3,20);
+  OrthoBusyFast(I->G,3,20);
 
-  PRINTFB(FB_Ray,FB_Blather) 
+  PRINTFB(I->G,FB_Ray,FB_Blather) 
     " RayNew: Background = %x %d %d %d\n",background,(int)(bkrd[0]*255),
     (int)(bkrd[1]*255),(int)(bkrd[2]*255)
-    ENDFB;
+    ENDFB(I->G);
 
   if(!I->NPrimitive) { /* nothing to render! */
     fill(image,background,width * (unsigned int)height);
@@ -2341,17 +2360,17 @@ void RayRender(CRay *I,int width,int height,unsigned int *image,
     RayExpandPrimitives(I);
     RayTransformFirst(I);
     
-    now = UtilGetSeconds(TempPyMOLGlobals)-timing;
+    now = UtilGetSeconds(I->G)-timing;
 
-	 PRINTFB(FB_Ray,FB_Blather)
+	 PRINTFB(I->G,FB_Ray,FB_Blather)
       " Ray: processed %i graphics primitives in %4.2f sec.\n",I->NPrimitive,now
-      ENDFB;
+      ENDFB(I->G);
 
     I->NBasis=3; /* light source */
-    BasisInit(I->Basis+2,2);
+    BasisInit(I->G,I->Basis+2,2);
     
     { /* setup light & rotate if necessary  */
-      v=SettingGetfv(cSetting_light);
+      v=SettingGetfv(I->G,cSetting_light);
       copy3f(v,light);
       
       if(angle) {
@@ -2411,12 +2430,12 @@ void RayRender(CRay *I,int width,int height,unsigned int *image,
        
     }
 
-    OrthoBusyFast(5,20);
-    now = UtilGetSeconds(TempPyMOLGlobals)-timing;
+    OrthoBusyFast(I->G,5,20);
+    now = UtilGetSeconds(I->G)-timing;
 
 #ifdef _MemoryDebug_ON
     if(shadows) {
-      PRINTFB(FB_Ray,FB_Blather)
+      PRINTFB(I->G,FB_Ray,FB_Blather)
         " Ray: voxels: [%4.2f:%dx%dx%d], [%4.2f:%dx%dx%d], %d MB, %4.2f sec.\n",
         I->Basis[1].Map->Div,   I->Basis[1].Map->Dim[0],
         I->Basis[1].Map->Dim[1],I->Basis[1].Map->Dim[2],
@@ -2424,33 +2443,33 @@ void RayRender(CRay *I,int width,int height,unsigned int *image,
         I->Basis[2].Map->Dim[2],I->Basis[2].Map->Dim[2],
         (int)(MemoryDebugUsage()/(1024.0*1024)),
         now
-        ENDFB;
+        ENDFB(I->G);
     } else {
-      PRINTFB(FB_Ray,FB_Blather)
+      PRINTFB(I->G,FB_Ray,FB_Blather)
         " Ray: voxels: [%4.2f:%dx%dx%d], %d MB, %4.2f sec.\n",
         I->Basis[1].Map->Div,   I->Basis[1].Map->Dim[0],
         I->Basis[1].Map->Dim[1],I->Basis[1].Map->Dim[2],
         (int)(MemoryDebugUsage()/(1024.0*1024)),
         now
-        ENDFB;
+        ENDFB(I->G);
     }
 #else
     if(shadows) {
-      PRINTFB(FB_Ray,FB_Blather)
+      PRINTFB(I->G,FB_Ray,FB_Blather)
         " Ray: voxels: [%4.2f:%dx%dx%d], [%4.2f:%dx%dx%d], %4.2f sec.\n",
         I->Basis[1].Map->Div,   I->Basis[1].Map->Dim[0],
         I->Basis[1].Map->Dim[1],I->Basis[1].Map->Dim[2],
         I->Basis[2].Map->Div,   I->Basis[2].Map->Dim[0],
         I->Basis[2].Map->Dim[2],I->Basis[2].Map->Dim[2],
         now
-        ENDFB;
+        ENDFB(I->G);
     } else {
-      PRINTFB(FB_Ray,FB_Blather)
+      PRINTFB(I->G,FB_Ray,FB_Blather)
         " Ray: voxels: [%4.2f:%dx%dx%d], %4.2f sec.\n",
         I->Basis[1].Map->Div,   I->Basis[1].Map->Dim[0],
         I->Basis[1].Map->Dim[1],I->Basis[1].Map->Dim[2],
         now
-        ENDFB;
+        ENDFB(I->G);
     }
 
 #endif
@@ -2473,7 +2492,7 @@ void RayRender(CRay *I,int width,int height,unsigned int *image,
       if(x_stop>width) x_stop = width;
       if(y_stop>height) y_stop = height;
 
-      oversample_cutoff = SettingGetGlobal_i(cSetting_ray_oversample_cutoff);
+      oversample_cutoff = SettingGetGlobal_i(I->G,cSetting_ray_oversample_cutoff);
 
       if(!antialias)
         oversample_cutoff = 0;
@@ -2510,7 +2529,7 @@ void RayRender(CRay *I,int width,int height,unsigned int *image,
       if(oversample_cutoff) { /* perform edge oversampling, if requested */
         unsigned int *edging;
 
-        edging = CacheAlloc(unsigned int,buffer_size,0,cCache_ray_edging_buffer);
+        edging = CacheAlloc(I->G,unsigned int,buffer_size,0,cCache_ray_edging_buffer);
         
         memcpy(edging,image,buffer_size*sizeof(unsigned int));
 
@@ -2523,7 +2542,7 @@ void RayRender(CRay *I,int width,int height,unsigned int *image,
         else 
           RayTraceSpawn(rt,n_thread);
 
-        CacheFreeP(edging,0,cCache_ray_edging_buffer,false);
+        CacheFreeP(I->G,edging,0,cCache_ray_edging_buffer,false);
       }
     }
   }
@@ -2549,11 +2568,11 @@ void RayRender(CRay *I,int width,int height,unsigned int *image,
 		else 
         RayAntiSpawn(rt,n_thread);
     }
-    CacheFreeP(image,0,cCache_ray_antialias_buffer,false);
+    CacheFreeP(I->G,image,0,cCache_ray_antialias_buffer,false);
     image = image_copy;
   }
 
-  PRINTFD(FB_Ray)
+  PRINTFD(I->G,FB_Ray)
     " RayRender: n_hit %d\n",n_hit
     ENDFD;
 #ifdef PROFILE_BASIS
@@ -2638,7 +2657,7 @@ void RaySphere3fv(CRay *I,float *v,float r)
 
   float *vv;
 
-  VLACacheCheck(I->Primitive,CPrimitive,I->NPrimitive,0,cCache_ray_primitive);
+  VLACacheCheck(I->G,I->Primitive,CPrimitive,I->NPrimitive,0,cCache_ray_primitive);
   p = I->Primitive+I->NPrimitive;
 
   p->type = cPrimSphere;
@@ -2679,8 +2698,8 @@ void RayCharacter(CRay *I,int char_id, float xorig, float yorig, float advance)
   float *vv;
   float width,height;
 
-  v = TextGetPos();
-  VLACacheCheck(I->Primitive,CPrimitive,I->NPrimitive+1,0,cCache_ray_primitive);
+  v = TextGetPos(I->G);
+  VLACacheCheck(I->G,I->Primitive,CPrimitive,I->NPrimitive+1,0,cCache_ray_primitive);
   p = I->Primitive+I->NPrimitive;
 
   p->type = cPrimCharacter;
@@ -2718,7 +2737,7 @@ void RayCharacter(CRay *I,int char_id, float xorig, float yorig, float advance)
     scale = I->PixelRadius * advance;
     scale3f(xn,scale,vt); /* advance raster position in 3-space */
     add3f(v,vt,vt);
-    TextSetPos(vt);
+    TextSetPos(I->G,vt);
 
     /* position the pixmap relative to raster position */
 
@@ -2730,8 +2749,8 @@ void RayCharacter(CRay *I,int char_id, float xorig, float yorig, float advance)
     scale3f(yn,scale,sc);
     add3f(sc,p->v1,p->v1);
     
-    width = (float)CharacterGetWidth(char_id);
-    height = (float)CharacterGetHeight(char_id);
+    width = (float)CharacterGetWidth(I->G,char_id);
+    height = (float)CharacterGetHeight(I->G,char_id);
 
     scale = I->PixelRadius*width;
     scale3f(xn,scale,xn);
@@ -2780,7 +2799,7 @@ void RayCylinder3fv(CRay *I,float *v1,float *v2,float r,float *c1,float *c2)
 
   float *vv;
 
-  VLACacheCheck(I->Primitive,CPrimitive,I->NPrimitive,0,cCache_ray_primitive);
+  VLACacheCheck(I->G,I->Primitive,CPrimitive,I->NPrimitive,0,cCache_ray_primitive);
   p = I->Primitive+I->NPrimitive;
 
   p->type = cPrimCylinder;
@@ -2830,7 +2849,7 @@ void RayCustomCylinder3fv(CRay *I,float *v1,float *v2,float r,
 
   float *vv;
 
-  VLACacheCheck(I->Primitive,CPrimitive,I->NPrimitive,0,cCache_ray_primitive);
+  VLACacheCheck(I->G,I->Primitive,CPrimitive,I->NPrimitive,0,cCache_ray_primitive);
   p = I->Primitive+I->NPrimitive;
 
   p->type = cPrimCylinder;
@@ -2879,7 +2898,7 @@ void RaySausage3fv(CRay *I,float *v1,float *v2,float r,float *c1,float *c2)
 
   float *vv;
 
-  VLACacheCheck(I->Primitive,CPrimitive,I->NPrimitive,0,cCache_ray_primitive);
+  VLACacheCheck(I->G,I->Primitive,CPrimitive,I->NPrimitive,0,cCache_ray_primitive);
   p = I->Primitive+I->NPrimitive;
 
   p->type = cPrimSausage;
@@ -2940,7 +2959,7 @@ void RayTriangle3fv(CRay *I,
   dump3f(c1," c1");
   dump3f(c2," c2");
   dump3f(c3," c3");*/
-  VLACacheCheck(I->Primitive,CPrimitive,I->NPrimitive,0,cCache_ray_primitive);
+  VLACacheCheck(I->G,I->Primitive,CPrimitive,I->NPrimitive,0,cCache_ray_primitive);
   p = I->Primitive+I->NPrimitive;
 
   p->type = cPrimTriangle;
@@ -3049,14 +3068,14 @@ void RayTriangle3fv(CRay *I,
 
 }
 /*========================================================================*/
-CRay *RayNew(void)
+CRay *RayNew(PyMOLGlobals *G)
 {
   unsigned int test;
   unsigned char *testPtr;
   int a;
 
-  OOAlloc(CRay);
-  
+  OOAlloc(I->G,CRay);
+  I->G = G;
   test = 0xFF000000;
   testPtr = (unsigned char*)&test;
   I->BigEndian = (*testPtr)&&1;
@@ -3064,14 +3083,14 @@ CRay *RayNew(void)
   I->Wobble=0;
   I->TTTFlag=false;
   zero3f(I->WobbleParam);
-  PRINTFB(FB_Ray,FB_Blather) 
+  PRINTFB(I->G,FB_Ray,FB_Blather) 
     " RayNew: BigEndian = %d\n",I->BigEndian
-    ENDFB;
+    ENDFB(I->G);
 
-  I->Basis=CacheAlloc(CBasis,3,0,cCache_ray_basis);
-  BasisInit(I->Basis,0);
-  BasisInit(I->Basis+1,1);
-  I->Vert2Prim=VLACacheAlloc(int,1,0,cCache_ray_vert2prim);
+  I->Basis=CacheAlloc(I->G,CBasis,3,0,cCache_ray_basis);
+  BasisInit(I->G,I->Basis,0);
+  BasisInit(I->G,I->Basis+1,1);
+  I->Vert2Prim=VLACacheAlloc(I->G,int,1,0,cCache_ray_vert2prim);
   I->NBasis=2;
   I->Primitive=NULL;
   I->NPrimitive=0;
@@ -3084,16 +3103,13 @@ CRay *RayNew(void)
   I->fCharacter=RayCharacter;
   I->fWobble=RayWobble;
   I->fTransparentf=RayTransparentf;
-  if(!RandomFlag) {
-    for(a=0;a<256;a++) {
-      Random[a]=(float)((rand()/(1.0+RAND_MAX))-0.5);
-    }
-    RandomFlag=1;
+  for(a=0;a<256;a++) {
+    I->Random[a]=(float)((rand()/(1.0+RAND_MAX))-0.5);
   }
 
-  I->Wobble = SettingGet_i(NULL,NULL,cSetting_ray_texture);
+  I->Wobble = SettingGet_i(I->G,NULL,NULL,cSetting_ray_texture);
   {
-    float *v = SettingGet_3fv(NULL,NULL,cSetting_ray_texture_settings);
+    float *v = SettingGet_3fv(I->G,NULL,NULL,cSetting_ray_texture_settings);
     copy3f(v,I->WobbleParam);
   }
 
@@ -3107,9 +3123,9 @@ void RayPrepare(CRay *I,float v0,float v1,float v2,
 {
   int a;
   if(!I->Primitive) 
-	 I->Primitive=VLACacheAlloc(CPrimitive,10000,3,cCache_ray_primitive);  
+	 I->Primitive=VLACacheAlloc(I->G,CPrimitive,10000,3,cCache_ray_primitive);  
   if(!I->Vert2Prim) 
-	 I->Vert2Prim=VLACacheAlloc(int,10000,3,cCache_ray_vert2prim);
+	 I->Vert2Prim=VLACacheAlloc(I->G,int,10000,3,cCache_ray_vert2prim);
   I->Volume[0]=v0;
   I->Volume[1]=v1;
   I->Volume[2]=v2;
@@ -3120,7 +3136,7 @@ void RayPrepare(CRay *I,float v0,float v1,float v2,
   I->Range[1]=I->Volume[3]-I->Volume[2];
   I->Range[2]=I->Volume[5]-I->Volume[4];
   I->AspRatio=aspRat;
-  CharacterSetRetention(true);
+  CharacterSetRetention(I->G,true);
 
   if(mat)  
     for(a=0;a<16;a++)
@@ -3158,16 +3174,16 @@ void RayRelease(CRay *I)
 	 BasisFinish(&I->Basis[a],a);
   }
   I->NBasis=0;
-  VLACacheFreeP(I->Primitive,0,cCache_ray_primitive,false);
-  VLACacheFreeP(I->Vert2Prim,0,cCache_ray_vert2prim,false);
+  VLACacheFreeP(I->G,I->Primitive,0,cCache_ray_primitive,false);
+  VLACacheFreeP(I->G,I->Vert2Prim,0,cCache_ray_vert2prim,false);
 }
 /*========================================================================*/
 void RayFree(CRay *I)
 {
   RayRelease(I);
-  CharacterSetRetention(false);
-  CacheFreeP(I->Basis,0,cCache_ray_basis,false);
-  VLACacheFreeP(I->Vert2Prim,0,cCache_ray_vert2prim,false);
+  CharacterSetRetention(I->G,false);
+  CacheFreeP(I->G,I->Basis,0,cCache_ray_basis,false);
+  VLACacheFreeP(I->G,I->Vert2Prim,0,cCache_ray_vert2prim,false);
   OOFreeP(I);
 }
 /*========================================================================*/

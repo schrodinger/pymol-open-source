@@ -17,8 +17,7 @@ Z* -------------------------------------------------------------------
 #define _H_Character
 
 #include "Pixmap.h"
-
-
+#include "PyMOLGlobals.h"
 
 typedef unsigned char CharColor[4];
 
@@ -53,7 +52,7 @@ typedef struct {
   CharFngrprnt Fngrprnt;
 } CharRec;
 
-typedef struct {
+struct _CCharacter {
   int MaxAlloc;
   int LastFree;
   int NewestUsed;
@@ -63,23 +62,23 @@ typedef struct {
   int *Hash;
   int RetainAll;
   CharRec *Char;
-} CCharacter;
+};
 
-void CharacterInit(void);
-void CharacterFree(void);
+int CharacterInit(PyMOLGlobals *G);
+void CharacterFree(PyMOLGlobals *G);
 
-int CharacterGetNew(void);
-int CharacterGetWidth(int id);
-int CharacterGetHeight(int id);
+int CharacterGetNew(PyMOLGlobals *G);
+int CharacterGetWidth(PyMOLGlobals *G,int id);
+int CharacterGetHeight(PyMOLGlobals *G,int id);
 
-int CharacterNewFromBitmap(int width, int height,
+int CharacterNewFromBitmap(PyMOLGlobals *G,int width, int height,
                            unsigned char *bitmap,
                            CharFngrprnt *fprnt);
 
-int CharacterFind(CharFngrprnt *fprnt);
+int CharacterFind(PyMOLGlobals *G,CharFngrprnt *fprnt);
 
-float CharacterInterpolate(int id,float *v);
-void CharacterSetRetention(int retail_all);
+float CharacterInterpolate(PyMOLGlobals *G,int id,float *v);
+void CharacterSetRetention(PyMOLGlobals *G,int retail_all);
 
 #endif
 

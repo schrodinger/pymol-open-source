@@ -76,7 +76,7 @@ typedef struct {
 
 } CFontGLUT;
 
-CFont* FontGLUTNew(int font_code);
+CFont* FontGLUTNew(PyMOLGlobals *G,int font_code);
 void FontGLUTFree(CFont *I);
 
 #endif

@@ -18,24 +18,12 @@ Z* -------------------------------------------------------------------
 
 #include"Ortho.h"
 
-typedef struct {
-  Block *Block;
-  int Rocking;
-  int DragFlag;
-  int LastPos;
-  int ExtraSpace;
-  float ButtonColor[3];
-  float ActiveColor[3];
-  int Pressed,Active;
-}  CControl;
-
-extern CControl Control;
-
-void ControlInit(void);
-void ControlFree(void);
-Block *ControlGetBlock(void);
-int ControlIdling(void);
-void ControlInterrupt(void);
-void ControlRock(int mode);
+int ControlInit(PyMOLGlobals *G);
+void ControlFree(PyMOLGlobals *G);
+Block *ControlGetBlock(PyMOLGlobals *G);
+int ControlIdling(PyMOLGlobals *G);
+void ControlInterrupt(PyMOLGlobals *G);
+void ControlRock(PyMOLGlobals *G,int mode);
+int ControlRocking(PyMOLGlobals *G);
 
 #endif

@@ -51,7 +51,7 @@ typedef struct {
   OrthoLineType code;
 } WizardLine;
 
-typedef struct {
+struct _CWizard {
   Block *Block;
   PyObject **Wiz;
   WizardLine *Line;
@@ -63,7 +63,7 @@ typedef struct {
   int LastUpdatedState;
   int LastUpdatedFrame;
   
-}  CWizard;
+};
 
 CWizard Wizard;
 
@@ -71,33 +71,33 @@ CWizard Wizard;
 #define cWizardTopMargin 0
 #define cWizardClickOffset 2
 
-void WizardDirty(void)
+void WizardDirty(PyMOLGlobals *G)
 {
-  CWizard *I=&Wizard;
+  register CWizard *I=G->Wizard;
   I->Dirty=true;
-  OrthoDirty();
+  OrthoDirty(G);
 }
 
-int WizardUpdate(void)
+int WizardUpdate(PyMOLGlobals *G)
 {
-  CWizard *I=&Wizard;
+  register CWizard *I=G->Wizard;
   int result = false;
 
   {
-    int frame = SettingGetGlobal_i(cSetting_frame);
-    int state = SettingGetGlobal_i(cSetting_state);
+    int frame = SettingGetGlobal_i(G,cSetting_frame);
+    int state = SettingGetGlobal_i(G,cSetting_state);
     if(frame!=I->LastUpdatedFrame) {
       I->LastUpdatedFrame = frame;
-      WizardDoFrame();
+      WizardDoFrame(G);
     }
     if(state!=I->LastUpdatedState) {
       I->LastUpdatedState = state;
-      WizardDoState();
+      WizardDoState(G);
     }
   }
 
   if(I->Dirty) {
-    WizardRefresh();
+    WizardRefresh(G);
     I->Dirty=false;
     result = true;
   }
@@ -105,11 +105,11 @@ int WizardUpdate(void)
   return result;
 }
 
-void WizardPurgeStack(void)
+void WizardPurgeStack(PyMOLGlobals *G)
 {
   int blocked;
   int a;
-  CWizard *I=&Wizard;
+  register CWizard *I=G->Wizard;
   blocked = PAutoBlock();
   for(a=I->Stack;a>=0;a--)
     Py_XDECREF(I->Wiz[a]);
@@ -117,10 +117,10 @@ void WizardPurgeStack(void)
   PAutoUnblock(blocked);
 
 }
-int WizardDoSelect(char *name)
+int WizardDoSelect(PyMOLGlobals *G,char *name)
 {
   OrthoLineType buf;
-  CWizard *I=&Wizard;
+  register CWizard *I=G->Wizard;
   int result = false;
 
   if(I->EventMask & cWizEventSelect) 
@@ -138,9 +138,9 @@ int WizardDoSelect(char *name)
   return result;
 }
 /*========================================================================*/
-void WizardRefresh(void)
+void WizardRefresh(PyMOLGlobals *G)
 {
-  CWizard *I = &Wizard;
+  register CWizard *I = G->Wizard;
   char *vla = NULL;
   PyObject *P_list;
   int ll;
@@ -162,7 +162,7 @@ void WizardRefresh(void)
       }
     }
 
-  OrthoSetWizardPrompt(vla);
+  OrthoSetWizardPrompt(G,vla);
 
   /* get the current panel list */
   
@@ -212,17 +212,17 @@ void WizardRefresh(void)
       }
     }
   if(I->NLine) {
-    int LineHeight = SettingGetGlobal_i(cSetting_internal_gui_control_size);
-    OrthoReshapeWizard(LineHeight*I->NLine+4);
+    int LineHeight = SettingGetGlobal_i(G,cSetting_internal_gui_control_size);
+    OrthoReshapeWizard(G,LineHeight*I->NLine+4);
   } else {
-    OrthoReshapeWizard(0);
+    OrthoReshapeWizard(G,0);
   }
   PAutoUnblock(blocked);
 }
 /*========================================================================*/
-void WizardSet(PyObject *wiz,int replace)
+void WizardSet(PyMOLGlobals *G,PyObject *wiz,int replace)
 {
-  CWizard *I = &Wizard;
+  register CWizard *I = G->Wizard;
   int blocked;
   blocked = PAutoBlock();
   if(I->Wiz) {
@@ -249,13 +249,13 @@ void WizardSet(PyObject *wiz,int replace)
       }
     }
   }
-  WizardRefresh();
+  WizardRefresh(G);
   PAutoUnblock(blocked);
 }
 /*========================================================================*/
-int WizardActive(void)
+int WizardActive(PyMOLGlobals *G)
 {
-  CWizard *I = &Wizard;
+  register CWizard *I = G->Wizard;
   if(!I->Wiz)
     return(false);
   if(I->Stack<0)
@@ -263,15 +263,15 @@ int WizardActive(void)
   return(I->Wiz[I->Stack]&&1);
 }
 /*========================================================================*/
-Block *WizardGetBlock(void)
+Block *WizardGetBlock(PyMOLGlobals *G)
 {
-  CWizard *I=&Wizard;
+  register CWizard *I=G->Wizard;
   {return(I->Block);}
 }
 /*========================================================================*/
-int WizardDoPick(int bondFlag)
+int WizardDoPick(PyMOLGlobals *G,int bondFlag)
 {
-  CWizard *I=&Wizard;
+  register CWizard *I=G->Wizard;
   int result=false;
   if(I->EventMask & cWizEventPick) 
     if(I->Stack>=0) 
@@ -294,9 +294,9 @@ int WizardDoPick(int bondFlag)
   return result;
 }
 
-int WizardDoKey(unsigned char k, int x, int y, int mod)
+int WizardDoKey(PyMOLGlobals *G,unsigned char k, int x, int y, int mod)
 {
-  CWizard *I=&Wizard;
+  register CWizard *I=G->Wizard;
   int result=false;
   if(I->EventMask & cWizEventKey) 
     if(I->Stack>=0) 
@@ -317,9 +317,9 @@ int WizardDoKey(unsigned char k, int x, int y, int mod)
   return result;
 }
 
-int WizardDoScene(void)
+int WizardDoScene(PyMOLGlobals *G)
 {
-  CWizard *I=&Wizard;
+  register CWizard *I=G->Wizard;
   int result=false;
   if(I->EventMask & cWizEventScene) 
     if(I->Stack>=0) 
@@ -341,15 +341,15 @@ int WizardDoScene(void)
 }
 
 
-int WizardDoState(void)
+int WizardDoState(PyMOLGlobals *G)
 {
-  CWizard *I=&Wizard;
+  register CWizard *I=G->Wizard;
   int result=false;
   if(I->EventMask & cWizEventState) 
     if(I->Stack>=0) 
       if(I->Wiz[I->Stack]) {
         OrthoLineType buffer;
-        int state = SettingGetGlobal_i(cSetting_state) + 1;
+        int state = SettingGetGlobal_i(G,cSetting_state) + 1;
         sprintf(buffer,"cmd.get_wizard().do_state(%d)",state);
         PLog(buffer,cPLog_pym);
         PBlock(); 
@@ -366,15 +366,15 @@ int WizardDoState(void)
 }
 
 
-int WizardDoFrame(void)
+int WizardDoFrame(PyMOLGlobals *G)
 {
-  CWizard *I=&Wizard;
+  register CWizard *I=G->Wizard;
   int result=false;
   if(I->EventMask & cWizEventFrame) 
     if(I->Stack>=0) 
       if(I->Wiz[I->Stack]) {
         OrthoLineType buffer;
-        int frame = SettingGetGlobal_i(cSetting_frame) + 1;
+        int frame = SettingGetGlobal_i(G,cSetting_frame) + 1;
         sprintf(buffer,"cmd.get_wizard().do_frame(%d)",frame);
         PLog(buffer,cPLog_pym);
         PBlock(); 
@@ -390,9 +390,9 @@ int WizardDoFrame(void)
   return result;
 }
 
-int WizardDoSpecial(int k, int x, int y, int mod)
+int WizardDoSpecial(PyMOLGlobals *G,int k, int x, int y, int mod)
 {
-  CWizard *I=&Wizard;
+  register CWizard *I=G->Wizard;
   int result=false;
 
   if(I->EventMask & cWizEventSpecial) 
@@ -417,19 +417,20 @@ int WizardDoSpecial(int k, int x, int y, int mod)
 /*========================================================================*/
 static int WizardClick(Block *block,int button,int x,int y,int mod)
 {
-  CWizard *I=&Wizard;
+  PyMOLGlobals *G=block->G;
+  register CWizard *I=G->Wizard;
 
   int a;
   PyObject *menuList=NULL;
-  int LineHeight = SettingGetGlobal_i(cSetting_internal_gui_control_size);
+  int LineHeight = SettingGetGlobal_i(G,cSetting_internal_gui_control_size);
 
   a=((I->Block->rect.top-(y+cWizardClickOffset))-cWizardTopMargin)/LineHeight;
   if((a>=0)&&(a<I->NLine)) {
     switch(I->Line[a].type) {
     case cWizTypeButton:
-      OrthoGrab(I->Block);
+      OrthoGrab(G,I->Block);
       I->Pressed=a;
-      OrthoDirty();
+      OrthoDirty(G);
       break;
     case cWizTypePopUp:
       PBlock(); 
@@ -445,7 +446,7 @@ static int WizardClick(Block *block,int button,int x,int y,int mod)
       if(menuList&&(menuList!=Py_None)) {
         int my = I->Block->rect.top-(cWizardTopMargin + a*LineHeight) - 2;
         
-        PopUpNew(x,my,x,y,menuList,NULL);
+        PopUpNew(G,x,my,x,y,menuList,NULL);
       }
       Py_XDECREF(menuList);
       PUnblock();
@@ -458,8 +459,10 @@ static int WizardClick(Block *block,int button,int x,int y,int mod)
 /*========================================================================*/
 static int WizardDrag(Block *block,int x,int y,int mod)
 {
-  CWizard *I=&Wizard;
-  int LineHeight = SettingGetGlobal_i(cSetting_internal_gui_control_size);
+  PyMOLGlobals *G=block->G;
+
+  register CWizard *I=G->Wizard;
+  int LineHeight = SettingGetGlobal_i(G,cSetting_internal_gui_control_size);
 
   int a;
   a=((I->Block->rect.top-(y+cWizardClickOffset))-
@@ -470,7 +473,7 @@ static int WizardDrag(Block *block,int x,int y,int mod)
 
   if(I->Pressed!=a) {
     I->Pressed=-1;
-    OrthoDirty();
+    OrthoDirty(G);
   }
   if((a>=0)&&(a<I->NLine)) {
 
@@ -478,7 +481,7 @@ static int WizardDrag(Block *block,int x,int y,int mod)
     case cWizTypeButton:
       if(I->Pressed!=a) {
         I->Pressed=a;
-        OrthoDirty();
+        OrthoDirty(G);
       }
       break;
     }
@@ -488,8 +491,10 @@ static int WizardDrag(Block *block,int x,int y,int mod)
 /*========================================================================*/
 static int WizardRelease(Block *block,int button,int x,int y,int mod)
 {
-  CWizard *I=&Wizard;
-    int LineHeight = SettingGetGlobal_i(cSetting_internal_gui_control_size);
+  PyMOLGlobals *G=block->G;
+
+  register CWizard *I=G->Wizard;
+    int LineHeight = SettingGetGlobal_i(G,cSetting_internal_gui_control_size);
 
   int a;
   a=((I->Block->rect.top-(y+cWizardClickOffset))-
@@ -497,9 +502,9 @@ static int WizardRelease(Block *block,int button,int x,int y,int mod)
 
   if(I->Pressed)
     I->Pressed=-1;
-  OrthoDirty();
+  OrthoDirty(G);
 
-  OrthoUngrab();
+  OrthoUngrab(G);
 
   if((a>=0)&&(a<I->NLine)) {
     switch(I->Line[a].type) {
@@ -579,7 +584,9 @@ static void draw_text(char *c,int xx,int yy,float *color)
 /*========================================================================*/
 static void WizardDraw(Block *block)
 {
-  CWizard *I=&Wizard;
+  PyMOLGlobals *G=block->G;
+
+  register CWizard *I=G->Wizard;
   int x,y;
   int a;
 
@@ -597,7 +604,7 @@ static void WizardDraw(Block *block)
 
   float black_color[3] = {0.0F,0.0F,0.0F};
   float menuColor[3] = { 0.0,0.0,0.0};
-  int LineHeight = SettingGetGlobal_i(cSetting_internal_gui_control_size);
+  int LineHeight = SettingGetGlobal_i(G,cSetting_internal_gui_control_size);
   int text_lift = (LineHeight/2)-5;
   float *text_color ;
 
@@ -662,9 +669,9 @@ static void WizardDraw(Block *block)
   }
 }
 /*========================================================================*/
-PyObject *WizardGet(void)
+PyObject *WizardGet(PyMOLGlobals *G)
 {
-  CWizard *I=&Wizard;
+  register CWizard *I=G->Wizard;
   if(!I->Wiz)
     return(NULL);
   if(I->Stack<0)
@@ -672,9 +679,9 @@ PyObject *WizardGet(void)
   return(I->Wiz[I->Stack]);
 }
 /*========================================================================*/
-PyObject *WizardGetStack(void)
+PyObject *WizardGetStack(PyMOLGlobals *G)
 {
-  CWizard *I=&Wizard;
+  register CWizard *I=G->Wizard;
   int a;
   PyObject *result;
 
@@ -688,14 +695,14 @@ PyObject *WizardGetStack(void)
   return(result);
 }
 /*========================================================================*/
-int WizardSetStack(PyObject *list)
+int WizardSetStack(PyMOLGlobals *G,PyObject *list)
 {
-  CWizard *I=&Wizard;
+  register CWizard *I=G->Wizard;
   int a;
   int ok= true;
   
   if(I->Wiz) {
-    WizardPurgeStack();
+    WizardPurgeStack(G);
     if(ok) ok = (list!=NULL);
     if(ok) ok = PyList_Check(list);
     if(ok) {
@@ -708,17 +715,18 @@ int WizardSetStack(PyObject *list)
         }
       }
     }
-    if(ok) WizardRefresh();
-    if(ok) OrthoDirty();
+    if(ok) WizardRefresh(G);
+    if(ok) OrthoDirty(G);
   }
   return(ok);
 }
 /*========================================================================*/
-void WizardInit(void)
+int WizardInit(PyMOLGlobals *G)
 {
-  CWizard *I = &Wizard;
+  register CWizard *I=NULL;
+  if( (I=(G->Wizard=Calloc(CWizard,1)))) {
 
-  I->Block = OrthoNewBlock(NULL);
+  I->Block = OrthoNewBlock(G,NULL);
   I->Block->fClick = WizardClick;
   I->Block->fDrag  = WizardDrag;
   I->Block->fDraw    = WizardDraw;
@@ -733,7 +741,7 @@ void WizardInit(void)
   I->LastUpdatedState = -1;
   I->LastUpdatedFrame = -1;
 
-  OrthoAttach(I->Block,cOrthoTool);
+  OrthoAttach(G,I->Block,cOrthoTool);
 
   I->Line = VLAlloc(WizardLine,10);
   I->NLine = 0;
@@ -741,15 +749,18 @@ void WizardInit(void)
   I->EventMask = 0;
   I->Stack = -1;
   I->Wiz = VLAlloc(PyObject*,10);
+  return 1;
+  } else
+    return 0;
 }
 /*========================================================================*/
-void WizardFree(void)
+void WizardFree(PyMOLGlobals *G)
 {
-  CWizard *I = &Wizard;
-  WizardPurgeStack();
-  OrthoFreeBlock(I->Block);
+  register CWizard *I = G->Wizard;
+  WizardPurgeStack(G);
+  OrthoFreeBlock(G,I->Block);
   VLAFreeP(I->Line);
-  VLAFreeP(I->Wiz)
-    
+  VLAFreeP(I->Wiz);
+  FreeP(G->Wizard);
 }
 

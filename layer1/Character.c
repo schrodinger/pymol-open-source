@@ -51,11 +51,9 @@ static int equal_fprnt(CharFngrprnt *f1, CharFngrprnt *f2)
   return 1;
 }
 
-CCharacter Character; /* global singleton */
-
-int CharacterFind(CharFngrprnt *fprnt)
+int CharacterFind(PyMOLGlobals *G,CharFngrprnt *fprnt)
 {
-  CCharacter *I = &Character;
+  register CCharacter *I = G->Character;
   unsigned int hash_code = get_hash(fprnt);
   int id = I->Hash[hash_code];
   while(id) {
@@ -85,15 +83,15 @@ int CharacterFind(CharFngrprnt *fprnt)
   return 0;
 }
 
-int CharacterNewFromBitmap(int width, int height,
+int CharacterNewFromBitmap(PyMOLGlobals *G, int width, int height,
                            unsigned char *bitmap,
                            CharFngrprnt *fprnt)
 {
-  CCharacter *I = &Character;
-  int id=CharacterGetNew();
+  register CCharacter *I = G->Character;
+  int id=CharacterGetNew(G);
   if((id>0)&&(id<=I->MaxAlloc)) {
     CharRec *rec = I->Char + id;
-    PixmapInitFromBitmap(&rec->Pixmap,width,height,bitmap,
+    PixmapInitFromBitmap(G,&rec->Pixmap,width,height,bitmap,
                          fprnt->u.i.color);    
     rec->Width = width;
     rec->Height = height;
@@ -114,9 +112,9 @@ int CharacterNewFromBitmap(int width, int height,
   return id;
 }
 
-int CharacterGetWidth(int id)
+int CharacterGetWidth(PyMOLGlobals *G,int id)
 {
-  CCharacter *I = &Character;
+  register CCharacter *I = G->Character;
   if((id>0)&&(id<=I->MaxAlloc)) {
     return I->Char[id].Width;
   }
@@ -124,9 +122,9 @@ int CharacterGetWidth(int id)
 }
 const float _inv255 = 1.0F/255.0F;
 
-float CharacterInterpolate(int id,float *v)
+float CharacterInterpolate(PyMOLGlobals *G,int id,float *v)
 {
-  CCharacter *I = &Character;
+  register CCharacter *I = G->Character;
   int x = (int)v[0];
   int y = (int)v[1];
   unsigned char *src;
@@ -153,34 +151,37 @@ float CharacterInterpolate(int id,float *v)
   return 1.0F;
 }
 
-int CharacterGetHeight(int id)
+int CharacterGetHeight(PyMOLGlobals *G,int id)
 {
-  CCharacter *I = &Character;
+  register CCharacter *I = G->Character;
   if((id>0)&&(id<=I->MaxAlloc)) {
     return I->Char[id].Height;
   }
   return 0;
 }
 
-void CharacterInit(void)
+int CharacterInit(PyMOLGlobals *G)
 {
-  CCharacter *I = &Character;
-  UtilZeroMem(I,sizeof(CCharacter));
-  I->MaxAlloc = 10;
-  I->Char = VLACalloc(CharRec,I->MaxAlloc+1);
-  {
-    int a;
-    for(a=2;a<=I->MaxAlloc;a++)
-      I->Char[a].Prev=a-1;
-    I->LastFree = I->MaxAlloc;
-  }
-  I->Hash = Calloc(int,(HASH_MASK+1));
-  I->TargetMaxUsage = 25000; 
+  register CCharacter *I=NULL;
+  if( (I=(G->Character=Calloc(CCharacter,1)))) {
+    I->MaxAlloc = 10;
+    I->Char = VLACalloc(CharRec,I->MaxAlloc+1);
+    {
+      int a;
+      for(a=2;a<=I->MaxAlloc;a++)
+        I->Char[a].Prev=a-1;
+      I->LastFree = I->MaxAlloc;
+    }
+    I->Hash = Calloc(int,(HASH_MASK+1));
+    I->TargetMaxUsage = 25000; 
+    return 1;
+  } else 
+    return 0;
 }
 
-static void CharacterAllocMore(void)
+static void CharacterAllocMore(PyMOLGlobals *G)
 {
-  CCharacter *I = &Character;
+  register CCharacter *I = G->Character;
   int new_max = I->MaxAlloc * 2;
   VLACheck(I->Char,CharRec,new_max);
   {
@@ -192,15 +193,15 @@ static void CharacterAllocMore(void)
     I->MaxAlloc = new_max;
   }
 }
-void CharacterSetRetention(int retain_all)
+void CharacterSetRetention(PyMOLGlobals *G,int retain_all)
 {
-  CCharacter *I = &Character;
+  register CCharacter *I = G->Character;
   I->RetainAll = retain_all;
 }
 
-static void CharacterPurgeOldest(void)
+static void CharacterPurgeOldest(PyMOLGlobals *G)
 {
-  CCharacter *I = &Character;
+  register CCharacter *I = G->Character;
   int max_kill = 10;
 
   while(I->NUsed > I->TargetMaxUsage) {
@@ -249,12 +250,12 @@ static void CharacterPurgeOldest(void)
   }
 }
 
-int CharacterGetNew(void)
+int CharacterGetNew(PyMOLGlobals *G)
 {
-  CCharacter *I = &Character;
+  register CCharacter *I = G->Character;
   int result = 0;
   if(!I->LastFree)
-    CharacterAllocMore();
+    CharacterAllocMore(G);
   if(I->LastFree) {
 
     /* remove from free chain */
@@ -277,15 +278,15 @@ int CharacterGetNew(void)
     I->NUsed++;
         
     if(!I->RetainAll)
-      CharacterPurgeOldest();
+      CharacterPurgeOldest(G);
   }
 
   return result;
 }
 
-void CharacterFree(void)
+void CharacterFree(PyMOLGlobals *G)
 {
-  CCharacter *I = &Character;
+  register CCharacter *I = G->Character;
   {
     int a;
     a = I->NewestUsed;
@@ -296,5 +297,6 @@ void CharacterFree(void)
   }
   FreeP(I->Hash);
   VLAFreeP(I->Char);
+  FreeP(G->Character);
 }
 

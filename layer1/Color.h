@@ -20,6 +20,7 @@ Z* -------------------------------------------------------------------
 
 #include"Rep.h"
 #include"Vector.h"
+#include"PyMOLGlobals.h"
 
 typedef char ColorName[64];
 
@@ -38,48 +39,45 @@ typedef struct {
   int Type;
 } ExtRec;
 
-typedef struct  {
+struct _CColor {
   ColorRec *Color;
   int NColor;
   ExtRec *Ext;
   int NExt;
   unsigned int *ColorTable;
   int BigEndian;
-} CColor;
+};
+
+int ColorInit(PyMOLGlobals *G);
+void ColorFree(PyMOLGlobals *G);
+
+int ColorGetNext(PyMOLGlobals *G);
+int ColorGetCurrent(PyMOLGlobals *G);
+int ColorGetIndex(PyMOLGlobals *G,char *name);
+float *ColorGet(PyMOLGlobals *G,int index); /* pointer maybe invalid after creating a new color */
+float *ColorGetNamed(PyMOLGlobals *G,char *name);
+void ColorDef(PyMOLGlobals *G,char *name,float *v);
+int ColorGetNColor(PyMOLGlobals *G);
+char *ColorGetName(PyMOLGlobals *G,int index);
+int ColorGetStatus(PyMOLGlobals *G,int index);
+void ColorReset(PyMOLGlobals *G);
+
+int ColorGetRamped(PyMOLGlobals *G,int index,float *vertex,float *color);
+int ColorCheckRamped(PyMOLGlobals *G,int index);
+
+struct ObjectGadgetRamp* ColorGetRamp(PyMOLGlobals *G,int index);
 
 
+void ColorRegisterExt(PyMOLGlobals *G,char *name,void *extPtr,int type);
+void ColorForgetExt(PyMOLGlobals *G,char *name);
 
+PyObject *ColorAsPyList(PyMOLGlobals *G);
+int ColorFromPyList(PyMOLGlobals *G,PyObject *list);
 
-void ColorInit(void);
-void ColorFree(void);
-
-int ColorGetNext(void);
-int ColorGetCurrent(void);
-int ColorGetIndex(char *name);
-float *ColorGet(int index); /* pointer maybe invalid after creating a new color */
-float *ColorGetNamed(char *name);
-void ColorDef(char *name,float *v);
-int ColorGetNColor(void);
-char *ColorGetName(int index);
-int ColorGetStatus(int index);
-void ColorReset(void);
-
-int ColorGetRamped(int index,float *vertex,float *color);
-int ColorCheckRamped(int index);
-
-struct ObjectGadgetRamp* ColorGetRamp(int index);
-
-
-void ColorRegisterExt(char *name,void *extPtr,int type);
-void ColorForgetExt(char *name);
-
-PyObject *ColorAsPyList(void);
-int ColorFromPyList(PyObject *list);
-
-int ColorExtFromPyList(PyObject *list);
-PyObject *ColorExtAsPyList(void);
-int ColorTableLoad(char *fname,int quiet);
-void ColorUpdateClamp(int index);
+int ColorExtFromPyList(PyMOLGlobals *G,PyObject *list);
+PyObject *ColorExtAsPyList(PyMOLGlobals *G);
+int ColorTableLoad(PyMOLGlobals *G,char *fname,int quiet);
+void ColorUpdateClamp(PyMOLGlobals *G,int index);
 
 #endif
 

@@ -18,9 +18,10 @@ Z* -------------------------------------------------------------------
 #include "OOMac.h"
 #include "Util.h"
 
-void PixmapInit(CPixmap *I,int width,int height)
+void PixmapInit(PyMOLGlobals *G,CPixmap *I,int width,int height)
 {
   UtilZeroMem(I,sizeof(CPixmap));
+  I->G=G;
   I->height = height;
   I->width = width;
   if((height>=0)&&(width>=0)) {
@@ -28,14 +29,14 @@ void PixmapInit(CPixmap *I,int width,int height)
   }
 }
 
-CPixmap *PixmapNew(int width,int height)
+CPixmap *PixmapNew(PyMOLGlobals *G,int width,int height)
 {
-  OOAlloc(CPixmap);
-  PixmapInit(I,width,height);
+  OOAlloc(G,CPixmap);
+  PixmapInit(G,I,width,height);
   return I;
 }
 
-void PixmapInitFromBitmap(CPixmap *I,int width, int height,
+void PixmapInitFromBitmap(PyMOLGlobals *G,CPixmap *I,int width, int height,
                              unsigned char *bitmap,
                              unsigned char *rgba)
 {
@@ -46,7 +47,7 @@ void PixmapInitFromBitmap(CPixmap *I,int width, int height,
     unsigned char *src;
     unsigned char *dst;
     register unsigned char red,blue,green,alpha;
-    PixmapInit(I,width,height);
+    PixmapInit(G,I,width,height);
     red = rgba[0];
     green = rgba[1];
     blue = rgba[2];

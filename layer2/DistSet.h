@@ -24,6 +24,7 @@ typedef struct DistSet {
   void (*fRender)(struct DistSet *I,CRay *ray,Pickable **pick,int pass);
   void (*fFree)(struct DistSet *I);
   void (*fInvalidateRep)(struct DistSet *I,int type,int level);
+  PyMOLGlobals *G;
   struct ObjectDist *Obj;
   float *Coord;
   int NIndex;
@@ -34,9 +35,9 @@ typedef struct DistSet {
 
 #include"ObjectDist.h"
 
-DistSet *DistSetNew(void);
+DistSet *DistSetNew(PyMOLGlobals *G);
 PyObject *DistSetAsPyList(DistSet *I);
-int DistSetFromPyList(PyObject *list,DistSet **cs);
+int DistSetFromPyList(PyMOLGlobals *G,PyObject *list,DistSet **cs);
 int DistSetGetExtent(DistSet *I,float *mn,float *mx);
 
 #endif

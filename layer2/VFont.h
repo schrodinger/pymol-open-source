@@ -19,14 +19,14 @@ Z* -------------------------------------------------------------------
 #include"os_python.h"
 #include"CGO.h"
 
-void VFontInit(void);
-void VFontFree(void);
+int VFontInit(PyMOLGlobals *G);
+void VFontFree(PyMOLGlobals *G);
 
-int VFontLoad(float size,int face,int style,int can_load_new);
-int VFontWriteToCGO(int font_id,CGO *cgo,char *text,
+int VFontLoad(PyMOLGlobals *G,float size,int face,int style,int can_load_new);
+int VFontWriteToCGO(PyMOLGlobals *G,int font_id,CGO *cgo,char *text,
                     float *pos,float *scale, float *matrix);
 
-int VFontIndent(int font_id,char *text,
+int VFontIndent(PyMOLGlobals *G,int font_id,char *text,
                  float *pos,float *scale, float *matrix, float dir);
 
 #endif

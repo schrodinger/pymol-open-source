@@ -55,36 +55,36 @@ typedef struct ObjectMapDesc { /* information for creating a new map */
                      1 = ones */
 } ObjectMapDesc;
 
-ObjectMap *ObjectMapNew(void);
-ObjectMapState *ObjectMapNewStateFromDesc(ObjectMap *I,ObjectMapDesc *md,int state);
-int ObjectMapStateGetExcludedStats(ObjectMapState *ms,float *vert_vla,
+ObjectMap *ObjectMapNew(PyMOLGlobals *G);
+ObjectMapState *ObjectMapNewStateFromDesc(PyMOLGlobals *G,ObjectMap *I,ObjectMapDesc *md,int state);
+int ObjectMapStateGetExcludedStats(PyMOLGlobals *G,ObjectMapState *ms,float *vert_vla,
                                    float beyond, float within, float *level);
 
-ObjectMap *ObjectMapLoadXPLORFile(ObjectMap *obj,char *fname,int state,int is_file);
-ObjectMap *ObjectMapReadXPLORStr(ObjectMap *I,char *XPLORStr,int state);
+ObjectMap *ObjectMapLoadXPLORFile(PyMOLGlobals *G,ObjectMap *obj,char *fname,int state,int is_file);
+ObjectMap *ObjectMapReadXPLORStr(PyMOLGlobals *G,ObjectMap *I,char *XPLORStr,int state);
 int ObjectMapXPLORStrToMap(ObjectMap *I,char *XPLORStr,int state);
 
-ObjectMap *ObjectMapLoadCCP4File(ObjectMap *obj,char *fname,int state);
-ObjectMap *ObjectMapReadCCP4Str(ObjectMap *I,char *XPLORStr,int bytes,int state);
+ObjectMap *ObjectMapLoadCCP4File(PyMOLGlobals *G,ObjectMap *obj,char *fname,int state);
+ObjectMap *ObjectMapReadCCP4Str(PyMOLGlobals *G,ObjectMap *I,char *XPLORStr,int bytes,int state);
 int ObjectMapCCP4StrToMap(ObjectMap *I,char *XPLORStr,int bytes,int state);
 
-ObjectMap *ObjectMapLoadDXFile(ObjectMap *obj,char *fname,int state);
-ObjectMap *ObjectMapLoadPHIFile(ObjectMap *obj,char *fname,int state);
-ObjectMap *ObjectMapLoadFLDFile(ObjectMap *obj,char *fname,int state);
-ObjectMap *ObjectMapLoadBRIXFile(ObjectMap *obj,char *fname,int state);
-ObjectMap *ObjectMapLoadGRDFile(ObjectMap *obj,char *fname,int state);
+ObjectMap *ObjectMapLoadDXFile(PyMOLGlobals *G,ObjectMap *obj,char *fname,int state);
+ObjectMap *ObjectMapLoadPHIFile(PyMOLGlobals *G,ObjectMap *obj,char *fname,int state);
+ObjectMap *ObjectMapLoadFLDFile(PyMOLGlobals *G,ObjectMap *obj,char *fname,int state);
+ObjectMap *ObjectMapLoadBRIXFile(PyMOLGlobals *G,ObjectMap *obj,char *fname,int state);
+ObjectMap *ObjectMapLoadGRDFile(PyMOLGlobals *G,ObjectMap *obj,char *fname,int state);
 
-ObjectMap *ObjectMapLoad(ObjectMap *obj,char *fname,int state);
-ObjectMap *ObjectMapLoadChemPyBrick(ObjectMap *I,PyObject *Map,
+ObjectMap *ObjectMapLoad(PyMOLGlobals *G,ObjectMap *obj,char *fname,int state);
+ObjectMap *ObjectMapLoadChemPyBrick(PyMOLGlobals *G,ObjectMap *I,PyObject *Map,
                                     int state,int discrete);
-ObjectMap *ObjectMapLoadCObject(ObjectMap *obj,int state);
-ObjectMap *ObjectMapLoadChemPyMap(ObjectMap *I,PyObject *Map,
+ObjectMap *ObjectMapLoadCObject(PyMOLGlobals *G,ObjectMap *obj,int state);
+ObjectMap *ObjectMapLoadChemPyMap(PyMOLGlobals *G,ObjectMap *I,PyObject *Map,
                                   int state,int discrete);
 int ObjectMapDouble(ObjectMap *I,int state);
 int ObjectMapSetBorder(ObjectMap *I,float level);
 int ObjectMapStateSetBorder(ObjectMapState *I,float level);
-void ObjectMapStateInit(ObjectMapState *I);
-void ObjectMapStatePurge(ObjectMapState *I);
+void ObjectMapStateInit(PyMOLGlobals *G,ObjectMapState *I);
+void ObjectMapStatePurge(PyMOLGlobals *G,ObjectMapState *I);
 int ObjectMapStateInterpolate(ObjectMapState *ms,float *array,float *result,int *flag, int n);
 int ObjectMapStateContainsPoint(ObjectMapState *ms,float *point);
 ObjectMapState *ObjectMapStatePrime(ObjectMap *I,int state);
@@ -94,7 +94,7 @@ void ObjectMapUpdateExtents(ObjectMap *I);
 ObjectMapState *ObjectMapGetState(ObjectMap *I,int state);
 
 PyObject *ObjectMapAsPyList(ObjectMap *I);
-int ObjectMapNewFromPyList(PyObject *list,ObjectMap **result);
+int ObjectMapNewFromPyList(PyMOLGlobals *G,PyObject *list,ObjectMap **result);
 
 int ObjectMapInterpolate(ObjectMap *I,int state,float *array,float *result,int *flag,int n);
 

@@ -26,20 +26,20 @@ typedef struct SculptCacheEntry {
 } SculptCacheEntry;
 
 
-typedef struct CSculptCache {
+struct _CSculptCache {
   int NCached;
   int *Hash;
   SculptCacheEntry *List;
   int SculptID;
-} CSculptCache;
+};
 
-void SculptCacheInit(void);
-void SculptCacheFree(void);
-void SculptCachePurge(void);
+int SculptCacheInit(PyMOLGlobals *G);
+void SculptCacheFree(PyMOLGlobals *G);
+void SculptCachePurge(PyMOLGlobals *G);
 
-int SculptCacheNewID(void);
-int SculptCacheQuery(int rest_type,int id0,int id1,int id2,int id3,float *value);
-void SculptCacheStore(int rest_type,int id0,int id1,int id2,int id3,float value);
+int SculptCacheNewID(PyMOLGlobals *G);
+int SculptCacheQuery(PyMOLGlobals *G,int rest_type,int id0,int id1,int id2,int id3,float *value);
+void SculptCacheStore(PyMOLGlobals *G,int rest_type,int id0,int id1,int id2,int id3,float value);
 
 #endif
 

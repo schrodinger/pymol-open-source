@@ -56,7 +56,7 @@ void RepCylBondFree(RepCylBond *I)
   FreeP(I->V);
   FreeP(I->VSP);
   FreeP(I->VSPC);
-  RepFree(&I->R);
+  RepPurge(&I->R);
   OOFreeP(I);
 }
 
@@ -74,13 +74,13 @@ void RepCylBondRender(RepCylBond *I,CRay *ray,Pickable **pick)
   float alpha;
   SphereRec *sp;
 
-  alpha = SettingGet_f(I->R.cs->Setting,I->R.obj->Setting,cSetting_stick_transparency);
+  alpha = SettingGet_f(I->R.G,I->R.cs->Setting,I->R.obj->Setting,cSetting_stick_transparency);
   alpha=1.0F-alpha;
   if(fabs(alpha-1.0)<R_SMALL4)
     alpha=1.0F;
   if(ray) {
     ray->fTransparentf(ray,1.0F-alpha);    
-    PRINTFD(FB_RepCylBond)
+    PRINTFD(I->R.G,FB_RepCylBond)
       " RepCylBondRender: rendering raytracable...\n"
       ENDFD;
 
@@ -104,7 +104,7 @@ void RepCylBondRender(RepCylBond *I,CRay *ray,Pickable **pick)
     ray->fTransparentf(ray,0.0);
   } else if(pick&&PMGUI) {
 
-  PRINTFD(FB_RepCylBond)
+  PRINTFD(I->R.G,FB_RepCylBond)
     " RepCylBondRender: rendering pickable...\n"
     ENDFD;
 
@@ -181,7 +181,7 @@ void RepCylBondRender(RepCylBond *I,CRay *ray,Pickable **pick)
   } else if(PMGUI) {
     
     int use_dlst;
-    use_dlst = (int)SettingGet(cSetting_use_display_lists);
+    use_dlst = (int)SettingGet(I->R.G,cSetting_use_display_lists);
     if(use_dlst&&I->R.displayList) {
       glCallList(I->R.displayList);
     } else { 
@@ -198,7 +198,7 @@ void RepCylBondRender(RepCylBond *I,CRay *ray,Pickable **pick)
       v=I->V;
       c=I->N;
       
-      PRINTFD(FB_RepCylBond)
+      PRINTFD(I->R.G,FB_RepCylBond)
         " RepCylBondRender: rendering GL...\n"
         ENDFD;
       
@@ -306,7 +306,7 @@ void RepCylBondRender(RepCylBond *I,CRay *ray,Pickable **pick)
       }
       
 
-      PRINTFD(FB_RepCylBond)
+      PRINTFD(I->R.G,FB_RepCylBond)
         " RepCylBondRender: done.\n"
         ENDFD;
       
@@ -1139,6 +1139,7 @@ static void RepValence(float **v_ptr,int *n_ptr, /* opengl */
 
 Rep *RepCylBondNew(CoordSet *cs)
 {
+  PyMOLGlobals *G=cs->G;
   ObjectMolecule *obj;
   int a,a1,a2,c1,c2,s1,s2,b1,b2;
   BondType *b;
@@ -1163,9 +1164,9 @@ Rep *RepCylBondNew(CoordSet *cs)
   int caps_req = true;
   int valence_flag = false;
 
-  OOAlloc(RepCylBond);
+  OOAlloc(G,RepCylBond);
 
-  PRINTFD(FB_RepCylBond)
+  PRINTFD(G,FB_RepCylBond)
     " RepCylBondNew-Debug: entered.\n"
     ENDFD;
 
@@ -1189,7 +1190,7 @@ Rep *RepCylBondNew(CoordSet *cs)
     return(NULL); /* skip if no dots are visible */
   }
 
-  valence = SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_valence);
+  valence = SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_valence);
   valence_flag = (valence!=0.0F);
   maxCyl = 0;
 
@@ -1239,12 +1240,12 @@ Rep *RepCylBondNew(CoordSet *cs)
     }
 
 
-  nEdge = (int)SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_stick_quality);
-  radius = SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_stick_radius);
-  half_bonds = (int)SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_half_bonds);  
+  nEdge = (int)SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_stick_quality);
+  radius = SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_stick_radius);
+  half_bonds = (int)SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_half_bonds);  
 
 
-  RepInit(&I->R);
+  RepInit(G,&I->R);
   I->R.fRender=(void (*)(struct Rep *, CRay *, Pickable **))RepCylBondRender;
   I->R.fFree=(void (*)(struct Rep *))RepCylBondFree;
   I->R.obj=(CObject*)obj;
@@ -1263,45 +1264,45 @@ Rep *RepCylBondNew(CoordSet *cs)
   I->NSPC = 0;
   if(obj->NBond) {
 
-    stick_ball = SettingGet_b(cs->Setting,obj->Obj.Setting,cSetting_stick_ball);
-    overlap = SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_stick_overlap);
-    nub = SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_stick_nub);
+    stick_ball = SettingGet_b(G,cs->Setting,obj->Obj.Setting,cSetting_stick_ball);
+    overlap = SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_stick_overlap);
+    nub = SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_stick_nub);
 
     overlap_r = overlap * radius;
     nub_r = nub * radius;
 
     if(valence_flag) {/* build list of up to 2 connected atoms for each atom */
       other=ObjectMoleculeGetPrioritizedOtherIndexList(obj,cs);
-      fixed_radius = SettingGet_b(cs->Setting,obj->Obj.Setting,cSetting_stick_fixed_radius);
+      fixed_radius = SettingGet_b(G,cs->Setting,obj->Obj.Setting,cSetting_stick_fixed_radius);
     }
     
     /* OpenGL */
 
     v_size = ((maxCyl)*((nEdge+1)*21)+22);
 	 I->V = Alloc(float,v_size);
-	 ErrChkPtr(I->V);
+	 ErrChkPtr(G,I->V);
 
     /* RayTrace */
 
     vr_size = maxCyl*10*3;
     I->VR=Alloc(float,vr_size);
-	 ErrChkPtr(I->VR);
+	 ErrChkPtr(G,I->VR);
 
     /* spheres for stick & balls */
 	 
     if(stick_ball) {
       int ds;
-      stick_ball_ratio = SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_stick_ball_ratio);
+      stick_ball_ratio = SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_stick_ball_ratio);
 
-      ds = SettingGet_i(cs->Setting,obj->Obj.Setting,cSetting_sphere_quality);
+      ds = SettingGet_i(G,cs->Setting,obj->Obj.Setting,cSetting_sphere_quality);
       if(ds<0) ds=0;
       if(ds>4) ds=4;
-      sp = TempPyMOLGlobals->Sphere->Sphere[ds];
+      sp = G->Sphere->Sphere[ds];
 
       I->SP = sp;
       I->VSP=Alloc(float,maxCyl*2*(3+sp->NVertTot*6));
       I->VSPC=Alloc(float,maxCyl*2*7);
-      ErrChkPtr(I->VSP);
+      ErrChkPtr(G,I->VSP);
     }
 	 I->NEdge = nEdge;
 	 
@@ -1356,11 +1357,11 @@ Rep *RepCylBondNew(CoordSet *cs)
                 int *s=sp->StripLen;
                 obj->AtomInfo[b1].temp1=1;
                 {
-                  if(ColorCheckRamped(c1)) {
-                    ColorGetRamped(c1,vv1,rgb2_buf);
+                  if(ColorCheckRamped(G,c1)) {
+                    ColorGetRamped(G,c1,vv1,rgb2_buf);
                     rgb1 = rgb1_buf;
                   } else {
-                    rgb1 = ColorGet(c1);
+                    rgb1 = ColorGet(G,c1);
                   }
                 }
                 copy3f(rgb1,vsp);
@@ -1392,11 +1393,11 @@ Rep *RepCylBondNew(CoordSet *cs)
                 int *s=sp->StripLen;
                 obj->AtomInfo[b2].temp1=1;
                 
-                if(ColorCheckRamped(c2)) {
-                  ColorGetRamped(c2,vv2,rgb2_buf);
+                if(ColorCheckRamped(G,c2)) {
+                  ColorGetRamped(G,c2,vv2,rgb2_buf);
                   rgb2 = rgb2_buf;
                 } else {
-                  rgb2 = ColorGet(c2);
+                  rgb2 = ColorGet(G,c2);
                 }
               
                 copy3f(rgb2,vsp);
@@ -1432,10 +1433,10 @@ Rep *RepCylBondNew(CoordSet *cs)
 					 
                 if((valence_flag)&&(ord>1)&&(ord<5)) {
                   
-                  if((c1==c2)&&s1&&s2&&(!ColorCheckRamped(c1))) {
+                  if((c1==c2)&&s1&&s2&&(!ColorCheckRamped(G,c1))) {
 
                     
-                    v0 = ColorGet(c1);
+                    v0 = ColorGet(G,c1);
 
                     RepValence(&v,&I->N,
                                &vr,&I->NR,
@@ -1451,22 +1452,22 @@ Rep *RepCylBondNew(CoordSet *cs)
 
                     rgb1 = NULL;
                     if(s1) {
-                      if(ColorCheckRamped(c1)) {
-                        ColorGetRamped(c1,vv1,rgb1_buf);
+                      if(ColorCheckRamped(G,c1)) {
+                        ColorGetRamped(G,c1,vv1,rgb1_buf);
                         rgb1 = rgb1_buf;
                       } else {
-                        rgb1 = ColorGet(c1);
+                        rgb1 = ColorGet(G,c1);
                       }
                     }
 
                     rgb2 = NULL;
                     if(s2) 
                       {
-                        if(ColorCheckRamped(c2)) {
-                          ColorGetRamped(c2,vv2,rgb2_buf);
+                        if(ColorCheckRamped(G,c2)) {
+                          ColorGetRamped(G,c2,vv2,rgb2_buf);
                           rgb2 = rgb2_buf;
                         } else {
-                          rgb2 = ColorGet(c2);
+                          rgb2 = ColorGet(G,c2);
                         }
                       }
                     
@@ -1484,13 +1485,13 @@ Rep *RepCylBondNew(CoordSet *cs)
                   
                 } else {
                   
-                  if((c1==c2)&&s1&&s2&&(!ColorCheckRamped(c1)))
+                  if((c1==c2)&&s1&&s2&&(!ColorCheckRamped(G,c1)))
                     {
                       
                       copy3f(vv1,v1);
                       copy3f(vv2,v2);
                       
-                      v0 = ColorGet(c1);
+                      v0 = ColorGet(G,c1);
                       
                       /* ray-tracing */
                     
@@ -1528,12 +1529,12 @@ Rep *RepCylBondNew(CoordSet *cs)
                       
                       if(s1) 
                         {
-                          if(ColorCheckRamped(c1)) {
-                            ColorGetRamped(c1,v1,vr);
+                          if(ColorCheckRamped(G,c1)) {
+                            ColorGetRamped(G,c1,v1,vr);
                             v0=vr;
                             vr+=3;
                           } else {
-                            v0 = ColorGet(c1);
+                            v0 = ColorGet(G,c1);
                             *(vr++)=*(v0);
                             *(vr++)=*(v0+1);
                             *(vr++)=*(v0+2);
@@ -1564,12 +1565,12 @@ Rep *RepCylBondNew(CoordSet *cs)
                       
                       if(s2) 
                         {
-                          if(ColorCheckRamped(c2)) {
-                            ColorGetRamped(c2,v1,vr);
+                          if(ColorCheckRamped(G,c2)) {
+                            ColorGetRamped(G,c2,v1,vr);
                             v0=vr;
                             vr+=3;
                           } else {
-                            v0 = ColorGet(c2);
+                            v0 = ColorGet(G,c2);
                             
                             *(vr++)=*(v0);
                             *(vr++)=*(v0+1);
@@ -1599,14 +1600,14 @@ Rep *RepCylBondNew(CoordSet *cs)
 				  }
 			 }
 		}
-	 PRINTFD(FB_RepCylBond)
+	 PRINTFD(G,FB_RepCylBond)
       " RepCylBond-DEBUG: %d triplets\n",(v-I->V)/3
       ENDFD;
 
     if((signed)v_size<(v-I->V))
-      ErrFatal("RepCylBond","V array overrun.");
+      ErrFatal(G,"RepCylBond","V array overrun.");
     if((signed)vr_size<(vr-I->VR))
-      ErrFatal("RepCylBond","VR array overrun.");
+      ErrFatal(G,"RepCylBond","VR array overrun.");
     
 	 I->V = ReallocForSure(I->V,float,(v-I->V));
 	 I->VR = ReallocForSure(I->VR,float,(vr-I->VR));
@@ -1614,9 +1615,9 @@ Rep *RepCylBondNew(CoordSet *cs)
       I->VSP = ReallocForSure(I->VSP,float,(vsp-I->VSP));
     if(I->VSPC) 
       I->VSPC = ReallocForSure(I->VSPC,float,(vspc-I->VSPC));
-	 if(SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_pickable)) { 
+	 if(SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_pickable)) { 
 
-      PRINTFD(FB_RepCylBond)
+      PRINTFD(G,FB_RepCylBond)
         " RepCylBondNEW: generating pickable version\n"
         ENDFD;
       /* pickable versions are simply capped boxes, 
@@ -1625,11 +1626,11 @@ Rep *RepCylBondNew(CoordSet *cs)
 
       vp_size = maxCyl*24;
       I->VP=Alloc(float,vp_size);
-		ErrChkPtr(I->VP);
+		ErrChkPtr(G,I->VP);
 		
       rp_size = maxCyl+1;
 		I->R.P=Alloc(Pickable,rp_size);
-		ErrChkPtr(I->R.P);
+		ErrChkPtr(G,I->R.P);
 		rp = I->R.P + 1; /* skip first record! */
 
 		v=I->VP;
@@ -1699,15 +1700,15 @@ Rep *RepCylBondNew(CoordSet *cs)
 		  }
       
       if((signed)vp_size<(v-I->VP))
-        ErrFatal("RepCylBond","VP array overrun.");
+        ErrFatal(G,"RepCylBond","VP array overrun.");
       if((signed)rp_size<=(I->NP))
-        ErrFatal("RepCylBond","RP array overrun.");
+        ErrFatal(G,"RepCylBond","RP array overrun.");
 
 		I->R.P = Realloc(I->R.P,Pickable,I->NP+1);
 		I->R.P[0].index = I->NP;
       I->VP = ReallocForSure(I->VP,float,(v-I->VP));
 
-      PRINTFD(FB_RepCylBond)
+      PRINTFD(G,FB_RepCylBond)
         " RepCylBondNew: I->NP: %d I->VP: %p\n",I->NP,
         (void*)I->VP
         ENDFD;

@@ -30,15 +30,16 @@ Z* -------------------------------------------------------------------
 typedef int int2[2];
 #endif
 
-CMatch *MatchNew(unsigned int na,unsigned int nb)
+CMatch *MatchNew(PyMOLGlobals *G,unsigned int na,unsigned int nb)
 {
   unsigned int dim[2];
   int a,b;
-  OOAlloc(CMatch);
+  OOAlloc(G,CMatch);
 
   dim[0]=na;
   dim[1]=nb;
   I->mat = NULL;
+  I->G=G;
   if(na&&nb) {
     I->mat = (float**)UtilArrayMalloc(dim,2,sizeof(float));
   }
@@ -58,7 +59,9 @@ CMatch *MatchNew(unsigned int na,unsigned int nb)
 
 int MatchResidueToCode(CMatch *I,int *vla,int n)
 {
+
 #define cNRES 30
+  PyMOLGlobals *G=I->G;
   int ok=true;
   int a,b,c;
   int found;
@@ -122,10 +125,10 @@ int MatchResidueToCode(CMatch *I,int *vla,int n)
         break;
       }
     if(!found) {
-      PRINTFB(FB_Match,FB_Warnings)
+      PRINTFB(G,FB_Match,FB_Warnings)
         " Match-Warning: unknown residue type %c%c%c (using X).\n",
         0xFF&(*trg>>16),0xFF&(*trg>>8),0xFF&*trg
-        ENDFB;
+        ENDFB(G);
       *trg='X';
     }
   }
@@ -134,11 +137,11 @@ int MatchResidueToCode(CMatch *I,int *vla,int n)
 
 int MatchPreScore(CMatch *I,int *vla1,int n1,int *vla2,int n2)
 {
+  PyMOLGlobals *G=I->G;
   int a,b;
-
-  PRINTFB(FB_Match,FB_Details)
+  PRINTFB(G,FB_Match,FB_Details)
     " Match: assigning %d x %d pairwise scores.\n",n1,n2
-    ENDFB;
+    ENDFB(G);
 
   for(a=0;a<n1;a++) {
     for(b=0;b<n2;b++) {
@@ -151,6 +154,8 @@ int MatchPreScore(CMatch *I,int *vla1,int n1,int *vla2,int n2)
 
 int MatchMatrixFromFile(CMatch *I,char *fname)
 {
+  PyMOLGlobals *G=I->G;
+
   int ok=1;
   FILE *f;
   char *buffer;
@@ -164,9 +169,9 @@ int MatchMatrixFromFile(CMatch *I,char *fname)
   
   f=fopen(fname,"rb");
   if(!f) {
-    PRINTFB(FB_Match,FB_Errors) 
+    PRINTFB(G,FB_Match,FB_Errors) 
       " Match-Error: unable to open matrix file '%s'.\n",fname
-      ENDFB;
+      ENDFB(G);
     ok=false;
   } else {
     fseek(f,0,SEEK_END);
@@ -174,7 +179,7 @@ int MatchMatrixFromFile(CMatch *I,char *fname)
     fseek(f,0,SEEK_SET);
     
     buffer=(char*)mmalloc(size+255);
-    ErrChkPtr(buffer);
+    ErrChkPtr(G,buffer);
     p=buffer;
     fseek(f,0,SEEK_SET);
     fread(p,size,1,f);
@@ -245,9 +250,9 @@ int MatchMatrixFromFile(CMatch *I,char *fname)
     }
   }
   if(ok) {
-    PRINTFB(FB_Match,FB_Details)
+    PRINTFB(G,FB_Match,FB_Details)
       " Match: read scoring matrix.\n"
-      ENDFB;
+      ENDFB(G);
   }
   FreeP(code);
   return(ok);
@@ -255,6 +260,7 @@ int MatchMatrixFromFile(CMatch *I,char *fname)
 
 float MatchAlign(CMatch *I,float gap_penalty,float ext_penalty,int max_skip)
 {
+  PyMOLGlobals *G=I->G;
   unsigned int dim[2];
   int a,b,f,g;
   int nf,ng;
@@ -271,9 +277,9 @@ float MatchAlign(CMatch *I,float gap_penalty,float ext_penalty,int max_skip)
   nf = I->na+2;
   ng = I->nb+2;
 
-  PRINTFB(FB_Match,FB_Actions)
+  PRINTFB(G,FB_Match,FB_Actions)
     " MatchAlign: aligning residues (%d vs %d)...\n",I->na,I->nb
-    ENDFB;
+    ENDFB(G);
 
   dim[0]=nf;
   dim[1]=ng;
@@ -359,7 +365,7 @@ float MatchAlign(CMatch *I,float gap_penalty,float ext_penalty,int max_skip)
   }
 }
 
-  if(Feedback(FB_Match,FB_Debugging)) {
+  if(Feedback(G,FB_Match,FB_Debugging)) {
     for(b=0;b<I->nb;b++) {
       for(a=0;a<I->na;a++) {
         printf("%4.1f(%2d,%2d)",score[a][b],point[a][b][0],point[a][b][1]);
@@ -397,10 +403,10 @@ float MatchAlign(CMatch *I,float gap_penalty,float ext_penalty,int max_skip)
     b=g;
     cnt++;
   }
-  PRINTFD(FB_Match)
+  PRINTFD(G,FB_Match)
     " MatchAlign-DEBUG: best entry %8.3f %d %d %d\n",mxv,mxa,mxb,cnt
     ENDFD;
-  PRINTFB(FB_Match,FB_Results) 
+  PRINTFB(G,FB_Match,FB_Results) 
     " MatchAlign: score %1.3f\n",mxv
     ENDFD;
   if(cnt)

@@ -50,6 +50,7 @@ void RepDotFree(RepDot *I)
 
 void RepDotRender(RepDot *I,CRay *ray,Pickable **pick)
 {
+  PyMOLGlobals *G=I->R.G;
   float *v=I->V;
   int c=I->N;
   int cc=0;
@@ -87,17 +88,17 @@ void RepDotRender(RepDot *I,CRay *ray,Pickable **pick)
   } else if(pick&&PMGUI) {
   } else if(PMGUI) {
 
-    int normals = SettingGet_f(I->R.cs->Setting,I->R.obj->Setting,cSetting_dot_normals);
-    int lighting = SettingGet_f(I->R.cs->Setting,I->R.obj->Setting,cSetting_dot_lighting);
+    int normals = SettingGet_f(G,I->R.cs->Setting,I->R.obj->Setting,cSetting_dot_normals);
+    int lighting = SettingGet_f(G,I->R.cs->Setting,I->R.obj->Setting,cSetting_dot_lighting);
     int use_dlst;
 
     if(!normals)
-      SceneResetNormal(true);
+      SceneResetNormal(G,true);
     if(!lighting)
       glDisable(GL_LIGHTING);
       
       
-    use_dlst = (int)SettingGet(cSetting_use_display_lists);
+    use_dlst = (int)SettingGet(G,cSetting_use_display_lists);
     if(use_dlst&&I->R.displayList) {
       glCallList(I->R.displayList);
     } else { 
@@ -150,7 +151,7 @@ Rep *RepDotDoNew(CoordSet *cs,int mode)
      but also acting as our surface area computation routine.
      Modes: cRepDotNormal,cRepDotAreaType
   */
-
+  PyMOLGlobals *G=cs->G;
   ObjectMolecule *obj;
   int a,b,flag,h,k,l,i,j,c1;
   float *v,*v0,*vc,vdw,*vn;
@@ -161,7 +162,7 @@ Rep *RepDotDoNew(CoordSet *cs,int mode)
   int colorCnt,lastColor;
   Vector3f v1;
   MapType *map;
-  SphereRec *sp = TempPyMOLGlobals->Sphere->Sphere[0];
+  SphereRec *sp = G->Sphere->Sphere[0];
   int ds;
   float max_vdw = MAX_VDW;
   float solv_rad=0.0;
@@ -171,7 +172,7 @@ Rep *RepDotDoNew(CoordSet *cs,int mode)
   int atm,*ati=NULL;
   AtomInfoType *ai1,*ai2;
   int dot_color;
-  OOAlloc(RepDot);
+  OOAlloc(G,RepDot);
 
   obj = cs->Obj;
 
@@ -192,9 +193,9 @@ Rep *RepDotDoNew(CoordSet *cs,int mode)
     return(NULL); /* skip if no dots are visible */
   }
 
-  RepInit(&I->R);
+  RepInit(G,&I->R);
 
-  I->dotSize = SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_dot_radius);
+  I->dotSize = SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_dot_radius);
 
   I->A=NULL;
   I->T=NULL;
@@ -205,24 +206,24 @@ Rep *RepDotDoNew(CoordSet *cs,int mode)
   I->Atom=NULL;
   I->R.fRecolor=NULL;
 
-  I->Width = SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_dot_width);
-  cullByFlag = SettingGet_i(cs->Setting,obj->Obj.Setting,cSetting_trim_dots); /* are we using flags 24 & 25 */
+  I->Width = SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_dot_width);
+  cullByFlag = SettingGet_i(G,cs->Setting,obj->Obj.Setting,cSetting_trim_dots); /* are we using flags 24 & 25 */
 
-  dot_color = SettingGet_color(cs->Setting,obj->Obj.Setting,cSetting_dot_color); /* are we using flags 24 & 25 */
-  inclH = SettingGet_i(cs->Setting,obj->Obj.Setting,cSetting_dot_hydrogens); /* are we ignoring hydrogens? */
-  if(SettingGet_b(cs->Setting,obj->Obj.Setting,cSetting_dot_solvent)) { /* are we generating a solvent surface? */
-    solv_rad = SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_solvent_radius); /* if so, get solvent radius */
+  dot_color = SettingGet_color(G,cs->Setting,obj->Obj.Setting,cSetting_dot_color); /* are we using flags 24 & 25 */
+  inclH = SettingGet_i(G,cs->Setting,obj->Obj.Setting,cSetting_dot_hydrogens); /* are we ignoring hydrogens? */
+  if(SettingGet_b(G,cs->Setting,obj->Obj.Setting,cSetting_dot_solvent)) { /* are we generating a solvent surface? */
+    solv_rad = SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_solvent_radius); /* if so, get solvent radius */
   }
 
   /* get current dot sampling */
-  ds = SettingGet_i(cs->Setting,obj->Obj.Setting,cSetting_dot_density);
+  ds = SettingGet_i(G,cs->Setting,obj->Obj.Setting,cSetting_dot_density);
 
   max_vdw+=solv_rad;
 
 /* Note: significantly affects the accuracy of our area comp. */
   if(ds<0) ds=0;
   if(ds>4) ds=4;
-  sp = TempPyMOLGlobals->Sphere->Sphere[ds];
+  sp = G->Sphere->Sphere[ds];
 
   I->R.fRender=(void (*)(struct Rep *, CRay *, Pickable **))RepDotRender;
   I->R.fFree=(void (*)(struct Rep *))RepDotFree;
@@ -230,7 +231,7 @@ Rep *RepDotDoNew(CoordSet *cs,int mode)
   I->R.cs = cs;
 
   I->V=(float*)mmalloc(sizeof(float)*cs->NIndex*sp->nDot*10);
-  ErrChkPtr(I->V);
+  ErrChkPtr(G,I->V);
 
   if(mode==cRepDotAreaType) { /* in area mode, we need to export save addl. info 
                                * such as the normal vectors, the partial area, 
@@ -252,7 +253,7 @@ Rep *RepDotDoNew(CoordSet *cs,int mode)
   I->N=0;
   lastColor=-1;
   colorCnt=0;
-  map=MapNew(max_vdw,cs->Coord,cs->NIndex,NULL);
+  map=MapNew(G,max_vdw,cs->Coord,cs->NIndex,NULL);
   v=I->V;
   if(map)
 	 {
@@ -313,16 +314,16 @@ Rep *RepDotDoNew(CoordSet *cs,int mode)
 							 switch(mode) {
 							 case cRepDotNormal:
                         
-								if((lastColor!=c1)||ColorCheckRamped(c1)) /* new color */
+								if((lastColor!=c1)||ColorCheckRamped(G,c1)) /* new color */
 								  {
 									 if(countPtr) /* after first pass */
 										*countPtr=(float)colorCnt; /* save count */
 									 colorCnt=1;
 									 countPtr=v++;
-									 vc = ColorGet(c1); /* save new color */
+									 vc = ColorGet(G,c1); /* save new color */
 									 lastColor=c1;
-                            if(ColorCheckRamped(c1)) {
-                              ColorGetRamped(c1,v1,v);
+                            if(ColorCheckRamped(G,c1)) {
+                              ColorGetRamped(G,c1,v1,v);
                               v+=3;
                             } else {
                               *(v++)=*(vc++);

@@ -107,7 +107,7 @@ const static int mesh[30][2] = {
 
 #else
 
-static SphereRec *MakeDotSphere(int level);
+static SphereRec *MakeDotSphere(PyMOLGlobals *G,int level);
 
 #endif
 
@@ -260,11 +260,11 @@ void SphereInit(PyMOLGlobals *G)
   I->Sphere[3] = &I->Array[3];
   I->Sphere[4] = &I->Array[4];
 #else
-  I->Sphere[0] = MakeDotSphere(0);
-  I->Sphere[1] = MakeDotSphere(1);
-  I->Sphere[2] = MakeDotSphere(2);
-  I->Sphere[3] = MakeDotSphere(3);
-  I->Sphere[4] = MakeDotSphere(4);
+  I->Sphere[0] = MakeDotSphere(G,0);
+  I->Sphere[1] = MakeDotSphere(G,1);
+  I->Sphere[2] = MakeDotSphere(G,2);
+  I->Sphere[3] = MakeDotSphere(G,3);
+  I->Sphere[4] = MakeDotSphere(G,4);
   /*
   SphereDumpAll();
   */
@@ -352,7 +352,7 @@ static float SphericalAngle(SphereBuilderRec *S,int d0,int d1,int d2)
   
 }
 
-static SphereRec *MakeDotSphere(int level)
+static SphereRec *MakeDotSphere(PyMOLGlobals *G,int level)
 {
   SphereRec *result;
   int *TriFlag;
@@ -366,13 +366,13 @@ static SphereRec *MakeDotSphere(int level)
   S = &SBuild;
 
   S->Dot=(float*)mmalloc(sizeof(float)*3*MAXDOT);
-  ErrChkPtr(S->Dot);
+  ErrChkPtr(G,S->Dot);
   S->EdgeRef=(EdgeArray*)mmalloc(sizeof(EdgeArray));
-  ErrChkPtr(S->EdgeRef);
+  ErrChkPtr(G,S->EdgeRef);
   S->Tri=Alloc(Triangle,MAXTRI);
-  ErrChkPtr(S->Tri);
+  ErrChkPtr(G,S->Tri);
   TriFlag=Alloc(int,MAXTRI);
-  ErrChkPtr(TriFlag);
+  ErrChkPtr(G,TriFlag);
   
   S->NDot = 12;
   for(a=0;a<S->NDot;a++)
@@ -434,15 +434,15 @@ static SphereRec *MakeDotSphere(int level)
 	 }
   /*  printf(" MakeDotSphere: NDot %i S->NTri %i\n",NDot,S->NTri);*/
   result= Alloc(SphereRec,1);
-  ErrChkPtr(result);
+  ErrChkPtr(G,result);
   result->dot = Alloc(Vector3f,S->NDot);
-  ErrChkPtr(result->dot);
+  ErrChkPtr(G,result->dot);
   result->area = Alloc(float,S->NDot);
-  ErrChkPtr(result->area);
+  ErrChkPtr(G,result->area);
   result->StripLen = Alloc(int,S->NTri*3);
-  ErrChkPtr(result->StripLen);
+  ErrChkPtr(G,result->StripLen);
   result->Sequence = Alloc(int,S->NTri*3);
-  ErrChkPtr(result->Sequence);
+  ErrChkPtr(G,result->Sequence);
 
   for(a=0;a<S->NDot;a++)
 	 {
@@ -477,7 +477,7 @@ static SphereRec *MakeDotSphere(int level)
 
   if(fabs(sumArea - (4*cPI))>0.001) {
     printf(" MakeDotSphere: sumArea: %8.6f which is %8.6f Pi\n",sumArea,sumArea/cPI);
-	 ErrFatal("MakeDotSphere","Area of sphere does not sum to 4*pi!\n");
+	 ErrFatal(G,"MakeDotSphere","Area of sphere does not sum to 4*pi!\n");
   }
 
   

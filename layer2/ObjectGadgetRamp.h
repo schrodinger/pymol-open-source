@@ -72,9 +72,9 @@ typedef struct ObjectGadgetRamp {
 #define cRAMP_AFMHOT 7
 #define cRAMP_GRAYSCALE 8
 
-ObjectGadgetRamp *ObjectGadgetRampNew(void);
+ObjectGadgetRamp *ObjectGadgetRampNew(PyMOLGlobals *G);
 
-ObjectGadgetRamp *ObjectGadgetRampMapNewAsDefined(ObjectMap *map,PyObject *level,
+ObjectGadgetRamp *ObjectGadgetRampMapNewAsDefined(PyMOLGlobals *G,ObjectMap *map,PyObject *level,
                                                   PyObject *color,int map_state,float *vert_vla,
                                                   float beyond,float within,float sigma,int zero);
 
@@ -82,7 +82,7 @@ int ObjectGadgetRampInterpolate(ObjectGadgetRamp *I,float level,float *color);
 int ObjectGadgetRampInterVertex(ObjectGadgetRamp *I,float *pos,float *color);
 
 PyObject *ObjectGadgetRampAsPyList(ObjectGadgetRamp *I);
-int ObjectGadgetRampNewFromPyList(PyObject *list,ObjectGadgetRamp **result,int version);
+int ObjectGadgetRampNewFromPyList(PyMOLGlobals *G,PyObject *list,ObjectGadgetRamp **result,int version);
 
 void ObjectGadgetRampUpdate(ObjectGadgetRamp *I);
 void ObjectGadgetRampFree(ObjectGadgetRamp *I);

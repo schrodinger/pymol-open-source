@@ -35,14 +35,14 @@ void ObjectDistUpdate(ObjectDist *I);
 int ObjectDistGetNFrames(ObjectDist *I);
 void ObjectDistUpdateExtents(ObjectDist *I);
 
-static DistSet *ObjectDistGetDistSetFromM4XBond(ObjectMolecule *obj, M4XBondType *hb, int n_hb,
+static DistSet *ObjectDistGetDistSetFromM4XBond(PyMOLGlobals *G,ObjectMolecule *obj, M4XBondType *hb, int n_hb,
                                                 int state,int nbr_sele)
 {
   int min_id,max_id,range,*lookup = NULL;
   int nv = 0;
   float *vv=NULL;
   DistSet *ds;
-  ds = DistSetNew();
+  ds = DistSetNew(G);
   vv = VLAlloc(float,10);
   
   /* this routine only works if IDs cover a reasonable range --
@@ -109,9 +109,9 @@ static DistSet *ObjectDistGetDistSetFromM4XBond(ObjectMolecule *obj, M4XBondType
               sele_flag =false;
               
               if(nbr_sele>=0) {
-                if(SelectorIsMember(ai1->selEntry,nbr_sele))
+                if(SelectorIsMember(G,ai1->selEntry,nbr_sele))
                   sele_flag=true;
-                if(SelectorIsMember(ai2->selEntry,nbr_sele))
+                if(SelectorIsMember(G,ai2->selEntry,nbr_sele))
                   sele_flag=true;
               } else {
                 sele_flag =true;
@@ -168,7 +168,7 @@ static DistSet *ObjectDistGetDistSetFromM4XBond(ObjectMolecule *obj, M4XBondType
   
 }
 
-ObjectDist *ObjectDistNewFromM4XBond(ObjectDist *oldObj,
+ObjectDist *ObjectDistNewFromM4XBond(PyMOLGlobals *G,ObjectDist *oldObj,
                                       struct ObjectMolecule *objMol,
                                       struct M4XBondType *hbond,
                                      int n_hbond,int nbr_sele)
@@ -177,7 +177,7 @@ ObjectDist *ObjectDistNewFromM4XBond(ObjectDist *oldObj,
   ObjectDist *I;
   int n_state;
   if(!oldObj)
-    I=ObjectDistNew();
+    I=ObjectDistNew(G);
   else {
     I=oldObj;
     for(a=0;a<I->NDSet;a++)
@@ -193,7 +193,7 @@ ObjectDist *ObjectDistNewFromM4XBond(ObjectDist *oldObj,
     {
       VLACheck(I->DSet,DistSet*,a);
       
-      I->DSet[a] = ObjectDistGetDistSetFromM4XBond(objMol,hbond,n_hbond,a,nbr_sele);
+      I->DSet[a] = ObjectDistGetDistSetFromM4XBond(G,objMol,hbond,n_hbond,a,nbr_sele);
       
       if(I->DSet[a]) {
         I->DSet[a]->Obj = I;
@@ -202,7 +202,7 @@ ObjectDist *ObjectDistNewFromM4XBond(ObjectDist *oldObj,
     } 
   ObjectDistUpdateExtents(I);
   
-  SceneChanged();
+  SceneChanged(G);
   return(I);
 }
 
@@ -254,7 +254,7 @@ static int ObjectDistDSetFromPyList(ObjectDist *I,PyObject *list)
   if(ok) {
     VLACheck(I->DSet,DistSet*,I->NDSet);
     for(a=0;a<I->NDSet;a++) {
-      if(ok) ok = DistSetFromPyList(PyList_GetItem(list,a),&I->DSet[a]);
+      if(ok) ok = DistSetFromPyList(I->Obj.G,PyList_GetItem(list,a),&I->DSet[a]);
       if(ok) I->DSet[a]->Obj = I;
     }
   }
@@ -285,7 +285,7 @@ PyObject *ObjectDistAsPyList(ObjectDist *I)
   return(PConvAutoNone(result));  
 }
 
-int ObjectDistNewFromPyList(PyObject *list,ObjectDist **result)
+int ObjectDistNewFromPyList(PyMOLGlobals *G,PyObject *list,ObjectDist **result)
 {
   int ok = true;
   ObjectDist *I=NULL;
@@ -293,10 +293,10 @@ int ObjectDistNewFromPyList(PyObject *list,ObjectDist **result)
   
   if(ok) ok=PyList_Check(list);
 
-  I=ObjectDistNew();
+  I=ObjectDistNew(G);
   if(ok) ok = (I!=NULL);
 
-  if(ok) ok = ObjectFromPyList(PyList_GetItem(list,0),&I->Obj);
+  if(ok) ok = ObjectFromPyList(G,PyList_GetItem(list,0),&I->Obj);
   if(ok) ok = PConvPyIntToInt(PyList_GetItem(list,1),&I->NDSet);
   if(ok) ok = ObjectDistDSetFromPyList(I,PyList_GetItem(list,2));
   if(ok) ok = PConvPyIntToInt(PyList_GetItem(list,3),&I->CurDSet);
@@ -323,10 +323,10 @@ int ObjectDistGetNFrames(ObjectDist *I)
 void ObjectDistUpdate(ObjectDist *I)
 {
   int a;
-  OrthoBusyPrime();
+  OrthoBusyPrime(I->Obj.G);
   for(a=0;a<I->NDSet;a++)
 	 if(I->DSet[a]) {	
-	   OrthoBusySlow(a,I->NDSet);
+	   OrthoBusySlow(I->Obj.G,a,I->NDSet);
       /*	   printf(" ObjectDist: updating state %d of \"%s\".\n" , a+1, I->Obj.Name);*/
       if(I->DSet[a]->fUpdate)
         I->DSet[a]->fUpdate(I->DSet[a]);
@@ -336,7 +336,7 @@ void ObjectDistUpdate(ObjectDist *I)
 void ObjectDistInvalidateRep(ObjectDist *I,int rep)
 {
   int a;
-  PRINTFD(FB_ObjectDist)
+  PRINTFD(I->Obj.G,FB_ObjectDist)
     " ObjectDistInvalidateRep: entered.\n"
     ENDFD;
 
@@ -372,10 +372,10 @@ void ObjectDistRender(ObjectDist *I,int frame,CRay *ray,Pickable **pick,int pass
 }
 
 /*========================================================================*/
-ObjectDist *ObjectDistNew(void)
+ObjectDist *ObjectDistNew(PyMOLGlobals *G)
 {
-  OOAlloc(ObjectDist);
-  ObjectInit((CObject*)I);
+  OOAlloc(G,ObjectDist);
+  ObjectInit(G,(CObject*)I);
   I->Obj.type=cObjectDist;
   I->DSet=VLAMalloc(10,sizeof(DistSet*),5,true); /* auto-zero */
   I->NDSet=0;
@@ -385,13 +385,13 @@ ObjectDist *ObjectDistNew(void)
   I->Obj.fGetNFrame = (int (*)(struct CObject *)) ObjectDistGetNFrames;
   I->Obj.fDescribeElement = NULL;
   I->CurDSet=0;
-  I->Obj.Color=ColorGetIndex("dash");
+  I->Obj.Color=ColorGetIndex(G,"dash");
   return(I);
 }
 
 /*========================================================================*/
 /*========================================================================*/
-ObjectDist *ObjectDistNewFromSele(ObjectDist *oldObj,int sele1,int sele2,int mode,float cutoff,
+ObjectDist *ObjectDistNewFromSele(PyMOLGlobals *G,ObjectDist *oldObj,int sele1,int sele2,int mode,float cutoff,
                                   int labels,float *result)
 {
   int a,mn;
@@ -401,7 +401,7 @@ ObjectDist *ObjectDistNewFromSele(ObjectDist *oldObj,int sele1,int sele2,int mod
   ObjectDist *I;
 
   if(!oldObj)
-    I=ObjectDistNew();
+    I=ObjectDistNew(G);
   else {
     I=oldObj;
     for(a=0;a<I->NDSet;a++)
@@ -414,9 +414,9 @@ ObjectDist *ObjectDistNewFromSele(ObjectDist *oldObj,int sele1,int sele2,int mod
   }
   *result = 0.0;
   mn = 0;
-  SelectorUpdateTable();
-  n_state1 = SelectorGetSeleNCSet(sele1);
-  n_state2 = SelectorGetSeleNCSet(sele2);
+  SelectorUpdateTable(G);
+  n_state1 = SelectorGetSeleNCSet(G,sele1);
+  n_state2 = SelectorGetSeleNCSet(G,sele2);
   mn = n_state1;
   if(n_state2>mn) mn = n_state2;
   if(mn) {
@@ -431,7 +431,7 @@ ObjectDist *ObjectDistNewFromSele(ObjectDist *oldObj,int sele1,int sele2,int mod
           state2=a;
         else
           state2=0;
-        I->DSet[a] = SelectorGetDistSet(sele1,state1,sele2,
+        I->DSet[a] = SelectorGetDistSet(G,sele1,state1,sele2,
                                         state2,mode,cutoff,&dist);
         if(I->DSet[a]) {
           dist_sum+=dist;
@@ -450,7 +450,7 @@ ObjectDist *ObjectDistNewFromSele(ObjectDist *oldObj,int sele1,int sele2,int mod
 
   if(dist_cnt)
     (*result) = dist_sum/dist_cnt;
-  SceneChanged();
+  SceneChanged(G);
   return(I);
 }
 
@@ -458,7 +458,7 @@ ObjectDist *ObjectDistNewFromSele(ObjectDist *oldObj,int sele1,int sele2,int mod
 void ObjectDistFree(ObjectDist *I)
 {
   int a;
-  SceneObjectDel((CObject*)I);
+  SceneObjectDel(I->Obj.G,(CObject*)I);
   for(a=0;a<I->NDSet;a++)
 	 if(I->DSet[a]) {
       if(I->DSet[a]->fFree)

@@ -27,10 +27,10 @@ Z* -------------------------------------------------------------------
 #include"Util.h"
 #include"PConv.h"
 
-CCrystal *CrystalNewFromPyList(PyObject *list)
+CCrystal *CrystalNewFromPyList(PyMOLGlobals *G,PyObject *list)
 {
   CCrystal *I=NULL;
-  I=CrystalNew();
+  I=CrystalNew(G);
   if(I) {
     if(!CrystalFromPyList(I,list)) {
       CrystalFree(I);
@@ -75,9 +75,10 @@ void CrystalFree(CCrystal *I)
   OOFreeP(I);
 }
 
-void CrystalInit(CCrystal *I)
+void CrystalInit(PyMOLGlobals *G,CCrystal *I)
 {
   int a;
+  I->G=G;
   for(a=0;a<9;a++) {
     I->RealToFrac[a]=0.0;
     I->FracToReal[a]=0.0;
@@ -92,17 +93,17 @@ void CrystalInit(CCrystal *I)
 
 }
 
-CCrystal *CrystalNew(void)
+CCrystal *CrystalNew(PyMOLGlobals *G)
 {
-  OOAlloc(CCrystal);
-  CrystalInit(I);
+  OOAlloc(G,CCrystal);
+  CrystalInit(G,I);
   return(I);
 }
 
 
 CCrystal *CrystalCopy(CCrystal *other)
 {
-  OOAlloc(CCrystal);
+  OOAlloc(other->G,CCrystal);
   UtilCopyMem(I,other,sizeof(CCrystal));
   return(I);
 }
@@ -169,45 +170,47 @@ void CrystalUpdate(CCrystal *I)
 
 void CrystalDump(CCrystal *I) 
 {
+  PyMOLGlobals *G=I->G;
   int i;
 
   PRINTF 
     " Crystal: Unit Cell         %8.3f %8.3f %8.3f\n",
     I->Dim[0],I->Dim[1],I->Dim[2]
-    ENDF;
+    ENDF(G);
   PRINTF 
     " Crystal: Alpha Beta Gamma  %8.3f %8.3f %8.3f\n",
     I->Angle[0],I->Angle[1],I->Angle[2]
-    ENDF;
+    ENDF(G);
   PRINTF
     " Crystal: RealToFrac Matrix\n"
-    ENDF;
+    ENDF(G);
   for(i=0;i<3;i++) {
     PRINTF " Crystal: %9.4f %9.4f %9.4f\n",
       I->RealToFrac[i*3],I->RealToFrac[i*3+1],I->RealToFrac[i*3+2]
-      ENDF;
+      ENDF(G);
   }
   PRINTF
     " Crystal: FracToReal Matrix\n"
-    ENDF;
+    ENDF(G);
   for(i=0;i<3;i++) {
     PRINTF
       " Crystal: %9.4f %9.4f %9.4f\n",
       I->FracToReal[i*3],I->FracToReal[i*3+1],I->FracToReal[i*3+2]
-      ENDF;
+      ENDF(G);
   }
   PRINTF
   " Crystal: Unit Cell Volume %8.0f.\n",I->UnitCellVolume
-    ENDF;
+    ENDF(G);
 
 }
 
 CGO *CrystalGetUnitCellCGO(CCrystal *I)
 {
+  PyMOLGlobals *G=I->G;
   float v[3];
   CGO *cgo=NULL;
   if(I) {
-    cgo=CGONew();
+    cgo=CGONew(G);
     CGODisable(cgo,GL_LIGHTING);
     CGOBegin(cgo,GL_LINE_STRIP);
     set3f(v,0,0,0);

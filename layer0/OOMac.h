@@ -19,10 +19,10 @@ Z* -------------------------------------------------------------------
 #include"Err.h"
 #include"MemoryDebug.h"
 
-#define OOAlloc(type) \
+#define OOAlloc(G,type) \
 type *I;\
 I = (type*)mmalloc(sizeof(type));\
-ErrChkPtr(I);
+ErrChkPtr(G,I);
 
 #define OOFreeP(ptr) \
 {if(ptr) {mfree(ptr);ptr=NULL;}}

@@ -43,34 +43,30 @@ typedef struct {
   char name[ObjNameMax]; /* associated object */
   struct ObjectMolecule *obj; /* this pointer only valid during update */
   int accum,current,title_width; /* temporary stores for aligning */
-
 } CSeqRow;
 
 typedef struct {
-  CSeqRow* (*fClick)   (CSeqRow* rowVLA,int button,int row,int col,int mod,int x,int y);
-  CSeqRow* (*fDrag)    (CSeqRow* rowVLA,int row,int col,int mod);
-  CSeqRow* (*fRelease) (CSeqRow* rowVLA,int button,int row,int col,int mod);
-  void (*fRefresh) (CSeqRow* rowVLA);
+  CSeqRow* (*fClick)   (PyMOLGlobals *G,CSeqRow* rowVLA,int button,int row,int col,int mod,int x,int y);
+  CSeqRow* (*fDrag)    (PyMOLGlobals *G,CSeqRow* rowVLA,int row,int col,int mod);
+  CSeqRow* (*fRelease) (PyMOLGlobals *G,CSeqRow* rowVLA,int button,int row,int col,int mod);
+  void (*fRefresh) (PyMOLGlobals *G,CSeqRow* rowVLA);
   int box_active,box_row;
   int box_start_col,box_stop_col;
 } CSeqHandler;
 
-void SeqInit(void);
-void SeqFree(void);
-Block *SeqGetBlock(void);
+int SeqInit(PyMOLGlobals *G);
+void SeqFree(PyMOLGlobals *G);
+Block *SeqGetBlock(PyMOLGlobals *G);
 
-void SeqInit(void);
-void SeqFree(void);
-Block *SeqGetBlock(void);
-int SeqIdling(void);
-void SeqInterrupt(void);
-int SeqGetHeight(void);
-void SeqSetHandler(CSeqHandler *handler);
-void SeqSetRowVLA(CSeqRow *row,int nRow);
+int SeqIdling(PyMOLGlobals *G);
+void SeqInterrupt(PyMOLGlobals *G);
+int SeqGetHeight(PyMOLGlobals *G);
+void SeqSetHandler(PyMOLGlobals *G,CSeqHandler *handler);
+void SeqSetRowVLA(PyMOLGlobals *G,CSeqRow *row,int nRow);
 CSeqRow *SeqGetRowVLA(void);
-void SeqDirty(void); /* sequence dirty -- need to update selections */
-void SeqChanged(void); /* sequence changed -- need to rebuild */
-void SeqUpdate(void);
+void SeqDirty(PyMOLGlobals *G); /* sequence dirty -- need to update selections */
+void SeqChanged(PyMOLGlobals *G); /* sequence changed -- need to rebuild */
+void SeqUpdate(PyMOLGlobals *G);
 
 #endif
 

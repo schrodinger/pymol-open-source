@@ -202,10 +202,11 @@ static float ShakerDoTors(int type,float *v0,float *v1,float *v2,float *v3,
   
 }
 
-CSculpt *SculptNew(void)
+CSculpt *SculptNew(PyMOLGlobals *G)
 {
-  OOAlloc(CSculpt);
-  I->Shaker = ShakerNew();
+  OOAlloc(G,CSculpt);
+  I->G=G;
+  I->Shaker = ShakerNew(G);
   I->NBList = VLAlloc(int,150000);
   I->NBHash = Alloc(int,NB_HASH_SIZE);
   I->EXList = VLAlloc(int,100000);
@@ -222,6 +223,7 @@ CSculpt *SculptNew(void)
 
 void SculptMeasureObject(CSculpt *I,ObjectMolecule *obj,int state)
 {
+  PyMOLGlobals *G=I->G;
   int a,a0,a1,a2,a3,b0,b1,b2,b3;
   BondType *b;
   float *v0,*v1,*v2,*v3,d,dummy;
@@ -236,7 +238,7 @@ void SculptMeasureObject(CSculpt *I,ObjectMolecule *obj,int state)
   int xoffset;
   int use_cache = 1;
 
-  PRINTFD(FB_Sculpt)
+  PRINTFD(G,FB_Sculpt)
     " SculptMeasureObject-Debug: entered.\n"
     ENDFD;
 
@@ -257,7 +259,7 @@ void SculptMeasureObject(CSculpt *I,ObjectMolecule *obj,int state)
           I->Don[a]=false;
           I->Acc[a]=false;
           if(!ai->sculpt_id) /* insure all atoms have unique sculpt IDs */
-            ai->sculpt_id=SculptCacheNewID();
+            ai->sculpt_id=SculptCacheNewID(G);
           ai++;
         }
         
@@ -266,7 +268,7 @@ void SculptMeasureObject(CSculpt *I,ObjectMolecule *obj,int state)
 
         cs = obj->CSet[state];
 
-        use_cache = SettingGet_i(cs->Setting,obj->Obj.Setting,cSetting_sculpt_memory);
+        use_cache = SettingGet_i(G,cs->Setting,obj->Obj.Setting,cSetting_sculpt_memory);
         if(obj->NBond) {
 
           planer=Alloc(int,obj->NAtom);
@@ -462,10 +464,10 @@ void SculptMeasureObject(CSculpt *I,ObjectMolecule *obj,int state)
                   v2 = cs->Coord+3*a2;
                   d = (float)diff3f(v1,v2);
                   if(use_cache) {
-                    if(!SculptCacheQuery(cSculptBond,
+                    if(!SculptCacheQuery(G,cSculptBond,
                                          oai[b1].sculpt_id,
                                          oai[b2].sculpt_id,0,0,&d))
-                      SculptCacheStore(cSculptBond,
+                      SculptCacheStore(G,cSculptBond,
                                        oai[b1].sculpt_id,
                                        oai[b2].sculpt_id,0,0,d);
                   }
@@ -524,11 +526,11 @@ void SculptMeasureObject(CSculpt *I,ObjectMolecule *obj,int state)
                   v2 = cs->Coord+3*a2;
                   d = (float)diff3f(v1,v2);
                   if(use_cache) {
-                    if(!SculptCacheQuery(cSculptAngl,
+                    if(!SculptCacheQuery(G,cSculptAngl,
                                          oai[b0].sculpt_id,
                                          oai[b1].sculpt_id,
                                          oai[b2].sculpt_id,0,&d))
-                      SculptCacheStore(cSculptAngl,
+                      SculptCacheStore(G,cSculptAngl,
                                        oai[b0].sculpt_id,
                                        oai[b1].sculpt_id,
                                        oai[b2].sculpt_id,0,d);
@@ -539,11 +541,11 @@ void SculptMeasureObject(CSculpt *I,ObjectMolecule *obj,int state)
                   if(linear[b0]&&(linear[b1]||linear[b2])) {
                     
                     if(use_cache) {
-                      if(!SculptCacheQuery(cSculptLine,
+                      if(!SculptCacheQuery(G,cSculptLine,
                                            oai[b1].sculpt_id,
                                            oai[b0].sculpt_id,
                                            oai[b2].sculpt_id,0,&dummy))
-                        SculptCacheStore(cSculptLine,
+                        SculptCacheStore(G,cSculptLine,
                                          oai[b1].sculpt_id,
                                          oai[b0].sculpt_id,
                                          oai[b2].sculpt_id,0,0.0);
@@ -603,13 +605,13 @@ void SculptMeasureObject(CSculpt *I,ObjectMolecule *obj,int state)
                     if(planer[b0])
                       d=0.0;
                     if(use_cache) {
-                      if(!SculptCacheQuery(cSculptPyra,
+                      if(!SculptCacheQuery(G,cSculptPyra,
                                            oai[b1].sculpt_id,
                                            oai[b0].sculpt_id,
                                            oai[b2].sculpt_id,
                                            oai[b3].sculpt_id,
                                            &d))
-                        SculptCacheStore(cSculptPyra,
+                        SculptCacheStore(G,cSculptPyra,
                                          oai[b1].sculpt_id,
                                          oai[b0].sculpt_id,
                                          oai[b2].sculpt_id,
@@ -728,13 +730,13 @@ void SculptMeasureObject(CSculpt *I,ObjectMolecule *obj,int state)
                             d = 1.0; 
                           }
                         if(use_cache) {
-                          if(!SculptCacheQuery(cSculptPlan,
+                          if(!SculptCacheQuery(G,cSculptPlan,
                                                oai[b1].sculpt_id,
                                                oai[b0].sculpt_id,
                                                oai[b2].sculpt_id,
                                                oai[b3].sculpt_id,
                                                &d))
-                            SculptCacheStore(cSculptPlan,
+                            SculptCacheStore(G,cSculptPlan,
                                              oai[b1].sculpt_id,
                                              oai[b0].sculpt_id,
                                              oai[b2].sculpt_id,
@@ -759,18 +761,18 @@ void SculptMeasureObject(CSculpt *I,ObjectMolecule *obj,int state)
         }
       }
 
-  PRINTFB(FB_Sculpt,FB_Blather)
+  PRINTFB(G,FB_Sculpt,FB_Blather)
     " Sculpt: I->Shaker->NDistCon %d\n",I->Shaker->NDistCon
-    ENDFB;
-  PRINTFB(FB_Sculpt,FB_Blather)
+    ENDFB(G);
+  PRINTFB(G,FB_Sculpt,FB_Blather)
     " Sculpt: I->Shaker->NPyraCon %d\n",I->Shaker->NPyraCon
-    ENDFB;
-  PRINTFB(FB_Sculpt,FB_Blather)
+    ENDFB(G);
+  PRINTFB(G,FB_Sculpt,FB_Blather)
     " Sculpt: I->Shaker->NPlanCon %d\n",I->Shaker->NPlanCon
-    ENDFB;
+    ENDFB(G);
 
 
- PRINTFD(FB_Sculpt)
+ PRINTFD(G,FB_Sculpt)
     " SculptMeasureObject-Debug: leaving...\n"
     ENDFD;
 
@@ -827,6 +829,7 @@ static int SculptDoBump(float target,float actual,float *d,
        
 float SculptIterateObject(CSculpt *I,ObjectMolecule *obj,int state,int n_cycle)
 {
+  PyMOLGlobals *G=I->G;
   CShaker *shk;
   int a,aa,a0,a1,a2,a3,b0,b1,b2,b3;
   CoordSet *cs;
@@ -871,7 +874,7 @@ float SculptIterateObject(CSculpt *I,ObjectMolecule *obj,int state,int n_cycle)
   float total_strain=0.0F;
   int total_count=1;
 
-  PRINTFD(FB_Sculpt)
+  PRINTFD(G,FB_Sculpt)
     " SculptIterateObject-Debug: entered state=%d n_cycle=%d\n",state,n_cycle
     ENDFD;
 
@@ -885,28 +888,28 @@ float SculptIterateObject(CSculpt *I,ObjectMolecule *obj,int state,int n_cycle)
         active = Alloc(int,obj->NAtom);
         shk=I->Shaker;
 
-        PRINTFD(FB_Sculpt)
+        PRINTFD(G,FB_Sculpt)
           " SIO-Debug: NDistCon %d\n",shk->NDistCon
           ENDFD;
 
         cs = obj->CSet[state];
 
-        nb_skip = SettingGet_i(cs->Setting,obj->Obj.Setting,cSetting_sculpt_nb_interval);
+        nb_skip = SettingGet_i(G,cs->Setting,obj->Obj.Setting,cSetting_sculpt_nb_interval);
         if(nb_skip<1) nb_skip=1;
-        vdw = SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_sculpt_vdw_scale);
-        vdw14 = SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_sculpt_vdw_scale14);
-        vdw_wt = SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_sculpt_vdw_weight);
-        vdw_wt14 = SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_sculpt_vdw_weight14);
-        bond_wt =  SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_sculpt_bond_weight);
-        angl_wt =  SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_sculpt_angl_weight);
-        pyra_wt =  SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_sculpt_pyra_weight);
-        plan_wt =  SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_sculpt_plan_weight);
-        line_wt =  SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_sculpt_line_weight);
-        mask = SettingGet_i(cs->Setting,obj->Obj.Setting,cSetting_sculpt_field_mask);
-        hb_overlap = SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_sculpt_hb_overlap);
-        hb_overlap_base = SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_sculpt_hb_overlap_base);
-        tors_tole = SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_sculpt_tors_tolerance);
-        tors_wt = SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_sculpt_tors_weight);
+        vdw = SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_sculpt_vdw_scale);
+        vdw14 = SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_sculpt_vdw_scale14);
+        vdw_wt = SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_sculpt_vdw_weight);
+        vdw_wt14 = SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_sculpt_vdw_weight14);
+        bond_wt =  SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_sculpt_bond_weight);
+        angl_wt =  SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_sculpt_angl_weight);
+        pyra_wt =  SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_sculpt_pyra_weight);
+        plan_wt =  SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_sculpt_plan_weight);
+        line_wt =  SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_sculpt_line_weight);
+        mask = SettingGet_i(G,cs->Setting,obj->Obj.Setting,cSetting_sculpt_field_mask);
+        hb_overlap = SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_sculpt_hb_overlap);
+        hb_overlap_base = SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_sculpt_hb_overlap_base);
+        tors_tole = SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_sculpt_tors_tolerance);
+        tors_wt = SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_sculpt_tors_weight);
         n_active = 0;
         ai0=obj->AtomInfo;
         for(a=0;a<obj->NAtom;a++) {
@@ -937,7 +940,7 @@ float SculptIterateObject(CSculpt *I,ObjectMolecule *obj,int state,int n_cycle)
           /* first, create coordinate -> vertex mapping */
           /* and count number of constraints */
 
-          task_time = UtilGetSeconds(TempPyMOLGlobals);
+          task_time = UtilGetSeconds(G);
           vdw_magnify = 1.0F;
           nb_skip_count = n_cycle - nb_skip * (n_cycle/nb_skip);
           if(!nb_skip_count) nb_skip_count = nb_skip;
@@ -1325,11 +1328,11 @@ float SculptIterateObject(CSculpt *I,ObjectMolecule *obj,int state,int n_cycle)
           
           }
           
-          task_time = UtilGetSeconds(TempPyMOLGlobals) - task_time;
-          PRINTFB(FB_Sculpt,FB_Blather)
+          task_time = UtilGetSeconds(G) - task_time;
+          PRINTFB(G,FB_Sculpt,FB_Blather)
             " Sculpt: %2.5f seconds %8.3f %d %8.3f\n",task_time,total_strain,total_count,
             100*total_strain/total_count
-            ENDFB;
+            ENDFB(G);
 
           if(total_count) 
             total_strain = (1000*total_strain)/total_count;
@@ -1340,7 +1343,7 @@ float SculptIterateObject(CSculpt *I,ObjectMolecule *obj,int state,int n_cycle)
         FreeP(atm2idx);
       }
 
-  PRINTFD(FB_Sculpt)
+  PRINTFD(G,FB_Sculpt)
     " SculptIterateObject-Debug: leaving...\n"
     ENDFD;
 

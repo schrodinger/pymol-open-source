@@ -20,15 +20,40 @@ Z* -------------------------------------------------------------------
 #include"Base.h"
 #include"Word.h"
 #include"Parse.h"
+#include"PyMOLObject.h"
+#include"MemoryDebug.h"
 
-static char WILDCARD='*';
+struct _CWord {
+  char Wildcard;
+};
 
-void WordSetWildcard(char wc)
+
+int WordInit(PyMOLGlobals *G)
 {
-  WILDCARD=wc;
+  register CWord *I= NULL;
+  
+  I = (G->Word = Calloc(CWord,1));
+  if(I) {
+    I->Wildcard='*';
+    return 1;
+  } else 
+    return 0;
+
 }
 
-void WordPrimeCommaMatch(char *p)
+void WordFree(PyMOLGlobals *G)
+{
+  FreeP(G->Word);
+}
+
+void WordSetWildcard(PyMOLGlobals *G,char wc)
+{
+  register CWord *I = G->Word;
+  
+  I->Wildcard=wc;
+}
+
+void WordPrimeCommaMatch(PyMOLGlobals *G,char *p)
 { /* replace '+' with ',' */
   while(*p) { /* this should not be done here... */
     if(*p=='+')
@@ -38,7 +63,7 @@ void WordPrimeCommaMatch(char *p)
   }
 }
 
-int WordMatchExact(char *p,char *q,int ignCase) 
+int WordMatchExact(PyMOLGlobals *G,char *p,char *q,int ignCase) 
 
 /* 0 = no match
    non-zero = perfect match  */
@@ -62,7 +87,7 @@ int WordMatchExact(char *p,char *q,int ignCase)
 }
 
 
-int WordMatch(char *p,char *q,int ignCase) 
+int WordMatch(PyMOLGlobals *G,char *p,char *q,int ignCase) 
 /* allows for terminal wildcard (*) in p
  * and allows for p to match when shorter than q.
 
@@ -73,6 +98,7 @@ negative = perfect/wildcard match  */
 
 {
   int i=1;
+  register char WILDCARD = G->Word->Wildcard;
   while((*p)&&(*q))
 	 {
 		if(*p!=*q)
@@ -111,7 +137,7 @@ negative = perfect/wildcard match  */
   return(i);
 }
 
-int WordMatchComma(char *p,char *q,int ignCase) 
+int WordMatchComma(PyMOLGlobals *G,char *p,char *q,int ignCase) 
      /* allows for comma list in p, also allows wildcards (*) in p */
 {
   int i=0;
@@ -119,6 +145,7 @@ int WordMatchComma(char *p,char *q,int ignCase)
   char *q_copy;
   int blank;
   int trailing_comma=0;
+  register char WILDCARD = G->Word->Wildcard;
 
   blank = (!*p);
   q_copy=q;
@@ -187,7 +214,7 @@ int WordMatchComma(char *p,char *q,int ignCase)
   return(best_i);
 }
 
-int WordMatchCommaExact(char *p,char *q,int ignCase) 
+int WordMatchCommaExact(PyMOLGlobals *G,char *p,char *q,int ignCase) 
 /* allows for comma list in p, no wildcards */
 {
   int i=0;
@@ -262,14 +289,14 @@ int WordMatchCommaExact(char *p,char *q,int ignCase)
   return(best_i);
 }
 
-int WordMatchCommaInt(char *p,int number) 
+int WordMatchCommaInt(PyMOLGlobals *G,char *p,int number) 
 {
   WordType buffer;
   sprintf(buffer,"%d",number);
-  return(WordMatchComma(p,buffer,1));
+  return(WordMatchComma(G,p,buffer,1));
 }
 
-int WordCompare(char *p,char *q,int ignCase) 
+int WordCompare(PyMOLGlobals *G,char *p,char *q,int ignCase) 
 /* all things equal, shorter is smaller */
 {
   int result=0;
@@ -307,7 +334,7 @@ int WordCompare(char *p,char *q,int ignCase)
   return 0;
 }
 
-int WordIndex(WordType *list,char *word,int minMatch,int ignCase)
+int WordIndex(PyMOLGlobals *G,WordType *list,char *word,int minMatch,int ignCase)
 {
   int c,i,mi,mc;
   int result = -1;
@@ -316,7 +343,7 @@ int WordIndex(WordType *list,char *word,int minMatch,int ignCase)
   mi=-1;
   while(list[c][0])
 	 {
-		i=WordMatch(word,list[c],ignCase);
+		i=WordMatch(G,word,list[c],ignCase);
 		if(i>0)
 		  {
 			 if(mi<i)
@@ -341,7 +368,7 @@ int WordIndex(WordType *list,char *word,int minMatch,int ignCase)
 
 }
 
-int WordKey(WordKeyValue *list,char *word,int minMatch,int ignCase,int *exact)
+int WordKey(PyMOLGlobals *G,WordKeyValue *list,char *word,int minMatch,int ignCase,int *exact)
 {
   int c,i,mi,mc;
   int result = 0;
@@ -351,7 +378,7 @@ int WordKey(WordKeyValue *list,char *word,int minMatch,int ignCase,int *exact)
   *exact = false;
   while(list[c].word[0])
     {
-      i=WordMatch(word,list[c].word,ignCase);
+      i=WordMatch(G,word,list[c].word,ignCase);
 		if(i>0)
 		  {
 			 if(mi<i)

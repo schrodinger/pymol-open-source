@@ -54,18 +54,19 @@ void RepLabelFree(RepLabel *I)
 
 void RepLabelRender(RepLabel *I,CRay *ray,Pickable **pick)
 {
+  PyMOLGlobals *G=I->R.G;
   float *v=I->V;
   int c=I->N;
   char *l=I->L;
-  int font_id = SettingGet_i(I->R.cs->Setting,I->R.obj->Setting,cSetting_label_font_id);
+  int font_id = SettingGet_i(G,I->R.cs->Setting,I->R.obj->Setting,cSetting_label_font_id);
   
   if(ray) {
 
     if(c) {
       while(c--) {
         if(*l) {
-          TextSetPosNColor(v+3,v);
-          l = TextRenderRay(ray,font_id,l);
+          TextSetPosNColor(G,v+3,v);
+          l = TextRenderRay(G,ray,font_id,l);
         }
         v+=6;
       }
@@ -76,14 +77,14 @@ void RepLabelRender(RepLabel *I,CRay *ray,Pickable **pick)
 
     if(c) {
       int float_text;
-      float_text = (int)SettingGet(cSetting_float_labels);
+      float_text = (int)SettingGet(G,cSetting_float_labels);
       if(float_text)
         glDisable(GL_DEPTH_TEST);	 
       glDisable(GL_LIGHTING);
       while(c--) {
         if(*l) {
-          TextSetPosNColor(v+3,v);
-          l = TextRenderOpenGL(font_id,l);
+          TextSetPosNColor(G,v+3,v);
+          l = TextRenderOpenGL(G,font_id,l);
         }
         v+=6;
       }
@@ -96,13 +97,14 @@ void RepLabelRender(RepLabel *I,CRay *ray,Pickable **pick)
 
 Rep *RepLabelNew(CoordSet *cs)
 {
+  PyMOLGlobals *G=cs->G;
   ObjectMolecule *obj;
   int a,a1,vFlag,c1;
   float *v,*v0,*vc;
   char *p,*l;
   int label_color;
   AtomInfoType *ai;
-  OOAlloc(RepLabel);
+  OOAlloc(G,RepLabel);
   
   obj = cs->Obj;
   vFlag=false;
@@ -118,10 +120,10 @@ Rep *RepLabelNew(CoordSet *cs)
     return(NULL); /* skip if no label are visible */
   }
 
-  label_color = SettingGet_i(cs->Setting,obj->Obj.Setting,cSetting_label_color);
+  label_color = SettingGet_i(G,cs->Setting,obj->Obj.Setting,cSetting_label_color);
 
   
-  RepInit(&I->R);
+  RepInit(G,&I->R);
   
   obj = cs->Obj;
   I->R.fRender=(void (*)(struct Rep *, CRay *, Pickable **))RepLabelRender;
@@ -133,9 +135,9 @@ Rep *RepLabelNew(CoordSet *cs)
   /* raytracing primitives */
 
   I->L=Alloc(char,sizeof(LabelType)*cs->NIndex);
-  ErrChkPtr(I->L);
+  ErrChkPtr(G,I->L);
   I->V=(float*)mmalloc(sizeof(float)*cs->NIndex*6);
-  ErrChkPtr(I->V);
+  ErrChkPtr(G,I->V);
 
   I->N=0;
   
@@ -152,7 +154,7 @@ Rep *RepLabelNew(CoordSet *cs)
             c1 = label_color;
           else
             c1=*(cs->Color+a);
-			 vc = ColorGet(c1); /* save new color */
+			 vc = ColorGet(G,c1); /* save new color */
 			 *(v++)=*(vc++);
 			 *(v++)=*(vc++);
 			 *(v++)=*(vc++);

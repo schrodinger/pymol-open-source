@@ -24,7 +24,7 @@ Z* -------------------------------------------------------------------
 #include"Setting.h"
 #include"Feedback.h"
 
-void ExtrudeInit(CExtrude *I);
+void ExtrudeInit(PyMOLGlobals *G,CExtrude *I);
 
 static float smooth(float x,float power)
 {
@@ -40,9 +40,9 @@ static float smooth(float x,float power)
 
 CExtrude *ExtrudeCopyPointsNormalsColors(CExtrude *orig)
 {
-  OOAlloc(CExtrude);
+  OOAlloc(orig->G,CExtrude);
   
-  ExtrudeInit(I);
+  ExtrudeInit(orig->G,I);
 
   ExtrudeAllocPointsNormalsColors(I,orig->N);
 
@@ -53,8 +53,10 @@ CExtrude *ExtrudeCopyPointsNormalsColors(CExtrude *orig)
   return(I);
 }
 
-void ExtrudeInit(CExtrude *I)
+void ExtrudeInit(PyMOLGlobals *G,CExtrude *I)
 {
+  I->G=G;
+
   I->N = 0;
   I->p = NULL;
   I->n = NULL;
@@ -74,7 +76,7 @@ void ExtrudeCircle(CExtrude *I, int n,float size)
   int a;
   float *v,*vn;
 
-  PRINTFD(FB_Extrude)
+  PRINTFD(I->G,FB_Extrude)
     " ExtrudeCircle-DEBUG: entered.\n"
     ENDFD;
   if(n>20) n=20;
@@ -103,7 +105,7 @@ void ExtrudeCircle(CExtrude *I, int n,float size)
       *(v++) = (float)sin(a*2*PI/n)*size;
 	 }
 
-  PRINTFD(FB_Extrude)
+  PRINTFD(I->G,FB_Extrude)
     " ExtrudeCircle-DEBUG: exiting...\n"
     ENDFD;
 
@@ -114,7 +116,7 @@ void ExtrudeOval(CExtrude *I, int n,float width,float length)
   int a;
   float *v,*vn;
 
-  PRINTFD(FB_Extrude)
+  PRINTFD(I->G,FB_Extrude)
     " ExtrudeOval-DEBUG: entered.\n"
     ENDFD;
 
@@ -144,7 +146,7 @@ void ExtrudeOval(CExtrude *I, int n,float width,float length)
       *(v++) = (float)sin(a*2*PI/n)*length;
 	 }
 
-  PRINTFD(FB_Extrude)
+  PRINTFD(I->G,FB_Extrude)
     " ExtrudeOval-DEBUG: exiting...\n"
     ENDFD;
 
@@ -154,7 +156,7 @@ void ExtrudeRectangle(CExtrude *I,float width,float length,int mode)
 {
   float *v,*vn;
 
-  PRINTFD(FB_Extrude)
+  PRINTFD(I->G,FB_Extrude)
     " ExtrudeRectangle-DEBUG: entered...\n"
     ENDFD;
 
@@ -241,7 +243,7 @@ void ExtrudeRectangle(CExtrude *I,float width,float length,int mode)
     *(v++) = (float)-sin(PI/4)*length;
   }
 
-  PRINTFD(FB_Extrude)
+  PRINTFD(I->G,FB_Extrude)
     " ExtrudeRectangle-DEBUG: exiting...\n"
     ENDFD;
 
@@ -254,7 +256,7 @@ void ExtrudeDumbbell1(CExtrude *I,float width,float length,int mode)
 {
   float *v,*vn;
 
-  PRINTFD(FB_Extrude)
+  PRINTFD(I->G,FB_Extrude)
     " ExtrudeDumbbell1-DEBUG: entered...\n"
     ENDFD;
 
@@ -311,7 +313,7 @@ void ExtrudeDumbbell1(CExtrude *I,float width,float length,int mode)
     *(v++) = (float)-sin(PI/4)*length;
   }
 
-  PRINTFD(FB_Extrude)
+  PRINTFD(I->G,FB_Extrude)
     " ExtrudeDumbbell1-DEBUG: exiting...\n"
     ENDFD;
 
@@ -324,7 +326,7 @@ void ExtrudeDumbbellEdge(CExtrude *I,int samp,int sign,float length)
   int a;
   float *n,*p,f,disp;
 
-  PRINTFD(FB_Extrude)
+  PRINTFD(I->G,FB_Extrude)
     " ExtrudeDumbbellEdge-DEBUG: entered.\n"
     ENDFD;
   disp = (float)(sign*sin(PI/4)*length);
@@ -343,7 +345,7 @@ void ExtrudeDumbbellEdge(CExtrude *I,int samp,int sign,float length)
       (*p++) += *(n++)*f;
       (*p++) += *(n++)*f;
 	 }
-  PRINTFD(FB_Extrude)
+  PRINTFD(I->G,FB_Extrude)
     " ExtrudeDumbbellEdge-DEBUG: exiting...\n"
     ENDFD;
 
@@ -356,7 +358,7 @@ void ExtrudeDumbbell2(CExtrude *I, int n,int sign,float length,float size)
   int a;
   float *v,*vn;
 
-  PRINTFD(FB_Extrude)
+  PRINTFD(I->G,FB_Extrude)
     " ExtrudeDumbbell2-DEBUG: entered.\n"
     ENDFD;
   if(n>20) n=20;
@@ -385,17 +387,17 @@ void ExtrudeDumbbell2(CExtrude *I, int n,int sign,float length,float size)
       *(v++) = (float)((sin(a*2*PI/n)*size)+(sign*sin(PI/4)*length));
 	 }
 
-  PRINTFD(FB_Extrude)
+  PRINTFD(I->G,FB_Extrude)
     " ExtrudeDumbbell2-DEBUG: exiting...\n"
     ENDFD;
 
 }
 
 
-CExtrude *ExtrudeNew(void)
+CExtrude *ExtrudeNew(PyMOLGlobals *G)
 {
-  OOAlloc(CExtrude);
-  ExtrudeInit(I);
+  OOAlloc(G,CExtrude);
+  ExtrudeInit(G,I);
   return(I);
 }
 
@@ -404,7 +406,7 @@ void ExtrudeBuildNormals1f(CExtrude *I)
   int a;
   float *v;
 
-  PRINTFD(FB_Extrude)
+  PRINTFD(I->G,FB_Extrude)
     " ExtrudeBuildNormals1f-DEBUG: entered.\n"
     ENDFD;
 
@@ -419,7 +421,7 @@ void ExtrudeBuildNormals1f(CExtrude *I)
       }
   }
 
-  PRINTFD(FB_Extrude)
+  PRINTFD(I->G,FB_Extrude)
     " ExtrudeBuildNormals1f-DEBUG: exiting...\n"
     ENDFD;
 
@@ -429,7 +431,7 @@ void ExtrudeBuildNormals2f(CExtrude *I)
 {
   int a;
   float *v;
-  PRINTFD(FB_Extrude)
+  PRINTFD(I->G,FB_Extrude)
     " ExtrudeBuildNormals2f-DEBUG: entered.\n"
     ENDFD;
 
@@ -442,7 +444,7 @@ void ExtrudeBuildNormals2f(CExtrude *I)
       }
   }
 
-  PRINTFD(FB_Extrude)
+  PRINTFD(I->G,FB_Extrude)
     " ExtrudeBuildNormals2f-DEBUG: entering...\n"
     ENDFD;
 
@@ -500,7 +502,7 @@ void ExtrudeComputeTangents(CExtrude *I)
   float *nv,*v1,*v;
   int a;
 
-  PRINTFD(FB_Extrude)
+  PRINTFD(I->G,FB_Extrude)
     " ExtrudeComputeTangents-DEBUG: entered.\n"
     ENDFD;
 
@@ -542,7 +544,7 @@ void ExtrudeComputeTangents(CExtrude *I)
 
   FreeP(nv);
 
-  PRINTFD(FB_Extrude)
+  PRINTFD(I->G,FB_Extrude)
     " ExtrudeComputeTangents-DEBUG: exiting...\n"
     ENDFD;
 
@@ -601,7 +603,7 @@ void ExtrudeCGOSurfaceTube(CExtrude *I,CGO *cgo,int cap,float *color_override)
   float *sv,*sn,*tv,*tn,*tv1,*tn1,*TV,*TN;
   float v0[3];
   int start,stop;
-  PRINTFD(FB_Extrude)
+  PRINTFD(I->G,FB_Extrude)
     " ExtrudeCGOSurfaceTube-DEBUG: entered.\n"
     ENDFD;
 
@@ -650,7 +652,7 @@ void ExtrudeCGOSurfaceTube(CExtrude *I,CGO *cgo,int cap,float *color_override)
     start=I->Ns/4;
     stop=3*I->Ns/4;
     for(b=0;b<I->Ns;b++) {
-      if(SettingGet(cSetting_cartoon_debug)<1.5)
+      if(SettingGet(I->G,cSetting_cartoon_debug)<1.5)
         CGOBegin(cgo,GL_TRIANGLE_STRIP);
       else {
         CGOBegin(cgo,GL_LINE_STRIP);        
@@ -678,7 +680,7 @@ void ExtrudeCGOSurfaceTube(CExtrude *I,CGO *cgo,int cap,float *color_override)
       CGOEnd(cgo);
     }
 
-    if(SettingGet(cSetting_cartoon_debug)>=1.5) {
+    if(SettingGet(I->G,cSetting_cartoon_debug)>=1.5) {
       CGOEnable(cgo,GL_LIGHTING);
     }
     
@@ -745,7 +747,7 @@ void ExtrudeCGOSurfaceTube(CExtrude *I,CGO *cgo,int cap,float *color_override)
     FreeP(TN);
   }
   
-  PRINTFD(FB_Extrude)
+  PRINTFD(I->G,FB_Extrude)
     " ExtrudeCGOSurfaceTube-DEBUG: exiting...\n"
     ENDFD;
 
@@ -761,7 +763,7 @@ void ExtrudeCGOSurfacePolygon(CExtrude *I,CGO *cgo,int cap,float *color_override
   float *sv,*sn,*tv,*tn,*tv1,*tn1,*TV,*TN;
   float v0[3];
 
-  PRINTFD(FB_Extrude)
+  PRINTFD(I->G,FB_Extrude)
     " ExtrudeCGOSurfacePolygon-DEBUG: entered.\n"
     ENDFD;
   
@@ -808,7 +810,7 @@ void ExtrudeCGOSurfacePolygon(CExtrude *I,CGO *cgo,int cap,float *color_override
     tn1 = TN+3*I->N;
 
     for(b=0;b<I->Ns;b+=2) {
-      if(SettingGet(cSetting_cartoon_debug)<1.5)
+      if(SettingGet(I->G,cSetting_cartoon_debug)<1.5)
         CGOBegin(cgo,GL_TRIANGLE_STRIP);
       else {
         CGOBegin(cgo,GL_LINE_STRIP);        
@@ -840,7 +842,7 @@ void ExtrudeCGOSurfacePolygon(CExtrude *I,CGO *cgo,int cap,float *color_override
       CGOEnd(cgo);
     }
 
-    if(SettingGet(cSetting_cartoon_debug)>1.5) {
+    if(SettingGet(I->G,cSetting_cartoon_debug)>1.5) {
       CGOEnable(cgo,GL_LIGHTING);
     }
 
@@ -904,7 +906,7 @@ void ExtrudeCGOSurfacePolygon(CExtrude *I,CGO *cgo,int cap,float *color_override
     FreeP(TN);
   }
   
-  PRINTFD(FB_Extrude)
+  PRINTFD(I->G,FB_Extrude)
     " ExtrudeCGOSurfacePolygon-DEBUG: exiting...\n"
     ENDFD;
 
@@ -923,7 +925,7 @@ void ExtrudeCGOSurfacePolygonTaper(CExtrude *I,CGO *cgo,int sampling,float *colo
 
   subN=I->N-sampling;
 
-  PRINTFD(FB_Extrude)
+  PRINTFD(I->G,FB_Extrude)
     " ExtrudeCGOSurfacePolygon-DEBUG: entered.\n"
     ENDFD;
   
@@ -993,7 +995,7 @@ void ExtrudeCGOSurfacePolygonTaper(CExtrude *I,CGO *cgo,int sampling,float *colo
     tn1 = TN+3*I->N;
 
     for(b=0;b<I->Ns;b+=2) {
-      if(SettingGet(cSetting_cartoon_debug)<1.5)
+      if(SettingGet(I->G,cSetting_cartoon_debug)<1.5)
         CGOBegin(cgo,GL_TRIANGLE_STRIP);
       else {
         CGOBegin(cgo,GL_LINE_STRIP);        
@@ -1025,7 +1027,7 @@ void ExtrudeCGOSurfacePolygonTaper(CExtrude *I,CGO *cgo,int sampling,float *colo
       CGOEnd(cgo);
     }
 
-    if(SettingGet(cSetting_cartoon_debug)>1.5) {
+    if(SettingGet(I->G,cSetting_cartoon_debug)>1.5) {
       CGOEnable(cgo,GL_LIGHTING);
     }
 
@@ -1033,7 +1035,7 @@ void ExtrudeCGOSurfacePolygonTaper(CExtrude *I,CGO *cgo,int sampling,float *colo
     FreeP(TN);
   }
   
-  PRINTFD(FB_Extrude)
+  PRINTFD(I->G,FB_Extrude)
     " ExtrudeCGOSurfacePolygon-DEBUG: exiting...\n"
     ENDFD;
   
@@ -1055,7 +1057,7 @@ void ExtrudeCGOSurfaceStrand(CExtrude *I,CGO *cgo,int sampling,float *color_over
   
   subN=I->N-sampling;
 
-  PRINTFD(FB_Extrude)
+  PRINTFD(I->G,FB_Extrude)
     " ExtrudeCGOSurfaceStrand-DEBUG: entered.\n"
     ENDFD;
   
@@ -1106,7 +1108,7 @@ void ExtrudeCGOSurfaceStrand(CExtrude *I,CGO *cgo,int sampling,float *color_over
     tn1 = TN+3*I->N;
 
     for(b=0;b<I->Ns;b+=2) {
-      if(SettingGet(cSetting_cartoon_debug)<1.5)
+      if(SettingGet(I->G,cSetting_cartoon_debug)<1.5)
         CGOBegin(cgo,GL_TRIANGLE_STRIP);
       else {
         CGOBegin(cgo,GL_LINE_STRIP);        
@@ -1142,7 +1144,7 @@ void ExtrudeCGOSurfaceStrand(CExtrude *I,CGO *cgo,int sampling,float *color_over
       CGOEnd(cgo);
     }
 
-    if(SettingGet(cSetting_cartoon_debug)>1.5) {
+    if(SettingGet(I->G,cSetting_cartoon_debug)>1.5) {
       CGOEnable(cgo,GL_LIGHTING);
     }
 
@@ -1219,7 +1221,7 @@ void ExtrudeCGOSurfaceStrand(CExtrude *I,CGO *cgo,int sampling,float *color_over
     tn1 = TN+3*I->N;
 
     for(b=0;b<I->Ns;b+=2) {
-      if(SettingGet(cSetting_cartoon_debug)<1.5)
+      if(SettingGet(I->G,cSetting_cartoon_debug)<1.5)
         CGOBegin(cgo,GL_TRIANGLE_STRIP);
       else {
         CGOBegin(cgo,GL_LINE_STRIP);        
@@ -1293,7 +1295,7 @@ void ExtrudeCGOSurfaceStrand(CExtrude *I,CGO *cgo,int sampling,float *color_over
     FreeP(TN);
   }
   
-  PRINTFD(FB_Extrude)
+  PRINTFD(I->G,FB_Extrude)
     " ExtrudeCGOSurfaceStrand-DEBUG: exiting...\n"
     ENDFD;
 

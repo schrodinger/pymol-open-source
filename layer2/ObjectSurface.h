@@ -47,14 +47,14 @@ typedef struct ObjectSurface {
   int NState;
 } ObjectSurface;
 
-ObjectSurface *ObjectSurfaceFromBox(ObjectSurface *obj,ObjectMap *map,
+ObjectSurface *ObjectSurfaceFromBox(PyMOLGlobals *G,ObjectSurface *obj,ObjectMap *map,
                                     int map_state,
                               int state,float *mn,float *mx,
                               float level,int mode,
                               float carve,float *vert_vla,int side);
 void ObjectSurfaceDump(ObjectSurface *I,char *fname,int state);
 
-int ObjectSurfaceNewFromPyList(PyObject *list,ObjectSurface **result);
+int ObjectSurfaceNewFromPyList(PyMOLGlobals *G,PyObject *list,ObjectSurface **result);
 PyObject *ObjectSurfaceAsPyList(ObjectSurface *I);
 int ObjectSurfaceSetLevel(ObjectSurface *I,float level,int state);
 

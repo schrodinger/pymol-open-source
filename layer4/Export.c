@@ -29,13 +29,13 @@ Z* -------------------------------------------------------------------
 #include"ObjectMolecule.h"
 #include"Scene.h"
 
-void ExportDotsObjFree(ExportDotsObj *rec);
+void ExportDotsObjFree(PyMOLGlobals *G,ExportDotsObj *rec);
 
 /*--------------------------------------------------------------------- */
 
 /* routines for shuttling coordinates to and from molecular mechanics routines */
 
-ExportCoords *ExportCoordsExport(char *name,int state,int order)
+ExportCoords *ExportCoordsExport(PyMOLGlobals *G,char *name,int state,int order)
 {
   ExportCoords *io = NULL;
   ObjectMolecule *obj;
@@ -43,7 +43,7 @@ ExportCoords *ExportCoordsExport(char *name,int state,int order)
   int a,a0;
   float *crd0,*crd1;
 
-  obj = ExecutiveFindObjectMoleculeByName(name);
+  obj = ExecutiveFindObjectMoleculeByName(G,name);
   if(obj&&(state>=0)) {
     if((state<obj->NCSet)&&(!obj->DiscreteFlag)) {
       if(obj->CSet[state]) {
@@ -82,7 +82,7 @@ ExportCoords *ExportCoordsExport(char *name,int state,int order)
   return((void*)io);
 }
 
-int ExportCoordsImport(char *name,int state,ExportCoords *io,int order)
+int ExportCoordsImport(PyMOLGlobals *G,char *name,int state,ExportCoords *io,int order)
 {
   int result = false;
   ObjectMolecule *obj;
@@ -90,21 +90,21 @@ int ExportCoordsImport(char *name,int state,ExportCoords *io,int order)
   int a,a0,cc;
   float *crd0,*crd1;
 
-  obj = ExecutiveFindObjectMoleculeByName(name);
+  obj = ExecutiveFindObjectMoleculeByName(G,name);
   if(io) {
     if(!obj) {
-      result=ErrMessage("ExportCoordsImport","invalid object");
+      result=ErrMessage(G,"ExportCoordsImport","invalid object");
     } else {
       if((state<0)||(state>=obj->NCSet)||(obj->DiscreteFlag)) {
-        result=ErrMessage("ExportCoordsImport","invalid state for object.");
+        result=ErrMessage(G,"ExportCoordsImport","invalid state for object.");
       } else  {
         if(!obj->CSet[state]) {
-          result=ErrMessage("ExportCoordsImport","empty state.");
+          result=ErrMessage(G,"ExportCoordsImport","empty state.");
         } else {
           cs=obj->CSet[state];
           if(cs->NIndex!=io->nAtom) {
-            result=ErrMessage("ExportCoordsImport","atom count mismatch.");
-            PRINTF "ExportCoordsImport: cset %d != io %d \n",cs->NIndex,io->nAtom ENDF;
+            result=ErrMessage(G,"ExportCoordsImport","atom count mismatch.");
+            PRINTF "ExportCoordsImport: cset %d != io %d \n",cs->NIndex,io->nAtom ENDF(G);
           } else {
 
             crd0=cs->Coord;
@@ -132,7 +132,7 @@ int ExportCoordsImport(char *name,int state,ExportCoords *io,int order)
 
             if(cs->fInvalidateRep)
               cs->fInvalidateRep(cs,cRepAll,cRepInvAll);
-            SceneChanged();
+            SceneChanged(G);
             result = true;
           }
         }
@@ -142,7 +142,7 @@ int ExportCoordsImport(char *name,int state,ExportCoords *io,int order)
   return(result);
 }
 
-void ExportCoordsFree(ExportCoords *io)
+void ExportCoordsFree(PyMOLGlobals *G,ExportCoords *io)
 {
   if(io) {
     FreeP(io->coord);
@@ -150,7 +150,7 @@ void ExportCoordsFree(ExportCoords *io)
   }
 }
 
-ExportDotsObj *ExportDots(char *name,int csIndex)
+ExportDotsObj *ExportDots(PyMOLGlobals *G,char *name,int csIndex)
 {
   CObject *obj;
   ObjectMolecule *objMol;
@@ -159,27 +159,27 @@ ExportDotsObj *ExportDots(char *name,int csIndex)
   ExportDotsObj *result = NULL;
   int ok = true;
 
-  obj=ExecutiveFindObjectByName(name);
+  obj=ExecutiveFindObjectByName(G,name);
   if(!obj) 
-	 ok=ErrMessage("ExportDots","Not a valid object name.");
+	 ok=ErrMessage(G,"ExportDots","Not a valid object name.");
   else if(obj->type!=cObjectMolecule)
-	 ok=ErrMessage("ExportDots","Not molecule object.");
+	 ok=ErrMessage(G,"ExportDots","Not molecule object.");
 
   if(ok) {
-    /*	 ExecutiveSetRepVisib(name,cRepDot,1); */
+    /*	 ExecutiveSetRepVisib(G,name,cRepDot,1); */
 	 objMol = (ObjectMolecule*)obj;
 	 cs = ObjectMoleculeGetCoordSet(objMol,csIndex);
 	 if(!cs)
-		ok=ErrMessage("ExportDots","Invalid coordinate set number.");
+		ok=ErrMessage(G,"ExportDots","Invalid coordinate set number.");
   }
 
   if(ok) {
 	 rep = (RepDot*)RepDotDoNew(cs,cRepDotAreaType);
 	 if(!rep) 
-		ok=ErrMessage("ExportDots","Couldn't get dot representation.");
+		ok=ErrMessage(G,"ExportDots","Couldn't get dot representation.");
 	 else {
 		result=Alloc(ExportDotsObj,1);
-		ErrChkPtr(result);
+		ErrChkPtr(G,result);
 		result->export.fFree=(void (*)(struct Export *))ExportDotsObjFree;
 		/* cannabilize the data structures */
 		result->point=rep->V;
@@ -204,7 +204,7 @@ ExportDotsObj *ExportDots(char *name,int csIndex)
 
 
 
-void ExportDotsObjFree(ExportDotsObj *obj)
+void ExportDotsObjFree(PyMOLGlobals *G,ExportDotsObj *obj)
 {
   if(obj) {
 	 FreeP(obj->point);
@@ -215,7 +215,7 @@ void ExportDotsObjFree(ExportDotsObj *obj)
   }
 }
 
-void ExportDeleteMDebug(Export *ex)
+void ExportDeleteMDebug(PyMOLGlobals *G,Export *ex)
 {
   if(ex) 
 	 if(ex->fFree)

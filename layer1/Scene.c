@@ -64,9 +64,7 @@ typedef struct ObjRec {
 } ObjRec;
 
 
-ListVarDeclare(ObjList,ObjRec);
-
-typedef struct {
+struct _CScene {
   Block *Block;
   ObjRec *Obj;
   float RotMatrix[16];
@@ -112,10 +110,7 @@ typedef struct {
   float LastPickVertex[3];
   int LastPickVertexFlag;
 
-} CScene;
-
-CScene Scene;
-
+};
 
 typedef struct {
   float unit_left,unit_right,unit_top,unit_bottom,unit_front,unit_back;
@@ -142,34 +137,34 @@ static const char SelModeKW[][20]  = {
   "bca.",
 };
 
-void SceneUpdateStereo(void)
+void SceneUpdateStereo(PyMOLGlobals *G)
 {
-  SceneSetStereo(SettingGetGlobal_b(cSetting_stereo));
+  SceneSetStereo(G,SettingGetGlobal_b(G,cSetting_stereo));
 }
 
-char *SceneGetSeleModeKeyword(void)
+char *SceneGetSeleModeKeyword(PyMOLGlobals *G)
 {
-  int sel_mode = SettingGet(cSetting_mouse_selection_mode);
+  int sel_mode = SettingGet(G,cSetting_mouse_selection_mode);
   if((sel_mode>=0)&&(sel_mode<SELE_MODE_MAX))
     return (char*)SelModeKW[sel_mode];
   return (char*)SelModeKW[0];
 }
 
-void SceneCopy(GLenum buffer,int force);
+void SceneCopy(PyMOLGlobals *G,GLenum buffer,int force);
 
-unsigned int SceneFindTriplet(int x,int y,GLenum gl_buffer);
-unsigned int *SceneReadTriplets(int x,int y,int w,int h,GLenum gl_buffer);
+unsigned int SceneFindTriplet(PyMOLGlobals *G,int x,int y,GLenum gl_buffer);
+unsigned int *SceneReadTriplets(PyMOLGlobals *G,int x,int y,int w,int h,GLenum gl_buffer);
 
 void SceneDraw(Block *block);
-void ScenePrepareMatrix(int mode);
+void ScenePrepareMatrix(PyMOLGlobals *G,int mode);
 
-void ScenePrepareUnitContext(SceneUnitContext *context,int width,int height);
+void ScenePrepareUnitContext(PyMOLGlobals *G,SceneUnitContext *context,int width,int height);
 
 #if 0
-static int SceneGetObjState(CObject *obj,int state)
+static int SceneGetObjState(PyMOLGlobals *G,CObject *obj,int state)
 {
   int objState;
-  if(SettingGetIfDefined_i(obj->Setting,cSetting_state,&objState)) {
+  if(SettingGetIfDefined_i(G,obj->Setting,cSetting_state,&objState)) {
     if(objState>0) { /* specific state */
       state=objState-1;
     } if(objState<0) { /* all states */
@@ -177,18 +172,18 @@ static int SceneGetObjState(CObject *obj,int state)
     }
   }
   if(state>=0) { /* if all states for object is set */
-    if(SettingGet_i(obj->Setting,NULL,cSetting_all_states))
+    if(SettingGet_i(G,obj->Setting,NULL,cSetting_all_states))
       state=-1;
   }
   return(state);
 }
 #endif
 
-void SceneToViewElem(CViewElem *elem)
+void SceneToViewElem(PyMOLGlobals *G,CViewElem *elem)
 {
   float *fp;
   double *dp;
-  CScene *I=&Scene;
+  register CScene *I=G->Scene;
 
   /* copy rotation matrix */
   elem->matrix_flag = true;
@@ -235,13 +230,13 @@ void SceneToViewElem(CViewElem *elem)
   elem->back = I->Back;
 
   elem->ortho_flag = true;
-  elem->ortho = SettingGet(cSetting_ortho);
+  elem->ortho = SettingGet(G,cSetting_ortho);
   
 }
 
-void SceneFromViewElem(CViewElem *elem)
+void SceneFromViewElem(PyMOLGlobals *G,CViewElem *elem)
 {
-  CScene *I=&Scene;
+  register CScene *I=G->Scene;
   float *fp;
   double *dp;
   int changed_flag = false;
@@ -290,23 +285,23 @@ void SceneFromViewElem(CViewElem *elem)
   }   
 
   if(elem->clip_flag) {
-    SceneClipSet(elem->front,elem->back);
+    SceneClipSet(G,elem->front,elem->back);
   }
   if(elem->ortho_flag) {
-    SettingSet(cSetting_ortho,elem->ortho);
+    SettingSet(G,cSetting_ortho,elem->ortho);
   }
   if(changed_flag) 
-    SceneRovingDirty();
+    SceneRovingDirty(G);
 }
 
-void SceneCleanupStereo(void)
+void SceneCleanupStereo(PyMOLGlobals *G)
 {
-  CScene *I=&Scene;  
+  register CScene *I=G->Scene;  
   if(I->StereoMode==1)
     PSGIStereo(0);
 }
 
-void ScenePrepareUnitContext(SceneUnitContext *context,int width,int height)
+void ScenePrepareUnitContext(PyMOLGlobals *G,SceneUnitContext *context,int width,int height)
 {
   float tw = 1.0F;
   float th = 1.0F;
@@ -331,7 +326,7 @@ void ScenePrepareUnitContext(SceneUnitContext *context,int width,int height)
   context->unit_front = -0.5F;
   context->unit_back = 0.5F;
 
-  PRINTFD(FB_Scene)
+  PRINTFD(G,FB_Scene)
     "ScenePrepareUnitContext:%8.3f %8.3f %8.3f %8.3f %8.3f %8.3f\n",
     context->unit_left,
     context->unit_right,
@@ -342,51 +337,51 @@ void ScenePrepareUnitContext(SceneUnitContext *context,int width,int height)
     ENDFD;
 
 }
-void SceneGetWidthHeight(int *width,int *height)
+void SceneGetWidthHeight(PyMOLGlobals *G,int *width,int *height)
 {
-  CScene *I=&Scene;  
+  register CScene *I=G->Scene;  
   *width = I->Width;
   *height = I->Height;
 }
 
-void SceneSetCardInfo(char *vendor,char *renderer,char *version){
-  CScene *I=&Scene;  
+void SceneSetCardInfo(PyMOLGlobals *G,char *vendor,char *renderer,char *version){
+  register CScene *I=G->Scene;  
   UtilNCopy(I->vendor,vendor,sizeof(OrthoLineType)-1);
   UtilNCopy(I->renderer,renderer,sizeof(OrthoLineType)-1);
   UtilNCopy(I->version,version,sizeof(OrthoLineType)-1);
 }
 
-int SceneGetStereo(void)
+int SceneGetStereo(PyMOLGlobals *G)
 {
-  CScene *I=&Scene;  
+  register CScene *I=G->Scene;  
   return(I->StereoMode);
 }
-void SceneGetCardInfo(char **vendor,char **renderer,char **version)
+void SceneGetCardInfo(PyMOLGlobals *G,char **vendor,char **renderer,char **version)
 {
-  CScene *I=&Scene;  
+  register CScene *I=G->Scene;  
   (*vendor)=I->vendor;
   (*renderer)=I->renderer;
   (*version)=I->version;
 }
-void SceneSuppressMovieFrame(void)
+void SceneSuppressMovieFrame(PyMOLGlobals *G)
 {
-  CScene *I=&Scene;  
+  register CScene *I=G->Scene;  
   I->MovieFrameFlag = false;
 }
-void SceneGetPos(float *pos)
+void SceneGetPos(PyMOLGlobals *G,float *pos)
 {
   /* returns realspace coordinates for center of screen */
 
-  CScene *I=&Scene;  
+  register CScene *I=G->Scene;  
   
-  PRINTFD(FB_Scene)
+  PRINTFD(G,FB_Scene)
     " SceneGetPos: origin of rotation"
     ENDFD3f(I->Origin);
   /* take origin into camera coords */
 
   MatrixTransform3f(I->RotMatrix,I->Origin,pos); 
 
-  PRINTFD(FB_Scene)
+  PRINTFD(G,FB_Scene)
     " SceneGetPos: origin in camera  "
     ENDFD3f(pos);
 
@@ -395,7 +390,7 @@ void SceneGetPos(float *pos)
   pos[0]=pos[0]-I->Pos[0]; 
   pos[1]=pos[1]-I->Pos[1];
   /*  pos[2]=pos[2]+I->Pos[2]; +(I->FrontSafe+I->Back)/2; */
-  PRINTFD(FB_Scene)
+  PRINTFD(G,FB_Scene)
     " SceneGetPos: center in camera  "
     ENDFD3f(pos);
 
@@ -403,43 +398,43 @@ void SceneGetPos(float *pos)
 
   MatrixInvTransform3f(I->RotMatrix,pos,pos);
 
-  PRINTFD(FB_Scene)
+  PRINTFD(G,FB_Scene)
     " SceneGetPos: center            "
     ENDFD3f(pos);
 
 }
 /*========================================================================*/
-void SceneApplyRotMatrix(float *src,float *dst)
+void SceneApplyRotMatrix(PyMOLGlobals *G,float *src,float *dst)
 {
-  CScene *I=&Scene;
+  register CScene *I=G->Scene;
   MatrixTransform3f(I->RotMatrix,src,dst);
 }
 /*========================================================================*/
-int SceneMultipick(Multipick *smp)
+int SceneMultipick(PyMOLGlobals *G,Multipick *smp)
 {
-  CScene *I=&Scene;
-  if(((int)SettingGet(cSetting_overlay))&&((int)SettingGet(cSetting_text)))
-    SceneRender(NULL,0,0,NULL); /* remove overlay if present */
-  SceneDontCopyNext();
+  register CScene *I=G->Scene;
+  if(((int)SettingGet(G,cSetting_overlay))&&((int)SettingGet(G,cSetting_text)))
+    SceneRender(G,NULL,0,0,NULL); /* remove overlay if present */
+  SceneDontCopyNext(G);
   if(I->StereoMode>1) {
     smp->x = smp->x % (I->Width/2);
   }
-  SceneRender(NULL,0,0,smp);
-  SceneDirty();
+  SceneRender(G,NULL,0,0,smp);
+  SceneDirty(G);
   return(1);
 }
 /*========================================================================*/
-int SceneGetNFrame(void)
+int SceneGetNFrame(PyMOLGlobals *G)
 {
-  CScene *I=&Scene;
+  register CScene *I=G->Scene;
   return(I->NFrame);
 }
 /*========================================================================*/
-void SceneGetView(SceneViewType view)
+void SceneGetView(PyMOLGlobals *G,SceneViewType view)
 {
   float *p;
   int a;
-  CScene *I=&Scene;
+  register CScene *I=G->Scene;
   p=view;
   for(a=0;a<16;a++)
     *(p++) = I->RotMatrix[a];
@@ -451,14 +446,14 @@ void SceneGetView(SceneViewType view)
   *(p++) = I->Origin[2];
   *(p++) = I->Front;
   *(p++) = I->Back;
-  *(p++) = SettingGet(cSetting_ortho);
+  *(p++) = SettingGet(G,cSetting_ortho);
 }
 /*========================================================================*/
-void SceneSetView(SceneViewType view,int quiet)
+void SceneSetView(PyMOLGlobals *G,SceneViewType view,int quiet)
 {
   float *p;
   int a;
-  CScene *I=&Scene;
+  register CScene *I=G->Scene;
   p=view;
   for(a=0;a<16;a++)
     I->RotMatrix[a] = *(p++); 
@@ -468,46 +463,46 @@ void SceneSetView(SceneViewType view,int quiet)
   I->Origin[0] = *(p++);
   I->Origin[1] = *(p++);
   I->Origin[2] = *(p++);
-  SceneClipSet(p[0],p[1]);
+  SceneClipSet(G,p[0],p[1]);
   p+=2;
-  SettingSet(cSetting_ortho,*(p++));
+  SettingSet(G,cSetting_ortho,*(p++));
   if(!quiet) { 
-    PRINTFB(FB_Scene,FB_Actions)
+    PRINTFB(G,FB_Scene,FB_Actions)
       " Scene: view updated.\n"
-      ENDFB;
+      ENDFB(G);
   }
-  SceneRovingDirty();
+  SceneRovingDirty(G);
 }
 /*========================================================================*/
-void SceneDontCopyNext(void)
+void SceneDontCopyNext(PyMOLGlobals *G)
 /* disables automatic copying of the image for the next rendering run */
 {
-  CScene *I=&Scene;
+  register CScene *I=G->Scene;
   I->CopyNextFlag=false;
 }
 /*========================================================================*/
-void SceneUpdateStereoMode(void)
+void SceneUpdateStereoMode(PyMOLGlobals *G)
 {
-  CScene *I=&Scene;
+  register CScene *I=G->Scene;
   if(I->StereoMode) {
-    SceneSetStereo(true);
+    SceneSetStereo(G,true);
   }
 }
 /*========================================================================*/
-void SceneSetStereo(int flag)
+void SceneSetStereo(PyMOLGlobals *G,int flag)
 {
-  CScene *I=&Scene;
+  register CScene *I=G->Scene;
   if(flag) 
-    I->StereoMode=(int)SettingGet(cSetting_stereo_mode);
+    I->StereoMode=(int)SettingGet(G,cSetting_stereo_mode);
   else
     I->StereoMode=false;
-  SettingSetGlobal_b(cSetting_stereo,flag);
-  SceneDirty();
+  SettingSetGlobal_b(G,cSetting_stereo,flag);
+  SceneDirty(G);
 }
 /*========================================================================*/
-void SceneTranslate(float x,float y, float z)
+void SceneTranslate(PyMOLGlobals *G,float x,float y, float z)
 {
-  CScene *I=&Scene;
+  register CScene *I=G->Scene;
   I->Pos[0]+=x;
   I->Pos[1]+=y;
   I->Pos[2]+=z;
@@ -516,38 +511,38 @@ void SceneTranslate(float x,float y, float z)
   if(I->Front>I->Back)
 	 I->Front=I->Back+cSliceMin;
   I->FrontSafe= GetFrontSafe(I->Front,I->Back);
-  SceneDirty();
+  SceneDirty(G);
 }
 /*========================================================================*/
-void SceneClipSet(float front,float back)
+void SceneClipSet(PyMOLGlobals *G,float front,float back)
 {
-  CScene *I=&Scene;
+  register CScene *I=G->Scene;
   I->Front=front;
   I->Back=back;
   if(I->Front>I->Back)
 	 I->Front=I->Back+cSliceMin;
   I->FrontSafe= GetFrontSafe(I->Front,I->Back);
-  SceneDirty();
+  SceneDirty(G);
 }
 /*========================================================================*/
-void SceneClip(int plane,float movement,char *sele,int state) /* 0=front, 1=back*/
+void SceneClip(PyMOLGlobals *G,int plane,float movement,char *sele,int state) /* 0=front, 1=back*/
 {
-  CScene *I=&Scene;
+  register CScene *I=G->Scene;
   float avg;
   float mn[3],mx[3],cent[3],v0[3],offset[3],origin[3];
   switch(plane) {
   case 0: /* near */
-    SceneClipSet(I->Front-movement,I->Back);
+    SceneClipSet(G,I->Front-movement,I->Back);
     break;
   case 1: /* far */
-    SceneClipSet(I->Front,I->Back-movement);      
+    SceneClipSet(G,I->Front,I->Back-movement);      
     break;
   case 2: /* move */
-    SceneClipSet(I->Front-movement,I->Back-movement);    
+    SceneClipSet(G,I->Front-movement,I->Back-movement);    
     break;
   case 3: /* slab */
     if(sele[0]) {
-      if(!ExecutiveGetExtent(sele,mn,mx,true,state,false))
+      if(!ExecutiveGetExtent(G,sele,mn,mx,true,state,false))
         sele = NULL;
       else {
         average3f(mn,mx,cent); /* get center of selection */
@@ -562,7 +557,7 @@ void SceneClip(int plane,float movement,char *sele,int state) /* 0=front, 1=back
     if(sele) {
       avg = -I->Pos[2]-offset[2];
     }
-    SceneClipSet(avg-movement,avg+movement);
+    SceneClipSet(G,avg-movement,avg+movement);
     break;
   case 4: /* atoms */
     if(!sele) 
@@ -570,7 +565,7 @@ void SceneClip(int plane,float movement,char *sele,int state) /* 0=front, 1=back
     else if(!sele[0]) {
       sele=cKeywordAll;
     } 
-    if(!ExecutiveGetCameraExtent(sele,mn,mx,true,state))
+    if(!ExecutiveGetCameraExtent(G,sele,mn,mx,true,state))
       sele = NULL;
     if(sele) {
       if(sele[0]) {
@@ -578,7 +573,7 @@ void SceneClip(int plane,float movement,char *sele,int state) /* 0=front, 1=back
         MatrixTransform3f(I->RotMatrix,I->Origin,origin); /* convert to view-space */
         subtract3f(mx,origin,mx); /* how far from origin? */
         subtract3f(mn,origin,mn); /* how far from origin? */
-        SceneClipSet(-I->Pos[2]-mx[2]-movement,-I->Pos[2]-mn[2]+movement);
+        SceneClipSet(G,-I->Pos[2]-mx[2]-movement,-I->Pos[2]-mn[2]+movement);
       } else {
         sele = NULL;
       }
@@ -592,46 +587,46 @@ void SceneClip(int plane,float movement,char *sele,int state) /* 0=front, 1=back
       float new_front = avg+new_width/2.0F;
       float new_back = avg-new_width/2.0F;
       
-      SceneClipSet(new_front,new_back);
+      SceneClipSet(G,new_front,new_back);
     }
     break;
   case 6: /* proportional movement */
     {
       float shift = (I->Front-I->Back)*movement;
-      SceneClipSet(I->Front+shift,I->Back+shift);    
+      SceneClipSet(G,I->Front+shift,I->Back+shift);    
     }
     break;
   }
 }
 /*========================================================================*/
-void SceneSetMatrix(float *m)
+void SceneSetMatrix(PyMOLGlobals *G,float *m)
 {
-  CScene *I=&Scene;
+  register CScene *I=G->Scene;
   int a;
   for(a=0;a<16;a++)
 	 I->RotMatrix[a]=m[a];
 }
 /*========================================================================*/
-void SceneGetViewNormal(float *v)
+void SceneGetViewNormal(PyMOLGlobals *G,float *v)
 {
-  CScene *I=&Scene;
+  register CScene *I=G->Scene;
   copy3f(I->ViewNormal,v);
 }
 /*========================================================================*/
-int SceneGetState(void)
+int SceneGetState(PyMOLGlobals *G)
 {
-  return(SettingGetGlobal_i(cSetting_state)-1);
+  return(SettingGetGlobal_i(G,cSetting_state)-1);
 }
 /*========================================================================*/
-float *SceneGetMatrix()
+float *SceneGetMatrix(PyMOLGlobals *G)
 {
-  CScene *I=&Scene;
+  register CScene *I=G->Scene;
   return(I->RotMatrix);
 }
 /*========================================================================*/
-static unsigned char *SceneImagePrepare(void)
+static unsigned char *SceneImagePrepare(PyMOLGlobals *G)
 {
-  CScene *I=&Scene;
+  register CScene *I=G->Scene;
   unsigned int buffer_size;
   GLvoid *image;
   int reset_alpha = false;
@@ -639,7 +634,7 @@ static unsigned char *SceneImagePrepare(void)
   buffer_size = 4*I->Width*I->Height;
   if(!I->CopyFlag) {
 	 image = (GLvoid*)Alloc(char,buffer_size);
-	 ErrChkPtr(image);
+	 ErrChkPtr(G,image);
     if(PMGUI) {
       glReadBuffer(GL_BACK);
       PyMOLReadPixels(I->Block->rect.left,I->Block->rect.bottom,I->Width,I->Height,
@@ -649,16 +644,16 @@ static unsigned char *SceneImagePrepare(void)
       I->ImageBufferHeight=I->Height;
       I->ImageBufferWidth=I->Width;
     } else {
-       PRINTFB(FB_Scene,FB_Errors)
+       PRINTFB(G,FB_Scene,FB_Errors)
          " ScenePNG-WARNING: writing a blank image buffer.\n"
-         ENDFB;
+         ENDFB(G);
      }
   } else {
     image=I->ImageBuffer;
     reset_alpha = I->CopiedFromOpenGL;
-    PRINTFB(FB_Scene,FB_Blather)
+    PRINTFB(G,FB_Scene,FB_Blather)
       " ScenePNG: writing cached image (reset_alpha=%d).\n",reset_alpha
-      ENDFB;
+      ENDFB(G);
   }
   if(reset_alpha&&image) {
     unsigned char *p = (unsigned char*)image;
@@ -673,18 +668,18 @@ static unsigned char *SceneImagePrepare(void)
   return (unsigned char*)image;
 }
 
-static void SceneImageFinish(char *image)
+static void SceneImageFinish(PyMOLGlobals *G,char *image)
 {
-  CScene *I=&Scene;
+  register CScene *I=G->Scene;
 
   if(!I->CopyFlag)
 	 FreeP(image);
 }
 
-int  SceneCopyExternal(int width, int height,int rowbytes,unsigned char *dest)
+int  SceneCopyExternal(PyMOLGlobals *G,int width, int height,int rowbytes,unsigned char *dest)
 {
-  GLvoid *image = SceneImagePrepare();
-  CScene *I=&Scene;
+  GLvoid *image = SceneImagePrepare(G);
+  register CScene *I=G->Scene;
   int result=false;
   int i,j;
   if(image&&(I->ImageBufferWidth==width)&&(I->ImageBufferHeight==height)) {
@@ -703,51 +698,51 @@ int  SceneCopyExternal(int width, int height,int rowbytes,unsigned char *dest)
       }
     result=true;
   }
-  SceneImageFinish(image);  
+  SceneImageFinish(G,image);  
   return(result);
 }
 
-void ScenePNG(char *png,int quiet)
+void ScenePNG(PyMOLGlobals *G,char *png,int quiet)
 {
-  CScene *I=&Scene;
-  GLvoid *image = SceneImagePrepare();
+  register CScene *I=G->Scene;
+  GLvoid *image = SceneImagePrepare(G);
   if(image) {
-    if(MyPNGWrite(png,image,I->ImageBufferWidth,I->ImageBufferHeight)) {
+    if(MyPNGWrite(G,png,image,I->ImageBufferWidth,I->ImageBufferHeight)) {
       if(!quiet) {
-        PRINTFB(FB_Scene,FB_Actions) 
+        PRINTFB(G,FB_Scene,FB_Actions) 
           " ScenePNG: wrote %dx%d pixel image to file \"%s\".\n",
           I->ImageBufferWidth,I->ImageBufferHeight,png
-          ENDFB;
+          ENDFB(G);
       }
     } else {
-      PRINTFB(FB_Scene,FB_Errors) 
+      PRINTFB(G,FB_Scene,FB_Errors) 
         " ScenePNG-Error: error writing \"%s\"! Please check directory...\n",
         png
-        ENDFB;
+        ENDFB(G);
     }
   }
-  SceneImageFinish(image);  
+  SceneImageFinish(G,image);  
 }
 /*========================================================================*/
-void ScenePerspective(int flag)
+void ScenePerspective(PyMOLGlobals *G,int flag)
 {
   float persp;
   persp=(float)(!flag);
-  SettingSetfv(cSetting_ortho,&persp);
-  SceneDirty();
+  SettingSetfv(G,cSetting_ortho,&persp);
+  SceneDirty(G);
 }
 /*========================================================================*/
-int SceneGetFrame(void)
+int SceneGetFrame(PyMOLGlobals *G)
 {
-  if(MovieDefined())
-    return(SettingGetGlobal_i(cSetting_frame)-1);
+  if(MovieDefined(G))
+    return(SettingGetGlobal_i(G,cSetting_frame)-1);
   else
-    return(SettingGetGlobal_i(cSetting_state)-1);    
+    return(SettingGetGlobal_i(G,cSetting_state)-1);    
 }
 /*========================================================================*/
-void SceneCountFrames() 
+void SceneCountFrames(PyMOLGlobals *G) 
 {
-  CScene *I=&Scene;
+  register CScene *I=G->Scene;
   ObjRec *rec = NULL;
   int n;
   int mov_len;
@@ -761,7 +756,7 @@ void SceneCountFrames()
 		if(n>I->NFrame)
 		  I->NFrame=n;
 	 }
-  mov_len = MovieGetLength();
+  mov_len = MovieGetLength(G);
   if(mov_len>0) {
     I->NFrame=mov_len;
   } else if(mov_len<0) {
@@ -769,19 +764,19 @@ void SceneCountFrames()
     if(I->NFrame<mov_len) /* allows you to see cached movie even w/o object */
       I->NFrame=mov_len;
   }
-  PRINTFD(FB_Scene)
+  PRINTFD(G,FB_Scene)
     " SceneCountFrames: leaving... I->NFrame %d\n",I->NFrame
     ENDFD
 }
 /*========================================================================*/
-void SceneSetFrame(int mode,int frame)
+void SceneSetFrame(PyMOLGlobals *G,int mode,int frame)
 {
-  CScene *I=&Scene;
+  register CScene *I=G->Scene;
   int newFrame;
   int newState=0;
   int movieCommand = false;
-  newFrame = SettingGetGlobal_i(cSetting_frame) -1;
-  PRINTFD(FB_Scene)
+  newFrame = SettingGetGlobal_i(G,cSetting_frame) -1;
+  PRINTFD(G,FB_Scene)
     " SceneSetFrame: entered.\n"
     ENDFD;
   switch(mode) {
@@ -826,33 +821,33 @@ void SceneSetFrame(int mode,int frame)
     movieCommand = true;
     break;
   }
-  SceneCountFrames();
+  SceneCountFrames(G);
   if (mode>=0) { 
     if(newFrame>=I->NFrame) newFrame=I->NFrame-1;
     if(newFrame<0) newFrame=0;
-    newState = MovieFrameToIndex(newFrame);
+    newState = MovieFrameToIndex(G,newFrame);
     if(newFrame==0) {
-      MovieMatrix(cMovieMatrixRecall);
+      MovieMatrix(G,cMovieMatrixRecall);
     }
     if(movieCommand) {
-      MovieDoFrameCommand(newFrame);
+      MovieDoFrameCommand(G,newFrame);
     }
-    if(SettingGet(cSetting_cache_frames))
+    if(SettingGet(G,cSetting_cache_frames))
       I->MovieFrameFlag=true;
   }
-  SettingSetGlobal_i(cSetting_frame,newFrame+1);
-  SettingSetGlobal_i(cSetting_state,newState+1);
+  SettingSetGlobal_i(G,cSetting_frame,newFrame+1);
+  SettingSetGlobal_i(G,cSetting_state,newState+1);
 
-  SceneDirty();
-  PRINTFD(FB_Scene)
+  SceneDirty(G);
+  PRINTFD(G,FB_Scene)
     " SceneSetFrame: leaving...\n"
     ENDFD;
 
 }
 /*========================================================================*/
-void ScenePurgeCopy(void)
+void ScenePurgeCopy(PyMOLGlobals *G)
 {
-  CScene *I=&Scene;
+  register CScene *I=G->Scene;
   I->CopyFlag=false;
   if(I->MovieOwnsImageFlag) 
 	 {
@@ -861,83 +856,86 @@ void ScenePurgeCopy(void)
 	 }
 }
 /*========================================================================*/
-void SceneDirty(void) 
+void SceneDirty(PyMOLGlobals *G) 
 	  /* This means that the current image on the screen (and/or in the buffer)
 		 needs to be updated */
 {
-  CScene *I=&Scene;
+  register CScene *I=G->Scene;
 
-  PRINTFD(FB_Scene)
+  PRINTFD(G,FB_Scene)
     " SceneDirty: called.\n"
     ENDFD;
 
-  I->DirtyFlag=true;
-  ScenePurgeCopy();
-  OrthoDirty();
+  if(I) {
+    I->DirtyFlag=true;
+    ScenePurgeCopy(G);
+    OrthoDirty(G);
+  }
+
 }
 
-void SceneRovingPostpone(void)
+void SceneRovingPostpone(PyMOLGlobals *G)
 {
-  CScene *I=&Scene;
+  register CScene *I=G->Scene;
   float delay;
-  if(SettingGet(cSetting_roving_detail)) {
-    delay = SettingGet(cSetting_roving_delay);
+  if(SettingGet(G,cSetting_roving_detail)) {
+    delay = SettingGet(G,cSetting_roving_delay);
     if(delay<0.0F) {
-      I->RovingLastUpdate = UtilGetSeconds(TempPyMOLGlobals); /* put off delay */
+      I->RovingLastUpdate = UtilGetSeconds(G); /* put off delay */
     }
   }
 }
 
-void SceneRovingDirty(void)
+void SceneRovingDirty(PyMOLGlobals *G)
 {
-  CScene *I=&Scene;
+  register CScene *I=G->Scene;
 
-  if(SettingGet(cSetting_roving_detail)) {
-    SceneRovingPostpone();
+  if(SettingGet(G,cSetting_roving_detail)) {
+    SceneRovingPostpone(G);
     I->RovingDirtyFlag=true;
   }
 }
 
 /*========================================================================*/
-void SceneChanged(void)
+void SceneChanged(PyMOLGlobals *G)
 {
-  CScene *I=&Scene;
+  register CScene *I=G->Scene;
   I->ChangedFlag=true;
-  SceneDirty();
-  SeqChanged();
+  SceneDirty(G);
+  SeqChanged(G);
 }
 /*========================================================================*/
-Block *SceneGetBlock(void)
+Block *SceneGetBlock(PyMOLGlobals *G)
 {
-  CScene *I=&Scene;
+  register CScene *I=G->Scene;
   return(I->Block);
 }
 /*========================================================================*/
-void SceneMakeMovieImage(void) {
-  CScene *I=&Scene;
+void SceneMakeMovieImage(PyMOLGlobals *G) {
+  register CScene *I=G->Scene;
   float *v;
 
-  PRINTFB(FB_Scene,FB_Blather)
+  PRINTFB(G,FB_Scene,FB_Blather)
     " Scene: Making movie image.\n"
-    ENDFB;
+    ENDFB(G);
 
   I->DirtyFlag=false;
-  if(SettingGet(cSetting_ray_trace_frames)) {
-	SceneRay(0,0,(int)SettingGet(cSetting_ray_default_renderer),NULL,NULL,
+  if(SettingGet(G,cSetting_ray_trace_frames)) {
+	SceneRay(G,0,0,(int)SettingGet(G,cSetting_ray_default_renderer),NULL,NULL,
             0.0F,0.0F,false); 
   } else {
-	 v=SettingGetfv(cSetting_bg_rgb);
+	 v=SettingGetfv(G,cSetting_bg_rgb);
     if(PMGUI) {
       glDrawBuffer(GL_BACK);
       glClearColor(v[0],v[1],v[2],1.0);
       glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
       glClearColor(0.0,0.0,0.0,1.0);
-      SceneRender(NULL,0,0,NULL);
-      SceneCopy(GL_BACK,true);
+      SceneRender(G,NULL,0,0,NULL);
+      SceneCopy(G,GL_BACK,true);
     }
   }
   if(I->ImageBuffer&&(I->ImageBufferHeight==I->Height)&&(I->ImageBufferWidth==I->Width)) {
-	 MovieSetImage(MovieFrameToImage(SettingGetGlobal_i(cSetting_frame)-1)
+	 MovieSetImage(G,MovieFrameToImage(G,SettingGetGlobal_i(G,cSetting_frame)-1)
                                     ,I->ImageBuffer);
     I->MovieOwnsImageFlag=true;
   } else {
@@ -946,60 +944,60 @@ void SceneMakeMovieImage(void) {
   I->CopyFlag=true;
 }
 /*========================================================================*/
-void SceneIdle(void)
+void SceneIdle(PyMOLGlobals *G)
 {
-  CScene *I=&Scene;
+  register CScene *I=G->Scene;
   double renderTime;
   double minTime;
   int frameFlag = false;
   int rockFlag = false;
   float ang_cur,disp,diff;
 
-  if(MoviePlaying())
+  if(MoviePlaying(G))
     {
-		renderTime = -I->LastFrameTime + UtilGetSeconds(TempPyMOLGlobals);
-		minTime=SettingGet(cSetting_movie_delay)/1000.0;
+		renderTime = -I->LastFrameTime + UtilGetSeconds(G);
+		minTime=SettingGet(G,cSetting_movie_delay)/1000.0;
 		if(renderTime>=minTime) {
         frameFlag=true;
         rockFlag=true;
       }
     }
-  if(Control.Rocking&&(!rockFlag))
+  if(ControlRocking(G)&&(!rockFlag))
     {
-		renderTime = -I->LastRockTime + UtilGetSeconds(TempPyMOLGlobals);
-		minTime=SettingGet(cSetting_rock_delay)/1000.0;
+		renderTime = -I->LastRockTime + UtilGetSeconds(G);
+		minTime=SettingGet(G,cSetting_rock_delay)/1000.0;
 		if(renderTime>=minTime) {
         rockFlag=true;
-        I->LastRockTime=UtilGetSeconds(TempPyMOLGlobals);
+        I->LastRockTime=UtilGetSeconds(G);
       }
     }
-  if(Control.Rocking&&rockFlag) {
+  if(ControlRocking(G)&&rockFlag) {
 
 
 	I->RockTime+=I->RenderTime;
-    ang_cur = (float)(I->RockTime*SettingGet(cSetting_sweep_speed));
+    ang_cur = (float)(I->RockTime*SettingGet(G,cSetting_sweep_speed));
     
-    disp = (float)(SettingGet(cSetting_sweep_angle)*(3.1415/180.0)*sin(ang_cur)/2);
+    disp = (float)(SettingGet(G,cSetting_sweep_angle)*(3.1415/180.0)*sin(ang_cur)/2);
     diff = (float)(disp-I->LastRock);
-    SceneRotate((float)(180*diff/cPI),0.0F,1.0F,0.0F);
+    SceneRotate(G,(float)(180*diff/cPI),0.0F,1.0F,0.0F);
     I->LastRock = disp;
   }
-  if(MoviePlaying()&&frameFlag)
+  if(MoviePlaying(G)&&frameFlag)
 	 {
-      I->LastFrameTime = UtilGetSeconds(TempPyMOLGlobals);
-      if((SettingGetGlobal_i(cSetting_frame)-1)==(I->NFrame-1)) {
-        if((int)SettingGet(cSetting_movie_loop)) {
-          SceneSetFrame(7,0);
+      I->LastFrameTime = UtilGetSeconds(G);
+      if((SettingGetGlobal_i(G,cSetting_frame)-1)==(I->NFrame-1)) {
+        if((int)SettingGet(G,cSetting_movie_loop)) {
+          SceneSetFrame(G,7,0);
         } else
-          MoviePlay(cMovieStop);
+          MoviePlay(G,cMovieStop);
       } else 
-        SceneSetFrame(5,1);
+        SceneSetFrame(G,5,1);
 	 }
 }
 /*========================================================================*/
-void SceneWindowSphere(float *location,float radius)
+void SceneWindowSphere(PyMOLGlobals *G,float *location,float radius)
 {
-  CScene *I=&Scene;
+  register CScene *I=G->Scene;
   float v0[3];
   float dist;
   float aspRat = ((float) I->Width) / ((float) I->Height);
@@ -1012,7 +1010,7 @@ void SceneWindowSphere(float *location,float radius)
   /*  printf("%8.3f %8.3f %8.3f\n",I->Front,I->Pos[2],I->Back);*/
 
   MatrixTransform3f(I->RotMatrix,v0,I->Pos); /* convert to view-space */
-  fov = SettingGet(cSetting_field_of_view);
+  fov = SettingGet(G,cSetting_field_of_view);
   if(aspRat<1.0)
     fov *= aspRat;
 
@@ -1023,13 +1021,13 @@ void SceneWindowSphere(float *location,float radius)
   I->Back=(-I->Pos[2]+radius*1.2F);
   I->FrontSafe= GetFrontSafe(I->Front,I->Back);
 
-  SceneRovingDirty();
+  SceneRovingDirty(G);
   /*printf("%8.3f %8.3f %8.3f\n",I->Front,I->Pos[2],I->Back);*/
 }
 /*========================================================================*/
-void SceneRelocate(float *location)
+void SceneRelocate(PyMOLGlobals *G,float *location)
 {
-  CScene *I=&Scene;
+  register CScene *I=G->Scene;
   float v0[3];
   float slab_width;
   float dist;
@@ -1050,19 +1048,19 @@ void SceneRelocate(float *location)
   I->Front=(-I->Pos[2]-(slab_width*0.50F));
   I->Back=(-I->Pos[2]+(slab_width*0.50F));
   I->FrontSafe= GetFrontSafe(I->Front,I->Back);
-  SceneRovingDirty();
+  SceneRovingDirty(G);
 
 }
 /*========================================================================*/
-void SceneOriginGet(float *origin)
+void SceneOriginGet(PyMOLGlobals *G,float *origin)
 {
-  CScene *I=&Scene;
+  register CScene *I=G->Scene;
   copy3f(I->Origin,origin);
 }
 /*========================================================================*/
-void SceneOriginSet(float *origin,int preserve)
+void SceneOriginSet(PyMOLGlobals *G,float *origin,int preserve)
 {
-  CScene *I=&Scene;
+  register CScene *I=G->Scene;
   float v0[3],v1[3];
   
   if(preserve) /* preserve current viewing location */
@@ -1074,31 +1072,31 @@ void SceneOriginSet(float *origin,int preserve)
   I->Origin[0]=origin[0]; /* move origin */
   I->Origin[1]=origin[1];
   I->Origin[2]=origin[2];
-  SceneDirty();
+  SceneDirty(G);
 }
 /*========================================================================*/
-void SceneObjectAdd(CObject *obj)
+void SceneObjectAdd(PyMOLGlobals *G,CObject *obj)
 {
-  CScene *I=&Scene;
+  register CScene *I=G->Scene;
   ObjRec *rec = NULL;
-  ListElemAlloc(rec,ObjRec);
+  ListElemAlloc(G,rec,ObjRec);
   rec->next=NULL;
   obj->Enabled=true;
   rec->obj=obj;
-  ListAppend(I->Obj,rec,next,ObjList);
-  SceneCountFrames();
-  SceneChanged();
+  ListAppend(I->Obj,rec,next,ObjRec);
+  SceneCountFrames(G);
+  SceneChanged(G);
 }
 /*========================================================================*/
-void SceneObjectDel(CObject *obj)
+void SceneObjectDel(PyMOLGlobals *G,CObject *obj)
 {
-  CScene *I=&Scene;
+  register CScene *I=G->Scene;
   ObjRec *rec = NULL;
 
   if(!obj) {
     while(ListIterate(I->Obj,rec,next)) {
       if(rec) {
-        ListDetach(I->Obj,rec,next,ObjList);
+        ListDetach(I->Obj,rec,next,ObjRec);
         ListElemFree(rec);
       }
     }
@@ -1108,17 +1106,17 @@ void SceneObjectDel(CObject *obj)
         break;
     if(rec) {
       rec->obj->Enabled=false;
-      ListDetach(I->Obj,rec,next,ObjList);
+      ListDetach(I->Obj,rec,next,ObjRec);
       ListElemFree(rec);
     }
   }
-  SceneCountFrames();
-  SceneDirty();
+  SceneCountFrames(G);
+  SceneDirty(G);
 }
 /*========================================================================*/
-int SceneLoadPNG(char *fname,int movie_flag,int quiet) 
+int SceneLoadPNG(PyMOLGlobals *G,char *fname,int movie_flag,int quiet) 
 {
-  CScene *I=&Scene;
+  register CScene *I=G->Scene;
   int ok=false;
   if(I->ImageBuffer) {
 	 if(I->MovieOwnsImageFlag) {
@@ -1131,16 +1129,18 @@ int SceneLoadPNG(char *fname,int movie_flag,int quiet)
   }
   if(MyPNGRead(fname,(unsigned char**)&I->ImageBuffer,(unsigned int*)&I->ImageBufferWidth,(unsigned int*)&I->ImageBufferHeight)) {
     if(!quiet) {
-      PRINTFB(FB_Scene,FB_Details)
+      PRINTFB(G,FB_Scene,FB_Details)
         " Scene: loaded image from '%s'.\n",fname
-        ENDFB;
+        ENDFB(G);
     }
     I->CopyFlag=true;
     I->CopiedFromOpenGL = false;
-    OrthoRemoveSplash();
-    SettingSet(cSetting_text,0.0);
+    OrthoRemoveSplash(G);
+    SettingSet(G,cSetting_text,0.0);
     if(movie_flag&&I->ImageBuffer&&(I->ImageBufferHeight==I->Height)&&(I->ImageBufferWidth==I->Width)) {
-      MovieSetImage(MovieFrameToImage(SettingGetGlobal_i(cSetting_frame)-1)
+      MovieSetImage(G,
+                    MovieFrameToImage(G,
+                                      SettingGetGlobal_i(G,cSetting_frame)-1)
                     ,I->ImageBuffer);
       I->MovieOwnsImageFlag=true;
       I->MovieFrameFlag=true;
@@ -1148,13 +1148,13 @@ int SceneLoadPNG(char *fname,int movie_flag,int quiet)
       I->MovieOwnsImageFlag=false;
       I->DirtyFlag=false; /* make sure we don't overwrite image */
     }
-    OrthoDirty();
+    OrthoDirty(G);
     ok=true;
   } else {
     if(!quiet) {
-      PRINTFB(FB_Scene,FB_Errors)
+      PRINTFB(G,FB_Scene,FB_Errors)
         " Scene: unable to load image from '%s'.\n",fname
-        ENDFB;
+        ENDFB(G);
     }
   }
   return(ok);
@@ -1162,15 +1162,16 @@ int SceneLoadPNG(char *fname,int movie_flag,int quiet)
 /*========================================================================*/
 void SceneDraw(Block *block)
 {
-  CScene *I=&Scene;
+  PyMOLGlobals *G=block->G;
+  register CScene *I=G->Scene;
   int overlay,text;
   int width,height;
   int double_pump;
 
   if(PMGUI) {
-    overlay = (int)SettingGet(cSetting_overlay);
-    text = (int)SettingGet(cSetting_text);
-    double_pump = (int)SettingGet(cSetting_stereo_double_pump_mono);
+    overlay = (int)SettingGet(G,cSetting_overlay);
+    text = (int)SettingGet(G,cSetting_text);
+    double_pump = (int)SettingGet(G,cSetting_stereo_double_pump_mono);
 
     if(overlay||(!text)) 
 
@@ -1210,9 +1211,9 @@ void SceneDraw(Block *block)
 
           }
           I->RenderTime = -I->LastRender;
-          I->LastRender = UtilGetSeconds(TempPyMOLGlobals);
+          I->LastRender = UtilGetSeconds(G);
           I->RenderTime += I->LastRender;
-          ButModeSetRate((float)I->RenderTime);
+          ButModeSetRate(G,(float)I->RenderTime);
         }
     
     glColor3f(1.0,1.0,1.0);
@@ -1224,7 +1225,7 @@ typedef unsigned char pix[4];
 #define cRange 7
 /*typedef pix pix_array[cRange*2+1][cRange*2+1];*/
 
-unsigned int SceneFindTriplet(int x,int y,GLenum gl_buffer) 
+unsigned int SceneFindTriplet(PyMOLGlobals *G,int x,int y,GLenum gl_buffer) 
 {
   int result = 0;
   /*int before_check[100];
@@ -1257,7 +1258,7 @@ unsigned int SceneFindTriplet(int x,int y,GLenum gl_buffer)
 	if((rb>=8)&&(gb>=8)&&(bb>=8))
 		strict = true;
 
-    if(Feedback(FB_Scene,FB_Debugging)) debug=true;
+    if(Feedback(G,FB_Scene,FB_Debugging)) debug=true;
     
     glReadBuffer(gl_buffer);
 
@@ -1330,7 +1331,7 @@ unsigned int SceneFindTriplet(int x,int y,GLenum gl_buffer)
   return(result);
 }
 /*========================================================================*/
-unsigned int *SceneReadTriplets(int x,int y,int w,int h,GLenum gl_buffer)
+unsigned int *SceneReadTriplets(PyMOLGlobals *G,int x,int y,int w,int h,GLenum gl_buffer)
 { 
   unsigned int *result = NULL;
   pix *buffer=NULL;
@@ -1411,10 +1412,11 @@ unsigned int *SceneReadTriplets(int x,int y,int w,int h,GLenum gl_buffer)
 /*========================================================================*/
 int SceneRelease(Block *block,int button,int x,int y,int mod) 
 {
-  CScene *I=&Scene;
+  PyMOLGlobals *G=block->G;
+  register CScene *I=G->Scene;
   ObjectMolecule *obj;
   if(I->SculptingFlag) {
-    /* SettingSet(cSetting_sculpting,1); */
+    /* SettingSet(G,cSetting_sculpting,1); */
     obj=(ObjectMolecule*)I->LastPicked.ptr;
     if(obj) {
       obj->AtomInfo[I->LastPicked.index].protekted=I->SculptingSave;
@@ -1425,18 +1427,18 @@ int SceneRelease(Block *block,int button,int x,int y,int mod)
   return(1);
 }
 /*========================================================================*/
-static void do_roving(float old_front,float old_back,float old_origin,int adjust_flag)
+static void SceneDoRoving(PyMOLGlobals *G,float old_front,float old_back,float old_origin,int adjust_flag)
 {
-  if((int)SettingGet(cSetting_roving_origin)) {
+  if((int)SettingGet(G,cSetting_roving_origin)) {
 
-    CScene *I=&Scene;
+    register CScene *I=G->Scene;
     float delta_front,delta_back;
     float front_weight,back_weight,slab_width;
     float z_buffer = 3.0;
     float old_pos2 = 0.0F;
     float v2[3];
 
-    z_buffer = SettingGet(cSetting_roving_origin_z_cushion);
+    z_buffer = SettingGet(G,cSetting_roving_origin_z_cushion);
     
     delta_front = I->Front - old_front;
     delta_back = I->Back - old_back;
@@ -1482,7 +1484,7 @@ static void do_roving(float old_front,float old_back,float old_origin,int adjust
         v2[2] = delta_front;
       }
     }
-    if(SettingGet(cSetting_ortho)) { 
+    if(SettingGet(G,cSetting_ortho)) { 
       old_pos2 = I->Pos[2];
       /* we're orthoscopic, so we don't want the effective field of view 
          to change.  Thus, we have to hold Pos[2] constant, and instead
@@ -1491,12 +1493,12 @@ static void do_roving(float old_front,float old_back,float old_origin,int adjust
     }
     MatrixInvTransform3f(I->RotMatrix,v2,v2); /* transform offset into realspace */
     subtract3f(I->Origin,v2,v2); /* calculate new origin location */
-    SceneOriginSet(v2,true); /* move origin, preserving camera location */
+    SceneOriginSet(G,v2,true); /* move origin, preserving camera location */
     
-    if(SettingGet(cSetting_ortho)) { 
+    if(SettingGet(G,cSetting_ortho)) { 
       float delta = old_pos2-I->Pos[2];
       I->Pos[2] += delta;
-      SceneClipSet( I->Front - delta, I->Back - delta );
+      SceneClipSet(G, I->Front - delta, I->Back - delta );
     }
     
     slab_width = I->Back - I->Front;
@@ -1506,11 +1508,11 @@ static void do_roving(float old_front,float old_back,float old_origin,int adjust
       z_buffer = slab_width*0.5F;      
     
   }
-  if((adjust_flag)&&(int)SettingGet(cSetting_roving_detail)) {    
-    SceneRovingPostpone();
+  if((adjust_flag)&&(int)SettingGet(G,cSetting_roving_detail)) {    
+    SceneRovingPostpone(G);
   }
-  if(SettingGet(cSetting_roving_detail)) {    
-    SceneRovingDirty();
+  if(SettingGet(G,cSetting_roving_detail)) {    
+    SceneRovingDirty(G);
   }
 }
 
@@ -1519,7 +1521,8 @@ static void do_roving(float old_front,float old_back,float old_origin,int adjust
 /*========================================================================*/
 int SceneClick(Block *block,int button,int x,int y,int mod)
 {
-  CScene *I=&Scene;
+  PyMOLGlobals *G=block->G;
+  register CScene *I=G->Scene;
   CObject *obj;
   ObjectMolecule *objMol;
   OrthoLineType buffer,buf1,buf2;
@@ -1530,7 +1533,7 @@ int SceneClick(Block *block,int button,int x,int y,int mod)
   char *sel_mode_kw = empty_string;
   static int mode = 0; /* static declaration works around compiler bug in VC6 */
   
-  if((!(mod&(cOrthoCTRL+cOrthoSHIFT)))&&(UtilGetSeconds(TempPyMOLGlobals)-I->LastClickTime)<cDoubleTime)
+  if((!(mod&(cOrthoCTRL+cOrthoSHIFT)))&&(UtilGetSeconds(G)-I->LastClickTime)<cDoubleTime)
     {
       int dx,dy;
       dx = abs(I->LastWinX - x);
@@ -1552,22 +1555,22 @@ int SceneClick(Block *block,int button,int x,int y,int mod)
     
   I->LastWinX = x;
   I->LastWinY = y;
-  I->LastClickTime = UtilGetSeconds(TempPyMOLGlobals);
+  I->LastClickTime = UtilGetSeconds(G);
   I->LastButton = button;
   I->Threshold = 0;
 
   if(double_click)
     mode = cButModeMenu;
   else
-    mode = ButModeTranslate(button,mod); 
+    mode = ButModeTranslate(G,button,mod); 
   I->Button=button;    
   I->SculptingSave = 0;
   switch(mode) {
   case cButModeScaleSlabExpand:
-    SceneClip(5,1.2F,NULL,0);
+    SceneClip(G,5,1.2F,NULL,0);
     break;
   case cButModeScaleSlabShrink:
-    SceneClip(5,0.8F,NULL,0);
+    SceneClip(G,5,0.8F,NULL,0);
     break;
   case cButModeMoveSlabForward:
 
@@ -1575,8 +1578,8 @@ int SceneClick(Block *block,int button,int x,int y,int mod)
       float old_front = I->Front;
       float old_back = I->Back;
       float old_origin = -I->Pos[2];
-      SceneClip(6,0.1F,NULL,0);
-      do_roving(old_front,old_back,old_origin,true);
+      SceneClip(G,6,0.1F,NULL,0);
+      SceneDoRoving(G,old_front,old_back,old_origin,true);
     }
     break;
   case cButModeMoveSlabBackward:
@@ -1584,8 +1587,8 @@ int SceneClick(Block *block,int button,int x,int y,int mod)
       float old_front = I->Front;
       float old_back = I->Back;
       float old_origin = -I->Pos[2];
-      SceneClip(6,-0.1F,NULL,0);
-      do_roving(old_front,old_back,old_origin,true);
+      SceneClip(G,6,-0.1F,NULL,0);
+      SceneDoRoving(G,old_front,old_back,old_origin,true);
     }
     break;
   case cButModeRectAdd: /* deprecated */
@@ -1602,7 +1605,7 @@ int SceneClick(Block *block,int button,int x,int y,int mod)
   case cButModeClipN:    
   case cButModeClipF:    
   case cButModeRotZ:
-    SceneDontCopyNext();
+    SceneDontCopyNext(G);
 
     y=y-I->Block->margin.bottom;
     x=x-I->Block->margin.left;
@@ -1613,7 +1616,7 @@ int SceneClick(Block *block,int button,int x,int y,int mod)
     I->LastX=x;
     I->LastY=y;	 
 
-    /*    SceneDirty();*/
+    /*    SceneDirty(G);*/
     break;
   case cButModePickAtom1:
   case cButModePickAtom:
@@ -1621,12 +1624,12 @@ int SceneClick(Block *block,int button,int x,int y,int mod)
     if(I->StereoMode>1)
       x = x % (I->Width/2);
 
-    if(((int)SettingGet(cSetting_overlay))&&((int)SettingGet(cSetting_text)))
-      SceneRender(NULL,0,0,NULL); /* remove overlay if present */
-    SceneDontCopyNext();
+    if(((int)SettingGet(G,cSetting_overlay))&&((int)SettingGet(G,cSetting_text)))
+      SceneRender(G,NULL,0,0,NULL); /* remove overlay if present */
+    SceneDontCopyNext(G);
 
     I->LastPicked.ptr = NULL;
-	 SceneRender(&I->LastPicked,x,y,NULL);
+	 SceneRender(G,&I->LastPicked,x,y,NULL);
 	 if(I->LastPicked.ptr) { /* did we pick something? */
 
 		obj=(CObject*)I->LastPicked.ptr;
@@ -1640,32 +1643,32 @@ int SceneClick(Block *block,int button,int x,int y,int mod)
         case cButModeMenu:
           ObjectMoleculeGetAtomSele((ObjectMolecule*)obj,I->LastPicked.index,buffer);
           ObjectMoleculeGetAtomSeleLog((ObjectMolecule*)obj,I->LastPicked.index,buf1,false);
-          MenuActivate2Arg(I->LastWinX,I->LastWinY+20,
+          MenuActivate2Arg(G,I->LastWinX,I->LastWinY+20,
                            I->LastWinX,I->LastWinY,"pick_menu",buffer,buf1);
           break;
         case cButModePickAtom1:
           if(obj&&obj->type==cObjectMolecule) {
-            if(Feedback(FB_ObjectMolecule,FB_Results)) {
+            if(Feedback(G,FB_ObjectMolecule,FB_Results)) {
               if(obj->fDescribeElement)
                 obj->fDescribeElement(obj,I->LastPicked.index,buffer);
-              PRINTF " You clicked %s -> (%s)\n",buffer,cEditorSele1 ENDF;
+              PRINTF " You clicked %s -> (%s)\n",buffer,cEditorSele1 ENDF(G);
             }
-            if(SettingGet(cSetting_logging)) {
+            if(SettingGet(G,cSetting_logging)) {
               objMol = (ObjectMolecule*)obj;            
               ObjectMoleculeGetAtomSeleLog(objMol,I->LastPicked.index,buffer,false);
               sprintf(buf2,"cmd.edit(\"%s\",pkresi=1)",buffer);
               PLog(buf2,cPLog_pym);
             }
-            OrthoRestorePrompt();
+            OrthoRestorePrompt(G);
             sprintf(buffer,"%s`%d",
                     obj->Name,I->LastPicked.index+1);    
-            EditorInactivate();
-            SelectorCreate(cEditorSele1,buffer,NULL,true,NULL);
-            EditorActivate(SettingGetGlobal_i(cSetting_state)-1,false);
-            if(EditorActive()) {
-              EditorDefineExtraPks();
+            EditorInactivate(G);
+            SelectorCreate(G,cEditorSele1,buffer,NULL,true,NULL);
+            EditorActivate(G,SettingGetGlobal_i(G,cSetting_state)-1,false);
+            if(EditorActive(G)) {
+              EditorDefineExtraPks(G);
             }
-            WizardDoPick(0);
+            WizardDoPick(G,0);
           }
           break;
         case cButModePickAtom:
@@ -1673,34 +1676,38 @@ int SceneClick(Block *block,int button,int x,int y,int mod)
             WordType name;
             if(obj->fDescribeElement)
               obj->fDescribeElement(obj,I->LastPicked.index,buffer);
-            if(EditorIsBondMode()
-               /* &&!(EditorIsAnActiveObject((ObjectMolecule*)obj))*/ ) {
-              EditorInactivate();
-              EditorLogState(false);
+            if(EditorIsBondMode(G)
+               /* &&!(EditorIsAnActiveObject(G,(ObjectMolecule*)obj))*/ ) {
+              EditorInactivate(G);
+              EditorLogState(G,false);
             }
-            if((!EditorIsBondMode())&&EditorDeselectIfSelected((ObjectMolecule*)obj,I->LastPicked.index,true)) {
-              PRINTF " You unpicked %s.",buffer ENDF;
-              if(EditorActive()) 
-                EditorDefineExtraPks();
-              EditorLogState(false);
+            if((!EditorIsBondMode(G))&&
+               EditorDeselectIfSelected(G,
+                                        (ObjectMolecule*)obj,I->LastPicked.index,true)) {
+              PRINTF " You unpicked %s.",buffer ENDF(G);
+              if(EditorActive(G)) 
+                EditorDefineExtraPks(G);
+              EditorLogState(G,false);
             } else {
-              if(EditorIsBondMode()&&EditorDeselectIfSelected((ObjectMolecule*)obj,I->LastPicked.index,false)) {
-                EditorInactivate();
+              if(EditorIsBondMode(G)&&
+                 EditorDeselectIfSelected(G,
+                                          (ObjectMolecule*)obj,I->LastPicked.index,false)) {
+                EditorInactivate(G);
               }
-              EditorGetNextMultiatom(name);
+              EditorGetNextMultiatom(G,name);
 
-              PRINTF " You clicked %s -> (%s)\n",buffer,name ENDF;
+              PRINTF " You clicked %s -> (%s)\n",buffer,name ENDF(G);
               /* TODO: logging */
               
               sprintf(buffer,"%s`%d",obj->Name,I->LastPicked.index+1);    
-              ExecutiveDelete(name);
-              SelectorCreate(name,buffer,NULL,true,NULL);
-              EditorActivate(SettingGetGlobal_i(cSetting_state)-1,false);
-              if(EditorActive()) {
-                EditorDefineExtraPks();
+              ExecutiveDelete(G,name);
+              SelectorCreate(G,name,buffer,NULL,true,NULL);
+              EditorActivate(G,SettingGetGlobal_i(G,cSetting_state)-1,false);
+              if(EditorActive(G)) {
+                EditorDefineExtraPks(G);
               }
-              EditorLogState(false);
-              WizardDoPick(0);
+              EditorLogState(G,false);
+              WizardDoPick(G,0);
             }
           }
           break;
@@ -1709,31 +1716,31 @@ int SceneClick(Block *block,int button,int x,int y,int mod)
       case cObjectGadget:
         break;
       default:
-        EditorInactivate();
+        EditorInactivate(G);
         break;
       }
     } else { /* no atom picked */
       switch(mode) {
       case cButModeMenu:
-        MenuActivate0Arg(I->LastWinX,I->LastWinY,I->LastWinX,I->LastWinY,"main_menu");
+        MenuActivate0Arg(G,I->LastWinX,I->LastWinY,I->LastWinX,I->LastWinY,"main_menu");
         break;
       default:
-        EditorInactivate();
+        EditorInactivate(G);
         break;
       }
     }
-    SceneDirty();
+    SceneDirty(G);
     break;
   case cButModePickBond:
   case cButModePkTorBnd:
     if(I->StereoMode>1)
       x = x % (I->Width/2);
 
-    if(((int)SettingGet(cSetting_overlay))&&((int)SettingGet(cSetting_text)))
-      SceneRender(NULL,0,0,NULL); /* remove overlay if present */
-    SceneDontCopyNext();
+    if(((int)SettingGet(G,cSetting_overlay))&&((int)SettingGet(G,cSetting_text)))
+      SceneRender(G,NULL,0,0,NULL); /* remove overlay if present */
+    SceneDontCopyNext(G);
     I->LastPicked.ptr = NULL;
-	 SceneRender(&I->LastPicked,x,y,NULL);
+	 SceneRender(G,&I->LastPicked,x,y,NULL);
 	 if(I->LastPicked.ptr) {
 		obj=(CObject*)I->LastPicked.ptr;
       y=y-I->Block->margin.bottom;
@@ -1750,29 +1757,29 @@ int SceneClick(Block *block,int button,int x,int y,int mod)
       switch(obj->type) {
       case cObjectMolecule:
 
-        EditorInactivate();
-        if(Feedback(FB_ObjectMolecule,FB_Results)) {
+        EditorInactivate(G);
+        if(Feedback(G,FB_ObjectMolecule,FB_Results)) {
           if(obj->fDescribeElement)
             obj->fDescribeElement(obj,I->LastPicked.index,buffer);
-          PRINTF " You clicked %s -> (%s)",buffer,cEditorSele1 ENDF;
-          OrthoRestorePrompt();
+          PRINTF " You clicked %s -> (%s)",buffer,cEditorSele1 ENDF(G);
+          OrthoRestorePrompt(G);
         }
 		  sprintf(buffer,"%s`%d",
 					 obj->Name,I->LastPicked.index+1);    
-        SelectorCreate(cEditorSele1,buffer,NULL,true,NULL);
+        SelectorCreate(G,cEditorSele1,buffer,NULL,true,NULL);
         objMol = (ObjectMolecule*)obj;
         if(I->LastPicked.bond>=0) {
           atIndex = objMol->Bond[I->LastPicked.bond].index[0];
           if(atIndex == I->LastPicked.index)
             atIndex = objMol->Bond[I->LastPicked.bond].index[1];              
-          if(Feedback(FB_ObjectMolecule,FB_Results)) {
+          if(Feedback(G,FB_ObjectMolecule,FB_Results)) {
             if(obj->fDescribeElement)
               obj->fDescribeElement(obj,atIndex,buffer);
-            PRINTF " You clicked %s -> (%s)",buffer,cEditorSele2 ENDF;
-            OrthoRestorePrompt();
+            PRINTF " You clicked %s -> (%s)",buffer,cEditorSele2 ENDF(G);
+            OrthoRestorePrompt(G);
           }
           
-          if(SettingGet(cSetting_logging)) {
+          if(SettingGet(G,cSetting_logging)) {
             objMol = (ObjectMolecule*)obj;            
             ObjectMoleculeGetAtomSeleLog(objMol,I->LastPicked.index,buf1,false);
             ObjectMoleculeGetAtomSeleLog(objMol,atIndex,buf2,false);
@@ -1781,52 +1788,52 @@ int SceneClick(Block *block,int button,int x,int y,int mod)
           }
           sprintf(buffer,"%s`%d",
                   obj->Name,atIndex+1);    
-          SelectorCreate(cEditorSele2,buffer,NULL,true,NULL);
-          EditorActivate(SettingGetGlobal_i(cSetting_state)-1,true);
+          SelectorCreate(G,cEditorSele2,buffer,NULL,true,NULL);
+          EditorActivate(G,SettingGetGlobal_i(G,cSetting_state)-1,true);
 
 
           if(mode==cButModePkTorBnd) {
             /* get ready to drag */
-            SceneDontCopyNext();
+            SceneDontCopyNext(G);
             switch(obj->type) {
             case cObjectMolecule:
               objMol = (ObjectMolecule*)obj;
-              EditorPrepareDrag(objMol,I->LastPicked.index,
-                                SettingGetGlobal_i(cSetting_state)-1);
+              EditorPrepareDrag(G,objMol,I->LastPicked.index,
+                                SettingGetGlobal_i(G,cSetting_state)-1);
               I->SculptingFlag = 1;
               I->SculptingSave =  objMol->AtomInfo[I->LastPicked.index].protekted;
               objMol->AtomInfo[I->LastPicked.index].protekted=2;
               break;
             }
           }
-          WizardDoPick(1);
+          WizardDoPick(G,1);
         } else {
-          WizardDoPick(0);
+          WizardDoPick(G,0);
         }
-        if(SettingGet(cSetting_auto_hide_selections))
-          ExecutiveHideSelections();
+        if(SettingGet(G,cSetting_auto_hide_selections))
+          ExecutiveHideSelections(G);
         break;
       case cObjectGadget:
         break;
       default:
-        EditorInactivate();
+        EditorInactivate(G);
         break;
       }
     } else {
-      EditorInactivate();
+      EditorInactivate(G);
     }
-    SceneDirty();
+    SceneDirty(G);
     break;
   case cButModeMovFrag:
   case cButModeTorFrag:
   case cButModeRotFrag:
   case cButModeMoveAtom:
-    if(((int)SettingGet(cSetting_overlay))&&((int)SettingGet(cSetting_text)))
-      SceneRender(NULL,0,0,NULL); /* remove overlay if present */
-    SceneDontCopyNext();
+    if(((int)SettingGet(G,cSetting_overlay))&&((int)SettingGet(G,cSetting_text)))
+      SceneRender(G,NULL,0,0,NULL); /* remove overlay if present */
+    SceneDontCopyNext(G);
     if(I->StereoMode>1)
       x = x % (I->Width/2);
-	 SceneRender(&I->LastPicked,x,y,NULL);
+	 SceneRender(G,&I->LastPicked,x,y,NULL);
 	 if(I->LastPicked.ptr) {
       obj=(CObject*)I->LastPicked.ptr;
       y=y-I->Block->margin.bottom;
@@ -1836,15 +1843,15 @@ int SceneClick(Block *block,int button,int x,int y,int mod)
       switch(obj->type) {
       case cObjectMolecule:
         
-        if(Feedback(FB_ObjectMolecule,FB_Results)) {
+        if(Feedback(G,FB_ObjectMolecule,FB_Results)) {
           if(obj->fDescribeElement) 
             obj->fDescribeElement(obj,I->LastPicked.index,buffer);
-          PRINTF " You clicked %s",buffer ENDF;        
-          OrthoRestorePrompt();
+          PRINTF " You clicked %s",buffer ENDF(G);        
+          OrthoRestorePrompt(G);
         }
         objMol = (ObjectMolecule*)obj;
-        EditorPrepareDrag(objMol,I->LastPicked.index,
-                          SettingGetGlobal_i(cSetting_state)-1);
+        EditorPrepareDrag(G,objMol,I->LastPicked.index,
+                          SettingGetGlobal_i(G,cSetting_state)-1);
         I->SculptingFlag = 1;
         I->SculptingSave =  objMol->AtomInfo[I->LastPicked.index].protekted;
         objMol->AtomInfo[I->LastPicked.index].protekted=2;
@@ -1858,18 +1865,18 @@ int SceneClick(Block *block,int button,int x,int y,int mod)
       case cObjectGadget:
         break;
       default:
-        EditorInactivate();
+        EditorInactivate(G);
         break;
       }
       /*
-        (int)SettingGet(cSetting_sculpting);
-            SettingSet(cSetting_sculpting,0);*/
+        (int)SettingGet(G,cSetting_sculpting);
+            SettingSet(G,cSetting_sculpting,0);*/
     }
     break;
  
   case cButModeSeleSet:
   case cButModeSeleToggle:
-      sel_mode_kw = SceneGetSeleModeKeyword();
+      sel_mode_kw = SceneGetSeleModeKeyword(G);
          
     /* intentional pass through */
 
@@ -1882,23 +1889,23 @@ int SceneClick(Block *block,int button,int x,int y,int mod)
 
   case cButModeOrigAt:
   case cButModeCent:
-    if(((int)SettingGet(cSetting_overlay))&&((int)SettingGet(cSetting_text)))
-      SceneRender(NULL,0,0,NULL); /* remove overlay if present */
-    SceneDontCopyNext();
+    if(((int)SettingGet(G,cSetting_overlay))&&((int)SettingGet(G,cSetting_text)))
+      SceneRender(G,NULL,0,0,NULL); /* remove overlay if present */
+    SceneDontCopyNext(G);
     if(I->StereoMode>1)
       x = x % (I->Width/2);
 
-	 SceneRender(&I->LastPicked,x,y,NULL);
+	 SceneRender(G,&I->LastPicked,x,y,NULL);
 	 if(I->LastPicked.ptr) {
 		obj=(CObject*)I->LastPicked.ptr;
 
       switch(obj->type) {
       case cObjectMolecule:
-        if(Feedback(FB_ObjectMolecule,FB_Results)) {
+        if(Feedback(G,FB_ObjectMolecule,FB_Results)) {
           if(obj->fDescribeElement) 
             obj->fDescribeElement(obj,I->LastPicked.index,buffer);
-          PRINTF " You clicked %s",buffer ENDF;        
-          OrthoRestorePrompt();
+          PRINTF " You clicked %s",buffer ENDF(G);        
+          OrthoRestorePrompt(G);
         }
         sprintf(buffer,"%s`%d",
                 obj->Name,I->LastPicked.index+1);
@@ -1917,45 +1924,45 @@ int SceneClick(Block *block,int button,int x,int y,int mod)
           break;
         case cButModeSeleSet:
         case cButModeSeleToggle:
-          ExecutiveGetActiveSeleName(selName,true);
+          ExecutiveGetActiveSeleName(G,selName,true);
           break;
           
         case cButModeOrigAt:
           sprintf(buf2,"origin (%s)",buffer);        
-          OrthoCommandIn(buf2);
+          OrthoCommandIn(G,buf2);
           if(obj->type==cObjectMolecule) {
-            if(SettingGet(cSetting_logging)) {
+            if(SettingGet(G,cSetting_logging)) {
               objMol = (ObjectMolecule*)obj;            
               ObjectMoleculeGetAtomSeleLog(objMol,I->LastPicked.index,buf1,false);
               sprintf(buffer,"cmd.origin(\"%s\")",buf1);
               PLog(buffer,cPLog_pym);
 
             }
-            if(Feedback(FB_ObjectMolecule,FB_Results)) {
+            if(Feedback(G,FB_ObjectMolecule,FB_Results)) {
               if(obj->fDescribeElement) 
                 obj->fDescribeElement(obj,I->LastPicked.index,buffer);
-              PRINTF " You clicked %s",buffer ENDF;        
-              OrthoRestorePrompt();
+              PRINTF " You clicked %s",buffer ENDF(G);        
+              OrthoRestorePrompt(G);
             }
           }
-          PRINTFB(FB_Scene,FB_Actions) 
+          PRINTFB(G,FB_Scene,FB_Actions) 
             " Scene: Origin set.\n"
-            ENDFB;
+            ENDFB(G);
           break;
         case cButModeCent:
           sprintf(buf2,"center (%s),state=-1",buffer);        
-          OrthoCommandIn(buf2);
+          OrthoCommandIn(G,buf2);
           if(obj->type==cObjectMolecule) {
-            if(SettingGet(cSetting_logging)) {
+            if(SettingGet(G,cSetting_logging)) {
               objMol = (ObjectMolecule*)obj;            
               ObjectMoleculeGetAtomSeleLog(objMol,I->LastPicked.index,buf1,false);
               sprintf(buffer,"cmd.center(\"%s\",state=-1)",buf1);
               PLog(buffer,cPLog_pym);
             }
           }
-          PRINTFB(FB_Scene,FB_Actions) 
+          PRINTFB(G,FB_Scene,FB_Actions) 
             " Scene: Centered.\n"
-            ENDFB;
+            ENDFB(G);
           break;
         }
         switch(mode) {
@@ -1964,32 +1971,32 @@ int SceneClick(Block *block,int button,int x,int y,int mod)
         case cButModeRB:
         case cButModeSeleSet:
          sprintf(buf2,"(%s(%s))",sel_mode_kw,buffer);
-         SelectorCreate(selName,buf2,NULL,false,NULL);
-          if(SettingGet(cSetting_auto_hide_selections))
-            ExecutiveHideSelections();
-          if(SettingGet(cSetting_auto_show_selections))
-            ExecutiveSetObjVisib(selName,1);
+         SelectorCreate(G,selName,buf2,NULL,false,NULL);
+          if(SettingGet(G,cSetting_auto_hide_selections))
+            ExecutiveHideSelections(G);
+          if(SettingGet(G,cSetting_auto_show_selections))
+            ExecutiveSetObjVisib(G,selName,1);
           if(obj->type==cObjectMolecule) {
-            if(SettingGet(cSetting_logging)) {
+            if(SettingGet(G,cSetting_logging)) {
               objMol = (ObjectMolecule*)obj;            
               ObjectMoleculeGetAtomSeleLog(objMol,I->LastPicked.index,buf1,false);
               sprintf(buffer,"cmd.select('%s',\"%s(%s)\")",selName,sel_mode_kw,buf1);
               PLog(buffer,cPLog_pym);
             }
           }
-          WizardDoSelect(selName);
+          WizardDoSelect(G,selName);
           break;
         case cButModeAddToLB:
         case cButModeAddToMB:
         case cButModeAddToRB:
         case cButModeSeleToggle:
 
-          if(SelectorIndexByName(selName)>=0) {
+          if(SelectorIndexByName(G,selName)>=0) {
             sprintf(buf2,"(((%s) or %s(%s)) and not ((%s(%s)) in %s(%s)))",
                     selName,sel_mode_kw,buffer,sel_mode_kw,buffer,sel_mode_kw,selName);
-            SelectorCreate(selName,buf2,NULL,false,NULL);
+            SelectorCreate(G,selName,buf2,NULL,false,NULL);
             if(obj->type==cObjectMolecule) {
-              if(SettingGet(cSetting_logging)) {
+              if(SettingGet(G,cSetting_logging)) {
                 objMol = (ObjectMolecule*)obj;            
                 ObjectMoleculeGetAtomSeleLog(objMol,I->LastPicked.index,buffer,false);
                 sprintf(buf2,"(((%s) or %s(%s)) and ((%s(%s)) in %s(%s)))",
@@ -2000,9 +2007,9 @@ int SceneClick(Block *block,int button,int x,int y,int mod)
             }
           } else {
             sprintf(buf2,"%s(%s)",sel_mode_kw,buffer);
-            SelectorCreate(selName,buf2,NULL,false,NULL);
+            SelectorCreate(G,selName,buf2,NULL,false,NULL);
             if(obj->type==cObjectMolecule) {
-              if(SettingGet(cSetting_logging)) {
+              if(SettingGet(G,cSetting_logging)) {
                 objMol = (ObjectMolecule*)obj;            
                 ObjectMoleculeGetAtomSeleLog(objMol,I->LastPicked.index,buf1,false);
                 sprintf(buffer,"cmd.select('%s',\"%s(%s)\")",selName,sel_mode_kw,buf1);
@@ -2010,45 +2017,45 @@ int SceneClick(Block *block,int button,int x,int y,int mod)
               }
             }
           }
-          if(SettingGet(cSetting_auto_hide_selections))
-            ExecutiveHideSelections();
-          if(SettingGet(cSetting_auto_show_selections))
-            ExecutiveSetObjVisib(selName,1);
-          WizardDoSelect(selName);
+          if(SettingGet(G,cSetting_auto_hide_selections))
+            ExecutiveHideSelections(G);
+          if(SettingGet(G,cSetting_auto_show_selections))
+            ExecutiveSetObjVisib(G,selName,1);
+          WizardDoSelect(G,selName);
           break;
         }
       case cObjectGadget:
         break;
       default:
-        EditorInactivate();
+        EditorInactivate(G);
         break;
       }
 	 } else {
       if(mode==cButModeSeleSet) {
         OrthoLineType buf2;
         char name[ObjNameMax];
-        if(ExecutiveGetActiveSeleName(name, false)) {
-          SelectorCreate(name,"none",NULL,true,NULL);
-          if(SettingGet(cSetting_logging)) {
+        if(ExecutiveGetActiveSeleName(G,name, false)) {
+          SelectorCreate(G,name,"none",NULL,true,NULL);
+          if(SettingGet(G,cSetting_logging)) {
             sprintf(buf2,"cmd.select('%s','none')\n",name);
             PLog(buf2,cPLog_no_flush);
           }
-          SeqDirty();
+          SeqDirty(G);
         }
       }
-      PRINTFB(FB_Scene,FB_Warnings) 
+      PRINTFB(G,FB_Scene,FB_Warnings) 
         " SceneClick: no atom found nearby.\n"
-        ENDFB;
-		OrthoRestorePrompt();
+        ENDFB(G);
+		OrthoRestorePrompt(G);
 	 }
   }
   return(1);
 }
 /*========================================================================*/
-float SceneGetScreenVertexScale(float *v1)
+float SceneGetScreenVertexScale(PyMOLGlobals *G,float *v1)
 {
   /* get conversion factor from screen point to atomic coodinate */
-  CScene *I=&Scene;
+  register CScene *I=G->Scene;
   float vl,p1[4],p2[4];
   /* now, scale properly given the current projection matrix */
   copy3f(v1,p1);
@@ -2075,22 +2082,22 @@ float SceneGetScreenVertexScale(float *v1)
   return(1.0F/vl);
 }
 
-void SceneRovingChanged(void)
+void SceneRovingChanged(PyMOLGlobals *G)
 {
-  CScene *I=&Scene;  
-  SceneRovingDirty();
+  register CScene *I=G->Scene;  
+  SceneRovingDirty(G);
   I->RovingCleanupFlag=true;
 }
 
-static void SceneRovingCleanup(void)
+static void SceneRovingCleanup(PyMOLGlobals *G)
 {
-  CScene *I=&Scene;  
+  register CScene *I=G->Scene;  
   char *s;  
   char buffer[OrthoLineLength];
 
   I->RovingCleanupFlag=false;
 
-  s = SettingGet_s(NULL,NULL,cSetting_roving_selection);
+  s = SettingGet_s(G,NULL,NULL,cSetting_roving_selection);
 
   sprintf(buffer,"cmd.hide('lines','''%s''')",s);
   PParse(buffer);
@@ -2118,9 +2125,9 @@ static void SceneRovingCleanup(void)
   PFlush();
 }
 
-void SceneRovingUpdate(void)
+void SceneRovingUpdate(PyMOLGlobals *G)
 {
-  CScene *I=&Scene;
+  register CScene *I=G->Scene;
   char buffer[OrthoLineLength];
   float sticks,lines,spheres,labels,ribbon,cartoon;
   float polar_contacts,polar_cutoff,nonbonded,nb_spheres;
@@ -2135,28 +2142,28 @@ void SceneRovingUpdate(void)
   float level;
   float isosurface,isomesh;
   if(I->RovingDirtyFlag&&(
-                          (UtilGetSeconds(TempPyMOLGlobals)-I->RovingLastUpdate)>
-                          fabs(SettingGet(cSetting_roving_delay)))) {
+                          (UtilGetSeconds(G)-I->RovingLastUpdate)>
+                          fabs(SettingGet(G,cSetting_roving_delay)))) {
     
     if(I->RovingCleanupFlag)
-      SceneRovingCleanup();
+      SceneRovingCleanup(G);
     
-    s = SettingGet_s(NULL,NULL,cSetting_roving_selection);
-    sticks = SettingGet(cSetting_roving_sticks);
-    lines = SettingGet(cSetting_roving_lines);
-    labels = SettingGet(cSetting_roving_labels);
-    spheres = SettingGet(cSetting_roving_spheres);
-    ribbon = SettingGet(cSetting_roving_ribbon);
-    cartoon = SettingGet(cSetting_roving_cartoon);
-    polar_contacts = SettingGet(cSetting_roving_polar_contacts);
-    polar_cutoff = SettingGet(cSetting_roving_polar_cutoff);
-    nonbonded = SettingGet(cSetting_roving_nonbonded);
-    nb_spheres = SettingGet(cSetting_roving_nb_spheres);
+    s = SettingGet_s(G,NULL,NULL,cSetting_roving_selection);
+    sticks = SettingGet(G,cSetting_roving_sticks);
+    lines = SettingGet(G,cSetting_roving_lines);
+    labels = SettingGet(G,cSetting_roving_labels);
+    spheres = SettingGet(G,cSetting_roving_spheres);
+    ribbon = SettingGet(G,cSetting_roving_ribbon);
+    cartoon = SettingGet(G,cSetting_roving_cartoon);
+    polar_contacts = SettingGet(G,cSetting_roving_polar_contacts);
+    polar_cutoff = SettingGet(G,cSetting_roving_polar_cutoff);
+    nonbonded = SettingGet(G,cSetting_roving_nonbonded);
+    nb_spheres = SettingGet(G,cSetting_roving_nb_spheres);
 
-    isomesh = SettingGet(cSetting_roving_isomesh);
-    isosurface = SettingGet(cSetting_roving_isosurface);
+    isomesh = SettingGet(G,cSetting_roving_isomesh);
+    isosurface = SettingGet(G,cSetting_roving_isosurface);
 
-    if(SettingGet(cSetting_roving_byres))
+    if(SettingGet(G,cSetting_roving_byres))
       p2 = byres;
     else
       p2 = empty;
@@ -2307,15 +2314,15 @@ void SceneRovingUpdate(void)
     if(isomesh!=0.0F) {
       int auto_save;
 
-      auto_save = (int)SettingGet(cSetting_auto_zoom);
-      SettingSet(cSetting_auto_zoom,0);
+      auto_save = (int)SettingGet(G,cSetting_auto_zoom);
+      SettingSet(G,cSetting_auto_zoom,0);
       
-      name = SettingGet_s(NULL,NULL,cSetting_roving_map1_name);
+      name = SettingGet_s(G,NULL,NULL,cSetting_roving_map1_name);
       if(name)
         if(name[0]) 
-          if(ExecutiveFindObjectByName(name))
+          if(ExecutiveFindObjectByName(G,name))
             {
-              level = SettingGet(cSetting_roving_map1_level);
+              level = SettingGet(G,cSetting_roving_map1_level);
               sprintf(buffer,
                       "cmd.isomesh('rov_m1','%s',%8.6f,'center',%1.3f)",
                       name,level,isomesh);
@@ -2324,12 +2331,12 @@ void SceneRovingUpdate(void)
               refresh_flag=true;
             }
 
-      name = SettingGet_s(NULL,NULL,cSetting_roving_map2_name);
+      name = SettingGet_s(G,NULL,NULL,cSetting_roving_map2_name);
       if(name)
         if(name[0]) 
-          if(ExecutiveFindObjectByName(name))
+          if(ExecutiveFindObjectByName(G,name))
             {
-              level = SettingGet(cSetting_roving_map2_level);
+              level = SettingGet(G,cSetting_roving_map2_level);
               sprintf(buffer,
                       "cmd.isomesh('rov_m2','%s',%8.6f,'center',%1.3f)",
                       name,level,isomesh);
@@ -2338,12 +2345,12 @@ void SceneRovingUpdate(void)
               refresh_flag=true;
             }
 
-      name = SettingGet_s(NULL,NULL,cSetting_roving_map3_name);
+      name = SettingGet_s(G,NULL,NULL,cSetting_roving_map3_name);
       if(name)
         if(name[0]) 
-          if(ExecutiveFindObjectByName(name))
+          if(ExecutiveFindObjectByName(G,name))
             {
-              level = SettingGet(cSetting_roving_map3_level);
+              level = SettingGet(G,cSetting_roving_map3_level);
               sprintf(buffer,
                       "cmd.isomesh('rov_m3','%s',%8.6f,'center',%1.3f)",
                       name,level,isomesh);
@@ -2353,21 +2360,21 @@ void SceneRovingUpdate(void)
             }
 
 
-      SettingSet(cSetting_auto_zoom,(float)auto_save);            
+      SettingSet(G,cSetting_auto_zoom,(float)auto_save);            
     }
 
     if(isosurface!=0.0F) {
       int auto_save;
 
-      auto_save = (int)SettingGet(cSetting_auto_zoom);
-      SettingSet(cSetting_auto_zoom,0.0F);
+      auto_save = (int)SettingGet(G,cSetting_auto_zoom);
+      SettingSet(G,cSetting_auto_zoom,0.0F);
       
-      name = SettingGet_s(NULL,NULL,cSetting_roving_map1_name);
+      name = SettingGet_s(G,NULL,NULL,cSetting_roving_map1_name);
       if(name)
         if(name[0]) 
-          if(ExecutiveFindObjectByName(name))
+          if(ExecutiveFindObjectByName(G,name))
             {
-              level = SettingGet(cSetting_roving_map1_level);
+              level = SettingGet(G,cSetting_roving_map1_level);
               sprintf(buffer,
                       "cmd.isosurface('rov_s1','%s',%8.6f,'center',%1.3f)",
                       name,level,isosurface);
@@ -2376,12 +2383,12 @@ void SceneRovingUpdate(void)
               refresh_flag=true;
             }
 
-      name = SettingGet_s(NULL,NULL,cSetting_roving_map2_name);
+      name = SettingGet_s(G,NULL,NULL,cSetting_roving_map2_name);
       if(name)
         if(name[0]) 
-          if(ExecutiveFindObjectByName(name))
+          if(ExecutiveFindObjectByName(G,name))
             {
-              level = SettingGet(cSetting_roving_map2_level);
+              level = SettingGet(G,cSetting_roving_map2_level);
               sprintf(buffer,
                       "cmd.isosurface('rov_s2','%s',%8.6f,'center',%1.3f)",
                       name,level,isosurface);
@@ -2390,12 +2397,12 @@ void SceneRovingUpdate(void)
               refresh_flag=true;
             }
 
-      name = SettingGet_s(NULL,NULL,cSetting_roving_map3_name);
+      name = SettingGet_s(G,NULL,NULL,cSetting_roving_map3_name);
       if(name)
         if(name[0]) 
-          if(ExecutiveFindObjectByName(name))
+          if(ExecutiveFindObjectByName(G,name))
             {
-              level = SettingGet(cSetting_roving_map3_level);
+              level = SettingGet(G,cSetting_roving_map3_level);
               sprintf(buffer,
                       "cmd.isosurface('rov_s3','%s',%8.6f,'center',%1.3f)",
                       name,level,isosurface);
@@ -2405,7 +2412,7 @@ void SceneRovingUpdate(void)
             }
 
 
-      SettingSet(cSetting_auto_zoom,(float)auto_save);            
+      SettingSet(G,cSetting_auto_zoom,(float)auto_save);            
     }
 
 
@@ -2414,7 +2421,7 @@ void SceneRovingUpdate(void)
       PFlush();
     }
 
-    I->RovingLastUpdate=UtilGetSeconds(TempPyMOLGlobals);
+    I->RovingLastUpdate=UtilGetSeconds(G);
     I->RovingDirtyFlag=false;
   } 
 }
@@ -2422,7 +2429,8 @@ void SceneRovingUpdate(void)
 /*========================================================================*/
 int SceneDrag(Block *block,int x,int y,int mod)
 {
-  CScene *I=&Scene;
+  PyMOLGlobals *G = block->G;
+  register CScene *I=G->Scene;
   float scale,vScale;
   float v1[3],v2[3],n1[3],n2[3],r1,r2,cp[3],v3[3];
   float dx,dy,dt;
@@ -2434,7 +2442,7 @@ int SceneDrag(Block *block,int x,int y,int mod)
   int adjust_flag;
   CObject *obj;
 
-  mode = ButModeTranslate(I->Button,mod);
+  mode = ButModeTranslate(G,I->Button,mod);
   
   y=y-I->Block->margin.bottom;
   scale = (float)I->Height;
@@ -2442,7 +2450,7 @@ int SceneDrag(Block *block,int x,int y,int mod)
 	 scale = (float)I->Width;
   scale = 0.45F * scale;
 
-  SceneDontCopyNext();
+  SceneDontCopyNext(G);
   switch(mode) {
   case cButModePickAtom:
     obj=(CObject*)I->LastPicked.ptr;
@@ -2455,7 +2463,7 @@ int SceneDrag(Block *block,int x,int y,int mod)
 
         ObjectGadgetGetVertex(gad,I->LastPicked.index,I->LastPicked.bond,v1);
 
-        vScale = SceneGetScreenVertexScale(v1);
+        vScale = SceneGetScreenVertexScale(G,v1);
         if(I->StereoMode>1) {
           x = x % (I->Width/2);
           vScale*=2;
@@ -2485,7 +2493,7 @@ int SceneDrag(Block *block,int x,int y,int mod)
         ObjectGadgetSetVertex(gad,I->LastPicked.index,I->LastPicked.bond,v2);
         if(gad->Obj.fUpdate)
           gad->Obj.fUpdate((CObject*)gad);
-        SceneChanged();
+        SceneChanged(G);
         /*        printf("dragging gadget\n");*/
       }
       break;
@@ -2510,10 +2518,10 @@ int SceneDrag(Block *block,int x,int y,int mod)
         switch(obj->type) {
         case cObjectMolecule:
           if(ObjectMoleculeGetAtomVertex((ObjectMolecule*)obj,
-                                         SettingGetGlobal_i(cSetting_state)-1,
+                                         SettingGetGlobal_i(G,cSetting_state)-1,
                                          I->LastPicked.index,v1)) {
             /* scale properly given the current projection matrix */
-            vScale = SceneGetScreenVertexScale(v1);
+            vScale = SceneGetScreenVertexScale(G,v1);
             if(I->StereoMode>1) {
               x = x % (I->Width/2);
               vScale*=2;
@@ -2532,13 +2540,13 @@ int SceneDrag(Block *block,int x,int y,int mod)
             MatrixInvTransform44fAs33f3f(I->RotMatrix,v3,v3); 
 
             if(mode!=cButModeMoveAtom) {
-              EditorDrag((ObjectMolecule*)obj,I->LastPicked.index,mode,
-                         SettingGetGlobal_i(cSetting_state)-1,v1,v2,v3);
+              EditorDrag(G,(ObjectMolecule*)obj,I->LastPicked.index,mode,
+                         SettingGetGlobal_i(G,cSetting_state)-1,v1,v2,v3);
             } else {
-              int log_trans = (int)SettingGet(cSetting_log_conformations);
-              ObjectMoleculeMoveAtom((ObjectMolecule*)obj,SettingGetGlobal_i(cSetting_state)-1,
+              int log_trans = (int)SettingGet(G,cSetting_log_conformations);
+              ObjectMoleculeMoveAtom((ObjectMolecule*)obj,SettingGetGlobal_i(G,cSetting_state)-1,
                                      I->LastPicked.index,v2,1,log_trans);
-              SceneDirty();
+              SceneDirty(G);
             }
           }
           break;
@@ -2550,7 +2558,7 @@ int SceneDrag(Block *block,int x,int y,int mod)
               
               copy3f(I->LastPickVertex,v1);
 
-              vScale = SceneGetScreenVertexScale(v1);
+              vScale = SceneGetScreenVertexScale(G,v1);
 
               if(I->StereoMode>1) {
                 x = x % (I->Width/2);
@@ -2569,7 +2577,7 @@ int SceneDrag(Block *block,int x,int y,int mod)
               MatrixInvTransform44fAs33f3f(I->RotMatrix,v2,v2); 
               MatrixInvTransform44fAs33f3f(I->RotMatrix,v3,v3); 
 
-              ObjectSliceDrag(slice,SceneGetState(),mode,v1,v2,v3);
+              ObjectSliceDrag(slice,SceneGetState(G),mode,v1,v2,v3);
             }
           }
           break;
@@ -2582,7 +2590,7 @@ int SceneDrag(Block *block,int x,int y,int mod)
     break;
   case cButModeTransXY:
 
-    vScale = SceneGetScreenVertexScale(I->Origin);
+    vScale = SceneGetScreenVertexScale(G,I->Origin);
     if(I->StereoMode>1) {
       x = x % (I->Width/2);
       vScale*=2;
@@ -2597,23 +2605,23 @@ int SceneDrag(Block *block,int x,int y,int mod)
       {
         I->Pos[0]+=v2[0];
         I->LastX=x;
-        SceneDirty();
+        SceneDirty(G);
         moved_flag=true;
       }
     if(I->LastY!=y)
       {
         I->Pos[1]+=v2[1];
         I->LastY=y;
-        SceneDirty();
+        SceneDirty(G);
         moved_flag=true;
       }
     
-    if(moved_flag&&(int)SettingGet(cSetting_roving_origin)) {
-      SceneGetPos(v2); /* gets position of center of screen */
-      SceneOriginSet(v2,true);
+    if(moved_flag&&(int)SettingGet(G,cSetting_roving_origin)) {
+      SceneGetPos(G,v2); /* gets position of center of screen */
+      SceneOriginSet(G,v2,true);
     }
-    if(moved_flag&&(int)SettingGet(cSetting_roving_detail)) {    
-      SceneRovingDirty();
+    if(moved_flag&&(int)SettingGet(G,cSetting_roving_detail)) {    
+      SceneRovingDirty(G);
     }
     break;
   case cButModeRotXYZ:
@@ -2630,7 +2638,7 @@ int SceneDrag(Block *block,int x,int y,int mod)
     }
 
 	 
-    if(SettingGet_b(NULL,NULL,cSetting_virtual_trackball)) {
+    if(SettingGet_b(G,NULL,NULL,cSetting_virtual_trackball)) {
       v1[0] = (float)(eff_width/2) - x;
       v1[1] = (float)(I->Height/2) - y;
       
@@ -2663,12 +2671,12 @@ int SceneDrag(Block *block,int x,int y,int mod)
 	 normalize23f(v1,n1);
 	 normalize23f(v2,n2);
 	 cross_product3f(n1,n2,cp);
-	 theta = (float)(SettingGet_f(NULL,NULL,cSetting_mouse_scale)*
+	 theta = (float)(SettingGet_f(G,NULL,NULL,cSetting_mouse_scale)*
       2*180*asin(sqrt1f(cp[0]*cp[0]+cp[1]*cp[1]+cp[2]*cp[2]))/cPI);
 
     dx = (v1[0]-v2[0]);
     dy = (v1[1]-v2[1]);
-    dt = (float)(SettingGet_f(NULL,NULL,cSetting_mouse_limit)*sqrt1f(dx*dx+dy*dy)/scale);
+    dt = (float)(SettingGet_f(G,NULL,NULL,cSetting_mouse_limit)*sqrt1f(dx*dx+dy*dy)/scale);
     
     if(theta>dt)
       theta = dt;
@@ -2695,13 +2703,13 @@ int SceneDrag(Block *block,int x,int y,int mod)
 	 case cButModeRotXYZ:
 		if(I->LastX!=x)
 		  {
-			 SceneRotate(theta,axis[0],axis[1],-axis[2]);
+			 SceneRotate(G,theta,axis[0],axis[1],-axis[2]);
 			 I->LastX=x;
           adjust_flag=true;
 		  }
 		if(I->LastY!=y)
 		  {
-			 SceneRotate(theta,axis[0],axis[1],-axis[2]);
+			 SceneRotate(G,theta,axis[0],axis[1],-axis[2]);
 			 I->LastY=y;
           adjust_flag=true;
 		  }
@@ -2709,13 +2717,13 @@ int SceneDrag(Block *block,int x,int y,int mod)
 	 case cButModeRotZ:
 		if(I->LastX!=x)
 		  {
-			 SceneRotate(omega,axis2[0],axis2[1],-axis2[2]);
+			 SceneRotate(G,omega,axis2[0],axis2[1],-axis2[2]);
 			 I->LastX=x;
           adjust_flag=true;
 		  }
 		if(I->LastY!=y)
 		  {
-			 SceneRotate(omega,axis2[0],axis2[1],-axis2[2]);
+			 SceneRotate(G,omega,axis2[0],axis2[1],-axis2[2]);
 			 I->LastY=y;
           adjust_flag=true;		
 		  }
@@ -2733,7 +2741,7 @@ int SceneDrag(Block *block,int x,int y,int mod)
             I->FrontSafe = GetFrontSafe(I->Front,I->Back);
           }
           I->LastY=y;
-          SceneDirty();
+          SceneDirty(G);
           adjust_flag=true;
 		  }
 		break;
@@ -2744,7 +2752,7 @@ int SceneDrag(Block *block,int x,int y,int mod)
 			 if(I->Back<I->Front)
 				I->Back=I->Front+cSliceMin;
 			 I->LastX=x;
-			 SceneDirty();
+			 SceneDirty(G);
           moved_flag=true;
 		  }
 		if(I->LastY!=y)
@@ -2754,7 +2762,7 @@ int SceneDrag(Block *block,int x,int y,int mod)
 				I->Front=I->Back+cSliceMin;
           I->FrontSafe = GetFrontSafe(I->Front,I->Back);
 			 I->LastY=y;
-			 SceneDirty();
+			 SceneDirty(G);
           moved_flag=true;
 		  }
 		break;
@@ -2766,7 +2774,7 @@ int SceneDrag(Block *block,int x,int y,int mod)
 				I->Front=I->Back+cSliceMin;
           I->FrontSafe = GetFrontSafe(I->Front,I->Back);
 			 I->LastX=x;
-			 SceneDirty();
+			 SceneDirty(G);
           moved_flag=true;
 		  }
 		if(I->LastY!=y)
@@ -2776,7 +2784,7 @@ int SceneDrag(Block *block,int x,int y,int mod)
 				I->Front=I->Back+cSliceMin;
           I->FrontSafe = GetFrontSafe(I->Front,I->Back);
 			 I->LastY=y;
-			 SceneDirty();
+			 SceneDirty(G);
           moved_flag=true;
 		  }
 		break;
@@ -2787,7 +2795,7 @@ int SceneDrag(Block *block,int x,int y,int mod)
 			 if(I->Back<I->Front)
 				I->Back=I->Front+cSliceMin;
 			 I->LastX=x;
-			 SceneDirty();
+			 SceneDirty(G);
           moved_flag=true;
 		  }
 		if(I->LastY!=y)
@@ -2796,37 +2804,39 @@ int SceneDrag(Block *block,int x,int y,int mod)
 			 if(I->Back<I->Front)
 				I->Back=I->Front+cSliceMin;
 			 I->LastY=y;
-			 SceneDirty();
+			 SceneDirty(G);
           moved_flag=true;
 		  }
 		break;
     }
     if(moved_flag)
-      do_roving(old_front,old_back,old_origin,adjust_flag);
+      SceneDoRoving(G,old_front,old_back,old_origin,adjust_flag);
   }
   return(1);
 }
 /*========================================================================*/
-void SceneFree(void)
+void SceneFree(PyMOLGlobals *G)
 {
-  CScene *I=&Scene;
-  OrthoFreeBlock(I->Block);
+  register CScene *I=G->Scene;
+  OrthoFreeBlock(G,I->Block);
   
-  ListFree(I->Obj,next,ObjList);
+  ListFree(I->Obj,next,ObjRec);
   if(!I->MovieOwnsImageFlag)
 	 FreeP(I->ImageBuffer);
   
   CGOFree(DebugCGO);
+  FreeP(G->Scene);
+                      
 }
 /*========================================================================*/
-void SceneResetMatrix(void)
+void SceneResetMatrix(PyMOLGlobals *G)
 {
-  CScene *I=&Scene;
+  register CScene *I=G->Scene;
   MatrixLoadIdentity44f(I->RotMatrix);
 }
 /*========================================================================*/
-void SceneSetDefaultView(void) {
-  CScene *I=&Scene;
+void SceneSetDefaultView(PyMOLGlobals *G) {
+  register CScene *I=G->Scene;
 
   MatrixLoadIdentity44f(I->RotMatrix);
 
@@ -2845,75 +2855,80 @@ void SceneSetDefaultView(void) {
   I->Scale = 1.0;
   
 }
-int SceneReinitialize(void)
+int SceneReinitialize(PyMOLGlobals *G)
 {
   int ok=true;
-  SceneSetDefaultView();
-  SceneCountFrames();
-  SceneSetFrame(0,0);
-  SceneDirty();
+  SceneSetDefaultView(G);
+  SceneCountFrames(G);
+  SceneSetFrame(G,0,0);
+  SceneDirty(G);
   return(ok);
 }
 /*========================================================================*/
-void SceneInit(void)
+int  SceneInit(PyMOLGlobals *G)
 {
-  CScene *I=&Scene;
+  register CScene *I=NULL;
+  if( (I=(G->Scene=Calloc(CScene,1)))) {
 
-  DebugCGO = CGONew();
+    DebugCGO = CGONew(G);
 
-  ListInit(I->Obj);
-
-  I->RockTime=0;
-  I->TextColor[0]=0.2F;
-  I->TextColor[1]=1.0F;
-  I->TextColor[2]=0.2F;
-  I->SculptingSave=0;
-  
-  I->LastClickTime = UtilGetSeconds(TempPyMOLGlobals);
-  I->LastWinX = 0;
-  I->LastWinY = 0;
-  I->Threshold = 0;
-  I->LastPickVertexFlag = false;
-
-  SceneSetDefaultView();
-
-  I->NFrame = 0;
-  I->Scale = 1.0;
-  I->Block = OrthoNewBlock(NULL);
-  I->Block->fClick   = SceneClick;
-  I->Block->fRelease = SceneRelease;
-  I->Block->fDrag    = SceneDrag;
-  I->Block->fDraw    = SceneDraw;
-  I->Block->fReshape = SceneReshape;
-  I->Block->active = true;
-
-  OrthoAttach(I->Block,cOrthoScene);
-
-  I->DirtyFlag = true;
-  I->RovingDirtyFlag = false;
-  I->ImageBuffer = NULL;
-  I->ImageBufferWidth=0;
-  I->ImageBufferHeight=0;
-  I->ImageBufferSize = 0;
-  I->MovieOwnsImageFlag = false;
-  I->MovieFrameFlag = false;
-  I->RenderTime = 0;
-  I->LastRender = UtilGetSeconds(TempPyMOLGlobals);
-  I->LastFrameTime = UtilGetSeconds(TempPyMOLGlobals);
-  I->LastRockTime = UtilGetSeconds(TempPyMOLGlobals);
-  I->LastPicked.ptr = NULL;
-
-  I->CopyNextFlag=true;
-  I->CopyFlag=false;
-  I->CopiedFromOpenGL=false;
-  I->vendor[0]=0;
-  I->renderer[0]=0;
-  I->version[0]=0;
+    ListInit(I->Obj);
+    
+    I->RockTime=0;
+    I->TextColor[0]=0.2F;
+    I->TextColor[1]=1.0F;
+    I->TextColor[2]=0.2F;
+    I->SculptingSave=0;
+    
+    I->LastClickTime = UtilGetSeconds(G);
+    I->LastWinX = 0;
+    I->LastWinY = 0;
+    I->Threshold = 0;
+    I->LastPickVertexFlag = false;
+    
+    SceneSetDefaultView(G);
+    
+    I->NFrame = 0;
+    I->Scale = 1.0;
+    I->Block = OrthoNewBlock(G,NULL);
+    I->Block->fClick   = SceneClick;
+    I->Block->fRelease = SceneRelease;
+    I->Block->fDrag    = SceneDrag;
+    I->Block->fDraw    = SceneDraw;
+    I->Block->fReshape = SceneReshape;
+    I->Block->active = true;
+    
+    OrthoAttach(G,I->Block,cOrthoScene);
+    
+    I->DirtyFlag = true;
+    I->RovingDirtyFlag = false;
+    I->ImageBuffer = NULL;
+    I->ImageBufferWidth=0;
+    I->ImageBufferHeight=0;
+    I->ImageBufferSize = 0;
+    I->MovieOwnsImageFlag = false;
+    I->MovieFrameFlag = false;
+    I->RenderTime = 0;
+    I->LastRender = UtilGetSeconds(G);
+    I->LastFrameTime = UtilGetSeconds(G);
+    I->LastRockTime = UtilGetSeconds(G);
+    I->LastPicked.ptr = NULL;
+    
+    I->CopyNextFlag=true;
+    I->CopyFlag=false;
+    I->CopiedFromOpenGL=false;
+    I->vendor[0]=0;
+    I->renderer[0]=0;
+    I->version[0]=0;
+    return 1;
+  } else 
+    return 0;
 }
 /*========================================================================*/
 void SceneReshape(Block *block,int width,int height)
 {
-  CScene *I=&Scene;
+  PyMOLGlobals *G=block->G;
+  register CScene *I=G->Scene;
   int y = height;
 
   if(I->Block->margin.right) {
@@ -2949,25 +2964,25 @@ void SceneReshape(Block *block,int width,int height)
 	 I->Height=height;
 	 I->Block->rect.bottom=I->Block->rect.top - I->Height;
   }
-  SceneDirty();
+  SceneDirty(G);
 
-  MovieClearImages();
-  MovieSetSize(I->Width,I->Height);
+  MovieClearImages(G);
+  MovieSetSize(G,I->Width,I->Height);
 
 }
 
 float fog_val=1.0;
 /*========================================================================*/
-void SceneDone(void)
+void SceneDone(PyMOLGlobals *G)
 {
-  CScene *I=&Scene;
+  register CScene *I=G->Scene;
   if(I->Block)
-	 OrthoFreeBlock(I->Block);
+	 OrthoFreeBlock(G,I->Block);
 }
 /*========================================================================*/
-void SceneResetNormal(int lines)
+void SceneResetNormal(PyMOLGlobals *G,int lines)
 {
-  CScene *I=&Scene;
+  register CScene *I=G->Scene;
   if(PMGUI) {
     if(lines)
       glNormal3fv(I->LinesNormal);
@@ -2977,12 +2992,12 @@ void SceneResetNormal(int lines)
 }
 
 /*========================================================================*/
-static void SceneApplyImageGamma(unsigned int *buffer, int width, int height)
+static void SceneApplyImageGamma(PyMOLGlobals *G,unsigned int *buffer, int width, int height)
 {
   unsigned int test;
   unsigned char *testPtr;
   int big_endian;
-  float gamma = SettingGet(cSetting_gamma);
+  float gamma = SettingGet(G,cSetting_gamma);
   if(gamma>R_SMALL4)
     gamma=1.0F/gamma;
   else
@@ -3028,10 +3043,10 @@ static void SceneApplyImageGamma(unsigned int *buffer, int width, int height)
 
 static double accumTiming = 0.0; 
 
-void SceneRay(int ray_width,int ray_height,int mode,char **headerVLA_ptr,
+void SceneRay(PyMOLGlobals *G,int ray_width,int ray_height,int mode,char **headerVLA_ptr,
               char **charVLA_ptr,float angle,float shift,int quiet)
 {
-  CScene *I=&Scene;
+  register CScene *I=G->Scene;
   ObjRec *rec=NULL;
   CRay *ray;
   unsigned int buffer_size;
@@ -3053,21 +3068,21 @@ void SceneRay(int ray_width,int ray_height,int mode,char **headerVLA_ptr,
     ray_height=I->Height;
   }
 
-  fov=SettingGet(cSetting_field_of_view);
+  fov=SettingGet(G,cSetting_field_of_view);
   aspRat = ((float) ray_width) / ((float) ray_height);
 
-  ScenePrepareUnitContext(&context,ray_width,ray_height);
-  if(SettingGet(cSetting_all_states)) {
+  ScenePrepareUnitContext(G,&context,ray_width,ray_height);
+  if(SettingGet(G,cSetting_all_states)) {
     curState=-1;
   } else {
-    curState=SettingGetGlobal_i(cSetting_state)-1;
+    curState=SettingGetGlobal_i(G,cSetting_state)-1;
   }
 
-  ray = RayNew();
+  ray = RayNew(G);
 
-  SceneUpdate();
+  SceneUpdate(G);
 
-  timing = UtilGetSeconds(TempPyMOLGlobals); /* start timing the process */
+  timing = UtilGetSeconds(G); /* start timing the process */
   
   /* start afresh, looking in the negative Z direction (0,0,-1) from (0,0,0) */
   MatrixLoadIdentity44f(rayView);
@@ -3101,7 +3116,7 @@ void SceneRay(int ray_width,int ray_height,int mode,char **headerVLA_ptr,
   MatrixTranslate44f3f(rayView,-I->Origin[0],-I->Origin[1],-I->Origin[2]);
 
 
-  if(Feedback(FB_Scene,FB_Debugging)) {
+  if(Feedback(G,FB_Scene,FB_Debugging)) {
     fprintf(stderr,"SceneRay: %8.3f %8.3f %8.3f\n",
            I->Pos[0],I->Pos[1],I->Pos[2]);
     fprintf(stderr,"SceneRay: %8.3f %8.3f %8.3f\n",
@@ -3114,11 +3129,11 @@ void SceneRay(int ray_width,int ray_height,int mode,char **headerVLA_ptr,
   height  = (float)(fabs(I->Pos[2])*tan((fov/2.0)*cPI/180.0));	 
   width = height*aspRat;
 
-  OrthoBusyFast(0,20);
+  OrthoBusyFast(G,0,20);
 
   {
     int ray_pixel_width;
-    if(SettingGetGlobal_b(cSetting_ray_pixel_scale_to_window)) {
+    if(SettingGetGlobal_b(G,cSetting_ray_pixel_scale_to_window)) {
       ray_pixel_width = I->Width;
     }  else {
       ray_pixel_width = ray_width;
@@ -3137,24 +3152,24 @@ void SceneRay(int ray_width,int ray_height,int mode,char **headerVLA_ptr,
                           ObjectGetCurrentState(rec->obj,false),ray,NULL,0);
 		}
 	 }
-  OrthoBusyFast(1,20);
+  OrthoBusyFast(G,1,20);
 
   if(mode!=2) { /* don't show pixel count for tests */
     if(!quiet) {
-    PRINTFB(FB_Ray,FB_Blather)
+    PRINTFB(G,FB_Ray,FB_Blather)
       " Ray: tracing %dx%d = %d rays against %d primitives.\n",ray_width,ray_height,
       ray_width*ray_height,RayGetNPrimitives(ray)
-      ENDFB;
+      ENDFB(G);
     }
   }
   switch(mode) {
   case 0: /* mode 0 is built-in */
     buffer_size = 4*ray_width*ray_height;
     buffer=(GLvoid*)Alloc(char,buffer_size);
-    ErrChkPtr(buffer);
+    ErrChkPtr(G,buffer);
     
     RayRender(ray,ray_width,ray_height,buffer,I->FrontSafe,I->Back,timing,angle);
-    SceneApplyImageGamma(buffer,ray_width,ray_height);
+    SceneApplyImageGamma(G,buffer,ray_width,ray_height);
 
     /*    RayRenderColorTable(ray,ray_width,ray_height,buffer);*/
     
@@ -3183,11 +3198,11 @@ void SceneRay(int ray_width,int ray_height,int mode,char **headerVLA_ptr,
     RayRenderPOV(ray,ray_width,ray_height,&headerVLA,&charVLA,
                  I->FrontSafe,I->Back,fov,angle);
     if(!(charVLA_ptr&&headerVLA_ptr)) { /* immediate mode */
-      strcpy(prefix,SettingGet_s(NULL,NULL,cSetting_batch_prefix));
+      strcpy(prefix,SettingGet_s(G,NULL,NULL,cSetting_batch_prefix));
       if(PPovrayRender(headerVLA,charVLA,prefix,ray_width,
-                       ray_height,(int)SettingGet(cSetting_antialias))) {
+                       ray_height,(int)SettingGet(G,cSetting_antialias))) {
         strcat(prefix,".png");
-        SceneLoadPNG(prefix,false,false);
+        SceneLoadPNG(G,prefix,false,false);
         I->DirtyFlag=false;
       }
       VLAFreeP(charVLA);
@@ -3202,28 +3217,28 @@ void SceneRay(int ray_width,int ray_height,int mode,char **headerVLA_ptr,
     break;
   }
 
-  timing = UtilGetSeconds(TempPyMOLGlobals)-timing;
+  timing = UtilGetSeconds(G)-timing;
   if(mode!=2) { /* don't show timings for tests */
 	accumTiming += timing; 
 
 	if(!quiet) {
-     PRINTFB(FB_Ray,FB_Details)
+     PRINTFB(G,FB_Ray,FB_Details)
        " Ray: total time: %4.2f sec. = %3.1f frames/hour. (%4.2f sec. accum.)\n", 
        timing,3600/timing, 
        accumTiming 
-      ENDFB;
+      ENDFB(G);
    }
   }
-  OrthoDirty();
+  OrthoDirty(G);
   RayFree(ray);
 }
 /*========================================================================*/
-void SceneCopy(GLenum buffer,int force)
+void SceneCopy(PyMOLGlobals *G,GLenum buffer,int force)
 {
-  CScene *I=&Scene;
+  register CScene *I=G->Scene;
   unsigned int buffer_size;
 
-  if(force || (!(I->StereoMode||SettingGet(cSetting_stereo_double_pump_mono))))
+  if(force || (!(I->StereoMode||SettingGet(G,cSetting_stereo_double_pump_mono))))
   { /* no copies while in stereo mode */
     if((!I->DirtyFlag)&&(!I->CopyFlag)) { 
       buffer_size = 4*I->Width*I->Height;
@@ -3241,7 +3256,7 @@ void SceneCopy(GLenum buffer,int force)
         }
         if(!I->ImageBuffer) {
           I->ImageBuffer=(GLvoid*)Alloc(char,buffer_size);
-          ErrChkPtr(I->ImageBuffer);
+          ErrChkPtr(G,I->ImageBuffer);
           I->ImageBufferSize = buffer_size;
           I->ImageBufferWidth=I->Width;
           I->ImageBufferHeight=I->Height;
@@ -3261,57 +3276,59 @@ void SceneCopy(GLenum buffer,int force)
 }
 
 /*========================================================================*/
-int SceneRovingCheckDirty(void)
+int SceneRovingCheckDirty(PyMOLGlobals *G)
 {
-  CScene *I=&Scene;
+  register CScene *I=G->Scene;
 
   return(I->RovingDirtyFlag);
 }
 /*========================================================================*/
-void SceneUpdate(void)
+void SceneUpdate(PyMOLGlobals *G)
 {
-  CScene *I=&Scene;
+  register CScene *I=G->Scene;
   ObjRec *rec=NULL;
 
-  PRINTFD(FB_Scene)
+  PRINTFD(G,FB_Scene)
     " SceneUpdate: entered.\n"
     ENDFD;
   if(I->ChangedFlag) {
-    SceneCountFrames();
+    SceneCountFrames(G);
 	 while(ListIterate(I->Obj,rec,next))
       if(rec->obj->fUpdate) 
         rec->obj->fUpdate(rec->obj);
 	 I->ChangedFlag=false;
-    if(!MovieDefined()) {
-      if(SettingGetGlobal_i(cSetting_frame)!=
-         SettingGetGlobal_i(cSetting_state))
-        SettingSetGlobal_i(cSetting_frame,SettingGetGlobal_i(cSetting_state));
+    if(!MovieDefined(G)) {
+      if(SettingGetGlobal_i(G,cSetting_frame)!=
+         SettingGetGlobal_i(G,cSetting_state))
+        SettingSetGlobal_i(G,cSetting_frame,SettingGetGlobal_i(G,cSetting_state));
     }
-    WizardDoScene();
+    WizardDoScene(G);
   }
 
-  PRINTFD(FB_Scene)
+  PRINTFD(G,FB_Scene)
     " SceneUpdate: leaving...\n"
     ENDFD;
 }
 /*========================================================================*/
-int SceneRenderCached(void)
+int SceneRenderCached(PyMOLGlobals *G)
 {
   /* sets up a cached image buffer is one is available, or if we are
    * using cached images by default */
-  CScene *I=&Scene;
+  register CScene *I=G->Scene;
   ImageType image;
   int renderedFlag=false;
 
-  PRINTFD(FB_Scene)
+  PRINTFD(G,FB_Scene)
     " SceneRenderCached: entered.\n"
     ENDFD;
 
   if(I->DirtyFlag) {
 	if(I->MovieFrameFlag||
-	   (MoviePlaying()&&SettingGet(cSetting_cache_frames))) {
+	   (MoviePlaying(G)&&SettingGet(G,cSetting_cache_frames))) {
 	  I->MovieFrameFlag=false;
-	  image = MovieGetImage(MovieFrameToImage(SettingGetGlobal_i(cSetting_frame)-1));
+	  image = MovieGetImage(G,
+                           MovieFrameToImage(G,
+                                             SettingGetGlobal_i(G,cSetting_frame)-1));
 	  if(image)
 		{
 		  if(I->ImageBuffer)
@@ -3323,16 +3340,16 @@ int SceneRenderCached(void)
 		  I->MovieOwnsImageFlag=true;
 		  I->CopyFlag=true;
 		  I->ImageBuffer=image;
-		  OrthoDirty();
+		  OrthoDirty(G);
 		  renderedFlag=true;
 		}
 	  else
 		{
-        SceneMakeMovieImage();
+        SceneMakeMovieImage(G);
         renderedFlag=true;
 		}
-	} else if(MoviePlaying()&&SettingGet(cSetting_ray_trace_frames)) {
-	  SceneRay(0,0,(int)SettingGet(cSetting_ray_default_renderer),NULL,NULL,0.0F,0.0F,false); 
+	} else if(MoviePlaying(G)&&SettingGet(G,cSetting_ray_trace_frames)) {
+	  SceneRay(G,0,0,(int)SettingGet(G,cSetting_ray_default_renderer),NULL,NULL,0.0F,0.0F,false); 
 	} else {
 	  renderedFlag=false;
 	  I->CopyFlag = false;
@@ -3343,12 +3360,12 @@ int SceneRenderCached(void)
   }
   /*  if(renderedFlag) {
 	I->RenderTime = -I->LastRender;
-	I->LastRender = UtilGetSeconds(TempPyMOLGlobals);
+	I->LastRender = UtilGetSeconds(G);
 	I->RenderTime += I->LastRender;
-	ButModeSetRate(I->RenderTime);
+	ButModeSetRate(G,I->RenderTime);
    }*/
 
-  PRINTFD(FB_Scene)
+  PRINTFD(G,FB_Scene)
     " SceneRenderCached: leaving...renderedFlag %d\n",renderedFlag
     ENDFD;
 
@@ -3357,9 +3374,9 @@ int SceneRenderCached(void)
 
 
 /*========================================================================*/
-static void SceneRenderAll(SceneUnitContext *context,float *normal,Pickable **pickVLA,int pass,int fat)
+static void SceneRenderAll(PyMOLGlobals *G,SceneUnitContext *context,float *normal,Pickable **pickVLA,int pass,int fat)
 {
-  CScene *I=&Scene;
+  register CScene *I=G->Scene;
   ObjRec *rec=NULL;
   float vv[4];
 
@@ -3424,10 +3441,10 @@ void sharp3d_switch_to_right_stereo(void);
 void sharp3d_end_stereo(void);
 #endif
 /*========================================================================*/
-void SceneRender(Pickable *pick,int x,int y,Multipick *smp)
+void SceneRender(PyMOLGlobals *G,Pickable *pick,int x,int y,Multipick *smp)
 {
   /* think in terms of the camera's world */
-  CScene *I=&Scene;
+  register CScene *I=G->Scene;
   ObjRec *rec=NULL;
   float fog[4];
   float *v,vv[4],f;
@@ -3460,20 +3477,20 @@ void SceneRender(Pickable *pick,int x,int y,Multipick *smp)
 
   SceneUnitContext context;
 
-  PRINTFD(FB_Scene)
+  PRINTFD(G,FB_Scene)
     " SceneRender: entered. pick %p x %d y %d smp %p\n",
     (void*)pick,x,y,(void*)smp
     ENDFD;
 
-  double_pump=SettingGet_i(NULL,NULL,cSetting_stereo_double_pump_mono);
+  double_pump=SettingGet_i(G,NULL,NULL,cSetting_stereo_double_pump_mono);
   
   if(I->StereoMode>1)
     aspRat=aspRat/2;
 
-  fov=SettingGet(cSetting_field_of_view);
+  fov=SettingGet(G,cSetting_field_of_view);
   if(PMGUI) {
 
-    if(Feedback(FB_OpenGL,FB_Debugging))
+    if(Feedback(G,FB_OpenGL,FB_Debugging))
       PyMOLCheckOpenGLErr("SceneRender checkpoint 0");
 
     must_render_stereo = (I->StereoMode!=0);
@@ -3491,16 +3508,16 @@ void SceneRender(Pickable *pick,int x,int y,Multipick *smp)
       render_buffer = GL_BACK;
     }
 
-    if(Feedback(FB_OpenGL,FB_Debugging))
+    if(Feedback(G,FB_OpenGL,FB_Debugging))
       PyMOLCheckOpenGLErr("SceneRender checkpoint 1");
 
   
     glGetIntegerv(GL_VIEWPORT,(GLint*)view_save);
     glViewport(I->Block->rect.left,I->Block->rect.bottom,I->Width,I->Height);
 
-    debug_pick = (int)SettingGet(cSetting_debug_pick);
+    debug_pick = (int)SettingGet(G,cSetting_debug_pick);
 
-    if(SettingGet(cSetting_line_smooth)) {
+    if(SettingGet(G,cSetting_line_smooth)) {
       if(!(pick||smp)) {
         glEnable(GL_LINE_SMOOTH);
         glHint(GL_LINE_SMOOTH_HINT,GL_NICEST);
@@ -3508,10 +3525,10 @@ void SceneRender(Pickable *pick,int x,int y,Multipick *smp)
     } else {
       glDisable(GL_LINE_SMOOTH);
     }
-    glLineWidth(SettingGet(cSetting_line_width));
+    glLineWidth(SettingGet(G,cSetting_line_width));
       
 
-    glPointSize(SettingGet(cSetting_dot_width));
+    glPointSize(SettingGet(G,cSetting_dot_width));
 
     glEnable(GL_NORMALIZE); /* get rid of this to boost performance */
 
@@ -3524,7 +3541,7 @@ void SceneRender(Pickable *pick,int x,int y,Multipick *smp)
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
 
-    ScenePrepareUnitContext(&context,I->Width,I->Height);
+    ScenePrepareUnitContext(G,&context,I->Width,I->Height);
  
  
     /* do standard 3D objects */
@@ -3534,13 +3551,13 @@ void SceneRender(Pickable *pick,int x,int y,Multipick *smp)
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
 
-    if(SettingGet(cSetting_all_states)) {
+    if(SettingGet(G,cSetting_all_states)) {
       curState=-1;
     } else {
-      curState=SettingGetGlobal_i(cSetting_state)-1;
+      curState=SettingGetGlobal_i(G,cSetting_state)-1;
     }
 
-    if(SettingGet(cSetting_ortho)==0.0) {
+    if(SettingGet(G,cSetting_ortho)==0.0) {
       gluPerspective(fov,aspRat,I->FrontSafe,I->Back);
     } else {
       height  = (float)(fabs(I->Pos[2])*tan((fov/2.0)*cPI/180.0));	 
@@ -3552,7 +3569,7 @@ void SceneRender(Pickable *pick,int x,int y,Multipick *smp)
     }
 
     glMatrixMode(GL_MODELVIEW);
-    ScenePrepareMatrix(0);
+    ScenePrepareMatrix(G,0);
 
     /* Save these for editing operations */
 
@@ -3566,7 +3583,7 @@ void SceneRender(Pickable *pick,int x,int y,Multipick *smp)
     MatrixInvTransform3f(I->RotMatrix,zAxis,normal); 
     copy3f(normal,I->ViewNormal);
   
-    if(SettingGet(cSetting_normal_workaround)) {
+    if(SettingGet(G,cSetting_normal_workaround)) {
       I->LinesNormal[0]=0.0;	
       I->LinesNormal[1]=0.0;	 
       I->LinesNormal[2]=1.0;
@@ -3592,7 +3609,7 @@ void SceneRender(Pickable *pick,int x,int y,Multipick *smp)
       if(PyMOLOption->multisample)
         glEnable(0x809D); /* GL_MULTISAMPLE_ARB */
 
-      f=SettingGet(cSetting_gl_ambient);
+      f=SettingGet(G,cSetting_gl_ambient);
       vv[0]=f;
       vv[1]=f;
       vv[2]=f;
@@ -3601,16 +3618,16 @@ void SceneRender(Pickable *pick,int x,int y,Multipick *smp)
       glEnable(GL_LIGHTING);
       glEnable(GL_LIGHT0);
       glLightModelfv(GL_LIGHT_MODEL_AMBIENT,vv);
-      if(SettingGet(cSetting_two_sided_lighting)||
-         (SettingGetGlobal_i(cSetting_transparency_mode)==1)) {
+      if(SettingGet(G,cSetting_two_sided_lighting)||
+         (SettingGetGlobal_i(G,cSetting_transparency_mode)==1)) {
         glLightModeli(GL_LIGHT_MODEL_TWO_SIDE,GL_TRUE);
       } else {
         glLightModeli(GL_LIGHT_MODEL_TWO_SIDE,GL_FALSE);
       }
 
-      f = SettingGet(cSetting_specular);
+      f = SettingGet(G,cSetting_specular);
       if(f==1.0F) {
-        f=SettingGet(cSetting_specular_intensity);
+        f=SettingGet(G,cSetting_specular_intensity);
       } 
       if(f>R_SMALL4) {
         /*        glEnable(GL_LIGHT1);*/
@@ -3625,10 +3642,10 @@ void SceneRender(Pickable *pick,int x,int y,Multipick *smp)
         glLightfv(GL_LIGHT1,GL_SPECULAR,vv);
         glLightfv(GL_LIGHT1,GL_DIFFUSE,zero);
         glMaterialfv(GL_FRONT,GL_SPECULAR,vv);
-        vv[0]=SettingGet(cSetting_shininess);
+        vv[0]=SettingGet(G,cSetting_shininess);
         glMaterialfv(GL_FRONT,GL_SHININESS,vv);
 
-        copy3f(SettingGetGlobal_3fv(cSetting_light),vv);
+        copy3f(SettingGetGlobal_3fv(G,cSetting_light),vv);
         normalize3f(vv);
         MatrixInvTransform44fAs33f3f(I->RotMatrix,vv,vv); 
         invert3f(vv);
@@ -3638,10 +3655,10 @@ void SceneRender(Pickable *pick,int x,int y,Multipick *smp)
       } else {
         glMaterialfv(GL_FRONT,GL_SPECULAR,zero); 
       }
-      if(SettingGet(cSetting_depth_cue)&&SettingGet(cSetting_fog)) {
-        fog_start = (I->Back-I->FrontSafe)*SettingGet(cSetting_fog_start)+I->FrontSafe;
+      if(SettingGet(G,cSetting_depth_cue)&&SettingGet(G,cSetting_fog)) {
+        fog_start = (I->Back-I->FrontSafe)*SettingGet(G,cSetting_fog_start)+I->FrontSafe;
 #ifdef _PYMOL_3DFX
-        if(SettingGet(cSetting_ortho)==0.0) {
+        if(SettingGet(G,cSetting_ortho)==0.0) {
 #endif
           glEnable(GL_FOG);
           glFogf(GL_FOG_MODE, GL_LINEAR);
@@ -3656,10 +3673,10 @@ void SceneRender(Pickable *pick,int x,int y,Multipick *smp)
           if(fog_val>1.0) fog_val=0.99999;
           glFogf(GL_FOG_DENSITY, fog_val);
 #else
-          glFogf(GL_FOG_END, I->FrontSafe+(I->Back-I->FrontSafe)/SettingGet(cSetting_fog));
+          glFogf(GL_FOG_END, I->FrontSafe+(I->Back-I->FrontSafe)/SettingGet(G,cSetting_fog));
           glFogf(GL_FOG_DENSITY, fog_val);
 #endif
-          v=SettingGetfv(cSetting_bg_rgb);
+          v=SettingGetfv(G,cSetting_bg_rgb);
           fog[0]=v[0];
           fog[1]=v[1];
           fog[2]=v[2];
@@ -3692,7 +3709,7 @@ void SceneRender(Pickable *pick,int x,int y,Multipick *smp)
 
     }
 
-    PRINTFD(FB_Scene)
+    PRINTFD(G,FB_Scene)
     " SceneRender: matrices loaded. rendering objects...\n"
     ENDFD;
 
@@ -3715,7 +3732,7 @@ void SceneRender(Pickable *pick,int x,int y,Multipick *smp)
       pickVLA[0].index=0;
       pickVLA[0].ptr=NULL;
 
-      SceneRenderAll(&context,NULL,&pickVLA,0,true);
+      SceneRenderAll(G,&context,NULL,&pickVLA,0,true);
 	  
 
       if(debug_pick) {
@@ -3723,14 +3740,14 @@ void SceneRender(Pickable *pick,int x,int y,Multipick *smp)
         PSleep(1000000*debug_pick/4);
         p_glutSwapBuffers();
       }
-      lowBits = SceneFindTriplet(x,y,render_buffer);
+      lowBits = SceneFindTriplet(G,x,y,render_buffer);
 	
       glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	
       pickVLA[0].index=0;
       pickVLA[0].ptr=(void*)pick; /* this is just a flag */
 	
-      SceneRenderAll(&context,NULL,&pickVLA,0,true);
+      SceneRenderAll(G,&context,NULL,&pickVLA,0,true);
 
       if(debug_pick) {
         p_glutSwapBuffers();
@@ -3738,21 +3755,21 @@ void SceneRender(Pickable *pick,int x,int y,Multipick *smp)
         p_glutSwapBuffers();
       }
 
-      highBits = SceneFindTriplet(x,y,render_buffer);
+      highBits = SceneFindTriplet(G,x,y,render_buffer);
       index = lowBits+(highBits<<12);
 
       if(debug_pick) {
-        PRINTFB(FB_Scene,FB_Details)
+        PRINTFB(G,FB_Scene,FB_Details)
           " SceneClick-Detail: index %d < %d?\n",index,pickVLA[0].index
-          ENDFB;
+          ENDFB(G);
       }
       
       if(index&&(index<=pickVLA[0].index)) {
         *pick = pickVLA[index]; /* return object info */
         if(debug_pick) {
-          PRINTFB(FB_Scene,FB_Details)
+          PRINTFB(G,FB_Scene,FB_Details)
             " SceneClick-Detail: obj %p index %d bond %d\n",pick->ptr,pick->index,pick->bond
-            ENDFB;
+            ENDFB(G);
         }
       } else {
         pick->ptr = NULL;
@@ -3778,18 +3795,18 @@ void SceneRender(Pickable *pick,int x,int y,Multipick *smp)
       pickVLA[0].index=0;
       pickVLA[0].ptr=NULL;
       
-      SceneRenderAll(&context,NULL,&pickVLA,0,true);
+      SceneRenderAll(G,&context,NULL,&pickVLA,0,true);
       
-      lowBitVLA = SceneReadTriplets(smp->x,smp->y,smp->w,smp->h,render_buffer);
+      lowBitVLA = SceneReadTriplets(G,smp->x,smp->y,smp->w,smp->h,render_buffer);
 
       glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	
       pickVLA[0].index=0;
       pickVLA[0].ptr=(void*)smp; /* this is just a flag */
 	
-      SceneRenderAll(&context,NULL,&pickVLA,0,true);
+      SceneRenderAll(G,&context,NULL,&pickVLA,0,true);
 
-      highBitVLA = SceneReadTriplets(smp->x,smp->y,smp->w,smp->h,render_buffer);
+      highBitVLA = SceneReadTriplets(G,smp->x,smp->y,smp->w,smp->h,render_buffer);
       
       nLowBits = VLAGetSize(lowBitVLA);
       nHighBits = VLAGetSize(highBitVLA);
@@ -3833,24 +3850,24 @@ void SceneRender(Pickable *pick,int x,int y,Multipick *smp)
       
       /* STANDARD RENDERING */
 
-      ButModeCaptionReset(); /* reset the frame caption if any */
+      ButModeCaptionReset(G); /* reset the frame caption if any */
       /* rendering for visualization */
 
 
-      PRINTFD(FB_Scene)
+      PRINTFD(G,FB_Scene)
         " SceneRender: I->StereoMode %d must_render_stereo %d\n    stereo_as_mono %d  StereoCapable %d\n",
         I->StereoMode, must_render_stereo, stereo_as_mono, StereoCapable
         ENDFD;
 
-      start_time = UtilGetSeconds(TempPyMOLGlobals);
+      start_time = UtilGetSeconds(G);
       if(must_render_stereo) {
         /*stereo*/
 
-        PRINTFD(FB_Scene)
+        PRINTFD(G,FB_Scene)
           " SceneRender: left hand stereo...\n"
           ENDFD;
 
-        if(Feedback(FB_OpenGL,FB_Debugging))
+        if(Feedback(G,FB_OpenGL,FB_Debugging))
           PyMOLCheckOpenGLErr("before stereo glViewport 1");
         
         /* LEFT HAND STEREO */
@@ -3875,11 +3892,11 @@ void SceneRender(Pickable *pick,int x,int y,Multipick *smp)
         
 
         glPushMatrix(); /* 1 */
-        ScenePrepareMatrix(stereo_as_mono ? 0 : 1);
+        ScenePrepareMatrix(G,stereo_as_mono ? 0 : 1);
         for(pass=1;pass>=0;pass--) { /* render opaque then antialiased...*/
           rec=NULL;
 
-          SceneRenderAll(&context,normal,NULL,pass,false);
+          SceneRenderAll(G,&context,normal,NULL,pass,false);
 
         }
 
@@ -3891,23 +3908,23 @@ void SceneRender(Pickable *pick,int x,int y,Multipick *smp)
 
         glPushMatrix(); /* 2 */
         glNormal3fv(normal);
-        ExecutiveRenderSelections(curState);
-        EditorRender(curState);
+        ExecutiveRenderSelections(G,curState);
+        EditorRender(G,curState);
         glPopMatrix(); /* 1 */
 
         /* render transparent */
 
-        SceneRenderAll(&context,normal,NULL,-1,false);
+        SceneRenderAll(G,&context,normal,NULL,-1,false);
 
         glPopMatrix(); /* 0 */
 
         /* RIGHT HAND STEREO */
 
-        PRINTFD(FB_Scene)
+        PRINTFD(G,FB_Scene)
           " SceneRender: right hand stereo...\n"
           ENDFD;
 
-        if(Feedback(FB_OpenGL,FB_Debugging))
+        if(Feedback(G,FB_OpenGL,FB_Debugging))
           PyMOLCheckOpenGLErr("before stereo glViewport 2");
 
         if(stereo_as_mono) { /* double pumped mono */
@@ -3931,10 +3948,10 @@ void SceneRender(Pickable *pick,int x,int y,Multipick *smp)
         
         glClear(GL_DEPTH_BUFFER_BIT);        
         glPushMatrix(); /* 1 */
-        ScenePrepareMatrix(stereo_as_mono ? 0 : 2);
+        ScenePrepareMatrix(G,stereo_as_mono ? 0 : 2);
         for(pass=1;pass>=0;pass--) { /* render opaque then antialiased...*/
           
-          SceneRenderAll(&context,normal,NULL,pass,false);
+          SceneRenderAll(G,&context,normal,NULL,pass,false);
           
         }
         
@@ -3945,12 +3962,12 @@ void SceneRender(Pickable *pick,int x,int y,Multipick *smp)
         
         glPushMatrix(); /* 2 */
         glNormal3fv(normal);
-        ExecutiveRenderSelections(curState);
-        EditorRender(curState);
+        ExecutiveRenderSelections(G,curState);
+        EditorRender(G,curState);
         glPopMatrix(); /* 1 */
         
         /* render transparent */
-        SceneRenderAll(&context,normal,NULL,-1,false);
+        SceneRenderAll(G,&context,normal,NULL,-1,false);
         
         glPopMatrix(); /* 0 */
 
@@ -3974,20 +3991,20 @@ void SceneRender(Pickable *pick,int x,int y,Multipick *smp)
 
       } else {
 
-        if(Feedback(FB_OpenGL,FB_Debugging))
+        if(Feedback(G,FB_OpenGL,FB_Debugging))
           PyMOLCheckOpenGLErr("Before mono rendering");
 
         /* mono rendering */
 
-        PRINTFD(FB_Scene)
+        PRINTFD(G,FB_Scene)
           " SceneRender: rendering opaque and antialiased...\n"
           ENDFD;
         
         for(pass=1;pass>=0;pass--) { /* render opaque then antialiased...*/
-          SceneRenderAll(&context,normal,NULL,pass,false);
+          SceneRenderAll(G,&context,normal,NULL,pass,false);
         }
 
-        PRINTFD(FB_Scene)
+        PRINTFD(G,FB_Scene)
           " SceneRender: rendering DebugCGO...\n"
           ENDFD;
         
@@ -3996,28 +4013,28 @@ void SceneRender(Pickable *pick,int x,int y,Multipick *smp)
         CGORenderGL(DebugCGO,NULL,NULL,NULL);
         glPopMatrix();
 
-        PRINTFD(FB_Scene)
+        PRINTFD(G,FB_Scene)
           " SceneRender: rendering selections...\n"
           ENDFD;
 
         glPushMatrix();
-        PRINTFD(FB_Scene)
+        PRINTFD(G,FB_Scene)
           " SceneRender: rendering editing...\n"
           ENDFD;
-        EditorRender(curState);
+        EditorRender(G,curState);
 
         glNormal3fv(normal);
-        ExecutiveRenderSelections(curState);
+        ExecutiveRenderSelections(G,curState);
 
-        PRINTFD(FB_Scene)
+        PRINTFD(G,FB_Scene)
           " SceneRender: rendering transparent objects...\n"
           ENDFD;
 
         /* render transparent */
-        SceneRenderAll(&context,normal,NULL,-1,false);
+        SceneRenderAll(G,&context,normal,NULL,-1,false);
         glPopMatrix();
 
-        if(Feedback(FB_OpenGL,FB_Debugging))
+        if(Feedback(G,FB_OpenGL,FB_Debugging))
           PyMOLCheckOpenGLErr("during mono rendering");
       }
     }
@@ -4038,48 +4055,48 @@ void SceneRender(Pickable *pick,int x,int y,Multipick *smp)
       glDisable(0x809D); /* GL_MULTISAMPLE_ARB */
     glViewport(view_save[0],view_save[1],view_save[2],view_save[3]);
 
-    if(Feedback(FB_OpenGL,FB_Debugging))
+    if(Feedback(G,FB_OpenGL,FB_Debugging))
       PyMOLCheckOpenGLErr("SceneRender final checkpoint");
 
   }
 
-  PRINTFD(FB_Scene)
+  PRINTFD(G,FB_Scene)
     " SceneRender: rendering complete.\n"
     ENDFD;
   
   if(!(pick||smp)) { /* update frames per second field */
     I->RenderTime = -I->LastRender;
-    I->LastRender = UtilGetSeconds(TempPyMOLGlobals);
+    I->LastRender = UtilGetSeconds(G);
     I->RenderTime += I->LastRender;
-    ButModeSetRate((float)I->RenderTime);
+    ButModeSetRate(G,(float)I->RenderTime);
     if(I->CopyNextFlag) {
       start_time = I->LastRender - start_time;
       if((start_time>0.10)||(MainSavingUnderWhileIdle()))
-        if(!(ControlIdling()))
-          if(SettingGet(cSetting_cache_display)) {
-            SceneCopy(render_buffer,false);
+        if(!(ControlIdling(G)))
+          if(SettingGet(G,cSetting_cache_display)) {
+            SceneCopy(G,render_buffer,false);
           }
     } else {
       I->CopyNextFlag=true;
     }
   }
-  PRINTFD(FB_Scene)
+  PRINTFD(G,FB_Scene)
     " SceneRender: leaving...\n"
     ENDFD;
 
 }
 /*========================================================================*/
-void SceneRestartTimers(void)
+void SceneRestartTimers(PyMOLGlobals *G)
 {
-  CScene *I=&Scene;
-  I->LastRender = UtilGetSeconds(TempPyMOLGlobals);
-  I->LastFrameTime = UtilGetSeconds(TempPyMOLGlobals);
+  register CScene *I=G->Scene;
+  I->LastRender = UtilGetSeconds(G);
+  I->LastFrameTime = UtilGetSeconds(G);
   I->RenderTime = 0;
 }
 /*========================================================================*/
-void ScenePrepareMatrix(int mode)
+void ScenePrepareMatrix(PyMOLGlobals *G,int mode)
 {
-  CScene *I=&Scene;
+  register CScene *I=G->Scene;
 
   float stAng,stShift;
   
@@ -4104,8 +4121,8 @@ void ScenePrepareMatrix(int mode)
 
     /* stereo */
 
-    stAng = SettingGet(cSetting_stereo_angle);
-    stShift = SettingGet(cSetting_stereo_shift);
+    stAng = SettingGet(G,cSetting_stereo_angle);
+    stShift = SettingGet(G,cSetting_stereo_shift);
 
 
     stShift = (float)(stShift*fabs(I->Pos[2])/100.0);
@@ -4118,7 +4135,7 @@ void ScenePrepareMatrix(int mode)
       stShift=-stShift;
     }
 
-    PRINTFD(FB_Scene)
+    PRINTFD(G,FB_Scene)
       " StereoMatrix-Debug: mode %d stAng %8.3f stShift %8.3f \n",mode,stAng,stShift
       ENDFD;
     
@@ -4135,9 +4152,9 @@ void ScenePrepareMatrix(int mode)
 
 }
 /*========================================================================*/
-void SceneRotate(float angle,float x,float y,float z)
+void SceneRotate(PyMOLGlobals *G,float angle,float x,float y,float z)
 {
-  CScene *I=&Scene;
+  register CScene *I=G->Scene;
   float temp[16];
   int a;
   angle = (float)(-PI*angle/180.0);
@@ -4146,7 +4163,7 @@ void SceneRotate(float angle,float x,float y,float z)
   MatrixMultiply44f(I->RotMatrix,temp);
   for(a=0;a<16;a++)
     I->RotMatrix[a]=temp[a];
-  SceneDirty();
+  SceneDirty(G);
 
     /*  glPushMatrix();
         glLoadIdentity();
@@ -4156,11 +4173,11 @@ void SceneRotate(float angle,float x,float y,float z)
         glPopMatrix();*/
 }
 /*========================================================================*/
-void SceneApplyMatrix(float *m)
+void SceneApplyMatrix(PyMOLGlobals *G,float *m)
 {
-  CScene *I=&Scene;
+  register CScene *I=G->Scene;
   MatrixMultiply44f(m,I->RotMatrix);
-  SceneDirty();
+  SceneDirty(G);
   
   /*  glPushMatrix();
       glLoadIdentity();
@@ -4170,11 +4187,11 @@ void SceneApplyMatrix(float *m)
   glPopMatrix();*/
 }
 /*========================================================================*/
-void SceneScale(float scale)
+void SceneScale(PyMOLGlobals *G,float scale)
 {
-  CScene *I=&Scene;
+  register CScene *I=G->Scene;
   I->Scale*=scale;
-  SceneDirty();
+  SceneDirty(G);
 }
 
 

@@ -21,6 +21,7 @@ Z* -------------------------------------------------------------------
 #include"os_python.h"
 
 typedef struct { 
+  PyMOLGlobals *G;
   CCrystal *Crystal;
   WordType PDBSpaceGroup;
   int PDBZValue;
@@ -33,13 +34,13 @@ typedef struct {
 
 int SymmetryAttemptGeneration(CSymmetry *I,int blocked,int quiet);
 void SymmetryFree(CSymmetry *I);
-CSymmetry *SymmetryNew(void);
+CSymmetry *SymmetryNew(PyMOLGlobals *G);
 void SymmetryUpdate(CSymmetry *I);
 void SymmetryDump(CSymmetry *I);
 CSymmetry *SymmetryCopy(CSymmetry *other);
 PyObject *SymmetryAsPyList(CSymmetry *I);
 int SymmetryFromPyList(CSymmetry *I,PyObject *list);
-CSymmetry *SymmetryNewFromPyList(PyObject *list);
+CSymmetry *SymmetryNewFromPyList(PyMOLGlobals *G,PyObject *list);
 void SymmetryReset(CSymmetry *I);
 
 #endif

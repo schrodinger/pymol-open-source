@@ -67,30 +67,15 @@ Z* -------------------------------------------------------------------
 
 typedef char CodeType[10];
 
-typedef struct {
-  Block *Block;
-  CodeType Code[cButModeCount+1];
-  int NCode;
-  int Mode[20];
-  int NBut;
-  float Rate;
-  float Samples;
-  WordType Caption;
-  float TextColor1[3];
-  float TextColor2[3];
-  float TextColor3[3];
-}  CButMode;
 
-extern CButMode ButMode;
-
-void ButModeInit(void);
-void ButModeFree(void);
-Block *ButModeGetBlock(void);
-void ButModeSetRate(float renderTime);
-void ButModeResetRate(void);
-void ButModeSet(int button,int action);
-void ButModeCaption(char *text);
-void ButModeCaptionReset(void);
-int ButModeTranslate(int button,int mod);
+int ButModeInit(PyMOLGlobals *G);
+void ButModeFree(PyMOLGlobals *G);
+Block *ButModeGetBlock(PyMOLGlobals *G);
+void ButModeSetRate(PyMOLGlobals *G,float renderTime);
+void ButModeResetRate(PyMOLGlobals *G);
+void ButModeSet(PyMOLGlobals *G,int button,int action);
+void ButModeCaption(PyMOLGlobals *G,char *text);
+void ButModeCaptionReset(PyMOLGlobals *G);
+int ButModeTranslate(PyMOLGlobals *G,int button,int mod);
 
 #endif

@@ -46,6 +46,7 @@ Z* -------------------------------------------------------------------
  */
 
 typedef struct {
+  PyMOLGlobals *G;
   float *op;
   int c;
 } CGO;
@@ -107,8 +108,10 @@ extern CGO *DebugCGO; /* for programming... initialized in Scene.c */
 #define CGO_PICK_COLOR_SZ        2
 #define CGO_MASK                 0x1F
 
-CGO *CGONew(void);
-CGO *CGONewSized(int size);
+int CGORendererInit(PyMOLGlobals *G);
+void CGORendererFree(PyMOLGlobals *G);
+CGO *CGONew(PyMOLGlobals *G);
+CGO *CGONewSized(PyMOLGlobals *G,int size);
 int CGOGetExtent(CGO *I,float *mn,float *mx);
 
 void CGOFree(CGO *I);
@@ -166,7 +169,7 @@ void CGORenderRay(CGO *I,CRay *ray,float *color,CSetting *set1,CSetting *set2);
 void CGOReset(CGO *I);
 
 PyObject *CGOAsPyList(CGO *I);
-CGO *CGONewFromPyList(PyObject *list,int version);
+CGO *CGONewFromPyList(PyMOLGlobals *G,PyObject *list,int version);
 void CGOPickColor(CGO *I,int index,int bond);
 
 #endif

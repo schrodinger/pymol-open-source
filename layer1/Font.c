@@ -18,9 +18,10 @@ Z* -------------------------------------------------------------------
 #include"Util.h"
 #include"Font.h"
 
-int FontInit(CFont *I)
+int FontInit(PyMOLGlobals *G,CFont *I)
 {
   UtilZeroMem(I,sizeof(CFont));
+  I->G = G;
   return 1;
 }
 

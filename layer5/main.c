@@ -256,34 +256,34 @@ static void DrawBlueLine(void)
 void MainMovieCopyPrepare(int *width,int *height,int *length)
 {
   PLockAPIAsGlut();
-  MovieCopyPrepare(width,height,length);
+  MovieCopyPrepare(TempPyMOLGlobals,width,height,length);
   PUnlockAPIAsGlut();
 }
 int MainMovieCopyFrame(int frame,int width,int height,int rowbytes,void *ptr)
 {
   int result;
   PLockAPIAsGlut();
-  result = MovieCopyFrame(frame,width,height,rowbytes,ptr);
+  result = MovieCopyFrame(TempPyMOLGlobals,frame,width,height,rowbytes,ptr);
   PUnlockAPIAsGlut();
   return result;
 }
 void MainMovieCopyFinish(void)
 {
   PLockAPIAsGlut();
-  MovieCopyFinish();
+  MovieCopyFinish(TempPyMOLGlobals);
   PUnlockAPIAsGlut();
 }
 void MainSceneGetSize(int *width,int *height)
 {
   PLockAPIAsGlut();
-  SceneGetWidthHeight(width,height);
+  SceneGetWidthHeight(TempPyMOLGlobals,width,height);
   PUnlockAPIAsGlut();
 }
 int MainSceneCopy(int width,int height,int rowbytes,void *ptr)
 { 
   int result;
   PLockAPIAsGlut();
-  result = SceneCopyExternal(width, height,rowbytes,(unsigned char *)ptr);
+  result = SceneCopyExternal(TempPyMOLGlobals,width, height,rowbytes,(unsigned char *)ptr);
   PUnlockAPIAsGlut();
   return result;
 }
@@ -293,9 +293,9 @@ void MainDoCommand(char *str1)
   PLockAPIAsGlut();
   if(str1[0]!='_') { /* suppress internal call-backs */
     if(strncmp(str1,"cmd._",5)) {
-      OrthoAddOutput("PyMOL>");
-      OrthoAddOutput(str1);
-      OrthoNewLine(NULL,true);
+      OrthoAddOutput(TempPyMOLGlobals,"PyMOL>");
+      OrthoAddOutput(TempPyMOLGlobals,str1);
+      OrthoNewLine(TempPyMOLGlobals,NULL,true);
     }
     PDo(str1);
   } else if(str1[1]==' ') { /* "_ command" suppresses echoing of command, but it is still logged */
@@ -311,15 +311,15 @@ void MainRunCommand(char *str1)
   PLockAPIAsGlut();
   if(str1[0]!='_') { /* suppress internal call-backs */
     if(strncmp(str1,"cmd._",5)) {
-      OrthoAddOutput("PyMOL>");
-      OrthoAddOutput(str1);
-      OrthoNewLine(NULL,true);
-      if(WordMatch(str1,"quit",true)==0) /* don't log quit */
+      OrthoAddOutput(TempPyMOLGlobals,"PyMOL>");
+      OrthoAddOutput(TempPyMOLGlobals,str1);
+      OrthoNewLine(TempPyMOLGlobals,NULL,true);
+      if(WordMatch(TempPyMOLGlobals,str1,"quit",true)==0) /* don't log quit */
         PLog(str1,cPLog_pml);
     }
     PParse(str1);
   } else if(str1[1]==' ') { /* "_ command" suppresses echoing of command, but it is still logged */
-    if(WordMatch(str1+2,"quit",true)>=0) /* don't log quit */
+    if(WordMatch(TempPyMOLGlobals,str1+2,"quit",true)>=0) /* don't log quit */
       PLog(str1+2,cPLog_pml);
     PParse(str1+2);    
   } else { 
@@ -390,7 +390,7 @@ void MainResetIdle(void)
 void MainDirty(void)
 {
   CMain *I = &Main;
-  /*  PRINTFD(FB_Main)
+  /*  PRINTFD(TempPyMOLGlobals,FB_Main)
     " MainDirty: called.\n"
     ENDFD; */
   I->DirtyFlag=true;
@@ -445,7 +445,7 @@ static void MainButton(int button,int state,int x,int y)
       x=WinX/2;y=WinY/2; /* force into scene */
       break;
     }
-    if(!OrthoButton(button,state,x,y,Modifiers))
+    if(!OrthoButton(TempPyMOLGlobals,button,state,x,y,Modifiers))
       {
       }
   }
@@ -461,7 +461,7 @@ static void MainDrag(int x,int y)
   PLockAPIAsGlut();
   
   y=WinY-y;
-  if(!OrthoDrag(x,y,Modifiers))
+  if(!OrthoDrag(TempPyMOLGlobals,x,y,Modifiers))
     {
     }
   
@@ -490,14 +490,14 @@ static void MainPassive(int x,int y)
       y=WinY-y;
      
 
-      OrthoButton(P_GLUT_LEFT_BUTTON, P_GLUT_UP,x,y,Modifiers);
+      OrthoButton(TempPyMOLGlobals,P_GLUT_LEFT_BUTTON, P_GLUT_UP,x,y,Modifiers);
       I->DragPassive = false;
 
     } else {
       
       y=WinY-y;
       
-      if(!OrthoDrag(x,y,Modifiers))
+      if(!OrthoDrag(TempPyMOLGlobals,x,y,Modifiers))
         {
         }
       
@@ -523,18 +523,18 @@ static void MainDrawLocked(void)
     I->DirtyFlag=false;
   }
   
-  OrthoBusyPrime();
-  ExecutiveDrawNow();
+  OrthoBusyPrime(TempPyMOLGlobals);
+  ExecutiveDrawNow(TempPyMOLGlobals);
 
   if(PMGUI) {
-    if(Feedback(FB_OpenGL,FB_Debugging)) {
+    if(Feedback(TempPyMOLGlobals,FB_OpenGL,FB_Debugging)) {
       PyMOLCheckOpenGLErr("During Rendering");
     }
   }
 
   if(I->SwapFlag)
     {
-      if(!(int)SettingGet(cSetting_suspend_updates))
+      if(!(int)SettingGet(TempPyMOLGlobals,cSetting_suspend_updates))
         if(PMGUI) {
           DrawBlueLine();
           p_glutSwapBuffers();
@@ -547,14 +547,14 @@ static void MainDrawLocked(void)
 /*========================================================================*/
 static void MainDraw(void)
 {
-  PRINTFD(FB_Main)
+  PRINTFD(TempPyMOLGlobals,FB_Main)
     " MainDraw: called.\n"
     ENDFD;
   PLockAPIAsGlut();
 
   MainDrawLocked();
   PUnlockAPIAsGlut();
-  PRINTFD(FB_Main)
+  PRINTFD(TempPyMOLGlobals,FB_Main)
     " MainDraw: completed.\n"
     ENDFD;
 }
@@ -566,7 +566,7 @@ static void MainKey(unsigned char k, int x, int y)
 
   glMod = p_glutGetModifiers();
 
-  PRINTFD(FB_Main)
+  PRINTFD(TempPyMOLGlobals,FB_Main)
     " MainKey: %d %d %d\n",k,x,y
     ENDFD;
   PLockAPIAsGlut();
@@ -575,8 +575,8 @@ static void MainKey(unsigned char k, int x, int y)
 	 ((glMod&P_GLUT_ACTIVE_CTRL) ? cOrthoCTRL : 0) |
 	 ((glMod&P_GLUT_ACTIVE_ALT) ? cOrthoALT : 0);
 
-  if(!WizardDoKey(k,x,y,Modifiers))
-    OrthoKey(k,x,y,Modifiers);
+  if(!WizardDoKey(TempPyMOLGlobals,k,x,y,Modifiers))
+    OrthoKey(TempPyMOLGlobals,k,x,y,Modifiers);
 
   PUnlockAPIAsGlut();
   
@@ -597,19 +597,19 @@ static void MainSpecial(int k, int x, int y)
 	 ((glMod&P_GLUT_ACTIVE_ALT) ? cOrthoALT : 0);
 
   if(!grabbed)
-    grabbed = WizardDoKey((unsigned char)k,x,y,Modifiers);
+    grabbed = WizardDoKey(TempPyMOLGlobals,(unsigned char)k,x,y,Modifiers);
 
   switch(k) {
     case P_GLUT_KEY_UP:
     case P_GLUT_KEY_DOWN:
       grabbed=1;
-      OrthoSpecial(k,x,y,Modifiers);
+      OrthoSpecial(TempPyMOLGlobals,k,x,y,Modifiers);
       break;
     case P_GLUT_KEY_LEFT:
     case P_GLUT_KEY_RIGHT:      
-      if(OrthoArrowsGrabbed()) {
+      if(OrthoArrowsGrabbed(TempPyMOLGlobals)) {
         grabbed=1;
-        OrthoSpecial(k,x,y,Modifiers);
+        OrthoSpecial(TempPyMOLGlobals,k,x,y,Modifiers);
       }
       break;
   }
@@ -635,7 +635,7 @@ void MainReshape(int width, int height) /* called by Glut */
   h = ((float)height)/width;
   if(PMGUI) glViewport(0, 0, (GLint) width, (GLint) height);
   
-  OrthoReshape(width,height,false);
+  OrthoReshape(TempPyMOLGlobals,width,height,false);
 
 }
 /*========================================================================*/
@@ -645,9 +645,9 @@ PyObject *MainAsPyList(void)
   PyObject *result=NULL;
   int width,height;
   result = PyList_New(2);
-  BlockGetSize(SceneGetBlock(),&width,&height);
-  if(SettingGetGlobal_b(cSetting_seq_view)&&!SettingGetGlobal_b(cSetting_seq_view_overlay))
-    height+=SeqGetHeight();
+  BlockGetSize(SceneGetBlock(TempPyMOLGlobals),&width,&height);
+  if(SettingGetGlobal_b(TempPyMOLGlobals,cSetting_seq_view)&&!SettingGetGlobal_b(TempPyMOLGlobals,cSetting_seq_view_overlay))
+    height+=SeqGetHeight(TempPyMOLGlobals);
   PyList_SetItem(result,0,PyInt_FromLong(width));
   PyList_SetItem(result,1,PyInt_FromLong(height));
   return(PConvAutoNone(result));
@@ -680,27 +680,27 @@ void MainDoReshape(int width, int height) /* called internally */
   int force =false;
 
   if(width<0) {
-    BlockGetSize(SceneGetBlock(),&width,&h);
-    if(SettingGetGlobal_b(cSetting_internal_gui))
-      width+=SettingGetGlobal_i(cSetting_internal_gui_width);
+    BlockGetSize(SceneGetBlock(TempPyMOLGlobals),&width,&h);
+    if(SettingGetGlobal_b(TempPyMOLGlobals,cSetting_internal_gui))
+      width+=SettingGetGlobal_i(TempPyMOLGlobals,cSetting_internal_gui_width);
     force = true;
   }
 
   if(height<0) { 
-    BlockGetSize(SceneGetBlock(),&w,&height);
-    internal_feedback = (int)SettingGet(cSetting_internal_feedback);
+    BlockGetSize(SceneGetBlock(TempPyMOLGlobals),&w,&height);
+    internal_feedback = (int)SettingGet(TempPyMOLGlobals,cSetting_internal_feedback);
     if(internal_feedback)
       height+=(internal_feedback-1)*cOrthoLineHeight+cOrthoBottomSceneMargin;
-    if(SettingGetGlobal_b(cSetting_seq_view)&&!SettingGetGlobal_b(cSetting_seq_view_overlay))
-      height+=SeqGetHeight();
+    if(SettingGetGlobal_b(TempPyMOLGlobals,cSetting_seq_view)&&!SettingGetGlobal_b(TempPyMOLGlobals,cSetting_seq_view_overlay))
+      height+=SeqGetHeight(TempPyMOLGlobals);
     force = true;
   }
   if(PMGUI) {
     p_glutReshapeWindow(width,height);
     glViewport(0, 0, (GLint) width, (GLint) height);
   }
-  OrthoReshape(width,height,force);
-  if(SettingGet(cSetting_full_screen))
+  OrthoReshape(TempPyMOLGlobals,width,height,force);
+  if(SettingGet(TempPyMOLGlobals,cSetting_full_screen))
     p_glutFullScreen();
 
 }
@@ -734,36 +734,39 @@ static void MainInit(PyMOLGlobals *G)
     glDisable(GL_BLEND);
   }
 
-  MemoryCacheInit(); 
-  FeedbackInit(PyMOLOption->quiet);
+  MemoryCacheInit(G);
+  FeedbackInit(G,PyMOLOption->quiet);
+  WordInit(G);
   UtilInit(G);
 
-  I->IdleTime=(float)UtilGetSeconds(TempPyMOLGlobals);
+  I->IdleTime=(float)UtilGetSeconds(G);
 
 
 
-  SettingInitGlobal(true,true);  
-  SettingSet(cSetting_internal_gui,(float)InternalGUI);
-  SettingSet(cSetting_internal_feedback,(float)InternalFeedback);
-  TextInit();
-  CharacterInit();
+  ColorInit(G);
+  CGORendererInit(G);
+  SettingInitGlobal(G,true,true);  
+  SettingSet(G,cSetting_internal_gui,(float)InternalGUI);
+  SettingSet(G,cSetting_internal_feedback,(float)InternalFeedback);
+  TextInit(G);
+  CharacterInit(G);
   SphereInit(G);
-  ColorInit();
-  OrthoInit(ShowSplash);
-  WizardInit(); /* must come after ortho */
-  SelectorInit();
-  MovieInit();
-  SceneInit();
-  SeqInit();
-  SeekerInit();
-  ButModeInit();
-  ControlInit();
-  SculptCacheInit();
-  VFontInit();
-  ExecutiveInit();
+  OrthoInit(G,ShowSplash);
+  WizardInit(G); /* must come after ortho */
+  MovieInit(G);
+  SceneInit(G);
+  SelectorInit(G);
+  SeqInit(G);
+  SeekerInit(G);
+  ButModeInit(G);
+  ControlInit(G);
+  AtomInfoInit(G);
+  SculptCacheInit(G);
+  VFontInit(G);
+  ExecutiveInit(G);
   IsosurfInit(G);
   TetsurfInit(G);
-  EditorInit();  
+  EditorInit(G);
 }
 
 
@@ -772,34 +775,37 @@ static void MainInit(PyMOLGlobals *G)
 /*========================================================================*/
 void MainFree(void)
 {
-  PyMOLGlobals *G = ClassPyMOLGetGlobals(PyMOLInstance);
+  PyMOLGlobals *G = ClassPyMOLGetGlobals(PyMOLInstance); /* temporary -- will change */
 
   PyMOLTerminating=true;
   TetsurfFree(G);
   IsosurfFree(G);
-  WizardFree();
-  SceneCleanupStereo();
-  EditorFree();
-  ExecutiveFree();
-  VFontFree();
-  SculptCacheFree();
-  ButModeFree();
-  ControlFree();
-  SeekerFree();
-  SeqFree();
-  SceneFree();
-  MovieFree();
-  SelectorFree();
-  OrthoFree();
-  SettingFreeGlobal();
-  ColorFree();
-  CharacterFree();
-  TextFree();
+  WizardFree(G);
+  SceneCleanupStereo(G);
+  EditorFree(G);
+  ExecutiveFree(G);
+  VFontFree(G);
+  SculptCacheFree(G);
+  AtomInfoFree(G);
+  ButModeFree(G);
+  ControlFree(G);
+  SeekerFree(G);
+  SeqFree(G);
+  SelectorFree(G);
+  SceneFree(G);
+  MovieFree(G);
+  OrthoFree(G);
+  SettingFreeGlobal(G);
+  CharacterFree(G);
+  TextFree(G);
   SphereFree(G);
   PFree();
+  CGORendererFree(G);
+  ColorFree(G);
   UtilFree(G);
-  FeedbackFree();
-  MemoryCacheDone();
+  WordFree(G);
+  FeedbackFree(G);
+  MemoryCacheDone(G);
                      
   ClassPyMOLFree(PyMOLInstance);
 
@@ -870,7 +876,7 @@ void MainBusyIdle(void)
   CMain *I = &Main;
 
 
-  PRINTFD(FB_Main)
+  PRINTFD(TempPyMOLGlobals,FB_Main)
     " MainBusyIdle: called.\n"
     ENDFD;
 
@@ -892,7 +898,7 @@ void MainBusyIdle(void)
 
   /* flush command and output queues */
   
-  /*  PRINTFD(FB_Main)
+  /*  PRINTFD(TempPyMOLGlobals,FB_Main)
     " MainBusyIdle: entered, IdleMode %d, DirtyFlag %d, SwapFlag %d\n",
     I->IdleMode,I->DirtyFlag,I->SwapFlag
     ENDFD;*/
@@ -903,25 +909,25 @@ void MainBusyIdle(void)
       WindowIsVisible = PyMOLOption->window_visible;
       if(WindowIsVisible) {
         p_glutShowWindow();
-        OrthoDirty();
+        OrthoDirty(TempPyMOLGlobals);
       } else {
         p_glutHideWindow();
       }
     }
   }
 
-  PRINTFD(FB_Main)
+  PRINTFD(TempPyMOLGlobals,FB_Main)
     " MainBusyIdle: got lock.\n"
     ENDFD;
 
   if(I->DragDirtyFlag==1) {
     I->DragDirtyFlag = 0;
-    OrthoFakeDrag();
+    OrthoFakeDrag(TempPyMOLGlobals);
   }
 
-  if(ControlIdling()) {
-    ExecutiveSculptIterateAll();
-	 SceneIdle(); 
+  if(ControlIdling(TempPyMOLGlobals)) {
+    ExecutiveSculptIterateAll(TempPyMOLGlobals);
+	 SceneIdle(TempPyMOLGlobals); 
 	 I->IdleMode=0;
   } else {
     if(!I->IdleMode) {
@@ -930,8 +936,8 @@ void MainBusyIdle(void)
     }
   }
 
-  if(SceneRovingCheckDirty()) {
-    SceneRovingUpdate();
+  if(SceneRovingCheckDirty(TempPyMOLGlobals)) {
+    SceneRovingUpdate(TempPyMOLGlobals);
     I->IdleMode = 0;
   }
   PFlush();
@@ -944,8 +950,8 @@ void MainBusyIdle(void)
     I->SwapFlag=false;
   }
   if(I->DirtyFlag&&
-     ((!SettingGet_b(NULL,NULL,cSetting_defer_updates)||
-       ControlIdling()))
+     ((!SettingGet_b(TempPyMOLGlobals,NULL,NULL,cSetting_defer_updates)||
+       ControlIdling(TempPyMOLGlobals)))
      ) {
     if(PMGUI) 
       p_glutPostRedisplay();
@@ -956,19 +962,19 @@ void MainBusyIdle(void)
 
   if(I->IdleMode) { /* avoid racing the CPU */
     if(I->IdleMode==1) {
-      if(UtilGetSeconds(TempPyMOLGlobals)-I->IdleTime>SettingGet(cSetting_idle_delay)) { 
+      if(UtilGetSeconds(TempPyMOLGlobals)-I->IdleTime>SettingGet(TempPyMOLGlobals,cSetting_idle_delay)) { 
         I->IdleMode=2;
         if(PMGUI)
-          if(SettingGet(cSetting_cache_display))
+          if(SettingGet(TempPyMOLGlobals,cSetting_cache_display))
              p_glutPostRedisplay(); /* trigger caching of the current scene */
       }
     }
     if(I->IdleMode==1)
-      PSleep((int)SettingGet(cSetting_fast_idle)); /* fast idle - more responsive */
+      PSleep((int)SettingGet(TempPyMOLGlobals,cSetting_fast_idle)); /* fast idle - more responsive */
     else
-      PSleep((int)SettingGet(cSetting_slow_idle)); /* slow idle - save CPU cycles */
+      PSleep((int)SettingGet(TempPyMOLGlobals,cSetting_slow_idle)); /* slow idle - save CPU cycles */
   } else {
-    PSleep((int)SettingGet(cSetting_no_idle)); /* give Tcl/Tk a chance to run */
+    PSleep((int)SettingGet(TempPyMOLGlobals,cSetting_no_idle)); /* give Tcl/Tk a chance to run */
   }
   PUnlockAPIAsGlut();
 
@@ -1011,7 +1017,7 @@ void MainBusyIdle(void)
     I->ReshapeFlag=false;
   }
   if(!PMGUI) {
-    if(!OrthoCommandWaiting()) {
+    if(!OrthoCommandWaiting(TempPyMOLGlobals)) {
       if((!PyMOLOption->keep_thread_alive)&&(!PyMOLOption->read_stdin)) {
         I->IdleCount++;
         if(I->IdleCount==10) {
@@ -1023,7 +1029,7 @@ void MainBusyIdle(void)
       }
     }
   }
-  PRINTFD(FB_Main)
+  PRINTFD(TempPyMOLGlobals,FB_Main)
     " MainBusyIdle: leaving... IdleMode %d, DirtyFlag %d, SwapFlag %d\n",
     I->IdleMode,I->DirtyFlag,I->SwapFlag
     ENDFD;
@@ -1170,8 +1176,8 @@ SetConsoleCtrlHandler(
    PInit();
   
 #ifdef _PYMOL_SHARP3D
-  SettingSetGlobal_b(cSetting_overlay,1);
-  SettingSetGlobal_b(cSetting_overlay_lines,1);
+  SettingSetGlobal_b(TempPyMOLGlobals,cSetting_overlay,1);
+  SettingSetGlobal_b(TempPyMOLGlobals,cSetting_overlay_lines,1);
 #endif
 
   if(PMGUI) {
@@ -1190,7 +1196,7 @@ SetConsoleCtrlHandler(
   PUnblock();
 
   if(PMGUI) {
-    SceneSetCardInfo((char*)glGetString(GL_VENDOR),
+    SceneSetCardInfo(TempPyMOLGlobals,(char*)glGetString(GL_VENDOR),
                      (char*)glGetString(GL_RENDERER),
                      (char*)glGetString(GL_VERSION));
     if(ShowSplash) {
@@ -1211,7 +1217,7 @@ SetConsoleCtrlHandler(
     p_glutMainLoop();
     PBlock(); /* if we've gotten here, then we're heading back to Python... */
   } else {
-    SceneSetCardInfo("none","ray trace only","none");
+    SceneSetCardInfo(TempPyMOLGlobals,"none","ray trace only","none");
     if(ShowSplash) 
       printf(" Command mode. No graphics front end.\n");
     MainReshape(WinX,WinY);

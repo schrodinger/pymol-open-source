@@ -41,15 +41,15 @@ Isofield *IsosurfFieldAlloc(PyMOLGlobals *G,int *dims);
 void IsosurfFieldFree(PyMOLGlobals *G,Isofield *field);
 
 int	IsosurfVolume(PyMOLGlobals *G,Isofield *field,float level,int **num,float **vert,int *range,int mode);
-void IsosurfGetRange(Isofield *field,CCrystal *cryst,float *mn,float *mx,int *range);
+void IsosurfGetRange(PyMOLGlobals *G,Isofield *field,CCrystal *cryst,float *mn,float *mx,int *range);
 
 int	IsosurfInit(PyMOLGlobals *G);
 void  IsosurfFree(PyMOLGlobals *G);
 
 /* isofield operations -- not part of Isosurf */
 
-void IsofieldComputeGradients(Isofield *field);
+void IsofieldComputeGradients(PyMOLGlobals *G,Isofield *field);
 PyObject *IsosurfAsPyList(Isofield *I);
-Isofield *IsosurfNewFromPyList(PyObject *list);
+Isofield *IsosurfNewFromPyList(PyMOLGlobals *G,PyObject *list);
 
 #endif

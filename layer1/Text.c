@@ -33,65 +33,64 @@ typedef struct {
   CFont *Font;
 } ActiveRec;
 
-typedef struct {
+struct _CText {
   int NActive;
   ActiveRec *Active;
   float Pos[4];
   float Color[4];
 
-} CText;
+};
 
-CText Text; /* global singleton */
-
-void TextSetPosNColor(float *pos,float *color)
+void TextSetPosNColor(PyMOLGlobals *G,float *pos,float *color)
 {
-  CText *I=&Text;
+  register CText *I=G->Text;
   copy3f(pos,I->Pos);
   copy3f(color,I->Color);
   I->Pos[3]=1.0F;
   I->Color[3]=1.0F;
 }
-void TextSetPos(float *pos)
+void TextSetPos(PyMOLGlobals *G,float *pos)
 {
-  CText *I=&Text;
+  register CText *I=G->Text;
   copy3f(pos,I->Pos);
   I->Pos[3]=1.0F;
 }
-void TextSetColor(float *color)
+void TextSetColor(PyMOLGlobals *G,float *color)
 {
-  CText *I=&Text;
+  register CText *I=G->Text;
   copy3f(color,I->Color);
   I->Color[3]=1.0F;
 }
 
-float *TextGetPos(void)
+float *TextGetPos(PyMOLGlobals *G)
 {
-  CText *I=&Text;
+  register CText *I=G->Text;
   return I->Pos;
 }
 
-float *TextGetColor(void)
+float *TextGetColor(PyMOLGlobals *G)
 {
-  CText *I=&Text;
+  register CText *I=G->Text;
   return I->Color;
 }
 
-const float _255 = 255.0F;
-void TextGetColorUChar(unsigned char *red,
+const static float _255 = 255.0F;
+
+void TextGetColorUChar(PyMOLGlobals *G,unsigned char *red,
                        unsigned char *green, 
                        unsigned char *blue,
                        unsigned char *alpha)
 {
-  CText *I=&Text;
+  register CText *I=G->Text;
   *red = (unsigned char)(_255*I->Color[0]);
   *green = (unsigned char)(_255*I->Color[1]);
   *blue = (unsigned char)(_255*I->Color[2]);
   *alpha = (unsigned char)(_255*I->Color[3]);
 }
 
-char *TextRenderOpenGL(int text_id,char *st)
+char *TextRenderOpenGL(PyMOLGlobals *G,int text_id,char *st)
 {
-  CText *I=&Text;
+  register CText *I=G->Text;
   CFont *font;
   FontRenderOpenGLFn *fn;
 
@@ -108,9 +107,9 @@ char *TextRenderOpenGL(int text_id,char *st)
   return st;
 }
 
-char *TextRenderRay(struct CRay *ray,int text_id,char *st)
+char *TextRenderRay(PyMOLGlobals *G,CRay *ray,int text_id,char *st)
 {
-  CText *I=&Text;
+  register CText *I=G->Text;
   CFont *font;
   FontRenderRayFn *fn;
 
@@ -128,74 +127,79 @@ char *TextRenderRay(struct CRay *ray,int text_id,char *st)
 }
 
 
-int TextInit(void)
+int TextInit(PyMOLGlobals *G)
 {
-  CText *I=&Text;
-  I->NActive = 0;
-  I->Active = VLACalloc(ActiveRec,10);
+  register CText *I=NULL;
+  if( (I=(G->Text=Calloc(CText,1)))) {
+
+    I->NActive = 0;
+    I->Active = VLACalloc(ActiveRec,10);
   
-  /* font 0 is old reliable GLUT 8x13 */
+    /* font 0 is old reliable GLUT 8x13 */
 
-  VLACheck(I->Active,ActiveRec,I->NActive);
-  I->Active[I->NActive].Font = FontGLUTNew(cFontGLUT8x13);
-  if(I->Active[I->NActive].Font) {
-    I->Active[I->NActive].Src = cTextSrcGLUT;
-    I->Active[I->NActive].Code = cFontGLUT8x13;
-    I->Active[I->NActive].Font->TextID = I->NActive;
-    I->NActive++;
-  }
+    VLACheck(I->Active,ActiveRec,I->NActive);
+    I->Active[I->NActive].Font = FontGLUTNew(G,cFontGLUT8x13);
+    if(I->Active[I->NActive].Font) {
+      I->Active[I->NActive].Src = cTextSrcGLUT;
+      I->Active[I->NActive].Code = cFontGLUT8x13;
+      I->Active[I->NActive].Font->TextID = I->NActive;
+      I->NActive++;
+    }
 
-  /* font 1 is GLUT 9x15 */
+    /* font 1 is GLUT 9x15 */
 
-  VLACheck(I->Active,ActiveRec,I->NActive);
-  I->Active[I->NActive].Font = FontGLUTNew(cFontGLUT9x15);
-  if(I->Active[I->NActive].Font) {
-    I->Active[I->NActive].Src = cTextSrcGLUT;
-    I->Active[I->NActive].Code = cFontGLUT9x15;
-    I->Active[I->NActive].Font->TextID = I->NActive;
-    I->NActive++;
-  }
+    VLACheck(I->Active,ActiveRec,I->NActive);
+    I->Active[I->NActive].Font = FontGLUTNew(G,cFontGLUT9x15);
+    if(I->Active[I->NActive].Font) {
+      I->Active[I->NActive].Src = cTextSrcGLUT;
+      I->Active[I->NActive].Code = cFontGLUT9x15;
+      I->Active[I->NActive].Font->TextID = I->NActive;
+      I->NActive++;
+    }
 
-  /* font 2 is GLUT Helvetica10 */
+    /* font 2 is GLUT Helvetica10 */
 
-  VLACheck(I->Active,ActiveRec,I->NActive);
-  I->Active[I->NActive].Font = FontGLUTNew(cFontGLUTHel10);
-  if(I->Active[I->NActive].Font) {
-    I->Active[I->NActive].Src = cTextSrcGLUT;
-    I->Active[I->NActive].Code = cFontGLUTHel10;
-    I->Active[I->NActive].Font->TextID = I->NActive;
-    I->NActive++;
-  }
+    VLACheck(I->Active,ActiveRec,I->NActive);
+    I->Active[I->NActive].Font = FontGLUTNew(G,cFontGLUTHel10);
+    if(I->Active[I->NActive].Font) {
+      I->Active[I->NActive].Src = cTextSrcGLUT;
+      I->Active[I->NActive].Code = cFontGLUTHel10;
+      I->Active[I->NActive].Font->TextID = I->NActive;
+      I->NActive++;
+    }
 
-  /* font 3 is GLUT Helvetica12 */
+    /* font 3 is GLUT Helvetica12 */
 
-  VLACheck(I->Active,ActiveRec,I->NActive);
-  I->Active[I->NActive].Font = FontGLUTNew(cFontGLUTHel12);
-  if(I->Active[I->NActive].Font) {
-    I->Active[I->NActive].Src = cTextSrcGLUT;
-    I->Active[I->NActive].Code = cFontGLUTHel12;
-    I->Active[I->NActive].Font->TextID = I->NActive;
-    I->NActive++;
-  }
+    VLACheck(I->Active,ActiveRec,I->NActive);
+    I->Active[I->NActive].Font = FontGLUTNew(G,cFontGLUTHel12);
+    if(I->Active[I->NActive].Font) {
+      I->Active[I->NActive].Src = cTextSrcGLUT;
+      I->Active[I->NActive].Code = cFontGLUTHel12;
+      I->Active[I->NActive].Font->TextID = I->NActive;
+      I->NActive++;
+    }
 
-  /* font 4 is GLUT Helvetica18 */
+    /* font 4 is GLUT Helvetica18 */
 
-  VLACheck(I->Active,ActiveRec,I->NActive);
-  I->Active[I->NActive].Font = FontGLUTNew(cFontGLUTHel18);
-  if(I->Active[I->NActive].Font) {
-    I->Active[I->NActive].Src = cTextSrcGLUT;
-    I->Active[I->NActive].Code = cFontGLUTHel18;
-    I->Active[I->NActive].Font->TextID = I->NActive;
-    I->NActive++;
-  }
+    VLACheck(I->Active,ActiveRec,I->NActive);
+    I->Active[I->NActive].Font = FontGLUTNew(G,cFontGLUTHel18);
+    if(I->Active[I->NActive].Font) {
+      I->Active[I->NActive].Src = cTextSrcGLUT;
+      I->Active[I->NActive].Code = cFontGLUTHel18;
+      I->Active[I->NActive].Font->TextID = I->NActive;
+      I->NActive++;
+    }
 
-  return 1;
+    return 1;
+  } else 
+    return 0;
+
 }
 
-int TextGetFontID(int src, int code, char *name,int mode, int size, int style)
+int TextGetFontID(PyMOLGlobals *G,int src, int code, char *name,int mode, int size, int style)
 {
   /* first, return the font code if it is already active */
-  CText *I=&Text;
+  register CText *I=G->Text;
   {
     int a;
     ActiveRec *rec = I->Active;
@@ -216,7 +220,7 @@ int TextGetFontID(int src, int code, char *name,int mode, int size, int style)
   switch(src) {
   case cTextSrcGLUT:
     VLACheck(I->Active,ActiveRec,I->NActive);
-    I->Active[I->NActive].Font = FontGLUTNew(code);
+    I->Active[I->NActive].Font = FontGLUTNew(G,code);
     if(I->Active[I->NActive].Font) {
       I->Active[I->NActive].Src = cTextSrcGLUT;
       I->Active[I->NActive].Code = code;
@@ -227,9 +231,9 @@ int TextGetFontID(int src, int code, char *name,int mode, int size, int style)
   return -1;
 }
 
-void TextFree(void)
+void TextFree(PyMOLGlobals *G)
 {
-  CText *I=&Text;
+  register CText *I=G->Text;
   int a;
   CFont *fp;
   for(a=0;a<I->NActive;a++) {
@@ -238,6 +242,7 @@ void TextFree(void)
       fp->fFree(fp);
   }
   VLAFreeP(I->Active);
+  FreeP(G->Text);
 }
 
 

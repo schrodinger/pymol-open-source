@@ -19,9 +19,9 @@ Z* -------------------------------------------------------------------
 #include"OOMac.h"
 #include"Queue.h"
 
-CQueue *QueueNew(unsigned int mask)
+CQueue *QueueNew(PyMOLGlobals *G,unsigned int mask)
 {
-  OOAlloc(CQueue);
+  OOAlloc(G,CQueue);
   I->size=mask+1;
   I->ptr=Alloc(char,I->size);
   I->mask=mask;

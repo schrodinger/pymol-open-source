@@ -17,15 +17,14 @@ Z* -------------------------------------------------------------------
 #include"os_predef.h"
 #include"Base.h"
 #include"Ortho.h"
-#include "Pop.h"
+#include"Pop.h"
+#include"MemoryDebug.h"
 
 #define cPopMargin 3
 
-typedef struct {
+struct _CPop {
   Block *Block;
-} CPop;
-
-CPop Pop;
+};
 
 void PopReshape(Block *I,int width, int height);
 
@@ -36,39 +35,42 @@ void PopReshape(Block *I,int width, int height)
   I->rect.right=width;
 }
 /*========================================================================*/
-Block *PopGetBlock(void)
+Block *PopGetBlock(PyMOLGlobals *G)
 {
-  CPop *I=&Pop;
+  register CPop *I=G->Pop;
   {return(I->Block);}
 }
 /*========================================================================*/
-void PopFree(void)
+void PopFree(PyMOLGlobals *G)
 {
-  CPop *I=&Pop;
-  OrthoFreeBlock(I->Block);
+  register CPop *I=G->Pop;
+  OrthoFreeBlock(G,I->Block);
+  FreeP(G->Pop);
 }
 /*========================================================================*/
-void PopInit(void)
+int PopInit(PyMOLGlobals *G)
 {
-
-  CPop *I=&Pop;
-
-  I->Block = OrthoNewBlock(NULL);
-  I->Block->fReshape = PopReshape;
-  I->Block->active = false;
-
-  I->Block->rect.top=10;
-  I->Block->rect.bottom=0;
-  I->Block->rect.left=0;
-  I->Block->rect.right=10;
-
-  OrthoAttach(I->Block,cOrthoHidden);
-
+  register CPop *I=NULL;
+  if( (I=(G->Pop=Calloc(CPop,1)))) {
+    
+    I->Block = OrthoNewBlock(G,NULL);
+    I->Block->fReshape = PopReshape;
+    I->Block->active = false;
+  
+    I->Block->rect.top=10;
+    I->Block->rect.bottom=0;
+    I->Block->rect.left=0;
+    I->Block->rect.right=10;
+    
+    OrthoAttach(G,I->Block,cOrthoHidden);
+    return 1;
+  } else 
+    return 0;
 }
 /*========================================================================*/
 void PopFitBlock(Block *block)
 {
-  CPop *I=&Pop;
+  register CPop *I=block->G->Pop;
   int delta;
 
   if((block->rect.bottom - cPopMargin)< (I->Block->rect.bottom)) {

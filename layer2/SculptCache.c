@@ -30,43 +30,49 @@ Z* -------------------------------------------------------------------
  (((e+g)<< 6)&0x0FC0)|\
  (((f-g)<<12)&0xF000))
 
-static CSculptCache SculptCache;
 
-int SculptCacheNewID(void)
+int SculptCacheNewID(PyMOLGlobals *G)
 {
-  CSculptCache *I=&SculptCache;
+  register CSculptCache *I=G->SculptCache;
   return(I->SculptID++);
 }
 
-void SculptCacheInit(void)
+int SculptCacheInit(PyMOLGlobals *G)
 {
-  CSculptCache *I=&SculptCache;
-  I->Hash = Alloc(int,CACHE_HASH_SIZE);
-  I->List = VLAlloc(SculptCacheEntry,1000);
+  register CSculptCache *I=NULL;
+  if( (I=(G->SculptCache=Calloc(CSculptCache,1)))) {
+
+    I->Hash = Alloc(int,CACHE_HASH_SIZE);
+    I->List = VLAlloc(SculptCacheEntry,1000);
+    I->SculptID=1;
+    I->NCached=1;
+    UtilZeroMem(I->Hash,CACHE_HASH_SIZE*sizeof(int));
+    return 1;
+  } else {
+    return 0;
+  }
+}
+
+void SculptCachePurge(PyMOLGlobals *G)
+{
+  register CSculptCache *I=G->SculptCache;
   I->SculptID=1;
   I->NCached=1;
   UtilZeroMem(I->Hash,CACHE_HASH_SIZE*sizeof(int));
 }
 
-void SculptCachePurge(void)
+void SculptCacheFree(PyMOLGlobals *G) 
 {
-  CSculptCache *I=&SculptCache;
-  I->SculptID=1;
-  I->NCached=1;
-  UtilZeroMem(I->Hash,CACHE_HASH_SIZE*sizeof(int));
-}
-
-void SculptCacheFree(void) 
-{
-  CSculptCache *I=&SculptCache;
+  register CSculptCache *I=G->SculptCache;
 
   FreeP(I->Hash);
   VLAFreeP(I->List);
+  FreeP(G->SculptCache);
 }
 
-int SculptCacheQuery(int rest_type,int id0,int id1,int id2,int id3,float *value)
+int SculptCacheQuery(PyMOLGlobals *G,int rest_type,int id0,int id1,int id2,int id3,float *value)
 {
-  CSculptCache *I=&SculptCache;
+  register CSculptCache *I=G->SculptCache;
   int *v,i;
   SculptCacheEntry *e;
   int found = false;
@@ -84,9 +90,9 @@ int SculptCacheQuery(int rest_type,int id0,int id1,int id2,int id3,float *value)
   return(found);
 }
 
-void SculptCacheStore(int rest_type,int id0,int id1,int id2,int id3,float value)
+void SculptCacheStore(PyMOLGlobals *G,int rest_type,int id0,int id1,int id2,int id3,float value)
 {
-  CSculptCache *I=&SculptCache;
+  register CSculptCache *I=G->SculptCache;
   int *v,i;
   SculptCacheEntry *e;
   int found = false;

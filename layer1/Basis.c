@@ -30,9 +30,6 @@ Z* -------------------------------------------------------------------
 
 static const float kR_SMALL4 = 0.0001F;
 
-static float BasisFudge0;
-static float BasisFudge1;
-
 float ZLineClipPoint(float *base,float *point,float *alongNormalSq,float cutoff);
 
 int ZLineToSphere(float *base,float *point,float *dir,float radius,float maxial,
@@ -734,11 +731,6 @@ void BasisGetTriangleNormal(CBasis *I,RayInfo *r,int i,float *fc)
 }
 
 
-void BasisSetFudge(float fudge)
-{
-  BasisFudge0 = 0.0F-fudge;
-  BasisFudge1 = 1.0F+fudge;
-}
 
 #ifdef PROFILE_BASIS
 int n_cells = 0;
@@ -779,6 +771,9 @@ int BasisHitNoShadow(BasisCallRec *BC)
       const float front = BC->front;
       const float back = BC->back;
       const float excl_trans = BC->excl_trans;
+      const float BasisFudge0 = BC->fudge0;
+      const float BasisFudge1 = BC->fudge1;
+
       MapCache *cache = &BC->cache;
       
       float r_tri1=_0, r_tri2=_0, r_dist=_0; /* zero inits to suppress compiler warnings */
@@ -1056,7 +1051,7 @@ int BasisHitShadow(BasisCallRec *BC)
 
    CBasis   *BI   = BC->Basis;
    RayInfo   *r   = BC->rr;
-
+      
    if( MapInsideXY(BI->Map,r->base, &a, &b, &c) )
    {
       register int      minIndex=-1;
@@ -1068,6 +1063,8 @@ int BasisHitShadow(BasisCallRec *BC)
       const int *vert2prim = BC->vert2prim;
       const int trans_shadows = BC->trans_shadows;
       const float excl_trans = BC->excl_trans;
+      const float BasisFudge0 = BC->fudge0;
+      const float BasisFudge1 = BC->fudge1;
       MapCache *cache = &BC->cache;
       
       float r_tri1=_0, r_tri2=_0, r_dist=_0;  /* zero inits to suppress compiler warnings */
@@ -1143,7 +1140,7 @@ int BasisHitShadow(BasisCallRec *BC)
 
                                 BasisGetTriangleNormal(BI,r,minIndex,fc);
                                 
-                                trans = CharacterInterpolate(prm->char_id,fc);
+                                trans = CharacterInterpolate(BI->G,prm->char_id,fc);
 
                                 if(trans == _0)  { /* opaque? return immed. */
                                   
@@ -1479,7 +1476,7 @@ void BasisMakeMap(CBasis *I,int *vert2prim,CPrimitive *prim,float *volume,
    const float _0   = 0.0;
    const float _p5   = 0.5;
    
-   PRINTFD(FB_Ray)
+   PRINTFD(I->G,FB_Ray)
      " BasisMakeMap: I->NVertex %d [(%8.3f, %8.3f, %8.3f),...]\n",I->NVertex,
      I->Vertex[0],I->Vertex[1],I->Vertex[2]
    ENDFD;
@@ -1533,10 +1530,10 @@ void BasisMakeMap(CBasis *I,int *vert2prim,CPrimitive *prim,float *volume,
       if(min[2] > (-volume[5]))   min[2]   = (-volume[5]);
       if(max[2] < (-volume[4]))   max[2]   = (-volume[4]);
 
-      PRINTFB(FB_Ray,FB_Debugging)
+      PRINTFB(I->G,FB_Ray,FB_Debugging)
 	" BasisMakeMap: (%8.3f,%8.3f),(%8.3f,%8.3f),(%8.3f,%8.3f)\n",
 	volume[0],volume[1],volume[2],volume[3],volume[4],volume[5]
-	ENDFB;
+	ENDFB(I->G);
    }
    
    /* don't break up space unnecessarily if we only have a few vertices... */
@@ -1558,14 +1555,14 @@ void BasisMakeMap(CBasis *I,int *vert2prim,CPrimitive *prim,float *volume,
          sep   = (l1/I->NVertex);
    }
 
-   if(Feedback(FB_Ray,FB_Debugging)) {
+   if(Feedback(I->G,FB_Ray,FB_Debugging)) {
      dump3f(min," BasisMakeMap: min");
      dump3f(max," BasisMakeMap: max");
      dump3f(I->Vertex," BasisMakeMap: I->Vertex");
      fflush(stdout);
    }
 
-   sep = MapGetSeparation(sep,max,min,diagonal); /* this needs to be a minimum 
+   sep = MapGetSeparation(I->G,sep,max,min,diagonal); /* this needs to be a minimum 
                                      * estimate of the actual value */
    
    /* here we have to carry out a complicated work-around in order to
@@ -1611,11 +1608,11 @@ void BasisMakeMap(CBasis *I,int *vert2prim,CPrimitive *prim,float *volume,
       }   /* for */
       
       extra_vert   += I->NVertex;
-      tempVertex   = CacheAlloc(float,extra_vert*3,group_id,cCache_basis_tempVertex);
-      tempRef      = CacheAlloc(int,extra_vert,group_id,cCache_basis_tempRef); 
+      tempVertex   = CacheAlloc(I->G,float,extra_vert*3,group_id,cCache_basis_tempVertex);
+      tempRef      = CacheAlloc(I->G,int,extra_vert,group_id,cCache_basis_tempRef); 
       
-      ErrChkPtr(tempVertex); /* can happen if extra vert is unreasonable */
-      ErrChkPtr(tempRef);
+      ErrChkPtr(I->G,tempVertex); /* can happen if extra vert is unreasonable */
+      ErrChkPtr(I->G,tempRef);
       
       /* lower indexes->flags, top is ref->lower index*/
       
@@ -1769,7 +1766,7 @@ void BasisMakeMap(CBasis *I,int *vert2prim,CPrimitive *prim,float *volume,
       if(n > extra_vert)
       {
          printf("BasisMakeMap: %d>%d\n",n,extra_vert);
-         ErrFatal("BasisMakeMap","used too many extra vertices (this indicates a bug)...\n");
+         ErrFatal(I->G,"BasisMakeMap","used too many extra vertices (this indicates a bug)...\n");
       }
 
       if(volume)
@@ -1782,7 +1779,7 @@ void BasisMakeMap(CBasis *I,int *vert2prim,CPrimitive *prim,float *volume,
 
          v += 3;
 
-	 if(Feedback(FB_Ray,FB_Debugging)) {
+	 if(Feedback(I->G,FB_Ray,FB_Debugging)) {
 	   dump3f(min," BasisMakeMap: remapped min");
 	   dump3f(max," BasisMakeMap: remapped max");
 	   fflush(stdout);
@@ -1802,7 +1799,7 @@ void BasisMakeMap(CBasis *I,int *vert2prim,CPrimitive *prim,float *volume,
 	   v   += 3;
          }
 
-	 if(Feedback(FB_Ray,FB_Debugging)) {
+	 if(Feedback(I->G,FB_Ray,FB_Debugging)) {
 	   dump3f(min," BasisMakeMap: remapped min");
 	   dump3f(max," BasisMakeMap: remapped max");
 	   fflush(stdout);
@@ -1823,15 +1820,15 @@ void BasisMakeMap(CBasis *I,int *vert2prim,CPrimitive *prim,float *volume,
          extent[3]   = max[1];
          extent[4]   = min[2];
          extent[5]   = max[2];
-	 PRINTFB(FB_Ray,FB_Blather)
+	 PRINTFB(I->G,FB_Ray,FB_Blather)
 	   " BasisMakeMap: Extent %8.3f %8.3f %8.3f %8.3f %8.3f %8.3f\n",
 	   extent[0],extent[1],extent[2],extent[3],extent[4],extent[5]
-	   ENDFB;
-         I->Map   = MapNewCached(-sep,tempVertex,n,extent,group_id,block_base);
+	   ENDFB(I->G);
+         I->Map   = MapNewCached(I->G,-sep,tempVertex,n,extent,group_id,block_base);
       }
       else
       {
-         I->Map   = MapNewCached(sep,tempVertex,n,NULL,group_id,block_base);
+         I->Map   = MapNewCached(I->G,sep,tempVertex,n,NULL,group_id,block_base);
       }
 
       n_voxel = I->Map->Dim[0]*I->Map->Dim[1]*I->Map->Dim[2];
@@ -1902,8 +1899,8 @@ void BasisMakeMap(CBasis *I,int *vert2prim,CPrimitive *prim,float *volume,
          MapType   *mapPtr   = I->Map;
          
          max_site   = extra_vert;
-         site      = CacheAlloc(int*,max_site,group_id,cCache_basis_site);
-         value      = CacheAlloc(int,max_site,group_id,cCache_basis_value);
+         site      = CacheAlloc(I->G,int*,max_site,group_id,cCache_basis_site);
+         value      = CacheAlloc(I->G,int,max_site,group_id,cCache_basis_value);
          
          site_p      = site;
          value_p      = value;
@@ -1997,30 +1994,31 @@ void BasisMakeMap(CBasis *I,int *vert2prim,CPrimitive *prim,float *volume,
             **(site_p++)   = *(value_p++);
          }
 
-         CacheFreeP(value,group_id,cCache_basis_value,false);
-         CacheFreeP(site,group_id,cCache_basis_site,false);
+         CacheFreeP(I->G,value,group_id,cCache_basis_value,false);
+         CacheFreeP(I->G,site,group_id,cCache_basis_site,false);
       }
       
-      CacheFreeP(tempVertex,group_id,cCache_basis_tempVertex,false);
-      CacheFreeP(tempRef,group_id,cCache_basis_tempRef,false);
+      CacheFreeP(I->G,tempVertex,group_id,cCache_basis_tempVertex,false);
+      CacheFreeP(I->G,tempRef,group_id,cCache_basis_tempRef,false);
    }
    else
    {
       /* simple sphere mode */
-      I->Map   = MapNewCached(-sep,I->Vertex,I->NVertex,NULL,group_id,block_base);
+      I->Map   = MapNewCached(I->G,-sep,I->Vertex,I->NVertex,NULL,group_id,block_base);
       MapSetupExpressXYVert(I->Map,I->Vertex,I->NVertex);
    }
 }
 
 /*========================================================================*/
-void BasisInit(CBasis *I,int group_id)
+void BasisInit(PyMOLGlobals *G,CBasis *I,int group_id)
 {
-  I->Vertex = VLACacheAlloc(float,1,group_id,cCache_basis_vertex);
-  I->Radius = VLACacheAlloc(float,1,group_id,cCache_basis_radius);
-  I->Radius2 = VLACacheAlloc(float,1,group_id,cCache_basis_radius2);
-  I->Normal = VLACacheAlloc(float,1,group_id,cCache_basis_normal);
-  I->Vert2Normal = VLACacheAlloc(int,1,group_id,cCache_basis_vert2normal);
-  I->Precomp = VLACacheAlloc(float,1,group_id,cCache_basis_precomp);
+  I->G = G;
+  I->Vertex = VLACacheAlloc(I->G,float,1,group_id,cCache_basis_vertex);
+  I->Radius = VLACacheAlloc(I->G,float,1,group_id,cCache_basis_radius);
+  I->Radius2 = VLACacheAlloc(I->G,float,1,group_id,cCache_basis_radius2);
+  I->Normal = VLACacheAlloc(I->G,float,1,group_id,cCache_basis_normal);
+  I->Vert2Normal = VLACacheAlloc(I->G,int,1,group_id,cCache_basis_vert2normal);
+  I->Precomp = VLACacheAlloc(I->G,float,1,group_id,cCache_basis_precomp);
   I->Map=NULL;
   I->NVertex=0;
   I->NNormal=0;
@@ -2033,12 +2031,12 @@ void BasisFinish(CBasis *I,int group_id)
       MapFree(I->Map);
       I->Map=NULL;
     }  
-  VLACacheFreeP(I->Radius2,group_id,cCache_basis_radius2,false);
-  VLACacheFreeP(I->Radius,group_id,cCache_basis_radius,false);
-  VLACacheFreeP(I->Vertex,group_id,cCache_basis_vertex,false);
-  VLACacheFreeP(I->Vert2Normal,group_id,cCache_basis_vert2normal,false);
-  VLACacheFreeP(I->Normal,group_id,cCache_basis_normal,false);
-  VLACacheFreeP(I->Precomp,group_id,cCache_basis_precomp,false);
+  VLACacheFreeP(I->G,I->Radius2,group_id,cCache_basis_radius2,false);
+  VLACacheFreeP(I->G,I->Radius,group_id,cCache_basis_radius,false);
+  VLACacheFreeP(I->G,I->Vertex,group_id,cCache_basis_vertex,false);
+  VLACacheFreeP(I->G,I->Vert2Normal,group_id,cCache_basis_vert2normal,false);
+  VLACacheFreeP(I->G,I->Normal,group_id,cCache_basis_normal,false);
+  VLACacheFreeP(I->G,I->Precomp,group_id,cCache_basis_precomp,false);
   I->Vertex=NULL;
 }
 
@@ -2073,43 +2071,6 @@ void BasisCylinderSausagePrecompute(float *dir,float *pre)
   pre[0] = dir[1] * ln;
   pre[1] = -dir[0] * ln;
 }
-
-
-#if 0
-
-static int intersect_triangle(float orig[3], float *pre,float vert0[3],
-                              float *u, float *v, float *d)
-{
-   /* this routine now optimized to the point of total and complete opacity : ) */
-   register float tvec0,tvec1,tv,tu;
-   
-#if !PRE_TEST   /* If this is on then we are testing for this in the caller! */
-   if(!pre[6]) return 0;
-#endif
-   
-   /* calculate distance from vert0 to ray origin */
-   tvec0   = orig[0] - vert0[0];
-   tvec1   = orig[1] - vert0[1];
-   
-   /* calculate U parameter and test bounds */
-   tu   = (tvec0 * pre[4] - tvec1 * pre[3]) * pre[7];
-      
-   /* calculate V parameter and test bounds */
-   tv   = -(tvec0 * pre[1] - tvec1 * pre[0]) * pre[7];
-   
-   if((tu < BasisFudge0) || (tv < BasisFudge0) || (tu > BasisFudge1) || ((tu + tv) > BasisFudge1) )
-      return 0;
-   
-   /* calculate t, ray intersects triangle */
-   *u = tu;
-   *d = (orig[2] - (tu*pre[2]) - (tv*pre[5]) - vert0[2]);
-   *v = tv;
-   
-   return 1;
-}
-
-#endif
-
 
 #else
 typedef int this_file_is_no_longer_empty;

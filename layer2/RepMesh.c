@@ -72,6 +72,7 @@ void RepMeshGetSolventDots(RepMesh *I,CoordSet *cs,float *min,float *max,float p
 
 void RepMeshRender(RepMesh *I,CRay *ray,Pickable **pick)
 {
+  PyMOLGlobals *G=I->R.G;
   float *v=I->V;
   float *vc=I->VC;
   int *n=I->N;
@@ -88,8 +89,8 @@ void RepMeshRender(RepMesh *I,CRay *ray,Pickable **pick)
         radius = I->Radius;
       }
       if(I->oneColorFlag) 
-        col=ColorGet(I->oneColor);
-		ray->fColor3fv(ray,ColorGet(I->R.obj->Color));
+        col=ColorGet(G,I->oneColor);
+		ray->fColor3fv(ray,ColorGet(G,I->R.obj->Color));
 		while(*n)
 		  {
 			 c=*(n++);
@@ -118,16 +119,16 @@ void RepMeshRender(RepMesh *I,CRay *ray,Pickable **pick)
   } else if(pick&&PMGUI) {
   } else if(PMGUI) {
     int use_dlst;
-    int lighting = SettingGet_f(I->R.cs->Setting,I->R.obj->Setting,cSetting_mesh_lighting);
-    SceneResetNormal(true);
+    int lighting = SettingGet_f(G,I->R.cs->Setting,I->R.obj->Setting,cSetting_mesh_lighting);
+    SceneResetNormal(G,true);
     if(!lighting)
       glDisable(GL_LIGHTING);
     
-    use_dlst = (int)SettingGet(cSetting_use_display_lists);
+    use_dlst = (int)SettingGet(G,cSetting_use_display_lists);
     if(use_dlst&&I->R.displayList) {
       glCallList(I->R.displayList);
     } else { 
-      SceneResetNormal(false);
+      SceneResetNormal(G,false);
 
       if(use_dlst) {
         if(!I->R.displayList) {
@@ -145,7 +146,7 @@ void RepMeshRender(RepMesh *I,CRay *ray,Pickable **pick)
           if(I->oneColorFlag) {
             while(*n)
               {
-                glColor3fv(ColorGet(I->oneColor));
+                glColor3fv(ColorGet(G,I->oneColor));
                 c=*(n++);
                 glBegin(GL_LINE_STRIP);
                 while(c--) {
@@ -171,12 +172,12 @@ void RepMeshRender(RepMesh *I,CRay *ray,Pickable **pick)
         }
       break;
       case 1:
-        glPointSize(SettingGet_f(I->R.cs->Setting,I->R.obj->Setting,cSetting_dot_width));
+        glPointSize(SettingGet_f(G,I->R.cs->Setting,I->R.obj->Setting,cSetting_dot_width));
         if(n) {
           if(I->oneColorFlag) {
             while(*n)
               {
-                glColor3fv(ColorGet(I->oneColor));
+                glColor3fv(ColorGet(G,I->oneColor));
                 c=*(n++);
                 glBegin(GL_POINTS);
                 while(c--) {
@@ -240,6 +241,7 @@ int RepMeshSameVis(RepMesh *I,CoordSet *cs)
 
 void RepMeshColor(RepMesh *I,CoordSet *cs)
 {
+  PyMOLGlobals *G=cs->G;
   MapType *map;
   int a,i0,i,j,h,k,l,c1;
   float *v0,*vc,*c0;
@@ -256,9 +258,9 @@ void RepMeshColor(RepMesh *I,CoordSet *cs)
 
   obj=cs->Obj;
 
-  probe_radius = SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_solvent_radius);
-  mesh_color = SettingGet_color(cs->Setting,obj->Obj.Setting,cSetting_mesh_color);
-  mesh_mode = SettingGet_i(cs->Setting,obj->Obj.Setting,cSetting_mesh_mode);
+  probe_radius = SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_solvent_radius);
+  mesh_color = SettingGet_color(G,cs->Setting,obj->Obj.Setting,cSetting_mesh_color);
+  mesh_mode = SettingGet_i(G,cs->Setting,obj->Obj.Setting,cSetting_mesh_mode);
   cullByFlag = (mesh_mode==cRepMesh_by_flags);
   inclH = !(mesh_mode==cRepMesh_heavy_atoms);
   
@@ -274,12 +276,12 @@ void RepMeshColor(RepMesh *I,CoordSet *cs)
       *(lc++) = *(cc++);
     }
 
-  I->Width = SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_mesh_width);
-  I->Radius = SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_mesh_radius);
+  I->Width = SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_mesh_width);
+  I->Radius = SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_mesh_radius);
 
   if(I->NTot) {
 	 obj=cs->Obj;
-    if(ColorCheckRamped(mesh_color)) {
+    if(ColorCheckRamped(G,mesh_color)) {
       I->oneColorFlag=false;
     } else {
       I->oneColorFlag=true;
@@ -288,7 +290,7 @@ void RepMeshColor(RepMesh *I,CoordSet *cs)
 	 if(!I->VC) I->VC = Alloc(float,3*I->NTot);
 	 vc=I->VC;
 	 /* now, assign colors to each point */
-	 map=MapNew(I->max_vdw+probe_radius,cs->Coord,cs->NIndex,NULL);
+	 map=MapNew(G,I->max_vdw+probe_radius,cs->Coord,cs->NIndex,NULL);
 	 if(map)
 		{
 		  MapSetupExpress(map);
@@ -329,15 +331,15 @@ void RepMeshColor(RepMesh *I,CoordSet *cs)
 				  }
 				}
 
-            if(ColorCheckRamped(mesh_color)) {
+            if(ColorCheckRamped(G,mesh_color)) {
               c1 = mesh_color;
             }
-            if(ColorCheckRamped(c1)) {
+            if(ColorCheckRamped(G,c1)) {
               I->oneColorFlag=false;
-              ColorGetRamped(c1,v0,vc);
+              ColorGetRamped(G,c1,v0,vc);
               vc+=3;
             } else {
-              c0 = ColorGet(c1);
+              c0 = ColorGet(G,c1);
               *(vc++) = *(c0++);
               *(vc++) = *(c0++);
               *(vc++) = *(c0++);
@@ -358,6 +360,7 @@ void RepMeshColor(RepMesh *I,CoordSet *cs)
 
 Rep *RepMeshNew(CoordSet *cs)
 {
+  PyMOLGlobals *G=cs->G;
   ObjectMolecule *obj;
   CoordSet *ccs;
   int a,b,c,d,h,k,l,*n;
@@ -386,21 +389,21 @@ Rep *RepMeshNew(CoordSet *cs)
 
   AtomInfoType *ai1;
 
-  OOAlloc(RepMesh);
+  OOAlloc(G,RepMesh);
 
-  PRINTFD(FB_RepMesh)
+  PRINTFD(G,FB_RepMesh)
 	 " RepMeshNew-DEBUG: entered with coord-set %p\n",(void*)cs
 	 ENDFD;
   obj = cs->Obj;
 
-  probe_radius = SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_solvent_radius);
+  probe_radius = SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_solvent_radius);
   probe_radius2 = probe_radius*probe_radius;
-  solv_acc = (SettingGet_i(cs->Setting,obj->Obj.Setting,cSetting_mesh_solvent));
-  mesh_type = SettingGet_i(cs->Setting,obj->Obj.Setting,cSetting_mesh_type);
+  solv_acc = (SettingGet_i(G,cs->Setting,obj->Obj.Setting,cSetting_mesh_solvent));
+  mesh_type = SettingGet_i(G,cs->Setting,obj->Obj.Setting,cSetting_mesh_type);
 
   I->max_vdw = ObjectMoleculeGetMaxVDW(obj) + solv_acc*probe_radius;
 
-  mesh_mode = SettingGet_i(cs->Setting,obj->Obj.Setting,cSetting_mesh_mode);
+  mesh_mode = SettingGet_i(G,cs->Setting,obj->Obj.Setting,cSetting_mesh_mode);
   cullByFlag = (mesh_mode==cRepMesh_by_flags);
   inclH = !(mesh_mode==cRepMesh_heavy_atoms);
   visFlag=false;
@@ -420,9 +423,9 @@ Rep *RepMeshNew(CoordSet *cs)
     return(NULL); /* skip if no dots are visible */
   }
 
-  RepInit(&I->R);
+  RepInit(G,&I->R);
 
-  min_spacing = SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_min_mesh_spacing);
+  min_spacing = SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_min_mesh_spacing);
 
   I->N=NULL;
   I->NTot=0;
@@ -439,7 +442,7 @@ Rep *RepMeshNew(CoordSet *cs)
   I->LastVisib=NULL;
   I->LastColor=NULL;
   I->mesh_type = mesh_type;
-  I->Radius = SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_mesh_radius);
+  I->Radius = SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_mesh_radius);
 
   meshFlag=true;
 
@@ -499,25 +502,25 @@ Rep *RepMeshNew(CoordSet *cs)
 	 for(c=0;c<3;c++)
 		dims[c] = (int)((sizeE[c]/gridSize)+1.5F);
 	 
-	 field = IsosurfFieldAlloc(TempPyMOLGlobals,dims);
+	 field = IsosurfFieldAlloc(G,dims);
 	 
 	 for(a=0;a<dims[0];a++)
 		for(b=0;b<dims[1];b++)
 		  for(c=0;c<dims[2];c++)
 			 F3(field->data,a,b,c) = 2.0;
 
-	 OrthoBusyFast(0,1);
+	 OrthoBusyFast(G,0,1);
 	 if(!solv_acc)
       RepMeshGetSolventDots(I,cs,minE,maxE,probe_radius);
-	 smap=MapNew(probe_radius,I->Dot,I->NDot,NULL);
-	 map=MapNew(I->max_vdw+probe_radius,cs->Coord,cs->NIndex,NULL);
+	 smap=MapNew(G,probe_radius,I->Dot,I->NDot,NULL);
+	 map=MapNew(G,I->max_vdw+probe_radius,cs->Coord,cs->NIndex,NULL);
 	 if(map&&smap)
 		{
 		  MapSetupExpress(smap);
 		  MapSetupExpress(map);
 		  for(a=0;a<dims[0];a++)
 			 {
-				OrthoBusyFast(dims[0]+a,dims[0]*3);
+				OrthoBusyFast(G,dims[0]+a,dims[0]*3);
 				point[0]=minE[0]+a*gridSize;
 				for(b=0;b<dims[1];b++)
 				  {
@@ -604,9 +607,9 @@ Rep *RepMeshNew(CoordSet *cs)
 	 MapFree(smap);
 	 MapFree(map);
 	 FreeP(I->Dot);	 
-	 OrthoBusyFast(2,3);
-    IsosurfVolume(TempPyMOLGlobals,field,1.0,&I->N,&I->V,NULL,mesh_type);
-    IsosurfFieldFree(TempPyMOLGlobals,field);
+	 OrthoBusyFast(G,2,3);
+    IsosurfVolume(G,field,1.0,&I->N,&I->V,NULL,mesh_type);
+    IsosurfFieldFree(G,field);
     
     /* someday add support for solid mesh representation....
        if(mesh_type==0||mesh_type==1) {
@@ -628,20 +631,21 @@ Rep *RepMeshNew(CoordSet *cs)
 	 I->NTot=0;
 	 while(*n) I->NTot+=*(n++);
 	 RepMeshColor(I,cs);
-	 OrthoBusyFast(3,4);
+	 OrthoBusyFast(G,3,4);
   }
-  OrthoBusyFast(4,4);
+  OrthoBusyFast(G,4,4);
   return((void*)(struct Rep*)I);
 }
 
 void RepMeshGetSolventDots(RepMesh *I,CoordSet *cs,float *min,float *max,float probe_radius)
 {
+  PyMOLGlobals *G=cs->G;
   ObjectMolecule *obj;
   int a,b,c,a1,a2,flag,i,h,k,l,j;
   float *v,*v0,vdw;
   MapType *map;
   int inFlag,*p,*dot_flag;
-  SphereRec *sp = TempPyMOLGlobals->Sphere->Sphere[0];
+  SphereRec *sp = G->Sphere->Sphere[0];
   int cavity_cull;
   float probe_radius_plus;
   int dotCnt,maxCnt,maxDot=0;
@@ -649,25 +653,25 @@ void RepMeshGetSolventDots(RepMesh *I,CoordSet *cs,float *min,float *max,float p
   int inclH,mesh_mode,cullByFlag;
   AtomInfoType *ai1,*ai2;
   obj = cs->Obj;
-  int ds = SettingGet_i(cs->Setting,obj->Obj.Setting,cSetting_mesh_quality);
+  int ds = SettingGet_i(G,cs->Setting,obj->Obj.Setting,cSetting_mesh_quality);
 
   if(ds<0) ds = 0;
   if(ds>4) ds = 4;
-  sp = TempPyMOLGlobals->Sphere->Sphere[ds];
+  sp = G->Sphere->Sphere[ds];
 
-  cavity_cull = SettingGet_i(cs->Setting,obj->Obj.Setting,cSetting_cavity_cull);
+  cavity_cull = SettingGet_i(G,cs->Setting,obj->Obj.Setting,cSetting_cavity_cull);
 
-  mesh_mode = SettingGet_i(cs->Setting,obj->Obj.Setting,cSetting_mesh_mode);
+  mesh_mode = SettingGet_i(G,cs->Setting,obj->Obj.Setting,cSetting_mesh_mode);
   cullByFlag = (mesh_mode==cRepMesh_by_flags);
   inclH = !(mesh_mode==cRepMesh_heavy_atoms);
 
   I->Dot=(float*)mmalloc(sizeof(float)*cs->NIndex*3*sp->nDot);
-  ErrChkPtr(I->Dot);
+  ErrChkPtr(G,I->Dot);
 
   probe_radius_plus = probe_radius * 1.5F;
 
   I->NDot=0;
-  map=MapNew(I->max_vdw+probe_radius,cs->Coord,cs->NIndex,NULL);
+  map=MapNew(G,I->max_vdw+probe_radius,cs->Coord,cs->NIndex,NULL);
   if(map)
 	 {
 		MapSetupExpress(map);
@@ -680,7 +684,7 @@ void RepMeshGetSolventDots(RepMesh *I,CoordSet *cs,float *min,float *max,float p
           if((inclH||(!ai1->hydrogen))&&
              ((!cullByFlag)||
               (!(ai1->flags&(cAtomFlag_ignore))))) {
-            OrthoBusyFast(a,cs->NIndex*3);
+            OrthoBusyFast(G,a,cs->NIndex*3);
             dotCnt=0;
             a1 = cs->IdxToAtm[a];
             v0 = cs->Coord+3*a;
@@ -738,13 +742,13 @@ void RepMeshGetSolventDots(RepMesh *I,CoordSet *cs,float *min,float *max,float p
 
   if(cavity_cull>0) {
 	 dot_flag=Alloc(int,I->NDot);
-	 ErrChkPtr(dot_flag);
+	 ErrChkPtr(G,dot_flag);
 	 for(a=0;a<I->NDot;a++) {
 		dot_flag[a]=0;
 	 }
 	 dot_flag[maxDot]=1; /* this guarantees that we have a valid dot */
 
-	 map=MapNew(probe_radius_plus,I->Dot,I->NDot,NULL);
+	 map=MapNew(G,probe_radius_plus,I->Dot,I->NDot,NULL);
 	 if(map)
 		{
 		  MapSetupExpress(map);

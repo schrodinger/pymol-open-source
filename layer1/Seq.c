@@ -31,7 +31,7 @@ Z* -------------------------------------------------------------------
 #include "Menu.h"
 #include "Executive.h"
 
-typedef struct {
+struct _CSeq {
   Block *Block;
   int DragFlag;
   int ScrollBarActive;
@@ -50,14 +50,12 @@ typedef struct {
   int CharMargin;
   int LastRow;
   CSeqHandler *Handler; /* borrowed pointer */
-} CSeq;
+};
 
 
-CSeq Seq;
-
-static int FindRowCol(int x,int y,int *row_num_ptr,int *col_num_ptr,int fixed_row)
+static int SeqFindRowCol(PyMOLGlobals *G,int x,int y,int *row_num_ptr,int *col_num_ptr,int fixed_row)
 {
-  CSeq *I=&Seq;
+  register CSeq *I=G->Seq;  
   int result =0;
   int row_num = 0;
   int col_num = 0;
@@ -106,26 +104,27 @@ static int FindRowCol(int x,int y,int *row_num_ptr,int *col_num_ptr,int fixed_ro
   return result;
 }
 
-void SeqUpdate(void)
+void SeqUpdate(PyMOLGlobals *G)
 {
-  CSeq *I=&Seq;
+  register CSeq *I=G->Seq;
 
   if(I->Changed) {
-    SeekerUpdate();
+    SeekerUpdate(G);
     I->Changed = false;
     I->Dirty = true;
-    OrthoReshape(-1,-1,false); /* careful, this is recursive... */
+    OrthoReshape(G,-1,-1,false); /* careful, this is recursive... */
   }
   if(I->Dirty) {
     if(I->Handler->fRefresh)
-      I->Handler->fRefresh(I->Row);
+      I->Handler->fRefresh(G,I->Row);
     I->Dirty = false;
   }
 }
 
 static void SeqReshape(Block *block,int width, int height)
 {
-  CSeq *I=&Seq;
+  PyMOLGlobals *G=block->G;
+  register CSeq *I=G->Seq;
   BlockReshape(block,width,height);
 
   { /* get current sequence sizes */
@@ -153,36 +152,37 @@ static void SeqReshape(Block *block,int width, int height)
   }
 }
 
-void SeqDirty(void)
+void SeqDirty(PyMOLGlobals *G)
 {
-  CSeq *I=&Seq;
+  register CSeq *I=G->Seq;
   I->Dirty = true;
-  SceneDirty();
+  SceneDirty(G);
 }
 
-void SeqChanged(void)
+void SeqChanged(PyMOLGlobals *G)
 {
-  CSeq *I=&Seq;
+  register CSeq *I=G->Seq;
   I->Changed = true;
-  SceneDirty();
+  SceneDirty(G);
 }
 
 static int SeqDrag(Block *block,int x,int y,int mod)
 {
-  CSeq *I=&Seq;
+  PyMOLGlobals *G=block->G;
+  register CSeq *I=G->Seq;
   int pass = 0;
   int row_num;
   int col_num;
   if(!pass) {
-    if(FindRowCol(x,y,&row_num,&col_num,I->LastRow)) {
+    if(SeqFindRowCol(G,x,y,&row_num,&col_num,I->LastRow)) {
       CSeqRow *row;
       CSeqCol *col;
       row = I->Row+row_num;
       col = row->col+col_num;
       if(I->Handler)
         if(I->Handler->fDrag)
-          I->Handler->fDrag(I->Row,row_num,col_num,mod);
-      OrthoDirty();
+          I->Handler->fDrag(G,I->Row,row_num,col_num,mod);
+      OrthoDirty(G);
     }
   }
   return(1);
@@ -190,34 +190,35 @@ static int SeqDrag(Block *block,int x,int y,int mod)
 
 static int SeqRelease(Block *block,int button,int x,int y,int mod)
 {
-  CSeq *I=&Seq;  
+  PyMOLGlobals *G=block->G;
+  register CSeq *I=G->Seq;  
   int pass=0;
   /*
     if(I->ScrollBarActive) {
       if((y-I->Block->rect.bottom)<I->ScrollBarWidth) {
         pass = 1;
         ScrollBarDoRelease(I->ScrollBar,button,x,y,mod);
-     OrthoUngrab();
+     OrthoUngrab(G);
       }
     } 
   */
   if(!pass) {
     int row_num;
     int col_num;
-    if(FindRowCol(x,y,&row_num,&col_num,I->LastRow)) {
+    if(SeqFindRowCol(G,x,y,&row_num,&col_num,I->LastRow)) {
       CSeqRow *row;
       CSeqCol *col;
       row = I->Row+row_num;
       col = row->col+col_num;
       if(I->Handler)
         if(I->Handler->fRelease)
-          I->Handler->fRelease(I->Row,button,row_num,col_num,mod);
-      OrthoDirty();
+          I->Handler->fRelease(G,I->Row,button,row_num,col_num,mod);
+      OrthoDirty(G);
     } else {
       if(I->Handler)
         if(I->Handler->fRelease)
-          I->Handler->fRelease(I->Row,button,-1,-1,mod);
-      OrthoDirty();
+          I->Handler->fRelease(G,I->Row,button,-1,-1,mod);
+      OrthoDirty(G);
     }
   }
   I->DragFlag=false;
@@ -225,9 +226,9 @@ static int SeqRelease(Block *block,int button,int x,int y,int mod)
   return(1);
 }
 
-int SeqGetHeight(void)
+int SeqGetHeight(PyMOLGlobals *G)
 {
-  CSeq *I=&Seq;
+  register CSeq *I=G->Seq;
   int height = 0;
 
   if(I->NRow) {
@@ -238,15 +239,16 @@ int SeqGetHeight(void)
   return(height);
 }
 
-void SeqSetHandler(CSeqHandler *handler)
+void SeqSetHandler(PyMOLGlobals *G,CSeqHandler *handler)
 {
-  CSeq *I=&Seq;
+  register CSeq *I=G->Seq;
   I->Handler = handler;
 }
 
 static int SeqClick(Block *block,int button,int x,int y,int mod)
 {
-  CSeq *I=&Seq;
+  PyMOLGlobals *G=block->G;
+  register CSeq *I=G->Seq;
   int pass = 0;
   int row_num;
   int col_num;
@@ -257,32 +259,32 @@ static int SeqClick(Block *block,int button,int x,int y,int mod)
     }
   } 
   if(!pass) {    
-    if(FindRowCol(x,y,&row_num,&col_num,-1)) {
+    if(SeqFindRowCol(G,x,y,&row_num,&col_num,-1)) {
       CSeqRow *row;
       CSeqCol *col;
       row = I->Row+row_num;
       col = row->col+col_num;
       if(I->Handler)
         if(I->Handler->fClick)
-          I->Handler->fClick(I->Row,button,row_num,col_num,mod,x,y);
+          I->Handler->fClick(G,I->Row,button,row_num,col_num,mod,x,y);
       I->DragFlag=true;
       I->LastRow = row_num;
-      OrthoDirty();
+      OrthoDirty(G);
     } else {
       switch(button) {
       case P_GLUT_RIGHT_BUTTON: 
         {
           char name[ObjNameMax];
           
-          if(ExecutiveGetActiveSeleName(name, false)) {
-            MenuActivate2Arg(x,y+20,x,y,"pick_option",name,name);
+          if(ExecutiveGetActiveSeleName(G,name, false)) {
+            MenuActivate2Arg(G,x,y+20,x,y,"pick_option",name,name);
           }
         }
         break;
       case P_GLUT_LEFT_BUTTON:
         if(I->Handler)
           if(I->Handler->fClick)
-            I->Handler->fClick(I->Row,button,-1,-1,mod,x,y);
+            I->Handler->fClick(G,I->Row,button,-1,-1,mod,x,y);
         break;
       }
     }
@@ -292,14 +294,15 @@ static int SeqClick(Block *block,int button,int x,int y,int mod)
 
 static void SeqDraw(Block *block)
 {
-  CSeq *I=&Seq;
+  PyMOLGlobals *G=block->G;
+  register CSeq *I=G->Seq;
   
   if(PMGUI) {
     int x = I->Block->rect.left;
     int y = I->Block->rect.bottom+I->ScrollBarMargin+1;
     float *bg_color,overlay_color[3] = {1.0F,1.0F,1.0F};
 
-    bg_color=SettingGet_3fv(NULL,NULL,cSetting_bg_rgb);
+    bg_color=SettingGet_3fv(G,NULL,NULL,cSetting_bg_rgb);
     
     overlay_color[0]=1.0F-bg_color[0];
     overlay_color[1]=1.0F-bg_color[1];
@@ -396,7 +399,7 @@ static void SeqDraw(Block *block)
               if(row->label_flag)
                 glColor3fv(cur_color);
               else 
-                glColor3fv(ColorGet(col->color));
+                glColor3fv(ColorGet(G,col->color));
               if(col->inverse) {
                 glBegin(GL_POLYGON);
                 glVertex2i(xx,yy);
@@ -488,7 +491,7 @@ static void SeqDraw(Block *block)
                   if(row->label_flag) 
                     cur_color = overlay_color;
                   else 
-                    cur_color = ColorGet(col->color); /* is this safe? should be for single-threading */ 
+                    cur_color = ColorGet(G,col->color); /* is this safe? should be for single-threading */ 
                 } else if((!col->inverse)&&(mode)) {
                   stop = (width*col->offset)/max_len;
                   if((stop-start)<1.0F) {
@@ -525,7 +528,7 @@ static void SeqDraw(Block *block)
                     if(row->label_flag) 
                       cur_color = overlay_color;
                     else 
-                      cur_color = ColorGet(col->color); /* is this safe? should be for single-threading */ 
+                      cur_color = ColorGet(G,col->color); /* is this safe? should be for single-threading */ 
                   }
                   right = col->offset + (col->stop-col->start);
 
@@ -562,10 +565,12 @@ static void SeqDraw(Block *block)
 
 }
 
-void SeqInit(void)
+int SeqInit(PyMOLGlobals *G)
 {
-  CSeq *I=&Seq;
-  I->Block = OrthoNewBlock(NULL);
+  register CSeq *I=NULL;
+  if( (I=(G->Seq=Calloc(CSeq,1)))) {
+
+  I->Block = OrthoNewBlock(G,NULL);
   I->Block->fClick = SeqClick;
   I->Block->fDraw    = SeqDraw;
   I->Block->fDrag = SeqDrag;
@@ -575,10 +580,10 @@ void SeqInit(void)
   I->Block->TextColor[0]=1.0;
   I->Block->TextColor[1]=0.75;
   I->Block->TextColor[2]=0.75;
-  OrthoAttach(I->Block,cOrthoTool);
+  OrthoAttach(G,I->Block,cOrthoTool);
   I->DragFlag = false;
   I->ScrollBarActive = true;
-  I->ScrollBar=ScrollBarNew(true);
+  I->ScrollBar=ScrollBarNew(G,true);
   ScrollBarSetValue(I->ScrollBar,0);
   I->Row = NULL;
   I->NRow = 0;
@@ -589,11 +594,15 @@ void SeqInit(void)
   I->CharMargin = 2;
   I->LastRow=-1;
   I->CharWidth = GrapMeasureStr(" ");
+  return 1;
+  }
+  else 
+    return 0;
 }
 
-static void SeqPurgeRowVLA(void)
+static void SeqPurgeRowVLA(PyMOLGlobals *G)
 {
-  CSeq *I=&Seq;
+  register CSeq *I=G->Seq;
   if(I->Row)
     {
       int a;
@@ -609,26 +618,27 @@ static void SeqPurgeRowVLA(void)
     }
 }
 
-void SeqSetRowVLA(CSeqRow *row,int nRow)
+void SeqSetRowVLA(PyMOLGlobals *G,CSeqRow *row,int nRow)
 {
-  CSeq *I=&Seq;
-  SeqPurgeRowVLA();
+  register CSeq *I=G->Seq;
+  SeqPurgeRowVLA(G);
   I->Row = row;
   I->NRow = nRow;
 }
 
-void SeqFree(void)
+void SeqFree(PyMOLGlobals *G)
 {
-  CSeq *I=&Seq;
+  register CSeq *I=G->Seq;
 
-  SeqPurgeRowVLA();
+  SeqPurgeRowVLA(G);
   if(I->ScrollBar)
     ScrollBarFree(I->ScrollBar);
-  OrthoFreeBlock(I->Block);
+  OrthoFreeBlock(G,I->Block);
+  FreeP(G->Seq);
 }
 
-Block *SeqGetBlock(void)
+Block *SeqGetBlock(PyMOLGlobals *G)
 {
-  CSeq *I=&Seq;
+  register CSeq *I=G->Seq;
   {return(I->Block);}
 }

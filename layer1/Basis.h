@@ -44,6 +44,7 @@ typedef struct {
 } CPrimitive;
 
 typedef struct {
+  PyMOLGlobals *G;
   MapType *Map;
   float *Vertex,*Normal,*Precomp;
   float *Radius,*Radius2,MaxRadius,MinVoxel;
@@ -81,13 +82,13 @@ typedef struct {
   int check_interior;
   CPrimitive *prim;
   MapCache cache;
-
+  float fudge0,fudge1;
   /* returns */
   int interior_flag; 
 } BasisCallRec; 
 
 
-void BasisInit(CBasis *I,int group_id);
+void BasisInit(PyMOLGlobals *G,CBasis *I,int group_id);
 void BasisFinish(CBasis *I,int group_id);
 void BasisMakeMap(CBasis *I,int *vert2prim,CPrimitive *prim,float *volume,
                   int group_id,int block_base);
@@ -100,7 +101,7 @@ int BasisHitNoShadow(BasisCallRec *BC);
 int BasisHitShadow(BasisCallRec *BC);
 
 void BasisGetTriangleFlatDotgle(CBasis *I,RayInfo *r,int i);
-void BasisSetFudge(float fudge);
+
 void BasisCylinderSausagePrecompute(float *dir,float *pre);
 
 #define PROFILE_BASIS_OFF

@@ -148,9 +148,9 @@ PyObject *ViewElemVLAAsPyList(CViewElem *vla,int nFrame)
   return(PConvAutoNone(result));
 }
 
-CView *ViewNew(void)
+CView *ViewNew(PyMOLGlobals *G)
 {
-  OOAlloc(CView);
+  OOAlloc(G,CView);
   I->View = NULL;
   return I;
 }

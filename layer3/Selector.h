@@ -25,86 +25,86 @@ Z* -------------------------------------------------------------------
 #define cSelectionAll 0
 #define cSelectionNone 1
 
-void SelectorInit(void);
-int *SelectorSelect(char *sele);
-int SelectorCreate(char *name,char *sele,ObjectMolecule *obj,int quiet,Multipick *mp);
-int SelectorCreateSimple(char *name, char *sele);
-int SelectorCreateOrderedFromObjectIndices(char *sname, ObjectMolecule *obj, int *idx, int n_idx); 
+int SelectorInit(PyMOLGlobals *G);
+int *SelectorSelect(PyMOLGlobals *G,char *sele);
+int SelectorCreate(PyMOLGlobals *G,char *name,char *sele,ObjectMolecule *obj,int quiet,Multipick *mp);
+int SelectorCreateSimple(PyMOLGlobals *G,char *name, char *sele);
+int SelectorCreateOrderedFromObjectIndices(PyMOLGlobals *G,char *sname, ObjectMolecule *obj, int *idx, int n_idx); 
 /* if n_idx is negative, then looks for negative *idx as the sentinel */
-int SelectorMoveMember(int s,int sele_old,int sele_new);
-int SelectorCreateEmpty(char *name);
-void SelectorToggle(int rep,char *name);
-void SelectorCylinder(char *sele,char *onoff);
-int SelectorUpdateTable(void);
-int SelectorIndexByName(char *sele);
-int SelectorIsMember(int start,int sele);
-void SelectorFree(void);
-void SelectorDelete(char *sele);
-void SelectorFreeTmp(char *name);
-int SelectorGetTmp(char *input,char *store);
-int SelectorGetPDB(char **charVLA,int cLen,int sele,int state,
+int SelectorMoveMember(PyMOLGlobals *G,int s,int sele_old,int sele_new);
+int SelectorCreateEmpty(PyMOLGlobals *G,char *name);
+void SelectorToggle(PyMOLGlobals *G,int rep,char *name);
+void SelectorCylinder(PyMOLGlobals *G,char *sele,char *onoff);
+int SelectorUpdateTable(PyMOLGlobals *G);
+int SelectorIndexByName(PyMOLGlobals *G,char *sele);
+int SelectorIsMember(PyMOLGlobals *G,int start,int sele);
+void SelectorFree(PyMOLGlobals *G);
+void SelectorDelete(PyMOLGlobals *G,char *sele);
+void SelectorFreeTmp(PyMOLGlobals *G,char *name);
+int SelectorGetTmp(PyMOLGlobals *G,char *input,char *store);
+int SelectorGetPDB(PyMOLGlobals *G,char **charVLA,int cLen,int sele,int state,
                    int conectFlag,PDBInfoRec *pdb_info);
-PyObject *SelectorGetChemPyModel(int sele,int state);
-float SelectorSumVDWOverlap(int sele1,int state1,int sele2,int state2,float adjust);
-DistSet *SelectorGetDistSet(int sele1,int state1,int sele2,int state2,int mode,
+PyObject *SelectorGetChemPyModel(PyMOLGlobals *G,int sele,int state);
+float SelectorSumVDWOverlap(PyMOLGlobals *G,int sele1,int state1,int sele2,int state2,float adjust);
+DistSet *SelectorGetDistSet(PyMOLGlobals *G,int sele1,int state1,int sele2,int state2,int mode,
                             float cutoff,float *result);
-int SelectorGetSeleNCSet(int sele);
-void SelectorCreateObjectMolecule(int sele,char *name,int target_state,int state,int discrete);
-int SelectorSubdivide(char *pref,int sele1,int sele2,
+int SelectorGetSeleNCSet(PyMOLGlobals *G,int sele);
+void SelectorCreateObjectMolecule(PyMOLGlobals *G,int sele,char *name,int target_state,int state,int discrete);
+int SelectorSubdivide(PyMOLGlobals *G,char *pref,int sele1,int sele2,
                             int sele3,int sele4,
                             char *fragPref,char *compName,int *bondMode);
-ObjectMolecule *SelectorGetSingleObjectMolecule(int sele);
-void SelectorUpdateObjectSele(ObjectMolecule *obj);
-void SelectorDeletePrefixSet(char *pref);
-void SelectorUpdateCmd(int sele0,int sele1,int sta0,int sta1);
-int SelectorGetSingleAtomVertex(int sele,int state,float *v);
-int SelectorGetSingleAtomObjectIndex(int sele,ObjectMolecule **in_obj,int *index);
-int *SelectorGetResidueVLA(int sele0);
-int  SelectorCreateAlignments(int *pair,int sele1,int *vla1,int sele2,
+ObjectMolecule *SelectorGetSingleObjectMolecule(PyMOLGlobals *G,int sele);
+void SelectorUpdateObjectSele(PyMOLGlobals *G,ObjectMolecule *obj);
+void SelectorDeletePrefixSet(PyMOLGlobals *G,char *pref);
+void SelectorUpdateCmd(PyMOLGlobals *G,int sele0,int sele1,int sta0,int sta1);
+int SelectorGetSingleAtomVertex(PyMOLGlobals *G,int sele,int state,float *v);
+int SelectorGetSingleAtomObjectIndex(PyMOLGlobals *G,int sele,ObjectMolecule **in_obj,int *index);
+int *SelectorGetResidueVLA(PyMOLGlobals *G,int sele0);
+int  SelectorCreateAlignments(PyMOLGlobals *G,int *pair,int sele1,int *vla1,int sele2,
                               int *vla2,char *name1,char *name2,int identical);
-int SelectorGetPairIndices(int sele1,int state1,int sele2,int state2,
+int SelectorGetPairIndices(PyMOLGlobals *G,int sele1,int state1,int sele2,int state2,
                            int mode,float cutoff,float h_angle,
                            int **indexVLA, ObjectMolecule ***objVLA);
 
-int SelectorCountAtoms(int sele);
-int SelectorCountStates(int sele);
-int SelectorClassifyAtoms(int sele, int preserve,ObjectMolecule *only_object);
+int SelectorCountAtoms(PyMOLGlobals *G,int sele);
+int SelectorCountStates(PyMOLGlobals *G,int sele);
+int SelectorClassifyAtoms(PyMOLGlobals *G,int sele, int preserve,ObjectMolecule *only_object);
 
 
-void SelectorLogSele(char *name);
-int SelectorMapMaskVDW(int sele1,ObjectMapState *oMap,float buffer,int state);
+void SelectorLogSele(PyMOLGlobals *G,char *name);
+int SelectorMapMaskVDW(PyMOLGlobals *G,int sele1,ObjectMapState *oMap,float buffer,int state);
 
-int SelectorMapCoulomb(int sele1,ObjectMapState *oMap,float cutoff,int state,
+int SelectorMapCoulomb(PyMOLGlobals *G,int sele1,ObjectMapState *oMap,float cutoff,int state,
                        int neutral,int shift,float shift_power);
 
-int SelectorMapGaussian(int sele1,ObjectMapState *oMap,float buffer,int state);
-PyObject *SelectorAsPyList(int sele1);
-int SelectorFromPyList(char *name,PyObject *list);
-ObjectMolecule **SelectorGetObjectMoleculeVLA(int sele);
+int SelectorMapGaussian(PyMOLGlobals *G,int sele1,ObjectMapState *oMap,float buffer,int state);
+PyObject *SelectorAsPyList(PyMOLGlobals *G,int sele1);
+int SelectorFromPyList(PyMOLGlobals *G,char *name,PyObject *list);
+ObjectMolecule **SelectorGetObjectMoleculeVLA(PyMOLGlobals *G,int sele);
 
-PyObject *SelectorColorectionGet(char *prefix);
-int SelectorColorectionApply(PyObject *list,char *prefix);
-int SelectorColorectionFree(PyObject *list,char *prefix);
-void SelectorReinit(void);
-PyObject *SelectorSecretsAsPyList(void);
-int SelectorSecretsFromPyList(PyObject *list);
-void SelectorMemoryDump(void);
-int SelectorAssignSS(int target,int present,int state_value,int preserve,int quiet);
+PyObject *SelectorColorectionGet(PyMOLGlobals *G,char *prefix);
+int SelectorColorectionApply(PyMOLGlobals *G,PyObject *list,char *prefix);
+int SelectorColorectionFree(PyMOLGlobals *G,PyObject *list,char *prefix);
+void SelectorReinit(PyMOLGlobals *G);
+PyObject *SelectorSecretsAsPyList(PyMOLGlobals *G);
+int SelectorSecretsFromPyList(PyMOLGlobals *G,PyObject *list);
+void SelectorMemoryDump(PyMOLGlobals *G);
+int SelectorAssignSS(PyMOLGlobals *G,int target,int present,int state_value,int preserve,int quiet);
 
-int SelectorPurgeObjectMembers(ObjectMolecule *obj);
-void SelectorDefragment(void);
-void SelectorSelectByID(char *name,ObjectMolecule *obj,int *id,int n_id);
-void SelectorGetUniqueTmpName(char *name_buffer);
-int SelectorIsAtomBondedToSele(ObjectMolecule *obj,int sele1atom,int sele2);
-void SelectorComputeFragPos(ObjectMolecule *obj,int state,int n_frag, char *prefix,float **vla);
+int SelectorPurgeObjectMembers(PyMOLGlobals *G,ObjectMolecule *obj);
+void SelectorDefragment(PyMOLGlobals *G);
+void SelectorSelectByID(PyMOLGlobals *G,char *name,ObjectMolecule *obj,int *id,int n_id);
+void SelectorGetUniqueTmpName(PyMOLGlobals *G,char *name_buffer);
+int SelectorIsAtomBondedToSele(PyMOLGlobals *G,ObjectMolecule *obj,int sele1atom,int sele2);
+void SelectorComputeFragPos(PyMOLGlobals *G,ObjectMolecule *obj,int state,int n_frag, char *prefix,float **vla);
 
-int SelectorSetName(char *new_name, char *old_name);
+int SelectorSetName(PyMOLGlobals *G,char *new_name, char *old_name);
 
-ObjectMolecule *SelectorGetCachedSingleAtom(int sele,int *theAtom);
+ObjectMolecule *SelectorGetCachedSingleAtom(PyMOLGlobals *G,int sele,int *theAtom);
 
-ObjectMolecule *SelectorGetFastSingleAtomObjectIndex(int sele,int *index);
-ObjectMolecule *SelectorGetFastSingleObjectMolecule(int sele);
-MapType *SelectorGetSpacialMapFromSeleCoord(int sele,int state,float cutoff,float **coord_vla);
+ObjectMolecule *SelectorGetFastSingleAtomObjectIndex(PyMOLGlobals *G,int sele,int *index);
+ObjectMolecule *SelectorGetFastSingleObjectMolecule(PyMOLGlobals *G,int sele);
+MapType *SelectorGetSpacialMapFromSeleCoord(PyMOLGlobals *G,int sele,int state,float cutoff,float **coord_vla);
 
 
 #endif

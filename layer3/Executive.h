@@ -25,174 +25,174 @@ Z* -------------------------------------------------------------------
 #include"Ortho.h"
 #include"Word.h"
 
-int ExecutiveFixChemistry(char *s1,char *s2,int invalidate, int quiet);
-int ExecutiveGetAtomVertex(char *s1,int state,int index,float *v);
-void ExecutiveProcessPDBFile(CObject *origObj,char *fname, char *oname,
+int ExecutiveFixChemistry(PyMOLGlobals *G,char *s1,char *s2,int invalidate, int quiet);
+int ExecutiveGetAtomVertex(PyMOLGlobals *G,char *s1,int state,int index,float *v);
+void ExecutiveProcessPDBFile(PyMOLGlobals *G,CObject *origObj,char *fname, char *oname,
                              int frame, int discrete,int finish,OrthoLineType buf,
                              PDBInfoRec *pdb_info,int quiet);
 
-int ExecutiveDebug(char *name);
-float ExecutiveAlign(char *s1,char *s2,char *mat_file,float gap,float extend,int skip,
+int ExecutiveDebug(PyMOLGlobals *G,char *name);
+float ExecutiveAlign(PyMOLGlobals *G,char *s1,char *s2,char *mat_file,float gap,float extend,int skip,
                      float cutoff,int cycles,int quiet,char *oname,int state1,int state2);
 
-float ExecutiveDistance(char *sele1,char *sele2);
-float ExecutiveDist(char *nam,char *s1,char *s2,int mode,float cutoff,int labels,int quiet);
-void ExecutiveBond(char *s1,char *s2,int order,int add);
-int ExecutiveIterate(char *s1,char *expr,int read_only,int quiet);
-int ExecutiveIterateList(char *s1,PyObject *list,int read_only,int quiet);
-int ExecutiveSelectList(char *sele_name,char *s1,PyObject *list,int quiet);
-void ExecutiveLabel(char *s1,char *expr,int quiet);
-void ExecutiveIterateState(int i1,char *s1,char *expr,int read_only,
+float ExecutiveDistance(PyMOLGlobals *G,char *sele1,char *sele2);
+float ExecutiveDist(PyMOLGlobals *G,char *nam,char *s1,char *s2,int mode,float cutoff,int labels,int quiet);
+void ExecutiveBond(PyMOLGlobals *G,char *s1,char *s2,int order,int add);
+int ExecutiveIterate(PyMOLGlobals *G,char *s1,char *expr,int read_only,int quiet);
+int ExecutiveIterateList(PyMOLGlobals *G,char *s1,PyObject *list,int read_only,int quiet);
+int ExecutiveSelectList(PyMOLGlobals *G,char *sele_name,char *s1,PyObject *list,int quiet);
+void ExecutiveLabel(PyMOLGlobals *G,char *s1,char *expr,int quiet);
+void ExecutiveIterateState(PyMOLGlobals *G,int i1,char *s1,char *expr,int read_only,
                            int atomic_props,int quiet);
-int ExecutiveColor(char *name,char *color,int flags,int quiet);
-void ExecutiveInit(void);
-void ExecutiveFree(void);
-int ExecutivePop(char *target,char *source,int quiet);
-void ExecutiveManageObject(struct CObject *obj,int allow_zoom,int quiet);
-void ExecutiveUpdateObjectSelection(struct CObject *obj);
-void ExecutiveManageSelection(char *name);
-Block *ExecutiveGetBlock(void);
-CObject *ExecutiveFindObjectByName(char *name);
-ObjectMolecule *ExecutiveFindObjectMoleculeByName(char *name);
-int ExecutiveIterateObject(CObject **obj,void **hidden);
-void ExecutiveDelete(char *name);
-void ExecutiveDump(char *fname,char *obj);
-void ExecutiveSetControlsOff(char *name);
-void ExecutiveSort(char *name);
-int ExecutiveSetSetting(int index,PyObject *tuple,char *sele,int state,
+int ExecutiveColor(PyMOLGlobals *G,char *name,char *color,int flags,int quiet);
+int ExecutiveInit(PyMOLGlobals *G);
+void ExecutiveFree(PyMOLGlobals *G);
+int ExecutivePop(PyMOLGlobals *G,char *target,char *source,int quiet);
+void ExecutiveManageObject(PyMOLGlobals *G,struct CObject *obj,int allow_zoom,int quiet);
+void ExecutiveUpdateObjectSelection(PyMOLGlobals *G,struct CObject *obj);
+void ExecutiveManageSelection(PyMOLGlobals *G,char *name);
+Block *ExecutiveGetBlock(PyMOLGlobals *G);
+CObject *ExecutiveFindObjectByName(PyMOLGlobals *G,char *name);
+ObjectMolecule *ExecutiveFindObjectMoleculeByName(PyMOLGlobals *G,char *name);
+int ExecutiveIterateObject(PyMOLGlobals *G,CObject **obj,void **hidden);
+void ExecutiveDelete(PyMOLGlobals *G,char *name);
+void ExecutiveDump(PyMOLGlobals *G,char *fname,char *obj);
+void ExecutiveSetControlsOff(PyMOLGlobals *G,char *name);
+void ExecutiveSort(PyMOLGlobals *G,char *name);
+int ExecutiveSetSetting(PyMOLGlobals *G,int index,PyObject *tuple,char *sele,int state,
                          int quiet,int updates);
-void ExecutiveRay(int width,int height,int mode,float angle,float shift,int quiet);
-int ExecutiveGetDistance(char *s0,char *s1,float *value,int state);
-int ExecutiveGetAngle(char *s0,char *s1,char *s2,float *value,int state);
-int ExecutiveGetDihe(char *s0,char *s1,char *s2,char *s3,float *value,int state);
-int ExecutiveSetDihe(char *s0,char *s1,char *s2,char *s3,float value,int state,int quiet);
-float ExecutiveRMS(char *sele1,char *sele2,int mode,float refine,int max_cyc,
+void ExecutiveRay(PyMOLGlobals *G,int width,int height,int mode,float angle,float shift,int quiet);
+int ExecutiveGetDistance(PyMOLGlobals *G,char *s0,char *s1,float *value,int state);
+int ExecutiveGetAngle(PyMOLGlobals *G,char *s0,char *s1,char *s2,float *value,int state);
+int ExecutiveGetDihe(PyMOLGlobals *G,char *s0,char *s1,char *s2,char *s3,float *value,int state);
+int ExecutiveSetDihe(PyMOLGlobals *G,char *s0,char *s1,char *s2,char *s3,float value,int state,int quiet);
+float ExecutiveRMS(PyMOLGlobals *G,char *sele1,char *sele2,int mode,float refine,int max_cyc,
                    int quiet,char *oname,int state1,int state2,
                    int ordered_selections);
-void ExecutiveUpdateCmd(char *sele1,char *sele2,int sta1,int sta2);
-float ExecutiveRMSPairs(WordType *sele,int pairs,int mode);
-float *ExecutiveRMSStates(char *s1,int target,int mode,int quiet);
-int *ExecutiveIdentify(char *s1,int mode);
-int ExecutiveIndex(char *s1,int mode,int **indexVLA,ObjectMolecule ***objVLA);
-int ExecutiveReset(int cmd,char *name);
-void ExecutiveDrawNow(void);
-int ExecutiveCartoon(int type,char *sele);
-void ExecutiveSetAllVisib(int state);
-void ExecutiveSetRepVisib(char *name,int rep,int state);
-int ExecutiveToggleRepVisib(char *name,int rep);
+void ExecutiveUpdateCmd(PyMOLGlobals *G,char *sele1,char *sele2,int sta1,int sta2);
+float ExecutiveRMSPairs(PyMOLGlobals *G,WordType *sele,int pairs,int mode);
+float *ExecutiveRMSStates(PyMOLGlobals *G,char *s1,int target,int mode,int quiet);
+int *ExecutiveIdentify(PyMOLGlobals *G,char *s1,int mode);
+int ExecutiveIndex(PyMOLGlobals *G,char *s1,int mode,int **indexVLA,ObjectMolecule ***objVLA);
+int ExecutiveReset(PyMOLGlobals *G,int cmd,char *name);
+void ExecutiveDrawNow(PyMOLGlobals *G);
+int ExecutiveCartoon(PyMOLGlobals *G,int type,char *sele);
+void ExecutiveSetAllVisib(PyMOLGlobals *G,int state);
+void ExecutiveSetRepVisib(PyMOLGlobals *G,char *name,int rep,int state);
+int ExecutiveToggleRepVisib(PyMOLGlobals *G,char *name,int rep);
 
-void ExecutiveSetAllRepVisib(char *name,int rep,int state);
-void ExecutiveSetObjVisib(char *name,int state);
+void ExecutiveSetAllRepVisib(PyMOLGlobals *G,char *name,int rep,int state);
+void ExecutiveSetObjVisib(PyMOLGlobals *G,char *name,int state);
 
-int ExecutiveOrigin(char *name,int preserve,char *oname,float *pos,int state);
-int ExecutiveCenter(char *name,int state,int inclusive);
-int ExecutiveWindowZoom(char *name,float buffer,int state,int inclusive);
-int ExecutiveGetMoment(char *name,Matrix33d mi,int state);
+int ExecutiveOrigin(PyMOLGlobals *G,char *name,int preserve,char *oname,float *pos,int state);
+int ExecutiveCenter(PyMOLGlobals *G,char *name,int state,int inclusive);
+int ExecutiveWindowZoom(PyMOLGlobals *G,char *name,float buffer,int state,int inclusive);
+int ExecutiveGetMoment(PyMOLGlobals *G,char *name,Matrix33d mi,int state);
 
-char *ExecutiveGetChains(char *sele,int state,int *null_chain);
+char *ExecutiveGetChains(PyMOLGlobals *G,char *sele,int state,int *null_chain);
 
-void ExecutiveOrient(char *sele,Matrix33d mi,int state);
-char *ExecutiveSeleToPDBStr(char *s1,int state,int conectFlag,int mode);
-int ExecutiveStereo(int flag);
-void ExecutiveCopy(char *src,char *dst);
-float ExecutiveOverlap(char *s1,int state1,char *s2,int state2,float adjust);
-int ExecutiveCountStates(char *s1);
-void ExecutiveSymExp(char *name,char *obj,char *sele,float cutoff);
-int ExecutiveGetExtent(char *name,float *mn,float *mx,int transformed,int state,int weighted);
-int ExecutiveGetCameraExtent(char *name,float *mn,float *mx,int transformed,int state);
-void ExecutiveSeleToObject(char *name,char *s1,int source,int target,int discrete);
-PyObject *ExecutiveSeleToChemPyModel(char *s1,int state);
-void ExecutiveInvalidateRep(char *name,int rep,int level);
-void ExecutiveFlag(int flag,char *s1,int action,int quiet);
-void ExecutiveRemoveAtoms(char *s1,int quiet);
-void ExecutiveProtect(char *s1,int mode,int quiet);
-void ExecutiveMask(char *s1,int mode);
-void ExecutiveUndo(int dir);
-void ExecutiveRebuildAll(void);
-void ExecutiveSpheroid(char *name,int average);
-void ExecutiveAddHydrogens(char *s1,int quiet);
-void ExecutiveFuse(char *s0,char *s1,int mode);
-void ExecutiveRenameObjectAtoms(char *name,int force);
-int ExecutiveInvert(int quiet);
-char *ExecutiveGetNames(int mode,int enabled_only);
-int ExecutiveGetType(char *name,WordType type);
-float ExecutiveGetArea(char *s0,int sta0,int load_b);
-void ExecutiveRenderSelections(int curState);
-void ExecutiveHideSelections(void);
-int ExecutiveSetTitle(char *name,int state,char *text);
-char *ExecutiveGetTitle(char *name,int state);
-int ExecutiveSaveUndo(char *s1,int state);
-void ExecutiveSetLastObjectEdited(CObject *o);
-CObject *ExecutiveGetLastObjectEdited(void);
-void ExecutiveFullScreen(int flag);
-void ExecutiveFocus(void);
-PyObject *ExecutiveGetSettingTuple(int index,char *object,int state);
-PyObject *ExecutiveGetSettingText(int index,char *object,int state);
-int ExecutivePairIndices(char *s1,char *s2,int state1,int state2,
+void ExecutiveOrient(PyMOLGlobals *G,char *sele,Matrix33d mi,int state);
+char *ExecutiveSeleToPDBStr(PyMOLGlobals *G,char *s1,int state,int conectFlag,int mode);
+int ExecutiveStereo(PyMOLGlobals *G,int flag);
+void ExecutiveCopy(PyMOLGlobals *G,char *src,char *dst);
+float ExecutiveOverlap(PyMOLGlobals *G,char *s1,int state1,char *s2,int state2,float adjust);
+int ExecutiveCountStates(PyMOLGlobals *G,char *s1);
+void ExecutiveSymExp(PyMOLGlobals *G,char *name,char *obj,char *sele,float cutoff);
+int ExecutiveGetExtent(PyMOLGlobals *G,char *name,float *mn,float *mx,int transformed,int state,int weighted);
+int ExecutiveGetCameraExtent(PyMOLGlobals *G,char *name,float *mn,float *mx,int transformed,int state);
+void ExecutiveSeleToObject(PyMOLGlobals *G,char *name,char *s1,int source,int target,int discrete);
+PyObject *ExecutiveSeleToChemPyModel(PyMOLGlobals *G,char *s1,int state);
+void ExecutiveInvalidateRep(PyMOLGlobals *G,char *name,int rep,int level);
+void ExecutiveFlag(PyMOLGlobals *G,int flag,char *s1,int action,int quiet);
+void ExecutiveRemoveAtoms(PyMOLGlobals *G,char *s1,int quiet);
+void ExecutiveProtect(PyMOLGlobals *G,char *s1,int mode,int quiet);
+void ExecutiveMask(PyMOLGlobals *G,char *s1,int mode);
+void ExecutiveUndo(PyMOLGlobals *G,int dir);
+void ExecutiveRebuildAll(PyMOLGlobals *G);
+void ExecutiveSpheroid(PyMOLGlobals *G,char *name,int average);
+void ExecutiveAddHydrogens(PyMOLGlobals *G,char *s1,int quiet);
+void ExecutiveFuse(PyMOLGlobals *G,char *s0,char *s1,int mode);
+void ExecutiveRenameObjectAtoms(PyMOLGlobals *G,char *name,int force);
+int ExecutiveInvert(PyMOLGlobals *G,int quiet);
+char *ExecutiveGetNames(PyMOLGlobals *G,int mode,int enabled_only);
+int ExecutiveGetType(PyMOLGlobals *G,char *name,WordType type);
+float ExecutiveGetArea(PyMOLGlobals *G,char *s0,int sta0,int load_b);
+void ExecutiveRenderSelections(PyMOLGlobals *G,int curState);
+void ExecutiveHideSelections(PyMOLGlobals *G);
+int ExecutiveSetTitle(PyMOLGlobals *G,char *name,int state,char *text);
+char *ExecutiveGetTitle(PyMOLGlobals *G,char *name,int state);
+int ExecutiveSaveUndo(PyMOLGlobals *G,char *s1,int state);
+void ExecutiveSetLastObjectEdited(PyMOLGlobals *G,CObject *o);
+CObject *ExecutiveGetLastObjectEdited(PyMOLGlobals *G);
+void ExecutiveFullScreen(PyMOLGlobals *G,int flag);
+void ExecutiveFocus(PyMOLGlobals *G);
+PyObject *ExecutiveGetSettingTuple(PyMOLGlobals *G,int index,char *object,int state);
+PyObject *ExecutiveGetSettingText(PyMOLGlobals *G,int index,char *object,int state);
+int ExecutivePairIndices(PyMOLGlobals *G,char *s1,char *s2,int state1,int state2,
                          int mode,float cutoff,float h_angle,
                          int **indexVLA, ObjectMolecule ***objVLA);
-void ExecutiveRebuildAllObjectDist(void);
-int ExecutivePhiPsi(char *s1,ObjectMolecule ***objVLA,int **iVLA,
+void ExecutiveRebuildAllObjectDist(PyMOLGlobals *G);
+int ExecutivePhiPsi(PyMOLGlobals *G,char *s1,ObjectMolecule ***objVLA,int **iVLA,
                     float **phiVLA,float **psiVLA,int state) ;
-float *ExecutiveGetVertexVLA(char *s1,int state);
-int ExecutiveValidName(char *name);
-int ExecutiveIsolevel(char *name,float level,int state);
-int ExecutiveTransformObjectSelection(char *name,int state,char *s1,int log,float *ttt);
-int ExecutiveTransformSelection(int state,char *s1,int log,float *ttt);
-int ExecutiveTranslateAtom(char *sele,float *v,int state,int mode,int log);
-void ExecutiveSelectRect(BlockRect *rect,int mode);
-int ExecutiveMapSetBorder(char *name,float level);
-int ExecutiveMapDouble(char *name,int state);
+float *ExecutiveGetVertexVLA(PyMOLGlobals *G,char *s1,int state);
+int ExecutiveValidName(PyMOLGlobals *G,char *name);
+int ExecutiveIsolevel(PyMOLGlobals *G,char *name,float level,int state);
+int ExecutiveTransformObjectSelection(PyMOLGlobals *G,char *name,int state,char *s1,int log,float *ttt);
+int ExecutiveTransformSelection(PyMOLGlobals *G,int state,char *s1,int log,float *ttt);
+int ExecutiveTranslateAtom(PyMOLGlobals *G,char *sele,float *v,int state,int mode,int log);
+void ExecutiveSelectRect(PyMOLGlobals *G,BlockRect *rect,int mode);
+int ExecutiveMapSetBorder(PyMOLGlobals *G,char *name,float level);
+int ExecutiveMapDouble(PyMOLGlobals *G,char *name,int state);
 
-int ExecutiveMultiSave(char *fname,char *name,int state,int append);
-int ExecutiveIdentifyObjects(char *s1,int mode,int **indexVLA,ObjectMolecule ***objVLA);
-int ExecutiveCombineObjectTTT(char *name,float *ttt);
-int ExecutiveSetGeometry(char *s1,int geom,int valence);
-int ExecutiveSculptIterateAll(void);
-int ExecutiveSmooth(char *name,int cycles,int window,int first, int last, int ends,int quiet);
-int ExecutiveSculptDeactivate(char *name);
-int ExecutiveSculptActivate(char *name,int state);
-float ExecutiveSculptIterate(char *name,int state,int n_cycle);
-int ExecutiveMapNew(char *name,int type,float *grid,char *sele,
+int ExecutiveMultiSave(PyMOLGlobals *G,char *fname,char *name,int state,int append);
+int ExecutiveIdentifyObjects(PyMOLGlobals *G,char *s1,int mode,int **indexVLA,ObjectMolecule ***objVLA);
+int ExecutiveCombineObjectTTT(PyMOLGlobals *G,char *name,float *ttt);
+int ExecutiveSetGeometry(PyMOLGlobals *G,char *s1,int geom,int valence);
+int ExecutiveSculptIterateAll(PyMOLGlobals *G);
+int ExecutiveSmooth(PyMOLGlobals *G,char *name,int cycles,int window,int first, int last, int ends,int quiet);
+int ExecutiveSculptDeactivate(PyMOLGlobals *G,char *name);
+int ExecutiveSculptActivate(PyMOLGlobals *G,char *name,int state);
+float ExecutiveSculptIterate(PyMOLGlobals *G,char *name,int state,int n_cycle);
+int ExecutiveMapNew(PyMOLGlobals *G,char *name,int type,float *grid,char *sele,
                     float buffer,float *minCorner,float *maxCorner,
                     int state);
 
-int ***ExecutiveGetBondPrint(char *name,int max_bond,int max_type,int *dim);
-int ExecutiveSetCrystal(char *sele,float a,float b,float c,
+int ***ExecutiveGetBondPrint(PyMOLGlobals *G,char *name,int max_bond,int max_type,int *dim);
+int ExecutiveSetCrystal(PyMOLGlobals *G,char *sele,float a,float b,float c,
                          float alpha,float beta,float gamma,char *sgroup);
-int ExecutiveGetSession(PyObject *dict);
-int ExecutiveSetSession(PyObject *session);
+int ExecutiveGetSession(PyMOLGlobals *G,PyObject *dict);
+int ExecutiveSetSession(PyMOLGlobals *G,PyObject *session);
 
-ObjectMap *ExecutiveFindObjectMapByName(char *name);
+ObjectMap *ExecutiveFindObjectMapByName(PyMOLGlobals *G,char *name);
 
-int  ExecutiveUnsetSetting(int index,char *sele,
+int  ExecutiveUnsetSetting(PyMOLGlobals *G,int index,char *sele,
                            int state,int quiet,int updates);
 
 
-int  ExecutiveAssignSS(char *target,int state,char *context,int preserve,int quiet);
+int  ExecutiveAssignSS(PyMOLGlobals *G,char *target,int state,char *context,int preserve,int quiet);
 
-int ExecutiveRampMapNew(char *name,char *map_name,PyObject *range,
+int ExecutiveRampMapNew(PyMOLGlobals *G,char *name,char *map_name,PyObject *range,
                         PyObject *color,int map_state,char *sele,
                         float beyond,float within,float sigma,int zero);
 
-int ExecutiveValidateObjectPtr(CObject *ptr,int object_type);
+int ExecutiveValidateObjectPtr(PyMOLGlobals *G,CObject *ptr,int object_type);
 
-int ExecutiveSpectrum(char *s1,char *expr,float min,float max,int first,int last,
+int ExecutiveSpectrum(PyMOLGlobals *G,char *s1,char *expr,float min,float max,int first,int last,
                       char *prefix,int digits,int byres,int quiet,float *min_ret,float *max_ret);
 
-int ExecutiveReinitialize(void);
-char *ExecutiveFindBestNameMatch(char *name);
-int ExecutiveSetVisFromPyDict(PyObject *dict);
-     PyObject *ExecutiveGetVisAsPyDict(void);
-int ExecutiveGetCrystal(char *sele,float *a,float *b,float *c,
+int ExecutiveReinitialize(PyMOLGlobals *G);
+char *ExecutiveFindBestNameMatch(PyMOLGlobals *G,char *name);
+int ExecutiveSetVisFromPyDict(PyMOLGlobals *G,PyObject *dict);
+PyObject *ExecutiveGetVisAsPyDict(PyMOLGlobals *G);
+int ExecutiveGetCrystal(PyMOLGlobals *G,char *sele,float *a,float *b,float *c,
                         float *alpha,float *beta,float *gamma,char *sgroup,int *defined);
-int ExecutiveIterateObjectMolecule(ObjectMolecule **obj,void **hidden);
-int ExecutiveGetObjectColorIndex(char *name);
-void ExecutiveToggleAllRepVisib(char *name,int rep);
-int ExecutiveSetOnOffBySele(char *name,int onoff);
-int ExecutiveSetName(char *old_name, char *new_name);
-int ExecutiveGetActiveSeleName(char *name, int create_new);
-int ExecutiveGetActiveSele(void);
+int ExecutiveIterateObjectMolecule(PyMOLGlobals *G,ObjectMolecule **obj,void **hidden);
+int ExecutiveGetObjectColorIndex(PyMOLGlobals *G,char *name);
+void ExecutiveToggleAllRepVisib(PyMOLGlobals *G,char *name,int rep);
+int ExecutiveSetOnOffBySele(PyMOLGlobals *G,char *name,int onoff);
+int ExecutiveSetName(PyMOLGlobals *G,char *old_name, char *new_name);
+int ExecutiveGetActiveSeleName(PyMOLGlobals *G,char *name, int create_new);
+int ExecutiveGetActiveSele(PyMOLGlobals *G);
 
 #endif
 

@@ -16,6 +16,8 @@ Z* -------------------------------------------------------------------
 #ifndef _H_Text
 #define _H_Text
 
+#include"PyMOLGlobals.h"
+
 /* Here are the issues:
 
 - Many different types of fonts:
@@ -64,24 +66,23 @@ Z* -------------------------------------------------------------------
 #define cTextSrcGLUT      1
 #define cTextSrcFreeType  2
 
-int TextInit(void);
-int TextGetFontID(int src, int code, char *name,int size_mode, int size, int style);
+int TextInit(PyMOLGlobals *G);
+int TextGetFontID(PyMOLGlobals *G,int src, int code, char *name,int size_mode, int size, int style);
 
-void TextFree(void);
+void TextFree(PyMOLGlobals *G);
 
-void TextSetPos(float *pos);
+void TextSetPos(PyMOLGlobals *G,float *pos);
 
-void TextSetColor(float *color);
+void TextSetColor(PyMOLGlobals *G,float *color);
 
-void TextSetPosNColor(float *pos,float *color);
-float *TextGetColor(void);
-float *TextGetPos(void);
-void TextGetColorUChar(unsigned char *red,
+void TextSetPosNColor(PyMOLGlobals *G,float *pos,float *color);
+float *TextGetColor(PyMOLGlobals *G);
+float *TextGetPos(PyMOLGlobals *G);
+void TextGetColorUChar(PyMOLGlobals *G,unsigned char *red,
                        unsigned char *green, 
                        unsigned char *blue,
                        unsigned char *alpha);
-char *TextRenderOpenGL(int text_id,char *st);
-struct CRay;
-char *TextRenderRay(struct CRay *ray,int text_id,char *st);
+char *TextRenderOpenGL(PyMOLGlobals *G,int text_id,char *st);
+char *TextRenderRay(PyMOLGlobals *G,CRay *ray,int text_id,char *st);
 
 #endif

@@ -16,6 +16,8 @@ Z* -------------------------------------------------------------------
 #ifndef _H_Matrix
 #define _H_Matrix
 
+#include"PyMOLGlobals.h"
+
 /* WARNING - MAJOR GOTCHA!  
 
    A state of confusion has arisen because of mixed row-major and
@@ -42,7 +44,7 @@ Z* -------------------------------------------------------------------
 
 void MatrixRotation44f( float *m44, const float angle, const float x,const float y,const float z);
 
-void MatrixDump44f(float *m,char *prefix);
+void MatrixDump44f(PyMOLGlobals *G,float *m,char *prefix);
 
 void MatrixTransform44f3f(float *m, float *q,float *p);
 void MatrixTransform44f4f(float *m, float *q,float *p);
@@ -50,7 +52,7 @@ void MatrixInvTransform44fAs33f3f(float *m, float *q,float *p);
 
 void MatrixTransform44fAs33f3f(float *p, float *m, float *q);
 void MatrixTransform44fn( unsigned int n, float *q, const float m[16], float *p);
-int MatrixEigensolve33d(double *a, double *wr, double *wi, double *v);
+int MatrixEigensolve33d(PyMOLGlobals *G,double *a, double *wr, double *wi, double *v);
 
 void MatrixLoadIdentity44f(float *m);
 void MatrixTranslate44f3f( float *m, const float x,const float y,const float z);
@@ -65,8 +67,8 @@ int  MatrixInvert44f( const float *m, float *out );
   pre-translation - tranformation - and post-translation (TTT) matrix */
 
 void MatrixApplyTTTfn3f(unsigned int n, float *q, const float m[16], float *p );
-float MatrixFitRMS(int n,float *v1,float *v2,float *wt,float *ttt);
-float MatrixGetRMS(int n,float *v1,float *v2,float *wt);
+float MatrixFitRMS(PyMOLGlobals *G,int n,float *v1,float *v2,float *wt,float *ttt);
+float MatrixGetRMS(PyMOLGlobals *G,int n,float *v1,float *v2,float *wt);
 int *MatrixFilter(float cutoff,int window,int n_pass,int nv,float *v1,float *v2);
 
 #endif

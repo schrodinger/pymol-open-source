@@ -18,7 +18,7 @@ Z* -------------------------------------------------------------------
 
 struct CScrollBar;
 
-struct CScrollBar *ScrollBarNew(int horizontal);
+struct CScrollBar *ScrollBarNew(PyMOLGlobals *G,int horizontal);
 void ScrollBarFree(struct CScrollBar *I);
 void ScrollBarSetBox(struct CScrollBar *I,int top,int left,int bottom, int right);
 void ScrollBarDoDraw(struct CScrollBar *I);

@@ -344,12 +344,13 @@ void RepWireBondFree(RepWireBond *I)
 {
   FreeP(I->VP);
   FreeP(I->V);
-  RepFree(&I->R);
+  RepPurge(&I->R);
   OOFreeP(I);
 }
 
 void RepWireBondRender(RepWireBond *I,CRay *ray,Pickable **pick)
 {
+  PyMOLGlobals *G=I->R.G;
   float *v=I->V;
   int c=I->N;
   unsigned int i,j;
@@ -415,7 +416,7 @@ void RepWireBondRender(RepWireBond *I,CRay *ray,Pickable **pick)
   } else if(PMGUI) {
 
     int use_dlst;
-    use_dlst = (int)SettingGet(cSetting_use_display_lists);
+    use_dlst = (int)SettingGet(G,cSetting_use_display_lists);
     if(use_dlst&&I->R.displayList) {
       glCallList(I->R.displayList);
     } else { 
@@ -436,7 +437,7 @@ void RepWireBondRender(RepWireBond *I,CRay *ray,Pickable **pick)
       
       glDisable(GL_LIGHTING); 
       glBegin(GL_LINES);	 
-      SceneResetNormal(true);
+      SceneResetNormal(G,true);
       while(c--) {
         glColor3fv(v);
         v+=3;
@@ -456,6 +457,7 @@ void RepWireBondRender(RepWireBond *I,CRay *ray,Pickable **pick)
 
 Rep *RepWireBondNew(CoordSet *cs)
 {
+  PyMOLGlobals *G=cs->G;
   ObjectMolecule *obj;
   int a,a1,a2,c1,c2,s1,s2,b1,b2,ord;
   BondType *b;
@@ -470,10 +472,10 @@ Rep *RepWireBondNew(CoordSet *cs)
 
   Pickable *rp;
   AtomInfoType *ai1,*ai2;
-  OOAlloc(RepWireBond);
+  OOAlloc(G,RepWireBond);
   obj = cs->Obj;
 
-  PRINTFD(FB_RepWireBond)
+  PRINTFD(G,FB_RepWireBond)
     " RepWireBondNew-Debug: entered.\n"
     ENDFD;
 
@@ -495,12 +497,12 @@ Rep *RepWireBondNew(CoordSet *cs)
     return(NULL); /* skip if no dots are visible */
   }
 
-  valence = SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_valence);
+  valence = SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_valence);
   if(valence==1.0F) /* backwards compatibility... */
-    valence = SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_valence_size);
+    valence = SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_valence_size);
   valence_flag = (valence!=0.0F);
 
-  half_bonds = SettingGet_i(cs->Setting,obj->Obj.Setting,cSetting_half_bonds);
+  half_bonds = SettingGet_i(G,cs->Setting,obj->Obj.Setting,cSetting_half_bonds);
 
   b=obj->Bond;
   for(a=0;a<obj->NBond;a++)
@@ -538,12 +540,12 @@ Rep *RepWireBondNew(CoordSet *cs)
       b++;
     }
   
-  RepInit(&I->R);
+  RepInit(G,&I->R);
 
   I->R.fRender=(void (*)(struct Rep *, CRay *, Pickable **))RepWireBondRender;
   I->R.fFree=(void (*)(struct Rep *))RepWireBondFree;
-  I->Width = SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_line_width);
-  I->Radius = SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_line_radius);
+  I->Width = SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_line_width);
+  I->Radius = SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_line_radius);
 
 
   I->N=0;
@@ -559,7 +561,7 @@ Rep *RepWireBondNew(CoordSet *cs)
       other=ObjectMoleculeGetPrioritizedOtherIndexList(obj,cs);
     
 	 I->V=(float*)mmalloc(sizeof(float)*maxSegment*9);
-	 ErrChkPtr(I->V);
+	 ErrChkPtr(G,I->V);
 	 	 
 	 v=I->V;
 	 b=obj->Bond;
@@ -605,10 +607,10 @@ Rep *RepWireBondNew(CoordSet *cs)
 					 v1 = cs->Coord+3*a1;
 					 v2 = cs->Coord+3*a2;
 					 
-					 if((c1==c2)&&s1&&s2&&(!ColorCheckRamped(c1))) {
+					 if((c1==c2)&&s1&&s2&&(!ColorCheckRamped(G,c1))) {
 						
 
-						v0 = ColorGet(c1);
+						v0 = ColorGet(G,c1);
 
                   if((valence_flag)&&(ord>1)&&(ord<4)) {
                     RepValence(v,v1,v2,other,a1,a2,cs->Coord,v0,ord,valence);
@@ -639,11 +641,11 @@ Rep *RepWireBondNew(CoordSet *cs)
 						if(s1)
 						  {
                       
-                      if(ColorCheckRamped(c1)) {
-                        ColorGetRamped(c1,v1,tmpColor);
+                      if(ColorCheckRamped(G,c1)) {
+                        ColorGetRamped(G,c1,v1,tmpColor);
                         v0=tmpColor;
                       } else {
-                        v0 = ColorGet(c1);
+                        v0 = ColorGet(G,c1);
                       }
 
                       if((valence_flag)&&(ord>1)&&(ord<4)) {
@@ -670,11 +672,11 @@ Rep *RepWireBondNew(CoordSet *cs)
                     }
 						if(s2)
 						  {
-                      if(ColorCheckRamped(c2)) {
-                        ColorGetRamped(c2,v2,tmpColor);
+                      if(ColorCheckRamped(G,c2)) {
+                        ColorGetRamped(G,c2,v2,tmpColor);
                         v0 = tmpColor;
                       } else {
-                        v0 = ColorGet(c2);
+                        v0 = ColorGet(G,c2);
                       }
                       if((valence_flag)&&(ord>1)&&(ord<4)) {
                         RepValence(v,h,v2,other,a1,a2,cs->Coord,v0,ord,valence);
@@ -707,12 +709,12 @@ Rep *RepWireBondNew(CoordSet *cs)
 
 	 /* now create pickable verson */
 
-	 if(SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_pickable)) {
+	 if(SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_pickable)) {
 		I->VP=(float*)mmalloc(sizeof(float)*maxBond*6*2);
-		ErrChkPtr(I->VP);
+		ErrChkPtr(G,I->VP);
 		
 		I->R.P=Alloc(Pickable,2*maxBond+1);
-		ErrChkPtr(I->R.P);
+		ErrChkPtr(G,I->R.P);
 		rp = I->R.P + 1; /* skip first record! */
 
 		v=I->VP;

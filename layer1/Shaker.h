@@ -51,6 +51,7 @@ typedef struct {
 } ShakerLineCon;
 
 typedef struct {
+  PyMOLGlobals *G;
   ShakerDistCon *DistCon;
   int NDistCon;
   ShakerPyraCon *PyraCon;
@@ -63,7 +64,7 @@ typedef struct {
   int NTorsCon;
 } CShaker;
 
-CShaker *ShakerNew(void);
+CShaker *ShakerNew(PyMOLGlobals *G);
 void ShakerReset(CShaker *I);
 void ShakerAddDistCon(CShaker *I,int atom0,int atom1,float dist,int type);
 void ShakerAddTorsCon(CShaker *I,int atom0,int atom1,int atom2,int atom3,int type);

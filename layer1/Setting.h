@@ -17,6 +17,7 @@ Z* -------------------------------------------------------------------
 #define _H_Setting
 
 #include"os_python.h"
+#include"PyMOLGlobals.h"
 
 typedef char SettingName[255];
 
@@ -28,11 +29,12 @@ typedef struct {
   unsigned int max_size;
 } SettingRec;
 
-typedef struct {
+struct _CSetting {
+  PyMOLGlobals *G;
   unsigned int size;
   char *data;
   SettingRec *info;
-} CSetting;
+};
 
 #define cSetting_blank       0
 #define cSetting_boolean     1
@@ -47,14 +49,14 @@ typedef struct {
  * in contrast, set commands expand the current list 
  */
 
-void SettingInitGlobal(int alloc,int reset_gui);
-void SettingFreeGlobal(void);
+void SettingInitGlobal(PyMOLGlobals *G,int alloc,int reset_gui);
+void SettingFreeGlobal(PyMOLGlobals *G);
 
-CSetting *SettingNew(void);
+CSetting *SettingNew(PyMOLGlobals *G);
 void SettingFreeP(CSetting *I);
-void SettingInit(CSetting *I);
+void SettingInit(PyMOLGlobals *G,CSetting *I);
 void SettingPurge(CSetting *I);
-void SettingCheckHandle(CSetting **handle);
+void SettingCheckHandle(PyMOLGlobals *G,CSetting **handle);
 
 int SettingSet_b(CSetting *I,int index, int value);
 int SettingSet_i(CSetting *I,int index, int value);
@@ -63,71 +65,71 @@ int SettingSet_s(CSetting *I,int index, char *value);
 int SettingSet_3f(CSetting *I,int index, float value1,float value2,float value3);
 int SettingSet_3fv(CSetting *I,int index, float *value);
 
-int SettingGetTextValue(CSetting *set1,CSetting *set2,int index,char *buffer);
+int SettingGetTextValue(PyMOLGlobals *G,CSetting *set1,CSetting *set2,int index,char *buffer);
 
-int SettingSetTuple(CSetting *I,int index,PyObject *tuple);
+int SettingSetTuple(PyMOLGlobals *G,CSetting *I,int index,PyObject *tuple);
 int SettingUnset(CSetting *I,int index);
 
 void SettingClear(CSetting *I,int index); /* don't call this for the global list! */
 
-int SettingGetType(int index); /* based on global types, always succeeds */
+int SettingGetType(PyMOLGlobals *G,int index); /* based on global types, always succeeds */
 
-int   SettingGetGlobal_b(int index); /* always succeed */
-int   SettingGetGlobal_i(int index); /* always succeed */
-float SettingGetGlobal_f(int index); /* always succeed */
-char *SettingGetGlobal_s(int index); /* always succeeds */
-void  SettingGetGlobal_3f(int index,float *value); /* always succeeds */
-float *SettingGetGlobal_3fv(int index); /* always succeed */
+int   SettingGetGlobal_b(PyMOLGlobals *G,int index); /* always succeed */
+int   SettingGetGlobal_i(PyMOLGlobals *G,int index); /* always succeed */
+float SettingGetGlobal_f(PyMOLGlobals *G,int index); /* always succeed */
+char *SettingGetGlobal_s(PyMOLGlobals *G,int index); /* always succeeds */
+void  SettingGetGlobal_3f(PyMOLGlobals *G,int index,float *value); /* always succeeds */
+float *SettingGetGlobal_3fv(PyMOLGlobals *G,int index); /* always succeed */
 
-int   SettingSetGlobal_b(int index,int value);
-int   SettingSetGlobal_i(int index,int value);
-int   SettingSetGlobal_f(int index,float value);
+int   SettingSetGlobal_b(PyMOLGlobals *G,int index,int value);
+int   SettingSetGlobal_i(PyMOLGlobals *G,int index,int value);
+int   SettingSetGlobal_f(PyMOLGlobals *G,int index,float value);
 
-int   SettingSetSmart_i(CSetting *set1,CSetting *set2,int index, int value);
+int   SettingSetSmart_i(PyMOLGlobals *G,CSetting *set1,CSetting *set2,int index, int value);
 /* more to come */
 
-int SettingGetIfDefined_i(CSetting *set1,int index,int *value);
-int SettingGetIfDefined_b(CSetting *set1,int index,int *value);
-int SettingGetIfDefined_f(CSetting *set1,int index,float *value);
-int SettingGetIfDefined_s(CSetting *set1,int index,char **value);
-int SettingGetIfDefined_3fv(CSetting *set1,int index,float **value);
-int SettingGetIfDefined_color(CSetting *set1,int index,int *value);
+int SettingGetIfDefined_i(PyMOLGlobals *G,CSetting *set1,int index,int *value);
+int SettingGetIfDefined_b(PyMOLGlobals *G,CSetting *set1,int index,int *value);
+int SettingGetIfDefined_f(PyMOLGlobals *G,CSetting *set1,int index,float *value);
+int SettingGetIfDefined_s(PyMOLGlobals *G,CSetting *set1,int index,char **value);
+int SettingGetIfDefined_3fv(PyMOLGlobals *G,CSetting *set1,int index,float **value);
+int SettingGetIfDefined_color(PyMOLGlobals *G,CSetting *set1,int index,int *value);
 
 /* more to come */
 
 int SettingSet_color(CSetting *I,int index, char *value);
 
 
-int   SettingGet_b  (CSetting *set1,CSetting *set2,int index);
-int   SettingGet_i  (CSetting *set1,CSetting *set2,int index);
-float SettingGet_f  (CSetting *set1,CSetting *set2,int index);
-char  *SettingGet_s  (CSetting *set1,CSetting *set2,int index);
-void  SettingGet_3f (CSetting *set1,CSetting *set2,int index,float *value);
-float *SettingGet_3fv (CSetting *set1,CSetting *set2,int index);
-int   SettingGet_color(CSetting *set1,CSetting *set2,int index);
+int   SettingGet_b(PyMOLGlobals *G,CSetting *set1,CSetting *set2,int index);
+int   SettingGet_i(PyMOLGlobals *G,CSetting *set1,CSetting *set2,int index);
+float SettingGet_f(PyMOLGlobals *G,CSetting *set1,CSetting *set2,int index);
+char  *SettingGet_s(PyMOLGlobals *G,CSetting *set1,CSetting *set2,int index);
+void  SettingGet_3f(PyMOLGlobals *G,CSetting *set1,CSetting *set2,int index,float *value);
+float *SettingGet_3fv(PyMOLGlobals *G,CSetting *set1,CSetting *set2,int index);
+int   SettingGet_color(PyMOLGlobals *G,CSetting *set1,CSetting *set2,int index);
 
-PyObject *SettingGetTuple(CSetting *set1,CSetting *set2,int index); /* (type,(value,)) */
-PyObject *SettingGetDefinedTuple(CSetting *set1,int index);
+PyObject *SettingGetTuple(PyMOLGlobals *G,CSetting *set1,CSetting *set2,int index); /* (type,(value,)) */
+PyObject *SettingGetDefinedTuple(PyMOLGlobals *G,CSetting *set1,int index);
 
-void SettingGenerateSideEffects(int index,char *sele,int state);
-PyObject *SettingGetUpdateList(CSetting *I);
+void SettingGenerateSideEffects(PyMOLGlobals *G,int index,char *sele,int state);
+PyObject *SettingGetUpdateList(PyMOLGlobals *G,CSetting *I);
 
 /* Legacy API below */
 
-int SettingGetIndex(char *name);
-float SettingGet(int index);
-int SettingSet(int index,float v);
-int SettingSetfv(int index,float *value);
-float *SettingGetfv(int index);
-int SettingSetNamed(char *name,char *value);
-float SettingGetNamed(char *name);
-int SettingGetName(int index,SettingName name);
+int SettingGetIndex(PyMOLGlobals *G,char *name);
+float SettingGet(PyMOLGlobals *G,int index);
+int SettingSet(PyMOLGlobals *G,int index,float v);
+int SettingSetfv(PyMOLGlobals *G,int index,float *value);
+float *SettingGetfv(PyMOLGlobals *G,int index);
+int SettingSetNamed(PyMOLGlobals *G,char *name,char *value);
+float SettingGetNamed(PyMOLGlobals *G,char *name);
+int SettingGetName(PyMOLGlobals *G,int index,SettingName name);
 
 PyObject *SettingAsPyList(CSetting *I);
 int SettingFromPyList(CSetting *I,PyObject *list);
-int SettingSetGlobalsFromPyList(PyObject *list);
-PyObject *SettingGetGlobalsPyList(void);
-CSetting *SettingNewFromPyList(PyObject *list);
+int SettingSetGlobalsFromPyList(PyMOLGlobals *G,PyObject *list);
+PyObject *SettingGetGlobalsPyList(PyMOLGlobals *G);
+CSetting *SettingNewFromPyList(PyMOLGlobals *G,PyObject *list);
 
 /* WARNING: do not delete or change indices
    since they are used in session objects */

@@ -19,8 +19,8 @@ Z* -------------------------------------------------------------------
 #include"Ortho.h"
 #include"ObjectMolecule.h"
 
-void SeekerInit(void);
-void SeekerFree(void);
-void SeekerUpdate(void);
+int SeekerInit(PyMOLGlobals *G);
+void SeekerFree(PyMOLGlobals *G);
+void SeekerUpdate(PyMOLGlobals *G);
 
 #endif

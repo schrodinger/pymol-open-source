@@ -48,10 +48,10 @@ typedef struct ObjRec {
   struct ObjRec *next;
 } ObjRec;
 
-ObjectSlice *ObjectSliceNew(void);
+ObjectSlice *ObjectSliceNew(PyMOLGlobals *G);
 
 static void ObjectSliceFree(ObjectSlice *I);
-void ObjectSliceStateInit(ObjectSliceState *ms);
+void ObjectSliceStateInit(PyMOLGlobals *G,ObjectSliceState *ms);
 void ObjectSliceRecomputeExtent(ObjectSlice *I);
 
 static PyObject *ObjectSliceStateAsPyList(ObjectSliceState *I)
@@ -104,7 +104,7 @@ static PyObject *ObjectSliceAllStatesAsPyList(ObjectSlice *I)
 
 }
 
-static int ObjectSliceStateFromPyList(ObjectSliceState *I,PyObject *list)
+static int ObjectSliceStateFromPyList(PyMOLGlobals *G,ObjectSliceState *I,PyObject *list)
 {
   int ok=true;
 
@@ -114,7 +114,7 @@ static int ObjectSliceStateFromPyList(ObjectSliceState *I,PyObject *list)
     if(!PyList_Check(list))
       I->Active=false;
     else {
-      ObjectSliceStateInit(I);
+      ObjectSliceStateInit(G,I);
       if(ok) ok=(list!=NULL);
       if(ok) ok=PyList_Check(list);
       if(ok) ll = PyList_Size(list);
@@ -147,14 +147,14 @@ static int ObjectSliceAllStatesFromPyList(ObjectSlice *I,PyObject *list)
   if(ok) ok=PyList_Check(list);
   if(ok) {
     for(a=0;a<I->NState;a++) {
-      ok = ObjectSliceStateFromPyList(I->State+a,PyList_GetItem(list,a));
+      ok = ObjectSliceStateFromPyList(I->Obj.G,I->State+a,PyList_GetItem(list,a));
       if(!ok) break;
     }
   }
   return(ok);
 }
 
-int ObjectSliceNewFromPyList(PyObject *list,ObjectSlice **result)
+int ObjectSliceNewFromPyList(PyMOLGlobals *G,PyObject *list,ObjectSlice **result)
 {
   int ok = true;
   int ll;
@@ -167,10 +167,10 @@ int ObjectSliceNewFromPyList(PyObject *list,ObjectSlice **result)
   /* TO SUPPORT BACKWARDS COMPATIBILITY...
      Always check ll when adding new PyList_GetItem's */
 
-  I=ObjectSliceNew();
+  I=ObjectSliceNew(G);
   if(ok) ok = (I!=NULL);
   
-  if(ok) ok = ObjectFromPyList(PyList_GetItem(list,0),&I->Obj);
+  if(ok) ok = ObjectFromPyList(G,PyList_GetItem(list,0),&I->Obj);
   if(ok) ok = PConvPyIntToInt(PyList_GetItem(list,1),&I->NState);
   if(ok) ok = ObjectSliceAllStatesFromPyList(I,PyList_GetItem(list,2));
   if(ok) {
@@ -239,7 +239,7 @@ static void ObjectSliceInvalidate(ObjectSlice *I,int rep,int level,int state)
     if(state<0) once_flag=false;
     if(!once_flag) state=a;
     I->State[state].RefreshFlag=true;
-    SceneChanged();
+    SceneChanged(I->Obj.G);
     if(once_flag) break;
   }
 }
@@ -274,12 +274,12 @@ static void ObjectSliceStateUpdate(ObjectSlice *I,ObjectSliceState *oss, ObjectM
   int ok=true;
   int min[2] = {0,0}, max[2] = {0,0}; /* limits of the rectangle */
   int need_normals = false;
-  float grid = SettingGet_f(NULL,I->Obj.Setting,cSetting_slice_grid);  
+  float grid = SettingGet_f(I->Obj.G,NULL,I->Obj.Setting,cSetting_slice_grid);  
   int min_expand = 1;
 
-  if(SettingGet_b(NULL,I->Obj.Setting,cSetting_slice_dynamic_grid)) {
-    float resol =  SettingGet_f(NULL,I->Obj.Setting,cSetting_slice_dynamic_grid_resolution);
-    float scale = SceneGetScreenVertexScale(oss->origin);
+  if(SettingGet_b(I->Obj.G,NULL,I->Obj.Setting,cSetting_slice_dynamic_grid)) {
+    float resol =  SettingGet_f(I->Obj.G,NULL,I->Obj.Setting,cSetting_slice_dynamic_grid_resolution);
+    float scale = SceneGetScreenVertexScale(I->Obj.G,oss->origin);
 
     oss->last_scale = scale;
     grid = resol * scale;
@@ -419,9 +419,9 @@ static void ObjectSliceStateUpdate(ObjectSlice *I,ObjectSliceState *oss, ObjectM
     }
     if(!(oss->points&&oss->values&&oss->flags)) {
       ok=false;
-      PRINTFB(FB_ObjectSlice,FB_Errors)
+      PRINTFB(I->Obj.G,FB_ObjectSlice,FB_Errors)
         "ObjectSlice-Error: allocation failed\n"
-        ENDFB;
+        ENDFB(I->Obj.G);
     }
 
     if(!oss->strips) /* this is range-checked during use */
@@ -457,9 +457,9 @@ static void ObjectSliceStateUpdate(ObjectSlice *I,ObjectSliceState *oss, ObjectM
 
   if(ok) {
 
-    if(SettingGet_b(NULL,I->Obj.Setting,cSetting_slice_height_map))
+    if(SettingGet_b(I->Obj.G,NULL,I->Obj.Setting,cSetting_slice_height_map))
       {
-        float height_scale = SettingGet_f(NULL,I->Obj.Setting,cSetting_slice_height_scale);
+        float height_scale = SettingGet_f(I->Obj.G,NULL,I->Obj.Setting,cSetting_slice_height_scale);
         float *value = oss->values;
         float up[3],scaled[3],factor;
         int x,y;
@@ -675,12 +675,12 @@ static void ObjectSliceUpdate(ObjectSlice *I)
   for(a=0;a<I->NState;a++) {
     oss = I->State + a;
     if(oss && oss->Active) {      
-      map = ExecutiveFindObjectMapByName(oss->MapName);
+      map = ExecutiveFindObjectMapByName(I->Obj.G,oss->MapName);
       if(!map) {
         ok=false;
-        PRINTFB(FB_ObjectSlice,FB_Errors)
+        PRINTFB(I->Obj.G,FB_ObjectSlice,FB_Errors)
           "ObjectSliceUpdate-Error: map '%s' has been deleted.\n",oss->MapName
-          ENDFB;
+          ENDFB(I->Obj.G);
       }
       if(map) {
         oms = ObjectMapGetState(map,oss->MapState);
@@ -690,16 +690,16 @@ static void ObjectSliceUpdate(ObjectSlice *I)
         
         if(oss->RefreshFlag) {
           oss->RefreshFlag=false;
-          PRINTFB(FB_ObjectSlice,FB_Blather)
+          PRINTFB(I->Obj.G,FB_ObjectSlice,FB_Blather)
             " ObjectSlice: updating \"%s\".\n" , I->Obj.Name 
-            ENDFB;
+            ENDFB(I->Obj.G);
           if(oms->Field) {
             ObjectSliceStateUpdate(I,oss, oms);
-            ogr = ColorGetRamp(I->Obj.Color);
+            ogr = ColorGetRamp(I->Obj.G,I->Obj.Color);
             if(ogr) 
               ObjectSliceStateAssignColors(oss, ogr);
             else { /* solid color */
-              float *solid = ColorGet(I->Obj.Color);
+              float *solid = ColorGet(I->Obj.G,I->Obj.Color);
               float *color = oss->colors;
               for(a=0;a<oss->n_points;a++) {
                 *(color++)=solid[0];
@@ -710,7 +710,7 @@ static void ObjectSliceUpdate(ObjectSlice *I)
           }
         }
       }
-      SceneDirty();
+      SceneDirty(I->Obj.G);
     }
   }
 }
@@ -755,7 +755,7 @@ void ObjectSliceDrag(ObjectSlice *I, int state, int mode, float *pt, float *mov,
         multiply33f33f(mat,oss->system,oss->system);
         
         ObjectSliceInvalidate(I,cRepSlice,cRepAll,state);
-        SceneDirty();
+        SceneDirty(I->Obj.G);
         
       }
       break;
@@ -769,7 +769,7 @@ void ObjectSliceDrag(ObjectSlice *I, int state, int mode, float *pt, float *mov,
         project3f(mov,up,v1);
         add3f(v1,oss->origin,oss->origin);
         ObjectSliceInvalidate(I,cRepSlice,cRepAll,state);        
-        SceneDirty();
+        SceneDirty(I->Obj.G);
       }
       break;
     case cButModeTorFrag: 
@@ -819,7 +819,7 @@ int ObjectSliceGetOrigin(ObjectSlice *I,int state,float *origin)
     } else {
       if(!oss) {
         if(I->NState&&
-           ((SettingGet(cSetting_static_singletons)&&(I->NState==1))))
+           ((SettingGet(I->Obj.G,cSetting_static_singletons)&&(I->NState==1))))
           oss=I->State;
       }
     }
@@ -841,8 +841,8 @@ static void ObjectSliceRender(ObjectSlice *I,int state,CRay *ray,Pickable **pick
 
   int cur_state = 0;
   float alpha;
-  int track_camera = SettingGet_b(NULL,I->Obj.Setting,cSetting_slice_track_camera);
-  int dynamic_grid = SettingGet_b(NULL,I->Obj.Setting,cSetting_slice_dynamic_grid);
+  int track_camera = SettingGet_b(I->Obj.G,NULL,I->Obj.Setting,cSetting_slice_track_camera);
+  int dynamic_grid = SettingGet_b(I->Obj.G,NULL,I->Obj.Setting,cSetting_slice_dynamic_grid);
   ObjectSliceState *oss = NULL;
 
   if(track_camera||dynamic_grid) {
@@ -862,8 +862,8 @@ static void ObjectSliceRender(ObjectSlice *I,int state,CRay *ray,Pickable **pick
            SceneViewType view;
            float pos[3];
 
-           SceneGetPos(pos);
-           SceneGetView(view);
+           SceneGetPos(I->Obj.G,pos);
+           SceneGetView(I->Obj.G,view);
            
            if(track_camera) {
              if((diffsq3f(pos,oss->origin)>R_SMALL8) ||
@@ -881,7 +881,7 @@ static void ObjectSliceRender(ObjectSlice *I,int state,CRay *ray,Pickable **pick
                }
            }
            if(dynamic_grid&&(!update_flag)) {
-             float scale = SceneGetScreenVertexScale(oss->origin);
+             float scale = SceneGetScreenVertexScale(I->Obj.G,oss->origin);
              
              if(fabs(scale-oss->last_scale)>R_SMALL4) {
                update_flag = true;
@@ -898,7 +898,7 @@ static void ObjectSliceRender(ObjectSlice *I,int state,CRay *ray,Pickable **pick
   }
 
   ObjectPrepareContext(&I->Obj,ray);
-  alpha = SettingGet_f(NULL,I->Obj.Setting,cSetting_transparency);
+  alpha = SettingGet_f(I->Obj.G,NULL,I->Obj.Setting,cSetting_transparency);
   alpha=1.0F-alpha;
   if(fabs(alpha-1.0)<R_SMALL4)
     alpha=1.0F;
@@ -914,7 +914,7 @@ static void ObjectSliceRender(ObjectSlice *I,int state,CRay *ray,Pickable **pick
     } else {
       if(!oss) {
         if(I->NState&&
-           ((SettingGet(cSetting_static_singletons)&&(I->NState==1))))
+           ((SettingGet(I->Obj.G,cSetting_static_singletons)&&(I->NState==1))))
           oss=I->State;
       }
     }
@@ -1084,9 +1084,9 @@ static void ObjectSliceRender(ObjectSlice *I,int state,CRay *ray,Pickable **pick
             
             int use_dlst;
        
-            SceneResetNormal(false);
+            SceneResetNormal(I->Obj.G,false);
             ObjectUseColor(&I->Obj);
-            use_dlst = (int)SettingGet(cSetting_use_display_lists);
+            use_dlst = (int)SettingGet(I->Obj.G,cSetting_use_display_lists);
             if(use_dlst&&oss->displayList) {
               glCallList(oss->displayList);
             } else { 
@@ -1186,11 +1186,11 @@ ObjectSliceState *ObjectSliceStateGetActive(ObjectSlice *I,int state)
 }
 
 /*========================================================================*/
-ObjectSlice *ObjectSliceNew(void)
+ObjectSlice *ObjectSliceNew(PyMOLGlobals *G)
 {
-  OOAlloc(ObjectSlice);
+  OOAlloc(G,ObjectSlice);
   
-  ObjectInit((CObject*)I);
+  ObjectInit(G,(CObject*)I);
   
   I->NState = 0;
   I->State=VLAMalloc(10,sizeof(ObjectSliceState),5,true); /* autozero important */
@@ -1206,7 +1206,7 @@ ObjectSlice *ObjectSliceNew(void)
 }
 
 /*========================================================================*/
-void ObjectSliceStateInit(ObjectSliceState *oss)
+void ObjectSliceStateInit(PyMOLGlobals *G,ObjectSliceState *oss)
 {
   oss->displayList=0;
   oss->Active=true;
@@ -1233,7 +1233,7 @@ void ObjectSliceStateInit(ObjectSliceState *oss)
 }
 
 /*========================================================================*/
-ObjectSlice *ObjectSliceFromMap(ObjectSlice * obj,ObjectMap *map,int state,int map_state)
+ObjectSlice *ObjectSliceFromMap(PyMOLGlobals *G,ObjectSlice * obj,ObjectMap *map,int state,int map_state)
 {
   ObjectSlice *I;
   ObjectSliceState *oss;
@@ -1242,7 +1242,7 @@ ObjectSlice *ObjectSliceFromMap(ObjectSlice * obj,ObjectMap *map,int state,int m
 
 
   if(!obj) {
-    I=ObjectSliceNew();
+    I=ObjectSliceNew(G);
   } else {
     I=obj;
   }
@@ -1255,7 +1255,7 @@ ObjectSlice *ObjectSliceFromMap(ObjectSlice * obj,ObjectMap *map,int state,int m
 
   oss=I->State+state;
 
-  ObjectSliceStateInit(oss);
+  ObjectSliceStateInit(G,oss);
   oss->MapState = map_state;
   oms = ObjectMapGetState(map,map_state);
   if(oms) {
@@ -1271,7 +1271,7 @@ ObjectSlice *ObjectSliceFromMap(ObjectSlice * obj,ObjectMap *map,int state,int m
 
     {
       float tmp[3];
-      if(ObjectMapStateGetExcludedStats(oms,NULL,0.0F,0.0F,tmp)) {
+      if(ObjectMapStateGetExcludedStats(G,oms,NULL,0.0F,0.0F,tmp)) {
         oss->MapMean = tmp[1];
         oss->MapStdev = tmp[2]-tmp[1];
       } else {
@@ -1298,7 +1298,7 @@ ObjectSlice *ObjectSliceFromMap(ObjectSlice * obj,ObjectMap *map,int state,int m
     
     SceneViewType view;
      
-    SceneGetView(view);
+    SceneGetView(G,view);
     copy3f(view,oss->system);
     copy3f(view+4,oss->system+3);
     copy3f(view+8,oss->system+6);
@@ -1312,8 +1312,8 @@ ObjectSlice *ObjectSliceFromMap(ObjectSlice * obj,ObjectMap *map,int state,int m
 
   I->Obj.ExtentFlag=true;
 
-  SceneChanged();
-  SceneCountFrames();
+  SceneChanged(G);
+  SceneCountFrames(G);
   return(I);
 }
 

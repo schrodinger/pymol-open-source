@@ -33,9 +33,21 @@ Z* -------------------------------------------------------------------
 #include"Util.h"
 #include"Parse.h"
 
-CMovie Movie;
+struct _CMovie {
+  ImageType *Image;
+  int *Sequence;
+  MovieCmdType *Cmd;
+  int NImage,NFrame;
+  unsigned Width,Height;
+  int MatrixFlag;
+  SceneViewType Matrix;
+  int Playing;
+  int Locked;
+  int CacheSave;
+  CViewElem *ViewElem;
+};
 
-void MovieCopyPrepare(int *width,int *height,int *length)
+void MovieCopyPrepare(PyMOLGlobals *G,int *width,int *height,int *length)
 {
   /* assumed locked api, blocked threads, and master thread on entry */
 
@@ -44,53 +56,53 @@ void MovieCopyPrepare(int *width,int *height,int *length)
   * TODO: develop an interrupt mechanism */
 
   int start,stop;
-  CMovie *I=&Movie;
+  register CMovie *I=G->Movie;
   int nFrame;
 
-  I->CacheSave = (int)SettingGet(cSetting_cache_frames); 
+  I->CacheSave = (int)SettingGet(G,cSetting_cache_frames); 
   if(!I->CacheSave)
-    MovieClearImages();
-  SettingSet(cSetting_cache_frames,1.0);
+    MovieClearImages(G);
+  SettingSet(G,cSetting_cache_frames,1.0);
   nFrame = I->NFrame;
   if(!nFrame) {
-	 nFrame=SceneGetNFrame();
+	 nFrame=SceneGetNFrame(G);
   }
   start=0;
   stop=nFrame;
   if((start!=0)||(stop!=(nFrame+1)))
-    SceneSetFrame(0,0);
-  MoviePlay(cMoviePlay);
+    SceneSetFrame(G,0,0);
+  MoviePlay(G,cMoviePlay);
   VLACheck(I->Image,ImageType,nFrame);
-  SceneGetWidthHeight(width,height);
+  SceneGetWidthHeight(G,width,height);
   *length = nFrame;
 }
 
-int MovieCopyFrame(int frame,int width,int height,int rowbytes,void *ptr)
+int MovieCopyFrame(PyMOLGlobals *G,int frame,int width,int height,int rowbytes,void *ptr)
 {
-  CMovie *I=&Movie;
+  register CMovie *I=G->Movie;
   int result=false;
   int nFrame;
   
   nFrame = I->NFrame;
   if(!nFrame) {
-    nFrame=SceneGetNFrame();
+    nFrame=SceneGetNFrame(G);
   }
   
   if((width==I->Width)&&(height==I->Height)&&(frame<nFrame)&&(ptr)) {
     int a = frame;
     int i;
-    SceneSetFrame(0,a);
-    MovieDoFrameCommand(a);
+    SceneSetFrame(G,0,a);
+    MovieDoFrameCommand(G,a);
     PFlush();
-    i=MovieFrameToImage(a);
+    i=MovieFrameToImage(G,a);
     VLACheck(I->Image,ImageType,i);
     if(!I->Image[i]) {
-      SceneMakeMovieImage();
+      SceneMakeMovieImage(G);
     }
     if(!I->Image[i]) {
-      PRINTFB(FB_Movie,FB_Errors) 
+      PRINTFB(G,FB_Movie,FB_Errors) 
         "MoviePNG-Error: Missing rendered image.\n"
-        ENDFB;
+        ENDFB(G);
     } else {
       {
         unsigned char *srcImage = (unsigned char*)I->Image[i];
@@ -110,7 +122,7 @@ int MovieCopyFrame(int frame,int width,int height,int rowbytes,void *ptr)
           }
         result = true;
       }
-      ExecutiveDrawNow();
+      ExecutiveDrawNow(G);
       if(PMGUI) p_glutSwapBuffers();
     }
     if(!I->CacheSave) {
@@ -122,34 +134,34 @@ int MovieCopyFrame(int frame,int width,int height,int rowbytes,void *ptr)
   return result;
 }
 
-void MovieCopyFinish(void) 
+void MovieCopyFinish(PyMOLGlobals *G) 
 {
-  CMovie *I=&Movie;
-  SceneDirty(); /* important */
-  SettingSet(cSetting_cache_frames,(float)I->CacheSave);
-  MoviePlay(cMovieStop);
+  register CMovie *I=G->Movie;
+  SceneDirty(G); /* important */
+  SettingSet(G,cSetting_cache_frames,(float)I->CacheSave);
+  MoviePlay(G,cMovieStop);
   if(!I->CacheSave) {
-    MovieClearImages(); 
-    SceneSuppressMovieFrame();
+    MovieClearImages(G); 
+    SceneSuppressMovieFrame(G);
   }
 }
 
-int MovieLocked(void)
+int MovieLocked(PyMOLGlobals *G)
 {
-  CMovie *I=&Movie;
+  register CMovie *I=G->Movie;
   return(I->Locked);
 }
 
-void MovieSetLock(int lock)
+void MovieSetLock(PyMOLGlobals *G,int lock)
 {
-  CMovie *I=&Movie;
+  register CMovie *I=G->Movie;
   I->Locked=lock;
 }
 /*========================================================================*/
-void MovieDump(void)
+void MovieDump(PyMOLGlobals *G)
 {
   int a;
-  CMovie *I=&Movie;
+  register CMovie *I=G->Movie;
   int flag=false;
   char buffer[OrthoLineLength+100];
 
@@ -160,25 +172,25 @@ void MovieDump(void)
     }
   }
   if(flag&&I->NFrame) {
-    PRINTFB(FB_Movie,FB_Results)
+    PRINTFB(G,FB_Movie,FB_Results)
       " Movie: General Purpose Commands:\n"
-      ENDFB;
+      ENDFB(G);
     for(a=0;a<I->NFrame;a++) {
       if(I->Cmd[a][0]) {
         sprintf(buffer,"%5d: %s\n",a+1,I->Cmd[a]);
-        OrthoAddOutput(buffer);
+        OrthoAddOutput(G,buffer);
       }
     }
   } else {
-    PRINTFB(FB_Movie,FB_Results)
+    PRINTFB(G,FB_Movie,FB_Results)
       " Movie: No movie commands are defined.\n"
-      ENDFB;
+      ENDFB(G);
   }
 }
 /*========================================================================*/
-static int MovieCmdFromPyList(PyObject *list,int *warning)
+static int MovieCmdFromPyList(PyMOLGlobals *G,PyObject *list,int *warning)
 {
-  CMovie *I=&Movie;
+  register CMovie *I=G->Movie;
   int ok=true;
   int a;
   int warn=false;
@@ -194,13 +206,13 @@ static int MovieCmdFromPyList(PyObject *list,int *warning)
   return(ok);
 }
 /*========================================================================*/
-int MovieFromPyList(PyObject *list,int *warning)
+int MovieFromPyList(PyMOLGlobals *G,PyObject *list,int *warning)
 {
   int ok=true;
-  CMovie *I=&Movie;
+  register CMovie *I=G->Movie;
   int ll = 0;
 
-  MovieReset();
+  MovieReset(G);
   if(ok) ok=PyList_Check(list);
   if(ok) ll = PyList_Size(list);
   /* TO SUPPORT BACKWARDS COMPATIBILITY...
@@ -214,9 +226,9 @@ int MovieFromPyList(PyObject *list,int *warning)
     I->Sequence=VLACalloc(int,I->NFrame);
     I->Cmd=VLACalloc(MovieCmdType,I->NFrame);
     if(ok) ok=PConvPyListToIntArrayInPlace(PyList_GetItem(list,4),I->Sequence,I->NFrame);
-    if(ok) ok=MovieCmdFromPyList(PyList_GetItem(list,5),warning);
+    if(ok) ok=MovieCmdFromPyList(G,PyList_GetItem(list,5),warning);
     if((*warning)&&Security) {
-      MovieSetLock(true);
+      MovieSetLock(G,true);
     }
   }
   if(ok&&(ll>6)) {
@@ -228,14 +240,14 @@ int MovieFromPyList(PyObject *list,int *warning)
       ok = ViewElemVLAFromPyList(tmp,&I->ViewElem,I->NFrame);
   }
   if(!ok) {
-    MovieReset();
+    MovieReset(G);
   }
   return(ok);
 }
 /*========================================================================*/
-static PyObject *MovieCmdAsPyList(void)
+static PyObject *MovieCmdAsPyList(PyMOLGlobals *G)
 {
-  CMovie *I=&Movie;
+  register CMovie *I=G->Movie;
   PyObject *result=NULL;
   int a;
 
@@ -248,9 +260,9 @@ static PyObject *MovieCmdAsPyList(void)
 }
 
 /*========================================================================*/
-PyObject *MovieAsPyList(void)
+PyObject *MovieAsPyList(PyMOLGlobals *G)
 {
-  CMovie *I=&Movie;
+  register CMovie *I=G->Movie;
   PyObject *result = NULL;
 
   result = PyList_New(7);
@@ -264,7 +276,7 @@ PyObject *MovieAsPyList(void)
     PyList_SetItem(result,4,PConvAutoNone(NULL));
   }
   if(I->Cmd) {
-    PyList_SetItem(result,5,MovieCmdAsPyList());
+    PyList_SetItem(result,5,MovieCmdAsPyList(G));
   } else {
     PyList_SetItem(result,5,PConvAutoNone(NULL));
   }
@@ -286,39 +298,39 @@ PyObject *MovieAsPyList(void)
   return(PConvAutoNone(result));
 }
 /*========================================================================*/
-int MoviePlaying(void)
+int MoviePlaying(PyMOLGlobals *G)
 {
-  CMovie *I=&Movie;
+  register CMovie *I=G->Movie;
   if(I->Locked)
     return false;
   return(I->Playing);
 }
 /*========================================================================*/
-void MoviePlay(int cmd)
+void MoviePlay(PyMOLGlobals *G,int cmd)
 {
-  CMovie *I=&Movie;
+  register CMovie *I=G->Movie;
   switch(cmd) {
   case cMovieStop:
 	 I->Playing=false;
 	 break;
   case cMoviePlay:
-    if(!(int)SettingGet(cSetting_movie_loop)) { 
+    if(!(int)SettingGet(G,cSetting_movie_loop)) { 
       /* if not looping, and at end of movie, then automatically rewind
        and force execution of the first movie command */
-      if((SettingGetGlobal_i(cSetting_frame))==(SceneGetNFrame())) {
-        SceneSetFrame(7,0);
+      if((SettingGetGlobal_i(G,cSetting_frame))==(SceneGetNFrame(G))) {
+        SceneSetFrame(G,7,0);
       }
     }
 	 I->Playing=true;
 	 break;
   }
-  OrthoDirty();
-  SceneRestartTimers();
+  OrthoDirty(G);
+  SceneRestartTimers(G);
 }
 /*========================================================================*/
-int  MovieMatrix(int action)
+int  MovieMatrix(PyMOLGlobals *G,int action)
 {
-  CMovie *I=&Movie;
+  register CMovie *I=G->Movie;
   int result = false;
   switch(action) {
   case cMovieMatrixClear:
@@ -326,13 +338,13 @@ int  MovieMatrix(int action)
     result = 1;
 	 break;
   case cMovieMatrixStore:
-    SceneGetView(I->Matrix);
+    SceneGetView(G,I->Matrix);
 	 I->MatrixFlag=true;
     result = 1;
 	 break;
   case cMovieMatrixRecall:
 	 if(I->MatrixFlag) 
-		SceneSetView(I->Matrix,true);
+		SceneSetView(G,I->Matrix,true);
     else
       result = 0;
 	 break;
@@ -343,14 +355,14 @@ int  MovieMatrix(int action)
   return result;
 }
 /*========================================================================*/
-void MovieSetSize(unsigned int width,unsigned int height)
+void MovieSetSize(PyMOLGlobals *G,unsigned int width,unsigned int height)
 {  
-  CMovie *I=&Movie;
+  register CMovie *I=G->Movie;
   I->Width=width;
   I->Height=height;
 }
 /*========================================================================*/
-int MoviePNG(char *prefix,int save,int start,int stop)
+int MoviePNG(PyMOLGlobals *G,char *prefix,int save,int start,int stop)
 {
   /* assumed locked api, blocked threads, and master thread on entry */
 
@@ -358,63 +370,63 @@ int MoviePNG(char *prefix,int save,int start,int stop)
   * this routine can take a LOT of time -- 
   * TODO: develop an interrupt mechanism */
 
-  CMovie *I=&Movie;
+  register CMovie *I=G->Movie;
   int a;
   int i;
   char fname[255];
   char buffer[255];
   int nFrame;
 
-  save = (int)SettingGet(cSetting_cache_frames); 
+  save = (int)SettingGet(G,cSetting_cache_frames); 
   if(!save)
-    MovieClearImages();
-  SettingSet(cSetting_cache_frames,1.0);
-  OrthoBusyPrime();
+    MovieClearImages(G);
+  SettingSet(G,cSetting_cache_frames,1.0);
+  OrthoBusyPrime(G);
   nFrame = I->NFrame;
   if(!nFrame) {
-	 nFrame=SceneGetNFrame();
+	 nFrame=SceneGetNFrame(G);
   }
   if(start<0) start=0;
   if(start>nFrame) start=nFrame;
   if(stop<0) stop=nFrame;
   if(stop>nFrame) stop=nFrame;
   sprintf(buffer,"Creating movie (%d frames)...",nFrame);
-  OrthoBusyMessage(buffer);
+  OrthoBusyMessage(G,buffer);
   if((start!=0)||(stop!=(nFrame+1)))
     
-  SceneSetFrame(0,0);
-  MoviePlay(cMoviePlay);
+  SceneSetFrame(G,0,0);
+  MoviePlay(G,cMoviePlay);
   VLACheck(I->Image,ImageType,nFrame);
 
-  OrthoBusySlow(0,nFrame);
+  OrthoBusySlow(G,0,nFrame);
   for(a=0;a<nFrame;a++)
 	 {
-      PRINTFB(FB_Movie,FB_Debugging)
+      PRINTFB(G,FB_Movie,FB_Debugging)
         " MoviePNG-DEBUG: Cycle %d...\n",a
-        ENDFB;
+        ENDFB(G);
 		sprintf(fname,"%s%04d.png",prefix,a+1);
-		SceneSetFrame(0,a);
-		MovieDoFrameCommand(a);
+		SceneSetFrame(G,0,a);
+		MovieDoFrameCommand(G,a);
 		PFlush();
-		i=MovieFrameToImage(a);
+		i=MovieFrameToImage(G,a);
       VLACheck(I->Image,ImageType,i);
       if((a>=start)&&(a<=stop)) { /* only render frames in the specified interval */
         if(!I->Image[i]) {
-          SceneMakeMovieImage();
+          SceneMakeMovieImage(G);
         }
         if(!I->Image[i]) {
-          PRINTFB(FB_Movie,FB_Errors) 
+          PRINTFB(G,FB_Movie,FB_Errors) 
             "MoviePNG-Error: Missing rendered image.\n"
-            ENDFB;
+            ENDFB(G);
         } else {
-          MyPNGWrite(fname,I->Image[i],I->Width,I->Height);		
-          ExecutiveDrawNow();
-          OrthoBusySlow(a,nFrame);
+          MyPNGWrite(G,fname,I->Image[i],I->Width,I->Height);		
+          ExecutiveDrawNow(G);
+          OrthoBusySlow(G,a,nFrame);
           if(PMGUI) p_glutSwapBuffers();
-          PRINTFB(FB_Movie,FB_Debugging)
+          PRINTFB(G,FB_Movie,FB_Debugging)
             " MoviePNG-DEBUG: i = %d, I->Image[i] = %p\n",i,I->Image[i]
-            ENDFB;
-          if(Feedback(FB_Movie,FB_Actions)) {
+            ENDFB(G);
+          if(Feedback(G,FB_Movie,FB_Actions)) {
             printf(" MoviePNG: wrote %s\n",fname);
           }
         }
@@ -423,20 +435,20 @@ int MoviePNG(char *prefix,int save,int start,int stop)
         mfree(I->Image[i]);
 		I->Image[i]=NULL;
 	 }
-  SceneDirty(); /* important */
-  PRINTFB(FB_Movie,FB_Debugging)
+  SceneDirty(G); /* important */
+  PRINTFB(G,FB_Movie,FB_Debugging)
     " MoviePNG-DEBUG: done.\n"
-    ENDFB;
-  SettingSet(cSetting_cache_frames,(float)save);
-  MoviePlay(cMovieStop);
-  MovieClearImages();
-  SceneSuppressMovieFrame();
+    ENDFB(G);
+  SettingSet(G,cSetting_cache_frames,(float)save);
+  MoviePlay(G,cMovieStop);
+  MovieClearImages(G);
+  SceneSuppressMovieFrame(G);
   return(true);
 }
 /*========================================================================*/
-void MovieAppendSequence(char *str,int start_from)
+void MovieAppendSequence(PyMOLGlobals *G,char *str,int start_from)
 {
-  CMovie *I=&Movie;
+  register CMovie *I=G->Movie;
   int c=0;
   int i;
   char *s,number[20];
@@ -446,9 +458,9 @@ void MovieAppendSequence(char *str,int start_from)
 
   c=start_from;
 
-  PRINTFB(FB_Movie,FB_Debugging)
+  PRINTFB(G,FB_Movie,FB_Debugging)
     " MovieSequence: entered. str:%s\n",str
-    ENDFB;
+    ENDFB(G);
 
   s=str;
   while(*s) {
@@ -501,29 +513,29 @@ void MovieAppendSequence(char *str,int start_from)
   }
            
   VLACheck(I->Image,ImageType,I->NFrame);
-  PRINTFB(FB_Movie,FB_Debugging)
+  PRINTFB(G,FB_Movie,FB_Debugging)
     " MovieSequence: leaving... I->NFrame%d\n",I->NFrame
-    ENDFB;
+    ENDFB(G);
 
 }
 /*========================================================================*/
-int MovieFrameToImage(int frame)
+int MovieFrameToImage(PyMOLGlobals *G,int frame)
 {
   int result = 0;
-  int single_image = (int)SettingGet(cSetting_single_image);
+  int single_image = (int)SettingGet(G,cSetting_single_image);
   if(single_image)
-	 result = MovieFrameToIndex(frame);
+	 result = MovieFrameToIndex(G,frame);
   else
     result = frame;
-  PRINTFB(FB_Movie,FB_Debugging)
+  PRINTFB(G,FB_Movie,FB_Debugging)
     " MovieFrameToImage-DEBUG: result %d\n",result
-    ENDFB;
+    ENDFB(G);
   return(result);
 }
 /*========================================================================*/
-int MovieFrameToIndex(int frame)
+int MovieFrameToIndex(PyMOLGlobals *G,int frame)
 {
-  CMovie *I=&Movie;
+  register CMovie *I=G->Movie;
   if(I->Sequence&&I->NFrame) {
 	 if(frame<I->NFrame)
 		return(I->Sequence[frame]);
@@ -532,13 +544,13 @@ int MovieFrameToIndex(int frame)
   } else return(frame);
 }
 /*========================================================================*/
-void MovieSetImage(int index,ImageType image)
+void MovieSetImage(PyMOLGlobals *G,int index,ImageType image)
 {
-  CMovie *I=&Movie;
+  register CMovie *I=G->Movie;
 
-  PRINTFB(FB_Movie,FB_Blather)
+  PRINTFB(G,FB_Movie,FB_Blather)
     " MovieSetImage: setting movie image %d\n",index+1
-    ENDFB;
+    ENDFB(G);
 
   VLACheck(I->Image,ImageType,index);
   if(I->Image[index]) FreeP(I->Image[index]);
@@ -547,25 +559,25 @@ void MovieSetImage(int index,ImageType image)
 	 I->NImage=index+1;
 }
 /*========================================================================*/
-void MovieDoFrameCommand(int frame)
+void MovieDoFrameCommand(PyMOLGlobals *G,int frame)
 {
-  CMovie *I=&Movie;
+  register CMovie *I=G->Movie;
   if(frame==0)
-	 MovieMatrix(cMovieMatrixRecall);
+	 MovieMatrix(G,cMovieMatrixRecall);
   if(!I->Locked) {
     if((frame>=0)&&(frame<I->NFrame))
       {
         if(I->Cmd[frame][0]) 
           PParse(I->Cmd[frame]);
         if(I->ViewElem) 
-          SceneFromViewElem(I->ViewElem+frame);
+          SceneFromViewElem(G,I->ViewElem+frame);
       }
   }
 }
 /*========================================================================*/
-void MovieSetCommand(int frame,char *command)
+void MovieSetCommand(PyMOLGlobals *G,int frame,char *command)
 {
-  CMovie *I=&Movie;
+  register CMovie *I=G->Movie;
   int a,len;
   if((frame>=0)&&(frame<I->NFrame))
 	 {
@@ -577,9 +589,9 @@ void MovieSetCommand(int frame,char *command)
 		I->Cmd[frame][len]=0;
 	 }
   else {
-    PRINTFB(FB_Movie,FB_Errors)
+    PRINTFB(G,FB_Movie,FB_Errors)
       " Movie-Error: frame %d does not exist.  Use 'mset' to define movie first.\n",frame+1
-      ENDFB;
+      ENDFB(G);
   }
 }
 
@@ -744,24 +756,24 @@ static int interpolate_view(CViewElem *first,CViewElem *last,float power,float b
   return 1;
 }
 /*========================================================================*/
-int MovieView(int action,int first,int last,float power,float bias)
+int MovieView(PyMOLGlobals *G,int action,int first,int last,float power,float bias)
 {
-  CMovie *I=&Movie;
+  register CMovie *I=G->Movie;
   int frame;
   switch(action) {
   case 0: /* set */
     if(I->ViewElem) {
       if(first<0)
-        first = SceneGetFrame();
+        first = SceneGetFrame(G);
       if(last<0)
         last = first;
       for(frame=first;frame<=last;frame++) {
         if((frame>=0)&&(frame<I->NFrame)) {
           VLACheck(I->ViewElem,CViewElem,frame);
-          PRINTFB(FB_Movie,FB_Details)
+          PRINTFB(G,FB_Movie,FB_Details)
             " MovieView: Setting frame %d.\n",frame+1
-            ENDFB;
-          SceneToViewElem(I->ViewElem+frame);          
+            ENDFB(G);
+          SceneToViewElem(G,I->ViewElem+frame);          
           I->ViewElem[frame].specification_level = 2;
         }
       }
@@ -770,7 +782,7 @@ int MovieView(int action,int first,int last,float power,float bias)
   case 1: /* clear */
     if(I->ViewElem) {
       if(first<0)
-        first = SceneGetFrame();
+        first = SceneGetFrame(G);
       if(last<0)
         last = first;
       for(frame=first;frame<=last;frame++) {
@@ -788,17 +800,17 @@ int MovieView(int action,int first,int last,float power,float bias)
       if(first<0)
         first = 0;
       if(last<0)
-        last = SceneGetNFrame()-1;
+        last = SceneGetNFrame(G)-1;
 
       VLACheck(I->ViewElem,CViewElem,last);
       if(action==2) {
-        PRINTFB(FB_Movie,FB_Details)
+        PRINTFB(G,FB_Movie,FB_Details)
           " MovieView: interpolating unspecified frames %d to %d.\n",first+1,last+1
-          ENDFB;
+          ENDFB(G);
       } else {
-        PRINTFB(FB_Movie,FB_Details)
+        PRINTFB(G,FB_Movie,FB_Details)
           " MovieView: reinterpolating all frames %d to %d.\n",first+1,last+1
-          ENDFB;
+          ENDFB(G);
       }
       for(frame=first;frame<=last;frame++) {
         if((frame>=0)&&(frame<I->NFrame)) {
@@ -834,9 +846,9 @@ int MovieView(int action,int first,int last,float power,float bias)
   return 1;
 }
 /*========================================================================*/
-void MovieAppendCommand(int frame,char *command)
+void MovieAppendCommand(PyMOLGlobals *G,int frame,char *command)
 {
-  CMovie *I=&Movie;
+  register CMovie *I=G->Movie;
   int a,len,cur_len;
   if((frame>=0)&&(frame<I->NFrame))
 	 {
@@ -849,49 +861,49 @@ void MovieAppendCommand(int frame,char *command)
 		I->Cmd[frame][cur_len+len]=0;
 	 }
   else {
-    PRINTFB(FB_Movie,FB_Errors)
+    PRINTFB(G,FB_Movie,FB_Errors)
       " Movie-Error: frame %d does not exist.  Use 'mset' to define movie first.\n",frame+1
-      ENDFB;
+      ENDFB(G);
   }
 }
 /*========================================================================*/
-ImageType MovieGetImage(int index)
+ImageType MovieGetImage(PyMOLGlobals *G,int index)
 {
-  CMovie *I=&Movie;
+  register CMovie *I=G->Movie;
   if((index>=0)&&(index<I->NImage))
 	 return(I->Image[index]);
   else
 	 return(NULL);
 }
 /*========================================================================*/
-int MovieDefined(void) 
+int MovieDefined(PyMOLGlobals *G) 
 {
-  CMovie *I=&Movie;
+  register CMovie *I=G->Movie;
   return(I->NFrame>0);
 }
 /*========================================================================*/
-int MovieGetLength(void)
+int MovieGetLength(PyMOLGlobals *G)
 {
-  CMovie *I=&Movie;
+  register CMovie *I=G->Movie;
   int len;
   if(!I->NFrame)
 	 len = -I->NImage;
   else
 	 len = I->NFrame;
-  PRINTFD(FB_Movie)
+  PRINTFD(G,FB_Movie)
     " MovieGetLength: leaving...result %d\n",len
     ENDFD;
   return(len);
 }
 /*========================================================================*/
-void MovieClearImages(void)
+void MovieClearImages(PyMOLGlobals *G)
 {
-  CMovie *I=&Movie;
+  register CMovie *I=G->Movie;
   int a;
 
-  PRINTFB(FB_Movie,FB_Blather)
+  PRINTFB(G,FB_Movie,FB_Blather)
     " MovieClearImages: clearing...\n"
-    ENDFB;
+    ENDFB(G);
   for(a=0;a<I->NImage;a++)
 	 {
 		if(I->Image[a]) {
@@ -900,12 +912,12 @@ void MovieClearImages(void)
 		}
 	 }
   I->NImage=0;
-  SceneDirty();
+  SceneDirty(G);
 }
 /*========================================================================*/
-void MovieReset(void) {
-  CMovie *I=&Movie;
-  MovieClearImages();
+void MovieReset(PyMOLGlobals *G) {
+  register CMovie *I=G->Movie;
+  MovieClearImages(G);
 
   VLAFreeP(I->Cmd);  
   VLAFreeP(I->Sequence);  
@@ -917,30 +929,37 @@ void MovieReset(void) {
   I->Playing=false;
 }
 /*========================================================================*/
-void MovieFree(void)
+void MovieFree(PyMOLGlobals *G)
 {
-  CMovie *I=&Movie;
-  MovieClearImages();
+  register CMovie *I=G->Movie;
+  MovieClearImages(G);
   VLAFree(I->Image);
   VLAFreeP(I->ViewElem);
   VLAFreeP(I->Cmd);
   VLAFreeP(I->Sequence);
+  FreeP(G->Movie);
 }
 /*========================================================================*/
-void MovieInit(void)
+int MovieInit(PyMOLGlobals *G)
 {
-  CMovie *I=&Movie;
-  int a;
-  I->Playing=false;
-  I->Image=VLAMalloc(10,sizeof(ImageType),5,true); /* auto-zero */
-  I->Sequence=NULL;
-  I->Cmd=NULL;
-  I->ViewElem = NULL;
-  I->NImage=0;
-  I->NFrame=0;
-  for(a=0;a<16;a++)
-    I->Matrix[a]=0.0F;
-  I->MatrixFlag=false;
+  register CMovie *I=NULL;
+
+  if( (I=(G->Movie=Calloc(CMovie,1)))) {
+    int a;
+    I->Playing=false;
+    I->Image=VLAMalloc(10,sizeof(ImageType),5,true); /* auto-zero */
+    I->Sequence=NULL;
+    I->Cmd=NULL;
+    I->ViewElem = NULL;
+    I->NImage=0;
+    I->NFrame=0;
+    for(a=0;a<16;a++)
+      I->Matrix[a]=0.0F;
+    I->MatrixFlag=false;
+    return 1;
+  } else {
+    return 0;
+  }
 }
 
 

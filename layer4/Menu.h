@@ -17,9 +17,10 @@ Z* -------------------------------------------------------------------
 #define _H_Menu
 
 #include"os_python.h"
+#include"PyMOLGlobals.h"
 
-void MenuActivate(int x,int y,int last_x,int last_y,char *name,char *sele);
-void MenuActivate0Arg(int x,int y,int last_x,int last_y,char *name);
-void MenuActivate2Arg(int x,int y,int last_x,int last_y,char *name,char *sele1,char *sele2);
+void MenuActivate(PyMOLGlobals *G,int x,int y,int last_x,int last_y,char *name,char *sele);
+void MenuActivate0Arg(PyMOLGlobals *G,int x,int y,int last_x,int last_y,char *name);
+void MenuActivate2Arg(PyMOLGlobals *G,int x,int y,int last_x,int last_y,char *name,char *sele1,char *sele2);
 
 #endif

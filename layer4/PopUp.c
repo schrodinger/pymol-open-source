@@ -69,9 +69,10 @@ int PopUpConvertY(CPopUp *I,int value,int mode);
 /*========================================================================*/
 static Block *PopUpRecursiveFind(Block *block,int x, int y)
 {
+  PyMOLGlobals *G=block->G;
   CPopUp *I = (CPopUp*)block->reference;
   if(BlockRecursiveFind(block,x,y) == block) {
-    OrthoGrab(block);
+    OrthoGrab(G,block);
     return block;
   } else if(I->Child) {
     if(PopUpRecursiveFind(I->Child,x,y)==I->Child)
@@ -80,7 +81,7 @@ static Block *PopUpRecursiveFind(Block *block,int x, int y)
   return NULL;
 }
 /*========================================================================*/
-Block *PopUpNew(int x,int y,int last_x,int last_y,PyObject *list,Block *parent)
+Block *PopUpNew(PyMOLGlobals *G,int x,int y,int last_x,int last_y,PyObject *list,Block *parent)
 {
   /* assumes blocked threads (calls the Python C API) */
 
@@ -89,9 +90,9 @@ Block *PopUpNew(int x,int y,int last_x,int last_y,PyObject *list,Block *parent)
   PyObject *elem;
   char *str,*c;
 
-  OOAlloc(CPopUp);
+  OOAlloc(G,CPopUp);
 
-  I->Block = OrthoNewBlock(NULL);
+  I->Block = OrthoNewBlock(G,NULL);
   I->Block->reference = (void*)I;
   I->Block->fDraw    = PopUpDraw;
   I->Block->fDrag    = PopUpDrag;
@@ -114,8 +115,8 @@ Block *PopUpNew(int x,int y,int last_x,int last_y,PyObject *list,Block *parent)
   I->Selected = -1;
   I->StartX = (I->LastX = last_x);
   I->StartY = (I->LastY = last_y);
-  I->ChildDelay = UtilGetSeconds(TempPyMOLGlobals) + cChildDelay*2.5;
-  I->PassiveDelay = UtilGetSeconds(TempPyMOLGlobals) + cPassiveDelay;
+  I->ChildDelay = UtilGetSeconds(G) + cChildDelay*2.5;
+  I->PassiveDelay = UtilGetSeconds(G) + cPassiveDelay;
   I->DirtyDelay = false;
   I->DirtyDelayFlag = false;
   I->NeverDragged = true;
@@ -184,10 +185,10 @@ Block *PopUpNew(int x,int y,int last_x,int last_y,PyObject *list,Block *parent)
 
   PopFitBlock(I->Block);
 
-  OrthoAttach(I->Block,cOrthoTool);
+  OrthoAttach(G,I->Block,cOrthoTool);
   I->Block->active=true;
-  OrthoGrab(I->Block);
-  OrthoDirty();
+  OrthoGrab(G,I->Block);
+  OrthoDirty(G);
   return I->Block;
 }
 /*========================================================================*/
@@ -259,9 +260,10 @@ int PopUpConvertY(CPopUp *I,int value,int mode)
 
 static void PopUpDetachRecursiveChild(Block *block)
 {
+  PyMOLGlobals *G=block->G;
   CPopUp *I = (CPopUp*)block->reference;
 
-  OrthoDetach(block);
+  OrthoDetach(G,block);
   if(I->Child)
     PopUpDetachRecursiveChild(I->Child);
 }
@@ -269,14 +271,16 @@ static void PopUpDetachRecursiveChild(Block *block)
 
 static void PopUpForgetChild(Block *block)
 {
+
   CPopUp *I = (CPopUp*)block->reference;
   I->Child = NULL;
 }
 
 static void PopUpRecursiveDetach(Block *block)
 {
+  PyMOLGlobals *G=block->G;
   CPopUp *I = (CPopUp*)block->reference;
-  OrthoDetach(block);
+  OrthoDetach(G,block);
   if(I->Child)
     PopUpDetachRecursiveChild(I->Child);
   if(I->Parent) {
@@ -288,6 +292,7 @@ static void PopUpRecursiveDetach(Block *block)
 
 static void PopUpFree(Block *block)
 {
+  PyMOLGlobals *G=block->G;
   CPopUp *I = (CPopUp*)block->reference;
 
 
@@ -300,8 +305,8 @@ static void PopUpFree(Block *block)
       }
 
   }
-  OrthoDetach(I->Block);
-  OrthoFreeBlock(I->Block);
+  OrthoDetach(G,I->Block);
+  OrthoFreeBlock(G,I->Block);
   FreeP(I->Sub);
   FreeP(I->Code);
   FreeP(I->Command);
@@ -312,6 +317,7 @@ static void PopUpFree(Block *block)
 
 static void PopUpRecursiveFree(Block *block)
 {
+
   CPopUp *I = (CPopUp*)block->reference;
 
   if(I->Child)
@@ -336,13 +342,14 @@ static void PopUpFreeRecursiveChild(Block *block)
 /*========================================================================*/
 int PopUpRelease(Block *block,int button,int x,int y,int mod)
 {
+  PyMOLGlobals *G=block->G;
   CPopUp *I = (CPopUp*)block->reference;
   int gone_passive = false;
 
   if(I->NeverDragged) {
-    if(I->PassiveDelay>UtilGetSeconds(TempPyMOLGlobals)) {    
+    if(I->PassiveDelay>UtilGetSeconds(G)) {    
       gone_passive = true;
-      I->PassiveDelay = UtilGetSeconds(TempPyMOLGlobals); /* kill any further delay */
+      I->PassiveDelay = UtilGetSeconds(G); /* kill any further delay */
     }
   } 
   if(!gone_passive) {
@@ -360,7 +367,7 @@ int PopUpRelease(Block *block,int button,int x,int y,int mod)
   if(gone_passive) {
     MainSetPassiveDrag(true);
   } else {
-    OrthoUngrab();
+    OrthoUngrab(G);
     PopUpRecursiveDetach(block);
     if(!I->NeverDragged) 
       if((I->Selected>=0)&&(!I->Sub[I->Selected])) {
@@ -370,7 +377,7 @@ int PopUpRelease(Block *block,int button,int x,int y,int mod)
       }
     PopUpRecursiveFree(block);
   }
-  OrthoDirty();
+  OrthoDirty(G);
   return(1);
 }
 
@@ -378,7 +385,7 @@ int PopUpRelease(Block *block,int button,int x,int y,int mod)
 /*========================================================================*/
 int PopUpDrag(Block *block,int x,int y,int mod)
 {
-
+  PyMOLGlobals *G=block->G;
   CPopUp *I = (CPopUp*)block->reference;
   
   int a;
@@ -412,7 +419,7 @@ int PopUpDrag(Block *block,int x,int y,int mod)
       }
     } 
   } else {
-    OrthoGrab(block);
+    OrthoGrab(G,block);
     a = PopUpConvertY(I,y,false);
     if(I->NLine&&(a==I->NLine))
       if((y-a*cPopUpLineHeight)<4)
@@ -422,12 +429,12 @@ int PopUpDrag(Block *block,int x,int y,int mod)
     else {
       if(I->Code[a]==1) {
         if((I->Child)&&(I->ChildLine!=a)) {
-          if(I->ChildDelay<UtilGetSeconds(TempPyMOLGlobals)) {
+          if(I->ChildDelay<UtilGetSeconds(G)) {
             PopUpDetachRecursiveChild(I->Child);
             PopUpFreeRecursiveChild(I->Child);
             I->Child=NULL;
             I->ChildLine=-1;
-            OrthoDirty();
+            OrthoDirty(G);
           } else {
             I->Selected = a;
           }
@@ -441,10 +448,10 @@ int PopUpDrag(Block *block,int x,int y,int mod)
         /* activate submenu */
         if(!I->Child) {
           I->ChildLine = a;
-          if(I->ChildDelay>UtilGetSeconds(TempPyMOLGlobals)) {
+          if(I->ChildDelay>UtilGetSeconds(G)) {
             MainDragDirty(); /* keep coming back here... */
           } else {
-            I->Child = PopUpNew(I->LastX-300,I->LastY,I->LastX,I->LastY,I->Sub[a],I->Block);
+            I->Child = PopUpNew(G,I->LastX-300,I->LastY,I->LastX,I->LastY,I->Sub[a],I->Block);
             {
               int target_y = block->rect.top - (PopUpConvertY(I,a,true)+ cPopUpCharMargin);
               CPopUp *child = (CPopUp*)(I->Child->reference);
@@ -454,12 +461,12 @@ int PopUpDrag(Block *block,int x,int y,int mod)
               PopPlaceChild(I->Child,block->rect.left-5,block->rect.right+5,target_y);
             }
                           
-            OrthoGrab(I->Block);
-            I->ChildDelay = UtilGetSeconds(TempPyMOLGlobals) + cChildDelay; /* leave child up for a while */
+            OrthoGrab(G,I->Block);
+            I->ChildDelay = UtilGetSeconds(G) + cChildDelay; /* leave child up for a while */
           }
           MainDragDirty(); /* keep coming back here... */
         } else if(I->ChildLine==a) { /* on correct line */
-          I->ChildDelay = UtilGetSeconds(TempPyMOLGlobals) + cChildDelay; /* keep child here for a while */
+          I->ChildDelay = UtilGetSeconds(G) + cChildDelay; /* keep child here for a while */
         }
         I->Selected=a;
       } else 
@@ -477,20 +484,20 @@ int PopUpDrag(Block *block,int x,int y,int mod)
     I->NeverDragged = false;
     if(!I->Child) {
       /* we moved, so renew the child delay */
-      I->ChildDelay = UtilGetSeconds(TempPyMOLGlobals) + cChildDelay;
+      I->ChildDelay = UtilGetSeconds(G) + cChildDelay;
       MainDragDirty();
     }
 
     if((I->Child)&&(I->Selected!=I->ChildLine)) {
       I->DirtyDelayFlag = true;
-      I->DirtyDelay = UtilGetSeconds(TempPyMOLGlobals) + cDirtyDelay;
+      I->DirtyDelay = UtilGetSeconds(G) + cDirtyDelay;
     }
     if(!I->DirtyDelayFlag)
-      OrthoDirty();
+      OrthoDirty(G);
   }
-  if(I->DirtyDelayFlag && (I->DirtyDelay<UtilGetSeconds(TempPyMOLGlobals))) {
+  if(I->DirtyDelayFlag && (I->DirtyDelay<UtilGetSeconds(G))) {
     I->DirtyDelayFlag = false;
-    OrthoDirty();
+    OrthoDirty(G);
   }
   return(1);
 }

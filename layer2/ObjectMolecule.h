@@ -221,7 +221,7 @@ void ObjectMoleculeM4XAnnotate(ObjectMolecule *I,M4XAnnoType *m4x,char *script_f
 /* */
 int ObjectMoleculeIsAtomBondedToName(ObjectMolecule *obj,int a0,char *name);
 void ObjectMoleculeOpRecInit(ObjectMoleculeOpRec *op);
-int ObjectMoleculeNewFromPyList(PyObject *list,ObjectMolecule **result);
+int ObjectMoleculeNewFromPyList(PyMOLGlobals *G,PyObject *list,ObjectMolecule **result);
 PyObject *ObjectMoleculeAsPyList(ObjectMolecule *I);
 int ObjectMoleculeGetSerial(ObjectMolecule *I);
 int ObjectMoleculeSetStateTitle(ObjectMolecule *I,int state,char *text);
@@ -229,41 +229,41 @@ char *ObjectMoleculeGetStateTitle(ObjectMolecule *I,int state);
 
 void ObjectMoleculeFree(ObjectMolecule *I); /* only for friends of ObjectMolecule */
 
-ObjectMolecule *ObjectMoleculeNew(int discreteFlag);
+ObjectMolecule *ObjectMoleculeNew(PyMOLGlobals *G,int discreteFlag);
 void ObjectMoleculeSort(ObjectMolecule *I);
 ObjectMolecule *ObjectMoleculeCopy(ObjectMolecule *obj);
 void ObjectMoleculeFixChemistry(ObjectMolecule *I, int sele1, int sele2, int invalidate);
 
-ObjectMolecule *ObjectMoleculeLoadXYZFile(ObjectMolecule *obj,char *fname,int frame,int discrete);
-ObjectMolecule *ObjectMoleculeLoadPDBFile(ObjectMolecule *obj,char *fname,int frame,int discrete,M4XAnnoType *m4x,PDBInfoRec *pdb_info);
-ObjectMolecule *ObjectMoleculeLoadPMOFile(ObjectMolecule *obj,char *fname,int frame,int discrete);
-ObjectMolecule *ObjectMoleculeLoadMOLFile(ObjectMolecule *obj,char *fname,int frame,int discrete);
-ObjectMolecule *ObjectMoleculeLoadMOL2File(ObjectMolecule *obj,char *fname,int frame,int discrete);
-ObjectMolecule *ObjectMoleculeLoadMMDFile(ObjectMolecule *obj,char *fname,
+ObjectMolecule *ObjectMoleculeLoadXYZFile(PyMOLGlobals *G,ObjectMolecule *obj,char *fname,int frame,int discrete);
+ObjectMolecule *ObjectMoleculeLoadPDBFile(PyMOLGlobals *G,ObjectMolecule *obj,char *fname,int frame,int discrete,M4XAnnoType *m4x,PDBInfoRec *pdb_info);
+ObjectMolecule *ObjectMoleculeLoadPMOFile(PyMOLGlobals *G,ObjectMolecule *obj,char *fname,int frame,int discrete);
+ObjectMolecule *ObjectMoleculeLoadMOLFile(PyMOLGlobals *G,ObjectMolecule *obj,char *fname,int frame,int discrete);
+ObjectMolecule *ObjectMoleculeLoadMOL2File(PyMOLGlobals *G,ObjectMolecule *obj,char *fname,int frame,int discrete);
+ObjectMolecule *ObjectMoleculeLoadMMDFile(PyMOLGlobals *G,ObjectMolecule *obj,char *fname,
                                           int frame,char *sepPrefix,int discrete);
-ObjectMolecule *ObjectMoleculeLoadTOPFile(ObjectMolecule *obj,char *fname,int frame,int discrete);
-ObjectMolecule *ObjectMoleculeLoadChemPyModel(ObjectMolecule *I,PyObject *model,int frame,int discrete);
+ObjectMolecule *ObjectMoleculeLoadTOPFile(PyMOLGlobals *G,ObjectMolecule *obj,char *fname,int frame,int discrete);
+ObjectMolecule *ObjectMoleculeLoadChemPyModel(PyMOLGlobals *G,ObjectMolecule *I,PyObject *model,int frame,int discrete);
 
-ObjectMolecule *ObjectMoleculeLoadTRJFile(ObjectMolecule *obj,char *fname,int frame,
+ObjectMolecule *ObjectMoleculeLoadTRJFile(PyMOLGlobals *G,ObjectMolecule *obj,char *fname,int frame,
                                           int interval,int average,int start,
                                           int stop,int max,char *sele,int image,
                                           float *shift);
 
-ObjectMolecule *ObjectMoleculeLoadRSTFile(ObjectMolecule *obj,char *fname,int frame);
+ObjectMolecule *ObjectMoleculeLoadRSTFile(PyMOLGlobals *G,ObjectMolecule *obj,char *fname,int frame);
 
-ObjectMolecule *ObjectMoleculeLoadCoords(ObjectMolecule *I,PyObject *coords,int frame);
+ObjectMolecule *ObjectMoleculeLoadCoords(PyMOLGlobals *G,ObjectMolecule *I,PyObject *coords,int frame);
 
-ObjectMolecule *ObjectMoleculeReadPMO(ObjectMolecule *obj,CRaw *pmo,int frame,int discrete);
+ObjectMolecule *ObjectMoleculeReadPMO(PyMOLGlobals *G,ObjectMolecule *obj,CRaw *pmo,int frame,int discrete);
 
-ObjectMolecule *ObjectMoleculeReadMOLStr(ObjectMolecule *obj,char *molstr,int frame,int discrete);
-ObjectMolecule *ObjectMoleculeReadMOL2Str(ObjectMolecule *obj,char *molstr,int frame,int discrete);
-ObjectMolecule *ObjectMoleculeReadPDBStr(ObjectMolecule *obj,char *molstr,
+ObjectMolecule *ObjectMoleculeReadMOLStr(PyMOLGlobals *G,ObjectMolecule *obj,char *molstr,int frame,int discrete);
+ObjectMolecule *ObjectMoleculeReadMOL2Str(PyMOLGlobals *G,ObjectMolecule *obj,char *molstr,int frame,int discrete);
+ObjectMolecule *ObjectMoleculeReadPDBStr(PyMOLGlobals *G,ObjectMolecule *obj,char *molstr,
                                          int frame,int discrete,
                                          M4XAnnoType *m4x,char *pdb_name,
                                          char **next_pdb,PDBInfoRec *pdb_info,int quiet);
 
-ObjectMolecule *ObjectMoleculeReadMMDStr(ObjectMolecule *I,char *MMDStr,int frame,int discrete);
-ObjectMolecule *ObjectMoleculeReadXYZStr(ObjectMolecule *I,char *PDBStr,int frame,int discrete);
+ObjectMolecule *ObjectMoleculeReadMMDStr(PyMOLGlobals *G,ObjectMolecule *I,char *MMDStr,int frame,int discrete);
+ObjectMolecule *ObjectMoleculeReadXYZStr(PyMOLGlobals *G,ObjectMolecule *I,char *PDBStr,int frame,int discrete);
 
 void ObjectMoleculeExtendIndices(ObjectMolecule *I);
 
@@ -339,18 +339,19 @@ int ObjectMoleculeGetCheckHBond(ObjectMolecule *don_obj,
                                 int acc_atom,
                                 int acc_state,
                                 HBondCriteria *hbc);
-void ObjectMoleculeInitHBondCriteria(HBondCriteria *hbc);
+void ObjectMoleculeInitHBondCriteria(PyMOLGlobals *G,HBondCriteria *hbc);
 int ObjectMoleculeConvertIDsToIndices(ObjectMolecule *I,int *id,int n_id);
 
 #define cObjectMoleculeDummyOrigin 1
 #define cObjectMoleculeDummyCenter 2
 
-ObjectMolecule *ObjectMoleculeDummyNew(int mode);
+ObjectMolecule *ObjectMoleculeDummyNew(PyMOLGlobals *G,int mode);
 void ObjectMoleculeDummyUpdate(ObjectMolecule *I,int mode);
 
 /* internal to ObjectMolecule */
 
-struct CoordSet *ObjectMoleculePDBStr2CoordSet(char *buffer,
+struct CoordSet *ObjectMoleculePDBStr2CoordSet(PyMOLGlobals *G,
+                                               char *buffer,
                                                AtomInfoType **atInfoPtr,
                                                char **restart_model,
                                                char *segi_override,

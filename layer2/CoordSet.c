@@ -82,7 +82,7 @@ int BondCompare(BondType *a,BondType *b)
   return(result);
 }
 
-int CoordSetFromPyList(PyObject *list,CoordSet **cs)
+int CoordSetFromPyList(PyMOLGlobals *G,PyObject *list,CoordSet **cs)
 {
   CoordSet *I = NULL;
   PyObject *tmp;
@@ -98,7 +98,7 @@ int CoordSetFromPyList(PyObject *list,CoordSet **cs)
     *cs = NULL;
   } else {
   
-    if(ok) I=CoordSetNew();
+    if(ok) I=CoordSetNew(G);
     if(ok) ok = (I!=NULL);
     if(ok) ok = (list!=NULL);
     if(ok) ok = PyList_Check(list);
@@ -155,7 +155,7 @@ void CoordSetAdjustAtmIdx(CoordSet *I,int *lookup,int nAtom)
   int a;
   int a0;
 
-  PRINTFD(FB_CoordSet)
+  PRINTFD(I->G,FB_CoordSet)
     " CoordSetAdjustAtmIdx-Debug: entered NAtIndex: %d NIndex %d\n I->AtmToIdx %p\n",
     I->NAtIndex,I->NIndex,(void*)I->AtmToIdx
     ENDFD;
@@ -171,7 +171,7 @@ void CoordSetAdjustAtmIdx(CoordSet *I,int *lookup,int nAtom)
   for(a=0;a<I->NIndex;a++) { 
     I->IdxToAtm[a] = lookup[I->IdxToAtm[a]];
   }
-  PRINTFD(FB_CoordSet)
+  PRINTFD(I->G,FB_CoordSet)
     " CoordSetAdjustAtmIdx-Debug: leaving... NAtIndex: %d NIndex %d\n",
     I->NAtIndex,I->NIndex
     ENDFD;
@@ -207,7 +207,7 @@ void CoordSetPurge(CoordSet *I)
   float *c0,*c1;
   obj=I->Obj;
 
-  PRINTFD(FB_CoordSet)
+  PRINTFD(I->G,FB_CoordSet)
     " CoordSetPurge-Debug: entering..."
     ENDFD;
 
@@ -236,13 +236,13 @@ void CoordSetPurge(CoordSet *I)
     I->NIndex+=offset;
     VLASize(I->Coord,float,I->NIndex*3);
     I->IdxToAtm=Realloc(I->IdxToAtm,int,I->NIndex);
-    PRINTFD(FB_CoordSet)
+    PRINTFD(I->G,FB_CoordSet)
       " CoordSetPurge-Debug: I->IdxToAtm shrunk to %d\n",I->NIndex
       ENDFD;
     if(I->fInvalidateRep)
       I->fInvalidateRep(I,cRepAll,cRepInvAtoms); /* this will free Color */
   }
-  PRINTFD(FB_CoordSet)
+  PRINTFD(I->G,FB_CoordSet)
     " CoordSetPurge-Debug: leaving NAtIndex %d NIndex %d...\n",
     I->NAtIndex,I->NIndex
     ENDFD;
@@ -397,15 +397,15 @@ void CoordSetFracToReal(CoordSet *I,CCrystal *cryst)
 }
 
 /*========================================================================*/
-void CoordSetAtomToPDBStrVLA(char **charVLA,int *c,AtomInfoType *ai,
+void CoordSetAtomToPDBStrVLA(PyMOLGlobals *G,char **charVLA,int *c,AtomInfoType *ai,
                              float *v,int cnt,PDBInfoRec *pdb_info)
 {
   char *aType;
   AtomName name;
   ResIdent resi; 
   int rl;
-  int literal = (int)SettingGet(cSetting_pdb_literal_names);
-  int reformat = (int)SettingGet(cSetting_pdb_reformat_names_mode);
+  int literal = (int)SettingGet(G,cSetting_pdb_literal_names);
+  int reformat = (int)SettingGet(G,cSetting_pdb_reformat_names_mode);
 
   if(ai->hetatm)
 	aType=sHETATM;
@@ -444,7 +444,7 @@ void CoordSetAtomToPDBStrVLA(char **charVLA,int *c,AtomInfoType *ai,
             case 1: /* pdb with internal pdb */
             case 3: /* pdb with internal iupac */
               if((ai->elem[0]=='H')&&(!ai->elem[1])&&(ai->name[2])) {
-                AtomInfoGetPDB3LetHydroName(ai->resn,ai->name,name);
+                AtomInfoGetPDB3LetHydroName(G,ai->resn,ai->name,name);
               } else {
                 name[0]=' ';	
                 strcpy(name+1,ai->name);
@@ -540,7 +540,7 @@ void CoordSetAtomToPDBStrVLA(char **charVLA,int *c,AtomInfoType *ai,
       strcpy(name,ai->name); /* otherwise, stick in the first */
     }
   }
-  if((int)SettingGet(cSetting_pdb_retain_ids)) {
+  if((int)SettingGet(G,cSetting_pdb_retain_ids)) {
     cnt = ai->id - 1;
   }
   if(cnt>99998)
@@ -558,14 +558,14 @@ void CoordSetAtomToPDBStrVLA(char **charVLA,int *c,AtomInfoType *ai,
   
 }
 /*========================================================================*/
-PyObject *CoordSetAtomToChemPyAtom(AtomInfoType *ai,float *v,int index)
+PyObject *CoordSetAtomToChemPyAtom(PyMOLGlobals *G,AtomInfoType *ai,float *v,int index)
 {
   PyObject *atom;
   int ok = true;
 
   atom = PyObject_CallMethod(P_chempy,"Atom","");
   if (!atom) 
-    ok = ErrMessage("CoordSetAtomToChemPyAtom","can't create atom");
+    ok = ErrMessage(G,"CoordSetAtomToChemPyAtom","can't create atom");
   else {
     PConvFloat3ToPyObjAttr(atom,"coord",v);
     PConvStringToPyObjAttr(atom,"name",ai->name);
@@ -599,11 +599,11 @@ PyObject *CoordSetAtomToChemPyAtom(AtomInfoType *ai,float *v,int index)
   return(atom);
 }
 /*========================================================================*/
-void CoordSetAtomToTERStrVLA(char **charVLA,int *c,AtomInfoType *ai,int cnt)
+void CoordSetAtomToTERStrVLA(PyMOLGlobals *G,char **charVLA,int *c,AtomInfoType *ai,int cnt)
 {
   ResIdent resi; 
   int rl;
-  int retain_ids = (int)SettingGet(cSetting_pdb_retain_ids);
+  int retain_ids = (int)SettingGet(G,cSetting_pdb_retain_ids);
   int ter_id;
   strcpy(resi,ai->resi);
   rl = strlen(resi)-1;
@@ -668,7 +668,7 @@ void CoordSetInvalidateRep(CoordSet *I,int type,int level)
 		}
 	 }
   }
-  SceneChanged();
+  SceneChanged(I->G);
 }
 /*========================================================================*/
 
@@ -683,7 +683,7 @@ void CoordSetInvalidateRep(CoordSet *I,int type,int level)
          I->Rep[rep] = I->Rep[rep]->fUpdate(I->Rep[rep],I,rep);\
     }\
   }\
-OrthoBusyFast(rep,I->NRep);\
+OrthoBusyFast(I->G,rep,I->NRep);\
 }
 
 /*========================================================================*/
@@ -716,7 +716,7 @@ void CoordSetUpdate(CoordSet *I)
             }
 		}
 	 }
-  OrthoBusyFast(0,I->NRep);
+  OrthoBusyFast(I->G,0,I->NRep);
 
   RepUpdateMacro(I, cRepLine,            RepWireBondNew        );
   RepUpdateMacro(I, cRepCyl,             RepCylBondNew         );
@@ -734,8 +734,8 @@ void CoordSetUpdate(CoordSet *I)
     if(!I->Rep[a])
       I->Active[a]=false;
 
-  SceneDirty();
-  OrthoBusyFast(1,1);
+  SceneDirty(I->G);
+  OrthoBusyFast(I->G,1,1);
 }
 /*========================================================================*/
 void CoordSetRender(CoordSet *I,CRay *ray,Pickable **pick,int pass)
@@ -743,12 +743,12 @@ void CoordSetRender(CoordSet *I,CRay *ray,Pickable **pick,int pass)
   int a,aa;
   Rep *r;
 
-  PRINTFD(FB_CoordSet)
+  PRINTFD(I->G,FB_CoordSet)
     " CoordSetRender: entered (%p).\n",(void*)I
     ENDFD;
 
   if((!pass)&&I->Name[0])
-    ButModeCaption(I->Name);
+    ButModeCaption(I->G,I->Name);
   for(aa=0;aa<I->NRep;aa++) {
     if(aa==cRepSurface) { /* reorder */
       a=cRepCell;
@@ -767,13 +767,13 @@ void CoordSetRender(CoordSet *I,CRay *ray,Pickable **pick,int pass)
           } else {
             if(I->Obj) 
               ray->fWobble(ray,
-                           SettingGet_i(I->Setting,I->Obj->Obj.Setting,cSetting_ray_texture),
-                           SettingGet_3fv(I->Setting,I->Obj->Obj.Setting,cSetting_ray_texture_settings));
+                           SettingGet_i(I->G,I->Setting,I->Obj->Obj.Setting,cSetting_ray_texture),
+                           SettingGet_3fv(I->G,I->Setting,I->Obj->Obj.Setting,cSetting_ray_texture_settings));
             else
               ray->fWobble(ray,
-                           SettingGet_i(I->Setting,NULL,cSetting_ray_texture),
-                           SettingGet_3fv(I->Setting,NULL,cSetting_ray_texture_settings));
-            ray->fColor3fv(ray,ColorGet(I->Obj->Obj.Color));
+                           SettingGet_i(I->G,I->Setting,NULL,cSetting_ray_texture),
+                           SettingGet_3fv(I->G,I->Setting,NULL,cSetting_ray_texture_settings));
+            ray->fColor3fv(ray,ColorGet(I->G,I->Obj->Obj.Color));
           }
         
           if(r->fRender) { /* do OpenGL rendering in three passes */
@@ -798,7 +798,7 @@ void CoordSetRender(CoordSet *I,CRay *ray,Pickable **pick,int pass)
                 if(!pass) r->fRender(r,ray,pick);                
                 break;
               case cRepCyl: /* render sticks differently depending on transparency */
-                if(SettingGet_f(r->cs->Setting,
+                if(SettingGet_f(I->G,r->cs->Setting,
                                 r->obj->Setting,
                                 cSetting_stick_transparency)>0.0001) {
                   if(pass==-1)
@@ -809,7 +809,7 @@ void CoordSetRender(CoordSet *I,CRay *ray,Pickable **pick,int pass)
 
               case cRepSurface:
                 /*                if(pass==-1) r->fRender(r,ray,pick);              */
-                if(SettingGet_f(r->cs->Setting,
+                if(SettingGet_f(I->G,r->cs->Setting,
                                 r->obj->Setting,
                                 cSetting_transparency)>0.0001) {
                   if(pass==-1)
@@ -818,7 +818,7 @@ void CoordSetRender(CoordSet *I,CRay *ray,Pickable **pick,int pass)
                   r->fRender(r,ray,pick);
                 break;
               case cRepSphere: /* render spheres differently depending on transparency */
-                if(SettingGet_f(r->cs->Setting,
+                if(SettingGet_f(I->G,r->cs->Setting,
                                 r->obj->Setting,
                                 cSetting_sphere_transparency)>0.0001) {
                   if(pass==-1)
@@ -827,7 +827,7 @@ void CoordSetRender(CoordSet *I,CRay *ray,Pickable **pick,int pass)
                   r->fRender(r,ray,pick);
                 break;
               case cRepCartoon:
-                if(SettingGet_f(r->cs->Setting,
+                if(SettingGet_f(I->G,r->cs->Setting,
                                 r->obj->Setting,
                                 cSetting_cartoon_transparency)>0.0001) {
                   if(pass==-1)
@@ -843,17 +843,17 @@ void CoordSetRender(CoordSet *I,CRay *ray,Pickable **pick,int pass)
                       ray->fWobble(ray,0,NULL);*/
         }
   }
-  PRINTFD(FB_CoordSet)
+  PRINTFD(I->G,FB_CoordSet)
     " CoordSetRender: leaving...\n"
     ENDFD;
 
 }
 /*========================================================================*/
-CoordSet *CoordSetNew(void)
+CoordSet *CoordSetNew(PyMOLGlobals *G)
 {
   int a;
-  OOAlloc(CoordSet);
-
+  OOAlloc(G,CoordSet);
+  I->G=G;
   I->fFree=CoordSetFree;
   I->fRender=CoordSetRender;
   I->fUpdate=CoordSetUpdate;
@@ -880,7 +880,7 @@ CoordSet *CoordSetNew(void)
   I->Obj = NULL;
   I->Spheroid = NULL;
   I->SpheroidNormal = NULL;
-  I->SpheroidSphereSize = TempPyMOLGlobals->Sphere->Sphere[1]->nDot; /* does this make any sense? */
+  I->SpheroidSphereSize = I->G->Sphere->Sphere[1]->nDot; /* does this make any sense? */
   for(a=0;a<I->NRep;a++)
 	 I->Rep[a] = NULL;
   I->Setting=NULL;
@@ -893,7 +893,7 @@ CoordSet *CoordSetCopy(CoordSet *cs)
   int nAtom;
   float *v0,*v1;
   int *i0,*i1;
-  OOAlloc(CoordSet);
+  OOAlloc(cs->G,CoordSet);
 
   (*I)=(*cs);
   I->Symmetry=SymmetryCopy(cs->Symmetry);
@@ -966,7 +966,7 @@ void CoordSetExtendIndices(CoordSet *I,int nAtom)
 		if(I->AtmToIdx) {
         I->AtmToIdx = Realloc(I->AtmToIdx,int,nAtom);
         if(nAtom){
-          ErrChkPtr(I->AtmToIdx);
+          ErrChkPtr(I->G,I->AtmToIdx);
           for(a=I->NAtIndex;a<nAtom;a++)
             I->AtmToIdx[a]=-1;
         }
@@ -987,7 +987,7 @@ void CoordSetAppendIndices(CoordSet *I,int offset)
 
   I->IdxToAtm = Alloc(int,I->NIndex);
   if(I->NIndex){
-    ErrChkPtr(I->IdxToAtm);
+    ErrChkPtr(I->G,I->IdxToAtm);
     for(a=0;a<I->NIndex;a++)
       I->IdxToAtm[a]=a+offset;
   }
@@ -1002,7 +1002,7 @@ void CoordSetAppendIndices(CoordSet *I,int offset)
   } else {
     I->AtmToIdx = Alloc(int,I->NIndex+offset);
     if(I->NIndex+offset){
-      ErrChkPtr(I->AtmToIdx);
+      ErrChkPtr(I->G,I->AtmToIdx);
       for(a=0;a<offset;a++)
         I->AtmToIdx[a]=-1;
       for(a=0;a<I->NIndex;a++) 
@@ -1019,8 +1019,8 @@ void CoordSetEnumIndices(CoordSet *I)
   I->AtmToIdx = Alloc(int,I->NIndex);
   I->IdxToAtm = Alloc(int,I->NIndex);
   if(I->NIndex) {
-    ErrChkPtr(I->AtmToIdx);
-    ErrChkPtr(I->IdxToAtm);
+    ErrChkPtr(I->G,I->AtmToIdx);
+    ErrChkPtr(I->G,I->IdxToAtm);
     for(a=0;a<I->NIndex;a++)
       {
         I->AtmToIdx[a]=a;

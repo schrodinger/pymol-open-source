@@ -34,7 +34,7 @@ void DistSetRender(DistSet *I,CRay *ray,Pickable **pick,int pass);
 void DistSetStrip(DistSet *I);
 void DistSetInvalidateRep(DistSet *I,int type,int level);
 
-int DistSetFromPyList(PyObject *list,DistSet **cs)
+int DistSetFromPyList(PyMOLGlobals *G,PyObject *list,DistSet **cs)
 {
   DistSet *I = NULL;
   int ok = true;
@@ -48,7 +48,7 @@ int DistSetFromPyList(PyObject *list,DistSet **cs)
     *cs = NULL;
   } else {
   
-    if(ok) I=DistSetNew();
+    if(ok) I=DistSetNew(G);
     if(ok) ok = (I!=NULL);
     if(ok) ok = (list!=NULL);
     if(ok) ok = PyList_Check(list);
@@ -99,12 +99,12 @@ int DistSetGetExtent(DistSet *I,float *mn,float *mx)
 void DistSetInvalidateRep(DistSet *I,int type,int level)
 {
   int a;
-  PRINTFD(FB_DistSet)
+  PRINTFD(I->G,FB_DistSet)
     " DistSetInvalidateRep: entered.\n"
     ENDFD;
   if(type>=0) {
 	 if(type<I->NRep)	{
-		SceneChanged();		
+		SceneChanged(I->G);		
 		if(I->Rep[type]) {
 		  I->Rep[type]->fFree(I->Rep[type]);
 		  I->Rep[type] = NULL;
@@ -112,7 +112,7 @@ void DistSetInvalidateRep(DistSet *I,int type,int level)
 	 }
   } else {
 	 for(a=0;a<I->NRep;a++)	{
-		SceneChanged();
+		SceneChanged(I->G);
 		if(I->Rep[a]) {
 		  switch(level) {
 		  case cRepInvColor:
@@ -136,16 +136,16 @@ void DistSetInvalidateRep(DistSet *I,int type,int level)
 void DistSetUpdate(DistSet *I)
 {
 
-  OrthoBusyFast(0,I->NRep);
+  OrthoBusyFast(I->G,0,I->NRep);
   if(!I->Rep[cRepDash]) {
     I->Rep[cRepDash]=RepDistDashNew(I);
-    SceneDirty();
+    SceneDirty(I->G);
   }
   if(!I->Rep[cRepLabel]) {
     I->Rep[cRepLabel]=RepDistLabelNew(I);
-    SceneDirty();
+    SceneDirty(I->G);
   }
-  OrthoBusyFast(1,1);
+  OrthoBusyFast(I->G,1,1);
 }
 /*========================================================================*/
 void DistSetRender(DistSet *I,CRay *ray,Pickable **pick,int pass)
@@ -159,18 +159,18 @@ void DistSetRender(DistSet *I,CRay *ray,Pickable **pick,int pass)
             if(!ray) {
               ObjectUseColor((CObject*)I->Obj);
             } else {
-              ray->fColor3fv(ray,ColorGet(I->Obj->Obj.Color));
+              ray->fColor3fv(ray,ColorGet(I->G,I->Obj->Obj.Color));
             }			 
             I->Rep[a]->fRender(I->Rep[a],ray,pick);
         }
   }
 }
 /*========================================================================*/
-DistSet *DistSetNew(void)
+DistSet *DistSetNew(PyMOLGlobals *G)
 {
   int a;
-  OOAlloc(DistSet);
-
+  OOAlloc(G,DistSet);
+  I->G=G;
   I->fFree=DistSetFree;
   I->fRender=DistSetRender;
   I->fUpdate=DistSetUpdate;

@@ -37,22 +37,22 @@ typedef struct ObjectGadget {
 #define cGadgetPlain 0
 #define cGadgetRamp 1
 
-ObjectGadget *ObjectGadgetNew(void);
-void ObjectGadgetInit(ObjectGadget *I);
+ObjectGadget *ObjectGadgetNew(PyMOLGlobals *G);
+void ObjectGadgetInit(PyMOLGlobals *G,ObjectGadget *I);
 void ObjectGadgetPurge(ObjectGadget *I);
 void ObjectGadgetFree(ObjectGadget *I);
-ObjectGadget *ObjectGadgetDefine(ObjectGadget *obj,PyObject *pycgo,int state);
-ObjectGadget *ObjectGadgetFromCGO(ObjectGadget *obj,CGO *cgo,int state);
+ObjectGadget *ObjectGadgetDefine(PyMOLGlobals *G,ObjectGadget *obj,PyObject *pycgo,int state);
+ObjectGadget *ObjectGadgetFromCGO(PyMOLGlobals *G,ObjectGadget *obj,CGO *cgo,int state);
 void ObjectGadgetRecomputeExtent(ObjectGadget *I);
 
 PyObject *ObjectGadgetAsPyList(ObjectGadget *I);
 PyObject *ObjectGadgetAsPyList(ObjectGadget *I);
 PyObject *ObjectGadgetPlainAsPyList(ObjectGadget *I);
 
-int ObjectGadgetNewFromPyList(PyObject *list,ObjectGadget **result,int version);
-int ObjectGadgetInitFromPyList(PyObject *list,ObjectGadget *I,int version);
+int ObjectGadgetNewFromPyList(PyMOLGlobals *G,PyObject *list,ObjectGadget **result,int version);
+int ObjectGadgetInitFromPyList(PyMOLGlobals *G,PyObject *list,ObjectGadget *I,int version);
 
-ObjectGadget *ObjectGadgetTest(void);
+ObjectGadget *ObjectGadgetTest(PyMOLGlobals *G);
 int ObjectGadgetGetVertex(ObjectGadget *I,int index,int base, float *v); /* in current state */
 int ObjectGadgetSetVertex(ObjectGadget *I,int index,int base, float *v); /* in current state */
 void ObjectGadgetUpdate(ObjectGadget *I);

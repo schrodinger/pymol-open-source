@@ -157,35 +157,39 @@ typedef struct AtomInfoType {
   int rank;
 } AtomInfoType;
 
-int *AtomInfoGetSortedIndex(AtomInfoType *rec,int n,int **outdex);
-void AtomInfoAssignParameters(AtomInfoType *I);
-void AtomInfoFreeSortedIndexes(int *index,int *outdex);
-void AtomInfoPrimeColors(void);
-int AtomInfoGetColor(AtomInfoType *at1);
-int AtomInfoGetExpectedValence(AtomInfoType *I);
-PyObject *AtomInfoAsPyList(AtomInfoType *at);
-int AtomInfoFromPyList(AtomInfoType *at,PyObject *list);
-int AtomInfoMatch(AtomInfoType *at1,AtomInfoType *at2);
-int AtomInfoAltMatch(AtomInfoType *at1,AtomInfoType *at2);
-int AtomInfoCompare(AtomInfoType *at1,AtomInfoType *at2);
-int AtomInfoCompareIgnoreHet(AtomInfoType *at1,AtomInfoType *at2);
-float AtomInfoGetBondLength(AtomInfoType *ai1,AtomInfoType *ai2);
-int AtomInfoSameResidue(AtomInfoType *at1,AtomInfoType *at2);
-int AtomInfoSameResidueP(AtomInfoType *at1,AtomInfoType *at2);
-int AtomInfoSameChainP(AtomInfoType *at1,AtomInfoType *at2);
-int AtomInfoSameSegmentP(AtomInfoType *at1,AtomInfoType *at2);
-int AtomInfoSequential(AtomInfoType *at1,AtomInfoType *at2);
+void AtomInfoFree(PyMOLGlobals *G);
+int AtomInfoInit(PyMOLGlobals *G);
 
-void AtomInfoBracketResidue(AtomInfoType *ai0,int n0,AtomInfoType *ai,int *st,int *nd);
-void AtomInfoBracketResidueFast(AtomInfoType *ai0,int n0,int cur,int *st,int *nd);
 
-void AtomInfoUniquefyNames(AtomInfoType *atInfo0,int n0,AtomInfoType *atInfo1,int n1);
-int AtomInfoGetCarbColor(void);
+int *AtomInfoGetSortedIndex(PyMOLGlobals *G,AtomInfoType *rec,int n,int **outdex);
+void AtomInfoAssignParameters(PyMOLGlobals *G,AtomInfoType *I);
+void AtomInfoFreeSortedIndexes(PyMOLGlobals *G,int *index,int *outdex);
+void AtomInfoPrimeColors(PyMOLGlobals *G);
+int AtomInfoGetColor(PyMOLGlobals *G,AtomInfoType *at1);
+int AtomInfoGetExpectedValence(PyMOLGlobals *G,AtomInfoType *I);
+PyObject *AtomInfoAsPyList(PyMOLGlobals *G,AtomInfoType *at);
+int AtomInfoFromPyList(PyMOLGlobals *G,AtomInfoType *at,PyObject *list);
+int AtomInfoMatch(PyMOLGlobals *G,AtomInfoType *at1,AtomInfoType *at2);
+int AtomInfoAltMatch(PyMOLGlobals *G,AtomInfoType *at1,AtomInfoType *at2);
+int AtomInfoCompare(PyMOLGlobals *G,AtomInfoType *at1,AtomInfoType *at2);
+int AtomInfoCompareIgnoreHet(PyMOLGlobals *G,AtomInfoType *at1,AtomInfoType *at2);
+float AtomInfoGetBondLength(PyMOLGlobals *G,AtomInfoType *ai1,AtomInfoType *ai2);
+int AtomInfoSameResidue(PyMOLGlobals *G,AtomInfoType *at1,AtomInfoType *at2);
+int AtomInfoSameResidueP(PyMOLGlobals *G,AtomInfoType *at1,AtomInfoType *at2);
+int AtomInfoSameChainP(PyMOLGlobals *G,AtomInfoType *at1,AtomInfoType *at2);
+int AtomInfoSameSegmentP(PyMOLGlobals *G,AtomInfoType *at1,AtomInfoType *at2);
+int AtomInfoSequential(PyMOLGlobals *G,AtomInfoType *at1,AtomInfoType *at2);
+
+void AtomInfoBracketResidue(PyMOLGlobals *G,AtomInfoType *ai0,int n0,AtomInfoType *ai,int *st,int *nd);
+void AtomInfoBracketResidueFast(PyMOLGlobals *G,AtomInfoType *ai0,int n0,int cur,int *st,int *nd);
+
+void AtomInfoUniquefyNames(PyMOLGlobals *G,AtomInfoType *atInfo0,int n0,AtomInfoType *atInfo1,int n1);
+int AtomInfoGetCarbColor(PyMOLGlobals *G);
 int AtomResvFromResi(char *resi);
 
-int AtomInfoKnownWaterResName(char *resn);
-int AtomInfoKnownPolymerResName(char *resn);
-void AtomInfoGetPDB3LetHydroName(char *resn, char *iname, char *oname);
+int AtomInfoKnownWaterResName(PyMOLGlobals *G,char *resn);
+int AtomInfoKnownPolymerResName(PyMOLGlobals *G,char *resn);
+void AtomInfoGetPDB3LetHydroName(PyMOLGlobals *G,char *resn, char *iname, char *oname);
 
 #define cAIC_ct        0x0001
 #define cAIC_fc        0x0002
@@ -204,8 +208,8 @@ void AtomInfoGetPDB3LetHydroName(char *resn, char *iname, char *oname);
 #define cAIC_MOLMask (cAIC_fc|cAIC_id|cAIC_rank)
 #define cAIC_AllMask 0xFFFF
 
-void AtomInfoCombine(AtomInfoType *dst,AtomInfoType *src,int mask);
-int AtomInfoNameOrder(AtomInfoType *at1,AtomInfoType *at2);
+void AtomInfoCombine(PyMOLGlobals *G,AtomInfoType *dst,AtomInfoType *src,int mask);
+int AtomInfoNameOrder(PyMOLGlobals *G,AtomInfoType *at1,AtomInfoType *at2);
 
 typedef struct  {
   int resv1,resv2;

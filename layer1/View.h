@@ -60,7 +60,7 @@ typedef struct CView {
 
 typedef int CViewIterator;
 
-CView *ViewNew(void);
+CView *ViewNew(PyMOLGlobals *G);
 void ViewFree(CView *I);
 
 CViewIterator ViewGetIterator(CView *I);

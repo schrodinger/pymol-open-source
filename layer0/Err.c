@@ -18,29 +18,30 @@ Z* -------------------------------------------------------------------
 
 #include"Err.h"
 #include"Ortho.h"
+#include"Feedback.h"
 
-void ErrFatal(const char *where,const char *what)
+void ErrFatal(PyMOLGlobals *G,const char *where,const char *what)
 {
   fprintf(stderr,"%s-Error: %s\n",where,what);
   fflush(stderr);
   exit(1);
 }
 
-int ErrMessage(const char *where,const char *what)
+int ErrMessage(PyMOLGlobals *G,const char *where,const char *what)
 {
   char buffer[1024];
-  if(Feedback(FB_Executive,FB_Errors)) {
+  if(Feedback(G,FB_Executive,FB_Errors)) {
 
     /* unclassified errors are assigned to the Executive catch-all */
 
     sprintf(buffer,"%s-Error: %s\n",where,what);
-    OrthoAddOutput(buffer);
-    OrthoRestorePrompt();
+    OrthoAddOutput(G,buffer);
+    OrthoRestorePrompt(G);
   }
   return(0);
 }
 
-void ErrPointer(const char *file,int line)
+void ErrPointer(PyMOLGlobals *G,const char *file,int line)
 {
   fprintf(stderr,"NULL-POINTER-ERROR: in %s line %i\n",file,line);
   printf("****************************************************************************\n");

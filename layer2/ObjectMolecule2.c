@@ -287,7 +287,7 @@ int ObjectMoleculeIsAtomBondedToName(ObjectMolecule *obj,int a0,char *name)
       a2 = obj->Neighbor[s];
       if(a2<0)
         break;
-      if(WordMatch(obj->AtomInfo[a2].name,name,true)<0)
+      if(WordMatch(obj->Obj.G,obj->AtomInfo[a2].name,name,true)<0)
         bonded = true;
       break;
       s+=2;
@@ -311,7 +311,7 @@ int ObjectMoleculeDoesAtomNeighborSele(ObjectMolecule *I, int index, int sele)
       n+=2; 
       if(a1<0) break;
       ai = I->AtomInfo + a1;
-      if(SelectorIsMember(ai->selEntry,sele)) {
+      if(SelectorIsMember(I->Obj.G,ai->selEntry,sele)) {
         result=true;
         break;
       }
@@ -335,11 +335,13 @@ void ObjectMoleculeFixChemistry(ObjectMolecule *I, int sele1, int sele2, int inv
     s1=ai1->selEntry;
     s2=ai2->selEntry;
     
-    if((SelectorIsMember(s1,sele1)&&SelectorIsMember(s2,sele2))||
-       (SelectorIsMember(s2,sele1)&&SelectorIsMember(s1,sele2))) {
+    if((SelectorIsMember(I->Obj.G,s1,sele1)&&
+        SelectorIsMember(I->Obj.G,s2,sele2))||
+       (SelectorIsMember(I->Obj.G,s2,sele1)&&
+        SelectorIsMember(I->Obj.G,s1,sele2))) {
       order = -1;
       if(!ai1->resn[3]) { /* Standard disconnected PDB residue */
-        if(AtomInfoSameResidue(ai1,ai2)) {
+        if(AtomInfoSameResidue(I->Obj.G,ai1,ai2)) {
           /* nasty high-speed hack to get bond valences and formal charges 
              for standard residues */
           if(((!ai1->name[1])&&(!ai2->name[1]))&&
@@ -643,7 +645,7 @@ void ObjectMoleculeFixChemistry(ObjectMolecule *I, int sele1, int sele2, int inv
   }
   if(flag) {
     ObjectMoleculeInvalidate(I,cRepAll,cRepInvAll);
-    SceneChanged();
+    SceneChanged(I->Obj.G);
   }
 }
   
@@ -730,7 +732,8 @@ int ObjectMoleculeConvertIDsToIndices(ObjectMolecule *I,int *id,int n_id)
 }
 
 /*========================================================================*/
-CoordSet *ObjectMoleculePDBStr2CoordSet(char *buffer,
+CoordSet *ObjectMoleculePDBStr2CoordSet(PyMOLGlobals *G,
+                                        char *buffer,
                                         AtomInfoType **atInfoPtr,
                                         char **restart_model,
                                         char *segi_override,
@@ -756,9 +759,9 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(char *buffer,
   int b1,b2,nReal,maxAt;
   CSymmetry *symmetry = NULL;
   int symFlag;
-  int auto_show_lines = (int)SettingGet(cSetting_auto_show_lines);
-  int auto_show_nonbonded = (int)SettingGet(cSetting_auto_show_nonbonded);
-  int reformat_names = (int)SettingGet(cSetting_pdb_reformat_names_mode);
+  int auto_show_lines = (int)SettingGet(G,cSetting_auto_show_lines);
+  int auto_show_nonbonded = (int)SettingGet(G,cSetting_auto_show_nonbonded);
+  int reformat_names = (int)SettingGet(G,cSetting_pdb_reformat_names_mode);
   int newModelFlag = false;
   int ssFlag = false;
   int ss_resv1=0,ss_resv2=0;
@@ -780,10 +783,10 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(char *buffer,
   int have_bond_order = false;
   int seen_model;
 
-  if((int)SettingGet(cSetting_pdb_literal_names)) 
+  if((int)SettingGet(G,cSetting_pdb_literal_names)) 
     reformat_names = 0;
 
-  ignore_pdb_segi = (int)SettingGet(cSetting_ignore_pdb_segi);
+  ignore_pdb_segi = (int)SettingGet(G,cSetting_ignore_pdb_segi);
 
   p=buffer;
   nAtom=0;
@@ -791,7 +794,7 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(char *buffer,
 	 atInfo = *atInfoPtr;
 
   if(!atInfo)
-    ErrFatal("PDBStr2CoordSet","need atom information record!"); /* failsafe for old version..*/
+    ErrFatal(G,"PDBStr2CoordSet","need atom information record!"); /* failsafe for old version..*/
 
   if(buffer == *restart_model)
     only_read_one_model = true;
@@ -845,17 +848,17 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(char *buffer,
           m4x->annotated_flag = true;
           switch(cc[0]) {
           case 'H':
-            if(WordMatchExact("HINT",cc,true)) {
+            if(WordMatchExact(G,"HINT",cc,true)) {
               p = nskip(p,1);
               p = ntrim(cc,p,6); /* get context name */
-              if(WordMatchExact("ALIGN",cc,true)) { /* ALIGN is special */
+              if(WordMatchExact(G,"ALIGN",cc,true)) { /* ALIGN is special */
                 if(!m4x->align) {
                   m4x->align=Calloc(M4XAlignType,1);
                   M4XAlignInit(m4x->align);
                   p = nskip(p,8);
                   p = ntrim(cc,p,6); /* get visibility of this structure */
                 }
-              } else if(WordMatchExact("HIDE",cc,true)) {
+              } else if(WordMatchExact(G,"HIDE",cc,true)) {
                 m4x->invisible = 1;
               } else {
                 if(!m4x->context) {
@@ -867,7 +870,7 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(char *buffer,
                   
                   /* does context already exist ? */
                   for(cn=0;cn<m4x->n_context;cn++) {
-                    if(WordMatchExact(m4x->context[cn].name,cc,true)) {
+                    if(WordMatchExact(G,m4x->context[cn].name,cc,true)) {
                       found=true;
                       break;
                     }
@@ -885,7 +888,7 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(char *buffer,
                     p = ntrim(cc,p,6);
                     switch(cc[0]) {
                     case 'B':
-                      if(WordMatchExact("BORDER",cc,true)) {
+                      if(WordMatchExact(G,"BORDER",cc,true)) {
                         /* ignore PDB CONECT if BORDER present */
                         ignore_conect = true;
                         have_bond_order = true;
@@ -893,35 +896,35 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(char *buffer,
                       }
                       break;
                     case 'S':
-                      if(WordMatchExact("SITE",cc,true)) {
+                      if(WordMatchExact(G,"SITE",cc,true)) {
                         if(!m4x->context[cn].site) {
                           m4x->context[cn].site=VLAlloc(int,50);
                         }
                       } 
                       break;
                     case 'L':
-                      if(WordMatchExact("LIGAND",cc,true)) {
+                      if(WordMatchExact(G,"LIGAND",cc,true)) {
                         if(!m4x->context[cn].ligand) {
                           m4x->context[cn].ligand=VLAlloc(int,50);
                         }
                       }
                       break;
                     case 'W':
-                      if(WordMatchExact("WATER",cc,true)) {
+                      if(WordMatchExact(G,"WATER",cc,true)) {
                         if(!m4x->context[cn].water) {
                           m4x->context[cn].water=VLAlloc(int,50);
                         }
                       } 
                       break;
                     case 'H':
-                      if(WordMatchExact("HBOND",cc,true)) {
+                      if(WordMatchExact(G,"HBOND",cc,true)) {
                         if(!m4x->context[cn].hbond) {
                           m4x->context[cn].hbond=VLAlloc(M4XBondType,50);
                         }
                       }
                       break;
                     case 'N':
-                      if(WordMatchExact("NBOND",cc,true)) {
+                      if(WordMatchExact(G,"NBOND",cc,true)) {
                         if(!m4x->context[cn].nbond) {
                           m4x->context[cn].nbond=VLAlloc(M4XBondType,50);
                         }
@@ -949,9 +952,9 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(char *buffer,
     bond=VLAlloc(BondType,6*nAtom);  
   }
   p=buffer;
-  PRINTFB(FB_ObjectMolecule,FB_Blather)
+  PRINTFB(G,FB_ObjectMolecule,FB_Blather)
 	 " ObjectMoleculeReadPDB: Found %i atoms...\n",nAtom
-    ENDFB;
+    ENDFB(G);
 
   if(ssFlag) {
     for(a=0;a<=255;a++) {
@@ -1027,10 +1030,10 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(char *buffer,
           if(!sscanf(cc,"%d",&ss_resv2)) ss_valid=false;
     
           if(ss_valid) {
-            PRINTFB(FB_ObjectMolecule,FB_Details)
+            PRINTFB(G,FB_ObjectMolecule,FB_Details)
               " ObjectMolecule: read HELIX %c %s %c %s\n",
               ss_chain1,ss_resi1,ss_chain2,ss_resi2
-              ENDFB;
+              ENDFB(G);
             SSCode='H';
           }
 
@@ -1059,10 +1062,10 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(char *buffer,
           if(!sscanf(cc,"%d",&ss_resv2)) ss_valid=false;
        
           if(ss_valid) {
-            PRINTFB(FB_ObjectMolecule,FB_Details)
+            PRINTFB(G,FB_ObjectMolecule,FB_Details)
               " ObjectMolecule: read SHEET %c %s %c %s\n",
               ss_chain1,ss_resi1,ss_chain2,ss_resi2
-              ENDFB;
+              ENDFB(G);
             SSCode = 'S';
           }
 
@@ -1107,11 +1110,11 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(char *buffer,
                 (p[4]=='T')&&
                 (p[5]=='1')&& (!*restart_model))
           {
-            if(!symmetry) symmetry=SymmetryNew();          
+            if(!symmetry) symmetry=SymmetryNew(G);          
             if(symmetry) {
-              PRINTFB(FB_ObjectMolecule,FB_Blather)
+              PRINTFB(G,FB_ObjectMolecule,FB_Blather)
                 " PDBStrToCoordSet: Attempting to read symmetry information\n"
-                ENDFB;
+                ENDFB(G);
               p=nskip(p,6);
               symFlag=true;
               p=ncopy(cc,p,9);
@@ -1132,7 +1135,7 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(char *buffer,
               p=ncopy(cc,p,4);
               if(sscanf(cc,"%d",&symmetry->PDBZValue)!=1) symmetry->PDBZValue=1;
               if(!symFlag) {
-              ErrMessage("PDBStrToCoordSet","Error reading CRYST1 record\n");
+              ErrMessage(G,"PDBStrToCoordSet","Error reading CRYST1 record\n");
               SymmetryFree(symmetry);
               symmetry=NULL;
             }
@@ -1195,7 +1198,7 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(char *buffer,
           /* is this a context name or a USER record? */
           switch(cc[0]) {
           case 'X':
-            if(WordMatchExact("XNAME",cc,true)) {  /* object name */
+            if(WordMatchExact(G,"XNAME",cc,true)) {  /* object name */
               p=nskip(p,1);
               p=ntrim(m4x->xname,p,10);
               if(m4x->xname[0]) {
@@ -1205,7 +1208,7 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(char *buffer,
             }
             break;
           case 'A': /* alignment information */
-            if(WordMatchExact("ALIGN",cc,true)) {
+            if(WordMatchExact(G,"ALIGN",cc,true)) {
               if(m4x->align && m4x->align->id_at_point) {
                 M4XAlignType *align = m4x->align;
                 char target[11];
@@ -1219,7 +1222,7 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(char *buffer,
                   if(target[0]) {
                     if(!align->target[0]) 
                       UtilNCopy(align->target,target,ObjNameMax);
-                    if(WordMatchExact(align->target,target,true)) { /* must match the one target allowed */
+                    if(WordMatchExact(G,align->target,target,true)) { /* must match the one target allowed */
                       p=nskip(p,1);
                       p=ncopy(cc,p,6);
                       if(sscanf(cc,"%d",&point_id)==1) {                      
@@ -1251,7 +1254,7 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(char *buffer,
             
             /* does context already exist ? */
             for(cn=0;cn<m4x->n_context;cn++) {
-              if(WordMatchExact(m4x->context[cn].name,cc,true)) {
+              if(WordMatchExact(G,m4x->context[cn].name,cc,true)) {
                 found=true;
                 break;
               }
@@ -1265,7 +1268,7 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(char *buffer,
               p = ntrim(cc,p,6);
               switch(cc[0]) {
               case 'B':
-                if(WordMatchExact("BORDER",cc,true)&&bondFlag) {
+                if(WordMatchExact(G,"BORDER",cc,true)&&bondFlag) {
                   int order;
                   
                   p=nskip(p,1);
@@ -1299,7 +1302,7 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(char *buffer,
                 }
                 break;
               case 'S':
-                if(WordMatchExact("SITE",cc,true)) {
+                if(WordMatchExact(G,"SITE",cc,true)) {
                   if(cont->site) {
                     int id;
                     while(*cc) {
@@ -1314,7 +1317,7 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(char *buffer,
                 } 
                 break;
               case 'L':
-                if(WordMatchExact("LIGAND",cc,true)) {
+                if(WordMatchExact(G,"LIGAND",cc,true)) {
                   if(cont->ligand) {
                     int id;
                     while(*cc) {
@@ -1329,7 +1332,7 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(char *buffer,
                 }
                 break;
               case 'W':
-                if(WordMatchExact("WATER",cc,true)) {
+                if(WordMatchExact(G,"WATER",cc,true)) {
                   if(cont->water) {
                     int id;
                     while(*cc) {
@@ -1344,7 +1347,7 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(char *buffer,
                 } 
                 break;
               case 'H':
-                if(WordMatchExact("HBOND",cc,true)) {
+                if(WordMatchExact(G,"HBOND",cc,true)) {
                   if(cont->hbond) {
                     int id1,id2;
                     float strength;
@@ -1369,7 +1372,7 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(char *buffer,
                 }
                 break;
               case 'N':
-                if(WordMatchExact("NBOND",cc,true)) {
+                if(WordMatchExact(G,"NBOND",cc,true)) {
                   if(cont->nbond) {
                     int id1,id2;
                     float strength;
@@ -1522,7 +1525,7 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(char *buffer,
                 if((ai->name[0]=='H')&&
                    (ai->name[1]>='A')&&((ai->name[1]<='Z'))&&
                    (ai->name[2]>='0')&&(ai->name[2]<='9')) {
-                  AtomInfoGetPDB3LetHydroName(ai->resn,ai->name,name);
+                  AtomInfoGetPDB3LetHydroName(G,ai->resn,ai->name,name);
                   if(name[0]==' ')
                     strcpy(ai->name,name+1);
                   else
@@ -1593,8 +1596,8 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(char *buffer,
                                   sst->resi1,ai->resi,sst->resi2);*/
                 if(ai->resv>=sst->resv1)
                   if(ai->resv<=sst->resv2)
-                    if((ai->resv!=sst->resv1)||(WordCompare(ai->resi,sst->resi1,true)>=0))
-                      if((ai->resv!=sst->resv2)||(WordCompare(ai->resi,sst->resi2,true)<=0))
+                    if((ai->resv!=sst->resv1)||(WordCompare(G,ai->resi,sst->resi1,true)>=0))
+                      if((ai->resv!=sst->resv2)||(WordCompare(G,ai->resi,sst->resi2,true)<=0))
                         {
                           ai->ssType[0]=sst->type;
                           /*                          printf(" Y\n");*/
@@ -1697,10 +1700,10 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(char *buffer,
             ai->flags=cAtomFlag_ignore;
           }
           
-          AtomInfoAssignParameters(ai);
-          ai->color=AtomInfoGetColor(ai);
+          AtomInfoAssignParameters(G,ai);
+          ai->color=AtomInfoGetColor(G,ai);
 
-          PRINTFD(FB_ObjectMolecule)
+          PRINTFD(G,FB_ObjectMolecule)
             "%s %s %s %s %8.3f %8.3f %8.3f %6.2f %6.2f %s\n",
                     ai->name,ai->resn,ai->resi,ai->chain,
                     *(coord+a),*(coord+a+1),*(coord+a+2),ai->b,ai->q,
@@ -1716,7 +1719,7 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(char *buffer,
   /* END PASS 2 */
   
   if(bondFlag) {
-    UtilSortInPlace(bond,nBond,sizeof(BondType),(UtilOrderFn*)BondInOrder);              
+    UtilSortInPlace(G,bond,nBond,sizeof(BondType),(UtilOrderFn*)BondInOrder);              
     if(nBond) {
 
       if(!have_bond_order) { /* handle PDB bond-order kludge */
@@ -1793,11 +1796,11 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(char *buffer,
       FreeP(idx);
     }
   }
-  PRINTFB(FB_ObjectMolecule,FB_Blather)
+  PRINTFB(G,FB_ObjectMolecule,FB_Blather)
    " PDBStr2CoordSet: Read %d bonds from CONECT records (%p).\n",nBond,
     (void*)bond
-    ENDFB;
-  cset = CoordSetNew();
+    ENDFB(G);
+  cset = CoordSetNew(G);
   cset->NIndex=nAtom;
   cset->Coord=coord;
   cset->TmpBond=bond;
@@ -1855,21 +1858,21 @@ void ObjectMoleculeM4XAnnotate(ObjectMolecule *I,M4XAnnoType *m4x,char *script_f
         UtilNConcat(name,"_",sizeof(WordType));
         UtilNConcat(name,cont->name,sizeof(WordType));
         UtilNConcat(name,"_site",sizeof(WordType));
-        SelectorSelectByID(name,I,cont->site,cont->n_site);
+        SelectorSelectByID(I->Obj.G,name,I,cont->site,cont->n_site);
       }
       if(cont->ligand) {
         UtilNCopy(name,I->Obj.Name,sizeof(WordType));
         UtilNConcat(name,"_",sizeof(WordType));
         UtilNConcat(name,cont->name,sizeof(WordType));
         UtilNConcat(name,"_ligand",sizeof(WordType));
-        SelectorSelectByID(name,I,cont->ligand,cont->n_ligand);
+        SelectorSelectByID(I->Obj.G,name,I,cont->ligand,cont->n_ligand);
       }
       if(cont->water) {
         UtilNCopy(name,I->Obj.Name,sizeof(WordType));
         UtilNConcat(name,"_",sizeof(WordType));
         UtilNConcat(name,cont->name,sizeof(WordType));
         UtilNConcat(name,"_water",sizeof(WordType));
-        SelectorSelectByID(name,I,cont->water,cont->n_water);
+        SelectorSelectByID(I->Obj.G,name,I,cont->water,cont->n_water);
       }
       if(cont->hbond) {
         ObjectDist *distObj;
@@ -1877,8 +1880,8 @@ void ObjectMoleculeM4XAnnotate(ObjectMolecule *I,M4XAnnoType *m4x,char *script_f
         UtilNConcat(name,"_",sizeof(WordType));
         UtilNConcat(name,cont->name,sizeof(WordType));
         UtilNConcat(name,"_hbond",sizeof(WordType));
-        ExecutiveDelete(name);
-        distObj = ObjectDistNewFromM4XBond(NULL,
+        ExecutiveDelete(I->Obj.G,name);
+        distObj = ObjectDistNewFromM4XBond(I->Obj.G,NULL,
                                             I,
                                             cont->hbond,
                                            cont->n_hbond,
@@ -1886,10 +1889,10 @@ void ObjectMoleculeM4XAnnotate(ObjectMolecule *I,M4XAnnoType *m4x,char *script_f
         if(match_colors)
           distObj->Obj.Color = I->Obj.Color;
         else
-          distObj->Obj.Color = ColorGetIndex("yellow");
+          distObj->Obj.Color = ColorGetIndex(I->Obj.G,"yellow");
         ObjectSetName((CObject*)distObj,name);
         if(distObj)
-          ExecutiveManageObject((CObject*)distObj,false,true);
+          ExecutiveManageObject(I->Obj.G,(CObject*)distObj,false,true);
       }
 
       if(cont->nbond&&0) {
@@ -1898,20 +1901,20 @@ void ObjectMoleculeM4XAnnotate(ObjectMolecule *I,M4XAnnoType *m4x,char *script_f
         UtilNConcat(name,"_",sizeof(WordType));
         UtilNConcat(name,cont->name,sizeof(WordType));
         UtilNConcat(name,"_nbond",sizeof(WordType));
-        ExecutiveDelete(name);
-        /*        distObj = ObjectDistNewFromM4XBond(NULL,
+        ExecutiveDelete(I->Obj.G,name);
+        /*        distObj = ObjectDistNewFromM4XBond(I->Obj.G,NULL,
                                             I,
                                              cont->nbond,
                                              cont->n_nbond);
          if(distObj)
-        ExecutiveManageObject((CObject*)distObj,false,true); */
+        ExecutiveManageObject(I->Obj.G,(CObject*)distObj,false,true); */
 
         {
           CGO *cgo = NULL;
           ObjectCGO *ocgo;
 
           
-          cgo=CGONew();
+          cgo=CGONew(I->Obj.G);
           /*
             CGOBegin(cgo,GL_LINES);
             for(a=0;a<op1.nvv1;a++) {
@@ -1921,17 +1924,17 @@ void ObjectMoleculeM4XAnnotate(ObjectMolecule *I,M4XAnnoType *m4x,char *script_f
           */
           CGOEnd(cgo);
           CGOStop(cgo);
-          ocgo = ObjectCGOFromCGO(NULL,cgo,0);
+          ocgo = ObjectCGOFromCGO(I->Obj.G,NULL,cgo,0);
           if(match_colors)
             ocgo->Obj.Color = I->Obj.Color;
           else
-            ocgo->Obj.Color = ColorGetIndex("yellow");
+            ocgo->Obj.Color = ColorGetIndex(I->Obj.G,"yellow");
           ObjectSetName((CObject*)ocgo,name);
-          ExecutiveDelete(name);
+          ExecutiveDelete(I->Obj.G,name);
 
-          ExecutiveManageObject((CObject*)ocgo,false,true);
+          ExecutiveManageObject(I->Obj.G,(CObject*)ocgo,false,true);
 
-          SceneDirty();
+          SceneDirty(I->Obj.G);
         }
 
       }
@@ -1942,14 +1945,14 @@ void ObjectMoleculeM4XAnnotate(ObjectMolecule *I,M4XAnnoType *m4x,char *script_f
   }
 }
 
-void ObjectMoleculeInitHBondCriteria(HBondCriteria *hbc)
+void ObjectMoleculeInitHBondCriteria(PyMOLGlobals *G,HBondCriteria *hbc)
 {
-  hbc->maxAngle = SettingGet_f(NULL,NULL,cSetting_h_bond_max_angle);
-  hbc->maxDistAtMaxAngle = SettingGet_f(NULL,NULL,cSetting_h_bond_cutoff_edge);
-  hbc->maxDistAtZero = SettingGet_f(NULL,NULL,cSetting_h_bond_cutoff_center);
-  hbc->power_a = SettingGet_f(NULL,NULL,cSetting_h_bond_power_a);
-  hbc->power_b = SettingGet_f(NULL,NULL,cSetting_h_bond_power_b);
-  hbc->cone_dangle = cos(PI*0.5*SettingGet_f(NULL,NULL,cSetting_h_bond_cone)/180.0F);
+  hbc->maxAngle = SettingGet_f(G,NULL,NULL,cSetting_h_bond_max_angle);
+  hbc->maxDistAtMaxAngle = SettingGet_f(G,NULL,NULL,cSetting_h_bond_cutoff_edge);
+  hbc->maxDistAtZero = SettingGet_f(G,NULL,NULL,cSetting_h_bond_cutoff_center);
+  hbc->power_a = SettingGet_f(G,NULL,NULL,cSetting_h_bond_power_a);
+  hbc->power_b = SettingGet_f(G,NULL,NULL,cSetting_h_bond_power_b);
+  hbc->cone_dangle = cos(PI*0.5*SettingGet_f(G,NULL,NULL,cSetting_h_bond_cone)/180.0F);
   if(hbc->maxDistAtMaxAngle!=0.0F) {
     hbc->factor_a = 0.5/pow(hbc->maxAngle,hbc->power_a);
     hbc->factor_b = 0.5/pow(hbc->maxAngle,hbc->power_b);
@@ -2272,7 +2275,7 @@ static int ObjectMoleculeCSetFromPyList(ObjectMolecule *I,PyObject *list)
     VLACheck(I->CSet,CoordSet*,I->NCSet);
     for(a=0;a<I->NCSet;a++) {
       
-      if(ok) ok = CoordSetFromPyList(PyList_GetItem(list,a),&I->CSet[a]);
+      if(ok) ok = CoordSetFromPyList(I->Obj.G,PyList_GetItem(list,a),&I->CSet[a]);
       if(ok) 
         if(I->CSet[a]) /* WLD 030205 */
           I->CSet[a]->Obj = I;
@@ -2335,7 +2338,7 @@ static PyObject *ObjectMoleculeAtomAsPyList(ObjectMolecule *I)
   result = PyList_New(I->NAtom);  
   ai = I->AtomInfo;
   for(a=0;a<I->NAtom;a++) {
-    PyList_SetItem(result,a,AtomInfoAsPyList(ai));
+    PyList_SetItem(result,a,AtomInfoAsPyList(I->Obj.G,ai));
     ai++;
   }
   return(PConvAutoNone(result));
@@ -2350,13 +2353,13 @@ static int ObjectMoleculeAtomFromPyList(ObjectMolecule *I,PyObject *list)
   VLACheck(I->AtomInfo,AtomInfoType,I->NAtom+1);
   ai = I->AtomInfo;
   for(a=0;a<I->NAtom;a++) {
-    if(ok) ok = AtomInfoFromPyList(ai,PyList_GetItem(list,a));
+    if(ok) ok = AtomInfoFromPyList(I->Obj.G,ai,PyList_GetItem(list,a));
     ai++;
   }
   return(ok);
 }
 
-int ObjectMoleculeNewFromPyList(PyObject *list,ObjectMolecule **result)
+int ObjectMoleculeNewFromPyList(PyMOLGlobals *G,PyObject *list,ObjectMolecule **result)
 {
   int ok = true;
   ObjectMolecule *I=NULL;
@@ -2371,20 +2374,20 @@ int ObjectMoleculeNewFromPyList(PyObject *list,ObjectMolecule **result)
    Always check ll when adding new PyList_GetItem's */
   if(ok) ok = PConvPyIntToInt(PyList_GetItem(list,8),&discrete_flag);
 
-  I=ObjectMoleculeNew(discrete_flag);
+  I=ObjectMoleculeNew(G,discrete_flag);
   if(ok) ok = (I!=NULL);
 
-  if(ok) ok = ObjectFromPyList(PyList_GetItem(list,0),&I->Obj);
+  if(ok) ok = ObjectFromPyList(G,PyList_GetItem(list,0),&I->Obj);
   if(ok) ok = PConvPyIntToInt(PyList_GetItem(list,1),&I->NCSet);
   if(ok) ok = PConvPyIntToInt(PyList_GetItem(list,2),&I->NBond);
   if(ok) ok = PConvPyIntToInt(PyList_GetItem(list,3),&I->NAtom);
   if(ok) ok = ObjectMoleculeCSetFromPyList(I,PyList_GetItem(list,4));
-  if(ok) ok = CoordSetFromPyList(PyList_GetItem(list,5),&I->CSTmpl);
+  if(ok) ok = CoordSetFromPyList(G,PyList_GetItem(list,5),&I->CSTmpl);
   if(ok) ok = ObjectMoleculeBondFromPyList(I,PyList_GetItem(list,6));
   if(ok) ok = ObjectMoleculeAtomFromPyList(I,PyList_GetItem(list,7));
   if(ok) ok = PConvPyIntToInt(PyList_GetItem(list,8),&I->DiscreteFlag);
   if(ok) ok = PConvPyIntToInt(PyList_GetItem(list,9),&I->NDiscrete);
-  if(ok) I->Symmetry = SymmetryNewFromPyList(PyList_GetItem(list,10));
+  if(ok) I->Symmetry = SymmetryNewFromPyList(G,PyList_GetItem(list,10));
   if(ok) ok = PConvPyIntToInt(PyList_GetItem(list,11),&I->CurCSet);
   if(ok) ok = PConvPyIntToInt(PyList_GetItem(list,12),&I->BondCounter);
   if(ok) ok = PConvPyIntToInt(PyList_GetItem(list,13),&I->AtomCounter);
@@ -2517,7 +2520,7 @@ int ObjectMoleculeConnect(ObjectMolecule *I,BondType **bond,AtomInfoType *ai,
                           struct CoordSet *cs,int bondSearchFlag)
 {
   #define cMULT 1
-
+  PyMOLGlobals *G=I->Obj.G;
   int a,b,c,d,e,f,i,j;
   int a1,a2;
   float *v1,*v2,dst;
@@ -2535,7 +2538,7 @@ int ObjectMoleculeConnect(ObjectMolecule *I,BondType **bond,AtomInfoType *ai,
   float max_cutoff;
   int water_flag;
 
-  cutoff_v=SettingGet(cSetting_connect_cutoff);
+  cutoff_v=SettingGet(G,cSetting_connect_cutoff);
   cutoff_s=cutoff_v + 0.2F;
   cutoff_h=cutoff_v - 0.2F;
   max_cutoff = cutoff_s;
@@ -2546,11 +2549,11 @@ int ObjectMoleculeConnect(ObjectMolecule *I,BondType **bond,AtomInfoType *ai,
   (*bond) = VLAlloc(BondType,maxBond);
   if(cs->NIndex&&bondSearchFlag) /* &&(!I->DiscreteFlag) WLD 010527 */
 	 {
-      switch((int)SettingGet(cSetting_connect_mode)) {
+      switch((int)SettingGet(G,cSetting_connect_mode)) {
       case 0:
         /* distance-based bond location  */
 
-      map=MapNew(max_cutoff+MAX_VDW,cs->Coord,cs->NIndex,NULL);
+      map=MapNew(G,max_cutoff+MAX_VDW,cs->Coord,cs->NIndex,NULL);
       if(map)
         {
           for(i=0;i<cs->NIndex;i++)
@@ -2582,9 +2585,9 @@ int ObjectMoleculeConnect(ObjectMolecule *I,BondType **bond,AtomInfoType *ai,
                                  and may not be HETATMs though they are supposed to be... */
                               
                               water_flag=false;
-                              if(AtomInfoKnownWaterResName(ai1->resn))
+                              if(AtomInfoKnownWaterResName(G,ai1->resn))
                                 water_flag=true;
-                              else if(AtomInfoKnownWaterResName(ai2->resn))
+                              else if(AtomInfoKnownWaterResName(G,ai2->resn))
                                 water_flag=true;
 
                               cutoff = cutoff_h;
@@ -2604,7 +2607,7 @@ int ObjectMoleculeConnect(ObjectMolecule *I,BondType **bond,AtomInfoType *ai,
                                 {
                                   flag=true;
                                   if(water_flag)
-                                    if(!AtomInfoSameResidue(ai1,ai2))
+                                    if(!AtomInfoSameResidue(G,ai1,ai2))
                                       flag=false;
 
                                   if(ai1->alt[0]!=ai2->alt[0]) { /* handle alternate conformers */
@@ -2612,14 +2615,14 @@ int ObjectMoleculeConnect(ObjectMolecule *I,BondType **bond,AtomInfoType *ai,
                                         flag=false; /* don't connect atoms with different, non-NULL
                                                        alternate conformations */
                                   } else if(ai1->alt[0]&&ai2->alt[0])
-                                    if(!AtomInfoSameResidue(ai1,ai2))
+                                    if(!AtomInfoSameResidue(G,ai1,ai2))
                                       if(ai1->alt[0]!=ai2->alt[0])
                                         flag=false; /* don't connect different, non-NULL 
                                                        alt conformations in 
                                                        different residues */
                                   if(ai1->alt[0]||ai2->alt[0]) 
                                     if(water_flag) /* hack to clean up water bonds */
-                                      if(!AtomInfoSameResidue(ai1,ai2))
+                                      if(!AtomInfoSameResidue(G,ai1,ai2))
                                         flag=false;
 
                                   if(flag) {
@@ -2638,7 +2641,7 @@ int ObjectMoleculeConnect(ObjectMolecule *I,BondType **bond,AtomInfoType *ai,
                                             if(((!ai1->name[1])&&(!ai2->name[1]))&&
                                                (((ai1->name[0]=='C')&&(ai2->name[0]=='O'))||
                                                 ((ai1->name[0]=='O')&&(ai2->name[0]=='C')))) {
-                                              if(AtomInfoSameResidue(ai1,ai2)) {
+                                              if(AtomInfoSameResidue(G,ai1,ai2)) {
                                                 order = 2;
                                               }
                                             }
@@ -2649,7 +2652,7 @@ int ObjectMoleculeConnect(ObjectMolecule *I,BondType **bond,AtomInfoType *ai,
                                         break;
                                       }
                                     } else if((!ai1->hetatm)&&(!ai1->resn[3])) { /* Standard disconnected PDB residue */
-                                      if(AtomInfoSameResidue(ai1,ai2)) {
+                                      if(AtomInfoSameResidue(G,ai1,ai2)) {
                                         /* nasty high-speed hack to get bond valences and formal charges 
                                            for standard residues */
                                         if(((!ai1->name[1])&&(!ai2->name[1]))&&
@@ -2943,10 +2946,10 @@ int ObjectMoleculeConnect(ObjectMolecule *I,BondType **bond,AtomInfoType *ai,
           break;
         }
       }
-      PRINTFB(FB_ObjectMolecule,FB_Blather)
+      PRINTFB(G,FB_ObjectMolecule,FB_Blather)
         " ObjectMoleculeConnect: Found %d bonds.\n",nBond
-        ENDFB;
-      if(Feedback(FB_ObjectMolecule,FB_Debugging)) {
+        ENDFB(G);
+      if(Feedback(G,FB_ObjectMolecule,FB_Debugging)) {
         for(a=0;a<nBond;a++)
           printf(" ObjectMoleculeConnect: bond %d ind0 %d ind1 %d\n",
                  a,(*bond)[a].index[0],(*bond)[a].index[1]);
@@ -2954,10 +2957,10 @@ int ObjectMoleculeConnect(ObjectMolecule *I,BondType **bond,AtomInfoType *ai,
     }
 
   if(cs->NTmpBond&&cs->TmpBond) {
-      PRINTFB(FB_ObjectMolecule,FB_Blather) 
+      PRINTFB(G,FB_ObjectMolecule,FB_Blather) 
       " ObjectMoleculeConnect: incorporating explicit bonds. %d %d\n",
              nBond,cs->NTmpBond
-        ENDFB;
+        ENDFB(G);
     VLACheck((*bond),BondType,(nBond+cs->NTmpBond));
     ii1=(*bond)+nBond;
     ii2=cs->TmpBond;
@@ -2981,10 +2984,10 @@ int ObjectMoleculeConnect(ObjectMolecule *I,BondType **bond,AtomInfoType *ai,
   }
 
   if(cs->NTmpLinkBond&&cs->TmpLinkBond) {
-    PRINTFB(FB_ObjectMolecule,FB_Blather) 
+    PRINTFB(G,FB_ObjectMolecule,FB_Blather) 
       "ObjectMoleculeConnect: incorporating linkage bonds. %d %d\n",
       nBond,cs->NTmpLinkBond
-      ENDFB;
+      ENDFB(G);
     VLACheck((*bond),BondType,(nBond+cs->NTmpLinkBond));
     ii1=(*bond)+nBond;
     ii2=cs->TmpLinkBond;
@@ -3006,12 +3009,12 @@ int ObjectMoleculeConnect(ObjectMolecule *I,BondType **bond,AtomInfoType *ai,
     cs->NTmpLinkBond=0;
   }
 
-  PRINTFD(FB_ObjectMolecule)
+  PRINTFD(G,FB_ObjectMolecule)
     " ObjectMoleculeConnect: elminating duplicates with %d bonds...\n",nBond
     ENDFD;
 
   if(!I->DiscreteFlag) {
-    UtilSortInPlace((*bond),nBond,sizeof(BondType),(UtilOrderFn*)BondInOrder);
+    UtilSortInPlace(G,(*bond),nBond,sizeof(BondType),(UtilOrderFn*)BondInOrder);
     if(nBond) { /* eliminate duplicates */
       ii1=(*bond)+1;
       ii2=(*bond)+1;
@@ -3041,7 +3044,7 @@ int ObjectMoleculeConnect(ObjectMolecule *I,BondType **bond,AtomInfoType *ai,
     ii1++;
   }
 
-  PRINTFD(FB_ObjectMolecule)
+  PRINTFD(G,FB_ObjectMolecule)
     " ObjectMoleculeConnect: leaving with %d bonds...\n",nBond
     ENDFD;
   return(nBond);
@@ -3059,7 +3062,7 @@ void ObjectMoleculeSort(ObjectMolecule *I) /* sorts atoms and bonds */
 
   if(!I->DiscreteFlag) {
 
-    index=AtomInfoGetSortedIndex(I->AtomInfo,I->NAtom,&outdex);
+    index=AtomInfoGetSortedIndex(I->Obj.G,I->AtomInfo,I->NAtom,&outdex);
     for(a=0;a<I->NBond;a++) { /* bonds */
       I->Bond[a].index[0]=outdex[I->Bond[a].index[0]];
       I->Bond[a].index[1]=outdex[I->Bond[a].index[1]];
@@ -3105,9 +3108,9 @@ void ObjectMoleculeSort(ObjectMolecule *I) /* sorts atoms and bonds */
       I->DiscreteCSet = dcs;
       I->DiscreteAtmToIdx = dAtmToIdx;
     }
-    AtomInfoFreeSortedIndexes(index,outdex);
+    AtomInfoFreeSortedIndexes(I->Obj.G,index,outdex);
 
-    UtilSortInPlace(I->Bond,I->NBond,sizeof(BondType),(UtilOrderFn*)BondInOrder);
+    UtilSortInPlace(I->Obj.G,I->Bond,I->NBond,sizeof(BondType),(UtilOrderFn*)BondInOrder);
     /* sort...important! */
     ObjectMoleculeInvalidate(I,cRepAll,cRepInvAtoms); /* important */
 

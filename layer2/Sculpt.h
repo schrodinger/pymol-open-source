@@ -29,6 +29,7 @@ Z* -------------------------------------------------------------------
 #define cSculptTors  0x80
 
 typedef struct CSculpt {
+  PyMOLGlobals *G;
   CShaker *Shaker;
   ObjectMolecule *Obj;
   int *NBHash;
@@ -40,7 +41,7 @@ typedef struct CSculpt {
   float inverse[256];
 } CSculpt;
 
-CSculpt *SculptNew(void);
+CSculpt *SculptNew(PyMOLGlobals *G);
 void SculptMeasureObject(CSculpt *I,ObjectMolecule *obj,int state);
 float SculptIterateObject(CSculpt *I,ObjectMolecule *obj,int state,int n_cycle);
 

@@ -25,6 +25,7 @@ typedef struct GadgetSet {
   void (*fRender)(struct GadgetSet *I,CRay *ray,Pickable **pick,int pass);
   void (*fFree)(struct GadgetSet *I);
   void (*fInvalidateRep)(struct GadgetSet *I,int type,int level);
+  PyMOLGlobals *G;
   struct ObjectGadget *Obj;
   float *Coord;
   float *Normal;
@@ -44,9 +45,9 @@ typedef struct GadgetSet {
 
 #include"ObjectGadget.h"
 
-GadgetSet *GadgetSetNew(void);
+GadgetSet *GadgetSetNew(PyMOLGlobals *G);
 PyObject *GadgetSetAsPyList(GadgetSet *I);
-int GadgetSetFromPyList(PyObject *list,GadgetSet **cs,int version);
+int GadgetSetFromPyList(PyMOLGlobals *G,PyObject *list,GadgetSet **cs,int version);
 int GadgetSetGetExtent(GadgetSet *I,float *mn,float *mx);
 int GadgetSetFetch(GadgetSet *I,float *inp,float *out);
 int GadgetSetFetchColor(GadgetSet *I,float *inp,float *out);
