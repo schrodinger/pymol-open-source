@@ -629,7 +629,7 @@ USAGE
    return r
 
 
-def rock():
+def rock(mode=-1):
    '''
 DESCRIPTION
   
@@ -645,7 +645,7 @@ PYMOL API
    '''
    try:
       lock()   
-      r = _cmd.rock()
+      r = _cmd.rock(int(mode))
    finally:
       unlock()
    return r

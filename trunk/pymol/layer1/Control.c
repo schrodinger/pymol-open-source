@@ -26,10 +26,10 @@ Z* -------------------------------------------------------------------
 
 #include"Movie.h"
 
-#define cControlBoxSize 21
+#define cControlBoxSize 17
 #define cControlLeftMargin 4
 #define cControlTopMargin 5
-#define cControlSpacing 1
+#define cControlSpacing 2
 #define cControlInnerMargin 4
 #define cControlSpread 6
 
@@ -132,19 +132,28 @@ int ControlClick(Block *block,int button,int x,int y,int mod)
       break;
 	 case 2:
 		MoviePlay(cMovieStop);
+      if(SettingGet(cSetting_sculpting)) SettingSet(cSetting_sculpting,0);
+      if(I->Rocking) I->Rocking=false;
 		ExecutiveDrawNow();
       OrthoDirty();
       PLog("cmd.mstop()",cPLog_pym);
 		break;
 	 case 3:
-		if(mod&cOrthoCTRL) {
-        PLog("cmd.rewind()",cPLog_pym);
-        PLog("cmd.mplay()",cPLog_pym);
-		  SceneSetFrame(0,0);		
-        MoviePlay(cMoviePlay);
+      if(!MoviePlaying()) {
+        if(mod&cOrthoCTRL) {
+          PLog("cmd.rewind()",cPLog_pym);
+          PLog("cmd.mplay()",cPLog_pym);
+          SceneSetFrame(0,0);		
+          MoviePlay(cMoviePlay);
+        } else {
+          PLog("cmd.mplay()",cPLog_pym);
+          MoviePlay(cMoviePlay);
+        }
       } else {
-        PLog("cmd.mplay()",cPLog_pym);
-        MoviePlay(cMoviePlay);
+        MoviePlay(cMovieStop);
+        ExecutiveDrawNow();
+        OrthoDirty();
+        PLog("cmd.mstop()",cPLog_pym);
       }
 		break;
     case 4:
@@ -160,8 +169,22 @@ int ControlClick(Block *block,int button,int x,int y,int mod)
         PLog("cmd.ending()",cPLog_pym);
 		}
 		break;
-	 case 6:
+    case 6:
+      if(SettingGet(cSetting_sculpting)) {
+        SettingSet(cSetting_sculpting,0.0);
+        PLog("cmd.set('sculpting',0)",cPLog_pym);
+      } else {
+        SettingSet(cSetting_sculpting,1.0);
+        PLog("cmd.set('sculpting',1)",cPLog_pym);        
+      }
+      OrthoDirty();
+      break;
+	 case 7:
 		I->Rocking=!I->Rocking;
+      if(I->Rocking)
+        PLog("cmd.set('rocking',1)",cPLog_pym);
+      else
+        PLog("cmd.set('rocking',0)",cPLog_pym);
 		SceneRestartTimers();
       OrthoDirty();
 		break;
@@ -247,27 +270,6 @@ void ControlDraw(Block *block)
                  y-(cControlBoxSize/2));  
       glEnd();
       glColor3fv(I->Block->TextColor);
-    } else if(SettingGet(cSetting_sculpting)) {
-      glBegin(GL_TRIANGLE_STRIP);
-      glVertex2i(x,y+1);
-      glVertex2i(x,y-(cControlBoxSize-1));
-      glVertex2i(x+cControlBoxSize,y+1);
-      glVertex2i(x+cControlBoxSize,y-(cControlBoxSize-1));
-      
-      glEnd();
-      glColor3fv(I->Block->BackColor);
-      glBegin(GL_LINE_STRIP);
-      glVertex2i(x+(cControlBoxSize)-cControlInnerMargin,
-                 y-cControlInnerMargin+1);
-      glVertex2i(x+cControlInnerMargin,
-                 y-(cControlBoxSize/3));  
-      glVertex2i(x+(cControlBoxSize)-cControlInnerMargin,
-                 y-(2*cControlBoxSize/3)+cControlInnerMargin-2);  
-      glVertex2i(x+cControlInnerMargin,
-                 y-(cControlBoxSize-1)+cControlInnerMargin-1);
-      
-      glEnd();
-      glColor3fv(I->Block->TextColor);    
     } else {
       glBegin(GL_LINE_LOOP);
       glVertex2i(x,y);
@@ -315,44 +317,91 @@ void ControlDraw(Block *block)
     glVertex2i(x+(cControlBoxSize-1)-cControlInnerMargin,y-(cControlBoxSize/2));  
     glEnd();
     x+=cControlBoxSize+cControlSpacing;
+
+    if(SettingGet(cSetting_sculpting)) {
+      glBegin(GL_TRIANGLE_STRIP);
+      glVertex2i(x,y+1);
+      glVertex2i(x,y-(cControlBoxSize-1));
+      glVertex2i(x+cControlBoxSize,y+1);
+      glVertex2i(x+cControlBoxSize,y-(cControlBoxSize-1));
+      
+      glEnd();
+      glColor3fv(I->Block->BackColor);
+      glBegin(GL_LINE_STRIP);
+      glVertex2i(x+(cControlBoxSize)-cControlInnerMargin,
+                 y-cControlInnerMargin+1);
+      glVertex2i(x+cControlInnerMargin,
+                 y-(cControlBoxSize/3));  
+      glVertex2i(x+(cControlBoxSize)-cControlInnerMargin,
+                 y-(2*cControlBoxSize/3)+cControlInnerMargin-2);  
+      glVertex2i(x+cControlInnerMargin,
+                 y-(cControlBoxSize-1)+cControlInnerMargin-1);
+      
+      glEnd();
+      glColor3fv(I->Block->TextColor);    
+    } else {
+
+      glBegin(GL_LINE_LOOP);
+      glVertex2i(x,y);
+      glVertex2i(x,y-(cControlBoxSize-1));
+      glVertex2i(x+cControlBoxSize-1,y-(cControlBoxSize-1));
+      glVertex2i(x+cControlBoxSize-1,y);
+      glEnd();
+      glBegin(GL_LINE_LOOP);
+      glVertex2i(x+(cControlBoxSize)-cControlInnerMargin,
+                 y-cControlInnerMargin+1);
+      glVertex2i(x+cControlInnerMargin,
+                 y-(cControlBoxSize/3));  
+      glVertex2i(x+(cControlBoxSize)-cControlInnerMargin,
+                 y-(2*cControlBoxSize/3)+cControlInnerMargin-2);  
+      glVertex2i(x+cControlInnerMargin,
+                 y-(cControlBoxSize-1)+cControlInnerMargin-1);
+      glEnd();
+      
+
+    }
+    x+=cControlBoxSize+cControlSpacing; 
     
     if(I->Rocking) {
       
-    glBegin(GL_TRIANGLE_STRIP);
-    glVertex2i(x,y+1);
-    glVertex2i(x,y-(cControlBoxSize-1));
-    glVertex2i(x+cControlBoxSize-1,y+1);
-    glVertex2i(x+cControlBoxSize-1,y-(cControlBoxSize-1));
-
-    glEnd();
+      glBegin(GL_TRIANGLE_STRIP);
+      glVertex2i(x,y+1);
+      glVertex2i(x,y-(cControlBoxSize-1));
+      glVertex2i(x+cControlBoxSize-1,y+1);
+      glVertex2i(x+cControlBoxSize-1,y-(cControlBoxSize-1));
+      
+      glEnd();
       glColor3fv(I->Block->BackColor);
-    glBegin(GL_LINE_LOOP);
-    glVertex2i(x+(cControlBoxSize/2)+cControlSpread,
-               y-cControlInnerMargin);
-    glVertex2i(x+(cControlBoxSize/2),
-               y-(cControlBoxSize)+cControlInnerMargin);
-    glVertex2i(x+(cControlBoxSize/2)-cControlSpread,
-               y-cControlInnerMargin);
-    glEnd();
+      glBegin(GL_LINE_LOOP);
+      glVertex2i(x+(cControlBoxSize/2)+cControlSpread,
+                 y-cControlInnerMargin);
+      glVertex2i(x+(cControlBoxSize/2),
+                 y-(cControlBoxSize)+cControlInnerMargin);
+      glVertex2i(x+(cControlBoxSize/2)-cControlSpread,
+                 y-cControlInnerMargin);
+      glEnd();
       glColor3fv(I->Block->TextColor);
     } else {
-    glBegin(GL_LINE_LOOP);
-    glVertex2i(x,y);
-    glVertex2i(x,y-(cControlBoxSize-1));
-    glVertex2i(x+cControlBoxSize-1,y-(cControlBoxSize-1));
-    glVertex2i(x+cControlBoxSize-1,y);
-    glEnd();
-    glBegin(GL_LINE_LOOP);
-    glVertex2i(x+(cControlBoxSize/2)+cControlSpread,
-               y-cControlInnerMargin);
-    glVertex2i(x+(cControlBoxSize/2),
-               y-(cControlBoxSize)+cControlInnerMargin);
-    glVertex2i(x+(cControlBoxSize/2)-cControlSpread,
-               y-cControlInnerMargin);
-    glEnd();
+      glBegin(GL_LINE_LOOP);
+      glVertex2i(x,y);
+      glVertex2i(x,y-(cControlBoxSize-1));
+      glVertex2i(x+cControlBoxSize-1,y-(cControlBoxSize-1));
+      glVertex2i(x+cControlBoxSize-1,y);
+      glEnd();
+      glBegin(GL_LINE_LOOP);
+      glVertex2i(x+(cControlBoxSize/2)+cControlSpread,
+                 y-cControlInnerMargin);
+      glVertex2i(x+(cControlBoxSize/2),
+                 y-(cControlBoxSize)+cControlInnerMargin);
+      glVertex2i(x+(cControlBoxSize/2)-cControlSpread,
+                 y-cControlInnerMargin);
+      glEnd();
       
     }
     x+=cControlBoxSize+cControlSpacing; 
+
+
+
   }
 }
 

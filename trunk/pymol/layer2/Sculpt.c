@@ -440,17 +440,23 @@ void SculptIterateObject(CSculpt *I,ObjectMolecule *obj,int state,int n_cycle)
         plan_wt =  SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_sculpt_plan_weight);
         mask =  SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_sculpt_field_mask);
 
+        ai0=obj->AtomInfo;
         for(a=0;a<obj->NAtom;a++) {
-          if(obj->DiscreteFlag) {
-            if(cs==obj->DiscreteCSet[a]) {
-              a1=obj->DiscreteAtmToIdx[a];
-            } else {
-              a1=-1;
-            }
+          if(ai0->flags&cAtomFlag_exclude) {
+            a1=-1;
           } else {
-            a1=cs->AtmToIdx[a];
+            if(obj->DiscreteFlag) {
+              if(cs==obj->DiscreteCSet[a]) {
+                a1=obj->DiscreteAtmToIdx[a];
+              } else {
+                a1=-1;
+              }
+            } else {
+              a1=cs->AtmToIdx[a];
+            }
           }
           atm2idx[a] = a1;
+          ai0++;
         }
         
         /* first, create coordinate -> vertex mapping */
@@ -463,10 +469,15 @@ void SculptIterateObject(CSculpt *I,ObjectMolecule *obj,int state,int n_cycle)
           v = disp;
           i = cnt;
           for(a=0;a<obj->NAtom;a++) {
-            *(v++)=0.0;
-            *(i++)=0;
-            *(v++)=0.0;          
-            *(v++)=0.0;
+            if(atm2idx[a]) {
+              *(v++)=0.0;
+              *(i++)=0;
+              *(v++)=0.0;          
+              *(v++)=0.0;
+            } else {
+              i++;
+              v+=3;
+            }
           }
           
           /* apply distance constraints */
@@ -665,15 +676,16 @@ void SculptIterateObject(CSculpt *I,ObjectMolecule *obj,int state,int n_cycle)
             /* average the displacements */
             
           for(a=0;a<obj->NAtom;a++) {
-            if(cnt[a]) {
-              if(!obj->AtomInfo[a].protected) {
-                v1 = disp+3*a;
-                sc = 0.99/cnt[a];
-                scale3f(v1,sc,v1);
-                v2 = cs->Coord+3*atm2idx[a];
-                add3f(v1,v2,v2);
+            if(atm2idx[a]) 
+              if(cnt[a]) {
+                if(!obj->AtomInfo[a].protected) {
+                  v1 = disp+3*a;
+                  sc = 0.99/cnt[a];
+                  scale3f(v1,sc,v1);
+                  v2 = cs->Coord+3*atm2idx[a];
+                  add3f(v1,v2,v2);
+                }
               }
-            }
           }
           
           ObjectMoleculeInvalidate(obj,cRepAll,cRepInvCoord);

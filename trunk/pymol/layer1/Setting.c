@@ -657,6 +657,9 @@ void SettingGenerateSideEffects(int index,char *sele,int state)
   case cSetting_selection_width:
     SceneDirty();
     break;
+  case cSetting_sculpting:
+    OrthoDirty();
+    break;
   case cSetting_overlay:
   case cSetting_text:
     OrthoDirty();
@@ -921,7 +924,7 @@ void SettingInitGlobal(void)
 
   SettingSet_f(I,cSetting_trim_dots, 1.0F);
 
-  SettingSet_f(I,cSetting_cull_spheres, 0.0F);
+  SettingSet_f(I,cSetting_cull_spheres, 1.0F);
 
   SettingSet_f(I,cSetting_test1, 1.0F);
 
