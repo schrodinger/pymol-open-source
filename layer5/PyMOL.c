@@ -72,6 +72,12 @@ typedef struct _CPyMOL {
   int RedisplayFlag;
   int PassiveFlag;
   int SwapFlag;
+  int BusyFlag;
+  int InterruptFlag;
+
+  int Progress[PYMOL_PROGRESS_SIZE];
+  int ProgressChanged;
+
   PyMOLSwapBuffersFn *SwapFn;
   
   /* dynamically mapped string constants */
@@ -1392,6 +1398,49 @@ void PyMOLOptions_Free(CPyMOLOptions *options)
   FreeP(options);
 }
 
+void PyMOL_ResetProgress(CPyMOL *I)
+{
+  I->ProgressChanged = true;
+  UtilZeroMem(I->Progress, sizeof(int)*6);
+}
+
+void PyMOL_SetProgress(CPyMOL *I,int offset, int current, int range)
+{
+  switch(offset) {
+  case PYMOL_PROGRESS_SLOW:
+  case PYMOL_PROGRESS_MED:
+  case PYMOL_PROGRESS_FAST:
+    if(current!=I->Progress[offset]) {
+      I->Progress[offset] = current;
+      I->ProgressChanged = true;
+    }
+    if(range!=I->Progress[offset+1]) {
+      I->Progress[offset+1] = range;
+      I->ProgressChanged = true;
+    }
+  }
+}
+
+int PyMOL_GetProgress(CPyMOL *I,int *progress,int reset)
+{
+  int a;
+  int result=I->ProgressChanged;
+  for(a=0;a<PYMOL_PROGRESS_SIZE;a++) {
+    progress[a] = I->Progress[a];
+  }
+  if(reset) 
+    I->ProgressChanged=false;
+  return result;
+}
+
+int PyMOL_GetProgressChanged(CPyMOL *I,int reset)
+{
+  int result = I->ProgressChanged;
+  if(reset)
+    I->ProgressChanged=false;
+  return result;
+}
+
 static CPyMOL *_PyMOL_New(void)
 {
   CPyMOL *result = NULL;
@@ -1403,6 +1452,10 @@ static CPyMOL *_PyMOL_New(void)
     if( (result->G = Calloc(PyMOLGlobals,1)) ) {
       
       result->G->PyMOL = result; /* store the instance pointer */
+
+      result->BusyFlag = false;
+      result->InterruptFlag = false;
+      PyMOL_ResetProgress(result);
 
       #ifndef _PYMOL_NOPY
       /* temporary global pointer for the transition period */
@@ -1715,6 +1768,40 @@ int PyMOL_GetSwap(CPyMOL *I, int reset)
     I->SwapFlag = false;
   return result;
 }
+
+int PyMOL_GetBusy(CPyMOL *I, int reset)
+{
+  int result = I->BusyFlag;
+  if(reset)
+    PyMOL_SetBusy(I,false);
+  return result;
+}
+
+void PyMOL_SetBusy(CPyMOL *I, int value)
+{
+  if(!I->BusyFlag) 
+    /* if we weren't busy before, then reset the progress indicators */
+    PyMOL_ResetProgress(I);
+
+  I->BusyFlag = value;
+
+  if(!I->BusyFlag) /* reset the interrupt flag once we're done being busy */
+    PyMOL_SetInterrupt(I,false);
+}
+
+int PyMOL_GetInterrupt(CPyMOL *I, int reset)
+{
+  int result = I->InterruptFlag;
+  if(reset)
+    PyMOL_SetInterrupt(I,false);
+  return result;
+}
+
+void PyMOL_SetInterrupt(CPyMOL *I, int value)
+{
+  I->InterruptFlag = value;
+}
+
 
 void PyMOL_Drag(CPyMOL *I,int x, int y, int modifiers)
 {

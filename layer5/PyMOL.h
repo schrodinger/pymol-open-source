@@ -73,6 +73,12 @@ Z* -------------------------------------------------------------------
 
 #define PYMOL_DEFAULT  -1
 
+#define PYMOL_PROGRESS_SLOW 0
+#define PYMOL_PROGRESS_MED  2
+#define PYMOL_PROGRESS_FAST 4
+
+#define PYMOL_PROGRESS_SIZE 6
+
 /* configuration */
 
 #ifndef CPyMOLOptions_DEFINED
@@ -138,6 +144,21 @@ void PyMOL_SetDefaultMouse(CPyMOL *I);
 int PyMOL_GetRedisplay(CPyMOL *I, int reset);
 int PyMOL_GetPassive(CPyMOL *I, int reset);
 int PyMOL_GetSwap(CPyMOL *I, int reset);
+
+/* asynchronous processing (only useful for Python-based multithreaded builds right now) */
+
+int PyMOL_GetBusy(CPyMOL *I, int reset);
+void PyMOL_SetBusy(CPyMOL *I, int value);
+
+void PyMOL_ResetProgress(CPyMOL *I);
+
+void PyMOL_SetProgress(CPyMOL *I,int offset, int current, int range);
+
+int PyMOL_GetProgress(CPyMOL *I,int *progress,int reset);
+int PyMOL_GetProgressChanged(CPyMOL *I,int reset);
+                       
+int PyMOL_GetInterrupt(CPyMOL *I, int reset);
+void PyMOL_SetInterrupt(CPyMOL *I, int value);
 
 /* developer/transient privates */
 

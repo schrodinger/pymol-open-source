@@ -3642,8 +3642,15 @@ void SceneRay(PyMOLGlobals *G,int ray_width,int ray_height,int mode,
   SceneUnitContext context;
 
   if((!ray_width)||(!ray_height)) {
-    ray_width=I->Width;
-    ray_height=I->Height;
+
+    if(ray_width&&(!ray_height)) {
+      ray_height = (ray_width*I->Height)/I->Width;
+    } else if(ray_height&&(!ray_width)) {
+      ray_width = (ray_height*I->Width)/I->Height;
+    } else {
+      ray_width=I->Width;
+      ray_height=I->Height;
+    }
   }
 
   fov=SettingGet(G,cSetting_field_of_view);
@@ -3929,9 +3936,11 @@ void SceneUpdate(PyMOLGlobals *G)
   if(I->ChangedFlag || ((cur_state != I->LastStateBuilt) && 
                         (defer_builds_mode>0))) {
     SceneCountFrames(G);
+    PyMOL_SetBusy(G->PyMOL,true); /*  race condition -- may need to be fixed */
 	 while(ListIterate(I->Obj,rec,next))
       if(rec->obj->fUpdate) 
         rec->obj->fUpdate(rec->obj);
+    PyMOL_SetBusy(G->PyMOL,false); /*  race condition -- may need to be fixed */
 	 I->ChangedFlag = false;
     if((defer_builds_mode == 2) && 
        (cur_state != I->LastStateBuilt)) { 

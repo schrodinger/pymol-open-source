@@ -3289,6 +3289,62 @@ static PyObject *CmdRock(PyObject *self, PyObject *args)
   return(APIStatus(ok));
 }
 
+static PyObject *CmdSetBusy(PyObject *self, PyObject *args)
+{
+  int int1;
+  int ok=true;
+  ok = PyArg_ParseTuple(args,"i",&int1);
+  PLockStatus();
+  PyMOL_SetBusy(TempPyMOLGlobals->PyMOL,int1);
+  PUnlockStatus();
+  return(APIStatus(ok));
+}
+
+static PyObject *CmdGetBusy(PyObject *self, PyObject *args)
+{
+  int result;
+  int ok=true;
+  int int1;
+  ok = PyArg_ParseTuple(args,"i",&int1);
+  PLockStatus();
+  result = PyMOL_GetBusy(TempPyMOLGlobals->PyMOL,int1);
+  PUnlockStatus();
+  return(APIStatus(result));
+}
+
+static PyObject *CmdGetProgress(PyObject *self, PyObject *args)
+{
+  /* assumes status is already locked */
+
+  float result = -1.0F;
+  float value=0.0F, range=1.0F;
+  int ok=true;
+  int int1;
+  int offset;
+  int progress[PYMOL_PROGRESS_SIZE];
+
+  ok = PyArg_ParseTuple(args,"i",&int1);
+  if(PyMOL_GetBusy(TempPyMOLGlobals->PyMOL,false)) {
+    PyMOL_GetProgress(TempPyMOLGlobals->PyMOL,progress,false);
+    
+    for(offset=PYMOL_PROGRESS_FAST;offset>=PYMOL_PROGRESS_SLOW;offset-=2) {
+      if(progress[offset+1]) {
+        float old_value = value;
+        float old_range = range;
+        
+        range = (float)(progress[PYMOL_PROGRESS_FAST+1]);
+        value = (float)(progress[PYMOL_PROGRESS_FAST]);
+       
+        value += (1.0F/range)*(old_value/old_range);
+
+        result = value/range;
+      }
+    }
+  }
+  return(PyFloat_FromDouble((double)result));
+}
+
+
 static PyObject *CmdGetMoment(PyObject *self, 	PyObject *args) /* missing? */
 {
   Matrix33d m;
@@ -5240,6 +5296,7 @@ static PyMethodDef Cmd_methods[] = {
 	{"get_area",              CmdGetArea,              METH_VARARGS },
    {"get_atom_coords",       CmdGetAtomCoords,        METH_VARARGS },
    {"get_bond_print",        CmdGetBondPrint,         METH_VARARGS },
+   {"get_busy",              CmdGetBusy,              METH_VARARGS },
 	{"get_chains",            CmdGetChains,            METH_VARARGS },
 	{"get_color",             CmdGetColor,             METH_VARARGS },
    {"get_colorection",       CmdGetColorection,       METH_VARARGS },   
@@ -5257,6 +5314,7 @@ static PyMethodDef Cmd_methods[] = {
    {"get_movie_playing",     CmdGetMoviePlaying,      METH_VARARGS },
 	{"get_position",	        CmdGetPosition,          METH_VARARGS },
 	{"get_povray",	           CmdGetPovRay,            METH_VARARGS },
+   {"get_progress",          CmdGetProgress,          METH_VARARGS },
 	{"get_pdb",	              CmdGetPDB,               METH_VARARGS },
    {"get_phipsi",            CmdGetPhiPsi,            METH_VARARGS },
    {"get_renderer",          CmdGetRenderer,          METH_VARARGS },
@@ -5351,6 +5409,7 @@ static PyMethodDef Cmd_methods[] = {
 	{"sculpt_activate",       CmdSculptActivate,       METH_VARARGS },
 	{"sculpt_iterate",        CmdSculptIterate,        METH_VARARGS },
 	{"sculpt_purge",          CmdSculptPurge,          METH_VARARGS },
+   {"set_busy",              CmdSetBusy,              METH_VARARGS },   
    {"set_colorection",       CmdSetColorection,       METH_VARARGS },   
    {"set_colorection_name",  CmdSetColorectionName,   METH_VARARGS },   
 	{"set_dihe",              CmdSetDihe,              METH_VARARGS },

@@ -292,6 +292,7 @@ if __name__=='pymol.cmd':
 
       lock_api = pymol.lock_api
       lock_api_c = pymol.lock_api_c
+      lock_api_status = pymol.lock_api_status
 
       def lock_c(): 
          # WARNING: internal routine, subject to change      
@@ -301,7 +302,15 @@ if __name__=='pymol.cmd':
          # WARNING: internal routine, subject to change      
          lock_api_c.release()
 
-      def lock(): # INTERNAL
+      def lock_status(): 
+         # WARNING: internal routine, subject to change      
+         lock_api_status.acquire(1)
+
+      def unlock_status():
+         # WARNING: internal routine, subject to change      
+         lock_api_status.release()
+
+      def lock(): # INTERNAL -- API lock
    #      print " lock: acquiring as 0x%x"%thread.get_ident(),(thread.get_ident() == pymol.glutThread)
          if not lock_api.acquire(0):
             w = 0.001
@@ -360,6 +369,15 @@ if __name__=='pymol.cmd':
             return 1
          else:
             return 0
+
+      def get_progress(reset=0):
+         r = -1.0
+         try:
+            lock_status()
+            r = _cmd.get_progress(int(reset))
+         finally:
+            unlock_status()
+         return r
 
       def check_redundant_open(file):
          found = 0
@@ -2088,7 +2106,8 @@ SEE ALSO
                     loadable.xplor : loadable.xplorstr,
                     loadable.mol2 : loadable.mol2str,
                     loadable.mmod : loadable.mmodstr,
-                    loadable.ccp4 : loadable.ccp4str }
+                    loadable.ccp4 : loadable.ccp4str,
+                    loadable.sdf2 : loadable.sdf2str}
 
    except:
       print "Error: unable to initalize the pymol.cmd module"

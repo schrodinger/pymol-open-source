@@ -15,6 +15,7 @@
 if __name__=='pymol.viewing':
    
    import thread
+   import threading
    import string
    import types
    import traceback
@@ -1626,7 +1627,20 @@ NOTES
          unlock()
       return r
 
-   def ray(width=0,height=0,renderer=-1,angle=0.0,shift=0.0,quiet=1):
+   def _ray(width,height,renderer,angle,shift,quiet):
+      try:
+         lock()
+         try:
+            _cmd.set_busy(1)
+            r = _cmd.render(int(width),int(height),
+                            int(renderer),float(angle),float(shift),int(quiet))
+         finally:
+            _cmd.set_busy(0)
+      finally:
+         unlock()
+      return r
+   
+   def ray(width=0,height=0,renderer=-1,angle=0.0,shift=0.0,quiet=1,async=0):
       '''
 DESCRIPTION
 
@@ -1665,12 +1679,16 @@ SEE ALSO
    ray-tracing engine.
 
       '''
-      try:
-         lock()   
-         r = _cmd.render(int(width),int(height),
-                         int(renderer),float(angle),float(shift),int(quiet))
-      finally:
-         unlock()
+      arg_tup = (int(width),int(height),
+                 int(renderer),float(angle),
+                 float(shift),int(quiet))
+      if not async:
+         r = apply(_ray, arg_tup)
+      else:
+         render_thread = threading.Thread(target=_ray, args=arg_tup)
+         render_thread.setDaemon(1)
+         render_thread.start()
+         r = 1
       return r
 
    def refresh():

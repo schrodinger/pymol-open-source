@@ -4,6 +4,14 @@ CHANGE LOG
 
 Changes up to 0.98
 
+   beta32
+
+   * async option to ray, now default for gui "ray" button
+
+   * increased output buffering for script output
+
+   * fixed sdf url support
+
    beta31
 
    * scene renaming
@@ -32,7 +40,7 @@ Changes up to 0.98
 
    * new "move" option for the fuse command
 
-   * url support for pdb, mol, mol2, sdf, xplor, ccp4, pkl, and pse files.
+   * url support for pdb, mol, mol2, xplor, ccp4, pkl, and pse files.
 
    beta29
 
