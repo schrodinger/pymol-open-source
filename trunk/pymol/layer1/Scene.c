@@ -2085,6 +2085,10 @@ void SceneRender(Pickable *pick,int x,int y,Multipick *smp)
         glDrawBuffer(GL_BACK);
 
       } else {
+
+        PRINTFD(FB_Scene)
+          " SceneRender: rendering opaque and antialiased...\n"
+          ENDFD;
         
         /* mono */
         for(pass=1;pass>=0;pass--) { /* render opaque then antialiased...*/
@@ -2098,6 +2102,10 @@ void SceneRender(Pickable *pick,int x,int y,Multipick *smp)
               glPopMatrix();
             }
         }
+
+        PRINTFD(FB_Scene)
+          " SceneRender: rendering DebugCGO...\n"
+          ENDFD;
         
         glPushMatrix();
         glNormal3fv(normal);
@@ -2117,6 +2125,10 @@ void SceneRender(Pickable *pick,int x,int y,Multipick *smp)
           ENDFD;
 
         EditorRender(curState);
+
+        PRINTFD(FB_Scene)
+          " SceneRender: rendering transparent objects...\n"
+          ENDFD;
 
         rec=NULL;
         while(ListIterate(I->Obj,rec,next))/* render transparent */

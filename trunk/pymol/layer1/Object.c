@@ -83,7 +83,6 @@ void ObjectPrepareContext(Object *I,CRay *ray)
       }
     }
   }
-  SceneDirty();
 }
 
 /*========================================================================*/
