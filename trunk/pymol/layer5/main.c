@@ -30,6 +30,7 @@
 #endif
 
 #include"MemoryDebug.h"
+#include"MemoryCache.h"
 #include"Err.h"
 #include"Util.h"
 #include"Selector.h"
@@ -516,6 +517,7 @@ static void MainInit(void)
     glDisable(GL_BLEND);
   }
 
+  MemoryCacheInit();
   FeedbackInit();
   UtilInit();
   SettingInitGlobal(true);  
@@ -560,7 +562,7 @@ void MainFree(void)
   SphereDone();
   PFree();
   FeedbackFree();
-
+  CacheFree();
   if(ShowSplash) {
     MemoryDebugDump();
     printf(" PyMOL: normal program termination.\n");

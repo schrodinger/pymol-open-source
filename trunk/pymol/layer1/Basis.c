@@ -8,7 +8,7 @@ F* -------------------------------------------------------------------
 G* Please see the accompanying LICENSE file for further information. 
 H* -------------------------------------------------------------------
 I* Additional authors of this source file include:
--* 
+-*   Larry Coopet (various optimizations)
 -* 
 -*
 Z* -------------------------------------------------------------------
@@ -772,9 +772,9 @@ int BasisHit(BasisCallRec *BC)
 		const float excl_trans = BC->excl_trans;
 		MapCache *cache = &BC->cache;
 		
-		float r_tri1, r_tri2, r_dist;
-		float r_sphere0,r_sphere1,r_sphere2;
-		CPrimitive *r_prim;
+		float r_tri1=_0, r_tri2=_0, r_dist=_0; /* zero inits to suppress compiler warnings */
+		float r_sphere0=_0,r_sphere1=_0,r_sphere2=_0;
+		CPrimitive *r_prim = NULL;
 		
 		check_interior_flag	= BC->check_interior;
 		
@@ -1185,9 +1185,9 @@ int BasisHitNoShadow(BasisCallRec *BC)
 		const float excl_trans = BC->excl_trans;
 		MapCache *cache = &BC->cache;
 		
-		float r_tri1, r_tri2, r_dist;
-		float r_sphere0,r_sphere1,r_sphere2;
-		CPrimitive *r_prim;
+		float r_tri1=_0, r_tri2=_0, r_dist=_0; /* zero inits to suppress compiler warnings */
+		float r_sphere0=_0,r_sphere1=_0,r_sphere2=_0;
+		CPrimitive *r_prim = NULL;
 		
 		check_interior_flag	= BC->check_interior;
 		
@@ -1473,14 +1473,12 @@ int BasisHitShadow(BasisCallRec *BC)
 		int except = BC->except;
 		const int *vert2prim = BC->vert2prim;
 		const int trans_shadows = BC->trans_shadows;
-		const float front = BC->front;
-		const float back = BC->back;
 		const float excl_trans = BC->excl_trans;
 		MapCache *cache = &BC->cache;
 		
-		float r_tri1, r_tri2, r_dist;
-		float r_sphere0,r_sphere1,r_sphere2;
-		CPrimitive *r_prim;
+		float r_tri1=_0, r_tri2=_0, r_dist=_0;  /* zero inits to suppress compiler warnings */
+		float r_sphere0=_0,r_sphere1=_0,r_sphere2=_0;
+		CPrimitive *r_prim = NULL;
 		
 		check_interior_flag	= BC->check_interior;
 		
@@ -2251,7 +2249,7 @@ void BasisMakeMap(CBasis *I,int *vert2prim,CPrimitive *prim,float *volume)
 			{
 				MapLocus(mapPtr,v, &j, &k, &c);
 				
-				//if( (c >= mapPtr->iMin[2]) && (c <= mapPtr->iMax[2]) )
+				/*if( (c >= mapPtr->iMin[2]) && (c <= mapPtr->iMax[2]) ) */
 				if( (c >= mapPtr->iMin[2]) && (c <= mapPtr->iMax[2]) && ((j-1) <= mapPtr->iMax[0]) && ((k-1) <= mapPtr->iMax[1]) )
 				{
 					int	*iPtr1	= mapPtr->EHead + ((j-1) * mapPtr->D1D2) + ((k-1) * mapPtr->Dim[2]) + c;
