@@ -50,6 +50,8 @@ void MovieDump(void)
   int a;
   CMovie *I=&Movie;
   int flag=false;
+  char buffer[OrthoLineLength+100];
+
   for(a=0;a<I->NFrame;a++) {
     if(I->Cmd[a][0]) {
       flag=true;
@@ -58,13 +60,12 @@ void MovieDump(void)
   }
   if(flag&&I->NFrame) {
     PRINTFB(FB_Movie,FB_Results)
-      " Movie commands:\n"
+      " Movie: General Purpose Commands:\n"
       ENDFB;
     for(a=0;a<I->NFrame;a++) {
       if(I->Cmd[a][0]) {
-        PRINTFB(FB_Movie,FB_Results)
-          "%5d: %s\n",a+1,I->Cmd[a]
-          ENDFB;
+        sprintf(buffer,"%5d: %s\n",a+1,I->Cmd[a]);
+        OrthoAddOutput(buffer);
       }
     }
   } else {
@@ -114,7 +115,6 @@ int MovieFromPyList(PyObject *list,int *warning)
     if(ok) ok=MovieCmdFromPyList(PyList_GetItem(list,5),warning);
     if(warning&&Security) {
       MovieSetLock(true);
-      PParse("wizard security");
     }
   }
   if(!ok) {

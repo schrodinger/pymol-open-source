@@ -995,6 +995,7 @@ if __name__=='pymol.cmd':
         get_dihedral,       \
         get_extent,         \
         get_model,          \
+        get_movie_locked,   \
         get_names,          \
         get_names_of_type,  \
         get_phipsi,         \

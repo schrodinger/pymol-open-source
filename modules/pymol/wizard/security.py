@@ -12,12 +12,12 @@ class Security(Wizard):
          print a
          
    def get_prompt(self):
-      self.prompt = [ '=== PyMOL SECURITY WARNING ===',
+      self.prompt = [ '========================= PyMOL SECURITY WARNING =========================',
                       '',
-                      'Do you trust the person who created the file you just loaded?',
+                      'CAUTION! Do you know and trust the person who created this session file? ',
                       '',
-                      'It contains movie commands which could be used maliciously',
-                      'to control your computer or damage your files.',
+                      'It contains GENERAL PURPOSE movie commands which could be used',
+                      'maliciously to take control your of computer or damage your files.',
                       '',
                       'Click or enter "accept" to assume the risks of running the commands.',
                       '',
@@ -25,8 +25,10 @@ class Security(Wizard):
                       '',
                       'Click or enter "mdump" to print out the commands in the movie.',
                       '',
-                      'To avoid this message in the future, "set security,off"',
-                      'or launch pymol with the -o option.',
+                      'To avoid this message in the future, "set security,off" before loading',
+                      'the session file, or just launch pymol with the "-o" option.',
+                      '',
+                      '=========================================================================',
                       ]
       return self.prompt
 

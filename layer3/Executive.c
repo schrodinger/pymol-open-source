@@ -935,7 +935,6 @@ int ExecutiveSetSession(PyObject *session)
         ENDFB;
     }
   }
-  
   if(!ok) {
     PRINTFB(FB_Executive,FB_Warnings)
       "ExectiveSetSession-Warning: restore may be incomplete.\n"

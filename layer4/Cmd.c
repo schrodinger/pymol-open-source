@@ -264,6 +264,7 @@ static PyObject *CmdGetMatrix(PyObject *self, 	PyObject *args);
 static PyObject *CmdGetMinMax(PyObject *self, 	PyObject *args);
 static PyObject *CmdGetModel(PyObject *dummy, PyObject *args);
 static PyObject *CmdGetMoment(PyObject *self, 	PyObject *args);
+static PyObject *CmdGetMovieLocked(PyObject *self, 	PyObject *args);
 static PyObject *CmdGetNames(PyObject *self, 	PyObject *args);
 static PyObject *CmdGetPhiPsi(PyObject *self, 	PyObject *args);
 static PyObject *CmdGetPosition(PyObject *self, 	PyObject *args);
@@ -432,6 +433,7 @@ static PyMethodDef Cmd_methods[] = {
 	{"get_min_max",           CmdGetMinMax,            METH_VARARGS },
 	{"get_model",	           CmdGetModel,             METH_VARARGS },
 	{"get_moment",	           CmdGetMoment,            METH_VARARGS },
+   {"get_movie_locked",      CmdGetMovieLocked,       METH_VARARGS },
    {"get_names",             CmdGetNames,             METH_VARARGS },
 	{"get_position",	        CmdGetPosition,          METH_VARARGS },
 	{"get_povray",	           CmdGetPovRay,            METH_VARARGS },
@@ -556,6 +558,12 @@ static PyMethodDef Cmd_methods[] = {
 	{"zoom",	                 CmdZoom,                 METH_VARARGS },
 	{NULL,		              NULL}     /* sentinel */        
 };
+
+
+static PyObject *CmdGetMovieLocked(PyObject *self, 	PyObject *args)
+{
+  return(APIStatus(MovieLocked()));
+}
 
 static PyObject *CmdDelColorection(PyObject *dummy, PyObject *args)
 {
