@@ -1733,7 +1733,7 @@ Rep *RepSurfaceNew(CoordSet *cs)
     CGOEnd(I->debug);
     */
 
-    PRINTFB(G,FB_RepSurface,FB_Details)
+    PRINTFB(G,FB_RepSurface,FB_Blather)
       " RepSurface: %i surface points.\n",I->N
       ENDFB(G);
 
@@ -1916,7 +1916,7 @@ Rep *RepSurfaceNew(CoordSet *cs)
         if((cutoff>probe_radius)&&(!surface_solvent))
           cutoff = probe_radius;
         I->T=TrianglePointsToSurface(G,I->V,I->VN,I->N,cutoff,&I->NT,&I->S,extent);
-        PRINTFB(G,FB_RepSurface,FB_Details)
+        PRINTFB(G,FB_RepSurface,FB_Blather)
           " RepSurface: %i triangles.\n",I->NT
           ENDFB(G);
       }

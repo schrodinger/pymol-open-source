@@ -56,8 +56,6 @@ void CGORendererFree(PyMOLGlobals *G)
   FreeP(G->CGORenderer);
 }
 
-CGO *DebugCGO = NULL; /* initialized in Scene.c */
-
 int CGO_sz[] = {
   CGO_NULL_SZ,
   CGO_NULL_SZ,
@@ -1247,9 +1245,8 @@ void CGORenderGL(CGO *I,float *color,CSetting *set1,CSetting *set2)
   register int op;
   register CCGORenderer *R = I->G->CGORenderer;
 
-  R->alpha = 1.0F;
-
   if(I->c) {
+    R->alpha = 1.0F;
     if(color) 
       glColor3fv(color);
     else

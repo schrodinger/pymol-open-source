@@ -589,11 +589,11 @@ int	IsosurfVolume(PyMOLGlobals *G,Isofield *field,float level,int **num,float **
 		}
    
    if(mode) {
-     PRINTFB(G,FB_Isomesh,FB_Actions)
+     PRINTFB(G,FB_Isomesh,FB_Blather)
        " IsosurfVolume: Surface generated using %d dots.\n",I->NLine
      ENDFB(G);
    } else {
-     PRINTFB(G,FB_Isomesh,FB_Actions)
+     PRINTFB(G,FB_Isomesh,FB_Blather)
        " IsosurfVolume: Surface generated using %d lines.\n",I->NLine
      ENDFB(G);
    }

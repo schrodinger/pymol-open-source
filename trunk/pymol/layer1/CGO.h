@@ -45,13 +45,11 @@ Z* -------------------------------------------------------------------
  * primwidth * ray-tracing 
  */
 
-typedef struct {
+struct _CGO {
   PyMOLGlobals *G;
   float *op;
   int c;
-} CGO;
-
-extern CGO *DebugCGO; /* for programming... initialized in Scene.c */
+};
 
 /* instructions and data segment sizes */
 

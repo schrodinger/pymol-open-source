@@ -1547,11 +1547,11 @@ int SceneClick(Block *block,int button,int x,int y,int mod)
   ObjectMolecule *objMol;
   OrthoLineType buffer,buf1,buf2;
   WordType selName = "";
+  register int mode = 0; /* trying to work around something... */
   int atIndex;
   int double_click = false;
   char empty_string[1] = "";
   char *sel_mode_kw = empty_string;
-  static int mode = 0; /* static declaration works around compiler bug in VC6 */
   
   if((!(mod&(cOrthoCTRL+cOrthoSHIFT)))&&(UtilGetSeconds(G)-I->LastClickTime)<cDoubleTime)
     {
@@ -2872,7 +2872,7 @@ void SceneFree(PyMOLGlobals *G)
   if(!I->MovieOwnsImageFlag)
 	 FreeP(I->ImageBuffer);
   
-  CGOFree(DebugCGO);
+  CGOFree(G->DebugCGO);
   FreeP(G->Scene);
                       
 }
@@ -2920,7 +2920,7 @@ int  SceneInit(PyMOLGlobals *G)
   register CScene *I=NULL;
   if( (I=(G->Scene=Calloc(CScene,1)))) {
 
-    DebugCGO = CGONew(G);
+    G->DebugCGO = CGONew(G);
 
     ListInit(I->Obj);
     
@@ -3956,7 +3956,7 @@ void SceneRender(PyMOLGlobals *G,Pickable *pick,int x,int y,Multipick *smp)
 
         glPushMatrix();  /* 2 */
         glNormal3fv(normal);
-        CGORenderGL(DebugCGO,NULL,NULL,NULL);
+        CGORenderGL(G->DebugCGO,NULL,NULL,NULL);
         glPopMatrix();  /* 1 */
 
 
@@ -4011,7 +4011,7 @@ void SceneRender(PyMOLGlobals *G,Pickable *pick,int x,int y,Multipick *smp)
         
         glPushMatrix(); /* 2 */
         glNormal3fv(normal);
-        CGORenderGL(DebugCGO,NULL,NULL,NULL);
+        CGORenderGL(G->DebugCGO,NULL,NULL,NULL);
         glPopMatrix(); /* 1 */
         
         glPushMatrix(); /* 2 */
@@ -4064,7 +4064,7 @@ void SceneRender(PyMOLGlobals *G,Pickable *pick,int x,int y,Multipick *smp)
         
         glPushMatrix();
         glNormal3fv(normal);
-        CGORenderGL(DebugCGO,NULL,NULL,NULL);
+        CGORenderGL(G->DebugCGO,NULL,NULL,NULL);
         glPopMatrix();
 
         PRINTFD(G,FB_Scene)
