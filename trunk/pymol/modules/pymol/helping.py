@@ -439,7 +439,7 @@ PyMOL COMMAND LINE OPTIONS
    -x   Disable the external GUI module.
    -t   Use Tcl/Tk based external GUI module (pmg_tk).
    -w   Use wxPython based external GUI module (pmg_wx).
-   -q   Quiet launch. Suppress splash screen.
+   -q   Quiet launch. Suppress splash screen & other chatter.
    -p   Listen for commands on standard input.
    -e   Start in full-screen mode
    -2   Start in two-button mouse mode
