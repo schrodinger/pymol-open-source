@@ -157,6 +157,11 @@ void WizardDoPick(int bondFlag)
 {
   CWizard *I=&Wizard;
   if(I->Wiz) {
+    if(bondFlag)
+      PLog("cmd.get_wizard().do_pick(1)",cPLog_pym);
+    else
+      PLog("cmd.get_wizard().do_pick(0)",cPLog_pym);
+
     PBlock(); 
     if(I->Wiz) {
       if(PyObject_HasAttrString(I->Wiz,"do_pick")) {
@@ -252,6 +257,7 @@ static int WizardRelease(Block *block,int button,int x,int y,int mod)
     switch(I->Line[a].type) {
     case cWizTypeButton:
       if(I->Wiz) {
+        PLog(I->Line[a].code,cPLog_pym);
         PParse(I->Line[a].code);
         PFlush();
         /* PBlockAndUnlockAPI();

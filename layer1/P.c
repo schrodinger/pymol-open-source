@@ -833,10 +833,11 @@ void PLog(char *str,int format) /* general log routine can write PML or PYM comm
   int a;
   PyObject *log;
   OrthoLineType buffer="";
-  PBlock();
   mode = SettingGet(cSetting_logging);
   if(mode)
     {
+      PBlock();
+
       log = PyDict_GetItemString(P_globals,P_log_file_str);
       if(log&&(log!=Py_None)) {
         switch(mode) {
@@ -875,8 +876,8 @@ void PLog(char *str,int format) /* general log routine can write PML or PYM comm
         PyObject_CallMethod(log,"write","s",buffer);        
         PyObject_CallMethod(log,"flush","");
       }
+      PUnblock();
     }
-  PUnblock();
 }
 
 void PFlush(void) {  

@@ -25,13 +25,15 @@ def mol_show(s):
            [ 1, 'cartoon'    , 'cmd.show("cartoon"   ,"'+s+'")' ],
            [ 0, ''           , ''                               ],
            [ 1, 'labels'     , 'cmd.show("labels"    ,"'+s+'")' ],
+           [ 1, 'cell'       , 'cmd.show("cell"      ,"'+s+'")' ],
            [ 0, ''           , ''                               ],
            [ 1, 'dots'       , 'cmd.show("dots"      ,"'+s+'")' ],
            [ 1, 'spheres'    , 'cmd.show("spheres"   ,"'+s+'")' ],
            [ 1, 'nb_spheres' , 'cmd.show("nb_spheres","'+s+'")' ],
            [ 0, ''           , ''                               ],
            [ 1, 'mesh'       , 'cmd.show("mesh"      ,"'+s+'")' ],
-           [ 1, 'surface'    , 'cmd.show("surface"   ,"'+s+'")' ]]
+           [ 1, 'surface'    , 'cmd.show("surface"   ,"'+s+'")' ],
+           ]
 
 def mol_hide(s):
    return [[ 2, 'Hide:'     , ''                                ],
@@ -42,6 +44,7 @@ def mol_hide(s):
            [ 1, 'cartoon'   , 'cmd.hide("cartoon"   ,"'+s+'")' ],           
            [ 0, ''          , ''                                ],
            [ 1, 'labels'    , 'cmd.hide("labels"    ,"'+s+'")'  ],
+           [ 1, 'cell'      , 'cmd.hide("cell"      ,"'+s+'")' ],
            [ 0, ''          , ''                                ],
            [ 1, 'dots'      , 'cmd.hide("dots"      ,"'+s+'")'  ],
            [ 1, 'spheres'   , 'cmd.hide("spheres"   ,"'+s+'")'  ],
@@ -75,6 +78,16 @@ def simple_show(s):
 def simple_hide(s):
    return [[ 2, 'Hide:'     ,''                                ],
            [ 1, 'everything'    ,'cmd.disable("'+s+'")'        ]]
+
+def mesh_show(s):
+   return [[ 2, 'Show:'       , ''                             ],
+           [ 1, 'cell'        , 'cmd.show("cell","'+s+'")'     ],
+           [ 1, 'everything'  , 'cmd.enable("'+s+'")'          ]]
+
+def mesh_hide(s):
+   return [[ 2, 'Hide:'       , ''                             ],
+           [ 1, 'cell'        , 'cmd.hide("cell","'+s+'")'      ],           
+           [ 1, 'everything'  , 'cmd.disable("'+s+'")'          ]]
 
 def mol_color(s):
    return [[ 2, 'Color:'     ,''                               ],
@@ -144,9 +157,9 @@ def sele_action(s):
            [ 1, 'Zoom'         ,'cmd.zoom("'+s+'")'       ],
            [ 1, 'Orient'       ,'cmd.orient("'+s+'")'     ],
            [ 0, ''          ,''                           ],
-           [ 1, 'Delete Selection'       ,'cmd.delete("'+s+'")'     ],
+           [ 1, 'Delete'       ,'cmd.delete("'+s+'")'     ],
            [ 0, ''          ,''                           ],
-           [ 1, 'Complete Residues' ,'cmd.select("'+s+'","(byres '+s+')")'                   ],
+           [ 1, 'Residues' ,'cmd.select("'+s+'","(byres '+s+')")'                   ],
            [ 0, ''          ,''                                              ],
            [ 1, 'Expand by 4 A'  ,'cmd.select("'+s+'","('+s+' expand 4)")'   ],
            [ 1, 'Expand by 8 A'  ,'cmd.select("'+s+'","('+s+' expand 8)")'   ],
@@ -164,52 +177,52 @@ def sele_action(s):
 
 def mol_action(s):
    return [[ 2, 'Actions:'     , ''                       ],     
-           [ 1, 'Origin'       , 'cmd.origin("'+s+'")'    ],
-           [ 1, 'Zoom'         , 'cmd.zoom("'+s+'")'      ],
-           [ 1, 'Orient'       , 'cmd.orient("'+s+'")'    ],
+           [ 1, 'origin'       , 'cmd.origin("'+s+'")'    ],
+           [ 1, 'zoom'         , 'cmd.zoom("'+s+'")'      ],
+           [ 1, 'orient'       , 'cmd.orient("'+s+'")'    ],
            [ 0, ''             , ''                       ],
-           [ 1, 'Delete'       , 'cmd.delete("'+s+'")'    ],
+           [ 1, 'delete'       , 'cmd.delete("'+s+'")'    ],
            [ 0, ''          ,''                                              ],
-           [ 1, 'Mask'  ,'cmd.mask("'+s+'")'        ],
-           [ 1, 'Unmask'  ,'cmd.unmask("'+s+'")'        ],
+           [ 1, 'mask'  ,'cmd.mask("'+s+'")'        ],
+           [ 1, 'unmask'  ,'cmd.unmask("'+s+'")'        ],
            [ 0, ''          ,''                                              ],
-           [ 1, 'Protect'  ,'cmd.protect("'+s+'")'        ],
-           [ 1, 'Deprotect'  ,'cmd.deprotect("'+s+'")'        ],
+           [ 1, 'protect'  ,'cmd.protect("'+s+'")'        ],
+           [ 1, 'deprotect'  ,'cmd.deprotect("'+s+'")'        ],
            [ 0, ''          ,''                                              ],
-           [ 1, 'Assign S.S.'  ,'util.ss("'+s+'")'        ],           
+           [ 1, 'assign S.S.'  ,'util.ss("'+s+'")'        ],           
            ]
 
 def simple_action(s):
    return [[ 2, 'Actions:'     , ''                       ],
-           [ 1, 'Origin'       , 'cmd.origin("'+s+'")'    ],
-           [ 1, 'Zoom'         , 'cmd.zoom("'+s+'")'      ],
+           [ 1, 'origin'       , 'cmd.origin("'+s+'")'    ],
+           [ 1, 'zoom'         , 'cmd.zoom("'+s+'")'      ],
            [ 0, ''             , ''                       ],
-           [ 1, 'Delete'       , 'cmd.delete("'+s+'")'    ],
+           [ 1, 'delete'       , 'cmd.delete("'+s+'")'    ],
            ]
 
 def all_action(s):
    return [[ 2, 'Actions:'     , ''                      ],     
-           [ 1, 'Set Origin'   , 'cmd.origin("'+s+'")'   ],
-           [ 1, 'Zoom'         , 'cmd.zoom("'+s+'")'     ],
+           [ 1, 'origin'   , 'cmd.origin("'+s+'")'   ],
+           [ 1, 'zoom'         , 'cmd.zoom("'+s+'")'     ],
            [ 0, ''             , ''                      ],
-           [ 1, 'Delete'       , 'cmd.delete("all")'     ]
+           [ 1, 'delete'       , 'cmd.delete("all")'     ]
            ]
 
 
 def mol_labels(s):
    return [[ 2, 'Labels:'        , ''                                  ],
-           [ 1, 'Clear'          , 'cmd.label("'+s+'","\'\'")'         ],
-           [ 1, 'Residues'       ,
+           [ 1, 'clear'          , 'cmd.label("'+s+'","\'\'")'         ],
+           [ 1, 'residues'       ,
   'cmd.label("(name ca and (byres('+s+')))","\'%s-%s\'%(resn,resi)")'  ],
-           [ 1, 'Atoms'          , 'cmd.label("'+s+'","name")'         ],
+           [ 1, 'atoms'          , 'cmd.label("'+s+'","name")'         ],
            [ 0, ''               , ''                                  ],
-           [ 1, 'B-factor'       , 'cmd.label("'+s+'","\'%1.2f\'%b")'  ],           [ 1, 'Partial Charge' , 
+           [ 1, 'b-factor'       , 'cmd.label("'+s+'","\'%1.2f\'%b")'  ],           [ 1, 'Partial Charge' , 
   'cmd.label("'+s+'","\'%1.4f\'%partial_charge")'                      ],
-           [ 1, 'Formal Charge' , 
+           [ 1, 'formal charge' , 
   'cmd.label("'+s+'","\'%d\'%formal_charge")'                      ],
            [ 0, ''               , ''                                  ],
-           [ 1, 'Text Type'      , 'cmd.label("'+s+'","text_type")'    ],
-           [ 1, 'Numeric Type'   , 'cmd.label("'+s+'","numeric_type")' ],
+           [ 1, 'text type'      , 'cmd.label("'+s+'","text_type")'    ],
+           [ 1, 'numeric Type'   , 'cmd.label("'+s+'","numeric_type")' ],
            [ 0, ''               , ''                                  ],      
            [ 1, 'ID'             , 'cmd.label("'+s+'","id")' ],
            [ 1, 'ID+1'           , 'cmd.label("'+s+'","id+1")' ],

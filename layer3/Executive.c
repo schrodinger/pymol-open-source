@@ -2210,7 +2210,7 @@ void ExecutiveSetRepVisib(char *name,int rep,int state)
         ObjectSetRepVis(tRec->obj,rep,state);
         if(tRec->obj->fInvalidate)
           tRec->obj->fInvalidate(tRec->obj,rep,cRepInvVisib,state);
-        SceneDirty();
+        SceneChanged();
         break;
       }
     if(!handled)
@@ -2679,9 +2679,10 @@ int ExecutiveClick(Block *block,int button,int x,int y,int mod)
                 case cObjectMolecule:
                   MenuActivate(x,y,"mol_action",rec->obj->Name);
                   break;
+
+                case cObjectMesh:
                 case cObjectDist:
                 case cObjectMap:
-                case cObjectMesh:
                 case cObjectCGO:
                 case cObjectCallback:
                   MenuActivate(x,y,"simple_action",rec->obj->Name);
@@ -2707,8 +2708,10 @@ int ExecutiveClick(Block *block,int button,int x,int y,int mod)
                   MenuActivate(x,y,"dist_show",rec->obj->Name);
                   break;
                 case cObjectMap:
-                case cObjectMesh:
                   MenuActivate(x,y,"simple_show",rec->obj->Name);
+                  break;
+                case cObjectMesh:
+                  MenuActivate(x,y,"mesh_show",rec->obj->Name);
                   break;
                 }
                 break;
@@ -2731,8 +2734,10 @@ int ExecutiveClick(Block *block,int button,int x,int y,int mod)
                   MenuActivate(x,y,"dist_hide",rec->obj->Name);
                   break;
                 case cObjectMap:
-                case cObjectMesh:
                   MenuActivate(x,y,"simple_hide",rec->obj->Name);
+                  break;
+                case cObjectMesh:
+                  MenuActivate(x,y,"mesh_hide",rec->obj->Name);
                   break;
                 }
                 break;

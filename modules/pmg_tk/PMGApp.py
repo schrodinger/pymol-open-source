@@ -225,6 +225,8 @@ class PMGApp(AbstractApp):
                                 initialdir = self.initialdir,
                                 filetypes=[("PyMOL Script","*.pml"),
                                            ("PyMOL Program","*.pym"),
+                                           ("Python Program","*.py"),
+                                           ("All Files","*.*"),                                           
                                            ])
       if len(sfile):
          self.initialdir = re.sub(r"[^\/\\]*$","",sfile)
@@ -235,7 +237,8 @@ class PMGApp(AbstractApp):
       ofile = askopenfilename(initialdir = os.getcwd(),
                    filetypes=[("PyMOL Script","*.pml"),
                               ("PyMOL Program","*.pym"),
-                              ("Python Program","*.py")
+                              ("Python Program","*.py"),
+                              ("All Files","*.*"),                                           
                               ])
       if len(ofile):
          self.initialdir = re.sub(r"[^\/\\]*$","",ofile)
