@@ -1445,9 +1445,9 @@ static PyObject *CmdGetWizard(PyObject *dummy, PyObject *args)
 static PyObject *CmdGetWizardStack(PyObject *dummy, PyObject *args)
 {
   PyObject *result;
-  APIEntry();
+  APIEnterBlocked();
   result = WizardGetStack();
-  APIExit();
+  APIExitBlocked();
   if(!result)
     result=Py_None;
   return APIIncRef(result);
