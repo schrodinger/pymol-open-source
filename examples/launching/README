@@ -1,0 +1,14 @@
+This directory contains a set of scripts which demonstrate
+how to launch PyMOL from within Python (if PyMOL has been built
+as a module).
+
+To use them, the appropriate pymol module directories must already
+be in your Python search path (pymol, chempy, pmg_tk, Pmw) and 
+PYMOL_PATH must be set.
+
+For example, under csh:
+
+setenv PYMOL_PATH $HOME/pymol
+setenv PYTHONPATH $PYMOL_PATH/modules
+python launch.py
+
