@@ -934,6 +934,23 @@ class PMGApp(AbstractApp):
                                label='Stereo Off',
                                command = lambda: cmd.do("_ stereo off"))
 
+      self.menuBar.addcascademenu('Display', 'Stereo', 'Stereo',
+                               label='Stereo')
+
+      self.menuBar.addmenuitem('Stereo', 'command', 'Quad-Buffered Stereo',
+                               label='Quad-Buffered Stereo',
+                               command = lambda: cmd.do("_ stereo on"))
+
+      self.menuBar.addmenuitem('Stereo', 'command', 'Cross-Eye Stereo',
+                               label='Cross-Eye Stereo',
+                               command = lambda: cmd.do("_ stereo crosseye"))
+
+      self.menuBar.addmenuitem('Stereo', 'separator', '')
+
+      self.menuBar.addmenuitem('Stereo', 'command', 'Swap Sides',
+                               label='Swap Sides',
+                               command = lambda: cmd.do("_ stereo swap"))
+
       self.menuBar.addmenuitem('Display', 'separator', '')
 
       self.menuBar.addmenuitem('Display', 'command', 'Maximum Performance',

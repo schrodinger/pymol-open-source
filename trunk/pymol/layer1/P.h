@@ -62,7 +62,7 @@ void PFlush(void);
 void PFlushFast(void);
 void PXDecRef(PyObject *obj);
 
-void PStereoOff(void);
+void PSGIStereo(int flag);
 void PDefineFloat(char *name,float value);
 
 void PRunString(char *str);

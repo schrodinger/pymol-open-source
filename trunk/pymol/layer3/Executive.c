@@ -1492,14 +1492,37 @@ void ExecutiveMask(char *s1,int mode)
   }
 }
 /*========================================================================*/
-void ExecutiveStereo(int flag)
+int ExecutiveStereo(int flag)
 {
+  int ok=1;
+  int stereo_mode;
 
-  if(PMGUI) {
-    if(StereoCapable) {
-      SceneSetStereo(flag);
+  switch(flag) {
+  case -1:
+    SettingSet(cSetting_stereo_shift,-SettingGet(cSetting_stereo_shift));
+    SettingSet(cSetting_stereo_angle,-SettingGet(cSetting_stereo_angle));
+    break;
+  default:
+    
+    if(PMGUI) {
+      stereo_mode = (int)SettingGet(cSetting_stereo_mode);
+      
+      switch(stereo_mode) {
+      case 1: /* hardware stereo-in-a-window*/
+        if(StereoCapable) {
+          SceneSetStereo(flag);
+          PSGIStereo(flag);
+        } else {
+          ok=false;
+        }
+        break;
+      case 2: /* wall-eye stereo*/
+        SceneSetStereo(flag);
+        break;
+      }
     }
   }
+  return(ok);
 }
 /*========================================================================*/
 void ExecutiveBond(char *s1,char *s2,int order,int add)

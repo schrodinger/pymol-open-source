@@ -70,7 +70,7 @@ int ExecutiveWindowZoom(char *name,float buffer,int state);
 int ExecutiveGetMoment(char *name,Matrix33d mi,int state);
 void ExecutiveOrient(char *sele,Matrix33d mi,int state);
 char *ExecutiveSeleToPDBStr(char *s1,int state,int conectFlag);
-void ExecutiveStereo(int flag);
+int ExecutiveStereo(int flag);
 void ExecutiveCopy(char *src,char *dst);
 float ExecutiveOverlap(char *s1,int state1,char *s2,int state2,float adjust);
 int ExecutiveCountStates(char *s1);

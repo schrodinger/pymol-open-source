@@ -290,7 +290,8 @@ int SettingGetName(int index,SettingName name);
 #define cSetting_fit_iterations              185
 #define cSetting_fit_tolerance               186
 #define cSetting_batch_prefix                187
-#define cSetting_INIT                        188
+#define cSetting_stereo_mode                 188
+#define cSetting_INIT                        189
 
 #endif
 
