@@ -693,8 +693,9 @@ void OrthoKey(unsigned char k,int x,int y,int mod)
       }
       break;
     case 22: /* CTRL V -- paste */
-      PParse("cmd.paste()");
-      PFlush();
+      PBlockAndUnlockAPI();
+      PRunString("cmd.paste()");
+      PLockAPIAndUnblock();
       /* PBlockAndUnlockAPI();
         PRunString("cmd.paste()");
         PLockAPIAndUnblock(); */
@@ -1668,7 +1669,7 @@ void OrthoPasteIn(char *buffer)
   int execFlag=false;
   OrthoLineType buf2;
 
-  if(I->CurChar) {
+  if(I->InputFlag) {
     if(I->CursorChar>=0) {
       strcpy(buf2,I->Line[curLine]+I->CursorChar);
       strcpy(I->Line[curLine]+I->CursorChar,buffer);
@@ -1699,8 +1700,7 @@ void OrthoPasteIn(char *buffer)
         }
     }
   } else {
-    strcpy(I->Line[curLine]+I->PromptChar,buffer);
-    I->CurChar=strlen(I->Line[curLine]);
+    OrthoRestorePrompt();
     
     while((I->Line[curLine][I->CurChar-1]==10)||(I->Line[curLine][I->CurChar-1]==13)) 
       {
@@ -1711,8 +1711,11 @@ void OrthoPasteIn(char *buffer)
           break;
       }
   }
-  if(execFlag)
+  if(execFlag) {
+    printf("[%s]\n",I->Line[curLine]);
     OrthoParseCurrentLine();
+    } else
+    I->InputFlag=true;
 }
 
 

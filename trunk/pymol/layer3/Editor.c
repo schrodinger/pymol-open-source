@@ -608,7 +608,7 @@ int EditorIsAnActiveObject(ObjectMolecule *obj) {
   return false;
 }
 /*========================================================================*/
-void EditorCycleValence(void)
+void EditorCycleValence(int quiet)
 {
   CEditor *I = &Editor;
   int sele0,sele1;
@@ -631,7 +631,7 @@ void EditorCycleValence(void)
 }
 
 /*========================================================================*/
-void EditorAttach(char *elem,int geom,int valence,char *name)
+void EditorAttach(char *elem,int geom,int valence,char *name,int quiet)
 {
   int i0;
   int sele0,sele1;
@@ -654,7 +654,7 @@ void EditorAttach(char *elem,int geom,int valence,char *name)
         if(obj1) {
           if(obj0==obj1) {
             /* bond mode - behave like replace */
-            EditorReplace(elem,geom,valence,name);
+            EditorReplace(elem,geom,valence,name,quiet);
           }
         } else {
           /* atom mode */
@@ -770,7 +770,7 @@ void EditorHFill(int quiet)
   
 }
 /*========================================================================*/
-void EditorReplace(char *elem,int geom,int valence,char *name)
+void EditorReplace(char *elem,int geom,int valence,char *name,int quiet)
 {
   int i0;
   int sele0;

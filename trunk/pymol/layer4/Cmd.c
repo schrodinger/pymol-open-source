@@ -1480,6 +1480,8 @@ static PyObject *CmdPaste(PyObject *dummy, PyObject *args)
               st = PyString_AsString(str);
               APIEntry();
               OrthoPasteIn(st);
+              if(a<(l-1))
+                OrthoPasteIn("\n");
               APIExit();
             } else {
               ok = false;
@@ -4409,9 +4411,13 @@ static PyObject *CmdHFill(PyObject *self, PyObject *args)
 static PyObject *CmdCycleValence(PyObject *self, PyObject *args)
 {
   int ok = true;
-  APIEntry();
-  EditorCycleValence();  /* TODO STATUS */
-  APIExit();
+  int quiet;
+  ok = PyArg_ParseTuple(args,"i",&quiet);
+  if(ok) {
+    APIEntry();
+    EditorCycleValence(quiet);  /* TODO STATUS */
+    APIExit();
+  }
   return(APIStatus(ok));
 }
 
@@ -4420,10 +4426,11 @@ static PyObject *CmdReplace(PyObject *self, 	PyObject *args)
   int i1,i2;
   char *str1,*str2;
   int ok=false;
-  ok = PyArg_ParseTuple(args,"siis",&str1,&i1,&i2,&str2);
+  int quiet;
+  ok = PyArg_ParseTuple(args,"siisi",&str1,&i1,&i2,&str2,&quiet);
   if (ok) {
     APIEntry();
-    EditorReplace(str1,i1,i2,str2);  /* TODO STATUS */
+    EditorReplace(str1,i1,i2,str2,quiet);  /* TODO STATUS */
     APIExit();
   }
   return(APIStatus(ok));  
@@ -4451,11 +4458,12 @@ static PyObject *CmdAttach(PyObject *self, 	PyObject *args)
   int i1,i2;
   char *str1;
   int ok=false;
+  int quiet;
   char *name;
-  ok = PyArg_ParseTuple(args,"siis",&str1,&i1,&i2,&name);
+  ok = PyArg_ParseTuple(args,"siis",&str1,&i1,&i2,&name,&quiet);
   if (ok) {
     APIEntry();
-    EditorAttach(str1,i1,i2,name);  /* TODO STATUS */
+    EditorAttach(str1,i1,i2,name,quiet);  /* TODO STATUS */
     APIExit();
   }
   return(APIStatus(ok));  

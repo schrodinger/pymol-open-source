@@ -580,8 +580,10 @@ int PAlterAtom(AtomInfoType *at,char *expr,int read_only,char *model,int index)
       if(formal_charge_id1!=formal_charge_id2) {
         if(!PConvPyObjectToInt(formal_charge_id2,&formalCharge))
           result=false;
-        else
+        else {
           at->formalCharge=formalCharge;
+          at->chemFlag = false; /* invalidate chemistry info for this atom */
+        }
 
       }
       if(cartoon_id1!=cartoon_id2) {

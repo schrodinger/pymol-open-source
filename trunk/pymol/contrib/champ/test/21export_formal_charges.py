@@ -17,6 +17,7 @@ for res in (  'ala','arg','asp','asn','cys','gln','glu','gly','his',
 
    stored.fc_dict = {}
    print "'"+string.upper(res)+"': ["
+   print "   ("
    
    ch = Champ()
    cmd.fragment(res,"tmp")
@@ -93,7 +94,7 @@ for res in (  'ala','arg','asp','asn','cys','gln','glu','gly','his',
       tag_count = tag_count+1
 
    new_pat = string.join(pat_list,'')
-   print "   '"+new_pat+"',"
+   print "      '"+new_pat+"',"
 
 #   np = ch.insert_pattern_string(new_pat)
 #   print ch.pattern_get_tags(np)
@@ -101,10 +102,11 @@ for res in (  'ala','arg','asp','asn','cys','gln','glu','gly','his',
 #   print ch.match_1v1_map(np,m1,1,1)
 #   print ch.pattern_get_ext_indices_with_tags(m1)
    
-   print "   {"
+   print "      {"
    for a in tag_list:
-      print "      %2d: %d,"%a
-   print "   }"
+      print "        %2d: %d,"%a
+   print "      },"
+   print "   ),"
    print "],"
 
 print "}"
