@@ -105,7 +105,7 @@ class SDFRec:
          self.ref_code[kee]=ref_code
       self.data[kee] = copy.deepcopy(data)
 
-   def delete(self):
+   def delete(self,kee):
       del self.data[kee]
 
 class SDF:
