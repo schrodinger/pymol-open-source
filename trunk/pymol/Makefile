@@ -74,26 +74,6 @@ unix-mindep: semistatic
 	install -d $(MDP)/ext/lib
 	cp -r modules $(MDP)
 	cp -r test $(MDP)
-	cp -r data $(MDP)
-	cp -r examples $(MDP)
-	cp -r pymol.exe $(MDP)
-	cp -r ext/lib/python2.1 $(MDP)/ext/lib
-	cp -r ext/lib/tcl8.3 $(MDP)/ext/lib
-	cp -r ext/lib/tk8.3 $(MDP)/ext/lib
-	/bin/rm -f $(MDP)/ext/lib/python2.1/config/libpython2.1.a
-	cp LICENSE $(MDP)
-	cp README $(MDP)
-	cp setup/INSTALL.unix-mindep $(MDP)/INSTALL
-	cp setup/setup.sh.unix-mindep $(MDP)/setup.sh
-	cd $(MINDEP);chown -R nobody.nobody pymol
-	cd $(MINDEP);tar -zcvf ../pymol-0_xx-bin-xxxxx-mindep.tgz pymol
-
-unix-mindep22: semistatic
-	$(PYTHON_EXE) modules/compile_pymol.py
-	/bin/rm -rf $(MINDEP)
-	install -d $(MDP)/ext/lib
-	cp -r modules $(MDP)
-	cp -r test $(MDP)
 	cp -r data $(MDP)	
 	cp -r examples $(MDP)
 	cp -r pymol.exe $(MDP)
@@ -101,6 +81,7 @@ unix-mindep22: semistatic
 	cp -r ext/lib/tcl8.4 $(MDP)/ext/lib
 	cp -r ext/lib/tk8.4 $(MDP)/ext/lib
 	/bin/rm -f $(MDP)/ext/lib/python2.2/config/libpython2.2.a
+	/bin/rm -rf $(MDP)/ext/lib/python2.2/test
 	cp LICENSE $(MDP)
 	cp README $(MDP)
 	cp setup/INSTALL.unix-mindep $(MDP)/INSTALL
@@ -142,6 +123,7 @@ distclean: clean
 	modules/*/*/*/*.so pymol.exe \
 	modules/*/*.pyc modules/*/*/*.pyc modules/*/*/*/*.pyc .no_fail* test/cmp/*
 	/bin/rm -rf build
+	/bin/rm -rf products/*.tgz products/unix-mindep
 	cd contrib;$(MAKE) distclean
 
 pyclean: clean
