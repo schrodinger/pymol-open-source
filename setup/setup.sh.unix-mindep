@@ -19,7 +19,7 @@ echo '#' >> ./pymol.com
 echo '# Set PYMOL_PATH to point to this directory' >> ./pymol.com
 echo '#' >> ./pymol.com
 echo '# ================================================' >> ./pymol.com
-echo "PYMOL_PATH='$PWD'" >> ./pymol.com
+echo "PYMOL_PATH=`pwd`" >> ./pymol.com
 echo '# ================================================' >> ./pymol.com
 echo '#' >> ./pymol.com
 echo 'export PYMOL_PATH' >> ./pymol.com
