@@ -100,4 +100,4 @@ pmw:
 	cd modules; gunzip < ./pmg_tk/pmw.tgz | tar xvf -
 
 compileall:
-	/usr/bin/python modules/compile_pymol.py
+	$(PYTHON_EXE) modules/compile_pymol.py
