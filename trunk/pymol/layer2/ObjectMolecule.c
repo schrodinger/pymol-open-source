@@ -583,9 +583,9 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(char *buffer,AtomInfoType **atInfoPtr)
 				llen++;
 			 }
 			 t=*(p+26);
-			 *(p+26) = 0;
+			 *(p+27) = 0;
 			 sscanf(p+22,"%s",shstr);
-			 *(p+26) = t;
+			 *(p+27) = t;
 			 if(atInfo)
 				{
 				  strcpy(atInfo[atomCount].resi,shstr);

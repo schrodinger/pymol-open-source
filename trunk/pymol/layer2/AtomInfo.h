@@ -20,7 +20,7 @@ Z* -------------------------------------------------------------------
 #include"Rep.h"
 
 #define cResnLen 20
-#define cResiLen 4
+#define cResiLen 5
 #define cAtomNameLen 4
 #define cSegiLen 4
 

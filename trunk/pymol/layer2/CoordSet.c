@@ -52,12 +52,21 @@ void CoordSetAtomToPDBStrVLA(char **charVLA,int *c,AtomInfoType *ai,float *v,int
 {
   char *aType;
   AtomName name;
+  ResIdent resi;
+  int rl;
 
   if(ai->hetatm)
 	aType=sHETATM;
   else
 	aType=sATOM;
-  
+
+  strcpy(resi,ai->resi);
+  rl = strlen(resi)-1;
+  if(rl>=0)
+    if((resi[rl]>='0')&&(resi[rl]<='9')) {
+        resi[rl+1]=' ';
+        resi[rl+2]=0;
+    }
   VLACheck(*charVLA,char,(*c)+1000);  
 
   if(strlen(ai->name)<4)
@@ -67,9 +76,9 @@ void CoordSetAtomToPDBStrVLA(char **charVLA,int *c,AtomInfoType *ai,float *v,int
 	} else {
 	  strcpy(name,ai->name);
 	}
-  (*c)+=sprintf((*charVLA)+(*c),"%6s%5i %-4s %3s %1s%4s    %8.3f%8.3f%8.3f%6.2f%6.2f      %-4s\n",
+  (*c)+=sprintf((*charVLA)+(*c),"%6s%5i %-4s %3s %1s%5s   %8.3f%8.3f%8.3f%6.2f%6.2f      %-4s\n",
 				aType,cnt+1,name,ai->resn,
-				ai->chain,ai->resi,*v,*(v+1),*(v+2),ai->q,ai->b,ai->segi);
+				ai->chain,resi,*v,*(v+1),*(v+2),ai->q,ai->b,ai->segi);
   
 }
 
