@@ -37,97 +37,80 @@ static void ObjectMapFree(ObjectMap *I) {
     IsosurfFieldFree(I->Field);
     I->Field=NULL;
   }
-  VLAFreeP(I->N);
-  VLAFreeP(I->V);
   OOFreeP(I->Crystal);
   OOFreeP(I);
 }
 
 static void ObjectMapUpdate(ObjectMap *I) {
-  if(I->ResurfaceFlag) {
-    I->ResurfaceFlag=false;
-    if(I->Field) 
-      IsosurfVolume(I->Field,1.0,&I->N,&I->V,NULL,NULL);  
-  }
+  SceneDirty();
 }
 
 static void ObjectMapRender(ObjectMap *I,int frame,CRay *ray,Pickable **pick)
 {
-  float *v=I->V;
-  float *vc;/*=I->VC;*/
-  int *n=I->N;
-  int c;
 
   if(ray) {
-	 if(n) {
-		ray->fColor3fv(ray,ColorGet(I->Obj.Color));
-		while(*n)
-		  {
-			 c=*(n++);
-			 if(c--)
-				{
-				  vc+=3;
-				  v+=3;
-				  while(c--)
-					 {
-						ray->fCylinder3fv(ray,v-3,v,0.05,vc-3,vc);
-						v+=3;
-						vc+=3;
-					 }
-				}
-		  }
-	 }
+    /*
+  float *vc;
+vc = ColorGet(I->Obj.Color);
+    ray->fColor3fv(ray,vc);
+    ray->fCylinder3fv(ray,I->Corner[0],I->Corner[1],0.05,vc,vc);*/
   } else if(pick&&PMGUI) {
   } else if(PMGUI) {
-	 if(n) {
-		if(true) {
-		  while(*n)
-			 {
-				c=*(n++);
-				glBegin(GL_LINE_STRIP);
-				SceneResetNormal(false);
-				while(c--) {
-				  glVertex3fv(v);
-				  v+=3;
-				}
-				glEnd();
-			 }
-		} else {
-		  while(*n)
-			 {
-				c=*(n++);
-				glBegin(GL_LINE_STRIP);
-				SceneResetNormal(false);
-				while(c--) {
-				  glColor3fv(vc);
-				  vc+=3;
-				  glVertex3fv(v);
-				  v+=3;
-				}
-				glEnd();
-			 }
-		}
-	 }
+    ObjectUseColor(&I->Obj);
+    glBegin(GL_LINES);
+    glVertex3fv(I->Corner[0]);
+    glVertex3fv(I->Corner[1]);
+
+    glVertex3fv(I->Corner[0]);
+    glVertex3fv(I->Corner[2]);
+
+    glVertex3fv(I->Corner[2]);
+    glVertex3fv(I->Corner[3]);
+
+    glVertex3fv(I->Corner[1]);
+    glVertex3fv(I->Corner[3]);
+    
+    glVertex3fv(I->Corner[0]);
+    glVertex3fv(I->Corner[4]);
+
+    glVertex3fv(I->Corner[1]);
+    glVertex3fv(I->Corner[5]);
+
+    glVertex3fv(I->Corner[2]);
+    glVertex3fv(I->Corner[6]);
+
+    glVertex3fv(I->Corner[3]);
+    glVertex3fv(I->Corner[7]);
+    
+    glVertex3fv(I->Corner[4]);
+    glVertex3fv(I->Corner[5]);
+
+    glVertex3fv(I->Corner[4]);
+    glVertex3fv(I->Corner[6]);
+
+    glVertex3fv(I->Corner[6]);
+    glVertex3fv(I->Corner[7]);
+
+    glVertex3fv(I->Corner[5]);
+    glVertex3fv(I->Corner[7]);
+
+    glEnd();
   }
 }
 
 /*========================================================================*/
 ObjectMap *ObjectMapNew(void)
 {
-  OOAlloc(ObjectMap);
+OOAlloc(ObjectMap);
 
-  ObjectInit((Object*)I);
+ObjectInit((Object*)I);
 
-  I->Crystal = CrystalNew();
-  I->Field = NULL;
-  I->V = VLAlloc(float,10000);
-  I->N = VLAlloc(int,10000);
+ I->Crystal = CrystalNew();
+ I->Field = NULL;
 
-  I->ResurfaceFlag=true;
-
-  I->Obj.fFree = (void (*)(struct Object *))ObjectMapFree;
-  I->Obj.fUpdate =  (void (*)(struct Object *)) ObjectMapUpdate;
-  I->Obj.fRender =(void (*)(struct Object *, int, CRay *, Pickable **))ObjectMapRender;
+ I->Obj.fFree = (void (*)(struct Object *))ObjectMapFree;
+ I->Obj.fUpdate =  (void (*)(struct Object *)) ObjectMapUpdate;
+ I->Obj.fRender =(void (*)(struct Object *, int, CRay *, Pickable **))ObjectMapRender;
 
 #ifdef _NOT_YET_NEEDED
   I->Obj.fGetNFrame = (int (*)(struct Object *)) ObjectMapGetNFrames;
@@ -141,7 +124,7 @@ int ObjectMapXPLORStrToMap(ObjectMap *I,char *XPLORStr,int frame) {
   char *p;
   int a,b,c,d,e;
   float v[3],vr[3];
-  char cc[MAXLINELEN],tmp[MAXLINELEN];
+  char cc[MAXLINELEN];
   int n;
   int ok = true;
 
@@ -184,21 +167,10 @@ int ObjectMapXPLORStrToMap(ObjectMap *I,char *XPLORStr,int frame) {
     p = ParseNCopy(cc,p,3);
     if(strcmp(cc,"ZYX")) ok=false;
     p=ParseNextLine(p);
-#ifdef MAPDEBUG
-    printf("%d %d %d %d %d %d %d %d %d\n",
-           I->Div[0],
-           I->Min[0],
-           I->Max[0],
-           I->Div[1],
-           I->Min[1],
-           I->Max[1],
-           I->Div[2],
-           I->Min[2],
-           I->Max[2]);
-#endif
-
-  } else 
+    
+  } else {
     ok=false;
+  }
   if(ok) {
     I->FDim[0]=I->Max[0]-I->Min[0]+1;
     I->FDim[1]=I->Max[1]-I->Min[1]+1;
@@ -208,7 +180,7 @@ int ObjectMapXPLORStrToMap(ObjectMap *I,char *XPLORStr,int frame) {
       ok=false;
     else {
       CrystalUpdate(I->Crystal);
-      I->Field=IsosurfFieldAlloc(I->FDim);
+          I->Field=IsosurfFieldAlloc(I->FDim);
       for(c=0;c<I->FDim[2];c++)
         {
           v[2]=(c+I->Min[2])/((float)I->Div[2]);
@@ -219,16 +191,47 @@ int ObjectMapXPLORStrToMap(ObjectMap *I,char *XPLORStr,int frame) {
             for(a=0;a<I->FDim[0];a++) {
               v[0]=(a+I->Min[0])/((float)I->Div[0]);
               p=ParseNCopy(cc,p,12);
-              if(sscanf(cc,"%f",F3Ptr(I->Field->data,a,b,c,I->Field->dimensions))!=1) ok=false;
+                            if(sscanf(cc,"%f",F3Ptr(I->Field->data,a,b,c,I->Field->dimensions))!=1) ok=false;
               transform33f3f(I->Crystal->FracToReal,v,vr);
-              for(e=0;e<3;e++) 
-                F4(I->Field->points,a,b,c,e,I->Field->dimensions) = vr[e];
+                            for(e=0;e<3;e++) 
+                              F4(I->Field->points,a,b,c,e,I->Field->dimensions) = vr[e];
               d++; if(d==6) { p=ParseNextLine(p); d=0;}              
             }
+          }
         }
+      if(ok) {
+        d = 0;
+        for(c=0;c<I->FDim[2];c+=(I->FDim[2]-1))
+          {
+            v[2]=(c+I->Min[2])/((float)I->Div[2]);
+            for(b=0;b<I->FDim[1];b+=(I->FDim[1]-1)) {
+              v[1]=(b+I->Min[1])/((float)I->Div[1]);
+              for(a=0;a<I->FDim[0];a+=(I->FDim[0]-1)) {
+                v[0]=(a+I->Min[0])/((float)I->Div[0]);
+                transform33f3f(I->Crystal->FracToReal,v,vr);
+                copy3f(vr,I->Corner[d]);
+                d++;
+              }
+            }
+          }
       }
     }
   }
+#ifdef _UNDEFINED
+    printf("%d %d %d %d %d %d %d %d %d\n",
+           I->Div[0],
+           I->Min[0],
+           I->Max[0],
+           I->Div[1],
+           I->Min[1],
+           I->Max[1],
+           I->Div[2],
+           I->Min[2],
+           I->Max[2]);
+    printf("Okay? %d\n",ok);
+    fflush(stdout);
+#endif
+
   return(ok);
 }
 /*========================================================================*/
@@ -250,7 +253,6 @@ ObjectMap *ObjectMapReadXPLORStr(ObjectMap *I,char *XPLORStr,int frame)
 	 }
     ObjectMapXPLORStrToMap(I,XPLORStr,frame);
     SceneChanged();
-    I->ResurfaceFlag=true;
   }
   return(I);
 }
@@ -293,8 +295,10 @@ ObjectMap *ObjectMapLoadXPLORFile(ObjectMap *obj,char *fname,int frame)
 	 }
   CrystalDump(I->Crystal);
   multiply33f33f(I->Crystal->FracToReal,I->Crystal->RealToFrac,mat);
+#ifdef _UNDEFINED
   for(a=0;a<9;a++)
     printf("%10.5f\n",mat[a]);
+#endif
 
   return(I);
 

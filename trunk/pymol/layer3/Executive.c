@@ -672,6 +672,34 @@ void ExecutiveWindowZoom(char *name)
   } 
 }
 /*========================================================================*/
+void ExecutiveGetBBox(char *name,float *mn,float *mx)
+{
+  int sele;
+  int c;
+  ObjectMoleculeOpRec op;
+
+  op.i1=0;
+
+  sele=SelectorIndexByName(name);
+  if(sele>=0) {
+	 op.code = 'MNMX';
+	 
+	 ExecutiveObjMolSeleOp(sele,&op);
+	 
+  }
+  if(!op.i1) {
+    for(c=0;c<3;c++) {
+      mn[c]=-1.0;
+      mx[c+3]=1.0;
+    }
+  } else {
+    for(c=0;c<3;c++) {
+      mn[c]=op.v1[c];
+      mx[c]=op.v2[c];
+    }
+  }
+}
+/*========================================================================*/
 int ExecutiveGetMoment(char *name,Matrix33d mi)
 {
   int sele;

@@ -621,6 +621,9 @@ void SelectorCreate(char *sname,char *sele,ObjectMolecule *obj)
   if(c&&name[0]!='_') {
     sprintf(buffer," Selector: selection \"%s\" defined with %d atoms.\n",name,c);
     OrthoAddOutput(buffer);
+  } else if(!c) {
+    sprintf(buffer," Selector: no atoms selected.\n",name);
+    OrthoAddOutput(buffer);
   }
 }
 /*========================================================================*/
