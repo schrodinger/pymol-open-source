@@ -100,6 +100,15 @@ def ball_and_stick(selection="(all)"):
    cmd.show("sticks",s)
    cmd.show("spheres",s)
    
+def b_factor_putty(selection="(name ca or name p)"):
+   s = tmp_sele
+   cmd.hide("everything",selection)
+   cmd.select(s,"(name ca or name p) and ("+selection+")")
+   cmd.show("cartoon",s)
+   cmd.set("cartoon_flat_sheets",0,s)
+   cmd.cartoon("putty",s)
+   cmd.spectrum("b",selection=s)
+
 def ligand_sites(selection="(all)"):
    try:
       s = tmp_sele
