@@ -882,7 +882,6 @@ r1=RegOpenKeyEx(HKEY_CLASSES_ROOT,"Software\\DeLano Scientific\\PyMOL\\PYMOL_PAT
 
   pymol = PyImport_AddModule("pymol"); /* get it */
   if(!pymol) ErrFatal("PyMOL","can't find module 'pymol'");
-printf("and not here\n");
 
 }
 
