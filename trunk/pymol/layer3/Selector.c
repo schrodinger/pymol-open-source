@@ -223,7 +223,7 @@ float SelectorSumVDWOverlap(int sele1,int state1,int sele2,int state2)
     obj1=I->Obj[I->Table[a1].model];
     obj2=I->Obj[I->Table[a2].model];
 
-    if(state1<obj1->NCSet&&state2<obj2->NCSet) {
+    if((state1<obj1->NCSet)&&(state2<obj2->NCSet)) {
       cs1=obj1->CSet[state1];
       cs2=obj2->CSet[state2];
       if(cs1&&cs2) { /* should always be true */
@@ -1638,7 +1638,7 @@ DistSet *SelectorGetDistSet(int sele1,int state1,int sele2,int state2,int mode,f
             *(vv0++) = *(vv1++);
             *(vv0++) = *(vv1++);
             *(vv0++) = *(vv1++);
-            vv1 = cs1->Coord+3*idx2;
+            vv1 = cs2->Coord+3*idx2;
             *(vv0++) = *(vv1++);
             *(vv0++) = *(vv1++);
             *(vv0++) = *(vv1++);
