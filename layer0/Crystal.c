@@ -197,7 +197,7 @@ void CrystalDump(CCrystal *I)
       ENDF;
   }
   PRINTF
-  " Crystal: Unit Cell Volume %8.1f\n",I->UnitCellVolume
+  " Crystal: Unit Cell Volume %8.0f\n",I->UnitCellVolume
     ENDF;
 
 }
