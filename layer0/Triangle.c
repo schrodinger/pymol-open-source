@@ -1484,7 +1484,7 @@ NTestLine=0; for(a=0;a<n;a++)
   }
   }
   */
-  TriangleBruteForceClosure(v,vn,n); /* abandon algorithm, just CLOSE THOSE GAPS! (/
+  TriangleBruteForceClosure(v,vn,n); /* abandon algorithm, just CLOSE THOSE GAPS! */
 
   TriangleAdjustNormals(v,vn,n);
 
