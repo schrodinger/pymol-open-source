@@ -40,12 +40,14 @@ float ExecutiveDist(char *nam,char *s1,char *s2,int mode,float cutoff,int labels
 void ExecutiveBond(char *s1,char *s2,int order,int add);
 int ExecutiveIterate(char *s1,char *expr,int read_only,int quiet);
 int ExecutiveIterateList(char *s1,PyObject *list,int read_only,int quiet);
+int ExecutiveSelectList(char *sele_name,char *s1,PyObject *list,int quiet);
 void ExecutiveLabel(char *s1,char *expr,int quiet);
 void ExecutiveIterateState(int i1,char *s1,char *expr,int read_only,
                            int atomic_props,int quiet);
 int ExecutiveColor(char *name,char *color,int flags,int quiet);
 void ExecutiveInit(void);
 void ExecutiveFree(void);
+int ExecutivePop(char *target,char *source,int quiet);
 void ExecutiveManageObject(struct CObject *obj,int allow_zoom,int quiet);
 void ExecutiveUpdateObjectSelection(struct CObject *obj);
 void ExecutiveManageSelection(char *name);

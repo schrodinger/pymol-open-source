@@ -1419,6 +1419,23 @@ static PyObject *CmdSetFeedbackMask(PyObject *self, 	PyObject *args)
   return(APIStatus(ok));  
 }
 
+static PyObject *CmdPop(PyObject *self,  PyObject *args)
+{
+  char *str1,*str2;
+  int quiet;
+  int result = 0;
+  int ok=true;
+  ok = PyArg_ParseTuple(args,"ssi",&str1,&str2,&quiet);
+  if (ok) {
+    APIEntry();
+    result = ExecutivePop(str1,str2,quiet); 
+    APIExit();
+  } else
+    result = -1;
+  return(APIStatus(result));
+
+}
+
 static PyObject *CmdFocus(PyObject *self, 	PyObject *args)
 {
   /* BROKEN */
@@ -2038,15 +2055,38 @@ static PyObject *CmdAlter(PyObject *self,   PyObject *args)
 
 static PyObject *CmdAlterList(PyObject *self,   PyObject *args)
 {
-  char *name;
+  char *str1;
+  OrthoLineType s1;
   int quiet;
   int result=0;
   int ok=false;
   PyObject *list;
-  ok = PyArg_ParseTuple(args,"sOi",&name,&list,&quiet);
+  ok = PyArg_ParseTuple(args,"sOi",&str1,&list,&quiet);
   if (ok) {
     APIEnterBlocked();
-    result=ExecutiveIterateList(name,list,false,quiet); /* TODO STATUS */
+    SelectorGetTmp(str1,s1);
+    result=ExecutiveIterateList(s1,list,false,quiet); /* TODO STATUS */
+    SelectorFreeTmp(s1);
+    APIExitBlocked();
+  }
+  return Py_BuildValue("i",result);
+}
+
+static PyObject *CmdSelectList(PyObject *self,   PyObject *args)
+{
+  char *str1,*sele_name;
+  OrthoLineType s1;
+  int quiet;
+  int result=0;
+  int ok=false;
+  PyObject *list;
+  ok = PyArg_ParseTuple(args,"ssOi",&sele_name,&str1,&list,&quiet);
+  if (ok) { 
+    APIEnterBlocked(); 
+    SelectorGetTmp(str1,s1);
+    result=ExecutiveSelectList(sele_name,s1,list,quiet); 
+    SceneDirty();
+    SeqDirty();
     APIExitBlocked();
   }
   return Py_BuildValue("i",result);
@@ -4671,6 +4711,7 @@ static PyMethodDef Cmd_methods[] = {
    {"p_glut_get_redisplay",  CmdPGlutGetRedisplay,    METH_VARARGS },
 	{"paste",	              CmdPaste,                METH_VARARGS },
 	{"png",	                 CmdPNG,                  METH_VARARGS },
+	{"pop",	                 CmdPop,                  METH_VARARGS },
 	{"protect",	              CmdProtect,              METH_VARARGS },
 	{"push_undo",	           CmdPushUndo,             METH_VARARGS },
 	{"quit",	                 CmdQuit,                 METH_VARARGS },
@@ -4696,9 +4737,9 @@ static PyMethodDef Cmd_methods[] = {
 	{"runpymol",	           CmdRunPyMOL,             METH_VARARGS },
 	{"runwxpymol",	           CmdRunWXPyMOL,           METH_VARARGS },
 	{"select",                CmdSelect,               METH_VARARGS },
+	{"select_list",           CmdSelectList,           METH_VARARGS },
 	{"set",	                 CmdSet,                  METH_VARARGS },
 	{"legacy_set",            CmdLegacySet,            METH_VARARGS },
-
 	{"sculpt_deactivate",     CmdSculptDeactivate,     METH_VARARGS },
 	{"sculpt_activate",       CmdSculptActivate,       METH_VARARGS },
 	{"sculpt_iterate",        CmdSculptIterate,        METH_VARARGS },

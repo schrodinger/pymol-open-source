@@ -6281,7 +6281,21 @@ void ObjectMoleculeSeleOp(ObjectMolecule *I,int sele,ObjectMoleculeOpRec *op)
            }
        }
      break;
-     
+   case OMOP_Pop:
+     for(a=0;a<I->NAtom;a++)
+       {
+         s=I->AtomInfo[a].selEntry;
+         if(SelectorIsMember(s,sele))
+           {
+             if(SelectorMoveMember(s,sele,op->i1)) {
+               op->i2--;
+               op->i3++;
+             }
+             if(!op->i2)
+               break;
+           }
+       }
+     break;
 	case OMOP_PDB1:
 	  for(b=0;b<I->NCSet;b++)
        if(I->CSet[b])

@@ -12,14 +12,41 @@
 #-*
 #Z* -------------------------------------------------------------------
 
-tmp_sele = "_assing_tmp"
+tmp_sele1 = "assign_tmp1"
+tmp_sele2 = "assign_tmp2"
 
 from chempy import champ
 from chempy.champ import Champ
 from pymol import cmd
 
+def missing_c_termini(selection):
+
+   # assumes that hydogens are not present!
+   
+   sele_list = []
+   ch=Champ()
+   model = cmd.get_model(selection)
+   model_pat = ch.insert_model(model)
+   assn_pat = ch.insert_pattern_string("[N+0+1]C[C;D2]<0>(=O)")
+   ch.pattern_clear_tags(model_pat)
+   if ch.match_1v1_n(assn_pat,model_pat,10000,2)>0:
+      result = ch.pattern_get_ext_indices_with_tags(model_pat)
+      for atom_tag in result[0]: # just iterate over atom tags
+         if len(atom_tag[1])==1: # one and only one match
+            if atom_tag[1][0]==0:
+               sele_list.append(atom_tag[0])
+   cmd.select_list(tmp_sele1,selection,sele_list)
+   while cmd.pop(tmp_sele2,tmp_sele1)>0: # complete the carboxy terminus
+      cmd.edit(tmp_sele2)
+      cmd.attach("O",1,1,"OXT",quiet=1)
+      cmd.unpick()
+   cmd.delete(tmp_sele1)
+   
+   
 def formal_charges(selection):
 
+   # assumes that hydogens are not present!
+   
    # first, set all formal charges to zero
    
    cmd.alter(selection,"formal_charge=0")
@@ -40,10 +67,10 @@ def formal_charges(selection):
    
    alter_list = []
    for resn in champ.formal_charge_dict.keys():
-      if cmd.select(tmp_sele,"(%s) and resn %s"%(selection,resn))>0:
+      if cmd.select(tmp_sele1,"(%s) and resn %s"%(selection,resn))>0:
          entry = champ.formal_charge_dict[resn]
          for rule in entry:
-            model = cmd.get_model(tmp_sele)
+            model = cmd.get_model(tmp_sele1)
             ch = Champ()
             model_pat = ch.insert_model(model)         
             assn_pat = ch.insert_pattern_string(rule[0])
@@ -59,6 +86,7 @@ def formal_charges(selection):
                                         "formal_charge=%d;flags=flags&0x7FFFFFFF"%formal_charge])
 
    if 1: # n-terminal amine
+      # non-proline 
       ch=Champ()
       model = cmd.get_model(selection)
       model_pat = ch.insert_model(model)
@@ -72,7 +100,22 @@ def formal_charges(selection):
                      # the following expression both changes the formal charge and resets flag 31
                      alter_list.append([atom_tag[0],
                                         "formal_charge=1;flags=flags&0x7FFFFFFF"])
-
+      # proline residues
+      ch=Champ()
+      model = cmd.get_model(selection)
+      model_pat = ch.insert_model(model)
+      assn_pat = ch.insert_pattern_string("C1CC[N;D2]<0>C1C(=O)")
+      ch.pattern_clear_tags(model_pat)
+      if ch.match_1v1_n(assn_pat,model_pat,10000,2)>0:
+            result = ch.pattern_get_ext_indices_with_tags(model_pat)
+            for atom_tag in result[0]: # just iterate over atom tags
+               if len(atom_tag[1])==1: # one and only one match
+                  if atom_tag[1][0]==0:
+                     # the following expression both changes the formal charge and resets flag 31
+                     alter_list.append([atom_tag[0],
+                                        "formal_charge=1;flags=flags&0x7FFFFFFF"])
+      
+                     
    if 1: # c-terminal acid
       ch=Champ()
       model = cmd.get_model(selection)
@@ -100,7 +143,7 @@ def formal_charges(selection):
 
    # remove the temporary selection we used to select appropriate residues
    
-   cmd.delete(tmp_sele)
+   cmd.delete(tmp_sele1)
    
 
 def amber99(selection):
@@ -127,10 +170,10 @@ def amber99(selection):
    
    alter_list = []
    for resn in champ.amber99_dict.keys():
-      if cmd.select(tmp_sele,"(%s) and resn %s"%(selection,resn))>0:
+      if cmd.select(tmp_sele1,"(%s) and resn %s"%(selection,resn))>0:
          entry = champ.amber99_dict[resn]
          for rule in entry:
-            model = cmd.get_model(tmp_sele)
+            model = cmd.get_model(tmp_sele1)
             ch = Champ()
             model_pat = ch.insert_model(model)
             ch.pattern_detect_chirality(model_pat)
@@ -158,7 +201,7 @@ def amber99(selection):
 
    # remove the temporary selection we used to select appropriate residues
    
-   cmd.delete(tmp_sele)
+   cmd.delete(tmp_sele1)
    
 
    

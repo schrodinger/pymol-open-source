@@ -1188,8 +1188,10 @@ SEE ALSO
    from selecting import \
         deselect,           \
         indicate,           \
-        select             
-
+        select,             \
+        select_list,        \
+        pop
+   
    #--------------------------------------------------------------------
    from exporting import \
         png,                \
@@ -1547,6 +1549,7 @@ SEE ALSO
       'pair_fit'      : [ pair_fit          , 2 ,98 , ',' , parsing.SIMPLE ],
       'pass'          : [ python_help       , 0 , 0 , ''  , parsing.PYTHON ],
       'phi_psi'       : [ phi_psi           , 0 , 0 , ''  , parsing.STRICT ],
+      'pop'           : [ pop               , 0 , 0 , ''  , parsing.STRICT ],
       'protect'       : [ protect           , 0 , 0 , ''  , parsing.STRICT ],
       'push_undo'     : [ push_undo         , 0 , 0 , ''  , parsing.STRICT ],   
       'pwd'           : [ pwd               , 0 , 0 , ''  , parsing.STRICT ],
