@@ -86,7 +86,7 @@ class PMGApp(AbstractApp):
          Frame,self.get_commandFrame(),bd=0)
       row2.pack(side=TOP,fill=BOTH,expand=YES)
       btn_reset = self.buttonAdd(row2,'Reset',lambda: cmd.do("_ reset"))
-      btn_reset = self.buttonAdd(row2,'Zoom',lambda: cmd.do("_ zoom"))      
+      btn_reset = self.buttonAdd(row2,'Zoom',lambda: cmd.do("_ zoom animate=1"))      
       btn_rtrace = self.buttonAdd(row2,'Ray',lambda : cmd.do("_ ray"))
       btn_reset = self.buttonAdd(row2,'Rock',lambda :cmd.do("_ rock"))
 

@@ -371,6 +371,7 @@ static void MainButton(int button,int state,int x,int y)
   PyMOLGlobals *G = TempPyMOLGlobals;
 
   int glMod;  
+
   CMain *I = G->Main;
 
   glMod = p_glutGetModifiers();
