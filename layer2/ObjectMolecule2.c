@@ -62,8 +62,11 @@ static int ObjectMoleculeCSetFromPyList(ObjectMolecule *I,PyObject *list)
   if(ok) {
     VLACheck(I->CSet,CoordSet*,I->NCSet);
     for(a=0;a<I->NCSet;a++) {
+      
       if(ok) ok = CoordSetFromPyList(PyList_GetItem(list,a),&I->CSet[a]);
-      if(ok) I->CSet[a]->Obj = I;
+      if(ok) 
+        if(I->CSet[a]) /* WLD 030205 */
+          I->CSet[a]->Obj = I;
     }
   }
   return(ok);
