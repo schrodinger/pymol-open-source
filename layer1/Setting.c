@@ -1175,6 +1175,9 @@ void SettingGenerateSideEffects(PyMOLGlobals *G,int index,char *sele,int state)
   case cSetting_dash_round_ends:
 	 SceneDirty(G);
 	 break;
+  case cSetting_mouse_selection_mode:
+    OrthoDirty(G);
+    break;
   case cSetting_internal_gui_control_size:
     WizardRefresh(G);
     OrthoDirty(G);

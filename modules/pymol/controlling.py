@@ -304,7 +304,17 @@ SEE ALSO
             bm = (int(bm) - 1) % len(mouse_ring)
             cmd.set("button_mode",str(bm),quiet=1)
             action=None
-
+         elif action=='select_forward':
+            sm = _cmd.get_setting("mouse_selection_mode")
+            sm = sm + 1
+            if sm>6: sm = 0
+            cmd.set("mouse_selection_mode",sm,quiet=1)
+         elif action=='select_backward':
+            sm = _cmd.get_setting("mouse_selection_mode")
+            sm = sm - 1
+            if sm<0: sm = 6
+            cmd.set("mouse_selection_mode",sm,quiet=1)
+         
          mode_list = None
          if action==None:
             bm = _cmd.get_setting("button_mode")
@@ -321,6 +331,7 @@ SEE ALSO
                apply(button,a)
             if not quiet:
                print " mouse: %s"%mode
+            if mode[-7:]!='editing': cmd.unpick()
       finally:
          unlock()
 
