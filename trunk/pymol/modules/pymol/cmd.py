@@ -3212,6 +3212,15 @@ TO DOCUMENT
    lst.extend(list(arg))
    return apply(load_object,lst)
 
+def load_callback(*arg):
+   '''
+TO DOCUMENT
+'''
+   
+   lst = [loadable.callback]
+   lst.extend(list(arg))
+   return apply(load_object,lst)
+
 def load_model(*arg):
    '''
 DESCRIPTION
@@ -4369,6 +4378,7 @@ class loadable:
    pdbstr = 9
    brick = 10
    map = 11
+   callback = 12
    
 # build shortcuts list
 

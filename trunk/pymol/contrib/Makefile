@@ -1,5 +1,5 @@
 
-all: make-modules make-sglite
+all: make-modules make-sglite make-pyopengl
 
 make-modules:
 	cd modules;$(MAKE) -f Makefile.pre.in boot
@@ -10,6 +10,10 @@ make-modules:
 make-sglite:
 	cd sglite;$(MAKE) 
 	mv sglite/*.so ../modules
+
+make-pyopengl:
+	cd pyopengl;$(MAKE) 
+	mv pyopengl/*.so ../modules
 
 clean: 
 	cd sglite;$(MAKE) clean

@@ -1441,6 +1441,7 @@ void SceneRender(Pickable *pick,int x,int y)
         glNormal3fv(normal);
         EditorRender(curState);
         glPopMatrix();
+
         glPopMatrix();
         
         glDrawBuffer(GL_BACK_RIGHT);

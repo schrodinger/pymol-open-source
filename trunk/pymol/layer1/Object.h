@@ -27,6 +27,7 @@ Z* -------------------------------------------------------------------
 #define cObjectMap 2
 #define cObjectMesh 3
 #define cObjectDist 4
+#define cObjectCallback 5
 
 typedef struct Object {
   void (*fUpdate)(struct Object *I); /* update representations */
