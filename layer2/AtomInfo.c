@@ -30,16 +30,16 @@ static int NColor,CarbColor,HColor,OColor,SColor,MColor,IColor;
 int AtomInfoInOrder(AtomInfoType *atom,int atom1,int atom2);
 
 /*========================================================================*/
-void AtomInfoCombine(AtomInfoType *dst,AtomInfoType *src)
+void AtomInfoCombine(AtomInfoType *dst,AtomInfoType *src,int mask)
 {
-  strcpy(dst->textType,src->textType); /* use the new types */
-  dst->customType = src->customType;
-  dst->partialCharge = src->partialCharge;
-  dst->formalCharge = src->formalCharge;
-  dst->flags = src->flags;
-  dst->b = src->b;
-  dst->q = src->q;
-  dst->id = src->id;
+  if(mask&cAIC_tt) strcpy(dst->textType,src->textType); /* use the new types */
+  if(mask&cAIC_ct) dst->customType = src->customType;
+  if(mask&cAIC_pc) dst->partialCharge = src->partialCharge;
+  if(mask&cAIC_fc) dst->formalCharge = src->formalCharge;
+  if(mask&cAIC_flags) dst->flags = src->flags;
+  if(mask&cAIC_b) dst->b = src->b;
+  if(mask&cAIC_q) dst->q = src->q;
+  if(mask&cAIC_id) dst->id = src->id;
   dst->temp1 = src->temp1;
   dst->sculpt_id = src->sculpt_id;
   /* keep all existing names, identifiers, etc. */

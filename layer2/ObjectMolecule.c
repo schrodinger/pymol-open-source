@@ -92,8 +92,839 @@ void ObjectMoleculeAddSeleHydrogens(ObjectMolecule *I,int sele);
 CoordSet *ObjectMoleculeXYZStr2CoordSet(char *buffer,AtomInfoType **atInfoPtr);
 CSetting **ObjectMoleculeGetSettingHandle(ObjectMolecule *I,int state);
 void ObjectMoleculeInferAmineGeomFromBonds(ObjectMolecule *I,int state);
+CoordSet *ObjectMoleculeTOPStr2CoordSet(char *buffer,
+                                        AtomInfoType **atInfoPtr);
+
+ObjectMolecule *ObjectMoleculeReadTOPStr(ObjectMolecule *I,char *TOPStr,int frame,int discrete);
 
 #define MAX_BOND_DIST 50
+
+#if 0
+static void dump_jxn(char *lab,char *q)
+{
+  char cc[MAXLINELEN];  
+  printf("\n%s %p\n",lab,q);
+  q=q-150;
+  q=nextline(q);
+  ncopy(cc,q,100);
+  printf("0[%s]\n",cc);
+  q=nextline(q);
+  ncopy(cc,q,100);
+  printf("1[%s]\n",cc);
+  q=nextline(q);
+  ncopy(cc,q,100);
+  printf("2[%s]\n",cc);
+  q=nextline(q);
+  ncopy(cc,q,100);
+  printf("3[%s]\n",cc);
+
+}
+#endif
+
+static char *skip_fortran(int num,int per_line,char *p)
+{
+  int a,b;
+  b=0;
+  for(a=0;a<num;a++) {
+    if((++b)==per_line) {
+      b=0;
+      p=nextline(p);
+    }
+  }  
+  if(b) p=nextline(p);
+  return(p);
+}
+/*========================================================================*/
+
+ObjectMolecule *ObjectMoleculeLoadTRJFile(ObjectMolecule *I,
+                                          char *fname,int frame,int discrete)
+{
+  int ok=true;
+  FILE *f;
+  char *buffer,*p;
+  char cc[MAXLINELEN];  
+  int n_read;
+  int to_go;
+  int skip_first_line = true;
+  int periodic=false;
+  float f0,f1,f2,f3,*fp;
+  int a,b,c;
+  int zoom_flag=false;
+  int cnt=0;
+  CoordSet *cs = NULL;
+
+  #define BUFSIZE 1048576
+  #define GETTING_LOW 10000
+
+  f=fopen(fname,"rb");
+  if(!f)
+	 ok=ErrMessage("ObjectMoleculeLoadTOPFile","Unable to open file!");
+  else
+	 {
+      cs=CoordSetCopy(I->CSet[0]);
+      cs->IsPlaceHolder=false;
+      PRINTFB(FB_ObjectMolecule,FB_Blather) 
+        " ObjectMoleculeLoadTOPFile: Loading from %s.\n",fname
+        ENDFB;
+      buffer = (char*)mmalloc(BUFSIZE+1); /* 1 MB read buffer */
+      p = buffer;
+      buffer[0]=0;
+      n_read = 0;
+      to_go=0;
+      a = 0;
+      b = 0;
+      c = 0;
+      f1=0.0;
+      f2=0.0;
+      while(1)
+        {
+          to_go = n_read-(p-buffer);
+          if(to_go<GETTING_LOW) 
+            if(!feof(f)) {
+              if(to_go) 
+                memcpy(buffer,p,to_go);
+              n_read = fread(buffer+to_go,1,BUFSIZE-to_go,f);              
+              n_read = to_go + n_read;
+              buffer[n_read]=0;
+              p = buffer;
+              if(skip_first_line) {
+                p=nextline(p);
+                skip_first_line=false;
+              }
+              to_go = n_read-(p-buffer);
+            }
+          if(!to_go) break;
+          p=ncopy(cc,p,8);
+          if((++b)==10) {
+            b=0;
+            p=nextline(p);
+          }
+          f0 = f1;
+          f1 = f2;
+          if(sscanf(cc,"%f",&f2)==1) {
+            if((++c)==3) {
+              c=0;
+              periodic=false;
+              if(!a) {/* is this a periodic box? */
+                ncopy(cc,p,8);
+                if(sscanf(cc,"%f",&f3)<1) { /* yes */
+                  periodic = true;
+                  p=nextline(p);
+                  b=0;
+                }
+              }
+              if(!periodic) {
+                fp=cs->Coord+3*a;
+                *(fp++)=f0;
+                *(fp++)=f1;
+                *(fp++)=f2;
+                if((++a)==I->NAtom) {
+
+                  a=0;
+                  if(b) p=nextline(p);
+                  b=0;
+                  /* add new coord set */
+                  if(cs->fInvalidateRep)
+                    cs->fInvalidateRep(cs,cRepAll,cRepInvRep);
+                  frame=I->NCSet;
+                  if(frame) {
+                    if(I->CSet[frame-1])
+                      if(I->CSet[frame-1]->IsPlaceHolder) {
+                        /* replace PlaceHolder Coordinate Sets */
+                        frame--;
+                        zoom_flag=true;
+                      }
+                  }
+                  VLACheck(I->CSet,CoordSet*,frame);
+                  if(I->NCSet<=frame) I->NCSet=frame+1;
+                  if(I->CSet[frame]) I->CSet[frame]->fFree(I->CSet[frame]);
+                  I->CSet[frame] = cs;
+                  cnt++;
+                  PRINTFB(FB_Details,FB_ObjectMolecule)
+                    " ObjectMolecule: read set %d into state %d...\n",cnt,frame+1
+                    ENDFB;
+                  cs = CoordSetCopy(cs);
+                }
+              }
+            }
+          } else {
+            PRINTFB(FB_Errors,FB_ObjectMolecule)
+              " ObjMolLoadTRJFile: atom/coordinate mismatch."
+              ENDFB;
+            break;
+          }
+        }
+		mfree(buffer);
+	 }
+  if(cs)
+    cs->fFree(cs);
+
+  SceneChanged();
+  SceneCountFrames();
+  if(zoom_flag) 
+    if(SettingGet(cSetting_auto_zoom)) {
+      ExecutiveWindowZoom(I->Obj.Name,0.0,-1); /* auto zoom (all states) */
+    }
+  
+  return(I);
+}
+/*========================================================================*/
+CoordSet *ObjectMoleculeTOPStr2CoordSet(char *buffer,
+                                        AtomInfoType **atInfoPtr)
+{
+  char *p;
+  int nAtom;
+  int a,b,c,bi,last_i,at_i,aa,rc;
+  float *coord = NULL;
+  float *f;
+  CoordSet *cset = NULL;
+  AtomInfoType *atInfo = NULL,*ai;
+  BondType *bond=NULL,*bd;
+  int nBond=0;
+  int auto_show_lines = SettingGet(cSetting_auto_show_lines);
+  int auto_show_nonbonded = SettingGet(cSetting_auto_show_nonbonded);
+
+  WordType title;
+  ResName *resn;
+
+  char cc[MAXLINELEN];
+  int ok=true;
+  int i0,i1,i2;
+
+  /* trajectory parameters */
+
+  int NTYPES,NBONH,MBONA,NTHETH,MTHETA;
+  int NPHIH,MPHIA,NHPARM,NPARM,NNB,NRES;
+  int NBONA,NTHETA,NPHIA,NUMBND,NUMANG,NPTRA;
+  int NATYP,NPHB,IFPERT,NBPER,NGPER,NDPER;
+  int MBPER,MGPER,MDPER,IFBOX,NMXRS,IFCAP;
+  int NEXTRA,IPOL;
+
+  AtomInfoPrimeColors();
+
+  p=buffer;
+  nAtom=0;
+  if(atInfoPtr)
+	 atInfo = *atInfoPtr;
+  if(!atInfo)
+    ErrFatal("TOPStr2CoordSet","need atom information record!");
+ /* failsafe for old version..*/
+
+  /* read title */
+
+  p=ncopy(cc,p,20);
+  title[0]=0;
+  sscanf(cc,"%s",title);
+  p=nextline(p);
+
+  p=ncopy(cc,p,6); ok = ok && sscanf(cc,"%d",&nAtom);
+  p=ncopy(cc,p,6); ok = ok && sscanf(cc,"%d",&NTYPES);
+  p=ncopy(cc,p,6); ok = ok && sscanf(cc,"%d",&NBONH);
+  p=ncopy(cc,p,6); ok = ok && sscanf(cc,"%d",&MBONA);
+  p=ncopy(cc,p,6); ok = ok && sscanf(cc,"%d",&NTHETH);
+  p=ncopy(cc,p,6); ok = ok && sscanf(cc,"%d",&MTHETA);
+
+  p=ncopy(cc,p,6); ok = ok && sscanf(cc,"%d",&NPHIH);
+  p=ncopy(cc,p,6); ok = ok && sscanf(cc,"%d",&MPHIA);
+  p=ncopy(cc,p,6); ok = ok && sscanf(cc,"%d",&NHPARM);
+  p=ncopy(cc,p,6); ok = ok && sscanf(cc,"%d",&NPARM);
+  p=ncopy(cc,p,6); ok = ok && sscanf(cc,"%d",&NNB);
+  p=ncopy(cc,p,6); ok = ok && sscanf(cc,"%d",&NRES);
+
+  p=nextline(p);
+
+  p=ncopy(cc,p,6); ok = ok && sscanf(cc,"%d",&NBONA);
+  p=ncopy(cc,p,6); ok = ok && sscanf(cc,"%d",&NTHETA);
+  p=ncopy(cc,p,6); ok = ok && sscanf(cc,"%d",&NPHIA);
+  p=ncopy(cc,p,6); ok = ok && sscanf(cc,"%d",&NUMBND);
+  p=ncopy(cc,p,6); ok = ok && sscanf(cc,"%d",&NUMANG);
+  p=ncopy(cc,p,6); ok = ok && sscanf(cc,"%d",&NPTRA);
+
+  p=ncopy(cc,p,6); ok = ok && sscanf(cc,"%d",&NATYP);
+  p=ncopy(cc,p,6); ok = ok && sscanf(cc,"%d",&NPHB);
+  p=ncopy(cc,p,6); ok = ok && sscanf(cc,"%d",&IFPERT);
+  p=ncopy(cc,p,6); ok = ok && sscanf(cc,"%d",&NBPER);
+  p=ncopy(cc,p,6); ok = ok && sscanf(cc,"%d",&NGPER);
+  p=ncopy(cc,p,6); ok = ok && sscanf(cc,"%d",&NDPER);
+  
+  p=nextline(p);
+
+  p=ncopy(cc,p,6); ok = ok && sscanf(cc,"%d",&MBPER);
+  p=ncopy(cc,p,6); ok = ok && sscanf(cc,"%d",&MGPER);
+  p=ncopy(cc,p,6); ok = ok && sscanf(cc,"%d",&MDPER);
+  p=ncopy(cc,p,6); ok = ok && sscanf(cc,"%d",&IFBOX);
+  p=ncopy(cc,p,6); ok = ok && sscanf(cc,"%d",&NMXRS);
+  p=ncopy(cc,p,6); ok = ok && sscanf(cc,"%d",&IFCAP);
+
+  p=ncopy(cc,p,12); ok = ok && sscanf(cc,"%d",&NEXTRA);
+
+  p=nextline(p);
+
+  if(!ok) {
+    ErrMessage("TOPStrToCoordSet","Error reading counts lines");
+  } else {
+    PRINTFB(FB_ObjectMolecule,FB_Blather)
+      " TOPStr2CoordSet: read counts line nAtom %d NBONA %d NBONH %d\n",
+      nAtom,NBONA,NBONH
+      ENDFB;
+  }
+  
+  VLACheck(atInfo,AtomInfoType,nAtom);
+
+  /* read atoms */
+
+  b=0;
+  for(a=0;a<nAtom;a++) {
+    p=ncopy(cc,p,4);
+    ai=atInfo+a;
+    if(!sscanf(cc,"%s",ai->name))
+      ai->name[0]=0;
+    if((++b)==20) {
+      b=0;
+      p=nextline(p);
+    }
+  }
+  
+  if(b) p=nextline(p);
+
+  if(!ok) {
+    ErrMessage("TOPStrToCoordSet","Error reading atom names");
+  } else {
+    PRINTFB(FB_ObjectMolecule,FB_Blather)
+      " TOPStr2CoordSet: read atom names.\n"
+      ENDFB;
+  }
+
+  /* read charges */
+
+  b=0;
+  for(a=0;a<nAtom;a++) {
+    p=ncopy(cc,p,16);
+    ai=atInfo+a;
+    if(!sscanf(cc,"%f",&ai->partialCharge))
+      ok=false;
+    else {
+      ai->partialCharge/=18.2223; /* convert to electron charge */
+    }
+    if((++b)==5) {
+      b=0;
+      p=nextline(p);
+    }
+  }
+
+  if(!ok) {
+    ErrMessage("TOPStrToCoordSet","Error reading charges");
+  } else {
+    PRINTFB(FB_ObjectMolecule,FB_Blather)
+      " TOPStr2CoordSet: read charges.\n"
+      ENDFB;
+  }
+  if(b) p=nextline(p);
+  
+  /* skip masses */
+
+  p=skip_fortran(nAtom,5,p);
+
+  /* read LJ atom types */
+
+  b=0;
+  for(a=0;a<nAtom;a++) {
+    p=ncopy(cc,p,6);
+    ai=atInfo+a;
+    if(!sscanf(cc,"%d",&ai->customType))
+      ok=false;
+    if((++b)==12) {
+      b=0;
+      p=nextline(p);
+    }
+  }
+  if(b) p=nextline(p);
+
+  if(!ok) {
+    ErrMessage("TOPStrToCoordSet","Error LJ atom types");
+  } else {
+    PRINTFB(FB_ObjectMolecule,FB_Blather)
+      " TOPStr2CoordSet: read LJ atom types.\n"
+      ENDFB;
+  }
+
+  /* skip excluded atom counts */
+
+  p=skip_fortran(nAtom,12,p);
+
+  /* skip NB param arrays */
+
+  p=skip_fortran(NTYPES*NTYPES,12,p);
+
+  /* read residue labels */
+
+  resn = Alloc(ResName,NRES);
+
+  b=0;
+  for(a=0;a<NRES;a++) {
+    p=ncopy(cc,p,4);
+    if(!sscanf(cc,"%s",resn[a]))
+      resn[a][0]=0;
+    if((++b)==20) {
+      b=0;
+      p=nextline(p);
+    }
+  }
+  if(b) p=nextline(p);
+
+  if(!ok) {
+    ErrMessage("TOPStrToCoordSet","Error reading residue labels");
+  } else {
+    PRINTFB(FB_ObjectMolecule,FB_Blather)
+      " TOPStr2CoordSet: read residue labels.\n"
+      ENDFB;
+  }
+
+  /* read residue assignments */
+
+  b=0;
+  last_i=0;
+  rc=0;
+  for(a=0;a<NRES;a++) {
+    p=ncopy(cc,p,6);
+    if(sscanf(cc,"%d",&at_i))
+      {
+        if(last_i)
+          for(aa=(last_i-1);aa<(at_i-1);aa++) {
+            ai = atInfo+aa;
+            strcpy(ai->resn,resn[a-1]);
+            ai->resv=rc;
+            sprintf(ai->resi,"%d",rc);
+          }
+        rc++;
+        last_i=at_i;
+      }
+    if((++b)==12) {
+      b=0;
+      p=nextline(p);
+    }
+  }
+  if(b) p=nextline(p);
+  if(last_i)
+    for(aa=(last_i-1);aa<nAtom;aa++) {
+      ai = atInfo+aa;
+      strcpy(ai->resn,resn[NRES-1]);
+      ai->resv=rc;
+      sprintf(ai->resi,"%d",rc);
+    }
+  rc++;
+
+  if(!ok) {
+    ErrMessage("TOPStrToCoordSet","Error reading residues");
+  } else {
+    PRINTFB(FB_ObjectMolecule,FB_Blather)
+      " TOPStr2CoordSet: read residues.\n"
+      ENDFB;
+  }
+
+  FreeP(resn);
+  
+  /* skip bond force constants */
+
+
+  p=skip_fortran(NUMBND,5,p);
+
+  /* skip bond lengths */
+
+
+  p=skip_fortran(NUMBND,5,p);
+  
+  /* skip angle force constant */
+
+  p=skip_fortran(NUMANG,5,p);
+
+  /* skip angle eq */
+
+  p=skip_fortran(NUMANG,5,p);
+
+  /* skip dihedral force constant */
+
+  p=skip_fortran(NPTRA,5,p);
+
+  /* skip dihedral periodicity */
+
+  p=skip_fortran(NPTRA,5,p);
+
+  /* skip dihedral phases */
+
+  p=skip_fortran(NPTRA,5,p);
+
+  /* skip SOLTYs */
+
+  p=skip_fortran(NATYP,5,p);
+
+  /* skip LJ terms r12 */
+
+  p=skip_fortran((NTYPES*(NTYPES+1))/2,5,p);
+
+  /* skip LJ terms r6 */
+
+  p=skip_fortran((NTYPES*(NTYPES+1))/2,5,p);
+
+  /* read bonds */
+    
+  nBond = NBONH + NBONA;
+
+  bond=VLAlloc(BondType,nBond);
+  
+  bi = 0;
+  
+
+  b=0;
+  c=0;
+  i0=0;
+  i1=0;
+  for(a=0;a<3*NBONH;a++) {
+    p=ncopy(cc,p,6);
+    i2=i1;
+    i1=i0;
+    if(!sscanf(cc,"%d",&i0))
+      ok=false;
+    if((++c)==3) {
+      c=0;
+      bd=bond+bi;
+      bd->index[0]=(abs(i2)/3);
+      bd->index[1]=(abs(i1)/3);
+      bi++;
+    }
+    if((++b)==12) {
+      b=0;
+      p=nextline(p);
+    }
+  }
+  if(b) p=nextline(p);
+
+  if(!ok) {
+    ErrMessage("TOPStrToCoordSet","Error hydrogen containing bonds");
+  } else {
+    PRINTFB(FB_ObjectMolecule,FB_Blather)
+      " TOPStr2CoordSet: read %d hydrogen containing bonds.\n",NBONH
+      ENDFB;
+  }
+
+  b=0;
+  c=0;
+  for(a=0;a<3*NBONA;a++) {
+    p=ncopy(cc,p,6);
+    i2=i1;
+    i1=i0;
+    if(!sscanf(cc,"%d",&i0))
+      ok=false;
+    if((++c)==3) {
+      c=0;
+      bd=bond+bi;
+      bd->index[0]=(abs(i2)/3);
+      bd->index[1]=(abs(i1)/3);
+      bi++;
+    }
+    if((++b)==12) {
+      b=0;
+      p=nextline(p);
+    }
+  }
+  if(b) p=nextline(p);
+
+  if(!ok) {
+    ErrMessage("TOPStrToCoordSet","Error hydrogen free bonds");
+  } else {
+    PRINTFB(FB_ObjectMolecule,FB_Blather)
+      " TOPStr2CoordSet: read %d hydrogen free bonds.\n",NBONA
+      ENDFB;
+  }
+
+  /* skip hydrogen angles */
+
+  p=skip_fortran(4*NTHETH,12,p);
+
+  /* skip non-hydrogen angles */
+
+  p=skip_fortran(4*NTHETA,12,p);
+
+  /* skip hydrogen dihedrals */
+
+  p=skip_fortran(5*NPHIH,12,p);
+
+  /* skip non hydrogen dihedrals */
+
+  p=skip_fortran(5*NPHIA,12,p);
+
+  /* skip nonbonded exclusions */
+
+  p=skip_fortran(NNB,12,p);
+
+  /* skip hydrogen bonds ASOL */
+
+  p=skip_fortran(NPHB,5,p);
+
+  /* skip hydrogen bonds BSOL */
+
+  p=skip_fortran(NPHB,5,p);
+
+  /* skip HBCUT */
+
+  p=skip_fortran(NPHB,5,p);
+
+  /* read AMBER atom types */
+  b=0;
+  for(a=0;a<nAtom;a++) {
+    p=ncopy(cc,p,4);
+    ai=atInfo+a;
+    if(!sscanf(cc,"%s",ai->textType))
+      ok=false;
+    if((++b)==20) {
+      b=0;
+      p=nextline(p);
+    }
+  }
+  if(b) p=nextline(p);
+
+  if(!ok) {
+    ErrMessage("TOPStrToCoordSet","Error reading atom types");
+  } else {
+    PRINTFB(FB_ObjectMolecule,FB_Blather)
+      " TOPStr2CoordSet: read atom types.\n"
+      ENDFB;
+  }
+
+  /* skip TREE classification */
+
+  p=skip_fortran(nAtom,20,p);
+
+  /* skip tree joining information */
+
+  p=skip_fortran(nAtom,12,p);
+
+  /* skip last atom rotated blah blah blah */
+
+  p=skip_fortran(nAtom,12,p);
+
+  if(IFBOX>0) {
+
+    int IPTRES,NSPM,NSPSOL;
+
+    p=ncopy(cc,p,12); ok = ok && sscanf(cc,"%d",&IPTRES);
+    p=ncopy(cc,p,12); ok = ok && sscanf(cc,"%d",&NSPM);
+    p=ncopy(cc,p,12); ok = ok && sscanf(cc,"%d",&NSPSOL);
+    
+    p=nextline(p);
+
+    /* skip pressuem scaling */
+
+    p=skip_fortran(NSPM,12,p);
+  
+    /* skip periodic box */
+
+    p=nextline(p);
+
+  }
+
+  if(IFCAP>0) {
+    p=nextline(p);
+    p=nextline(p);
+    p=nextline(p);
+  }
+
+  if(IFPERT>0) {
+
+    /* skip perturbed bond atoms */
+
+    p=skip_fortran(2*NBPER,12,p);    
+
+    /* skip perturbed bond atom pointers */
+
+    p=skip_fortran(2*NBPER,12,p);    
+
+    /* skip perturbed angles */
+
+    p=skip_fortran(3*NGPER,12,p);    
+
+    /* skip perturbed angle pointers */
+
+    p=skip_fortran(2*NGPER,12,p);    
+
+    /* skip perturbed dihedrals */
+
+    p=skip_fortran(4*NDPER,12,p);    
+
+    /* skip perturbed dihedral pointers */
+
+    p=skip_fortran(2*NDPER,12,p);    
+
+    /* skip residue names */
+
+    p=skip_fortran(NRES,20,p);    
+
+    /* skip atom names */
+
+    p=skip_fortran(nAtom,20,p);    
+
+    /* skip atom symbols */
+
+    p=skip_fortran(nAtom,20,p);    
+
+    /* skip unused field */
+
+    p=skip_fortran(nAtom,5,p);    
+
+    /* skip perturbed flags */
+
+    p=skip_fortran(nAtom,12,p);    
+
+    /* skip LJ atom flags */
+
+    p=skip_fortran(nAtom,12,p);    
+
+    /* skip perturbed charges */
+
+    p=skip_fortran(nAtom,5,p);    
+
+  }
+
+  if(IPOL>0) {
+
+    /* skip atomic polarizabilities */
+
+    p=skip_fortran(nAtom,5,p);    
+
+  }
+
+  if((IPOL>0) && (IFPERT>0)) {
+
+    /* skip atomic polarizabilities */
+
+    p=skip_fortran(nAtom,5,p);    
+    
+  }
+
+  coord=VLAlloc(float,3*nAtom);
+
+  f=coord;
+  for(a=0;a<nAtom;a++) {
+    *(f++)=0.0;
+    *(f++)=0.0;
+    *(f++)=0.0;
+    ai = atInfo + a;
+    AtomInfoAssignParameters(ai);
+    ai->color=AtomInfoGetColor(ai);
+    for(c=0;c<cRepCnt;c++) {
+      ai->visRep[c] = false;
+    }
+    ai->visRep[cRepLine] = auto_show_lines; /* show lines by default */
+    ai->visRep[cRepNonbonded] = auto_show_nonbonded; /* show lines by default */
+  }
+
+  cset = CoordSetNew();  /* needed to preserve original ordering... */
+  cset->NIndex=nAtom;
+  cset->Coord=coord;
+  cset->TmpBond=bond;
+  cset->NTmpBond=nBond;
+  if(atInfoPtr)
+	 *atInfoPtr = atInfo;
+  
+  return(cset);
+}
+
+/*========================================================================*/
+ObjectMolecule *ObjectMoleculeReadTOPStr(ObjectMolecule *I,char *TOPStr,int frame,int discrete)
+{
+  CoordSet *cset = NULL;
+  AtomInfoType *atInfo;
+  int ok=true;
+  int isNew = true;
+  unsigned int nAtom = 0;
+
+  if(!I) 
+	 isNew=true;
+  else 
+	 isNew=false;
+
+  if(ok) {
+
+	 if(isNew) {
+		I=(ObjectMolecule*)ObjectMoleculeNew(discrete);
+		atInfo = I->AtomInfo;
+		isNew = true;
+	 } else { /* never */
+		atInfo=VLAMalloc(10,sizeof(AtomInfoType),2,true); /* autozero here is important */
+		isNew = false;
+	 }
+	 cset=ObjectMoleculeTOPStr2CoordSet(TOPStr,&atInfo);	 
+	 nAtom=cset->NIndex;
+  }
+
+  /* include coordinate set */
+  if(ok) {
+    cset->Obj = I;
+    cset->fEnumIndices(cset);
+    cset->IsPlaceHolder=true;
+    if(cset->fInvalidateRep)
+      cset->fInvalidateRep(cset,cRepAll,cRepInvRep);
+    if(isNew) {		
+      I->AtomInfo=atInfo; /* IMPORTANT to reassign: this VLA may have moved! */
+    } else {
+      ObjectMoleculeMerge(I,atInfo,cset,false,cAIC_AllMask); /* NOTE: will release atInfo */
+    }
+    if(isNew) I->NAtom=nAtom;
+    if(frame<0) frame=I->NCSet;
+    VLACheck(I->CSet,CoordSet*,frame);
+    if(I->NCSet<=frame) I->NCSet=frame+1;
+    if(I->CSet[frame]) I->CSet[frame]->fFree(I->CSet[frame]);
+    I->CSet[frame] = cset;
+    if(isNew) I->NBond = ObjectMoleculeConnect(I,&I->Bond,I->AtomInfo,cset,false);
+    if(cset->Symmetry&&(!I->Symmetry)) {
+      I->Symmetry=SymmetryCopy(cset->Symmetry);
+      SymmetryAttemptGeneration(I->Symmetry);
+    }
+    SceneCountFrames();
+    ObjectMoleculeExtendIndices(I);
+    ObjectMoleculeSort(I);
+    ObjectMoleculeUpdateIDNumbers(I);
+    ObjectMoleculeUpdateNonbonded(I);
+  }
+  return(I);
+}
+
+ObjectMolecule *ObjectMoleculeLoadTOPFile(ObjectMolecule *obj,char *fname,int frame,int discrete)
+{
+  ObjectMolecule *I=NULL;
+  int ok=true;
+  FILE *f;
+  long size;
+  char *buffer,*p;
+
+  f=fopen(fname,"rb");
+  if(!f)
+	 ok=ErrMessage("ObjectMoleculeLoadTOPFile","Unable to open file!");
+  else
+	 {
+      PRINTFB(FB_ObjectMolecule,FB_Blather) 
+        " ObjectMoleculeLoadTOPFile: Loading from %s.\n",fname
+        ENDFB;
+		
+		fseek(f,0,SEEK_END);
+      size=ftell(f);
+		fseek(f,0,SEEK_SET);
+
+		buffer=(char*)mmalloc(size+255);
+		ErrChkPtr(buffer);
+		p=buffer;
+		fseek(f,0,SEEK_SET);
+		fread(p,size,1,f);
+		p[size]=0;
+		fclose(f);
+
+		I=ObjectMoleculeReadTOPStr(obj,buffer,frame,discrete);
+
+		mfree(buffer);
+	 }
+
+  return(I);
+}
 
 void ObjectMoleculeSculptClear(ObjectMolecule *I)
 {
@@ -425,7 +1256,7 @@ ObjectMolecule *ObjectMoleculeReadPMO(ObjectMolecule *I,CRaw *pmo,int frame,int 
       if(cset->fInvalidateRep)
         cset->fInvalidateRep(cset,cRepAll,cRepInvRep);
       if(!isNew) {		
-        ObjectMoleculeMerge(I,atInfo,cset,true); /* NOTE: will release atInfo */
+        ObjectMoleculeMerge(I,atInfo,cset,true,cAIC_AllMask); /* NOTE: will release atInfo */
       }
       if(isNew) I->NAtom=nAtom;
       if(frame<0) frame=I->NCSet;
@@ -1018,8 +1849,9 @@ ObjectMolecule *ObjectMoleculeReadXYZStr(ObjectMolecule *I,char *PDBStr,int fram
     if(isNew) {		
       I->AtomInfo=atInfo; /* IMPORTANT to reassign: this VLA may have moved! */
     } else {
-      ObjectMoleculeMerge(I,atInfo,cset,false); /* NOTE: will release atInfo */
+      ObjectMoleculeMerge(I,atInfo,cset,false,cAIC_IDMask); /* NOTE: will release atInfo */
     }
+
     if(isNew) I->NAtom=nAtom;
     if(frame<0) frame=I->NCSet;
     VLACheck(I->CSet,CoordSet*,frame);
@@ -1076,6 +1908,7 @@ ObjectMolecule *ObjectMoleculeLoadXYZFile(ObjectMolecule *obj,char *fname,int fr
 
   return(I);
 }
+
 
 /*========================================================================*/
 int ObjectMoleculeAreAtomsBonded(ObjectMolecule *I,int i0,int i1)
@@ -1195,7 +2028,7 @@ void ObjectMoleculeAddSeleHydrogens(ObjectMolecule *I,int sele)
 
           AtomInfoUniquefyNames(I->AtomInfo,I->NAtom,nai,nH);
 
-          ObjectMoleculeMerge(I,nai,cs,false); /* will free nai and cs->TmpLinkBond  */
+          ObjectMoleculeMerge(I,nai,cs,false,cAIC_AllMask); /* will free nai and cs->TmpLinkBond  */
           ObjectMoleculeExtendIndices(I);
           ObjectMoleculeUpdateNeighbors(I);
 
@@ -1374,7 +2207,7 @@ void ObjectMoleculeFuse(ObjectMolecule *I,int index0,ObjectMolecule *src,int ind
       I->AtomInfo[at0].temp1=1;
     }
 
-    ObjectMoleculeMerge(I,nai,cs,false); /* will free nai, cs->TmpBond and cs->TmpLinkBond  */
+    ObjectMoleculeMerge(I,nai,cs,false,cAIC_AllMask); /* will free nai, cs->TmpBond and cs->TmpLinkBond  */
 
     ObjectMoleculeExtendIndices(I);
     ObjectMoleculeUpdateNeighbors(I);
@@ -1519,7 +2352,7 @@ void ObjectMoleculeAttach(ObjectMolecule *I,int index,AtomInfoType *nai)
   if(cs->fEnumIndices) cs->fEnumIndices(cs);
   ObjectMoleculePrepareAtom(I,index,nai);
   d = AtomInfoGetBondLength(ai,nai);
-  ObjectMoleculeMerge(I,nai,cs,false); /* will free nai and cs->TmpLinkBond  */
+  ObjectMoleculeMerge(I,nai,cs,false,cAIC_AllMask); /* will free nai and cs->TmpLinkBond  */
   ObjectMoleculeExtendIndices(I);
   ObjectMoleculeUpdateNeighbors(I);
   for(a=0;a<I->NCSet;a++) { /* add atom to each coordinate set */
@@ -1577,7 +2410,7 @@ int ObjectMoleculeFillOpenValences(ObjectMolecule *I,int index)
       nai->valence=1;
       ObjectMoleculePrepareAtom(I,index,nai);
       d = AtomInfoGetBondLength(ai,nai);
-      ObjectMoleculeMerge(I,nai,cs,false); /* will free nai and cs->TmpLinkBond  */
+      ObjectMoleculeMerge(I,nai,cs,false,cAIC_AllMask); /* will free nai and cs->TmpLinkBond  */
       ObjectMoleculeExtendIndices(I);
       ObjectMoleculeUpdateNeighbors(I);
       for(a=0;a<I->NCSet;a++) { /* add atom to each coordinate set */
@@ -3526,7 +4359,7 @@ ObjectMolecule *ObjectMoleculeLoadChemPyModel(ObjectMolecule *I,PyObject *model,
     if(isNew) {	
       I->AtomInfo=atInfo; /* IMPORTANT to reassign: this VLA may have moved! */
     } else {
-      ObjectMoleculeMerge(I,atInfo,cset,false); /* NOTE: will release atInfo */
+      ObjectMoleculeMerge(I,atInfo,cset,false,cAIC_AllMask); /* NOTE: will release atInfo */
     }
     if(isNew) I->NAtom=nAtom;
     if(frame<0) frame=I->NCSet;
@@ -3968,7 +4801,7 @@ ObjectMolecule *ObjectMoleculeReadMOLStr(ObjectMolecule *I,char *MOLStr,int fram
       if(isNew) {		
         I->AtomInfo=atInfo; /* IMPORTANT to reassign: this VLA may have moved! */
       } else {
-        ObjectMoleculeMerge(I,atInfo,cset,false); /* NOTE: will release atInfo */
+        ObjectMoleculeMerge(I,atInfo,cset,false,cAIC_MOLMask); /* NOTE: will release atInfo */
       }
 
       if(isNew) I->NAtom=nAtom;
@@ -4025,7 +4858,8 @@ ObjectMolecule *ObjectMoleculeLoadMOLFile(ObjectMolecule *obj,char *fname,int fr
 }
 
 /*========================================================================*/
-void ObjectMoleculeMerge(ObjectMolecule *I,AtomInfoType *ai,CoordSet *cs,int bondSearchFlag)
+void ObjectMoleculeMerge(ObjectMolecule *I,AtomInfoType *ai,
+                         CoordSet *cs,int bondSearchFlag,int aic_mask)
 {
   int *index,*outdex,*a2i,*i2a;
   BondType *bond=NULL;
@@ -4118,7 +4952,7 @@ void ObjectMoleculeMerge(ObjectMolecule *I,AtomInfoType *ai,CoordSet *cs,int bon
 		a2=index[a1];
 		i2a[a]=a2; /* a2 is in object space */
       if(a2<oldNAtom)
-        AtomInfoCombine(I->AtomInfo+a2,ai+a1);
+        AtomInfoCombine(I->AtomInfo+a2,ai+a1,aic_mask);
       else
         *(I->AtomInfo+a2)=*(ai+a1);
     }
@@ -4267,10 +5101,17 @@ ObjectMolecule *ObjectMoleculeReadPDBStr(ObjectMolecule *I,char *PDBStr,int fram
       if(isNew) {		
         I->AtomInfo=atInfo; /* IMPORTANT to reassign: this VLA may have moved! */
       } else {
-        ObjectMoleculeMerge(I,atInfo,cset,true); /* NOTE: will release atInfo */
+        ObjectMoleculeMerge(I,atInfo,cset,true,cAIC_PDBMask); /* NOTE: will release atInfo */
       }
       if(isNew) I->NAtom=nAtom;
-      if(frame<0) frame=I->NCSet;
+      if(frame<0) {
+        frame=I->NCSet;
+        if(frame) {
+          if(I->CSet[frame-1])
+            if(I->CSet[frame-1]->IsPlaceHolder) /* replace PlaceHolder Coordinate Sets */
+              frame--;
+            }
+      }
       VLACheck(I->CSet,CoordSet*,frame);
       if(I->NCSet<=frame) I->NCSet=frame+1;
       if(I->CSet[frame]) I->CSet[frame]->fFree(I->CSet[frame]);
@@ -6273,7 +7114,7 @@ ObjectMolecule *ObjectMoleculeReadMMDStr(ObjectMolecule *I,char *MMDStr,int fram
         I->AtomInfo=atInfo; /* IMPORTANT to reassign: this VLA may have moved! */
         I->NAtom=nAtom;
       } else {
-        ObjectMoleculeMerge(I,atInfo,cset,false); /* NOTE: will release atInfo */
+        ObjectMoleculeMerge(I,atInfo,cset,false,cAIC_MMDMask); /* NOTE: will release atInfo */
       }
       if(frame<0) frame=I->NCSet;
       VLACheck(I->CSet,CoordSet*,frame);
@@ -6370,6 +7211,7 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(char *buffer,
   int symFlag;
   int auto_show_lines = SettingGet(cSetting_auto_show_lines);
   int auto_show_nonbonded = SettingGet(cSetting_auto_show_nonbonded);
+  int literal_names = SettingGet(cSetting_pdb_literal_names);
   int newModelFlag = false;
   int ssFlag = false;
   int ss_resv1=0,ss_resv2=0;
@@ -6378,9 +7220,9 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(char *buffer,
   SSEntry *ss_list = NULL;
   int n_ss = 1;
   int *(ss[256]); /* one array for each chain identifier */
-
+  
   char cc[MAXLINELEN];
-  char cc_saved;
+  char cc_saved,ctmp;
   int index;
   int ignore_pdb_segi = 0;
   int ss_valid;
@@ -6658,7 +7500,20 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(char *buffer,
 
           p=nskip(p,1);/* to 12 */
           p=ncopy(cc,p,4); 
-          if(!sscanf(cc,"%s",ai->name)) ai->name[0]=0;
+          if(!sscanf(cc,"%s",ai->name)) 
+            ai->name[0]=0;
+          else {
+            if(!literal_names) {
+              if(ai->name[3])
+                if((ai->name[0]>='0')&&(ai->name[0]<='9')) {
+                  ctmp = ai->name[0];
+                  ai->name[0]= ai->name[1];
+                  ai->name[1]= ai->name[2];
+                  ai->name[2]= ai->name[3];
+                  ai->name[3]= ctmp;
+                }
+            }
+          }
           
           p=ncopy(cc,p,1);
           if(*cc==32)

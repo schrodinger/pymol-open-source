@@ -90,6 +90,8 @@ Z* -------------------------------------------------------------------
 #define cLoadTypeXYZ 15
 #define cLoadTypeCCP4Map 18
 #define cLoadTypePMO  19
+#define cLoadTypeTOP  21
+#define cLoadTypeTRJ  22
 
 #define tmpSele "_tmp"
 #define tmpSele1 "_tmp1"
@@ -3289,6 +3291,8 @@ static PyObject *CmdLoad(PyObject *self, PyObject *args)
       case cLoadTypeMMDSeparate:
       case cLoadTypeMMDStr:
       case cLoadTypePMO:
+      case cLoadTypeTOP:
+      case cLoadTypeTRJ:
         new_type = cObjectMolecule;
         break;
       case cLoadTypeChemPyBrick:
@@ -3332,6 +3336,38 @@ static PyObject *CmdLoad(PyObject *self, PyObject *args)
           frame = ((ObjectMolecule*)origObj)->NCSet-1;
         sprintf(buf," CmdLoad: \"%s\" appended into object \"%s\", state %d.\n",
                 fname,oname,frame+1);
+      }
+      break;
+    case cLoadTypeTOP:
+      PRINTFD(FB_CCmd) " CmdLoad-DEBUG: loading TOP\n" ENDFD;
+      if(origObj) { /* always reinitialize topology objects from scratch */
+        ExecutiveDelete(origObj->Name);
+        origObj=NULL;
+      }
+      if(!origObj) {
+        obj=(CObject*)ObjectMoleculeLoadTOPFile(NULL,fname,frame,discrete);
+        if(obj) {
+          ObjectSetName(obj,oname);
+          ExecutiveManageObject(obj);
+          if(frame<0)
+            frame = ((ObjectMolecule*)obj)->NCSet-1;
+          sprintf(buf," CmdLoad: \"%s\" loaded into object \"%s\", state %d.\n",
+                  fname,oname,frame+1);
+        }
+      }
+      break;
+    case cLoadTypeTRJ:
+      PRINTFD(FB_CCmd) " CmdLoad-DEBUG: loading TRJ\n" ENDFD;
+      if(origObj) { /* always reinitialize topology objects from scratch */
+        ObjectMoleculeLoadTRJFile((ObjectMolecule*)origObj,fname,frame,discrete);
+        /* if(finish)
+           ExecutiveUpdateObjectSelection(origObj); unnecc */
+        sprintf(buf," CmdLoad: \"%s\" appended into object \"%s\".\n CmdLoad: %d total states in the object.\n",
+                fname,oname,((ObjectMolecule*)origObj)->NCSet);
+      } else {
+        PRINTFB(FB_CCmd,FB_Errors)
+          "CmdLoad-Error: object must exist before loading trajectory!\n"
+          ENDFB;
       }
       break;
     case cLoadTypePMO:

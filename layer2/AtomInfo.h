@@ -147,7 +147,24 @@ void AtomInfoBracketResidue(AtomInfoType *ai0,int n0,AtomInfoType *ai,int *st,in
 void AtomInfoBracketResidueFast(AtomInfoType *ai0,int n0,int cur,int *st,int *nd);
 
 void AtomInfoUniquefyNames(AtomInfoType *atInfo0,int n0,AtomInfoType *atInfo1,int n1);
-void AtomInfoCombine(AtomInfoType *dst,AtomInfoType *src);
+
+#define cAIC_ct        0x0001
+#define cAIC_fc        0x0002
+#define cAIC_pc        0x0004
+#define cAIC_b         0x0008
+#define cAIC_q         0x0010
+#define cAIC_id        0x0020
+#define cAIC_flags     0x0080
+#define cAIC_tt        0x0100
+
+#define cAIC_IDMask (cAIC_id)
+#define cAIC_NoneMask (cAIC_b|cAIC_q|cAIC_id)
+#define cAIC_PDBMask (cAIC_b|cAIC_q|cAIC_id)
+#define cAIC_MMDMask (cAIC_pc|cAIC_ct|cAIC_id)
+#define cAIC_MOLMask (cAIC_fc|cAIC_id)
+#define cAIC_AllMask 0xFFFF
+
+void AtomInfoCombine(AtomInfoType *dst,AtomInfoType *src,int mask);
 int AtomInfoNameOrder(AtomInfoType *at1,AtomInfoType *at2);
 
 typedef struct  {

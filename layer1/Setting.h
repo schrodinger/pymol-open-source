@@ -292,7 +292,8 @@ int SettingGetName(int index,SettingName name);
 #define cSetting_batch_prefix                187
 #define cSetting_stereo_mode                 188
 #define cSetting_cgo_sphere_quality          189
-#define cSetting_INIT                        190
+#define cSetting_pdb_literal_names           190
+#define cSetting_INIT                        191
 
 #endif
 
