@@ -7024,12 +7024,14 @@ int SelectorLogic1(EvalElem *base)
                     {
                       at2=&I->Obj[I->Table[b].model]->AtomInfo[I->Table[b].atom];
                       if(at1->chain[0]==at2->chain[0])
-                        if(WordMatch(at1->resi,at2->resi,I->IgnoreCase)<0)
-                          if(WordMatch(at1->segi,at2->segi,I->IgnoreCase)<0) {
-                            base[0].sele[b]=true;
-                            c++;
-                            flag=1;
-                          }
+                        if(at1->resv==at2->resv)
+                          if(WordMatch(at1->resi,at2->resi,I->IgnoreCase)<0)
+                            if(WordMatch(at1->resn,at2->resn,I->IgnoreCase)<0)
+                              if(WordMatch(at1->segi,at2->segi,I->IgnoreCase)<0) {
+                                base[0].sele[b]=true;
+                                c++;
+                                flag=1;
+                              }
                     }
                   if(!flag)
                     break;
@@ -7044,12 +7046,14 @@ int SelectorLogic1(EvalElem *base)
                     {
                       at2=&I->Obj[I->Table[b].model]->AtomInfo[I->Table[b].atom];
                       if(at1->chain[0]==at2->chain[0])
-                        if(WordMatch(at1->resi,at2->resi,I->IgnoreCase)<0)
-                          if(WordMatch(at1->segi,at2->segi,I->IgnoreCase)<0) {
-                            base[0].sele[b]=true;
-                            c++;
-                            flag=1;
-                          }
+                        if(at1->resv==at2->resv)
+                          if(WordMatch(at1->resi,at2->resi,I->IgnoreCase)<0)
+                            if(WordMatch(at1->resn,at2->resn,I->IgnoreCase)<0)
+                              if(WordMatch(at1->segi,at2->segi,I->IgnoreCase)<0) {
+                                base[0].sele[b]=true;
+                                c++;
+                                flag=1;
+                              }
                     }
                   if(!flag)
                     break;

@@ -458,8 +458,7 @@ int PAlterAtom(AtomInfoType *at,char *expr,int read_only,char *model,int index)
           result=false;
         else {
           if(strcmp(at->resi,resi)!=0)
-            if(!sscanf(resi,"%i",&at->resv))
-              at->resv=1;
+            at->resv=AtomResvFromResi(resi);
           strcpy(at->resi,resi);
         }
       } else if (resv_id1!=resv_id2) {
@@ -604,6 +603,7 @@ int PLabelAtom(AtomInfoType *at,char *expr,int index)
   PConvStringToPyDictItem(dict,"name",at->name);
   PConvStringToPyDictItem(dict,"resn",at->resn);
   PConvStringToPyDictItem(dict,"resi",at->resi);
+  PConvIntToPyDictItem(dict,"resv",at->resv); 
   PConvStringToPyDictItem(dict,"chain",at->chain);
   PConvStringToPyDictItem(dict,"alt",at->alt);
   PConvStringToPyDictItem(dict,"segi",at->segi);

@@ -5102,7 +5102,7 @@ CoordSet *ObjectMoleculeChemPyModel2CoordSet(PyObject *model,AtomInfoType **atIn
           if(!ok) 
             ErrMessage("ObjectMoleculeChemPyModel2CoordSet","can't read resi");
           else
-            sscanf(ai->resi,"%d",&ai->resv);
+            ai->resv=AtomResvFromResi(ai->resi);
           Py_XDECREF(tmp);
         }
 
@@ -8256,9 +8256,8 @@ CoordSet *ObjectMoleculeMMDStr2CoordSet(char *buffer,AtomInfoType **atInfoPtr)
         if(ok) {
           p=nskip(p,1);
           p=ncopy(cc,p,5);
-          if(sscanf(cc,"%d",&ai->resv)==1) {
-            sprintf(ai->resi,"%d",ai->resv); /* range check...*/
-          }
+          ai->resv = AtomResvFromResi(cc);
+          sprintf(ai->resi,"%d",ai->resv);
         }
         if(ok) {
           p=nskip(p,6);
@@ -8295,7 +8294,7 @@ CoordSet *ObjectMoleculeMMDStr2CoordSet(char *buffer,AtomInfoType **atInfoPtr)
           }
           ai->visRep[cRepLine] = auto_show_lines; /* show lines by default */
           ai->visRep[cRepNonbonded] = auto_show_nonbonded; /* show lines by default */
-
+          
         }
         if(ok) {
           AtomInfoAssignParameters(ai);
@@ -8304,8 +8303,8 @@ CoordSet *ObjectMoleculeMMDStr2CoordSet(char *buffer,AtomInfoType **atInfoPtr)
         if(!ok)
           break;
         p=nextline(p);
-      }
   }
+}
   if(ok)
     VLASize(bond,BondType,nBond);
   if(ok) {

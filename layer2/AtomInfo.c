@@ -36,6 +36,20 @@ int AtomInfoInOrigOrder(AtomInfoType *atom,int atom1,int atom2);
 int AtomInfoInOrderIgnoreHet(AtomInfoType *atom,int atom1,int atom2);
 int AtomNameCompare(char *name1,char *name2);
 
+int AtomResvFromResi(char *resi)
+{
+  int result = 1;
+  char *start = resi;
+  while(*start) {
+    if(sscanf(start,"%d",&result))
+      break;
+    else
+      result = 1;
+    start++;
+  }
+  return result;
+}
+
 /*========================================================================*/
 PyObject *AtomInfoAsPyList(AtomInfoType *I)
 {
@@ -812,7 +826,8 @@ int AtomInfoSameResidue(AtomInfoType *at1,AtomInfoType *at2)
       if(at1->resv==at2->resv)
         if(WordMatch(at1->resi,at2->resi,true)<0) 
           if(WordMatch(at1->segi,at2->segi,true)<0) 
-            return 1;
+            if(WordMatch(at1->resn,at2->resn,true)<0) 
+              return 1;
   return 0;
 }
 
@@ -824,7 +839,8 @@ int AtomInfoSameResidueP(AtomInfoType *at1,AtomInfoType *at2)
         if(at1->resv==at2->resv)
           if(WordMatch(at1->resi,at2->resi,true)<0) 
             if(WordMatch(at1->segi,at2->segi,true)<0) 
-              return 1;
+              if(WordMatch(at1->resn,at2->resn,true)<0) 
+                return 1;
   return 0;
 }
 

@@ -4,6 +4,9 @@ CHANGE LOG
 
 Changes up to 0.96
 
+   * atoms with the name resi, but not the same resn are now considered
+     to be in different residues.
+
    * ray_transparency_contrast setting, default=2.0, improves contrast
      of the transparent surface relative to objects inside.  
      COMPATIBILITY NOTICE: set ray_transparency_contrast=1.0 to 
