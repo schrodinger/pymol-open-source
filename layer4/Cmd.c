@@ -2817,7 +2817,7 @@ static PyObject *CmdFrame(PyObject *self, PyObject *args)
   if(frm<0) frm=0;
   if (ok) {
     APIEntry();
-    SceneSetFrame(0,frm);
+    SceneSetFrame(4,frm);
     APIExit();
   }
   return(APIStatus(ok));
