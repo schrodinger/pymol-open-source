@@ -73,9 +73,9 @@ class Density(Wizard):
          map_kee = 'map'+str(c)
          level_kee = 'level'+str(c)
          self.menu[map_kee] = [[2,'Select Map','']]
-         self.menu[map_kee].append([1,'','cmd.get_wizard().set_map(%d.'')'%c])
          for a in self.avail_maps:
             self.menu[map_kee].append([ 1,a,'cmd.get_wizard().set_map(%d,"%s")'%(c,a) ])
+         self.menu[map_kee].append([1,'(none)','cmd.get_wizard().set_map(%d,"")'%c])
          c = c + 1
 
    def set_track(self,track):
@@ -84,6 +84,7 @@ class Density(Wizard):
       
    def set_level(self,map,level):
       self.level[map] = level
+      self.update_maps()
       cmd.refresh_wizard()
 
    def set_map(self,map,map_name):
