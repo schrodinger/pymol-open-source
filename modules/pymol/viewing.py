@@ -268,7 +268,7 @@ SEE ALSO
       #   
       try:
          lock()
-         r = _cmd.orient(selection,int(state)-1,int(animate))
+         r = _cmd.orient(selection,int(state)-1,float(animate))
       finally:
          unlock()
       return r
@@ -758,7 +758,7 @@ SEE ALSO
                0.0,0.0,0.0,1.0,
                float(view[ 9]),float(view[10]),float(view[11]),
                float(view[12]),float(view[13]),float(view[14]),
-               float(view[15]),float(view[16]),float(view[17])),quiet,int(animate))
+               float(view[15]),float(view[16]),float(view[17])),quiet,float(animate))
          finally:
             unlock()
       return r
@@ -998,7 +998,8 @@ DEVELOPMENT TO DO
          active = int(active)
          frame = int(frame)
          if animate<0:
-            animate=int(cmd.get_setting_legacy("scene_animation"))         
+            if int(cmd.get_setting_legacy("scene_animation"))!=0.0:
+               animate = -1.0
          lock() # manipulating global data, so need lock
          if key=='*':
             action = view_sc.auto_err(action,'action')

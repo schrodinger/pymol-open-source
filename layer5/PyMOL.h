@@ -160,13 +160,28 @@ int PyMOL_Load(CPyMOL *I,char *content, char *content_type,
                int quiet, int multiplex, int zoom);
 
 int PyMOL_Zoom(CPyMOL *I,char *selection, float buffer,
-               int state, int complete, int animate);
+               int state, int complete, float animate, int quiet);
 
-int PyMOL_Show(CPyMOL *I,char *representation, char *selection);
+int PyMOL_Center(CPyMOL *I,char *selection, int state, int origin, float animate, int quiet);
 
-int PyMOL_Hide(CPyMOL *I,char *representation, char *selection);
+int PyMOL_Orient(CPyMOL *I,char *selection, float buffer, int state, int complete, float animate, int quiet);
 
-int PyMOL_Delete(CPyMOL *I,char *name);
+int PyMOL_Origin(CPyMOL *I,char *selection, int state, int quiet);
 
+int PyMOL_OriginAt(CPyMOL *I,float x, float y, float z, int quiet);
+
+int PyMOL_Clip(CPyMOL *I,char *mode, float amount, char *selection, int state, int quiet);
+
+int PyMOL_Show(CPyMOL *I,char *representation, char *selection,int quiet);
+
+int PyMOL_Hide(CPyMOL *I,char *representation, char *selection,int quiet);
+
+int PyMOL_Delete(CPyMOL *I,char *name, int quiet);
+
+int PyMOL_Set(CPyMOL *I,char *setting, char *value, char *selection, int state, int quiet, int side_effects);
+
+int PyMOL_Color(CPyMOL *I,char *color, char *selection, int flags, int quiet);
+
+int PyMOL_Select(CPyMOL *I,char *name, char *selection, int quiet);
 
 #endif

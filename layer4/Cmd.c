@@ -1147,8 +1147,8 @@ static PyObject *CmdSetView(PyObject *self, 	PyObject *args)
 {
   SceneViewType view;
   int quiet;
-  int animate;
-  int ok=PyArg_ParseTuple(args,"(fffffffffffffffffffffffff)ii",
+  float animate;
+  int ok=PyArg_ParseTuple(args,"(fffffffffffffffffffffffff)if",
                    &view[ 0],&view[ 1],&view[ 2],&view[ 3], /* 4x4 mat */
                    &view[ 4],&view[ 5],&view[ 6],&view[ 7],
                    &view[ 8],&view[ 9],&view[10],&view[11],
@@ -2924,13 +2924,13 @@ static PyObject *CmdOrient(PyObject *dummy, PyObject *args)
   OrthoLineType s1;
   int state;
   int ok=false;
-  int animate;
-  ok = PyArg_ParseTuple(args,"sii",&str1,&state,&animate);
+  float animate;
+  ok = PyArg_ParseTuple(args,"sif",&str1,&state,&animate);
   if (ok) {
     APIEntry();
     SelectorGetTmp(TempPyMOLGlobals,str1,s1);
     if(ExecutiveGetMoment(TempPyMOLGlobals,s1,m,state))
-      ExecutiveOrient(TempPyMOLGlobals,s1,m,state,animate); /* TODO STATUS */
+      ExecutiveOrient(TempPyMOLGlobals,s1,m,state,animate,false,0.0F); /* TODO STATUS */
     else
       ok=false;
     SelectorFreeTmp(TempPyMOLGlobals,s1); 
@@ -4858,8 +4858,8 @@ static PyObject *CmdCenter(PyObject *self, PyObject *args)
   int state;
   int origin;
   int ok=false;
-  int animate;
-  ok = PyArg_ParseTuple(args,"siii",&str1,&state,&origin,&animate);
+  float animate;
+  ok = PyArg_ParseTuple(args,"siif",&str1,&state,&origin,&animate);
   if (ok) {
     APIEntry();
     SelectorGetTmp(TempPyMOLGlobals,str1,s1);
@@ -4878,8 +4878,8 @@ static PyObject *CmdZoom(PyObject *self, PyObject *args)
   int state;
   int inclusive;
   int ok=false;
-  int animate;
-  ok = PyArg_ParseTuple(args,"sfiii",&str1,&buffer,&state,&inclusive,&animate);
+  float animate;
+  ok = PyArg_ParseTuple(args,"sfiif",&str1,&buffer,&state,&inclusive,&animate);
   if (ok) {
     APIEntry();
     SelectorGetTmp(TempPyMOLGlobals,str1,s1);
