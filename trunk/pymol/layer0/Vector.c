@@ -129,7 +129,7 @@ double dot_product3d ( double *v1, double *v2 )
 
 void identity44f ( float *m1 )
 {
-  int a,b;
+  int a;
   for(a=0;a<16;a++) m1[a]=0;
   for(a=0;a<16;a=a+5) m1[a]=1.0;
 }
