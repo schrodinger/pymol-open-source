@@ -29,6 +29,7 @@ Z* -------------------------------------------------------------------
 #include"Setting.h"
 #include"Color.h"
 #include"main.h"
+#include"PyMOLGlobals.h"
 
 typedef struct RepMesh {
   Rep R;
@@ -498,7 +499,7 @@ Rep *RepMeshNew(CoordSet *cs)
 	 for(c=0;c<3;c++)
 		dims[c] = (int)((sizeE[c]/gridSize)+1.5F);
 	 
-	 field = IsosurfFieldAlloc(dims);
+	 field = IsosurfFieldAlloc(TempPyMOLGlobals,dims);
 	 
 	 for(a=0;a<dims[0];a++)
 		for(b=0;b<dims[1];b++)
@@ -604,8 +605,8 @@ Rep *RepMeshNew(CoordSet *cs)
 	 MapFree(map);
 	 FreeP(I->Dot);	 
 	 OrthoBusyFast(2,3);
-    IsosurfVolume(field,1.0,&I->N,&I->V,NULL,mesh_type);
-    IsosurfFieldFree(field);
+    IsosurfVolume(TempPyMOLGlobals,field,1.0,&I->N,&I->V,NULL,mesh_type);
+    IsosurfFieldFree(TempPyMOLGlobals,field);
     
     /* someday add support for solid mesh representation....
        if(mesh_type==0||mesh_type==1) {
@@ -640,7 +641,7 @@ void RepMeshGetSolventDots(RepMesh *I,CoordSet *cs,float *min,float *max,float p
   float *v,*v0,vdw;
   MapType *map;
   int inFlag,*p,*dot_flag;
-  SphereRec *sp = Sphere0;
+  SphereRec *sp = TempPyMOLGlobals->Sphere->Sphere[0];
   int cavity_cull;
   float probe_radius_plus;
   int dotCnt,maxCnt,maxDot=0;
@@ -648,20 +649,11 @@ void RepMeshGetSolventDots(RepMesh *I,CoordSet *cs,float *min,float *max,float p
   int inclH,mesh_mode,cullByFlag;
   AtomInfoType *ai1,*ai2;
   obj = cs->Obj;
-  
-  switch(SettingGet_i(cs->Setting,obj->Obj.Setting,cSetting_mesh_quality)) {
-  case 0: sp = Sphere0; break;
-  case 1: sp = Sphere1; break;
-  case 2: sp = Sphere2; break;
-  case 3: sp = Sphere3; break;
-  case 4: sp = Sphere4; break;
-  default:
-    if(SettingGet_i(cs->Setting,obj->Obj.Setting,cSetting_mesh_quality)>4)
-      sp = Sphere4; 
-    else
-      sp = Sphere0;      
-    break;
-  }
+  int ds = SettingGet_i(cs->Setting,obj->Obj.Setting,cSetting_mesh_quality);
+
+  if(ds<0) ds = 0;
+  if(ds>4) ds = 4;
+  sp = TempPyMOLGlobals->Sphere->Sphere[ds];
 
   cavity_cull = SettingGet_i(cs->Setting,obj->Obj.Setting,cSetting_cavity_cull);
 

@@ -161,7 +161,7 @@ Rep *RepDotDoNew(CoordSet *cs,int mode)
   int colorCnt,lastColor;
   Vector3f v1;
   MapType *map;
-  SphereRec *sp = Sphere0; 
+  SphereRec *sp = TempPyMOLGlobals->Sphere->Sphere[0];
   int ds;
   float max_vdw = MAX_VDW;
   float solv_rad=0.0;
@@ -219,14 +219,10 @@ Rep *RepDotDoNew(CoordSet *cs,int mode)
 
   max_vdw+=solv_rad;
 
+/* Note: significantly affects the accuracy of our area comp. */
   if(ds<0) ds=0;
-  switch(ds) { /* Note: significantly affects the accuracy of our area comp. */
-  case 0: sp=Sphere0; break;
-  case 1: sp=Sphere1; break;
-  case 2: sp=Sphere2; break;
-  case 3: sp=Sphere3; break;
-  default: sp=Sphere4; break;
-  }
+  if(ds>4) ds=4;
+  sp = TempPyMOLGlobals->Sphere->Sphere[ds];
 
   I->R.fRender=(void (*)(struct Rep *, CRay *, Pickable **))RepDotRender;
   I->R.fFree=(void (*)(struct Rep *))RepDotFree;

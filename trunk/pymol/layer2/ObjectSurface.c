@@ -35,6 +35,7 @@ Z* -------------------------------------------------------------------
 #include"PConv.h"
 #include"P.h"
 #include"Util.h"
+#include"PyMOLGlobals.h"
 
 ObjectSurface *ObjectSurfaceNew(void);
 
@@ -360,7 +361,7 @@ static void ObjectSurfaceUpdate(ObjectSurface *I)
                 MapSetupExpress(voxelmap);  
             }
 
-            ms->nT=TetsurfVolume(oms->Field,
+            ms->nT=TetsurfVolume(TempPyMOLGlobals,oms->Field,
                           ms->Level,
                           &ms->N,&ms->V,
                           ms->Range,

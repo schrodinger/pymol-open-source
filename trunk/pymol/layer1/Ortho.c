@@ -344,7 +344,7 @@ void OrthoBusyPrime(void)
   for(a=0;a<4;a++)
 	 I->BusyStatus[a]=0;
   I->BusyMessage[0]=0;
-  I->BusyLast = UtilGetSeconds();
+  I->BusyLast = UtilGetSeconds(TempPyMOLGlobals);
 }
 /*========================================================================*/
 void OrthoBusyDraw(int force)
@@ -361,7 +361,7 @@ void OrthoBusyDraw(int force)
   PRINTFD(FB_Ortho)
     " OrthoBusyDraw: entered.\n"
     ENDFD;
-  now = UtilGetSeconds();
+  now = UtilGetSeconds(TempPyMOLGlobals);
   busyTime = (-I->BusyLast) + now;
   if(SettingGet(cSetting_show_progress)&&(force||(busyTime>cBusyUpdate))) {
     

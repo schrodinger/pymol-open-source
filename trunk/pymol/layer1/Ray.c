@@ -2341,7 +2341,7 @@ void RayRender(CRay *I,int width,int height,unsigned int *image,
     RayExpandPrimitives(I);
     RayTransformFirst(I);
     
-    now = UtilGetSeconds()-timing;
+    now = UtilGetSeconds(TempPyMOLGlobals)-timing;
 
 	 PRINTFB(FB_Ray,FB_Blather)
       " Ray: processed %i graphics primitives in %4.2f sec.\n",I->NPrimitive,now
@@ -2412,7 +2412,7 @@ void RayRender(CRay *I,int width,int height,unsigned int *image,
     }
 
     OrthoBusyFast(5,20);
-    now = UtilGetSeconds()-timing;
+    now = UtilGetSeconds(TempPyMOLGlobals)-timing;
 
 #ifdef _MemoryDebug_ON
     if(shadows) {

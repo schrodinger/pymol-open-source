@@ -328,7 +328,7 @@ static CSeqRow* SeekerClick(CSeqRow* rowVLA,int button,int row_num,int col_num,i
   if((row_num<0)||(col_num<0)) {
     switch(button) {
     case P_GLUT_LEFT_BUTTON:
-      if((UtilGetSeconds()-I->LastClickTime)<cDoubleTime) {
+      if((UtilGetSeconds(TempPyMOLGlobals)-I->LastClickTime)<cDoubleTime) {
         OrthoLineType buf2;
         char name[ObjNameMax];
         if(ExecutiveGetActiveSeleName(name, false)) {
@@ -341,7 +341,7 @@ static CSeqRow* SeekerClick(CSeqRow* rowVLA,int button,int row_num,int col_num,i
           
         }
       }
-      I->LastClickTime = UtilGetSeconds();
+      I->LastClickTime = UtilGetSeconds(TempPyMOLGlobals);
       break;
     }
   } else {
@@ -1582,7 +1582,7 @@ void SeekerInit(void)
   CSeeker *I = &Seeker;  
   UtilZeroMem(I,sizeof(CSeeker));
   I->drag_row = -1;
-  I->LastClickTime = UtilGetSeconds() - 1.0F;
+  I->LastClickTime = UtilGetSeconds(TempPyMOLGlobals) - 1.0F;
 }
 
 void SeekerFree(void)

@@ -16,6 +16,8 @@ Z* -------------------------------------------------------------------
 #ifndef _H_Util
 #define _H_Util
 
+#include "PyMOLGlobals.h"
+
 void UtilZeroMem(void *ptr,unsigned int howMuch);
 void UtilCopyMem(void *dst,void *src,unsigned int howMuch);
 void *UtilArrayMalloc(unsigned int *dim,int ndim,unsigned int atom_size);
@@ -27,8 +29,9 @@ void UtilNCopy(char *dst,char *src,int n);
 void UtilCleanStr(char *s);
 int UtilCountStringVLA(char *vla);
 
-double UtilGetSeconds(void);
-void UtilInit(void);
+double UtilGetSeconds(PyMOLGlobals *G);
+int UtilInit(PyMOLGlobals *G);
+void UtilFree(PyMOLGlobals *G);
 typedef int UtilOrderFn(void *array,int l,int r);
 
 void UtilSortIndex(int n,void *array,int *x,UtilOrderFn* fOrdered);

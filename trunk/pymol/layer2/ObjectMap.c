@@ -32,6 +32,7 @@ Z* -------------------------------------------------------------------
 #include"PConv.h"
 #include"Word.h"
 #include"Vector.h"
+#include"PyMOLGlobals.h"
 
 #define cMapSourceUndefined 0
 #define cMapSourceXPLOR 1
@@ -178,7 +179,7 @@ static int ObjectMapStateDouble(ObjectMapState *ms)
     }
     fdim[3]=3;
 
-    field=IsosurfFieldAlloc(fdim);
+    field=IsosurfFieldAlloc(TempPyMOLGlobals,fdim);
 
     for(c=0;c<fdim[2];c++) {
       v[2]=(c+min[2])/((float)div[2]);
@@ -203,7 +204,7 @@ static int ObjectMapStateDouble(ObjectMapState *ms)
         }
       }
     }
-    IsosurfFieldFree(ms->Field);
+    IsosurfFieldFree(TempPyMOLGlobals,ms->Field);
     for(a=0;a<3;a++) {
       ms->Min[a]=min[a];
       ms->Max[a]=max[a];
@@ -225,7 +226,7 @@ static int ObjectMapStateDouble(ObjectMapState *ms)
     }
     fdim[3]=3;
 
-    field=IsosurfFieldAlloc(fdim);
+    field=IsosurfFieldAlloc(TempPyMOLGlobals,fdim);
 
     for(c=0;c<fdim[2];c++) {
       v[2]=ms->Origin[2]+grid[2]*(c+min[2]);
@@ -249,7 +250,7 @@ static int ObjectMapStateDouble(ObjectMapState *ms)
         }
       }
     }
-    IsosurfFieldFree(ms->Field);
+    IsosurfFieldFree(TempPyMOLGlobals,ms->Field);
     for(a=0;a<3;a++) {
       ms->Min[a]=min[a];
       ms->Max[a]=max[a];
@@ -817,7 +818,7 @@ int ObjectMapStateSetBorder(ObjectMapState *I,float level)
 void ObjectMapStatePurge(ObjectMapState *I)
 {
   if(I->Field) {
-    IsosurfFieldFree(I->Field);
+    IsosurfFieldFree(TempPyMOLGlobals,I->Field);
     I->Field=NULL;
   }
   FreeP(I->Origin);
@@ -1032,7 +1033,7 @@ ObjectMapState *ObjectMapNewStateFromDesc(ObjectMap *I,ObjectMapDesc *md,int sta
     for(a=0;a<3;a++) ms->FDim[a] = ms->Max[a]-ms->Min[a]+1;
     ms->FDim[3] = 3; 
 
-    ms->Field=IsosurfFieldAlloc(ms->FDim);
+    ms->Field=IsosurfFieldAlloc(TempPyMOLGlobals,ms->FDim);
     if(!ms->Field) 
       ok=false;
     else {
@@ -1341,8 +1342,7 @@ int ObjectMapCCP4StrToMap(ObjectMap *I,char *CCP4Str,int bytes,int state) {
   else {
     CrystalUpdate(ms->Crystal);
     CrystalDump(ms->Crystal);
-    fflush(stdout);
-    ms->Field=IsosurfFieldAlloc(ms->FDim);
+    ms->Field=IsosurfFieldAlloc(TempPyMOLGlobals,ms->FDim);
     ms->MapSource = cMapSourceCCP4;
     ms->Field->save_points=false;
 
@@ -1531,7 +1531,7 @@ static int ObjectMapPHIStrToMap(ObjectMap *I,char *PHIStr,int bytes,int state) {
   ms->Max[1] = ms->Div[1];
   ms->Max[2] = ms->Div[2];
 
-  ms->Field=IsosurfFieldAlloc(ms->FDim);
+  ms->Field=IsosurfFieldAlloc(TempPyMOLGlobals,ms->FDim);
   ms->MapSource = cMapSourcePHI;
   ms->Field->save_points=false;
 
@@ -1781,7 +1781,7 @@ int ObjectMapXPLORStrToMap(ObjectMap *I,char *XPLORStr,int state) {
       ok=false;
     else {
       CrystalUpdate(ms->Crystal);
-      ms->Field=IsosurfFieldAlloc(ms->FDim);
+      ms->Field=IsosurfFieldAlloc(TempPyMOLGlobals,ms->FDim);
       ms->MapSource = cMapSourceXPLOR;
       ms->Field->save_points=false;
       for(c=0;c<ms->FDim[2];c++)
@@ -2078,7 +2078,7 @@ static int ObjectMapFLDStrToMap(ObjectMap *I,char *PHIStr,int bytes,int state)
         ms->Grid[a]=0.0F;
     }
 
-    ms->Field=IsosurfFieldAlloc(ms->FDim);
+    ms->Field=IsosurfFieldAlloc(TempPyMOLGlobals,ms->FDim);
     ms->MapSource = cMapSourceFLD;
     ms->Field->save_points=false;
 
@@ -2482,7 +2482,7 @@ static int ObjectMapBRIXStrToMap(ObjectMap *I,char *BRIXStr,int bytes,int state)
       ok=false;
     else {
       CrystalUpdate(ms->Crystal);
-      ms->Field=IsosurfFieldAlloc(ms->FDim);
+      ms->Field=IsosurfFieldAlloc(TempPyMOLGlobals,ms->FDim);
       ms->MapSource = cMapSourceBRIX;
       ms->Field->save_points=false;
       
@@ -2767,7 +2767,7 @@ static int ObjectMapGRDStrToMap(ObjectMap *I,char *GRDStr,int bytes,int state)
     }
 
     CrystalUpdate(ms->Crystal);
-    ms->Field=IsosurfFieldAlloc(ms->FDim);
+    ms->Field=IsosurfFieldAlloc(TempPyMOLGlobals,ms->FDim);
     ms->MapSource = cMapSourceGRD;
     ms->Field->save_points=false;
 
@@ -3262,7 +3262,7 @@ static int ObjectMapDXStrToMap(ObjectMap *I,char *DXStr,int bytes,int state) {
         ENDFB;
     }
     
-    ms->Field=IsosurfFieldAlloc(ms->FDim);
+    ms->Field=IsosurfFieldAlloc(TempPyMOLGlobals,ms->FDim);
     ms->MapSource = cMapSourcePHI;
     ms->Field->save_points=false;
     
@@ -3657,7 +3657,7 @@ int ObjectMapNumPyArrayToMapState(ObjectMapState *ms,PyObject *ary) {
     if(!(ms->FDim[0]&&ms->FDim[1]&&ms->FDim[2])) 
       ok=false;
     else {
-      ms->Field=IsosurfFieldAlloc(ms->FDim);
+      ms->Field=IsosurfFieldAlloc(TempPyMOLGlobals,ms->FDim);
       for(c=0;c<ms->FDim[2];c++)
         {
           v[2]=ms->Origin[2]+ms->Grid[2]*c;
@@ -3881,7 +3881,7 @@ ObjectMap *ObjectMapLoadChemPyMap(ObjectMap *I,PyObject *Map,
           ok=false;
         else {
           CrystalUpdate(ms->Crystal);
-          ms->Field=IsosurfFieldAlloc(ms->FDim);
+          ms->Field=IsosurfFieldAlloc(TempPyMOLGlobals,ms->FDim);
           for(c=0;c<ms->FDim[2];c++)
             {
               v[2]=(c+ms->Min[2])/((float)ms->Div[2]);

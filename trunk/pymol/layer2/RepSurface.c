@@ -924,31 +924,9 @@ void RepSurfaceRender(RepSurface *I,CRay *ray,Pickable **pick)
           }
         glEnd();
       }
-      glColor3f(0.3F,0.3F,1.0F);
-      v=TestLine;
-      c=NTestLine;
-      glBegin(GL_LINES);
-      while(c--) {
-        glVertex3fv(v);
-        v+=3;
-        glVertex3fv(v);
-        v+=3;
-      }
-      glEnd();
-    }
 
-    glColor4f(1,1,1,1);
-    SceneResetNormal(0);
-    v=TestLine;
-    c=NTestLine;
-    glBegin(GL_LINES);
-    while(c--) {
-      glVertex3fv(v);
-      v+=3;
-      glVertex3fv(v);
-      v+=3;
+      
     }
-    glEnd();
 
   }
 }
@@ -1278,6 +1256,7 @@ void RepSurfaceColor(RepSurface *I,CoordSet *cs)
 
 Rep *RepSurfaceNew(CoordSet *cs)
 {
+  PyMOLGlobals *G = TempPyMOLGlobals;
   ObjectMolecule *obj;
   int a,b,i,j,c;
   MapType *map,*solv_map;
@@ -1299,8 +1278,8 @@ Rep *RepSurfaceNew(CoordSet *cs)
   int surface_type;
   int surface_solvent;
   int MaxN;
-  SphereRec *sp = Sphere0;
-  SphereRec *ssp = Sphere0;
+  SphereRec *sp = G->Sphere->Sphere[0];
+  SphereRec *ssp = G->Sphere->Sphere[0];
   AtomInfoType *ai1,*ai2;
   int n_present = 0;
   float solv_tole;
@@ -1356,43 +1335,43 @@ Rep *RepSurfaceNew(CoordSet *cs)
   surface_quality = SettingGet_i(cs->Setting,obj->Obj.Setting,cSetting_surface_quality);
   if(surface_quality>=4) { /* totally impractical */
     minimum_sep = SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_surface_best)/4;
-    sp=Sphere4;
-    ssp=Sphere4;
+    sp = G->Sphere->Sphere[4];
+    ssp = G->Sphere->Sphere[4];
     circumscribe = 120;
   } else if(surface_quality>=3) { /* nearly impractical */
     minimum_sep = SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_surface_best)/3;
-    sp=Sphere4;
-    ssp=Sphere3;
+    sp = G->Sphere->Sphere[4];
+    ssp = G->Sphere->Sphere[3];
     circumscribe = 90;
   } else if(surface_quality>=2) { /* nearly perfect */
     minimum_sep = SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_surface_best)/2;
-    sp=Sphere3;
-    ssp=Sphere3;
+    sp = G->Sphere->Sphere[3];
+    ssp = G->Sphere->Sphere[3];
     circumscribe = 60;
   } else if(surface_quality>=1) { /* good */
     minimum_sep = SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_surface_best);
-    sp=Sphere2;
-    ssp=Sphere3;
+    sp = G->Sphere->Sphere[2];
+    ssp = G->Sphere->Sphere[3];
   } else if(!surface_quality) { /* 0 - normal */
     minimum_sep = SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_surface_normal);
-    sp=Sphere1;
-    ssp=Sphere2;
+    sp = G->Sphere->Sphere[1];
+    ssp = G->Sphere->Sphere[2];
   } else if(surface_quality==-1) { /* -1 */
     minimum_sep = SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_surface_poor);
-    sp=Sphere1;
-    ssp=Sphere2;
+    sp = G->Sphere->Sphere[1];
+    ssp = G->Sphere->Sphere[2];
   } else if(surface_quality==-2) { /* -2 god awful*/
     minimum_sep = SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_surface_poor)*1.5F;
-    sp=Sphere1;
-    ssp=Sphere1;
+    sp = G->Sphere->Sphere[1];
+    ssp = G->Sphere->Sphere[1];
   } else if(surface_quality==-3) { /* -3 miserable */
     minimum_sep = SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_surface_miserable);
-    sp=Sphere1;
-    ssp=Sphere1;
+    sp = G->Sphere->Sphere[1];
+    ssp = G->Sphere->Sphere[1];
   } else {
     minimum_sep = SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_surface_miserable)*1.18F;
-    sp=Sphere0;
-    ssp=Sphere1;
+    sp = G->Sphere->Sphere[0];
+    ssp = G->Sphere->Sphere[1];
   }
 
 

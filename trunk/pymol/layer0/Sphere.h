@@ -17,6 +17,7 @@ Z* -------------------------------------------------------------------
 #define _H_Sphere
 
 #include"Vector.h"
+#include"PyMOLGlobals.h"
 
 typedef struct SphereRec {
   float *area;
@@ -29,18 +30,14 @@ typedef struct SphereRec {
   int NTri;
   int *Mesh;
   int NMesh;
-} SphereRec;
+} SphereRec,*SphereRecPtr;
 
-extern SphereRec *Sphere0;
-extern SphereRec *Sphere1;
-extern SphereRec *Sphere2;
-extern SphereRec *Sphere3;
-extern SphereRec *Sphere4;
+struct _CSphere {
+  SphereRecPtr Sphere[5];
+  SphereRec *Array;
+};
 
-void SphereInit(void);
-void SphereDone(void);
-
-SphereRec *MakeDotSphere(int level);
-void SphereFree(SphereRec *sp);
+void SphereInit(PyMOLGlobals *G);
+void SphereFree(PyMOLGlobals *G);
 
 #endif

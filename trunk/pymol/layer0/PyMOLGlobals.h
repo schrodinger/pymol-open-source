@@ -1,7 +1,7 @@
 /* 
 A* -------------------------------------------------------------------
 B* This file contains source code for the PyMOL computer program
-C* copyright 1998-2000 by Warren Lyford Delano of DeLano Scientific. 
+C* copyright 1998-2000 by Warrn Lyford Delano of DeLano Scientific. 
 D* -------------------------------------------------------------------
 E* It is unlawful to modify or remove this copyright notice.
 F* -------------------------------------------------------------------
@@ -13,13 +13,24 @@ I* Additional authors of this source file include:
 -*
 Z* -------------------------------------------------------------------
 */
-#ifndef _H_Triangle
-#define _H_Triangle
+#ifndef _H_PyMOLGlobals
+#define _H_PyMOLGlobals
 
-#include"Vector.h"
+typedef struct _CIsosurf CIsosurf;
+typedef struct _CTetsurf CTetsurf;
+typedef struct _CSphere CSphere;
+typedef struct _CUtil CUtil;
 
-int *TrianglePointsToSurface(float *v,float *vn,int n,float cutoff,int *nTriPtr,int **stripPtr,float *extent);
+typedef struct PyMOLGlobals {
 
-int TriangleDegenerate(float *v1,float *n1,float *v2,float *n2,float *v3,float *n3);
+  CIsosurf *Isosurf;
+  CTetsurf *Tetsurf;
+  CSphere  *Sphere;
+  CUtil    *Util;
+  
+} PyMOLGlobals;
+
+extern PyMOLGlobals *TempPyMOLGlobals;
 
 #endif
+

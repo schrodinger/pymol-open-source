@@ -41,6 +41,8 @@ Z* -------------------------------------------------------------------
 #include"RepNonbonded.h"
 #include"RepNonbondedSphere.h"
 
+#include"PyMOLGlobals.h"
+
 void CoordSetUpdate(CoordSet *I);
 
 void CoordSetFree(CoordSet *I);
@@ -878,7 +880,7 @@ CoordSet *CoordSetNew(void)
   I->Obj = NULL;
   I->Spheroid = NULL;
   I->SpheroidNormal = NULL;
-  I->SpheroidSphereSize = Sphere1->nDot;
+  I->SpheroidSphereSize = TempPyMOLGlobals->Sphere->Sphere[1]->nDot; /* does this make any sense? */
   for(a=0;a<I->NRep;a++)
 	 I->Rep[a] = NULL;
   I->Setting=NULL;

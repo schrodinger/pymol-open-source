@@ -394,7 +394,7 @@ static void ObjectMeshUpdate(ObjectMesh *I)
                    ms->Range[4],
                    ms->Range[5]);*/
                 
-            IsosurfVolume(oms->Field,
+            IsosurfVolume(TempPyMOLGlobals,oms->Field,
                           ms->Level,
                           &ms->N,&ms->V,
                           ms->Range,

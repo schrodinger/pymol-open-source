@@ -156,6 +156,7 @@ setup ( # Distribution meta-data
    "layer4/Export.c",
    "layer4/Menu.c",
    "layer4/PopUp.c",
+   "layer5/ClassPyMOL.c",
    "layer5/TestPyMOL.c",
    "layer5/main.c",
    ],

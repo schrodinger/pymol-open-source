@@ -18,9 +18,4 @@ Z* -------------------------------------------------------------------
 
 /* OBSOLETE -- USE THE FEEDBACK FACILITY */
 
-unsigned int DebugState=0;
-
-/* 
-DebugSelector | DebugParser | DebugMolecule | DebugMap
- */
 
