@@ -468,7 +468,16 @@ static PyMethodDef Cmd_methods[] = {
 
 static PyObject *CmdPGlutGetRedisplay(PyObject *self, PyObject *args)
 {
+  #ifdef _PYMOL_PRETEND_GLUT
+
   return(APIStatus(p_glutGetRedisplay()));  
+  
+  #else
+  
+  return(APIStatus(0));  
+
+  #endif
+
 }
 
 static PyObject *CmdPGlutEvent(PyObject *self, PyObject *args)
