@@ -52,11 +52,11 @@ Z* -------------------------------------------------------------------
 #endif
 
 #ifndef R_SMALL4
-#define R_SMALL4 0.0001
+#define R_SMALL4 0.0001F
 #endif
 
 #ifndef R_SMALL8
-#define R_SMALL8 0.00000001
+#define R_SMALL8 0.00000001F
 #endif
 
 typedef struct { 
