@@ -1380,9 +1380,7 @@ void ExecutiveSeleToObject(char *name,char *s1,int source,int target)
 
   sele1=SelectorIndexByName(s1);
 
-  if(sele1>=0) {
-    SelectorCreateObjectMolecule(sele1,name,target,source);
-  }
+  SelectorCreateObjectMolecule(sele1,name,target,source);
 }
 /*========================================================================*/
 void ExecutiveCopy(char *src,char *dst)
