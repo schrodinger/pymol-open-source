@@ -166,6 +166,55 @@ def performance(mode):
       cmd.set('transparency_mode',0)
       cmd.do("rebuild")         
 
+
+
+def label_chains(sele="all"):
+   pymol.stored._cs = []
+   last = None
+   save = ()
+   list = []
+   cmd.iterate(sele,"stored._cs.append((model,chain,index))")
+   for a in pymol.stored._cs:
+      if (a[0:2]!=save):
+         list.append(last)
+         list.append(a)
+         save = a[0:2]
+      last = a
+   if len(list):
+      list.append(last)
+   list = filter(None,list)
+   for a in list:
+      if(a[1]==''):
+         cmd.label("%s`%d"%(a[0],a[2]),'''"chain ''"''',quiet=1)         
+      elif(a[1]==' '):
+         cmd.label("%s`%d"%(a[0],a[2]),'''"chain ' '"''',quiet=1)         
+      else:
+         cmd.label("%s`%d"%(a[0],a[2]),"'chain '+chain",quiet=1)
+
+def label_segments(sele="all"):
+   pymol.stored._cs = []
+   last = None
+   save = ()
+   list = []
+   cmd.iterate(sele,"stored._cs.append((model,segi,index))")
+   for a in pymol.stored._cs:
+      if (a[0:2]!=save):
+         list.append(last)
+         list.append(a)
+         save = a[0:2]
+      last = a
+   if len(list):
+      list.append(last)
+   list = filter(None,list)
+   for a in list:
+      if(a[1]==''):
+         cmd.label("%s`%d"%(a[0],a[2]),'''"segi ''"''',quiet=1)         
+      elif(a[1]==' '):
+         cmd.label("%s`%d"%(a[0],a[2]),'''"segi ' '"''',quiet=1)         
+      else:
+         cmd.label("%s`%d"%(a[0],a[2]),"'segi '+segi",quiet=1)
+
+   
 def hide_sele():
    arg = cmd.get_names("selections")
    for a in arg:
@@ -183,9 +232,13 @@ def cbc(selection='(all)',first_color=7):
    '''
    c = first_color
    for a in cmd.get_chains(selection):
-      if len(a):
+      if len(string.strip(a)):
          print (" util.cbc: color %d,(chain %s)"%(c,a))
          cmd.color("%d"%c,"(chain %s)"%a)
+         c = c + 1
+      elif len(a): # note, PyMOL's selection language can't handle this right now
+         print (" util.cbc: color %d,(chain ' ')"%(c))
+         cmd.color("%d"%c,"(chain '')")
          c = c + 1
       else:
          print (" util.cbc: color %d,(chain '')"%(c))

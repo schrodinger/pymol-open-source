@@ -149,7 +149,7 @@ int ExecutiveSpectrum(char *s1,char *expr,float min,float max,int first,int last
       n_atom=op.i1;
       
       if(n_atom) {
-        value = Alloc(float,n_atom);
+        value = Calloc(float,n_atom);
         
         if(WordMatch("count",expr,true)) {
           for(a=0;a<n_atom;a++) {
@@ -157,6 +157,16 @@ int ExecutiveSpectrum(char *s1,char *expr,float min,float max,int first,int last
           }
         } else if(WordMatch("b",expr,true)) {
           op.code = OMOP_GetBFactors;
+          op.i1 = 0;
+          op.ff1 = value;
+          ExecutiveObjMolSeleOp(sele1,&op);
+        } else if(WordMatch("q",expr,true)) {
+          op.code = OMOP_GetOccupancies;
+          op.i1 = 0;
+          op.ff1 = value;
+          ExecutiveObjMolSeleOp(sele1,&op);
+        } else if(WordMatch("pc",expr,true)) {
+          op.code = OMOP_GetPartialCharges;
           op.i1 = 0;
           op.ff1 = value;
           ExecutiveObjMolSeleOp(sele1,&op);
@@ -182,6 +192,8 @@ int ExecutiveSpectrum(char *s1,char *expr,float min,float max,int first,int last
           range = 1.0F;
         *min_ret = min;
         *max_ret = max;
+
+
         op.code = OMOP_Spectrum;
         op.i1 = n_color-1;
         op.i2 = n_atom;
@@ -2726,7 +2738,7 @@ void ExecutiveOrient(char *sele,Matrix33d mi,int state)
   }
 }
 /*========================================================================*/
-void ExecutiveLabel(char *s1,char *expr)
+void ExecutiveLabel(char *s1,char *expr,int quiet)
 {
   int sele1;
   ObjectMoleculeOpRec op1;
@@ -2748,9 +2760,11 @@ void ExecutiveLabel(char *s1,char *expr)
     op1.i2=cRepInvVisib;
     ExecutiveObjMolSeleOp(sele1,&op1);
 
-    PRINTFB(FB_Executive,FB_Actions)
-      " Label: labelled %i atoms.\n",cnt
-      ENDFB;
+    if(!quiet) {
+      PRINTFB(FB_Executive,FB_Actions)
+        " Label: labelled %i atoms.\n",cnt
+        ENDFB;
+    }
   } else {
     PRINTFB(FB_Executive,FB_Warnings)
       " Label: no atoms selections.\n"

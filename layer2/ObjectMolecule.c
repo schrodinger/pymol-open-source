@@ -6190,14 +6190,42 @@ void ObjectMoleculeSeleOp(ObjectMolecule *I,int sele,ObjectMoleculeOpRec *op)
        }
      break;
 	case OMOP_GetBFactors: 
+     ai=I->AtomInfo;
      for(a=0;a<I->NAtom;a++)
        {
-         s=I->AtomInfo[a].selEntry;
+         s=ai->selEntry;
          if(SelectorIsMember(s,sele))
            {
-             op->ff1[op->i1]=I->AtomInfo[a].b;
+             op->ff1[op->i1]=ai->b;
              op->i1++;
            }
+         ai++;
+       }
+     break;
+	case OMOP_GetOccupancies: 
+     ai=I->AtomInfo;
+     for(a=0;a<I->NAtom;a++)
+       {
+         s=ai->selEntry;
+         if(SelectorIsMember(s,sele))
+           {
+             op->ff1[op->i1]=ai->q;
+             op->i1++;
+           }
+         ai++;
+       }
+     break;
+	case OMOP_GetPartialCharges: 
+     ai=I->AtomInfo;
+     for(a=0;a<I->NAtom;a++)
+       {
+         s=ai->selEntry;
+         if(SelectorIsMember(s,sele))
+           {
+             op->ff1[op->i1]=ai->partialCharge;
+             op->i1++;
+           }
+         ai++;
        }
      break;
 	case OMOP_IdentifyObjects: /* identify atoms */
@@ -6360,7 +6388,6 @@ void ObjectMoleculeSeleOp(ObjectMolecule *I,int sele,ObjectMoleculeOpRec *op)
          s=ai->selEntry;
          if(SelectorIsMember(s,sele))
            {
-             op->i3++;
              skip_flag=false;
              if(op->i4&&ai0) /* byres and we've done a residue */
                if(AtomInfoSameResidue(ai,ai0))
@@ -6368,9 +6395,10 @@ void ObjectMoleculeSeleOp(ObjectMolecule *I,int sele,ObjectMoleculeOpRec *op)
              if(!skip_flag) {
                c = (int)(0.49999+op->i1*(op->ff1[op->i3] - op->f1)/op->f2);
                if(c<0) c=0;
-               if(c>=op->i1) c=op->i1;
+               if(c>=op->i1) c=op->i1-1;
                ai->color=op->ii1[c];
-               
+
+               /*               printf("%8.3 %8.3\n",ai->partial_charge,*/
                if(op->i4) { /* byres */
                  offset = -1;
                  while((a+offset)>=0) {
@@ -6392,7 +6420,9 @@ void ObjectMoleculeSeleOp(ObjectMolecule *I,int sele,ObjectMoleculeOpRec *op)
                  }
                }
                ai0=ai;
-             }
+                      }
+             op->i3++;
+
            }
          ai++;
        }
