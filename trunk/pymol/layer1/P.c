@@ -269,6 +269,7 @@ int PLabelAtom(AtomInfoType *at,char *expr)
   PConvStringToPyDictItem(dict,"alt",at->alt);
   PConvStringToPyDictItem(dict,"segi",at->segi);
   PConvStringToPyDictItem(dict,"text_type",at->textType);
+  PConvStringToPyDictItem(dict,"elem",at->elem);
   PConvFloatToPyDictItem(dict,"q",at->q);
   PConvFloatToPyDictItem(dict,"b",at->b);
   if(at->customType!=cAtomInfoNoType)

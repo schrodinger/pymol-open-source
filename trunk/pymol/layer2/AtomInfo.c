@@ -200,23 +200,25 @@ void AtomInfoAssignParameters(AtomInfoType *I)
 
   e = I->elem;
   if(!*e) {
-    n = I->name;
-    while(((*n)>='0')&&((*n)<='9')&&(*(n+1))) n++;  
-    while((((*n)>='A')&&((*n)<='Z'))||(((*n)>='a')&&((*n)<='z'))) {
-      *(e++)=*(n++);
+    if(!*e) {
+      n = I->name;
+      while(((*n)>='0')&&((*n)<='9')&&(*(n+1))) n++;  
+      while((((*n)>='A')&&((*n)<='Z'))||(((*n)>='a')&&((*n)<='z'))) {
+        *(e++)=*(n++);
+      }
+      *e=0;
     }
-    *e=0;
-  }
-  e=I->elem;
-  switch ( *e ) {
-  case 'C':
-    if(!((*(e+1)=='l')||(*(e+1)=='L')))
-      if(!(((*(e+1))=='A')&&(I->hetatm)))
-        *(e+1)=0;
-    break;
-  default:
-    *(e+1)=0;
-    break;
+    e=I->elem;
+    switch ( *e ) {
+    case 'C':
+      if(!((*(e+1)=='l')||(*(e+1)=='L')))
+        if(!(((*(e+1))=='A')&&(I->hetatm)))
+          *(e+1)=0;
+      break;
+    default:
+      *(e+1)=0;
+      break;
+    }
   }
   I->hydrogen=(((*I->elem)=='H')&&(!(*(I->elem+1))));
   n = I->name;
