@@ -17,10 +17,10 @@ Z* -------------------------------------------------------------------
 #include"os_std.h"
 #include"os_memory.h"
 #include"const.h"
-#include"err.h"
+#include"err2.h"
 #include"sort.h"
 
-#include"feedback.h"
+#include"feedback2.h"
 
 #include"mac.h"
 #include"vla.h"
@@ -1179,8 +1179,7 @@ void ChampPreparePattern(CChamp *I,int index)
     pat->unique_atom = ChampUniqueListNew(I,pat->atom,0);
 }
 
-int PTruthCallStr(PyObject *object,char *method,char *argument);
-int PTruthCallStr(PyObject *object,char *method,char *argument)
+static int PTruthCallStr(PyObject *object,char *method,char *argument)
 {
   int result = false;
   PyObject *tmp;
@@ -1193,8 +1192,7 @@ int PTruthCallStr(PyObject *object,char *method,char *argument)
   return(result);
 }
 
-int PConvPyObjectToInt(PyObject *object,int *value);
-int PConvPyObjectToInt(PyObject *object,int *value)
+static int PConvPyObjectToInt(PyObject *object,int *value)
 {
   int result = true;
   PyObject *tmp;
@@ -1213,9 +1211,7 @@ int PConvPyObjectToInt(PyObject *object,int *value)
   return(result);
 }
 
-void UtilCleanStr(char *s);
-void UtilCleanStr(char *s) /*remove flanking white and all unprintables*/
-{
+static void UtilCleanStr(char *s) /*remove flanking white and all unprintables*/{
   char *p,*q;
   p=s;
   q=s;
@@ -1667,7 +1663,7 @@ int ChampModelToPat(CChamp *I,PyObject *model)
 CChamp *ChampNew(void) {
   CChamp *I;
 
-  FeedbackInit(); /* only has side-effects the first time */
+  feedback_Init(); /* only has side-effects the first time */
   ChiralInit(); 
 
   I = mac_calloc(CChamp); 

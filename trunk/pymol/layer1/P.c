@@ -797,6 +797,7 @@ void	initarrayfns();
 void	initlapack_lite();
 void	initumath();
 void	initranlib();
+void  init_champ();
 #endif
 #endif
 #endif
@@ -953,6 +954,8 @@ putenv(line3);
 	initlapack_lite();
 	initumath();
 	initranlib();
+/* initialize champ */
+   init_champ();
 #endif
     init_opengl();
     init_opengl_num();

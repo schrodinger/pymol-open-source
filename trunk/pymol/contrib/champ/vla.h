@@ -35,9 +35,9 @@ typedef struct VLARec {
 #define vla_calloc(ptr,type,initSize) (ptr=(type*)VLAMalloc(initSize,sizeof(type),5,1))
 #define vla_free(ptr) {if(ptr) {VLAFree(ptr);ptr=NULL;}}
 #define vla_set_size(ptr,type,size) {ptr=(type*)VLASetSize(ptr,size);}
-#define vla_get_size(ptr) VLAGetSize(ptr)
+#define vla_get_size(ptr) VLAGetSize2(ptr)
 
-unsigned int VLAGetSize(void *ptr);
+unsigned int VLAGetSize2(void *ptr);
 
 #ifndef _os_memory_debug_on
 
