@@ -107,7 +107,7 @@ def trim_sele(st): # utility routine, returns selection string
       return None
    return st[0:c]
 
-def parse_arg(st):
+def parse_arg(st,mode=STRICT):
    '''
 parse_arg(st)
 
@@ -122,6 +122,10 @@ returns list of tuples of strings: [(None,value),(name,value)...]
    if mo:
       cc=cc+mo.end(0)
       while 1:
+         if mode>=LITERAL: # LITERAL argument handling
+            if (mode-LITERAL)==len(result):
+               result.append((None,string.strip(st[cc:])))
+               return result
          # clean whitespace
          mo = whitesp_re.match(st[cc:])
          if mo:
@@ -429,6 +433,19 @@ if __name__=='__main__':
    tv = parse_arg("command \"'hello''bob'\"")
    print tv==[(None, '"\'hello\'\'bob\'"')],tv
 
+
+   tv = parse_arg("command this,is,a command;b command",mode=LITERAL)
+   print tv==[(None, 'this,is,a command;b command')], tv
+
+   tv = parse_arg("command this,a command;b command",mode=LITERAL1)
+   print tv==[(None, 'this'), (None, 'a command;b command')], tv
+
+   tv = parse_arg("command this,is,a command;b command",mode=LITERAL2)
+   print tv==[(None, 'this'), (None, 'is'), (None, 'a command;b command')],tv
+
+   tv = parse_arg("command this,is,a=hello;b command",mode=LITERAL2)
+   print tv==[(None, 'this'), (None, 'is'), (None, 'a=hello;b command')],tv
+   
 # expected exceptions
 
    try:

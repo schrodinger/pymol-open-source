@@ -104,6 +104,7 @@ COMMANDS
    STEREO        stereo
    SYMMETRY      symexp
    SCRIPTS       @         run
+   LANGUAGE      alias     extend
 
 Try "help <command-name>".  Also see the following extra topics:
  
@@ -4105,6 +4106,8 @@ NOTES
       else:
          print " minimize: missing parameters, can't continue"
 
+
+   
 def cd(dir):
    '''
 DESCRIPTION
@@ -4219,6 +4222,54 @@ EXAMPLES
 def null():
    pass
 
+def extend(name,function):
+   '''
+DESCRIPTION
+
+   "extend" is an API-only function which binds a new external
+   function as a command into the PyMOL scripting language.
+
+PYMOL API
+
+   cmd.extend(string name,function function)
+   
+PYTHON EXAMPLE
+
+   def foo(moo=2): print moo
+   cmd.extend('foo',foo)
+
+   The following would now be valid within PyMOL:
+
+   foo
+   foo 3
+   foo moo=5
+   
+   '''
+   keyword[name] = [function, 0,0,',',parsing.STRICT]
+   rebuild_shortcuts()
+
+def alias(name,command):
+   '''
+DESCRIPTION
+
+   "alias" allows you to bind a commonly used command to a single word
+
+USAGE
+   
+   alias name, command-sequence
+
+PYMOL API
+
+   cmd.alias(string name,string command)
+   
+EXAMPLES
+
+   alias go,load "test.pdb";zoom (i;500);show sticks,(i;500 a;4)
+   go
+   '''
+   keyword[name] = [eval("lambda :do('''%s ''')"%command), 0,0,',',parsing.STRICT]   
+   rebuild_shortcuts()
+
 keyword = {
 
    # keyword : [ command, # min_arg, max_arg, separator, mode ]
@@ -4229,6 +4280,7 @@ keyword = {
    #       which make much better use of built-in python features.
    
    'abort'         : [dummy        , 0 , 0 , ',' , parsing.ABORT  ],
+   'alias'         : [alias        , 0 , 0 , ',' , parsing.LITERAL1 ],   
    'alter'         : [alter        , 2 , 2 , ',' , parsing.SIMPLE ],
    'alter_state'   : [alter_state  , 3 , 3 , ',' , parsing.SIMPLE ],
    'api'           : [api          , 0 , 0 , ',' , parsing.STRICT ],
@@ -4257,6 +4309,7 @@ keyword = {
    'enable'        : [enable       , 0 , 1 , ',' , parsing.STRICT ],
    'ending'        : [ending       , 0 , 0 , ',' , parsing.STRICT ],
    'export_dots'   : [export_dots  , 2 , 2 , ',' , parsing.SIMPLE  ],
+   'extend'        : [extend       , 0 , 0 , ',' , parsing.STRICT ],
    'fast_minimize' : [fast_minimize, 1,  4 , ',' , parsing.SIMPLE  ],
    'fit'           : [fit          , 2 , 2 , ',' , parsing.STRICT ],
    'flag'          : [flag         , 2 , 2 , '=' , parsing.SIMPLE  ],
@@ -4476,20 +4529,29 @@ class loadable:
    r3d = 14      # r3d, only used within cmd.py
    xyz = 15      # xyz, tinker format
    
-# build shortcuts list
+# build keyword shortcuts
 
-kwhash = {}
+def rebuild_shortcuts():
+   '''
+   INTERNAL
+   '''
+   global kwhash
+   kwhash = {}
+   
+   for a in keyword.keys():
+      for b in range(1,len(a)):
+         sub = a[0:b]
+         if kwhash.has_key(sub):
+            kwhash[sub]=0
+         else:
+            kwhash[sub]=a
 
-for a in keyword.keys():
-   for b in range(1,len(a)):
-      sub = a[0:b]
-      if kwhash.has_key(sub):
-         kwhash[sub]=0
-      else:
-         kwhash[sub]=a
+   for a in keyword.keys():
+      kwhash[a]=a
 
-for a in keyword.keys():
-   kwhash[a]=a
+rebuild_shortcuts()
+
+# build representation shortcuts
 
 rephash = {}
 

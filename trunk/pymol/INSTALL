@@ -19,7 +19,11 @@ STEP (1)
 A compiled copy of the external dependencies package ("ext") is
 required, but only needs to be downloaded once (10 MB).  This package
 contains everything you will need to run PyMOL all in one place so
-that you won't have to hunt down the individual components.
+that you won't have to hunt down the individual components.  (NOTE: If
+you already have all of the components installed elsewhere on your
+system, then feel free to bypass this step, but note that you will
+probably need to edit some configuration files in order to get that to
+work).
 
 You will need to compile the external dependencies from the sources
 (currently in the file "ext-0.51-req-src.tgz"), unless you already
@@ -63,7 +67,7 @@ standalone application.
 
 Under Linux, if you don't have a 3DFX card, get rid of the
 -D_PYMOL_3DFX work-around flag.  The nVidia drivers work great, so I
-suggest gettin a GeForce2 GTS for maximum performance.
+suggest getting a GeForce2 MX ($100) or GTS ($200) video card.
 
 STEP (3) 
 
@@ -84,7 +88,7 @@ on your system.
    cp pymol.com.template pymol.com
 	vi pymol.com
 	
- Now you should be all set to run pymol.
+Now you should be all set to run pymol.
 
 	./pymol.com
 
@@ -96,5 +100,6 @@ you have one.
 NOTE: If you ever want to clean up the tree
 	"make clean" gets rid of all intermediate objects, etc.
 	"make distclean" restores the tree to near "distribution" quality 
-       (NOTE it does not remove Rules.make or the "ext" directory/symlink)
+    (NOTE: it does not remove pymol.com, Rules.make, pymol.csh, or the
+    "ext" directory/symlink)
 

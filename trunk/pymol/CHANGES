@@ -20,6 +20,8 @@ Impending Changes
    
 Changes up to 0.50
 
+   * alias and extend commands
+
    * Additional test cases.
 
    * Parser improved with a new argument parsing subsystem which has a

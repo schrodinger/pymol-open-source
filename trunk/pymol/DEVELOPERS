@@ -10,14 +10,14 @@ you must transfer copyright of such improvements to DeLano Scientific
 and attach no conditions to your work beyond those specified in the
 PyMOL LICENSE file.  Essentially you are giving everyone the right to
 use your code for all purposes without restriction.  This is core to
-the PyMOL open-source philosophy, and no exceptions will be made.
+the PyMOL open-source philosophy, so please don't ask for exceptions.
 
 (2) Develop self-contained functionality that can be integrated into
 PyMOL as part of the "contrib" directory.  With this approach, you
 retain copyright to your code, but you must still place your source
 under the "Python" license or an equivalent.  Again, you are giving
 everyone the right to use your code for all purposes without
-restriction, and there will be no exceptions.
+restriction, and please don't ask for exceptions.
 
 (3) Develop independent functionality which makes use of the PyMOL
 Python API.  With this approach, your project need not become part of
@@ -26,7 +26,8 @@ would like to usage and distribution of your code.  However, if you
 attach restrictions, then you must also assume responsibility for
 distributing the software.  If you want your code to become part of
 the official PyMOL package, then you will need to release it under the
-"Python" license or an equivalent non-restrictive open source license.
+"Python" license or an equivalent non-restrictive open source license
+(not GPL).
 
 All contributors to the PyMOL project who donate source code will be
 permanently acknowledged by name in the individual source files and in
@@ -39,11 +40,11 @@ and copyright notices.
 
 These are draft rules, and I would appreciate feedback and comments
 (email to warren@delanoscientific.com).  However, I am totally opposed
-to restricting PyMOL to the GNU Public License (GPL), so don't even
-ask.  Contrary to the position of the Free Software Foundation
-(http://www.fsf.org), I believe that the open-source movement will
-benefit from source code with fewer restrictions, not more.  PyMOL,
-like Python, is truly free and open-source.
+to restricting any portion of PyMOL to the GNU Public License (GPL).
+Contrary to the "Free" Software Foundation (http://www.fsf.org), I
+believe that the open-source movement will benefit from source code
+with fewer restrictions, not more.  PyMOL, like Python, is truly free
+and open-source.
 
 Warren L. DeLano
 warren@delanoscientific.com
