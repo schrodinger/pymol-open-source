@@ -7402,7 +7402,7 @@ static void ExecutiveDraw(Block *block)
             if(rec->type==cExecObject) {
               if(rec->obj->fGetCaption)
                 c = rec->obj->fGetCaption(rec->obj);
-              if(c && c[0] && nChar>1)
+              if(c && c[0] && nChar>1 && strcmp(c,rec->obj->Name)!=0)
                 {
                   
                   glColor3fv(captionColor);
