@@ -4,25 +4,25 @@ PyMOL>load lrg/map.ccp4
  Crystal: Unit Cell           91.144   91.144   45.856
  Crystal: Alpha Beta Gamma    90.000   90.000   90.000
  Crystal: RealToFrac Matrix
- Crystal:    0.01097   -0.00000   -0.00000
- Crystal:    0.00000    0.01097   -0.00000
- Crystal:    0.00000    0.00000    0.02181
+ Crystal:    0.0110   -0.0000   -0.0000
+ Crystal:    0.0000    0.0110   -0.0000
+ Crystal:    0.0000    0.0000    0.0218
  Crystal: FracToReal Matrix
- Crystal:   91.14429    0.00000    0.00000
- Crystal:    0.00000   91.14429    0.00000
- Crystal:    0.00000    0.00000   45.85570
+ Crystal:   91.1443    0.0000    0.0000
+ Crystal:    0.0000   91.1443    0.0000
+ Crystal:    0.0000    0.0000   45.8557
  Crystal: Unit Cell Volume 380936.2
  ObjectMap: Map Read.  Range = -3.439 to 4.509
  Crystal: Unit Cell           91.144   91.144   45.856
  Crystal: Alpha Beta Gamma    90.000   90.000   90.000
  Crystal: RealToFrac Matrix
- Crystal:    0.01097   -0.00000   -0.00000
- Crystal:    0.00000    0.01097   -0.00000
- Crystal:    0.00000    0.00000    0.02181
+ Crystal:    0.0110   -0.0000   -0.0000
+ Crystal:    0.0000    0.0110   -0.0000
+ Crystal:    0.0000    0.0000    0.0218
  Crystal: FracToReal Matrix
- Crystal:   91.14429    0.00000    0.00000
- Crystal:    0.00000   91.14429    0.00000
- Crystal:    0.00000    0.00000   45.85570
+ Crystal:   91.1443    0.0000    0.0000
+ Crystal:    0.0000   91.1443    0.0000
+ Crystal:    0.0000    0.0000   45.8557
  Crystal: Unit Cell Volume 380936.2
  Executive: object "map" created.
 PyMOL>isosurf m1,map,1.0
@@ -51,19 +51,42 @@ PyMOL>ray renderer=2
  TetsurfVolume: Surface generated using 0 triangles.
  RayRenderTest: obtained 0 graphics primitives.
 PyMOL>dele m1
-Traceback (most recent call last):
-  File "/users/warren/pymol/modules/pymol/parser.py", line 105, in parse
-    exec(com2[nest]+"\n",pymol_names,pymol_names)
-  File "<string>", line 1, in ?
-AttributeError: 'module' object has no attribute 'isosurf'
+ Executive: object "m2" created.
+ Isosurface: created "m2", setting level to 1.100
+ Isosurface: created "m2", setting level to 1.200
+ Isosurface: created "m2", setting level to 1.300
+ Isosurface: created "m2", setting level to 1.400
+ Isosurface: created "m2", setting level to 1.500
+ Isosurface: created "m2", setting level to 1.600
+ Isosurface: created "m2", setting level to 1.700
+ Isosurface: created "m2", setting level to 1.800
+ Isosurface: created "m2", setting level to 1.900
 PyMOL>ray renderer=2
- RayRenderTest: obtained 0 graphics primitives.
+ ObjectSurface: updating "m2".
+ TetsurfVolume: Surface generated using 404568 triangles.
+ ObjectSurface: updating "m2".
+ TetsurfVolume: Surface generated using 381788 triangles.
+ ObjectSurface: updating "m2".
+ TetsurfVolume: Surface generated using 360028 triangles.
+ ObjectSurface: updating "m2".
+ TetsurfVolume: Surface generated using 339196 triangles.
+ ObjectSurface: updating "m2".
+ TetsurfVolume: Surface generated using 319936 triangles.
+ ObjectSurface: updating "m2".
+ TetsurfVolume: Surface generated using 302908 triangles.
+ ObjectSurface: updating "m2".
+ TetsurfVolume: Surface generated using 284766 triangles.
+ ObjectSurface: updating "m2".
+ TetsurfVolume: Surface generated using 269484 triangles.
+ ObjectSurface: updating "m2".
+ TetsurfVolume: Surface generated using 253698 triangles.
+ RayRenderTest: obtained 404568 graphics primitives.
 PyMOL>frame 3
 PyMOL>ray renderer=2
- RayRenderTest: obtained 0 graphics primitives.
+ RayRenderTest: obtained 360028 graphics primitives.
 PyMOL>frame 8
 PyMOL>ray renderer=2
- RayRenderTest: obtained 0 graphics primitives.
+ RayRenderTest: obtained 269484 graphics primitives.
 PyMOL>dele all
 PyMOL>load lrg/map.xplor
  ObjectMapLoadXPLORFile: Loading from 'lrg/map.xplor'.
@@ -71,13 +94,13 @@ PyMOL>load lrg/map.xplor
  Crystal: Unit Cell           91.144   91.144   45.856
  Crystal: Alpha Beta Gamma    90.000   90.000   90.000
  Crystal: RealToFrac Matrix
- Crystal:    0.01097   -0.00000   -0.00000
- Crystal:    0.00000    0.01097   -0.00000
- Crystal:    0.00000    0.00000    0.02181
+ Crystal:    0.0110   -0.0000   -0.0000
+ Crystal:    0.0000    0.0110   -0.0000
+ Crystal:    0.0000    0.0000    0.0218
  Crystal: FracToReal Matrix
- Crystal:   91.14430    0.00000    0.00000
- Crystal:    0.00000   91.14430    0.00000
- Crystal:    0.00000    0.00000   45.85570
+ Crystal:   91.1443    0.0000    0.0000
+ Crystal:    0.0000   91.1443    0.0000
+ Crystal:    0.0000    0.0000   45.8557
  Crystal: Unit Cell Volume 380936.3
  Executive: object "map" created.
 PyMOL>isosurf m1,map,1.0
@@ -106,19 +129,42 @@ PyMOL>ray renderer=2
  TetsurfVolume: Surface generated using 0 triangles.
  RayRenderTest: obtained 0 graphics primitives.
 PyMOL>dele m1
-Traceback (most recent call last):
-  File "/users/warren/pymol/modules/pymol/parser.py", line 105, in parse
-    exec(com2[nest]+"\n",pymol_names,pymol_names)
-  File "<string>", line 1, in ?
-AttributeError: 'module' object has no attribute 'isosurf'
+ Executive: object "m2" created.
+ Isosurface: created "m2", setting level to 1.100
+ Isosurface: created "m2", setting level to 1.200
+ Isosurface: created "m2", setting level to 1.300
+ Isosurface: created "m2", setting level to 1.400
+ Isosurface: created "m2", setting level to 1.500
+ Isosurface: created "m2", setting level to 1.600
+ Isosurface: created "m2", setting level to 1.700
+ Isosurface: created "m2", setting level to 1.800
+ Isosurface: created "m2", setting level to 1.900
 PyMOL>ray renderer=2
- RayRenderTest: obtained 0 graphics primitives.
+ ObjectSurface: updating "m2".
+ TetsurfVolume: Surface generated using 404548 triangles.
+ ObjectSurface: updating "m2".
+ TetsurfVolume: Surface generated using 381788 triangles.
+ ObjectSurface: updating "m2".
+ TetsurfVolume: Surface generated using 360028 triangles.
+ ObjectSurface: updating "m2".
+ TetsurfVolume: Surface generated using 339196 triangles.
+ ObjectSurface: updating "m2".
+ TetsurfVolume: Surface generated using 319936 triangles.
+ ObjectSurface: updating "m2".
+ TetsurfVolume: Surface generated using 302908 triangles.
+ ObjectSurface: updating "m2".
+ TetsurfVolume: Surface generated using 284766 triangles.
+ ObjectSurface: updating "m2".
+ TetsurfVolume: Surface generated using 269484 triangles.
+ ObjectSurface: updating "m2".
+ TetsurfVolume: Surface generated using 253698 triangles.
+ RayRenderTest: obtained 269484 graphics primitives.
 PyMOL>frame 3
 PyMOL>ray renderer=2
- RayRenderTest: obtained 0 graphics primitives.
+ RayRenderTest: obtained 360028 graphics primitives.
 PyMOL>frame 8
 PyMOL>ray renderer=2
- RayRenderTest: obtained 0 graphics primitives.
+ RayRenderTest: obtained 269484 graphics primitives.
 PyMOL>dele all
 PyMOL>load lrg/map.ccp4
  ObjectMapLoadCCP4File: Loading from 'lrg/map.ccp4'.
@@ -126,25 +172,25 @@ PyMOL>load lrg/map.ccp4
  Crystal: Unit Cell           91.144   91.144   45.856
  Crystal: Alpha Beta Gamma    90.000   90.000   90.000
  Crystal: RealToFrac Matrix
- Crystal:    0.01097   -0.00000   -0.00000
- Crystal:    0.00000    0.01097   -0.00000
- Crystal:    0.00000    0.00000    0.02181
+ Crystal:    0.0110   -0.0000   -0.0000
+ Crystal:    0.0000    0.0110   -0.0000
+ Crystal:    0.0000    0.0000    0.0218
  Crystal: FracToReal Matrix
- Crystal:   91.14429    0.00000    0.00000
- Crystal:    0.00000   91.14429    0.00000
- Crystal:    0.00000    0.00000   45.85570
+ Crystal:   91.1443    0.0000    0.0000
+ Crystal:    0.0000   91.1443    0.0000
+ Crystal:    0.0000    0.0000   45.8557
  Crystal: Unit Cell Volume 380936.2
  ObjectMap: Map Read.  Range = -3.439 to 4.509
  Crystal: Unit Cell           91.144   91.144   45.856
  Crystal: Alpha Beta Gamma    90.000   90.000   90.000
  Crystal: RealToFrac Matrix
- Crystal:    0.01097   -0.00000   -0.00000
- Crystal:    0.00000    0.01097   -0.00000
- Crystal:    0.00000    0.00000    0.02181
+ Crystal:    0.0110   -0.0000   -0.0000
+ Crystal:    0.0000    0.0110   -0.0000
+ Crystal:    0.0000    0.0000    0.0218
  Crystal: FracToReal Matrix
- Crystal:   91.14429    0.00000    0.00000
- Crystal:    0.00000   91.14429    0.00000
- Crystal:    0.00000    0.00000   45.85570
+ Crystal:   91.1443    0.0000    0.0000
+ Crystal:    0.0000   91.1443    0.0000
+ Crystal:    0.0000    0.0000   45.8557
  Crystal: Unit Cell Volume 380936.2
  Executive: object "map" created.
 PyMOL>load lrg/ref.pdb
@@ -152,13 +198,13 @@ PyMOL>load lrg/ref.pdb
  Crystal: Unit Cell           91.144   91.144   45.856
  Crystal: Alpha Beta Gamma    90.000   90.000   90.000
  Crystal: RealToFrac Matrix
- Crystal:    0.01097   -0.00000   -0.00000
- Crystal:    0.00000    0.01097   -0.00000
- Crystal:    0.00000    0.00000    0.02181
+ Crystal:    0.0110   -0.0000   -0.0000
+ Crystal:    0.0000    0.0110   -0.0000
+ Crystal:    0.0000    0.0000    0.0218
  Crystal: FracToReal Matrix
- Crystal:   91.14400    0.00000    0.00000
- Crystal:    0.00000   91.14400    0.00000
- Crystal:    0.00000    0.00000   45.85600
+ Crystal:   91.1440    0.0000    0.0000
+ Crystal:    0.0000   91.1440    0.0000
+ Crystal:    0.0000    0.0000   45.8560
  Crystal: Unit Cell Volume 380936.2
  Symmetry:      1.00000      0.00000      0.00000      0.00000
  Symmetry:      0.00000      1.00000      0.00000      0.00000
@@ -267,25 +313,25 @@ PyMOL>load lrg/map.ccp4
  Crystal: Unit Cell           91.144   91.144   45.856
  Crystal: Alpha Beta Gamma    90.000   90.000   90.000
  Crystal: RealToFrac Matrix
- Crystal:    0.01097   -0.00000   -0.00000
- Crystal:    0.00000    0.01097   -0.00000
- Crystal:    0.00000    0.00000    0.02181
+ Crystal:    0.0110   -0.0000   -0.0000
+ Crystal:    0.0000    0.0110   -0.0000
+ Crystal:    0.0000    0.0000    0.0218
  Crystal: FracToReal Matrix
- Crystal:   91.14429    0.00000    0.00000
- Crystal:    0.00000   91.14429    0.00000
- Crystal:    0.00000    0.00000   45.85570
+ Crystal:   91.1443    0.0000    0.0000
+ Crystal:    0.0000   91.1443    0.0000
+ Crystal:    0.0000    0.0000   45.8557
  Crystal: Unit Cell Volume 380936.2
  ObjectMap: Map Read.  Range = -3.439 to 4.509
  Crystal: Unit Cell           91.144   91.144   45.856
  Crystal: Alpha Beta Gamma    90.000   90.000   90.000
  Crystal: RealToFrac Matrix
- Crystal:    0.01097   -0.00000   -0.00000
- Crystal:    0.00000    0.01097   -0.00000
- Crystal:    0.00000    0.00000    0.02181
+ Crystal:    0.0110   -0.0000   -0.0000
+ Crystal:    0.0000    0.0110   -0.0000
+ Crystal:    0.0000    0.0000    0.0218
  Crystal: FracToReal Matrix
- Crystal:   91.14429    0.00000    0.00000
- Crystal:    0.00000   91.14429    0.00000
- Crystal:    0.00000    0.00000   45.85570
+ Crystal:   91.1443    0.0000    0.0000
+ Crystal:    0.0000   91.1443    0.0000
+ Crystal:    0.0000    0.0000   45.8557
  Crystal: Unit Cell Volume 380936.2
  Executive: object "map" created.
 PyMOL>isodot m1,map,1.0
@@ -343,7 +389,7 @@ PyMOL>ray renderer=2
  IsosurfVolume: Surface generated using 49577 dots.
  ObjectMesh: updating "m2".
  IsosurfVolume: Surface generated using 46714 dots.
- RayRenderTest: obtained 73751 graphics primitives.
+ RayRenderTest: obtained 49569 graphics primitives.
 PyMOL>frame 3
 PyMOL>ray renderer=2
  RayRenderTest: obtained 65725 graphics primitives.
@@ -357,13 +403,13 @@ PyMOL>load lrg/map.xplor
  Crystal: Unit Cell           91.144   91.144   45.856
  Crystal: Alpha Beta Gamma    90.000   90.000   90.000
  Crystal: RealToFrac Matrix
- Crystal:    0.01097   -0.00000   -0.00000
- Crystal:    0.00000    0.01097   -0.00000
- Crystal:    0.00000    0.00000    0.02181
+ Crystal:    0.0110   -0.0000   -0.0000
+ Crystal:    0.0000    0.0110   -0.0000
+ Crystal:    0.0000    0.0000    0.0218
  Crystal: FracToReal Matrix
- Crystal:   91.14430    0.00000    0.00000
- Crystal:    0.00000   91.14430    0.00000
- Crystal:    0.00000    0.00000   45.85570
+ Crystal:   91.1443    0.0000    0.0000
+ Crystal:    0.0000   91.1443    0.0000
+ Crystal:    0.0000    0.0000   45.8557
  Crystal: Unit Cell Volume 380936.3
  Executive: object "map" created.
 PyMOL>isodot m1,map,1.0
@@ -435,25 +481,25 @@ PyMOL>load lrg/map.ccp4
  Crystal: Unit Cell           91.144   91.144   45.856
  Crystal: Alpha Beta Gamma    90.000   90.000   90.000
  Crystal: RealToFrac Matrix
- Crystal:    0.01097   -0.00000   -0.00000
- Crystal:    0.00000    0.01097   -0.00000
- Crystal:    0.00000    0.00000    0.02181
+ Crystal:    0.0110   -0.0000   -0.0000
+ Crystal:    0.0000    0.0110   -0.0000
+ Crystal:    0.0000    0.0000    0.0218
  Crystal: FracToReal Matrix
- Crystal:   91.14429    0.00000    0.00000
- Crystal:    0.00000   91.14429    0.00000
- Crystal:    0.00000    0.00000   45.85570
+ Crystal:   91.1443    0.0000    0.0000
+ Crystal:    0.0000   91.1443    0.0000
+ Crystal:    0.0000    0.0000   45.8557
  Crystal: Unit Cell Volume 380936.2
  ObjectMap: Map Read.  Range = -3.439 to 4.509
  Crystal: Unit Cell           91.144   91.144   45.856
  Crystal: Alpha Beta Gamma    90.000   90.000   90.000
  Crystal: RealToFrac Matrix
- Crystal:    0.01097   -0.00000   -0.00000
- Crystal:    0.00000    0.01097   -0.00000
- Crystal:    0.00000    0.00000    0.02181
+ Crystal:    0.0110   -0.0000   -0.0000
+ Crystal:    0.0000    0.0110   -0.0000
+ Crystal:    0.0000    0.0000    0.0218
  Crystal: FracToReal Matrix
- Crystal:   91.14429    0.00000    0.00000
- Crystal:    0.00000   91.14429    0.00000
- Crystal:    0.00000    0.00000   45.85570
+ Crystal:   91.1443    0.0000    0.0000
+ Crystal:    0.0000   91.1443    0.0000
+ Crystal:    0.0000    0.0000   45.8557
  Crystal: Unit Cell Volume 380936.2
  Executive: object "map" created.
 PyMOL>load lrg/ref.pdb
@@ -461,13 +507,13 @@ PyMOL>load lrg/ref.pdb
  Crystal: Unit Cell           91.144   91.144   45.856
  Crystal: Alpha Beta Gamma    90.000   90.000   90.000
  Crystal: RealToFrac Matrix
- Crystal:    0.01097   -0.00000   -0.00000
- Crystal:    0.00000    0.01097   -0.00000
- Crystal:    0.00000    0.00000    0.02181
+ Crystal:    0.0110   -0.0000   -0.0000
+ Crystal:    0.0000    0.0110   -0.0000
+ Crystal:    0.0000    0.0000    0.0218
  Crystal: FracToReal Matrix
- Crystal:   91.14400    0.00000    0.00000
- Crystal:    0.00000   91.14400    0.00000
- Crystal:    0.00000    0.00000   45.85600
+ Crystal:   91.1440    0.0000    0.0000
+ Crystal:    0.0000   91.1440    0.0000
+ Crystal:    0.0000    0.0000   45.8560
  Crystal: Unit Cell Volume 380936.2
  Symmetry:      1.00000      0.00000      0.00000      0.00000
  Symmetry:      0.00000      1.00000      0.00000      0.00000

@@ -1,6 +1,6 @@
 #!/bin/csh -f
 if ( "`uname -s`" =~ IRIX* ) then
-xdiff ref/$1 cmp/$1
+xdiff ref/${1}*.log cmp/${1}*.log
 else
 if -e ~/bin/tkdiff then
 ~/bin/tkdiff ref/${1}*.log cmp/${1}*.log

@@ -164,11 +164,13 @@ void CrystalUpdate(CCrystal *I)
   I->Norm[2] = sqrt1f(I->RealToFrac[6]*I->RealToFrac[6] + 
                      I->RealToFrac[7]*I->RealToFrac[7] +
                      I->RealToFrac[8]*I->RealToFrac[8]);                                        
+
 }
 
 void CrystalDump(CCrystal *I) 
 {
   int i;
+  int a;
 
   PRINTF 
     " Crystal: Unit Cell         %8.3f %8.3f %8.3f\n",
@@ -182,7 +184,7 @@ void CrystalDump(CCrystal *I)
     " Crystal: RealToFrac Matrix\n"
     ENDF;
   for(i=0;i<3;i++) {
-    PRINTF " Crystal: %10.5f %10.5f %10.5f\n",
+    PRINTF " Crystal: %9.4f %9.4f %9.4f\n",
       I->RealToFrac[i*3],I->RealToFrac[i*3+1],I->RealToFrac[i*3+2]
       ENDF;
   }
@@ -191,7 +193,7 @@ void CrystalDump(CCrystal *I)
     ENDF;
   for(i=0;i<3;i++) {
     PRINTF
-      " Crystal: %10.5f %10.5f %10.5f\n",
+      " Crystal: %9.4f %9.4f %9.4f\n",
       I->FracToReal[i*3],I->FracToReal[i*3+1],I->FracToReal[i*3+2]
       ENDF;
   }
