@@ -71,6 +71,7 @@ void RayGetSphereNormal(CRay *I,RayInfo *r);
 
 void RayTransformNormals33( unsigned int n, float3 *q, const float m[16],float3 *p );
 void RayReflectAndTexture(CRay *I,RayInfo *r);
+void RayProjectTriangle(CRay *I,RayInfo *r,float *light,float *v0,float *n0,float scale);
 
 /*========================================================================*/
 void RayGetSphereNormal(CRay *I,RayInfo *r)
@@ -501,6 +502,44 @@ void RayRenderPOV(CRay *I,int width,int height,char *charVLA,float front,float b
   dump3f(light,"light");
   
 }
+
+/*========================================================================*/
+void RayProjectTriangle(CRay *I,RayInfo *r,float *light,float *v0,float *n0,float scale)
+{
+  float w2;
+  float d1[3],d2[3],d3[3];
+  float p1[3],p2[3],p3[3];
+  int c=0;
+
+  if(dot_product3f(light,n0-3)>=0.0) c++;  
+  if(dot_product3f(light,n0)>=0.0) c++;
+  if(dot_product3f(light,n0+3)>=0.0) c++;
+  if(dot_product3f(light,n0+6)>=0.0) c++;
+  
+  if(c) {
+
+    w2 = 1.0-(r->tri1+r->tri2);
+    
+    subtract3f(v0,r->impact,d1);
+    project3f(d1,n0,p1);
+    scale3f(p1,w2,d1);
+    
+    subtract3f(v0+3,r->impact,d2);
+    project3f(d2,n0+3,p2);
+    scale3f(p2,r->tri1,d2);
+    
+    subtract3f(v0+6,r->impact,d3);
+    project3f(d3,n0+6,p3);
+    scale3f(p3,r->tri2,d3);
+    
+    add3f(d1,d2,d2);
+    add3f(d2,d3,d3);
+    scale3f(d3,scale,d3);
+    if(dot_product3f(r->surfnormal,d3)>=0.0)
+      add3f(d3,r->impact,r->impact);
+  }
+}
+
 /*========================================================================*/
 void RayRender(CRay *I,int width,int height,unsigned int *image,float front,float back,
                double timing)
@@ -535,6 +574,9 @@ void RayRender(CRay *I,int width,int height,unsigned int *image,float front,floa
   int exclude;
   float lit;
   int backface_cull;
+  float project_triangle;
+
+  project_triangle = SettingGet(cSetting_ray_improve_shadows);
   
   backface_cull = (int)SettingGet(cSetting_backface_cull);
   opaque_back = (int)SettingGet(cSetting_ray_opaque_background);
@@ -685,6 +727,10 @@ void RayRender(CRay *I,int width,int height,unsigned int *image,float front,floa
                 new_front=r1.dist;
                 if(r1.prim->type==cPrimTriangle) {
                   BasisGetTriangleNormal(I->Basis+1,&r1,i,fc);
+                  RayProjectTriangle(I,&r1,I->Basis[2].LightNormal,
+                                     I->Basis[1].Vertex+i*3,
+                                     I->Basis[1].Normal+I->Basis[1].Vert2Normal[i]*3+3,
+                                     project_triangle);
                   RayReflectAndTexture(I,&r1);
                 } else {
                   RayGetSphereNormal(I,&r1);
@@ -1262,7 +1308,6 @@ CRay *RayNew(void)
   I->fTriangle3fv=RayTriangle3fv;
   I->fTexture=RayTexture;
   I->fTransparentf=RayTransparentf;
-
   if(!RandomFlag) {
     for(a=0;a<256;a++) {
       Random[a]=(rand()/(1.0+RAND_MAX))-0.5;

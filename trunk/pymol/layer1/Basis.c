@@ -315,7 +315,7 @@ int BasisHit(CBasis *I,RayInfo *r,int except,
                           }
                         } else {
                           if((dist>(-R_SMALL4))&&(dist<r->dist)) {
-									 minIndex=i;
+									 minIndex=prm->vert;
 									 r->tri1=tri1;
 									 r->tri2=tri2;
 									 r->dist=dist;
@@ -324,7 +324,7 @@ int BasisHit(CBasis *I,RayInfo *r,int except,
 							 } else {
 								if(dist<r->dist)
 								  if((dist>=front)&&(dist<=back)) {
-									 minIndex=i;
+									 minIndex=prm->vert;
 									 r->tri1=tri1;
 									 r->tri2=tri2;
 									 r->dist=dist;
@@ -345,14 +345,14 @@ int BasisHit(CBasis *I,RayInfo *r,int except,
                           }
                         } else {
                           if((dist>(-R_SMALL4))&&(dist<r->dist)) {
-									 minIndex=i;
+									 minIndex=prm->vert;
                             r->dist=dist;
                           }
                         }
 							 } else {
 								if(dist<r->dist)
 								  if((dist>=front)&&(dist<=back)) {
-									 minIndex=i;
+									 minIndex=prm->vert;
 									 r->dist=dist;
 								  }
 							 }
@@ -380,7 +380,7 @@ int BasisHit(CBasis *I,RayInfo *r,int except,
 										  r->sphere[0]=sph[0];
 										  r->sphere[1]=sph[1];										
 										  r->sphere[2]=sph[2];
-										  minIndex=i;
+										  minIndex=prm->vert;
 										  r->dist=dist;
                               }
                             }
@@ -392,7 +392,7 @@ int BasisHit(CBasis *I,RayInfo *r,int except,
 										  r->sphere[0]=sph[0];
 										  r->sphere[1]=sph[1];										
 										  r->sphere[2]=sph[2];
-										  minIndex=i;
+										  minIndex=prm->vert;
 										  r->dist=dist;
 										}
 								  }
@@ -480,17 +480,17 @@ void BasisMakeMap(CBasis *I,int *vert2prim,CPrimitive *prim,float *volume)
       v+=3;
     }
   if(volume) {
-    if(min[0]<volume[0])
+    if(min[0]>volume[0])
       min[0]=volume[0];
-    if(max[0]>volume[1])
+    if(max[0]<volume[1])
       max[0]=volume[1];
-    if(min[1]<volume[2])
+    if(min[1]>volume[2])
       min[1]=volume[2];
-    if(max[1]>volume[3])
+    if(max[1]<volume[3])
       max[1]=volume[3];
-    if(min[2]<(-volume[5]))
+    if(min[2]>(-volume[5]))
       min[2]=(-volume[5]);
-    if(max[2]>(-volume[4]))
+    if(max[2]<(-volume[4]))
 		max[2]=(-volume[4]);
   }
   sep = MapGetSeparation(sep,max,min,diagonal); /* this needs to be a minimum 
@@ -776,9 +776,9 @@ void BasisTrianglePrecompute(float *v0,float *v1,float *v2,float *pre)
   subtract3f(v1,v0,pre);
   subtract3f(v2,v0,pre+3);
   det = pre[0]*pre[4] - pre[1]*pre[3];
-  if(fabs(det)<EPSILON) 
+  if(fabs(det)<EPSILON) {
 	 *(pre+6)=0.0;
-  else {
+  } else {
 	 *(pre+6)=1.0;
 	 *(pre+7)=1.0/det;
   }
@@ -862,5 +862,37 @@ static int intersect_triangle(float orig[3], float *pre,float vert0[3],
 	/*	*d = (orig[2]-((*u)*edge1[2])-((*v)*edge2[2])-vert0[2]);*/
 	*d = (orig[2]-((*u)*pre[2])-((*v)*pre[5])-vert0[2]);
 
+   /*   { float d1[3],d2[3]; 
+   scale3f(pre,*u,d1);
+   scale3f(pre+3,*v,d2);
+   add3f(vert0,d1,d1);
+   add3f(d1,d2,d2);
+   
+   dump3f(d2,"impact0");
+   printf(" u %8.3f v %8.3f %p\n",*u,*v,vert0);
+  dump3f(pre,"pre");
+  dump3f(pre+3,"pre+3");
+  dump3f(vert0,"vert0");
+  }*/
+
    return 1;
 }
+
+
+
+
+  /*  {  float *pre;
+  dump3f(r->impact,"impact");
+  pre = I->Precomp+I->Vert2Normal[i]*3;
+  scale3f(pre,r->tri1,d1);
+  scale3f(pre+3,r->tri2,d2);
+  add3f(I->Vertex+3*i,d1,d1);
+  add3f(d1,d2,d2);
+  dump3f(pre,"pre");
+  dump3f(pre+3,"pre+3");
+  dump3f(I->Vertex+3*i,"vertex+3*i");
+  dump3f(d2,"impact2"); 
+  printf("%8.3f %8.3f %d %8.3f %8.3f %p\n",pre[6],pre[7],i,r->tri1,r->tri2,I->Vertex+3*i);
+  if(fabs(d2[1]-r->impact[1])>0.001)
+    printf("###########################################333333\n");
+    }*/

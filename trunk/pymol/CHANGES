@@ -108,6 +108,9 @@ Current Bugs to Fix
 
 Changes up to 0.68
 
+   * Fixed a huge bug in surfacing of subsets...that function was totally whacked
+     (I just hadn't noticed that until now)
+
    *  by default, PDB HETATMs are no longer surfaced -- if you want them to be, then
       please "set surface_mode=1"
 

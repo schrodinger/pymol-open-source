@@ -923,7 +923,7 @@ void SettingInitGlobal(void)
 
   SettingSet_f(I,cSetting_surface_quality, 0.0F);
 
-  SettingSet_f(I,cSetting_surface_proximity, 1.5F);
+  SettingSet_f(I,cSetting_surface_proximity, 1.0F);
 
   SettingSet_f(I,cSetting_stereo_angle, 2.1F);
 
@@ -1144,6 +1144,10 @@ void SettingInitGlobal(void)
   SettingSet_color(I,cSetting_mesh_color,"-1"); /* use atom colors by default */
 
   SettingSet_f(I,cSetting_auto_indicate_flags,1.0F); 
+
+  SettingSet_f(I,cSetting_surface_debug,0.0F);
+
+  SettingSet_f(I,cSetting_ray_improve_shadows,0.1F);
 
 }
 

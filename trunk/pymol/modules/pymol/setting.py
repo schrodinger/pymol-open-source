@@ -156,6 +156,8 @@ class SettingIndex:
    mesh_mode             =145
    mesh_color            =146
    auto_indicate_flags   =147
+   surface_debug         =148
+   ray_improve_shadows   =149
    
 setting_sc = Shortcut(SettingIndex.__dict__.keys())
    

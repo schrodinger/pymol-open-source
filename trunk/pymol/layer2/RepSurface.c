@@ -40,6 +40,7 @@ typedef struct RepSurface {
   Rep R;
   int N;
   int NT;
+  int proximity;
   float *V,*VN,*VC;
   int *Vis;
   int *T,*S; /* S=strips */
@@ -99,7 +100,8 @@ void RepSurfaceRender(RepSurface *I,CRay *ray,Pickable **pick)
       col=ColorGet(I->oneColor);
       while(c--)
         {
-          if((*(vi+(*t)))&&(*(vi+(*(t+1))))&&(*(vi+(*(t+2)))))
+          if((I->proximity&&((*(vi+(*t)))||(*(vi+(*(t+1))))||(*(vi+(*(t+2))))))||
+             ((*(vi+(*t)))&&(*(vi+(*(t+1))))&&(*(vi+(*(t+2))))))
             ray->fTriangle3fv(ray,v+(*t)*3,v+(*(t+1))*3,v+(*(t+2))*3,
                               vn+(*t)*3,vn+(*(t+1))*3,vn+(*(t+2))*3,
                               col,col,col);
@@ -108,7 +110,9 @@ void RepSurfaceRender(RepSurface *I,CRay *ray,Pickable **pick)
     } else {
       while(c--)
         {
-          if((*(vi+(*t)))&&(*(vi+(*(t+1))))&&(*(vi+(*(t+2)))))
+          if((I->proximity&&((*(vi+(*t)))||(*(vi+(*(t+1))))||(*(vi+(*(t+2))))))||
+             ((*(vi+(*t)))&&(*(vi+(*(t+1))))&&(*(vi+(*(t+2))))))
+          if((*(vi+(*t)))||(*(vi+(*(t+1))))||(*(vi+(*(t+2)))))
             ray->fTriangle3fv(ray,v+(*t)*3,v+(*(t+1))*3,v+(*(t+2))*3,
                               vn+(*t)*3,vn+(*(t+1))*3,vn+(*(t+2))*3,
                               vc+(*t)*3,vc+(*(t+1))*3,vc+(*(t+2))*3);
@@ -179,8 +183,10 @@ void RepSurfaceRender(RepSurface *I,CRay *ray,Pickable **pick)
               col = ColorGet(I->oneColor);
               glColor4f(col[0],col[1],col[2],alpha);
               while(c--) {
-                if((*(vi+(*t)))&&(*(vi+(*(t+1))))&&(*(vi+(*(t+2))))) {
-                  
+
+                if((I->proximity&&((*(vi+(*t)))||(*(vi+(*(t+1))))||(*(vi+(*(t+2))))))||
+                   ((*(vi+(*t)))&&(*(vi+(*(t+1))))&&(*(vi+(*(t+2)))))) {
+
                   col = vc+(*t)*3;
                   glNormal3fv(vn+(*t)*3);
                   glVertex3fv(v+(*t)*3);
@@ -198,7 +204,8 @@ void RepSurfaceRender(RepSurface *I,CRay *ray,Pickable **pick)
               }
             } else {
               while(c--) {
-                if((*(vi+(*t)))&&(*(vi+(*(t+1))))&&(*(vi+(*(t+2))))) {
+                if((I->proximity&&((*(vi+(*t)))||(*(vi+(*(t+1))))||(*(vi+(*(t+2))))))||
+                   ((*(vi+(*t)))&&(*(vi+(*(t+1))))&&(*(vi+(*(t+2)))))) {
                   
                   col = vc+(*t)*3;
                   glColor4f(col[0],col[1],col[2],alpha);            
@@ -274,7 +281,9 @@ void RepSurfaceRender(RepSurface *I,CRay *ray,Pickable **pick)
             if(I->oneColorFlag) {
               glColor3fv(ColorGet(I->oneColor));
               while(c--) {
-                if((*(vi+(*t)))&&(*(vi+(*(t+1))))&&(*(vi+(*(t+2))))) {
+                if((I->proximity&&((*(vi+(*t)))||(*(vi+(*(t+1))))||(*(vi+(*(t+2))))))||
+                   ((*(vi+(*t)))&&(*(vi+(*(t+1))))&&(*(vi+(*(t+2)))))) {
+
                   glNormal3fv(vn+(*t)*3);
                   glVertex3fv(v+(*t)*3);
                   t++;
@@ -289,7 +298,9 @@ void RepSurfaceRender(RepSurface *I,CRay *ray,Pickable **pick)
               }
             } else {
               while(c--) {
-                if((*(vi+(*t)))&&(*(vi+(*(t+1))))&&(*(vi+(*(t+2))))) {
+                if((I->proximity&&((*(vi+(*t)))||(*(vi+(*(t+1))))||(*(vi+(*(t+2))))))||
+                   ((*(vi+(*t)))&&(*(vi+(*(t+1))))&&(*(vi+(*(t+2)))))) {
+
                   glColor3fv(vc+(*t)*3);
                   glNormal3fv(vn+(*t)*3);
                   glVertex3fv(v+(*t)*3);
@@ -311,72 +322,72 @@ void RepSurfaceRender(RepSurface *I,CRay *ray,Pickable **pick)
         }
       }
 	 }
-
-    /*
-	c=I->NT;
-		if(c) {
-		glBegin(GL_TRIANGLES);
-		while(c--) {
-		glNormal3fv(vn+(*t)*3);
-		glVertex3fv(v+(*t)*3);
-		t++;
-		glNormal3fv(vn+(*t)*3);
-		glVertex3fv(v+(*t)*3);
-		t++;
-		glNormal3fv(vn+(*t)*3);
-		glVertex3fv(v+(*t)*3);
-		t++;
-		}
-		glEnd();
-		}
-
-		  t=I->T;
-		  c=I->NT;
-  if(c) {
-	 glColor3f(0.0,1.0,0.0);
-	 
-	 while(c--)
-		{
-		  glBegin(GL_LINE_STRIP);
-		  
-		  glNormal3fv(vn+(*t)*3);
-		  glVertex3fv(v+(*t)*3);
-		  t++;
-		  glNormal3fv(vn+(*t)*3);
-		  glVertex3fv(v+(*t)*3);
-		  t++;
-		  glNormal3fv(vn+(*t)*3);
-		  glVertex3fv(v+(*t)*3);
-		  t++;
-		  glEnd();
-		}
-  }
-  c=I->N;
-  if(c) {
-	 glColor3f(1.0,0.0,0.0);
-	 glBegin(GL_LINES);
-	 SceneResetNormal(true);
-	 while(c--)
-		{
-		  glVertex3fv(v);
-		  glVertex3f(v[0]+vn[0]/2,v[1]+vn[1]/2,v[2]+vn[2]/2);
-		  v+=3;
-		  vn+=3;
-		}
-	 glEnd();
-  }
-  glColor3f(0.3,0.3,1.0);
-  v=TestLine;
-  c=NTestLine;
-  glBegin(GL_LINES);
-  while(c--) {
-  glVertex3fv(v);
-  v+=3;
-  glVertex3fv(v);
-  v+=3;
-  }
-  glEnd();
-    */
+    if(SettingGet(cSetting_surface_debug)) {
+      
+      c=I->NT;
+ 		if(c) {
+        glBegin(GL_TRIANGLES);
+        while(c--) {
+          glNormal3fv(vn+(*t)*3);
+          glVertex3fv(v+(*t)*3);
+          t++;
+          glNormal3fv(vn+(*t)*3);
+          glVertex3fv(v+(*t)*3);
+          t++;
+          glNormal3fv(vn+(*t)*3);
+          glVertex3fv(v+(*t)*3);
+          t++;
+        }
+        glEnd();
+ 		}
+      
+      t=I->T;
+      c=I->NT;
+      if(c) {
+        glColor3f(0.0,1.0,0.0);
+        
+        while(c--)
+          {
+            glBegin(GL_LINE_STRIP);
+            
+            glNormal3fv(vn+(*t)*3);
+            glVertex3fv(v+(*t)*3);
+            t++;
+            glNormal3fv(vn+(*t)*3);
+            glVertex3fv(v+(*t)*3);
+            t++;
+            glNormal3fv(vn+(*t)*3);
+            glVertex3fv(v+(*t)*3);
+            t++;
+            glEnd();
+          }
+      }
+      c=I->N;
+      if(c) {
+        glColor3f(1.0,0.0,0.0);
+        glBegin(GL_LINES);
+        SceneResetNormal(true);
+        while(c--)
+          {
+            glVertex3fv(v);
+            glVertex3f(v[0]+vn[0]/2,v[1]+vn[1]/2,v[2]+vn[2]/2);
+            v+=3;
+            vn+=3;
+          }
+        glEnd();
+      }
+      glColor3f(0.3,0.3,1.0);
+      v=TestLine;
+      c=NTestLine;
+      glBegin(GL_LINES);
+      while(c--) {
+        glVertex3fv(v);
+        v+=3;
+        glVertex3fv(v);
+        v+=3;
+      }
+      glEnd();
+    }
 
   }
 }
@@ -419,7 +430,7 @@ void RepSurfaceColor(RepSurface *I,CoordSet *cs)
   ObjectMolecule *obj;
   float probe_radius;
   float dist,minDist;
-  float proximity,cutoff;
+  float cutoff;
   int inclH;
   int cullByFlag = false;
   int surface_mode;
@@ -433,11 +444,9 @@ void RepSurfaceColor(RepSurface *I,CoordSet *cs)
   cullByFlag = (surface_mode==cRepSurface_by_flags);
   inclH = !(surface_mode==cRepSurface_heavy_atoms);
   probe_radius = SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_solvent_radius);
-  proximity = SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_surface_proximity);
+  I->proximity = (int)SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_surface_proximity);
 
   cutoff = MAX_VDW+probe_radius;
-  if(cutoff<(MAX_VDW+proximity))
-    cutoff=MAX_VDW+proximity;
 
   if(!I->LastVisib) I->LastVisib = Alloc(int,cs->NIndex);
   if(!I->LastColor) I->LastColor = Alloc(int,cs->NIndex);
@@ -469,6 +478,7 @@ void RepSurfaceColor(RepSurface *I,CoordSet *cs)
 				minDist=MAXFLOAT;
 				i0=-1;
 				v0 = I->V+3*a;
+            vi = I->Vis+a;
 				MapLocus(map,v0,&h,&k,&l);
 				
             /* colors */
@@ -499,43 +509,26 @@ void RepSurfaceColor(RepSurface *I,CoordSet *cs)
 						  I->oneColorFlag=false;
 					 } else first_color=c1;
 				  }
-				}
+              if(I->allVisibleFlag)
+                *vi = 1;
+              else {
+                ai2 = obj->AtomInfo+cs->IdxToAtm[i0];                
+                if(ai2->visRep[cRepSurface]&&
+                   (inclH||(!ai2->hydrogen))&&
+                   ((!cullByFlag)||
+                    (!(ai2->flags&(cAtomFlag_ignore|cAtomFlag_exfoliate)))))
+                  *vi = 1;
+                else
+                  *vi = 0;
+              }
+				} else {
+              *vi = 0;
+            }
 				c0 = ColorGet(c1);
 				*(vc++) = *(c0++);
 				*(vc++) = *(c0++);
 				*(vc++) = *(c0++);
-
-            /* visibility */
-
-            if(I->allVisibleFlag)
-              *(vi++)=1;
-            else {
-              i0=-1;
-              i=*(MapEStart(map,h,k,l));
-              if(i) {
-                j=map->EList[i++];
-                while(j>=0) {
-                  ai2 = obj->AtomInfo+cs->IdxToAtm[j];
-                  if(ai2->visRep[cRepSurface])
-                    if((inclH||(!ai2->hydrogen))&&
-                       ((!cullByFlag)||
-                        (!(ai2->flags&(cAtomFlag_ignore|cAtomFlag_exfoliate)))))
-                      {
-                        dist = diff3f(v0,cs->Coord+j*3);
-                        if(dist<(ai2->vdw+proximity)) {
-                          i0=j;
-                          break;
-                        }
-                      }
-                  j=map->EList[i++];
-                }
-              }
-              if(i0>=0)
-                *(vi++) = 1;
-              else
-                *(vi++) = 0;
-            }
-
+            vi++;
 			 }
 		  MapFree(map);
 		}

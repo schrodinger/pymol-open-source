@@ -18,7 +18,7 @@ Z* -------------------------------------------------------------------
 #include"Ortho.h"
 #include "Pop.h"
 
-#define cPopMargin 2
+#define cPopMargin 4
 
 typedef struct {
   Block *Block;
