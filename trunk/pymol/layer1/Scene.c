@@ -307,6 +307,7 @@ void SceneSetView(SceneViewType view,int quiet)
       " Scene: view updated.\n"
       ENDFB;
   }
+  SceneRovingDirty();
 }
 /*========================================================================*/
 void SceneDontCopyNext(void)
@@ -396,19 +397,23 @@ void SceneClip(int plane,float movement,char *sele,int state) /* 0=front, 1=back
     SceneClipSet(avg-movement,avg+movement);
     break;
   case 4: /* atoms */
-    if(!sele[0]) {
+    if(!sele) 
+      sele=cKeywordAll;
+    else if(!sele[0]) {
       sele=cKeywordAll;
     } 
     if(!ExecutiveGetCameraExtent(sele,mn,mx,true,state))
       sele = NULL;
-    if(sele[0]) {
-      average3f(mn,mx,cent); /* get center of selection */
-      MatrixTransform3f(I->RotMatrix,I->Origin,origin); /* convert to view-space */
-      subtract3f(mx,origin,mx); /* how far from origin? */
-      subtract3f(mn,origin,mn); /* how far from origin? */
-      SceneClipSet(-I->Pos[2]-mx[2]-movement,-I->Pos[2]-mn[2]+movement);
-    } else {
-      sele = NULL;
+    if(sele) {
+      if(sele[0]) {
+        average3f(mn,mx,cent); /* get center of selection */
+        MatrixTransform3f(I->RotMatrix,I->Origin,origin); /* convert to view-space */
+        subtract3f(mx,origin,mx); /* how far from origin? */
+        subtract3f(mn,origin,mn); /* how far from origin? */
+        SceneClipSet(-I->Pos[2]-mx[2]-movement,-I->Pos[2]-mn[2]+movement);
+      } else {
+        sele = NULL;
+      }
     }
     break;
   }
@@ -1558,7 +1563,9 @@ void SceneRovingUpdate(void)
   char *p2;
   char *s;
   int refresh_flag=false;
-  
+  char *name;
+  float level;
+  float isosurface,isomesh;
   if(I->RovingDirtyFlag&&(
                           (UtilGetSeconds()-I->RovingLastUpdate)>
                           fabs(SettingGet(cSetting_roving_delay)))) {
@@ -1577,6 +1584,9 @@ void SceneRovingUpdate(void)
     polar_cutoff = SettingGet(cSetting_roving_polar_cutoff);
     nonbonded = SettingGet(cSetting_roving_nonbonded);
     nb_spheres = SettingGet(cSetting_roving_nb_spheres);
+
+    isomesh = SettingGet(cSetting_roving_isomesh);
+    isosurface = SettingGet(cSetting_roving_isosurface);
 
     if(SettingGet(cSetting_roving_byres))
       p2 = byres;
@@ -1724,6 +1734,110 @@ void SceneRovingUpdate(void)
       PParse(buffer);
       PFlush();
       refresh_flag=true;
+    }
+
+    if(isomesh!=0.0F) {
+      int auto_save;
+
+      auto_save = SettingGet(cSetting_auto_zoom);
+      SettingSet(cSetting_auto_zoom,0);
+      
+      name = SettingGet_s(NULL,NULL,cSetting_roving_map1_name);
+      if(name)
+        if(name[0]) 
+          if(ExecutiveFindObjectByName(name))
+            {
+              level = SettingGet(cSetting_roving_map1_level);
+              sprintf(buffer,
+                      "cmd.isomesh('rov_m1','%s',%8.6f,'center',%1.3f)",
+                      name,level,isomesh);
+              PParse(buffer);
+              PFlush();
+              refresh_flag=true;
+            }
+
+      name = SettingGet_s(NULL,NULL,cSetting_roving_map2_name);
+      if(name)
+        if(name[0]) 
+          if(ExecutiveFindObjectByName(name))
+            {
+              level = SettingGet(cSetting_roving_map2_level);
+              sprintf(buffer,
+                      "cmd.isomesh('rov_m2','%s',%8.6f,'center',%1.3f)",
+                      name,level,isomesh);
+              PParse(buffer);
+              PFlush();
+              refresh_flag=true;
+            }
+
+      name = SettingGet_s(NULL,NULL,cSetting_roving_map3_name);
+      if(name)
+        if(name[0]) 
+          if(ExecutiveFindObjectByName(name))
+            {
+              level = SettingGet(cSetting_roving_map3_level);
+              sprintf(buffer,
+                      "cmd.isomesh('rov_m3','%s',%8.6f,'center',%1.3f)",
+                      name,level,isomesh);
+              PParse(buffer);
+              PFlush();
+              refresh_flag=true;
+            }
+
+
+      SettingSet(cSetting_auto_zoom,auto_save);            
+    }
+
+    if(isosurface!=0.0F) {
+      int auto_save;
+
+      auto_save = SettingGet(cSetting_auto_zoom);
+      SettingSet(cSetting_auto_zoom,0);
+      
+      name = SettingGet_s(NULL,NULL,cSetting_roving_map1_name);
+      if(name)
+        if(name[0]) 
+          if(ExecutiveFindObjectByName(name))
+            {
+              level = SettingGet(cSetting_roving_map1_level);
+              sprintf(buffer,
+                      "cmd.isosurface('rov_s1','%s',%8.6f,'center',%1.3f)",
+                      name,level,isosurface);
+              PParse(buffer);
+              PFlush();
+              refresh_flag=true;
+            }
+
+      name = SettingGet_s(NULL,NULL,cSetting_roving_map2_name);
+      if(name)
+        if(name[0]) 
+          if(ExecutiveFindObjectByName(name))
+            {
+              level = SettingGet(cSetting_roving_map2_level);
+              sprintf(buffer,
+                      "cmd.isosurface('rov_s2','%s',%8.6f,'center',%1.3f)",
+                      name,level,isosurface);
+              PParse(buffer);
+              PFlush();
+              refresh_flag=true;
+            }
+
+      name = SettingGet_s(NULL,NULL,cSetting_roving_map3_name);
+      if(name)
+        if(name[0]) 
+          if(ExecutiveFindObjectByName(name))
+            {
+              level = SettingGet(cSetting_roving_map3_level);
+              sprintf(buffer,
+                      "cmd.isosurface('rov_s3','%s',%8.6f,'center',%1.3f)",
+                      name,level,isosurface);
+              PParse(buffer);
+              PFlush();
+              refresh_flag=true;
+            }
+
+
+      SettingSet(cSetting_auto_zoom,auto_save);            
     }
 
 

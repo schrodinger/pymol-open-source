@@ -272,6 +272,20 @@ if __name__=='pymol.setting':
       cartoon_highlight_color = 241
       coulomb_units_factor  = 242
       coulomb_dielectric    = 243
+      ray_interior_shadows  = 244
+      ray_interior_texture  = 245
+
+      roving_map1_name      = 246
+      roving_map2_name      = 247
+      roving_map3_name      = 248
+
+      roving_map1_level     = 249
+      roving_map2_level     = 250
+      roving_map3_level     = 251
+
+      roving_isomesh        = 252
+      roving_isosurface     = 253
+
       
    setting_sc = Shortcut(SettingIndex.__dict__.keys())
 

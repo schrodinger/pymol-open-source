@@ -194,6 +194,7 @@ class PMGApp(AbstractApp):
                       e=self.entry,s=self:
                       complete(event,w,e,s))
 
+
       self.history_mask = 0xFF
       self.history = [''] * (self.history_mask+1)
       self.history_cur = 0
@@ -228,6 +229,32 @@ class PMGApp(AbstractApp):
       self.bind(self.entry, 'Command Input Area')
       self.initialdir = os.getcwd()
       self.log_file = "log.pml"
+
+
+      self.bind_all('<F1>',lambda event,w=self.command,
+                      e=self.entry,s=self:cmd.do("cmd._special(1,0,0)"))
+      self.bind_all('<F2>',lambda event,w=self.command,
+                      e=self.entry,s=self:cmd.do("cmd._special(2,0,0)"))
+      self.bind_all('<F3>',lambda event,w=self.command,
+                      e=self.entry,s=self:cmd.do("cmd._special(3,0,0)"))
+      self.bind_all('<F4>',lambda event,w=self.command,
+                      e=self.entry,s=self:cmd.do("cmd._special(4,0,0)"))
+      self.bind_all('<F5>',lambda event,w=self.command,
+                      e=self.entry,s=self:cmd.do("cmd._special(5,0,0)"))
+      self.bind_all('<F6>',lambda event,w=self.command,
+                      e=self.entry,s=self:cmd.do("cmd._special(6,0,0)"))
+      self.bind_all('<F7>',lambda event,w=self.command,
+                      e=self.entry,s=self:cmd.do("cmd._special(7,0,0)"))
+      self.bind_all('<F8>',lambda event,w=self.command,
+                      e=self.entry,s=self:cmd.do("cmd._special(8,0,0)"))
+      self.bind_all('<F9>',lambda event,w=self.command,
+                      e=self.entry,s=self:cmd.do("cmd._special(9,0,0)"))
+      self.bind_all('<F10>',lambda event,w=self.command,
+                      e=self.entry,s=self:cmd.do("cmd._special_special(10,0,0)"))
+      self.bind_all('<F11>',lambda event,w=self.command,
+                      e=self.entry,s=self:cmd.do("cmd._special_special(11,0,0)"))
+      self.bind_all('<F12>',lambda event,w=self.command,
+                      e=self.entry,s=self:cmd.do("cmd._special(12,0,0)"))
 
    def flush_commands(self):
       # flush the external GUI fifo command queue
@@ -1023,6 +1050,65 @@ class PMGApp(AbstractApp):
 
       self.menuBar.addmenuitem('Display', 'separator', '')
 
+
+      self.menuBar.addcascademenu('Display', 'Zoom', 'Zoom',
+                                  label='Zoom')
+
+
+      self.menuBar.addmenuitem('Zoom', 'command', '4 Angstrom Sphere',
+                               label='4 Angstrom Sphere',
+                               command = lambda: cmd.do("_ zoom center,4"))
+
+      self.menuBar.addmenuitem('Zoom', 'command', '6 Angstrom Sphere',
+                               label='6 Angstrom Sphere',
+                               command = lambda: cmd.do("_ zoom center,6"))
+
+      self.menuBar.addmenuitem('Zoom', 'command', '8 Angstrom Sphere',
+                               label='8 Angstrom Sphere',
+                               command = lambda: cmd.do("_ zoom center,8"))
+
+      self.menuBar.addmenuitem('Zoom', 'command', '12 Angstrom Sphere',
+                               label='12 Angstrom Sphere',
+                               command = lambda: cmd.do("_ zoom center,12"))
+
+      self.menuBar.addmenuitem('Zoom', 'command', '20 Angstrom Sphere',
+                               label='20 Angstrom Sphere',
+                               command = lambda: cmd.do("_ zoom center,20"))
+
+      self.menuBar.addmenuitem('Zoom', 'command', 'All',
+                               label='All',
+                               command = lambda: cmd.do("_ zoom all"))
+
+      self.menuBar.addcascademenu('Display', 'Clip', 'Clip',
+                                  label='Clip')
+
+      self.menuBar.addmenuitem('Clip', 'command', 'None',
+                               label='None',
+                               command = lambda: cmd.do("_ clip atoms,5,all"))
+
+      self.menuBar.addmenuitem('Clip', 'command', '8 Angstrom Slab',
+                               label='8 Angstrom Slab',
+                               command = lambda: cmd.do("_ clip slab,8"))
+
+      self.menuBar.addmenuitem('Clip', 'command', '12 Angstrom Slab',
+                               label='12 Angstrom Slab',
+                               command = lambda: cmd.do("_ clip slab,10"))
+
+      self.menuBar.addmenuitem('Clip', 'command', '16 Angstrom Slab',
+                               label='16 Angstrom Slab',
+                               command = lambda: cmd.do("_ clip slab,15"))
+
+      self.menuBar.addmenuitem('Clip', 'command', '20 Angstrom Slab',
+                               label='20 Angstrom Slab',
+                               command = lambda: cmd.do("_ clip slab,20"))
+
+      self.menuBar.addmenuitem('Clip', 'command', '30 Angstrom Slab',
+                               label='30 Angstrom Slab',
+                               command = lambda: cmd.do("_ clip slab,30"))
+
+
+      self.menuBar.addmenuitem('Display', 'separator', '')
+
       self.menuBar.addcascademenu('Display', 'Background', 'Background',
                                   label='Background')
 
@@ -1163,6 +1249,34 @@ class PMGApp(AbstractApp):
                                label='Fiber',
                                command = lambda : cmd.do("_ cmd.set('ray_texture',5)"))
 
+      self.menuBar.addcascademenu('Rendering', 'Interior Texture', 'Interior Texture',
+                               label=self.pad+'Interior Texture')
+
+      self.menuBar.addmenuitem('Interior Texture', 'command', 'None',
+                               label='None',
+                               command = lambda : cmd.do("_ cmd.set('ray_interior_texture',0)"))
+
+      self.menuBar.addmenuitem('Interior Texture', 'command', 'Matte 1',
+                               label='Matte 1',
+                               command = lambda : cmd.do("_ cmd.set('ray_interior_texture',1)"))
+
+      self.menuBar.addmenuitem('Interior Texture', 'command', 'Matte 2',
+                               label='Matte 2',
+                               command = lambda : cmd.do("_ cmd.set('ray_interior_texture',4)"))
+
+      self.menuBar.addmenuitem('Interior Texture', 'command', 'Swirl 1',
+                               label='Swirl 1',
+                               command = lambda : cmd.do("_ cmd.set('ray_interior_texture',2)"))
+
+      self.menuBar.addmenuitem('Interior Texture', 'command', 'Swirl 2',
+                               label='Swirl 2',
+                               command = lambda : cmd.do("_ cmd.set('ray_interior_texture',3)"))
+
+      self.menuBar.addmenuitem('Interior Texture', 'command', 'Fiber',
+                               label='Fiber',
+                               command = lambda : cmd.do("_ cmd.set('ray_interior_texture',5)"))
+
+
       self.menuBar.addcascademenu('Rendering', 'Memory', 'Memory',
                                label=self.pad+'Memory')
 
@@ -1187,7 +1301,11 @@ class PMGApp(AbstractApp):
                         command = lambda s=self: s.setting.update('backface_cull'))
 
 
-
+      self.menuBar.addmenuitem('Rendering', 'checkbutton',
+                         'Opaque Interior Colors',
+                         label=self.pad+'Opaque Interiors',
+                        variable = self.setting.ray_interior_color,
+                        command = lambda s=self: s.setting.update('ray_interior_color'))
 
       
       self.menuBar.addmenuitem('Display', 'separator', '')
@@ -1320,7 +1438,87 @@ class PMGApp(AbstractApp):
                         variable = self.setting.overlay,
                         command = lambda s=self: s.setting.update('overlay'))
 
+      self.menuBar.addmenu('Scene', 'Scene Storage')
+
+      self.menuBar.addcascademenu('Scene', 'Store', 'Store',
+                                  label='Store')
+
+      self.menuBar.addmenuitem('Store', 'command', 'F1',
+                               label='F1',
+                               command = lambda: cmd.do("scene F1,store"))
+      self.menuBar.addmenuitem('Store', 'command', 'F2',
+                               label='F2',
+                               command = lambda: cmd.do("scene F2,store"))
+      self.menuBar.addmenuitem('Store', 'command', 'F3',
+                               label='F3',
+                               command = lambda: cmd.do("scene F3,store"))
+      self.menuBar.addmenuitem('Store', 'command', 'F4',
+                               label='F4',
+                               command = lambda: cmd.do("scene F4,store"))
+      self.menuBar.addmenuitem('Store', 'command', 'F5',
+                               label='F5',
+                               command = lambda: cmd.do("scene F5,store"))
+      self.menuBar.addmenuitem('Store', 'command', 'F6',
+                               label='F6',
+                               command = lambda: cmd.do("scene F6,store"))
+      self.menuBar.addmenuitem('Store', 'command', 'F7',
+                               label='F7',
+                               command = lambda: cmd.do("scene F7,store"))
+      self.menuBar.addmenuitem('Store', 'command', 'F8',
+                               label='F8',
+                               command = lambda: cmd.do("scene F8,store"))
+      self.menuBar.addmenuitem('Store', 'command', 'F9',
+                               label='F9',
+                               command = lambda: cmd.do("scene F9,store"))
+      self.menuBar.addmenuitem('Store', 'command', 'F10',
+                               label='F10',
+                               command = lambda: cmd.do("scene F10,store"))
+      self.menuBar.addmenuitem('Store', 'command', 'F11',
+                               label='F11',
+                               command = lambda: cmd.do("scene F11,store"))
+      self.menuBar.addmenuitem('Store', 'command', 'F12',
+                               label='F12',
+                               command = lambda: cmd.do("scene F12,store"))
+
+      self.menuBar.addmenuitem('Scene', 'separator', '')
       
+      self.menuBar.addmenuitem('Scene', 'command', 'Recall F1',
+                               label='Recall F1',
+                               command = lambda: cmd.do("scene F1"))
+      self.menuBar.addmenuitem('Scene', 'command', 'Recall F2',
+                               label='Recall F2',
+                               command = lambda: cmd.do("scene F2"))
+      self.menuBar.addmenuitem('Scene', 'command', 'Recall F3',
+                               label='Recall F3',
+                               command = lambda: cmd.do("scene F3"))
+      self.menuBar.addmenuitem('Scene', 'command', 'Recall F4',
+                               label='Recall F4',
+                               command = lambda: cmd.do("scene F4"))
+      self.menuBar.addmenuitem('Scene', 'command', 'Recall F5',
+                               label='Recall F5',
+                               command = lambda: cmd.do("scene F5"))
+      self.menuBar.addmenuitem('Scene', 'command', 'Recall F6',
+                               label='Recall F6',
+                               command = lambda: cmd.do("scene F6"))
+      self.menuBar.addmenuitem('Scene', 'command', 'Recall F7',
+                               label='Recall F7',
+                               command = lambda: cmd.do("scene F7"))
+      self.menuBar.addmenuitem('Scene', 'command', 'Recall F8',
+                               label='Recall F8',
+                               command = lambda: cmd.do("scene F8"))
+      self.menuBar.addmenuitem('Scene', 'command', 'Recall F9',
+                               label='Recall F9',
+                               command = lambda: cmd.do("scene F9"))
+      self.menuBar.addmenuitem('Scene', 'command', 'Recall F10',
+                               label='Recall F10',
+                               command = lambda: cmd.do("scene F10"))
+      self.menuBar.addmenuitem('Scene', 'command', 'Recall F11',
+                               label='Recall F11',
+                               command = lambda: cmd.do("scene F11"))
+      self.menuBar.addmenuitem('Scene', 'command', 'Recall F12',
+                               label='Recall F12',
+                               command = lambda: cmd.do("scene F12"))
+                      
       self.menuBar.addmenu('Mouse', 'Mouse Configuration')
 
       self.menuBar.addmenuitem('Mouse', 'checkbutton',
@@ -1415,6 +1613,12 @@ class PMGApp(AbstractApp):
                          label=self.pad+'Discrete Colors',
                         variable = self.setting.cartoon_discrete_colors,
                         command = lambda s=self: s.setting.update('cartoon_discrete_colors'))
+
+      self.menuBar.addmenuitem('Cartoon', 'checkbutton',
+                         'Highlight Color',
+                         label=self.pad+'Highlight Colors',
+                        variable = self.setting.cartoon_highlight_color,
+                        command = lambda s=self: s.setting.update('cartoon_highlight_color'))
 
 
       self.menuBar.addmenu('Wizard', 'Task Wizards')

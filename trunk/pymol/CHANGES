@@ -166,6 +166,14 @@ CHANGE LOG
 =========================================================================
 Changes up to 0.88
 
+   * added map support to roving facility
+
+   * enabled distance objects to persist through redefinition
+
+   * fixed various geometry and rendering glitches with cartoon ribbons
+
+   * ray_interior_texture, ray_interior_shadows
+
    * get command allows settings to be queried from the command line
 
    * added angle and shift options onto "ray" command for stereo figures
@@ -178,6 +186,8 @@ Changes up to 0.88
    * overhauled map_new, isomesh, isosurface.  added new test case
 
    * scene commands
+
+   * "rep" option in selector
 
    * $TUT environment variable points at $PYMOL_PATH/data/tut
 

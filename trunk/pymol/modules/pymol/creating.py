@@ -131,13 +131,16 @@ SEE ALSO
          mopt = 0 # render the whole map
       # preprocess selection
       selection = selector.process(selection)
+      print selection
+      if selection not in [ 'center', 'origin' ]:
+         selection = "("+selection+")"
       #
       if carve==None:
          carve=-1.0
       try:
          lock()
          r = _cmd.isomesh(str(name),0,str(map),int(mopt),
-                          "("+str(selection)+")",float(buffer),
+                          selection,float(buffer),
                           float(level),0,int(state)-1,float(carve),
                           int(source_state)-1)
       finally:
@@ -186,13 +189,15 @@ SEE ALSO
          mopt = 0 # render the whole map
       # preprocess selection
       selection = selector.process(selection)
-      #
+      if selection not in [ 'center', 'origin' ]:
+         selection = "("+selection+")"
+     #
       if carve==None:
          carve=-1.0
       try:
          lock()
          r = _cmd.isosurface(str(name),0,str(map),int(mopt),
-                          "("+str(selection)+")",float(buffer),
+                             selection,float(buffer),
                              float(level),0,int(state)-1,float(carve),
                              int(source_state)-1,int(side))
       finally:
@@ -232,11 +237,13 @@ SEE ALSO
          mopt = 0 # render the whole map
       # preprocess selections
       selection = selector.process(selection)
+      if selection not in [ 'center', 'origin' ]:
+         selection = "("+selection+")"
       #
       try:
          lock()
          r = _cmd.isomesh(str(name),0,str(map),int(mopt),
-                          "("+str(selection)+")",float(buffer),
+                          selection,float(buffer),
                           float(level),1,int(state)-1,
                           float(carve),int(source)-1)
       finally:

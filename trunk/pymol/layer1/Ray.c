@@ -800,8 +800,13 @@ void RayRender(CRay *I,int width,int height,unsigned int *image,
   float fudge,shadow_fudge;
   int interior_color;
   int interior_flag;
+  int interior_shadows;
+  int interior_texture;
   int dummy;
+  int texture_save;
 
+  interior_shadows = (int)SettingGet(cSetting_ray_interior_shadows);
+  interior_texture = (int)SettingGet(cSetting_ray_interior_texture);
   interior_color = (int)SettingGet(cSetting_ray_interior_color);
   project_triangle = SettingGet(cSetting_ray_improve_shadows);
   shadows = (int)SettingGet(cSetting_ray_shadows);
@@ -1013,58 +1018,92 @@ void RayRender(CRay *I,int width,int height,unsigned int *image,
               interior_flag=(interior_color>=0);
               i=BasisHit(I->Basis+1,&r1,exclude,I->Vert2Prim,I->Primitive,false,
                          new_front,back,excl_trans,trans_shadows,fudge,&interior_flag);
-              if(interior_flag) {
-                *(pixel) = interior;
-                break;
-              }
-              if(i>=0) {
+              /*              if(interior_flag) {
+               *(pixel) = interior;
+               break;
+               }*/
+              if((i>=0)||(interior_flag)) {
                 pixel_flag=true;
                 n_hit++;
-                new_front=r1.dist;
-                if(r1.prim->type==cPrimTriangle) {
-                  BasisGetTriangleNormal(I->Basis+1,&r1,i,fc);
-                  RayProjectTriangle(I,&r1,I->Basis[2].LightNormal,
-                                     I->Basis[1].Vertex+i*3,
-                                     I->Basis[1].Normal+I->Basis[1].Vert2Normal[i]*3+3,
-                                     project_triangle);
-                  RayReflectAndTexture(I,&r1);
-                  BasisGetTriangleFlatDotgle(I->Basis+1,&r1,i);
-                } else {
-                  RayGetSphereNormal(I,&r1);
-                  RayReflectAndTexture(I,&r1);
-                  if((r1.prim->type==cPrimCylinder)||
-                     (r1.prim->type==cPrimSausage)) {
-                    ft = r1.tri1;
-                    fc[0]=(r1.prim->c1[0]*(1-ft))+(r1.prim->c2[0]*ft);
-                    fc[1]=(r1.prim->c1[1]*(1-ft))+(r1.prim->c2[1]*ft);
-                    fc[2]=(r1.prim->c1[2]*(1-ft))+(r1.prim->c2[2]*ft);
-                  } else {
-                    fc[0]=r1.prim->c1[0];
-                    fc[1]=r1.prim->c1[1];
-                    fc[2]=r1.prim->c1[2];
-                  }
-                }
-                dotgle=-r1.dotgle;
-                              
-                if(r1.flat_dotgle<0.0F) {
-                  if((!two_sided_lighting)&&interior_color>=0) {
-                    interior_flag = true;
-                  }
-                }
-                if(dotgle<0.0F) {
-                  if(two_sided_lighting) {
-                    dotgle=-dotgle;
-                    invert3f(r1.surfnormal);
-                  } else 
-                    dotgle=0.0F;
-                }
                 if(interior_flag) {
-                  *(pixel) = interior;
-                  break;
+                  r1.surfnormal[0]=0.0F;
+                  r1.surfnormal[1]=0.0F;
+                  r1.surfnormal[2]=1.0F;
+                  copy3f(r1.base,r1.impact);
+                  r1.impact[2]-=front;
+                  if(interior_texture>=0) {
+                    texture_save = r1.prim->texture;
+                    r1.prim->texture = interior_texture;
+                    RayReflectAndTexture(I,&r1);
+                    r1.prim->texture = texture_save;
+                  } else {
+                    RayReflectAndTexture(I,&r1);
+                  }
+                  dotgle=-r1.dotgle;
+                  copy3f(inter,fc);
                 } else {
+                  new_front=r1.dist;
+                  if(r1.prim->type==cPrimTriangle) {
+                    BasisGetTriangleNormal(I->Basis+1,&r1,i,fc);
+                    RayProjectTriangle(I,&r1,I->Basis[2].LightNormal,
+                                       I->Basis[1].Vertex+i*3,
+                                       I->Basis[1].Normal+I->Basis[1].Vert2Normal[i]*3+3,
+                                       project_triangle);
+                    RayReflectAndTexture(I,&r1);
+                    BasisGetTriangleFlatDotgle(I->Basis+1,&r1,i);
+                  } else {
+                    RayGetSphereNormal(I,&r1);
+                    RayReflectAndTexture(I,&r1);
+                    if((r1.prim->type==cPrimCylinder)||
+                       (r1.prim->type==cPrimSausage)) {
+                      ft = r1.tri1;
+                      fc[0]=(r1.prim->c1[0]*(1-ft))+(r1.prim->c2[0]*ft);
+                      fc[1]=(r1.prim->c1[1]*(1-ft))+(r1.prim->c2[1]*ft);
+                      fc[2]=(r1.prim->c1[2]*(1-ft))+(r1.prim->c2[2]*ft);
+                    } else {
+                      fc[0]=r1.prim->c1[0];
+                      fc[1]=r1.prim->c1[1];
+                      fc[2]=r1.prim->c1[2];
+                    }
+                  }
+                  dotgle=-r1.dotgle;
+                  
+                  if(r1.flat_dotgle<0.0F) {
+                    if((!two_sided_lighting)&&(interior_color>=0)) {
+                      interior_flag = true;
+                      r1.surfnormal[0]=0.0F;
+                      r1.surfnormal[1]=0.0F;
+                      r1.surfnormal[2]=1.0F;
+                      copy3f(r1.base,r1.impact);
+                      r1.impact[2]-=front;
+                      r1.dist = front;
+                      if(interior_texture>=0) {
+                        texture_save = r1.prim->texture;
+                        r1.prim->texture = interior_texture;
+                        RayReflectAndTexture(I,&r1);
+                        r1.prim->texture = texture_save;
+                      } else {
+                        RayReflectAndTexture(I,&r1);
+                      }
+                      dotgle=-r1.dotgle;
+                      copy3f(inter,fc);
+                    }
+                  }
+                  if((dotgle<0.0F)&&(!interior_flag)) {
+                    if(two_sided_lighting) {
+                      dotgle=-dotgle;
+                      invert3f(r1.surfnormal);
+                    } else 
+                      dotgle=0.0F;
+                  }
+                }
+                /*                if(interior_flag) {
+                 *(pixel) = interior;
+                 } else {*/
+                {
                   direct_cmp=(float)((dotgle+(pow(dotgle,SettingGet(cSetting_power))))/2.0);
                   
-                  if(shadows) {
+                  if(shadows&&((!interior_flag)||(interior_shadows))) {
                     matrix_transform33f3f(I->Basis[2].Matrix,r1.impact,r2.base);
                     r2.base[2]-=shadow_fudge;
                     if(BasisHit(I->Basis+2,&r2,i,I->Vert2Prim,I->Primitive,
@@ -1146,7 +1185,7 @@ void RayRender(CRay *I,int width,int height,unsigned int *image,
                 pixel_flag=true;
               }
 
-                if(pixel_flag) {
+              if(pixel_flag) {
                 inp=(fc[0]+fc[1]+fc[2])/3.0F;
                 if(inp<R_SMALL4) 
                   sig=1.0F;
@@ -1229,7 +1268,7 @@ void RayRender(CRay *I,int width,int height,unsigned int *image,
                 }
               }
               if(i<0) {
-                break; /* hit nothing */
+                break; /* hit nothing,*/
               } else {
                 last_pixel = (*pixel);
                 exclude = i;
