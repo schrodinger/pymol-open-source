@@ -283,7 +283,12 @@ def complete(st):
          for a in flist:
             ac = map(None,a)
             css = map(_same_,css,ac)
-         css = filter(None,css)
+         tmp = css
+         css = []
+         for a in tmp:
+            if a==None:
+               break
+            css.append(a)
          css = string.join(css,'')
          if len(css)>len(st3):
             result = st[0:loc]+css

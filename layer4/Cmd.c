@@ -868,7 +868,7 @@ static PyObject *CmdIsomesh(PyObject *self, 	PyObject *args) {
       ExecutiveManageObject((Object*)obj);
     }
     if(SettingGet(cSetting_isomesh_auto_state))
-      if(obj) ObjectGotoState(obj,state);
+      if(obj) ObjectGotoState((ObjectMolecule*)obj,state);
     PRINTFB(FB_ObjectMesh,FB_Actions)
       " Mesh: created \"%s\", setting level to %5.3f\n",str1,lvl
       ENDFB;
