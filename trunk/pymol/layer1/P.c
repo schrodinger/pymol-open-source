@@ -161,7 +161,7 @@ int PAlterAtom(AtomInfoType *at,char *expr,int read_only)
   SegIdent segi;
   TextType textType;
   char atype[7];
-  float b,q,partialCharge;
+  float b,q,partialCharge,vdw;
   int formalCharge,numericType;
   
   PyObject *dict;
@@ -187,6 +187,7 @@ int PAlterAtom(AtomInfoType *at,char *expr,int read_only)
     PConvIntToPyDictItem(dict,"numeric_type",at->customType);
   PConvFloatToPyDictItem(dict,"q",at->q);
   PConvFloatToPyDictItem(dict,"b",at->b);
+  PConvFloatToPyDictItem(dict,"vdw",at->vdw);
   PConvFloatToPyDictItem(dict,"partial_charge",at->partialCharge);
   PConvIntToPyDictItem(dict,"formal_charge",at->formalCharge);
   
@@ -216,6 +217,8 @@ int PAlterAtom(AtomInfoType *at,char *expr,int read_only)
       result=false;
     else if(!PConvPyObjectToFloat(PyDict_GetItemString(dict,"q"),&q))
       result=false;
+    else if(!PConvPyObjectToFloat(PyDict_GetItemString(dict,"vdw"),&vdw))
+      result=false;
     else if(!PConvPyObjectToFloat(PyDict_GetItemString(dict,"partial_charge"),&partialCharge))
       result=false;
     else if(!PConvPyObjectToInt(PyDict_GetItemString(dict,"formal_charge"),&formalCharge))
@@ -243,6 +246,7 @@ int PAlterAtom(AtomInfoType *at,char *expr,int read_only)
         at->customType = numericType;
       at->b=b;
       at->q=q;
+      at->vdw=vdw;
       at->partialCharge=partialCharge;
       at->formalCharge=formalCharge;
     } else {
@@ -276,6 +280,7 @@ int PLabelAtom(AtomInfoType *at,char *expr)
   PConvStringToPyDictItem(dict,"chain",at->chain);
   PConvStringToPyDictItem(dict,"alt",at->alt);
   PConvStringToPyDictItem(dict,"segi",at->segi);
+  PConvFloatToPyDictItem(dict,"vdw",at->vdw);
   PConvStringToPyDictItem(dict,"text_type",at->textType);
   PConvStringToPyDictItem(dict,"elem",at->elem);
   PConvIntToPyDictItem(dict,"geom",at->geom);
