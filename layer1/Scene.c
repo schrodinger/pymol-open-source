@@ -2461,8 +2461,8 @@ void SceneRay(int ray_width,int ray_height,int mode,char **headerVLA_ptr,
              
   if(mode!=2) { /* don't show pixel count for tests */
     PRINTFB(FB_Ray,FB_Details)
-      " Ray: tracing %dx%d = %d rays...\n",ray_width,ray_height,
-      ray_width*ray_height
+      " Ray: tracing %dx%d = %d rays against %d primitives.\n",ray_width,ray_height,
+      ray_width*ray_height,RayGetNPrimitives(ray)
       ENDFB;
   }
   switch(mode) {
@@ -2523,7 +2523,7 @@ void SceneRay(int ray_width,int ray_height,int mode,char **headerVLA_ptr,
 	accumTiming += timing; 
 	
     PRINTFB(FB_Ray,FB_Details)
-      " Ray: rendering time: %4.2f sec. = %3.1f frames/hour. (%4.2f sec. accum.)\n", 
+      " Ray: total time: %4.2f sec. = %3.1f frames/hour. (%4.2f sec. accum.)\n", 
       timing,3600/timing, 
 	  accumTiming 
       ENDFB;

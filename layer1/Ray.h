@@ -65,6 +65,8 @@ typedef struct {
   unsigned int background;
   int phase, n_thread;
   float spec_vector[3];
+  int x_start,x_stop;
+  int y_start,y_stop;
 } CRayThreadInfo;
 
 typedef struct {
@@ -91,7 +93,7 @@ void RayApplyContexToNormal(CRay *I,float *v);
 void RayApplyContextToVertex(CRay *I,float *v);
 void RayRenderColorTable(CRay *I,int width,int height,int *image);
 int RayTraceThread(CRayThreadInfo *T);
-
+int RayGetNPrimitives(CRay *I);
 
 int RayHashThread(CRayHashThreadInfo *T);
 

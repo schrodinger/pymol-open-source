@@ -608,8 +608,6 @@ int BasisHit(CBasis *BI,RayInfo *rr,int except,
 	int		*elist, local_iflag = false;
 	const float		_0	= 0.0F;
 	
-	/*(*interior_flag)	= false;*/
-	
 	if( MapInsideXY(BI->Map,r->base,&a,&b,&c) )
 	{
 		int		*xxtmp;
@@ -618,7 +616,7 @@ int BasisHit(CBasis *BI,RayInfo *rr,int except,
 	    int     i,ii;
 	    int     c_m1;
 	    int     do_break;
-	    
+
 		check_interior_flag	= (*interior_flag);
 		
 		/* assumption: always heading in the negative Z direction with our vector... */
@@ -960,7 +958,7 @@ int BasisHit(CBasis *BI,RayInfo *rr,int except,
 	   (*interior_flag) = local_iflag;	
 	   return(minIndex);
 	} /* end of if */	
-	 (*interior_flag) = local_iflag;
+   (*interior_flag) = local_iflag;
 	return(-1);
 }
 /*========================================================================*/
