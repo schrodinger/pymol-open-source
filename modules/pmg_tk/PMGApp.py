@@ -638,6 +638,20 @@ class PMGApp(AbstractApp):
 
       self.menuBar.addmenuitem('Edit', 'separator', '')
 
+      self.menuBar.addmenuitem('Edit', 'command', 'Undo Conformation',
+                               label='Undo Conformation [Ctrl-Z]',
+                               command = lambda: cmd.do("_ undo"))
+
+      self.menuBar.addmenuitem('Edit', 'command', 'Redo Conformation',
+                               label='Redo Conformation [Ctrl-A]',
+                               command = lambda: cmd.do("_ redo"))
+
+      self.menuBar.addmenuitem('Edit', 'separator', '')
+      
+      self.menuBar.addmenuitem('Edit', 'command', 'Cycle Bond Valence',
+                               label='Cycle Bond Valence [Ctrl-W]',
+                               command = lambda: cmd.do("_ cycle_valence"))
+
       self.menuBar.addmenuitem('Edit', 'command', 'Fill Hydrogens',
                                label='Fill Hydrogens on (pk1) [Ctrl-R]',
                                command = lambda: cmd.do("_ h_fill"))
@@ -650,9 +664,6 @@ class PMGApp(AbstractApp):
                                label='Create Bond (lb)-(rb) [Ctrl-T]',
                                command = lambda: cmd.do("_ bond"))
 
-      self.menuBar.addmenuitem('Edit', 'command', 'Cycle Bond Valence',
-                               label='Cycle Bond Valence [Ctrl-W]',
-                               command = lambda: cmd.do("_ cycle_valence"))
 
       self.menuBar.addmenuitem('Edit', 'separator', '')
 
@@ -666,7 +677,7 @@ class PMGApp(AbstractApp):
                                command = lambda: cmd.do("_ remove pkfrag1"))
 
       self.menuBar.addmenuitem('Edit', 'command', 'Remove (pkchain)',
-                               label='Remove (pkchain) [Ctrl-X]',
+                               label='Remove (pkchain)',
                                command = lambda: cmd.do("_ remove pkchain"))
 
       self.menuBar.addmenuitem('Edit', 'separator', '')
