@@ -26,11 +26,151 @@ Z* -------------------------------------------------------------------
 #include"Ray.h"
 #include"ObjectDist.h"
 #include"Selector.h"
+#include"PConv.h"
 
 void ObjectDistRender(ObjectDist *I,int frame,CRay *ray,Pickable **pick,int pass);
 void ObjectDistFree(ObjectDist *I);
 void ObjectDistUpdate(ObjectDist *I);
 int ObjectDistGetNFrames(ObjectDist *I);
+void ObjectDistUpdateExtents(ObjectDist *I);
+
+
+void ObjectDistUpdateExtents(ObjectDist *I)
+{
+  float maxv[3] = {FLT_MAX,FLT_MAX,FLT_MAX};
+  float minv[3] = {-FLT_MAX,-FLT_MAX,-FLT_MAX};
+  int a;
+  DistSet *ds;
+
+  /* update extents */
+  copy3f(maxv,I->Obj.ExtentMin);
+  copy3f(minv,I->Obj.ExtentMax);
+  I->Obj.ExtentFlag=false;
+  for(a=0;a<I->NDSet;a++) {
+    ds = I->DSet[a];
+    if(ds) {
+      if(DistSetGetExtent(ds,I->Obj.ExtentMin,I->Obj.ExtentMax))
+        I->Obj.ExtentFlag=true;
+    }
+  }
+}
+
+
+
+static PyObject *ObjectDistGetDSetPyList(ObjectDist *I)
+{
+  PyObject *result = NULL;
+  int a;
+  result = PyList_New(I->NDSet);
+  for(a=0;a<I->NDSet;a++) {
+    if(I->DSet[a]) {
+      PyList_SetItem(result,a,DistSetGetPyList(I->DSet[a]));
+    } else {
+      PyList_SetItem(result,a,Py_None);
+      Py_INCREF(Py_None);
+    }
+  }
+  return(PConvAutoNone(result));
+}
+
+static int ObjectDistSetDSetPyList(ObjectDist *I,PyObject *list)
+{
+  int ok=true;
+  int a;
+  if(ok) ok=PyList_Check(list);
+  if(ok) {
+    VLACheck(I->DSet,DistSet*,I->NDSet);
+    for(a=0;a<I->NDSet;a++) {
+      if(ok) ok = DistSetSetPyList(PyList_GetItem(list,a),&I->DSet[a]);
+      if(ok) I->DSet[a]->Obj = I;
+    }
+  }
+  return(ok);
+}
+
+/*static PyObject *ObjectDistGetAtomPyList(ObjectDist *I)
+{
+  PyObject *result = NULL;
+  AtomInfoType *ai;
+  int a;
+
+  result = PyList_New(I->NAtom);  
+  ai = I->AtomInfo;
+  for(a=0;a<I->NAtom;a++) {
+    PyList_SetItem(result,a,AtomInfoGetPyList(ai));
+    ai++;
+  }
+  return(PConvAutoNone(result));
+}
+
+static int ObjectDistSetAtomPyList(ObjectDist *I,PyObject *list) 
+{
+  int ok=true;
+  int a;
+  AtomInfoType *ai;
+  if(ok) ok=PyList_Check(list);  
+  VLACheck(I->AtomInfo,AtomInfoType,I->NAtom+1);
+  ai = I->AtomInfo;
+  for(a=0;a<I->NAtom;a++) {
+    if(ok) ok = AtomInfoSetPyList(ai,PyList_GetItem(list,a));
+    ai++;
+  }
+  return(ok);
+}
+*/
+/*========================================================================*/
+PyObject *ObjectDistGetPyList(ObjectDist *I)
+{
+  PyObject *result = NULL;
+
+  /* first, dump the atoms */
+
+  result = PyList_New(4);
+  PyList_SetItem(result,0,ObjectGetPyList(&I->Obj));
+  PyList_SetItem(result,1,PyInt_FromLong(I->NDSet));
+  PyList_SetItem(result,2,ObjectDistGetDSetPyList(I));
+  PyList_SetItem(result,3,PyInt_FromLong(I->CurDSet));
+
+#if 0
+
+  CObject Obj;
+  struct DistSet **DSet;
+  int NDSet;
+  int CurDSet;
+
+#endif
+
+  return(PConvAutoNone(result));  
+}
+
+int ObjectDistNewFromPyList(PyObject *list,ObjectDist **result)
+{
+  int ok = true;
+  ObjectDist *I=NULL;
+  (*result) = NULL;
+  
+  if(ok) ok=PyList_Check(list);
+
+  I=ObjectDistNew();
+  if(ok) ok = (I!=NULL);
+
+  if(ok) ok = ObjectSetPyList(PyList_GetItem(list,0),&I->Obj);
+  if(ok) ok = PConvPyIntToInt(PyList_GetItem(list,1),&I->NDSet);
+  if(ok) ok = ObjectDistSetDSetPyList(I,PyList_GetItem(list,2));
+  if(ok) ok = PConvPyIntToInt(PyList_GetItem(list,3),&I->CurDSet);
+  
+  ObjectDistInvalidateRep(I,cRepAll);
+  if(ok) {
+    (*result) = I;
+    ObjectDistUpdateExtents(I);
+  }
+  else {
+    /* cleanup? */
+  }
+
+  return(ok);
+}
+
 
 /*========================================================================*/
 int ObjectDistGetNFrames(ObjectDist *I)
@@ -88,21 +228,13 @@ void ObjectDistRender(ObjectDist *I,int frame,CRay *ray,Pickable **pick,int pass
     }
   }
 }
+
 /*========================================================================*/
-ObjectDist *ObjectDistNew(int sele1,int sele2,int mode,float cutoff,float *result)
+ObjectDist *ObjectDistNew(void)
 {
-  int a,mn;
-  float dist_sum=0.0,dist;
-  int dist_cnt = 0;
-  int n_state1,n_state2,state1,state2;
-  float maxv[3] = {FLT_MAX,FLT_MAX,FLT_MAX};
-  float minv[3] = {-FLT_MAX,-FLT_MAX,-FLT_MAX};
-  DistSet *ds;
   OOAlloc(ObjectDist);
   ObjectInit((CObject*)I);
-  *result = 0.0;
   I->Obj.type=cObjectDist;
-  I->NAtom=0;
   I->DSet=VLAMalloc(10,sizeof(DistSet*),5,true); /* auto-zero */
   I->NDSet=0;
   I->Obj.fRender=(void (*)(struct CObject *, int, CRay *, Pickable **,int))ObjectDistRender;
@@ -112,6 +244,20 @@ ObjectDist *ObjectDistNew(int sele1,int sele2,int mode,float cutoff,float *resul
   I->Obj.fDescribeElement = NULL;
   I->CurDSet=0;
   I->Obj.Color=ColorGetIndex("dash");
+  return(I);
+}
+
+/*========================================================================*/
+/*========================================================================*/
+ObjectDist *ObjectDistNewFromSele(int sele1,int sele2,int mode,float cutoff,float *result)
+{
+  int a,mn;
+  float dist_sum=0.0,dist;
+  int dist_cnt = 0;
+  int n_state1,n_state2,state1,state2;
+  ObjectDist *I;
+  I=ObjectDistNew();
+  *result = 0.0;
   mn = 0;
   SelectorUpdateTable();
   n_state1 = SelectorGetSeleNCSet(sele1);
@@ -142,17 +288,8 @@ ObjectDist *ObjectDistNew(int sele1,int sele2,int mode,float cutoff,float *resul
     VLAFreeP(I->DSet);
     OOFreeP(I);
   }
-  /* update extents */
-  copy3f(maxv,I->Obj.ExtentMin);
-  copy3f(minv,I->Obj.ExtentMax);
-  I->Obj.ExtentFlag=false;
-  for(a=0;a<I->NDSet;a++) {
-    ds = I->DSet[a];
-    if(ds) {
-      if(DistSetGetExtent(ds,I->Obj.ExtentMin,I->Obj.ExtentMax))
-        I->Obj.ExtentFlag=true;
-    }
-  }
+  ObjectDistUpdateExtents(I);
+
   if(dist_cnt)
     (*result) = dist_sum/dist_cnt;
   SceneChanged();

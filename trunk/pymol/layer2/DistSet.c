@@ -26,12 +26,55 @@ Z* -------------------------------------------------------------------
 #include"Color.h"
 #include"RepDistDash.h"
 #include"RepDistLabel.h"
+#include"PConv.h"
 
 void DistSetUpdate(DistSet *I);
 void DistSetFree(DistSet *I);
 void DistSetRender(DistSet *I,CRay *ray,Pickable **pick,int pass);
 void DistSetStrip(DistSet *I);
 void DistSetInvalidateRep(DistSet *I,int type,int level);
+
+int DistSetSetPyList(PyObject *list,DistSet **cs)
+{
+  DistSet *I = NULL;
+  int ok = true;
+  if(*cs) {
+    DistSetFree(*cs);
+    *cs=NULL;
+  }
+
+  if(list==Py_None) { /* allow None for CSet */
+    *cs = NULL;
+  } else {
+  
+    if(ok) I=DistSetNew();
+    if(ok) ok = (I!=NULL);
+    if(ok) ok = PConvPyIntToInt(PyList_GetItem(list,0),&I->NIndex);
+    if(ok) ok = PConvPyListToFloatVLA(PyList_GetItem(list,1),&I->Coord);
+    if(!ok) {
+      if(I)
+        DistSetFree(I);
+    } else {
+      *cs = I;
+    }
+  }
+  return(ok);
+}
+
+PyObject *DistSetGetPyList(DistSet *I)
+{
+  PyObject *result = NULL;
+
+  if(I) {
+    result = PyList_New(2);
+    
+    PyList_SetItem(result,0,PyInt_FromLong(I->NIndex));
+    PyList_SetItem(result,1,PConvFloatArrayToPyList(I->Coord,I->NIndex*3));
+    /* TODO setting ... */
+
+  }
+  return(PConvAutoNone(result));
+}
 
 /*========================================================================*/
 int DistSetGetExtent(DistSet *I,float *mn,float *mx)
