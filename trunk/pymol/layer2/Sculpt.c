@@ -51,8 +51,6 @@ CSculpt *SculptNew(void)
   I->EXList = VLAlloc(int,100000);
   I->EXHash = Alloc(int,EX_HASH_SIZE);
 
-  UtilZeroMem(I->NBHash,NB_HASH_SIZE*sizeof(int));
-  UtilZeroMem(I->EXHash,EX_HASH_SIZE*sizeof(int));
   return(I);
 }
 
@@ -69,12 +67,19 @@ void SculptMeasureObject(CSculpt *I,ObjectMolecule *obj,int state)
 
   AtomInfoType *ai;
 
+
+  PRINTFD(FB_Sculpt)
+    " SculptMeasureObject-Debug: entered.\n"
+    ENDFD;
+
   ShakerReset(I->Shaker);
+
+  UtilZeroMem(I->NBHash,NB_HASH_SIZE*sizeof(int));
+  UtilZeroMem(I->EXHash,EX_HASH_SIZE*sizeof(int));
 
   if(state<obj->NCSet)
     if(obj->CSet[state])
       {
-
         ObjectMoleculeVerifyChemistry(obj);
         ObjectMoleculeUpdateNeighbors(obj);
 
@@ -333,6 +338,13 @@ void SculptMeasureObject(CSculpt *I,ObjectMolecule *obj,int state)
   PRINTFB(FB_Sculpt,FB_Blather)
     " Sculpt: I->Shaker->NPlanCon %d\n",I->Shaker->NPlanCon
     ENDFD;
+
+
+ PRINTFD(FB_Sculpt)
+    " SculptMeasureObject-Debug: leaving...\n"
+    ENDFD;
+
+
 }
 int SculptCheckBump(float *v1,float *v2,float *diff,float *dist,float cutoff);
 int SculptDoBump(float target,float actual,float *d,float *d0to1,float *d1to0,float wt);
@@ -409,6 +421,7 @@ void SculptIterateObject(CSculpt *I,ObjectMolecule *obj,int state,int n_cycle)
   float angl_wt;
   float pyra_wt;
   float plan_wt;
+  int active_flag=false;
 
   AtomInfoType *ai0;
 
@@ -455,248 +468,257 @@ void SculptIterateObject(CSculpt *I,ObjectMolecule *obj,int state,int n_cycle)
               a1=cs->AtmToIdx[a];
             }
           }
+          if(a1>=0) active_flag=true;
           atm2idx[a] = a1;
           ai0++;
         }
         
-        /* first, create coordinate -> vertex mapping */
-        /* and count number of constraints */
+        if(active_flag) {
 
-        while(n_cycle--) {
+          /* first, create coordinate -> vertex mapping */
+          /* and count number of constraints */
 
-          /* initialize displacements to zero */
+          while(n_cycle--) {
+
+            /* initialize displacements to zero */
         
-          v = disp;
-          i = cnt;
-          for(a=0;a<obj->NAtom;a++) {
-            if(atm2idx[a]) {
-              *(v++)=0.0;
-              *(i++)=0;
-              *(v++)=0.0;          
-              *(v++)=0.0;
-            } else {
-              i++;
-              v+=3;
+            v = disp;
+            i = cnt;
+            for(a=0;a<obj->NAtom;a++) {
+              if(atm2idx[a]) {
+                *(v++)=0.0;
+                *(i++)=0;
+                *(v++)=0.0;          
+                *(v++)=0.0;
+              } else {
+                i++;
+                v+=3;
+              }
             }
-          }
           
-          /* apply distance constraints */
+            /* apply distance constraints */
 
-          sdc=shk->DistCon;
-          for(a=0;a<shk->NDistCon;a++) {
-            b1 = sdc->at0;
-            b2 = sdc->at1;
-            if(sdc->type) {
-              wt = bond_wt;
-              eval_flag = cSculptBond & mask;
-            } else {
-              wt = angl_wt;
-              eval_flag = cSculptAngl & mask;
-            }
-            if(eval_flag) {
-              a1 = atm2idx[b1]; /* coordinate set indices */
-              a2 = atm2idx[b2];
-              cnt[b1]++;
-              cnt[b2]++;
+            sdc=shk->DistCon;
+            for(a=0;a<shk->NDistCon;a++) {
+              b1 = sdc->at0;
+              b2 = sdc->at1;
+              if(sdc->type) {
+                wt = bond_wt;
+                eval_flag = cSculptBond & mask;
+              } else {
+                wt = angl_wt;
+                eval_flag = cSculptAngl & mask;
+              }
+              if(eval_flag) {
+                a1 = atm2idx[b1]; /* coordinate set indices */
+                a2 = atm2idx[b2];
+                cnt[b1]++;
+                cnt[b2]++;
               
-              if((a1>=0)&&(a2>=0))
-                {
+                if((a1>=0)&&(a2>=0))
+                  {
+                    v1 = cs->Coord+3*a1;
+                    v2 = cs->Coord+3*a2;
+                    ShakerDoDist(sdc->targ,v1,v2,disp+b1*3,disp+b2*3,wt);
+                  }
+              }
+              sdc++;
+            }
+
+            /* apply pyramid constraints */
+
+            if(cSculptPyra & mask) {
+              spc=shk->PyraCon;
+              for(a=0;a<shk->NPyraCon;a++) {
+              
+                b0 = spc->at0;
+                b1 = spc->at1;
+                b2 = spc->at2;
+                b3 = spc->at3;
+                a0 = atm2idx[b0];
+                a1 = atm2idx[b1];
+                a2 = atm2idx[b2];
+                a3 = atm2idx[b3];
+              
+                if((a0>=0)&&(a1>=0)&&(a2>=0)&&(a3>=0)) {
+                  v0 = cs->Coord+3*a0;
                   v1 = cs->Coord+3*a1;
                   v2 = cs->Coord+3*a2;
-                  ShakerDoDist(sdc->targ,v1,v2,disp+b1*3,disp+b2*3,wt);
+                  v3 = cs->Coord+3*a3;
+                  ShakerDoPyra(spc->targ,
+                               v0,v1,v2,v3,
+                               disp+b0*3,
+                               disp+b1*3,
+                               disp+b2*3,
+                               disp+b3*3,
+                               pyra_wt);
+                
+                
+                  cnt[b0]++;
+                  cnt[b1]++;
+                  cnt[b2]++;
+                  cnt[b3]++;
                 }
-            }
-            sdc++;
-          }
-
-          /* apply pyramid constraints */
-
-          if(cSculptPyra & mask) {
-            spc=shk->PyraCon;
-            for(a=0;a<shk->NPyraCon;a++) {
-              
-              b0 = spc->at0;
-              b1 = spc->at1;
-              b2 = spc->at2;
-              b3 = spc->at3;
-              a0 = atm2idx[b0];
-              a1 = atm2idx[b1];
-              a2 = atm2idx[b2];
-              a3 = atm2idx[b3];
-              
-              if((a0>=0)&&(a1>=0)&&(a2>=0)&&(a3>=0)) {
-                v0 = cs->Coord+3*a0;
-                v1 = cs->Coord+3*a1;
-                v2 = cs->Coord+3*a2;
-                v3 = cs->Coord+3*a3;
-                ShakerDoPyra(spc->targ,
-                           v0,v1,v2,v3,
-                             disp+b0*3,
-                             disp+b1*3,
-                             disp+b2*3,
-                             disp+b3*3,
-                             pyra_wt);
-                
-                
-                cnt[b0]++;
-                cnt[b1]++;
-                cnt[b2]++;
-                cnt[b3]++;
-              }
-            spc++;
-            }
-          }
-
-          if(cSculptPlan & mask) {
-
-            /* apply planarity constraints */
-            
-            snc=shk->PlanCon;
-            for(a=0;a<shk->NPlanCon;a++) {
-              
-              b0 = snc->at0;
-              b1 = snc->at1;
-              b2 = snc->at2;
-              b3 = snc->at3;
-              a0 = atm2idx[b0];
-              a1 = atm2idx[b1];
-              a2 = atm2idx[b2];
-              a3 = atm2idx[b3];
-              
-              if((a0>=0)&&(a1>=0)&&(a2>=0)&&(a3>=0)) {
-                v0 = cs->Coord+3*a0;
-                v1 = cs->Coord+3*a1;
-                v2 = cs->Coord+3*a2;
-                v3 = cs->Coord+3*a3;
-                ShakerDoPlan(v0,v1,v2,v3,
-                             disp+b0*3,
-                             disp+b1*3,
-                             disp+b2*3,
-                             disp+b3*3,
-                             plan_wt);
-                cnt[b0]++;
-                cnt[b1]++;
-                cnt[b2]++;
-                cnt[b3]++;
-              }
-              
-              snc++;
-            }
-          }
-
-          if((cSculptVDW||cSculptVDW14)&mask) {
-            /* compute non-bonded interations */
-            
-            /* construct nonbonded hash */
-            
-            nb_next = 1;
-            for(b0=0;b0<obj->NAtom;b0++) {
-              a0 = atm2idx[b0];
-              if(a0>=0) {
-                VLACheck(I->NBList,int,nb_next+2);
-                v0 = cs->Coord+3*a0;
-                hash = nb_hash(v0);
-                i = I->NBList+nb_next;
-                *(i++)=*(I->NBHash+hash);
-                *(i++)=hash;
-                *(i++)=b0;
-                *(I->NBHash+hash)=nb_next;
-                nb_next+=3;
+                spc++;
               }
             }
+
+            if(cSculptPlan & mask) {
+
+              /* apply planarity constraints */
             
-            /* find neighbors for each atom */
+              snc=shk->PlanCon;
+              for(a=0;a<shk->NPlanCon;a++) {
+              
+                b0 = snc->at0;
+                b1 = snc->at1;
+                b2 = snc->at2;
+                b3 = snc->at3;
+                a0 = atm2idx[b0];
+                a1 = atm2idx[b1];
+                a2 = atm2idx[b2];
+                a3 = atm2idx[b3];
+              
+                if((a0>=0)&&(a1>=0)&&(a2>=0)&&(a3>=0)) {
+                  v0 = cs->Coord+3*a0;
+                  v1 = cs->Coord+3*a1;
+                  v2 = cs->Coord+3*a2;
+                  v3 = cs->Coord+3*a3;
+                  ShakerDoPlan(v0,v1,v2,v3,
+                               disp+b0*3,
+                               disp+b1*3,
+                               disp+b2*3,
+                               disp+b3*3,
+                               plan_wt);
+                  cnt[b0]++;
+                  cnt[b1]++;
+                  cnt[b2]++;
+                  cnt[b3]++;
+                }
+              
+                snc++;
+              }
+            }
+
+            if((cSculptVDW||cSculptVDW14)&mask) {
+              /* compute non-bonded interations */
             
-            for(b0=0;b0<obj->NAtom;b0++) {
-              a0 = atm2idx[b0];
-              if(a0>=0) {
-                ai0=obj->AtomInfo+b0;
-                v0 = cs->Coord+3*a0;
-                for(h=-4;h<5;h+=4)
-                  for(k=-4;k<5;k+=4)
-                    for(l=-4;l<5;l+=4) 
-                      {
-                        offset = *(I->NBHash+nb_hash_off(v0,h,k,l));
-                        while(offset) {
-                          i = I->NBList + offset;
-                          b1 = *(i+2);
-                          if(b1>b0) { 
-                            /* determine exclusion (if any) */
-                            xoffset = *(I->EXHash+ex_hash(b0,b1));
-                            ex = 10;
-                            while(xoffset) {
-                              j = I->EXList + xoffset;
-                              if((*(j+1)==b0)&&
-                                 (*(j+2)==b1)) {
-                                ex1 = *(j+3);
-                                if(ex1<ex) {
-                                  ex=ex1;
+              /* construct nonbonded hash */
+            
+              nb_next = 1;
+              for(b0=0;b0<obj->NAtom;b0++) {
+                a0 = atm2idx[b0];
+                if(a0>=0) {
+                  VLACheck(I->NBList,int,nb_next+2);
+                  v0 = cs->Coord+3*a0;
+                  hash = nb_hash(v0);
+                  i = I->NBList+nb_next;
+                  *(i++)=*(I->NBHash+hash);
+                  *(i++)=hash;
+                  *(i++)=b0;
+                  *(I->NBHash+hash)=nb_next;
+                  nb_next+=3;
+                }
+              }
+            
+              /* find neighbors for each atom */
+            
+              for(b0=0;b0<obj->NAtom;b0++) {
+                a0 = atm2idx[b0];
+                if(a0>=0) {
+                  ai0=obj->AtomInfo+b0;
+                  v0 = cs->Coord+3*a0;
+                  for(h=-4;h<5;h+=4)
+                    for(k=-4;k<5;k+=4)
+                      for(l=-4;l<5;l+=4) 
+                        {
+                          offset = *(I->NBHash+nb_hash_off(v0,h,k,l));
+                          while(offset) {
+                            i = I->NBList + offset;
+                            b1 = *(i+2);
+                            if(b1>b0) { 
+                              /* determine exclusion (if any) */
+                              xoffset = *(I->EXHash+ex_hash(b0,b1));
+                              ex = 10;
+                              while(xoffset) {
+                                j = I->EXList + xoffset;
+                                if((*(j+1)==b0)&&
+                                   (*(j+2)==b1)) {
+                                  ex1 = *(j+3);
+                                  if(ex1<ex) {
+                                    ex=ex1;
+                                  }
+                                }
+                                xoffset = (*j);
+                              }
+                              if(ex>3) {
+                                cutoff = ai0->vdw+obj->AtomInfo[b1].vdw;
+                                if(ex==4) {
+                                  cutoff*=vdw14;
+                                  wt = vdw_wt14;
+                                  eval_flag = cSculptVDW14 & mask;
+                                } else {
+                                  cutoff=cutoff*vdw;
+                                  wt = vdw_wt;
+                                  eval_flag = cSculptVDW & mask;
+                                }
+                                if(eval_flag) {
+                                  a1 = atm2idx[b1];
+                                  v1 = cs->Coord+3*a1;
+                                  if(SculptCheckBump(v0,v1,diff,&len,cutoff))
+                                    if(SculptDoBump(cutoff,len,diff,disp+b0*3,disp+b1*3,wt)) {
+                                      cnt[b0]++;
+                                      cnt[b1]++;
+                                    }
                                 }
                               }
-                              xoffset = (*j);
                             }
-                            if(ex>3) {
-                              cutoff = ai0->vdw+obj->AtomInfo[b1].vdw;
-                              if(ex==4) {
-                                cutoff*=vdw14;
-                                wt = vdw_wt14;
-                                eval_flag = cSculptVDW14 & mask;
-                              } else {
-                                cutoff=cutoff*vdw;
-                                wt = vdw_wt;
-                                eval_flag = cSculptVDW & mask;
-                              }
-                              if(eval_flag) {
-                                a1 = atm2idx[b1];
-                                v1 = cs->Coord+3*a1;
-                                if(SculptCheckBump(v0,v1,diff,&len,cutoff))
-                                  if(SculptDoBump(cutoff,len,diff,disp+b0*3,disp+b1*3,wt)) {
-                                    cnt[b0]++;
-                                    cnt[b1]++;
-                                  }
-                              }
-                            }
+                            offset=(*i);
                           }
-                          offset=(*i);
                         }
-                      }
-              }
-            }
-            
-            /* clean up nonbonded hash */
-          
-            i = I->NBList+2;
-            while(nb_next>1) {
-              *(I->NBHash+*i)=0; 
-              i+=3;
-              nb_next-=3;
-            }
-            
-          }
-            /* average the displacements */
-            
-          for(a=0;a<obj->NAtom;a++) {
-            if(atm2idx[a]) 
-              if(cnt[a]) {
-                if(!obj->AtomInfo[a].protected) {
-                  v1 = disp+3*a;
-                  sc = 0.99/cnt[a];
-                  scale3f(v1,sc,v1);
-                  v2 = cs->Coord+3*atm2idx[a];
-                  add3f(v1,v2,v2);
                 }
               }
+            
+              /* clean up nonbonded hash */
+          
+              i = I->NBList+2;
+              while(nb_next>1) {
+                *(I->NBHash+*i)=0; 
+                i+=3;
+                nb_next-=3;
+              }
+            
+            }
+            /* average the displacements */
+            
+            for(a=0;a<obj->NAtom;a++) {
+              if(atm2idx[a]) 
+                if(cnt[a]) {
+                  if(!obj->AtomInfo[a].protected) {
+                    v1 = disp+3*a;
+                    sc = 0.99/cnt[a];
+                    scale3f(v1,sc,v1);
+                    v2 = cs->Coord+3*atm2idx[a];
+                    add3f(v1,v2,v2);
+                  }
+                }
+            }
+          
+            ObjectMoleculeInvalidate(obj,cRepAll,cRepInvCoord);
+          
+          
+          
           }
-          
-          ObjectMoleculeInvalidate(obj,cRepAll,cRepInvCoord);
-          
-          
-          
         }
         FreeP(cnt);
         FreeP(disp);
         FreeP(atm2idx);
       }
+
+  PRINTFD(FB_Sculpt)
+    " SculptIterateObject-Debug: leaving...\n"
+    ENDFD;
+
 }
 
 void SculptFree(CSculpt *I)
