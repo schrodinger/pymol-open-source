@@ -1077,10 +1077,10 @@ void RayRender(CRay *I,int width,int height,unsigned int *image,float front,floa
 
                 pixel_flag=true;
               } else if(pass) { 
-                /* on second or greater pass */
-                fc[0] = first_excess;
-                fc[1] = first_excess;
-                fc[2] = first_excess;
+                /* hit nothing, and we're on on second or greater pass */
+                fc[0] = first_excess+bkrd[0];
+                fc[1] = first_excess+bkrd[1];
+                fc[2] = first_excess+bkrd[2];
                 fc[3] = 1.0;
                 pixel_flag=true;
               }
