@@ -1443,81 +1443,27 @@ class PMGApp(AbstractApp):
       self.menuBar.addcascademenu('Scene', 'Store', 'Store',
                                   label='Store')
 
-      self.menuBar.addmenuitem('Store', 'command', 'F1',
-                               label='F1',
-                               command = lambda: cmd.do("scene F1,store"))
-      self.menuBar.addmenuitem('Store', 'command', 'F2',
-                               label='F2',
-                               command = lambda: cmd.do("scene F2,store"))
-      self.menuBar.addmenuitem('Store', 'command', 'F3',
-                               label='F3',
-                               command = lambda: cmd.do("scene F3,store"))
-      self.menuBar.addmenuitem('Store', 'command', 'F4',
-                               label='F4',
-                               command = lambda: cmd.do("scene F4,store"))
-      self.menuBar.addmenuitem('Store', 'command', 'F5',
-                               label='F5',
-                               command = lambda: cmd.do("scene F5,store"))
-      self.menuBar.addmenuitem('Store', 'command', 'F6',
-                               label='F6',
-                               command = lambda: cmd.do("scene F6,store"))
-      self.menuBar.addmenuitem('Store', 'command', 'F7',
-                               label='F7',
-                               command = lambda: cmd.do("scene F7,store"))
-      self.menuBar.addmenuitem('Store', 'command', 'F8',
-                               label='F8',
-                               command = lambda: cmd.do("scene F8,store"))
-      self.menuBar.addmenuitem('Store', 'command', 'F9',
-                               label='F9',
-                               command = lambda: cmd.do("scene F9,store"))
-      self.menuBar.addmenuitem('Store', 'command', 'F10',
-                               label='F10',
-                               command = lambda: cmd.do("scene F10,store"))
-      self.menuBar.addmenuitem('Store', 'command', 'F11',
-                               label='F11',
-                               command = lambda: cmd.do("scene F11,store"))
-      self.menuBar.addmenuitem('Store', 'command', 'F12',
-                               label='F12',
-                               command = lambda: cmd.do("scene F12,store"))
+      self.menuBar.addcascademenu('Scene', 'Clear', 'Clear',
+                                  label='Clear')
 
       self.menuBar.addmenuitem('Scene', 'separator', '')
+
       
-      self.menuBar.addmenuitem('Scene', 'command', 'Recall F1',
-                               label='Recall F1',
-                               command = lambda: cmd.do("scene F1"))
-      self.menuBar.addmenuitem('Scene', 'command', 'Recall F2',
-                               label='Recall F2',
-                               command = lambda: cmd.do("scene F2"))
-      self.menuBar.addmenuitem('Scene', 'command', 'Recall F3',
-                               label='Recall F3',
-                               command = lambda: cmd.do("scene F3"))
-      self.menuBar.addmenuitem('Scene', 'command', 'Recall F4',
-                               label='Recall F4',
-                               command = lambda: cmd.do("scene F4"))
-      self.menuBar.addmenuitem('Scene', 'command', 'Recall F5',
-                               label='Recall F5',
-                               command = lambda: cmd.do("scene F5"))
-      self.menuBar.addmenuitem('Scene', 'command', 'Recall F6',
-                               label='Recall F6',
-                               command = lambda: cmd.do("scene F6"))
-      self.menuBar.addmenuitem('Scene', 'command', 'Recall F7',
-                               label='Recall F7',
-                               command = lambda: cmd.do("scene F7"))
-      self.menuBar.addmenuitem('Scene', 'command', 'Recall F8',
-                               label='Recall F8',
-                               command = lambda: cmd.do("scene F8"))
-      self.menuBar.addmenuitem('Scene', 'command', 'Recall F9',
-                               label='Recall F9',
-                               command = lambda: cmd.do("scene F9"))
-      self.menuBar.addmenuitem('Scene', 'command', 'Recall F10',
-                               label='Recall F10',
-                               command = lambda: cmd.do("scene F10"))
-      self.menuBar.addmenuitem('Scene', 'command', 'Recall F11',
-                               label='Recall F11',
-                               command = lambda: cmd.do("scene F11"))
-      self.menuBar.addmenuitem('Scene', 'command', 'Recall F12',
-                               label='Recall F12',
-                               command = lambda: cmd.do("scene F12"))
+      for x in range(1,13):
+         self.menuBar.addmenuitem('Store', 'checkbutton', 'F%d'%x,
+                                  label='F%d'%x,
+                                  variable = self.setting.F[x],
+                                  command = lambda x=x: cmd.do("scene F%d,store"%x))
+
+         self.menuBar.addmenuitem('Clear', 'checkbutton', 'F%d'%x,
+                                  label='F%d'%x,
+                                  variable = self.setting.F[x],
+                                  command = lambda x=x: cmd.do("scene F%d,clear"%x))
+
+         self.menuBar.addmenuitem('Scene', 'checkbutton', 'Recall F%d'%x,
+                                  label='Recall F%d'%x,
+                                  variable = self.setting.F[x],
+                                  command = lambda x=x: cmd.do("scene F%d"%x))
                       
       self.menuBar.addmenu('Mouse', 'Mouse Configuration')
 

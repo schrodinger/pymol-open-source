@@ -2034,6 +2034,8 @@ void SettingInitGlobal(int alloc)
 
   SettingSet_f(I,cSetting_roving_isosurface, 0.0F);
 
+  SettingSet_f(I,cSetting_scenes_changed, 1.0F);
+
 }
 
 

@@ -285,7 +285,8 @@ if __name__=='pymol.setting':
 
       roving_isomesh        = 252
       roving_isosurface     = 253
-
+      scenes_changed        = 254
+      
       
    setting_sc = Shortcut(SettingIndex.__dict__.keys())
 

@@ -50,7 +50,7 @@ refresh
 
 isomesh m4,tst4
 refresh
-isomesh m5a,tst5,source=1
+isomesh m5a,tst5,source_state=1
 refresh
 isomesh m5b,tst5
 
@@ -66,7 +66,7 @@ isosurface s4,tst4
 refresh
 isosurface s4,tst5
 refresh
-isosurface s5a,tst5,source=1
+isosurface s5a,tst5,source_state=1
 refresh
 isosurface s5b,tst5
 

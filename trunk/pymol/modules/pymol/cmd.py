@@ -1130,6 +1130,7 @@ if __name__=='pymol.cmd':
         full_screen,        \
         get_view,           \
         get_vis,            \
+        get_scene_dict,     \
         hide,               \
         label,              \
         load_png,           \

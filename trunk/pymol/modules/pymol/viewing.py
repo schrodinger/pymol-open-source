@@ -35,7 +35,7 @@ if __name__=='pymol.viewing':
                 "nonbonded", "nb_spheres",
                 "cartoon","ribbon","labels"]
 
-   view_sc = Shortcut(['store','recall','delete'])
+   view_sc = Shortcut(['store','recall','clear'])
    view_dict = {}
    view_dict_sc = Shortcut([])
 
@@ -617,7 +617,7 @@ SEE ALSO
    
       if key=='*':
          action = view_sc.auto_err(action,'action')
-         if action=='delete':
+         if action=='clear':
             view_dict = {}
             view_dict_sc = Shortcut(view_dict.keys())                        
          else:
@@ -662,7 +662,15 @@ SEE ALSO
       finally:
          unlock()
       return r
-     
+
+   def get_scene_dict():
+      try:
+         lock()
+         cpy = copy.deepcopy(scene_dict)
+      finally:
+         unlock()
+      return cpy
+   
    def scene(key,action='recall'):
       '''
 DESCRIPTION
@@ -692,52 +700,59 @@ SEE ALSO
    view, set_view, get_view
       '''
       global scene_dict,scene_dict_sc
-   
-      if key=='*':
-         action = view_sc.auto_err(action,'action')
-         if action=='delete':
-            scene_dict = {}
-            scene_dict_sc = Shortcut(scene_dict.keys())                        
-         else:
-            print " scene: stored scenes:"
-            lst = scene_dict.keys()
-            lst.sort()
-            parsing.dump_str_list(lst)
-            
-      else:
-         action = view_sc.auto_err(action,'action')
-         if action=='recall':
-            key = scene_dict_sc.auto_err(key,'scene')
-            set_view(scene_dict[key][0])
-            cmd.hide()
-            cmd.disable()
-            cmd.set_vis(scene_dict[key][1])
-            cmd.frame(scene_dict[key][2])
-            for rep in rep_list:
-               name = "_scene_"+key+"_"+rep
-               cmd.show(rep,name)
-            if _feedback(fb_module.scene,fb_mask.actions): # redundant
-               print " scene: \"%s\" recalled."%key
-         elif action=='store':
-            scene_dict_sc.append(key)
-            scene_dict[key]=[cmd.get_view(0),
-                             cmd.get_vis(),
-                             cmd.get_frame()]
-            for rep in rep_list:
-               name = "_scene_"+key+"_"+rep
-               cmd.select(name,"rep "+rep)
-            if _feedback(fb_module.scene,fb_mask.actions):
-               print " scene: scene stored as \"%s\"."%key
-         elif action=='delete':
-            key = scene_dict_sc.auto_err(key,'view')
-            if scene_dict.has_key(key):
-               del scene_dict[key]
-               scene_dict_sc = Shortcut(scene_dict.keys())            
-               name = "_scene_"+key+"_*"
-               cmd.delete(name)
-               if _feedback(fb_module.scene,fb_mask.actions):
-                  print " scene: '%s' deleted."%key
 
+      try:
+         lock() # manipulating global data, so need lock
+         
+         if key=='*':
+            action = view_sc.auto_err(action,'action')
+            if action=='clearscene':
+               scene_dict = {}
+               scene_dict_sc = Shortcut(scene_dict.keys())                        
+            else:
+               print " scene: stored scenes:"
+               lst = scene_dict.keys()
+               lst.sort()
+               parsing.dump_str_list(lst)
+         else:
+            action = view_sc.auto_err(action,'action')
+            if action=='recall':
+               cmd.set("scenes_changed",1,quiet=1);
+               key = scene_dict_sc.auto_err(key,'scene')
+               set_view(scene_dict[key][0])
+               cmd.hide()
+               cmd.disable()
+               cmd.set_vis(scene_dict[key][1])
+               cmd.frame(scene_dict[key][2])
+               for rep in rep_list:
+                  name = "_scene_"+key+"_"+rep
+                  cmd.show(rep,name)
+               if _feedback(fb_module.scene,fb_mask.actions): # redundant
+                  print " scene: \"%s\" recalled."%key
+            elif action=='store':
+               scene_dict_sc.append(key)
+               for rep in rep_list:
+                  name = "_scene_"+key+"_"+rep
+                  cmd.select(name,"rep "+rep)
+               scene_dict[key]=[cmd.get_view(0),
+                                cmd.get_vis(),
+                                cmd.get_frame()]
+               if _feedback(fb_module.scene,fb_mask.actions):
+                  print " scene: scene stored as \"%s\"."%key
+               cmd.set("scenes_changed",1,quiet=1);
+            elif action=='delete':
+               key = scene_dict_sc.auto_err(key,'view')
+               if scene_dict.has_key(key):
+                  cmd.set("scenes_changed",1,quiet=1);               
+                  del scene_dict[key]
+                  scene_dict_sc = Shortcut(scene_dict.keys())            
+                  name = "_scene_"+key+"_*"
+                  cmd.delete(name)
+                  if _feedback(fb_module.scene,fb_mask.actions):
+                     print " scene: '%s' deleted."%key
+      finally:
+         unlock()
+         
                
    def session_save_views(session):
       session['view_dict']=copy.deepcopy(view_dict)
