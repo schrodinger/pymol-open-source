@@ -302,6 +302,25 @@ void MemoryDebugForget(void *addr,const char *file,int line)
   Count--;
 }
 
+int MemoryDebugUsage(void) 
+{
+  int a;
+  unsigned int tot  = 0;
+  DebugRec *rec;
+  if(InitFlag) MemoryDebugInit();
+  for(a=0;a<1024;a++)
+    {
+      rec=HashTable[a];
+      while(rec)
+        {
+          if(rec->type!=_MDMarker)
+            tot+=rec->size;
+          rec=rec->next;
+        }
+    }
+  return(tot);
+}
+
 void MemoryDebugDump(void)
 {
   int a;

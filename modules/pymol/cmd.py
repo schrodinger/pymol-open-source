@@ -116,7 +116,7 @@ COMMANDS
                  rewind    middle    ending
                  forward   backward
    IMAGING       png       mpng
-   RAY TRACING   ray      
+   RAY TRACING   ray       
    MAPS          isomesh   isodot
    DISPLAY       cls       viewport  splash    
    SELECTIONS    select    mask   
@@ -1887,7 +1887,10 @@ USAGE
 PYMOL API
   
    cmd.ray()
-   
+
+SEE ALSO
+
+   "help faster" for optimization tips
    '''
    try:
       lock()   
@@ -1895,6 +1898,35 @@ PYMOL API
    finally:
       unlock()
    return r
+
+def faster():
+   '''
+RAY TRACING OPTIMIZATION
+
+   1. Reduce object complexity to a minimum acceptable level.
+         For example, try lowering:
+            "cartoon_sampling" 
+            "ribbon_sampling", and
+            "surface_quality", as appropriate.
+
+   2. Increase "hash_max" so as to obtain a voxel dimensions of
+      0.3-0.6.  Proper tuning of "hash_max" can speed up
+      rendering by a factor of 2-3 for non-trivial scenes.
+      
+      WARNING: memory usage depends on hash_max^3, so avoid
+      pushing into virtual memory.  Roughly speaking:
+      
+         hash_max = 80  -->   ~9 MB hash + data
+         hash_max = 160 -->  ~72 MB hash + data
+         hash_max = 240 --> ~243 MB hash + data
+
+      Avoid using virtual memory.
+      
+   3. Recompiling with optimizations on usually gives a 25-33%
+      performance boost for ray tracing.
+   
+'''
+   help('faster')
 
 def system(command):
    '''
@@ -5632,7 +5664,8 @@ help_only = {  # for API-only features
    'editing'       : [editing      , 0 , 0 , ',' , 0 ],  
    'edit_keys'     : [edit_keys    , 0 , 0 , ',' , 0 ],
    'get_names'     : [get_names    , 0 , 0 , ',' , 0 ],
-   'get_type'      : [get_type     , 0 , 0 , ',' , 0 ],  
+   'get_type'      : [get_type     , 0 , 0 , ',' , 0 ],
+   'faster'        : [faster       , 0 , 0 , ',' , 0 ],  
    '@'             : [at_sign      , 0 , 0 , ',' , 0 ],  
 }
 

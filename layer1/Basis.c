@@ -32,7 +32,7 @@ float ZLineClipPoint(float *base,float *point,float *alongNormalSq,float cutoff)
 int ZLineToSphere(float *base,float *point,float *dir,float radius,float maxial,
 						float *sphere,float *asum);
 
-static int intersect_triangle(float orig[3], float *pre,float vert0[3], float vert2[3],
+static int intersect_triangle(float orig[3], float *pre,float vert0[3], 
 										float *u, float *v, float *d);
 
 /*========================================================================*/
@@ -310,8 +310,7 @@ int BasisHit(CBasis *I,RayInfo *r,int except,
 					 case cPrimTriangle:
                   if(shadow||(!prm->cull))
 						if(intersect_triangle(r->base,I->Precomp+I->Vert2Normal[i]*3,
-													 I->Vertex+prm->vert*3,I->Vertex+prm->vert*3+6,
-													 &tri1,&tri2,&dist)) 
+													 I->Vertex+prm->vert*3,&tri1,&tri2,&dist)) 
 						  {
 							 if(shadow) {
 								if((dist>(-R_SMALL4))&&(dist<r->dist))
@@ -766,10 +765,13 @@ void BasisTrianglePrecompute(float *v0,float *v1,float *v2,float *pre)
 #define SUB(dest,v1,v2) {dest[0]=v1[0]-v2[0]; dest[1]=v1[1]-v2[1]; dest[2]=v1[2]-v2[2];} 
 
 
-static int intersect_triangle(float orig[3], float *pre,float vert0[3], float vert2[3],
+static int intersect_triangle(float orig[3], float *pre,float vert0[3],
+                              /* float vert2[3],*/
 										float *u, float *v, float *d)
 {
-  float tvec[3],qvec[3];
+  /* this routine now optimized to the point of total and complete opacity : ) */
+  register float tvec0,tvec1,qvec2;
+  /* float tvec[3],qvec[3]; */
   /* float edge1[3], edge2[3],*/
   /* float pvec[3] 
 	  float det,inv_det;*/
@@ -795,21 +797,27 @@ static int intersect_triangle(float orig[3], float *pre,float vert0[3], float ve
 	if(!pre[6]) return 0;
 
    /* calculate distance from vert0 to ray origin */
-   SUB(tvec, orig, vert0);
+   /*   SUB(tvec, orig, vert0);*/
+   tvec0=orig[0]-vert0[0];
+   tvec1=orig[1]-vert0[1];
 
    /* calculate U parameter and test bounds */
 	/*   *u = DOT(tvec, pvec) * inv_det;*/
 	/*	*u = (tvec[0]*edge2[1] - tvec[1]*edge2[0]) * inv_det;*/
-	*u = (tvec[0]*pre[4] - tvec[1]*pre[3]) * pre[7];
+	*u = (tvec0*pre[4] - tvec1*pre[3]) * pre[7];
    if ((*u < 0.0) || (*u > 1.0)) return 0;
 
    /* prepare to test V parameter */
 	/*   CROSS(qvec, tvec, edge1);*/
-   CROSS(qvec, tvec, pre);
+
+   /* CROSS(qvec, tvec, pre);  */
+   qvec2=tvec0*pre[1]-tvec1*pre[0];
 
    /* calculate V parameter and test bounds */
 	/*   *v = DOT(dir, qvec) * inv_det;*/
-   *v = -qvec[2] * pre[7];
+   /*   *v = -qvec[2] * pre[7]; */
+
+   *v = -qvec2 * pre[7];
 	
    if ((*v < 0.0) || ((*u + *v) > 1.0)) return 0;
 

@@ -402,7 +402,8 @@ void RayRenderPOV(CRay *I,int width,int height,char *charVLA,float front,float b
   
 }
 /*========================================================================*/
-void RayRender(CRay *I,int width,int height,unsigned int *image,float front,float back)
+void RayRender(CRay *I,int width,int height,unsigned int *image,float front,float back,
+               double timing)
 {
   int x,y;
   int a,b;
@@ -417,14 +418,14 @@ void RayRender(CRay *I,int width,int height,unsigned int *image,float front,floa
   unsigned int background,buffer_size,z[16],tot;
   int antialias;
   RayInfo r1,r2;
-  double timing;
   int fogFlag=false;
   int fogRangeFlag=false;
   float fog;
   float *bkrd;
   float fog_start=0.0;
   float gamma,inp,sig=1.0;
- 
+  double now;
+
   gamma = SettingGet(cSetting_gamma);
   if(gamma>R_SMALL4)
     gamma=1.0/gamma;
@@ -444,8 +445,6 @@ void RayRender(CRay *I,int width,int height,unsigned int *image,float front,floa
   }
   /* SETUP */
   
-  timing = UtilGetSeconds();
-
   antialias = (int)SettingGet(cSetting_antialias);
   if(antialias>0) {
 	 width=width*2;
@@ -483,8 +482,10 @@ void RayRender(CRay *I,int width,int height,unsigned int *image,float front,floa
     RayExpandPrimitives(I);
     RayTransformFirst(I);
     
+    now = UtilGetSeconds()-timing;
+
 	 PRINTFB(FB_Ray,FB_Details)
-      " Ray: processed %i graphics primitives.\n",I->NPrimitive 
+      " Ray: processed %i graphics primitives: %4.2f sec.\n",I->NPrimitive,now
       ENDFB;
     BasisMakeMap(I->Basis+1,I->Vert2Prim,I->Primitive,I->Volume);
     
@@ -502,11 +503,29 @@ void RayRender(CRay *I,int width,int height,unsigned int *image,float front,floa
     RayTransformBasis(I,I->Basis+2);
     BasisMakeMap(I->Basis+2,I->Vert2Prim,I->Primitive,NULL);
 
+    now = UtilGetSeconds()-timing;
+
+#ifdef _MemoryDebug_ON
     PRINTFB(FB_Ray,FB_Details)
-      " Ray: voxel spacing: %4.2f (camera), %4.2f (shadow).\n",
-      I->Basis[1].Map->Div,I->Basis[2].Map->Div 
+      " Ray: voxels: %4.2f (%dx%dx%d), %4.2f (%dx%dx%d), %d MB, %4.2f sec.\n",
+      I->Basis[1].Map->Div,   I->Basis[1].Map->Dim[0],
+      I->Basis[1].Map->Dim[1],I->Basis[1].Map->Dim[2],
+      I->Basis[2].Map->Div,   I->Basis[2].Map->Dim[0],
+      I->Basis[1].Map->Dim[2],I->Basis[2].Map->Dim[2],
+      (int)(MemoryDebugUsage()/(1024.0*1024)),
+      now
       ENDFB;
-    
+#else
+    PRINTFB(FB_Ray,FB_Details)
+      " Ray: voxels: %4.2f (%dx%dx%d), %4.2f (%dx%dx%d), %4.2f sec.\n",
+      I->Basis[1].Map->Div,   I->Basis[1].Map->Dim[0],
+      I->Basis[1].Map->Dim[1],I->Basis[1].Map->Dim[2],
+      I->Basis[2].Map->Div,   I->Basis[2].Map->Dim[0],
+      I->Basis[1].Map->Dim[2],I->Basis[2].Map->Dim[2],
+      now
+      ENDFB;
+#endif
+
     /* IMAGING */
     
     /* erase buffer */
@@ -800,11 +819,6 @@ void RayRender(CRay *I,int width,int height,unsigned int *image,float front,floa
 	 image=image_copy;
   }
   
-  timing = UtilGetSeconds()-timing;
-  PRINTFB(FB_Ray,FB_Details)
-    " Ray: rendering time: %4.2f sec. (%3.1f fph).\n", 
-    timing,3600/timing 
-    ENDFB;
 
 }
 /*========================================================================*/

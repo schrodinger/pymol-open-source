@@ -125,7 +125,7 @@ int SettingGetName(int index,SettingName name);
 #define cSetting_sweep_angle                  26
 #define cSetting_sweep_speed                  27
 #define cSetting_dot_hydrogens                28
-#define cSetting_dot_size                     29
+#define cSetting_dot_radius                   29
 #define cSetting_ray_trace_frames             30
 #define cSetting_cache_frames                 31
 #define cSetting_trim_dots                    32
