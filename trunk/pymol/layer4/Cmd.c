@@ -867,18 +867,22 @@ static PyObject *CmdMapNew(PyObject *self, PyObject *args)
   float buffer;
   int type;
   int state;
+  int have_corners;
+  int quiet;
   char *selection;
-  OrthoLineType s1;
+  OrthoLineType s1 = "";
   int ok = false;
-  ok = PyArg_ParseTuple(args,"sifsf(ffffff)i",&name,&type,&grid[0],&selection,&buffer,
+  ok = PyArg_ParseTuple(args,"sifsf(ffffff)iii",&name,&type,&grid[0],&selection,&buffer,
                         &minCorner[0],&minCorner[1],&minCorner[2],
-                        &maxCorner[0],&maxCorner[1],&maxCorner[2],&state);
+                        &maxCorner[0],&maxCorner[1],&maxCorner[2],
+                        &state,&have_corners,&quiet);
   if(ok) {
     grid[1]=grid[0];
     grid[2]=grid[0];
     APIEntry();
     SelectorGetTmp(TempPyMOLGlobals,selection,s1);
-    ok = ExecutiveMapNew(TempPyMOLGlobals,name,type,grid,s1,buffer,minCorner,maxCorner,state);
+    ok = ExecutiveMapNew(TempPyMOLGlobals,name,type,grid,s1,buffer,
+                         minCorner,maxCorner,state,have_corners,quiet);
     SelectorFreeTmp(TempPyMOLGlobals,s1);
     APIExit();
   }

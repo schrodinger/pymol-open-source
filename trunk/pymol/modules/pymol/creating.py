@@ -20,7 +20,7 @@ if __name__=='pymol.creating':
    import cmd
    import string
    from cmd import _cmd,lock,unlock,Shortcut,QuietException,is_list,is_string
-   from cmd import file_ext_re, sanitize_list_re
+   from cmd import file_ext_re, safe_list_eval, safe_alpha_list_eval
    from chempy import fragments
 
    map_type_dict = {
@@ -46,7 +46,7 @@ if __name__=='pymol.creating':
    
    ramp_spectrum_sc = Shortcut(ramp_spectrum_dict.keys())
    
-   def map_new(name,type='gaussian',grid=None,selection="(all)",buffer=None,box=None,state=0):
+   def map_new(name,type='gaussian',grid=None,selection="(all)",buffer=None,box=None,state=0,quiet=1):
       '''
       state > 0: do indicated state
       state = 0: independent states in independent extents
@@ -59,15 +59,17 @@ if __name__=='pymol.creating':
       selection = selector.process(selection)
       if box!=None: # box should be [[x1,y1,z1],[x2,y2,z2]]
          if cmd.is_string(box):
-            box = eval(box)
+            box = safe_list_eval(box)
          box = (float(box[0][0]),
                 float(box[0][1]),
                 float(box[0][2]),
                 float(box[1][0]),
                 float(box[1][1]),
                 float(box[1][2]))
+         box_flag = 1
       else:
          box = (0.0,0.0,0.0,1.0,1.0,1.0)
+         box_flag = 0
       if grid==None:
          grid = cmd.get_setting_legacy('gaussian_resolution')/3.0
       if buffer==None:
@@ -77,7 +79,7 @@ if __name__=='pymol.creating':
       try:
          lock()
          r = _cmd.map_new(str(name),int(type),grid,str(selection),
-                          float(buffer),box,int(state)-1)
+                          float(buffer),box,int(state)-1,box_flag,quiet)
       finally:
          unlock()
 
@@ -88,7 +90,7 @@ if __name__=='pymol.creating':
                 sigma=2.0,zero=1):
       safe_color = string.strip(str(color))
       if(safe_color[0:1]=="["): # looks like a list
-         color = eval(str(safe_color))
+         color = safe_alpha_list_eval(str(safe_color))
       else: # looks like a literal
          color = str(color)
       new_color = []
@@ -107,7 +109,7 @@ if __name__=='pymol.creating':
          new_color=int(color)
       try:
          lock()
-         r = _cmd.ramp_new(str(name),str(map_name),list(eval(str(range))),new_color,
+         r = _cmd.ramp_new(str(name),str(map_name),list(safe_list_eval(str(range))),new_color,
                            int(map_state)-1,str(selection),float(beyond),float(within),
                            float(sigma),int(zero))
       finally:

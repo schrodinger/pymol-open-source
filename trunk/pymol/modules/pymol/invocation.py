@@ -70,10 +70,10 @@ if __name__=='pymol.invocation':
 
    # Greg Landrum
    options.rpcServer = 0
-   options.security = 1
    # end
+   options.security = 1
    
-   pml_re = re.compile(r"pymolrc$|\.pml$|\.PML$")
+   script_re = re.compile(r"pymolrc$|\.pml$|\.PML$|\.p1m$|\.P1M$")
    py_re = re.compile(r"\.py$|\.pym$|\.PY$|\.PYM$")
    pyc_re = re.compile(r"\.pyc$|\.PYC$") # not yet used
 
@@ -103,7 +103,7 @@ if __name__=='pymol.invocation':
       for a in lst:
          if py_re.search(a):
             first.append("_do__ run "+a) # preceeding "_ " cloaks
-         elif pml_re.search(a):
+         elif script_re.search(a):
             second.append("_do__ @"+a) # preceeding "_ " cloaks 
    #      elif pyc_re.search(a): # ignore compiled versions for now
    #         first.append("_do__ run "+a) # preceeding "_ " cloaks

@@ -2156,7 +2156,7 @@ int ***ExecutiveGetBondPrint(PyMOLGlobals *G,char *name,int max_bond,int max_typ
 int ExecutiveMapNew(PyMOLGlobals *G,char *name,int type,float *grid,
                     char *sele,float buffer,
                     float *minCorner,
-                    float *maxCorner,int state)
+                    float *maxCorner,int state,int have_corners,int quiet)
 {
   CObject *origObj=NULL;
   ObjectMap *objMap;
@@ -2195,10 +2195,11 @@ int ExecutiveMapNew(PyMOLGlobals *G,char *name,int type,float *grid,
     if(state==-1) st_once_flag=false; /* each state, separate map, separate extent */
     if(!st_once_flag) state=st;
     
-    if(strlen(sele)) {
+    if(strlen(sele)&&(!have_corners)) {
       valid_extent = ExecutiveGetExtent(G,sele,md->MinCorner,
                                         md->MaxCorner,true,state,false); /* TODO restrict to state */
     } else {
+      valid_extent = 1;
       copy3f(minCorner,md->MinCorner);
       copy3f(maxCorner,md->MaxCorner);
     }

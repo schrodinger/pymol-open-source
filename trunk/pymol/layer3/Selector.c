@@ -5820,7 +5820,10 @@ int SelectorGetTmp(PyMOLGlobals *G,char *input,char *store)
   PRINTFD(G,FB_Selector)
     " SelectorGetTmp-Debug: entered with \"%s\".\n",input
     ENDFD;
-
+  if((input[0]=='\'')&&(input[1]=='\'')&&(!input[2])) {
+    store[0]=0;
+    return count;
+  }
   if(input[0]=='(') {
     sprintf(name,"%s%d",cSelectorTmpPrefix,I->TmpCounter++);
 	 count = SelectorCreate(G,name,input,NULL,false,NULL);
