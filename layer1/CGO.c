@@ -1034,6 +1034,8 @@ void CGORenderRay(CGO *I,CRay *ray,float *color,CSetting *set1,CSetting *set2)
     }
     pc+=CGO_sz[op];
   }
+
+  ray->fTransparentf(ray,0.0F);
 }
 
 /* ======== GL Rendering ======== */
