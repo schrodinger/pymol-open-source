@@ -59,10 +59,13 @@ file_ext_re= re.compile(string.join([
    r"\.PDB$|\.ENT$|\.MOL$|",
    r"\.mmod$|\.mmd$|\.dat$|\.out$|",
    r"\.MMOD$|\.MMD$|\.DAT$|\.OUT$|",
-   r"\.xplor$|\.pkl$|\.sdf$|",
+   r"\.xplor$|\.pkl$|\.sdf$|", 
    r"\.XPLOR$|\.PKL$|\.SDF$|",                        
-   r"\.r3d$|\.xyz$|\.xyz_[0-9]*$",
-   r"\.R3D$|\.XYZ$|\.XYZ_[0-9]*$"],''))
+   r"\.r3d$|\.xyz$|\.xyz_[0-9]*$|", 
+   r"\.R3D$|\.XYZ$|\.XYZ_[0-9]*$|",
+   r"\.cc1$|\.cc2$|", # ChemDraw 3D
+   r"\.CC1$|\.CC2$",
+   ],''))
 
 QuietException = parsing.QuietException
 
@@ -4181,6 +4184,11 @@ def _load(oname,finfo,state,ftype,finish,discrete):
                              int(finish),int(discrete))
          else:
             print " load: couldn't load raster3d file."
+      elif ftype == loadable.cc1: # ChemDraw 3D
+         obj = io.cc1.fromFile(finfo)
+         if obj:
+            _cmd.load_object(str(oname),obj,int(state)-1,loadable.model,
+                             int(finish),int(discrete))            
       else:
          r = _cmd.load(str(oname),finfo,int(state)-1,int(ftype),
                        int(finish),int(discrete))
@@ -4258,6 +4266,8 @@ SEE ALSO
             ftype = loadable.r3d
          elif re.search("\.xyz$",filename,re.I):
             ftype = loadable.xyz
+         elif re.search("\.cc1$|\.cc2$",filename,re.I):
+            ftype = loadable.cc1
          elif re.search("\.xyz_[0-9]*$",filename,re.I):
             ftype = loadable.xyz
          elif re.search("\.sdf$",filename,re.I):
@@ -4298,7 +4308,7 @@ SEE ALSO
          _cmd.finish_object(str(oname))
          _cmd.do("zoom (%s)"%oname) 
          ftype = -1
-
+         
 # standard file handling
 
       if ftype>=0:
@@ -5744,6 +5754,7 @@ class loadable:
    r3d = 14      # r3d, only used within cmd.py
    xyz = 15      # xyz, tinker format
    sdf = 16      # sdf, only used within cmd.py
+   cc1 = 17      # cc1 and cc2, only used within cmd.py
    
 loadable_sc = Shortcut(loadable.__dict__.keys()) 
 

@@ -492,7 +492,7 @@ void AtomInfoAssignParameters(AtomInfoType *I)
            (*(e+1)=='u')||(*(e+1)=='U')
            ))
         if(!(((*(e+1))=='A')&&(I->hetatm)))
-          *(e+1)=0;
+          *(e+1)=0; /* CA intpreted as carbon, not calcium */
       break;
     case 'B':
       if(!((*(e+1)=='r')||(*(e+1)=='R')))
@@ -566,15 +566,16 @@ void AtomInfoAssignParameters(AtomInfoType *I)
 		pri = 1000; break;
 	 }
   I->priority=pri;
-  n = I->name;  
-  while((*n>='0')&&(*n<='9')&&(*(n+1))) n++;
-  switch ( *n )
+  e = I->elem;  
+  while((*e>='0')&&(*e<='9')&&(*(e+1))) e++;
+  switch ( *e )
     {
     case 'N' : vdw=1.8;  break;
     case 'C' :	
-      switch (*(n+1)) 
+      switch (*(e+1)) 
         {
         case 'U':
+        case 'u':
           vdw=1.35; break; /* CU */
         case 0:
         default:
@@ -587,11 +588,12 @@ void AtomInfoAssignParameters(AtomInfoType *I)
     case 'B' :	vdw=1.9; break; /* incl B, BR */
     case 'S' :	vdw=1.9; break;
     case 'F' : 
-      switch (*(n+1))
+      switch (*(e+1))
         {
         case 0:
           vdw=1.35; break;
         case 'E': 
+        case 'e': 
           vdw=0.64; break;
         default:
           vdw=1.35; break;

@@ -2470,6 +2470,8 @@ CoordSet *ObjectMoleculeChemPyModel2CoordSet(PyObject *model,AtomInfoType **atIn
             if(!ok) 
               ErrMessage("ObjectMoleculeChemPyModel2CoordSet","can't read vdw radius");
             Py_XDECREF(tmp);
+          } else {
+            ai->vdw=0.0;
           }
         }
 
