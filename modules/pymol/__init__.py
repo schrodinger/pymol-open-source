@@ -60,4 +60,6 @@ def launch_gui():
 
 import cmd
 
-
+if os.environ.has_key('DISPLAY'):
+   from xwin import *
+   

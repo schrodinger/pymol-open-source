@@ -74,8 +74,11 @@ int  OrthoCommandOut(char *buffer);
 void OrthoFeedbackIn(char *buffer);
 int OrthoFeedbackOut(char *buffer);
 
+void OrthoPasteIn(char *buffer);
 void OrthoRemoveSplash(void);
 void OrthoSplash(void);
+int OrthoArrowsGrabbed(void);
+void OrthoSpecial(int k,int x,int y);
 
 #define OrthoLineLength 1024
 typedef char OrthoLineType[OrthoLineLength];

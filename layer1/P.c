@@ -105,7 +105,6 @@ void PDumpTraceback(PyObject *err)
   }
 }
 
-
 int PAlterAtomState(float *v,char *expr)
 {
   PyObject *dict; /* TODO: this function badly need error checking code */

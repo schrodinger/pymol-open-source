@@ -2351,6 +2351,23 @@ EXAMPLES
       unlock()
    return r
 
+def paste():
+   r=1
+   lst = []
+   if hasattr(pymol,"machine_get_clipboard"):
+      lst = pymol.machine_get_clipboard()
+   if len(lst):
+      while 1:
+         if len(lst[-1]):
+            if ord(lst[-1][-1])>32: # trim off final CR
+               break;
+         else:
+            break;
+         lst[-1]=lst[-1][:-1]
+      _cmd.paste(lst)
+      
+   return r
+
 def mmatrix(a):
    '''
 DESCRIPTION
