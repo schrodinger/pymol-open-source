@@ -429,7 +429,7 @@ void RayRender(CRay *I,int width,int height,unsigned int *image,float front,floa
   float gamma,inp,sig=1.0;
   double now;
 
-  opaque_back = SettingGet(cSetting_ray_opaque_background);
+  opaque_back = (int)SettingGet(cSetting_ray_opaque_background);
   gamma = SettingGet(cSetting_gamma);
   if(gamma>R_SMALL4)
     gamma=1.0/gamma;
