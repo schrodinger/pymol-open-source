@@ -3055,9 +3055,9 @@ void RayPrepare(CRay *I,float v0,float v1,float v2,
 {
   int a;
   if(!I->Primitive) 
-	 I->Primitive=VLACacheAlloc(CPrimitive,10000,0,cCache_ray_primitive);  
+	 I->Primitive=VLACacheAlloc(CPrimitive,10000,3,cCache_ray_primitive);  
   if(!I->Vert2Prim) 
-	 I->Vert2Prim=VLACacheAlloc(int,10000,0,cCache_ray_vert2prim);
+	 I->Vert2Prim=VLACacheAlloc(int,10000,3,cCache_ray_vert2prim);
   I->Volume[0]=v0;
   I->Volume[1]=v1;
   I->Volume[2]=v2;

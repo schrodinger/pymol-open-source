@@ -60,7 +60,6 @@ def ligands(selection="(all)"):
       cmd.select(host,s+" and "+prot_and_dna_sele)
       cmd.select(solvent,s+" and "+solv_sele)
       cmd.select(lig,s+" and "+lig_sele)
-      cmd.set("surface_type",0,s)
       cmd.select(near_solvent,s+" and ("+solvent+" within 4 of "+lig+")")
 
       util.chainbow(host)
@@ -146,6 +145,7 @@ def ligand_sites_hq(selection="(all)"):
    cmd.show("sticks",s+" and rep lines")
    cmd.hide("lines",s+" and rep lines")
    cmd.set("surface_quality","1",s)
+   cmd.set("surface_type",0,s)
 
 def ligand_sites_trans(selection="(all)"):
    ligand_sites("all")
@@ -154,6 +154,7 @@ def ligand_sites_trans(selection="(all)"):
    cmd.show("sticks",s+" and rep lines")
    cmd.hide("lines",s+" and rep lines")
    cmd.set("transparency","0.33",s)
+   cmd.set("surface_type",0,s)
 
 def ligand_sites_mesh(selection="(all)"):
    ligand_sites("all")
@@ -249,10 +250,10 @@ def default(selection="(all)"):
    cmd.show("nonbonded",s)
    cmd.unset("transparency",s)
    cmd.set("two_sided_lighting",0)
-   cmd.unset("dot_normals",1,s)
-   cmd.unset("mesh_normals",1,s)
-   cmd.unset("surface_quality",0,s)
-
+   cmd.unset("dot_normals",s)
+   cmd.unset("mesh_normals",s)
+   cmd.unset("surface_quality",s)
+   cmd.unset("surface_type",s)
    if polar_contacts in cmd.get_names():
       cmd.disable(polar_contacts)
    color=cmd.get_object_color_index(selection)

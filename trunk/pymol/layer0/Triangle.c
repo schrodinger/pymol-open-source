@@ -1097,11 +1097,9 @@ static void FollowActives(float *v,float *vn,int n,int mode)
     n,mode,I->nTri,I->nActive
     ENDFD;
 
-  cnt = (int)SettingGet(cSetting_max_triangles);
-  
   OrthoBusyFast((I->N*3)+I->nTri,I->N*5); /* 3/5 to 4/5 */
 
-  while(I->nActive&&(I->nTri<cnt)) {
+  while(I->nActive) {
     I->nActive--;
     i1 = I->activeEdge[I->nActive*2];
     i2 = I->activeEdge[I->nActive*2+1];
@@ -1493,7 +1491,6 @@ int *TrianglePointsToSurface(float *v,float *vn,int n,float cutoff,int *nTriPtr,
   TriangleSurfaceRec *I=&TriangleSurface;
   MapType *map;
   int a;
-  int cnt;
 
   I->N=n;
   I->nActive = 0;
@@ -1575,10 +1572,6 @@ NTestLine=0; for(a=0;a<n;a++)
   TriangleAdjustNormals(v,vn,n);
 
   *(stripPtr) = TriangleMakeStripVLA(v,vn,n);
-
-  cnt = (int)SettingGet(cSetting_max_triangles);
-  if(I->nTri>cnt)
-	 I->nTri=cnt;
 
   (*nTriPtr)=I->nTri;
   VLAFreeP(I->activeEdge);
