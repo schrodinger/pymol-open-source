@@ -288,7 +288,10 @@ if __name__=='pymol.setting':
       scenes_changed        = 254
       gaussian_lambda       = 255
       pdb_standard_order    = 256
-      
+      cartoon_smooth_first  = 257
+      cartoon_smooth_last   = 258
+      cartoon_smooth_cycles = 259
+      cartoon_flat_cycles   = 260
       
    setting_sc = Shortcut(SettingIndex.__dict__.keys())
 

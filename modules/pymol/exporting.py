@@ -32,13 +32,16 @@ if __name__=='pymol.exporting':
          if a==None:
             try:
                lock()
-               r = None
                r = _cmd.get_session(session)
             finally:
                unlock()
          else:
-            r = apply(a,(session,))
-         if not r: break
+            try:
+               r = apply(a,(session,))
+            except:
+               print_exc()
+               print "Error: An error occurred when trying to generate session."
+               print "Error: The resulting session file may be incomplete."
       return session
 
    def png(filename):

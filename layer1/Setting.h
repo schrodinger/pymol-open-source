@@ -392,9 +392,14 @@ CSetting *SettingNewFromPyList(PyObject *list);
 #define cSetting_gaussian_lambda             255
 #define cSetting_pdb_standard_order          256
 
+#define cSetting_cartoon_smooth_first        257
+#define cSetting_cartoon_smooth_last         258
+#define cSetting_cartoon_smooth_cycles       259
+#define cSetting_cartoon_flat_cycles         260
+
 /* cSetting_INIT must always be last setting_index +1 */
 
-#define cSetting_INIT                        257
+#define cSetting_INIT                        261
 
 #endif
 
