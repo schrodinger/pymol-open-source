@@ -22,6 +22,7 @@ from ColorEditor import ColorEditor
 
 import Pmw
 import sys, string
+import pymol
 from pymol import cmd
 from pymol import util
 import re
@@ -30,6 +31,8 @@ import threading
 import os
 from glob import glob
 import __builtin__
+import traceback
+import Queue
 
 class PMGApp(AbstractApp):
 
@@ -38,7 +41,14 @@ class PMGApp(AbstractApp):
    copyright      = 'Copyright (C) 1998-2001 by Warren DeLano of\nDeLano Scientific. All rights reserved.'
    contactweb     = 'http://www.pymol.org'
    contactemail   = 'warren@delanoscientific.com'
-   
+
+   def appInit(self): # create a global variable for the external gui
+      pymol._ext_gui = self
+      self.fifo = Queue.Queue(0)
+
+   def execute(self,cmmd): 
+      self.fifo.put(cmmd)
+
    def buttonAdd(self,frame,text,cmd):
       newBtn=self.createcomponent('button', (), None,
          Button,frame,text=text,highlightthickness=0,
@@ -159,12 +169,24 @@ class PMGApp(AbstractApp):
          
       text.configure(font = self.my_fw_font)
       text.configure(width=72)
+      self.output.after(1000,self.flush_commands)
       self.output.after(1000,self.update_feedback)
       self.output.after(1000,self.update_menus)
       self.output.pack(side=BOTTOM,expand=YES,fill=BOTH)
       self.bind(self.entry, 'Command Input Area')
       self.initialdir = os.getcwd()
       self.log_file = "log.pml"
+
+   def flush_commands(self):
+      # flush the external GUI fifo command queue
+      while not self.fifo.empty():
+         try:
+            cmmd = self.fifo.get(0)
+            print cmmd
+            exec cmmd
+         except:
+            traceback.print_exc()
+      self.output.after(20,self.flush_commands) # 50X a second
       
    def update_feedback(self):
       for a in cmd.get_feedback():
@@ -175,11 +197,11 @@ class PMGApp(AbstractApp):
          if self.lineCount > 10000:
             self.output.delete('0.0','%i.%i' % (self.lineCount-5000,0))
             self.lineCount=5000
-      self.output.after(50,self.update_feedback) # update feedback window 20X a second
+      self.output.after(100,self.update_feedback) # 10X a second
 
    def update_menus(self):
       self.setting.refresh()
-      self.output.after(500,self.update_menus) # update menus twice a second
+      self.output.after(500,self.update_menus) # twice a second
       
    def createInterface(self):
          AbstractApp.createInterface(self)

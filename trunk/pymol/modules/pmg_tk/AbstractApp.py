@@ -15,8 +15,6 @@
 from Tkinter import *
 import Pmw
 import sys, string
-#import ProgressBar
-from Setting import Setting
 
 class AbstractApp(Pmw.MegaWidget):        
    appversion      = ''
