@@ -326,9 +326,15 @@ class PMGApp(AbstractApp):
                   if hasattr(mod,'__init__'):
                      mod.__init__(self)
             except:
-               print "Exception in plugin '%s' -- Traceback follows..."%name
-               traceback.print_exc()
-               print "Error: unable to initialize plugin '%s'."%name
+               suppress = 0
+               # suppress error reporting when using old versions of Python
+               if float(sys.version[0:3])<2.3:
+                  if( name in ['apbs_tools' ]):
+                     suppress = 1
+               if not suppress:
+                  print "Exception in plugin '%s' -- Traceback follows..."%name
+                  traceback.print_exc()
+                  print "Error: unable to initialize plugin '%s'."%name
                
    def quit_app(self):
       cmd.log_close()
