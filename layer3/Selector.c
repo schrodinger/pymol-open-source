@@ -2461,6 +2461,7 @@ int SelectorGetPDB(char **charVLA,int sele,int state,int conectFlag)
   int nBond=0;
   int cLen =0;
   int newline;
+  int use_ter = (int)SettingGet(cSetting_pdb_use_ter_records);
   CoordSet *cs;
   ObjectMolecule *obj;
   AtomInfoType *atInfo,*ai,*last = NULL;
@@ -2541,8 +2542,10 @@ int SelectorGetPDB(char **charVLA,int sele,int state,int conectFlag)
               if(!last->hetatm)
                 if(ai->resv!=last->resv)
                   if((abs(ai->resv-last->resv)>1)||(ai->hetatm)) {
-                    CoordSetAtomToTERStrVLA(charVLA,&cLen,last,c);
-                    c++;
+                    if(use_ter) {
+                      CoordSetAtomToTERStrVLA(charVLA,&cLen,last,c);
+                      c++;
+                    }
                   }
             I->Table[a].index=c+1; /* NOTE marking with "1" based indexes here */
             CoordSetAtomToPDBStrVLA(charVLA,&cLen,ai,

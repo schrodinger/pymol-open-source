@@ -82,7 +82,7 @@ PYMOL API
          unlock()
       return r
 
-   def save(filename,selection='(all)',state=0,format=''):
+   def save(filename,selection='(all)',state=0,format='',quiet=1):
       '''
 DESCRIPTION
 
@@ -144,21 +144,27 @@ SEE ALSO
                f.write(st)
                f.close()
             r = None
-            print " Save: wrote \""+filename+"\"."
+            if not quiet:
+               print " Save: wrote \""+filename+"\"."
       elif format=='pkl': # python binary
          io.pkl.toFile(cmd.get_model(selection,state),filename)
-         print " Save: wrote \""+filename+"\"."
+         if not quiet:
+            print " Save: wrote \""+filename+"\"."
       elif format=='pkla': # ascii override
          io.pkl.toFile(cmd.get_model(selection),filename,bin=0)
-         print " Save: wrote \""+filename+"\"."
+         if not quiet:
+            print " Save: wrote \""+filename+"\"."
       elif format=='pse': # PyMOL session
          io.pkl.toFile(cmd.get_session(),filename)
-         print " Save: wrote \""+filename+"\"."
+         if not quiet:
+            print " Save: wrote \""+filename+"\"."
       elif format=='mmod': # macromodel
          io.mmd.toFile(cmd.get_model(selection),filename)
-         print " Save: wrote \""+filename+"\"."
+         if not quiet:
+            print " Save: wrote \""+filename+"\"."
       elif format=='mol': 
          io.mol.toFile(cmd.get_model(selection),filename)
-         print " Save: wrote \""+filename+"\"."
+         if not quiet:
+            print " Save: wrote \""+filename+"\"."
       return r
 

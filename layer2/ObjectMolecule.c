@@ -8108,15 +8108,35 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(char *buffer,
           if(!sscanf(cc,"%s",ai->name)) 
             ai->name[0]=0;
           else {
-            if(!literal_names) {
-              if(ai->name[3])
-                if((ai->name[0]>='0')&&(ai->name[0]<='9')) {
-                  ctmp = ai->name[0];
-                  ai->name[0]= ai->name[1];
-                  ai->name[1]= ai->name[2];
-                  ai->name[2]= ai->name[3];
-                  ai->name[3]= ctmp;
+            if(literal_names) { /* convert over to literal style? HZ2, HD22 instead of 2HZ, 2HD2 */
+              if(ai->name[0]) {
+                if((ai->name[0]>='0')&&(ai->name[0]<='9')&&
+                   (!((ai->name[1]>='0')&&(ai->name[1]<='9')))&&
+                   (ai->name[1]!=0)) {
+                  switch(strlen(ai->name)) {
+                  default:
+                    break;
+                  case 2:
+                    ctmp = ai->name[0];
+                    ai->name[0]= ai->name[1];
+                    ai->name[1]= ctmp;
+                    break;
+                  case 3:
+                    ctmp = ai->name[0];
+                    ai->name[0]= ai->name[1];
+                    ai->name[1]= ai->name[2];
+                    ai->name[2]= ctmp;
+                    break;
+                  case 4:
+                    ctmp = ai->name[0];
+                    ai->name[0]= ai->name[1];
+                    ai->name[1]= ai->name[2];
+                    ai->name[2]= ai->name[3];
+                    ai->name[3]= ctmp;
+                    break;
+                  }
                 }
+              }
             }
           }
           

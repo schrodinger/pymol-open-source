@@ -40,7 +40,7 @@ try:
                                     [ Mx[6]/rb, Mx[7]/rb, Mx[8]/rb, Mx[11]/tb],
                                     [        0,        0,        0,         1]] )                  
       except:
-         print " pmx: unrecognized space group symbol '"+sgsymbol+"'"
+         print " xray: unrecognized space group symbol '"+sgsymbol+"'"
          result = None
       return result
 

@@ -179,8 +179,20 @@ CHANGE LOG
 
 Changes up to 0.91
 
+   * fixed endianness problems with map files
 
-      
+   * pdb_use_ter_records: setting disables TER records in PDB output
+
+   * improved default hydrogen atom ordering in PyMOL
+   
+   * fixed bug in hydrogen name conversion -- this may break some scripts : (
+
+   * pdb_hetatm_sort: disable and sort to see cartoons for
+     non-canonical PDB residues
+   
+   * retain_order: enable and sort to preserve input atom ordering.
+      NOTE: may break some residue-based operations from working
+   
    * Fixed processor mis-detection bug on Linux with certain P4s
 
    * PyMOL now building warning-free on VC++ warning level 3

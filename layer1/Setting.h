@@ -402,10 +402,13 @@ CSetting *SettingNewFromPyList(PyObject *list);
 #define cSetting_use_display_lists           263
 #define cSetting_cache_memory                264
 #define cSetting_simplify_display_lists      265
+#define cSetting_retain_order                266
+#define cSetting_pdb_hetatm_sort             267
+#define cSetting_pdb_use_ter_records         268
 
 /* cSetting_INIT must always be last setting_index +1 */
 
-#define cSetting_INIT                        266
+#define cSetting_INIT                        269
 
 #endif
 

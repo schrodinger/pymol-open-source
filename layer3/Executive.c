@@ -4201,12 +4201,12 @@ int ExecutiveGetExtent(char *name,float *mn,float *mx,int transformed,int state,
   float f1,f2,fmx;
   int a;
 
-  if(WordMatch(cKeywordCenter,name,1)) {
+  if(WordMatch(cKeywordCenter,name,1)<0) {
     SceneGetPos(mn);
     copy3f(mn,mx);
     return 1;
   }
-  if(WordMatch(cKeywordOrigin,name,1)) {
+  if(WordMatch(cKeywordOrigin,name,1)<0) {
     SceneOriginGet(mn);
     copy3f(mn,mx);
     return 1;

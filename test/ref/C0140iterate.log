@@ -4,7 +4,7 @@ PyMOL>names = []
 PyMOL>iterate (all),names.append(name)
  Iterate: iterated over 37 atoms.
 PyMOL>print names
-['C', 'O', 'N', 'CA', 'CB', 'CG', 'CD', 'C', 'O', '2HB', '2HD', '2HG', '3HB', '3HD', '3HG', 'HA', 'N', 'CA', 'CB', 'OG', 'C', 'O', '2HB', '3HB', 'H', 'HA', 'HG', 'O', 'O01', 'C02', 'C03', 'C04', 'C05', 'H01', 'H04', 'H05', 'H06']
+['C', 'O', 'N', 'CA', 'CB', 'CG', 'CD', 'C', 'O', 'HA', '2HB', '3HB', '2HD', '3HD', '2HG', '3HG', 'N', 'CA', 'CB', 'OG', 'C', 'O', 'H', 'HA', '2HB', '3HB', 'HG', 'O', 'O01', 'C02', 'C03', 'C04', 'C05', 'H01', 'H04', 'H05', 'H06']
 PyMOL>bfct = []
 PyMOL>iterate (resn pro),bfct.append(b)
  Iterate: iterated over 14 atoms.

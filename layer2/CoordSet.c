@@ -400,6 +400,7 @@ void CoordSetAtomToPDBStrVLA(char **charVLA,int *c,AtomInfoType *ai,float *v,int
   AtomName name;
   ResIdent resi; 
   int rl;
+  int literal = (int)SettingGet(cSetting_pdb_literal_names);
 
   if(ai->hetatm)
 	aType=sHETATM;
@@ -414,23 +415,43 @@ void CoordSetAtomToPDBStrVLA(char **charVLA,int *c,AtomInfoType *ai,float *v,int
         resi[rl+2]=0;
     }
   VLACheck(*charVLA,char,(*c)+1000);  
-
+  
   if(!ai->name[0]) {
     sprintf(name," %s",ai->elem);
   }
-  else if(strlen(ai->name)<4) {
-    if(!((ai->name[0]>='0')&&(ai->name[0])<='9')) {
+  else if(!literal) {
+    if(strlen(ai->name)<4) {
+      if((!((ai->name[0]>='0')&&(ai->name[0])<='9')) &&
+         (((toupper(ai->elem[0])==toupper(ai->name[0])))||
+          (((toupper(ai->elem[0])!=toupper(ai->name[0]))&&
+           (toupper(ai->elem[0])!=toupper(ai->name[1])))))) {
+        name[0]=' ';	
+        strcpy(name+1,ai->name);
+      } else {
+        strcpy(name,ai->name);
+      }
+    } else {
+      strcpy(name,ai->name);
+    }
+  } else {
+    if(strlen(ai->name)==4) {
+      if((!((ai->name[0]>='0')&&(ai->name[0]<='9')))
+         &&((ai->name[3]>='0')&&(ai->name[3]<='9'))) {       
+        name[0]=ai->name[3];
+        name[1]=ai->name[0];
+        name[2]=ai->name[1];
+        name[3]=ai->name[2];
+        name[4]=0;
+      }
+      else {
+        strcpy(name,ai->name);
+      }
+    }  else if((!((ai->name[0]>='0')&&(ai->name[0])<='9')) &&
+               (((toupper(ai->elem[0])==toupper(ai->name[0])))||
+                ((toupper(ai->elem[0])!=toupper(ai->name[0]))&&
+                 (toupper(ai->elem[0])!=toupper(ai->name[1]))))) {
       name[0]=' ';	
       strcpy(name+1,ai->name);
-    } else 
-      strcpy(name,ai->name);
-  } else {
-    if(!((ai->name[0]>='0')&&(ai->name[0]<='9'))) {
-      name[0]=ai->name[3];
-      name[1]=ai->name[0];
-      name[2]=ai->name[1];
-      name[3]=ai->name[2];
-      name[4]=0;
     } else {
       strcpy(name,ai->name);
     }

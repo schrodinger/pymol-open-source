@@ -141,6 +141,7 @@ int AtomInfoFromPyList(AtomInfoType *at,PyObject *list);
 int AtomInfoMatch(AtomInfoType *at1,AtomInfoType *at2);
 int AtomInfoAltMatch(AtomInfoType *at1,AtomInfoType *at2);
 int AtomInfoCompare(AtomInfoType *at1,AtomInfoType *at2);
+int AtomInfoCompareIgnoreHet(AtomInfoType *at1,AtomInfoType *at2);
 float AtomInfoGetBondLength(AtomInfoType *ai1,AtomInfoType *ai2);
 int AtomInfoSameResidue(AtomInfoType *at1,AtomInfoType *at2);
 int AtomInfoSequential(AtomInfoType *at1,AtomInfoType *at2);
