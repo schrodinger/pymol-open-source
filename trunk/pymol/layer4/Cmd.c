@@ -198,6 +198,7 @@ static PyObject *CmdSetMatrix(PyObject *self, 	PyObject *args);
 static PyObject *CmdSet(PyObject *self, 	PyObject *args);
 static PyObject *CmdSetDihe(PyObject *self, 	PyObject *args);
 static PyObject *CmdSetFrame(PyObject *self, PyObject *args);
+static PyObject *CmdSetTitle(PyObject *self, PyObject *args);
 static PyObject *CmdSetWizard(PyObject *self, PyObject *args);
 static PyObject *CmdRefreshWizard(PyObject *dummy, PyObject *args);
 static PyObject *CmdShowHide(PyObject *self, 	PyObject *args);
@@ -309,6 +310,7 @@ static PyMethodDef Cmd_methods[] = {
 	{"select",                CmdSelect,       METH_VARARGS },
 	{"set",	                 CmdSet,          METH_VARARGS },
 	{"set_dihe",              CmdSetDihe,      METH_VARARGS },
+	{"set_title",             CmdSetTitle,     METH_VARARGS },
 	{"set_wizard",            CmdSetWizard,    METH_VARARGS },
 	{"setframe",	           CmdSetFrame,     METH_VARARGS },
 	{"showhide",              CmdShowHide,     METH_VARARGS },
@@ -344,6 +346,23 @@ static PyObject *CmdGetFrame(PyObject *self, 	PyObject *args)
   return(Py_BuildValue("i",result));
 }
 
+static PyObject *CmdSetTitle(PyObject *self, PyObject *args)
+{
+  char *str1,*str2;
+  int int1;
+  int result;
+
+  PyArg_ParseTuple(args,"sis",&str1,&int1,&str2);
+  APIEntry();
+  result = ExecutiveSetTitle(str1,int1,str2);
+  APIExit();
+  if(result) {
+    return(Py_BuildValue("i",result));
+  } else {
+    Py_INCREF(Py_None);
+    return(Py_None);
+  }
+}
 
 static PyObject *CmdExportCoords(PyObject *self, 	PyObject *args)
 {

@@ -942,7 +942,7 @@ PYMOL API
       unlock()
    return r
 
-def isomesh(name,map,level=1.0,selection='',buffer=0.0,state=-1):
+def isomesh(name,map,level=1.0,selection='',buffer=0.0,state=0):
    '''
 DESCRIPTION
  
@@ -960,12 +960,12 @@ USAGE
       lock()
       r = _cmd.isomesh(str(name),0,str(map),int(mopt),
                        str(selection),float(buffer),
-                       float(level),0,int(state))
+                       float(level),0,int(state)-1)
    finally:
       unlock()
    return r
 
-def isodot(name,map,level=1.0,selection='',buffer=0.0,state=-1):
+def isodot(name,map,level=1.0,selection='',buffer=0.0,state=0):
    '''
 DESCRIPTION
  
@@ -983,7 +983,7 @@ USAGE
       lock()
       r = _cmd.isomesh(str(name),0,str(map),int(mopt),
                        str(selection),float(buffer),
-                       float(level),1,int(state))
+                       float(level),1,int(state)-1)
    finally:
       unlock()
    return r
@@ -2409,7 +2409,7 @@ def export_coords(obj,state):
    r = None
    try:
       lock()   
-      r = _cmd.export_coords(str(obj),int(state))
+      r = _cmd.export_coords(str(obj),int(state)-1)
    finally:
       unlock()
    return r
@@ -3087,7 +3087,7 @@ NOTES
    try:
       lock()
       _cmd.create(str(name),str(selection),
-                  int(source_state),int(target_state))
+                  int(source_state)-1,int(target_state)-1)
    finally:
       unlock()
    return None
@@ -3116,7 +3116,7 @@ TO DOCUMENT
       lock()
       ok = 1
       ftype = loadable.model
-      state = -1
+      state = 0
       model = arg[0];
       if len(arg)<2:
          ok=0
@@ -3126,7 +3126,7 @@ TO DOCUMENT
          state = int(arg[2])-1
       if ok:
          r = _cmd.load_coords(str(oname),model,
-                              int(state),int(ftype))
+                              int(state)-1,int(ftype))
       else:
          print "Error: invalid arguments."
    finally:
@@ -3167,7 +3167,7 @@ TO DOCUMENT
       if la>5:
          discrete = int(arg[5])
       if la>1:
-         r = _cmd.load_object(str(oname),object,int(state),
+         r = _cmd.load_object(str(oname),object,int(state)-1,
                               int(ftype),int(finish),int(discrete))
       else:
          print "Error: invalid arguments."
@@ -3233,26 +3233,26 @@ def _load(oname,finfo,state,ftype,finish,discrete):
          import cgo
          obj = cgo.from_r3d(finfo)
          if obj:
-            _cmd.load_object(str(oname),obj,int(state),loadable.cgo,
+            _cmd.load_object(str(oname),obj,int(state)-1,loadable.cgo,
                              int(finish),int(discrete))
          else:
             print " load: couldn't load raster3d file."
       else:
-         r = _cmd.load(str(oname),finfo,int(state),int(ftype),
+         r = _cmd.load(str(oname),finfo,int(state)-1,int(ftype),
                        int(finish),int(discrete))
    else:
       try:
          x = io.pkl.fromFile(finfo)
          if isinstance(x,types.ListType) or isinstance(x,types.TupleType):
             for a in x:
-               r = _cmd.load_object(str(oname),a,int(state),
+               r = _cmd.load_object(str(oname),a,int(state)-1,
                                     int(ftype),0,int(discrete))
                if(state>0):
                   state = state + 1
             _cmd.finish_object(str(oname))
          else:
             r = _cmd.load_object(str(oname),x,
-                                 int(state),int(ftype),
+                                 int(state)-1,int(ftype),
                                  int(finish),int(discrete))
       except:
          print 'Error: can not load file "%s"' % finfo
@@ -3621,6 +3621,31 @@ PYMOL API
       r = _cmd.rebuild()
    finally:
       unlock()
+
+
+def set_title(object,state,text):
+   '''
+DESCRIPTION
+
+   "set_title" attaches a text string to the state of a particular
+   object which can be displayed when the state is active.  This is
+   useful for display the energies of a set of conformers.
+
+USAGE
+   
+   set_title object,state,text
+
+PYMOL API
+
+   cmd.set_title(string object,int state,string text)
+
+'''
+   r = 1
+   try:
+      lock()
+      r = _cmd.set_title(str(object),int(state)-1,str(text))
+   finally:
+      unlock()
       
 def mpng(a):
    '''
@@ -3798,6 +3823,7 @@ def paste():
       _cmd.paste(lst)      
    return r
 
+   
 def button(button,modifier,action):
    '''
 DESCRIPTION
@@ -4306,6 +4332,7 @@ keyword = {
    'select'        : [select       , 1 , 2 , '=' , parsing.SIMPLE  ],
    'set'           : [set          , 2 , 2 , '=' , parsing.LEGACY ],
    'set_color'     : [set_color    , 2 , 2 , '=' , parsing.SIMPLE  ],
+   'set_title'     : [set_title    , 0 , 0 , ',' , parsing.STRICT ],   
    'set_key'       : [set_key      , 2 , 1 , ',' , parsing.SIMPLE  ], # API only
    'show'          : [show         , 0 , 2 , ',' , parsing.SIMPLE  ],
    'sort'          : [sort         , 0 , 1 , ',' , parsing.STRICT ],

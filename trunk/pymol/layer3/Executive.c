@@ -88,6 +88,19 @@ void ExecutiveObjMolSeleOp(int sele,ObjectMoleculeOpRec *op);
 SpecRec *ExecutiveFindSpec(char *name);
 
 /*========================================================================*/
+int ExecutiveSetTitle(char *name,int state,char *text)
+{
+  int result=false;
+  ObjectMolecule *obj;
+  obj =ExecutiveFindObjectMoleculeByName(name);
+  if(!obj) {
+    PRINTF "Error: object %s not found.",name ENDF;
+  } else {
+    result = ObjectMoleculeSetStateTitle(obj,state,text);
+  }
+  return(result);
+}
+/*========================================================================*/
 void ExecutiveHideSelections(void)
 {
   CExecutive *I = &Executive;

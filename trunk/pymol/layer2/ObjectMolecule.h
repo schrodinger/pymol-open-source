@@ -94,6 +94,7 @@ typedef struct ObjectMoleculeOpRec {
 
 #include"CoordSet.h"
 
+int ObjectMoleculeSetStateTitle(ObjectMolecule *I,int state,char *text);
 ObjectMolecule *ObjectMoleculeNew(int discreteFlag);
 void ObjectMoleculeSort(ObjectMolecule *I);
 ObjectMolecule *ObjectMoleculeCopy(ObjectMolecule *obj);

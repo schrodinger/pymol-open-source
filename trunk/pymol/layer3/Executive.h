@@ -87,6 +87,7 @@ void ExecutiveGetType(char *name,WordType type);
 float ExecutiveGetArea(char *s0,int sta0,int load_b);
 void ExecutiveRenderSelections(int curState);
 void ExecutiveHideSelections(void);
+int ExecutiveSetTitle(char *name,int state,char *text);
 
 #endif
 

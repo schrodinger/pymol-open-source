@@ -76,6 +76,22 @@ void ObjectMoleculeAddSeleHydrogens(ObjectMolecule *I,int sele);
 CoordSet *ObjectMoleculeXYZStr2CoordSet(char *buffer,AtomInfoType **atInfoPtr);
 
 /*========================================================================*/
+int ObjectMoleculeSetStateTitle(ObjectMolecule *I,int state,char *text)
+{
+  int result=false;
+  if(state<0) state=I->NCSet-1;
+  if(state>=I->NCSet) {
+    PRINTF "Error: invalid state %d",state ENDF;
+  } else if(!I->CSet[state]) {
+    PRINTF "Error: empty state %d",state ENDF;
+  } else {
+    UtilNCopy(I->CSet[state]->Name,text,sizeof(WordType));
+    result=true;
+  }
+  return(result);
+}
+
+/*========================================================================*/
 void ObjectMoleculeRenderSele(ObjectMolecule *I,int curState,int sele)
 {
   CoordSet *cs;
