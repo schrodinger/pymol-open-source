@@ -512,6 +512,7 @@ typedef struct _CPyMOL {
   ov_word lex_dihedral_label_position;
   ov_word lex_defer_builds_mode;
   ov_word lex_seq_view_discrete_by_state;
+  ov_word lex_scene_animation_duration;
 
 } _CPyMOL;
 
@@ -1020,6 +1021,7 @@ static OVstatus PyMOL_InitAPI(CPyMOL *I)
   LEX_SETTING(dihedral_label_position, 408);
   LEX_SETTING(defer_builds_mode, 409);
   LEX_SETTING(seq_view_discrete_by_state, 410);
+  LEX_SETTING(scene_animation_duration, 411);
 
  return_OVstatus_SUCCESS;
 }

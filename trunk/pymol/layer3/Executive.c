@@ -4876,7 +4876,7 @@ void ExecutiveOrient(PyMOLGlobals *G,char *sele,Matrix33d mi,
     
     ExecutiveWindowZoom(G,sele,buffer,state,complete,false);
     if(animate!=0.0F)
-      SceneLoadAnimation(G,SettingGetGlobal_f(G,cSetting_animation_duration));
+      SceneLoadAnimation(G,animate);
     
   }
 }
