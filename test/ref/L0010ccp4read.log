@@ -11,7 +11,7 @@ PyMOL>load lrg/map.ccp4
  Crystal:   91.1443    0.0000    0.0000
  Crystal:    0.0000   91.1443    0.0000
  Crystal:    0.0000    0.0000   45.8557
- Crystal: Unit Cell Volume 380936.2
+ Crystal: Unit Cell Volume   380936.
  ObjectMap: Map Read.  Range = -3.439 to 4.509
  Crystal: Unit Cell           91.144   91.144   45.856
  Crystal: Alpha Beta Gamma    90.000   90.000   90.000
@@ -23,7 +23,7 @@ PyMOL>load lrg/map.ccp4
  Crystal:   91.1443    0.0000    0.0000
  Crystal:    0.0000   91.1443    0.0000
  Crystal:    0.0000    0.0000   45.8557
- Crystal: Unit Cell Volume 380936.2
+ Crystal: Unit Cell Volume   380936.
  Executive: object "map" created.
 PyMOL>load lrg/map.ccp4,map2,format=ccp4
  ObjectMapLoadCCP4File: Loading from 'lrg/map.ccp4'.
@@ -38,7 +38,7 @@ PyMOL>load lrg/map.ccp4,map2,format=ccp4
  Crystal:   91.1443    0.0000    0.0000
  Crystal:    0.0000   91.1443    0.0000
  Crystal:    0.0000    0.0000   45.8557
- Crystal: Unit Cell Volume 380936.2
+ Crystal: Unit Cell Volume   380936.
  ObjectMap: Map Read.  Range = -3.439 to 4.509
  Crystal: Unit Cell           91.144   91.144   45.856
  Crystal: Alpha Beta Gamma    90.000   90.000   90.000
@@ -50,7 +50,7 @@ PyMOL>load lrg/map.ccp4,map2,format=ccp4
  Crystal:   91.1443    0.0000    0.0000
  Crystal:    0.0000   91.1443    0.0000
  Crystal:    0.0000    0.0000   45.8557
- Crystal: Unit Cell Volume 380936.2
+ Crystal: Unit Cell Volume   380936.
  Executive: object "map2" created.
 PyMOL>set normalize_ccp4_maps = 0
  Setting: normalize_ccp4_maps set to off.
@@ -68,7 +68,7 @@ PyMOL>load lrg/map.ccp4,map3
  Crystal:   91.1443    0.0000    0.0000
  Crystal:    0.0000   91.1443    0.0000
  Crystal:    0.0000    0.0000   45.8557
- Crystal: Unit Cell Volume 380936.2
+ Crystal: Unit Cell Volume   380936.
  ObjectMap: Map Read.  Range = -0.911 to 2.312
  Crystal: Unit Cell           91.144   91.144   45.856
  Crystal: Alpha Beta Gamma    90.000   90.000   90.000
@@ -80,7 +80,7 @@ PyMOL>load lrg/map.ccp4,map3
  Crystal:   91.1443    0.0000    0.0000
  Crystal:    0.0000   91.1443    0.0000
  Crystal:    0.0000    0.0000   45.8557
- Crystal: Unit Cell Volume 380936.2
+ Crystal: Unit Cell Volume   380936.
  Executive: object "map3" created.
 PyMOL>cmd._dump_floats(extent[0])
 -18.514   9.257 -15.763

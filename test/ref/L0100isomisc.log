@@ -11,7 +11,7 @@ PyMOL>load lrg/map.ccp4
  Crystal:   91.1443    0.0000    0.0000
  Crystal:    0.0000   91.1443    0.0000
  Crystal:    0.0000    0.0000   45.8557
- Crystal: Unit Cell Volume 380936.2
+ Crystal: Unit Cell Volume   380936.
  ObjectMap: Map Read.  Range = -3.439 to 4.509
  Crystal: Unit Cell           91.144   91.144   45.856
  Crystal: Alpha Beta Gamma    90.000   90.000   90.000
@@ -23,7 +23,7 @@ PyMOL>load lrg/map.ccp4
  Crystal:   91.1443    0.0000    0.0000
  Crystal:    0.0000   91.1443    0.0000
  Crystal:    0.0000    0.0000   45.8557
- Crystal: Unit Cell Volume 380936.2
+ Crystal: Unit Cell Volume   380936.
  Executive: object "map" created.
 PyMOL>isosurf m1,map,1.0
  Executive: object "m1" created.
@@ -101,7 +101,7 @@ PyMOL>load lrg/map.xplor
  Crystal:   91.1443    0.0000    0.0000
  Crystal:    0.0000   91.1443    0.0000
  Crystal:    0.0000    0.0000   45.8557
- Crystal: Unit Cell Volume 380936.3
+ Crystal: Unit Cell Volume   380936.
  Executive: object "map" created.
 PyMOL>isosurf m1,map,1.0
  Executive: object "m1" created.
@@ -179,7 +179,7 @@ PyMOL>load lrg/map.ccp4
  Crystal:   91.1443    0.0000    0.0000
  Crystal:    0.0000   91.1443    0.0000
  Crystal:    0.0000    0.0000   45.8557
- Crystal: Unit Cell Volume 380936.2
+ Crystal: Unit Cell Volume   380936.
  ObjectMap: Map Read.  Range = -3.439 to 4.509
  Crystal: Unit Cell           91.144   91.144   45.856
  Crystal: Alpha Beta Gamma    90.000   90.000   90.000
@@ -191,7 +191,7 @@ PyMOL>load lrg/map.ccp4
  Crystal:   91.1443    0.0000    0.0000
  Crystal:    0.0000   91.1443    0.0000
  Crystal:    0.0000    0.0000   45.8557
- Crystal: Unit Cell Volume 380936.2
+ Crystal: Unit Cell Volume   380936.
  Executive: object "map" created.
 PyMOL>load lrg/ref.pdb
  PDBStrToCoordSet: Attempting to read symmetry information
@@ -205,7 +205,7 @@ PyMOL>load lrg/ref.pdb
  Crystal:   91.1440    0.0000    0.0000
  Crystal:    0.0000   91.1440    0.0000
  Crystal:    0.0000    0.0000   45.8560
- Crystal: Unit Cell Volume 380936.2
+ Crystal: Unit Cell Volume   380936.
  Symmetry:      1.00000      0.00000      0.00000      0.00000
  Symmetry:      0.00000      1.00000      0.00000      0.00000
  Symmetry:      0.00000      0.00000      1.00000      0.00000
@@ -320,7 +320,7 @@ PyMOL>load lrg/map.ccp4
  Crystal:   91.1443    0.0000    0.0000
  Crystal:    0.0000   91.1443    0.0000
  Crystal:    0.0000    0.0000   45.8557
- Crystal: Unit Cell Volume 380936.2
+ Crystal: Unit Cell Volume   380936.
  ObjectMap: Map Read.  Range = -3.439 to 4.509
  Crystal: Unit Cell           91.144   91.144   45.856
  Crystal: Alpha Beta Gamma    90.000   90.000   90.000
@@ -332,7 +332,7 @@ PyMOL>load lrg/map.ccp4
  Crystal:   91.1443    0.0000    0.0000
  Crystal:    0.0000   91.1443    0.0000
  Crystal:    0.0000    0.0000   45.8557
- Crystal: Unit Cell Volume 380936.2
+ Crystal: Unit Cell Volume   380936.
  Executive: object "map" created.
 PyMOL>isodot m1,map,1.0
  Executive: object "m1" created.
@@ -410,7 +410,7 @@ PyMOL>load lrg/map.xplor
  Crystal:   91.1443    0.0000    0.0000
  Crystal:    0.0000   91.1443    0.0000
  Crystal:    0.0000    0.0000   45.8557
- Crystal: Unit Cell Volume 380936.3
+ Crystal: Unit Cell Volume   380936.
  Executive: object "map" created.
 PyMOL>isodot m1,map,1.0
  Executive: object "m1" created.
@@ -488,7 +488,7 @@ PyMOL>load lrg/map.ccp4
  Crystal:   91.1443    0.0000    0.0000
  Crystal:    0.0000   91.1443    0.0000
  Crystal:    0.0000    0.0000   45.8557
- Crystal: Unit Cell Volume 380936.2
+ Crystal: Unit Cell Volume   380936.
  ObjectMap: Map Read.  Range = -3.439 to 4.509
  Crystal: Unit Cell           91.144   91.144   45.856
  Crystal: Alpha Beta Gamma    90.000   90.000   90.000
@@ -500,7 +500,7 @@ PyMOL>load lrg/map.ccp4
  Crystal:   91.1443    0.0000    0.0000
  Crystal:    0.0000   91.1443    0.0000
  Crystal:    0.0000    0.0000   45.8557
- Crystal: Unit Cell Volume 380936.2
+ Crystal: Unit Cell Volume   380936.
  Executive: object "map" created.
 PyMOL>load lrg/ref.pdb
  PDBStrToCoordSet: Attempting to read symmetry information
@@ -514,7 +514,7 @@ PyMOL>load lrg/ref.pdb
  Crystal:   91.1440    0.0000    0.0000
  Crystal:    0.0000   91.1440    0.0000
  Crystal:    0.0000    0.0000   45.8560
- Crystal: Unit Cell Volume 380936.2
+ Crystal: Unit Cell Volume   380936.
  Symmetry:      1.00000      0.00000      0.00000      0.00000
  Symmetry:      0.00000      1.00000      0.00000      0.00000
  Symmetry:      0.00000      0.00000      1.00000      0.00000

@@ -11,7 +11,7 @@ PyMOL>load lrg/map.xplor
  Crystal:   91.1443    0.0000    0.0000
  Crystal:    0.0000   91.1443    0.0000
  Crystal:    0.0000    0.0000   45.8557
- Crystal: Unit Cell Volume 380936.3
+ Crystal: Unit Cell Volume   380936.
  Executive: object "map" created.
 PyMOL>load lrg/map.xplor,map2,format=xplor
  ObjectMapLoadXPLORFile: Loading from 'lrg/map.xplor'.
@@ -26,7 +26,7 @@ PyMOL>load lrg/map.xplor,map2,format=xplor
  Crystal:   91.1443    0.0000    0.0000
  Crystal:    0.0000   91.1443    0.0000
  Crystal:    0.0000    0.0000   45.8557
- Crystal: Unit Cell Volume 380936.3
+ Crystal: Unit Cell Volume   380936.
  Executive: object "map2" created.
 PyMOL>cmd._dump_floats(extent[0])
 -18.514   9.257 -15.763

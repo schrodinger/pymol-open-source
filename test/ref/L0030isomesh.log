@@ -11,7 +11,7 @@ PyMOL>load lrg/map.ccp4
  Crystal:   91.1443    0.0000    0.0000
  Crystal:    0.0000   91.1443    0.0000
  Crystal:    0.0000    0.0000   45.8557
- Crystal: Unit Cell Volume 380936.2
+ Crystal: Unit Cell Volume   380936.
  ObjectMap: Map Read.  Range = -3.439 to 4.509
  Crystal: Unit Cell           91.144   91.144   45.856
  Crystal: Alpha Beta Gamma    90.000   90.000   90.000
@@ -23,7 +23,7 @@ PyMOL>load lrg/map.ccp4
  Crystal:   91.1443    0.0000    0.0000
  Crystal:    0.0000   91.1443    0.0000
  Crystal:    0.0000    0.0000   45.8557
- Crystal: Unit Cell Volume 380936.2
+ Crystal: Unit Cell Volume   380936.
  Executive: object "map" created.
 PyMOL>isomesh m1,map,1.0
  Executive: object "m1" created.
@@ -101,7 +101,7 @@ PyMOL>load lrg/map.xplor
  Crystal:   91.1443    0.0000    0.0000
  Crystal:    0.0000   91.1443    0.0000
  Crystal:    0.0000    0.0000   45.8557
- Crystal: Unit Cell Volume 380936.3
+ Crystal: Unit Cell Volume   380936.
  Executive: object "map" created.
 PyMOL>isomesh m1,map,1.0
  Executive: object "m1" created.

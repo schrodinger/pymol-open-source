@@ -98,7 +98,7 @@ PyMOL>load dat/1tii.pdb
  Crystal:  105.7000  -52.8500    0.0000
  Crystal:    0.0000   91.5389    0.0000
  Crystal:    0.0000    0.0000  171.6000
- Crystal: Unit Cell Volume 1660343.2
+ Crystal: Unit Cell Volume  1660343.
  Symmetry:      1.00000      0.00000      0.00000      0.00000
  Symmetry:      0.00000      1.00000      0.00000      0.00000
  Symmetry:      0.00000      0.00000      1.00000      0.00000
@@ -197,7 +197,7 @@ PyMOL>load dat/3al1.pdb
  Crystal:   20.5440   -9.8120   -3.1888
  Crystal:    0.0000   18.4071   -7.4145
  Crystal:    0.0000    0.0000   24.7734
- Crystal: Unit Cell Volume   9368.2
+ Crystal: Unit Cell Volume     9368.
  Symmetry:      1.00000      0.00000      0.00000      0.00000
  Symmetry:      0.00000      1.00000      0.00000      0.00000
  Symmetry:      0.00000      0.00000      1.00000      0.00000
@@ -545,7 +545,7 @@ PyMOL>load dat/1tii.pdb,m1
  Crystal:  105.7000  -52.8500    0.0000
  Crystal:    0.0000   91.5389    0.0000
  Crystal:    0.0000    0.0000  171.6000
- Crystal: Unit Cell Volume 1660343.2
+ Crystal: Unit Cell Volume  1660343.
  Symmetry:      1.00000      0.00000      0.00000      0.00000
  Symmetry:      0.00000      1.00000      0.00000      0.00000
  Symmetry:      0.00000      0.00000      1.00000      0.00000
