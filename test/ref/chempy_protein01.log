@@ -1,3 +1,4 @@
+ chempy: reading "dat/il2.pdb".
 before
 atoms: 2084
 N HN CA HA CB HB1 HB2 OG HG C O N HN CA HA
@@ -141,6 +142,7 @@ CB HB1 HB2 CG HG CD1 1HD1 2HD1 3HD1 CD2 1HD2 2HD2 3HD2 C O
 N HN CA HA CB HB OG1 HG1 CG2 1HG2 2HG2 3HG2 C O
 bonds: 0
 
+ chempy.protein: assigning types and bonds...
 add_bonds
 atoms: 2084
 N H CA HA CB 3HB 2HB OG HG C O N H CA HA
@@ -633,6 +635,8 @@ bonds: 2099
 2056 2055 1 2062 2060 1 2051 2049 1 2072 2073 1 2070 2071 1 2070 2072 1
 2075 2074 1 2077 2076 1 2072 2074 1 2078 2074 1 2082 2083 2 2079 2078 1
 2076 2074 1 2072 2082 1 2081 2078 1 2080 2078 1 2070 2068 1
+ chempy: reading "dat/il2.pdb".
+ chempy.protein: assigning types...
 assign_types
 atoms: 2084
 N H CA HA CB 3HB 2HB OG HG C O N H CA HA
@@ -776,6 +780,7 @@ CB 3HB 2HB CG HG CD1 1HD1 2HD1 3HD1 CD2 1HD2 2HD2 3HD2 C O
 N H CA HA CB HB OG1 1HG CG2 1HG2 2HG2 3HG2 C O
 bonds: 0
 
+ chempy.protein: assigning types and bonds...
 add_bonds
 atoms: 2084
 N H CA HA CB 3HB 2HB OG HG C O N H CA HA
