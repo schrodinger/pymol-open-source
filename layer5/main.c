@@ -413,7 +413,7 @@ void MainFree(void)
   }
   
 #ifdef WIN32
-  ExitProcess(0); /* Py_Exit hangs on WIN32 for some reason */
+  TerminateProcess(GetCurrentProcess(),0); /* only way to avoid a crash */
 #endif
 
 }
