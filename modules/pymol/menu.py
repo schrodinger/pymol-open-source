@@ -165,7 +165,6 @@ def sele_action(s):
            [ 1, 'expand by 8 A'  ,'cmd.select("'+s+'","('+s+' expand 8)",show=1)' ],
            [ 0, ''          ,''                                              ],
            [ 1, 'invert'  ,'cmd.select("'+s+'","(not '+s+')",show=1)'        ],
-           [ 1, 'duplicate'       ,'cmd.select("'+s+'")'     ],           
            [ 0, ''          ,''                                              ],
            [ 1, 'remove atoms'  ,'cmd.remove("'+s+'")'        ],
            [ 0, ''          ,''                                              ],
@@ -176,6 +175,9 @@ def sele_action(s):
            [ 1, 'deprotect'  ,'cmd.deprotect("'+s+'")'        ],
            [ 0, ''          ,''                                              ],
            [ 1, 'count atoms'  ,'cmd.count_atoms("'+s+'")'        ],           
+           [ 0, ''          ,''                                              ],
+           [ 1, 'duplicate'           ,'cmd.select("'+s+'")'     ],
+           [ 1, 'duplicate atoms'       ,'cmd.create(None,"'+s+'")'     ],           
            ]
 
 def mol_action(s):
@@ -194,7 +196,9 @@ def mol_action(s):
            [ 0, ''          ,''                                              ],
            [ 1, 'assign S.S.'  ,'util.ss("'+s+'")'        ],
            [ 0, ''          ,''                                              ],
-           [ 1, 'count atoms'  ,'cmd.count_atoms("'+s+'")'        ],           
+           [ 1, 'count atoms'  ,'cmd.count_atoms("'+s+'")'        ],
+           [ 0, ''          ,''                                              ],           
+           [ 1, 'duplicate'       ,'cmd.create(None,"'+s+'")'     ],           
            ]
 
 def simple_action(s):

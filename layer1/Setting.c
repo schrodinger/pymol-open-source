@@ -1020,7 +1020,7 @@ void SettingInitGlobal(void)
 
   SettingSet_f(I,cSetting_log_box_selections, 1.0);
 
-  SettingSet_f(I,cSetting_log_transformations, 1.0);
+  SettingSet_f(I,cSetting_log_conformations, 1.0);
 
   SettingSet_f(I,cSetting_valence_default, 0.05);
 

@@ -817,7 +817,7 @@ void EditorPrepareDrag(ObjectMolecule *obj,int index,int state)
   int seleFlag= false;
   int i0,i1;
   CEditor *I = &Editor;
-  int log_trans = SettingGet(cSetting_log_transformations);
+  int log_trans = SettingGet(cSetting_log_conformations);
   if(!I->Obj) { /* non-anchored */
     /* need to modify this code to move a complete covalent structure */
 
@@ -942,7 +942,7 @@ void EditorDrag(ObjectMolecule *obj,int index,int mode,int state,float *pt,float
   float d0[3],d1[3],d2[3],n0[3],n1[3],n2[3];
   float opp,adj,theta;
   float m[16];
-  int log_trans = SettingGet(cSetting_log_transformations);
+  int log_trans = SettingGet(cSetting_log_conformations);
 
   if((index=I->DragIndex)&&(obj=I->DragObject)) {
     if(obj!=I->Obj) {

@@ -151,8 +151,8 @@ void ButModeInit(void)
   strcpy(I->Code[cButModeAddToPk2],"+mb  ");
   strcpy(I->Code[cButModeAddToPk3],"+rb  ");
   strcpy(I->Code[cButModeOrigAt],  "Orig ");
-  strcpy(I->Code[cButModeRectAdd], "+lbX ");
-  strcpy(I->Code[cButModeRectSub], "-lbX ");
+  strcpy(I->Code[cButModeRectAdd], "+lBx ");
+  strcpy(I->Code[cButModeRectSub], "-lBx ");
   strcpy(I->Code[cButModeRect],    "lbBx ");
 
   I->Block = OrthoNewBlock(NULL);

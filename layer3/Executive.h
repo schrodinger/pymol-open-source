@@ -109,7 +109,7 @@ int ExecutiveValidName(char *name);
 
 int ExecutiveTransformObjectSelection(char *name,int state,char *s1,int log,float *ttt);
 int ExecutiveTranslateAtom(char *sele,float *v,int state,int mode,int log);
-void ExecutiveSelectRect(BlockRect *rect,int add);
+void ExecutiveSelectRect(BlockRect *rect,int mode);
 #endif
 
 

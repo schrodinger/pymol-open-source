@@ -136,7 +136,7 @@ int OrthoLoopBlockRelease(Block *block,int button,int x,int y,int mod)
     I->LoopRect.right=I->LoopRect.left;
     I->LoopRect.left=tmp;
   }
-  ExecutiveSelectRect(&I->LoopRect,mode==cButModeRectAdd);
+  ExecutiveSelectRect(&I->LoopRect,mode);
   I->LoopFlag=false;
   I->GrabbedBy=NULL;
   OrthoDirty();
