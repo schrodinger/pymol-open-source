@@ -110,7 +110,8 @@ repres = {
 }
 repres_sc = Shortcut(repres.keys())
 
-
+def null_function():
+   pass
 
 #--------------------------------------------------------------------
 # convenient type-checking
@@ -775,10 +776,12 @@ import controlling
 from controlling import \
      button,             \
      config_mouse,       \
-     edit_mode,          \
+     mouse,              \
      mask,               \
      set_key,            \
      unmask
+
+edit_mode = null_function # legacy compat.
 
 #--------------------------------------------------------------------
 from querying import \
@@ -1009,7 +1012,8 @@ keyword = {
    'clip'          : [ clip              , 0 , 0 , ''  , parsing.STRICT ],
    'cls'           : [ cls               , 0 , 0 , ''  , parsing.STRICT ],
    'color'         : [ color             , 0 , 0 , ''  , parsing.STRICT ],
-   'commands'      : [ helping.commands  , 0 , 0 , ''  , parsing.STRICT ],\
+   'commands'      : [ helping.commands  , 0 , 0 , ''  , parsing.STRICT ],
+   'config_mouse'  : [ config_mouse      , 0 , 0 , ''  , parsing.STRICT ],
    'copy'          : [ copy              , 0 , 0 , ''  , parsing.LEGACY ],
    'count_atoms'   : [ count_atoms       , 0 , 0 , ''  , parsing.STRICT ],
    'count_frames'  : [ count_frames      , 0 , 0 , ''  , parsing.STRICT ],   
@@ -1085,6 +1089,7 @@ keyword = {
    'middle'        : [ middle            , 0 , 0 , ''  , parsing.STRICT ],
    'minimize'      : [ minimize          , 0 , 4 , ',' , parsing.SIMPLE ], # TO REMOVE
    'mmatrix'       : [ mmatrix           , 0 , 0 , ''  , parsing.STRICT ],
+   'mouse'         : [ mouse             , 0 , 0 , ''  , parsing.STRICT ],
    'multisave'     : [ multisave         , 0 , 0 , ''  , parsing.STRICT ],   
    'origin'        : [ origin            , 0 , 0 , ''  , parsing.STRICT ],
    'orient'        : [ orient            , 0 , 0 , ''  , parsing.STRICT ],

@@ -55,70 +55,160 @@ but_act_code = {
    '+lbx' : 19 ,
    '-lbx' : 20 ,
    'lbbx' : 21 ,
+   'none' : 22 ,
    }
 but_act_sc = Shortcut(but_act_code.keys())
 
-def config_mouse(quiet=0):# INTERNAL
+
+ring_dict = {
+   'three_button' : [   'three_button_viewing',
+                        'three_button_editing' ],
+   'two_button' : [ 'two_button_viewing',
+                    'two_button_selecting',
+                            ],
+   'two_button_editing' : [ 'two_button_viewing',
+                            'two_button_selecting',
+                            'two_button_editing',
+                            ]
+   }
+
+def config_mouse(mode='three_button',quiet=0):
+   global mouse_ring
+   if ring_dict.has_key(mode):
+      mouse_ring = ring_dict[mode]
+      if not quiet:
+         print " config_mouse: %s"%mode
+      mouse(quiet=1)
+         
+   else:
+      print " Error: unrecognized mouse ring: '%s'"%mode
+
+mouse_ring = ring_dict['three_button']
+
+mode_dict = {
+   'three_button_viewing' : [ ('l','none','rota'),
+                              ('m','none','move'),
+                              ('r','none','movz'),
+                              ('l','shft','+lbx'),
+                              ('m','shft','-lbx'),
+                              ('r','shft','clip'),                 
+                              ('l','ctrl','+lb'),
+                              ('m','ctrl','pkat'),
+                              ('r','ctrl','pkbd'),                 
+                              ('l','ctsh','lb'),
+                              ('m','ctsh','orig'),
+                              ('r','ctsh','rb')
+                              ],
+   
+   'three_button_editing': [ ('l','none','rota'),
+                             ('m','none','move'),
+                             ('r','none','movz'),
+                             ('l','shft','rotf'),
+                             ('m','shft','movf'),
+                             ('r','shft','clip') ,                 
+                             ('l','ctrl','torf'),
+                             ('m','ctrl','pkat'),
+                             ('r','ctrl','pkbd'),                  
+                             ('l','ctsh','lb'),
+                             ('m','ctsh','orig'),
+                             ('r','ctsh','rb'),
+                             ],
+   
+   'two_button_viewing' : [ ('l','none','rota'),
+                            ('m','none','none'),
+                            ('r','none','movz'),
+                            ('l','shft','pkat'),
+                            ('m','shft','none'),
+                            ('r','shft','clip'),                 
+                            ('l','ctrl','move'),
+                            ('m','ctrl','none'),
+                            ('r','ctrl','pkbd'),                 
+                            ('l','ctsh','lb'),
+                            ('m','ctsh','none'),
+                            ('r','ctsh','orig')
+                            ],
+   'two_button_selecting' : [ ('l','none','rota'),
+                              ('m','none','none'),
+                              ('r','none','movz'),
+                              ('l','shft','+lbx'),
+                              ('m','shft','none'),
+                              ('r','shft','-lbx'),                 
+                              ('l','ctrl','+lb'),
+                              ('m','ctrl','none'),
+                              ('r','ctrl','+rb'),                 
+                              ('l','ctsh','lb'),
+                              ('m','ctsh','none'),
+                              ('r','ctsh','rb')
+                            ],
+   'two_button_editing' : [ ('l','none','rota'),
+                            ('m','none','none'),
+                            ('r','none','movz'),
+                            ('l','shft','pkat'),
+                            ('m','shft','none'),
+                            ('r','shft','clip'),                 
+                            ('l','ctrl','torf'),
+                            ('m','ctrl','none'),
+                            ('r','ctrl','pkbd'),                 
+                            ('l','ctsh','rotf'),
+                            ('m','ctsh','none'),
+                            ('r','ctsh','movf')
+                            ],
+   }
+
+def mouse(action=None,quiet=0):# INTERNAL
    # NOTE: PyMOL automatically runs this routine upon start-up
    try:
       lock()
-      r = _cmd.get_setting("button_mode")
-      r = int(r)
-      if not r:
-         # visualization
-         button('l','none','rota')
-         button('m','none','move')
-         button('r','none','movz')
-         button('l','shft','+lbx')
-         button('m','shft','-lbx')
-         button('r','shft','clip')                  
-         button('l','ctrl','+lb')
-         button('m','ctrl','pkat')
-         button('r','ctrl','pkbd')                  
-         button('l','ctsh','lb')
-         button('m','ctsh','orig')
-         button('r','ctsh','rb')
+      
+      if action=='forward':
+         bm = _cmd.get_setting("button_mode")
+         bm = (int(bm) + 1) % len(mouse_ring)
+         cmd.set("button_mode",str(bm),quiet=1)
+         action=None
+      elif action=='backward':
+         bm = _cmd.get_setting("button_mode")
+         bm = (int(bm) - 1) % len(mouse_ring)
+         cmd.set("button_mode",str(bm),quiet=1)
+         action=None
+
+      mode_list = None
+      if action==None:
+         bm = _cmd.get_setting("button_mode")
+         bm = int(bm) % len(mouse_ring)
+         mode = mouse_ring[bm]
+         mode_list = mode_dict[mode]
+      elif action in mode_dict.keys():
+         mode = action
+         mode_list = mode_dict[mode]
+      if mode_list!=None:
+         for a in mode_list:
+            apply(button,a)
          if not quiet:
-            print " Mouse: configured for visualization."
-      else:
-         # editing
-         button('l','none','rota')
-         button('m','none','move')
-         button('r','none','movz')
-         button('l','shft','rotf')
-         button('m','shft','movf')
-         button('r','shft','clip')                  
-         button('l','ctrl','torf')
-         button('m','ctrl','pkat')
-         button('r','ctrl','pkbd')                  
-         button('l','ctsh','lb')
-         button('m','ctsh','orig')
-         button('r','ctsh','rb')
-         if not quiet:
-            print " Mouse: configured for editing."
+            print " mouse: %s"%mode
    finally:
       unlock()
-
 
 def edit_mode(mode=None):
-   try:
-      lock()
-      r = _cmd.get_setting("button_mode")
-      r = int(r)
-      if mode==None:
-         if r:
-            _cmd.legacy_set("button_mode","0")
-         else:
-            _cmd.legacy_set("button_mode","1")            
-      else:
-         if mode=='on':
-            _cmd.legacy_set("button_mode","1")
-         if mode=='off':
-            _cmd.legacy_set("button_mode","0")
-      config_mouse()
-   finally:
-      unlock()
    pass
+
+#   try:
+#      lock()
+#      r = _cmd.get_setting("button_mode")
+#      r = int(r)
+#      if mode==None:
+#         if r:
+#            _cmd.legacy_set("button_mode","0")
+#         else:
+#            _cmd.legacy_set("button_mode","1")            
+#      else:
+#         if mode=='on':
+#            _cmd.legacy_set("button_mode","1")
+#         if mode=='off':
+#            _cmd.legacy_set("button_mode","0")
+#      config_mouse()
+#   finally:
+#      unlock()
+#   pass
 
 def set_key(key,fn,arg=(),kw={}):  
    '''
@@ -211,10 +301,6 @@ NOTES
    actions:     Rota, Move, MovZ, Clip, RotZ, ClpN, ClpF
                 lb,   mb,   rb,   +lb,  +lbX, -lbX, +mb,  +rb, 
                 PkAt, PkBd, RotF, TorF, MovF, Orig
-
-   Switching from visualization to editing mode will redefine the
-   buttons, so do not use the built-in switch if you want to preserve
-   your custom configuration.
 
 '''
    r=1

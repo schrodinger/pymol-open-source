@@ -113,6 +113,8 @@ Changes up to 0.77
 
    * optimized sculpting for small regions of large proteins
 
+   * FINALLY, modes for two-button mice
+
 Changes up to 0.76
 
    * VDW radii adjusted.  Use "set legacy_vdw_radii=1" on start-up for old values.
