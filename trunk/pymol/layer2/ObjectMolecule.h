@@ -70,6 +70,7 @@ typedef struct ObjectMoleculeOpRec {
 #define OMOP_INVA 13
 #define OMOP_MDST 14
 #define OMOP_MNMX 15
+#define OMOP_AlterState 16
 
 #include"CoordSet.h"
 
@@ -86,6 +87,7 @@ ObjectMolecule *ObjectMoleculeReadMOLStr(ObjectMolecule *obj,char *molstr,int fr
 ObjectMolecule *ObjectMoleculeReadPDBStr(ObjectMolecule *obj,char *molstr,int frame);
 ObjectMolecule *ObjectMoleculeReadMMDStr(ObjectMolecule *I,char *MMDStr,int frame);
 
+void ObjectMoleculeExtendIndices(ObjectMolecule *I);
 
 void ObjectMoleculeInvalidateRep(ObjectMolecule *I,int rep);
 
@@ -93,7 +95,7 @@ void ObjectMoleculeSeleOp(ObjectMolecule *I,int sele,ObjectMoleculeOpRec *op);
 
 CoordSet *ObjectMoleculeGetCoordSet(ObjectMolecule *I,int setIndex);
 void ObjectMoleculeBlindSymMovie(ObjectMolecule *I);
-
+void ObjectMoleculeMerge(ObjectMolecule *I,AtomInfoType *ai,CoordSet *cs,int bondSearchFlag);
 
 #endif
 

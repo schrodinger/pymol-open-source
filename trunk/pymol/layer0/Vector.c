@@ -45,6 +45,17 @@ float sqrt1f(float f) {
 	 return(0.0);
 }
 
+void dump3f( float *v, char *prefix ) /* for debugging */
+{
+  printf("%s %8.3f %8.3f %8.3f\n",prefix,v[0],v[1],v[2]);
+}
+
+void dump33f( float *m, char *prefix ) /* for debugging */
+{
+  printf("%s:0 %8.3f %8.3f %8.3f\n",prefix,m[0],m[1],m[2]);
+  printf("%s:1 %8.3f %8.3f %8.3f\n",prefix,m[3],m[4],m[5]);
+  printf("%s:2 %8.3f %8.3f %8.3f\n",prefix,m[6],m[7],m[8]);
+}
 
 #ifndef USE_VECTOR_MACROS
 float dot_product3f ( float *v1, float *v2 )

@@ -75,12 +75,14 @@ static void APIExit(void)
 }
 
 static PyObject *CmdAlter(PyObject *self,   PyObject *args);
+static PyObject *CmdAlterState(PyObject *self,   PyObject *args);
 static PyObject *CmdClip(PyObject *self, 	PyObject *args);
 static PyObject *CmdCls(PyObject *self, 	PyObject *args);
 static PyObject *CmdColor(PyObject *self, PyObject *args);
 static PyObject *CmdColorDef(PyObject *self, 	PyObject *args);
 static PyObject *CmdCopy(PyObject *self, PyObject *args);
 static PyObject *CmdCountStates(PyObject *self, PyObject *args);
+static PyObject *CmdCreate(PyObject *self, PyObject *args);
 static PyObject *CmdDelete(PyObject *self, PyObject *args);
 static PyObject *CmdDirty(PyObject *self, 	PyObject *args);
 static PyObject *CmdDist(PyObject *dummy, PyObject *args);
@@ -138,11 +140,13 @@ static PyObject *CmdZoom(PyObject *self, PyObject *args);
 
 static PyMethodDef Cmd_methods[] = {
 	{"alter",	     CmdAlter,        METH_VARARGS },
+	{"alter_state",  CmdAlterState,   METH_VARARGS },
 	{"clip",	        CmdClip,         METH_VARARGS },
 	{"cls",	        CmdCls,          METH_VARARGS },
 	{"color",	     CmdColor,        METH_VARARGS },
 	{"colordef",	  CmdColorDef,     METH_VARARGS },
 	{"copy",         CmdCopy,         METH_VARARGS },
+	{"create",       CmdCreate,       METH_VARARGS },
 	{"count_states", CmdCountStates,  METH_VARARGS },
 	{"delete",       CmdDelete,       METH_VARARGS },
 	{"dirty",        CmdDirty,        METH_VARARGS },
@@ -392,6 +396,23 @@ static PyObject *CmdAlter(PyObject *self,   PyObject *args)
 
 }
 
+static PyObject *CmdAlterState(PyObject *self,   PyObject *args)
+{
+  char *str1,*str2;
+  int i1;
+  OrthoLineType s1;
+
+  PyArg_ParseTuple(args,"iss",&i1,&str1,&str2);
+  APIEntry();
+  SelectorGetTmp(str1,s1);
+  ExecutiveAlterState(i1,s1,str2);
+  SelectorFreeTmp(s1);
+  APIExit();
+  Py_INCREF(Py_None);
+  return Py_None;
+
+}
+
 static PyObject *CmdCopy(PyObject *self,   PyObject *args)
 {
   char *str1,*str2;
@@ -509,6 +530,24 @@ static PyObject *CmdGetPDB(PyObject *dummy, PyObject *args)
     Py_INCREF(result);
   }
   FreeP(pdb);
+  return(result);
+}
+
+static PyObject *CmdCreate(PyObject *dummy, PyObject *args)
+{
+  char *str1,*str2;
+  int target,source;
+  OrthoLineType s1;
+
+  PyObject *result = NULL;
+  PyArg_ParseTuple(args,"ssii",&str1,&str2,&source,&target);
+  APIEntry();
+  SelectorGetTmp(str2,s1);
+  ExecutiveSeleToObject(str1,s1,source,target);
+  SelectorFreeTmp(s1);
+  APIExit();
+  result=Py_None;
+  Py_INCREF(result);
   return(result);
 }
 

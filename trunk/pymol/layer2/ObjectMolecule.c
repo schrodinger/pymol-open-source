@@ -59,10 +59,8 @@ int ObjectMoleculeGetNFrames(ObjectMolecule *I);
 void ObjectMoleculeDescribeElement(ObjectMolecule *I,int index);
 
 void ObjectMoleculeSeleOp(ObjectMolecule *I,int sele,ObjectMoleculeOpRec *op);
-void ObjectMoleculeExtendIndices(ObjectMolecule *I);
-void ObjectMoleculeMerge(ObjectMolecule *I,AtomInfoType *ai,CoordSet *cs);
 
-int ObjectMoleculeConnect(int **bond,AtomInfoType *ai,CoordSet *cs,float cutoff);
+int ObjectMoleculeConnect(int **bond,AtomInfoType *ai,CoordSet *cs,float cutoff,int searchFlag);
 void ObjectMoleculeTransformTTTf(ObjectMolecule *I,float *ttt,int state);
 
 static int BondInOrder(int *a,int b1,int b2);
@@ -483,7 +481,7 @@ ObjectMolecule *ObjectMoleculeLoadMOLFile(ObjectMolecule *obj,char *fname,int fr
 }
 
 /*========================================================================*/
-void ObjectMoleculeMerge(ObjectMolecule *I,AtomInfoType *ai,CoordSet *cs)
+void ObjectMoleculeMerge(ObjectMolecule *I,AtomInfoType *ai,CoordSet *cs,int bondSearchFlag)
 {
   int *index,*outdex,*a2i,*i2a,*bond=NULL;
   int a,b,c,lb,ac,a1,a2;
@@ -590,8 +588,7 @@ void ObjectMoleculeMerge(ObjectMolecule *I,AtomInfoType *ai,CoordSet *cs)
 
   /* now find and integrate and any new bonds */
   if(expansionFlag) { /* expansion flag means we have introduced at least 1 new atom */
-    nBond = ObjectMoleculeConnect(&bond,I->AtomInfo,cs,0.2);
-    
+    nBond = ObjectMoleculeConnect(&bond,I->AtomInfo,cs,0.2,bondSearchFlag);
     if(nBond) {
       index=Alloc(int,nBond);
       
@@ -613,12 +610,12 @@ void ObjectMoleculeMerge(ObjectMolecule *I,AtomInfoType *ai,CoordSet *cs)
         if(found) {
           index[a]=b;
           b++;
-		} else {
-		  index[a]=I->NBond+c;
-		  c++;
-		  b=lb;
-		}
-	  }
+        } else {
+          index[a]=I->NBond+c;
+          c++;
+          b=lb;
+        }
+      }
       /* first, reassign atom info for matched atoms */
       if(c) {
         /* allocate additional space */
@@ -678,7 +675,7 @@ ObjectMolecule *ObjectMoleculeReadPDBStr(ObjectMolecule *I,char *PDBStr,int fram
     if(isNew) {		
       I->AtomInfo=atInfo; /* IMPORTANT to reassign: this VLA may have moved! */
     } else {
-      ObjectMoleculeMerge(I,atInfo,cset); /* NOTE: will release atInfo */
+      ObjectMoleculeMerge(I,atInfo,cset,true); /* NOTE: will release atInfo */
     }
     cset->Obj = I;
     if(isNew) I->NAtom=nAtom;
@@ -687,7 +684,7 @@ ObjectMolecule *ObjectMoleculeReadPDBStr(ObjectMolecule *I,char *PDBStr,int fram
     if(I->NCSet<=frame) I->NCSet=frame+1;
     if(I->CSet[frame]) I->CSet[frame]->fFree(I->CSet[frame]);
     I->CSet[frame] = cset;
-    if(isNew) I->NBond = ObjectMoleculeConnect(&I->Bond,I->AtomInfo,cset,0.2);
+    if(isNew) I->NBond = ObjectMoleculeConnect(&I->Bond,I->AtomInfo,cset,0.2,true);
     if(cset->TmpSymmetry&&(!I->Symmetry)) {
       I->Symmetry=cset->TmpSymmetry;
       cset->TmpSymmetry=NULL;
@@ -812,6 +809,8 @@ void ObjectMoleculeSeleOp(ObjectMolecule *I,int sele,ObjectMoleculeOpRec *op)
   int ok = true;
   OrthoLineType buffer;
   int cnt,maxCnt;
+  CoordSet *cs;
+
   if(sele>=0) {
 	SelectorUpdateTable();
 	switch(op->code) {
@@ -934,6 +933,7 @@ void ObjectMoleculeSeleOp(ObjectMolecule *I,int sele,ObjectMoleculeOpRec *op)
 		   case OMOP_VISI:
 		   case OMOP_TTTF:
          case OMOP_ALTR:
+         case OMOP_AlterState:
 			 s=I->AtomInfo[a].selEntry;
 			 while(s)
 			   {
@@ -955,10 +955,26 @@ void ObjectMoleculeSeleOp(ObjectMolecule *I,int sele,ObjectMoleculeOpRec *op)
 					   break;
                 case OMOP_ALTR:
                   if (ok) {
-                    if(!PAlterAtom(&I->AtomInfo[a],op->s1))
+                    if(PAlterAtom(&I->AtomInfo[a],op->s1))
                       op->i1++;
                     else
                       ok=false;
+                  }
+                case OMOP_AlterState:
+                  if (ok) {
+                    if(op->i2<I->NCSet) {
+                      cs = I->CSet[op->i2];
+                      if(cs) {
+                        a1=cs->AtmToIdx[a];
+                        if(a1>=0) {
+                          if(PAlterAtomState(cs->Coord+(a1*3),op->s1)) {
+                            op->i1++;
+                            hit_flag=true;
+                          } else
+                            ok=false;
+                        }
+                      }
+                    }
                   }
                   break;
 					 }
@@ -1111,6 +1127,10 @@ void ObjectMoleculeSeleOp(ObjectMolecule *I,int sele,ObjectMoleculeOpRec *op)
 	  case OMOP_TTTF:
 		ObjectMoleculeTransformTTTf(I,op->ttt,-1);
 		break;
+     case OMOP_AlterState: /* overly coarse - doing all states, could do just 1 */
+       ObjectMoleculeInvalidateRep(I,-1);
+       SceneChanged();
+       break;
 	  }
 	}
   }
@@ -1253,7 +1273,7 @@ void ObjectMoleculeFree(ObjectMolecule *I)
 }
 
 /*========================================================================*/
-int ObjectMoleculeConnect(int **bond,AtomInfoType *ai,CoordSet *cs,float cutoff)
+int ObjectMoleculeConnect(int **bond,AtomInfoType *ai,CoordSet *cs,float cutoff,int bondSearchFlag)
 {
   #define cMULT 1
 
@@ -1264,58 +1284,57 @@ int ObjectMoleculeConnect(int **bond,AtomInfoType *ai,CoordSet *cs,float cutoff)
   MapType *map;
   int nBond,*ii1,*ii2;
   nBond = 0;
-  if(cs->NIndex)
-	 {
-		maxBond = cs->NIndex * 8;
-		(*bond) = VLAlloc(int,maxBond*3);
-		
-		map=MapNew(cutoff+MAX_VDW,cs->Coord,cs->NIndex,NULL);
-		if(map)
-		  {
-			 for(i=0;i<cs->NIndex;i++)
-				{
-				  v1=cs->Coord+(3*i);
-				  MapLocus(map,v1,&a,&b,&c);
-				  for(d=a-1;d<=a+1;d++)
-					 for(e=b-1;e<=b+1;e++)
-						for(f=c-1;f<=c+1;f++)
-						  {
-							 j = *(MapFirst(map,d,e,f));
-							 while(j>=0)
-								{
-								  if(i<j)
-									 {
-										v2 = cs->Coord + (3*j);
-										dst = diff3f(v1,v2);										
 
-										a1=cs->IdxToAtm[i];
-										a2=cs->IdxToAtm[j];
-										
-										dst -= ((ai[a1].vdw+ai[a2].vdw)/2);
-										
-										if( (dst <= cutoff)&&
+  maxBond = cs->NIndex * 8;
+  (*bond) = VLAlloc(int,maxBond*3);
+  if(cs->NIndex&&bondSearchFlag)
+	 {
+      
+      map=MapNew(cutoff+MAX_VDW,cs->Coord,cs->NIndex,NULL);
+      if(map)
+        {
+          for(i=0;i<cs->NIndex;i++)
+            {
+              v1=cs->Coord+(3*i);
+              MapLocus(map,v1,&a,&b,&c);
+              for(d=a-1;d<=a+1;d++)
+                for(e=b-1;e<=b+1;e++)
+                  for(f=c-1;f<=c+1;f++)
+                    {
+                      j = *(MapFirst(map,d,e,f));
+                      while(j>=0)
+                        {
+                          if(i<j)
+                            {
+                              v2 = cs->Coord + (3*j);
+                              dst = diff3f(v1,v2);										
+                              
+                              a1=cs->IdxToAtm[i];
+                              a2=cs->IdxToAtm[j];
+                              
+                              dst -= ((ai[a1].vdw+ai[a2].vdw)/2);
+                              
+                              if( (dst <= cutoff)&&
                                   (!(ai[a1].hydrogen&&ai[a2].hydrogen))&&
                                   ((!cs->TmpBond)||(!(ai[a1].hetatm&&ai[a2].hetatm))))
-										  {
-											 VLACheck((*bond),int,nBond*3+2);
-											 (*bond)[nBond*3  ] = a1;
-											 (*bond)[nBond*3+1] = a2;
+                                {
+                                  VLACheck((*bond),int,nBond*3+2);
+                                  (*bond)[nBond*3  ] = a1;
+                                  (*bond)[nBond*3+1] = a2;
                                   (*bond)[nBond*3+2] = 1;
-											 nBond++;
-										  }
-									 }
-								  j=MapNext(map,j);
-								}
-						  }
-				}
-			 MapFree(map);
-		  }
-		(*bond) = (int*)VLASetSize((*bond),nBond*3+2);
+                                  nBond++;
+                                }
+                            }
+                          j=MapNext(map,j);
+                        }
+                    }
+            }
+          MapFree(map);
+        }
+      if(DebugState&DebugMolecule) 
+        printf("ObjectMoleculeConnect: Found %d bonds.\n",nBond);
+    }
 
-		if(DebugState&DebugMolecule) 
-		  printf("ObjectMoleculeConnect: Found %d bonds.\n",nBond);
-		
-	 }
   if(cs->NTmpBond&&cs->TmpBond) {
     if(DebugState&DebugMolecule) 
       printf("ObjectMoleculeConnect: incorporating CONECT bonds. %d\n",nBond);
@@ -1332,7 +1351,7 @@ int ObjectMoleculeConnect(int **bond,AtomInfoType *ai,CoordSet *cs,float cutoff)
     VLAFreeP(cs->TmpBond);
     cs->NTmpBond=0;
   }
-  
+  VLASize((*bond),int,nBond*3);
   UtilSortInPlace((*bond),nBond,sizeof(int)*3,(UtilOrderFn*)BondInOrder);
   return(nBond);
 }
@@ -1381,14 +1400,14 @@ ObjectMolecule *ObjectMoleculeReadMMDStr(ObjectMolecule *I,char *MMDStr,int fram
         I->AtomInfo=atInfo; /* IMPORTANT to reassign: this VLA may have moved! */
         I->NAtom=nAtom;
       } else {
-        ObjectMoleculeMerge(I,atInfo,cset); /* NOTE: will release atInfo */
+        ObjectMoleculeMerge(I,atInfo,cset,true); /* NOTE: will release atInfo */
       }
       cset->Obj = I;
       if(frame<0) frame=I->NCSet;
       VLACheck(I->CSet,CoordSet*,frame);
       if(I->NCSet<=frame) I->NCSet=frame+1;
       I->CSet[frame] = cset;
-      if(isNew) I->NBond = ObjectMoleculeConnect(&I->Bond,I->AtomInfo,cset,0.2);
+      if(isNew) I->NBond = ObjectMoleculeConnect(&I->Bond,I->AtomInfo,cset,0.2,true);
       SceneCountFrames();
       ObjectMoleculeExtendIndices(I);
       ObjectMoleculeSort(I);

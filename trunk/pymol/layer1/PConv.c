@@ -30,6 +30,89 @@ Z* -------------------------------------------------------------------
 #include"PConv.h"
 #include"P.h"
 
+int PConvPyObjectToFloat(PyObject *object,float *value)
+{
+  int result = true;
+  PyObject *tmp;
+  if(PyFloat_Check(object)) {
+    (*value) = PyFloat_AsDouble(object);
+  } else if(PyInt_Check(object)) {
+    (*value) = (float)PyInt_AsLong(object);
+  } else {
+    tmp = PyNumber_Float(object);
+    if(tmp) {
+      (*value) = PyFloat_AsDouble(tmp);
+      Py_DECREF(tmp);
+    } else 
+      result=false;
+  }
+  return(result);
+}
+
+int PConvPyObjectToInt(PyObject *object,int *value)
+{
+  int result = true;
+  PyObject *tmp;
+  if(PyInt_Check(object)) {
+    (*value) = PyInt_AsLong(object);
+  } else {
+    tmp = PyNumber_Int(object);
+    if(tmp) {
+      (*value) = PyInt_AsLong(tmp);
+      Py_DECREF(tmp);
+    } else 
+      result=false;
+  }
+  return(result);
+}
+
+int PConvPyObjectToStrMaxLen(PyObject *object,char *value,int ln)
+{
+  char *st;
+  PyObject *tmp;
+  int result=true;
+  if(PyString_Check(object)) {
+    st = PyString_AsString(object);
+    strncpy(value,st,ln);
+    value[ln]=0;
+  } else {
+    tmp = PyObject_Str(object);
+    if(tmp) {
+      st = PyString_AsString(tmp);
+      strncpy(value,st,ln);
+      value[ln]=0;
+      Py_DECREF(tmp);
+    } else
+      result=0;
+  }
+  
+  return(result);
+}
+
+void PConvFloatToPyDictItem(PyObject *dict,char *key,float f)
+{
+  PyObject *fo;
+  fo = PyFloat_FromDouble((double)f);
+  PyDict_SetItemString(dict,key,fo);
+  Py_DECREF(fo); 
+}
+
+void PConvIntToPyDictItem(PyObject *dict,char *key,int i)
+{
+  PyObject *fo;
+  fo = PyInt_FromLong(i);
+  PyDict_SetItemString(dict,key,fo);
+  Py_DECREF(fo); 
+}
+
+void PConvStringToPyDictItem(PyObject *dict,char *key,char *f)
+{
+  PyObject *tmp;
+  tmp = PyString_FromString(f);
+  PyDict_SetItemString(dict,key,tmp);
+  Py_DECREF(tmp); 
+}
+
 PyObject *PConvFloatVLAToPyList(float *f)
 {
   int a,l;

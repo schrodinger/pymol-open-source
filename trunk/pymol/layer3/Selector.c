@@ -33,6 +33,7 @@ Z* -------------------------------------------------------------------
 #include"CoordSet.h"
 #include"DistSet.h"
 #include"Word.h"
+#include"Scene.h"
 
 #define SelectorMaxDepth 100
 
@@ -420,7 +421,7 @@ int SelectorGetPDB(char **charVLA,int sele,int state,int conectFlag)
             if(cs) {
               idx=cs->AtmToIdx[at];
               if(idx>=0) {
-                I->Table[a].index=c+1;
+                I->Table[a].index=c+1; /* NOTE marking with "1" based indexes here */
                 CoordSetAtomToPDBStrVLA(charVLA,&cLen,obj->AtomInfo+at,
                                         obj->CSet[state]->Coord+(3*idx),c);
                 c++;
@@ -492,6 +493,182 @@ int SelectorGetPDB(char **charVLA,int sele,int state,int conectFlag)
     VLAFree(bond);
   }
   return(cLen);
+}
+/*========================================================================*/
+void SelectorCreateObjectMolecule(int sele,char *name,int target,int source)
+{
+  SelectorType *I=&Selector;
+
+  int a,b,a1,b1,b2,c,d,*ii1,s,at;
+  int *bond=NULL;
+  int nBond=0;
+  int nCSet,nAtom,ts;
+  AtomInfoType *atInfo = NULL;
+  int isNew,csFlag;
+  CoordSet *cs,*cs1,*cs2;
+  ObjectMolecule *obj;
+  Object *ob;
+  ObjectMolecule *targ = NULL;
+
+  ob=ExecutiveFindObjectByName(name);
+  if(ob)
+    if(ob->type==cObjectMolecule) 
+      targ = (ObjectMolecule*)ob;
+  if(!targ) {
+    isNew=true;
+    targ = ObjectMoleculeNew();
+    targ->Bond = VLAlloc(int,1);
+  } else {
+    isNew=false;
+  }
+
+  SelectorUpdateTable();
+  c=0;
+  for(a=0;a<I->NAtom;a++) {
+    at=I->Table[a].atom;
+    I->Table[a].index=-1;
+    obj=I->Obj[I->Table[a].model];
+    s=obj->AtomInfo[at].selEntry;
+    while(s) 
+      {
+        if(I->Member[s].selection==sele)
+          {
+            I->Table[a].index=c; /* Mark records  */
+            c++;
+            break;
+          }
+        s=SelectorNext(s);
+      }
+  }
+  nAtom=c;
+  if(nAtom) {
+    nBond = 0;
+    bond = VLAlloc(int,nAtom*3);
+
+    for(a=0;a<I->NModel;a++) { /* find bonds wholly contained in the selection */
+      obj=I->Obj[a];
+      ii1=obj->Bond;
+      for(b=0;b<obj->NBond;b++) {
+        b1=ii1[0]+obj->SeleBase;
+        b2=ii1[1]+obj->SeleBase;
+        if((I->Table[b1].index>=0)&&(I->Table[b2].index>=0)) {
+          VLACheck(bond,int,nBond*3+1);
+          bond[nBond*3]=I->Table[b1].index; /* store what will be the new index */
+          bond[nBond*3+1]=I->Table[b2].index;
+          bond[nBond*3+2]=ii1[2];
+          nBond++;
+        }
+        ii1+=3;
+      }
+    }
+    
+    atInfo = VLAlloc(AtomInfoType,nAtom); /* copy the atom info records */
+    c=0;
+    for(a=0;a<I->NAtom;a++) {
+      if(I->Table[a].index>=0) {
+        obj=I->Obj[I->Table[a].model];
+        at=I->Table[a].atom;
+        VLACheck(atInfo,AtomInfoType,c);
+        atInfo[c] = obj->AtomInfo[at];
+        c++;
+      }
+    }
+    
+    cs=CoordSetNew();  /* set up a dummy coordinate set for the merge xref */
+    cs->NIndex = nAtom;
+    cs->fEnumIndices(cs);
+    cs->TmpBond = bond; /* load up the bonds */
+    cs->NTmpBond = nBond;
+    bond=NULL;
+    
+    ObjectMoleculeMerge(targ,atInfo,cs,false); /* will free atInfo */
+
+    /* cs->IdxToAtm now has the relevant indexes for the coordinate transfer */
+    
+    /* get maximum state index */
+    nCSet = 0;
+    for(a=0;a<I->NModel;a++) { 
+      if(nCSet<I->Obj[a]->NCSet)
+        nCSet=I->Obj[a]->NCSet;
+    }
+    for(d=0;d<nCSet;d++) { /* iterate through states */
+      if((source<0)||(source==d)) {
+        csFlag = false;
+        for(a=0;a<I->NAtom;a++)  /* any selected atoms in this state? */
+          if(I->Table[a].index>=0) {
+            at=I->Table[a].atom;
+            obj=I->Obj[I->Table[a].model];
+            if(d<obj->NCSet) {
+              cs1 = obj->CSet[d];
+              if(cs1) {
+                if(cs1->AtmToIdx[at]>=0) {
+                  csFlag=true;
+                  break;
+                }
+              }
+            }
+          }
+        if(csFlag) { /* copy this coordinate set */
+          cs2 = CoordSetNew();
+          c = 0;
+          cs2->Coord = VLAlloc(float,3*nAtom);
+          cs2->AtmToIdx = Alloc(int,targ->NAtom+1);
+          for(a=0;a<targ->NAtom;a++) 
+            cs2->AtmToIdx[a]=-1;
+          cs2->IdxToAtm = Alloc(int,nAtom);
+        
+          /* THERE IS A PROBLEM IN THE CODE RIGHT HERE  */
+          for(a=0;a<I->NAtom;a++)  /* any selected atoms in this state? */
+            if(I->Table[a].index>=0) {
+              at=I->Table[a].atom;
+              obj=I->Obj[I->Table[a].model];
+              if(d<obj->NCSet) {
+                cs1 = obj->CSet[d];
+                if(cs1) {
+                  a1 = cs1->AtmToIdx[at];
+                  if(a1>=0) {
+                    copy3f(cs1->Coord+a1*3,cs2->Coord+c*3);
+                    cs2->IdxToAtm[c] = cs->IdxToAtm[I->Table[a].atom]; /* used merged index 
+                                                                        * from dummy cset */
+                    cs2->AtmToIdx[cs->IdxToAtm[c]]=c;
+                    c++;
+                  }
+                }
+              }
+            }
+          printf("cs %d\n",c);
+          cs2->IdxToAtm=Realloc(cs2->IdxToAtm,int,c);
+          VLASize(cs2->Coord,float,c*3);
+          cs2->NIndex = c;
+          if(target>=0)
+            ts = target;
+          else
+            ts=d;
+          VLACheck(targ->CSet,CoordSet*,ts);
+          if(targ->NCSet<=ts) 
+            targ->NCSet=ts+1;
+          if(targ->CSet[ts])
+            targ->CSet[ts]->fFree(targ->CSet[ts]);
+          targ->CSet[ts]=cs2;
+          cs2->Obj=targ;
+        }
+      }
+    }               
+  }
+  VLAFreeP(bond); /* null-safe */
+  
+  if(nAtom) {
+    SceneCountFrames();
+    ObjectMoleculeExtendIndices(targ);
+    ObjectMoleculeSort(targ);
+    if(isNew) {
+      ObjectSetName((Object*)targ,name);
+      ExecutiveManageObject((Object*)targ);
+    }
+    SceneChanged();
+  } else {
+    targ->Obj.fFree((Object*)targ);
+  }
 }
 
 
