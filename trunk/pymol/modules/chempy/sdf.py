@@ -63,9 +63,9 @@ class SDFRec:
       for k in self.kees:
          if k!='MOL':
             if self.ref_code[k]!='':
-               r.append("> <"+k+"> ("+self.ref_code[k]+")\n")
+               r.append(">  <"+k+"> ("+self.ref_code[k]+")\n")
             else:
-               r.append("> <"+k+">\n")               
+               r.append(">  <"+k+">\n")               
          for a in self.data[k]:
             r.append(a)
          if k!='MOL':
