@@ -109,9 +109,11 @@ class PMGApp(AbstractApp):
 		cmd.quit()
 
 	def file_open(self):
-		ofile = askopenfilename(filetypes=[("PDB File","*.pdb"),("MOL File","*.mol")])
+		ofile = askopenfilename(filetypes=[("PDB File","*.pdb"),
+                    ("MOL File","*.mol"),("XPLOR Map","*.xplor"),
+                    ("ChemPy Model","*.pkl"),("All Files","*.*")])
 		if len(ofile):
-			cmd.load(ofile)
+                        cmd.load(ofile)
 
 	def file_run(self):
 		ofile = askopenfilename(filetypes=[("PyMOL Script","*.pml"),("Python Program","*.py")])
