@@ -37,7 +37,7 @@ typedef struct RepSphere {
   float *VC;
   SphereRec *SP;
   int *NT;
-  int N,NC;
+  int N,NC,NP;
   int cullFlag,spheroidFlag;
   int *LastVisib;
   int *LastColor;
@@ -49,9 +49,6 @@ void RepSphereRender(RepSphere *I,CRay *ray,Pickable **pick);
 void RepSphereFree(RepSphere *I);
 int RepSphereSameVis(RepSphere *I,CoordSet *cs);
 
-void RepSphereInit(void)
-{
-}
 
 void RepSphereFree(RepSphere *I)
 {
@@ -60,6 +57,7 @@ void RepSphereFree(RepSphere *I)
   FreeP(I->NT);
   FreeP(I->LastColor);
   FreeP(I->LastVisib);
+  RepFree(&I->R);
   OOFreeP(I);
 }
 
@@ -107,6 +105,90 @@ void RepSphereRender(RepSphere *I,CRay *ray,Pickable **pick)
     }
     ray->fTransparentf(ray,0.0);
   } else if(pick&&PMGUI) {
+    if(I->R.P) {
+      int i,j;
+		sp=I->SP;      
+      Pickable *p;
+      i=(*pick)->index;
+      
+      p=I->R.P;
+      
+      if(I->spheroidFlag) {
+        while(c--)
+          {
+            
+            i++;          
+            if(!(*pick)[0].ptr) {
+              /* pass 1 - low order bits *            */
+              glColor3ub((uchar)((i&0xF)<<4),(uchar)((i&0xF0)|0x8),(uchar)((i&0xF00)>>4)); 
+              VLACheck((*pick),Pickable,i);
+              p++;
+              (*pick)[i] = *p; /* copy object and atom info */
+            } else { 
+              /* pass 2 - high order bits */           
+              j=i>>12;            
+              glColor3ub((uchar)((j&0xF)<<4),(uchar)((j&0xF0)|0x8),(uchar)((j&0xF00)>>4));             
+            }			 
+            
+            v+=3;
+            for(a=0;a<sp->NStrip;a++) {
+              cc=sp->StripLen[a];
+              glBegin(GL_TRIANGLE_STRIP);
+              while((cc--)>0) {
+                glNormal3fv(v);
+                glVertex3fv(v+3);
+                v+=6;
+              }
+              glEnd();
+            }
+          }
+      } else {
+        v=I->VC;
+        c=I->NC;
+        while(c--) {
+          i++;          
+          if(!(*pick)[0].ptr) {
+            /* pass 1 - low order bits *            */
+            glColor3ub((uchar)((i&0xF)<<4),(uchar)((i&0xF0)|0x8),(uchar)((i&0xF00)>>4)); 
+            VLACheck((*pick),Pickable,i);
+            p++;
+            (*pick)[i] = *p; /* copy object and atom info */
+          } else { 
+            /* pass 2 - high order bits */           
+            j=i>>12;            
+            glColor3ub((uchar)((j&0xF)<<4),(uchar)((j&0xF0)|0x8),(uchar)((j&0xF00)>>4));             
+          }			 
+          
+          {
+            int *s,*q,b;
+            float *v0,vdw;
+
+            v0 = v+3;
+            vdw = v[6];
+            q=sp->Sequence;
+            s=sp->StripLen;
+            for(b=0;b<sp->NStrip;b++)
+              {
+                glBegin(GL_TRIANGLE_STRIP);
+                for(cc=0;cc<(*s);cc++)
+                  {
+                    glNormal3f(sp->dot[*q][0],
+                               sp->dot[*q][1],
+                               sp->dot[*q][2]);
+                    glVertex3f(v0[0]+vdw*sp->dot[*q][0],
+                               v0[1]+vdw*sp->dot[*q][1],
+                               v0[2]+vdw*sp->dot[*q][2]);
+                    q++;
+                  }
+                glEnd();
+                s++;
+              }
+            v+=7;
+          }
+        }
+      }
+	 (*pick)[0].index = i;
+    }
   } else if(PMGUI) {
     int use_dlst;
     use_dlst = (int)SettingGet(cSetting_use_display_lists);
@@ -352,6 +434,8 @@ Rep *RepSphereNew(CoordSet *cs)
   I->LastColor=NULL;
   I->R.obj=(CObject*)obj;
   I->R.cs = cs;
+    I->NP = 0;
+
   /* raytracing primitives */
   
 
@@ -369,12 +453,26 @@ Rep *RepSphereNew(CoordSet *cs)
     sphere_add = SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_solvent_radius); /* if so, get solvent radius */
   }
   
+  if(SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_pickable)) {
+    I->R.P=Alloc(Pickable,cs->NIndex+1);
+    ErrChkPtr(I->R.P);
+  }
+
   I->spheroidFlag=spheroidFlag;
   for(a=0;a<cs->NIndex;a++)
     {
       a1 = cs->IdxToAtm[a];
       if(obj->AtomInfo[a1].visRep[cRepSphere])
         {
+
+          if(I->R.P) {
+            I->NP++;
+            
+            I->R.P[I->NP].ptr = (void*)obj;
+            I->R.P[I->NP].index = a1;
+            I->R.P[I->NP].bond = -1;
+          }
+
           *mf=true;
           I->NC++;
           if(one_color==-1)
@@ -403,6 +501,10 @@ Rep *RepSphereNew(CoordSet *cs)
 	 I->VC=(float*)mrealloc(I->VC,sizeof(float)*(v-I->VC));
   else
 	 I->VC=(float*)mrealloc(I->VC,1);
+  if(I->R.P) {
+    I->R.P = Realloc(I->R.P,Pickable,I->NP+1);
+    I->R.P[0].index = I->NP;
+  }
 
 
   I->cullFlag = (int)SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_cull_spheres);
@@ -681,6 +783,8 @@ Rep *RepSphereNew(CoordSet *cs)
 		I->V=(float*)mrealloc(I->V,1);
 		if(I->NT) I->NT=Realloc(I->NT,int,1);
 	 }
+
+
   FreeP(visFlag);
   FreeP(map_flag);
   if(map)  MapFree(map);

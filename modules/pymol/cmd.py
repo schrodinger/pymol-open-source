@@ -1266,8 +1266,8 @@ SEE ALSO
    from preset import \
         simple,            \
         technical,         \
-        beautiful,         \
-        publishable
+        pretty,         \
+        publication
 
    #--------------------------------------------------------------------
    from moving import \

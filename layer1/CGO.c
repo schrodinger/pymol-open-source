@@ -1180,10 +1180,11 @@ void CGORenderGLPickable(CGO *I,Pickable **pick,void *ptr,CSetting *set1,CSettin
     glLineWidth(SettingGet_f(set1,set2,cSetting_cgo_line_width));
 
     while((op=(CGO_MASK&CGO_read_int(pc)))) {
-      if(op!=CGO_PICK_COLOR) 
-        CGO_gl[op](pc);
-      else {
-        
+      if(op!=CGO_PICK_COLOR) {
+        if(op!=CGO_COLOR) {
+          CGO_gl[op](pc); /* ignore color changes */
+        }
+      } else {
         i++;
         if(!(*pick)[0].ptr) {
           /* pass 1 - low order bits */

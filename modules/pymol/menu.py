@@ -134,10 +134,13 @@ def spectrum(s):
              'cmd.spectrum("count",selection="('+s+')&*/ca")'],
            [ 1, '\\900r\\950a\\990i\\090n\\099b\\059o\\009w',
              'cmd.spectrum("count",selection="'+s+'",byres=1)'],
-           [ 1, '\\900c\\950h\\990a\\090i\\099n\\059b\\009o\\705w\\888s',
-             'util.chainbow("('+s+')")'],                                 
+           [ 0, ''                                , ''                 ],
            [ 1, '\\900b\\950y \\090c\\099h\\059a\\009i\\705n',
              'util.color_chains("('+s+')")'],
+           [ 1, '\\900c\\950h\\990a\\090i\\099n\\059b\\009o\\705w\\888s',
+             'util.chainbow("('+s+')")'],                                 
+           [ 0, ''                                , ''                 ],
+           [ 1, 'b-factors'   , 'cmd.spectrum("b",selection=("'+s+'"))'         ],           
            ]
 
 
@@ -208,8 +211,8 @@ def presets(s):
            [ 1, 'simple'   ,'preset.simple("'+s+'")'          ],
            [ 1, 'technical'   , 'preset.technical("'+s+'")'          ],
            [ 1, 'ligands'   , 'preset.ligands("'+s+'")'          ],
-           [ 1, 'beautiful'   , 'preset.beautiful("'+s+'")'          ],
-           [ 1, 'publishable'   , 'preset.publishable("'+s+'")'          ],
+           [ 1, 'pretty'     , 'preset.pretty("'+s+'")'          ],
+           [ 1, 'publication'   , 'preset.publication("'+s+'")'          ],
            ]
 
 def expand(s):
@@ -372,10 +375,10 @@ def mol_view(s):
 def all_option(s):
    return [
       [ 2, '(all)'      , '' ],
-      [ 1, 'Action'      , all_action(s) ],
-      [ 1, 'Show'      , mol_color(s) ],
-      [ 1, 'Hide'      , mol_color(s) ],
-      [ 1, 'Color'      , mol_color(s) ],
+      [ 1, 'show'      , mol_color(s) ],
+      [ 1, 'hide'      , mol_color(s) ],
+      [ 1, 'color'      , mol_color(s) ],
+      [ 1, 'action'      , all_action(s) ],
       ]
 
 def all_option(s):
@@ -403,6 +406,7 @@ def main_menu(s):
       [ 1, 'reset'           ,'cmd.reset()'            ],
       [ 0, ''             , ''                      ],           
       [ 1, '(all)'      , all_option("all") ],
+      [ 1, '(visible)'      , all_option("visible") ],      
       [ 0, ''             , ''                      ],
       [ 1, 'ray'           ,'cmd.ray()' ],
       [ 0, ''             , ''                      ],
@@ -441,8 +445,8 @@ def pick_menu(s):
            [ 0, ''             , ''                      ],
            [ 1, 'molecule', pick_option("Molecule","(bymol ("+s+"))") ],
            [ 0, ''             , ''                      ],
-           [ 1, 'fragments', pick_option("Fragment","(byfrag ("+s+"))") ],
-           [ 1, '""+joints', pick_option("Fragment","((byfrag ("+s+")) extend 1)") ],
+           [ 1, 'fragment', pick_option("Fragment","(byfrag ("+s+"))") ],
+           [ 1, '""+joint(s)', pick_option("Fragment","((byfrag ("+s+")) extend 1)") ],
            ]
       
 

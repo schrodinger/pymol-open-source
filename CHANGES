@@ -179,6 +179,25 @@ CHANGE LOG
 
 Changes up to 0.95
 
+
+   * many new menus to support viewer pop-up actions
+
+   * pop-up menus in viewer
+
+   * cascading pop-up menus
+   
+   * made spheres pickable
+
+   * made cartoons pickable using pickable CGOs : )))
+
+   * finally fixed visible operator to behave as expected
+
+   * massive overhaul of user interface appearance
+
+   * double-clicking actions
+
+   * scrolling actions
+
    * new selection operations 
       byfragment (byfrag, bf.) 
       bysegment (byseg, bs.)
