@@ -17,6 +17,7 @@ Z* -------------------------------------------------------------------
 #include <stdlib.h>
 #include <stdio.h>
 #include <GL/glut.h>
+#include <Python.h>
 
 #include"MemoryDebug.h"
 #include"Err.h"
@@ -49,6 +50,8 @@ GLuint obj;
 
 int TheWindow;
 
+static PyThreadState *_save;
+
 static GLint WinX = 640+cOrthoRightSceneMargin;
 static GLint WinY = 480+cOrthoBottomSceneMargin;
 static GLint Modifiers = 0;
@@ -66,6 +69,9 @@ void MainTest(void)
 static void MainButton(int button,int state,int x,int y)
 {
   static int glMod;  
+
+  Py_BLOCK_THREADS
+
   y=WinY-y;
 
   glMod = glutGetModifiers();
@@ -81,20 +87,30 @@ static void MainButton(int button,int state,int x,int y)
 	 glutIdleFunc(MainBusyIdle);
 	 SceneRestartTimers();
   }
+
+  Py_UNBLOCK_THREADS
 }
 /*========================================================================*/
 static void MainDrag(int x,int y)
 {
+  Py_BLOCK_THREADS
+
   y=WinY-y;
   if(!OrthoDrag(x,y,Modifiers))
     {
 	 }
+
+  Py_UNBLOCK_THREADS
 }
 /*========================================================================*/
 static void MainMove(int x,int y)
 {
+  Py_BLOCK_THREADS
+
   y=WinY-y;
   OrthoCursor(x,y);
+
+  Py_UNBLOCK_THREADS
 }
 /*========================================================================*/
 static void MainDraw(void)
@@ -102,6 +118,9 @@ static void MainDraw(void)
   int a,l;
   char *p;
   char buffer[300];
+
+  Py_BLOCK_THREADS
+
   OrthoBusyPrime();
   ExecutiveDrawNow();
   if(FinalInitFlag)
@@ -142,30 +161,43 @@ static void MainDraw(void)
 	 }
   if(ControlIdling()) 
 	 glutIdleFunc(MainBusyIdle);
+
+  Py_UNBLOCK_THREADS
+
 }
 /*========================================================================*/
 static void MainKey(unsigned char k, int x, int y)
 {
+
+
+  Py_BLOCK_THREADS
+
   switch (k) 
 	 {
-	 case 27:  /* Escape */
+	 case 27: 
 		PExit(EXIT_SUCCESS);
 		break;
 	 default:
 		OrthoKey(k,x,y);
-		return;
+		break;
 	 }
-  glutPostRedisplay();
+
+  Py_UNBLOCK_THREADS
 }
 
 /*========================================================================*/
 static void MainSpecial(int k, int x, int y)
 {
+
+  Py_BLOCK_THREADS
+
   switch (k)
 	 {
 	 default:
-		return;
+		break;
 	 }
+
+  Py_UNBLOCK_THREADS
 }
 
 /* new window size or exposure */
@@ -173,6 +205,8 @@ static void MainSpecial(int k, int x, int y)
 void MainReshape(int width, int height)
 {
   float h;
+
+  Py_BLOCK_THREADS
 
   WinX = width;
   WinY = height;
@@ -187,6 +221,8 @@ void MainReshape(int width, int height)
   /*  glTranslatef(0.0, 0.0, -40.0); */
   glutReshapeWindow(width, height);
   OrthoReshape(width,height);
+
+  Py_UNBLOCK_THREADS
 }
 
 /*========================================================================*/
@@ -247,9 +283,12 @@ void MainFree(void)
 /*========================================================================*/
 void MainBusyIdle(void) 
 {
+  Py_BLOCK_THREADS
 
   if(!ControlIdling()) glutIdleFunc(NULL);
   SceneIdle();
+
+  Py_UNBLOCK_THREADS
 }
 /*========================================================================*/
 int main(int argc, char *argv[])
@@ -261,11 +300,10 @@ int main(int argc, char *argv[])
 
   glutInitDisplayMode(GLUT_RGB | GLUT_DEPTH | GLUT_DOUBLE);
 
-  glutInitWindowPosition(0, 0);
+  glutInitWindowPosition(0, 158);
   glutInitWindowSize(WinX, WinY);
 
-  TheWindow = glutCreateWindow("PyMol");
-
+  TheWindow = glutCreateWindow("PyMol Viewer");
   
   MainInit();
 
@@ -281,6 +319,9 @@ int main(int argc, char *argv[])
   glutIdleFunc(         MainBusyIdle );
 
   glutPostRedisplay();
+
+  Py_UNBLOCK_THREADS
+
   glutMainLoop();
 
   return 0;

@@ -41,7 +41,11 @@ void PInit(void)
 {
   /* Initialize the Python interpreter.  Required. */
   Py_Initialize();
-  
+
+#ifdef _PYMOL_THREADS
+  PyEval_InitThreads();
+#endif
+
   /* Add a static module */
   PCatchInit();
   PMInit();
@@ -65,6 +69,7 @@ void PInit(void)
   PyRun_SimpleString("import string\n"); 
   PyRun_SimpleString("from pmp import *\n");
   
+  PyRun_SimpleString("import pmg\n"); 
   signal(SIGINT,my_interrupt);
 }
 
@@ -78,6 +83,7 @@ void PExit(int code)
 void PParse(char *str) {
 
   PyDict_SetItemString(PM_Globals,"pymol_cmd",PyString_FromString(str));
+
   PyRun_SimpleString("pmp_cmd[pmp_nest] = pymol_cmd");
   PyRun_SimpleString("exec(pymol,globals(),globals())");
 
