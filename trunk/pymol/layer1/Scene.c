@@ -1197,8 +1197,11 @@ void SceneRay(void)
   buffer=(GLvoid*)Alloc(char,buffer_size);
   ErrChkPtr(buffer);
 
-  RayRender(ray,I->Width,I->Height,buffer,I->Front,I->Back);
 
+  RayRender(ray,I->Width,I->Height,buffer,I->Front,I->Back);
+  /*
+  RayRenderPOV(ray,I->Width,I->Height,NULL,I->Front,I->Back,SceneFOV);
+  */
   if(I->ImageBuffer) {
 	 if(I->MovieOwnsImageFlag) {
 		I->MovieOwnsImageFlag=false;

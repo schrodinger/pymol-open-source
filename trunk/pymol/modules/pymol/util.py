@@ -170,7 +170,32 @@ def sum_charge(*arg): # NOT THREAD SAFE
       print " sum_charge: an error occurred."
    return result
 
-
+def ray_shadows(mode):
+   if mode=='light': # maximum quality
+      cmd.set('power',3.0)
+      cmd.set('ambient',0.3)
+      cmd.set('spec_power',40)
+      cmd.set('ambient_scale',0.4)
+      cmd.set('reflect',1.2)         
+      cmd.set('direct',0.35)
+      cmd.set('gamma',1.2)
+   elif mode=='medium':
+      cmd.set('power',0.7)
+      cmd.set('spec_power',50)
+      cmd.set('ambient',0.12)
+      cmd.set('ambient_scale',1.0)
+      cmd.set('reflect',0.9)         
+      cmd.set('direct',0.25)
+      cmd.set('gamma',1.28)
+   elif mode=='heavy':
+      cmd.set('power',0.30)
+      cmd.set('spec_power',60)
+      cmd.set('ambient',0.08)
+      cmd.set('ambient_scale',1.2)
+      cmd.set('reflect',0.75)         
+      cmd.set('direct',0.06)
+      cmd.set('gamma',1.35)
+   
 def ff_copy(src,dst): # NOT THREAD SAFE
    pymol._rcopy = pymol.Scratch_Storage()
    pymol._rcopy.pc={}

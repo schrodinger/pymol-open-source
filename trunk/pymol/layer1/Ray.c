@@ -175,6 +175,7 @@ void RayExpandPrimitives(CRay *I)
 		nVert+=3;
 		break;
 	 case cPrimSphere:
+		I->Primitive[a].vert=nVert;
 		I->Vert2Prim[nVert]=a;
 		v1=I->Primitive[a].v1;
 		basis->Radius[nVert]=I->Primitive[a].r1;
@@ -187,6 +188,7 @@ void RayExpandPrimitives(CRay *I)
 		nVert++;
 		break;
 	 case cPrimCylinder:
+		I->Primitive[a].vert=nVert;
 		I->Vert2Prim[nVert]=a;
 		basis->Radius[nVert]=I->Primitive[a].r1;
 		basis->Radius2[nVert]=I->Primitive[a].r1*I->Primitive[a].r1; /*precompute*/
@@ -314,6 +316,89 @@ void RayTransformBasis(CRay *I,CBasis *basis1)
 	 }
   }
 
+  
+}
+
+
+/*========================================================================*/
+void RayRenderPOV(CRay *I,int width,int height,char *charVLA,float front,float back,float fov)
+{
+  float *light;
+  int antialias;
+  int fogFlag=false;
+  int fogRangeFlag=false;
+  float fog;
+  float *bkrd;
+  float fog_start=0.0;
+  float gamma;
+  CBasis *base;
+  CPrimitive *prim;
+  float *vert;
+
+  int a;
+
+  PRINTFB(FB_Ray,FB_Details)
+    " RayRenderPOV: w %d h %d f %8.3f b %8.3f\n",width,height,front,back
+    ENDFB;
+  if(Feedback(FB_Ray,FB_Details)) {
+    dump3f(I->Volume," RayRenderPOV: vol");
+    dump3f(I->Volume+3," RayRenderPOV: vol");
+  }
+  if(!charVLA) {
+    charVLA=VLAlloc(char,10000);
+  }
+  gamma = SettingGet(cSetting_gamma);
+  if(gamma>R_SMALL4)
+    gamma=1.0/gamma;
+  else
+    gamma=1.0;
+
+  fog = SettingGet(cSetting_ray_trace_fog);
+  if(fog!=0.0) {
+    fogFlag=true;
+    fog_start = SettingGet(cSetting_ray_trace_fog_start);
+    if(fog_start>R_SMALL4) {
+      fogRangeFlag=true;
+      if(fabs(fog_start-1.0)<R_SMALL4) /* prevent div/0 */
+        fogFlag=false;
+    }
+  }
+  /* SETUP */
+  
+  antialias = (int)SettingGet(cSetting_antialias);
+  bkrd=SettingGetfv(cSetting_bg_rgb);
+
+  RayExpandPrimitives(I);
+  RayTransformFirst(I);
+  
+  PRINTFB(FB_Ray,FB_Details)
+    " RayRenderPovRay: processed %i graphics primitives.\n",I->NPrimitive 
+    ENDFB;
+  base = I->Basis+1;
+  printf("#include \"colors.inc\"\n");
+  printf("  camera {location <0.0 , 0.0 , %10.6f>\nlook_at  <0.0 , 0.0 , -1.0> angle %10.6f}\n",
+         front,fov*0.75);
+  printf("    light_source{<-400,400,1000> color White}\n");
+
+  for(a=0;a<I->NPrimitive;a++) {
+    prim = I->Primitive+a;
+    vert = base->Vertex+3*(prim->vert);
+    switch(prim->type) {
+	 case cPrimSphere:
+      printf("sphere{<%10.6f,%10.6f,%10.6f>, %10.6f\n",
+             -vert[0],vert[1],vert[2],prim->r1);
+      printf("pigment{color rgb<1,0.8,0>}}\n");
+		break;
+	 case cPrimCylinder:
+		break;
+	 case cPrimTriangle:
+		break;
+    }
+  }
+  /*  BasisMakeMap(I->Basis+1,I->Vert2Prim,I->Primitive,I->Volume);*/
+  
+  light=SettingGetfv(cSetting_light);
+  dump3f(light,"light");
   
 }
 /*========================================================================*/

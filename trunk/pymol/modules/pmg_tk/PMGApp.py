@@ -22,6 +22,7 @@ from SetEditor import SetEditor
 import Pmw
 import sys, string
 from pymol import cmd
+from pymol import util
 import re
 import thread
 import threading
@@ -345,7 +346,7 @@ class PMGApp(AbstractApp):
          cmd.set('sphere_quality',0)
          cmd.set('cartoon_sampling',3)
          cmd.do("rebuild")         
-         
+
    def createMenuBar(self):
       self.menuBar.addmenuitem('Help', 'command',
                                'Get information on application', 
@@ -573,6 +574,20 @@ class PMGApp(AbstractApp):
                                label='Maximum Quality',
                                command = lambda s=self: s.performance(0))
 
+      self.menuBar.addmenuitem('Display', 'separator', '')
+
+      self.menuBar.addmenuitem('Display', 'command', 'Light Shadows',
+                               label='Light Shadows',
+                               command = lambda u=util: u.ray_lighting('light'))
+
+      self.menuBar.addmenuitem('Display', 'command', 'Medium Shadows',
+                               label='Medium Shadows',
+                               command = lambda u=util: u.ray_lighting('medium'))
+
+      self.menuBar.addmenuitem('Display', 'command', 'Heavy Shadows',
+                               label='Heavy Shadows',
+                               command = lambda u=util: u.ray_lighting('heavy'))
+      
       self.menuBar.addmenu('Settings', 'Configuration Control')
 
 

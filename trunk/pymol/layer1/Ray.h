@@ -45,6 +45,7 @@ CRay *RayNew(void);
 void RayFree(CRay *I);
 void RayPrepare(CRay *I,float v0,float v1,float v2,float v3,float v4,float v5,float *mat);
 void RayRender(CRay *I,int width,int height,unsigned int *image,float front,float back);
+void RayRenderPOV(CRay *I,int width,int height,char *charVLA,float front,float back,float fov);
 
 #endif
 
