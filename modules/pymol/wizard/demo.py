@@ -16,10 +16,7 @@ class Demo(Wizard):
       self.last = None
       if saved.has_key('last'):
          self.last = saved['last']
-      print "init called"
-      if not len(arg):
-         cmd.set_wizard()
-      else:
+      if len(arg):
          demo = DemoInfo()
          name = arg[0]
          if self.last:
@@ -429,7 +426,7 @@ class DemoInfo:
          cmd.delete("ray")
          
    def finish(self,cleanup=0):
-      cmd.set_wizard()
+      cmd.do("_ wizard")
 
    def sculpt(self,cleanup=0):
       if not cleanup:
@@ -451,6 +448,7 @@ class DemoInfo:
          cmd.set("suspend_updates",0,quiet=0)
          cmd.unpick()
       else:
+         cmd.set("valence","0")
          cmd.set("sculpting",0)
          cmd.set("auto_sculpt",0)
          cmd.delete("sculpt")
