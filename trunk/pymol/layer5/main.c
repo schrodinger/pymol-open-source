@@ -475,7 +475,7 @@ void launch(void)
     p_glutInitWindowPosition(0, 175);
     p_glutInitWindowSize(WinX, WinY);
     
-    TheWindow = p_glutCreateWindow("PyMol Viewer");
+    TheWindow = p_glutCreateWindow("PyMOL Viewer");
 
   }
 
