@@ -75,7 +75,7 @@ typedef struct {
   int DirtyFlag;
   int ChangedFlag;
   int CopyFlag;
-  int ImageIndex,Frame,NFrame;
+  int StateIndex,Frame,NFrame;
   GLvoid *ImageBuffer;
   int MovieOwnsImageFlag;
   int MovieFrameFlag;
@@ -234,7 +234,7 @@ void SceneSetFrame(int mode,int frame)
   }
   if(I->Frame>=I->NFrame) I->Frame=I->NFrame-1;
   if(I->Frame<0) I->Frame=0;
-  I->ImageIndex = MovieFrameToIndex(I->Frame);
+  I->StateIndex = MovieFrameToIndex(I->Frame);
   if(mode&4) 
 	MovieDoFrameCommand(I->Frame);
   if(I->Frame==0)
@@ -663,7 +663,7 @@ void SceneInit(void)
 
   I->Scale = 1.0;
   I->Frame=0;
-  I->ImageIndex=0;
+  I->StateIndex=0;
   
   I->Front=40;
   I->FrontSafe= (I->Front<cFrontMin ? cFrontMin : I->Front);
@@ -763,6 +763,13 @@ void SceneRay(void)
   float white[3] = {1.0,1.0,1.0};
   unsigned int *buffer;
   float rayView[16];
+  int curState;
+
+  if(SettingGet(cSetting_all_states)) {
+    curState=-1;
+  } else {
+    curState=I->StateIndex;
+  }
 
   ray = RayNew();
 
@@ -802,7 +809,7 @@ void SceneRay(void)
 	 {
 		if(rec->obj->fRender) {
 		  ray->fColor3fv(ray,white);
-		  rec->obj->fRender(rec->obj,I->ImageIndex,ray,NULL);
+		  rec->obj->fRender(rec->obj,curState,ray,NULL);
 		}
 	 }
 
@@ -949,6 +956,7 @@ void SceneRender(Pickable *pick,int x,int y)
   int view_save[4];
   Pickable *pickVLA;
   int index;
+  int curState;
 
   if(PMGUI) {
     glDrawBuffer(GL_BACK);
@@ -961,6 +969,13 @@ void SceneRender(Pickable *pick,int x,int y)
     
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
+
+    if(SettingGet(cSetting_all_states)) {
+      curState=-1;
+    } else {
+      curState=I->StateIndex;
+    }
+
 
     if(SettingGet(cSetting_ortho)==0.0) {
       gluPerspective(SceneFOV,aspRat,I->FrontSafe,I->Back);
@@ -1072,7 +1087,7 @@ void SceneRender(Pickable *pick,int x,int y)
         {
           glPushMatrix();
 			 if(rec->obj->fRender)
-			   rec->obj->fRender(rec->obj,I->ImageIndex,NULL,&pickVLA);
+			   rec->obj->fRender(rec->obj,curState,NULL,&pickVLA);
 			 glPopMatrix();
         }
 	
@@ -1087,7 +1102,7 @@ void SceneRender(Pickable *pick,int x,int y)
         {
           glPushMatrix();
           if(rec->obj->fRender)
-            rec->obj->fRender(rec->obj,I->ImageIndex,NULL,&pickVLA);
+            rec->obj->fRender(rec->obj,curState,NULL,&pickVLA);
           glPopMatrix();
         }
       highBits = SceneFindTriplet(x,y);
@@ -1115,7 +1130,7 @@ void SceneRender(Pickable *pick,int x,int y)
             glPushMatrix();
             glNormal3fv(normal);
             if(rec->obj->fRender)
-              rec->obj->fRender(rec->obj,I->ImageIndex,NULL,NULL);
+              rec->obj->fRender(rec->obj,curState,NULL,NULL);
             glPopMatrix();
           }
         glPopMatrix();
@@ -1130,7 +1145,7 @@ void SceneRender(Pickable *pick,int x,int y)
             glPushMatrix();
             glNormal3fv(normal);
             if(rec->obj->fRender)
-              rec->obj->fRender(rec->obj,I->ImageIndex,NULL,NULL);
+              rec->obj->fRender(rec->obj,curState,NULL,NULL);
             glPopMatrix();
           }
         glPopMatrix();        glDrawBuffer(GL_BACK);
@@ -1143,7 +1158,7 @@ void SceneRender(Pickable *pick,int x,int y)
             glPushMatrix();
             glNormal3fv(normal);
             if(rec->obj->fRender)
-              rec->obj->fRender(rec->obj,I->ImageIndex,NULL,NULL);
+              rec->obj->fRender(rec->obj,curState,NULL,NULL);
             glPopMatrix();
           }
       }

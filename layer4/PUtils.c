@@ -226,6 +226,12 @@ void PFlush(PyThreadState **save) {
   }
 }
 
+void PDefineFloat(char *name,float value) {
+  char buffer[OrthoLineLength];
+  sprintf(buffer,"%s = %f\n",name,value);
+  PyRun_SimpleString(buffer);
+}
+
 /* This function is called by the interpreter to get its own name */
 char *getprogramname(void)
 {

@@ -23,9 +23,13 @@ int *SelectorSelect(char *sele);
 void SelectorCreate(char *name,char *sele,ObjectMolecule *obj);
 void SelectorToggle(int rep,char *name);
 void SelectorCylinder(char *sele,char *onoff);
+int SelectorUpdateTable(void);
 int SelectorIndexByName(char *sele);
 int SelectorMatch(int ref,int sele);
 int SelectorNext(int ref);
 void SelectorFree(void);
 void SelectorDelete(char *sele);
+void SelectorFreeTmp(char *name);
+void SelectorGetTmp(char *input,char *store);
+
 #endif

@@ -22,6 +22,7 @@ Z* -------------------------------------------------------------------
 #include"Color.h"
 #include"Scene.h"
 #include"main.h"
+#include"Setting.h"
 
 typedef struct RepWireBond {
   Rep R;
@@ -126,6 +127,7 @@ Rep *RepWireBondNew(CoordSet *cs)
 {
   ObjectMolecule *obj;
   int a,a1,a2,*b,c1,c2,s1,s2,b1,b2;
+  int half_bonds;
   float *v,*v0,*v1,*v2,h[3];
   OOAlloc(RepWireBond);
 
@@ -133,6 +135,8 @@ Rep *RepWireBondNew(CoordSet *cs)
   obj = cs->Obj;
   I->R.fRender=(void (*)(struct Rep *, CRay *, Pickable **))RepWireBondRender;
   I->R.fFree=(void (*)(struct Rep *))RepWireBondFree;
+
+  half_bonds = SettingGet(cSetting_half_bonds);
 
   I->N=0;
   I->NP=0;
@@ -159,7 +163,13 @@ Rep *RepWireBondNew(CoordSet *cs)
 			 {
 				s1=obj->AtomInfo[b1].visRep[cRepLine];
 				s2=obj->AtomInfo[b2].visRep[cRepLine];
-				
+
+				if(!(s1&&s2))
+              if(!half_bonds) {
+                s1 = 0;
+                s2 = 0;
+              }
+
 				if(s1||s2)
 				  {	
 					 c1=*(cs->Color+a1);

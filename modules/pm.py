@@ -167,12 +167,26 @@ def system(a):
    lock()
    unlock()
 
+def intrafit(*args):
+   lock()
+   if len(args)<2:
+      b=-1
+   else:
+      b=int(args[1])-1
+   _pm.intrafit(args[0],b)
+   unlock()
+   
 def fit(a,b):
    if a[0]!='(': a="(%"+a+")"
    if b[0]!='(': b="(%"+b+")"
    lock()   
    _pm.fit("(%s in %s)" % (a,b),
          "(%s in %s)" % (b,a))
+   unlock()
+
+def pairfit(*args):
+   lock()   
+   _pm.fit_pairs(args)
    unlock()
 
 def expfit(a,b):
@@ -397,9 +411,11 @@ def load(*args):
       ftype = 0
    elif re.search("\.mol$",args[0]):
       ftype = 1
+   elif re.search("\.mmod$",args[0]):
+      ftype = 4
    if len(args)==1:
       oname = re.sub("[^/]*\/","",args[0])
-      oname = re.sub("\.pdb|\.mol","",oname)
+      oname = re.sub("\.pdb|\.mol|\.mmod","",oname)
       _pm.load(oname,args[0],-1,ftype)
    elif len(args)==2:
       oname = string.strip(args[1])
@@ -407,6 +423,9 @@ def load(*args):
    elif len(args)==3:
       oname = string.strip(args[1])
       _pm.load(oname,args[0],int(args[2])-1,ftype)
+   elif len(args)==4:
+      oname = string.strip(args[1])
+      _pm.load(oname,args[0],int(args[2])-1,int(args[3]))
    else:
       print "argument error."
    unlock()
@@ -563,7 +582,8 @@ keyword = {
    'forward'     : [forward      , 0 , 0 , ',' , 0 ],
    'frame'       : [frame        , 1 , 1 , ',' , 0 ],
    'hide'        : [hide         , 1 , 2 , ',' , 0 ],
-   'load'        : [load         , 1 , 3 , ',' , 0 ],
+   'intrafit'    : [intrafit     , 1 , 2 , ',' , 0 ],
+   'load'        : [load         , 1 , 4 , ',' , 0 ],
    'move'        : [move         , 2 , 2 , ',' , 0 ],
    'mset'        : [mset         , 1 , 1 , ',' , 0 ],
    'mdo'         : [mdo          , 2 , 2 , ':' , 1 ],
@@ -576,6 +596,7 @@ keyword = {
    'mmatrix'     : [mmatrix      , 1 , 1 , ',' , 0 ],
    'origin'      : [origin       , 1 , 1 , ',' , 0 ],
    'orient'      : [orient       , 0 , 1 , ',' , 0 ],
+   'pairfit'     : [pairfit      , 2 ,98 , ',' , 0 ],
    'ray'         : [render       , 0 , 0 , ',' , 0 ],
    'refresh'     : [refresh      , 0 , 0 , ',' , 0 ],
    'render'      : [render       , 0 , 0 , ',' , 0 ],

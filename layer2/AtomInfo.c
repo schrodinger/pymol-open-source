@@ -194,6 +194,7 @@ void AtomInfoAssignParameters(AtomInfoType *I)
 		default:
 		  vdw=1.8;  break; /*incl C,CL*/
 		}
+     break;
 	case 'O' : vdw=1.5;  break;
 	case 'I' :	vdw=2.15; break;
 	case 'P' :	vdw=1.9; break;
@@ -210,10 +211,24 @@ void AtomInfoAssignParameters(AtomInfoType *I)
 		  vdw=1.35; break;
 		}
 	  break;
+   case 'H' :
+     vdw = 1.1;
+	  break;
 	default:
 	  vdw=1.8;
 	  break;
 	}
   I->vdw = vdw;
 }
+
+
+
+
+
+
+
+
+
+
+
 

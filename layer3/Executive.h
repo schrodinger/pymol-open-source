@@ -37,6 +37,8 @@ void ExecutiveSort(char *name);
 void ExecutiveSetSetting(char *sname,char *value);
 void ExecutiveRay(void);
 void ExecutiveFit(char *sele1,char *sele2);
+void ExecutiveFitPairs(WordType *sele,int pairs);
+void ExecutiveFitStates(char *s1,int target);
 void ExecutiveReset(int cmd);
 void ExecutiveDrawNow(void);
 void ExecutiveSetAllVisib(int state);

@@ -89,9 +89,9 @@ class PMGApp(AbstractApp):
 
 	def update_feedback(self):
 		self.lineCount = self.lineCount + 1
-		if self.lineCount > 1000:
-			self.output.delete('0.0','%i.%i' % (self.lineCount-100,0))
-			self.lineCount=10
+		if self.lineCount > 10000:
+			self.output.delete('0.0','%i.%i' % (self.lineCount-5000,0))
+			self.lineCount=5000
 		for a in pm.get_feedback():
 			self.output.insert(END,"\n")
 			self.output.insert(END,a)
@@ -192,6 +192,12 @@ class PMGApp(AbstractApp):
 		self.menuBar.addmenu('Options', 'Configuration Control')
 
 		self.menuBar.addmenuitem('Options', 'checkbutton',
+							 	'Superimpose all molecular states.',
+							 	label='Show All States',
+								variable = self.setting.all_states,
+								command = lambda s=self: s.setting.update('all_states'))
+
+		self.menuBar.addmenuitem('Options', 'checkbutton',
 							 	'Disable perspective.',
 							 	label='Orthoscopic',
 								variable = self.setting.ortho,
@@ -202,5 +208,7 @@ class PMGApp(AbstractApp):
 							 	label='Antialias',
 								variable = self.setting.antialias,
 								command = lambda s=self: s.setting.update('antialias'))
+
+
 
 

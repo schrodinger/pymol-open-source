@@ -397,6 +397,31 @@ void SettingInit(void)
 			"line_width");
 
   I->NSetting++;
+  I->Setting[cSetting_half_bonds].Value[0] = 0.0;
+  strcpy(I->Setting[cSetting_half_bonds].Name,
+			"half_bonds");
+
+  I->NSetting++;
+  I->Setting[cSetting_stick_quality].Value[0] = 8.0;
+  strcpy(I->Setting[cSetting_stick_quality].Name,
+			"stick_quality");
+
+  I->NSetting++;
+  I->Setting[cSetting_stick_overlap].Value[0] = 0.2;
+  strcpy(I->Setting[cSetting_stick_overlap].Name,
+			"stick_overlap");
+
+  I->NSetting++;
+  I->Setting[cSetting_stick_nub].Value[0] = 0.7;
+  strcpy(I->Setting[cSetting_stick_nub].Name,
+			"stick_nub");
+
+  I->NSetting++;
+  I->Setting[cSetting_all_states].Value[0] = 0.0;
+  strcpy(I->Setting[cSetting_all_states].Name,
+			"all_states");
+
+  I->NSetting++;
 #ifdef _PYMOL_WINDOWS
   I->Setting[cSetting_normal_workaround].Value[0] = 1;
 #else
