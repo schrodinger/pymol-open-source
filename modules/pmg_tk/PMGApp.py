@@ -72,9 +72,10 @@ class PMGApp(AbstractApp):
          str = cmd.get_view(3,quiet=1)
          self.root.clipboard_clear()
          self.root.clipboard_append(str)
+         self.last_view = str
+         self.selection_clear()
          self.selection_own()
-
-         self.selection_handle(lambda a,b,st=str:st)
+         self.selection_handle(lambda a,b,s=self:s.last_view)
          print " PyMOL: Viewing matrix copied to clipboard."
       except:
          traceback.print_exc()

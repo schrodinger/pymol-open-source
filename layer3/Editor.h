@@ -45,11 +45,11 @@ void EditorDrag(ObjectMolecule *obj,int index,int mode,int state,
 
 void EditorActivate(int state,int enable_bond);
 ObjectMolecule *EditorDragObject(void);
-void EditorReplace(char *elem,int geom,int valence,char *name);
-void EditorAttach(char *elem,int geom,int valence,char *name);
+void EditorReplace(char *elem,int geom,int valence,char *name,int quiet);
+void EditorAttach(char *elem,int geom,int valence,char *name,int quiet);
 void EditorRemove(int hydrogen,int quiet);
 void EditorHFill(int quiet);
-void EditorCycleValence(void);
+void EditorCycleValence(int quiet);
 void EditorInactivate(void);
 void EditorUpdateState(void);
 

@@ -4119,6 +4119,7 @@ void ChampOrientBonds(CChamp *I,int index)
   int i;
   int left_to_do = 0;
   int start_atom = 0;
+  int last_atom = 0;
   ListAtom *at1;
   ListBond *bd1;
   ListScope *scp1,*scp2;
@@ -4141,7 +4142,26 @@ void ChampOrientBonds(CChamp *I,int index)
     bd1->mark_tmpl = 0;
     cur_bond = bd1->link;
   }
+
+  /* make sure that the start atom is not stereo-specified */
+
+  last_atom = 0;
+  start_atom = I->Pat[index].atom;
+  while(start_atom) {
+    if(!I->Atom[start_atom].stereo)
+      break;
+    last_atom = start_atom;
+    start_atom = I->Atom[start_atom].link;
+  }
   
+  if(last_atom&&start_atom) { /* start atom is stereo, so we've got to change things */
+    int old_first_atom = I->Pat[index].atom;
+    I->Pat[index].atom = start_atom;
+    I->Atom[last_atom].link = I->Atom[start_atom].link; /* excise this atom from the list */
+    I->Atom[start_atom].link = old_first_atom;
+  }
+    
+
   start_atom = I->Pat[index].atom;
   while(start_atom) {
     if(!I->Atom[start_atom].mark_tmpl) {

@@ -460,7 +460,7 @@ SEE ALSO
       return r
 
 
-   def cycle_valence(h_fill=1):
+   def cycle_valence(h_fill=1,quiet=1):
       '''
 DESCRIPTION
 
@@ -493,15 +493,15 @@ SEE ALSO
       r = 1
       try:
          lock()   
-         r = _cmd.cycle_valence()
+         r = _cmd.cycle_valence(quiet)
       finally:
          unlock()
       if h_fill:
-         globals()['h_fill']()
+         globals()['h_fill'](quiet)
       return r
 
 
-   def attach(element,geometry,valence,name=''):
+   def attach(element,geometry,valence,name='',quiet=1):
       '''
 DESCRIPTION
 
@@ -759,7 +759,7 @@ SEE ALSO
       return r
 
 
-   def replace(element,geometry,valence,h_fill=1,name=""):
+   def replace(element,geometry,valence,h_fill=1,name="",quiet=1):
       '''
 DESCRIPTION
 
@@ -788,9 +788,9 @@ SEE ALSO
          raise QuietException
       try:
          if h_fill: # strip off existing hydrogens
-            remove("((neighbor pk1) and elem h)")
+            remove("((neighbor pk1) and elem h)",quiet=quiet)
          lock()
-         r = _cmd.replace(str(element),int(geometry),int(valence),str(name))
+         r = _cmd.replace(str(element),int(geometry),int(valence),str(name),quiet)
       finally:
          unlock()
       return r

@@ -140,15 +140,15 @@ SEE ALSO
       if hasattr(pymol,"machine_get_clipboard"):
          lst = pymol.machine_get_clipboard()
       if len(lst):
-         while 1:
-            if len(lst[-1]):
-               if ord(lst[-1][-1])>32: # trim off final CR
-                  break;
-            else:
-               break;
-            lst[-1]=lst[-1][:-1]
-         _cmd.paste(lst)      
+         new_lst = []
+         for a in lst:
+            while len(a):
+               if ord(a[-1])>32:
+                  break
+               else:
+                  a=a[:-1]
+            if len(a):
+               new_lst.append(a)
+         _cmd.paste(new_lst)
       return r 
-
-
 
