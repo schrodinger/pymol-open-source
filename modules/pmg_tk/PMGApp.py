@@ -1026,7 +1026,7 @@ class PMGApp(AbstractApp):
          "_ editor.attach_fragment('pk1','benzene',6,0)"))
 
       self.menuBar.addmenuitem('Fragments', 'command', 'Sulfer',
-                               label='Sulfer',
+                               label='Sulfer (Ctrl-S)',
                                command = lambda: cmd.do("_ replace S,2,2"))
 
       self.menuBar.addmenuitem('Fragments', 'command', 'Sulfonyl',
