@@ -1048,11 +1048,12 @@ static int ObjectMapPHIStrToMap(ObjectMap *I,char *PHIStr,int bytes,int state) {
   char *p;
   float dens,dens_rev;
   int a,b,c,d,e;
+  unsigned int *u;
   float v[3],maxd,mind;
   int ok = true;
   int little_endian = 1;
   /* PHI named from their docs */
-  
+  int map_endian = 0;
   int map_dim;
 
   ObjectMapState *ms;
@@ -1061,6 +1062,7 @@ static int ObjectMapPHIStrToMap(ObjectMap *I,char *PHIStr,int bytes,int state) {
   char *rev;
 
   little_endian = *((char*)&little_endian);
+
 
   if(state<0) state=I->NState;
   if(I->NState<=state) {
@@ -1124,10 +1126,14 @@ static int ObjectMapPHIStrToMap(ObjectMap *I,char *PHIStr,int bytes,int state) {
     for(b=0;b<ms->FDim[1];b++) {
       for(a=0;a<ms->FDim[0];a++) {
 
-        rev[0]=p[3];
-        rev[1]=p[2];
-        rev[2]=p[1];
-        rev[3]=p[0];
+        if(little_endian!=map_endian) {
+          rev[0]=p[3];
+          rev[1]=p[2];
+          rev[2]=p[1];
+          rev[3]=p[0];
+        } else {
+          *((float*)rev)=*((float*)p);
+        }
         dens = *((float*)rev);
         F3(ms->Field->data,a,b,c) = dens;
         if(maxd<dens) maxd = dens;
@@ -1149,35 +1155,49 @@ static int ObjectMapPHIStrToMap(ObjectMap *I,char *PHIStr,int bytes,int state) {
 
   ms->Grid = Alloc(float,3);
   p+=4;
-  rev[0]=p[3];
-  rev[1]=p[2];
-  rev[2]=p[1];
-  rev[3]=p[0];
+  if(little_endian!=map_endian) {
+    rev[0]=p[3];
+    rev[1]=p[2];
+    rev[2]=p[1];
+    rev[3]=p[0];
+  } else {
+    *((float*)rev)=*((float*)p);
+  }
   ms->Grid[0] = 1.0F/(*((float*)rev));
   ms->Grid[1] = ms->Grid[0];
   ms->Grid[2] = ms->Grid[0];
   p+=4;
 
   ms->Origin = Alloc(float,3);
-
-  rev[0]=p[3];
-  rev[1]=p[2];
-  rev[2]=p[1];
-  rev[3]=p[0];
+  if(little_endian!=map_endian) {
+    rev[0]=p[3];
+    rev[1]=p[2];
+    rev[2]=p[1];
+    rev[3]=p[0];
+  } else {
+    *((float*)rev)=*((float*)p);
+  }
   ms->Origin[0] = *((float*)rev);
   p+=4;
 
-  rev[0]=p[3];
-  rev[1]=p[2];
-  rev[2]=p[1];
-  rev[3]=p[0];
+  if(little_endian!=map_endian) {
+    rev[0]=p[3];
+    rev[1]=p[2];
+    rev[2]=p[1];
+    rev[3]=p[0];
+  } else {
+    *((float*)rev)=*((float*)p);
+  }
   ms->Origin[1] = *((float*)rev);
   p+=4;
-
-  rev[0]=p[3];
-  rev[1]=p[2];
-  rev[2]=p[1];
-  rev[3]=p[0];
+  if(little_endian!=map_endian) {
+    rev[0]=p[3];
+    rev[1]=p[2];
+    rev[2]=p[1];
+    rev[3]=p[0];
+  } else {
+    *((float*)rev)=*((float*)p);
+  }
   ms->Origin[2] = *((float*)rev);
   p+=4;
 
