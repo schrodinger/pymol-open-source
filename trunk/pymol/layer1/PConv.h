@@ -66,9 +66,14 @@ int PConvPyListToStringVLA(PyObject *obj,char **vla_ptr);
 PyObject *PConvFloatVLAToPyList(float *f);
 PyObject *PConvIntVLAToPyList(int *f);
 
-void PConvFloatToPyDictItem(PyObject *dict,char *key,float f);
-void PConvStringToPyDictItem(PyObject *dict,char *key,char *f);
-void PConvIntToPyDictItem(PyObject *dict,char *key,int i);
+/* WARNING: the returned PyObject is unowned - it is intended for use
+ * only for efficient detection of changes to dictionary values
+ * following evaluation of some expression in the context of the
+ * dictionary PAlter, PAlterState, etc. */
+PyObject *PConvFloatToPyDictItem(PyObject *dict,char *key,float f); 
+PyObject *PConvStringToPyDictItem(PyObject *dict,char *key,char *f);
+PyObject *PConvIntToPyDictItem(PyObject *dict,char *key,int i);
+/* end WARNING */
 
 void PConvFloat3ToPyObjAttr(PyObject *obj,char *attr,float *v);
 void PConvFloatToPyObjAttr(PyObject *obj,char *attr,float f);

@@ -477,9 +477,8 @@ void SettingGenerateSideEffects(int index,char *sele,int state)
     SettingSet(cSetting_line_smooth,0);
     SceneChanged();
     break;
-  case cSetting_mesh_width: /* auto-disable smooth lines if line width > 1 */
+  case cSetting_mesh_width: 
     ExecutiveInvalidateRep(inv_sele,cRepMesh,cRepInvColor);
-    SettingSet(cSetting_line_smooth,0);
     SceneChanged();
     break;
   case cSetting_nonbonded_size:

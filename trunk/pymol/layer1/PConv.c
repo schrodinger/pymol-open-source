@@ -205,28 +205,31 @@ int PConvPyObjectToStrMaxClean(PyObject *object,char *value,int ln)
   return(result);
 }
 
-void PConvFloatToPyDictItem(PyObject *dict,char *key,float f)
+PyObject *PConvFloatToPyDictItem(PyObject *dict,char *key,float f)
 {
   PyObject *tmp;
   tmp = PyFloat_FromDouble((double)f);
   PyDict_SetItemString(dict,key,tmp);
   Py_XDECREF(tmp); 
+  return(tmp);
 }
 
-void PConvIntToPyDictItem(PyObject *dict,char *key,int i)
+PyObject *PConvIntToPyDictItem(PyObject *dict,char *key,int i)
 {
   PyObject *tmp;
   tmp = PyInt_FromLong(i);
   PyDict_SetItemString(dict,key,tmp);
   Py_XDECREF(tmp); 
+  return(tmp);
 }
 
-void PConvStringToPyDictItem(PyObject *dict,char *key,char *f)
+PyObject *PConvStringToPyDictItem(PyObject *dict,char *key,char *f)
 {
   PyObject *tmp;
   tmp = PyString_FromString(f);
   PyDict_SetItemString(dict,key,tmp);
   Py_XDECREF(tmp); 
+  return(tmp);
 }
 
 void PConvFloat3ToPyObjAttr(PyObject *obj,char *attr,float *v)

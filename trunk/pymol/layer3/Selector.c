@@ -2348,7 +2348,8 @@ int SelectorSelect1(EvalElem *base)
   int rmin,rmax,rtest,index,numeric;
   int flag;
   char *p;
-  
+  char *np;
+
   SelectorType *I=&Selector;
   ObjectMolecule *obj;
   base->type=STYP_LIST;
@@ -2573,6 +2574,14 @@ int SelectorSelect1(EvalElem *base)
         }
 		break;
 	 case SELE_MODs:
+      index = -1;
+      if((np=strstr(base[1].text,"`"))) {
+        *np=0;
+        if(sscanf(np+1,"%d",&index)!=1)
+          index = -1;
+        else
+          index--;
+      }
 		model=0;
       obj=(ObjectMolecule*)ExecutiveFindObjectByName(base[1].text);
       if(obj)
@@ -2597,16 +2606,33 @@ int SelectorSelect1(EvalElem *base)
 		if(model)
 		  {
 			 model--;
-			 for(a=0;a<I->NAtom;a++)
-				{
-				  if(I->Table[a].model==model)
-					 {
-						base[0].sele[a]=true;
-						c++;
-					 }
-				  else
-					 base[0].sele[a]=false;
-				}
+          if(index>=0) {
+            for(a=0;a<I->NAtom;a++)
+              {
+                if(I->Table[a].model==model)
+                  if(I->Table[a].atom==index)
+                    {
+                      base[0].sele[a]=true;
+                      c++;
+                    }
+                  else {
+                    base[0].sele[a]=false;                    
+                  }
+                else
+                  base[0].sele[a]=false;
+              }
+          } else {
+            for(a=0;a<I->NAtom;a++)
+              {
+                if(I->Table[a].model==model)
+                  {
+                    base[0].sele[a]=true;
+                    c++;
+                  }
+                else
+                  base[0].sele[a]=false;
+              }
+          }
 		  }
 		else
 		  ErrFatal("SelectorSelect1","Invalid Model");
@@ -3064,10 +3090,12 @@ int *SelectorEvaluate(WordType *word)
   char *q,*cc1,*cc2;
   int totDepth;
   int exact;
+  char *np;
   OrthoLineType line;
   EvalElem *Stack=NULL,*e;
   SelectorType *I=&Selector;
-  
+  WordType tmpKW;
+
   Stack = Alloc(EvalElem,SelectorMaxDepth);
 
   Stack[0].sele=NULL;
@@ -3168,16 +3196,34 @@ int *SelectorEvaluate(WordType *word)
 							 valueFlag=-1;
 							 break;
                     }
-					 } else if(SelectorIndexByName(word[c])>=0) {
-						depth++;
-						e=Stack+depth;
-						e->code=SELE_SELs;
-						e->level=(level<<4)+((e->code&0xF0)>>4);
-                  e->type=STYP_SEL1;
-                  valueFlag=1;
-                  c--;
-                } else {
-                  ok=ErrMessage("Selector","Unknown keyword or selection.");
+					 } else {
+                  strcpy(tmpKW,word[c]); /* handle <object-name>[`index] syntax */
+                  if((np=strstr(tmpKW,"`"))) { /* must be an object name */
+                    *np=0;
+                    if(SelectorIndexByName(tmpKW)>=0) {
+                      depth++;
+                      e=Stack+depth;
+                      e->code=SELE_MODs;
+                      e->level=(level<<4)+((e->code&0xF0)>>4);
+                      e->type=STYP_SEL1;
+                      valueFlag=1;
+                      c--;
+                    } else {
+                      ok=ErrMessage("Selector","Unknown keyword or selection.");
+                    }
+                  } else { /* handle <selection-name> syntax */
+                    if(SelectorIndexByName(tmpKW)>=0) {
+                      depth++;
+                      e=Stack+depth;
+                      e->code=SELE_SELs;
+                      e->level=(level<<4)+((e->code&0xF0)>>4);
+                      e->type=STYP_SEL1;
+                      valueFlag=1;
+                      c--;
+                    } else {
+                      ok=ErrMessage("Selector","Unknown keyword or selection.");
+                    }
+                  }
                 }
             }
           break;

@@ -35,6 +35,8 @@ Ongoing Goals
 
 Changes up to 0.58
 
+   * "alter" and "alter_state" given a 50% performance boost
+
    * added a coarse hydrogen-bond assessment feature (internal)
 
    * added phi/psi measuring capability to util module

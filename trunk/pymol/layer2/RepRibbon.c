@@ -189,7 +189,7 @@ Rep *RepRibbonNew(CoordSet *cs)
   I->R.fFree=(void (*)(struct Rep *))RepRibbonFree;
   I->R.fRecolor=NULL;
 
-  I->linewidth = SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_line_width);
+  I->linewidth = SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_ribbon_width);
 
   /* find all of the CA points */
 

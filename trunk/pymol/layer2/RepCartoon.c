@@ -421,7 +421,7 @@ Rep *RepCartoonNew(CoordSet *cs)
 
   I->std = CGONew();
 
-  if(nAt) {
+  if(nAt>1) {
     ex = ExtrudeNew();
     ExtrudeAllocPointsNormalsColors(ex,cs->NIndex*(3*sampling+3));
     n_p = 0;
@@ -648,26 +648,26 @@ Rep *RepCartoonNew(CoordSet *cs)
       }
     }
     ExtrudeFree(ex); 
+    if(SettingGet(cSetting_cartoon_debug)>0.5) {
+      CGOColor(I->std,1.0,1.0,1.0);
+      CGODisable(I->std,GL_LIGHTING);
+      CGOBegin(I->std,GL_LINES);
+      v1=pv;
+      v2=pvo;
+      for(a=0;a<nAt;a++) 
+        {
+          CGOVertexv(I->std,v1);
+          add3f(v1,v2,t0);
+          add3f(v2,t0,t0);
+          CGOVertexv(I->std,t0);
+          v1+=3;
+          v2+=3;
+        }
+      CGOEnd(I->std);
+      CGOEnable(I->std,GL_LIGHTING);
+    }
   }
   
-  if(SettingGet(cSetting_cartoon_debug)>0.5) {
-    CGOColor(I->std,1.0,1.0,1.0);
-    CGODisable(I->std,GL_LIGHTING);
-    CGOBegin(I->std,GL_LINES);
-    v1=pv;
-    v2=pvo;
-    for(a=0;a<nAt;a++) 
-      {
-        CGOVertexv(I->std,v1);
-        add3f(v1,v2,t0);
-        add3f(v2,t0,t0);
-        CGOVertexv(I->std,t0);
-        v1+=3;
-        v2+=3;
-      }
-    CGOEnd(I->std);
-    CGOEnable(I->std,GL_LIGHTING);
-  }
 
   CGOStop(I->std);
     

@@ -216,6 +216,9 @@ def phipsi(selection="(pk1)"): # NOT THREAD SAFE
    
 def ss(selection="(name ca and alt '',A)"): # NOT THREAD SAFE
 
+   cmd.feedback("push")
+   cmd.feedback("disable","executive","actions")
+   
    ss_pref = "sss"
    sss1 = ss_pref+"1"
    cnt = cmd.select(sss1,"((byres ("+selection+")) and name ca and not het)")
@@ -225,23 +228,43 @@ def ss(selection="(name ca and alt '',A)"): # NOT THREAD SAFE
    if not len(cas):
       return
 
-   print " util.ss: examining phi/psi angles..."
+   cmd.cartoon("auto",sss1)
    
-   cmd.feedback("push")
-   cmd.feedback("disable","executive","actions")
+   print " util.ss: extracting residue sequence..."
 
+   res_list = []
+   pymol._ss.res_list = res_list
+   cmd.iterate(sss1,'_ss.res_list.append((model,index))')
+   del pymol._ss.res_list # DECREF
+
+   # find gaps
+
+   gap_list = [None]
+   last = None
+   for a in res_list:
+      if last!=None:
+         if(cmd.count_atoms(
+            "((neighbor(neighbor(neighbor (%s`%d)))) and (%s`%d))"%
+            (last[0],last[1],a[0],a[1]),quiet=1)==0):
+            gap_list.append(None)
+         gap_list.append(a)
+      last = a
+   gap_list.append(None)
+
+   print " util.ss: analyzing phi/psi angles..."
+   
    # intialize all residues to loop
 
    cmd.alter(sss1,"ss ='L'")
 
    for a in cas:
-      (phi,psi) = phipsi("(%s & index %d)"%(a[0],a[1]))
+      (phi,psi) = phipsi("(%s`%d)"%(a[0],a[1]))
       if (phi!=None) and (psi!=None):
          if ((phi<-45) and (phi>-160) and (psi>90)): # beta?
-            cmd.alter("(%s & index %d)"%(a[0],a[1]),"ss='S'")
+            cmd.alter("(%s`%d)"%(a[0],a[1]),"ss='S'")
          elif ((phi<-45) and (phi>-160) and
                (psi>-80) and (psi<-30)): # helix?
-            cmd.alter("(%s & index %d)"%(a[0],a[1]),"ss='H'")
+            cmd.alter("(%s`%d)"%(a[0],a[1]),"ss='H'")
 
    cmd.feedback("pop")
    
@@ -257,5 +280,6 @@ def ss(selection="(name ca and alt '',A)"): # NOT THREAD SAFE
 
    #
 #   print conn_hash.keys()
+   print " util.ss: assignment complete."
 
 
