@@ -323,8 +323,15 @@ void ScenePNG(char *png)
                    GL_RGBA,GL_UNSIGNED_BYTE,image);
       I->ImageBufferHeight=I->Height;
       I->ImageBufferWidth=I->Width;
+    } else {
+      PRINTFB(FB_Scene,FB_Errors)
+        " ScenePNG-WARNING: writing a blank image buffer.\n"
+        ENDFB;
     }
   } else {
+    PRINTFB(FB_Scene,FB_Blather)
+      " ScenePNG: writing cached image.\n"
+      ENDFB;
 	 image=I->ImageBuffer;
   }
   if(MyPNGWrite(png,image,I->ImageBufferWidth,I->ImageBufferHeight)) {
@@ -1475,6 +1482,14 @@ void SceneRay(int ray_width,int ray_height,int mode,char **headerVLA_ptr,char **
   /* 5. move the origin to the center of rotation */
   MatrixTranslate44f3f(rayView,-I->Origin[0],-I->Origin[1],-I->Origin[2]);
 
+  if(Feedback(FB_Scene,FB_Debugging)) {
+    fprintf(stderr,"SceneRay: %8.3f %8.3f %8.3f\n",
+           I->Pos[0],I->Pos[1],I->Pos[2]);
+    fprintf(stderr,"SceneRay: %8.3f %8.3f %8.3f\n",
+           I->Origin[0],I->Origin[1],I->Origin[2]);
+    fprintf(stderr,"SceneRay: %8.3f %8.3f %8.3f\n",
+           I->RotMatrix[0],I->RotMatrix[1],I->RotMatrix[2]);
+  }
   /* define the viewing volume */
 
   height  = abs(I->Pos[2])*tan((fov/2.0)*cPI/180.0);	 
@@ -1542,7 +1557,6 @@ void SceneRay(int ray_width,int ray_height,int mode,char **headerVLA_ptr,char **
     " Ray: total rendering time: %4.2f sec. = %3.1f frames per hour.\n", 
     timing,3600/timing 
     ENDFB;
-
   OrthoDirty();
   RayFree(ray);
 }

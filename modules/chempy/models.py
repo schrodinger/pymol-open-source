@@ -550,14 +550,16 @@ class Indexed(Base):
                         done[a3] = 1
                         to_go = to_go - 1
             else: # for molecules with no torsions (dichloromethane, etc.)
+               # we have to generate torsions which include one virtual
+               # bond
                for b in cmodel.bond[fst]:
                   nbr = b.index[0]
                   if nbr == fst:
                      nbr = b.index[1]
-                     if not done.has_key(nbr):
-                        z_set.append((nbr,fst,nxt))
-                        to_go = to_go - 1
-                        done[nbr] = 1
+                  if not done.has_key(nbr):
+                     z_set.append((nbr,trd,fst,nxt))
+                     to_go = to_go - 1
+                     done[nbr] = 1
       return z_set
 #------------------------------------------------------------------------------
 #------------------------------------------------------------------------------

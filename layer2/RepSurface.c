@@ -663,6 +663,7 @@ Rep *RepSurfaceNew(CoordSet *cs)
     vn=I->VN;
 
 	 RepSurfaceGetSolventDots(I,cs,probe_radius,ssp,extent);
+
 	 solv_map=MapNew(probe_radius,I->Dot,I->NDot,extent);
 	 map=MapNew(MAX_VDW+probe_radius,cs->Coord,cs->NIndex,extent);
 
@@ -672,7 +673,7 @@ Rep *RepSurfaceNew(CoordSet *cs)
 		  MapSetupExpress(map);
         for(a=0;a<cs->NIndex;a++)
           {
-            OrthoBusyFast(a+cs->NIndex,cs->NIndex*5);
+            OrthoBusyFast(a+cs->NIndex,cs->NIndex*5); /* 1/5 - 2/5 */
             ai1 = obj->AtomInfo+cs->IdxToAtm[a];
             if((inclH||(!ai1->hydrogen))&&
                ((!cullByFlag)||
@@ -740,11 +741,16 @@ Rep *RepSurfaceNew(CoordSet *cs)
                 }
             }
           }
-		  OrthoBusyFast(3,10);
+
+        PRINTFD(FB_RepSurface)
+          " RepSurfaceNew-DEBUG: convex surfaces complete...\n"
+          ENDFD;
+
 		  if(I->NDot) {
-			 /* concave surfaces */
+			 /* concave surfaces - SLOW */
 			 for(a=0;a<I->NDot;a++)
 				{
+              OrthoBusyFast(a+I->NDot*2,I->NDot*5); /* 2/5 to 3/5 */
 				  v0 = I->Dot+3*a;
 				  vdw = probe_radius;
 				  for(b=0;b<sp->nDot;b++)
@@ -806,7 +812,6 @@ Rep *RepSurfaceNew(CoordSet *cs)
 		}
 	 /* now, eliminate dots that are too close to each other*/
 
-	 OrthoBusyFast(4,10);
     PRINTFB(FB_RepSurface,FB_Details)
       " RepSurface: %i surface points.\n",I->N
       ENDFB;
@@ -885,7 +890,7 @@ Rep *RepSurfaceNew(CoordSet *cs)
       " RepSurfaceNew-DEBUG: %i surface points after coloring.\n",I->N
       ENDFD;
 
-	 OrthoBusyFast(5,10);
+	 OrthoBusyFast(3,5);
 
     if(I->N) {
       I->T=TrianglePointsToSurface(I->V,I->VN,I->N,probe_radius,&I->NT,&I->S,extent);

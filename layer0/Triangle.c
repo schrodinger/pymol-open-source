@@ -1040,7 +1040,7 @@ static void FollowActives(float *v,float *vn,int n,int mode)
 
   cnt = (int)SettingGet(cSetting_max_triangles);
   
-  OrthoBusyFast((I->N*2)+I->nTri,I->N*4);
+  OrthoBusyFast((I->N*3)+I->nTri,I->N*5); /* 3/5 to 4/5 */
 
   while(I->nActive&&(I->nTri<cnt)) {
     I->nActive--;

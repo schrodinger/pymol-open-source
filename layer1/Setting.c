@@ -896,7 +896,7 @@ void SettingInitGlobal(void)
 
   SettingSet_f(I,cSetting_spec_reflect, 0.5F);
 
-  SettingSet_f(I,cSetting_spec_power, 40.0F);
+  SettingSet_f(I,cSetting_spec_power, 60.0F);
 
   SettingSet_f(I,cSetting_sweep_angle, 15.0F);
 
