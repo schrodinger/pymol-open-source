@@ -72,6 +72,7 @@ typedef struct ObjectMoleculeOpRec {
   char *charVLA;
   char *s1;
   ObjectMolecule **obj1VLA;
+  AtomInfoType *ai;
   float ttt[16];
   int nvv1,nvv2;
 } ObjectMoleculeOpRec;
@@ -113,6 +114,7 @@ typedef struct ObjectMoleculeOpRec {
 #define OMOP_IdentifyObjects 31
 #define OMOP_FlagSet 32
 #define OMOP_FlagClear 33
+#define OMOP_PrepareFromTemplate 34
 
 #include"CoordSet.h"
 

@@ -100,6 +100,10 @@ Current Bugs to Fix
 
    * intra_fit broken?
 
+Changes up to 0.73
+
+   * improved fragment and residue building capabilities
+
 Changes up to 0.72
 
    * fixed some logging issues with dragging pieces

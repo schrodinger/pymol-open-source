@@ -854,12 +854,15 @@ int  ExecutiveInvert(char *s0,char *s1,int mode)
   return(ok);
 }
 /*========================================================================*/
-void ExecutiveFuse(char *s0,char *s1)
+void ExecutiveFuse(char *s0,char *s1,int mode)
 {
   int i0=-1;
   int i1=-1;
-  int sele0,sele1;
+  int sele0,sele1,sele2;
   ObjectMolecule *obj0,*obj1;
+  ObjectMoleculeOpRec op;
+  
+  #define tmp_fuse_sele "tmp_fuse_sele"
 
   sele0 = SelectorIndexByName(s0);
   if(sele0>=0) {
@@ -875,6 +878,18 @@ void ExecutiveFuse(char *s0,char *s1)
       if(obj0&&obj1&&(i0>=0)&&(i1>=0)&&(obj0!=obj1)) {
         ObjectMoleculeVerifyChemistry(obj0);
         ObjectMoleculeVerifyChemistry(obj1);
+        
+        SelectorCreate(tmp_fuse_sele,NULL,obj0,1,NULL);
+        sele2=SelectorIndexByName(tmp_fuse_sele);
+        if(mode==1) {
+          op.code=OMOP_PrepareFromTemplate;
+          op.ai=obj1->AtomInfo+i1;
+          op.i1=mode;
+          op.i2=0;
+          ExecutiveObjMolSeleOp(sele2,&op);
+        }
+        SelectorDelete(tmp_fuse_sele);
+
         if((obj0->AtomInfo[i0].protons==1)&&
            (obj1->AtomInfo[i1].protons==1))
           ObjectMoleculeFuse(obj1,i1,obj0,i0,0);
@@ -1084,7 +1099,7 @@ void ExecutiveAddHydrogens(char *s1)
   
   sele1 = SelectorIndexByName(s1);
   if(sele1>=0) {
-    op.code = OMOP_AddHydrogens;
+    op.code = OMOP_AddHydrogens; /* 4 passes completes the job */
     ExecutiveObjMolSeleOp(sele1,&op);    
   }
 }

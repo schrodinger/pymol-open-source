@@ -202,6 +202,9 @@ def mol_action(s):
            [ 1, 'protect'  ,'cmd.protect("'+s+'")'        ],
            [ 1, 'deprotect'  ,'cmd.deprotect("'+s+'")'        ],
            [ 0, ''          ,''                                              ],
+           [ 1, 'add hydrogens' ,'cmd.h_add("'+s+'")'     ],           
+           [ 1, 'remove hydrogens'  ,'cmd.remove("(elem h and ('+s+'))")'     ],
+           [ 0, ''          ,''                                              ],
            [ 1, 'count atoms'  ,'cmd.count_atoms("'+s+'")'        ],
            ]
 
@@ -219,6 +222,9 @@ def all_action(s):
            [ 1, 'zoom'         , 'cmd.zoom("all")'     ],
            [ 0, ''             , ''                      ],
            [ 1, 'delete'       , 'cmd.delete("all")'     ],
+           [ 0, ''          ,''                                              ],
+           [ 1, 'add hydrogens' ,'cmd.h_add("'+s+'")'     ],           
+           [ 1, 'remove hydrogens'  ,'cmd.remove("(elem h and ('+s+'))")'     ],
            [ 0, ''             , ''                      ],
            [ 1, 'count atoms'       , 'cmd.count_atoms("all")'     ]
            ]

@@ -96,6 +96,7 @@ static void OrthoDrawWizardPrompt(void);
 
 Block *OrthoFindBlock(int x,int y);
 void OrthoKeyControl(unsigned char k);
+void OrthoKeyAlt(unsigned char k);
 
 #define cBusyWidth 240
 #define cBusyHeight 60
@@ -461,7 +462,24 @@ void OrthoKeyControl(unsigned char k) {
 
   /* safer...*/
 
-  sprintf(buffer,"cmd._ctrl('%c')",k+64);
+  sprintf(buffer,"cmd._ctrl(chr(%d))",k);
+  PLog(buffer,cPLog_pym);
+  PParse(buffer);
+  PFlush();
+
+  /*  PBlockAndUnlockAPI();
+      sprintf(buffer,"cmd._ctrl('%c')",k+64);
+      PRunString(buffer);
+      PLockAPIAndUnblock(); */
+
+}
+/*========================================================================*/
+void OrthoKeyAlt(unsigned char k) {
+  char buffer[OrthoLineLength];
+
+  /* safer...*/
+
+  sprintf(buffer,"cmd._alt(chr(%d))",k);
   PLog(buffer,cPLog_pym);
   PParse(buffer);
   PFlush();
@@ -509,7 +527,9 @@ void OrthoKey(unsigned char k,int x,int y,int mod)
 		}
 	 I->InputFlag=1;
   }
-  if((k>=32)&&(k!=127))
+  if(mod==4) { /* alt */
+    OrthoKeyAlt(k);
+  } else if((k>=32)&&(k!=127))
 	 {
       curLine=I->CurLine&OrthoSaveLines;
       
@@ -529,7 +549,7 @@ void OrthoKey(unsigned char k,int x,int y,int mod)
 	 {
     case 127: /* delete */     
       if((!I->CurChar)||(I->CurChar==I->PromptChar)||!OrthoTextVisible()) {
-        OrthoKeyControl(4);
+        OrthoKeyControl(4+64);
       } else {
         if(I->CursorChar>=0) {
           if(I->CursorChar<I->CurChar)
@@ -576,18 +596,18 @@ void OrthoKey(unsigned char k,int x,int y,int mod)
       if(OrthoArrowsGrabbed()) {
         I->CursorChar=-1;
       } else 
-        OrthoKeyControl(k);
+        OrthoKeyControl(k+64);
       break;
     case 1: /* CTRL A -- beginning */
       if(OrthoArrowsGrabbed()) {
         if(I->CurChar)
           I->CursorChar=I->PromptChar;        
       } else 
-        OrthoKeyControl(k);
+        OrthoKeyControl(k+64);
       break;
     case 4: /* CTRL D */
       if((!I->CurChar)||(I->CurChar==I->PromptChar)||!OrthoTextVisible()) {
-        OrthoKeyControl(4);
+        OrthoKeyControl(4+64);
       } else if((I->CurChar>I->PromptChar)&&
                 (I->CursorChar>=0)&&
                 (I->CursorChar<I->CurChar)) { /* deleting */
@@ -606,7 +626,7 @@ void OrthoKey(unsigned char k,int x,int y,int mod)
       break;
 	 case 9: /* CTRL I -- tab */
       if(mod&cOrthoCTRL) {
-        OrthoKeyControl(k); 
+        OrthoKeyControl(k+64); 
       } else {
         curLine=I->CurLine&OrthoSaveLines;
         if(I->PromptChar) {
@@ -644,7 +664,7 @@ void OrthoKey(unsigned char k,int x,int y,int mod)
         }
       } else {
         if(mod&cOrthoCTRL) {
-          OrthoKeyControl(k); 
+          OrthoKeyControl(k+64);
         }
       }
       break;
@@ -656,7 +676,7 @@ void OrthoKey(unsigned char k,int x,int y,int mod)
         PLockAPIAndUnblock(); */
       break;
 	 default:
-      OrthoKeyControl(k);
+      OrthoKeyControl(k+64);
 		break;
 	 }
   MainDirty();
