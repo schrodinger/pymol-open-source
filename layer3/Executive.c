@@ -96,6 +96,28 @@ void ExecutiveReshape(Block *block,int width,int height);
 void ExecutiveObjMolSeleOp(int sele,ObjectMoleculeOpRec *op);
 
 /*========================================================================*/
+int ExecutiveSculptIterateAll(void)
+{
+  int active = false;
+
+  CExecutive *I = &Executive;
+  SpecRec *rec = NULL;
+  ObjectMolecule *objMol;
+
+  if(SettingGet(cSetting_sculpting)) {
+    while(ListIterate(I->Spec,rec,next)) {
+      if(rec->type==cExecObject) {
+        if(rec->obj->type==cObjectMolecule) {
+          objMol =(ObjectMolecule*)rec->obj;
+          ObjectMoleculeSculptIterate(objMol,0,5);
+          active = true;
+        }
+      }
+    }
+  }
+  return(active);
+}
+/*========================================================================*/
 int ExecutiveObjectSculptIterate(char *name,int state,int n_cycle)
 {
   Object *obj = ExecutiveFindObjectByName(name);
@@ -2062,7 +2084,6 @@ void ExecutiveDrawNow(void)
   PRINTFD(FB_Executive)
     " ExecutiveDrawNow: leaving.\n"
     ENDFD;
-
 }
 /*========================================================================*/
 int ExecutiveCountStates(char *s1)

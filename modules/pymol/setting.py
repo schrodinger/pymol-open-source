@@ -175,6 +175,7 @@ class SettingIndex:
    auto_remove_hydrogens =158
    raise_exceptions      =159
    stop_on_exceptions    =160
+   sculpting             =161
    
 setting_sc = Shortcut(SettingIndex.__dict__.keys())
    

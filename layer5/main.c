@@ -405,6 +405,7 @@ void MainBusyIdle(void)
   PLockAPIAsGlut();
 
   if(ControlIdling()) {
+    ExecutiveSculptIterateAll();
 	 SceneIdle(); 
 	 I->IdleMode=0;
   } else {

@@ -1177,5 +1177,7 @@ void SettingInitGlobal(void)
 
   SettingSet_f(I,cSetting_stop_on_exceptions, 0.0F);  
 
+  SettingSet_f(I,cSetting_sculpting, 0.0F);  
+
 }
 

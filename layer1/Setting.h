@@ -259,7 +259,9 @@ int SettingGetName(int index,SettingName name);
 #define cSetting_auto_remove_hydrogens       158
 #define cSetting_raise_exceptions            159
 #define cSetting_stop_on_exceptions          160
-#define cSetting_INIT                        161
+#define cSetting_sculpting                   161
+
+#define cSetting_INIT                        162
 
 #endif
 
