@@ -103,7 +103,7 @@ void _VLAFree(const char *file,int line,void *ptr)
 #endif
 }
 
-unsigned int VLAGetSize(void *ptr)
+unsigned int VLAGetSize2(void *ptr)
 {
   VLARec *vla;
   vla = &((VLARec*)ptr)[-1];

@@ -61,9 +61,9 @@ function name.
 
 /* Discrete Systems and/or Code Modules */
 
-#define FB_All               0 /* only used for setting */
+#define FB_all               0 /* only used for setting */
 
-#define FB_Feedback                  1
+#define FB_feedback_                 1
 #define FB_smiles_parsing            2
 #define FB_smiles_creation           3
 
@@ -85,33 +85,33 @@ function name.
 
 #define FB_everything      0xFF 
 
-extern char *FeedbackMask;
+extern char *feedback_Mask;
 
-void FeedbackInit(void);
-void FeedbackFree(void);
-void FeedbackPush(void);
-void FeedbackPop(void);
+void feedback_Init(void);
+void feedback_Free(void);
+void feedback_Push(void);
+void feedback_Pop(void);
 
-void FeedbackSetMask(unsigned int sysmod,unsigned char mask);
-void FeedbackDisable(unsigned int sysmod,unsigned char mask);
-void FeedbackEnable(unsigned int sysmod,unsigned char mask);
+void feedback_SetMask(unsigned int sysmod,unsigned char mask);
+void feedback_Disable(unsigned int sysmod,unsigned char mask);
+void feedback_Enable(unsigned int sysmod,unsigned char mask);
 
 /* Mechanism: a high-speed bit test, with no range checking 
  * in order to avoid penalizing performance-senstive code
  * modules which may contain live debugging code.  
  */
 
-#define Feedback(sysmod,mask) (FeedbackMask[sysmod]&mask) 
+#define feedback_(sysmod,mask) (feedback_Mask[sysmod]&mask) 
 
 #define FEEDBACK_MAX_OUTPUT 1024
-typedef char FeedbackLineType[FEEDBACK_MAX_OUTPUT];
+typedef char feedback_LineType[FEEDBACK_MAX_OUTPUT];
 
-/* Print Feedback Macros -- this the most flexible and cross-OS
+/* Print feedback_ Macros -- this the most flexible and cross-OS
  * portable solution I've come up with for sending output with
  * variable arguments.
 */
 
-#define PRINTFB(sysmod,mask) { if(Feedback(sysmod,mask)) { printf(
+#define PRINTFB(sysmod,mask) { if(feedback_(sysmod,mask)) { printf(
 #define ENDFB );}}
 
 #define PRINTF { printf(
@@ -119,7 +119,7 @@ typedef char FeedbackLineType[FEEDBACK_MAX_OUTPUT];
 
 /* debugging: goes to stderr */
 
-#define PRINTFD(sysmod) {if(Feedback(sysmod,FB_debugging)) fprintf(stderr,
+#define PRINTFD(sysmod) {if(feedback_(sysmod,FB_debugging)) fprintf(stderr,
 #define ENDFD   );}
 
 #endif
