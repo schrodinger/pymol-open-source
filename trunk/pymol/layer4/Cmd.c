@@ -97,8 +97,12 @@ static PyObject *Cmd_Failure;
 
 static void APIEntry(void)
 {
-  if(PyMOLTerminating) /* try to bail */
+if(PyMOLTerminating) {/* try to bail */
+#ifdef WIN32
+	abort();
+#endif
     exit(0);
+	}
   P_glut_thread_keep_out++; 
   PUnblock();
 }
@@ -1012,8 +1016,12 @@ static PyObject *CmdGetFeedback(PyObject *dummy, PyObject *args)
   PyObject *result = NULL;
   int code;
 
-  if(PyMOLTerminating) /* try to bail */
+  if(PyMOLTerminating) { /* try to bail */
+#ifdef WIN32
+	abort();
+#endif
     exit(0);
+  }
   code = OrthoFeedbackOut(buffer);
   if(code)
     result = Py_BuildValue("s",buffer);
