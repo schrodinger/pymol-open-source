@@ -179,6 +179,9 @@ CHANGE LOG
 
 Changes up to 0.92
 
+   * added RPM support for "import pymol", fixed several bugs running
+     PyMOL in this fashion, with or without a GUI.  
+
    * fixed alpha channel handling for transparent surfaces in ray tracer
      with a non-opaque background, with fog, and with both togetherset 
 
