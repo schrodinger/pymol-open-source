@@ -2628,7 +2628,7 @@ int ObjectMoleculeTransformSelection(ObjectMolecule *I,int state,
     switch(logging) {
     case cPLog_pml:
       sprintf(line,
-              "_ cmd.transform_object('%s',[\\\n_ %15.9f,%15.9f,%15.9f,%15.9f,\\\n_ %15.9f,%15.9f,%15.9f,%15.9f,\\\n_ %15.9f,%15.9f,%15.9f,%15.9f,\\\n_ %15.9f,%15.9f,%15.9f,%15.9f\n_     ],%d,%d%s)\n",
+              "_ cmd.transform_object('%s',[\\\n_ %15.9f,%15.9f,%15.9f,%15.9f,\\\n_ %15.9f,%15.9f,%15.9f,%15.9f,\\\n_ %15.9f,%15.9f,%15.9f,%15.9f,\\\n_ %15.9f,%15.9f,%15.9f,%15.9f\\\n_     ],%d,%d%s)\n",
               I->Obj.Name,
               TTT[ 0],TTT[ 1],TTT[ 2],TTT[ 3],
               TTT[ 4],TTT[ 5],TTT[ 6],TTT[ 7],
