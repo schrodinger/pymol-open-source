@@ -179,6 +179,7 @@ static int ExecutiveSetNamedEntries(PyObject *names)
 {
   CExecutive *I = &Executive;  
   int ok=true;
+  int skip=false;
   int a=0,l=0;
   PyObject *cur;
   SpecRec *rec = NULL;
@@ -190,6 +191,7 @@ static int ExecutiveSetNamedEntries(PyObject *names)
   while(ok&&(a<l)) {
     cur = PyList_GetItem(names,a);
     if(cur!=Py_None) { /* skip over None w/o aborting */
+      skip=false;
       rec=NULL;
       ListElemAlloc(rec,SpecRec); 
       rec->next=NULL;
@@ -223,7 +225,11 @@ static int ExecutiveSetNamedEntries(PyObject *names)
           if(ok) ok = ObjectCGONewFromPyList(PyList_GetItem(cur,5),(ObjectCGO**)&rec->obj);
           break;
         default:
-          ok=false;
+          PRINTFB(FB_Executive,FB_Errors)
+            " Executive:  unrecognized object '%s' of type %d.\n",
+            rec->name,rec->type
+            ENDFB;
+          skip=true;
           break;
         }
         break;
@@ -231,7 +237,7 @@ static int ExecutiveSetNamedEntries(PyObject *names)
         rec->sele_color=extra_int;
         break;
       }
-      if(ok) {
+      if(ok&&!skip) {
         switch(rec->type) {
         case cExecObject:        
           if(rec->visible) {
@@ -4133,11 +4139,12 @@ void ExecutiveSetRepVisib(char *name,int rep,int state)
           if(tRec->obj->fInvalidate)
             tRec->obj->fInvalidate(tRec->obj,rep,cRepInvVisib,state);
         } else {
-          for(a=0;a<cRepCnt;a++)
+          for(a=0;a<cRepCnt;a++) {
             tRec->repOn[a]=state; 
-          ObjectSetRepVis(tRec->obj,a,state);
-          if(tRec->obj->fInvalidate)
-            tRec->obj->fInvalidate(tRec->obj,rep,cRepInvVisib,state);
+            ObjectSetRepVis(tRec->obj,a,state);
+            if(tRec->obj->fInvalidate)
+              tRec->obj->fInvalidate(tRec->obj,a,cRepInvVisib,state);
+          }
         }
         SceneChanged();
         break;

@@ -16,7 +16,7 @@ PyMOL>load dat/3al1.pdb
  Crystal:   20.54400   -9.81199   -3.18885
  Crystal:    0.00000   18.40714   -7.41448
  Crystal:    0.00000    0.00000   24.77337
- Crystal: Unit Cell Volume 9368.204
+ Crystal: Unit Cell Volume   9368.2
  Symmetry:      1.00000      0.00000      0.00000      0.00000
  Symmetry:      0.00000      1.00000      0.00000      0.00000
  Symmetry:      0.00000      0.00000      1.00000      0.00000
@@ -65,14 +65,14 @@ PyMOL>util.cbas
  Executive: Colored 922 atoms.
 PyMOL>util.cbc
  Iterate: iterated over 2870 atoms.
-7,(chain E)
- Executive: Colored 107 atoms.
-8,(chain B)
- Executive: Colored 310 atoms.
-9,(chain '')
+7,(chain '')
  Executive: Colored 2174 atoms.
-10,(chain A)
+8,(chain A)
  Executive: Colored 279 atoms.
+9,(chain B)
+ Executive: Colored 310 atoms.
+10,(chain E)
+ Executive: Colored 107 atoms.
 PyMOL>hide
 PyMOL>show car
 PyMOL>zoom

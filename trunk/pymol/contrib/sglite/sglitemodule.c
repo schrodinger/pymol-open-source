@@ -1266,6 +1266,11 @@ static struct PyMethodDef module_methods[] = {
 
 static char *module_documentation = "sglite - space group library";
 
+/* C prototype to suppress GCC compiler warning...*/
+DL_EXPORT(void)
+     initsglite(void);
+
+
 DL_EXPORT(void)
 initsglite(void)
 {

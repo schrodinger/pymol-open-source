@@ -40,6 +40,19 @@
 #include <string.h>
 #include "openglutil.h"
 
+static PyObject *ErrorReturn(char *message)
+{
+    PyErr_SetString(gl_Error, message);
+    return NULL;
+}
+
+static void suppress_compiler_warnings(void)
+{
+  ErrorReturn(NULL);
+  suppress_compiler_warnings();
+}
+
+
 /*
  * The procedure gl_SaveTiff was added by 
  * Lothar Birk <lb@ocean.fb12.TU-Berlin.DE>
@@ -73,6 +86,7 @@
 #ifdef LIBTIFF
 
 #include <tiffio.h>
+
 
 static PyObject *gl_SaveTiff(PyObject * self, PyObject * args)
 {
@@ -1468,7 +1482,8 @@ static PyObject *glSphereSetDSPL(PyObject * self, PyObject * args,
      "slices", "stacks",
      NULL};
 
-    int type, frontAndBack = 0, noCol = 0, slices = 10, stacks;
+    /* int type;*/
+      int frontAndBack = 0, noCol = 0, slices = 10, stacks;
     PyObject *py_coords, *py_frontMat = NULL, *py_backMat = NULL, *py_frontMatBind = NULL,
     *py_backMatBind = NULL, *lstitem;
 
@@ -1484,8 +1499,9 @@ static PyObject *glSphereSetDSPL(PyObject * self, PyObject * args,
     int expected_bind_dims = 5, hasFrontMatBind = 0, hasBackMatBind = 0;
 
     GLuint dpl;
-    int i, j, k, l, v, w, face, frontMatBind[5], backMatBind[5], *fmb,
-    *bmb, NONE = -1, OVERALL = 10, PER_VERTEX = 11, PER_PART = 12, propConst[] =
+    /* int  k, l, v, w, PER_VERTEX = 11;*/
+    int i, j, face, frontMatBind[5], backMatBind[5], *fmb,
+    *bmb, NONE = -1, OVERALL = 10, PER_PART = 12, propConst[] =
     {GL_AMBIENT, GL_DIFFUSE, GL_SPECULAR, GL_EMISSION,
      GL_SHININESS};
 
@@ -1535,11 +1551,11 @@ static PyObject *glSphereSetDSPL(PyObject * self, PyObject * args,
 						 expected_prop_dims);
 	    if (!fm_array[i]) {
 		Py_DECREF((PyObject *) c_array);
-		if (fmb_array)
-		    Py_DECREF((PyObject *) fmb_array);
+		if (fmb_array) {
+        Py_DECREF((PyObject *) fmb_array);}
 		for (j = 0; j < i; j++)
-		    if (fm_array[j])
-			Py_DECREF((PyObject *) fm_array[j]);
+        if (fm_array[j]) {
+          Py_DECREF((PyObject *) fm_array[j]);}
 		return NULL;
 	    }
 	    frontMat[i] = (float *) fm_array[i]->data;
@@ -1564,11 +1580,13 @@ static PyObject *glSphereSetDSPL(PyObject * self, PyObject * args,
 					   &expected_bind_dims);
 	if (!bmb_array) {
 	    Py_DECREF((PyObject *) c_array);
-	    if (fmb_array)
+	    if (fmb_array) {
 		Py_DECREF((PyObject *) fmb_array);
+       }
 	    for (j = 0; j < 5; j++)
-		if (fm_array[j])
+         if (fm_array[j]) {
 		    Py_DECREF((PyObject *) fm_array[j]);
+         }
 	    return NULL;
 	}
 	bmb = (int *) bmb_array->data;
@@ -1591,16 +1609,18 @@ static PyObject *glSphereSetDSPL(PyObject * self, PyObject * args,
 						 expected_prop_dims);
 	    if (!bm_array[i]) {
 		Py_DECREF((PyObject *) c_array);
-		if (fmb_array)
-		    Py_DECREF((PyObject *) fmb_array);
-		if (bmb_array)
-		    Py_DECREF((PyObject *) bmb_array);
+		if (fmb_array) {
+        Py_DECREF((PyObject *) fmb_array);}
+		if (bmb_array) {
+        Py_DECREF((PyObject *) bmb_array); }
 		for (j = 0; j < 5; j++)
-		    if (fm_array[j])
+        if (fm_array[j]) {
 			Py_DECREF((PyObject *) fm_array[j]);
+        }
 		for (j = 0; j < i; j++)
-		    if (bm_array[j])
+        if (bm_array[j]) {
 			Py_DECREF((PyObject *) bm_array[j]);
+        }
 		return NULL;
 	    }
 	    backMat[i] = (float *) bm_array[i]->data;
@@ -1700,15 +1720,15 @@ static PyObject *glSphereSetDSPL(PyObject * self, PyObject * args,
     glEndList();
 
     Py_DECREF((PyObject *) c_array);
-    if (fmb_array)
-	Py_DECREF((PyObject *) fmb_array);
-    if (bmb_array)
-	Py_DECREF((PyObject *) bmb_array);
+    if (fmb_array) {
+      Py_DECREF((PyObject *) fmb_array); }
+    if (bmb_array) {
+      Py_DECREF((PyObject *) bmb_array); }
     for (j = 0; j < 5; j++) {
-	if (fm_array[j])
-	    Py_DECREF((PyObject *) fm_array[j]);
-	if (bm_array[j])
-	    Py_DECREF((PyObject *) bm_array[j]);
+      if (fm_array[j]) {
+        Py_DECREF((PyObject *) fm_array[j]); }
+      if (bm_array[j]) { 
+        Py_DECREF((PyObject *) bm_array[j]); }
     }
     return Py_BuildValue("i", dpl);
 }
@@ -2016,13 +2036,13 @@ static PyObject *PyObjtrackball_getattr(PyObjtrackball * self, char *name)
 static int PyObjtrackball_setattr(PyObjtrackball * self, char *name, PyObject * v)
 {
     if (strcmp(name, "size") == 0) {
-	Py_Try(PyArg_Parse(v, "f", &self->trackballsize));
+      PyArg_Parse(v, "f", &self->trackballsize);
 	return 0;
     } else if (strcmp(name, "scale") == 0) {
-	Py_Try(PyArg_Parse(v, "f", &self->scale));
+      PyArg_Parse(v, "f", &self->scale);
 	return 0;
     } else if (strcmp(name, "renom") == 0) {
-	Py_Try(PyArg_Parse(v, "i", &self->renormcount));
+      PyArg_Parse(v, "i", &self->renormcount);
 	return 0;
     }
     PyErr_SetString(PyExc_ValueError, "Sorry, bad or ReadOnly data member");
@@ -2481,8 +2501,10 @@ static char openglutil_module_documentation[] =
    glSelectWithCallback";
 
 #ifdef NUMERIC
+DL_EXPORT(void) initopenglutil_num(void);
 DL_EXPORT(void) initopenglutil_num(void)
 #else
+DL_EXPORT(void) initopenglutil(void);
 DL_EXPORT(void) initopenglutil(void)
 #endif
 {

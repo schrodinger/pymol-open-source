@@ -70,13 +70,13 @@
 /* #include "GL/glutint.h" */
 
 static PyObject *glut_Error;
-
+void DeviceButtonPressGrab(void *x, void *y, void *z);
 void DeviceButtonPressGrab(void *x, void *y, void *z)
 {
     printf("help, shouldn't be here\n");
 }
 
-void *map_lookup(char *mp[][2], char *nm)
+static void *map_lookup(char *mp[][2], char *nm)
 {
     int i = 0;
     while (mp[i][0] != NULL) {
@@ -2616,8 +2616,8 @@ static PyMethodDef glut_methods[] =
     {NULL, NULL, 0}
 };
 
-DL_EXPORT(void)
-init_glut(void)
+DL_EXPORT(void) init_glut(void);
+DL_EXPORT(void) init_glut(void)
 {
     PyObject *m;
     PyObject *d;
