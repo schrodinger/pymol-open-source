@@ -54,7 +54,7 @@ static char *FontGLUTRenderOpenGL(CFontGLUT *I,char *st)
   int c;
   FontGLUTBitmapFontRec *font_info = I->glutFont;
   int first,last;
-  FontGLUTBitmapCharRec *ch;
+  FontGLUTBitmapCharRec const *ch;
 
   if(st&&(*st)) {
     FontGLUTSave(I);
@@ -109,7 +109,7 @@ static char *FontGLUTRenderRay(CRay *ray, CFontGLUT *I,char *st)
   int c;
   FontGLUTBitmapFontRec *font_info = I->glutFont;
   int first,last;
-  FontGLUTBitmapCharRec *ch;
+  FontGLUTBitmapCharRec const *ch;
   CharFngrprnt fprnt;
   unsigned char *rgba;
   
@@ -126,17 +126,19 @@ static char *FontGLUTRenderRay(CRay *ray, CFontGLUT *I,char *st)
           ch = font_info->ch[c - first];
           if (ch) {
             fprnt.u.i.ch = c;
-            int id = CharacterFind(&fprnt);
-            if(!id) {
-              id = CharacterNewFromBitmap(ch->width, 
+            {
+              int id = CharacterFind(&fprnt);
+              if(!id) {
+                id = CharacterNewFromBitmap(ch->width, 
                                           ch->height, 
                                           (unsigned char*)ch->bitmap,
                                           &fprnt);
-            }
-            ray->fCharacter(ray,id,
+              }
+               ray->fCharacter(ray,id,
                             (float)ch->xorig,
                             (float)ch->yorig,
                             (float)ch->advance);
+            }
           }
         }
     }

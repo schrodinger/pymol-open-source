@@ -21,6 +21,7 @@ Z* -------------------------------------------------------------------
 int FontInit(CFont *I)
 {
   UtilZeroMem(I,sizeof(CFont));
+  return 1;
 }
 
 void FontPurge(CFont *I)
