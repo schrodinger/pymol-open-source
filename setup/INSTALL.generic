@@ -1,24 +1,23 @@
 ----------------------------------------------------------------------
-PyMOL (C) 1998-2002 by Warren L. DeLano of DeLano Scientific.
+PyMOL (C) 1998-2003 by Warren L. DeLano of DeLano Scientific.
 http://www.pymol.org       EMAIL: warren@delanoscientific.com
 ----------------------------------------------------------------------
 INSTALLATION AND COMPILATION GUIDE
 
 NOTE: 
 
-   These are the general installation instructions.  If you are on a
-   commmon platform such as RedHat Linux, look for a INSTALL file
-   which specifically address your platform (for example,
-   "INSTALL.linux-rh7x") in the setup directory.
+These are the general installation instructions for a platform which
+has no preinstalled dependencies whatsoever.  These days, that's
+pretty rare.  
 
+Most likely, you are on a commmon platform such as RedHat, or OSX, so
+look for a INSTALL file which specifically address your platform in
+the setup directory.
 
-WARNING:
-
-   You will need some basic knowledge of Makefiles, compilation
-   flags, libraries, python, environment variables, and paths in order
-   to compile PyMOL.  If you don't feel comfortable with this, then try
-   out the MS-Window's version, which you can download from the WEB
-   site.
+WARNING: You will need some basic knowledge of Makefiles, compilation
+flags, libraries, python, environment variables, and paths in order to
+compile PyMOL.  If you don't feel comfortable with this, then try out
+the MS-Window's version, which you can download from the WEB site.
 
 The following instructions assume you are installing PyMOL in your
 home directory.  You can of course put it anywhere, but you will need
