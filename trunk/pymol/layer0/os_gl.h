@@ -26,6 +26,10 @@ Z* -------------------------------------------------------------------
 #include<gl.h>
 #endif
 
+#ifdef WIN32
+#include<GL/glu.h>
+#endif
+
 /* determine whether or not we have a real GLUT */
 
 #ifdef _PYMOL_NO_GLUT

@@ -13,10 +13,9 @@ I* Additional authors of this source file include:
 -*
 Z* -------------------------------------------------------------------
 */
-#ifndef _H_MyPNG
-#define _H_MyPNG
+#ifndef _H_os_predef
+#define _H_os_predef
 
-int MyPNGWrite(char *file_name,unsigned char *p,unsigned int width,unsigned int height);
-int MyPNGRead(char *file_name,unsigned char **p_ptr,unsigned int *width_ptr,unsigned int *height_ptr);
+
 
 #endif
