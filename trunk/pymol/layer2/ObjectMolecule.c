@@ -6710,49 +6710,56 @@ void ObjectMoleculeSeleOp(ObjectMolecule *I,int sele,ObjectMoleculeOpRec *op)
        }
      break;
    default:
+     ai = I->AtomInfo;
      for(a=0;a<I->NAtom;a++)
 		 {
 		   switch(op->code) { 
          case OMOP_Flag: 
-           I->AtomInfo[a].flags &= op->i2; /* clear flag using mask */
+           ai->flags &= op->i2; /* clear flag using mask */
            op->i4++;
            /* no break here is intentional!  */
          case OMOP_FlagSet:
          case OMOP_FlagClear:
 		   case OMOP_COLR: /* normal atom based loops */
 		   case OMOP_VISI:
+         case OMOP_CheckVis:
 		   case OMOP_TTTF:
          case OMOP_ALTR:
          case OMOP_LABL:
          case OMOP_AlterState:
-			 s=I->AtomInfo[a].selEntry;
+			 s=ai->selEntry;
           if(SelectorIsMember(s,sele))
             {
               switch(op->code) {
               case OMOP_Flag:
-                I->AtomInfo[a].flags |= op->i1; /* set flag */
+                ai->flags |= op->i1; /* set flag */
                 op->i3++;
                 break;
               case OMOP_FlagSet:
-                I->AtomInfo[a].flags |= op->i1; /* set flag */
+                ai->flags |= op->i1; /* set flag */
                 op->i3++;
                 break;
               case OMOP_FlagClear:
-                I->AtomInfo[a].flags &= op->i2; /* clear flag */
+                ai->flags &= op->i2; /* clear flag */
                 op->i3++;
                 break;
               case OMOP_VISI:
                 if(op->i1<0)
                   for(d=0;d<cRepCnt;d++) 
-                    I->AtomInfo[a].visRep[d]=op->i2;                      
+                    ai->visRep[d]=op->i2;                      
                 else {
-                  I->AtomInfo[a].visRep[op->i1]=op->i2;
+                  ai->visRep[op->i1]=op->i2;
                   if(op->i1==cRepCell) I->Obj.RepVis[cRepCell]=op->i2;
                 }
                 break;
                 break;
+              case OMOP_CheckVis:
+                if(ai->visRep[op->i1]) {
+                  op->i2 = true;
+                }
+                break;
               case OMOP_COLR:
-                I->AtomInfo[a].color=op->i1;
+                ai->color=op->i1;
                 op->i2++;
                 break;
               case OMOP_TTTF:
@@ -6761,14 +6768,14 @@ void ObjectMoleculeSeleOp(ObjectMolecule *I,int sele,ObjectMoleculeOpRec *op)
               case OMOP_LABL:
                 if (ok) {
                   if(!op->s1[0]) {
-                    I->AtomInfo[a].label[0]=0;
+                    ai->label[0]=0;
                     op->i1++;
-                    I->AtomInfo[a].visRep[cRepLabel]=false;
+                    ai->visRep[cRepLabel]=false;
                     hit_flag=true;
                   }  else {
                     if(PLabelAtom(&I->AtomInfo[a],op->s1,a)) {
                       op->i1++;
-                      I->AtomInfo[a].visRep[cRepLabel]=true;
+                      ai->visRep[cRepLabel]=true;
                       hit_flag=true;
                     } else
                       ok=false;
@@ -6813,7 +6820,7 @@ void ObjectMoleculeSeleOp(ObjectMolecule *I,int sele,ObjectMoleculeOpRec *op)
               }
               break;
             }
-			 break;
+          break;
 
           /* coord-set based properties, iterating only a single coordinate set */
          case OMOP_CSetMinMax:          
@@ -6824,7 +6831,7 @@ void ObjectMoleculeSeleOp(ObjectMolecule *I,int sele,ObjectMoleculeOpRec *op)
            if((op->cs1>=0)&&(op->cs1<I->NCSet)) {
              cs=I->CSet[op->cs1];
              if(cs) {
-               s=I->AtomInfo[a].selEntry;
+               s=ai->selEntry;
                if(SelectorIsMember(s,sele))
                  {
                    switch(op->code) {
@@ -6967,7 +6974,7 @@ void ObjectMoleculeSeleOp(ObjectMolecule *I,int sele,ObjectMoleculeOpRec *op)
               {
                 cs=I->CSet[b];
                 inv_flag=false;
-                s=I->AtomInfo[a].selEntry;
+                s=ai->selEntry;
                 if(SelectorIsMember(s,sele))
                   {
                     switch(op->code) {
@@ -7185,6 +7192,7 @@ void ObjectMoleculeSeleOp(ObjectMolecule *I,int sele,ObjectMoleculeOpRec *op)
               } /* end coordset section */
           break;
          }
+         ai++;
 		 }
      break;
 	}

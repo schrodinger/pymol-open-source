@@ -152,6 +152,8 @@ typedef struct {
 #define OMOP_GetOccupancies 49
 #define OMOP_GetPartialCharges 50
 #define OMOP_StateVRT 51
+#define OMOP_CheckVis 52
+
 
 #include"CoordSet.h"
 
@@ -205,7 +207,8 @@ void M4XAnnoPurge(M4XAnnoType *m4x);
 void M4XAlignInit(M4XAlignType *align);
 void M4XAlignPurge(M4XAlignType *align);
 
-void ObjectMoleculeM4XAnnotate(ObjectMolecule *I,M4XAnnoType *m4x,char *script_file,int match_colors);
+void ObjectMoleculeM4XAnnotate(ObjectMolecule *I,M4XAnnoType *m4x,char *script_file,int match_colors,
+                               int nbr_sele);
 
 /* */
 void ObjectMoleculeOpRecInit(ObjectMoleculeOpRec *op);

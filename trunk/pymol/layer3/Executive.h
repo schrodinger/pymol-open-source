@@ -71,8 +71,11 @@ void ExecutiveDrawNow(void);
 int ExecutiveCartoon(int type,char *sele);
 void ExecutiveSetAllVisib(int state);
 void ExecutiveSetRepVisib(char *name,int rep,int state);
+int ExecutiveToggleRepVisib(char *name,int rep);
+
 void ExecutiveSetAllRepVisib(char *name,int rep,int state);
 void ExecutiveSetObjVisib(char *name,int state);
+
 int ExecutiveOrigin(char *name,int preserve,char *oname,float *pos,int state);
 int ExecutiveCenter(char *name,int state,int inclusive);
 int ExecutiveWindowZoom(char *name,float buffer,int state,int inclusive);
@@ -175,6 +178,7 @@ int ExecutiveGetCrystal(char *sele,float *a,float *b,float *c,
                         float *alpha,float *beta,float *gamma,char *sgroup,int *defined);
 int ExecutiveIterateObjectMolecule(ObjectMolecule **obj,void **hidden);
 int ExecutiveGetObjectColorIndex(char *name);
+void ExecutiveToggleAllRepVisib(char *name,int rep);
 
 #endif
 

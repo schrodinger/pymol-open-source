@@ -74,6 +74,7 @@ void WizardDoSelect(char *name)
 {
   OrthoLineType buf;
   CWizard *I=&Wizard;
+
   if(I->Stack>=0)
     if(I->Wiz[I->Stack]) {
       sprintf(buf,"cmd.get_wizard().do_select('''%s''')",name);
@@ -373,6 +374,25 @@ static void draw_button(int x2,int y2, int w, int h, float *light, float *dark, 
 
 }
 
+static draw_text(char *c,int xx,int yy,float *color)
+{
+  glColor3fv(color);
+  while(*c) {
+    if(*c=='\\') if(*(c+1)) if(*(c+2)) if(*(c+3)) {
+      if(*(c+1)=='-') {
+        glColor3fv(color);
+        c+=4;
+      } else {
+        glColor3f((*(c+1)-'0')/9.0F,(*(c+2)-'0')/9.0F,(*(c+3)-'0')/9.0F);
+        c+=4;
+      }
+    }
+    glRasterPos4d((double)(xx),(double)(yy),0.0,1.0);
+    p_glutBitmapCharacter(P_GLUT_BITMAP_8_BY_13,*(c++));
+    xx = xx + 8;
+  }
+}
+
 /*========================================================================*/
 static void WizardDraw(Block *block)
 {
@@ -392,10 +412,13 @@ static void WizardDraw(Block *block)
   float menuLightEdge[3] = {0.7,0.7,0.9F};
   float menuDarkEdge[3] = {0.3,0.3,0.5F};
 
-  
+  float black_color[3] = {0.0F,0.0F,0.0F};
   float menuColor[3] = { 0.0,0.0,0.0};
   int LineHeight = SettingGetGlobal_i(cSetting_internal_gui_control_size);
   int text_lift = (LineHeight/2)-5;
+  float *text_color ;
+
+  text_color = menuColor;
 
   if(PMGUI) {
     glColor3fv(I->Block->BackColor);
@@ -414,12 +437,14 @@ static void WizardDraw(Block *block)
                       dimLightEdge,
                       dimDarkEdge,
                       buttonActiveColor);
-        glColor3f(0.0,0.0,0.0);
+          /*        glColor3f(0.0,0.0,0.0);*/
+          text_color = black_color;
       } else {
         switch(I->Line[a].type) {
         case cWizTypeText:
 
           glColor3fv(I->Block->TextColor);
+          text_color = I->Block->TextColor;
           break;
         case cWizTypeButton:
           draw_button(I->Block->rect.left+1,y,
@@ -429,8 +454,8 @@ static void WizardDraw(Block *block)
                       dimDarkEdge,
                       dimColor);
 
-          glColor3fv(buttonTextColor);
-
+          /*          glColor3fv(buttonTextColor);*/
+          text_color = buttonTextColor;
          break;
         case cWizTypePopUp:
           draw_button(I->Block->rect.left+1,y,
@@ -439,13 +464,15 @@ static void WizardDraw(Block *block)
                       menuLightEdge,
                       menuDarkEdge,
                       menuBGColor);
-          glColor3fv(menuColor);
+          /* glColor3fv(menuColor);*/
+          text_color = menuColor;
           break;
         default:
           break;
         }
       }
-      GrapDrawStr(I->Line[a].text,x+1,y+text_lift);
+      draw_text(I->Line[a].text,x+1,y+text_lift,text_color);
+      /*GrapDrawStr(I->Line[a].text,x+1,y+text_lift);*/
       y-=LineHeight;
     }
   }

@@ -29,8 +29,8 @@ Z* -------------------------------------------------------------------
 #include "P.h"
 #include "Util.h"
 
-#define cPopUpLineHeight 16
-#define cPopUpTitleHeight 18
+#define cPopUpLineHeight 17
+#define cPopUpTitleHeight 19
 #define cPopUpBarHeight 4
 #define cPopUpCharWidth 8
 #define cPopUpCharMargin 2
@@ -567,8 +567,8 @@ void PopUpDraw(Block *block)
       glBegin(GL_POLYGON);
       glVertex2i(x,y);
       glVertex2i(x+I->Width,y);
-      glVertex2i(x+I->Width,y-(cPopUpLineHeight+cPopUpCharMargin+1));
-      glVertex2i(x,y-(cPopUpLineHeight+cPopUpCharMargin+1));
+      glVertex2i(x+I->Width,y-(cPopUpLineHeight+3));
+      glVertex2i(x,y-(cPopUpLineHeight+3));
       glEnd();
     }
 
@@ -650,11 +650,11 @@ void PopUpDraw(Block *block)
         } else {
           glBegin(GL_LINES);
           glColor3f(0.3F,0.3F,0.5F);
-          glVertex2i(I->Block->rect.left,y+((cPopUpLineHeight+cPopUpCharMargin)/2)+2);
-          glVertex2i(I->Block->rect.right,y+((cPopUpLineHeight+cPopUpCharMargin)/2)+2);
-          glColor3f(0.6F,0.6F,0.8F);
           glVertex2i(I->Block->rect.left,y+((cPopUpLineHeight+cPopUpCharMargin)/2)+3);
           glVertex2i(I->Block->rect.right,y+((cPopUpLineHeight+cPopUpCharMargin)/2)+3);
+          glColor3f(0.6F,0.6F,0.8F);
+          glVertex2i(I->Block->rect.left,y+((cPopUpLineHeight+cPopUpCharMargin)/2)+4);
+          glVertex2i(I->Block->rect.right,y+((cPopUpLineHeight+cPopUpCharMargin)/2)+4);
           glEnd();
           y-=cPopUpBarHeight;
         }

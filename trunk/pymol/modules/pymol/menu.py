@@ -223,7 +223,9 @@ def presets(s):
            [ 1, 'technical'   , 'preset.technical("'+s+'")'          ],
            [ 1, 'ligands'   , 'preset.ligands("'+s+'")'          ],
            [ 1, 'pretty'     , 'preset.pretty("'+s+'")'          ],
+           [ 1, 'pretty_no_solv', 'preset.pretty_no_solv("'+s+'")'          ],
            [ 1, 'publication'   , 'preset.publication("'+s+'")'          ],
+           [ 1, 'pub_no_solv'   , 'preset.pub_no_solv("'+s+'")'          ],           
            ]
 
 def expand(s):
@@ -411,8 +413,9 @@ def all_option(s):
 
 def main_menu(s):
    return [
-      [ 2, 'Main Menu'  , 'cmd.show("lines"     ,"'+s+'")' ],
+      [ 2, 'Main Pop-Up'  , 'cmd.show("lines"     ,"'+s+'")' ],
       [ 1, 'zoom (vis)'           ,'cmd.zoom("visible")'            ],
+      [ 1, 'center (vis)'           ,'cmd.center("visible")'            ],      
       [ 1, 'orient (vis)'           ,'cmd.orient("visible")'            ],
       [ 1, 'reset'           ,'cmd.reset()'            ],
       [ 0, ''             , ''                      ],           

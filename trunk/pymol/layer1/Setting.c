@@ -2176,7 +2176,8 @@ void SettingInitGlobal(int alloc,int reset_gui)
   SettingSet_b(I,cSetting_editor_label_fragments,0);
   SettingSet_i(I,cSetting_internal_gui_control_size, 18);
   SettingSet_b(I,cSetting_auto_dss,1);
-  SettingSet_i(I,cSetting_transparent_picking_mode,2); /* auto */
+  SettingSet_i(I,cSetting_transparency_picking_mode,2); /* auto */
+  SettingSet_b(I,cSetting_virtual_trackball,1);
 
 }
 

@@ -1504,7 +1504,7 @@ int SceneClick(Block *block,int button,int x,int y,int mod)
           if(Feedback(FB_ObjectMolecule,FB_Results)) {
             if(obj->fDescribeElement)
               obj->fDescribeElement(obj,I->LastPicked.index,buffer);
-            PRINTF " You clicked %s -> (%s)",buffer,cEditorSele1 ENDF;
+            PRINTF " You clicked %s -> (%s)\n",buffer,cEditorSele1 ENDF;
           }
           if(SettingGet(cSetting_logging)) {
             objMol = (ObjectMolecule*)obj;            
@@ -1532,7 +1532,7 @@ int SceneClick(Block *block,int button,int x,int y,int mod)
               obj->fDescribeElement(obj,I->LastPicked.index,buffer);
             if(EditorIsObjectNotCurrent((ObjectMolecule*)obj))
               EditorInactive();
-            else if((!EditorIsBondMode())&&EditorDeselectIfSelected(I->LastPicked.index,true)) {
+            if((!EditorIsBondMode())&&EditorDeselectIfSelected(I->LastPicked.index,true)) {
               
               PRINTF " You unpicked %s.",buffer ENDF;
               if(EditorActive())
@@ -1542,7 +1542,7 @@ int SceneClick(Block *block,int button,int x,int y,int mod)
                 EditorInactive();
               }
               EditorGetNextMultiatom(name);
-              PRINTF " You clicked %s -> (%s)",buffer,name ENDF;
+              PRINTF " You clicked %s -> (%s)\n",buffer,name ENDF;
               /* TODO: logging */
               
               sprintf(buffer,"%s`%d",obj->Name,I->LastPicked.index+1);    
@@ -2404,12 +2404,23 @@ int SceneDrag(Block *block,int x,int y,int mod)
       x = x % eff_width;
     }
 
-    v1[0] = (float)(eff_width/2) - x;
-    v1[1] = (float)(I->Height/2) - y;
-    
-	 v2[0] = (float)(eff_width/2) - I->LastX;
-	 v2[1] = (float)(I->Height/2) - I->LastY;
 	 
+    if(SettingGet_b(NULL,NULL,cSetting_virtual_trackball)) {
+      v1[0] = (float)(eff_width/2) - x;
+      v1[1] = (float)(I->Height/2) - y;
+      
+      v2[0] = (float)(eff_width/2) - I->LastX;
+      v2[1] = (float)(I->Height/2) - I->LastY;
+      
+    } else {
+      v1[0] = (float)(I->LastX) - x;
+      v1[1] = (float)(I->LastY) - y;
+      
+      v2[0] = 0;
+      v2[1] = 0;
+    }
+
+
 	 r1 = (float)sqrt1f(v1[0]*v1[0] + v1[1]*v1[1]);
 	 r2 = (float)sqrt1f(v2[0]*v2[0] + v2[1]*v2[1]);
 	 
@@ -2438,6 +2449,8 @@ int SceneDrag(Block *block,int x,int y,int mod)
       theta = dt;
 
 	 normalize23f(cp,axis);
+
+    theta = theta/(1.0F+fabs(axis[2]));
 
     v1[2]=0.0;
     v2[2]=0.0;

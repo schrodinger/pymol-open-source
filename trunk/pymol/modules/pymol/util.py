@@ -24,9 +24,10 @@ from pymol import movie
 mload = movie.load
 mrock = movie.rock
 mroll = movie.roll
-
    
-   
+def color_carbon(color,selection="(all)"):
+   selection = str(selection)
+   cmd.color(color,"(%s) and elem c"%selection)
    
 def cbss(selection="(all)",helix_color="red",sheet_color="yellow",loop_color="green",quiet=1):
    sel = str(selection)

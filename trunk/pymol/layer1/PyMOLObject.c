@@ -191,6 +191,12 @@ void ObjectDescribeElement(struct CObject *I,int index,char *buffer)
   buffer[0]=0;
 }
 /*========================================================================*/
+void ObjectToggleRepVis(CObject *I,int rep)
+{
+  if((rep>=0)&&(rep<cRepCnt))
+    I->RepVis[rep]=!I->RepVis[rep];
+}
+/*========================================================================*/
 void ObjectSetRepVis(CObject *I,int rep,int state)
 {
   if((rep>=0)&&(rep<cRepCnt))

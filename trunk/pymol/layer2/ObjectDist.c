@@ -36,7 +36,7 @@ int ObjectDistGetNFrames(ObjectDist *I);
 void ObjectDistUpdateExtents(ObjectDist *I);
 
 static DistSet *ObjectDistGetDistSetFromM4XBond(ObjectMolecule *obj, M4XBondType *hb, int n_hb,
-                                                 int state)
+                                                int state,int nbr_sele)
 {
   int min_id,max_id,range,*lookup = NULL;
   int nv = 0;
@@ -91,6 +91,7 @@ static DistSet *ObjectDistGetDistSetFromM4XBond(ObjectMolecule *obj, M4XBondType
       int idx1,idx2;
       
       int i,offset1,offset2;
+      int sele_flag = false;
       
       for(i=0;i<n_hb;i++) {
         offset1 = hb[i].atom1-min_id;
@@ -100,45 +101,58 @@ static DistSet *ObjectDistGetDistSetFromM4XBond(ObjectMolecule *obj, M4XBondType
           at2 = lookup[offset2]-1;
           if((at1>=0)&&(at2>=0)&&(at1!=at2)&&(state<obj->NCSet)) {
             cs=obj->CSet[state];
+
             if(cs) { 
-              
               ai1=obj->AtomInfo+at1;
               ai2=obj->AtomInfo+at2;
               
-              if(obj->DiscreteFlag) {
-                if(cs==obj->DiscreteCSet[at1]) {
-                  idx1=obj->DiscreteAtmToIdx[at1];
-                } else {
-                  idx1=-1;
-                }
+              sele_flag =false;
+              
+              if(nbr_sele>=0) {
+                if(SelectorIsMember(ai1->selEntry,nbr_sele))
+                  sele_flag=true;
+                if(SelectorIsMember(ai2->selEntry,nbr_sele))
+                  sele_flag=true;
               } else {
-                idx1=cs->AtmToIdx[at1];
+                sele_flag =true;
               }
               
-              if(obj->DiscreteFlag) {
-                if(cs==obj->DiscreteCSet[at2]) {
-                  idx2=obj->DiscreteAtmToIdx[at2];
+              if(sele_flag) {
+                if(obj->DiscreteFlag) {
+                  if(cs==obj->DiscreteCSet[at1]) {
+                    idx1=obj->DiscreteAtmToIdx[at1];
+                  } else {
+                    idx1=-1;
+                  }
                 } else {
-                  idx2=-1;
+                  idx1=cs->AtmToIdx[at1];
                 }
                 
-              } else {
-                idx2=cs->AtmToIdx[at2];
-              }
-              
-              if((idx1>=0)&&(idx2>=0)) {
-                dist=(float)diff3f(cs->Coord+3*idx1,cs->Coord+3*idx2);
-                VLACheck(vv,float,(nv*3)+5);
-                vv0 = vv+ (nv*3);
-                vv1 = cs->Coord+3*idx1;
-                *(vv0++) = *(vv1++);
-                *(vv0++) = *(vv1++);
-                *(vv0++) = *(vv1++);
-                vv1 = cs->Coord+3*idx2;
-                *(vv0++) = *(vv1++);
-                *(vv0++) = *(vv1++);
-                *(vv0++) = *(vv1++);
-                nv+=2;
+                if(obj->DiscreteFlag) {
+                  if(cs==obj->DiscreteCSet[at2]) {
+                    idx2=obj->DiscreteAtmToIdx[at2];
+                  } else {
+                    idx2=-1;
+                  }
+                  
+                } else {
+                  idx2=cs->AtmToIdx[at2];
+                }
+                
+                if((idx1>=0)&&(idx2>=0)) {
+                  dist=(float)diff3f(cs->Coord+3*idx1,cs->Coord+3*idx2);
+                  VLACheck(vv,float,(nv*3)+5);
+                  vv0 = vv+ (nv*3);
+                  vv1 = cs->Coord+3*idx1;
+                  *(vv0++) = *(vv1++);
+                  *(vv0++) = *(vv1++);
+                  *(vv0++) = *(vv1++);
+                  vv1 = cs->Coord+3*idx2;
+                  *(vv0++) = *(vv1++);
+                  *(vv0++) = *(vv1++);
+                  *(vv0++) = *(vv1++);
+                  nv+=2;
+                }
               }
             }
           }
@@ -156,7 +170,8 @@ static DistSet *ObjectDistGetDistSetFromM4XBond(ObjectMolecule *obj, M4XBondType
 
 ObjectDist *ObjectDistNewFromM4XBond(ObjectDist *oldObj,
                                       struct ObjectMolecule *objMol,
-                                      struct M4XBondType *hbond,int n_hbond)
+                                      struct M4XBondType *hbond,
+                                     int n_hbond,int nbr_sele)
 {
   int a;
   ObjectDist *I;
@@ -178,7 +193,7 @@ ObjectDist *ObjectDistNewFromM4XBond(ObjectDist *oldObj,
     {
       VLACheck(I->DSet,DistSet*,a);
       
-      I->DSet[a] = ObjectDistGetDistSetFromM4XBond(objMol,hbond,n_hbond,a);
+      I->DSet[a] = ObjectDistGetDistSetFromM4XBond(objMol,hbond,n_hbond,a,nbr_sele);
       
       if(I->DSet[a]) {
         I->DSet[a]->Obj = I;

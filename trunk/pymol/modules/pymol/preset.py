@@ -82,7 +82,7 @@ def technical(selection="(all)"):
       cmd.enable(polar_contacts)
       cmd.set("dash_width",1.5,polar_contacts)
       cmd.hide("labels",polar_contacts)
-   cmd.show("nonbonded","(hetatm and ("+s+"))")
+   cmd.show("nonbonded","((hetatm|hoh+wat+h2o/) and ("+s+"))")
 
 def pretty(selection="(all)"):
    s = str(selection)
@@ -90,7 +90,7 @@ def pretty(selection="(all)"):
    cmd.hide("everything",s)
    cmd.show("cartoon",s)
    cmd.show("sticks","(hetatm and ("+s+"))")
-   cmd.show("nb_spheres","(hetatm and ("+s+"))")
+   cmd.show("nb_spheres","((hetatm|hoh+wat+h2o/) and ("+s+"))")
    util.cbc("(hetatm and ("+s+"))")
    util.cbac("(hetatm and ("+s+") and not elem c)")
    cmd.spectrum("count",selection="(elem c and ("+s+") and not hetatm)")
@@ -101,6 +101,10 @@ def pretty(selection="(all)"):
       cmd.disable(polar_contacts)
    if cmd.count_atoms(s):
       cmd.center(s)
+      
+def pretty_no_solv(selection):
+   pretty(selection)
+   cmd.hide("nb_spheres","(hetatm|hoh+wat+h2o/)")
    
 def publication(selection="(all)"):
    s = str(selection)
@@ -112,3 +116,8 @@ def publication(selection="(all)"):
       cmd.disable(polar_contacts)
    if cmd.count_atoms(s):
       cmd.center(s)
+
+def pub_no_solv(selection="(all)"):
+   publication(selection)
+   cmd.hide("nb_spheres","(hetatm|hoh+wat+h2o/)")
+   

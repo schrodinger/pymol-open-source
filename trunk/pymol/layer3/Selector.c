@@ -2557,8 +2557,9 @@ int SelectorIsMember(int s,int sele)
 {
   SelectorType *I=&Selector;
   MemberType *member,*mem;
-  if(!sele) return true; /* "all" is selection number 0, unordered */
   if(sele<0) return false; /* negative selections don't exist */
+  if(!sele) return true; /* "all" is selection number 0, unordered */
+  if(sele==1) return false; /* no atom is a member of none */
   member=I->Member;
   while(s) 
     {
@@ -5953,6 +5954,12 @@ int SelectorSelect0(EvalElem *base)
                   if((!bonded)&&(vis[b]))
                     flag = true;
                   break;
+                case cRepDash: /* not current applicable to atom selections */
+                case cRepCell:
+                case cRepCGO:
+                case cRepCallback:
+                case cRepExtent:
+                  break;
                 default:
                   if(vis[b]) {
                     flag=true;
@@ -7750,7 +7757,7 @@ static void SelectorInit2(void)
     n=I->NActive;
     VLACheck(I->Name,SelectorWordType,n+1);
     VLACheck(I->ID,int,n+1);
-    strcpy(I->Name[n],cKeywordAll); /* "all" selection */
+    strcpy(I->Name[n],cKeywordAll); /* "all" selection = 0*/
     I->Name[n+1][0]=0;
     I->ID[n] = I->NSelection++;
     I->NActive++;
@@ -7758,7 +7765,7 @@ static void SelectorInit2(void)
     n=I->NActive;
     VLACheck(I->Name,SelectorWordType,n+1);
     VLACheck(I->ID,int,n+1);
-    strcpy(I->Name[n],cKeywordNone); /* "none" selection */
+    strcpy(I->Name[n],cKeywordNone); /* "none" selection = 1*/
     I->Name[n+1][0]=0;
     I->ID[n] = I->NSelection++;
     I->NActive++;

@@ -22,6 +22,9 @@ Z* -------------------------------------------------------------------
 #include"DistSet.h"
 #include"ObjectMap.h"
 
+#define cSelectionAll 0
+#define cSelectionNone 1
+
 void SelectorInit(void);
 int *SelectorSelect(char *sele);
 int SelectorCreate(char *name,char *sele,ObjectMolecule *obj,int quiet,Multipick *mp);
