@@ -70,8 +70,7 @@ def exec_deferred():
          pass
       elif re.search(r"\.py$",a,re.I):
          cmd.do("run %s" % a)
-      elif re.search(
-r"\.pdb$|\.ent$|\.mol$|\.mmod$|\.mmd$|\.xplor$|\.pkl$|\.sdf$|\.r3d$|\.xyz$|\.xyz_[0-9]*$",a,re.I):
+      elif cmd.file_ext_re.search(a):
          cmd.load(a)
       elif re.search(r"\.pml$",a,re.I):
          cmd.do("@%s" % a)
@@ -88,9 +87,3 @@ import cmd
 
 if os.environ.has_key('DISPLAY'):
    from xwin import *
-   
-
-
-
-
-

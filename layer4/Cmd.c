@@ -1043,8 +1043,6 @@ static PyObject *CmdSystem(PyObject *dummy, PyObject *args)
   return(result);
 }
 
-static int pop_flag = false;
-
 static PyObject *CmdGetFeedback(PyObject *dummy, PyObject *args)
 {
   OrthoLineType buffer;
@@ -2272,14 +2270,9 @@ static PyObject *CmdSpheroid(PyObject *self, PyObject *args)
 
 static PyObject *CmdTest(PyObject *self, PyObject *args)
 {
-  Object *obj;
-  APIEntry();
-  obj=ExecutiveFindObjectByName("test");
-  /*  if(obj) ObjectMoleculeInferChemFromNeighGeom((ObjectMolecule*)obj,0);
-      if(obj) ObjectMoleculeInferChemForProtein((ObjectMolecule*)obj,0);
-      if(obj) ObjectMoleculeInferChemFromBonds((ObjectMolecule*)obj,0);*/
-  if(obj) ObjectMoleculeCreateSpheroid((ObjectMolecule*)obj);
-  APIExit();
+  int int1;
+  PyArg_ParseTuple(args,"i",&int1);
+  TkinterWorkaround=int1;
   Py_INCREF(Py_None);
   return Py_None;
 }

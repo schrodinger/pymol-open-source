@@ -67,7 +67,31 @@ class PMGApp(AbstractApp):
       btn_last = self.buttonAdd(row1,'>|',cmd.ending)
       btn_ccache = self.buttonAdd(row1,'MClear',cmd.mclear)
 
-
+   def my_activate(self,win,center=1):
+      if sys.platform!='linux2':
+         win.activate()
+      else: # autocenter, deiconify, and run mainloop
+         # this is a workaround for a bug in the
+         # interaction between Tcl/Tk and common Linux
+         # window managers (namely KDE/Gnome) which causes
+         # an annoying 1-2 second delay in opening windows!
+         if center:
+            tw = win.winfo_reqwidth()+100
+            th = win.winfo_reqheight()+100
+            vw = win.winfo_vrootwidth()
+            vh = win.winfo_vrootheight()
+            x = max(0,(vw-tw)/2)
+            y = max(0,(vh-tw)/2)
+            win.geometry(newGeometry="+%d+%d"%(x,y))
+         win.deiconify()
+         win.mainloop()
+         
+   def my_deactivate(self,win):
+      if sys.platform!='linux2':
+         win.deactivate()
+      else: # autocenter, deiconify, and run mainloop
+         win.destroy()
+      
    def createMain(self):
       self.command = StringVar()
       self.entry = self.createcomponent('entry', (), None,
@@ -115,24 +139,69 @@ class PMGApp(AbstractApp):
       cmd.quit()
 
    def file_open(self):
-      ofile = askopenfilename(filetypes=[("PDB File","*.pdb"),
-                    ("MOL File","*.mol"),("XPLOR Map","*.xplor"),
-                    ("ChemPy Model","*.pkl"),("All Files","*.*")])
+      ofile = askopenfilename(initialdir = os.getcwd(),
+                              filetypes=[("PDB File","*.pdb"),
+                                         ("All Files","*.*"),
+                                         ("PDB File","*.ent"),
+                                         ("Macromodel File","*.dat"),
+                                         ("Macromodel File","*.out"),
+                                         ("Macromodel File","*.mmd"),
+                                         ("Macromodel File","*.mmod"),
+                                         ("MOL File","*.mol"),
+                                         ("ChemPy Model","*.pkl"),
+                                         ("Raster3D Scene","*.r3d"),
+                                         ("SDF File","*.sdf"),
+                                         ("XPLOR Map","*.xplor"),
+                                         ("Tinker XYZ File","*.xyz")
+                                         ])
       if len(ofile):
-         cmd.do("cmd.load('%s')"%ofile)
-
-   def file_run(self):
-      ofile = askopenfilename(filetypes=[("PyMOL Script","*.pml"),("Python Program","*.py")])
-      if re.search("\.py$",ofile):
-         cmd.do("run "+ofile);      
-      else:
-         cmd.do("@"+ofile);
+         cmd.load(ofile)
 
    def file_save(self):
+      self.dialog = Pmw.SelectionDialog(self.root,title="Save",
+                          buttons = ('OK', 'Cancel'),
+                                   defaultbutton='OK',
+                          scrolledlist_labelpos=N,
+                          label_text='Which object or selection would you like to save?',
+                          scrolledlist_items = cmd.get_names('all'),
+                          command = self.file_save2)
+      self.my_activate(self.dialog)
+      
+   def file_save2(self,result):
+      if result!='OK':
+         self.my_deactivate(self.dialog)
+         del self.dialog
+      else:
+         sels = self.dialog.getcurselection()
+         if len(sels)!=0:
+            sfile = sels[0]+".pdb"
+            self.my_deactivate(self.dialog)
+            del self.dialog
+            if result=='OK':
+               sfile = asksaveasfilename(initialfile = sfile,
+                                         initialdir = os.getcwd(),
+                                         filetypes=[("PDB File","*.pdb"),
+                                                    ("MOL File","*.mol"),
+                                                    ("MMD File","*.mmd"),
+                                                    ("PKL File","*.pkl"),
+                                                    ])
+               if len(sfile):
+                  cmd.save(sfile,"(%s)"%sels[0])
+         
+   def file_run(self):
+      ofile = askopenfilename(filetypes=[("PyMOL Script","*.pml"),("Python Program","*.py")])
+      if len(ofile):
+         if re.search("\.py$",ofile):
+            cmd.do("run "+ofile);      
+         else:
+            cmd.do("@"+ofile);
+
+   def file_savepng(self):
       sfile = asksaveasfilename(filetypes=[("PNG File","*.png")])
       if len(sfile):
          cmd.png(sfile)
-
+         
+      
    def file_savemovie(self):
       sfile = asksaveasfilename(filetypes=[("Numbered PNG Files","*.png")])
       if len(sfile):
@@ -200,25 +269,27 @@ class PMGApp(AbstractApp):
                         label='Open...',
                         command=self.file_open)
 
+      self.menuBar.addmenuitem('File', 'command', 'Save structure file.',
+                        label='Save Molecule...',
+                        command=self.file_save)
+
 #      self.menuBar.addmenuitem('File', 'command', 'Open sequential files.',
 #                        label='Open Sequence...',
 #                        command=self.file_open)
 
-      self.menuBar.addmenuitem('File', 'separator', '')
-
-      self.menuBar.addmenuitem('File', 'command', 'Run program or script.',
-                        label='Run...',
-                        command=self.file_run)
-
-      self.menuBar.addmenuitem('File', 'separator', '')
-
       self.menuBar.addmenuitem('File', 'command', 'Save current image.',
                         label='Save Image...',
-                        command=self.file_save)
+                        command=self.file_savepng)
 
       self.menuBar.addmenuitem('File', 'command', 'Save all frames.',
                         label='Save Movie...',
                         command=self.file_savemovie)
+
+      self.menuBar.addmenuitem('File', 'separator', '')
+      
+      self.menuBar.addmenuitem('File', 'command', 'Run program or script.',
+                        label='Run...',
+                        command=self.file_run)
 
       self.menuBar.addmenuitem('File', 'separator', '')
 
