@@ -108,7 +108,7 @@ def add_bonds(model, forcefield = protein_amber, histidine = 'HIE' ):
                      for b in lst:
                         if b!=cur:
                            at2 = model.atom[b]
-                           if at2.name=='SG':
+                           if (resn == 'CYS') and (at2.name=='SG'):
                               if not at2.in_same_residue(at):
                                  dst = distance(at.coord,at2.coord)
                                  if dst<=MAX_BOND_LEN:
@@ -120,23 +120,26 @@ def add_bonds(model, forcefield = protein_amber, histidine = 'HIE' ):
                                        for c in range(a[0],a[1]): # this residue
                                           atx = model.atom[c]
                                           atx.resn = 'CYX'
-                                          k = ('CYX',atx.name)
-                                          if ffld.has_key(k):
-                                             atx.text_type = ffld[k]['type']
-                                             atx.partial_charge = ffld[k]['charge']
-                                          else:
-                                             raise RuntimeError("no parameters for '"+str(k)+"'")
+                                          resn = atx.resn
+                                          if (c<=b):
+                                             k = ('CYX',atx.name)
+                                             if ffld.has_key(k):
+                                                atx.text_type = ffld[k]['type']
+                                                atx.partial_charge = ffld[k]['charge']
+                                             else:
+                                                raise RuntimeError("no parameters for '"+str(k)+"'")
                                        for d in res_list: # other residue
                                           if (b>=d[0]) and (b<d[1]):
                                              for c in range(d[0],d[1]):
                                                 atx = model.atom[c]
                                                 atx.resn = 'CYX'
-                                                k = ('CYX',atx.name)
-                                                if ffld.has_key(k):
-                                                   atx.text_type = ffld[k]['type']
-                                                   atx.partial_charge = ffld[k]['charge']
-                                                else:
-                                                   raise RuntimeError("no parameters for '"+str(k)+"'")
+                                                if (d[0]<=a[0]):
+                                                   k = ('CYX',atx.name)
+                                                   if ffld.has_key(k):
+                                                      atx.text_type = ffld[k]['type']
+                                                      atx.partial_charge = ffld[k]['charge']
+                                                   else:
+                                                      raise RuntimeError("no parameters for '"+str(k)+"'")
                                              
                                     break
                      

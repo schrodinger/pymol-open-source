@@ -568,7 +568,9 @@ PyObject *SelectorGetChempyModel(int sele,int state)
           idx=cs->AtmToIdx[at];
           if(idx>=0) {
             ai = obj->AtomInfo+at;
-            PyList_SetItem(atom_list,c,CoordSetAtomToChempyAtom(ai,obj->CSet[state]->Coord+(3*idx)));
+            PyList_SetItem(atom_list,c,
+                  CoordSetAtomToChempyAtom(
+                      ai,obj->CSet[state]->Coord+(3*idx)));
             c = c + 1;
           }
         }
@@ -595,8 +597,8 @@ PyObject *SelectorGetChempyModel(int sele,int state)
               b2+=obj->SeleBase;
               if(I->Table[b1].index&&I->Table[b2].index) {
                 VLACheck(bond,int,nBond*3+2);
-                b1=I->Table[b1].index;
-                b2=I->Table[b2].index;
+                b1=I->Table[b1].index - 1; /* counteract 1-based */
+                b2=I->Table[b2].index - 1; /* indexing from above */
                 bond[nBond*3] = b1;
                 bond[nBond*3+1] = b2;
                 bond[nBond*3+2] = b3;
@@ -609,12 +611,12 @@ PyObject *SelectorGetChempyModel(int sele,int state)
         ii1=bond;
         bond_list = PyList_New(nBond);
         PyObject_SetAttrString(model,"bond",bond_list);
-        for(a=0;a<nBond;a++) {
+        for(b=0;b<nBond;b++) {
           bnd = PyObject_CallMethod(P_chempy,"Bond","");
           if(bnd) {
             PConvInt2ToPyObjAttr(bnd,"index",ii1);
             PConvIntToPyObjAttr(bnd,"order",ii1[2]);
-            PyList_SetItem(bond_list,a,bnd);
+            PyList_SetItem(bond_list,b,bnd);
           }
           ii1+=3;
         }
