@@ -324,6 +324,7 @@ int TestPyMOLRun(PyMOLGlobals *G,int group,int test)
     ButModeSet(G,2,cButModeTransZ);
     ButModeSet(G,12,cButModeScaleSlab);
     ButModeSet(G,13,cButModeMoveSlab);
+    ButModeSet(G,5,cButModeClipNF);
     
     switch(test) {
     case 1: 
