@@ -49,7 +49,6 @@ void RepAngleFree(RepAngle *I)
   OOFreeP(I);
 }
 
-
 void RepAngleRender(RepAngle *I,CRay *ray,Pickable **pick)
 {
   PyMOLGlobals *G=I->R.G;
@@ -136,13 +135,13 @@ Rep *RepAngleNew(DistSet *ds)
   PyMOLGlobals *G=ds->G;
   int a;
   int n;
-  float *v,*v1,*v2,d[3],d1[3],d2[3];
-  float l,ph;
-  float dash_len,dash_gap,dash_sum,seg;
+  float *v,*v1,*v2,*v3,d1[3],d2[3],d3[3],n1[3],n3[3],l1,l2,x[3],y[3];
+  float length,radius,angle,pos,phase;
+  float dash_len,dash_gap,dash_sum;
 
   OOAlloc(G,RepAngle);
 
-  if(1||!ds->NIndex) {
+  if(!ds->NAngleIndex) {
     OOFreeP(I);
     return(NULL); 
   }
@@ -157,7 +156,7 @@ Rep *RepAngleNew(DistSet *ds)
   dash_len = SettingGet_f(G,ds->Setting,ds->Obj->Obj.Setting,cSetting_dash_length);
   dash_gap = SettingGet_f(G,ds->Setting,ds->Obj->Obj.Setting,cSetting_dash_gap);
   dash_sum = dash_len+dash_gap;
-  if(dash_sum<R_SMALL4) dash_sum=0.5;
+  if(dash_sum<R_SMALL4) dash_sum=0.1;
 
   I->N=0;
   I->V=NULL;
@@ -167,52 +166,91 @@ Rep *RepAngleNew(DistSet *ds)
 
   n=0;
   if(ds->NIndex) {
-	 I->V=VLAlloc(float,ds->NIndex*10);
+	 I->V=VLAlloc(float,ds->NAngleIndex*10);
 
-	 for(a=0;a<ds->NIndex;a=a+2) {
+	 for(a=0;a<ds->NAngleIndex;a=a+2) {
       v1 = ds->Coord+3*a;
       v2 = ds->Coord+3*(a+1);
+      v3 = ds->Coord+3*(a+2);
 
-      subtract3f(v2,v1,d);
+      subtract3f(v1,v2,d1);
+      subtract3f(v3,v2,d2);
 
-      l = (float)length3f(d);
+      l1 = (float)length3f(d1);
+      l2 = (float)length3f(d2);
+
+      if(l1>l2)
+        radius = l2;
+      else
+        radius = l1;
+      radius *= 0.66666667F;
       
-      l -= dash_gap;
-      
-      ph = dash_sum-(float)fmod((l+dash_gap)/2.0,dash_sum);
-      if(l>R_SMALL4) {
+      angle = get_angle3f(d1,d2);
 
-        copy3f(v1,d1);
-        normalize3f(d);
-        scale3f(d,dash_gap,d2);        
-        scale3f(d2,0.5F,d2);
-        add3f(d1,d2,d1);
+      normalize23f(d1,n1);
 
-        while(l>0.0) {
-          if(ph<dash_len) {
-            seg = dash_len-ph;
-            if(l<seg) seg = l;
-            scale3f(d,seg,d2);
-            if((seg/dash_len)>0.2) {
-              VLACheck(I->V,float,(n*3)+5);
-              v=I->V+n*3;
-              copy3f(d1,v);
-              v+=3;
-              add3f(d1,d2,d1);
-              copy3f(d1,v);
-              n+=2;
-            } else 
-              add3f(d1,d2,d1);
-            ph = dash_len;
+      remove_component3f(d2,n1,d3);
+
+      if(length3f(d3)<R_SMALL8) {
+        d3[0]=1.0F;
+        d3[1]=0.0F;
+        d3[2]=0.0F;
+      } else {
+        normalize23f(d3,n3);
+      }
+
+      scale3f(n1,radius,x);
+      scale3f(n3,radius,y);
+
+      /* now we have a relevant orthogonal axes */
+
+      length = (float)(angle * radius * 2); 
+
+      /* figure out dash/gap phasing that will lead to nicely space dashes and gaps */
+
+      phase = dash_sum - (float)fmod(length/2+(dash_gap/2), dash_sum); 
+      pos = -phase;
+
+      if(length>R_SMALL4) {
+        
+        float mod_pos;
+        float vx[3],vy[3];
+        float cur_angle;
+        float cons_pos;
+
+        while(pos<length) {
+
+          mod_pos = fmod(pos + phase, dash_sum);
+
+          if(mod_pos<dash_len) {
+            VLACheck(I->V,float,(n*3)+5);
+
+            cons_pos = pos;
+            if(cons_pos<0.0F) cons_pos = 0.0F;
+
+            cur_angle = angle * cons_pos/length;
+
+            v=I->V+n*3;
+            scale3f(x,cos(cur_angle),vx);
+            scale3f(y,cos(cur_angle),vy);
+            add3f(vx,vy,v);
+            add3f(v2,v,v);
+
+            
+            cons_pos = ( pos+=dash_len );
+            if(cons_pos>length) cons_pos = length;
+            cur_angle = angle * cons_pos/length;
+
+            v+=3;
+            scale3f(x,cos(cur_angle),vx);
+            scale3f(y,cos(cur_angle),vy);
+            add3f(vx,vy,v);
+            add3f(v2,v,v);
+            
+            n+=2;
           } else {
-            /* gap */
-            seg = dash_gap;
-            if(l<seg) seg = l;            
-            scale3f(d,seg,d2);
-            add3f(d1,d2,d1);
-            ph = 0.0;
+            pos += dash_gap;
           }
-          l-=seg;
         }
       }
     }
