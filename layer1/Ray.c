@@ -318,7 +318,7 @@ void RayRender(CRay *I,int width,int height,unsigned int *image,float front,floa
   float excess=0.0;
   float dotgle;
   float bright,direct_cmp,reflect_cmp,*v,fc[3];
-  float ambient,direct,lreflect,ft;
+  float ambient,direct,lreflect,ft,ffact,ffact1m;
   unsigned int c[3],aa;
   unsigned int *image_copy = NULL;
   int i;
@@ -326,7 +326,14 @@ void RayRender(CRay *I,int width,int height,unsigned int *image,float front,floa
   int antialias;
   RayInfo r1,r2;
   double timing;
-  
+  int fogFlag;
+  float fog;
+  float *bkrd;
+
+  fog = SettingGet(cSetting_ray_trace_fog);
+  if(fog!=0.0)
+    fogFlag=true;
+
   /* SETUP */
   
   timing = UtilGetSeconds();
@@ -341,17 +348,17 @@ void RayRender(CRay *I,int width,int height,unsigned int *image,float front,floa
 	 ErrChkPtr(image);
   }
 
-  v=SettingGetfv(cSetting_bg_rgb);
+  bkrd=SettingGetfv(cSetting_bg_rgb);
   if(I->BigEndian) {
 	 background = 0x000000FF|
-		((0xFF& ((unsigned int)(v[0]*255))) <<24)|
-		((0xFF& ((unsigned int)(v[1]*255))) <<16)|
-		((0xFF& ((unsigned int)(v[2]*255)) <<8 ));
+		((0xFF& ((unsigned int)(bkrd[0]*255))) <<24)|
+		((0xFF& ((unsigned int)(bkrd[1]*255))) <<16)|
+		((0xFF& ((unsigned int)(bkrd[2]*255)) <<8 ));
   } else {
 	 background = 0xFF000000|
-		((0xFF& ((unsigned int)(v[2]*255))) <<16)|
-		((0xFF& ((unsigned int)(v[1]*255))) <<8)|
-		((0xFF& ((unsigned int)(v[0]*255)) ));
+		((0xFF& ((unsigned int)(bkrd[2]*255))) <<16)|
+		((0xFF& ((unsigned int)(bkrd[1]*255))) <<8)|
+		((0xFF& ((unsigned int)(bkrd[0]*255)) ));
   }
 
   if(!I->NPrimitive) {
@@ -456,10 +463,25 @@ void RayRender(CRay *I,int width,int height,unsigned int *image,float front,floa
               if(bright>1.0) bright=1.0;
               if(bright<0.0) bright=0.0;
 				  
-				  
-				  c[0]=(bright*fc[0]+excess)*255.0;
-				  c[1]=(bright*fc[1]+excess)*255.0;
-				  c[2]=(bright*fc[2]+excess)*255.0;
+				  fc[0] = (bright*fc[0]+excess);
+              fc[1] = (bright*fc[1]+excess);
+              fc[2] = (bright*fc[2]+excess);
+              
+              if (fogFlag) {
+                ffact = (front-r1.dist)/(front-back);
+                if(ffact<0.0)
+                  ffact=0.0;
+                if(ffact>1.0)
+                  ffact=0.0;
+                ffact1m = 1.0-ffact;
+                fc[0]=ffact*bkrd[0]+fc[0]*ffact1m;
+                fc[1]=ffact*bkrd[1]+fc[1]*ffact1m;
+                fc[2]=ffact*bkrd[2]+fc[2]*ffact1m;
+              }
+
+				  c[0]=fc[0]*255.0;
+				  c[1]=fc[1]*255.0;
+				  c[2]=fc[2]*255.0;
 
               if(c[0]>255.0) c[0]=255.0;
               if(c[1]>255.0) c[1]=255.0;
