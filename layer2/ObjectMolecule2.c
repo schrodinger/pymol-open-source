@@ -734,7 +734,35 @@ int ObjectMoleculeConvertIDsToIndices(ObjectMolecule *I,int *id,int n_id)
   return unique;
     
 }
-
+static char *check_next_pdb_object(char *p)
+{
+  char *start = p;
+  char cc[MAXLINELEN];  
+  while(*p) {
+    ncopy(cc,p,6);
+    p++;
+    if(((cc[0]=='A')&&
+        (cc[1]=='T')&&
+        (cc[2]=='O')&&
+        (cc[3]=='M')&&
+        (cc[4]==' ')&&
+        (cc[5]==' '))||
+       ((cc[0]=='H')&&
+        (cc[1]=='E')&&
+        (cc[2]=='T')&&
+        (cc[3]=='A')&&
+        (cc[4]=='T')&&
+        (cc[5]=='M'))||
+       ((cc[0]=='H')&&
+        (cc[1]=='E')&&
+        (cc[2]=='A')&&
+        (cc[3]=='D')&&
+        (cc[4]=='E')&&
+        (cc[5]=='R')))
+      return start;
+  }
+  return NULL;
+}
 /*========================================================================*/
 CoordSet *ObjectMoleculePDBStr2CoordSet(PyMOLGlobals *G,
                                         char *buffer,
@@ -1115,7 +1143,7 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(PyMOLGlobals *G,
           if((pp[0]=='E')&& /* END we're going to be starting a new object...*/
              (pp[1]=='N')&&
              (pp[2]=='D')) {
-            (*next_pdb) = nextline(pp);
+            (*next_pdb) = check_next_pdb_object(nextline(pp));
             is_end_of_object = true;
           } else if((pp[0]=='M')&& /* not a new object...just a new state (model) */
                     (pp[1]=='O')&&
@@ -1123,13 +1151,13 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(PyMOLGlobals *G,
                     (pp[3]=='E')&&
                     (pp[4]=='L')) {
             if(info && info->multiplex) { /* end object if we're multiplexing */
-              (*next_pdb) = pp;
+              (*next_pdb) = check_next_pdb_object(pp);
               (*restart_model) = NULL;
             } else 
               is_end_of_object = false;
           } else {
             if(pp[0]>32) /* more content follows... */
-              (*next_pdb) = pp;
+              (*next_pdb) = check_next_pdb_object(pp);
             else
               (*next_pdb) = NULL; /* at end of file */
           }
