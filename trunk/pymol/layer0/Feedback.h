@@ -104,6 +104,8 @@ function name.
 #define FB_Setting                   17
 #define FB_Object                    18
 #define FB_Ortho                     19
+#define FB_Movie                     20
+#define FB_Python                    21 /* part of P.c */
 
 /* layer 2 */
 

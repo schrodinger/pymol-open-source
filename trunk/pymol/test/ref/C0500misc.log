@@ -76,15 +76,15 @@ PyMOL>print stored.cnt
 107
 PyMOL>stored.x = 0
 PyMOL>iterate_state 1,(all),stored.x=stored.x+x
- Iterate: iterated over 107 atom states.
+ IterateState: iterated over 107 atom states.
 PyMOL>print stored.x
 130.971997736
 PyMOL>alter (all),segi='PEPT'
  Alter: modified 107 atoms.
 PyMOL>alter_state 1,(all),x = x + 1.0
- Alter: modified 107 atom states.
-PyMOL>print cmd.get_dihedral("(i;11&n;n)","(i;11&n;ca)","(i;11&n;cb)","(i;11&n;c
-g)")
+ AlterState: modified 107 atom states.
+PyMOL>print cmd.get_dihedral("(i;11&n;n)","(i;11&n;ca)","(i;11&n;cb)","(i;11&n
+;cg)")
 -160.790878296
 PyMOL>dist
  Executive: object "dist01" created.
@@ -108,7 +108,7 @@ PyMOL>copy cpy=pept
 PyMOL>select cpy_sel = (cpy)
  Selector: selection "cpy_sel" defined with 107 atoms.
 PyMOL>alter_state 1,(cpy),x=x+math.cos(y+z)
- Alter: modified 107 atom states.
+ AlterState: modified 107 atom states.
 PyMOL>rms cpy,pept
  Executive: RMS =    0.698 (107 to 107 atoms)
 PyMOL>rms (cpy and name ca),pept
@@ -228,8 +228,8 @@ object:molecule
 PyMOL>print cmd.identify("(i;7)")
 [52, 53, 54, 55]
 PyMOL>print cmd.get_extent()
-[[-5.47092437744, -21.4213943481, 13.156999588], [9.91899967194, 0.862999916077,
- 27.9338817596]]
+[[-5.47092437744, -21.4213943481, 13.156999588], [9.91899967194, 0.86299991607
+7, 27.9338817596]]
 PyMOL>sort
 PyMOL>sort pept
 PyMOL>spheroid

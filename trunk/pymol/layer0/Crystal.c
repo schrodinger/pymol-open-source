@@ -17,14 +17,11 @@ Z* -------------------------------------------------------------------
 #include"os_std.h"
 
 #include"MemoryDebug.h"
-#include"Debug.h"
 #include"Err.h"
 #include"Base.h"
 #include"OOMac.h"
 #include"Crystal.h"
-#include"Setting.h"
-#include"Ortho.h"
-
+#include"Feedback.h"
 
 void CrystalFree(CCrystal *I)
 {
@@ -115,29 +112,37 @@ void CrystalUpdate(CCrystal *I)
 
 void CrystalDump(CCrystal *I) 
 {
-  char  buffer[255];
   int i;
 
-  sprintf(buffer," Crystal: Unit Cell         %8.3f %8.3f %8.3f\n",
-          I->Dim[0],I->Dim[1],I->Dim[2]);
-  OrthoAddOutput(buffer);
-  sprintf(buffer," Crystal: Alpha Beta Gamma  %8.3f %8.3f %8.3f\n",
-          I->Angle[0],I->Angle[1],I->Angle[2]);
-  OrthoAddOutput(buffer);
-  OrthoAddOutput(" Crystal: RealToFrac Matrix\n");
+  PRINTF 
+    " Crystal: Unit Cell         %8.3f %8.3f %8.3f\n",
+    I->Dim[0],I->Dim[1],I->Dim[2]
+    ENDF;
+  PRINTF 
+    " Crystal: Alpha Beta Gamma  %8.3f %8.3f %8.3f\n",
+    I->Angle[0],I->Angle[1],I->Angle[2]
+    ENDF;
+  PRINTF
+    " Crystal: RealToFrac Matrix\n"
+    ENDF;
   for(i=0;i<3;i++) {
-    sprintf(buffer," Crystal: %10.5f %10.5f %10.5f\n",
-            I->RealToFrac[i*3],I->RealToFrac[i*3+1],I->RealToFrac[i*3+2]);    
-    OrthoAddOutput(buffer);
+    PRINTF " Crystal: %10.5f %10.5f %10.5f\n",
+      I->RealToFrac[i*3],I->RealToFrac[i*3+1],I->RealToFrac[i*3+2]
+      ENDF;
   }
-  OrthoAddOutput(" Crystal: FracToReal Matrix\n");
+  PRINTF
+    " Crystal: FracToReal Matrix\n"
+    ENDF;
   for(i=0;i<3;i++) {
-    sprintf(buffer," Crystal: %10.5f %10.5f %10.5f\n",
-            I->FracToReal[i*3],I->FracToReal[i*3+1],I->FracToReal[i*3+2]);    
-    OrthoAddOutput(buffer);
+    PRINTF
+      " Crystal: %10.5f %10.5f %10.5f\n",
+      I->FracToReal[i*3],I->FracToReal[i*3+1],I->FracToReal[i*3+2]
+      ENDF;
   }
-  sprintf(buffer," Crystal: Unit Cell Volume %8.3f\n",I->UnitCellVolume);
-  OrthoAddOutput(buffer);
+  PRINTF
+  " Crystal: Unit Cell Volume %8.3f\n",I->UnitCellVolume
+    ENDF;
+
 }
 
 

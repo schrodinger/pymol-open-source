@@ -21,6 +21,7 @@ Z* -------------------------------------------------------------------
 #include"Matrix.h"
 #include"MemoryDebug.h"
 #include"Ortho.h"
+#include"Feedback.h"
 
 /* WARNING - MAJOR GOTCHA!  
 
@@ -507,9 +508,12 @@ float MatrixFitRMS(int n,float *v1,float *v2,float *wt,float *ttt)
 		}
 		printf("\n");
 	*/
+    
 	if(iters>=maxiter) 
 	  {
-		printf("Error in RMS fitting : maximum iterations exceeded.\n");
+       if(Feedback(FB_Matrix,FB_Debugging)) {
+         printf("Error in RMS fitting : maximum iterations exceeded.\n");
+       }
 		break;
 	  }
 	/* IX, IY, and IZ rotate 1-2-3, 2-3-1, 3-1-2, etc.*/
@@ -861,12 +865,14 @@ int MatrixEigensolve33d(double *a, double *wr, double *wi, double *v)
      IS that because we're actually solving the transpose?
   */
 
-  printf(" Eigensolve: eigenvectors %8.3f %8.3f %8.3f\n",v[0],v[1],v[2]);
-  printf(" Eigensolve:              %8.3f %8.3f %8.3f\n",v[3],v[4],v[5]);
-  printf(" Eigensolve:              %8.3f %8.3f %8.3f\n",v[6],v[7],v[8]);
-  
-  printf(" Eigensolve: eigenvalues  %8.3f %8.3f %8.3f\n",wr[0],wr[1],wr[2]);
-  printf(" Eigensolve:              %8.3f %8.3f %8.3f\n",wi[0],wi[1],wi[2]);
+  if(Feedback(FB_Matrix,FB_Details)) {
+    printf(" Eigensolve: eigenvectors %8.3f %8.3f %8.3f\n",v[0],v[1],v[2]);
+    printf(" Eigensolve:              %8.3f %8.3f %8.3f\n",v[3],v[4],v[5]);
+    printf(" Eigensolve:              %8.3f %8.3f %8.3f\n",v[6],v[7],v[8]);
+    
+    printf(" Eigensolve: eigenvalues  %8.3f %8.3f %8.3f\n",wr[0],wr[1],wr[2]);
+    printf(" Eigensolve:              %8.3f %8.3f %8.3f\n",wi[0],wi[1],wi[2]);
+  }
   return(ierr);
 }
 

@@ -619,11 +619,14 @@ void SettingSetNamed(char *name,char *value)
 		break;
 	 }
   } else {
-	 OrthoAddOutput(" Error: Non-Existent Setting");
-	 OrthoNewLine(NULL);
+    PRINTFB(FB_Setting,FB_Warnings)
+      " Error: Non-Existent Settin\n"
+      ENDFB;
   }
   if(buffer[0]) {
-	 OrthoAddOutput(buffer);
+    PRINTFB(FB_Setting,FB_Actions)
+      "%s",buffer
+      ENDFB;
   }
 }
 /*========================================================================*/

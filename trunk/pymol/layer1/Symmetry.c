@@ -18,7 +18,6 @@ Z* -------------------------------------------------------------------
 #include"os_std.h"
 
 #include"MemoryDebug.h"
-#include"Debug.h"
 #include"Err.h"
 #include"Base.h"
 #include"OOMac.h"
@@ -36,7 +35,9 @@ void SymmetryAttemptGeneration(CSymmetry *I)
   PyObject *mats;
   int a,l;
   CrystalUpdate(I->Crystal);
-  CrystalDump(I->Crystal);
+  if(Feedback(FB_Symmetry,FB_Details)) {
+    CrystalDump(I->Crystal);
+  }
   if(!I->SpaceGroup[0]) {
     ErrMessage("Symmetry","Missing space group symbol");
   } else {

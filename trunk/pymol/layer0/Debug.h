@@ -16,6 +16,7 @@ Z* -------------------------------------------------------------------
 #ifndef _H_DEBUG
 #define _H_DEBUG
 
+/* OBSOLETE -- USE THE FEEDBACK FACILITY */
 
 #define DebugSelector (1)
 #define DebugParser   (1<<1)

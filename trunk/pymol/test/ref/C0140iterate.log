@@ -4,15 +4,15 @@ PyMOL>names = []
 PyMOL>iterate (all),names.append(name)
  Iterate: iterated over 37 atoms.
 PyMOL>print names
-['C', 'O', 'N', 'CA', 'CB', 'CG', 'CD', 'C', 'O', '2HB', '2HD', '2HG', '3HB', '3
-HD', '3HG', 'HA', 'N', 'CA', 'CB', 'OG', 'C', 'O', '2HB', '3HB', 'H', 'HA', 'HG',
- 'O', 'O01', 'C02', 'C03', 'C04', 'C05', 'H01', 'H04', 'H05', 'H06']
+['C', 'O', 'N', 'CA', 'CB', 'CG', 'CD', 'C', 'O', '2HB', '2HD', '2HG', '3HB', 
+'3HD', '3HG', 'HA', 'N', 'CA', 'CB', 'OG', 'C', 'O', '2HB', '3HB', 'H', 'HA', '
+HG', 'O', 'O01', 'C02', 'C03', 'C04', 'C05', 'H01', 'H04', 'H05', 'H06']
 PyMOL>bfct = []
 PyMOL>iterate (resn pro),bfct.append(b)
  Iterate: iterated over 14 atoms.
 PyMOL>print bfct
-[50.7799987793, 48.1599998474, 38.5699996948, 54.5800018311, 46.5900001526, 43.9
-799995422, 44.4900016785, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+[50.7799987793, 48.1599998474, 38.5699996948, 54.5800018311, 46.5900001526, 43
+.9799995422, 44.4900016785, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
 PyMOL>iterate (all),resn = 'NON'
  Iterate: iterated over 37 atoms.
 PyMOL>iterate (all),b = b + 10
@@ -21,5 +21,5 @@ PyMOL>bfct = []
 PyMOL>iterate (resn pro),bfct.append(b)
  Iterate: iterated over 14 atoms.
 PyMOL>print bfct
-[50.7799987793, 48.1599998474, 38.5699996948, 54.5800018311, 46.5900001526, 43.9
-799995422, 44.4900016785, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+[50.7799987793, 48.1599998474, 38.5699996948, 54.5800018311, 46.5900001526, 43
+.9799995422, 44.4900016785, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]

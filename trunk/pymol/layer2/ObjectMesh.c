@@ -73,8 +73,9 @@ void ObjectMeshDump(ObjectMesh *I,char *fname,int state)
           }
     }
     fclose(f);
-    sprintf(buf,"%s written to %s\n",I->Obj.Name,fname);
-    ErrOk("ObjectMeshDump",buf);
+    PRINTFB(FB_ObjectMesh,FB_Actions)
+      " ObjectMeshDump: %s written to %s\n",I->Obj.Name,fname
+      ENDFB;
   }
 }
 
@@ -107,74 +108,85 @@ static void ObjectMeshRender(ObjectMesh *I,int state,CRay *ray,Pickable **pick)
   float *vc;
   int *n = NULL;
   int c;
+  int a=0;
   ObjectMeshState *ms = NULL;
 
   if(state<I->NState) {
     if(I->State[state].V&&I->State[state].N)
       ms=I->State+state;
   }
-  if(!ms) {
-    if(I->NState&&I->State[0].V&&I->State[0].N&&SettingGet(cSetting_static_singletons))
-      ms=I->State;
-  }
-  if(ms) {
-    v=ms->V;
-    n=ms->N;
-  }
-  if(ray) {
-    ms->Radius=SettingGet(cSetting_mesh_radius);
-	 if(n&&v) {
-      vc = ColorGet(I->Obj.Color);
-      if(ms->DotFlag) {
-        ray->fColor3fv(ray,vc);
-        while(*n)
-		  {
-			 c=*(n++);
-			 if(c--)
-				{
-				  v+=3;
-				  while(c--)
-					 {
-						ray->fSphere3fv(ray,v,ms->Radius);
-						v+=3;
-					 }
-				}
-		  }
-      } else {
+  while(1) {
+    if(state<0) { /* all_states */
+      ms = I->State + a;
+    } else {
+      if(!ms) {
+        if(I->NState&&I->State[0].V&&I->State[0].N&&SettingGet(cSetting_static_singletons))
+          ms=I->State;
+      }
+    }
+    if(ms) {
+      v=ms->V;
+      n=ms->N;
+    }
+    
+    if(ray) {
+      ms->Radius=SettingGet(cSetting_mesh_radius);
+      if(n&&v) {
+        vc = ColorGet(I->Obj.Color);
+        if(ms->DotFlag) {
+          ray->fColor3fv(ray,vc);
+          while(*n)
+            {
+              c=*(n++);
+              if(c--)
+                {
+                  v+=3;
+                  while(c--)
+                    {
+                      ray->fSphere3fv(ray,v,ms->Radius);
+                      v+=3;
+                    }
+                }
+            }
+        } else {
+          while(*n)
+            {
+              c=*(n++);
+              if(c--)
+                {
+                  v+=3;
+                  while(c--)
+                    {
+                      ray->fCylinder3fv(ray,v-3,v,ms->Radius,vc,vc);
+                      v+=3;
+                    }
+                }
+            }
+        }
+      }
+    } else if(pick&&PMGUI) {
+    } else if(PMGUI) {
+      if(n&&v) {
+        ObjectUseColor(&I->Obj);
         while(*n)
           {
             c=*(n++);
-            if(c--)
-              {
-                v+=3;
-                while(c--)
-                  {
-                    ray->fCylinder3fv(ray,v-3,v,ms->Radius,vc,vc);
-                    v+=3;
-                  }
-              }
+            if(ms->DotFlag) 
+              glBegin(GL_POINTS);
+            else 
+              glBegin(GL_LINE_STRIP);
+            SceneResetNormal(false);
+            while(c--) {
+              glVertex3fv(v);
+              v+=3;
+            }
+            glEnd();
           }
       }
-	 }
-  } else if(pick&&PMGUI) {
-  } else if(PMGUI) {
-	 if(n&&v) {
-      ObjectUseColor(&I->Obj);
-      while(*n)
-        {
-          c=*(n++);
-          if(ms->DotFlag) 
-            glBegin(GL_POINTS);
-          else 
-            glBegin(GL_LINE_STRIP);
-          SceneResetNormal(false);
-          while(c--) {
-            glVertex3fv(v);
-            v+=3;
-          }
-          glEnd();
-        }
     }
+    if(state<0) break;
+    a = a + 1;
+    if(a>=I->NState) break;
   }
 }
 

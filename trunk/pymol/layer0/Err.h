@@ -18,7 +18,6 @@ Z* -------------------------------------------------------------------
 
 void ErrFatal(const char *where,const char *what);
 void ErrPointer(const char *file,int line);
-int ErrOk(const char *where,const char *what);
 int ErrMessage(const char *where,const char *what);
 
 #define ErrChkPtr(p) {if(!p) ErrPointer(__FILE__,__LINE__);}

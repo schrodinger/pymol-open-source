@@ -21,6 +21,7 @@ Z* -------------------------------------------------------------------
 #include"Err.h"
 #include"Crystal.h"
 #include"Vector.h"
+#include"Feedback.h"
 
 #define Trace_OFF
 
@@ -362,10 +363,12 @@ int	IsosurfVolume(Isofield *field,float level,int **num,float **vert,int *range,
    
    Num[NSeg]=0;  /* important - must terminate the segment list */
    
-   if(mode)
-     printf(" IsosurfVolume: Surface generated using %d dots.\n",NLine); 
-   else
-     printf(" IsosurfVolume: Surface generated using %d lines.\n",NLine); 
+   if(Feedback(FB_Isosurf,FB_Actions)) { 
+     if(mode)
+       printf(" IsosurfVolume: Surface generated using %d dots.\n",NLine); 
+     else
+       printf(" IsosurfVolume: Surface generated using %d lines.\n",NLine); 
+   }
 
 	*vert = Line;
 	*num = Num;

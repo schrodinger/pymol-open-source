@@ -245,7 +245,7 @@ class PMGApp(AbstractApp):
       cmd.disable()
       cmd.do("cd $PYMOL_PATH")
       cmd.delete("pept")
-      cmd.select("pept_dist")
+      cmd.delete("pept_dist")
       cmd.load("test/dat/pept.pdb")
       cmd.show("sticks","(pept and not i;5:7)")
       cmd.show("surface","(pept and i;5,6)")
@@ -432,6 +432,20 @@ class PMGApp(AbstractApp):
 
       self.menuBar.addmenuitem('Movies', 'separator', '')
 
+      self.menuBar.addmenuitem('Movies', 'checkbutton',
+                         'Static Singleton Objects.',
+                         label='Static Singleton Objects',
+                        variable = self.setting.static_singletons,
+                        command = lambda s=self: s.setting.update('static_singletons'))
+
+      self.menuBar.addmenuitem('Movies', 'checkbutton',
+                         'Superimpose all molecular states.',
+                         label='Show All States',
+                        variable = self.setting.all_states,
+                        command = lambda s=self: s.setting.update('all_states'))
+
+      self.menuBar.addmenuitem('Movies', 'separator', '')
+      
       self.menuBar.addmenuitem('Movies', 'command', 'Maximum Speed',
                                label='Maximum Speed',
                                command = lambda: cmd.set("movie_delay","0"))
@@ -503,11 +517,6 @@ class PMGApp(AbstractApp):
                         variable = self.setting.valence,
                         command = lambda s=self: s.setting.update('valence'))
 
-      self.menuBar.addmenuitem('Settings', 'checkbutton',
-                         'Superimpose all molecular states.',
-                         label='Show All States',
-                        variable = self.setting.all_states,
-                        command = lambda s=self: s.setting.update('all_states'))
 
       self.menuBar.addmenuitem('Settings', 'checkbutton',
                          'Disable perspective.',

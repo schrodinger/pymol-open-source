@@ -22,7 +22,6 @@ Z* -------------------------------------------------------------------
 #include"Base.h"
 #include"MemoryDebug.h"
 #include"Map.h"
-#include"Debug.h"
 #include"Parse.h"
 #include"Isosurf.h"
 #include"Vector.h"
@@ -341,9 +340,9 @@ ObjectMap *ObjectMapLoadXPLORFile(ObjectMap *obj,char *fname,int frame)
 	 ok=ErrMessage("ObjectMapLoadXPLORFile","Unable to open file!");
   else
 	 {
-		if(DebugState&DebugMap)
+		if(Feedback(FB_ObjectMap,FB_Actions))
 		  {
-			printf(" ObjectMapLoadXPLORFile: Loading from %s.\n",fname);
+			printf(" ObjectMapLoadXPLORFile: Loading from '%s'.\n",fname);
 		  }
 		
 		fseek(f,0,SEEK_END);
@@ -443,7 +442,9 @@ int ObjectMapNumPyArrayToMap(ObjectMap *I,PyObject *ary) {
   if(!ok) {
     ErrMessage("ObjectMap","Error reading map");
   } else {
-    printf(" ObjectMap: Map Read.  Range = %5.3f to %5.3f\n",mind,maxd);
+    if(Feedback(FB_ObjectMap,FB_Actions)) {
+      printf(" ObjectMap: Map Read.  Range = %5.3f to %5.3f\n",mind,maxd);
+    }
   }
   return(ok);
 }
@@ -580,7 +581,9 @@ ObjectMap *ObjectMapLoadChemPyMap(ObjectMap *I,PyObject *Map,
         I->FDim[0]=I->Max[0]-I->Min[0]+1;
         I->FDim[1]=I->Max[1]-I->Min[1]+1;
         I->FDim[2]=I->Max[2]-I->Min[2]+1;
-        printf(" LoadChemPyMap: CObjectZYXdouble %dx%dx%d\n",I->FDim[0],I->FDim[1],I->FDim[2]);        
+        if(Feedback(FB_ObjectMap,FB_Actions)) {
+          printf(" LoadChemPyMap: CObjectZYXdouble %dx%dx%d\n",I->FDim[0],I->FDim[1],I->FDim[2]);        
+        }
         I->FDim[3]=3;
         if(!(I->FDim[0]&&I->FDim[1]&&I->FDim[2])) 
           ok=false;
@@ -646,7 +649,9 @@ ObjectMap *ObjectMapLoadChemPyMap(ObjectMap *I,PyObject *Map,
     if(!ok) {
       ErrMessage("ObjectMap","Error reading map");
     } else {
-      printf(" ObjectMap: Map Read.  Range = %5.3f to %5.3f\n",mind,maxd);
+		if(Feedback(FB_ObjectMap,FB_Actions)) {
+        printf(" ObjectMap: Map Read.  Range = %5.3f to %5.3f\n",mind,maxd);
+      }
     }
 
     if(ok) SceneChanged();

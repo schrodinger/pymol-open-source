@@ -44,13 +44,13 @@ PyMOL>create pc12=(resi 12 and pept)
 PyMOL>create pc13=(resi 13 and pept)
  Selector: found 15 atoms.
  Executive: object "pc13" created.
-PyMOL>create chk = (pc1 | pc2 | pc3 | pc4 | pc5 | pc6 | pc7 | pc8 | pc9 | pc10 |
- pc11 | pc12 | pc13 )
+PyMOL>create chk = (pc1 | pc2 | pc3 | pc4 | pc5 | pc6 | pc7 | pc8 | pc9 | pc10
+ | pc11 | pc12 | pc13 )
  Selector: found 198 atoms.
  Executive: object "chk" created.
 PyMOL>print cmd.get_names()
-['pept', 'cpy', 'pc1', 'pc2', 'pc3', 'pc4', 'pc5', 'pc6', 'pc7', 'pc8', 'pc9', '
-pc10', 'pc11', 'pc12', 'pc13', 'chk']
+['pept', 'cpy', 'pc1', 'pc2', 'pc3', 'pc4', 'pc5', 'pc6', 'pc7', 'pc8', 'pc9',
+ 'pc10', 'pc11', 'pc12', 'pc13', 'chk']
 PyMOL>delete pc*
 PyMOL>print cmd.get_names()
 ['pept', 'cpy', 'chk']

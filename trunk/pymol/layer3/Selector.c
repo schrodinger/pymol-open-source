@@ -1175,7 +1175,9 @@ void SelectorUpdateCmd(int sele0,int sele1,int sta0, int sta1)
         ObjectMoleculeInvalidate(obj0,cRepAll,cRepInvCoord);
       }
     }
-    PRINTF " Update: coordinates updated for %d atoms.\n",ccc ENDF
+    PRINTFB(FB_Selector,FB_Actions)
+      " Update: coordinates updated for %d atoms.\n",ccc 
+      ENDFB
   }
   VLAFreeP(vla0);
   VLAFreeP(vla1);
@@ -1389,7 +1391,9 @@ void SelectorCreateObjectMolecule(int sele,char *name,int target,int source)
       }
     }
     SceneCountFrames();
-    PRINTF " Selector: found %d atoms.\n",nAtom ENDF
+    PRINTFB(FB_Selector,FB_Details)
+      " Selector: found %d atoms.\n",nAtom 
+      ENDFB
     ObjectMoleculeSort(targ);
     if(isNew) {
       ObjectSetName((Object*)targ,name);
@@ -1557,8 +1561,9 @@ int  SelectorEmbedSelection(int *atom, char *name, ObjectMolecule *obj)
     else
       ExecutiveSetControlsOff(name);
   }
-  if(DebugSelector&DebugState) 
-    printf(" Selector: Embedded %s, %d atoms.\n",name,c);
+  PRINTFD(FB_Selector)
+    " Selector: Embedded %s, %d atoms.\n",name,c
+    ENDFD;
   return(c);
 }
 /*========================================================================*/
@@ -1576,10 +1581,9 @@ int SelectorCreate(char *sname,char *sele,ObjectMolecule *obj,int quiet)
   UtilCleanStr(name);
   if(!name[0])
 	 {
-		ok=ErrMessage("Select","Invalid selection name.");
-		strcpy(name,sname);
-		strcat(name,"<--");
-		OrthoAddOutput(name);
+      PRINTFB(FB_Selector,FB_Errors)
+        "Selector-Error: Invalid selection name '%s'.\n",sname
+        ENDFB;
 		OrthoRestorePrompt();
 	 }
   if(ok)
@@ -1954,11 +1958,11 @@ int SelectorModulate1(EvalElem *base)
 		break;
 	 }
   FreeP(base[1].sele);
-  if(DebugSelector&DebugState) {
+  if(Feedback(FB_Selector,FB_Debugging)) {
 	 c=0;
 	 for(a=0;a<I->NAtom;a++)
 		if(base[0].sele[a]) c++;
-	 printf("SelectorModulate0: %d atoms selected.\n",c);
+	 fprintf(stderr,"SelectorModulate0: %d atoms selected.\n",c);
   }
   return(ok);
   
@@ -2016,8 +2020,10 @@ int SelectorSelect0(EvalElem *base)
 		  }
 		break;
 	 }
-  if(DebugSelector&DebugState)
-	 printf("SelectorSelect0: %d atoms selected.\n",c);
+  PRINTFD(FB_Selector)
+	 "SelectorSelect0: %d atoms selected.\n",c
+    ENDFD;
+
   return(1);
 }
 /*========================================================================*/
@@ -2291,8 +2297,9 @@ int SelectorSelect1(EvalElem *base)
 		  ErrFatal("SelectorSelect1","Invalid Model");
 		break;
 	 }
-  if(DebugSelector&DebugState)
-	 printf("SelectorSelect1:  %d atoms selected.\n",c);
+  PRINTFD(FB_Selector)
+	 "SelectorSelect1:  %d atoms selected.\n",c
+    ENDFD;
   return(ok);
 }
 /*========================================================================*/
@@ -2481,8 +2488,9 @@ int SelectorSelect2(EvalElem *base)
       }
     }
   
-  if(DebugSelector&DebugState)
-	 printf("SelectorSelect2: %d atoms selected.\n",c);
+  PRINTFD(FB_Selector)
+	 "SelectorSelect2: %d atoms selected.\n",c
+    ENDFD;
   return(ok);
 }
 /*========================================================================*/
@@ -2639,8 +2647,9 @@ int SelectorLogic1(EvalElem *base)
 #endif
 		break;
 	 }
-  if(DebugSelector&DebugState)
-	 printf("SelectorLogic1: %d atoms selected.\n",c);
+  PRINTFD(FB_Selector)
+	 "SelectorLogic1: %d atoms selected.\n",c
+    ENDFD;
   return(1);
 }
 /*========================================================================*/
@@ -2720,8 +2729,9 @@ int SelectorLogic2(EvalElem *base)
 		break;
 	 }
   FreeP(base[2].sele);
-  if(DebugSelector&DebugState)
-	 printf("SelectorLogic2: %d atoms selected.\n",c);
+  PRINTFD(FB_Selector)
+	 "SelectorLogic2: %d atoms selected.\n",c
+    ENDFD;
   return(1);
 }
 /*========================================================================*/
@@ -2805,8 +2815,9 @@ int *SelectorEvaluate(WordType *word)
                 }
                   
               }
-              if(DebugState&DebugSelector)
-                printf("code %x\n",code);
+              PRINTFD(FB_Selector)
+                "code %x\n",code
+                ENDFD;
               if(code>0)  
                 if(SelectorIndexByName(word[c])>=0)
                   code=0; /* favor selections over partial keyword matches */
@@ -2862,22 +2873,28 @@ int *SelectorEvaluate(WordType *word)
       opFlag=true;
       maxLevel=-1;
       for(a=1;a<=totDepth;a++) {
-        if(DebugState&DebugSelector)
-                printf("%x\n",Stack[a].code);
+        PRINTFD(FB_Selector)
+          "%x\n",Stack[a].code
+          ENDFD;
+                 
         if(Stack[a].level>maxLevel) 
           maxLevel=Stack[a].level;
       }
       level=maxLevel;
-      if(DebugState&DebugSelector)
-        printf("maxLevel %d %d\n",maxLevel,totDepth);
+      PRINTFD(FB_Selector)
+        "maxLevel %d %d\n",maxLevel,totDepth
+        ENDFD;
       if(level>=0) 
         while(ok) { /* loop until all ops at all levels have been tried */
           depth = 1;
           opFlag=true;
           while(ok&&opFlag) { /* loop through all entries looking for ops at the current level */
-            if(DebugState&DebugSelector)
-              printf("level lv: %d slv:%d de:%d co: %x typ %x td: %d\n",level,Stack[depth].level,depth,Stack[depth].code,
-                     Stack[depth].type,totDepth);
+            PRINTFD(FB_Selector)
+              "level lv: %d slv:%d de:%d co: %x typ %x td: %d\n",
+              level,Stack[depth].level,depth,Stack[depth].code,
+              Stack[depth].type,totDepth
+              ENDFD;
+          
             opFlag=false;
             
             if(Stack[depth].level>=level) {
@@ -3014,7 +3031,9 @@ int *SelectorEvaluate(WordType *word)
 			 q=UtilConcat(q,word[a]);
 		  }
 		q=UtilConcat(q,"<--");
-		OrthoAddOutput(line);
+      PRINTFB(FB_Selector,FB_Errors) 
+        "%s\n",line
+        ENDFB;
 		OrthoRestorePrompt();
 	 }
   FreeP(Stack);
@@ -3117,12 +3136,12 @@ WordType *SelectorParse(char *s) {
   /* null strings terminate the list*/
   q=r[c];
   *q=0;
-  if(DebugState&DebugSelector) /* Legacy...get rid of this */
+  if(Feedback(FB_Selector,FB_Debugging)) 
 	 {
 		c=0;
 		while(r[c][0])
 		  {
-			 printf("word: %s\n",r[c]);
+			 fprintf(stderr,"word: %s\n",r[c]);
 			 c++;
 		  }
 	 }

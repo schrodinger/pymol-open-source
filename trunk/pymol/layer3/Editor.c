@@ -830,8 +830,10 @@ void EditorPrepareDrag(ObjectMolecule *obj,int index,int state)
     }
     if(seleFlag) { /* normal selection */
       
-      PRINTF " Editor: grabbing (%s).",name ENDF
-        I->DragIndex = index;
+      PRINTFB(FB_Editor,FB_Actions)
+        " Editor: grabbing (%s).",name
+        ENDFB;
+      I->DragIndex = index;
       I->DragSelection = sele0;
       I->DragObject = obj;
       I->DragHaveAxis = false;
@@ -889,7 +891,9 @@ void EditorPrepareDrag(ObjectMolecule *obj,int index,int state)
         seleFlag = SelectorIsMember(s,sele0);
       }
 
-      PRINTF " Editor: grabbing all fragments." ENDF
+      PRINTFB(FB_Editor,FB_Actions)
+        " Editor: grabbing all fragments." 
+        ENDFB
       I->DragIndex = index;
       I->DragSelection = SelectorIndexByName(cEditorComp);
       I->DragObject = obj;
