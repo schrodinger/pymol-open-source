@@ -100,7 +100,7 @@ extern CGO *DebugCGO; /* for programming... initialized in Scene.c */
 #define CGO_CHAR                 0x17
 #define CGO_CHAR_SZ              1
 #define CGO_INDENT               0x18
-#define CGO_INDENT_SZ            1
+#define CGO_INDENT_SZ            2
 #define CGO_ALPHA                0x19 
 #define CGO_ALPHA_SZ             1
 #define CGO_PICK_COLOR           0x1F

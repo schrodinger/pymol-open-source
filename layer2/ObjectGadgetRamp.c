@@ -195,6 +195,7 @@ static void ObjectGadgetRampUpdateCGO(ObjectGadgetRamp *I,GadgetSet *gs)
   CGOColor(cgo,1.0F,1.0F,1.0F);
   CGOFontScale(cgo,I->text_scale_h,I->text_scale_v);
 
+
   if(I->Level&&I->NColor) {
     sprintf(buffer,"%0.6f",I->Level[0]);
     ShapeFVertex(cgo,REL,11);
@@ -203,6 +204,7 @@ static void ObjectGadgetRampUpdateCGO(ObjectGadgetRamp *I,GadgetSet *gs)
     ShapeFVertex(cgo,REL,12);
     CGOWriteLeft(cgo,buffer);
   }
+
 
   CGOBegin(cgo,GL_TRIANGLE_STRIP);
   ShapeNormal(cgo,LKP,2);
