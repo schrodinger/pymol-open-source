@@ -27,6 +27,7 @@ from chempy import Storage,Atom,Bond
 from chempy.models import Indexed
 from pymol import util
 
+import re
 import string
 
 from chempy import cex
@@ -179,7 +180,7 @@ def get_context_info():  # Author: Warren DeLano
 def setup_contexts(context_info):   # Author: Warren DeLano
     (list,dict) = context_info[0:2]
     key_list = ['F2','F3','F4','F5','F6','F7','F8','F9']
-    doc_list = ["Key  Zoom","F1   All"]
+    doc_list = ["Key  Context","F1   All"]
     cmd.set_key('F1',lambda :(cmd.zoom(),cmd.hide("labels")))
     zoom_context = 1
     for a in list:
@@ -195,15 +196,21 @@ def setup_contexts(context_info):   # Author: Warren DeLano
             cmd.show("sticks",ligand)
             util.cbag(ligand)
         if site in name_list:
-            if zoom_context:
-                cmd.zoom(site)
+            if zoom_context == 1:
+                zoom_context = site
+            elif zoom_context not in (0,1):
                 zoom_context = 0
             cmd.show("sticks",site)
             util.cbac(site)
             if len(key_list):
                 key = key_list.pop(0)
                 cmd.set_key(key,lambda x=site:(cmd.zoom(site),cmd.show("labels")))
-                doc_list.append(key+"   "+a)
+                mo = re.search("_([^_]+)$",a)
+                if mo:
+                    cont_name = mo.groups()[0]
+                else:
+                    cont_name = a
+                doc_list.append(key+"   "+cont_name)
             # replace cartoon with explicit atoms for "site" atoms
             cmd.hide("cartoon",site)
             cmd.show("sticks","(byres (neighbor ("+site+" and name c))) and name n+ca")
@@ -213,7 +220,8 @@ def setup_contexts(context_info):   # Author: Warren DeLano
             cmd.show("dashes",hbond)
             cmd.show("labels",hbond)
     cmd.wizard("message",doc_list)
-
+    if zoom_context not in (0,1):
+        cmd.zoom(zoom_context)
         
 
     

@@ -31,6 +31,8 @@ Z* -------------------------------------------------------------------
 #include"Selector.h"
 #include"ObjectDist.h"
 #include"Executive.h"
+#include"P.h"
+
 
 void ObjectMoleculeM4XAnnotate(ObjectMolecule *I,M4XAnnoType *m4x)
 {
@@ -79,6 +81,7 @@ void ObjectMoleculeM4XAnnotate(ObjectMolecule *I,M4XAnnoType *m4x)
           ExecutiveManageObject((CObject*)distObj,false,true);
       }
     }
+    PParse("@$PYMOL_SCRIPTS/metaphorics/annotate.pml");
   }
 }
 

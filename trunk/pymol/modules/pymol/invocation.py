@@ -210,8 +210,11 @@ if __name__=='pymol.invocation':
                options.auto_reinitialize = 1
             if "L" in a:
                options.after_load_script = av.pop()
-            if "H" in a: # reserved for activation of helper mode
-               pass
+            if "h" in a:
+               options.internal_gui = 0
+               options.external_gui = 0
+               options.internal_feedback = 0
+               options.show_splash = 1
          else:
             options.deferred.append(a)
             loaded_something = 1
