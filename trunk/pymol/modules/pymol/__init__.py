@@ -92,7 +92,7 @@ def adapt_to_hardware():
    (vendor,renderer,version) = cmd.get_renderer()
    if vendor[0:6]=='NVIDIA':
       if renderer[0:7]=='GeForce':
-         print " Optimizing for GeForce hardware..."
+         print " Adapting to GeForce hardware..."
          cmd.set('line_width','2',quiet=1)
 # NEED SOME CONTRIBUTIONS HERE!
 
