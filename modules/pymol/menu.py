@@ -285,7 +285,7 @@ def vacuum(s):
            [ 1, 'protein surface potential (relative)', 'util.protein_vacuum_esp("'+s+'",absolute=0,quiet=0)'          ],
            [ 2, '\\955NOTE:\\559 vacuum electrostatic potentials for', '' ],
            [ 2, '\\559macromolecules are not really appropriate', '' ],
-           [ 2, '\\559or meaningful -- so please use with caution.', '' ],
+           [ 2, '\\559or meaningful, so treat with extreme caution.', '' ],
            ]
    
 def mol_assign(s):
