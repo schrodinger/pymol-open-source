@@ -330,6 +330,8 @@ static void MainDrawLocked(void)
         }
       I->SwapFlag=false;
     }
+  /* don't claim to be ready until we've drawn at least once */
+  PyMOLReady = true; 
 }
 /*========================================================================*/
 static void MainDraw(void)
@@ -750,8 +752,6 @@ void launch(void)
   }
 
   PUnblock();
-
-  PyMOLReady = true;
 
   if(PMGUI) {
     SceneSetCardInfo((char*)glGetString(GL_VENDOR),
