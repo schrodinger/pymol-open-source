@@ -50,12 +50,13 @@ void GrapDrawSubStrFast(char *c,int x,int y,int start,int n)
 {
   c+=start;
   glRasterPos4d((double)(x),(double)(y),0.0,1.0);
-  while(*c) {
-    p_glutBitmapCharacter(P_GLUT_BITMAP_8_BY_13,*(c));
-    n--;
-    if(n<=0) break;
-    c++;
-  }
+  if(n)
+    while(*c) {
+      p_glutBitmapCharacter(P_GLUT_BITMAP_8_BY_13,*(c));
+      n--;
+      if(n<=0) break;
+      c++;
+    }
 }
 
 void GrapContStr(char *c)
