@@ -475,20 +475,33 @@ static void MainPassive(int x,int y)
   CMain *I = &Main;
 
   if(I->DragPassive) { /* a harmless race condition -- we don't want
-                          to slow Python down buy locking */
+                          to slow Python down buy locking on passive
+                          mouse motion */
 
     PLockAPIAsGlut();
-    
-    y=WinY-y;
-    if(!OrthoDrag(x,y,Modifiers))
-      {
-      }
-    
-    if(I->DirtyFlag)
-      if(PMGUI) {
-        p_glutPostRedisplay();
-        I->DirtyFlag=false;
-      }
+
+    if((y<0)||(x<0)||(x>WinX)||(y>WinY)) {       /* release passive drag if mouse leaves window... */
+
+      y=WinY-y;
+     
+
+      OrthoButton(P_GLUT_LEFT_BUTTON, P_GLUT_UP,x,y,Modifiers);
+      I->DragPassive = false;
+
+    } else {
+      
+      y=WinY-y;
+      
+      if(!OrthoDrag(x,y,Modifiers))
+        {
+        }
+      
+      if(I->DirtyFlag)
+        if(PMGUI) {
+          p_glutPostRedisplay();
+          I->DirtyFlag=false;
+        }
+    }
     
     PUnlockAPIAsGlut();
   }
