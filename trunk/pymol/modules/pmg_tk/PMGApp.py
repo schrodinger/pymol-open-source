@@ -297,7 +297,8 @@ class PMGApp(AbstractApp):
             unique[re.sub(r".*[\/\\]|\.py.*$","",a)] = 1
          for name in unique.keys():
             if name != "__init__":
-               mod_name = "pmg_tk.startup."+name
+               module_context = string.join(string.split(__name__,'.')[0:-1])
+               mod_name = module_context+".startup."+name
                __builtin__.__import__(mod_name)
                mod = sys.modules[mod_name]
                mod.__init__(self)

@@ -18,10 +18,11 @@ Z* -------------------------------------------------------------------
 #include"os_std.h"
 #include"os_gl.h"
 #include"Err.h"
-
+#include"Util.h"
 #include"Seq.h"
 #include"Seeker.h"
 #include"MemoryDebug.h"
+#include"Executive.h"
 
 typedef struct {
 } CSeeker;
@@ -32,23 +33,26 @@ CSeqHandler SeekerHandler;
 
 static CSeqRow* SeekerClick(CSeqRow* rowVLA,int button,int row,int col,int mod)
 {
-  
   printf("%d %d %d %d\n",button,row,col,mod);
+  return NULL;
 }
 
 static CSeqRow* SeekerDrag(CSeqRow* rowVLA,int row,int col,int mod)
 {
+  return NULL;
 }
 
-static CSeqRow* SeekerRelease(CSeqRow* rowVLA,int button,int row,int col,int mod)
+static CSeqRow* SeekerRelease(CSeqRow* rowVLA,int button,
+                              int row,int col,int mod)
+{
+  return NULL;
+}
+
+static void SeekerReset(void)
 {
 }
 
-void SeekerReset(void)
-{
-}
-
-void SeekerUpdateSimple(void)
+static void SeekerUpdateSimple(void)
 {
 }
 
@@ -235,11 +239,12 @@ static char SeekerGetAbbr(char *abbr)
 
 void SeekerUpdate(void)
 {
-  CObject *o = NULL;
+  /*  CObject *o = NULL;
+      int s;*/
+
   void *hidden = NULL;
   AtomInfoType *ai;
   ObjectMolecule *obj;
-  int s;
   int nRow = 0;
   CSeqRow *row,*r1;
   row = VLACalloc(CSeqRow,10);
@@ -255,7 +260,7 @@ void SeekerUpdate(void)
       int est_char = obj->NAtom*4;
       int first_atom_in_label;
       VLACheck(row,CSeqRow,nRow);
-      CSeqCol *col,*c1 = NULL;
+      CSeqCol *c1 = NULL;/* *col */
 
       r1 = row+nRow;
       r1->txt = VLAlloc(char,est_char);
@@ -360,13 +365,13 @@ void SeekerUpdate(void)
   SeqSetHandler(&SeekerHandler);
 }
 
-void SeekerInvalidate(void)
+static void SeekerInvalidate(void)
 {
 }
 
 void SeekerInit(void)
 {
-  CSeeker *I = &Seeker;  
+  /*  CSeeker *I = &Seeker;  */
 }
 
 void SeekerFree(void)

@@ -161,7 +161,8 @@ typedef struct {
 } ObjMolPairwise;
 
 void ObjMolPairwiseInit(ObjMolPairwise *pairwise);
-void ObjMolPairwiseFree(ObjMolPairwise *pairwise);
+void ObjMolPairwisePurge(ObjMolPairwise *pairwise);
+
 
 /* Metaphorics Annotated PDB stuff */
 

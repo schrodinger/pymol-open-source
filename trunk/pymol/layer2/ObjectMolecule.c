@@ -6154,7 +6154,7 @@ void ObjectMoleculeSeleOp(ObjectMolecule *I,int sele,ObjectMoleculeOpRec *op)
      for(a=0;a<I->NAtom;a++)
        {
          s=I->AtomInfo[a].selEntry;
-         if(priority=SelectorIsMember(s,sele))
+         if((priority=SelectorIsMember(s,sele)))
            {
              cnt=0;
              for(b=0;b<I->NCSet;b++) {
@@ -6196,7 +6196,7 @@ void ObjectMoleculeSeleOp(ObjectMolecule *I,int sele,ObjectMoleculeOpRec *op)
      for(a=0;a<I->NAtom;a++)
        {
          s=I->AtomInfo[a].selEntry;
-         if(priority=SelectorIsMember(s,sele))
+         if((priority=SelectorIsMember(s,sele)))
            {
              cnt=0;
              b=op->i1;

@@ -199,16 +199,18 @@ static int SeqClick(Block *block,int button,int x,int y,int mod)
       ScrollBarDoClick(I->ScrollBar,button,x,y,mod);      
     }
   } 
-  if(FindRowCol(x,y,&row_num,&col_num)) {
-    CSeqRow *row;
-    CSeqCol *col;
-    row = I->Row+row_num;
-    col = row->col+col_num;
-    col->inverse=!col->inverse;
-    if(I->Handler)
-      if(I->Handler->fClick)
-        I->Handler->fClick(I->Row,button,row_num,col_num,mod);
-    OrthoDirty();
+  if(!pass) {
+    if(FindRowCol(x,y,&row_num,&col_num)) {
+      CSeqRow *row;
+      CSeqCol *col;
+      row = I->Row+row_num;
+      col = row->col+col_num;
+      col->inverse=!col->inverse;
+      if(I->Handler)
+        if(I->Handler->fClick)
+          I->Handler->fClick(I->Row,button,row_num,col_num,mod);
+      OrthoDirty();
+    }
   }
   return(1);
 }

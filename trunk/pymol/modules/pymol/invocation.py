@@ -167,6 +167,8 @@ if __name__=='pymol.invocation':
                options.win_py = int(av.pop())
             if "V" in a:
                options.ext_y = int(av.pop())
+            if "N" in a: # external gui name...
+               options.gui = av.pop()
             if "x" in a:
                options.external_gui = 0
             if "m" in a: # mac external GUI
