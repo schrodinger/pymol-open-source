@@ -750,21 +750,29 @@ void RayRenderPOV(CRay *I,int width,int height,char **headerVLA_ptr,
 
   if(!SettingGet(I->G,cSetting_ortho)) {
     sprintf(buffer,"camera {direction<0.0,0.0,%8.3f>\n location <0.0 , 0.0 , 0.0>\n right %12.10f*x up y \n }\n",
-            -56.6/fov,/* by trial and error */
+            -57.3F*cos(fov*cPI/(180*2.4))/fov,/* by trial and error */
             I->Range[0]/I->Range[1]);
   } else {
     sprintf(buffer,"camera {orthographic location <0.0 , 0.0 , %12.10f>\nlook_at  <0.0 , 0.0 , -1.0> right %12.10f*x up %12.10f*y}\n",
-            front,I->Range[0],I->Range[1]);
+            front,-I->Range[0],I->Range[1]);
   }
   UtilConcatVLA(&headerVLA,&hc,buffer);
 
-  sprintf(buffer,"#default { finish{phong %8.3f ambient %8.3f diffuse %8.3f phong_size %8.6f}}\n",
-          SettingGet(I->G,cSetting_spec_reflect),
-          SettingGet(I->G,cSetting_ambient),
-          SettingGet(I->G,cSetting_reflect)*1.2,
-          SettingGet(I->G,cSetting_spec_power)/4.0F);
-  UtilConcatVLA(&headerVLA,&hc,buffer);
+  {
+    float ambient =           SettingGet(I->G,cSetting_ambient) + SettingGet(I->G,cSetting_direct);
+    float reflect =           SettingGet(I->G,cSetting_reflect);
 
+    if(ambient>0.5) ambient=0.5;
+
+    reflect = 1.2 - 1.5*ambient;
+
+    sprintf(buffer,"#default { finish{phong %8.3f ambient %8.3f diffuse %8.3f phong_size %8.6f}}\n",
+            SettingGet(I->G,cSetting_spec_reflect),
+            ambient,
+            reflect,
+            SettingGet(I->G,cSetting_spec_power)/4.0F);
+    UtilConcatVLA(&headerVLA,&hc,buffer);
+  }
   lightv = SettingGet_3fv(I->G,NULL,NULL,cSetting_light);
   copy3f(lightv,light);
   if(angle) {
@@ -780,10 +788,10 @@ void RayRenderPOV(CRay *I,int width,int height,char **headerVLA_ptr,
           );
   UtilConcatVLA(&headerVLA,&hc,buffer);
 
-
   sprintf(buffer,"plane{z , %6.4f \n pigment{color rgb<%6.4f,%6.4f,%6.4f>}\n finish{phong 0 specular 0 diffuse 0 ambient 1.0}}\n",-back,bkrd[0],bkrd[1],bkrd[2]);
   UtilConcatVLA(&headerVLA,&hc,buffer);
 
+  
   for(a=0;a<I->NPrimitive;a++) {
     prim = I->Primitive+a;
     vert = base->Vertex+3*(prim->vert);
@@ -852,6 +860,7 @@ void RayRenderPOV(CRay *I,int width,int height,char **headerVLA_ptr,
               prim->c2[0],prim->c2[1],prim->c2[2]);
       UtilConcatVLA(&charVLA,&cc,buffer);
 
+      
 		break;
 	 case cPrimTriangle:
       norm=base->Normal+3*base->Vert2Normal[prim->vert]+3;/* first normal is the average */      
@@ -873,6 +882,8 @@ void RayRenderPOV(CRay *I,int width,int height,char **headerVLA_ptr,
                   );
           UtilConcatVLA(&charVLA,&cc,buffer);
         } else {
+#if 0
+          
           sprintf(buffer,"smooth_triangle{<%12.10f,%12.10f,%12.10f>,\n<%12.10f,%12.10f,%12.10f>,\n<%12.10f,%12.10f,%12.10f>,\n<%12.10f,%12.10f,%12.10f>,\n<%12.10f,%12.10f,%12.10f>,\n<%12.10f,%12.10f,%12.10f>\n",
                   vert[0],vert[1],vert[2],
                   norm[0],norm[1],norm[2],
@@ -899,6 +910,44 @@ void RayRenderPOV(CRay *I,int width,int height,char **headerVLA_ptr,
                     (prim->c1[2]+prim->c2[2]+prim->c3[2])/3,transmit);
           }
         UtilConcatVLA(&charVLA,&cc,buffer);
+#else
+        /* nowadays we use mesh2 to generate smooth_color_triangles */
+
+        UtilConcatVLA(&charVLA,&cc,"mesh2 { ");
+        sprintf(buffer,"vertex_vectors { 3, <%12.10f,%12.10f,%12.10f>,\n<%12.10f,%12.10f,%12.10f>,\n<%12.10f,%12.10f,%12.10f>}\n normal_vectors { 3,\n<%12.10f,%12.10f,%12.10f>,\n<%12.10f,%12.10f,%12.10f>,\n<%12.10f,%12.10f,%12.10f>}\n",
+                vert[0],vert[1],vert[2],
+                vert[3],vert[4],vert[5],
+                vert[6],vert[7],vert[8],
+                norm[0],norm[1],norm[2],
+                norm[3],norm[4],norm[5],
+                norm[6],norm[7],norm[8]
+                );
+        UtilConcatVLA(&charVLA,&cc,buffer);
+
+        if(prim->trans>R_SMALL4) 
+          sprintf(transmit,"transmit %4.6f",prim->trans);
+        else
+          transmit[0]=0;
+
+        sprintf(buffer,"texture_list { 3, ");
+        UtilConcatVLA(&charVLA,&cc,buffer);
+
+        sprintf(buffer, "texture { pigment{color rgb<%6.4f1,%6.4f,%6.4f> %s}}\n",
+                prim->c1[0],prim->c1[1],prim->c1[2],transmit);
+        UtilConcatVLA(&charVLA,&cc,buffer);
+
+        sprintf(buffer, ",texture { pigment{color rgb<%6.4f1,%6.4f,%6.4f> %s}}\n",
+                prim->c2[0],prim->c2[1],prim->c2[2],transmit);
+        UtilConcatVLA(&charVLA,&cc,buffer);
+
+        sprintf(buffer, ",texture { pigment{color rgb<%6.4f1,%6.4f,%6.4f> %s}} }\n",
+                prim->c3[0],prim->c3[1],prim->c3[2],transmit);
+        UtilConcatVLA(&charVLA,&cc,buffer);
+
+        sprintf(buffer, "face_indices { 1, <0,1,2>, 0, 1, 2 } }\n");
+        UtilConcatVLA(&charVLA,&cc,buffer);        
+#endif
+
         }
       }
 		break;
@@ -1131,7 +1180,7 @@ int RayTraceThread(CRayThreadInfo *T)
    float edge_width = 0.35356F;
    float edge_height = 0.35356F;
    float trans_spec_cut,trans_spec_scale;
-
+   float direct_shade;
    float red_blend=0.0F;
    float blue_blend=0.0F;
    float green_blend=0.0F;
@@ -1183,6 +1232,7 @@ int RayTraceThread(CRayThreadInfo *T)
 	ambient				= SettingGet(I->G,cSetting_ambient);
 	lreflect			= SettingGet(I->G,cSetting_reflect);
 	direct				= SettingGet(I->G,cSetting_direct);
+	direct_shade	= SettingGet(I->G,cSetting_ray_direct_shade);
    trans_spec_cut = SettingGet(I->G,cSetting_ray_transparency_spec_cut);
    blend_colors    = SettingGetGlobal_i(I->G,cSetting_ray_blend_colors);
    max_pass = SettingGetGlobal_i(I->G,cSetting_ray_max_passes);
@@ -1563,9 +1613,8 @@ int RayTraceThread(CRayThreadInfo *T)
                           excess		= _0;
                           reflect_cmp	= _0;
                         }
-                      
-                      bright	= ambient + (_1-ambient) * (direct*direct_cmp + (_1-direct)*direct_cmp*lreflect*reflect_cmp);
-                      
+                      bright	= ambient + (_1-ambient) * (((_1-direct_shade)+direct_shade*lit) * direct*direct_cmp +
+                                                          (_1-direct)*direct_cmp*lreflect*reflect_cmp);
                       if(bright > _1)			bright = _1;
                       else if(bright < _0)	bright = _0;
                       
@@ -2575,6 +2624,7 @@ void RayRender(CRay *I,int width,int height,unsigned int *image,
          rt[a].phase = a;
          rt[a].mag = mag; /* fold magnification */
          rt[a].n_thread = n_thread;
+         rt[a].ray = I;
       }
 		
 #ifndef _PYMOL_NOPY

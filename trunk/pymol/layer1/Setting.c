@@ -1143,6 +1143,7 @@ void SettingGenerateSideEffects(PyMOLGlobals *G,int index,char *sele,int state)
   case cSetting_mesh_lighting:
   case cSetting_light:
   case cSetting_fog:
+  case cSetting_field_of_view:
   case cSetting_fog_start:
   case cSetting_two_sided_lighting:
   case cSetting_transparency_mode:
@@ -1700,7 +1701,7 @@ void SettingInitGlobal(PyMOLGlobals *G,int alloc,int reset_gui)
 
   SettingSet_b(I,cSetting_cull_spheres, 1);
 
-  SettingSet_f(I,cSetting_test1, 1.0F);
+  SettingSet_f(I,cSetting_test1, -56.6F);
 
   SettingSet_f(I,cSetting_test2, 1.0F);
 
@@ -2358,6 +2359,7 @@ void SettingInitGlobal(PyMOLGlobals *G,int alloc,int reset_gui)
   SettingSet_b(I,cSetting_slice_dynamic_grid, 0);
   SettingSet_f(I,cSetting_slice_dynamic_grid_resolution, 3.0F);
   SettingSet_b(I,cSetting_pdb_insure_orthogonal, 1);
+  SettingSet_f(I,cSetting_ray_direct_shade,0.0F);
 
 }
 

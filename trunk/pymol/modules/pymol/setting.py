@@ -412,6 +412,7 @@ if __name__=='pymol.setting':
       slice_dynamic_grid   = 372
       slice_dynamic_grid_resolution = 373
       pdb_insure_orthogonal = 374
+      ray_direct_shade     =375
       
    setting_sc = Shortcut(SettingIndex.__dict__.keys())
 
