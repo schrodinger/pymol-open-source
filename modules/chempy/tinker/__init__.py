@@ -4,10 +4,68 @@ import shutil
 import glob
 import re
 import string
+import sys
+from chempy import feedback
+
+# "do" is the preferred command for running tinker
+
+def do(command,in_prefix,run_prefix,out_prefix,tokens,capture=None):
+   if feedback['tinker']:
+      print " "+str(__name__)+': creating temporary files "%s.*"' % (run_prefix)
+      print " "+str(__name__)+': launching %s...' % command
+      c = 1
+      for a in tokens:
+         print " "+str(__name__)+': input %d = %s' % (c,a)
+         c = c + 1
+      sys.stdout.flush()
+   for a in glob.glob(run_prefix+".*"):
+      os.unlink(a)
+   for a in glob.glob(out_prefix+".*"):
+      os.unlink(a)
+   for src in glob.glob(in_prefix+".*"):
+      dst = string.split(src,'.')
+      dst = run_prefix+'.'+dst[len(dst)-1]
+      shutil.copyfile(src,dst)
+   if capture==1:
+      pipe = os.popen(bin_path+command+"> "+out_prefix+".out","w")      
+   elif capture==2:
+      pipe = os.popen(bin_path+command+" | tee "+out_prefix+".out","w")      
+   else:
+      pipe = os.popen(bin_path+command,"w")
+   if not pipe:
+      print "Error: can't run tinker!!!"
+      raise RunError
+   for a in tokens:
+      pipe.write(a+"\n")
+   pipe.close()
+   for src in glob.glob(run_prefix+".*_2"):
+      dst = string.replace(src,'_2','')
+      if os.path.exists(dst):
+         os.unlink(dst)
+      os.rename(src,dst)      
+   for src in glob.glob(run_prefix+".*"):
+      dst = string.split(src,'.')
+      dst = out_prefix+'.'+dst[len(dst)-1]
+      if os.path.exists(dst):
+         os.unlink(dst)
+      os.rename(src,dst)
+   if feedback['tinker']:
+      print " "+str(__name__)+': %s job complete. ' % command
+      print " "+str(__name__)+': creating output files "%s.*"' % (out_prefix)
+
+#  DEPRECATED
 
 prefix = "tinker_run"
 
 def run(command,in_prefix,out_prefix,tokens,capture=None):
+   if feedback['tinker']:
+      print " "+str(__name__)+': creating temporary files "%s.*"' % (prefix)
+      print " "+str(__name__)+': launching %s...' % command
+      c = 1
+      for a in tokens:
+         print " "+str(__name__)+': input %d = %s' % (c,a)
+         c = c + 1
+      sys.stdout.flush()
    for a in glob.glob(prefix+".*"):
       os.unlink(a)
    for a in glob.glob(out_prefix+".*"):
@@ -37,7 +95,10 @@ def run(command,in_prefix,out_prefix,tokens,capture=None):
       if os.path.exists(dst):
          os.unlink(dst)
       os.rename(src,dst)
-   
+   if feedback['tinker']:
+      print " "+str(__name__)+': %s job complete. ' % command
+      print " "+str(__name__)+': creating output files "%s.*"' % (out_prefix)
+
 if os.environ.has_key('TINKER_PATH'):
    base = os.environ['TINKER_PATH']
    bin_path = base + '/bin/'

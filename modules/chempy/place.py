@@ -5,6 +5,7 @@
 import bond_amber
 
 from chempy.cpv import *
+from chempy import feedback
 
 TET_TAN = 1.41
 TRI_TAN = 1.732
@@ -31,6 +32,8 @@ def find_known_secondary(model,anchor,known_list):
 
 #------------------------------------------------------------------------------
 def simple_unknowns(model,bondfield=bond_amber):
+   if feedback['actions']:
+      print " "+str(__name__)+": placing unknowns..."
    # this can be used to build hydrogens and would robably work for
    # acyclic carbons as well
    if str(model.__class__) != 'chempy.models.Connected':

@@ -5,6 +5,8 @@ class Base:
 
 #------------------------------------------------------------------------------
    def update_index(self):
+      if chempy.feedback['verbose']:
+         print " "+str(self.__class__)+": updating indexes..."
       c = 0
       self.index = {}
       idx = self.index
@@ -67,6 +69,8 @@ class Indexed(Base):
    
 #------------------------------------------------------------------------------
    def merge(self,other): # steals atom objects from 'other' and resets 'other'
+      if chempy.feedback['actions']:
+         print " "+str(self.__class__)+": merging models..."
       nAtom=self.nAtom
       self.atom.extend(other.atom)
       for b in other.bond:
@@ -79,6 +83,8 @@ class Indexed(Base):
 
 #--------------------------------------------------------------------------------
    def delete_atom(self,index):
+      if chempy.feedback['atoms']:
+         print " "+str(self.__class__)+": deleting atom %d." % index
    
       nAtom=self.nAtom
 
@@ -114,6 +120,9 @@ class Indexed(Base):
 
 #------------------------------------------------------------------------------
    def insert_atom(self,index,atom):
+      if chempy.feedback['atoms']:
+         print " "+str(self.__class__)+': inserting atom "%s" before %d.' % (
+            atom.name,index)
 
       nAtom=self.nAtom
       self.atom.insert(index,atom)
@@ -135,6 +144,8 @@ class Indexed(Base):
 
 #------------------------------------------------------------------------------
    def add_atom(self,atom):
+      if chempy.feedback['atoms']:
+         print " "+str(self.__class__)+': adding atom "%s".' % atom.name
       self.atom.append(atom)
       index = self.nAtom - 1
       if self.index:
@@ -143,14 +154,20 @@ class Indexed(Base):
 
 #------------------------------------------------------------------------------
    def add_bond(self,bond):
+      if chempy.feedback['bonds']:
+         print " "+str(self.__class__)+": adding bond (%d,%d)." % bond.index
       self.bond.append(bond)      
 
 #------------------------------------------------------------------------------
    def remove_bond(self,index):
+      if chempy.feedback['bonds']:
+         print " "+str(self.__class__)+": removing bond %d." % index
       nBond=len(self.Bond)
       del self.bond[index]
 #------------------------------------------------------------------------------
    def convert_to_connected(self):
+      if chempy.feedback['verbose']:
+         print " "+str(self.__class__)+": converting to connected model..."
       model = Connected()
       model.molecule = self.molecule
       model.atom = self.atom
@@ -192,6 +209,8 @@ class Connected(Base):
       
 #------------------------------------------------------------------------------
    def convert_to_indexed(self):
+      if chempy.feedback['verbose']:
+         print " "+str(self.__class__)+": converting to indexed model..."
       indexed = Indexed()
       indexed.atom = self.atom
       indexed.molecule = self.molecule
@@ -206,6 +225,9 @@ class Connected(Base):
 
 #------------------------------------------------------------------------------
    def insert_atom(self,index,atom):
+      if chempy.feedback['atoms']:
+         print " "+str(self.__class__)+': inserting atom "%s" before %d.' % (
+            atom.name,index)
 
       nAtom=self.nAtom
       self.atom.insert(index,atom)
@@ -228,6 +250,8 @@ class Connected(Base):
 
 #------------------------------------------------------------------------------
    def delete_atom(self,index):
+      if chempy.feedback['atoms']:
+         print " "+str(self.__class__)+": deleting atom %d." % index
 
       nAtom=self.nAtom
 
@@ -266,6 +290,8 @@ class Connected(Base):
 
 #------------------------------------------------------------------------------
    def add_atom(self,atom):
+      if chempy.feedback['atoms']:
+         print " "+str(self.__class__)+': adding atom "%s".' % atom.name
       self.atom.append(atom)
       self.bond.append([])
       index = self.nAtom - 1
@@ -275,6 +301,8 @@ class Connected(Base):
 
 #------------------------------------------------------------------------------
    def sort(self):
+      if chempy.feedback['verbose']:
+         print " "+__name__+": sorting..."
       if not self.index:
          self.update_index()
       old_index = self.index
