@@ -1068,6 +1068,10 @@ void RayRender(CRay *I,int width,int height,unsigned int *image,float front,floa
                 *(pixel) = (c[0]<<24)|(c[1]<<16)|(c[2]<<8)|c[3];
               }
               if(i>=0) { 
+
+                if(r1.prim->type==cPrimSausage) { /* carry ray through the stick */
+                  new_front+=2*r1.surfnormal[2]*r1.prim->r1;
+                }
                 if(!backface_cull) 
                   persist = persist * r1.prim->trans;
                 else {
@@ -1356,7 +1360,7 @@ void RayCylinder3fv(CRay *I,float *v1,float *v2,float r,float *c1,float *c2)
 
   p->type = cPrimCylinder;
   p->r1=r;
-  p->trans=0.0;
+  p->trans=I->Trans;
   p->texture=I->Texture;
   p->cap1=cCylCapFlat;
   p->cap2=cCylCapFlat;
@@ -1400,7 +1404,7 @@ void RayCustomCylinder3fv(CRay *I,float *v1,float *v2,float r,
 
   p->type = cPrimCylinder;
   p->r1=r;
-  p->trans=0.0;
+  p->trans=I->Trans;
   p->texture=I->Texture;
   p->cap1=cap1;
   p->cap2=cap2;
@@ -1443,7 +1447,7 @@ void RaySausage3fv(CRay *I,float *v1,float *v2,float r,float *c1,float *c2)
 
   p->type = cPrimSausage;
   p->r1=r;
-  p->trans=0.0;
+  p->trans=I->Trans;
   p->texture=I->Texture;
   copy3f(I->TextureParam,p->texture_param);
 
