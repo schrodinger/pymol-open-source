@@ -33,6 +33,7 @@ Z* -------------------------------------------------------------------
 #define cObjectSurface      7
 #define cObjectGadget       8
 #define cObjectCalculator   9
+#define cObjectSlice        10
 
 /* 
    the object base class is in the process of being converted to support

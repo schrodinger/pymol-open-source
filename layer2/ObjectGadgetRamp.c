@@ -121,7 +121,7 @@ int ObjectGadgetRampInterVertex(ObjectGadgetRamp *I,float *pos,float *color)
   if (!ExecutiveValidateObjectPtr((CObject*)I->Map,cObjectMap));
     I->Map = ExecutiveFindObjectMapByName(I->SrcName);
   if(ok) ok = (I->Map!=NULL);
-  if(ok) ok = ObjectMapInterpolate(I->Map,I->SrcState,pos,&level,1);
+  if(ok) ok = ObjectMapInterpolate(I->Map,I->SrcState,pos,&level,NULL,1);
   if(ok) ok = ObjectGadgetRampInterpolate(I,level,color);
   return(ok);
 }

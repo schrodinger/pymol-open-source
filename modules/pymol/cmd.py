@@ -147,7 +147,8 @@ if __name__=='pymol.cmd':
       'cell'          :12,
       'cgo'           :13,
       'callback'      :14,
-      'extent'        :15,   
+      'extent'        :15,
+      'slice'         :16,
    }
    repres_sc = Shortcut(repres.keys())
 
@@ -1125,6 +1126,7 @@ SEE ALSO
         isolevel,           \
         isomesh,            \
         isosurface,         \
+        slice_map,          \
         symexp,             \
         map_new,            \
         ramp_new
@@ -1356,6 +1358,7 @@ SEE ALSO
         recolour,           \
         refresh,            \
         reset,              \
+        rgbfunction,        \
         rock,               \
         scene,              \
         set_color,          \
@@ -1364,6 +1367,9 @@ SEE ALSO
         set_vis,            \
         set_view,           \
         show,               \
+        slice_lock,         \
+        slice_unlock,       \
+        slice_heightmap,    \
         spectrum,           \
         stereo,             \
         toggle,             \
@@ -1584,6 +1590,7 @@ SEE ALSO
       'resume'        : [ resume            , 0 , 0 , ''  , parsing.STRICT ],
       'return'        : [ python_help       , 0 , 0 , ''  , parsing.PYTHON ],   
       'rewind'        : [ rewind            , 0 , 0 , ''  , parsing.STRICT ],
+      'rgbfunction'   : [ rgbfunction       , 0 , 0 , ''  , parsing.LEGACY ],         
       'rock'          : [ rock              , 0 , 0 , ''  , parsing.STRICT ],
       'rotate'        : [ rotate            , 0 , 0 , ''  , parsing.STRICT ],   
       'run'           : [ helping.run       , 1 , 2 , ',' , parsing.RUN    ],
@@ -1607,6 +1614,9 @@ SEE ALSO
       'set_key'       : [ set_key           , 0 , 0 , ''  , parsing.STRICT ], # API only
       'set_view'      : [ set_view          , 0 , 0 , ''  , parsing.STRICT ],   
       'show'          : [ show              , 0 , 0 , ''  , parsing.STRICT ],
+      'slice_map'     : [ slice_map         , 0 , 0 , ''  , parsing.LEGACY ],
+      'slice_lock'    : [ slice_lock        , 0 , 0 , ''  , parsing.LEGACY ],
+      'slice_unlock'  : [ slice_unlock      , 0 , 0 , ''  , parsing.LEGACY ],
       'smooth'        : [ smooth            , 0 , 0 , ''  , parsing.STRICT ],
       'sort'          : [ sort              , 0 , 0 , ''  , parsing.STRICT ],
       'spawn'         : [ helping.spawn     , 1 , 2 , ',' , parsing.SPAWN  ],
@@ -1939,6 +1949,7 @@ SEE ALSO
       'symexp'         : [ object_sc              , 'object'          , ', ' ],   
       'isomesh'        : [ map_sc                 , 'map object'      , ', ' ],
       'isosurface'     : [ map_sc                 , 'map object'      , ', ' ],
+      'slice_map'      : [ map_sc                 , 'map object'      , ', ' ],
       'view'           : [ viewing.view_sc        , 'view action'     , ''   ],
       'scene'          : [ viewing.view_sc        , 'scene action'    , ','   ],                  
       'unset'          : [ selection_sc           , 'selection'        , ','  ],

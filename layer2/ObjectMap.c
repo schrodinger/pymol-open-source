@@ -136,13 +136,13 @@ int ObjectMapStateGetExcludedStats(ObjectMapState *ms,float *vert_vla, float bey
   return cnt;
 }
 
-int ObjectMapInterpolate(ObjectMap *I,int state,float *array,float *result,int n)
+int ObjectMapInterpolate(ObjectMap *I,int state,float *array,float *result,int *flag,int n)
 {
   int ok=false;
   if(state<0) state=0;
   if(state<I->NState)
     if(I->State[state].Active)
-      ok = ObjectMapStateInterpolate(&I->State[state],array,result,n);
+      ok = ObjectMapStateInterpolate(&I->State[state],array,result,flag,n);
   return(ok);
 }
 
@@ -282,8 +282,48 @@ int ObjectMapDouble(ObjectMap *I,int state)
   return(result);
 }
 
+int ObjectMapStateContainsPoint(ObjectMapState *ms,float *point)
+{
+  int result=false;
+  float x,y,z;
+  
+  switch(ms->MapSource) {
+  case cMapSourceXPLOR:
+  case cMapSourceCCP4:
+  case cMapSourceBRIX:
+  case cMapSourceGRD:
+    {
+      float frac[3];
 
-int ObjectMapStateInterpolate(ObjectMapState *ms,float *array,float *result,int n)
+      transform33f3f(ms->Crystal->RealToFrac,point,frac); 
+      
+      x = (ms->Div[0] * frac[0]);
+      y = (ms->Div[1] * frac[1]);
+      z = (ms->Div[2] * frac[2]);
+
+      if((x>=ms->Min[0])&&(x<=ms->Max[0])&&
+         (y>=ms->Min[1])&&(y<=ms->Max[1])&&
+         (z>=ms->Min[2])&&(z<=ms->Max[2]))
+        result = true;
+    }
+    break;
+  case cMapSourcePHI:
+  case cMapSourceFLD:
+  case cMapSourceDesc:
+    x = (point[0] - ms->Origin[0])/ms->Grid[0];
+    y = (point[1] - ms->Origin[1])/ms->Grid[1];
+    z = (point[2] - ms->Origin[2])/ms->Grid[2];
+    
+    if((x>=ms->Min[0])&&(x<=ms->Max[0])&&
+       (y>=ms->Min[1])&&(y<=ms->Max[1])&&
+       (z>=ms->Min[2])&&(z<=ms->Max[2]))
+      result = true;
+    break;
+    }
+  return(result);
+}
+
+int ObjectMapStateInterpolate(ObjectMapState *ms,float *array,float *result,int *flag, int n)
 {
   int ok=true;
   float *inp;
@@ -294,6 +334,87 @@ int ObjectMapStateInterpolate(ObjectMapState *ms,float *array,float *result,int 
   out = result;
   
   switch(ms->MapSource) {
+  case cMapSourceXPLOR:
+  case cMapSourceCCP4:
+  case cMapSourceBRIX:
+  case cMapSourceGRD:
+    {
+      float frac[3];
+
+      while(n--) {
+        
+        /* get the fractional coordinate */
+        transform33f3f(ms->Crystal->RealToFrac,inp,frac); 
+        
+        x = inp[0];
+        y = inp[1];
+        z = inp[2];
+        
+        inp+=3;
+
+        /* compute the effective lattice offset as a function of cell spacing */
+
+        x = (ms->Div[0] * frac[0]);
+        y = (ms->Div[1] * frac[1]);
+        z = (ms->Div[2] * frac[2]);
+        
+        /* now separate the integration and fractional parts for interpolation */
+           
+        a=(int)floor(x);
+        b=(int)floor(y);
+        c=(int)floor(z);
+        x-=a;
+        y-=b;
+        z-=c;
+        
+        if(flag) *flag = 1;
+        /* wrap into the map */
+
+        if(a<ms->Min[0]) {
+          x=0.0F;
+          a=ms->Min[0];
+          ok=false;
+          if(flag) *flag = 0;
+        } else if(a>=ms->FDim[0]+ms->Min[0]-1) {
+          x=0.0F;
+          a=ms->FDim[0]+ms->Min[0]-1;
+          ok=false;
+          if(flag) *flag = 0;
+        }
+        
+        if(b<ms->Min[1]) {
+          y=0.0F;
+          b=ms->Min[1];
+          ok=false;
+          if(flag) *flag = 0;
+        } else if(b>=ms->FDim[1]+ms->Min[1]-1) {
+          y=0.0F;
+          b=ms->FDim[1]+ms->Min[1]-1;
+          ok=false;
+          if(flag) *flag = 0;
+        }
+        
+        if(c<ms->Min[2]) {
+          z=0.0F;
+          c=ms->Min[2];
+          ok=false;
+          if(flag) *flag = 0;
+        } else if(c>=ms->FDim[2]+ms->Min[2]-1) {
+          z=0.0F;
+          c=ms->FDim[2]+ms->Min[2]-1;
+          ok=false;
+          if(flag) *flag = 0;
+        }
+        /*      printf("%d %d %d %8.3f %8.3f %8.3f\n",a,b,c,x,y,z);*/
+        *(result++)=FieldInterpolatef(ms->Field->data,
+                                      a-ms->Min[0],
+                                      b-ms->Min[1],
+                                      c-ms->Min[2],x,y,z);
+        if(flag) flag++;
+
+      }
+    }
+    break;
   case cMapSourcePHI:
   case cMapSourceFLD:
   case cMapSourceDesc:
@@ -311,48 +432,56 @@ int ObjectMapStateInterpolate(ObjectMapState *ms,float *array,float *result,int 
       y-=b;
       z-=c;
 
+      if(flag) *flag = 1;
       if(a<ms->Min[0]) {
         x=0.0F;
         a=ms->Min[0];
         ok=false;
+        if(flag) *flag = 0;
       } else if(a>=ms->Max[0]) {
         x=1.0F;
         a=ms->Max[0]-1;
         ok=false;
+        if(flag) *flag = 0;
       }
 
       if(b<ms->Min[1]) {
         y=0.0F;
         b=ms->Min[1];
         ok=false;
+        if(flag) *flag = 0;
       } else if(b>=ms->Max[1]) {
         y=1.0F;
-        b=ms->Min[1];
+        b=ms->Max[1]-1;
         ok=false;
+        if(flag) *flag = 0;
       }
 
       if(c<ms->Min[2]) {
         z=0.0F;
         c=ms->Min[2];
         ok=false;
+        if(flag) *flag = 0;
       } else if(c>=ms->Max[2]) {
         z=1.0F;
         c=ms->Max[2]-1;
         ok=false;
+        if(flag) *flag = 0;
       }
       /*      printf("%d %d %d %8.3f %8.3f %8.3f\n",a,b,c,x,y,z);*/
       *(result++)=FieldInterpolatef(ms->Field->data,
                                     a-ms->Min[0],
                                     b-ms->Min[1],
                                     c-ms->Min[2],x,y,z);
+      if(flag) flag++;
     }
     break;
   default:
     ok=false;
     break;
   }
-  return(ok);
-}
+    return(ok);
+  }
 
 int ObjectMapNumPyArrayToMapState(ObjectMapState *I,PyObject *ary);
 
@@ -1296,6 +1425,7 @@ int ObjectMapCCP4StrToMap(ObjectMap *I,char *CCP4Str,int bytes,int state) {
     ObjectMapUpdateExtents(I);
     printf(" ObjectMap: Map Read.  Range = %5.3f to %5.3f\n",mind,maxd);
   }
+
   return(ok);
 }
 /*========================================================================*/

@@ -7,7 +7,7 @@
 #G* Please see the accompanying LICENSE file for further information. 
 #H* -------------------------------------------------------------------
 #I* Additional authors of this source file include:
-#-* 
+#-* Filipe Maia (slicing code)
 #-* 
 #-*
 #Z* -------------------------------------------------------------------
@@ -34,7 +34,7 @@ if __name__=='pymol.viewing':
    rep_list = [ "lines","sticks","spheres",
                 "dots","surface","mesh",
                 "nonbonded", "nb_spheres",
-                "cartoon","ribbon","labels"]
+                "cartoon","ribbon","labels","slice"]
 
    view_sc = Shortcut(['store','recall','clear'])
    view_dict = {}
@@ -436,9 +436,9 @@ DESCRIPTION
 
    The available representations are:
 
-      lines     spheres   mesh      ribbon     cartoon
-      sticks    dots      surface   labels     extent
-      nonbonded nb_spheres 
+      lines     spheres    mesh      ribbon     cartoon
+      sticks    dots       surface   labels     extent
+      nonbonded nb_spheres slice
 
 USAGE
 
@@ -1660,6 +1660,187 @@ EXAMPLES
             unlock()
       return r
 
+
+   def slice_lock(name,state=-1):
+      '''
+DESCRIPTION
+
+   "slice_lock" imprisons the slice exactly between the 2 clipping planes.
+
+
+USAGE
+
+   slice_lock slice [, state ]
+
+   slice = the name of the slice object you want to lock.
+
+   state = the state of the slice you want to lock (default=-1)
+
+
+NOTES
+
+   state > 0: specific state
+   state = 0: all states
+   state = -1: current state
+
+
+SEE ALSO
+
+   slice_unlock
+      '''
+      # preprocess selection
+      selection = selector.process(name)
+      #   
+      try:
+         lock()   
+         r = _cmd.slice_setlock(str(selection),int(state)-1,1)
+      finally:
+         unlock()
+      return r
+
+   def slice_unlock(name,state=-1):
+      '''
+DESCRIPTION
+
+   "slice_unlock" allows the slice to freely move on the 3D space.
+
+
+USAGE
+
+   slice_unlock slice [, state ]
+
+   slice = the name of the slice object you want to unlock.
+
+   state = the state of the slice you want to unlock (default=-1)
+
+
+NOTES
+
+   state > 0: specific state
+   state = 0: all states
+   state = -1: current state
+
+
+SEE ALSO
+
+   slice_lock
+      '''
+      # preprocess selection
+      selection = selector.process(name)
+      #   
+      try:
+         lock()   
+         r = _cmd.slice_setlock(str(selection),int(state)-1,0)
+      finally:
+         unlock()
+      return r
+
+
+   def rgbfunction(name,function="traditional",state=-1):
+      '''
+DESCRIPTION
+
+   "rgbfunction" defines the fuction that is used to map a color to a
+   value
+
+USAGE
+
+   rgbfunction name, [ function ]
+
+   name = the name of the object from which you wish to change the
+   rgb color map function
+
+   function = the mapping function you want to use (default=traditional)
+
+   state = the state of the slice you want to unlock (default=-1)
+
+
+NOTES:
+
+   Possible functions:
+   
+   traditional
+   sludge
+   ocean
+   hot
+   grayable
+   rainbow
+   afmhot
+   grayscale
+
+
+   state > 0: specific state
+   state = 0: all states
+   state = -1: current state
+
+
+   
+EXAMPLES 
+
+   rgbfunction slice,ocean
+      '''
+
+      # Evil literal constants alert!! It would be nice to be able to use
+      # the same defines that are specified in ObjectSlice.c
+      # but i have not idea on how to do it
+      r = 1
+      try:
+
+         lock()
+         if (cmp(function.lower(),"traditional") == 0):
+            r = _cmd.rgbfunction(str(name),1,int(state)-1)
+         elif (cmp(function.lower(),"sludge") == 0):
+            r = _cmd.rgbfunction(str(name),2,int(state)-1)
+         elif (cmp(function.lower(),"ocean") == 0):
+            r = _cmd.rgbfunction(str(name),3,int(state)-1)
+         elif (cmp(function.lower(),"hot") == 0):
+            r = _cmd.rgbfunction(str(name),4,int(state)-1)
+         elif (cmp(function.lower(),"grayable") == 0):
+            r = _cmd.rgbfunction(str(name),5,int(state)-1)
+         elif (cmp(function.lower(),"rainbow") == 0):
+            r = _cmd.rgbfunction(str(name),6,int(state)-1)
+         elif (cmp(function.lower(),"afmhot") == 0):
+            r = _cmd.rgbfunction(str(name),7,int(state)-1)
+         elif (cmp(function.lower(),"grayscale") == 0):
+            r = _cmd.rgbfunction(str(name),8,int(state)-1)
+         else:
+            print "Error: Invalid function name."
+      finally:
+         unlock()
+      return r
+
+   def slice_heightmap(name,state=-1):
+      '''
+DESCRIPTION
+
+   "slice_heightmap" toogles the heightmap representation.
+
+
+USAGE
+
+   heightmap slice [, state ]
+
+   slice = the name of the slice.
+
+   state = the state of the slice (default=-1)
+
+
+NOTES
+
+   state > 0: specific state
+   state = 0: all states
+   state = -1: current state
+
+      '''
+      # preprocess selection
+      selection = selector.process(name)
+      #   
+      try:
+        lock()   
+        r = _cmd.slice_heightmap(str(selection),int(state)-1)
+      finally:
+         unlock()
+      return r
 
 # Aliases for Mother England.
 

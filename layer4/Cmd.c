@@ -56,6 +56,7 @@ Z* -------------------------------------------------------------------
 #include"ObjectCallback.h"
 #include"ObjectCGO.h"
 #include"ObjectSurface.h"
+#include"ObjectSlice.h"
 #include"Executive.h"
 #include"Selector.h"
 #include"main.h"
@@ -1769,6 +1770,275 @@ static PyObject *CmdIsomesh(PyObject *self, 	PyObject *args) {
     } else {
       PRINTFB(FB_ObjectMesh,FB_Errors)
         " Isomesh: Map or brick object \"%s\" not found.\n",str2
+        ENDFB;
+      ok=false;
+    }
+    APIExit();
+  }
+  return(APIStatus(ok));  
+}
+
+static PyObject *CmdSliceMap(PyObject *self, 	PyObject *args) 
+{
+  int ok = true;
+  int multi = false;
+  char * slice;
+  char * map;
+  float opacity = -1;
+  int state,map_state;
+  int resolution = 5;
+  CObject *obj=NULL,*mObj,*origObj;
+  ObjectMap *mapObj;
+  ObjectMapState *ms;
+
+  ok = PyArg_ParseTuple(args,"ssfiii",&slice,&map,&opacity,&resolution,&state,&map_state);  
+  if (ok) {
+    APIEntry();
+    if(opacity == -1){
+      opacity = 1;
+    }
+    origObj=ExecutiveFindObjectByName(slice);  
+    if(origObj) {
+      if(origObj->type!=cObjectSlice) {
+        ExecutiveDelete(slice);
+        origObj=NULL;
+      }
+    }
+
+    mObj=ExecutiveFindObjectByName(map);  
+    if(mObj) {
+      if(mObj->type!=cObjectMap)
+        mObj=NULL;
+    }
+    if(mObj) {
+      mapObj = (ObjectMap*)mObj;
+      if(state==-1) {
+        multi=true;
+        state=0;
+        map_state=0;
+      } else if(state==-2) {
+        state=SceneGetState();
+        if(map_state<0) 
+          map_state=state;
+      } else if(state==-3) { /* append mode */
+        state=0;
+        if(origObj)
+          if(origObj->fGetNFrame)
+            state=origObj->fGetNFrame(origObj);
+      } else {
+        if(map_state==-1) {
+          map_state=0;
+          multi=true;
+        } else {
+          multi=false;
+        }
+      }
+      while(1) {      
+        if(map_state==-2)
+          map_state=SceneGetState();
+        if(map_state==-3)
+          map_state=ObjectMapGetNStates(mapObj)-1;
+        ms = ObjectMapStateGetActive(mapObj,map_state);
+        if(ms) {
+          obj=(CObject*)ObjectSliceFromBox((ObjectSlice*)origObj,mapObj,
+                                           opacity,resolution,state,map_state);
+     
+          if(!origObj) {
+            ObjectSetName(obj,slice);
+            ExecutiveManageObject((CObject*)obj,true,false);
+          }
+          PRINTFB(FB_ObjectMesh,FB_Actions)
+            " SliceMap: created \"%s\", setting opacity to %5.3f\n",slice,opacity
+            ENDFB;
+
+        } else if(!multi) {
+          PRINTFB(FB_ObjectSlice
+                  ,FB_Warnings)
+            " SliceMap-Warning: state %d not present in map \"%s\".\n",map_state+1,map
+            ENDFB;
+          ok=false;
+        }
+        if(multi) {
+          origObj = obj;
+          map_state++;
+          state++;
+          if(map_state>=mapObj->NState)
+            break;
+        } else {
+          break;
+        }
+      }      
+    }
+  }else{
+    PRINTFB(FB_ObjectSlice,FB_Errors)
+      " SliceMap: Map or brick object \"%s\" not found.\n",map
+      ENDFB;
+    ok=false;
+  }
+  APIExit();
+  return(APIStatus(ok));  
+}
+
+
+static PyObject *CmdRGBFunction(PyObject *self, 	PyObject *args) {
+  int ok = true;
+  int multi = false;
+  char * slice;
+  int function = -1;
+  int state;
+  CObject *obj=NULL;
+  ObjectSlice *Sobj=NULL;
+  ObjectSliceState *ss;
+  
+  ok = PyArg_ParseTuple(args,"sii",&slice,&function,&state);
+  if (ok) {
+    APIEntry();
+    obj=ExecutiveFindObjectByName(slice);  
+    if(obj) {
+      if(obj->type!=cObjectSlice) {
+        obj=NULL;
+        ok=false;
+      }
+    }
+    if(obj) {
+      Sobj = (ObjectSlice*)obj;
+      if(state==-1) {
+        multi=true;
+        state=0;
+      } else if(state==-2) {
+        state=SceneGetState();
+        multi=false;
+      } else {
+        multi=false;
+      }
+      while(1) {      
+        ss = ObjectSliceStateGetActive(Sobj,state);
+        if(ss) {
+          ss->RGBFunction = function;
+          ss->RefreshFlag = true;
+        }
+        if(multi) {
+          state++;
+          if(state>=Sobj->NState)
+            break;
+        } else {
+          break;
+        }
+      }      
+    }else{
+      PRINTFB(FB_ObjectSlice,FB_Errors)
+        " SliceRGBFunction-Warning: Object \"%s\" doesn't exist or is not a slice.\n",slice
+        ENDFB;
+      ok=false;
+    }
+    APIExit();
+  }
+  return(APIStatus(ok));  
+}
+
+static PyObject *CmdSliceHeightmap(PyObject *self, 	PyObject *args) {
+  int ok = true;
+  int multi = false;
+  char * slice;
+  int state;
+  CObject *obj=NULL;
+  ObjectSlice *Sobj=NULL;
+  ObjectSliceState *ss;
+  
+  ok = PyArg_ParseTuple(args,"si",&slice,&state);  
+  if (ok) {
+    APIEntry();
+    obj=ExecutiveFindObjectByName(slice);  
+    if(obj) {
+      if(obj->type!=cObjectSlice) {
+        obj=NULL;
+        ok=false;
+      }
+    }
+    if(obj) {
+      Sobj = (ObjectSlice*)obj;
+      if(state==-1) {
+        multi=true;
+        state=0;
+      } else if(state==-2) {
+        state=SceneGetState();
+        multi=false;
+      } else {
+        multi=false;
+      }
+      while(1) {      
+        ss = ObjectSliceStateGetActive(Sobj,state);
+        if(ss) {
+          ss->HeightmapFlag = !ss->HeightmapFlag;
+        }
+        if(multi) {
+          state++;
+          if(state>=Sobj->NState)
+            break;
+        } else {
+          break;
+        }
+      }      
+    }else{
+      PRINTFB(FB_ObjectSlice,FB_Errors)
+        " SliceHeightmap-Warning: Object \"%s\" doesn't exist or is not a slice.\n",slice
+        ENDFB;
+      ok=false;
+    }
+    APIExit();
+  }
+  return(APIStatus(ok));  
+}
+
+
+static PyObject *CmdSliceSetLock(PyObject *self, 	PyObject *args) {
+  int ok = true;
+  int multi = false;
+  char * slice;
+  int lock = -1;
+  int state;
+  CObject *obj=NULL;
+  ObjectSlice *Sobj=NULL;
+  ObjectSliceState *ss;
+  
+  ok = PyArg_ParseTuple(args,"sii",&slice,&state,&lock);  
+  if (ok) {
+    APIEntry();
+    obj=ExecutiveFindObjectByName(slice);  
+    if(obj) {
+      if(obj->type!=cObjectSlice) {
+        obj=NULL;
+        ok=false;
+      }
+    }
+    if(obj) {
+      Sobj = (ObjectSlice*)obj;
+      if(state==-1) {
+        multi=true;
+        state=0;
+      } else if(state==-2) {
+        state=SceneGetState();
+        multi=false;
+      } else {
+        multi=false;
+      }
+      while(1) {      
+        ss = ObjectSliceStateGetActive(Sobj,state);
+        if(ss) {
+          ss->LockedFlag = lock;
+          ss->RefreshFlag = true;
+        }
+        if(multi) {
+          state++;
+          if(state>=Sobj->NState)
+            break;
+        } else {
+          break;
+        }
+      }      
+    }else{
+      PRINTFB(FB_ObjectSlice,FB_Errors)
+        " SliceSetLock-Warning: Object \"%s\" doesn't exist or is not a slice.\n",slice
         ENDFB;
       ok=false;
     }
@@ -4848,6 +5118,7 @@ static PyMethodDef Cmd_methods[] = {
    {"reinitialize",          CmdReinitialize,         METH_VARARGS },
 	{"reset",                 CmdReset,                METH_VARARGS },
 	{"reset_rate",	           CmdResetRate,            METH_VARARGS },
+	{"rgbfunction",       CmdRGBFunction,              METH_VARARGS },
 	{"rock",	                 CmdRock,                 METH_VARARGS },
 	{"runpymol",	           CmdRunPyMOL,             METH_VARARGS },
 	{"runwxpymol",	           CmdRunWXPyMOL,           METH_VARARGS },
@@ -4867,6 +5138,7 @@ static PyMethodDef Cmd_methods[] = {
 	{"set_feedback",          CmdSetFeedbackMask,      METH_VARARGS },
 	{"set_name",              CmdSetName,              METH_VARARGS },
    {"set_geometry",          CmdSetGeometry,          METH_VARARGS },
+	{"set_matrix",	           CmdSetMatrix,            METH_VARARGS },
    {"set_session",           CmdSetSession,           METH_VARARGS },
    {"set_symmetry",          CmdSetCrystal,           METH_VARARGS },
 	{"set_title",             CmdSetTitle,             METH_VARARGS },
@@ -4876,7 +5148,9 @@ static PyMethodDef Cmd_methods[] = {
    {"set_vis",               CmdSetVis,               METH_VARARGS },
 	{"setframe",	           CmdSetFrame,             METH_VARARGS },
 	{"showhide",              CmdShowHide,             METH_VARARGS },
-	{"set_matrix",	           CmdSetMatrix,            METH_VARARGS },
+	{"slice_map",                 CmdSliceMap,              METH_VARARGS },
+	{"slice_setlock",             CmdSliceSetLock,              METH_VARARGS},
+	{"slice_heightmap",           CmdSliceHeightmap,              METH_VARARGS},
 	{"smooth",	              CmdSmooth,               METH_VARARGS },
 	{"sort",                  CmdSort,                 METH_VARARGS },
    {"spectrum",              CmdSpectrum,             METH_VARARGS },

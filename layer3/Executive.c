@@ -26,6 +26,7 @@ Z* -------------------------------------------------------------------
 #include"ObjectMesh.h"
 #include"ObjectDist.h"
 #include"ObjectSurface.h"
+#include"ObjectSlice.h"
 #include"ListMacros.h"
 #include"Ortho.h"
 #include"Scene.h"
@@ -1032,6 +1033,9 @@ static PyObject *ExecutiveGetExecObject(SpecRec *rec)
   case cObjectMesh:
     PyList_SetItem(result,5,ObjectMeshAsPyList((ObjectMesh*)rec->obj));
     break;
+  case cObjectSlice:
+    PyList_SetItem(result,5,ObjectSliceAsPyList((ObjectSlice*)rec->obj));
+    break;
   case cObjectSurface:
     PyList_SetItem(result,5,ObjectSurfaceAsPyList((ObjectSurface*)rec->obj));
     break;
@@ -1088,6 +1092,9 @@ static int ExecutiveSetNamedEntries(PyObject *names,int version)
         case cObjectMesh:
           if(ok) ok = ObjectMeshNewFromPyList(PyList_GetItem(cur,5),(ObjectMesh**)&rec->obj);
           break;
+        case cObjectSlice:
+          if(ok) ok = ObjectSliceNewFromPyList(PyList_GetItem(cur,5),(ObjectSlice**)&rec->obj);
+          break;	  
         case cObjectSurface:
           if(ok) ok = ObjectSurfaceNewFromPyList(PyList_GetItem(cur,5),(ObjectSurface**)&rec->obj);
           break;
@@ -3085,6 +3092,8 @@ int ExecutiveGetType(char *name,WordType type)
         strcat(type,"map");
       else if(rec->obj->type==cObjectMesh)
         strcat(type,"mesh");
+      else if(rec->obj->type==cObjectSlice)
+        strcat(type,"slice");
       else if(rec->obj->type==cObjectSurface)
         strcat(type,"surface");
       else if(rec->obj->type==cObjectDist)
@@ -3248,6 +3257,7 @@ void ExecutiveRebuildAll(void)
         break;
       case cObjectSurface:
       case cObjectMesh:
+      case cObjectSlice:
         if(rec->obj->fInvalidate) {
           rec->obj->fInvalidate((CObject*)rec->obj,cRepAll,cRepInvAll,-1);
         }
@@ -6596,6 +6606,9 @@ int ExecutiveClick(Block *block,int button,int x,int y,int mod)
                     case cObjectCallback:
                       MenuActivate(mx,my,x,y,"simple_action",rec->obj->Name);
                       break;
+                    case cObjectSlice:
+                      MenuActivate(mx,my,x,y,"slice_action",rec->obj->Name);
+                      break;
                     }
                     break;
                   }
@@ -6626,6 +6639,10 @@ int ExecutiveClick(Block *block,int button,int x,int y,int mod)
                     case cObjectMesh:
                       MenuActivate(mx,my,x,y,"mesh_show",rec->obj->Name);
                       break;
+                    case cObjectSlice:
+                      MenuActivate(mx,my,x,y,"slice_show",rec->obj->Name);
+                      break;
+
                     }
                     break;
                   }
@@ -6656,6 +6673,10 @@ int ExecutiveClick(Block *block,int button,int x,int y,int mod)
                     case cObjectMesh:
                       MenuActivate(mx,my,x,y,"mesh_hide",rec->obj->Name);
                       break;
+                    case cObjectSlice:
+                      MenuActivate(mx,my,x,y,"slice_hide",rec->obj->Name);
+                      break;
+
                     }
                     break;
                   }
@@ -6678,6 +6699,7 @@ int ExecutiveClick(Block *block,int button,int x,int y,int mod)
                     case cObjectMap:
                     case cObjectSurface:
                     case cObjectMesh:
+                    case cObjectSlice:
                       break;
                     }
                     break;
@@ -6700,6 +6722,9 @@ int ExecutiveClick(Block *block,int button,int x,int y,int mod)
                     case cObjectCGO:
                     case cObjectMesh:
                       MenuActivate(mx,my,x,y,"general_color",rec->obj->Name);
+                      break;
+                    case cObjectSlice:
+                      MenuActivate(mx,my,x,y,"slice_color",rec->obj->Name);
                       break;
                     }
                     break;

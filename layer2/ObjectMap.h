@@ -85,7 +85,8 @@ int ObjectMapSetBorder(ObjectMap *I,float level);
 int ObjectMapStateSetBorder(ObjectMapState *I,float level);
 void ObjectMapStateInit(ObjectMapState *I);
 void ObjectMapStatePurge(ObjectMapState *I);
-int ObjectMapStateInterpolate(ObjectMapState *ms,float *array,float *result,int n);
+int ObjectMapStateInterpolate(ObjectMapState *ms,float *array,float *result,int *flag, int n);
+int ObjectMapStateContainsPoint(ObjectMapState *ms,float *point);
 ObjectMapState *ObjectMapStatePrime(ObjectMap *I,int state);
 ObjectMapState *ObjectMapStateGetActive(ObjectMap *I,int state);
 int ObjectMapGetNStates(ObjectMap *I);
@@ -95,7 +96,7 @@ ObjectMapState *ObjectMapGetState(ObjectMap *I,int state);
 PyObject *ObjectMapAsPyList(ObjectMap *I);
 int ObjectMapNewFromPyList(PyObject *list,ObjectMap **result);
 
-int ObjectMapInterpolate(ObjectMap *I,int state,float *array,float *result,int n);
+int ObjectMapInterpolate(ObjectMap *I,int state,float *array,float *result,int *flag,int n);
 
 #endif
 

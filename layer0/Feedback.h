@@ -132,6 +132,7 @@ function name.
 #define FB_ObjectCallback            35
 #define FB_ObjectSurface             36
 #define FB_ObjectGadget              37
+#define FB_ObjectSlice               38
 
 #define FB_RepWireBond               45
 #define FB_RepCylBond                46
