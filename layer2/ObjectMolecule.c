@@ -480,10 +480,10 @@ ObjectMolecule *ObjectMoleculeReadMOLStr(ObjectMolecule *I,char *MOLStr,int fram
 		if(I->NCSet<=frame)
 		  I->NCSet=frame+1;
 		VLACheck(I->CSet,CoordSet*,frame);
-		
 		cset->fAppendIndices(cset,I->NAtom);
 		cset->Obj=I;
 		ObjectMoleculeAppendAtoms(I,atInfo,cset);
+      if(I->CSet[frame]) I->CSet[frame]->fFree();
 		I->CSet[frame] = cset;
 		I->CSet[frame]->fInvalidateRep(I->CSet[frame],-1,0);
 		SceneCountFrames();
@@ -731,6 +731,7 @@ ObjectMolecule *ObjectMoleculeReadPDBStr(ObjectMolecule *I,char *PDBStr,int fram
     if(frame<0) frame=I->NCSet;
     VLACheck(I->CSet,CoordSet*,frame);
     if(I->NCSet<=frame) I->NCSet=frame+1;
+    if(I->CSet[frame]) I->CSet[frame]->fFree();
     I->CSet[frame] = cset;
     if(isNew) I->NBond = ObjectMoleculeConnect(&I->Bond,I->AtomInfo,cset,0.2);
     SceneCountFrames();

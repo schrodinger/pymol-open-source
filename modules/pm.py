@@ -387,10 +387,27 @@ def _special(k,x,y):
    if special.has_key(k):
       if special[k][1]:
          if special[k][2]:
-            apply(special[k][1],(x,y))
+            apply(special[k][1],special[k][3])
          else:
             apply(special[k][1],())
    return None
+
+def set_key(*args):  
+   key=args[0]
+   cmd=args[1]
+   if len(args)>2:
+      cmd_args=args[2]
+   else:
+      cmd_args=None 
+   for a in special.keys():
+      if special[a][0]==key:
+         special[a][1]=cmd
+         if cmd_args:
+            special[a][2]=1
+            special[a][3]=cmd_args
+         else:
+            special[a][2]=0
+            special[a][3]=None
 
 def mstop():
    lock()   
@@ -537,7 +554,7 @@ def load(*args):
    unlock()
    return r
 
-def read_mol(*args):
+def read_molstr(*args):
    r = 1
    lock()   
    ftype = 3
@@ -552,7 +569,7 @@ def read_mol(*args):
    unlock()
    return r
 
-def load_mmolstr(*args):
+def read_mmodstr(*args):
    r = 1
    lock()   
    ftype = 6
