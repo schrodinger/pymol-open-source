@@ -52,9 +52,7 @@ try:\n\
             pmp_com = pmp_input[pmp_nest][0]\n\
             if pm.kwhash.has_key(pmp_com):\n\
                pmp_com = pm.kwhash[pmp_com]\n\
-               if pmp_com:\n\
-                  print 'hi',pmp_com\n\
-               else:\n\
+               if not pmp_com:\n\
                   print 'Error: ambiguous command.'\n\
                   raise SyntaxError\n\
             if pm.keyword.has_key(pmp_com):\n\
