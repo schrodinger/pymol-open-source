@@ -764,6 +764,7 @@ from importing import \
      loadable    
 
 #--------------------------------------------------------------------
+import creating
 from creating import \
      copy,               \
      create,             \
@@ -1375,6 +1376,7 @@ auto_arg =[
    'load'           : [ selection_sc           , 'selection'       , ', ' ],
    'load_traj'      : [ selection_sc           , 'selection'       , ', ' ],
    'create'         : [ selection_sc           , 'selection'       , ', ' ],
+   'map_new'        : [ creating.map_type_sc   , 'map type'        , ', ' ],
    'symexp'         : [ object_sc              , 'object'          , ', ' ],   
    'isomesh'        : [ map_sc                 , 'map object'      , ', ' ],
    'view'           : [ viewing.view_sc        , 'view action'     , ''   ],            
@@ -1383,6 +1385,9 @@ auto_arg =[
    'feedback'       : [ fb_mask_sc             , 'mask'            , ''   ],
    'button'         : [ controlling.but_act_sc , 'button action'   , ''   ],
    'flag'           : [ editing.flag_action_sc , 'flag action'     , ''   ],      
+   },
+   {
+   'map_new'        : [ selection_sc           , 'selection'       , ', ' ],
    }
    ]
    

@@ -1377,7 +1377,7 @@ int SelectorMapGaussian(int sele1,ObjectMap *oMap,float buffer)
   sf[cAN_H][5] =  3.142360;
   sf[cAN_H][6] =  0.040810;
   sf[cAN_H][7] = 57.799698;
-  sf[cAN_H][8] = 13.166500;
+  sf[cAN_H][8] =  0.003038;
 
   sf[cAN_C][0] =  2.310000;
   sf[cAN_C][1] = 20.843899;
