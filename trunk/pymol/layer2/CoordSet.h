@@ -44,6 +44,7 @@ typedef struct CoordSet {
 
 CoordSet *CoordSetNew(void);
 void CoordSetAtomToPDBStrVLA(char **charVLA,int *c,AtomInfoType *ai,float *v,int cnt);
+void CoordSetAtomToTERStrVLA(char **charVLA,int *c,AtomInfoType *ai,int cnt);
 CoordSet *CoordSetCopy(CoordSet *cs);
 
 void CoordSetTransform44f(CoordSet *I,float *mat);

@@ -198,13 +198,15 @@ void AtomInfoAssignParameters(AtomInfoType *I)
   int pri;
   float vdw;
 
-  e=I->elem;
-  n = I->name;
-  while(((*n)>='0')&&((*n)<='9')&&(*(n+1))) n++;  
-  while((((*n)>='A')&&((*n)<='Z'))||(((*n)>='a')&&((*n)<='z'))) {
-    *(e++)=*(n++);
+  e = I->elem;
+  if(!*e) {
+    n = I->name;
+    while(((*n)>='0')&&((*n)<='9')&&(*(n+1))) n++;  
+    while((((*n)>='A')&&((*n)<='Z'))||(((*n)>='a')&&((*n)<='z'))) {
+      *(e++)=*(n++);
     }
-  *e=0;
+    *e=0;
+  }
   e=I->elem;
   switch ( *e ) {
   case 'C':

@@ -1677,9 +1677,9 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(char *buffer,AtomInfoType **atInfoPtr)
             ai->chain[1] = 0;
           }
 
-          p=ncopy(cc,p,5);
+          p=ncopy(cc,p,5); /* we treat insertion records as part of the residue identifier */
           if(!sscanf(cc,"%s",ai->resi)) ai->resi[0]=0;
-          if(!sscanf(cc,"%d",&ai->resv)) ai->resv=0;
+          if(!sscanf(cc,"%d",&ai->resv)) ai->resv=1;
           
           p=nskip(p,3);
           p=ncopy(cc,p,8);
@@ -1699,6 +1699,9 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(char *buffer,AtomInfoType **atInfoPtr)
           p=ncopy(cc,p,4);
           if(!sscanf(cc,"%s",ai->segi)) ai->segi[0]=0;
           
+          p=ncopy(cc,p,2);
+          if(!sscanf(cc,"%s",ai->elem)) ai->elem[0]=0;          
+
           ai->visRep[0] = autoshow_lines;
           for(c=1;c<cRepCnt;c++) {
             ai->visRep[c] = false;
