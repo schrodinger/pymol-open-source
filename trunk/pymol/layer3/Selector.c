@@ -404,8 +404,7 @@ int SelectorGetPDB(char **charVLA,int sele,int state,int conectFlag)
   int newline;
   CoordSet *cs;
   ObjectMolecule *obj;
-  AtomInfoType *atInfo;
-
+  AtomInfoType *atInfo,*ai,*last = NULL;
   SelectorUpdateTable();
   c=0;
   for(a=0;a<I->NAtom;a++) {
@@ -425,8 +424,17 @@ int SelectorGetPDB(char **charVLA,int sele,int state,int conectFlag)
               idx=cs->AtmToIdx[at];
               if(idx>=0) {
                 I->Table[a].index=c+1; /* NOTE marking with "1" based indexes here */
-                CoordSetAtomToPDBStrVLA(charVLA,&cLen,obj->AtomInfo+at,
+                ai = obj->AtomInfo+at;
+                if(last)
+                  if(!last->hetatm)
+                    if(ai->resv!=last->resv)
+                      if((abs(ai->resv-last->resv)>1)||(ai->hetatm)) {
+                        CoordSetAtomToTERStrVLA(charVLA,&cLen,last,c);
+                        c++;
+                      }
+                CoordSetAtomToPDBStrVLA(charVLA,&cLen,ai,
                                         obj->CSet[state]->Coord+(3*idx),c);
+                last = ai;
                 c++;
               }
               break;
