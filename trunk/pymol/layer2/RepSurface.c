@@ -516,6 +516,7 @@ Rep *RepSurfaceNew(CoordSet *cs)
 		  MapSetupExpress(map);
         for(a=0;a<cs->NIndex;a++)
           {
+            OrthoBusyFast(a+cs->NIndex,cs->NIndex*5);
             ai1 = obj->AtomInfo+cs->IdxToAtm[a];
             if((inclH||(!ai1->hydrogen))&&
                ((!cullByFlag)||
