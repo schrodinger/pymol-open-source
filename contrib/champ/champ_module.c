@@ -118,6 +118,22 @@ static PyObject *pattern_orient_bonds(PyObject *self,      PyObject *args)
   return(RetStatus(ok));
 }
 
+
+static PyObject *pattern_generalize(PyObject *self,      PyObject *args)
+{
+  int ok=true;
+  int int1;
+  PyObject *O;
+  CChamp *I;
+  ok = PyArg_ParseTuple(args,"Oi",&O,&int1);
+  ok = PyCObject_Check(O);
+  if(ok) {
+    I = PyCObject_AsVoidPtr(O);
+    ChampGeneralize(I,int1);
+  }
+  return(RetStatus(ok));
+}
+
 static PyObject *pattern_get_cycle(PyObject *self,      PyObject *args)
 {
   int ok=true;
@@ -572,7 +588,7 @@ static PyObject *list_get_pattern_strings(PyObject *self,      PyObject *args)
   return(RetObj(ok,result));
 }
 
-
+ 
 static PyObject *list_prepend_pattern_strings(PyObject *self,      PyObject *args)
 {
   int ok=true;
@@ -594,6 +610,23 @@ static PyObject *list_prepend_pattern_strings(PyObject *self,      PyObject *arg
       }
       I->Int[list_handle].link = ListElemPushInt(&I->Int,I->Int[list_handle].link,pat_index);
     }
+  }
+  return(RetStatus(ok));
+}
+ 
+
+static PyObject *list_prepend_pattern_index(PyObject *self,      PyObject *args)
+{
+  int ok=true;
+  int list_handle,pat_index;
+  PyObject *O;
+  CChamp *I;
+  ok = PyArg_ParseTuple(args,"Oii",&O,&list_handle,&pat_index);
+  ok = PyCObject_Check(O);
+  if(ok) {
+    I = PyCObject_AsVoidPtr(O);
+    if(pat_index)
+      I->Int[list_handle].link = ListElemPushInt(&I->Int,I->Int[list_handle].link,pat_index);
   }
   return(RetStatus(ok));
 }
@@ -734,6 +767,26 @@ static PyObject *match_1vN_n(PyObject *self,      PyObject *args)
   return(RetInt(ok,result));
 }
 
+static PyObject *exact_1vN_n(PyObject *self,      PyObject *args)
+{
+  int ok=true;
+  int result = 0;
+  int list_handle,list_index;
+  int pattern;
+
+  PyObject *O;
+  CChamp *I;
+  ok = PyArg_ParseTuple(args,"Oii",&O,&pattern,&list_handle);
+  ok = PyCObject_Check(O);
+  if(ok) {
+    I = PyCObject_AsVoidPtr(O);
+    list_index = I->Int[list_handle].link;
+    result = ChampExact_1VN_N(I,pattern,list_index);
+  }
+  return(RetInt(ok,result));
+}
+
+
 static PyObject *match_Nv1_n(PyObject *self,      PyObject *args)
 {
   int ok=true;
@@ -784,7 +837,9 @@ static PyMethodDef champ_methods[] = {
   {"pattern_get_atom_symbols",  pattern_get_atom_symbols,     METH_VARARGS },
   {"pattern_dump",  pattern_dump,     METH_VARARGS },
   {"pattern_orient_bonds",   pattern_orient_bonds,       METH_VARARGS },
+  {"pattern_generalize",   pattern_generalize,     METH_VARARGS },
   {"list_prepend_pattern_strings",  list_prepend_pattern_strings, METH_VARARGS },
+  {"list_prepend_pattern_index",  list_prepend_pattern_index, METH_VARARGS },
   {"list_get_pattern_indices",  list_get_pattern_indices,       METH_VARARGS },
   {"list_get_pattern_strings",      list_get_pattern_strings,       METH_VARARGS },
   {"list_free",                 list_free,               METH_VARARGS },
@@ -794,6 +849,8 @@ static PyMethodDef champ_methods[] = {
   {"match_1v1_n",               match_1v1_n,             METH_VARARGS},
   {"match_1vN_n",               match_1vN_n,              METH_VARARGS },
   {"match_Nv1_n",               match_Nv1_n,              METH_VARARGS },
+  {"exact_1vN_n",               exact_1vN_n,              METH_VARARGS },
+
   {NULL,		                    NULL}     /* sentinel */        
 };
 
