@@ -44,6 +44,7 @@ typedef struct CRay {
   int Texture;
   float TextureParam[3];
   float Trans;
+  float Random[256];
 } CRay;
 
 CRay *RayNew(void);

@@ -38,6 +38,10 @@ Z* -------------------------------------------------------------------
 typedef float float3[3];
 typedef float float4[4];
 
+
+static int RandomFlag=0;
+static float Random[255];
+
 void RayRelease(CRay *I);
 void RayTexture(CRay *I,int mode,float *v);
 void RayTransparentf(CRay *I,float v);
@@ -54,6 +58,8 @@ void RayTriangle3fv(CRay *I,
 
 void RayApplyMatrix33( unsigned int n, float3 *q, const float m[16],
 							float3 *p );
+void RayApplyMatrixInverse33( unsigned int n, float3 *q, const float m[16],
+                              float3 *p );
 
 void RayExpandPrimitives(CRay *I);
 void RayTransformFirst(CRay *I);
@@ -61,12 +67,13 @@ void RayTransformBasis(CRay *I,CBasis *B);
 
 int PrimitiveSphereHit(CRay *I,float *v,float *n,float *minDist,int except);
 
-void RayReflectSphere(CRay *I,RayInfo *r);
+void RayGetSphereNormal(CRay *I,RayInfo *r);
 
 void RayTransformNormals33( unsigned int n, float3 *q, const float m[16],float3 *p );
+void RayReflectAndTexture(CRay *I,RayInfo *r);
 
 /*========================================================================*/
-void RayReflectSphere(CRay *I,RayInfo *r)
+void RayGetSphereNormal(CRay *I,RayInfo *r)
 {
   
   r->impact[0]=r->base[0]; 
@@ -79,6 +86,11 @@ void RayReflectSphere(CRay *I,RayInfo *r)
   
   normalize3f(r->surfnormal);
   
+}
+/*========================================================================*/
+void RayReflectAndTexture(CRay *I,RayInfo *r)
+{
+  
   if(r->prim->texture)
     switch(r->prim->texture) {
     case 1:
@@ -87,14 +99,92 @@ void RayReflectSphere(CRay *I,RayInfo *r)
     case 2:
       wiggle3f(r->surfnormal,r->impact,r->prim->texture_param);
       break;
-    }
+    case 3: 
+      {
+        float3 v;
+        float3 n;
+        copy3f(r->impact,v);
+        RayApplyMatrixInverse33(1,&v,I->ModelView,&v);
+        n[0]=(float)cos((v[0]+v[1]+v[2])*r->prim->texture_param[1]);
+        n[1]=(float)cos((v[0]-v[1]+v[2])*r->prim->texture_param[1]);
+        n[2]=(float)cos((v[0]+v[1]-v[2])*r->prim->texture_param[1]);
+        RayTransformNormals33(1,&n,I->ModelView,&n);
+        scale3f(n,r->prim->texture_param[0],n);
+        add3f(n,r->surfnormal,r->surfnormal);
+        normalize3f(r->surfnormal);
+      }
+    case 4: 
+      {
+        float3 v;
+        float3 n;
+        float *tp = r->prim->texture_param;
+        copy3f(r->impact,v);
+        RayApplyMatrixInverse33(1,&v,I->ModelView,&v);
+        n[0]=Random[0xFF&(int)((cos((v[0])*tp[1])*256*tp[2]))];
+        n[1]=Random[0xFF&(int)((cos((v[1])*tp[1])*256*tp[2]+96))];
+        n[2]=Random[0xFF&(int)((cos((v[2])*tp[1])*256*tp[2]+148))];
+        RayTransformNormals33(1,&n,I->ModelView,&n);
+        scale3f(n,tp[0],n);
+        add3f(n,r->surfnormal,r->surfnormal);
+        normalize3f(r->surfnormal);
+      }
+      break;
+    case 5: 
+      {
+        float3 v;
+        float3 n;
+        float *tp = r->prim->texture_param;
+        copy3f(r->impact,v);
+        RayApplyMatrixInverse33(1,&v,I->ModelView,&v);
+        n[0]=Random[0xFF&(int)((v[0]*tp[1])+0)]+
+          Random[0xFF&(int)((v[1]*tp[1])+20)]+
+          Random[0xFF&(int)((v[2]*tp[1])+40)];
+        n[1]=Random[0xFF&(int)((-v[0]*tp[1])+90)]+
+          Random[0xFF&(int)((v[1]*tp[1])+100)]+
+          Random[0xFF&(int)((-v[2]*tp[1])+120)];
+        n[2]=Random[0xFF&(int)((v[0]*tp[1])+200)]+
+          Random[0xFF&(int)((-v[1]*tp[1])+70)]+
+          Random[0xFF&(int)((v[2]*tp[1])+30)];
+        
+        n[0]+=
+          Random[0xFF&((int)((v[0]-v[1])*tp[1])+0)] +
+          Random[0xFF&((int)((v[1]-v[2])*tp[1])+20)] +
+          Random[0xFF&((int)((v[2]-v[0])*tp[1])+40)];
+        n[1]+=
+          Random[0xFF&((int)((v[0]+v[1])*tp[1])+10)]+
+          Random[0xFF&((int)((v[1]+v[2])*tp[1])+90)]+
+          Random[0xFF&((int)((v[2]+v[0])*tp[1])+30)];
+        n[2]+=
+          Random[0xFF&((int)((-v[0]+v[1])*tp[1])+220)]+
+          Random[0xFF&((int)((-v[1]+v[2])*tp[1])+20)]+
+          Random[0xFF&((int)((-v[2]+v[0])*tp[1])+50)];
+        
+        n[0]+=
+          Random[0xFF&((int)((v[0]+v[1]+v[2])*tp[1])+5)]+
+          Random[0xFF&((int)((v[0]+v[1]+v[2])*tp[1])+25)]+
+          Random[0xFF&((int)((v[0]+v[1]+v[2])*tp[1])+46)];
+        n[1]+=
+          Random[0xFF&((int)((-v[0]-v[1]+v[2])*tp[1])+90)]+
+          Random[0xFF&((int)((-v[0]-v[1]+v[2])*tp[1])+45)]+
+          Random[0xFF&((int)((-v[0]-v[1]+v[2])*tp[1])+176)];
+        n[2]+=
+          Random[0xFF&((int)((v[0]+v[1]-v[2])*tp[1])+192)]+
+          Random[0xFF&((int)((v[0]+v[1]-v[2])*tp[1])+223)]+
+          Random[0xFF&((int)((v[0]+v[1]-v[2])*tp[1])+250)];
 
+        RayTransformNormals33(1,&n,I->ModelView,&n);
+        scale3f(n,tp[0],n);
+        add3f(n,r->surfnormal,r->surfnormal);
+        normalize3f(r->surfnormal);
+      }
+      break;
+    }
+  
   r->dotgle = -r->surfnormal[2]; 
   
   r->reflect[0]= - ( 2 * r->dotgle * r->surfnormal[0] );
   r->reflect[1]= - ( 2 * r->dotgle * r->surfnormal[1] );
   r->reflect[2]= -1.0 - ( 2 * r->dotgle * r->surfnormal[2] );
-  
 }
 /*========================================================================*/
 void RayExpandPrimitives(CRay *I)
@@ -327,8 +417,6 @@ void RayTransformBasis(CRay *I,CBasis *basis1)
 
 	 }
   }
-
-  
 }
 
 
@@ -596,9 +684,11 @@ void RayRender(CRay *I,int width,int height,unsigned int *image,float front,floa
               if(i>=0) {
                 new_front=r1.dist;
                 if(r1.prim->type==cPrimTriangle) {
-                  BasisReflectTriangle(I->Basis+1,&r1,i,fc);
+                  BasisGetTriangleNormal(I->Basis+1,&r1,i,fc);
+                  RayReflectAndTexture(I,&r1);
                 } else {
-                  RayReflectSphere(I,&r1);/*,zRay,sphere,dist,surf,impact,reflect,&dotgle);*/
+                  RayGetSphereNormal(I,&r1);
+                  RayReflectAndTexture(I,&r1);
                   if(r1.prim->type==cPrimCylinder) {
                     ft = r1.tri1;
                     fc[0]=(r1.prim->c1[0]*(1-ft))+(r1.prim->c2[0]*ft);
@@ -949,8 +1039,6 @@ void RayRender(CRay *I,int width,int height,unsigned int *image,float front,floa
 	 FreeP(image);
 	 image=image_copy;
   }
-  
-
 }
 
 /*========================================================================*/
@@ -1146,6 +1234,7 @@ CRay *RayNew(void)
 {
   unsigned int test;
   unsigned char *testPtr;
+  int a;
 
   OOAlloc(CRay);
   
@@ -1173,7 +1262,14 @@ CRay *RayNew(void)
   I->fTriangle3fv=RayTriangle3fv;
   I->fTexture=RayTexture;
   I->fTransparentf=RayTransparentf;
-  
+
+  if(!RandomFlag) {
+    for(a=0;a<256;a++) {
+      Random[a]=(rand()/(1.0+RAND_MAX))-0.5;
+    }
+    RandomFlag=1;
+  }
+
   return(I);
 }
 /*========================================================================*/
@@ -1228,72 +1324,48 @@ void RayApplyMatrix33( unsigned int n, float3 *q, const float m[16],
       unsigned int i;
       float m0 = m[0],  m4 = m[4],  m8 = m[8],  m12 = m[12];
       float m1 = m[1],  m5 = m[5],  m9 = m[9],  m13 = m[13];
+      float m2 = m[2],  m6 = m[6],  m10 = m[10],  m14 = m[14];
       for (i=0;i<n;i++) {
          float p0 = p[i][0], p1 = p[i][1], p2 = p[i][2];
          q[i][0] = m0 * p0 + m4  * p1 + m8 * p2 + m12;
          q[i][1] = m1 * p0 + m5  * p1 + m9 * p2 + m13;
+         q[i][2] = m2 * p0 + m6 * p1 + m10 * p2 + m14;
       }
    }
+}
+
+void RayApplyMatrixInverse33( unsigned int n, float3 *q, const float m[16],
+                          float3 *p )
+{
    {
       unsigned int i;
+      float m0 = m[0],  m4 = m[4],  m8 = m[8],  m12 = m[12];
+      float m1 = m[1],  m5 = m[5],  m9 = m[9],  m13 = m[13];
       float m2 = m[2],  m6 = m[6],  m10 = m[10],  m14 = m[14];
-      float m3 = m[3],  m7 = m[7],  m11 = m[11],  m15 = m[15];
-      if (m3==0.0F && m7==0.0F && m11==0.0F && m15==1.0F) {
-         /* common case */
-         for (i=0;i<n;i++) {
-            float p0 = p[i][0], p1 = p[i][1], p2 = p[i][2];
-            q[i][2] = m2 * p0 + m6 * p1 + m10 * p2 + m14;
-				/*				q[i][3] = 1.0F;*/
-         }
-      }
-      else {
-         /* general case */
-         for (i=0;i<n;i++) {
-            float p0 = p[i][0], p1 = p[i][1], p2 = p[i][2];
-            q[i][2] = m2 * p0 + m6 * p1 + m10 * p2 + m14;
-				/*				q[i][3] = m3 * p0 + m7 * p1 + m11 * p2 + m15; */
-         }
+      for (i=0;i<n;i++) {
+         float p0 = p[i][0]-m12, p1 = p[i][1]-m13, p2 = p[i][2]-m14;
+         q[i][0] = m0 * p0 + m1  * p1 + m2 * p2;
+         q[i][1] = m4 * p0 + m5  * p1 + m6 * p2;
+         q[i][2] = m8 * p0 + m9 * p1 + m10 * p2;
       }
    }
 }
 
 void RayTransformNormals33( unsigned int n, float3 *q, const float m[16],float3 *p )
 {
-   {
-      unsigned int i;
-      float m0 = m[0],  m4 = m[4],  m8 = m[8];
-      float m1 = m[1],  m5 = m[5],  m9 = m[9];
-      for (i=0;i<n;i++) {
-         float p0 = p[i][0], p1 = p[i][1], p2 = p[i][2];
-         q[i][0] = m0 * p0 + m4  * p1 + m8 * p2;
-         q[i][1] = m1 * p0 + m5  * p1 + m9 * p2;
-      }
-   }
-   {
-      unsigned int i;
-      float m2 = m[2],  m6 = m[6],  m10 = m[10];
-      float m3 = m[3],  m7 = m[7],  m11 = m[11],  m15 = m[15];
-      if (m3==0.0F && m7==0.0F && m11==0.0F && m15==1.0F) {
-         /* common case */
-         for (i=0;i<n;i++) {
-            float p0 = p[i][0], p1 = p[i][1], p2 = p[i][2];
-            q[i][2] = m2 * p0 + m6 * p1 + m10 * p2;
-         }
-      }
-      else {
-         /* general case */
-         for (i=0;i<n;i++) {
-            float p0 = p[i][0], p1 = p[i][1], p2 = p[i][2];
-            q[i][2] = m2 * p0 + m6 * p1 + m10 * p2;
-         }
-      }
-   }
-	{      
-	  unsigned int i;
-	  for (i=0;i<n;i++) { /* renormalize - can we do this to the matrix instead? */
-		 normalize3f(q[i]);
-	  }
-	}
+  unsigned int i;
+  float m0 = m[0],  m4 = m[4],  m8 = m[8];
+  float m1 = m[1],  m5 = m[5],  m9 = m[9];
+  float m2 = m[2],  m6 = m[6],  m10 = m[10];
+  for (i=0;i<n;i++) {
+    float p0 = p[i][0], p1 = p[i][1], p2 = p[i][2];
+    q[i][0] = m0 * p0 + m4  * p1 + m8 * p2;
+    q[i][1] = m1 * p0 + m5  * p1 + m9 * p2;
+    q[i][2] = m2 * p0 + m6 * p1 + m10 * p2;
+  }
+  for (i=0;i<n;i++) { /* renormalize - can we do this to the matrix instead? */
+    normalize3f(q[i]);
+  }
 }
 
 
