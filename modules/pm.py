@@ -636,25 +636,41 @@ def _mpng(*args):
 
 def show(*args):
    r=1
-   lock()   
-   if len(args)==2:
+   lock()
+   l = len(args)
+   if not l:
+      r = _pm.showhide("(all)",0,1); # show lines by default       
+   elif l==2:
       if repres.has_key(args[0]):      
          repn = repres[args[0]];
          r = _pm.showhide(args[1],repn,1);
    elif args[0]=='all':
-         r = _pm.showhide("!",0,1);
+      r = _pm.showhide("(all)",0,1); # show lines by default 
+   elif args[0][0]=='(':
+      r = _pm.showhide(args[0],0,1);
+   elif repres.has_key(args[0]):      
+      repn = repres[args[0]];
+      r = _pm.showhide("(all)",repn,1);
    unlock()
    return r
 
 def hide(*args):
    r = 1
-   lock()   
-   if len(args)==2:
+   l = len(args)
+   lock()
+   if not l:
+      r = _pm.showhide("!",0,0);      
+   elif l==2:
       if repres.has_key(args[0]):      
          repn = repres[args[0]];
          r = _pm.showhide(args[1],repn,0);
    elif args[0]=='all':
-         r = _pm.showhide("!",0,0);
+      r = _pm.showhide("!",0,0);
+   elif args[0][0]=='(':
+      r = _pm.showhide(args[0],-1,0);
+   elif repres.has_key(args[0]):      
+      repn = repres[args[0]];
+      r = _pm.showhide("(all)",repn,0);      
    unlock()
    return r
 
@@ -730,7 +746,7 @@ keyword = {
    'fork'          : [dummy        , 1 , 1 , ',' , 3 ],
    'forward'       : [forward      , 0 , 0 , ',' , 0 ],
    'frame'         : [frame        , 1 , 1 , ',' , 0 ],
-   'hide'          : [hide         , 1 , 2 , ',' , 0 ],
+   'hide'          : [hide         , 0 , 2 , ',' , 0 ],
    'intra_fit'     : [intra_fit    , 1 , 2 , ',' , 0 ],
    'intra_rms'     : [intra_rms    , 1 , 2 , ',' , 0 ],
    'intra_rms_cur' : [intra_rms_cur, 1 , 2 , ',' , 0 ],
@@ -764,7 +780,7 @@ keyword = {
    'select'        : [select       , 1 , 2 , '=' , 0 ],
    'sel'           : [select       , 1 , 2 , '=' , 0 ],
    'set'           : [set          , 2 , 2 , '=' , 0 ],
-   'show'          : [show         , 1 , 2 , ',' , 0 ],
+   'show'          : [show         , 0 , 2 , ',' , 0 ],
    'sort'          : [sort         , 0 , 1 , ',' , 0 ],
    '_special'      : [_special     , 3 , 3 , ',' , 0 ],
    'stereo'        : [stereo       , 1 , 1 , ',' , 0 ],

@@ -789,13 +789,13 @@ void ExecutiveSetRepVisib(char *name,int rep,int state)
 	 if(name[0]=='_') {
 		flag=true;
 	 } else {
-      if(rep>0) {
-        if(state!=tRec->repOn[rep])  /* more intuitive behavior for REAL selections */
-          {
-            flag=true;
-            tRec->repOn[rep]=state;
-          }
-      }
+	   if(rep>=0) {
+	     if(state!=tRec->repOn[rep])  /* more intuitive behavior for REAL selections */
+	       {
+		 flag=true;
+		 tRec->repOn[rep]=state;
+	       }
+	   }
 	 }
 	 
 	 if(flag) {
