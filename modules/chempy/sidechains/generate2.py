@@ -17,11 +17,23 @@ sc_clus = {}
 for resn in sc_raw.keys():
    resn_list = sc_raw[resn]
    resn_key_dict = {}
-   resn_key_list = resn_list[1].keys() # HACK - need to work this out...
-   for kee in resn_key_list:
-      resn_key_dict[kee] = None
-   resn_key = resn_key_dict.keys()
+   # find the most commonly encountered set of torsions
+   # (it is most likely to be correct)
+   for set in resn_list:
+      lst = deepcopy(set.keys())
+      lst.sort()
+      tup = tuple(lst)
+      if resn_key_dict.has_key(tup):
+         resn_key_dict[tup] = resn_key_dict[tup] + 1
+      else:
+         resn_key_dict[tup] = 1
+   key_lst = []
+   for a in resn_key_dict.keys():
+      key_lst.append((resn_key_dict[a],a))
+   key_lst.sort()
+   resn_key = list(key_lst[-1][1])
    resn_key.sort()
+   print resn,resn_key
    n_dihe = len(resn_key)
    print resn,len(sc_raw[resn])#,resn_key
    if n_dihe: # not glycine or alanine
@@ -38,6 +50,12 @@ for resn in sc_raw.keys():
          cur = resn_list.pop()
          if len(cur)!=n_dihe:
 #            print "skipping...",cur
+            continue
+         flag=1
+         for k in resn_key:
+            if not cur.has_key(k):
+               flag=0
+         if not flag:
             continue
          recomp_avg = None
          closest = None
