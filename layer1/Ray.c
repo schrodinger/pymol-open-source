@@ -1793,7 +1793,7 @@ void RayRender(CRay *I,int width,int height,unsigned int *image,
 	 height=height*2;
 	 image_copy = image;
 	 buffer_size = 4*width*height;
-    image = (int*)CacheAlloc(char,buffer_size,0,cCache_ray_antialias_buffer);
+    image = (unsigned int*)CacheAlloc(char,buffer_size,0,cCache_ray_antialias_buffer);
 
 	 ErrChkPtr(image);
   }
