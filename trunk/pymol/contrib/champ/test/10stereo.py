@@ -401,4 +401,5 @@ for a in range(0,len(PIR)):
       if not (ch.match_1v1_b(PIR[a],TX[b]) == 0):
          print "Error: PIR[%d],TX[%d]"%(a,b)
 
+print " test complete."
 

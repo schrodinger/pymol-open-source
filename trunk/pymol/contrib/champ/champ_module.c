@@ -52,9 +52,11 @@ static PyObject *RetInt(int ok,int result) /* status/integer return */
   return(Py_BuildValue("(ii)",!ok,result));
 }
 
+typedef void(*CObjectDestruct)(void*) ;
+
 static PyObject *_new(PyObject *self,      PyObject *args)
 {
-  return(PyCObject_FromVoidPtr((void*)ChampNew(),(void*)(void*)ChampFree));
+  return(PyCObject_FromVoidPtr((void*)ChampNew(),(CObjectDestruct)ChampFree));
 }
 
 static PyObject *_memory_dump(PyObject *self,      PyObject *args)
@@ -115,6 +117,21 @@ static PyObject *pattern_orient_bonds(PyObject *self,      PyObject *args)
   if(ok) {
     I = PyCObject_AsVoidPtr(O);
     ChampOrientBonds(I,int1);
+  }
+  return(RetStatus(ok));
+}
+
+static PyObject *pattern_detect_chirality(PyObject *self,      PyObject *args)
+{
+  int ok=true;
+  int int1;
+  PyObject *O;
+  CChamp *I;
+  ok = PyArg_ParseTuple(args,"Oi",&O,&int1);
+  ok = PyCObject_Check(O);
+  if(ok) {
+    I = PyCObject_AsVoidPtr(O);
+    ChampDetectChirality(I,int1);
   }
   return(RetStatus(ok));
 }
@@ -530,20 +547,21 @@ static PyObject *list_get_pattern_indices(PyObject *self,      PyObject *args)
   return(RetObj(ok,result));
 }
 
-static PyObject *get_pattern_string(PyObject *self,      PyObject *args)
+static PyObject *pattern_get_string(PyObject *self,      PyObject *args)
 {
   int ok=true;
   PyObject *result = NULL;
   PyObject *O;
   int pat_index;
+  int mode;
   CChamp *I;
   char *smi;
 
-  ok = PyArg_ParseTuple(args,"Oi",&O,&pat_index);
+  ok = PyArg_ParseTuple(args,"Oii",&O,&pat_index,&mode);
   ok = PyCObject_Check(O);
   if(ok) {
     I = PyCObject_AsVoidPtr(O);
-    smi = ChampPatToSmiVLA(I,pat_index,NULL);
+    smi = ChampPatToSmiVLA(I,pat_index,NULL,mode);
     result = PyString_FromString(smi);
     vla_free(smi);
   }
@@ -598,6 +616,35 @@ static PyObject *pattern_get_atom_symbols(PyObject *self,      PyObject *args)
   return(RetObj(ok,result));
 }
 
+static PyObject *pattern_get_atom_names(PyObject *self,      PyObject *args)
+{
+  int ok=true;
+  int int1,ai;
+  PyObject *result = NULL;
+  PyObject *O;
+  CChamp *I;
+  ListPat *pat;
+  ListAtom *at;
+  int a;
+  int n_atom;
+
+  ok = PyArg_ParseTuple(args,"Oi",&O,&int1);
+  ok = PyCObject_Check(O);
+  if(ok) {
+    I = PyCObject_AsVoidPtr(O);
+    pat = I->Pat+int1;
+    n_atom = ListLen(I->Atom,pat->atom);
+    ai = pat->atom;
+    result = PyList_New(n_atom);
+    for(a=0;a<n_atom;a++) {
+      at = I->Atom + ai;
+      PyList_SetItem(result,a,PyString_FromString(at->name));
+      ai = at->link;
+    }
+  }
+  return(RetObj(ok,result));
+}
+
 
 static PyObject *list_get_pattern_strings(PyObject *self,      PyObject *args)
 {
@@ -623,7 +670,7 @@ static PyObject *list_get_pattern_strings(PyObject *self,      PyObject *args)
     i = list_index;
     c = 0;
     while(i) {
-      smi = ChampPatToSmiVLA(I,I->Int[i].value,smi);
+      smi = ChampPatToSmiVLA(I,I->Int[i].value,smi,0);
       str = PyString_FromString(smi);
       PyList_SetItem(result,c,str);
       i = I->Int[i].link;
@@ -761,7 +808,10 @@ static PyObject *match_1v1_map(PyObject *self,      PyObject *args)
       targ = PyList_New(pair_cnt);
       j = mat->atom;
       for(b=0;b<pair_cnt;b++) {
-        /*        printf("%2d %2d\n",I->Int2[j].value[0],I->Int2[j].value[1]);*/
+        /*
+                printf("%2d %2d %4d %4d\n",I->Int2[j].value[0],I->Int2[j].value[1],
+                       I->Atom[I->Int2[j].value[0]].index,
+                       I->Atom[I->Int2[j].value[1]].index);*/
         PyList_SetItem(tmpl,b,PyInt_FromLong(I->Atom[I->Int2[j].value[0]].index));
         PyList_SetItem(targ,b,PyInt_FromLong(I->Atom[I->Int2[j].value[1]].index));
         j = I->Int2[j].link;
@@ -873,7 +923,6 @@ static PyObject *insert_model(PyObject *self,      PyObject *args)
 static PyMethodDef champ_methods[] = {
   {"new",	                     _new,                   METH_VARARGS },
   {"memory_dump",               _memory_dump,           METH_VARARGS },
-  {"get_pattern_string",        get_pattern_string,       METH_VARARGS },
   {"insert_pattern_string",     insert_pattern_string,          METH_VARARGS },
   {"insert_model",              insert_model,           METH_VARARGS },
   {"pattern_free",              pattern_free,          METH_VARARGS },
@@ -881,11 +930,14 @@ static PyMethodDef champ_methods[] = {
   {"pattern_get_cycle",   pattern_get_cycle,       METH_VARARGS },
   {"pattern_get_class",   pattern_get_class,       METH_VARARGS },
   {"pattern_get_codes",   pattern_get_codes,       METH_VARARGS },
+  {"pattern_get_string",        pattern_get_string,       METH_VARARGS },
   {"pattern_get_tags",    pattern_get_tags,       METH_VARARGS },
   {"pattern_get_tag_masks",    pattern_get_tag_masks,       METH_VARARGS },
   {"pattern_get_atom_symbols",  pattern_get_atom_symbols,     METH_VARARGS },
+  {"pattern_get_atom_names",  pattern_get_atom_names,     METH_VARARGS },
   {"pattern_dump",  pattern_dump,     METH_VARARGS },
   {"pattern_orient_bonds",   pattern_orient_bonds,       METH_VARARGS },
+  {"pattern_detect_chirality",   pattern_detect_chirality,       METH_VARARGS },
   {"pattern_generalize",   pattern_generalize,     METH_VARARGS },
   {"list_prepend_pattern_strings",  list_prepend_pattern_strings, METH_VARARGS },
   {"list_prepend_pattern_index",  list_prepend_pattern_index, METH_VARARGS },

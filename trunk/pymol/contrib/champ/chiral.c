@@ -34,7 +34,7 @@ void ChiralInit(void)
   chirality_lookup[chi(3,0,2,1)]=1;
 
   /* these orderings have reverse chirality
-     (opposite to 0,1,2,3) */
+     (opposite to 0,1,3,2) */
 
   chirality_lookup[chi(0,1,3,2)]=-1;
   chirality_lookup[chi(0,2,1,3)]=-1;
