@@ -364,9 +364,10 @@ int ButModeInit(PyMOLGlobals *G)
       I->Mode[a]=-1;
     }
 
-    I->Mode[19] = cButModeSeleToggle;
+    /*    I->Mode[19] = cButModeSeleToggle;
     I->Mode[20] = cButModeCent; 
     I->Mode[21] = cButModeMenu;
+    */
 
     strcpy(I->Code[cButModeRotXYZ],  "Rota ");
     strcpy(I->Code[cButModeRotZ],    "RotZ ");  
