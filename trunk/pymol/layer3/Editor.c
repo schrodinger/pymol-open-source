@@ -834,7 +834,10 @@ void EditorInactive(void)
   ExecutiveDelete(cEditorSele2);    
   ExecutiveDelete(cEditorRes);
   ExecutiveDelete(cEditorComp);
-  if(SettingGet(cSetting_log_conformations)) PLogFlush();
+  /*  if(SettingGet(cSetting_log_conformations)) PLogFlush();
+      TODO: resolve this problem:
+      we can't assume that Python interpreter isn't blocked
+  */
   SceneDirty();
 }
 /*========================================================================*/
