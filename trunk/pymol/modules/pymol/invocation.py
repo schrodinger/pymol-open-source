@@ -53,6 +53,7 @@ if __name__=='pymol.invocation':
    options.auto_reinitialize = 0
    options.keep_thread_alive = 0
    options.after_load_script = ""
+   options.quiet = 0
    if sys.platform != 'win32':
       options.win_py = 200
    else:
@@ -114,6 +115,7 @@ if __name__=='pymol.invocation':
       av = av[1:] # throw out the executable path
       av.reverse()
       global options
+      once_dict = {}
       options.deferred = []
       loaded_something = 0
       # append user settings file as an option
@@ -130,10 +132,12 @@ if __name__=='pymol.invocation':
                new_args = []
                # ====== mode 5 - simple helper application ======
                if a[2:3] == "5": 
-                  new_args = ["-qxiICUF",
-                     "-X","68",
-                     "-Y","100",
-                     ]
+                  if not once_dict.has_key('A5'):
+                     once_dict['A5'] = 1
+                     new_args = ["-QxiICUF",
+                        "-X","68",
+                        "-Y","100",
+                        ]
                # ===============================================
                new_args.reverse()
                av = av + new_args
@@ -209,6 +213,9 @@ if __name__=='pymol.invocation':
                options.sigint_handler = 0
             if "U" in a:
                options.reuse_helper = 1
+            if "Q" in a:
+               options.quiet = 1
+               options.show_splash = 0
             if "I" in a:
                options.auto_reinitialize = 1
             if "L" in a:

@@ -51,7 +51,7 @@ typedef struct PyMOLOptionRec {
     internal_feedback, security, game_mode,
     force_stereo, winX, winY, blue_line,
     winPX, winPY, external_gui, siginthand,
-    reuse_helper, auto_reinitialize, keep_thread_alive;
+    reuse_helper, auto_reinitialize, keep_thread_alive, quiet;
   char after_load_script[PYMOL_MAX_OPT_STR];
 } PyMOLOptionRec;
 

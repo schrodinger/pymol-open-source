@@ -1006,7 +1006,7 @@ void PGetOptions(PyMOLOptionRec *rec)
   rec->reuse_helper = PyInt_AsLong(PyObject_GetAttrString(options,"reuse_helper"));
   rec->auto_reinitialize = PyInt_AsLong(PyObject_GetAttrString(options,"auto_reinitialize"));
   rec->keep_thread_alive = PyInt_AsLong(PyObject_GetAttrString(options,"keep_thread_alive"));
-  
+  rec->quiet = PyInt_AsLong(PyObject_GetAttrString(options,"quiet"));
   load_str = PyString_AsString(PyObject_GetAttrString(options,"after_load_script"));
   if(load_str) {
     if(load_str[0]) {
