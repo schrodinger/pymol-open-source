@@ -57,10 +57,10 @@ int SelectorGetPairIndices(int sele1,int state1,int sele2,int state2,
                            int **indexVLA, ObjectMolecule ***objVLA);
 
 void SelectorLogSele(char *name);
-int SelectorMapMaskVDW(int sele1,ObjectMap *oMap,float buffer);
+int SelectorMapMaskVDW(int sele1,ObjectMapState *oMap,float buffer);
 
-int SelectorMapCoulomb(int sele1,ObjectMap *oMap,float cutoff);
-int SelectorMapGaussian(int sele1,ObjectMap *oMap,float buffer);
+int SelectorMapCoulomb(int sele1,ObjectMapState *oMap,float cutoff);
+int SelectorMapGaussian(int sele1,ObjectMapState *oMap,float buffer);
 
 
 #endif

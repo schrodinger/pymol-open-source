@@ -19,7 +19,7 @@ Z* -------------------------------------------------------------------
 #include"ObjectMap.h"
 
 typedef struct {
-  ObjectMap *Map;
+  ObjectMapState *Map;
   CCrystal Crystal;
   int Active;
   int *N;
@@ -44,7 +44,7 @@ typedef struct ObjectSurface {
   int NState;
 } ObjectSurface;
 
-ObjectSurface *ObjectSurfaceFromBox(ObjectSurface *obj,ObjectMap *map,
+ObjectSurface *ObjectSurfaceFromBox(ObjectSurface *obj,ObjectMapState *map,
                               int state,float *mn,float *mx,
                               float level,int mode,
                               float carve,float *vert_vla);

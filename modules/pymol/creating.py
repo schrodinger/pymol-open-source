@@ -54,7 +54,7 @@ def map_new(name,type,grid=None,selection=None,buffer=0.0,box=None):
    finally:
       unlock()
       
-def isomesh(name,map,level=1.0,selection='',buffer=0.0,state=1,carve=None):
+def isomesh(name,map,level=1.0,selection='',buffer=0.0,state=1,carve=None,source=-1):
    '''
 DESCRIPTION
  
@@ -102,12 +102,14 @@ SEE ALSO
       lock()
       r = _cmd.isomesh(str(name),0,str(map),int(mopt),
                        "("+str(selection)+")",float(buffer),
-                       float(level),0,int(state)-1,float(carve))
+                       float(level),0,int(state)-1,float(carve),
+                       int(source)-1)
    finally:
       unlock()
    return r
 
-def isosurface(name,map,level=1.0,selection='',buffer=0.0,state=1,carve=None):
+def isosurface(name,map,level=1.0,selection='',buffer=0.0,state=1,carve=None,
+               source=-1):
    '''
 DESCRIPTION
  
@@ -155,12 +157,14 @@ SEE ALSO
       lock()
       r = _cmd.isosurface(str(name),0,str(map),int(mopt),
                        "("+str(selection)+")",float(buffer),
-                       float(level),0,int(state)-1,float(carve))
+                          float(level),0,int(state)-1,float(carve),
+                          int(source)-1)
    finally:
       unlock()
    return r
 
-def isodot(name,map,level=1.0,selection='',buffer=0.0,state=0,carve=0):
+def isodot(name,map,level=1.0,selection='',buffer=0.0,state=0,
+           carve=0,source=0):
    '''
 DESCRIPTION
  
@@ -197,7 +201,8 @@ SEE ALSO
       lock()
       r = _cmd.isomesh(str(name),0,str(map),int(mopt),
                        "("+str(selection)+")",float(buffer),
-                       float(level),1,int(state)-1,float(carve))
+                       float(level),1,int(state)-1,
+                       float(carve),int(source)-1)
    finally:
       unlock()
    return r

@@ -33,6 +33,8 @@ int TestPyMOL_00_00(CTestPyMOL *I)
 {
   ObjectMap *obj;
   ObjectMapDesc _md,*md;
+  ObjectMapState *ms =NULL;
+
   int a;
 
   md=&_md;
@@ -46,7 +48,10 @@ int TestPyMOL_00_00(CTestPyMOL *I)
   }
   md->init_mode = -2;
   
-  obj = ObjectMapNewFromDesc(md);
+  obj = ObjectMapNew();
+  if(obj) {
+    ms = ObjectMapNewStateFromDesc(obj,md,0);    
+  }
   if(obj) {
     ObjectSetName((CObject*)obj,"00_00");
     ExecutiveManageObject((CObject*)obj,true);

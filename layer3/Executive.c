@@ -154,7 +154,7 @@ int ExecutiveSetCrystal(char *sele,float a,float b,float c,
   CObject **objVLA = NULL;
   CObject *obj;
   ObjectMolecule *objMol;
-  ObjectMap *objMap;
+  /*  ObjectMap *objMap;*/
   int ok=true;
   CSymmetry *symmetry = NULL;
   CCrystal *crystal = NULL;
@@ -186,6 +186,7 @@ int ExecutiveSetCrystal(char *sele,float a,float b,float c,
           objMol->Symmetry = SymmetryCopy(symmetry);
         }
         break;
+        /* not currently supported 
       case cObjectMap:
         
         if(!crystal) {
@@ -206,7 +207,9 @@ int ExecutiveSetCrystal(char *sele,float a,float b,float c,
           objMap->Crystal=CrystalCopy(crystal);
         }
         break;
-      } 
+        */
+
+      }
     }
   } else {
     ok=false;
@@ -410,11 +413,13 @@ int ExecutiveMapNew(char *name,int type,float *grid,
 {
   CObject *origObj;
   ObjectMap *objMap;
+  ObjectMapState *ms = NULL;
   int a;
   float v[3];
   ObjectMapDesc _md,*md;
   int ok = true;
   int sele0 = SelectorIndexByName(sele);
+  int state=0;
 
   md=&_md;
   /* remove object if it already exists */
@@ -451,21 +456,23 @@ int ExecutiveMapNew(char *name,int type,float *grid,
     if(md->Grid[a]<=R_SMALL8) md->Grid[a]=R_SMALL8;
 
   if(ok) {
-    objMap = ObjectMapNewFromDesc(md);
-    if(!objMap)
+    objMap = ObjectMapNew();
+    if(objMap) 
+      ms = ObjectMapNewStateFromDesc(objMap,md,state);
+    if(!ms)
       ok=false;
 
-    if(ok) {
+    if(ok&&ms) {
 
       switch(type) {
       case 0: /* vdw */
-        SelectorMapMaskVDW(sele0,objMap,0.0F);
+        SelectorMapMaskVDW(sele0,ms,0.0F);
         break;
       case 1: /* coulomb */
-        SelectorMapCoulomb(sele0,objMap,20.0F);
+        SelectorMapCoulomb(sele0,ms,20.0F);
         break;
       case 2: /* gaussian */
-        SelectorMapGaussian(sele0,objMap,0.0F);
+        SelectorMapGaussian(sele0,ms,0.0F);
         break;
       }
 

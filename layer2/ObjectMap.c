@@ -45,9 +45,55 @@ typedef struct {
 } MyArrayObject;
 #endif
 
-int ObjectMapNumPyArrayToMap(ObjectMap *I,PyObject *ary);
+int ObjectMapNumPyArrayToMapState(ObjectMapState *I,PyObject *ary);
 
-int ObjectMapSetBorder(ObjectMap *I,float level)
+ObjectMapState *ObjectMapStatePrime(ObjectMap *I,int state)
+{
+  ObjectMapState *ms = NULL;
+  if(state<0)
+    state=I->NState;
+  if(I->NState<=state) {
+    VLACheck(I->State,ObjectMapState,state);
+    I->NState=state+1;
+  }
+  ms=&I->State[state];
+  ObjectMapStateInit(ms);
+  return(ms);
+}
+
+ObjectMapState *ObjectMapStateGetActive(ObjectMap *I,int state)
+{
+  ObjectMapState *ms = NULL;
+  if(state>=0) {
+    if(state<I->NState) {
+      ms=&I->State[state];
+      if(!ms->Active)
+        ms = NULL;
+    }
+  }
+  return(ms);
+}
+
+
+void ObjectMapUpdateExtents(ObjectMap *I)
+{
+  int a;
+  I->Obj.ExtentFlag=false;
+  for(a=0;a<I->NState;a++) {
+    if(I->State[a].Active)
+      {
+        if(!I->Obj.ExtentFlag) {
+          copy3f(I->State[a].ExtentMin,I->Obj.ExtentMin);
+          copy3f(I->State[a].ExtentMax,I->Obj.ExtentMax);
+          I->Obj.ExtentFlag=true;
+        } else {
+          min3f(I->State[a].ExtentMin,I->Obj.ExtentMin,I->Obj.ExtentMin);
+          max3f(I->State[a].ExtentMax,I->Obj.ExtentMax,I->Obj.ExtentMax);
+        }
+      }
+  }
+}
+int ObjectMapStateSetBorder(ObjectMapState *I,float level)
 {
   int result = false;
   int a,b,c;
@@ -78,9 +124,8 @@ int ObjectMapSetBorder(ObjectMap *I,float level)
   return(result);
 }
 
-static void ObjectMapFree(ObjectMap *I);
-
-static void ObjectMapFree(ObjectMap *I) {
+void ObjectMapStatePurge(ObjectMapState *I)
+{
   if(I->Field) {
     IsosurfFieldFree(I->Field);
     I->Field=NULL;
@@ -90,6 +135,17 @@ static void ObjectMapFree(ObjectMap *I) {
   FreeP(I->Range);
   FreeP(I->Grid);
   OOFreeP(I->Crystal);
+  I->Active=false;
+}
+
+static void ObjectMapFree(ObjectMap *I) {
+
+  int a;
+  for(a=0;a<I->NState;a++) {
+    if(I->State[a].Active)
+      ObjectMapStatePurge(I->State+a);
+  }
+  VLAFreeP(I->State);
   ObjectPurge(&I->Obj);
   OOFreeP(I);
 }
@@ -98,115 +154,136 @@ static void ObjectMapUpdate(ObjectMap *I) {
   SceneDirty();
 }
 
-static void ObjectMapRender(ObjectMap *I,int frame,CRay *ray,Pickable **pick,int pass)
+static void ObjectMapRender(ObjectMap *I,int state,CRay *ray,Pickable **pick,int pass)
 {
+  ObjectMapState *ms = NULL;
   if(!pass) {
+    if(state<I->NState)
+      if(I->State[state].Active)
+        ms=&I->State[state];
+    
+    if(ms) {
+      ObjectPrepareContext(&I->Obj,ray);
 
-    ObjectPrepareContext(&I->Obj,ray);
-
-    if(I->Obj.RepVis[cRepExtent]) {
-      if(ray) {
-        float *vc;
-        vc = ColorGet(I->Obj.Color);
-        ray->fColor3fv(ray,vc);
-        ray->fSausage3fv(ray,I->Corner[0],I->Corner[1],0.20,vc,vc);
-        ray->fSausage3fv(ray,I->Corner[0],I->Corner[2],0.20,vc,vc);
-        ray->fSausage3fv(ray,I->Corner[2],I->Corner[3],0.20,vc,vc);
-        ray->fSausage3fv(ray,I->Corner[1],I->Corner[3],0.20,vc,vc);
-        ray->fSausage3fv(ray,I->Corner[0],I->Corner[4],0.20,vc,vc);
-        ray->fSausage3fv(ray,I->Corner[1],I->Corner[5],0.20,vc,vc);
-        ray->fSausage3fv(ray,I->Corner[2],I->Corner[6],0.20,vc,vc);
-        ray->fSausage3fv(ray,I->Corner[3],I->Corner[7],0.20,vc,vc);
-        ray->fSausage3fv(ray,I->Corner[4],I->Corner[5],0.20,vc,vc);
-        ray->fSausage3fv(ray,I->Corner[4],I->Corner[6],0.20,vc,vc);
-        ray->fSausage3fv(ray,I->Corner[6],I->Corner[7],0.20,vc,vc);
-        ray->fSausage3fv(ray,I->Corner[5],I->Corner[7],0.20,vc,vc);
-      } else if(pick&&PMGUI) {
-      } else if(PMGUI) {
-        ObjectUseColor(&I->Obj);
-        glDisable(GL_LIGHTING); 
-        glBegin(GL_LINES);
-        glVertex3fv(I->Corner[0]);
-        glVertex3fv(I->Corner[1]);
-        
-        glVertex3fv(I->Corner[0]);
-        glVertex3fv(I->Corner[2]);
-        
-        glVertex3fv(I->Corner[2]);
-        glVertex3fv(I->Corner[3]);
-        
-        glVertex3fv(I->Corner[1]);
-        glVertex3fv(I->Corner[3]);
-        
-        glVertex3fv(I->Corner[0]);
-        glVertex3fv(I->Corner[4]);
-        
-        glVertex3fv(I->Corner[1]);
-        glVertex3fv(I->Corner[5]);
-        
-        glVertex3fv(I->Corner[2]);
-        glVertex3fv(I->Corner[6]);
-        
-        glVertex3fv(I->Corner[3]);
-        glVertex3fv(I->Corner[7]);
-        
-        glVertex3fv(I->Corner[4]);
-        glVertex3fv(I->Corner[5]);
-        
-        glVertex3fv(I->Corner[4]);
-        glVertex3fv(I->Corner[6]);
-        
-        glVertex3fv(I->Corner[6]);
-        glVertex3fv(I->Corner[7]);
-        
-        glVertex3fv(I->Corner[5]);
-        glVertex3fv(I->Corner[7]);
-        
-        glEnd();
-        glEnable(GL_LIGHTING);
+      if(I->Obj.RepVis[cRepExtent]) {
+        if(ray) {
+          float *vc;
+          vc = ColorGet(I->Obj.Color);
+          ray->fColor3fv(ray,vc);
+          ray->fSausage3fv(ray,ms->Corner[0],ms->Corner[1],0.20,vc,vc);
+          ray->fSausage3fv(ray,ms->Corner[0],ms->Corner[2],0.20,vc,vc);
+          ray->fSausage3fv(ray,ms->Corner[2],ms->Corner[3],0.20,vc,vc);
+          ray->fSausage3fv(ray,ms->Corner[1],ms->Corner[3],0.20,vc,vc);
+          ray->fSausage3fv(ray,ms->Corner[0],ms->Corner[4],0.20,vc,vc);
+          ray->fSausage3fv(ray,ms->Corner[1],ms->Corner[5],0.20,vc,vc);
+          ray->fSausage3fv(ray,ms->Corner[2],ms->Corner[6],0.20,vc,vc);
+          ray->fSausage3fv(ray,ms->Corner[3],ms->Corner[7],0.20,vc,vc);
+          ray->fSausage3fv(ray,ms->Corner[4],ms->Corner[5],0.20,vc,vc);
+          ray->fSausage3fv(ray,ms->Corner[4],ms->Corner[6],0.20,vc,vc);
+          ray->fSausage3fv(ray,ms->Corner[6],ms->Corner[7],0.20,vc,vc);
+          ray->fSausage3fv(ray,ms->Corner[5],ms->Corner[7],0.20,vc,vc);
+        } else if(pick&&PMGUI) {
+        } else if(PMGUI) {
+          ObjectUseColor(&I->Obj);
+          glDisable(GL_LIGHTING); 
+          glBegin(GL_LINES);
+          glVertex3fv(ms->Corner[0]);
+          glVertex3fv(ms->Corner[1]);
+          
+          glVertex3fv(ms->Corner[0]);
+          glVertex3fv(ms->Corner[2]);
+          
+          glVertex3fv(ms->Corner[2]);
+          glVertex3fv(ms->Corner[3]);
+          
+          glVertex3fv(ms->Corner[1]);
+          glVertex3fv(ms->Corner[3]);
+          
+          glVertex3fv(ms->Corner[0]);
+          glVertex3fv(ms->Corner[4]);
+          
+          glVertex3fv(ms->Corner[1]);
+          glVertex3fv(ms->Corner[5]);
+          
+          glVertex3fv(ms->Corner[2]);
+          glVertex3fv(ms->Corner[6]);
+          
+          glVertex3fv(ms->Corner[3]);
+          glVertex3fv(ms->Corner[7]);
+          
+          glVertex3fv(ms->Corner[4]);
+          glVertex3fv(ms->Corner[5]);
+          
+          glVertex3fv(ms->Corner[4]);
+          glVertex3fv(ms->Corner[6]);
+          
+          glVertex3fv(ms->Corner[6]);
+          glVertex3fv(ms->Corner[7]);
+          
+          glVertex3fv(ms->Corner[5]);
+          glVertex3fv(ms->Corner[7]);
+          
+          glEnd();
+          glEnable(GL_LIGHTING);
+        }
       }
     }
   }
 }
+
+void ObjectMapStateInit(ObjectMapState *I) 
+{
+  if(I->Crystal) {
+    OOFreeP(I->Crystal);
+  }
+  I->Crystal = CrystalNew();
+  I->Field = NULL;
+  I->Origin = NULL;
+  I->Dim = NULL;
+  I->Range = NULL;
+  I->Grid = NULL;
+}
+int ObjectMapGetNStates(ObjectMap *I)     
+{
+  return(I->NState);
+}
 /*========================================================================*/
 ObjectMap *ObjectMapNew(void)
 {
-OOAlloc(ObjectMap);
+  OOAlloc(ObjectMap);
 
- ObjectInit((CObject*)I);
+  ObjectInit((CObject*)I);
+  I->Obj.type = cObjectMap;
 
- I->Obj.RepVis[cRepExtent]=true; 
- I->Crystal = CrystalNew();
- I->Field = NULL;
- I->Obj.type = cObjectMap;
- I->Obj.fFree = (void (*)(struct CObject *))ObjectMapFree;
- I->Obj.fUpdate =  (void (*)(struct CObject *)) ObjectMapUpdate;
- I->Obj.fRender =(void (*)(struct CObject *, int, CRay *, Pickable **,int))ObjectMapRender;
- I->Origin = NULL;
- I->Dim = NULL;
- I->Range = NULL;
- I->Grid = NULL;
-#ifdef _NOT_YET_NEEDED
-  I->Obj.fGetNFrame = (int (*)(struct CObject *)) ObjectMapGetNFrames;
-#endif
+  
+  I->NState = 0;
+  I->State=VLAMalloc(1,sizeof(ObjectMapState),5,true); /* autozero important */
+
+  I->Obj.RepVis[cRepExtent]=true; 
+  I->Obj.fFree = (void (*)(struct CObject *))ObjectMapFree;
+  I->Obj.fUpdate =  (void (*)(struct CObject *)) ObjectMapUpdate;
+  I->Obj.fRender =(void (*)(struct CObject *, int, CRay *, Pickable **,int))ObjectMapRender;
+
+  I->Obj.fGetNFrame = (int (*)(struct CObject *)) ObjectMapGetNStates;
 
   return(I);
 }
 /*========================================================================*/
-ObjectMap *ObjectMapNewFromDesc(ObjectMapDesc *md)
+ObjectMapState *ObjectMapNewStateFromDesc(ObjectMap *I,ObjectMapDesc *md,int state)
 {
-  ObjectMap *I;
   int ok=true;
   float v[3];
   int a,b,c,d;
   float *fp;
+  ObjectMapState *ms = NULL;
 
-  I = (ObjectMap*)ObjectMapNew();
+  ms=ObjectMapStatePrime(I,state);
+  
   if(I) {
-    I->Origin=Alloc(float,3);
-    I->Range=Alloc(float,3);
-    I->Dim=Alloc(int,3);
-    I->Grid=Alloc(float,3);
+    ms->Origin=Alloc(float,3);
+    ms->Range=Alloc(float,3);
+    ms->Dim=Alloc(int,3);
+    ms->Grid=Alloc(float,3);
   }
   switch(md->mode) {
   case cObjectMap_OrthoMinMaxGrid: /* Orthorhombic: min, max, spacing, centered over range  */
@@ -235,36 +312,36 @@ ObjectMap *ObjectMapNewFromDesc(ObjectMapDesc *md)
     
     /* now populate the map data structure */
 
-    copy3f(md->MinCorner,I->Origin);
-    for(a=0;a<3;a++) I->Range[a] = md->Grid[a] * md->Dim[a];
+    copy3f(md->MinCorner,ms->Origin);
+    for(a=0;a<3;a++) ms->Range[a] = md->Grid[a] * md->Dim[a];
 
     /* these maps start at zero */
-    for(a=0;a<3;a++) I->Min[a]=0; 
-    copy3f(md->Dim,I->Max);
+    for(a=0;a<3;a++) ms->Min[a]=0; 
+    copy3f(md->Dim,ms->Max);
 
     /* define corners */
 
-    for(a=0;a<8;a++) copy3f(I->Origin,I->Corner[a]);
+    for(a=0;a<8;a++) copy3f(ms->Origin,ms->Corner[a]);
 
     d = 0;
     for(c=0;c<2;c++) {
       {
-        v[2] = (c ? I->Range[2] : 0.0);
+        v[2] = (c ? ms->Range[2] : 0.0);
         for(b=0;b<2;b++) {
-          v[1]= (b ? I->Range[1] : 0.0);
+          v[1]= (b ? ms->Range[1] : 0.0);
           for(a=0;a<2;a++) {
-            v[0]= (a ? I->Range[0] : 0.0);
-            add3f(v,I->Corner[d],I->Corner[d]);
+            v[0]= (a ? ms->Range[0] : 0.0);
+            add3f(v,ms->Corner[d],ms->Corner[d]);
             d++;
           }
         }
       }
     }
-    for(a=0;a<3;a++) I->FDim[a] = I->Max[a];
-    I->FDim[3] = 3; 
+    for(a=0;a<3;a++) ms->FDim[a] = ms->Max[a];
+    ms->FDim[3] = 3; 
 
-    I->Field=IsosurfFieldAlloc(I->FDim);
-    if(!I->Field) 
+    ms->Field=IsosurfFieldAlloc(ms->FDim);
+    if(!ms->Field) 
       ok=false;
     else {
       for(a=0;a<md->Dim[0];a++) {
@@ -273,7 +350,7 @@ ObjectMap *ObjectMapNewFromDesc(ObjectMapDesc *md)
           v[1] = md->MinCorner[1] + b * md->Grid[1];
           for(c=0;c<md->Dim[2];c++) {
             v[2] = md->MinCorner[2] + c * md->Grid[2];
-            fp = F4Ptr(I->Field->points,a,b,c,0);
+            fp = F4Ptr(ms->Field->points,a,b,c,0);
             copy3f(v,fp);
           }
         }
@@ -289,7 +366,7 @@ ObjectMap *ObjectMapNewFromDesc(ObjectMapDesc *md)
       for(a=0;a<md->Dim[0];a++) {      
         for(b=0;b<md->Dim[1];b++) {
           for(c=0;c<md->Dim[2];c++) {
-            F3(I->Field->data,a,b,c)=0.0F;
+            F3(ms->Field->data,a,b,c)=0.0F;
           }
         }
       }
@@ -298,7 +375,7 @@ ObjectMap *ObjectMapNewFromDesc(ObjectMapDesc *md)
       for(a=0;a<md->Dim[0];a++) {      
         for(b=0;b<md->Dim[1];b++) {
           for(c=0;c<md->Dim[2];c++) {
-            F3(I->Field->data,a,b,c)=1.0F;
+            F3(ms->Field->data,a,b,c)=1.0F;
           }
         }
       }
@@ -307,7 +384,7 @@ ObjectMap *ObjectMapNewFromDesc(ObjectMapDesc *md)
       for(a=0;a<md->Dim[0];a++) {      
         for(b=0;b<md->Dim[1];b++) {
           for(c=0;c<md->Dim[2];c++) {
-            F3(I->Field->data,a,b,c)=sqrt1f(a*a+b*b+c*c);
+            F3(ms->Field->data,a,b,c)=sqrt1f(a*a+b*b+c*c);
           }
         }
       }
@@ -316,10 +393,10 @@ ObjectMap *ObjectMapNewFromDesc(ObjectMapDesc *md)
   }
   
   if(ok) {
-    copy3f(I->Origin,I->Obj.ExtentMin);
-    copy3f(I->Origin,I->Obj.ExtentMax);
-    add3f(I->Range,I->Obj.ExtentMax,I->Obj.ExtentMax);
-    I->Obj.ExtentFlag=true;
+    copy3f(ms->Origin,ms->ExtentMin);
+    copy3f(ms->Origin,ms->ExtentMax);
+    add3f(ms->Range,ms->ExtentMax,ms->ExtentMax);
+    ObjectMapUpdateExtents(I);
   }
   if(!ok) {
     ErrMessage("ObjectMap","Unable to create map");
@@ -331,10 +408,10 @@ ObjectMap *ObjectMapNewFromDesc(ObjectMapDesc *md)
       ENDFB;
   }
   
-  return(I);
+  return(ms);
 }
 /*========================================================================*/
-int ObjectMapCCP4StrToMap(ObjectMap *I,char *CCP4Str,int bytes,int frame) {
+int ObjectMapCCP4StrToMap(ObjectMap *I,char *CCP4Str,int bytes,int state) {
   
   char *p;
   int *i;
@@ -359,6 +436,15 @@ int ObjectMapCCP4StrToMap(ObjectMap *I,char *CCP4Str,int bytes,int frame) {
   double sum,sumsq;
   float mean,stdev;
   int normalize;
+  ObjectMapState *ms;
+
+  if(state<0) state=I->NState;
+  if(I->NState<=state) {
+    VLACheck(I->State,ObjectMapState,state);
+    I->NState=state+1;
+  }
+  ms=&I->State[state];
+  ObjectMapStateInit(ms);
 
   normalize=(int)SettingGet(cSetting_normalize_ccp4_maps);
   maxd = FLT_MIN;
@@ -524,75 +610,75 @@ int ObjectMapCCP4StrToMap(ObjectMap *I,char *CCP4Str,int bytes,int frame) {
   xref[mapr]=1;
   xref[mapc]=2;
 
-  I->Div[0] = nx;
-  I->Div[1] = ny;
-  I->Div[2] = nz;
+  ms->Div[0] = nx;
+  ms->Div[1] = ny;
+  ms->Div[2] = nz;
 
-  I->FDim[mapc] = nc;
-  I->Min[mapc] = ncstart;
-  I->Max[mapc] = nc+ncstart;
+  ms->FDim[mapc] = nc;
+  ms->Min[mapc] = ncstart;
+  ms->Max[mapc] = nc+ncstart;
 
-  I->FDim[mapr] = nr;
-  I->Min[mapr] = nrstart;
-  I->Max[mapr] = nr+nrstart;
+  ms->FDim[mapr] = nr;
+  ms->Min[mapr] = nrstart;
+  ms->Max[mapr] = nr+nrstart;
 
-  I->FDim[maps] = ns;
-  I->Min[maps] = nsstart;
-  I->Max[maps] = ns+nsstart;
+  ms->FDim[maps] = ns;
+  ms->Min[maps] = nsstart;
+  ms->Max[maps] = ns+nsstart;
   
-  I->Crystal->Dim[0] = xlen;
-  I->Crystal->Dim[1] = ylen;
-  I->Crystal->Dim[2] = zlen;
+  ms->Crystal->Dim[0] = xlen;
+  ms->Crystal->Dim[1] = ylen;
+  ms->Crystal->Dim[2] = zlen;
 
-  I->Crystal->Angle[0] = alpha;
-  I->Crystal->Angle[1] = beta;
-  I->Crystal->Angle[2] = gamma;
+  ms->Crystal->Angle[0] = alpha;
+  ms->Crystal->Angle[1] = beta;
+  ms->Crystal->Angle[2] = gamma;
 
 
-  I->FDim[3]=3;
-  if(!(I->FDim[0]&&I->FDim[1]&&I->FDim[2])) 
+  ms->FDim[3]=3;
+  if(!(ms->FDim[0]&&ms->FDim[1]&&ms->FDim[2])) 
     ok=false;
   else {
-    CrystalUpdate(I->Crystal);
-    CrystalDump(I->Crystal);
+    CrystalUpdate(ms->Crystal);
+    CrystalDump(ms->Crystal);
     fflush(stdout);
-    I->Field=IsosurfFieldAlloc(I->FDim);
-    for(cc[maps]=0;cc[maps]<I->FDim[maps];cc[maps]++)
+    ms->Field=IsosurfFieldAlloc(ms->FDim);
+    for(cc[maps]=0;cc[maps]<ms->FDim[maps];cc[maps]++)
       {
-        v[maps]=(cc[maps]+I->Min[maps])/((float)I->Div[maps]);
+        v[maps]=(cc[maps]+ms->Min[maps])/((float)ms->Div[maps]);
 
-        for(cc[mapr]=0;cc[mapr]<I->FDim[mapr];cc[mapr]++) {
-          v[mapr]=(cc[mapr]+I->Min[mapr])/((float)I->Div[mapr]);
+        for(cc[mapr]=0;cc[mapr]<ms->FDim[mapr];cc[mapr]++) {
+          v[mapr]=(cc[mapr]+ms->Min[mapr])/((float)ms->Div[mapr]);
 
-          for(cc[mapc]=0;cc[mapc]<I->FDim[mapc];cc[mapc]++) {
-            v[mapc]=(cc[mapc]+I->Min[mapc])/((float)I->Div[mapc]);
+          for(cc[mapc]=0;cc[mapc]<ms->FDim[mapc];cc[mapc]++) {
+            v[mapc]=(cc[mapc]+ms->Min[mapc])/((float)ms->Div[mapc]);
 
             if(normalize) 
               dens = (*f-mean)/stdev;
             else 
               dens = *f;
-            F3(I->Field->data,cc[0],cc[1],cc[2]) = dens;
+            F3(ms->Field->data,cc[0],cc[1],cc[2]) = dens;
             if(maxd<*f) maxd = dens;
             if(mind>*f) mind = dens;
             f++;
-            transform33f3f(I->Crystal->FracToReal,v,vr);
+            transform33f3f(ms->Crystal->FracToReal,v,vr);
             for(e=0;e<3;e++) 
-              F4(I->Field->points,cc[0],cc[1],cc[2],e) = vr[e];
+              F4(ms->Field->points,cc[0],cc[1],cc[2],e) = vr[e];
           }
         }
       }
   }
   if(ok) {
     d = 0;
-    for(c=0;c<I->FDim[2];c+=(I->FDim[2]-1))
+    for(c=0;c<ms->FDim[2];c+=(ms->FDim[2]-1))
       {
-        v[2]=(c+I->Min[2])/((float)I->Div[2]);
-        for(b=0;b<I->FDim[1];b+=(I->FDim[1]-1)) {
-          v[1]=(b+I->Min[1])/((float)I->Div[1]);
-          for(a=0;a<I->FDim[0];a+=(I->FDim[0]-1)) {
-            v[0]=(a+I->Min[0])/((float)I->Div[0]);
-            transform33f3f(I->Crystal->FracToReal,v,vr);
-            copy3f(vr,I->Corner[d]);
+        v[2]=(c+ms->Min[2])/((float)ms->Div[2]);
+        for(b=0;b<ms->FDim[1];b+=(ms->FDim[1]-1)) {
+          v[1]=(b+ms->Min[1])/((float)ms->Div[1]);
+          for(a=0;a<ms->FDim[0];a+=(ms->FDim[0]-1)) {
+            v[0]=(a+ms->Min[0])/((float)ms->Div[0]);
+            transform33f3f(ms->Crystal->FracToReal,v,vr);
+            copy3f(vr,ms->Corner[d]);
             d++;
           }
         }
@@ -600,42 +686,43 @@ int ObjectMapCCP4StrToMap(ObjectMap *I,char *CCP4Str,int bytes,int frame) {
   }
   
   if(ok) {
-    v[2]=(I->Min[2])/((float)I->Div[2]);
-    v[1]=(I->Min[1])/((float)I->Div[1]);
-    v[0]=(I->Min[0])/((float)I->Div[0]);
+    v[2]=(ms->Min[2])/((float)ms->Div[2]);
+    v[1]=(ms->Min[1])/((float)ms->Div[1]);
+    v[0]=(ms->Min[0])/((float)ms->Div[0]);
     
-    transform33f3f(I->Crystal->FracToReal,v,I->Obj.ExtentMin);
+    transform33f3f(ms->Crystal->FracToReal,v,ms->ExtentMin);
     
-    v[2]=((I->FDim[2]-1)+I->Min[2])/((float)I->Div[2]);
-    v[1]=((I->FDim[1]-1)+I->Min[1])/((float)I->Div[1]);
-    v[0]=((I->FDim[0]-1)+I->Min[0])/((float)I->Div[0]);
+    v[2]=((ms->FDim[2]-1)+ms->Min[2])/((float)ms->Div[2]);
+    v[1]=((ms->FDim[1]-1)+ms->Min[1])/((float)ms->Div[1]);
+    v[0]=((ms->FDim[0]-1)+ms->Min[0])/((float)ms->Div[0]);
     
-    transform33f3f(I->Crystal->FracToReal,v,I->Obj.ExtentMax);
-    I->Obj.ExtentFlag=true;
+    transform33f3f(ms->Crystal->FracToReal,v,ms->ExtentMax);
+    ObjectMapUpdateExtents(I);
   }
 #ifdef _UNDEFINED
   printf("%d %d %d %d %d %d %d %d %d\n",
-         I->Div[0],
-         I->Min[0],
-         I->Max[0],
-         I->Div[1],
-         I->Min[1],
-         I->Max[1],
-         I->Div[2],
-         I->Min[2],
-         I->Max[2]);
+         ms->Div[0],
+         ms->Min[0],
+         ms->Max[0],
+         ms->Div[1],
+         ms->Min[1],
+         ms->Max[1],
+         ms->Div[2],
+         ms->Min[2],
+         ms->Max[2]);
   printf("Okay? %d\n",ok);
   fflush(stdout);
 #endif
   if(!ok) {
     ErrMessage("ObjectMap","Error reading map");
   } else {
+    ms->Active=true;
     printf(" ObjectMap: Map Read.  Range = %5.3f to %5.3f\n",mind,maxd);
   }
   return(ok);
 }
 /*========================================================================*/
-int ObjectMapXPLORStrToMap(ObjectMap *I,char *XPLORStr,int frame) {
+int ObjectMapXPLORStrToMap(ObjectMap *I,char *XPLORStr,int state) {
   
   char *p;
   int a,b,c,d,e;
@@ -643,6 +730,16 @@ int ObjectMapXPLORStrToMap(ObjectMap *I,char *XPLORStr,int frame) {
   char cc[MAXLINELEN];
   int n;
   int ok = true;
+  ObjectMapState *ms;
+
+  if(state<0) state=I->NState;
+  if(I->NState<=state) {
+    VLACheck(I->State,ObjectMapState,state);
+    I->NState=state+1;
+  }
+
+  ms=&I->State[state];
+  ObjectMapStateInit(ms);
 
   maxd = FLT_MIN;
   mind = FLT_MAX;
@@ -667,22 +764,22 @@ int ObjectMapXPLORStrToMap(ObjectMap *I,char *XPLORStr,int frame) {
     }
   }
   if(*p) { /* n contains first dimension */
-    I->Div[0]=n;
-    if(sscanf(cc,"%i",&I->Min[0])!=1) ok=false;
-    p = ParseNCopy(cc,p,8); if(sscanf(cc,"%i",&I->Max[0])!=1) ok=false;
-    p = ParseNCopy(cc,p,8); if(sscanf(cc,"%i",&I->Div[1])!=1) ok=false;
-    p = ParseNCopy(cc,p,8); if(sscanf(cc,"%i",&I->Min[1])!=1) ok=false;    
-    p = ParseNCopy(cc,p,8); if(sscanf(cc,"%i",&I->Max[1])!=1) ok=false;
-    p = ParseNCopy(cc,p,8); if(sscanf(cc,"%i",&I->Div[2])!=1) ok=false;
-    p = ParseNCopy(cc,p,8); if(sscanf(cc,"%i",&I->Min[2])!=1) ok=false;    
-    p = ParseNCopy(cc,p,8); if(sscanf(cc,"%i",&I->Max[2])!=1) ok=false;
+    ms->Div[0]=n;
+    if(sscanf(cc,"%i",&ms->Min[0])!=1) ok=false;
+    p = ParseNCopy(cc,p,8); if(sscanf(cc,"%i",&ms->Max[0])!=1) ok=false;
+    p = ParseNCopy(cc,p,8); if(sscanf(cc,"%i",&ms->Div[1])!=1) ok=false;
+    p = ParseNCopy(cc,p,8); if(sscanf(cc,"%i",&ms->Min[1])!=1) ok=false;    
+    p = ParseNCopy(cc,p,8); if(sscanf(cc,"%i",&ms->Max[1])!=1) ok=false;
+    p = ParseNCopy(cc,p,8); if(sscanf(cc,"%i",&ms->Div[2])!=1) ok=false;
+    p = ParseNCopy(cc,p,8); if(sscanf(cc,"%i",&ms->Min[2])!=1) ok=false;    
+    p = ParseNCopy(cc,p,8); if(sscanf(cc,"%i",&ms->Max[2])!=1) ok=false;
     p=ParseNextLine(p);
-    p = ParseNCopy(cc,p,12); if(sscanf(cc,"%f",&I->Crystal->Dim[0])!=1) ok=false;
-    p = ParseNCopy(cc,p,12); if(sscanf(cc,"%f",&I->Crystal->Dim[1])!=1) ok=false;
-    p = ParseNCopy(cc,p,12); if(sscanf(cc,"%f",&I->Crystal->Dim[2])!=1) ok=false;
-    p = ParseNCopy(cc,p,12); if(sscanf(cc,"%f",&I->Crystal->Angle[0])!=1) ok=false;
-    p = ParseNCopy(cc,p,12); if(sscanf(cc,"%f",&I->Crystal->Angle[1])!=1) ok=false;
-    p = ParseNCopy(cc,p,12); if(sscanf(cc,"%f",&I->Crystal->Angle[2])!=1) ok=false;
+    p = ParseNCopy(cc,p,12); if(sscanf(cc,"%f",&ms->Crystal->Dim[0])!=1) ok=false;
+    p = ParseNCopy(cc,p,12); if(sscanf(cc,"%f",&ms->Crystal->Dim[1])!=1) ok=false;
+    p = ParseNCopy(cc,p,12); if(sscanf(cc,"%f",&ms->Crystal->Dim[2])!=1) ok=false;
+    p = ParseNCopy(cc,p,12); if(sscanf(cc,"%f",&ms->Crystal->Angle[0])!=1) ok=false;
+    p = ParseNCopy(cc,p,12); if(sscanf(cc,"%f",&ms->Crystal->Angle[1])!=1) ok=false;
+    p = ParseNCopy(cc,p,12); if(sscanf(cc,"%f",&ms->Crystal->Angle[2])!=1) ok=false;
     p=ParseNextLine(p);
     p = ParseNCopy(cc,p,3);
     if(strcmp(cc,"ZYX")) ok=false;
@@ -692,23 +789,23 @@ int ObjectMapXPLORStrToMap(ObjectMap *I,char *XPLORStr,int frame) {
     ok=false;
   }
   if(ok) {
-    I->FDim[0]=I->Max[0]-I->Min[0]+1;
-    I->FDim[1]=I->Max[1]-I->Min[1]+1;
-    I->FDim[2]=I->Max[2]-I->Min[2]+1;
-    I->FDim[3]=3;
-    if(!(I->FDim[0]&&I->FDim[1]&&I->FDim[2])) 
+    ms->FDim[0]=ms->Max[0]-ms->Min[0]+1;
+    ms->FDim[1]=ms->Max[1]-ms->Min[1]+1;
+    ms->FDim[2]=ms->Max[2]-ms->Min[2]+1;
+    ms->FDim[3]=3;
+    if(!(ms->FDim[0]&&ms->FDim[1]&&ms->FDim[2])) 
       ok=false;
     else {
-      CrystalUpdate(I->Crystal);
-      I->Field=IsosurfFieldAlloc(I->FDim);
-      for(c=0;c<I->FDim[2];c++)
+      CrystalUpdate(ms->Crystal);
+      ms->Field=IsosurfFieldAlloc(ms->FDim);
+      for(c=0;c<ms->FDim[2];c++)
         {
-          v[2]=(c+I->Min[2])/((float)I->Div[2]);
+          v[2]=(c+ms->Min[2])/((float)ms->Div[2]);
           p=ParseNextLine(p);
-          for(b=0;b<I->FDim[1];b++) {
-            v[1]=(b+I->Min[1])/((float)I->Div[1]);
-            for(a=0;a<I->FDim[0];a++) {
-              v[0]=(a+I->Min[0])/((float)I->Div[0]);
+          for(b=0;b<ms->FDim[1];b++) {
+            v[1]=(b+ms->Min[1])/((float)ms->Div[1]);
+            for(a=0;a<ms->FDim[0];a++) {
+              v[0]=(a+ms->Min[0])/((float)ms->Div[0]);
               p=ParseNCopy(cc,p,12);
               if(!cc[0]) {
                 p=ParseNextLine(p);
@@ -717,28 +814,28 @@ int ObjectMapXPLORStrToMap(ObjectMap *I,char *XPLORStr,int frame) {
               if(sscanf(cc,"%f",&dens)!=1) {
                 ok=false;
               } else {
-                F3(I->Field->data,a,b,c) = dens;
+                F3(ms->Field->data,a,b,c) = dens;
                 if(maxd<dens) maxd = dens;
                 if(mind>dens) mind = dens;
               }
-              transform33f3f(I->Crystal->FracToReal,v,vr);
+              transform33f3f(ms->Crystal->FracToReal,v,vr);
               for(e=0;e<3;e++) 
-                F4(I->Field->points,a,b,c,e) = vr[e];
+                F4(ms->Field->points,a,b,c,e) = vr[e];
             }
           }
           p=ParseNextLine(p);
         }
       if(ok) {
         d = 0;
-        for(c=0;c<I->FDim[2];c+=(I->FDim[2]-1))
+        for(c=0;c<ms->FDim[2];c+=(ms->FDim[2]-1))
           {
-            v[2]=(c+I->Min[2])/((float)I->Div[2]);
-            for(b=0;b<I->FDim[1];b+=(I->FDim[1]-1)) {
-              v[1]=(b+I->Min[1])/((float)I->Div[1]);
-              for(a=0;a<I->FDim[0];a+=(I->FDim[0]-1)) {
-                v[0]=(a+I->Min[0])/((float)I->Div[0]);
-                transform33f3f(I->Crystal->FracToReal,v,vr);
-                copy3f(vr,I->Corner[d]);
+            v[2]=(c+ms->Min[2])/((float)ms->Div[2]);
+            for(b=0;b<ms->FDim[1];b+=(ms->FDim[1]-1)) {
+              v[1]=(b+ms->Min[1])/((float)ms->Div[1]);
+              for(a=0;a<ms->FDim[0];a+=(ms->FDim[0]-1)) {
+                v[0]=(a+ms->Min[0])/((float)ms->Div[0]);
+                transform33f3f(ms->Crystal->FracToReal,v,vr);
+                copy3f(vr,ms->Corner[d]);
                 d++;
               }
             }
@@ -748,43 +845,45 @@ int ObjectMapXPLORStrToMap(ObjectMap *I,char *XPLORStr,int frame) {
   }
 
   if(ok) {
-    v[2]=(I->Min[2])/((float)I->Div[2]);
-    v[1]=(I->Min[1])/((float)I->Div[1]);
-    v[0]=(I->Min[0])/((float)I->Div[0]);
+    v[2]=(ms->Min[2])/((float)ms->Div[2]);
+    v[1]=(ms->Min[1])/((float)ms->Div[1]);
+    v[0]=(ms->Min[0])/((float)ms->Div[0]);
 
-    transform33f3f(I->Crystal->FracToReal,v,I->Obj.ExtentMin);
+    transform33f3f(ms->Crystal->FracToReal,v,ms->ExtentMin);
     
-    v[2]=((I->FDim[2]-1)+I->Min[2])/((float)I->Div[2]);
-    v[1]=((I->FDim[1]-1)+I->Min[1])/((float)I->Div[1]);
-    v[0]=((I->FDim[0]-1)+I->Min[0])/((float)I->Div[0]);
+    v[2]=((ms->FDim[2]-1)+ms->Min[2])/((float)ms->Div[2]);
+    v[1]=((ms->FDim[1]-1)+ms->Min[1])/((float)ms->Div[1]);
+    v[0]=((ms->FDim[0]-1)+ms->Min[0])/((float)ms->Div[0]);
 
-    transform33f3f(I->Crystal->FracToReal,v,I->Obj.ExtentMax);
-    I->Obj.ExtentFlag=true;
+    transform33f3f(ms->Crystal->FracToReal,v,ms->ExtentMax);
+    ObjectMapUpdateExtents(I);
+
   }
 #ifdef _UNDEFINED
     printf("%d %d %d %d %d %d %d %d %d\n",
-           I->Div[0],
-           I->Min[0],
-           I->Max[0],
-           I->Div[1],
-           I->Min[1],
-           I->Max[1],
-           I->Div[2],
-           I->Min[2],
-           I->Max[2]);
+           ms->Div[0],
+           ms->Min[0],
+           ms->Max[0],
+           ms->Div[1],
+           ms->Min[1],
+           ms->Max[1],
+           ms->Div[2],
+           ms->Min[2],
+           ms->Max[2]);
     printf("Okay? %d\n",ok);
     fflush(stdout);
 #endif
   if(!ok) {
     ErrMessage("ObjectMap","Error reading map");
   } else {
+    ms->Active=true;
     printf(" ObjectMap: Map Read.  Range = %5.3f to %5.3f\n",mind,maxd);
   }
     
   return(ok);
 }
 /*========================================================================*/
-ObjectMap *ObjectMapReadXPLORStr(ObjectMap *I,char *XPLORStr,int frame)
+ObjectMap *ObjectMapReadXPLORStr(ObjectMap *I,char *XPLORStr,int state)
 {
   int ok=true;
   int isNew = true;
@@ -800,13 +899,14 @@ ObjectMap *ObjectMapReadXPLORStr(ObjectMap *I,char *XPLORStr,int frame)
 	 } else {
 		isNew = false;
 	 }
-    ObjectMapXPLORStrToMap(I,XPLORStr,frame);
+    ObjectMapXPLORStrToMap(I,XPLORStr,state);
     SceneChanged();
+    SceneCountFrames();
   }
   return(I);
 }
 /*========================================================================*/
-ObjectMap *ObjectMapReadCCP4Str(ObjectMap *I,char *XPLORStr,int bytes,int frame)
+ObjectMap *ObjectMapReadCCP4Str(ObjectMap *I,char *XPLORStr,int bytes,int state)
 {
   int ok=true;
   int isNew = true;
@@ -822,13 +922,14 @@ ObjectMap *ObjectMapReadCCP4Str(ObjectMap *I,char *XPLORStr,int bytes,int frame)
 	 } else {
 		isNew = false;
 	 }
-    ObjectMapCCP4StrToMap(I,XPLORStr,bytes,frame);
+    ObjectMapCCP4StrToMap(I,XPLORStr,bytes,state);
     SceneChanged();
+    SceneCountFrames();
   }
   return(I);
 }
 /*========================================================================*/
-ObjectMap *ObjectMapLoadCCP4File(ObjectMap *obj,char *fname,int frame)
+ObjectMap *ObjectMapLoadCCP4File(ObjectMap *obj,char *fname,int state)
 {
   ObjectMap *I = NULL;
   int ok=true;
@@ -858,22 +959,32 @@ ObjectMap *ObjectMapLoadCCP4File(ObjectMap *obj,char *fname,int frame)
 		fread(p,size,1,f);
 		fclose(f);
 
-		I=ObjectMapReadCCP4Str(obj,buffer,size,frame);
+		I=ObjectMapReadCCP4Str(obj,buffer,size,state);
 
 		mfree(buffer);
-      CrystalDump(I->Crystal);
-      multiply33f33f(I->Crystal->FracToReal,I->Crystal->RealToFrac,mat);
+      if(state<0)
+        state=I->NState-1;
+      if(state<I->NState) {
+        ObjectMapState *ms;
+        ms = &I->State[state];
+        if(ms->Active) {
+          CrystalDump(ms->Crystal);
+          multiply33f33f(ms->Crystal->FracToReal,ms->Crystal->RealToFrac,mat);
+        }
+      }
     }
 #ifdef _UNDEFINED
+  {int a;
   for(a=0;a<9;a++)
     printf("%10.5f\n",mat[a]);
+  }
 #endif
   return(I);
 
 }
 
 /*========================================================================*/
-ObjectMap *ObjectMapLoadXPLORFile(ObjectMap *obj,char *fname,int frame)
+ObjectMap *ObjectMapLoadXPLORFile(ObjectMap *obj,char *fname,int state)
 {
   ObjectMap *I = NULL;
   int ok=true;
@@ -904,50 +1015,74 @@ ObjectMap *ObjectMapLoadXPLORFile(ObjectMap *obj,char *fname,int frame)
 		p[size]=0;
 		fclose(f);
 
-		I=ObjectMapReadXPLORStr(obj,buffer,frame);
+		I=ObjectMapReadXPLORStr(obj,buffer,state);
 
 		mfree(buffer);
-      CrystalDump(I->Crystal);
-      multiply33f33f(I->Crystal->FracToReal,I->Crystal->RealToFrac,mat);
+      if(state<0)
+        state=I->NState-1;
+      if(state<I->NState) {
+        ObjectMapState *ms;
+        ms = &I->State[state];
+        if(ms->Active) {
+          CrystalDump(ms->Crystal);
+          multiply33f33f(ms->Crystal->FracToReal,ms->Crystal->RealToFrac,mat);
+        }
+      }
     }
 #ifdef _UNDEFINED
+  {int a;
   for(a=0;a<9;a++)
     printf("%10.5f\n",mat[a]);
+  }
 #endif
   return(I);
 
 }
 
 /*========================================================================*/
-int ObjectMapNumPyArrayToMap(ObjectMap *I,PyObject *ary) {
+int ObjectMapSetBorder(ObjectMap *I,float level)
+{
+  int a;
+  int result=false;
+  for(a=0;a<I->NState;a++) {
+    if(I->State[a].Active)
+      result = result && ObjectMapStateSetBorder(&I->State[a],level);
+  }
+  return(result);
+}
+/*========================================================================*/
+int ObjectMapNumPyArrayToMapState(ObjectMapState *ms,PyObject *ary) {
   
   int a,b,c,d,e;
   float v[3],dens,maxd,mind;
   int ok = true;
-
 #ifdef _PYMOL_NUMPY
   MyArrayObject *pao;
+#endif
+
+
+#ifdef _PYMOL_NUMPY
   pao = (MyArrayObject*)ary;
 #endif
   maxd = FLT_MIN;
   mind = FLT_MAX;
   if(ok) {
-    I->FDim[0]=I->Dim[0];
-    I->FDim[1]=I->Dim[1];
-    I->FDim[2]=I->Dim[2];
-    I->FDim[3]=3;
+    ms->FDim[0]=ms->Dim[0];
+    ms->FDim[1]=ms->Dim[1];
+    ms->FDim[2]=ms->Dim[2];
+    ms->FDim[3]=3;
 
-    if(!(I->FDim[0]&&I->FDim[1]&&I->FDim[2])) 
+    if(!(ms->FDim[0]&&ms->FDim[1]&&ms->FDim[2])) 
       ok=false;
     else {
-      I->Field=IsosurfFieldAlloc(I->FDim);
-      for(c=0;c<I->FDim[2];c++)
+      ms->Field=IsosurfFieldAlloc(ms->FDim);
+      for(c=0;c<ms->FDim[2];c++)
         {
-          v[2]=I->Origin[2]+I->Grid[2]*c;
-          for(b=0;b<I->FDim[1];b++) {
-            v[1]=I->Origin[1]+I->Grid[1]*b;
-            for(a=0;a<I->FDim[0];a++) {
-              v[0]=I->Origin[0]+I->Grid[0]*a;
+          v[2]=ms->Origin[2]+ms->Grid[2]*c;
+          for(b=0;b<ms->FDim[1];b++) {
+            v[1]=ms->Origin[1]+ms->Grid[1]*b;
+            for(a=0;a<ms->FDim[0];a++) {
+              v[0]=ms->Origin[0]+ms->Grid[0]*a;
 #ifdef _PYMOL_NUMPY
               dens = *((double*)
                 (pao->data+
@@ -957,23 +1092,23 @@ int ObjectMapNumPyArrayToMap(ObjectMap *I,PyObject *ary) {
 #else
               dens = 0.0;
 #endif
-              F3(I->Field->data,a,b,c) = dens;
+              F3(ms->Field->data,a,b,c) = dens;
               if(maxd<dens) maxd = dens;
               if(mind>dens) mind = dens;
               for(e=0;e<3;e++) 
-                F4(I->Field->points,a,b,c,e) = v[e];
+                F4(ms->Field->points,a,b,c,e) = v[e];
             }
           }
         }
       d = 0;
-      for(c=0;c<I->FDim[2];c+=(I->FDim[2]-1))
+      for(c=0;c<ms->FDim[2];c+=(ms->FDim[2]-1))
         {
-          v[2]=I->Origin[2]+I->Grid[2]*c;
-          for(b=0;b<I->FDim[1];b+=(I->FDim[1]-1)) {
-            v[1]=I->Origin[1]+I->Grid[1]*b;
-            for(a=0;a<I->FDim[0];a+=(I->FDim[0]-1)) {
-              v[0]=I->Origin[0]+I->Grid[0]*a;
-              copy3f(v,I->Corner[d]);
+          v[2]=ms->Origin[2]+ms->Grid[2]*c;
+          for(b=0;b<ms->FDim[1];b+=(ms->FDim[1]-1)) {
+            v[1]=ms->Origin[1]+ms->Grid[1]*b;
+            for(a=0;a<ms->FDim[0];a+=(ms->FDim[0]-1)) {
+              v[0]=ms->Origin[0]+ms->Grid[0]*a;
+              copy3f(v,ms->Corner[d]);
               d++;
             }
           }
@@ -981,14 +1116,14 @@ int ObjectMapNumPyArrayToMap(ObjectMap *I,PyObject *ary) {
     }
   }
   if(ok) {
-    copy3f(I->Origin,I->Obj.ExtentMin);
-    copy3f(I->Origin,I->Obj.ExtentMax);
-    add3f(I->Range,I->Obj.ExtentMax,I->Obj.ExtentMax);
-    I->Obj.ExtentFlag=true;
+    copy3f(ms->Origin,ms->ExtentMin);
+    copy3f(ms->Origin,ms->ExtentMax);
+    add3f(ms->Range,ms->ExtentMax,ms->ExtentMax);
   }
   if(!ok) {
     ErrMessage("ObjectMap","Error reading map");
   } else {
+    ms->Active=true;
     if(Feedback(FB_ObjectMap,FB_Actions)) {
       printf(" ObjectMap: Map Read.  Range = %5.3f to %5.3f\n",mind,maxd);
     }
@@ -997,11 +1132,12 @@ int ObjectMapNumPyArrayToMap(ObjectMap *I,PyObject *ary) {
 }
 /*========================================================================*/
 ObjectMap *ObjectMapLoadChemPyBrick(ObjectMap *I,PyObject *Map,
-                                           int frame,int discrete)
+                                           int state,int discrete)
 {
   int ok=true;
   int isNew = true;
   PyObject *tmp;
+  ObjectMapState *ms;
 
 
   if(!I) 
@@ -1017,6 +1153,15 @@ ObjectMap *ObjectMapLoadChemPyBrick(ObjectMap *I,PyObject *Map,
 	 } else {
 		isNew = false;
 	 }
+
+    if(state<0) state=I->NState;
+    if(I->NState<=state) {
+      VLACheck(I->State,ObjectMapState,state);
+      I->NState=state+1;
+    }
+    ms=&I->State[state];
+    ObjectMapStateInit(ms);
+    
     if(PyObject_HasAttrString(Map,"origin")&&
        PyObject_HasAttrString(Map,"dim")&&
        PyObject_HasAttrString(Map,"range")&&
@@ -1025,44 +1170,50 @@ ObjectMap *ObjectMapLoadChemPyBrick(ObjectMap *I,PyObject *Map,
       {
         tmp = PyObject_GetAttrString(Map,"origin");
         if(tmp) {
-          PConvPyListToFloatArray(tmp,&I->Origin);
+          PConvPyListToFloatArray(tmp,&ms->Origin);
           Py_DECREF(tmp);
         } else 
           ok=ErrMessage("ObjectMap","missing brick origin.");
         tmp = PyObject_GetAttrString(Map,"dim");
         if(tmp) {
-          PConvPyListToIntArray(tmp,&I->Dim);
+          PConvPyListToIntArray(tmp,&ms->Dim);
           Py_DECREF(tmp);
         } else 
           ok=ErrMessage("ObjectMap","missing brick dimension.");
         tmp = PyObject_GetAttrString(Map,"range");
         if(tmp) {
-          PConvPyListToFloatArray(tmp,&I->Range);
+          PConvPyListToFloatArray(tmp,&ms->Range);
           Py_DECREF(tmp);
         } else 
           ok=ErrMessage("ObjectMap","missing brick range.");
         tmp = PyObject_GetAttrString(Map,"grid");
         if(tmp) {
-          PConvPyListToFloatArray(tmp,&I->Grid);
+          PConvPyListToFloatArray(tmp,&ms->Grid);
           Py_DECREF(tmp);
         } else
           ok=ErrMessage("ObjectMap","missing brick grid.");
         tmp = PyObject_GetAttrString(Map,"lvl");
         if(tmp) {
-          ObjectMapNumPyArrayToMap(I,tmp);	 
+
+          ObjectMapNumPyArrayToMapState(ms,tmp);	 
+          ObjectMapUpdateExtents(I);
+
           Py_DECREF(tmp);
         } else
           ok=ErrMessage("ObjectMap","missing brick density.");
 
       }
     SceneChanged();
+    SceneCountFrames();
+    if(ok)
+      ms->Active=true;
   }
   return(I);
 }
 
 /*========================================================================*/
 ObjectMap *ObjectMapLoadChemPyMap(ObjectMap *I,PyObject *Map,
-                                  int frame,int discrete)
+                                  int state,int discrete)
 {
 
   int ok=true;
@@ -1071,6 +1222,8 @@ ObjectMap *ObjectMapLoadChemPyMap(ObjectMap *I,PyObject *Map,
   WordType format;
   float v[3],vr[3],dens,maxd,mind;
   int a,b,c,d,e;
+  ObjectMapState *ms;
+
 
 
   /*  
@@ -1097,18 +1250,26 @@ ObjectMap *ObjectMapLoadChemPyMap(ObjectMap *I,PyObject *Map,
 	 } else {
 		isNew = false;
 	 }
+    
+    if(state<0) state=I->NState;
+    if(I->NState<=state) {
+      VLACheck(I->State,ObjectMapState,state);
+      I->NState=state+1;
+    }
+    ms=&I->State[state];
+    ObjectMapStateInit(ms);
 
     if(!PConvAttrToStrMaxLen(Map,"format",format,sizeof(WordType)-1))
       ok=ErrMessage("LoadChemPyMap","bad 'format' parameter.");
-    else if(!PConvAttrToFloatArrayInPlace(Map,"cell_dim",I->Crystal->Dim,3))
+    else if(!PConvAttrToFloatArrayInPlace(Map,"cell_dim",ms->Crystal->Dim,3))
       ok=ErrMessage("LoadChemPyMap","bad 'cell_dim' parameter.");
-    else if(!PConvAttrToFloatArrayInPlace(Map,"cell_ang",I->Crystal->Angle,3))
+    else if(!PConvAttrToFloatArrayInPlace(Map,"cell_ang",ms->Crystal->Angle,3))
       ok=ErrMessage("LoadChemPyMap","bad 'cell_ang' parameter.");
-    else if(!PConvAttrToIntArrayInPlace(Map,"cell_div",I->Div,3))
+    else if(!PConvAttrToIntArrayInPlace(Map,"cell_div",ms->Div,3))
       ok=ErrMessage("LoadChemPyMap","bad 'cell_div' parameter.");
-    else if(!PConvAttrToIntArrayInPlace(Map,"first",I->Min,3))
+    else if(!PConvAttrToIntArrayInPlace(Map,"first",ms->Min,3))
       ok=ErrMessage("LoadChemPyMap","bad 'first' parameter.");
-    else if(!PConvAttrToIntArrayInPlace(Map,"last",I->Max,3))
+    else if(!PConvAttrToIntArrayInPlace(Map,"last",ms->Max,3))
       ok=ErrMessage("LoadChemPyMap","bad 'last' parameter.");
 
     if(ok) {
@@ -1125,49 +1286,49 @@ ObjectMap *ObjectMapLoadChemPyMap(ObjectMap *I,PyObject *Map,
     if(ok) {
       if (strcmp(format,"CObjectZYXfloat")==0) {
 
-        I->FDim[0]=I->Max[0]-I->Min[0]+1;
-        I->FDim[1]=I->Max[1]-I->Min[1]+1;
-        I->FDim[2]=I->Max[2]-I->Min[2]+1;
+        ms->FDim[0]=ms->Max[0]-ms->Min[0]+1;
+        ms->FDim[1]=ms->Max[1]-ms->Min[1]+1;
+        ms->FDim[2]=ms->Max[2]-ms->Min[2]+1;
         if(Feedback(FB_ObjectMap,FB_Actions)) {
-          printf(" LoadChemPyMap: CObjectZYXdouble %dx%dx%d\n",I->FDim[0],I->FDim[1],I->FDim[2]);        
+          printf(" LoadChemPyMap: CObjectZYXdouble %dx%dx%d\n",ms->FDim[0],ms->FDim[1],ms->FDim[2]);        
         }
-        I->FDim[3]=3;
-        if(!(I->FDim[0]&&I->FDim[1]&&I->FDim[2])) 
+        ms->FDim[3]=3;
+        if(!(ms->FDim[0]&&ms->FDim[1]&&ms->FDim[2])) 
           ok=false;
         else {
-          CrystalUpdate(I->Crystal);
-          I->Field=IsosurfFieldAlloc(I->FDim);
-          for(c=0;c<I->FDim[2];c++)
+          CrystalUpdate(ms->Crystal);
+          ms->Field=IsosurfFieldAlloc(ms->FDim);
+          for(c=0;c<ms->FDim[2];c++)
             {
-              v[2]=(c+I->Min[2])/((float)I->Div[2]);
-              for(b=0;b<I->FDim[1];b++) {
-                v[1]=(b+I->Min[1])/((float)I->Div[1]);
-                for(a=0;a<I->FDim[0];a++) {
-                  v[0]=(a+I->Min[0])/((float)I->Div[0]);
+              v[2]=(c+ms->Min[2])/((float)ms->Div[2]);
+              for(b=0;b<ms->FDim[1];b++) {
+                v[1]=(b+ms->Min[1])/((float)ms->Div[1]);
+                for(a=0;a<ms->FDim[0];a++) {
+                  v[0]=(a+ms->Min[0])/((float)ms->Div[0]);
                   
                   dens = *(cobj++);
 
-                  F3(I->Field->data,a,b,c) = dens;
+                  F3(ms->Field->data,a,b,c) = dens;
                   if(maxd<dens) maxd = dens;
                   if(mind>dens) mind = dens;
-                  transform33f3f(I->Crystal->FracToReal,v,vr);
+                  transform33f3f(ms->Crystal->FracToReal,v,vr);
                   for(e=0;e<3;e++) 
-                    F4(I->Field->points,a,b,c,e) = vr[e];
+                    F4(ms->Field->points,a,b,c,e) = vr[e];
                 }
               }
             }
 
           if(ok) {
             d = 0;
-            for(c=0;c<I->FDim[2];c+=(I->FDim[2]-1))
+            for(c=0;c<ms->FDim[2];c+=(ms->FDim[2]-1))
               {
-                v[2]=(c+I->Min[2])/((float)I->Div[2]);
-                for(b=0;b<I->FDim[1];b+=(I->FDim[1]-1)) {
-                  v[1]=(b+I->Min[1])/((float)I->Div[1]);
-                  for(a=0;a<I->FDim[0];a+=(I->FDim[0]-1)) {
-                    v[0]=(a+I->Min[0])/((float)I->Div[0]);
-                    transform33f3f(I->Crystal->FracToReal,v,vr);
-                    copy3f(vr,I->Corner[d]);
+                v[2]=(c+ms->Min[2])/((float)ms->Div[2]);
+                for(b=0;b<ms->FDim[1];b+=(ms->FDim[1]-1)) {
+                  v[1]=(b+ms->Min[1])/((float)ms->Div[1]);
+                  for(a=0;a<ms->FDim[0];a+=(ms->FDim[0]-1)) {
+                    v[0]=(a+ms->Min[0])/((float)ms->Div[0]);
+                    transform33f3f(ms->Crystal->FracToReal,v,vr);
+                    copy3f(vr,ms->Corner[d]);
                     d++;
                   }
                 }
@@ -1178,31 +1339,36 @@ ObjectMap *ObjectMapLoadChemPyMap(ObjectMap *I,PyObject *Map,
     }
     
     if(ok) {
-      CrystalDump(I->Crystal);
+      CrystalDump(ms->Crystal);
       
-      v[2]=(I->Min[2])/((float)I->Div[2]);
-      v[1]=(I->Min[1])/((float)I->Div[1]);
-      v[0]=(I->Min[0])/((float)I->Div[0]);
+      v[2]=(ms->Min[2])/((float)ms->Div[2]);
+      v[1]=(ms->Min[1])/((float)ms->Div[1]);
+      v[0]=(ms->Min[0])/((float)ms->Div[0]);
       
-      transform33f3f(I->Crystal->FracToReal,v,I->Obj.ExtentMin);
+      transform33f3f(ms->Crystal->FracToReal,v,ms->ExtentMin);
       
-      v[2]=((I->FDim[2]-1)+I->Min[2])/((float)I->Div[2]);
-      v[1]=((I->FDim[1]-1)+I->Min[1])/((float)I->Div[1]);
-      v[0]=((I->FDim[0]-1)+I->Min[0])/((float)I->Div[0]);
+      v[2]=((ms->FDim[2]-1)+ms->Min[2])/((float)ms->Div[2]);
+      v[1]=((ms->FDim[1]-1)+ms->Min[1])/((float)ms->Div[1]);
+      v[0]=((ms->FDim[0]-1)+ms->Min[0])/((float)ms->Div[0]);
       
-      transform33f3f(I->Crystal->FracToReal,v,I->Obj.ExtentMax);
-      I->Obj.ExtentFlag=true;
+      transform33f3f(ms->Crystal->FracToReal,v,ms->ExtentMax);
+      ObjectMapUpdateExtents(I);
+
     }
 
     if(!ok) {
       ErrMessage("ObjectMap","Error reading map");
     } else {
+      ms->Active=true;
 		if(Feedback(FB_ObjectMap,FB_Actions)) {
         printf(" ObjectMap: Map Read.  Range = %5.3f to %5.3f\n",mind,maxd);
       }
     }
 
-    if(ok) SceneChanged();
+    if(ok) {
+      SceneChanged();
+      SceneCountFrames();
+    }
   }
   return(I);
 }

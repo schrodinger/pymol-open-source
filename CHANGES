@@ -109,7 +109,7 @@ Current Bugs to Fix
    * superposition system fails with degenerate sets (planer systems, etc).
      sometimes it just fails period
 
-Changes up to 0.84
+Changes up to 0.85
 
    * added some nasty code to handle quotes and apostrophes in atom selections
      so that nucleic acids and sugars with apostrophes will work right while
@@ -117,6 +117,8 @@ Changes up to 0.84
 
    * added "safe" option to zoom command in order to provide a mode
      which will guarantee against clipping
+
+Changes up to 0.84
 
    * updated SPHEROID command for use with trajectories
 

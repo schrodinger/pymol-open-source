@@ -302,19 +302,19 @@ PyMOL>isodot m1,map,0.5
 PyMOL>ray renderer=2
  ObjectMesh: updating "m1".
  IsosurfVolume: Surface generated using 140060 dots.
- RayRenderTest: obtained 157866 graphics primitives.
+ RayRenderTest: obtained 78933 graphics primitives.
 PyMOL>isodot m1,map,500
  Isomesh: created "m1", setting level to 500.000
 PyMOL>ray renderer=2
  ObjectMesh: updating "m1".
  IsosurfVolume: Surface generated using 0 dots.
- RayRenderTest: obtained 236799 graphics primitives.
+ RayRenderTest: obtained 78933 graphics primitives.
 PyMOL>isodot m1,map,-3000
  Isomesh: created "m1", setting level to -3000.000
 PyMOL>ray renderer=2
  ObjectMesh: updating "m1".
  IsosurfVolume: Surface generated using 0 dots.
- RayRenderTest: obtained 315732 graphics primitives.
+ RayRenderTest: obtained 78933 graphics primitives.
 PyMOL>del m1
  Executive: object "m2" created.
  Isomesh: created "m2", setting level to 1.100
@@ -345,13 +345,13 @@ PyMOL>ray renderer=2
  IsosurfVolume: Surface generated using 49577 dots.
  ObjectMesh: updating "m2".
  IsosurfVolume: Surface generated using 46714 dots.
- RayRenderTest: obtained 663759 graphics primitives.
+ RayRenderTest: obtained 73751 graphics primitives.
 PyMOL>frame 3
 PyMOL>ray renderer=2
- RayRenderTest: obtained 591525 graphics primitives.
+ RayRenderTest: obtained 65725 graphics primitives.
 PyMOL>frame 8
 PyMOL>ray renderer=2
- RayRenderTest: obtained 446121 graphics primitives.
+ RayRenderTest: obtained 49569 graphics primitives.
 PyMOL>del all
 PyMOL>load lrg/map.xplor
  ObjectMapLoadXPLORFile: Loading from 'lrg/map.xplor'.
@@ -380,19 +380,19 @@ PyMOL>isodot m1,map,0.5
 PyMOL>ray renderer=2
  ObjectMesh: updating "m1".
  IsosurfVolume: Surface generated using 140060 dots.
- RayRenderTest: obtained 157866 graphics primitives.
+ RayRenderTest: obtained 78933 graphics primitives.
 PyMOL>isodot m1,map,500
  Isomesh: created "m1", setting level to 500.000
 PyMOL>ray renderer=2
  ObjectMesh: updating "m1".
  IsosurfVolume: Surface generated using 0 dots.
- RayRenderTest: obtained 236799 graphics primitives.
+ RayRenderTest: obtained 78933 graphics primitives.
 PyMOL>isodot m1,map,-3000
  Isomesh: created "m1", setting level to -3000.000
 PyMOL>ray renderer=2
  ObjectMesh: updating "m1".
  IsosurfVolume: Surface generated using 0 dots.
- RayRenderTest: obtained 315732 graphics primitives.
+ RayRenderTest: obtained 78933 graphics primitives.
 PyMOL>del m1
  Executive: object "m2" created.
  Isomesh: created "m2", setting level to 1.100
@@ -423,13 +423,13 @@ PyMOL>ray renderer=2
  IsosurfVolume: Surface generated using 49577 dots.
  ObjectMesh: updating "m2".
  IsosurfVolume: Surface generated using 46714 dots.
- RayRenderTest: obtained 446121 graphics primitives.
+ RayRenderTest: obtained 49569 graphics primitives.
 PyMOL>frame 3
 PyMOL>ray renderer=2
- RayRenderTest: obtained 591525 graphics primitives.
+ RayRenderTest: obtained 65725 graphics primitives.
 PyMOL>frame 8
 PyMOL>ray renderer=2
- RayRenderTest: obtained 446121 graphics primitives.
+ RayRenderTest: obtained 49569 graphics primitives.
 PyMOL>del all
 PyMOL>load lrg/map.ccp4
  ObjectMapLoadCCP4File: Loading from 'lrg/map.ccp4'.
@@ -552,22 +552,22 @@ PyMOL>isodot m1,map,1.0,A/53/,carve=100
 PyMOL>ray renderer=2
  ObjectMesh: updating "m1".
  IsosurfVolume: Surface generated using 78941 dots.
- RayRenderTest: obtained 633506 graphics primitives.
+ RayRenderTest: obtained 80975 graphics primitives.
 PyMOL>isodot m1,map,1.0,A/53/,carve=-0.5
  Isomesh: created "m1", setting level to 1.000
 PyMOL>ray renderer=2
  ObjectMesh: updating "m1".
  IsosurfVolume: Surface generated using 232 dots.
- RayRenderTest: obtained 712439 graphics primitives.
+ RayRenderTest: obtained 80975 graphics primitives.
 PyMOL>isodot m1,map,1.0,A/53/,carve=10
  Isomesh: created "m1", setting level to 1.000
 PyMOL>ray renderer=2
  ObjectMesh: updating "m1".
  IsosurfVolume: Surface generated using 13844 dots.
- RayRenderTest: obtained 791372 graphics primitives.
+ RayRenderTest: obtained 80975 graphics primitives.
 PyMOL>isodot m1,map,1.0,A/53/,carve=0.0
  Isomesh: created "m1", setting level to 1.000
 PyMOL>ray renderer=2
  ObjectMesh: updating "m1".
  IsosurfVolume: Surface generated using 232 dots.
- RayRenderTest: obtained 870305 graphics primitives.
+ RayRenderTest: obtained 80975 graphics primitives.

@@ -23,8 +23,8 @@ Z* -------------------------------------------------------------------
 #include"Isosurf.h"
 #include"CGO.h"
 
-typedef struct ObjectMap {
-  CObject Obj;
+typedef struct ObjectMapState {
+  int Active;
   CCrystal *Crystal;
   int Div[3],Min[3],Max[3],FDim[4];
   Isofield *Field;
@@ -33,6 +33,13 @@ typedef struct ObjectMap {
   float *Origin;
   float *Range;
   float *Grid;
+  float ExtentMin[3],ExtentMax[3];
+} ObjectMapState;
+
+typedef struct ObjectMap {
+  CObject Obj;
+  ObjectMapState *State;
+  int NState;
 } ObjectMap;
 
 #define cObjectMap_OrthoMinMaxGrid 0
@@ -48,23 +55,31 @@ typedef struct ObjectMapDesc { /* information for creating a new map */
 } ObjectMapDesc;
 
 ObjectMap *ObjectMapNew(void);
-ObjectMap *ObjectMapNewFromDesc(ObjectMapDesc *md);
+ObjectMapState *ObjectMapNewStateFromDesc(ObjectMap *I,ObjectMapDesc *md,int state);
 
-ObjectMap *ObjectMapLoadXPLORFile(ObjectMap *obj,char *fname,int frame);
-ObjectMap *ObjectMapReadXPLORStr(ObjectMap *I,char *XPLORStr,int frame);
-int ObjectMapXPLORStrToMap(ObjectMap *I,char *XPLORStr,int frame);
+ObjectMap *ObjectMapLoadXPLORFile(ObjectMap *obj,char *fname,int state);
+ObjectMap *ObjectMapReadXPLORStr(ObjectMap *I,char *XPLORStr,int state);
+int ObjectMapXPLORStrToMap(ObjectMap *I,char *XPLORStr,int state);
 
-ObjectMap *ObjectMapLoadCCP4File(ObjectMap *obj,char *fname,int frame);
-ObjectMap *ObjectMapReadCCP4Str(ObjectMap *I,char *XPLORStr,int bytes,int frame);
-int ObjectMapCCP4StrToMap(ObjectMap *I,char *XPLORStr,int bytes,int frame);
+ObjectMap *ObjectMapLoadCCP4File(ObjectMap *obj,char *fname,int state);
+ObjectMap *ObjectMapReadCCP4Str(ObjectMap *I,char *XPLORStr,int bytes,int state);
+int ObjectMapCCP4StrToMap(ObjectMap *I,char *XPLORStr,int bytes,int state);
 
-ObjectMap *ObjectMapLoad(ObjectMap *obj,char *fname,int frame);
+ObjectMap *ObjectMapLoad(ObjectMap *obj,char *fname,int state);
 ObjectMap *ObjectMapLoadChemPyBrick(ObjectMap *I,PyObject *Map,
-                                    int frame,int discrete);
-ObjectMap *ObjectMapLoadCObject(ObjectMap *obj,int frame);
+                                    int state,int discrete);
+ObjectMap *ObjectMapLoadCObject(ObjectMap *obj,int state);
 ObjectMap *ObjectMapLoadChemPyMap(ObjectMap *I,PyObject *Map,
-                                  int frame,int discrete);
+                                  int state,int discrete);
+
 int ObjectMapSetBorder(ObjectMap *I,float level);
+int ObjectMapStateSetBorder(ObjectMapState *I,float level);
+void ObjectMapStateInit(ObjectMapState *I);
+void ObjectMapStatePurge(ObjectMapState *I);
+ObjectMapState *ObjectMapStatePrime(ObjectMap *I,int state);
+ObjectMapState *ObjectMapStateGetActive(ObjectMap *I,int state);
+int ObjectMapGetNStates(ObjectMap *I);
+void ObjectMapUpdateExtents(ObjectMap *I);
 
 #endif
 
