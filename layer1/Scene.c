@@ -674,12 +674,14 @@ void SceneDraw(Block *block)
 
       if(I->CopyFlag)
         {
+          glReadBuffer(GL_BACK); /* neither of these seems to fix the nVidia driver under windows */
+          glDrawBuffer(GL_BACK); /* in full-screen mode...pixels still get written to the front buffer! */
+
           if(I->ImageBufferHeight>I->Height||I->ImageBufferWidth>I->Width) {
             glColor3f(1.0,0.2,0.2);
             GrapDrawStr("Sorry, I can't display an oversize image.",30,60);
             GrapDrawStr("To save image, use File Menu or enter \"png <filename>\".",30,40);
           } else {
-            glDrawBuffer(GL_BACK);
             width = I->ImageBufferWidth;
             height = I->ImageBufferHeight;
             
