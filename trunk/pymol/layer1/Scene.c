@@ -1807,35 +1807,23 @@ static int SceneClick(Block *block,int button,int x,int y,
     break;
   case cButModeZoomForward:
     {
-      float old_front = I->Front;
-      float old_back = I->Back;
-      float old_origin = -I->Pos[2];
-
-      float factor;
-      factor = -((I->FrontSafe+I->Back)/2)*0.1F;
+      float factor = -((I->FrontSafe+I->Back)/2)*0.1F;
       if(factor<=0.0F) {
         I->Pos[2]+=factor;
         I->Front-=factor;
         I->Back-=factor;
         I->FrontSafe = GetFrontSafe(I->Front,I->Back);
-        SceneDoRoving(G,old_front,old_back,old_origin,true,false);
       }
     }
     break;
   case cButModeZoomBackward:
     {
-      float old_front = I->Front;
-      float old_back = I->Back;
-      float old_origin = -I->Pos[2];
-
-      float factor;
-      factor = ((I->FrontSafe+I->Back)/2)*0.1F;
+      float factor = ((I->FrontSafe+I->Back)/2)*0.1F;
       if(factor>=0.0F) {
         I->Pos[2]+=factor;
         I->Front-=factor;
         I->Back-=factor;
         I->FrontSafe = GetFrontSafe(I->Front,I->Back);
-        SceneDoRoving(G,old_front,old_back,old_origin,true,false);
       }
     }
     break;
