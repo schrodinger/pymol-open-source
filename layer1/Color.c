@@ -26,9 +26,35 @@ Z* -------------------------------------------------------------------
 
 CColor Color;
 /*========================================================================*/
+void ColorDef(char *name,float *v)
+{
+  CColor *I=&Color;
+  int color=-1;
+  int a;
+  int idx;
+  for(a=0;a<I->NColor;a++)
+	 {
+		if(strcmp(name,I->Color[a].Name)==0) 
+		  {
+			 color=a;
+			 break;
+		  }
+	 }
+  if(color<0) {
+    color=I->NColor;
+    VLACheck(I->Color,ColorRec,I->NColor);
+    I->NColor++;
+  }
+  strcpy(I->Color[color].Name,name);
+  I->Color[color].Color[0]=v[0];
+  I->Color[color].Color[1]=v[1];
+  I->Color[color].Color[2]=v[2];
+  
+}
+/*========================================================================*/
 int ColorGetIndex(char *name)
 {
-    CColor *I=&Color;
+  CColor *I=&Color;
   int color=1; /* default for unknown is white */
   int a;
   for(a=0;a<I->NColor;a++)
@@ -60,12 +86,6 @@ void ColorInit(void)
 
   I->Color=VLAlloc(ColorRec,100);
   I->NColor=0;
-
-  strcpy(I->Color[I->NColor].Name,"black");
-  I->Color[I->NColor].Color[0]=0.0;
-  I->Color[I->NColor].Color[1]=0.0;
-  I->Color[I->NColor].Color[2]=0.0;
-  I->NColor++;
 
   strcpy(I->Color[I->NColor].Name,"white");
   I->Color[I->NColor].Color[0]=1.0;

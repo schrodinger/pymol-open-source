@@ -43,6 +43,7 @@ PyObject *PM_Globals = NULL;
 static PyObject *PMAlter(PyObject *self,   PyObject *args);
 static PyObject *PMClip(PyObject *self, 	PyObject *args);
 static PyObject *PMColor(PyObject *self, PyObject *args);
+static PyObject *PMColorDef(PyObject *self, 	PyObject *args);
 static PyObject *PMCopy(PyObject *self, PyObject *args);
 static PyObject *PMDelete(PyObject *self, PyObject *args);
 static PyObject *PMDirty(PyObject *self, 	PyObject *args);
@@ -95,6 +96,7 @@ static PyMethodDef PM_methods[] = {
 	{"alter",	     PMAlter,        METH_VARARGS },
 	{"clip",	        PMClip,         METH_VARARGS },
 	{"color",	     PMColor,        METH_VARARGS },
+	{"colordef",	  PMColorDef,     METH_VARARGS },
 	{"copy",         PMCopy,         METH_VARARGS },
 	{"delete",       PMDelete,       METH_VARARGS },
 	{"dirty",        PMDirty,        METH_VARARGS },
@@ -610,6 +612,17 @@ static PyObject *PMColor(PyObject *self, 	PyObject *args)
   return Py_None;
 }
 
+static PyObject *PMColorDef(PyObject *self, 	PyObject *args)
+{
+  char *color;
+  int flags;
+  float v[3];
+  PyArg_ParseTuple(args,"sfff",&color,v,v+1,v+2);
+  ColorDef(color,v);
+  Py_INCREF(Py_None);
+  return Py_None;
+}
+
 static PyObject *PMRay(PyObject *self, 	PyObject *args)
 {
   /*  PyArg_ParseTuple(args,"ss",&sname,&value);
@@ -838,9 +851,23 @@ static PyObject *PMLoad(PyObject *self, PyObject *args)
 
 static PyObject *PMOrigin(PyObject *self, PyObject *args)
 {
-  char *name;
-  PyArg_ParseTuple(args,"s",&name);
-  ExecutiveCenter(name,1);
+  char *str1;
+  OrthoLineType s1;
+  int f1=false;
+
+  PyArg_ParseTuple(args,"s",&str1);
+
+  if(str1[0]=='(') {
+	 SelectorCreate(tmpSele1,str1,NULL);
+	 strcpy(s1,tmpSele1);
+	 f1=true;
+  } else {
+	strcpy(s1,str1);
+  }
+  ExecutiveCenter(s1,1);
+  if(f1) {
+    ExecutiveDelete(s1);
+  }
   Py_INCREF(Py_None);
   return Py_None;
 }
@@ -856,10 +883,24 @@ static PyObject *PMSort(PyObject *self, PyObject *args)
 
 static PyObject *PMZoom(PyObject *self, PyObject *args)
 {
-  char *name;
-  PyArg_ParseTuple(args,"s",&name);
-  ExecutiveCenter(name,1);
-  ExecutiveWindowZoom(name);
+  char *str1;
+  OrthoLineType s1,s2;
+  int f1=false;
+
+  PyArg_ParseTuple(args,"s",&str1);
+
+  if(str1[0]=='(') {
+	 SelectorCreate(tmpSele1,str1,NULL);
+	 strcpy(s1,tmpSele1);
+	 f1=true;
+  } else {
+	strcpy(s1,str1);
+  }
+  ExecutiveCenter(s1,1);
+  ExecutiveWindowZoom(s1);
+  if(f1) {
+    ExecutiveDelete(s1);
+  }
   Py_INCREF(Py_None);
   return Py_None;
 }

@@ -309,7 +309,7 @@ float MatrixFitRMS(int n,float *v1,float *v2,float *wt,float *ttt)
   }
 
   err=err/sumwt;
-  err=sqrt(err*err);
+  err=sqrt(err);
 
   ttt[0]=m[0][0];
   ttt[1]=m[0][1];

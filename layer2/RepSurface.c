@@ -40,7 +40,7 @@ typedef struct RepSurface {
   int NDot;
   float *Dot;
   int solidFlag;
-  int oneColorFlag;
+  int oneColorFlag,oneColor;
   int allVisibleFlag;
   Object *Obj;
 } RepSurface;
@@ -91,6 +91,7 @@ void RepSurfaceRender(RepSurface *I,CRay *ray,Pickable **pick)
 	 if(I->S) {
       if(I->allVisibleFlag) {
         if(I->oneColorFlag) {
+          glColor3fv(ColorGet(I->oneColor));
           c=*(s++);
           while(c) {
             glBegin(GL_TRIANGLE_STRIP);
@@ -340,6 +341,9 @@ void RepSurfaceColor(RepSurface *I,CoordSet *cs)
 			 }
 		  MapFree(map);
 		}
+    if(I->oneColorFlag) {
+      I->oneColor=first_color;
+    }
   } 
 }
 
