@@ -956,6 +956,7 @@ void OrthoReshape(int width, int height)
   int internal_gui_width;
   int internal_feedback;
 
+  if((width!=I->Width)||(height!=I->Height)) {
   if(width<0) width=I->Width;
   if(height<0) height=I->Height;
 
@@ -1018,6 +1019,7 @@ void OrthoReshape(int width, int height)
   OrthoPopMatrix();
 
   WizardRefresh(); /* safe to call even if no wizard exists */
+  }
 }
 
 /*========================================================================*/
