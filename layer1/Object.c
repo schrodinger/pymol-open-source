@@ -72,7 +72,7 @@ void ObjectInit(Object *I)
   I->fGetNFrame = ObjectGetNFrames;
   I->fDescribeElement = ObjectDescribeElement;
   I->Name[0]=0;
-  I->Color=1;
+  I->Color=0;
   for(a=0;a<cRepCnt;a++) I->RepVis[a]=true;
 }
 /*========================================================================*/
