@@ -1,9 +1,9 @@
 Changes Under Consideration
 
-NOTE: Some of these are mutually exclusive, and many of them
-will never be carried out.
-
-   * Transparency support in rendering (on a per-primitive basis)
+NOTE: Some of these are mutually exclusive, and many of them will
+never be carried out -- they are listed here so that I don't forget
+about them and so that you can see ways in which core PyMOL might
+evolve.
 
    * Generic volume data object (to supplement bricks and maps)
 
@@ -11,23 +11,15 @@ will never be carried out.
      for use in coloring all PyMOL geometries according to electrostatic
      potential and the like.
 
-   * Log file generation capability so that you can automatically 
-     redo everything you've done just like in Grasp.
-
    * "Fragment" wizard, tied into the fragments subsystem. 
-
-   * "Tinker" wizard ?
 
    * "Batchmin" wizard ?
 
    * Real Edit Menu in Tk
 
-   * make commas optional in PyMOL command arguments -- this would be
+   * make commas optional in the PyMOL scripting language -- this would be
      not be the default, but it could be an option.  The syntatic compilications
-     are hard to fathom.
-
-   * adopt standardized conventions for reading user-specific startup
-     scripts and initializing external GUI modules.
+     are difficult to fathom though.
 
    * CTRL and CTRL/SHIFT numbers should add aromatic and aliphatic
      ring systems in the builder respectively within the molecular editor.
@@ -52,28 +44,55 @@ will never be carried out.
 
    * create a VRML->CGO converter so that VRML can be displayed inside of PyMOL
 
+   * support CML via some "swallowable" python XML parser
+ 
+   * add in support for CGL's annotated PDB file format
+
+   * make PyMOL a compliant extension for the Chimera environment
+
+   * add a dynamic 3-D based tutorial
+
+   * finish abstracting GLUT away from PyMOL and wrap it inside of TOGL so that
+     Chimera and PyMOL can share a context 
+
+Specific Requests from Users
+
+   * Get label support into the raytracer (build a 3D character set)
+
+   * Enable specific xyz positioning of labels (w/ mouse?)
+   
+   * Cutting of images to the MS Window's clipboard for easy pasting into Powerpoint
+
+   * Enable exfoliation of atoms within an object so that it isn't necessary to
+     split objects before resurfacing.
 
 Current and Ongoing Goals
 
    * make an ActiveX control which contains the core PyMOL viewer for 
      use in web browsers and many other crazy contexts.
 
-   * fill-out object and coord. set specific settings
-
-   * clean-up return conventions in cmd.py
+   * clean up return values in the API
 
    * complete first-round test-cases
 
-   * feedback conditionals placed around all error output
+   * place feedback conditionals around all error output
 
    * draw all solid representations before drawing lines
-     in order to improve antialiasing -- these means that every
-     object will need to rendering method calls.
+     in order to improve antialiasing and transparency 
+     -- this means that every object will need multiple
+     rendering method calls.
 
 Bugs to Fix
 
    * superposition system fails with degenerate sets (planer atoms, etc).
-     sometimes it just fails period.
+     sometimes it just fails period
+  
+   * intra_fit broken?
+
+Changes up to 0.67
+
+   * Transparency support in rendering has been added, but it doesn't yet
+     exist yet in opengl mode.
 
 Changes up to 0.66
 
