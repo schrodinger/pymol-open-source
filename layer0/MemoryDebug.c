@@ -227,7 +227,8 @@ void MemoryDebugRegister(void *addr,const char *note,
     {
       printf("MemoryDebugRegister-ERR: memory allocation failure"); 
 #ifdef GDB_ENTRY
-  printf("hit ctrl/c\n");
+  MemoryDebugDump();
+  printf("hit ctrl/c to enter debugger\n");
   while(true);
 #endif
      exit(EXIT_FAILURE);
@@ -281,7 +282,8 @@ void MemoryDebugForget(void *addr,const char *file,int line)
    "MemoryDebug-ERR: free(): corrupted tree or bad ptr! (%s:%i @%p)\n",
 	     file,line,addr);
 #ifdef GDB_ENTRY
-  printf("hit ctrl/c\n");
+  MemoryDebugDump();
+  printf("hit ctrl/c to enter debugger\n");
   while(true);
 #endif
       exit(EXIT_FAILURE);
@@ -389,7 +391,8 @@ void *MemoryDebugRealloc(void *ptr,size_t size,const char *file,
 	     "MemoryDebug-ERR: realloc given (NULL,zero) (%s:%i)\n",
 	     file,line);
 #ifdef GDB_ENTRY
-  printf("hit ctrl/c\n");
+  MemoryDebugDump();
+  printf("hit ctrl/c to enter debugger\n");
   while(true);
 #endif
       exit(EXIT_FAILURE);
@@ -410,7 +413,8 @@ void *MemoryDebugRealloc(void *ptr,size_t size,const char *file,
 					  "MemoryDebug-ERR: realloc() corrupted tree or bad ptr! (%s:%i @%p)\n",
 					  file,line,ptr);
 #ifdef GDB_ENTRY
-			 printf("hit ctrl/c\n");
+  MemoryDebugDump();
+  printf("hit ctrl/c to enter debugger\n");
 			 while(true);
 #endif
 			 exit(EXIT_FAILURE);
@@ -421,6 +425,11 @@ void *MemoryDebugRealloc(void *ptr,size_t size,const char *file,
 				{
 				  printf("MemoryDebug-ERR: ptr is of wrong type: %i!=%i (%s:%i)\n",
 							rec->type,type,file,line);
+#ifdef GDB_ENTRY
+              MemoryDebugDump();
+				  printf("hit ctrl/c to enter debugger\n");
+				  while(true);
+#endif
               exit(EXIT_FAILURE);
             }
 			 rec=(DebugRec*)realloc(rec,size+sizeof(DebugRec));
@@ -429,7 +438,8 @@ void *MemoryDebugRealloc(void *ptr,size_t size,const char *file,
 				  printf("MemoryDebug-ERR: realloc() failed reallocation! (%s:%i)\n",
 							file,line);
 #ifdef GDB_ENTRY
-				  printf("hit ctrl/c\n");
+              MemoryDebugDump();
+				  printf("hit ctrl/c to enter debugger\n");
 				  while(true);
 #endif
 				  exit(EXIT_FAILURE);
@@ -463,7 +473,8 @@ void MemoryDebugQuietFree(void *ptr,int type)
 			 printf("MemoryDebug-ERR: ptr is of wrong type: %i!=%i (allocated %s:%i)\n",
 					  rec->type,type,rec->file,rec->line);
 #ifdef GDB_ENTRY
-			 printf("hit ctrl/c\n");
+  MemoryDebugDump();
+  printf("hit ctrl/c to enter debugger\n");
 			 while(true);
 #endif
 			 exit(EXIT_FAILURE);
@@ -485,7 +496,8 @@ void MemoryDebugFree(void *ptr,const char*file,int line,int type)
       printf("MemoryDebug-ERR: free() called with NULL pointer (%s:%i)\n",
 				 file,line);
 #ifdef GDB_ENTRY
-		printf("hit ctrl/c\n");
+  MemoryDebugDump();
+  printf("hit ctrl/c to enter debugger\n");
 		while(true);
 #endif
       exit(EXIT_FAILURE);
@@ -498,7 +510,8 @@ void MemoryDebugFree(void *ptr,const char*file,int line,int type)
 			 printf("MemoryDebug-ERR: ptr is of wrong type: %i!=%i (%s:%i)\n",
 					  rec->type,type,file,line);
 #ifdef GDB_ENTRY
-			 printf("hit ctrl/c\n");
+          MemoryDebugDump();
+          printf("hit ctrl/c to enter debugger\n");
 			 while(true);
 #endif
 			 exit(EXIT_FAILURE);
@@ -512,7 +525,8 @@ void MemoryDebugFree(void *ptr,const char*file,int line,int type)
 				 "MemoryDebug-ERR: free(): corrupted tree or bad ptr! (%s:%i @%p)\n",
 				 file,line,ptr);
 #ifdef GDB_ENTRY
-		printf("hit ctrl/c\n");
+      MemoryDebugDump();
+      printf("hit ctrl/c to enter debugger\n");
 		while(true);
 #endif
       exit(EXIT_FAILURE);

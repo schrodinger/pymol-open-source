@@ -2192,6 +2192,29 @@ def read_mmodstr(*arg):
    finally:
       unlock()
    return r
+
+def read_pdbstr(*arg):
+   r = 1
+   finish = 1
+   discrete = 0
+   if len(arg)>3:
+      finish=int(arg[3])
+   if len(arg)>4:
+      discrete=int(arg[4])
+   try:
+      lock()   
+      ftype = loadable.pdbstr
+      if len(arg)==2:
+         oname = string.strip(arg[1])
+         r = _cmd.load(oname,arg[0],-1,ftype,finish,discrete)
+      elif len(arg)>=3:
+         oname = string.strip(arg[1])
+         r = _cmd.load(oname,arg[0],int(arg[2])-1,ftype,finish,discrete)
+      else:
+         print "argument error."
+   finally:
+      unlock()
+   return r
    
 def select(*arg):
    '''
@@ -2788,6 +2811,7 @@ class loadable:
    mmod = 4
    xplor = 7
    model = 8
+   pdbstr = 9
 
 # build shortcuts list
 

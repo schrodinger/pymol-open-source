@@ -2111,10 +2111,9 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(char *buffer,AtomInfoType **atInfoPtr)
         conectFlag=true;
       p=nextline(p);
 	 }
-  for(a=0;a<255;a++) /*to prevent hopping over end of file*/
-	 *p++=0;
   
   coord=VLAlloc(float,3*nAtom);
+
   if(atInfo)
 	 VLACheck(atInfo,AtomInfoType,nAtom);
 
@@ -2252,10 +2251,12 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(char *buffer,AtomInfoType **atInfoPtr)
           sscanf(cc,"%f",coord+(a+2));
 
           p=ncopy(cc,p,6);
-          sscanf(cc,"%f",&ai->q);
+          if(!sscanf(cc,"%f",&ai->q))
+            ai->q=1.0;
           
           p=ncopy(cc,p,6);
-          sscanf(cc,"%f",&ai->b);
+          if(!sscanf(cc,"%f",&ai->b))
+            ai->b=0.0;
 
           p=nskip(p,6);
           p=ncopy(cc,p,4);
