@@ -130,7 +130,6 @@ int PComplete(char *str,int buf_size)
   char *st2;
   PBlockAndUnlockAPI();
   if(P_complete) {
-    fflush(stdout);
     result = PyObject_CallFunction(P_complete,"s",str);
     if(result) {
       if(PyString_Check(result)) {

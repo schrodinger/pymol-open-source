@@ -21,6 +21,8 @@ Changes up to 0.951
     
    * added numarray into the osx-x11-hybrid version for BSI use
 
+   * increased the session file version # to account for the new colors
+
    * added a "perceptive space" rainbow & switched this over to default
 
    * fixed ray-tracing bug with infinite loops on transparent surfaces
