@@ -179,6 +179,10 @@ CHANGE LOG
 
 Changes up to 0.95
 
+   * fixed nonbonded detection problem with discrete objects
+
+   * fixed serious bug with "state" selection operator and discrete objects.
+
    * improved ray-tracer's ability to handle multiple transparent objects
 
    * "Virtual trackball" toggle now in menu

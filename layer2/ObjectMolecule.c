@@ -4765,22 +4765,23 @@ void ObjectMoleculeUpdateNonbonded(ObjectMolecule *I)
   BondType *b;
   AtomInfoType *ai;
 
-  if(!I->DiscreteFlag) {
-    ai=I->AtomInfo;
-    
-    for(a=0;a<I->NAtom;a++)
-      (ai++)->bonded = false;
-    
-    b=I->Bond;
-    ai=I->AtomInfo;
-    for(a=0;a<I->NBond;a++)
-      {
-        ai[b->index[0]].bonded=true;
-        ai[b->index[1]].bonded=true;
-        b++;
-      }
+  /*   if(!I->DiscreteFlag) { */
 
-  }
+  ai=I->AtomInfo;
+  
+  for(a=0;a<I->NAtom;a++)
+    (ai++)->bonded = false;
+  
+  b=I->Bond;
+  ai=I->AtomInfo;
+  for(a=0;a<I->NBond;a++)
+    {
+      ai[b->index[0]].bonded=true;
+      ai[b->index[1]].bonded=true;
+      b++;
+    }
+  
+  /* } */
 }
 /*========================================================================*/
 int ObjectMoleculeGetTotalAtomValence(ObjectMolecule *I,int atom)
