@@ -27,11 +27,12 @@ typedef struct RepDot {
   float dotSize;
   float *V;
   float *VC;
-  float *A;
+  float *A; /* area */
   float *VN; /* vector normal */
-  int *T;
-  int *F;
+  int *T; /* custom type */
+  int *F; /* flags */
   int N,NC;
+  int *Atom; /* atom */
 } RepDot;
 
 Rep *RepDotNew(CoordSet *cset);

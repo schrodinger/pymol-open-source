@@ -42,7 +42,7 @@ float SettingGetNamed(char *name);
 #define cSetting_bonding_vdw_cutoff    0
 #define cSetting_min_mesh_spacing      1
 #define cSetting_dot_density           2
-#define cSetting_dot_surface           3
+#define cSetting_dot_mode              3
 #define cSetting_solvent_radius        4
 #define cSetting_sel_counter           5
 #define cSetting_bg_rgb                6

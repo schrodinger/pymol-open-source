@@ -127,6 +127,7 @@ static PyObject *CmdIsomesh(PyObject *self, 	PyObject *args);
 static PyObject *CmdFinishObject(PyObject *self, PyObject *args);
 static PyObject *CmdFrame(PyObject *self, PyObject *args);
 static PyObject *CmdGet(PyObject *self, 	PyObject *args);
+static PyObject *CmdGetArea(PyObject *self, 	PyObject *args);
 static PyObject *CmdGetPDB(PyObject *dummy, PyObject *args);
 static PyObject *CmdGetMatrix(PyObject *self, 	PyObject *args);
 static PyObject *CmdGetMinMax(PyObject *self, 	PyObject *args);
@@ -230,6 +231,7 @@ static PyMethodDef Cmd_methods[] = {
 	{"get_pdb",	     CmdGetPDB,       METH_VARARGS },
 	{"get_setting",  CmdGetSetting,   METH_VARARGS },
 	{"get_type",     CmdGetType,      METH_VARARGS },
+	{"get_area",     CmdGetArea,      METH_VARARGS },
 	{"h_add",        CmdHAdd,         METH_VARARGS },
 	{"h_fill",       CmdHFill,        METH_VARARGS },
    {"identify",     CmdIdentify,     METH_VARARGS },
@@ -290,6 +292,24 @@ static PyMethodDef Cmd_methods[] = {
 	{"zoom",	        CmdZoom,         METH_VARARGS },
 	{NULL,		     NULL}		/* sentinel */
 };
+
+static PyObject *CmdGetArea(PyObject *self, 	PyObject *args)
+{
+  char *str1;
+  int int1;
+  WordType type = "";
+  OrthoLineType s1="";
+  float result;
+
+  PyArg_ParseTuple(args,"si",&str1,&int1);
+  APIEntry();
+  if(str1[0]) SelectorGetTmp(str1,s1);
+  result = ExecutiveGetArea(s1,int1);
+  if(s1[0]) SelectorFreeTmp(s1);
+  APIExit();
+  return(Py_BuildValue("f",result));
+
+}
 
 static PyObject *CmdGetType(PyObject *self, 	PyObject *args)
 {

@@ -49,7 +49,7 @@ void SettingSetfv(int index,float *v)
 {
   CSetting *I=&Setting;
   switch(index) {
-  case cSetting_dot_surface:
+  case cSetting_dot_mode:
 	 I->Setting[index].Value[0]=v[0];
 	 break;
   case cSetting_bg_rgb:
@@ -122,7 +122,7 @@ void SettingSetNamed(char *name,char *value)
   char buffer[1024] = "";
   if(index>=0) {
 	 switch(index) {
-	 case cSetting_dot_surface:
+	 case cSetting_dot_mode:
 		if(strcmp(value,"molecular")==0) {
 		  v=0.0;
 		  SettingSetfv(index,&v);
@@ -131,7 +131,10 @@ void SettingSetNamed(char *name,char *value)
 		  v=1.0;
 		  SettingSetfv(index,&v);
 		  sprintf(buffer," Setting: %s set to %s\n",I->Setting[index].Name,value);
-		}
+		} else if(sscanf(value,"%f",&v)==1) {
+		  SettingSetfv(index,&v);
+		  sprintf(buffer," Setting: %s set to %s\n",I->Setting[index].Name,value);
+      }
 		break;
 	 case cSetting_bg_rgb:
 	 case cSetting_light:
@@ -225,9 +228,9 @@ void SettingInit(void)
 			"dot_density");
 
   I->NSetting++;
-  I->Setting[cSetting_dot_surface].Value[0] = 0;
-  strcpy(I->Setting[cSetting_dot_surface].Name,
-			"dot_surface");
+  I->Setting[cSetting_dot_mode].Value[0] = 0;
+  strcpy(I->Setting[cSetting_dot_mode].Name,
+			"dot_mode");
 
   I->NSetting++;
   I->Setting[cSetting_solvent_radius].Value[0] = 1.4;
