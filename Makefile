@@ -90,7 +90,7 @@ clean:
 distclean: clean
 	touch .no_fail
 	/bin/rm -f modules/*.pyc modules/*.so modules/pymol/*.so pymol.exe \
-	modules/*/*.pyc modules/*/*/*.pyc .no_fail* test/cmp/*
+	modules/*/*.pyc modules/*/*/*.pyc modules/*/*/*/*.pyc .no_fail* test/cmp/*
 	cd contrib;$(MAKE) distclean
 
 dist: distclean
