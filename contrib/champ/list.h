@@ -71,6 +71,7 @@ int   ListElemPushInt(ListInt **list,int elem,int value);
 int   ListElemPopInt(ListInt *list,int elem,int *value);
 int   ListElemGetInt(ListInt *list,int elem,int *value);
 
+int   ListElemPurgeInt(ListInt *list,int start, int value); /* slow! */
 #endif
 
 

@@ -1653,13 +1653,15 @@ int ChampModelToPat(CChamp *I,PyObject *model)
 
   mac_free(atom_index);
 
-  result = ListElemNewZero(&I->Pat);
-  I->Pat[result].atom = cur_atom;
-  I->Pat[result].bond = cur_bond;
-  I->Pat[result].chempy_molecule = molec;
-  
-    
-  if(result) ChampPatReindex(I,result);
+  result = ListElemNewZero(&I->Pat); 
+  if(result) 
+    {
+      I->ActivePatList = ListElemPushInt(&I->Int,I->ActivePatList,result);
+      I->Pat[result].atom = cur_atom;
+      I->Pat[result].bond = cur_bond;
+      I->Pat[result].chempy_molecule = molec;
+      ChampPatReindex(I,result);     
+  }
   return(result);
 }
 
@@ -1685,7 +1687,8 @@ CChamp *ChampNew(void) {
   I->Scope = (ListScope*)ListNew(100,sizeof(ListScope));
   I->Str = StrBlockNew(1000);
   I->Match = (ListMatch*)ListNew(1000,sizeof(ListMatch));
-  /* hmm...what language does this remind you of? */
+
+  I->ActivePatList = 0;
 
   return I;
 }
@@ -1721,6 +1724,11 @@ int ChampMemoryUsage(CChamp *I)
 }
 
 void ChampFree(CChamp *I) {
+
+  while(I->ActivePatList) {
+    ChampPatFree(I,I->ActivePatList); /* will update ActivePatList */
+  }
+
   ListFree(I->Pat);
   ListFree(I->Atom);
   ListFree(I->Bond);
@@ -1771,6 +1779,7 @@ void ChampPatFree(CChamp *I,int index)
     if(pt->chempy_molecule) {Py_DECREF(pt->chempy_molecule);}
     ChampUniqueListFree(I,I->Pat[index].unique_atom);
     ListElemFree(I->Pat,index);
+    I->ActivePatList = ListElemPurgeInt(I->Int,I->ActivePatList,index);
   }
 }
 
@@ -5095,8 +5104,12 @@ int ChampSmiToPat(CChamp *I,char *c)
   }
   if(ok&&atom_list) {
     result = ListElemNewZero(&I->Pat);
-    I->Pat[result].atom = atom_list;
-    I->Pat[result].bond = bond_list;
+    if(result) {
+      I->ActivePatList = ListElemPushInt(&I->Int,I->ActivePatList,result);
+      I->Pat[result].atom = atom_list;
+      I->Pat[result].bond = bond_list;
+    } else
+      ok=false;
   }
   if(cur_atom) ChampAtomFree(I,cur_atom);
   if(cur_bond) ChampBondFree(I,cur_bond);

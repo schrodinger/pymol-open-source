@@ -4,6 +4,10 @@ CHANGE LOG
 
 Changes up to 0.96
 
+   * more VDW parameters & updated bond info for DNA/RNA
+
+   * fixed a colossal memory leak in the champ module.
+
    * aromatic bond display
 
    * mol2 and multi-mol2 reading capability

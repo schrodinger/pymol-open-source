@@ -1748,7 +1748,17 @@ void AtomInfoAssignParameters(AtomInfoType *I)
   while((*e>='0')&&(*e<='9')&&(*(e+1))) e++;
   switch ( *e )
     {
-    case 'N' : vdw=1.55F;  break;
+    case 'N':
+      switch (*(e+1)) {
+      case 0:
+        vdw=1.55F;  break;
+      case 'a':
+      case 'A':
+        vdw=2.27F; break;
+      default:
+        vdw = 1.80F; break;
+      }
+      break;
     case 'C' :	
       switch (*(e+1)) 
         {
@@ -1768,7 +1778,17 @@ void AtomInfoAssignParameters(AtomInfoType *I)
     case 'I' :	vdw=1.98F; break;
     case 'P' :	vdw=1.80F; break;
     case 'B' :	vdw=1.85F; break; /* incl B, BR */
-    case 'S' :	vdw=1.80F; break;
+    case 'S' :	
+      switch (*(e+1)) {
+      case 'e':
+      case 'E':
+        vdw=1.9F;
+        break;
+      default:
+        vdw=1.80F; break;
+
+      }
+      break;
     case 'F' : 
       switch (*(e+1))
         {
@@ -1782,9 +1802,37 @@ void AtomInfoAssignParameters(AtomInfoType *I)
           vdw=1.35F; break;
         }
       break;
+    case 'K':
+      switch (*(e+1)) {
+      case 0:
+        vdw=2.75F; break;
+      default:
+        vdw = 1.80F; break;
+      }
+      break;
+    case 'M':
+      switch (*(e+1)) {
+      case 'n':
+      case 'N':
+      case 'g':
+      case 'G':
+        vdw=1.73F; break;
+      default:
+        vdw = 1.80F; break;
+      }
+      break;
     case 'H' :
     case 'D' :
       vdw = 1.2F; /* WLD */
+      break;
+    case 'Z':
+      switch (*(e+1)) {
+      case 'n':
+      case 'N':
+        vdw=1.39F; break;
+      default:
+        vdw = 1.80F; break;
+      }
       break;
     default:
       vdw=1.8F;
