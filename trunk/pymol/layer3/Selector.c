@@ -1163,6 +1163,7 @@ PyObject *SelectorGetChemPyModel(int sele,int state)
       s=obj->AtomInfo[at].selEntry;
       if(SelectorIsMember(s,sele))
         {
+          printf(" debug:state %d\n",state);
           if(state<obj->NCSet) 
             cs=obj->CSet[state];
           else
@@ -1253,15 +1254,16 @@ PyObject *SelectorGetChemPyModel(int sele,int state)
             ii1+=3;
           }
         }
-
-        if(c==cs->NIndex) { /* support for experimental spheroids - likely to change */
-          if(cs->Spheroid&&cs->SpheroidNormal) {
-            tmp = PConvFloatArrayToPyList(cs->Spheroid,cs->NSpheroid);
-            PyObject_SetAttrString(model,"spheroid",tmp);
-            Py_XDECREF(tmp);          
-            tmp = PConvFloatArrayToPyList(cs->SpheroidNormal,cs->NSpheroid*3);
-            PyObject_SetAttrString(model,"spheroid_normals",tmp);
-            Py_XDECREF(tmp);          
+        if(cs) {
+          if(c==cs->NIndex) { /* support for experimental spheroids - likely to change */
+            if(cs->Spheroid&&cs->SpheroidNormal) {
+              tmp = PConvFloatArrayToPyList(cs->Spheroid,cs->NSpheroid);
+              PyObject_SetAttrString(model,"spheroid",tmp);
+              Py_XDECREF(tmp);          
+              tmp = PConvFloatArrayToPyList(cs->SpheroidNormal,cs->NSpheroid*3);
+              PyObject_SetAttrString(model,"spheroid_normals",tmp);
+              Py_XDECREF(tmp);          
+            }
           }
         }
 

@@ -3480,7 +3480,7 @@ SEE ALSO
          r = None
          print " Save: wrote \""+filename+"\"."
    elif format=='pkl': # default binary
-      io.pkl.toFile(get_model(selection),filename)
+      io.pkl.toFile(get_model(selection,state),filename)
       print " Save: wrote \""+filename+"\"."
    elif format=='pkla': # ascii override
       io.pkl.toFile(get_model(selection),filename,bin=0)
@@ -3493,7 +3493,7 @@ SEE ALSO
       print " Save: wrote \""+filename+"\"."
    return r
 
-def get_model(*arg):
+def get_model(selection="(all)",state=1):
    '''
 DESCRIPTION
   
@@ -3507,18 +3507,10 @@ PYMOL API
    r = 1
    try:
       lock()
-      sele = "(all)"
-      state = -1
-      if len(arg)==1:
-         sele = arg[0]
-      elif len(arg)==2:
-         sele = arg[0]
-         state = arg[1]
-      r = _cmd.get_model(str(sele),int(state)-1)
+      r = _cmd.get_model(str(selection),int(state)-1)
    finally:
       unlock()
    return r
-
 
 def get_area(*arg):
    '''
