@@ -1500,12 +1500,12 @@ SEE ALSO
 
    flag_action_sc = Shortcut(flag_action_dict.keys())
 
-   def fix_chemistry(selection1 = "all",selection2 = "all", quiet=1):
+   def fix_chemistry(selection1 = "all",selection2 = "all", invalidate=0, quiet=1):
       selection1 = selector.process(selection1)
       selection2 = selector.process(selection2)
       try:
          lock()   
-         r = _cmd.fix_chemistry("("+str(selection1)+")","("+str(selection2)+")",int(quiet))
+         r = _cmd.fix_chemistry("("+str(selection1)+")","("+str(selection2)+")",int(invalidate),int(quiet))
       finally:
          unlock()
       return r

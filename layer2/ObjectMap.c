@@ -60,16 +60,20 @@ int ObjectMapStateGetExcludedStats(ObjectMapState *ms,float *vert_vla, float bey
   float mean,stdev;  
   int cnt = 0;
   int list_size = VLAGetSize(vert_vla)/3;
-
+  float cutoff = beyond;
   MapType *voxelmap = NULL;
+
+  if(cutoff<within)
+    cutoff = within;
+
   if(list_size) 
-    voxelmap=MapNew(-within,vert_vla,list_size,NULL);
+    voxelmap=MapNew(-cutoff,vert_vla,list_size,NULL);
   if(voxelmap||(!list_size)) {
     int a,b,c;
     int h,k,l,i,j;
     int *fdim = ms->FDim;
     float *v,f_val;
-    int within_flag;
+    int within_flag, within_default=false;
     int beyond_flag;
     
     Isofield *field = ms->Field;
@@ -80,11 +84,13 @@ int ObjectMapStateGetExcludedStats(ObjectMapState *ms,float *vert_vla, float bey
     within_flag=true;
     beyond_flag=true;
 
+    if(within<R_SMALL4)
+      within_default = true;
     for(c=0;c<fdim[2];c++) {
       for(b=0;b<fdim[1];b++) {
         for(a=0;a<fdim[0];a++) {
           if(list_size) {
-            within_flag = false;
+            within_flag = within_default;
             beyond_flag = true;
 
             v = F4Ptr(field->points,a,b,c,0);

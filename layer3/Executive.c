@@ -192,7 +192,7 @@ int ExecutiveGetActiveSeleName(char *name, int create_new)
 }
 
 
-int ExecutiveFixChemistry(char *s1,char *s2,int quiet)
+int ExecutiveFixChemistry(char *s1,char *s2,int invalidate,int quiet)
 {
   int sele1=SelectorIndexByName(s1);
   int sele2=SelectorIndexByName(s2);
@@ -204,7 +204,7 @@ int ExecutiveFixChemistry(char *s1,char *s2,int quiet)
     while(ListIterate(I->Spec,rec,next)) {
       if(rec->type==cExecObject)
         if(rec->obj->type==cObjectMolecule) {
-          ObjectMoleculeFixChemistry((ObjectMolecule*)rec->obj,sele1,sele2);
+          ObjectMoleculeFixChemistry((ObjectMolecule*)rec->obj,sele1,sele2,invalidate);
         }
     }
   }

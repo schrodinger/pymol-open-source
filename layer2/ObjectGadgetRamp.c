@@ -466,8 +466,8 @@ ObjectGadgetRamp *ObjectGadgetRampMapNewAsDefined(ObjectMap *map,PyObject *level
     if(vert_vla && 
        (ms = ObjectMapGetState(map,map_state)) &&
        ObjectMapStateGetExcludedStats(ms,vert_vla,beyond,within,tmp_level)) {
-      tmp_level[0]+=(tmp_level[0]-tmp_level[1])*sigma;
-      tmp_level[2]+=(tmp_level[2]-tmp_level[1])*sigma;
+      tmp_level[0]=tmp_level[1]+(tmp_level[0]-tmp_level[1])*sigma;
+      tmp_level[2]=tmp_level[1]+(tmp_level[2]-tmp_level[1])*sigma;
       if(zero) {
         if(tmp_level[1]<0.0F) {
           tmp_level[1]=0.0F;

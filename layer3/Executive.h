@@ -25,7 +25,7 @@ Z* -------------------------------------------------------------------
 #include"Ortho.h"
 #include"Word.h"
 
-int ExecutiveFixChemistry(char *s1,char *s2,int quiet);
+int ExecutiveFixChemistry(char *s1,char *s2,int invalidate, int quiet);
 int ExecutiveGetAtomVertex(char *s1,int state,int index,float *v);
 void ExecutiveProcessPDBFile(CObject *origObj,char *fname, char *oname,
                              int frame, int discrete,int finish,OrthoLineType buf,
