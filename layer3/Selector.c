@@ -731,7 +731,6 @@ int SelectorGetPairIndices(int sele1,int state1,int sele2,int state2,
   (*indexVLA)=VLAlloc(int,1000);
   (*objVLA)=VLAlloc(ObjectMolecule*,1000);
 
-  CGOReset(DebugCGO);
 
   for(a=0;a<c;a++) {
     a1=vla[a*2];
@@ -808,8 +807,6 @@ int SelectorGetPairIndices(int sele1,int state1,int sele2,int state2,
       }
     }
   }
-  
-  CGOStop(DebugCGO);
   
   VLASize((*objVLA),ObjectMolecule*,dist_cnt);
   VLASize((*indexVLA),int,dist_cnt);

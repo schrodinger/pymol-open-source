@@ -410,10 +410,11 @@ CSetting *SettingNewFromPyList(PyObject *list);
 #define cSetting_gaussian_resolution         271
 #define cSetting_gaussian_b_floor            272
 #define cSetting_sculpt_nb_interval          273
-
+#define cSetting_sculpt_tors_weight          274
+#define cSetting_sculpt_tors_tolerance       275
 /* cSetting_INIT must always be last setting_index +1 */
 
-#define cSetting_INIT                        274
+#define cSetting_INIT                        276
 
 #endif
 

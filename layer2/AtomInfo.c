@@ -781,6 +781,18 @@ int AtomInfoSameResidue(AtomInfoType *at1,AtomInfoType *at2)
   return 0;
 }
 
+int AtomInfoSameResidueP(AtomInfoType *at1,AtomInfoType *at2)
+{
+  if(at1&&at2)
+    if(at1->hetatm==at2->hetatm)
+      if(at1->chain[0]==at2->chain[0])
+        if(at1->resv==at2->resv)
+          if(WordMatch(at1->resi,at2->resi,true)<0) 
+            if(WordMatch(at1->segi,at2->segi,true)<0) 
+              return 1;
+  return 0;
+}
+
 int AtomInfoSequential(AtomInfoType *at1,AtomInfoType *at2)
 {
   char last1=0,last2=0;

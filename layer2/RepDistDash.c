@@ -147,12 +147,10 @@ Rep *RepDistDashNew(DistSet *ds)
   I->R.fFree=(void (*)(struct Rep *))RepDistDashFree;
   I->R.fRecolor=NULL;
 
-
   dash_len = SettingGet_f(ds->Setting,ds->Obj->Obj.Setting,cSetting_dash_length);
   dash_gap = SettingGet_f(ds->Setting,ds->Obj->Obj.Setting,cSetting_dash_gap);
   dash_sum = dash_len+dash_gap;
   if(dash_sum<R_SMALL4) dash_sum=0.5;
-
 
   I->N=0;
   I->V=NULL;

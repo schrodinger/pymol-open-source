@@ -19,6 +19,7 @@ Z* -------------------------------------------------------------------
 #include"os_gl.h"
 #include"Base.h"
 #include"OOMac.h"
+#include"CGO.h"
 
 #include"Map.h"
 
@@ -30,18 +31,27 @@ CShaker *ShakerNew(void)
   I->DistCon = VLAlloc(ShakerDistCon,1000);
   I->PyraCon = VLAlloc(ShakerPyraCon,1000);
   I->PlanCon = VLAlloc(ShakerPlanCon,1000);
+  I->TorsCon = VLAlloc(ShakerTorsCon,1000);
   I->LineCon = VLAlloc(ShakerLineCon,100);
   I->NDistCon = 0;
   I->NPyraCon = 0;
   I->NPlanCon = 0;
   I->NLineCon = 0;
+  I->NTorsCon = 0;
   return(I);
 }
 
 void ShakerReset(CShaker *I)
 {
   I->NDistCon = 0;
+  I->NPyraCon = 0;
+  I->NPlanCon = 0;
+  I->NLineCon = 0;
+  I->NTorsCon = 0;
 }
+
+#if 0
+/* this code moved into Sculpt.c */
 
 float ShakerDoDist(float target,float *v0,float *v1,float *d0to1,float *d1to0,float wt)
 {
@@ -66,6 +76,7 @@ float ShakerDoDist(float target,float *v0,float *v1,float *d0to1,float *d1to0,fl
     result = 0.0;
   return result;
 }
+#endif
 
 float ShakerDoDistLimit(float target,float *v0,float *v1,float *d0to1,float *d1to0,float wt)
 {
@@ -116,6 +127,7 @@ float ShakerGetPyra(float *v0,float *v1,float *v2,float *v3)
   subtract3f(v1,v0,d0);
   return(dot_product3f(d0,cp));
 }
+
 
 float ShakerDoPyra(float target,float *v0,float *v1,float *v2,float *v3,
                    float *p0,float *p1,float *p2,float *p3,float wt)
@@ -260,6 +272,22 @@ void ShakerAddPyraCon(CShaker *I,int atom0,int atom1,int atom2,int atom3,float t
 
 }
 
+
+void ShakerAddTorsCon(CShaker *I,int atom0,int atom1,int atom2,int atom3,int type)
+{
+  ShakerTorsCon *stc;
+  
+  VLACheck(I->TorsCon,ShakerTorsCon,I->NTorsCon);
+  stc = I->TorsCon+I->NTorsCon;
+  stc->at0=atom0;
+  stc->at1=atom1;
+  stc->at2=atom2;
+  stc->at3=atom3;
+  stc->type = type;
+  I->NTorsCon++;
+
+}
+
 void ShakerAddPlanCon(CShaker *I,int atom0,int atom1,int atom2,int atom3)
 {
   ShakerPlanCon *spc;
@@ -291,6 +319,7 @@ void ShakerFree(CShaker *I)
   VLAFreeP(I->PyraCon);
   VLAFreeP(I->DistCon);
   VLAFreeP(I->LineCon);
+  VLAFreeP(I->TorsCon);
   OOFreeP(I);
 }
 

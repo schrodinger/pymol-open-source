@@ -1923,7 +1923,7 @@ void BasisMakeMap(CBasis *I,int *vert2prim,CPrimitive *prim,float *volume,
 				case cPrimCylinder:
 				case cPrimSausage:
 					q = ((int)(2*(floor(prm->r1/sep)+1)))+1;
-					q = q * q * ((int)ceil((prm->l1+2*prm->r1)/sep)+1);
+					q = q * q * ((int)ceil((prm->l1+2*prm->r1)/sep)+2);
 					extra_vert+= q;
 				break;
 	

@@ -167,7 +167,8 @@ Rep *RepCartoonNew(CoordSet *cs)
   float *stmp;
   int smooth_first,smooth_last,smooth_cycles,flat_cycles;
   int trace;
-
+  int skip_to;
+  AtomInfoType *ai,*last_ai=NULL;
 
   /* THIS HAS GOT TO BE A CANDIDATE FOR THE WORST ROUTINE IN PYMOL
    * DEVELOP ON IT ONLY AT EXTREME RISK TO YOUR MENTAL HEALTH */
@@ -276,6 +277,7 @@ ENDFD;
   nSeg = 0;
   a2=-1;
   parity = 1;
+
   for(a1=0;a1<cs->NAtIndex;a1++)
 	 {
       if(obj->DiscreteFlag) {
@@ -285,16 +287,18 @@ ENDFD;
           a=-1;
       } else 
         a=cs->AtmToIdx[a1];
-		if(a>=0)
-		  if(obj->AtomInfo[a1].visRep[cRepCartoon])
+		if(a>=0) {
+        ai = obj->AtomInfo+a1;
+		  if(ai->visRep[cRepCartoon]) {
           /*			 if(!obj->AtomInfo[a1].hetatm)*/
-          if((!obj->AtomInfo[a1].alt[0])||
-             (obj->AtomInfo[a1].alt[0]=='A')) {
-            if(trace||((obj->AtomInfo[a1].protons==cAN_C)&&
-               (WordMatch("CA",obj->AtomInfo[a1].name,1)<0)))
+          if((!ai->alt[0])||
+             (ai->alt[0]=='A')) {
+            if(trace||(((ai->protons==cAN_C)&&
+               (WordMatch("CA",ai->name,1)<0))&&
+                       !AtomInfoSameResidueP(last_ai,ai)))
               {
                 PRINTFD(FB_RepCartoon)
-                  " RepCartoon: found CA in %s; a2 %d\n",obj->AtomInfo[a1].resi,a2
+                  " RepCartoon: found CA in %s; a2 %d\n",ai->resi,a2
                   ENDFD;
                 if(!trace) 
                   if(a2>=0) {
@@ -306,8 +310,10 @@ ENDFD;
                     a2=-1;
                   
                 }
+                last_ai = ai;
+                
                 PRINTFD(FB_RepCartoon)
-                  " RepCartoon: found CA in %s; a2 %d\n",obj->AtomInfo[a1].resi,a2
+                  " RepCartoon: found CA in %s; a2 %d\n",ai->resi,a2
                   ENDFD;
                 
                 
@@ -316,8 +322,8 @@ ENDFD;
                 *(s++) = nSeg;
                 nAt++;
                 *(i++)=a;
-                cur_car = obj->AtomInfo[a1].cartoon;
-                switch (obj->AtomInfo[a1].ssType[0]) {
+                cur_car = ai->cartoon;
+                switch (ai->ssType[0]) {
                 case 'H':
                 case 'h':
                   if (cur_car==cCartoon_auto) {
@@ -363,6 +369,12 @@ ENDFD;
                 v_o = NULL;
                   
                 AtomInfoBracketResidueFast(obj->AtomInfo,obj->NAtom,a1,&st,&nd);
+
+                if(obj->DiscreteFlag) {
+                  if(cs==obj->DiscreteCSet[nd]) 
+                    skip_to=obj->DiscreteAtmToIdx[nd];
+                } else 
+                  skip_to=cs->AtmToIdx[nd];
                   
                 for(a3=st;a3<=nd;a3++) {
                     
@@ -402,19 +414,21 @@ ENDFD;
                   }
                   vo+=3;
                 }
-              } else if(trace||((obj->AtomInfo[a1].protons==cAN_P)&&
-                        (WordMatch("P",obj->AtomInfo[a1].name,1)<0))) {
+              } else if(trace||(((ai->protons==cAN_P)&&
+                                 (WordMatch("P",ai->name,1)<0))&&
+                        !AtomInfoSameResidueP(last_ai,ai))) {
                 if(!trace) 
                   if(a2>=0) {
                     if(!ObjectMoleculeCheckBondSep(obj,a1,a2,6)) /* six bonds between phosphates */
                       a2=-1;
                   }
+                last_ai = ai;
                 if(a2<0)
                   nSeg++;
                 *(s++) = nSeg;
                 nAt++;
                 *(i++)=a;
-                cur_car = obj->AtomInfo[a1].cartoon;
+                cur_car = ai->cartoon;
                 if(cur_car == cCartoon_auto)
                   cur_car = cCartoon_tube;
                 *ss=3; /* DNA/RNA */
@@ -470,9 +484,9 @@ ENDFD;
                   vo+=3;
                 }
               }
-             
           }
-
+        }
+      }
 	 }
 
 PRINTFD(FB_RepCartoon)
