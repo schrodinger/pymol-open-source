@@ -36,6 +36,7 @@ Z* -------------------------------------------------------------------
 
 #define cRepInvStatus 10
 #define cRepInvColor  15
+#define cRepInvText   16
 #define cRepInvVisib  20
 #define cRepInvCoord  30
 #define cRepInvBonds  40

@@ -468,7 +468,7 @@ void RayRender(CRay *I,int width,int height,unsigned int *image,float front,floa
               fc[2] = (bright*fc[2]+excess);
               
               if (fogFlag) {
-                ffact = (front-r1.dist)/(front-back);
+                ffact = fog*(front-r1.dist)/(front-back);
                 if(ffact<0.0)
                   ffact=0.0;
                 if(ffact>1.0)

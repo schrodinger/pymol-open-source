@@ -133,6 +133,7 @@ void SelectorPurgeMembers(int sele);
 #define SELE_FCHx ( 0x1D00 | STYP_SEL2 | 0x70 )
 #define SELE_ID_s ( 0x1E00 | STYP_SEL1 | 0x70 )
 #define SELE_BNDz ( 0x1F00 | STYP_SEL0 | 0x70 )
+#define SELE_LIK2 ( 0x2000 | STYP_OPR2 | 0x30 )
 
 #define SEL_PREMAX 0x8
 
@@ -148,6 +149,8 @@ static WordKeyValue Keyword[] =
   {  "or",       SELE_OR_2 },
   {  "|",        SELE_OR_2 },
   {  "in",       SELE_IN_2 },
+  {  "like",     SELE_LIK2 },
+  {  "l;",       SELE_LIK2 },
   {  "all",      SELE_ALLz }, /* 0 parameter */
   {  "+",        SELE_ALLz }, /* 0 parameter */
   {  "none",     SELE_NONz }, /* 0 parameter */
@@ -1997,7 +2000,9 @@ int SelectorLogic2(EvalElem *base)
   int c=0;
   SelectorType *I=&Selector;
   AtomInfoType *at1,*at2;
-
+  TableRec *tr0,*tr2;
+  int *s0,*s2;
+  ObjectMolecule **obj;
   switch(base[1].code)
 	 {
 	 case SELE_OR_2:
@@ -2023,15 +2028,44 @@ int SelectorLogic2(EvalElem *base)
 			  for(b=0;b<I->NAtom;b++)
 				if(base[2].sele[b]) {
 				  at2=&I->Obj[I->Table[b].model]->AtomInfo[I->Table[b].atom];
-				  if((tolower(at1->chain[0]))==(tolower(at2->chain[0])))
-					if(WordMatch(at1->name,at2->name,I->IgnoreCase)<0)
-					  if(WordMatch(at1->resi,at2->resi,I->IgnoreCase)<0)
-						if(WordMatch(at1->resn,at2->resn,I->IgnoreCase)<0)
-						  if(WordMatch(at1->segi,at2->segi,I->IgnoreCase)<0)
-							base[0].sele[a]=1;
+              if(at1->resv==at2->resv)
+                if((tolower(at1->chain[0]))==(tolower(at2->chain[0])))
+                  if(WordMatch(at1->name,at2->name,I->IgnoreCase)<0)
+                    if(WordMatch(at1->resi,at2->resi,I->IgnoreCase)<0)
+                      if(WordMatch(at1->resn,at2->resn,I->IgnoreCase)<0)
+                        if(WordMatch(at1->segi,at2->segi,I->IgnoreCase)<0)
+                          base[0].sele[a]=1;
 				}
 			  if(base[0].sele[a]) c++;
 			}
+		  }
+		break;
+	 case SELE_LIK2:
+      s0  = base[0].sele;
+      tr0  = I->Table;
+      obj = I->Obj;
+		for(a=0;a<I->NAtom;a++)
+		  {
+          if(*s0) {
+            at1=&obj[tr0->model]->AtomInfo[tr0->atom];
+            *s0=0;
+            s2 = base[2].sele;
+            tr2 = I->Table;
+            for(b=0;b<I->NAtom;b++) {
+              if(*s2) {
+                at2=&obj[tr2->model]->AtomInfo[tr2->atom];
+                if(at1->resv==at2->resv)
+                  if(WordMatch(at1->name,at2->name,I->IgnoreCase)<0)
+                    if(WordMatch(at1->resi,at2->resi,I->IgnoreCase)<0)
+                      (*s0)=1;
+              }
+              s2++;
+              tr2++;
+            }
+            if(*s0) c++;
+          }
+          s0++;
+          tr0++;
 		  }
 		break;
 	 }
