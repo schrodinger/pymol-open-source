@@ -336,6 +336,12 @@ static CSeqRow* SeekerClick(CSeqRow* rowVLA,int button,int row_num,int col_num,i
         I->drag_row = row_num;
         I->dragging = true;
         I->drag_setting = true;
+
+        if(mod & cOrthoSHIFT) {
+          SeekerSelectionCenter(rowVLA,row_num,col_num,true);
+          SeekerSelectionCenterGo(0);
+        }
+
         if(col->inverse&&!start_over) {
           SeekerSelectionToggle(rowVLA,row_num,col_num,false,false);
           I->drag_setting = false;
@@ -421,6 +427,32 @@ static CSeqRow* SeekerDrag(CSeqRow* rowVLA,int row,int col,int mod)
     switch(I->drag_button) {
     case P_GLUT_LEFT_BUTTON:
       if(col != I->drag_last_col) {
+
+
+        if(mod &cOrthoSHIFT) {
+          if(I->drag_start_col == I->drag_last_col) {
+            if(col>I->drag_start_col) {
+              SeekerSelectionCenter(rowVLA,I->drag_row,I->drag_start_col+1,false);
+            } else if(col<I->drag_start_col) {
+              SeekerSelectionCenter(rowVLA,I->drag_row,I->drag_start_col-1,false);
+            }
+          }
+          if(I->drag_start_col < I->drag_last_col) {
+            if( col > I->drag_last_col ) {
+              for( a=I->drag_last_col+1; a<=col; a++) {
+                SeekerSelectionCenter(rowVLA,I->drag_row,a,false);
+              }
+            }
+          } else {
+            
+            if( col < I->drag_last_col) {
+              for(a=I->drag_last_col-1;a>=col;a--) {
+                SeekerSelectionCenter(rowVLA,I->drag_row,a,false);
+              }
+            }
+          }
+          SeekerSelectionCenterGo(0);
+        }
 
         if((I->drag_last_col<I->drag_start_col) && (col>I->drag_start_col))
           {
@@ -721,7 +753,7 @@ void SeekerUpdate(void)
   ObjectMolecule *obj;
   int nRow = 0;
   int label_flag = true;
-  int codes;
+  int codes = 0;
 
   CSeqRow *row_vla,*row,*lab=NULL;
   row_vla = VLACalloc(CSeqRow,10);
@@ -1181,6 +1213,8 @@ void SeekerUpdate(void)
         int st_len;
         int div,sub;
         int draw_it;
+        int n_skipped = 0;
+        int last_resv = -1;
         ObjectMolecule *obj;
         AtomInfoType *ai;
         row = lab+1;
@@ -1193,14 +1227,17 @@ void SeekerUpdate(void)
           CSeqCol *r1 = row->col + b;
           CSeqCol *l1 = lab->col + b;
 
-
+          ai = NULL;
+          if(r1->atom_at) {
+            atom_list = row->atom_lists + r1->atom_at;
+            
+            if(*atom_list>=0)
+              ai = obj->AtomInfo + (*atom_list); /* get first atom in list */
+          }
           if(l1->stop) {/* if label is already present, just line it up */
             l1->offset = r1->offset;
-          } else if((r1->offset >= next_open) && (r1->atom_at)) {
-
-            atom_list = row->atom_lists + r1->atom_at;
-            ai = obj->AtomInfo + (*atom_list); /* get first atom in list */
-              
+          } else if((r1->offset >= next_open)) {
+            
             if(div>1) {
               if(! ((ai->resv-sub) % div))
                 draw_it = true;
@@ -1209,7 +1246,14 @@ void SeekerUpdate(void)
             } else {
               draw_it = true;
             }
+            if(ai->resv!=(last_resv+1)) /* gap in sequence?  then draw label ASAP */
+              draw_it = true;
+
+            if(n_skipped >= (div+div)) /* don't skip too many without a label! */
+              draw_it = true;
+
             if(draw_it) {
+              n_skipped = 0;
               st_len = strlen(ai->resi);
               VLACheck(lab->txt,char,lab->len+st_len+1);
               strcpy(lab->txt+lab->len, ai->resi); /* copy the residue identifier */
@@ -1231,8 +1275,12 @@ void SeekerUpdate(void)
                 if((c-b)>st_len) /* only search as many columns as characters */
                   break;
               }
-            }
+            } else
+              n_skipped++;
           }
+
+          if(ai)
+            last_resv = ai->resv;
         }
       }
     }

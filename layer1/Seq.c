@@ -230,7 +230,7 @@ int SeqGetHeight(void)
   int height = 0;
 
   if(I->NRow) {
-    height = 13*I->NRow + 14;
+    height = 13*I->NRow + 4;
     if(I->ScrollBarActive)
       height+=I->ScrollBarWidth;
   }
@@ -457,9 +457,9 @@ static void SeqDraw(Block *block)
           int real_count = n_real;
           int mode = 0;
           float width = I->Block->rect.right - I->Block->rect.left;
-          float start,stop;
-          int right;
-          float bot,top;
+          float start=0,stop;
+          int right=0;
+          float bot,top,cent;
           float height = (I->ScrollBarWidth - I->ScrollBarMargin);
           cur_color = blue;
           for(a=0;a<I->NRow;a++) {
@@ -477,6 +477,12 @@ static void SeqDraw(Block *block)
                   mode=1;
                 } else if((!col->inverse)&&(mode)) {
                   stop = (width*col->offset)/max_len;
+                  if((stop-start)<1.0F) {
+                    cent = (stop+start)*0.5F;
+                    start = cent-0.5F;
+                    stop = cent+0.5F;
+                  }
+
                   glColor3fv(cur_color);
                   glBegin(GL_POLYGON);
                   glVertex2f(start,bot);
@@ -492,6 +498,11 @@ static void SeqDraw(Block *block)
               
               if(mode) {
                 stop = width*right/max_len;
+                if((stop-start)<1.0F) {
+                  cent = (stop+start)*0.5F;
+                  start = cent-0.5F;
+                  stop = cent+0.5F;
+                }
                 glColor3fv(cur_color);
                 glBegin(GL_POLYGON);
                 glVertex2f(start,bot);

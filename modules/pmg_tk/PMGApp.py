@@ -1830,7 +1830,8 @@ class PMGApp(AbstractApp):
                                label='C-alphas',
                                command = lambda :
                                cmd.do("_ set mouse_selection_mode,6,quiet=1"))
-      
+
+      self.menuBar.addmenuitem('Mouse', 'separator', '')
       self.menuBar.addmenuitem('Mouse', 'command', '3 Button Viewing Mode',
                                label='3 Button Viewing Mode',
                                command = lambda: cmd.mouse('three_button_viewing'))
