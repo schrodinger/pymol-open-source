@@ -82,11 +82,53 @@ void ObjectMoleculeBracketResidue(ObjectMolecule *I,AtomInfoType *ai,int *st,int
 int ObjectMoleculeFindOpenValenceVector(ObjectMolecule *I,int state,int index,float *v);
 void ObjectMoleculeAddSeleHydrogens(ObjectMolecule *I,int sele);
 
+
 CoordSet *ObjectMoleculeXYZStr2CoordSet(char *buffer,AtomInfoType **atInfoPtr);
 CSetting **ObjectMoleculeGetSettingHandle(ObjectMolecule *I,int state);
 
 #define MAX_BOND_DIST 50
 
+void ObjectMoleculeUpdateIDNumbers(ObjectMolecule *I)
+{
+  int a;
+  int max;
+  AtomInfoType *ai;
+  BondType *b;
+
+  if(I->AtomCounter<0) {
+    max=-1;
+    ai=I->AtomInfo;
+    for(a=0;a<I->NAtom;a++) {
+      if(ai->id>max)
+        max=ai->id;
+      ai++;
+    }
+    I->AtomCounter=max+1;
+  }
+  ai=I->AtomInfo;
+  for(a=0;a<I->NAtom;a++) {
+    if(ai->id<0) 
+      ai->id=I->AtomCounter++;
+    ai++;
+  }
+
+  if(I->BondCounter<0) {
+    max=-1;
+    b=I->Bond;
+    for(a=0;a<I->NBond;a++) {
+      if(b->id>max) 
+        max=b->id;
+      b++;
+    }
+    I->BondCounter=max+1;
+  }
+  b=I->Bond;
+  for(a=0;a<I->NBond;a++) {
+    if(!b->id) 
+      b->id=I->BondCounter++;
+    b++;
+  }
+}
 
 CoordSet *ObjectMoleculePMO2CoordSet(CRaw *pmo,AtomInfoType **atInfoPtr,int *restart)
 {
@@ -293,6 +335,7 @@ ObjectMolecule *ObjectMoleculeReadPMO(ObjectMolecule *I,CRaw *pmo,int frame,int 
       SceneCountFrames();
       ObjectMoleculeExtendIndices(I);
       ObjectMoleculeSort(I);
+      ObjectMoleculeUpdateIDNumbers(I);
       ObjectMoleculeUpdateNonbonded(I);
       successCnt++;
       if(successCnt>1) {
@@ -345,7 +388,7 @@ int ObjectMoleculeMultiSave(ObjectMolecule *I,char *fname,int state,int append)
   /* version 1 writes atominfo, coords, spheroid, bonds */
   CRaw *raw = NULL;
   int ok=true;
-  int a,c,a1,a2,b1,b2,b3;
+  int a,c,a1,a2,b1,b2;
   BondType *b;
   CoordSet *cs;
   BondType *bondVLA = NULL;
@@ -415,8 +458,6 @@ int ObjectMoleculeMultiSave(ObjectMolecule *I,char *fname,int state,int append)
         for(c=0;c<I->NBond;c++) {
           b1 = b->index[0];
           b2 = b->index[1];
-          b3 = b->order;
-          b++;
           if(I->DiscreteFlag) {
             if((cs==I->DiscreteCSet[b1])&&(cs==I->DiscreteCSet[b2])) {
               a1=I->DiscreteAtmToIdx[b1];
@@ -432,10 +473,12 @@ int ObjectMoleculeMultiSave(ObjectMolecule *I,char *fname,int state,int append)
           if((a1>=0)&&(a2>=0)) { 
             nBond++;
             VLACheck(bondVLA,BondType,nBond);
+            bondVLA[nBond-1]=*b;
             bondVLA[nBond-1].index[0] = a1;
             bondVLA[nBond-1].index[1] = a2;
-            bondVLA[nBond-1].order = b3;
           }
+          b++;
+
         }
         if(ok) ok = RawWrite(raw,cRaw_Bonds1,sizeof(BondType)*nBond,0,(char*)bondVLA);
       }
@@ -746,6 +789,7 @@ CoordSet *ObjectMoleculeXYZStr2CoordSet(char *buffer,AtomInfoType **atInfoPtr)
           ii->index[0] = b1;
           ii->index[1] = b2-1;
           ii->order = 1; /* missing bond order information */
+          ii->id = -1; /* no serial number */
         }
       }
       
@@ -831,6 +875,7 @@ ObjectMolecule *ObjectMoleculeReadXYZStr(ObjectMolecule *I,char *PDBStr,int fram
     SceneCountFrames();
     ObjectMoleculeExtendIndices(I);
     ObjectMoleculeSort(I);
+    ObjectMoleculeUpdateIDNumbers(I);
     ObjectMoleculeUpdateNonbonded(I);
   }
   return(I);
@@ -957,7 +1002,7 @@ void ObjectMoleculeAddSeleHydrogens(ObjectMolecule *I,int sele)
               UtilNCopy((nai+nH)->elem,"H",2);
               (nai+nH)->geom=cAtomInfoSingle;
               (nai+nH)->valence=1;
-              (nai+nH)->id = a; /* borrowing this field temporarily */
+              (nai+nH)->tmp_index = a; /* borrowing this field temporarily */
               ObjectMoleculePrepareAtom(I,a,nai+nH);
               nH++;
             }
@@ -974,16 +1019,17 @@ void ObjectMoleculeAddSeleHydrogens(ObjectMolecule *I,int sele)
 
           index = Alloc(int,nH);
           for(a=0;a<nH;a++) {
-            index[a] = (nai+a)->id;
+            index[a] = (nai+a)->tmp_index;
           }
           
           if(cs->fEnumIndices) cs->fEnumIndices(cs);
 
           cs->TmpLinkBond = VLAlloc(BondType,nH);
           for(a=0;a<nH;a++) {
-            cs->TmpLinkBond[a].index[0] = (nai+a)->id;
+            cs->TmpLinkBond[a].index[0] = (nai+a)->tmp_index;
             cs->TmpLinkBond[a].index[1] = a;
             cs->TmpLinkBond[a].order = 1;
+            cs->TmpLinkBond[a].id = -1;
           }
           cs->NTmpLinkBond = nH;
 
@@ -1010,6 +1056,7 @@ void ObjectMoleculeAddSeleHydrogens(ObjectMolecule *I,int sele)
           if(cs->fFree)
             cs->fFree(cs);
           ObjectMoleculeSort(I);
+          ObjectMoleculeUpdateIDNumbers(I);
         } else
           VLAFreeP(nai);
       }
@@ -1026,7 +1073,7 @@ void ObjectMoleculeFuse(ObjectMolecule *I,int index0,ObjectMolecule *src,int ind
   int n,nn;
   int at0=-1;
   int at1=-1;
-  int a0,a1,o1;
+  int a0,a1;
   int hydr1=-1;
   int anch1=-1;
   int ca0,ch0;
@@ -1105,21 +1152,14 @@ void ObjectMoleculeFuse(ObjectMolecule *I,int index0,ObjectMolecule *src,int ind
     for(a=0;a<src->NBond;a++) {
       a0 = scs->AtmToIdx[b1->index[0]];
       a1 = scs->AtmToIdx[b1->index[1]];
-      o1 = b1->order;
-      b1++;
-      /*      a0 = scs->AtmToIdx[*(b1++)];
-              a1 = scs->AtmToIdx[*(b1++)];
-              o1 = *(b1++);*/
       if((a0>=0)&&(a1>=0)) {
+        *b0=*b1;
         b0->index[0] = a0;
         b0->index[1] = a1;
-        b0->order = o1;
         b0++;
-        /**(b0++) = a0;
-         *(b0++) = a1;
-         *(b0++) = o1;*/
         cs->NTmpBond++;
       }
+      b1++;
     }
 
     backup = Alloc(float,cs->NIndex*3); /* make untransformed copy of coordinate set */
@@ -1151,7 +1191,8 @@ void ObjectMoleculeFuse(ObjectMolecule *I,int index0,ObjectMolecule *src,int ind
     cs->TmpLinkBond->index[0] = at0;
     cs->TmpLinkBond->index[1] = anch1;
     cs->TmpLinkBond->order = 1;
-
+    cs->TmpLinkBond->id = -1;
+    
     if(cs->fEnumIndices) cs->fEnumIndices(cs);
 
     d = AtomInfoGetBondLength(ai0+at0,ai1+at1);
@@ -1212,6 +1253,7 @@ void ObjectMoleculeFuse(ObjectMolecule *I,int index0,ObjectMolecule *src,int ind
       break;
     }
     ObjectMoleculeSort(I);
+    ObjectMoleculeUpdateIDNumbers(I);
   }
   if(cs)
     if(cs->fFree)
@@ -1275,6 +1317,7 @@ void ObjectMoleculeAttach(ObjectMolecule *I,int index,AtomInfoType *nai)
   cs->TmpLinkBond->index[0]=index;
   cs->TmpLinkBond->index[1]=0;
   cs->TmpLinkBond->order=1;
+  cs->TmpLinkBond->id = -1;
   if(cs->fEnumIndices) cs->fEnumIndices(cs);
   ObjectMoleculePrepareAtom(I,index,nai);
   d = AtomInfoGetBondLength(ai,nai);
@@ -1291,6 +1334,7 @@ void ObjectMoleculeAttach(ObjectMolecule *I,int index,AtomInfoType *nai)
     }
   }
   ObjectMoleculeSort(I);
+  ObjectMoleculeUpdateIDNumbers(I);
   if(cs->fFree)
     cs->fFree(cs);
   
@@ -1322,9 +1366,10 @@ int ObjectMoleculeFillOpenValences(ObjectMolecule *I,int index)
       cs->NIndex=1;
       cs->TmpLinkBond = VLAlloc(BondType,1);
       cs->NTmpLinkBond = 1;
-      cs->TmpLinkBond[0].index[0]=index;
-      cs->TmpLinkBond[0].index[1]=0;
-      cs->TmpLinkBond[0].order=1;
+      cs->TmpLinkBond->index[0]=index;
+      cs->TmpLinkBond->index[1]=0;
+      cs->TmpLinkBond->order=1;
+      cs->TmpLinkBond->id = -1;
       if(cs->fEnumIndices) cs->fEnumIndices(cs);
       nai = (AtomInfoType*)VLAMalloc(1,sizeof(AtomInfoType),1,true);
       UtilNCopy(nai->elem,"H",2);
@@ -1350,6 +1395,7 @@ int ObjectMoleculeFillOpenValences(ObjectMolecule *I,int index)
       flag=true;
     }
   }
+  ObjectMoleculeUpdateIDNumbers(I);
   return(result);
 }
 /*========================================================================*/
@@ -1718,6 +1764,7 @@ void ObjectMoleculePrepareAtom(ObjectMolecule *I,int index,AtomInfoType *ai)
       ai->color=AtomInfoGetColor(ai);
     for(a=0;a<cRepCnt;a++)
       ai->visRep[a]=ai0->visRep[a];
+    ai->id=-1;
     AtomInfoUniquefyNames(I->AtomInfo,I->NAtom,ai,1);
     AtomInfoAssignParameters(ai);
   }
@@ -1854,6 +1901,7 @@ int ObjectMoleculeAddBond(ObjectMolecule *I,int sele0,int sele1,int order)
             bnd->index[0]=a1;
             bnd->index[1]=a2;                      
             bnd->order=order;
+            bnd->id=-1;
             I->NBond++;
             c++;
             I->AtomInfo[a1].chemFlag=false;
@@ -1872,6 +1920,7 @@ int ObjectMoleculeAddBond(ObjectMolecule *I,int sele0,int sele1,int order)
     ObjectMoleculeInvalidate(I,cRepNonbondedSphere,cRepInvBonds);
     ObjectMoleculeInvalidate(I,cRepRibbon,cRepInvBonds);
     ObjectMoleculeInvalidate(I,cRepCartoon,cRepInvBonds);
+    ObjectMoleculeUpdateIDNumbers(I);
   }
   return(c);    
 }
@@ -2059,15 +2108,15 @@ void ObjectMoleculePurge(ObjectMolecule *I)
       offset--;
       b0++;
     } else if(offset) {
+      *b1=*b0;
       b1->index[0]=oldToNew[a0]; /* copy bond info */
       b1->index[1]=oldToNew[a1];
-      b1->order = b0->order;
       b0++;
       b1++;
     } else {
+      *b1=*b0;
       b1->index[0]=oldToNew[a0]; /* copy bond info */
       b1->index[1]=oldToNew[a1];
-      b1->order = b0->order;
       b0++;
       b1++; /* TODO check reasoning agaist above */
     }
@@ -2810,6 +2859,7 @@ CoordSet *ObjectMoleculeChemPyModel2CoordSet(PyObject *model,AtomInfoType **atIn
   int auto_show_lines;
   int auto_show_nonbonded;
   int hetatm;
+  int ignore_ids;
 
   PyObject *atomList = NULL;
   PyObject *bondList = NULL;
@@ -2821,6 +2871,8 @@ CoordSet *ObjectMoleculeChemPyModel2CoordSet(PyObject *model,AtomInfoType **atIn
   auto_show_lines = SettingGet(cSetting_auto_show_lines);
   auto_show_nonbonded = SettingGet(cSetting_auto_show_nonbonded);
   AtomInfoPrimeColors();
+
+  ignore_ids=!(int)SettingGet(cSetting_preserve_chempy_ids);
 
   nAtom=0;
   nBond=0;
@@ -2866,6 +2918,20 @@ CoordSet *ObjectMoleculeChemPyModel2CoordSet(PyObject *model,AtomInfoType **atIn
         
         ai = atInfo+a;
         ai->id = a; /* chempy models are zero-based */
+        if(!ignore_ids) { 
+          if(ok) { /* get chempy atom id if extant */
+            if(PTruthCallStr(atom,"has","id")) { 
+              tmp = PyObject_GetAttrString(atom,"id");
+              if (tmp)
+                ok = PConvPyObjectToInt(tmp,&ai->id);
+              if(!ok) 
+                ErrMessage("ObjectMoleculeChemPyModel2CoordSet","can't read atom identifier");
+              Py_XDECREF(tmp);
+            } else {
+              ii->id=-1;
+            }
+          }
+        }
 
         if(ok) {
           tmp = PyObject_GetAttrString(atom,"name");
@@ -3062,6 +3128,7 @@ CoordSet *ObjectMoleculeChemPyModel2CoordSet(PyObject *model,AtomInfoType **atIn
 			 atInfo[a].color=AtomInfoGetColor(ai);
 		  }
 
+
 		  if(!ok)
 			 break;
 		}
@@ -3102,6 +3169,21 @@ CoordSet *ObjectMoleculeChemPyModel2CoordSet(PyObject *model,AtomInfoType **atIn
           if(!ok) 
             ErrMessage("ObjectMoleculeChemPyModel2CoordSet","can't read bond order");
           Py_XDECREF(tmp);
+        }
+        ii->id=a;
+        if(!ignore_ids) { 
+          if(ok) { /* get unique chempy bond id if present */
+            if(PTruthCallStr(bnd,"has","id")) { 
+              tmp = PyObject_GetAttrString(bnd,"id");
+              if (tmp)
+                ok = PConvPyObjectToInt(tmp,&ii->id);
+              if(!ok) 
+                ErrMessage("ObjectMoleculeChemPyModel2CoordSet","can't read bond identifier");
+              Py_XDECREF(tmp);
+            } else {
+              ii->id=-1;
+            }
+          }
         }
         Py_XDECREF(index);
         ii++;
@@ -3213,6 +3295,7 @@ ObjectMolecule *ObjectMoleculeLoadChemPyModel(ObjectMolecule *I,PyObject *model,
     SceneCountFrames();
     ObjectMoleculeExtendIndices(I);
     ObjectMoleculeSort(I);
+    ObjectMoleculeUpdateIDNumbers(I);
     ObjectMoleculeUpdateNonbonded(I);
   }
   return(I);
@@ -3644,6 +3727,7 @@ ObjectMolecule *ObjectMoleculeReadMOLStr(ObjectMolecule *I,char *MOLStr,int fram
       SceneCountFrames();
       ObjectMoleculeExtendIndices(I);
       ObjectMoleculeSort(I);
+      ObjectMoleculeUpdateIDNumbers(I);
       ObjectMoleculeUpdateNonbonded(I);
 	 }
   return(I);
@@ -3942,6 +4026,7 @@ ObjectMolecule *ObjectMoleculeReadPDBStr(ObjectMolecule *I,char *PDBStr,int fram
       SceneCountFrames();
       ObjectMoleculeExtendIndices(I);
       ObjectMoleculeSort(I);
+      ObjectMoleculeUpdateIDNumbers(I);
       ObjectMoleculeUpdateNonbonded(I);
       successCnt++;
       if(successCnt>1) {
@@ -4037,6 +4122,7 @@ void ObjectMoleculeAppendAtoms(ObjectMolecule *I,AtomInfoType *atInfo,CoordSet *
 		ii->index[0]=cs->IdxToAtm[si->index[0]];
 		ii->index[1]=cs->IdxToAtm[si->index[1]];
       ii->order=si->order;
+      ii->id=-1;
       ii++;
       si++;
 	 }
@@ -4118,8 +4204,10 @@ void ObjectMoleculeSeleOp(ObjectMolecule *I,int sele,ObjectMoleculeOpRec *op)
            a++; /* realize that the atom list may have been resorted */
          }
        }
-       if(hit_flag)
+       if(hit_flag) {
          ObjectMoleculeSort(I);
+         ObjectMoleculeUpdateIDNumbers(I);
+       } 
      }
      break;
 #endif
@@ -5015,6 +5103,8 @@ ObjectMolecule *ObjectMoleculeNew(int discreteFlag)
   I->CSet=VLAMalloc(10,sizeof(CoordSet*),5,true); /* auto-zero */
   I->NCSet=0;
   I->Bond=NULL;
+  I->AtomCounter=-1;
+  I->BondCounter=-1;
   I->DiscreteFlag=discreteFlag;
   I->UnitCellCGO=NULL;
   if(I->DiscreteFlag) { /* discrete objects don't share atoms between states */
@@ -5323,6 +5413,7 @@ ObjectMolecule *ObjectMoleculeReadMMDStr(ObjectMolecule *I,char *MMDStr,int fram
       SceneCountFrames();
       ObjectMoleculeExtendIndices(I);
       ObjectMoleculeSort(I);
+      ObjectMoleculeUpdateIDNumbers(I);
       ObjectMoleculeUpdateNonbonded(I);
 	 }
   return(I);
@@ -5959,6 +6050,7 @@ CoordSet *ObjectMoleculeMMDStr2CoordSet(char *buffer,AtomInfoType **atInfoPtr)
                 ii->index[0]=a;
                 ii->index[1]=bPart-1;
                 ii->order=bOrder;
+                ii->id=-1;
                 ii++;
               }
             }

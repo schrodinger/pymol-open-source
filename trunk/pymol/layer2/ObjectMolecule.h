@@ -30,6 +30,7 @@ Z* -------------------------------------------------------------------
 typedef struct {
   int index[2];
   int order;
+  int id;
 } BondType;
 
 typedef struct ObjectMolecule {
@@ -54,6 +55,8 @@ typedef struct ObjectMolecule {
   int UndoNIndex[cUndoMask+1];
   int UndoIter;
   CGO *UnitCellCGO;
+  int BondCounter;
+  int AtomCounter;
 } ObjectMolecule;
 
 
@@ -112,7 +115,7 @@ typedef struct ObjectMoleculeOpRec {
 
 #include"CoordSet.h"
 
-
+int ObjectMoleculeGetSerial(ObjectMolecule *I);
 int ObjectMoleculeSetStateTitle(ObjectMolecule *I,int state,char *text);
 ObjectMolecule *ObjectMoleculeNew(int discreteFlag);
 void ObjectMoleculeSort(ObjectMolecule *I);
@@ -184,6 +187,7 @@ void ObjectMoleculeGetAtomSele(ObjectMolecule *I,int index, char *buffer);
 void ObjectMoleculeGetAtomSeleFast(ObjectMolecule *I,int index, char *buffer);
 void ObjectMoleculeGetAtomSeleLog(ObjectMolecule *I,int index, char *buffer);
 int ObjectMoleculeMultiSave(ObjectMolecule *I,char *fname,int state,int append);
+void ObjectMoleculeUpdateIDNumbers(ObjectMolecule *I);
 
 #endif
 

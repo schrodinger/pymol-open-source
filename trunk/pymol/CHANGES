@@ -96,7 +96,15 @@ Current Bugs to Fix
    * superposition system fails with degenerate sets (planer atoms, etc).
      sometimes it just fails period
   
+   * superposition flaky when fitting against multiple conformations...
+
    * intra_fit broken?
+
+Changes up to 0.71
+
+   * revamped PyMOL's internal bond handling data structure.  I've done my best
+     to insure that this doesn't break anything, but it is a major change and has
+     the potential to create huge problems...
 
 Changes up to 0.70
 
