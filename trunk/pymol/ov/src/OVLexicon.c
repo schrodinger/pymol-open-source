@@ -58,6 +58,7 @@ void OVLexicon_Del(OVLexicon *I)
     OVHeap_Free(I->heap,I);
   }
 }
+
 static OVstatus OVLexicon_CheckStorage(OVLexicon *uk, ov_word entry_size, ov_size data_size)
 {
   if(!uk->entry) { /* auto zero to initialize ref_cnt fields */

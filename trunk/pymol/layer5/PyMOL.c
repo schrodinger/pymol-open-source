@@ -70,8 +70,37 @@ typedef struct _CPyMOL {
   int PassiveFlag;
   int SwapFlag;
   PyMOLSwapBuffersFn *SwapFn;
+  
+  /* dynamically mapped string constants */
 
+  OVLexicon *Lex;
+  ov_word lex_pdb;
+  
 } _CPyMOL;
+
+OVstatus PyMOL_InitAPI(CPyMOL *I)
+{
+  OVContext *C = I->G->Context;
+  OVreturn_word result;
+  
+  I->Lex = OVLexicon_New(C->heap);
+  if(I->Lex) {
+    if(OVreturn_IS_OK( (result= OVLexicon_GetFromCString(I->Lex,"pdb")))) I->lex_pdb = result.word;
+  }
+}
+
+OVstatus PyMOL_PurgeAPI(CPyMOL *I)
+{
+  OVLexicon_DEL_AUTO_NULL(I->Lex);
+}
+
+void PyMOL_Load(CPyMOL *I,char *content, char *content_type, char *format, char *object, 
+                int frame, int discrete, int finish, int quiet)
+{
+  /*
+    ExecutiveProcessPDBFile(TempPyMOLGlobals,origObj,fname,oname,frame,discrete,finish,buf,NULL,quiet,false);*/
+}
+
 
 const static CPyMOLOptions Defaults = {
   true, /* pmgui */
@@ -186,6 +215,9 @@ void PyMOL_Start(CPyMOL *I)
   PyMOLGlobals *G=I->G;
 
   G->Context = OVContext_New();
+
+  PyMOL_InitAPI(I);
+
   MemoryCacheInit(G);
   FeedbackInit(G,G->Option->quiet);
   WordInit(G);
@@ -254,6 +286,9 @@ void PyMOL_Stop(CPyMOL *I)
   WordFree(G);
   FeedbackFree(G);
   MemoryCacheDone(G);
+
+  PyMOL_PurgeAPI(I);
+
   OVContext_Del(G->Context);   
 }
 void PyMOL_Free(CPyMOL *I)
@@ -484,3 +519,4 @@ void PyMOL_PopValidContext(CPyMOL *I)
   if(I && I->G && (I->G->ValidContext>0))
     I->G->ValidContext--;
 }
+
