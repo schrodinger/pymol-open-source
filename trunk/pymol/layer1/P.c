@@ -725,7 +725,6 @@ void PInitEmbedded(int argc,char **argv)
 	 initopenglutil_num();
 #endif
 #endif
-
   PyRun_SimpleString("import os\n");
   PyRun_SimpleString("import sys\n");
 #ifdef WIN32
@@ -743,9 +742,15 @@ r1=RegOpenKeyEx(HKEY_CLASSES_ROOT,"Software\\DeLano Scientific\\PyMOL\\PYMOL_PAT
 	  }
 	RegCloseKey(phkResult);
 	} 
-/*  PyRun_SimpleString("if not os.environ.has_key('PYMOL_PATH'): os.environ['PYTHONPATH']=os.environ['PYTHONPATH']+';'+os.getcwd()+'/modules'\n");*/
-  PyRun_SimpleString("if not os.environ.has_key('PYMOL_PATH'): os.environ['PYMOL_PATH']=os.getcwd()\n");
 #endif
+
+  PyRun_SimpleString("if not os.environ.has_key('PYMOL_PATH'): os.environ['PYMOL_PATH']=os.getcwd()\n");
+
+#ifdef _PYMOL_SETUP_TCLTK83
+  PyRun_SimpleString("if not os.environ.has_key('TCL_LIBRARY') and os.path.exists(os.environ['PYMOL_PATH']+'/ext/lib/tcl8.3'): os.environ['TCL_LIBRARY']=os.environ['PYMOL_PATH']+'/ext/lib/tcl8.3'\n");
+  PyRun_SimpleString("if not os.environ.has_key('TK_LIBRARY') and os.path.exists(os.environ['PYMOL_PATH']+'/ext/lib/tk8.3'): os.environ['TK_LIBRARY']=os.environ['PYMOL_PATH']+'/ext/lib/tk8.3'\n");
+#endif
+  
   PyRun_SimpleString("if (os.environ['PYMOL_PATH']+'/modules') not in sys.path: sys.path.append(os.environ['PYMOL_PATH']+'/modules')\n");
   PyRun_SimpleString("import pymol"); /* create the global PyMOL namespace */
 
@@ -766,6 +771,7 @@ r1=RegOpenKeyEx(HKEY_CLASSES_ROOT,"Software\\DeLano Scientific\\PyMOL\\PYMOL_PAT
   PyObject_SetAttrString(sys,"argv",args);
 
   PXDecRef(PyObject_CallMethod(invocation,"parse_args","O",args)); /* parse the arguments */
+
 
 }
 

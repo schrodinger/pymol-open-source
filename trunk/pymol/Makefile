@@ -80,6 +80,7 @@ unix-mindep: semistatic
 	cp -r ext/lib/tk8.3 $(MDP)/ext/lib
 	/bin/rm -f $(MDP)/ext/lib/python2.1/config/libpython2.1.a
 	cp LICENSE $(MDP)
+	cp README $(MDP)
 	cp setup/INSTALL.unix-mindep $(MDP)/INSTALL
 	cp setup/setup.sh.unix-mindep $(MDP)/setup.sh
 	cd $(MINDEP);tar -zcvf ../pymol-0_xx-bin-xxxxx-mindep.tgz pymol

@@ -11,6 +11,13 @@ _opengl_nummodule.so \
 _openglmodule.so \
 openglutil.so \
 openglutil_num.so                                                                  
+static:_glu_nummodule.o \
+_glumodule.o \
+_glutmodule.o \
+_opengl_nummodule.o \
+_openglmodule.o \
+openglutil.o \
+openglutil_num.o
 
 .c.o: 
 	$(CC) $(CFLAGS) -c $*.c -DPythonTypes
