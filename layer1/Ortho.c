@@ -84,6 +84,7 @@ typedef struct {
   char *WizardPromptVLA;
   int SplashFlag;
   int LoopFlag;
+  int LoopMod;
   BlockRect LoopRect;
   CQueue *cmds;
   CQueue *feedback;
@@ -124,7 +125,7 @@ int OrthoLoopBlockRelease(Block *block,int button,int x,int y,int mod)
   OrthoObject *I=&Ortho;
   int tmp;
   int mode;
-  mode = ButModeTranslate(button,mod);
+  mode = ButModeTranslate(button,I->LoopMod);
 
   if(I->LoopRect.top<I->LoopRect.bottom) {
     tmp=I->LoopRect.top;
@@ -1196,6 +1197,7 @@ int OrthoButton(int button,int state,int x,int y,int mod)
         I->LoopRect.right=x;
         I->LoopRect.bottom=y;
         I->LoopFlag=true;
+        I->LoopMod = mod;
         I->GrabbedBy=&I->LoopBlock;
         OrthoDirty();
       } 
@@ -1294,7 +1296,7 @@ void OrthoInit(int showSplash)
   I->Line[I->CurLine&OrthoSaveLines][I->CurChar]=0;
   I->WizardPromptVLA=NULL;
   I->LoopFlag=0;
-    
+  I->LoopMod=0;
   I->SplashFlag = true;
   I->ShowLines = 1;
   I->Saved[0]=0;
