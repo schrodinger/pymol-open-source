@@ -154,7 +154,7 @@ ObjectMolecule *ObjectMoleculeLoadTRJFile(ObjectMolecule *I,char *fname,int fram
   int r_act,r_val,r_cnt;
   float *r_fp_start=NULL,*r_fp_stop=NULL;
   int a,b,c,i;
-  int *to;
+  int *to,at_i;
   int zoom_flag=false;
   int cnt=0;
   int n_avg=0;
@@ -195,21 +195,25 @@ ObjectMolecule *ObjectMoleculeLoadTRJFile(ObjectMolecule *I,char *fname,int fram
         }
 
         for(a=0;a<I->NAtom;a++) { /* now terminate the excluded references */
-          if(xref[cs->AtmToIdx[a]]<0)
+          if(xref[a]<0) {
             cs->AtmToIdx[a]=-1;
+          } 
         }
 
         to=cs->IdxToAtm;
         c=0;
-        for(a=0;a<cs->NIndex;a++) { /* now fix IdxToAtm and remap xref to coordinate space */
-          if(cs->AtmToIdx[cs->IdxToAtm[a]]>=0) {
-            *(to++)=cs->IdxToAtm[a];
+        for(a=0;a<cs->NIndex;a++) { /* now fix IdxToAtm and remap xref to coordinate space */         
+          at_i = cs->IdxToAtm[a];
+          if(cs->AtmToIdx[at_i]>=0) {
+            *(to++)=at_i;
+            cs->AtmToIdx[at_i]=c;
             xref[a]=c;
             c++;
           } else {
             xref[a]=-1;
           }
         }
+
         cs->NIndex=c;
         cs->IdxToAtm = Realloc(cs->IdxToAtm,int,cs->NIndex+1);
         VLASize(cs->Coord,float,cs->NIndex*3);
