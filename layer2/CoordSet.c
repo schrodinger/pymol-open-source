@@ -709,12 +709,12 @@ void CoordSetRender(CoordSet *I,CRay *ray,Pickable **pick,int pass)
           } else {
             if(I->Obj) 
               ray->fWobble(ray,
-                            SettingGet_i(I->Setting,I->Obj->Obj.Setting,cSetting_ray_texture),
-                            SettingGet_3fv(I->Setting,I->Obj->Obj.Setting,cSetting_ray_texture_settings));
+                           SettingGet_i(I->Setting,I->Obj->Obj.Setting,cSetting_ray_texture),
+                           SettingGet_3fv(I->Setting,I->Obj->Obj.Setting,cSetting_ray_texture_settings));
             else
               ray->fWobble(ray,
-                            SettingGet_i(I->Setting,NULL,cSetting_ray_texture),
-                            SettingGet_3fv(I->Setting,NULL,cSetting_ray_texture_settings));
+                           SettingGet_i(I->Setting,NULL,cSetting_ray_texture),
+                           SettingGet_3fv(I->Setting,NULL,cSetting_ray_texture_settings));
             ray->fColor3fv(ray,ColorGet(I->Obj->Obj.Color));
           }
         
@@ -772,8 +772,8 @@ void CoordSetRender(CoordSet *I,CRay *ray,Pickable **pick,int pass)
 
             
           }
-          if(ray)
-            ray->fWobble(ray,0,NULL);
+          /*          if(ray)
+                      ray->fWobble(ray,0,NULL);*/
         }
   
   PRINTFD(FB_CoordSet)

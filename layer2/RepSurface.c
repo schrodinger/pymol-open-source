@@ -1285,8 +1285,8 @@ Rep *RepSurfaceNew(CoordSet *cs)
       }
 
     if(I->N) {	
-      I->V = Realloc(I->V,float,(v0-I->V));
-      I->VN = Realloc(I->VN,float,(vn0-I->VN));
+      I->V = ReallocForSure(I->V,float,(v0-I->V));
+      I->VN = ReallocForSure(I->VN,float,(vn0-I->VN));
     }
 
     PRINTFD(FB_RepSurface)
@@ -1307,8 +1307,8 @@ Rep *RepSurfaceNew(CoordSet *cs)
         " RepSurface: %i triangles.\n",I->NT
         ENDFB;
     } else {
-      I->V = Realloc(I->V,float,1);
-      I->VN = Realloc(I->VN,float,1);
+      I->V = ReallocForSure(I->V,float,1);
+      I->VN = ReallocForSure(I->VN,float,1);
     }
     
   }

@@ -1314,12 +1314,12 @@ Rep *RepCylBondNew(CoordSet *cs)
     if((signed)vr_size<(vr-I->VR))
       ErrFatal("RepCylBond","VR array overrun.");
     
-	 I->V = Realloc(I->V,float,(v-I->V));
-	 I->VR = Realloc(I->VR,float,(vr-I->VR));
+	 I->V = ReallocForSure(I->V,float,(v-I->V));
+	 I->VR = ReallocForSure(I->VR,float,(vr-I->VR));
     if(I->VSP) 
-      I->VSP = Realloc(I->VSP,float,(vsp-I->VSP));
+      I->VSP = ReallocForSure(I->VSP,float,(vsp-I->VSP));
     if(I->VSPC) 
-      I->VSPC = Realloc(I->VSPC,float,(vspc-I->VSPC));
+      I->VSPC = ReallocForSure(I->VSPC,float,(vspc-I->VSPC));
 	 if(SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_pickable)) { 
 
       PRINTFD(FB_RepCylBond)
@@ -1409,9 +1409,9 @@ Rep *RepCylBondNew(CoordSet *cs)
       if((signed)rp_size<=(I->NP))
         ErrFatal("RepCylBond","RP array overrun.");
 
-		I->R.P = Realloc(I->R.P,Pickable,I->NP+1);
+		I->R.P = ReallocForSure(I->R.P,Pickable,I->NP+1);
 		I->R.P[0].index = I->NP;
-      I->VP = Realloc(I->VP,float,(v-I->VP));
+      I->VP = ReallocForSure(I->VP,float,(v-I->VP));
 
       PRINTFD(FB_RepCylBond)
         " RepCylBondNew: I->NP: %d I->VP: %p\n",I->NP,I->VP

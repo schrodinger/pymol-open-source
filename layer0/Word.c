@@ -273,35 +273,38 @@ int WordCompare(char *p,char *q,int ignCase)
 /* all things equal, shorter is smaller */
 {
   int result=0;
-  while((*p)&&(*q))	{
-	if(*p!=*q) {
-	  if(ignCase) {
-		if(tolower(*p)<tolower(*q)) {
-		  result=-1;
-		  break;
-		}
-		else if(tolower(*p)>tolower(*q)) {
-		  result=1;
-		  break;
-		}
-	  } else {
-		if(*p<*q) {
-		  result=-1;
-		  break;
-		} else if(*p>*q) {
-		  result=1;
-		  break;
-		}
-	  }
-	}
-	p++;
-	q++;
+  if(ignCase) {
+    while((*p)&&(*q))	{
+      if(*p!=*q) {
+        if(tolower(*p)<tolower(*q)) {
+          return -1;
+        }
+        else if(tolower(*p)>tolower(*q)) {
+          return 1;
+        }
+      }
+      p++;
+      q++;
+    }
+  } else {
+    while((*p)&&(*q))	{
+      if(*p!=*q) {
+        if(*p<*q) {
+          return -1;
+        } else if(*p>*q) {
+          return 1;
+        }
+      }
+      p++;
+      q++;
+    }
   }
+  
   if((!result)&&(!*p)&&(*q))
-	result=-1;
+    return -1;
   else if((!result)&&(*p)&&(!*q))
-	result=1;
-  return(result);
+    return 1;
+  return 0;
 }
 
 int WordIndex(WordType *list,char *word,int minMatch,int ignCase)

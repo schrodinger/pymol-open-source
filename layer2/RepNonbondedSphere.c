@@ -239,9 +239,9 @@ Rep *RepNonbondedSphereNew(CoordSet *cs)
 	 }
 
   if(I->NC) 
-	 I->VC=(float*)mrealloc(I->VC,sizeof(float)*(v-I->VC));
+	 I->VC=ReallocForSure(I->VC,float,(v-I->VC));
   else
-	 I->VC=(float*)mrealloc(I->VC,1);
+	 I->VC=ReallocForSure(I->VC,float,1);
 
   I->V=(float*)mmalloc(sizeof(float)*nSphere*(3+sp->NVertTot*6));
   ErrChkPtr(I->V);
@@ -293,9 +293,9 @@ Rep *RepNonbondedSphereNew(CoordSet *cs)
 	 }
   
   if(I->N) 
-    I->V=(float*)mrealloc(I->V,sizeof(float)*(v-I->V));
+    I->V=ReallocForSure(I->V,float,(v-I->V));
   else
-    I->V=(float*)mrealloc(I->V,1);
+    I->V=ReallocForSure(I->V,float,1);
 
   /* use pickable representation from nonbonded */
   if(SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_pickable)) {

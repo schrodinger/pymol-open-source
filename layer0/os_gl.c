@@ -1,18 +1,19 @@
 #include"os_predef.h"
 #include"os_gl.h"
 
+
 #ifdef _PYMOL_PRETEND_GLUT_FONT
 void plutBitmapCharacter(int c);
 #endif
 
 void PyMOLCheckOpenGLErr(char *pos)
 {
-    GLenum  glerr = glGetError( );
-	while( glerr != GL_NO_ERROR ) 
-	{
-		printf("OpenGL-Error: Where? %s: %s\n",pos,gluErrorString(glerr));
-		glerr = glGetError( );
-	}
+  GLenum  glerr = glGetError( );
+  while( glerr != GL_NO_ERROR ) 
+    {
+      printf("OpenGL-Error: Where? %s: %s\n",pos,gluErrorString(glerr));
+      glerr = glGetError( );
+    }
 }
 
 #ifdef _PYMOL_MIN_GLUT

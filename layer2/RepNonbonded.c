@@ -264,7 +264,7 @@ Rep *RepNonbondedNew(CoordSet *cs)
       *(v++)=v1[2]+nonbonded_size;
       I->N++;
     }
-  I->V = Realloc(I->V,float,I->N*21);
+  I->V = ReallocForSure(I->V,float,I->N*21);
 
   /* now create pickable verson */
   
@@ -308,9 +308,9 @@ Rep *RepNonbondedNew(CoordSet *cs)
         *(v++)=v1[1];
         *(v++)=v1[2]+nonbonded_size;
       }
-    I->R.P = Realloc(I->R.P,Pickable,I->NP+1);
+    I->R.P = ReallocForSure(I->R.P,Pickable,I->NP+1);
     I->R.P[0].index = I->NP;
-    I->VP = Realloc(I->VP,float,I->NP*21);
+    I->VP = ReallocForSure(I->VP,float,I->NP*21);
   }
   FreeP(active);
   return((void*)(struct Rep*)I);

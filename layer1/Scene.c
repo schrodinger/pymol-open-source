@@ -1404,11 +1404,8 @@ int SceneClick(Block *block,int button,int x,int y,int mod)
         case P_GLUT_RIGHT_BUTTON:
           button = P_GLUT_DOUBLE_RIGHT;
           break;
-
       }
     }
-      
-
   }
     
   I->LastWinX = x;
@@ -1472,7 +1469,7 @@ int SceneClick(Block *block,int button,int x,int y,int mod)
     I->LastX=x;
     I->LastY=y;	 
 
-    SceneDirty();
+    /*    SceneDirty();*/
     break;
   case cButModePickAtom1:
   case cButModePickAtom:

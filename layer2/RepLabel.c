@@ -169,13 +169,13 @@ Rep *RepLabelNew(CoordSet *cs)
 
   if(I->N) 
 	 {
-		I->V=(float*)mrealloc(I->V,sizeof(float)*(v-I->V));
-		I->L=(char*)mrealloc(I->L,sizeof(char)*(l-I->L));      
+		I->V=ReallocForSure(I->V,float,(v-I->V));
+		I->L=ReallocForSure(I->L,char,(l-I->L));      
 	 }
   else
 	 {
-		I->V=(float*)mrealloc(I->V,1);
-		I->L=(char*)mrealloc(I->L,1);
+		I->V=ReallocForSure(I->V,float,1);
+		I->L=ReallocForSure(I->L,char,1);
 	 }
   return((void*)(struct Rep*)I);
 }

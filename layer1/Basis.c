@@ -824,7 +824,7 @@ int BasisHitNoShadow(BasisCallRec *BC)
                   
                   switch(prm->type) 
                   {
-                     case cPrimTriangle:
+                  case cPrimTriangle:
                   case cPrimCharacter:
                         if(!prm->cull)
                         {
@@ -1567,7 +1567,7 @@ void BasisMakeMap(CBasis *I,int *vert2prim,CPrimitive *prim,float *volume,
                                      * estimate of the actual value */
    
    /* here we have to carry out a complicated work-around in order to
-   * efficiently encode our lines into the map in a way that doesn't
+   * efficiently encode our primitives into the map in a way that doesn't
    * require expanding the map cutoff to the size of the largest object*/
    if(remapMode) 
    {
@@ -1576,32 +1576,38 @@ void BasisMakeMap(CBasis *I,int *vert2prim,CPrimitive *prim,float *volume,
          prm   = prim + vert2prim[a];
          
          switch(prm->type)
-         {
-            case cPrimTriangle:
-                  case cPrimCharacter:
-               if(a == prm->vert) { /* only do this calculation for one of the three vertices */
-                  l1   = (float)length3f(I->Precomp+I->Vert2Normal[a]*3);
-                  l2   = (float)length3f(I->Precomp+I->Vert2Normal[a]*3+3);
-                  b   = (int)ceil(l1/sep)+1;
-                  c   = (int)ceil(l2/sep)+1;
-                  extra_vert += 4*b*c;
+           {
+           case cPrimTriangle:
+           case cPrimCharacter:
+             if(a == prm->vert) { /* only do this calculation for one of the three vertices */
+               l1   = (float)length3f(I->Precomp+I->Vert2Normal[a]*3);
+               l2   = (float)length3f(I->Precomp+I->Vert2Normal[a]*3+3);
+               if((l1>=sep)||(l2>=sep)) {
+                 b   = (int)ceil(l1/sep)+1;
+                 c   = (int)ceil(l2/sep)+1;
+                 extra_vert += 4*b*c;
                }
-            break;
-            
-            case cPrimCylinder:
-            case cPrimSausage:
+             }
+             break;
+             
+           case cPrimCylinder:
+           case cPrimSausage:
+             if((prm->l1+2*prm->r1)>=sep) {
                q = ((int)(2*(floor(prm->r1/sep)+1)))+1;
                q = q * q * ((int)ceil((prm->l1+2*prm->r1)/sep)+2);
                extra_vert+= q;
-            break;
-   
-            case cPrimSphere:
+             }
+             break;
+             
+           case cPrimSphere:
+             if(prm->r1>=sep) {
                b = (int)(2*floor(prm->r1/sep)+1);
                extra_vert   += (b*b*b);
-            break;
-         }
+             }
+             break;
+           }
       }   /* for */
-   
+      
       extra_vert   += I->NVertex;
       tempVertex   = CacheAlloc(float,extra_vert*3,group_id,cCache_basis_tempVertex);
       tempRef      = CacheAlloc(int,extra_vert,group_id,cCache_basis_tempRef); 
@@ -1616,18 +1622,10 @@ void BasisMakeMap(CBasis *I,int *vert2prim,CPrimitive *prim,float *volume,
       v   = tempVertex;
       vv   = I->Vertex;
 
-#if 0
-      for(a = 0; a < n; a++)
-      {
-         *(v++)   = *(vv++);
-         *(v++)   = *(vv++);
-         *(v++)   = *(vv++);
-      }
-#else
       memcpy( v, vv, n * sizeof(float) * 3 );
       vv   += n * 3;
       v   += n * 3;
-#endif
+
       for(a = 0; a < I->NVertex; a++)
       {
          prm   = prim + vert2prim[a];
@@ -1644,51 +1642,53 @@ void BasisMakeMap(CBasis *I,int *vert2prim,CPrimitive *prim,float *volume,
                   vv   = I->Vertex + a*3;
                   l1   = (float)length3f(d1);
                   l2   = (float)length3f(d2);
-                  b   = (int)floor(l1/sep)+1;
-                  c   = (int)floor(l2/sep)+1;
-                  extra_vert += b*c;
-                  bh   = (float)(b/2)+1;
-                  ch   = (float)(c/2)+1;
-                  
-                  for(x = 0; x < bh; x++)
-                  {
-                     const float   xb   = (float)x / b;
-                     
-                     for(y = 0; y < ch; y++) 
-                     {
-                        const float   yc   = (float)y / c;
+                  if((l1>=sep)||(l2>=sep)) {
+                    b   = (int)floor(l1/sep)+1;
+                    c   = (int)floor(l2/sep)+1;
+                    extra_vert += b*c;
+                    bh   = (float)(b/2)+1;
+                    ch   = (float)(c/2)+1;
+                    
+                    for(x = 0; x < bh; x++)
+                      {
+                        const float   xb   = (float)x / b;
                         
-                        *(v++)   = vv[0] + (d1[0] * xb) + (d2[0] * yc);
-                        *(v++)   = vv[1] + (d1[1] * xb) + (d2[1] * yc);
-                        *(v++)   = vv[2] + (d1[2] * xb) + (d2[2] * yc);
+                        for(y = 0; y < ch; y++) 
+                          {
+                            const float   yc   = (float)y / c;
+                            
+                            *(v++)   = vv[0] + (d1[0] * xb) + (d2[0] * yc);
+                            *(v++)   = vv[1] + (d1[1] * xb) + (d2[1] * yc);
+                            *(v++)   = vv[2] + (d1[2] * xb) + (d2[2] * yc);
+                            
+                            tempRef[n++]   = a;
+                          }
+                      }
+                    
+                    for(x = 0; x < bh; x++)
+                      {
+                        const float   xb   = (float)x / b;
                         
-                        tempRef[n++]   = a;
-                     }
-                  }
-                      
-                  for(x = 0; x < bh; x++)
-                  {
-                     const float   xb   = (float)x / b;
-                     
-                     for(y = 0; y < ch; y++) 
-                     {
-                        const float   yc   = (float)y/c;
-                        
-                        if( (xb + yc) < _p5 )
-                        {
-                           *(v++)   = vv[0] + d1[0] * (_p5 + xb) + (d2[0]*yc);
-                           *(v++)   = vv[1] + d1[1] * (_p5 + xb) + (d2[1]*yc);
-                           *(v++)   = vv[2] + d1[2] * (_p5 + xb) + (d2[2]*yc);
-                           
-                           tempRef[n++]   = a; 
-                           
-                           *(v++)   = vv[0] + (d1[0]*xb) + d2[0]*(_p5 + yc);
-                           *(v++)   = vv[1] + (d1[1]*xb) + d2[1]*(_p5 + yc);
-                           *(v++)   = vv[2] + (d1[2]*xb) + d2[2]*(_p5 + yc);
-                           
-                           tempRef[n++] = a;
-                        }
-                     }
+                        for(y = 0; y < ch; y++) 
+                          {
+                            const float   yc   = (float)y/c;
+                            
+                            if( (xb + yc) < _p5 )
+                              {
+                                *(v++)   = vv[0] + d1[0] * (_p5 + xb) + (d2[0]*yc);
+                                *(v++)   = vv[1] + d1[1] * (_p5 + xb) + (d2[1]*yc);
+                                *(v++)   = vv[2] + d1[2] * (_p5 + xb) + (d2[2]*yc);
+                                
+                                tempRef[n++]   = a; 
+                                
+                                *(v++)   = vv[0] + (d1[0]*xb) + d2[0]*(_p5 + yc);
+                                *(v++)   = vv[1] + (d1[1]*xb) + d2[1]*(_p5 + yc);
+                                *(v++)   = vv[2] + (d1[2]*xb) + d2[2]*(_p5 + yc);
+                                
+                                tempRef[n++] = a;
+                              }
+                          }
+                      }
                   }
                }   /* if */
                break;
@@ -1696,65 +1696,69 @@ void BasisMakeMap(CBasis *I,int *vert2prim,CPrimitive *prim,float *volume,
             case cPrimCylinder:
             case cPrimSausage:
             
-               d   = I->Normal+3*I->Vert2Normal[a];
-               vv   = I->Vertex+a*3;
-            
-               get_system1f3f(d,cx,cy); /* creates an orthogonal system about d */
-               
-               p[0]   = vv[0]-d[0]*prm->r1;
-               p[1]   = vv[1]-d[1]*prm->r1;
-               p[2]   = vv[2]-d[2]*prm->r1;
-               dd[0]   = d[0]*sep;
-               dd[1]   = d[1]*sep;
-               dd[2]   = d[2]*sep;
                l   = prm->l1+2*prm->r1;
-            
-               q   = (int)floor(prm->r1 / sep) + 1;
-               
-               while(1)
-               {
-                  vd[0]   = (p[0] += dd[0]);
-                  vd[1]   = (p[1] += dd[1]);
-                  vd[2]   = (p[2] += dd[2]);
-               
-                  for(x = -q; x <= q; x++)
-                  {
-                     for(y = -q; y <= q; y++)
-                     {
-                        xs      = x*sep;
-                        ys      = y*sep;
-                        *(v++)   = vd[0] + xs*cx[0] + ys*cy[0];
-                        *(v++)   = vd[1] + xs*cx[1] + ys*cy[1];
-                        *(v++)   = vd[2] + xs*cx[2] + ys*cy[2];
 
-                        tempRef[n++]   = a;
-                     }
-                  }
+               if(l>=sep) {
+                 d   = I->Normal+3*I->Vert2Normal[a];
+                 vv   = I->Vertex+a*3;
+                 get_system1f3f(d,cx,cy); /* creates an orthogonal system about d */
+                 
+                 p[0]   = vv[0]-d[0]*prm->r1;
+                 p[1]   = vv[1]-d[1]*prm->r1;
+                 p[2]   = vv[2]-d[2]*prm->r1;
+                 dd[0]   = d[0]*sep;
+                 dd[1]   = d[1]*sep;
+                 dd[2]   = d[2]*sep;
+                 
+                 q   = (int)floor(prm->r1 / sep) + 1;
+                 
+                 while(1)
+                   {
+                     vd[0]   = (p[0] += dd[0]);
+                     vd[1]   = (p[1] += dd[1]);
+                     vd[2]   = (p[2] += dd[2]);
                      
-                  if(l <= _0)
-                     break;
-                  l   -= sep;
+                     for(x = -q; x <= q; x++)
+                       {
+                         for(y = -q; y <= q; y++)
+                           {
+                             xs      = x*sep;
+                             ys      = y*sep;
+                             *(v++)   = vd[0] + xs*cx[0] + ys*cy[0];
+                             *(v++)   = vd[1] + xs*cx[1] + ys*cy[1];
+                             *(v++)   = vd[2] + xs*cx[2] + ys*cy[2];
+                             
+                             tempRef[n++]   = a;
+                           }
+                       }
+                     
+                     if(l <= _0)
+                       break;
+                     l   -= sep;
+                   }
                }
             break;
           
             case cPrimSphere:
-               q   = (int)floor(prm->r1 / sep);
-               vv   = I->Vertex + a*3;
-            
-               for(x = -q; x <= q; x++)
-               {
-                  for(y = -q; y <= q; y++)
+              if(prm->r1>=sep) {
+                q   = (int)floor(prm->r1 / sep);
+                vv   = I->Vertex + a*3;
+                
+                for(x = -q; x <= q; x++)
                   {
-                     for( z = -q; z <= q; z++)
-                     {
-                        *(v++)   = vv[0] + x * sep;
-                        *(v++)   = vv[1] + y * sep;
-                        *(v++)   = vv[2] + z * sep;
-
-                        tempRef[n++]   = a;
-                     }
+                    for(y = -q; y <= q; y++)
+                      {
+                        for( z = -q; z <= q; z++)
+                          {
+                            *(v++)   = vv[0] + x * sep;
+                            *(v++)   = vv[1] + y * sep;
+                            *(v++)   = vv[2] + z * sep;
+                            
+                            tempRef[n++]   = a;
+                          }
+                      }
                   }
-               }
+              }
             break;
          }   /* end of switch */
       }
@@ -1838,13 +1842,7 @@ void BasisMakeMap(CBasis *I,int *vert2prim,CPrimitive *prim,float *volume,
       /* now do a filter-reassignment pass to remap fake vertices
       to the original line vertex while deleting duplicate entries */
       
-#if 0
-      ip   = tempRef;
-      for(i = 0; i < I->NVertex; i++)
-         *(ip++)   = 0; /* clear flags */
-#else
       memset( tempRef, 0, sizeof(int) * I->NVertex );
-#endif
 
       if(n_voxel < (3*n))
       {
@@ -1992,18 +1990,11 @@ void BasisMakeMap(CBasis *I,int *vert2prim,CPrimitive *prim,float *volume,
          value_p   = value;
          site_p   = site;
          
-#if 0
-         while(n_site--)
-         {
-            start   = *(site_p++);
-            *start   = *(value_p++);
-         }
-#else
          while( n_site-- )
          {
             **(site_p++)   = *(value_p++);
          }
-#endif         
+
          CacheFreeP(value,group_id,cCache_basis_value,false);
          CacheFreeP(site,group_id,cCache_basis_site,false);
       }
