@@ -229,6 +229,9 @@ void SettingClear(CSetting *I,int index)
 static void *SettingPtr(CSetting *I,int index,unsigned int size)
 {
   SettingRec *sr = I->info+index;
+  if(size<sizeof(int)) size=sizeof(int); /* make sure we're word aligned */
+  while(size&(sizeof(int)-1)) size++;
+                         
   if((!sr->offset)||(sr->max_size<size)) { 
     sr->offset=I->size;
     I->size+=size;
