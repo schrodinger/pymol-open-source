@@ -25,6 +25,7 @@ def simple(selection="(all)"):
    cmd.show("ribbon",s)
    cmd.show("lines","(byres (("+s+" & r. CYS+CYX & n. SG) & bound_to ("+s+" & r. CYS+CYX & n. SG))) & n. CA+CB+SG")
    cmd.show("sticks","(hetatm and ("+s+"))")
+   util.cnc("(hetatm and ("+s+"))")
    cmd.show("nonbonded","(hetatm and ("+s+"))")
    if polar_contacts in cmd.get_names():
       cmd.disable(polar_contacts)
