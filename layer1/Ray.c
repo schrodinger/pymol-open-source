@@ -588,6 +588,7 @@ void RayRender(CRay *I,int width,int height,unsigned int *image,float front,floa
 				  }
 
               dotgle=-r1.dotgle;
+              if(dotgle<0.0) dotgle=0.0;
               direct_cmp=(dotgle+(pow(dotgle,SettingGet(cSetting_power))))/2.0;
               
               matrix_transform33f3f(I->Basis[2].Matrix,r1.impact,r2.base);
