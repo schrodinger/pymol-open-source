@@ -343,6 +343,7 @@ static void ObjectSurfaceUpdate(ObjectSurface *I)
               if(voxelmap)
                 MapSetupExpress(voxelmap);  
             }
+
             TetsurfVolume(oms->Field,
                           ms->Level,
                           &ms->N,&ms->V,
@@ -351,7 +352,7 @@ static void ObjectSurfaceUpdate(ObjectSurface *I)
                           voxelmap,
                           ms->AtomVertex,
                           ms->CarveBuffer,
-                          ms->Side); 
+                          ms->Side);
             if(voxelmap)
               MapFree(voxelmap);
           }
@@ -411,6 +412,7 @@ static void ObjectSurfaceRender(ObjectSurface *I,int state,CRay *ray,Pickable **
               {
                 c=*(n++);
                 switch(ms->Mode) {
+                case 3:
                 case 2:
                   v+=12;
                   c-=4;
@@ -488,6 +490,7 @@ static void ObjectSurfaceRender(ObjectSurface *I,int state,CRay *ray,Pickable **
                 {
                   c=*(n++);
                   switch(ms->Mode) {
+                  case 3:
                   case 2:
                     glBegin(GL_TRIANGLE_STRIP);
                     while(c>0) {
@@ -597,7 +600,6 @@ float carve,float *vert_vla,int side)
   ObjectSurfaceState *ms;
   ObjectMapState *oms;
 
-  mode=2;
   if(!obj) {
     I=ObjectSurfaceNew();
   } else {

@@ -126,6 +126,8 @@ int ExecutiveTransformSelection(int state,char *s1,int log,float *ttt);
 int ExecutiveTranslateAtom(char *sele,float *v,int state,int mode,int log);
 void ExecutiveSelectRect(BlockRect *rect,int mode);
 int ExecutiveMapSetBorder(char *name,float level);
+int ExecutiveMapDouble(char *name,int state);
+
 int ExecutiveMultiSave(char *fname,char *name,int state,int append);
 int ExecutiveIdentifyObjects(char *s1,int mode,int **indexVLA,ObjectMolecule ***objVLA);
 int ExecutiveCombineObjectTTT(char *name,float *ttt);

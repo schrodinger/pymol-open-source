@@ -60,6 +60,7 @@ if __name__=='pymol.importing':
       phi = 27      # Delphi/Grasp
       fld = 28      # AVS field format (not yet general -- just uniform allowed)
       brix = 29     # BRIX/DSN6/O map format
+      grd = 30      # Insight II Grid format
       
    loadable_sc = Shortcut(loadable.__dict__.keys()) 
 
@@ -403,6 +404,8 @@ SEE ALSO
                ftype = loadable.fld
             elif re.search("\.o$|\.brix$|\.omap$",filename,re.I):
                ftype = loadable.brix
+            elif re.search("\.grd$",filename,re.I):
+               ftype = loadable.grd
             else:
                ftype = loadable.pdb # default is PDB
          elif cmd.is_string(type):

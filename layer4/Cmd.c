@@ -14,7 +14,6 @@ I* Additional authors of this source file include:
 Z* -------------------------------------------------------------------
 */
 
-
 /* 
    NOTICE:
 
@@ -100,6 +99,7 @@ Z* -------------------------------------------------------------------
 #define cLoadTypePHIMap 27
 #define cLoadTypeFLDMap 28
 #define cLoadTypeBRIXMap 29
+#define cLoadTypeGRDMap 30
 
 #define tmpSele "_tmp"
 #define tmpSele1 "_tmp1"
@@ -196,378 +196,6 @@ static PyObject *APIAutoNone(PyObject *result) /* automatically own Py_None */
   } 
   return(result);
 }
-
-
-
-static PyObject *CmdAccept(PyObject *self, 	PyObject *args);
-static PyObject *CmdAlign(PyObject *self,   PyObject *args);
-static PyObject *CmdAlter(PyObject *self,   PyObject *args);
-static PyObject *CmdAlterState(PyObject *self,   PyObject *args);
-static PyObject *CmdAttach(PyObject *self, 	PyObject *args);
-static PyObject *CmdBackgroundColor(PyObject *dummy, PyObject *args);
-static PyObject *CmdBond(PyObject *dummy, PyObject *args);
-static PyObject *CmdButton(PyObject *dummy, PyObject *args);
-static PyObject *CmdCartoon(PyObject *self, 	PyObject *args);
-static PyObject *CmdCenter(PyObject *self, PyObject *args);
-static PyObject *CmdClip(PyObject *self, 	PyObject *args);
-static PyObject *CmdCls(PyObject *self, 	PyObject *args);
-static PyObject *CmdColor(PyObject *self, PyObject *args);
-static PyObject *CmdColorDef(PyObject *self, 	PyObject *args);
-static PyObject *CmdCombineObjectTTT(PyObject *self, 	PyObject *args);
-static PyObject *CmdCopy(PyObject *self, PyObject *args);
-static PyObject *CmdCountStates(PyObject *self, PyObject *args);
-static PyObject *CmdCountFrames(PyObject *self, PyObject *args);
-static PyObject *CmdCreate(PyObject *self, PyObject *args);
-static PyObject *CmdCycleValence(PyObject *self, PyObject *args);
-static PyObject *CmdDebug(PyObject *self, PyObject *args);
-static PyObject *CmdDecline(PyObject *self, 	PyObject *args);
-static PyObject *CmdDelete(PyObject *self, PyObject *args);
-static PyObject *CmdDelColorection(PyObject *self,   PyObject *args);
-static PyObject *CmdDirty(PyObject *self, 	PyObject *args);
-static PyObject *CmdDist(PyObject *dummy, PyObject *args);
-static PyObject *CmdDistance(PyObject *dummy, PyObject *args);
-static PyObject *CmdDo(PyObject *self, 	PyObject *args);
-static PyObject *CmdDump(PyObject *self, 	PyObject *args);
-static PyObject *CmdEdit(PyObject *self, 	PyObject *args);
-static PyObject *CmdTorsion(PyObject *self, PyObject *args);
-static PyObject *CmdExportDots(PyObject *self, PyObject *args);
-static PyObject *CmdFeedback(PyObject *dummy, PyObject *args);
-static PyObject *CmdFindPairs(PyObject *dummy, PyObject *args);
-static PyObject *CmdFit(PyObject *dummy, PyObject *args);
-static PyObject *CmdFitPairs(PyObject *dummy, PyObject *args);
-static PyObject *CmdFlag(PyObject *self, 	PyObject *args);
-static PyObject *CmdFlushNow(PyObject *self, 	PyObject *args);
-static PyObject *CmdFocus(PyObject *self, 	PyObject *args);
-static PyObject *CmdFullScreen(PyObject *self,PyObject *args);
-static PyObject *CmdFuse(PyObject *self, 	PyObject *args);
-static PyObject *CmdHAdd(PyObject *self, PyObject *args);
-static PyObject *CmdIdentify(PyObject *dummy, PyObject *args);
-static PyObject *CmdIndex(PyObject *dummy, PyObject *args);
-static PyObject *CmdReinitialize(PyObject *dummy, PyObject *args);
-static PyObject *CmdIntraFit(PyObject *dummy, PyObject *args);
-static PyObject *CmdInvert(PyObject *self, PyObject *args);
-static PyObject *CmdIsolevel(PyObject *self, 	PyObject *args);
-static PyObject *CmdIsomesh(PyObject *self, 	PyObject *args);
-static PyObject *CmdIsosurface(PyObject *self, 	PyObject *args);
-static PyObject *CmdFinishObject(PyObject *self, PyObject *args);
-static PyObject *CmdFrame(PyObject *self, PyObject *args);
-static PyObject *CmdGet(PyObject *self, 	PyObject *args);
-static PyObject *CmdGetArea(PyObject *self, 	PyObject *args);
-static PyObject *CmdGetBondPrint(PyObject *self,PyObject *args);
-static PyObject *CmdGetChains(PyObject *self, 	PyObject *args);
-static PyObject *CmdGetColor(PyObject *self, 	PyObject *args);
-static PyObject *CmdGetColorection(PyObject *self,   PyObject *args);
-static PyObject *CmdGetDihe(PyObject *self, 	PyObject *args);
-static PyObject *CmdGetFeedback(PyObject *dummy, PyObject *args);
-static PyObject *CmdGetFrame(PyObject *self, 	PyObject *args);
-static PyObject *CmdSetGeometry(PyObject *self, 	PyObject *args);
-static PyObject *CmdGetPDB(PyObject *dummy, PyObject *args);
-static PyObject *CmdGetMatrix(PyObject *self, 	PyObject *args);
-static PyObject *CmdGetMinMax(PyObject *self, 	PyObject *args);
-static PyObject *CmdGetModel(PyObject *dummy, PyObject *args);
-static PyObject *CmdGetMoment(PyObject *self, 	PyObject *args);
-static PyObject *CmdGetMovieLocked(PyObject *self, 	PyObject *args);
-static PyObject *CmdGetNames(PyObject *self, 	PyObject *args);
-static PyObject *CmdGetPhiPsi(PyObject *self, 	PyObject *args);
-static PyObject *CmdGetPosition(PyObject *self, 	PyObject *args);
-static PyObject *CmdGetPovRay(PyObject *dummy, PyObject *args);
-static PyObject *CmdGetRenderer(PyObject *self,  PyObject *args);
-static PyObject *CmdGetSession(PyObject *self, 	PyObject *args);
-static PyObject *CmdGetSetting(PyObject *self, 	PyObject *args);
-static PyObject *CmdGetSettingText(PyObject *self, 	PyObject *args);
-static PyObject *CmdGetSettingTuple(PyObject *self, 	PyObject *args);
-static PyObject *CmdGetSettingUpdates(PyObject *self, 	PyObject *args);
-static PyObject *CmdGetState(PyObject *self, 	PyObject *args);
-static PyObject *CmdGetType(PyObject *self, 	PyObject *args);
-static PyObject *CmdGetWizard(PyObject *self, PyObject *args);
-static PyObject *CmdGetWizardStack(PyObject *self, PyObject *args);
-static PyObject *CmdGetView(PyObject *self, 	PyObject *args);
-static PyObject *CmdGetVis(PyObject *self, 	PyObject *args);
-static PyObject *CmdGLDeleteLists(PyObject *self, PyObject *args);
-static PyObject *CmdMask(PyObject *self, PyObject *args);
-static PyObject *CmdMDump(PyObject *self, PyObject *args);
-static PyObject *CmdMem(PyObject *self, 	PyObject *args);
-static PyObject *CmdLabel(PyObject *self,   PyObject *args);
-static PyObject *CmdLoad(PyObject *self, 	PyObject *args);
-static PyObject *CmdLoadColorTable(PyObject *self, 	PyObject *args);
-static PyObject *CmdLoadCoords(PyObject *self, PyObject *args);
-static PyObject *CmdLoadObject(PyObject *self, PyObject *args);
-static PyObject *CmdLoadPNG(PyObject *self, PyObject *args);
-static PyObject *CmdLoadTraj(PyObject *self, 	PyObject *args);
-static PyObject *CmdMapNew(PyObject *self, 	PyObject *args);
-static PyObject *CmdMapSetBorder(PyObject *self, 	PyObject *args);
-static PyObject *CmdMClear(PyObject *self, 	PyObject *args);
-static PyObject *CmdMDo(PyObject *self, 	PyObject *args);
-static PyObject *CmdMMatrix(PyObject *self, 	PyObject *args);
-static PyObject *CmdMove(PyObject *self, 	PyObject *args);
-static PyObject *CmdMPlay(PyObject *self, 	PyObject *args);
-static PyObject *CmdMPNG(PyObject *self, 	PyObject *args);
-static PyObject *CmdMSet(PyObject *self, 	PyObject *args);
-static PyObject *CmdMultiSave(PyObject *self, 	PyObject *args);
-static PyObject *CmdExportCoords(PyObject *self, 	PyObject *args);
-static PyObject *CmdImportCoords(PyObject *self, 	PyObject *args);
-static PyObject *CmdOrigin(PyObject *self, PyObject *args);
-static PyObject *CmdOnOff(PyObject *self, 	PyObject *args);
-static PyObject *CmdOrient(PyObject *dummy, PyObject *args);
-static PyObject *CmdOverlap(PyObject *self, 	PyObject *args);
-static PyObject *CmdPaste(PyObject *self, 	PyObject *args);
-static PyObject *CmdPGlutEvent(PyObject *self,   PyObject *args);
-static PyObject *CmdPGlutGetRedisplay(PyObject *self, PyObject *args);
-static PyObject *CmdPNG(PyObject *self, 	PyObject *args);
-static PyObject *CmdProtect(PyObject *self, PyObject *args);
-static PyObject *CmdQuit(PyObject *self, 	PyObject *args);
-static PyObject *CmdRay(PyObject *self, 	PyObject *args);
-static PyObject *CmdRayTraceThread(PyObject *self, 	PyObject *args);
-static PyObject *CmdRayHashThread(PyObject *self, 	PyObject *args);
-static PyObject *CmdRayAntiThread(PyObject *self, 	PyObject *args);
-static PyObject *CmdRampMapNew(PyObject *self, 	PyObject *args);
-static PyObject *CmdRebuild(PyObject *self, PyObject *args);
-static PyObject *CmdRecolor(PyObject *self, PyObject *args);
-static PyObject *CmdHFill(PyObject *self, PyObject *args);
-static PyObject *CmdRemove(PyObject *self, PyObject *args);
-static PyObject *CmdRemovePicked(PyObject *self, PyObject *args);
-static PyObject *CmdRename(PyObject *self, 	PyObject *args);
-static PyObject *CmdReplace(PyObject *self, PyObject *args);
-static PyObject *CmdReset(PyObject *self, PyObject *args);
-static PyObject *CmdResetRate(PyObject *dummy, PyObject *args);
-static PyObject *CmdRefresh(PyObject *self, 	PyObject *args);
-static PyObject *CmdRefreshNow(PyObject *self, 	PyObject *args);
-static PyObject *CmdReady(PyObject *dummy, PyObject *args);
-static PyObject *CmdRock(PyObject *self, PyObject *args);
-static PyObject *CmdRunPyMOL(PyObject *dummy, PyObject *args);
-static PyObject *CmdRunWXPyMOL(PyObject *dummy, PyObject *args);
-static PyObject *CmdSculptPurge(PyObject *self, PyObject *args);
-static PyObject *CmdSculptDeactivate(PyObject *self, PyObject *args);
-static PyObject *CmdSculptActivate(PyObject *self, PyObject *args);
-static PyObject *CmdSculptIterate(PyObject *self, PyObject *args);
-static PyObject *CmdSelect(PyObject *self, PyObject *args);
-static PyObject *CmdSet(PyObject *self, 	PyObject *args);
-static PyObject *CmdLegacySet(PyObject *self, 	PyObject *args);
-static PyObject *CmdSetColorection(PyObject *self,   PyObject *args);
-static PyObject *CmdSetDihe(PyObject *self, 	PyObject *args);
-static PyObject *CmdSetFeedbackMask(PyObject *dummy, PyObject *args);
-static PyObject *CmdSetFrame(PyObject *self, PyObject *args);
-static PyObject *CmdSetMatrix(PyObject *self, 	PyObject *args);
-static PyObject *CmdSetSession(PyObject *self, 	PyObject *args);
-static PyObject *CmdSetTitle(PyObject *self, PyObject *args);
-static PyObject *CmdGetTitle(PyObject *self, PyObject *args);
-static PyObject *CmdSetView(PyObject *self, 	PyObject *args);
-static PyObject *CmdSetWizard(PyObject *self, PyObject *args);
-static PyObject *CmdSetWizardStack(PyObject *self, PyObject *args);
-static PyObject *CmdSetCrystal(PyObject *self, PyObject *args);
-static PyObject *CmdRefreshWizard(PyObject *dummy, PyObject *args);
-static PyObject *CmdSetVis(PyObject *self, 	PyObject *args);
-static PyObject *CmdShowHide(PyObject *self, 	PyObject *args);
-static PyObject *CmdSmooth(PyObject *self,PyObject *args);
-static PyObject *CmdSort(PyObject *dummy, PyObject *args);
-static PyObject *CmdSpectrum(PyObject *dummy, PyObject *args);
-static PyObject *CmdSplash(PyObject *dummy, PyObject *args);
-static PyObject *CmdSpheroid(PyObject *dummy, PyObject *args);
-static PyObject *CmdStereo(PyObject *self, PyObject *args);
-static PyObject *CmdSystem(PyObject *dummy, PyObject *args);
-static PyObject *CmdSymExp(PyObject *dummy, PyObject *args);
-static PyObject *CmdTest(PyObject *self, 	PyObject *args);
-static PyObject *CmdTransformObject(PyObject *self, 	PyObject *args);
-static PyObject *CmdTransformSelection(PyObject *self, 	PyObject *args);
-static PyObject *CmdTranslateAtom(PyObject *self, PyObject *args);
-static PyObject *CmdTurn(PyObject *self, 	PyObject *args);
-static PyObject *CmdViewport(PyObject *self, 	PyObject *args);
-static PyObject *CmdZoom(PyObject *self, PyObject *args);
-static PyObject *CmdUnset(PyObject *self, 	PyObject *args);
-static PyObject *CmdUnpick(PyObject *dummy, PyObject *args);
-static PyObject *CmdUpdate(PyObject *dummy, PyObject *args);
-static PyObject *CmdWaitQueue(PyObject *self, 	PyObject *args);
-static PyObject *CmdUndo(PyObject *self, 	PyObject *args);
-static PyObject *CmdPushUndo(PyObject *self, 	PyObject *args);
-
-static PyMethodDef Cmd_methods[] = {
-	{"accept",	              CmdAccept,               METH_VARARGS },
-	{"align",	              CmdAlign,                METH_VARARGS },
-	{"alter",	              CmdAlter,                METH_VARARGS },
-	{"alter_state",           CmdAlterState,           METH_VARARGS },
-	{"attach",                CmdAttach,               METH_VARARGS },
-   {"bg_color",              CmdBackgroundColor,      METH_VARARGS },
-	{"bond",                  CmdBond,                 METH_VARARGS },
-   {"button",                CmdButton,               METH_VARARGS },
-   {"cartoon",               CmdCartoon,              METH_VARARGS },
-   {"center",                CmdCenter,               METH_VARARGS },
-	{"clip",	                 CmdClip,                 METH_VARARGS },
-	{"cls",	                 CmdCls,                  METH_VARARGS },
-	{"color",	              CmdColor,                METH_VARARGS },
-	{"colordef",	           CmdColorDef,             METH_VARARGS },
-   {"combine_object_ttt",    CmdCombineObjectTTT,     METH_VARARGS },
-	{"copy",                  CmdCopy,                 METH_VARARGS },
-	{"create",                CmdCreate,               METH_VARARGS },
-	{"count_states",          CmdCountStates,          METH_VARARGS },
-	{"count_frames",          CmdCountFrames,          METH_VARARGS },
-	{"cycle_valence",         CmdCycleValence,         METH_VARARGS },
-   {"debug",                 CmdDebug,                METH_VARARGS },
-   {"decline",               CmdDecline,              METH_VARARGS },
-   {"del_colorection",       CmdDelColorection,       METH_VARARGS },   
-   {"gl_delete_lists",       CmdGLDeleteLists,        METH_VARARGS },
-	{"delete",                CmdDelete,               METH_VARARGS },
-	{"dirty",                 CmdDirty,                METH_VARARGS },
-	{"distance",	           CmdDistance,             METH_VARARGS },
-	{"dist",    	           CmdDist,                 METH_VARARGS },
-	{"do",	                 CmdDo,                   METH_VARARGS },
-	{"dump",	                 CmdDump,                 METH_VARARGS },
-   {"edit",                  CmdEdit,                 METH_VARARGS },
-   {"torsion",               CmdTorsion,              METH_VARARGS },
-	{"export_dots",           CmdExportDots,           METH_VARARGS },
-	{"export_coords",         CmdExportCoords,         METH_VARARGS },
-	{"feedback",              CmdFeedback,             METH_VARARGS },
-	{"find_pairs",            CmdFindPairs,            METH_VARARGS },
-	{"finish_object",         CmdFinishObject,         METH_VARARGS },
-	{"fit",                   CmdFit,                  METH_VARARGS },
-	{"fit_pairs",             CmdFitPairs,             METH_VARARGS },
-	{"flag",                  CmdFlag,                 METH_VARARGS },
-	{"frame",	              CmdFrame,                METH_VARARGS },
-   {"flush_now",             CmdFlushNow,             METH_VARARGS },
-   {"focus",                 CmdFocus,                METH_VARARGS },
-   {"delete_colorection",    CmdDelColorection,       METH_VARARGS },   
-   {"full_screen",           CmdFullScreen,           METH_VARARGS },
-   {"fuse",                  CmdFuse,                 METH_VARARGS },
-	{"get",	                 CmdGet,                  METH_VARARGS },
-	{"get_area",              CmdGetArea,              METH_VARARGS },
-   {"get_bond_print",        CmdGetBondPrint,         METH_VARARGS },
-	{"get_chains",            CmdGetChains,            METH_VARARGS },
-	{"get_color",             CmdGetColor,             METH_VARARGS },
-   {"get_colorection",       CmdGetColorection,       METH_VARARGS },   
-	{"get_dihe",              CmdGetDihe,              METH_VARARGS },
-	{"get_frame",             CmdGetFrame,             METH_VARARGS },
-	{"get_feedback",          CmdGetFeedback,          METH_VARARGS },
-	{"get_matrix",	           CmdGetMatrix,            METH_VARARGS },
-	{"get_min_max",           CmdGetMinMax,            METH_VARARGS },
-	{"get_model",	           CmdGetModel,             METH_VARARGS },
-	{"get_moment",	           CmdGetMoment,            METH_VARARGS },
-   {"get_movie_locked",      CmdGetMovieLocked,       METH_VARARGS },
-   {"get_names",             CmdGetNames,             METH_VARARGS },
-	{"get_position",	        CmdGetPosition,          METH_VARARGS },
-	{"get_povray",	           CmdGetPovRay,            METH_VARARGS },
-	{"get_pdb",	              CmdGetPDB,               METH_VARARGS },
-   {"get_phipsi",            CmdGetPhiPsi,            METH_VARARGS },
-   {"get_renderer",          CmdGetRenderer,          METH_VARARGS },
-   {"get_session",           CmdGetSession,           METH_VARARGS },
-	{"get_setting",           CmdGetSetting,           METH_VARARGS },
-	{"get_setting_tuple",     CmdGetSettingTuple,      METH_VARARGS },
-	{"get_setting_text",      CmdGetSettingText,       METH_VARARGS },
-   {"get_setting_updates",   CmdGetSettingUpdates,    METH_VARARGS },
-	{"get_state",             CmdGetState,             METH_VARARGS },
-   {"get_title",             CmdGetTitle,             METH_VARARGS },
-	{"get_type",              CmdGetType,              METH_VARARGS },
-   {"get_view",              CmdGetView,              METH_VARARGS },
-   {"get_vis",               CmdGetVis,               METH_VARARGS },
-   {"get_wizard",            CmdGetWizard,            METH_VARARGS },
-   {"get_wizard_stack",      CmdGetWizardStack,       METH_VARARGS },
-	{"h_add",                 CmdHAdd,                 METH_VARARGS },
-	{"h_fill",                CmdHFill,                METH_VARARGS },
-   {"identify",              CmdIdentify,             METH_VARARGS },
-	{"import_coords",         CmdImportCoords,         METH_VARARGS },
-   {"index",                 CmdIndex,                METH_VARARGS },
-	{"intrafit",              CmdIntraFit,             METH_VARARGS },
-   {"invert",                CmdInvert,               METH_VARARGS },
-	{"isolevel",              CmdIsolevel,             METH_VARARGS },
-	{"isomesh",	              CmdIsomesh,              METH_VARARGS },
-	{"isosurface",	           CmdIsosurface,           METH_VARARGS },
-   {"wait_queue",            CmdWaitQueue,            METH_VARARGS },
-   {"label",                 CmdLabel,                METH_VARARGS },
-	{"load",	                 CmdLoad,                 METH_VARARGS },
-	{"load_color_table",	     CmdLoadColorTable,       METH_VARARGS },
-	{"load_coords",           CmdLoadCoords,           METH_VARARGS },
-	{"load_png",              CmdLoadPNG,              METH_VARARGS },
-	{"load_object",           CmdLoadObject,           METH_VARARGS },
-	{"load_traj",             CmdLoadTraj,             METH_VARARGS },
-   {"map_new",               CmdMapNew,               METH_VARARGS },
-   {"map_set_border",        CmdMapSetBorder,         METH_VARARGS },
-	{"mask",	                 CmdMask,                 METH_VARARGS },
-	{"mclear",	              CmdMClear,               METH_VARARGS },
-	{"mdo",	                 CmdMDo,                  METH_VARARGS },
-	{"mdump",	              CmdMDump,                METH_VARARGS },
-	{"mem",	                 CmdMem,                  METH_VARARGS },
-	{"move",	                 CmdMove,                 METH_VARARGS },
-	{"mset",	                 CmdMSet,                 METH_VARARGS },
-	{"mplay",	              CmdMPlay,                METH_VARARGS },
-	{"mpng_",	              CmdMPNG,                 METH_VARARGS },
-	{"mmatrix",	              CmdMMatrix,              METH_VARARGS },
-	{"multisave",             CmdMultiSave,            METH_VARARGS },
-	{"origin",	              CmdOrigin,               METH_VARARGS },
-	{"orient",	              CmdOrient,               METH_VARARGS },
-	{"onoff",                 CmdOnOff,                METH_VARARGS },
-	{"overlap",               CmdOverlap,              METH_VARARGS },
-	{"p_glut_event",          CmdPGlutEvent,           METH_VARARGS },
-   {"p_glut_get_redisplay",  CmdPGlutGetRedisplay,    METH_VARARGS },
-	{"paste",	              CmdPaste,                METH_VARARGS },
-	{"png",	                 CmdPNG,                  METH_VARARGS },
-	{"protect",	              CmdProtect,              METH_VARARGS },
-	{"push_undo",	           CmdPushUndo,             METH_VARARGS },
-	{"quit",	                 CmdQuit,                 METH_VARARGS },
-   {"ray_trace_thread",      CmdRayTraceThread,       METH_VARARGS },
-   {"ray_hash_thread",       CmdRayHashThread,        METH_VARARGS },
-   {"ray_anti_thread",       CmdRayAntiThread,        METH_VARARGS },
-   {"ramp_new",              CmdRampMapNew,           METH_VARARGS },
-	{"ready",                 CmdReady,                METH_VARARGS },
-   {"rebuild",               CmdRebuild,              METH_VARARGS },
-   {"recolor",               CmdRecolor,              METH_VARARGS },
-	{"refresh",               CmdRefresh,              METH_VARARGS },
-	{"refresh_now",           CmdRefreshNow,           METH_VARARGS },
-	{"refresh_wizard",        CmdRefreshWizard,        METH_VARARGS },
-	{"remove",	              CmdRemove,               METH_VARARGS },
-	{"remove_picked",         CmdRemovePicked,         METH_VARARGS },
-	{"render",	              CmdRay,                  METH_VARARGS },
-   {"rename",                CmdRename,               METH_VARARGS },
-   {"replace",               CmdReplace,              METH_VARARGS },
-   {"reinitialize",          CmdReinitialize,         METH_VARARGS },
-	{"reset",                 CmdReset,                METH_VARARGS },
-	{"reset_rate",	           CmdResetRate,            METH_VARARGS },
-	{"rock",	                 CmdRock,                 METH_VARARGS },
-	{"runpymol",	           CmdRunPyMOL,             METH_VARARGS },
-	{"runwxpymol",	           CmdRunWXPyMOL,           METH_VARARGS },
-	{"select",                CmdSelect,               METH_VARARGS },
-	{"set",	                 CmdSet,                  METH_VARARGS },
-	{"legacy_set",            CmdLegacySet,            METH_VARARGS },
-
-	{"sculpt_deactivate",     CmdSculptDeactivate,     METH_VARARGS },
-	{"sculpt_activate",       CmdSculptActivate,       METH_VARARGS },
-	{"sculpt_iterate",        CmdSculptIterate,        METH_VARARGS },
-	{"sculpt_purge",          CmdSculptPurge,          METH_VARARGS },
-   {"set_colorection",       CmdSetColorection,       METH_VARARGS },   
-	{"set_dihe",              CmdSetDihe,              METH_VARARGS },
-	{"set_dihe",              CmdSetDihe,              METH_VARARGS },
-
-	{"set_dihe",              CmdSetDihe,              METH_VARARGS },
-	{"set_feedback",          CmdSetFeedbackMask,      METH_VARARGS },
-   {"set_geometry",          CmdSetGeometry,          METH_VARARGS },
-   {"set_session",           CmdSetSession,           METH_VARARGS },
-   {"set_symmetry",          CmdSetCrystal,           METH_VARARGS },
-	{"set_title",             CmdSetTitle,             METH_VARARGS },
-	{"set_wizard",            CmdSetWizard,            METH_VARARGS },
-	{"set_wizard_stack",      CmdSetWizardStack,       METH_VARARGS },
-   {"set_view",              CmdSetView,              METH_VARARGS },
-   {"set_vis",               CmdSetVis,               METH_VARARGS },
-	{"setframe",	           CmdSetFrame,             METH_VARARGS },
-	{"showhide",              CmdShowHide,             METH_VARARGS },
-	{"set_matrix",	           CmdSetMatrix,            METH_VARARGS },
-	{"smooth",	              CmdSmooth,               METH_VARARGS },
-	{"sort",                  CmdSort,                 METH_VARARGS },
-   {"spectrum",              CmdSpectrum,             METH_VARARGS },
-   {"spheroid",              CmdSpheroid,             METH_VARARGS },
-	{"splash",                CmdSplash,               METH_VARARGS },
-	{"stereo",	              CmdStereo,               METH_VARARGS },
-	{"system",	              CmdSystem,               METH_VARARGS },
-	{"symexp",	              CmdSymExp,               METH_VARARGS },
-	{"test",	                 CmdTest,                 METH_VARARGS },
-	{"transform_object",      CmdTransformObject,      METH_VARARGS },
-	{"transform_selection",   CmdTransformSelection,   METH_VARARGS },
-	{"translate_atom",        CmdTranslateAtom,        METH_VARARGS },
-	{"turn",	                 CmdTurn,                 METH_VARARGS },
-	{"viewport",              CmdViewport,             METH_VARARGS },
-	{"undo",                  CmdUndo,                 METH_VARARGS },
-	{"unpick",                CmdUnpick,               METH_VARARGS },
-	{"unset",                 CmdUnset,                METH_VARARGS },
-	{"update",                CmdUpdate,               METH_VARARGS },
-	{"zoom",	                 CmdZoom,                 METH_VARARGS },
-	{NULL,		              NULL}     /* sentinel */        
-};
 
 static PyObject *CmdGLDeleteLists(PyObject *self, PyObject *args)
 {
@@ -1150,6 +778,20 @@ static PyObject *CmdMapSetBorder(PyObject *self, PyObject *args)
   if(ok) {
     APIEntry();
     ok = ExecutiveMapSetBorder(name,level);
+    APIExit();
+  }
+  return(APIStatus(ok));
+}
+
+static PyObject *CmdMapDouble(PyObject *self, PyObject *args)
+{
+  char *name;
+  int state;
+  int ok = false;
+  ok = PyArg_ParseTuple(args,"si",&name,&state);
+  if(ok) {
+    APIEntry();
+    ok = ExecutiveMapDouble(name,state);
     APIExit();
   }
   return(APIStatus(ok));
@@ -3908,6 +3550,7 @@ static PyObject *CmdLoad(PyObject *self, PyObject *args)
       case cLoadTypeXPLORMap:
       case cLoadTypeCCP4Map:
       case cLoadTypeFLDMap:
+      case cLoadTypeGRDMap:
         new_type = cObjectMap;
         break;
       case cLoadTypeCallback:
@@ -4246,6 +3889,21 @@ static PyObject *CmdLoad(PyObject *self, PyObject *args)
         }
       } else {
         ObjectMapLoadFLDFile((ObjectMap*)origObj,fname,frame);
+        sprintf(buf," CmdLoad: \"%s\" appended into object \"%s\".\n",
+                fname,oname);
+      }
+      break;
+    case cLoadTypeGRDMap:
+      PRINTFD(FB_CCmd) " CmdLoad-DEBUG: loading GRD Map\n" ENDFD;
+      if(!origObj) {
+        obj=(CObject*)ObjectMapLoadGRDFile(NULL,fname,frame);
+        if(obj) {
+          ObjectSetName(obj,oname);
+          ExecutiveManageObject((CObject*)obj,true,false);
+          sprintf(buf," CmdLoad: \"%s\" loaded into object \"%s\".\n",fname,oname);
+        }
+      } else {
+        ObjectMapLoadGRDFile((ObjectMap*)origObj,fname,frame);
         sprintf(buf," CmdLoad: \"%s\" appended into object \"%s\".\n",
                 fname,oname);
       }
@@ -4650,6 +4308,197 @@ static PyObject *CmdRename(PyObject *self, 	PyObject *args)
   }
   return(APIStatus(ok));  
 }
+
+static PyMethodDef Cmd_methods[] = {
+	{"accept",	              CmdAccept,               METH_VARARGS },
+	{"align",	              CmdAlign,                METH_VARARGS },
+	{"alter",	              CmdAlter,                METH_VARARGS },
+	{"alter_state",           CmdAlterState,           METH_VARARGS },
+	{"attach",                CmdAttach,               METH_VARARGS },
+   {"bg_color",              CmdBackgroundColor,      METH_VARARGS },
+	{"bond",                  CmdBond,                 METH_VARARGS },
+   {"button",                CmdButton,               METH_VARARGS },
+   {"cartoon",               CmdCartoon,              METH_VARARGS },
+   {"center",                CmdCenter,               METH_VARARGS },
+	{"clip",	                 CmdClip,                 METH_VARARGS },
+	{"cls",	                 CmdCls,                  METH_VARARGS },
+	{"color",	              CmdColor,                METH_VARARGS },
+	{"colordef",	           CmdColorDef,             METH_VARARGS },
+   {"combine_object_ttt",    CmdCombineObjectTTT,     METH_VARARGS },
+	{"copy",                  CmdCopy,                 METH_VARARGS },
+	{"create",                CmdCreate,               METH_VARARGS },
+	{"count_states",          CmdCountStates,          METH_VARARGS },
+	{"count_frames",          CmdCountFrames,          METH_VARARGS },
+	{"cycle_valence",         CmdCycleValence,         METH_VARARGS },
+   {"debug",                 CmdDebug,                METH_VARARGS },
+   {"decline",               CmdDecline,              METH_VARARGS },
+   {"del_colorection",       CmdDelColorection,       METH_VARARGS },   
+   {"gl_delete_lists",       CmdGLDeleteLists,        METH_VARARGS },
+	{"delete",                CmdDelete,               METH_VARARGS },
+	{"dirty",                 CmdDirty,                METH_VARARGS },
+	{"distance",	           CmdDistance,             METH_VARARGS },
+	{"dist",    	           CmdDist,                 METH_VARARGS },
+	{"do",	                 CmdDo,                   METH_VARARGS },
+	{"dump",	                 CmdDump,                 METH_VARARGS },
+   {"edit",                  CmdEdit,                 METH_VARARGS },
+   {"torsion",               CmdTorsion,              METH_VARARGS },
+	{"export_dots",           CmdExportDots,           METH_VARARGS },
+	{"export_coords",         CmdExportCoords,         METH_VARARGS },
+	{"feedback",              CmdFeedback,             METH_VARARGS },
+	{"find_pairs",            CmdFindPairs,            METH_VARARGS },
+	{"finish_object",         CmdFinishObject,         METH_VARARGS },
+	{"fit",                   CmdFit,                  METH_VARARGS },
+	{"fit_pairs",             CmdFitPairs,             METH_VARARGS },
+	{"flag",                  CmdFlag,                 METH_VARARGS },
+	{"frame",	              CmdFrame,                METH_VARARGS },
+   {"flush_now",             CmdFlushNow,             METH_VARARGS },
+   {"focus",                 CmdFocus,                METH_VARARGS },
+   {"delete_colorection",    CmdDelColorection,       METH_VARARGS },   
+   {"full_screen",           CmdFullScreen,           METH_VARARGS },
+   {"fuse",                  CmdFuse,                 METH_VARARGS },
+	{"get",	                 CmdGet,                  METH_VARARGS },
+	{"get_area",              CmdGetArea,              METH_VARARGS },
+   {"get_bond_print",        CmdGetBondPrint,         METH_VARARGS },
+	{"get_chains",            CmdGetChains,            METH_VARARGS },
+	{"get_color",             CmdGetColor,             METH_VARARGS },
+   {"get_colorection",       CmdGetColorection,       METH_VARARGS },   
+	{"get_dihe",              CmdGetDihe,              METH_VARARGS },
+	{"get_frame",             CmdGetFrame,             METH_VARARGS },
+	{"get_feedback",          CmdGetFeedback,          METH_VARARGS },
+	{"get_matrix",	           CmdGetMatrix,            METH_VARARGS },
+	{"get_min_max",           CmdGetMinMax,            METH_VARARGS },
+	{"get_model",	           CmdGetModel,             METH_VARARGS },
+	{"get_moment",	           CmdGetMoment,            METH_VARARGS },
+   {"get_movie_locked",      CmdGetMovieLocked,       METH_VARARGS },
+   {"get_names",             CmdGetNames,             METH_VARARGS },
+	{"get_position",	        CmdGetPosition,          METH_VARARGS },
+	{"get_povray",	           CmdGetPovRay,            METH_VARARGS },
+	{"get_pdb",	              CmdGetPDB,               METH_VARARGS },
+   {"get_phipsi",            CmdGetPhiPsi,            METH_VARARGS },
+   {"get_renderer",          CmdGetRenderer,          METH_VARARGS },
+   {"get_session",           CmdGetSession,           METH_VARARGS },
+	{"get_setting",           CmdGetSetting,           METH_VARARGS },
+	{"get_setting_tuple",     CmdGetSettingTuple,      METH_VARARGS },
+	{"get_setting_text",      CmdGetSettingText,       METH_VARARGS },
+   {"get_setting_updates",   CmdGetSettingUpdates,    METH_VARARGS },
+	{"get_state",             CmdGetState,             METH_VARARGS },
+   {"get_title",             CmdGetTitle,             METH_VARARGS },
+	{"get_type",              CmdGetType,              METH_VARARGS },
+   {"get_view",              CmdGetView,              METH_VARARGS },
+   {"get_vis",               CmdGetVis,               METH_VARARGS },
+   {"get_wizard",            CmdGetWizard,            METH_VARARGS },
+   {"get_wizard_stack",      CmdGetWizardStack,       METH_VARARGS },
+	{"h_add",                 CmdHAdd,                 METH_VARARGS },
+	{"h_fill",                CmdHFill,                METH_VARARGS },
+   {"identify",              CmdIdentify,             METH_VARARGS },
+	{"import_coords",         CmdImportCoords,         METH_VARARGS },
+   {"index",                 CmdIndex,                METH_VARARGS },
+	{"intrafit",              CmdIntraFit,             METH_VARARGS },
+   {"invert",                CmdInvert,               METH_VARARGS },
+	{"isolevel",              CmdIsolevel,             METH_VARARGS },
+	{"isomesh",	              CmdIsomesh,              METH_VARARGS },
+	{"isosurface",	           CmdIsosurface,           METH_VARARGS },
+   {"wait_queue",            CmdWaitQueue,            METH_VARARGS },
+   {"label",                 CmdLabel,                METH_VARARGS },
+	{"load",	                 CmdLoad,                 METH_VARARGS },
+	{"load_color_table",	     CmdLoadColorTable,       METH_VARARGS },
+	{"load_coords",           CmdLoadCoords,           METH_VARARGS },
+	{"load_png",              CmdLoadPNG,              METH_VARARGS },
+	{"load_object",           CmdLoadObject,           METH_VARARGS },
+	{"load_traj",             CmdLoadTraj,             METH_VARARGS },
+   {"map_new",               CmdMapNew,               METH_VARARGS },
+   {"map_double",            CmdMapDouble,            METH_VARARGS },
+   {"map_set_border",        CmdMapSetBorder,         METH_VARARGS },
+	{"mask",	                 CmdMask,                 METH_VARARGS },
+	{"mclear",	              CmdMClear,               METH_VARARGS },
+	{"mdo",	                 CmdMDo,                  METH_VARARGS },
+	{"mdump",	              CmdMDump,                METH_VARARGS },
+	{"mem",	                 CmdMem,                  METH_VARARGS },
+	{"move",	                 CmdMove,                 METH_VARARGS },
+	{"mset",	                 CmdMSet,                 METH_VARARGS },
+	{"mplay",	              CmdMPlay,                METH_VARARGS },
+	{"mpng_",	              CmdMPNG,                 METH_VARARGS },
+	{"mmatrix",	              CmdMMatrix,              METH_VARARGS },
+	{"multisave",             CmdMultiSave,            METH_VARARGS },
+	{"origin",	              CmdOrigin,               METH_VARARGS },
+	{"orient",	              CmdOrient,               METH_VARARGS },
+	{"onoff",                 CmdOnOff,                METH_VARARGS },
+	{"overlap",               CmdOverlap,              METH_VARARGS },
+	{"p_glut_event",          CmdPGlutEvent,           METH_VARARGS },
+   {"p_glut_get_redisplay",  CmdPGlutGetRedisplay,    METH_VARARGS },
+	{"paste",	              CmdPaste,                METH_VARARGS },
+	{"png",	                 CmdPNG,                  METH_VARARGS },
+	{"protect",	              CmdProtect,              METH_VARARGS },
+	{"push_undo",	           CmdPushUndo,             METH_VARARGS },
+	{"quit",	                 CmdQuit,                 METH_VARARGS },
+   {"ray_trace_thread",      CmdRayTraceThread,       METH_VARARGS },
+   {"ray_hash_thread",       CmdRayHashThread,        METH_VARARGS },
+   {"ray_anti_thread",       CmdRayAntiThread,        METH_VARARGS },
+   {"ramp_new",              CmdRampMapNew,           METH_VARARGS },
+	{"ready",                 CmdReady,                METH_VARARGS },
+   {"rebuild",               CmdRebuild,              METH_VARARGS },
+   {"recolor",               CmdRecolor,              METH_VARARGS },
+	{"refresh",               CmdRefresh,              METH_VARARGS },
+	{"refresh_now",           CmdRefreshNow,           METH_VARARGS },
+	{"refresh_wizard",        CmdRefreshWizard,        METH_VARARGS },
+	{"remove",	              CmdRemove,               METH_VARARGS },
+	{"remove_picked",         CmdRemovePicked,         METH_VARARGS },
+	{"render",	              CmdRay,                  METH_VARARGS },
+   {"rename",                CmdRename,               METH_VARARGS },
+   {"replace",               CmdReplace,              METH_VARARGS },
+   {"reinitialize",          CmdReinitialize,         METH_VARARGS },
+	{"reset",                 CmdReset,                METH_VARARGS },
+	{"reset_rate",	           CmdResetRate,            METH_VARARGS },
+	{"rock",	                 CmdRock,                 METH_VARARGS },
+	{"runpymol",	           CmdRunPyMOL,             METH_VARARGS },
+	{"runwxpymol",	           CmdRunWXPyMOL,           METH_VARARGS },
+	{"select",                CmdSelect,               METH_VARARGS },
+	{"set",	                 CmdSet,                  METH_VARARGS },
+	{"legacy_set",            CmdLegacySet,            METH_VARARGS },
+
+	{"sculpt_deactivate",     CmdSculptDeactivate,     METH_VARARGS },
+	{"sculpt_activate",       CmdSculptActivate,       METH_VARARGS },
+	{"sculpt_iterate",        CmdSculptIterate,        METH_VARARGS },
+	{"sculpt_purge",          CmdSculptPurge,          METH_VARARGS },
+   {"set_colorection",       CmdSetColorection,       METH_VARARGS },   
+	{"set_dihe",              CmdSetDihe,              METH_VARARGS },
+	{"set_dihe",              CmdSetDihe,              METH_VARARGS },
+
+	{"set_dihe",              CmdSetDihe,              METH_VARARGS },
+	{"set_feedback",          CmdSetFeedbackMask,      METH_VARARGS },
+   {"set_geometry",          CmdSetGeometry,          METH_VARARGS },
+   {"set_session",           CmdSetSession,           METH_VARARGS },
+   {"set_symmetry",          CmdSetCrystal,           METH_VARARGS },
+	{"set_title",             CmdSetTitle,             METH_VARARGS },
+	{"set_wizard",            CmdSetWizard,            METH_VARARGS },
+	{"set_wizard_stack",      CmdSetWizardStack,       METH_VARARGS },
+   {"set_view",              CmdSetView,              METH_VARARGS },
+   {"set_vis",               CmdSetVis,               METH_VARARGS },
+	{"setframe",	           CmdSetFrame,             METH_VARARGS },
+	{"showhide",              CmdShowHide,             METH_VARARGS },
+	{"set_matrix",	           CmdSetMatrix,            METH_VARARGS },
+	{"smooth",	              CmdSmooth,               METH_VARARGS },
+	{"sort",                  CmdSort,                 METH_VARARGS },
+   {"spectrum",              CmdSpectrum,             METH_VARARGS },
+   {"spheroid",              CmdSpheroid,             METH_VARARGS },
+	{"splash",                CmdSplash,               METH_VARARGS },
+	{"stereo",	              CmdStereo,               METH_VARARGS },
+	{"system",	              CmdSystem,               METH_VARARGS },
+	{"symexp",	              CmdSymExp,               METH_VARARGS },
+	{"test",	                 CmdTest,                 METH_VARARGS },
+	{"transform_object",      CmdTransformObject,      METH_VARARGS },
+	{"transform_selection",   CmdTransformSelection,   METH_VARARGS },
+	{"translate_atom",        CmdTranslateAtom,        METH_VARARGS },
+	{"turn",	                 CmdTurn,                 METH_VARARGS },
+	{"viewport",              CmdViewport,             METH_VARARGS },
+	{"undo",                  CmdUndo,                 METH_VARARGS },
+	{"unpick",                CmdUnpick,               METH_VARARGS },
+	{"unset",                 CmdUnset,                METH_VARARGS },
+	{"update",                CmdUpdate,               METH_VARARGS },
+	{"zoom",	                 CmdZoom,                 METH_VARARGS },
+	{NULL,		              NULL}     /* sentinel */        
+};
+
 
 void init_cmd(void)
 {

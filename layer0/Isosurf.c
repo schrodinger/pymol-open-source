@@ -35,13 +35,13 @@ Z* -------------------------------------------------------------------
 #define false 0
 #endif
 
-#define O3(field,P1,P2,P3,offs) Ffloat3(field,P1+offs[0],P2+offs[1],P3+offs[2])
+#define O3(field,P1,P2,P3,offs) Ffloat3(field,(P1)+offs[0],(P2)+offs[1],(P3)+offs[2])
 
-#define O3Ptr(field,P1,P2,P3,offs) Ffloat3p(field,P1+offs[0],P2+offs[1],P3+offs[2])
+#define O3Ptr(field,P1,P2,P3,offs) Ffloat3p(field,(P1)+offs[0],(P2)+offs[1],(P3)+offs[2])
 
-#define O4(field,P1,P2,P3,P4,offs) Ffloat4(field,P1+offs[0],P2+offs[1],P3+offs[2],P4)
+#define O4(field,P1,P2,P3,P4,offs) Ffloat4(field,(P1)+offs[0],(P2)+offs[1],(P3)+offs[2],P4)
 
-#define O4Ptr(field,P1,P2,P3,P4,offs) Ffloat4p(field,P1+offs[0],P2+offs[1],P3+offs[2],P4)
+#define O4Ptr(field,P1,P2,P3,P4,offs) Ffloat4p(field,(P1)+offs[0],(P2)+offs[1],(P3)+offs[2],P4)
 
 #define I3(field,P1,P2,P3) Fint3(field,P1,P2,P3)
 
@@ -150,6 +150,73 @@ Isofield *IsosurfNewFromPyList(PyObject *list)
   return(result);
 }
 
+void IsofieldComputeGradients(Isofield *I)
+{
+  int dim[4];
+  int a,b,c;
+  CField *data = I->data;
+  CField *gradients;
+
+  if(!I->gradients) {
+
+    for(a=0;a<3;a++)
+      dim[a]=I->dimensions[a];
+    dim[3]=3;
+    I->gradients = FieldNew(dim,4,sizeof(float),cFieldFloat);
+    gradients =  I->gradients;
+    dim[3] = 3;
+
+    for(a=1;a<(dim[0]-1);a++) {
+      for(b=1;b<(dim[1]-1);b++) {
+        for(c=1;c<(dim[2]-1);c++) {
+          F4(gradients,a,b,c,0) = (F3(data,a+1,b,c) - F3(data,a-1,b,c))/2.0F;
+          F4(gradients,a,b,c,1) = (F3(data,a,b+1,c) - F3(data,a,b-1,c))/2.0F;
+          F4(gradients,a,b,c,2) = (F3(data,a,b,c+1) - F3(data,a,b,c-1))/2.0F;
+        }
+      }
+    }
+
+#if 1
+    /* temporary handling of edges */
+
+    for(a=0;a<dim[0];a+=dim[0]-1) {
+      for(b=0;b<dim[1];b+=dim[1]-1) {
+        for(c=0;c<dim[2];c+=dim[2]-1) {
+          F4(gradients,a,b,c,0) = 0.0F;
+          F4(gradients,a,b,c,1) = 0.0F;
+          F4(gradients,a,b,c,2) = 0.0F;
+        }
+      }
+    }
+#else
+    /* still need to do faces, edges, and corners */
+
+    /* left face */
+
+    a=0;
+    for(b=1;a<(dim[1]-1);a++) {
+      for(c=1;a<(dim[2]-1);a++) {
+        F4(gradient,a,b,c,0) = (F3(data,a+1,b,c) - F3(data,a,b,c));
+        F4(gradient,a,b,c,1) = (F3(data,a,b+1,c) - F3(data,a,b-1,c))/2.0F;
+        F4(gradient,a,b,c,2) = (F3(data,a,b,c+1) - F3(data,a,b,c-1))/2.0F;
+      }
+    }
+
+    /* right face */
+
+    a=dim[0]-1;
+    for(b=1;a<(dim[1]-1);a++) {
+      for(c=1;a<(dim[2]-1);a++) {
+        F4(gradient,a,b,c,0) = (F3(data,a,b,c) - F3(data,a-1,b,c));
+        F4(gradient,a,b,c,1) = (F3(data,a,b+1,c) - F3(data,a,b-1,c))/2.0F;
+        F4(gradient,a,b,c,2) = (F3(data,a,b,c+1) - F3(data,a,b,c-1))/2.0F;
+      }
+    }
+#endif
+  }
+
+}
+
 /*===========================================================================*/
 /*===========================================================================*/
 Isofield *IsosurfFieldAlloc(int *dims)
@@ -157,11 +224,11 @@ Isofield *IsosurfFieldAlloc(int *dims)
   int dim4[4];
   int a;
   Isofield *result;
-
+  
   for(a=0;a<3;a++)
     dim4[a]=dims[a];
   dim4[3] = 3;
-  
+
   result=mmalloc(sizeof(Isofield));
   ErrChkPtr(result);
   result->data = FieldNew(dims,3,sizeof(float),cFieldFloat);
@@ -172,12 +239,15 @@ Isofield *IsosurfFieldAlloc(int *dims)
   result->dimensions[1]=dims[1];
   result->dimensions[2]=dims[2];
   result->save_points=true;
+  result->gradients = NULL;
   return(result);
 }
 /*===========================================================================*/
 /*===========================================================================*/
 void IsosurfFieldFree(Isofield *field)
 {
+  if(field->gradients)
+    FieldFree(field->gradients);
   FieldFree(field->points);
   FieldFree(field->data);
   mfree(field);

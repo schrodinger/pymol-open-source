@@ -69,6 +69,7 @@ int ObjectMapCCP4StrToMap(ObjectMap *I,char *XPLORStr,int bytes,int state);
 ObjectMap *ObjectMapLoadPHIFile(ObjectMap *obj,char *fname,int state);
 ObjectMap *ObjectMapLoadFLDFile(ObjectMap *obj,char *fname,int state);
 ObjectMap *ObjectMapLoadBRIXFile(ObjectMap *obj,char *fname,int state);
+ObjectMap *ObjectMapLoadGRDFile(ObjectMap *obj,char *fname,int state);
 
 ObjectMap *ObjectMapLoad(ObjectMap *obj,char *fname,int state);
 ObjectMap *ObjectMapLoadChemPyBrick(ObjectMap *I,PyObject *Map,
@@ -76,7 +77,7 @@ ObjectMap *ObjectMapLoadChemPyBrick(ObjectMap *I,PyObject *Map,
 ObjectMap *ObjectMapLoadCObject(ObjectMap *obj,int state);
 ObjectMap *ObjectMapLoadChemPyMap(ObjectMap *I,PyObject *Map,
                                   int state,int discrete);
-
+int ObjectMapDouble(ObjectMap *I,int state);
 int ObjectMapSetBorder(ObjectMap *I,float level);
 int ObjectMapStateSetBorder(ObjectMapState *I,float level);
 void ObjectMapStateInit(ObjectMapState *I);

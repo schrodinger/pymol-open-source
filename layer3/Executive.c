@@ -1612,6 +1612,23 @@ int ExecutiveMapSetBorder(char *name,float level)
   return(result);
 }
 
+int ExecutiveMapDouble(char *name,int state)
+{
+  int result=false;
+  SpecRec *tRec;
+  ObjectMap *mobj;
+
+  tRec = ExecutiveFindSpec(name);
+  if(tRec) {
+    if(tRec->type==cExecObject)
+      if(tRec->obj->type==cObjectMap) {
+        mobj =(ObjectMap*)tRec->obj;
+        result = ObjectMapDouble(mobj,state);
+      }
+  }
+  return(result);
+}
+
 void ExecutiveSelectRect(BlockRect *rect,int mode)
 {
   Multipick smp;

@@ -40,6 +40,7 @@ Z* -------------------------------------------------------------------
 #define cMapSourceDesc 4
 #define cMapSourceFLD 5
 #define cMapSourceBRIX 6
+#define cMapSourceGRD 7
 
 #ifdef _PYMOL_NUMPY
 typedef struct {
@@ -62,6 +63,139 @@ int ObjectMapInterpolate(ObjectMap *I,int state,float *array,float *result,int n
       ok = ObjectMapStateInterpolate(&I->State[state],array,result,n);
   return(ok);
 }
+
+static int ObjectMapStateDouble(ObjectMapState *ms)
+{
+  int div[3];
+  int min[3];
+  int max[3];
+  int fdim[4];
+  int a,b,c;
+  float v[3],vr[3];
+  float *vt;
+  float x,y,z;
+  float grid[3];
+
+  Isofield *field;
+
+  switch(ms->MapSource) {
+  case cMapSourceXPLOR:
+  case cMapSourceCCP4:
+  case cMapSourceBRIX:
+  case cMapSourceGRD:
+    for(a=0;a<3;a++) {
+      div[a]=ms->Div[a]*2-1;
+      min[a]=ms->Min[a]*2;
+      max[a]=ms->Max[a]*2;
+      fdim[a]=ms->FDim[a]*2-1;
+    }
+    fdim[3]=3;
+
+    field=IsosurfFieldAlloc(fdim);
+
+    for(c=0;c<fdim[2];c++) {
+      v[2]=(c+min[2])/((float)div[2]);
+      z = (c&0x1) ? 0.5F : 0.0F;
+      for(b=0;b<fdim[1];b++) {
+        v[1]=(b+min[1])/((float)div[1]);        
+        y = (b&0x1) ? 0.5F : 0.0F;
+        for(a=0;a<fdim[0];a++) {
+          v[0]=(a+min[0])/((float)div[0]);
+          transform33f3f(ms->Crystal->FracToReal,v,vr);
+          x = (a&0x1) ? 0.5F : 0.0F;
+          vt = F4Ptr(field->points,a,b,c,0);
+          copy3f(vr,vt);
+          if((a&0x1)||(b&0x1)||(c&0x1)) {
+            F3(field->data,a,b,c) = FieldInterpolatef(ms->Field->data,
+                                    a/2,
+                                    b/2,
+                                    c/2,x,y,z);
+          } else {
+            F3(field->data,a,b,c) = F3(ms->Field->data,a/2,b/2,c/2);
+          }
+        }
+      }
+    }
+    IsosurfFieldFree(ms->Field);
+    for(a=0;a<3;a++) {
+      ms->Min[a]=min[a];
+      ms->Max[a]=max[a];
+      ms->FDim[a]=fdim[a];
+      ms->Div[a]=div[a];
+    }
+    ms->Field = field;
+    break;
+  case cMapSourcePHI:
+  case cMapSourceFLD:
+  case cMapSourceDesc:
+
+    for(a=0;a<3;a++) {
+      grid[a]=ms->Grid[a]/2.0F;
+      min[a]=ms->Min[a]*2;
+      max[a]=ms->Max[a]*2;
+      fdim[a]=ms->FDim[a]*2-1;
+    }
+    fdim[3]=3;
+
+    field=IsosurfFieldAlloc(fdim);
+
+    for(c=0;c<fdim[2];c++) {
+      v[2]=ms->Origin[2]+ms->Grid[2]*(c+ms->Min[2]);
+      z = (c&0x1) ? 0.5F : 0.0F;
+      for(b=0;b<fdim[1];b++) {
+        v[1]=ms->Origin[1]+ms->Grid[1]*(b+ms->Min[1]);
+        y = (b&0x1) ? 0.5F : 0.0F;
+        for(a=0;a<fdim[0];a++) {
+          v[0]=ms->Origin[0]+ms->Grid[0]*(b+ms->Min[0]);
+          x = (a&0x1) ? 0.5F : 0.0F;
+          vt = F4Ptr(field->points,a,b,c,0);
+          copy3f(v ,vt);
+          if((a&0x1)||(b&0x1)||(c&0x1)) {
+            F3(field->data,a,b,c) = FieldInterpolatef(ms->Field->data,
+                                    a/2,
+                                    b/2,
+                                    c/2,x,y,z);
+          } else {
+            F3(field->data,a,b,c) = F3(ms->Field->data,a/2,b/2,c/2);
+          }
+        }
+      }
+    }
+    IsosurfFieldFree(ms->Field);
+    for(a=0;a<3;a++) {
+      ms->Min[a]=min[a];
+      ms->Max[a]=max[a];
+      ms->FDim[a]=fdim[a];
+      ms->Div[a]=div[a];
+      ms->Grid[a]=grid[a];
+    }
+    ms->Field = field;
+
+    break;
+  }
+  return 1;
+}
+
+int ObjectMapDouble(ObjectMap *I,int state)
+{
+  int a;
+  int result=true;
+  if(state<0) {
+    for(a=0;a<I->NState;a++) {
+      if(I->State[a].Active)
+        result = result && ObjectMapStateDouble(&I->State[a]);
+    }
+  } else if((state>=0)&&(state<I->NState)&&(I->State[state].Active)) {
+    ObjectMapStateDouble(&I->State[state]);
+  } else {
+    PRINTFB(FB_ObjectMap,FB_Errors)
+      " ObjectMap-Error: invalidate state.\n"
+      ENDFB;
+    result=false;
+  }
+  return(result);
+}
+
 
 int ObjectMapStateInterpolate(ObjectMapState *ms,float *array,float *result,int n)
 {
@@ -144,6 +278,7 @@ static void ObjectMapStateRegeneratePoints(ObjectMapState *ms)
   case cMapSourceXPLOR:
   case cMapSourceCCP4:
   case cMapSourceBRIX:
+  case cMapSourceGRD:
     for(c=0;c<ms->FDim[2];c++)
       {
         v[2]=(c+ms->Min[2])/((float)ms->Div[2]);
@@ -1908,11 +2043,11 @@ static int ObjectMapBRIXStrToMap(ObjectMap *I,char *BRIXStr,int bytes,int state)
       pp=ParseWordCopy(cc,p,4);
       if(WordMatch("grid",cc,true)<0) {
         p = ParseWordCopy(cc,pp,50);
-        if(sscanf(cc,"%d",&ms->Div[0])==1) {
+        if(sscanf(cc,"%d",&ms->FDim[0])==1) {
           p = ParseWordCopy(cc,p,50);
-          if(sscanf(cc,"%d",&ms->Div[1])==1) {
+          if(sscanf(cc,"%d",&ms->FDim[1])==1) {
             p = ParseWordCopy(cc,p,50);
-            if(sscanf(cc,"%d",&ms->Div[2])==1) {
+            if(sscanf(cc,"%d",&ms->FDim[2])==1) {
               got_grid=true;
             }
           }
@@ -2098,6 +2233,220 @@ static int ObjectMapBRIXStrToMap(ObjectMap *I,char *BRIXStr,int bytes,int state)
   
 }
 /*========================================================================*/
+static int ObjectMapGRDStrToMap(ObjectMap *I,char *GRDStr,int bytes,int state) 
+{
+  char *p;
+  float dens;
+  int a,b,c,d,e;
+  float v[3],vr[3],maxd,mind;
+  int ok = true;
+  char cc[MAXLINELEN];
+  ObjectMapState *ms;
+  int got_cell=false;
+  int got_brick=false;
+  int fast_axis=1;
+  int got_ranges=false;
+
+  if(state<0) state=I->NState;
+  if(I->NState<=state) {
+    VLACheck(I->State,ObjectMapState,state);
+    I->NState=state+1;
+  }
+  ms=&I->State[state];
+  ObjectMapStateInit(ms);
+
+  maxd = FLT_MIN;
+  mind = FLT_MAX;
+  
+  p = GRDStr;
+
+  /* print map title */
+
+  p = ParseNCopy(cc,p,100);
+
+  PRINTFB(FB_ObjectMap,FB_Details)
+    " ObjectMap: %s\n",cc
+    ENDFD;
+
+  p = ParseNextLine(p);
+
+  /* skip format -- we're reading float regardless... */
+
+  p = ParseNextLine(p);
+
+  /* read unit cell */
+
+  if(ok) {
+    p = ParseWordCopy(cc,p,50);
+    if(sscanf(cc,"%f",&ms->Crystal->Dim[0])==1) {
+      p = ParseWordCopy(cc,p,50);
+      if(sscanf(cc,"%f",&ms->Crystal->Dim[1])==1) {
+        p = ParseWordCopy(cc,p,50);
+        if(sscanf(cc,"%f",&ms->Crystal->Dim[2])==1) {
+          p = ParseWordCopy(cc,p,50);
+          if(sscanf(cc,"%f",&ms->Crystal->Angle[0])==1) {
+            p = ParseWordCopy(cc,p,50);
+            if(sscanf(cc,"%f",&ms->Crystal->Angle[1])==1) {
+              p = ParseWordCopy(cc,p,50);
+              if(sscanf(cc,"%f",&ms->Crystal->Angle[2])==1) {
+                got_cell=true;
+              }
+            }
+          }
+        }
+      }
+      ok = got_cell;
+    }
+  }
+
+  p=ParseNextLine(p);
+
+  /* read brick dimensions */
+
+  if(ok) {
+    p = ParseWordCopy(cc,p,50);
+    if(sscanf(cc,"%d",&ms->FDim[0])==1) {
+      p = ParseWordCopy(cc,p,50);
+      if(sscanf(cc,"%d",&ms->FDim[1])==1) {
+        p = ParseWordCopy(cc,p,50);
+        if(sscanf(cc,"%d",&ms->FDim[2])==1) {
+          got_brick=true;
+          ms->FDim[0]++;
+          ms->FDim[1]++;
+          ms->FDim[2]++; /* stupid 0-based counters */
+        }
+      }
+    }
+    ok = got_brick;
+  }
+
+  p=ParseNextLine(p);
+
+  /* read ranges */
+
+  if(ok) {
+    p = ParseWordCopy(cc,p,50);
+    if(sscanf(cc,"%d",&fast_axis)==1) {
+      p = ParseWordCopy(cc,p,50);      
+      if(sscanf(cc,"%d",&ms->Min[0])==1) {
+        p = ParseWordCopy(cc,p,50);
+        if(sscanf(cc,"%d",&ms->Div[0])==1) {
+          p = ParseWordCopy(cc,p,50);
+          if(sscanf(cc,"%d",&ms->Min[1])==1) {
+            p = ParseWordCopy(cc,p,50);
+            if(sscanf(cc,"%d",&ms->Div[1])==1) {
+              p = ParseWordCopy(cc,p,50);
+              if(sscanf(cc,"%d",&ms->Min[2])==1) {
+                p = ParseWordCopy(cc,p,50);
+                if(sscanf(cc,"%d",&ms->Div[2])==1) {
+                  got_ranges=true;
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+    ok = got_ranges;
+  }
+  
+  if(ok) {
+
+    
+    ms->Div[0]= ms->Div[0] - ms->Min[0] + 1;
+    ms->Div[1]= ms->Div[1] - ms->Min[1] + 1;
+    ms->Div[2]= ms->Div[2] - ms->Min[2] + 1;
+
+    ms->Max[0]=ms->Min[0]+ms->FDim[0]-1;
+    ms->Max[1]=ms->Min[1]+ms->FDim[1]-1;
+    ms->Max[2]=ms->Min[2]+ms->FDim[2]-1;
+
+    ms->FDim[3]=3;
+
+    printf("%d %d %d\n",ms->FDim[0],ms->FDim[1],ms->FDim[2]);
+    CrystalUpdate(ms->Crystal);
+    ms->Field=IsosurfFieldAlloc(ms->FDim);
+    ms->MapSource = cMapSourceGRD;
+    ms->Field->save_points=false;
+
+    switch(fast_axis) {
+    case 3: /* Fast Y - UNTESTED! */
+    default:
+    case 1: /* Fast X */
+      for(c=0;c<ms->FDim[2];c++)
+        {
+          v[2]=(c+ms->Min[2])/((float)ms->Div[2]);
+          for(b=0;b<ms->FDim[1];b++) {
+            v[1]=(b+ms->Min[1])/((float)ms->Div[1]);
+            for(a=0;a<ms->FDim[0];a++) {
+              v[0]=(a+ms->Min[0])/((float)ms->Div[0]);
+              p=ParseNextLine(p);
+              p=ParseNCopy(cc,p,24);                
+              if(sscanf(cc,"%f",&dens)!=1) {
+                ok=false;
+              } else {
+                F3(ms->Field->data,a,b,c) = dens;
+                if(maxd<dens) maxd = dens;
+                if(mind>dens) mind = dens;
+              }
+              transform33f3f(ms->Crystal->FracToReal,v,vr);
+              for(e=0;e<3;e++) {
+                F4(ms->Field->points,a,b,c,e) = vr[e];
+              }
+            }
+          }
+        }
+      printf("left over '%s'\n",p);
+      break;
+    }
+
+  }   
+  if(ok) {
+    d = 0;
+    for(c=0;c<ms->FDim[2];c+=(ms->FDim[2]-1))
+      {
+        v[2]=(c+ms->Min[2])/((float)ms->Div[2]);
+        for(b=0;b<ms->FDim[1];b+=(ms->FDim[1]-1)) {
+          v[1]=(b+ms->Min[1])/((float)ms->Div[1]);
+          for(a=0;a<ms->FDim[0];a+=(ms->FDim[0]-1)) {
+            v[0]=(a+ms->Min[0])/((float)ms->Div[0]);
+            transform33f3f(ms->Crystal->FracToReal,v,vr);
+            copy3f(vr,ms->Corner[d]);
+            d++;
+          }
+        }
+      }
+    
+    v[2]=(ms->Min[2])/((float)ms->Div[2]);
+    v[1]=(ms->Min[1])/((float)ms->Div[1]);
+    v[0]=(ms->Min[0])/((float)ms->Div[0]);
+    
+    transform33f3f(ms->Crystal->FracToReal,v,ms->ExtentMin);
+    
+    v[2]=((ms->FDim[2]-1)+ms->Min[2])/((float)ms->Div[2]);
+    v[1]=((ms->FDim[1]-1)+ms->Min[1])/((float)ms->Div[1]);
+    v[0]=((ms->FDim[0]-1)+ms->Min[0])/((float)ms->Div[0]);
+    
+    transform33f3f(ms->Crystal->FracToReal,v,ms->ExtentMax);
+    
+    PRINTFB(FB_Details,FB_ObjectMap) 
+      " GRDXMapToStr: Map Size %d x %d x %d\n",ms->FDim[0],ms->FDim[1],ms->FDim[2]
+      ENDFB;
+    
+    ms->Active=true;
+    ObjectMapUpdateExtents(I);
+    printf(" ObjectMap: Map Read.  Range = %5.6f to %5.6f\n",mind,maxd);
+
+  } else {
+    PRINTFB(FB_Errors,FB_ObjectMap) 
+      " Error: unable to read GRD file.\n"
+      ENDFB;
+  }
+  
+  return(ok);
+  
+}
+/*========================================================================*/
 ObjectMap *ObjectMapReadXPLORStr(ObjectMap *I,char *XPLORStr,int state)
 {
   int ok=true;
@@ -2239,6 +2588,29 @@ static ObjectMap *ObjectMapReadBRIXStr(ObjectMap *I,char *MapStr,int bytes,int s
 		isNew = false;
 	 }
     ObjectMapBRIXStrToMap(I,MapStr,bytes,state);
+    SceneChanged();
+    SceneCountFrames();
+  }
+  return(I);
+}
+/*========================================================================*/
+static ObjectMap *ObjectMapReadGRDStr(ObjectMap *I,char *MapStr,int bytes,int state)
+{
+  int ok=true;
+  int isNew = true;
+
+  if(!I) 
+	 isNew=true;
+  else 
+	 isNew=false;
+  if(ok) {
+	 if(isNew) {
+		I=(ObjectMap*)ObjectMapNew();
+		isNew = true;
+	 } else {
+		isNew = false;
+	 }
+    ObjectMapGRDStrToMap(I,MapStr,bytes,state);
     SceneChanged();
     SceneCountFrames();
   }
@@ -2397,6 +2769,55 @@ ObjectMap *ObjectMapLoadBRIXFile(ObjectMap *obj,char *fname,int state)
       fclose(f);
       
 		I=ObjectMapReadBRIXStr(obj,buffer,size,state);
+
+      mfree(buffer);
+      if(state<0)
+        state=I->NState-1;
+      if(state<I->NState) {
+        ObjectMapState *ms;
+        ms = &I->State[state];
+        if(ms->Active) {
+          CrystalDump(ms->Crystal);
+          multiply33f33f(ms->Crystal->FracToReal,ms->Crystal->RealToFrac,mat);
+        }
+      }
+    }
+  return(I);
+
+}
+/*========================================================================*/
+ObjectMap *ObjectMapLoadGRDFile(ObjectMap *obj,char *fname,int state)
+{
+  ObjectMap *I = NULL;
+  int ok=true;
+  FILE *f = NULL;
+  long size;
+  char *buffer,*p;
+  float mat[9];
+
+  f=fopen(fname,"rb");
+  if(!f)
+    ok=ErrMessage("ObjectMapLoadGRDFile","Unable to open file!");
+  if(ok)
+	 {
+      if(Feedback(FB_ObjectMap,FB_Actions))
+        {
+          printf(" ObjectMapLoadGRDFile: Loading from '%s'.\n",fname);
+        }
+      
+      fseek(f,0,SEEK_END);
+      size=ftell(f);
+      fseek(f,0,SEEK_SET);
+      
+      buffer=(char*)mmalloc(size+255);
+      ErrChkPtr(buffer);
+      p=buffer;
+      fseek(f,0,SEEK_SET);
+      fread(p,size,1,f);
+      p[size]=0;
+      fclose(f);
+      
+		I=ObjectMapReadGRDStr(obj,buffer,size,state);
 
       mfree(buffer);
       if(state<0)

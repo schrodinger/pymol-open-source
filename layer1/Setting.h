@@ -409,7 +409,7 @@ CSetting *SettingNewFromPyList(PyObject *list);
 
 /* cSetting_INIT must always be last setting_index +1 */
 
-#define cSetting_INIT                        270
+#define cSetting_INIT                        271
 
 #endif
 
