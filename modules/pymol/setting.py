@@ -191,6 +191,7 @@ class SettingIndex:
    sculpt_field_mask     =174
    sculpt_hb_overlap     =175
    sculpt_hb_overlap_base=176
+   legacy_vdw_radii      =177
    
 setting_sc = Shortcut(SettingIndex.__dict__.keys())
    

@@ -17,7 +17,7 @@ Z* -------------------------------------------------------------------
 #define _H_AtomInfo
 
 #include"Rep.h"
-
+#include"Setting.h"
 
 /* FLAGS 0-3 have the following conventional usage for molecular modeling */
 
