@@ -130,6 +130,7 @@ static int ObjectMapStateDouble(ObjectMapState *ms)
   case cMapSourceDesc:
 
     for(a=0;a<3;a++) {
+      div[a]=ms->Div[a]*2-1;
       grid[a]=ms->Grid[a]/2.0F;
       min[a]=ms->Min[a]*2;
       max[a]=ms->Max[a]*2;
@@ -140,16 +141,16 @@ static int ObjectMapStateDouble(ObjectMapState *ms)
     field=IsosurfFieldAlloc(fdim);
 
     for(c=0;c<fdim[2];c++) {
-      v[2]=ms->Origin[2]+ms->Grid[2]*(c+ms->Min[2]);
+      v[2]=ms->Origin[2]+grid[2]*(c+min[2]);
       z = (c&0x1) ? 0.5F : 0.0F;
       for(b=0;b<fdim[1];b++) {
-        v[1]=ms->Origin[1]+ms->Grid[1]*(b+ms->Min[1]);
+        v[1]=ms->Origin[1]+grid[1]*(b+min[1]);
         y = (b&0x1) ? 0.5F : 0.0F;
         for(a=0;a<fdim[0];a++) {
-          v[0]=ms->Origin[0]+ms->Grid[0]*(b+ms->Min[0]);
+          v[0]=ms->Origin[0]+grid[0]*(a+min[0]);
           x = (a&0x1) ? 0.5F : 0.0F;
           vt = F4Ptr(field->points,a,b,c,0);
-          copy3f(v ,vt);
+          copy3f(v,vt);
           if((a&0x1)||(b&0x1)||(c&0x1)) {
             F3(field->data,a,b,c) = FieldInterpolatef(ms->Field->data,
                                     a/2,
@@ -166,8 +167,11 @@ static int ObjectMapStateDouble(ObjectMapState *ms)
       ms->Min[a]=min[a];
       ms->Max[a]=max[a];
       ms->FDim[a]=fdim[a];
+      if(ms->Dim) 
+        ms->Dim[a]=fdim[a];
       ms->Div[a]=div[a];
-      ms->Grid[a]=grid[a];
+      if(ms->Grid)
+        ms->Grid[a]=grid[a];
     }
     ms->Field = field;
 

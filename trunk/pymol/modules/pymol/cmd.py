@@ -1742,6 +1742,8 @@ SEE ALSO
 
       'symexp'         : [ object_sc              , 'object'          , ', ' ],   
       'isomesh'        : [ map_sc                 , 'map object'      , ', ' ],
+      'isosurface'     : [ map_sc                 , 'map object'      , ', ' ],
+      'map_double'     : [ map_sc                 , 'map object'      , ', ' ],            
       'view'           : [ viewing.view_sc        , 'view action'     , ''   ],
       'scene'          : [ viewing.view_sc        , 'scene action'    , ','   ],                  
       'unset'          : [ selection_sc           , 'selection'        , ','  ],   
@@ -1755,6 +1757,8 @@ SEE ALSO
       },
       {
       'map_new'        : [ selection_sc           , 'selection'       , ', ' ],
+      'isosurface'     : [ selection_sc           , 'selection'       , ', ' ],
+      'isomesh'        : [ selection_sc           , 'selection'       , ', ' ],      
       }
       ]
 
