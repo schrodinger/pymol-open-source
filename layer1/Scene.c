@@ -95,10 +95,11 @@ typedef struct {
   float LastRock,LastRockTime;
   Pickable LastPicked;
   int StereoMode;
-  
+  OrthoLineType vendor,renderer,version;
 } CScene;
 
 CScene Scene;
+
 
 unsigned int SceneFindTriplet(int x,int y);
 unsigned int *SceneReadTriplets(int x,int y,int w,int h);
@@ -109,6 +110,21 @@ int SceneRelease(Block *block,int button,int x,int y,int mod);
 
 int SceneDrag(Block *block,int x,int y,int mod);
 void ScenePrepareMatrix(int mode);
+
+void SceneSetCardInfo(char *vendor,char *renderer,char *version){
+  CScene *I=&Scene;  
+  UtilNCopy(I->vendor,vendor,sizeof(OrthoLineType)-1);
+  UtilNCopy(I->renderer,renderer,sizeof(OrthoLineType)-1);
+  UtilNCopy(I->version,version,sizeof(OrthoLineType)-1);
+}
+
+void SceneGetCardInfo(char **vendor,char **renderer,char **version)
+{
+  CScene *I=&Scene;  
+  (*vendor)=I->vendor;
+  (*renderer)=I->renderer;
+  (*version)=I->version;
+}
 
 void SceneGetPos(float *pos)
 {
@@ -1297,6 +1313,10 @@ void SceneInit(void)
   I->LastPicked.ptr = NULL;
 
   I->CopyNextFlag=true;
+
+  I->vendor[0]=0;
+  I->renderer[0]=0;
+  I->version[0]=0;
 }
 /*========================================================================*/
 void SceneReshape(Block *block,int width,int height)

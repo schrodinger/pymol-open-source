@@ -185,6 +185,7 @@ static PyObject *CmdGetFeedback(PyObject *dummy, PyObject *args);
 static PyObject *CmdGetMoment(PyObject *self, 	PyObject *args);
 static PyObject *CmdGetPhiPsi(PyObject *self, 	PyObject *args);
 static PyObject *CmdGetPosition(PyObject *self, 	PyObject *args);
+static PyObject *CmdGetRenderer(PyObject *self,  PyObject *args);
 static PyObject *CmdGetSetting(PyObject *self, 	PyObject *args);
 static PyObject *CmdGetSettingText(PyObject *self, 	PyObject *args);
 static PyObject *CmdGetSettingTuple(PyObject *self, 	PyObject *args);
@@ -258,6 +259,7 @@ static PyObject *CmdWaitQueue(PyObject *self, 	PyObject *args);
 static PyObject *CmdUndo(PyObject *self, 	PyObject *args);
 static PyObject *CmdPushUndo(PyObject *self, 	PyObject *args);
 
+
 static PyMethodDef Cmd_methods[] = {
 	{"align",	              CmdAlign,                METH_VARARGS },
 	{"alter",	              CmdAlter,                METH_VARARGS },
@@ -309,6 +311,7 @@ static PyMethodDef Cmd_methods[] = {
 	{"get_position",	        CmdGetPosition,          METH_VARARGS },
 	{"get_pdb",	              CmdGetPDB,               METH_VARARGS },
    {"get_phipsi",            CmdGetPhiPsi,            METH_VARARGS },
+   {"get_renderer",          CmdGetRenderer,          METH_VARARGS },
 	{"get_setting",           CmdGetSetting,           METH_VARARGS },
 	{"get_setting_tuple",     CmdGetSettingTuple,      METH_VARARGS },
 	{"get_setting_text",      CmdGetSettingText,       METH_VARARGS },
@@ -391,6 +394,14 @@ static PyMethodDef Cmd_methods[] = {
 	{NULL,		              NULL}     /* sentinel */        
 };
 
+static PyObject *CmdGetRenderer(PyObject *self, PyObject *args)
+{
+  char *vendor,*renderer,*version;
+  APIEntry();
+  SceneGetCardInfo(&vendor,&renderer,&version);
+  APIExit();
+  return Py_BuildValue("(sss)",vendor,renderer,version);
+}
 
 static PyObject *CmdTranslateAtom(PyObject *self, PyObject *args)
 {

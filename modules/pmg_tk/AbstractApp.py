@@ -75,8 +75,11 @@ class AbstractApp(Pmw.MegaWidget):
       # Initialize platform-specific options
       if sys.platform == 'mac':
          self.__initializeTk_mac(root)
-      elif sys.platform == 'win32':
+      elif sys.platform[:3] == 'win':
          self.__initializeTk_win32(root)
+      elif sys.platform[:5] == 'linux':
+         self.frameHeight=self.frameHeight+24
+         self.__initializeTk_unix(root)
       else:
          self.__initializeTk_unix(root)
 
