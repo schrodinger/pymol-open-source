@@ -16,6 +16,7 @@ Z* -------------------------------------------------------------------
 #include <GL/glut.h>
 #include<string.h>
 
+#include"main.h"
 #include"Object.h"
 #include"Color.h"
 
@@ -53,7 +54,7 @@ int ObjectGetNFrames(Object *I)
 /*========================================================================*/
 void ObjectUseColor(Object *I)
 {
-  glColor3fv(ColorGet(I->Color));
+  if(PMGUI) glColor3fv(ColorGet(I->Color));
 }
 /*========================================================================*/
 void ObjectInit(Object *I)
@@ -69,30 +70,31 @@ void ObjectInit(Object *I)
 /*========================================================================*/
 void ObjectRenderUnitBox(Object *this,int frame,CRay *ray,Pickable **pick)
 {
-  glBegin(GL_LINE_LOOP);
-  glVertex3i(-1,-1,-1);
-  glVertex3i(-1,-1, 1);
-  glVertex3i(-1, 1, 1);
-  glVertex3i(-1, 1,-1);
+  if(PMGUI) {
+    glBegin(GL_LINE_LOOP);
+    glVertex3i(-1,-1,-1);
+    glVertex3i(-1,-1, 1);
+    glVertex3i(-1, 1, 1);
+    glVertex3i(-1, 1,-1);
+    
+    glVertex3i( 1, 1,-1);
+    glVertex3i( 1, 1, 1);
+    glVertex3i( 1,-1, 1);
+    glVertex3i( 1,-1,-1);
+    glEnd();
+    
+    glBegin(GL_LINES);
+    glVertex3i(0,0,0);
+    glVertex3i(1,0,0);
+    
+    glVertex3i(0,0,0);
+    glVertex3i(0,3,0);
+    
+    glVertex3i(0,0,0);
+    glVertex3i(0,0,9);
 
-  glVertex3i( 1, 1,-1);
-  glVertex3i( 1, 1, 1);
-  glVertex3i( 1,-1, 1);
-  glVertex3i( 1,-1,-1);
-  glEnd();
-
-  glBegin(GL_LINES);
-  glVertex3i(0,0,0);
-  glVertex3i(1,0,0);
-
-  glVertex3i(0,0,0);
-  glVertex3i(0,3,0);
-
-  glVertex3i(0,0,0);
-  glVertex3i(0,0,9);
-
-  glEnd();
-
+    glEnd();
+  }
 }
 
 

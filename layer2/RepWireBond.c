@@ -16,9 +16,12 @@ Z* -------------------------------------------------------------------
 
 
 #include<GL/gl.h>
+
 #include"OOMac.h"
 #include"RepWireBond.h"
 #include"Color.h"
+#include"Scene.h"
+#include"main.h"
 
 typedef struct RepWireBond {
   Rep R;
@@ -55,11 +58,12 @@ void RepWireBondRender(RepWireBond *I,CRay *ray,Pickable **pick)
 	 c=I->N;
 	 
 	 while(c--) {
+      /*      printf("%8.3f %8.3f %8.3f   %8.3f %8.3f %8.3f \n",v[3],v[4],v[5],v[6],v[7],v[8]);*/
 		ray->fCylinder3fv(ray,v+3,v+6,0.15,v,v);
 		v+=9;
 	 }
 
-  } else if(pick) {
+  } else if(pick&&PMGUI) {
 	 
 	 i=(*pick)->index;
 
@@ -98,7 +102,7 @@ void RepWireBondRender(RepWireBond *I,CRay *ray,Pickable **pick)
 	 glEnd();
 
 	 (*pick)[0].index = i;
-  } else {
+  } else if(PMGUI) {
 
 	 
 	 v=I->V;

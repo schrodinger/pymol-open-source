@@ -42,6 +42,7 @@ typedef struct ObjectMoleculeOpRec {
   double d[3][3];
   float *vv1;
   char *charVLA;
+  char *s1;
   float ttt[16];
   int nvv1;
 } ObjectMoleculeOpRec;

@@ -18,6 +18,7 @@ Z* -------------------------------------------------------------------
 #include <stdio.h>
 #include <GL/glut.h>
 
+#include "main.h"
 #include "Base.h"
 #include "Control.h"
 #include "Scene.h"
@@ -176,92 +177,94 @@ void ControlDraw(Block *block)
   CControl *I=&Control;
   int x,y;
 
-  glColor3fv(I->Block->BackColor);
-  BlockFill(I->Block);
-  glColor3fv(I->Block->TextColor);
-
-  x = I->Block->rect.left+cControlLeftMargin;
-  y = I->Block->rect.top-cControlTopMargin;
-  
-  glBegin(GL_LINE_LOOP);
-  glVertex2i(x,y);
-  glVertex2i(x,y-(cControlBoxSize-1));
-  glVertex2i(x+cControlBoxSize-1,y-(cControlBoxSize-1));
-  glVertex2i(x+cControlBoxSize-1,y);
-  glEnd();
-  glBegin(GL_LINE_LOOP);
-  glVertex2i(x+cControlInnerMargin,y-cControlInnerMargin);
-  glVertex2i(x+cControlInnerMargin,y-(cControlBoxSize-1)+cControlInnerMargin);
-  glVertex2i(x+(cControlBoxSize-1)-cControlInnerMargin,
-				 y-(cControlBoxSize-1)+cControlInnerMargin);
-  glVertex2i(x+(cControlBoxSize-1)-cControlInnerMargin,y-cControlInnerMargin);
-  glEnd();
-  x+=cControlBoxSize+cControlSpacing;
-
-  glBegin(GL_LINE_LOOP);
-  glVertex2i(x,y);
-  glVertex2i(x,y-(cControlBoxSize-1));
-  glVertex2i(x+cControlBoxSize-1,y-(cControlBoxSize-1));
-  glVertex2i(x+cControlBoxSize-1,y);
-  glEnd();
-  glBegin(GL_LINE_LOOP);
-  glVertex2i(x+cControlInnerMargin,y-cControlInnerMargin);
-  glVertex2i(x+cControlInnerMargin,y-(cControlBoxSize-1)+cControlInnerMargin);
-  glVertex2i(x+(cControlBoxSize-1)-cControlInnerMargin,
-				 y-(cControlBoxSize/2));  
-  glEnd();
-  x+=cControlBoxSize+cControlSpacing;
-
-  glBegin(GL_LINE_LOOP);
-  glVertex2i(x,y);
-  glVertex2i(x,y-(cControlBoxSize-1));
-  glVertex2i(x+cControlBoxSize-1,y-(cControlBoxSize-1));
-  glVertex2i(x+cControlBoxSize-1,y);
-  glEnd();
-  glBegin(GL_LINE_LOOP);
-  glVertex2i(x+(cControlBoxSize-1)-cControlInnerMargin,y-cControlInnerMargin);
-  glVertex2i(x+(cControlBoxSize-1)-cControlInnerMargin,
-				 y-(cControlBoxSize-1)+cControlInnerMargin);
-  glVertex2i(x+cControlInnerMargin,y-(cControlBoxSize/2));  
-  glVertex2i(x+cControlInnerMargin,y-cControlInnerMargin);
-  glVertex2i(x+cControlInnerMargin,y-(cControlBoxSize-1)+cControlInnerMargin);
-  glVertex2i(x+cControlInnerMargin,y-(cControlBoxSize/2));  
-  glEnd();
-  x+=cControlBoxSize+cControlSpacing;
-
-  glBegin(GL_LINE_LOOP);
-  glVertex2i(x,y);
-  glVertex2i(x,y-(cControlBoxSize-1));
-  glVertex2i(x+cControlBoxSize-1,y-(cControlBoxSize-1));
-  glVertex2i(x+cControlBoxSize-1,y);
-  glEnd();
-  glBegin(GL_LINE_LOOP);
-  glVertex2i(x+cControlInnerMargin,y-cControlInnerMargin);
-  glVertex2i(x+cControlInnerMargin,y-(cControlBoxSize-1)+cControlInnerMargin);
-  glVertex2i(x+(cControlBoxSize-1)-cControlInnerMargin,
-				 y-(cControlBoxSize/2));  
-  glVertex2i(x+(cControlBoxSize-1)-cControlInnerMargin,y-cControlInnerMargin);
-  glVertex2i(x+(cControlBoxSize-1)-cControlInnerMargin,
-				 y-(cControlBoxSize-1)+cControlInnerMargin);
-  glVertex2i(x+(cControlBoxSize-1)-cControlInnerMargin,y-(cControlBoxSize/2));  
-  glEnd();
-  x+=cControlBoxSize+cControlSpacing;
-
-  glBegin(GL_LINE_LOOP);
-  glVertex2i(x,y);
-  glVertex2i(x,y-(cControlBoxSize-1));
-  glVertex2i(x+cControlBoxSize-1,y-(cControlBoxSize-1));
-  glVertex2i(x+cControlBoxSize-1,y);
-  glEnd();
-  glBegin(GL_LINE_LOOP);
-  glVertex2i(x+(cControlBoxSize/2)+cControlSpread,
-				 y-cControlInnerMargin);
-  glVertex2i(x+(cControlBoxSize/2),
-				 y-(cControlBoxSize)+cControlInnerMargin);
-  glVertex2i(x+(cControlBoxSize/2)-cControlSpread,
-				 y-cControlInnerMargin);
-  glEnd();
-  x+=cControlBoxSize+cControlSpacing;  
+  if(PMGUI) {
+    glColor3fv(I->Block->BackColor);
+    BlockFill(I->Block);
+    glColor3fv(I->Block->TextColor);
+    
+    x = I->Block->rect.left+cControlLeftMargin;
+    y = I->Block->rect.top-cControlTopMargin;
+    
+    glBegin(GL_LINE_LOOP);
+    glVertex2i(x,y);
+    glVertex2i(x,y-(cControlBoxSize-1));
+    glVertex2i(x+cControlBoxSize-1,y-(cControlBoxSize-1));
+    glVertex2i(x+cControlBoxSize-1,y);
+    glEnd();
+    glBegin(GL_LINE_LOOP);
+    glVertex2i(x+cControlInnerMargin,y-cControlInnerMargin);
+    glVertex2i(x+cControlInnerMargin,y-(cControlBoxSize-1)+cControlInnerMargin);
+    glVertex2i(x+(cControlBoxSize-1)-cControlInnerMargin,
+               y-(cControlBoxSize-1)+cControlInnerMargin);
+    glVertex2i(x+(cControlBoxSize-1)-cControlInnerMargin,y-cControlInnerMargin);
+    glEnd();
+    x+=cControlBoxSize+cControlSpacing;
+    
+    glBegin(GL_LINE_LOOP);
+    glVertex2i(x,y);
+    glVertex2i(x,y-(cControlBoxSize-1));
+    glVertex2i(x+cControlBoxSize-1,y-(cControlBoxSize-1));
+    glVertex2i(x+cControlBoxSize-1,y);
+    glEnd();
+    glBegin(GL_LINE_LOOP);
+    glVertex2i(x+cControlInnerMargin,y-cControlInnerMargin);
+    glVertex2i(x+cControlInnerMargin,y-(cControlBoxSize-1)+cControlInnerMargin);
+    glVertex2i(x+(cControlBoxSize-1)-cControlInnerMargin,
+               y-(cControlBoxSize/2));  
+    glEnd();
+    x+=cControlBoxSize+cControlSpacing;
+    
+    glBegin(GL_LINE_LOOP);
+    glVertex2i(x,y);
+    glVertex2i(x,y-(cControlBoxSize-1));
+    glVertex2i(x+cControlBoxSize-1,y-(cControlBoxSize-1));
+    glVertex2i(x+cControlBoxSize-1,y);
+    glEnd();
+    glBegin(GL_LINE_LOOP);
+    glVertex2i(x+(cControlBoxSize-1)-cControlInnerMargin,y-cControlInnerMargin);
+    glVertex2i(x+(cControlBoxSize-1)-cControlInnerMargin,
+               y-(cControlBoxSize-1)+cControlInnerMargin);
+    glVertex2i(x+cControlInnerMargin,y-(cControlBoxSize/2));  
+    glVertex2i(x+cControlInnerMargin,y-cControlInnerMargin);
+    glVertex2i(x+cControlInnerMargin,y-(cControlBoxSize-1)+cControlInnerMargin);
+    glVertex2i(x+cControlInnerMargin,y-(cControlBoxSize/2));  
+    glEnd();
+    x+=cControlBoxSize+cControlSpacing;
+    
+    glBegin(GL_LINE_LOOP);
+    glVertex2i(x,y);
+    glVertex2i(x,y-(cControlBoxSize-1));
+    glVertex2i(x+cControlBoxSize-1,y-(cControlBoxSize-1));
+    glVertex2i(x+cControlBoxSize-1,y);
+    glEnd();
+    glBegin(GL_LINE_LOOP);
+    glVertex2i(x+cControlInnerMargin,y-cControlInnerMargin);
+    glVertex2i(x+cControlInnerMargin,y-(cControlBoxSize-1)+cControlInnerMargin);
+    glVertex2i(x+(cControlBoxSize-1)-cControlInnerMargin,
+               y-(cControlBoxSize/2));  
+    glVertex2i(x+(cControlBoxSize-1)-cControlInnerMargin,y-cControlInnerMargin);
+    glVertex2i(x+(cControlBoxSize-1)-cControlInnerMargin,
+               y-(cControlBoxSize-1)+cControlInnerMargin);
+    glVertex2i(x+(cControlBoxSize-1)-cControlInnerMargin,y-(cControlBoxSize/2));  
+    glEnd();
+    x+=cControlBoxSize+cControlSpacing;
+    
+    glBegin(GL_LINE_LOOP);
+    glVertex2i(x,y);
+    glVertex2i(x,y-(cControlBoxSize-1));
+    glVertex2i(x+cControlBoxSize-1,y-(cControlBoxSize-1));
+    glVertex2i(x+cControlBoxSize-1,y);
+    glEnd();
+    glBegin(GL_LINE_LOOP);
+    glVertex2i(x+(cControlBoxSize/2)+cControlSpread,
+               y-cControlInnerMargin);
+    glVertex2i(x+(cControlBoxSize/2),
+               y-(cControlBoxSize)+cControlInnerMargin);
+    glVertex2i(x+(cControlBoxSize/2)-cControlSpread,
+               y-cControlInnerMargin);
+    glEnd();
+    x+=cControlBoxSize+cControlSpacing;  
+  }
 }
 
 

@@ -477,6 +477,7 @@ void BasisMakeMap(CBasis *I,int *vert2prim,CPrimitive *prim,float *volume)
   sep = MapGetSeparation(sep,max,min,diagonal); /* this needs to be a minimum 
                                                  * estimate of the actual value */
 
+  /*  printf("sep %f\n",sep);*/
   /* here we have to carry out a complicated work-around in order to
 	* efficiently encode our lines into the map in a way that doesn't
    * require expanding the map cutoff to the size of the largest object*/

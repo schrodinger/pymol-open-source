@@ -40,100 +40,126 @@ Z* -------------------------------------------------------------------
 
 PyObject *PM_Globals = NULL;
 
-static PyObject *PMResetRate(PyObject *dummy, PyObject *args);
-static PyObject *PMQuit(PyObject *self, 	PyObject *args);
-static PyObject *PMLoad(PyObject *self, 	PyObject *args);
-static PyObject *PMOrigin(PyObject *self, PyObject *args);
-static PyObject *PMZoom(PyObject *self, PyObject *args);
-static PyObject *PMSelect(PyObject *self, PyObject *args);
-static PyObject *PMDelete(PyObject *self, PyObject *args);
-static PyObject *PMColor(PyObject *self, PyObject *args);
-static PyObject *PMSet(PyObject *self, 	PyObject *args);
-static PyObject *PMGet(PyObject *self, 	PyObject *args);
-static PyObject *PMRay(PyObject *self, 	PyObject *args);
-static PyObject *PMTurn(PyObject *self, 	PyObject *args);
+static PyObject *PMAlter(PyObject *self,   PyObject *args);
 static PyObject *PMClip(PyObject *self, 	PyObject *args);
-static PyObject *PMMove(PyObject *self, 	PyObject *args);
-static PyObject *PMSetGlobals(PyObject *dummy, PyObject *args);
-static PyObject *PMMSet(PyObject *self, 	PyObject *args);
-static PyObject *PMRefresh(PyObject *self, 	PyObject *args);
-static PyObject *PMRefreshNow(PyObject *self, 	PyObject *args);
-static PyObject *PMMClear(PyObject *self, 	PyObject *args);
-static PyObject *PMMDo(PyObject *self, 	PyObject *args);
-static PyObject *PMDo(PyObject *self, 	PyObject *args);
-static PyObject *PMMPlay(PyObject *self, 	PyObject *args);
-static PyObject *PMMMatrix(PyObject *self, 	PyObject *args);
-static PyObject *PMViewport(PyObject *self, 	PyObject *args);
-static PyObject *PMMPNG(PyObject *self, 	PyObject *args);
-static PyObject *PMPNG(PyObject *self, 	PyObject *args);
-static PyObject *PMShowHide(PyObject *self, 	PyObject *args);
-static PyObject *PMOnOff(PyObject *self, 	PyObject *args);
-static PyObject *PMSetMatrix(PyObject *self, 	PyObject *args);
-static PyObject *PMGetMatrix(PyObject *self, 	PyObject *args);
-static PyObject *PMReset(PyObject *self, PyObject *args);
-static PyObject *PMFrame(PyObject *self, PyObject *args);
-static PyObject *PMExportDots(PyObject *self, PyObject *args);
-static PyObject *PMGetMoment(PyObject *self, 	PyObject *args);
+static PyObject *PMColor(PyObject *self, PyObject *args);
+static PyObject *PMDelete(PyObject *self, PyObject *args);
 static PyObject *PMDirty(PyObject *self, 	PyObject *args);
-static PyObject *PMSetFrame(PyObject *self, PyObject *args);
-static PyObject *PMRock(PyObject *self, PyObject *args);
-static PyObject *PMGetGlobals(PyObject *dummy, PyObject *args);
+static PyObject *PMDo(PyObject *self, 	PyObject *args);
+static PyObject *PMExportDots(PyObject *self, PyObject *args);
 static PyObject *PMFit(PyObject *dummy, PyObject *args);
-static PyObject *PMOrient(PyObject *dummy, PyObject *args);
+static PyObject *PMFrame(PyObject *self, PyObject *args);
+static PyObject *PMGet(PyObject *self, 	PyObject *args);
 static PyObject *PMGetPDB(PyObject *dummy, PyObject *args);
 static PyObject *PMGetFeedback(PyObject *dummy, PyObject *args);
-static PyObject *PMSystem(PyObject *dummy, PyObject *args);
-static PyObject *PMRunPyMOL(PyObject *dummy, PyObject *args);
+static PyObject *PMGetGlobals(PyObject *dummy, PyObject *args);
+static PyObject *PMGetMatrix(PyObject *self, 	PyObject *args);
+static PyObject *PMGetMoment(PyObject *self, 	PyObject *args);
+static PyObject *PMLoad(PyObject *self, 	PyObject *args);
+static PyObject *PMMClear(PyObject *self, 	PyObject *args);
+static PyObject *PMMDo(PyObject *self, 	PyObject *args);
+static PyObject *PMMMatrix(PyObject *self, 	PyObject *args);
+static PyObject *PMMove(PyObject *self, 	PyObject *args);
+static PyObject *PMMPlay(PyObject *self, 	PyObject *args);
+static PyObject *PMMPNG(PyObject *self, 	PyObject *args);
+static PyObject *PMMSet(PyObject *self, 	PyObject *args);
+static PyObject *PMOrigin(PyObject *self, PyObject *args);
+static PyObject *PMOnOff(PyObject *self, 	PyObject *args);
+static PyObject *PMOrient(PyObject *dummy, PyObject *args);
+static PyObject *PMPNG(PyObject *self, 	PyObject *args);
+static PyObject *PMSelect(PyObject *self, PyObject *args);
+static PyObject *PMShowHide(PyObject *self, 	PyObject *args);
+static PyObject *PMSetMatrix(PyObject *self, 	PyObject *args);
+static PyObject *PMQuit(PyObject *self, 	PyObject *args);
+static PyObject *PMReset(PyObject *self, PyObject *args);
+static PyObject *PMRay(PyObject *self, 	PyObject *args);
+static PyObject *PMResetRate(PyObject *dummy, PyObject *args);
+static PyObject *PMRefresh(PyObject *self, 	PyObject *args);
+static PyObject *PMRefreshNow(PyObject *self, 	PyObject *args);
 static PyObject *PMReady(PyObject *dummy, PyObject *args);
+static PyObject *PMRock(PyObject *self, PyObject *args);
+static PyObject *PMRunPyMOL(PyObject *dummy, PyObject *args);
+static PyObject *PMSystem(PyObject *dummy, PyObject *args);
+static PyObject *PMSet(PyObject *self, 	PyObject *args);
+static PyObject *PMSetFrame(PyObject *self, PyObject *args);
+static PyObject *PMSetGlobals(PyObject *dummy, PyObject *args);
+static PyObject *PMTurn(PyObject *self, 	PyObject *args);
+static PyObject *PMViewport(PyObject *self, 	PyObject *args);
+static PyObject *PMZoom(PyObject *self, PyObject *args);
 
 static PyMethodDef PM_methods[] = {
-	{"clip",	     PMClip,         METH_VARARGS },
+	{"alter",	     PMAlter,        METH_VARARGS },
+	{"clip",	        PMClip,         METH_VARARGS },
 	{"color",	     PMColor,        METH_VARARGS },
 	{"delete",       PMDelete,       METH_VARARGS },
 	{"dirty",        PMDirty,        METH_VARARGS },
-	{"do",	         PMDo,           METH_VARARGS },
+	{"do",	        PMDo,           METH_VARARGS },
 	{"export_dots",  PMExportDots,   METH_VARARGS },
 	{"fit",          PMFit,          METH_VARARGS },
 	{"frame",	     PMFrame,        METH_VARARGS },
-	{"get",	         PMGet,          METH_VARARGS },
-	{"get_matrix",	 PMGetMatrix,    METH_VARARGS },
-	{"get_moment",	 PMGetMoment,    METH_VARARGS },
-	{"get_globals",	 PMGetGlobals,   METH_VARARGS },
-	{"get_feedback", PMGetFeedback,    METH_VARARGS },
+	{"get",	        PMGet,          METH_VARARGS },
+	{"get_feedback", PMGetFeedback,  METH_VARARGS },
+	{"get_globals",  PMGetGlobals,   METH_VARARGS },
+	{"get_matrix",	  PMGetMatrix,    METH_VARARGS },
+	{"get_moment",	  PMGetMoment,    METH_VARARGS },
 	{"get_pdb",	     PMGetPDB,       METH_VARARGS },
-	{"load",	     PMLoad,         METH_VARARGS },
+	{"load",	        PMLoad,         METH_VARARGS },
 	{"mclear",	     PMMClear,       METH_VARARGS },
-	{"mdo",	         PMMDo,          METH_VARARGS },
-	{"move",	     PMMove,         METH_VARARGS },
-	{"mset",	     PMMSet,         METH_VARARGS },
+	{"mdo",	        PMMDo,          METH_VARARGS },
+	{"move",	        PMMove,         METH_VARARGS },
+	{"mset",	        PMMSet,         METH_VARARGS },
 	{"mplay",	     PMMPlay,        METH_VARARGS },
 	{"mpng_",	     PMMPNG,         METH_VARARGS },
 	{"mmatrix",	     PMMMatrix,      METH_VARARGS },
 	{"origin",	     PMOrigin,       METH_VARARGS },
 	{"orient",	     PMOrient,       METH_VARARGS },
 	{"onoff",        PMOnOff,        METH_VARARGS },
-	{"png",	         PMPNG,          METH_VARARGS },
-	{"quit",	     PMQuit,         METH_VARARGS },
+	{"png",	        PMPNG,          METH_VARARGS },
+	{"quit",	        PMQuit,         METH_VARARGS },
 	{"ready",        PMReady,        METH_VARARGS },
 	{"refresh",      PMRefresh,      METH_VARARGS },
 	{"refresh_now",  PMRefreshNow,   METH_VARARGS },
 	{"render",	     PMRay,          METH_VARARGS },
 	{"reset",        PMReset,        METH_VARARGS },
-	{"reset_rate",	     PMResetRate,         METH_VARARGS },
-	{"rock",	     PMRock,         METH_VARARGS },
-	{"runpymol",	 PMRunPyMOL,     METH_VARARGS },
+	{"reset_rate",	  PMResetRate,    METH_VARARGS },
+	{"rock",	        PMRock,         METH_VARARGS },
+	{"runpymol",	  PMRunPyMOL,     METH_VARARGS },
 	{"select",       PMSelect,       METH_VARARGS },
-	{"set",	         PMSet,          METH_VARARGS },
-	{"setframe",	 PMSetFrame,     METH_VARARGS },
+	{"set",	        PMSet,          METH_VARARGS },
+	{"setframe",	  PMSetFrame,     METH_VARARGS },
 	{"showhide",     PMShowHide,     METH_VARARGS },
-	{"set_globals",	 PMSetGlobals,   METH_VARARGS },
-	{"set_matrix",	 PMSetMatrix,    METH_VARARGS },
-	{"system",	     PMSystem,         METH_VARARGS },
-	{"turn",	     PMTurn,         METH_VARARGS },
+	{"set_globals",  PMSetGlobals,   METH_VARARGS },
+	{"set_matrix",	  PMSetMatrix,    METH_VARARGS },
+	{"system",	     PMSystem,       METH_VARARGS },
+	{"turn",	        PMTurn,         METH_VARARGS },
 	{"viewport",     PMViewport,     METH_VARARGS },
-	{"zoom",	     PMZoom,         METH_VARARGS },
+	{"zoom",	        PMZoom,         METH_VARARGS },
 	{NULL,		     NULL}		/* sentinel */
 };
+
+static PyObject *PMAlter(PyObject *self,   PyObject *args)
+{
+  char *str1,*str2;
+  OrthoLineType s1;
+  int f1=false;
+
+  PyArg_ParseTuple(args,"ss",&str1,&str2);
+
+  if(str1[0]=='(') {
+	 SelectorCreate(tmpSele1,str1,NULL);
+	 strcpy(s1,tmpSele1);
+	 f1=true;
+  } else {
+	strcpy(s1,str1);
+  }
+
+  ExecutiveAlter(s1,str2);
+  if(f1)
+	ExecutiveDelete(s1);
+  Py_INCREF(Py_None);
+  return Py_None;
+
+}
 
 static PyObject *PMResetRate(PyObject *dummy, PyObject *args)
 {
@@ -274,8 +300,10 @@ static PyObject *PMDo(PyObject *self, 	PyObject *args)
   char *str1;
 
   PyArg_ParseTuple(args,"s",&str1);
-  OrthoAddOutput("PyMOL>");
-  OrthoAddOutput(str1);
+  if(str1[0]!='_') {
+    OrthoAddOutput("PyMOL>");
+    OrthoAddOutput(str1);
+  }
   PParse(str1);
   OrthoNewLine(NULL);
   Py_INCREF(Py_None);
@@ -497,7 +525,7 @@ static PyObject *PMViewport(PyObject *self, 	PyObject *args)
 
   w+=cOrthoRightSceneMargin;
   h+=cOrthoBottomSceneMargin;
-  MainReshape(w,h); /* should be moved into Executive */
+  MainDoReshape(w,h); /* should be moved into Executive */
   Py_INCREF(Py_None);
   return Py_None;
 }

@@ -30,6 +30,7 @@ Z* -------------------------------------------------------------------
 #include"MyPNG.h"
 #include"PUtils.h"
 #include"Setting.h"
+#include"main.h"
 
 CMovie Movie;
 
@@ -125,7 +126,7 @@ void MoviePNG(char *prefix,int save)
 		fflush(stdout);		  
 		MyPNGWrite(fname,I->Image[i],I->Width,I->Height);		
 		ExecutiveDrawNow();
-		glutSwapBuffers();
+		if(PMGUI) glutSwapBuffers();
 		printf(" MoviePNG: wrote %s\n",fname);
 		if(!save) {
 		  SceneDirty();

@@ -18,6 +18,7 @@ Z* -------------------------------------------------------------------
 #include<stdlib.h>
 #include<Python.h>
 #include<signal.h>
+#include<string.h>
 #include <sys/types.h>
 #include <sys/time.h>
 #include <unistd.h>
@@ -29,6 +30,7 @@ Z* -------------------------------------------------------------------
 #include"main.h"
 #include"AtomInfo.h"
 #include"CoordSet.h"
+
 
 void PSleep(int usec)
 { /* assumes threads have already been unblocked */
@@ -67,48 +69,53 @@ void PLock(int lock,PyThreadState **save)
   Py_UNBLOCK_THREADS;
   (*save)=_save;
 }
-void PAlterAtom(AtomInfoType *info,CoordSet *cs,int idx);
 
-void PAlterAtom(AtomInfoType *info,CoordSet *cs,int idx)
+int PAlterAtom(AtomInfoType *at,char *expr)
 {
-  int atm;
   char atype[255],name[255],resi[255],chain[255],resn[255],segi[255];
-  AtomInfoType *at;
-  float *f,x,y,z,b,q;
+  float b,q;
   PyObject *input,*output;
-  
-  atm = cs->IdxToAtm[idx];
-  if(atm>=0) {
-    at = info+atm;
-    f = cs->Coord+(idx*3);
-    if(at->hetatm)
-      strcpy(atype,"HETATM");
-    else
-      strcpy(atype,"ATOM");
-    input = Py_BuildValue("[sssssfffffs]",
-                          atype,
-                          at->name,
-                          at->resn,
-                          at->chain,
-                          at->resi,
-                          *f,*(f+1),*(f+2),
-                          at->q,
-                          at->b,
-                          at->segi);
-    PyDict_SetItemString(PM_Globals,"alter_inp",input);
-    PyRun_SimpleString("alter_out = pm._do_alter(alter_inp)");
-    output = PyDict_GetItemString(PM_Globals,"alter_out");
+  int result;
+  if(at->hetatm)
+    strcpy(atype,"HETATM");
+  else
+    strcpy(atype,"ATOM");
+  input = Py_BuildValue("[ssssssfffffs]",
+                        expr,
+                        atype,
+                        at->name,
+                        at->resn,
+                        at->chain,
+                        at->resi,
+                        0.0,0.0,0.0,
+                        at->q,
+                        at->b,
+                        at->segi);
+  PyDict_SetItemString(PM_Globals,"alter_inp",input);
+  Py_DECREF(input);
+  result = PyRun_SimpleString("alter_out = pm._alter_do(alter_inp)");
+  output = PyDict_GetItemString(PM_Globals,"alter_out");
+  if(output) {
     strcpy(atype,PyString_AsString(PyList_GetItem(output,0)));
     strcpy(name,PyString_AsString(PyList_GetItem(output,1)));
-    strcpy(chain,PyString_AsString(PyList_GetItem(output,2)));
-    strcpy(resn,PyString_AsString(PyList_GetItem(output,3)));
-    x=PyFloat_AsDouble(PyList_GetItem(output,4));
-    y=PyFloat_AsDouble(PyList_GetItem(output,5));
-    z=PyFloat_AsDouble(PyList_GetItem(output,6));
-    q=PyFloat_AsDouble(PyList_GetItem(output,7));
-    b=PyFloat_AsDouble(PyList_GetItem(output,8));
-    strcpy(segi,PyString_AsString(PyList_GetItem(output,9)));
+    strcpy(resn,PyString_AsString(PyList_GetItem(output,2)));
+    strcpy(chain,PyString_AsString(PyList_GetItem(output,3)));
+    strcpy(resi,PyString_AsString(PyList_GetItem(output,4)));
+    q=PyFloat_AsDouble(PyList_GetItem(output,8));
+    b=PyFloat_AsDouble(PyList_GetItem(output,9));
+    strcpy(segi,PyString_AsString(PyList_GetItem(output,10)));
+    strcpy(at->name,name);
+    strcpy(at->resi,resi);
+    strcpy(at->chain,chain);
+    strcpy(at->resn,resi);
+    at->b = b;
+    at->q = q;
+    strcpy(at->segi,segi);
+    at->hetatm = (strcmp(atype,"HETATM")==0);
+    /*    printf("%s %s %s %s %s %8.3f %8.3f %s\n",
+          atype,name,resi,chain,resn,q,b,segi);*/
   }
+  return(result);
 }
 
 void PUnlock(int lock,PyThreadState **save)
@@ -173,10 +180,10 @@ void PInit(void)
 
 #ifndef _PYMOL_MODULE
   PyRun_SimpleString("pm.setup_global_locks()");
-  /*  PyRun_SimpleString("execfile(os.environ['PYMOL_PATH']+'/modules/pmx.py',globals(),globals())\n"); */
-  PyRun_SimpleString("sys.argv=['pymol']\n");
-  /*  PyRun_SimpleString("thread.start_new_thread(execfile,(os.environ['PYMOL_PATH']+'/modules/pmg.py',globals(),locals()))\n"); */
-  PyRun_SimpleString("_t=threading.Thread(target=execfile,args=(os.environ['PYMOL_PATH']+'/modules/pmg.py',globals(),locals()))\n_t.setDaemon(1)\n_t.start()"); 
+  if(PMGUI) {
+    PyRun_SimpleString("sys.argv=['pymol']\n");
+    PyRun_SimpleString("_t=threading.Thread(target=execfile,args=(os.environ['PYMOL_PATH']+'/modules/pmg.py',globals(),locals()))\n_t.setDaemon(1)\n_t.start()"); 
+  }
 #endif
 
   signal(SIGINT,my_interrupt);

@@ -13,10 +13,13 @@ I* Additional authors of this source file include:
 -*
 Z* -------------------------------------------------------------------
 */
-#include"Rep.h"
-#include"MemoryDebug.h"
 #include<stdlib.h>
 #include<GL/gl.h>
+
+
+#include"main.h"
+#include"Rep.h"
+#include"MemoryDebug.h"
 
 /*========================================================================*/
 
@@ -55,29 +58,31 @@ void RepFree(Rep *I)
 /*========================================================================*/
 void RepRenderBox(struct Rep *this,CRay *ray,Pickable **pick)
 {
-  glBegin(GL_LINE_LOOP);
-  glVertex3i(-0.5,-0.5,-0.5);
-  glVertex3i(-0.5,-0.5, 0.5);
-  glVertex3i(-0.5, 0.5, 0.5);
-  glVertex3i(-0.5, 0.5,-0.5);
-
-  glVertex3i( 0.5, 0.5,-0.5);
-  glVertex3i( 0.5, 0.5, 0.5);
-  glVertex3i( 0.5,-0.5, 0.5);
-  glVertex3i( 0.5,-0.5,-0.5);
-  glEnd();
-
-  glBegin(GL_LINES);
-  glVertex3i(0,0,0);
-  glVertex3i(1,0,0);
-
-  glVertex3i(0,0,0);
-  glVertex3i(0,2,0);
-
-  glVertex3i(0,0,0);
-  glVertex3i(0,0,3);
-
-  glEnd();
+  if(PMGUI) {
+    glBegin(GL_LINE_LOOP);
+    glVertex3i(-0.5,-0.5,-0.5);
+    glVertex3i(-0.5,-0.5, 0.5);
+    glVertex3i(-0.5, 0.5, 0.5);
+    glVertex3i(-0.5, 0.5,-0.5);
+    
+    glVertex3i( 0.5, 0.5,-0.5);
+    glVertex3i( 0.5, 0.5, 0.5);
+    glVertex3i( 0.5,-0.5, 0.5);
+    glVertex3i( 0.5,-0.5,-0.5);
+    glEnd();
+    
+    glBegin(GL_LINES);
+    glVertex3i(0,0,0);
+    glVertex3i(1,0,0);
+    
+    glVertex3i(0,0,0);
+    glVertex3i(0,2,0);
+    
+    glVertex3i(0,0,0);
+    glVertex3i(0,0,3);
+    
+    glEnd();
+  }
 
 }
 

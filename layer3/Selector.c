@@ -17,6 +17,7 @@ Z* -------------------------------------------------------------------
 #include<string.h>
 #include<stdio.h>
 #include<ctype.h>
+#include<math.h>
 
 #include"Base.h"
 #include"Vector.h"
@@ -272,7 +273,7 @@ void SelectorCreate(char *sname,char *sele,ObjectMolecule *obj)
   FreeP(I->Obj);
   I->NAtom=0;
   if(c&&name[0]!='_') {
-    sprintf(buffer," Selector: %s created with %d atoms.\n",name,c);
+    sprintf(buffer," Selector: selection \"%s\" defined with %d atoms.\n",name,c);
     OrthoAddOutput(buffer);
   }
 }
@@ -619,15 +620,13 @@ int SelectorSelect1(EvalElem *base)
 /*========================================================================*/
 int SelectorSelect2(EvalElem *base)
 {
-  int a,model,sele,s;
+  int a;
   int c=0;
   int ok=true;
   int oper;
-  float comp1,comp2;
+  float comp1;
   AtomInfoType *at1;
-  char *p;
   SelectorType *I=&Selector;
-  ObjectMolecule *obj;
   base->type=SELE_LIST;
   base->sele=Alloc(int,I->NAtom);
   ErrChkPtr(base->sele);

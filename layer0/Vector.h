@@ -56,6 +56,8 @@ double length3d ( double *v1 );
 
 /* OLD MATRIX STUFF NEEDS REWORKING */
 
+void rotation_matrix3f( float angle, float x, float y, float z,float *m );
+
 typedef float *oMatrix5f[5]; /* PHASE THESE OUT! - THEY CAUSE PROBLEMS! */
 
 typedef float *oMatrix3f[3];

@@ -22,6 +22,7 @@ Z* -------------------------------------------------------------------
 #include"Sphere.h"
 #include"Map.h"
 #include"Setting.h"
+#include"main.h"
 
 typedef struct RepSphere {
   Rep R;
@@ -68,8 +69,8 @@ void RepSphereRender(RepSphere *I,CRay *ray,Pickable **pick)
 		ray->fSphere3fv(ray,v,*(v+3));
 		v+=4;
 	 }
-  } else if(pick) {
-  } else {
+  } else if(pick&&PMGUI) {
+  } else if(PMGUI) {
 	 if(I->cullFlag) {
 		nt=I->NT;
 		while(c--)

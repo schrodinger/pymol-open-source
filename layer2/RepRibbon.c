@@ -23,6 +23,7 @@ Z* -------------------------------------------------------------------
 #include"Setting.h"
 #include"Word.h"
 #include"Scene.h"
+#include"main.h"
 
 typedef struct RepRibbon {
   Rep R;
@@ -61,8 +62,8 @@ void RepRibbonRender(RepRibbon *I,CRay *ray,Pickable **pick)
 		  ray->fCylinder3fv(ray,v+4,v+7,*(v+3),v,v);
 		  v+=10;
 		}
-  } else if(pick) {
-  } else {
+  } else if(pick&&PMGUI) {
+  } else if(PMGUI) {
 	 glBegin(GL_LINES);
 	 SceneResetNormal(true);
 	 while(c--)

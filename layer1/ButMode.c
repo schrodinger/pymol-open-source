@@ -18,6 +18,7 @@ Z* -------------------------------------------------------------------
 #include <stdio.h>
 #include <GL/glut.h>
 
+#include "main.h"
 #include "Base.h"
 #include "ButMode.h"
 #include "Scene.h"
@@ -124,49 +125,50 @@ void ButModeDraw(Block *block)
 
   char rateStr[255];
 
-  glColor3fv(I->Block->BackColor);
-  BlockFill(I->Block);
-  glColor3fv(I->Block->TextColor);
+  if(PMGUI) {
+    glColor3fv(I->Block->BackColor);
+    BlockFill(I->Block);
+    glColor3fv(I->Block->TextColor);
 
-  x = I->Block->rect.left+cButModeLeftMargin;
-  y = (I->Block->rect.top-cButModeLineHeight)-cButModeTopMargin;
+    x = I->Block->rect.left+cButModeLeftMargin;
+    y = (I->Block->rect.top-cButModeLineHeight)-cButModeTopMargin;
   
-  for(a=0;a<3;a++)
-	 {
-		glRasterPos4d((double)(x),(double)(y),0.0,1.0);
-		glutBitmapCharacter(GLUT_BITMAP_8_BY_13,a+'1');
-		glutBitmapCharacter(GLUT_BITMAP_8_BY_13,':');
-		c=I->Code[I->Mode[a]];
-		while(*c) 
-		  glutBitmapCharacter(GLUT_BITMAP_8_BY_13,*(c++));
-		y-=cButModeLineHeight;
-	 }
+    for(a=0;a<3;a++)
+      {
+        glRasterPos4d((double)(x),(double)(y),0.0,1.0);
+        glutBitmapCharacter(GLUT_BITMAP_8_BY_13,a+'1');
+        glutBitmapCharacter(GLUT_BITMAP_8_BY_13,':');
+        c=I->Code[I->Mode[a]];
+        while(*c) 
+          glutBitmapCharacter(GLUT_BITMAP_8_BY_13,*(c++));
+        y-=cButModeLineHeight;
+      }
 
-  if(I->Samples) 
-	 rate = I->Rate/I->Samples;
-  else 
-	 rate = 0;
-  sprintf(rateStr,"R: %1.1f Frame: %2d",rate,SceneGetFrame()+1);
+    if(I->Samples) 
+      rate = I->Rate/I->Samples;
+    else 
+      rate = 0;
+    sprintf(rateStr,"R: %1.1f Frame: %2d",rate,SceneGetFrame()+1);
   
-  glRasterPos4d((double)(x),(double)y,0.0,1.0);
-  c=rateStr;
-  while(*c)
-	 glutBitmapCharacter(GLUT_BITMAP_8_BY_13,*(c++));
+    glRasterPos4d((double)(x),(double)y,0.0,1.0);
+    c=rateStr;
+    while(*c)
+      glutBitmapCharacter(GLUT_BITMAP_8_BY_13,*(c++));
 
-  x = (I->Block->rect.left+I->Block->rect.right)/2;
-  y = (I->Block->rect.top-cButModeLineHeight)-cButModeTopMargin;
-  for(a=3;a<6;a++)
-	 {
-		glRasterPos4d((double)(x),(double)(y),0.0,1.0);
-		glutBitmapCharacter(GLUT_BITMAP_8_BY_13,a+'1');
-		glutBitmapCharacter(GLUT_BITMAP_8_BY_13,':');
-		c=I->Code[I->Mode[a]];
-		while(*c) 
-		  glutBitmapCharacter(GLUT_BITMAP_8_BY_13,*(c++));
-		y-=cButModeLineHeight;
-	 }
+    x = (I->Block->rect.left+I->Block->rect.right)/2;
+    y = (I->Block->rect.top-cButModeLineHeight)-cButModeTopMargin;
+    for(a=3;a<6;a++)
+      {
+        glRasterPos4d((double)(x),(double)(y),0.0,1.0);
+        glutBitmapCharacter(GLUT_BITMAP_8_BY_13,a+'1');
+        glutBitmapCharacter(GLUT_BITMAP_8_BY_13,':');
+        c=I->Code[I->Mode[a]];
+        while(*c) 
+          glutBitmapCharacter(GLUT_BITMAP_8_BY_13,*(c++));
+        y-=cButModeLineHeight;
+      }
 
-
+  }
 }
 
 

@@ -88,9 +88,9 @@ char *ExecutiveSeleToPDBStr(char *s1,int state)
   op1.i3 = 0; /* atIndex */
   sele1=SelectorIndexByName(s1);
   if(sele1>=0) {
-	op1.code = 'PDB1';
-	op1.i1 = state;
-	ExecutiveObjMolSeleOp(sele1,&op1);
+    op1.code = 'PDB1';
+    op1.i1 = state;
+    ExecutiveObjMolSeleOp(sele1,&op1);
   }
   op1.charVLA[op1.i2]=0;
   op1.i2++; /* get trailing null */
@@ -122,43 +122,62 @@ void ExecutiveOrient(char *sele,Matrix33d mi)
 		}
 	 }
 
-	for(a=0;a<3;a++)
-	  {
-		m[3][a]=0;
-		m[a][3]=0;
-	  }
-	m[3][3]=1.0;
+    for(a=0;a<3;a++)
+      {
+        m[3][a]=0;
+        m[a][3]=0;
+      }
+    m[3][3]=1.0;
 
-	normalize3f(m[0]);
-	normalize3f(m[1]);
-	normalize3f(m[2]);
+    normalize3f(m[0]);
+    normalize3f(m[1]);
+    normalize3f(m[2]);
 
-	SceneSetMatrix(m[0]);
+    SceneSetMatrix(m[0]);
 
-	/* there must  be a more elegant to get the PC on X and the SC
-	 * on Y then what is shown below, but I couldn't get it to work.
-	 * I tried swapping the eigen-columns around but either that is 
-	 * a bogus approach (??) or my code was buggy.  Hence the following...*/
+    /* there must  be a more elegant to get the PC on X and the SC
+     * on Y then what is shown below, but I couldn't get it to work.
+     * I tried swapping the eigen-columns around but either that is 
+     * a bogus approach (??) or my code was buggy.  Hence the following...*/
 
-	if((egval[0]<egval[2])&&(egval[2]<egval[1])) { /* X < Z < Y */
-	  SceneRotate(90,1,0,0); /*1<-->2*/
-	} else if((egval[1]<egval[0])&&(egval[0]<egval[2])) { /* Y < X < Z */
-	  SceneRotate(90,0,0,1); /*0<-->1*/
-	} else if((egval[1]<egval[2])&&(egval[2]<egval[0])) { /* Y < Z < X */
-	  SceneRotate(90,0,1,0); /*1<-->2*/
-	  SceneRotate(90,0,0,1); /*0<-->1*/
-	} else if((egval[2]<egval[1])&&(egval[1]<egval[0])) { /* Z < Y < X */
-	  SceneRotate(90,0,1,0); /*0<-->2*/
-	} else if((egval[2]<egval[0])&&(egval[0]<egval[1])) { /* Z < X < Y */
-	  SceneRotate(90,0,1,0); /*0<-->2*/
-	  SceneRotate(90,1,0,0); /*0<-->1*/
-	}
-	/* X < Y < Z  - do nothing - that's what we want */
+    if((egval[0]<egval[2])&&(egval[2]<egval[1])) { /* X < Z < Y */
+      SceneRotate(90,1,0,0); /*1<-->2*/
+    } else if((egval[1]<egval[0])&&(egval[0]<egval[2])) { /* Y < X < Z */
+      SceneRotate(90,0,0,1); /*0<-->1*/
+    } else if((egval[1]<egval[2])&&(egval[2]<egval[0])) { /* Y < Z < X */
+      SceneRotate(90,0,1,0); /*1<-->2*/
+      SceneRotate(90,0,0,1); /*0<-->1*/
+    } else if((egval[2]<egval[1])&&(egval[1]<egval[0])) { /* Z < Y < X */
+      SceneRotate(90,0,1,0); /*0<-->2*/
+    } else if((egval[2]<egval[0])&&(egval[0]<egval[1])) { /* Z < X < Y */
+      SceneRotate(90,0,1,0); /*0<-->2*/
+      SceneRotate(90,1,0,0); /*0<-->1*/
+    }
+    /* X < Y < Z  - do nothing - that's what we want */
 
 
-	ExecutiveWindowZoom(sele);
-	ExecutiveCenter(sele,1);
+    ExecutiveWindowZoom(sele);
+    ExecutiveCenter(sele,1);
 
+  }
+}
+/*========================================================================*/
+void ExecutiveAlter(char *s1,char *expr)
+{
+  int sele1,sele2;
+  char buffer[255];
+  ObjectMoleculeOpRec op1;
+  
+  sele1=SelectorIndexByName(s1);
+  if(sele1>=0) {
+    op1.code = 'ALTR';
+    op1.s1 = expr;
+    op1.i1 = 0;
+    ExecutiveObjMolSeleOp(sele1,&op1);
+    sprintf(buffer,"modified %i atoms.",op1.i1);
+    ErrOk(" Alter",buffer);
+  } else {
+    ErrMessage("ExecutiveAlter","No atoms selected.");
   }
 }
 /*========================================================================*/
@@ -171,34 +190,34 @@ void ExecutiveFit(char *s1,char *s2)
   
   sele1=SelectorIndexByName(s1);
   if(sele1>=0) {
-	op1.code = 'VERT';
-	op1.nvv1=0;
-	op1.vv1=(float*)VLAMalloc(1000,sizeof(float),5,0);
-	ExecutiveObjMolSeleOp(sele1,&op1);
+    op1.code = 'VERT';
+    op1.nvv1=0;
+    op1.vv1=(float*)VLAMalloc(1000,sizeof(float),5,0);
+    ExecutiveObjMolSeleOp(sele1,&op1);
   } else {
-	op1.vv1=NULL;
+    op1.vv1=NULL;
   }
 
   sele2=SelectorIndexByName(s2);
   if(sele2>=0) {
-	op2.code = 'VERT';
-	op2.nvv1=0;
-	op2.vv1=(float*)VLAMalloc(1000,sizeof(float),5,0);
-	ExecutiveObjMolSeleOp(sele2,&op2);
+    op2.code = 'VERT';
+    op2.nvv1=0;
+    op2.vv1=(float*)VLAMalloc(1000,sizeof(float),5,0);
+    ExecutiveObjMolSeleOp(sele2,&op2);
   } else {
-	op2.vv1=NULL;
+    op2.vv1=NULL;
   }
   if(op1.vv1&&op2.vv1) {
-	if(op1.nvv1!=op2.nvv1) {
-	  ErrMessage("ExecutiveFit","Atom counts between selections don't match.");
-	} else if(op1.nvv1) {
-	  printf(" ExecutiveFit: RMS = %8.3f\n",
-			 MatrixFitRMS(op1.nvv1,op1.vv1,op2.vv1,NULL,op2.ttt));
-	  op2.code = 'TTTF';
-	  ExecutiveObjMolSeleOp(sele1,&op2);
-	} else {
-	  ErrMessage("ExecutiveFit","No atoms selected.");
-	}
+    if(op1.nvv1!=op2.nvv1) {
+      ErrMessage("ExecutiveFit","Atom counts between selections don't match.");
+    } else if(op1.nvv1) {
+      printf(" ExecutiveFit: RMS = %8.3f\n",
+             MatrixFitRMS(op1.nvv1,op1.vv1,op2.vv1,NULL,op2.ttt));
+      op2.code = 'TTTF';
+      ExecutiveObjMolSeleOp(sele1,&op2);
+    } else {
+      ErrMessage("ExecutiveFit","No atoms selected.");
+    }
   }
   VLAFreeP(op1.vv1);
   VLAFreeP(op2.vv1);
@@ -328,8 +347,8 @@ void ExecutiveWindowZoom(char *name)
 		ExecutiveObjMolSeleOp(sele,&op);			 
 		if(op.f1>0.0)
 		  {
-			SceneWindowSphere(op.v1,op.f1);						  
-			SceneDirty();
+          SceneWindowSphere(op.v1,op.f1);						  
+          SceneDirty();
 		  }
 	 }
   } 
@@ -563,6 +582,7 @@ void ExecutiveManageObject(Object *obj)
   int a;
   SpecRec *rec = NULL;
   CExecutive *I = &Executive;
+  char buffer[255];
   while(ListIterate(I->Spec,rec,next,SpecList))
 	 {
 		if(rec->type==cExecObject)
@@ -577,6 +597,11 @@ void ExecutiveManageObject(Object *obj)
 		rec->obj->fFree(rec->obj);
 		rec->obj=NULL;
 	 }
+  else 
+    {
+      sprintf(buffer," Executive: object \"%s\" created.\n",obj->Name);
+      OrthoAddOutput(buffer);
+    }
   if(!rec)
 	 ListElemAlloc(rec,SpecRec);
   SceneObjectAdd(obj);
@@ -612,8 +637,8 @@ void ExecutiveManageSelection(char *name)
 int ExecutiveClick(Block *block,int button,int x,int y,int mod)
 {
   /*  Executive.Button = button;
-  I->LastX = x;
-  I->LastY = y;*/
+      I->LastX = x;
+      I->LastY = y;*/
   
   return(1);
 }
@@ -672,92 +697,95 @@ void ExecutiveDraw(Block *block)
 
   SpecRec *rec = NULL;
   CExecutive *I = &Executive;
-  glColor3fv(I->Block->BackColor);
-  BlockFill(I->Block);
 
-  x = I->Block->rect.left+ExecLeftMargin;
-  y = (I->Block->rect.top-ExecLineHeight)-ExecTopMargin;
-  xx = I->Block->rect.right-ExecRightMargin-ExecToggleWidth*(cRepCnt+ExecOpCnt);
-  
-  while(ListIterate(I->Spec,rec,next,SpecList))
-	 {
-		x2=xx;
-		y2=y-ExecToggleMargin;
-		glColor3fv(toggleColor);
-		for(a=0;a<ExecOpCnt;a++)
-		  {
-			 if(!a) {
-				glBegin(GL_LINE_LOOP);
-				glVertex2i(x2,y2+(ExecToggleSize-1)/2);
-				glVertex2i(x2+(ExecToggleSize-1)/2,y2);
-				glVertex2i(x2+ExecToggleSize-1,y2+(ExecToggleSize-1)/2);
-				glVertex2i(x2+(ExecToggleSize-1)/2,y2+ExecToggleSize-1);
-				glEnd();
-			 } else {
-				glBegin(GL_LINES);
-				glVertex2i(x2,y2+(ExecToggleSize-1)/2);
-				glVertex2i(x2+ExecToggleSize-1,y2+(ExecToggleSize-1)/2);
-				glVertex2i(x2+(ExecToggleSize-1)/2,y2);
-				glVertex2i(x2+(ExecToggleSize-1)/2,y2+ExecToggleSize-1);
-				glEnd();				
-			 }
+  if(PMGUI) {
+    glColor3fv(I->Block->BackColor);
+    BlockFill(I->Block);
+    
+    x = I->Block->rect.left+ExecLeftMargin;
+    y = (I->Block->rect.top-ExecLineHeight)-ExecTopMargin;
+    xx = I->Block->rect.right-ExecRightMargin-ExecToggleWidth*(cRepCnt+ExecOpCnt);
+    
+    while(ListIterate(I->Spec,rec,next,SpecList))
+      {
+        x2=xx;
+        y2=y-ExecToggleMargin;
+        glColor3fv(toggleColor);
+        for(a=0;a<ExecOpCnt;a++)
+          {
+            if(!a) {
+              glBegin(GL_LINE_LOOP);
+              glVertex2i(x2,y2+(ExecToggleSize-1)/2);
+              glVertex2i(x2+(ExecToggleSize-1)/2,y2);
+              glVertex2i(x2+ExecToggleSize-1,y2+(ExecToggleSize-1)/2);
+              glVertex2i(x2+(ExecToggleSize-1)/2,y2+ExecToggleSize-1);
+              glEnd();
+            } else {
+              glBegin(GL_LINES);
+              glVertex2i(x2,y2+(ExecToggleSize-1)/2);
+              glVertex2i(x2+ExecToggleSize-1,y2+(ExecToggleSize-1)/2);
+              glVertex2i(x2+(ExecToggleSize-1)/2,y2);
+              glVertex2i(x2+(ExecToggleSize-1)/2,y2+ExecToggleSize-1);
+              glEnd();				
+            }
 	
-			x2+=ExecToggleWidth;
-		  }
+            x2+=ExecToggleWidth;
+          }
 
-		for(a=0;a<cRepCnt;a++)
-		  {
-			if(rec->repOn[a]) 
-			  {
-				 glBegin(GL_POLYGON);
-				 glVertex2i(x2,y2);
-				 glVertex2i(x2,y2+ExecToggleSize);
-				 glVertex2i(x2+ExecToggleSize,y2+ExecToggleSize);
-				 glVertex2i(x2+ExecToggleSize,y2);
-			  }
-			else
-			  {
-				 glBegin(GL_LINE_LOOP);
-				 glVertex2i(x2,y2);
-				 glVertex2i(x2,y2+ExecToggleSize-1);
-				 glVertex2i(x2+ExecToggleSize-1,y2+ExecToggleSize-1);
-				 glVertex2i(x2+ExecToggleSize-1,y2);
-			  }
-				 glEnd();
-			x2+=ExecToggleWidth;
-		  }
+        for(a=0;a<cRepCnt;a++)
+          {
+            if(rec->repOn[a]) 
+              {
+                glBegin(GL_POLYGON);
+                glVertex2i(x2,y2);
+                glVertex2i(x2,y2+ExecToggleSize);
+                glVertex2i(x2+ExecToggleSize,y2+ExecToggleSize);
+                glVertex2i(x2+ExecToggleSize,y2);
+              }
+            else
+              {
+                glBegin(GL_LINE_LOOP);
+                glVertex2i(x2,y2);
+                glVertex2i(x2,y2+ExecToggleSize-1);
+                glVertex2i(x2+ExecToggleSize-1,y2+ExecToggleSize-1);
+                glVertex2i(x2+ExecToggleSize-1,y2);
+              }
+            glEnd();
+            x2+=ExecToggleWidth;
+          }
 
-		glColor3fv(I->Block->TextColor);
-		glRasterPos4d((double)(x),(double)(y),0.0,1.0);
-		if(rec->type==cExecObject)
-		  {
-			 y2=y-ExecToggleMargin;
-			 if(rec->visible)
-				glColor3f(ExecColorVisible);
-			 else
-				glColor3f(ExecColorHidden);
-			 glBegin(GL_POLYGON);
-			 glVertex2i(x-ExecToggleMargin,y2);
-			 glVertex2i(xx-ExecToggleMargin,y2);
-			 glVertex2i(xx-ExecToggleMargin,y2+ExecToggleSize);
-			 glVertex2i(x-ExecToggleMargin,y2+ExecToggleSize);
-			 glEnd();
-			 c=rec->obj->Name;
-			 glColor3fv(I->Block->TextColor);
+        glColor3fv(I->Block->TextColor);
+        glRasterPos4d((double)(x),(double)(y),0.0,1.0);
+        if(rec->type==cExecObject)
+          {
+            y2=y-ExecToggleMargin;
+            if(rec->visible)
+              glColor3f(ExecColorVisible);
+            else
+              glColor3f(ExecColorHidden);
+            glBegin(GL_POLYGON);
+            glVertex2i(x-ExecToggleMargin,y2);
+            glVertex2i(xx-ExecToggleMargin,y2);
+            glVertex2i(xx-ExecToggleMargin,y2+ExecToggleSize);
+            glVertex2i(x-ExecToggleMargin,y2+ExecToggleSize);
+            glEnd();
+            c=rec->obj->Name;
+            glColor3fv(I->Block->TextColor);
 		
-		  }
-		else if(rec->type==cExecSelection)
-		  {
-			 glutBitmapCharacter(GLUT_BITMAP_8_BY_13,'%');
-			 c=rec->name;
-		  }
+          }
+        else if(rec->type==cExecSelection)
+          {
+            glutBitmapCharacter(GLUT_BITMAP_8_BY_13,'%');
+            c=rec->name;
+          }
 
-		if(c)
-		  while(*c) 
-			 glutBitmapCharacter(GLUT_BITMAP_8_BY_13,*(c++));
+        if(c)
+          while(*c) 
+            glutBitmapCharacter(GLUT_BITMAP_8_BY_13,*(c++));
 
-		y-=ExecLineHeight;
-	 }
+        y-=ExecLineHeight;
+      }
+  }
 }
 /*========================================================================*/
 int ExecutiveIterateObject(Object **obj,void **hidden)

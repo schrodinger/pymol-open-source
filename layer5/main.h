@@ -17,12 +17,13 @@ Z* -------------------------------------------------------------------
 #define _H_main
 
 void MainFree(void);
-void MainReshape(int width, int height);
+void MainDoReshape(int width, int height);
 void MainDirty(void);
 void MainSwapBuffers(void);
 void MainRefreshNow(void);
 
 extern int PyMOLReady;
+extern int PMGUI;
 
 #ifdef _PYMOL_MODULE
 void was_main(void);

@@ -35,6 +35,7 @@ Z* -------------------------------------------------------------------
 #include"Selector.h"
 #include"Matrix.h"
 #include"Scene.h"
+#include"PUtils.h"
 
 void ObjectMoleculeRender(ObjectMolecule *I,int frame,CRay *ray,Pickable **pick);
 void ObjectMoleculeCylinders(ObjectMolecule *I);
@@ -1053,7 +1054,8 @@ void ObjectMoleculeSeleOp(ObjectMolecule *I,int sele,ObjectMoleculeOpRec *op)
   float v1[3],v2,*vv1,*vv2;
   int inv_flag;
   int hit_flag = false;
-  
+  int ok = true;
+
   if(sele>=0) {
 	SelectorUpdateTable();
 	switch(op->code) {
@@ -1087,6 +1089,7 @@ void ObjectMoleculeSeleOp(ObjectMolecule *I,int sele,ObjectMoleculeOpRec *op)
 		   case 'COLR':
 		   case 'VISI':
 		   case 'TTTF':
+         case 'ALTR':
 			 s=I->AtomInfo[a].selEntry;
 			 while(s) 
 			   {
@@ -1102,6 +1105,14 @@ void ObjectMoleculeSeleOp(ObjectMolecule *I,int sele,ObjectMoleculeOpRec *op)
 					 case 'TTTF':
 					   hit_flag=true;
 					   break;
+                case 'ALTR':
+                  if (ok) {
+                    if(!PAlterAtom(&I->AtomInfo[a],op->s1))
+                      op->i1++;
+                    else
+                      ok=false;
+                  }
+                  break;
 					 }
 					 break;
 				   }
@@ -1220,7 +1231,7 @@ void ObjectMoleculeUpdate(ObjectMolecule *I)
   for(a=0;a<I->NCSet;a++)
 	 if(I->CSet[a]) {	
 	   OrthoBusySlow(a,I->NCSet);
-	   PRINTF " ObjectMolecule: updating state %2d of \"%s\".\n" , a+1, I->Obj.Name ENDF
+	   PRINTF " ObjectMolecule: updating state %d of \"%s\".\n" , a+1, I->Obj.Name ENDF
 	   I->CSet[a]->fUpdate(I->CSet[a]);
 	 }
 }

@@ -28,6 +28,7 @@ Z* -------------------------------------------------------------------
 #include"ObjectMolecule.h"
 #include"Triangle.h"
 #include"Vector.h"
+#include"main.h"
 
 typedef struct RepSurface {
   Rep R;
@@ -84,8 +85,8 @@ void RepSurfaceRender(RepSurface *I,CRay *ray,Pickable **pick)
                               vc+(*t)*3,vc+(*(t+1))*3,vc+(*(t+2))*3);
           t+=3;
         }
-  } else if(pick) {
-  } else {
+  } else if(pick&&PMGUI) {
+  } else if(PMGUI) {
 
 	 if(I->S) {
       if(I->allVisibleFlag) {
