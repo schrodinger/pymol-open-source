@@ -1,5 +1,5 @@
 ----------------------------------------------------------------------
-PyMOL (C) 1998-2001 by Warren L. DeLano of DeLano Scientific.
+PyMOL (C) 1998-2002 by Warren L. DeLano of DeLano Scientific.
 http://www.pymol.org  EMAIL: warren@delanoscientific.com
 ----------------------------------------------------------------------
 PyMOL is an OPEN SOURCE program distributed under the "Python" license.
@@ -12,6 +12,7 @@ PyMOL has the following external dependencies:
   4. libpng (can compiled without it, but image saves won't work)
   5. Tcl/Tk (technically optional)
   6. Numerical Python (technically optional)
+  7. Python megawidgets (Pmw)
 ----------------------------------------------------------------------
 see INSTALL for installation instructions
 ----------------------------------------------------------------------
@@ -74,7 +75,7 @@ The PyMOL Team:
       Precision Insight (DRI)
       The XFree86 Project (Free Windowing System)
       VA Linux (CVS Hosting)
-      Free Software Foundation (GNU Suite)
+      Richard Stallman/Free Software Foundation (GNU Suite)
       The unknown authors of EISPACK (Linear Algebra)
       
 ----------------------------------------------------------------------

@@ -1,0 +1,47 @@
+# Here is how to build PyMOL for RedHat 7x with installation in:
+#
+# "/usr/local/pymol"
+#
+# Step 1: Make sure you have the required dependencies installed.
+
+rpm -q python
+rpm -q tcl
+rpm -q tk
+rpm -q libpng
+rpm -q zlib
+rpm -q Mesa-devel
+
+# Step 2: Extract the PyMOL archive and change to that directory.
+
+cd /usr/local/pymol
+
+# Step 3: Copy the appropriate makefile rules to "Rules.make".
+
+cp Rules.linux-rh7x Rules.make
+
+# Step 4: Build PyMOL.
+
+make
+
+# Step 5: You probably don't have Pmw, so install the PyMOL copy.
+
+make pmw
+
+# Step 6: Create you own copy of the start-up script.
+
+cp pymol.com.linux-rh7x pymol.com
+
+# Step 7: Test it.
+
+./pymol.com
+
+# Step 8: (optional) Make PyMOL available to all users.
+
+ln -s /usr/local/pymol/pymol.com /usr/local/bin/pymol
+
+#######
+
+# If you'd like to put PyMOL somewhere else, then change the paths in
+# "Rules.make" and "pymol.com" prior to compilation.
+
+
