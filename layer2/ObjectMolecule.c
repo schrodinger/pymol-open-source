@@ -4757,7 +4757,7 @@ void ObjectMoleculeUpdateNeighbors(ObjectMolecule *I)
     /* set up offsets and list terminators */
     c = I-> NAtom;
     for(a=0;a<I->NAtom;a++) {
-      d = I->Neighbor[a];
+      d = I->Neighbor[a]; /* get number of neighbors */
       I->Neighbor[c]=d; /* store neighbor count */
       I->Neighbor[a]=c+d+d+1; /* set initial position to end of list, we'll fill backwards */
       I->Neighbor[I->Neighbor[a]]=-1; /* store terminator */
@@ -4773,13 +4773,13 @@ void ObjectMoleculeUpdateNeighbors(ObjectMolecule *I)
 
       I->Neighbor[l0]--; 
       I->Neighbor[I->Neighbor[l0]]=b; /* store bond indices (for I->Bond) */
-      I->Neighbor[l1]--;
-      I->Neighbor[I->Neighbor[l1]]=b;
-
       I->Neighbor[l0]--;
       I->Neighbor[I->Neighbor[l0]]=l1; /* store neighbor references (I->AtomInfo, etc.)*/
+
       I->Neighbor[l1]--;
-      I->Neighbor[I->Neighbor[l1]]=l0;
+      I->Neighbor[I->Neighbor[l1]]=b; /* store bond indices (for I->Bond) */
+      I->Neighbor[l1]--;
+      I->Neighbor[I->Neighbor[l1]]=l0; /* store neighbor references (I->AtomInfo, etc.)*/
     }
     for(a=0;a<I->NAtom;a++) { /* adjust down to point to the count, not the first entry */
       if(I->Neighbor[a]>=0)
@@ -8259,7 +8259,7 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(char *buffer,
               if(sscanf(cc,"%d",&b2)!=1)
                 break;
               else {
-                if((b1>=0)&&(b2>=0)) { /* IDs must be positive */
+                if((b1>=0)&&(b2>=0)&&(b1!=b2)) { /* IDs must be positive and distinct*/
                   VLACheck(bond,BondType,nBond);
                   if(b1<=b2) {
                     bond[nBond].index[0]=b1; /* temporarily store the atom indexes */
