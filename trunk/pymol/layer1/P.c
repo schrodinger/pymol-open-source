@@ -1403,7 +1403,7 @@ static PyObject *PCatchWrite(PyObject *self, 	PyObject *args)
   char *str;
   PyArg_ParseTuple(args,"s",&str);
   if(str[0]) {
-    if(Feedback(FB_Python,FB_Results)) {
+    if(Feedback(FB_Python,FB_Output)) {
       OrthoAddOutput(str);
     }
   }

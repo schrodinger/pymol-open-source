@@ -272,12 +272,13 @@ if __name__=='pymol.cmd':
    fb_module_sc = Shortcut(fb_module.__dict__.keys())
 
    class fb_mask:
-      results =             0x01
-      errors =              0x02
-      actions =             0x04
-      warnings =            0x08
-      details =             0x10
-      blather =             0x20
+      output =              0x01 # Python/text output
+      results =             0x02
+      errors =              0x04
+      actions =             0x08
+      warnings =            0x10
+      details =             0x20
+      blather =             0x40
       debugging =           0x80
       everything =          0xFF
 
