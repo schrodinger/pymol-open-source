@@ -108,6 +108,11 @@ def mload(*args):
    nam = "mov"
    if len(args)>1:
       nam = args[1]
-   for a in glob.glob(args[0]):
-      cmd.load(a,nam)
+   fils = glob.glob(args[0])
+   fils.sort()
+   if not len(fils):
+      print "Error: no matching files"
+   else:
+      for a in fils:
+         cmd.load(a,nam)
    

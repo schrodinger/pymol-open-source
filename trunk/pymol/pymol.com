@@ -2,7 +2,7 @@
 #
 # PyMOL startup script
 #
-setenv PYMOL_PATH $HOME/pymol
+setenv PYMOL_PATH ${WLD_MTK}/pkg/pymol
 setenv PYMOL_EXTLIBPATH $PYMOL_PATH/ext/lib
 #
 # Tcl/Tk path
