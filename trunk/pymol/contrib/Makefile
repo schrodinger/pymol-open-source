@@ -6,6 +6,7 @@ static:
 	cd modules;$(MAKE) -f Makefile.static
 	cd sglite;$(MAKE) static
 	cd pyopengl;$(MAKE) static
+	cd champ;$(MAKE) static
 
 make-modules:
 	cd modules;echo installdir=$(PYMOL_PATH)/modules > Makefile.pre.in 
