@@ -166,6 +166,8 @@ CHANGE LOG
 =========================================================================
 Changes up to 0.88
 
+   * fixed numerous bugs
+
    * validated current test suite and source code build against:
         Linux, Win32, IRIX, Mac OSX, and OSF
 

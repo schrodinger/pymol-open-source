@@ -126,10 +126,10 @@ void ObjectResetTTT(CObject *I)
 void ObjectPrepareContext(CObject *I,CRay *ray)
 {
   float gl[16],*ttt;
-  if(PMGUI) {
-    if(ray) {
-      RaySetTTT(ray,I->TTTFlag,I->TTT);
-    } else {
+  if(ray) {
+    RaySetTTT(ray,I->TTTFlag,I->TTT);
+  } else {
+    if(PMGUI) {
       if(I->TTTFlag) {
         /* form standard 4x4 GL matrix with TTT rotation and 2nd translation */
         ttt=I->TTT;
