@@ -2768,6 +2768,54 @@ void SceneResetNormal(int lines)
 }
 
 /*========================================================================*/
+static void SceneApplyImageGamma(unsigned int *buffer, int width, int height)
+{
+  unsigned int test;
+  unsigned char *testPtr;
+  int big_endian;
+  float gamma = SettingGet(cSetting_gamma);
+  if(gamma>R_SMALL4)
+    gamma=1.0F/gamma;
+  else
+    gamma=1.0F;
+
+  test = 0xFF000000;
+  testPtr = (unsigned char*)&test;
+  big_endian = (*testPtr)&&1;
+
+  if(buffer&&height&&width) {
+    register float _inv3 = 1/(255*3.0F);
+    register float _1 = 1/3.0F;
+    register unsigned char *p;
+    register int x,y;
+    register float c1,c2,c3,inp,sig;
+    register unsigned int i1,i2,i3;
+    p = (unsigned char*) buffer;
+    for(y=0;y<height;y++) {
+      for(x=0;x<width;x++) {
+        c1 = p[0];
+        c2 = p[1];
+        c3 = p[2];
+        inp = (c1+c2+c3) * _inv3;
+        if(inp < R_SMALL4) 
+          sig = _1;
+        else
+          sig = (float)(pow(inp,gamma) / inp);
+        i1 = sig * c1;
+        i2 = sig * c2;
+        i3 = sig * c3;
+        if(i1>255) i1 = 255;
+        if(i2>255) i2 = 255;
+        if(i3>255) i3 = 255;
+        p[0] = i1;
+        p[1] = i2;
+        p[2] = i3;
+        p+=4;
+      }
+    }
+  }
+}
+/*========================================================================*/
 
 static double accumTiming = 0.0; 
 
@@ -2897,6 +2945,7 @@ void SceneRay(int ray_width,int ray_height,int mode,char **headerVLA_ptr,
     ErrChkPtr(buffer);
     
     RayRender(ray,ray_width,ray_height,buffer,I->FrontSafe,I->Back,timing,angle);
+    SceneApplyImageGamma(buffer,ray_width,ray_height);
 
     /*    RayRenderColorTable(ray,ray_width,ray_height,buffer);*/
     
