@@ -699,10 +699,11 @@ int SelectorCountStates(int sele)
         if(obj!=last) {
           at1=I->Table[a].atom;
           if(SelectorIsMember(obj->AtomInfo[at1].selEntry,sele)) {
-            if(obj->Obj.fGetNFrame)
+            if(obj->Obj.fGetNFrame) {
               n_frame=obj->Obj.fGetNFrame((CObject*)obj);
-            if(result<n_frame)
-              result=n_frame;
+              if(result<n_frame)
+                result=n_frame;
+            }
           }
           last=obj;
         }
