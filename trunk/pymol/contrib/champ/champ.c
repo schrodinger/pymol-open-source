@@ -1413,6 +1413,7 @@ int ChampModelToPat(CChamp *I,PyObject *model)
           case 'C':
             switch(*(c+1)) {
             case 'l':
+            case 'L':
               ChampParseAliphaticAtom(I,c,cur_atom,cH_Cl,2,false);
               std_flag = true;
               break;
@@ -1437,6 +1438,7 @@ int ChampModelToPat(CChamp *I,PyObject *model)
           case 'B':
             switch(*(c+1)) {
             case 'r':
+            case 'R':
               ChampParseAliphaticAtom(I,c,cur_atom,cH_Br,2,false);
               std_flag = true;
               break;
@@ -2672,6 +2674,7 @@ int ChampMatch2(CChamp *I,int template,int target,
 /* =============================================================== 
  * Smiles
  * =============================================================== */
+
 char *ChampParseBlockAtom(CChamp *I,char *c,int atom,int mask,int len,int not_flag)
 {
   ListAtom *at;
@@ -2683,9 +2686,20 @@ char *ChampParseBlockAtom(CChamp *I,char *c,int atom,int mask,int len,int not_fl
     at->atom |= mask;
     at->pos_flag = true;
   }
+  at->hydro_flag=true;
   PRINTFD(FB_smiles_parsing) 
     " ChampParseBlockAtom: called.\n"
     ENDFD;
+  if(mask==cH_Sym) {
+    if(len==1) {
+      at->symbol[0]=*c;
+      at->symbol[1]=0;
+    } else if(len==2) {
+      at->symbol[0]=*c;
+      at->symbol[1]=*(c+1);
+      at->symbol[2]=0;
+    }
+  }
   /* need to include code for loading symbol */
   return c+len;
 }
@@ -2824,14 +2838,41 @@ int ChampParseAtomBlock(CChamp *I,char **c_ptr,int cur_atom)
         I->Atom[cur_atom].stereo = cH_Clockwise;
       break;
     case 'A': /* note there is no way to address the 'A' symbol ...*/
-      if(not_flag) {
-        I->Atom[cur_atom].neg_flag=true;
-        I->Atom[cur_atom].not_class|=cH_Aliphatic;      
-      } else {
-        I->Atom[cur_atom].pos_flag=true;
-        I->Atom[cur_atom].class|=cH_Aliphatic;
+      switch(*(c+1)) {
+      case 'c':
+        c = ChampParseBlockAtom(I,c,cur_atom,cH_Sym,2,not_flag);
+        atom_seen = true;
+        break;
+      case 'g':
+        c = ChampParseBlockAtom(I,c,cur_atom,cH_Sym,2,not_flag);
+        atom_seen = true;
+        break;
+      case 'l':
+        c = ChampParseBlockAtom(I,c,cur_atom,cH_Sym,2,not_flag);
+        atom_seen = true;
+        break;
+      case 'm':
+        c = ChampParseBlockAtom(I,c,cur_atom,cH_Sym,2,not_flag);
+        atom_seen = true;
+        break;
+      case 's':
+        c = ChampParseBlockAtom(I,c,cur_atom,cH_Sym,2,not_flag);
+        atom_seen = true;
+        break;
+      case 'u':
+        c = ChampParseBlockAtom(I,c,cur_atom,cH_Sym,2,not_flag);
+        atom_seen = true;
+        break;
+      default:
+        if(not_flag) {
+          I->Atom[cur_atom].neg_flag=true;
+          I->Atom[cur_atom].not_class|=cH_Aliphatic;      
+        } else {
+          I->Atom[cur_atom].pos_flag=true;
+          I->Atom[cur_atom].class|=cH_Aliphatic;
+        }
+        c++;
       }
-      c++;
       break;
     case 'a':
       if(not_flag) {
@@ -2845,6 +2886,18 @@ int ChampParseAtomBlock(CChamp *I,char **c_ptr,int cur_atom)
       break;
     case 'B':
       switch(*(c+1)) {
+      case 'a':
+        c = ChampParseBlockAtom(I,c,cur_atom,cH_Sym,2,not_flag);
+        atom_seen = true;
+        break;
+      case 'e':
+        c = ChampParseBlockAtom(I,c,cur_atom,cH_Sym,2,not_flag);
+        atom_seen = true;
+        break;
+      case 'i':
+        c = ChampParseBlockAtom(I,c,cur_atom,cH_Sym,2,not_flag);
+        atom_seen = true;
+        break;
       case 'r':
         c = ChampParseBlockAtom(I,c,cur_atom,cH_Br,2,not_flag);
         atom_seen = true;
@@ -2859,6 +2912,26 @@ int ChampParseAtomBlock(CChamp *I,char **c_ptr,int cur_atom)
       switch(*(c+1)) {
       case 'a':
         c = ChampParseBlockAtom(I,c,cur_atom,cH_Ca,2,not_flag);
+        atom_seen = true;
+        break;
+      case 'd':
+        c = ChampParseBlockAtom(I,c,cur_atom,cH_Sym,2,not_flag);
+        atom_seen = true;
+        break;
+      case 'e':
+        c = ChampParseBlockAtom(I,c,cur_atom,cH_Sym,2,not_flag);
+        atom_seen = true;
+        break;
+      case 'o':
+        c = ChampParseBlockAtom(I,c,cur_atom,cH_Sym,2,not_flag);
+        atom_seen = true;
+        break;
+      case 'r':
+        c = ChampParseBlockAtom(I,c,cur_atom,cH_Sym,2,not_flag);
+        atom_seen = true;
+        break;
+      case 's':
+        c = ChampParseBlockAtom(I,c,cur_atom,cH_Sym,2,not_flag);
         atom_seen = true;
         break;
       case 'u':
@@ -2876,27 +2949,51 @@ int ChampParseAtomBlock(CChamp *I,char **c_ptr,int cur_atom)
       }
       break;
     case 'D':
-      num = ChampParseNumeral(c+1);
-      if(num>=0) {
-        if(not_flag) {
-          I->Atom[cur_atom].neg_flag=true;
-          I->Atom[cur_atom].not_degree|=num_to_degree[num];
-        } else {
-          I->Atom[cur_atom].pos_flag=true;
-          I->Atom[cur_atom].degree|=num_to_degree[num];
-        }
-        c+=2;
-      } else
-        ok=false;
+      switch(*(c+1)) {
+        case 'y':
+          c = ChampParseBlockAtom(I,c,cur_atom,cH_Sym,2,not_flag);
+          atom_seen = true;
+          break;
+      default:
+        num = ChampParseNumeral(c+1);
+        if(num>=0) {
+          if(not_flag) {
+            I->Atom[cur_atom].neg_flag=true;
+            I->Atom[cur_atom].not_degree|=num_to_degree[num];
+          } else {
+            I->Atom[cur_atom].pos_flag=true;
+            I->Atom[cur_atom].degree|=num_to_degree[num];
+          }
+          c+=2;
+        } else
+          ok=false;
+        break;
+      }
       break;
     case 'E':
-      c = ChampParseBlockAtom(I,c,cur_atom,cH_E,1,not_flag);
-      atom_seen = true;
+      switch(*(c+1)) {
+      case 'r':
+        c = ChampParseBlockAtom(I,c,cur_atom,cH_Sym,2,not_flag);
+        atom_seen = true;
+        break;
+      case 'u':
+        c = ChampParseBlockAtom(I,c,cur_atom,cH_Sym,2,not_flag);
+        atom_seen = true;
+        break;
+      default:
+        c = ChampParseBlockAtom(I,c,cur_atom,cH_E,1,not_flag);
+        atom_seen = true;
+        break;
+      }
       break;
     case 'F':
       switch(*(c+1)) {
       case 'e':
         c = ChampParseBlockAtom(I,c,cur_atom,cH_Fe,2,not_flag);
+        atom_seen = true;
+        break;
+      case 'r':
+        c = ChampParseBlockAtom(I,c,cur_atom,cH_Sym,2,not_flag);
         atom_seen = true;
         break;
       default:
@@ -2906,38 +3003,83 @@ int ChampParseAtomBlock(CChamp *I,char **c_ptr,int cur_atom)
       }
       break;      
     case 'G':
-      c = ChampParseBlockAtom(I,c,cur_atom,cH_G,1,not_flag);
-      atom_seen = true;
+      switch(*(c+1)) {
+      case 'a':
+        c = ChampParseBlockAtom(I,c,cur_atom,cH_Sym,2,not_flag);
+        atom_seen = true;
+        break;
+      case 'd':
+        c = ChampParseBlockAtom(I,c,cur_atom,cH_Sym,2,not_flag);
+        atom_seen = true;
+        break;
+      case 'e':
+        c = ChampParseBlockAtom(I,c,cur_atom,cH_Sym,2,not_flag);
+        atom_seen = true;
+        break;
+      }
       break;
     case 'H': 
-      if(!atom_seen) {
-        c = ChampParseBlockAtom(I,c,cur_atom,cH_H,1,not_flag);
+      switch(*(c+1)) {
+      case 'e':
+        c = ChampParseBlockAtom(I,c,cur_atom,cH_Sym,2,not_flag);
         atom_seen = true;
-      } else {
-        num = ChampParseNumeral(c+1);
-        if(num>=0) {
-          c+=2;
+        break;
+      case 'f':
+        c = ChampParseBlockAtom(I,c,cur_atom,cH_Sym,2,not_flag);
+        atom_seen = true;
+        break;
+      case 'g':
+        c = ChampParseBlockAtom(I,c,cur_atom,cH_Sym,2,not_flag);
+        atom_seen = true;
+        break;
+      case 'o':
+        c = ChampParseBlockAtom(I,c,cur_atom,cH_Sym,2,not_flag);
+        atom_seen = true;
+        break;
+      default:
+        if(!atom_seen) {
+          c = ChampParseBlockAtom(I,c,cur_atom,cH_H,1,not_flag);
+          atom_seen = true;
         } else {
-          num = 1;
-          c++;
-          while(*c) {
-            if(*c!='H')
-              break;
-            else {
-              num++;
-              c++;
+          num = ChampParseNumeral(c+1);
+          if(num>=0) {
+            c+=2;
+          } else {
+            num = 1;
+            c++;
+            while(*c) {
+              if(*c!='H')
+                break;
+              else {
+                num++;
+                c++;
+              }
             }
           }
+          I->Atom[cur_atom].imp_hydro = num;
+          I->Atom[cur_atom].tot_hydro = num;
+          I->Atom[cur_atom].hydro_flag = true; 
+          /* turn on hydrogen count matching for this atom */
+          
         }
-        I->Atom[cur_atom].imp_hydro = num;
-        I->Atom[cur_atom].tot_hydro = num;
-        I->Atom[cur_atom].hydro_flag = true; 
-        /* turn on hydrogen count matching for this atom */
+        break;
       }
       break;
     case 'I':
-      c = ChampParseBlockAtom(I,c,cur_atom,cH_I,1,not_flag);
+      switch(*(c+1)) {
+      case 'n':
+        c = ChampParseBlockAtom(I,c,cur_atom,cH_Sym,2,not_flag);
         atom_seen = true;
+        break;
+      case 'r':
+        c = ChampParseBlockAtom(I,c,cur_atom,cH_Sym,2,not_flag);
+        atom_seen = true;
+        break;
+      default:
+        c = ChampParseBlockAtom(I,c,cur_atom,cH_I,1,not_flag);
+        atom_seen = true;
+        break;
+      }
       break;      
     case 'J':
       c = ChampParseBlockAtom(I,c,cur_atom,cH_J,1,not_flag);
@@ -2948,11 +3090,34 @@ int ChampParseAtomBlock(CChamp *I,char **c_ptr,int cur_atom)
         atom_seen = true;
       break;      
     case 'L':
-      c = ChampParseBlockAtom(I,c,cur_atom,cH_L,1,not_flag);
+      switch(*(c+1)) {
+      case 'a':
+        c = ChampParseBlockAtom(I,c,cur_atom,cH_Sym,2,not_flag);
         atom_seen = true;
+        break;
+      case 'i':
+        c = ChampParseBlockAtom(I,c,cur_atom,cH_Sym,2,not_flag);
+        atom_seen = true;
+        break;
+      case 'u':
+        c = ChampParseBlockAtom(I,c,cur_atom,cH_Sym,2,not_flag);
+        atom_seen = true;
+        break;
+      default:
+        c = ChampParseBlockAtom(I,c,cur_atom,cH_L,1,not_flag);
+        atom_seen = true;
+      }
       break;      
     case 'M':
       switch(*(c+1)) {
+      case 'n':
+        c = ChampParseBlockAtom(I,c,cur_atom,cH_Sym,2,not_flag);
+        atom_seen = true;
+        break;
+      case 'o':
+        c = ChampParseBlockAtom(I,c,cur_atom,cH_Sym,2,not_flag);
+        atom_seen = true;
+        break;
       case 'g':
         c = ChampParseBlockAtom(I,c,cur_atom,cH_Mg,2,not_flag);
         atom_seen = true;
@@ -2969,6 +3134,18 @@ int ChampParseAtomBlock(CChamp *I,char **c_ptr,int cur_atom)
         c = ChampParseBlockAtom(I,c,cur_atom,cH_Na,2,not_flag);      
         atom_seen = true;
         break;
+      case 'b':
+        c = ChampParseBlockAtom(I,c,cur_atom,cH_Sym,2,not_flag);      
+        atom_seen = true;
+        break;
+      case 'd':
+        c = ChampParseBlockAtom(I,c,cur_atom,cH_Sym,2,not_flag);      
+        atom_seen = true;
+        break;
+      case 'i':
+        c = ChampParseBlockAtom(I,c,cur_atom,cH_Sym,2,not_flag);      
+        atom_seen = true;
+        break;
       default:
         c = ChampParseBlockAtom(I,c,cur_atom,cH_N,1,not_flag);
         atom_seen = true;
@@ -2976,12 +3153,43 @@ int ChampParseAtomBlock(CChamp *I,char **c_ptr,int cur_atom)
       }
       break;      
     case 'O':
-      c = ChampParseBlockAtom(I,c,cur_atom,cH_O,1,not_flag);
-      atom_seen = true;
+      switch(*(c+1)) {
+      case 's':
+        c = ChampParseBlockAtom(I,c,cur_atom,cH_Sym,2,not_flag);      
+        atom_seen = true;
+        break;
+      default:
+        c = ChampParseBlockAtom(I,c,cur_atom,cH_O,1,not_flag);
+        atom_seen = true;
+        break;
+      }
       break;      
     case 'P':
-      c = ChampParseBlockAtom(I,c,cur_atom,cH_P,1,not_flag);
+      switch(*(c+1)) {
+      case 'b':
+        c = ChampParseBlockAtom(I,c,cur_atom,cH_Sym,2,not_flag);      
         atom_seen = true;
+        break;
+      case 'd':
+        c = ChampParseBlockAtom(I,c,cur_atom,cH_Sym,2,not_flag);      
+        atom_seen = true;
+        break;
+      case 'o':
+        c = ChampParseBlockAtom(I,c,cur_atom,cH_Sym,2,not_flag);      
+        atom_seen = true;
+        break;
+      case 'r':
+        c = ChampParseBlockAtom(I,c,cur_atom,cH_Sym,2,not_flag);      
+        atom_seen = true;
+        break;
+      case 't':
+        c = ChampParseBlockAtom(I,c,cur_atom,cH_Sym,2,not_flag);      
+        atom_seen = true;
+        break;
+      default:
+        c = ChampParseBlockAtom(I,c,cur_atom,cH_P,1,not_flag);
+        atom_seen = true;
+      }
       break;      
     case 'p': /* Pi system */
       if(not_flag) {
@@ -2993,6 +3201,30 @@ int ChampParseAtomBlock(CChamp *I,char **c_ptr,int cur_atom)
       }
       c++;
       break;      
+    case 'R':
+      switch(*(c+1)) {
+      case 'b':
+        c = ChampParseBlockAtom(I,c,cur_atom,cH_Sym,2,not_flag);
+        atom_seen = true;
+        break;
+      case 'e':
+        c = ChampParseBlockAtom(I,c,cur_atom,cH_Sym,2,not_flag);
+        atom_seen = true;
+        break;
+      case 'h':
+        c = ChampParseBlockAtom(I,c,cur_atom,cH_Sym,2,not_flag);
+        atom_seen = true;
+        break;
+      case 'u':
+        c = ChampParseBlockAtom(I,c,cur_atom,cH_Sym,2,not_flag);
+        atom_seen = true;
+        break;
+      default:
+        c = ChampParseBlockAtom(I,c,cur_atom,cH_R,1,not_flag);
+        atom_seen = true;
+        break;
+      }
+      break;
     case 'r':
       num = ChampParseNumeral(c+1);
       if(num>=0) {
@@ -3021,8 +3253,32 @@ int ChampParseAtomBlock(CChamp *I,char **c_ptr,int cur_atom)
       break;      
     case 'S':
       switch(*(c+1)) {
+      case 'b':
+        c = ChampParseBlockAtom(I,c,cur_atom,cH_Sym,2,not_flag);
+        atom_seen = true;
+        break;
+      case 'c':
+        c = ChampParseBlockAtom(I,c,cur_atom,cH_Sym,2,not_flag);
+        atom_seen = true;
+        break;
       case 'e':
         c = ChampParseBlockAtom(I,c,cur_atom,cH_Se,2,not_flag);
+        atom_seen = true;
+        break;
+      case 'i':
+        c = ChampParseBlockAtom(I,c,cur_atom,cH_Sym,2,not_flag);
+        atom_seen = true;
+        break;
+      case 'm':
+        c = ChampParseBlockAtom(I,c,cur_atom,cH_Sym,2,not_flag);
+        atom_seen = true;
+        break;
+      case 'n':
+        c = ChampParseBlockAtom(I,c,cur_atom,cH_Sym,2,not_flag);
+        atom_seen = true;
+        break;
+      case 'r':
+        c = ChampParseBlockAtom(I,c,cur_atom,cH_Sym,2,not_flag);
         atom_seen = true;
         break;
       default:
@@ -3032,8 +3288,46 @@ int ChampParseAtomBlock(CChamp *I,char **c_ptr,int cur_atom)
       }
       break;      
     case 'T':
-      c = ChampParseBlockAtom(I,c,cur_atom,cH_T,1,not_flag);
+      switch(*(c+1)) {
+      case 'a':
+        c = ChampParseBlockAtom(I,c,cur_atom,cH_Sym,2,not_flag);
         atom_seen = true;
+        break;
+      case 'b':
+        c = ChampParseBlockAtom(I,c,cur_atom,cH_Sym,2,not_flag);
+        atom_seen = true;
+        break;
+      case 'e':
+        c = ChampParseBlockAtom(I,c,cur_atom,cH_Sym,2,not_flag);
+        atom_seen = true;
+        break;
+      case 'i':
+        c = ChampParseBlockAtom(I,c,cur_atom,cH_Sym,2,not_flag);
+        atom_seen = true;
+        break;
+      case 'h':
+        c = ChampParseBlockAtom(I,c,cur_atom,cH_Sym,2,not_flag);
+        atom_seen = true;
+        break;
+      case 'l':
+        c = ChampParseBlockAtom(I,c,cur_atom,cH_Sym,2,not_flag);
+        atom_seen = true;
+        break;
+      case 'm':
+        c = ChampParseBlockAtom(I,c,cur_atom,cH_Sym,2,not_flag);
+        atom_seen = true;
+        break;
+      default:
+        c = ChampParseBlockAtom(I,c,cur_atom,cH_T,1,not_flag);
+        atom_seen = true;
+      }
+      break;    
+    case 'V':
+      switch(*(c+1)) {
+      default:
+        c = ChampParseBlockAtom(I,c,cur_atom,cH_Sym,1,not_flag);
+        atom_seen = true;
+      }
       break;    
     case 'v':
       num = ChampParseNumeral(c+1);
@@ -3049,8 +3343,40 @@ int ChampParseAtomBlock(CChamp *I,char **c_ptr,int cur_atom)
       } else 
         ok=false;
       break;
+    case 'W':
+      switch(*(c+1)) {
+      default:
+        c = ChampParseBlockAtom(I,c,cur_atom,cH_Sym,1,not_flag);
+        atom_seen = true;
+        break;
+      }
+      break;
+    case 'U':
+      switch(*(c+1)) {
+      default:
+        c = ChampParseBlockAtom(I,c,cur_atom,cH_Sym,1,not_flag);
+        atom_seen = true;
+        break;
+      }
+      break;
+    case 'Y':
+      switch(*(c+1)) {
+      case 'b':
+        c = ChampParseBlockAtom(I,c,cur_atom,cH_Sym,2,not_flag);
+        atom_seen = true;
+        break;
+      default:
+        c = ChampParseBlockAtom(I,c,cur_atom,cH_Sym,1,not_flag);
+        atom_seen = true;
+        break;
+      }
+      break;
     case 'Z':
       switch(*(c+1)) {
+      case 'r':
+        c = ChampParseBlockAtom(I,c,cur_atom,cH_Sym,2,not_flag);
+        atom_seen = true;
+        break;
       case 'n':
         c = ChampParseBlockAtom(I,c,cur_atom,cH_Zn,2,not_flag);
         atom_seen = true;
@@ -3085,6 +3411,7 @@ int ChampParseAtomBlock(CChamp *I,char **c_ptr,int cur_atom)
         case 2: I->Atom[cur_atom].not_charge|=cH_Dication; break;
         case 3: I->Atom[cur_atom].not_charge|=cH_Trication; break;
         case 4: I->Atom[cur_atom].not_charge|=cH_Tetcation; break;
+        case 5: I->Atom[cur_atom].not_charge|=cH_Pentcation; break;
           
         }
       } else {
@@ -3095,6 +3422,7 @@ int ChampParseAtomBlock(CChamp *I,char **c_ptr,int cur_atom)
         case 2: I->Atom[cur_atom].charge|=cH_Dication; break;
         case 3: I->Atom[cur_atom].charge|=cH_Trication; break;
         case 4: I->Atom[cur_atom].charge|=cH_Tetcation; break;
+        case 5: I->Atom[cur_atom].charge|=cH_Pentcation; break;
         }
       }
       break;
@@ -3122,6 +3450,7 @@ int ChampParseAtomBlock(CChamp *I,char **c_ptr,int cur_atom)
         case 2: I->Atom[cur_atom].not_charge|=cH_Dianion; break;
         case 3: I->Atom[cur_atom].not_charge|=cH_Trianion; break;
         case 4: I->Atom[cur_atom].not_charge|=cH_Tetanion; break;
+        case 5: I->Atom[cur_atom].not_charge|=cH_Pentanion; break;
         }
       } else {
         I->Atom[cur_atom].pos_flag=true;
@@ -3131,6 +3460,7 @@ int ChampParseAtomBlock(CChamp *I,char **c_ptr,int cur_atom)
         case 2: I->Atom[cur_atom].charge|=cH_Dianion; break;
         case 3: I->Atom[cur_atom].charge|=cH_Trianion; break;
         case 4: I->Atom[cur_atom].charge|=cH_Tetanion; break;
+        case 5: I->Atom[cur_atom].charge|=cH_Pentanion; break;
         }
       }
       break;
@@ -3138,6 +3468,7 @@ int ChampParseAtomBlock(CChamp *I,char **c_ptr,int cur_atom)
       PRINTFB(FB_smiles_parsing,FB_errors)
         " champ: error parsing atom block at '%c' in: '%s'\n",*c,*c_ptr
         ENDFB;
+      c++;
       break;
     }
   }
@@ -3252,6 +3583,8 @@ char *ChampPatToSmiVLA(CChamp *I,int index,char *vla)
                   if(index<MAX_RING) {
                     mark[index]=bd1->atom[0]; /* save for matching other end of cycle */
                     mark_bond[index]=cur_bond;
+                    c = ChampBondToString(I,cur_bond,buf);
+                    concat_s(buf,c);
                     if(index<10) {
                       concat_c('0'+index);
                     } else {
@@ -3514,9 +3847,9 @@ void ChampPatDump(CChamp *I,int index)
     ChampAtomToString(I,cur_atom,buf);
     printf(" atom %d %3s 0x%08x",cur_atom,buf,at->atom);
     printf(" cy: %x",at->cycle);
-    printf(" cl: %x v: %02x D: %02x ch: %02x st: %d ih: %d hy: %d bo: ",
+    printf(" cl: %x v: %02x D: %02x ch: %02x st: %d ih: %d hy: %d hf: %d bo: ",
            at->class,at->valence,at->degree,at->charge,
-           at->stereo,at->imp_hydro,at->tot_hydro);
+           at->stereo,at->imp_hydro,at->tot_hydro,at->hydro_flag);
     for(a=0;a<MAX_BOND;a++) {
       if(!at->bond[a]) break;
       else printf("%d ",at->bond[a]);
@@ -3559,21 +3892,30 @@ int ChampAtomToString(CChamp *I,int index,char *buf)
   int a;
   int trivial=true;
   ListAtom *at;
-
+  
+  buf[0]=0;
   if(index) {
     at=I->Atom + index;
 
   /* the following are non-trivial */
 
-    trivial = trivial && !(at->neg_flag);
-    trivial = trivial && !(at->charge&(cH_Cation|cH_Dication|cH_Anion|cH_Dianion));
+    trivial = trivial && (!at->neg_flag) && (!at->hydro_flag);
+    trivial = trivial && !(at->charge&(cH_Cation|cH_Dication|
+                                       cH_Anion|cH_Dianion|
+                                       cH_Trication|cH_Trianion|
+                                       cH_Tetcation|cH_Tetanion|
+                                       cH_Pentcation|cH_Pentanion
+                                       ));
     trivial = trivial && !(at->cycle|at->valence|at->degree);
     trivial = trivial && !(at->class&cH_Aliphatic);
-    trivial = trivial && !((at->atom!=cH_Any) &&
-                           at->atom&( cH_Na | cH_K  | cH_Ca | cH_Mg | cH_Zn | cH_Fe | cH_Cu | cH_Se |
-                                       cH_B | cH_A | cH_E | cH_G | cH_J | cH_L | cH_M |
-                                      cH_Q | cH_R | cH_T | cH_X | cH_Z ));
 
+    trivial = trivial && !((at->atom!=cH_Any) &&
+                           at->atom&( cH_Na | cH_K  | cH_Ca | cH_Mg | 
+                                      cH_Zn | cH_Fe | cH_Cu | cH_Se |
+                                      cH_A  | cH_E  | cH_G  | cH_J  |
+                                      cH_L  | cH_M  | cH_Q  | cH_R  |
+                                      cH_T | cH_X | cH_Z ));
+    
     if(trivial&&(at->atom!=cH_Any)) {
       /* check number of atoms represented */
       c = 0;
@@ -3590,7 +3932,6 @@ int ChampAtomToString(CChamp *I,int index,char *buf)
       }
     }
 
-    trivial = true;
   
     if(trivial) {
       if(at->class&cH_Aromatic) {
@@ -3624,7 +3965,99 @@ int ChampAtomToString(CChamp *I,int index,char *buf)
       }
     }
     if(!trivial) {
-      strcpy(buf,"%");
+      strcat(buf,"[");
+      if(at->atom==cH_Sym) {
+        strcat(buf,at->symbol);
+      } else {
+        switch(at->atom) {
+        case cH_Any: strcat(buf,"*"); break;
+        case cH_NotH: strcat(buf,"?"); break; 
+        case cH_B: strcat(buf,"B"); break;
+        case cH_C: strcat(buf,"C"); break;
+        case cH_N: strcat(buf,"N"); break;
+        case cH_O: strcat(buf,"O"); break;
+        case cH_H: strcat(buf,"H"); break;
+        case cH_S: strcat(buf,"S"); break;
+        case cH_P: strcat(buf,"P"); break;
+        case cH_F: strcat(buf,"F"); break;
+        case cH_Cl: strcat(buf,"Cl"); break;
+        case cH_Br: strcat(buf,"Br"); break;
+        case cH_I: strcat(buf,"I"); break;
+        case cH_Na: strcat(buf,"Na"); break;
+        case cH_K: strcat(buf,"K"); break;
+        case cH_Ca: strcat(buf,"Ca"); break;
+        case cH_Mg: strcat(buf,"Mg"); break;
+        case cH_Fe: strcat(buf,"Fe"); break;
+        case cH_Zn: strcat(buf,"Zn"); break;
+        case cH_Cu: strcat(buf,"Cu"); break;
+        case cH_Se: strcat(buf,"Se"); break;
+        case cH_A: strcat(buf,"A"); break;
+        case cH_E: strcat(buf,"E"); break;
+        case cH_G: strcat(buf,"G"); break;
+        case cH_J: strcat(buf,"J"); break;
+        case cH_L: strcat(buf,"L"); break;
+        case cH_M: strcat(buf,"M"); break;
+        case cH_Q: strcat(buf,"Q"); break;
+        case cH_R: strcat(buf,"R"); break;
+        case cH_T: strcat(buf,"T"); break;
+        case cH_X: strcat(buf,"X"); break;
+        case cH_Z: strcat(buf,"Z"); break;
+        default: sprintf(buf,"%x",at->atom); break;
+        }
+      }
+      if(at->imp_hydro) {
+        switch(at->imp_hydro) {
+        case 0:
+          break;
+        case 1:
+          strcat(buf,"H");
+          break;
+        case 2:
+          strcat(buf,"H2");
+          break;
+        case 3:
+          strcat(buf,"H3");
+          break;
+        case 4:
+          strcat(buf,"H4");
+          break;
+        }
+      }
+      if(at->charge) {
+        switch(at->charge) {
+        case cH_Cation:
+          strcat(buf,"+");
+          break;
+        case cH_Anion:
+          strcat(buf,"-");
+          break;
+        case cH_Dication:
+          strcat(buf,"++");
+          break;
+        case cH_Dianion:
+          strcat(buf,"--");
+          break;
+        case cH_Trication:
+          strcat(buf,"+3");
+          break;
+        case cH_Trianion:
+          strcat(buf,"-3");
+          break;
+        case cH_Tetcation:
+          strcat(buf,"+4");
+          break;
+        case cH_Tetanion:
+          strcat(buf,"-4");
+          break;
+        case cH_Pentcation:
+          strcat(buf,"+5");
+          break;
+        case cH_Pentanion:
+          strcat(buf,"-5");
+          break;
+        }
+      }
+      strcat(buf,"]");
     }
   } else 
     buf[0]=0;
@@ -3713,6 +4146,7 @@ int ChampSmiToPat(CChamp *I,char *c)
       case 'C':
         switch(*(c+1)) {
         case 'l':
+        case 'L': /* be tolerate at the root level, but not withing blocks...*/
           c = ChampParseAliphaticAtom(I,c,cur_atom,cH_Cl,2,false);
           sym = cSym_Atom;
           break;
@@ -3759,6 +4193,7 @@ int ChampSmiToPat(CChamp *I,char *c)
       case 'B':
         switch(*(c+1)) {
         case 'r':
+        case 'R':
           c = ChampParseAliphaticAtom(I,c,cur_atom,cH_Br,2,true);
           sym = cSym_Atom;
           break;
