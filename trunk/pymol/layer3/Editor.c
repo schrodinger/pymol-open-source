@@ -57,6 +57,7 @@ ObjectMolecule *EditorDragObject(void)
 }
 static void subdivide( int n, float *x, float *y);
 
+/*========================================================================*/
 static void subdivide( int n, float *x, float *y)
 {
   int a;
@@ -68,6 +69,7 @@ static void subdivide( int n, float *x, float *y)
 	 }
 }
 
+/*========================================================================*/
 void EditorRender(int state)
 {
   CEditor *I = &Editor;
@@ -167,7 +169,7 @@ void EditorRender(int state)
     }
   }
 }
-
+/*========================================================================*/
 
 void EditorSetActiveObject(ObjectMolecule *obj,int state)
 {
@@ -191,7 +193,7 @@ void EditorSetActiveObject(ObjectMolecule *obj,int state)
     I->Obj=NULL;
   }
 }
-
+/*========================================================================*/
 void EditorPrepareDrag(ObjectMolecule *obj,int index,int state)
 {
   int frg;
@@ -287,7 +289,7 @@ void EditorPrepareDrag(ObjectMolecule *obj,int index,int state)
   if(I->DragObject)
     ObjectMoleculeSaveUndo(I->DragObject,state);
 }
-
+/*========================================================================*/
 void EditorDrag(ObjectMolecule *obj,int index,int mode,int state,float *pt,float *mov)
 {
   CEditor *I = &Editor;
@@ -407,7 +409,7 @@ void EditorDrag(ObjectMolecule *obj,int index,int mode,int state,float *pt,float
     }
   }
 }
-
+/*========================================================================*/
 void EditorInit(void)
 {
   CEditor *I = &Editor;
@@ -417,7 +419,7 @@ void EditorInit(void)
   I->DragIndex=-1;
   I->DragSelection=-1;
 }
-
+/*========================================================================*/
 void EditorFree(void)
 {
 }

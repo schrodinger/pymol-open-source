@@ -334,14 +334,13 @@ ObjectMap *ObjectMapLoadXPLORFile(ObjectMap *obj,char *fname,int frame)
 		I=ObjectMapReadXPLORStr(obj,buffer,frame);
 
 		mfree(buffer);
-	 }
-  CrystalDump(I->Crystal);
-  multiply33f33f(I->Crystal->FracToReal,I->Crystal->RealToFrac,mat);
+      CrystalDump(I->Crystal);
+      multiply33f33f(I->Crystal->FracToReal,I->Crystal->RealToFrac,mat);
+    }
 #ifdef _UNDEFINED
   for(a=0;a<9;a++)
     printf("%10.5f\n",mat[a]);
 #endif
-
   return(I);
 
 }

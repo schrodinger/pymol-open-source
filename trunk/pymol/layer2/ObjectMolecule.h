@@ -132,6 +132,7 @@ int ObjectMoleculeRemoveBonds(ObjectMolecule *I,int sele1,int sele2);
 
 void ObjectMoleculeSaveUndo(ObjectMolecule *I,int state);
 void ObjectMoleculeUndo(ObjectMolecule *I,int dir);
+void ObjectMoleculeReplaceAtom(ObjectMolecule *I,int index,AtomInfoType *ai);
 
 #endif
 

@@ -66,7 +66,15 @@ CoordSet *ObjectMoleculeChemPyModel2CoordSet(PyObject *model,AtomInfoType **atIn
 
 int ObjectMoleculeGetAtomGeometry(ObjectMolecule *I,int state,int at);
 
-
+/*========================================================================*/
+void ObjectMoleculeReplaceAtom(ObjectMolecule *I,int index,AtomInfoType *ai)
+{
+  if((index>=0)&&(index<=I->NAtom)) {
+    memcpy(I->AtomInfo+index,ai,sizeof(AtomInfoType));
+    ObjectMoleculeInvalidate(I,cRepAll,cRepInvAtoms);
+    /* could we put in a refinement step here? */
+  }
+}
 /*========================================================================*/
 void ObjectMoleculeSaveUndo(ObjectMolecule *I,int state)
 {
@@ -405,66 +413,62 @@ void ObjectMoleculeInferChemForProtein(ObjectMolecule *I,int state)
       ai=I->AtomInfo+a;
       if(ai->chemFlag) {
         if(ai->geom==cAtomInfoPlaner)
-          if(ai->elem[0]=='C')
-            if(!ai->elem[1]) /* found planer carbon */
-              {
-                n = I->Neighbor[a];
-                nn = I->Neighbor[n++];
-                if(nn>1) {
-                  a1 = -1;
-                  while(1) {
-                    a0 = I->Neighbor[n++];
-                    if(a0<0) break;
+          if(ai->protons == cAN_C) {
+            n = I->Neighbor[a];
+            nn = I->Neighbor[n++];
+            if(nn>1) {
+              a1 = -1;
+              while(1) {
+                a0 = I->Neighbor[n++];
+                if(a0<0) break;
+                ai0 = I->AtomInfo+a0;
+                if((ai0->protons==cAN_O)&&(!ai0->chemFlag)) {
+                  a1=a0;
+                  ai1=ai0; /* found candidate carbonyl */
+                  break;
+                }
+              }
+              if(a1>0) {
+                n = I->Neighbor[a]+1;
+                while(1) {
+                  a0 = I->Neighbor[n++];
+                  if(a0<0) break;
+                  if(a0!=a1) {
                     ai0 = I->AtomInfo+a0;
-                    if((ai0->elem[0]=='O')&&(!ai0->elem[1])&&(!ai0->chemFlag)) {
-                      a1=a0;
-                      ai1=ai0; /* found candidate carbonyl */
-                      break;
-                    }
-                  }
-                  if(a1>0) {
-                    n = I->Neighbor[a]+1;
-                    while(1) {
-                      a0 = I->Neighbor[n++];
-                      if(a0<0) break;
-                      if(a0!=a1) {
-                        ai0 = I->AtomInfo+a0;
-                        if(!ai0->elem[1]) {
-                          if(ai0->elem[0]=='O') {
-                            if(!ai0->chemFlag) {
-                              ai0->chemFlag=true; /* acid */
-                              ai0->geom=cAtomInfoPlaner;
-                              ai0->valence=1;
-                              ai1->chemFlag=true;
-                              ai1->geom=cAtomInfoPlaner;
-                              ai1->valence=1;
-                              changedFlag=true;
-                              break;
-                            }
-                          } else if(ai0->elem[0]=='N') {
-                            if(!ai0->chemFlag) { 
-                              ai0->chemFlag=true; /* amide N */ 
-                              ai0->geom=cAtomInfoPlaner;                            
-                              ai0->valence=3;
-                              ai1->chemFlag=true; /* amide =O */ 
-                              ai1->geom=cAtomInfoPlaner;
-                              ai1->valence=1;
-                              changedFlag=true;
-                              break;
-                            } else if(ai0->geom==cAtomInfoPlaner) {
-                              ai1->chemFlag=true; /* amide =O */
-                              ai1->geom=cAtomInfoPlaner;
-                              ai1->valence=1;
-                              changedFlag=true;
-                              break;
-                            }
-                          }
-                        }
+                    if(ai0->protons==cAN_O) {
+                      if(!ai0->chemFlag) {
+                        ai0->chemFlag=true; /* acid */
+                        ai0->geom=cAtomInfoPlaner;
+                        ai0->valence=1;
+                        ai1->chemFlag=true;
+                        ai1->geom=cAtomInfoPlaner;
+                        ai1->valence=1;
+                        changedFlag=true;
+                        break;
+                      }
+                    } else if(ai0->protons==cAN_N) {
+                      if(!ai0->chemFlag) { 
+                        ai0->chemFlag=true; /* amide N */ 
+                        ai0->geom=cAtomInfoPlaner;                            
+                        ai0->valence=3;
+                        ai1->chemFlag=true; /* amide =O */ 
+                        ai1->geom=cAtomInfoPlaner;
+                        ai1->valence=1;
+                        changedFlag=true;
+                        break;
+                      } else if(ai0->geom==cAtomInfoPlaner) {
+                        ai1->chemFlag=true; /* amide =O */
+                        ai1->geom=cAtomInfoPlaner;
+                        ai1->valence=1;
+                        changedFlag=true;
+                        break;
                       }
                     }
                   }
                 }
               }
+            }
+          }
       }
     }
   }
@@ -476,38 +480,34 @@ void ObjectMoleculeInferChemForProtein(ObjectMolecule *I,int state)
     for(a=0;a<I->NAtom;a++) {
       ai=I->AtomInfo+a;
       if(!ai->chemFlag) {
-        if(ai->elem[0]=='C') {
-          if(!ai->elem[1]) /* candidate carbon */
-            {
-              n = I->Neighbor[a];
-              nn = I->Neighbor[n++];
-              if(nn>1) {
-                a1 = -1;
-                while(1) {
-                  a0 = I->Neighbor[n++];
-                  if(a0<0) break;
-                  ai0 = I->AtomInfo+a0;
-                  if((ai0->elem[0]=='O')&&(!ai0->elem[1])&&(!ai0->chemFlag)) { /* =O */
-                    ai->chemFlag=true; 
-                    ai->geom=cAtomInfoPlaner;
-                    ai->valence=1;
-                    ai0->chemFlag=true;
-                    ai0->geom=cAtomInfoPlaner;
-                    ai0->valence=3;
-                    changedFlag=true;
-                    break;
-                  }
-                }
+        if(ai->protons==cAN_C) {
+          n = I->Neighbor[a];
+          nn = I->Neighbor[n++];
+          if(nn>1) {
+            a1 = -1;
+            while(1) {
+              a0 = I->Neighbor[n++];
+              if(a0<0) break;
+              ai0 = I->AtomInfo+a0;
+              if((ai0->protons==cAN_O)&&(!ai0->chemFlag)) { /* =O */
+                ai->chemFlag=true; 
+                ai->geom=cAtomInfoPlaner;
+                ai->valence=1;
+                ai0->chemFlag=true;
+                ai0->geom=cAtomInfoPlaner;
+                ai0->valence=3;
+                changedFlag=true;
+                break;
               }
             }
+          }
         }
-        else if(ai->elem[0]=='N')
-          if(!ai->elem[1]) /* unassigned nitrogen */
-            {
-              ai->chemFlag=true; 
-              ai->geom=cAtomInfoPlaner;
-              ai->valence=3;
-            }
+        else if(ai->protons==cAN_N)
+          {
+            ai->chemFlag=true; 
+            ai->geom=cAtomInfoPlaner;
+            ai->valence=3;
+          }
       }
     }
   }
@@ -520,7 +520,7 @@ void ObjectMoleculeInferChemFromNeighGeom(ObjectMolecule *I,int state)
   * NOTE: very limited in scope */
 
   int a,n,a0,nn;
-  int changedFlag;
+  int changedFlag=true;
   int geom;
   int carbonVal[10];
   
@@ -537,117 +537,101 @@ void ObjectMoleculeInferChemFromNeighGeom(ObjectMolecule *I,int state)
       ai=I->AtomInfo+a;
       if(!ai->chemFlag) {
         geom=ObjectMoleculeGetAtomGeometry(I,state,a);
-        if(!ai->chemFlag) {
-          if(!ai->elem[1]) {
-            switch(ai->elem[0]) {
-            case 'K':
-              ai->chemFlag=1;
-              ai->geom=cAtomInfoNone;
-              ai->valence=0;
-              break;
-            case 'H':
-            case 'F':
-            case 'I':
-              ai->chemFlag=1;
-              ai->geom=cAtomInfoSingle;
-              ai->valence=1;
-              break;
-            case 'O':
-              n = I->Neighbor[a];
-              nn = I->Neighbor[n++];
-              if(nn!=1) { /* water, hydroxy, ether */
-                ai->chemFlag=1;
+        switch(ai->protons) {
+        case cAN_K:
+          ai->chemFlag=1;
+          ai->geom=cAtomInfoNone;
+          ai->valence=0;
+          break;
+        case cAN_H:
+        case cAN_F:
+        case cAN_I:
+        case cAN_Br:
+          ai->chemFlag=1;
+          ai->geom=cAtomInfoSingle;
+          ai->valence=1;
+          break;
+        case cAN_O:
+          n = I->Neighbor[a];
+          nn = I->Neighbor[n++];
+          if(nn!=1) { /* water, hydroxy, ether */
+            ai->chemFlag=1;
+            ai->geom=cAtomInfoTetrahedral;
+            ai->valence=2;
+          } else { /* hydroxy or carbonyl? check carbon geometry */
+            a0 = I->Neighbor[n+1];
+            ai2=I->AtomInfo+a0;
+            if(ai2->chemFlag) {
+              if((ai2->geom==cAtomInfoTetrahedral)||
+                 (ai2->geom==cAtomInfoLinear)) {
+                ai->chemFlag=1; /* hydroxy */
                 ai->geom=cAtomInfoTetrahedral;
                 ai->valence=2;
-              } else { /* hydroxy or carbonyl? check carbon geometry */
-                a0 = I->Neighbor[n+1];
-                ai2=I->AtomInfo+a0;
-                if(ai2->chemFlag) {
-                  if((ai2->geom==cAtomInfoTetrahedral)||
-                     (ai2->geom==cAtomInfoLinear)) {
-                    ai->chemFlag=1; /* hydroxy */
-                    ai->geom=cAtomInfoTetrahedral;
-                    ai->valence=2;
-                  }
-                }
-              }
-              
-              break;
-            case 'C':
-              if(geom>=0) {
-                ai->geom = geom;
-                ai->valence = carbonVal[geom];
-                ai->chemFlag=true;
-              } else {
-                n = I->Neighbor[a];
-                nn = I->Neighbor[n++];
-                if(nn==1) { /* only one neighbor */
-                  ai2=I->AtomInfo+I->Neighbor[n];
-                  if(ai2->chemFlag&&(ai2->geom==cAtomInfoTetrahedral)) {
-                    ai->chemFlag=true; /* singleton carbon bonded to tetC must be tetC */
-                    ai->geom=cAtomInfoTetrahedral;
-                    ai->valence=4;
-                  }
-                }
-              }
-              break;
-            case 'N':
-              n = I->Neighbor[a];
-              nn = I->Neighbor[n++];
-              if(geom==cAtomInfoPlaner) {
-                ai->chemFlag=true;
-                ai->geom=cAtomInfoPlaner;
-                ai->valence=3;
-              }
-              break;
-            case 'S':
-              n = I->Neighbor[a];
-              nn = I->Neighbor[n++];
-              if(nn==4) { /* sulfone */
-                ai->chemFlag=true;
-                ai->geom=cAtomInfoTetrahedral;
-                ai->valence=4;
-              } else if(nn==3) { /* suloxide */
-                ai->chemFlag=true;
-                ai->geom=cAtomInfoTetrahedral;
-                ai->valence=3;
-              } else if(nn==2) { /* thioether */
-                ai->chemFlag=true;
-                ai->geom=cAtomInfoTetrahedral;
-                ai->valence=2;
-              }
-              break;
-            }
-          } else {
-            switch(ai->elem[0]) {
-            case 'B':
-              switch(ai->elem[1]) {
-              case 'R':
-              case 'r':
-                ai->chemFlag=1;
-                ai->geom=cAtomInfoSingle;
-                ai->valence=1;
-                break;
-              }
-            case 'C':
-              switch(ai->elem[1]) {
-              case 'l':
-              case 'L':
-                ai->chemFlag=1;
-                if(ai->formalCharge==0.0) {
-                  ai->geom=cAtomInfoSingle;
-                  ai->valence=1;
-                } else {
-                  ai->geom=cAtomInfoNone;
-                  ai->valence=0;
-                }
-                break;
               }
             }
           }
+          break;
+        case cAN_C:
+          if(geom>=0) {
+            ai->geom = geom;
+            ai->valence = carbonVal[geom];
+            ai->chemFlag=true;
+          } else {
+            n = I->Neighbor[a];
+            nn = I->Neighbor[n++];
+            if(nn==1) { /* only one neighbor */
+              ai2=I->AtomInfo+I->Neighbor[n];
+              if(ai2->chemFlag&&(ai2->geom==cAtomInfoTetrahedral)) {
+                ai->chemFlag=true; /* singleton carbon bonded to tetC must be tetC */
+                ai->geom=cAtomInfoTetrahedral;
+                ai->valence=4;
+              }
+            }
+          }
+          break;
+        case cAN_N:
+          n = I->Neighbor[a];
+          nn = I->Neighbor[n++];
+          if(geom==cAtomInfoPlaner) {
+            ai->chemFlag=true;
+            ai->geom=cAtomInfoPlaner;
+            ai->valence=3;
+          } else if(geom==cAtomInfoTetrahedral) {
+            ai->chemFlag=true;
+            ai->geom=cAtomInfoTetrahedral;
+            ai->valence=4;
+          }
+          break;
+        case cAN_S:
+          n = I->Neighbor[a];
+          nn = I->Neighbor[n++];
+          if(nn==4) { /* sulfone */
+            ai->chemFlag=true;
+            ai->geom=cAtomInfoTetrahedral;
+            ai->valence=4;
+          } else if(nn==3) { /* suloxide */
+            ai->chemFlag=true;
+            ai->geom=cAtomInfoTetrahedral;
+            ai->valence=3;
+          } else if(nn==2) { /* thioether */
+            ai->chemFlag=true;
+            ai->geom=cAtomInfoTetrahedral;
+            ai->valence=2;
+          }
+          break;
+        case cAN_Cl:
+          ai->chemFlag=1;
+          if(ai->formalCharge==0.0) {
+            ai->geom=cAtomInfoSingle;
+            ai->valence=1;
+          } else {
+            ai->geom=cAtomInfoNone;
+            ai->valence=0;
+          }
+          break;
+        }
         if(ai->chemFlag)
           changedFlag=true;
-        }
       }
     }
   }
@@ -655,7 +639,160 @@ void ObjectMoleculeInferChemFromNeighGeom(ObjectMolecule *I,int state)
 /*========================================================================*/
 void ObjectMoleculeInferChemFromBonds(ObjectMolecule *I,int state)
 {
+
+  int a,b,*b0;
+  AtomInfoType *ai,*ai0,*ai1;
+  int a0,a1;
+  int expect,order;
+  int n,nn;
+  int changedFlag;
+  /* initialize accumulators on uncategorized atoms */
+
+
+  ObjectMoleculeUpdateNeighbors(I);
+  ai=I->AtomInfo;
+  for(a=0;a<I->NAtom;a++) {
+    if(!ai->chemFlag) {
+      ai->geom=0;
+      ai->valence=0;
+    }
+    ai++;
+  }
   
+  /* find maximum bond order for each atom */
+
+  b0=I->Bond;
+  for(b=0;b<I->NBond;b++) {
+    a0 = *(b0++);
+    a1 = *(b0++);
+    ai0=I->AtomInfo + a0;
+    ai1=I->AtomInfo + a1;
+    order = *(b0++);
+    if(order>ai0->geom)
+      ai0->geom=order;
+    ai0->valence+=order;
+    if(order>ai1->geom)
+      ai1->geom=order;
+    ai1->valence+=order;
+  }
+
+  /* now set up valences and geometries */
+
+  ai=I->AtomInfo;
+  for(a=0;a<I->NAtom;a++) {
+    if(!ai->chemFlag) {
+      expect = AtomInfoGetExpectedValence(ai);
+      if(expect<0) 
+        expect = -expect; /* for now, just ignore this issue */
+      n = I->Neighbor[a];
+      nn = I->Neighbor[n++];
+      if(nn==expect) { /* sum of bond orders equals valence */
+        ai->chemFlag=true;
+        ai->valence=expect;
+        switch(ai->geom) { /* max bond order observed */
+        case 0: ai->geom = cAtomInfoNone; break;
+        case 2: ai->geom = cAtomInfoPlaner; break;
+        case 3: ai->geom = cAtomInfoLinear; break;
+        default: 
+          if(expect==1) 
+            ai->geom = cAtomInfoSingle;
+          else
+            ai->geom = cAtomInfoTetrahedral; 
+          break;            
+        }
+      } else if(nn<expect) { /* missing a bond */
+        ai->chemFlag=true;
+        ai->valence=expect;
+        switch(ai->geom) { 
+        case 2: ai->geom = cAtomInfoPlaner; break;
+        case 3: ai->geom = cAtomInfoLinear; break;
+        default: 
+          if(expect==1) 
+            ai->geom = cAtomInfoSingle;
+          else
+            ai->geom = cAtomInfoTetrahedral; 
+          break;
+        }
+      } else if(nn>expect) {
+        ai->chemFlag=true;
+        ai->valence=expect;
+        switch(ai->geom) { 
+        case 2: ai->geom = cAtomInfoPlaner; break;
+        case 3: ai->geom = cAtomInfoLinear; break;
+        default: 
+          if(expect==1) 
+            ai->geom = cAtomInfoSingle;
+          else
+            ai->geom = cAtomInfoTetrahedral; 
+          break;
+        }
+        if(nn>3)
+          ai->geom = cAtomInfoTetrahedral;
+      }
+    }
+    ai++;
+  }
+
+  /* now go through and make sure conjugated amines are planer */
+  changedFlag=true;
+  while(changedFlag) {
+    changedFlag=false;
+    ai=I->AtomInfo;
+    for(a=0;a<I->NAtom;a++) {
+      if(ai->chemFlag) {
+        if(ai->protons==cAN_N) 
+          if(ai->formalCharge==0) 
+            if(ai->geom==cAtomInfoTetrahedral) { 
+              /* search for uncharged tetrahedral nitrogen */
+              n = I->Neighbor[a];
+              nn = I->Neighbor[n++];
+              while(1) {
+                a0 = I->Neighbor[n++];
+                if(a0<0) break;
+                ai0 = I->AtomInfo+a0;
+                if((ai0->chemFlag)&&(ai0->geom==cAtomInfoPlaner)&&
+                   ((ai0->protons==cAN_C)||(ai1->protons==cAN_N))) {
+                  ai->geom=cAtomInfoPlaner; /* found probably delocalization */
+                  changedFlag=true;
+                  break;
+                }
+              }
+            }
+      }
+      ai++; 
+    }
+  }
+
+  /* now go through and make sure conjugated anions are planer */
+  changedFlag=true;
+  while(changedFlag) {
+    changedFlag=false;
+    ai=I->AtomInfo;
+    for(a=0;a<I->NAtom;a++) {
+      if(ai->chemFlag) {
+        if(ai->protons==cAN_O) 
+          if(ai->formalCharge==-1) 
+            if((ai->geom==cAtomInfoTetrahedral)||
+               (ai->geom==cAtomInfoSingle)) { /* search for anionic tetrahedral oxygen */
+              n = I->Neighbor[a];
+              while(1) {
+                a0 = I->Neighbor[n++];
+                if(a0<0) break;
+                ai0 = I->AtomInfo+a0;
+                if((ai0->chemFlag)&&(ai0->geom==cAtomInfoPlaner)&&
+                   ((ai0->protons==cAN_C)||(ai1->protons==cAN_N))) {
+                  ai->geom=cAtomInfoPlaner; /* found probable delocalization */
+                  changedFlag=true;
+                  break;
+                }
+              }
+            }
+      }
+      ai++;
+    }
+  }
+
+
 }
 /*========================================================================*/
 void ObjectMoleculeTransformSelection(ObjectMolecule *I,int state,int sele,float *TTT) 
