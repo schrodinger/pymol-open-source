@@ -1147,8 +1147,9 @@ SEE ALSO
    from exporting import \
         png,                \
         export_coords,      \
-        multisave,          \
+        get_pdbstr,         \
         get_session,        \
+        multisave,          \
         save               
 
    #--------------------------------------------------------------------
@@ -1417,8 +1418,9 @@ SEE ALSO
       'get_area'      : [ get_area          , 0 , 0 , ''  , parsing.STRICT ],
       'get_chains'    : [ get_chains        , 0 , 0 , ''  , parsing.STRICT ],
       'get_dihedral'  : [ get_dihedral      , 0 , 0 , ''  , parsing.STRICT ],
-      'get_extent'    : [ get_extent        , 0 , 0 , ''  , parsing.STRICT ],   
-      'get_position'  : [ get_position      , 0 , 0 , ''  , parsing.STRICT ],
+      'get_extent'    : [ get_extent        , 0 , 0 , ''  , parsing.STRICT ],
+      'get_pdbstr'    : [ get_pdbstr        , 0 , 0 , ''  , parsing.STRICT ],      
+      'get_position'  : [ get_position      , 0 , 0 , ''  , parsing.STRICT ],      
       'get_title'     : [ get_title         , 0 , 0 , ''  , parsing.STRICT ],   
       'get_type'      : [ get_type          , 0 , 0 , ''  , parsing.STRICT ],
       'get_view'      : [ get_view          , 0 , 0 , ''  , parsing.STRICT ],
