@@ -217,6 +217,7 @@ def setup_contexts(context_info):   # Author: Warren DeLano
             zoom_list.append(water)
         if ligand in name_list:
             cmd.show("sticks",ligand)
+            cmd.hide("cartoon",ligand)
             util.cbag(ligand)
             zoom_list.append(ligand)
         if site in name_list:

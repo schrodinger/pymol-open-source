@@ -8047,58 +8047,62 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(char *buffer,
 		else if((*p == 'C')&&(*(p+1)=='O')&&(*(p+2)=='N')&&
          (*(p+3)=='E')&&(*(p+4)=='C')&&(*(p+5)=='T'))
         bondFlag=true;
-		else if((*p == 'U')&&(*(p+1)=='S')&&(*(p+2)=='E')&&(*(p+3)=='R')&&(!*restart)&&m4x) {
-        p = nskip(p,10);
-        p = ntrim(cc,p,6);
-        m4x->annotated_flag = true;
-        if(WordMatchExact("HINT",cc,true)) {
-          p = nskip(p,1);
+		else if((*p == 'U')&&(*(p+1)=='S')&&(*(p+2)=='E')&&
+              (*(p+3)=='R')&&(!*restart)) {
+        /* Metaphorics key '   '*/
+        if((*(p+6)==' ')&&(*(p+7)==' ')&&(*(p+8)==' ')&&m4x) {
+          p = nskip(p,10);
           p = ntrim(cc,p,6);
-          if(!m4x->context) {
-            m4x->context = VLACalloc(M4XContextType,10);
-          } 
-          if(m4x->context) {
-            int cn;
-            int found=false;
-            
-            /* does context already exist ? */
-            for(cn=0;cn<m4x->n_context;cn++) {
-              if(WordMatchExact(m4x->context[cn].name,cc,true)) {
-                found=true;
-                break;
+          m4x->annotated_flag = true;
+          if(WordMatchExact("HINT",cc,true)) {
+            p = nskip(p,1);
+            p = ntrim(cc,p,6);
+            if(!m4x->context) {
+              m4x->context = VLACalloc(M4XContextType,10);
+            } 
+            if(m4x->context) {
+              int cn;
+              int found=false;
+              
+              /* does context already exist ? */
+              for(cn=0;cn<m4x->n_context;cn++) {
+                if(WordMatchExact(m4x->context[cn].name,cc,true)) {
+                  found=true;
+                  break;
+                }
               }
-            }
-
-            /* if not, then create it */
-            if(!found) {
-              cn = m4x->n_context++;
-              VLACheck(m4x->context,M4XContextType,cn);
-              UtilNCopy(m4x->context[cn].name,cc,sizeof(WordType));
-            }
-
-            while(*cc) {
-              p = nskip(p,1);
-              p = ntrim(cc,p,6);
-              if(WordMatchExact("BORDER",cc,true)) {
-                /* ignore PDB CONECT if BORDER present */
-                ignore_conect = true;
-                have_bond_order = true;
-                bondFlag = true;
-              } else if(WordMatchExact("SITE",cc,true)) {
-                if(!m4x->context[cn].site) {
-                  m4x->context[cn].site=VLAlloc(int,50);
-                }
-              } else if(WordMatchExact("LIGAND",cc,true)) {
-                if(!m4x->context[cn].ligand) {
-                  m4x->context[cn].ligand=VLAlloc(int,50);
-                }
-              } else if(WordMatchExact("WATER",cc,true)) {
-                if(!m4x->context[cn].water) {
-                  m4x->context[cn].water=VLAlloc(int,50);
-                }
-              } else if(WordMatchExact("HBOND",cc,true)) {
-                if(!m4x->context[cn].hbond) {
-                  m4x->context[cn].hbond=VLAlloc(M4XHBondType,50);
+              
+              /* if not, then create it */
+              if(!found) {
+                cn = m4x->n_context++;
+                VLACheck(m4x->context,M4XContextType,cn);
+                UtilNCopy(m4x->context[cn].name,cc,sizeof(WordType));
+              }
+              
+              while(*cc) {
+                p = nskip(p,1);
+                p = ntrim(cc,p,6);
+                if(WordMatchExact("BORDER",cc,true)) {
+                  /* ignore PDB CONECT if BORDER present */
+                  ignore_conect = true;
+                  have_bond_order = true;
+                  bondFlag = true;
+                } else if(WordMatchExact("SITE",cc,true)) {
+                  if(!m4x->context[cn].site) {
+                    m4x->context[cn].site=VLAlloc(int,50);
+                  }
+                } else if(WordMatchExact("LIGAND",cc,true)) {
+                  if(!m4x->context[cn].ligand) {
+                    m4x->context[cn].ligand=VLAlloc(int,50);
+                  }
+                } else if(WordMatchExact("WATER",cc,true)) {
+                  if(!m4x->context[cn].water) {
+                    m4x->context[cn].water=VLAlloc(int,50);
+                  }
+                } else if(WordMatchExact("HBOND",cc,true)) {
+                  if(!m4x->context[cn].hbond) {
+                    m4x->context[cn].hbond=VLAlloc(M4XHBondType,50);
+                  }
                 }
               }
             }
@@ -8278,114 +8282,117 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(char *buffer,
               }
             }
         }
-		else if((*p == 'U')&&(*(p+1)=='S')&&(*(p+2)=='E')&&(*(p+3)=='R')&&(!*restart)&&m4x) {
-
-        p = nskip(p,10);
-        p = ntrim(cc,p,6);
-
-        if(m4x->context) {
-          int cn;
-          int found=false;
-
-          /* does context already exist ? */
-          for(cn=0;cn<m4x->n_context;cn++) {
-            if(WordMatchExact(m4x->context[cn].name,cc,true)) {
-              found=true;
-              break;
-            }
-          }
-
-          if(found) {
+		else if((*p == 'U')&&(*(p+1)=='S')&&(*(p+2)=='E')
+              &&(*(p+3)=='R')&&(!*restart)) {
+        if((*(p+6)==' ')&&(*(p+7)==' ')&&(*(p+8)==' ')&&m4x) {
+          
+          p = nskip(p,10);
+          p = ntrim(cc,p,6);
+          
+          if(m4x->context) {
+            int cn;
+            int found=false;
             
-            M4XContextType *cont = m4x->context+cn;
-
-            p = nskip(p,1);
-            p = ntrim(cc,p,6);
-            if(WordMatchExact("BORDER",cc,true)&&bondFlag) {
-              int order;
-
-              p=nskip(p,1);
-              p=ncopy(cc,p,6);
-              if(sscanf(cc,"%d",&b1)==1) {
+            /* does context already exist ? */
+            for(cn=0;cn<m4x->n_context;cn++) {
+              if(WordMatchExact(m4x->context[cn].name,cc,true)) {
+                found=true;
+                break;
+              }
+            }
+            
+            if(found) {
+              
+              M4XContextType *cont = m4x->context+cn;
+              
+              p = nskip(p,1);
+              p = ntrim(cc,p,6);
+              if(WordMatchExact("BORDER",cc,true)&&bondFlag) {
+                int order;
+                
                 p=nskip(p,1);
                 p=ncopy(cc,p,6);
-                if(sscanf(cc,"%d",&b2)==1) {
-                  p = nskip(p,1);
-                  p = ncopy(cc,p,6);
-                  if(sscanf(cc,"%d",&order)==1) {      
-                    if((b1>=0)&&(b2>=0)) { /* IDs must be positive */
-                      VLACheck(bond,BondType,nBond);
-                      if(b1<=b2) {
-                        bond[nBond].index[0]=b1; /* temporarily store the atom indexes */
-                        bond[nBond].index[1]=b2;
-                        bond[nBond].order=order;
-                        bond[nBond].stereo=0;
-                        
-                      } else {
-                        bond[nBond].index[0]=b2;
-                        bond[nBond].index[1]=b1;
-                        bond[nBond].order=order;
-                        bond[nBond].stereo=0;
+                if(sscanf(cc,"%d",&b1)==1) {
+                  p=nskip(p,1);
+                  p=ncopy(cc,p,6);
+                  if(sscanf(cc,"%d",&b2)==1) {
+                    p = nskip(p,1);
+                    p = ncopy(cc,p,6);
+                    if(sscanf(cc,"%d",&order)==1) {      
+                      if((b1>=0)&&(b2>=0)) { /* IDs must be positive */
+                        VLACheck(bond,BondType,nBond);
+                        if(b1<=b2) {
+                          bond[nBond].index[0]=b1; /* temporarily store the atom indexes */
+                          bond[nBond].index[1]=b2;
+                          bond[nBond].order=order;
+                          bond[nBond].stereo=0;
+                          
+                        } else {
+                          bond[nBond].index[0]=b2;
+                          bond[nBond].index[1]=b1;
+                          bond[nBond].order=order;
+                          bond[nBond].stereo=0;
+                        }
+                        nBond++;
                       }
-                      nBond++;
                     }
                   }
                 }
-              }
-            } else if(WordMatchExact("SITE",cc,true)) {
-              if(cont->site) {
-                int id;
-                while(*cc) {
-                  p = nskip(p,1);
-                  p = ncopy(cc,p,6);
-                  if(sscanf(cc,"%d",&id)==1) {
-                    VLACheck(cont->site,int,cont->n_site);
-                    cont->site[cont->n_site++] = id;
-                  }
-                }
-              }
-            } else if(WordMatchExact("LIGAND",cc,true)) {
-              if(cont->ligand) {
-                int id;
-                while(*cc) {
-                  p = nskip(p,1);
-                  p = ncopy(cc,p,6);
-                  if(sscanf(cc,"%d",&id)==1) {
-                    VLACheck(cont->ligand,int,cont->n_ligand);
-                    cont->ligand[cont->n_ligand++] = id;
-                  }
-                }
-              }
-            } else if(WordMatchExact("WATER",cc,true)) {
-              if(cont->water) {
-                int id;
-                while(*cc) {
-                  p = nskip(p,1);
-                  p = ncopy(cc,p,6);
-                  if(sscanf(cc,"%d",&id)==1) {
-                    VLACheck(cont->water,int,cont->n_water);
-                    cont->water[cont->n_water++] = id;
-                  }
-                }
-              }
-            } else if(WordMatchExact("HBOND",cc,true)) {
-              if(cont->hbond) {
-                int id1,id2;
-                float strength;
-                p = nskip(p,1);
-                p = ncopy(cc,p,6);
-                if(sscanf(cc,"%d",&id1)==1) {
-                  p = nskip(p,1);
-                  p = ncopy(cc,p,6);
-                  if(sscanf(cc,"%d",&id2)==1) {
+              } else if(WordMatchExact("SITE",cc,true)) {
+                if(cont->site) {
+                  int id;
+                  while(*cc) {
                     p = nskip(p,1);
                     p = ncopy(cc,p,6);
-                    if(sscanf(cc,"%f",&strength)==1) {                  
-                      VLACheck(cont->hbond,M4XHBondType,cont->n_hbond);
-                      cont->hbond[cont->n_hbond].atom1 = id1;
-                      cont->hbond[cont->n_hbond].atom2 = id2;
-                      cont->hbond[cont->n_hbond].strength = strength;
-                      cont->n_hbond++;
+                    if(sscanf(cc,"%d",&id)==1) {
+                      VLACheck(cont->site,int,cont->n_site);
+                      cont->site[cont->n_site++] = id;
+                    }
+                  }
+                }
+              } else if(WordMatchExact("LIGAND",cc,true)) {
+                if(cont->ligand) {
+                  int id;
+                  while(*cc) {
+                    p = nskip(p,1);
+                    p = ncopy(cc,p,6);
+                    if(sscanf(cc,"%d",&id)==1) {
+                      VLACheck(cont->ligand,int,cont->n_ligand);
+                      cont->ligand[cont->n_ligand++] = id;
+                    }
+                  }
+                }
+              } else if(WordMatchExact("WATER",cc,true)) {
+                if(cont->water) {
+                  int id;
+                  while(*cc) {
+                    p = nskip(p,1);
+                    p = ncopy(cc,p,6);
+                    if(sscanf(cc,"%d",&id)==1) {
+                      VLACheck(cont->water,int,cont->n_water);
+                      cont->water[cont->n_water++] = id;
+                    }
+                  }
+                }
+              } else if(WordMatchExact("HBOND",cc,true)) {
+                if(cont->hbond) {
+                  int id1,id2;
+                  float strength;
+                  p = nskip(p,1);
+                  p = ncopy(cc,p,6);
+                  if(sscanf(cc,"%d",&id1)==1) {
+                    p = nskip(p,1);
+                    p = ncopy(cc,p,6);
+                    if(sscanf(cc,"%d",&id2)==1) {
+                      p = nskip(p,1);
+                      p = ncopy(cc,p,6);
+                      if(sscanf(cc,"%f",&strength)==1) {                  
+                        VLACheck(cont->hbond,M4XHBondType,cont->n_hbond);
+                        cont->hbond[cont->n_hbond].atom1 = id1;
+                        cont->hbond[cont->n_hbond].atom2 = id2;
+                        cont->hbond[cont->n_hbond].strength = strength;
+                        cont->n_hbond++;
+                      }
                     }
                   }
                 }
