@@ -108,6 +108,9 @@ Current Bugs to Fix
 
 Changes up to 0.68
 
+   *  by default, PDB HETATMs are no longer surfaced -- if you want them to be, then
+      please "set surface_mode=1"
+
    * "transparent" renamed to "transparency"
 
    * OpenGL transparency now works too! See "help transparency".
