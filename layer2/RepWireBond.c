@@ -304,7 +304,7 @@ Rep *RepWireBondNew(CoordSet *cs)
 
 						v0 = ColorGet(c1);
 
-                  if((valence!=0.0)&&(ord>1)) {
+                  if((valence!=0.0)&&(ord>1)&&(ord<4)) {
                     RepValence(v,v1,v2,other,a1,a2,cs->Coord,v0,ord,valence);
                     v+=ord*9;
                     I->N+=ord;
@@ -334,7 +334,7 @@ Rep *RepWireBondNew(CoordSet *cs)
 							 v0 = ColorGet(c1);
 
 
-                      if((valence!=0.0)&&(ord>1)) {
+                      if((valence!=0.0)&&(ord>1)&&(ord<4)) {
                         RepValence(v,v1,h,other,a1,a2,cs->Coord,v0,ord,valence);
                         v+=ord*9;
                         I->N+=ord;
@@ -359,7 +359,7 @@ Rep *RepWireBondNew(CoordSet *cs)
                       
 							 v0 = ColorGet(c2);
 							 
-                      if((valence!=0.0)&&(ord>1)) {
+                      if((valence!=0.0)&&(ord>1)&&(ord<4)) {
                         RepValence(v,h,v2,other,a1,a2,cs->Coord,v0,ord,valence);
                         v+=ord*9;
                         I->N+=ord;
@@ -492,7 +492,6 @@ void RepValence(float *v,float *v1,float *v2,int *other,
 
   float d[3],t[3],p0[3],p1[3],p2[3],*vv;
   int a3,ck;
-
 
   v[0] = color[0];
   v[1] = color[1];

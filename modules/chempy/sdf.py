@@ -12,7 +12,7 @@ class SDFRec:
       ll = len(sdflist)
       if ll<4:
          print " SDFRec: invalid SDF record format #1"
-         return None
+         raise RuntimeError
       self.kees = ['MOL'] # separate key list to preserve order
       self.data = {}
       self.ref_code = {}
@@ -31,14 +31,14 @@ class SDFRec:
          l = l + 1
          if l>=ll:
             print " SDFRec: invalid SDF record format #2"
-            return None            
+            raise RuntimeError
       while l<ll:
          if sdflist[l][0]=='>':
             sl = sdflist[l]
             kee_match = getkee.match(sl)
             if not kee_match:
                print " SDFRec: invalid SDF record format #3"
-               return None
+               raise RuntimeError
             kee = kee_match.group(1)
             self.kees.append(kee)
             ref_code_match = gettag.match(sl)
