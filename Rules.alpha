@@ -30,8 +30,12 @@ LIBS = $(PYTHON_LIB) -lglut -lGL -lGLU -lpng -lXmu $(ZLIB) -lm
 DEFS = -D_PYMOL_MODULE -D_PYMOL_NUMPY
 #--- How we build shared libraries
 BUILD = -shared -o modules/_cmd.so
+#--- What are we trying to build?
+DEST = -o modules/_cmd.so
 #--- CC options
 CCOPT1 = 
+#--- libraries for PyOpenGL 
+PYOGL_LIB =  -lglut -lGL -lGLU -lXmu -lXi
 #---------------------------------------------------------------------
 #
 #- Choose One --------------------------------------------------------

@@ -318,6 +318,36 @@ int main(int argc, char *argv[])
 }
 
 #endif
+
+
+
+
+void ChampPrepareTarget(Champ *I,int index)
+{
+  /* detects cycles and aromaticity for atoms and bonds
+     and assigns degree and total valence */
+
+  /* cycle detection... */
+
+  ListPat *pat;
+
+  ListAtom *at;
+  int ai;
+  int lvl;
+  int cur_stack = 0;
+  int next_stack = 0;
+  pat = I->Pat + index;
+
+  ai = pat->atom;
+  while(ai) { /* clear marks */
+    at = I->Atom + ai;
+    at->mark_targ = 0;
+    ai = at->link;
+  }
+  
+  
+}
+
 int PTruthCallStr(PyObject *object,char *method,char *argument);
 int PTruthCallStr(PyObject *object,char *method,char *argument)
 {
