@@ -135,9 +135,10 @@ void SculptMeasureObject(CSculpt *I,ObjectMolecule *obj,int state)
                   I->Don[b1]=true; 
                   I->Don[b2]=true; /* mark heavy atom too... */
                   break;
-                case cAN_N: I->Don[b2]=true; break;
+                case cAN_N: 
                   I->Don[b1]=true; 
                   I->Don[b2]=true; /* mark heavy atom too... */
+                  break;
                 }
               } else {
                 
