@@ -567,8 +567,6 @@ NOTES
          unlock()
    return r
 
-
-
 def show_help(cmd):
    set("text","1")
    print "PyMOL>help %s\n" % cmd

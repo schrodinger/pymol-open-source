@@ -284,7 +284,7 @@ int SelectorWalkTree(int *atom,int *toDo,int **stk,
           }
         } else 
           break;
-        s++;
+        s+=2;
       }
       c++;
     }
@@ -335,7 +335,7 @@ int SelectorSubdivideObject(char *pref,ObjectMolecule *obj,int sele1,int sele2,c
               }
             } else 
               break;
-            s++;
+            s+=2;
           }
           p1=atom; /* first atom */
           for(a=0;a<nAtom;a++) 
@@ -364,7 +364,7 @@ int SelectorSubdivideObject(char *pref,ObjectMolecule *obj,int sele1,int sele2,c
               }
             } else 
               break;
-            s++;
+            s+=2;
           }
           
           p1=atom; /* second atom */
@@ -403,7 +403,7 @@ int SelectorSubdivideObject(char *pref,ObjectMolecule *obj,int sele1,int sele2,c
               nFrag++;
             }
           }
-          n++;
+          n+=2;
         }
       }
       FreeP(toDo);

@@ -103,5 +103,7 @@ int AtomInfoGetExpectedValence(AtomInfoType *I);
 int AtomInfoMatch(AtomInfoType *at1,AtomInfoType *at2);
 int AtomInfoAltMatch(AtomInfoType *at1,AtomInfoType *at2);
 int AtomInfoCompare(AtomInfoType *at1,AtomInfoType *at2);
+float AtomInfoGetBondLength(AtomInfoType *ai1,AtomInfoType *ai2);
+int AtomInfoSameResidue(AtomInfoType *at1,AtomInfoType *at2);
 
 #endif

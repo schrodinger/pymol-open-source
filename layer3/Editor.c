@@ -57,6 +57,7 @@ ObjectMolecule *EditorDragObject(void)
 }
 static void subdivide( int n, float *x, float *y);
 
+
 /*========================================================================*/
 static void subdivide( int n, float *x, float *y)
 {
@@ -67,6 +68,39 @@ static void subdivide( int n, float *x, float *y)
 		x[a]=cos(a*2*PI/n);
 		y[a]=sin(a*2*PI/n);
 	 }
+}
+/*========================================================================*/
+void EditorReplace(void);
+
+void EditorReplace(void)
+{
+  CEditor *I = &Editor;
+  int i0,i1;
+  float v[3],v0[3],v1[3],v2[3];
+  float d0[3],n0[3],n1[3],n2[3];
+  int sele0,sele1;
+  int c;
+
+  int state;
+  sele0 = SelectorIndexByName(cEditorSele1);
+  if(sele0>=0) {
+    sele1 = SelectorIndexByName(cEditorSele2);
+    if(sele1>=0) {
+      /* bond mode */
+      i0 = ObjectMoleculeGetAtomIndex(I->Obj,sele0); /* slow */
+      i1 = ObjectMoleculeGetAtomIndex(I->Obj,sele1); /* slow */
+      if((i0>=0)&&(i1>=0)) {
+        
+        ObjectMoleculeGetAtomVertex(I->Obj,state,i0,v0);
+        ObjectMoleculeGetAtomVertex(I->Obj,state,i1,v1);
+      }
+      
+    } else {
+      /* atom mode */
+      
+      
+    }
+  }
 }
 
 /*========================================================================*/
