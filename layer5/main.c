@@ -951,7 +951,7 @@ void MainBusyIdle(void)
 #ifdef _PYMOL_SHARP3D
         //PParse("load $TUT/1hpv.pdb;hide;show sticks;show surface;set surface_color,white;set transparency,0.5;stereo on");
         PParse("stereo on");
-        PParse("wizard demo,cartoon");
+        //PParse("wizard demo,cartoon");
 #endif
         PUnblock();
       }
