@@ -27,6 +27,7 @@ import threading
 import types
 import pymol
 import os
+from glob import glob
 
 from chempy import io
 from chempy.sdf import SDF,SDFRec
@@ -81,7 +82,28 @@ def editing():
    '''
 SUMMARY
 
-   PyMOL has a minimal but functional molecular structure editing capability.
+PyMOL has a minimal but functional molecular structure editing
+capability.  However, you will need to set up Tinker if you want to to
+"clean-up" your structures after editing.  Furthermore, if you are
+going to modify molecules other than proteins, then you will also need
+a way of assigning atom types (Amber) on the fly.  Unfortunately, my
+solution to that problem hasn't been published yet.
+
+To edit a conformation or structure, you first need to enter editing
+mode (see Mouse Menu).  Then you can pick an atom (CTRL-Middle click)
+or a bond (CTRL-Right click).  Next, you can use the other
+CTRL-key/click combinations listed on the right hand side of the
+screen to adjust the attached fragments.  For example, CTRL-left click
+will torsion fragments.
+
+Editing structures is done through a series of CTRL key actions
+applied to the currently selected atom or bonds. See "help edit_keys"
+for the exact combinations.  To build structure, you usually just
+replace hydrogens with methyl groups, etc., and then repeat.
+
+NOTE
+  
+Only "lines" representations can be picked.
    
 '''
 
@@ -90,8 +112,8 @@ def edit_keys():
 EDITING KEYS 
 
    These are defaults, which can be redefined.  Note that while
-entering text on the command line, some of these control keys 
-take on text editing functions instead (CTRL - A, E, and K)
+entering text on the command line, some of these control keys take on
+text editing functions instead (CTRL - A, E, and K)
 
 ATOM REPLACEMENT
  
@@ -141,7 +163,7 @@ USAGE
 
 PYMOL API
 
- Not directly available. Instead, use cmd.do("@...").
+Not directly available. Instead, use cmd.do("@...").
  
 '''
    help(at_sign)
@@ -155,20 +177,20 @@ the global namespace, or in its own namespace (as a module).
 
 USAGE
   
- run <python-script> [, (local | global | module) ]
+   run <python-script> [, (local | global | module) ]
 
 PYMOL API
 
- Not directly available.  Instead, use cmd.do("run ...").
+Not directly available.  Instead, use cmd.do("run ...").
 
 NOTES
 
- The default mode for run is "global".
+The default mode for run is "global".
  
- Due to an idiosyncracy in Pickle, you can not pickle objects
- directly created at the main level in a script run as "module",
- (because the pickled object becomes dependent on that module).
- Workaround: delegate construction to an imported module.
+Due to an idiosyncracy in Pickle, you can not pickle objects
+directly created at the main level in a script run as "module",
+(because the pickled object becomes dependent on that module).
+Workaround: delegate construction to an imported module.
 
 '''
    help(run)
@@ -222,10 +244,10 @@ API-ONLY METHODS
  
 NOTES
  
-   Although the PyMOL core is not multi-threaded, the API is
-   threads-safe and can be called asynchronously by external python
-   programs.  PyMOL handles the necessary locking to insure that
-   internal states do not get corrupted.
+Although the PyMOL core is not multi-threaded, the API is threads-safe
+and can be called asynchronously by external python programs.  PyMOL
+handles the necessary locking to insure that internal states do not
+get corrupted.
    '''
    help('api')
 
@@ -276,6 +298,8 @@ MOUSE CONTROLS
  
 ATOM SELECTIONS (These only work on the "lines" representation!)
  
+   (normal mode - when not editing)
+
    CTRL-left mouse click    Pick atom and store as selection (lb).
    CTRL-middle mouse click  Pick atom and store as selection (mb).
    CTRL-right mouse click   Pick atom and store as selection (rb).
@@ -3700,12 +3724,21 @@ def fast_minimize(*arg):
    '''
 DESCRIPTION
 
-Runs Tinker's minimize routine without executing the setup procedure.
+   Runs Tinker's minimize routine in a separate thread without first 
+   executing the setup procedure.  
 
-NOTES
+USAGE
 
-Assumes that the molecular state has already been set up and that no
-subsequent changes have been made to atom types.
+   fast_minimize <object-name>,<max-iterations>,<final-gradient>,<interval>
+
+PYMOL API
+
+   Direct API calls not recommended due to threading issues.
+
+NOTE
+
+   Assumes that the molecular state has already been set up and that no
+   subsequent changes have been made to atom types.
 
    '''
    from chempy.tinker import realtime  
@@ -3729,13 +3762,23 @@ def minimize(*arg):
    '''
 DESCRIPTION
 
-Minimizes the current molecular structure after running an automated
-topology and parameter setup routine which generates a custom parameter
-file for Tinker based on the current text atom types ("text_type" field).
+   Minimizes the indicated object in a separate thread after running an automated
+   topology and parameter setup routine which generates a custom parameter file
+   for Tinker based on the current text atom types ("text_type" field).
 
 USAGE
 
-minimize object name
+   minimize <object-name>,<max-iterations>,<final-gradient>,<interval>
+
+PYMOL API
+
+   Direct API calls not recommended due to threading issues.  Instead, call the 
+   ChemPy Tinker (chempy.tinker) module directly.
+
+NOTES
+
+   Only all-atom Amber 94/99 atom types are currently supported.
+
    '''
    # NOTE: the realtime module relies on code that is not yet part of PyMOL/ChemPy
    from chempy.tinker import realtime  
@@ -3757,7 +3800,39 @@ minimize object name
          t.start()
       else:
          print " minimize: missing parameters, can't continue"
+
+def cd(dir):
+   '''
+DESCRIPTION
+
+   Changing the current working directory.
+
+USAGE
    
+   cd <path>
+
+   '''
+   os.chdir(dir)
+   
+
+def ls(*arg):
+   '''
+DESCRIPTION
+
+   List contents of the current working directory.
+
+USAGE
+   
+   ls [<pattern>]
+   dir [<pattern>]
+
+   '''
+   pat = "*"
+   if len(arg):
+      pat = arg[0]
+   for a in glob(pat):
+      print a   
+      
 def mset(seq):
    '''
 DESCRIPTION
@@ -3825,6 +3900,8 @@ keyword = {
    'backward'      : [backward     , 0 , 0 , ',' , 0 ],
    'bond'          : [bond         , 0 , 3 , ',' , 0 ],
    'button'        : [button       , 3 , 3 , ',' , 0 ],
+   'cd'            : [cd           , 1 , 1 , ',' , 0 ],  
+   'check'         : [check        , 1 , 1 , ',' , 0 ],
    'check'         : [check        , 1 , 1 , ',' , 0 ],
    'clip'          : [clip         , 2 , 2 , ',' , 0 ],
    'cls'           : [cls          , 0 , 0 , ',' , 0 ],
@@ -3835,6 +3912,7 @@ keyword = {
    'cycle_valence' : [cycle_valence, 0 , 0 , ',' , 0 ],
    'create'        : [create       , 2 , 2 , '=' , 0 ],   
    'delete'        : [delete       , 1 , 1 , ',' , 0 ],
+   'dir'           : [ls          , 0 , 1 , ',' , 0 ],  
    'disable'       : [disable      , 0 , 1 , ',' , 0 ],
    'dist'          : [dist         , 0 , 2 , '=' , 0 ],
    'distance'      : [distance     , 0 , 2 , '=' , 0 ],
@@ -3865,6 +3943,7 @@ keyword = {
    'iterate_state' : [iterate_state, 3 , 3 , ',' , 0 ],
    'label'         : [label        , 1 , 2 , ',' , 0 ],
    'load'          : [load         , 1 , 6 , ',' , 0 ],
+   'ls'            : [ls           , 0 , 1 , ',' , 0 ],  
    'mask'          : [mask         , 0 , 1 , ',' , 0 ],
    'mem'           : [mem          , 0 , 0 , ',' , 0 ],
    'meter_reset'   : [meter_reset  , 0 , 0 , ',' , 0 ],
