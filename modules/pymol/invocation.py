@@ -43,7 +43,7 @@ options.read_stdin = 0
 # Greg Landrum
 options.rpcServer = 0
 
-pml_re = re.compile(r"\.pml$|\.PML$")
+pml_re = re.compile(r"pymolrc$|\.pml$|\.PML$")
 py_re = re.compile(r"\.py$|\.pym$|\.PY$|\.PYM$")
 pyc_re = re.compile(r"\.pyc$|\.PYC$") # not yet used
 
