@@ -437,7 +437,7 @@ void IsosurfGetRange(Isofield *field,CCrystal *cryst,float *mn,float *mx,int *ra
   for(a=0;a<3;a++) {
     if(imx[a]!=imn[a]) {
       int b;
-      float mini,maxi,cur;
+      float mini=0,maxi=0,cur;
 
       for(b=0;b<8;b++) {
         cur = ((field->dimensions[a]*(imix[a+3*b]-imn[a])/(imx[a]-imn[a])));
