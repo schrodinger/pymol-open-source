@@ -1,4 +1,4 @@
-Potential Changes
+Changes Under Consideration
 
    * Transparency support. 
 
@@ -7,6 +7,16 @@ Potential Changes
    * Auto-detection of stereo capability
 
    * Generic volume data object (to supplement bricks and maps)
+
+   * "Pickable" stick representation
+
+   * Log file generation capability
+
+   * "Builder" wizard, tied into the fragments subsystem.
+
+   * Protein side-chain rotamer wizard.
+
+   * "Tinker" wizard 
 
 Impending Changes
 
@@ -18,7 +28,14 @@ Impending Changes
 
    * Tracking down thread-related hangs upon program termination
    
+   * Saving and restoring matrix, center, origin, zoom, clip
+
 Changes up to 0.50
+
+
+   * "Distances" wizard (internal gui;replace with external version later)
+
+   * "Pair Fit" wizard (internal gui; replace with external version later)
 
    * Mesh objects now have states, and new meshes are appended onto the object.
 
