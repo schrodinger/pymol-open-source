@@ -45,7 +45,7 @@ Z* -------------------------------------------------------------------
 /* WARNING!!! MemoryDebug is not thread safe...it must be disabled
    for stable multi-threaded operation within the PyMOL core */
 
-#define _MemoryDebug_ON
+#define _MemoryDebug_OFF
 
 /* ================================================================ 
  * Don't touch below unless you know what you are doing */

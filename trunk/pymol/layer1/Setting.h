@@ -265,7 +265,7 @@ CSetting *SettingNewFromPyList(PyObject *list);
 #define cSetting_robust_logs                 132
 #define cSetting_log_box_selections          133
 #define cSetting_log_conformations           134
-#define cSetting_valence_default             135
+#define cSetting_valence_size                135
 #define cSetting_surface_miserable           136
 #define cSetting_ray_opaque_background       137
 #define cSetting_transparency                138
@@ -415,10 +415,11 @@ CSetting *SettingNewFromPyList(PyObject *list);
 #define cSetting_stick_ball                  276
 #define cSetting_stick_ball_ratio            277
 #define cSetting_stick_fixed_radius          278
+#define cSetting_cartoon_transparency        279
 
 /* cSetting_INIT must always be last setting_index +1 */
 
-#define cSetting_INIT                        279
+#define cSetting_INIT                        280
 
 #endif
 

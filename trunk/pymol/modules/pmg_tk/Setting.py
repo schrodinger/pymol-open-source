@@ -158,7 +158,7 @@ class Setting:
          'antialias'     :
          (lambda s,a: (cmd.set(a,("%1.0f" % s.antialias.get()),log=1))),
          'valence'       :
-         (lambda s,a: (cmd.set(a,("%1.2f" % (float(s.valence.get())/20.0)),log=1))),
+         (lambda s,a: (cmd.set(a,("%1.2f" % s.valence.get()),log=1))),
          'all_states'    :
          (lambda s,a: (cmd.set(a,("%1.0f" % s.all_states.get()),log=1))),
          'line_smooth'    :

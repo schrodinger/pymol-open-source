@@ -1774,7 +1774,7 @@ int RayAntiThread(CRayAntiThreadInfo *T)
 	
 	unsigned int *pSrc;
 	unsigned int *pDst;
-   //   unsigned int m00FF=0x00FF,mFF00=0xFF00,mFFFF=0xFFFF;
+   /*   unsigned int m00FF=0x00FF,mFF00=0xFF00,mFFFF=0xFFFF;*/
 	int width;
 	int height;
 	int x,y,yy;

@@ -1068,6 +1068,7 @@ void SettingGenerateSideEffects(int index,char *sele,int state)
     break;
   case cSetting_valence:
     ExecutiveInvalidateRep(inv_sele,cRepLine,cRepInvRep);
+    ExecutiveInvalidateRep(inv_sele,cRepCyl,cRepInvRep);
     SceneChanged();
     break;
   case cSetting_retain_order:
@@ -1206,6 +1207,7 @@ void SettingGenerateSideEffects(int index,char *sele,int state)
     ExecutiveInvalidateRep(inv_sele,cRepRibbon,cRepInvRep);
     SceneChanged();
     break;
+  case cSetting_cartoon_transparency:
   case cSetting_cartoon_trace:
   case cSetting_cartoon_refine:
   case cSetting_cartoon_sampling:
@@ -1297,6 +1299,8 @@ void SettingGenerateSideEffects(int index,char *sele,int state)
 /*========================================================================*/
 int SettingSetfv(int index,float *v)
 {
+  /* Warren, are these side effects still relevant? */
+
   CSetting *I=&Setting;
   int ok=true;
   switch(index) {
@@ -1317,19 +1321,16 @@ int SettingSetfv(int index,float *v)
   case cSetting_valence:
     ExecutiveInvalidateRep("all",cRepLine,cRepInvRep);
     SettingSet_f(I,index,v[0]);
-    /*   I->Setting[index].Value[0]=v[0];    */
     SceneChanged();
     break;
   case cSetting_dash_length:
   case cSetting_dash_gap:
     ExecutiveInvalidateRep("all",cRepDash,cRepInvRep);
     SettingSet_f(I,index,v[0]);
-    /*    I->Setting[index].Value[0]=v[0];    */
     SceneChanged();
     break;
   case cSetting_button_mode:
     SettingSet_f(I,index,v[0]);
-    /* I->Setting[index].Value[0]=v[0]; */
     SceneDirty();
     break;
   case cSetting_stick_radius:
@@ -1771,7 +1772,7 @@ void SettingInitGlobal(int alloc)
 
   SettingSet_b(I,cSetting_log_conformations, 1);
 
-  SettingSet_f(I,cSetting_valence_default, 0.05F);
+  SettingSet_f(I,cSetting_valence_size, 0.05F);
 
   SettingSet_f(I,cSetting_surface_miserable, 0.8F);
 
@@ -2097,6 +2098,8 @@ void SettingInitGlobal(int alloc)
   SettingSet_f(I,cSetting_stick_ball_ratio, 1.0F);
 
   SettingSet_b(I,cSetting_stick_fixed_radius, false);
+
+  SettingSet_f(I,cSetting_cartoon_transparency, 0.0F);
 
 }
 

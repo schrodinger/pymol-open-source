@@ -230,7 +230,8 @@ Rep *RepWireBondNew(CoordSet *cs)
 
   half_bonds = SettingGet_i(cs->Setting,obj->Obj.Setting,cSetting_half_bonds);
   valence = SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_valence);
-
+  if(valence==1.0F) /* backwards compatibility... */
+    valence = SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_valence_size);
 
   I->N=0;
   I->NP=0;

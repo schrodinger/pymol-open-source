@@ -57,6 +57,7 @@ FONT_AXES          = 22.0
 
 CHAR               = 23.0
 
+ALPHA              = 25.0
 
 LIGHTING           = float(0x0B50)
 

@@ -817,7 +817,7 @@ Rep *RepCylBondNew(CoordSet *cs)
   int maxCyl;
   int ord;
   int stick_ball;
-  float stick_ball_ratio;
+  float stick_ball_ratio=1.0F;
   unsigned int v_size,vr_size,rp_size,vp_size;
   Pickable *rp;
   AtomInfoType *ai1,*ai2;
