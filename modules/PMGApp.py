@@ -133,7 +133,7 @@ class PMGApp(AbstractApp):
 	def createMenuBar(self):
 		self.menuBar.addmenuitem('Help', 'command',
 							 'Get information on application', 
-							 label='About', command = lambda: pm.splash())
+							 label='About', command = pm.splash)
 
 		self.menuBar.addmenuitem('Help', 'separator', '')
       

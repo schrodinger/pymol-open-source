@@ -132,7 +132,6 @@ static WordType Keyword[] =
   "model",    "MODs",
   "m;",       "MODs",
   "index",    "IDXs",
-  "i;",       "IDXs",
   "resn",     "RSNs",
   "r;",       "RSNs",
   "%",        "SELs",

@@ -1752,11 +1752,11 @@ DESCRIPTION
 USAGE
  
    select (selection)
-   select selection-name = 
+   select selection-name = (selection)
  
 PYMOL API
   
-   pm.load( filename [,object [,state]] )
+   pm.select(string selection-name, string selection)
  
 EXAMPLES 
  
@@ -1977,7 +1977,7 @@ EXAMPLES
       if rephash.has_key(rep):
          rep = rephash[rep]
       if repres.has_key(rep):
-         repn = repres[arg[0]];
+         repn = repres[rep];
          r = _pm.showhide("(all)",repn,0);
       else:
          print "Error: unrecognized or ambiguous representation"
