@@ -39,6 +39,32 @@ void AtomInfoPrimeColors(void)
   IColor=ColorGetIndex("yellow");
 }
 
+float AtomInfoGetBondLength(AtomInfoType *ai1,AtomInfoType *ai2)
+{
+  float result = 1.6;
+
+  /* very simple for now just CC and CH, 
+     flush this out with decent parameters later */
+
+  if((ai1->protons>1)&&(ai2->protons>1)) {
+    result=0.0;
+    switch(ai1->geom) {
+    case cAtomInfoLinear: result+=1.20; break;
+    case cAtomInfoPlaner: result+=1.34; break;
+    default: result+= 1.54; break;
+    }
+    switch(ai2->geom) {
+    case cAtomInfoLinear: result+=1.20; break;
+    case cAtomInfoPlaner: result+=1.34; break;
+    default: result+= 1.54; break;
+    }    
+    result/=2.0;
+  } else {
+    result=1.05;
+  }
+  return(result);
+}
+
 int AtomInfoGetColor(AtomInfoType *at1)
 {
   char *n=at1->elem;
@@ -167,6 +193,20 @@ int AtomInfoCompare(AtomInfoType *at1,AtomInfoType *at2)
 int AtomInfoInOrder(AtomInfoType *atom,int atom1,int atom2)
 {
   return(AtomInfoCompare(atom+atom1,atom+atom2)<=0);
+}
+
+int AtomInfoSameResidue(AtomInfoType *at1,AtomInfoType *at2)
+{
+  int result;
+  if(at1->hetatm==at2->hetatm)
+    if(at1->chain[0]==at2->chain[0])
+      if(WordMatch(at1->resi,at2->resi,true)<0)
+        if(WordMatch(at1->segi,at2->segi,true)<0) {
+          result = true;
+        } else {
+          result = false;
+        }
+  return(result);
 }
 
 int AtomInfoMatch(AtomInfoType *at1,AtomInfoType *at2)
