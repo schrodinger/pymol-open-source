@@ -1557,7 +1557,8 @@ int RayTraceThread(CRayThreadInfo *T)
                   SceneCall.except = exclude;
                   SceneCall.front = new_front;
                   SceneCall.excl_trans = excl_trans;
-                  
+                  SceneCall.interior_flag = false;
+
                   if(perspective) {
                     i = BasisHitPerspective( &SceneCall );
                   } else {
@@ -1573,10 +1574,12 @@ int RayTraceThread(CRayThreadInfo *T)
                       if(interior_flag)
                         {
                           copy3f(interior_normal,r1.surfnormal);
-                          copy3f(r1.base,r1.impact);
                           if(perspective) {
                             copy3f(start,r1.impact);
+                            r1.dist = _0;
                           } else {
+                            copy3f(r1.base,r1.impact);
+                            r1.dist = T->front;
                             r1.impact[2]	-= T->front; 
                           }
                           
@@ -1655,12 +1658,12 @@ int RayTraceThread(CRayThreadInfo *T)
                                 {
                                   interior_flag		= true;
                                   copy3f(interior_normal,r1.surfnormal);
-                                  copy3f(r1.base,r1.impact);
                                   if(perspective) {
                                     copy3f(start,r1.impact);                                    
                                     r1.dist = _0;
                                   } else {
-                                    r1.impact[2]		-= T->front; /* FIX THIS */
+                                    copy3f(r1.base,r1.impact);
+                                    r1.impact[2]		-= T->front; 
                                     r1.dist				= T->front;
                                   }
                                   

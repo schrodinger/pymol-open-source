@@ -436,9 +436,9 @@ void MapSetupExpressPerp(MapType *I, float *vert, float front)
   register float min0 = I->Min[0] * iDiv;
   register float min1 = I->Min[1] * iDiv;
   register float base0, base1;
-  register float perp_factor,*v0;
-  register int *emask, dim1, *link;
-
+  register float perp_factor,premult,*v0;
+  register int *emask, dim1, *link, *ptr1,*ptr2;
+  
   PRINTFD(G,FB_Map)
     " MapSetupExpress-Debug: entered.\n"
     ENDFD;
@@ -449,12 +449,14 @@ void MapSetupExpressPerp(MapType *I, float *vert, float front)
   ErrChkPtr(G,I->EHead);
   I->EList=VLACacheMalloc(G,1000,sizeof(int),5,0,
                      I->group_id,I->block_base + cCache_map_elist_offset);
+
   I->EMask    = CacheCalloc(G,int,I->Dim[0]*I->Dim[1],
                             I->group_id,I->block_base + cCache_map_emask_offset);
-  ErrChkPtr(G,I->EMask);
+
   emask = I->EMask;
   dim1 = I->Dim[1];
   link = I->Link;
+  premult = -front*iDiv;
 
   n=1;
   for(a=(I->iMin[0]-1);a<=(I->iMax[0]+1);a++)
@@ -464,15 +466,15 @@ void MapSetupExpressPerp(MapType *I, float *vert, float front)
           /* compute a "shadow" mask for all vertices */
           
           i=*MapFirst(I,a,b,c);
-          while(i>=0) {
+          if(i>=0) {
             v0 = vert + 3*i;
-            perp_factor = front/v0[2];
+            perp_factor = premult/v0[2];
             base0 = v0[0] * perp_factor;
             base1 = v0[1] * perp_factor;
-
-            d	= (int)(base0*iDiv - min0) + MapBorder;
-            e	= (int)(base1*iDiv - min1) + MapBorder;
-
+            
+            d	= (int)(base0 - min0) + MapBorder;
+            e	= (int)(base1 - min1) + MapBorder;
+            
             if(d < iMin0) {
               d = iMin0; 
             } else if(d > iMax0) { 
@@ -485,11 +487,22 @@ void MapSetupExpressPerp(MapType *I, float *vert, float front)
               e = iMax1;
             }
             i = link[i];
-            *(emask + dim1*d +e) = true;
+            ptr2 = (ptr1 = emask + dim1*(d-1) + (e-1));
+            *(ptr2++) = true;
+            *(ptr2++) = true;
+            *(ptr2++) = true;
+            ptr2 = (ptr1 += dim1);
+            *(ptr2++) = true;
+            *(ptr2++) = true;
+            *(ptr2++) = true;
+            ptr2 = (ptr1 += dim1);
+            *(ptr2++) = true;
+            *(ptr2++) = true;
+            *(ptr2++) = true;
           }
-
-			 st=n;
-			 flag=false;
+            
+          st=n;
+          flag=false;
 			 for(d=a-1;d<=a+1;d++)
 				for(e=b-1;e<=b+1;e++)
 				  for(f=c-1;f<=c+1;f++)

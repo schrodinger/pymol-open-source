@@ -1085,6 +1085,7 @@ int BasisHitPerspective(BasisCallRec *BC)
   int     i,ii;
   int except = BC->except;
   int check_interior_flag   = BC->check_interior;
+  int new_ray = (r->base[2] == -BC->front);
 
   MapCache *cache = &BC->cache;   
 
@@ -1143,9 +1144,12 @@ int BasisHitPerspective(BasisCallRec *BC)
         b = iMax1;
     }
 
-    if(base2 == BC->front) 
-      if(!*(map->EMask + a * map->Dim[1] + b))
+    if(new_ray) {
+      if(!*(map->EMask + a * map->Dim[1] + b)) {
         return -1;
+      }
+      new_ray = false;
+    }
 
     if(c < iMin2) { 
       if((iMin2 - c) > 1) 
