@@ -44,6 +44,9 @@ void PUnlockAPIAsGlut(void);
 void PBlock(void);
 void PUnblock(void);
 
+int PAutoBlock(void);
+void PAutoUnblock(int flag);
+
 void PBlockAndUnlockAPI(void);
 void PLockAPIAndUnblock(void);
 
@@ -68,6 +71,7 @@ extern PyObject *P_menu;
 extern PyObject *P_xray;
 extern PyObject *P_chempy;
 extern PyObject *P_models;
+extern PyObject *P_setting;
 
 extern PyThreadState *P_glut_thread_state; /* this is the state for the main GUI thread */
 extern PyThreadState *P_api_thread_state; /* this is the thread state for a non-glut API thread */

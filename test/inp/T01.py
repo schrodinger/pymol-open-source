@@ -1,6 +1,6 @@
 # 
 
-# full blown threading stability test
+# full blown threading stability test - low event rate
 #
 # The user should make it a point of interacting with the GUI
 # while this test is running, including using menus in both the
@@ -88,6 +88,19 @@ def viewport():
       cmd.viewport(800,600)
 
 t = threading.Thread(target=viewport)
+t.setDaemon(1)
+t.start()
+
+def sets():
+   while 1:
+      time.sleep(whrandom.random()*0.50)
+      if whrandom.random()>0.5:
+         ortho=1
+      else:
+         ortho=0
+      cmd.set('ortho',str(ortho))
+
+t = threading.Thread(target=sets)
 t.setDaemon(1)
 t.start()
 
