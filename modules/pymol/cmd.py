@@ -1977,22 +1977,17 @@ def load_coords(*arg):
       ftype = loadable.model
       state = -1
       model = arg[0];
-      finish = 1
-      discrete = 0
       if len(arg)<2:
          ok=0
       if len(arg)>=2:
          oname = string.strip(arg[1])
       if len(arg)>=3:
-         ftype = arg[1]
-         r = _cmd.load_coords(oname,model,state,ftype)
-      elif len(arg)==3:
-         oname = string.strip(arg[1])
          state = int(arg[2])-1
       if ok:
-         r = _cmd.load_coords(oname,model,state,ftype)
-      print "Error: invalid arguments."
-
+         r = _cmd.load_coords(oname,model,
+                              state,ftype)
+      else:
+         print "Error: invalid arguments."
    finally:
       unlock()
    return r
