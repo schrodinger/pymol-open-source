@@ -137,7 +137,7 @@ static void ObjectSurfaceUpdate(ObjectSurface *I)
                                            &ms->N,&ms->V,
                                            ms->Range,
                                            ms->Mode); 
-          if(ms->CarveFlag&&ms->AtomVertex&&
+          if(0&&ms->CarveFlag&&ms->AtomVertex&&
              VLAGetSize(ms->N)&&VLAGetSize(ms->V)) {
             /* cull my friend, cull */
             voxelmap=MapNew(-ms->CarveBuffer,ms->AtomVertex,VLAGetSize(ms->AtomVertex)/3,NULL);
@@ -213,10 +213,17 @@ static void ObjectSurfaceRender(ObjectSurface *I,int state,CRay *ray,Pickable **
 {
   float *v = NULL;
   float *vc;
+  float *col;
   int *n = NULL;
   int c;
   int a=0;
   ObjectSurfaceState *ms = NULL;
+  float alpha;
+
+  alpha = SettingGet_f(NULL,I->Obj.Setting,cSetting_transparency);
+  alpha=1.0-alpha;
+  if(fabs(alpha-1.0)<R_SMALL4)
+    alpha=1.0;
 
   if(state<I->NState) {
     if(I->State[state].Active)
@@ -237,44 +244,52 @@ static void ObjectSurfaceRender(ObjectSurface *I,int state,CRay *ray,Pickable **
         v=ms->V;
         n=ms->N;
         if(ray) {
-          
+          ray->fTransparentf(ray,1.0-alpha);          
           if(ms->UnitCellCGO&&(I->Obj.RepVis[cRepCell]))
             CGORenderRay(ms->UnitCellCGO,ray,ColorGet(I->Obj.Color),
                          I->Obj.Setting,NULL);
           ms->Radius=SettingGet_f(I->Obj.Setting,NULL,cSetting_mesh_radius);
           if(n&&v&&I->Obj.RepVis[cRepSurface]) {
             vc = ColorGet(I->Obj.Color);
-            if(ms->Mode) {
-              ray->fColor3fv(ray,vc);
-              while(*n)
-                {
-                  c=*(n++);
-                  if(c--)
-                    {
-                      v+=3;
-                      while(c--)
-                        {
-                          ray->fSphere3fv(ray,v,ms->Radius);
-                          v+=3;
-                        }
-                    }
+            
+            /*            glLineWidth(SettingGet_f(I->Obj.Setting,NULL,cSetting_mesh_width));*/
+            while(*n)
+              {
+                c=*(n++);
+                switch(ms->Mode) {
+                case 2:
+                  v+=12;
+                  c-=4;
+                  while(c>0) {
+                    ray->fTriangle3fv(ray,v-9,v-3,v+3,
+                                      v-12,v-6,v,
+                                      vc,vc,vc);
+                    v+=6;
+                    c-=2;
+                  }
+                  break;
+                case 1:
+                  c--;
+                  v+=3;
+                  while(c>0) {
+                    ray->fCylinder3fv(ray,v-3,v,ms->Radius,vc,vc);
+                    v+=3;
+                    c--;
+                  }
+                  break;
+                case 0:
+                default:
+                  while(c>0) {
+                    ray->fSphere3fv(ray,v,ms->Radius);
+                    v+=3;
+                    c--;
+                  }
+                  break;
                 }
-            } else {
-              while(*n)
-                {
-                  c=*(n++);
-                  if(c--)
-                    {
-                      v+=3;
-                      while(c--)
-                        {
-                          ray->fCylinder3fv(ray,v-3,v,ms->Radius,vc,vc);
-                          v+=3;
-                        }
-                    }
-                }
-            }
+              }
+            
           }
+          ray->fTransparentf(ray,0.0);
         } else if(pick&&PMGUI) {
         } else if(PMGUI) {
           if(!pass) {
@@ -282,25 +297,47 @@ static void ObjectSurfaceRender(ObjectSurface *I,int state,CRay *ray,Pickable **
               CGORenderGL(ms->UnitCellCGO,ColorGet(I->Obj.Color),
                           I->Obj.Setting,NULL);
             if(n&&v&&I->Obj.RepVis[cRepSurface]) {
-              ObjectUseColor(&I->Obj);
+              col = ColorGet(I->Obj.Color);
+              glColor4f(col[0],col[1],col[2],alpha);
+
               glLineWidth(SettingGet_f(I->Obj.Setting,NULL,cSetting_mesh_width));
               while(*n)
                 {
                   c=*(n++);
-                  /*                  if(ms->Mode) 
-glBegin(GL_LINE_STRIP);
-                    else */
+                  switch(ms->Mode) {
+                  case 2:
+                    glBegin(GL_TRIANGLE_STRIP);
+                    while(c>0) {
+                      glNormal3fv(v);
+                      v+=3;
+                      glVertex3fv(v);
+                      v+=3;
+                      c-=2;
+                    }
+                    glEnd();
+                    break;
+                  case 1:
+                    glBegin(GL_LINES);
+                    SceneResetNormal(false);
+                    while(c>0) {
+                      glVertex3fv(v);
+                      v+=3;
+                      c--;
+                    }
+                    glEnd();
+                    break;
+                  case 0:
+                  default:
                     glBegin(GL_POINTS);
-
-
-
-                    
-                  SceneResetNormal(false);
-                  while(c--) {
-                    glVertex3fv(v);
-                    v+=3;
+                    SceneResetNormal(false);
+                    while(c>0) {
+                      glVertex3fv(v);
+                      v+=3;
+                      c--;
+                    }
+                    glEnd();
+                    break;
                   }
-                  glEnd();
                 }
             }
           }
@@ -367,6 +404,7 @@ float carve,float *vert_vla)
   ObjectSurface *I;
   ObjectSurfaceState *ms;
 
+  mode=2;
   if(!obj) {
     I=ObjectSurfaceNew();
   } else {

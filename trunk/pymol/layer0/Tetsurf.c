@@ -52,9 +52,27 @@ Z* -------------------------------------------------------------------
 
 #define I4Ptr(field,P1,P2,P3,P4) Fint4p(field,P1,P2,P3,P4)
 
-typedef struct	PointType {
-	float		Point[3];
-	} PointType;
+
+typedef struct {
+  float Point[3];
+  float Normal[3];
+  int NormalFlag;
+  int  Link;
+} PointType;
+
+typedef struct {
+  PointType *p[3];
+  float n[3];
+  int done;
+} TriangleType;
+
+typedef struct {
+  int link;
+  int tri;
+} PointLinkType;
+
+static TriangleType *Tri = NULL;
+static PointLinkType *PtLink = NULL;
 
 #define EdgePtPtr(field,P2,P3,P4,P5) ((PointType*)Fvoid4p(field,P2,P3,P4,P5))
 
@@ -71,23 +89,38 @@ static	float	Level;
 static   int   Edge[6020]; /* 6017 */
 static   int   EdgeStart[256];
 
-
 int	TetsurfInit(void);
 int	TetsurfAlloc(void);
 void	TetsurfFree(void);
 int	TetsurfCodeVertices(void);
-void	TetsurfInterpolate(float *v1,float *l1,float *v2,float *l2,float *pt);
+void	TetsurfInterpolate2(float *pt,float *v0,float l0,float *v1,float l1);
+void	TetsurfInterpolate4(float *pt,float *v0,float l0,float *v1,float l1
+                          ,float l2,float l3);
+void	TetsurfInterpolate8(float *pt,float *v0,float l0,float *v1,float l1,
+                          float l2,float l3,float l4,
+                          float l5,float l6,float l7);
+
 int	TetsurfFindActiveBoxes(int mode,int *n_strip,int n_vert,int **strip_l,float **vert);
 void	TetsurfCode(char *bits1,char *bits2);
 int	TetsurfPoints(void);
 
 #define TetsurfSubSize		50
 
+static void copy3fn ( float *v1,float *v2)
+{
+  v2[0]=v1[0];
+  v2[1]=v1[1];
+  v2[2]=v1[2];
+}
+
 /*===========================================================================*/
 static int ProcessTetrahedron(int *edge,int nv,int v0,int v1,int v2,int v3,
-                              int e01,int e02,int e03,int e12,int e13,int e23)
+                              int e01,int e02,int e03,int e12,int e13,int e23,
+                              int reflect)
 {
-  int bits = (v0<<3)+(v1<<2)+(v2<<1)+v3;
+  int bits = (v3<<3)+(v2<<2)+(v1<<1)+v0;
+  if(reflect)
+    bits = 0xF-bits;
   switch(bits) {
   case 0x0:
     break;
@@ -310,7 +343,7 @@ int	TetsurfInit(void)
                         cE_000_111,
                         cE_001_011,
                         cE_001_111,
-                        cE_011_111);
+                        cE_011_111,0);
      /* tetrahedron 1: 000, 001, 101, 111 */
      nv=ProcessTetrahedron(Edge,nv,v000,v001,v101,v111,
                         cE_000_001,
@@ -318,7 +351,8 @@ int	TetsurfInit(void)
                         cE_000_111,
                         cE_001_101,
                         cE_001_111,
-                        cE_101_111);
+                        cE_101_111,1);
+
      /* tetrahedron 2: 000, 010, 011, 111 */
      nv=ProcessTetrahedron(Edge,nv,v000,v010,v011,v111,
                         cE_000_010,
@@ -326,7 +360,7 @@ int	TetsurfInit(void)
                         cE_000_111,
                         cE_010_011,
                         cE_010_111,
-                        cE_011_111);
+                        cE_011_111,1);
      /* tetrahedron 3: 000, 010, 110, 111 */
      nv=ProcessTetrahedron(Edge,nv,v000,v010,v110,v111,
                         cE_000_010,
@@ -334,7 +368,8 @@ int	TetsurfInit(void)
                         cE_000_111,
                         cE_010_110,
                         cE_010_111,
-                        cE_110_111);
+                        cE_110_111,0);
+
      /* tetrahedron 4: 000, 100, 101, 111 */
      nv=ProcessTetrahedron(Edge,nv,v000,v100,v101,v111,
                         cE_000_100,
@@ -342,7 +377,8 @@ int	TetsurfInit(void)
                         cE_000_111,
                         cE_100_101,
                         cE_100_111,
-                        cE_101_111);
+                        cE_101_111,0);
+
      /* tetrahedron 5: 000, 100, 110, 111 */
      nv=ProcessTetrahedron(Edge,nv,v000,v100,v110,v111,
                         cE_000_100,
@@ -350,7 +386,8 @@ int	TetsurfInit(void)
                         cE_000_111,
                         cE_100_110,
                         cE_100_111,
-                        cE_110_111);
+                        cE_110_111,1);
+
      Edge[nv++]=(-1); /* sentinel */
      EdgeStart[c] = last_nv;
      last_nv = nv;
@@ -404,13 +441,12 @@ int	TetsurfVolume(Isofield *field,float level,int **num,float **vert,int *range,
    int range_store[6];
    int n_strip = 0;
    int n_vert = 0;
-
    if(range) {
      for(c=0;c<3;c++)
        {
          AbsDim[c]=field->dimensions[c];
          CurDim[c]=TetsurfSubSize+1;
-         Steps[c]=((range[3+c]-range[c])-2)/TetsurfSubSize+1;
+         Steps[c]=1+((range[3+c]-range[c])-1)/TetsurfSubSize;
        }     
    } else {
      range=range_store;
@@ -420,10 +456,16 @@ int	TetsurfVolume(Isofield *field,float level,int **num,float **vert,int *range,
          range[3+c]=field->dimensions[c];
          AbsDim[c]=field->dimensions[c];
          CurDim[c]=TetsurfSubSize+1;
-         Steps[c]=(AbsDim[c]-2)/TetsurfSubSize+1;
+         Steps[c]=1+(AbsDim[c]-1)/TetsurfSubSize;
        }
    }
-
+   
+   /*   for(c=0;c<3;c++) {
+        printf("range %d %d %d\n",c,range[c],range[c+3]);
+        printf("steps %d\n",Steps[c]);
+        }
+   */
+     
 	Coord=field->points;
 	Data=field->data;
 	Level=level;
@@ -442,27 +484,24 @@ int	TetsurfVolume(Isofield *field,float level,int **num,float **vert,int *range,
          for(c=0;c<3;c++)
            CurOff[c]+=range[c];
 			for(c=0;c<3;c++)
-				{
-				Max[c]=range[3+c]-CurOff[c];
-				if(Max[c]>(TetsurfSubSize+1))
-					Max[c]=(TetsurfSubSize+1);
-				}
-         
-#ifdef Trace
+           {
+             Max[c]=(range[3+c]-CurOff[c]);
+             if(Max[c]>(TetsurfSubSize+1))
+               Max[c]=(TetsurfSubSize+1);
+           }
+         /*         
          for(c=0;c<3;c++)
            printf(" TetsurfVolume: c: %i CurOff[c]: %i Max[c] %i\n",c,CurOff[c],Max[c]); 
-#endif
-         
+         */
+
 			if(ok) 
-           switch(mode) { 
-           case 0: /* standard mode - want lines */
+           {
              if(TetsurfCodeVertices())
                n_vert=TetsurfFindActiveBoxes(mode,&n_strip,n_vert,num,vert);
-             break;
            }
-			}
-		TetsurfFree();
-		}
+         }
+      TetsurfFree();
+      }
    
    if(Feedback(FB_Isosurface,FB_Actions)) { 
      printf(" TetsurfVolume: Surface generated using %d vertices.\n",n_vert); 
@@ -495,12 +534,16 @@ int	TetsurfAlloc(void)
 	ErrChkPtr(VertexCodes);
 	ActiveEdges=FieldNew(CurDim,3,sizeof(int));
 	ErrChkPtr(ActiveEdges);
-   FieldZero(ActiveEdges);
 
+
+   
    dim4[3]=7; /* seven different ways now... */
-
 	Point=FieldNew(dim4,4,sizeof(PointType));
 	ErrChkPtr(Point);
+
+   Tri = VLAlloc(TriangleType,50000);
+   PtLink = VLAlloc(PointLinkType,50000);
+
 	if(!(VertexCodes&&ActiveEdges&&Point))
 		{
 		TetsurfFree();
@@ -514,43 +557,108 @@ int	TetsurfAlloc(void)
 /*===========================================================================*/
 void	TetsurfFree(void)
 {
-	if(VertexCodes) 
-		{
-        FieldFree(VertexCodes);
-        VertexCodes=NULL;
-		}
-	if(ActiveEdges)
-		{
-        FieldFree(ActiveEdges);
-        ActiveEdges=NULL;
-		}
-	if(Point)
-		{
-        FieldFree(Point);
-        Point=NULL;
-		}
+  if(Tri)
+    {
+      VLAFreeP(Tri);
+    }
+  if(PtLink);
+    {
+      VLAFreeP(PtLink);
+    }
+  if(VertexCodes) 
+    {
+      FieldFree(VertexCodes);
+      VertexCodes=NULL;
+    }
+  if(ActiveEdges)
+    {
+      FieldFree(ActiveEdges);
+      ActiveEdges=NULL;
+    }
+  if(Point)
+    {
+      FieldFree(Point);
+      Point=NULL;
+    }
 }
 /*===========================================================================*/
-void	TetsurfInterpolate(float *v1,float *l1,float *v2,float *l2,float *pt)
+void	TetsurfInterpolate2(float *pt,float *v0,float l0,float *v1,float l1)
 {
-  register float	ratio;
-  ratio=(Level-*l1)/(*l2-*l1);
-  pt[0]=v1[0]+(v2[0]-v1[0])*ratio;
-  pt[1]=v1[1]+(v2[1]-v1[1])*ratio;
-  pt[2]=v1[2]+(v2[2]-v1[2])*ratio;
+  float	ratio;
+  ratio=(Level-l0)/(l1-l0);
+  pt[0]=v0[0]+(v1[0]-v0[0])*ratio;
+  pt[1]=v0[1]+(v1[1]-v0[1])*ratio;
+  pt[2]=v0[2]+(v1[2]-v0[2])*ratio;
+}
+
+/*===========================================================================*/
+void	TetsurfInterpolate4(float *pt,float *v0,float l0,float *v1,float l1
+                          ,float l2,float l3)
+
+{
+  float	ratio;
+  float  v[3],l;
+  average3f(v0,v1,v);
+  l = (l0+l1+l2+l3)*0.25F;
+  if(((l> Level)&&(l1>Level))||
+     ((l<=Level)&&(l0>Level))) { /* l0 vs l */
+    ratio=(Level-l0)/(l-l0);      
+    pt[0]=v0[0]+(v[0]-v0[0])*ratio;
+    pt[1]=v0[1]+(v[1]-v0[1])*ratio;
+    pt[2]=v0[2]+(v[2]-v0[2])*ratio;
+  } else {
+    ratio=(Level-l1)/(l-l1);      
+    pt[0]=v1[0]+(v[0]-v1[0])*ratio;
+    pt[1]=v1[1]+(v[1]-v1[1])*ratio;
+    pt[2]=v1[2]+(v[2]-v1[2])*ratio;
+  }
+}
+
+/*===========================================================================*/
+void	TetsurfInterpolate8(float *pt,float *v0,float l0,float *v1,float l1,
+                          float l2,float l3,float l4,
+                          float l5,float l6,float l7)
+{
+  float	ratio;
+  float  v[3],l;
+  average3f(v0,v1,v);
+  l = (l0+l1+l2+l3+l4+l5+l6+l7)*0.125F;
+  if(((l> Level)&&(l1>Level))||
+     ((l<=Level)&&(l0>Level))) { /* l0 vs l */
+    ratio=(Level-l0)/(l-l0);      
+    pt[0]=v0[0]+(v[0]-v0[0])*ratio;
+    pt[1]=v0[1]+(v[1]-v0[1])*ratio;
+    pt[2]=v0[2]+(v[2]-v0[2])*ratio;
+  } else {
+    ratio=(Level-l1)/(l-l1);      
+    pt[0]=v1[0]+(v[0]-v1[0])*ratio;
+    pt[1]=v1[1]+(v[1]-v1[1])*ratio;
+    pt[2]=v1[2]+(v[2]-v1[2])*ratio;
+  }
 }
 /*===========================================================================*/
 int	TetsurfFindActiveBoxes(int mode,int *n_strip,int n_vert,int **strip_l,float **vert)
 {
-	int	i,j,k;
+	int	a,b,c,i,j,k;
 #ifdef Trace
 	int	ECount=0;
 #endif
 	int i000,i001,i010,i011,i100,i101,i110,i111;
+   float *c000,*c001,*c010,*c011,*c100,*c101,*c110,*c111;
+   float d000,d001,d010,d011,d100,d101,d110,d111;
    int active;
    int n_active=0;
    int n_start=0;
+   PointType *e[19],*p0,*p1,*p2;
+   int code;
+   int eidx;
+   int idx;
+   TriangleType *tt;
+   int n_tri = 0;
+   int n_link = 1;
 
+   FieldZero(Point); /* sets initial links to zero */
+   FieldZero(ActiveEdges);
 
    n_start = n_vert;
 	for(i=0;i<(Max[0]-1);i++)
@@ -568,289 +676,495 @@ int	TetsurfFindActiveBoxes(int mode,int *n_strip,int n_vert,int **strip_l,float 
        i110=I3(VertexCodes,i+1,j+1,k  );
        i111=I3(VertexCodes,i+1,j+1,k+1);
 
-       /* Generate interpolated coordinates for all active edges */
+       if((i000!=i001)||
+          (i001!=i010)||
+          (i010!=i011)||
+          (i011!=i100)||
+          (i100!=i101)||
+          (i101!=i110)||
+          (i110!=i111)) { /* this is an active box */
 
-       if(i000!=i001) {
-         if(!(I3(ActiveEdges,i,j,k)&cM_000_001)) {
-           I3(ActiveEdges,i,j,k)|=cM_000_001;
-           TetsurfInterpolate(O4Ptr(Coord,i  ,j  ,k  ,0,CurOff),
-                              O3Ptr(Data ,i  ,j  ,k  ,CurOff),
-                              O4Ptr(Coord,i  ,j  ,k+1,0,CurOff),
-                              O3Ptr(Data ,i  ,j  ,k+1,CurOff),
-                              &(EdgePt(Point,i,j,k,cE_000_001).Point[0])); 
-         }
-         active|=cM_000_001;
-       }
+         c000=O4Ptr(Coord,i  ,j  ,k  ,0,CurOff);
+         c001=O4Ptr(Coord,i  ,j  ,k+1,0,CurOff);
+         c010=O4Ptr(Coord,i  ,j+1,k  ,0,CurOff);
+         c011=O4Ptr(Coord,i  ,j+1,k+1,0,CurOff);
+         c100=O4Ptr(Coord,i+1,j  ,k  ,0,CurOff);
+         c101=O4Ptr(Coord,i+1,j  ,k+1,0,CurOff);
+         c110=O4Ptr(Coord,i+1,j+1,k  ,0,CurOff);
+         c111=O4Ptr(Coord,i+1,j+1,k+1,0,CurOff);
 
+         d000=O3(Data ,i  ,j  ,k  ,CurOff);
+         d001=O3(Data ,i  ,j  ,k+1,CurOff);
+         d010=O3(Data ,i  ,j+1,k  ,CurOff);
+         d011=O3(Data ,i  ,j+1,k+1,CurOff);
+         d100=O3(Data ,i+1,j  ,k  ,CurOff);
+         d101=O3(Data ,i+1,j  ,k+1,CurOff);
+         d110=O3(Data ,i+1,j+1,k  ,CurOff);
+         d111=O3(Data ,i+1,j+1,k+1,CurOff);
+         
+         e[cE_000_001]=EdgePtPtr(Point,i  ,j  ,k  ,cE_000_001);
+         e[cE_000_010]=EdgePtPtr(Point,i  ,j  ,k  ,cE_000_010);
+         e[cE_000_011]=EdgePtPtr(Point,i  ,j  ,k  ,cE_000_011);
+         e[cE_000_100]=EdgePtPtr(Point,i  ,j  ,k  ,cE_000_100);
+         e[cE_000_101]=EdgePtPtr(Point,i  ,j  ,k  ,cE_000_101);
 
-       if(i000!=i010) {
-         if(!(I3(ActiveEdges,i,j,k)&cM_000_010)) {
-           I3(ActiveEdges,i,j,k)|=cM_000_010;
-           TetsurfInterpolate(O4Ptr(Coord,i  ,j  ,k  ,0,CurOff),
-                              O3Ptr(Data ,i  ,j  ,k  ,CurOff),
-                              O4Ptr(Coord,i  ,j+1,k  ,0,CurOff),
-                              O3Ptr(Data ,i  ,j+1,k  ,CurOff),
-                              &(EdgePt(Point,i,j,k,cE_000_010).Point[0])); 
-         }
-         active|=cM_000_010;
-       }
+         e[cE_000_110]=EdgePtPtr(Point,i  ,j  ,k  ,cE_000_110);
+         e[cE_000_111]=EdgePtPtr(Point,i  ,j  ,k  ,cE_000_111);
+         e[cE_001_011]=EdgePtPtr(Point,i  ,j  ,k+1,cE_000_010);
+         e[cE_001_101]=EdgePtPtr(Point,i  ,j  ,k+1,cE_000_100);
+         e[cE_001_111]=EdgePtPtr(Point,i  ,j  ,k+1,cE_000_110);
 
-       /*
+         e[cE_010_011]=EdgePtPtr(Point,i  ,j+1,k  ,cE_000_001);
+         e[cE_010_110]=EdgePtPtr(Point,i  ,j+1,k  ,cE_000_100);
+         e[cE_010_111]=EdgePtPtr(Point,i  ,j+1,k  ,cE_000_101);
+         e[cE_100_101]=EdgePtPtr(Point,i+1,j  ,k  ,cE_000_001);
+         e[cE_100_110]=EdgePtPtr(Point,i+1,j  ,k  ,cE_000_010);
 
-       if(i000!=i011) {
-         if(!(I3(ActiveEdges,i,j,k)&cM_000_011)) {
-           I3(ActiveEdges,i,j,k)|=cM_000_011;
-           TetsurfInterpolate(O4Ptr(Coord,i  ,j  ,k  ,0,CurOff),
-                              O3Ptr(Data ,i  ,j  ,k  ,CurOff),
-                              O4Ptr(Coord,i  ,j+1,k+1,0,CurOff),
-                              O3Ptr(Data ,i  ,j+1,k+1,CurOff),
-                              &(EdgePt(Point,i,j,k,cE_000_011).Point[0])); 
-         }
-         active|=cM_000_011;
-       }
-       */
+         e[cE_100_111]=EdgePtPtr(Point,i+1,j  ,k  ,cE_000_011);
+         e[cE_011_111]=EdgePtPtr(Point,i  ,j+1,k+1,cE_000_100);
+         e[cE_101_111]=EdgePtPtr(Point,i+1,j  ,k+1,cE_000_010);
+         e[cE_110_111]=EdgePtPtr(Point,i+1,j+1,k  ,cE_000_001);
 
-       if(i000!=i100) {
-         if(!(I3(ActiveEdges,i,j,k)&cM_000_100)) {
-           I3(ActiveEdges,i,j,k)|=cM_000_100;
-           TetsurfInterpolate(O4Ptr(Coord,i  ,j  ,k  ,0,CurOff),
-                              O3Ptr(Data ,i  ,j  ,k  ,CurOff),
-                              O4Ptr(Coord,i+1,j  ,k  ,0,CurOff),
-                              O3Ptr(Data ,i+1,j  ,k  ,CurOff),
-                              &(EdgePt(Point,i,j,k,cE_000_100).Point[0])); 
-         }
-         active|=cM_000_100;
-       }
-       /*
-       if(i000!=i101) {
-         if(!(I3(ActiveEdges,i,j,k)&cM_000_101)) {
-           I3(ActiveEdges,i,j,k)|=cM_000_101;
-           TetsurfInterpolate(O4Ptr(Coord,i  ,j  ,k  ,0,CurOff),
-                              O3Ptr(Data ,i  ,j  ,k  ,CurOff),
-                              O4Ptr(Coord,i+1,j  ,k+1,0,CurOff),
-                              O3Ptr(Data ,i+1,j  ,k+1,CurOff),
-                              &(EdgePt(Point,i,j,k,cE_000_101).Point[0])); 
-         }
-         active|=cM_000_101;
-       }
-       if(i000!=i110) {
-         if(!(I3(ActiveEdges,i,j,k)&cM_000_110)) {
-           I3(ActiveEdges,i,j,k)|=cM_000_110;
-           TetsurfInterpolate(O4Ptr(Coord,i  ,j  ,k  ,0,CurOff),
-                              O3Ptr(Data ,i  ,j  ,k  ,CurOff),
-                              O4Ptr(Coord,i+1,j+1,k  ,0,CurOff),
-                              O3Ptr(Data ,i+1,j+1,k  ,CurOff),
-                              &(EdgePt(Point,i,j,k,cE_000_110).Point[0])); 
-         }
-         active|=cM_000_110;
-       }
-       */
-
-       if(i000!=i111) {
-         if(!(I3(ActiveEdges,i,j,k)&cM_000_111)) {
-           I3(ActiveEdges,i,j,k)|=cM_000_111;
-           TetsurfInterpolate(O4Ptr(Coord,i  ,j  ,k  ,0,CurOff),
-                              O3Ptr(Data ,i  ,j  ,k  ,CurOff),
-                              O4Ptr(Coord,i+1,j+1,k+1,0,CurOff),
-                              O3Ptr(Data ,i+1,j+1,k+1,CurOff),
-                              &(EdgePt(Point,i,j,k,cE_000_111).Point[0])); 
-         }
-         active|=cM_000_111;
-       }
-       /*
-       if(i001!=i011) {
-         if(!(I3(ActiveEdges,i  ,j  ,k+1)&cM_000_010)) {
-           I3(ActiveEdges,i  ,j  ,k+1)|=cM_000_010;
-           TetsurfInterpolate(O4Ptr(Coord,i  ,j  ,k+1,0,CurOff),
-                              O3Ptr(Data ,i  ,j  ,k+1,CurOff),
-                              O4Ptr(Coord,i  ,j+1,k+1,0,CurOff),
-                              O3Ptr(Data ,i  ,j+1,k+1,CurOff),
-                              &(EdgePt(Point,i  ,j  ,k+1,cE_000_010).Point[0])); 
-         }
-         active|=cM_001_011;
-       }
-       if(i001!=i101) {
-         if(!(I3(ActiveEdges,i  ,j  ,k+1)&cM_000_100)) {
-           I3(ActiveEdges,i  ,j  ,k+1)|=cM_000_100;
-           TetsurfInterpolate(O4Ptr(Coord,i  ,j  ,k+1,0,CurOff),
-                              O3Ptr(Data ,i  ,j  ,k+1,CurOff),
-                              O4Ptr(Coord,i+1,j  ,k+1,0,CurOff),
-                              O3Ptr(Data ,i+1,j  ,k+1,CurOff),
-                              &(EdgePt(Point,i  ,j  ,k+1,cE_000_100).Point[0])); 
-         }
-         active|=cM_001_101;
-       }
-       if(i001!=i111) {
-         if(!(I3(ActiveEdges,i  ,j  ,k+1)&cM_000_110)) {
-           I3(ActiveEdges,i  ,j  ,k+1)|=cM_000_110;
-           TetsurfInterpolate(O4Ptr(Coord,i  ,j  ,k+1,0,CurOff),
-                              O3Ptr(Data ,i  ,j  ,k+1,CurOff),
-                              O4Ptr(Coord,i+1,j+1,k+1,0,CurOff),
-                              O3Ptr(Data ,i+1,j+1,k+1,CurOff),
-                              &(EdgePt(Point,i  ,j  ,k+1,cE_000_110).Point[0])); 
-         }
-         active|=cM_001_111;
-       }
-       if(i010!=i011) {
-         if(!(I3(ActiveEdges,i  ,j+1,k  )&cM_000_001)) {
-           I3(ActiveEdges,i  ,j+1,k  )|=cM_000_001;
-           TetsurfInterpolate(O4Ptr(Coord,i  ,j+1,k  ,0,CurOff),
-                              O3Ptr(Data ,i  ,j+1,k  ,CurOff),
-                              O4Ptr(Coord,i  ,j+1,k+1,0,CurOff),
-                              O3Ptr(Data ,i  ,j+1,k+1,CurOff),
-                              &(EdgePt(Point,i  ,j+1,k  ,cE_000_001).Point[0])); 
-         }
-         active|=cM_010_011;
-       }
-       if(i010!=i110) {
-         if(!(I3(ActiveEdges,i  ,j+1,k  )&cM_000_100)) {
-           I3(ActiveEdges,i  ,j+1,k  )|=cM_000_100;
-           TetsurfInterpolate(O4Ptr(Coord,i  ,j+1,k  ,0,CurOff),
-                              O3Ptr(Data ,i  ,j+1,k  ,CurOff),
-                              O4Ptr(Coord,i+1,j+1,k  ,0,CurOff),
-                              O3Ptr(Data ,i+1,j+1,k  ,CurOff),
-                              &(EdgePt(Point,i  ,j+1,k  ,cE_000_100).Point[0])); 
-         }
-         active|=cM_010_110;
-       }
-       if(i010!=i111) {
-         if(!(I3(ActiveEdges,i  ,j+1,k  )&cM_000_101)) {
-           I3(ActiveEdges,i  ,j+1,k  )|=cM_000_101;
-           TetsurfInterpolate(O4Ptr(Coord,i  ,j+1,k  ,0,CurOff),
-                              O3Ptr(Data ,i  ,j+1,k  ,CurOff),
-                              O4Ptr(Coord,i+1,j+1,k+1,0,CurOff),
-                              O3Ptr(Data ,i+1,j+1,k+1,CurOff),
-                              &(EdgePt(Point,i  ,j+1,k  ,cE_000_101).Point[0])); 
-         }
-         active|=cM_010_111;
-       }
-
-       if(i100!=i101) {
-         if(!(I3(ActiveEdges,i+1,j  ,k  )&cM_000_001)) {
-           I3(ActiveEdges,i+1,j  ,k  )|=cM_000_001;
-           TetsurfInterpolate(O4Ptr(Coord,i+1,j  ,k  ,0,CurOff),
-                              O3Ptr(Data ,i+1,j  ,k  ,CurOff),
-                              O4Ptr(Coord,i+1,j  ,k+1,0,CurOff),
-                              O3Ptr(Data ,i+1,j  ,k+1,CurOff),
-                              &(EdgePt(Point,i+1,j  ,k  ,cE_000_001).Point[0])); 
-         }
-         active|=cM_100_101;
-       }
-       if(i100!=i110) {
-         if(!(I3(ActiveEdges,i+1,j  ,k  )&cM_000_010)) {
-           I3(ActiveEdges,i+1,j  ,k  )|=cM_000_010;
-           TetsurfInterpolate(O4Ptr(Coord,i+1,j  ,k  ,0,CurOff),
-                              O3Ptr(Data ,i+1,j  ,k  ,CurOff),
-                              O4Ptr(Coord,i+1,j+1,k  ,0,CurOff),
-                              O3Ptr(Data ,i+1,j+1,k  ,CurOff),
-                              &(EdgePt(Point,i+1,j  ,k  ,cE_000_010).Point[0])); 
-         }
-         active|=cM_100_110;
-       }
-       if(i100!=i111) {
-         if(!(I3(ActiveEdges,i+1,j  ,k  )&cM_000_011)) {
-           I3(ActiveEdges,i+1,j  ,k  )|=cM_000_011;
-           TetsurfInterpolate(O4Ptr(Coord,i+1,j  ,k  ,0,CurOff),
-                              O3Ptr(Data ,i+1,j  ,k  ,CurOff),
-                              O4Ptr(Coord,i+1,j+1,k+1,0,CurOff),
-                              O3Ptr(Data ,i+1,j+1,k+1,CurOff),
-                              &(EdgePt(Point,i+1,j  ,k  ,cE_000_011).Point[0])); 
-         }
-         active|=cM_100_111;
-       }
-       if(i011!=i111) {
-         if(!(I3(ActiveEdges,i  ,j+1,k+1)&cM_000_100)) {
-           I3(ActiveEdges,i  ,j+1,k+1)|=cM_000_100;
-           TetsurfInterpolate(O4Ptr(Coord,i  ,j+1,k+1,0,CurOff),
-                              O3Ptr(Data ,i  ,j+1,k+1,CurOff),
-                              O4Ptr(Coord,i+1,j+1,k+1,0,CurOff),
-                              O3Ptr(Data ,i+1,j+1,k+1,CurOff),
-                              &(EdgePt(Point,i  ,j+1,k+1,cE_000_100).Point[0])); 
-         }
-         active|=cM_011_111;
-       }
-       if(i101!=i111) {
-         if(!(I3(ActiveEdges,i+1,j  ,k+1)&cM_000_010)) {
-           I3(ActiveEdges,i+1,j  ,k+1)|=cM_000_010;
-           TetsurfInterpolate(O4Ptr(Coord,i+1,j  ,k+1,0,CurOff),
-                              O3Ptr(Data ,i+1,j  ,k+1,CurOff),
-                              O4Ptr(Coord,i+1,j+1,k+1,0,CurOff),
-                              O3Ptr(Data ,i+1,j+1,k+1,CurOff),
-                              &(EdgePt(Point,i+1,j  ,k+1,cE_000_010).Point[0])); 
-         }
-         active|=cM_101_111;
-       }
-       if(i110!=i111) {
-         if(!(I3(ActiveEdges,i+1,j+1,k  )&cM_000_001)) {
-           I3(ActiveEdges,i+1,j+1,k  )|=cM_000_001;
-           TetsurfInterpolate(O4Ptr(Coord,i+1,j+1,k  ,0,CurOff),
-                              O3Ptr(Data ,i+1,j+1,k  ,CurOff),
-                              O4Ptr(Coord,i+1,j+1,k+1,0,CurOff),
-                              O3Ptr(Data ,i+1,j+1,k+1,CurOff),
-                              &(EdgePt(Point,i+1,j+1,k  ,cE_000_001).Point[0])); 
-         }
-         active|=cM_110_111;
-       }
-       */
-
-       if(active) {
-
-         VLACheck(*vert,float,(n_vert*3)+50); 
-         /* make sure we have a enough storage for even the most complex box */
-
-         switch(mode) {
-         case 2:
-           break;
-         case 1:
-           break;
-         case 0:
-         default: /* dots */
-           if(active&cM_000_001) {
-             copy3f(EdgePt(Point,i,j,k,cE_000_001).Point,
-                    (*vert)+(n_vert*3));
-             n_vert+=1;
+         /* Generate interpolated coordinates for all active edges */
+         
+         if(i000!=i001) {
+           if(!(I3(ActiveEdges,i,j,k)&cM_000_001)) {
+             I3(ActiveEdges,i,j,k)|=cM_000_001;
+             TetsurfInterpolate2(e[cE_000_001]->Point,c000,d000,c001,d001);
            }
-
-           if(active&cM_000_010) {
-             copy3f(EdgePt(Point,i,j,k,cE_000_010).Point,
-                    (*vert)+(n_vert*3));
-             n_vert+=1;
-           }
-           if(active&cM_000_011) {
-             copy3f(EdgePt(Point,i,j,k,cE_000_011).Point,
-                    (*vert)+(n_vert*3));
-             n_vert+=1;
-           }
-           if(active&cM_000_100) {
-             copy3f(EdgePt(Point,i,j,k,cE_000_100).Point,
-                    (*vert)+(n_vert*3));
-             n_vert+=1;
-           }
-           if(active&cM_000_101) {
-             copy3f(EdgePt(Point,i,j,k,cE_000_101).Point,
-                    (*vert)+(n_vert*3));
-             n_vert+=1;
-           }
-           if(active&cM_000_110) {
-             copy3f(EdgePt(Point,i,j,k,cE_000_110).Point,
-                    (*vert)+(n_vert*3));
-             n_vert+=1;
-           }
-           if(active&cM_000_111) {
-             copy3f(EdgePt(Point,i,j,k,cE_000_111).Point,
-                    (*vert)+(n_vert*3));
-             n_vert+=1;
-           }
-           break;
+           active|=cM_000_001;
          }
-         n_active++;
+         if(i000!=i010) {
+           if(!(I3(ActiveEdges,i,j,k)&cM_000_010)) {
+             I3(ActiveEdges,i,j,k)|=cM_000_010;
+             TetsurfInterpolate2(e[cE_000_010]->Point,c000,d000,c010,d010);
+             
+           }
+           active|=cM_000_010;
+         }
+         if(i000!=i011) {
+           if(!(I3(ActiveEdges,i,j,k)&cM_000_011)) {
+             I3(ActiveEdges,i,j,k)|=cM_000_011;
+             TetsurfInterpolate4(e[cE_000_011]->Point,c000,d000,c011,d011,d001,d010);
+           }
+           active|=cM_000_011;
+         }
+         if(i000!=i100) {
+           if(!(I3(ActiveEdges,i,j,k)&cM_000_100)) {
+             I3(ActiveEdges,i,j,k)|=cM_000_100;
+             TetsurfInterpolate2(e[cE_000_100]->Point,c000,d000,c100,d100);
+             
+           }
+           active|=cM_000_100;
+         }
+         if(i000!=i101) {
+           if(!(I3(ActiveEdges,i,j,k)&cM_000_101)) {
+             I3(ActiveEdges,i,j,k)|=cM_000_101;
+             TetsurfInterpolate4(e[cE_000_101]->Point,c000,d000,c101,d101,d100,d001);
+             
+           }
+           active|=cM_000_101;
+         }
+         if(i000!=i110) {
+           if(!(I3(ActiveEdges,i,j,k)&cM_000_110)) {
+             I3(ActiveEdges,i,j,k)|=cM_000_110;
+             TetsurfInterpolate4(e[cE_000_110]->Point,c000,d000,c110,d110,d100,d010);
+           }
+           active|=cM_000_110;
+         }
+         if(i000!=i111) {
+           if(!(I3(ActiveEdges,i,j,k)&cM_000_111)) {
+             I3(ActiveEdges,i,j,k)|=cM_000_111;
+             TetsurfInterpolate8(e[cE_000_111]->Point,
+                                 c000,d000,c111,d111,
+                                 d001,d010,d011,d100,
+                                 d101,d110);
+           }
+           active|=cM_000_111;
+         }
+         if(i001!=i011) {
+           if(!(I3(ActiveEdges,i  ,j  ,k+1)&cM_000_010)) {
+             I3(ActiveEdges,i  ,j  ,k+1)|=cM_000_010;
+             TetsurfInterpolate2(e[cE_001_011]->Point,c001,d001,c011,d011);
+           }
+           active|=cM_001_011;
+         }
+         if(i001!=i101) {
+           if(!(I3(ActiveEdges,i  ,j  ,k+1)&cM_000_100)) {
+             I3(ActiveEdges,i  ,j  ,k+1)|=cM_000_100;
+             TetsurfInterpolate2(e[cE_001_101]->Point,c001,d001,c101,d101);
+           }
+           active|=cM_001_101;
+         }
+         if(i001!=i111) {
+           if(!(I3(ActiveEdges,i  ,j  ,k+1)&cM_000_110)) {
+             I3(ActiveEdges,i  ,j  ,k+1)|=cM_000_110;
+             TetsurfInterpolate4(e[cE_001_111]->Point,c001,d001,c111,d111,d101,d011);
+           }
+           active|=cM_001_111;
+         }
+         if(i010!=i011) {
+           if(!(I3(ActiveEdges,i  ,j+1,k  )&cM_000_001)) {
+             I3(ActiveEdges,i  ,j+1,k  )|=cM_000_001;
+             TetsurfInterpolate2(e[cE_010_011]->Point,c010,d010,c011,d011);
+           }
+           active|=cM_010_011;
+         }
+         if(i010!=i110) {
+           if(!(I3(ActiveEdges,i  ,j+1,k  )&cM_000_100)) {
+             I3(ActiveEdges,i  ,j+1,k  )|=cM_000_100;
+             TetsurfInterpolate2(e[cE_010_110]->Point,c010,d010,c110,d110);
+           }
+           active|=cM_010_110;
+         }
+         if(i010!=i111) {
+           if(!(I3(ActiveEdges,i  ,j+1,k  )&cM_000_101)) {
+             I3(ActiveEdges,i  ,j+1,k  )|=cM_000_101;
+             TetsurfInterpolate4(e[cE_010_111]->Point,c010,d010,c111,d111,d110,d011);
+           }
+           active|=cM_010_111;
+         }
+         if(i100!=i101) {
+           if(!(I3(ActiveEdges,i+1,j  ,k  )&cM_000_001)) {
+             I3(ActiveEdges,i+1,j  ,k  )|=cM_000_001;
+             TetsurfInterpolate2(e[cE_100_101]->Point,c100,d100,c101,d101);
+           }
+           active|=cM_100_101;
+         }
+         if(i100!=i110) {
+           if(!(I3(ActiveEdges,i+1,j  ,k  )&cM_000_010)) {
+             I3(ActiveEdges,i+1,j  ,k  )|=cM_000_010;
+             TetsurfInterpolate2(e[cE_100_110]->Point,c100,d100,c110,d110);
+           }
+           active|=cM_100_110;
+         }
+         if(i100!=i111) {
+           if(!(I3(ActiveEdges,i+1,j  ,k  )&cM_000_011)) {
+             I3(ActiveEdges,i+1,j  ,k  )|=cM_000_011;
+             TetsurfInterpolate4(e[cE_100_111]->Point,c100,d100,c111,d111,d101,d110);
+           }
+           active|=cM_100_111;
+         }
+         if(i011!=i111) {
+           if(!(I3(ActiveEdges,i  ,j+1,k+1)&cM_000_100)) {
+             I3(ActiveEdges,i  ,j+1,k+1)|=cM_000_100;
+             TetsurfInterpolate2(e[cE_011_111]->Point,c011,d011,c111,d111);
+           }
+           active|=cM_011_111;
+         }
+         if(i101!=i111) {
+           if(!(I3(ActiveEdges,i+1,j  ,k+1)&cM_000_010)) {
+             I3(ActiveEdges,i+1,j  ,k+1)|=cM_000_010;
+             TetsurfInterpolate2(e[cE_101_111]->Point,c101,d101,c111,d111);
+           }
+           active|=cM_101_111;
+         }
+         if(i110!=i111) {
+           if(!(I3(ActiveEdges,i+1,j+1,k  )&cM_000_001)) {
+             I3(ActiveEdges,i+1,j+1,k  )|=cM_000_001;
+             TetsurfInterpolate2(e[cE_110_111]->Point,c110,d110,c111,d111);
+           }
+           active|=cM_110_111;
+         }
+                  
+         if(active) {
+           switch(mode) {
+           case 2: 
+             code=
+               (i000 ? 0x01 : 0)|
+               (i001 ? 0x02 : 0)|
+               (i010 ? 0x04 : 0)|
+               (i011 ? 0x08 : 0)|
+               (i100 ? 0x10 : 0)|
+               (i101 ? 0x20 : 0)|
+               (i110 ? 0x40 : 0)|
+               (i111 ? 0x80 : 0);
+             eidx=EdgeStart[code];
+             while(1) {
+               idx=Edge[eidx];
+               if(idx<0) break;
+
+               /* assemble a triangle from these three points */
+
+               VLACheck(Tri,TriangleType,n_tri);
+               tt = Tri + n_tri;
+               tt->p[0] = e[idx];
+               tt->p[1] = e[Edge[eidx+1]];
+               tt->p[2] = e[Edge[eidx+2]];
+
+               VLACheck(PtLink,PointLinkType,n_link+3);
+
+               /* link this triangle into the points */
+
+               PtLink[n_link].tri = n_tri;
+               PtLink[n_link].link = tt->p[0]->Link;
+               tt->p[0]->Link=n_link;
+               n_link++;
+
+               PtLink[n_link].tri = n_tri;
+               PtLink[n_link].link = tt->p[1]->Link;
+               tt->p[1]->Link=n_link;
+               n_link++;
+
+               PtLink[n_link].tri = n_tri;
+               PtLink[n_link].link = tt->p[2]->Link;
+               tt->p[2]->Link=n_link;
+               n_link++;
+               n_tri++;
+               eidx+=3;
+             }
+             break;
+           case 1: /* lines */
+             VLACheck(*vert,float,(n_vert*3)+200); 
+
+             code=
+               (i000 ? 0x01 : 0)|
+               (i001 ? 0x02 : 0)|
+               (i010 ? 0x04 : 0)|
+               (i011 ? 0x08 : 0)|
+               (i100 ? 0x10 : 0)|
+               (i101 ? 0x20 : 0)|
+               (i110 ? 0x40 : 0)|
+               (i111 ? 0x80 : 0);
+             eidx=EdgeStart[code];
+             while(1) {
+               idx=Edge[eidx];
+               if(idx<0) break;
+               copy3fn(e[idx]->Point,(*vert)+(n_vert*3));                                
+               n_vert++;
+               copy3fn(e[Edge[eidx+1]]->Point,(*vert)+(n_vert*3));                                
+               n_vert++;
+               copy3fn(e[Edge[eidx+1]]->Point,(*vert)+(n_vert*3));                                
+               n_vert++;
+               copy3fn(e[Edge[eidx+2]]->Point,(*vert)+(n_vert*3));               
+               n_vert++;
+               copy3fn(e[Edge[eidx+2]]->Point,(*vert)+(n_vert*3));               
+               n_vert++;
+               copy3fn(e[idx]->Point,(*vert)+(n_vert*3));                                
+               n_vert++;
+               eidx+=3;
+             }
+             break;
+           case 0:
+           default: /* dots */
+             VLACheck(*vert,float,(n_vert*3)+200); 
+
+             if(active&cM_000_001) {
+               copy3fn(e[cE_000_001]->Point,(*vert)+(n_vert*3));
+               n_vert+=1;
+             }
+             if(active&cM_000_010) {
+               copy3fn(e[cE_000_010]->Point,(*vert)+(n_vert*3));
+               n_vert+=1;
+             }
+             if(active&cM_000_011) {
+               copy3fn(e[cE_000_011]->Point,(*vert)+(n_vert*3));
+               n_vert+=1;
+             }
+             if(active&cM_000_100) {
+               copy3fn(e[cE_000_100]->Point,(*vert)+(n_vert*3));
+               n_vert+=1;
+             }
+             if(active&cM_000_101) {
+               copy3fn(e[cE_000_101]->Point,(*vert)+(n_vert*3));
+               n_vert+=1;
+             }
+             if(active&cM_000_110) {
+               copy3fn(e[cE_000_110]->Point,(*vert)+(n_vert*3));
+               n_vert+=1;
+             }
+             if(active&cM_000_111) {
+               copy3fn(e[cE_000_111]->Point,(*vert)+(n_vert*3));
+               n_vert+=1;
+             }
+             
+             if(active&cM_001_011) {
+               copy3fn(e[cE_001_011]->Point,(*vert)+(n_vert*3));
+               n_vert+=1;
+             }
+             if(active&cM_001_101) {
+               copy3fn(e[cE_001_101]->Point,(*vert)+(n_vert*3));
+               n_vert+=1;
+             }
+             if(active&cM_001_111) {
+               copy3fn(e[cE_001_111]->Point,(*vert)+(n_vert*3));
+               n_vert+=1;
+             }
+
+             if(active&cM_010_011) {
+               copy3fn(e[cE_010_011]->Point,(*vert)+(n_vert*3));
+               n_vert+=1;
+             }
+             if(active&cM_010_110) {
+               copy3fn(e[cE_010_011]->Point,(*vert)+(n_vert*3));
+               n_vert+=1;
+             }
+             if(active&cM_010_111) {
+               copy3fn(e[cE_010_111]->Point,(*vert)+(n_vert*3));
+               n_vert+=1;
+             }
+
+             if(active&cM_100_101) {
+               copy3fn(e[cE_100_101]->Point,(*vert)+(n_vert*3));
+               n_vert+=1;
+             }
+             if(active&cM_100_110) {
+               copy3fn(e[cE_100_110]->Point,(*vert)+(n_vert*3));
+               n_vert+=1;
+             }
+             if(active&cM_100_111) {
+               copy3fn(e[cE_100_111]->Point,(*vert)+(n_vert*3));
+               n_vert+=1;
+             }
+
+             if(active&cM_011_111) {
+               copy3fn(e[cE_011_111]->Point,(*vert)+(n_vert*3));
+               n_vert+=1;
+             }
+             if(active&cM_101_111) {
+               copy3fn(e[cE_101_111]->Point,(*vert)+(n_vert*3));
+               n_vert+=1;
+             }
+             if(active&cM_110_111) {
+               copy3fn(e[cE_101_111]->Point,(*vert)+(n_vert*3));
+               n_vert+=1;
+             }
+             
+             break;
+           }
+           n_active++;
+         }
        }
      }
-
+   
    switch(mode) {
    case 2:
+     /* compute area-weighted normal */
+     for(a=0;a<n_tri;a++) {
+       float *v0,*v1,*v2;
+       float vt1[3],vt2[3];
+
+       tt = Tri + a;
+       v0 = tt->p[0]->Point;
+       v1 = tt->p[1]->Point;
+       v2 = tt->p[2]->Point;
+       tt->done=false; /* init */
+       
+       subtract3f(v0,v2,vt1);
+       subtract3f(v1,v2,vt2);
+       cross_product3f(vt2,vt1,tt->n);
+     }
+     /* compute normals at active points */
+     for(a=0;a<n_tri;a++) {
+       float v[3];
+
+       tt = Tri + a;
+       for(b=0;b<3;b++) {
+         if(!tt->p[b]->NormalFlag) {
+           zero3f(v);
+           idx = tt->p[b]->Link;
+           while(idx>0) {
+             add3f(Tri[PtLink[idx].tri].n,v,v);
+             c++;
+             idx = PtLink[idx].link;
+           }
+           normalize23f(v,tt->p[b]->Normal);
+           tt->p[b]->NormalFlag=true;
+         }
+       }
+     }
+     /* now create triangle strips (not yet optimal) */
+     for(a=0;a<n_tri;a++) {
+       tt = Tri + a;
+       n_start = n_vert;
+       if(!tt->done) {
+
+         VLACheck(*vert,float,(n_vert*3)+200); 
+
+         copy3fn(tt->p[0]->Normal,(*vert)+(n_vert*3));
+         n_vert++;
+         copy3fn(tt->p[0]->Point,(*vert)+(n_vert*3));
+         n_vert++;
+         copy3fn(tt->p[1]->Normal,(*vert)+(n_vert*3));
+         n_vert++;
+         copy3fn(tt->p[1]->Point,(*vert)+(n_vert*3));
+         n_vert++;
+         
+         copy3fn(tt->p[2]->Normal,(*vert)+(n_vert*3));
+         n_vert++;
+         copy3fn(tt->p[2]->Point,(*vert)+(n_vert*3));
+         n_vert++;
+         
+         tt->done = true;
+
+         p0 = tt->p[1];
+         p1 = tt->p[2];
+         
+         while(1) {
+           p2 = NULL;
+           idx = p1->Link;
+           while(idx>0) {
+             tt=Tri+PtLink[idx].tri;
+
+             if(!tt->done) {
+               if((tt->p[0]==p0)&&(tt->p[1]==p1)) {
+                 p2=tt->p[2];
+                 break;
+               }
+               
+               if((tt->p[1]==p0)&&(tt->p[2]==p1)) {
+                 p2=tt->p[0];
+                 break;
+               }
+               
+               if((tt->p[2]==p0)&&(tt->p[0]==p1)) {
+                 p2=tt->p[1];
+                 break;
+               }
+               
+               if((tt->p[1]==p0)&&(tt->p[0]==p1)) {
+                 p2=tt->p[2];
+                 break;
+               }
+               
+               if((tt->p[2]==p0)&&(tt->p[1]==p1)) {
+                 p2=tt->p[0];
+                 break;
+               }
+               
+               if((tt->p[0]==p0)&&(tt->p[2]==p1)) {
+                 p2=tt->p[1];
+                 break;
+               }
+             }
+             idx = PtLink[idx].link;
+           }
+
+           if(!p2) break;
+           tt->done=true;
+           VLACheck(*vert,float,(n_vert*3)+200); 
+           copy3fn(p2->Normal,(*vert)+(n_vert*3));
+           n_vert++;
+           copy3fn(p2->Point,(*vert)+(n_vert*3));
+           n_vert++;
+           p0=p1;
+           p1=p2;
+         }
+       }
+       if(n_vert>n_start) {
+         VLACheck(*strip_l,int,*n_strip);
+         (*strip_l)[*n_strip]=n_vert-n_start;
+         (*n_strip)++;
+       }
+     }
      break;
+     
    case 1:
+     if(n_vert>n_start) {
+       VLACheck(*strip_l,int,*n_strip);
+       (*strip_l)[*n_strip]=n_vert-n_start;
+       (*n_strip)++;
+     }
      break;
    case 0: /* dots */
    default:
@@ -861,9 +1175,12 @@ int	TetsurfFindActiveBoxes(int mode,int *n_strip,int n_vert,int **strip_l,float 
      }
      break;
    }
-   printf("n_strip %d\n",*n_strip);
-   printf("n_active %d\n",n_active);
-   printf("n_vert %d\n",n_vert);
+   /*
+     printf("n_strip %d\n",*n_strip);
+     printf("n_active %d\n",n_active);
+     printf("n_vert %d\n",n_vert);
+     printf("mode %d\n",mode);
+   */
 	return(n_vert);
 }
 /*===========================================================================*/
@@ -871,18 +1188,23 @@ int	TetsurfCodeVertices(void)
 {
 	int	i,j,k;
 	int	VCount=0;
+   int b0,b1;
 
+   b0=1;
+   if(Level<0.0F)
+     b0=0;
+   b1=1-b0;
 	for(i=0;i<Max[0];i++)
 	for(j=0;j<Max[1];j++)
 	for(k=0;k<Max[2];k++)
 		{
 		if((O3(Data,i,j,k,CurOff)>Level))
 			{
-			I3(VertexCodes,i,j,k)=1;
+			I3(VertexCodes,i,j,k)=b0;
 			VCount++;
 			}
 		else
-			I3(VertexCodes,i,j,k)=0;
+			I3(VertexCodes,i,j,k)=b1;
 		}
 #ifdef Trace
 printf(" TetsurfCodeVertices: %i of %i vertices above level\n",VCount,
