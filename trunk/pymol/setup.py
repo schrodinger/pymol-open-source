@@ -17,6 +17,16 @@ if sys.platform=='win32':
                   ("WIN32",None),
                   ("_HAVE_LIBPNG",None)]
    ext_link_args=['/NODEFAULTLIB:"LIBC"']
+elif sys.platform=='cygwin':
+   inc_dirs=["layer0","layer1","layer2","layer3","layer4","layer5"]
+   libs=["glut32","opengl32","glu32","png"]
+   pyogl_libs = ["glut32","opengl32","glu32"]
+   lib_dirs=["/usr/lib/w32api"]
+   def_macros=[("_PYMOL_MODULE",None),
+#                  ("_PYMOL_NUMPY",None),
+                  ("CYGWIN",None),
+               ("_HAVE_LIBPNG",None)]
+   ext_link_args=[]
 else:
    inc_dirs=["layer0","layer1","layer2","layer3","layer4","layer5"]
    libs=["GL","GLU","glut","png"]

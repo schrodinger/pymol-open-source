@@ -24,6 +24,10 @@
 
 #include "Python.h"
 
+#ifdef CYGWIN
+#define WIN32
+#endif
+
 #ifdef WIN32
 #ifndef MS_WIN32
 #define MS_WIN32
