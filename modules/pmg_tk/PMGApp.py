@@ -1441,27 +1441,27 @@ class PMGApp(AbstractApp):
       self.menuBar.addmenu('Scene', 'Scene Storage')
 
       self.menuBar.addcascademenu('Scene', 'Store', 'Store',
-                                  label='Store')
+                                  label=self.pad+'Store')
 
       self.menuBar.addcascademenu('Scene', 'Clear', 'Clear',
-                                  label='Clear')
+                                  label=self.pad+'Clear')
 
       self.menuBar.addmenuitem('Scene', 'separator', '')
 
       
       for x in range(1,13):
          self.menuBar.addmenuitem('Store', 'checkbutton', 'F%d'%x,
-                                  label='F%d'%x,
+                                  label=self.pad+'F%d'%x,
                                   variable = self.setting.F[x],
                                   command = lambda x=x: cmd.do("scene F%d,store"%x))
 
          self.menuBar.addmenuitem('Clear', 'checkbutton', 'F%d'%x,
-                                  label='F%d'%x,
+                                  label=self.pad+'F%d'%x,
                                   variable = self.setting.F[x],
                                   command = lambda x=x: cmd.do("scene F%d,clear"%x))
 
          self.menuBar.addmenuitem('Scene', 'checkbutton', 'Recall F%d'%x,
-                                  label='Recall F%d'%x,
+                                  label=self.pad+'Recall F%d'%x,
                                   variable = self.setting.F[x],
                                   command = lambda x=x: cmd.do("scene F%d"%x))
                       
