@@ -432,7 +432,6 @@ void ObjectGadgetInit(ObjectGadget *I)
   I->Obj.fGetNFrame = (int (*)(struct CObject *)) ObjectGadgetGetNState;
   I->Obj.fDescribeElement = NULL;
   I->CurGSet=0;
-  return(I);
 }
 
 /*========================================================================*/
