@@ -131,8 +131,8 @@ void CrystalUpdate(CCrystal *I)
   cabgs[2] = (cabg[0]*cabg[1]-cabg[2])/(sabg[0]*sabg[1]);
     
   I->UnitCellVolume=I->Dim[0]*I->Dim[1]*I->Dim[2]*
-    sqrt1f(1.0+2.0*cabg[0]*cabg[1]*cabg[2]-
-          (cabg[0]*cabg[0]+cabg[1]*cabg[1]+cabg[2]*cabg[2]));
+    sqrt1f(1.0+(double)2.0*cabg[0]*cabg[1]*cabg[2]-
+          (double)(cabg[0]*cabg[0]+(double)cabg[1]*cabg[1]+(double)cabg[2]*cabg[2]));
   
   I->RecipDim[0] = I->Dim[1]*I->Dim[2]*sabg[0]/I->UnitCellVolume;
   I->RecipDim[1] = I->Dim[0]*I->Dim[2]*sabg[1]/I->UnitCellVolume;
