@@ -102,6 +102,7 @@ SEE ALSO
       'store'       : 0,
       'clear'       : 1,
       'interpolate' : 2,
+      'reinterpolate' : 3,
       }
 
    mview_action_sc = Shortcut(mview_action_dict.keys())

@@ -737,7 +737,7 @@ static int interpolate_view(CViewElem *first,CViewElem *last,float power,float b
     } else {
       current->post_flag=false;
     }
-    current->specified_flag = false;
+    current->specification_level = 1;
     current++;
   }
 
@@ -762,7 +762,7 @@ int MovieView(int action,int first,int last,float power,float bias)
             " MovieView: Setting frame %d.\n",frame+1
             ENDFB;
           SceneToViewElem(I->ViewElem+frame);          
-          I->ViewElem[frame].specified_flag = true;
+          I->ViewElem[frame].specification_level = 2;
         }
       }
     }
@@ -781,7 +781,8 @@ int MovieView(int action,int first,int last,float power,float bias)
       }
     }
     break;
-  case 2: /* interpolate */
+  case 2: /* interpolate & reinterpolate */
+  case 3:
     {
       CViewElem *first_view=NULL,*last_view=NULL;
       if(first<0)
@@ -790,19 +791,37 @@ int MovieView(int action,int first,int last,float power,float bias)
         last = SceneGetNFrame()-1;
 
       VLACheck(I->ViewElem,CViewElem,last);
-      PRINTFB(FB_Movie,FB_Details)
-        " MovieView: interpolating frames %d to %d.\n",first+1,last+1
-        ENDFB;
+      if(action==2) {
+        PRINTFB(FB_Movie,FB_Details)
+          " MovieView: interpolating unspecified frames %d to %d.\n",first+1,last+1
+          ENDFB;
+      } else {
+        PRINTFB(FB_Movie,FB_Details)
+          " MovieView: reinterpolating all frames %d to %d.\n",first+1,last+1
+          ENDFB;
+      }
       for(frame=first;frame<=last;frame++) {
         if((frame>=0)&&(frame<I->NFrame)) {
           if(!first_view) {
-            if(I->ViewElem[frame].specified_flag) {
+            if(I->ViewElem[frame].specification_level==2) { /* specified */
               first_view = I->ViewElem + frame;
             }
           } else {
-            if(I->ViewElem[frame].specified_flag) {
+            CViewElem *view;
+            int interpolate_flag = false;
+            if(I->ViewElem[frame].specification_level==2) { /* specified */
               last_view = I->ViewElem + frame;
-              interpolate_view(first_view,last_view,power,bias);
+              if(action==2) {/* interpolate */
+                for(view=first_view+1;view<last_view;view++) {
+                  if(!view->specification_level)
+                    interpolate_flag = true;
+                }
+              } else {
+                interpolate_flag=true;
+              }
+              if(interpolate_flag) {
+                interpolate_view(first_view,last_view,power,bias);
+              }
               first_view = last_view;
               last_view = NULL;
             }

@@ -1181,7 +1181,8 @@ void EditorRender(int state)
             vv+=3;
           }
         }
-        
+
+#if 0        
         v_cnt = (vv-vp)/3;
         
         switch(v_cnt) {
@@ -1195,6 +1196,8 @@ void EditorRender(int state)
           draw_torsion(vp,vp+3,vp+6,vp+9);
           break;
         }
+#endif
+
       }
       /*
         if(I->ShowFrags) {
