@@ -67,6 +67,30 @@ float ShakerDoDist(float target,float *v0,float *v1,float *d0to1,float *d1to0,fl
   return dev;
 }
 
+float ShakerDoDistLimit(float target,float *v0,float *v1,float *d0to1,float *d1to0,float wt)
+{
+  float d[3],push[3];
+  float len,dev,dev_2,sc;
+
+  subtract3f(v0,v1,d);
+  len = (float)length3f(d);
+  dev = target-len;
+  if(dev<0.0F) {
+    dev_2 = wt*dev/2.0F;
+    if(len>R_SMALL8) { /* nonoverlapping */
+      sc = dev_2/len;
+      scale3f(d,sc,push);
+      add3f(push,d0to1,d0to1);
+      subtract3f(d1to0,push,d1to0);
+    } else { /* overlapping, so just push along X */
+      d0to1[0]-=dev_2;
+      d1to0[0]+=dev_2;
+    }
+  } else
+    dev = 0.0;
+  return dev;
+}
+
 void ShakerAddDistCon(CShaker *I,int atom0,int atom1,float target,int type)
 {
   ShakerDistCon *sdc;

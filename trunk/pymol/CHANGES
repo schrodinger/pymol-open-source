@@ -179,10 +179,15 @@ CHANGE LOG
 
 Changes up to 0.91
 
-   * So long as they are zero, mesh_radius, line_radius, ribbon_radius, 
-     dot_radius, and dash_radius are now subordinated to mesh_width, 
-     line_width, ribbon_width, dot_width, and dash_width. If set to a 
-     non-zero value, they will take priority.
+   * Fixed CENT action with multi-state object
+
+   * Adjusting Z scaling for mouse
+
+   * Better WYSIWYG: If they are set to zero, then the settings:
+       mesh_radius, line_radius, ribbon_radius,  dot_radius, dash_radius 
+     are now subordinated to:
+       mesh_width, line_width, ribbon_width, dot_width, and dash_width.
+     However, if changed to a non-zero value, they will take priority.
 
      This behavior provides better WYSIWYG for raytracing, but will break
      some scripts.

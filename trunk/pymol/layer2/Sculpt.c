@@ -236,7 +236,7 @@ void SculptMeasureObject(CSculpt *I,ObjectMolecule *obj,int state)
                                        oai[b1].sculpt_id,
                                        oai[b2].sculpt_id,0,0,d);
                   }
-                  ShakerAddDistCon(I->Shaker,b1,b2,d,1); 
+                  ShakerAddDistCon(I->Shaker,b1,b2,d,cShakerDistBond); 
                   /* NOTE: storing atom indices, not coord. ind.! */
                 }
             }
@@ -299,7 +299,7 @@ void SculptMeasureObject(CSculpt *I,ObjectMolecule *obj,int state)
                                        oai[b1].sculpt_id,
                                        oai[b2].sculpt_id,0,d);
                   }
-                  ShakerAddDistCon(I->Shaker,b1,b2,d,0); 
+                  ShakerAddDistCon(I->Shaker,b1,b2,d,cShakerDistAngle); 
 
 
                   if(linear[b0]&&(linear[b1]||linear[b2])) {
@@ -323,6 +323,77 @@ void SculptMeasureObject(CSculpt *I,ObjectMolecule *obj,int state)
             }
           }
           
+#if 0
+          /* add additional limiting distance restraints into object */
+
+          /* b1-b0-b2-b3-b4 */
+
+          for(b0=0;b0<obj->NAtom;b0++) {
+            n0 = obj->Neighbor[b0]+1;
+            while(obj->Neighbor[n0]>=0) {
+              b1 = obj->Neighbor[n0];
+              n1 = obj->Neighbor[b0]+1;
+              while(obj->Neighbor[n1]>=0) {
+                b2 = obj->Neighbor[n1];
+                if(b1!=b2) {
+                  n2 =  obj->Neighbor[b2]+1;
+                  while(obj->Neighbor[n2]>=0) {
+                    b3 = obj->Neighbor[n2];
+                    if(b3!=b0) {
+                      n3 =  obj->Neighbor[b3]+1;
+                      while(obj->Neighbor[n3]>=0) {
+                        b4 = obj->Neighbor[n3];
+                        if(b2!=b4) {
+                          
+                          if(obj->DiscreteFlag) {
+                            if((cs==obj->DiscreteCSet[b0])&&
+                               (cs==obj->DiscreteCSet[b1])&&
+                               (cs==obj->DiscreteCSet[b2])&&
+                               (cs==obj->DiscreteCSet[b3])&&
+                               (cs==obj->DiscreteCSet[b4])
+                               ) {
+                              a0=obj->DiscreteAtmToIdx[b0];
+                              a1=obj->DiscreteAtmToIdx[b1];
+                              a2=obj->DiscreteAtmToIdx[b2];
+                              a3=obj->DiscreteAtmToIdx[b3];
+                              a4=obj->DiscreteAtmToIdx[b4];
+                            } else {
+                              a0=-1;
+                              a1=-1;
+                              a2=-1;
+                              a3=-1;
+                              a4=-1;
+                            }
+                          } else {
+                            a0=cs->AtmToIdx[b0];
+                            a1=cs->AtmToIdx[b1];
+                            a2=cs->AtmToIdx[b2];
+                            a3=cs->AtmToIdx[b3];
+                            a4=cs->AtmToIdx[b4];
+                          }
+                          if((a0>=0)&&(a1>=0)&&(a2>=0)&&(a3>=0)&&(a4>=0)) {
+                            v0 = cs->Coord+3*a0;
+                            v1 = cs->Coord+3*a1;
+                            v2 = cs->Coord+3*a2;
+                            v3 = cs->Coord+3*a3;
+                            v4 = cs->Coord+3*a4;
+                            d = diff3f(v0,v1)+diff3f(v0,v2)+diff3f(v2,v3)+diff3f(v3,v4);
+                            ShakerAddDistCon(I->Shaker,b0,b1,d,cShakerDistLimit); 
+                          }   
+                        }
+                        n3+=2;
+                      }                
+                    }
+                    n2+=2;
+                  }
+                }
+                n1+=2;
+              }
+              n0+=2;
+            }
+          }
+#endif
+
           /* and record the pyramidal and planer geometries */
           
           for(b0=0;b0<obj->NAtom;b0++) {
@@ -693,13 +764,26 @@ void SculptIterateObject(CSculpt *I,ObjectMolecule *obj,int state,int n_cycle)
             for(a=0;a<shk->NDistCon;a++) {
               b1 = sdc->at0;
               b2 = sdc->at1;
-              if(sdc->type) {
+              
+              switch(sdc->type) {
+              case cShakerDistBond:
                 wt = bond_wt;
                 eval_flag = cSculptBond & mask;
-              } else {
+                break;
+              case cShakerDistAngle:
                 wt = angl_wt;
                 eval_flag = cSculptAngl & mask;
+                break;
+              case cShakerDistLimit:
+                wt = 2.0F;
+                eval_flag = true;
+                break;
+              default:
+                eval_flag = false;
+                wt=0.0F;
+                break;
               }
+              
               if(eval_flag) {
                 a1 = atm2idx[b1]; /* coordinate set indices */
                 a2 = atm2idx[b2];
@@ -710,7 +794,11 @@ void SculptIterateObject(CSculpt *I,ObjectMolecule *obj,int state,int n_cycle)
                   {
                     v1 = cs->Coord+3*a1;
                     v2 = cs->Coord+3*a2;
-                    ShakerDoDist(sdc->targ,v1,v2,disp+b1*3,disp+b2*3,wt);
+                    if(sdc->type!=cShakerDistLimit) {
+                      ShakerDoDist(sdc->targ,v1,v2,disp+b1*3,disp+b2*3,wt);
+                    } else {
+                      ShakerDoDistLimit(sdc->targ,v1,v2,disp+b1*3,disp+b2*3,wt);
+                    }
                   }
               }
               sdc++;

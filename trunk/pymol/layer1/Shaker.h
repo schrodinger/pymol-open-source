@@ -16,6 +16,10 @@ Z* -------------------------------------------------------------------
 #ifndef _H_Shaker
 #define _H_Shaker
 
+#define cShakerDistBond 0
+#define cShakerDistAngle 1
+#define cShakerDistLimit 2
+
 typedef struct {
   int at0,at1;
   int type;
@@ -66,6 +70,7 @@ float ShakerGetPyra(float *v0,float *v1,float *v2,float *v3);
 float ShakerDoDist(float target,float *v0,float *v1,float *d0to1,float *d1to0,float wt);
 float ShakerDoPyra(float target,float *v0,float *v1,float *v2,float *v3,
                    float *p0,float *p1,float *p2,float *p3,float wt);
+float ShakerDoDistLimit(float target,float *v0,float *v1,float *d0to1,float *d1to0,float wt);
 
 float ShakerDoLine(float *v0,float *v1,float *v2,
                    float *p0,float *p1,float *p2,float wt);
