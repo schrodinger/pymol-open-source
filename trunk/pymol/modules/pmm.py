@@ -42,7 +42,6 @@ def mol_hide(s):
            [ 0, ''          ,''                             ],
            [ 1, 'hydrogens' ,'pm.hide("('+s+' and hydro)")' ],
            [ 1, 'everything','pm.hide("('+s+')")'           ],
-           [ 0, ''          ,''                             ],
            [ 1, 'unselected','pm.hide("(not '+s+')")'      ],
            ]
 
@@ -88,7 +87,7 @@ def dist_color(s):
 
 def sele_action(s):
    return [[ 2, 'Actions:'     ,''                      ],     
-           [ 1, 'Set Origin'   ,'pm.origin("'+s+'")'    ],
+           [ 1, 'Origin'   ,'pm.origin("'+s+'")'    ],
            [ 1, 'Zoom'         ,'pm.zoom("'+s+'")'      ],
            [ 1, 'Orient'       ,'pm.orient("'+s+'")'      ],
            [ 0, ''          ,''                         ],
@@ -96,16 +95,21 @@ def sele_action(s):
            [ 0, ''          ,''                         ],
            [ 1, 'Duplicate'    ,'pm.select("('+s+')")'  ],
            [ 0, ''          ,''                         ],
+           [ 1, 'Full Residues' ,'pm.select("'+s+'","(byres '+s+')")' ],
+           [ 1, 'Full Residues + 3 A' ,'pm.select("'+s+'","(byres ('+s+' expand 3))")' ],
+           [ 1, 'Full Residues + 7 A' ,'pm.select("'+s+'","(byres ('+s+' expand 7))")' ],
+           [ 1, 'Full Residues + 10 A' ,'pm.select("'+s+'","(byres ('+s+' expand 10))")' ],
+           [ 0, ''          ,''                         ],
            [ 1, 'Expand By 3 A'  ,'pm.select("'+s+'","('+s+' expand 3)")' ],
            [ 1, 'Expand By 7 A'  ,'pm.select("'+s+'","('+s+' expand 7)")' ],
            [ 1, 'Expand By 10 A'  ,'pm.select("'+s+'","('+s+' expand 10)")' ],
            [ 0, ''          ,''                         ],
-           [ 1, 'Full Residues' ,'pm.select("'+s+'","(byres '+s+')")' ],
+           [ 1, 'Invert'  ,'pm.select("'+s+'","(not '+s+')")' ],
            ]
 
 def mol_action(s):
    return [[ 2, 'Actions:'     ,''                      ],     
-           [ 1, 'Set Origin'   ,'pm.origin("'+s+'")'    ],
+           [ 1, 'Origin'   ,'pm.origin("'+s+'")'    ],
            [ 1, 'Zoom'         ,'pm.zoom("'+s+'")'      ],
            [ 1, 'Orient'       ,'pm.orient("'+s+'")'      ],
            [ 0, ''          ,''                         ],

@@ -133,12 +133,55 @@ class PMGApp(AbstractApp):
 	def createMenuBar(self):
 		self.menuBar.addmenuitem('Help', 'command',
 							 'Get information on application', 
-							 label='About...', command=self.showAbout)
+							 label='About', command = lambda: pm.splash())
+
+		self.menuBar.addmenuitem('Help', 'separator', '')
+      
+		self.menuBar.addmenuitem('Help', 'command', 'Help on the API',
+                               label='API',
+                               command = lambda: pm.show_help("api"))      
+
+		self.menuBar.addmenuitem('Help', 'command', 'Help on Launching',
+                               label='Launching',
+                               command = lambda: pm.show_help("launching"))      
+
+		self.menuBar.addmenuitem('Help', 'command', 'Help on Commands',
+                               label='Commands',
+                               command = lambda: pm.show_help("commands"))      
+
+		self.menuBar.addmenuitem('Help', 'separator', '')
+
+  		self.menuBar.addmenuitem('Help', 'command', 'Help on the API',
+                               label='API',
+                               command = lambda: pm.show_help("api"))      
+
+		self.menuBar.addmenuitem('Help', 'command', 'Help on Selections',
+                               label='Selections',
+                               command = lambda: pm.show_help("selections"))      
+
+		self.menuBar.addmenuitem('Help', 'command', 'Example Selections',
+                               label='Example Selections',
+                               command = lambda: pm.show_help("examples"))      
+
+		self.menuBar.addmenuitem('Help', 'command', 'Help on the Mouse',
+                               label='Mouse',
+                               command = lambda: pm.show_help("mouse"))      
+
+		self.menuBar.addmenuitem('Help', 'command', 'Help on the Keyboard',
+                               label='Keyboard',
+                               command = lambda: pm.show_help("keyboard"))      
+
+		self.menuBar.addmenuitem('Help', 'command', 'Help on Stereo',
+                               label='Stereo',
+                               command = lambda: pm.show_help("stereo"))      
+
 
 		self.toggleBalloonVar = IntVar()
 		self.toggleBalloonVar.set(1)
 		self.setting = Setting()
-               
+
+		self.menuBar.addmenuitem('Help', 'separator', '')
+      
 		self.menuBar.addmenuitem('Help', 'checkbutton',
 							 	'Toggle balloon help',
 							 	label='Balloon help',
@@ -189,6 +232,10 @@ class PMGApp(AbstractApp):
 								variable = self.setting.cache_frames,
 								command = lambda s=self: s.setting.update('cache_frames'))
 
+		self.menuBar.addmenuitem('Movie', 'command', 'Flush Cache',
+                               label='Flush Cache',
+                               command = lambda: pm.mclear())
+
 		self.menuBar.addmenuitem('Movie', 'separator', '')
 
 		self.menuBar.addmenuitem('Movie', 'command', 'Maximum Speed',
@@ -197,15 +244,15 @@ class PMGApp(AbstractApp):
 
 		self.menuBar.addmenuitem('Movie', 'command', '30 FPS Maximum',
                                label='30 FPS Maximum',
-                               command = lambda: pm.set("movie_delay","30"))
+                               command = lambda: pm.set("movie_delay","33"))
 
 		self.menuBar.addmenuitem('Movie', 'command', '15 FPS Maximum',
                                label='15 FPS Maximum',
-                               command = lambda: pm.set("movie_delay","62"))
+                               command = lambda: pm.set("movie_delay","66"))
 
 		self.menuBar.addmenuitem('Movie', 'command', '5 FPS Maximum',
                                label='5 FPS Maximum',
-                               command = lambda: pm.set("movie_delay","195"))
+                               command = lambda: pm.set("movie_delay","200"))
 
 		self.menuBar.addmenuitem('Movie', 'separator', '')
 
@@ -219,13 +266,13 @@ class PMGApp(AbstractApp):
                                label='Clear Text',
                                command = lambda: pm.cls())
 
-		self.menuBar.addmenuitem('Display', 'command', 'Show Text Output',
-                               label='Show Text',
-                               command = lambda: pm.set("text","1"))
-
 		self.menuBar.addmenuitem('Display', 'command', 'Hide Text Output',
                                label='Hide Text',
                                command = lambda: pm.set("text","0"))
+
+		self.menuBar.addmenuitem('Display', 'command', 'Show Text Output',
+                               label='Show Text',
+                               command = lambda: pm.set("text","1"))
 
 		self.menuBar.addmenuitem('Display', 'separator', '')
       
@@ -294,7 +341,6 @@ class PMGApp(AbstractApp):
 		self.menuBar.addmenuitem('Mouse', 'command', 'Right Mode 3',
                                label='Right Mode 3',
                                command = lambda: pm.set("button_mode","5"))      
-
 
 
 

@@ -435,6 +435,10 @@ void SceneDraw(Block *block)
           glReadBuffer(GL_BACK);
           glRasterPos3i(I->Block->rect.left,I->Block->rect.bottom,0);
           glDrawPixels(I->Width,I->Height,GL_RGBA,GL_UNSIGNED_BYTE,I->ImageBuffer);
+          I->RenderTime = -I->LastRender;
+          I->LastRender = UtilGetSeconds();
+          I->RenderTime += I->LastRender;
+          ButModeSetRate(I->RenderTime);
         }
     
     glColor3f(1.0,1.0,1.0);
@@ -1039,12 +1043,12 @@ int SceneRenderCached(void)
   } else if(I->CopyFlag) {
 	renderedFlag=true;
   }
-  if(renderedFlag) {
+  /*  if(renderedFlag) {
 	I->RenderTime = -I->LastRender;
 	I->LastRender = UtilGetSeconds();
 	I->RenderTime += I->LastRender;
 	ButModeSetRate(I->RenderTime);
-  }
+   }*/
   return(renderedFlag);
 }
 /*========================================================================*/
