@@ -1577,8 +1577,8 @@ int OrthoInit(PyMOLGlobals *G,int showSplash)
   I->ClickedIn = NULL;
   I->DrawText=1;
   I->HaveSeqViewer = false;
-  I->TextColor[0]=0.7F;
-  I->TextColor[1]=0.7F;
+  I->TextColor[0]=0.82F;
+  I->TextColor[1]=0.82F;
   I->TextColor[2]=1.0;
   I->OverlayColor[0]=1.0;
   I->OverlayColor[1]=1.0;
