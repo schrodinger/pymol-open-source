@@ -293,10 +293,15 @@ class Filter(Wizard):
             f.close()
          except:
             print " Filter-Warning: '"+fname+"' in current directory is not writable."
-            print " Filter-Warning: attempting to write as '$HOME/%s'"%(fname)
-            fname = "~/"+fname
-            fname = os.path.expanduser(fname)
-            fname = os.path.expandvars(fname)
+            print " Filter-Warning: attempting to write in home directory."
+            if sys.platform[0:3]!="win":
+               fname = "$HOME/"+fname
+               fname = os.path.expandvars(fname)               
+            else:
+               fname = "$HOMEPATH\\"+fname
+               fname = os.path.expandvars(fname)
+               fname = "$HOMEDRIVE"+fname
+               fname = os.path.expandvars(fname)
          try:
             f=open(fname,'w')
             sd = self.state_dict
