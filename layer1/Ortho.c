@@ -725,8 +725,8 @@ void OrthoSplash(void)
   OrthoAddOutput("Enter \"help commands\" for a list of commands.\n");
   OrthoAddOutput("Enter \"help <command-name>\" for information on a specific command.\n \n");
   OrthoAddOutput("Other help topics include:\n");
-  OrthoAddOutput("    \"keyboard\", \"mouse\", \"selections\", \"api\", and \"examples\".\n \n");
-  OrthoAddOutput("Hit TAB to toggle text; type \"cls\" to clear.\n \n");
+  OrthoAddOutput("    \"keyboard\", \"mouse\", \"selections\", \"examples\", \"launching\", and \"api\".\n \n");
+  OrthoAddOutput("Hit TAB to toggle text or type \"cls\" to clear.\n \n");
 }
 /*========================================================================*/
 void OrthoInit(void)

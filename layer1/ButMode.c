@@ -105,7 +105,7 @@ void ButModeSetRate(float interval)
 
   I->Samples++;
 
-  if(interval>=0.01)
+  if(interval>=0.001)
 	 I->Rate += 1/interval;
   else
 	 I->Rate += 99;

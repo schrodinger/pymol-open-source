@@ -54,20 +54,38 @@ COMMANDS
    SYMMETRY      symexp
  
 Try "help <command-name>" for more information on a given command.
-Additional help is also available for "selections", for
-special "api" commands, and "keyboard" for keyboard shortcuts.
+ 
+Additional help topics include:
+   "keyboard", "mouse", "selections", "examples", "launching", and "api".
    '''
    help('commands')
 
 def api():
    '''
-API COMMANDS
+DESCRIPTION
+ 
+The PyMOL Python Application Programming Interface (API) should be
+accessed exclusively through the "pm" module.  All command-line
+functions have an equivalent API method with the same name.
+ 
+USAGE
+ 
+   import pm
+   <result> = pm.<methods>( <args> ) 
+    
+API-ONLY METHODS
  
    KEY BINDING   set_key
-
+   (more documentation to come)
+ 
+NOTES
+ 
+   Although the PyMOL core is not multi-threaded, the API is
+   threads-safe and can be called asynchronously by external python
+   programs.  PyMOL handles the necessary locking to insure that
+   internal states do not get corrupted.
    '''
    help('api')
-
    
 def keyboard():
    '''
@@ -98,9 +116,9 @@ def mouse():
    '''
 MOUSE CONTROLS
  
-   Transformations can be changed by setting the buttom_mode variable.
-   The current configuration is visible on screen with the following
-   abbreviations:
+   The configuration can be changed by setting the "button_mode"
+   variable.  The current configuration is described on screen with
+   the following abbreviations:
  
       R-XYZ    = Rotates about X, Y, and Z axes
       R-Z      = Rotates about the Z axis
@@ -143,6 +161,30 @@ EXAMPLE ATOM SELECTIONS
       * can be abbreviated as *
    sel combi = (hev&!site)
    '''
+   help('examples')
+   
+def launching():
+   '''
+PyMOL COMMAND LINE OPTIONS 
+ 
+   pymol.com [-s] [-c] <file> ...
+  
+   -s   Enable stereo mode (not currently autodetected).
+ 
+   -c   Command driven mode, no GUI.
+ 
+   <file> can have extension:
+    
+      .pml    PyMOL command script to be run on startup
+      .py     Python program to be run on startup
+       
+      .pdb    Protein Data Bank format file to be loaded on startup
+      .mmod   Macromodel format to be loaded on startup
+      .mol    MDL MOL file to be loaded on startup
+      .xplor  X-PLOR Map file to be loaded on startup
+   '''
+   help('launching')
+
 ### -------------------------------------------------------------------
 def selections():
    '''
@@ -322,6 +364,12 @@ NOTES
       unlock()
    return r
 
+def show_help(cmd):
+   set("text","1")
+   print "PyMOL>help %s\n" % cmd
+   help(cmd)
+   print "(Hit TAB to hide)"
+      
 def help(*arg):
    '''
 USAGE
@@ -473,6 +521,7 @@ DESCRIPTION
  
 "splash" shows the splash screen information.
    '''
+   set("text","1")
    lock()
    r = _pm.splash()
    unlock()
@@ -538,7 +587,7 @@ DESCRIPTION
  
 "stereo" activates or deactives stereo mode.  Currently only high-end
 stereo graphics are supported on the SGI (stereo in a window), and it
-is necessary to launch the program with a "-s" option to activate
+is necessary to launching the program with a "-s" option to activate
 this feature.
  
 USAGE
@@ -2150,6 +2199,7 @@ help_only = {
    'keyboard'      : [keyboard     , 0 , 0 , ',' , 0 ],
    'mouse'         : [mouse        , 0 , 0 , ',' , 0 ],
    'examples'      : [examples     , 0 , 0 , ',' , 0 ],
+   'launching'        : [launching       , 0 , 0 , ',' , 0 ],
 }
 
 repres = {
