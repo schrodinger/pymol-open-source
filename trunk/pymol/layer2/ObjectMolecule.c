@@ -4856,27 +4856,26 @@ int ObjectMoleculeGetAtomIndex(ObjectMolecule *I,int sele)
 /*========================================================================*/
 void ObjectMoleculeUpdateNonbonded(ObjectMolecule *I)
 {
-  int a;
-  BondType *b;
-  AtomInfoType *ai;
+  register int a;
+  register BondType *b;
+  register AtomInfoType *ai;
+  register int nAtom = I->NAtom;
+  register int nBond = I->NBond;
 
-  /*   if(!I->DiscreteFlag) { */
 
   ai=I->AtomInfo;
   
-  for(a=0;a<I->NAtom;a++)
+  for(a=0;a<nAtom;a++)
     (ai++)->bonded = false;
   
   b=I->Bond;
   ai=I->AtomInfo;
-  for(a=0;a<I->NBond;a++)
+  for(a=0;a<nBond;a++)
     {
       ai[b->index[0]].bonded=true;
       ai[b->index[1]].bonded=true;
       b++;
     }
-  
-  /* } */
 }
 /*========================================================================*/
 int ObjectMoleculeGetTotalAtomValence(ObjectMolecule *I,int atom)
