@@ -1,3 +1,6 @@
+#ifdef _PYMOL_WIN32
+#include"os_predef.h"
+#endif
 /**
  *
  * GLU Module for Python (incomplete) 

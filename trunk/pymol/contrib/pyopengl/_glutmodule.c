@@ -1,3 +1,6 @@
+#ifdef _PYMOL_WIN32
+#include"os_predef.h"
+#endif
 
 #ifndef _H_PYMOL_NO_GLUT
 

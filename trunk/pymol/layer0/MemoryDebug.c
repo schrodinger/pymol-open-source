@@ -15,6 +15,8 @@ Z* -------------------------------------------------------------------
 */
 /* This file can be compiled under C as a .c file, or under C++ as a .cc file*/
 
+#include"os_predef.h"
+
 #ifdef __cplusplus
 #include<new.h>
 #endif

@@ -13,6 +13,7 @@ I* Additional authors of this source file include:
 -*
 Z* -------------------------------------------------------------------
 */
+#include"os_predef.h"
 #include"os_python.h"
 
 #ifdef WIN32

@@ -1,3 +1,8 @@
+
+#ifdef _PYMOL_WIN32
+#include"os_predef.h"
+#endif
+
 /*
 
   Copyright (c) 1996-1998, Digital Creations, Fredericksburg, VA, USA.  

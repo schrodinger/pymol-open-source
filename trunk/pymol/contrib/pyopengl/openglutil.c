@@ -1,3 +1,6 @@
+#ifdef _PYMOL_WIN32
+#include"os_predef.h"
+#endif
 /** 
  *
  *  This module provides utility functions to use in conjunction with

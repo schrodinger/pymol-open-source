@@ -14,6 +14,7 @@ I* Additional authors of this source file include:
 Z* -------------------------------------------------------------------
 */
 
+#include"os_predef.h"
 #include"MemoryDebug.h"
 #include"OOMac.h"
 #include"Queue.h"

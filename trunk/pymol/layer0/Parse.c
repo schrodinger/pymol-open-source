@@ -14,6 +14,7 @@ I* Additional authors of this source file include:
 Z* -------------------------------------------------------------------
 */
 
+#include"os_predef.h"
 #include"Parse.h"
 
 char *ParseNextLine(char *p) {
