@@ -144,13 +144,19 @@ static OVstatus PyMOL_PurgeAPI(CPyMOL *I)
   return_OVstatus_SUCCESS;
 }
 
+int PyMOL_Delete(CPyMOL *I,char *name)
+{
+  ExecutiveDelete(I->G, name);
+  return OVstatus_SUCCESS; /* to do: return a real result */
+}
+
 int PyMOL_Zoom(CPyMOL *I,char *selection, float buffer,
                int state, int complete, int animate)
 {
   return ExecutiveWindowZoom(I->G, selection, buffer, state, complete, animate);
 }
 
-OVreturn_word get_rep_id(CPyMOL *I,char *representation)
+static OVreturn_word get_rep_id(CPyMOL *I,char *representation)
 {
   OVreturn_word result;
 
@@ -674,6 +680,7 @@ void PyMOL_SetDefaultMouse(CPyMOL *I)
   ButModeSet(G,13,cButModeMoveSlab);
   ButModeSet(G,5,cButModeClipNF);
   ButModeSet(G,14,cButModeMoveSlabAndZoom);
+  ButModeSet(G,15,cButModeTransZ);
   ButModeSet(G,20,cButModeCent);
   ButModeSet(G,10,cButModeOrigAt);
 }
