@@ -153,12 +153,22 @@ class Distance(Wizard):
             else:
                cmd.delete(dist_prefix+"%2d"%dist_count)
             name = dist_prefix + "%02d"%dist_count
+            raising = cmd.get_setting_legacy("raise_exceptions")
+            cmd.set("raise_exceptions",0)
+            cnt = 0
             if self.mode == 'neigh':
-               cmd.dist(name,"(pk1)","((pk1 a; %f) and (not (neighbor pk1)) and (not (neighbor (neighbor pk1))) and (not (neighbor (neighbor (neighbor pk1)))))"%self.__class__.cutoff)
+               cnt = cmd.select(sele_prefix,"((pk1 a; %f) and (not (neighbor pk1)) and (not (neighbor (neighbor pk1))) and (not (neighbor (neighbor (neighbor pk1)))))"%self.__class__.cutoff)
             elif self.mode == 'polar':
-               cmd.dist(name,"(pk1)","((pk1 a; %f) and (e;n,o) and (not (neighbor pk1)) and (not (neighbor (neighbor pk1))) and (not (neighbor (neighbor (neighbor pk1)))))"%self.__class__.cutoff)            
+               cnt = cmd.select(sele_prefix,"((pk1 a; %f) and (e;n,o) and (not (neighbor pk1)) and (not (neighbor (neighbor pk1))) and (not (neighbor (neighbor (neighbor pk1)))))"%self.__class__.cutoff)            
             elif self.mode == 'heavy':
-               cmd.dist(name,"(pk1)","((pk1 a; %f) and (not hydro) and (not (neighbor pk1)) and (not (neighbor (neighbor pk1))) and (not (neighbor (neighbor (neighbor pk1)))))"%self.__class__.cutoff)            
+               cnt = cmd.select(sele_prefix,"((pk1 a; %f) and (not hydro) and (not (neighbor pk1)) and (not (neighbor (neighbor pk1))) and (not (neighbor (neighbor (neighbor pk1)))))"%self.__class__.cutoff)            
+            cmd.delete(name)
+            if cnt:
+               cmd.dist(name,"(pk1)",sele_prefix)
+            else:
+               print " Wizard: No neighbors found."
+            cmd.delete(sele_prefix)
+            cmd.set("raise_exceptions",raising)
             cmd.unpick()
             cmd.enable(name)
       cmd.refresh_wizard()
