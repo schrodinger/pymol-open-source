@@ -91,7 +91,6 @@ void RepDotRender(RepDot *I,CRay *ray,Pickable **pick)
 
     if(!normals)
       SceneResetNormal(true);
-    
     use_dlst = (int)SettingGet(cSetting_use_display_lists);
     if(use_dlst&&I->R.displayList) {
       glCallList(I->R.displayList);

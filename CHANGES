@@ -4,6 +4,8 @@ CHANGE LOG
 
 Changes up to 0.95
 
+   * dot_normals setting
+
    * bound_to selection operator now complements neighbor...
 
    * fixed stereo opengl bug & improved opengl debugging capability
