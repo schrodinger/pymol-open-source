@@ -624,6 +624,7 @@ void ExecutiveWindowZoom(char *name)
 		op.f1 = 0.0;
 		op.i1 = 0.0;
 		ExecutiveObjMolSeleOp(sele,&op);			 
+		op.f1 += MAX_VDW;
 		if(op.f1>0.0)
 		  {
           SceneWindowSphere(op.v1,op.f1);						  
