@@ -1000,7 +1000,11 @@ SetConsoleCtrlHandler(
       /*      G->Option->winX = 794+220; */
       /* G->Option->winY = 547; */
 
-      glutInitDisplayMode( P_GLUT_RGBA| P_GLUT_DOUBLE| P_GLUT_STENCIL );
+      p_glutInitDisplayMode( P_GLUT_RGBA| P_GLUT_DOUBLE| multisample_mask | P_GLUT_STENCIL );
+
+      if(!p_glutGet(P_GLUT_DISPLAY_MODE_POSSIBLE)) {
+        p_glutInitDisplayMode( P_GLUT_RGBA| P_GLUT_DOUBLE | P_GLUT_STENCIL );
+      }
       G->StereoCapable = 1;
 #else
 #ifndef _PYMOL_OSX
