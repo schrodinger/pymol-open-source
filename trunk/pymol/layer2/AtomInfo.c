@@ -834,65 +834,190 @@ void AtomInfoAssignParameters(AtomInfoType *I)
   I->hydrogen=(((*I->elem)=='H')&&(!(*(I->elem+1))));
   n = I->name;
   while((*n>='0')&&(*n<='0')&&(*(n+1))) n++;
-  switch ( *n )
-	 {
-	 case 'N' : 
-	 case 'C' : 
-	 case 'O' :
-	 case 'S' :
-		switch (*(n+1))
-		  {
-		  case 0: 
-			 switch ( *n )
-				{
-				case 'N':
-				  pri = 1; break;
-				case 'C':
-				  pri = 997; break;
-				case 'O':
-				  pri = 998; break;
-				default:
-				  pri = 1000; break;
-				}
-			 break;
-		  case 'A': pri = 3; break;
-		  case 'B': pri = 4; break;
-		  case 'G': pri = 5; break;
-		  case 'D': pri = 6; break;
-		  case 'E': pri = 7; break;
-		  case 'Z': pri = 8; break;
-		  case 'H': pri = 9; break;
-		  case 'I': pri = 10; break;
-		  case 'J': pri = 11; break;
-		  case 'K': pri = 12; break;
-		  case 'L': pri = 13; break;
-		  case 'M': pri = 14; break;
-		  case 'N': pri = 15; break;
-		  case '0':
-		  case '1':
-		  case '2':
-		  case '3':
-		  case '4':
-		  case '5':
-		  case '6':
-		  case '7':
-		  case '8':
-		  case '9':
-			pri=0;
-			n++;
-			while(*n) {
-			  pri*=10;
-			  pri+=(*n-'0');
-			  n++;
-			}
-			pri+=25;
-			break;
-		  default: pri = 500; break;
-		  }
-		break;
-	 default:
-		pri = 1000; break;
-	 }
+  if(SettingGet(cSetting_pdb_standard_order)) {
+    switch ( *n )
+      {
+        
+      case 'N' : 
+      case 'C' : 
+      case 'O' :
+      case 'S' :
+        switch (*(n+1))
+          {
+          case 0: 
+            switch ( *n )
+              {
+              case 'N':
+                pri = 1; break;
+              case 'C':
+                pri = 3; break;
+              case 'O':
+                pri = 4; break;
+              default:
+                pri = 1000; break;
+              }
+            break;
+          case 'A': 
+            switch ( *n )
+              {
+              case 'C':
+                pri = 2; break;
+              default:
+                pri = 5; break;
+              }
+            break;
+          case 'B': pri = 6; break;
+          case 'G': pri = 7; break;
+          case 'D': pri = 8; break;
+          case 'E': pri = 9; break;
+          case 'Z': pri = 10; break;
+          case 'H': pri = 11; break;
+          case 'I': pri = 12; break;
+          case 'J': pri = 13; break;
+          case 'K': pri = 14; break;
+          case 'L': pri = 15; break;
+          case 'M': pri = 16; break;
+          case 'N': pri = 17; break;
+          case 'X':
+            switch (*(n+2)) {
+            case 'T': pri = 999; break;
+            default:
+            case 0: pri = 16; break;
+            }
+          case '0':
+          case '1':
+          case '2':
+          case '3':
+          case '4':
+          case '5':
+          case '6':
+          case '7':
+          case '8':
+          case '9':
+            pri=0;
+            n++;
+            while(*n) {
+              pri*=10;
+              pri+=(*n-'0');
+              n++;
+            }
+            pri+=25;
+            break;
+          default: pri = 500; break;
+          }
+        break;
+      case 'H' :
+        switch (*(n+1))
+          {
+          case 0: pri = 1001; break;
+          case 'A': 
+          case 'B': pri = 1003; break;
+          case 'G': pri = 1004; break;
+          case 'D': pri = 1005; break;
+          case 'E': pri = 1006; break;
+          case 'Z': pri = 1007; break;
+          case 'H': pri = 1008; break;
+          case 'I': pri = 1009; break;
+          case 'J': pri = 1010; break;
+          case 'K': pri = 1011; break;
+          case 'L': pri = 1012; break;
+          case 'M': pri = 1013; break;
+          case 'N': pri = 1002; break;
+          case 'X': pri = 1999; break;
+          case '0':
+          case '1':
+          case '2':
+          case '3':
+          case '4':
+          case '5':
+          case '6':
+          case '7':
+          case '8':
+          case '9':
+            pri=1020;
+            n++;
+            while(*n) {
+              pri*=10;
+              pri+=(*n-'0');
+              n++;
+            }
+            pri+=25;
+            break;
+            
+          default: pri = 1500; break;
+          }
+        break;
+      default:
+        pri = 1000; break;
+      }
+  } else {
+    switch ( *n )
+      {
+      case 'N' : 
+      case 'C' : 
+      case 'O' :
+      case 'S' :
+        switch (*(n+1))
+          {
+          case 0: 
+            switch ( *n )
+              {
+              case 'N':
+                pri = 1; break;
+              case 'C':
+                pri = 997; break;
+              case 'O':
+                pri = 998; break;
+              default:
+                pri = 1000; break;
+              }
+            break;
+          case 'A': pri = 3; break;
+          case 'B': pri = 4; break;
+          case 'G': pri = 5; break;
+          case 'D': pri = 6; break;
+          case 'E': pri = 7; break;
+          case 'Z': pri = 8; break;
+          case 'H': pri = 9; break;
+          case 'I': pri = 10; break;
+          case 'J': pri = 11; break;
+          case 'K': pri = 12; break;
+          case 'L': pri = 13; break;
+          case 'M': pri = 14; break;
+          case 'N': pri = 15; break;
+          case 'X':
+            switch (*(n+2)) {
+            case 'T': pri = 999; break;
+            default:
+            case 0: pri = 16; break;
+            }
+          case '0':
+          case '1':
+          case '2':
+          case '3':
+          case '4':
+          case '5':
+          case '6':
+          case '7':
+          case '8':
+          case '9':
+            pri=0;
+            n++;
+            while(*n) {
+              pri*=10;
+              pri+=(*n-'0');
+              n++;
+            }
+            pri+=25;
+            break;
+          default: pri = 500; break;
+          }
+        break;
+      default:
+        pri = 1000; break;
+      }
+  }
+  
   I->priority=pri;
   e = I->elem;  
   while((*e>='0')&&(*e<='9')&&(*(e+1))) e++;

@@ -287,7 +287,7 @@ if __name__=='pymol.setting':
       roving_isosurface     = 253
       scenes_changed        = 254
       gaussian_lambda       = 255
-      
+      pdb_standard_order    = 256
       
       
    setting_sc = Shortcut(SettingIndex.__dict__.keys())

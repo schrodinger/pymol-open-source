@@ -166,6 +166,8 @@ CHANGE LOG
 =========================================================================
 Changes up to 0.88
 
+   * pdb_standard_order setting 
+
    * calibrated CGO line widths to produce consistent results
 
    * added color support to scenes

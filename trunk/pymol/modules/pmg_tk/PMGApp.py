@@ -1721,10 +1721,13 @@ class PMGApp(AbstractApp):
                                label='Scripted Animation',
                                command = lambda s=self:s.demo('anime'))
 
-
       self.menuBar.addmenuitem('Demo', 'command', 'MolScript/Raster3D Input',
                                label='Molscript/Raster3D Input',
                                command = lambda s=self:s.demo('raster3d'))
+
+      self.menuBar.addmenuitem('Demo', 'command', 'Electrostatics',
+                               label='Electrostatics',
+                               command = lambda s=self:s.demo('elec'))
 
       self.menuBar.addmenuitem('Demo', 'command', 'Compiled Graphics Objects',
                                label='Compiled Graphics Objects',
