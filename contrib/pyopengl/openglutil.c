@@ -643,8 +643,8 @@ static PyObject *gl_CleanRotMat(PyObject * self, PyObject * args)
     a[3][3] = 1.0;
 
     for (i = 0, s = 0.0; i < 3; i++)
-	s += a[0][i] * a[0][i];
-    s = sqrt(s);
+	s += (float)(a[0][i] * a[0][i]);
+    s = (float)sqrt(s);
     for (i = 0; i < 3; i++)
 	a[0][i] /= s;		/* first row normalized */
 
@@ -652,8 +652,8 @@ static PyObject *gl_CleanRotMat(PyObject * self, PyObject * args)
     a[2][1] = a[0][2] * a[1][0] - a[0][0] * a[1][2];
     a[2][2] = a[0][0] * a[1][1] - a[0][1] * a[1][0];
     for (i = 0, s = 0.0; i < 3; i++)
-	s += a[2][i] * a[2][i];
-    s = sqrt(s);
+	s += (float)(a[2][i] * a[2][i]);
+    s = (float)sqrt(s);
     for (i = 0; i < 3; i++)
 	a[2][i] /= s;		/* third row orthonormal to first */
 
@@ -661,8 +661,8 @@ static PyObject *gl_CleanRotMat(PyObject * self, PyObject * args)
     a[1][1] = a[2][2] * a[0][0] - a[2][0] * a[0][2];
     a[1][2] = a[2][0] * a[0][1] - a[2][1] * a[0][0];
     for (i = 0, s = 0.0; i < 3; i++)
-	s += a[1][i] * a[1][i];
-    s = sqrt(s);
+	s += (float)(a[1][i] * a[1][i]);
+    s = (float)sqrt(s);
     for (i = 0; i < 3; i++)
 	a[1][i] /= s;		/* second row orthonormal to 1,3 */
 
@@ -689,14 +689,14 @@ static void triangle_normal(double *p1, double *p2, double *p3, float *v)
 	v1[i] = p2[i] - p1[i];	/* vector (p1,p2) */
 	v2[i] = p3[i] - p2[i];	/* vector (p2,p3) */
     }
-    v[0] = v1[1] * v2[2] - v1[2] * v2[1];	/* v3 = v1^v2 */
-    v[1] = v1[2] * v2[0] - v1[0] * v2[2];
-    v[2] = v1[0] * v2[1] - v1[1] * v2[0];
+    v[0] = (float)(v1[1] * v2[2] - v1[2] * v2[1]);	/* v3 = v1^v2 */
+    v[1] = (float)(v1[2] * v2[0] - v1[0] * v2[2]);
+    v[2] = (float)(v1[0] * v2[1] - v1[1] * v2[0]);
 
     norm = sqrt(v[0] * v[0] + v[1] * v[1] + v[2] * v[2]);
     if (norm > 0.01) {
 	for (i = 0; i < 3; i++)
-	    v[i] /= norm;
+	    v[i] = (float)(v[i]/norm);
     } else {
 	for (i = 0; i < 3; i++)
 	    v[i] = 0.0;

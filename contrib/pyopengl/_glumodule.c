@@ -129,7 +129,6 @@ static PyObject *gluquadric_getattr(gluQuadricObject * op, char *name)
     return Py_FindMethod(py_glu_methods, (PyObject *) op, name);
 }
 
-#ifndef NUMERIC
 static PyTypeObject GLUquadricType =
 {
 #ifdef MS_WIN32
@@ -153,7 +152,6 @@ static PyTypeObject GLUquadricType =
 };
 
 #define is_gluQuadricObject(op) ((op)->ob_type == &GLUquadricType)
-#endif
 
 #define is_gluCallbackObject(op) ((op)->ob_type == &GLUcallbackType)
 
@@ -840,7 +838,9 @@ DL_EXPORT(void) init_glu(void)
 #ifdef GLU_VERSION_1_2
     GLUtesselatorType.ob_type = &PyType_Type;
 #endif
+#ifdef NUMERIC
     GLUquadricType.ob_type = &PyType_Type;
+#endif
 #endif
 #ifdef NUMERIC
     Py_InitModule("_glu_num", py_glu_methods);
