@@ -339,8 +339,8 @@ void MemoryDebugDump(void)
 	    }
 	  else {
        tot+=rec->size;
-	    printf(" MemoryDebug: @%10p:%7x:%i %s:%i     \n",
-				  rec+1,rec->size,rec->type,rec->file,rec->line);
+	    printf(" MemoryDebug: @%10p-%10p:%7x:%i %s:%i     \n",
+				  rec+1,((char*)(rec+1)+rec->size),rec->size,rec->type,rec->file,rec->line);
      }
 	  rec=rec->next;
 	  cnt++;

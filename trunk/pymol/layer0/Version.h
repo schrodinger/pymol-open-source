@@ -1,5 +1,5 @@
 #ifndef _PyMOL_VERSION
-#define _PyMOL_VERSION "0.62"
+#define _PyMOL_VERSION "0.63"
 #endif
 
 

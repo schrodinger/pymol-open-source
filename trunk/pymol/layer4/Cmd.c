@@ -84,6 +84,7 @@ Z* -------------------------------------------------------------------
 #define cLoadTypeCGO 13
 #define cLoadTypeR3D 14
 #define cLoadTypeXYZ 15
+#define cLoadTypeCCP4Map 18
 
 #define tmpSele "_tmp"
 #define tmpSele1 "_tmp1"
@@ -2581,6 +2582,21 @@ static PyObject *CmdLoad(PyObject *self, PyObject *args)
     PRINTFD(FB_CCmd) " CmdLoad-DEBUG: loading XPLORMap\n" ENDFD;
 	 if(!origObj) {
 		obj=(Object*)ObjectMapLoadXPLORFile(NULL,fname,frame);
+		if(obj) {
+		  ObjectSetName(obj,oname);
+		  ExecutiveManageObject((Object*)obj);
+		  sprintf(buf," CmdLoad: \"%s\" loaded into object \"%s\".\n",fname,oname);
+		}
+	 } else {
+		ObjectMapLoadXPLORFile((ObjectMap*)origObj,fname,frame);
+		sprintf(buf," CmdLoad: \"%s\" appended into object \"%s\".\n",
+				  fname,oname);
+	 }
+	 break;
+  case cLoadTypeCCP4Map:
+    PRINTFD(FB_CCmd) " CmdLoad-DEBUG: loading CCP4Map\n" ENDFD;
+	 if(!origObj) {
+		obj=(Object*)ObjectMapLoadCCP4File(NULL,fname,frame);
 		if(obj) {
 		  ObjectSetName(obj,oname);
 		  ExecutiveManageObject((Object*)obj);

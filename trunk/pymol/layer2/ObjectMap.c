@@ -30,6 +30,7 @@ Z* -------------------------------------------------------------------
 #include"Scene.h"
 #include"PConv.h"
 #include"Word.h"
+#include"Vector.h"
 
 #ifdef _PYMOL_NUMPY
 typedef struct {
@@ -153,6 +154,293 @@ ObjectInit((Object*)I);
 #endif
 
   return(I);
+}
+/*========================================================================*/
+int ObjectMapCCP4StrToMap(ObjectMap *I,char *CCP4Str,int bytes,int frame) {
+  
+  char *p;
+  int *i;
+  unsigned int *u;
+  unsigned char *uc,c0,c1,c2,c3;
+  float *f;
+  float dens;
+  int a,b,c,d,e;
+  float v[3],vr[3],maxd,mind;
+  int ok = true;
+  int little_endian = 1,map_endian;
+  /* CCP4 named from their docs */
+  int nc,nr,ns;
+  int map_mode;
+  int ncstart,nrstart,nsstart;
+  int nx,ny,nz;
+  float xlen,ylen,zlen,alpha,beta,gamma;
+  int n_skip;
+  int mapc,mapr,maps;
+  int cc[3],xref[3];
+  int n_pts;
+  double sum,sumsq;
+  float mean,stdev;
+
+  maxd = FLT_MIN;
+  mind = FLT_MAX;
+  p=CCP4Str;
+  little_endian = *((char*)&little_endian);
+  map_endian = (*p||*(p+1));
+
+  if(bytes<256*sizeof(int)) {
+    PRINTFB(FB_ObjectMap,FB_Errors)
+      " ObjectMapCCP4: Map appears to be truncated -- aborting."
+      ENDFB;
+    return(0);
+  }
+  if(little_endian!=map_endian) {
+    PRINTFB(FB_ObjectMap,FB_Blather)
+      " ObjectMapCCP4: Map appears to be reverse endian, swapping...\n"
+      ENDFB;
+    c = bytes;
+    u = (unsigned int*)p;
+    uc = uc = (unsigned char *)u;
+    while(c>3) {
+      c0 = *(uc++);
+      c1 = *(uc++);
+      c2 = *(uc++);
+      c3 = *(uc++);
+      uc = (unsigned char *)u;
+      *(uc++) = c3;
+      *(uc++) = c2;
+      *(uc++) = c1;
+      *(uc++) = c0;
+      u++;
+      c-=4;
+    }
+  }
+  i = (int*)p;
+  nc=*(i++); /* columns */
+  nr=*(i++); /* rows */
+  ns=*(i++); /* sections */
+  PRINTFB(FB_ObjectMap,FB_Blather)
+    " ObjectMapCCP4: NC %d   NR %d   NS %d\n",
+    nc,nr,ns
+    ENDFB;
+  map_mode = *(i++); /* mode */
+
+  
+  if(map_mode!=2) {
+    PRINTFB(FB_ObjectMap,FB_Errors)
+      "ObjectMapCCP4-ERR: Only map mode 2 currently supported (this map is mode %d)",map_mode
+      ENDFB;
+    return(0);
+  }
+
+  PRINTFB(FB_ObjectMap,FB_Blather)
+    " ObjectMapCCP4: Map is mode %d.\n",map_mode
+    ENDFB;
+
+  ncstart = *(i++);
+  nrstart = *(i++);
+  nsstart = *(i++);
+
+  PRINTFB(FB_ObjectMap,FB_Blather)
+    " ObjectMapCCP4: NCSTART %d   NRSTART %d   NSSTART  %d\n",
+    ncstart,nrstart,nsstart
+    ENDFB;
+
+  nx = *(i++);
+  ny = *(i++);
+  nz = *(i++);
+
+  PRINTFB(FB_ObjectMap,FB_Blather)
+    " ObjectMapCCP4: NX %d   NY %d   NZ  %d \n",
+    nx,ny,nz
+    ENDFB;
+
+  xlen = *(float*)(i++);
+  ylen = *(float*)(i++);
+  zlen = *(float*)(i++);
+
+  PRINTFB(FB_ObjectMap,FB_Blather)
+    " ObjectMapCCP4: X %8.3f   Y %8.3f  Z  %8.3f \n",
+    xlen,ylen,zlen
+    ENDFB;
+
+  alpha = *(float*)(i++);
+  beta = *(float*)(i++);
+  gamma = *(float*)(i++);
+
+  PRINTFB(FB_ObjectMap,FB_Blather)
+    " ObjectMapCCP4: alpha %8.3f   beta %8.3f  gamma %8.3f \n",
+    alpha,beta,gamma
+    ENDFB;
+
+  mapc = *(i++);
+  mapr = *(i++);
+  maps = *(i++);
+
+  PRINTFB(FB_ObjectMap,FB_Blather)
+    " ObjectMapCCP4: MAPC %d   MAPR %d  MAPS  %d \n",
+    mapc,mapr,maps
+    ENDFB;
+
+  i+=4;
+  n_skip = *(i++);
+  
+  if(*(i++)) {
+    PRINTFB(FB_ObjectMap,FB_Errors)
+      "ObjectMapCCP4-ERR: PyMOL doesn't know how to handle skewed maps. Sorry!\n"
+      ENDFB;
+    return(0);
+  }
+
+  n_pts = nc*ns*nr;
+  if(bytes<(n_skip + sizeof(int)*(256+n_pts))) {
+    PRINTFB(FB_ObjectMap,FB_Errors)
+      " ObjectMapCCP4: Map appears to be truncated -- aborting.\n"
+      ENDFB;
+    return(0);
+  }
+
+  if(n_pts>1) {
+    f = (float*)(p+(sizeof(int)*256)+n_skip);
+    c = n_pts;
+    sum = 0.0;
+    sumsq = 0.0;
+    while(c--) {
+      sumsq+=(*f)*(*f);
+      sum+=*f++;
+    }
+    mean = sum/n_pts;
+    stdev = sqrt1f((sumsq - (sum*sum/n_pts))/(n_pts-1));
+
+    if(stdev<0.000001)
+      stdev = 1.0;
+  PRINTFB(FB_ObjectMap,FB_Details)
+    " ObjectMapCCP4: Normalizing with mean %8.6f and stdev %8.6f.\n",
+    mean,stdev
+    ENDFB;
+  } else {
+    mean = 1.0;
+    stdev = 1.0;
+  }
+  
+  f = (float*)(p+(sizeof(int)*256)+n_skip);
+  mapc--; /* convert to C indexing... */
+  mapr--;
+  maps--;
+
+  xref[maps]=0;
+  xref[mapr]=1;
+  xref[maps]=2;
+
+  xref[maps]=0;
+  xref[mapr]=1;
+  xref[mapc]=2;
+
+  I->Div[0] = nx;
+  I->Div[1] = ny;
+  I->Div[2] = nz;
+
+  I->FDim[mapc] = nc;
+  I->Min[mapc] = ncstart;
+  I->Max[mapc] = nc+ncstart;
+
+  I->FDim[mapr] = nr;
+  I->Min[mapr] = nrstart;
+  I->Max[mapr] = nr+nrstart;
+
+  I->FDim[maps] = ns;
+  I->Min[maps] = nsstart;
+  I->Max[maps] = ns+nsstart;
+  
+  I->Crystal->Dim[0] = xlen;
+  I->Crystal->Dim[1] = ylen;
+  I->Crystal->Dim[2] = zlen;
+
+  I->Crystal->Angle[0] = alpha;
+  I->Crystal->Angle[1] = beta;
+  I->Crystal->Angle[2] = gamma;
+
+
+  I->FDim[3]=3;
+  if(!(I->FDim[0]&&I->FDim[1]&&I->FDim[2])) 
+    ok=false;
+  else {
+    CrystalUpdate(I->Crystal);
+    CrystalDump(I->Crystal);
+    fflush(stdout);
+    I->Field=IsosurfFieldAlloc(I->FDim);
+    for(cc[maps]=0;cc[maps]<I->FDim[maps];cc[maps]++)
+      {
+        v[maps]=(cc[maps]+I->Min[maps])/((float)I->Div[maps]);
+
+        for(cc[mapr]=0;cc[mapr]<I->FDim[mapr];cc[mapr]++) {
+          v[mapr]=(cc[mapr]+I->Min[mapr])/((float)I->Div[mapr]);
+
+          for(cc[mapc]=0;cc[mapc]<I->FDim[mapc];cc[mapc]++) {
+            v[mapc]=(cc[mapc]+I->Min[mapc])/((float)I->Div[mapc]);
+
+            dens = (*f-mean)/stdev;
+            F3(I->Field->data,cc[0],cc[1],cc[2],I->Field->dimensions) = dens;
+            if(maxd<*f) maxd = dens;
+            if(mind>*f) mind = dens;
+            f++;
+            transform33f3f(I->Crystal->FracToReal,v,vr);
+            for(e=0;e<3;e++) 
+              F4(I->Field->points,cc[0],cc[1],cc[2],e,I->Field->dimensions) = vr[e];
+          }
+        }
+      }
+  }
+  if(ok) {
+    d = 0;
+    for(c=0;c<I->FDim[2];c+=(I->FDim[2]-1))
+      {
+        v[2]=(c+I->Min[2])/((float)I->Div[2]);
+        for(b=0;b<I->FDim[1];b+=(I->FDim[1]-1)) {
+          v[1]=(b+I->Min[1])/((float)I->Div[1]);
+          for(a=0;a<I->FDim[0];a+=(I->FDim[0]-1)) {
+            v[0]=(a+I->Min[0])/((float)I->Div[0]);
+            transform33f3f(I->Crystal->FracToReal,v,vr);
+            copy3f(vr,I->Corner[d]);
+            d++;
+          }
+        }
+      }
+  }
+  
+  if(ok) {
+    v[2]=(I->Min[2])/((float)I->Div[2]);
+    v[1]=(I->Min[1])/((float)I->Div[1]);
+    v[0]=(I->Min[0])/((float)I->Div[0]);
+    
+    transform33f3f(I->Crystal->FracToReal,v,I->Obj.ExtentMin);
+    
+    v[2]=((I->FDim[2]-1)+I->Min[2])/((float)I->Div[2]);
+    v[1]=((I->FDim[1]-1)+I->Min[1])/((float)I->Div[1]);
+    v[0]=((I->FDim[0]-1)+I->Min[0])/((float)I->Div[0]);
+    
+    transform33f3f(I->Crystal->FracToReal,v,I->Obj.ExtentMax);
+    I->Obj.ExtentFlag=true;
+  }
+#ifdef _UNDEFINED
+  printf("%d %d %d %d %d %d %d %d %d\n",
+         I->Div[0],
+         I->Min[0],
+         I->Max[0],
+         I->Div[1],
+         I->Min[1],
+         I->Max[1],
+         I->Div[2],
+         I->Min[2],
+         I->Max[2]);
+  printf("Okay? %d\n",ok);
+  fflush(stdout);
+#endif
+  if(!ok) {
+    ErrMessage("ObjectMap","Error reading map");
+  } else {
+    printf(" ObjectMap: Map Read.  Range = %5.3f to %5.3f\n",mind,maxd);
+  }
+  return(ok);
 }
 /*========================================================================*/
 int ObjectMapXPLORStrToMap(ObjectMap *I,char *XPLORStr,int frame) {
@@ -325,6 +613,73 @@ ObjectMap *ObjectMapReadXPLORStr(ObjectMap *I,char *XPLORStr,int frame)
   }
   return(I);
 }
+/*========================================================================*/
+ObjectMap *ObjectMapReadCCP4Str(ObjectMap *I,char *XPLORStr,int bytes,int frame)
+{
+  int ok=true;
+  int isNew = true;
+
+  if(!I) 
+	 isNew=true;
+  else 
+	 isNew=false;
+  if(ok) {
+	 if(isNew) {
+		I=(ObjectMap*)ObjectMapNew();
+		isNew = true;
+	 } else {
+		isNew = false;
+	 }
+    ObjectMapCCP4StrToMap(I,XPLORStr,bytes,frame);
+    SceneChanged();
+  }
+  return(I);
+}
+/*========================================================================*/
+ObjectMap *ObjectMapLoadCCP4File(ObjectMap *obj,char *fname,int frame)
+{
+  ObjectMap *I = NULL;
+  int ok=true;
+  FILE *f;
+  long size;
+  char *buffer,*p;
+  float mat[9];
+
+  f=fopen(fname,"r");
+  if(!f)
+	 ok=ErrMessage("ObjectMapLoadCCP4File","Unable to open file!");
+  else
+	 {
+		if(Feedback(FB_ObjectMap,FB_Actions))
+		  {
+			printf(" ObjectMapLoadCCP4File: Loading from '%s'.\n",fname);
+		  }
+		
+		fseek(f,0,SEEK_END);
+      size=ftell(f);
+		fseek(f,0,SEEK_SET);
+
+		buffer=(char*)mmalloc(size);
+		ErrChkPtr(buffer);
+		p=buffer;
+		fseek(f,0,SEEK_SET);
+		fread(p,size,1,f);
+		fclose(f);
+
+		I=ObjectMapReadCCP4Str(obj,buffer,size,frame);
+
+		mfree(buffer);
+      CrystalDump(I->Crystal);
+      multiply33f33f(I->Crystal->FracToReal,I->Crystal->RealToFrac,mat);
+    }
+#ifdef _UNDEFINED
+  for(a=0;a<9;a++)
+    printf("%10.5f\n",mat[a]);
+#endif
+  return(I);
+
+}
+
 /*========================================================================*/
 ObjectMap *ObjectMapLoadXPLORFile(ObjectMap *obj,char *fname,int frame)
 {
