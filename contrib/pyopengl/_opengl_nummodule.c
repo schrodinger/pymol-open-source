@@ -17,4 +17,9 @@
 DL_EXPORT(void)
 init_opengl_num(void) {}
 
+/* for distutils compatibility on WIN32 */
+DL_EXPORT(void)
+init_opengl_nummodule(void) {init_opengl_num();}
+
 #endif
+

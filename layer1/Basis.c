@@ -55,7 +55,7 @@ int ZLineToSphere(float *base,float *point,float *dir,float radius,float maxial,
   float radialsq,tan_acos_dangle;
   float intra[3],vradial[3],ln;
 
-  ln = sqrt1f(dir[1]*dir[1]+dir[0]*dir[0]);
+  ln = (float)sqrt1d(dir[1]*dir[1]+dir[0]*dir[0]);
 
   perpAxis[0] = dir[1]/ln; /* was cross_product(MinusZ,dir,perpAxis),normalize */
   perpAxis[1] = -dir[0]/ln;
@@ -78,7 +78,7 @@ int ZLineToSphere(float *base,float *point,float *dir,float radius,float maxial,
   intra[2]=point[2]-base[2];
 
   dangle = -dir[2]; /* was dot(MinusZ,dir) */
-  ab_dangle=fabs(dangle);
+  ab_dangle=(float)fabs(dangle);
   if(ab_dangle>(1-R_SMALL4))
 	 {
 		if(dangle>0.0) {
@@ -95,7 +95,7 @@ int ZLineToSphere(float *base,float *point,float *dir,float radius,float maxial,
 	 }
 
   /*tan_acos_dangle = tan(acos(dangle));*/
-  tan_acos_dangle = sqrt1f(1-dangle*dangle)/dangle;
+  tan_acos_dangle = (float)(sqrt1d(1.0-dangle*dangle)/dangle);
 
   /*
   printf("perpDist %8.3f\n",perpDist);
@@ -122,10 +122,10 @@ int ZLineToSphere(float *base,float *point,float *dir,float radius,float maxial,
   if(ab_dangle<R_SMALL4)
 	 axial_perp=0;
   else
-	 axial_perp = sqrt1f(radialsq)/tan_acos_dangle;
+	 axial_perp = (float)(sqrt1f(radialsq)/tan_acos_dangle);
   
-  axial = lengthsq3f(intra_p)-radialsq;
-  axial = sqrt1f(axial);
+  axial = (float)lengthsq3f(intra_p)-radialsq;
+  axial = (float)sqrt1f(axial);
 
   /*
   printf("radial %8.3f\n",radial);
@@ -152,7 +152,7 @@ int ZLineToSphere(float *base,float *point,float *dir,float radius,float maxial,
 	  is parallel to the line, so we can compute the radial component to this point */
 
   radial = radius*radius-perpDist*perpDist;
-  radial = sqrt1f(radial);
+  radial = (float)sqrt1f(radial);
 
   /* now the trick is figuring out how to adjust the axial distance to get the actual
 	  position along the cyl line which will give us a representative sphere */
@@ -191,7 +191,7 @@ int ZLineToSphereCapped(float *base,float *point,float *dir,float radius,float m
   float diff[3],fpoint[3];
   float proj[3];
 
-  ln = sqrt1f(dir[1]*dir[1]+dir[0]*dir[0]);
+  ln = (float)sqrt1f(dir[1]*dir[1]+dir[0]*dir[0]);
 
   perpAxis[0] = dir[1]/ln; /* was cross_product(MinusZ,dir,perpAxis),normalize */
   perpAxis[1] = -dir[0]/ln;
@@ -214,7 +214,7 @@ int ZLineToSphereCapped(float *base,float *point,float *dir,float radius,float m
   intra[2]=point[2]-base[2];
 
   dangle = -dir[2]; /* was dot(MinusZ,dir) */
-  ab_dangle=fabs(dangle);
+  ab_dangle= (float)fabs(dangle);
   if(ab_dangle>(1-R_SMALL4))
 	 {
 		if(dangle>0.0) {
@@ -231,7 +231,7 @@ int ZLineToSphereCapped(float *base,float *point,float *dir,float radius,float m
 	 }
 
   /*tan_acos_dangle = tan(acos(dangle));*/
-  tan_acos_dangle = sqrt1f(1-dangle*dangle)/dangle;
+  tan_acos_dangle = (float)sqrt1f(1-dangle*dangle)/dangle;
 
   /*
   printf("perpDist %8.3f\n",perpDist);
@@ -258,10 +258,10 @@ int ZLineToSphereCapped(float *base,float *point,float *dir,float radius,float m
   if(ab_dangle<R_SMALL4)
 	 axial_perp=0;
   else
-	 axial_perp = sqrt1f(radialsq)/tan_acos_dangle;
+	 axial_perp = (float)sqrt1f(radialsq)/tan_acos_dangle;
   
-  axial = lengthsq3f(intra_p)-radialsq;
-  axial = sqrt1f(axial);
+  axial = (float)lengthsq3f(intra_p)-radialsq;
+  axial = (float)sqrt1f(axial);
 
   /*
   printf("radial %8.3f\n",radial);
@@ -288,7 +288,7 @@ int ZLineToSphereCapped(float *base,float *point,float *dir,float radius,float m
 	  is parallel to the line, so we can compute the radial component to this point */
 
   radial = radius*radius-perpDist*perpDist;
-  radial = sqrt1f(radial);
+  radial = (float)sqrt1f(radial);
 
   /* now the trick is figuring out how to adjust the axial distance to get the actual
 	  position along the cyl line which will give us a representative sphere */
@@ -305,7 +305,7 @@ int ZLineToSphereCapped(float *base,float *point,float *dir,float radius,float m
     case cCylCapFlat:
       subtract3f(point,base,diff);
       project3f(diff,dir,proj);
-      len_proj = length3f(proj);
+      len_proj = (float)length3f(proj);
       dangle = -proj[2]/len_proj;
       if(fabs(dangle)<R_SMALL4) 
         return 0;
@@ -338,7 +338,7 @@ int ZLineToSphereCapped(float *base,float *point,float *dir,float radius,float m
       add3f(fpoint,point,fpoint);
       subtract3f(fpoint,base,diff);
       project3f(diff,dir,proj);
-      len_proj = length3f(proj);
+      len_proj = (float)length3f(proj);
       dangle = -proj[2]/len_proj;
       if(fabs(dangle)<R_SMALL4) 
         return 0;
@@ -418,7 +418,7 @@ void BasisSetupMatrix(CBasis *I)
   
   if((1.0-fabs(dotgle))<R_SMALL4)
 	 {
-		dotgle=dotgle/fabs(dotgle);
+		dotgle=(float)(dotgle/fabs(dotgle));
 		newY[0]=0.0;
 		newY[1]=1.0;
 		newY[2]=0.0;
@@ -426,7 +426,7 @@ void BasisSetupMatrix(CBasis *I)
   
   normalize3f(newY);
 
-  angle=-acos(dotgle);
+  angle=(float)(-acos(dotgle));
   
   /* now all we gotta do is effect a rotation about the new Y axis to line up new Z with Z */
   
@@ -463,7 +463,7 @@ void BasisGetTriangleNormal(CBasis *I,RayInfo *r,int i,float *fc)
 
   ni = I->Vert2Normal[i];
   n0 = I->Normal+3*ni+3; /* skip triangle normal */
-  w2 = 1.0-(r->tri1+r->tri2);
+  w2 = 1.0F-(r->tri1+r->tri2);
   /*  printf("%8.3f %8.3f\n",r->tri[1],r->tri[2]);*/
 
   fc[0]=(r->prim->c2[0]*r->tri1)+(r->prim->c3[0]*r->tri2)+(r->prim->c1[0]*w2);
@@ -551,7 +551,7 @@ int BasisHit(CBasis *I,RayInfo *r,int except,
 						oppSq = ZLineClipPoint(r->base,I->Vertex+i*3,&dist,I->Radius[i]);
 						if(oppSq<=I->Radius2[i])
 						  {
-							 dist=sqrt1f(dist)-sqrt1f((I->Radius2[i]-oppSq));
+							 dist=(float)(sqrt1f(dist)-sqrt1f((I->Radius2[i]-oppSq)));
 							 if(shadow) {
                         if(prm->trans==0.0F) {
                           if((dist>(-R_SMALL4))&&(dist<r->dist)) {
@@ -581,7 +581,7 @@ int BasisHit(CBasis *I,RayInfo *r,int except,
 							 oppSq = ZLineClipPoint(r->base,sph,&dist,I->Radius[i]);
 							 if(oppSq<=I->Radius2[i])
 								{
-								  dist=sqrt1f(dist)-sqrt1f((I->Radius2[i]-oppSq));
+								  dist=(float)(sqrt1f(dist)-sqrt1f((I->Radius2[i]-oppSq)));
 								  if(shadow) {
                             if(prm->trans==0.0) {
                               if((dist>(-R_SMALL4))&&(dist<r->dist)) {
@@ -622,7 +622,7 @@ int BasisHit(CBasis *I,RayInfo *r,int except,
 							 oppSq = ZLineClipPoint(r->base,sph,&dist,I->Radius[i]);
 							 if(oppSq<=I->Radius2[i])
 								{
-								  dist=sqrt1f(dist)-sqrt1f((I->Radius2[i]-oppSq));
+								  dist=(float)(sqrt1f(dist)-sqrt1f((I->Radius2[i]-oppSq)));
 								  if(shadow) {
                             if(prm->trans==0.0) {
                               if((dist>(-R_SMALL4))&&(dist<r->dist)) {
@@ -771,10 +771,10 @@ void BasisMakeMap(CBasis *I,int *vert2prim,CPrimitive *prim,float *volume)
   /* don't break up space unnecessarily if we only have a few vertices... */
 
   if(I->NVertex) {
-    l1 = fabs(max[0]-min[0]);
-    l2 = fabs(max[1]-min[1]);
+    l1 = (float)fabs(max[0]-min[0]);
+    l2 = (float)fabs(max[1]-min[1]);
     if(l1<l2) l1 = l2;  
-    l2 = fabs(max[2]-min[2]);
+    l2 = (float)fabs(max[2]-min[2]);
     if(l1<l2) l1 = l2;      
     if(l1<R_SMALL4) l1=100.0;
     if(I->NVertex<(l1/sep))
@@ -794,8 +794,8 @@ void BasisMakeMap(CBasis *I,int *vert2prim,CPrimitive *prim,float *volume)
 		  switch(prm->type) {
 		  case cPrimTriangle:
 			 if(a==prm->vert) { /* only do this calculation for one of the three vertices */
-				l1=length3f(I->Precomp+I->Vert2Normal[a]*3);
-				l2=length3f(I->Precomp+I->Vert2Normal[a]*3+3);
+				l1=(float)length3f(I->Precomp+I->Vert2Normal[a]*3);
+				l2=(float)length3f(I->Precomp+I->Vert2Normal[a]*3+3);
 				b = (int)ceil(l1/sep)+1;
 				c = (int)ceil(l2/sep)+1;
 				extra_vert += 4*b*c;
@@ -846,8 +846,8 @@ void BasisMakeMap(CBasis *I,int *vert2prim,CPrimitive *prim,float *volume)
 				d1=I->Precomp+I->Vert2Normal[a]*3;
 				d2=I->Precomp+I->Vert2Normal[a]*3+3;
 				vv=I->Vertex+a*3;
-				l1=length3f(d1);
-				l2=length3f(d2);
+				l1=(float)length3f(d1);
+				l2=(float)length3f(d2);
 				b = (int)floor(l1/sep)+1;
 				c = (int)floor(l2/sep)+1;
 				extra_vert += b*c;
@@ -868,15 +868,15 @@ void BasisMakeMap(CBasis *I,int *vert2prim,CPrimitive *prim,float *volume)
 				  for(y=0;y<ch;y++) 
 					 {
 						if(((((float)x)/b)+(((float)y)/c))<0.5) {
-						  *(v++) = vv[0]+d1[0]*(0.5+((float)x)/b)+(d2[0]*y)/c;
-						  *(v++) = vv[1]+d1[1]*(0.5+((float)x)/b)+(d2[1]*y)/c;
-						  *(v++) = vv[2]+d1[2]*(0.5+((float)x)/b)+(d2[2]*y)/c;
+						  *(v++) = vv[0]+d1[0]*(0.5F+((float)x)/b)+(d2[0]*y)/c;
+						  *(v++) = vv[1]+d1[1]*(0.5F+((float)x)/b)+(d2[1]*y)/c;
+						  *(v++) = vv[2]+d1[2]*(0.5F+((float)x)/b)+(d2[2]*y)/c;
 						  tempRef[n]=a; 
 						  n++;
 
-						  *(v++) = vv[0]+(d1[0]*x)/b+d2[0]*(0.5+((float)y)/c);
-						  *(v++) = vv[1]+(d1[1]*x)/b+d2[1]*(0.5+((float)y)/c);
-						  *(v++) = vv[2]+(d1[2]*x)/b+d2[2]*(0.5+((float)y)/c);
+						  *(v++) = vv[0]+(d1[0]*x)/b+d2[0]*(0.5F+((float)y)/c);
+						  *(v++) = vv[1]+(d1[1]*x)/b+d2[1]*(0.5F+((float)y)/c);
+						  *(v++) = vv[2]+(d1[2]*x)/b+d2[2]*(0.5F+((float)y)/c);
 						  tempRef[n]=a;
 						  n++;
 						}
@@ -1083,10 +1083,10 @@ void BasisTrianglePrecompute(float *v0,float *v1,float *v2,float *pre)
   subtract3f(v2,v0,pre+3);
   det = pre[0]*pre[4] - pre[1]*pre[3];
   if(fabs(det)<EPSILON) {
-	 *(pre+6)=0.0;
+	 *(pre+6)=0.0F;
   } else {
-	 *(pre+6)=1.0;
-	 *(pre+7)=1.0/det;
+	 *(pre+6)=1.0F;
+	 *(pre+7)=1.0F/det;
   }
 }
 

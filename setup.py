@@ -3,13 +3,31 @@
 # This script only applies if you are performing a Python Distutils-based
 # installation of PyMOL.
 #
-# tested with Python 2.1
+# tested with Python 2.1 on Linux, 2.2 on Win32
 
 from distutils.core import setup, Extension
+import sys
 
+if sys.platform=='win32':
+   inc_dirs=["layer0","layer1","layer2","layer3","layer4","layer5","win32/include"]
+   libs=["opengl3","glu32","glut32","libpng","zlib"]
+   pyogl_libs = ["opengl32","glu32","glut32"]
+   lib_dirs=["win32/lib"]
+   def_macros=[("_PYMOL_MODULE",None),
+                  ("WIN32",None),
+                  ("_HAVE_LIBPNG",None)]
+else:
+   inc_dirs=["layer0","layer1","layer2","layer3","layer4","layer5"]
+   libs=["GL","GLU","glut","png"]
+   pyogl_libs = []
+   lib_dirs=["/usr/X11R6/lib"]
+   def_macros=[("_PYMOL_MODULE",None),
+                  ("_PYMOL_NUMPY",None),
+                  ("_HAVE_LIBPNG",None)]
+   
 setup ( # Distribution meta-data
    name = "pymol",
-	version = "0.86",
+	version = "0.87",
 	package_dir = {'' : 'modules'},
 	packages = ['chempy',
                'chempy/bmin',
@@ -72,6 +90,7 @@ setup ( # Distribution meta-data
    "layer1/Wizard.c",
    "layer2/AtomInfo.c",
    "layer2/CoordSet.c",
+   "layer2/GadgetSet.c",   
    "layer2/DistSet.c",
    "layer2/ObjectCGO.c",
    "layer2/ObjectCallback.c",
@@ -90,7 +109,6 @@ setup ( # Distribution meta-data
    "layer2/RepMesh.c",
    "layer2/ObjectGadget.c",
    "layer2/ObjectGadgetRamp.c",
-   "layer2/RepGadget.c",
    "layer2/RepNonbonded.c",
    "layer2/RepNonbondedSphere.c",
    "layer2/RepRibbon.c",
@@ -99,6 +117,7 @@ setup ( # Distribution meta-data
    "layer2/RepWireBond.c",
    "layer2/Sculpt.c",
    "layer2/SculptCache.c",
+   "layer2/VFont.c",   
    "layer3/Editor.c",
    "layer3/Executive.c",
    "layer3/Selector.c",
@@ -109,12 +128,10 @@ setup ( # Distribution meta-data
    "layer5/TestPyMOL.c",
    "layer5/main.c",
    ],
-   include_dirs=["layer0","layer1","layer2","layer3","layer4","layer5"],
-   libraries=["GL","GLU","glut","png"],
-#   library_dirs=["/usr/X11R6/lib"],             
-   define_macros=[("_PYMOL_MODULE",None),
-                  ("_PYMOL_NUMPY",None),
-                  ("_HAVE_LIBPNG",None)]
+   include_dirs = inc_dirs,
+   libraries = libs,
+   library_dirs = lib_dirs,
+   define_macros = def_macros
              ),
    Extension("pymol.sglite", [
    "contrib/sglite/runtests.c",
@@ -142,13 +159,48 @@ setup ( # Distribution meta-data
    include_dirs=["contrib/sglite","contrib/modules"]
              ),
    Extension("pymol.ExtensionClass",["contrib/modules/ExtensionClass.c"]),
-   Extension("pymol.opengl.glu._glu_nummodule", ["contrib/pyopengl/_glu_nummodule.c"]),
-   Extension("pymol.opengl.glu_glumodule", ["contrib/pyopengl/_glumodule.c"]),
-   Extension("pymol.opengl.glut._glutmodule", ["contrib/pyopengl/_glutmodule.c"]),
-   Extension("pymol.opengl.gl._opengl_nummodule", ["contrib/pyopengl/_opengl_nummodule.c"]),
-   Extension("pymol.opengl.gl._openglmodule", ["contrib/pyopengl/_openglmodule.c"]),
-   Extension("pymol.opengl.gl.openglutil", ["contrib/pyopengl/openglutil.c"]),
-   Extension("pymol.opengl.gl.openglutil_num", ["contrib/pyopengl/openglutil_num.c"])
+   Extension("pymol.opengl.glu._glu_nummodule", ["contrib/pyopengl/_glu_nummodule.c"],
+             include_dirs = inc_dirs,
+             libraries = pyogl_libs,
+             library_dirs = lib_dirs,
+             define_macros = def_macros
+             ),
+   Extension("pymol.opengl.glu._glumodule", ["contrib/pyopengl/_glumodule.c"],
+             include_dirs = inc_dirs,
+             libraries = pyogl_libs,
+             library_dirs = lib_dirs,
+             define_macros = def_macros
+             ),
+   Extension("pymol.opengl.glut._glutmodule", ["contrib/pyopengl/_glutmodule.c"],
+             include_dirs = inc_dirs,
+             libraries = pyogl_libs,
+             library_dirs = lib_dirs,
+             define_macros = def_macros
+             ),
+   Extension("pymol.opengl.gl._opengl_num", ["contrib/pyopengl/_opengl_nummodule.c"],
+             include_dirs = inc_dirs,
+             libraries = pyogl_libs,
+             library_dirs = lib_dirs,
+             define_macros = def_macros
+             ),
+   Extension("pymol.opengl.gl._opengl", ["contrib/pyopengl/_openglmodule.c"],
+             include_dirs = inc_dirs,
+             libraries = pyogl_libs,
+             library_dirs = lib_dirs,
+             define_macros = def_macros
+             ),
+   Extension("pymol.opengl.gl.openglutil", ["contrib/pyopengl/openglutil.c"],
+             include_dirs = inc_dirs,
+             libraries = pyogl_libs,
+             library_dirs = lib_dirs,
+             define_macros = def_macros
+             ),
+   Extension("pymol.opengl.gl.openglutil_num", ["contrib/pyopengl/openglutil_num.c"],
+             include_dirs = inc_dirs,
+             libraries = pyogl_libs,
+             library_dirs = lib_dirs,
+             define_macros = def_macros
+             )
 ])
 
 print '''

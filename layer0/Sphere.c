@@ -439,7 +439,7 @@ SphereRec *MakeDotSphere(int level)
 
   for(a=0;a<NTri;a++)
 	 {
-		area = (SphericalAngle(Tri[a][0],Tri[a][1],Tri[a][2]) +
+		area = (float)(SphericalAngle(Tri[a][0],Tri[a][1],Tri[a][2]) +
 		  SphericalAngle(Tri[a][1],Tri[a][0],Tri[a][2]) +
 				  SphericalAngle(Tri[a][2],Tri[a][0],Tri[a][1]) - cPI);
 		/* multiply by r^2 to get area */

@@ -591,8 +591,8 @@ static void TriangleBuildObvious(int i1,int i2,float *v,float *vn,int n)
         if((j!=i1)&&(j!=i2)&&(j!=used)) 
           {
             v0 = v+3*j;
-            d1 = diff3f(v0,v1);
-            d2 = diff3f(v0,v2);
+            d1 = (float)diff3f(v0,v1);
+            d2 = (float)diff3f(v0,v2);
             dif= ( d2 > d1 ? d2 : d1 );
 				if(dif<minDist)
 				  {
@@ -655,7 +655,7 @@ static void TriangleBuildObvious(int i1,int i2,float *v,float *vn,int n)
 				cross_product3f(vt3,vt4,tNorm); 
 				normalize3f(tNorm); 							 
 				dp = dot_product3f(vt2,tNorm);
-				if(dp<0) scale3f(tNorm,-1.0,tNorm);
+				if(dp<0) scale3f(tNorm,-1.0F,tNorm);
 				if(fabs(dp)<0.1) flag = false;
 			 } 
           /*          PRINTFD(FB_Triangle)
@@ -750,8 +750,8 @@ static void TriangleBuildSecondPass(int i1,int i2,float *v,float *vn,int n)
 			 /* eliminate closed vertices from consideration - where vertactive is 0 */
           {
             v0 = v+3*j;
-            d1 = diff3f(v0,v1);
-            d2 = diff3f(v0,v2);
+            d1 = (float)diff3f(v0,v1);
+            d2 = (float)diff3f(v0,v2);
             dif= ( d2 > d1 ? d2 : d1 );
 				if(dif<minDist)
 				  {
@@ -789,7 +789,7 @@ static void TriangleBuildSecondPass(int i1,int i2,float *v,float *vn,int n)
 				cross_product3f(vt3,vt4,tNorm); 
 				normalize3f(tNorm); 							 
 				dp = dot_product3f(vt2,tNorm);
-				if(dp<0) scale3f(tNorm,-1.0,tNorm);
+				if(dp<0) scale3f(tNorm,-1.0F,tNorm);
 				if(fabs(dp)<0.1) flag = false;
 			 } /*printf("pass tNorm  %i\n",flag);*/
 			 if(flag) {
@@ -871,8 +871,8 @@ static void TriangleBuildSingle(int i1,int i2,float *v,float *vn,int n)
         if((j!=i1)&&(j!=i2)&&(j!=used)&&(I->vertActive[j]))
           {
             v0 = v+3*j;
-            d1 = diff3f(v0,v1);
-            d2 = diff3f(v0,v2);
+            d1 = (float)diff3f(v0,v1);
+            d2 = (float)diff3f(v0,v2);
             dif= ( d2 > d1 ? d2 : d1 );
 				if(dif<minDist)
 				  {
@@ -904,7 +904,7 @@ static void TriangleBuildSingle(int i1,int i2,float *v,float *vn,int n)
 				cross_product3f(vt3,vt4,tNorm); 
 				normalize3f(tNorm); 							 
 				dp = dot_product3f(vt2,tNorm);
-				if(dp<0) scale3f(tNorm,-1.0,tNorm);
+				if(dp<0) scale3f(tNorm,-1.0F,tNorm);
 				if(fabs(dp)<0.1) flag = false;
 			 } /*printf("pass tNorm  %i\n",flag);*/
 			 if(flag) {
@@ -989,8 +989,8 @@ static void TriangleBuildThirdPass(int i1,int i2,float *v,float *vn,int n)
         if((j!=i1)&&(j!=i2)&&(j!=used)&&(I->vertActive[j]))
           {
             v0 = v+3*j;
-            d1 = diff3f(v0,v1);
-            d2 = diff3f(v0,v2);
+            d1 = (float)diff3f(v0,v1);
+            d2 = (float)diff3f(v0,v2);
             dif= ( d2 > d1 ? d2 : d1 );
 				if(dif<minDist)
 				  {
@@ -1013,7 +1013,7 @@ static void TriangleBuildThirdPass(int i1,int i2,float *v,float *vn,int n)
 			 cross_product3f(vt3,vt4,tNorm); 
 			 normalize3f(tNorm); 							 
 			 dp = dot_product3f(vt2,tNorm);
-			 if(dp<0) scale3f(tNorm,-1.0,tNorm);
+			 if(dp<0) scale3f(tNorm,-1.0F,tNorm);
 			 TriangleAdd(i0,i1,i2,tNorm,v,vn);
 		  }
 		}
@@ -1049,8 +1049,8 @@ static void TriangleBuildLast(int i1,int i2,float *v,float *vn,int n)
         if((j!=i1)&&(j!=i2)&&(j!=used)&&(I->vertActive[j]>0))
           {
             v0 = v+3*j;
-            d1 = diff3f(v0,v1);
-            d2 = diff3f(v0,v2);
+            d1 = (float)diff3f(v0,v1);
+            d2 = (float)diff3f(v0,v2);
             dif= ( d2 > d1 ? d2 : d1 );
 				if(dif<minDist)
 				  {
@@ -1074,7 +1074,7 @@ static void TriangleBuildLast(int i1,int i2,float *v,float *vn,int n)
 			 cross_product3f(vt3,vt4,tNorm); 
 			 normalize3f(tNorm); 							 
 			 dp = dot_product3f(vt2,tNorm);
-			 if(dp<0) scale3f(tNorm,-1.0,tNorm);
+			 if(dp<0) scale3f(tNorm,-1.0F,tNorm);
 			 TriangleAdd(i0,i1,i2,tNorm,v,vn);
 		  }
 		}
@@ -1162,7 +1162,7 @@ static void TriangleFill(float *v,float *vn,int n)
                 while(j>=0) {
                   if(j!=a) 
                     {
-                      dif=diff3f(v+3*j,v0);
+                      dif=(float)diff3f(v+3*j,v0);
                       if(dif<minDist)
                         if(I->vertActive[a]==-1)
                           if(TriangleEdgeStatus(a,j)>=0) /* can we put a triangle here? */
@@ -1467,7 +1467,7 @@ static void TriangleBruteForceClosure(float *v,float *vn,int n)
               cross_product3f(vt3,vt4,tNorm); 
               normalize3f(tNorm); 							 
               dp = dot_product3f(vt2,tNorm);
-              if(dp<0) scale3f(tNorm,-1.0,tNorm);
+              if(dp<0) scale3f(tNorm,-1.0F,tNorm);
               TriangleAdd(i0,i1,i2,tNorm,v,vn);
             }
           }

@@ -4331,6 +4331,7 @@ static PyMethodDef py_gl_methods[] = {
     {NULL, NULL}
 };
 
+
 #ifdef NUMERIC
 DL_EXPORT(void)
 init_opengl_num(void)
@@ -4379,3 +4380,8 @@ init_opengl(void)
 	Py_FatalError("can't initialize module _opengl");
 #endif
 }
+
+/* for distutils compatibility on WIN32 */
+#ifndef NUMERIC
+void init_openglmodule(void) {init_opengl();}
+#endif

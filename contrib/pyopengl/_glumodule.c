@@ -807,6 +807,7 @@ static PyMethodDef py_glu_methods[] =
     {NULL, NULL}
 };
 
+
 #ifdef NUMERIC
 DL_EXPORT(void)
 init_glu_num(void)
@@ -828,3 +829,7 @@ init_glu(void)
 #endif
 }
 
+/* for distutils compatibility on WIN32 */
+#ifndef NUMERIC
+DL_EXPORT(void) init_glumodule(void) {init_glu();}
+#endif

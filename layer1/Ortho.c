@@ -212,7 +212,7 @@ void OrthoSpecial(int k,int x,int y)
     } else {
       I->CursorChar = I->CurChar-1;
     }
-    if(I->CursorChar>strlen(I->Line[curLine]))
+    if((unsigned)I->CursorChar>strlen(I->Line[curLine]))
       I->CursorChar=strlen(I->Line[curLine]);
     break;
   }

@@ -250,7 +250,7 @@ int MyPNGRead(char *file_name,unsigned char **p_ptr,unsigned int *width_ptr,unsi
    if(ok) {
      
      /* set the individual row_pointers to point at the correct offsets */
-     for (i = 0; i < (height); i++)
+     for (i = 0; i < ((signed)height); i++)
        row_pointers[i] = png_pixels + i * row_bytes;
      
      /* now we can go ahead and just read the whole image */
@@ -272,10 +272,10 @@ int MyPNGRead(char *file_name,unsigned char **p_ptr,unsigned int *width_ptr,unsi
      *(width_ptr)=width;
      *(height_ptr)=height;
      
-     for (row = 0; row < height; row++)
+     for (row = 0; row < (signed)height; row++)
        {
          pix_ptr=row_pointers[(height-1)-row];
-         for (col = 0; col < width; col++)
+         for (col = 0; col < (signed)width; col++)
            {
              *p++=*pix_ptr++;
              *p++=*pix_ptr++;

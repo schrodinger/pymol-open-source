@@ -44,7 +44,7 @@ Z* -------------------------------------------------------------------
 #define uint unsigned int
 #endif
 
-#define MAX_VDW 2.5  /* this has to go */
+#define MAX_VDW 2.5F  /* this has to go */
 
 
 #ifndef MAXFLOAT

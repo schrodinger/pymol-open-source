@@ -12,8 +12,11 @@ import re
 import sys
 from distutils import dir_util,file_util
 
-launch_script = "pymol.com"
-
+if sys.platform!='win32':
+   launch_script = "pymol.com"
+else:
+   launch_script = "pymol.bat"
+   
 try:
    pymol_launch = 3
    import pymol
@@ -24,8 +27,9 @@ try:
       pymol_file = sys.modules['pymol'].__file__
       if pymol_file[-4:]==".pyc":
          pymol_file = pymol_file[0:-1]
-      pymol_path = re.sub(r"\/[^\/]*$","/pymol_path",pymol_file)
-      
+      pymol_path = re.sub(r"[\/\\][^\/\\]*$","/pymol_path",pymol_file)
+
+      print pymol_path
       # Create PYMOL_PATH directory
       dir_util.mkpath(pymol_path)
       
@@ -37,12 +41,16 @@ try:
       
       # Now build a startup script for PyMOL
       f = open(launch_script,'w')
-      f.write("#!/bin/sh\n")
-      pymol_init = re.sub(r"\/[^\/]*$","/__pymol_path",sys.modules['pymol'].__file__)
+      if sys.platform!='win32':
+         f.write("#!/bin/sh\n")
+      pymol_init = re.sub(r"[\/\\][^\/\\]*$","/__pymol_path",sys.modules['pymol'].__file__)
       python_exe = sys.executable
       if python_exe[0:2]=="./":
          python_exe=os.getcwd()+"/"+python_exe[2:]
-      f.write(python_exe+" "+pymol_file+" $*")
+      if sys.platform!='win32':
+         f.write(python_exe+" "+pymol_file+" $*\n")
+      else:
+         f.write('"%s" "%s" %%1 %%2 %%3 %%4 %%5 %%6 %%7 %%8 %%9\n'%(python_exe,pymol_file))
       f.close()
       os.chmod(launch_script,0755)
       print '''

@@ -370,9 +370,9 @@ void CoordSetGetAverage(CoordSet *I,float *v0)
       accum[1]+=*(v++);
       accum[2]+=*(v++);
     }
-    v0[0]=accum[0]/I->NIndex;
-    v0[1]=accum[1]/I->NIndex;
-    v0[2]=accum[2]/I->NIndex;
+    v0[0]=(float)(accum[0]/I->NIndex);
+    v0[1]=(float)(accum[1]/I->NIndex);
+    v0[2]=(float)(accum[2]/I->NIndex);
   }
 }
 /*========================================================================*/

@@ -15,10 +15,12 @@
 
 #include<Python.h>
 
-#ifndef WIN32
 DL_EXPORT(void)
 init_glu_num(void) {}
-#endif
+
+/* for distutils compatibility on WIN32 */
+DL_EXPORT(void) 
+init_glu_nummodule(void) {init_glu_num();}
 
 #endif
  

@@ -495,9 +495,9 @@ Rep *RepCylBondNew(CoordSet *cs)
       " RepCylBond-DEBUG: %d triplets\n",(v-I->V)/3
       ENDFD;
 
-    if(v_size<(v-I->V))
+    if((unsigned)v_size<(v-I->V))
       ErrFatal("RepCylBond","V array overrun.");
-    if(vr_size<(vr-I->VR))
+    if((unsigned)vr_size<(vr-I->VR))
       ErrFatal("RepCylBond","VR array overrun.");
     
 	 I->V = Realloc(I->V,float,(v-I->V));
@@ -587,9 +587,9 @@ Rep *RepCylBondNew(CoordSet *cs)
 				}
 		  }
       
-      if(vp_size<(v-I->VP))
+      if((unsigned)vp_size<(v-I->VP))
         ErrFatal("RepCylBond","VP array overrun.");
-      if(rp_size<=(I->NP))
+      if((unsigned)rp_size<=(I->NP))
         ErrFatal("RepCylBond","RP array overrun.");
 
 		I->R.P = Realloc(I->R.P,Pickable,I->NP+1);

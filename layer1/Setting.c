@@ -279,13 +279,13 @@ int SettingSetTuple(CSetting *I,int index,PyObject *tuple)
     SettingSet_i(I,index,PyInt_AsLong(PyTuple_GetItem(value,0)));
     break;
   case cSetting_float:
-   SettingSet_f(I,index,PyFloat_AsDouble(PyTuple_GetItem(value,0)));
+   SettingSet_f(I,index,(float)PyFloat_AsDouble(PyTuple_GetItem(value,0)));
     break;
   case cSetting_float3:
         SettingSet_3f(I,index,
-                  PyFloat_AsDouble(PyTuple_GetItem(value,0)),
-                  PyFloat_AsDouble(PyTuple_GetItem(value,1)),
-                  PyFloat_AsDouble(PyTuple_GetItem(value,2)));
+                  (float)PyFloat_AsDouble(PyTuple_GetItem(value,0)),
+                  (float)PyFloat_AsDouble(PyTuple_GetItem(value,1)),
+                  (float)PyFloat_AsDouble(PyTuple_GetItem(value,2)));
     break;
   case cSetting_color:
     SettingSet_color(I,index,

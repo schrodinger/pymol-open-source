@@ -73,25 +73,25 @@ int MatrixInvert44f( const float *m, float *out )
   
   r0[0] = MAT(m,0,0), r0[1] = MAT(m,0,1),
     r0[2] = MAT(m,0,2), r0[3] = MAT(m,0,3),
-    r0[4] = 1.0, r0[5] = r0[6] = r0[7] = 0.0,
+    r0[4] = 1.0, r0[5] = r0[6] = r0[7] = 0.0F,
     
     r1[0] = MAT(m,1,0), r1[1] = MAT(m,1,1),
     r1[2] = MAT(m,1,2), r1[3] = MAT(m,1,3),
-    r1[5] = 1.0, r1[4] = r1[6] = r1[7] = 0.0,
+    r1[5] = 1.0, r1[4] = r1[6] = r1[7] = 0.0F,
     
     r2[0] = MAT(m,2,0), r2[1] = MAT(m,2,1),
     r2[2] = MAT(m,2,2), r2[3] = MAT(m,2,3),
-    r2[6] = 1.0, r2[4] = r2[5] = r2[7] = 0.0,
+    r2[6] = 1.0, r2[4] = r2[5] = r2[7] = 0.0F,
     
     r3[0] = MAT(m,3,0), r3[1] = MAT(m,3,1),
     r3[2] = MAT(m,3,2), r3[3] = MAT(m,3,3),
-    r3[7] = 1.0, r3[4] = r3[5] = r3[6] = 0.0;
+    r3[7] = 1.0, r3[4] = r3[5] = r3[6] = 0.0F;
   
   /* choose pivot - or die */
   if (fabs(r3[0])>fabs(r2[0])) SWAP_ROWS(r3, r2);
   if (fabs(r2[0])>fabs(r1[0])) SWAP_ROWS(r2, r1);
   if (fabs(r1[0])>fabs(r0[0])) SWAP_ROWS(r1, r0);
-  if (0.0 == r0[0])  return 0;
+  if (0.0F == r0[0])  return 0;
   
   /* eliminate first variable     */
   m1 = r1[0]/r0[0]; m2 = r2[0]/r0[0]; m3 = r3[0]/r0[0];
@@ -99,31 +99,31 @@ int MatrixInvert44f( const float *m, float *out )
   s = r0[2]; r1[2] -= m1 * s; r2[2] -= m2 * s; r3[2] -= m3 * s;
   s = r0[3]; r1[3] -= m1 * s; r2[3] -= m2 * s; r3[3] -= m3 * s;
   s = r0[4];
-  if (s != 0.0) { r1[4] -= m1 * s; r2[4] -= m2 * s; r3[4] -= m3 * s; }
+  if (s != 0.0F) { r1[4] -= m1 * s; r2[4] -= m2 * s; r3[4] -= m3 * s; }
   s = r0[5];
-  if (s != 0.0) { r1[5] -= m1 * s; r2[5] -= m2 * s; r3[5] -= m3 * s; }
+  if (s != 0.0F) { r1[5] -= m1 * s; r2[5] -= m2 * s; r3[5] -= m3 * s; }
   s = r0[6];
-  if (s != 0.0) { r1[6] -= m1 * s; r2[6] -= m2 * s; r3[6] -= m3 * s; }
+  if (s != 0.0F) { r1[6] -= m1 * s; r2[6] -= m2 * s; r3[6] -= m3 * s; }
   s = r0[7];
-  if (s != 0.0) { r1[7] -= m1 * s; r2[7] -= m2 * s; r3[7] -= m3 * s; }
+  if (s != 0.0F) { r1[7] -= m1 * s; r2[7] -= m2 * s; r3[7] -= m3 * s; }
   
   /* choose pivot - or die */
   if (fabs(r3[1])>fabs(r2[1])) SWAP_ROWS(r3, r2);
   if (fabs(r2[1])>fabs(r1[1])) SWAP_ROWS(r2, r1);
-  if (0.0 == r1[1])  return 0;
+  if (0.0F == r1[1])  return 0;
   
   /* eliminate second variable */
   m2 = r2[1]/r1[1]; m3 = r3[1]/r1[1];
   r2[2] -= m2 * r1[2]; r3[2] -= m3 * r1[2];
   r2[3] -= m2 * r1[3]; r3[3] -= m3 * r1[3];
-  s = r1[4]; if (0.0 != s) { r2[4] -= m2 * s; r3[4] -= m3 * s; }
-  s = r1[5]; if (0.0 != s) { r2[5] -= m2 * s; r3[5] -= m3 * s; }
-  s = r1[6]; if (0.0 != s) { r2[6] -= m2 * s; r3[6] -= m3 * s; }
-  s = r1[7]; if (0.0 != s) { r2[7] -= m2 * s; r3[7] -= m3 * s; }
+  s = r1[4]; if (0.0F != s) { r2[4] -= m2 * s; r3[4] -= m3 * s; }
+  s = r1[5]; if (0.0F != s) { r2[5] -= m2 * s; r3[5] -= m3 * s; }
+  s = r1[6]; if (0.0F != s) { r2[6] -= m2 * s; r3[6] -= m3 * s; }
+  s = r1[7]; if (0.0F != s) { r2[7] -= m2 * s; r3[7] -= m3 * s; }
   
   /* choose pivot - or die */
   if (fabs(r3[2])>fabs(r2[2])) SWAP_ROWS(r3, r2);
-  if (0.0 == r2[2])  return 0;
+  if (0.0F == r2[2])  return 0;
   
   /* eliminate third variable */
   m3 = r3[2]/r2[2];
@@ -132,13 +132,13 @@ int MatrixInvert44f( const float *m, float *out )
     r3[7] -= m3 * r2[7];
   
   /* last check */
-  if (0.0 == r3[3]) return 0;
+  if (0.0F == r3[3]) return 0;
   
-  s = 1.0/r3[3];              /* now back substitute row 3 */
+  s = 1.0F/r3[3];              /* now back substitute row 3 */
   r3[4] *= s; r3[5] *= s; r3[6] *= s; r3[7] *= s;
   
   m2 = r2[3];                 /* now back substitute row 2 */
-  s  = 1.0/r2[2];
+  s  = 1.0F/r2[2];
   r2[4] = s * (r2[4] - r3[4] * m2), r2[5] = s * (r2[5] - r3[5] * m2),
     r2[6] = s * (r2[6] - r3[6] * m2), r2[7] = s * (r2[7] - r3[7] * m2);
   m1 = r1[3];
@@ -149,7 +149,7 @@ int MatrixInvert44f( const float *m, float *out )
     r0[6] -= r3[6] * m0, r0[7] -= r3[7] * m0;
   
   m1 = r1[2];                 /* now back substitute row 1 */
-  s  = 1.0/r1[1];
+  s  = 1.0F/r1[1];
   r1[4] = s * (r1[4] - r2[4] * m1), r1[5] = s * (r1[5] - r2[5] * m1),
     r1[6] = s * (r1[6] - r2[6] * m1), r1[7] = s * (r1[7] - r2[7] * m1);
   m0 = r0[2];
@@ -157,7 +157,7 @@ int MatrixInvert44f( const float *m, float *out )
     r0[6] -= r2[6] * m0, r0[7] -= r2[7] * m0;
   
   m0 = r0[1];                 /* now back substitute row 0 */
-  s  = 1.0/r0[0];
+  s  = 1.0F/r0[0];
   r0[4] = s * (r0[4] - r1[4] * m0), r0[5] = s * (r0[5] - r1[5] * m0),
     r0[6] = s * (r0[6] - r1[6] * m0), r0[7] = s * (r0[7] - r1[7] * m0);
   
@@ -211,18 +211,18 @@ int *MatrixFilter(float cutoff,int window,int n_pass,int nv,float *v1,float *v2)
       }
     }
     if(cc) {
-      scale3f(center1,1.0/cc,center1);
-      scale3f(center2,1.0/cc,center2);
+      scale3f(center1,1.0F/cc,center1);
+      scale3f(center2,1.0F/cc,center2);
     }
     
     /* store average deviation from it */
-    avg_dev = 0.0;
+    avg_dev = 0.0F;
     cc=0;
     for(a=0;a<nv;a++) {
       if(flag[a]) {
         vv1 = v1+3*a;
         vv2 = v2+3*a;
-        dev[a] = fabs(diff3f(center1,vv1)-diff3f(center2,vv2));
+        dev[a] = (float)fabs(diff3f(center1,vv1)-diff3f(center2,vv2));
         avg_dev+=dev[a];
         cc++;
       }
@@ -300,17 +300,17 @@ int *MatrixFilter(float cutoff,int window,int n_pass,int nv,float *v1,float *v2)
                   wc++;
                 }
               if(wc) {
-                scale3f(center1,1.0/wc,center1);
-                scale3f(center2,1.0/wc,center2);
+                scale3f(center1,1.0F/wc,center1);
+                scale3f(center2,1.0F/wc,center2);
                 
                 /* compute average deviation over window */
-                avg_dev = 0.0;
+                avg_dev = 0.0F;
                 wc = 0;
                 for(b=start;b<=finish;b++) 
                   if(flag[b]) {
                     vv1 = v1+3*b;
                     vv2 = v2+3*b;
-                    avg_dev+=fabs(diff3f(center1,vv1)-diff3f(center2,vv2));
+                    avg_dev+=(float)fabs(diff3f(center1,vv1)-diff3f(center2,vv2));
                     wc++;
                   }
                 if(wc) { /* store ratio of the actual vs. average deviation */
@@ -318,9 +318,9 @@ int *MatrixFilter(float cutoff,int window,int n_pass,int nv,float *v1,float *v2)
                   vv1 = v1+3*a;
                   vv2 = v2+3*a;
                   if(avg_dev>R_SMALL4) 
-                    dev[a] = fabs(diff3f(center1,vv1)-diff3f(center2,vv2))/avg_dev;
+                    dev[a] = (float)fabs(diff3f(center1,vv1)-diff3f(center2,vv2))/avg_dev;
                   else
-                    dev[a] = 0.0;
+                    dev[a] = 0.0F;
                   printf("%8.3f\n",dev[a]);
                 }
               }
@@ -377,25 +377,25 @@ void MatrixApplyTTTfn3f( unsigned int n, float *q, const float m[16], float *p )
 /*========================================================================*/
 void MatrixLoadIdentity44f(float *m)
 {
-   m[0]=1.0;
-   m[1]=0.0;
-   m[2]=0.0;
-   m[3]=0.0;
+   m[0]=1.0F;
+   m[1]=0.0F;
+   m[2]=0.0F;
+   m[3]=0.0F;
    
-   m[4]=0.0;   
-   m[5]=1.0;
-   m[6]=0.0;
-   m[7]=0.0;
+   m[4]=0.0F;   
+   m[5]=1.0F;
+   m[6]=0.0F;
+   m[7]=0.0F;
    
-   m[8]=0.0;
-   m[9]=0.0;
-   m[10]=1.0;
-   m[11]=0.0;
+   m[8]=0.0F;
+   m[9]=0.0F;
+   m[10]=1.0F;
+   m[11]=0.0F;
    
-   m[12]=0.0;
-   m[13]=0.0;
-   m[14]=0.0;
-   m[15]=1.0;
+   m[12]=0.0F;
+   m[13]=0.0F;
+   m[14]=0.0F;
+   m[15]=1.0F;
 }
 /*========================================================================*/
 void MatrixRotation44f( float *m44, const float angle, const float x,const float y,const float z)
@@ -405,19 +405,19 @@ void MatrixRotation44f( float *m44, const float angle, const float x,const float
   m44[0]=m33[0];
   m44[1]=m33[3];
   m44[2]=m33[6];
-  m44[3]=0.0;
+  m44[3]=0.0F;
   m44[4]=m33[1];
   m44[5]=m33[4];
   m44[6]=m33[7];
-  m44[7]=0.0;
+  m44[7]=0.0F;
   m44[8]=m33[2];
   m44[9]=m33[5];
   m44[10]=m33[8];
-  m44[11]=0.0;
-  m44[12]=0.0;
-  m44[13]=0.0;
-  m44[14]=0.0;
-  m44[15]=1.0;
+  m44[11]=0.0F;
+  m44[12]=0.0F;
+  m44[13]=0.0F;
+  m44[14]=0.0F;
+  m44[15]=1.0F;
 }
 /*========================================================================*/
 void MatrixRotate44f3f( float *m, const float angle, const float x,const float y,const float z)
@@ -428,19 +428,19 @@ void MatrixRotate44f3f( float *m, const float angle, const float x,const float y
   m44[0]=m33[0];
   m44[1]=m33[1];
   m44[2]=m33[2];
-  m44[3]=0.0;
+  m44[3]=0.0F;
   m44[4]=m33[3];
   m44[5]=m33[4];
   m44[6]=m33[5];
-  m44[7]=0.0;
+  m44[7]=0.0F;
   m44[8]=m33[6];
   m44[9]=m33[7];
   m44[10]=m33[8];
-  m44[11]=0.0;
-  m44[12]=0.0;
-  m44[13]=0.0;
-  m44[14]=0.0;
-  m44[15]=1.0;
+  m44[11]=0.0F;
+  m44[12]=0.0F;
+  m44[13]=0.0F;
+  m44[14]=0.0F;
+  m44[15]=1.0F;
   MatrixMultiply44f(m44,m);
 }
 
@@ -523,24 +523,24 @@ float MatrixGetRMS(int n,float *v1,float *v2,float *wt)
   float *vv1,*vv2;
   float  err, etmp, tmp;
   int a, c;
-  float sumwt = 0.0;
+  float sumwt = 0.0F;
 
   if(wt) {
     for(c=0;c<n;c++)
-      if (wt[c]!=0.0) {
+      if (wt[c]!=0.0F) {
         sumwt = sumwt + wt[c];
       } else {
-        sumwt = sumwt + 1.0; /* WHAT IS THIS? */
+        sumwt = sumwt + 1.0F; /* WHAT IS THIS? */
       }
   } else {
     for(c=0;c<n;c++)
-      sumwt+=1.0;
+      sumwt+=1.0F;
   }
-  err = 0.0;
+  err = 0.0F;
   vv1=v1;
   vv2=v2;
   for(c=0;c<n;c++) {
-    etmp = 0.0;
+    etmp = 0.0F;
     for(a=0;a<3;a++) {
       tmp = (vv2[a]-vv1[a]);
       etmp += tmp*tmp;
@@ -553,10 +553,10 @@ float MatrixGetRMS(int n,float *v1,float *v2,float *wt)
     vv2+=3;
   }
   err=err/sumwt;
-  err=sqrt1f(err);
+  err=(float)sqrt1f(err);
 
   if(fabs(err)<R_SMALL4)
-    err=0.0;
+    err=0.0F;
 
   return(err);
 }
@@ -583,12 +583,12 @@ float MatrixFitRMS(int n,float *v1,float *v2,float *wt,float *ttt)
 
   for(a=0;a<3;a++) {
 	for(b=0;b<3;b++) {
-	  m[a][b] = 0.0;
-	  aa[a][b] = 0.0;
+	  m[a][b] = 0.0F;
+	  aa[a][b] = 0.0F;
 	}
-	m[a][a] = 1.0;
-	t1[a]=0.0;
-	t2[a]=0.0;
+	m[a][a] = 1.0F;
+	t1[a]=0.0F;
+	t2[a]=0.0F;
   }
 
   sumwt = 0.0F;
@@ -607,10 +607,10 @@ float MatrixFitRMS(int n,float *v1,float *v2,float *wt,float *ttt)
 		  t1[a] += wt[c]*vv1[a];
 		  t2[a] += wt[c]*vv2[a];
 		}
-		if (wt[c]!=0.0) {
+		if (wt[c]!=0.0F) {
 		  sumwt = sumwt + wt[c];
 		} else {
-		  sumwt = sumwt + 1.0; /* WHAT IS THIS? */
+		  sumwt = sumwt + 1.0F; /* WHAT IS THIS? */
 		}
 		vv1+=3;
 		vv2+=3;
@@ -622,12 +622,12 @@ float MatrixFitRMS(int n,float *v1,float *v2,float *wt,float *ttt)
 		  t1[a] += vv1[a];
 		  t2[a] += vv2[a];
 		}
-		sumwt+=1.0;
+		sumwt+=1.0F;
 		vv1+=3;
 		vv2+=3;
 	  }
   }
-  if(sumwt==0.0) sumwt = 1.0;
+  if(sumwt==0.0F) sumwt = 1.0F;
   for(a=0;a<3;a++) {
 	t1[a] /= sumwt;
 	t2[a] /= sumwt;
@@ -691,9 +691,9 @@ float MatrixFitRMS(int n,float *v1,float *v2,float *wt,float *ttt)
       /* Determine size of off-diagonal element.  If off-diagonals exceed the
          diagonal elements * tolerance, perform Jacobi rotation. */
       tmp = sig*sig + gam*gam;
-      sg = sqrt1f(tmp);
-      if((sg!=0.0) &&(fabs(sig)>(tol*fabs(gam)))) {
-        sg = 1.0 / sg;
+      sg = sqrt1d(tmp);
+      if((sg!=0.0F) &&(fabs(sig)>(tol*fabs(gam)))) {
+        sg = 1.0F / sg;
         for(a=0;a<3;a++)
           {
             bb = gam*aa[iy][a] + sig*aa[iz][a];
@@ -714,7 +714,7 @@ float MatrixFitRMS(int n,float *v1,float *v2,float *wt,float *ttt)
   }
   /* At this point, we should have a converged rotation matrix (M).  Calculate
 	 the weighted RMS error. */
-  err = 0.0;
+  err = 0.0F;
   vv1=v1;
   vv2=v2;
 
@@ -722,7 +722,7 @@ float MatrixFitRMS(int n,float *v1,float *v2,float *wt,float *ttt)
   normalize3d(m[1]);
   normalize3d(m[2]);
   for(c=0;c<n;c++) {
-	etmp = 0.0;
+	etmp = 0.0F;
 	for(a=0;a<3;a++) {
 	  tmp = m[a][0]*(vv2[0]-t2[0])
 		+ m[a][1]*(vv2[1]-t2[1])
@@ -739,29 +739,29 @@ float MatrixFitRMS(int n,float *v1,float *v2,float *wt,float *ttt)
   }
 
   err=err/sumwt;
-  err=sqrt1f(err);
+  err=sqrt1d(err);
 
-  ttt[0]=m[0][0];
-  ttt[1]=m[0][1];
-  ttt[2]=m[0][2];
-  ttt[3]=-t1[0];
-  ttt[4]=m[1][0];
-  ttt[5]=m[1][1];
-  ttt[6]=m[1][2];
-  ttt[7]=-t1[1];
-  ttt[8]=m[2][0];
-  ttt[9]=m[2][1];
-  ttt[10]=m[2][2];
-  ttt[11]=-t1[2];
-  ttt[12]=t2[0];
-  ttt[13]=t2[1];
-  ttt[14]=t2[2];
-  ttt[15]=1.0; /* for compatibility with normal 4x4 matrices */
+  ttt[0]=(float)m[0][0];
+  ttt[1]=(float)m[0][1];
+  ttt[2]=(float)m[0][2];
+  ttt[3]=(float)-t1[0];
+  ttt[4]=(float)m[1][0];
+  ttt[5]=(float)m[1][1];
+  ttt[6]=(float)m[1][2];
+  ttt[7]=(float)-t1[1];
+  ttt[8]=(float)m[2][0];
+  ttt[9]=(float)m[2][1];
+  ttt[10]=(float)m[2][2];
+  ttt[11]=(float)-t1[2];
+  ttt[12]=(float)t2[0];
+  ttt[13]=(float)t2[1];
+  ttt[14]=(float)t2[2];
+  ttt[15]=1.0F; /* for compatibility with normal 4x4 matrices */
 
   if(fabs(err)<R_SMALL4)
-    err=0.0;
+    err=0.0F;
 
-  return(err);
+  return((float)err);
 }
 
 /*========================================================================*/
@@ -2013,7 +2013,7 @@ L160:
 	q /= x;
 	r__ /= x;
 L170:
-	d__1 = sqrt1f(p * p + q * q + r__ * r__);
+	d__1 = sqrt1d(p * p + q * q + r__ * r__);
 	s = d_sign(&d__1, &p);
 	if (k == m) {
 	    goto L180;
@@ -2097,7 +2097,7 @@ L270:
 L280:
     p = (y - x) / 2.;
     q = p * p + w;
-    zz = sqrt1f((abs(q)));
+    zz = sqrt1d((abs(q)));
     x += t;
     if (q < 0.) {
 	goto L320;
@@ -2388,7 +2388,7 @@ L160:
 	q /= x;
 	r__ /= x;
 L170:
-	d__1 = sqrt1f(p * p + q * q + r__ * r__);
+	d__1 = sqrt1d(p * p + q * q + r__ * r__);
 	s = d_sign(&d__1, &p);
 	if (k == m) {
 	    goto L180;
@@ -2491,7 +2491,7 @@ L270:
 L280:
     p = (y - x) / 2.;
     q = p * p + w;
-    zz = sqrt1f((abs(q)));
+    zz = sqrt1d((abs(q)));
     h__[en + en * h_dim1] = x + t;
     x = h__[en + en * h_dim1];
     h__[na + na * h_dim1] = y + t;
@@ -2511,7 +2511,7 @@ L280:
     s = abs(x) + abs(zz);
     p = x / s;
     q = zz / s;
-    r__ = sqrt1f(p * p + q * q);
+    r__ = sqrt1d(p * p + q * q);
     p /= r__;
     q /= r__;
 /*     .......... row modification .......... */
