@@ -31,6 +31,21 @@ Z* -------------------------------------------------------------------
 #include<GL/glu.h>
 #endif
 
+void PyMOLReadPixels(GLint x,
+                  GLint y,
+                  GLsizei width,
+                  GLsizei height,
+                  GLenum format,
+                  GLenum type,
+                      GLvoid *pixels);
+
+
+void PyMOLDrawPixels(GLsizei width,
+                  GLsizei height,
+                  GLenum format,
+                  GLenum type,
+                  const GLvoid *pixels);
+
 #define P_GLUT_BUTTON_SCROLL_FORWARD  3
 #define P_GLUT_BUTTON_SCROLL_BACKWARD 4
 #define P_GLUT_DOUBLE_LEFT 5

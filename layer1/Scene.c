@@ -493,7 +493,7 @@ static unsigned char *SceneImagePrepare(void)
 	 ErrChkPtr(image);
     if(PMGUI) {
       glReadBuffer(GL_BACK);
-      glReadPixels(I->Block->rect.left,I->Block->rect.bottom,I->Width,I->Height,
+      PyMOLReadPixels(I->Block->rect.left,I->Block->rect.bottom,I->Width,I->Height,
                    GL_RGBA,GL_UNSIGNED_BYTE,image);
       
       reset_alpha = true;
@@ -1041,16 +1041,16 @@ void SceneDraw(Block *block)
             }
             if(I->ImageBuffer) {
 #if 1
-              glDrawPixels(width,height,GL_RGBA,GL_UNSIGNED_BYTE,I->ImageBuffer);            
+              PyMOLDrawPixels(width,height,GL_RGBA,GL_UNSIGNED_BYTE,I->ImageBuffer);            
 #else
               if(!(double_pump||(I->StereoMode==1))) {
                 glDrawBuffer(GL_BACK);
-                glDrawPixels(width,height,GL_RGBA,GL_UNSIGNED_BYTE,I->ImageBuffer);            
+                PyMOLDrawPixels(width,height,GL_RGBA,GL_UNSIGNED_BYTE,I->ImageBuffer);            
               } else {
                 glDrawBuffer(GL_BACK_LEFT);
-                glDrawPixels(width,height,GL_RGBA,GL_UNSIGNED_BYTE,I->ImageBuffer);            
+                PyMOLDrawPixels(width,height,GL_RGBA,GL_UNSIGNED_BYTE,I->ImageBuffer);            
                 glDrawBuffer(GL_BACK_RIGHT);
-                glDrawPixels(width,height,GL_RGBA,GL_UNSIGNED_BYTE,I->ImageBuffer);            
+                PyMOLDrawPixels(width,height,GL_RGBA,GL_UNSIGNED_BYTE,I->ImageBuffer);            
               }
 #endif
             }
@@ -1112,7 +1112,7 @@ unsigned int SceneFindTriplet(int x,int y,GLenum gl_buffer)
     for(a=0;a<100;a++) *(int_ptr++)=0x12345678;
 */
 /*printf("%d %d %d %d %p %p\n",x-cRange,y-cRange,cRange*2+1,cRange*2+1,buffer,&buffer[0][0][0]);*/
-    glReadPixels(x-cRange,y-cRange,cRange*2+1,cRange*2+1,GL_RGBA,GL_UNSIGNED_BYTE,&buffer[0][0][0]);
+    PyMOLReadPixels(x-cRange,y-cRange,cRange*2+1,cRange*2+1,GL_RGBA,GL_UNSIGNED_BYTE,&buffer[0][0][0]);
 
 /*	{
 	for(a=0;a<=(cRange*2);a++)
@@ -1232,7 +1232,7 @@ unsigned int *SceneReadTriplets(int x,int y,int w,int h,GLenum gl_buffer)
     buffer=Alloc(pix,w*h);
     result = VLAlloc(unsigned int,w*h);
     glReadBuffer(gl_buffer);
-    glReadPixels(x,y,w,h,GL_RGBA,GL_UNSIGNED_BYTE,&buffer[0][0]);
+    PyMOLReadPixels(x,y,w,h,GL_RGBA,GL_UNSIGNED_BYTE,&buffer[0][0]);
     
      /* first, check to make sure bkrd_alpha is correct 
         (this is a bug for systems with broken alpha, such as Extreme 3D on Solaris 8 */
@@ -2983,7 +2983,7 @@ void SceneCopy(GLenum buffer,int force)
         }
         if(PMGUI) {
           glReadBuffer(buffer);
-          glReadPixels(I->Block->rect.left,I->Block->rect.bottom,I->Width,I->Height,
+          PyMOLReadPixels(I->Block->rect.left,I->Block->rect.bottom,I->Width,I->Height,
                        GL_RGBA,GL_UNSIGNED_BYTE,I->ImageBuffer);
           I->ImageBufferWidth=I->Width;
           I->ImageBufferHeight=I->Height;
