@@ -33,6 +33,10 @@ Ongoing Goals
    * draw all solid representations before drawing lines
      in order to improve antialiasing.
 
+Changes up to 0.59
+
+   * fixed valency display bug...
+
 Changes up to 0.58
 
    * second generation cartoon ribbons are in -- Goodbye Molscript!
