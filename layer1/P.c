@@ -70,7 +70,7 @@ typedef struct {
 
 #define MAX_SAVED_THREAD 20
 
-SavedThreadRec SavedThread[MAX_SAVED_THREAD];
+static SavedThreadRec SavedThread[MAX_SAVED_THREAD];
 
 int P_glut_thread_keep_out = 0; 
 /* enables us to keep glut out if by chance it grabs the API
@@ -672,15 +672,24 @@ int PAutoBlock(void)
   int a,id;
   /* synchronize python */
 
-
   id = PyThread_get_thread_ident();
+  PRINTFD(FB_Threads)
+	 " PAutoBlock-DEBUG: searching for 0x%x (0x%x, 0x%x, ...)\n",id,
+	 SavedThread[MAX_SAVED_THREAD-1].id,
+	 SavedThread[MAX_SAVED_THREAD-2].id
+	 ENDFD;
   a = MAX_SAVED_THREAD-1;
   while(a) {
-    if(SavedThread[a].id==id) { 
-      PyEval_RestoreThread(SavedThread[a].state);
+  if(!((SavedThread+a)->id-id)) { 
+	 /* astoundingly, equality test fails on ALPHA even 
+	  * though the ints are equal. Must be some kind of optimizer bug
+	  * or mis-assumption */
+
+      PyEval_RestoreThread((SavedThread+a)->state);
 
       PXDecRef(PyObject_CallFunction(P_lock_c,NULL));
-      SavedThread[a].id = -1; /* this is the only safe time we can change things */
+      SavedThread[a].id = -1; 
+		    /* this is the only safe time we can change things */
       PXDecRef(PyObject_CallFunction(P_unlock_c,NULL));
 
       PRINTFD(FB_Threads)
@@ -707,14 +716,18 @@ void PUnblock(void)
   PXDecRef(PyObject_CallFunction(P_lock_c,NULL));
   a = MAX_SAVED_THREAD-1;
   while(a) {
-    if(SavedThread[a].id == -1 ) {
-      SavedThread[a].id = PyThread_get_thread_ident();
+    if((SavedThread+a)->id == -1 ) {
+      (SavedThread+a)->id = PyThread_get_thread_ident();
       break;
     }
     a--;
   }
   PXDecRef(PyObject_CallFunction(P_unlock_c,NULL));
-  SavedThread[a].state = PyEval_SaveThread();  
+  (SavedThread+a)->state = PyEval_SaveThread();  
+  PRINTFD(FB_Threads)
+    " PUnblock-DEBUG: stored in slot %d\n",a
+    ENDFD;
+
 }
 
 
