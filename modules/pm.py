@@ -34,6 +34,23 @@ def alter(sele,expr):
    _pm.alter(sele,expr)
    unlock()   
 
+def distance(*args):
+   la = len(args)
+   if la==0:
+      a="pk1"
+      b="pk3"
+   elif la==1:
+      a=args[0]
+      b="pk1"
+   elif la==2:
+      a=args[0]
+      b=args[1]
+   if a[0]!='(': a="(%"+a+")"
+   if b[0]!='(': b="(%"+b+")"
+   lock()   
+   _pm.distance(a,b)
+   unlock()
+
 def _alter_do(at):
    type = at[1]
    name = at[2]
@@ -397,7 +414,6 @@ def color(*args):
       _pm.color(args[0],"(all)",0)   
    unlock()
    
-
 def mpng(a):
    if thread.get_ident() ==__main__.glutThread:
       _mpng(a)
@@ -492,8 +508,9 @@ keyword = {
    'beginning'   : [beginning    , 0 , 0 , ',' , 0 ],
    'clip'        : [clip         , 2 , 2 , ',' , 0 ],
    'color'       : [color        , 1 , 2 , ',' , 0 ],
-   'disable'     : [disable      , 1 , 1 , ',' , 0 ],
    'delete'      : [delete       , 1 , 1 , ',' , 0 ],
+   'disable'     : [disable      , 1 , 1 , ',' , 0 ],
+   'dist'        : [distance     , 0 , 2 , ',' , 0 ],   
    'enable'      : [enable       , 1 , 1 , ',' , 0 ],
    'export_dots' : [export_dots  , 2 , 2 , ',' , 0 ],
    'fit'         : [fit          , 2 , 2 , ',' , 0 ],
@@ -523,6 +540,7 @@ keyword = {
    'rock'        : [rock         , 0 , 0 , ',' , 0 ],
    'run'         : [dummy        , 1 , 2 , ',' , 2 ],
    'select'      : [select       , 1 , 2 , '=' , 0 ],
+   'sel'         : [select       , 1 , 2 , '=' , 0 ],
    'set'         : [set          , 2 , 2 , '=' , 0 ],
    'show'        : [show         , 1 , 2 , ',' , 0 ],
    'system'      : [system       , 1 , 1 , ',' , 0 ],

@@ -77,6 +77,51 @@ SpecRec *ExecutiveFindSpec(char *name);
 void ExecutiveInvalidateRep(char *name,int rep,int level);
 
 /*========================================================================*/
+void ExecutiveDistance(char *s1,char *s2)
+{
+  int sele1,sele2;
+   char buffer[255];
+
+   ObjectMoleculeOpRec op1;
+   ObjectMoleculeOpRec op2;
+
+   sele1=SelectorIndexByName(s1);
+   op1.i1=0;
+   if(sele1>=0) {
+     op1.code = 'SUMC';
+     op1.v1[0]=0.0;
+     op1.v1[1]=0.0;
+     op1.v1[2]=0.0;
+     ExecutiveObjMolSeleOp(sele1,&op1);
+   } else {
+     ErrMessage("ExecutiveDistance","The first selection contains no atoms.");
+   }
+
+   sele2=SelectorIndexByName(s2);
+   op2.i1=0;
+   if(sele2>=0) {
+     op2.code = 'SUMC';
+     op2.v1[0]=0.0;
+     op2.v1[1]=0.0;
+     op2.v1[2]=0.0;
+     op2.i1=0;
+     ExecutiveObjMolSeleOp(sele2,&op2);
+   } else {
+     ErrMessage("ExecutiveDistance","The second selection contains no atoms.");
+   }
+   
+   if(op1.i1&&op2.i1) {
+     scale3f(op1.v1,1.0/op1.i1,op1.v1);
+     scale3f(op2.v1,1.0/op2.i1,op2.v1);
+     sprintf(buffer," Distance: %8.3f [%i atom(s) to %i atom(s)]\n",
+             diff3f(op1.v1,op2.v1),
+            op1.i1,op2.i1);
+    OrthoAddOutput(buffer);
+  } else {
+    ErrMessage("ExecutiveFit","No atoms selected.");
+	}
+}
+/*========================================================================*/
 char *ExecutiveSeleToPDBStr(char *s1,int state)
 {
   char *result=NULL;

@@ -462,24 +462,21 @@ int SceneClick(Block *block,int button,int x,int y,int mod)
 	 if(I->LastPicked.ptr) {
 		obj=(Object*)I->LastPicked.ptr;
 		obj->fDescribeElement(obj,I->LastPicked.index);
+		  sprintf(buffer,"model %s and index %i",
+					 obj->Name,I->LastPicked.index+1);
 		
 		switch(button) {
 		case GLUT_LEFT_BUTTON:
-		  sprintf(buffer,"model %s and index %i",
-					 obj->Name,I->LastPicked.index+1);
+        SelectorCreate("%pk1",buffer,NULL);
 		  break;
 		case GLUT_MIDDLE_BUTTON:
-		  sprintf(buffer,"model %s and index %i expand 5",
-					 obj->Name,I->LastPicked.index+1);
+        SelectorCreate("%pk2",buffer,NULL);
 		  break;
 		case GLUT_RIGHT_BUTTON:
 		default:
-		  sprintf(buffer,"model %s and index %i expand 8",
-					 obj->Name,I->LastPicked.index+1);
+        SelectorCreate("%pk3",buffer,NULL);
 		  break;
 		}
-
-		SelectorCreate("%pick",buffer,NULL);
 	 } else {
 		OrthoAddOutput("No atom!\n");
 		OrthoNewLine(NULL);
