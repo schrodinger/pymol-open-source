@@ -3528,7 +3528,7 @@ static PyObject *CmdZoom(PyObject *self, PyObject *args)
   if (ok) {
     APIEntry();
     SelectorGetTmp(str1,s1);
-    ExecutiveWindowZoom(s1,buffer); /* TODO STATUS */
+    ok = ExecutiveWindowZoom(s1,buffer); /* TODO STATUS */
     SelectorFreeTmp(s1);
     APIExit();
   }

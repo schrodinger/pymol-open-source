@@ -2732,11 +2732,12 @@ int ExecutiveGetExtent(char *name,float *mn,float *mx,int transformed)
   return(flag);  
 }
 /*========================================================================*/
-void ExecutiveWindowZoom(char *name,float buffer)
+int ExecutiveWindowZoom(char *name,float buffer)
 {
   float center[3],radius;
   float mn[3],mx[3];
-
+  int sele0;
+  int ok=true;
   if(ExecutiveGetExtent(name,mn,mx,true)) {
     if(buffer!=0.0) {
       buffer = buffer;
@@ -2762,9 +2763,19 @@ void ExecutiveWindowZoom(char *name,float buffer)
     SceneWindowSphere(center,radius);
     SceneDirty();
   } else {
-    SceneSetDefaultView();
-    SceneDirty();
+    sele0 = SelectorIndexByName(name);
+    if(sele0>=0) {
+      ErrMessage("ExecutiveWindowZoom","selection is empty.");
+      ok=false;
+    } else if(ExecutiveValidName(name)) {
+      SceneSetDefaultView();
+      SceneDirty();
+    } else {
+      ErrMessage("ExecutiveWindowZoom","selection or object unknown.");
+      ok=false;
+    }
   }
+  return(ok);
 }
 /*========================================================================*/
 int ExecutiveCenter(char *name,int preserve,char *oname,float *pos)

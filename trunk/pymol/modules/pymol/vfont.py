@@ -855,6 +855,37 @@ plain = {
             1, Nw, Ht,
             ],
           ],
+   '%': [ Nsp,
+          [
+            0, 0.0, 0.0,
+            1, Nw, Ht,
+            0, 0.0, Ht,
+            1, Bvl, Ht,
+            1, Bvl, Ht-Bvl,
+            1, 0.0, Ht-Bvl,
+            1, 0.0, Ht,            
+
+            0, Nw, 0.0,
+            1, Nw, Bvl,
+            1, Nw-Bvl, Bvl,
+            1, Nw-Bvl, 0.0,
+            1, Nw, 0.0,            
+            ],
+          ],
+   '<': [ Nsp,
+          [
+            0, Nw, Ht-Bvl,
+            1, 0.0, Ht_2,
+            1, Nw, Bvl,
+            ],
+          ],
+   '>': [ Nsp,
+          [
+            0, 0.0, Ht-Bvl,
+            1, Nw, Ht_2,
+            1, 0.0, Bvl,
+            ],
+          ],
    
    }
 
