@@ -17,6 +17,7 @@ from tkFileDialog import *
 
 from AbstractApp import AbstractApp
 from Setting import Setting
+from SetEditor import SetEditor
 
 import Pmw
 import sys, string
@@ -67,7 +68,32 @@ class PMGApp(AbstractApp):
       btn_last = self.buttonAdd(row1,'>|',cmd.ending)
       btn_ccache = self.buttonAdd(row1,'MClear',cmd.mclear)
 
-   def my_activate(self,win,center=1):
+   def my_show(self,win,center=1):
+      if sys.platform!='linux2':
+         win.show()
+      else: # autocenter, deiconify, and run mainloop
+         # this is a workaround for a bug in the
+         # interaction between Tcl/Tk and common Linux
+         # window managers (namely KDE/Gnome) which causes
+         # an annoying 1-2 second delay in opening windows!
+         if center:
+            tw = win.winfo_reqwidth()+100
+            th = win.winfo_reqheight()+100
+            vw = win.winfo_vrootwidth()
+            vh = win.winfo_vrootheight()
+            x = max(0,(vw-tw)/2)
+            y = max(0,(vh-tw)/2)
+            win.geometry(newGeometry="+%d+%d"%(x,y))
+         win.deiconify()
+#         win.show()
+         
+   def my_withdraw(self,win):
+      if sys.platform!='linux2':
+         win.withdraw()
+      else: # autocenter, deiconify, and run mainloop
+         win.destroy()
+
+   def my_activate(self,win,center=1,focus=None):
       if sys.platform!='linux2':
          win.activate()
       else: # autocenter, deiconify, and run mainloop
@@ -84,6 +110,8 @@ class PMGApp(AbstractApp):
             y = max(0,(vh-tw)/2)
             win.geometry(newGeometry="+%d+%d"%(x,y))
          win.deiconify()
+         if focus!=None:
+            focus.focus_set()
          win.mainloop()
          
    def my_deactivate(self,win):
@@ -110,11 +138,13 @@ class PMGApp(AbstractApp):
 
       text = self.output.component('text')
       if sys.platform!='win32':
-         text.configure(font=('Courier',12))         
+         self.my_fw_font=('Courier',12)
       else:
-         text.configure(font=('Courier',9))
+         self.my_fw_font=('Courier',9)
+      text.configure(font = self.my_fw_font)
       text.configure(width=72)
       self.output.after(1000,self.update_feedback)
+      self.output.after(1000,self.update_menus)
       self.output.pack(side=BOTTOM,expand=YES,fill=BOTH)
       self.bind(self.entry, 'Command Input Area')
 
@@ -127,8 +157,12 @@ class PMGApp(AbstractApp):
          if self.lineCount > 10000:
             self.output.delete('0.0','%i.%i' % (self.lineCount-5000,0))
             self.lineCount=5000
-      self.output.after(50,self.update_feedback)
+      self.output.after(50,self.update_feedback) # update feedback window 20X a second
 
+   def update_menus(self):
+      self.setting.refresh()
+      self.output.after(500,self.update_menus) # update menus twice a second
+      
    def createInterface(self):
          AbstractApp.createInterface(self)
          self.createButtons()
@@ -165,17 +199,17 @@ class PMGApp(AbstractApp):
                           label_text='Which object or selection would you like to save?',
                           scrolledlist_items = cmd.get_names('all'),
                           command = self.file_save2)
-      self.my_activate(self.dialog)
+      self.my_show(self.dialog)
       
    def file_save2(self,result):
       if result!='OK':
-         self.my_deactivate(self.dialog)
+         self.my_withdraw(self.dialog)
          del self.dialog
       else:
          sels = self.dialog.getcurselection()
          if len(sels)!=0:
             sfile = sels[0]+".pdb"
-            self.my_deactivate(self.dialog)
+            self.my_withdraw(self.dialog)
             del self.dialog
             if result=='OK':
                sfile = asksaveasfilename(initialfile = sfile,
@@ -297,53 +331,65 @@ class PMGApp(AbstractApp):
                         label='Quit',
                         command=cmd.quit)
 
-      self.menuBar.addmenu('Movie', 'Movie Control')
+      self.menuBar.addmenuitem('Edit', 'command',
+                         'To Copy: Use Ctrl-C',
+                         label='To copy text use Ctrl-C',
+                               state='disabled',
+                        command =  None)
 
-      self.menuBar.addmenuitem('Movie', 'checkbutton',
+      self.menuBar.addmenuitem('Edit', 'command',
+                         'To Paste, Use Ctrl-V',
+                         label='To copy text use Ctrl-V',
+                               state='disabled',                               
+                        command =  None)
+
+      self.menuBar.addmenu('Movies', 'Movie Control')
+
+      self.menuBar.addmenuitem('Movies', 'checkbutton',
                          'Photorealistic images.',
                          label='Ray Trace Frames',
                         variable = self.setting.ray_trace_frames,
                         command = lambda s=self: s.setting.update('ray_trace_frames'))
 
-      self.menuBar.addmenuitem('Movie', 'checkbutton',
+      self.menuBar.addmenuitem('Movies', 'checkbutton',
                          'Save images in memory.',
                          label='Cache Frames',
                         variable = self.setting.cache_frames,
                         command = lambda s=self: s.setting.update('cache_frames'))
 
-      self.menuBar.addmenuitem('Movie', 'command', 'Flush Cache',
-                               label='Flush Cache',
+      self.menuBar.addmenuitem('Movies', 'command', 'Flush Image Cache',
+                               label='Flush Image Cache',
                                command = lambda: cmd.mclear())
 
-      self.menuBar.addmenuitem('Movie', 'separator', '')
+      self.menuBar.addmenuitem('Movies', 'separator', '')
 
-      self.menuBar.addmenuitem('Movie', 'command', 'Maximum Speed',
+      self.menuBar.addmenuitem('Movies', 'command', 'Maximum Speed',
                                label='Maximum Speed',
                                command = lambda: cmd.set("movie_delay","0"))
 
-      self.menuBar.addmenuitem('Movie', 'command', '30 FPS',
+      self.menuBar.addmenuitem('Movies', 'command', '30 FPS',
                                label='30 FPS',
                                command = lambda: cmd.set("movie_delay","33"))
 
-      self.menuBar.addmenuitem('Movie', 'command', '15 FPS',
+      self.menuBar.addmenuitem('Movies', 'command', '15 FPS',
                                label='15 FPS',
                                command = lambda: cmd.set("movie_delay","66"))
 
-      self.menuBar.addmenuitem('Movie', 'command', '5 FPS',
+      self.menuBar.addmenuitem('Movies', 'command', '5 FPS',
                                label='5 FPS',
                                command = lambda: cmd.set("movie_delay","200"))
 
-      self.menuBar.addmenuitem('Movie', 'command', '1 FPS',
+      self.menuBar.addmenuitem('Movies', 'command', '1 FPS',
                                label='1 FPS',
                                command = lambda: cmd.set("movie_delay","1000"))
 
-      self.menuBar.addmenuitem('Movie', 'command', '0.3 FPS',
+      self.menuBar.addmenuitem('Movies', 'command', '0.3 FPS',
                                label='0.3 FPS',
                                command = lambda: cmd.set("movie_delay","3000"))
 
-      self.menuBar.addmenuitem('Movie', 'separator', '')
+      self.menuBar.addmenuitem('Movies', 'separator', '')
 
-      self.menuBar.addmenuitem('Movie', 'command', 'Reset Meter',
+      self.menuBar.addmenuitem('Movies', 'command', 'Reset Meter',
                                label='Reset Meter',
                                command = lambda: cmd.meter_reset())
 
@@ -372,49 +418,59 @@ class PMGApp(AbstractApp):
                                label='Stereo Off',
                                command = lambda: cmd.stereo("off"))
 
-      self.menuBar.addmenu('Options', 'Configuration Control')
+      self.menuBar.addmenu('Settings', 'Configuration Control')
 
-      self.menuBar.addmenuitem('Options', 'checkbutton',
-                         'Show bond valences.',
-                         label='Show bond valences',
+
+      self.menuBar.addmenuitem('Settings', 'command',
+                         'Edit PyMOL Settings',
+                         label='Edit All...',
+                               command = lambda s=self: SetEditor(s))
+
+
+
+      self.menuBar.addmenuitem('Settings', 'separator', '')
+      
+      self.menuBar.addmenuitem('Settings', 'checkbutton',
+                         'Show Valences.',
+                         label='Show Valences',
                         variable = self.setting.valence,
                         command = lambda s=self: s.setting.update('valence'))
 
-      self.menuBar.addmenuitem('Options', 'checkbutton',
+      self.menuBar.addmenuitem('Settings', 'checkbutton',
                          'Superimpose all molecular states.',
                          label='Show All States',
                         variable = self.setting.all_states,
                         command = lambda s=self: s.setting.update('all_states'))
 
-      self.menuBar.addmenuitem('Options', 'checkbutton',
+      self.menuBar.addmenuitem('Settings', 'checkbutton',
                          'Disable perspective.',
-                         label='Orthoscopic',
+                         label='Orthoscopic View',
                         variable = self.setting.ortho,
                         command = lambda s=self: s.setting.update('ortho'))
 
-      self.menuBar.addmenuitem('Options', 'checkbutton',
-                         'Smooth raytracing.',
-                         label='Antialias',
+      self.menuBar.addmenuitem('Settings', 'checkbutton',
+                         'Smooth Lines.',
+                         label='Smooth Lines',
                         variable = self.setting.antialias,
                         command = lambda s=self: s.setting.update('antialias'))
 
-      self.menuBar.addmenuitem('Options', 'checkbutton',
+      self.menuBar.addmenuitem('Settings', 'checkbutton',
                          'Auto Zoom.',
-                         label='Auto Zoom',
+                         label='Auto Zoom New Objects',
                         variable = self.setting.auto_zoom,
                         command = lambda s=self: s.setting.update('auto_zoom'))
 
-      self.menuBar.addmenuitem('Options', 'checkbutton',
+      self.menuBar.addmenuitem('Settings', 'checkbutton',
                          'Overlay',
                          label='Overlay Text on Graphics',
                         variable = self.setting.overlay,
                         command = lambda s=self: s.setting.update('overlay'))
 
-      self.menuBar.addmenuitem('Options', 'checkbutton',
-                         'Normals Bug Workaround',
-                         label='Normals Bug Workaround',
-                        variable = self.setting.normal_workaround,
-                        command = lambda s=self: s.setting.update('normal_workaround'))
+      self.menuBar.addmenuitem('Settings', 'checkbutton',
+                         'Smooth raytracing.',
+                         label='Antialiased Rendering',
+                        variable = self.setting.antialias,
+                        command = lambda s=self: s.setting.update('antialias'))
 
       self.menuBar.addmenu('Mouse', 'Mouse Configuration')
 

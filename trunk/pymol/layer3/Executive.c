@@ -95,6 +95,23 @@ void ExecutiveFocus(void)
   glutPopWindow();
   glutShowWindow();
 }
+
+PyObject *ExecutiveGetSettingText(int index,char *object,int state)
+{
+  PyObject *result;
+  OrthoLineType buffer;
+
+  if(object[0]==0) /* global */ {
+    buffer[0]=0;
+    SettingGetTextValue(NULL,NULL,index,buffer);
+    result=Py_BuildValue("s",buffer);
+  } else {
+    /* TODO */
+    Py_INCREF(Py_None);
+    result = Py_None;
+  }
+  return(result);
+}
 /*========================================================================*/
 PyObject *ExecutiveGetSettingTuple(int index,char *object,int state)
 {
@@ -102,6 +119,7 @@ PyObject *ExecutiveGetSettingTuple(int index,char *object,int state)
   if(object[0]==0) /* global */
     result = SettingGetTuple(NULL,NULL,index);
   else {
+    /* TODO */
     Py_INCREF(Py_None);
     result = Py_None;
   }

@@ -634,7 +634,7 @@ void OrthoAddOutput(char *str)
 		if(*p>=32)
 		  {
 			 cc++;
-			 if(cc>80)
+			 if(cc>78)
 				{
 				  *q=0;
 				  I->CurChar = cc;

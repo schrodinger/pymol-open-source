@@ -34,6 +34,29 @@ static void *SettingPtr(CSetting *I,int index,unsigned int size);
 
 
 /*========================================================================*/
+PyObject *SettingGetUpdateList(CSetting *I)
+{
+  int a;
+  int n;
+  int unblock;
+  PyObject *result;
+
+  if(!I) I=&Setting; /* fall back on global settings */
+
+  unblock = PAutoBlock();
+  n=VLAGetSize(I->info);
+  result=PyList_New(0);
+  for(a=0;a<n;a++) {
+    if(I->info[a].changed) {
+      I->info[a].changed=false;
+      PyList_Append(result,PyInt_FromLong(a));
+    }
+  }
+  PAutoUnblock(unblock);
+
+  return(result);
+}
+/*========================================================================*/
 void SettingCheckHandle(CSetting **handle)
 {
   if(!*handle)
@@ -173,9 +196,9 @@ static void *SettingPtr(CSetting *I,int index,unsigned int size)
     sr->offset=I->size;
     I->size+=size;
     VLACheck(I->data,char,I->size);
-    sr->defined = true;
-    sr->changed = true;
   }
+  sr->defined = true;
+  sr->changed = true;
   return(I->data+sr->offset);
 }
 /*========================================================================*/
@@ -440,6 +463,7 @@ void SettingGenerateSideEffects(int index,char *sele,int state)
 	 break;
   case cSetting_ortho:
   case cSetting_ambient:
+  case cSetting_bg_rgb:
 	 SceneDirty();
   case cSetting_overlay:
   case cSetting_text:

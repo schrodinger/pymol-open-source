@@ -83,6 +83,7 @@ float *SettingGet_fv (CSetting *set1,CSetting *set2,int index);
 PyObject *SettingGetTuple(CSetting *set1,CSetting *set2,int index); /* (type,(value,)) */
 
 void SettingGenerateSideEffects(int index,char *sele,int state);
+PyObject *SettingGetUpdateList(CSetting *I);
 
 /* Legacy API below */
 
