@@ -14,6 +14,10 @@ I* Additional authors of this source file include:
 Z* -------------------------------------------------------------------
 */
 
+#ifdef WIN32
+#include<windows.h>
+#endif
+
 #include"os_std.h"
 #include"os_time.h"
 #include"os_unix.h"
@@ -296,7 +300,7 @@ int PLabelAtom(AtomInfoType *at,char *expr)
   if(at->customType!=cAtomInfoNoType)
     PConvIntToPyDictItem(dict,"numeric_type",at->customType);
   PConvFloatToPyDictItem(dict,"partial_charge",at->partialCharge);
-  PConvFloatToPyDictItem(dict,"formal_charge",at->formalCharge);
+  PConvIntToPyDictItem(dict,"formal_charge",at->formalCharge);
   PConvIntToPyDictItem(dict,"id",at->id);
   PyRun_String(expr,Py_single_input,P_globals,dict);
   if(PyErr_Occurred()) {
@@ -376,11 +380,18 @@ void PInitEmbedded(int argc,char **argv)
   
   PyObject *args,*pymol,*invocation;
 
+#ifdef WIN32
+  OrthoLineType path_buffer,command;
+  HKEY phkResult;
+  int lpcbData;
+  int lpType = REG_SZ;
+  int r1,r2;
+#endif
+
   Py_Initialize();
   PyEval_InitThreads();
 
   init_cmd();
-
 #ifdef _PYMOL_MONOLITHIC
 	initExtensionClass();
 	initsglite();
@@ -390,13 +401,28 @@ void PInitEmbedded(int argc,char **argv)
     init_glu_num();
     init_glut();
     initopenglutil();
+	/* missing initopenglutil_num()???  WLD 3/26/2001*/
 #endif
 
   PyRun_SimpleString("import os\n");
   PyRun_SimpleString("import sys\n");
 #ifdef WIN32
   PyRun_SimpleString("if not os.environ.has_key('PYTHONPATH'): os.environ['PYTHONPATH']=''\n");
-  PyRun_SimpleString("if not os.environ.has_key('PYMOL_PATH'): os.environ['PYTHONPATH']=os.environ['PYTHONPATH']+';'+os.getcwd()+'/modules'\n");
+
+lpcbData = sizeof(OrthoLineType)-1;
+r1=RegOpenKeyEx(HKEY_CLASSES_ROOT,"Software\\DeLano Scientific\\PyMOL\\PYMOL_PATH",0,KEY_EXECUTE,&phkResult);
+  if(r1==ERROR_SUCCESS) {
+	  r2 = RegQueryValueEx(phkResult,"",NULL,&lpType,path_buffer,&lpcbData);
+	  if (r2==ERROR_SUCCESS) {
+			/* use environment variable PYMOL_PATH first, registry entry second */
+			sprintf(command,"_registry_pymol_path = r'''%s'''\n",path_buffer);
+			PyRun_SimpleString(command);
+			PyRun_SimpleString("print _registry_pymol_path\n");
+			PyRun_SimpleString("if not os.environ.has_key('PYMOL_PATH'): os.environ['PYMOL_PATH']=_registry_pymol_path\n");
+	  }
+	RegCloseKey(phkResult);
+	} 
+/*  PyRun_SimpleString("if not os.environ.has_key('PYMOL_PATH'): os.environ['PYTHONPATH']=os.environ['PYTHONPATH']+';'+os.getcwd()+'/modules'\n");*/
   PyRun_SimpleString("if not os.environ.has_key('PYMOL_PATH'): os.environ['PYMOL_PATH']=os.getcwd()\n");
 #endif
   PyRun_SimpleString("sys.path.append(os.environ['PYMOL_PATH']+'/modules')\n");
