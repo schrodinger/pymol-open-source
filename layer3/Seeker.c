@@ -753,7 +753,7 @@ static char SeekerGetAbbr(char *abbr)
         return 'Q';
         break;
       case 'U':
-        return 'D';
+        return 'E';
         break;
       case 'Y':
         return 'G';

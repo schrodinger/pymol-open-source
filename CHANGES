@@ -2,6 +2,12 @@
 CHANGE LOG
 =========================================================================
 
+Changes up to 0.97
+
+   * install plugin menu item
+
+   * fixed sequence viewer bug -- GLU now shown as 'E' not 'D'!
+
 Changes up to 0.96
 
    * more VDW parameters & updated bond info for DNA/RNA
