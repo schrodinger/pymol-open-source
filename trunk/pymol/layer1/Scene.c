@@ -549,7 +549,6 @@ void SceneSetFrame(int mode,int frame)
   int newFrame=0;
   int newState=0;
   int movieCommand = false;
-  int oldFrame=0;
   newFrame = SettingGetGlobal_i(cSetting_frame) -1;
   PRINTFD(FB_Scene)
     " SceneSetFrame: entered.\n"
