@@ -202,7 +202,8 @@ ObjectMolecule *ObjectMoleculeLoadTRJFile(ObjectMolecule *I,char *fname,int fram
 
         to=cs->IdxToAtm;
         c=0;
-        for(a=0;a<cs->NIndex;a++) { /* now fix IdxToAtm and remap xref to coordinate space */         
+        for(a=0;a<cs->NIndex;a++) { /* now fix IdxToAtm, AtmToIdx,
+                                       and remap xref to coordinate space */         
           at_i = cs->IdxToAtm[a];
           if(cs->AtmToIdx[at_i]>=0) {
             *(to++)=at_i;
