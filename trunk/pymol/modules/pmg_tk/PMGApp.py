@@ -18,6 +18,7 @@ from tkFileDialog import *
 from AbstractApp import AbstractApp
 from Setting import Setting
 from SetEditor import SetEditor
+from ColorEditor import ColorEditor
 
 import Pmw
 import sys, string
@@ -385,6 +386,7 @@ class PMGApp(AbstractApp):
       cmd.log("util.hide_sele()\n","util.hide_sele()\n")
       util.hide_sele()
 
+   
    def createMenuBar(self):
       self.menuBar.addmenuitem('Help', 'command',
                                'Get information on application', 
@@ -536,6 +538,12 @@ class PMGApp(AbstractApp):
                                state='disabled',                               
                         command =  None)
 
+
+      self.menuBar.addmenuitem('Edit', 'command',
+                         'Test',
+                         label='Test',
+                        command =  lambda s=self: s.test())
+
       self.menuBar.addmenu('Movies', 'Movie Control')
 
       self.menuBar.addmenuitem('Movies', 'checkbutton',
@@ -667,6 +675,11 @@ class PMGApp(AbstractApp):
                          'Edit PyMOL Settings',
                          label=self.pad+'Edit All...',
                                command = lambda s=self: SetEditor(s))
+
+      self.menuBar.addmenuitem('Settings', 'command',
+                         'Edit PyMOL Colors',
+                         label=self.pad+'Colors...',
+                               command = lambda s=self: ColorEditor(s))
 
       self.menuBar.addmenuitem('Settings', 'separator', '')
       

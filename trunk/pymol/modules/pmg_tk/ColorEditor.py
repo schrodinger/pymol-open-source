@@ -17,23 +17,22 @@
 # PyMOL
 
 from Tkinter import *
+import tkColorChooser
+
 import Pmw
 from pymol import cmd
 import pymol.setting
 import string
 import copy
 
-class SingleEdit:
-   def __init__(self,app,name,parent):
+class NewColor:
+   def __init__(self,app,parent):
       self.app = app
       self.parent = parent
-      self.name = name
       items = []
 
-      prompt = name
-      
-      self.dialog = Pmw.PromptDialog(self.app.root,title=prompt,
-                          buttons = ('Set', 'Cancel'),
+      self.dialog = Pmw.PromptDialog(self.app.root,title='Create color named...',
+                          buttons = ('Create', 'Cancel'),
                                    defaultbutton='Set',
                           buttonboxpos=S,
                           command = self.command)
@@ -41,9 +40,7 @@ class SingleEdit:
       self.entryfield = self.dialog.component('entryfield')
       self.entry = self.entryfield.component('entry')
 
-      txt = cmd.get_setting_text(name)
-      self.entryfield.setentry(txt)
-      self.entry.selection_range(0,len(txt))
+      self.entryfield.setentry('')
       self.dialog.protocol('WM_DELETE_WINDOW',self.cancel)
 
       app.my_activate(self.dialog,focus=self.entry)
@@ -52,31 +49,55 @@ class SingleEdit:
       self.command(result='Done')
 
    def command(self,result=None):
-      if result=='Set':
+      if result=='Create':
          st = string.strip(self.entry.get())
          if len(st):
-            cmd.set(self.name,st,log=1)
-         self.parent.update(self.name)
-      self.app.my_deactivate(self.dialog)
+            self.parent.update(st)
+         self.app.my_deactivate(self.dialog)
+         if len(st):
+            ColorEdit(self.app,st,self.parent,[1.0,1.0,1.0])
+      else:
+         self.app.my_deactivate(self.dialog)
+      
+class ColorEdit:
+   def __init__(self,app,name,parent,rgb):
+      self.app = app
+      self.parent = parent
+      self.name = name
+
+      color = tkColorChooser.Chooser(
+         initialcolor='#%02x%02x%02x'%(
+         int(rgb[0]*255),int(rgb[1]*255),int(rgb[2]*255)),
+         title="Modify color").show()
+
+      if color:
+         if color[0]!=None:
+            rgb = color[0]
+            cmd.do("set_color %s,[%5.2f,%5.2f,%5.2f]"%(name,
+                   float(rgb[0]/255.0),
+                   float(rgb[1]/255.0),
+                   float(rgb[2]/255.0)))
+            cmd.do("recolor")
             
-class SetEditor:
+class ColorEditor:
 
    def __init__(self,app):
 
       self.app = app
       self.list = []
-      for a in  pymol.setting.get_index_list():
-         self.list.append("%-30s %s"%(pymol.setting._get_name(a),
-                    cmd.get_setting_text(a,'',-1)))
+
+      lst = cmd.get_color_indices()
+      for a in lst:
+         self.list.append("%-30s"%(a[0]))
 
       self.index = {}
       c = 0
-      for a in pymol.setting.get_name_list():
-         self.index[a] = c
+      for a in lst:
+         self.index[a[0]] = a[1]
          c = c + 1
          
       self.dialog = Pmw.SelectionDialog(self.app.root,title="Settings",
-                          buttons = ('Edit', 'Done'),
+                          buttons = ('New', 'Edit', 'Done'),
                                    defaultbutton='Edit',
                           scrolledlist_labelpos=N,
                           label_text='Double click to edit',
@@ -92,20 +113,19 @@ class SetEditor:
       self.command(result='Done')
       
    def update(self,name):
-      if self.index.has_key(name):
-         idx = self.index[name]
-         self.listbox.delete(idx,idx)
-         self.listbox.insert(idx,"%-30s %s"%(name,
-                    cmd.get_setting_text(pymol.setting._get_index(name))))
-         self.listbox.selection_set(idx)
+      if not self.index.has_key(name):
+         self.listbox.insert(0,"%s"%name)
+         self.listbox.selection_set(0)
+         self.index[name]=0
          
    def command(self,result):
       if result=='Done':
          self.app.my_withdraw(self.dialog)
-      else:
+      elif result=='Edit':
          sels = self.dialog.getcurselection()
          if len(sels)!=0:
-            setting = string.strip(sels[0][0:30])
-            SingleEdit(self.app,setting,self)
-
-               
+            color = string.strip(sels[0])
+            ColorEdit(self.app,color,self,cmd.get_color_tuple(color))
+      else:
+         NewColor(self.app,self)
+         
