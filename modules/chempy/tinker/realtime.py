@@ -3,6 +3,7 @@
 from pymol import cmd
 from molobj import MolObj
 from typer import Typer,Rules
+import rules
 
 from chempy import io
 from chempy import protein,hetatm
@@ -16,11 +17,13 @@ from chempy.tinker.state import State
 import os
 
 state = None
+model = None
 
 def setup(sele):
    
    global state
-
+   global model
+   
    state = State()
 
    model = cmd.get_model(sele)
@@ -28,26 +31,29 @@ def setup(sele):
 
    ruleSet = Rules()
 
-   ruleSet.fromFile("amber.txt")
+   ruleSet.fromList(rules.amber_types)
 
    mobj = MolObj()
    mobj.fromChemPyModel(model)
 
    typed = Typer(molObj = mobj)
+   
+   print " realtime: assigning atom types"
    typed.applyRules(ruleSet)
 
    c = 0
    for a in typed.getNamedTypes():
-      print c,a
-      if a=='':
-         print " warning: unable to assign atom type to atom %d"%c
-      else:
-         model.atom[c].text_type = a
+      at = model.atom[c]
+      if at.text_type == '??':
+         print c,a
+         if a=='':
+            print " warning: unable to assign atom type to atom %d"%c
+         else:
+            at.text_type = a
       c = c + 1
 
    sm = 0
    for a in model.atom:
-      a.resi_number = 500
       a.resi = str(a.resi_number)
       sm = sm + a.partial_charge
 
@@ -68,7 +74,7 @@ def setup(sele):
       return 1
    else:
       subset.dump_missing()
-      
+      model = model
       state = None
       return 0
       
@@ -110,7 +116,20 @@ def dyna(steps,iter=1):
 
       print " realtime.dyna: terminated after %d steps." % state.counter
 
+def check(obj='check'):
+   global state
+   global model
+   
+   if not state:
+      if not model:
+         print " realtime.reload: please run setup first."
+      else:
+         cmd.load_model(model,obj,1)
+   else:
+      model = state.model
+      cmd.load_model(model,obj,1)
 
+   
 def mini(total_step=100,gradient=0.001,interval=100,obj='rt'):
 
    global state
