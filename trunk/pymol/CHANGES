@@ -111,6 +111,8 @@ Changes up to 0.83
 
    * fixed bug in startup file reading
 
+   * first inclusion of cex file support
+
 Changes up to 0.82
 
    * WARNING: default behavior of isomesh and isosurf changed!  By default, they
