@@ -35,7 +35,6 @@ if __name__=='pymol.querying':
          unlock()
       return r
 
-      return r
    def get_symmetry(selection="(all)",quiet=1):
       '''
 DESCRIPTION

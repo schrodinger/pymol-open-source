@@ -537,6 +537,10 @@ int EditorTorsion(PyMOLGlobals *G,float angle)
             I->DragIndex=-1;
             I->DragSelection=-1;
             I->DragObject=NULL;
+
+            if(I->BondMode && 
+               SettingGetGlobal_b(G,cSetting_editor_auto_dihedral)) 
+              EditorDrawDihedral(G);
           }
         }
       }
