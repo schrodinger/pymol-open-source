@@ -37,6 +37,7 @@ Z* -------------------------------------------------------------------
 #include"Word.h"
 #include"Scene.h"
 #include"CGO.h"
+#include"Seq.h"
 
 #define SelectorWordLength 1024
 typedef char SelectorWordType[SelectorWordLength];
@@ -4693,6 +4694,41 @@ int  SelectorEmbedSelection(int *atom, char *name, ObjectMolecule *obj,int no_du
   return(c);
 }
 /*========================================================================*/
+static int *SelectorApplySeqRowVLA(CSeqRow *rowVLA,int nRow)
+{
+#if 0
+
+  SelectorType *I=&Selector;
+  int *result;
+  int a,n;
+  ObjectMolecule *obj;
+  SelectorUpdateTable();  
+  result = Calloc(int,I->NAtom);
+  for(a=0;a<nRow;a++) {
+    CSeqRow *row = rowVLA + a;
+    obj = ExecutiveFindObjectMoleculeByName(row->name);
+    if(obj) {
+      for(b=0;b<row->nCol;b++)
+        {
+          CSeqCol *col = row->col + b;
+          int *index;
+          if(col->atom_at&&row->atom_lists)
+            index = row->atom_lists + col->atom_at;
+          while((*index)>0) {
+            if(index)
+              if(col->inverse)
+                result[obj->SeleBase + *index] = true;
+            index++;
+          }
+        }
+    }
+  }
+  return(result);
+#else
+  return NULL;
+#endif
+}
+/*========================================================================*/
 int *SelectorApplyMultipick(Multipick *mp)
 {
   SelectorType *I=&Selector;
@@ -4714,7 +4750,10 @@ int *SelectorApplyMultipick(Multipick *mp)
   return(result);
 }
 /*========================================================================*/
-int SelectorCreate(char *sname,char *sele,ObjectMolecule *obj,int quiet,Multipick *mp) 
+
+static int _SelectorCreate(char *sname,char *sele,ObjectMolecule *obj,
+                           int quiet,Multipick *mp,CSeqRow *rowVLA,
+                           int nRow) 
 {
   SelectorType *I=&Selector;
   int *atom=NULL;
@@ -4750,7 +4789,9 @@ int SelectorCreate(char *sname,char *sele,ObjectMolecule *obj,int quiet,Multipic
         SelectorUpdateTableSingleObject(obj,false);
 	   } else if(mp) {
         atom=SelectorApplyMultipick(mp);
-      } else
+      } else if(rowVLA) {
+        atom=SelectorApplySeqRowVLA(rowVLA,nRow);
+      } else 
         ok=false;
 	 }
   if(ok)	c=SelectorEmbedSelection(atom,name,obj,false);
@@ -4775,6 +4816,17 @@ int SelectorCreate(char *sname,char *sele,ObjectMolecule *obj,int quiet,Multipic
     ENDFD
   return(c);
 }
+
+int SelectorCreateFromSeqRowVLA(char *sname,CSeqRow *rowVLA,int nRow)
+{
+  return _SelectorCreate(sname,NULL,NULL,true,NULL,rowVLA,nRow);
+}
+
+int SelectorCreate(char *sname,char *sele,ObjectMolecule *obj,int quiet,Multipick *mp)
+{
+  return _SelectorCreate(sname,sele,obj,quiet,mp,NULL,0);
+}
+
 /*========================================================================*/
 void SelectorClean(void)
 {

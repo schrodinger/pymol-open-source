@@ -185,11 +185,12 @@ static int ScrollBarDrag(Block *block,int x,int y,int mod)
   else 
     displ = y-I->StartPos;    
   I->Value = I->StartValue - (I->ValueMax*displ)/I->BarRange;
-  if(displ>0.0)
+  /*  if(displ>0.0)
     I->Value-=0.5;
   else
     I->Value+=0.5;
-  
+  */
+
   if(I->Value<0.0) I->Value=0.0;
   if(I->Value>I->ValueMax) I->Value=I->ValueMax;
   OrthoDirty();

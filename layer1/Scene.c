@@ -727,6 +727,7 @@ void SceneChanged(void)
   CScene *I=&Scene;
   I->ChangedFlag=true;
   SceneDirty();
+  SeqDirty();
 }
 /*========================================================================*/
 Block *SceneGetBlock(void)

@@ -83,6 +83,7 @@ void UtilConcatVLA(char **vla,int *cc,char *str)
   *(cc)+=len;
 }
 
+
 void UtilNConcat(char *dst,char *src,int n) { /* copies up to N-1 chars */
   int l;
   l=strlen(dst);
