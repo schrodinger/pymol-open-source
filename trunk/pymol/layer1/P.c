@@ -211,7 +211,7 @@ int PAlterAtomState(float *v,char *expr,int read_only)
 int PAlterAtom(AtomInfoType *at,char *expr,int read_only,char *model,int index)
 {
   /* assumes Blocked python interpreter*/
-  
+  WordType buf;
   AtomName name;
   PyObject *name_id1,*name_id2=NULL;
   AtomName elem;
@@ -220,6 +220,8 @@ int PAlterAtom(AtomInfoType *at,char *expr,int read_only,char *model,int index)
   PyObject *resn_id1,*resn_id2=NULL;
   ResIdent resi;
   PyObject *resi_id1,*resi_id2=NULL;
+  int resv;
+  PyObject *resv_id1,*resv_id2=NULL;
   Chain chain;
   PyObject *chain_id1,*chain_id2=NULL;
   Chain alt;
@@ -268,6 +270,7 @@ int PAlterAtom(AtomInfoType *at,char *expr,int read_only,char *model,int index)
   name_id1 = PConvStringToPyDictItem(dict,"name",at->name);
   resn_id1 = PConvStringToPyDictItem(dict,"resn",at->resn);
   resi_id1 = PConvStringToPyDictItem(dict,"resi",at->resi);
+  resv_id1 = PConvIntToPyDictItem(dict,"resv",at->resv); /* subordinate to resi */
   chain_id1 = PConvStringToPyDictItem(dict,"chain",at->chain);
   alt_id1 = PConvStringToPyDictItem(dict,"alt",at->alt);
   segi_id1 = PConvStringToPyDictItem(dict,"segi",at->segi);
@@ -307,6 +310,8 @@ int PAlterAtom(AtomInfoType *at,char *expr,int read_only,char *model,int index)
       else if(!(resn_id2 = PyDict_GetItemString(dict,"resn")))
         result=false;
       else if(!(resi_id2 = PyDict_GetItemString(dict,"resi")))
+        result=false;
+      else if(!(resv_id2 = PyDict_GetItemString(dict,"resv")))
         result=false;
       else if(!(segi_id2 = PyDict_GetItemString(dict,"segi")))
         result=false;
@@ -374,7 +379,15 @@ int PAlterAtom(AtomInfoType *at,char *expr,int read_only,char *model,int index)
               at->resv=1;
           strcpy(at->resi,resi);
         }
-      
+      } else if (resv_id1!=resv_id2) {
+        if(!PConvPyObjectToInt(resv_id2,&resv))
+          result=false;
+        else {
+          sprintf(buf,"%d",resv);
+          buf[sizeof(ResIdent)-1]=0;
+          strcpy(at->resi,buf);
+        }
+        
       }
       if(segi_id1!=segi_id2) {
         if(!PConvPyObjectToStrMaxLen(segi_id2,segi,sizeof(SegIdent)-1))

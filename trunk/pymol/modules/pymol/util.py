@@ -135,6 +135,10 @@ def performance(mode):
       cmd.set('cartoon_sampling',3)
       cmd.do("rebuild")         
 
+def hide_sele():
+   arg = cmd.get_names("selections")
+   for a in arg:
+      cmd.disable(a)
 
 def hbond(a,b,cutoff=3.3):
    st = "(%s and (%s around %4.2f) and elem N,O),(%s and (%s around %4.2f) and elem N,O),%4.2f" % (a,b,cutoff,b,a,cutoff,cutoff)
