@@ -107,6 +107,7 @@ static PyObject *CmdFit(PyObject *dummy, PyObject *args);
 static PyObject *CmdFitPairs(PyObject *dummy, PyObject *args);
 static PyObject *CmdFlag(PyObject *self, 	PyObject *args);
 static PyObject *CmdFlushNow(PyObject *self, 	PyObject *args);
+static PyObject *CmdIdentify(PyObject *dummy, PyObject *args);
 static PyObject *CmdIntraFit(PyObject *dummy, PyObject *args);
 static PyObject *CmdIsomesh(PyObject *self, 	PyObject *args);
 static PyObject *CmdFinishObject(PyObject *self, PyObject *args);
@@ -192,6 +193,7 @@ static PyMethodDef Cmd_methods[] = {
 	{"get_model",	  CmdGetModel,     METH_VARARGS },
 	{"get_moment",	  CmdGetMoment,    METH_VARARGS },
 	{"get_pdb",	     CmdGetPDB,       METH_VARARGS },
+	{"identify",     CmdIdentify,     METH_VARARGS },
 	{"intrafit",     CmdIntraFit,     METH_VARARGS },
 	{"isomesh",	     CmdIsomesh,      METH_VARARGS },
    {"wait_queue",   CmdWaitQueue,    METH_VARARGS },
@@ -591,6 +593,27 @@ static PyObject *CmdCountStates(PyObject *dummy, PyObject *args)
   return(result);
 }
 
+static PyObject *CmdIdentify(PyObject *dummy, PyObject *args)
+{
+  char *str1;
+  OrthoLineType s1;
+  int mode;
+  PyObject *result = Py_None;
+  int *iVLA=NULL;
+  PyArg_ParseTuple(args,"si",&str1,&mode);
+  APIEntry();
+  SelectorGetTmp(str1,s1);
+  iVLA=ExecutiveIdentify(s1,mode);
+  SelectorFreeTmp(s1);
+  APIExit();
+  if(iVLA) {
+    result=PConvIntVLAToPyList(iVLA);
+    VLAFreeP(iVLA);
+  }
+  if(result==Py_None) Py_INCREF(result);
+  return(result);
+}
+
 static PyObject *CmdSystem(PyObject *dummy, PyObject *args)
 {
   char *str1;
@@ -661,8 +684,9 @@ static PyObject *CmdGetModel(PyObject *dummy, PyObject *args)
   model=ExecutiveSeleToChemPyModel(s1,state);
   SelectorFreeTmp(s1);
   APIExit();
-  if(model)
-    result = Py_BuildValue("O",model);
+  if(model) {
+    result = model;
+  }
   if(!result) {
     result=Py_None;
     Py_INCREF(result);
@@ -852,8 +876,8 @@ static PyObject *CmdExportDots(PyObject *self, 	PyObject *args)
 	 {
 		cObj = PyCObject_FromVoidPtr(obj,(void(*)(void*))ExportDeleteMDebug);
 		if(cObj) {
-		  result = Py_BuildValue("O",cObj);
-		  Py_DECREF(cObj); /* IMPORTANT */
+        result = Py_BuildValue("O",cObj); /* I think this */
+        Py_DECREF(cObj); /* transformation is unnecc. */
 		} 
 	 }
   if(!result)

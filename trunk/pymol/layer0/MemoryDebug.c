@@ -295,6 +295,7 @@ void MemoryDebugDump(void)
 {
   int a;
   int cnt=0;
+  unsigned int tot  = 0;
   DebugRec *rec,*str;
   if(InitFlag) MemoryDebugInit();
   for(a=0;a<1024;a++)
@@ -308,15 +309,19 @@ void MemoryDebugDump(void)
 	    printf(" MemoryDebug: %s:%i <%s> \n",
 		   rec->file,rec->line,(char*)str);
 	    }
-	  else
-	    printf(" MemoryDebug: @%10p:%6x:%i %s:%i     \n",
+	  else {
+       tot+=rec->size;
+	    printf(" MemoryDebug: @%10p:%7x:%i %s:%i     \n",
 				  rec+1,rec->size,rec->type,rec->file,rec->line);
+     }
 	  rec=rec->next;
 	  cnt++;
 	}
     }
-  printf(" Memory Check: %d blocks expected, %d found, %d maximum allocated.\n",
+  printf(" Memory Check: %d expected, %d found, %d max. allocated.\n",
 			Count,cnt,MaxCount);
+  printf(" Memory Check: Total memory allocated %x (%0.1f MB).\n",tot,tot/(1024.0*1024));
+
 }
 
 void MemoryDebugHashAdd(DebugRec *rec);

@@ -160,9 +160,9 @@ void ExecutiveStereo(int flag)
 void ExecutiveBond(char *s1,char *s2,int order,int add)
 {
   int sele1,sele2;
-  Object *obj;
+  /*  Object *obj;
   ObjectMolecule *objMol;
-
+  */
   sele1=SelectorIndexByName(s1);
   sele2=SelectorIndexByName(s2);
   
@@ -557,6 +557,23 @@ float ExecutiveRMS(char *s1,char *s2,int mode)
   VLAFreeP(op1.vc1);
   VLAFreeP(op2.vc1);
   return(rms);
+}
+/*========================================================================*/
+int *ExecutiveIdentify(char *s1,int mode)
+{
+  int sele1;
+  ObjectMoleculeOpRec op2;
+  int *result = NULL;
+  sele1=SelectorIndexByName(s1);
+  if(sele1>=0) {
+    op2.code=OMOP_Identify;
+    op2.i1=0;
+    op2.i1VLA=VLAlloc(int,1000);
+    ExecutiveObjMolSeleOp(sele1,&op2);
+    result = op2.i1VLA;
+    VLASize(result,int,op2.i1);
+  } 
+  return(result);
 }
 /*========================================================================*/
 float *ExecutiveRMSStates(char *s1,int target,int mode)
