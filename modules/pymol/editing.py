@@ -1231,6 +1231,43 @@ PYMOL API
 
 
    def transform_selection(selection,matrix,state=0,log=0):
+      '''
+
+"transform_selection" is currently UNSUPPORTED, but some information has
+been provided via the mailing list:
+
+RE: transform_selection
+
+cmd.transform_selection(string selection, list-of-16-floats matrix, int state-number):
+
+Note that matrix is NOT a standard homogenous 4x4 transformation
+matrix.  Instead it is something PyMOL-specific which consists of the
+following:
+
+1) a 3x3 matrix containing the rotation in the upper-left quadrant
+
+2) a 3x1 translation to be applied before rotation in the right-hand
+   column (matrix[3],matrix[7],matrix[11])
+
+3) a 1x3 translation to be applied after rotation in the bottom row
+   (matrix[12],matrix[13],matrix[14]).
+
+In other words, if the matrix is:
+
+[  m0  m1  m2  m3
+   m4  m5  m6  m7
+   m8  m9 m10 m11
+  m12 m13 m14 m15 ]
+
+Atoms will be transformed as follows
+
+Y = M X
+
+y0 = m0*(x0+m3) + m4*(x1+m7) +  m8*(x2+m11) + m12
+y1 = m1*(x0+m3) + m5*(x1+m7) +  m9*(x2+m11) + m13
+y2 = m2*(x0+m3) + m6*(x1+m7) + m10*(x2+m11) + m14
+
+      '''
       try:
          lock()
          r = _cmd.transform_selection(str(selection),int(state)-1,list(matrix),int(log))

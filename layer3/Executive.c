@@ -474,12 +474,16 @@ int ExecutiveRampMapNew(char *name,char *map_name,PyObject *range,PyObject *colo
   if(map_obj) {
     if(map_obj->type!=cObjectMap) {
       PRINTFB(FB_Executive,FB_Errors)
-        "ExecutiveRampMapNew: Error: map not found.\n"
+        "ExecutiveRampMapNew: Error: object '%s' is not a map.\n",map_name
         ENDFB;
       ok=false;
     }
-  } else
+  } else {
+    PRINTFB(FB_Executive,FB_Errors)
+      "ExecutiveRampMapNew: Error: map '%s' not found.\n",map_name
+      ENDFB;
     ok = false;
+  }
   ok = ok && (obj=ObjectGadgetRampMapNewAsDefined((ObjectMap*)map_obj,range,color,map_state));
   if(ok) ExecutiveDelete(name); 
   if(ok) ObjectSetName((CObject*)obj,name);
