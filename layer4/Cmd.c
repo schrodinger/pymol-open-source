@@ -262,11 +262,11 @@ static PyObject *CmdFlushNow(PyObject *self, 	PyObject *args)
 {
   /* only called by the GLUT thread with unlocked API */
   P_glut_thread_keep_out++;
-  if(!flush_count) {
-    flush_count++;
-    PFlushFast();
-    flush_count--;
-  }
+  /*  if(!flush_count) {
+      flush_count++;*/
+  PFlushFast();
+    /*    flush_count--;
+          }*/
   P_glut_thread_keep_out--;
   Py_INCREF(Py_None);
   return Py_None;  

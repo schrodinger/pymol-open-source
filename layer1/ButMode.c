@@ -284,6 +284,7 @@ void ButModeDraw(Block *block)
 
     if(I->Caption[0]) GrapDrawStr(I->Caption,x,y);
 
+    y-=cButModeLineHeight;
     if(I->Samples) 
       rate = I->Rate/I->Samples;
     else 
