@@ -191,6 +191,10 @@ static PyObject *PMIsomesh(PyObject *self, 	PyObject *args) {
   
   mObj=ExecutiveFindObjectByName(str2);  
   if(mObj) {
+    if(mObj->type!=cObjectMap)
+      mObj=NULL;
+  }
+  if(mObj) {
     mapObj = (ObjectMap*)mObj;
     switch(oper) {
     case 0:
@@ -215,7 +219,7 @@ static PyObject *PMIsomesh(PyObject *self, 	PyObject *args) {
     if(obj) {
       ObjectSetName(obj,str1);
       ExecutiveManageObject((Object*)obj);
-      sprintf(buf," Mesh: created \"%s\".\n",str1);
+      sprintf(buf," Mesh: created \"%s\", setting level to %5.3f\n",str1,lvl);
       OrthoAddOutput(buf);
     }
   } else {
