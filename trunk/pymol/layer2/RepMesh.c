@@ -174,17 +174,18 @@ void RepMeshColor(RepMesh *I,CoordSet *cs)
   int cullByFlag = false;
   AtomInfoType *ai2;
 
-  /*  cullByFlag = SettingGet(cSetting_trim_dots);*/
-  inclH = SettingGet(cSetting_dot_hydrogens);
+  obj=cs->Obj;
 
-  probe_radius = SettingGet(cSetting_solvent_radius);
+  /*  cullByFlag = SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_trim_dots);*/
+  inclH = SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_dot_hydrogens);
+
+  probe_radius = SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_solvent_radius);
 
   if(!I->LastVisib) I->LastVisib = Alloc(int,cs->NIndex);
   if(!I->LastColor) I->LastColor = Alloc(int,cs->NIndex);
   lv = I->LastVisib;
   lc = I->LastColor;
   cc = cs->Color;
-  obj=cs->Obj;
   ai2=obj->AtomInfo;
   for(a=0;a<cs->NIndex;a++)
     {
@@ -297,9 +298,9 @@ Rep *RepMeshNew(CoordSet *cs)
 
   RepInit(&I->R);
 
-  probe_radius = SettingGet(cSetting_solvent_radius);
+  probe_radius = SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_solvent_radius);
   probe_radius2 = probe_radius*probe_radius;
-  min_spacing = SettingGet(cSetting_min_mesh_spacing);
+  min_spacing = SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_min_mesh_spacing);
 
   I->N=NULL;
   I->NTot=0;
@@ -489,9 +490,10 @@ void RepMeshGetSolventDots(RepMesh *I,CoordSet *cs,float *min,float *max,float p
   float probe_radius_plus;
   int dotCnt,maxCnt,maxDot=0;
   int cnt;
-  cavity_cull = (int)SettingGet(cSetting_cavity_cull);
-
   obj = cs->Obj;
+
+  cavity_cull = (int)SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_cavity_cull);
+
   I->Dot=(float*)mmalloc(sizeof(float)*cs->NIndex*3*sp->nDot);
   ErrChkPtr(I->Dot);
 

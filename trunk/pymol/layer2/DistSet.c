@@ -110,7 +110,7 @@ DistSet *DistSetNew(void)
   I->Coord = NULL;
   I->Rep=VLAlloc(Rep*,cRepCnt);
   I->NRep=cRepCnt;
-
+  I->Setting=NULL;
   for(a=0;a<I->NRep;a++)
 	 I->Rep[a] = NULL;
   return(I);

@@ -17,6 +17,7 @@ Z* -------------------------------------------------------------------
 #define _H_DistSet
 
 #include"Rep.h"
+#include"Setting.h"
 
 typedef struct DistSet {
   void (*fUpdate)(struct DistSet *I);
@@ -28,6 +29,7 @@ typedef struct DistSet {
   int NIndex;
   Rep **Rep; /* an array of pointers to representations */
   int NRep;
+  CSetting *Setting;
 } DistSet;
 
 #include"ObjectDist.h"

@@ -212,7 +212,7 @@ Rep *RepSphereNew(CoordSet *cs)
   }
 
   RepInit(&I->R);
-  ds = (int)SettingGet(cSetting_sphere_quality);
+  ds = (int)SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_sphere_quality);
   if(ds<0) ds=0;
   switch(ds) {
   case 0: sp=Sphere0; break;
@@ -221,14 +221,13 @@ Rep *RepSphereNew(CoordSet *cs)
   default: sp=Sphere3; break;
   }
 
-  spheroid_scale=SettingGet(cSetting_spheroid_scale);
+  spheroid_scale=SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_spheroid_scale);
   if(spheroid_scale&&cs->Spheroid) 
     spheroidFlag=1;
   else
     spheroidFlag=0;
 
 
-  obj = cs->Obj;
   I->R.fRender=(void (*)(struct Rep *, CRay *, Pickable **))RepSphereRender;
   I->R.fFree=(void (*)(struct Rep *))RepSphereFree;
   I->R.fSameVis=(int (*)(struct Rep*, struct CoordSet*))RepSphereSameVis;
@@ -273,7 +272,7 @@ Rep *RepSphereNew(CoordSet *cs)
 	 I->VC=(float*)mrealloc(I->VC,1);
 
 
-  if(SettingGet(cSetting_cull_spheres)&&(!spheroidFlag)) {
+  if(SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_cull_spheres)&&(!spheroidFlag)) {
 	 I->V=(float*)mmalloc(sizeof(float)*cs->NIndex*(sp->NVertTot*19));
 	 ErrChkPtr(I->V);
 

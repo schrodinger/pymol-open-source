@@ -96,6 +96,7 @@ Rep *RepDistDashNew(DistSet *ds)
   float *v,*v1,*v2,d[3],d1[3],d2[3];
   float l,ph;
   float dash_len,dash_gap,dash_sum,seg;
+
   OOAlloc(RepDistDash);
 
   if(!ds->NIndex) {
@@ -104,25 +105,26 @@ Rep *RepDistDashNew(DistSet *ds)
   }
 
   RepInit(&I->R);
-
-
+  
+  
   I->R.fRender=(void (*)(struct Rep *, CRay *, Pickable **))RepDistDashRender;
   I->R.fFree=(void (*)(struct Rep *))RepDistDashFree;
   I->R.fRecolor=NULL;
 
-  dash_len = SettingGet(cSetting_dash_length);
-  dash_gap = SettingGet(cSetting_dash_gap);
+
+  dash_len = SettingGet_f(ds->Setting,ds->Obj->Obj.Setting,cSetting_dash_length);
+  dash_gap = SettingGet_f(ds->Setting,ds->Obj->Obj.Setting,cSetting_dash_gap);
   dash_sum = dash_len+dash_gap;
   if(dash_sum<R_SMALL4) dash_sum=0.5;
 
-  I->linewidth = SettingGet(cSetting_dash_width);
-  I->radius = SettingGet(cSetting_dash_radius);
+  I->linewidth = SettingGet_f(ds->Setting,ds->Obj->Obj.Setting,cSetting_dash_width);
+  I->radius = SettingGet_f(ds->Setting,ds->Obj->Obj.Setting,cSetting_dash_radius);
 
   I->N=0;
   I->V=NULL;
   I->R.P=NULL;
   I->Obj = (Object*)ds->Obj;
-
+  
   n=0;
   if(ds->NIndex) {
 	 I->V=VLAlloc(float,ds->NIndex*10);

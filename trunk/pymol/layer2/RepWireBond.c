@@ -350,7 +350,7 @@ Rep *RepWireBondNew(CoordSet *cs)
 
 	 /* now create pickable verson */
 
-	 if(SettingGet(cSetting_pickable)) {
+	 if(SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_pickable)) {
 		I->VP=(float*)mmalloc(sizeof(float)*obj->NBond*6*2);
 		ErrChkPtr(I->VP);
 		
