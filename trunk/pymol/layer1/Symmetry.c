@@ -97,7 +97,6 @@ int SymmetryAttemptGeneration(CSymmetry *I,int blocked,int quiet)
   } else {
     if(!blocked) 
       PBlock();
-    fflush(stdout);
     mats = PyObject_CallMethod(P_xray,"sg_sym_to_mat_list","s",I->SpaceGroup);
     if(mats&&(mats!=Py_None)) {
       l = PyList_Size(mats);
