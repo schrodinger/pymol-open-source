@@ -701,7 +701,7 @@ void PInitEmbedded(int argc,char **argv)
 
 #ifdef _PYMOL_SETUP_PY21
 {
-  OrthoLineType line;
+  char line[5000];
   char *pymol_path;
 
   if(!getenv("PYMOL_PATH")) {
@@ -710,12 +710,29 @@ void PInitEmbedded(int argc,char **argv)
     }
   }
 
-  if(!getenv("PYTHONPATH")) {
+  if(!getenv("PYTHONPATH")) { /* create PYTHONPATH */
     if(getenv("PYMOL_PATH")) {
       strcpy(line,getenv("PYMOL_PATH"));
-      strcat(line,"/ext/lib/python2.1");
+      strcat(line,"/ext/lib/python2.1:");
+      strcat(line,getenv("PYMOL_PATH"));
+      strcat(line,"/ext/lib/python2.1/plat-linux2:");
+      strcat(line,getenv("PYMOL_PATH"));
+      strcat(line,"/ext/lib/python2.1/lib-tk:");
+      strcat(line,getenv("PYMOL_PATH"));
+      strcat(line,"/ext/lib/python2.1/lib-dynload");
       setenv("PYTHONPATH",line,1);
     }
+  } else { /* preempt existing PYTHONPATH */
+      strcpy(line,getenv("PYMOL_PATH"));
+      strcat(line,"/ext/lib/python2.1:");
+      strcat(line,getenv("PYMOL_PATH"));
+      strcat(line,"/ext/lib/python2.1/plat-linux2:");
+      strcat(line,getenv("PYMOL_PATH"));
+      strcat(line,"/ext/lib/python2.1/lib-tk:");
+      strcat(line,getenv("PYMOL_PATH"));
+      strcat(line,"/ext/lib/python2.1/lib-dynload:");
+      strcat(line,getenv("PYTHONPATH"));
+      setenv("PYTHONPATH",line,1);
   }
 }
 #endif
@@ -771,6 +788,11 @@ r1=RegOpenKeyEx(HKEY_CLASSES_ROOT,"Software\\DeLano Scientific\\PyMOL\\PYMOL_PAT
 #ifdef _PYMOL_SETUP_TCLTK83
   PyRun_SimpleString("if os.path.exists(os.environ['PYMOL_PATH']+'/ext/lib/tcl8.3'): os.environ['TCL_LIBRARY']=os.environ['PYMOL_PATH']+'/ext/lib/tcl8.3'\n");
   PyRun_SimpleString("if os.path.exists(os.environ['PYMOL_PATH']+'/ext/lib/tk8.3'): os.environ['TK_LIBRARY']=os.environ['PYMOL_PATH']+'/ext/lib/tk8.3'\n");
+#endif
+
+#ifdef _PYMOL_SETUP_PY21
+  PyRun_SimpleString("import string");
+  PyRun_SimpleString("sys.path=filter(lambda x:string.find(x,'warren/ext-static')<0,sys.path)"); /* clean bogus entries in sys.path */
 #endif
   
   PyRun_SimpleString("if (os.environ['PYMOL_PATH']+'/modules') not in sys.path: sys.path.append(os.environ['PYMOL_PATH']+'/modules')\n");

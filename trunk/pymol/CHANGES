@@ -105,6 +105,12 @@ Current Bugs to Fix
    * superposition system fails with degenerate sets (planer systems, etc).
      sometimes it just fails period
 
+Changes up to 0.83
+
+   * various tweaks to the semistatic minimal dependencies build...
+
+   * fixed bug in startup file reading
+
 Changes up to 0.82
 
    * WARNING: default behavior of isomesh and isosurf changed!  By default, they
