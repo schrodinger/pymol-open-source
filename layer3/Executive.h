@@ -105,7 +105,7 @@ int ExecutivePairIndices(char *s1,char *s2,int state1,int state2,
 void ExecutiveRebuildAllObjectDist(void);
 int ExecutivePhiPsi(char *s1,ObjectMolecule ***objVLA,int **iVLA,float **phiVLA,float **psiVLA,int state) ;
 float *ExecutiveGetVertexVLA(char *s1,int state);
-
+int ExecutiveValidName(char *name);
 #endif
 
 
