@@ -391,10 +391,8 @@ class PMGApp(AbstractApp):
          dir = re.sub(r"[^\/\\]*$","",ofile)
          os.chdir(dir)	
          if re.search("\.pym*$|\.PYM*$",ofile):
-            cmd.log("run %s\n"%ofile)                     
             cmd.do("run "+ofile);      
          else:
-            cmd.log("@%s\n"%ofile)                                 
             cmd.do("@"+ofile);
 
    def file_savepng(self):
