@@ -165,10 +165,10 @@ ObjectMolecule *ObjectMoleculeLoadTRJFile(ObjectMolecule *I,char *fname,int fram
   int sele0 = SelectorIndexByName(sele);
   int *xref = NULL;
   float zerovector[3]={0.0,0.0,0.0};
+  CoordSet *cs = NULL;
 
   if(!shift)
     shift = zerovector;
-  CoordSet *cs = NULL;
   if(interval<1)
     interval=1;
 
