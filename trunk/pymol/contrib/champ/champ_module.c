@@ -70,7 +70,7 @@ static PyObject *_memory_dump(PyObject *self,      PyObject *args)
   return(RetStatus(ok));
 }
 
-static PyObject *insert_smiles(PyObject *self,      PyObject *args)
+static PyObject *insert_pattern_string(PyObject *self,      PyObject *args)
 {
   int ok=true;
   int result = 0;
@@ -119,7 +119,7 @@ static PyObject *pattern_get_cycle(PyObject *self,      PyObject *args)
   if(ok) {
     I = PyCObject_AsVoidPtr(O);
     pat = I->Pat+int1;
-    printf("index2 %d\n",int1);
+
     n_atom = ListLen(I->Atom,pat->atom);
     at = I->Atom + pat->atom;
     l1 = PyList_New(n_atom);
@@ -142,6 +142,128 @@ static PyObject *pattern_get_cycle(PyObject *self,      PyObject *args)
   }
   return(RetObj(ok,result));
 }
+
+
+static PyObject *pattern_get_class(PyObject *self,      PyObject *args)
+{
+  int ok=true;
+  int int1;
+  PyObject *result = NULL;
+  PyObject *O,*l1,*l2;
+  CChamp *I;
+  ListPat *pat;
+  ListAtom *at;
+  ListBond *bd;
+  int a,b;
+  int n_atom,n_bond;
+  ok = PyArg_ParseTuple(args,"Oi",&O,&int1);
+  ok = PyCObject_Check(O);
+  if(ok) {
+    I = PyCObject_AsVoidPtr(O);
+    pat = I->Pat+int1;
+    
+    n_atom = ListLen(I->Atom,pat->atom);
+    at = I->Atom + pat->atom;
+    l1 = PyList_New(n_atom);
+    for(a=0;a<n_atom;a++) {
+      PyList_SetItem(l1,a,PyInt_FromLong(at->class));
+      at = I->Atom + at->link;
+    }
+
+    n_bond = ListLen(I->Bond,pat->bond);
+    l2 = PyList_New(n_bond);
+    bd = I->Bond + pat->bond;
+    for(b=0;b<n_bond;b++) {
+      PyList_SetItem(l2,b,PyInt_FromLong(bd->class));
+      bd = I->Bond + bd->link;
+    }
+
+    result = PyList_New(2);
+    PyList_SetItem(result,0,l1);
+    PyList_SetItem(result,1,l2);
+  }
+  return(RetObj(ok,result));
+}
+
+static PyObject *pattern_get_codes(PyObject *self,      PyObject *args)
+{
+  int ok=true;
+  int int1,ai,bi;
+  PyObject *result = NULL;
+  PyObject *O,*l1,*l2;
+  CChamp *I;
+  ListPat *pat;
+  ListAtom *at;
+  ListBond *bd;
+  int a,b;
+  int n_atom,n_bond;
+  char code[255],atom[10];
+
+  ok = PyArg_ParseTuple(args,"Oi",&O,&int1);
+  ok = PyCObject_Check(O);
+  if(ok) {
+    I = PyCObject_AsVoidPtr(O);
+    pat = I->Pat+int1;
+    n_atom = ListLen(I->Atom,pat->atom);
+    ai = pat->atom;
+    l1 = PyList_New(n_atom);
+    for(a=0;a<n_atom;a++) {
+      at = I->Atom + ai;
+
+      if(at->class&cH_Aliphatic)
+        code[0]='A';
+      else if(at->class&cH_Aromatic)
+        code[0]='R';
+      else
+        code[0]='P';
+      if(at->cycle&(cH_Ring3|cH_Ring4|cH_Ring5|cH_Ring6|cH_Ring7))
+        code[1]='C';
+      else 
+        code[1]='X';
+      code[2]=0;
+      ChampAtomToString(I,ai,atom);
+      if(atom[0]>96)
+        atom[0]-=32;
+      strcat(code,atom);
+      PyList_SetItem(l1,a,PyString_FromString(code));
+      ai = at->link;
+    }
+
+    n_bond = ListLen(I->Bond,pat->bond);
+    l2 = PyList_New(n_bond);
+    bi = pat->bond;
+    for(b=0;b<n_bond;b++) {
+      bd = I->Bond + bi;
+      if(bd->class&cH_Aliphatic)
+        code[0]='A';
+      else if(bd->class&cH_Aromatic)
+        code[0]='R';
+      else
+        code[0]='P';
+      if(bd->cycle&(cH_Ring3|cH_Ring4|cH_Ring5|cH_Ring6|cH_Ring7))
+        code[1]='C';
+      else 
+        code[1]='X';
+
+      switch(bd->order) {
+      case cH_Single: code[2]='-'; break;
+      case cH_Double: code[2]='='; break;
+      case cH_Triple: code[2]='#'; break;
+      }
+      code[3]=0;
+
+      PyList_SetItem(l2,b,PyString_FromString(code));
+      bi = bd->link;
+    }
+
+    result = PyList_New(2);
+    PyList_SetItem(result,0,l1);
+    PyList_SetItem(result,1,l2);
+  }
+  return(RetObj(ok,result));
+}
+
+
 
 
 static PyObject *list_new(PyObject *self,      PyObject *args)
@@ -181,7 +303,7 @@ static PyObject *list_free(PyObject *self,      PyObject *args)
   return(RetStatus(ok));
 }
 
-static PyObject *list_get_pattern_list(PyObject *self,      PyObject *args)
+static PyObject *list_get_pattern_indices(PyObject *self,      PyObject *args)
 {
   int ok=true;
   PyObject *result = NULL;
@@ -212,8 +334,7 @@ static PyObject *list_get_pattern_list(PyObject *self,      PyObject *args)
   return(RetObj(ok,result));
 }
 
-
-static PyObject *get_smiles(PyObject *self,      PyObject *args)
+static PyObject *get_pattern_string(PyObject *self,      PyObject *args)
 {
   int ok=true;
   PyObject *result = NULL;
@@ -233,8 +354,56 @@ static PyObject *get_smiles(PyObject *self,      PyObject *args)
   return(RetObj(ok,result));
 }
 
+static PyObject *pattern_dump(PyObject *self,      PyObject *args)
+{
+  int ok=true;
+  PyObject *result = NULL;
+  PyObject *O;
+  int pat_index;
+  CChamp *I;
 
-static PyObject *list_get_smiles_list(PyObject *self,      PyObject *args)
+  ok = PyArg_ParseTuple(args,"Oi",&O,&pat_index);
+  ok = PyCObject_Check(O);
+  if(ok) {
+    I = PyCObject_AsVoidPtr(O);
+    ChampPatDump(I,pat_index);
+  }
+  return(RetObj(ok,result));
+}
+
+static PyObject *pattern_get_atom_symbols(PyObject *self,      PyObject *args)
+{
+  int ok=true;
+  int int1,ai;
+  PyObject *result = NULL;
+  PyObject *O;
+  CChamp *I;
+  ListPat *pat;
+  ListAtom *at;
+  int a;
+  int n_atom;
+  char atom[255];
+
+  ok = PyArg_ParseTuple(args,"Oi",&O,&int1);
+  ok = PyCObject_Check(O);
+  if(ok) {
+    I = PyCObject_AsVoidPtr(O);
+    pat = I->Pat+int1;
+    n_atom = ListLen(I->Atom,pat->atom);
+    ai = pat->atom;
+    result = PyList_New(n_atom);
+    for(a=0;a<n_atom;a++) {
+      at = I->Atom + ai;
+      ChampAtomToString(I,ai,atom);
+      PyList_SetItem(result,a,PyString_FromString(atom));
+      ai = at->link;
+    }
+  }
+  return(RetObj(ok,result));
+}
+
+
+static PyObject *list_get_pattern_strings(PyObject *self,      PyObject *args)
 {
   int ok=true;
   PyObject *result = NULL,*str;
@@ -270,7 +439,7 @@ static PyObject *list_get_smiles_list(PyObject *self,      PyObject *args)
 }
 
 
-static PyObject *list_prepend_smiles_list(PyObject *self,      PyObject *args)
+static PyObject *list_prepend_pattern_strings(PyObject *self,      PyObject *args)
 {
   int ok=true;
   int list_handle,pat_index;
@@ -333,6 +502,10 @@ static PyObject *match_1v1_map(PyObject *self,      PyObject *args)
   if(ok) {
     I = PyCObject_AsVoidPtr(O);
     mat_start = ChampMatch_1V1_Map(I,pat1,pat2,limit);
+
+    ChampPatReindex(I,pat1);
+    ChampPatReindex(I,pat2);
+
     mat_cnt = 0;
     i = mat_start;
     while(i) {
@@ -428,15 +601,18 @@ static PyObject *insert_model(PyObject *self,      PyObject *args)
 static PyMethodDef champ_methods[] = {
   {"new",	                     _new,                   METH_VARARGS },
   {"memory_dump",               _memory_dump,           METH_VARARGS },
-  {"get_smiles",                get_smiles,             METH_VARARGS },
-  {"insert_smiles",             insert_smiles,          METH_VARARGS },
+  {"get_pattern_string",        get_pattern_string,       METH_VARARGS },
+  {"insert_pattern_string",     insert_pattern_string,          METH_VARARGS },
   {"insert_model",              insert_model,           METH_VARARGS },
   {"pattern_free",              pattern_free,          METH_VARARGS },
   {"pattern_get_cycle",   pattern_get_cycle,       METH_VARARGS },
-
-  {"list_prepend_smiles_list",  list_prepend_smiles_list, METH_VARARGS },
-  {"list_get_pattern_list",     list_get_pattern_list,       METH_VARARGS },
-  {"list_get_smiles_list",      list_get_smiles_list,       METH_VARARGS },
+  {"pattern_get_class",   pattern_get_class,       METH_VARARGS },
+  {"pattern_get_codes",   pattern_get_codes,       METH_VARARGS },
+  {"pattern_get_atom_symbols",  pattern_get_atom_symbols,     METH_VARARGS },
+  {"pattern_dump",  pattern_dump,     METH_VARARGS },
+  {"list_prepend_pattern_strings",  list_prepend_pattern_strings, METH_VARARGS },
+  {"list_get_pattern_indices",  list_get_pattern_indices,       METH_VARARGS },
+  {"list_get_pattern_strings",      list_get_pattern_strings,       METH_VARARGS },
   {"list_free",                 list_free,               METH_VARARGS },
   {"list_new",                  list_new,              METH_VARARGS },
   {"match_1v1_b",                 match_1v1_b,              METH_VARARGS },

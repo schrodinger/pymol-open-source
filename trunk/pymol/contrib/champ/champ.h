@@ -27,11 +27,11 @@ Z* -------------------------------------------------------------------
 /* atoms */
 
 #define cH_Any  0xFFFFFFFF
-#define cH_NotH 0x00000001
+#define cH_H    0x00000001
 #define cH_C    0x00000002 
 #define cH_N    0x00000004 
 #define cH_O    0x00000008
-#define cH_H    0x00000010
+#define cH_X4   0x00000010
 #define cH_S    0x00000020
 #define cH_P    0x00000040
 #define cH_F    0x00000080
@@ -47,19 +47,19 @@ Z* -------------------------------------------------------------------
 #define cH_Cu   0x00020000
 #define cH_Se   0x00040000
 #define cH_B    0x00080000
-#define cH_A    0x00100000
+#define cH_X1   0x00100000
 #define cH_E    0x00200000
 #define cH_G    0x00400000
 #define cH_J    0x00800000
 #define cH_L    0x01000000
 #define cH_M    0x02000000
 #define cH_Q    0x04000000
-#define cH_R    0x08000000
+#define cH_X2   0x08000000
 #define cH_T    0x10000000
 #define cH_X    0x20000000
 #define cH_Z    0x40000000
 
-/* [Cl,Br,!F,Cl|H3;r5,r6;X1] */
+#define cH_NotH 0xFFFFFFFE
 
 /* charge */
 
@@ -80,10 +80,15 @@ Z* -------------------------------------------------------------------
 #define cH_Ring8      0x00000040
 #define cH_RingN      0x80000000 /* not yet implemented */
 
+#define cH_Cyclic     0xFFFFFFFE
+
 /* class */
 
 #define cH_Aliphatic  0x00000001
 #define cH_Aromatic   0x00000002
+#define cH_Pi         0x00000004 /* non-exclusive with above */
+
+#define cH_AnyClass   0x00000003
 
 /* degree */
 
@@ -94,8 +99,10 @@ Z* -------------------------------------------------------------------
 #define cH_4Bond       0x00000010
 #define cH_5Bond       0x00000020
 #define cH_6Bond       0x00000040
+#define cH_7Bond       0x00000080
+#define cH_8Bond       0x00000100
 
-/* total valence */
+/* valence */
 
 #define cH_0Valence       0x00000001
 #define cH_1Valence       0x00000002
@@ -104,6 +111,8 @@ Z* -------------------------------------------------------------------
 #define cH_4Valence       0x00000010
 #define cH_5Valence       0x00000020
 #define cH_6Valence       0x00000040
+#define cH_7Valence       0x00000080
+#define cH_8Valence       0x00000100
 
 typedef char AtomBuffer[255]; /* maximum length for a single atom */
 
@@ -122,6 +131,7 @@ typedef struct {
   int class;
   int degree;
   int valence;
+  int imp_hydro; /* not current searchable & not yet bitmap */
   char symbol[SYM_SIZE];
   char name[NAM_SIZE];
   char residue[RES_SIZE];
@@ -132,7 +142,7 @@ typedef struct {
   int not_class;
   int not_degree;
   int not_valence;
-  int implicit_hydrogens;
+  int imp_hydro_flag;
   int tag; /* string index for tag */
   int mark_tmpl,mark_targ,mark_read; /* traversal */
   int first_tmpl,first_targ; /* first template stack entry */
@@ -145,6 +155,7 @@ typedef struct {
 #define cH_Single      0x00000001
 #define cH_Double      0x00000002
 #define cH_Triple      0x00000004
+#define cH_AnyOrder    0x00000007
 
 typedef struct {
   int link;     /* memory management */
@@ -238,6 +249,11 @@ int ChampMatch_1V1_Map(CChamp *I,int pattern,int target,int limit);
 int ChampMatch_1VN_N(CChamp *I,int pattern,int list);
 int ChampModelToPat(CChamp *I,PyObject *model);
 char *ChampPatToSmiVLA(CChamp *I,int index,char *vla);
+int ChampAtomToString(CChamp *I,int index,char *buf);
+int ChampBondToString(CChamp *I,int index,char *buf);
+void ChampPatReindex(CChamp *I,int index);
+void ChampPatDump(CChamp *I,int index);
+
 
 #endif
 
