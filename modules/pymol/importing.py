@@ -15,11 +15,11 @@
 import re
 import string
 import os
-from pymol import cmd
 from cmd import _cmd,lock,unlock,Shortcut,QuietException, \
      _feedback,fb_module,fb_mask, \
      file_ext_re,safe_oname_re, \
      _load
+import cmd
 
 from chempy.sdf import SDF,SDFRec
 
