@@ -7410,9 +7410,9 @@ void ObjectMoleculeDescribeElement(ObjectMolecule *I,int index, char *buffer)
   AtomInfoType *ai;
   ai=I->AtomInfo+index;
   if(ai->alt[0])
-    sprintf(buffer,"%s: /%s/%s/%s/%s`%s/%s`%s",ai->resn,I->Obj.Name,ai->segi,ai->chain,ai->resn,ai->resi,ai->name,ai->alt);
+    sprintf(buffer,"/%s/%s/%s/%s`%s/%s`%s",I->Obj.Name,ai->segi,ai->chain,ai->resn,ai->resi,ai->name,ai->alt);
     else
-  sprintf(buffer,"%s: /%s/%s/%s/%s`%s/%s",ai->resn,I->Obj.Name,ai->segi,ai->chain,ai->resn,ai->resi,ai->name);
+  sprintf(buffer,"/%s/%s/%s/%s`%s/%s",I->Obj.Name,ai->segi,ai->chain,ai->resn,ai->resi,ai->name);
 }
 
 /*========================================================================*/
