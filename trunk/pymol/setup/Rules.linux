@@ -4,7 +4,7 @@
 #
 #- Building ----------------------------------------------------------
 #--- Tell "make" how to get to PyMOL 
-PYMOL_PATH = /users/warren/pymol
+PYMOL_PATH = ${HOME}/pymol
 #---------------------------------------------------------------------
 #
 #- Dependencies ------------------------------------------------------
@@ -15,8 +15,8 @@ XINC_DIR = -I/usr/X11R6/include
 PYTHON_EXE = $(PYMOL_PATH)/ext/bin/python
 PYTHON_LIB =
 PYTHON_LIB_DIR = 
-PYTHON_INC_DIR = -I$(PYMOL_PATH)/ext/include/python2.2 \
-	-I$(PYMOL_PATH)/ext/include/python2.2/Numeric
+PYTHON_INC_DIR = -I$(PYMOL_PATH)/ext/include/python2.3 \
+	-I$(PYMOL_PATH)/ext/include/python2.3/Numeric
 #--- Other external dependencies
 EXT_INC_DIR = -I$(PYMOL_PATH)/ext/include
 EXT_LIB_DIR = -L$(PYMOL_PATH)/ext/lib
@@ -24,9 +24,9 @@ EXT_LIB_DIR = -L$(PYMOL_PATH)/ext/lib
 #
 #- Build for LINUX as an importable module ---------------------------
 #--- System libraries
-LIBS = $(PYTHON_LIB) -lglut -lGL -lGLU -lpng -lXmu $(ZLIB) -lm
+LIBS = $(PYTHON_LIB) -lglut -lGL -lGLU -ldl -lpng -lXmu $(ZLIB) -lm
 #--- PyMOL configuration
-DEFS = -D_PYMOL_MODULE -D_PYMOL_NUMPY 
+DEFS = -D_PYMOL_MODULE -D_PYMOL_NUMPY -D_PYMOL_INLINE
 #--- How we build shared libraries
 BUILD = -shared 
 #--- What are we trying to build?
@@ -39,18 +39,19 @@ PYOGL_LIB =  -lglut -lGL -lGLU -lXmu -lXi
 #
 #- Choose One --------------------------------------------------------
 #--- GCC Optimized
-CCOPT2 = -O3 -funroll-loops -fomit-frame-pointer
+CCOPT2 = -O3 -funroll-loops -fomit-frame-pointer -finline-limit=10000 
 #--- GCC Profiling
 #CCOPT2 = -pg -O3 -funroll-loops
 #--- Debugging
-#CCOPT2 = -g
+#CCOPT2 = -g -D_MemoryDebug_ON
+CCOPT2 = -g
 #---------------------------------------------------------------------
 #
 #- Choose One --------------------------------------------------------
-#--- Workaround for very old XFree86/DRI linux dll problem
-#BUGS = -D_DRI_WORKAROUND
+#--- Workaround for XFree86/DRI linux dll problem for module build
+BUGS = -D_DRI_WORKAROUND
 #---
-BUGS =
+#BUGS =
 #---------------------------------------------------------------------
 #
 #- Choose One Pair ---------------------------------------------------
