@@ -25,7 +25,7 @@ Z* -------------------------------------------------------------------
 float ExecutiveDistance(char *sele1,char *sele2);
 float ExecutiveDist(char *nam,char *s1,char *s2,int mode,float cutoff);
 void ExecutiveBond(char *s1,char *s2,int order,int add);
-void ExecutiveIterate(char *s1,char *expr,int read_only);
+int ExecutiveIterate(char *s1,char *expr,int read_only);
 void ExecutiveLabel(char *s1,char *expr);
 void ExecutiveIterateState(int i1,char *s1,char *expr,int read_only);
 void ExecutiveColor(char *name,char *color,int flags);
@@ -83,6 +83,8 @@ void ExecutiveInvert(char *s0,char *s1,int mode);
 char *ExecutiveGetNames(int mode);
 void ExecutiveGetType(char *name,WordType type);
 float ExecutiveGetArea(char *s0,int sta0,int load_b);
+void ExecutiveRenderSelections(int curState);
+void ExecutiveHideSelections(void);
 
 #endif
 

@@ -778,6 +778,7 @@ void EditorSetActiveObject(ObjectMolecule *obj,int state)
                                          cEditorBasePref,
                                          cEditorComp);
       I->ActiveState=state;
+      
     } else {
       EditorInactive();
     }
@@ -787,7 +788,12 @@ void EditorSetActiveObject(ObjectMolecule *obj,int state)
                                          cEditorBasePref,
                                          cEditorComp);
     EditorInactive();
+
   }
+
+  if(SettingGet(cSetting_autohide_selections))
+    ExecutiveHideSelections();
+
 }
 /*========================================================================*/
 void EditorPrepareDrag(ObjectMolecule *obj,int index,int state)

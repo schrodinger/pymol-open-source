@@ -51,6 +51,8 @@ int PConvAttrToPtr(PyObject *obj,char *name,void **cobj);
 
 int PConvCObjectToPtr(PyObject *obj,void **ptr);
 
+int PConvPyListToStringVLA(PyObject *obj,char **vla_ptr);
+
 /* === end === */
 
 /* === optimized, non-error checking routines === */

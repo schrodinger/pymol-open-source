@@ -31,6 +31,7 @@ Z* -------------------------------------------------------------------
 #include"ButMode.h"
 #include"Control.h"
 #include"Setting.h"
+#include"Wizard.h"
 #include"Queue.h"
 #include"Pop.h"
 
@@ -48,10 +49,13 @@ ListVarDeclare(BlockList,Block);
 #define OrthoHistoryLines 0xFF
 
 #define cOrthoLineHeight 12
+#define cOrthoCharWidth 8
 #define cOrthoLeftMargin 8
 #define cOrthoBottomMargin 10
 
-#define ExecutiveMargin 130
+#define ExecutiveMargin 200
+#define WizardMargin 130
+
 #define ButModeMargin 40
 #define ControlMargin 0
 
@@ -73,11 +77,12 @@ typedef struct {
   int ShowLines;
   char Saved[OrthoLineLength];
   int SavedPC,SavedCC;
-  float TextColor[3],OverlayColor[3];
+  float TextColor[3],OverlayColor[3],WizardBackColor[3],WizardTextColor[3];
   int DirtyFlag;
   float BusyLast;
   int BusyStatus[4];
   char BusyMessage[255];
+  char *WizardPromptVLA;
   int SplashFlag;
   CQueue *cmds;
   CQueue *feedback;
@@ -85,6 +90,7 @@ typedef struct {
 
 static OrthoObject Ortho;
 void OrthoParseCurrentLine(void);
+static void OrthoDrawWizardPrompt(void);
 
 Block *OrthoFindBlock(int x,int y);
 void OrthoKeyControl(unsigned char k);
@@ -96,6 +102,18 @@ void OrthoKeyControl(unsigned char k);
 #define cBusySpacing 15
 
 #define cBusyUpdate 1.0
+
+#define cWizardTopMargin 15
+#define cWizardLeftMargin 15
+#define cWizardBorder 7
+
+/*========================================================================*/
+void OrthoSetWizardPrompt(char *vla)
+{
+  OrthoObject *I=&Ortho;
+  VLAFreeP(I->WizardPromptVLA);
+  I->WizardPromptVLA=vla;
+}
 /*========================================================================*/
 
 void OrthoSpecial(int k,int x,int y)
@@ -272,7 +290,7 @@ void OrthoBusyDraw(int force)
 
 	 OrthoPushMatrix();
 	 
-      if(PMGUI) {
+    if(PMGUI) {
       glDrawBuffer(GL_FRONT);
       glClear(GL_DEPTH_BUFFER_BIT);
       
@@ -675,7 +693,8 @@ Block *OrthoNewBlock(Block *block)
 /*========================================================================*/
 void OrthoFreeBlock(Block *block)
 {
-  ListElemFree(block);
+  if(block) 
+    ListElemFree(block);
 }
 /*========================================================================*/
 void OrthoAttach(Block *block,int type)
@@ -776,11 +795,87 @@ void OrthoDoDraw()
         }
     }
 
+    OrthoDrawWizardPrompt();
     OrthoPopMatrix();
   }
 
   I->DirtyFlag =false;
 }
+/*========================================================================*/
+static void OrthoDrawWizardPrompt(void)
+{
+  /* assumes PMGUI */
+
+  OrthoObject *I=&Ortho;
+  
+  char *vla,*p;
+  int nLine;
+  int x,y;
+  int nChar,c,ll;
+  int maxLen;
+  BlockRect rect;
+
+  if(I->WizardPromptVLA) {
+    vla = I->WizardPromptVLA;
+    
+    nLine = UtilCountStringVLA(vla);
+    if(nLine) {
+      nChar = VLAGetSize(I->WizardPromptVLA);
+      
+      /* count max line length */
+      
+      maxLen = 0;
+      p = vla;
+      ll = 0;
+      c=nChar;
+      while(c--) {
+        if(!*(p++)) {
+          if(maxLen<ll)
+            maxLen = ll;
+          ll=0;
+        } else 
+          ll++;
+      }
+      
+      rect.top = I->Height-cWizardTopMargin;
+      rect.bottom = rect.top-(nLine*cOrthoLineHeight+2*cWizardBorder)-2;
+      rect.left = cWizardLeftMargin;
+      rect.right = rect.left + cOrthoCharWidth*maxLen + 2*cWizardBorder+1;
+      
+      glColor3fv(I->WizardBackColor);
+
+      glBegin(GL_POLYGON);
+      glVertex2i(rect.right,rect.top);
+      glVertex2i(rect.right,rect.bottom);
+      glVertex2i(rect.left,rect.bottom);
+      glVertex2i(rect.left,rect.top);
+      glEnd();
+      
+      glColor3fv(I->WizardTextColor);
+      
+      x = rect.left+cWizardBorder;
+      y = rect.top-(cWizardBorder+cOrthoLineHeight);
+
+      vla = I->WizardPromptVLA;
+      
+      /* count max line length */
+      
+      glRasterPos4d((double)x,(double)y,0.0,1.0);
+      p = vla;
+      ll = 0;
+      c=nChar;
+      while(c--) {
+        if(*p)
+          glutBitmapCharacter(GLUT_BITMAP_8_BY_13,*p);
+        if(!*(p++)) {
+          y=y-cOrthoLineHeight;
+          glRasterPos4d((double)x,(double)y,0.0,1.0);          
+        }
+      }
+    }
+  }
+}
+
 /*========================================================================*/
 void OrthoReshape(int width, int height)
 {
@@ -806,9 +901,12 @@ void OrthoReshape(int width, int height)
 
   if(InternalGUI) {
     block=ExecutiveGetBlock();
-    BlockSetMargin(block,0,width-cOrthoRightSceneMargin,ExecutiveMargin,0);
+    BlockSetMargin(block,0,width-cOrthoRightSceneMargin,WizardMargin,0);
+    block=WizardGetBlock();
+    BlockSetMargin(block,height-WizardMargin,width-cOrthoRightSceneMargin,WizardMargin,0);
+    block->active=false;
     block=ButModeGetBlock();
-    BlockSetMargin(block,height-ExecutiveMargin,width-cOrthoRightSceneMargin,ButModeMargin,0);
+    BlockSetMargin(block,height-WizardMargin,width-cOrthoRightSceneMargin,ButModeMargin,0);
     block=ControlGetBlock();
     BlockSetMargin(block,height-ButModeMargin,width-cOrthoRightSceneMargin,ControlMargin,0);
   } else {
@@ -830,6 +928,39 @@ void OrthoReshape(int width, int height)
 		block->fReshape(block,width,height);			
   OrthoPopMatrix();
 }
+
+/*========================================================================*/
+void OrthoReshapeWizard(int wizHeight)
+{
+  Block *block;
+  OrthoObject *I=&Ortho;
+  int height,width;
+
+  height=I->Height;
+  width=I->Width;
+
+  if(InternalGUI) {
+    block=ExecutiveGetBlock();
+    if(height) {
+      BlockSetMargin(block,0,width-cOrthoRightSceneMargin,WizardMargin+wizHeight,0);
+    } else {
+      BlockSetMargin(block,0,width-cOrthoRightSceneMargin,WizardMargin,0);
+    }
+    block->fReshape(block,width,height);
+
+    block=WizardGetBlock();
+
+    if(wizHeight) {
+      BlockSetMargin(block,height-(WizardMargin+wizHeight),width-cOrthoRightSceneMargin,WizardMargin,0);
+      block->active=true;
+    } else {
+      BlockSetMargin(block,height-WizardMargin,width-cOrthoRightSceneMargin,WizardMargin,0);
+      block->active=false;
+    }
+    block->fReshape(block,width,height);
+  }
+}
+
 /*========================================================================*/
 Block *OrthoFindBlock(int x,int y)
 {
@@ -876,14 +1007,14 @@ int OrthoButton(int button,int state,int x,int y,int mod)
         {
 			 block=I->GrabbedBy;
 			 if(block->fRelease)
-            handled = block->fRelease(block,x,y,mod);
+            handled = block->fRelease(block,button,x,y,mod);
 			 I->ClickedIn = NULL;
         }
 		if(I->ClickedIn)
 		  {
 			 block=I->ClickedIn;
 			 if(block->fRelease)
-            handled = block->fRelease(block,x,y,mod);
+            handled = block->fRelease(block,button,x,y,mod);
 			 I->ClickedIn = NULL;
 		  }
 	 }
@@ -946,6 +1077,12 @@ void OrthoInit(int showSplash)
   I->cmds = QueueNew(0xFFFF);
   I->feedback = QueueNew(0xFFFF);
 
+  I->WizardBackColor[0]=0.2;
+  I->WizardBackColor[1]=0.2;
+  I->WizardBackColor[2]=0.2;
+  I->WizardTextColor[0]=0.2;
+  I->WizardTextColor[1]=1.0;
+  I->WizardTextColor[2]=0.2;
   I->Blocks = NULL;
   I->GrabbedBy = NULL;
   I->ClickedIn = NULL;
@@ -963,7 +1100,9 @@ void OrthoInit(int showSplash)
   I->HistoryLine=0;
   I->HistoryView=0;
   I->Line[I->CurLine&OrthoSaveLines][I->CurChar]=0;
-
+  I->WizardPromptVLA=NULL;
+  
+    
   I->SplashFlag = true;
   I->ShowLines = 1;
   I->Saved[0]=0;
@@ -976,6 +1115,7 @@ void OrthoInit(int showSplash)
 
   ButModeInit();
   ControlInit();
+  WizardInit();
   PopInit();
   for(a=0;a<=OrthoHistoryLines;a++)
     I->History[a][0]=0;
@@ -984,9 +1124,12 @@ void OrthoInit(int showSplash)
 void OrthoFree(void)
 {
   OrthoObject *I=&Ortho;
+
+  VLAFreeP(I->WizardPromptVLA);
   PopFree();
   ButModeFree();
   ControlFree();
+  WizardFree();
   QueueFree(I->cmds);
   I->cmds=NULL;
   QueueFree(I->feedback);

@@ -32,7 +32,6 @@ Z* -------------------------------------------------------------------
 
 CButMode ButMode;
 
-int ButModeRelease(Block *block,int x,int y,int mod);
 void ButModeDraw(Block *block);
 int ButModeClick(Block *block,int button,int x,int y,int mod);
 

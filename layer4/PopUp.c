@@ -43,7 +43,7 @@ typedef struct {
   int *Code;
 }  CPopUp;
 
-int PopUpRelease(Block *block,int x,int y,int mod);
+int PopUpRelease(Block *block,int button,int x,int y,int mod);
 void PopUpDraw(Block *block);
 int PopUpDrag(Block *block,int x,int y,int mod);
 /*========================================================================*/
@@ -134,7 +134,7 @@ void PopUpNew(int x,int y,PyObject *list)
 
 }
 /*========================================================================*/
-int PopUpRelease(Block *block,int x,int y,int mod)
+int PopUpRelease(Block *block,int button,int x,int y,int mod)
 {
   CPopUp *I = (CPopUp*)block->reference;
   PopUpDrag(block,x,y,mod);

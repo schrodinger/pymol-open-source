@@ -32,7 +32,7 @@ typedef struct Block {
   int (*fClick)   (struct Block *block,int button,int x,int y,int mod);
   int (*fCursor)  (struct Block *block,int x,int y,int mod);
   int (*fDrag)    (struct Block *block,int x,int y,int mod);
-  int (*fRelease) (struct Block *block,int x,int y,int mod);
+  int (*fRelease) (struct Block *block,int button,int x,int y,int mod);
 } Block;
 
 typedef Block **CBlock;

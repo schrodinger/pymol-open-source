@@ -311,7 +311,6 @@ static void MainInit(void)
 /*========================================================================*/
 void MainFree(void)
 {
-  
   EditorFree();
   ExecutiveFree();
   SceneFree();

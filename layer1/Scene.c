@@ -41,6 +41,7 @@ Z* -------------------------------------------------------------------
 #include"P.h"
 #include"Editor.h"
 #include"Executive.h"
+#include"Wizard.h"
 
 #define cFrontMin 0.1
 #define cSliceMin 0.1
@@ -556,6 +557,7 @@ int SceneClick(Block *block,int button,int x,int y,int mod)
         SelectorCreate(cEditorSele1,buffer,NULL,false);
         ExecutiveDelete(cEditorSele2);
         EditorSetActiveObject((ObjectMolecule*)obj,I->StateIndex);
+        WizardDoPick(0);
       } else {
       EditorSetActiveObject(NULL,0);
       }
@@ -588,6 +590,8 @@ int SceneClick(Block *block,int button,int x,int y,int mod)
                   obj->Name,atIndex+1);    
           SelectorCreate(cEditorSele2,buffer,NULL,false);
           EditorSetActiveObject(objMol,I->StateIndex);
+          WizardDoPick(1);
+
         }
       } else {
         EditorSetActiveObject(NULL,0);
@@ -637,15 +641,15 @@ int SceneClick(Block *block,int button,int x,int y,int mod)
 		switch(mode) {
       case cButModePk1:
       case cButModeAddToPk1:
-        strcpy(selName,"%lb");
+        strcpy(selName,"lb");
 		  break;
       case cButModePk2:
       case cButModeAddToPk2:
-        strcpy(selName,"%mb");
+        strcpy(selName,"mb");
 		  break;
       case cButModePk3:
       case cButModeAddToPk3:
-        strcpy(selName,"%rb");
+        strcpy(selName,"rb");
 		  break;
       case cButModeOrigAt:
         sprintf(buf2,"origin (%s)",buffer);        
@@ -657,15 +661,24 @@ int SceneClick(Block *block,int button,int x,int y,int mod)
       case cButModePk2:
       case cButModePk3:
         SelectorCreate(selName,buffer,NULL,false);
+        if(SettingGet(cSetting_autohide_selections))
+          ExecutiveHideSelections();
+        if(SettingGet(cSetting_autoshow_selections))
+          ExecutiveSetObjVisib(selName,1);
         break;
       case cButModeAddToPk1:
       case cButModeAddToPk2:
       case cButModeAddToPk3:
         if(SelectorIndexByName(selName)>=0) {
-          sprintf(buf2,"( %s or (%s))",selName,buffer);
+          sprintf(buf2,"( ((%s) or (%s)) and not ((%s) in (%s)))",
+                  selName,buffer,buffer,selName);
           SelectorCreate(selName,buf2,NULL,false);
         } else 
           SelectorCreate(selName,buffer,NULL,false);
+        if(SettingGet(cSetting_autohide_selections))
+          ExecutiveHideSelections();
+        if(SettingGet(cSetting_autoshow_selections))
+          ExecutiveSetObjVisib(selName,1);
         break;
       }
 	 } else {
@@ -1310,6 +1323,8 @@ void SceneRender(Pickable *pick,int x,int y)
       glDisable(GL_LINE_SMOOTH);
     }
 
+    glPointSize(SettingGet(cSetting_dot_width));
+
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_NORMALIZE);
     
@@ -1439,6 +1454,7 @@ void SceneRender(Pickable *pick,int x,int y)
           }
         glPushMatrix();
         glNormal3fv(normal);
+        ExecutiveRenderSelections(curState);
         EditorRender(curState);
         glPopMatrix();
 
@@ -1459,10 +1475,13 @@ void SceneRender(Pickable *pick,int x,int y)
           }
         glPushMatrix();
         glNormal3fv(normal);
+        ExecutiveRenderSelections(curState);
         EditorRender(curState);
         glPopMatrix();
 
-        glPopMatrix();        glDrawBuffer(GL_BACK);
+        glPopMatrix();        
+        glDrawBuffer(GL_BACK);
+
       } else {
         
         /* mono */
@@ -1477,6 +1496,7 @@ void SceneRender(Pickable *pick,int x,int y)
           }
         glPushMatrix();
         glNormal3fv(normal);
+        ExecutiveRenderSelections(curState);
         EditorRender(curState);
         glPopMatrix();
 
