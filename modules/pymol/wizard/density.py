@@ -29,9 +29,10 @@ class Density(Wizard):
                              [1, '6.0 A Radius','cmd.get_wizard().set_radius(6)'],
                              [1, '8.0 A Radius','cmd.get_wizard().set_radius(8)'],
                              [1, '10.0 A Radius','cmd.get_wizard().set_radius(10)'],
+                             [1, '10.0 A Radius','cmd.get_wizard().set_radius(15)'],
                              [1, '20.0 A Radius','cmd.get_wizard().set_radius(20)'],
-
-]
+                             [1, '20.0 A Radius','cmd.get_wizard().set_radius(50)'],
+                             ]
                               
       self.menu['map0'] = []
       self.menu['map1'] = []
@@ -125,7 +126,7 @@ class Density(Wizard):
             cmd.clip("slab",self.radius-1)
          elif self.track<2:
             cmd.origin("(pk1)")
-      
+      cmd.refresh_wizard()      
 # generic set routines
 
    def zoom(self):

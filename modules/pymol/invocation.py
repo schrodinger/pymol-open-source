@@ -21,6 +21,7 @@ import copy
 import re
 import os
 import glob
+import string
 
 pattern = '.pymolrc*'
 
@@ -94,7 +95,7 @@ def parse_args(argv):
          if "w" in a:
             options.gui = 'pmg_wx'
          if "d" in a:
-            options.deferred.append("_do_%s"%av.pop())
+            options.deferred.append("_do_%s"%string.replace(av.pop(),'%',' '))
          if "l" in a:
             options.deferred.append("_do_spawn %s"%av.pop())
          if "r" in a:
