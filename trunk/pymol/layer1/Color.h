@@ -38,5 +38,9 @@ int ColorGetIndex(char *name);
 float *ColorGet(int index); /* pointer maybe invalid after creating a new color */
 float *ColorGetNamed(char *name);
 void ColorDef(char *name,float *v);
+int ColorGetNColor(void);
+char *ColorGetName(int index);
+int ColorGetStatus(int index);
+
 #endif
 

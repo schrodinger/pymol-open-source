@@ -298,7 +298,7 @@ void ExtrudeDumbbellEdge(CExtrude *I,int samp,int sign,float length)
   disp = (sign*sin(PI/4)*length);
   p=I->p;
   n=I->n;
-  for(a=0;a<=I->N;a++)
+  for(a=0;a<I->N;a++)
 	 {
       if(a<=samp)
         f=disp*smooth((a/((float)samp)),2);

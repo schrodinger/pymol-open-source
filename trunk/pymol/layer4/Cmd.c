@@ -203,6 +203,7 @@ static PyObject *CmdFinishObject(PyObject *self, PyObject *args);
 static PyObject *CmdFrame(PyObject *self, PyObject *args);
 static PyObject *CmdGet(PyObject *self, 	PyObject *args);
 static PyObject *CmdGetArea(PyObject *self, 	PyObject *args);
+static PyObject *CmdGetColor(PyObject *self, 	PyObject *args);
 static PyObject *CmdGetDihe(PyObject *self, 	PyObject *args);
 static PyObject *CmdGetFrame(PyObject *self, 	PyObject *args);
 static PyObject *CmdGetPDB(PyObject *dummy, PyObject *args);
@@ -333,6 +334,7 @@ static PyMethodDef Cmd_methods[] = {
    {"fuse",                  CmdFuse,                 METH_VARARGS },
 	{"get",	                 CmdGet,                  METH_VARARGS },
 	{"get_area",              CmdGetArea,              METH_VARARGS },
+	{"get_color",             CmdGetColor,             METH_VARARGS },
 	{"get_dihe",              CmdGetDihe,              METH_VARARGS },
 	{"get_frame",             CmdGetFrame,             METH_VARARGS },
 	{"get_feedback",          CmdGetFeedback,          METH_VARARGS },
@@ -428,6 +430,45 @@ static PyMethodDef Cmd_methods[] = {
 	{"zoom",	                 CmdZoom,                 METH_VARARGS },
 	{NULL,		              NULL}     /* sentinel */        
 };
+
+static PyObject *CmdGetColor(PyObject *self, PyObject *args)
+{
+  char *name;
+  int mode;
+  int ok = false;
+  int a,nc,nvc;
+  PyObject *result = NULL;
+  PyObject *cname,*cindex;
+  PyObject *tup;
+  ok = PyArg_ParseTuple(args,"si",&name,&mode);
+  if(ok) {
+    APIEntry();
+    switch(mode) {
+    case 1: /* get named color names (THOSE WITH NO NUMBERS) */
+      PBlock();
+      nc=ColorGetNColor();
+      nvc=0;
+      for(a=0;a<nc;a++) {
+        if(ColorGetStatus(a))
+          nvc++;
+      }
+      result = PyList_New(nvc);
+      nvc=0;
+      for(a=0;a<nc;a++) {
+        if(ColorGetStatus(a)) {
+          tup = PyTuple_New(2);
+          PyTuple_SetItem(tup,0,PyString_FromString(ColorGetName(a)));
+          PyTuple_SetItem(tup,1,PyInt_FromLong(a));
+          PyList_SetItem(result,nvc++,tup);
+        }
+      }
+      PUnblock();
+      break;
+    }
+    APIExit();
+  }
+  return(APIAutoNone(result));
+}
 
 static PyObject *CmdMultiSave(PyObject *self, PyObject *args)
 {

@@ -168,14 +168,14 @@ class Shortcut:
                descrip,kee)
             raise parsing.QuietException
       else:
-         result = self.shortcut[kee]
+         result = self.interpret(kee)
          if not is_string(result):
             if descrip!=None:
                print "Error: ambiguous %s:"%descrip
                lst = parsing.list_to_str_list(result)
                for a in lst:
                   print a
-               raise QuietException
+               raise parsing.QuietException
       return result
               
 if __name__=='__main__':

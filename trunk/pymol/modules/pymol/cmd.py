@@ -103,6 +103,8 @@ toggle_sc = Shortcut(toggle_dict.keys())
 def is_string(obj):
    return isinstance(obj,types.StringType)
 
+def is_list(obj):
+   return isinstance(obj,types.ListType)
 
 def write_html_ref(file):
    lst = globals()
@@ -714,6 +716,15 @@ def translate_atom(sele1,v0,v1,v2,state=0,mode=0,log=0):
       unlock()
    return r
 
+def get_color_indices():
+   r = None
+   try:
+      lock()
+      r = _cmd.get_color('',1)
+   finally:
+      unlock()
+   return r
+      
 def get_setting_tuple(name,object='',state=0): # INTERNAL
    r = None
    if is_string(name):
@@ -789,9 +800,6 @@ USAGE
       unlock()
    return r
 
-def _adjust_coord(a,i,x):
-   a.coord[i]=a.coord[i]+x
-   return None
 
 def fragment(name,object=None,origin=1,zoom=0):
    '''
@@ -1604,6 +1612,7 @@ USAGE
       unlock()
    return r
 
+
 def bg_color(color="black"):
    '''
 DESCRIPTION
@@ -1619,6 +1628,8 @@ PYMOL API
    cmd.color(string color="black")
    
    '''
+   r = None
+   color = _interpret_color(color)
    try:
       lock()
       r = _cmd.bg_color(str(color))
@@ -1898,13 +1909,6 @@ SEE ALSO
    finally:
       unlock()   
    return r
-
-def _stereo(flag): # SGI-SPECIFIC - bad bad bad
-   
-   if flag:
-      os.system("/usr/gfx/setmon -n 1024x768_96s")
-   else:
-      os.system("/usr/gfx/setmon -n 72hz")
 
 def stereo(state='on'):
    '''
@@ -3269,20 +3273,6 @@ SEE ALSO
          unlock()
    return r
 
-def _refresh(swap_buffers=1):  # Only call with GLUT thread!
-   try:
-      lock()
-      if thread.get_ident() == pymol.glutThread:
-         if swap_buffers:
-            r = _cmd.refresh_now()
-         else:
-            r = _cmd.refresh()
-      else:
-         print "Error: Ignoring an unsafe call to cmd._refresh"
-   finally:
-      unlock()
-   return r
-
 def dirty(): # OBSOLETE?
    try:
       lock()
@@ -3440,14 +3430,6 @@ SEE ALSO
       unlock()
    return r
 
-def _quit():
-   try:
-      lock()
-      r = _cmd.quit()
-   finally:
-      unlock()
-   return r
-
 def quit():
    '''
 DESCRIPTION
@@ -3524,19 +3506,6 @@ PYMOL API
       r = _cmd.do("cmd._png('"+str(filename)+"')")
    return r
 
-def _png(a): # INTERNAL - can only be safely called by GLUT thread 
-   try:
-      lock()   
-      fname = a
-      if not re.search("\.png$",fname):
-         fname = fname +".png"
-      fname = os.path.expanduser(fname)
-      fname = os.path.expandvars(fname)         
-      r = _cmd.png(str(fname))
-   finally:
-      unlock()
-   return r
-
 def export_coords(obj,state): # experimental
    r = None
    try:
@@ -3575,19 +3544,6 @@ PYMOL API
    finally:
       unlock()
    return r
-
-def _special(k,x,y): # INTERNAL (invoked when special key is pressed)
-   k=int(k)
-   if special.has_key(k):
-      if special[k][1]:
-         apply(special[k][1],special[k][2],special[k][3])
-   return None
-
-def _ctrl(k):
-   if ctrl.has_key(k):
-      if ctrl[k][0]!=None:
-         apply(ctrl[k][0],ctrl[k][1],ctrl[k][2])
-   return None
 
 
 def set_key(key,fn,arg=(),kw={}):  
@@ -4496,45 +4452,6 @@ PYMOL API
    lst.extend(list(arg))
    return apply(load_object,lst,kw)
 
-def _load(oname,finfo,state,ftype,finish,discrete):
-   # caller must already hold API lock
-   # NOTE: state index assumes 1-based state
-   r = 1
-   if ftype not in (loadable.model,loadable.brick):
-      if ftype == loadable.r3d:
-         import cgo
-         obj = cgo.from_r3d(finfo)
-         if obj:
-            _cmd.load_object(str(oname),obj,int(state)-1,loadable.cgo,
-                             int(finish),int(discrete))
-         else:
-            print " load: couldn't load raster3d file."
-      elif ftype == loadable.cc1: # ChemDraw 3D
-         obj = io.cc1.fromFile(finfo)
-         if obj:
-            _cmd.load_object(str(oname),obj,int(state)-1,loadable.model,
-                             int(finish),int(discrete))            
-      else:
-         r = _cmd.load(str(oname),finfo,int(state)-1,int(ftype),
-                       int(finish),int(discrete))
-   else:
-      try:
-         x = io.pkl.fromFile(finfo)
-         if isinstance(x,types.ListType) or isinstance(x,types.TupleType):
-            for a in x:
-               r = _cmd.load_object(str(oname),a,int(state)-1,
-                                    int(ftype),0,int(discrete))
-               if(state>0):
-                  state = state + 1
-            _cmd.finish_object(str(oname))
-         else:
-            r = _cmd.load_object(str(oname),x,
-                                 int(state)-1,int(ftype),
-                                 int(finish),int(discrete))
-      except:
-         print 'Error: can not load file "%s"' % finfo
-   return r
-
 def load(filename,object='',state=0,format='',finish=1,discrete=0):
    '''
 DESCRIPTION
@@ -4858,6 +4775,7 @@ EXAMPLES
    '''
    # preprocess selection
    selection = selector.process(selection)
+   color = _interpret_color(color)
    #
    try:
       lock()
@@ -4935,6 +4853,7 @@ EXAMPLES
 
          if len(rgb)==3:
             r = _cmd.colordef(str(name),float(rgb[0]),float(rgb[1]),float(rgb[2]))
+            _invalidate_color_sc()
          else:
             print "Error: invalid color."
       finally:
@@ -5021,18 +4940,6 @@ PYMOL API
       r = _cmd.do("cmd._mpng('"+prefix+"')")
    return r
 
-def _mpng(*arg): # INTERNAL
-   try:
-      lock()   
-      fname = arg[0]
-      if re.search("\.png$",fname):
-         fname = re.sub("\.png$","",fname)
-      fname = os.path.expanduser(fname)
-      fname = os.path.expandvars(fname)
-      r = _cmd.mpng_(str(fname))
-   finally:
-      unlock()
-   return r
 
 def show(representation="",selection=""):
    '''
@@ -5642,20 +5549,6 @@ for a in fb_module.__dict__.keys():
 
 fb_debug = sys.stderr # can redirect python debugging output elsewhere if desred...
 
-def _feedback(module,mask): # feedback test routine
-   r = 0
-   module = int(module)
-   mask = int(mask)
-   if module>0:
-      try:
-         lock()
-         r = _cmd.feedback(module,mask)
-      finally:
-         unlock()
-   else:
-      if fb_dict.has_key(module):
-         r = fb_dict[module]&mask
-   return r
    
 def feedback(action="?",module="?",mask="?"):
    '''
@@ -5798,7 +5691,164 @@ SEE ALSO
    '''
    keyword[name] = [eval("lambda :do('''%s ''')"%command), 0,0,',',parsing.STRICT]
    kwhash.append(name)
+
+#####################################################################
+# INTERNAL API ROUTINES
+
+def _feedback(module,mask): # feedback test routine
+   r = 0
+   module = int(module)
+   mask = int(mask)
+   if module>0:
+      try:
+         lock()
+         r = _cmd.feedback(module,mask)
+      finally:
+         unlock()
+   else:
+      if fb_dict.has_key(module):
+         r = fb_dict[module]&mask
+   return r
+
+def _mpng(*arg): # INTERNAL
+   try:
+      lock()   
+      fname = arg[0]
+      if re.search("\.png$",fname):
+         fname = re.sub("\.png$","",fname)
+      fname = os.path.expanduser(fname)
+      fname = os.path.expandvars(fname)
+      r = _cmd.mpng_(str(fname))
+   finally:
+      unlock()
+   return r
+
+def _load(oname,finfo,state,ftype,finish,discrete):
+   # caller must already hold API lock
+   # NOTE: state index assumes 1-based state
+   r = 1
+   if ftype not in (loadable.model,loadable.brick):
+      if ftype == loadable.r3d:
+         import cgo
+         obj = cgo.from_r3d(finfo)
+         if obj:
+            _cmd.load_object(str(oname),obj,int(state)-1,loadable.cgo,
+                             int(finish),int(discrete))
+         else:
+            print " load: couldn't load raster3d file."
+      elif ftype == loadable.cc1: # ChemDraw 3D
+         obj = io.cc1.fromFile(finfo)
+         if obj:
+            _cmd.load_object(str(oname),obj,int(state)-1,loadable.model,
+                             int(finish),int(discrete))            
+      else:
+         r = _cmd.load(str(oname),finfo,int(state)-1,int(ftype),
+                       int(finish),int(discrete))
+   else:
+      try:
+         x = io.pkl.fromFile(finfo)
+         if isinstance(x,types.ListType) or isinstance(x,types.TupleType):
+            for a in x:
+               r = _cmd.load_object(str(oname),a,int(state)-1,
+                                    int(ftype),0,int(discrete))
+               if(state>0):
+                  state = state + 1
+            _cmd.finish_object(str(oname))
+         else:
+            r = _cmd.load_object(str(oname),x,
+                                 int(state)-1,int(ftype),
+                                 int(finish),int(discrete))
+      except:
+         print 'Error: can not load file "%s"' % finfo
+   return r
+
+
+def _special(k,x,y): # INTERNAL (invoked when special key is pressed)
+   k=int(k)
+   if special.has_key(k):
+      if special[k][1]:
+         apply(special[k][1],special[k][2],special[k][3])
+   return None
+
+def _ctrl(k):
+   if ctrl.has_key(k):
+      if ctrl[k][0]!=None:
+         apply(ctrl[k][0],ctrl[k][1],ctrl[k][2])
+   return None
+
+def _png(a): # INTERNAL - can only be safely called by GLUT thread 
+   try:
+      lock()   
+      fname = a
+      if not re.search("\.png$",fname):
+         fname = fname +".png"
+      fname = os.path.expanduser(fname)
+      fname = os.path.expandvars(fname)         
+      r = _cmd.png(str(fname))
+   finally:
+      unlock()
+   return r
+
+def _quit():
+   try:
+      lock()
+      r = _cmd.quit()
+   finally:
+      unlock()
+   return r
+
+def _refresh(swap_buffers=1):  # Only call with GLUT thread!
+   try:
+      lock()
+      if thread.get_ident() == pymol.glutThread:
+         if swap_buffers:
+            r = _cmd.refresh_now()
+         else:
+            r = _cmd.refresh()
+      else:
+         print "Error: Ignoring an unsafe call to cmd._refresh"
+   finally:
+      unlock()
+   return r
+
+def _stereo(flag): # SGI-SPECIFIC - bad bad bad
    
+   if flag:
+      os.system("/usr/gfx/setmon -n 1024x768_96s")
+   else:
+      os.system("/usr/gfx/setmon -n 72hz")
+
+def _interpret_color(color):
+   _validate_color_sc()
+   new_color = color_sc.interpret(color)
+   if new_color:
+      if is_string(new_color):
+         return new_color
+      else:
+         color_sc.auto_err(color,'colors')
+   else:
+      return color
+
+def _adjust_coord(a,i,x):
+   a.coord[i]=a.coord[i]+x
+   return None
+
+def _validate_color_sc():
+   global color_sc
+   if color_sc == None: # update color shortcuts if needed
+      lst = get_color_indices()
+      color_sc = Shortcut(map(lambda x:x[0],lst))
+      color_dict = {}
+      for a in lst: color_dict[a[0]]=a[1]
+
+def _invalidate_color_sc():
+   global color_sc
+   color_sc = None
+
+def _get_color_sc():
+   _validate_color_sc()
+   return color_sc
+
 #####################################################################
 import util
 import movie
@@ -6125,6 +6175,7 @@ map_sc = lambda sc=Shortcut,gnot=get_names_of_type:sc(gnot('object:map'))
 
 auto_arg =[
    {
+   'color' : [ _get_color_sc, 'colors', ',' ],   
    'set' : [ setting.setting_sc, 'settings', '=' ],
    'show' : [ repres_sc , 'representations',', ' ],
    'hide' : [ repres_sc , 'representations',', ' ],
@@ -6184,4 +6235,4 @@ class loadable:
    pmo = 19      # pmo, experimental molecular object format
    
 loadable_sc = Shortcut(loadable.__dict__.keys()) 
-
+color_sc = None
