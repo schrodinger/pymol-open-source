@@ -23,7 +23,7 @@ Z* -------------------------------------------------------------------
 typedef struct {
   int at0,at1;
   int type;
-  float targ;
+  float targ,targ2;
 } ShakerDistCon;
 
 typedef struct {
