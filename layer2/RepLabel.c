@@ -112,7 +112,7 @@ Rep *RepLabelNew(CoordSet *cs)
     return(NULL); /* skip if no label are visible */
   }
 
-  label_color = SettingGet(cSetting_label_color);
+  label_color = SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_label_color);
 
   
   RepInit(&I->R);

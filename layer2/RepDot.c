@@ -151,7 +151,7 @@ Rep *RepDotDoNew(CoordSet *cs,int mode)
 
   RepInit(&I->R);
 
-  I->dotSize = SettingGet(cSetting_dot_radius);
+  I->dotSize = SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_dot_radius);
 
   I->A=NULL;
   I->T=NULL;
@@ -162,14 +162,14 @@ Rep *RepDotDoNew(CoordSet *cs,int mode)
   I->Atom=NULL;
   I->R.fRecolor=NULL;
 
-  cullByFlag = SettingGet(cSetting_trim_dots); /* are we using flags 24 & 25 */
-  inclH = SettingGet(cSetting_dot_hydrogens); /* are we ignoring hydrogens? */
-  if(SettingGet(cSetting_dot_mode)>0.0) { /* are we generating a solvent surface? */
-    solv_rad = SettingGet(cSetting_solvent_radius); /* if so, get solvent radius */
+  cullByFlag = SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_trim_dots); /* are we using flags 24 & 25 */
+  inclH = SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_dot_hydrogens); /* are we ignoring hydrogens? */
+  if(SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_dot_mode)>0.0) { /* are we generating a solvent surface? */
+    solv_rad = SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_solvent_radius); /* if so, get solvent radius */
   }
 
   /* get current dot sampling */
-  ds = (int)SettingGet(cSetting_dot_density);
+  ds = (int)SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_dot_density);
 
   max_vdw+=solv_rad;
 

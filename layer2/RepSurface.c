@@ -285,10 +285,12 @@ void RepSurfaceColor(RepSurface *I,CoordSet *cs)
   int cullByFlag = false;
   AtomInfoType *ai2;
 
-  /*  cullByFlag = SettingGet(cSetting_trim_dots);*/
-  inclH = SettingGet(cSetting_dot_hydrogens);
-  probe_radius = SettingGet(cSetting_solvent_radius);
-  proximity = SettingGet(cSetting_surface_proximity);
+  obj=cs->Obj;
+
+  /*  cullByFlag = SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_trim_dots);*/
+  inclH = SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_dot_hydrogens);
+  probe_radius = SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_solvent_radius);
+  proximity = SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_surface_proximity);
 
   cutoff = MAX_VDW+probe_radius;
   if(cutoff<(MAX_VDW+proximity))
@@ -299,7 +301,6 @@ void RepSurfaceColor(RepSurface *I,CoordSet *cs)
   lv = I->LastVisib;
   lc = I->LastColor;
   cc = cs->Color;
-  obj=cs->Obj;
   ai2=obj->AtomInfo;
   for(a=0;a<cs->NIndex;a++)
     {
@@ -435,13 +436,13 @@ Rep *RepSurfaceNew(CoordSet *cs)
 
   surface_quality = SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_surface_quality);
   if(surface_quality>=1) {
-    minimum_sep = SettingGet(cSetting_surface_best);
+    minimum_sep = SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_surface_best);
     sp=Sphere2;
   } else if(!surface_quality) {
-    minimum_sep = SettingGet(cSetting_surface_normal);
+    minimum_sep = SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_surface_normal);
     sp=Sphere1;
   } else { /* surface quality < 0 */
-    minimum_sep = SettingGet(cSetting_surface_poor);
+    minimum_sep = SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_surface_poor);
     sp=Sphere1;
   }
 
@@ -739,9 +740,10 @@ void RepSurfaceGetSolventDots(RepSurface *I,CoordSet *cs,float probe_radius,Sphe
   float probe_radius_plus;
   int dotCnt,maxCnt,maxDot=0;
   int cnt;
-  cavity_cull = (int)SettingGet(cSetting_cavity_cull);
-
   obj = cs->Obj;
+
+  cavity_cull = (int)SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_cavity_cull);
+
   I->Dot=(float*)mmalloc(sizeof(float)*cs->NIndex*3*sp->nDot);
   ErrChkPtr(I->Dot);
 

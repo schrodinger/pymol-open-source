@@ -253,9 +253,9 @@ Rep *RepCylBondNew(CoordSet *cs)
     return(NULL); /* skip if no dots are visible */
   }
 
-  nEdge = SettingGet(cSetting_stick_quality);
+  nEdge = SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_stick_quality);
   radius = SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_stick_radius);
-  half_bonds = SettingGet(cSetting_half_bonds);  
+  half_bonds = SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_half_bonds);  
 
   RepInit(&I->R);
   I->R.fRender=(void (*)(struct Rep *, CRay *, Pickable **))RepCylBondRender;
@@ -447,7 +447,7 @@ Rep *RepCylBondNew(CoordSet *cs)
 	 I->V = Realloc(I->V,float,(v-I->V));
 	 I->VR = Realloc(I->VR,float,(vr-I->VR));
 
-	 if(SettingGet(cSetting_pickable)) { 
+	 if(SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_pickable)) { 
 
       PRINTFD(FB_RepCylBond)
         " RepCylBondNEW: generating pickable version\n"
@@ -572,8 +572,8 @@ float *RepCylinderBox(float *v,float *v1,float *v2,CoordSet *cs,ObjectMolecule *
   tube_size = SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_stick_radius)
     *0.7;
 
-  overlap = tube_size*SettingGet(cSetting_stick_overlap);
-  nub = tube_size*SettingGet(cSetting_stick_nub);
+  overlap = tube_size*SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_stick_overlap);
+  nub = tube_size*SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_stick_nub);
 
   overlap+=(nub/2);
 
@@ -683,8 +683,8 @@ float *RepCylinder(float *v,float *v1,float *v2,int nEdge,int endCap,
   int c;
 
   tube_size = SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_stick_radius);
-  overlap = tube_size*SettingGet(cSetting_stick_overlap);
-  nub = tube_size*SettingGet(cSetting_stick_nub);
+  overlap = tube_size*SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_stick_overlap);
+  nub = tube_size*SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_stick_nub);
 
   if(nEdge>50)
     nEdge=50;
