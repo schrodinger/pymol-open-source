@@ -105,7 +105,10 @@ void RepSphereRender(RepSphere *I,CRay *ray,Pickable **pick)
     }
     ray->fTransparentf(ray,0.0);
   } else if(pick&&PMGUI) {
-    if(I->R.P) {
+    int trans_pick_mode = SettingGet_i(I->R.cs->Setting,
+                                       I->R.obj->Setting,
+                                       cSetting_transparent_picking_mode);
+    if(I->R.P&&(trans_pick_mode==1)||((trans_pick_mode==2)&&(alpha>0.9F))) {
       int i,j;
 		sp=I->SP;      
       Pickable *p;
