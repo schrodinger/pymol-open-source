@@ -1220,6 +1220,7 @@ SEE ALSO
         sculpt_activate,    \
         sculpt_iterate,     \
         set_dihedral,       \
+        set_name,           \
         set_geometry,       \
         set_symmetry,       \
         set_title,          \
@@ -1566,7 +1567,8 @@ SEE ALSO
       'select'        : [ select            , 0 , 0 , ''  , parsing.LEGACY ],
       'set'           : [ set               , 0 , 0 , ''  , parsing.LEGACY ],
       'set_color'     : [ set_color         , 0 , 0 , ''  , parsing.LEGACY ],
-      'set_dihedral'  : [ set_dihedral      , 0 , 0 , ''  , parsing.STRICT ],   
+      'set_dihedral'  : [ set_dihedral      , 0 , 0 , ''  , parsing.STRICT ],
+      'set_name'      : [ set_name          , 0 , 0 , ''  , parsing.STRICT ],
       'set_geometry'  : [ set_geometry      , 0 , 0 , ''  , parsing.STRICT ],
       'set_symmetry'  : [ set_symmetry      , 0 , 0 , ''  , parsing.STRICT ],         
       'set_title'     : [ set_title         , 0 , 0 , ''  , parsing.STRICT ],   

@@ -544,6 +544,19 @@ static PyObject *CmdSetSession(PyObject *self, PyObject *args)
   return(APIStatus(ok));
 }
 
+static PyObject *CmdSetName(PyObject *self, PyObject *args)
+{
+  int ok=true;
+  char *str1,*str2;
+  ok = PyArg_ParseTuple(args,"ss",&str1,&str2);
+  if(ok) {
+    APIEntry();
+    ok = ExecutiveSetName(str1,str2);
+    APIExit();
+  }
+  return(APIStatus(ok));
+}
+
 static PyObject *CmdGetBondPrint(PyObject *self,PyObject *args)
 {
   int ok=true;

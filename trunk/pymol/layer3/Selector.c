@@ -103,7 +103,7 @@ typedef struct {
 } SelectionInfoRec;
 
 typedef struct {
-  SelectorWordType *Name;
+  SelectorWordType *Name; /* this seems rather excessive, since name len < ObjNameMax ... */
   SelectionInfoRec *Info;
   int NSelection,NActive;
   int TmpCounter;
@@ -3096,10 +3096,10 @@ int SelectorSubdivide(char *pref,int sele1,int sele2,
 
   /* this is seriously getting out of hand -- need to switch over to arrays soon */
 
-  int *atom1_base,*atom2_base,*atom3_base,*atom4_base;
-  int *toDo1_base,*toDo2_base,*toDo3_base,*toDo4_base;
-  int *comp1_base,*comp2_base,*comp3_base,*comp4_base;
-  int *pkset1_base,*pkset2_base,*pkset3_base,*pkset4_base;
+  int *atom1_base=NULL,*atom2_base=NULL,*atom3_base=NULL,*atom4_base=NULL;
+  int *toDo1_base=NULL,*toDo2_base=NULL,*toDo3_base=NULL,*toDo4_base=NULL;
+  int *comp1_base=NULL,*comp2_base=NULL,*comp3_base=NULL,*comp4_base=NULL;
+  int *pkset1_base=NULL,*pkset2_base=NULL,*pkset3_base=NULL,*pkset4_base=NULL;
 
   PRINTFD(FB_Selector)
     " SelectorSubdivideObject: entered...\n"
@@ -5137,6 +5137,20 @@ void SelectorCreateObjectMolecule(int sele,char *name,int target,int source)
     ExecutiveUpdateObjectSelection((CObject*)targ);
   }
   SceneChanged();
+}
+
+/*========================================================================*/
+int SelectorSetName(char *new_name, char *old_name)
+{
+ SelectorType *I=&Selector;
+ int i= SelectorIndexByName(old_name);
+ if(i>=0) {
+   UtilNCopy(I->Name[i], new_name, ObjNameMax);
+   
+   return true;
+ } else {
+   return false;
+ }
 }
 
 /*========================================================================*/

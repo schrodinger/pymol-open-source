@@ -182,6 +182,7 @@ int ExecutiveIterateObjectMolecule(ObjectMolecule **obj,void **hidden);
 int ExecutiveGetObjectColorIndex(char *name);
 void ExecutiveToggleAllRepVisib(char *name,int rep);
 int ExecutiveSetOnOffBySele(char *name,int onoff);
+int ExecutiveSetName(char *new_name, char *old_name);
 
 #endif
 

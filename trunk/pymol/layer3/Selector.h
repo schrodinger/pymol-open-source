@@ -90,9 +90,13 @@ void SelectorSelectByID(char *name,ObjectMolecule *obj,int *id,int n_id);
 void SelectorGetUniqueTmpName(char *name_buffer);
 int SelectorIsAtomBondedToSele(ObjectMolecule *obj,int sele1atom,int sele2);
 void SelectorComputeFragPos(ObjectMolecule *obj,int state,int n_frag, char *prefix,float **vla);
+
+int SelectorSetName(char *new_name, char *old_name);
+
 ObjectMolecule *SelectorGetCachedSingleAtom(int sele,int *theAtom);
 
 ObjectMolecule *SelectorGetFastSingleAtomObjectIndex(int sele,int *index);
 ObjectMolecule *SelectorGetFastSingleObjectMolecule(int sele);
+
 
 #endif
