@@ -4,7 +4,7 @@
 #
 #- Building ----------------------------------------------------------
 #--- Tell "make" how to get to PyMOL 
-PYMOL_PATH = /Users/warren/pymol
+PYMOL_PATH = /Applications/PyMOL/Darwin
 #---------------------------------------------------------------------
 #
 #- Dependencies ------------------------------------------------------
