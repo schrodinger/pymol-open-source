@@ -21,6 +21,13 @@ Z* -------------------------------------------------------------------
 #include"Word.h"
 #include"Parse.h"
 
+static char WILDCARD='*';
+
+void WordSetWildcard(char wc)
+{
+  WILDCARD=wc;
+}
+
 void WordPrimeCommaMatch(char *p)
 { /* replace '+' with ',' */
   while(*p) { /* this should not be done here... */
@@ -39,7 +46,7 @@ int WordMatch(char *p,char *q,int ignCase)
 Returns:
 0 = no match
 positive = match out to N characters
-negative = perfect match  */
+negative = perfect/wildcard match  */
 
 {
   int i=1;
@@ -47,7 +54,7 @@ negative = perfect match  */
 	 {
 		if(*p!=*q)
 		  {
-			 if(*p=='*')
+			 if(*p==WILDCARD)
 				{
 				  i=-i;
 				  break;
@@ -70,9 +77,9 @@ negative = perfect match  */
 		p++;
 		q++;
 	 }
-  if((!*q)&&(*p=='*'))
+  if((!*q)&&(*p==WILDCARD))
 	 i=-i;
-  if(*p!='*') {
+  if(*p!=WILDCARD) {
 	 if((*p)&&(!*q))
 		i=0;
   }
@@ -102,7 +109,7 @@ int WordMatchComma(char *p,char *q,int ignCase)
           break;
         if(*p!=*q)
           {
-            if(*p=='*')
+            if(*p==WILDCARD)
               {
                 i=-i;
                 break;
@@ -125,9 +132,80 @@ int WordMatchComma(char *p,char *q,int ignCase)
         p++;
         q++;
       }
-    if((!*q)&&((*p=='*')||(*p==',')))
+    if((!*q)&&((*p==WILDCARD)||(*p==',')))
       i=-i;
-    if((*p!='*')&&(*p!=','))
+    if((*p!=WILDCARD)&&(*p!=','))
+      if((*p)&&(!*q))
+        i=0;
+    if(i&&((!*p)&&(!*q))) /*exact match*/
+      i=-i;
+
+    if(i<0)
+      best_i=i;
+    else if((best_i>=0))
+      if(i>best_i)
+        best_i=i;
+    if(best_i>=0) {
+      while(*p) {
+        if(*p==',')
+          break;
+        p++;
+      }
+      if(*p==',') { /* handle special case, trailing comma */
+        if(*(p+1))
+          p++;
+        else if(!trailing_comma)
+          trailing_comma = 1;
+        else
+          p++;
+      }
+    }
+  }
+  return(best_i);
+}
+
+int WordMatchCommaExact(char *p,char *q,int ignCase) 
+/* allows for comma list in p, no wildcards */
+{
+  int i=0;
+  int best_i=0;
+  char *q_copy;
+  int blank;
+  int trailing_comma=0;
+
+  blank = (!*p);
+  q_copy=q;
+  while(((*p)||(blank))&&(best_i>=0)) {
+    blank=0;
+    i=1;
+    q=q_copy;
+    while((*p)&&(*q))
+      {
+        if(*p==',')
+          break;
+        if(*p!=*q)
+          {
+            if(ignCase)
+              {
+                if(tolower(*p)!=tolower(*q))
+                  {
+                    i=0;
+                    break;
+                  }
+              }
+            else 
+              {
+                i=0;
+                break;
+              }
+          }
+        i++;
+        p++;
+        q++;
+      }
+    if((!*q)&&(*p==','))
+      i=-i;
+    if(*p!=',')
       if((*p)&&(!*q))
         i=0;
     if(i&&((!*p)&&(!*q))) /*exact match*/
