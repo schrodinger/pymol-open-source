@@ -17,6 +17,49 @@ Z* -------------------------------------------------------------------
 #ifndef _H_CPyMOL
 #define _H_CPyMOL
 
+/* WARNING: This is a private interface to PyMOL for the exclusive
+ * internal use of DeLano Scientific LLC in the development of wrapped 
+ * PyMOL applications.
+ *
+ * DeLano Scientific LLC can and will change this interface suddenly
+ * and without notice.  It may even vanish altogether.  Any and all
+ * code you develop against this interface is guaranteed to be
+ * fragile, expensive, and time-consuming to maintain.
+ * 
+ * DO NOT UNDER ANY CIRCUMSTANCE MAKE USE OF THIS API...
+ * 
+ * YOU HAVE BEEN WARNED!
+ */
+
+#define PYMOL_BUTTON_DOWN           0
+#define PYMOL_BUTTON_UP             1
+
+#define PYMOL_KEY_F1         1
+#define PYMOL_KEY_F2         2
+#define PYMOL_KEY_F3         3
+#define PYMOL_KEY_F4         4
+#define PYMOL_KEY_F5         5
+#define PYMOL_KEY_F6         6
+#define PYMOL_KEY_F7         7
+#define PYMOL_KEY_F8         8
+#define PYMOL_KEY_F9         9
+#define PYMOL_KEY_F10        10
+#define PYMOL_KEY_F11        11
+#define PYMOL_KEY_F12        12
+#define PYMOL_KEY_LEFT       100
+#define PYMOL_KEY_UP         101
+#define PYMOL_KEY_RIGHT      102
+#define PYMOL_KEY_DOWN       103
+#define PYMOL_KEY_PAGE_UP    104
+#define PYMOL_KEY_PAGE_DOWN  105
+#define PYMOL_KEY_HOME       106
+#define PYMOL_KEY_END        107
+#define PYMOL_KEY_INSERT     108
+
+#define PYMOL_BUTTON_LEFT    0
+#define PYMOL_BUTTON_MIDDLE  1
+#define PYMOL_BUTTON_RIGHT   2
+
 /* configuration */
 
 #ifndef CPyMOLOptions_DEFINED
