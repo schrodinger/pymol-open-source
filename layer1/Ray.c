@@ -1338,6 +1338,8 @@ int RayTraceThread(CRayThreadInfo *T)
    float green_blend=0.0F;
    float trans_cont;
    float pixel_base[3];
+   float inv_trans_cont = 1.0F;
+
    int trans_cont_flag = false;
    int blend_colors;
    int max_pass;
@@ -1384,8 +1386,10 @@ int RayTraceThread(CRayThreadInfo *T)
    trans_cont        = SettingGetGlobal_f(I->G,cSetting_ray_transparency_contrast);
    trans_mode        = SettingGetGlobal_i(I->G,cSetting_transparency_mode);
    if(trans_mode==1) two_sided_lighting = true;
-   if(trans_cont>1.0F)
+   if(trans_cont>1.0F) {
      trans_cont_flag = true;
+     inv_trans_cont = 1.0F/trans_cont;
+   }
 	ambient				= SettingGet(I->G,cSetting_ambient);
 	lreflect			= SettingGet(I->G,cSetting_reflect);
 	direct				= SettingGet(I->G,cSetting_direct);
@@ -1689,7 +1693,10 @@ int RayTraceThread(CRayThreadInfo *T)
                     {
                       pixel_flag		= true;
                       n_hit++;
-                      r1.trans = r1.prim->trans;
+                      if( ((r1.trans = r1.prim->trans) != _0 ) &&
+                          trans_cont_flag ) {
+                        r1.trans = pow(r1.trans,inv_trans_cont);
+                      }
                       if(interior_flag)
                         {
                           copy3f(interior_normal,r1.surfnormal);
