@@ -63,17 +63,11 @@ void RepLabelRender(RepLabel *I,CRay *ray,Pickable **pick)
 #ifdef _DRI_WORKAROUND
       glDisable(GL_DEPTH_TEST);	 
 #endif
-      SceneResetNormal(false);
+      /*      SceneResetNormal(false);*/
 	 while(c--) {
       if(*l) {
         glColor3fv(v);
         glRasterPos4f(v[3],v[4],v[5],1.0);
-
-	glBegin(GL_LINES);
-	glVertex3fv(v);
-	glVertex3fv(v);
-	glEnd();
-
       }
 		v+=6;
       while(*l) {
