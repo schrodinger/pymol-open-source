@@ -764,7 +764,7 @@ static void RayHashSpawn(CRayHashThreadInfo *Thread,int n_thread)
   blocked = PAutoBlock();
 
   PRINTFB(FB_Ray,FB_Details)
-    " Ray: Building voxels with %d threads...\n",n_thread
+    " Ray: Filling voxels with %d threads...\n",n_thread
   ENDFB;
   info_list = PyList_New(n_thread);
   for(a=0;a<n_thread;a++) {
