@@ -1055,6 +1055,7 @@ void SettingGenerateSideEffects(int index,char *sele,int state)
   case cSetting_two_sided_lighting:
   case cSetting_transparency_mode:
   case cSetting_dot_normals:
+  case cSetting_mesh_normals:
 	 SceneDirty();
 	 break;
   case cSetting_stereo_shift:
@@ -2196,6 +2197,7 @@ void SettingInitGlobal(int alloc,int reset_gui)
   SettingSet_i(I,cSetting_surface_type,0);
   SettingSet_b(I,cSetting_dot_normals,1);
   SettingSet_b(I,cSetting_session_migration,1);
+  SettingSet_b(I,cSetting_mesh_normals,1);
 }
 
 

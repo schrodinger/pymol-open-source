@@ -17,6 +17,10 @@ import util
 import traceback
 
 polar_contacts = "preset_polar_conts"
+lig_sele = "(hetatm and not resn MSE,WAT,H2O,HOH)"
+wat_sele = "(resn WAT,H2O,HOH)"
+lig_and_wat_sele = "("+lig_sele+"|"+wat_sele+")"
+
 
 def simple(selection="(all)"):
    s = "("+str(selection)+")"
@@ -24,9 +28,9 @@ def simple(selection="(all)"):
    cmd.hide("everything",s)
    cmd.show("ribbon",s)
    cmd.show("lines","(byres (("+s+" & r. CYS+CYX & n. SG) & bound_to ("+s+" & r. CYS+CYX & n. SG))) & n. CA+CB+SG")
-   cmd.show("sticks","(hetatm and ("+s+"))")
-   util.cnc("(hetatm and ("+s+"))")
-   cmd.show("nonbonded","(hetatm and ("+s+"))")
+   cmd.show("sticks","("+lig_sele+" and ("+s+"))")
+   util.cnc("("+lig_and_wat_sele+" and ("+s+"))")
+   cmd.show("nonbonded","("+lig_and_wat_sele+" and ("+s+"))")
    if polar_contacts in cmd.get_names():
       cmd.disable(polar_contacts)
    if cmd.count_atoms(s):
@@ -35,7 +39,7 @@ def simple(selection="(all)"):
 def simple_no_solv(selection="(all)"):
    simple(selection)
    s = "("+str(selection)+")"   
-   cmd.hide("nonbonded","("+s+" and (hetatm|hoh+wat+h2o/))")
+   cmd.hide("nonbonded","("+wat_sele+" and "+s+")")
 
 def ligands(selection="(all)"):
    try:
@@ -46,7 +50,7 @@ def ligands(selection="(all)"):
       lig = "_preset_lig"
       cmd.select(host,s+
         " and resn ALA+CYS+ASP+GLU+PHE+GLY+HIS+ILE+LYS+LEU+MET+MSE+ASN+PRO+GLN+ARG+SER+THR+VAL+TRP+TYR+A+C+T+G+U")
-      cmd.select(water,s+" and resn WAT+HOH+H20")
+      cmd.select(water,s+" and resn WAT+HOH+H2O")
       cmd.select(lig,s+" and not ("+host+"|"+water+")")
       cmd.select(near_water,s+" and ("+water+" within 5 of "+lig+")")
 
@@ -55,8 +59,9 @@ def ligands(selection="(all)"):
       util.cbac("(("+s+") and not elem c)")
       cmd.hide("everything",s)
       cmd.show("ribbon",host)
-      cmd.show("lines","(byres ("+host+" within 5 of "+lig+"))")
+      cmd.show("lines","("+s+"and byres ("+host+" within 5 of "+lig+"))")
       cmd.show("sticks",lig)
+      cmd.show("lines","("+s+" and (rep lines extend 1) and "+lig+")")
 
       if cmd.count_atoms(lig):
          cmd.dist(polar_contacts,host+"|"+near_water,lig,mode=2,quiet=1,labels=0) # hbonds
@@ -79,12 +84,12 @@ def ligands(selection="(all)"):
 def technical(selection="(all)"):
    s = str(selection)
    util.chainbow(s)
-   util.cbc("(hetatm and ("+s+"))")   
+   util.cbc("("+lig_sele+" and ("+s+"))")   
    util.cbac("(("+s+") and not elem c)")
    cmd.hide("everything",s)
    cmd.show("nonbonded",s)
-   cmd.show("lines","((("+s+") and not hetatm) extend 1)")
-   cmd.show("sticks","(hetatm and ("+s+"))")
+   cmd.show("lines","((("+s+") and not "+lig_sele+") extend 1)")
+   cmd.show("sticks","("+lig_sele+" and ("+s+"))")
    cmd.show("ribbon",s)
    cmd.dist(polar_contacts,s,s,mode=2,labels=0) # hbonds
    if polar_contacts in cmd.get_names():
@@ -92,18 +97,18 @@ def technical(selection="(all)"):
       cmd.set("dash_width",1.5,polar_contacts)
       cmd.hide("labels",polar_contacts)
       cmd.show("dashes",polar_contacts)
-   cmd.show("nonbonded","((hetatm|hoh+wat+h2o/) and ("+s+"))")
+   cmd.show("nonbonded","(("+lig_sele+"|resn hoh+wat+h2o) and ("+s+"))")
 
 def pretty(selection="(all)"):
    s = str(selection)
    cmd.dss(s,preserve=1)
    cmd.hide("everything",s)
    cmd.show("cartoon",s)
-   cmd.show("sticks","(hetatm and ("+s+"))")
-   cmd.show("nb_spheres","((hetatm|hoh+wat+h2o/) and ("+s+"))")
-   util.cbc("(hetatm and ("+s+"))")
-   util.cbac("(hetatm and ("+s+") and not elem c)")
-   cmd.spectrum("count",selection="(elem c and ("+s+") and not hetatm)")
+   cmd.show("sticks","("+lig_sele+" and ("+s+"))")
+   cmd.show("nb_spheres","(("+lig_sele+"|resn hoh+wat+h2o) and ("+s+"))")
+   util.cbc("("+lig_sele+" and ("+s+"))")
+   util.cbac("("+lig_sele+" and ("+s+") and not elem c)")
+   cmd.spectrum("count",selection="(elem c and ("+s+") and not "+lig_sele+")")
    cmd.set("cartoon_highlight_color",-1)
    cmd.set("cartoon_fancy_helices",0)
    cmd.set("cartoon_smooth_loops",0)
@@ -114,7 +119,7 @@ def pretty(selection="(all)"):
       
 def pretty_no_solv(selection):
    pretty(selection)
-   cmd.hide("nb_spheres","(hetatm|hoh+wat+h2o/)")
+   cmd.hide("nb_spheres","("+lig_sele+"|resn hoh+wat+h2o)")
    
 def publication(selection="(all)"):
    s = str(selection)
@@ -130,7 +135,7 @@ def publication(selection="(all)"):
 def pub_no_solv(selection="(all)"):
    publication(selection)
    s = "("+str(selection)+")"
-   cmd.hide("nb_spheres","((hetatm|hoh+wat+h2o/) and "+s+")")
+   cmd.hide("nb_spheres","(("+lig_sele+"|resn hoh+wat+h2o) and "+s+")")
    
 def default(selection="(all)"):
    s = "("+str(selection)+")"

@@ -371,7 +371,8 @@ if __name__=='pymol.setting':
       surface_type          = 331
       dot_normals           = 332
       session_migration     = 333
-      
+      mesh_normals          = 334
+
    setting_sc = Shortcut(SettingIndex.__dict__.keys())
 
    index_list = []
