@@ -623,6 +623,10 @@ class PMGApp(AbstractApp):
 
       self.menuBar.addmenu('Fragment', 'Fragment')
 
+      self.menuBar.addmenuitem('Fragment', 'command', 'Acetylene',
+                               label='Acetylene [Alt-J]',
+                               command = lambda: cmd.do(
+         "_ editor.attach_fragment('pk1','acetylene',2,0)"))
 
       self.menuBar.addmenuitem('Fragment', 'command', 'Amide N->C',
                                label='Amide N->C [Alt-1]',
