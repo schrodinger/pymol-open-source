@@ -188,6 +188,9 @@ O2-SO  525.0    1.430       RSM, based on Xray analysis
 O -SO  525.0    1.430       RSM, based on Xray analysis, WLD O2->O
 CB-CT  317.0    1.510       WLD from CA-CT
 CA-OS  450.0    1.364       WLD from CA-OH
+CN-NC  428.0    1.380       WLD from CN-NA
+CA-CC  469.0    1.404       WLD from CA-CB
+CC-NC  410.0    1.394       WLD from CC-NB
 
 HW-OW-HW    100.      104.52    TIP3P water
 HW-HW-OW      0.      127.74    (found in crystallographic water with 3 bonds)
@@ -506,6 +509,18 @@ C -CT-CB    63.0      111.10    WLD from C -CT-CT *
 CB-CT-HC    50.0      109.50    WLD from C -CT-HC
 CA-OS-CT    60.0      117.00    WLD from C -OS-CT
 CA-CA-OS    70.0      120.00    WLD from CA-CA-OH
+CC-CA-HA    50.0      120.00    WLD from CB-CA-HA
+CA-CN-NC    70.0      132.80    WLD from CA-CN-NA
+CB-CN-NC    70.0      104.40    WLD from CB-CN-NA
+F -CT-CC    50.0      114.00    WLD est. from CT-CT-CA
+CA-CC-NC    70.0      120.00    WLD from CW-CC-NA
+CT-CC-CA    70.0      120.00    WLD from CT-CC-CV
+CA-CA-N2    70.0      123.50    WLD from CB-CA-N2
+CT-N2-CT    50.0      123.20    WLD from CA-N2-CT
+CC-NC-CN    70.0      111.00    WLD from CB-NC-CQ 
+CA-CA-CC    63.0      120.00    WLD from CA-CA-CB
+CT-CC-NC    70.0      120.00    WLD from CT-CC-NA
+CA-CB-CA    63.0      117.30    WLD from CA-CB-CB
 
 X -C -C -X    4   14.50        180.0             2.         Junmei et al, 1999
 X -C -CA-X    4   14.50        180.0             2.         intrpol.bsd.on C6H6
@@ -574,7 +589,9 @@ X -CA-SO-X    6    0.00          0.0             2.         RSM, estimated
 X -N3-SO-X    6    2.40          0.0             3.         RSM, estimated
 X -CB-CT-X    6    0.00          0.0             2.         WLD from X -C -CT-X 
 X -CA-OS-X    2    2.40        180.0             4.         WLD gross est.
-N -CT-C -N    1    1.700       180.000          -1.
+X -CC-CA-X    4   20.60        180.0             2.         WLD from X -CC-CV-X
+X -CC-NC-X    2    8.30        180.0             2.         WLD from X -CB-NC-X
+X -CN-NC-X    2    8.30        180.0             2.         WLD from X -CB-NC-X
 N -CT-C -N    1    2.000       180.000           2.
 C -N -CT-C    1    0.850       180.000          -2.
 C -N -CT-C    1    0.800         0.000           1.

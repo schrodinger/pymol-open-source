@@ -107,7 +107,7 @@ def parse(s):
                         args[nest] = map(string.strip,args[nest])
                         if kw[nest][4]<2:
                            result=apply(kw[nest][0],args[nest])
-                        elif kw[nest][4]==3:
+                        elif kw[nest][4]==3: # default: module
                            if len(args[nest])==1:
                               mod = new.module(args[nest][0])
                               t = threading.Thread(target=execfile,
@@ -136,10 +136,8 @@ def parse(s):
                                                    mod.__dict__))
                               t.setDaemon(1)
                               t.start()
-                        elif len(args[nest])==1:
-                           mod = new.module(args[nest][0])
-                           execfile(args[nest][0],mod.__dict__,mod.__dict__)
-                           del mod
+                        elif len(args[nest])==1: # default: global
+                           execfile(args[nest][0],pymol_names,pymol_names)
                         elif args[nest][1]=='local':
                            execfile(args[nest][0],pymol_names,local_names)
                         elif args[nest][1]=='global':
