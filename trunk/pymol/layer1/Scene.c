@@ -1505,14 +1505,14 @@ void SceneRovingUpdate(void)
   char *p2;
   char *s;
   int refresh_flag=false;
-
+  
   if(I->RovingDirtyFlag&&(
                           (UtilGetSeconds()-I->RovingLastUpdate)>
                           fabs(SettingGet(cSetting_roving_delay)))) {
-
+    
     if(I->RovingCleanupFlag)
       SceneRovingCleanup();
-
+    
     s = SettingGet_s(NULL,NULL,cSetting_roving_selection);
     sticks = SettingGet(cSetting_roving_sticks);
     lines = SettingGet(cSetting_roving_lines);
@@ -1823,7 +1823,6 @@ int SceneDrag(Block *block,int x,int y,int mod)
     }
     if(moved_flag&&(int)SettingGet(cSetting_roving_detail)) {    
       SceneRovingDirty();
-      SceneRovingUpdate();
     }
     break;
   case cButModeRotXYZ:
@@ -2006,7 +2005,6 @@ int SceneDrag(Block *block,int x,int y,int mod)
     }
     if((moved_flag)&&(int)SettingGet(cSetting_roving_detail)) {    
       SceneRovingDirty();
-      SceneRovingUpdate();
     }
 
   }
