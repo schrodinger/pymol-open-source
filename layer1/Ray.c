@@ -1526,7 +1526,7 @@ int RayTraceThread(CRayThreadInfo *T)
                       fc[1] = (bright*fc[1]+excess);
                       fc[2] = (bright*fc[2]+excess);
                       
-                      if (fogFlag) 
+                      if(fogFlag) 
                         {
                           ffact = fog*(T->front - r1.dist) * invFrontMinusBack;
                           if(fogRangeFlag)
@@ -1585,10 +1585,18 @@ int RayTraceThread(CRayThreadInfo *T)
                   else if(pass) 
                     {
                       /* hit nothing, and we're on on second or greater pass */
+
                       fc[0] = first_excess+T->bkrd[0];
                       fc[1] = first_excess+T->bkrd[1];
                       fc[2] = first_excess+T->bkrd[2];
-                      fc[3] = _1;
+                      if(opaque_back) {
+                        fc[3] = _1;
+                      } else {
+                        fc[3] = _0;
+                      }
+                      
+                      ffact = 1.0F;
+                      ffact1m = 0.0F;
                       
                       pixel_flag	= true;
                     }

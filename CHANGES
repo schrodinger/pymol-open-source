@@ -4,6 +4,9 @@ CHANGE LOG
 
 Changes up to 0.95
 
+   * fixed bug with raytracing transparent surfaces using 
+     intermediate backgrounds
+
    * surface code now tolerates superimposed identical atoms more gracefully
 
    * dot_normals setting

@@ -62,6 +62,7 @@ def ligands(selection="(all)"):
          if polar_contacts in cmd.get_names():
             cmd.enable(polar_contacts)
             cmd.hide("labels",polar_contacts)
+            cmd.show("dashes",polar_contacts)            
       elif polar_contacts in cmd.get_names():
          cmd.delete(polar_contacts)
       cmd.show("nonbonded",lig+"|"+host+"|"+near_water)
@@ -80,6 +81,7 @@ def technical(selection="(all)"):
    util.cbc("(hetatm and ("+s+"))")   
    util.cbac("(("+s+") and not elem c)")
    cmd.hide("everything",s)
+   cmd.show("nonbonded",s)
    cmd.show("lines","((("+s+") and not hetatm) extend 1)")
    cmd.show("sticks","(hetatm and ("+s+"))")
    cmd.show("ribbon",s)
@@ -88,6 +90,7 @@ def technical(selection="(all)"):
       cmd.enable(polar_contacts)
       cmd.set("dash_width",1.5,polar_contacts)
       cmd.hide("labels",polar_contacts)
+      cmd.show("dashes",polar_contacts)
    cmd.show("nonbonded","((hetatm|hoh+wat+h2o/) and ("+s+"))")
 
 def pretty(selection="(all)"):
