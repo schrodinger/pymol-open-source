@@ -2412,7 +2412,7 @@ static PyObject *CmdShowHide(PyObject *self, 	PyObject *args)
   ok = PyArg_ParseTuple(args,"sii",&sname,&rep,&state);
   if (ok) { /* TODO STATUS */
     APIEntry();
-    if(sname[0]=='!') {
+    if(sname[0]=='@') {
       ExecutiveSetAllVisib(state);
     } else {
       SelectorGetTmp(sname,s1);
