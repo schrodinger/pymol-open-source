@@ -221,7 +221,8 @@ void RepCylBondRender(RepCylBond *I,CRay *ray,Pickable **pick)
 Rep *RepCylBondNew(CoordSet *cs)
 {
   ObjectMolecule *obj;
-  int a,a1,a2,*b,c1,c2,s1,s2,b1,b2;
+  int a,a1,a2,c1,c2,s1,s2,b1,b2;
+  BondType *b;
   float *v,*vv1,*vv2,*v0,*vr;
   float v1[3],v2[3],h[3];
   float radius;
@@ -243,8 +244,8 @@ Rep *RepCylBondNew(CoordSet *cs)
   b=obj->Bond;
   for(a=0;a<obj->NBond;a++)
     {
-      b1 = *(b++);
-      b2 = *(b++);
+      b1 = b->index[0];
+      b2 = b->index[1];
       b++;
       if(obj->AtomInfo[b1].visRep[cRepCyl]||
          obj->AtomInfo[b2].visRep[cRepCyl]) {
@@ -289,8 +290,8 @@ Rep *RepCylBondNew(CoordSet *cs)
 	 b=obj->Bond;
 	 for(a=0;a<obj->NBond;a++)
 		{
-		  b1 = *(b++);
-		  b2 = *(b++);
+        b1 = b->index[0];
+        b2 = b->index[1];
         b++;
 
         if(obj->DiscreteFlag) {
@@ -473,9 +474,9 @@ Rep *RepCylBondNew(CoordSet *cs)
 		b=obj->Bond;
 		for(a=0;a<obj->NBond;a++)
 		  {
-			 b1 = *(b++);
-			 b2 = *(b++);
-			 b++;
+          b1 = b->index[0];
+          b2 = b->index[1];
+          b++;
           if(obj->DiscreteFlag) {
             if((cs==obj->DiscreteCSet[b1])&&(cs==obj->DiscreteCSet[b2])) {
               a1=obj->DiscreteAtmToIdx[b1];

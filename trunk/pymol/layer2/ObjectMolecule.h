@@ -27,11 +27,16 @@ Z* -------------------------------------------------------------------
 
 #define cUndoMask 0x7
 
+typedef struct {
+  int index[2];
+  int order;
+} BondType;
+
 typedef struct ObjectMolecule {
   Object Obj;
   struct CoordSet **CSet;
   int NCSet;
-  int *Bond;
+  BondType *Bond;
   AtomInfoType *AtomInfo;
   int NAtom;
   int NBond;
@@ -138,9 +143,9 @@ void ObjectMoleculeRenderSele(ObjectMolecule *I,int curState,int sele);
 
 void ObjectMoleculeSeleOp(ObjectMolecule *I,int sele,ObjectMoleculeOpRec *op);
 
-CoordSet *ObjectMoleculeGetCoordSet(ObjectMolecule *I,int setIndex);
+struct CoordSet *ObjectMoleculeGetCoordSet(ObjectMolecule *I,int setIndex);
 void ObjectMoleculeBlindSymMovie(ObjectMolecule *I);
-void ObjectMoleculeMerge(ObjectMolecule *I,AtomInfoType *ai,CoordSet *cs,int bondSearchFlag);
+void ObjectMoleculeMerge(ObjectMolecule *I,AtomInfoType *ai,struct CoordSet *cs,int bondSearchFlag);
 void ObjectMoleculeUpdateNonbonded(ObjectMolecule *I);
 void ObjectMoleculeUpdateNeighbors(ObjectMolecule *I);
 int ObjectMoleculeMoveAtom(ObjectMolecule *I,int state,int index,float *v,int mode,int log);

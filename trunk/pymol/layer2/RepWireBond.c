@@ -129,7 +129,8 @@ void RepWireBondRender(RepWireBond *I,CRay *ray,Pickable **pick)
 Rep *RepWireBondNew(CoordSet *cs)
 {
   ObjectMolecule *obj;
-  int a,a1,a2,*b,c1,c2,s1,s2,b1,b2,ord,*o;
+  int a,a1,a2,c1,c2,s1,s2,b1,b2,ord,*o;
+  BondType *b;
   int half_bonds,*other=NULL;
   float valence;
   float *v,*v0,*v1,*v2,h[3];
@@ -147,8 +148,8 @@ Rep *RepWireBondNew(CoordSet *cs)
   b=obj->Bond;
   for(a=0;a<obj->NBond;a++)
     {
-      b1 = *(b++);
-      b2 = *(b++);
+      b1 = b->index[0];
+      b2 = b->index[1];
       b++;
       if(obj->AtomInfo[b1].visRep[cRepLine]||
          obj->AtomInfo[b2].visRep[cRepLine]) {
@@ -183,8 +184,8 @@ Rep *RepWireBondNew(CoordSet *cs)
       b=obj->Bond;
       for(a=0;a<obj->NBond;a++)
         {
-          b1 = *(b++);
-          b2 = *(b++);
+          b1 = b->index[0];
+          b2 = b->index[1];
           b++;
           if(obj->DiscreteFlag) {
             if((cs==obj->DiscreteCSet[b1])&&(cs==obj->DiscreteCSet[b2])) {
@@ -229,10 +230,15 @@ Rep *RepWireBondNew(CoordSet *cs)
 	 b=obj->Bond;
 	 for(a=0;a<obj->NBond;a++)
 		{
-		  b1 = *(b++);
-		  b2 = *(b++);
-        ord = (*(b++));
-
+        b1 = b->index[0];
+        b2 = b->index[1];
+        ord = b->order;
+        b++;
+        /*
+          b1 = *(b++);
+          b2 = *(b++);
+          ord = (*(b++));
+        */
         if(obj->DiscreteFlag) {
           if((cs==obj->DiscreteCSet[b1])&&(cs==obj->DiscreteCSet[b2])) {
             a1=obj->DiscreteAtmToIdx[b1];
@@ -365,8 +371,8 @@ Rep *RepWireBondNew(CoordSet *cs)
 		b=obj->Bond;
 		for(a=0;a<obj->NBond;a++)
 		  {
-			 b1 = *(b++);
-			 b2 = *(b++);
+          b1 = b->index[0];
+          b2 = b->index[1];
 			 b++;
           if(obj->DiscreteFlag) {
             if((cs==obj->DiscreteCSet[b1])&&(cs==obj->DiscreteCSet[b2])) {

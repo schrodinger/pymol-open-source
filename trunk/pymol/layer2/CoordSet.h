@@ -21,6 +21,7 @@ Z* -------------------------------------------------------------------
 #include"Symmetry.h"
 #include"Word.h"
 #include"Setting.h"
+#include"ObjectMolecule.h"
 
 typedef struct CoordSet {
   void (*fUpdate)(struct CoordSet *I);
@@ -30,7 +31,7 @@ typedef struct CoordSet {
   void (*fAppendIndices)(struct CoordSet *I,int existingAtoms);
   void (*fExtendIndices)(struct CoordSet *I,int nAtom);
   void (*fInvalidateRep)(struct CoordSet *I,int type,int level);
-  struct ObjectMolecule *Obj;
+  ObjectMolecule *Obj;
   float *Coord;
   int *Color;
   int *IdxToAtm;
@@ -40,9 +41,9 @@ typedef struct CoordSet {
   int Active[cRepCnt]; /* active flags */
   int NRep;
   int NTmpBond; /* optional, temporary (for coord set transfers) */
-  int *TmpBond; /* actual bond info is stored in ObjectMolecule */
+  BondType *TmpBond; /* actual bond info is stored in ObjectMolecule */
   int NTmpLinkBond; /* optional, temporary storage of linkage  info. */
-  int *TmpLinkBond; /* first atom is in obj, second is in cset */
+  BondType *TmpLinkBond; /* first atom is in obj, second is in cset */
   CSymmetry *Symmetry;
   WordType Name;
   float *Spheroid;
@@ -52,7 +53,6 @@ typedef struct CoordSet {
   CSetting *Setting;
 } CoordSet;
 
-#include"ObjectMolecule.h"
 
 CoordSet *CoordSetNew(void);
 void CoordSetAtomToPDBStrVLA(char **charVLA,int *c,AtomInfoType *ai,float *v,int cnt);

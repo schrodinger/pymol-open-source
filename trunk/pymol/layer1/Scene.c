@@ -878,9 +878,9 @@ int SceneClick(Block *block,int button,int x,int y,int mod)
         SelectorCreate(cEditorSele1,buffer,NULL,true,NULL);
         objMol = (ObjectMolecule*)obj;
         if(I->LastPicked.bond>=0) {
-          atIndex = objMol->Bond[I->LastPicked.bond*3];
+          atIndex = objMol->Bond[I->LastPicked.bond].index[0];
           if(atIndex == I->LastPicked.index)
-            atIndex = objMol->Bond[I->LastPicked.bond*3+1];              
+            atIndex = objMol->Bond[I->LastPicked.bond].index[1];              
           if(Feedback(FB_ObjectMolecule,FB_Results)) {
             if(obj->fDescribeElement)
               obj->fDescribeElement(obj,atIndex,buffer);
