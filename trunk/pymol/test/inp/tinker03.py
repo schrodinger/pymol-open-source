@@ -10,8 +10,6 @@ from chempy import feedback
 
 import os
 
-feedback['atoms'] = 1
-
 m = io.pdb.fromFile("dat/pept.pdb")
 
 m = protein.generate(m)

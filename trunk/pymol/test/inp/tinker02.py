@@ -2,7 +2,6 @@
 
 # minimization test
 
-
 from chempy import io
 from chempy import tinker
 from chempy import protein

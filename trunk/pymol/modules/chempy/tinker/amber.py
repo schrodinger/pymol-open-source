@@ -4,7 +4,9 @@ from chempy import feedback
 import string
 import copy
 
-tinker_extra = { # atomic number, and normal valency (for tinker)
+default_extra = { # atomic number, and normal valency (for tinker)
+   # NOTE: THIS SET IS ONLY USED IF THERE ARE NO CHEMPY RECORDS
+   # IN THE PARAMETER FILE
    # bromine 
    'BR' : [                 35 ,               1 ],
    # carbon                           
@@ -187,6 +189,18 @@ class Parameters:
          self.vdw[a4] =  [float(l[4:20]),
                           float(l[20:37]),
                           string.strip(l[37:])]
+         
+      # read extra tinker information if present
+      self.extra = {}
+      while 1:
+         l = string.strip(f.readline())
+         if not l: break
+         if l[0:6] == 'TINKER':
+            self.extra[string.strip(l[6:12])]  = [
+               string.strip(l[12:18]),
+               string.strip(l[18:22])]
+      if not len(self.extra.keys()):
+            self.extra = default_extra
       # now generate redundant equivalents
       for a in self.vdw_eq.keys():
          self.vdw[a] = self.vdw[self.vdw_eq[a]]
@@ -394,6 +408,17 @@ class Subset:
       atype = []
       for a in self.model.atom:
          atype.append(a.text_type)
+      # extra tinker info (atomic number, valency)
+      self.miss_extra = []
+      self.extra = {}
+      s_extra = self.extra
+      present = top.present
+      p_extra = par.extra
+      for kee in present.keys():
+         if p_extra.has_key(kee):
+            s_extra[kee] = p_extra[kee]
+         else:
+            self.miss_extra.append(kee)
       # molecular weight
       self.miss_mw = []
       self.mw = {}
@@ -553,18 +578,20 @@ class Subset:
 
       if feedback['actions']:
          print ' '+str(self.__class__)+': missing:'
-         print ' '+str(self.__class__)+':    mol. wts.   %6d' % (
+         print ' '+str(self.__class__)+':    mol. wts.         %6d' % (
             len(self.miss_mw))
-         print ' '+str(self.__class__)+':    vdw         %6d' % (
+         print ' '+str(self.__class__)+':    vdw               %6d' % (
             len(self.miss_vdw))
-         print ' '+str(self.__class__)+':    bonds       %6d' % (
+         print ' '+str(self.__class__)+':    bonds             %6d' % (
             len(self.miss_bond))
-         print ' '+str(self.__class__)+':    angles      %6d' % (
+         print ' '+str(self.__class__)+':    angles            %6d' % (
             len(self.miss_angle))
-         print ' '+str(self.__class__)+':    torsions    %6d' % (
+         print ' '+str(self.__class__)+':    torsions          %6d' % (
             len(self.miss_torsion))
-         print ' '+str(self.__class__)+':    impropers*  %6d (usually okay)' % (
+         print ' '+str(self.__class__)+':    impropers         %6d (usually okay)' % (
             len(self.miss_improper))
+         print ' '+str(self.__class__)+':    extra tinker info %6d' % (
+            len(self.miss_extra))
       
    def dump(self):
       kees = self.mw.keys()
@@ -646,8 +673,8 @@ dielectric              1.0
          at = type[c]
          f.write("atom %6s %6s    %-2s      %-25s %3d %10.3f%6d\n" % (
             label[c],label[c],at,'"'+self.mw[at][1][0:23]+'"',
-            tinker_extra[at][0],
-            self.mw[at][0],tinker_extra[at][1]))
+            self.extra[at][0],
+            self.mw[at][0],self.extra[at][1]))
       # van der waals
       for c in range(len(self.present)):
          at = type[c]

@@ -488,3 +488,107 @@ MOD4      RE
  
 END
 END
+
+
+
+# bromine 
+TINKER    BR    35    1
+TINKER    Br    35    1
+# carbon                        
+TINKER    C      6    3 
+TINKER    CA     6    3 
+TINKER    CB     6    3
+TINKER    CC     6    3
+TINKER    CD     6    3 
+TINKER    CF     6    3 
+TINKER    CK     6    3 
+TINKER    CM     6    3 
+TINKER    CN     6    3 
+TINKER    CQ     6    3 
+TINKER    CR     6    3 
+TINKER    CT     6    4 
+TINKER    CV     6    3 
+TINKER    CW     6    3  
+TINKER    CY     6    2 
+TINKER    CX     6    2
+TINKER    CZ     6    2
+TINKER    C5     6    3 
+TINKER    C*     6    3 
+# calcium       
+TINKER    C0    20    3 
+# chloride      
+TINKER    Cl    17    1  
+# fluorine      
+TINKER    F      9    1 
+# hydrogen      
+TINKER    H      1    1 
+TINKER    H1     1    1 
+TINKER    H2     1    1 
+TINKER    H3     1    1 
+TINKER    H4     1    1 
+TINKER    H5     1    1 
+TINKER    HC     1    1 
+TINKER    HA     1    1 
+TINKER    HO     1    1 
+TINKER    HP     1    1 
+TINKER    HS     1    1 
+TINKER    HW     1    1
+TINKER    HZ     1    1
+# iodine        
+TINKER    I     53    1 
+# chloride anion
+TINKER    IM    17    0 
+# magnesium     
+TINKER    MG    12    0
+# sodium cation 
+TINKER    Na    11    0
+TINKER    IP    11    0 
+# nitrogen      
+TINKER    N      7    3 
+TINKER    N*     7    2 
+TINKER    N2     7    3 
+TINKER    N3     7    4 
+TINKER    NA     7    3 
+TINKER    NB     7    2 
+TINKER    NC     7    2 
+TINKER    NT     7    3
+TINKER    NX     7    2 
+TINKER    NZ     7    3
+TINKER    NY     7    1
+# oxygen            
+TINKER    O      8    1 
+TINKER    O2     8    1 
+TINKER    OW     8    2 
+TINKER    OH     8    2 
+TINKER    OS     8    2 
+TINKER    OM     8    1 
+TINKER    OZ     8    1    
+# phosphate
+TINKER    P     15    4
+# sulfter
+TINKER    S     16    2 
+TINKER    SO    16    4 
+TINKER    SX    16    2 
+TINKER    SH    16    2 
+# copper     
+TINKER    CU    29    0 
+# iron       
+TINKER    FE    26    0 
+# lithium    
+TINKER    Li     3    0 
+# potassium  
+TINKER    K     19    0 
+# rubidium   
+TINKER    Rb    37    0 
+# cesium     
+TINKER    Cs    55    0 
+# calcium (alternate)
+TINKER    Ca    20    0 
+# dummy
+TINKER    X      6    1 
+# zinc
+TINKER    Z0    30    0 
+TINKER    Z4    30    4 
+TINKER    Z5    30    5 
+TINKER    Zn    30    0 
+TINKER    LP     0    1
