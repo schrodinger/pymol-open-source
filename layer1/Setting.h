@@ -89,6 +89,7 @@ float SettingGetNamed(char *name);
 #define cSetting_stick_overlap        47
 #define cSetting_stick_nub            48
 #define cSetting_all_states           49
+#define cSetting_pickable             50
 
 #endif
 

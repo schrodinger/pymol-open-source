@@ -246,73 +246,75 @@ Rep *RepWireBondNew(CoordSet *cs)
 	 I->V = Realloc(I->V,float,I->N*9);
 
 	 /* now create pickable verson */
-	 
-	 I->VP=(float*)mmalloc(sizeof(float)*obj->NBond*6*2);
-	 ErrChkPtr(I->VP);
-	 
-	 I->R.P=Alloc(Pickable,2*obj->NBond+1);
-	 ErrChkPtr(I->R.P);
-	 
-	 v=I->VP;
-	 b=obj->Bond;
-	 for(a=0;a<obj->NBond;a++)
-		{
-		  b1 = *(b++);
-		  b2 = *(b++);
-        b++;
-		  a1=cs->AtmToIdx[b1];
-		  a2=cs->AtmToIdx[b2];
-		  
-		  if((a1>=0)&&(a2>=0))
-			 {
-				s1=obj->AtomInfo[b1].visRep[cRepLine];
-				s2=obj->AtomInfo[b2].visRep[cRepLine];
-				
-				if(s1||s2)
-				  {	
-					 v1 = cs->Coord+3*a1;
-					 v2 = cs->Coord+3*a2;
-					 
-					 h[0]=(v1[0]+v2[0])/2;
-					 h[1]=(v1[1]+v2[1])/2;
-					 h[2]=(v1[2]+v2[2])/2;
-					 
-					 if(s1)
-						{
-						  I->NP++;
-						  
-						  I->R.P[I->NP].ptr = (void*)obj;
-						  I->R.P[I->NP].index = *(b-3);
-						  
-						  *(v++)=*(v1++);
-						  *(v++)=*(v1++);
-						  *(v++)=*(v1++);
-						  
-						  *(v++)=h[0];
-						  *(v++)=h[1];
-						  *(v++)=h[2];
-						}
-					 if(s2)
-						{
-						  I->NP++;
-						  I->R.P[I->NP].ptr = (void*)obj;
-						  I->R.P[I->NP].index = *(b-2);
-						  
-						  
-						  *(v++)=h[0];
-						  *(v++)=h[1];
-						  *(v++)=h[2];
-						  
-						  *(v++)=*(v2++);
-						  *(v++)=*(v2++);
-						  *(v++)=*(v2++);
-						}
-				  }
-			 }
-		}
-	 I->R.P = Realloc(I->R.P,Pickable,I->NP+1);
-	 I->R.P[0].index = I->NP;
-	 I->VP = Realloc(I->VP,float,I->NP*9);
+
+	 if(SettingGet(cSetting_pickable)) {
+		I->VP=(float*)mmalloc(sizeof(float)*obj->NBond*6*2);
+		ErrChkPtr(I->VP);
+		
+		I->R.P=Alloc(Pickable,2*obj->NBond+1);
+		ErrChkPtr(I->R.P);
+		
+		v=I->VP;
+		b=obj->Bond;
+		for(a=0;a<obj->NBond;a++)
+		  {
+			 b1 = *(b++);
+			 b2 = *(b++);
+			 b++;
+			 a1=cs->AtmToIdx[b1];
+			 a2=cs->AtmToIdx[b2];
+			 
+			 if((a1>=0)&&(a2>=0))
+				{
+				  s1=obj->AtomInfo[b1].visRep[cRepLine];
+				  s2=obj->AtomInfo[b2].visRep[cRepLine];
+				  
+				  if(s1||s2)
+					 {	
+						v1 = cs->Coord+3*a1;
+						v2 = cs->Coord+3*a2;
+						
+						h[0]=(v1[0]+v2[0])/2;
+						h[1]=(v1[1]+v2[1])/2;
+						h[2]=(v1[2]+v2[2])/2;
+						
+						if(s1)
+						  {
+							 I->NP++;
+							 
+							 I->R.P[I->NP].ptr = (void*)obj;
+							 I->R.P[I->NP].index = *(b-3);
+							 
+							 *(v++)=*(v1++);
+							 *(v++)=*(v1++);
+							 *(v++)=*(v1++);
+							 
+							 *(v++)=h[0];
+							 *(v++)=h[1];
+							 *(v++)=h[2];
+						  }
+						if(s2)
+						  {
+							 I->NP++;
+							 I->R.P[I->NP].ptr = (void*)obj;
+							 I->R.P[I->NP].index = *(b-2);
+							 
+							 
+							 *(v++)=h[0];
+							 *(v++)=h[1];
+							 *(v++)=h[2];
+							 
+							 *(v++)=*(v2++);
+							 *(v++)=*(v2++);
+							 *(v++)=*(v2++);
+						  }
+					 }
+				}
+		  }
+		I->R.P = Realloc(I->R.P,Pickable,I->NP+1);
+		I->R.P[0].index = I->NP;
+		I->VP = Realloc(I->VP,float,I->NP*9);
+	 }
   }
   return((void*)(struct Rep*)I);
 }

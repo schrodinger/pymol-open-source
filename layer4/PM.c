@@ -17,6 +17,7 @@ Z* -------------------------------------------------------------------
 #include<stdlib.h>
 #include<Python.h>
 
+#include"MemoryDebug.h"
 #include"Err.h"
 #include"Util.h"
 #include"PM.h"
@@ -32,7 +33,6 @@ Z* -------------------------------------------------------------------
 #include"Export.h"
 #include"PUtils.h"
 #include"Control.h"
-#include"MemoryDebug.h"
 
 #define tmpSele "_tmp"
 #define tmpSele1 "_tmp1"
@@ -60,6 +60,7 @@ static PyObject *PMGetFeedback(PyObject *dummy, PyObject *args);
 static PyObject *PMGetGlobals(PyObject *dummy, PyObject *args);
 static PyObject *PMGetMatrix(PyObject *self, 	PyObject *args);
 static PyObject *PMGetMoment(PyObject *self, 	PyObject *args);
+static PyObject *PMMem(PyObject *self, 	PyObject *args);
 static PyObject *PMLoad(PyObject *self, 	PyObject *args);
 static PyObject *PMMClear(PyObject *self, 	PyObject *args);
 static PyObject *PMMDo(PyObject *self, 	PyObject *args);
@@ -118,6 +119,7 @@ static PyMethodDef PM_methods[] = {
 	{"load",	        PMLoad,         METH_VARARGS },
 	{"mclear",	     PMMClear,       METH_VARARGS },
 	{"mdo",	        PMMDo,          METH_VARARGS },
+	{"mem",	        PMMem,          METH_VARARGS },
 	{"move",	        PMMove,         METH_VARARGS },
 	{"mset",	        PMMSet,         METH_VARARGS },
 	{"mplay",	     PMMPlay,        METH_VARARGS },
@@ -205,6 +207,15 @@ static PyObject *PMReady(PyObject *dummy, PyObject *args)
   return(result);
 }
 
+static PyObject *PMMem(PyObject *dummy, PyObject *args)
+{
+  PyObject *result = NULL;
+  MemoryDebugDump();
+  result = Py_None;
+  Py_INCREF(result);
+  return(result);
+}
+
 static PyObject *PMRunPyMOL(PyObject *dummy, PyObject *args)
 {
   int gui;
@@ -283,13 +294,13 @@ static PyObject *PMFitPairs(PyObject *dummy, PyObject *args)
 {
   PyObject *list;
   WordType *word = NULL;
-  int ln;
+  int ln=0;
   int a;
   int ok=true;
 
   PyArg_ParseTuple(args,"O",&list);
+  ln = PyObject_Length(list);
   if(ln) {
-    ln = PyObject_Length(list);
     if(ln&0x1)
       ok=ErrMessage("FitPairs","must supply an even number of selections.");
   } else ok=false;
@@ -306,9 +317,9 @@ static PyObject *PMFitPairs(PyObject *dummy, PyObject *args)
     for(a=0;a<ln;a++)
       SelectorFreeTmp(word[a]);
     FreeP(word);
-    Py_INCREF(Py_None);
-    return Py_None;
   }
+  Py_INCREF(Py_None);
+  return Py_None;
 }
 
 static PyObject *PMIntraFit(PyObject *dummy, PyObject *args)

@@ -422,6 +422,11 @@ void SettingInit(void)
 			"all_states");
 
   I->NSetting++;
+  I->Setting[cSetting_pickable].Value[0] = 1.0;
+  strcpy(I->Setting[cSetting_pickable].Name,
+			"pickable");
+
+  I->NSetting++;
 #ifdef _PYMOL_WINDOWS
   I->Setting[cSetting_normal_workaround].Value[0] = 1;
 #else

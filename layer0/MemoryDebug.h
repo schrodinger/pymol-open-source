@@ -60,7 +60,7 @@ typedef struct VLARec {
 
  /* NOTE: rec is index (total-1) */
 
-#define VLAlloc(type,initSize) (type*)VLAMalloc(initSize,sizeof(type),2,0)
+#define VLAlloc(type,initSize) (type*)VLAMalloc(initSize,sizeof(type),5,0)
 #define VLAFreeP(ptr) {if(ptr) {VLAFree(ptr);ptr=NULL;}}
 #define Alloc(type,size) (type*)mmalloc(sizeof(type)*(size))
 #define Realloc(ptr,type,size) (type*)mrealloc(ptr,sizeof(type)*(size))
