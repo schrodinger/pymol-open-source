@@ -76,7 +76,7 @@ void RepWireBondRender(RepWireBond *I,CRay *ray,Pickable **pick)
 
 	 glBegin(GL_LINES);
 	 
-	 while(c--) {
+	 while(0&&c--) {
 
 		i++;
 

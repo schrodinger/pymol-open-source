@@ -5046,10 +5046,10 @@ DistSet *SelectorGetDistSet(int sele1,int state1,int sele2,int state2,
   int dist_cnt = 0;
   int s;
   int a_keeper = false;
+  int *zero=NULL,*scratch=NULL;
   *result = 0.0;
   ds = DistSetNew();
   vv = VLAlloc(float,10000);
-  int *zero=NULL,*scratch=NULL;
 
   SelectorUpdateTable(); 
 

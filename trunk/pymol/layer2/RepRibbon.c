@@ -131,11 +131,11 @@ void RepRibbonRender(RepRibbon *I,CRay *ray,Pickable **pick)
     if(c) {
 
       int ribbon_smooth;
+      int first = true;
 
       ribbon_smooth=SettingGet_i(NULL,I->R.obj->Setting,cSetting_ribbon_smooth);
       if(!ribbon_smooth)
         glDisable(GL_LINE_SMOOTH);
-      int first = true;
 	   glDisable(GL_LIGHTING);
       glBegin(GL_LINE_STRIP);
       SceneResetNormal(true);
