@@ -70,15 +70,11 @@ class PMGApp(AbstractApp):
 
    def createMain(self):
       self.command = StringVar()
-      if os.name == 'nt':
-         entryWidth=40
-      else:
-         entryWidth=60
       self.entry = self.createcomponent('entry', (), None,
                            Entry,
                            (self.get_dataArea(),),
                            justify=LEFT,
-                           width=entryWidth,
+                           width=50,
                            textvariable=self.command)
       self.entry.pack(side=BOTTOM,expand=NO,fill=X)
       self.entry.bind('<Return>',lambda event,w=self.command:
