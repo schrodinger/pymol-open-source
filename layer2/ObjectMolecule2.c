@@ -28,7 +28,42 @@ Z* -------------------------------------------------------------------
 #include"Feedback.h"
 #include"Util.h"
 #include"AtomInfo.h"
+#include"Selector.h"
 
+void ObjectMoleculeM4XAnnotate(ObjectMolecule *I,M4XAnnoType *m4x)
+{
+  int a;
+  WordType name;
+  M4XContextType *cont;
+
+  if(m4x) {
+    for(a=0;a<m4x->n_context;a++) {
+      cont = m4x->context + a;
+
+      if(cont->site) {
+        UtilNCopy(name,I->Obj.Name,sizeof(WordType));
+        UtilNConcat(name,"_",sizeof(WordType));
+        UtilNConcat(name,cont->name,sizeof(WordType));
+        UtilNConcat(name,"_site",sizeof(WordType));
+        SelectorSelectByID(name,I,cont->site,cont->n_site);
+      }
+      if(cont->ligand) {
+        UtilNCopy(name,I->Obj.Name,sizeof(WordType));
+        UtilNConcat(name,"_",sizeof(WordType));
+        UtilNConcat(name,cont->name,sizeof(WordType));
+        UtilNConcat(name,"_ligand",sizeof(WordType));
+        SelectorSelectByID(name,I,cont->ligand,cont->n_ligand);
+      }
+      if(cont->water) {
+        UtilNCopy(name,I->Obj.Name,sizeof(WordType));
+        UtilNConcat(name,"_",sizeof(WordType));
+        UtilNConcat(name,cont->name,sizeof(WordType));
+        UtilNConcat(name,"_water",sizeof(WordType));
+        SelectorSelectByID(name,I,cont->water,cont->n_water);
+      }
+    }
+  }
+}
 
 void ObjectMoleculeInitHBondCriteria(HBondCriteria *hbc)
 {
@@ -43,7 +78,6 @@ void ObjectMoleculeInitHBondCriteria(HBondCriteria *hbc)
     hbc->factor_b = 0.5/pow(hbc->maxAngle,hbc->power_b);
   }
 }
-
     
 static int ObjectMoleculeTestHBond(float *donToAcc,float *donToH, float *hToAcc, 
                           float *accPlane, HBondCriteria *hbc)

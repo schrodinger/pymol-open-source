@@ -17,6 +17,7 @@ if __name__=='pymol.setting':
    import traceback
    import string
    import types
+   import selector
    from shortcut import Shortcut
    import cmd
    from cmd import _cmd,lock,lock_attempt,unlock,QuietException, \
@@ -336,6 +337,8 @@ if __name__=='pymol.setting':
       ss_strand_phi_include = 297
       ss_strand_phi_exclude = 298
       movie_loop            = 299
+      pdb_retain_ids        = 300
+      pdb_no_end_record     = 301
       
    setting_sc = Shortcut(SettingIndex.__dict__.keys())
 
@@ -380,7 +383,6 @@ if __name__=='pymol.setting':
       else:
          return ""
 
-
    def get_index_list():
       return index_list
 
@@ -389,7 +391,7 @@ if __name__=='pymol.setting':
 
    ###### API functions
 
-   def set(name,value,selection='',state=0,quiet=1,updates=1,log=0):
+   def set(name,value=1,selection='',state=0,updates=1,log=0,quiet=1):
       '''
 DESCRIPTION
 
@@ -397,15 +399,15 @@ DESCRIPTION
 
 USAGE
 
-   set name, value [,object-or-selection [,state ]]
+   set name, [,value [,object-or-selection [,state ]]]
 
-   set name = value      # (DEPRECATED)
+   set name = value  # (DEPRECATED)
 
 PYMOL API
 
-   cmd.set ( string name, string value,
+   cmd.set ( string name, string value=1,
              string selection='', int state=0,
-             int quiet=0, int updates=1 )
+              int updates=1, quiet=1)
 
 NOTES
 
@@ -421,14 +423,17 @@ NOTES
 
       '''
       r = None
+      selection = str(selection)
       if log:
-         cmd.log("set %s,%s\n"%(str(name),str(value)))
+         if len(selection):
+            cmd.log("set %s,%s,%s\n"%(str(name),str(value),str(selection)))
+         else:
+            cmd.log("set %s,%s\n"%(str(name),str(value)))            
       index = _get_index(str(name))
       if(index<0):
          print "Error: unknown setting '%s'."%name
          raise QuietException
       else:
-         success = 0
          try:
             lock()
             type = _cmd.get_setting_tuple(int(index),str(""),int(-1))[0]
@@ -436,20 +441,29 @@ NOTES
                print "Error: unable to get setting type."
                raise QuietException
             try:
-               if type==1: # boolean
-                  v = (boolean_dict[
-                         boolean_sc.auto_err(
-                            str(value),"boolean")],)
+               if type==1: # boolean (also support non-zero float for truth)
+                  handled = 0
+                  if boolean_sc.interpret(str(value))==None:
+                     try: # number, non-zero, then interpret as TRUE
+                        if not (float(value)==0.0):
+                           handled = 1
+                           v = (1,)
+                        else:
+                           handled = 1
+                           v = (0,)
+                     except:
+                        pass
+                  if not handled:
+                     v = (boolean_dict[
+                        boolean_sc.auto_err(
+                        str(value),"boolean")],)
                elif type==2: # int (also supports boolean language for 0,1)
-                  try:
-                     if boolean_sc.has_key(str(value)):
-                        v = (boolean_dict[
-                           boolean_sc.auto_err(
-                           str(value),"boolean")],)
-                     else:
-                        v = (int(value),)
-                  except:
-                     traceback.print_exc()
+                  if boolean_sc.has_key(str(value)):
+                     v = (boolean_dict[
+                        boolean_sc.auto_err(
+                        str(value),"boolean")],)
+                  else:
+                     v = (int(value),)
                elif type==3: # float
                   v = (float(value),)
                elif type==4: # float3 - some legacy handling req.
@@ -467,8 +481,10 @@ NOTES
                   v = (str(value),)
 
                v = (type,v)
+               if len(selection):
+                  selection=selector.process(selection)
                r = _cmd.set(int(index),v,
-                            string.strip(str(selection)),
+                            selection,
                             int(state)-1,int(quiet),
                             int(updates))
             except:
@@ -480,12 +496,18 @@ NOTES
             unlock()
       return r
 
-   def unset(name,selection='all',state=0,quiet=1,updates=1,log=0):
+   def unset(name,selection='',state=0,updates=1,log=0,quiet=1):
       '''
 DESCRIPTION
 
-   "unset" undefines an object-specific or state-specific setting so
-   that the global setting will be in effect.
+   "unset" behaves in two ways.
+
+   If selection is not provided, unset changes the named global
+   setting to a zero or off value.
+
+   If a selection is provided, then "unset" undefines 
+   object-specific or state-specific settings so that the global
+   setting will be in effect.
 
 USAGE
 
@@ -493,32 +515,39 @@ USAGE
 
 PYMOL API
 
-   cmd.unset ( string name, string selection='all',
-            int state=0, int quiet=0, int updates=1 )
+   cmd.unset ( string name, string selection = '',
+            int state=0, int updates=1, int log=0 )
 
       '''
       r = None
+      selection = str(selection)
       if log:
-         cmd.log("unset %s,%s\n"%(str(name),str(selection)))
+         if(len(selection)):
+            cmd.log("unset %s,%s\n"%(str(name),str(selection)))
+         else:
+            cmd.log("set %s,0\n"%(str(name)))
       index = _get_index(str(name))
       if(index<0):
          print "Error: unknown setting '%s'."%name
          raise QuietException
       else:
-         success = 0
-         try:
-            lock()
+         if not len(selection):
+            r = set(name,0,'',state,updates,log=0,quiet=quiet)
+         else:
             try:
-               r = _cmd.unset(int(index),string.strip(str(selection)),
-                           int(state)-1,int(quiet),
-                           int(updates))
-            except:
-               if(_feedback(fb_module.cmd,fb_mask.debugging)):
-                  traceback.print_exc()
-                  raise QuietException
-               print "Error: unable to unset setting value."
-         finally:
-            unlock()
+               lock()
+               try:
+                  selection = selector.process(selection)   
+                  r = _cmd.unset(int(index),selection,
+                                 int(state)-1,int(quiet),
+                                 int(updates))
+               except:
+                  if(_feedback(fb_module.cmd,fb_mask.debugging)):
+                     traceback.print_exc()
+                     raise QuietException
+                  print "Error: unable to unset setting value."
+            finally:
+               unlock()
       return r
 
 

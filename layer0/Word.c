@@ -38,6 +38,29 @@ void WordPrimeCommaMatch(char *p)
   }
 }
 
+int WordMatchExact(char *p,char *q,int ignCase) 
+
+/* 0 = no match
+   non-zero = perfect match  */
+
+{
+  while((*p)&&(*q))
+	 {
+		if(*p!=*q)
+		  {
+			 if(!ignCase)
+            return 0;
+          else if(tolower(*p)!=tolower(*q))
+            return 0;
+		  }
+		p++;
+		q++;
+	 }
+  if((*p)!=(*q))
+    return 0;
+  return 1;
+}
+
 
 int WordMatch(char *p,char *q,int ignCase) 
 /* allows for terminal wildcard (*) in p

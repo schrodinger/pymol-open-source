@@ -3608,25 +3608,35 @@ static PyObject *CmdLoad(PyObject *self, PyObject *args)
     
     switch(type) {
     case cLoadTypePDB:
-      PRINTFD(FB_CCmd) " CmdLoad-DEBUG: loading PDB\n" ENDFD;
-      if(!origObj) {
-        obj=(CObject*)ObjectMoleculeLoadPDBFile(NULL,fname,frame,discrete);
-        if(obj) {
-          ObjectSetName(obj,oname);
-          ExecutiveManageObject(obj,true,false);
+      {
+        M4XAnnoType m4x;
+        M4XAnnoInit(&m4x);
+        PRINTFD(FB_CCmd) " CmdLoad-DEBUG: loading PDB\n" ENDFD;
+        if(!origObj) {
+          
+          obj=(CObject*)ObjectMoleculeLoadPDBFile(NULL,fname,frame,discrete,&m4x);
+          if(obj) {
+            ObjectSetName(obj,oname);
+            ExecutiveManageObject(obj,true,false);
+            if(frame<0)
+              frame = ((ObjectMolecule*)obj)->NCSet-1;
+            sprintf(buf," CmdLoad: \"%s\" loaded into object \"%s\", state %d.\n",
+                    fname,oname,frame+1);
+          }
+        } else {
+          ObjectMoleculeLoadPDBFile((ObjectMolecule*)origObj,fname,frame,discrete,&m4x);
+          if(finish)
+            ExecutiveUpdateObjectSelection(origObj);
           if(frame<0)
-            frame = ((ObjectMolecule*)obj)->NCSet-1;
-          sprintf(buf," CmdLoad: \"%s\" loaded into object \"%s\", state %d.\n",
+            frame = ((ObjectMolecule*)origObj)->NCSet-1;
+          sprintf(buf," CmdLoad: \"%s\" appended into object \"%s\", state %d.\n",
                   fname,oname,frame+1);
+          obj = origObj;
         }
-      } else {
-        ObjectMoleculeLoadPDBFile((ObjectMolecule*)origObj,fname,frame,discrete);
-        if(finish)
-          ExecutiveUpdateObjectSelection(origObj);
-        if(frame<0)
-          frame = ((ObjectMolecule*)origObj)->NCSet-1;
-        sprintf(buf," CmdLoad: \"%s\" appended into object \"%s\", state %d.\n",
-                fname,oname,frame+1);
+        if(m4x.annotated_flag) {
+          ObjectMoleculeM4XAnnotate((ObjectMolecule*)obj,&m4x);
+        }
+        M4XAnnoPurge(&m4x);
       }
       break;
     case cLoadTypeTOP:
@@ -3736,7 +3746,7 @@ static PyObject *CmdLoad(PyObject *self, PyObject *args)
       break;
     case cLoadTypePDBStr:
       PRINTFD(FB_CCmd) " CmdLoad-DEBUG: loading PDBStr\n" ENDFD;
-      obj=(CObject*)ObjectMoleculeReadPDBStr((ObjectMolecule*)origObj,fname,frame,discrete);
+      obj=(CObject*)ObjectMoleculeReadPDBStr((ObjectMolecule*)origObj,fname,frame,discrete,NULL);
       if(!origObj) {
         if(obj) {
           ObjectSetName(obj,oname);

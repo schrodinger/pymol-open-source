@@ -604,6 +604,7 @@ int AtomNameCompare(char *name1,char *name2)
   else
     n2=name2;
   cmp = WordCompare(n1,n2,true);
+
   if(cmp) 
     return cmp;
   return WordCompare(name1,name2,true);
@@ -960,7 +961,7 @@ void AtomInfoAssignParameters(AtomInfoType *I)
                 )&&(!(*(I->elem+1))));
   
   n = I->name;
-  while((*n>='0')&&(*n<='0')&&(*(n+1))) n++;
+  while((*n>='0')&&(*n<='9')&&(*(n+1))) n++;
   if(toupper(*n)!=I->elem[0]) {
     pri=1000; /* unconventional atom name -- make no assignments */
   } else if((int)SettingGet(cSetting_pdb_standard_order)) {
@@ -992,10 +993,10 @@ void AtomInfoAssignParameters(AtomInfoType *I)
               case 'C':
                 pri = 2; break;
               default:
-                pri = 5; break;
+                pri = 5; break; /* generic alpha atom */
               }
             break;
-          case 'B': pri = 6; break;
+          case 'B': pri = 6; break; /* generic beta atom, etc. */
           case 'G': pri = 7; break;
           case 'D': pri = 8; break;
           case 'E': pri = 9; break;
@@ -1102,7 +1103,7 @@ void AtomInfoAssignParameters(AtomInfoType *I)
                 pri = 1000; break;
               }
             break;
-          case 'A': pri = 3; break;
+          case 'A': pri = 3; break; /* generic alpha */
           case 'B': pri = 4; break;
           case 'G': pri = 5; break;
           case 'D': pri = 6; break;
@@ -1269,6 +1270,7 @@ void AtomInfoAssignParameters(AtomInfoType *I)
   }
   if(I->vdw==0.0)
     I->vdw = vdw;
+  /*  printf("I->name %s I->priority %d\n",I->name,I->priority);*/
 }
 
 

@@ -328,6 +328,78 @@ static int IntInOrder(int *list,int a,int b)
   return(list[a]<=list[b]);
 }
 
+void SelectorSelectByID(char *name,ObjectMolecule *obj,int *id,int n_id)
+{
+  SelectorType *I=&Selector;
+  int min_id,max_id,range,*lookup = NULL;
+  int *atom = NULL;
+  /* this routine only works if IDs cover a reasonable range --
+     should rewrite using a hash table */
+
+  SelectorUpdateTableSingleObject(obj,true);
+  atom = Calloc(int,I->NAtom);
+  if(I->NAtom) {
+
+    /* determine range */
+
+    {
+      int a,cur_id;
+      cur_id = obj->AtomInfo[0].id;
+      min_id = cur_id;
+      max_id = cur_id;
+      for(a=1;a<obj->NAtom;a++) {
+        cur_id = obj->AtomInfo[a].id;
+        if(min_id>cur_id) min_id = cur_id;
+        if(max_id<cur_id) max_id = cur_id;
+      }
+    }
+
+    /* create cross-reference table */
+
+    {
+      int a,offset;
+      
+      range = max_id - min_id + 1;
+      lookup = Calloc(int,range);
+      for(a=0;a<obj->NAtom;a++) {
+        offset = obj->AtomInfo[a].id - min_id;
+        if(lookup[offset])
+          lookup[offset] = -1;
+        else {
+          lookup[offset] = a+1;
+        }
+      }
+    }
+    
+    /* iterate through IDs and mark */
+
+    {
+      int i,a,offset,lkup;
+
+      for(i=0;i<n_id;i++) {
+        offset = id[i]-min_id;
+        if((offset>=0)&&(offset<range)) {
+          lkup = lookup[offset];
+          if(lkup>0) {
+            atom[lkup-1]=true;
+          } else if(lkup<0) { 
+            for(a=0;a<obj->NAtom;a++) {
+              if(obj->AtomInfo[a].id==id[i]) 
+                atom[a]=true;
+            }
+          }
+        }
+      }
+    }
+  }
+
+  SelectorEmbedSelection(atom,name,NULL,true);
+  FreeP(atom);
+  FreeP(lookup);
+  SelectorClean();
+
+}
+
 void SelectorDefragment(void) 
 {
   SelectorType *I=&Selector;

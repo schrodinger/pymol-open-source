@@ -83,7 +83,7 @@ PyMOL>bond id 6,id 10,2
  AddBond: 1 bonds added to model "small01".
 PyMOL>h_add
 PyMOL>set valence=0.05
- Setting: valence set to 0.05000.
+ Setting: valence set to on.
 PyMOL>ray
  RayRenderTest: obtained 43 graphics primitives.
 PyMOL>dele all

@@ -154,6 +154,35 @@ typedef struct {
 
 #include"CoordSet.h"
 
+/* Metaphorics Annotated PDB stuff */
+
+typedef struct {
+  int atom1;
+  int atom2;
+  int strength;
+} M4XHBondType;
+
+typedef struct {
+  WordType name;
+  int *site, n_site;
+  int *ligand, n_ligand;
+  int *water, n_water;
+  M4XHBondType *hbond;
+  int n_hbond;
+} M4XContextType;
+
+typedef struct {
+  int annotated_flag;
+  int n_context;
+  M4XContextType *context;
+} M4XAnnoType;
+
+void M4XAnnoInit(M4XAnnoType *m4x);
+void M4XAnnoPurge(M4XAnnoType *m4x);
+void ObjectMoleculeM4XAnnotate(ObjectMolecule *I,M4XAnnoType *m4x);
+
+/* */
+
 int ObjectMoleculeNewFromPyList(PyObject *list,ObjectMolecule **result);
 PyObject *ObjectMoleculeAsPyList(ObjectMolecule *I);
 int ObjectMoleculeGetSerial(ObjectMolecule *I);
@@ -166,7 +195,7 @@ void ObjectMoleculeSort(ObjectMolecule *I);
 ObjectMolecule *ObjectMoleculeCopy(ObjectMolecule *obj);
 
 ObjectMolecule *ObjectMoleculeLoadXYZFile(ObjectMolecule *obj,char *fname,int frame,int discrete);
-ObjectMolecule *ObjectMoleculeLoadPDBFile(ObjectMolecule *obj,char *fname,int frame,int discrete);
+ObjectMolecule *ObjectMoleculeLoadPDBFile(ObjectMolecule *obj,char *fname,int frame,int discrete,M4XAnnoType *m4x);
 ObjectMolecule *ObjectMoleculeLoadPMOFile(ObjectMolecule *obj,char *fname,int frame,int discrete);
 ObjectMolecule *ObjectMoleculeLoadMOLFile(ObjectMolecule *obj,char *fname,int frame,int discrete);
 ObjectMolecule *ObjectMoleculeLoadMMDFile(ObjectMolecule *obj,char *fname,
@@ -186,7 +215,7 @@ ObjectMolecule *ObjectMoleculeLoadCoords(ObjectMolecule *I,PyObject *coords,int 
 ObjectMolecule *ObjectMoleculeReadPMO(ObjectMolecule *obj,CRaw *pmo,int frame,int discrete);
 
 ObjectMolecule *ObjectMoleculeReadMOLStr(ObjectMolecule *obj,char *molstr,int frame,int discrete);
-ObjectMolecule *ObjectMoleculeReadPDBStr(ObjectMolecule *obj,char *molstr,int frame,int discrete);
+ObjectMolecule *ObjectMoleculeReadPDBStr(ObjectMolecule *obj,char *molstr,int frame,int discrete,M4XAnnoType *m4x);
 ObjectMolecule *ObjectMoleculeReadMMDStr(ObjectMolecule *I,char *MMDStr,int frame,int discrete);
 ObjectMolecule *ObjectMoleculeReadXYZStr(ObjectMolecule *I,char *PDBStr,int frame,int discrete);
 
@@ -271,6 +300,7 @@ void ObjectMoleculeInitHBondCriteria(HBondCriteria *hbc);
 
 ObjectMolecule *ObjectMoleculeDummyNew(int mode);
 void ObjectMoleculeDummyUpdate(ObjectMolecule *I,int mode);
+
 
 /* legacy binary file suppoort */
 

@@ -441,9 +441,12 @@ CSetting *SettingNewFromPyList(PyObject *list);
 #define cSetting_ss_strand_phi_exclude         298
 #define cSetting_movie_loop                    299
 
+#define cSetting_pdb_retain_ids             300
+#define cSetting_pdb_no_end_record          301
+
 /* cSetting_ss_INIT must always be last setting_index +1 */
 
-#define cSetting_INIT                        300
+#define cSetting_INIT                        302
 
 #endif
 

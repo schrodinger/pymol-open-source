@@ -1482,7 +1482,7 @@ RESERVED FLAGS
       free       1 = Free Atoms (free to move subject to a force-field)
       restrain   2 = Restrained Atoms (typically harmonically contrained)
       fix        3 = Fixed Atoms (no movement allowed)
-      ignore     4 = Atoms which should not be part of any simulation
+      exclude    4 = Atoms which should not be part of any simulation
    Flags 8-15 are free for end users to manipulate
    Flags 16-23 are reserved for external GUIs and linked applications
    Flags 24-31 are reserved for PyMOL internal usage

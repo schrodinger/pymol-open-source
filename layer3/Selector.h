@@ -79,5 +79,6 @@ int SelectorAssignSS(int target,int present,int state_value,int preserve,int qui
 
 int SelectorPurgeObjectMembers(ObjectMolecule *obj);
 void SelectorDefragment(void);
+void SelectorSelectByID(char *name,ObjectMolecule *obj,int *id,int n_id);
 
 #endif
