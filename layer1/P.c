@@ -465,7 +465,6 @@ r1=RegOpenKeyEx(HKEY_CLASSES_ROOT,"Software\\DeLano Scientific\\PyMOL\\PYMOL_PAT
 			/* use environment variable PYMOL_PATH first, registry entry second */
 			sprintf(command,"_registry_pymol_path = r'''%s'''\n",path_buffer);
 			PyRun_SimpleString(command);
-			PyRun_SimpleString("print _registry_pymol_path\n");
 			PyRun_SimpleString("if not os.environ.has_key('PYMOL_PATH'): os.environ['PYMOL_PATH']=_registry_pymol_path\n");
 	  }
 	RegCloseKey(phkResult);
