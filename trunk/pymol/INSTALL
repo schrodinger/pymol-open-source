@@ -50,7 +50,7 @@ directory and then use a symbolic link to "ext" in the pymol directory.
 STEP(2) 
 
 After you have built the external dependencies, copy Rules.<platform>
-to Rules.make and choose options appropriate for your configuration
+to "Rules.make" and choose options appropriate for your configuration
 (here is where experience counts).
 
 Unless you are planning on doing heavy PyMOL development under Linux,
@@ -59,11 +59,11 @@ standalone application.
 
 	cd $HOME/pymol
    cp Rules.<platform> Rules.make
-	vi ./Rules.make
+	vi Rules.make
 
-Also, if you don't have a 3DFX card, get rid of the -D_PYMOL_3DFX
-workaround flag.  The nVidia drivers work great, so go get a GeForce2
-GTS.
+Under Linux, if you don't have a 3DFX card, get rid of the
+-D_PYMOL_3DFX work-around flag.  The nVidia drivers work great, so I
+suggest gettin a GeForce2 GTS for maximum performance.
 
 STEP (3) 
 
@@ -75,7 +75,7 @@ STEP (3)
 STEP (4) 
   
 Assuming that you chose to build PyMOL as a Python module, copy
-pymol.com.template to pymol.com.
+"pymol.com.template" to "pymol.com".
 
 Next, edit pymol.com so that PYMOL_PATH points to the correct location
 on your system.
