@@ -604,7 +604,6 @@ if __name__=='pymol.viewing':
 
       set_view, get_view
       '''
-      print __name__
       if key=='*':
          print " view: stored views:"
          lst = view_dict.keys()
