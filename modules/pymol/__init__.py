@@ -248,6 +248,7 @@ if pymol_launch != 3: # if this isn't a dry run
       # table size to reflect available RAM
 
       try:
+         ncpu = 1
          if sys.platform=='darwin':
             if os.path.exists("/usr/sbin/sysctl"):
                f=os.popen("/usr/sbin/sysctl hw.ncpu hw.physmem")
@@ -258,11 +259,6 @@ if pymol_launch != 3: # if this isn't a dry run
                      ll = string.split(string.strip(ll))
                      if ll[0]=='hw.ncpu':
                         ncpu = int(ll[2])
-                        if ncpu>0:
-                           cmd.set("max_threads",ncpu)
-                           if invocation.options.show_splash:  
-                              print "  Detected %d CPUs."%ncpu,
-                              print " Enabled multithreaded rendering."
                      elif ll[0]=='hw.physmem':
                         mem = int(ll[2])
                         if mem>1000000000: # Gig or more
@@ -271,6 +267,15 @@ if pymol_launch != 3: # if this isn't a dry run
                            cmd.set("hash_max",120)
                         elif mem<256000000:
                            cmd.set("hash_max",80)
+         elif sys.platform=='linux2':
+            f=os.popen("grep -c processor /proc/cpuinfo")
+            l=f.readlines()
+            f.close()
+         if ncpu>1:
+             cmd.set("max_threads",ncpu)
+             if invocation.options.show_splash:  
+                 print "  Detected %d CPUs."%ncpu,
+                 print " Enabled multithreaded rendering."
       except:
          pass
                      
