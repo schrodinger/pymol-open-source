@@ -107,6 +107,23 @@ int ExecutiveGetMaxDistance(char *name,float *pos,float *dev,int transformed,int
 #define ExecGreyVisible 0.45
 #define ExecGreyHidden 0.3
 
+int ExecutiveValidateObjectPtr(CObject *ptr,int object_type)
+{
+  CExecutive *I = &Executive;
+  int ok=false;
+  SpecRec *rec = NULL;
+
+  while(ListIterate(I->Spec,rec,next)) {
+    if(rec->type==cExecObject) {
+      if(rec->obj->type==object_type) {
+        ok=true;
+        break;
+      }
+    }
+  }
+  return(ok);
+}
+
 int ExecutiveRampMapNew(char *name,char *map_name,PyObject *range,PyObject *color,int map_state)
 {
   ObjectGadgetRamp *obj = NULL;

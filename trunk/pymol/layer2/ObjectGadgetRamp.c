@@ -111,11 +111,11 @@ int ObjectGadgetRampInterVertex(ObjectGadgetRamp *I,float *pos,float *color)
 {
   float level;
   int ok=true;
-  ObjectMap *map = NULL;
-  map = ExecutiveFindObjectMapByName(I->SrcName);
+  if (!ExecutiveValidateObjectPtr((CObject*)I->Map,cObjectMap));
+    I->Map = ExecutiveFindObjectMapByName(I->SrcName);
 
-  if(ok) ok = (map!=NULL);
-  if(ok) ok = ObjectMapInterpolate(map,I->SrcState,pos,&level,1);
+  if(ok) ok = (I->Map!=NULL);
+  if(ok) ok = ObjectMapInterpolate(I->Map,I->SrcState,pos,&level,1);
   if(ok) ok = ObjectGadgetRampInterpolate(I,level,color);
   return(ok);
 }
@@ -510,6 +510,7 @@ ObjectGadgetRamp *ObjectGadgetRampNew(void)
   I->var_index = 0;
   I->x = (1.0-(I->width+2*I->border))/2.0F;
   I->y = 0.12F;
+  I->Map = NULL;
   return(I);
 }
 

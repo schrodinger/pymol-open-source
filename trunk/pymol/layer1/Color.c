@@ -44,15 +44,21 @@ int ColorGetRamped(int index,float *vertex,float *color)
   if(index<=cColorExtCutoff) {
     index = cColorExtCutoff - index;
     if(index<I->NExt) {
-      if(!I->Ext[index].Ptr)
-        I->Ext[index].Ptr = (void*)ExecutiveFindObjectByName(I->Ext[index].Name);
-
+      if(!I->Ext[index].Ptr) {
+        if(I->Ext[index].Name)
+          I->Ext[index].Ptr = (void*)ExecutiveFindObjectByName(I->Ext[index].Name);
+      }
       if(I->Ext[index].Ptr) 
         ok = ObjectGadgetRampInterVertex(
                                          (ObjectGadgetRamp*)I->Ext[index].Ptr,
                                          vertex,color);
     }
   
+  }
+  if(!ok) {
+    color[0]=1.0;
+    color[1]=1.0;
+    color[2]=1.0;
   }
   return(ok);
 }
@@ -104,11 +110,9 @@ void ColorForgetExt(char *name)
 
   /* this won't work! */
 
-  if(a>=0) {
-    I->NExt--;
-    if(I->NExt) {
-      I->Ext[a] = I->Ext[I->NExt];
-    }
+  if(a>=0) { /* currently leaks memory TODO fix */
+    I->Ext[a].Name[0]=0;
+    I->Ext[a].Ptr=NULL;
   }
 }
 
