@@ -119,6 +119,31 @@ PYMOL API
 
    def angle(name=None,selection1="(pk1)",selection2="(pk2)",selection3="(pk3)", 
                 mode=None,labels=1,reset=0,zoom=0,quiet=1):
+      '''
+DESCRIPTION
+
+   "angle" shows the angle formed between any three atoms.
+
+USAGE
+
+   angle 
+   angle name, selection1, selection2, selection3
+
+PYMOL API
+
+   cmd.angle(string name=None,
+             string selection1="(pk1)",
+             string selection2="(pk2)",
+             string selection3="(pk3)")
+
+NOTES
+
+   "angle" alone will show the angle angle formed by selections (pk1),
+   (pk2), (pk3) which can be set using the "PkAt" mouse action
+   (typically, Ctrl-middle-click)
+
+   '''
+      
       r = 1
       if selection1=="(pk1)":
          if "pk1" not in cmd.get_names('selections'):
@@ -174,6 +199,32 @@ PYMOL API
    def dihedral(name=None,selection1="(pk1)",selection2="(pk2)",
                 selection3="(pk3)",selection4="(pk4)",
                 mode=None,labels=1,reset=0,zoom=0,quiet=1):
+      '''
+DESCRIPTION
+
+   "dihedral" shows dihedral angles formed between any four atoms.
+
+USAGE
+
+   dihedral 
+   dihedral name, selection1, selection2, selection3, selection4
+
+PYMOL API
+
+   cmd.dihedral(string name=None,
+                string selection1="(pk1)",
+                string selection2="(pk2)",
+                string selection3="(pk3)",
+                string selection4="(pk4)")
+
+NOTES
+
+   "dihedral" alone will show the dihedral angle formed by selections
+   (pk1), (pk2), (pk3), and (pk4), which can be set using the "PkAt"
+   mouse action (typically, Ctrl-middle-click)
+
+   '''
+      
       r = 1
       if selection1=="(pk1)":
          if "pk1" not in cmd.get_names('selections'):

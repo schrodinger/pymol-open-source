@@ -130,7 +130,7 @@ int  PyMOL_Idle(CPyMOL *I); /* return true if PyMOL is busy doing real
 typedef void PyMOLSwapBuffersFn(void);
 
 void PyMOL_SetSwapBuffersFn(CPyMOL *I, PyMOLSwapBuffersFn *fn);
-void PyMOL_SwapBuffers(CPyMOL *I); /* only works if above  function has been set */
+void PyMOL_SwapBuffers(CPyMOL *I); /* only works if above function has been set */
 void PyMOL_SetDefaultMouse(CPyMOL *I); 
 
 /* host query methods */
@@ -143,6 +143,8 @@ int PyMOL_GetSwap(CPyMOL *I, int reset);
 
 struct _PyMOLGlobals *PyMOL_GetGlobals(CPyMOL *I);
 void PyMOL_RunTest(CPyMOL *I, int group, int test);
+
+/* for Jmol integration */
 
 int PyMOL_NewG3DStream(CPyMOL *I,int **array_ptr);
 int PyMOL_DelG3DStream(CPyMOL *I,int *array_ptr);

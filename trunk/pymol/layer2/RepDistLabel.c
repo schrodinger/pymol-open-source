@@ -258,9 +258,6 @@ Rep *RepDistLabelNew(DistSet *ds)
       if((avg[0]==0.0F) && (avg[1]==0.0F) && (avg[2]==0.0F))
         copy3f(np12,avg);
       
-      dump3f(np12,"np12");
-        dump3f(np43,"np43");
-        dump3f(avg,"avg");
         scale3f(avg,radius,avg);
         add3f(a32,avg,avg);
 

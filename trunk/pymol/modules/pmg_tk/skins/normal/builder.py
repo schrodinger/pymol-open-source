@@ -320,7 +320,7 @@ class Builder(Frame):
             #        imgDir = os.path.split(__file__)[0] + "/bitmaps/"
             
             imgDir = os.path.join(os.environ['PYMOL_DATA'], "pmg_tk/bitmaps/builder")
-            print imgDir
+#            print imgDir
             imgList = glob("%s/aro*.gif" % imgDir) + glob("%s/cyc*.gif" % imgDir)
             for imgFile in imgList:
                 imgName = os.path.splitext(os.path.split(imgFile)[1])[0]
