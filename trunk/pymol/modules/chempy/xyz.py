@@ -51,7 +51,8 @@ class XYZ(Storage):
 #---------------------------------------------------------------------------------
    def toList(self,model):
 
-      conn = Connected(copy.deepcopy(model))
+      conn = copy.deepcopy(model)
+      conn = conn.convert_to_connected()
       
       list = []
 

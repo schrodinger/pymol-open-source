@@ -10,6 +10,8 @@ prefix = "tinker_run"
 def run(command,in_prefix,out_prefix,tokens):
    for a in glob.glob(prefix+".*"):
       os.unlink(a)
+   for a in glob.glob(out_prefix+".*"):
+      os.unlink(a)
    for src in glob.glob(in_prefix+".*"):
       dst = string.split(src,'.')
       dst = prefix+'.'+dst[len(dst)-1]
@@ -37,13 +39,14 @@ if os.environ.has_key('TINKER_PATH'):
    base = os.environ['TINKER_PATH']
    bin_path = base + '/bin/'
    params_path = base + '/params/'
-   if os.environ.has_key('PYMOL_PATH'):
-      pymol_path = os.environ['PYMOL_PATH']
-      test_path = pymol_path + '/modules/chempy/tinker/'
-      if os.path.exists(test_path):
-         params_path = test_path
 else:
    base = ''
    bin_path = ''
    params_path = ''
+
+if os.environ.has_key('PYMOL_PATH'):
+   pymol_path = os.environ['PYMOL_PATH']
+   test_path = pymol_path + '/modules/chempy/tinker/'
+   if os.path.exists(test_path):
+      params_path = test_path
 
