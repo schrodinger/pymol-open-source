@@ -202,9 +202,19 @@ PyObject *PConvFloatVLAToPyList(float *f)
   PyObject *result = Py_None;
   l=VLAGetSize(f);
   result=PyList_New(l);
-  for(a=0;a<l;a++) {
-    PyList_SetItem(result,a,PyFloat_FromDouble((double)f[a]));
-  }
+  for(a=0;a<l;a++) 
+    PyList_SetItem(result,a,PyFloat_FromDouble((double)*(f++)));
+  return(result);
+}
+
+PyObject *PConvIntVLAToPyList(int *f)
+{
+  int a,l;
+  PyObject *result = Py_None;
+  l=VLAGetSize(f);
+  result=PyList_New(l);
+  for(a=0;a<l;a++) 
+    PyList_SetItem(result,a,PyInt_FromLong(*(f++)));
   return(result);
 }
 

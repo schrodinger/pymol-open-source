@@ -46,6 +46,7 @@ void ExecutiveRay(void);
 float ExecutiveRMS(char *sele1,char *sele2,int mode);
 float ExecutiveRMSPairs(WordType *sele,int pairs,int mode);
 float *ExecutiveRMSStates(char *s1,int target,int mode);
+int *ExecutiveIdentify(char *s1,int mode);
 void ExecutiveReset(int cmd);
 void ExecutiveDrawNow(void);
 void ExecutiveSetAllVisib(int state);

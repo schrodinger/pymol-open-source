@@ -1932,6 +1932,29 @@ PYMOL API
       unlock()
    return r
 
+def identify(*arg):
+   '''
+DESCRIPTION
+  
+   "identify" returns a list of atom IDs corresponding to the ID code
+   of atoms in the selection
+ 
+PYMOL API
+ 
+   list = cmd.identify( [selection] )
+ 
+   '''
+   r = []
+   try:
+      lock()
+      sele = "(all)"
+      if len(arg)==1:
+         sele = arg[0]
+      r = _cmd.identify(sele,0) # 0 = default mode
+   finally:
+      unlock()
+   return r
+
 def get_extent(*arg):
    '''
 DESCRIPTION
@@ -2119,6 +2142,8 @@ PYMOL API
          ftype = loadable.mol
       elif re.search("\.mmod$",arg[0]):
          ftype = loadable.mmod
+      elif re.search("\.mmd$",arg[0]):
+         ftype = loadable.mmod
       elif re.search("\.xplor$",arg[0]):
          ftype = loadable.xplor
       elif re.search("\.pkl$",arg[0]):
@@ -2142,7 +2167,8 @@ PYMOL API
             ok = 0
          if len(arg)==1:
             oname = re.sub("[^/]*\/","",arg[0])
-            oname = re.sub("\.pdb$|\.mol$|\.mmod$|\.xplor$|\.pkl$","",oname)
+            oname = re.sub("\.pdb$|\.mol$|\.mmod$|\.mmd$|\.xplor$|\.pkl$",
+                           "",oname)
          else:
             oname = string.strip(arg[1])
          if len(arg)>2:

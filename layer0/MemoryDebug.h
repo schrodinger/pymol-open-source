@@ -65,7 +65,7 @@ typedef struct VLARec {
 
 #define VLAlloc(type,initSize) (type*)VLAMalloc(initSize,sizeof(type),5,0)
 #define VLAFreeP(ptr) {if(ptr) {VLAFree(ptr);ptr=NULL;}}
-#define VLASize(ptr,type,size) {ptr=(type*)VLASetSize(ptr,sizeof(type)*(size));}
+#define VLASize(ptr,type,size) {ptr=(type*)VLASetSize(ptr,size);}
 
 #define Alloc(type,size) (type*)mmalloc(sizeof(type)*(size))
 #define Realloc(ptr,type,size) (type*)mrealloc(ptr,sizeof(type)*(size))

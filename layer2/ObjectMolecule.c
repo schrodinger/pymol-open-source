@@ -1398,9 +1398,24 @@ void ObjectMoleculeSeleOp(ObjectMolecule *I,int sele,ObjectMoleculeOpRec *op)
        VLACheck(op->f1VLA,float,b);
        op->f1VLA[b]=rms;
      }
-     VLASetSize(op->f1VLA,I->NCSet); 
+     VLASetSize(op->f1VLA,I->NCSet);  /* NOTE this action is object-specific! */
      break;
-
+	case OMOP_Identify: /* identify atoms */
+     for(a=0;a<I->NAtom;a++)
+       {
+         s=I->AtomInfo[a].selEntry;
+         while(s) 
+           {
+             if(SelectorMatch(s,sele))
+               {
+                 VLACheck(op->i1VLA,int,op->i1);
+                 op->i1VLA[op->i1++]=I->AtomInfo[a].id;
+                 break;
+               }
+             s=SelectorNext(s);
+           }
+       }
+     break;
 	default:
 	   for(a=0;a<I->NAtom;a++)
 		 {
@@ -2514,8 +2529,8 @@ CoordSet *ObjectMoleculeMMDStr2CoordSet(char *buffer,AtomInfoType **atInfoPtr)
         p=nextline(p);
       }
   }
-  if(ok) 
-    bond=VLASetSize(bond,3*sizeof(int)*nBond);
+  if(ok)
+    bond=VLASetSize(bond,3*nBond);
   if(ok) {
 	 cset = CoordSetNew();
 	 cset->NIndex=nAtom;

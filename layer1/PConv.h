@@ -39,6 +39,7 @@ Z* -------------------------------------------------------------------
 */
 
 PyObject *PConvFloatVLAToPyList(float *f);
+PyObject *PConvIntVLAToPyList(int *f);
 
 void PConvFloatToPyDictItem(PyObject *dict,char *key,float f);
 void PConvStringToPyDictItem(PyObject *dict,char *key,char *f);

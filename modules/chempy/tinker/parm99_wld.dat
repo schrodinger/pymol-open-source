@@ -53,6 +53,7 @@ OS 16.00         0.465               ether and ester oxygen
 P  30.97         1.538               phosphate,pol:JACS,112,8543,90,K.J.Miller
 S  32.06         2.900               S in disulfide linkage,pol:JPC,102,2399,98
 SH 32.06         2.900               S in cystine
+SO 32.06         2.900               S in sulfate, sulfonamide (WLD)
 CU 63.55                             copper
 FE 55.00                             iron
 Li  6.94         0.029               lithium, ions pol:J.PhysC,11,1541,(1978)
@@ -93,6 +94,7 @@ CA-N2  481.0    1.340       JCC,7,(1986),230; ARG,CYT,GUA
 CA-NA  427.0    1.381       JCC,7,(1986),230; GUA
 CA-NC  483.0    1.339       JCC,7,(1986),230; ADE,CYT,GUA
 CA-OH  450.0    1.364       substituted for C-OH in tyr 
+CA-SO  427.0    1.761       RSM, based on Xray analysis
 CB-CB  520.0    1.370       JCC,7,(1986),230; ADE,GUA
 CB-N*  436.0    1.374       JCC,7,(1986),230; ADE,GUA
 CB-NB  414.0    1.391       JCC,7,(1986),230; ADE,GUA
@@ -181,6 +183,9 @@ LP-NB  600.0    0.200       or 0.35 histidines, nucleic acids
 LP-NC  600.0    0.200       or 0.35 nucleic acids
 LP-S   600.0    0.700       cys,cyx,met
 LP-SH  600.0    0.700       cys,cyx
+N3-SO  230.0    1.615       RSM, based on Xray analysis
+O2-SO  525.0    1.430       RSM, based on Xray analysis
+O -SO  525.0    1.430       RSM, based on Xray analysis, WLD O2->O
 
 HW-OW-HW    100.      104.52    TIP3P water
 HW-HW-OW      0.      127.74    (found in crystallographic water with 3 bonds)
@@ -468,6 +473,23 @@ P -OS-LP   150.0       109.5    NA
 LP-S -LP   150.0       180.0    cys,cyx,met
 LP-SH-LP   150.0       180.0    cys,cyx,met
 HS-SH-LP   150.0        90.0    cys  
+CA-SO-N3    62.0      107.10    RSM, estimated from xray data
+CA-SO-O2   100.0      107.80    RSM, estimated from xray data
+CA-SO-O    100.0      107.80    RSM, estimated from xray data, WLD O2->O
+N3-SO-N3   100.0      106.80    RSM, estimated from xray data
+N3-SO-O2   100.0      107.10    RSM, estimated from xray data
+N3-SO-O    100.0      107.10    RSM, estimated from xray data, WLD O2->O
+O2-SO-O2   140.0      119.70    RSM, estimated from xray data
+O -SO-O    140.0      119.70    RSM, estimated from xray data, WLD O2->O
+N3-SO-N3   100.0      106.80    RSM, estimated from xray data
+CA-CA-SO    70.0      120.00    RSM, based on Xray analysis
+CT-N3-SO    50.0      121.20    RSM, estimated from Xray data
+H -N3-SO    30.0      115.43    RSM, estimated from Xray data
+H1-CT-N3    50.0      109.50    WLD based on AA lys, ch3nh3+
+CA-CT-N3    80.0      111.20    WLD based on C -CT-N3
+O -C -CA    70.0      120.00    WLD based on CA-C -OH
+N -C -CA    70.0      120.00    WLD based on CA-C -OH
+O2-C -CA    70.0      120.00    WLD based on CA-C -OH
 
 X -C -C -X    4   14.50        180.0             2.         Junmei et al, 1999
 X -C -CA-X    4   14.50        180.0             2.         intrpol.bsd.on C6H6
@@ -532,6 +554,8 @@ X -CV-NB-X    2    4.80        180.0             2.         JCC,7,(1986),230
 X -CW-NA-X    4    6.00        180.0             2.         JCC,7,(1986),230
 X -OH-P -X    3    0.75          0.0             3.         JCC,7,(1986),230
 X -OS-P -X    3    0.75          0.0             3.         JCC,7,(1986),230
+X -CA-SO-X    6    0.00          0.0             2.         RSM, estimated
+X -N3-SO-X    6    2.40          0.0             3.         RSM, estimated
 N -CT-C -N    1    1.700       180.000          -1.
 N -CT-C -N    1    2.000       180.000           2.
 C -N -CT-C    1    0.850       180.000          -2.
@@ -693,6 +717,7 @@ MOD4      RE
   NY          1.8240  0.1700             N in nitrile
   S           2.0000  0.2500             W. Cornell CH3SH and CH3SCH3 FEP's
   SH          2.0000  0.2500             W. Cornell CH3SH and CH3SCH3 FEP's
+  SO          2.0000  0.2500             RSM
   P           2.1000  0.2000             JCC,7,(1986),230; 
   IM          2.47    0.1                Cl- Smith & Dang, JCP 1994,100:5,3757
   Li          1.1370  0.0183             Li+ Aqvist JPC 1990,94,8021. (adapted)
@@ -810,7 +835,7 @@ TINKER    OM     8    1
 TINKER    OZ     8    1    
 # phosphate
 TINKER    P     15    4
-# sulfter
+# sulfer
 TINKER    S     16    2 
 TINKER    SO    16    4 
 TINKER    SX    16    2 

@@ -64,6 +64,7 @@ typedef struct {
   int TmpCounter;
   MemberType *Member;
   int NMember;
+  int FreeMember;
   ObjectMolecule **Obj;
   TableRec *Table;
   float *Vertex;
@@ -965,10 +966,10 @@ int SelectorIndexByName(char *sname)
 /*========================================================================*/
 void SelectorPurgeMembers(int sele) 
 {
-/* NOTE: this routine leaks memory in I->Member array - TODO: fix*/
   int a=0;
   int s=0;
   int l;
+  int nxt;
   Object *o = NULL;
   void *hidden = NULL;
   ObjectMolecule *obj;
@@ -986,15 +987,18 @@ void SelectorPurgeMembers(int sele)
 					 s=obj->AtomInfo[a].selEntry;
 					 while(s)
 						{
+                    nxt = I->Member[s].next;
 						  if(I->Member[s].selection==sele)
 							 {
 								if(l>=0)
 								  I->Member[l].next=I->Member[s].next;
 								else
 								  obj->AtomInfo[a].selEntry=I->Member[s].next;
+                        I->Member[s].next = I->FreeMember; 
+                        I->FreeMember=s;
 							 }
                     l=s;
-						  s=I->Member[s].next;
+						  s=nxt;
 						}
 				  }
 			 }
@@ -1091,9 +1095,14 @@ void SelectorCreate(char *sname,char *sele,ObjectMolecule *obj,int quiet)
 			 if(flag)
 				{
 				  c++;
-				  I->NMember++;
-				  m=I->NMember;
-				  VLACheck(I->Member,MemberType,m);
+              if(I->FreeMember>=0) {
+                m=I->FreeMember;
+                I->FreeMember=I->Member[m].next;
+              } else {
+                I->NMember++;
+                m=I->NMember;
+                VLACheck(I->Member,MemberType,m);
+              }
 				  I->Member[m].selection=n;
 				  I->Member[m].next = 
 					 I->Obj[I->Table[a].model]->AtomInfo[I->Table[a].atom].selEntry;
@@ -2483,6 +2492,7 @@ void SelectorInit(void)
   I->Name = VLAlloc(WordType,10);
   I->Member = (MemberType*)VLAMalloc(1000,sizeof(MemberType),5,true);
   I->NMember=0;
+  I->FreeMember=-1;
   I->NCSet=0;
   I->Table=NULL;
   I->Obj=NULL;
