@@ -149,6 +149,24 @@ static int set_list(CSetting *I,PyObject *list)
   return(ok);
 }
 /*========================================================================*/
+CSetting *SettingNewFromPyList(PyObject *list)
+{
+  int ok=true;
+  int size;
+  int a;
+  CSetting *I=NULL;
+  if(ok) ok=(list!=NULL);
+  if(ok) ok=PyList_Check(list);
+  if(ok) {
+    I=SettingNew();
+    size=PyList_Size(list);
+    for(a=0;a<size;a++) {
+      if(ok) ok=set_list(I,PyList_GetItem(list,a));
+    }
+  }
+  return(I);
+}
+/*========================================================================*/
 int SettingSetPyList(CSetting *I,PyObject *list)
 {
   int ok=true;

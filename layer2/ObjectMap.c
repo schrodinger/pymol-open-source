@@ -75,6 +75,26 @@ ObjectMapState *ObjectMapStateGetActive(ObjectMap *I,int state)
 }
 
 
+
+/*
+  int ObjectMapNewFromPyList(PyObject *list,ObjectMolecule **result)
+  {
+  int ok = true;
+  ObjectMolecule *I=NULL;
+  (*result) = NULL;
+  
+  if(ok) ok=PyList_Check(list);
+
+  I=ObjectMapNew();
+  if(ok) ok = (I!=NULL);
+
+  if(ok) ok = ObjectSetPyList(PyList_GetItem(list,0),&I->Obj);
+
+  if(ok) ok = PConvPyIntToInt(PyList_GetItem(list,1),&I->NState);
+  return(ok);
+}
+*/
+
 void ObjectMapUpdateExtents(ObjectMap *I)
 {
   int a;

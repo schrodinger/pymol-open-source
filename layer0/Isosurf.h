@@ -20,6 +20,7 @@ Z* -------------------------------------------------------------------
 #include"MemoryDebug.h"
 #include"Crystal.h"
 #include"Field.h"
+#include"os_python.h"
 
 typedef struct {
   int dimensions[3];
@@ -40,5 +41,8 @@ int	IsosurfVolume(Isofield *field,float level,int **num,float **vert,int *range,
 void IsosurfGetRange(Isofield *field,CCrystal *cryst,float *mn,float *mx,int *range);
 
 int	IsosurfInit(void);
+
+PyObject *IsosurfGetPyList(Isofield *I);
+Isofield *IsosurfNewFromPyList(PyObject *list);
 
 #endif

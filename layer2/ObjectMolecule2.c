@@ -59,7 +59,6 @@ static int ObjectMoleculeSetCSetPyList(ObjectMolecule *I,PyObject *list)
     for(a=0;a<I->NCSet;a++) {
       if(ok) ok = CoordSetSetPyList(PyList_GetItem(list,a),&I->CSet[a]);
       if(ok) I->CSet[a]->Obj = I;
-      printf("omc %d\n",ok);
     }
   }
   return(ok);

@@ -44,7 +44,7 @@ PyObject *ObjectGetPyList(CObject *I)
   PyList_SetItem(result,5,PConvFloatArrayToPyList(I->ExtentMax,3));
   PyList_SetItem(result,6,PyInt_FromLong(I->ExtentFlag));
   PyList_SetItem(result,7,PyInt_FromLong(I->TTTFlag));
-  PyList_SetItem(result,8,Py_None); /* TO DO setting */
+  PyList_SetItem(result,8,SettingGetPyList(I->Setting));
   PyList_SetItem(result,9,PyInt_FromLong(I->Enabled));
 
   return(PConvAutoNone(result));
@@ -62,7 +62,7 @@ int ObjectSetPyList(PyObject *list,CObject *I)
   if(ok) ok = PConvPyListToFloatArrayInPlaceAutoZero(PyList_GetItem(list,5),I->ExtentMax,3);
   if(ok) ok = PConvPyIntToInt(PyList_GetItem(list,6),&I->ExtentFlag);
   if(ok) ok = PConvPyIntToInt(PyList_GetItem(list,7),&I->TTTFlag);
-  /* TODO setting */
+  if(ok) I->Setting=SettingNewFromPyList(PyList_GetItem(list,8));
   if(ok) ok = PConvPyIntToInt(PyList_GetItem(list,9),&I->Enabled);
   
   return(ok);

@@ -107,6 +107,7 @@ PyObject *SettingGetPyList(CSetting *I);
 int SettingSetPyList(CSetting *I,PyObject *list);
 int SettingSetGlobalsFromPyList(PyObject *list);
 PyObject *SettingGetGlobalsPyList(void);
+CSetting *SettingNewFromPyList(PyObject *list);
 
 /* WARNING: do not delete or change indices
    since they are used in session objects */

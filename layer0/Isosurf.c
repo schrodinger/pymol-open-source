@@ -23,6 +23,7 @@ Z* -------------------------------------------------------------------
 #include"Crystal.h"
 #include"Vector.h"
 #include"Feedback.h"
+#include"PConv.h"
 
 #define Trace_OFF
 
@@ -93,6 +94,66 @@ int	IsosurfDrawPoints(void);
 int	IsosurfPoints(void);
 
 #define IsosurfSubSize		50
+
+PyObject *IsosurfGetPyList(Isofield *I)
+{
+  PyObject *result=NULL;
+
+  result = PyList_New(3);
+  PyList_SetItem(result,0,PConvIntArrayToPyList(I->dimensions,3));
+  PyList_SetItem(result,1,PConvFloatArrayToPyList((float*)I->data->data,
+                                                  I->dimensions[0]*
+                                                  I->dimensions[1]*
+                                                  I->dimensions[2]));
+  PyList_SetItem(result,2,PConvFloatArrayToPyList((float*)I->points->data,
+                                                  I->dimensions[0]*
+                                                  I->dimensions[1]*
+                                                  I->dimensions[2]*
+                                                  I->dimensions[3]));
+  return(PConvAutoNone(result));
+}
+
+Isofield *IsosurfNewFromPyList(PyObject *list)
+{
+  int ok=true;
+  Isofield *result = NULL;
+  int dim4[4];
+  if(ok) ok=(list!=NULL);
+  if(ok) ok=PyList_Check(list);
+  if(ok) ok=PConvPyListToIntArrayInPlace(PyList_GetItem(list,0),dim4,3);
+  dim4[3] = 3;
+  
+  result=mmalloc(sizeof(Isofield));
+  result->data = NULL;
+  result->points = NULL;
+
+  ErrChkPtr(result);
+  result->data = FieldNew(dim4,3,sizeof(float));
+  ErrChkPtr(result->data);
+  if(ok) ok=PConvPyListToFloatArrayInPlace(PyList_GetItem(list,1),
+                                           (float*)result->data->data,
+                                           dim4[0]*dim4[1]*dim4[2]);
+
+  result->points = FieldNew(dim4,4,sizeof(float));
+  ErrChkPtr(result->points);
+  if(ok) ok=PConvPyListToFloatArrayInPlace(PyList_GetItem(list,2),
+                                           (float*)result->points->data,
+                                           dim4[0]*dim4[1]*dim4[2]*dim4[3]);
+
+  result->dimensions[0]=dim4[0];
+  result->dimensions[1]=dim4[1];
+  result->dimensions[2]=dim4[2];
+  if(!ok) {
+    if(result) {
+      if(result->dimensions)
+        mfree(result->dimensions);
+      if(result->points)
+        mfree(result->points);
+      mfree(result);
+    }
+  }
+  return(result);
+}
 
 /*===========================================================================*/
 /*===========================================================================*/
