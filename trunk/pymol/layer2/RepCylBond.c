@@ -339,6 +339,8 @@ static void RepValence(float **v_ptr,int *n_ptr, /* opengl */
   int n = *n_ptr,nr = *nr_ptr;
   int a3;
   int double_sided;
+
+      
   /* First, we need to construct a coordinate system */
 
   /* get direction vector */
@@ -352,7 +354,6 @@ static void RepValence(float **v_ptr,int *n_ptr, /* opengl */
   
   /* need a third atom to get planarity*/
   a3 = ObjectMoleculeGetPrioritizedOther(other,a1,a2,&double_sided);
-
 
   if(a3<0) {    
     t[0] = p0[0];
@@ -833,11 +834,6 @@ static void RepValence(float **v_ptr,int *n_ptr, /* opengl */
         vr+=3;
         nr++;
 
-
-        copy3f(color1,v);
-        
-        v+=3;
-        
         subtract3f(v1,t,v1t);
         subtract3f(v2,t,v2t);
         
@@ -860,13 +856,13 @@ static void RepValence(float **v_ptr,int *n_ptr, /* opengl */
 
         /* opengl */
 
+        copy3f(color1,v); 
+        v+=3;
+        
         v=RepCylinder(v,v1tt,v2tt,n_edge,1,1,radius2,
                       overlap_r2,nub_r2);
         n++;
 
-        copy3f(color1,v);
-        
-        v+=3;
 
         scale3f(along,inner2a,adj);
         add3f(adj,v1t,v1tt);
@@ -886,15 +882,15 @@ static void RepValence(float **v_ptr,int *n_ptr, /* opengl */
 
         /* opengl */
 
+        copy3f(color1,v);
+        v+=3;
+
         v=RepCylinder(v,v1tt,v2tt,n_edge,1,1,radius2,
                       overlap_r2,nub_r2);        
         n++;
 
         if(double_sided) {
           
-          copy3f(color1,v);
-          
-          v+=3;
           
           add3f(v1,t,v1t);
           add3f(v2,t,v2t);
@@ -918,13 +914,12 @@ static void RepValence(float **v_ptr,int *n_ptr, /* opengl */
           
           /* opengl */
           
+          copy3f(color1,v);
+          v+=3;
+
           v=RepCylinder(v,v1tt,v2tt,n_edge,1,1,radius2,
                         overlap_r2,nub_r2);
           n++;
-          
-          copy3f(color1,v);
-          
-          v+=3;
           
           scale3f(along,inner2a,adj);
           add3f(adj,v1t,v1tt);
@@ -944,6 +939,9 @@ static void RepValence(float **v_ptr,int *n_ptr, /* opengl */
           
           /* opengl */
           
+          copy3f(color1,v);          
+          v+=3;
+          
           v=RepCylinder(v,v1tt,v2tt,n_edge,1,1,radius2,
                         overlap_r2,nub_r2);        
           n++;
@@ -957,7 +955,8 @@ static void RepValence(float **v_ptr,int *n_ptr, /* opengl */
 
         if(color1) {
 
-        /* opengl */
+          /* opengl */
+
           copy3f(color1,v);
           v+=3;
 
@@ -978,9 +977,6 @@ static void RepValence(float **v_ptr,int *n_ptr, /* opengl */
           vr+=3;
           nr++;
           
-          copy3f(color1,v);
-          v+=3;
-
           subtract3f(v1,t,v1t);
           subtract3f(v2,t,v2t);
           
@@ -1003,14 +999,14 @@ static void RepValence(float **v_ptr,int *n_ptr, /* opengl */
           
           /* open gl */
 
+          copy3f(color1,v);
+          v+=3;
+
           v=RepCylinder(v,v1tt,v2tt,n_edge,1,1,radius2,
                         overlap_r2,nub_r2);
           n++;
          
           if(double_sided) {
-
-            copy3f(color1,v);
-            v+=3;
             
             add3f(v1,t,v1t);
             add3f(v2,t,v2t);
@@ -1034,6 +1030,9 @@ static void RepValence(float **v_ptr,int *n_ptr, /* opengl */
             
             /* open gl */
             
+            copy3f(color1,v);
+            v+=3;
+
             v=RepCylinder(v,v1tt,v2tt,n_edge,1,1,radius2,
                           overlap_r2,nub_r2);
             n++;
@@ -1066,9 +1065,6 @@ static void RepValence(float **v_ptr,int *n_ptr, /* opengl */
           nr++;
 
 
-          copy3f(color2,v);
-          v+=3;
-
           subtract3f(v1,t,v1t);
           subtract3f(v2,t,v2t);
           
@@ -1091,14 +1087,14 @@ static void RepValence(float **v_ptr,int *n_ptr, /* opengl */
 
           /* opengl */
 
+          copy3f(color2,v);
+          v+=3;
+
           v=RepCylinder(v,v1tt,v2tt,n_edge,1,1,radius2,
                         overlap_r2,nub_r2);
           n++;
           
           if(double_sided) {
-            
-            copy3f(color2,v);
-            v+=3;
             
             add3f(v1,t,v1t);
             add3f(v2,t,v2t);
@@ -1121,6 +1117,9 @@ static void RepValence(float **v_ptr,int *n_ptr, /* opengl */
             nr++;
             
             /* opengl */
+            
+            copy3f(color2,v);
+            v+=3;
             
             v=RepCylinder(v,v1tt,v2tt,n_edge,1,1,radius2,
                           overlap_r2,nub_r2);
@@ -1237,7 +1236,7 @@ Rep *RepCylBondNew(CoordSet *cs)
           if(valence_flag) {
             switch(ord) {
             case 1:
-              maxCyl+=2;
+              maxCyl+=2; 
               break;
             case 2:
               maxCyl+=4;
@@ -1246,7 +1245,7 @@ Rep *RepCylBondNew(CoordSet *cs)
               maxCyl+=6;
               break;
             case 4:
-              maxCyl+=10;
+              maxCyl+=12;  
               break;
             }
           } else
@@ -1293,7 +1292,12 @@ Rep *RepCylBondNew(CoordSet *cs)
     
     /* OpenGL */
 
-    v_size = ((maxCyl)*((nEdge+1)*21)+22);
+    v_size = maxCyl * ( (9+6+6) * (nEdge+1) + 3 );
+    /* each double-sided cylinder is 9+6+6+3= 21*(nEdge+1) + 3 floats for coordinates
+       plus up to 18 more floats for color fields */
+
+    printf("debug maxCyl: %d nEdge: %d v_size: %d\n",maxCyl,nEdge,v_size);
+    fflush(stdout);
 	 I->V = Alloc(float,v_size);
 	 ErrChkPtr(G,I->V);
 
@@ -1326,370 +1330,373 @@ Rep *RepCylBondNew(CoordSet *cs)
     vsp = I->VSP;
     vspc = I->VSPC;
 	 b=obj->Bond;
-	 for(a=0;a<obj->NBond;a++)
-		{
-        b1 = b->index[0];
-        b2 = b->index[1];
-        ord = b->order;
-        b++;
-
-        if(obj->DiscreteFlag) {
-          if((cs==obj->DiscreteCSet[b1])&&(cs==obj->DiscreteCSet[b2])) {
-            a1=obj->DiscreteAtmToIdx[b1];
-            a2=obj->DiscreteAtmToIdx[b2];
-          } else {
-            a1=-1;
-            a2=-1;
-          }
+	 for(a=0;a<obj->NBond;a++) {
+      
+      b1 = b->index[0];
+      b2 = b->index[1];
+      ord = b->order;
+      b++;
+      
+      if(obj->DiscreteFlag) {
+        if((cs==obj->DiscreteCSet[b1])&&(cs==obj->DiscreteCSet[b2])) {
+          a1=obj->DiscreteAtmToIdx[b1];
+          a2=obj->DiscreteAtmToIdx[b2];
         } else {
-          a1=cs->AtmToIdx[b1];
-          a2=cs->AtmToIdx[b2];
+          a1=-1;
+          a2=-1;
         }
-		  if((a1>=0)&&(a2>=0))
-			 {
-            register AtomInfoType *ati1=obj->AtomInfo+b1;
-            register AtomInfoType *ati2=obj->AtomInfo+b2;
-
-            if(stick_color<0) {
-              c1=*(cs->Color+a1);
-              c2=*(cs->Color+a2);
-            } else {
-              c1 = (c2 = stick_color);
+      } else {
+        a1=cs->AtmToIdx[b1];
+        a2=cs->AtmToIdx[b2];
+      }
+      if((a1>=0)&&(a2>=0))
+        {
+          register AtomInfoType *ati1=obj->AtomInfo+b1;
+          register AtomInfoType *ati2=obj->AtomInfo+b2;
+          
+          if(stick_color<0) {
+            c1=*(cs->Color+a1);
+            c2=*(cs->Color+a2);
+          } else {
+            c1 = (c2 = stick_color);
+          }
+          
+          vv1 = cs->Coord+3*a1;
+          vv2 = cs->Coord+3*a2;
+          
+          s1=ati1->visRep[cRepCyl];
+          s2=ati2->visRep[cRepCyl];
+          
+          if(!(s1&&s2))
+            if(!half_bonds) {
+              s1 = 0;
+              s2 = 0;
             }
-				
-				vv1 = cs->Coord+3*a1;
-				vv2 = cs->Coord+3*a2;
-				
-				s1=ati1->visRep[cRepCyl];
-				s2=ati2->visRep[cRepCyl];
-
-				if(!(s1&&s2))
-              if(!half_bonds) {
-                s1 = 0;
-                s2 = 0;
+          
+          if( (!ati1->hetatm) && (!ati2->hetatm) &&
+              ((cartoon_side_chain_helper && 
+                ati1->visRep[cRepCartoon] && 
+                ati2->visRep[cRepCartoon]) ||
+               (ribbon_side_chain_helper && 
+                ati1->visRep[cRepRibbon] && 
+                ati2->visRep[cRepRibbon]))) {
+            
+            register char *name1=ati1->name;
+            register int prot1=ati1->protons;
+            register char *name2=ati2->name;
+            register int prot2=ati2->protons;
+            
+            if(prot1 == cAN_C) { 
+              if((name1[1]=='A')&&(name1[0]=='C')&&(!name1[2])) { /* CA */
+                if(prot2 == cAN_C) { 
+                  if((name2[1]=='B')&&(name2[0]=='C')&&(!name2[2]))
+                    c1 = c2;  /* CA-CB */
+                  else if((!name2[1])&&(name2[0]=='C'))
+                    s1 = s2 = 0; /* suppress CA-C */
+                } else if(prot2 == cAN_H) 
+                  s1 = s2 = 0; /* suppress all CA-hydrogens */
               }
-
-            if( (!ati1->hetatm) && (!ati2->hetatm) &&
-                ((cartoon_side_chain_helper && ati1->visRep[cRepCartoon] && ati2->visRep[cRepCartoon]) ||
-                 (ribbon_side_chain_helper && ati1->visRep[cRepRibbon] && ati2->visRep[cRepRibbon]))) {
-
-                register char *name1=ati1->name;
-                register int prot1=ati1->protons;
-                register char *name2=ati2->name;
-                register int prot2=ati2->protons;
-                
-                if(prot1 == cAN_C) { 
-                  if((name1[1]=='A')&&(name1[0]=='C')&&(!name1[2])) { /* CA */
-                    if(prot2 == cAN_C) { 
-                      if((name2[1]=='B')&&(name2[0]=='C')&&(!name2[2]))
-                        c1 = c2;  /* CA-CB */
-                      else if((!name2[1])&&(name2[0]=='C'))
-                        s1 = s2 = 0; /* suppress CA-C */
-                    } else if(prot2 == cAN_H) 
-                      s1 = s2 = 0; /* suppress all CA-hydrogens */
-                  }
-                } else if(prot1 == cAN_N) { 
-                  if((!name1[1])&&(name1[0]=='N')) { /* N */
-                    if(prot2 == cAN_C) {
-                      if((name2[1]=='D')&&(name2[0]=='C')&&(!name2[2])) 
-                        c1 = c2; /* N->CD in PRO */
-                      else if((name2[1]=='A')&&(name2[0]=='C')&&(!name2[2]))
-                        s1 = s2 = 0; /* suppress N-CA */
-                      else if((!name2[1])&&(name2[0]=='C'))
-                        s1 = s2 = 0; /* suppress N-C */
-                    } else if(prot2 == cAN_H)
-                      s1 = s2 = 0; /* suppress all N-hydrogens */
-                  }
-                } else if((prot1 == cAN_O)&&(prot2 == cAN_C)) { 
-                  if((!name2[1])&&(name2[0]=='C')&&
-                     (((!name1[1])&&(name1[0]=='O'))||
-                      ((name1[3]==0)&&(name1[2]=='T')&&(name1[1]=='X')&&(name1[0]=='O'))))
-                    s1 = s2 = 0; /* suppress C-O,OXT */
-                }
-                
+            } else if(prot1 == cAN_N) { 
+              if((!name1[1])&&(name1[0]=='N')) { /* N */
                 if(prot2 == cAN_C) {
-                  if((name2[1]=='A')&&(name2[0]=='C')&&(!name2[2])) { /* CA */
-                    if(prot1 == cAN_C) { 
-                      if((name1[1]=='B')&&(name1[0]=='C')&&(!name1[2]))
-                        c2 = c1; /* CA-CB */
-                      else if((!name1[1])&&(name1[0]=='C'))
-                        s1 = s2 = 0; /* suppress CA-C */
-                    } else if(prot1 == cAN_H) 
-                      s1 = s2 = 0; /* suppress all CA-hydrogens */
-                  }
-                } else if(prot2 == cAN_N) {
-                  if((!name2[1])&&(name2[0]=='N')) { /* N */
-                    if(prot1 == cAN_C) { 
-                      if((name1[1]=='D')&&(name1[0]=='C')&&(!name1[2]))
-                        c2 = c1; /* N->CD in PRO */
-                      else if((name1[1]=='A')&&(name1[0]=='C')&&(!name1[2]))
-                        s1 = s2 = 0; /* suppress N-CA */
-                      else if((!name1[1])&&(name1[0]=='C'))
-                        s1 = s2 = 0; /* suppress N-C */
-                    } else if(prot1 == cAN_H)
-                      s1 = s2 = 0; /* suppress all N-hydrogens */
-                  }
-                } else if((prot2 == cAN_O)&&(prot1 == cAN_C)) {
-                  if((!name1[1])&&(name1[0]=='C')&&
-                     (((!name2[1])&&(name2[0]=='O'))||
-                      ((name2[3]==0)&&(name2[2]=='T')&&(name2[1]=='X')&&(name2[0]=='O'))))
-                    s1 = s2 = 0; /* suppress C-O,OXT */
-                }
+                  if((name2[1]=='D')&&(name2[0]=='C')&&(!name2[2])) 
+                    c1 = c2; /* N->CD in PRO */
+                  else if((name2[1]=='A')&&(name2[0]=='C')&&(!name2[2]))
+                    s1 = s2 = 0; /* suppress N-CA */
+                  else if((!name2[1])&&(name2[0]=='C'))
+                    s1 = s2 = 0; /* suppress N-C */
+                } else if(prot2 == cAN_H)
+                  s1 = s2 = 0; /* suppress all N-hydrogens */
               }
+            } else if((prot1 == cAN_O)&&(prot2 == cAN_C)) { 
+              if((!name2[1])&&(name2[0]=='C')&&
+                 (((!name1[1])&&(name1[0]=='O'))||
+                  ((name1[3]==0)&&(name1[2]=='T')&&(name1[1]=='X')&&(name1[0]=='O'))))
+                s1 = s2 = 0; /* suppress C-O,OXT */
             }
                 
-            if(stick_ball) {
-              float vdw = stick_ball_ratio * radius;
-              int d,e;
-              if(stick_ball_ratio>=1.0F) /* don't use caps if spheres are big enough */
-                caps_req = false;
-              if(s1&&(!obj->AtomInfo[b1].temp1)) { /* just once for each atom... */
-                int *q=sp->Sequence;
-                int *s=sp->StripLen;
-                obj->AtomInfo[b1].temp1=1;
-                {
-                  if(ColorCheckRamped(G,c1)) {
-                    ColorGetRamped(G,c1,vv1,rgb2_buf);
-                    rgb1 = rgb1_buf;
-                  } else {
-                    rgb1 = ColorGet(G,c1);
-                  }
-                }
-                copy3f(rgb1,vsp);
-                vsp+=3;
-                for(d=0;d<sp->NStrip;d++)
-                  {
-                    for(e=0;e<(*s);e++)
-                      {
-                        *(vsp++)=sp->dot[*q][0]; /* normal */
-                        *(vsp++)=sp->dot[*q][1];
-                        *(vsp++)=sp->dot[*q][2];
-                        *(vsp++)=vv1[0]+vdw*sp->dot[*q][0]; /* point */
-                        *(vsp++)=vv1[1]+vdw*sp->dot[*q][1];
-                        *(vsp++)=vv1[2]+vdw*sp->dot[*q][2];
-                        q++;
-                      }
-                    s++;
-                  }
-                I->NSP++;
-                copy3f(rgb1,vspc);
-                vspc+=3;
-                copy3f(vv1,vspc);
-                vspc+=3;
-                *(vspc++)=vdw;
-                I->NSPC++;
+            if(prot2 == cAN_C) {
+              if((name2[1]=='A')&&(name2[0]=='C')&&(!name2[2])) { /* CA */
+                if(prot1 == cAN_C) { 
+                  if((name1[1]=='B')&&(name1[0]=='C')&&(!name1[2]))
+                    c2 = c1; /* CA-CB */
+                  else if((!name1[1])&&(name1[0]=='C'))
+                    s1 = s2 = 0; /* suppress CA-C */
+                } else if(prot1 == cAN_H) 
+                  s1 = s2 = 0; /* suppress all CA-hydrogens */
               }
-              if(s2&&!(obj->AtomInfo[b2].temp1)) { /* just once for each atom... */
-                int *q=sp->Sequence;
-                int *s=sp->StripLen;
-                obj->AtomInfo[b2].temp1=1;
-                
-                if(ColorCheckRamped(G,c2)) {
-                  ColorGetRamped(G,c2,vv2,rgb2_buf);
-                  rgb2 = rgb2_buf;
+            } else if(prot2 == cAN_N) {
+              if((!name2[1])&&(name2[0]=='N')) { /* N */
+                if(prot1 == cAN_C) { 
+                  if((name1[1]=='D')&&(name1[0]=='C')&&(!name1[2]))
+                    c2 = c1; /* N->CD in PRO */
+                  else if((name1[1]=='A')&&(name1[0]=='C')&&(!name1[2]))
+                    s1 = s2 = 0; /* suppress N-CA */
+                  else if((!name1[1])&&(name1[0]=='C'))
+                    s1 = s2 = 0; /* suppress N-C */
+                } else if(prot1 == cAN_H)
+                  s1 = s2 = 0; /* suppress all N-hydrogens */
+              }
+            } else if((prot2 == cAN_O)&&(prot1 == cAN_C)) {
+              if((!name1[1])&&(name1[0]=='C')&&
+                 (((!name2[1])&&(name2[0]=='O'))||
+                  ((name2[3]==0)&&(name2[2]=='T')&&(name2[1]=='X')&&(name2[0]=='O'))))
+                s1 = s2 = 0; /* suppress C-O,OXT */
+            }
+          }
+          
+          if(stick_ball) {
+            float vdw = stick_ball_ratio * radius;
+            int d,e;
+            if(stick_ball_ratio>=1.0F) /* don't use caps if spheres are big enough */
+              caps_req = false;
+            if(s1&&(!obj->AtomInfo[b1].temp1)) { /* just once for each atom... */
+              int *q=sp->Sequence;
+              int *s=sp->StripLen;
+              obj->AtomInfo[b1].temp1=1;
+              {
+                if(ColorCheckRamped(G,c1)) {
+                  ColorGetRamped(G,c1,vv1,rgb2_buf);
+                  rgb1 = rgb1_buf;
                 } else {
-                  rgb2 = ColorGet(G,c2);
+                  rgb1 = ColorGet(G,c1);
                 }
-              
-                copy3f(rgb2,vsp);
-                vsp+=3;
-
-                for(d=0;d<sp->NStrip;d++)
-                  {
-                    for(e=0;e<(*s);e++)
-                      {
-                        *(vsp++)=sp->dot[*q][0]; /* normal */
-                        *(vsp++)=sp->dot[*q][1];
-                        *(vsp++)=sp->dot[*q][2];
-                        *(vsp++)=vv2[0]+vdw*sp->dot[*q][0]; /* point */
-                        *(vsp++)=vv2[1]+vdw*sp->dot[*q][1];
-                        *(vsp++)=vv2[2]+vdw*sp->dot[*q][2];
-                        q++;
-                      }
-                    s++;
-                  }
-                I->NSP++;
-
-                copy3f(rgb2,vspc);
-                vspc+=3;
-                copy3f(vv2,vspc);
-                vspc+=3;
-                *(vspc++)=vdw;
-                I->NSPC++;
               }
+              copy3f(rgb1,vsp);
+              vsp+=3;
+              for(d=0;d<sp->NStrip;d++)
+                {
+                  for(e=0;e<(*s);e++)
+                    {
+                      *(vsp++)=sp->dot[*q][0]; /* normal */
+                      *(vsp++)=sp->dot[*q][1];
+                      *(vsp++)=sp->dot[*q][2];
+                      *(vsp++)=vv1[0]+vdw*sp->dot[*q][0]; /* point */
+                      *(vsp++)=vv1[1]+vdw*sp->dot[*q][1];
+                      *(vsp++)=vv1[2]+vdw*sp->dot[*q][2];
+                      q++;
+                    }
+                  s++;
+                }
+              I->NSP++;
+              copy3f(rgb1,vspc);
+              vspc+=3;
+              copy3f(vv1,vspc);
+              vspc+=3;
+              *(vspc++)=vdw;
+              I->NSPC++;
             }
+            if(s2&&!(obj->AtomInfo[b2].temp1)) { /* just once for each atom... */
+              int *q=sp->Sequence;
+              int *s=sp->StripLen;
+              obj->AtomInfo[b2].temp1=1;
+              
+              if(ColorCheckRamped(G,c2)) {
+                ColorGetRamped(G,c2,vv2,rgb2_buf);
+                rgb2 = rgb2_buf;
+              } else {
+                rgb2 = ColorGet(G,c2);
+              }
+              
+              copy3f(rgb2,vsp);
+              vsp+=3;
+              
+              for(d=0;d<sp->NStrip;d++)
+                {
+                  for(e=0;e<(*s);e++)
+                    {
+                      *(vsp++)=sp->dot[*q][0]; /* normal */
+                      *(vsp++)=sp->dot[*q][1];
+                      *(vsp++)=sp->dot[*q][2];
+                      *(vsp++)=vv2[0]+vdw*sp->dot[*q][0]; /* point */
+                      *(vsp++)=vv2[1]+vdw*sp->dot[*q][1];
+                      *(vsp++)=vv2[2]+vdw*sp->dot[*q][2];
+                      q++;
+                    }
+                  s++;
+                }
+              I->NSP++;
 
-				if(s1||s2)
-				  {
+              copy3f(rgb2,vspc);
+              vspc+=3;
+              copy3f(vv2,vspc);
+              vspc+=3;
+              *(vspc++)=vdw;
+              I->NSPC++;
+            }
+          }
+
+          if(s1||s2)
+            {
 					 
-                if((valence_flag)&&(ord>1)&&(ord<5)) {
+              if((valence_flag)&&(ord>1)&&(ord<5)) {
                   
-                  if((c1==c2)&&s1&&s2&&(!ColorCheckRamped(G,c1))) {
+                if((c1==c2)&&s1&&s2&&(!ColorCheckRamped(G,c1))) {
 
                     
-                    v0 = ColorGet(G,c1);
+                  v0 = ColorGet(G,c1);
 
-                    RepValence(&v,&I->N,
-                               &vr,&I->NR,
-                               vv1,vv2,other,
-                               a1,a2,cs->Coord,
-                               v0,NULL,ord,nEdge,
-                               radius,
-                               overlap,
-                               nub,
-                               false,
-                               fixed_radius);
-                  } else {
+                  RepValence(&v,&I->N,
+                             &vr,&I->NR,
+                             vv1,vv2,other,
+                             a1,a2,cs->Coord,
+                             v0,NULL,ord,nEdge,
+                             radius,
+                             overlap,
+                             nub,
+                             false,
+                             fixed_radius);
+                } else {
 
-                    rgb1 = NULL;
-                    if(s1) {
-                      if(ColorCheckRamped(G,c1)) {
-                        ColorGetRamped(G,c1,vv1,rgb1_buf);
-                        rgb1 = rgb1_buf;
+                  rgb1 = NULL;
+                  if(s1) {
+                    if(ColorCheckRamped(G,c1)) {
+                      ColorGetRamped(G,c1,vv1,rgb1_buf);
+                      rgb1 = rgb1_buf;
+                    } else {
+                      rgb1 = ColorGet(G,c1);
+                    }
+                  }
+
+                  rgb2 = NULL;
+                  if(s2) 
+                    {
+                      if(ColorCheckRamped(G,c2)) {
+                        ColorGetRamped(G,c2,vv2,rgb2_buf);
+                        rgb2 = rgb2_buf;
                       } else {
-                        rgb1 = ColorGet(G,c1);
+                        rgb2 = ColorGet(G,c2);
                       }
                     }
-
-                    rgb2 = NULL;
+                    
+                  RepValence(&v,&I->N,
+                             &vr,&I->NR,
+                             vv1,vv2,other,
+                             a1,a2,cs->Coord,
+                             rgb1,rgb2,ord,nEdge,
+                             radius,
+                             overlap,
+                             nub,
+                             true,
+                             fixed_radius);
+                }
+                  
+              } else {
+                  
+                if((c1==c2)&&s1&&s2&&(!ColorCheckRamped(G,c1)))
+                  {
+                      
+                    copy3f(vv1,v1);
+                    copy3f(vv2,v2);
+                      
+                    v0 = ColorGet(G,c1);
+                      
+                    /* ray-tracing */
+                    
+                    copy3f(v0,vr);
+                    vr+=3;
+                    
+                    *(vr++)=radius;						  
+                    
+                    copy3f(v1,vr);
+                    vr+=3;
+                    
+                    copy3f(v2,vr);
+                    vr+=3;
+                    
+                    I->NR++;
+                    
+                    /* store color */
+                    
+                    copy3f(v0,v);
+                    v+=3;
+                    
+                    I->N++;
+                    
+                    /* generate a cylinder */
+                    v=RepCylinder(v,v1,v2,nEdge,caps_req,caps_req,radius,overlap_r,nub_r);
+                  } else {                    
+                    v1[0]=vv1[0];
+                    v1[1]=vv1[1];
+                    v1[2]=vv1[2];
+                      
+                    v2[0]=(vv1[0]+vv2[0])*0.5F;
+                    v2[1]=(vv1[1]+vv2[1])*0.5F;
+                    v2[2]=(vv1[2]+vv2[2])*0.5F;
+                      
+                    if(s1) 
+                      {
+                        if(ColorCheckRamped(G,c1)) {
+                          ColorGetRamped(G,c1,v1,vr);
+                          v0=vr;
+                          vr+=3;
+                        } else {
+                          v0 = ColorGet(G,c1);
+                          *(vr++)=*(v0);
+                          *(vr++)=*(v0+1);
+                          *(vr++)=*(v0+2);
+                        }
+                        *(vr++)=radius;
+                          
+                        *(vr++)=*(v1);
+                        *(vr++)=*(v1+1);
+                        *(vr++)=*(v1+2);
+                          
+                        *(vr++)=*(v2);
+                        *(vr++)=*(v2+1);
+                        *(vr++)=*(v2+2);
+                          
+                        I->NR++;
+                          
+                        *(v++)=*(v0++);
+                        *(v++)=*(v0++);
+                        *(v++)=*(v0++);
+                          
+                        I->N++;
+                        v=RepCylinder(v,v1,v2,nEdge,caps_req,0,radius,overlap_r,nub_r);
+                      }
+                      
+                    v1[0]=vv2[0];
+                    v1[1]=vv2[1];
+                    v1[2]=vv2[2];
+                      
                     if(s2) 
                       {
                         if(ColorCheckRamped(G,c2)) {
-                          ColorGetRamped(G,c2,vv2,rgb2_buf);
-                          rgb2 = rgb2_buf;
+                          ColorGetRamped(G,c2,v1,vr);
+                          v0=vr;
+                          vr+=3;
                         } else {
-                          rgb2 = ColorGet(G,c2);
-                        }
-                      }
-                    
-                     RepValence(&v,&I->N,
-                               &vr,&I->NR,
-                               vv1,vv2,other,
-                               a1,a2,cs->Coord,
-                               rgb1,rgb2,ord,nEdge,
-                               radius,
-                               overlap,
-                               nub,
-                               true,
-                                fixed_radius);
-                  }
-                  
-                } else {
-                  
-                  if((c1==c2)&&s1&&s2&&(!ColorCheckRamped(G,c1)))
-                    {
-                      
-                      copy3f(vv1,v1);
-                      copy3f(vv2,v2);
-                      
-                      v0 = ColorGet(G,c1);
-                      
-                      /* ray-tracing */
-                    
-                      copy3f(v0,vr);
-                      vr+=3;
-                    
-                      *(vr++)=radius;						  
-                    
-                      copy3f(v1,vr);
-                      vr+=3;
-                    
-                      copy3f(v2,vr);
-                      vr+=3;
-                    
-                      I->NR++;
-                    
-                      /* store color */
-                    
-                      copy3f(v0,v);
-                      v+=3;
-                    
-                      I->N++;
-                    
-                      /* generate a cylinder */
-                    
-                      v=RepCylinder(v,v1,v2,nEdge,caps_req,caps_req,radius,overlap_r,nub_r);
-                    } else {                    
-                      v1[0]=vv1[0];
-                      v1[1]=vv1[1];
-                      v1[2]=vv1[2];
-                      
-                      v2[0]=(vv1[0]+vv2[0])*0.5F;
-                      v2[1]=(vv1[1]+vv2[1])*0.5F;
-                      v2[2]=(vv1[2]+vv2[2])*0.5F;
-                      
-                      if(s1) 
-                        {
-                          if(ColorCheckRamped(G,c1)) {
-                            ColorGetRamped(G,c1,v1,vr);
-                            v0=vr;
-                            vr+=3;
-                          } else {
-                            v0 = ColorGet(G,c1);
-                            *(vr++)=*(v0);
-                            *(vr++)=*(v0+1);
-                            *(vr++)=*(v0+2);
-                          }
-                          *(vr++)=radius;
-                          
-                          *(vr++)=*(v1);
-                          *(vr++)=*(v1+1);
-                          *(vr++)=*(v1+2);
-                          
-                          *(vr++)=*(v2);
-                          *(vr++)=*(v2+1);
-                          *(vr++)=*(v2+2);
-                          
-                          I->NR++;
-                          
-                          *(v++)=*(v0++);
-                          *(v++)=*(v0++);
-                          *(v++)=*(v0++);
-                          
-                          I->N++;
-                          v=RepCylinder(v,v1,v2,nEdge,caps_req,0,radius,overlap_r,nub_r);
-                        }
-                      
-                      v1[0]=vv2[0];
-                      v1[1]=vv2[1];
-                      v1[2]=vv2[2];
-                      
-                      if(s2) 
-                        {
-                          if(ColorCheckRamped(G,c2)) {
-                            ColorGetRamped(G,c2,v1,vr);
-                            v0=vr;
-                            vr+=3;
-                          } else {
-                            v0 = ColorGet(G,c2);
+                          v0 = ColorGet(G,c2);
                             
-                            *(vr++)=*(v0);
-                            *(vr++)=*(v0+1);
-                            *(vr++)=*(v0+2);
-                          }
-                          *(vr++)=radius;
-                          
-                          *(vr++)=*(v1);
-                          *(vr++)=*(v1+1);
-                          *(vr++)=*(v1+2);
-                          
-                          *(vr++)=*(v2);
-                          *(vr++)=*(v2+1);
-                          *(vr++)=*(v2+2);
-                          
-                          I->NR++;
-                          
-                          *(v++)=*(v0++);
-                          *(v++)=*(v0++);
-                          *(v++)=*(v0++);
-                          
-                          I->N++;
-                          v=RepCylinder(v,v1,v2,nEdge,caps_req,0,radius,overlap_r,nub_r);
+                          *(vr++)=*(v0);
+                          *(vr++)=*(v0+1);
+                          *(vr++)=*(v0+2);
                         }
-                    }
-                }
-				  }
-      }
+                        *(vr++)=radius;
+                          
+                        *(vr++)=*(v1);
+                        *(vr++)=*(v1+1);
+                        *(vr++)=*(v1+2);
+                          
+                        *(vr++)=*(v2);
+                        *(vr++)=*(v2+1);
+                        *(vr++)=*(v2+2);
+                          
+                        I->NR++;
+                          
+                        *(v++)=*(v0++);
+                        *(v++)=*(v0++);
+                        *(v++)=*(v0++);
+                          
+                        I->N++;
+                        v=RepCylinder(v,v1,v2,nEdge,caps_req,0,radius,overlap_r,nub_r);
+                      }
+                  }
+              }
+            }
+        }
+    }
 	 PRINTFD(G,FB_RepCylBond)
       " RepCylBond-DEBUG: %d triplets\n",(v-I->V)/3
       ENDFD;
@@ -1935,10 +1942,9 @@ float *RepCylinder(float *v,float *v1,float *v2,int nEdge,
   float x[50],y[50];
   int c;
 
-
   if(nEdge>50)
     nEdge=50;
- subdivide(nEdge,x,y);
+  subdivide(nEdge,x,y);
  
   /* direction vector */
   
