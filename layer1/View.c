@@ -282,8 +282,10 @@ int ViewElemInterpolate(CViewElem *first,CViewElem *last,float power,float bias)
 */
   multiply33f33f(inverse3x3,last3x3,&rot[0][0]);
 
+  dump33f(rot,"view input matrix");
   matrix_to_rotation(rot,rot_axis,&angle);
 
+  dump3f(rot_axis,"rot_axis");
   if(!tLinear) {
     tVector[0] = (float)(last->pre[0] - first->pre[0]);
     tVector[1] = (float)(last->pre[1] - first->pre[1]);

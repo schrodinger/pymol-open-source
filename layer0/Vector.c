@@ -18,6 +18,7 @@ Z* -------------------------------------------------------------------
 
 #include"Base.h"
 #include"Vector.h"
+#include"Matrix.h"
 
 #ifndef R_SMALL
 #define R_SMALL 0.000000001
@@ -91,6 +92,11 @@ void dump3f( float *v, char *prefix ) /* for debugging */
   printf("%s %8.3f %8.3f %8.3f\n",prefix,v[0],v[1],v[2]);
 }
 
+void dump3d( double *v, char *prefix ) /* for debugging */
+{
+  printf("%s %8.3f %8.3f %8.3f\n",prefix,v[0],v[1],v[2]);
+}
+
 void dump4f( float *v, char *prefix ) /* for debugging */
 {
   printf("%s %8.3f %8.3f %8.3f %8.3f\n",prefix,v[0],v[1],v[2],v[3]);
@@ -109,6 +115,13 @@ void dump44f( float *m, char *prefix ) /* for debugging */
   printf("%s:1 %8.3f %8.3f %8.3f %8.3f\n",prefix,m[4],m[5],m[6],m[7]);
   printf("%s:2 %8.3f %8.3f %8.3f %8.3f\n",prefix,m[8],m[9],m[10],m[11]);
   printf("%s:3 %8.3f %8.3f %8.3f %8.3f\n",prefix,m[12],m[13],m[14],m[15]);
+}
+
+void dump33d( double *m, char *prefix ) /* for debugging */
+{
+  printf("%s:0 %8.3f %8.3f %8.3f\n",prefix,m[0],m[1],m[2]);
+  printf("%s:1 %8.3f %8.3f %8.3f\n",prefix,m[3],m[4],m[5]);
+  printf("%s:2 %8.3f %8.3f %8.3f\n",prefix,m[6],m[7],m[8]);
 }
 
 void get_divergent3f(float *src,float *dst)
@@ -987,6 +1000,7 @@ void matrot ( oMatrix5f nm, oMatrix5f om, int axis, float angle )
 void rotation_to_matrix(Matrix53f rot,float *axis, float angle)
 {
   rotation_matrix3f(angle,axis[0],axis[1],axis[2],&rot[0][0]);
+  dump3f(axis,"axis");
 }
 
 void matrix_interpolate(Matrix53f imat,Matrix53f mat,float *pivot,
@@ -1023,10 +1037,12 @@ void matrix_interpolate(Matrix53f imat,Matrix53f mat,float *pivot,
 		imat[a][a]=_1;
 	 }
 
-  if(!linear) 
+  if(!linear) {
 	 rotation_to_matrix(imat,axis,fxn*angle);
-  else
+  }
+  else {
 	 tLinear = true;
+  }
   if(!tLinear)
 	 {
 		subtract3f(mat[3],pivot,p0);
@@ -1093,6 +1109,7 @@ void matrix_to_rotation(Matrix53f rot,float *axis, float *angle)
 
   find_axis(rot3d,axis);
 
+  dump3f(axis,"axis returned");
   /* find a perpendicular vector */
 
   perp[0]=axis[1]*axis[0]-axis[2]*axis[2];
@@ -1132,18 +1149,6 @@ void matrix_to_rotation(Matrix53f rot,float *axis, float *angle)
 
 }
 
-typedef long int integer;
-typedef double doublereal;
-
-int pymol_rg_( /* defined in Matrix.c */
-integer *nm, integer *n,
-doublereal *a, doublereal *wr, doublereal *wi,
-integer *matz,
-doublereal *z__,
-integer *iv1,
-doublereal *fv1,
-integer *ierr);
-
 
 void find_axis( Matrix33d a, float *axis)
 {
@@ -1167,42 +1172,56 @@ void find_axis( Matrix33d a, float *axis)
 		  }
 	 } 
 
- 
   pymol_rg_(&nm,&n,&at[0][0],wr,wi,&matz,&vt[0][0],iv1,&fv1[0][0],&ierr);
 
   for(x=0;x<3;x++)
 	 {
+          printf("wr %8.3f\n",wr[x]);
+          printf("wi %8.3f\n",wi[x]);
 		for(y=0;y<3;y++)
 		  {
+          printf("vt %8.3f\n",vt[x][y]);
+
+  
 			 v[y][x] = vt[x][y];
 		  }
 	 } 
 
-  for(x=0;x<3;x++)
+  axis[0]=0.0F;
+  axis[1]=0.0F;
+  axis[2]=0.0F;
+
+  {
+    float max_real = wr[0];
+    float min_imag = wi[0];
+
+  for(x=0;x<3;x++) /* looking for an eigvalue of (1,0) */
 	 {
-		if((fabs(wr[x]-_1)<R_MED)&&
-			(fabs(wi[x])<R_SMALL))
+		if((fabs(wr[x])>=max_real) &&
+         (fabs(wi[x])<=min_imag))
 		  for(y=0;y<3;y++)
 			 axis[y] = (float)v[y][x];
-		else
+      /*		else
 		  for(y=0;y<3;y++)
-			 v[y][x]=_0;
+        v[y][x]=_0;*/
 	 }
+  }
 
-  /*    printf("eigenvectors\n%8.3f %8.3f %8.3f\n",v[0][0],v[0][1],v[0][2]);
-  printf("%8.3f %8.3f %8.3f\n",v[1][0],v[1][1],v[1][2]);
-  printf("%8.3f %8.3f %8.3f\n",v[2][0],v[2][1],v[2][2]);
-
-
-  printf("eigenvalues\n%8.3f %8.3f %8.3f\n",wr[0],wr[1],wr[2]);
-  printf("%8.3f %8.3f %8.3f\n",wi[0],wi[1],wi[2]);
-  
-  matrix_multiply33d33d(a,v,p);
-
-  printf("invariance\n");
-  printf("%8.3f %8.3f %8.3f\n",p[0][0],p[0][1],p[0][2]);
-  printf("%8.3f %8.3f %8.3f\n",p[1][0],p[1][1],p[1][2]);
-  printf("%8.3f %8.3f %8.3f\n",p[2][0],p[2][1],p[2][2]);
+  /*
+    printf("eigenvectors\n%8.3f %8.3f %8.3f\n",v[0][0],v[0][1],v[0][2]);
+    printf("%8.3f %8.3f %8.3f\n",v[1][0],v[1][1],v[1][2]);
+    printf("%8.3f %8.3f %8.3f\n",v[2][0],v[2][1],v[2][2]);
+    
+    
+    printf("eigenvalues\n%8.3f %8.3f %8.3f\n",wr[0],wr[1],wr[2]);
+    printf("%8.3f %8.3f %8.3f\n",wi[0],wi[1],wi[2]);
+    
+    matrix_multiply33d33d(a,v,p);
+    
+    printf("invariance\n");
+    printf("%8.3f %8.3f %8.3f\n",p[0][0],p[0][1],p[0][2]);
+    printf("%8.3f %8.3f %8.3f\n",p[1][0],p[1][1],p[1][2]);
+    printf("%8.3f %8.3f %8.3f\n",p[2][0],p[2][1],p[2][2]);
   */
 }
 
