@@ -8,6 +8,7 @@
  * WARNING: Modified for usage within PyMOL
  *
 **/
+
 #ifdef __MWERKS__
 #define NO_IMPORT_ARRAY
 #endif
@@ -1430,7 +1431,7 @@ static PyObject *gl_indexedGeomDSPL(PyObject * self, PyObject * args,
     return Py_BuildValue("i", dpl);
 }
 
-#ifdef GLUT
+#ifndef _PYMOL_NO_GLUT
 #include <GL/glut.h>
 
 static PyObject *glSphereSetDSPL(PyObject * self, PyObject * args,
@@ -2403,7 +2404,7 @@ static PyMethodDef glutil_methods[] =
     {"glCleanRotMat", gl_CleanRotMat, 1},
     {"glTriangleNormals", gl_TriangleNormals, 1},
     {"glIndexedGeomDSPL", (PyCFunction) gl_indexedGeomDSPL, 3},
-#ifdef GLUT
+#ifndef _PYMOL_NO_GLUT
     {"glSphereSetDSPL", (PyCFunction) glSphereSetDSPL, 3},
 #endif
     {"glTrackball", (PyCFunction) Create_trackball, 3},
@@ -2496,7 +2497,7 @@ DL_EXPORT(void) initopenglutil(void)
 #endif
     PyDict_SetItemString(d, "_numeric", nl);
     Py_DECREF(nl);
-#ifdef GLUT
+#ifndef PYMOL_NO_GLUT
     gl = PyInt_FromLong(1L);
 #else
     gl = PyInt_FromLong(0L);

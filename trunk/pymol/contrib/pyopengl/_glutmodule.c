@@ -1,4 +1,6 @@
 
+#ifndef _H_PYMOL_NO_GLUT
+
 /**
  *
  * GLUT Module for Python
@@ -2618,3 +2620,23 @@ init_glut(void)
 	PyDict_SetItemString(d, "Error", glut_Error) != 0)
 	Py_FatalError("can't initialize glut.Error");
 }
+#else
+
+/* NO GLUT available */
+
+static PyMethodDef glut_methods[] =
+{
+    {NULL, NULL, 0}
+};
+
+DL_EXPORT(void)
+init_glut(void)
+{
+    PyObject *m;
+    PyObject *d;
+
+    m = Py_InitModule("_glut", glut_methods);
+    d = PyModule_GetDict(m);
+}
+
+#endif

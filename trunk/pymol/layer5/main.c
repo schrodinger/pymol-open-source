@@ -141,10 +141,10 @@ static void MainButton(int button,int state,int x,int y)
 
   y=WinY-y;
 
-  glMod = glutGetModifiers();
-  Modifiers = ((glMod&GLUT_ACTIVE_SHIFT) ? cOrthoSHIFT : 0) |
-	 ((glMod&GLUT_ACTIVE_CTRL) ? cOrthoCTRL : 0) |
-	 ((glMod&GLUT_ACTIVE_ALT) ? cOrthoALT : 0);
+  glMod = p_glutGetModifiers();
+  Modifiers = ((glMod&P_GLUT_ACTIVE_SHIFT) ? cOrthoSHIFT : 0) |
+	 ((glMod&P_GLUT_ACTIVE_CTRL) ? cOrthoCTRL : 0) |
+	 ((glMod&P_GLUT_ACTIVE_ALT) ? cOrthoALT : 0);
 
   if(!OrthoButton(button,state,x,y,Modifiers))
     {
@@ -181,7 +181,7 @@ static void MainDrawLocked(void)
 
   if(I->SwapFlag)
     {
-      if(PMGUI) glutSwapBuffers();
+      if(PMGUI) p_glutSwapBuffers();
       I->SwapFlag=false;
     }
 }
@@ -200,10 +200,10 @@ static void MainKey(unsigned char k, int x, int y)
 
   PLockAPIAsGlut();
 
-  glMod = glutGetModifiers();
-  Modifiers = ((glMod&GLUT_ACTIVE_SHIFT) ? cOrthoSHIFT : 0) |
-	 ((glMod&GLUT_ACTIVE_CTRL) ? cOrthoCTRL : 0) |
-	 ((glMod&GLUT_ACTIVE_ALT) ? cOrthoALT : 0);
+  glMod = p_glutGetModifiers();
+  Modifiers = ((glMod&P_GLUT_ACTIVE_SHIFT) ? cOrthoSHIFT : 0) |
+	 ((glMod&P_GLUT_ACTIVE_CTRL) ? cOrthoCTRL : 0) |
+	 ((glMod&P_GLUT_ACTIVE_ALT) ? cOrthoALT : 0);
 
   OrthoKey(k,x,y,Modifiers);
 
@@ -218,13 +218,13 @@ static void MainSpecial(int k, int x, int y)
   int grabbed = false;
   PLockAPIAsGlut();
   switch(k) {
-    case GLUT_KEY_UP:
-    case GLUT_KEY_DOWN:
+    case P_GLUT_KEY_UP:
+    case P_GLUT_KEY_DOWN:
       grabbed=1;
       OrthoSpecial(k,x,y);
       break;
-    case GLUT_KEY_LEFT:
-    case GLUT_KEY_RIGHT:      
+    case P_GLUT_KEY_LEFT:
+    case P_GLUT_KEY_RIGHT:      
       if(OrthoArrowsGrabbed()) {
         grabbed=1;
         OrthoSpecial(k,x,y);
@@ -261,7 +261,7 @@ void MainDoReshape(int width, int height) /* called internally */
   if(width<0) width=WinX;
   if(height<0) height=WinY;
   if(PMGUI) {
-    glutReshapeWindow(width,height);
+    p_glutReshapeWindow(width,height);
     glViewport(0, 0, (GLint) width, (GLint) height);
   }
 
@@ -355,13 +355,13 @@ void MainRefreshNow(void)
   CMain *I = &Main;
   if(I->SwapFlag)
     {
-      if(PMGUI) glutSwapBuffers();
+      if(PMGUI) p_glutSwapBuffers();
       I->SwapFlag=false;
     }
   if(I->DirtyFlag)
     {
       if(PMGUI) 
-        glutPostRedisplay();
+        p_glutPostRedisplay();
       else
         MainDrawLocked();
       I->DirtyFlag=false;
@@ -394,12 +394,12 @@ void MainBusyIdle(void)
   PFlush();
 
   if(I->SwapFlag) {
-    if(PMGUI) glutSwapBuffers();
+    if(PMGUI) p_glutSwapBuffers();
     I->SwapFlag=false;
   }
   if(I->DirtyFlag) {
     if(PMGUI) 
-      glutPostRedisplay();
+      p_glutPostRedisplay();
     else
       MainDrawLocked();
     I->DirtyFlag=false;
@@ -411,7 +411,7 @@ void MainBusyIdle(void)
         I->IdleMode=2;
         if(PMGUI)
           if(SettingGet(cSetting_cache_display))
-             glutPostRedisplay(); /* trigger caching of the current scene */
+             p_glutPostRedisplay(); /* trigger caching of the current scene */
       }
     }
     if(I->IdleMode==1)
@@ -462,20 +462,20 @@ void launch(void)
     atexit(MainOnExit); /* register callback to help prevent crashes
                                  when GLUT spontaneously kills us */
   
-    glutInit(&myArgc, myArgv);
+    p_glutInit(&myArgc, myArgv);
 
-    glutInitDisplayMode(GLUT_RGBA | GLUT_DEPTH | GLUT_DOUBLE | GLUT_STEREO );
-    if(!glutGet(GLUT_DISPLAY_MODE_POSSIBLE)) {
-      glutInitDisplayMode(GLUT_RGBA | GLUT_DEPTH | GLUT_DOUBLE );            
+    p_glutInitDisplayMode(P_GLUT_RGBA | P_GLUT_DEPTH | P_GLUT_DOUBLE | P_GLUT_STEREO );
+    if(!p_glutGet(P_GLUT_DISPLAY_MODE_POSSIBLE)) {
+      p_glutInitDisplayMode(P_GLUT_RGBA | P_GLUT_DEPTH | P_GLUT_DOUBLE );            
       StereoCapable = 0;
     } else {
       StereoCapable = 1;
     }
 
-    glutInitWindowPosition(0, 175);
-    glutInitWindowSize(WinX, WinY);
+    p_glutInitWindowPosition(0, 175);
+    p_glutInitWindowSize(WinX, WinY);
     
-    TheWindow = glutCreateWindow("PyMol Viewer");
+    TheWindow = p_glutCreateWindow("PyMol Viewer");
 
   }
 
@@ -484,16 +484,16 @@ void launch(void)
   PInit();
 
   if(PMGUI) {
-    glutDisplayFunc(         MainDraw );
-    glutReshapeFunc(         MainReshape );
-    glutKeyboardFunc(        MainKey );
-    glutMouseFunc(           MainButton );
-    glutMotionFunc(          MainDrag );
-    /*  glutPassiveMotionFunc(   MainMove );*/
-    glutSpecialFunc(         MainSpecial );
-    glutIdleFunc(         MainBusyIdle );
+    p_glutDisplayFunc(         MainDraw );
+    p_glutReshapeFunc(         MainReshape );
+    p_glutKeyboardFunc(        MainKey );
+    p_glutMouseFunc(           MainButton );
+    p_glutMotionFunc(          MainDrag );
+    /*  p_glutPassiveMotionFunc(   MainMove );*/
+    p_glutSpecialFunc(         MainSpecial );
+    p_glutIdleFunc(         MainBusyIdle );
 
-    glutPostRedisplay();
+    p_glutPostRedisplay();
 
     SettingSet(cSetting_line_smooth,1.0);
   }
@@ -511,7 +511,7 @@ void launch(void)
     if(StereoCapable) {
       printf(" Hardware stereo capability detected.\n");
     } 
-    glutMainLoop();
+    p_glutMainLoop();
   } else {
     printf(" Command mode. No graphics front end.\n");
     MainReshape(WinX,WinY);

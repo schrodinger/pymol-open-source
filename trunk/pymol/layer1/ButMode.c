@@ -178,13 +178,13 @@ int ButModeTranslate(int button, int mod)
   int mode = 0;
   CButMode *I=&ButMode;
   switch(button) {
-  case GLUT_LEFT_BUTTON:
+  case P_GLUT_LEFT_BUTTON:
     mode = 0;
     break;
-  case GLUT_MIDDLE_BUTTON:
+  case P_GLUT_MIDDLE_BUTTON:
     mode = 1;
     break;
-  case GLUT_RIGHT_BUTTON:
+  case P_GLUT_RIGHT_BUTTON:
     mode = 2;
     break;
   }

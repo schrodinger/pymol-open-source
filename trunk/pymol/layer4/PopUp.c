@@ -254,7 +254,7 @@ void PopUpDraw(Block *block)
               }
             }
             glRasterPos4d((double)(xx),(double)(y+cPopUpCharLift),0.0,1.0);
-            glutBitmapCharacter(GLUT_BITMAP_8_BY_13,*(c++));
+            p_glutBitmapCharacter(P_GLUT_BITMAP_8_BY_13,*(c++));
             xx = xx + 8;
           }
         } else {

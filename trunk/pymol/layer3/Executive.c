@@ -194,8 +194,8 @@ int ExecutivePairIndices(char *s1,char *s2,int state1,int state2,
 void ExecutiveFocus(void)
 { /* unfortunately, this doesn't achieve the desired effect */
   if(PMGUI) {
-    glutPopWindow();
-    glutShowWindow();
+    p_glutPopWindow();
+    p_glutShowWindow();
   }
 }
 
@@ -2094,9 +2094,9 @@ void ExecutiveFullScreen(int flag)
 {
   if(PMGUI) {
     if(flag) {
-      glutFullScreen();
+      p_glutFullScreen();
     } else {
-      glutReshapeWindow(640+SettingGet(cSetting_internal_gui_width),
+      p_glutReshapeWindow(640+SettingGet(cSetting_internal_gui_width),
                         480+cOrthoBottomSceneMargin);
     }
   }
@@ -2844,7 +2844,7 @@ void ExecutiveDraw(Block *block)
               glEnd();
               glColor3f(0.0,0.0,0.0);
               glRasterPos4d((double)(x2+2),(double)(y2+2),0.0,1.0);
-              glutBitmapCharacter(GLUT_BITMAP_8_BY_13,'S');              
+              p_glutBitmapCharacter(P_GLUT_BITMAP_8_BY_13,'S');              
               glColor3fv(toggleColor);
               break;
             case 2:
@@ -2857,7 +2857,7 @@ void ExecutiveDraw(Block *block)
               glEnd();
               glColor3f(0.0,0.0,0.0);
               glRasterPos4d((double)(x2+2),(double)(y2+2),0.0,1.0);
-              glutBitmapCharacter(GLUT_BITMAP_8_BY_13,'H');              
+              p_glutBitmapCharacter(P_GLUT_BITMAP_8_BY_13,'H');              
               glColor3fv(toggleColor);
               break;
             case 3:
@@ -2870,7 +2870,7 @@ void ExecutiveDraw(Block *block)
               glEnd();
               glColor3f(0.0,0.0,0.0);
               glRasterPos4d((double)(x2+2),(double)(y2+2),0.0,1.0);
-              glutBitmapCharacter(GLUT_BITMAP_8_BY_13,'L');              
+              p_glutBitmapCharacter(P_GLUT_BITMAP_8_BY_13,'L');              
               glColor3fv(toggleColor);
               break;
             case 4:
@@ -2886,7 +2886,7 @@ void ExecutiveDraw(Block *block)
               glEnd();
               /*              glColor3f(0.0,0.0,0.0);
               glRasterPos4d((double)(x2+2),(double)(y2+2),0.0,1.0);
-              glutBitmapCharacter(GLUT_BITMAP_8_BY_13,'C');              */
+              p_glutBitmapCharacter(P_GLUT_BITMAP_8_BY_13,'C');              */
               glColor3fv(toggleColor);
               break;
             }
@@ -2940,16 +2940,16 @@ void ExecutiveDraw(Block *block)
               c=rec->obj->Name;
 
             if(rec->type==cExecSelection)
-              glutBitmapCharacter(GLUT_BITMAP_8_BY_13,'(');
+              p_glutBitmapCharacter(P_GLUT_BITMAP_8_BY_13,'(');
           }
 
         if(c)
           while(*c) 
-            glutBitmapCharacter(GLUT_BITMAP_8_BY_13,*(c++));
+            p_glutBitmapCharacter(P_GLUT_BITMAP_8_BY_13,*(c++));
 
         if(rec->type==cExecSelection)
           {
-            glutBitmapCharacter(GLUT_BITMAP_8_BY_13,')');
+            p_glutBitmapCharacter(P_GLUT_BITMAP_8_BY_13,')');
             c=rec->name;
           }
 

@@ -35,6 +35,8 @@ Ongoing Goals
 
 Changes up to 0.60
 
+   * preparing for GLUT independence on selected platforms...
+
    * choice of lighting modes for ray-tracing (improved shadows, contrast)
 
    * settings renames (gl_ambient, dot_radius)
