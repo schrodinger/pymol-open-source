@@ -2217,9 +2217,9 @@ DESCRIPTION
       
 USAGE
  
-   cartoon type,(selection)
+   cartoon type, (selection)
 
-   type = skip | automatic | loop | rectangle | oval | tube
+   type = skip | automatic | loop | rectangle | oval | tube | arrow | dumbbell
 
 PYMOL API
   
@@ -5596,7 +5596,9 @@ keyword = {
    'util.cbab'     : [util.cbab    , 0 , 0 , ''  , parsing.STRICT ],
    'util.cbc'      : [util.cbc     , 0 , 0 , ''  , parsing.STRICT ],
    'util.mrock'    : [util.mrock   , 0 , 0 , ''  , parsing.STRICT ],
-   'util.mroll'    : [util.mroll   , 0 , 0 , ''  , parsing.STRICT ],   
+   'util.mroll'    : [util.mroll   , 0 , 0 , ''  , parsing.STRICT ],
+   'util.ss'       : [util.ss      , 0 , 0 , ''  , parsing.STRICT ],# secondary structure
+   'util.rainbow'  : [util.rainbow , 0 , 0 , ''  , parsing.STRICT ],# secondary structure
 #   
    'update'        : [update       , 0 , 0 , ''  , parsing.STRICT ],
    'view'          : [view         , 0 , 0 , ''  , parsing.STRICT ],   
