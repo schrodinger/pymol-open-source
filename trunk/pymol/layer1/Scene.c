@@ -1655,7 +1655,7 @@ void SceneRovingUpdate(void)
         polar_cutoff=fabs(polar_cutoff);
       }
       sprintf(buffer,
-"cmd.dist('rov_pc','%s & (elem n+o) & enabled & %s %s (center expand %1.3f)','same',%1.4f,mode=1,labels=%d)",
+"cmd.dist('rov_pc','%s & (elem n+o) & enabled & %s %s (center expand %1.3f)','same',%1.4f,mode=1,labels=%d,quiet=2)",
               s,p1,p2,polar_contacts,polar_cutoff,label_flag);
       PParse(buffer);
       PFlush();
