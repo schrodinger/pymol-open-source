@@ -31,6 +31,7 @@ typedef struct {
   int index[2];
   int order;
   int id;
+  int stereo; /* to preserve 2D rep */
 } BondType;
 
 typedef struct ObjectMoleculeBPRec {
@@ -222,6 +223,12 @@ typedef struct {
   int index[2];
   int order;
 } BondType068;
+
+typedef struct {
+  int index[2];
+  int order;
+  int stereo;
+} BondType083;
 
 #endif
 

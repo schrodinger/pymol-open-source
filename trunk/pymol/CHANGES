@@ -105,6 +105,11 @@ Current Bugs to Fix
    * superposition system fails with degenerate sets (planer systems, etc).
      sometimes it just fails period
 
+Changes up to 0.84
+
+   * PyMOL now preserves stereo field on MOL-files to better enable
+     shuttling of 2D structures through PyMOL...
+
 Changes up to 0.83
 
    * various tweaks to the semistatic minimal dependencies build...
