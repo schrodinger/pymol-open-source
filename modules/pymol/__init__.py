@@ -74,11 +74,11 @@ def exec_deferred():
          elif re.search(r"pymol\.py$",a):
             pass
          elif re.search(r"\.py$|\.pym|\.pyc$",a,re.I):
-            cmd.do("run %s" % a)
+            cmd.do("_ run %s" % a)
          elif cmd.file_ext_re.search(a):
             cmd.load(a)
          elif re.search(r"\.pml$",a,re.I):
-            cmd.do("@%s" % a)
+            cmd.do("_ @%s" % a)
          else:
             cmd.load(a)
    except:
