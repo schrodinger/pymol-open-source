@@ -180,7 +180,7 @@ Rep *RepCartoonNew(CoordSet *cs)
   AtomInfoType *ai,*last_ai=NULL;
   float alpha;
   int putty_flag = false;
-  float putty_mean,putty_stdev;
+  float putty_mean=10.0F,putty_stdev=0.0F;
   /* THIS HAS GOT TO BE A CANDIDATE FOR THE WORST ROUTINE IN PYMOL!
    * DEVELOP ON IT ONLY AT EXTREME RISK TO YOUR MENTAL HEALTH */
   
