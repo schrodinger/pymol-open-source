@@ -138,7 +138,7 @@ ObjectMap *ObjectMapNew(void)
 /*========================================================================*/
 int ObjectMapXPLORStrToMap(ObjectMap *I,char *XPLORStr,int frame) {
   
-  unsigned char *p;
+  char *p;
   int a,b,c,d,e;
   float v[3],vr[3];
   char cc[MAXLINELEN],tmp[MAXLINELEN];

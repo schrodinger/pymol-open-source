@@ -16,9 +16,9 @@ Z* -------------------------------------------------------------------
 #ifndef _H_Parse
 #define _H_Parse
 
-unsigned char *ParseNextLine(unsigned char *p);
-unsigned char *ParseWordCopy(unsigned char *dst,unsigned char *src,int n);
-unsigned char *ParseNCopy(unsigned char *dst,unsigned char *src,int n);
-unsigned char *ParseNSkip(unsigned char *p,int n);
+char *ParseNextLine(char *p);
+char *ParseWordCopy(char *dst,char *src,int n);
+char *ParseNCopy(char *dst,char *src,int n);
+char *ParseNSkip(char *p,int n);
 
 #endif
