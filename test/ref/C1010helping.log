@@ -41,13 +41,13 @@ PyMOL>help dummy
 
 DESCRIPTION
 
-      This is a dummy function which returns None. 
+   This is a dummy function which returns None. 
 
 PyMOL>cmd.show_help('dummy')
 PyMOL>help dummy
 
 DESCRIPTION
 
-      This is a dummy function which returns None. 
+   This is a dummy function which returns None. 
 
 (Hit ESC to hide)

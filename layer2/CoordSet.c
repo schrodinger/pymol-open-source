@@ -840,8 +840,8 @@ void CoordSetAppendIndices(CoordSet *I,int offset)
       I->IdxToAtm[a]=a+offset;
   }
   if(obj->DiscreteFlag) {
-    VLACheck(obj->DiscreteAtmToIdx,int,a+offset);
-    VLACheck(obj->DiscreteCSet,CoordSet*,a+offset);
+    VLACheck(obj->DiscreteAtmToIdx,int,I->NIndex+offset);
+    VLACheck(obj->DiscreteCSet,CoordSet*,I->NIndex+offset);
     for(a=0;a<I->NIndex;a++) {
       b=a+offset;
       obj->DiscreteAtmToIdx[b] = a;

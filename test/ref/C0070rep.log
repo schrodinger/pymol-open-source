@@ -10,7 +10,7 @@ PyMOL>show dots
 PyMOL>refresh
 PyMOL>show surface
 PyMOL>refresh
- RepSurface: 541 surface points.
+ RepSurface: 365 surface points.
  RepSurface: 632 triangles.
 PyMOL>show mesh
 PyMOL>refresh
