@@ -1,0 +1,22 @@
+000603 
+
+Major progress in the last week! Added solid surfaces to the
+representations and triangle rendering to the ray tracer.  
+
+Current TODO list:
+	
+On surfaces:
+	1. replace GL_TRIANGLES with GL_TRIANGLE_STRIP for better performance
+	2. associate vertices with atoms
+	3. color vertices, but also optimize for uniform coloring
+
+On meshes:
+	1. associate vertices with atoms
+	2. support mesh coloring, but optimize for uniform coloring
+
+On selections:
+	1. support attribute selection
+	2. optimize "around and expand"
+
+
+
