@@ -24,14 +24,28 @@ Z* -------------------------------------------------------------------
 #include"GadgetSet.h"
 #include"ObjectMap.h"
 
+#define dRampNone 0
+#define cRampMap 1
+#define cRampProp 2
+
 typedef struct ObjectGadgetRamp {
   ObjectGadget Gadget;
-  ObjectMap *Map;
-  int MapState;
+
+  int RampType; 
+
   int NColor;
   float *Level;
   float *Color;
   int var_index;
+
+  /* cRampMap */
+
+  char SrcName[ObjNameMax];
+  int SrcState;
+
+  /* fields below are not saved in session */
+  ObjectMap *Map;
+
   float border;
   float width;
   float height;
@@ -43,11 +57,12 @@ typedef struct ObjectGadgetRamp {
   float text_scale_h;
   float text_scale_v;
   float x,y;
+
 } ObjectGadgetRamp;
 
 ObjectGadgetRamp *ObjectGadgetRampNew(void);
 
-ObjectGadgetRamp *ObjectGadgetRampNewAsDefined(ObjectMap *map,PyObject *level,
+ObjectGadgetRamp *ObjectGadgetRampMapNewAsDefined(ObjectMap *map,PyObject *level,
                                                PyObject *color,int map_state);
 
 int ObjectGadgetRampInterpolate(ObjectGadgetRamp *I,float level,float *color);

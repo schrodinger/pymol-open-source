@@ -20,6 +20,7 @@ Z* -------------------------------------------------------------------
 
 #include"OOMac.h"
 #include"ObjectGadget.h"
+#include"ObjectGadgetRamp.h"
 #include"GadgetSet.h"
 #include"Base.h"
 #include"MemoryDebug.h"
@@ -283,8 +284,29 @@ static int ObjectGadgetGSetFromPyList(ObjectGadget *I,PyObject *list)
     VLACheck(I->GSet,GadgetSet*,I->NGSet);
     for(a=0;a<I->NGSet;a++) {
       if(ok) ok = GadgetSetFromPyList(PyList_GetItem(list,a),&I->GSet[a]);
-      /*      if(ok) I->GSet[a]->Obj = I;*/
+      if(ok&&I->GSet[a]) I->GSet[a]->Obj = I;
     }
+  }
+  return(ok);
+}
+
+int ObjectGadgetInitFromPyList(PyObject *list,ObjectGadget *I)
+{
+  int ok = true;
+  if(ok) ok = (I!=NULL)&&(list!=NULL);
+  if(ok) ok = PyList_Check(list);
+  if(ok) ok = ObjectFromPyList(PyList_GetItem(list,0),&I->Obj);
+  if(ok) ok = PConvPyIntToInt(PyList_GetItem(list,1),&I->GadgetType);
+  if(ok) ok = PConvPyIntToInt(PyList_GetItem(list,2),&I->NGSet);
+  if(ok) ok = ObjectGadgetGSetFromPyList(I,PyList_GetItem(list,3));
+  if(ok) ok = PConvPyIntToInt(PyList_GetItem(list,4),&I->CurGSet);
+  
+  /*  ObjectGadgetInvalidateRep(I,cRepAll);*/
+  if(ok) {
+    ObjectGadgetUpdateExtents(I);
+  }
+  else {
+    /* cleanup? */
   }
   return(ok);
 }
@@ -294,31 +316,43 @@ int ObjectGadgetNewFromPyList(PyObject *list,ObjectGadget **result)
   int ok = true;
   ObjectGadget *I=NULL;
   (*result) = NULL;
-  
+  int gadget_type = -1;
+
+  if(ok) ok=(list!=NULL);
   if(ok) ok=PyList_Check(list);
 
-  I=ObjectGadgetNew();
-  if(ok) ok = (I!=NULL);
-
-  if(ok) ok = ObjectFromPyList(PyList_GetItem(list,0),&I->Obj);
-  if(ok) ok = PConvPyIntToInt(PyList_GetItem(list,1),&I->NGSet);
-  if(ok) ok = ObjectGadgetGSetFromPyList(I,PyList_GetItem(list,2));
-  if(ok) ok = PConvPyIntToInt(PyList_GetItem(list,3),&I->CurGSet);
-  
-  /*  ObjectGadgetInvalidateRep(I,cRepAll);*/
-  if(ok) {
-    (*result) = I;
-    ObjectGadgetUpdateExtents(I);
-  }
-  else {
-    /* cleanup? */
-  }
-
+  if(ok) ok=PConvPyIntToInt(PyList_GetItem(list,1),&gadget_type);
+  if(ok) switch(gadget_type) { /* call the right routine to restore the gadget! */
+  case cGadgetRamp:
+    ok = ObjectGadgetRampNewFromPyList(list,(ObjectGadgetRamp**)result);
+    break;
+  case cGadgetPlain:
+    I=ObjectGadgetNew();
+    if(ok) ok = (I!=NULL);
+    if(ok) ok = ObjectGadgetInitFromPyList(list,I);
+    if(ok) (*result) = I;
+    break;
+  default:
+    ok=false;
+    break;
+  } 
   return(ok);
 }
 
+PyObject *ObjectGadgetPlainAsPyList(ObjectGadget *I)
+{
+  PyObject *result = NULL;
 
+  /* first, dump the atoms */
 
+  result = PyList_New(5);
+  PyList_SetItem(result,0,ObjectAsPyList(&I->Obj));
+  PyList_SetItem(result,1,PyInt_FromLong(I->GadgetType));
+  PyList_SetItem(result,2,PyInt_FromLong(I->NGSet));
+  PyList_SetItem(result,3,ObjectGadgetGSetAsPyList(I));
+  PyList_SetItem(result,4,PyInt_FromLong(I->CurGSet));
+  return(PConvAutoNone(result));  
+}
 
 PyObject *ObjectGadgetAsPyList(ObjectGadget *I)
 {
@@ -326,21 +360,14 @@ PyObject *ObjectGadgetAsPyList(ObjectGadget *I)
 
   /* first, dump the atoms */
 
-  result = PyList_New(4);
-  PyList_SetItem(result,0,ObjectAsPyList(&I->Obj));
-  PyList_SetItem(result,1,PyInt_FromLong(I->NGSet));
-  PyList_SetItem(result,2,ObjectGadgetGSetAsPyList(I));
-  PyList_SetItem(result,3,PyInt_FromLong(I->CurGSet));
-
-#if 0
-
-  CObject Obj;
-  struct GadgetSet **GSet;
-  int NGSet;
-  int CurGSet;
-
-#endif
-
+  switch(I->GadgetType) { 
+  case cGadgetRamp:
+    result = ObjectGadgetRampAsPyList((ObjectGadgetRamp*)I);
+    break;
+  case cGadgetPlain:
+    result = ObjectGadgetPlainAsPyList(I);
+    break;
+  } 
   return(PConvAutoNone(result));  
 }
 
@@ -425,7 +452,6 @@ void ObjectGadgetInit(ObjectGadget *I)
   I->GSet=VLAMalloc(10,sizeof(GadgetSet*),5,true); /* auto-zero */
   I->NGSet=0;
 
-  I->Obj.type = cObjectGadget;
   I->Obj.fFree = (void (*)(struct CObject *))ObjectGadgetFree;
   I->Obj.fUpdate =(void (*)(struct CObject *)) ObjectGadgetUpdate;
   I->Obj.fRender =(void (*)(struct CObject *, int, CRay *, Pickable **,int))ObjectGadgetRender;
@@ -532,6 +558,8 @@ ObjectGadget *ObjectGadgetDefine(ObjectGadget *obj,PyObject *pycgo,int state)
   } else {
     I=obj;
   }
+  I->GadgetType = cGadgetPlain;
+
   if(state<0) state=I->NState;
   if(I->NState<=state) {
     VLACheck(I->State,ObjectGadgetState,state);

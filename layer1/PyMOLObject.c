@@ -58,7 +58,7 @@ int ObjectGetCurrentState(CObject *I,int ignore_all_states)
 PyObject *ObjectAsPyList(CObject *I)
 {
   PyObject *result = NULL;
-  result = PyList_New(10);
+  result = PyList_New(11);
   PyList_SetItem(result,0,PyInt_FromLong(I->type));
   PyList_SetItem(result,1,PyString_FromString(I->Name));
   PyList_SetItem(result,2,PyInt_FromLong(I->Color));
@@ -69,6 +69,7 @@ PyObject *ObjectAsPyList(CObject *I)
   PyList_SetItem(result,7,PyInt_FromLong(I->TTTFlag));
   PyList_SetItem(result,8,SettingAsPyList(I->Setting));
   PyList_SetItem(result,9,PyInt_FromLong(I->Enabled));
+  PyList_SetItem(result,10,PyInt_FromLong(I->Context));
 
   return(PConvAutoNone(result));
 }
@@ -87,6 +88,7 @@ int ObjectFromPyList(PyObject *list,CObject *I)
   if(ok) ok = PConvPyIntToInt(PyList_GetItem(list,7),&I->TTTFlag);
   if(ok) I->Setting=SettingNewFromPyList(PyList_GetItem(list,8));
   if(ok) ok = PConvPyIntToInt(PyList_GetItem(list,9),&I->Enabled);
+  if(ok) ok = PConvPyIntToInt(PyList_GetItem(list,10),&I->Context);
   
   return(ok);
 }

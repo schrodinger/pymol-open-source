@@ -26,10 +26,11 @@ Z* -------------------------------------------------------------------
 #include"PConv.h"
 #include"ObjectGadgetRamp.h"
 #include"Util.h"
+#include"Executive.h"
 
 CColor Color;
 
-#define cColorExtCutoff -10
+#define cColorExtCutoff (-10)
 
 int ColorCheckRamped(int index)
 {
@@ -40,12 +41,16 @@ int ColorGetRamped(int index,float *vertex,float *color)
 {
   CColor *I=&Color;
   int ok=false;
-  if(index<=(-10)) {
-    index = -10 - index;
+  if(index<=cColorExtCutoff) {
+    index = cColorExtCutoff - index;
     if(index<I->NExt) {
-      ok = ObjectGadgetRampInterVertex(
-                                       (ObjectGadgetRamp*)I->Ext[index].Ptr,
-                                       vertex,color);
+      if(!I->Ext[index].Ptr)
+        I->Ext[index].Ptr = (void*)ExecutiveFindObjectByName(I->Ext[index].Name);
+
+      if(I->Ext[index].Ptr) 
+        ok = ObjectGadgetRampInterVertex(
+                                         (ObjectGadgetRamp*)I->Ext[index].Ptr,
+                                         vertex,color);
     }
   
   }
@@ -97,12 +102,33 @@ void ColorForgetExt(char *name)
   int a;
   a=ColorFindExtByName(name);
 
+  /* this won't work! */
+
   if(a>=0) {
     I->NExt--;
     if(I->NExt) {
       I->Ext[a] = I->Ext[I->NExt];
     }
   }
+}
+
+PyObject *ColorExtAsPyList(void)
+{
+  CColor *I=&Color;
+  PyObject *result,*list;
+  ExtRec *ext;
+  int a;
+
+  result = PyList_New(I->NExt);
+  ext=I->Ext;
+  for(a=0;a<I->NExt;a++) {
+    list = PyList_New(2);
+    PyList_SetItem(list,0,PyString_FromString(ext->Name));
+    PyList_SetItem(list,1,PyInt_FromLong(ext->Type));
+    PyList_SetItem(result,a,list);
+    ext++;
+  }
+  return(result);
 }
 
 /*========================================================================*/
@@ -134,6 +160,34 @@ PyObject *ColorAsPyList()
     color++;
   }
   return(result);
+}
+
+int ColorExtFromPyList(PyObject *list)
+{
+  int n_ext=0;
+  int a;
+  int ok=true;
+  CColor *I=&Color;
+  PyObject *rec;
+  ExtRec *ext;
+  if(ok) ok=(list!=Py_None);
+  if(ok) ok=PyList_Check(list);
+  if(ok) {
+    n_ext=PyList_Size(list);
+    VLACheck(I->Ext,ExtRec,n_ext); 
+    ext=I->Ext;
+    for(a=0;a<n_ext;a++) {
+      rec=PyList_GetItem(list,a);
+      if(ok) ok=(rec!=NULL);
+      if(ok) ok=PyList_Check(rec);
+      if(ok) ok=PConvPyStrToStr(PyList_GetItem(rec,0),ext->Name,sizeof(ColorName));
+      if(ok) ok=PConvPyIntToInt(PyList_GetItem(rec,1),&ext->Type);
+      ext++;
+    }
+    if(ok) I->NExt=n_ext;
+
+  }
+  return(ok);
 }
 
 /*========================================================================*/

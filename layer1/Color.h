@@ -65,5 +65,8 @@ void ColorForgetExt(char *name);
 PyObject *ColorAsPyList(void);
 int ColorFromPyList(PyObject *list);
 
+int ColorExtFromPyList(PyObject *list);
+PyObject *ColorExtAsPyList(void);
+
 #endif
 

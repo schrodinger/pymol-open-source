@@ -107,7 +107,7 @@ int ExecutiveGetMaxDistance(char *name,float *pos,float *dev,int transformed,int
 #define ExecGreyVisible 0.45
 #define ExecGreyHidden 0.3
 
-int ExecutiveRampNew(char *name,char *map_name,PyObject *range,PyObject *color,int map_state)
+int ExecutiveRampMapNew(char *name,char *map_name,PyObject *range,PyObject *color,int map_state)
 {
   ObjectGadgetRamp *obj = NULL;
   int ok =true;
@@ -122,7 +122,7 @@ int ExecutiveRampNew(char *name,char *map_name,PyObject *range,PyObject *color,i
       ok=false;
     }
   }
-  ok = ok && (obj=ObjectGadgetRampNewAsDefined((ObjectMap*)map_obj,range,color,map_state));
+  ok = ok && (obj=ObjectGadgetRampMapNewAsDefined((ObjectMap*)map_obj,range,color,map_state));
   if(ok) ObjectSetName((CObject*)obj,name);
   if(ok) ColorRegisterExt(name,(void*)obj,cColorGadgetRamp);
   if(ok) ExecutiveManageObject((CObject*)obj,true);
@@ -150,6 +150,9 @@ static PyObject *ExecutiveGetExecObject(SpecRec *rec)
   PyList_SetItem(result,3,PConvIntArrayToPyList(rec->repOn,cRepCnt));
   PyList_SetItem(result,4,PyInt_FromLong(rec->obj->type));
   switch(rec->obj->type) {
+  case cObjectGadget:
+    PyList_SetItem(result,5,ObjectGadgetAsPyList((ObjectGadget*)rec->obj));    
+    break;
   case cObjectMolecule:
     PyList_SetItem(result,5,ObjectMoleculeAsPyList((ObjectMolecule*)rec->obj));
     break;
@@ -223,6 +226,9 @@ static int ExecutiveSetNamedEntries(PyObject *names)
           break;
         case cObjectCGO:
           if(ok) ok = ObjectCGONewFromPyList(PyList_GetItem(cur,5),(ObjectCGO**)&rec->obj);
+          break;
+        case cObjectGadget:
+          if(ok) ok = ObjectGadgetNewFromPyList(PyList_GetItem(cur,5),(ObjectGadget**)&rec->obj);
           break;
         default:
           PRINTFB(FB_Executive,FB_Errors)
@@ -352,6 +358,7 @@ int ExecutiveGetSession(PyObject *dict)
   PyDict_SetItemString(dict,"names",ExecutiveGetNamedEntries());
   PyDict_SetItemString(dict,"settings",SettingGetGlobalsPyList());
   PyDict_SetItemString(dict,"colors",ColorAsPyList());
+  PyDict_SetItemString(dict,"color_ext",ColorExtAsPyList());
   PyDict_SetItemString(dict,"version",PyInt_FromLong(_PyMOL_VERSION_int));
   SceneGetView(sv);
   PyDict_SetItemString(dict,"view",PConvFloatArrayToPyList(sv,cSceneViewSize));
@@ -396,6 +403,14 @@ int ExecutiveSetSession(PyObject *session)
       ok = ColorFromPyList(tmp);
     }
   }
+  
+  if(ok) {
+    tmp = PyDict_GetItemString(session,"color_ext");
+    if(tmp) {
+      ok = ColorExtFromPyList(tmp);
+    }
+  }
+
   if(ok) {
     tmp = PyDict_GetItemString(session,"settings");
     if(tmp) {

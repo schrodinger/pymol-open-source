@@ -944,7 +944,7 @@ void BasisMakeMap(CBasis *I,int *vert2prim,CPrimitive *prim,float *volume)
   
 	 if(n>extra_vert) {
       printf("BasisMakeMap: %d>%d\n",n,extra_vert);
-      ErrFatal("BasisMakeMap","used too many extra vertices (this is a bug)...\n");
+      ErrFatal("BasisMakeMap","used too many extra vertices (this indicates a bug)...\n");
 	 }
 	 
 	 if(volume) {

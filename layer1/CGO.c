@@ -27,6 +27,7 @@ Z* -------------------------------------------------------------------
 #include"PConv.h"
 #include"GadgetSet.h"
 #include"VFont.h"
+#include"P.h"
 
 #define CGO_read_int(p) (*((int*)(p++)))
 #define CGO_get_int(p) (*((int*)(p)))
@@ -169,12 +170,94 @@ CGO *CGOProcessShape(CGO *I,struct GadgetSet *gs,CGO *result)
   return(result);
 }
 
+static PyObject *CGOArrayAsPyList(CGO *I)
+{
+  register float *pc = I->op;
+  register int op;
+  int i;
+  int cc;
+  PyObject *result = NULL;
+
+  result = PyList_New(I->c);
+  
+  i=0;
+  if(I->c) {
+    while((op=(CGO_MASK&CGO_read_int(pc)))) {
+      PyList_SetItem(result,i++,PyFloat_FromDouble((float)op));
+      cc = CGO_sz[op];
+      switch(op) { /* now convert any instructions with int arguments */
+      case CGO_BEGIN:
+      case CGO_ENABLE:
+      case CGO_DISABLE:
+        PyList_SetItem(result,i++,PyFloat_FromDouble((float)CGO_read_int(pc))); 
+        cc--;
+        break;
+      }
+      if(cc>0) 
+        while(cc--) {
+          PyList_SetItem(result,i++,PyFloat_FromDouble(*(pc++)));
+        }
+    }
+  }
+  while(i<I->c) {
+    PyList_SetItem(result,i++,PyFloat_FromDouble((float)CGO_STOP));
+  }
+  return(result);
+}
+
+static int CGOArrayFromPyListInPlace(PyObject *list,CGO *I)
+{
+  int a;
+  int c=I->c;
+  int cc=0;
+  int ok=true;
+  float *pc;
+  int sz,op;
+  int l;
+  if(!list) { 
+    ok=false;
+  } else if(!PyList_Check(list)) {
+    ok=false;
+  } else {
+    l=PyList_Size(list);
+    if (l!=I->c) 
+      ok=false;
+  }
+  if(ok) {
+    pc = I->op;
+    
+    while(c>0) {
+      op = (int)PyFloat_AsDouble(PyList_GetItem(list,cc++));
+      c--;
+      sz = CGO_sz[op];
+      CGO_write_int(pc,op);
+      ok=true;
+      
+      switch(op) { /* now convert any instructions with int arguments */
+      case CGO_BEGIN:
+      case CGO_ENABLE:
+      case CGO_DISABLE:
+        CGO_write_int(pc,(int)PyFloat_AsDouble(PyList_GetItem(list,cc++)));
+        c--;
+        sz--;
+        break;
+      }
+      
+      for(a=0;a<sz;a++) {
+        CGO_write_int(pc,(int)PyFloat_AsDouble(PyList_GetItem(list,cc++)));
+        c--;
+      }
+    }
+  }
+  return(ok);
+}
+
 PyObject *CGOAsPyList(CGO *I)
 {
   PyObject *result;
   result = PyList_New(2);
   PyList_SetItem(result,0,PyInt_FromLong(I->c));
-  PyList_SetItem(result,1,PConvFloatArrayToPyList(I->op,I->c));
+  PyList_SetItem(result,1,CGOArrayAsPyList(I));
   return(result);
 }
 
@@ -187,8 +270,7 @@ CGO *CGONewFromPyList(PyObject *list)
   if(ok) ok=PyList_Check(list);
   if(ok) ok=PConvPyIntToInt(PyList_GetItem(list,0),&I->c);
   if(ok) ok=((I->op=VLAlloc(float,I->c+1))!=NULL);
-  if(ok) ok=PConvPyListToFloatArrayInPlace(PyList_GetItem(list,1),I->op,I->c);
-
+  if(ok) ok=CGOArrayFromPyListInPlace(PyList_GetItem(list,1),I);
   if(!ok) {
     CGOFree(I);
     I=NULL;
@@ -526,7 +608,7 @@ void CGOStop(CGO *I)
    * although this is wasteful, it does prevent crashes...
    */
 
-  float *pc = CGO_size(I,I->c+32); 
+  float *pc = CGO_size(I,I->c+16); 
 
   CGO_write_int(pc,CGO_STOP);
   CGO_write_int(pc,CGO_STOP);
@@ -546,25 +628,6 @@ void CGOStop(CGO *I)
   CGO_write_int(pc,CGO_STOP);
   CGO_write_int(pc,CGO_STOP);
 
-  CGO_write_int(pc,CGO_STOP);
-  CGO_write_int(pc,CGO_STOP);
-  CGO_write_int(pc,CGO_STOP);
-  CGO_write_int(pc,CGO_STOP);
-  CGO_write_int(pc,CGO_STOP);
-
-  CGO_write_int(pc,CGO_STOP);
-  CGO_write_int(pc,CGO_STOP);
-  CGO_write_int(pc,CGO_STOP);
-  CGO_write_int(pc,CGO_STOP);
-  CGO_write_int(pc,CGO_STOP);
- 
-  CGO_write_int(pc,CGO_STOP);
-  CGO_write_int(pc,CGO_STOP);
-  CGO_write_int(pc,CGO_STOP);
-  CGO_write_int(pc,CGO_STOP);
-  CGO_write_int(pc,CGO_STOP);
-
-  CGO_write_int(pc,CGO_STOP);
   CGO_write_int(pc,CGO_STOP);
 
 }
@@ -598,13 +661,15 @@ int CGOCheckComplex(CGO *I)
 }
 
 int CGOPreloadFonts(CGO *I)
-{ /* requires blocked intepreter */
+{
   int ok=true;
   register float *pc = I->op;
   int op;
   int font_seen = false;
   int font_id;
+  int blocked = false;
 
+  blocked = PAutoBlock();
   while((op=(CGO_MASK&CGO_read_int(pc)))) {
     switch(op) {
     case CGO_FONT:
@@ -621,6 +686,8 @@ int CGOPreloadFonts(CGO *I)
     }
     pc+=CGO_sz[op];
   }
+  if(blocked) PUnblock();
+
   return(ok);
 }
 
