@@ -5375,7 +5375,7 @@ SEE ALSO
    for a in lst:
       print a
       
-def mset(specification):
+def mset(specification=""):
    '''
 DESCRIPTION
   
