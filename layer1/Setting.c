@@ -59,7 +59,8 @@ int SettingSetGlobalsFromPyList(PyMOLGlobals *G,PyObject *list)
   int session_version_check=SettingGetGlobal_b(G,cSetting_session_version_check);
   int full_screen = SettingGetGlobal_b(G,cSetting_full_screen);
   int internal_gui = SettingGetGlobal_b(G,cSetting_internal_gui);
- 
+  int internal_feedback = SettingGetGlobal_b(G,cSetting_internal_feedback);
+
   register CSetting *I=G->Setting;
   if(list)
     if(PyList_Check(list)) 
@@ -71,7 +72,9 @@ int SettingSetGlobalsFromPyList(PyMOLGlobals *G,PyObject *list)
   SettingSet_b(I,cSetting_session_version_check,session_version_check);
   if(G->Option->presentation) {
       SettingSet_b(I,cSetting_full_screen,full_screen);
+      SettingSet_b(I,cSetting_presentation,1);
       SettingSet_b(I,cSetting_internal_gui,internal_gui);
+      SettingSet_b(I,cSetting_internal_feedback,internal_feedback);
   }
   return(ok);
 #endif
@@ -2527,6 +2530,7 @@ void SettingInitGlobal(PyMOLGlobals *G,int alloc,int reset_gui)
   SettingSet_s(I,cSetting_wildcard, "*");
   SettingSet_s(I,cSetting_atom_name_wildcard, "");
   SettingSet_b(I,cSetting_ignore_case, 1);
+  SettingSet_b(I,cSetting_presentation_auto_quit,1);
 
 }
 

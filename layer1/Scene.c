@@ -4093,13 +4093,13 @@ void SceneRender(PyMOLGlobals *G,Pickable *pick,int x,int y,Multipick *smp)
   /* think in terms of the camera's world */
   register CScene *I=G->Scene;
   float fog[4];
-  float *v,vv[4],f;
+  float *v,f;
   unsigned int lowBits,highBits;
   unsigned int *lowBitVLA=NULL,*highBitVLA=NULL;
   int high,low;
   static float white[4] =
   {1.0, 1.0, 1.0, 1.0};
-  float zero[4] = {0.0,0.0,0.0,0.0};
+  float zero[4] = {0.0, 0.0, 0.0, 0.0};
   float zAxis[4] = { 0.0, 0.0, 1.0, 0.0 };
   float normal[4] = { 0.0, 0.0, 1.0, 0.0 };
   float aspRat = ((float) I->Width) / ((float) I->Height);
@@ -4122,7 +4122,8 @@ void SceneRender(PyMOLGlobals *G,Pickable *pick,int x,int y,Multipick *smp)
   double now;
   GLenum render_buffer = GL_BACK;
   SceneUnitContext context;
-  
+  float vv[4];
+
   PRINTFD(G,FB_Scene)
     " SceneRender: entered. pick %p x %d y %d smp %p\n",
     (void*)pick,x,y,(void*)smp
@@ -4142,8 +4143,6 @@ void SceneRender(PyMOLGlobals *G,Pickable *pick,int x,int y,Multipick *smp)
     }
     I->cur_ani_elem = cur;
     SceneFromViewElem(G,I->ani_elem+cur);
-
-
   }
 
   double_pump=SettingGet_i(G,NULL,NULL,cSetting_stereo_double_pump_mono);
@@ -4205,22 +4204,41 @@ void SceneRender(PyMOLGlobals *G,Pickable *pick,int x,int y,Multipick *smp)
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
 
-    /* load up the light positions relative to the camera while MODELVIEW still has the identity */
+    /* load up the light positions relative to the camera while 
+       MODELVIEW still has the identity */
 
     vv[0] = 0.0F;
     vv[1] = 0.0F;
     vv[2] = 1.0F;
-    vv[3]=0.0;
+    /* workaround for flickering of specular reflections on Mac OSX 10.3.8 with nVidia hardware */
+    #ifdef _PYMOL_OSX
+    vv[3] = 0.000001F;
+    #else
+    vv[3] = 0.0F;
+    #endif
     glLightfv(GL_LIGHT0,GL_POSITION,vv);
 
     copy3f(SettingGetGlobal_3fv(G,cSetting_light),vv);
     normalize3f(vv);
     invert3f(vv);
-    vv[3]=0.0;
+
+    /* workaround for flickering of specular reflections on Mac OSX 10.3.8 with nVidia hardware */
+    #ifdef _PYMOL_OSX
+    vv[3] = 0.000001F;
+    #else
+    vv[3] = 0.0F;
+    #endif
     glLightfv(GL_LIGHT1,GL_POSITION,vv);
 
+    if(0) {
+      glGetLightfv(GL_LIGHT0,GL_POSITION,vv);
+      dump4f(vv, "glGetLightfv(GL_LIGHT0,GL_POSITION,vv)"); 
+      
+      glGetLightfv(GL_LIGHT1,GL_POSITION,vv);
+      dump4f(vv, "glGetLightfv(GL_LIGHT1,GL_POSITION,vv)");
+    }
+
     ScenePrepareUnitContext(G,&context,I->Width,I->Height);
- 
  
     /* do standard 3D objects */
 
@@ -4275,19 +4293,15 @@ void SceneRender(PyMOLGlobals *G,Pickable *pick,int x,int y,Multipick *smp)
     if(!(pick||smp)) {
       glEnable(GL_BLEND);
       glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
-    }  
 
-    if(!(pick||smp)) {
-
-
-      glMaterialfv(GL_FRONT, GL_AMBIENT_AND_DIFFUSE, white);
       glColorMaterial(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE);
 
-      vv[0]=SettingGet(G,cSetting_shininess);
-      glMaterialfv(GL_FRONT,GL_SHININESS,vv);
+      glEnable(GL_COLOR_MATERIAL);
+
+      glMaterialf(GL_FRONT,GL_SHININESS,SettingGet(G,cSetting_shininess));
 
       glShadeModel(GL_SMOOTH);
-      glEnable(GL_COLOR_MATERIAL);
+
       glEnable(GL_DITHER);
 
       glAlphaFunc(GL_GREATER, 0.05F);
@@ -4314,27 +4328,23 @@ void SceneRender(PyMOLGlobals *G,Pickable *pick,int x,int y,Multipick *smp)
         } else {
           glLightModeli(GL_LIGHT_MODEL_TWO_SIDE,GL_FALSE);
         }     
+
         
-        /* add half the ambient component (perceptive kludge) */
+        /* add half of the ambient component (perceptive kludge) */
         
         f=SettingGet(G,cSetting_ambient) * 0.5F;
 
-        vv[0]=f;
-        vv[1]=f;
-        vv[2]=f;
-        vv[3]=1.0;
+        vv[0] = f;
+        vv[1] = f;
+        vv[2] = f;
+        vv[3] = 1.0;
         glLightModelfv(GL_LIGHT_MODEL_AMBIENT,vv);
         
-        /* LIGHT0 is or direct light (eminating from the camera) */
+
+        /* LIGHT0 is our direct light (eminating from the camera -- minus Z) */
         
         if(direct>R_SMALL4) {          
           glEnable(GL_LIGHT0);
-          
-          vv[0]=direct;
-          vv[1]=direct;
-          vv[2]=direct;
-          vv[3]=1.0F;
-          glLightfv(GL_LIGHT0,GL_DIFFUSE,vv);
           
           f=SettingGet(G,cSetting_ambient);
           vv[0] = f;
@@ -4342,14 +4352,24 @@ void SceneRender(PyMOLGlobals *G,Pickable *pick,int x,int y,Multipick *smp)
           vv[2] = f;
           vv[3] = 1.0F;
           glLightfv(GL_LIGHT0,GL_AMBIENT,vv);
-          
-          glLightfv(GL_LIGHT0,GL_SPECULAR,zero);
+
+          vv[0] = direct;
+          vv[1] = direct;
+          vv[2] = direct;
+          vv[3] = 1.0F;
+          glLightfv(GL_LIGHT0,GL_DIFFUSE,vv);
+                    
+          /* no specular component from this light */
+
+          {
+            float specular[4] = { 0.0F, 0.0F, 0.0F, 1.0F };
+            glLightfv(GL_LIGHT0,GL_SPECULAR,specular);
+          }
           
         } else {
           glDisable(GL_LIGHT0);
         }
 
-        
         /* LIGHT1 is our reflected light (specular and diffuse
            reflection from a movable directional light) */
         
@@ -4357,83 +4377,80 @@ void SceneRender(PyMOLGlobals *G,Pickable *pick,int x,int y,Multipick *smp)
         
         /* load up the default ambient and diffuse lighting values */
         
-        vv[0]=reflect;
-        vv[1]=reflect;
-        vv[2]=reflect;
-        vv[3]=0.0F;
-        glLightfv(GL_LIGHT1,GL_DIFFUSE,vv);
+        /* no ambient */
+        { 
+          float ambient[4] = { 0.0F, 0.0F, 0.0F, 1.0F };
+          glLightfv(GL_LIGHT1,GL_AMBIENT,ambient);
+        }
 
-        vv[0] = 0.0F;
-        vv[1] = 0.0F;
-        vv[2] = 0.0F;
+        vv[0] = reflect;
+        vv[1] = reflect;
+        vv[2] = reflect;
         vv[3] = 1.0F;
-        glLightfv(GL_LIGHT1,GL_AMBIENT,vv);
+        glLightfv(GL_LIGHT1,GL_DIFFUSE,vv);
         
         f = SettingGet(G,cSetting_specular);
-        if(f==1.0F) {
+        if(f == 1.0F) {
           f=SettingGet(G,cSetting_specular_intensity);
         } 
-        if(f>R_SMALL4) { /* setup specular reflections for LIGHT0 if needed */
+        if(f<R_SMALL4) f = 0;
           
-          vv[0]=f;
-          vv[1]=f;
-          vv[2]=f;
-          vv[3]=1.0;
+        vv[0] = f;
+        vv[1] = f;
+        vv[2] = f;
+        vv[3] = 1.0F;
+        glLightfv(GL_LIGHT1,GL_SPECULAR,vv);
+        glMaterialfv(GL_FRONT,GL_SPECULAR,vv);
+        
+        if(0) {
+
+          glColor4f(1.0F,1.0F,1.0F,1.0F);
           
-          glLightfv(GL_LIGHT1,GL_SPECULAR,vv);
-          glMaterialfv(GL_FRONT,GL_SPECULAR,vv);
-        } else { /* no specular reflections */
+          glGetFloatv(GL_LIGHT_MODEL_AMBIENT,vv);
+          dump4f(vv,"glGetFloatv(GL_LIGHT_MODEL_AMBIENT,vv)");
           
-          vv[0]=0.0;
-          vv[1]=0.0;
-          vv[2]=0.0;
-          vv[3]=1.0;
+          glGetFloatv(GL_LIGHT0,vv);
+          printf("glGetFloatv(GL_LIGHT0) %8.3f\n",vv[0]);
           
-          glLightfv(GL_LIGHT1, GL_SPECULAR, vv);
-          glMaterialfv(GL_FRONT,GL_SPECULAR,vv); 
+          glGetLightfv(GL_LIGHT0,GL_AMBIENT,vv);
+          dump4f(vv, "glGetLightfv(GL_LIGHT0,GL_AMBIENT,vv)");
+          
+          glGetLightfv(GL_LIGHT0,GL_DIFFUSE,vv);
+          dump4f(vv, "glGetLightfv(GL_LIGHT0,GL_DIFFUSE,vv)");
+          
+          glGetLightfv(GL_LIGHT0,GL_SPECULAR,vv);
+          dump4f(vv, "glGetLightfv(GL_LIGHT0,GL_SPECULAR,vv)");
+          
+          
+          glGetFloatv(GL_LIGHT1,vv);
+          printf("glGetFloatv(GL_LIGHT1) %8.3f\n",vv[0]);
+          
+          glGetLightfv(GL_LIGHT1,GL_AMBIENT,vv);
+          dump4f(vv, "glGetLightfv(GL_LIGHT1,GL_AMBIENT,vv)");
+          
+          glGetLightfv(GL_LIGHT1,GL_DIFFUSE,vv);
+          dump4f(vv, "glGetLightfv(GL_LIGHT1,GL_DIFFUSE,vv)");
+          
+          glGetLightfv(GL_LIGHT1,GL_SPECULAR,vv);
+          dump4f(vv, "glGetLightfv(GL_LIGHT1,GL_SPECULAR,vv)");
+          
+          glGetFloatv(GL_LIGHT_MODEL_AMBIENT,vv);
+          dump4f(vv, "glGetFloatv(GL_LIGHT_MODEL_AMBIENT,vv)");
+          
+          glGetMaterialfv(GL_FRONT, GL_AMBIENT, vv);
+          dump4f(vv, "glGetMaterialfv(GL_FRONT,GL_AMBIENT,vv)");
+          
+          glGetMaterialfv(GL_FRONT, GL_DIFFUSE, vv);
+          dump4f(vv, "glGetMaterialfv(GL_FRONT,GL_DIFFUSE,vv)"); 
+          
+          glGetMaterialfv(GL_FRONT, GL_SPECULAR, vv);
+          dump4f(vv, "glGetMaterialfv(GL_FRONT,GL_SPECULAR,vv)");
+          
+          glGetMaterialfv(GL_FRONT, GL_SHININESS, vv);
+          dump4f(vv, "glGetMaterialfv(GL_FRONT,GL_SHININESS, vv)");
+          
         }
-        
-        /* 
-
-        glGetFloatv(GL_LIGHT0,vv);
-        printf("glGetFloatv(GL_LIGHT0) %8.3f\n",vv[0]);
-        
-        glGetLightfv(GL_LIGHT0,GL_AMBIENT,vv);
-        dump4f(vv, "glGetLightfv(GL_LIGHT0,GL_AMBIENT,vv)");
-        
-        glGetLightfv(GL_LIGHT0,GL_DIFFUSE,vv);
-        dump4f(vv, "glGetLightfv(GL_LIGHT0,GL_DIFFUSE,vv)");
-        
-        glGetLightfv(GL_LIGHT0,GL_SPECULAR,vv);
-        dump4f(vv, "glGetLightfv(GL_LIGHT0,GL_SPECULAR,vv)");
-        
-        glGetLightfv(GL_LIGHT0,GL_POSITION,vv);
-        dump4f(vv, "glGetLightfv(GL_LIGHT0,GL_POSITION,vv)");
-        
-        glGetFloatv(GL_LIGHT1,vv);
-        printf("glGetFloatv(GL_LIGHT1) %8.3f\n",vv[0]);
-        
-        glGetLightfv(GL_LIGHT1,GL_AMBIENT,vv);
-        dump4f(vv, "glGetLightfv(GL_LIGHT1,GL_AMBIENT,vv)");
-        
-        glGetLightfv(GL_LIGHT1,GL_DIFFUSE,vv);
-        dump4f(vv, "glGetLightfv(GL_LIGHT1,GL_DIFFUSE,vv)");
-        
-        glGetLightfv(GL_LIGHT1,GL_SPECULAR,vv);
-        dump4f(vv, "glGetLightfv(GL_LIGHT1,GL_SPECULAR,vv)");
-
-        glGetLightfv(GL_LIGHT1,GL_POSITION,vv);
-        dump4f(vv, "glGetLightfv(GL_LIGHT1,GL_POSITION,vv)");
-
-        glGetFloatv(GL_LIGHT_MODEL_AMBIENT,vv);
-        dump4f(vv, "glGetFloatv(GL_LIGHT_MODEL_AMBIENT,vv)");
-
-        glGetMaterialfv(GL_FRONT, GL_SPECULAR, vv);
-        dump4f(vv, "glGetMaterialfv(GL_FRONT,GL_SPECULAR,vv)");
-        */
-
       }
-
 
       if(SettingGet(G,cSetting_depth_cue)&&SettingGet(G,cSetting_fog)) {
         fog_start = (I->Back-I->FrontSafe)*SettingGet(G,cSetting_fog_start)+I->FrontSafe;

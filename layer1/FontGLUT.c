@@ -121,11 +121,16 @@ static char *FontGLUTRenderOpenGL(CFontGLUT *I,char *st)
             }
           }
       }
+                
       if(textured && !pushed) {
         ScenePopRasterMatrix(G);
       }
       if(!textured) {
         FontGLUTRestore(I); 
+        #ifdef _PYMOL_OSX
+        /* workaround for screen flashes on late-model nVidia hardware */
+        glFlush();
+        #endif
       }
     }
   }
