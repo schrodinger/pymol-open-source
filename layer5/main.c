@@ -74,7 +74,7 @@ struct _CMain {
   double IdleTime;
   int IdleCount;
   int Modifiers;
-  int FinalInit;
+  int FinalInitCounter, FinalInitTrigger;
   int TheWindow;
   int WindowIsVisible;
   CPyMOLOptions *OwnedOptions;
@@ -454,6 +454,59 @@ static void MainDrawLocked(void)
 {
   PyMOLGlobals *G = TempPyMOLGlobals;
 
+  CMain *I = G->Main;
+  if(I->FinalInitTrigger) {
+
+    I->FinalInitTrigger = false;
+
+#ifndef _PYMOL_NOPY
+    
+    /* okay, on the way in, the API is locked but the interpreter is
+       running async, so we need to block it */
+
+    PBlock();
+
+    /* next, we need to let PyMOL know we have a valid context,
+      because some initializations, involve GL calls (such as going
+      into full-screen or stereo mode) */
+
+    if(G->HaveGUI) 
+      PyMOL_PushValidContext(PyMOLInstance);
+    
+    /* restore working directory if asked to */
+    PRunString("if os.environ.has_key('PYMOL_WD'): os.chdir(os.environ['PYMOL_WD'])");
+    
+#ifdef _PYMOL_OSX
+    PRunString("if os.getcwd()[-23:]=='.app/Contents/Resources': os.chdir('../../..')");
+#endif
+    
+    PRunString("launch_gui()");
+    
+    /*#ifndef _PYMOL_WX_GLUT
+      PRunString("launch_gui()");
+      #endif*/
+    
+    PRunString("adapt_to_hardware()");
+    
+    if(G->Option->incentive_product) { /* perform incentive product initialization (if any) */
+      PyRun_SimpleString("try:\n   import ipymol\nexcept:\n   pass\n");
+    }
+    
+    PRunString("exec_deferred()");
+#ifdef _PYMOL_SHARP3D
+    /*PParse("load $TUT/1hpv.pdb;hide;show sticks;show surface;set surface_color,white;set transparency,0.5;stereo on");*/
+    PParse("stereo on");
+    /*PParse("wizard demo,cartoon");*/
+#endif
+    
+    if(G->HaveGUI) 
+      PyMOL_PopValidContext(PyMOLInstance);
+
+    PUnblock();
+    
+#endif
+  }
+
   PyMOL_Draw(PyMOLInstance);
 
   if(G->HaveGUI) {
@@ -647,7 +700,8 @@ void MainDoReshape(int width, int height) /* called internally */
 static void MainInit(PyMOLGlobals *G) 
 {
 
-  CMain *I = (G->Main = Calloc(CMain,1));
+  CMain *I = (G->Main = Calloc(CMain,1)); 
+  /* Data structure is zeroed on start...*/
   
   I->IdleMode = 0;
   I->IdleCount = 0;
@@ -854,40 +908,13 @@ static void MainBusyIdle(void)
 
   #define FINAL_INIT_AT 10
 
-  if(I->FinalInit<FINAL_INIT_AT)
+  if(I->FinalInitCounter<FINAL_INIT_AT)
 	 {
-      I->FinalInit=I->FinalInit+1;
-      if(I->FinalInit==FINAL_INIT_AT) {
+      I->FinalInitCounter=I->FinalInitCounter+1;
+      if(I->FinalInitCounter==FINAL_INIT_AT) {
 
-#ifndef _PYMOL_NOPY
-        PBlock();
-        /* restore working directory if asked to */
-        PRunString("if os.environ.has_key('PYMOL_WD'): os.chdir(os.environ['PYMOL_WD'])");
-
-        #ifdef _PYMOL_OSX
-        PRunString("if os.getcwd()[-23:]=='.app/Contents/Resources': os.chdir('../../..')");
-        #endif
-
-        PRunString("launch_gui()");
-
-        /*#ifndef _PYMOL_WX_GLUT
-         PRunString("launch_gui()");
-        #endif*/
-
-        PRunString("adapt_to_hardware()");
-
-        if(G->Option->incentive_product) { /* perform incentive product initialization (if any) */
-          PyRun_SimpleString("try:\n   import ipymol\nexcept:\n   pass\n");
-        }
-
-        PRunString("exec_deferred()");
-#ifdef _PYMOL_SHARP3D
-        /*PParse("load $TUT/1hpv.pdb;hide;show sticks;show surface;set surface_color,white;set transparency,0.5;stereo on");*/
-        PParse("stereo on");
-        /*PParse("wizard demo,cartoon");*/
-#endif
-        PUnblock();
-#endif
+        I->FinalInitTrigger=true;
+        PyMOL_NeedRedisplay(PyMOLInstance);
       }
     }
 
@@ -897,7 +924,9 @@ static void MainBusyIdle(void)
 
   if(!G->HaveGUI) {
     if(!OrthoCommandWaiting(G)) {
-      if((!G->Option->keep_thread_alive)&&(!G->Option->read_stdin)) {
+      if((!G->Option->keep_thread_alive)&&
+         (!G->Option->read_stdin)&&
+         (I->FinalInitCounter>=FINAL_INIT_AT)) {
         I->IdleCount++;
         if(I->IdleCount==10) {
           PLockAPIAsGlut();
@@ -1107,7 +1136,7 @@ SetConsoleCtrlHandler(
        p_glutSpecialFunc(         MainSpecial );
        p_glutIdleFunc(            MainBusyIdle );
        
-       p_glutPostRedisplay();
+
      }
      
      PUnblock();

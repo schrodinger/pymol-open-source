@@ -1293,6 +1293,9 @@ void SettingGenerateSideEffects(PyMOLGlobals *G,int index,char *sele,int state)
     SceneRestartTimers(G);
     break;
   case cSetting_mesh_width: 
+    ExecutiveInvalidateRep(G,inv_sele,cRepMesh,cRepInvRep);
+    SceneChanged(G);
+    break;
   case cSetting_mesh_color: 
     ExecutiveInvalidateRep(G,inv_sele,cRepMesh,cRepInvColor);
     SceneChanged(G);
