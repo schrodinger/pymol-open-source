@@ -492,7 +492,6 @@ void CoordSetUpdate(CoordSet *I)
 	 }
   OrthoBusyFast(0,I->NRep);
 
-
   RepUpdateMacro(I, cRepLine,            RepWireBondNew        );
   RepUpdateMacro(I, cRepCyl,             RepCylBondNew         );
   RepUpdateMacro(I, cRepDot,             RepDotNew             );

@@ -59,10 +59,10 @@ Z* -------------------------------------------------------------------
 #define cRepInvColor  15
 /* invalidate label text */
 #define cRepInvText   16
+/* invalidate picked atoms */
+#define cRepInvPick   19
 /* invalidate visible atoms */
 #define cRepInvVisib  20
-/* invalidate picked atoms */
-#define cRepInvPick   21
 /* invalidate atomic properties */
 #define cRepInvProp   22
 /* invalidate coordinates */

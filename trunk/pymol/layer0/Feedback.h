@@ -109,6 +109,7 @@ function name.
 #define FB_Movie                     20
 #define FB_Python                    21 /* part of P.c */
 #define FB_Extrude                   22
+#define FB_Rep                       23
 
 /* layer 2 */
 

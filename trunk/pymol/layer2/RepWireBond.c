@@ -139,6 +139,9 @@ Rep *RepWireBondNew(CoordSet *cs)
   OOAlloc(RepWireBond);
   obj = cs->Obj;
 
+  PRINTFD(FB_RepWireBond)
+    " RepWireBondNew-Debug: entered.\n"
+    ENDFD;
 
   visFlag=false;
   b=obj->Bond;
