@@ -292,11 +292,20 @@ static int SeqClick(Block *block,int button,int x,int y,int mod)
 static void SeqDraw(Block *block)
 {
   CSeq *I=&Seq;
-
+  
   if(PMGUI) {
     int x = I->Block->rect.left;
     int y = I->Block->rect.bottom+I->ScrollBarMargin+1;
+    float *bg_color,overlay_color[3] = {1.0F,1.0F,1.0F};
+
+    bg_color=SettingGet_3fv(NULL,NULL,cSetting_bg_rgb);
     
+    overlay_color[0]=1.0F-bg_color[0];
+    overlay_color[1]=1.0F-bg_color[1];
+    overlay_color[2]=1.0F-bg_color[2];
+    if(diff3f(overlay_color,bg_color)<0.25)
+      zero3f(overlay_color);
+
     if(I->ScrollBarActive) {
       ScrollBarSetBox(I->ScrollBar,I->Block->rect.bottom+I->ScrollBarWidth,
                       I->Block->rect.left+I->ScrollBarMargin,
@@ -310,7 +319,6 @@ static void SeqDraw(Block *block)
     }
     if(I->NRow) { /* get current sequence sizes */
       int a,b;
-      float white[3] = {1,1,1};
       float black[3] = {0,0,0};
       float blue[3] = {0.5,0.5,1.0};
       float *cur_color;
@@ -338,7 +346,7 @@ static void SeqDraw(Block *block)
 
       /* draw titles */
 
-      cur_color = white;
+      cur_color = overlay_color;
       glColor3fv(cur_color);
       for(a=I->NRow-1;a>=0;a--) {
         row = I->Row+a;
@@ -361,10 +369,7 @@ static void SeqDraw(Block *block)
       y1 = y;
       for(a=I->NRow-1;a>=0;a--) {
         row = I->Row+a;
-        if(row->label_flag)
-          cur_color = white;
-        else
-          cur_color = blue;
+        cur_color = overlay_color;
         glColor3fv(cur_color);
         yy=y1-2;
         if(max_len<row->ext_len)
@@ -387,7 +392,10 @@ static void SeqDraw(Block *block)
             pix_wid = I->CharWidth * ch_wid;
             tot_len = col->offset+ch_wid-I->NSkip;
             if(tot_len<=vis_size) {
-              glColor3fv(ColorGet(col->color));
+              if(row->label_flag)
+                glColor3fv(cur_color);
+              else 
+                glColor3fv(ColorGet(col->color));
               if(col->inverse) {
                 glBegin(GL_POLYGON);
                 glVertex2i(xx,yy);
@@ -398,7 +406,6 @@ static void SeqDraw(Block *block)
                 glColor3fv(black);
                 GrapDrawSubStrFast(row->txt,xx,y1,
                                    col->start,ch_wid);
-                glColor3fv(cur_color);
               } else {
                 GrapDrawSubStrFast(row->txt,xx,y1,
                                    col->start,ch_wid);
@@ -461,6 +468,7 @@ static void SeqDraw(Block *block)
           int right=0;
           float bot,top,cent;
           float height = (I->ScrollBarWidth - I->ScrollBarMargin);
+          int last_color = -1;
           cur_color = blue;
           for(a=0;a<I->NRow;a++) {
             row = I->Row+a;
@@ -475,6 +483,11 @@ static void SeqDraw(Block *block)
                   start = (width*col->offset)/max_len;
                   right = col->offset + (col->stop-col->start);
                   mode=1;
+                  last_color = col->color;
+                  if(row->label_flag) 
+                    cur_color = overlay_color;
+                  else 
+                    cur_color = ColorGet(col->color); /* is this safe? should be for single-threading */ 
                 } else if((!col->inverse)&&(mode)) {
                   stop = (width*col->offset)/max_len;
                   if((stop-start)<1.0F) {
@@ -492,7 +505,29 @@ static void SeqDraw(Block *block)
                   glEnd();
                   mode = 0;
                 } else if(col->inverse&&mode) {
+                  if(last_color!=col->color) {
+                    stop = (width*col->offset)/max_len;
+                    if((stop-start)<1.0F) {
+                      cent = (stop+start)*0.5F;
+                      start = cent-0.5F;
+                      stop = cent+0.5F;
+                    }
+                    glColor3fv(cur_color);
+                    glBegin(GL_POLYGON);
+                    glVertex2f(start,bot);
+                    glVertex2f(start,top);
+                    glVertex2f(stop,top);
+                    glVertex2f(stop,bot);
+                    glEnd();
+                    start = (width*col->offset)/max_len;
+                    last_color = col->color;
+                    if(row->label_flag) 
+                      cur_color = overlay_color;
+                    else 
+                      cur_color = ColorGet(col->color); /* is this safe? should be for single-threading */ 
+                  }
                   right = col->offset + (col->stop-col->start);
+
                 }
               }
               
