@@ -27,7 +27,10 @@ Z* -------------------------------------------------------------------
 #define F4(field,P1,P2,P3,P4) Ffloat4(field,P1,P2,P3,P4)
 #define F4Ptr(field,P1,P2,P3,P4) Ffloat4p(field,P1,P2,P3,P4)
 
-int	TetsurfVolume(Isofield *field,float level,int **num,float **vert,int *range,int mode);
+int	TetsurfVolume(Isofield *field,float level,int **num,
+                    float **vert,int *range,int mode,
+                    MapType *voxelmap,float *a_vert,
+                    float carvebuffer);
 void TetsurfGetRange(Isofield *field,CCrystal *cryst,float *mn,float *mx,int *range);
 
 int	TetsurfInit(void);

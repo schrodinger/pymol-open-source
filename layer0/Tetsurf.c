@@ -101,7 +101,10 @@ void	TetsurfInterpolate8(float *pt,float *v0,float l0,float *v1,float l1,
                           float l2,float l3,float l4,
                           float l5,float l6,float l7);
 
-int	TetsurfFindActiveBoxes(int mode,int *n_strip,int n_vert,int **strip_l,float **vert);
+int	TetsurfFindActiveBoxes(int mode,int *n_strip,int n_vert,
+                             int **strip_l,float **vert,
+                             MapType *voxelmap,float *a_vert,
+                             float carvebuffer);
 void	TetsurfCode(char *bits1,char *bits2);
 int	TetsurfPoints(void);
 
@@ -434,7 +437,9 @@ void TetsurfGetRange(Isofield *field,CCrystal *cryst,float *mn,float *mx,int *ra
   }
 }
   /*===========================================================================*/
-int	TetsurfVolume(Isofield *field,float level,int **num,float **vert,int *range,int mode)
+int	TetsurfVolume(Isofield *field,float level,int **num,float **vert,
+                    int *range,int mode,MapType *voxelmap,float *a_vert,
+                    float carvebuffer)
 {
 	int	ok=true;
 	int	Steps[3];
@@ -500,7 +505,8 @@ int	TetsurfVolume(Isofield *field,float level,int **num,float **vert,int *range,
 			if(ok) 
            {
              if(TetsurfCodeVertices())
-               n_vert=TetsurfFindActiveBoxes(mode,&n_strip,n_vert,num,vert);
+               n_vert=TetsurfFindActiveBoxes(mode,&n_strip,n_vert,num,vert,
+                                             voxelmap,a_vert,carvebuffer);
            }
          }
       TetsurfFree();
@@ -644,9 +650,11 @@ void	TetsurfInterpolate8(float *pt,float *v0,float l0,float *v1,float l1,
   }
 }
 /*===========================================================================*/
-int	TetsurfFindActiveBoxes(int mode,int *n_strip,int n_vert,int **strip_l,float **vert)
+int	TetsurfFindActiveBoxes(int mode,int *n_strip,int n_vert,
+                             int **strip_l,float **vert,
+                             MapType *voxelmap,float *a_vert,float carvebuffer)
 {
-	int	a,b,c,i,j,k;
+  int	a,b,c,i,j,k,h,l;
 #ifdef Trace
 	int	ECount=0;
 #endif
@@ -1100,7 +1108,6 @@ int	TetsurfFindActiveBoxes(int mode,int *n_strip,int n_vert,int **strip_l,float 
            idx = tt->p[b]->Link;
            while(idx>0) {
              add3f(Tri[PtLink[idx].tri].n,v,v);
-             c++;
              idx = PtLink[idx].link;
            }
            normalize23f(v,tt->p[b]->Normal);
@@ -1108,9 +1115,31 @@ int	TetsurfFindActiveBoxes(int mode,int *n_strip,int n_vert,int **strip_l,float 
          }
        }
      }
-     
-
-
+     /* if we are carving, then exclude triangles outside region */
+     if(voxelmap) {
+       for(a=0;a<n_tri;a++) {
+         float *v;
+         tt = Tri + a;
+         c=0;
+         for(b=0;b<3;b++) {
+           v=tt->p[b]->Point;
+           MapLocus(voxelmap,v,&h,&k,&l);
+           i=*(MapEStart(voxelmap,h,k,l));
+           if(i) {
+             j=voxelmap->EList[i++];
+             while(j>=0) {
+               if(within3f(a_vert+3*j,v,carvebuffer)) {
+                 c++;
+                 break;
+               }
+               j=voxelmap->EList[i++];
+             }
+           }
+         }
+         if(c<3) /* exclude this triangle from the surface */
+           tt->done=true;
+       }
+     }
 
      /* now create triangle strips (not yet optimal) */
      for(a=0;a<n_tri;a++) {
