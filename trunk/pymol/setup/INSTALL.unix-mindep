@@ -6,7 +6,7 @@ INSTALLATION GUIDE for Unix Minimal Dependency Distribution
 
 1) Extract the archive
 
-   tar -zxvf pymol-0_xx-bin-linux6-mindep.tgz
+   tar -zxvf pymol-0_xx-bin-linux-libc6-i386.tgz
 
 2) Change directory into the root level of the archive (important).
 

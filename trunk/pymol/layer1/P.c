@@ -781,7 +781,7 @@ void PInitEmbedded(int argc,char **argv)
       strcat(line,getenv("PYMOL_PATH"));
       strcat(line,"/ext/lib/python2.2/lib-tk:");
       strcat(line,getenv("PYMOL_PATH"));
-      strcat(line,"/ext/lib/python2.2/lib-dynload:");
+      strcat(line,"/ext/lib/python2.2/lib-dynload");
       strcat(line,getenv("PYTHONPATH"));
       setenv("PYTHONPATH",line,1);
   }
