@@ -62,6 +62,7 @@ def mol_hide(s):
            [ 0, ''          , ''                                ],
            [ 1, 'main chain', 'cmd.hide("((byres ('+s+'))&n;c,n,o,h)")' ],
            [ 1, 'side chain', 'cmd.hide("((byres ('+s+'))&!n;ca,c,n,o,h)")' ],
+           [ 1, 'waters'    , 'cmd.hide("(resn HOH+WAT and ('+s+'))")'     ],                      
            [ 0, ''          , ''                                ],
            [ 1, 'hydrogens' , 'cmd.hide("('+s+' and hydro)")'   ],
            [ 0, ''          , ''                                ],           
@@ -531,7 +532,7 @@ def pick_menu(s1,s2):
            [ 1, 'molecule', pick_option("Molecule","(bymol ("+s2+"))") ],
            [ 0, ''             , ''                      ],
            [ 1, 'fragment', pick_option("Fragment","(byfrag ("+s2+"))") ],
-           [ 1, '""+joint(s)', pick_option("Fragment","((byfrag ("+s2+")) extend 1)") ],
+           [ 1, 'fragment+joint(s)', pick_option("Fragment","((byfrag ("+s2+")) extend 1)") ],
            ]
       
 

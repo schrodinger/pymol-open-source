@@ -23,6 +23,7 @@ def simple(selection="(all)"):
    util.cbc(s)
    cmd.hide("everything",s)
    cmd.show("ribbon",s)
+   cmd.show("lines","(byres (("+s+" & r. CYS+CYX & n. SG) & bound_to ("+s+" & r. CYS+CYX & n. SG))) & n. CA+CB+SG")
    cmd.show("sticks","(hetatm and ("+s+"))")
    cmd.show("nonbonded","(hetatm and ("+s+"))")
    if polar_contacts in cmd.get_names():
@@ -43,7 +44,7 @@ def ligands(selection="(all)"):
       near_water = "_preset_water"
       lig = "_preset_lig"
       cmd.select(host,s+
-        " and resn ALA+CYS+ASP+GLU+PHE+GLY+HIS+ILE+LYS+LEU+MET+ASN+PRO+GLN+ARG+SER+THR+VAL+TRP+TYR+A+C+T+G+U")
+        " and resn ALA+CYS+ASP+GLU+PHE+GLY+HIS+ILE+LYS+LEU+MET+MSE+ASN+PRO+GLN+ARG+SER+THR+VAL+TRP+TYR+A+C+T+G+U")
       cmd.select(water,s+" and resn WAT+HOH+H20")
       cmd.select(lig,s+" and not ("+host+"|"+water+")")
       cmd.select(near_water,s+" and ("+water+" within 5 of "+lig+")")

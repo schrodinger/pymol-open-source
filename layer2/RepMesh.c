@@ -484,10 +484,14 @@ Rep *RepMeshNew(CoordSet *cs)
 					 point[1]=minE[1]+b*gridSize;
 					 for(c=0;c<dims[2];c++)
 						{
+                    float bestDist;
+                    float dist2vdw;
+                    float vdw_add = solv_acc*probe_radius;
 						  point[2]=minE[2]+c*gridSize;
                     copy3f(point,F3Ptr(field->points,a,b,c));
 						  aNear = -1;
-						  aLen = MAXFLOAT;
+                    bestDist = MAXFLOAT;
+                    aLen = MAXFLOAT;
 						  MapLocus(map,point,&h,&k,&l);						  
 						  d=*(MapEStart(map,h,k,l));
 						  if(d) {
@@ -497,9 +501,11 @@ Rep *RepMeshNew(CoordSet *cs)
                         if((inclH||(!ai1->hydrogen))&&
                            ((!cullByFlag)||
                             (!(ai1->flags&cAtomFlag_ignore)))) {
-                          vLen=(float)diffsq3f(point,cs->Coord+(cur*3));
-                          if(vLen<aLen)
+                          vLen=(float)diff3f(point,cs->Coord+(cur*3));
+                          dist2vdw = vLen - (ai1->vdw + vdw_add);
+                          if(dist2vdw<bestDist)
                             {
+                              bestDist = dist2vdw;
                               aLen=vLen;
                               aNear=cur;
                             }
@@ -509,7 +515,7 @@ Rep *RepMeshNew(CoordSet *cs)
 						  }						
 						  if(aNear>=0) /* near an atom... */
 							 {
-								pVal = (float)sqrt1f(aLen); /* pVal is the distance from atom center */
+								pVal = aLen; /* pVal is the distance from atom center */
 								vdw = cs->Obj->AtomInfo[cs->IdxToAtm[aNear]].vdw + solv_acc*probe_radius;
 								if((!solv_acc)&&(pVal>vdw)&&(pVal<(vdw+probe_radius))) { /* point outside an atom */
 								  inSolvFlag=false;
@@ -532,11 +538,11 @@ Rep *RepMeshNew(CoordSet *cs)
 										cur=smap->EList[d++];
 									 }
 								  }
+                          aLen = (float)sqrt1f(aLen); 
 								  if(inSolvFlag) { /* point is inside a water, so a linear crossing point works fine*/
                             pVal=pVal/vdw;
                           } else { /* point is not inside a water, so we need to guestimate a value depending
                                     * on where the point is */
-                            aLen = (float)sqrt1f(aLen); /* find out how far point is from water */
                             if(aLen<(2*probe_radius)) {
                               pVal=1.05F*(2*probe_radius-aLen)/probe_radius; 
                               /* within a radius, so assign based on water surface, but error on the side of exclusion */
@@ -755,7 +761,6 @@ void RepMeshGetSolventDots(RepMesh *I,CoordSet *cs,float *min,float *max,float p
 		}
 	 FreeP(dot_flag);
   }
-  /* printf("NDot: %d->%d\n",c,I->NDot);*/
 }
 
 

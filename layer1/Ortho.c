@@ -926,6 +926,9 @@ void OrthoDoDraw()
     ENDFD;
   if(PMGUI) {
 
+    if(Feedback(FB_OpenGL,FB_Debugging))
+      PyMOLCheckOpenGLErr("OrthoDoDraw checkpoint 0");
+
     rightSceneMargin=(int)SettingGet(cSetting_internal_gui_width);
     internal_feedback=(int)SettingGet(cSetting_internal_feedback);
 
@@ -944,16 +947,16 @@ void OrthoDoDraw()
       if(!SceneRenderCached())
         render=true;
 
-    if(SceneGetStereo()||double_pump) {
+    if((SceneGetStereo()==1)||double_pump) {
       glDrawBuffer(GL_BACK_LEFT);
       glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
       glDrawBuffer(GL_BACK_RIGHT);
       glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
       glClearColor(0.0,0.0,0.0,1.0);
       times = 2;
+      double_pump = true;
     } else {
       glDrawBuffer(GL_BACK);
-      glClearColor(v[0],v[1],v[2],1.0);
       glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
       glClearColor(0.0,0.0,0.0,1.0);
       times = 1;
@@ -962,11 +965,11 @@ void OrthoDoDraw()
 
     if(render)
       SceneRender(NULL,0,0,NULL);
-
+    
     while(times--) {
       switch(times) {
       case 1:
-          glDrawBuffer(GL_BACK_RIGHT);
+        glDrawBuffer(GL_BACK_RIGHT);
         break;
       case 0:
         if(double_pump) {
@@ -1078,6 +1081,10 @@ void OrthoDoDraw()
       
       OrthoDrawWizardPrompt();
       OrthoPopMatrix();
+
+      if(Feedback(FB_OpenGL,FB_Debugging))
+        PyMOLCheckOpenGLErr("OrthoDoDraw final checkpoint");
+
     }
   }
 

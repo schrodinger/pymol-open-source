@@ -33,6 +33,7 @@ set, enable, disable
     objectmesh
     objectmolecule
     objectsurface
+    opengl
     ortho
     parser
     python
@@ -106,6 +107,7 @@ PyMOL>feedback enable
     objectmesh
     objectmolecule
     objectsurface
+    opengl
     ortho
     parser
     python
