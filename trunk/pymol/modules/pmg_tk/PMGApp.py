@@ -750,8 +750,8 @@ class PMGApp(AbstractApp):
                                command = lambda: cmd.do(
          "_ editor.attach_fragment('pk1','cycloheptane',8,0)"))
 
-      self.menuBar.addmenuitem('Fragment', 'command', 'Fluorene',
-                               label='Fluorene [Ctrl-F]',
+      self.menuBar.addmenuitem('Fragment', 'command', 'Fluorine',
+                               label='Fluorine [Ctrl-F]',
                                command = lambda: cmd.do("_ replace F,1,1"))
 
       self.menuBar.addmenuitem('Fragment', 'command', 'Iodine',
