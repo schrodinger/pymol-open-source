@@ -2458,7 +2458,7 @@ void SettingInitGlobal(PyMOLGlobals *G,int alloc,int reset_gui)
   SettingSet_f(I,cSetting_angle_size, 0.6666F);
   SettingSet_f(I,cSetting_angle_label_position, 0.5);
   SettingSet_f(I,cSetting_dihedral_size, 0.6666F);
-  SettingSet_f(I,cSetting_dihedral_label_position, 1.2);
+  SettingSet_f(I,cSetting_dihedral_label_position, 1.2F);
 }
 
 

@@ -290,7 +290,7 @@ if __name__=='pymol.invocation':
             if a[-4:] in (".p5m",".P5M"):
                # mode 5 helper application 
                av.append("-A5")
-            if a[-4:] in (".psp",".PSP"):
+            if a[-4:] in (".psw",".PSW"):
                # presentation mode
                av.append("-A6")               
             options.deferred.append(a)
