@@ -1057,6 +1057,23 @@ void SettingGenerateSideEffects(int index,char *sele,int state)
     ExecutiveInvalidateRep(inv_sele,cRepLine,cRepInvRep);
     SceneChanged();
     break;
+  case cSetting_roving_lines:
+  case cSetting_roving_sticks:
+  case cSetting_roving_spheres:
+  case cSetting_roving_labels:
+  case cSetting_roving_selection:
+  case cSetting_roving_ribbon:
+  case cSetting_roving_cartoon:
+  case cSetting_roving_polar_contacts:
+  case cSetting_roving_polar_cutoff:
+  case cSetting_roving_nonbonded:
+  case cSetting_roving_nb_spheres:
+    SceneRovingChanged();
+    break;
+  case cSetting_roving_byres:
+  case cSetting_roving_detail:
+    SceneRovingDirty();
+    break;
   case cSetting_dash_length:
   case cSetting_dash_gap:
   case cSetting_dash_radius:
@@ -1079,6 +1096,14 @@ void SettingGenerateSideEffects(int index,char *sele,int state)
     break;
   case cSetting_label_color:
     ExecutiveInvalidateRep(inv_sele,cRepLabel,cRepInvRep);
+    SceneChanged();
+    break;
+  case cSetting_cartoon_color:
+    ExecutiveInvalidateRep(inv_sele,cRepCartoon,cRepInvRep);
+    SceneChanged();
+    break;
+  case cSetting_ribbon_color:
+    ExecutiveInvalidateRep(inv_sele,cRepRibbon,cRepInvRep);
     SceneChanged();
     break;
   case cSetting_all_states:
@@ -1650,7 +1675,7 @@ void SettingInitGlobal(void)
 
   SettingSet_i(I,cSetting_cartoon_debug, 0);
 
-  SettingSet_f(I,cSetting_ribbon_width, 1.0F);
+  SettingSet_f(I,cSetting_ribbon_width, 2.0F);
 
   SettingSet_f(I,cSetting_dash_width, 3.0F);
 
@@ -1886,9 +1911,9 @@ void SettingInitGlobal(void)
 
   SettingSet_i(I,cSetting_roving_origin,1);
 
-  SettingSet_f(I,cSetting_roving_sticks,0.0F);
+  SettingSet_f(I,cSetting_roving_sticks,6.0F);
 
-  SettingSet_f(I,cSetting_roving_lines,0.0F);
+  SettingSet_f(I,cSetting_roving_lines,10.0F);
 
   SettingSet_f(I,cSetting_roving_spheres,0.0F);
 
@@ -1898,13 +1923,13 @@ void SettingInitGlobal(void)
 
   SettingSet_s(I,cSetting_roving_selection,"all");
 
-  SettingSet_i(I,cSetting_roving_byres,0);
+  SettingSet_i(I,cSetting_roving_byres,1);
 
-  SettingSet_f(I,cSetting_roving_ribbon,0.0F);
+  SettingSet_f(I,cSetting_roving_ribbon,-7.0F);
   
   SettingSet_f(I,cSetting_roving_cartoon,0.0F);
 
-  SettingSet_f(I,cSetting_roving_polar_contacts,0.0F);
+  SettingSet_f(I,cSetting_roving_polar_contacts,7.0F);
 
   SettingSet_f(I,cSetting_roving_polar_cutoff,3.2F);
 
@@ -1912,6 +1937,15 @@ void SettingInitGlobal(void)
 
   SettingSet_f(I,cSetting_float_labels,1.0F);
 
+  SettingSet_f(I,cSetting_roving_detail,0.0F);
+
+  SettingSet_f(I,cSetting_roving_nb_spheres,8.0F);
+
+  SettingSet_color(I,cSetting_ribbon_color,"-1"); /* use atom colors by default */
+
+  SettingSet_color(I,cSetting_cartoon_color,"-1"); /* use atom colors by default */
+
+  SettingSet_i(I,cSetting_ribbon_smooth,-1);
 }
 
 

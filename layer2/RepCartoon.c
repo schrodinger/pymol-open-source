@@ -137,6 +137,7 @@ Rep *RepCartoonNew(CoordSet *cs)
   int discrete_colors;
   int cylindrical_helices;
   int last_color,uniform_color;
+  int cartoon_color;
   int round_helices;
   int smooth_loops;
   int parity;
@@ -190,6 +191,7 @@ ENDFD;
   tube_quality = SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_cartoon_tube_quality);
   if(tube_quality<3) tube_quality=3;
 
+  cartoon_color = SettingGet_color(cs->Setting,obj->Obj.Setting,cSetting_cartoon_color);
   oval_length = SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_cartoon_oval_length);
   oval_width = SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_cartoon_oval_width);
   oval_quality = SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_cartoon_oval_quality);
@@ -1053,6 +1055,10 @@ ENDFD;
             
 				c1=*(cs->Color+*atp);
 				c2=*(cs->Color+*(atp+1));
+            if(cartoon_color>=0) {
+              c1 = (c2 = cartoon_color);
+            }
+              
             if(discrete_colors) {
               if(n_p==0) {
                 if(contigFlag) {
@@ -1135,6 +1141,11 @@ ENDFD;
         
         if(n_p) {
           c1=*(cs->Color+*(atp-1));
+
+          if(cartoon_color>=0) {
+            c1 = cartoon_color;
+          }
+
           if(n_p<5) {
             copy3f(ex->p,t3);
             copy3f(v-3,t4);
@@ -1303,6 +1314,11 @@ ENDFD;
             {
               c1=*(cs->Color+*atp);
               c2=*(cs->Color+*(atp+1));
+
+              if(cartoon_color>=0) {
+                c1 = (c2 = cartoon_color);
+              }
+
               if(discrete_colors) {
                 if(n_p==0) {
                   if(contigFlag) {

@@ -99,6 +99,10 @@ int SceneLoadPNG(char *fname,int movie_flag,int quiet);
 
 void SceneSetDefaultView(void);
 void SceneApplyRotMatrix(float *src,float *dst);
+void SceneRovingDirty(void);
+int SceneRovingCheckDirty(void);
+void SceneRovingUpdate(void);
+void SceneRovingChanged(void);
 #endif
 
 
