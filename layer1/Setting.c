@@ -42,6 +42,7 @@ int SettingSetGlobalsFromPyList(PyObject *list)
   if(list)
     if(PyList_Check(list)) 
       ok = SettingFromPyList(I,list);
+  SettingSet_i(I,cSetting_security,Security); /* always override Security setting with global variable */
   return(ok);
 }
 
@@ -1088,6 +1089,9 @@ void SettingGenerateSideEffects(int index,char *sele,int state)
     if(!SettingGet(cSetting_suspend_updates))
       SceneChanged(); /* force big update upon resumption */
     break;
+  case cSetting_security:
+    Security = (int)SettingGet(cSetting_security);
+    break;
   case cSetting_frame:
   case cSetting_state:
     SceneChanged();
@@ -1346,9 +1350,9 @@ void SettingInitGlobal(void)
 
   SettingSet_f(I,cSetting_spec_power, 60.0F);
 
-  SettingSet_f(I,cSetting_sweep_angle, 15.0F);
+  SettingSet_f(I,cSetting_sweep_angle, 20.0F);
 
-  SettingSet_f(I,cSetting_sweep_speed, 0.5F);
+  SettingSet_f(I,cSetting_sweep_speed, 0.75F);
 
   SettingSet_b(I,cSetting_dot_hydrogens, 1);
 
@@ -1699,6 +1703,8 @@ void SettingInitGlobal(void)
   SettingSet_i(I,cSetting_ray_shadows,1);
 
   SettingSet_i(I,cSetting_ribbon_trace,0);
+
+  SettingSet_i(I,cSetting_security,1);
 
 }
 

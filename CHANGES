@@ -98,6 +98,11 @@ Current Bugs to Fix
 
 Changes up to 0.86
 
+   * added command history feature to external gui
+
+   * added security warning and mechanism for session files 
+     containing movie commands.
+
    * session saves completed -- boy that was a lot of work!
 
    * reorganized tcltk menu structure

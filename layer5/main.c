@@ -89,6 +89,8 @@ int PyMOLReady = false;
 int PyMOLTerminating = false;
 int PMGUI = true;
 int StereoCapable=false;
+int Security = true;
+
 static int InternalGUI = true;
 static int InternalFeedback = true;
 int ShowSplash=true;
@@ -309,9 +311,11 @@ void MainReshape(int width, int height) /* called by Glut */
 PyObject *MainAsPyList(void) 
 {
   PyObject *result=NULL;
+  int width,height;
   result = PyList_New(2);
-  PyList_SetItem(result,0,PyInt_FromLong(WinX));
-  PyList_SetItem(result,1,PyInt_FromLong(WinY));
+  BlockGetSize(SceneGetBlock(),&width,&height);
+  PyList_SetItem(result,0,PyInt_FromLong(width));
+  PyList_SetItem(result,1,PyInt_FromLong(height));
   return(PConvAutoNone(result));
 }
 
@@ -685,7 +689,7 @@ int was_main(void)
 
 #endif  
 
-  PGetOptions(&PMGUI,&InternalGUI,&ShowSplash,&InternalFeedback);
+  PGetOptions(&PMGUI,&InternalGUI,&ShowSplash,&InternalFeedback,&Security);
   launch();
 
   return 0;

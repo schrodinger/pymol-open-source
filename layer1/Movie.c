@@ -33,6 +33,46 @@ Z* -------------------------------------------------------------------
 
 CMovie Movie;
 
+int MovieLocked(void)
+{
+  CMovie *I=&Movie;
+  return(I->Locked);
+}
+
+void MovieSetLock(int lock)
+{
+  CMovie *I=&Movie;
+  I->Locked=lock;
+}
+/*========================================================================*/
+void MovieDump(void)
+{
+  int a;
+  CMovie *I=&Movie;
+  int flag=false;
+  for(a=0;a<I->NFrame;a++) {
+    if(I->Cmd[a][0]) {
+      flag=true;
+      break;
+    }
+  }
+  if(flag&&I->NFrame) {
+    PRINTFB(FB_Movie,FB_Results)
+      " Movie commands:\n"
+      ENDFB;
+    for(a=0;a<I->NFrame;a++) {
+      if(I->Cmd[a][0]) {
+        PRINTFB(FB_Movie,FB_Results)
+          "%5d: %s\n",a+1,I->Cmd[a]
+          ENDFB;
+      }
+    }
+  } else {
+    PRINTFB(FB_Movie,FB_Results)
+      " Movie: No movie commands are defined.\n"
+      ENDFB;
+  }
+}
 /*========================================================================*/
 static int MovieCmdFromPyList(PyObject *list,int *warning)
 {
@@ -68,6 +108,10 @@ int MovieFromPyList(PyObject *list,int *warning)
     I->Cmd=Alloc(MovieCmdType,I->NFrame+1);
     if(ok) ok=PConvPyListToIntArrayInPlace(PyList_GetItem(list,4),I->Sequence,I->NFrame);
     if(ok) ok=MovieCmdFromPyList(PyList_GetItem(list,5),warning);
+    if(warning&&Security) {
+      MovieSetLock(true);
+      PParse("wizard security");
+    }
   }
   if(!ok) {
     MovieReset();
@@ -124,6 +168,8 @@ PyObject *MovieAsPyList(void)
 int MoviePlaying(void)
 {
   CMovie *I=&Movie;
+  if(I->Locked)
+    return false;
   return(I->Playing);
 }
 /*========================================================================*/
@@ -341,11 +387,13 @@ void MovieDoFrameCommand(int frame)
   CMovie *I=&Movie;
   if(frame==0)
 	 MovieMatrix(cMovieMatrixRecall);
-  if((frame>=0)&&(frame<I->NFrame))
-	 {
-		if(I->Cmd[frame][0]) 
-		  PParse(I->Cmd[frame]);
-	 }
+  if(!I->Locked) {
+    if((frame>=0)&&(frame<I->NFrame))
+      {
+        if(I->Cmd[frame][0]) 
+          PParse(I->Cmd[frame]);
+      }
+  }
 }
 /*========================================================================*/
 void MovieSetCommand(int frame,char *command)
@@ -424,6 +472,8 @@ void MovieReset(void) {
   FreeP(I->Sequence);
   I->NFrame=0;
   I->MatrixFlag=false;
+  I->Locked=false;
+  I->Playing=false;
 }
 /*========================================================================*/
 void MovieFree(void)

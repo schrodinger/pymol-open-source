@@ -24,6 +24,54 @@ if __name__=='pymol.moving':
    from cmd import _cmd,lock,unlock,Shortcut,QuietException
    from cmd import toggle_dict,toggle_sc
 
+
+   def accept():
+      '''
+      SECURITY FEATURE
+      '''
+      try:
+         lock()
+         r = _cmd.accept()
+         cmd.set_wizard()
+      finally:
+         unlock()
+
+   def decline():
+      '''
+      SECURITY FEATURE
+      '''
+      try:
+         lock()
+         r = _cmd.decline()
+         cmd.set_wizard()
+      finally:
+         unlock()
+
+   def mdump():
+      '''
+   DESCRIPTION
+
+      "mdump" dumps the current set of movie commands
+
+   USAGE
+
+      mdump
+
+   PYMOL API
+
+      cmd.mdump()
+
+   SEE ALSO
+
+      mplay, mset, mdo, mclear, mmatrix
+      '''
+      try:
+         lock()   
+         r = _cmd.mdump(0)
+      finally:
+         unlock()
+      return r
+
    def mstop():
       '''
    DESCRIPTION

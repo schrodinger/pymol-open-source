@@ -917,7 +917,7 @@ ObjectMolecule **SelectorGetObjectMoleculeVLA(int sele)
         }
       }
     }
-  VLASize(result,ObjectMolecule,n);
+  VLASize(result,ObjectMolecule*,n);
   return(result);
 }
 

@@ -42,6 +42,7 @@ class Demo: # stateful class for doing effective demonstrations
       rep_list = [ "lines","sticks","spheres","surface","mesh","dots","ribbon","cartoon" ]
       try:
          if not cleanup:
+            cmd.disable()
             cmd.set("suspend_updates",1,quiet=1)
             cmd.load("$PYMOL_PATH/test/dat/pept.pdb","rep1")
             cmd.alter("rep1///1-5+8-13/","ss='S'")

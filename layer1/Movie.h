@@ -33,6 +33,7 @@ typedef struct  {
   int MatrixFlag;
   SceneViewType Matrix;
   int Playing;
+  int Locked;
 } CMovie;
 
 int MovieFromPyList(PyObject *list,int *warning);
@@ -41,6 +42,7 @@ PyObject *MovieAsPyList(void);
 void MovieInit(void);
 void MovieFree(void);
 void MovieReset(void);
+void MovieDump(void);
 void MovieSequence(char *seq);
 int MoviePNG(char *prefix,int save,int start,int stop);
 void MovieSetCommand(int frame,char *command);
@@ -62,7 +64,8 @@ void MovieSetImage(int index,ImageType image);
 int MovieGetLength(void);
 int MovieFrameToImage(int frame);
 int MovieFrameToIndex(int frame);
-
+int MovieLocked(void);
+void MovieSetLock(int);
 #define cMovieMatrixClear  0
 #define cMovieMatrixStore  1
 #define cMovieMatrixRecall 2

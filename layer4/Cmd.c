@@ -167,6 +167,7 @@ static void APIExit(void) /* assumes API is locked */
     ENDFD;
 }
 
+static PyObject *CmdAccept(PyObject *self, 	PyObject *args);
 static PyObject *CmdAlign(PyObject *self,   PyObject *args);
 static PyObject *CmdAlter(PyObject *self,   PyObject *args);
 static PyObject *CmdAlterState(PyObject *self,   PyObject *args);
@@ -187,6 +188,7 @@ static PyObject *CmdCountFrames(PyObject *self, PyObject *args);
 static PyObject *CmdCreate(PyObject *self, PyObject *args);
 static PyObject *CmdCycleValence(PyObject *self, PyObject *args);
 static PyObject *CmdDebug(PyObject *self, PyObject *args);
+static PyObject *CmdDecline(PyObject *self, 	PyObject *args);
 static PyObject *CmdDelete(PyObject *self, PyObject *args);
 static PyObject *CmdDirty(PyObject *self, 	PyObject *args);
 static PyObject *CmdDist(PyObject *dummy, PyObject *args);
@@ -242,6 +244,7 @@ static PyObject *CmdGetType(PyObject *self, 	PyObject *args);
 static PyObject *CmdGetWizard(PyObject *self, PyObject *args);
 static PyObject *CmdGetView(PyObject *self, 	PyObject *args);
 static PyObject *CmdMask(PyObject *self, PyObject *args);
+static PyObject *CmdMDump(PyObject *self, PyObject *args);
 static PyObject *CmdMem(PyObject *self, 	PyObject *args);
 static PyObject *CmdLabel(PyObject *self,   PyObject *args);
 static PyObject *CmdLoad(PyObject *self, 	PyObject *args);
@@ -327,8 +330,8 @@ static PyObject *CmdWaitQueue(PyObject *self, 	PyObject *args);
 static PyObject *CmdUndo(PyObject *self, 	PyObject *args);
 static PyObject *CmdPushUndo(PyObject *self, 	PyObject *args);
 
-
 static PyMethodDef Cmd_methods[] = {
+	{"accept",	              CmdAccept,               METH_VARARGS },
 	{"align",	              CmdAlign,                METH_VARARGS },
 	{"alter",	              CmdAlter,                METH_VARARGS },
 	{"alter_state",           CmdAlterState,           METH_VARARGS },
@@ -348,8 +351,9 @@ static PyMethodDef Cmd_methods[] = {
 	{"count_states",          CmdCountStates,          METH_VARARGS },
 	{"count_frames",          CmdCountFrames,          METH_VARARGS },
 	{"cycle_valence",         CmdCycleValence,         METH_VARARGS },
-	{"delete",                CmdDelete,               METH_VARARGS },
    {"debug",                 CmdDebug,                METH_VARARGS },
+   {"decline",               CmdDecline,              METH_VARARGS },
+	{"delete",                CmdDelete,               METH_VARARGS },
 	{"dirty",                 CmdDirty,                METH_VARARGS },
 	{"distance",	           CmdDistance,             METH_VARARGS },
 	{"dist",    	           CmdDist,                 METH_VARARGS },
@@ -418,6 +422,7 @@ static PyMethodDef Cmd_methods[] = {
 	{"mask",	                 CmdMask,                 METH_VARARGS },
 	{"mclear",	              CmdMClear,               METH_VARARGS },
 	{"mdo",	                 CmdMDo,                  METH_VARARGS },
+	{"mdump",	              CmdMDump,                METH_VARARGS },
 	{"mem",	                 CmdMem,                  METH_VARARGS },
 	{"move",	                 CmdMove,                 METH_VARARGS },
 	{"mset",	                 CmdMSet,                 METH_VARARGS },
@@ -467,7 +472,7 @@ static PyMethodDef Cmd_methods[] = {
 	{"set_feedback",          CmdSetFeedbackMask,      METH_VARARGS },
    {"set_geometry",          CmdSetGeometry,          METH_VARARGS },
    {"set_session",           CmdSetSession,           METH_VARARGS },
-   {"set_symmetry",          CmdSetCrystal,          METH_VARARGS },
+   {"set_symmetry",          CmdSetCrystal,           METH_VARARGS },
 	{"set_title",             CmdSetTitle,             METH_VARARGS },
 	{"set_wizard",            CmdSetWizard,            METH_VARARGS },
    {"set_view",              CmdSetView,              METH_VARARGS },
@@ -494,6 +499,47 @@ static PyMethodDef Cmd_methods[] = {
 	{"zoom",	                 CmdZoom,                 METH_VARARGS },
 	{NULL,		              NULL}     /* sentinel */        
 };
+
+static PyObject *CmdMDump(PyObject *self, PyObject *args)
+{
+  int ok=true;
+  if(ok) {
+    APIEntry();
+    MovieDump();
+    APIExit();
+  }
+  return(APIStatus(ok));
+}
+
+static PyObject *CmdAccept(PyObject *self,PyObject *args)
+{
+  int ok=true;
+  if(ok) {
+    APIEntry();
+    MovieSetLock(false);
+    PRINTFB(FB_Movie,FB_Actions)
+      " Movie: Risk accepted by user.  Movie commands are enabled.\n"
+      ENDFB;
+    APIExit();
+  }
+  return(APIStatus(ok));
+  
+}
+
+static PyObject *CmdDecline(PyObject *self,PyObject *args)
+{
+  int ok=true;
+  if(ok) {
+    APIEntry();
+    MovieReset();
+    PRINTFB(FB_Movie,FB_Actions)
+      " Movie: Risk declined by user.  Movie commands deleted.\n"
+      ENDFB;
+    APIExit();
+  }
+  return(APIStatus(ok));
+  
+}
 
 static PyObject *CmdSetCrystal(PyObject *self,PyObject *args)
 {

@@ -47,11 +47,12 @@ static PyObject *ObjectMoleculeCSetAsPyList(ObjectMolecule *I)
   return(PConvAutoNone(result));
 }
 
-static PyObject *ObjectMoleculeDiscreteCSetAsPyList(ObjectMolecule *I)
-{
+/*static PyObject *ObjectMoleculeDiscreteCSetAsPyList(ObjectMolecule *I)
+  {
   PyObject *result = NULL;
   return(PConvAutoNone(result));
-}
+  }*/
+
 
 static int ObjectMoleculeCSetFromPyList(ObjectMolecule *I,PyObject *list)
 {

@@ -440,12 +440,12 @@ if __name__=='pymol.helping':
       -i   Disable the internal OpenGL GUI (object list, menus, etc.)
       -x   Disable the external GUI module.
       -t   Use Tcl/Tk based external GUI module (pmg_tk).
-      -w   Use wxPython based external GUI module (pmg_wx).
       -q   Quiet launch. Suppress splash screen & other chatter.
       -p   Listen for commands on standard input.
-      -e   Start in full-screen mode
-      -2   Start in two-button mouse mode
-
+      -e   Start in full-screen mode.
+      -2   Start in two-button mouse mode.
+      -o   Disable security.
+      
       -f <# line> Controls display of commands and feedback in OpenGL (0=off).
       -r <file.py> Run a Python program (in __main__) on startup.
       -l <file.py> Spawn a python program in new thread.
