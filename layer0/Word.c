@@ -20,6 +20,17 @@ Z* -------------------------------------------------------------------
 #include"Word.h"
 #include"Parse.h"
 
+void WordPrimeCommaMatch(char *p)
+{ /* replace '+' with ',' */
+  while(*p) { /* this should not be done here... */
+    if(*p=='+')
+      if(!((*(p+1)==0)||(*(p+1)==',')||(*(p+1)=='+')))
+        *p=',';
+    p++;
+  }
+}
+
+
 int WordMatch(char *p,char *q,int ignCase) 
 /* allows for terminal wildcard (*) in p
  * and allows for p to match when shorter than q.
@@ -74,20 +85,11 @@ int WordMatchComma(char *p,char *q,int ignCase)
 {
   int i=0;
   int best_i=0;
-  char *q_copy,*p_copy;
+  char *q_copy;
   int blank;
 
-
   blank = (!*p);
-  p_copy=p;
-  while(*p) { /* this should not be done here... */
-    if(*p=='+')
-      if(!((*(p+1)==0)||(*(p+1)==',')||(*(p+1)=='+')))
-        *p=',';
-    p++;
-  }
   q_copy=q;
-  p=p_copy;
   while(((*p)||(blank))&&(best_i>=0)) {
     blank=0;
     i=1;

@@ -26,6 +26,7 @@ typedef struct {
 } WordKeyValue;
 
 int WordMatch(char *p,char *q,int ignCase); 
+void WordPrimeCommaMatch(char *p);
 int WordMatchComma(char *p,char *q,int ignCase); 
 int WordMatchCommaInt(char *p,int number);
 

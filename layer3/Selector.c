@@ -2406,6 +2406,7 @@ int SelectorSelect1(EvalElem *base)
 		}
 		break;
 	 case SELE_ID_s:
+      WordPrimeCommaMatch(base[1].text);
       for(a=0;a<I->NAtom;a++)
         {
           if(WordMatchCommaInt(base[1].text,
@@ -2419,6 +2420,7 @@ int SelectorSelect1(EvalElem *base)
         }
       break;
 	 case SELE_NAMs:
+      WordPrimeCommaMatch(base[1].text);
 		for(a=0;a<I->NAtom;a++)
 		  {
 			 if(WordMatchComma(base[1].text,
@@ -2433,6 +2435,7 @@ int SelectorSelect1(EvalElem *base)
 		  }
 		break;
 	 case SELE_TTYs:
+      WordPrimeCommaMatch(base[1].text);
 		for(a=0;a<I->NAtom;a++)
 		  {
 			 if(WordMatchComma(base[1].text,
@@ -2447,6 +2450,7 @@ int SelectorSelect1(EvalElem *base)
 		  }
 		break;
 	 case SELE_ELEs:
+      WordPrimeCommaMatch(base[1].text);
 		for(a=0;a<I->NAtom;a++)
 		  {
 			 if(WordMatchComma(base[1].text,
@@ -2461,6 +2465,7 @@ int SelectorSelect1(EvalElem *base)
 		  }
 		break;
 	 case SELE_SEGs:
+      WordPrimeCommaMatch(base[1].text);
 		for(a=0;a<I->NAtom;a++)
 		  {
 			 if(WordMatchComma(base[1].text,I->Obj[I->Table[a].model]->AtomInfo[I->Table[a].atom].segi,I->IgnoreCase)<0)
@@ -2473,6 +2478,7 @@ int SelectorSelect1(EvalElem *base)
 		  }
 		break;
 	 case SELE_CHNs:
+      WordPrimeCommaMatch(base[1].text);
 		for(a=0;a<I->NAtom;a++)
 		  {
 			 if(WordMatchComma(base[1].text,
@@ -2487,6 +2493,7 @@ int SelectorSelect1(EvalElem *base)
         }
 		break;
 	 case SELE_SSTs:
+      WordPrimeCommaMatch(base[1].text);
 		for(a=0;a<I->NAtom;a++)
 		  {
 			 if(WordMatchComma(base[1].text,
@@ -2501,6 +2508,7 @@ int SelectorSelect1(EvalElem *base)
         }
 		break;
 	 case SELE_ALTs:
+      WordPrimeCommaMatch(base[1].text);
 		for(a=0;a<I->NAtom;a++)
 		  {
 			 if(WordMatchComma(base[1].text,
@@ -2564,7 +2572,8 @@ int SelectorSelect1(EvalElem *base)
 						base[0].sele[a]=false;
 				  }
 		  }
-		else /* not a range */
+		else /* not a range */ {
+        WordPrimeCommaMatch(base[1].text);
 		  for(a=0;a<I->NAtom;a++)
 			 {
 				if(WordMatchComma(base[1].text,
@@ -2577,8 +2586,10 @@ int SelectorSelect1(EvalElem *base)
 				else
 				  base[0].sele[a]=false;
 			 }
+      }
 		break;
 	 case SELE_RSNs:
+      WordPrimeCommaMatch(base[1].text);
 		for(a=0;a<I->NAtom;a++)
 		  {
 			 if(WordMatchComma(base[1].text,
