@@ -707,7 +707,8 @@ DEVELOPMENT TO DO
 
       # loading
 
-      def _load(oname,finfo,state,ftype,finish,discrete,quiet=1,multiplex=0):
+      def _load(oname,finfo,state,ftype,finish,discrete,
+                quiet=1,multiplex=0,zoom=-1):
          # WARNING: internal routine, subject to change
          # caller must already hold API lock
          # NOTE: state index assumes 1-based state
@@ -718,17 +719,20 @@ DEVELOPMENT TO DO
                obj = cgo.from_r3d(finfo)
                if obj:
                   _cmd.load_object(str(oname),obj,int(state)-1,loadable.cgo,
-                                   int(finish),int(discrete),int(quiet))
+                                   int(finish),int(discrete),int(quiet),
+                                   int(zoom))
                else:
                   print " load: couldn't load raster3d file."
             elif ftype == loadable.cc1: # ChemDraw 3D
                obj = io.cc1.fromFile(finfo)
                if obj:
                   _cmd.load_object(str(oname),obj,int(state)-1,loadable.model,
-                                   int(finish),int(discrete),int(quiet))            
+                                   int(finish),int(discrete),
+                                   int(quiet),int(zoom))            
             else:
                r = _cmd.load(str(oname),finfo,int(state)-1,int(ftype),
-                             int(finish),int(discrete),int(quiet),int(multiplex))
+                             int(finish),int(discrete),int(quiet),
+                             int(multiplex),int(zoom))
          else:
             try:
                x = io.pkl.fromFile(finfo)
@@ -736,14 +740,15 @@ DEVELOPMENT TO DO
                   for a in x:
                      r = _cmd.load_object(str(oname),a,int(state)-1,
                                           int(ftype),0,int(discrete),int(quiet),
-                                          int(multiplex))
+                                          int(zoom))
                      if(state>0):
                         state = state + 1
                   _cmd.finish_object(str(oname))
                else:
                   r = _cmd.load_object(str(oname),x,
                                        int(state)-1,int(ftype),
-                                       int(finish),int(discrete),int(quiet))
+                                       int(finish),int(discrete),
+                                       int(quiet),int(zoom))
             except:
                print 'Error: can not load file "%s"' % finfo
          return r

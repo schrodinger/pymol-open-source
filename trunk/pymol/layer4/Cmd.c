@@ -1751,7 +1751,7 @@ static PyObject *CmdIsomesh(PyObject *self, 	PyObject *args) {
                                           carve,vert_vla);
           if(!origObj) {
             ObjectSetName(obj,str1);
-            ExecutiveManageObject(TempPyMOLGlobals,(CObject*)obj,true,false);
+            ExecutiveManageObject(TempPyMOLGlobals,(CObject*)obj,-1,false);
           }
           
           if(SettingGet(TempPyMOLGlobals,cSetting_isomesh_auto_state))
@@ -1852,7 +1852,7 @@ static PyObject *CmdSliceNew(PyObject *self, 	PyObject *args)
      
           if(!origObj) {
             ObjectSetName(obj,slice);
-            ExecutiveManageObject(TempPyMOLGlobals,(CObject*)obj,true,false);
+            ExecutiveManageObject(TempPyMOLGlobals,(CObject*)obj,-1,false);
           }
           PRINTFB(TempPyMOLGlobals,FB_ObjectMesh,FB_Actions)
             " SliceMap: created \"%s\", setting opacity to %5.3f\n",slice,opacity
@@ -2156,7 +2156,7 @@ static PyObject *CmdIsosurface(PyObject *self, 	PyObject *args) {
                                              carve,vert_vla,side);
           if(!origObj) {
             ObjectSetName(obj,str1);
-            ExecutiveManageObject(TempPyMOLGlobals,(CObject*)obj,true,false);
+            ExecutiveManageObject(TempPyMOLGlobals,(CObject*)obj,-1,false);
           }
           if(SettingGet(TempPyMOLGlobals,cSetting_isomesh_auto_state))
             if(obj) ObjectGotoState((ObjectMolecule*)obj,state);
@@ -3960,7 +3960,9 @@ static PyObject *CmdLoadObject(PyObject *self, PyObject *args)
   int finish,discrete;
   int quiet;
   int ok=false;
-  ok = PyArg_ParseTuple(args,"sOiiiii",&oname,&model,&frame,&type,&finish,&discrete,&quiet);
+  int zoom;
+  ok = PyArg_ParseTuple(args,"sOiiiiii",&oname,&model,&frame,&type,
+                        &finish,&discrete,&quiet,&zoom);
   buf[0]=0;
   if (ok) {
     APIEntry();
@@ -3982,7 +3984,7 @@ static PyObject *CmdLoadObject(PyObject *self, PyObject *args)
       if(!origObj) {
         if(obj) {
           ObjectSetName(obj,oname);
-          ExecutiveManageObject(TempPyMOLGlobals,obj,true,quiet);
+          ExecutiveManageObject(TempPyMOLGlobals,obj,zoom,quiet);
           if(frame<0)
             frame = ((ObjectMolecule*)obj)->NCSet-1;
           sprintf(buf," CmdLoad: ChemPy-model loaded into object \"%s\", state %d.\n",
@@ -4009,7 +4011,7 @@ static PyObject *CmdLoadObject(PyObject *self, PyObject *args)
       if(!origObj) {
         if(obj) {
           ObjectSetName(obj,oname);
-          ExecutiveManageObject(TempPyMOLGlobals,obj,true,quiet);
+          ExecutiveManageObject(TempPyMOLGlobals,obj,zoom,quiet);
           sprintf(buf," CmdLoad: chempy.brick loaded into object \"%s\"\n",
                   oname);		  
         }
@@ -4030,7 +4032,7 @@ static PyObject *CmdLoadObject(PyObject *self, PyObject *args)
       if(!origObj) {
         if(obj) {
           ObjectSetName(obj,oname);
-          ExecutiveManageObject(TempPyMOLGlobals,obj,true,quiet);
+          ExecutiveManageObject(TempPyMOLGlobals,obj,zoom,quiet);
           sprintf(buf," CmdLoad: chempy.map loaded into object \"%s\"\n",
                   oname);		  
         }
@@ -4051,7 +4053,7 @@ static PyObject *CmdLoadObject(PyObject *self, PyObject *args)
       if(!origObj) {
         if(obj) {
           ObjectSetName(obj,oname);
-          ExecutiveManageObject(TempPyMOLGlobals,obj,true,quiet);
+          ExecutiveManageObject(TempPyMOLGlobals,obj,zoom,quiet);
           sprintf(buf," CmdLoad: pymol.callback loaded into object \"%s\"\n",
                   oname);		  
         }
@@ -4072,7 +4074,7 @@ static PyObject *CmdLoadObject(PyObject *self, PyObject *args)
       if(!origObj) {
         if(obj) {
           ObjectSetName(obj,oname);
-          ExecutiveManageObject(TempPyMOLGlobals,obj,true,quiet);
+          ExecutiveManageObject(TempPyMOLGlobals,obj,zoom,quiet);
           sprintf(buf," CmdLoad: CGO loaded into object \"%s\"\n",
                   oname);		  
         }
@@ -4150,10 +4152,11 @@ static PyObject *CmdLoad(PyObject *self, PyObject *args)
   int quiet;
   int ok=false;
   int multiplex;
-
-  ok = PyArg_ParseTuple(args,"ssiiiiii",
+  int zoom;
+  ok = PyArg_ParseTuple(args,"ssiiiiiii",
                         &oname,&fname,&frame,&type,
-                        &finish,&discrete,&quiet,&multiplex);
+                        &finish,&discrete,&quiet,
+                        &multiplex,&zoom);
 
   buf[0]=0;
   PRINTFD(TempPyMOLGlobals,FB_CCmd)
@@ -4181,7 +4184,9 @@ static PyObject *CmdLoad(PyObject *self, PyObject *args)
     
     switch(type) {
     case cLoadTypePDB:
-      ExecutiveProcessPDBFile(TempPyMOLGlobals,origObj,fname,oname,frame,discrete,finish,buf,NULL,quiet,false,multiplex);
+      ExecutiveProcessPDBFile(TempPyMOLGlobals,origObj,fname,oname,
+                              frame,discrete,finish,buf,NULL,quiet,
+                              false,multiplex,zoom);
       break;
     case cLoadTypePQR:
       {
@@ -4189,7 +4194,9 @@ static PyObject *CmdLoad(PyObject *self, PyObject *args)
         UtilZeroMem(&pdb_info,sizeof(PDBInfoRec));
 
         pdb_info.is_pqr_file = true;        
-        ExecutiveProcessPDBFile(TempPyMOLGlobals,origObj,fname,oname,frame,discrete,finish,buf,&pdb_info,quiet,false,multiplex);
+        ExecutiveProcessPDBFile(TempPyMOLGlobals,origObj,fname,oname,
+                                frame,discrete,finish,buf,&pdb_info,
+                                quiet,false,multiplex,zoom);
       }
       break;
     case cLoadTypeTOP:
@@ -4259,7 +4266,7 @@ static PyObject *CmdLoad(PyObject *self, PyObject *args)
         obj=(CObject*)ObjectMoleculeLoadPMOFile(TempPyMOLGlobals,NULL,fname,frame,discrete);
         if(obj) {
           ObjectSetName(obj,oname);
-          ExecutiveManageObject(TempPyMOLGlobals,obj,true,true);
+          ExecutiveManageObject(TempPyMOLGlobals,obj,zoom,true);
           if(frame<0)
             frame = ((ObjectMolecule*)obj)->NCSet-1;
           sprintf(buf," CmdLoad: \"%s\" loaded as \"%s\".\n",
@@ -4281,7 +4288,7 @@ static PyObject *CmdLoad(PyObject *self, PyObject *args)
         obj=(CObject*)ObjectMoleculeLoadXYZFile(TempPyMOLGlobals,NULL,fname,frame,discrete);
         if(obj) {
           ObjectSetName(obj,oname);
-          ExecutiveManageObject(TempPyMOLGlobals,obj,true,true);
+          ExecutiveManageObject(TempPyMOLGlobals,obj,zoom,true);
           if(frame<0)
             frame = ((ObjectMolecule*)obj)->NCSet-1;
           sprintf(buf," CmdLoad: \"%s\" loaded as \"%s\".\n",
@@ -4298,7 +4305,9 @@ static PyObject *CmdLoad(PyObject *self, PyObject *args)
       }
       break;
     case cLoadTypePDBStr:
-      ExecutiveProcessPDBFile(TempPyMOLGlobals,origObj,fname,oname,frame,discrete,finish,buf,NULL,quiet,true,multiplex);
+      ExecutiveProcessPDBFile(TempPyMOLGlobals,origObj,fname,oname,
+                              frame,discrete,finish,buf,NULL,
+                              quiet,true,multiplex,zoom);
       break;
     case cLoadTypeMOL:
       PRINTFD(TempPyMOLGlobals,FB_CCmd) " CmdLoad-DEBUG: loading MOL\n" ENDFD;
@@ -4306,7 +4315,7 @@ static PyObject *CmdLoad(PyObject *self, PyObject *args)
       if(!origObj) {
         if(obj) {
           ObjectSetName(obj,oname);
-          ExecutiveManageObject(TempPyMOLGlobals,obj,true,true);
+          ExecutiveManageObject(TempPyMOLGlobals,obj,zoom,true);
           if(frame<0)
             frame = ((ObjectMolecule*)obj)->NCSet-1;
           sprintf(buf," CmdLoad: \"%s\" loaded as \"%s\".\n",
@@ -4327,7 +4336,7 @@ static PyObject *CmdLoad(PyObject *self, PyObject *args)
       if(!origObj) {
         if(obj) {
           ObjectSetName(obj,oname);
-          ExecutiveManageObject(TempPyMOLGlobals,obj,true,true);
+          ExecutiveManageObject(TempPyMOLGlobals,obj,zoom,true);
           if(frame<0)
             frame = ((ObjectMolecule*)obj)->NCSet-1;
           sprintf(buf," CmdLoad: MOL-string loaded as \"%s\".\n",
@@ -4360,7 +4369,7 @@ static PyObject *CmdLoad(PyObject *self, PyObject *args)
       if(!origObj) {
         if(obj) {
           ObjectSetName(obj,oname);
-          ExecutiveManageObject(TempPyMOLGlobals,obj,true,true);
+          ExecutiveManageObject(TempPyMOLGlobals,obj,zoom,true);
           if(frame<0)
             frame = ((ObjectMolecule*)obj)->NCSet-1;
           sprintf(buf," CmdLoad: \"%s\" loaded as \"%s\".\n",
@@ -4384,7 +4393,7 @@ static PyObject *CmdLoad(PyObject *self, PyObject *args)
       if(!origObj) {
         if(obj) {
           ObjectSetName(obj,oname);
-          ExecutiveManageObject(TempPyMOLGlobals,obj,true,true);
+          ExecutiveManageObject(TempPyMOLGlobals,obj,zoom,true);
           if(frame<0)
             frame = ((ObjectMolecule*)obj)->NCSet-1;
           sprintf(buf," CmdLoad: MMD-string loaded as \"%s\".\n",
@@ -4405,7 +4414,7 @@ static PyObject *CmdLoad(PyObject *self, PyObject *args)
         obj=(CObject*)ObjectMapLoadXPLORFile(TempPyMOLGlobals,NULL,fname,frame,true);
         if(obj) {
           ObjectSetName(obj,oname);
-          ExecutiveManageObject(TempPyMOLGlobals,(CObject*)obj,true,true);
+          ExecutiveManageObject(TempPyMOLGlobals,(CObject*)obj,zoom,true);
           sprintf(buf," CmdLoad: \"%s\" loaded as \"%s\".\n",fname,oname);
         }
       } else {
@@ -4420,7 +4429,7 @@ static PyObject *CmdLoad(PyObject *self, PyObject *args)
         obj=(CObject*)ObjectMapLoadXPLORFile(TempPyMOLGlobals,NULL,fname,frame,false);
         if(obj) {
           ObjectSetName(obj,oname);
-          ExecutiveManageObject(TempPyMOLGlobals,(CObject*)obj,true,true);
+          ExecutiveManageObject(TempPyMOLGlobals,(CObject*)obj,zoom,true);
           sprintf(buf," CmdLoad: XPLOR string loaded as \"%s\".\n",oname);
         }
       } else {
@@ -4435,7 +4444,7 @@ static PyObject *CmdLoad(PyObject *self, PyObject *args)
         obj=(CObject*)ObjectMapLoadCCP4File(TempPyMOLGlobals,NULL,fname,frame);
         if(obj) {
           ObjectSetName(obj,oname);
-          ExecutiveManageObject(TempPyMOLGlobals,(CObject*)obj,true,true);
+          ExecutiveManageObject(TempPyMOLGlobals,(CObject*)obj,zoom,true);
           sprintf(buf," CmdLoad: \"%s\" loaded as \"%s\".\n",fname,oname);
         }
       } else {
@@ -4450,7 +4459,7 @@ static PyObject *CmdLoad(PyObject *self, PyObject *args)
         obj=(CObject*)ObjectMapLoadPHIFile(TempPyMOLGlobals,NULL,fname,frame);
         if(obj) {
           ObjectSetName(obj,oname);
-          ExecutiveManageObject(TempPyMOLGlobals,(CObject*)obj,true,true);
+          ExecutiveManageObject(TempPyMOLGlobals,(CObject*)obj,zoom,true);
           sprintf(buf," CmdLoad: \"%s\" loaded as \"%s\".\n",fname,oname);
         }
       } else {
@@ -4465,7 +4474,7 @@ static PyObject *CmdLoad(PyObject *self, PyObject *args)
         obj=(CObject*)ObjectMapLoadDXFile(TempPyMOLGlobals,NULL,fname,frame);
         if(obj) {
           ObjectSetName(obj,oname);
-          ExecutiveManageObject(TempPyMOLGlobals,(CObject*)obj,true,true);
+          ExecutiveManageObject(TempPyMOLGlobals,(CObject*)obj,zoom,true);
           sprintf(buf," CmdLoad: \"%s\" loaded as \"%s\".\n",fname,oname);
         }
       } else {
@@ -4480,7 +4489,7 @@ static PyObject *CmdLoad(PyObject *self, PyObject *args)
         obj=(CObject*)ObjectMapLoadFLDFile(TempPyMOLGlobals,NULL,fname,frame);
         if(obj) {
           ObjectSetName(obj,oname);
-          ExecutiveManageObject(TempPyMOLGlobals,(CObject*)obj,true,true);
+          ExecutiveManageObject(TempPyMOLGlobals,(CObject*)obj,zoom,true);
           sprintf(buf," CmdLoad: \"%s\" loaded as \"%s\".\n",fname,oname);
         }
       } else {
@@ -4495,7 +4504,7 @@ static PyObject *CmdLoad(PyObject *self, PyObject *args)
         obj=(CObject*)ObjectMapLoadBRIXFile(TempPyMOLGlobals,NULL,fname,frame);
         if(obj) {
           ObjectSetName(obj,oname);
-          ExecutiveManageObject(TempPyMOLGlobals,(CObject*)obj,true,true);
+          ExecutiveManageObject(TempPyMOLGlobals,(CObject*)obj,zoom,true);
           sprintf(buf," CmdLoad: \"%s\" loaded as \"%s\".\n",fname,oname);
         }
       } else {
@@ -4510,7 +4519,7 @@ static PyObject *CmdLoad(PyObject *self, PyObject *args)
         obj=(CObject*)ObjectMapLoadGRDFile(TempPyMOLGlobals,NULL,fname,frame);
         if(obj) {
           ObjectSetName(obj,oname);
-          ExecutiveManageObject(TempPyMOLGlobals,(CObject*)obj,true,true);
+          ExecutiveManageObject(TempPyMOLGlobals,(CObject*)obj,zoom,true);
           sprintf(buf," CmdLoad: \"%s\" loaded as \"%s\".\n",fname,oname);
         }
       } else {

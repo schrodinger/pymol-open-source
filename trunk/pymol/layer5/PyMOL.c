@@ -216,15 +216,16 @@ int PyMOL_Reinitialize(CPyMOL *I)
 }
 
 int PyMOL_Load(CPyMOL *I,char *content, char *content_type, 
-                           char *content_format, char *object_name, 
-                           int frame, int discrete, int finish, 
-                           int quiet, int multiplex)
+               char *content_format, char *object_name, 
+               int frame, int discrete, int finish, 
+               int quiet, int multiplex) /* ADD zoom */
 {
   OrthoLineType buf = "";
   OVreturn_word result;
   int type_code;
   int format_code;
-  
+  int zoom = -1;
+
   if(!OVreturn_IS_OK( (result= OVLexicon_BorrowFromCString(I->Lex,content_type))))
     return OVstatus_FAILURE;
   else
@@ -263,7 +264,7 @@ int PyMOL_Load(CPyMOL *I,char *content, char *content_type,
   ExecutiveProcessPDBFile(I->G,ExecutiveGetExistingCompatible(I->G,object_name,cLoadTypePDB),content,
                           object_name,frame-1,discrete,finish
                           ,buf,NULL,quiet,
-                          type_code==I->lex_c_string, multiplex);
+                          type_code==I->lex_c_string, multiplex,zoom);
                           
   return OVstatus_SUCCESS;
 }

@@ -62,7 +62,7 @@ static int TestPyMOL_00_00(PyMOLGlobals *G)
   }
   if(obj) {
     ObjectSetName((CObject*)obj,"00_00");
-    ExecutiveManageObject(G,(CObject*)obj,true,false);
+    ExecutiveManageObject(G,(CObject*)obj,-1,false);
   }
   return (obj!=NULL);
 }
@@ -305,7 +305,7 @@ int TestPyMOLRun(PyMOLGlobals *G,int group,int test)
         PUnblock();
         if(obj) {
           ObjectSetName(obj,"hello");
-          ExecutiveManageObject(G,obj,true,false);
+          ExecutiveManageObject(G,obj,-1,false);
         }
       }
       break;
@@ -315,7 +315,7 @@ int TestPyMOLRun(PyMOLGlobals *G,int group,int test)
         obj = (CObject*)ObjectGadgetTest(G);
         if(obj)  {
           ObjectSetName(obj,"gadget");
-          ExecutiveManageObject(G,obj,true,false);
+          ExecutiveManageObject(G,obj,-1,false);
         }
       }
       break;
@@ -411,7 +411,7 @@ int TestPyMOLRun(PyMOLGlobals *G,int group,int test)
         char *st = get_st(mol_01_02);
         obj=ObjectMoleculeReadMOLStr(G,NULL,st,0,0,1);
         ObjectSetName((CObject*)obj,"test_01_07");
-        ExecutiveManageObject(G,(CObject*)obj,true,true);
+        ExecutiveManageObject(G,(CObject*)obj,-1,true);
         ExecutiveSetRepVisib(G,"test_01_07",cRepCyl,1);
         ExecutiveSetRepVisib(G,"test_01_07",cRepLine,0);
         SettingSetGlobal_b(G,cSetting_valence,1);
@@ -428,7 +428,7 @@ int TestPyMOLRun(PyMOLGlobals *G,int group,int test)
         char *st = get_st(mol_01_02);
         obj=ObjectMoleculeReadMOLStr(G,NULL,st,0,0,1);
         ObjectSetName((CObject*)obj,"test_01_08");
-        ExecutiveManageObject(G,(CObject*)obj,true,true);
+        ExecutiveManageObject(G,(CObject*)obj,-1,true);
         SettingSetGlobal_b(G,cSetting_valence,1);
         ControlRock(G,1);
         FreeP(st);
@@ -441,7 +441,7 @@ int TestPyMOLRun(PyMOLGlobals *G,int group,int test)
         char *st = get_st(mol_01_02);
         obj=ObjectMoleculeReadMOLStr(G,NULL,st,0,0,1);
         ObjectSetName((CObject*)obj,"test_01_09");
-        ExecutiveManageObject(G,(CObject*)obj,true,true);
+        ExecutiveManageObject(G,(CObject*)obj,-1,true);
         ExecutiveSetRepVisib(G,"test_01_09",cRepMesh,1);
         ExecutiveSetRepVisib(G,"test_01_09",cRepLine,0);
         SettingSetGlobal_b(G,cSetting_valence,1);

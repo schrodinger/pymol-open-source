@@ -543,7 +543,7 @@ void ExecutiveLoadMOL2(PyMOLGlobals *G,CObject *origObj,char *fname,
         }
 
         if(obj) {
-          ExecutiveManageObject(G,obj,true,true);
+          ExecutiveManageObject(G,obj,-1,true);
           if(eff_frame<0)
             eff_frame = ((ObjectMolecule*)obj)->NCSet-1;
           if(n_processed>0) {
@@ -644,7 +644,7 @@ CObject *ExecutiveGetExistingCompatible(PyMOLGlobals *G,char *oname,int type)
 void ExecutiveProcessPDBFile(PyMOLGlobals *G,CObject *origObj,char *fname,
                              char *oname, int frame, int discrete,int finish,
                              OrthoLineType buf,PDBInfoRec *pdb_info,int quiet,
-                             int is_string, int multiplex)
+                             int is_string,int multiplex,int zoom)
 {
   int ok=true;
   FILE *f;
@@ -789,7 +789,7 @@ void ExecutiveProcessPDBFile(PyMOLGlobals *G,CObject *origObj,char *fname,
         }
 
         if(obj) {
-          ExecutiveManageObject(G,obj,true,true);
+          ExecutiveManageObject(G,obj,zoom,true);
           if(eff_frame<0)
             eff_frame = ((ObjectMolecule*)obj)->NCSet-1;
           if(buf) {
@@ -2548,7 +2548,7 @@ int ExecutiveMapNew(PyMOLGlobals *G,char *name,int type,float *grid,
         ObjectSetName((CObject*)objMap,name);
         ObjectMapUpdateExtents(objMap);
         if(isNew)
-          ExecutiveManageObject(G,(CObject*)objMap,true,false);
+          ExecutiveManageObject(G,(CObject*)objMap,-1,false);
         isNew=false;
         origObj = (CObject*)objMap;
       }
@@ -4216,7 +4216,7 @@ float ExecutiveDist(PyMOLGlobals *G,char *nam,char *s1,char *s2,int mode,float c
       ErrMessage(G,"ExecutiveDistance","No such distances found.");
     } else {
       ObjectSetName((CObject*)obj,nam);
-      ExecutiveManageObject(G,(CObject*)obj,true,quiet);
+      ExecutiveManageObject(G,(CObject*)obj,-1,quiet);
       ExecutiveSetRepVisib(G,nam,cRepLine,1);
       if(!labels)
         ExecutiveSetRepVisib(G,nam,cRepLabel,0);        
@@ -4408,7 +4408,7 @@ void ExecutiveCopy(PyMOLGlobals *G,char *src,char *dst)
       oDst = ObjectMoleculeCopy(oSrc);
       if(oDst) {
         strcpy(oDst->Obj.Name,dst);
-        ExecutiveManageObject(G,(CObject*)oDst,true,false);
+        ExecutiveManageObject(G,(CObject*)oDst,-1,false);
         rec1=ExecutiveFindSpec(G,oSrc->Obj.Name);
         rec2=ExecutiveFindSpec(G,oDst->Obj.Name);
         if(rec1&&rec2) {
@@ -5041,7 +5041,7 @@ float ExecutiveRMS(PyMOLGlobals *G,char *s1,char *s2,int mode,float refine,int m
             ExecutiveDelete(G,oname);
             auto_save = (int)SettingGet(G,cSetting_auto_zoom);
             SettingSet(G,cSetting_auto_zoom,0);
-            ExecutiveManageObject(G,(CObject*)ocgo,true,false);
+            ExecutiveManageObject(G,(CObject*)ocgo,-1,false);
             SettingSet(G,cSetting_auto_zoom,(float)auto_save);            
             SceneDirty(G);
           }
@@ -7010,7 +7010,7 @@ void ExecutiveSymExp(PyMOLGlobals *G,char *name,char *oname,char *s1,float cutof
                   sprintf(new_name,"%s%02d%02d%02d%02d",name,a,x,y,z);
                   ObjectSetName((CObject*)new_obj,new_name);
                   ExecutiveDelete(G,new_name);
-                  ExecutiveManageObject(G,(CObject*)new_obj,true,false);
+                  ExecutiveManageObject(G,(CObject*)new_obj,-1,false);
                   SceneChanged(G);
                 } else {
                   ((CObject*)new_obj)->fFree((CObject*)new_obj);
@@ -7106,7 +7106,7 @@ void ExecutiveDump(PyMOLGlobals *G,char *fname,char *obj)
   
 }
 /*========================================================================*/
-void ExecutiveManageObject(PyMOLGlobals *G,CObject *obj,int allow_zoom,int quiet)
+void ExecutiveManageObject(PyMOLGlobals *G,CObject *obj,int zoom,int quiet)
 {
   int a;
   SpecRec *rec = NULL;
@@ -7187,9 +7187,11 @@ void ExecutiveManageObject(PyMOLGlobals *G,CObject *obj,int allow_zoom,int quiet
     }
   }
 
-  if(allow_zoom)
+  if(zoom) /* -1 = use setting, 0 = never, 1 = force zoom */
     if(!exists) {
-      switch(SettingGetGlobal_i(G,cSetting_auto_zoom)) {
+      if(zoom==1) { /* force zoom */
+        ExecutiveWindowZoom(G,obj->Name,0.0,-1,0,0); /* (all states) */
+      } else switch(SettingGetGlobal_i(G,cSetting_auto_zoom)) {
       case 1: /* zoom new one */
         ExecutiveWindowZoom(G,obj->Name,0.0,-1,0,0); /* auto zoom (all states) */
         break;

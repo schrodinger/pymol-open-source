@@ -5688,7 +5688,7 @@ void SelectorCreateObjectMolecule(PyMOLGlobals *G,int sele,char *name,int target
     ObjectMoleculeSort(targ);
   if(isNew) {
     ObjectSetName((CObject*)targ,name);
-    ExecutiveManageObject(G,(CObject*)targ,true,false);
+    ExecutiveManageObject(G,(CObject*)targ,-1,false);
   } else {
     ExecutiveUpdateObjectSelection(G,(CObject*)targ);
   }
