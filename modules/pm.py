@@ -26,8 +26,11 @@ import traceback
 def export_dots(a,b):
 	return pmx.export_dots(a,int(b))
 
+def do(a):
+	pmx.do(a);
+
 def turn(a,b):
-	pmx.turn(a,b)
+	pmx.turn(a,float(b))
 
 def render():
 	pmx.render()
@@ -42,10 +45,10 @@ def frame(a):
 	pmx.frame(int(a))
 
 def move(a,b):
-	pmx.move(a,b)
+	pmx.move(a,float(b))
 
 def clip(a,b):
-	pmx.clip(a,b)
+	pmx.clip(a,float(b))
 
 def origin(a):
 	pmx.origin(a)
@@ -55,9 +58,6 @@ def refresh():
 
 def set(a,b):
 	pmx.set(a,b)
-
-def turn(a,b):
-	pmx.turn(a,b)
 
 def reset():
 	pmx.reset(0)

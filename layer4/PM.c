@@ -20,6 +20,7 @@ Z* -------------------------------------------------------------------
 #include"Err.h"
 #include"Util.h"
 #include"PM.h"
+#include"Ortho.h"
 #include"ObjectMolecule.h"
 #include"Executive.h"
 #include"Selector.h"
@@ -52,6 +53,7 @@ static PyObject *PMMSet(PyObject *self, 	PyObject *args);
 static PyObject *PMRefresh(PyObject *self, 	PyObject *args);
 static PyObject *PMMClear(PyObject *self, 	PyObject *args);
 static PyObject *PMMDo(PyObject *self, 	PyObject *args);
+static PyObject *PMDo(PyObject *self, 	PyObject *args);
 static PyObject *PMMPlay(PyObject *self, 	PyObject *args);
 static PyObject *PMMMatrix(PyObject *self, 	PyObject *args);
 static PyObject *PMViewport(PyObject *self, 	PyObject *args);
@@ -92,6 +94,7 @@ static PyMethodDef PM_methods[] = {
 	{"mplay",	 PMMPlay,   METH_VARARGS },
 	{"mpng",	 PMMPNG,   METH_VARARGS },
 	{"mdo",	 PMMDo,   METH_VARARGS },
+	{"do",	 PMDo,   METH_VARARGS },
 	{"mmatrix",	 PMMMatrix,   METH_VARARGS },
 	{"png",	 PMPNG,   METH_VARARGS },
 	{"set_matrix",	 PMSetMatrix,   METH_VARARGS },
@@ -100,6 +103,17 @@ static PyMethodDef PM_methods[] = {
 	{"export_dots", PMExportDots,   METH_VARARGS },
 	{NULL,		NULL}		/* sentinel */
 };
+
+static PyObject *PMDo(PyObject *self, 	PyObject *args)
+{
+  char *str1;
+  PyArg_ParseTuple(args,"s",&str1);
+  OrthoAddOutput("PyMOL>");
+  OrthoAddOutput(str1);
+  PParse(str1);
+  OrthoNewLine(NULL);
+  return Py_None;
+}
 
 static PyObject *PMGetMoment(PyObject *self, 	PyObject *args)
 {
@@ -165,16 +179,12 @@ static PyObject *PMReset(PyObject *self, PyObject *args)
 
 static PyObject *PMSetMatrix(PyObject *self, 	PyObject *args)
 {
-  int a;
-  double md[16];
   float m[16];
-  PyArg_ParseTuple(args,"dddddddddddddddd",
-						 &md[0],&md[1],&md[2],&md[3],
-						 &md[4],&md[5],&md[6],&md[7],
-						 &md[8],&md[9],&md[10],&md[11],
-						 &md[12],&md[13],&md[14],&md[15]);
-  for(a=0;a<16;a++)
-	 m[a]=md[a];
+  PyArg_ParseTuple(args,"ffffffffffffffff",
+						 &m[0],&m[1],&m[2],&m[3],
+						 &m[4],&m[5],&m[6],&m[7],
+						 &m[8],&m[9],&m[10],&m[11],
+						 &m[12],&m[13],&m[14],&m[15]);
   SceneSetMatrix(m);
   Py_INCREF(Py_None);
   return Py_None;
@@ -324,10 +334,8 @@ static PyObject *PMRay(PyObject *self, 	PyObject *args)
 static PyObject *PMClip(PyObject *self, 	PyObject *args)
 {
   char *sname;
-  char *value;
   float dist;
-  PyArg_ParseTuple(args,"ss",&sname,&value);
-  sscanf(value,"%f",&dist);
+  PyArg_ParseTuple(args,"sf",&sname,&dist);
   switch(sname[0]) {
   case 'n':
 	 SceneClip(0,dist);
@@ -344,10 +352,8 @@ static PyObject *PMClip(PyObject *self, 	PyObject *args)
 static PyObject *PMMove(PyObject *self, 	PyObject *args)
 {
   char *sname;
-  char *value;
   float dist;
-  PyArg_ParseTuple(args,"ss",&sname,&value);
-  sscanf(value,"%f",&dist);
+  PyArg_ParseTuple(args,"sf",&sname,&dist);
   switch(sname[0]) {
   case 'x':
 	 SceneTranslate(dist,0.0,0.0);
@@ -366,10 +372,8 @@ static PyObject *PMMove(PyObject *self, 	PyObject *args)
 static PyObject *PMTurn(PyObject *self, 	PyObject *args)
 {
   char *sname;
-  char *value;
   float angle;
-  PyArg_ParseTuple(args,"ss",&sname,&value);
-  sscanf(value,"%f",&angle);
+  PyArg_ParseTuple(args,"sf",&sname,&angle);
   switch(sname[0]) {
   case 'x':
 	 SceneRotate(angle,1.0,0.0,0.0);

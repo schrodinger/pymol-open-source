@@ -20,9 +20,8 @@ Z* -------------------------------------------------------------------
 #define cOrthoCTRL 2
 #define cOrthoALT 4
 
-
-#define cOrthoRightSceneMargin 220
-#define cOrthoBottomSceneMargin 110
+#define cOrthoRightSceneMargin 180
+#define cOrthoBottomSceneMargin 20
 
 #include"Block.h"
 

@@ -681,7 +681,7 @@ void OrthoInit(void)
 	 I->CursorFlag = (c[0] == 'f');
   else
 	 I->CursorFlag = 0;
-  I->ShowLines = 8;
+  I->ShowLines = 1;
   I->Saved[0]=0;
   I->DirtyFlag = true;
 
