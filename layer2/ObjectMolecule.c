@@ -8575,6 +8575,7 @@ ObjectMolecule *ObjectMoleculeCopy(ObjectMolecule *obj)
   I->UnitCellCGO=NULL;
   I->Neighbor=NULL;
   I->Sculpt=NULL;
+  I->Obj.Setting=NULL; /* TODO - make a copy */
   for(a=0;a<=cUndoMask;a++)
     I->UndoCoord[a]=NULL;
   I->CSet=VLAMalloc(I->NCSet,sizeof(CoordSet*),5,true); /* auto-zero */
