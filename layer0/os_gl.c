@@ -73,7 +73,6 @@ void     p_glutIdleFunc(void (*func)(void)) { idleFunc = func; }
 
 #ifdef _PYMOL_WX_GLUT
 
-#include<GL/glut.h>
 #include"P.h"
 #include"main.h"
 
@@ -95,7 +94,7 @@ static void (*idleFunc)(void) = NULL;
 static void (*displayFunc)(void) = NULL;
 static void (*reshapeFunc)(int width,int height) = NULL;
 static void (*mouseFunc)(int button, int state,int x,int y) = NULL;
-static void (*keyboardFunc)(int key,int x,int y) = NULL;
+static void (*keyboardFunc)(unsigned char key,int x,int y) = NULL;
 static void (*motionFunc)(int x,int y) = NULL;
 static int WinX = 640,WinY=480;
 
