@@ -689,9 +689,9 @@ void SettingInitGlobal(void)
 
   SettingSet_f(I,cSetting_movie_delay, 30);
 
-  SettingSet_f(I,cSetting_ribbon_power, 5);
+  SettingSet_f(I,cSetting_ribbon_power, 2);
 
-  SettingSet_f(I,cSetting_ribbon_power_b, 2.0);
+  SettingSet_f(I,cSetting_ribbon_power_b, 0.5);
 
   SettingSet_f(I,cSetting_ribbon_sampling, 16);
 
@@ -725,7 +725,7 @@ void SettingInitGlobal(void)
 
   SettingSet_f(I,cSetting_cull_spheres, 1.0);
 
-  SettingSet_f(I,cSetting_test1, 1000000.0);
+  SettingSet_f(I,cSetting_test1, 0.0);
 
   SettingSet_f(I,cSetting_test2, 1.0);
 

@@ -196,10 +196,22 @@ void SceneClipSet(float front,float back)
 void SceneClip(int plane,float movement) /* 0=front, 1=back*/
 {
   CScene *I=&Scene;
-  if(plane) {
-    SceneClipSet(I->Front,I->Back-movement);
-  } else {
+  float avg;
+
+  switch(plane) {
+  case 0: /* near */
     SceneClipSet(I->Front-movement,I->Back);
+    break;
+  case 1: /* far */
+    SceneClipSet(I->Front,I->Back-movement);
+    break;
+  case 2: /* move */
+    SceneClipSet(I->Front-movement,I->Back-movement);    
+    break;
+  case 3: /* slab */
+    avg = (I->Front+I->Back)/2.0;
+    SceneClipSet(avg-movement,avg+movement);
+    break;
   }
 }
 /*========================================================================*/
