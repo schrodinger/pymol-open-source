@@ -166,6 +166,7 @@ def sele_action(s):
            [ 0, ''          ,''                                              ],
            [ 1, 'invert'  ,'cmd.select("'+s+'","(not '+s+')",show=1)'        ],
            [ 0, ''          ,''                                              ],
+           [ 1, 'create object'       ,'cmd.create(None,"'+s+'")'     ],           
            [ 1, 'remove atoms'  ,'cmd.remove("'+s+'")'        ],
            [ 0, ''          ,''                                              ],
            [ 1, 'mask'  ,'cmd.mask("'+s+'")'        ],
@@ -177,7 +178,6 @@ def sele_action(s):
            [ 1, 'count atoms'  ,'cmd.count_atoms("'+s+'")'        ],           
            [ 0, ''          ,''                                              ],
            [ 1, 'duplicate'           ,'cmd.select("'+s+'")'     ],
-           [ 1, 'duplicate atoms'       ,'cmd.create(None,"'+s+'")'     ],           
            ]
 
 def mol_action(s):
