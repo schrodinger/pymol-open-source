@@ -6078,7 +6078,9 @@ auto_arg =[
    'show' : [ selection_sc , 'selections','' ],
    'hide' : [ selection_sc , 'selections','' ],
    'color' : [ selection_sc , 'selections','' ],
-   'select' : [ selection_sc , 'selections','' ],      
+   'select' : [ selection_sc , 'selections','' ],
+   'save' : [ selection_sc , 'selections',', ' ],
+   'load' : [ selection_sc , 'selections',', ' ],      
    },
    {
    'feedback' : [ fb_mask_sc , 'mask','' ],
