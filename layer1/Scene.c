@@ -2446,6 +2446,8 @@ void SceneRay(int ray_width,int ray_height,int mode,char **headerVLA_ptr,
   height  = fabs(I->Pos[2])*tan((fov/2.0)*cPI/180.0);	 
   width = height*aspRat;
 
+  OrthoBusyFast(0,20);
+
   RayPrepare(ray,-width,width,-height,height,
              I->FrontSafe,I->Back,rayView,aspRat,ray_width);
 
@@ -2458,7 +2460,8 @@ void SceneRay(int ray_width,int ray_height,int mode,char **headerVLA_ptr,
                           ObjectGetCurrentState(rec->obj,false),ray,NULL,0);
 		}
 	 }
-             
+  OrthoBusyFast(1,20);
+
   if(mode!=2) { /* don't show pixel count for tests */
     PRINTFB(FB_Ray,FB_Details)
       " Ray: tracing %dx%d = %d rays against %d primitives.\n",ray_width,ray_height,
