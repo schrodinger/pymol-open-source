@@ -181,7 +181,6 @@ class PMGApp(AbstractApp):
       while not self.fifo.empty():
          try:
             cmmd = self.fifo.get(0)
-            print cmmd
             exec cmmd
          except:
             traceback.print_exc()
