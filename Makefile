@@ -47,7 +47,7 @@ clean:
 	/bin/rm -f *.log core */core game.* log.* layer*/*.o layer*/*.p .update layer*/.files layer*/.depends layer*/.includes 
 
 distclean: clean
-	/bin/rm -f modules/*.pyc modules/_pm.so
+	/bin/rm -f modules/*.pyc modules/_pm.so pymol.exe
 	/bin/rm -f modules/Pmw/*.pyc modules/Pmw/*/*.pyc modules/Pmw/*/*/*.pyc
 
 dist: distclean

@@ -13,16 +13,16 @@ BUILD = -shared -o modules/_pm.so
 #
 #- Choose One --------------------------------------------------------
 #--- Workaround for XFree86/DRI linux dll problem for module build
-#BUGS = -D_DRI_WORKAROUND
+BUGS = -D_DRI_WORKAROUND
 #---
 #BUGS =
 #---------------------------------------------------------------------
 #
 #- Choose One --------------------------------------------------------
 #--- Linux
-#CCOPT1 = -m486 -D__i686__ -ffast-math -Wall -ansi -Wmissing-prototypes
+CCOPT1 = -m486 -D__i686__ -ffast-math -Wall -ansi -Wmissing-prototypes
 #--- SGI Irix 6.x
-CCOPT1 = -ansi -n32 -woff 1429,1204
+#CCOPT1 = -ansi -n32 -woff 1429,1204
 #---------------------------------------------------------------------
 #
 #- Choose One --------------------------------------------------------
