@@ -350,22 +350,23 @@ int SelectorModulate1(EvalElem *base)
 			 {
 				if(base[1].sele[a])
 				  for(e=0;e<I->Obj[I->Table[a].model]->NCSet;e++)
-					 {
-						v=I->Obj[I->Table[a].model]->CSet[e]->Coord+(3*I->Table[a].atom);
-						for(b=0;b<I->NAtom;b++)
-						  if((!base[0].sele[b])&&((base[1].code=='EXP_')||(!base[1].sele[b]))) /*exclude current selection */
-							 {
-								for(d=0;d<I->Obj[I->Table[b].model]->NCSet;d++)
-								  {
-									 if(diff3f(I->Obj[I->Table[b].model]->CSet[d]->Coord+(3*I->Table[b].atom),v)<dist)
-										{
-										  base[0].sele[b]=true;
-										  c++;
-										  break;
-										}
-								  }
-							 }
-					 }
+                if(I->Obj[I->Table[a].model]->CSet[e])
+                  {
+                    v=I->Obj[I->Table[a].model]->CSet[e]->Coord+(3*I->Table[a].atom);
+                    for(b=0;b<I->NAtom;b++)
+                      if((!base[0].sele[b])&&((base[1].code=='EXP_')||(!base[1].sele[b]))) /*exclude current selection */
+                        {
+                          for(d=0;d<I->Obj[I->Table[b].model]->NCSet;d++)
+                            {
+                              if(diff3f(I->Obj[I->Table[b].model]->CSet[d]->Coord+(3*I->Table[b].atom),v)<dist)
+                                {
+                                  base[0].sele[b]=true;
+                                  c++;
+                                  break;
+                                }
+                            }
+                        }
+                  }
 			 }
 		break;
 	 }

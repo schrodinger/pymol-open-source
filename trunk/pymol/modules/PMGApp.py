@@ -88,17 +88,23 @@ class PMGApp(AbstractApp):
 		self.bind(self.entry, 'Output Area')
 
 	def update_feedback(self):
+		self.lineCount = self.lineCount + 1
+		if self.lineCount > 1000:
+			self.output.delete('0.0','%i.%i' % (self.lineCount-100,0))
+			self.lineCount=10
 		for a in pm.get_feedback():
 			self.output.insert(END,"\n")
 			self.output.insert(END,a)
 			self.output.see(END)
+			self.lineCount = self.lineCount + 1
 		self.output.after(50,self.update_feedback)
 
 	def createInterface(self):
 			AbstractApp.createInterface(self)
 			self.createButtons()
 			self.createMain()
-
+			self.lineCount = 0
+			
 	def quit_app(self):
 		pm.quit()
 
