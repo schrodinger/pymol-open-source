@@ -4,6 +4,8 @@ CHANGE LOG
 
 Changes up to 0.98
 
+   * added support for embedded data on stdin
+
    * support for 4-letter residue codes in PDB files
 
    * new selection operator for proteins "pepseq/ps." with 1-letter

@@ -309,6 +309,7 @@ class PMGApp(AbstractApp):
             self.output.delete('0.0','%i.%i' % (self.lineCount-5000,0))
             self.lineCount=5000
          self.entry.focus_set()
+      self.updating = 1
       self.output.after(100,self.update_feedback) # 10X a second
 
    def update_menus(self):
