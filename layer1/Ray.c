@@ -138,8 +138,10 @@ void RayExpandPrimitives(CRay *I)
 		I->Vert2Prim[nVert+2]=a;
 		basis->Radius[nVert]=I->Primitive[a].r1;
 		basis->Radius2[nVert]=I->Primitive[a].r1*I->Primitive[a].r1; /*necessary??*/
-		if(basis->Radius[nVert]>basis->MinVoxel)
-		  basis->MinVoxel=basis->Radius[nVert];
+		/*		if(basis->Radius[nVert]>basis->MinVoxel)
+				basis->MinVoxel=basis->Radius[nVert];*/
+		if(basis->MinVoxel<0.001)
+		  basis->MinVoxel=0.001;
 		basis->Vert2Normal[nVert]=nNorm;
 		basis->Vert2Normal[nVert+1]=nNorm;
 		basis->Vert2Normal[nVert+2]=nNorm;
@@ -206,8 +208,8 @@ void RayExpandPrimitives(CRay *I)
 		break;
 	 }
   }
-  printf("minvoxel  %8.3f\n",basis->MinVoxel);
-  printf("NPrimit  %d nvert %d\n",I->NPrimitive,nVert);
+  /*  printf("minvoxel  %8.3f\n",basis->MinVoxel);
+		printf("NPrimit  %d nvert %d\n",I->NPrimitive,nVert);*/
 }
 /*========================================================================*/
 void RayTransformFirst(CRay *I)
