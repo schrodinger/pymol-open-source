@@ -103,7 +103,8 @@ if __name__=='pymol.cmd':
       r"\.crd$|\.CRD$|", # AMBER coordinate file
       r"\.rst$|\.RST$|", # AMBER restart
       r"\.cex$|\.CEX$|", # CEX format (used by metaphorics)
-      r"\.phi$|\.PHI$", # PHI format (delphi)
+      r"\.phi$|\.PHI$|", # PHI format (delphi)
+      r"\.fld$|\.FLD$", # FLD format (AVS)
       ],''))
 
    safe_oname_re = re.compile(r"\ |\+|\(|\)|\||\&|\!|\,")  # quash reserved characters

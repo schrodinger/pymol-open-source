@@ -67,6 +67,7 @@ ObjectMap *ObjectMapReadCCP4Str(ObjectMap *I,char *XPLORStr,int bytes,int state)
 int ObjectMapCCP4StrToMap(ObjectMap *I,char *XPLORStr,int bytes,int state);
 
 ObjectMap *ObjectMapLoadPHIFile(ObjectMap *obj,char *fname,int state);
+ObjectMap *ObjectMapLoadFLDFile(ObjectMap *obj,char *fname,int state);
 
 ObjectMap *ObjectMapLoad(ObjectMap *obj,char *fname,int state);
 ObjectMap *ObjectMapLoadChemPyBrick(ObjectMap *I,PyObject *Map,

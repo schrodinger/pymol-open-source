@@ -21,5 +21,5 @@ char *ParseWordCopy(char *dst,char *src,int n);
 char *ParseNCopy(char *dst,char *src,int n);
 char *ParseNSkip(char *p,int n);
 char *ParseCommaCopy(char *q,char *p,int n);
-
+char *ParseSkipEquals(char *p);
 #endif

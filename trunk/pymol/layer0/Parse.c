@@ -17,6 +17,27 @@ Z* -------------------------------------------------------------------
 #include"os_predef.h"
 #include"Parse.h"
 
+char *ParseSkipEquals(char *p)
+{
+  while(*p) {
+    if(*p!='=')
+      p++;
+    else
+      break;
+  }
+
+  if(*p) {
+    p++;
+    while(*p) {
+      if(*p<33)  /* skip whitespace */
+        p++; 
+      else
+        break;
+    }
+  }
+  return p;
+}
+
 char *ParseNextLine(char *p) {
   while(*p) {
 	 if(*p==0xD) { /* Mac or PC */

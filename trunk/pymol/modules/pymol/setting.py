@@ -300,6 +300,7 @@ if __name__=='pymol.setting':
       retain_order          = 266
       pdb_hetatm_sort       = 267
       pdb_use_ter_records   = 268
+      cartoon_trace         = 269
       
    setting_sc = Shortcut(SettingIndex.__dict__.keys())
 
