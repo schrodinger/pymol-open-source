@@ -1,7 +1,7 @@
 PyMOL>load dat/tiny.pdb
- Executive: object "tiny" created.
+ CmdLoad: "dat/tiny.pdb" loaded as "tiny".
 PyMOL>load dat/il2.pdb
- Executive: object "il2" created.
+ CmdLoad: "dat/il2.pdb" loaded as "il2".
 PyMOL>print cmd.get_names()
 ['tiny', 'il2']
 PyMOL>select tst = (all)
@@ -78,7 +78,7 @@ PyMOL>select (q=1.0)
 PyMOL>select (b=0.0)
  Selector: selection "sel24" defined with 1080 atoms.
 PyMOL>load dat/pept.pdb
- Executive: object "pept" created.
+ CmdLoad: "dat/pept.pdb" loaded as "pept".
 PyMOL>select tst,pept within 5 of tiny
  Selector: selection "tst" defined with 0 atoms.
 PyMOL>select tst,pept within 50 of tiny
@@ -89,7 +89,7 @@ PyMOL>print cmd.select("(none)")
 0
 PyMOL>dele all
 PyMOL>load dat/pept.pdb,mult
- Executive: object "mult" created.
+ CmdLoad: "dat/pept.pdb" loaded as "mult".
 PyMOL>load dat/il2.pdb,mult
  CmdLoad: "dat/il2.pdb" appended into object "mult", state 2.
 PyMOL>frame 1

@@ -1,5 +1,5 @@
 PyMOL>load dat/tiny.pdb
- Executive: object "tiny" created.
+ CmdLoad: "dat/tiny.pdb" loaded as "tiny".
 PyMOL>names = []
 PyMOL>iterate (all),names.append(name)
  Iterate: iterated over 37 atoms.

@@ -1,5 +1,5 @@
 PyMOL>load dat/small01.mol
- Executive: object "small01" created.
+ CmdLoad: "dat/small01.mol" loaded as "small01".
 PyMOL>save tmp/small01.mol
  chempy: writing "tmp/small01.mol".
  Save: wrote "tmp/small01.mol".
@@ -18,20 +18,20 @@ PyMOL>save tmp/small01.pdb
 PyMOL>multisave tmp/small01.pmo,small01
 PyMOL>dele all
 PyMOL>load tmp/small01.pmo
- Executive: object "small01" created.
+ CmdLoad: "tmp/small01.pmo" loaded as "small01".
 PyMOL>dele all
 PyMOL>load tmp/small01.pdb
- Executive: object "small01" created.
+ CmdLoad: "tmp/small01.pdb" loaded as "small01".
 PyMOL>count_atoms
  count_atoms: 36 atoms
 PyMOL>dele all
 PyMOL>load tmp/small01.mmd
- Executive: object "small01" created.
+ CmdLoad: "tmp/small01.mmd" loaded as "small01".
 PyMOL>count_atoms
  count_atoms: 36 atoms
 PyMOL>dele all
 PyMOL>load tmp/small01.mmod
- Executive: object "small01" created.
+ CmdLoad: "tmp/small01.mmod" loaded as "small01".
 PyMOL>count_atoms
  count_atoms: 36 atoms
 PyMOL>dele all
@@ -46,7 +46,7 @@ PyMOL>count_atoms
  count_atoms: 36 atoms
 PyMOL>dele all
 PyMOL>load tmp/small01.mol
- Executive: object "small01" created.
+ CmdLoad: "tmp/small01.mol" loaded as "small01".
 PyMOL>count_atoms
  count_atoms: 36 atoms
 PyMOL>feedback disable,ray,details

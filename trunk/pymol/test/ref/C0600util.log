@@ -1,12 +1,12 @@
 PyMOL>load dat/il2.pdb
- Executive: object "il2" created.
+ CmdLoad: "dat/il2.pdb" loaded as "il2".
 PyMOL>load dat/pept.pdb
- Executive: object "pept" created.
+ CmdLoad: "dat/pept.pdb" loaded as "pept".
 PyMOL>load dat/3al1.pdb
  ObjectMolecule: Read secondary structure assignments.
  ObjectMolecule: Read crystal symmetry information.
  Symmetry: Found 2 symmetry operators.
- Executive: object "3al1" created.
+ CmdLoad: "dat/3al1.pdb" loaded as "3al1".
 PyMOL>util.ss
  util.ss: WARNING: This is not a "correct" secondary structure
  util.ss: assignment algorithm!  Please use only as a last resort.

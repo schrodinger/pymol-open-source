@@ -1,5 +1,5 @@
 PyMOL>load dat/pept.pdb
- Executive: object "pept" created.
+ CmdLoad: "dat/pept.pdb" loaded as "pept".
 PyMOL>load dat/pept.pdb
  CmdLoad: "dat/pept.pdb" appended into object "pept", state 2.
 PyMOL>load dat/pept.pdb

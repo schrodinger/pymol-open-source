@@ -1,5 +1,5 @@
 PyMOL>load dat/tiny.pdb
- Executive: object "tiny" created.
+ CmdLoad: "dat/tiny.pdb" loaded as "tiny".
 PyMOL>alter (all),resn = name
  Alter: modified 37 atoms.
 PyMOL>alter (all),b = b + 10

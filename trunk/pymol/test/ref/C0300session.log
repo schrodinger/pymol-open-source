@@ -1,5 +1,5 @@
 PyMOL>load $PYMOL_PATH/test/dat/pept.pdb
- Executive: object "pept" created.
+ CmdLoad: "/home/local/warren/pymol/test/dat/pept.pdb" loaded as "pept".
 PyMOL>select cas,name ca
  Selector: selection "cas" defined with 13 atoms.
 PyMOL>set line_width,5

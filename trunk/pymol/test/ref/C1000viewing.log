@@ -27,7 +27,7 @@ PyMOL>load dat/1tii.pdb
  ObjectMolecule: Read secondary structure assignments.
  ObjectMolecule: Read crystal symmetry information.
  Symmetry: Found 6 symmetry operators.
- Executive: object "1tii" created.
+ CmdLoad: "dat/1tii.pdb" loaded as "1tii".
 PyMOL>hide
 PyMOL>show cartoon
 PyMOL>ray
@@ -63,7 +63,7 @@ PyMOL>ray
 PyMOL>dele all
 PyMOL>dele all
 PyMOL>load dat/pept.pdb
- Executive: object "pept" created.
+ CmdLoad: "dat/pept.pdb" loaded as "pept".
 PyMOL>color
 Parsing-Error: missing required argument: color
 PyMOL>color -123454
@@ -85,12 +85,12 @@ PyMOL>color red,(all)
 PyMOL>dele all
 PyMOL>dele all
 PyMOL>load dat/pept.pdb
- Executive: object "pept" created.
+ CmdLoad: "dat/pept.pdb" loaded as "pept".
 PyMOL>load dat/3al1.pdb
  ObjectMolecule: Read secondary structure assignments.
  ObjectMolecule: Read crystal symmetry information.
  Symmetry: Found 2 symmetry operators.
- Executive: object "3al1" created.
+ CmdLoad: "dat/3al1.pdb" loaded as "3al1".
 PyMOL>disable
 PyMOL>enable pept
 PyMOL>ray
@@ -118,7 +118,7 @@ PyMOL>cmd._dump_floats(cmd.get_view(0))
   1.000   0.000   0.000   0.000   1.000   0.000   0.000   0.000   1.000
   0.000   0.000 -50.000   0.000   0.000   0.000  40.000 100.000   0.000
 PyMOL>load dat/pept.pdb
- Executive: object "pept" created.
+ CmdLoad: "dat/pept.pdb" loaded as "pept".
 PyMOL>hide
 PyMOL>ray
  RayRenderTest: obtained 0 graphics primitives.
@@ -161,7 +161,7 @@ PyMOL>ray
 PyMOL>dele all
 PyMOL>dele all
 PyMOL>load dat/pept.pdb
- Executive: object "pept" created.
+ CmdLoad: "dat/pept.pdb" loaded as "pept".
 PyMOL>label (all),resi
  Label: labelled 107 atoms.
 PyMOL>label (name ca),"ca"
@@ -198,7 +198,7 @@ PyMOL>cmd._dump_floats(cmd.get_view(0))
 PyMOL>dele all
 PyMOL>dele all
 PyMOL>load dat/pept.pdb
- Executive: object "pept" created.
+ CmdLoad: "dat/pept.pdb" loaded as "pept".
 PyMOL>orient
 PyMOL>orient (none)
 PyMOL>orient (name ca)
@@ -207,7 +207,7 @@ PyMOL>orient (name ca and i. 10)
 PyMOL>dele all
 PyMOL>dele all
 PyMOL>load dat/pept.pdb
- Executive: object "pept" created.
+ CmdLoad: "dat/pept.pdb" loaded as "pept".
 PyMOL>origin
 PyMOL>origin (none)
 PyMOL>origin (name ca)
@@ -216,7 +216,7 @@ PyMOL>origin (name ca and i. 10)
 PyMOL>dele all
 PyMOL>dele all
 PyMOL>load dat/pept.pdb
- Executive: object "pept" created.
+ CmdLoad: "dat/pept.pdb" loaded as "pept".
 PyMOL>show dots
 PyMOL>ray
  RayRenderTest: obtained 6837 graphics primitives.
@@ -231,7 +231,7 @@ PyMOL>ray
 PyMOL>dele all
 PyMOL>dele all
 PyMOL>load dat/pept.pdb
- Executive: object "pept" created.
+ CmdLoad: "dat/pept.pdb" loaded as "pept".
 PyMOL>color shoot
 Color-Error: Unknown color.
 PyMOL>set_color shoot,[1.0,0.9,1.0]
@@ -250,7 +250,7 @@ PyMOL>cmd._dump_floats(v1)
   1.000   0.000   0.000   0.000   1.000   0.000   0.000   0.000   1.000
   0.000   0.000 -50.000   0.000   0.000   0.000  40.000 100.000   0.000
 PyMOL>load dat/pept.pdb
- Executive: object "pept" created.
+ CmdLoad: "dat/pept.pdb" loaded as "pept".
 PyMOL>cmd._dump_floats(cmd.get_view(0))
   1.000   0.000   0.000   0.000   1.000   0.000   0.000   0.000   1.000
   0.000   0.000 -63.191   1.224 -10.279  20.545  49.820  76.561   0.000
@@ -343,7 +343,7 @@ PyMOL>viewport 300,300
 PyMOL>viewport 640,480
 PyMOL>dele all
 PyMOL>load dat/pept.pdb
- Executive: object "pept" created.
+ CmdLoad: "dat/pept.pdb" loaded as "pept".
 PyMOL>cmd._dump_floats(cmd.get_view(0))
   1.000   0.000   0.000   0.000   0.985   0.174   0.000  -0.174   0.985
   0.000   0.000 -63.191   1.224 -10.279  20.545  49.820  76.561   0.000
@@ -358,7 +358,7 @@ PyMOL>load dat/1tii.pdb,m1
  ObjectMolecule: Read secondary structure assignments.
  ObjectMolecule: Read crystal symmetry information.
  Symmetry: Found 6 symmetry operators.
- Executive: object "m1" created.
+ CmdLoad: "dat/1tii.pdb" loaded as "m1".
 PyMOL>load dat/il2.pdb,m1
  CmdLoad: "dat/il2.pdb" appended into object "m1", state 2.
 PyMOL>load dat/pept.pdb,m1

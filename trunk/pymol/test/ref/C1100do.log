@@ -1,5 +1,5 @@
 PyMOL>load dat/pept.pdb
- Executive: object "pept" created.
+ CmdLoad: "dat/pept.pdb" loaded as "pept".
 PyMOL>show sticks,pept
 PyMOL>set ray_default_renderer=2
  Setting: ray_default_renderer set to 2.
@@ -7,7 +7,7 @@ PyMOL>ray
  RayRenderTest: obtained 332 graphics primitives.
 PyMOL>dele all
 PyMOL>load dat/il2.pdb
- Executive: object "il2" created.
+ CmdLoad: "dat/il2.pdb" loaded as "il2".
 PyMOL>show dots,il2
 PyMOL>ray
  RayRenderTest: obtained 111078 graphics primitives.
@@ -16,7 +16,7 @@ PyMOL>load dat/3al1.pdb
  ObjectMolecule: Read secondary structure assignments.
  ObjectMolecule: Read crystal symmetry information.
  Symmetry: Found 2 symmetry operators.
- Executive: object "3al1" created.
+ CmdLoad: "dat/3al1.pdb" loaded as "3al1".
 PyMOL>show sph,3al1
 PyMOL>ray
  RayRenderTest: obtained 1945 graphics primitives.

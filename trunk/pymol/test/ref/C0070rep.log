@@ -1,5 +1,5 @@
 PyMOL>load dat/tiny.pdb
- Executive: object "tiny" created.
+ CmdLoad: "dat/tiny.pdb" loaded as "tiny".
 PyMOL>print cmd.get_names()
 ['tiny']
 PyMOL>show sticks
