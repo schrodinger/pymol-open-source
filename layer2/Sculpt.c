@@ -988,6 +988,8 @@ float SculptIterateObject(CSculpt *I,ObjectMolecule *obj,int state,int n_cycle)
               int x0i;
               int don_b0;
               int acc_b0;
+              int ex14_b0;
+              int ex14_b2;
               nb_skip_count = nb_skip;
               if((cSculptVDW|cSculptVDW14)&mask) {
                 /* compute non-bonded interations */
@@ -1043,6 +1045,10 @@ float SculptIterateObject(CSculpt *I,ObjectMolecule *obj,int state,int n_cycle)
                                   ex1 = *(j+3);
                                   if(ex1<ex) {
                                     ex=ex1;
+                                    if(ex1==4) {
+                                      ex14_b0=*(j+4);
+                                      ex14_b2=*(j+5);
+                                    }
                                   }
                                 }
                               }
