@@ -1969,7 +1969,7 @@ void SettingInitGlobal(PyMOLGlobals *G,int alloc,int reset_gui)
 
   SettingSet_b(I,cSetting_log_conformations, 1);
 
-  SettingSet_f(I,cSetting_valence_size, 0.050F);
+  SettingSet_f(I,cSetting_valence_size, 0.060F);
 
   SettingSet_f(I,cSetting_surface_miserable, 2.0F);
 

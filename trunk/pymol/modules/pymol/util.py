@@ -195,7 +195,6 @@ def cba(color,selection="(all)",quiet=1):
    s = str(selection)
    cmd.color("atomic","(("+s+") and not elem C)",quiet=quiet)
    cmd.color(color,"(elem C and ("+s+"))",quiet=quiet)
-   print s
    cmd.color(color,s,flags=1,quiet=quiet)
 
 def performance(mode):

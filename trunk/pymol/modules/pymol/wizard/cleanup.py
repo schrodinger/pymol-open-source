@@ -19,6 +19,9 @@ def auto_configure():
       SZYBKI_EXE = os.path.join(OE_DIR,"bin/szybki")
       if os.path.exists(SZYBKI_EXE):
          result = 1
+      else:
+         if os.path.exists(SZYBKI_EXE):
+            SZYBKI_EXE = SZYBKI_EXE + ".exe"
    return result
 
 class Cleanup(Wizard):
