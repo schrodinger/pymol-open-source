@@ -259,12 +259,12 @@ class PMGApp(AbstractApp):
          self.createButtons()
          self.createMain()
          self.lineCount = 0
-         startup_pattern = re.sub(r"\/[^\/]*$","/startup/*.py*",__file__)
+         startup_pattern = re.sub(r"[\/\\][^\/\\]*$","/startup/*.py*",__file__)
          # startup_pattern = os.environ['PYMOL_PATH']+"/modules/pmg_tk/startup/*.py*"
          raw_list = glob(startup_pattern)
          unique = {}
          for a in raw_list:
-            unique[re.sub(r".*\/|\.py.*$","",a)] = 1
+            unique[re.sub(r".*[\/\\]|\.py.*$","",a)] = 1
          for name in unique.keys():
             if name != "__init__":
                mod_name = "pmg_tk.startup."+name
