@@ -3081,11 +3081,12 @@ static PyObject *CmdColor(PyObject *self, 	PyObject *args)
   int flags;
   OrthoLineType s1;
   int ok=false;
-  ok = PyArg_ParseTuple(args,"ssi",&color,&str1,&flags);
+  int quiet;
+  ok = PyArg_ParseTuple(args,"ssii",&color,&str1,&flags,&quiet);
   if (ok) {
     APIEntry();
     SelectorGetTmp(str1,s1);
-    ok = ExecutiveColor(s1,color,flags);
+    ok = ExecutiveColor(s1,color,flags,quiet);
     SelectorFreeTmp(s1);
     APIExit();
   }

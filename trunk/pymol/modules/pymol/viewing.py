@@ -1100,7 +1100,7 @@ SEE ALSO
       finally:
          unlock()
 
-   def color(color,selection="(all)"):
+   def color(color,selection="(all)",quiet=1):
       '''
 DESCRIPTION
 
@@ -1126,7 +1126,7 @@ EXAMPLES
       #
       try:
          lock()
-         r = _cmd.color(str(color),str(selection),0)
+         r = _cmd.color(str(color),str(selection),0,int(quiet))
       finally:
          unlock()
       if not r:
