@@ -688,7 +688,8 @@ void RayRender(CRay *I,int width,int height,unsigned int *image,float front,floa
   int fogFlag=false;
   int fogRangeFlag=false;
   int opaque_back=0;
-  
+  int n_hit=0;
+
   float fog;
   float *bkrd;
   float fog_start=0.0;
@@ -856,6 +857,7 @@ void RayRender(CRay *I,int width,int height,unsigned int *image,float front,floa
             while((persist>0.0001)&&(pass<25)) {
               i=BasisHit(I->Basis+1,&r1,exclude,I->Vert2Prim,I->Primitive,false,new_front,back);
               if(i>=0) {
+                n_hit++;
                 new_front=r1.dist;
                 if(r1.prim->type==cPrimTriangle) {
                   BasisGetTriangleNormal(I->Basis+1,&r1,i,fc);
@@ -928,8 +930,10 @@ void RayRender(CRay *I,int width,int height,unsigned int *image,float front,floa
                     fc[1]=ffact*bkrd[1]+fc[1]*ffact1m;
                     fc[2]=ffact*bkrd[2]+fc[2]*ffact1m;
                   } else {
-                    fc[3]=1.0-ffact;
+                    fc[3]=ffact1m;
                   }
+                } else {
+                  fc[3]=1.0;
                 }
                 
                 inp=(fc[0]+fc[1]+fc[2])/3.0;
@@ -957,10 +961,10 @@ void RayRender(CRay *I,int width,int height,unsigned int *image,float front,floa
                 
                 if(opaque_back) { 
                   if(I->BigEndian) {
-                    *(image+((width)*y)+x)=
+                    *(pixel)=
                       fore_mask|(c[0]<<24)|(c[1]<<16)|(c[2]<<8);
                   } else {
-                    *(image+((width)*y)+x)=
+                    *(pixel)=
                       fore_mask|(c[2]<<16)|(c[1]<<8)|c[0];
                   }
                 } else { /* use alpha channel for fog with transparent backgrounds */
@@ -1018,6 +1022,9 @@ void RayRender(CRay *I,int width,int height,unsigned int *image,float front,floa
           }
       }
   }
+  PRINTFD(FB_Ray)
+    " RayRender: n_hit %d\n",n_hit
+    ENDFD;
 
   if(antialias) {
 	 OrthoBusyFast(9,10);

@@ -4858,7 +4858,25 @@ NOTES
    finally:
       unlock()
    return r
-   
+
+def deselect():
+   '''
+DESCRIPTION
+  
+   "deselect" disables any and all visible selections
+ 
+USAGE
+ 
+   deselect
+ 
+PYMOL API
+  
+   cmd.deselect()
+   '''
+   arg = get_names("selections")
+   for a in arg:
+      disable(a)
+
 def select(name,selection="",quiet=0,show=0):
    '''
 DESCRIPTION
@@ -6183,6 +6201,7 @@ keyword = {
    'create'        : [create       , 0 , 0 , ''  , parsing.LEGACY ],   
    'delete'        : [delete       , 0 , 0 , ''  , parsing.STRICT ],
    'deprotect'     : [deprotect    , 0 , 0 , ''  , parsing.STRICT ],
+   'deselect'      : [deselect     , 0 , 0 , ''  , parsing.STRICT ],
    'dir'           : [ls           , 0 , 0 , ''  , parsing.STRICT ],  
    'disable'       : [disable      , 0 , 0 , ''  , parsing.STRICT ],
    'distance'      : [distance     , 0 , 0 , ''  , parsing.LEGACY ],   

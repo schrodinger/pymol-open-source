@@ -415,7 +415,7 @@ void OrthoBusyDraw(int force)
       glFlush();
     }
 	 OrthoPopMatrix();
-	 SceneDirty();/* shouldn't this just be OrthoDirty? */
+	 OrthoDirty();/* switched from SceneDirty */
 	 I->BusyLast=now;
   }
   PRINTFD(FB_Ortho)
