@@ -469,14 +469,14 @@ void ExecutiveFlag(int flag,char *s1)
   }
 }
 /*========================================================================*/
-float ExecutiveOverlap(char *s1,int state1,char *s2,int state2)
+float ExecutiveOverlap(char *s1,int state1,char *s2,int state2,float adjust)
 {
   int sele1,sele2;
   
   sele1=SelectorIndexByName(s1);
   sele2=SelectorIndexByName(s2);
   
-  return(SelectorSumVDWOverlap(sele1,state1,sele2,state2));
+  return(SelectorSumVDWOverlap(sele1,state1,sele2,state2,adjust));
 }
 /*========================================================================*/
 void ExecutiveProtect(char *s1,int mode)

@@ -594,13 +594,14 @@ static PyObject *CmdOverlap(PyObject *dummy, PyObject *args)
   char *str1,*str2;
   int state1,state2;
   float overlap;
+  float adjust;
   OrthoLineType s1,s2;
   PyObject *result;
-  PyArg_ParseTuple(args,"ssii",&str1,&str2,&state1,&state2);
+  PyArg_ParseTuple(args,"ssiif",&str1,&str2,&state1,&state2,&adjust);
   APIEntry();
   SelectorGetTmp(str1,s1);
   SelectorGetTmp(str2,s2);
-  overlap = ExecutiveOverlap(s1,state1,s2,state2);
+  overlap = ExecutiveOverlap(s1,state1,s2,state2,adjust);
   SelectorFreeTmp(s1);
   SelectorFreeTmp(s2);
   APIExit();
@@ -1571,7 +1572,8 @@ static PyObject *CmdLoadObject(PyObject *self, PyObject *args)
   OrthoLineType buf;
   int frame,type;
   int finish,discrete;
-
+  int listFlag=false;
+  PyObject *list;
   buf[0]=0;
 
   PyArg_ParseTuple(args,"sOiiii",&oname,&model,&frame,&type,&finish,&discrete);
@@ -1579,7 +1581,7 @@ static PyObject *CmdLoadObject(PyObject *self, PyObject *args)
   APIEntry();
   origObj=ExecutiveFindObjectByName(oname);
   
-      /* TODO check for existing object of wrong type */
+  /* TODO check for existing object of wrong type */
   
   switch(type) {
   case cLoadTypeChemPyModel:

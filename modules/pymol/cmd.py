@@ -1177,6 +1177,9 @@ def overlap(*arg):
 UNSUPPORTED FEATURE - LIKELY TO CHANGE
    '''
    state = [ 1,1 ]
+   adjust = 0.0
+   if len(arg)>3:
+      adjust = float(arg[3])
    if len(arg)==3:
       state[0]=int(arg[2][0])
       if state[0]<1: state[0]=1;
@@ -1184,7 +1187,7 @@ UNSUPPORTED FEATURE - LIKELY TO CHANGE
       if state[1]<1: state[1]=1
    try:
       lock()
-      r = _cmd.overlap(arg[0],arg[1],state[0]-1,state[1]-1)
+      r = _cmd.overlap(arg[0],arg[1],state[0]-1,state[1]-1,adjust)
    finally:
       unlock()
    return r
@@ -2999,7 +3002,14 @@ def _load(oname,finfo,state,ftype,finish,discrete):
    else:
       try:
          x = io.pkl.fromFile(finfo)
-         r = _cmd.load_object(oname,x,state,ftype,finish,discrete)            
+         if isinstance(x,types.ListType) or isinstance(x,types.TupleType):
+            for a in x:
+               r = _cmd.load_object(oname,a,state,ftype,0,discrete)
+               if(state>0):
+                  state = state + 1
+            _cmd.finish_object(oname)
+         else:
+            r = _cmd.load_object(oname,x,state,ftype,finish,discrete)            
       except:
          print 'Error: can not load file "%s"' % finfo
    return r

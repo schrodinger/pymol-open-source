@@ -35,7 +35,7 @@ void SelectorFreeTmp(char *name);
 void SelectorGetTmp(char *input,char *store);
 int SelectorGetPDB(char **charVLA,int sele,int state,int conectFlag);
 PyObject *SelectorGetChemPyModel(int sele,int state);
-float SelectorSumVDWOverlap(int sele1,int state1,int sele2,int state2);
+float SelectorSumVDWOverlap(int sele1,int state1,int sele2,int state2,float adjust);
 DistSet *SelectorGetDistSet(int sele1,int state1,int sele2,int state2,int mode,float cutoff);
 int SelectorGetSeleNCSet(int sele);
 void SelectorCreateObjectMolecule(int sele,char *name,int target_state,int state);
