@@ -7947,6 +7947,7 @@ ObjectMolecule *ObjectMoleculeReadPDBStr(ObjectMolecule *I,char *PDBStr,int fram
   char *start,*restart=NULL;
   int repeatFlag = true;
   int successCnt = 0;
+  unsigned int aic_mask = cAIC_PDBMask;
 
   SegIdent segi_override=""; /* saved segi for corrupted NMR pdb files */
 
@@ -7975,7 +7976,10 @@ ObjectMolecule *ObjectMoleculeReadPDBStr(ObjectMolecule *I,char *PDBStr,int fram
       }
 
       cset=ObjectMoleculePDBStr2CoordSet(start,&atInfo,&restart,
-                                         segi_override,m4x,pdb_name,next_pdb);	 
+                                         segi_override,m4x,pdb_name,next_pdb);	
+      if(m4x) /* preserve original atom IDs for annotated Metaphorics files */
+        if(m4x->annotated_flag)
+          aic_mask = (cAIC_b|cAIC_q);
       nAtom=cset->NIndex;
     }
     if(pdb_name&&(*next_pdb)) {
@@ -7992,7 +7996,7 @@ ObjectMolecule *ObjectMoleculeReadPDBStr(ObjectMolecule *I,char *PDBStr,int fram
       if(isNew) {		
         I->AtomInfo=atInfo; /* IMPORTANT to reassign: this VLA may have moved! */
       } else {
-        ObjectMoleculeMerge(I,atInfo,cset,true,cAIC_PDBMask); /* NOTE: will release atInfo */
+        ObjectMoleculeMerge(I,atInfo,cset,true,aic_mask); /* NOTE: will release atInfo */
       }
       if(isNew) I->NAtom=nAtom;
       if(frame<0) frame=I->NCSet;

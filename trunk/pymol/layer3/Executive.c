@@ -140,6 +140,7 @@ void ExecutiveProcessPDBFile(CObject *origObj,char *fname, char *oname,
   int m4x_mode = 0; /* 0 = annotate, 1 = alignment */
   ProcPDBRec *target_rec = NULL;
   char nbrhood_sele[] = "m4x_nearby";
+  ProcPDBRec *current = NULL;
 
   f=fopen(fname,"rb");
   if(!f) {
@@ -171,18 +172,19 @@ void ExecutiveProcessPDBFile(CObject *origObj,char *fname, char *oname,
   while(repeat_flag&&ok) {
     char *start_at = buffer;
     int is_repeat_pass = false;
-    ProcPDBRec *current;
+    CObject *tmpObj;
 
     VLACheck(processed,ProcPDBRec,n_processed);
     current = processed + n_processed;
 
-    M4XAnnoInit(&current->m4x);
     PRINTFD(FB_CCmd) " ExecutiveProcessPDBFile-DEBUG: loading PDB\n" ENDFD;
 
     if(next_pdb) {
       start_at = next_pdb;
       is_repeat_pass = true;
     }
+
+    M4XAnnoInit(&current->m4x);
 
     repeat_flag=false;
     next_pdb = NULL;
@@ -194,24 +196,43 @@ void ExecutiveProcessPDBFile(CObject *origObj,char *fname, char *oname,
         if(next_pdb) { /* NOTE: if set, assume that multiple PDBs are present in the file */
           repeat_flag=true;
         }
+
         if(current->m4x.xname_flag) { /* USER XNAME trumps the PDB Header name */                 
           ObjectSetName(obj,current->m4x.xname); /* from PDB */
-          ExecutiveDelete(current->m4x.xname); /* just in case */
+          if( (tmpObj = ExecutiveFindObjectByName(obj->Name))) {
+            if(tmpObj->type != cObjectMolecule)
+              ExecutiveDelete(current->m4x.xname); /* just in case */
+            else
+              {
+                if(is_repeat_pass) {  /* this is a workaround for when PLANET accidentally duplicates the target */
+                  {
+                    int a;
+                    for(a=0; a<n_processed; a++) {
+                      ProcPDBRec *cur = processed + a;
+                      if(cur->obj == (ObjectMolecule*)tmpObj) {
+                        cur->m4x.invisible = false;
+                      }
+                    }
+                  }
+                  ObjectMoleculeFree(obj);
+                  obj=NULL;
+                }
+              }
+          }
         } else if(next_pdb) {
-          ObjectSetName(obj,pdb_name); /* from PDB */
-          ExecutiveDelete(pdb_name); /* just in case */
-        } else if(is_repeat_pass) {
           ObjectSetName(obj,pdb_name); /* from PDB */
           ExecutiveDelete(pdb_name); /* just in case */
         } else {
           ObjectSetName(obj,oname); /* from filename/parameter */
         }
 
-        ExecutiveManageObject(obj,true,false);
-        if(frame<0)
-          frame = ((ObjectMolecule*)obj)->NCSet-1;
-        sprintf(buf," CmdLoad: \"%s\" loaded into object \"%s\", state %d.\n",
-                fname,oname,frame+1);
+        if(obj) {
+          ExecutiveManageObject(obj,true,false);
+          if(frame<0)
+            frame = ((ObjectMolecule*)obj)->NCSet-1;
+          sprintf(buf," CmdLoad: \"%s\" loaded into object \"%s\", state %d.\n",
+                  fname,oname,frame+1);
+        }
       }
     } else {
       ObjectMoleculeReadPDBStr((ObjectMolecule*)origObj,
@@ -224,7 +245,8 @@ void ExecutiveProcessPDBFile(CObject *origObj,char *fname, char *oname,
               fname,oname,frame+1);
       obj = origObj;
     }
-    if(obj) {
+
+    if(obj&&current) {
       current->obj = (ObjectMolecule*)obj;
       n_processed++;
     }
@@ -264,7 +286,7 @@ void ExecutiveProcessPDBFile(CObject *origObj,char *fname, char *oname,
       }
     }
     if(target_rec) { /* there is a target.. */
-
+      
       /* first, convert all IDs to genuine atom indices */
 
       {
