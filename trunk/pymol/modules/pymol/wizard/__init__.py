@@ -15,6 +15,9 @@ class Wizard:
    def do_pick(self,bondFlag):
       pass
 
+   def do_select(self,name):
+      pass
+   
    def cleanup(self):
       pass
 

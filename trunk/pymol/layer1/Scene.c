@@ -1115,6 +1115,7 @@ int SceneClick(Block *block,int button,int x,int y,int mod)
             PLog(buffer,cPLog_pym);
           }
         }
+        WizardDoSelect(selName);
         break;
       case cButModeAddToPk1:
       case cButModeAddToPk2:
@@ -1148,6 +1149,7 @@ int SceneClick(Block *block,int button,int x,int y,int mod)
           ExecutiveHideSelections();
         if(SettingGet(cSetting_auto_show_selections))
           ExecutiveSetObjVisib(selName,1);
+        WizardDoSelect(selName);
         break;
       }
 	 } else {

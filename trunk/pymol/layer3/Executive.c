@@ -38,6 +38,7 @@ Z* -------------------------------------------------------------------
 #include"Match.h"
 #include"ObjectCGO.h"
 #include"Util.h"
+#include"Wizard.h"
 
 #include"Menu.h"
 #include"Map.h"
@@ -605,7 +606,7 @@ void ExecutiveSelectRect(BlockRect *rect,int mode)
   ExecutiveDelete(cTempRectSele);
   }
   VLAFreeP(smp.picked);
-
+  WizardDoSelect(cLeftButSele);
 }
 
 int ExecutiveTranslateAtom(char *sele,float *v,int state,int mode,int log)
