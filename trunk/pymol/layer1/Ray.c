@@ -1239,7 +1239,6 @@ int RayTraceThread(CRayThreadInfo *T)
    int perspective = T->perspective;
    float eye[3];
    float half_height, front_ratio;
-   float height_range, width_range;
    float start[3];
 
 	I = T->ray;
@@ -1358,35 +1357,27 @@ int RayTraceThread(CRayThreadInfo *T)
    }
 
    if(perspective) {
-     zero3f(eye);
+     float height_range, width_range;
 
+     zero3f(eye);
      half_height = -T->pos[2] * tan((T->fov/2.0F)*PI/180.0F);
      front_ratio = -T->front/T->pos[2];
      height_range = front_ratio*2*half_height;
      width_range = height_range*(I->Range[0]/I->Range[1]);
-   }
-
-	invFrontMinusBack	= _1 / (T->front - T->back);
-
-   if(perspective) {
      invWdthRange        = invWdth * width_range;
      invHgtRange         = invHgt * height_range;
-
-   } else {
-     invWdthRange        = invWdth * I->Range[0];
-     invHgtRange         = invHgt * I->Range[1];
-   }
-
-   edge_width *= invWdthRange;
-   edge_height *= invHgtRange;
-
-   if(perspective) {
      vol0 = eye[0] - width_range/2.0F;
      vol2 = eye[1] - height_range/2.0F;
    } else {
+     invWdthRange        = invWdth * I->Range[0];
+     invHgtRange         = invHgt * I->Range[1];
      vol0 = I->Volume[0];
      vol2 = I->Volume[2];
    }
+	invFrontMinusBack	= _1 / (T->front - T->back);
+
+   edge_width *= invWdthRange;
+   edge_height *= invHgtRange;
 
 	bp1  = I->Basis + 1;
 	bp2  = I->Basis + 2;
