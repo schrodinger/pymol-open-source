@@ -100,6 +100,7 @@ typedef struct ObjectMoleculeOpRec {
 #define OMOP_Index 28
 #define OMOP_PhiPsi 29
 #define OMOP_SingleStateVertices 30
+#define OMOP_IdentifyObjects 31
 
 #include"CoordSet.h"
 

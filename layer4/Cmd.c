@@ -1391,23 +1391,43 @@ static PyObject *CmdIdentify(PyObject *dummy, PyObject *args)
   char *str1;
   OrthoLineType s1;
   int mode;
+  int a,l=0;
   PyObject *result = Py_None;
-  int *iVLA=NULL;
+  PyObject *tuple;
+  int *iVLA=NULL,*i;
+  ObjectMolecule **oVLA=NULL,**o;
   int ok=false;
   ok = PyArg_ParseTuple(args,"si",&str1,&mode);
   if (ok) {
     APIEntry();
     SelectorGetTmp(str1,s1);
-    iVLA=ExecutiveIdentify(s1,mode);
+    if(!mode) {
+      iVLA=ExecutiveIdentify(s1,mode);
+    } else {
+      l = ExecutiveIdentifyObjects(s1,mode,&iVLA,&oVLA);
+    }
     SelectorFreeTmp(s1);
     APIExit();
     if(iVLA) {
-      result=PConvIntVLAToPyList(iVLA);
-      VLAFreeP(iVLA);
+      if(!mode) {
+        result=PConvIntVLAToPyList(iVLA);
+      } else { /* object mode */
+        result=PyList_New(l);
+        i = iVLA;
+        o = oVLA;
+        for(a=0;a<l;a++) {
+          tuple = PyTuple_New(2);      
+          PyTuple_SetItem(tuple,1,PyInt_FromLong(*(i++))); 
+          PyTuple_SetItem(tuple,0,PyString_FromString((*(o++))->Obj.Name));
+          PyList_SetItem(result,a,tuple);
+        }
+      }
     } else {
       result = PyList_New(0);
     }
   }
+  VLAFreeP(iVLA);
+  VLAFreeP(oVLA);
   return(APIAutoNone(result));
 }
 

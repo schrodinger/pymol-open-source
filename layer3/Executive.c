@@ -1691,6 +1691,25 @@ int *ExecutiveIdentify(char *s1,int mode)
   return(result);
 }
 /*========================================================================*/
+int ExecutiveIdentifyObjects(char *s1,int mode,int **indexVLA,ObjectMolecule ***objVLA)
+{
+  int sele1;
+  ObjectMoleculeOpRec op2;
+  sele1=SelectorIndexByName(s1);
+  if(sele1>=0) {
+    op2.code=OMOP_IdentifyObjects;
+    op2.obj1VLA=VLAlloc(ObjectMolecule*,1000);
+    op2.i1VLA=VLAlloc(int,1000);
+    op2.i1=0;
+    ExecutiveObjMolSeleOp(sele1,&op2);
+    VLASize(op2.i1VLA,int,op2.i1);
+    VLASize(op2.obj1VLA,ObjectMolecule*,op2.i1);
+    (*indexVLA) = op2.i1VLA;
+    (*objVLA) = op2.obj1VLA;
+  } 
+  return(op2.i1);
+}
+/*========================================================================*/
 int ExecutiveIndex(char *s1,int mode,int **indexVLA,ObjectMolecule ***objVLA)
 {
   int sele1;
