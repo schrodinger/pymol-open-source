@@ -50,6 +50,8 @@ def do(command,in_prefix,run_prefix,out_prefix,tokens,capture=None):
       if os.path.exists(dst):
          os.unlink(dst)
       os.rename(src,dst)
+   for a in glob.glob(in_prefix+".*"):
+      os.unlink(a)
    if feedback['tinker']:
       print " "+str(__name__)+': %s job complete. ' % command
       print " "+str(__name__)+': creating output files "%s.*"' % (out_prefix)
