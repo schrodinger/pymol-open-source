@@ -993,8 +993,8 @@ from experimenting import \
      test
 
 #--------------------------------------------------------------------
-from m4x import \
-     metaphorics
+#from m4x import \
+#     metaphorics
 
 #--------------------------------------------------------------------
 # Modules which contain programs used explicity as "module.xxx"
@@ -1198,7 +1198,7 @@ keyword = {
    'movie.nutate'  : [ movie.nutate      , 0 , 0 , ''  , parsing.STRICT ],
    'movie.tdroll'  : [ movie.tdroll      , 0 , 0 , ''  , parsing.STRICT ],
 # activate metaphorics extensions
-   'metaphorics'   : [ metaphorics       , 0 , 0 , ''  , parsing.STRICT ],
+#   'metaphorics'   : [ metaphorics       , 0 , 0 , ''  , parsing.STRICT ],
    }
 
 kwhash = Shortcut(keyword.keys())
