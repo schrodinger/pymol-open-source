@@ -1609,6 +1609,8 @@ int ChampModelToPat(CChamp *I,PyObject *model)
           case 1: bd->order = cH_Single; break;
           case 2: bd->order = cH_Double; break;
           case 3: bd->order = cH_Triple; break;
+          case 4: bd->order = cH_Single; bd->class = cH_Aromatic|cH_Pi; break;
+
           }
           Py_XDECREF(tmp);
         }
@@ -1624,6 +1626,11 @@ int ChampModelToPat(CChamp *I,PyObject *model)
           else {
             atom1 = atom_index[atom1];
             atom2 = atom_index[atom2];
+
+            if(order==4) {
+              I->Atom[atom1].class |= cH_Aromatic|cH_Pi;
+              I->Atom[atom2].class |= cH_Aromatic|cH_Pi;
+            }
             bd->atom[0]=atom1;
             bd->atom[1]=atom2;
             bd->pri[0]=0;

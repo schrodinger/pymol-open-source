@@ -65,6 +65,7 @@ if __name__=='pymol.importing':
       grd = 30      # Insight II Grid format
       pqr = 31      # PQR file (modified PDB file for APBS)
       dx = 32       # DX file (APBS)
+      mol2 = 33     # MOL2 file (TRIPOS)
       
    loadable_sc = Shortcut(loadable.__dict__.keys()) 
 
@@ -339,7 +340,7 @@ SEE ALSO
 
 
 
-   def load(filename,object='',state=0,format='',finish=1,discrete=0,quiet=1):
+   def load(filename,object='',state=0,format='',finish=1,discrete=None,quiet=1):
       '''
 DESCRIPTION
 
@@ -378,6 +379,7 @@ NOTES
    'cex' : Metaphorics CEX format
    'pse' : PyMOL Session file
    'pqr' : PQR (a modified PDB file with charges and radii)
+   'mol2' : MOL2
    
 SEE ALSO
 
@@ -390,7 +392,12 @@ SEE ALSO
          ftype = 0
          state = int(state)
          finish = int(finish)
-         discrete = int(discrete)
+         if discrete==None:
+            discrete_default = 1
+            discrete=0
+         else:
+            discrete_default = 0
+            discrete = int(discrete)
          fname = filename
          fname = os.path.expanduser(fname)
          fname = os.path.expandvars(fname)
@@ -435,6 +442,8 @@ SEE ALSO
                ftype = loadable.pse
             elif re.search("\.phi$",filename,re.I):
                ftype = loadable.phi
+            elif re.search("\.mol2$",filename,re.I):
+               ftype = loadable.mol2
             elif re.search("\.dx$",filename,re.I):
                ftype = loadable.dx
             elif re.search("\.fld$",filename,re.I):
@@ -503,6 +512,12 @@ SEE ALSO
             ftype = -1
             cmd.set_session(io.pkl.fromFile(fname))
 
+   # special handling for mol2 files
+
+         if ftype == loadable.mol2:
+            if discrete_default==1: # make mol2 files discrete by default
+               discrete = 1
+               
    # standard file handling
 
          if ftype>=0:

@@ -40,6 +40,306 @@ void RepWireBondFree(RepWireBond *I);
 static void RepValence(float *v,float *v1,float *v2,int *other,int a1,
                 int a2,float *coord,float *color,int ord,float tube_size);
 
+
+static void RepAromatic(float *v1,float *v2,int *other,
+                int a1,int a2,float *coord,float *color,
+                float tube_size,int half_state,float **v_ptr,int *n_ptr)
+{
+  float d[3],t[3],p0[3],p1[3],p2[3],*vv;
+  int a3;
+  float *v = *v_ptr;
+  float f,f_1;
+  int n=*n_ptr;
+  int double_sided;
+
+  v[0] = color[0];
+  v[1] = color[1];
+  v[2] = color[2];
+
+  v[9] = color[0];
+  v[10] = color[1];
+  v[11] = color[2];
+
+  /* direction vector */
+
+  p0[0] = (v2[0] - v1[0]);
+  p0[1] = (v2[1] - v1[1]);
+  p0[2] = (v2[2] - v1[2]);
+  
+  copy3f(p0,d);
+  normalize3f(p0);
+  
+  /* need a prioritized third atom to get planarity */
+
+  a3 = ObjectMoleculeGetPrioritizedOther(other,a1,a2,&double_sided);
+
+  if(a3<0) {    
+    t[0] = p0[0];
+    t[1] = p0[1];
+    t[2] = -p0[2];
+  } else {
+    vv= coord+3*a3;
+    t[0] = *(vv++)-v1[0];
+    t[1] = *(vv++)-v1[1];
+    t[2] = *(vv++)-v1[2];
+    normalize3f(t);
+  }
+  
+  cross_product3f(d,t,p1);
+  
+  normalize3f(p1);
+
+  if(length3f(p1)==0.0) {
+    p1[0]=p0[1];
+    p1[1]=p0[2];
+    p1[2]=p0[0];
+    cross_product3f(p0,p1,p2);
+    normalize3f(p2);
+  } else {
+    cross_product3f(d,p1,p2);
+    
+    normalize3f(p2);
+  }
+
+  switch(half_state) {
+  case 0: /* full bond */
+
+    t[0] = p2[0]*tube_size*2;
+    t[1] = p2[1]*tube_size*2;
+    t[2] = p2[2]*tube_size*2;
+    
+    v[0] = color[0];
+    v[1] = color[1];
+    v[2] = color[2];
+    
+    v[3] = v1[0];
+    v[4] = v1[1];
+    v[5] = v1[2];
+    
+    v[6] = v2[0];
+    v[7] = v2[1];
+    v[8] = v2[2];
+    
+
+    v[9] = color[0];
+    v[10] = color[1];
+    v[11] = color[2];
+    
+    f = 0.14F;
+    f_1 = 1.0F-f;
+
+    v[12] = (f_1*v1[0]+f*v2[0]) - t[0];
+    v[13] = (f_1*v1[1]+f*v2[1]) - t[1];
+    v[14] = (f_1*v1[2]+f*v2[2]) - t[2];
+
+    f = 0.4F;
+    f_1 = 1.0F-f;
+
+    v[15] = (f_1*v1[0]+f*v2[0]) - t[0];
+    v[16] = (f_1*v1[1]+f*v2[1]) - t[1];
+    v[17] = (f_1*v1[2]+f*v2[2]) - t[2];
+
+    v[18] = color[0];
+    v[19] = color[1];
+    v[20] = color[2];
+
+    f = 0.6F;
+    f_1 = 1.0F-f;
+
+    v[21] = (f_1*v1[0]+f*v2[0]) - t[0];
+    v[22] = (f_1*v1[1]+f*v2[1]) - t[1];
+    v[23] = (f_1*v1[2]+f*v2[2]) - t[2];
+
+    f = 0.84F;
+    f_1 = 1.0F-f;
+
+    v[24] = (f_1*v1[0]+f*v2[0]) - t[0];
+    v[25] = (f_1*v1[1]+f*v2[1]) - t[1];
+    v[26] = (f_1*v1[2]+f*v2[2]) - t[2];
+    
+    v+=27;
+    n+=3;
+
+    if(double_sided) {
+      
+      v[ 0] = color[0];
+      v[ 1] = color[1];
+      v[ 2] = color[2];
+      
+      f = 0.14F;
+      f_1 = 1.0F-f;
+      
+      v[ 3] = (f_1*v1[0]+f*v2[0]) + t[0];
+      v[ 4] = (f_1*v1[1]+f*v2[1]) + t[1];
+      v[ 5] = (f_1*v1[2]+f*v2[2]) + t[2];
+      
+      f = 0.4F;
+      f_1 = 1.0F-f;
+      
+      v[ 6] = (f_1*v1[0]+f*v2[0]) + t[0];
+      v[ 7] = (f_1*v1[1]+f*v2[1]) + t[1];
+      v[ 8] = (f_1*v1[2]+f*v2[2]) + t[2];
+      
+      v[ 9] = color[0];
+      v[10] = color[1];
+      v[11] = color[2];
+      
+      f = 0.6F;
+      f_1 = 1.0F-f;
+      
+      v[12] = (f_1*v1[0]+f*v2[0]) + t[0];
+      v[13] = (f_1*v1[1]+f*v2[1]) + t[1];
+      v[14] = (f_1*v1[2]+f*v2[2]) + t[2];
+      
+      f = 0.84F;
+      f_1 = 1.0F-f;
+      
+      v[15] = (f_1*v1[0]+f*v2[0]) + t[0];
+      v[16] = (f_1*v1[1]+f*v2[1]) + t[1];
+      v[17] = (f_1*v1[2]+f*v2[2]) + t[2];
+      
+      v+=18;
+      n+=2;
+
+    }
+
+    break;
+  case 1:
+
+    t[0] = p2[0]*tube_size*2;
+    t[1] = p2[1]*tube_size*2;
+    t[2] = p2[2]*tube_size*2;
+    
+    v[0] = color[0];
+    v[1] = color[1];
+    v[2] = color[2];
+    
+    v[3] = v1[0];
+    v[4] = v1[1];
+    v[5] = v1[2];
+    
+    v[6] = (v2[0]+v1[0])/2.0F;
+    v[7] = (v2[1]+v1[1])/2.0F;
+    v[8] = (v2[2]+v1[2])/2.0F;
+    
+    v[9] = color[0];
+    v[10] = color[1];
+    v[11] = color[2];
+    
+    f = 0.14F;
+    f_1 = 1.0F-f;
+
+    v[12] = (f_1*v1[0]+f*v2[0]) - t[0];
+    v[13] = (f_1*v1[1]+f*v2[1]) - t[1];
+    v[14] = (f_1*v1[2]+f*v2[2]) - t[2];
+
+    f = 0.4F;
+    f_1 = 1.0F-f;
+
+    v[15] = (f_1*v1[0]+f*v2[0]) - t[0];
+    v[16] = (f_1*v1[1]+f*v2[1]) - t[1];
+    v[17] = (f_1*v1[2]+f*v2[2]) - t[2];
+
+    v+=18;
+    n+=2;
+
+    if(double_sided) {
+
+      v[ 0] = color[0];
+      v[ 1] = color[1];
+      v[ 2] = color[2];
+      
+      f = 0.14F;
+      f_1 = 1.0F-f;
+      
+      v[ 3] = (f_1*v1[0]+f*v2[0]) + t[0];
+      v[ 4] = (f_1*v1[1]+f*v2[1]) + t[1];
+      v[ 5] = (f_1*v1[2]+f*v2[2]) + t[2];
+      
+      f = 0.4F;
+      f_1 = 1.0F-f;
+      
+      v[ 6] = (f_1*v1[0]+f*v2[0]) + t[0];
+      v[ 7] = (f_1*v1[1]+f*v2[1]) + t[1];
+      v[ 8] = (f_1*v1[2]+f*v2[2]) + t[2];
+      
+      v+=9;
+      n++;
+
+    }
+    break;
+  case 2:
+
+    t[0] = p2[0]*tube_size*2;
+    t[1] = p2[1]*tube_size*2;
+    t[2] = p2[2]*tube_size*2;
+    
+    v[0] = color[0];
+    v[1] = color[1];
+    v[2] = color[2];
+    
+    v[3] = (v2[0]+v1[0])/2.0F;
+    v[4] = (v2[1]+v1[1])/2.0F;
+    v[5] = (v2[2]+v1[2])/2.0F;
+
+    v[6] = v2[0];
+    v[7] = v2[1];
+    v[8] = v2[2];
+    
+    v[9] = color[0];
+    v[10] = color[1];
+    v[11] = color[2];
+    
+    f = 0.60F;
+    f_1 = 1.0F-f;
+
+    v[12] = (f_1*v1[0]+f*v2[0]) - t[0];
+    v[13] = (f_1*v1[1]+f*v2[1]) - t[1];
+    v[14] = (f_1*v1[2]+f*v2[2]) - t[2];
+
+    f = 0.84F;
+    f_1 = 1.0F-f;
+
+    v[15] = (f_1*v1[0]+f*v2[0]) - t[0];
+    v[16] = (f_1*v1[1]+f*v2[1]) - t[1];
+    v[17] = (f_1*v1[2]+f*v2[2]) - t[2];
+
+    v+=18;
+    n+=2;
+
+
+    if(double_sided) {
+
+      v[ 0] = color[0];
+      v[ 1] = color[1];
+      v[ 2] = color[2];
+      
+      f = 0.60F;
+      f_1 = 1.0F-f;
+      
+      v[ 3] = (f_1*v1[0]+f*v2[0]) + t[0];
+      v[ 4] = (f_1*v1[1]+f*v2[1]) + t[1];
+      v[ 5] = (f_1*v1[2]+f*v2[2]) + t[2];
+      
+      f = 0.84F;
+      f_1 = 1.0F-f;
+      
+      v[ 6] = (f_1*v1[0]+f*v2[0]) + t[0];
+      v[ 7] = (f_1*v1[1]+f*v2[1]) + t[1];
+      v[ 8] = (f_1*v1[2]+f*v2[2]) + t[2];
+      
+      v+=9;
+      n++;
+
+    }
+
+    break;
+  }
+  *v_ptr = v;
+  *n_ptr = n;
+
+}
+
 void RepWireBondFree(RepWireBond *I)
 {
   FreeP(I->VP);
@@ -157,14 +457,16 @@ void RepWireBondRender(RepWireBond *I,CRay *ray,Pickable **pick)
 Rep *RepWireBondNew(CoordSet *cs)
 {
   ObjectMolecule *obj;
-  int a,a1,a2,c1,c2,s1,s2,b1,b2,ord,*o;
+  int a,a1,a2,c1,c2,s1,s2,b1,b2,ord;
   BondType *b;
   int half_bonds,*other=NULL;
   float valence;
   float *v,*v0,*v1,*v2,h[3];
   int visFlag;
-  int maxBond;
+  int maxSegment = 0;
+  int maxBond = 0;
   float tmpColor[3];
+  int valence_flag = false;
 
   Pickable *rp;
   AtomInfoType *ai1,*ai2;
@@ -193,14 +495,19 @@ Rep *RepWireBondNew(CoordSet *cs)
     return(NULL); /* skip if no dots are visible */
   }
 
-  maxBond = 0;
+  valence = SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_valence);
+  if(valence==1.0F) /* backwards compatibility... */
+    valence = SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_valence_size);
+  valence_flag = (valence!=0.0F);
+
+  half_bonds = SettingGet_i(cs->Setting,obj->Obj.Setting,cSetting_half_bonds);
 
   b=obj->Bond;
   for(a=0;a<obj->NBond;a++)
     {
       b1 = b->index[0];
       b2 = b->index[1];
-      b++;
+
       
       if(obj->DiscreteFlag) {
         if((cs==obj->DiscreteCSet[b1])&&(cs==obj->DiscreteCSet[b2])) {
@@ -216,11 +523,21 @@ Rep *RepWireBondNew(CoordSet *cs)
       }
       if((a1>=0)&&(a2>=0))
         {
+          if(valence_flag) {
+            if((b->order>0)&&(b->order<4)) {
+              maxSegment+=2*b->order;
+            } else if(b->order==4) { /* aromatic */
+              maxSegment+=10;
+            } else {
+              maxSegment+=2;
+            }
+          } else
+            maxSegment+=2;
           maxBond++;
         }
+      b++;
     }
-
-
+  
   RepInit(&I->R);
 
   I->R.fRender=(void (*)(struct Rep *, CRay *, Pickable **))RepWireBondRender;
@@ -228,10 +545,6 @@ Rep *RepWireBondNew(CoordSet *cs)
   I->Width = SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_line_width);
   I->Radius = SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_line_radius);
 
-  half_bonds = SettingGet_i(cs->Setting,obj->Obj.Setting,cSetting_half_bonds);
-  valence = SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_valence);
-  if(valence==1.0F) /* backwards compatibility... */
-    valence = SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_valence_size);
 
   I->N=0;
   I->NP=0;
@@ -242,50 +555,10 @@ Rep *RepWireBondNew(CoordSet *cs)
 
   if(obj->NBond) {
 
-    if(valence!=0.0) /* build list of up to 2 connected atoms for each atom */
-      {
-        other=Alloc(int,2*obj->NAtom);
-        o=other;
-        for(a=0;a<obj->NAtom;a++) {
-          *(o++)=-1;
-          *(o++)=-1;
-        }
-        b=obj->Bond;
-        for(a=0;a<obj->NBond;a++)
-          {
-            b1 = b->index[0];
-            b2 = b->index[1];
-            b++;
-            if(obj->DiscreteFlag) {
-              if((cs==obj->DiscreteCSet[b1])&&(cs==obj->DiscreteCSet[b2])) {
-                a1=obj->DiscreteAtmToIdx[b1];
-                a2=obj->DiscreteAtmToIdx[b2];
-              } else {
-                a1=-1;
-                a2=-1;
-              }
-            } else {
-              a1=cs->AtmToIdx[b1];
-              a2=cs->AtmToIdx[b2];
-            }
-            if((a1>=0)&&(a2>=0))
-              {
-                o=other+2*a1;
-                if(*o!=a2) {
-                  if(*o>=0) o++;
-                  *o=a2;
-                }
-                o=other+2*a2;              
-                if(*o!=a1) {
-                  if(*o>=0) o++;
-                  *o=a1;
-                }
-              }
-          }
-      }
+    if(valence_flag) /* build list of up to 2 connected atoms for each atom */
+      other=ObjectMoleculeGetPrioritizedOtherIndexList(obj,cs);
     
-    
-	 I->V=(float*)mmalloc(sizeof(float)*maxBond*54);
+	 I->V=(float*)mmalloc(sizeof(float)*maxSegment*9);
 	 ErrChkPtr(I->V);
 	 	 
 	 v=I->V;
@@ -337,10 +610,12 @@ Rep *RepWireBondNew(CoordSet *cs)
 
 						v0 = ColorGet(c1);
 
-                  if((valence!=0.0)&&(ord>1)&&(ord<4)) {
+                  if((valence_flag)&&(ord>1)&&(ord<4)) {
                     RepValence(v,v1,v2,other,a1,a2,cs->Coord,v0,ord,valence);
                     v+=ord*9;
                     I->N+=ord;
+                  } else if(valence_flag&&(ord==4)) { /* aromatic */
+                    RepAromatic(v1,v2,other,a1,a2,cs->Coord,v0,valence,0,&v,&I->N);
                   } else {
                     I->N++;
                     *(v++)=*(v0++);
@@ -371,40 +646,42 @@ Rep *RepWireBondNew(CoordSet *cs)
                         v0 = ColorGet(c1);
                       }
 
-
-                      if((valence!=0.0)&&(ord>1)&&(ord<4)) {
+                      if((valence_flag)&&(ord>1)&&(ord<4)) {
                         RepValence(v,v1,h,other,a1,a2,cs->Coord,v0,ord,valence);
                         v+=ord*9;
                         I->N+=ord;
-							 } else {
+							 } else if(valence_flag&&(ord==4)) {
+                        RepAromatic(v1,v2,other,a1,a2,cs->Coord,v0,valence,1,&v,&I->N);
+                      } else {
 
-							 I->N++;
-							 *(v++)=*(v0++);
-							 *(v++)=*(v0++);
-							 *(v++)=*(v0++);
-							 
-							 *(v++)=*(v1++);
-							 *(v++)=*(v1++);
-							 *(v++)=*(v1++);
-							 
-							 *(v++)=h[0];
-							 *(v++)=h[1];
-							 *(v++)=h[2];
+                        I->N++;
+                        *(v++)=*(v0++);
+                        *(v++)=*(v0++);
+                        *(v++)=*(v0++);
+                        
+                        *(v++)=*(v1++);
+                        *(v++)=*(v1++);
+                        *(v++)=*(v1++);
+                        
+                        *(v++)=h[0];
+                        *(v++)=h[1];
+                        *(v++)=h[2];
                       }
                     }
 						if(s2)
 						  {
-
                       if(ColorCheckRamped(c2)) {
                         ColorGetRamped(c2,v2,tmpColor);
                         v0 = tmpColor;
                       } else {
                         v0 = ColorGet(c2);
                       }
-                      if((valence!=0.0)&&(ord>1)&&(ord<4)) {
+                      if((valence_flag)&&(ord>1)&&(ord<4)) {
                         RepValence(v,h,v2,other,a1,a2,cs->Coord,v0,ord,valence);
                         v+=ord*9;
                         I->N+=ord;
+							 } else if(valence_flag&&(ord==4)) {
+                        RepAromatic(v1,v2,other,a1,a2,cs->Coord,v0,valence,2,&v,&I->N);
                       } else {
                         I->N++;
                         *(v++)=*(v0++);
@@ -530,7 +807,7 @@ static void RepValence(float *v,float *v1,float *v2,int *other,
 {
 
   float d[3],t[3],p0[3],p1[3],p2[3],*vv;
-  int a3,ck;
+  int a3;
 
   v[0] = color[0];
   v[1] = color[1];
@@ -549,27 +826,9 @@ static void RepValence(float *v,float *v1,float *v2,int *other,
   copy3f(p0,d);
   normalize3f(p0);
   
-  /* need a third atom to get planarity*/
+  /* need a prioritized third atom to get planarity */
 
-  a3 = -1;
-  ck = other[a1*2];
-  if((ck>=0)&&(ck!=a2))
-    a3=ck;
-  else {
-    ck = other[a1*2+1];
-    if((ck>=0)&&(ck!=a2))
-      a3=ck;
-    else {
-      ck = other[a2*2];
-      if((ck>=0)&&(ck!=a1))
-        a3=ck;
-      else {
-        ck = other[a2*2+1];
-        if((ck>=0)&&(ck!=a1))
-          a3=ck;
-        }
-      }
-  }
+  a3 = ObjectMoleculeGetPrioritizedOther(other,a1,a2,NULL);
 
   if(a3<0) {    
     t[0] = p0[0];
@@ -672,8 +931,8 @@ static void RepValence(float *v,float *v1,float *v2,int *other,
     v[24] = v2[0];
     v[25] = v2[1];
     v[26] = v2[2];
-
     break;
   }
 }
+
 
