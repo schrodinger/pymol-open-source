@@ -1776,12 +1776,26 @@ static int SceneClick(Block *block,int button,int x,int y,
       case cObjectMolecule:
         switch(mode) {
         case cButModeMenu:
-          ObjectMoleculeGetAtomSele((ObjectMolecule*)obj,I->LastPicked.index,buffer);
-          ObjectMoleculeGetAtomSeleLog((ObjectMolecule*)obj,I->LastPicked.index,buf1,false);
-          MenuActivate2Arg(G,I->LastWinX,I->LastWinY+20,
-                           I->LastWinX,I->LastWinY,
-                           is_single_click,
-                           "pick_menu",buffer,buf1);
+          {
+            ObjectMolecule *objMol = (ObjectMolecule*)obj;
+            int active_sele = ExecutiveGetActiveSele(G);
+            if(active_sele && SelectorIsMember(G,objMol->AtomInfo[I->LastPicked.index].selEntry,
+                                               active_sele)) {
+              char name[ObjNameMax];
+              ExecutiveGetActiveSeleName(G,name,false);
+              MenuActivate2Arg(G,I->LastWinX,I->LastWinY+20, /* selection menu */
+                               I->LastWinX,I->LastWinY,
+                               is_single_click,
+                               "pick_option",name,name);
+            } else {
+              ObjectMoleculeGetAtomSele((ObjectMolecule*)obj,I->LastPicked.index,buffer);
+              ObjectMoleculeGetAtomSeleLog((ObjectMolecule*)obj,I->LastPicked.index,buf1,false);
+              MenuActivate2Arg(G,I->LastWinX,I->LastWinY+20,
+                               I->LastWinX,I->LastWinY,
+                               is_single_click,
+                               "pick_menu",buffer,buf1);
+            }
+          }
           break;
         case cButModePickAtom1:
           if(obj&&obj->type==cObjectMolecule) {
