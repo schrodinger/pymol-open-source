@@ -37,6 +37,7 @@ following dependencies (download win32 versions from the net):
    pymol/win32/include/pngasmrd.h
    pymol/win32/include/zconf.h
    pymol/win32/include/zlib.h
+   pymol/win32/include/GL/glut.h
 
    pymol/win32/lib/glut32.lib
    pymol/win32/lib/libpng.lib
