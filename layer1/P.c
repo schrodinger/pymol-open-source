@@ -790,6 +790,7 @@ void PLockAPIAsGlut(void) /* must call with an unblocked interpreter */
 #ifndef _EPYMOL
 void	initExtensionClass(void);
 void	initsglite(void);
+void  init_champ(void);
 void    init_opengl(void);
 void    init_opengl_num(void);
 void    init_glu(void);
@@ -821,6 +822,7 @@ void  init_champ();
 #ifndef _EPYMOL
 void	initExtensionClass(void);
 void	initsglite(void);
+void  init_champ(void);
 void    init_opengl(void);
 void    init_opengl_num(void);
 void    init_glu(void);
@@ -959,6 +961,7 @@ putenv(line3);
 #ifndef _EPYMOL
 	initExtensionClass();
 	initsglite();
+   init_champ();
 #ifdef WIN32
 	/* initialize numeric python */
 	init_numpy();
@@ -1124,6 +1127,7 @@ void PInit(void)
 	/* sglite */
 	initExtensionClass();
 	initsglite();
+   init_champ(void);
 	/* initialize numeric python */
 	init_numpy();
 	initmultiarray();
