@@ -179,7 +179,8 @@ compileall:
 # Compilation of MacPyMOL requires layerOSX.
 
 OSXPROD=products/MacPyMOL.app
-OSXFREE=products/PyMOL.app
+OSXVIEWER=products/PyMOLViewer.app
+OSXHYBRID=products/PyMOLX11Hybrid.app
 OSXHELPER=products/HelperPyMOL.app
 OSXFRWK=products/FrameworkPyMOL.app
 OSXDEMO=products/PyMOL\ Demos
@@ -196,13 +197,13 @@ osx-unwrap:
 	/usr/local/bin/tar -xzvf layerOSX/bundle/app.hfstar
 
 osx-python-framework:
-	cc layerOSX/bundle/python.c -o $(OSXEXE) \
+	cc layerOSX/bundle/python.c -o $(OSXEXE) $(DEFS)\
 $(PYTHON_INC_DIR) \
 -framework CoreFoundation -framework Python -lc -Wno-long-double
 
 osx-python-standalone:
-	cc layerOSX/bundle/python.c -o $(OSXEXE) \
-$(PYTHON_INC_DIR) -Lext/lib -lpython2.3 \
+	cc layerOSX/bundle/python.c -o $(OSXEXE) $(DEFS)\
+$(PYTHON_INC_DIR) -Lext/lib -Lext/lib/python2.3/config -lpython2.3 \
 -framework CoreFoundation -lc -Wno-long-double -D_PYMOL_OSX_PYTHONHOME
 
 osx: 
@@ -266,14 +267,26 @@ mac-helper: mac
 	/bin/rm -r $(OSXHELPER)/Contents/Resources/English.lproj/MainMenu.nib
 	/bin/rm -r $(OSXHELPER)/Contents/Resources/English.lproj/MainMenu~.nib
 
-mac-free: mac
-	/bin/rm -rf $(OSXFREE)
-	/bin/cp -R $(OSXPROD) $(OSXFREE)
-	sed 's/MacPyMOL/PyMOL/' $(OSXFREE)/Contents/Info.plist > $(OSXFREE)/Contents/Info.plist.tmp
-	mv $(OSXFREE)/Contents/Info.plist.tmp $(OSXFREE)/Contents/Info.plist
-	/bin/cp data/pymol/splash.png $(OSXFREE)/pymol/data/pymol/
-	/bin/rm -r $(OSXFREE)/Contents/Resources/English.lproj/MainMenu.nib
-	/bin/rm -r $(OSXFREE)/Contents/Resources/English.lproj/MainMenu~.nib
+mac-viewer: mac
+	/bin/rm -rf $(OSXVIEWER)
+	/bin/cp -R $(OSXPROD) $(OSXVIEWER)
+	sed 's/MacPyMOL/PyMOLViewer/' $(OSXVIEWER)/Contents/Info.plist > $(OSXVIEWER)/Contents/Info.plist.tmp
+	mv $(OSXVIEWER)/Contents/Info.plist.tmp $(OSXVIEWER)/Contents/Info.plist
+	/bin/cp data/pymol/splash.png $(OSXVIEWER)/pymol/data/pymol/
+	/bin/rm -r $(OSXVIEWER)/Contents/Resources/English.lproj/MainMenu.nib
+	/bin/rm -r $(OSXVIEWER)/Contents/Resources/English.lproj/MainMenu~.nib
+
+mac-hybrid: mac
+	/bin/rm -rf $(OSXHYBRID)
+	/bin/cp -R $(OSXPROD) $(OSXHYBRID)
+	sed 's/MacPyMOL/PyMOLX11Hybrid/' $(OSXHYBRID)/Contents/Info.plist > $(OSXHYBRID)/Contents/Info.plist.tmp
+	mv $(OSXHYBRID)/Contents/Info.plist.tmp $(OSXHYBRID)/Contents/Info.plist
+	/bin/cp data/pymol/splash.png $(OSXHYBRID)/pymol/data/pymol/
+	/bin/rm -r $(OSXHYBRID)/Contents/Resources/English.lproj/MainMenu.nib
+	/bin/rm -r $(OSXHYBRID)/Contents/Resources/English.lproj/MainMenu~.nib
+	/bin/cp -r ext/lib/tcl8.4 $(OSXHYBRID)
+	/bin/cp -r ext/lib/tk8.4 $(OSXHYBRID)
+
 
 mac-beta:
 	make distclean

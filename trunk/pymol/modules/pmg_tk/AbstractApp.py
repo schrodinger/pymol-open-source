@@ -50,11 +50,13 @@ class AbstractApp(Pmw.MegaWidget):
          self.frameAdjust = 60 # 51 sufficient for Win2k, but 60 needed for XP
       elif sys.platform[0:4]=='irix':
          self.frameAdjust = 41
+      elif sys.platform=='darwin':
+         self.frameAdjust = 51
       elif sys.platform!='linux':
          self.frameAdjust = 31
       else:
          self.frameAdjust = 51
-         
+
       inv = sys.modules.get("pymol.invocation",None)
       if inv!=None:
          self.frameWidth = inv.options.win_x+220

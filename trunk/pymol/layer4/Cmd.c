@@ -2373,7 +2373,9 @@ static PyObject *CmdGetFeedback(PyObject *dummy, PyObject *args)
 #endif
     exit(0);
   }
+  APIEnterBlocked();
   ok = OrthoFeedbackOut(buffer); 
+  APIExitBlocked();
   if(ok) result = Py_BuildValue("s",buffer);
   return(APIAutoNone(result));
 }

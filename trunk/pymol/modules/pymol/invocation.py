@@ -64,7 +64,7 @@ if __name__=='pymol.invocation':
 
    if sys.platform[:5] == 'linux':
       options.ext_y = options.ext_y + 48
-      
+
    options.blue_line = 0
 
    # Greg Landrum
@@ -140,10 +140,18 @@ if __name__=='pymol.invocation':
                         "-X","68",
                         "-Y","100",
                         ]
-               # ====== mode 3 - internal GUI window ======
+               # ====== mode 2 - internal GUI only with splash ======
+               if a[2:3] == "2": # used by PYMOLVIEWER
+                  if not once_dict.has_key('A2'):
+                     once_dict['A2'] = 1
+                     new_args = [
+                        "-X","68",
+                        "-Y","100",
+                        ]
+               # ====== mode 3 - internal GUI only no splash ======
                if a[2:3] == "3": 
                   if not once_dict.has_key('A3'):
-                     once_dict['A3'] = 3
+                     once_dict['A3'] = 1
                      new_args = ["-qx",
                         "-X","68",
                         "-Y","100",
