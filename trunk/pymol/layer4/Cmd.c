@@ -2391,14 +2391,15 @@ static PyObject *CmdGetPDB(PyObject *dummy, PyObject *args)
   char *str1;
   char *pdb = NULL;
   int state;
+  int mode;
   OrthoLineType s1 = "";
   PyObject *result = NULL;
   int ok=false;
-  ok = PyArg_ParseTuple(args,"si",&str1,&state);
+  ok = PyArg_ParseTuple(args,"sii",&str1,&state,&mode);
   if (ok) {
     APIEntry();
     SelectorGetTmp(str1,s1);
-    pdb=ExecutiveSeleToPDBStr(s1,state,true);
+    pdb=ExecutiveSeleToPDBStr(s1,state,true,mode);
     SelectorFreeTmp(s1);
     APIExit();
     if(pdb) result = Py_BuildValue("s",pdb);

@@ -5060,7 +5060,19 @@ CoordSet *ObjectMoleculeChemPyModel2CoordSet(PyObject *model,AtomInfoType **atIn
               ErrMessage("ObjectMoleculeChemPyModel2CoordSet","can't read vdw radius");
             Py_XDECREF(tmp);
           } else {
-            ai->vdw=0.0;
+            ai->vdw=0.0f;
+          }
+        }
+        if(ok) {
+          if(PTruthCallStr(atom,"has","bohr")) { 
+            tmp = PyObject_GetAttrString(atom,"bohr");
+            if (tmp)
+              ok = PConvPyObjectToFloat(tmp,&ai->bohr_radius);
+            if(!ok) 
+              ErrMessage("ObjectMoleculeChemPyModel2CoordSet","can't read bohr radius");
+            Py_XDECREF(tmp);
+          } else {
+            ai->bohr_radius=0.0F;
           }
         }
 
@@ -6289,7 +6301,7 @@ void ObjectMoleculeSeleOp(ObjectMolecule *I,int sele,ObjectMoleculeOpRec *op)
                     ind=I->CSet[b]->AtmToIdx[a];
                   if(ind>=0) 
                     CoordSetAtomToPDBStrVLA(&op->charVLA,&op->i2,I->AtomInfo+a,
-                                            I->CSet[b]->Coord+(3*ind),op->i3);
+                                            I->CSet[b]->Coord+(3*ind),op->i3,NULL);
                   op->i3++;
                 }
 				}

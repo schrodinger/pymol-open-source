@@ -296,7 +296,7 @@ PyObject *AtomInfoAsPyList(AtomInfoType *I)
 {
   PyObject *result = NULL;
 
-  result = PyList_New(35);
+  result = PyList_New(36);
   PyList_SetItem(result, 0,PyInt_FromLong(I->resv));
   PyList_SetItem(result, 1,PyString_FromString(I->chain));
   PyList_SetItem(result, 2,PyString_FromString(I->alt));
@@ -332,6 +332,7 @@ PyObject *AtomInfoAsPyList(AtomInfoType *I)
   PyList_SetItem(result,32,PyInt_FromLong(I->sculpt_id));
   PyList_SetItem(result,33,PyInt_FromLong(I->stereo));
   PyList_SetItem(result,34,PyInt_FromLong(I->discrete_state));
+  PyList_SetItem(result,35,PyFloat_FromDouble(I->bohr_radius));
   return(PConvAutoNone(result));
 }
 
@@ -378,6 +379,7 @@ int AtomInfoFromPyList(AtomInfoType *I,PyObject *list)
   if(ok) ok = PConvPyIntToInt(PyList_GetItem(list,32),&I->sculpt_id);
   if(ok) ok = PConvPyIntToInt(PyList_GetItem(list,33),&I->stereo);
   if(ok&&(ll>34)) ok = PConvPyIntToInt(PyList_GetItem(list,34),&I->discrete_state);
+  if(ok&&(ll>35)) ok = PConvPyFloatToFloat(PyList_GetItem(list,35),&I->bohr_radius);
   return(ok);
 }
 
@@ -1599,6 +1601,7 @@ void AtomInfoAssignParameters(AtomInfoType *I)
   }
   if(I->vdw==0.0)
     I->vdw = vdw;
+
   /*  printf("I->name %s I->priority %d\n",I->name,I->priority);*/
 }
 

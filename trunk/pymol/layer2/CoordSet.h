@@ -68,7 +68,8 @@ PyObject *CoordSetAsPyList(CoordSet *I);
 int CoordSetFromPyList(PyObject *list,CoordSet **cs);
 
 CoordSet *CoordSetNew(void);
-void CoordSetAtomToPDBStrVLA(char **charVLA,int *c,AtomInfoType *ai,float *v,int cnt);
+void CoordSetAtomToPDBStrVLA(char **charVLA,int *c,AtomInfoType *ai,
+                             float *v,int cnt,PDBInfoRec *pdb_info);
 void CoordSetAtomToTERStrVLA(char **charVLA,int *c,AtomInfoType *ai,int cnt);
 CoordSet *CoordSetCopy(CoordSet *cs);
 

@@ -394,7 +394,8 @@ void CoordSetFracToReal(CoordSet *I,CCrystal *cryst)
   }
 }
 /*========================================================================*/
-void CoordSetAtomToPDBStrVLA(char **charVLA,int *c,AtomInfoType *ai,float *v,int cnt)
+void CoordSetAtomToPDBStrVLA(char **charVLA,int *c,AtomInfoType *ai,
+                             float *v,int cnt,PDBInfoRec *pdb_info)
 {
   char *aType;
   AtomName name;
@@ -503,9 +504,16 @@ void CoordSetAtomToPDBStrVLA(char **charVLA,int *c,AtomInfoType *ai,float *v,int
   }
   if(cnt>99998)
     cnt=99998;
-  (*c)+=sprintf((*charVLA)+(*c),"%6s%5i %-4s%1s%3s %1s%5s   %8.3f%8.3f%8.3f%6.2f%6.2f      %-4s%2s\n",
-                aType,cnt+1,name,ai->alt,ai->resn,
-                ai->chain,resi,*v,*(v+1),*(v+2),ai->q,ai->b,ai->segi,ai->elem);
+  if((!pdb_info)||(!pdb_info->is_pqr_file)) { /* relying upon short-circuit */
+
+    (*c)+=sprintf((*charVLA)+(*c),"%6s%5i %-4s%1s%3s %1s%5s   %8.3f%8.3f%8.3f%6.2f%6.2f      %-4s%2s\n",
+                  aType,cnt+1,name,ai->alt,ai->resn,
+                  ai->chain,resi,*v,*(v+1),*(v+2),ai->q,ai->b,ai->segi,ai->elem);
+  } else {
+    (*c)+=sprintf((*charVLA)+(*c),"%6s%5i %-4s%1s%3s %1s%5s   %8.3f%8.3f%8.3f %7.3f %7.3f\n",
+                  aType,cnt+1,name,ai->alt,ai->resn,
+                  ai->chain,resi,*v,*(v+1),*(v+2),ai->partialCharge,ai->bohr_radius);
+  }
   
 }
 /*========================================================================*/
@@ -533,6 +541,7 @@ PyObject *CoordSetAtomToChemPyAtom(AtomInfoType *ai,float *v,int index)
     PConvFloatToPyObjAttr(atom,"q",ai->q);
     PConvFloatToPyObjAttr(atom,"b",ai->b);
     PConvFloatToPyObjAttr(atom,"vdw",ai->vdw);
+    PConvFloatToPyObjAttr(atom,"bohr",ai->bohr_radius);
     PConvFloatToPyObjAttr(atom,"partial_charge",ai->partialCharge);
     PConvIntToPyObjAttr(atom,"formal_charge",ai->formalCharge);
     if(ai->customType!=-9999)
