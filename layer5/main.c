@@ -1012,7 +1012,6 @@ SetConsoleCtrlHandler(
         printf(" Hardware stereo not present (unable to force).\n");
       }
     } 
-
     p_glutMainLoop();
     PBlock(); /* if we've gotten here, then we're heading back to Python... */
   } else {
