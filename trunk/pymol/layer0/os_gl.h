@@ -24,6 +24,7 @@ Z* -------------------------------------------------------------------
 #include<GL/gl.h>
 #else
 #include<gl.h>
+#include <OpenGL/glext.h>
 #endif
 
 #ifdef WIN32

@@ -111,6 +111,7 @@ int SceneRelease(Block *block,int button,int x,int y,int mod);
 int SceneDrag(Block *block,int x,int y,int mod);
 void ScenePrepareMatrix(int mode);
 
+
 #if 0
 static int SceneGetObjState(CObject *obj,int state)
 {
