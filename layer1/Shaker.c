@@ -124,7 +124,7 @@ float ShakerDoPyra(float target,float *v0,float *v1,float *v2,float *v3,
 float ShakerDoPlan(float *v0,float *v1,float *v2,float *v3,
                    float *p0,float *p1,float *p2,float *p3)
 {
-  float vc[3],d0[3],d1[3],d2[3],d3[3],cp[3];
+  float vc[3],d0[3],d1[3],d2[3],cp[3];
   float push[3];
   float cur,dev,sc;
 
@@ -149,10 +149,25 @@ float ShakerDoPlan(float *v0,float *v1,float *v2,float *v3,
 
     subtract3f(v0,v3,d0);
     normalize3f(d0);
-
     scale3f(d0,sc,push);
     add3f(push,p0,p0); 
     subtract3f(p3,push,p3);
+
+    sc = -2.0*sc ;
+
+    subtract3f(v0,v2,d0);
+    normalize3f(d0);
+    scale3f(d0,sc,push);
+    add3f(push,p0,p0); 
+    subtract3f(p2,push,p2);
+
+    subtract3f(v1,v3,d0);
+    normalize3f(d0);
+    scale3f(d0,sc,push);
+    add3f(push,p1,p1); 
+    subtract3f(p3,push,p3);
+
+    
   } else
     dev = 0.0;
   return dev;

@@ -94,7 +94,7 @@ typedef struct {
   Pickable LastPicked;
   int StereoMode;
   OrthoLineType vendor,renderer,version;
-  int SculptingSave;
+  int SculptingFlag,SculptingSave;
 } CScene;
 
 CScene Scene;
@@ -790,8 +790,13 @@ unsigned int *SceneReadTriplets(int x,int y,int w,int h)
 int SceneRelease(Block *block,int button,int x,int y,int mod) 
 {
   CScene *I=&Scene;
-  if(I->SculptingSave)
-    SettingSet(cSetting_sculpting,1);
+  ObjectMolecule *obj;
+  if(I->SculptingFlag) {
+    /* SettingSet(cSetting_sculpting,1); */
+    obj=(ObjectMolecule*)I->LastPicked.ptr;
+    obj->AtomInfo[I->LastPicked.index].protected=I->SculptingSave;
+    I->SculptingFlag=0;
+  }
   return(1);
 }
 /*========================================================================*/
@@ -938,13 +943,18 @@ int SceneClick(Block *block,int button,int x,int y,int mod)
         PRINTF " You clicked %s",buffer ENDF;        
         OrthoRestorePrompt();
       }
-      EditorPrepareDrag((ObjectMolecule*)obj,I->LastPicked.index,I->StateIndex);
+      objMol = (ObjectMolecule*)obj;
+      EditorPrepareDrag(objMol,I->LastPicked.index,I->StateIndex);
       y=y-I->Block->margin.bottom;
       x=x-I->Block->margin.left;
       I->LastX=x;
       I->LastY=y;	
-      I->SculptingSave = (int)SettingGet(cSetting_sculpting);
-      SettingSet(cSetting_sculpting,0);
+      I->SculptingFlag = 1;
+      I->SculptingSave =  objMol->AtomInfo[I->LastPicked.index].protected;
+      objMol->AtomInfo[I->LastPicked.index].protected=2;
+      /*
+        (int)SettingGet(cSetting_sculpting);
+            SettingSet(cSetting_sculpting,0);*/
     }
     break;
  

@@ -2766,7 +2766,7 @@ int ObjectMoleculeTransformSelection(ObjectMolecule *I,int state,
       ai=I->AtomInfo;
       for(a=0;a<I->NAtom;a++) {
         s=ai->selEntry;
-        if(!ai->protected)
+        if(!(ai->protected==1))
           if(SelectorIsMember(s,sele))
             {
               CoordSetTransformAtom(cs,a,TTT);
@@ -2777,7 +2777,7 @@ int ObjectMoleculeTransformSelection(ObjectMolecule *I,int state,
     } else {
       ai=I->AtomInfo;
       for(a=0;a<I->NAtom;a++) {
-        if(!ai->protected)
+        if(!(ai->protected==1))
           CoordSetTransformAtom(cs,a,TTT);
         ai++;
       }
@@ -5135,7 +5135,11 @@ void ObjectMoleculeInvalidate(ObjectMolecule *I,int rep,int level)
     ENDFD;
 
   if(level>=cRepInvBonds) {
-    VLAFreeP(I->Neighbor);
+    VLAFreeP(I->Neighbor); /* set I->Neighbor to NULL */
+    if(I->Sculpt) {
+      SculptFree(I->Sculpt);
+      I->Sculpt = NULL;
+    }
     ObjectMoleculeUpdateNonbonded(I);
     if(level>=cRepInvAtoms) {
       SelectorUpdateObjectSele(I);
@@ -5161,8 +5165,7 @@ int ObjectMoleculeMoveAtom(ObjectMolecule *I,int state,int index,float *v,int mo
 {
   int result = 0;
   CoordSet *cs;
-  int protect;
-  if(!I->AtomInfo[index].protected) {
+  if(!(I->AtomInfo[index].protected==1)) {
     if(state<0) state=0;
     if(I->NCSet==1) state=0;
     state = state % I->NCSet;
@@ -5182,10 +5185,7 @@ int ObjectMoleculeMoveAtom(ObjectMolecule *I,int state,int index,float *v,int mo
     }
   }
   if(I->Sculpt) {
-    protect = I->AtomInfo[index].protected;
-    I->AtomInfo[index].protected=1;
     SculptIterateObject(I->Sculpt,I,state,1);
-    I->AtomInfo[index].protected=0;
   }
   return(result);
 }
