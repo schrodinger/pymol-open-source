@@ -39,6 +39,8 @@ Bugs to Fix
 
 Changes up to 0.63
 
+   * fixed rendering background color bug on BigEndian machines
+
    * fixed fatal bug with symexp
 
    * first attempt at support for CCP4's binary maps -- it works with my
