@@ -59,6 +59,7 @@ if __name__=='pymol.importing':
       xplorstr = 26 # XPLOR map as string
       phi = 27      # Delphi/Grasp
       fld = 28      # AVS field format (not yet general -- just uniform allowed)
+      brix = 29     # BRIX/DSN6/O map format
       
    loadable_sc = Shortcut(loadable.__dict__.keys()) 
 
@@ -400,6 +401,8 @@ SEE ALSO
                ftype = loadable.phi
             elif re.search("\.fld$",filename,re.I):
                ftype = loadable.fld
+            elif re.search("\.o$|\.brix$|\.omap$",filename,re.I):
+               ftype = loadable.brix
             else:
                ftype = loadable.pdb # default is PDB
          elif cmd.is_string(type):
