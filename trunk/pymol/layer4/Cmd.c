@@ -68,6 +68,7 @@ Z* -------------------------------------------------------------------
 #define cLoadTypeMMDStr 6
 #define cLoadTypeXPLORMap 7
 #define cLoadTypeChemPyModel 8
+#define cLoadTypePDBStr 9
 
 #define tmpSele "_tmp"
 #define tmpSele1 "_tmp1"
@@ -1436,6 +1437,26 @@ static PyObject *CmdLoad(PyObject *self, PyObject *args)
         frame = ((ObjectMolecule*)obj)->NCSet-1;
 		sprintf(buf," CmdLoad: \"%s\" appended into object \"%s\", state %d.\n",
               fname,oname,frame+1);
+	 }
+	 break;
+  case cLoadTypePDBStr:
+	 obj=(Object*)ObjectMoleculeReadPDBStr((ObjectMolecule*)origObj,fname,frame,discrete);
+	 if(!origObj) {
+	   if(obj) {
+		 ObjectSetName(obj,oname);
+		 ExecutiveManageObject(obj);
+       if(frame<0)
+         frame = ((ObjectMolecule*)obj)->NCSet-1;
+		 sprintf(buf," CmdLoad: PDB-string loaded into object \"%s\", state %d.\n",
+               oname,frame+1);		  
+	   }
+	 } else if(origObj) {
+      if(finish)
+        ExecutiveUpdateObjectSelection(origObj);
+      if(frame<0)
+        frame = ((ObjectMolecule*)origObj)->NCSet-1;
+		sprintf(buf," CmdLoad: PDB-string appended into object \"%s\", state %d.\n",
+              oname,frame+1);
 	 }
 	 break;
   case cLoadTypeMOL:

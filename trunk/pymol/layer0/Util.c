@@ -38,8 +38,9 @@ double UtilGetSeconds(void)
   struct timeval tv;
   gettimeofday(&tv,NULL);
   return((tv.tv_sec-UtilStartSec)+(tv.tv_usec/((double)1000000.0)));
-#endif
+#else
   return(0.0);
+#endif
 }
 
 char *UtilConcat(char *where,char *what)

@@ -242,21 +242,25 @@ class PMGApp(AbstractApp):
                                label='Maximum Speed',
                                command = lambda: cmd.set("movie_delay","0"))
 
-		self.menuBar.addmenuitem('Movie', 'command', '30 FPS Maximum',
-                               label='30 FPS Maximum',
+		self.menuBar.addmenuitem('Movie', 'command', '30 FPS',
+                               label='30 FPS',
                                command = lambda: cmd.set("movie_delay","33"))
 
-		self.menuBar.addmenuitem('Movie', 'command', '15 FPS Maximum',
-                               label='15 FPS Maximum',
+		self.menuBar.addmenuitem('Movie', 'command', '15 FPS',
+                               label='15 FPS',
                                command = lambda: cmd.set("movie_delay","66"))
 
-		self.menuBar.addmenuitem('Movie', 'command', '5 FPS Maximum',
-                               label='5 FPS Maximum',
+		self.menuBar.addmenuitem('Movie', 'command', '5 FPS',
+                               label='5 FPS',
                                command = lambda: cmd.set("movie_delay","200"))
 
-		self.menuBar.addmenuitem('Movie', 'command', '1 FPS Maximum',
-                               label='5 FPS Maximum',
+		self.menuBar.addmenuitem('Movie', 'command', '1 FPS',
+                               label='1 FPS',
                                command = lambda: cmd.set("movie_delay","1000"))
+
+		self.menuBar.addmenuitem('Movie', 'command', '0.3 FPS',
+                               label='0.3 FPS',
+                               command = lambda: cmd.set("movie_delay","3000"))
 
 		self.menuBar.addmenuitem('Movie', 'separator', '')
 
