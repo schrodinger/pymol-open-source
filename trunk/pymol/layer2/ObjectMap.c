@@ -1148,7 +1148,10 @@ static int ObjectMapPHIStrToMap(ObjectMap *I,char *PHIStr,int bytes,int state) {
           rev[2]=p[1];
           rev[3]=p[0];
         } else {
-          *((float*)rev)=*((float*)p);
+          rev[0]=p[0]; /* gotta go char by char because of memory alignment issues ... */
+          rev[1]=p[1];
+          rev[2]=p[2];
+          rev[3]=p[3];
         }
         dens = *((float*)rev);
         F3(ms->Field->data,a,b,c) = dens;
@@ -1177,7 +1180,10 @@ static int ObjectMapPHIStrToMap(ObjectMap *I,char *PHIStr,int bytes,int state) {
     rev[2]=p[1];
     rev[3]=p[0];
   } else {
-    *((float*)rev)=*((float*)p);
+    rev[0]=p[0]; /* gotta go char by char because of memory alignment issues ... */
+    rev[1]=p[1];
+    rev[2]=p[2];
+    rev[3]=p[3];
   }
   ms->Grid[0] = 1.0F/(*((float*)rev));
   ms->Grid[1] = ms->Grid[0];
@@ -1191,7 +1197,10 @@ static int ObjectMapPHIStrToMap(ObjectMap *I,char *PHIStr,int bytes,int state) {
     rev[2]=p[1];
     rev[3]=p[0];
   } else {
-    *((float*)rev)=*((float*)p);
+    rev[0]=p[0]; /* gotta go char by char because of memory alignment issues ... */
+    rev[1]=p[1];
+    rev[2]=p[2];
+    rev[3]=p[3];;
   }
   ms->Origin[0] = *((float*)rev);
   p+=4;
@@ -1202,7 +1211,10 @@ static int ObjectMapPHIStrToMap(ObjectMap *I,char *PHIStr,int bytes,int state) {
     rev[2]=p[1];
     rev[3]=p[0];
   } else {
-    *((float*)rev)=*((float*)p);
+    rev[0]=p[0]; /* gotta go char by char because of memory alignment issues ... */
+    rev[1]=p[1];
+    rev[2]=p[2];
+    rev[3]=p[3];;
   }
   ms->Origin[1] = *((float*)rev);
   p+=4;
@@ -1212,7 +1224,10 @@ static int ObjectMapPHIStrToMap(ObjectMap *I,char *PHIStr,int bytes,int state) {
     rev[2]=p[1];
     rev[3]=p[0];
   } else {
-    *((float*)rev)=*((float*)p);
+    rev[0]=p[0]; /* gotta go char by char because of memory alignment issues ... */
+    rev[1]=p[1];
+    rev[2]=p[2];
+    rev[3]=p[3];;
   }
   ms->Origin[2] = *((float*)rev);
   p+=4;
