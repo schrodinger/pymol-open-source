@@ -102,6 +102,7 @@ setup ( # Distribution meta-data
    "layer1/Ortho.c",
    "layer1/P.c",
    "layer1/PConv.c",
+   "layer1/PixMap.c",
    "layer1/Pop.c",
    "layer1/PyMOLObject.c",
    "layer1/Ray.c",
