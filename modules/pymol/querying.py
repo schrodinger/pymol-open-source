@@ -20,6 +20,22 @@ if __name__=='pymol.querying':
    from cmd import _cmd,lock,unlock,Shortcut,QuietException
    from cmd import _feedback,fb_module,fb_mask,is_list
 
+   def get_object_list(selection="(all)",quiet=1):
+      '''
+      '''
+      r = []
+      selection = selector.process(selection)
+      try:
+         lock()
+         r = _cmd.get_object_list(str(selection))
+         if not quiet:
+            if(is_list(r)):
+               print " get_object_list: ",str(r)
+      finally:
+         unlock()
+      return r
+
+      return r
    def get_symmetry(selection="(all)",quiet=1):
       '''
 DESCRIPTION

@@ -1173,6 +1173,7 @@ SEE ALSO
         get_color_index,    \
         get_color_indices,  \
         get_object_color_index, \
+        get_object_list,    \
         get_color_tuple,    \
         get_atom_coords,    \
         get_dihedral,       \

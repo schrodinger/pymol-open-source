@@ -128,6 +128,7 @@ void ExecutiveFullScreen(PyMOLGlobals *G,int flag);
 void ExecutiveFocus(PyMOLGlobals *G);
 PyObject *ExecutiveGetSettingTuple(PyMOLGlobals *G,int index,char *object,int state);
 PyObject *ExecutiveGetSettingText(PyMOLGlobals *G,int index,char *object,int state);
+ObjectMolecule **ExecutiveGetObjectMoleculeVLA(PyMOLGlobals *G,char *sele);
 int ExecutivePairIndices(PyMOLGlobals *G,char *s1,char *s2,int state1,int state2,
                          int mode,float cutoff,float h_angle,
                          int **indexVLA, ObjectMolecule ***objVLA);

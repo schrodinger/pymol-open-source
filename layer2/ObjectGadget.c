@@ -59,6 +59,7 @@ int ObjectGadgetSetVertex(ObjectGadget *I,int index,int base, float *v)
       ok = GadgetSetSetVertex(gs,index,base,v);
     }
   }
+  I->Changed=true;
   return(ok);
 }
 
@@ -435,8 +436,11 @@ void ObjectGadgetUpdateStates(ObjectGadget *I)
 /*========================================================================*/
 void ObjectGadgetUpdate(ObjectGadget *I)
 {
-  ObjectGadgetUpdateStates(I);
-  ObjectGadgetUpdateExtents(I);
+  if(I->Changed) {
+    ObjectGadgetUpdateStates(I);
+    ObjectGadgetUpdateExtents(I);
+    I->Changed=false;
+  }
 }
 
 /*========================================================================*/
@@ -479,6 +483,7 @@ void ObjectGadgetInit(PyMOLGlobals *G,ObjectGadget *I)
   I->Obj.type=cObjectGadget;
   I->GSet=VLAMalloc(10,sizeof(GadgetSet*),5,true); /* auto-zero */
   I->NGSet=0;
+  I->Changed=true;
 
   I->Obj.fFree = (void (*)(struct CObject *))ObjectGadgetFree;
   I->Obj.fUpdate =(void (*)(struct CObject *)) ObjectGadgetUpdate;

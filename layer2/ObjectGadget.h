@@ -31,6 +31,7 @@ typedef struct ObjectGadget {
   int NGSet;
   int CurGSet;
   int GadgetType;
+  int Changed;
 } ObjectGadget;
 
 
