@@ -240,6 +240,9 @@ int ExecutiveSetName(PyMOLGlobals *G,char *old_name, char *new_name);
 int ExecutiveGetActiveSeleName(PyMOLGlobals *G,char *name, int create_new);
 int ExecutiveGetActiveSele(PyMOLGlobals *G);
 CObject *ExecutiveGetExistingCompatible(PyMOLGlobals *G,char *oname,int type);
+float ExecutiveAngle(PyMOLGlobals *G,char *nam,char *s1,char *s2,char *s3,int mode,
+                     int labels,int reset,int zoom,int quiet);
+
 
 #endif
 

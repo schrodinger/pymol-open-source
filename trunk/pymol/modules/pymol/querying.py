@@ -117,6 +117,10 @@ PYMOL API
          unlock()
       return r
 
+   def angle(name=None,selection1="(pk1)",selection2="(pk2)",selection3="(pk3)", 
+                mode=None,zoom=0,width=None,length=None,gap=None,labels=1,quiet=1):
+      pass
+   
    def distance(name=None,selection1="(pk1)",selection2="(pk2)",cutoff=None,
                 mode=None,zoom=0,width=None,length=None,gap=None,labels=1,quiet=1):
       '''

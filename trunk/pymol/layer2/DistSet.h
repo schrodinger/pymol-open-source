@@ -31,6 +31,11 @@ typedef struct DistSet {
   Rep **Rep; /* an array of pointers to representations */
   int NRep;
   CSetting *Setting;
+  /* extended for angles and torsions */
+  float *AngleCoord;
+  int NAngleIndex;
+  float *DihedralCoord;
+  int NDihedralIndex;
 } DistSet;
 
 #include"ObjectDist.h"

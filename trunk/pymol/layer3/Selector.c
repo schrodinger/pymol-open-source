@@ -130,8 +130,11 @@ typedef struct {
   int frag;
 } WalkDepthRec;
 
-int SelectorGetInterstateVLA(PyMOLGlobals *G,int sele1,int state1,int sele2,int state2,
+
+static int SelectorGetInterstateVLA(PyMOLGlobals *G,int sele1,int state1,int sele2,int state2,
 									  float cutoff,int **vla);
+
+
 int SelectorGetArrayNCSet(PyMOLGlobals *G,int *array);
 
 int SelectorModulate1(PyMOLGlobals *G,EvalElem *base);
@@ -4058,7 +4061,7 @@ float SelectorSumVDWOverlap(PyMOLGlobals *G,int sele1,int state1,int sele2,int s
   return(result);
 }
 /*========================================================================*/
-int SelectorGetInterstateVLA(PyMOLGlobals *G,int sele1,int state1,int sele2,int state2,
+static int SelectorGetInterstateVLA(PyMOLGlobals *G,int sele1,int state1,int sele2,int state2,
 										float cutoff,int **vla) /* Assumes valid tables */
 {
   register CSelector *I=G->Selector;
@@ -4156,8 +4159,6 @@ int SelectorGetInterstateVLA(PyMOLGlobals *G,int sele1,int state1,int sele2,int 
   }
   return(c);
 }
-
-
 /*========================================================================*/
 int SelectorMapMaskVDW(PyMOLGlobals *G,int sele1,ObjectMapState *oMap,float buffer,int state)
 {
@@ -8882,7 +8883,7 @@ DistSet *SelectorGetDistSet(PyMOLGlobals *G,int sele1,int state1,int sele2,int s
   hbc=&hbcRec;
   *result = 0.0;
   ds = DistSetNew(G);
-  vv = VLAlloc(float,100);
+  vv = VLAlloc(float,10);
 
   SelectorUpdateTable(G); 
 
@@ -8941,7 +8942,7 @@ DistSet *SelectorGetDistSet(PyMOLGlobals *G,int sele1,int state1,int sele2,int s
       obj1=I->Obj[I->Table[a1].model];
       obj2=I->Obj[I->Table[a2].model];
       
-      if(state1<obj1->NCSet&&state2<obj2->NCSet) {
+      if((state1<obj1->NCSet)&&(state2<obj2->NCSet)) {
         cs1=obj1->CSet[state1];
         cs2=obj2->CSet[state2];
         if(cs1&&cs2) { 
@@ -9038,6 +9039,244 @@ DistSet *SelectorGetDistSet(PyMOLGlobals *G,int sele1,int state1,int sele2,int s
     VLASize(vv,float,(nv+1)*3);
   ds->NIndex = nv;
   ds->Coord = vv;
+  return(ds);
+}
+
+
+DistSet *SelectorGetAngleSet(PyMOLGlobals *G, DistSet *ds,
+                             int sele1,int state1,
+                             int sele2,int state2,
+                             int sele3,int state3,
+                             int mode, float *angle_sum,
+                             int *angle_cnt)
+{
+  register CSelector *I=G->Selector;
+  float *vv = NULL;
+  int nv = 0;
+  int *coverage=NULL;
+
+  if(!ds) {
+    ds = DistSetNew(G);
+    vv = VLAlloc(float,10);
+  } else {
+    vv = ds->AngleCoord;
+    nv = ds->NAngleIndex;
+  }
+
+  SelectorUpdateTable(G); 
+
+  /* which atoms are involved? */
+
+  {
+    int a, s, at;
+    ObjectMolecule *obj;
+
+    coverage=Calloc(int,I->NAtom);
+    for(a=cNDummyAtoms;a<I->NAtom;a++) {
+      at=I->Table[a].atom;
+      obj=I->Obj[I->Table[a].model];
+      s=obj->AtomInfo[at].selEntry;
+      if(SelectorIsMember(G,s,sele1))
+        coverage[a]++;
+      if(SelectorIsMember(G,s,sele2))
+        coverage[a]++;
+      if(SelectorIsMember(G,s,sele3))
+        coverage[a]++;
+    }
+  }
+
+  if(mode!=0) { /* fill in all the neighbor tables if we're just looking for bonded angles */
+    int a, s, at;
+    ObjectMolecule *obj,*lastObj = NULL;
+    for(a=cNDummyAtoms;a<I->NAtom;a++) {
+      at=I->Table[a].atom;
+      obj=I->Obj[I->Table[a].model];
+      s=obj->AtomInfo[at].selEntry;
+      if(obj!=lastObj) {
+        if(SelectorIsMember(G,s,sele1)||
+           SelectorIsMember(G,s,sele2)||
+           SelectorIsMember(G,s,sele3)) {
+          ObjectMoleculeUpdateNeighbors(obj);
+          /*          if(mode==2)
+                      ObjectMoleculeVerifyChemistry(obj);*/
+          lastObj = obj;
+        }
+      }
+    }
+  }
+
+  {
+    int a, s, at;
+    ObjectMolecule *obj;
+    int *list1 = VLAlloc(int,1000);
+    int *list2 = VLAlloc(int,1000);
+    int *list3 = VLAlloc(int,1000);
+    int n1 = 0;
+    int n2 = 0;
+    int n3 = 0;
+
+    /* now generate three lists of atoms, one for each selection set */
+
+    if(list1&&list2&&list3) {
+      for(a=cNDummyAtoms;a<I->NAtom;a++) {
+        at=I->Table[a].atom;
+        obj=I->Obj[I->Table[a].model];
+        s=obj->AtomInfo[at].selEntry;
+        if(SelectorIsMember(G,s,sele1)) {
+          VLACheck(list1,int,n1);
+          list1[n1++] = a;
+        }
+        if(SelectorIsMember(G,s,sele2)) {
+          VLACheck(list2,int,n2);
+          list2[n2++] = a;
+        }
+        if(SelectorIsMember(G,s,sele3)) {
+          VLACheck(list3,int,n3);
+          list3[n3++] = a;
+        }
+      }
+      
+      /* for each set of 3 atoms in each selection... */
+      
+      {
+        int i1,i2,i3;
+        int a1,a2,a3;
+        int at1,at2,at3;
+        
+        /*        AtomInfoType *ai1,*ai2,ai3;*/
+        CoordSet *cs1,*cs2,*cs3;
+        ObjectMolecule *obj1,*obj2,*obj3;
+        
+        int idx1,idx2,idx3;
+        int a_keeper = true;
+        float angle;
+        float d1[3],d2[3];
+        float *v1,*v2,*v3, *vv0;
+
+        for(i1=0;i1<n1;i1++) {
+          a1 = list1[i1];
+          at1=I->Table[a1].atom;
+          obj1=I->Obj[I->Table[a1].model];
+
+          if(state1<obj1->NCSet) {
+            cs1=obj1->CSet[state1];
+
+            if(cs1) {
+              if(obj1->DiscreteFlag) {
+                if(cs1==obj1->DiscreteCSet[at1]) {
+                  idx1=obj1->DiscreteAtmToIdx[at1];
+                } else {
+                  idx1=-1;
+                }
+              } else {
+                idx1=cs1->AtmToIdx[at1];
+              }
+              
+              if(idx1>=0) 
+                
+                for(i2=0;i2<n2;i2++) {
+                  a2 = list2[i2];
+                  at2=I->Table[a2].atom;
+                  obj2=I->Obj[I->Table[a2].model];
+                  
+                  if(state2<obj2->NCSet) {
+                    
+                    cs2=obj2->CSet[state2];
+                    
+                    if(cs2) {
+                      if(obj2->DiscreteFlag) {
+                        if(cs2==obj2->DiscreteCSet[at2]) {
+                          idx2=obj2->DiscreteAtmToIdx[at2];
+                        } else {
+                          idx2=-1;
+                        }
+                      } else {
+                        idx2=cs2->AtmToIdx[at2];
+                      }
+                    
+                      if(idx2>=0) 
+                        
+                        for(i3=0;i3<n3;i3++) {
+                          a3 = list3[i3];
+                          
+                          if((a1!=a2) && (a2!=a3) && (a1!=a3)) {
+                            if((!((coverage[a1]==3)&&(coverage[a2]==3)&&(coverage[a2]==3))) 
+                               ||((a1<a2)&&(a2<a3))) { /* eliminate alternate-order duplicates */
+                              
+                              at3=I->Table[a3].atom;
+                              obj3=I->Obj[I->Table[a3].model];
+                              
+                              if(state3<obj3->NCSet) {
+                                
+                                cs3=obj3->CSet[state3];
+                                
+                                if(cs3) { 
+                                  if(obj3->DiscreteFlag) {
+                                    if(cs3==obj3->DiscreteCSet[at3]) {
+                                      idx3=obj3->DiscreteAtmToIdx[at3];
+                                    } else {
+                                      idx3=-1;
+                                    }
+                                  } else {
+                                    idx3=cs3->AtmToIdx[at3];
+                                  }
+                                  
+                                  if(idx3>=0) {
+                                    
+                                    /* check here to see if atoms are bonded a1-a2-a3, then set a_keeper */
+                                    
+                                    if(a_keeper) { /* store the 3 coordinates */
+                                      
+                                      v1 = cs1->Coord+idx1;
+                                      v2 = cs1->Coord+idx2;
+                                      v3 = cs3->Coord+idx3;
+                                      
+                                      subtract3f(v1,v2,d1);
+                                      subtract3f(v3,v2,d2);
+                                      
+                                      angle = get_angle3f(d1,d2);
+                                      
+                                      (*angle_sum)+=angle;
+                                      (*angle_cnt)++;
+                                      
+                                      printf("here\n");
+                                      VLACheck(vv,float,(nv*3)+8);
+                                      vv0 = vv+ (nv*3);
+                                      *(vv0++) = *(v1++);
+                                      *(vv0++) = *(v1++);
+                                      *(vv0++) = *(v1++);
+                                      *(vv0++) = *(v2++);
+                                      *(vv0++) = *(v2++);
+                                      *(vv0++) = *(v2++);
+                                      *(vv0++) = *(v3++);
+                                      *(vv0++) = *(v3++);
+                                      *(vv0++) = *(v3++);
+                                      nv+=3;
+                                    }
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        }
+                    }
+                  }
+                }
+            }
+          }
+        }
+      }
+    }
+    VLAFreeP(list1);
+    VLAFreeP(list2);
+    VLAFreeP(list3);
+  }
+
+  FreeP(coverage);
+  if(vv)
+    VLASize(vv,float,(nv+1)*3);
+  ds->NAngleIndex = nv;
+  ds->AngleCoord = vv;
   return(ds);
 }
 

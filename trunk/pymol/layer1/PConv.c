@@ -608,7 +608,7 @@ int PConvPyListToIntArrayInPlaceAutoZero(PyObject *obj,int *ii,int ll)
       ok=-1;
     else
       ok=l;
-    for(a=0;a<l;a++) 
+    for(a=0;(a<l)&&(a<ll);a++) 
       *(ii++) = PyInt_AsLong(PyList_GetItem(obj,a)); 
     while(l<ll) {
       *(ii++)=0;
@@ -632,7 +632,7 @@ int PConvPyListToSIntArrayInPlaceAutoZero(PyObject *obj,short int *ii,int ll)
       ok=-1;
     else
       ok=l;
-    for(a=0;a<l;a++) 
+    for(a=0;(a<l)&&(a<ll);a++) 
       *(ii++) = (short int)PyInt_AsLong(PyList_GetItem(obj,a)); 
     while(l<ll) {
       *(ii++)=0;
@@ -656,7 +656,7 @@ int PConvPyListToFloatArrayInPlaceAutoZero(PyObject *obj,float *ii,int ll)
       ok=-1;
     else
       ok=l;
-    for(a=0;a<l;a++) 
+    for(a=0;(a<l)&&(a<ll);a++) 
       *(ii++) = (float)PyFloat_AsDouble(PyList_GetItem(obj,a)); 
     while(l<ll) {
       *(ii++)=0.0f;

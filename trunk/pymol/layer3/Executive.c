@@ -4198,6 +4198,59 @@ void ExecutiveBond(PyMOLGlobals *G,char *s1,char *s2,int order,int add)
   }
 }
 /*========================================================================*/
+float ExecutiveAngle(PyMOLGlobals *G,char *nam,char *s1,char *s2,char *s3,int mode,
+                     int labels,int reset,int zoom,int quiet)
+{
+  int sele1,sele2,sele3;
+  ObjectDist *obj;
+  CObject *anyObj = NULL;
+  float result;
+  sele1=SelectorIndexByName(G,s1);
+
+  if(!WordMatch(G,s2,cKeywordSame,true))
+    sele2=SelectorIndexByName(G,s2);
+  else {
+    sele2 = sele1;
+  }
+  if(!WordMatch(G,s3,cKeywordSame,true))
+    sele3=SelectorIndexByName(G,s3);
+  else {
+    sele3 = sele2;  
+  }
+  
+  if((sele1>=0)&&(sele2>=0)&&(sele3>=0)) {
+    anyObj = ExecutiveFindObjectByName(G,nam);
+    if(anyObj) {
+      if(anyObj->type!=cObjectDist) {
+        ExecutiveDelete(G,nam);
+        anyObj=NULL;
+      }
+    }
+
+    obj = ObjectDistNewFromAngleSele(G,(ObjectDist*)anyObj,
+                                     sele1,sele2,sele3,
+                                     mode,labels,&result,reset);
+    if(!obj) {
+      ErrMessage(G,"ExecutiveDistance","No angles found.");
+    } else {
+      if(!anyObj) {
+        ObjectSetName((CObject*)obj,nam);
+        ExecutiveManageObject(G,(CObject*)obj,zoom,quiet);
+        ExecutiveSetRepVisib(G,nam,cRepLine,1);
+        if(!labels)
+          ExecutiveSetRepVisib(G,nam,cRepLabel,0);        
+      }
+    }
+  } else if(sele1<0) {
+    ErrMessage(G,"ExecutiveDistance","The first selection contains no atoms.");
+  } else if(sele2<0) {
+    ErrMessage(G,"ExecutiveDistance","The second selection contains no atoms.");
+  } else if(sele3<0) {
+    ErrMessage(G,"ExecutiveDistance","The third selection contains no atoms.");
+  }
+  return(result);
+}
+
 float ExecutiveDist(PyMOLGlobals *G,char *nam,char *s1,char *s2,int mode,float cutoff,
                     int labels,int quiet)
 {
@@ -4215,8 +4268,10 @@ float ExecutiveDist(PyMOLGlobals *G,char *nam,char *s1,char *s2,int mode,float c
   if((sele1>=0)&&(sele2>=0)) {
     anyObj = ExecutiveFindObjectByName(G,nam);
     if(anyObj)
-      if(anyObj->type!=cObjectDist)
+      if(anyObj->type!=cObjectDist) {
         ExecutiveDelete(G,nam);
+        anyObj=NULL;
+      }
     obj = ObjectDistNewFromSele(G,(ObjectDist*)anyObj,sele1,sele2,mode,cutoff,labels,&result);
     if(!obj) {
       ErrMessage(G,"ExecutiveDistance","No such distances found.");

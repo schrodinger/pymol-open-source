@@ -466,6 +466,88 @@ ObjectDist *ObjectDistNewFromSele(PyMOLGlobals *G,ObjectDist *oldObj,int sele1,i
   return(I);
 }
 
+ObjectDist *ObjectDistNewFromAngleSele(PyMOLGlobals *G,ObjectDist *oldObj,
+                                        int sele1, int sele2, int sele3, int mode,
+                                        int labels,float *result, int reset)
+{
+  int a,mn;
+  float angle_sum=0.0;
+  int angle_cnt=0;
+  int n_state1,n_state2,n_state3, state1,state2,state3;
+  ObjectDist *I;
+
+  if(!oldObj) /* create object if new */
+    I=ObjectDistNew(G);
+  else { /* otherwise, use existing object */
+    I=oldObj;
+    if(reset) { /* if reseting, then clear out all existing coordinate sets */
+      for(a=0;a<I->NDSet;a++)
+        if(I->DSet[a]) {
+          if(I->DSet[a]->fFree)
+            I->DSet[a]->fFree(I->DSet[a]);
+          I->DSet[a]=NULL;
+        }
+      I->NDSet=0;
+    }
+  }
+  *result = 0.0;
+
+  /* count number of states in each selection */
+
+  SelectorUpdateTable(G);
+  n_state1 = SelectorGetSeleNCSet(G,sele1);
+  n_state2 = SelectorGetSeleNCSet(G,sele2);  
+  n_state3 = SelectorGetSeleNCSet(G,sele3);
+
+  /* figure out the total number of states */
+
+  mn = n_state1;
+  if(n_state2>mn) mn = n_state2;
+  if(n_state3>mn) mn = n_state3;
+
+  if(mn) {
+    for(a=0;a<mn;a++)
+      {
+        /* treat selections with one state as static singletons */
+
+        if(n_state1>1)
+          state1=a;
+        else
+          state1=0;
+        if(n_state2>1)
+          state2=a;
+        else
+          state2=0;
+        if(n_state3>1)
+          state3=a;
+        else
+          state3=0;
+        
+        VLACheck(I->DSet,DistSet*,a);
+        I->DSet[a] = SelectorGetAngleSet(G,I->DSet[a],sele1,state1,sele2,
+                                         state2,sele3,state3,mode,&angle_sum,
+                                         &angle_cnt);
+
+        if(I->DSet[a]) {
+          I->DSet[a]->Obj = I;
+          if(I->NDSet<=a) I->NDSet = a+1;
+        }
+      }  
+  } 
+  /* else {
+     VLAFreeP(I->DSet);
+     OOFreeP(I);
+     }
+  */
+  ObjectDistUpdateExtents(I);
+
+  if(angle_cnt)
+    (*result) = angle_sum/angle_cnt;
+
+  SceneChanged(G);
+  return(I);
+}
+
 /*========================================================================*/
 void ObjectDistFree(ObjectDist *I)
 {
