@@ -49,6 +49,32 @@ class Base:
       return sm
 
 #------------------------------------------------------------------------------
+   def assign_names(self,preserve=1):
+      dct = {}
+      cnt = {}
+      if preserve:
+         for a in self.atom:
+            if a.has('name'):
+               dct[a['name']] = 1
+      else:
+         for a in self.atom:
+            if hasattr(a,'name'):
+               del a.name
+      for a in self.atom:
+         if not a.has('name'):
+            if not cnt.has_key(a.symbol):
+               c = 1
+            else:
+               c = cnt[a.symbol]
+            while 1:
+               nam = a.symbol+str(c)
+               c = c + 1
+               if not dct.has_key(nam):
+                  break
+            cnt[a.symbol]=c
+            a.name=nam
+            dct[nam]=1
+#------------------------------------------------------------------------------
 #------------------------------------------------------------------------------
 
 class Indexed(Base):
