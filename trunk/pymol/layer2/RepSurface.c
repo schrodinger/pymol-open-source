@@ -179,7 +179,7 @@ void RepSurfaceRender(RepSurface *I,CRay *ray,Pickable **pick)
       if(radius==0.0F) {
         radius = ray->PixelRadius*SettingGet_f(I->R.cs->Setting,
                                                I->R.obj->Setting,
-                                               cSetting_mesh_width);
+                                               cSetting_mesh_width)/2.0F;
       }
 
       c=I->NT;      
