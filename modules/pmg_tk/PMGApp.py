@@ -160,13 +160,17 @@ class PMGApp(AbstractApp):
          self.history[0] = self.command.get()
       self.history_cur = (self.history_cur + 1) & self.history_mask
       self.command.set(self.history[self.history_cur])
+      l = len(self.history[self.history_cur])
+      self.entry.icursor(l)
    
    def forward(self):
       if not self.history_cur:
          self.history[0] = self.command.get()
       self.history_cur = (self.history_cur - 1) & self.history_mask
       self.command.set(self.history[self.history_cur])
-   
+      l = len(self.history[self.history_cur])
+      self.entry.icursor(l)
+      
    def do(self,cmmd):
       self.history[0]=cmmd
       self.history.insert(0,'') # always leave blank at 0
