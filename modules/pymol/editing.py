@@ -1040,7 +1040,8 @@ NOTES
 
       return r
 
-   def rotate(axis='x',angle=0.0,selection="all",state=0,camera=1,object=None):
+   def rotate(axis='x',angle=0.0,selection="all",
+              state=0,camera=1,object=None,origin=None):
       '''
 DESCRIPTION
 
@@ -1060,7 +1061,7 @@ DESCRIPTION
 
 USAGE
 
-   rotate axis, angle [,selection [,state [,camera [,object ]]]]
+   rotate axis, angle [,selection [,state [,camera [,object [,origin]]]]]
 
 PYMOL API
 
@@ -1093,16 +1094,22 @@ NOTES
          axis = [float(axis[0]),float(axis[1]),float(axis[2])]
          angle = math.pi*float(angle)/180.0
          view = cmd.get_view(0)
+         if origin!=None:
+            if cmd.is_string(origin):
+               origin = eval(origin) # should be a sequence of floats
+            origin = [float(origin[0]),float(origin[1]),float(origin[2])]
+         else:
+            origin = [view[12],view[13],view[14]]
          camera=int(camera)
          if camera:
             vmat = [ view[0:3],view[3:6],view[6:9] ]
             axis = cpv.transform(vmat,axis)
          mat = cpv.rotation_matrix(angle,axis)
          if object==None:
-            ttt = [mat[0][0],mat[1][0],mat[2][0],-view[12],
-                   mat[0][1],mat[1][1],mat[2][1],-view[13],
-                   mat[0][2],mat[1][2],mat[2][2],-view[14],
-                   view[12],view[13],view[14],view[15]]
+            ttt = [mat[0][0],mat[1][0],mat[2][0],-origin[0],                   
+                   mat[0][1],mat[1][1],mat[2][1],-origin[1],
+                   mat[0][2],mat[1][2],mat[2][2],-origin[2],
+                   origin[0],origin[1],origin[2], view[15]]
             r=cmd.transform_selection(selection,ttt,state=state)
          else:
             lock()

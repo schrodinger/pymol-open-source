@@ -935,8 +935,11 @@ void SculptIterateObject(CSculpt *I,ObjectMolecule *obj,int state,int n_cycle)
                 }
               }
             }
-          
-            ObjectMoleculeInvalidate(obj,cRepAll,cRepInvCoord);
+            if(cs->fInvalidateRep) {
+              cs->fInvalidateRep(cs,cRepAll,cRepInvCoord);
+            } else {
+              ObjectMoleculeInvalidate(obj,cRepAll,cRepInvCoord);
+            }
           
           }
         }
