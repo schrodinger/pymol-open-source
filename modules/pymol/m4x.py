@@ -199,6 +199,10 @@ def setup_contexts(context_info):   # Author: Warren DeLano
         key = key_list.pop(0)
         cmd.set_key(key,lambda :(cmd.zoom(),toggle_labels(0)))
         doc_list.append(key+": All")
+    if len(key_list):
+        key = key_list.pop(0)
+        cmd.set_key(key,toggle_labels)
+        doc_list.append(key+": Dist")        
     
     for a in list:
         water = a+"_water"
@@ -243,10 +247,6 @@ def setup_contexts(context_info):   # Author: Warren DeLano
             cmd.show("dashes",hbond)
             cmd.show("labels",hbond)
 
-    if len(key_list):
-        key = key_list.pop(0)
-        cmd.set_key(key,toggle_labels)
-        doc_list.append(key+": Dist")        
         
     cmd.wizard("message",doc_list)
     if zoom_context not in (0,1):
