@@ -3745,7 +3745,7 @@ PYMOL API
       unlock()
    return r
 
-def read_molstr(*arg):
+def read_molstr(molstr,name,state=0,finish=1,discrete=1):
    '''
 DESCRIPTION
   
@@ -3753,39 +3753,26 @@ DESCRIPTION
    
 PYMOL API ONLY
  
-   cmd.read_molstr( string MOL-content, string object name 
-   [ ,int state [ ,int finish [ ,int discrete ] ] ] )
+   cmd.read_molstr( string molstr, string name, int state=0,
+      int finish=1, int discrete=1 )
 
 NOTES
 
-   "state" is a 1-based state index for the object.
+   "state" is a 1-based state index for the object, or 0 to append.
 
    "finish" is a flag (0 or 1) which can be set to zero to improve
    performance when loading large numbers of objects, but you must
    call "finish_object" when you are done.
 
    "discrete" is a flag (0 or 1) which tells PyMOL that there will be
-   no overlapping atoms in the PDB files being loaded.  "discrete"
-   objects save memory but can't be edited.
+   no overlapping atoms in the file being loaded.  "discrete"
+   objects save memory but can not be edited.
    '''
    r = 1
    try:
       lock()
-      ftype = 3
-      if len(arg)>1:
-         oname = string.strip(arg[1])
-      if len(arg)==2:
-         r = _cmd.load(str(oname),arg[0],-1,int(ftype),1,1)
-      elif len(arg)==3:
-         r = _cmd.load(str(oname),arg[0],int(arg[2])-1,int(ftype),1,1)
-      elif len(arg)==4:
-         r = _cmd.load(str(oname),arg[0],int(arg[2])-1,
-            int(ftype),int(arg[3]),discrete)         
-      elif len(arg)==5:
-         r = _cmd.load(oname,arg[0],int(arg[2])-1,int(ftype),
-            int(arg[3]),int(arg[4]))
-      else:
-         print "argument error."
+      r = _cmd.load(str(name),str(molstr),int(state),
+                    loadable.molstr,int(finish),int(discrete))
    finally:
       unlock()
    return r
@@ -3831,7 +3818,7 @@ NOTES
 
    "discrete" is a flag (0 or 1) which tells PyMOL that there will be
    no overlapping atoms in the PDB files being loaded.  "discrete"
-   objects save memory but can't be edited.
+   objects save memory but can not be edited.
 '''
    r = 1
    finish = 1
@@ -4692,7 +4679,7 @@ class fb_module:
    editor                    =72
 
    export                    =75
-   cmd                       =76
+   ccmd                      =76
    api                       =77   
    
    main                      =80  

@@ -34,6 +34,11 @@ Goals for 0.52 release:
 
    * provide accurate documentation
 
+Changes up to 0.52
+
+   * formal charge now read from MOL files -- need to consider full
+     implementation of MOL file reading capability (incl stereo)
+
 Changes up to 0.51
 
    * Tcl/Tk GUI now contains a save molecule option
