@@ -159,7 +159,7 @@ void SceneLoadAnimation(PyMOLGlobals *G, double duration)
 {
   if(G->HaveGUI) {
     double now;
-    int target = duration * 30;
+    int target = (int)(duration * 30);
     CScene *I=G->Scene;
     if(target<1)
       target = 1;
