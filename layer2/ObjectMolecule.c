@@ -6067,6 +6067,43 @@ void ObjectMoleculeSeleOp(ObjectMolecule *I,int sele,ObjectMoleculeOpRec *op)
            }
        }
      break;
+	case OMOP_StateVRT: /* state vertex coordinate */
+     for(a=0;a<I->NAtom;a++)
+       {
+         s=I->AtomInfo[a].selEntry;
+         if(SelectorIsMember(s,sele))
+           {
+             cnt=0;
+             b=op->i1;
+             if(b<I->NCSet)
+               if(I->CSet[b])
+                 {
+                   if(I->DiscreteFlag) {
+                     if(I->CSet[b]==I->DiscreteCSet[a])
+                       a1=I->DiscreteAtmToIdx[a];
+                     else
+                       a1=-1;
+                   } else 
+                     a1=I->CSet[b]->AtmToIdx[a];
+                   if(a1>=0) {
+                     if(!cnt) {
+                       VLACheck(op->vv1,float,(op->nvv1*3)+2);
+                       VLACheck(op->vc1,int,op->nvv1);
+                     }
+                     cnt++;
+                     vv2=I->CSet[b]->Coord+(3*a1);
+                     vv1=op->vv1+(op->nvv1*3);
+                     *(vv1++)+=*(vv2++);
+                     *(vv1++)+=*(vv2++);
+                     *(vv1++)+=*(vv2++);
+                   }
+                 }
+             op->vc1[op->nvv1]=cnt;
+             if(cnt)
+               op->nvv1++;
+           }
+       }
+     break;
 	case OMOP_SFIT: /* state fitting within a single object */
      vt = Alloc(float,3*op->nvv2);
      cnt = 0;

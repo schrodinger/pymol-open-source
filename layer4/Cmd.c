@@ -1169,10 +1169,10 @@ static PyObject *CmdAlign(PyObject *self, 	PyObject *args) {
   int ok = false;
   int quiet,cycles,skip;
   float cutoff,gap,extend;
-
-  ok = PyArg_ParseTuple(args,"ssfiffissi",&str2,&str3,
+  int state1,state2;
+  ok = PyArg_ParseTuple(args,"ssfiffissiii",&str2,&str3,
                         &cutoff,&cycles,&gap,&extend,&skip,&oname,
-                        &mfile,&quiet);
+                        &mfile,&state1,&state2,&quiet);
 
   if(ok) {
     PRINTFD(FB_CCmd)
@@ -1183,7 +1183,8 @@ static PyObject *CmdAlign(PyObject *self, 	PyObject *args) {
     APIEntry();
     SelectorGetTmp(str2,s2);
     SelectorGetTmp(str3,s3);
-    result = ExecutiveAlign(s2,s3,mfile,gap,extend,skip,cutoff,cycles,quiet,oname);
+    result = ExecutiveAlign(s2,s3,mfile,gap,extend,skip,cutoff,
+                            cycles,quiet,oname,state1,state2);
     SelectorFreeTmp(s2);
     SelectorFreeTmp(s3);
     APIExit();
@@ -2561,14 +2562,14 @@ static PyObject *CmdFit(PyObject *dummy, PyObject *args)
   OrthoLineType s1,s2;
   PyObject *result;
   float tmp_result = -1.0;
-  
+  int state1,state2;
   int ok=false;
-  ok = PyArg_ParseTuple(args,"ssii",&str1,&str2,&mode,&quiet);
+  ok = PyArg_ParseTuple(args,"ssiiii",&str1,&str2,&mode,&state1,&state2,&quiet);
   if (ok) {
     APIEntry();
     SelectorGetTmp(str1,s1);
     SelectorGetTmp(str2,s2);
-    tmp_result=ExecutiveRMS(s1,s2,mode,0.0,0,quiet,NULL);
+    tmp_result=ExecutiveRMS(s1,s2,mode,0.0,0,quiet,NULL,state1,state2);
     SelectorFreeTmp(s1);
     SelectorFreeTmp(s2);
     APIExit();
