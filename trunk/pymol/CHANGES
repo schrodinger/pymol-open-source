@@ -4,6 +4,10 @@ CHANGE LOG
 
 Changes up to 0.98
 
+   * continued elimination of global state information
+
+   * texture_fonts for better performance on low-end ATI hardware
+
    * fixed F10 action in external gui
 
    * added colors for each atomic element, plus deuterium

@@ -1439,11 +1439,6 @@ class PMGApp(AbstractApp):
                         variable = self.setting.ortho,
                         command = lambda s=self: s.setting.update('ortho'))
 
-      self.menuBar.addmenuitem('Display', 'checkbutton',
-                         'Use Display Lists.',
-                         label=self.pad+'Use Display Lists',
-                        variable = self.setting.use_display_lists,
-                        command = lambda s=self: s.setting.update('use_display_lists'))
 
       self.menuBar.addmenuitem('Display', 'checkbutton',
                          'Show Valences.',
@@ -1475,6 +1470,18 @@ class PMGApp(AbstractApp):
                          label=self.pad+'Specular Reflections',
                         variable = self.setting.specular,
                         command = lambda s=self: s.setting.update('specular'))
+
+      self.menuBar.addmenuitem('Display', 'checkbutton',
+                         'Use Display Lists.',
+                         label=self.pad+'Use Display Lists',
+                        variable = self.setting.use_display_lists,
+                        command = lambda s=self: s.setting.update('use_display_lists'))
+
+      self.menuBar.addmenuitem('Display', 'checkbutton',
+                         'Texture Fonts',
+                         label=self.pad+'Texture Fonts',
+                        variable = self.setting.texture_fonts,
+                        command = lambda s=self: s.setting.update('texture_fonts'))
 
       self.menuBar.addmenu('Setting', 'Configuration Control',tearoff=TRUE)
 

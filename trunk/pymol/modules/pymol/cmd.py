@@ -681,6 +681,11 @@ DEVELOPMENT TO DO
             r = fb_dict[module]&mask
       return r
 
+   # do command (while API already locked)
+
+   def _do(cmmd,log=0,echo=1):
+      return _cmd.do(cmmd,log,echo)
+      
    # movie rendering
 
    def _mpng(*arg): # INTERNAL

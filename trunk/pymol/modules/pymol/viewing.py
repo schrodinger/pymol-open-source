@@ -1151,7 +1151,7 @@ USAGE
       else:
          try:
             lock()
-            r = _cmd.do("_cmd.full_screen(%d)"%int(toggle),0)
+            r = cmd._do("_cmd.full_screen(%d)"%int(toggle))
          finally:
             unlock()
       return r
@@ -1424,7 +1424,7 @@ SEE ALSO
       else:
          try:
             lock()
-            r = _cmd.do("cmd._refresh()",0)
+            r = cmd._do("cmd._refresh()")
          finally:
             unlock()
       return r

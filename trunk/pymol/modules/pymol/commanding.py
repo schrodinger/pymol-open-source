@@ -176,8 +176,9 @@ SEE ALSO
                break
 
 
-   def do(commands,log=1):
+   def do(commands,log=1,echo=1):
       # WARNING: don't call this routine if you already have the API lock
+      # use cmd._do instead
       '''
 DESCRIPTION
 
@@ -206,8 +207,7 @@ USAGE (PYTHON)
                if(len(a)):
                   try:
                      lock()
-                     r = None
-                     r = _cmd.do(a,log)
+                     r = _cmd.do(a,log,echo)
                   finally:
                      unlock()
          else:
@@ -217,8 +217,7 @@ USAGE (PYTHON)
                if(len(a)):
                   try:
                      lock()
-                     r = None
-                     r = _cmd.do(a,log)
+                     r = _cmd.do(a,log,echo)
                   finally:
                      unlock()
             cmd.set('defer_updates',defer)
@@ -244,7 +243,8 @@ PYMOL API
       else:
          try:
             lock()
-            _cmd.do("_ time.sleep(0.100);cmd._quit()",0) # allow time for a graceful exit from the calling thread
+            _cmd.do("_ time.sleep(0.100);cmd._quit()",0,0)
+            # allow time for a graceful exit from the calling thread
             thread.exit()
          finally:
             unlock()

@@ -138,6 +138,9 @@ class Setting:
       self.seq_view = IntVar()
       self.seq_view.set(int(cmd.get_setting_legacy('seq_view')))
       
+      self.texture_fonts = IntVar()
+      self.texture_fonts.set(int(cmd.get_setting_legacy('texture_fonts')))
+      
       self.F=[ None,
                IntVar(),
                IntVar(),
@@ -237,6 +240,8 @@ class Setting:
          
          'seq_view'         :
          (lambda s,a: (cmd.set(a,("%d" % s.seq_view.get()),log=1))),
+         'texture_fonts'         :
+         (lambda s,a: (cmd.set(a,("%d" % s.texture_fonts.get()),log=1))),
          
          }
 
@@ -313,6 +318,8 @@ class Setting:
          (lambda s,t: (s.virtual_trackball.set(t[1][0]!=0))),
          'seq_view':
          (lambda s,t: (s.seq_view.set(t[1][0]!=0))),
+         'texture_fonts':
+         (lambda s,t: (s.texture_fonts.set(t[1][0]!=0))),
          'stereo':
          (lambda s,t: (s.stereo.set(t[1][0]!=0))),         
         }
@@ -354,6 +361,7 @@ class Setting:
          pymol.setting._get_index("use_display_lists"),
          pymol.setting._get_index("virtual_trackball"),
          pymol.setting._get_index("seq_view"),
+         pymol.setting._get_index("texture_fonts"),
          pymol.setting._get_index("stereo"),
          ]
 

@@ -351,8 +351,8 @@ SEE ALSO
       del sdf
       _cmd.finish_object(str(oname))
       if _cmd.get_setting("auto_zoom")==1.0:
-         _cmd.do("zoom (%s)"%oname,0)
-      _cmd.do("set seq_view_format,4,"+oname,0)
+         cmd._do("zoom (%s)"%oname)
+      cmd._do("set seq_view_format,4,"+oname)
    
    def load(filename,object='',state=0,format='',finish=1,discrete=None,quiet=1,multiplex=None):
       '''
@@ -502,8 +502,10 @@ SEE ALSO
             _processSDF(sdf,oname,state,quiet)
             ftype = -1
 
+   # p1m embedded data script files
+   
          if ftype == loadable.p1m:
-            _cmd.do("_ @"+fname,0)
+            cmd._do("_ @"+fname)
             ftype = -1
             
    # special handling for AMBER trj failes
