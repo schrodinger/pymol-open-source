@@ -21,16 +21,14 @@ Z* -------------------------------------------------------------------
 #include"MemoryDebug.h"
 #include"Err.h"
 
+
 static unsigned int UtilStartSec;
 
 
 void UtilInit(void) {
-#ifndef WIN32
-  struct timeval tv;
-  gettimeofday(&tv,NULL);
-  UtilStartSec = tv.tv_sec;
-#endif
+  UtilStartSec = (int)UtilGetSeconds();
 }
+
 
 double UtilGetSeconds(void)
 {
@@ -39,7 +37,9 @@ double UtilGetSeconds(void)
   gettimeofday(&tv,NULL);
   return((tv.tv_sec-UtilStartSec)+(tv.tv_usec/((double)1000000.0)));
 #else
-  return(0.0);
+   struct _timeb timebuffer;
+   _ftime( &timebuffer );
+   return((timebuffer.time-UtilStartSec)+(timebuffer.millitm/((double)1000.0)));
 #endif
 }
 
