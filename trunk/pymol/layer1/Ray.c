@@ -756,6 +756,7 @@ G3dPrimitive *RayRenderG3d(CRay *I,int width, int height,
 #define convert_x(x) shift_x + (int)(x*scale_x);
 #define convert_y(y) height - (shift_y + (int)(y*scale_y));
 #define convert_z(z) -(int)((z+front)*scale_x);
+#define convert_col(c) (0xFF000000 | (((int)(c[0]*255.0))<<16) | (((int)(c[1]*255.0))<<8) | (((int)(c[2]*255.0))))
 
   RayExpandPrimitives(I);
   RayTransformFirst(I,0);
@@ -790,6 +791,7 @@ G3dPrimitive *RayRenderG3d(CRay *I,int width, int height,
       jp->x1 = convert_x(vert[0]);
       jp->y1 = convert_y(vert[1]);
       jp->z1 = convert_z(vert[2]);
+      jp->c = convert_col(prim->c1);
       n_jp++;
 		break;
     case cPrimSausage:
@@ -807,6 +809,7 @@ G3dPrimitive *RayRenderG3d(CRay *I,int width, int height,
       jp->x2 = convert_x(vert2[0]);
       jp->y2 = convert_y(vert2[1]);
       jp->z2 = convert_z(vert2[2]);
+      jp->c = convert_col(prim->c1);
       n_jp++;
 		break;
 	 case cPrimTriangle:
@@ -822,6 +825,7 @@ G3dPrimitive *RayRenderG3d(CRay *I,int width, int height,
       jp->x3 = convert_x(vert[6]);
       jp->y3 = convert_y(vert[7]);
       jp->z3 = convert_z(vert[8]);
+      jp->c = convert_col(prim->c1);
       n_jp++;
 		break;
     }
