@@ -296,7 +296,7 @@ void AtomInfoPrimeColors(void)
   CarbColor=ColorGetIndex("carbon");
   HColor=ColorGetIndex("hydrogen");
   OColor=ColorGetIndex("oxygen");
-  SColor=ColorGetIndex("sulfer");
+  SColor=ColorGetIndex("sulfur");
   MColor=ColorGetIndex("magenta");
   IColor=ColorGetIndex("yellow");
 }

@@ -27,7 +27,8 @@ if __name__=='pymol.viewing':
    from cmd import _cmd,lock,unlock,Shortcut,QuietException,_raising, \
         _feedback,fb_module,fb_mask, \
         repres,repres_sc, \
-        toggle_dict,toggle_sc,stereo_dict,stereo_sc
+        toggle_dict,toggle_sc,stereo_dict,stereo_sc, \
+        palette_dict ,palette_sc
 
 
    view_dict = {}
@@ -1132,12 +1133,12 @@ EXAMPLES
          if _raising(): raise QuietException
       return r
 
-   palette_dict = {
-      'rainbow' : ('s',3,0,999)
-      }
-   def spectrum(expression,selection="(all)",
-                minimum=None,maximum=None,
-                palette='blue_red',byres=0):
+   def spectrum(expression="count",
+                palette="rainbow",
+                selection="(all)",
+                minimum=None,
+                maximum=None,
+                byres=0,quiet=1):
       '''
 DESCRIPTION
 
@@ -1151,12 +1152,14 @@ EXAMPLES
 
       '''
 
-      (prefix,digits,first,last) = palette_dict['rainbow']
+      palette = palette_sc.auto_err(palette,'palette')
+      
+      (prefix,digits,first,last) = palette_dict[str(palette)]
 
-      if (maximum==None) or (mininum==None):
-         minimum = -9999
-         maximum = -10000
-         
+      if (maximum==None) or (minimum==None):
+         minimum = 0 # signal to auto-adjust levels
+         maximum = -1
+
       # preprocess selection
       selection = selector.process(selection)
       #
@@ -1165,7 +1168,7 @@ EXAMPLES
          r = _cmd.spectrum(str(selection),str(expression),
                            float(minimum),float(maximum),
                            int(first),int(last),str(prefix),
-                           int(digits),int(byres))
+                           int(digits),int(byres),int(quiet))
       finally:
          unlock()
       if not r:

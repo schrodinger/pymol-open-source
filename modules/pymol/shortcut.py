@@ -187,6 +187,7 @@ if __name__=='pymol.shortcut':
                lst = self.interpret('')
                if is_list(lst):
                   if len(lst)<100:
+                     lst.sort()
                      print "Choices:"
                      lst = parsing.list_to_str_list(lst)
                      for a in lst: print a

@@ -127,6 +127,97 @@ if __name__=='pymol.cmd':
    }
    repres_sc = Shortcut(repres.keys())
 
+
+   palette_dict = {
+      'rainbow_cycle'           : ('s',3,0  ,999),
+      'rainbow_cycle_rev'       : ('s',3,999,  0),      
+      'rainbow'                 : ('s',3,167,833),
+      'rainbow_rev'             : ('s',3,833,167),
+
+      'gcbmry' : ('r',3,166,999),
+      'yrmbcg' : ('r',3,999,166),
+      
+      'cbmr'   : ('r',3,166,833),
+      'rmbc'   : ('r',3,833,166),      
+      
+      'green_yellow_red'        : ('s',3,500,833),
+      'red_yellow_green'        : ('s',3,833,500),      
+
+      'yellow_white_blue'       : ('w',3,  0, 83),
+      'blue_white_yellow'       : ('w',3, 83,  0),      
+      
+      'blue_white_red'          : ('w',3, 83,167),
+      'red_white_blue'          : ('w',3,167, 83),
+      
+      'red_white_green'         : ('w',3,167,250),
+      'green_white_red'         : ('w',3,250,167),
+      
+      'green_white_magenta'     : ('w',3,250,333),
+      'magenta_white_green'     : ('w',3,333,250),      
+      
+      'magenta_white_cyan'      : ('w',3,333,417),
+      'cyan_white_magenta'      : ('w',3,417,333),
+      
+      'cyan_white_yellow'       : ('w',3,417,500),
+      'yellow_cyan_white'       : ('w',3,500,417),
+      
+      'yellow_white_green'      : ('w',3,500,583),
+      'green_white_yellow'      : ('w',3,583,500),
+      
+      'green_white_blue'        : ('w',3,583,667),
+      'blue_white_green'        : ('w',3,667,583),      
+      
+      'blue_white_magenta'      : ('w',3,667,750),
+      'magenta_white_blue'      : ('w',3,750,667),
+      
+      'magenta_white_yellow'    : ('w',3,750,833),
+      'yellow_white_magenta'    : ('w',3,833,750),
+      
+      'yellow_white_red'        : ('w',3,833,917),
+      'red_white_yellow'        : ('w',3,817,833),
+      
+      'red_white_cyan'          : ('w',3,916,999),
+      'cyan_white_red'          : ('w',3,999,916),      
+
+      'yellow_blue'       : ('w',3,  0, 83),
+      'blue_yellow'       : ('w',3, 83,  0),      
+      
+      'blue_red'          : ('w',3, 83,167),
+      'red_blue'          : ('w',3,167, 83),
+      
+      'red_green'         : ('w',3,167,250),
+      'green_red'         : ('w',3,250,167),
+      
+      'green_magenta'     : ('w',3,250,333),
+      'magenta_green'     : ('w',3,333,250),      
+      
+      'magenta_cyan'      : ('w',3,333,417),
+      'cyan_magenta'      : ('w',3,417,333),
+      
+      'cyan_yellow'       : ('w',3,417,500),
+      'yellow_cyan'       : ('w',3,500,417),
+      
+      'yellow_green'      : ('w',3,500,583),
+      'green_yellow'      : ('w',3,583,500),
+      
+      'green_blue'        : ('w',3,583,667),
+      'blue_green'        : ('w',3,667,583),      
+      
+      'blue_magenta'      : ('w',3,667,750),
+      'magenta_blue'      : ('w',3,750,667),
+      
+      'magenta_yellow'    : ('w',3,750,833),
+      'yellow_magenta'    : ('w',3,833,750),
+      
+      'yellow_red'        : ('w',3,833,917),
+      'red_yellow'        : ('w',3,817,833),
+      
+      'red_cyan'          : ('w',3,916,999),
+      'cyan_red'          : ('w',3,999,916),      
+      }
+
+   palette_sc = Shortcut(palette_dict.keys())
+   
    def null_function():
       pass
 
@@ -1481,12 +1572,15 @@ if __name__=='pymol.cmd':
       'load_traj'      : [ selection_sc           , 'selection'       , ', ' ],
       'create'         : [ selection_sc           , 'selection'       , ', ' ],
       'map_new'        : [ creating.map_type_sc   , 'map type'        , ', ' ],
+      'spectrum'       : [ palette_sc             , 'palette'       , ''   ],      
+
       'symexp'         : [ object_sc              , 'object'          , ', ' ],   
       'isomesh'        : [ map_sc                 , 'map object'      , ', ' ],
       'view'           : [ viewing.view_sc        , 'view action'     , ''   ],            
       'unset'          : [ selection_sc           , 'selection'         , ','  ],   
       },
       {
+      'spectrum'       : [ selection_sc           , 'selection'       , ''   ],
       'feedback'       : [ fb_mask_sc             , 'mask'            , ''   ],
       'button'         : [ controlling.but_act_sc , 'button action'   , ''   ],
       'flag'           : [ editing.flag_action_sc , 'flag action'     , ''   ],
