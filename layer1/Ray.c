@@ -1444,7 +1444,7 @@ void RayRenderColorTable(CRay *I,int width,int height,int *image)
     for(y=0;y<512;y++) 
       for(x=0;x<512;x++)        
         {
-          pixel = image+((width)*y)+x;
+          pixel = (unsigned int*) (image+((width)*y)+x);
           if(I->BigEndian) {
             *(pixel)=
               mask|(r<<24)|(g<<16)|(b<<8);

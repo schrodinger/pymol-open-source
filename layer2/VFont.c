@@ -184,7 +184,7 @@ int VFontRecLoad(VFontRec *I,PyObject *dict)
   float adv;
   int n_float;
   while (PyDict_Next(dict, &pos, &key, &char_list)) {
-    if(!PConvPyStrToStr(key,code,1)) {
+    if(!PConvPyStrToStr(key,(char*)code,1)) {
       PRINTFB(FB_VFont,FB_Errors) 
         "VFont-Error: Bad character code."
         ENDFB;
