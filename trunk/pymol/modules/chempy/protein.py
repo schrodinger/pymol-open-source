@@ -7,8 +7,7 @@ import protein_amber
 
 from chempy.neighbor import Neighbor
 from chempy.models import Connected
-from chempy import Bond
-from chempy import place
+from chempy import Bond,place,feedback
 from chempy.cpv import *
 
 MAX_BOND_LEN = 2.2
@@ -29,6 +28,8 @@ def assign_types(model, forcefield = protein_amber, histidine = 'HIE' ):
 assigns types: takes HIS -> HID,HIE,HIP and CYS->CYX where appropriate
 but does not add any bonds!
 '''
+   if feedback['actions']:
+      print " "+str(__name__)+": assigning types..."
    if str(model.__class__) != 'chempy.models.Indexed':
       raise ValueError('model is not an "Indexed" model object')
    if model.nAtom:
@@ -121,6 +122,8 @@ add_bonds(model, forcefield = protein_amber, histidine = 'HIE' )
     and changes cystine to CYX
 (2) adds bonds between existing atoms
    '''
+   if feedback['actions']:
+      print " "+str(__name__)+": assigning types and bonds..."
    if str(model.__class__) != 'chempy.models.Indexed':
       raise ValueError('model is not an "Indexed" model object')
    if model.nAtom:
@@ -233,6 +236,8 @@ add_bonds(model, forcefield = protein_amber, histidine = 'HIE' )
                      
 #---------------------------------------------------------------------------------
 def add_hydrogens(model,forcefield=protein_amber):  # assumes no bonds between non-hetatms
+   if feedback['actions']:
+      print " "+str(__name__)+": adding hydrogens..."
    if str(model.__class__) != 'chempy.models.Connected':
       raise ValueError('model is not a "Connected" model object')
    if model.nAtom:
@@ -313,4 +318,4 @@ def add_hydrogens(model,forcefield=protein_amber):  # assumes no bonds between n
                               bnd.order = bonds[b]['order']
                               mbond[idx1].append(bnd)
                               mbond[idx2].append(bnd)
-   model.sort()
+      model.sort()

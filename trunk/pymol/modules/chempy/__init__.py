@@ -130,13 +130,26 @@ class Storage:
       fp.close()
 
    def fromFile(self,fname,**params):
+      if feedback['io']:
+         print ' chempy: reading "%s".' % fname
       fp = open(fname)
       result = apply(self.fromList,(fp.readlines(),),params)
       fp.close()
       return result
 
    def toFile(self,indexed,fname,**params):
+      if feedback['io']:
+         print ' chempy: writing "%s".' % fname
       fp = open(fname,'w')
       result = fp.writelines(apply(self.toList,(indexed,),params))
       fp.close()
+
+feedback = { 'terse'   : 1,
+             'io'      : 1,
+             'actions' : 1,
+             'tinker'  : 1,
+             'atoms'   : 0,
+             'bonds'   : 0,                          
+             'verbose' : 0,
+             }
 

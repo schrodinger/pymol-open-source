@@ -1,5 +1,9 @@
 
+import chempy
+
 def get_partial_charge(model):
+   if chempy.feedback['verbose']:
+      print ' '+str(__name__)+': generating partial charge keywords...'
    list = []
    c = -1
    for a in model.atom:
