@@ -231,6 +231,7 @@ SEE ALSO
          f=open(filename,"w")
          f.write(tup[0])
          f.write(tup[1])
+         f.flush()
          f.close()
       return r
 

@@ -278,7 +278,8 @@ def technical(selection="(all)"):
 def pretty_solv(selection="(all)"):
    s = tmp_sele
    cmd.select(s,selection)
-   _prepare(s)
+   polar_contacts = _get_polar_contacts_name(s)
+   _prepare(s,polar_contacts)
    cmd.dss(s,preserve=1)
    cmd.cartoon("auto",s)
    cmd.show("cartoon",s)
