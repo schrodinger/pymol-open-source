@@ -420,6 +420,7 @@ PyMOL COMMAND LINE OPTIONS
    -t   Use Tcl/Tk based external GUI module (pmg_tk).
    -w   Use wxPython based external GUI module (pmg_wx).
 	-q   Quiet launch.  Suppress splash screen.
+   -p   Listen for commands on standard input stream.  
 
    <file> can have one of the following extensions, and all 
    files provided will be loaded or run after PyMOL starts.
