@@ -36,7 +36,7 @@ Z* -------------------------------------------------------------------
 #define CGO_write_int(p,i) ((*((int*)(p++)))=(i))
 
 struct _CCGORenderer {
-  float global_alpha;
+  float alpha;
 };
 
 int CGORendererInit(PyMOLGlobals *G)
@@ -45,7 +45,7 @@ int CGORendererInit(PyMOLGlobals *G)
   
   I = (G->CGORenderer = Calloc(CCGORenderer,1));
   if(I) {
-    I->global_alpha = 1.0F;
+    I->alpha = 1.0F;
     return 1;
   } else 
     return 0;
@@ -102,7 +102,7 @@ int CGO_sz[] = {
 
 };
 
-typedef void CGO_op(float *);
+typedef void CGO_op(CCGORenderer *I,float *);
 typedef CGO_op *CGO_op_fn;
 
 static float *CGO_add(CGO *I,int c);
@@ -945,7 +945,7 @@ void CGORenderRay(CGO *I,CRay *ray,float *color,CSetting *set1,CSetting *set2)
   float *n0=NULL,*n1=NULL,*n2=NULL,*v0=NULL,*v1=NULL,*v2=NULL,*c0=NULL,*c1=NULL,*c2=NULL;
   int mode = -1;
 
-  I->G->CGORenderer->global_alpha = 1.0F;
+  I->G->CGORenderer->alpha = 1.0F;
 
   widthscale = SettingGet_f(I->G,set1,set2,cSetting_cgo_ray_width_scale);
 
@@ -1003,7 +1003,7 @@ void CGORenderRay(CGO *I,CRay *ray,float *color,CSetting *set1,CSetting *set2)
       ray->fColor3fv(ray,c0);
       break;
     case CGO_ALPHA:
-      I->G->CGORenderer->global_alpha = *pc;
+      I->G->CGORenderer->alpha = *pc;
       ray->fTransparentf(ray,1.0F - *pc);
       break;
     case CGO_VERTEX:
@@ -1094,77 +1094,56 @@ void CGORenderRay(CGO *I,CRay *ray,float *color,CSetting *set1,CSetting *set2)
 
 /* ======== GL Rendering ======== */
 
-static void CGO_gl_begin(float *pc)
+static void CGO_gl_begin(CCGORenderer *I,float *pc)
 {
   glBegin(CGO_read_int(pc));
 
 }
 
-static void CGO_gl_end(float *pc)
+static void CGO_gl_end(CCGORenderer *I,float *pc)
 {
   glEnd();
 }
 
-static void CGO_gl_linewidth(float *pc)
+static void CGO_gl_linewidth(CCGORenderer *I,float *pc)
 {
   glLineWidth(*pc);
 }
 
-static void CGO_gl_dotwidth(float *pc)
+static void CGO_gl_dotwidth(CCGORenderer *I,float *pc)
 {
   glPointSize(*pc);
 }
 
-static void CGO_gl_enable(float *pc)
+static void CGO_gl_enable(CCGORenderer *I,float *pc)
 {
   glEnable(CGO_read_int(pc));
 }
 
-static void CGO_gl_disable(float *pc)
+static void CGO_gl_disable(CCGORenderer *I,float *pc)
 {
   glDisable(CGO_read_int(pc));
 }
 
-static void CGO_gl_alpha(float *pc)
+static void CGO_gl_alpha(CCGORenderer *I,float *pc)
 {
-  /*  global_alpha = *pc; *** can't use this global anymore... */ 
+  I->alpha = *pc;
 }
 
-static void CGO_gl_alpha_global(float *global_alpha,float *pc)
-{
-  *global_alpha = *pc;
-}
-
-static void CGO_gl_null(float *pc) {
+static void CGO_gl_null(CCGORenderer *I,float *pc) {
 }
 #ifdef CYGWIN
 #define WIN32
 #endif
 
-#ifdef WIN32
-
-/* Under windows, these functions needed to be wrapped....
- * That may also be the case for any operating system which
- * doesn't use canonical gl calls */
-
-static void CGO_gl_vertex(float *v) {
+static void CGO_gl_vertex(CCGORenderer *I,float *v) {
   glVertex3fv(v);
 }
-static void CGO_gl_normal(float *v) {
+static void CGO_gl_normal(CCGORenderer *I,float *v) {
   glNormal3fv(v);
 }
-#endif
-
-static void CGO_gl_color(float *v) {
-  glColor3fv(v);
-}
-
-static void CGO_gl_color_global(float *global_alpha,float *v) {
-  if(*global_alpha==1.0F) 
-    glColor3fv(v);
-  else {
-    glColor4f(v[0],v[1],v[2],*global_alpha);
-  }
+static void CGO_gl_color(CCGORenderer *I,float *v) {
+  glColor4f(v[0],v[1],v[2],I->alpha);
 }
 
 /* dispatch table for OpenGL */
@@ -1174,13 +1153,8 @@ CGO_op_fn CGO_gl[] = {
   CGO_gl_null,             /* 0x01 */
   CGO_gl_begin,            /* 0x02 */
   CGO_gl_end,              /* 0x03 */
-#ifdef WIN32
   CGO_gl_vertex,           /* 0x04 */
   CGO_gl_normal,           /* 0x05 */
-#else
-  (CGO_op_fn)glVertex3fv,  /* 0x04 */
-  (CGO_op_fn)glNormal3fv,  /* 0x05 */
-#endif
   CGO_gl_color,            /* 0x06 */
   CGO_gl_null,             /* 0x07 */
   CGO_gl_null,             /* 0x08 */
@@ -1219,6 +1193,8 @@ void CGORenderGLPickable(CGO *I,Pickable **pick,void *ptr,CSetting *set1,CSettin
 {
   register float *pc = I->op;
   register int op;
+  register CCGORenderer *R = I->G->CGORenderer;
+
   int i,j;
   Pickable *p;
 
@@ -1230,7 +1206,7 @@ void CGORenderGLPickable(CGO *I,Pickable **pick,void *ptr,CSetting *set1,CSettin
     while((op=(CGO_MASK&CGO_read_int(pc)))) {
       if(op!=CGO_PICK_COLOR) {
         if(op!=CGO_COLOR) {
-          CGO_gl[op](pc); /* ignore color changes */
+          CGO_gl[op](R,pc); /* ignore color changes */
         }
       } else {
         i++;
@@ -1269,9 +1245,9 @@ void CGORenderGL(CGO *I,float *color,CSetting *set1,CSetting *set2)
 {
   register float *pc = I->op;
   register int op;
-  register float *global_alpha = &I->G->CGORenderer->global_alpha;
+  register CCGORenderer *R = I->G->CGORenderer;
 
-  *global_alpha = 1.0F;
+  R->alpha = 1.0F;
 
   if(I->c) {
     if(color) 
@@ -1282,16 +1258,7 @@ void CGORenderGL(CGO *I,float *color,CSetting *set1,CSetting *set2)
     glPointSize(SettingGet_f(I->G,set1,set2,cSetting_cgo_dot_width));
 
     while((op=(CGO_MASK&CGO_read_int(pc)))) {
-      if((op!=CGO_ALPHA)&&(op!=CGO_COLOR)) {
-        CGO_gl[op](pc);
-      } else switch(op) {
-      case CGO_ALPHA:
-        CGO_gl_alpha_global(global_alpha,pc);
-        break;
-      case CGO_COLOR:
-        CGO_gl_color_global(global_alpha,pc);
-        break;
-      }
+      CGO_gl[op](R,pc);
       pc+=CGO_sz[op];
     }
   }
