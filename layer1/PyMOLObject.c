@@ -32,6 +32,29 @@ int ObjectGetNFrames(CObject *I);
 void ObjectDescribeElement(struct CObject *I,int index,char *buffer);
 CSetting **ObjectGetSettingHandle(struct CObject *I,int state);
 
+void ObjectAdjustStateRebuildRange(CObject *I,int *start, int *stop)
+{
+  /* on entry, start and stop should hold the valid range for the object */
+
+  switch(SettingGet_i(I->G,NULL,I->Setting,cSetting_defer_builds_mode)) {
+  case 1: /* defer geometry builds until needed */
+  case 2: /* defer and destroy continuously for maximum memory conservation */
+
+    {
+      int min = *start;
+      int max = *stop;
+      *start = ObjectGetCurrentState(I,false);
+      *stop = *start + 1;
+      if(*start<min) *start = min;
+      if(*start>max) *start = max;
+      if(*stop <min)  *stop  = min;
+      if(*stop >max)  *stop  = max;
+    }
+    break;
+    break;
+  }
+}
+
 void ObjectMakeValidName(char *name)
 {
   char *p=name,*q;

@@ -59,6 +59,8 @@ if __name__=='pymol.invocation':
    options.incentive_product = 0
    options.window_visible = 1
    options.presentation = 0
+   options.defer_builds_mode = 0
+   
    if sys.platform != 'win32':
       options.win_py = 200
    else:
@@ -204,6 +206,8 @@ if __name__=='pymol.invocation':
                options.win_px = int(av.pop())
             if "Y" in a:
                options.win_py = int(av.pop())
+            if "D" in a:
+               options.defer_builds_mode = int(av.pop())
             if "V" in a:
                options.ext_y = int(av.pop())
             if "N" in a: # external gui name...

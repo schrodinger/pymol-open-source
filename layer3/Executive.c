@@ -4015,7 +4015,7 @@ void ExecutiveSpheroid(PyMOLGlobals *G,char *name,int average)  /* EXPERIMENTAL 
           if((!os)||(rec->obj==os)) {
             obj =(ObjectMolecule*)rec->obj;
             ObjectMoleculeCreateSpheroid(obj,average);  
-            ObjectMoleculeInvalidate(obj,cRepAll,cRepInvRep);
+            ObjectMoleculeInvalidate(obj,cRepAll,cRepInvRep,-1);
           }
     }
     SceneChanged(G);
@@ -4033,7 +4033,7 @@ void ExecutiveRebuildAll(PyMOLGlobals *G)
     if(rec->type==cExecObject) {
       switch(rec->obj->type) {
       case cObjectMolecule:
-        ObjectMoleculeInvalidate((ObjectMolecule*)rec->obj,cRepAll,cRepInvRep);
+        ObjectMoleculeInvalidate((ObjectMolecule*)rec->obj,cRepAll,cRepInvRep,-1);
         break;
       case cObjectDist:
         ObjectDistInvalidateRep((ObjectDist*)rec->obj,cRepAll);
@@ -6274,7 +6274,7 @@ int ExecutiveColor(PyMOLGlobals *G,char *name,char *color,int flags,int quiet)
         if(rec->type==cExecObject) {
           rec->obj->Color=col_ind;
           if(rec->obj->fInvalidate)
-            rec->obj->fInvalidate(rec->obj,cRepAll,cRepInvColor,cRepAll);
+            rec->obj->fInvalidate(rec->obj,cRepAll,cRepInvColor,-1);
           n_obj++;
           ok=true;
           SceneDirty(G);
@@ -6286,7 +6286,7 @@ int ExecutiveColor(PyMOLGlobals *G,char *name,char *color,int flags,int quiet)
         if(rec->type==cExecObject) {
           rec->obj->Color=col_ind;
           if(rec->obj->fInvalidate)
-            rec->obj->fInvalidate(rec->obj,cRepAll,cRepInvColor,cRepAll);
+            rec->obj->fInvalidate(rec->obj,cRepAll,cRepInvColor,-1);
           n_obj++;
           ok=true;
           SceneDirty(G);

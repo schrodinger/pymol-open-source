@@ -136,6 +136,7 @@ struct _CScene {
   BlockRect LoopRect;
   CViewElem ani_elem[MAX_ANI_ELEM+1];
   int cur_ani_elem, n_ani_elem;
+  int LastStateBuilt;
 
 };
 
@@ -3476,7 +3477,7 @@ int  SceneInit(PyMOLGlobals *G)
     I->LastRockTime = UtilGetSeconds(G);
     I->SingleClickDelay = 0.0;
     I->LastPicked.ptr = NULL;
-    
+    I->LastStateBuilt = -1;
     I->CopyNextFlag=true;
     I->CopyFlag=false;
     I->CopiedFromOpenGL=false;
@@ -3915,22 +3916,34 @@ void SceneUpdate(PyMOLGlobals *G)
 {
   register CScene *I=G->Scene;
   ObjRec *rec=NULL;
+  int cur_state = SettingGetGlobal_i(G,cSetting_state) - 1;
+  int defer_builds_mode = SettingGetGlobal_b(G,cSetting_defer_builds_mode);
 
   PRINTFD(G,FB_Scene)
     " SceneUpdate: entered.\n"
     ENDFD;
-  if(I->ChangedFlag) {
+  if(I->ChangedFlag || ((cur_state != I->LastStateBuilt) && 
+                        (defer_builds_mode>0))) {
     SceneCountFrames(G);
 	 while(ListIterate(I->Obj,rec,next))
       if(rec->obj->fUpdate) 
         rec->obj->fUpdate(rec->obj);
-	 I->ChangedFlag=false;
-    if(!MovieDefined(G)) {
-      if(SettingGetGlobal_i(G,cSetting_frame)!=
-         SettingGetGlobal_i(G,cSetting_state))
-        SettingSetGlobal_i(G,cSetting_frame,SettingGetGlobal_i(G,cSetting_state));
+	 I->ChangedFlag = false;
+    if((defer_builds_mode == 2) && 
+       (cur_state != I->LastStateBuilt)) { 
+      /* purge graphics representation when no longer used */
+      if(I->LastStateBuilt>=0) {
+        while(ListIterate(I->Obj,rec,next))
+          if(rec->obj->fInvalidate) 
+            rec->obj->fInvalidate(rec->obj,cRepAll,cRepInvRep,I->LastStateBuilt);
+      }
     }
+    I->LastStateBuilt = cur_state;
     WizardDoScene(G);
+    if(!MovieDefined(G)) {
+      if(SettingGetGlobal_i(G,cSetting_frame)!= (cur_state+1))
+        SettingSetGlobal_i(G,cSetting_frame, (cur_state+1));
+    }
   }
 
   PRINTFD(G,FB_Scene)

@@ -1135,6 +1135,7 @@ void PGetOptions(CPyMOLOptions *rec)
   rec->window_visible = PyInt_AsLong(PyObject_GetAttrString(options,"window_visible"));
   rec->read_stdin = PyInt_AsLong(PyObject_GetAttrString(options,"read_stdin"));
   rec->presentation = PyInt_AsLong(PyObject_GetAttrString(options,"presentation"));
+  rec->defer_builds_mode = PyInt_AsLong(PyObject_GetAttrString(options,"defer_builds_mode"));
   load_str = PyString_AsString(PyObject_GetAttrString(options,"after_load_script"));
 
   if(load_str) {

@@ -44,8 +44,8 @@ struct _CPyMOLOptions {
   
   int multisample,
     window_visible, 
-    read_stdin, presentation;
-  
+    read_stdin, presentation, defer_builds_mode;
+ 
   /* WARNING: for the sake of forward compability, never delete or
      move any fields in the above */
 

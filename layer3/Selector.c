@@ -2090,7 +2090,7 @@ int SelectorAssignSS(PyMOLGlobals *G,int target,int present,int state_value,int 
 
           if(obj!=last_obj) {
             if(changed_flag&&last_obj) {
-              ObjectMoleculeInvalidate(last_obj,cRepCartoon,cRepInvRep);
+              ObjectMoleculeInvalidate(last_obj,cRepCartoon,cRepInvRep,-1);
               SceneChanged(G);
               changed_flag=false;
             }
@@ -2108,7 +2108,7 @@ int SelectorAssignSS(PyMOLGlobals *G,int target,int present,int state_value,int 
       }
 
       if(changed_flag&&last_obj) {
-        ObjectMoleculeInvalidate(last_obj,cRepCartoon,cRepInvRep);
+        ObjectMoleculeInvalidate(last_obj,cRepCartoon,cRepInvRep,-1);
         SceneChanged(G);
         changed_flag=false;
       }
@@ -2250,7 +2250,7 @@ int SelectorColorectionApply(PyMOLGlobals *G,PyObject *list,char *prefix)
         if(SelectorIsMember(G,ai->selEntry,used[b].sele)) {
           ai->color = used[b].color;
           if(obj!=last) {
-            ObjectMoleculeInvalidate(obj,cRepAll,cRepInvColor);
+            ObjectMoleculeInvalidate(obj,cRepAll,cRepInvColor,-1);
             last = obj;
           }
           break;
@@ -5539,7 +5539,7 @@ void SelectorUpdateCmd(PyMOLGlobals *G,int sele0,int sele1,int sta0, int sta1,
       obj1=I->Obj[I->Table[i0].model];
       if(obj0!=obj1) {
         obj0=obj1;
-        ObjectMoleculeInvalidate(obj0,cRepAll,cRepInvCoord);
+        ObjectMoleculeInvalidate(obj0,cRepAll,cRepInvCoord,-1);
       }
     }
     if(!quiet) {
