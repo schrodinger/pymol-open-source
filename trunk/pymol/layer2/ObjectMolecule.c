@@ -607,19 +607,29 @@ ObjectMolecule *ObjectMoleculeLoadRSTFile(ObjectMolecule *I,char *fname,int fram
 }
 static char *findflag(char *p,char *flag,char *format)
 {
+
   char cc[MAXLINELEN];
   char pat[MAXLINELEN] = "%FLAG ";
   int l;
+
+  PRINTFD(FB_ObjectMolecule)
+    " findflag: flag %s format %s\n",flag,format
+    ENDFD;
+
   strcat(pat,flag);
   l=strlen(pat);
   while(*p) {
     p=ncopy(cc,p,l);
-    if(WordMatch(cc,pat,true)) {
-      printf("flag? %s\n",cc);
+    if(WordMatch(cc,pat,true)<0) {
       p=nextline(p);
       break;
     }
     p=nextline(p);
+    if(!*p) {
+      PRINTFB(FB_ObjectMolecule,FB_Errors)
+        " ObjectMolecule-Error: Unrecognized file format (can't find '%s').\n",pat
+        ENDFB;
+    }
   }
 
   strcpy(pat,"%FORMAT(");
@@ -628,12 +638,17 @@ static char *findflag(char *p,char *flag,char *format)
   l=strlen(pat);
   while(*p) {
     p=ncopy(cc,p,l);
-    printf("format? %s\n",cc);
-    if(WordMatch(cc,pat,true)) {
+    if(WordMatch(cc,pat,true)<0) {
       p=nextline(p);
       break; 
     }
     p=nextline(p);
+    if(!*p) {
+      PRINTFB(FB_ObjectMolecule,FB_Errors)
+        " ObjectMolecule-Error: Unrecognized file format (can't find '%s').\n",pat
+        ENDFB;
+    }
+      
   }
   return(p);
 }
@@ -672,6 +687,7 @@ CoordSet *ObjectMoleculeTOPStr2CoordSet(char *buffer,
   int NATYP,NPHB,IFPERT,NBPER,NGPER,NDPER;
   int MBPER,MGPER,MDPER,IFBOX,NMXRS,IFCAP;
   int NEXTRA,IPOL=0;
+  int wid,col;
 
   
   AtomInfoPrimeColors();
@@ -811,7 +827,10 @@ CoordSet *ObjectMoleculeTOPStr2CoordSet(char *buffer,
   if(ok) {  
     VLACheck(atInfo,AtomInfoType,nAtom);
 
-  /* read atoms */
+    if(amber7) {
+      p = findflag(p,"ATOM_NAME","20a4");
+    }
+    /* read atoms */
 
     b=0;
     for(a=0;a<nAtom;a++) {
@@ -837,6 +856,10 @@ CoordSet *ObjectMoleculeTOPStr2CoordSet(char *buffer,
 
     /* read charges */
 
+    if(amber7) {
+      p = findflag(p,"CHARGE","5E16.8");
+    }
+
     b=0;
     for(a=0;a<nAtom;a++) {
       p=ncopy(cc,p,16);
@@ -861,19 +884,30 @@ CoordSet *ObjectMoleculeTOPStr2CoordSet(char *buffer,
     }
     if(b) p=nextline_top(p);
   
-  /* skip masses */
-
-    p=skip_fortran(nAtom,5,p);
+    if(!amber7) {
+      /* skip masses */
+      
+      p=skip_fortran(nAtom,5,p);
+    }
 
     /* read LJ atom types */
 
+    if(amber7) {
+      p = findflag(p,"ATOM_TYPE_INDEX","10I8");
+      col=10;
+      wid=8;
+    } else {
+      col=12;
+      wid=6;
+    }
+
     b=0;
     for(a=0;a<nAtom;a++) {
-      p=ncopy(cc,p,6);
+      p=ncopy(cc,p,wid);
       ai=atInfo+a;
       if(!sscanf(cc,"%d",&ai->customType))
         ok=false;
-      if((++b)==12) {
+      if((++b)==col) {
         b=0;
         p=nextline_top(p);
       }
@@ -888,15 +922,21 @@ CoordSet *ObjectMoleculeTOPStr2CoordSet(char *buffer,
         ENDFB;
     }
 
-    /* skip excluded atom counts */
-
-    p=skip_fortran(nAtom,12,p);
-
-    /* skip NB param arrays */
-
-    p=skip_fortran(NTYPES*NTYPES,12,p);
+    if(!amber7) {
+      /* skip excluded atom counts */
+      
+      p=skip_fortran(nAtom,12,p);
+      
+      /* skip NB param arrays */
+      
+      p=skip_fortran(NTYPES*NTYPES,12,p);
+    }
 
     /* read residue labels */
+
+    if(amber7) {
+      p = findflag(p,"RESIDUE_LABEL","20a4");
+    }
 
     resn = Alloc(ResName,NRES);
 
@@ -922,11 +962,20 @@ CoordSet *ObjectMoleculeTOPStr2CoordSet(char *buffer,
 
     /* read residue assignments */
 
+    if(amber7) {
+      p = findflag(p,"RESIDUE_POINTER","10I8");
+      col=10;
+      wid=8;
+    } else {
+      col=12;
+      wid=6;
+    }
+
     b=0;
     last_i=0;
     rc=0;
     for(a=0;a<NRES;a++) {
-      p=ncopy(cc,p,6);
+      p=ncopy(cc,p,wid);
       if(sscanf(cc,"%d",&at_i))
         {
           if(last_i)
@@ -939,7 +988,7 @@ CoordSet *ObjectMoleculeTOPStr2CoordSet(char *buffer,
           rc++;
           last_i=at_i;
         }
-      if((++b)==12) {
+      if((++b)==col) {
         b=0;
         p=nextline_top(p);
       }
@@ -963,50 +1012,60 @@ CoordSet *ObjectMoleculeTOPStr2CoordSet(char *buffer,
     }
 
     FreeP(resn);
-  
-  /* skip bond force constants */
 
+    if(!amber7) {  
+      /* skip bond force constants */
 
-    p=skip_fortran(NUMBND,5,p);
+      p=skip_fortran(NUMBND,5,p);
+      
+      /* skip bond lengths */
 
-    /* skip bond lengths */
-
-
-    p=skip_fortran(NUMBND,5,p);
-  
-    /* skip angle force constant */
-
-    p=skip_fortran(NUMANG,5,p);
-
-    /* skip angle eq */
-
-    p=skip_fortran(NUMANG,5,p);
-
-    /* skip dihedral force constant */
-
-    p=skip_fortran(NPTRA,5,p);
-
-    /* skip dihedral periodicity */
-
-    p=skip_fortran(NPTRA,5,p);
-
-    /* skip dihedral phases */
-
-    p=skip_fortran(NPTRA,5,p);
-
-    /* skip SOLTYs */
-
-    p=skip_fortran(NATYP,5,p);
-
-    /* skip LJ terms r12 */
-
-    p=skip_fortran((NTYPES*(NTYPES+1))/2,5,p);
-
-    /* skip LJ terms r6 */
-
-    p=skip_fortran((NTYPES*(NTYPES+1))/2,5,p);
+      p=skip_fortran(NUMBND,5,p);
+      
+      /* skip angle force constant */
+      
+      p=skip_fortran(NUMANG,5,p);
+      
+      /* skip angle eq */
+      
+      p=skip_fortran(NUMANG,5,p);
+      
+      /* skip dihedral force constant */
+      
+      p=skip_fortran(NPTRA,5,p);
+      
+      /* skip dihedral periodicity */
+      
+      p=skip_fortran(NPTRA,5,p);
+      
+      /* skip dihedral phases */
+      
+      p=skip_fortran(NPTRA,5,p);
+      
+      /* skip SOLTYs */
+      
+      p=skip_fortran(NATYP,5,p);
+      
+      /* skip LJ terms r12 */
+      
+      p=skip_fortran((NTYPES*(NTYPES+1))/2,5,p);
+      
+      /* skip LJ terms r6 */
+      
+      p=skip_fortran((NTYPES*(NTYPES+1))/2,5,p);
+      
+    }
 
     /* read bonds */
+
+    if(amber7) {
+      p = findflag(p,"BONDS_INC_HYDROGEN","10I8");
+      col=10;
+      wid=8;
+    } else {
+      col=12;
+      wid=6;
+    }
     
     nBond = NBONH + NBONA;
 
@@ -1020,7 +1079,7 @@ CoordSet *ObjectMoleculeTOPStr2CoordSet(char *buffer,
     i0=0;
     i1=0;
     for(a=0;a<3*NBONH;a++) {
-      p=ncopy(cc,p,6);
+      p=ncopy(cc,p,wid);
       i2=i1;
       i1=i0;
       if(!sscanf(cc,"%d",&i0))
@@ -1035,7 +1094,7 @@ CoordSet *ObjectMoleculeTOPStr2CoordSet(char *buffer,
         bd->id = bi+1;
         bi++;
       }
-      if((++b)==12) {
+      if((++b)==col) {
         b=0;
         p=nextline_top(p);
       }
@@ -1050,10 +1109,19 @@ CoordSet *ObjectMoleculeTOPStr2CoordSet(char *buffer,
         ENDFB;
     }
 
+    if(amber7) {
+      p = findflag(p,"BONDS_WITHOUT_HYDROGEN","10I8");
+      col=10;
+      wid=8;
+    } else {
+      col=12;
+      wid=6;
+    }
+
     b=0;
     c=0;
     for(a=0;a<3*NBONA;a++) {
-      p=ncopy(cc,p,6);
+      p=ncopy(cc,p,wid);
       i2=i1;
       i1=i0;
       if(!sscanf(cc,"%d",&i0))
@@ -1068,7 +1136,7 @@ CoordSet *ObjectMoleculeTOPStr2CoordSet(char *buffer,
         bd->id = bi+1;
         bi++;
       }
-      if((++b)==12) {
+      if((++b)==col) {
         b=0;
         p=nextline_top(p);
       }
@@ -1083,39 +1151,46 @@ CoordSet *ObjectMoleculeTOPStr2CoordSet(char *buffer,
         ENDFB;
     }
 
-    /* skip hydrogen angles */
-
-    p=skip_fortran(4*NTHETH,12,p);
-
-    /* skip non-hydrogen angles */
-
-    p=skip_fortran(4*NTHETA,12,p);
-
-    /* skip hydrogen dihedrals */
-
-    p=skip_fortran(5*NPHIH,12,p);
-
-    /* skip non hydrogen dihedrals */
-
-    p=skip_fortran(5*NPHIA,12,p);
-
-    /* skip nonbonded exclusions */
-
-    p=skip_fortran(NNB,12,p);
-
-    /* skip hydrogen bonds ASOL */
-
-    p=skip_fortran(NPHB,5,p);
-
-    /* skip hydrogen bonds BSOL */
-
-    p=skip_fortran(NPHB,5,p);
-
-    /* skip HBCUT */
-
-    p=skip_fortran(NPHB,5,p);
-
+    if(!amber7) {
+      /* skip hydrogen angles */
+      
+      p=skip_fortran(4*NTHETH,12,p);
+      
+      /* skip non-hydrogen angles */
+      
+      p=skip_fortran(4*NTHETA,12,p);
+      
+      /* skip hydrogen dihedrals */
+      
+      p=skip_fortran(5*NPHIH,12,p);
+      
+      /* skip non hydrogen dihedrals */
+      
+      p=skip_fortran(5*NPHIA,12,p);
+      
+      /* skip nonbonded exclusions */
+      
+      p=skip_fortran(NNB,12,p);
+      
+      /* skip hydrogen bonds ASOL */
+      
+      p=skip_fortran(NPHB,5,p);
+      
+      /* skip hydrogen bonds BSOL */
+      
+      p=skip_fortran(NPHB,5,p);
+      
+      /* skip HBCUT */
+      
+      p=skip_fortran(NPHB,5,p);
+      
+    }
     /* read AMBER atom types */
+
+    if(amber7) {
+      p = findflag(p,"AMBER_ATOM_TYPE","20a4");
+    }
+
     b=0;
     for(a=0;a<nAtom;a++) {
       p=ncopy(cc,p,4);
@@ -1137,115 +1212,149 @@ CoordSet *ObjectMoleculeTOPStr2CoordSet(char *buffer,
         ENDFB;
     }
 
-    /* skip TREE classification */
+    if(!amber7) {
+      /* skip TREE classification */
+      
+      p=skip_fortran(nAtom,20,p);
+      
+      /* skip tree joining information */
+      
+      p=skip_fortran(nAtom,12,p);
+      
+      /* skip last atom rotated blah blah blah */
+      
+      p=skip_fortran(nAtom,12,p);
 
-    p=skip_fortran(nAtom,20,p);
+      if(IFBOX>0) {
 
-    /* skip tree joining information */
+        int IPTRES,NSPM,NSPSOL;
 
-    p=skip_fortran(nAtom,12,p);
-
-    /* skip last atom rotated blah blah blah */
-
-    p=skip_fortran(nAtom,12,p);
-
-    if(IFBOX>0) {
-
-      int IPTRES,NSPM,NSPSOL;
-
-      p=ncopy(cc,p,12); ok = ok && sscanf(cc,"%d",&IPTRES);
-      p=ncopy(cc,p,12); ok = ok && sscanf(cc,"%d",&NSPM);
-      p=ncopy(cc,p,12); ok = ok && sscanf(cc,"%d",&NSPSOL);
+        p=ncopy(cc,p,12); ok = ok && sscanf(cc,"%d",&IPTRES);
+        p=ncopy(cc,p,12); ok = ok && sscanf(cc,"%d",&NSPM);
+        p=ncopy(cc,p,12); ok = ok && sscanf(cc,"%d",&NSPSOL);
     
-      p=nextline_top(p);
+        p=nextline_top(p);
 
-      /* skip pressuem scaling */
+        /* skip pressuem scaling */
 
-      p=skip_fortran(NSPM,12,p);
+        p=skip_fortran(NSPM,12,p);
   
-      /* skip periodic box */
+        /* skip periodic box */
 
-      p=nextline_top(p);
+        p=nextline_top(p);
 
-    }
+      }
 
-    if(IFCAP>0) {
-      p=nextline_top(p);
-      p=nextline_top(p);
-      p=nextline_top(p);
-    }
+      if(IFCAP>0) {
+        p=nextline_top(p);
+        p=nextline_top(p);
+        p=nextline_top(p);
+      }
 
-    if(IFPERT>0) {
+      if(IFPERT>0) {
 
-      /* skip perturbed bond atoms */
+        /* skip perturbed bond atoms */
 
-      p=skip_fortran(2*NBPER,12,p);    
+        p=skip_fortran(2*NBPER,12,p);    
 
-      /* skip perturbed bond atom pointers */
+        /* skip perturbed bond atom pointers */
 
-      p=skip_fortran(2*NBPER,12,p);    
+        p=skip_fortran(2*NBPER,12,p);    
 
-      /* skip perturbed angles */
+        /* skip perturbed angles */
 
-      p=skip_fortran(3*NGPER,12,p);    
+        p=skip_fortran(3*NGPER,12,p);    
 
-      /* skip perturbed angle pointers */
+        /* skip perturbed angle pointers */
 
-      p=skip_fortran(2*NGPER,12,p);    
+        p=skip_fortran(2*NGPER,12,p);    
 
-      /* skip perturbed dihedrals */
+        /* skip perturbed dihedrals */
 
-      p=skip_fortran(4*NDPER,12,p);    
+        p=skip_fortran(4*NDPER,12,p);    
 
-      /* skip perturbed dihedral pointers */
+        /* skip perturbed dihedral pointers */
 
-      p=skip_fortran(2*NDPER,12,p);    
+        p=skip_fortran(2*NDPER,12,p);    
 
-      /* skip residue names */
+        /* skip residue names */
 
-      p=skip_fortran(NRES,20,p);    
+        p=skip_fortran(NRES,20,p);    
 
-      /* skip atom names */
+        /* skip atom names */
 
-      p=skip_fortran(nAtom,20,p);    
+        p=skip_fortran(nAtom,20,p);    
 
-      /* skip atom symbols */
+        /* skip atom symbols */
 
-      p=skip_fortran(nAtom,20,p);    
+        p=skip_fortran(nAtom,20,p);    
 
-      /* skip unused field */
+        /* skip unused field */
 
-      p=skip_fortran(nAtom,5,p);    
+        p=skip_fortran(nAtom,5,p);    
 
-      /* skip perturbed flags */
+        /* skip perturbed flags */
 
-      p=skip_fortran(nAtom,12,p);    
+        p=skip_fortran(nAtom,12,p);    
 
-      /* skip LJ atom flags */
+        /* skip LJ atom flags */
 
-      p=skip_fortran(nAtom,12,p);    
+        p=skip_fortran(nAtom,12,p);    
 
-      /* skip perturbed charges */
+        /* skip perturbed charges */
 
-      p=skip_fortran(nAtom,5,p);    
+        p=skip_fortran(nAtom,5,p);    
 
-    }
+      }
 
-    if(IPOL>0) {
+      if(IPOL>0) {
 
-      /* skip atomic polarizabilities */
+        /* skip atomic polarizabilities */
 
-      p=skip_fortran(nAtom,5,p);    
+        p=skip_fortran(nAtom,5,p);    
 
-    }
+      }
 
-    if((IPOL>0) && (IFPERT>0)) {
+      if((IPOL>0) && (IFPERT>0)) {
 
-      /* skip atomic polarizabilities */
+        /* skip atomic polarizabilities */
 
-      p=skip_fortran(nAtom,5,p);    
+        p=skip_fortran(nAtom,5,p);    
     
+      }
     }
+    /* for future reference 
+
+%FLAG LES_NTYP
+%FORMAT(10I8)
+%FLAG LES_TYPE
+%FORMAT(10I8)
+%FLAG LES_FAC
+%FORMAT(5E16.8)
+%FLAG LES_CNUM
+%FORMAT(10I8)
+%FLAG LES_ID
+%FORMAT(10I8)
+
+Here is the additional information for LES topology formats:
+First, if NPARM ==1, LES entries are in topology (NPARM is the 10th
+entry in the initial list of control parameters); otherwise the standard
+format applies.
+So, with NPARM=1, you just need to read a few more things at the very
+end of topology file:
+LES_NTYP (format: I6) ... one number, number of LES types
+and four arrays:
+LES_TYPE (12I6) ... NATOM integer entries
+LES_FAC (E16.8) ... LES_NTYPxLES_NTYP float entries
+LES_CNUM (12I6) ... NATOM integer entries
+LES_ID (12I6)   ... NATOM integer entries
+
+and that's it. Your parser must have skipped this information because it
+was at the end of the file. Maybe that's good enough.
+
+
+
+     */
 
     coord=VLAlloc(float,3*nAtom);
 
