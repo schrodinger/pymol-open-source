@@ -570,7 +570,7 @@ static void MainSpecial(int k, int x, int y)
 	 ((glMod&P_GLUT_ACTIVE_ALT) ? cOrthoALT : 0);
 
   if(!grabbed)
-    grabbed = WizardDoKey(k,x,y,Modifiers);
+    grabbed = WizardDoKey((unsigned char)k,x,y,Modifiers);
 
   switch(k) {
     case P_GLUT_KEY_UP:
