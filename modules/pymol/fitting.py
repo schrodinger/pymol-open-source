@@ -18,8 +18,10 @@ import selector
 
 from cmd import _cmd,lock,unlock,Shortcut,QuietException
 
-def align(source,target): # EXPERIMENTAL, BUGGY
+def align(source,target,matrix="IDENTITY"): # EXPERIMENTAL, BUGGY
    r = None
+   source = selector.process(source)
+   target = selector.process(target)
    try:
       lock()
       r = _cmd.align(str(source),str(target))

@@ -18,11 +18,13 @@ Z* -------------------------------------------------------------------
 #include"os_limits.h"
 #include"os_std.h"
 
+#include"Base.h"
 #include"MemoryDebug.h"
 #include"OOMac.h"
 #include"Match.h"
 #include"Util.h"
 #include"Feedback.h"
+#include"Parse.h"
 
 #ifndef int2 
 typedef int int2[2];
@@ -31,8 +33,9 @@ typedef int int2[2];
 CMatch *MatchNew(unsigned int na,unsigned int nb)
 {
   unsigned int dim[2];
+  int a,b;
   OOAlloc(CMatch);
-  
+
   dim[0]=na;
   dim[1]=nb;
   I->mat = NULL;
@@ -42,9 +45,200 @@ CMatch *MatchNew(unsigned int na,unsigned int nb)
   I->pair = NULL;
   I->na=na;
   I->nb=nb;
+
+  /* scoring matrix is always 128^2 */
+  dim[0]=128;
+  dim[1]=128;
+  I->smat = (float**)UtilArrayMalloc(dim,2,sizeof(float));
+  for(a=0;a<128;a++)
+    for(b=0;b<128;b++) 
+      I->smat[a][b]=0.0;
   return(I);
 }
 
+int MatchResidueToCode(CMatch *I,int *vla,int n)
+{
+#define cNRES 20
+  int ok=true;
+  int a,b,c;
+  int found;
+  int rcode[cNRES],rname[cNRES];
+  int *trg;
+  char res[][4] = { "ALA", "A",
+                     "CYS", "C",
+                     "ASP", "D",
+                     "GLU", "E",
+                     "PHE", "F",
+                     
+                     "GLY", "G",
+                     "HIS", "H",
+                     "ILE", "I",
+                     "LYS", "K",
+                     "LEU", "L",
+                     
+                     "MET", "M",
+                     "ASN", "N",
+                     "PRO", "P",
+                     "GLN", "Q",
+                     "ARG", "R",
+                     
+                     "SER", "S",
+                     "THR", "T",
+                     "VAL", "V",
+                     "TRP", "W",
+                     "TYR", "Y" };
+  
+  /* get integral values for the residue names */
+  
+  for(a=0;a<cNRES;a++) {
+    b = 0;
+    for(c=0;c<3;c++) {
+      b = (b<<8) | res[a*2][c];
+    }
+    rname[a]=b;
+    rcode[a]=res[a*2+1][0];
+  }
+  
+  for(b=0;b<n;b++) {
+    found = 0;
+    trg = vla+(b*3)+2;
+    for(a=0;a<cNRES;a++)
+      if(rname[a]==*trg) {
+        found=true;
+        *trg=rcode[a];
+        break;
+      }
+    if(!found) {
+      PRINTFB(FB_Match,FB_Warnings)
+        " Match-Warning: unknown residue type %c%c%c (using X).\n",
+        0xFF&(*trg>>16),0xFF&(*trg>>8),0xFF&*trg
+        ENDFB;
+      *trg='X';
+    }
+  }
+  return(ok);
+}
+
+int MatchPreScore(CMatch *I,int *vla1,int n1,int *vla2,int n2)
+{
+  int a,b;
+
+  PRINTFB(FB_Match,FB_Details)
+    " Match: assigning %d x %d pairwise scores.\n",n1,n2
+    ENDFB;
+
+  for(a=0;a<n1;a++) {
+    for(b=0;b<n2;b++) {
+      I->mat[a][b] = I->smat[0x7F&vla1[a*3+2]][0x7F&vla2[b*3+2]];
+    }
+  }
+  return 1;
+}
+
+
+int MatchMatrixFromFile(CMatch *I,char *fname)
+{
+  int ok=1;
+  FILE *f;
+  char *buffer;
+  char *p;
+  char cc[255];
+  char *code=NULL;
+  unsigned int x,y;
+  int a;
+  int n_entry;
+  unsigned int size;
+  
+  f=fopen(fname,"r");
+  if(!f) {
+    PRINTFB(FB_Match,FB_Errors) 
+      " Match-Error: unable to open matrix file '%s'.\n",fname
+      ENDFB;
+    ok=false;
+  } else {
+    fseek(f,0,SEEK_END);
+    size=ftell(f);
+    fseek(f,0,SEEK_SET);
+    
+    buffer=(char*)mmalloc(size+255);
+    ErrChkPtr(buffer);
+    p=buffer;
+    fseek(f,0,SEEK_SET);
+    fread(p,size,1,f);
+    p[size]=0;
+    fclose(f);
+
+    /* count codes */
+
+    p=buffer;
+    n_entry = 0;
+    while(*p) {
+      switch(*p) {
+      case '#':
+        break;
+      default:
+        if((*p)>32) n_entry++;
+        break;
+      }
+      p=ParseNextLine(p);
+    }
+
+    if(!n_entry) 
+      ok=false;
+    else {
+      code=(char*)Alloc(int,n_entry);
+      
+      /* read codes */
+      
+      p=buffer;
+      n_entry = 0;
+      while(*p) {
+        switch(*p) {
+        case '#':
+          break;
+        default:
+          if((*p)>32) {
+            code[n_entry]=*p;
+            n_entry++;
+            break;
+          }
+        }
+        p=ParseNextLine(p);
+      }
+      
+      /* read values */
+
+      p=buffer;
+      while(*p) {
+        switch(*p) {
+        case '#':
+          break;
+        default:
+          if((*p)>32) {
+            x=*(p++);
+            for(a=0;a<n_entry;a++) {
+              p = ParseWordCopy(cc,p,255);
+              y=(unsigned int)code[a];
+              ok=sscanf(cc,"%f",&I->smat[x][y]);
+              if(!ok) break;
+            }
+          }
+          break;
+        }
+        if(!ok) break;
+        p=ParseNextLine(p);
+      }
+      mfree(buffer);
+    }
+  }
+  if(ok) {
+    PRINTFB(FB_Match,FB_Details)
+      " Match: read scoring matrix.\n"
+      ENDFB;
+  }
+  FreeP(code);
+  return(ok);
+}
 
 float MatchAlign(CMatch *I,float gap_penalty,float ext_penalty,int max_skip)
 {
@@ -60,7 +254,6 @@ float MatchAlign(CMatch *I,float gap_penalty,float ext_penalty,int max_skip)
   int gap;
   int *p;
   int cnt;
-
 
   nf = I->na+2;
   ng = I->nb+2;
@@ -198,6 +391,9 @@ float MatchAlign(CMatch *I,float gap_penalty,float ext_penalty,int max_skip)
   PRINTFD(FB_Match)
     " MatchAlign-DEBUG: best entry %8.3f %d %d %d\n",mxv,mxa,mxb,cnt
     ENDFD;
+  PRINTFB(FB_Match,FB_Results) 
+    " MatchAlign: score %1.3f\n",mxv
+    ENDFD;
   if(cnt)
     mxv = mxv/cnt;
   VLASize(I->pair,int,(p-I->pair));
@@ -209,6 +405,7 @@ float MatchAlign(CMatch *I,float gap_penalty,float ext_penalty,int max_skip)
 void MatchFree(CMatch *I)
 {
   FreeP(I->mat);
+  FreeP(I->smat);
   VLAFreeP(I->pair);
   OOFreeP(I);
 }

@@ -18,12 +18,17 @@ Z* -------------------------------------------------------------------
 #define _H_Match
 
 typedef struct {
+  float **smat;
   float **mat;
   int *pair;
+  
   int na,nb;
 } CMatch;
 
 CMatch *MatchNew(unsigned int na,unsigned int nb);
+int MatchResidueToCode(CMatch *I,int *vla,int n);
+int MatchMatrixFromFile(CMatch *I,char *fname);
+int MatchPreScore(CMatch *I,int *vla1,int n1,int *vla2,int n2);
 void MatchFree(CMatch *I);
 float MatchAlign(CMatch *I,float gap_penalty,float ext_penalty,int max_gap);
 
