@@ -179,6 +179,9 @@ CHANGE LOG
 
 Changes up to 0.91
 
+   * restored CRLFs on Windows versions of PyMOL so that
+     python code can be viewed/edited with Notepad, etc.
+
    * added quiet parameter to alter and iterate commands
 
    * fixed raytracing bug with one residue cylindrical helices
