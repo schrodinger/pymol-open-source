@@ -29,6 +29,7 @@ Z* -------------------------------------------------------------------
 #include"Selector.h"
 #include"Executive.h"
 #include"ObjectMolecule.h"
+#include"CoordSet.h"
 
 
 #define SelectorMaxDepth 100
@@ -49,6 +50,7 @@ typedef struct {
 typedef struct {
   int model;
   int atom;
+  int index;
 } TableRec;
 
 typedef struct {
@@ -97,6 +99,7 @@ static WordType Keyword[] =
   "in",       "IN_2",
   "all",      "ALLz", /* 0 parameter */
   "none",     "NONz", /* 0 parameter */
+  "hetatm",   "HETz", /* 0 parameter */
   "around",   "ARD_", /* 1 parameter */
   "expand",   "EXP_", /* 1 parameter */
   "name",     "NAMs",
@@ -119,6 +122,125 @@ static WordType AtOper[] =
   "=",      "EQAL",
   ""
 };
+
+static int BondInOrder(int *a,int b1,int b2);
+static int BondCompare(int *a,int *b);
+
+/*========================================================================*/
+static int BondInOrder(int *a,int b1,int b2)
+{
+  return(BondCompare(a+b1*2,a+b2*2)<=0);
+}
+
+/*========================================================================*/
+static int BondCompare(int *a,int *b)
+{
+  int result;
+  if(a[0]==b[0]) {
+	if(a[1]==b[1]) {
+	  result=0;
+	} else if(a[1]>b[1]) {
+	  result=1;
+	} else {
+	  result=-1;
+	}
+  } else if(a[0]>b[0]) {
+	result=1;
+  } else {
+	result=-1;
+  }
+  return(result);
+}
+
+/*========================================================================*/
+int SelectorGetPDB(char **charVLA,int sele,int state,int conectFlag)
+{
+  SelectorType *I=&Selector;
+
+
+  int a,b,b1,b2,c,d,*ii1,s,ind,at;
+  int *bond=NULL;
+  int nBond=0;
+  int cLen =0;
+  CoordSet *cs;
+  ObjectMolecule *obj;
+  AtomInfoType *atInfo;
+
+  SelectorUpdateTable();
+  c=0;
+  for(a=0;a<I->NAtom;a++) {
+    at=I->Table[a].atom;
+    I->Table[a].index=0;
+    obj=I->Obj[I->Table[a].model];
+    s=obj->AtomInfo[at].selEntry;
+    while(s) 
+      {
+        if(I->Member[s].selection==sele)
+          {
+            ind=obj->CSet[state]->AtmToIdx[at];
+            if(ind>=0) {
+              I->Table[a].index=c+1;
+              CoordSetAtomToPDBStrVLA(charVLA,&cLen,obj->AtomInfo+a,
+                                      obj->CSet[state]->Coord+(3*ind),c);
+              c++;
+            }
+            break;
+          }
+        s=SelectorNext(s);
+      }
+  }
+  if(conectFlag) {
+    nBond = 0;
+    bond = VLAlloc(int,1000);
+    for(a=0;a<I->NModel;a++) {
+      obj=I->Obj[a];
+      ii1=obj->Bond;
+      cs=obj->CSet[state];
+      atInfo=obj->AtomInfo;
+      for(b=0;b<obj->NBond;b++) {
+        b1=ii1[0];
+        b2=ii1[1];        
+        if((cs->AtmToIdx[b1]>=0)&&(cs->AtmToIdx[b2]>=0)&&
+           (atInfo[b1].hetatm||atInfo[b2].hetatm)) {
+          b1+=obj->SeleBase;
+          b2+=obj->SeleBase;
+          if(I->Table[b1].index&&I->Table[b2].index) {
+            VLACheck(bond,int,nBond*2+12);
+            b1=I->Table[b1].index;
+            b2=I->Table[b2].index;
+            for(d=0;d<ii1[2];d++) {
+              bond[nBond*2] = b1;
+              bond[nBond*2+1] = b2;
+              nBond++;
+              bond[nBond*2] = b2;
+              bond[nBond*2+1] = b1;
+              nBond++;
+            }
+          }
+        }
+        ii1+=3;
+      }
+    }
+    UtilSortInPlace(bond,nBond,sizeof(int)*2,(UtilOrderFn*)BondInOrder);
+    ii1=bond;
+    b1=-1;
+    for(a=0;a<nBond;a++) {
+      if(b1!=ii1[0]||((b1==ii1[0])&&(b2==ii1[1]))) {
+        if(a) cLen+=sprintf((*charVLA)+cLen,"\n");
+        cLen+=sprintf((*charVLA)+cLen,"CONECT%5d%5d",
+                      ii1[0],ii1[1]);
+        b1=ii1[0];
+      } else cLen+=sprintf((*charVLA)+cLen,"%5d",
+                           ii1[1]);
+      b2=ii1[1];
+      ii1+=2;
+    }
+    cLen+=sprintf((*charVLA)+cLen,"\n");
+    VLAFree(bond);
+  }
+  return(cLen);
+}
+
 
 /*========================================================================*/
 int SelectorMatch(int ref,int sele)
@@ -332,6 +454,7 @@ int SelectorUpdateTable(void)
 		  {
 			 obj=(ObjectMolecule*)o;
 			 I->Obj[modelCnt]=obj;
+          obj->SeleBase=c; /* make note of where this object starts */
 			 for(a=0;a<obj->NAtom;a++)
 				{
 				  I->Table[c].model=modelCnt;
@@ -418,9 +541,9 @@ int SelectorModulate1(EvalElem *base)
 /*========================================================================*/
 int SelectorSelect0(EvalElem *base)
 {
+  SelectorType *I=&Selector;
   int a;
   int c=0;
-  SelectorType *I=&Selector;
   base->type=SELE_LIST;
   base->sele=Alloc(int,I->NAtom);
   ErrChkPtr(base->sele);
@@ -429,6 +552,10 @@ int SelectorSelect0(EvalElem *base)
 	 case 'NONz':
 		for(a=0;a<I->NAtom;a++)
 		  base[0].sele[a]=false;
+		break;
+	 case 'HETz':
+		for(a=0;a<I->NAtom;a++)
+        base[0].sele[a]=I->Obj[I->Table[a].model]->AtomInfo[I->Table[a].atom].hetatm;
 		break;
 	 case 'ALLz':
 		for(a=0;a<I->NAtom;a++)

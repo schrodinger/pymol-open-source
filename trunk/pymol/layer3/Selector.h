@@ -31,5 +31,6 @@ void SelectorFree(void);
 void SelectorDelete(char *sele);
 void SelectorFreeTmp(char *name);
 void SelectorGetTmp(char *input,char *store);
+int SelectorGetPDB(char **charVLA,int sele,int state,int conectFlag);
 
 #endif

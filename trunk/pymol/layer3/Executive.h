@@ -48,7 +48,7 @@ void ExecutiveCenter(char *name,int preserve);
 void ExecutiveWindowZoom(char *name);
 int ExecutiveGetMoment(char *name,Matrix33d mi);
 void ExecutiveOrient(char *sele,Matrix33d mi);
-char *ExecutiveSeleToPDBStr(char *s1,int state);
+char *ExecutiveSeleToPDBStr(char *s1,int state,int conectFlag);
 void ExecutiveStereo(int flag);
 void ExecutiveCopy(char *src,char *dst);
 

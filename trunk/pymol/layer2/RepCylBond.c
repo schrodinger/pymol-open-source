@@ -158,6 +158,7 @@ Rep *RepCylBondNew(CoordSet *cs)
 		{
 		  b1 = *(b++);
 		  b2 = *(b++);
+        b++;
 		  a1=cs->AtmToIdx[b1];
 		  a2=cs->AtmToIdx[b2];
 		  

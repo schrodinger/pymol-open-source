@@ -64,30 +64,36 @@ int AtomInfoCompare(AtomInfoType *at1,AtomInfoType *at2)
   wc=WordCompare(at1->segi,at2->segi,true);
   if(!wc) {
 	 if(at1->chain[0]==at2->chain[0]) {
-		if(at1->resv==at2->resv) {
-		  wc=WordCompare(at1->resi,at2->resi,true);
-		  if(!wc) {
-			 wc=WordCompare(at1->resn,at2->resn,true);
-			 if(!wc) {
-				if(at1->priority==at2->priority) {
-				  result=WordCompare(at1->name,at2->name,true);
-				} else if(at1->priority<at2->priority) {
-				  result=-1;
-				} else {
-				  result=1;
-				}
-			 } else {
-				result=wc;
-			 }
-		  } else {
-			 result=wc;
-		  }
-		} else if(at1->resv<at2->resv) {
-		  result=-1;
-		} else {
-		  result=1;
-		}
-	 } else if(at1->chain[0]<at2->chain[0]) {
+      if(at1->hetatm==at2->hetatm) {
+        if(at1->resv==at2->resv) {
+          wc=WordCompare(at1->resi,at2->resi,true);
+          if(!wc) {
+            wc=WordCompare(at1->resn,at2->resn,true);
+            if(!wc) {
+              if(at1->priority==at2->priority) {
+                result=WordCompare(at1->name,at2->name,true);
+              } else if(at1->priority<at2->priority) {
+                result=-1;
+              } else {
+                result=1;
+              }
+            } else {
+              result=wc;
+            }
+          } else {
+            result=wc;
+          }
+        } else if(at1->resv<at2->resv) {
+          result=-1;
+        } else {
+          result=1;
+        }
+      } else if(at2->hetatm) {
+        result=-1;
+      } else {
+        result=1;
+      }
+	 } else if((!at2->chain[0])||(at1->chain[0]&&((at1->chain[0]<at2->chain[0])))) {
 		result=-1;
 	 } else {
 		result=1;

@@ -50,6 +50,7 @@ typedef struct AtomInfoType {
   int visRep[cRepCnt];
   int color;
   int hetatm;
+  int tmpID; /* used for reading conect records */
 } AtomInfoType;
 
 int *AtomInfoGetSortedIndex(AtomInfoType *rec,int n,int **outdex);

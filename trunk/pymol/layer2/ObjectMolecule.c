@@ -66,7 +66,7 @@ static int BondCompare(int *a,int *b);
 /*========================================================================*/
 static int BondInOrder(int *a,int b1,int b2)
 {
-  return(BondCompare(a+b1,a+b2)<=0);
+  return(BondCompare(a+(b1*3),a+(b2*3))<=0);
 }
 
 /*========================================================================*/
@@ -149,6 +149,18 @@ static char *ncopy(char *q,char *p,int n) {  /* n character copy */
   return p;
 }
 /*========================================================================*/
+static char *nskip(char *p,int n) {  /* n character skip */
+  while(*p) {
+	 if(!n)
+		break;
+	 if((*p==0xD)||(*p==0xA)) /* stop at newlines */
+		break;
+    p++;
+	 n--;
+  }
+  return p;
+}
+/*========================================================================*/
 void ObjectMoleculeSort(ObjectMolecule *I)
 {
   int *index,*outdex;
@@ -159,8 +171,8 @@ void ObjectMoleculeSort(ObjectMolecule *I)
   index=AtomInfoGetSortedIndex(I->AtomInfo,I->NAtom,&outdex);
   
   for(a=0;a<I->NBond;a++) { /* bonds */
-	I->Bond[a*2]=outdex[I->Bond[2*a]];
-	I->Bond[a*2+1]=outdex[I->Bond[a*2+1]];
+	I->Bond[a*3]=outdex[I->Bond[a*3]];
+	I->Bond[a*3+1]=outdex[I->Bond[a*3+1]];
   }
   
   for(a=0;a<I->NCSet;a++) { /* coordinate set mapping */
@@ -266,7 +278,7 @@ CoordSet *ObjectMoleculeMOLStr2CoordSet(char *buffer,AtomInfoType **atInfoPtr)
 				ok=ErrMessage("ReadMOLFile","bad coordinate");
 		  }
 		  if(ok) {
-			 p++; 
+          p=nskip(p,1);
 			 p=ncopy(atInfo[a].name,p,3);
 			 UtilCleanStr(atInfo[a].name);
 			 
@@ -310,20 +322,26 @@ CoordSet *ObjectMoleculeMOLStr2CoordSet(char *buffer,AtomInfoType **atInfoPtr)
 		}
   }
   if(ok) {
-	 bond=VLAlloc(int,2*nBond);
+	 bond=VLAlloc(int,3*nBond);
 	 ii=bond;
 	 for(a=0;a<nBond;a++)
 		{
 		  if(ok) {
 			 p=ncopy(cc,p,3);
 			 if(sscanf(cc,"%d",ii++)!=1)
-				ok=ErrMessage("ReadMOLFile","bad bond");
+				ok=ErrMessage("ReadMOLFile","bad bond atom");
 		  }
 		  
 		  if(ok) {  
 			 p=ncopy(cc,p,3);
 			 if(sscanf(cc,"%d",ii++)!=1)
-				ok=ErrMessage("ReadMOLFile","bad bond");
+				ok=ErrMessage("ReadMOLFile","bad bond atom");
+		  }
+
+		  if(ok) {  
+			 p=ncopy(cc,p,3);
+			 if(sscanf(cc,"%d",ii++)!=1)
+				ok=ErrMessage("ReadMOLFile","bad bond order");
 		  }
 		  if(!ok)
 			 break;
@@ -333,6 +351,7 @@ CoordSet *ObjectMoleculeMOLStr2CoordSet(char *buffer,AtomInfoType **atInfoPtr)
 	 for(a=0;a<nBond;a++) {
 		(*(ii++))--; /* adjust bond indexs down one */
 		(*(ii++))--; 
+      ii++;
 	 }
   }
   if(ok&&atInfo) 
@@ -351,7 +370,7 @@ CoordSet *ObjectMoleculeMOLStr2CoordSet(char *buffer,AtomInfoType **atInfoPtr)
 			 if(ok) {
 				for(a=0;a<nType;a++) {
 				  p=nextline(p);
-				  p+=16;
+				  p=nskip(p,16);
 				  p=ncopy(cc,p,6);
 				  if(sscanf(cc,"%d",&c)!=1)
 					 ok=ErrMessage("ObjectMoleculeLoadMOLFile","missing ludi type count");
@@ -394,17 +413,17 @@ CoordSet *ObjectMoleculeMOLStr2CoordSet(char *buffer,AtomInfoType **atInfoPtr)
 			 if(ok) {
 				for(a=0;a<nType;a++) {
 				  p=nextline(p);
-				  p+=8;
+				  p=nskip(p,8);
 				  p=ncopy(cc,p,3);
 				  if(sscanf(cc,"%d",&atInfo[a].customType)!=1) {
 					 ok=ErrMessage("ObjectMoleculeLoadMOLFile","bad custom atom type record-1");
 				  } else {
-					 p+=1;
+					 p=nskip(p,1);
 					 p=ncopy(cc,p,3);
 					 if(sscanf(cc,"%d",&atInfo[a].customFlag)!=1) {
 						ok=ErrMessage("ObjectMoleculeLoadMOLFile","bad custom atom type record-2");
 					 } else {
-					   p+=1;
+					   p=nskip(p,1);
 					   p=ncopy(cc,p,6);
 					   if(sscanf(cc,"%f",&atInfo[a].vdw)!=1) {
 						 ok=ErrMessage("ObjectMoleculeLoadMOLFile","bad van der waals radius");
@@ -507,201 +526,6 @@ ObjectMolecule *ObjectMoleculeLoadMOLFile(ObjectMolecule *obj,char *fname,int fr
   return(I);
 }
 
-/*========================================================================*/
-CoordSet *ObjectMoleculePDBStr2CoordSet(char *buffer,AtomInfoType **atInfoPtr)
-{
-  char *p;
-  int nAtom;
-  int a,c,llen;
-  float *coord = NULL;
-  CoordSet *cset = NULL;
-  AtomInfoType *atInfo = NULL;
-  int AFlag;
-  int atomCount;
-  char shstr[12];
-  float dummy[3];
-  char t;
-  int NColor,CColor,HColor,OColor,SColor,MColor;
-  int color=0;
-
-  NColor=ColorGetIndex("nitrogen");
-  CColor=ColorGetIndex("carbon");
-  HColor=ColorGetIndex("hydrogen");
-  OColor=ColorGetIndex("oxygen");
-  SColor=ColorGetIndex("sulfer");
-  MColor=ColorGetIndex("magenta");
-
-  p=buffer;
-  nAtom=0;
-  if(atInfoPtr)
-	 atInfo = *atInfoPtr;
-
-  while(*p)
-	 {
-		if(*p == 'A') if(*(p+1)=='T') if(*(p+2)=='O') if(*(p+3)=='M')
-		  nAtom++;
-		if( *p == 'H') if(*(p+1)=='E') if(*(p+2)=='T') if(*(p+3)=='A')
-		  if(*(p+4)=='T') if(*(p+5)=='M')
-			 nAtom++;
-		p++;
-		while(*p)
-		  if(*p==0xA)
-			 {
-				p++;
-				break;
-			 }
-		  else
-			 p++;
-	 }
-  for(a=0;a<255;a++) /*to prevent hopping over end of file*/
-	 *p++=0;
-  
-  coord=VLAlloc(float,3*nAtom);
-  if(atInfo)
-	 VLACheck(atInfo,AtomInfoType,nAtom);
-
-  p=buffer;
-  if(DebugState & DebugMolecule) {
-	 printf(" ObjectMoleculeReadPDB: Found %i atoms...\n",nAtom);
-	 fflush(stdout);
-  }
-  fflush(stdout);
-  a=0;
-  atomCount=0;
-  
-  while(*p)
-	 {
-		AFlag=false;
-		if(*p == 'A') if(*(p+1)=='T') if(*(p+2)=='O') if(*(p+3)=='M')
-		  AFlag = 1;
-		if( *p == 'H') if(*(p+1)=='E') if(*(p+2)=='T') if(*(p+3)=='A')
-		  if(*(p+4)=='T') if(*(p+5)=='M')
-			 AFlag = 2;
-		if(AFlag)
-		  {
-			 llen=0;
-			 while((*(p+llen))&&((*(p+llen))!=13)&&((*(p+llen))!=10)) {
-				llen++;
-			 }
-			 t=*(p+26);
-			 *(p+27) = 0;
-			 sscanf(p+22,"%s",shstr);
-			 *(p+27) = t;
-			 if(atInfo)
-				{
-				  strcpy(atInfo[atomCount].resi,shstr);
-				  sscanf(shstr,"%d",&atInfo[atomCount].resv);
-				}
-
-			 t=*(p+38);
-			 *(p+38) = 0;
-			 sscanf(p+30,"%f",coord+a);
-			 *(p+38) = t;
-
-			 t=*(p+46);
-			 *(p+46) = 0;
-			 sscanf(p+38,"%f",coord+a+1);
-			 *(p+46) = t;
-
-			 t=*(p+54);
-			 *(p+54) = 0;
-			 sscanf(p+46,"%f",coord+a+2);
-			 *(p+54) = t;
-			 
-			 t = *(p+60);
-			 *(p+60) = 0;
-			 sscanf(p+54,"%f",&dummy[0]);
-			 if(atInfo)
-				atInfo[atomCount].q=dummy[0];
-			 *(p+60) = t;
-
-			 t = *(p+66);
-			 *(p+66) = 0;
-			 sscanf(p+60,"%f",&dummy[0]);
-			 if(atInfo)
-				atInfo[atomCount].b=dummy[0];
-			 *(p+66) = t;
-			 
-			 t = *(p+16);
-			 *(p+16) = 0;
-			 sscanf(p+12,"%s",shstr);
-			 if(atInfo) 
-				strcpy(atInfo[atomCount].name,shstr);
-			 *(p+16) = t;
-			 
-			 t = *(p+20);
-			 *(p+20) = 0;
-			 sscanf(p+17,"%s",shstr);
-			 if(atInfo) 
-				strcpy(atInfo[atomCount].resn,shstr);
-			 *(p+20) = t;
-			 
-			 if(llen>=73) {
-				t = *(p+76);
-				*(p+76) = 0;
-				shstr[0]=0;
-				sscanf(p+72,"%s",shstr);
-				if(atInfo) 
-				  strcpy(atInfo[atomCount].segi,shstr);
-				*(p+76) = t;
-				}
-
-			 if(atInfo)
-				{
-				  atInfo[atomCount].chain[0]=
-					 atInfo[atomCount].chain[0] = *(p+21);
-				  if((atInfo[atomCount].chain[0])==32)
-					 atInfo[atomCount].chain[0] = 0;
-				  else
-					 atInfo[atomCount].chain[1] = 0;
-
-				  atInfo[atomCount].visRep[0] = true;
-
-				  for(c=1;c<cRepCnt;c++) {
-					 atInfo[atomCount].visRep[c] = false;
-				  }
-				  if(AFlag==1) 
-					 atInfo[atomCount].hetatm=0;
-				  else
-					 atInfo[atomCount].hetatm=1;
-
-				  AtomInfoAssignParameters(atInfo+atomCount);
-
-				  switch ( atInfo[atomCount].name[0] ) /* need to move this stuff into parameters */
-					{
-					case 'N' : color = NColor; break;
-					case 'C' : color = CColor; break;
-					case 'O' : color = OColor; break;
-					case 'I' : color = MColor; break;
-					case 'P' : color = MColor; break;
-					case 'B' : color = MColor; break;
-					case 'S' : color = SColor; break;
-					case 'F' : color = MColor; break;
-					case 'H' : color=HColor; break;
-					default  : color=MColor; break;
-					}
-				  atInfo[atomCount].color=color;
-				}
-			 a+=3;
-			 atomCount++;
-		  }
-		p++;
-		while(*p)
-		  if(*p==0xA)
-			 {
-				p++;
-				break;
-			 }
-		  else
-			 p++;
-	 }
-  cset = CoordSetNew();
-  cset->NIndex=nAtom;
-  cset->Coord=coord;
-  if(atInfoPtr)
-	 *atInfoPtr = atInfo;
-  return(cset);
-}
 /*========================================================================*/
 void ObjectMoleculeMerge(ObjectMolecule *I,AtomInfoType *ai,CoordSet *cs)
 {
@@ -844,14 +668,15 @@ void ObjectMoleculeMerge(ObjectMolecule *I,AtomInfoType *ai,CoordSet *cs)
         /* allocate additional space */
         nBd=I->NBond+c;
         
-        VLACheck(I->Bond,int,nBd*2);
+        VLACheck(I->Bond,int,nBd*3);
         
         for(a=0;a<nBond;a++)
           {
             a2=index[a];
             if(a2 >= I->NBond) { 
-              I->Bond[2*a2]=bond[2*a]; /* copy bond info */
-              I->Bond[2*a2+1]=bond[2*a+1]; /* copy bond info */
+              I->Bond[3*a2]=bond[3*a]; /* copy bond info */
+              I->Bond[3*a2+1]=bond[3*a+1]; /* copy bond info */
+              I->Bond[3*a2+2]=bond[3*a+2]; /* copy bond info */
             }
           }
         I->NBond=nBd;
@@ -915,29 +740,27 @@ ObjectMolecule *ObjectMoleculeReadPDBStr(ObjectMolecule *I,char *PDBStr,int fram
 
   }
 
-  /* prepare the cset for inclusion into the object */
+  /* include coordinate set */
   if(ok) {
-	cset->fEnumIndices(cset);
-	cset->fInvalidateRep(cset,-1,0);
-	if(isNew) {		
-	  for(a=0;a<3;a++)
-		I->Obj.center[a] = (I->Obj.extent[2*a]+I->Obj.extent[2*a+1])/2.0;
-	  I->AtomInfo=atInfo; /* IMPORTANT to reassign: this VLA may have moved! */
-	} else {
-	  ObjectMoleculeMerge(I,atInfo,cset); /* NOTE: will release atInfo */
-	}
-  }
-  if(ok) { /* now, include it */
-	 cset->Obj = I;
-	 if(isNew) I->NAtom=nAtom;
-	 if(frame<0) frame=I->NCSet;
-	 VLACheck(I->CSet,CoordSet*,frame);
-	 if(I->NCSet<=frame) I->NCSet=frame+1;
-	 I->CSet[frame] = cset;
-	 if(isNew) I->NBond = ObjectMoleculeConnect(&I->Bond,I->AtomInfo,cset,0.2);
-	 SceneCountFrames();
-	 ObjectMoleculeExtendIndices(I);
-	 ObjectMoleculeSort(I);
+    cset->fEnumIndices(cset);
+    cset->fInvalidateRep(cset,-1,0);
+    if(isNew) {		
+      for(a=0;a<3;a++)
+        I->Obj.center[a] = (I->Obj.extent[2*a]+I->Obj.extent[2*a+1])/2.0;
+      I->AtomInfo=atInfo; /* IMPORTANT to reassign: this VLA may have moved! */
+    } else {
+      ObjectMoleculeMerge(I,atInfo,cset); /* NOTE: will release atInfo */
+    }
+    cset->Obj = I;
+    if(isNew) I->NAtom=nAtom;
+    if(frame<0) frame=I->NCSet;
+    VLACheck(I->CSet,CoordSet*,frame);
+    if(I->NCSet<=frame) I->NCSet=frame+1;
+    I->CSet[frame] = cset;
+    if(isNew) I->NBond = ObjectMoleculeConnect(&I->Bond,I->AtomInfo,cset,0.2);
+    SceneCountFrames();
+    ObjectMoleculeExtendIndices(I);
+    ObjectMoleculeSort(I);
   }
   return(I);
 }
@@ -1005,14 +828,15 @@ void ObjectMoleculeAppendAtoms(ObjectMolecule *I,AtomInfoType *atInfo,CoordSet *
   }
   nBond=I->NBond+cs->NTmpBond;
   if(!I->Bond)
-	 I->Bond=VLAlloc(int,nBond*2);
-  VLACheck(I->Bond,int,nBond*2);
-  ii=I->Bond+I->NBond*2;
+	 I->Bond=VLAlloc(int,nBond*3);
+  VLACheck(I->Bond,int,nBond*3);
+  ii=I->Bond+I->NBond*3;
   si=cs->TmpBond;
   for(a=0;a<cs->NTmpBond;a++)
 	 {
 		*(ii++)=cs->IdxToAtm[*(si++)];
 		*(ii++)=cs->IdxToAtm[*(si++)];
+      *(ii++)=*(si++);
 	 }
   I->NBond=nBond;
 }
@@ -1044,8 +868,8 @@ void ObjectMoleculeTransformTTTf(ObjectMolecule *I,float *ttt,int frame)
 void ObjectMoleculeSeleOp(ObjectMolecule *I,int sele,ObjectMoleculeOpRec *op)
 {
   int a,b,s;
-  int a1;
-  float r,rms,inv;
+  int a1,ind;
+  float r,rms;
   float v1[3],v2,*vv1,*vv2;
   int inv_flag;
   int hit_flag = false;
@@ -1067,9 +891,10 @@ void ObjectMoleculeSeleOp(ObjectMolecule *I,int sele,ObjectMoleculeOpRec *op)
 					{
 					  if(SelectorMatch(s,sele))
 						{
-						  
-						  CoordSetAtomToPDBStrVLA(&op->charVLA,&op->i2,I->AtomInfo+a,
-												  I->CSet[b]->Coord+(3*I->CSet[b]->AtmToIdx[a]),op->i3);
+                    ind=I->CSet[b]->AtmToIdx[a];
+						  if(ind>=0) 
+                      CoordSetAtomToPDBStrVLA(&op->charVLA,&op->i2,I->AtomInfo+a,
+                                              I->CSet[b]->Coord+(3*ind),op->i3);
 						  op->i3++;
 						}
 					  s=SelectorNext(s);
@@ -1298,7 +1123,7 @@ void ObjectMoleculeSeleOp(ObjectMolecule *I,int sele,ObjectMoleculeOpRec *op)
 void ObjectMoleculeDescribeElement(ObjectMolecule *I,int index) 
 {
   char buffer[1024];
-  sprintf(buffer,"Selected %s:%s:%s:%s:%s:%s",
+  sprintf(buffer," Pick: Selected %s:%s:%s:%s:%s:%s",
 			 I->Obj.Name,I->AtomInfo[index].segi,I->AtomInfo[index].chain,
 			 I->AtomInfo[index].resi,I->AtomInfo[index].resn,I->AtomInfo[index].name
 			 );
@@ -1382,12 +1207,13 @@ ObjectMolecule *ObjectMoleculeCopy(ObjectMolecule *obj)
     I->CSet[a]=CoordSetCopy(obj->CSet[a]);
     I->CSet[a]->Obj=I;
   }
-  I->Bond=VLAlloc(int,I->NBond*2);
+  I->Bond=VLAlloc(int,I->NBond*3);
   i0=I->Bond;
   i1=obj->Bond;
   for(a=0;a<I->NBond;a++) {
     *(i0++)=*(i1++);
     *(i0++)=*(i1++);
+    *(i0++)=*(i1++);    
   }
   
   I->AtomInfo=VLAlloc(AtomInfoType,I->NAtom);
@@ -1432,13 +1258,12 @@ int ObjectMoleculeConnect(int **bond,AtomInfoType *ai,CoordSet *cs,float cutoff)
   float *v1,*v2,dst;
   int maxBond;
   MapType *map;
-  int nBond;
-
+  int nBond,*ii1,*ii2;
   nBond = 0;
   if(cs->NIndex)
 	 {
 		maxBond = cs->NIndex * 8;
-		(*bond) = VLAlloc(int,maxBond*2);
+		(*bond) = VLAlloc(int,maxBond*3);
 		
 		map=MapNew(cutoff+MAX_VDW,cs->Coord,cs->NIndex,NULL);
 		if(map)
@@ -1464,13 +1289,15 @@ int ObjectMoleculeConnect(int **bond,AtomInfoType *ai,CoordSet *cs,float cutoff)
 										
 										dst -= ((ai[a1].vdw+ai[a2].vdw)/2);
 										
-										if( (dst <= cutoff)&&(
-                                                    !((ai[a1].name[0]=='H') && 
-                                                      (ai[a2].name[0]=='H'))))
+										if( (dst <= cutoff)&&
+                                  (!((ai[a1].name[0]=='H')&& 
+                                     (ai[a2].name[0]=='H')))&&
+                                  ((!cs->TmpBond)||(!(ai[a1].hetatm||ai[a2].hetatm))))
 										  {
-											 VLACheck((*bond),int,nBond*2+1);
-											 (*bond)[nBond*2  ] = a1;
-											 (*bond)[nBond*2+1] = a2;
+											 VLACheck((*bond),int,nBond*3+2);
+											 (*bond)[nBond*3  ] = a1;
+											 (*bond)[nBond*3+1] = a2;
+                                  (*bond)[nBond*3+2] = 1;
 											 nBond++;
 										  }
 									 }
@@ -1480,178 +1307,33 @@ int ObjectMoleculeConnect(int **bond,AtomInfoType *ai,CoordSet *cs,float cutoff)
 				}
 			 MapFree(map);
 		  }
-		(*bond) = (int*)VLASetSize((*bond),nBond*2+1);
+		(*bond) = (int*)VLASetSize((*bond),nBond*3+2);
 
-		if(DebugState&DebugMolecule) {
+		if(DebugState&DebugMolecule) 
 		  printf("ObjectMoleculeConnect: Found %d bonds.\n",nBond);
-		}
+		
 	 }
-  UtilSortInPlace((*bond),nBond,sizeof(int)*2,(UtilOrderFn*)BondInOrder);
+  if(cs->NTmpBond&&cs->TmpBond) {
+    if(DebugState&DebugMolecule) 
+      printf("ObjectMoleculeConnect: incorporating CONECT bonds. %d\n",nBond);
+    VLACheck((*bond),int,(nBond+cs->NTmpBond)*3);
+    ii1=(*bond)+nBond*3;
+    ii2=cs->TmpBond;
+    for(a=0;a<cs->NTmpBond;a++)
+      {
+        *(ii1++)=*(ii2++);
+        *(ii1++)=*(ii2++);
+        *(ii1++)=*(ii2++);
+      }
+    nBond=nBond+cs->NTmpBond;
+    VLAFreeP(cs->TmpBond);
+    cs->NTmpBond=0;
+  }
+  
+  UtilSortInPlace((*bond),nBond,sizeof(int)*3,(UtilOrderFn*)BondInOrder);
   return(nBond);
 }
 
-
-/*========================================================================*/
-CoordSet *ObjectMoleculeMMDStr2CoordSet(char *buffer,AtomInfoType **atInfoPtr)
-{
-  char *p;
-  int nAtom,nBond;
-  int a,c,bPart,bOrder;
-  float *coord = NULL;
-  CoordSet *cset = NULL;
-  AtomInfoType *atInfo = NULL;
-  char cc[MAXLINELEN];
-  float *f;
-  int *ii,*bond=NULL;
-  int NColor,CColor,HColor,OColor,SColor,MColor;
-  int color=0;
-  int ok=true;
-
-  NColor=ColorGetIndex("nitrogen");
-  CColor=ColorGetIndex("carbon");
-  HColor=ColorGetIndex("hydrogen");
-  OColor=ColorGetIndex("oxygen");
-  SColor=ColorGetIndex("sulfer");
-  MColor=ColorGetIndex("magenta");
-  
-  p=buffer;
-  nAtom=0;
-  if(atInfoPtr)
-	 atInfo = *atInfoPtr;
-
-  if(ok) {
-	 p=ncopy(cc,p,6);
-	 if(sscanf(cc,"%d",&nAtom)!=1)
-		ok=ErrMessage("ReadMMDFile","bad atom count");
-  }
-
-  if(ok) {
-	 coord=VLAlloc(float,3*nAtom);
-	 if(atInfo)
-		VLACheck(atInfo,AtomInfoType,nAtom);	 
-  }
-
-  nBond=0;
-  if(ok) {
-	 bond=VLAlloc(int,6*nAtom);  
-  }
-  p=nextline(p);
-
-  /* read coordinates and atom names */
-
-  if(ok) { 
-	 f=coord;
-	 ii=bond;
-	 for(a=0;a<nAtom;a++)
-		{
-        if(ok) {
-          p=ncopy(cc,p,4);
-          if(atInfo) 
-            if(sscanf(cc,"%d",&atInfo[a].customType)!=1)
-              ok=ErrMessage("ReadMMDFile","bad atom type");
-        }
-
-        for(c=0;c<6;c++) {
-          if(ok) {
-            p=ncopy(cc,p,8);
-            if(sscanf(cc,"%d%d",&bPart,&bOrder)!=2)
-              ok=ErrMessage("ReadMMDFile","bad bond record");
-            else {
-              if(bPart&&bOrder) {
-                nBond++;
-                *(ii++)=a;
-                *(ii++)=bPart-1;
-              }
-            }
-          }
-        }
-        if(ok) {
-          p=ncopy(cc,p,12);
-          if(sscanf(cc,"%f",f++)!=1)
-            ok=ErrMessage("ReadMMDFile","bad coordinate");
-        }
-        if(ok) {
-          p=ncopy(cc,p,12);
-          if(sscanf(cc,"%f",f++)!=1)
-            ok=ErrMessage("ReadMMDFile","bad coordinate");
-        }
-        if(ok) {
-          p=ncopy(cc,p,12);
-			 if(sscanf(cc,"%f",f++)!=1)
-				ok=ErrMessage("ReadMMDFile","bad coordinate");
-		  }
-        if(atInfo) {
-          if(ok) {
-            p+=31;
-            p=ncopy(cc,p,3);
-            strcpy(atInfo[a].resn,cc);
-            atInfo[a].hetatm=true;
-          }
-          if(ok) {
-            p+=3;
-            p=ncopy(atInfo[a].name,p,3);
-            UtilCleanStr(atInfo[a].name);
-            
-            atInfo[a].visRep[0] = true; /* show lines by default */
-            for(c=1;c<cRepCnt;c++) {
-              atInfo[a].visRep[c] = false;
-            }
-          }
-          if(ok&&atInfo) {
-            AtomInfoAssignParameters(atInfo+a);
-            switch ( atInfo[a].name[0] ) /* need to move this stuff into parameters */
-              {
-              case 'N' : color = NColor; break;
-              case 'C' : 
-                color=CColor;
-                if(atInfo[a].name[1]>'9') {
-                  switch(atInfo[a].name[1]) {
-                  case 0:
-                  case 32:
-                    color = CColor; break;
-                  case 'l':
-                  case 'L':
-                    color = MColor; break;
-                    break;
-                  default:
-                    break;
-                  }
-                }
-                break;
-              case 'O' : color = OColor; break;
-              case 'I' : color = MColor; break;
-              case 'P' : color = MColor; break;
-              case 'B' : color = MColor; break;
-              case 'S' : color = SColor; break;
-              case 'F' : color = MColor; break;
-              case 'H' : color=HColor; break;
-              default  : color=MColor; break;
-              }
-            atInfo[a].color=color;
-          }
-          if(!ok)
-            break;
-        }
-        p=nextline(p);
-        
-      }
-  }
-  if(ok) 
-    bond=VLASetSize(bond,2*sizeof(int)*nBond);
-  if(ok) {
-	 cset = CoordSetNew();
-	 cset->NIndex=nAtom;
-	 cset->Coord=coord;
-	 cset->NTmpBond=nBond;
-	 cset->TmpBond=bond;
-  } else {
-	 VLAFreeP(bond);
-	 VLAFreeP(coord);
-  }
-  if(atInfoPtr)
-	 *atInfoPtr = atInfo;
-  return(cset);
-}
 
 
 /*========================================================================*/
@@ -1749,12 +1431,456 @@ ObjectMolecule *ObjectMoleculeLoadMMDFile(ObjectMolecule *obj,char *fname,
   return(I);
 }
 
+/*========================================================================*/
+CoordSet *ObjectMoleculePDBStr2CoordSet(char *buffer,AtomInfoType **atInfoPtr)
+{
+  char *p;
+  int nAtom;
+  int a,c,llen;
+  float *coord = NULL;
+  CoordSet *cset = NULL;
+  AtomInfoType *atInfo = NULL,*ai;
+  char cc[MAXLINELEN];
+  int AFlag;
+  int atomCount;
+  int NColor,CColor,HColor,OColor,SColor,MColor;
+  int color=0;
+  int conectFlag = false;
+  int *bond=NULL,*ii1,*ii2,*idx;
+  int nBond=0;
+  int b1,b2,nReal,maxAt;
+
+  NColor=ColorGetIndex("nitrogen");
+  CColor=ColorGetIndex("carbon");
+  HColor=ColorGetIndex("hydrogen");
+  OColor=ColorGetIndex("oxygen");
+  SColor=ColorGetIndex("sulfer");
+  MColor=ColorGetIndex("magenta");
+
+  p=buffer;
+  nAtom=0;
+  if(atInfoPtr)
+	 atInfo = *atInfoPtr;
+
+  if(!atInfo)
+    ErrFatal("PDBStr2CoordSet","need atom information record!"); /* failsafe for old version..*/
+
+  while(*p)
+	 {
+		if(*p == 'A') if(*(p+1)=='T') if(*(p+2)=='O') if(*(p+3)=='M')
+		  nAtom++;
+		if( *p == 'H') if(*(p+1)=='E') if(*(p+2)=='T') if(*(p+3)=='A')
+		  if(*(p+4)=='T') if(*(p+5)=='M')
+			 nAtom++;
+		if( *p == 'C') if(*(p+1)=='O') if(*(p+2)=='N') if(*(p+3)=='E')
+		  if(*(p+4)=='C') if(*(p+5)=='T')
+          conectFlag=true;
+      p=nextline(p);
+	 }
+  for(a=0;a<255;a++) /*to prevent hopping over end of file*/
+	 *p++=0;
+  
+  coord=VLAlloc(float,3*nAtom);
+  if(atInfo)
+	 VLACheck(atInfo,AtomInfoType,nAtom);
+
+  if(conectFlag) {
+    nBond=0;
+    bond=VLAlloc(int,12*nAtom);  
+  }
+  p=buffer;
+  if(DebugState & DebugMolecule) {
+	 printf(" ObjectMoleculeReadPDB: Found %i atoms...\n",nAtom);
+	 fflush(stdout);
+  }
+  fflush(stdout);
+  a=0;
+  atomCount=0;
+  
+  while(*p)
+	 {
+		AFlag=false;
+		if(*p == 'A') if(*(p+1)=='T') if(*(p+2)=='O') if(*(p+3)=='M')
+		  AFlag = 1;
+		if( *p == 'H') if(*(p+1)=='E') if(*(p+2)=='T') if(*(p+3)=='A')
+		  if(*(p+4)=='T') if(*(p+5)=='M')
+			 AFlag = 2;
+		if( *p == 'C') if(*(p+1)=='O') if(*(p+2)=='N') if(*(p+3)=='E')
+		  if(*(p+4)=='C') if(*(p+5)=='T')
+          {
+            p=nskip(p,6);
+            p=ncopy(cc,p,5);
+            if(sscanf(cc,"%d",&b1)==1)
+              while (1) {
+                p=ncopy(cc,p,5);
+                if(sscanf(cc,"%d",&b2)!=1)
+                  break;
+                else {
+                  VLACheck(bond,int,(nBond*3)+2);
+                  if(b1<=b2) {
+                    bond[nBond*3]=b1; /* temporarily store the atom indexes */
+                    bond[nBond*3+1]=b2;
+                    bond[nBond*3+2]=1;
+                  } else {
+                    bond[nBond*3]=b2;
+                    bond[nBond*3+1]=b1;
+                    bond[nBond*3+2]=1;
+                  }
+                  nBond++;
+                }
+              }
+          }
+		if(AFlag)
+		  {
+			 llen=0;
+			 while((*(p+llen))&&((*(p+llen))!=13)&&((*(p+llen))!=10)) {
+				llen++;
+			 }
+
+          ai=atInfo+atomCount;
+
+          p=nskip(p,6);
+          p=ncopy(cc,p,5);
+          if(!sscanf(cc,"%d",&ai->tmpID)) ai->tmpID=0;
+
+          p=nskip(p,1);/* to 12 */
+          p=ncopy(cc,p,4); 
+          if(!sscanf(cc,"%s",ai->name)) ai->name[0]=0;
+          
+          p=nskip(p,1);
+          p=ncopy(cc,p,3); 
+          if(!sscanf(cc,"%s",ai->resn)) ai->resn[0]=0;
+
+          p=nskip(p,1);
+          p=ncopy(cc,p,1);
+          if(*cc==' ')
+            ai->chain[0]=0;
+          else {
+            ai->chain[0] = *cc;
+            ai->chain[1] = 0;
+          }
+
+          p=ncopy(cc,p,4);
+          if(!sscanf(cc,"%s",ai->resi)) ai->resi[0]=0;
+          if(!sscanf(cc,"%d",&ai->resv)) ai->resv=0;
+          
+          p=nskip(p,4);
+          p=ncopy(cc,p,8);
+          sscanf(cc,"%f",coord+a);
+          p=ncopy(cc,p,8);
+          sscanf(cc,"%f",coord+(a+1));
+          p=ncopy(cc,p,8);
+          sscanf(cc,"%f",coord+(a+2));
+
+          p=ncopy(cc,p,6);
+          sscanf(cc,"%f",&ai->q);
+          
+          p=ncopy(cc,p,6);
+          sscanf(cc,"%f",&ai->b);
+
+          p=nskip(p,3);
+          p=ncopy(cc,p,4);
+          if(!sscanf(cc,"%s",ai->segi)) ai->segi[0]=0;
+          
+          ai->visRep[0] = true;
+          for(c=1;c<cRepCnt;c++) {
+            ai->visRep[c] = false;
+          }
+
+          if(AFlag==1) 
+            ai->hetatm=0;
+          else
+            ai->hetatm=1;
+          
+          AtomInfoAssignParameters(ai);
+          
+          switch ( ai->name[0] ) /* need to move this stuff into parameters */
+            {
+            case 'N' : color = NColor; break;
+            case 'C' : color = CColor; break;
+            case 'O' : color = OColor; break;
+            case 'I' : color = MColor; break;
+            case 'P' : color = MColor; break;
+            case 'B' : color = MColor; break;
+            case 'S' : color = SColor; break;
+            case 'F' : color = MColor; break;
+            case 'H' : color = HColor; break;
+            default  : color = MColor; break;
+            }
+          ai->color=color;
+
+          if(DebugState&DebugMolecule)
+            printf("%s %s %s %s %8.3f %8.3f %8.3f %6.2f %6.2f %s\n",
+                    ai->name,ai->resn,ai->resi,ai->chain,
+                    *(coord+a),*(coord+a+1),*(coord+a+2),ai->b,ai->q,
+                    ai->segi);
+
+			 a+=3;
+			 atomCount++;
+		  }
 
 
+      p=nextline(p);
+	 }
+
+  if(conectFlag) {
+    UtilSortInPlace(bond,nBond,sizeof(int)*3,(UtilOrderFn*)BondInOrder);              
+    if(nBond) {
+      ii1=bond;
+      ii2=bond+3;
+      nReal=1;
+      ii1[2]=1;
+      a=nBond-1;
+      while(a) {
+        if((ii1[0]==ii2[0])&&(ii1[1]==ii2[1])) {
+          ii1[2]++; /* count dup */
+        } else {
+          ii1+=3; /* non-dup, make copy */
+          ii1[0]=ii2[0];
+          ii1[1]=ii2[1];
+          ii1[2]=ii2[2];
+          nReal++;
+        }
+        ii2+=3;
+        a--;
+      }
+      nBond=nReal;
+      /* now, find atoms we're looking for */
+      maxAt=0;
+      ii1=bond;
+      for(a=0;a<nBond;a++) {
+        if(ii1[0]>maxAt) maxAt=ii1[0];
+        if(ii1[1]>maxAt) maxAt=ii1[1];
+        ii1+=3;
+      }
+      for(a=0;a<nAtom;a++) 
+        if(maxAt<atInfo[a].tmpID) maxAt=atInfo[a].tmpID;
+      /* build index */
+      idx = Alloc(int,maxAt);
+      for(a=0;a<maxAt;a++) idx[a]=-1;
+      for(a=0;a<nAtom;a++)
+        idx[atInfo[a].tmpID]=a;
+      /* convert indices to bonds */
+      ii1=bond;
+      ii2=bond;
+      nReal=0;
+      for(a=0;a<nBond;a++) {
+        ii2[0]=idx[ii1[0]];
+        ii2[1]=idx[ii1[1]];
+        if((ii2[0]>=0)&&(ii2[1]>=0)) {
+          if(ii1[2]<=2) ii2[2]=1;
+          else if(ii1[2]<=4) ii2[2]=2;
+          else ii2[2]=3;
+          nReal++;
+          ii2+=3;
+        }
+        ii1+=3;
+      }
+      nBond=nReal;
+    /* first, count and eliminate duplicates */
+      FreeP(idx);
+    }
+  }
+  if(DebugState&DebugMolecule)
+    printf(" PDBStr2CoordSet: Read %d bonds from CONECT records (%p).\n",nBond,bond);
+  cset = CoordSetNew();
+  cset->NIndex=nAtom;
+  cset->Coord=coord;
+  cset->TmpBond=bond;
+  cset->NTmpBond=nBond;
+  if(atInfoPtr)
+	 *atInfoPtr = atInfo;
+  return(cset);
+}
+
+/*========================================================================*/
+CoordSet *ObjectMoleculeMMDStr2CoordSet(char *buffer,AtomInfoType **atInfoPtr)
+{
+  char *p;
+  int nAtom,nBond;
+  int a,c,bPart,bOrder;
+  float *coord = NULL;
+  CoordSet *cset = NULL;
+  AtomInfoType *atInfo = NULL,*ai;
+  char cc[MAXLINELEN];
+  float *f;
+  int *ii,*bond=NULL;
+  int NColor,CColor,HColor,OColor,SColor,MColor;
+  int color=0;
+  int ok=true;
+
+  NColor=ColorGetIndex("nitrogen");
+  CColor=ColorGetIndex("carbon");
+  HColor=ColorGetIndex("hydrogen");
+  OColor=ColorGetIndex("oxygen");
+  SColor=ColorGetIndex("sulfer");
+  MColor=ColorGetIndex("magenta");
+  
+  p=buffer;
+  nAtom=0;
+  if(atInfoPtr)
+	 atInfo = *atInfoPtr;
 
 
+  if(ok) {
+	 p=ncopy(cc,p,6);
+	 if(sscanf(cc,"%d",&nAtom)!=1)
+		ok=ErrMessage("ReadMMDFile","bad atom count");
+  }
 
+  if(ok) {
+	 coord=VLAlloc(float,3*nAtom);
+	 if(atInfo)
+		VLACheck(atInfo,AtomInfoType,nAtom);	 
+  }
 
+  if(!atInfo)
+    ErrFatal("PDBStr2CoordSet","need atom information record!"); /* failsafe for old version..*/
 
+  nBond=0;
+  if(ok) {
+	 bond=VLAlloc(int,18*nAtom);  
+  }
+  p=nextline(p);
 
+  /* read coordinates and atom names */
+
+  if(ok) { 
+	 f=coord;
+	 ii=bond;
+	 for(a=0;a<nAtom;a++)
+		{
+        ai=atInfo+a;
+
+        if(ok) {
+          p=ncopy(cc,p,4);
+          if(sscanf(cc,"%d",&ai->customType)!=1)
+            ok=ErrMessage("ReadMMDFile","bad atom type");
+        }
+
+        for(c=0;c<6;c++) {
+          if(ok) {
+            p=ncopy(cc,p,8);
+            if(sscanf(cc,"%d%d",&bPart,&bOrder)!=2)
+              ok=ErrMessage("ReadMMDFile","bad bond record");
+            else {
+              if(bPart&&bOrder) {
+                nBond++;
+                *(ii++)=a;
+                *(ii++)=bPart-1;
+                *(ii++)=1;
+              }
+            }
+          }
+        }
+        if(ok) {
+          p=ncopy(cc,p,12);
+          if(sscanf(cc,"%f",f++)!=1)
+            ok=ErrMessage("ReadMMDFile","bad coordinate");
+        }
+        if(ok) {
+          p=ncopy(cc,p,12);
+          if(sscanf(cc,"%f",f++)!=1)
+            ok=ErrMessage("ReadMMDFile","bad coordinate");
+        }
+        if(ok) {
+          p=ncopy(cc,p,12);
+			 if(sscanf(cc,"%f",f++)!=1)
+				ok=ErrMessage("ReadMMDFile","bad coordinate");
+		  }
+        if(ok) {
+          p=nskip(p,31);
+          p=ncopy(cc,p,3);
+          if(sscanf(cc,"%s",ai->resn)!=1)
+            ai->resn[0]=0;
+          ai->hetatm=true;
+        }
+
+        ai->segi[0]=0;
+
+        if(ok) {
+          p=nskip(p,3);
+          p=ncopy(ai->name,p,3);
+          UtilCleanStr(ai->name);
+          if(ai->name[0]==0) {
+            if(ai->customType<=14) strcpy(ai->name,"C");
+            else if(ai->customType<=23) strcpy(ai->name,"O");
+            else if(ai->customType<=40) strcpy(ai->name,"N");
+            else if(ai->customType<=48) strcpy(ai->name,"H");
+            else if(ai->customType<=52) strcpy(ai->name,"S");
+            else if(ai->customType<=53) strcpy(ai->name,"P");
+            else if(ai->customType<=55) strcpy(ai->name,"B");
+            else if(ai->customType<=56) strcpy(ai->name,"F");
+            else if(ai->customType<=57) strcpy(ai->name,"Cl");           
+            else if(ai->customType<=58) strcpy(ai->name,"Br");           
+            else if(ai->customType<=59) strcpy(ai->name,"I");           
+            else if(ai->customType<=60) strcpy(ai->name,"Si");           
+            else if(ai->customType<=61) strcpy(ai->name,"Du");           
+            else if(ai->customType<=62) strcpy(ai->name,"Z0");
+            else if(ai->customType<=63) strcpy(ai->name,"Lp");
+            else strcpy(ai->name,"?");
+            sprintf(cc,"%02d",a+1);
+            if((strlen(cc)+strlen(ai->name))>4)
+              strcpy(ai->name,cc);
+            else
+              strcat(ai->name,cc);
+          }
+          ai->visRep[0] = true; /* show lines by default */
+          for(c=1;c<cRepCnt;c++) {
+            ai->visRep[c] = false;
+          }
+        }
+        if(ok) {
+          AtomInfoAssignParameters(atInfo+a);
+          switch ( ai->name[0] ) /* need to move this stuff into parameters */
+            {
+            case 'N' : color = NColor; break;
+            case 'C' : 
+              color=CColor;
+              if(ai->name[1]>'9') {
+                switch(ai->name[1]) {
+                case 0:
+                case 32:
+                  color = CColor; break;
+                case 'l':
+                case 'L':
+                  color = MColor; break;
+                  break;
+                default:
+                  break;
+                }
+              }
+              break;
+            case 'O' : color = OColor; break;
+            case 'I' : color = MColor; break;
+            case 'P' : color = MColor; break;
+            case 'B' : color = MColor; break;
+            case 'S' : color = SColor; break;
+            case 'F' : color = MColor; break;
+            case 'H' : color=HColor; break;
+            default  : color=MColor; break;
+            }
+          ai->color=color;
+        }
+        if(!ok)
+          break;
+        p=nextline(p);
+      }
+  }
+  if(ok) 
+    bond=VLASetSize(bond,3*sizeof(int)*nBond);
+  if(ok) {
+	 cset = CoordSetNew();
+	 cset->NIndex=nAtom;
+	 cset->Coord=coord;
+	 cset->NTmpBond=nBond;
+	 cset->TmpBond=bond;
+  } else {
+	 VLAFreeP(bond);
+	 VLAFreeP(coord);
+  }
+  if(atInfoPtr)
+	 *atInfoPtr = atInfo;
+  return(cset);
+}
 

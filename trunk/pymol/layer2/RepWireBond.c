@@ -156,6 +156,7 @@ Rep *RepWireBondNew(CoordSet *cs)
 		{
 		  b1 = *(b++);
 		  b2 = *(b++);
+        b++;
 		  a1=cs->AtmToIdx[b1];
 		  a2=cs->AtmToIdx[b2];
 		  
@@ -258,7 +259,7 @@ Rep *RepWireBondNew(CoordSet *cs)
 		{
 		  b1 = *(b++);
 		  b2 = *(b++);
-
+        b++;
 		  a1=cs->AtmToIdx[b1];
 		  a2=cs->AtmToIdx[b2];
 		  
@@ -281,7 +282,7 @@ Rep *RepWireBondNew(CoordSet *cs)
 						  I->NP++;
 						  
 						  I->R.P[I->NP].ptr = (void*)obj;
-						  I->R.P[I->NP].index = *(b-2);
+						  I->R.P[I->NP].index = *(b-3);
 						  
 						  *(v++)=*(v1++);
 						  *(v++)=*(v1++);
@@ -295,7 +296,7 @@ Rep *RepWireBondNew(CoordSet *cs)
 						{
 						  I->NP++;
 						  I->R.P[I->NP].ptr = (void*)obj;
-						  I->R.P[I->NP].index = *(b-1);
+						  I->R.P[I->NP].index = *(b-2);
 						  
 						  
 						  *(v++)=h[0];
