@@ -75,8 +75,13 @@ typedef struct _CPyMOL {
 
   OVLexicon *Lex;
   ov_word lex_pdb, lex_c_string, lex_c_filename;
-  
-  
+
+  OVOneToOne *Rep;
+  ov_word lex_everything, lex_sticks, lex_spheres, lex_surface;
+  ov_word lex_labels, lex_nb_spheres, lex_cartoon, lex_ribbon;
+  ov_word lex_lines, lex_mesh, lex_dots, lex_dashes, lex_nonbonded;
+  ov_word lex_cell, lex_cgo, lex_callback, lex_extent, lex_slice;
+
 } _CPyMOL;
 
 static OVstatus PyMOL_InitAPI(CPyMOL *I)
@@ -84,34 +89,105 @@ static OVstatus PyMOL_InitAPI(CPyMOL *I)
   OVContext *C = I->G->Context;
   OVreturn_word result;
   I->Lex = OVLexicon_New(C->heap);
-
   if(!I->Lex) 
     return_OVstatus_FAILURE;
+
+  I->Rep = OVOneToOne_New(C->heap);
+  if(!I->Rep)
+    return_OVstatus_FAILURE;
+
+  /* the following preprocessor macros may required GNU's cpp or VC++
+     we'll see... */
+
+#define LEX(ARG)  \
+  if(!OVreturn_IS_OK( (result= OVLexicon_GetFromCString(I->Lex,#ARG))))  \
+    return_OVstatus_FAILURE \
+    else \
+      I -> lex_ ## ARG = result.word;
   
+  LEX(pdb);
+  LEX(c_string);
+  LEX(c_filename);
+
   /* string constants that are accepted on input */
 
-  if(!OVreturn_IS_OK( (result= OVLexicon_GetFromCString(I->Lex,"pdb")))) 
-    return_OVstatus_FAILURE
-  else
-    I->lex_pdb = result.word;
-
-  if(!OVreturn_IS_OK( (result= OVLexicon_GetFromCString(I->Lex,"c_string")))) 
-    return_OVstatus_FAILURE
-  else
-    I->lex_c_string = result.word;
-
-  if(!OVreturn_IS_OK( (result= OVLexicon_GetFromCString(I->Lex,"c_filename")))) 
-    return_OVstatus_FAILURE
-  else
-    I->lex_c_filename = result.word;
+#define LEX_REP(NAME,CODE) LEX(NAME) \
+    if(!OVreturn_IS_OK( OVOneToOne_Set(I->Rep,I->lex_ ## NAME, CODE)))  \
+      return_OVstatus_FAILURE;
+  
+  LEX_REP(everything,-1);
+  LEX_REP(sticks,0);
+  LEX_REP(spheres,1);
+  LEX_REP(surface,2);
+  LEX_REP(labels,3);
+  LEX_REP(nb_spheres,4);
+  LEX_REP(cartoon,5);
+  LEX_REP(ribbon,6);
+  LEX_REP(lines,7);
+  LEX_REP(mesh,8);
+  LEX_REP(dots,9);
+  LEX_REP(dashes,10);
+  LEX_REP(nonbonded,11);
+  LEX_REP(cell,11);
+  LEX_REP(cgo,13);
+  LEX_REP(callback,14);
+  LEX_REP(extent,15);
+  LEX_REP(slice,16);
 
  return_OVstatus_SUCCESS;
 }
 
 static OVstatus PyMOL_PurgeAPI(CPyMOL *I)
 {
+  OVOneToOne_DEL_AUTO_NULL(I->Rep);
   OVLexicon_DEL_AUTO_NULL(I->Lex);
   return_OVstatus_SUCCESS;
+}
+
+int PyMOL_Zoom(CPyMOL *I,char *selection, float buffer,
+               int state, int complete, int animate)
+{
+  return ExecutiveWindowZoom(I->G, selection, buffer, state, complete, animate);
+}
+
+OVreturn_word get_rep_id(CPyMOL *I,char *representation)
+{
+  OVreturn_word result;
+
+  if(!OVreturn_IS_OK( (result = OVLexicon_BorrowFromCString(I->Lex,representation))))
+    return result;
+  return OVOneToOne_GetForward(I->Rep,result.word);
+}
+
+int PyMOL_Show(CPyMOL *I,char *representation, char *selection)
+{
+  OrthoLineType s1;
+  int ok=true;
+  OVreturn_word rep;
+  if(OVreturn_IS_OK( (rep= get_rep_id(I,representation)))) {
+    SelectorGetTmp(I->G,selection,s1);
+    ExecutiveSetRepVisib(I->G,s1,rep.word,true);
+    SelectorFreeTmp(I->G,s1);
+  }
+  return ok;
+}
+
+int PyMOL_Hide(CPyMOL *I,char *representation, char *selection)
+{
+  OrthoLineType s1;
+  int ok=true;
+  OVreturn_word rep;
+  if(OVreturn_IS_OK( (rep= get_rep_id(I,representation)))) {
+    SelectorGetTmp(I->G,selection,s1);
+    ExecutiveSetRepVisib(I->G,s1,rep.word,false);
+    SelectorFreeTmp(I->G,s1);
+  }
+  return ok;
+}
+
+int PyMOL_Reinitialize(CPyMOL *I)
+{
+  return ExecutiveReinitialize(I->G);
 }
 
 int PyMOL_Load(CPyMOL *I,char *content, char *content_type, 
@@ -585,5 +661,19 @@ void PyMOL_PopValidContext(CPyMOL *I)
 {
   if(I && I->G && (I->G->ValidContext>0))
     I->G->ValidContext--;
+}
+
+void PyMOL_SetDefaultMouse(CPyMOL *I)
+{
+  PyMOLGlobals *G = I->G;
+
+  ButModeSet(G,0,cButModeRotXYZ);
+  ButModeSet(G,1,cButModeTransXY);
+  ButModeSet(G,2,cButModeTransZ);
+  ButModeSet(G,12,cButModeScaleSlab);
+  ButModeSet(G,13,cButModeMoveSlab);
+  ButModeSet(G,5,cButModeClipNF);
+  ButModeSet(G,14,cButModeMoveSlabAndZoom);
+
 }
 

@@ -126,6 +126,7 @@ typedef void PyMOLSwapBuffersFn(void);
 
 void PyMOL_SetSwapBuffersFn(CPyMOL *I, PyMOLSwapBuffersFn *fn);
 void PyMOL_SwapBuffers(CPyMOL *I); /* only works if above  function has been set */
+void PyMOL_SetDefaultMouse(CPyMOL *I); 
 
 /* host query methods */
 
@@ -140,9 +141,18 @@ void PyMOL_RunTest(CPyMOL *I, int group, int test);
 
 /* Command API */
 
+int PyMOL_Reinitialize(CPyMOL *I);
+
 int PyMOL_Load(CPyMOL *I,char *content, char *content_type, 
                     char *content_format, char *object_name, 
                     int frame, int discrete, int finish, 
                     int quiet, int multiplex);
+
+int PyMOL_Zoom(CPyMOL *I,char *selection, float buffer,
+               int state, int complete, int animate);
+
+int PyMOL_Show(CPyMOL *I,char *representation, char *selection);
+
+int PyMOL_Hide(CPyMOL *I,char *representation, char *selection);
 
 #endif
