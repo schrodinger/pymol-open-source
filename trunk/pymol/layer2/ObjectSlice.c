@@ -55,7 +55,7 @@ static PyObject *ObjectSliceStateAsPyList(ObjectSliceState *I)
 {
   PyObject *result = NULL;
 
-  result = PyList_New(8);
+  result = PyList_New(10);
   
   PyList_SetItem(result,0,PyInt_FromLong(I->Active));
   PyList_SetItem(result,1,PyString_FromString(I->MapName));
@@ -65,7 +65,9 @@ static PyObject *ObjectSliceStateAsPyList(ObjectSliceState *I)
   PyList_SetItem(result,5,PyInt_FromLong(I->ExtentFlag));
   PyList_SetItem(result,6,PConvFloatArrayToPyList(I->origin,3));
   PyList_SetItem(result,7,PConvFloatArrayToPyList(I->system,9));
-
+  PyList_SetItem(result,8,PyFloat_FromDouble(I->MapMean));
+  PyList_SetItem(result,9,PyFloat_FromDouble(I->MapStdev));
+  
 #if 0
   int Active;
   char MapName[ObjNameMax];
@@ -124,6 +126,8 @@ static int ObjectSliceStateFromPyList(ObjectSliceState *I,PyObject *list)
       if(ok) ok = PConvPyIntToInt(PyList_GetItem(list,5),&I->ExtentFlag);
       if(ok) ok = PConvPyListToFloatArrayInPlace(PyList_GetItem(list,6),I->origin,3);
       if(ok) ok = PConvPyListToFloatArrayInPlace(PyList_GetItem(list,7),I->system,9);
+      if(ok) ok = PConvPyFloatToFloat(PyList_GetItem(list,8),&I->MapMean);
+      if(ok) ok = PConvPyFloatToFloat(PyList_GetItem(list,9),&I->MapStdev);
 
       I->RefreshFlag=true;
     }
@@ -408,31 +412,34 @@ static void ObjectSliceStateUpdate(ObjectSlice *I,ObjectSliceState *oss, ObjectM
   /* apply the height scale (if nonzero) */
 
   if(ok) {
-    float height_scale = SettingGet_f(NULL,I->Obj.Setting,cSetting_slice_height_scale);
-    
-    if(fabs(height_scale)>R_SMALL8) {
-      float *value = oss->values;
-      float up[3],scaled[3],factor;
-      int x,y;
-      float *point = oss->points;
 
-      need_normals=true;
-      up[0] = oss->system[2];
-      up[1] = oss->system[5];
-      up[2] = oss->system[8];
+    if(SettingGet_b(NULL,I->Obj.Setting,cSetting_slice_height_map))
+      {
+        float height_scale = SettingGet_f(NULL,I->Obj.Setting,cSetting_slice_height_scale);
+        float *value = oss->values;
+        float up[3],scaled[3],factor;
+        int x,y;
+        float *point = oss->points;
 
-      for(y=min[1];y<=max[1];y++) {
-        for(x=min[0];x<=max[0];x++) {
-          factor = *value * height_scale;
-          scale3f(up,factor,scaled);
-          add3f(scaled,point,point);
-          point +=3;
-          value ++;
+
+        need_normals=true;
+        up[0] = oss->system[2];
+        up[1] = oss->system[5];
+        up[2] = oss->system[8];
+        
+        for(y=min[1];y<=max[1];y++) {
+          for(x=min[0];x<=max[0];x++) {
+            factor = ((*value-oss->MapMean)/oss->MapStdev) * height_scale;
+            scale3f(up,factor,scaled);
+            add3f(scaled,point,point);
+            point +=3;
+            value ++;
+          }
         }
+        
       }
-    }
   }
-  /* now generate efficient triangle strips based on the points that are present in the map */
+/* now generate efficient triangle strips based on the points that are present in the map */
 
   if(ok) {
     int x,y;
@@ -1176,6 +1183,8 @@ ObjectSlice *ObjectSliceFromMap(ObjectSlice * obj,ObjectMap *map,int state,int m
   ObjectSliceState *oss;
   ObjectMapState *oms;
 
+
+
   if(!obj) {
     I=ObjectSliceNew();
   } else {
@@ -1203,14 +1212,24 @@ ObjectSlice *ObjectSliceFromMap(ObjectSlice * obj,ObjectMap *map,int state,int m
     if(oss->flags) {
       VLAFreeP(oss->flags);
     }
+
+    {
+      float tmp[3];
+      if(ObjectMapStateGetExcludedStats(oms,NULL,0.0F,0.0F,tmp)) {
+        oss->MapMean = tmp[1];
+        oss->MapStdev = tmp[2]-tmp[1];
+      } else {
+        oss->MapMean =0.0F;
+        oss->MapStdev = 1.0F;
+      }
+    }
+    /* simply copy the extents from the map -- not quite correct, but probably good enough */
+    
+    memcpy(oss->ExtentMin,oms->ExtentMin,3*sizeof(float));
+    memcpy(oss->ExtentMax,oms->ExtentMax,3*sizeof(float));
   }
 
-  /* simply copy the extents from the map -- not quite correct, but probably good enough */
-
   strcpy(oss->MapName,map->Obj.Name);
-  memcpy(oss->ExtentMin,oms->ExtentMin,3*sizeof(float));
-  memcpy(oss->ExtentMax,oms->ExtentMax,3*sizeof(float));
-
   oss->ExtentFlag = true;
 
   /* set the origin of the slice to the center of the map */

@@ -24,10 +24,13 @@ typedef struct {
   int Active;
   char MapName[ObjNameMax];
   int MapState;
+  float MapMean;
+  float MapStdev;
+
   float ExtentMin[3];
   float ExtentMax[3];
   int ExtentFlag;
-
+  
   float origin[3]; /* the origin of the plane */
   float system[9]; /* x, y, and z of the system */
 

@@ -59,10 +59,15 @@ int ObjectMapStateGetExcludedStats(ObjectMapState *ms,float *vert_vla, float bey
   double sum=0.0,sumsq=0.0;
   float mean,stdev;  
   int cnt = 0;
-  int list_size = VLAGetSize(vert_vla)/3;
+  int list_size;
   float cutoff = beyond;
   MapType *voxelmap = NULL;
 
+  if(vert_vla) {
+    list_size = VLAGetSize(vert_vla)/3;
+  } else {
+    list_size = 0;
+  }
   if(cutoff<within)
     cutoff = within;
 
