@@ -239,7 +239,7 @@ SEE ALSO
 # special handling of sdf files
       if ftype == loadable.sdf:
          ftype = loadable.molstr
-         sdf = SDF(filename)
+         sdf = SDF(fname)
          while 1:
             rec = sdf.read()
             if not rec: break

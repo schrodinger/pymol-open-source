@@ -96,6 +96,7 @@ float ExecutiveGetArea(char *s0,int sta0,int load_b);
 void ExecutiveRenderSelections(int curState);
 void ExecutiveHideSelections(void);
 int ExecutiveSetTitle(char *name,int state,char *text);
+char *ExecutiveGetTitle(char *name,int state);
 int ExecutiveSaveUndo(char *s1,int state);
 void ExecutiveSetLastObjectEdited(CObject *o);
 CObject *ExecutiveGetLastObjectEdited(void);

@@ -2,6 +2,7 @@
 # filter wizard
 # no-frills tool for quickly filtering docked compounds, etc.
 
+import os
 from pymol.wizard import Wizard
 from pymol import cmd
 import pymol
@@ -206,7 +207,7 @@ class Filter(Wizard):
       
       self.prompt = None
       if self.object == None:
-         self.prompt = [ 'Please select an object...' ]
+         self.prompt = [ 'Please select a multi-state object...' ]
       else:
          cnt = cmd.count_states(self.object)
          self.prompt = [ '%s: %d total, %d accepted, %d rejected, %d deferred, %d remaining'%(
@@ -289,14 +290,31 @@ class Filter(Wizard):
          fname = self.object+".txt"
          try:
             f=open(fname,'w')
+            sd = self.state_dict
             sdo = self.dict[self.object]
-            for a in sdo.keys():
-               f.write("%s\t%s\n"%(a,sdo[a]))
+            f.write('Object\t"%s"%s'%(self.object,os.linesep))
+            f.write('Total\t%d%sAccepted\t%d%sRejected\t%d%sDeferred\t%d%sRemaining\t%d%s%s'%(
+               self.tota,os.linesep,
+               self.acce,os.linesep,
+               self.reje,os.linesep,
+               self.defe,os.linesep,
+               self.togo,os.linesep,os.linesep))
+            # sort output in order of states            
+            lst = []
+            for a in sd.keys():
+               lst.append((sd[a],a))
+            lst.sort()
+            # write list with decisions
+            for a in lst:
+               if sdo.has_key(a[1]):
+                  f.write('%d\t"%s"\t"%s"%s'%(a[0],a[1],sdo[a[1]],os.linesep))
+               else:
+                  f.write('%d\t"%s"\t"?"%s'%(a[0],a[1],os.linesep))
             f.close()
             print "Wrote '%s'."%fname
          except:
             traceback.print_exc()
-            print "Unable to write %s'."%fname
+            print "Unable to write '%s'."%fname
             
    def cleanup(self):
       # save current state in global vars...

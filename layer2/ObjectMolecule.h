@@ -130,6 +130,8 @@ typedef struct ObjectMoleculeOpRec {
 
 int ObjectMoleculeGetSerial(ObjectMolecule *I);
 int ObjectMoleculeSetStateTitle(ObjectMolecule *I,int state,char *text);
+char *ObjectMoleculeGetStateTitle(ObjectMolecule *I,int state);
+
 ObjectMolecule *ObjectMoleculeNew(int discreteFlag);
 void ObjectMoleculeSort(ObjectMolecule *I);
 ObjectMolecule *ObjectMoleculeCopy(ObjectMolecule *obj);

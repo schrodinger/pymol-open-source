@@ -294,6 +294,7 @@ static PyObject *CmdSetFrame(PyObject *self, PyObject *args);
 static PyObject *CmdSetMatrix(PyObject *self, 	PyObject *args);
 static PyObject *CmdSetSession(PyObject *self, 	PyObject *args);
 static PyObject *CmdSetTitle(PyObject *self, PyObject *args);
+static PyObject *CmdGetTitle(PyObject *self, PyObject *args);
 static PyObject *CmdSetView(PyObject *self, 	PyObject *args);
 static PyObject *CmdSetWizard(PyObject *self, PyObject *args);
 static PyObject *CmdRefreshWizard(PyObject *dummy, PyObject *args);
@@ -381,6 +382,7 @@ static PyMethodDef Cmd_methods[] = {
 	{"get_setting_text",      CmdGetSettingText,       METH_VARARGS },
    {"get_setting_updates",   CmdGetSettingUpdates,    METH_VARARGS },
 	{"get_state",             CmdGetState,             METH_VARARGS },
+   {"get_title",             CmdGetTitle,             METH_VARARGS },
 	{"get_type",              CmdGetType,              METH_VARARGS },
    {"get_view",              CmdGetView,              METH_VARARGS },
    {"get_wizard",            CmdGetWizard,            METH_VARARGS },
@@ -972,6 +974,23 @@ static PyObject *CmdSetTitle(PyObject *self, PyObject *args)
   }
   return(APIStatus(ok));
 }
+
+static PyObject *CmdGetTitle(PyObject *self, PyObject *args)
+{
+  char *str1,*str2;
+  int int1;
+  int ok = false;
+  PyObject *result = Py_None;
+  ok = PyArg_ParseTuple(args,"si",&str1,&int1);
+  if(ok) {
+    APIEntry();
+    str2 = ExecutiveGetTitle(str1,int1);
+    if(str2) result = PyString_FromString(str2);
+    APIExit();
+  }
+  return(APIAutoNone(result));
+}
+
 
 static PyObject *CmdExportCoords(PyObject *self, 	PyObject *args)
 {
