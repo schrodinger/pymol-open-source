@@ -50,8 +50,7 @@ CExtrude *ExtrudeCopyPointsNormalsColors(CExtrude *orig)
   CopyArray(I->n,orig->n,float,9*I->N);
   CopyArray(I->c,orig->c,float,3*I->N);
   CopyArray(I->i,orig->i,int,    I->N);
-  CopyArray(I->sf,orig->sf,float,I->N); /* SAUSAGE: scale factors from LUT */
-  CopyArray(I->z,orig->z,int,    I->N);	 /* SAUSAGE: nearest atom index */
+  CopyArray(I->sf,orig->sf,float,I->N); /* PUTTY: scale factors */
      
   return(I);
 }
@@ -72,7 +71,6 @@ void ExtrudeInit(PyMOLGlobals *G,CExtrude *I)
   I->tn = NULL; /* transformed normals */
   I->Ns = 0; /* number of shape points */
 
-  I->z = NULL;
   I->sf = NULL;
 }
 
@@ -767,7 +765,7 @@ void ExtrudeCGOSurfaceVariableTube(CExtrude *I,CGO *cgo,int cap)
   float *c;
   float *sv,*sn,*tv,*tn,*tv1,*tn1,*TV,*TN,*AN,*an;
   float v0[3];
-  float *sf;                            /* SAUSAGE: scale factor from ExtrudeMakeSausLUT() */
+  float *sf;                            /* PUTTY: scale factor from ExtrudeMakeSausLUT() */
   int start,stop;
   PRINTFD(I->G,FB_Extrude)
     " ExtrudeCGOSurfaceTube-DEBUG: entered.\n"
@@ -792,7 +790,7 @@ void ExtrudeCGOSurfaceVariableTube(CExtrude *I,CGO *cgo,int cap)
 
       n=I->n; /* NOTE: n is not a counter -- it's a 3x3 coordinate system! */
       v=I->p;
-      sf=I->sf;                         /* SAUSAGE: scale factors */
+      sf=I->sf;                         /* PUTTY: scale factors */
 
       for(a=0;a<I->N;a++) {
         transform33Tf3f(n,sv,tv);
@@ -994,7 +992,7 @@ void ExtrudeCGOSurfaceVariableTube(CExtrude *I,CGO *cgo,int cap)
 
       n = I->n+9*(I->N-1);
       v = I->p+3*(I->N-1);
-      sf = I->sf+(I->N-1);		/* SAUSAGE */
+      sf = I->sf+(I->N-1);		/* PUTTY */
 
       sv = I->sv;
       tv = I->tv;
@@ -1583,7 +1581,7 @@ void ExtrudeCGOSurfaceStrand(CExtrude *I,CGO *cgo,int sampling,float *color_over
 }
 
 void ExtrudeComputeScaleFactors(CExtrude *I,ObjectMolecule *obj,int source_field,
-                                float mean, float stdev, float power,
+                                float mean, float stdev, float power, float range,
                                 float min_scale, float max_scale,
                                 int window)
 {
@@ -1598,26 +1596,40 @@ void ExtrudeComputeScaleFactors(CExtrude *I,ObjectMolecule *obj,int source_field
     i=I->i;
     sf=I->sf;
 
-    for(a=0;a<I->N;a++) {
-      at = obj->AtomInfo + (*i);
-
-      switch(source_field) {
-      default: /* b*/
-        scale = (at->b - mean)/stdev;
-        if(scale<0.0F)
-          scale = 0.0F;
-        scale=pow(scale,power);
-        if(scale<min_scale)
-          scale=min_scale;
-        if(scale>max_scale)
-          scale=max_scale;
-        *sf = scale;
-        break;
+    if(stdev>R_SMALL8) {
+      for(a=0;a<I->N;a++) {
+        at = obj->AtomInfo + (*i);
+        
+        switch(source_field) {
+        default: /* b*/
+          scale = (range+(at->b - mean)/stdev)/range;
+          if(scale<0.0F)
+            scale = 0.0F;
+          scale=pow(scale,power);
+          if(scale<min_scale)
+            scale=min_scale;
+          if(scale>max_scale)
+            scale=max_scale;
+          *sf = scale;
+          break;
+        }
+        sf++;
+        i++;
       }
-      sf++;
-      i++;
+    } else {
+      for(a=0;a<I->N;a++) {
+        *sf = 1.0F;
+        sf++;
+      }
     }
+   
 
+    PRINTFB(I->G,FB_RepCartoon,FB_Blather)
+            " Putty: mean %8.3f stdev %8.3f min %8.3f max %8.3f\n",
+      mean,stdev,
+      mean+(pow(min_scale,1.0F/power)*range-range)*stdev,
+      mean+(pow(max_scale,1.0F/power)*range-range)*stdev
+      ENDFB(I->G);
     /* now compute window average */
     
     
@@ -1631,8 +1643,6 @@ void ExtrudeComputeScaleFactors(CExtrude *I,ObjectMolecule *obj,int source_field
       
       for(a=1;a<(I->N-1);a++) {
         accum = 0.0F;
-        
-        ww = window;
         cnt=0;
         for(w=-window;w<=window;w++) {
           ww=w + a;
@@ -1652,20 +1662,19 @@ void ExtrudeComputeScaleFactors(CExtrude *I,ObjectMolecule *obj,int source_field
 }
 
 #if 0
-/* SAUSAGE: look-up table of nearest neighbors and scaling factors (derived from nearby B-facts) */
+/* PUTTY: look-up table of nearest neighbors and scaling factors (derived from nearby B-facts) */
 void ExtrudeMakePuttyLUT(CExtrude *I,ObjectMolecule *Sauce_obj)
 {
   int a,b;		  /* loop indices */
   float *v;    		  /* extrusion points */
-  float *sf;		  /* SAUSAGE: scale factors */
-  float min_dist = 0.0;   /* SAUSAGE: distance between given extrusion point 'p' and nearest atom */
-  float minB = 0.0;	  /* SAUSAGE: overall minimum b-fact */
-  float maxB = 0.0;   	  /* SAUSAGE: overall maximum b-fact */
-  int my_i = 0;		  /* SAUSAGE: loop index */
-  int startAt = 0;	  /* SAUSAGE: starting atom index for extrusion point nearest neighbor search */
-  int endAt = 0;	  /* SAUSAGE: ending atom index for extrusion point nearest neighbor search */
-  int atm2use = 0;	  /* SAUSAGE: temporary index of atom nearest to given extrusion point 'p' */
-  int *z;		  /* SAUSAGE: indices of all such atoms nearest to extrusion points 'p' */
+  float *sf;		  /* PUTTY: scale factors */
+  float min_dist = 0.0;   /* PUTTY: distance between given extrusion point 'p' and nearest atom */
+  float minB = 0.0;	  /* PUTTY: overall minimum b-fact */
+  float maxB = 0.0;   	  /* PUTTY: overall maximum b-fact */
+  int my_i = 0;		  /* PUTTY: loop index */
+  int startAt = 0;	  /* PUTTY: starting atom index for extrusion point nearest neighbor search */
+  int endAt = 0;	  /* PUTTY: ending atom index for extrusion point nearest neighbor search */
+  int atm2use = 0;	  /* PUTTY: temporary index of atom nearest to given extrusion point 'p' */
   
   PRINTFD(I->G,FB_Extrude)
     " ExtrudeMakePuttyLUT-DEBUG: entered.\n"
@@ -1694,7 +1703,6 @@ void ExtrudeMakePuttyLUT(CExtrude *I,ObjectMolecule *Sauce_obj)
     for(b=0;b<=I->Ns;b++) {
 
       v=I->p;
-      z=I->z;
       sf=I->sf;
       
       for(a=0;a<I->N;a++) {
@@ -1745,15 +1753,9 @@ void ExtrudeMakePuttyLUT(CExtrude *I,ObjectMolecule *Sauce_obj)
         *(sf+1) = (float)pow((2.0*Sauce_obj->AtomInfo[atm2use].b / (maxB - minB)), 1.5 );
         *(sf+2) = (float)pow((2.0*Sauce_obj->AtomInfo[atm2use].b / (maxB - minB)), 1.5 );
         
-        /* record nearest atom indices: */
 
-        *z = atm2use;
-        *(z+1) = atm2use;
-        *(z+2) = atm2use;
-        
         v+=3;
         sf+=3;
-        z+=3;
       }
     }
     
@@ -1780,14 +1782,12 @@ void ExtrudeAllocPointsNormalsColors(CExtrude *I,int n)
     FreeP(I->n);
     FreeP(I->c);
     FreeP(I->i);
-    FreeP(I->z);
-    FreeP(I->sf);		/* SAUSAGE */
+    FreeP(I->sf);		/* PUTTY */
     I->p = Alloc(float,3*(n+1));
     I->n = Alloc(float,9*(n+1));
     I->c = Alloc(float,3*(n+1));
     I->i = Alloc(int,3*(n+1));
-    I->z = Alloc(int,3*(n+1));	/* SAUSAGE: nearest atoms to extrusion points from the LUT */
-    I->sf= Alloc(float,n+1); /* SAUSAGE: scale factors */ 
+    I->sf= Alloc(float,n+1); /* PUTTY: scale factors */ 
   }
   I->N = n;
 }
@@ -1802,7 +1802,6 @@ void ExtrudeFree(CExtrude *I)
   FreeP(I->sn);
   FreeP(I->sv);
   FreeP(I->i);
-  FreeP(I->z);
   FreeP(I->sf);
   OOFreeP(I);
 }

@@ -1690,18 +1690,15 @@ ENDFD;
               ExtrudeBuildNormals1f(ex);
               ExtrudeComputeScaleFactors(ex,obj,0,
                                          putty_mean,putty_stdev,
-                                         SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_cartoon_putty_scale_power),
-                   SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_cartoon_putty_scale_min),
-                   SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_cartoon_putty_scale_max),
+                   SettingGet_f(G,cs->Setting,obj->Obj.Setting,
+                                cSetting_cartoon_putty_scale_power),
+                   SettingGet_f(G,cs->Setting,obj->Obj.Setting,
+                                cSetting_cartoon_putty_range),
+                   SettingGet_f(G,cs->Setting,obj->Obj.Setting,
+                                cSetting_cartoon_putty_scale_min),
+                   SettingGet_f(G,cs->Setting,obj->Obj.Setting,
+                                cSetting_cartoon_putty_scale_max),
                                          sampling/2);
-
-              /* ExtrudeMakePuttyLUT(ex,obj);*/
-
-              /* SAUSAGE look-up table -- nearest neighbors to extrusion points */
-              /* Because of the way it's written, need to do it here rather than above --
-                 i.e., after ExtrudeCircle has already defined the number shapepoints (I->Ns).
-                 Of course, could re-write ExtrudeMakeSausLUT() to not depend on I->Ns, but 
-                 that raises other difficulties with downstream steps... */
 
               ExtrudeCGOSurfaceVariableTube(ex,I->ray,1);
               break;
