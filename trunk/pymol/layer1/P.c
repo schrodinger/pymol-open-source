@@ -705,6 +705,19 @@ void    initopenglutil_num(void);
 
 #ifdef _PYMOL_MONOLITHIC
 #ifndef _PYMOL_ACTIVEX
+#ifdef WIN32
+void	init_numpy();
+void	initmultiarray();
+void	initarrayfns();
+void	initlapack_lite();
+void	initumath();
+void	initranlib();
+#endif
+#endif
+#endif
+
+#ifdef _PYMOL_MONOLITHIC
+#ifndef _PYMOL_ACTIVEX
 void	initExtensionClass(void);
 void	initsglite(void);
 void    init_opengl(void);
