@@ -99,6 +99,128 @@ void ExecutiveReshape(Block *block,int width,int height);
 #define ExecColorHidden 0.3,0.3,0.3
 
 void ExecutiveObjMolSeleOp(int sele,ObjectMoleculeOpRec *op);
+CObject **ExecutiveSeleToObjectVLA(char *s1);
+
+CObject **ExecutiveSeleToObjectVLA(char *s1)
+{
+  /* return VLA containing list of atoms references by selection */
+
+  CObject **result = NULL;
+  CExecutive *I = &Executive;
+  SpecRec *rec = NULL;
+  CObject *obj=NULL;
+  int n = 0;
+  ObjectMoleculeOpRec op2;
+  int sele;
+
+  result = VLAlloc(CObject*,50);
+  if(WordMatch(s1,cKeywordAll,true)) {
+    /* all objects */
+    while(ListIterate(I->Spec,rec,next))
+      {
+        if(rec->type==cExecObject)
+          {
+            VLACheck(result,CObject*,n);
+            result[n]=rec->obj;
+            n++;
+          }
+      }
+  } else {
+    sele = SelectorIndexByName(s1);
+    if(sele>0) {
+      op2.code=OMOP_GetObjects;
+      op2.obj1VLA=(ObjectMolecule**)result;
+      op2.i1=0;
+      ExecutiveObjMolSeleOp(sele,&op2);
+      n = op2.i1;
+      result = (CObject**)op2.obj1VLA;
+    } else {
+      obj = ExecutiveFindObjectByName(s1);
+      if(obj) {
+        VLACheck(result,CObject*,n);
+        result[n]=obj;
+        n++;
+      }
+    }
+  }
+  VLASize(result,CObject*,n);
+  return(result);
+}
+
+int ExecutiveSetCrystal(char *sele,float a,float b,float c,
+                         float alpha,float beta,float gamma,char *sgroup)
+{
+  CObject **objVLA = NULL;
+  CObject *obj;
+  ObjectMolecule *objMol;
+  ObjectMap *objMap;
+  int ok;
+  CSymmetry *symmetry = NULL;
+  CCrystal *crystal = NULL;
+  int n_obj;
+  int i;
+
+  objVLA = ExecutiveSeleToObjectVLA(sele);
+  n_obj = VLAGetSize(objVLA);
+  if(n_obj) {
+    for(i=0;i<n_obj;i++) {
+      obj = objVLA[i];
+      switch(obj->type) {
+      case cObjectMolecule:
+        if(!symmetry) {
+          symmetry=SymmetryNew();          
+          symmetry->Crystal->Dim[0]=a;
+          symmetry->Crystal->Dim[1]=b;
+          symmetry->Crystal->Dim[2]=c;
+          symmetry->Crystal->Angle[0]=alpha;
+          symmetry->Crystal->Angle[1]=beta;
+          symmetry->Crystal->Angle[2]=gamma;
+          UtilNCopy(symmetry->SpaceGroup,sgroup,sizeof(WordType));
+          SymmetryAttemptGeneration(symmetry);
+        }
+        objMol = (ObjectMolecule*)obj;
+        if(symmetry) {
+          if(objMol->Symmetry)
+            SymmetryFree(objMol->Symmetry);
+          objMol->Symmetry = SymmetryCopy(symmetry);
+        }
+        break;
+      case cObjectMap:
+        
+        if(!crystal) {
+          crystal = CrystalNew();
+          crystal->Dim[0]=a;
+          crystal->Dim[1]=b;
+          crystal->Dim[2]=c;
+          crystal->Angle[0]=alpha;
+          crystal->Angle[1]=beta;
+          crystal->Angle[2]=gamma;
+          CrystalUpdate(crystal);
+        }
+        if(crystal) {
+          objMap = (ObjectMap*)obj;
+          if(objMap->Crystal) {
+            CrystalFree(objMap->Crystal);
+          }
+          objMap->Crystal=CrystalCopy(crystal);
+        }
+        break;
+      } 
+    }
+  } else {
+    ok=false;
+    PRINTFB(FB_Executive,FB_Errors)
+      " ExecutiveSetCrystal: no object selected\n"
+      ENDFB;
+  }
+if(crystal)
+     CrystalFree(crystal);
+     if(symmetry)
+    SymmetryFree(symmetry);
+  printf("executivesetsymm '%s' %d\n",sele,VLAGetSize(objVLA));
+  VLAFreeP(objVLA);
+  return(ok);
+}
 
 int ExecutiveSmooth(char *name,int cycles,int first,int last,int window)
 {
@@ -3517,6 +3639,7 @@ void ExecutiveSymExp(char *name,char *oname,char *s1,float cutoff) /* TODO state
                   if(keepFlag) { /* need to create new object */
                     sprintf(new_name,"%s%02d%02d%02d%02d",name,a,x,y,z);
                     ObjectSetName((CObject*)new_obj,new_name);
+                    ExecutiveDelete(new_name);
                     ExecutiveManageObject((CObject*)new_obj);
                     SceneChanged();
                   } else {

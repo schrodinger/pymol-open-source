@@ -216,9 +216,17 @@ class Champ:
       if e: raise RuntimeError
       return r
 
+   def pattern_get_tag_masks(self,index):
+      '''
+      get tags as bit masks
+      '''
+      (e,r) = _champ.pattern_get_tag_masks(self._champ,int(index))
+      if e: raise RuntimeError
+      return r
+   
    def pattern_get_tags(self,index):
       '''
-      get atomic tags
+      get tags (numeric lists)
       '''
       (e,r) = _champ.pattern_get_tags(self._champ,int(index))
       if e: raise RuntimeError

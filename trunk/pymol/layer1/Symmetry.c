@@ -30,8 +30,10 @@ Z* -------------------------------------------------------------------
 #include"PConv.h"
 #include"Util.h"
 
-void SymmetryAttemptGeneration(CSymmetry *I)
+int SymmetryAttemptGeneration(CSymmetry *I)
 {
+  int ok = false;
+
 #ifdef _PYMOL_XRAY
   PyObject *mats;
   int a,l;
@@ -52,6 +54,7 @@ void SymmetryAttemptGeneration(CSymmetry *I)
         MatrixDump44f(I->SymMatVLA+(a*16)," Symmetry:");
       }
       I->NSymMat = l;
+      ok = true;
       Py_DECREF(mats);
     } else {
       ErrMessage("Symmetry","Unable to get matrices from sglite");
@@ -59,6 +62,7 @@ void SymmetryAttemptGeneration(CSymmetry *I)
     PUnblock();
   }
 #endif
+  return(ok);
 }
 
 void SymmetryFree(CSymmetry *I)

@@ -4657,6 +4657,19 @@ void ObjectMoleculeSeleOp(ObjectMolecule *I,int sele,ObjectMoleculeOpRec *op)
            }
        }
      break;
+	case OMOP_GetObjects: /* identify atoms */
+     for(a=0;a<I->NAtom;a++)
+       {
+         s=I->AtomInfo[a].selEntry;
+         if(SelectorIsMember(s,sele))
+           {
+             VLACheck(op->obj1VLA,ObjectMolecule*,op->i1);
+             op->obj1VLA[op->i1]=I;
+             op->i1++;
+             break;
+           }
+       }
+     break;
 	case OMOP_CountAtoms: /* count atoms in object, in selection */
      ai=I->AtomInfo;
      for(a=0;a<I->NAtom;a++)

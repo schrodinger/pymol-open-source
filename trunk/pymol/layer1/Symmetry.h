@@ -30,7 +30,7 @@ typedef struct {
   WordType *SymOpVLA;
 } CSymmetry;
 
-void SymmetryAttemptGeneration(CSymmetry *I);
+int SymmetryAttemptGeneration(CSymmetry *I);
 void SymmetryFree(CSymmetry *I);
 CSymmetry *SymmetryNew(void);
 void SymmetryUpdate(CSymmetry *I);

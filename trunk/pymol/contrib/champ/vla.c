@@ -117,11 +117,12 @@ void *_VLASetSize(const char *file,int line,void *ptr,unsigned int newSize)
 #endif
 {
   VLARec *vla;
-  char *start=NULL;
+  unsigned int orig_size = 0;
+  char *start;
   char *stop;
   vla = &((VLARec*)ptr)[-1];
   if(vla->autoZero)
-	 start = ((char*)vla)+sizeof(VLARec)+(vla->recSize*vla->nAlloc);
+	 orig_size = sizeof(VLARec)+(vla->recSize*vla->nAlloc);
   vla->nAlloc = newSize;
 #ifndef _os_memory_debug_on
   vla=(void*)os_realloc(vla,(vla->recSize*vla->nAlloc)+sizeof(VLARec));
@@ -136,6 +137,7 @@ void *_VLASetSize(const char *file,int line,void *ptr,unsigned int newSize)
 	 }
   if(vla->autoZero)
 	 {
+      start = ((char*)vla)+orig_size;
 		stop = ((char*)vla)+sizeof(VLARec)+(vla->recSize*vla->nAlloc);
 		if(start<stop)
 		  os_zero(start,stop);

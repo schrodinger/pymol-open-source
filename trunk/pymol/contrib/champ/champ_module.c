@@ -22,10 +22,11 @@ Z* -------------------------------------------------------------------
 #include"list.h"
 #include"vla.h"
 
-static PyObject *RetNone()
+/*static PyObject *RetNone()
 {
   return(Py_BuildValue("(iO)",0,Py_None));
 }
+*/
 
 static PyObject *RetStatus(int ok)
 {
@@ -370,6 +371,51 @@ static PyObject *pattern_get_tags(PyObject *self,      PyObject *args)
         bit_mask=((bit_mask>>1)&0x7FFFFFFF);
       }
       PyList_SetItem(l2,b,l3);
+      bi = bd->link;
+    }
+
+    result = PyList_New(2);
+    PyList_SetItem(result,0,l1);
+    PyList_SetItem(result,1,l2);
+  }
+  return(RetObj(ok,result));
+}
+
+static PyObject *pattern_get_tag_masks(PyObject *self,      PyObject *args)
+{
+  int ok=true;
+  int int1,ai,bi;
+  PyObject *result = NULL;
+  PyObject *O,*l1,*l2;
+  CChamp *I;
+  ListPat *pat;
+  ListAtom *at;
+  ListBond *bd;
+  int a,b;
+  int n_atom,n_bond;
+
+  ok = PyArg_ParseTuple(args,"Oi",&O,&int1);
+  ok = PyCObject_Check(O);
+  if(ok) {
+    I = PyCObject_AsVoidPtr(O);
+    pat = I->Pat+int1;
+    n_atom = ListLen(I->Atom,pat->atom);
+    ai = pat->atom;
+    l1 = PyList_New(n_atom);
+    for(a=0;a<n_atom;a++) {
+      at = I->Atom + ai;
+
+      PyList_SetItem(l1,a,PyInt_FromLong(at->tag));
+
+      ai = at->link;
+    }
+
+    n_bond = ListLen(I->Bond,pat->bond);
+    l2 = PyList_New(n_bond);
+    bi = pat->bond;
+    for(b=0;b<n_bond;b++) {
+      bd = I->Bond + bi;
+      PyList_SetItem(l2,b,PyInt_FromLong(bd->tag));
       bi = bd->link;
     }
 
@@ -834,6 +880,7 @@ static PyMethodDef champ_methods[] = {
   {"pattern_get_class",   pattern_get_class,       METH_VARARGS },
   {"pattern_get_codes",   pattern_get_codes,       METH_VARARGS },
   {"pattern_get_tags",    pattern_get_tags,       METH_VARARGS },
+  {"pattern_get_tag_masks",    pattern_get_tag_masks,       METH_VARARGS },
   {"pattern_get_atom_symbols",  pattern_get_atom_symbols,     METH_VARARGS },
   {"pattern_dump",  pattern_dump,     METH_VARARGS },
   {"pattern_orient_bonds",   pattern_orient_bonds,       METH_VARARGS },

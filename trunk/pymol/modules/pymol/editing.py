@@ -81,7 +81,42 @@ undocumented
    finally:
       unlock()
    return r
+
+def set_symmetry(selection,a,b,c,alpha,beta,gamma,spacegroup="P1"):
+   '''
+DESCRIPTION
+  
+   "set_symmetry" can be used to define or redefine the crystal
+   and spacegroup parameters for a molecule or map object.
+      
+USAGE
+ 
+   set_symmetry selection, a, b, c, alpha, beta, gamma, spacegroup
    
+PYMOL API
+  
+   cmd.set_symmetry(string selection, float a, float b, float c,
+        float alpha,float beta, float gamma, string spacegroup)
+
+NOTES
+
+   The new symmetry will be defined for every object referenced
+   by the selection
+   
+   '''
+   r = 0
+   selection = selector.process(selection)
+   try:
+      lock()
+      r = _cmd.set_symmetry(str(selection),
+                            float(a),float(b),float(c),
+                            float(alpha),float(beta),float(gamma),
+                            str(spacegroup))
+   finally:
+      unlock()
+   return r
+   
+
 def set_geometry(selection,geometry,valence):
    '''
 DESCRIPTION
