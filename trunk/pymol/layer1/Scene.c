@@ -2254,14 +2254,14 @@ static int SceneClick(Block *block,int button,int x,int y,
         case cButModeSeleToggle:
 
           if(SelectorIndexByName(G,selName)>=0) {
-            sprintf(buf2,"(((%s) or %s(%s)) and not ((%s(%s)) in %s(%s)))",
+            sprintf(buf2,"(((%s) or %s(%s)) and not ((%s(%s)) and %s(%s)))",
                     selName,sel_mode_kw,buffer,sel_mode_kw,buffer,sel_mode_kw,selName);
             SelectorCreate(G,selName,buf2,NULL,false,NULL);
             if(obj->type==cObjectMolecule) {
               if(SettingGet(G,cSetting_logging)) {
                 objMol = (ObjectMolecule*)obj;            
                 ObjectMoleculeGetAtomSeleLog(objMol,I->LastPicked.index,buffer,false);
-                sprintf(buf2,"(((%s) or %s(%s)) and ((%s(%s)) in %s(%s)))",
+                sprintf(buf2,"(((%s) or %s(%s)) and ((%s(%s)) and %s(%s)))",
                         selName,sel_mode_kw,buffer,sel_mode_kw,buffer,sel_mode_kw,selName);
                 sprintf(buffer,"cmd.select('%s',\"%s(%s)\")",selName,sel_mode_kw,buf2);
                 PLog(buffer,cPLog_pym);

@@ -7061,14 +7061,18 @@ void ExecutiveManageObject(PyMOLGlobals *G,CObject *obj,int allow_zoom,int quiet
       rec->visible=0;
     } else {
       rec->visible=1;
-      SceneObjectAdd(G,obj);
+      /*      SceneObjectAdd(G,obj);*/
     }
     for(a=0;a<cRepCnt;a++)
       rec->repOn[a]=false;
     if(rec->obj->type==cObjectMolecule)
       rec->repOn[cRepLine]=true;
     ListAppend(I->Spec,rec,next,SpecRec);
+
+    if(rec->visible)
+      SceneObjectAdd(G,obj);
   }
+
   if(obj->type==cObjectMolecule) {
 	 ExecutiveUpdateObjectSelection(G,obj);
   }
