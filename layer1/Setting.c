@@ -1070,6 +1070,10 @@ void SettingGenerateSideEffects(int index,char *sele,int state)
     ExecutiveInvalidateRep(inv_sele,cRepLine,cRepInvRep);
     SceneChanged();
     break;
+  case cSetting_retain_order:
+  case cSetting_pdb_hetatm_sort:
+    ExecutiveSort(cKeywordAll);
+    break;
   case cSetting_roving_lines:
   case cSetting_roving_sticks:
   case cSetting_roving_spheres:
@@ -1197,6 +1201,7 @@ void SettingGenerateSideEffects(int index,char *sele,int state)
     ExecutiveInvalidateRep(inv_sele,cRepRibbon,cRepInvRep);
     SceneChanged();
     break;
+  case cSetting_cartoon_trace:
   case cSetting_cartoon_refine:
   case cSetting_cartoon_sampling:
   case cSetting_cartoon_loop_quality:
@@ -2067,6 +2072,8 @@ void SettingInitGlobal(int alloc)
   SettingSet_i(I,cSetting_pdb_hetatm_sort,1);
 
   SettingSet_i(I,cSetting_pdb_use_ter_records,1);
+
+  SettingSet_i(I,cSetting_cartoon_trace,0);
 
 }
 

@@ -38,6 +38,7 @@ Z* -------------------------------------------------------------------
 #define cMapSourceCCP4 2
 #define cMapSourcePHI 3
 #define cMapSourceDesc 4
+#define cMapSourceFLD 5
 
 #ifdef _PYMOL_NUMPY
 typedef struct {
@@ -50,7 +51,6 @@ typedef struct {
   int flags;
 } MyArrayObject;
 #endif
-
 
 int ObjectMapInterpolate(ObjectMap *I,int state,float *array,float *result,int n)
 {
@@ -74,6 +74,7 @@ int ObjectMapStateInterpolate(ObjectMapState *ms,float *array,float *result,int 
   
   switch(ms->MapSource) {
   case cMapSourcePHI:
+  case cMapSourceFLD:
   case cMapSourceDesc:
     while(n--) {
 
@@ -156,6 +157,7 @@ static void ObjectMapStateRegeneratePoints(ObjectMapState *ms)
       }
     break;
   case cMapSourcePHI:
+  case cMapSourceFLD:
     for(c=0;c<ms->FDim[2];c++) {
       v[2]=ms->Origin[2]+ms->Grid[2]*(c+ms->Min[2]);
       for(b=0;b<ms->FDim[1];b++) {
@@ -1288,7 +1290,7 @@ static int ObjectMapPHIStrToMap(ObjectMap *I,char *PHIStr,int bytes,int state) {
     for(b=0;b<ms->FDim[1];b+=ms->FDim[1]-1) {
       v[1]=ms->Origin[1]+ms->Grid[1]*(b+ms->Min[1]);
 
-      for(a=0;a<ms->FDim[2];a+=ms->FDim[2]-1) {
+      for(a=0;a<ms->FDim[0];a+=ms->FDim[0]-1) {
         v[0]=ms->Origin[0]+ms->Grid[0]*(a+ms->Min[0]);
         copy3f(v,ms->Corner[d]);
         d++;
@@ -1499,6 +1501,323 @@ int ObjectMapXPLORStrToMap(ObjectMap *I,char *XPLORStr,int state) {
   return(ok);
 }
 /*========================================================================*/
+static int ObjectMapFLDStrToMap(ObjectMap *I,char *PHIStr,int bytes,int state) 
+{
+  char *p;
+  float dens,dens_rev;
+  int a,b,c,d,e;
+  float v[3],maxd,mind;
+  int ok = true;
+  int little_endian = 1;
+  /* PHI named from their docs */
+  int map_endian = 1;
+  char cc[MAXLINELEN];
+  char *rev;
+  int ndim=0;
+  int veclen=0;
+  int nspace=0;
+  ObjectMapState *ms;
+    int got_ndim=false;
+    int got_dim1=false;
+    int got_dim2=false;
+    int got_dim3=false;
+    int got_data=false;
+    int got_veclen=false;
+    int got_min_ext=false;
+    int got_max_ext=false;
+    int got_field=false;
+    int got_nspace=false;
+
+
+  little_endian = *((char*)&little_endian);
+  map_endian = little_endian;
+
+  if(state<0) state=I->NState;
+  if(I->NState<=state) {
+    VLACheck(I->State,ObjectMapState,state);
+    I->NState=state+1;
+  }
+  ms=&I->State[state];
+  ObjectMapStateInit(ms);
+
+  maxd = FLT_MIN;
+  mind = FLT_MAX;
+
+
+    
+  p = PHIStr;
+
+  while((*p)&&(!(
+                 got_ndim&&
+                 got_dim1&&
+                 got_dim2&&
+                 got_dim3&&
+                 got_veclen&&
+                 got_min_ext&&
+                 got_max_ext&&
+                 got_field&&
+                 got_nspace&&
+                 got_data))) {
+
+    if(!got_ndim) {
+      ParseWordCopy(cc,p,4);
+      if(!strcmp(cc,"ndim")) {
+        p = ParseSkipEquals(p);
+        p = ParseWordCopy(cc,p,50);
+        if(sscanf(cc,"%d",&ndim)==1)
+          got_ndim=true;
+      }
+    }
+      
+    if(!got_dim1) {
+      ParseWordCopy(cc,p,4);
+      if(!strcmp(cc,"dim1")) {
+        p = ParseSkipEquals(p);
+        p = ParseWordCopy(cc,p,50);
+        if(sscanf(cc,"%d",&ms->FDim[0])==1)
+          got_dim1=true;
+      }
+    }
+      
+    if(!got_dim2) {
+      ParseWordCopy(cc,p,4);
+      if(!strcmp(cc,"dim2")) {
+        p = ParseSkipEquals(p);
+        p = ParseWordCopy(cc,p,50);
+        if(sscanf(cc,"%d",&ms->FDim[1])==1)
+          got_dim2=true;
+      }
+    }
+      
+    if(!got_dim3) {
+      ParseWordCopy(cc,p,4);
+      if(!strcmp(cc,"dim3")) {
+        p = ParseSkipEquals(p);
+        p = ParseWordCopy(cc,p,50);
+        if(sscanf(cc,"%d",&ms->FDim[2])==1)
+          got_dim3=true;
+      }
+    }
+       
+    if(!got_nspace) {
+      ParseWordCopy(cc,p,6);
+      if(!strcmp(cc,"nspace")) {
+        p = ParseSkipEquals(p);
+        p = ParseWordCopy(cc,p,50);
+        if(sscanf(cc,"%d",&nspace)==1)
+          got_nspace=true;
+      }
+    }
+
+    if(!got_veclen) {
+      ParseWordCopy(cc,p,6);
+      if(!strcmp(cc,"veclen")) {
+        p = ParseSkipEquals(p);
+        p = ParseWordCopy(cc,p,50);
+        if(sscanf(cc,"%d",&veclen)==1)
+          got_veclen=true;
+      }
+    }
+
+    if(!got_data) {
+      ParseWordCopy(cc,p,4);
+      if(!strcmp(cc,"data")) {
+        p = ParseSkipEquals(p);
+        p = ParseWordCopy(cc,p,50);
+        if(!strcmp(cc,"float"))
+          got_data=true;
+      }
+    }
+
+    if(!got_min_ext) {
+      ParseWordCopy(cc,p,7);
+      if(!strcmp(cc,"min_ext")) {
+        p = ParseSkipEquals(p);
+        p = ParseWordCopy(cc,p,50);
+        if(sscanf(cc,"%f",&ms->ExtentMin[0])) {
+          p = ParseWordCopy(cc,p,50);
+          if(sscanf(cc,"%f",&ms->ExtentMin[1])) {
+            p = ParseWordCopy(cc,p,50);
+            if(sscanf(cc,"%f",&ms->ExtentMin[2])) {
+              got_min_ext=true;
+            }
+          }
+        }
+      }
+    }
+
+    if(!got_max_ext) {
+      ParseWordCopy(cc,p,7);
+      if(!strcmp(cc,"max_ext")) {
+        p = ParseSkipEquals(p);
+        p = ParseWordCopy(cc,p,50);
+        if(sscanf(cc,"%f",&ms->ExtentMax[0])) {
+          p = ParseWordCopy(cc,p,50);
+          if(sscanf(cc,"%f",&ms->ExtentMax[1])) {
+            p = ParseWordCopy(cc,p,50);
+            if(sscanf(cc,"%f",&ms->ExtentMax[2])) {
+              got_max_ext=true;
+            }
+          }
+        }
+      }
+    }
+
+    if(!got_field) {
+      ParseWordCopy(cc,p,5);
+      if(!strcmp(cc,"field")) {
+        p = ParseSkipEquals(p);
+        p = ParseWordCopy(cc,p,50);
+        if(!strcmp(cc,"uniform"))
+          got_field=true;
+      }
+    }
+    p=ParseNextLine(p);
+  }
+    
+  if(got_ndim&&
+     got_dim1&&
+     got_dim2&&
+     got_dim3&&
+     got_veclen&&
+     got_min_ext&&
+     got_max_ext&&
+     got_field&&
+     got_nspace&&
+     got_data) {
+
+    ms->Origin = Alloc(float,3);
+    ms->Range = Alloc(float,3);
+    ms->Grid = Alloc(float,3);
+
+    copy3f(ms->ExtentMin,ms->Origin);
+    subtract3f(ms->ExtentMax,ms->ExtentMin,ms->Range);
+    ms->FDim[3] = 3;
+      
+    for(a=0;a<3;a++) {
+      ms->Min[a] = 0;
+      ms->Max[a] = ms->FDim[a]-1;
+      ms->Div[a] = ms->FDim[a];
+        
+      if(ms->FDim[a]) 
+        ms->Grid[a]=ms->Range[a]/(ms->Max[a]);
+      else
+        ms->Grid[a]=0.0F;
+    }
+
+
+    dump3f(ms->ExtentMin,"min");
+    dump3f(ms->ExtentMax,"max");
+    subtract3f(ms->ExtentMax,ms->ExtentMin,ms->Range);
+    dump3f(ms->Range,"range");
+    dump3f(ms->Grid,"grid");
+
+    ms->Field=IsosurfFieldAlloc(ms->FDim);
+    ms->MapSource = cMapSourceFLD;
+    ms->Field->save_points=false;
+
+    p=PHIStr;
+
+    while(*p) { /* ^L^L sentinel */
+      if((p[0]==12)&&(p[1]==12)) {
+        p+=2;
+        break;
+      }
+      p++;
+    }
+
+    rev = (char*)&dens_rev;
+    for(c=0;c<ms->FDim[2];c++) { /* z y x ordering into c b a  so that x = a, etc. */
+      for(b=0;b<ms->FDim[1];b++) {
+        for(a=0;a<ms->FDim[0];a++) {
+          
+          if(little_endian!=map_endian) {
+            rev[0]=p[3];
+            rev[1]=p[2];
+            rev[2]=p[1];
+            rev[3]=p[0];
+          } else {
+            rev[0]=p[0]; /* gotta go char by char because of memory alignment issues ... */
+            rev[1]=p[1];
+            rev[2]=p[2];
+            rev[3]=p[3];
+          }
+          dens = *((float*)rev);
+          F3(ms->Field->data,a,b,c) = dens;
+          if(maxd<dens) maxd = dens;
+          if(mind>dens) mind = dens;
+          p+=4;
+        }
+      }
+    }
+    
+    for(c=0;c<ms->FDim[2];c++) {
+      v[2]=ms->Origin[2]+ms->Grid[2]*(c+ms->Min[2]);
+      for(b=0;b<ms->FDim[1];b++) {
+        v[1]=ms->Origin[1]+ms->Grid[1]*(b+ms->Min[1]);
+        for(a=0;a<ms->FDim[0];a++) {
+          v[0]=ms->Origin[0]+ms->Grid[0]*(a+ms->Min[0]);
+          for(e=0;e<3;e++) {
+            F4(ms->Field->points,a,b,c,e) = v[e];
+          }
+        }
+      }
+    }
+    
+    d=0;
+    for(c=0;c<ms->FDim[2];c+=ms->FDim[2]-1) {
+      v[2]=ms->Origin[2]+ms->Grid[2]*(c+ms->Min[2]);
+      if(!c) 
+        v[2]=ms->ExtentMin[2];
+      else 
+        v[2]=ms->ExtentMax[2];
+      
+      for(b=0;b<ms->FDim[1];b+=ms->FDim[1]-1) {
+        v[1]=ms->Origin[1]+ms->Grid[1]*(b+ms->Min[1]);
+
+      if(!b) 
+        v[1]=ms->ExtentMin[1];
+      else 
+        v[1]=ms->ExtentMax[1];
+        
+        for(a=0;a<ms->FDim[0];a+=ms->FDim[0]-1) {
+          v[0]=ms->Origin[0]+ms->Grid[0]*(a+ms->Min[0]);
+
+      if(!a) 
+        v[0]=ms->ExtentMin[0];
+      else 
+        v[0]=ms->ExtentMax[0];
+
+          copy3f(v,ms->Corner[d]);
+          d++;
+        }
+      }
+    }
+    
+    ms->Active=true;
+    ObjectMapUpdateExtents(I);
+    printf(" ObjectMap: Map Read.  Range = %5.6f to %5.6f\n",mind,maxd);
+      
+  } else {
+      
+    printf(" got_ndim %d\n",got_ndim);
+    printf(" got_dim1 %d\n",got_dim1);
+    printf(" got_dim2 %d\n",got_dim2);
+    printf(" got_dim3 %d\n",got_dim3);
+    printf(" got_veclen %d\n",got_veclen);
+    printf(" got_min_ext %d\n",got_min_ext);
+    printf(" got_max_ext %d\n",got_max_ext);
+    printf(" got_field %d\n",got_field);
+    printf(" got_nspace %d\n",got_nspace);
+    printf(" got_data %d\n",got_data);
+      
+  }
+    
+
+  return(ok);
+
+}
+/*========================================================================*/
 ObjectMap *ObjectMapReadXPLORStr(ObjectMap *I,char *XPLORStr,int state)
 {
   int ok=true;
@@ -1598,6 +1917,29 @@ ObjectMap *ObjectMapLoadCCP4File(ObjectMap *obj,char *fname,int state)
   return(I);
 
 }
+/*========================================================================*/
+static ObjectMap *ObjectMapReadFLDStr(ObjectMap *I,char *MapStr,int bytes,int state)
+{
+  int ok=true;
+  int isNew = true;
+
+  if(!I) 
+	 isNew=true;
+  else 
+	 isNew=false;
+  if(ok) {
+	 if(isNew) {
+		I=(ObjectMap*)ObjectMapNew();
+		isNew = true;
+	 } else {
+		isNew = false;
+	 }
+    ObjectMapFLDStrToMap(I,MapStr,bytes,state);
+    SceneChanged();
+    SceneCountFrames();
+  }
+  return(I);
+}
 
 /*========================================================================*/
 static ObjectMap *ObjectMapReadPHIStr(ObjectMap *I,char *MapStr,int bytes,int state)
@@ -1654,6 +1996,61 @@ ObjectMap *ObjectMapLoadPHIFile(ObjectMap *obj,char *fname,int state)
 		fclose(f);
 
 		I=ObjectMapReadPHIStr(obj,buffer,size,state);
+
+		mfree(buffer);
+      if(state<0)
+        state=I->NState-1;
+      if(state<I->NState) {
+        ObjectMapState *ms;
+        ms = &I->State[state];
+        if(ms->Active) {
+          CrystalDump(ms->Crystal);
+          multiply33f33f(ms->Crystal->FracToReal,ms->Crystal->RealToFrac,mat);
+        }
+      }
+    }
+#ifdef _UNDEFINED
+  {int a;
+  for(a=0;a<9;a++)
+    printf("%10.5f\n",mat[a]);
+  }
+#endif
+  return(I);
+
+}
+
+/*========================================================================*/
+ObjectMap *ObjectMapLoadFLDFile(ObjectMap *obj,char *fname,int state)
+{
+  ObjectMap *I = NULL;
+  int ok=true;
+  FILE *f;
+  long size;
+  char *buffer,*p;
+  float mat[9];
+
+  f=fopen(fname,"rb");
+  if(!f)
+	 ok=ErrMessage("ObjectMapLoadFLDFile","Unable to open file!");
+  else
+	 {
+		if(Feedback(FB_ObjectMap,FB_Actions))
+		  {
+			printf(" ObjectMapLoadFLDFile: Loading from '%s'.\n",fname);
+		  }
+		
+		fseek(f,0,SEEK_END);
+      size=ftell(f);
+		fseek(f,0,SEEK_SET);
+
+		buffer=(char*)mmalloc(size);
+		ErrChkPtr(buffer);
+		p=buffer;
+		fseek(f,0,SEEK_SET);
+		fread(p,size,1,f);
+		fclose(f);
+
+		I=ObjectMapReadFLDStr(obj,buffer,size,state);
 
 		mfree(buffer);
       if(state<0)

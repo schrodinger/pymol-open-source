@@ -166,7 +166,8 @@ Rep *RepCartoonNew(CoordSet *cs)
   float *h_start=NULL,*h_end=NULL;
   float *stmp;
   int smooth_first,smooth_last,smooth_cycles,flat_cycles;
-  
+  int trace;
+
 
   /* THIS HAS GOT TO BE A CANDIDATE FOR THE WORST ROUTINE IN PYMOL
    * DEVELOP ON IT ONLY AT EXTREME RISK TO YOUR MENTAL HEALTH */
@@ -199,6 +200,7 @@ ENDFD;
   cartoon_debug=SettingGet_i(cs->Setting,obj->Obj.Setting,cSetting_cartoon_debug);
   length=SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_cartoon_rect_length);
   width=SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_cartoon_rect_width);
+  trace=SettingGet_i(cs->Setting,obj->Obj.Setting,cSetting_cartoon_trace);
 
   throw=SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_cartoon_throw);
 
@@ -288,13 +290,14 @@ ENDFD;
           /*			 if(!obj->AtomInfo[a1].hetatm)*/
           if((!obj->AtomInfo[a1].alt[0])||
              (obj->AtomInfo[a1].alt[0]=='A')) {
-            if((obj->AtomInfo[a1].protons==cAN_C)&&
-               (WordMatch("CA",obj->AtomInfo[a1].name,1)<0))
+            if(trace||((obj->AtomInfo[a1].protons==cAN_C)&&
+               (WordMatch("CA",obj->AtomInfo[a1].name,1)<0)))
               {
                 PRINTFD(FB_RepCartoon)
                   " RepCartoon: found CA in %s; a2 %d\n",obj->AtomInfo[a1].resi,a2
                   ENDFD;
-                if(a2>=0) {
+                if(!trace) 
+                  if(a2>=0) {
                   /*
                     if((abs(obj->AtomInfo[a1].resv-obj->AtomInfo[a2].resv)>1)||
                     (obj->AtomInfo[a1].chain[0]!=obj->AtomInfo[a2].chain[0])||
@@ -399,12 +402,13 @@ ENDFD;
                   }
                   vo+=3;
                 }
-              } else if((obj->AtomInfo[a1].protons==cAN_P)&&
-                        (WordMatch("P",obj->AtomInfo[a1].name,1)<0)) {
-                if(a2>=0) {
-                  if(!ObjectMoleculeCheckBondSep(obj,a1,a2,6)) /* six bonds between phosphates */
-                    a2=-1;
-                }
+              } else if(trace||((obj->AtomInfo[a1].protons==cAN_P)&&
+                        (WordMatch("P",obj->AtomInfo[a1].name,1)<0))) {
+                if(!trace) 
+                  if(a2>=0) {
+                    if(!ObjectMoleculeCheckBondSep(obj,a1,a2,6)) /* six bonds between phosphates */
+                      a2=-1;
+                  }
                 if(a2<0)
                   nSeg++;
                 *(s++) = nSeg;
