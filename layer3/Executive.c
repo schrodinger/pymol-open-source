@@ -764,7 +764,6 @@ int ExecutiveGetExtent(char *name,float *mn,float *mx)
           fmx = f1;
         else
           fmx = f2;
-        printf("%8.3f %8.3f\n",f1,f2);
         op.v1[a] = op2.v1[a] - fmx;
         op.v2[a] = op2.v1[a] + fmx;
       }
