@@ -114,7 +114,7 @@ class Normal(PMGSkin):
       row1.pack(side=TOP,fill=BOTH,expand=YES)
       btn_reset = self.buttonAdd(row1,'Reset',lambda s=self: s.cmd.do("_ reset"))
       btn_reset = self.buttonAdd(row1,'Zoom',lambda s=self: s.cmd.do("_ zoom animate=1"))      
-      btn_rtrace = self.buttonAdd(row1,'Ray',lambda s=self: s.cmd.do("_ ray"))
+      btn_rtrace = self.buttonAdd(row1,'Ray',lambda s=self: s.cmd.do("_ ray async=1"))
       btn_reset = self.buttonAdd(row1,'Rock',lambda s=self: s.cmd.do("_ rock"))
 
       row2 = self.app.createcomponent('row2', (), None,
@@ -146,7 +146,7 @@ class Normal(PMGSkin):
                                    lambda s=self:
                                    s.toggleFrame(self.buildFrame))
       
-
+      
    def my_show(self,win,center=1):
       if sys.platform!='linux2':
          win.show()
@@ -310,7 +310,14 @@ class Normal(PMGSkin):
             self.lineCount=5000
          self.entry.focus_set()
       self.updating = 1
+      progress = self.cmd.get_progress()
+      if progress>=0.0:
+         self.messageBar.message("busy","Progress %d%%..."%int(progress*100))
+      else:
+         self.messageBar.resetmessages("busy")
+      
       self.output.after(100,self.update_feedback) # 10X a second
+      
 
    def toggleFrame(self, frame):
       if frame not in self.dataArea.slaves():
@@ -2169,7 +2176,7 @@ class Normal(PMGSkin):
           entry_relief='sunken', entry_borderwidth=1) #, labelpos = 'w')
       self.messageBar.pack(side=BOTTOM, anchor=W, fill=X, expand=1)
       self.balloon.configure(statuscommand = self.messageBar.helpmessage)
-      
+
       self.createConsole()
 
 

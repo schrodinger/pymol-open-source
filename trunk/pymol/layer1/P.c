@@ -41,41 +41,50 @@ Z* -------------------------------------------------------------------
 #include"PyMOLOptions.h"
 #include"PyMOL.h"
 
+/* globally accessible */
+
 PyObject *P_globals = NULL;
 
 PyObject *P_cmd = NULL;
 PyObject *P_menu = NULL;
 PyObject *P_xray = NULL;
-PyObject *P_parser = NULL;
-PyObject *P_setting = NULL;
-PyObject *P_povray = NULL;
-PyObject *P_traceback = NULL;
-
 PyObject *P_chempy = NULL;
 PyObject *P_models = NULL;
-
-PyObject *P_complete = NULL;
-
-PyObject *P_exec = NULL;
-PyObject *P_parse = NULL;
-PyObject *P_lock = NULL; /* API locks */
-PyObject *P_unlock = NULL;
-
-PyObject *P_lock_c = NULL; /* C locks */
-PyObject *P_unlock_c = NULL;
-
-PyObject *P_do = NULL;
-
-PyObject *P_time = NULL;
-PyObject *P_sleep = NULL;
-PyObject *P_main = NULL;
-PyObject *P_vfont = NULL;
+PyObject *P_setting = NULL;
 PyObject *P_embed = NULL;
+
+/* local to this module */
+
+static PyObject *P_povray = NULL;
+static PyObject *P_traceback = NULL;
+static PyObject *P_parser = NULL;
+static PyObject *P_complete = NULL;
+static PyObject *P_exec = NULL;
+static PyObject *P_parse = NULL;
+
+static PyObject *P_lock = NULL; /* API locks */
+static PyObject *P_lock_attempt = NULL;
+static PyObject *P_unlock = NULL;
+
+static PyObject *P_lock_c = NULL; /* C locks */
+static PyObject *P_unlock_c = NULL;
+
+static PyObject *P_lock_status = NULL; /* status locks */
+static PyObject *P_unlock_status = NULL;
+
+static PyObject *P_do = NULL;
+
+#ifdef WIN32
+static PyObject *P_time = NULL;
+static PyObject *P_sleep = NULL;
+#endif
+
+static PyObject *P_main = NULL;
+static PyObject *P_vfont = NULL;
 
 #define P_log_file_str "_log_file"
 
 #define xxxPYMOL_NEW_THREADS
-
 
 unsigned int PyThread_get_thread_ident(void); /* critical functionality */
 
@@ -83,6 +92,16 @@ typedef struct {
   int id;
   PyThreadState *state;
 } SavedThreadRec;
+
+void PLockStatus(void) /* assumes we have the GIL */
+{
+  PXDecRef(PyObject_CallFunction(P_lock_status,NULL));
+}
+
+void PUnlockStatus(void) /* assumes we have the GIL */
+{
+  PXDecRef(PyObject_CallFunction(P_unlock_status,NULL));
+}
 
 #define MAX_SAVED_THREAD 16
 
@@ -203,6 +222,26 @@ void PXDecRef(PyObject *obj)
   Py_XDECREF(obj);
 }
 
+void PSleepWhileBusy(int usec)
+{
+#ifndef WIN32
+  struct timeval tv;
+  PRINTFD(TempPyMOLGlobals,FB_Threads)
+    " PSleep-DEBUG: napping.\n"
+  ENDFD;
+  tv.tv_sec=0;
+  tv.tv_usec=usec; 
+  select(0,NULL,NULL,NULL,&tv);
+  PRINTFD(TempPyMOLGlobals,FB_Threads)
+    " PSleep-DEBUG: nap over.\n"
+  ENDFD;
+#else
+  PBlock();
+  PXDecRef(PyObject_CallFunction(P_sleep,"f",usec/1000000.0));
+  PUnblock();
+#endif
+}
+
 void PSleep(int usec)
 { /* can only be called by the glut process */
 #ifndef WIN32
@@ -217,7 +256,7 @@ void PSleep(int usec)
   PRINTFD(TempPyMOLGlobals,FB_Threads)
     " PSleep-DEBUG: nap over.\n"
   ENDFD;
-  PLockAPIAsGlut();
+  PLockAPIAsGlut(true);
 #else
   PBlockAndUnlockAPI();
   PXDecRef(PyObject_CallFunction(P_sleep,"f",usec/1000000.0));
@@ -773,23 +812,65 @@ void PUnlockAPIAsGlut(void) /* must call with unblocked interpreter */
     ENDFD;
   PBlock();
   PXDecRef(PyObject_CallFunction(P_unlock,NULL));
+  PLockStatus();
   PyMOL_PopValidContext(TempPyMOLGlobals->PyMOL);
+  PUnlockStatus();
   PUnblock();
 }
 
-void PLockAPIAsGlut(void) /* must call with an unblocked interpreter */
+static int get_api_lock(int block_if_busy) 
+{
+  int result = true;
+
+  if(block_if_busy) {
+    
+    PXDecRef(PyObject_CallFunction(P_lock,NULL));
+
+  } else { /* not blocking if PyMOL is busy */
+
+    PyObject *got_lock = PyObject_CallFunction(P_lock_attempt,NULL);
+    
+    if(got_lock) {
+      if(!PyInt_AsLong(got_lock)) {
+        PLockStatus();
+        if(PyMOL_GetBusy(TempPyMOLGlobals->PyMOL,false))
+          result = false;
+        PUnlockStatus();
+        
+        if(result) { /* didn't get lock, but not busy, so block and wait for lock */
+          PXDecRef(PyObject_CallFunction(P_lock,NULL));
+        }
+      }
+      Py_DECREF(got_lock);
+    }
+  }
+  return result;
+}
+
+int PLockAPIAsGlut(int block_if_busy)
 {
   PRINTFD(TempPyMOLGlobals,FB_Threads)
     "*PLockAPIAsGlut-DEBUG: entered as thread 0x%x\n",PyThread_get_thread_ident()
     ENDFD;
 
   PBlock();
+
+  PLockStatus();
   PyMOL_PushValidContext(TempPyMOLGlobals->PyMOL);
+  PUnlockStatus();
 
   PRINTFD(TempPyMOLGlobals,FB_Threads)
     "#PLockAPIAsGlut-DEBUG: acquiring lock as thread 0x%x\n",PyThread_get_thread_ident()
     ENDFD;
-  PXDecRef(PyObject_CallFunction(P_lock,NULL));
+  
+  if(!get_api_lock(block_if_busy)) {
+    PLockStatus();
+    PyMOL_PopValidContext(TempPyMOLGlobals->PyMOL);
+    PUnlockStatus();
+    PUnblock();
+    return false;/* busy -- so allow main to update busy status display (if any) */
+  }
+   
   while(P_glut_thread_keep_out) {
     /* IMPORTANT: keeps the glut thread out of an API operation... */
     /* NOTE: the keep_out variable can only be changed or read by the thread
@@ -814,15 +895,23 @@ void PLockAPIAsGlut(void) /* must call with an unblocked interpreter */
     PXDecRef(PyObject_CallFunction(P_sleep,"f",0.050));
 #endif
 
-
-    PXDecRef(PyObject_CallFunction(P_lock,NULL)); 
+    if(!get_api_lock(block_if_busy)) {
+      /* return false-- allow main to update busy status display (if any) */
+      PLockStatus();
+      PyMOL_PopValidContext(TempPyMOLGlobals->PyMOL);
+      PUnlockStatus();
+      PUnblock();
+      return false;
+    }
   }
+
+
   PUnblock(); /* API is now locked, so we can free up Python...*/
 
   PRINTFD(TempPyMOLGlobals,FB_Threads)
     "=PLockAPIAsGlut-DEBUG: acquired\n"
     ENDFD;
-
+  return true;
 }
 
 /* THESE CALLS ARE REQUIRED FOR MONOLITHIC COMPILATION TO SUCCEED UNDER WINDOWS. */
@@ -1225,6 +1314,9 @@ void PInit(PyMOLGlobals *G)
   P_lock = PyObject_GetAttrString(P_cmd,"lock");
   if(!P_lock) ErrFatal(TempPyMOLGlobals,"PyMOL","can't find 'cmd.lock()'");
 
+  P_lock_attempt = PyObject_GetAttrString(P_cmd,"lock_attempt");
+  if(!P_lock_attempt) ErrFatal(TempPyMOLGlobals,"PyMOL","can't find 'cmd.lock_attempt()'");
+
   P_unlock = PyObject_GetAttrString(P_cmd,"unlock");
   if(!P_unlock) ErrFatal(TempPyMOLGlobals,"PyMOL","can't find 'cmd.unlock()'");
 
@@ -1233,6 +1325,12 @@ void PInit(PyMOLGlobals *G)
 
   P_unlock_c = PyObject_GetAttrString(P_cmd,"unlock_c");
   if(!P_unlock_c) ErrFatal(TempPyMOLGlobals,"PyMOL","can't find 'cmd.unlock_c()'");
+
+  P_lock_status = PyObject_GetAttrString(P_cmd,"lock_status");
+  if(!P_lock_status) ErrFatal(TempPyMOLGlobals,"PyMOL","can't find 'cmd.lock_status()'");
+
+  P_unlock_status = PyObject_GetAttrString(P_cmd,"unlock_status");
+  if(!P_unlock_status) ErrFatal(TempPyMOLGlobals,"PyMOL","can't find 'cmd.unlock_status()'");
 
   P_do = PyObject_GetAttrString(P_cmd,"do");
   if(!P_do) ErrFatal(TempPyMOLGlobals,"PyMOL","can't find 'cmd.do()'");

@@ -322,6 +322,13 @@ void OrthoBusySlow(PyMOLGlobals *G,int progress,int total)
     ENDFD;
   I->BusyStatus[0]=progress;
   I->BusyStatus[1]=total;
+  if(PyMOL_GetBusy(G->PyMOL,false)) { /* harmless race condition */
+    int blocked = PAutoBlock();
+    PLockStatus();
+    PyMOL_SetProgress(G->PyMOL,PYMOL_PROGRESS_SLOW,progress,total);
+    PUnlockStatus();
+    PAutoUnblock(blocked);
+  }
   OrthoBusyDraw(G,false);
 }
 /*========================================================================*/
@@ -333,6 +340,14 @@ void OrthoBusyFast(PyMOLGlobals *G,int progress,int total)
     ENDFD;
   I->BusyStatus[2]=progress;
   I->BusyStatus[3]=total;
+  if(PyMOL_GetBusy(G->PyMOL,false)) { /* harmless race condition */
+    int blocked = PAutoBlock();
+    PLockStatus();
+    PyMOL_SetProgress(G->PyMOL,PYMOL_PROGRESS_FAST,progress,total);
+    PUnlockStatus();
+    PAutoUnblock(blocked);
+  }
+
   OrthoBusyDraw(G,false);
 }
 /*========================================================================*/
@@ -1567,8 +1582,8 @@ int OrthoInit(PyMOLGlobals *G,int showSplash)
   ListInit(I->Blocks);
 
   I->Pushed = false;
-  I->cmds = QueueNew(G,0xFFF);
-  I->feedback = QueueNew(G,0xFFF);
+  I->cmds = QueueNew(G,0xFFFF); /* 65K for commands */
+  I->feedback = QueueNew(G,0x3FFFF); /* ~256K for output */
   I->deferred = NULL;
 
   I->WizardBackColor[0]=0.2F;

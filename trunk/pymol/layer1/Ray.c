@@ -32,6 +32,7 @@ Z* -------------------------------------------------------------------
 #include"MemoryCache.h"
 #include"Character.h"
 #include"Text.h"
+#include"PyMOL.h"
 
 #ifdef _PYMOL_INLINE
 #undef _PYMOL_INLINE
@@ -1367,7 +1368,6 @@ int RayTraceThread(CRayThreadInfo *T)
      BasisFudge0 = 0.0F-fudge;
      BasisFudge1 = 1.0F+fudge;
    }
-
   	
 	/* SETUP */
 	
@@ -1549,7 +1549,9 @@ int RayTraceThread(CRayThreadInfo *T)
    }
 	for(yy = T->y_start; (yy < T->y_stop); yy++)
 	{
-		
+     if(PyMOL_GetInterrupt(I->G->PyMOL,false))
+       break;
+
       y = T->y_start + ((yy-T->y_start) + offset) % ( render_height); /* make sure threads write to different pages */
 
 		if((!T->phase)&&!(yy & 0xF)) { /* don't slow down rendering too much */

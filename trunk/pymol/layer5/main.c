@@ -86,6 +86,20 @@ struct _CMain {
 
 void MainOnExit(void);
 
+static void MainPushValidContext(PyMOLGlobals *G)
+{
+  PLockStatus();
+  PyMOL_PushValidContext(G->PyMOL);
+  PUnlockStatus();
+}
+
+static void MainPopValidContext(PyMOLGlobals *G)
+{
+  PLockStatus();
+  PyMOL_PopValidContext(G->PyMOL);
+  PUnlockStatus();
+}
+
 static void DrawBlueLine(PyMOLGlobals *G)
 {
   if(G->Option->blue_line) {
@@ -188,41 +202,46 @@ int MainCheckRedundantOpen(char *file)
 void MainMovieCopyPrepare(int *width,int *height,int *length)
 {
   PyMOLGlobals *G = TempPyMOLGlobals;
-  PLockAPIAsGlut();
-  MovieCopyPrepare(G,width,height,length);
-  PUnlockAPIAsGlut();
+  if(PLockAPIAsGlut(true)) {
+    MovieCopyPrepare(G,width,height,length);
+    PUnlockAPIAsGlut();
+  }
 }
 int MainMovieCopyFrame(int frame,int width,int height,int rowbytes,void *ptr)
 {
   PyMOLGlobals *G = TempPyMOLGlobals;
-  int result;
-  PLockAPIAsGlut();
-  result = MovieCopyFrame(G,frame,width,height,rowbytes,ptr);
-  PUnlockAPIAsGlut();
+  int result = false;
+  if(PLockAPIAsGlut(true)) {
+    result = MovieCopyFrame(G,frame,width,height,rowbytes,ptr);
+    PUnlockAPIAsGlut();
+  }
   return result;
 }
 void MainMovieCopyFinish(void)
 {
   PyMOLGlobals *G = TempPyMOLGlobals;
-  PLockAPIAsGlut();
-  MovieCopyFinish(G);
-  PUnlockAPIAsGlut();
+  if(PLockAPIAsGlut(true)) {
+    MovieCopyFinish(G);
+    PUnlockAPIAsGlut();
+  }
 }
 void MainSceneGetSize(int *width,int *height)
 {
   PyMOLGlobals *G = TempPyMOLGlobals;
-  PLockAPIAsGlut();
-  SceneGetWidthHeight(G,width,height);
-  PUnlockAPIAsGlut();
+  if(PLockAPIAsGlut(true)) {
+    SceneGetWidthHeight(G,width,height);
+    PUnlockAPIAsGlut();
+  }
 }
 int MainSceneCopy(int width,int height,int rowbytes,void *ptr)
 { 
   PyMOLGlobals *G = TempPyMOLGlobals;
 
-  int result;
-  PLockAPIAsGlut();
-  result = SceneCopyExternal(G,width, height,rowbytes,(unsigned char *)ptr);
-  PUnlockAPIAsGlut();
+  int result = false;
+  if(PLockAPIAsGlut(true)) {
+    result = SceneCopyExternal(G,width, height,rowbytes,(unsigned char *)ptr);
+    PUnlockAPIAsGlut();
+  }
   return result;
 }
 /*========================================================================*/
@@ -230,72 +249,79 @@ void MainDoCommand(char *str1)
 {
   PyMOLGlobals *G = TempPyMOLGlobals;
 
-  PLockAPIAsGlut();
-  if(str1[0]!='_') { /* suppress internal call-backs */
-    if(strncmp(str1,"cmd._",5)) {
-      OrthoAddOutput(G,"PyMOL>");
-      OrthoAddOutput(G,str1);
-      OrthoNewLine(G,NULL,true);
+  if(PLockAPIAsGlut(true)) {
+    if(str1[0]!='_') { /* suppress internal call-backs */
+      if(strncmp(str1,"cmd._",5)) {
+        OrthoAddOutput(G,"PyMOL>");
+        OrthoAddOutput(G,str1);
+        OrthoNewLine(G,NULL,true);
+      }
+      PDo(str1);
+    } else if(str1[1]==' ') { /* "_ command" suppresses echoing of command, but it is still logged */
+      PDo(str1+2);    
+    } else { 
+      PDo(str1);
     }
-    PDo(str1);
-  } else if(str1[1]==' ') { /* "_ command" suppresses echoing of command, but it is still logged */
-    PDo(str1+2);    
-  } else { 
-    PDo(str1);
+    PUnlockAPIAsGlut();
   }
-  PUnlockAPIAsGlut();
 }
 /*========================================================================*/
 void MainRunCommand(char *str1)
 {
   PyMOLGlobals *G = TempPyMOLGlobals;
 
-  PLockAPIAsGlut();
-
-  if(str1[0]!='_') { /* suppress internal call-backs */
-    if(strncmp(str1,"cmd._",5)) {
-      OrthoAddOutput(G,"PyMOL>");
-      OrthoAddOutput(G,str1);
-      OrthoNewLine(G,NULL,true);
-      if(WordMatch(G,str1,"quit",true)==0) /* don't log quit */
-        PLog(str1,cPLog_pml);
+  if(PLockAPIAsGlut(true)) {
+    
+    if(str1[0]!='_') { /* suppress internal call-backs */
+      if(strncmp(str1,"cmd._",5)) {
+        OrthoAddOutput(G,"PyMOL>");
+        OrthoAddOutput(G,str1);
+        OrthoNewLine(G,NULL,true);
+        if(WordMatch(G,str1,"quit",true)==0) /* don't log quit */
+          PLog(str1,cPLog_pml);
+      }
+      PParse(str1);
+    } else if(str1[1]==' ') { /* "_ command" suppresses echoing of command, but it is still logged */
+      if(WordMatch(G,str1+2,"quit",true)>=0) /* don't log quit */
+        PLog(str1+2,cPLog_pml);
+      PParse(str1+2);    
+    } else { 
+      PParse(str1);
     }
-    PParse(str1);
-  } else if(str1[1]==' ') { /* "_ command" suppresses echoing of command, but it is still logged */
-    if(WordMatch(G,str1+2,"quit",true)>=0) /* don't log quit */
-      PLog(str1+2,cPLog_pml);
-    PParse(str1+2);    
-  } else { 
-    PParse(str1);
+    PUnlockAPIAsGlut();
   }
-
-  PUnlockAPIAsGlut();
 }
 
 /*========================================================================*/
 void MainFlushAsync(void)
 {
   PyMOLGlobals *G = TempPyMOLGlobals;
-  PLockAPIAsGlut();
-  PFlush();
-  PUnlockAPIAsGlut();
+  if(PLockAPIAsGlut(true)) {
+    PFlush();
+    PUnlockAPIAsGlut();
+  }
 }
 /*========================================================================*/
-void MainFlush(void)
+void MainFlush(void) /* assumes GIL held */
 {
   PyMOLGlobals *G = TempPyMOLGlobals;
-  PyMOL_PushValidContext(G->PyMOL);
+
+  MainPushValidContext(G);
+
   PFlush();
-  PyMOL_PopValidContext(G->PyMOL);
+
+  MainPopValidContext(G);
+
 }
 /*========================================================================*/
 void MainRunString(char *str)
 {
   PyMOLGlobals *G = TempPyMOLGlobals;
   PBlock();
-  PyMOL_PushValidContext(G->PyMOL);
+  PLockStatus();
+  MainPushValidContext(G);
   PRunString(str);
-  PyMOL_PopValidContext(G->PyMOL);
+  MainPopValidContext(G);
   PUnblock();
 }
 /*========================================================================*/
@@ -303,9 +329,9 @@ PyObject *MainGetStringResult(char *str)
 {
   PyMOLGlobals *G = TempPyMOLGlobals;
   PyObject *result;
-  PyMOL_PushValidContext(G->PyMOL);
+  MainPushValidContext(G);
   result = PyRun_String(str,Py_eval_input,P_globals,P_globals);
-  PyMOL_PopValidContext(G->PyMOL);
+  MainPopValidContext(G);
   return(result);
 }
 
@@ -350,20 +376,21 @@ static void MainDrag(int x,int y)
 
   CMain *I = G->Main;
   
-  PLockAPIAsGlut();
-  
-  y=G->Option->winY-y;
-
-  PyMOL_Drag(PyMOLInstance,x,y,I->Modifiers);
-  
-  if(PyMOL_GetRedisplay(PyMOLInstance, true)) {
-    if(G->HaveGUI) {
-      p_glutPostRedisplay();
+  if(PLockAPIAsGlut(false)) {
+    
+    y=G->Option->winY-y;
+    
+    PyMOL_Drag(PyMOLInstance,x,y,I->Modifiers);
+    
+    if(PyMOL_GetRedisplay(PyMOLInstance, true)) {
+      if(G->HaveGUI) {
+        p_glutPostRedisplay();
+      }
+      I->IdleMode = 0;
     }
-    I->IdleMode = 0;
+    
+    PUnlockAPIAsGlut();
   }
-  
-  PUnlockAPIAsGlut();
 }
 /*========================================================================*/
 static void MainButton(int button,int state,int x,int y)
@@ -376,33 +403,33 @@ static void MainButton(int button,int state,int x,int y)
 
   glMod = p_glutGetModifiers();
 
-  PLockAPIAsGlut();
-
-  I->IdleMode = 0; /* restore responsiveness */
-
-  if(PyMOL_GetPassive(PyMOLInstance, true)) {
-    MainDrag(x,y);
-  } else {
-    /* stay blocked here because Clicks->SexFrame->PParse */
+  if(PLockAPIAsGlut(false)) {
     
-    y=G->Option->winY-y;
+    I->IdleMode = 0; /* restore responsiveness */
     
-    I->Modifiers = ((glMod&P_GLUT_ACTIVE_SHIFT) ? cOrthoSHIFT : 0) |
-      ((glMod&P_GLUT_ACTIVE_CTRL) ? cOrthoCTRL : 0) |
-      ((glMod&P_GLUT_ACTIVE_ALT) ? cOrthoALT : 0);
-    
-    switch(button) {
-    case P_GLUT_BUTTON_SCROLL_FORWARD:
-    case P_GLUT_BUTTON_SCROLL_BACKWARD:
-      x=G->Option->winX/2;
-      y=G->Option->winY/2; /* force into scene */
-      break;
+    if(PyMOL_GetPassive(PyMOLInstance, true)) {
+      MainDrag(x,y);
+    } else {
+      /* stay blocked here because Clicks->SexFrame->PParse */
+      
+      y=G->Option->winY-y;
+      
+      I->Modifiers = ((glMod&P_GLUT_ACTIVE_SHIFT) ? cOrthoSHIFT : 0) |
+        ((glMod&P_GLUT_ACTIVE_CTRL) ? cOrthoCTRL : 0) |
+        ((glMod&P_GLUT_ACTIVE_ALT) ? cOrthoALT : 0);
+      
+      switch(button) {
+      case P_GLUT_BUTTON_SCROLL_FORWARD:
+      case P_GLUT_BUTTON_SCROLL_BACKWARD:
+        x=G->Option->winX/2;
+        y=G->Option->winY/2; /* force into scene */
+        break;
+      }
+      PyMOL_Button(PyMOLInstance,button,state,x,y,I->Modifiers);
     }
-    PyMOL_Button(PyMOLInstance,button,state,x,y,I->Modifiers);
+    
+    PUnlockAPIAsGlut();
   }
-
-  PUnlockAPIAsGlut();
-
 }
 /*========================================================================*/
 static void MainPassive(int x,int y)
@@ -416,35 +443,36 @@ static void MainPassive(int x,int y)
                                            to slow Python down buy locking on passive
                                            mouse motion */
     
-    PLockAPIAsGlut();
-    
-    if((y<-PASSIVE_EDGE)||(x<-PASSIVE_EDGE)||
-       (x>(G->Option->winX+PASSIVE_EDGE))||
-       (y>(G->Option->winY+PASSIVE_EDGE))) {       
-      /* release passive drag if mouse leaves window... */
+    if(PLockAPIAsGlut(false)) {
       
-      y=G->Option->winY-y;
+      if((y<-PASSIVE_EDGE)||(x<-PASSIVE_EDGE)||
+         (x>(G->Option->winX+PASSIVE_EDGE))||
+         (y>(G->Option->winY+PASSIVE_EDGE))) {       
+        /* release passive drag if mouse leaves window... */
+        
+        y=G->Option->winY-y;
+        
+        PyMOL_Button(PyMOLInstance,P_GLUT_LEFT_BUTTON, P_GLUT_UP,x,y,I->Modifiers);
+        
+        PyMOL_GetPassive(G->PyMOL,true); /* reset the flag */
+        
+      } else {
+        
+        y=G->Option->winY-y;
+        
+        PyMOL_Drag(PyMOLInstance,x,y,I->Modifiers);
+        
+      }
       
-      PyMOL_Button(PyMOLInstance,P_GLUT_LEFT_BUTTON, P_GLUT_UP,x,y,I->Modifiers);
-
-      PyMOL_GetPassive(G->PyMOL,true); /* reset the flag */
+      if(PyMOL_GetRedisplay(PyMOLInstance, true)) {
+        if(G->HaveGUI) {
+          p_glutPostRedisplay();
+        }      
+        I->IdleMode = 0;
+      }
       
-    } else {
-      
-      y=G->Option->winY-y;
-      
-      PyMOL_Drag(PyMOLInstance,x,y,I->Modifiers);
-      
+      PUnlockAPIAsGlut();
     }
-    
-    if(PyMOL_GetRedisplay(PyMOLInstance, true)) {
-      if(G->HaveGUI) {
-        p_glutPostRedisplay();
-      }      
-      I->IdleMode = 0;
-    }
-    
-    PUnlockAPIAsGlut();
   }
   
 }
@@ -471,7 +499,7 @@ static void MainDrawLocked(void)
       into full-screen or stereo mode) */
 
     if(G->HaveGUI) 
-      PyMOL_PushValidContext(PyMOLInstance);
+      MainPushValidContext(G);
     
     /* restore working directory if asked to */
     PRunString("if os.environ.has_key('PYMOL_WD'): os.chdir(os.environ['PYMOL_WD'])");
@@ -500,7 +528,7 @@ static void MainDrawLocked(void)
 #endif
     
     if(G->HaveGUI) 
-      PyMOL_PopValidContext(PyMOLInstance);
+      MainPopValidContext(G);
 
     PUnblock();
     
@@ -524,6 +552,128 @@ static void MainDrawLocked(void)
         }
     }
 }
+
+static void MainDrawProgress(PyMOLGlobals *G)
+{
+  int progress[PYMOL_PROGRESS_SIZE];
+  
+  PBlock();
+  PLockStatus();
+  PyMOL_GetProgress(G->PyMOL,progress,true);
+  
+  /*
+
+  printf("show progress %d %d %d %d %d %d\n",
+         progress[0],progress[1],progress[2],
+         progress[3],progress[4],progress[5]);*/
+  
+  if(progress[PYMOL_PROGRESS_SLOW]||
+     progress[PYMOL_PROGRESS_MED]||
+     progress[PYMOL_PROGRESS_FAST]) {
+    
+    int offset;
+    int x=0,y;
+    float black[3] = {0,0,0};
+    float white[3] = {1,1,1};
+    GLint ViewPort[4];
+
+#define cBusyWidth 240
+#define cBusyHeight 60
+#define cBusyMargin 10
+#define cBusyBar 10
+#define cBusySpacing 15
+
+    glGetIntegerv(GL_VIEWPORT,ViewPort);
+    glMatrixMode(GL_PROJECTION);
+    glPushMatrix();
+    glLoadIdentity();
+    glOrtho(0,ViewPort[2],0,ViewPort[3],-100,100);
+    glMatrixMode(GL_MODELVIEW);
+    glPushMatrix();
+    glLoadIdentity();
+    glTranslatef(0.33F,0.33F,0.0F); /* this generates better 
+                                       rasterization on macs */
+
+    glDisable(GL_ALPHA_TEST);
+    glDisable(GL_LIGHTING);
+    glDisable(GL_FOG);
+    glDisable(GL_NORMALIZE);
+    glDisable(GL_DEPTH_TEST);
+    glDisable(GL_COLOR_MATERIAL);
+    glDisable(GL_LINE_SMOOTH);
+    glDisable(GL_DITHER);
+    glDisable(GL_BLEND);
+    
+    glDrawBuffer(GL_FRONT); /* draw into the front buffer */
+
+    glClear(GL_DEPTH_BUFFER_BIT);
+        
+    glColor3fv(black);
+    glBegin(GL_POLYGON);
+    glVertex2i(0,ViewPort[3]);
+    glVertex2i(cBusyWidth,ViewPort[3]);
+    glVertex2i(cBusyWidth,ViewPort[3]-cBusyHeight);
+    glVertex2i(0,ViewPort[3]-cBusyHeight);
+    glVertex2i(0,ViewPort[3]); /* needed on old buggy Mesa */
+    glEnd();
+
+    y=ViewPort[3]-cBusyMargin;
+
+    glColor3fv(white);	 
+    
+    /* 
+       c=I->BusyMessage;
+       if(*c) {
+       TextSetColor(G,white);
+       TextSetPos2i(G,cBusyMargin,y-(cBusySpacing/2));
+       TextDrawStr(G,c);
+       y-=cBusySpacing;
+       }
+    */
+
+    for(offset=0;offset<PYMOL_PROGRESS_SIZE;offset+=2) {
+      
+      if(progress[offset+1]) {
+        
+        glBegin(GL_LINE_LOOP);
+        glVertex2i(cBusyMargin,y);
+        glVertex2i(cBusyWidth-cBusyMargin,y);
+        glVertex2i(cBusyWidth-cBusyMargin,y-cBusyBar);
+        glVertex2i(cBusyMargin,y-cBusyBar);
+        glVertex2i(cBusyMargin,y); /* needed on old buggy Mesa */
+        glEnd();
+        glColor3fv(white);	 
+        glBegin(GL_POLYGON);
+        glVertex2i(cBusyMargin,y);
+        x=(progress[offset]*(cBusyWidth-2*cBusyMargin)/progress[offset+1])+cBusyMargin;
+        glVertex2i(x,y);
+        glVertex2i(x,y-cBusyBar);
+        glVertex2i(cBusyMargin,y-cBusyBar);
+        glVertex2i(cBusyMargin,y); /* needed on old buggy Mesa */
+        glEnd();
+        y-=cBusySpacing;
+      }
+    }
+    
+    glFlush();
+    glFinish();
+    glDrawBuffer(GL_BACK);
+    
+    glPopMatrix();
+    glMatrixMode(GL_PROJECTION);
+    glPopMatrix();
+    glMatrixMode(GL_MODELVIEW);
+    
+  }
+  
+  PRINTFD(G,FB_Ortho)
+    " OrthoBusyDraw: leaving...\n"
+    ENDFD;
+  
+  PUnlockStatus();
+  PUnblock();
+}
+
 /*========================================================================*/
 static void MainDraw(void)
 {
@@ -532,10 +682,13 @@ static void MainDraw(void)
   PRINTFD(G,FB_Main)
     " MainDraw: called.\n"
     ENDFD;
-  PLockAPIAsGlut();
-
-  MainDrawLocked();
-  PUnlockAPIAsGlut();
+  if(PLockAPIAsGlut(false)) {
+    
+    MainDrawLocked();
+    PUnlockAPIAsGlut();
+  } else { /* we're busy -- so try to display a progress indicator */
+    MainDrawProgress(G);
+  }
   PRINTFD(G,FB_Main)
     " MainDraw: completed.\n"
     ENDFD;
@@ -552,18 +705,26 @@ static void MainKey(unsigned char k, int x, int y)
   PRINTFD(G,FB_Main)
     " MainKey: %d %d %d\n",k,x,y
     ENDFD;
-  PLockAPIAsGlut();
-
-  I->IdleMode = 0; /* restore responsiveness */
-
-  I->Modifiers = ((glMod&P_GLUT_ACTIVE_SHIFT) ? cOrthoSHIFT : 0) |
-	 ((glMod&P_GLUT_ACTIVE_CTRL) ? cOrthoCTRL : 0) |
-	 ((glMod&P_GLUT_ACTIVE_ALT) ? cOrthoALT : 0);
-
-  PyMOL_Key(PyMOLInstance,k,x,y,I->Modifiers);
-
-  PUnlockAPIAsGlut();
-  
+  if(PLockAPIAsGlut(false)) {
+    
+    I->IdleMode = 0; /* restore responsiveness */
+    
+    I->Modifiers = ((glMod&P_GLUT_ACTIVE_SHIFT) ? cOrthoSHIFT : 0) |
+      ((glMod&P_GLUT_ACTIVE_CTRL) ? cOrthoCTRL : 0) |
+      ((glMod&P_GLUT_ACTIVE_ALT) ? cOrthoALT : 0);
+    
+    PyMOL_Key(PyMOLInstance,k,x,y,I->Modifiers);
+    
+    PUnlockAPIAsGlut();
+  } else {
+    if((k==8)||(k==127)) { /* interrupt busy state (if possibele) */
+      PBlock();
+      PLockStatus();
+      PyMOL_SetInterrupt(G->PyMOL,true);
+      PUnlockStatus();
+      PUnblock();
+    }
+  }
 }
 
 /*========================================================================*/
@@ -574,15 +735,16 @@ static void MainSpecial(int k, int x, int y)
   int glMod;  
 
   glMod = p_glutGetModifiers();
-  PLockAPIAsGlut();
-
-  I->Modifiers = ((glMod&P_GLUT_ACTIVE_SHIFT) ? cOrthoSHIFT : 0) |
-	 ((glMod&P_GLUT_ACTIVE_CTRL) ? cOrthoCTRL : 0) |
-	 ((glMod&P_GLUT_ACTIVE_ALT) ? cOrthoALT : 0);
-
-  PyMOL_Special(PyMOLInstance, k, x, y, I->Modifiers);
-
-  PUnlockAPIAsGlut();
+  if(PLockAPIAsGlut(false)) {
+    
+    I->Modifiers = ((glMod&P_GLUT_ACTIVE_SHIFT) ? cOrthoSHIFT : 0) |
+      ((glMod&P_GLUT_ACTIVE_CTRL) ? cOrthoCTRL : 0) |
+      ((glMod&P_GLUT_ACTIVE_ALT) ? cOrthoALT : 0);
+    
+    PyMOL_Special(PyMOLInstance, k, x, y, I->Modifiers);
+    
+    PUnlockAPIAsGlut();
+  }
 }
 
 /* new window size or exposure */
@@ -591,20 +753,21 @@ void MainReshape(int width, int height) /* called by Glut */
 {
   PyMOLGlobals *G = TempPyMOLGlobals;
 
-  PLockAPIAsGlut();
-  if(G->HaveGUI) {
-    glViewport(0, 0, (GLint) width, (GLint) height);
-    /* wipe the screen ASAP to prevent display of garbage... */
-    glDrawBuffer(GL_FRONT);
-    glClearColor(0.0,0.0,0.0,1.0);
-    glClear(GL_COLOR_BUFFER_BIT);
-    glDrawBuffer(GL_BACK);
-    glClearColor(0.0,0.0,0.0,1.0);
-    glClear(GL_COLOR_BUFFER_BIT);
-    PyMOL_SwapBuffers(PyMOLInstance);
+  if(PLockAPIAsGlut(true)) {
+    if(G->HaveGUI) {
+      glViewport(0, 0, (GLint) width, (GLint) height);
+      /* wipe the screen ASAP to prevent display of garbage... */
+      glDrawBuffer(GL_FRONT);
+      glClearColor(0.0,0.0,0.0,1.0);
+      glClear(GL_COLOR_BUFFER_BIT);
+      glDrawBuffer(GL_BACK);
+      glClearColor(0.0,0.0,0.0,1.0);
+      glClear(GL_COLOR_BUFFER_BIT);
+      PyMOL_SwapBuffers(PyMOLInstance);
+    }
+    PyMOL_Reshape(PyMOLInstance, width, height, false);
+    PUnlockAPIAsGlut();
   }
-  PyMOL_Reshape(PyMOLInstance, width, height, false);
-  PUnlockAPIAsGlut();
 }
 /*========================================================================*/
 
@@ -822,17 +985,17 @@ static void MainBusyIdle(void)
 #if 0
 #ifdef  _PYMOL_SHARP3D
   /* keep the window on even coordinates to preserve L/R stereo... */
- {
-   int x,y;
-   x = glutGet(GLUT_WINDOW_X);
-   if(x!=Sharp3DLastWindowX) {
-     Sharp3DLastWindowX=x;
-     if(x&0x1) {
-       y = glutGet(GLUT_WINDOW_Y);
-       glutPositionWindow(x-1,y);
-     }
-   }
- }
+  {
+    int x,y;
+    x = glutGet(GLUT_WINDOW_X);
+    if(x!=Sharp3DLastWindowX) {
+      Sharp3DLastWindowX=x;
+      if(x&0x1) {
+        y = glutGet(GLUT_WINDOW_Y);
+        glutPositionWindow(x-1,y);
+      }
+    }
+  }
 #endif
 #endif
 
@@ -843,104 +1006,117 @@ static void MainBusyIdle(void)
     I->IdleMode
     ENDFD;*/
 
-  PLockAPIAsGlut();
-
-  /* change window visibility & refresh, if necessary */
-
-  if(G->HaveGUI) {
-    if(I->WindowIsVisible!=G->Option->window_visible) {
-      I->WindowIsVisible = G->Option->window_visible;
-      if(I->WindowIsVisible) {
-        p_glutShowWindow();
-        OrthoDirty(G);
-      } else {
-        p_glutHideWindow();
-      }
-    }
-  }
-
-  PRINTFD(G,FB_Main)
-    " MainBusyIdle: got lock.\n"
-    ENDFD;
-
-  if(PyMOL_Idle(PyMOLInstance)) {
-    I->IdleMode=0;
-  } else if(!I->IdleMode) {
-    I->IdleTime=UtilGetSeconds(G);
-    I->IdleMode=1;
-  }
-  
-  if(PyMOL_GetSwap(G->PyMOL,true)) {
+  if(PLockAPIAsGlut(false)) {
+    
+    /* change window visibility & refresh, if necessary */
+    
     if(G->HaveGUI) {
-      DrawBlueLine(G);
-      p_glutSwapBuffers();
-    }
-  }
-  
-  /* if the screen has become dirty, post a redisplay event, or if
-     we're running without a GUI, then call the draw routine (if we */
-
-  if(PyMOL_GetRedisplay(PyMOLInstance, true)) {
-    if(G->HaveGUI) 
-      p_glutPostRedisplay();
-    else
-      MainDrawLocked();
-    I->IdleMode = 0;
-  }
-
-  /* the following code enables PyMOL to avoid busy-idling 
-   * even though we're using GLUT! */
-
-  if(I->IdleMode) { /* avoid racing the CPU */
-    if(I->IdleMode==1) {
-      if(UtilGetSeconds(G)-I->IdleTime>SettingGet(G,cSetting_idle_delay)) { 
-        I->IdleMode=2;
-        if(G->HaveGUI)
-          if(SettingGet(G,cSetting_cache_display))
-             p_glutPostRedisplay(); /* trigger caching of the current scene */
-      }
-    }
-    if(I->IdleMode==1)
-      PSleep((int)SettingGet(G,cSetting_fast_idle)); /* fast idle - more responsive */
-    else
-      PSleep((int)SettingGet(G,cSetting_slow_idle)); /* slow idle - save CPU cycles */
-  } else {
-    PSleep((int)SettingGet(G,cSetting_no_idle)); /* give Tcl/Tk a chance to run */
-  }
-
-  PUnlockAPIAsGlut();
-
-  /* run final initilization code for Python-based PyMOL implementations. */
-
-  #define FINAL_INIT_AT 10
-
-  if(I->FinalInitCounter<FINAL_INIT_AT)
-	 {
-      I->FinalInitCounter=I->FinalInitCounter+1;
-      if(I->FinalInitCounter==FINAL_INIT_AT) {
-
-        I->FinalInitTrigger=true;
-        PyMOL_NeedRedisplay(PyMOLInstance);
-      }
-    }
-
-  /* when running in command-line mode, if we're not reading from
-   * standard input and if we're not keeping the thread alive, then 
-   * we can have no further input.  Therefore die. */
-
-  if(!G->HaveGUI) {
-    if(!OrthoCommandWaiting(G)) {
-      if((!G->Option->keep_thread_alive)&&
-         (!G->Option->read_stdin)&&
-         (I->FinalInitCounter>=FINAL_INIT_AT)) {
-        I->IdleCount++;
-        if(I->IdleCount==10) {
-          PLockAPIAsGlut();
-          PParse("_quit");
-          PFlush();
-          PUnlockAPIAsGlut();
+      if(I->WindowIsVisible!=G->Option->window_visible) {
+        I->WindowIsVisible = G->Option->window_visible;
+        if(I->WindowIsVisible) {
+          p_glutShowWindow();
+          OrthoDirty(G);
+        } else {
+          p_glutHideWindow();
         }
       }
+    }
+    
+    PRINTFD(G,FB_Main)
+      " MainBusyIdle: got lock.\n"
+      ENDFD;
+    
+    if(PyMOL_Idle(PyMOLInstance)) {
+      I->IdleMode=0;
+    } else if(!I->IdleMode) {
+      I->IdleTime=UtilGetSeconds(G);
+      I->IdleMode=1;
+    }
+    
+    if(PyMOL_GetSwap(G->PyMOL,true)) {
+      if(G->HaveGUI) {
+        DrawBlueLine(G);
+        p_glutSwapBuffers();
+      }
+    }
+    
+    /* if the screen has become dirty, post a redisplay event, or if
+       we're running without a GUI, then call the draw routine (if we */
+    
+    if(PyMOL_GetRedisplay(PyMOLInstance, true)) {
+      if(G->HaveGUI) 
+        p_glutPostRedisplay();
+      else
+        MainDrawLocked();
+      I->IdleMode = 0;
+    }
+    
+    /* the following code enables PyMOL to avoid busy-idling 
+     * even though we're using GLUT! */
+    
+    if(I->IdleMode) { /* avoid racing the CPU */
+      if(I->IdleMode==1) {
+        if(UtilGetSeconds(G)-I->IdleTime>SettingGet(G,cSetting_idle_delay)) { 
+          I->IdleMode=2;
+          if(G->HaveGUI)
+            if(SettingGet(G,cSetting_cache_display))
+              p_glutPostRedisplay(); /* trigger caching of the current scene */
+        }
+      }
+      if(I->IdleMode==1)
+        PSleep((int)SettingGet(G,cSetting_fast_idle)); /* fast idle - more responsive */
+      else
+        PSleep((int)SettingGet(G,cSetting_slow_idle)); /* slow idle - save CPU cycles */
+    } else {
+      PSleep((int)SettingGet(G,cSetting_no_idle)); /* give Tcl/Tk a chance to run */
+    }
+    
+    PUnlockAPIAsGlut();
+    
+    
+    /* run final initilization code for Python-based PyMOL implementations. */
+    
+#define FINAL_INIT_AT 10
+    
+    if(I->FinalInitCounter<FINAL_INIT_AT)
+      {
+        I->FinalInitCounter=I->FinalInitCounter+1;
+        if(I->FinalInitCounter==FINAL_INIT_AT) {
+          
+          I->FinalInitTrigger=true;
+          PyMOL_NeedRedisplay(PyMOLInstance);
+        }
+      }
+    
+    /* when running in command-line mode, if we're not reading from
+     * standard input and if we're not keeping the thread alive, then 
+     * we can have no further input.  Therefore die. */
+    
+    if(!G->HaveGUI) {
+      if(!OrthoCommandWaiting(G)) {
+        if((!G->Option->keep_thread_alive)&&
+           (!G->Option->read_stdin)&&
+           (I->FinalInitCounter>=FINAL_INIT_AT)) {
+          I->IdleCount++;
+          if(I->IdleCount==10) {
+            if(PLockAPIAsGlut(true)) {
+              PParse("_quit");
+              PFlush();
+              PUnlockAPIAsGlut();
+            }
+          }
+        }
+      }
+    }
+  } else {
+    PSleepWhileBusy(100000); /* 10 per second */
+    if(G->HaveGUI) {
+      PBlock();
+      PLockStatus();
+      if(PyMOL_GetProgressChanged(G->PyMOL,false))
+        p_glutPostRedisplay();
+      PUnlockStatus();
+      PUnblock();
     }
   }
 

@@ -38,7 +38,7 @@ Z* -------------------------------------------------------------------
 #define PBlock()
 #define PUnblock()
 
-#define PLockAPIAsGlut()
+#define PLockAPIAsGlut(block_if_busy)
 #define PUnlockAPIAsGlut()
 
 #define PBlockAndUnlockAPI()
@@ -61,6 +61,7 @@ Z* -------------------------------------------------------------------
 #define PTruthCallStr(a,b,c)
 
 #define PSleep(a)
+#define PSleepWhileBusy(a)
 
 #define PFree()
 #define PInit(G)
@@ -95,9 +96,13 @@ void PLog(char *str,int lf);
 void PLogFlush(void);
 
 void PSleep(int usec);
+void PSleepWhileBusy(int usec);
 
-void PLockAPIAsGlut(void);
+int PLockAPIAsGlut(int block_if_busy);
 void PUnlockAPIAsGlut(void);
+
+void PLockStatus(void);
+void PUnlockStatus(void);
 
 void PBlock(void);
 void PUnblock(void);
