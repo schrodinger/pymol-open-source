@@ -975,11 +975,10 @@ r1=RegOpenKeyEx(HKEY_CLASSES_ROOT,"Software\\DeLano Scientific\\PyMOL\\PYMOL_PAT
 
 }
 
-void PGetOptions(int *pmgui,int *internal_gui,int *show_splash,
-  int *internal_feedback,int *security,int *game_mode,int *force_stereo,
-  int *winX,int *winY,int *blue_line,int *winPX,int *winPY,int *external_gui)
+void PGetOptions(PyMOLOptionRec *rec)
 {
   PyObject *pymol,*invocation,*options;
+  char *load_str;
 
   pymol = PyImport_AddModule("pymol"); /* get it */
   if(!pymol) ErrFatal("PyMOL","can't find module 'pymol'");
@@ -990,20 +989,29 @@ void PGetOptions(int *pmgui,int *internal_gui,int *show_splash,
   options = PyObject_GetAttrString(invocation,"options");
   if(!pymol) ErrFatal("PyMOL","can't get 'invocation.options'.");
 
-  (*pmgui) = ! PyInt_AsLong(PyObject_GetAttrString(options,"no_gui"));
-  (*internal_gui) = PyInt_AsLong(PyObject_GetAttrString(options,"internal_gui"));
-  (*internal_feedback) = PyInt_AsLong(PyObject_GetAttrString(options,"internal_feedback"));
-  (*show_splash) = PyInt_AsLong(PyObject_GetAttrString(options,"show_splash"));
-  (*security) = PyInt_AsLong(PyObject_GetAttrString(options,"security"));
-  (*game_mode) = PyInt_AsLong(PyObject_GetAttrString(options,"game_mode"));
-  (*force_stereo) = PyInt_AsLong(PyObject_GetAttrString(options,"force_stereo"));
-  (*winX) = PyInt_AsLong(PyObject_GetAttrString(options,"win_x"));
-  (*winY) = PyInt_AsLong(PyObject_GetAttrString(options,"win_y"));
-  (*winPX) = PyInt_AsLong(PyObject_GetAttrString(options,"win_px"));
-  (*winPY) = PyInt_AsLong(PyObject_GetAttrString(options,"win_py"));
-  (*blue_line) = PyInt_AsLong(PyObject_GetAttrString(options,"blue_line"));
-  (*external_gui) = PyInt_AsLong(PyObject_GetAttrString(options,"external_gui"));
-
+  rec->pmgui = ! PyInt_AsLong(PyObject_GetAttrString(options,"no_gui"));
+  rec->internal_gui = PyInt_AsLong(PyObject_GetAttrString(options,"internal_gui"));
+  rec->internal_feedback = PyInt_AsLong(PyObject_GetAttrString(options,"internal_feedback"));
+  rec->show_splash = PyInt_AsLong(PyObject_GetAttrString(options,"show_splash"));
+  rec->security = PyInt_AsLong(PyObject_GetAttrString(options,"security"));
+  rec->game_mode = PyInt_AsLong(PyObject_GetAttrString(options,"game_mode"));
+  rec->force_stereo = PyInt_AsLong(PyObject_GetAttrString(options,"force_stereo"));
+  rec->winX = PyInt_AsLong(PyObject_GetAttrString(options,"win_x"));
+  rec->winY = PyInt_AsLong(PyObject_GetAttrString(options,"win_y"));
+  rec->winPX = PyInt_AsLong(PyObject_GetAttrString(options,"win_px"));
+  rec->winPY = PyInt_AsLong(PyObject_GetAttrString(options,"win_py"));
+  rec->blue_line = PyInt_AsLong(PyObject_GetAttrString(options,"blue_line"));
+  rec->external_gui = PyInt_AsLong(PyObject_GetAttrString(options,"external_gui"));
+  rec->siginthand = PyInt_AsLong(PyObject_GetAttrString(options,"sigint_handler"));
+  rec->reuse_helper = PyInt_AsLong(PyObject_GetAttrString(options,"reuse_helper"));
+  rec->auto_reinitialize = PyInt_AsLong(PyObject_GetAttrString(options,"auto_reinitialize"));
+  
+  load_str = PyString_AsString(PyObject_GetAttrString(options,"after_load_script"));
+  if(load_str) {
+    if(load_str[0]) {
+      UtilNCopy(rec->after_load_script,load_str,PYMOL_MAX_OPT_STR);
+    }
+  }
   if(PyErr_Occurred()) {
     PyErr_Print();
   }
@@ -1159,7 +1167,9 @@ void PInit(void)
   P_glut_thread_id = PyThread_get_thread_ident();
 
   #ifndef WIN32
-  signal(SIGINT,my_interrupt);
+  if(PyMOLOption->siginthand) {
+    signal(SIGINT,my_interrupt);
+  }
   #endif
 
   PyRun_SimpleString(

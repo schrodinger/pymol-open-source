@@ -84,7 +84,6 @@ static int myArgc;
 
 static int FinalInitFlag=1;
 
-int ExternalGUI=1;
 
 int TheWindow;
 
@@ -100,16 +99,44 @@ typedef struct {
 static CMain Main;
 int PyMOLReady = false;
 int PyMOLTerminating = false;
+
+/* global options */
+
+int ExternalGUI=1;
 int PMGUI = true;
 int StereoCapable=false;
 int Security = true;
-int ForceStereo = 0; /* 1 = force stereo (if possible); -1 = force mono; 0 = autodetect */
+int ForceStereo = 0; 
+  /* 1 = force stereo (if possible); -1 = force mono; 0 = autodetect */
 int GameMode = false;
 int BlueLine = false;
 
 static int InternalGUI = true;
 static int InternalFeedback = true;
 int ShowSplash=true;
+int PyMOLRegisterSigIntHandler = true;
+
+static PyMOLOptionRec PyMOLOptionGlobal = {
+  true, /* pmgui */
+  true, /* internal_gui*/
+  true, /* show_splash */
+  1,   /* internal_feedback */
+  true, /* security */
+  false, /* game mode */
+  0, /* force_stereo */
+  640, /* winX */
+  480, /* winY */
+  false, /* blue_line */
+  0, /* winPX */
+  175, /* winPY */
+  true, /* external_gui */
+  true, /* siginthand */
+  false, /* reuse helper */
+  false, /* auto reinitialize */
+  "", /* after_load_script */
+};
+
+struct PyMOLOptionRec *PyMOLOption = &PyMOLOptionGlobal;
 
 void launch(void);
 
@@ -223,6 +250,12 @@ void MainRunCommand(char *str1)
   } else {
     PParse(str1);
   }
+
+}
+/*========================================================================*/
+void MainFlush(void)
+{
+  PFlush();
 }
 /*========================================================================*/
 void MainRunString(char *str)
@@ -497,6 +530,7 @@ static void MainInit(void)
 
   CMain *I = &Main;
 
+  
   I->DirtyFlag=true;
   I->IdleMode=2;
   I->IdleTime=(float)UtilGetSeconds();
@@ -536,7 +570,6 @@ static void MainInit(void)
   IsosurfInit();
   TetsurfInit();
   EditorInit();  
-
 }
 
 
@@ -734,6 +767,7 @@ BOOL WINAPI HandlerRoutine(
 
 void launch(void)
 {
+
   if(InternalGUI&&(!GameMode))
     WinX+=cOrthoRightSceneMargin;
   if(InternalFeedback&&(!GameMode))
@@ -788,14 +822,9 @@ SetConsoleCtrlHandler(
     }
 
     if(!GameMode) {
-      /*
-	#ifdef _PYMOL_OSX
-	p_glutInitWindowPosition(0, 200);
-	#else
-	p_glutInitWindowPosition(0, 175);
-	#endif
-      */
-      p_glutInitWindowPosition(WinPX,WinPY);
+      if((WinPX>-1000)&&(WinPY>-1000)) {
+        p_glutInitWindowPosition(WinPX,WinPY);
+      }
       p_glutInitWindowSize(WinX, WinY);
 
       TheWindow = p_glutCreateWindow("PyMOL Viewer");
@@ -808,7 +837,6 @@ SetConsoleCtrlHandler(
   } 
 
   MainInit();
-
   PInit();
 
   if(PMGUI) {
@@ -843,6 +871,7 @@ SetConsoleCtrlHandler(
         printf(" Hardware stereo not present (unable to force).\n");
       }
     } 
+
     p_glutMainLoop();
     PBlock(); /* if we've gotten here, then we're heading back to Python... */
   } else {
@@ -883,10 +912,24 @@ int was_main(void)
 
 #endif  
 
-  PGetOptions(&PMGUI,&InternalGUI,&ShowSplash,
-	      &InternalFeedback,&Security,&GameMode,
-	      &ForceStereo,&WinX,&WinY,&BlueLine,
-	      &WinPX,&WinPY,&ExternalGUI);
+  PGetOptions(PyMOLOption);
+
+  /* below need to be phased out by modifying code to use
+     PyMOLOption global */
+
+  PMGUI = PyMOLOption->pmgui;
+  InternalGUI=PyMOLOption->internal_gui;
+  ShowSplash = PyMOLOption->show_splash;
+  InternalFeedback = PyMOLOption->internal_feedback;
+  Security = PyMOLOption->security;
+  GameMode = PyMOLOption->game_mode;
+  ForceStereo = PyMOLOption->force_stereo;
+  WinX = PyMOLOption->winX;
+  WinY = PyMOLOption->winY;
+  BlueLine = PyMOLOption->blue_line;
+  WinPX = PyMOLOption->winPX;
+  WinPY = PyMOLOption->winPY;
+  ExternalGUI = PyMOLOption->external_gui;
 
   launch();
 
