@@ -46,6 +46,7 @@ if __name__!='__main__':
 # 1: new way, spawn thread on import: (e.g. from "import pymol")
 # 2: new way, consume main thread: (e.g. from "python pymol/__init__.py")
 # 3: dry run -- just get PyMOL environment information
+# 4: monolithic (embedded) PyMOL.  Prime, but don't start.
 
 if hasattr(__main__,'pymol_launch'):
    pymol_launch = __main__.pymol_launch
@@ -92,7 +93,7 @@ if pymol_launch != 3: # if this isn't a dry run
       import pymol
 
       pymol_launch = 1
-
+   
    elif pymol_launch==-1:
 
       if hasattr(__main__,"pymol_argv"):
@@ -107,6 +108,13 @@ if pymol_launch != 3: # if this isn't a dry run
       else:
          # suppresses startup messages with "import pymol"      
          pymol_argv = [ "pymol", "-q" ] 
+
+   elif pymol_launch==4:
+
+      if hasattr(__main__,"pymol_argv"):
+         pymol_argv = __main__.pymol_argv
+      else:
+         pymol_argv = [ "pymol"]
 
    # PyMOL __init__.py
 
@@ -141,13 +149,16 @@ if pymol_launch != 3: # if this isn't a dry run
    lock_api = threading.RLock() # mutex for API 
    lock_api_c = threading.RLock() # mutex for C management of python threads
 
-   def start_pymol():
+   def prime_pymol():
       global glutThread
       glutThread = thread.get_ident()
       pymol_launch = 0 # never do this again : )
+
+   def start_pymol():
+      prime_pymol()
       _cmd.runpymol() # only returns if we are running pretend GLUT
 #      from pymol.embed import wxpymol # never returns
-
+   
    def exec_str(s):
       try:
          exec s in globals(),globals()
@@ -238,6 +249,11 @@ if pymol_launch != 3: # if this isn't a dry run
         args=(pymol_argv,))
       glutThreadObject.start()
 
+   elif pymol_launch==4: # monolithic (embedded) launch
+      invocation.parse_args(pymol_argv)
+      prime_pymol()
+      # count on host process to actually start PyMOL
+   
    if os.environ.has_key('DISPLAY'):
       from xwin import *
 
@@ -247,4 +263,5 @@ if pymol_launch != 3: # if this isn't a dry run
          e.wait(0.01)
       while not _cmd.ready():
          e.wait(0.01)
+
 

@@ -870,6 +870,9 @@ r1=RegOpenKeyEx(HKEY_CLASSES_ROOT,"Software\\DeLano Scientific\\PyMOL\\PYMOL_PAT
   P_main = PyImport_AddModule("__main__");
   if(!P_main) ErrFatal("PyMOL","can't find '__main__'");
 
+  /* inform PyMOL's other half that we're launching embedded-style */
+  PyObject_SetAttrString(P_main,"pymol_launch",PyInt_FromLong(4));
+
   args = PConvStringListToPyList(argc,argv); /* prepare our argument list */
   if(!args) ErrFatal("PyMOL","can't process arguments.");
 
