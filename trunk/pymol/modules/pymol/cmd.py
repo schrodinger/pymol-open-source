@@ -3786,6 +3786,10 @@ NOTES
    iter = 500
    interval = 50
    la = len(arg)
+   if not la:
+      arg = get_names("objects")
+      arg = arg[0:1]
+      la = len(arg)
    if la:
       sele  = "("+arg[0]+")"
       if la>1:
@@ -3956,7 +3960,7 @@ keyword = {
    'mstop'         : [mstop        , 0 , 0 , ',' , 0 ],
    'mclear'        : [mclear       , 0 , 0 , ',' , 0 ],
    'middle'        : [middle       , 0 , 0 , ',' , 0 ],
-   'minimize'      : [minimize     , 1 , 4 , ',' , 0 ],
+   'minimize'      : [minimize     , 0 , 4 , ',' , 0 ],
    'mmatrix'       : [mmatrix      , 1 , 1 , ',' , 0 ],
    'origin'        : [origin       , 1 , 1 , ',' , 0 ],
    'orient'        : [orient       , 0 , 1 , ',' , 0 ],

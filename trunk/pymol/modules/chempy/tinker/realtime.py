@@ -1,9 +1,6 @@
 # pymol
 
 from pymol import cmd
-from molobj import MolObj
-from typer import Typer,Rules
-import rules
 
 from chempy import io
 from chempy import protein,hetatm
@@ -20,7 +17,11 @@ state = None
 model = None
 
 def assign(sele,preserve=0):
-   
+
+   from molobj import MolObj
+   from typer import Typer,Rules
+   import rules
+
    global state
    global model
    
