@@ -112,13 +112,15 @@ Changes up to 0.82
    * mpng now can support a range in order to enable coarse-grained parallelism
      (distributed movie rendering)
 
-   * within operator added to selection language
+   * "within" operator added to selection language
 
    * visible selection operator no longer hits disabled objects
 
    * origin, zoom, and orient now take "state" as an argument
 
    * eigensolve output now considered blather
+
+   * important bug-fix on rotate and translate commands
 
 Changes up to 0.81
 

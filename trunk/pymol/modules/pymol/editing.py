@@ -902,12 +902,15 @@ def translate(vector=[0.0,0.0,0.0],selection="all",state=0,camera=1,object=None)
    else:
       vector = [float(vector[0]),float(vector[1]),float(vector[2])]
       selection = selector.process(selection)
+      camera=int(camera)
       view = cmd.get_view(0)
       if camera:
          mat = [ view[0:3],view[3:6],view[6:9] ]
          shift = cpv.transform(mat,vector)
+         print "hi",camera,camera and 1
       else:
          shift = vector
+      print shift,camera
       if object==None:
          ttt = [1.0,0.0,0.0,0.0,
                 0.0,1.0,0.0,0.0,
@@ -946,6 +949,7 @@ def rotate(axis='x',angle=0.0,selection="all",state=0,camera=1,object=None):
       axis = [float(axis[0]),float(axis[1]),float(axis[2])]
       angle = math.pi*float(angle)/180.0
       view = cmd.get_view(0)
+      camera=int(camera)
       if camera:
          vmat = [ view[0:3],view[3:6],view[6:9] ]
          axis = cpv.transform(vmat,axis)
