@@ -229,6 +229,8 @@ static int CGOArrayFromPyListInPlace(PyObject *list,CGO *I)
     
     while(c>0) {
       op = (int)PyFloat_AsDouble(PyList_GetItem(list,cc++));
+      printf("operand %d %d\n",op,op&CGO_MASK);
+      op = op&CGO_MASK;
       c--;
       sz = CGO_sz[op];
       CGO_write_int(pc,op);
