@@ -643,6 +643,7 @@ def wizard(name):
             wiz = apply(getattr(mod_obj,oname))
             if wiz:
                set_wizard(wiz)
+               do("refresh")
    except ImportError:
       print "Error: Sorry, couldn't find the '"+name+"' Wizard."
       
