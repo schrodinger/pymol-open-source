@@ -1652,7 +1652,7 @@ void SettingInitGlobal(int alloc,int reset_gui)
 
   SettingSet_f(I,cSetting_spheroid_scale, 1.0F);
 
-  SettingSet_f(I,cSetting_ray_trace_fog_start, 0.45F);
+  SettingSet_f(I,cSetting_ray_trace_fog_start, 0.50F);
 
   SettingSet_f(I,cSetting_spheroid_smooth, 1.1F);
 
@@ -1910,7 +1910,7 @@ void SettingInitGlobal(int alloc,int reset_gui)
 
   SettingSet_b(I,cSetting_wrap_output, 0);
 
-  SettingSet_f(I,cSetting_fog_start, 0.40F);
+  SettingSet_f(I,cSetting_fog_start, 0.45F);
 
   SettingSet_i(I,cSetting_frame,1);
 

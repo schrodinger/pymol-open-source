@@ -376,7 +376,7 @@ void SceneClipSet(float front,float back)
   I->Back=back;
   if(I->Front>I->Back)
 	 I->Front=I->Back+cSliceMin;
-  if(I->Front<cFrontMin) I->Front=cFrontMin;
+  /*  if(I->Front<cFrontMin) I->Front=cFrontMin;*/
   I->FrontSafe= (I->Front<cFrontMin ? cFrontMin : I->Front);
   SceneDirty();
 }
@@ -894,9 +894,9 @@ void SceneRelocate(float *location)
   MatrixTransform3f(I->RotMatrix,v0,I->Pos); /* convert to view-space */
 
   I->Pos[2]=dist;
-  I->Front=(-I->Pos[2]-(slab_width*0.45F));
+  I->Front=(-I->Pos[2]-(slab_width*0.50F));
   I->FrontSafe=(I->Front<cFrontMin ? cFrontMin : I->Front);  
-  I->Back=(-I->Pos[2]+(slab_width*0.55F));
+  I->Back=(-I->Pos[2]+(slab_width*0.50F));
   SceneRovingDirty();
 
 }
