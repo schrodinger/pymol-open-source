@@ -12,6 +12,29 @@
 #-*
 #Z* -------------------------------------------------------------------
 
+
+# How do I launch PyMOL?  There are two supported ways:
+
+# Method 1: "import pymol" from within a Python program in an
+# environment where $PYMOL_PATH points to the main PyMOL directory
+# and $PYTHONPATH includes $PYMOL_PATH/modules or where the contents of
+# $PYMOL_PATH/modules have been installed in a standard location such
+# as /usr/lib/python2.1/site-packages
+#
+# NOTE: with method 1, you should call pymol.finish_launching()
+# before using any PYMOL API functions
+
+# Method 2: "python pymol/__init__.py" in an environment in which
+# $PYMOL_PATH points to the main PyMOL directory and $PYTHONPATH
+# includes $PYMOL_PATH/modules or where the contents of
+# $PYMOL_PATH/modules have been installed in a standard location such
+# as /usr/lib/python2.1/site-packages
+
+# NOTE: with both methods, you should be able to get away with not
+# specifying PYMOL_PATH if there is a subdirectory pymol_path located
+# in the "pymol" modules directory which points to the main
+# pymol directory
+
 import thread 
 import threading 
 import os
@@ -23,6 +46,61 @@ import invocation
 import traceback
 import math
 import threading
+import __main__
+
+# Global variable "__main__.pymol_launch" tracks how we're launching PyMOL:
+#
+# 0: old way, now obsolete (e.g. "python launch_pymol.py")
+# 1: new way, spawn thread on import: (e.g. from "import pymol")
+# 2: new way, consume main thread: (e.g. from "python pymol/__init__.py")
+
+if hasattr(__main__,'pymol_launch'):
+   pymol_launch = __main__.pymol_launch
+else:
+   pymol_launch = 2 
+
+# try to set PYMOL_PATH if unset...
+
+if not os.environ.has_key("PYMOL_PATH"):
+   try:
+      pymol_path = re.sub(r"\/[^\/]*$","/pymol_path",__file__)
+      if pymol_path[0:1]!='/': 
+         pymol_path = os.getcwd()+"/"+pymol_path # make path absolute
+      if os.path.isdir(pymol_path):
+         os.environ['PYMOL_PATH'] = pymol_path
+   except NameError:
+      pass
+
+# now start the launch process...
+
+if __name__=='__main__':
+
+   # PyMOL launched as "python pymol/__init__.py"
+   # or via execfile(".../pymol/__init__.py",...) from main
+   
+   if not hasattr(__main__,"pymol_argv"):
+      __main__.pymol_argv = sys.argv
+
+   pymol_launch = -1 # non-threaded launch import flag
+   
+   import pymol
+
+   pymol_launch = 1
+   
+elif pymol_launch==-1:
+
+   if hasattr(__main__,"pymol_argv"):
+      pymol_argv = __main__.pymol_argv
+   else:
+      pymol_argv = [ "pymol", "-q" ]
+      
+elif pymol_launch==2:
+
+   if hasattr(__main__,"pymol_argv"):
+      pymol_argv = __main__.pymol_argv
+   else:
+      # suppresses startup messages with "import pymol"      
+      pymol_argv = [ "pymol", "-q" ] 
 
 # PyMOL __init__.py
 
@@ -47,12 +125,6 @@ _log_file = None
 
 _ext_gui = None
 
-# include the modules directory
-
-modules_path = os.environ['PYMOL_PATH']+'/modules'
-if modules_path not in sys.path:
-   sys.path.append(modules_path)
-
 # include installed numpy on win32 
 
 if sys.platform=='win32':
@@ -66,6 +138,7 @@ lock_api_c = threading.RLock() # mutex for C management of python threads
 def start_pymol():
    global glutThread
    glutThread = thread.get_ident()
+   pymol_launch = 0 # never do this again : )
    _cmd.runpymol() # only returns if we are running pretend GLUT
    from pymol.embed import wxpymol # never returns
 
@@ -77,14 +150,14 @@ def exec_str(s):
    return None
 
 def stdin_reader(): # dedicated thread for reading standard input
-	import sys
-	from pymol import cmd
-	while 1:
-		cmd.do(sys.stdin.readline())
+   import sys
+   from pymol import cmd
+   while 1:
+      cmd.do(sys.stdin.readline())
 
-			   
+
 def exec_deferred():
-   
+
    try:
       cmd.config_mouse(quiet=1)
       for a in invocation.options.deferred:
@@ -126,13 +199,13 @@ def adapt_to_hardware():
             print " Adapting to FireGL hardware..."
          cmd.set('line_width','2',quiet=1)            
 
-         
 # NEED SOME CONTRIBUTIONS HERE!
 
 def launch_gui():
    if invocation.options.external_gui:
-      __import__(invocation.options.gui)
 
+      __import__(invocation.options.gui)
+   
 # -- Greg Landrum's RPC stuff
    if invocation.options.rpcServer:
       import rpc
@@ -142,9 +215,30 @@ def launch_gui():
 import _cmd
 import cmd
 
+def thread_launch(pa):
+   invocation.parse_args(pa)
+   start_pymol()
+   
+if pymol_launch==1: # standard launch (absorb main thread)
+
+   invocation.parse_args(pymol_argv)
+
+   start_pymol()
+
+elif pymol_launch==2: # threaded launch (create new thread)
+
+   global glutThreadObject
+   glutThreadObject = threading.Thread(target=thread_launch,
+     args=(pymol_argv,))
+   glutThreadObject.start()
+
 if os.environ.has_key('DISPLAY'):
    from xwin import *
 
-
-
-
+def finish_launching():
+   e=threading.Event()
+   while not hasattr(__main__,'pymol'):
+      e.wait(0.01)
+   while not _cmd.ready():
+      e.wait(0.01)
+   

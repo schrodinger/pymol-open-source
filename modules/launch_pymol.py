@@ -1,3 +1,7 @@
+# NOTE: this file is now obsolete, however it has been left intact and
+# functional in order to promote backwards compatibility with existing
+# PyMOL installs.
+
 import thread 
 import threading 
 import os
@@ -5,6 +9,9 @@ import sys
 import time
 import __main__
 
+# let pymol/__init__.py known that we're launching using the old way
+
+__main__.pymol_launch = 0 
 
 if hasattr(__main__,"pymol_argv"):
    pymol_argv = __main__.pymol_argv
