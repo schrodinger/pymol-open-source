@@ -85,6 +85,7 @@ int OrthoArrowsGrabbed(void);
 void OrthoSpecial(int k,int x,int y);
 int  OrthoCommandWaiting(void);
 
+int OrthoTextVisible(void);
 void OrthoReshapeWizard(int height);
 #define OrthoLineLength 1024
 typedef char OrthoLineType[OrthoLineLength];

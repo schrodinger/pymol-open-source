@@ -173,14 +173,18 @@ void OrthoSpecial(int k,int x,int y)
   OrthoDirty();
 }
 /*========================================================================*/
+int OrthoTextVisible(void) {
+  return(SettingGet(cSetting_internal_feedback)||
+         SettingGet(cSetting_text)||
+         SettingGet(cSetting_overlay));
+}
+/*========================================================================*/
 
 int OrthoArrowsGrabbed(void)
 {
   OrthoObject *I=&Ortho;
-  return(I->CurChar>I->PromptChar&& /* can't grab arrows if we can't see the text */
-         (SettingGet(cSetting_internal_feedback)||
-          SettingGet(cSetting_text)||
-          SettingGet(cSetting_overlay)));
+  return(I->CurChar>I->PromptChar&&OrthoTextVisible()); 
+  /* arrows can't be grabbed if text isn't visible */
 }
 /*========================================================================*/
 void  OrthoRemoveSplash(void)
@@ -469,7 +473,7 @@ void OrthoKey(unsigned char k,int x,int y,int mod)
   else switch(k)
 	 {
     case 127: /* delete */     
-      if((!I->CurChar)||(I->CurChar==I->PromptChar)) {
+      if((!I->CurChar)||(I->CurChar==I->PromptChar)||!OrthoTextVisible()) {
         OrthoKeyControl(4);
       } else {
         if(I->CursorChar>=0) {
@@ -527,7 +531,7 @@ void OrthoKey(unsigned char k,int x,int y,int mod)
         OrthoKeyControl(k);
       break;
     case 4: /* CTRL D */
-      if((!I->CurChar)||(I->CurChar==I->PromptChar)) {
+      if((!I->CurChar)||(I->CurChar==I->PromptChar)||!OrthoTextVisible()) {
         OrthoKeyControl(4);
       } else if((I->CurChar>I->PromptChar)&&
                 (I->CursorChar>=0)&&
