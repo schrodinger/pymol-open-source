@@ -211,25 +211,208 @@ void AtomInfoPrimeColors(void)
 float AtomInfoGetBondLength(AtomInfoType *ai1,AtomInfoType *ai2)
 {
   float result = 1.6F;
+  AtomInfoType *a1,*a2;
+  
+  /* very simple for now ... 
+     flush this out with pattern-based parameters later on */
+  
+  if(ai1->protons>ai2->protons) {
+    a1 = ai2;
+    a2 = ai1;
+  } else {
+    a1 = ai1;
+    a2 = ai2;
+  }    
+  switch(a1->protons) {
+    
+/* hydrogen =========================== */
+  case cAN_H:
+    switch(a2->protons) {
+    case cAN_H: result = 0.74F; break;
+    case cAN_C: result = 1.09F; break;
+    case cAN_N: result = 1.01F; break;
+    case cAN_S: result = 1.34F; break;
+    case cAN_O: result = 0.96F; break;
+    default:
+      result = 1.09F; 
+      break;
+    }
+    break;
+/* carbon =========================== */
 
-  /* very simple for now just CC and CH, 
-     flush this out with decent parameters later */
+  case cAN_C: /* carbon */
+    switch(a1->geom) {
+      
+    case cAtomInfoLinear: /* linear carbon =============*/
+      switch(a2->geom) {
+      case cAtomInfoLinear: 
+        switch(a2->protons) {
+        case cAN_C: result = 1.20F; break; /* C#^C */
+        case cAN_N: result = 1.16F; break; /* C#^N */
+        default: result = 1.20F; break;
+        }
+        break;
+      case cAtomInfoPlaner: 
+        switch(a2->protons) { 
+        case cAN_I:  result = 2.14F; break; /* normal single bond lengths */
+        case cAN_Cl: result = 1.77F; break; 
+        case cAN_Br: result = 1.94F; break; 
+        case cAN_F:  result = 1.35F; break; 
+        case cAN_S:  result = 1.82F; break; 
+        case cAN_N:  result = 1.47F; break; 
+        case cAN_O:  result = 1.43F; break; 
+        case cAN_P:  result = 1.84F; break;
+        case cAN_C:  result = 1.54F; break;
+        default: result = 1.54F; break;
+        }
+        break;
+      default: /* ?#C-^? */
+        switch(a2->protons) { 
+        case cAN_I:  result = 2.14F; break; /* normal single bond lengths */
+        case cAN_Cl: result = 1.77F; break; 
+        case cAN_Br: result = 1.94F; break; 
+        case cAN_F:  result = 1.35F; break; 
+        case cAN_S:  result = 1.82F; break; 
+        case cAN_N:  result = 1.47F; break; 
+        case cAN_O:  result = 1.43F; break; 
+        case cAN_P:  result = 1.84F; break;
+        case cAN_C:  result = 1.54F; break;
+        default: result = 1.54F; break;
+        }
+        break;
+      }
+      break;
+      
+    case cAtomInfoPlaner: /* planer carbon =============*/
+      switch(a2->geom) {
+      case cAtomInfoLinear: 
+        switch(a2->protons) { 
+        case cAN_I:  result = 2.14F; break; /* normal single bond lengths */
+        case cAN_Cl: result = 1.77F; break; 
+        case cAN_Br: result = 1.94F; break; 
+        case cAN_F:  result = 1.35F; break; 
+        case cAN_S:  result = 1.82F; break; 
+        case cAN_N:  result = 1.47F; break; 
+        case cAN_O:  result = 1.43F; break; 
+        case cAN_P:  result = 1.84F; break;
+        case cAN_C:  result = 1.54F; break;
+        default: result = 1.54F; break;
+        }
+        break;
+      case cAtomInfoPlaner: 
+        switch(a2->protons) {
+        case cAN_C: result = 1.34F; break; /* C=^C or ?=C-^C=? */
+        case cAN_O: result = 1.20F; break; /* carbonyl */
+        case cAN_N: result = 1.29F; break; /* C=^N or ?=C-^N=? */
+        case cAN_S: result = 1.60F; break; /* C=^S or ?=C-^S-?=? */
+        default: result = 1.34F; break;
+        }
+        break;
+      default: /* ?#C-^? */
+        switch(a2->protons) { 
+        case cAN_I:  result = 2.14F; break; /* normal single bond lengths */
+        case cAN_Cl: result = 1.77F; break; 
+        case cAN_Br: result = 1.94F; break; 
+        case cAN_F:  result = 1.35F; break; 
+        case cAN_S:  result = 1.71F; break; /* mmod */
+        case cAN_N:  result = 1.47F; break; 
+        case cAN_O:  result = 1.43F; break; 
+        case cAN_P:  result = 1.84F; break;
+        case cAN_C:  result = 1.54F; break;
+        default: result = 1.54F; break;
+        }
+        break;
+      }
+      break;
 
-  if((ai1->protons>1)&&(ai2->protons>1)) {
+    default: /* tetrahedral carbon */
+      switch(a2->protons) { 
+      case cAN_I:  result = 2.14F; break; /* normal single bond lengths */
+      case cAN_Cl: result = 1.77F; break; 
+      case cAN_Br: result = 1.94F; break; 
+      case cAN_F:  result = 1.35F; break; 
+      case cAN_S:  result = 1.82F; break; 
+      case cAN_N:  result = 1.47F; break; 
+      case cAN_O:  result = 1.43F; break; 
+      case cAN_P:  result = 1.84F; break;
+      case cAN_C:  result = 1.54F; break;
+      default: result = 1.54F; break;
+      }
+      break;
+    }
+    break;
+
+/* nitrogen ========================= */
+
+  case cAN_N:
+    if((a1->geom==cAtomInfoPlaner)&&
+       (a2->geom==cAtomInfoPlaner))
+      switch(a2->protons) {
+      case cAN_N:  result = 1.25; break;
+      case cAN_O:  result = 1.21; break;
+      case cAN_S:  result = 1.53; break; /* interpolated */
+      default: result = 1.25; break;
+      }
+    else {
+      switch(a2->protons) {
+      case cAN_N:  result = 1.45; break;
+      case cAN_O:  result = 1.40; break;
+      case cAN_S:  result = 1.75; break; /* interpolated */
+      default: result = 1.45; break;
+      }
+    }
+    break;
+    
+/* oxygen =========================== */
+
+  case cAN_O:
+    if((a1->geom==cAtomInfoPlaner)&&
+       (a2->geom==cAtomInfoPlaner))
+      switch(a2->protons) {
+      case cAN_O:  result = 1.35; break; /* guess */
+      case cAN_S:  result = 1.44; break; /* macromodel */
+      default: result = 1.35; break;
+      }
+    else if(a1->geom==cAtomInfoPlaner) {
+      switch(a2->protons) {
+      case cAN_O:  result = 1.35; break; /* guess */
+      case cAN_S:  result = 1.44; break; /* macromodel */
+      default: result = 1.35; break;
+      }
+    } else {
+      switch(a2->protons) {
+      case cAN_O:  result = 1.40; break;
+      case cAN_S:  result = 1.75; break; /* interpolated */
+      default: result = 1.45; break;
+      }
+    }
+    break;
+
+/* sulfur =========================== */
+
+  case cAN_S:
+    switch(a2->protons) {
+    case cAN_S:  result = 2.05; break; /* interpolated */
+    default: result = 1.82; break;
+    }
+    break;
+    
+    /* fall-back to old method */
+  default:
+
     result=0.0;
-    switch(ai1->geom) {
+    switch(a1->geom) {
     case cAtomInfoLinear: result+=1.20F; break;
     case cAtomInfoPlaner: result+=1.34F; break;
     default: result+= 1.54F; break;
     }
-    switch(ai2->geom) {
+    switch(a2->geom) {
     case cAtomInfoLinear: result+=1.20F; break;
     case cAtomInfoPlaner: result+=1.34F; break;
     default: result+= 1.54F; break;
     }    
     result/=2.0F;
-  } else {
-    result=1.05F;
+    break;
   }
   return(result);
 }
@@ -271,6 +454,7 @@ int AtomInfoGetColor(AtomInfoType *at1)
     case 'H' : color=HColor; break;
     default  : color=MColor; break;
     }
+
   return(color);
 }
 

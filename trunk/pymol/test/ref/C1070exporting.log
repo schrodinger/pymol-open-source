@@ -1,0 +1,51 @@
+PyMOL>load dat/small01.mol
+ Executive: object "small01" created.
+PyMOL>save tmp/small01.mol
+ chempy: writing "tmp/small01.mol".
+ Save: wrote "tmp/small01.mol".
+PyMOL>save tmp/small01.pkl
+ Save: wrote "tmp/small01.pkl".
+PyMOL>save tmp/small02.pkl,format=pkla
+ Save: wrote "tmp/small02.pkl".
+PyMOL>save tmp/small01.mmod
+ chempy: writing "tmp/small01.mmod".
+ Save: wrote "tmp/small01.mmod".
+PyMOL>save tmp/small01.mmd
+ chempy: writing "tmp/small01.mmd".
+ Save: wrote "tmp/small01.mmd".
+PyMOL>save tmp/small01.pdb
+ Save: wrote "tmp/small01.pdb".
+PyMOL>multisave tmp/small01.pmo,small01
+PyMOL>del all
+PyMOL>load tmp/small01.pmo
+ Executive: object "small01" created.
+PyMOL>del all
+PyMOL>load tmp/small01.pdb
+ Executive: object "small01" created.
+PyMOL>count_atoms
+ count_atoms: 36 atoms
+PyMOL>del all
+PyMOL>load tmp/small01.mmd
+ Executive: object "small01" created.
+PyMOL>count_atoms
+ count_atoms: 36 atoms
+PyMOL>del all
+PyMOL>load tmp/small01.mmod
+ Executive: object "small01" created.
+PyMOL>count_atoms
+ count_atoms: 36 atoms
+PyMOL>del all
+PyMOL>load tmp/small01.pkl
+ Executive: object "small01" created.
+PyMOL>count_atoms
+ count_atoms: 36 atoms
+PyMOL>del all
+PyMOL>load tmp/small02.pkl
+ Executive: object "small02" created.
+PyMOL>count_atoms
+ count_atoms: 36 atoms
+PyMOL>del all
+PyMOL>load tmp/small01.mol
+ Executive: object "small01" created.
+PyMOL>count_atoms
+ count_atoms: 36 atoms

@@ -590,6 +590,10 @@ void SettingGenerateSideEffects(int index,char *sele,int state)
     ExecutiveInvalidateRep(inv_sele,cRepSurface,cRepInvColor);
     SceneChanged();
     break;
+  case cSetting_sphere_color:
+    ExecutiveInvalidateRep(inv_sele,cRepSphere,cRepInvColor);
+    SceneChanged();
+    break;
   case cSetting_surface_quality:
   case cSetting_surface_mode:
   case cSetting_surface_proximity:
@@ -917,7 +921,7 @@ void SettingInitGlobal(void)
 
   SettingSet_f(I,cSetting_trim_dots, 1.0F);
 
-  SettingSet_f(I,cSetting_cull_spheres, 1.0F);
+  SettingSet_f(I,cSetting_cull_spheres, 0.0F);
 
   SettingSet_f(I,cSetting_test1, 1.0F);
 
@@ -1181,10 +1185,29 @@ void SettingInitGlobal(void)
 
   SettingSet_f(I,cSetting_auto_sculpt, 0.0F);  
 
-  SettingSet_f(I,cSetting_sculpt_vdw, 0.96F);  
+  SettingSet_f(I,cSetting_sculpt_vdw_scale, 0.95F);  
 
-  SettingSet_f(I,cSetting_sculpt_vdw14, 0.82F);  
+  SettingSet_f(I,cSetting_sculpt_vdw_scale14, 1.0F);  
+
+  SettingSet_f(I,cSetting_sculpt_vdw_weight, 1.0F);  
+
+  SettingSet_f(I,cSetting_sculpt_vdw_weight14, 0.2F);  
+
+  SettingSet_f(I,cSetting_sculpt_bond_weight, 2.25F);  
+
+  SettingSet_f(I,cSetting_sculpt_angl_weight, 1.0F);  
+
+  SettingSet_f(I,cSetting_sculpt_pyra_weight, 1.0F);  
+
+  SettingSet_f(I,cSetting_sculpt_plan_weight, 1.0F);  
 
   SettingSet_f(I,cSetting_sculpting_cycles, 5.0F);  
+
+  SettingSet_f(I,cSetting_sphere_transparency, 0.0F);
+
+  SettingSet_color(I,cSetting_sphere_color,"-1"); /* use atom colors by default */
+
+  SettingSet_f(I,cSetting_sculpt_field_mask, (float)0x3F );  
+
 
 }

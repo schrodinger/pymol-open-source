@@ -247,6 +247,27 @@ void ControlDraw(Block *block)
                  y-(cControlBoxSize/2));  
       glEnd();
       glColor3fv(I->Block->TextColor);
+    } else if(SettingGet(cSetting_sculpting)) {
+      glBegin(GL_TRIANGLE_STRIP);
+      glVertex2i(x,y+1);
+      glVertex2i(x,y-(cControlBoxSize-1));
+      glVertex2i(x+cControlBoxSize,y+1);
+      glVertex2i(x+cControlBoxSize,y-(cControlBoxSize-1));
+      
+      glEnd();
+      glColor3fv(I->Block->BackColor);
+      glBegin(GL_LINE_STRIP);
+      glVertex2i(x+(cControlBoxSize)-cControlInnerMargin,
+                 y-cControlInnerMargin+1);
+      glVertex2i(x+cControlInnerMargin,
+                 y-(cControlBoxSize/3));  
+      glVertex2i(x+(cControlBoxSize)-cControlInnerMargin,
+                 y-(2*cControlBoxSize/3)+cControlInnerMargin-2);  
+      glVertex2i(x+cControlInnerMargin,
+                 y-(cControlBoxSize-1)+cControlInnerMargin-1);
+      
+      glEnd();
+      glColor3fv(I->Block->TextColor);    
     } else {
       glBegin(GL_LINE_LOOP);
       glVertex2i(x,y);
@@ -331,9 +352,9 @@ void ControlDraw(Block *block)
     glEnd();
       
     }
-    x+=cControlBoxSize+cControlSpacing;  
-
+    x+=cControlBoxSize+cControlSpacing; 
   }
 }
+
 
 

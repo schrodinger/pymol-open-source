@@ -177,9 +177,18 @@ class SettingIndex:
    stop_on_exceptions    =160
    sculpting             =161
    auto_sculpt           =162
-   sculpt_vdw            =163
-   sculpt_vdw14          =164
-   sculpting_cycles      =165
+   sculpt_vdw_scale      =163
+   sculpt_vdw_scale14    =164
+   sculpt_vdw_weight     =165
+   sculpt_vdw_weight14   =166
+   sculpt_bond_weight    =167
+   sculpt_angl_weight    =168
+   sculpt_pyra_weight    =169
+   sculpt_plan_weight    =170
+   sculpting_cycles      =171
+   sphere_transparency   =172
+   sphere_color          =173
+   sculpt_field_mask     =174
    
 setting_sc = Shortcut(SettingIndex.__dict__.keys())
    

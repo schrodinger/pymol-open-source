@@ -43,6 +43,7 @@ void MoviePlay(int cmd)
   CMovie *I=&Movie;
   switch(cmd) {
   case cMovieStop:
+    if(SettingGet(cSetting_sculpting)) SettingSet(cSetting_sculpting,0);
 	 I->Playing=false;
 	 break;
   case cMoviePlay:

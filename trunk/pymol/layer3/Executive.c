@@ -126,11 +126,12 @@ int ExecutiveSculptIterate(char *name,int state,int n_cycle)
   Object *obj = ExecutiveFindObjectByName(name);
   CExecutive *I = &Executive;
   int ok=true;
-
   SpecRec *rec = NULL;
   ObjectMolecule *objMol;
 
-  if(!WordMatch(name,cKeywordAll,true)) {
+  if(state<0) state=SceneGetState();
+
+  if(WordMatch(name,cKeywordAll,true)<0) {
     while(ListIterate(I->Spec,rec,next)) {
       if(rec->type==cExecObject) {
         if(rec->obj->type==cObjectMolecule) {
@@ -162,8 +163,9 @@ int ExecutiveSculptImprint(char *name,int state)
   ObjectMolecule *objMol;
   CExecutive *I = &Executive;
   int ok=true;
+  if(state<0) state=SceneGetState();
 
-  if(!WordMatch(name,cKeywordAll,true)) {
+  if(WordMatch(name,cKeywordAll,true)<0) {
     while(ListIterate(I->Spec,rec,next)) {
       if(rec->type==cExecObject) {
         if(rec->obj->type==cObjectMolecule) {
@@ -197,7 +199,7 @@ int ExecutiveSculptClear(char *name)
 
   int ok=true;
 
-  if(!WordMatch(name,cKeywordAll,true)) {
+  if(WordMatch(name,cKeywordAll,true)<0) {
     while(ListIterate(I->Spec,rec,next)) {
       if(rec->type==cExecObject) {
         if(rec->obj->type==cObjectMolecule) {

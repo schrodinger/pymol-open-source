@@ -515,6 +515,7 @@ void CoordSetUpdate(CoordSet *I)
 void CoordSetRender(CoordSet *I,CRay *ray,Pickable **pick,int pass)
 {
   int a;
+  Rep *r;
 
   PRINTFD(FB_CoordSet)
     " CoordSetRender: entered (%p).\n",I
@@ -526,6 +527,7 @@ void CoordSetRender(CoordSet *I,CRay *ray,Pickable **pick,int pass)
     if(I->Active[a])
       if(I->Rep[a]) 
         {
+          r = I->Rep[a];
           if(!ray) {
             ObjectUseColor((Object*)I->Obj);
           } else {
@@ -540,13 +542,12 @@ void CoordSetRender(CoordSet *I,CRay *ray,Pickable **pick,int pass)
             ray->fColor3fv(ray,ColorGet(I->Obj->Obj.Color));
           }
         
-          if(I->Rep[a]->fRender) { /* do OpenGL rendering in three passes */
+          if(r->fRender) { /* do OpenGL rendering in three passes */
             if(ray||pick) {
-                  I->Rep[a]->fRender(I->Rep[a],ray,pick);                
+                  r->fRender(r,ray,pick);                
             } else 
               switch(a) {
               case cRepCyl:
-              case cRepSphere:
               case cRepLabel:
               case cRepNonbondedSphere:
               case cRepCartoon:
@@ -554,8 +555,7 @@ void CoordSetRender(CoordSet *I,CRay *ray,Pickable **pick,int pass)
               case cRepDot:
               case cRepCGO:
               case cRepCallback:
-                if(pass==1)
-                  I->Rep[a]->fRender(I->Rep[a],ray,pick);
+                if(pass==1) r->fRender(r,ray,pick);
                 break;
               case cRepLine:
               case cRepMesh:
@@ -563,12 +563,19 @@ void CoordSetRender(CoordSet *I,CRay *ray,Pickable **pick,int pass)
               case cRepNonbonded:
               case cRepCell:
               case cRepExtent:
-                if(!pass)
-                  I->Rep[a]->fRender(I->Rep[a],ray,pick);                
+                if(!pass) r->fRender(r,ray,pick);                
                 break;
               case cRepSurface:
-                if(pass==-1)
-                  I->Rep[a]->fRender(I->Rep[a],ray,pick);              
+                if(pass==-1) r->fRender(r,ray,pick);              
+                break;
+              case cRepSphere: /* render spheres differently depending on transparency */
+                if(SettingGet_f(r->cs->Setting,
+                                r->obj->Setting,
+                                cSetting_sphere_transparency)>0.0001) {
+                  if(pass==-1)
+                    r->fRender(r,ray,pick);                                
+                } else if(pass==1)
+                  r->fRender(r,ray,pick);
                 break;
               }
           }
