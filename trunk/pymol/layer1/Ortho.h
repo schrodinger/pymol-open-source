@@ -54,7 +54,7 @@ int OrthoButton(int button,int state,int x,int y,int mod);
 void OrthoKey(unsigned char k,int x,int y,int mod);
 
 void OrthoAddOutput(char *str);
-void OrthoNewLine(char *prompt);
+void OrthoNewLine(char *prompt,int crlf);
 
 int OrthoDrag(int x,int y,int mod);
 

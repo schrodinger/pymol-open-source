@@ -53,6 +53,12 @@ int PConvAttrToPtr(PyObject *obj,char *name,void **cobj);
 int PConvCObjectToPtr(PyObject *obj,void **ptr);
 
 int PConvPyListToStringVLA(PyObject *obj,char **vla_ptr);
+int PConvPyListToIntVLA(PyObject *obj,int **f);
+int PConvPyStrToStr(PyObject *obj,char *ptr,int l);
+int PConvPyStrToStrPtr(PyObject *obj,char **ptr);
+int PConvPyFloatToFloat(PyObject *obj,float *ptr);
+int PConvPyIntToChar(PyObject *obj,char *ptr);
+int PConvPyIntToInt(PyObject *obj,int *ptr);
 
 /* === end === */
 
@@ -64,6 +70,8 @@ int PConvPyListToStringVLA(PyObject *obj,char **vla_ptr);
 
 PyObject *PConvFloatVLAToPyList(float *f);
 PyObject *PConvIntVLAToPyList(int *f);
+PyObject *PConvIntArrayToPyList(int *f,int l);
+PyObject *PConvSIntArrayToPyList(short int *f,int l);
 
 /* WARNING: the returned PyObject is unowned - it is intended for use
  * only for efficient detection of changes to dictionary values
@@ -94,14 +102,23 @@ PyObject *PConvStringVLAToPyList(char *str);
 
 void PConv44PyListTo44f(PyObject *src,float *dest); /* note loss of precision */
 
+int PConvPyListToFloatVLA(PyObject *obj,float **f);
 int PConvPyListToFloatArray(PyObject *obj,float **f);
 int PConvPyListToFloatArrayInPlace(PyObject *obj,float *ff,int ll);
+int PConvPyListToFloatArrayInPlaceAutoZero(PyObject *obj,float *ii,int ll);
 
 PyObject *PConvFloatArrayToPyList(float *f,int l);
 
 int PConvPyListToIntArray(PyObject *obj,int **f);
 int PConvPyListToIntArrayInPlace(PyObject *obj,int *ff,int ll);
+int PConvPyListToIntArrayInPlaceAutoZero(PyObject *obj,int *ii,int ll);
+
+int PConvPyListToSIntArrayInPlaceAutoZero(PyObject *obj,short int *ii,int ll);
+
 PyObject *PConv3DIntArrayTo3DPyList(int ***array,int *dim);
+
+
+PyObject *PConvAutoNone(PyObject *result); /* automatically own Py_None */
 
 #endif
 

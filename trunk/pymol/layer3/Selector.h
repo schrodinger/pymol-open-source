@@ -61,6 +61,7 @@ int SelectorMapMaskVDW(int sele1,ObjectMapState *oMap,float buffer);
 
 int SelectorMapCoulomb(int sele1,ObjectMapState *oMap,float cutoff);
 int SelectorMapGaussian(int sele1,ObjectMapState *oMap,float buffer);
-
+PyObject *SelectorGetPyList(int sele1);
+int SelectorSetPyList(char *name,PyObject *list);
 
 #endif

@@ -23,11 +23,99 @@ Z* -------------------------------------------------------------------
 #include"Err.h"
 #include"Util.h"
 #include"Color.h"
+#include"PConv.h"
 
 
 static int NColor,CarbColor,HColor,OColor,SColor,MColor,IColor;
 
 int AtomInfoInOrder(AtomInfoType *atom,int atom1,int atom2);
+
+/*========================================================================*/
+PyObject *AtomInfoGetPyList(AtomInfoType *I)
+{
+  PyObject *result = NULL;
+
+  result = PyList_New(34);
+  PyList_SetItem(result, 0,PyInt_FromLong(I->resv));
+  PyList_SetItem(result, 1,PyString_FromString(I->chain));
+  PyList_SetItem(result, 2,PyString_FromString(I->alt));
+  PyList_SetItem(result, 3,PyString_FromString(I->resi));
+  PyList_SetItem(result, 4,PyString_FromString(I->segi));
+  PyList_SetItem(result, 5,PyString_FromString(I->resn));
+  PyList_SetItem(result, 6,PyString_FromString(I->name));
+  PyList_SetItem(result, 7,PyString_FromString(I->elem));
+  PyList_SetItem(result, 8,PyString_FromString(I->textType));
+  PyList_SetItem(result, 9,PyString_FromString(I->label));
+  PyList_SetItem(result,10,PyString_FromString(I->ssType));
+  PyList_SetItem(result,11,PyInt_FromLong(I->hydrogen));  
+  PyList_SetItem(result,12,PyInt_FromLong(I->customType));
+  PyList_SetItem(result,13,PyInt_FromLong(I->priority));
+  PyList_SetItem(result,14,PyFloat_FromDouble(I->b));
+  PyList_SetItem(result,15,PyFloat_FromDouble(I->q));
+  PyList_SetItem(result,16,PyFloat_FromDouble(I->vdw));
+  PyList_SetItem(result,17,PyFloat_FromDouble(I->partialCharge));
+  PyList_SetItem(result,18,PyInt_FromLong(I->formalCharge));
+  PyList_SetItem(result,19,PyInt_FromLong((int)I->hetatm));
+  PyList_SetItem(result,20,PConvSIntArrayToPyList(I->visRep,cRepCnt));
+  PyList_SetItem(result,21,PyInt_FromLong(I->color));
+  PyList_SetItem(result,22,PyInt_FromLong(I->id));
+  PyList_SetItem(result,23,PyInt_FromLong(I->cartoon));
+  PyList_SetItem(result,24,PyInt_FromLong(I->flags));
+  PyList_SetItem(result,25,PyInt_FromLong((int)I->bonded));
+  PyList_SetItem(result,26,PyInt_FromLong((int)I->chemFlag));
+  PyList_SetItem(result,27,PyInt_FromLong((int)I->geom));
+  PyList_SetItem(result,28,PyInt_FromLong((int)I->valence));
+  PyList_SetItem(result,29,PyInt_FromLong((int)I->masked));
+  PyList_SetItem(result,30,PyInt_FromLong((int)I->protected));
+  PyList_SetItem(result,31,PyInt_FromLong((int)I->protons));
+  PyList_SetItem(result,32,PyInt_FromLong(I->sculpt_id));
+  PyList_SetItem(result,33,PyInt_FromLong(I->stereo));
+
+  return(PConvAutoNone(result));
+}
+
+int AtomInfoSetPyList(AtomInfoType *I,PyObject *list)
+{
+  int ok=true;
+  int hetatm;
+  if(ok) ok = PyList_Check(list);
+  if(ok) ok = PConvPyIntToInt(PyList_GetItem(list, 0),&I->resv);
+  if(ok) ok = PConvPyStrToStr(PyList_GetItem(list, 1),I->chain,sizeof(Chain));
+  if(ok) ok = PConvPyStrToStr(PyList_GetItem(list, 2),I->alt,sizeof(Chain));
+  if(ok) ok = PConvPyStrToStr(PyList_GetItem(list, 3),I->resi,sizeof(ResIdent));
+  if(ok) ok = PConvPyStrToStr(PyList_GetItem(list, 4),I->segi,sizeof(SegIdent));
+  if(ok) ok = PConvPyStrToStr(PyList_GetItem(list, 5),I->resn,sizeof(ResName));
+  if(ok) ok = PConvPyStrToStr(PyList_GetItem(list, 6),I->name,sizeof(AtomName));
+  if(ok) ok = PConvPyStrToStr(PyList_GetItem(list, 7),I->elem,sizeof(AtomName));
+  if(ok) ok = PConvPyStrToStr(PyList_GetItem(list, 8),I->textType,sizeof(TextType));
+  if(ok) ok = PConvPyStrToStr(PyList_GetItem(list, 9),I->label,sizeof(LabelType));
+  if(ok) ok = PConvPyStrToStr(PyList_GetItem(list,10),I->ssType,sizeof(SSType));
+  if(ok) ok = PConvPyIntToInt(PyList_GetItem(list,11),&I->hydrogen);
+  if(ok) ok = PConvPyIntToInt(PyList_GetItem(list,12),&I->customType);
+  if(ok) ok = PConvPyIntToInt(PyList_GetItem(list,13),&I->priority);
+  if(ok) ok = PConvPyFloatToFloat(PyList_GetItem(list,14),&I->b);
+  if(ok) ok = PConvPyFloatToFloat(PyList_GetItem(list,15),&I->q);
+  if(ok) ok = PConvPyFloatToFloat(PyList_GetItem(list,16),&I->vdw);
+  if(ok) ok = PConvPyFloatToFloat(PyList_GetItem(list,17),&I->partialCharge);
+  if(ok) ok = PConvPyIntToInt(PyList_GetItem(list,18),&I->formalCharge);
+  if(ok) ok = PConvPyIntToInt(PyList_GetItem(list,19),&hetatm);
+  if(ok) I->hetatm = hetatm;
+  if(ok) ok = PConvPyListToSIntArrayInPlaceAutoZero(PyList_GetItem(list,20),I->visRep,cRepCnt);
+  if(ok) ok = PConvPyIntToInt(PyList_GetItem(list,21),&I->color);
+  if(ok) ok = PConvPyIntToInt(PyList_GetItem(list,22),&I->id);
+  if(ok) ok = PConvPyIntToInt(PyList_GetItem(list,23),&I->cartoon);
+  if(ok) ok = PConvPyIntToInt(PyList_GetItem(list,24),&I->flags);
+  if(ok) ok = PConvPyIntToChar(PyList_GetItem(list,25),&I->bonded);
+  if(ok) ok = PConvPyIntToChar(PyList_GetItem(list,26),&I->chemFlag);
+  if(ok) ok = PConvPyIntToChar(PyList_GetItem(list,27),&I->geom);
+  if(ok) ok = PConvPyIntToChar(PyList_GetItem(list,28),&I->valence);
+  if(ok) ok = PConvPyIntToChar(PyList_GetItem(list,29),&I->masked);
+  if(ok) ok = PConvPyIntToChar(PyList_GetItem(list,30),&I->protected);
+  if(ok) ok = PConvPyIntToChar(PyList_GetItem(list,31),&I->protons);
+  if(ok) ok = PConvPyIntToInt(PyList_GetItem(list,32),&I->sculpt_id);
+  if(ok) ok = PConvPyIntToInt(PyList_GetItem(list,33),&I->stereo);
+  return(ok);
+}
 
 /*========================================================================*/
 void AtomInfoCombine(AtomInfoType *dst,AtomInfoType *src,int mask)

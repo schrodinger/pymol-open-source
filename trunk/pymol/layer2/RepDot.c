@@ -171,7 +171,7 @@ Rep *RepDotDoNew(CoordSet *cs,int mode)
   }
 
   /* get current dot sampling */
-  ds = (int)SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_dot_density);
+  ds = SettingGet_i(cs->Setting,obj->Obj.Setting,cSetting_dot_density);
 
   max_vdw+=solv_rad;
 

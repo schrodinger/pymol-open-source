@@ -18,6 +18,7 @@ Z* -------------------------------------------------------------------
 
 #include"Crystal.h"
 #include"Word.h"
+#include"os_python.h"
 
 typedef struct { 
   CCrystal *Crystal;
@@ -30,12 +31,16 @@ typedef struct {
   WordType *SymOpVLA;
 } CSymmetry;
 
-int SymmetryAttemptGeneration(CSymmetry *I);
+int SymmetryAttemptGeneration(CSymmetry *I,int blocked,int quiet);
 void SymmetryFree(CSymmetry *I);
 CSymmetry *SymmetryNew(void);
 void SymmetryUpdate(CSymmetry *I);
 void SymmetryDump(CSymmetry *I);
 CSymmetry *SymmetryCopy(CSymmetry *other);
+PyObject *SymmetryGetPyList(CSymmetry *I);
+int SymmetrySetPyList(CSymmetry *I,PyObject *list);
+CSymmetry *SymmetryNewFromPyList(PyObject *list);
+void SymmetryReset(CSymmetry *I);
 
 #endif
 

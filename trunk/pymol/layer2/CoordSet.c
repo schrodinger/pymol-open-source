@@ -55,6 +55,64 @@ void CoordSetAppendIndices(CoordSet *I,int offset);
 static  char sATOM[]="ATOM  ";
 static  char sHETATM[]="HETATM";
 
+int CoordSetSetPyList(PyObject *list,CoordSet **cs)
+{
+  CoordSet *I = NULL;
+  PyObject *tmp;
+  int ok = true;
+  if(*cs) {
+    CoordSetFree(*cs);
+    *cs=NULL;
+  }
+
+  if(list==Py_None) { /* allow None for CSet */
+    *cs = NULL;
+  } else {
+  
+    if(ok) I=CoordSetNew();
+    if(ok) ok = (I!=NULL);
+    if(ok) ok = PConvPyIntToInt(PyList_GetItem(list,0),&I->NIndex);
+    if(ok) ok = PConvPyIntToInt(PyList_GetItem(list,1),&I->NAtIndex);
+    if(ok) ok = PConvPyListToFloatVLA(PyList_GetItem(list,2),&I->Coord);
+    if(ok) ok = PConvPyListToIntArray(PyList_GetItem(list,3),&I->IdxToAtm);
+    if(ok) {
+      tmp = PyList_GetItem(list,4); /* Discrete CSets don't have this */
+      if(tmp!=Py_None) 
+        ok = PConvPyListToIntArray(tmp,&I->AtmToIdx);
+    }
+    if(ok) ok = PConvPyStrToStr(PyList_GetItem(list,5),I->Name,sizeof(WordType));
+    
+    if(!ok) {
+      if(I)
+        CoordSetFree(I);
+    } else {
+      *cs = I;
+    }
+  }
+  return(ok);
+}
+
+PyObject *CoordSetGetPyList(CoordSet *I)
+{
+  PyObject *result = NULL;
+
+  if(I) {
+    result = PyList_New(6);
+    
+    PyList_SetItem(result,0,PyInt_FromLong(I->NIndex));
+    PyList_SetItem(result,1,PyInt_FromLong(I->NAtIndex));
+    PyList_SetItem(result,2,PConvFloatArrayToPyList(I->Coord,I->NIndex*3));
+    PyList_SetItem(result,3,PConvIntArrayToPyList(I->IdxToAtm,I->NIndex));
+    if(I->AtmToIdx) 
+      PyList_SetItem(result,4,PConvIntArrayToPyList(I->AtmToIdx,I->NAtIndex));
+    else 
+      PyList_SetItem(result,4,PConvAutoNone(NULL));
+    PyList_SetItem(result,5,PyString_FromString(I->Name));
+    /* TODO symmetry, spheroid, setting, periodic box ... */
+
+  }
+  return(PConvAutoNone(result));
+}
 
 void CoordSetAdjustAtmIdx(CoordSet *I,int *lookup,int nAtom)
      /* performs second half of removal */
@@ -543,12 +601,12 @@ void CoordSetRender(CoordSet *I,CRay *ray,Pickable **pick,int pass)
           } else {
             if(I->Obj) 
               ray->fTexture(ray,
-                            (int)SettingGet_f(I->Setting,I->Obj->Obj.Setting,cSetting_ray_texture),
-                            SettingGet_fv(I->Setting,I->Obj->Obj.Setting,cSetting_ray_texture_settings));
+                            SettingGet_i(I->Setting,I->Obj->Obj.Setting,cSetting_ray_texture),
+                            SettingGet_3fv(I->Setting,I->Obj->Obj.Setting,cSetting_ray_texture_settings));
             else
               ray->fTexture(ray,
-                            (int)SettingGet_f(I->Setting,NULL,cSetting_ray_texture),
-                            SettingGet_fv(I->Setting,NULL,cSetting_ray_texture_settings));
+                            SettingGet_i(I->Setting,NULL,cSetting_ray_texture),
+                            SettingGet_3fv(I->Setting,NULL,cSetting_ray_texture_settings));
             ray->fColor3fv(ray,ColorGet(I->Obj->Obj.Color));
           }
         

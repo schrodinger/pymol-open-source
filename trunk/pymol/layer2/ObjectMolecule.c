@@ -54,7 +54,6 @@ Z* -------------------------------------------------------------------
 #define nskip ParseNSkip
 
 #define cResvMask 0x7FFF
-
 void ObjectMoleculeRender(ObjectMolecule *I,int frame,CRay *ray,Pickable **pick,int pass);
 void ObjectMoleculeCylinders(ObjectMolecule *I);
 CoordSet *ObjectMoleculeMMDStr2CoordSet(char *buffer,AtomInfoType **atInfoPtr);
@@ -134,8 +133,8 @@ static char *skip_fortran(int num,int per_line,char *p)
   if(b) p=nextline(p);
   return(p);
 }
-/*========================================================================*/
 
+/*========================================================================*/
 ObjectMolecule *ObjectMoleculeLoadTRJFile(ObjectMolecule *I,char *fname,int frame,
                                           int interval,int average,int start,
                                           int stop,int max,char *sele,int image,
@@ -1544,7 +1543,7 @@ ObjectMolecule *ObjectMoleculeReadTOPStr(ObjectMolecule *I,char *TOPStr,int fram
     if(isNew) I->NBond = ObjectMoleculeConnect(I,&I->Bond,I->AtomInfo,cset,false);
     if(cset->Symmetry&&(!I->Symmetry)) {
       I->Symmetry=SymmetryCopy(cset->Symmetry);
-      SymmetryAttemptGeneration(I->Symmetry);
+      SymmetryAttemptGeneration(I->Symmetry,false,false);
     }
 
     if(I->CSTmpl)
@@ -1940,7 +1939,7 @@ ObjectMolecule *ObjectMoleculeReadPMO(ObjectMolecule *I,CRaw *pmo,int frame,int 
 
       if(cset->Symmetry&&(!I->Symmetry)) {
         I->Symmetry=SymmetryCopy(cset->Symmetry);
-        SymmetryAttemptGeneration(I->Symmetry);
+        SymmetryAttemptGeneration(I->Symmetry,false,false);
       }
       SceneCountFrames();
       ObjectMoleculeExtendIndices(I);
@@ -2533,7 +2532,7 @@ ObjectMolecule *ObjectMoleculeReadXYZStr(ObjectMolecule *I,char *PDBStr,int fram
     if(isNew) I->NBond = ObjectMoleculeConnect(I,&I->Bond,I->AtomInfo,cset,false);
     if(cset->Symmetry&&(!I->Symmetry)) {
       I->Symmetry=SymmetryCopy(cset->Symmetry);
-      SymmetryAttemptGeneration(I->Symmetry);
+      SymmetryAttemptGeneration(I->Symmetry,false,false);
     }
     SceneCountFrames();
     ObjectMoleculeExtendIndices(I);
@@ -5047,6 +5046,7 @@ ObjectMolecule *ObjectMoleculeLoadChemPyModel(ObjectMolecule *I,PyObject *model,
         tmp = PyObject_GetAttrString(model,"spheroid");
         if(tmp) {
           cset->NSpheroid = PConvPyListToFloatArray(tmp,&cset->Spheroid);
+          if(cset->NSpheroid<0) cset->NSpheroid=0;
           Py_DECREF(tmp);
         }
         tmp = PyObject_GetAttrString(model,"spheroid_normals");
@@ -5079,7 +5079,7 @@ ObjectMolecule *ObjectMoleculeLoadChemPyModel(ObjectMolecule *I,PyObject *model,
     if(isNew) I->NBond = ObjectMoleculeConnect(I,&I->Bond,I->AtomInfo,cset,false);
     if(cset->Symmetry&&(!I->Symmetry)) {
       I->Symmetry=SymmetryCopy(cset->Symmetry);
-      SymmetryAttemptGeneration(I->Symmetry);
+      SymmetryAttemptGeneration(I->Symmetry,false,false);
     }
     SceneCountFrames();
     ObjectMoleculeExtendIndices(I);
@@ -5312,7 +5312,8 @@ CoordSet *ObjectMoleculeMOLStr2CoordSet(char *buffer,AtomInfoType **atInfoPtr)
   if(atInfoPtr)
 	 atInfo = *atInfoPtr;
 
-  p=ParseWordCopy(nameTmp,p,sizeof(WordType)-1);
+  /*  p=ParseWordCopy(nameTmp,p,sizeof(WordType)-1);*/
+  p=ParseNCopy(nameTmp,p,sizeof(WordType)-1);
   p=nextline(p); 
   p=nextline(p);
   p=nextline(p);
@@ -5833,7 +5834,7 @@ ObjectMolecule *ObjectMoleculeReadPDBStr(ObjectMolecule *I,char *PDBStr,int fram
       if(isNew) I->NBond = ObjectMoleculeConnect(I,&I->Bond,I->AtomInfo,cset,true);
       if(cset->Symmetry&&(!I->Symmetry)) {
         I->Symmetry=SymmetryCopy(cset->Symmetry);
-        SymmetryAttemptGeneration(I->Symmetry);
+        SymmetryAttemptGeneration(I->Symmetry,false,false);
       }
       SceneCountFrames();
       ObjectMoleculeExtendIndices(I);
@@ -6475,13 +6476,13 @@ void ObjectMoleculeSeleOp(ObjectMolecule *I,int sele,ObjectMoleculeOpRec *op)
                      a1=I->CSet[b]->AtmToIdx[a];
                    if(a1>=0) {
                      if(op->ii1[op->i1*offset+op->i2]) { /* copy flag */
-		       vv1=op->vv1+3*(op->i1*offset+op->i2); /* atom-based offset */
-		       vv2=I->CSet[b]->Coord+(3*a1);
-		       *(vv2++)=*(vv1++);
-		       *(vv2++)=*(vv1++);
-		       *(vv2++)=*(vv1++);
-		       op->nvv1++;
-		     }
+                       vv1=op->vv1+3*(op->i1*offset+op->i2); /* atom-based offset */
+                       vv2=I->CSet[b]->Coord+(3*a1);
+                       *(vv2++)=*(vv1++);
+                       *(vv2++)=*(vv1++);
+                       *(vv2++)=*(vv1++);
+                       op->nvv1++;
+                     }
                    }
                  }
                }
@@ -7345,6 +7346,7 @@ ObjectMolecule *ObjectMoleculeNew(int discreteFlag)
   I->AtomCounter=-1;
   I->BondCounter=-1;
   I->DiscreteFlag=discreteFlag;
+  I->NDiscrete=0;
   I->UnitCellCGO=NULL;
   I->Sculpt=NULL;
   I->CSTmpl=NULL;

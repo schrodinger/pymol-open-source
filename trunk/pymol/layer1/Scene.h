@@ -22,7 +22,9 @@ Z* -------------------------------------------------------------------
 #include"Ortho.h"
 
 
-typedef float SceneViewType[25]; 
+#define cSceneViewSize 25
+typedef float SceneViewType[cSceneViewSize];
+ 
 /* all information required to define the geometry of a particular view,
    for shipping to and from python as a list of floats
    0-15 = 4x4 rotation matrix 

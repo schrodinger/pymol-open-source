@@ -97,10 +97,10 @@ Block *BlockRecursiveFind(Block *block,int x,int y)
   if(block){
 	 if(!block->active)
 		block = BlockRecursiveFind(block->next,x,y);
-	 else if ( ! (( block->rect.top    >  y ) &&
-					  ( block->rect.bottom <= y ) &&
-					  ( block->rect.left   <= x ) &&
-					  ( block->rect.right  >  x )))
+	 else if ( ! (( block->rect.top    >=  y ) &&
+					  ( block->rect.bottom < y ) &&
+					  ( block->rect.left   < x ) &&
+					  ( block->rect.right  >=  x )))
 		block = BlockRecursiveFind(block->next,x,y);
 	 else if(block->inside)
 		if((check = BlockRecursiveFind(block->inside,x,y)))

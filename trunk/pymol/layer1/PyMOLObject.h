@@ -69,6 +69,8 @@ void ObjectPrepareContext(CObject *I,CRay *ray);
 void ObjectCombineTTT(CObject *I,float *ttt);
 void ObjectSetTTTOrigin(CObject *I,float *origin);
 void ObjectResetTTT(CObject *I);
+PyObject *ObjectGetPyList(CObject *I);
+int ObjectSetPyList(PyObject *list,CObject *I);
 
 #endif
 

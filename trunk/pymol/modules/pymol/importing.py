@@ -55,6 +55,18 @@ class loadable:
    
 loadable_sc = Shortcut(loadable.__dict__.keys()) 
 
+def set_session(session):
+   '''
+NOT YET IMPLEMENTED
+'''
+   r = 1
+   try:
+      lock()   
+      r = _cmd.set_session(session)
+   finally:
+      unlock()
+   return r
+   
 def load_object(type,object,name,state=0,finish=1,discrete=0):
       # assume first argument is the object type (numeric)
    '''

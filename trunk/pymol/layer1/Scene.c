@@ -591,9 +591,9 @@ void SceneWindowSphere(float *location,float radius)
   dist = radius/tan((fov/2.0)*cPI/180.0);
 
   I->Pos[2]-=dist;
-  I->Front=(-I->Pos[2]-radius*1.2);
+  I->Front=(-I->Pos[2]-radius*1.1);
   I->FrontSafe=(I->Front<cFrontMin ? cFrontMin : I->Front);  
-  I->Back=(-I->Pos[2]+radius*1.2);
+  I->Back=(-I->Pos[2]+radius*1.4);
   /*printf("%8.3f %8.3f %8.3f\n",I->Front,I->Pos[2],I->Back);*/
 }
 /*========================================================================*/
@@ -604,8 +604,6 @@ void SceneRelocate(float *location)
   float slab_width;
   float dist;
 
-  dump3f(I->Pos,"pos 0");
-  dump3f(I->Origin,"origin 0");
   slab_width = I->Back-I->Front;
 
   /* find out how far camera was from previous origin */
@@ -620,12 +618,9 @@ void SceneRelocate(float *location)
   MatrixTransform3f(I->RotMatrix,v0,I->Pos); /* convert to view-space */
 
   I->Pos[2]=dist;
-  I->Front=(-I->Pos[2]-(slab_width/2));
+  I->Front=(-I->Pos[2]-(slab_width*0.45));
   I->FrontSafe=(I->Front<cFrontMin ? cFrontMin : I->Front);  
-  I->Back=(-I->Pos[2]+(slab_width/2));
-
-  dump3f(I->Pos,"pos 1");
-  dump3f(I->Origin,"origin 1");
+  I->Back=(-I->Pos[2]+(slab_width*0.55));
 
 }
 /*========================================================================*/
@@ -2030,7 +2025,7 @@ void SceneRender(Pickable *pick,int x,int y,Multipick *smp)
         vv[0]=SettingGet(cSetting_shininess);
         glMaterialfv(GL_FRONT,GL_SHININESS,vv);
 
-        copy3f(SettingGetGlobal_fv(cSetting_light),vv);
+        copy3f(SettingGetGlobal_3fv(cSetting_light),vv);
         normalize3f(vv);
         MatrixInvTransform44fAs33f3f(I->RotMatrix,vv,vv); 
         invert3f(vv);
