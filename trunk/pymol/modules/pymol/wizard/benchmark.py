@@ -20,12 +20,11 @@ class Benchmark(Wizard):
    def configure(self):
       cmd.reinitialize()
       cmd.set('use_display_lists',1)
-      cmd.set('max_threads',2)
       
    def __init__(self,*arg):
       self.gl = 5.0
-      self.short_cpu = 10.0
-      self.long_cpu = 25.0
+      self.short_cpu = 8.0
+      self.long_cpu = 16.0
       self.message = []
       if len(arg):
          if hasattr(self,arg[0]):
@@ -43,7 +42,7 @@ class Benchmark(Wizard):
       self.configure()
       self.mesh_calculation()
       self.configure()
-      self.ray_tracing()
+      self.ray_trace()
       self.configure()
 
    def run_gl(self):
@@ -81,7 +80,7 @@ class Benchmark(Wizard):
          cmd.refresh()
          cnt = cnt + 1
          elapsed = time.time()-start
-      report('UPDATES',(cnt/elapsed)/100)
+      report('UPDATES_V1',(cnt/elapsed)/100)
 
    def smooth_lines(self):
       cmd.load("$PYMOL_DATA/demo/1tii.pdb")
@@ -98,7 +97,7 @@ class Benchmark(Wizard):
          cmd.refresh()
          cnt = cnt + 1
          elapsed = time.time()-start
-      report('SMOOTH_LINES',cnt/elapsed)
+      report('SMOOTH_LINES_V1',cnt/elapsed)
       
    def jagged_lines(self):
       cmd.load("$PYMOL_DATA/demo/1tii.pdb")
@@ -116,7 +115,7 @@ class Benchmark(Wizard):
          cmd.refresh()
          cnt = cnt + 1
          elapsed = time.time()-start
-      report('JAGGED_LINES',cnt/elapsed)
+      report('JAGGED_LINES_V1',cnt/elapsed)
 
    def dots(self):
       cmd.load("$PYMOL_DATA/demo/1tii.pdb")
@@ -134,7 +133,7 @@ class Benchmark(Wizard):
          cmd.refresh()
          cnt = cnt + 1
          elapsed = time.time()-start
-      report('DOTS',cnt/elapsed)
+      report('DOTS_V1',cnt/elapsed)
 
    def sticks(self):
       cmd.load("$PYMOL_DATA/demo/1tii.pdb")
@@ -152,7 +151,7 @@ class Benchmark(Wizard):
          cmd.refresh()
          cnt = cnt + 1
          elapsed = time.time()-start
-      report('STICKS',cnt/elapsed)
+      report('STICKS_V1',cnt/elapsed)
 
    def surface(self):
       cmd.load("$PYMOL_DATA/demo/1tii.pdb")
@@ -170,7 +169,7 @@ class Benchmark(Wizard):
          cmd.refresh()
          cnt = cnt + 1
          elapsed = time.time()-start
-      report('SURFACE',cnt/elapsed)
+      report('SURFACE_V1',cnt/elapsed)
 
    def spheres(self):
       cmd.load("$PYMOL_DATA/demo/1tii.pdb")
@@ -188,7 +187,7 @@ class Benchmark(Wizard):
          cmd.refresh()
          cnt = cnt + 1
          elapsed = time.time()-start
-      report('SPHERES',cnt/elapsed)
+      report('SPHERES_V1',cnt/elapsed)
 
    def cartoon(self):
       cmd.load("$PYMOL_DATA/demo/1tii.pdb")
@@ -207,7 +206,7 @@ class Benchmark(Wizard):
          cmd.refresh()
          cnt = cnt + 1
          elapsed = time.time()-start
-      report('CARTOON',cnt/elapsed)
+      report('CARTOON_V1',cnt/elapsed)
 
    def blits(self):
       cmd.load("$PYMOL_DATA/demo/pept.pdb")
@@ -230,7 +229,7 @@ class Benchmark(Wizard):
          cmd.refresh()
          cnt = cnt + 1
          elapsed = time.time()-start
-      report('BLITS',2*cnt/elapsed)
+      report('BLITS_V1',2*cnt/elapsed)
 
    def surface_calculation(self):
       cmd.load("$PYMOL_DATA/demo/il2.pdb")
@@ -247,7 +246,7 @@ class Benchmark(Wizard):
          cmd.refresh()
          cnt = cnt + 1
          elapsed = time.time()-start
-      report('SURFACE_CALCULATION',60*cnt/elapsed)
+      report('SURFACE_CALCULATION_V1',60*cnt/elapsed)
 
    def mesh_calculation(self):
       cmd.load("$PYMOL_DATA/demo/il2.pdb")
@@ -264,31 +263,46 @@ class Benchmark(Wizard):
          cmd.refresh()
          cnt = cnt + 1
          elapsed = time.time()-start
-      report('MESH_CALCULATION',60*cnt/elapsed)
+      report('MESH_CALCULATION_V1',60*cnt/elapsed)
 
-   def ray_tracing(self):
+   def ray_trace(self):
+      self.configure()
+      self.ray_tracing([
+         [1,80],
+         [2,80],
+         [4,80],
+         [8,80],
+         [2,120],
+         [2,160],
+         [2,200],
+         ])
+
+   def ray_tracing(self,conditions):
       cmd.load("$PYMOL_DATA/demo/1tii.pdb")
       cmd.zoom(complete=1)
       cmd.hide()
-      cmd.show("spheres","11-20/")
-      cmd.show("surface","21-30/")
-      cmd.show("mesh","A//")
+      cmd.show("spheres","11-15/")
+      cmd.show("surface","21-25/")
+      cmd.show("mesh","A/10-20/")
       cmd.show("sticks","41-50/")
-      cmd.show("lines","51-60/")
-      cmd.show("dots","61-70/")      
-      cmd.show("cartoon","71-110/")
+      cmd.show("lines","51-55/")
+      cmd.show("dots","61-65/")      
+      cmd.show("cartoon","80-90/")
       cmd.turn('x',25)
       cmd.turn('y',25)
-      cmd.set('hash_max','70') # make sure we don't use too much RAM
-      cnt = 0
-      elapsed = 0.0
-      cmd.refresh()
-      start = time.time()
-      while elapsed<self.long_cpu:
-         cmd.ray(320,240)
-         cnt = cnt + 1
-         elapsed = time.time()-start
-      report('RAY_TRACING',60*cnt/elapsed)
+      for cond in conditions:
+         (max_threads,hash_max) = cond
+         cmd.set('max_threads',max_threads) 
+         cmd.set('hash_max',hash_max) 
+         cnt = 0
+         elapsed = 0.0
+         cmd.refresh()
+         start = time.time()
+         while elapsed<self.long_cpu:
+            cmd.ray(320,240,quiet=1)
+            cnt = cnt + 1
+            elapsed = time.time()-start
+         report('RAY_V2_THREADS%02d_HASH%03d'%(max_threads,hash_max),60*cnt/elapsed)
       
    def get_prompt(self):
       self.prompt = self.message
@@ -321,7 +335,7 @@ class Benchmark(Wizard):
          [ 2, 'Blits', 'cmd.get_wizard().delay_launch("blits")'],                                    
          [ 2, 'Surface Calculation', 'cmd.get_wizard().delay_launch("surface_calculation")'],
          [ 2, 'Mesh Calculation', 'cmd.get_wizard().delay_launch("surface_calculation")'],
-         [ 2, 'Ray Tracing', 'cmd.get_wizard().delay_launch("ray_tracing")'],
+         [ 2, 'Ray Tracing', 'cmd.get_wizard().delay_launch("ray_trace")'],
          [ 2, 'End Demonstration', 'cmd.set_wizard()' ]
          ]
 

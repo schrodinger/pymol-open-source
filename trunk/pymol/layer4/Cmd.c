@@ -1458,7 +1458,7 @@ static PyObject *CmdGetPovRay(PyObject *dummy, PyObject *args)
   PyObject *result = NULL;
   char *header=NULL,*geom=NULL;
   APIEntry();
-  SceneRay(0,0,1,&header,&geom,0.0F,0.0F);
+  SceneRay(0,0,1,&header,&geom,0.0F,0.0F,false);
   if(header&&geom) {
     result = Py_BuildValue("(ss)",header,geom);
   }
@@ -3047,12 +3047,13 @@ static PyObject *CmdRay(PyObject *self, 	PyObject *args)
   int w,h,mode;
   float angle,shift;
   int ok=false;
-  ok = PyArg_ParseTuple(args,"iiiff",&w,&h,&mode,&angle,&shift);
+  int quiet;
+  ok = PyArg_ParseTuple(args,"iiiffi",&w,&h,&mode,&angle,&shift,&quiet);
   if (ok) {
     APIEntry();
     if(mode<0)
       mode=(int)SettingGet(cSetting_ray_default_renderer);
-    ExecutiveRay(w,h,mode,angle,shift); /* TODO STATUS */
+    ExecutiveRay(w,h,mode,angle,shift,quiet); /* TODO STATUS */
     APIExit();
   }
   return(APIStatus(ok));

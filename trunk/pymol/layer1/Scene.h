@@ -57,7 +57,7 @@ void SceneIdle(void);
 void SceneFree(void);
 void SceneRay(int width,int height,int mode,
               char **headerVLA,char **charVLA,
-              float angle,float shift);
+              float angle,float shift,int quiet);
 void SceneMakeMovieImage(void);
 
 void ScenePNG(char *png);

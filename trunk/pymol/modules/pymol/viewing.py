@@ -1239,7 +1239,7 @@ NOTES
          unlock()
       return r
 
-   def ray(width=0,height=0,renderer=-1,angle=0.0,shift=0.0):
+   def ray(width=0,height=0,renderer=-1,angle=0.0,shift=0.0,quiet=1):
       '''
 DESCRIPTION
 
@@ -1281,7 +1281,7 @@ SEE ALSO
       try:
          lock()   
          r = _cmd.render(int(width),int(height),
-                         int(renderer),float(angle),float(shift))
+                         int(renderer),float(angle),float(shift),int(quiet))
       finally:
          unlock()
       return r
