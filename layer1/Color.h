@@ -25,7 +25,7 @@ Z* -------------------------------------------------------------------
 #include"OVLexicon.h"
 #include"OVOneToOne.h"
 
-typedef char ColorName[64];
+typedef char ColorName[24];
 
 #define cColorGadgetRamp  1
 
@@ -36,8 +36,8 @@ typedef char ColorName[64];
 typedef struct {
   ColorName Name;
   Vector3f Color,Clamped;
-  int ClampedFlag;
-  int Custom;
+  char ClampedFlag;
+  char Custom;
 } ColorRec;
 
 typedef struct {

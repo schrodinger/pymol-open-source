@@ -77,6 +77,7 @@ Z* -------------------------------------------------------------------
 #include"Seq.h"
 #include"PyMOL.h"
 #include"Movie.h"
+#include"OVContext.h"
 
 #define cLoadTypePDB 0
 #define cLoadTypeMOL 1
@@ -2532,6 +2533,7 @@ static PyObject *CmdMem(PyObject *dummy, PyObject *args)
 {
   MemoryDebugDump();
   SelectorMemoryDump(TempPyMOLGlobals);
+  OVHeap_Dump(TempPyMOLGlobals->Context->heap,0);
 #if 0
   printf(" Py_Debug: %d total references.\n",_Py_CountReferences());
 #endif

@@ -26,7 +26,7 @@ Z* -------------------------------------------------------------------
 #include"Text.h"
 #include"Texture.h"
 
-#define HASH_MASK 0x4FFF
+#define HASH_MASK 0x2FFF
 
 static unsigned int get_hash(CharFngrprnt *fprnt)
 {
@@ -226,7 +226,7 @@ int CharacterInit(PyMOLGlobals *G)
 {
   register CCharacter *I=NULL;
   if( (I=(G->Character=Calloc(CCharacter,1)))) {
-    I->MaxAlloc = 10;
+    I->MaxAlloc = 5;
     I->Char = VLACalloc(CharRec,I->MaxAlloc+1);
     {
       int a;

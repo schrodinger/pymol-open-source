@@ -8681,10 +8681,10 @@ int SelectorInit(PyMOLGlobals *G)
  register CSelector *I=NULL;
   if( (I=(G->Selector=Calloc(CSelector,1)))) {
     
-    I->Name = VLAlloc(SelectorWordType,100);
-    I->Info = VLAlloc(SelectionInfoRec,100);
+    I->Name = VLAlloc(SelectorWordType,10);
+    I->Info = VLAlloc(SelectionInfoRec,10);
     
-    I->Member = (MemberType*)VLAMalloc(10000,sizeof(MemberType),5,true);
+    I->Member = (MemberType*)VLAMalloc(100,sizeof(MemberType),5,true);
     I->Vertex=NULL;
     I->Origin=NULL;
     I->Table=NULL;

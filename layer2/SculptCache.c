@@ -30,10 +30,19 @@ Z* -------------------------------------------------------------------
  (((e+g)<< 6)&0x0FC0)|\
  (((f-g)<<12)&0xF000))
 
+static void SculptCacheCheck(PyMOLGlobals *G)
+{
+  register CSculptCache *I = G->SculptCache;
+  if(!I->Hash) {
+    I->Hash = Alloc(int,CACHE_HASH_SIZE);
+    UtilZeroMem(I->Hash,CACHE_HASH_SIZE*sizeof(int));
+  }
+}
 
 int SculptCacheNewID(PyMOLGlobals *G)
 {
   register CSculptCache *I=G->SculptCache;
+  if(!I->Hash) SculptCacheCheck(G);
   return(I->SculptID++);
 }
 
@@ -41,12 +50,10 @@ int SculptCacheInit(PyMOLGlobals *G)
 {
   register CSculptCache *I=NULL;
   if( (I=(G->SculptCache=Calloc(CSculptCache,1)))) {
-
-    I->Hash = Alloc(int,CACHE_HASH_SIZE);
-    I->List = VLAlloc(SculptCacheEntry,1000);
+    I->Hash = NULL; /* don't allocate until we need it */
+    I->List = VLAlloc(SculptCacheEntry,16);
     I->SculptID=1;
     I->NCached=1;
-    UtilZeroMem(I->Hash,CACHE_HASH_SIZE*sizeof(int));
     return 1;
   } else {
     return 0;
@@ -56,6 +63,7 @@ int SculptCacheInit(PyMOLGlobals *G)
 void SculptCachePurge(PyMOLGlobals *G)
 {
   register CSculptCache *I=G->SculptCache;
+  if(!I->Hash) SculptCacheCheck(G);
   I->SculptID=1;
   I->NCached=1;
   UtilZeroMem(I->Hash,CACHE_HASH_SIZE*sizeof(int));
@@ -64,7 +72,7 @@ void SculptCachePurge(PyMOLGlobals *G)
 void SculptCacheFree(PyMOLGlobals *G) 
 {
   register CSculptCache *I=G->SculptCache;
-
+  if(!I->Hash) SculptCacheCheck(G);
   FreeP(I->Hash);
   VLAFreeP(I->List);
   FreeP(G->SculptCache);
@@ -76,6 +84,7 @@ int SculptCacheQuery(PyMOLGlobals *G,int rest_type,int id0,int id1,int id2,int i
   int *v,i;
   SculptCacheEntry *e;
   int found = false;
+  if(!I->Hash) SculptCacheCheck(G);
   v = I->Hash + cache_hash(id0,id1,id2,id3);
   i = (*v);
   while(i) {
@@ -96,6 +105,7 @@ void SculptCacheStore(PyMOLGlobals *G,int rest_type,int id0,int id1,int id2,int 
   int *v,i;
   SculptCacheEntry *e;
   int found = false;
+  if(!I->Hash) SculptCacheCheck(G);
   v = I->Hash + cache_hash(id0,id1,id2,id3);
   i = (*v);
   while(i) {

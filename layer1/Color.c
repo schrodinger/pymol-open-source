@@ -263,8 +263,8 @@ PyObject *ColorAsPyList(PyMOLGlobals *G)
       PyList_SetItem(list,0,PyString_FromString(color->Name));
       PyList_SetItem(list,1,PyInt_FromLong(a));
       PyList_SetItem(list,2,PConvFloatArrayToPyList(color->Color,3));
-      PyList_SetItem(list,3,PyInt_FromLong(color->Custom));
-      PyList_SetItem(list,4,PyInt_FromLong(color->ClampedFlag));
+      PyList_SetItem(list,3,PyInt_FromLong((int)color->Custom));
+      PyList_SetItem(list,4,PyInt_FromLong((int)color->ClampedFlag));
       PyList_SetItem(list,5,PConvFloatArrayToPyList(color->Clamped,3));
       PyList_SetItem(result,c,list);
       c++;
@@ -349,8 +349,8 @@ int ColorFromPyList(PyMOLGlobals *G,PyObject *list)
         if(ok) ok=PConvPyStrToStr(PyList_GetItem(rec,0),color->Name,sizeof(ColorName));
         if(ok) ok=PConvPyListToFloatArrayInPlace(PyList_GetItem(rec,2),color->Color,3);
         if(PyList_Size(rec)>=6) {
-          if(ok) ok=PConvPyIntToInt(PyList_GetItem(rec,3),&color->Custom);
-          if(ok) ok=PConvPyIntToInt(PyList_GetItem(rec,4),&color->ClampedFlag);
+          if(ok) ok=PConvPyIntToChar(PyList_GetItem(rec,3),&color->Custom);
+          if(ok) ok=PConvPyIntToChar(PyList_GetItem(rec,4),&color->ClampedFlag);
           if(ok) ok=PConvPyListToFloatArrayInPlace(PyList_GetItem(rec,5),color->Clamped,3);
         } else {
           if(ok) {color->Custom=true;}
@@ -2300,7 +2300,7 @@ int ColorInit(PyMOLGlobals *G)
     I->NColor=0;
     ColorReset(G);
     I->NExt=0;
-    I->Ext=VLAMalloc(10,sizeof(ExtRec),5,true);
+    I->Ext=VLAMalloc(2,sizeof(ExtRec),5,true);
     I->ColorTable=NULL;
     return 1;
   } else {
@@ -2314,7 +2314,7 @@ float *ColorGet(PyMOLGlobals *G,int index)
   register CColor *I=G->Color;
   float *ptr;
   if((index>=0)&&(index<I->NColor)) {
-    if(I->Color[index].ClampedFlag&&(int)SettingGet(G,cSetting_clamp_colors))
+    if(I->Color[index].ClampedFlag&&SettingGetGlobal_b(G,cSetting_clamp_colors))
       ptr = I->Color[index].Clamped;
     else
       ptr = I->Color[index].Color;

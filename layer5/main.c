@@ -681,10 +681,10 @@ void MainFree(void)
    if(owned_options)
      PyMOLOptions_Free(owned_options); /* clean up launch options if we're supposed to */
 
+   MemoryDebugDump(); /* this is a no-op unless memory debugging is enabled */
+   
    if(show_splash) {
-     if(show_splash)  MemoryDebugDump();
      printf(" PyMOL: normal program termination.\n");
-
    }
   
 #ifdef WIN32
@@ -1155,8 +1155,6 @@ int was_main(void)
    CPyMOLOptions *options = PyMOLOptions_New();
 
    if(options) {
-     int show_splash;
-
      PGetOptions(options);
 
      /* below need to be phased out by modifying code to use
@@ -1168,7 +1166,6 @@ int was_main(void)
      options->show_splash = 0;
 #endif
 
-     show_splash = options->show_splash;
 
      launch(options,true); 
      /* this only returns when PyMOL is not running under GLUT */
