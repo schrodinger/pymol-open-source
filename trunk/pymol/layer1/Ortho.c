@@ -78,6 +78,7 @@ typedef struct {
   float BusyLast;
   int BusyStatus[4];
   char BusyMessage[255];
+  int SplashFlag;
   CQueue *cmds;
   CQueue *feedback;
 
@@ -95,6 +96,12 @@ Block *OrthoFindBlock(int x,int y);
 
 #define cBusyUpdate 1.0
 
+/*========================================================================*/
+void  OrthoRemoveSplash(void)
+{
+  OrthoObject *I=&Ortho;
+  I->SplashFlag=false;
+}
 /*========================================================================*/
 int  OrthoCommandOut(char *buffer)
 {
@@ -348,7 +355,11 @@ void OrthoKey(unsigned char k,int x,int y)
 		exit(0);
 		break;
 	 case 9:
-      SettingSet(cSetting_text,(float)(!((int)SettingGet(cSetting_text))));
+      if(I->SplashFlag) {
+        OrthoRemoveSplash();
+      } else {
+        SettingSet(cSetting_text,(float)(!((int)SettingGet(cSetting_text))));
+      }
 		break;
 	 case 13:
 		I->Line[I->CurLine&OrthoSaveLines][I->CurChar]=0;
@@ -551,7 +562,7 @@ void OrthoDoDraw()
       glVertex2i(0,cOrthoBottomSceneMargin-1);
       glEnd();
 
-      if((int)SettingGet(cSetting_text))
+      if((int)SettingGet(cSetting_text)||I->SplashFlag)
         showLines=I->ShowLines;
       else
         showLines=1;
@@ -629,6 +640,7 @@ int OrthoButton(int button,int state,int x,int y,int mod)
   Block *block;
   int handled = 0; 
 
+  OrthoRemoveSplash();
   I->X=x;
   I->Y=y;
 
@@ -719,6 +731,7 @@ void OrthoInit(void)
   I->CurChar=0;
   I->Line[I->CurLine&OrthoSaveLines][I->CurChar]=0;
 
+  I->SplashFlag = true;
   I->ShowLines = 1;
   I->Saved[0]=0;
   I->DirtyFlag = true;
@@ -728,10 +741,17 @@ void OrthoInit(void)
   OrthoAddOutput(_PyMOL_VERSION);
   OrthoAddOutput(".");
   OrthoNewLine(NULL);
-  OrthoAddOutput("Copyright (C) 1998-2000 by Warren L. DeLano, Ph.D.\n");
+  OrthoAddOutput("Copyright (C) 1998-2000 by DeLano Scientific.\nAll Rights Reserved.\n \n");
+  OrthoAddOutput("Principle Author:  Warren L. DeLano, Ph.D.\n \n");
+  OrthoAddOutput("Major Authors and Contributors:\n \n");
+  OrthoAddOutput("      Ralf W. Grosse-Kunstleve, Ph.D.\n \n");
   OrthoAddOutput("This software is open source and freely available.\n");
-  OrthoAddOutput("Updates at \"http://www.pymol.org\".\n \n");
-  OrthoAddOutput("Hit TAB to toggle text overlay; type cls to clear.\n");
+  OrthoAddOutput("Updates can be found at \"http://www.pymol.org\".\n \n");
+  OrthoAddOutput("Enter \"help commands\" for a list of commands.\n");
+  OrthoAddOutput("Enter \"help <command-name>\" for information on a specific command.\n \n");
+  OrthoAddOutput("Other help topics include:\n");
+  OrthoAddOutput("    \"keyboard\", \"mouse\", \"selections\", \"api\", and \"examples\".\n \n");
+  OrthoAddOutput("Hit TAB to toggle text; type \"cls\" to clear.\n \n");
   strcpy(I->Prompt,"PyMOL>");
   OrthoNewLine(I->Prompt);
 

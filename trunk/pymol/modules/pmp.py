@@ -118,8 +118,8 @@ try:\n\
             pmp_nest=pmp_nest-1\n\
 except SyntaxError:\n\
    pass\n\
-except NameError:\n\
-   print 'Error: unrecognized command.'\n"
+except NameError,e:\n\
+   print 'NameError: unrecognized command:',e\n"
       
    
 pymol = compile(pymol_str,'PyMOL','exec')

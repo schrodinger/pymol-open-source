@@ -21,6 +21,7 @@ void MainDoReshape(int width, int height);
 void MainDirty(void);
 void MainSwapBuffers(void);
 void MainRefreshNow(void);
+int MainSavingUnderWhileIdle(void);
 
 extern int PyMOLReady;
 extern int PMGUI;

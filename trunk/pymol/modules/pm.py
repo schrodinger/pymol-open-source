@@ -16,7 +16,7 @@
 # Python interface module for PyMol
 #
 # **This is the only module which should be/need be imported by 
-# **PyMol Programs
+# ** PyMol API Based Programs
 
 import re
 import _pm
@@ -52,7 +52,7 @@ COMMANDS
    DISTANCES     dist      
    STEREO        stereo
    SYMMETRY      symexp
-
+ 
 Try "help <command-name>" for more information on a given command.
 Additional help is also available for "selections", for
 special "api" commands, and "keyboard" for keyboard shortcuts.
@@ -73,14 +73,16 @@ def keyboard():
 KEYBOARD COMMANDS and MODIFIERS
  
    TAB          Toggle onscreen text.
-
+ 
    INSERT       Toggle rocking.
-
+ 
    LEFT ARROW   Go backwards one frame.
    RIGHT ARROW  Go forwards one frame.
    END          Go to end of movie.
    HOME         Go to beginning of movie.
  
+ ATOM SELECTIONS (These only work on the "lines" representation!)
+  
    CTRL/left mouse click    Pick atom and store as selection (pk1).
    CTRL/middle mouse click  Pick atom and store as selection (pk2).
    CTRL/right mouse click   Pick atom and store as selection (pk3).
@@ -91,6 +93,55 @@ KEYBOARD COMMANDS and MODIFIERS
    '''
    help('keyboard')
 
+def mouse():
+   '''
+MOUSE CONTROLS
+ 
+   Transformations can be changed by setting the buttom_mode variable.
+   The current configuration is visible on screen with the following
+   abbreviations:
+ 
+      R-XYZ    = Rotates about X, Y, and Z axes
+      R-Z      = Rotates about the Z axis
+      Trans-XY = Translates along the X and Y axes
+      Trans-Z  = Translates along Z axis
+      Clip-NF  = Y motion moves the near clipping plane while
+                 X motion moves the far one
+      Clip-N   = Motion affects only the near clipping plane
+      Clip-F   = Motion affects only the far clipping plane
+ 
+ATOM SELECTIONS (These only work on the "lines" representation!)
+ 
+   CTRL-left mouse click    Pick atom and store as selection (pk1).
+   CTRL-middle mouse click  Pick atom and store as selection (pk2).
+   CTRL-right mouse click   Pick atom and store as selection (pk3).
+ 
+   CTRL-SHIFT-left mouse click    Pick atom and add to selection (pk1).
+   CTRL-SHIFT-middle mouse click  Pick atom and add to selection (pk2).
+   CTRL-SHIFT-right mouse click   Pick atom and add to selection (pk3).
+   '''
+   help('mouse')
+
+def examples():
+   '''
+EXAMPLE ATOM SELECTIONS
+ 
+   select bk = ( name ca or name c or name n )
+      * can be abbreviated as *
+   sel bk = (n;ca,c,n)
+ 
+   select hev = ( not hydro )
+      * can be abbreviated as *
+   sel hev = (!h;)
+ 
+   select site = ( byres ( resi 45:52 expand 5 ))
+      * can be abbreviated as *
+   sel site = (b;(i;45:52 x;5))
+ 
+   select combi = ( hev and not site )
+      * can be abbreviated as *
+   sel combi = (hev&!site)
+   '''
 ### -------------------------------------------------------------------
 def selections():
    '''
@@ -121,19 +172,18 @@ DESCRIPTION
       around <distance>           a;<distance>
       expand <distance>           e;<distance>
       in <selection>              -
-
+ 
    Objects and selections can be referred to by name from within
    subsequent selections.
-
+ 
    "help examples" for some example selections
    '''
    help('selections')
 
-
 def _split(*arg): # custom split-and-trim
    '''
 split(string,token[,count]) -> list of strings
-
+ 
 UTILITY FUNCTION, NOT PART OF THE API
 Breaks strings up by tokens but preserves quoted strings and
 parenthetical groups (such as atom selections).
@@ -257,7 +307,7 @@ NOTES
    arg = _split(argst,',')
    la = len(arg)
    if la<2:
-      print " error: invalid dist arguments"
+      print "Error: invalid arguments for dist command."
       raise RunError
    else:
       sel1 = arg[0]
@@ -274,21 +324,28 @@ NOTES
 def help(*arg):
    '''
 USAGE
-
+ 
    help <command>
    '''
    if len(arg):
       cmd = arg[0]
    else:
       cmd = 'commands'
+   
    if keyword.has_key(cmd):
       doc = keyword[cmd][0].__doc__
       if doc:
          print " \n",string.strip(doc),"\n \n"
       else:
-         print " Error: sorry no help available on that command."
+         print "Error: sorry no help available on that command."
+   elif help_only.has_key(cmd):
+      doc = help_only[cmd][0].__doc__
+      if doc:
+         print " \n",string.strip(doc),"\n \n"
+      else:
+         print "Error: sorry no help available on that command."      
    else:
-      print " Error: unrecognized command"
+      print "Error: unrecognized command"
 
 def symexp(arg):
    '''
@@ -310,7 +367,7 @@ PYMOL API
 
    '''
    if len(arg)<2:
-      print " error: invalid symexp arguments"
+      print "Error: invalid arguments for symexp command."
       raise RunError
    elif len(arg)<3:
       nam= arg[0]
@@ -321,7 +378,7 @@ PYMOL API
    arg = _split(argst,',')
    la = len(arg)
    if la<3:
-      print " error: invalid symexp arguments"
+      print "Error: invalid arguments for symexp command."
       raise RunError
    else:
       obj=arg[0]
@@ -339,14 +396,13 @@ DESCRIPTION
 "isomesh" creates a mesh isosurface object from a map object.
  
 USAGE
-
+ 
    isomesh name = map-object, level [,(selection) [,buffer] ] 
-
    '''
    arg = _split(argst,',')
    la = len(arg)
    if la<1:
-      print " error: invalid mesh arguments"
+      print "Error: invalid arguments for isomesh command."
       raise RunError
    else:
       map=arg[0]
@@ -374,14 +430,13 @@ DESCRIPTION
 "isomesh" creates a dot isosurface object from a map object.
  
 USAGE
-
+ 
    isodot name = map-object, level [,(selection) [,buffer] ] 
-
    '''
    arg = _split(argst,',')
    la = len(arg)
    if la<1:
-      print " error: invalid dot arguments"
+      print "Error: invalid arguments for isodot command."
       raise RunError
    else:
       map=arg[0]
@@ -443,9 +498,9 @@ All strings in the expression must be explicitly quoted.  This
 operation typically takes several seconds per thousand atoms altered.
  
 USAGE
-
+ 
    alter (selection),expression
-
+ 
 EXAMPLES
  
    alter (chain A),chain='B'
@@ -639,9 +694,9 @@ DESCRIPTION
    "turn" rotates the world about one of the three primary axes
       
 USAGE
- 
+  
    turn axis, angle
-
+ 
 EXAMPLES
  
    turn x,90
@@ -701,7 +756,7 @@ DESCRIPTION
 USAGE
  
    intra_fit (selection),state
-
+ 
 PYMOL API
   
    pm.intra_fit( string selection, int state )
@@ -711,7 +766,7 @@ EXAMPLES
    intra_fit ( name ca )
    
 PYTHON EXAMPLE
-
+ 
    import pm
    rms = pm.intra_fit("(name ca)",1)
    '''
@@ -782,10 +837,9 @@ def fit(a,b):
    '''
 DESCRIPTION
   
-   "fit" superimposes the model in the first selection
-   on to the model in the second selection.  Only
-   atoms with matching atoms in both selections will
-   be used for the fit.
+   "fit" superimposes the model in the first selection on to the model
+   in the second selection.  Only matching atoms in both selections
+   will be used for the fit.
    
 USAGE
  
@@ -807,9 +861,8 @@ def rms(a,b):
    '''
 DESCRIPTION
   
-   "rms" computes a RMS fit between two atom
-   selections, but does not tranform the models
-   after performing the fit.
+   "rms" computes a RMS fit between two atom selections, but does not
+   tranform the models after performing the fit.
    
 USAGE
  
@@ -850,15 +903,14 @@ def pairfit(*arg):
    '''
 DESCRIPTION
   
-   "pair_fit" fits a set of atom pairs between two models.  Each
-   atom in each pair must be specified individually, which can be
-   tedious to enter manually.  Script files are recommended
-   when using this command.
+   "pair_fit" fits a set of atom pairs between two models.  Each atom
+   in each pair must be specified individually, which can be tedious
+   to enter manually.  Script files are recommended when using this
+   command.
    
 USAGE
  
    fit_pairs (selection), (selection) [ (selection), (selection) [ ...] ]
-
    '''
    lock()   
    r = _pm.fit_pairs(arg)
@@ -878,14 +930,14 @@ def zoom(a):
    '''
 DESCRIPTION
   
-   "zoom" scales and translates the window and the origin to
-   cover the atom selection.
+   "zoom" scales and translates the window and the origin to cover the
+   atom selection.
       
 USAGE
-
+ 
    zoom object-or-selection
    zoom (selection)
-
+ 
 PYMOL API
  
    pm.orient( string object-or-selection )
@@ -906,11 +958,11 @@ USAGE
    frame frame-number
  
 PYMOL API
-
+ 
    pm.frame( int frame_number )
  
 NOTES
-
+ 
    Frame numbers are 1-based 
    '''
    lock()   
@@ -925,9 +977,9 @@ DESCRIPTION
    "move" translates the world about one of the three primary axes.
       
 USAGE
- 
+  
    move axis,angle
-
+ 
 EXAMPLES
  
    move x,3
@@ -949,9 +1001,9 @@ DESCRIPTION
    "clip" translates the near and far clipping planes
       
 USAGE
- 
+  
    clip {near|far}, distance
-
+ 
 EXAMPLES
  
    clip near, -5
@@ -973,10 +1025,10 @@ DESCRIPTION
    "origin" sets the center of rotation about a selection
       
 USAGE
-
+ 
    origin object-or-selection
    origin (selection)
-
+ 
 PYMOL API
  
    pm.origin( string object-or-selection )
@@ -994,10 +1046,10 @@ DESCRIPTION
    atoms in the selection with the XYZ axes.
       
 USAGE
-
+ 
    orient object-or-selection
    orient (selection)
-
+ 
 PYMOL API
  
    pm.orient( string object-or-selection )
@@ -1048,9 +1100,9 @@ DESCRIPTION
    "set" changes one of the PyMOL state variables
       
 USAGE
-
+ 
    set variable = value
-
+ 
 PYMOL API
  
    pm.set ( string variable, string value )
@@ -1069,9 +1121,9 @@ DESCRIPTION
    planes to cover all objects.
    
 USAGE
-
+ 
    reset 
-
+ 
 PYMOL API
  
    pm.reset ( )
@@ -1081,7 +1133,7 @@ PYMOL API
    unlock()
    return r
 
-def reset_rate():
+def meter_reset():
    '''
 UNDOCUMENTED
    '''
@@ -1097,10 +1149,10 @@ DESCRIPTION
    "delete" removes an object or a selection. 
    
 USAGE
-
+ 
    delete object-or-selection-name
    delete all
-
+ 
 PYMOL API
  
    pm.delete ( string object-or-selection-name )
@@ -1123,9 +1175,9 @@ DESCRIPTION
    "quit" terminates the program. 
    
 USAGE
-
+ 
    quit
-
+ 
 PYMOL API
  
    pm.quit()
@@ -1145,9 +1197,9 @@ DESCRIPTION
    "png" writes a png format image file of the current image to disk.
    
 USAGE
-
+ 
    png filename
-
+ 
 PYMOL API
  
    pm.png( string filename )
@@ -1174,9 +1226,9 @@ DESCRIPTION
    "mclear" clears the movie frame image cache.
    
 USAGE
-
+ 
    mclear
-
+ 
 PYMOL API
  
    pm.mclear()
@@ -1242,9 +1294,9 @@ DESCRIPTION
    "mstop" stops the movie.
    
 USAGE
-
+ 
    mstop
-
+ 
 PYMOL API
  
    pm.mstop()
@@ -1261,9 +1313,9 @@ DESCRIPTION
    "mplay" starts the movie.
    
 USAGE
-
+ 
    mplay
-
+ 
 PYMOL API
  
    pm.mplay()
@@ -1304,10 +1356,10 @@ def mdo(a,b):
 DESCRIPTION
   
    "mdo" sets up a command to be executed upon entry into the
-   specified frame of the movie.  These commands are usually
-   created by a PyMOL utility program (such as pmu.mrock).  Command
-   can actually contain several commands separated by semicolons ';'
-
+   specified frame of the movie.  These commands are usually created
+   by a PyMOL utility program (such as pmu.mrock).  Command can
+   actually contain several commands separated by semicolons ';'
+ 
 USAGE
  
    mdo frame : command
@@ -1315,9 +1367,9 @@ USAGE
 PYMOL API
   
    pm.mdo( int frame, string command )
-
+ 
 EXAMPLE
-
+ 
    // Creates a single frame movie involving a rotation about X and Y
    
    load test.pdb
@@ -1326,7 +1378,7 @@ EXAMPLE
    mplay
    
 NOTES
-
+ 
    The "mset" command must first be used to define the movie before
    any "mdo" statements will have any effect.
    '''
@@ -1349,7 +1401,7 @@ def rock():
 DESCRIPTION
   
    "rock" toggles Y axis rocking.
-
+ 
 USAGE
  
    rock
@@ -1368,7 +1420,7 @@ def forward():
 DESCRIPTION
   
    "forward" moves the movie one frame forward.
-
+ 
 USAGE
  
    forward
@@ -1387,7 +1439,7 @@ def backward():
 DESCRIPTION
   
    "backward" moves the movie back one frame.
-
+ 
 USAGE
  
    backward
@@ -1407,9 +1459,9 @@ def rewind():
 DESCRIPTION
   
    "rewind" goes to the beginning of the movie.
-
+ 
 USAGE
-
+ 
    rewind
  
 PYMOL API
@@ -1426,9 +1478,9 @@ def ending():
 DESCRIPTION
   
    "ending" goes to the end of the movie.
-
+ 
 USAGE
-
+ 
    ending
  
 PYMOL API
@@ -1445,7 +1497,7 @@ def middle():
 DESCRIPTION
   
    "middle" goes to the middle of the movie.
-
+ 
 USAGE
  
    middle
@@ -1482,7 +1534,7 @@ def save(*arg):
 DESCRIPTION
   
    "save" writes selected atoms to a PDB file
-
+ 
 USAGE
  
    save filename [,(selection) [,state] ]
@@ -1542,14 +1594,15 @@ def load(*arg):
    '''
 DESCRIPTION
   
-   "load" reads several file formats.  The file extension
-   is used to determine the format.  PDB files must end in ".pdb",
-   MOL files must end in ".mol", Macromodel files must end in ".mmod".
-   and XPLOR maps must end in ".xplor".
-
+   "load" reads several file formats.  The file extension is used to
+   determine the format.  PDB files must end in ".pdb", MOL files must
+   end in ".mol", Macromodel files must end in ".mmod".  and XPLOR
+   maps must end in ".xplor".
+ 
    If an object is specified, then the file is load into that object.
-   Otherwise, an object is created with the same name as the file prefix.
-
+   Otherwise, an object is created with the same name as the file
+   prefix.
+ 
 USAGE
  
    load filname [,object ,[state]]
@@ -1629,12 +1682,12 @@ def select(*arg):
 DESCRIPTION
   
    "select" creates a named selection from an atom selection.
-
+ 
 USAGE
  
    select (selection)
    select selection-name = 
-
+ 
 PYMOL API
   
    pm.load( filename [,object [,state]] )
@@ -1668,13 +1721,13 @@ USAGE
    color color-name
    color color-name, object-name
    color color-name, (selection)
-
+ 
 PYMOL API
   
    pm.color( string color, string color-name )
  
 EXAMPLES 
-
+ 
    color yellow, (name C*)
    '''
    lock()   
@@ -1696,13 +1749,13 @@ DESCRIPTION
 USAGE
  
    colordef color, red-float green-float blue-float
-
+ 
 PYMOL API
   
    pm.colordef( string color, string color-components )
  
 EXAMPLES 
-
+ 
    colordef red, 1.0 0.0 0.0 
    '''
    r = 1
@@ -1711,7 +1764,7 @@ EXAMPLES
    if len(c)==3:
       r = _pm.colordef(nam,float(c[0]),float(c[1]),float(c[2]))
    else:
-      print "invalid color vector"
+      print "Error: invalid color vector."
    unlock()
    return r
 
@@ -1723,14 +1776,14 @@ DESCRIPTION
    the specified prefix.  If the "ray_trace_frames" variable is
    non-zero, these frames will be ray-traced.  This operation can take
    several hours for a long movie.
-
-   Be sure to disable "cache_frames" when issuing this operation on
-   a long movie (typically >100 frames to avoid running out of memory).
+ 
+   Be sure to disable "cache_frames" when issuing this operation on a
+   long movie (typically >100 frames to avoid running out of memory).
    
 USAGE
-
+ 
    mpng prefix
-
+ 
 PYMOL API
  
    pm.mpng( string prefix )
@@ -1762,22 +1815,22 @@ DESCRIPTION
       sticks    dots      surface     
    
 USAGE
-
+ 
    show
    show reprentation [,object]
    show reprentation [,(selection)]
-
+ 
 PYMOL API
  
    pm.show( string representation, string object-or-selection )
  
 EXAMPLES
-
+ 
    show lines,(name ca or name c or name n)
    show ribbon
-
+ 
 NOTES
-
+ 
    "show" alone will turn on lines for all bonds.
    '''
    r=1
@@ -1811,16 +1864,16 @@ DESCRIPTION
       sticks    dots      surface     
    
 USAGE
-
+ 
    hide reprentation [,object]
    hide reprentation [,(selection)]
-
+ 
 PYMOL API
  
    pm.hide( string representation, string object-or-selection )
  
 EXAMPLES
-
+ 
    hide lines,all
    hide ribbon
    '''
@@ -1850,15 +1903,15 @@ DESCRIPTION
    "mmatrix" sets up a matrix to be used for the first frame of the movie.
    
 USAGE
-
+ 
    mmatrix {clear|store|recall}
-
+ 
 PYMOL API
  
    pm.mmatrix( string action )
  
 EXAMPLES
-
+ 
    mmatrix store
    '''
    r = 1
@@ -1945,7 +1998,7 @@ EXAMPLES
      // the first thirty frames are state 1
      // the next 15 frames pass through states 1-15
      // the next 30 frames are of state 15
-     // over the next 15 frames we iterate back to state 1
+     // the next 15 frames iterate back to state 1
    '''
    lock()   
    output=[]
@@ -2008,9 +2061,9 @@ keyword = {
    'intra_rms_cur' : [intra_rms_cur, 1 , 2 , ',' , 0 ],
    'isodot'        : [isodot       , 2 , 2 , '=' , 0 ],   
    'isomesh'       : [isomesh      , 2 , 2 , '=' , 0 ],
-   'keyboard'      : [keyboard     , 0 , 0 , ',' , 0 ],
    'load'          : [load         , 1 , 4 , ',' , 0 ],
    'mem'           : [mem          , 0 , 0 , ',' , 0 ],
+   'meter_reset'   : [meter_reset  , 0 , 0 , ',' , 0 ],
    'move'          : [move         , 2 , 2 , ',' , 0 ],
    'mset'          : [mset         , 1 , 1 , ',' , 0 ],
    'mdo'           : [mdo          , 2 , 2 , ':' , 1 ],
@@ -2028,16 +2081,13 @@ keyword = {
    'ray'           : [ray          , 0 , 0 , ',' , 0 ],
    'refresh'       : [refresh      , 0 , 0 , ',' , 0 ],
    'reset'         : [reset        , 0 , 0 , ',' , 0 ],
-   'reset_rate'    : [reset_rate   , 0 , 0 , ',' , 0 ],
    'rewind'        : [rewind       , 0 , 0 , ',' , 0 ],
    'rock'          : [rock         , 0 , 0 , ',' , 0 ],
    'run'           : [dummy        , 1 , 2 , ',' , 2 ],
    'rms'           : [rms          , 2 , 2 , ',' , 0 ],
    'rms_cur'       : [rms_cur      , 2 , 2 , ',' , 0 ],
    'save'          : [save         , 0 , 4 , ',' , 0 ],
-   'sel'           : [select       , 1 , 2 , '=' , 0 ],
    'select'        : [select       , 1 , 2 , '=' , 0 ],
-   'selections'    : [selections   , 0 , 0 , ',' , 0 ],
    'set'           : [set          , 2 , 2 , '=' , 0 ],
    'set_key'       : [set_key      , 2 , 1 , ',' , 0 ], # API only
    'show'          : [show         , 0 , 2 , ',' , 0 ],
@@ -2055,6 +2105,12 @@ keyword = {
    'zoom'          : [zoom         , 1 , 1 , ',' , 0 ]
    }
 
+help_only = {
+   'selections'    : [selections   , 0 , 0 , ',' , 0 ],
+   'keyboard'      : [keyboard     , 0 , 0 , ',' , 0 ],
+   'mouse'         : [mouse        , 0 , 0 , ',' , 0 ],
+   'examples'      : [examples     , 0 , 0 , ',' , 0 ],
+}
 
 repres = {
    'lines'         : 0,

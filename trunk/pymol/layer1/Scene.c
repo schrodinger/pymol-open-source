@@ -422,14 +422,20 @@ void SceneObjectDel(Object *obj)
 void SceneDraw(Block *block)
 {
   CScene *I=&Scene;
+  int overlay,text;
 
   if(PMGUI) {
-    if(I->CopyFlag)
-      {
-        glReadBuffer(GL_BACK);
-        glRasterPos3i(I->Block->rect.left,I->Block->rect.bottom,0);
-        glDrawPixels(I->Width,I->Height,GL_RGBA,GL_UNSIGNED_BYTE,I->ImageBuffer);
-      }
+    overlay = SettingGet(cSetting_overlay);
+    text = SettingGet(cSetting_text);
+
+    if(overlay||(!text)) 
+
+      if(I->CopyFlag)
+        {
+          glReadBuffer(GL_BACK);
+          glRasterPos3i(I->Block->rect.left,I->Block->rect.bottom,0);
+          glDrawPixels(I->Width,I->Height,GL_RGBA,GL_UNSIGNED_BYTE,I->ImageBuffer);
+        }
     
     glColor3f(1.0,1.0,1.0);
   }
@@ -558,7 +564,7 @@ int SceneDrag(Block *block,int x,int y,int mod)
   CScene *I=&Scene;
   GLfloat scale;
   GLfloat v1[3],v2[3],n1[3],n2[3],r1,r2,cp[3];
-  GLfloat axis[3],theta;
+  GLfloat axis[3],axis2[3],theta,omega;
   int but;
   y=y-I->Block->margin.bottom;
   scale = I->Height;
@@ -592,7 +598,15 @@ int SceneDrag(Block *block,int x,int y,int mod)
 	 cross_product(n1,n2,cp);
 	 theta = 2*180*asin(sqrt(cp[0]*cp[0]+cp[1]*cp[1]+cp[2]*cp[2]))/3.14;
 	 normalize(cp,axis);
-	 
+
+    v1[2]=0.0;
+    v2[2]=0.0;
+	 normalize(v1,n1);
+	 normalize(v2,n2);
+	 cross_product(n1,n2,cp);
+    omega = 2*180*asin(sqrt(cp[0]*cp[0]+cp[1]*cp[1]+cp[2]*cp[2]))/3.14;
+	 normalize(cp,axis2);	 
+
 	 switch(I->Button) {
 	 case GLUT_LEFT_BUTTON:
 		but=0;
@@ -617,6 +631,18 @@ int SceneDrag(Block *block,int x,int y,int mod)
 		if(I->LastY!=y)
 		  {
 			 SceneRotate(theta,axis[0],axis[1],-axis[2]);
+			 I->LastY=y;
+		  }
+		break;
+	 case cButModeRotZ:
+		if(I->LastX!=x)
+		  {
+			 SceneRotate(omega,axis2[0],axis2[1],-axis2[2]);
+			 I->LastX=x;
+		  }
+		if(I->LastY!=y)
+		  {
+			 SceneRotate(omega,axis2[0],axis2[1],-axis2[2]);
 			 I->LastY=y;
 		  }
 		break;
@@ -661,6 +687,46 @@ int SceneDrag(Block *block,int x,int y,int mod)
 				I->Front=I->Back+cSliceMin;
 			 if(I->Front<cFrontMin) I->Front=cFrontMin;
 			 I->FrontSafe= (I->Front<cFrontMin ? cFrontMin : I->Front);
+			 I->LastY=y;
+			 SceneDirty();
+		  }
+		break;
+	 case cButModeClipN:
+		if(I->LastX!=x)
+		  {
+			 I->Front-=(((float)x)-I->LastX)/10;
+			 if(I->Front>I->Back)
+				I->Front=I->Back+cSliceMin;
+			 if(I->Front<cFrontMin) I->Front=cFrontMin;
+			 I->FrontSafe= (I->Front<cFrontMin ? cFrontMin : I->Front);
+			 I->LastX=x;
+			 SceneDirty();
+		  }
+		if(I->LastY!=y)
+		  {
+			 I->Front-=(((float)y)-I->LastY)/10;
+			 if(I->Front>I->Back)
+				I->Front=I->Back+cSliceMin;
+			 if(I->Front<cFrontMin) I->Front=cFrontMin;
+			 I->FrontSafe= (I->Front<cFrontMin ? cFrontMin : I->Front);
+			 I->LastY=y;
+			 SceneDirty();
+		  }
+		break;
+	 case cButModeClipF:
+		if(I->LastX!=x)
+		  {
+			 I->Back-=(((float)x)-I->LastX)/10;
+			 if(I->Back<I->Front)
+				I->Back=I->Front+cSliceMin;
+			 I->LastX=x;
+			 SceneDirty();
+		  }
+		if(I->LastY!=y)
+		  {
+			 I->Back-=(((float)y)-I->LastY)/10;
+			 if(I->Back<I->Front)
+				I->Back=I->Front+cSliceMin;
 			 I->LastY=y;
 			 SceneDirty();
 		  }
@@ -996,6 +1062,7 @@ void SceneRender(Pickable *pick,int x,int y)
   GLfloat normal[4] = { 0.0, 0.0, 1.0, 0.0 };
   GLfloat aspRat = ((GLfloat) I->Width) / ((GLfloat) I->Height);
   GLfloat height,width;
+  float start_time;
   int view_save[4];
   Pickable *pickVLA;
   int index;
@@ -1164,7 +1231,8 @@ void SceneRender(Pickable *pick,int x,int y)
 		
     } else {
       /* rendering for visualization */
-	
+
+      start_time = UtilGetSeconds();
       if(I->StereoMode) {
         /*stereo*/
 
@@ -1225,8 +1293,10 @@ void SceneRender(Pickable *pick,int x,int y)
     I->RenderTime += I->LastRender;
     ButModeSetRate(I->RenderTime);
     if(I->CopyNextFlag) {
-      if(!(ControlIdling()))
-        SceneCopy(0);
+      start_time = I->LastRender - start_time;
+      if((start_time>0.25)||(MainSavingUnderWhileIdle()))
+        if(!(ControlIdling()))
+          SceneCopy(0);
     } else {
       I->CopyNextFlag=true;
     }

@@ -24,6 +24,7 @@ Z* -------------------------------------------------------------------
 #include"Ortho.h"
 #include"Setting.h"
 #include"Scene.h"
+#include"ButMode.h"
 
 CSetting Setting;
 
@@ -64,10 +65,16 @@ void SettingSetfv(int index,float *v)
   case cSetting_sel_counter:
 	 I->Setting[index].Value[0]=v[0];
 	 break;
+  case cSetting_button_mode:
+    ButModeChange((int)v[0]);
+    OrthoDirty();
+	 I->Setting[index].Value[0]=v[0];
+    break;
   case cSetting_ortho:
   case cSetting_ambient:
 	 SceneDirty();
   case cSetting_overlay:
+  case cSetting_text:
     OrthoDirty();
   default:
 	 I->Setting[index].Value[0]=v[0];
@@ -112,6 +119,9 @@ void SettingSetNamed(char *name,char *value)
 		SettingSetfv(index,&v);
 		sprintf(buffer," Setting: %s set to %d\n",I->Setting[index].Name,(int)v);
 		break;
+    case cSetting_button_mode:
+	 case cSetting_text:
+	 case cSetting_overlay:
 	 case cSetting_sel_counter:
 		sscanf(value,"%f",&v);
 		SettingSetfv(index,&v);
@@ -479,14 +489,19 @@ void SettingInit(void)
 			"auto_zoom");
 
   I->NSetting++;
-  I->Setting[cSetting_overlay].Value[0] = 1.0;
+  I->Setting[cSetting_overlay].Value[0] = 0.0;
   strcpy(I->Setting[cSetting_overlay].Name,
 			"overlay");
 
   I->NSetting++;
-  I->Setting[cSetting_text].Value[0] = 1.0;
+  I->Setting[cSetting_text].Value[0] = 0.0;
   strcpy(I->Setting[cSetting_text].Name,
 			"text");
+
+  I->NSetting++;
+  I->Setting[cSetting_button_mode].Value[0] = 0.0;
+  strcpy(I->Setting[cSetting_button_mode].Name,
+			"button_mode");
 
   I->NSetting++;
 #ifdef _PYMOL_WINDOWS
