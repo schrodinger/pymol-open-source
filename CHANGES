@@ -4,6 +4,9 @@ CHANGE LOG
 
 Changes up to 0.98
 
+   * long-term code changes: elimination of global state from PyMOL and
+     allow for option of separating PyMOL graphics from Python top level
+
    * support for residue names and identifiers in mol2 files
 
    * dynamic grid for slice module

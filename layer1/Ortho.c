@@ -1565,6 +1565,7 @@ int OrthoInit(PyMOLGlobals *G,int showSplash)
 
   I->cmds = QueueNew(G,0xFFFF);
   I->feedback = QueueNew(G,0xFFFF);
+  printf("%p %p\n",I,I->feedback);
 
   I->WizardBackColor[0]=0.2F;
   I->WizardBackColor[1]=0.2F;

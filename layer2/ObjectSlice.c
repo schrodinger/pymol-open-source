@@ -956,15 +956,10 @@ static void ObjectSliceRender(ObjectSlice *I,int state,CRay *ray,Pickable **pick
               offset = *(strip++);
               switch(offset) {
               case START_STRIP:
-                if(!strip_active) {
-                  glBegin(GL_TRIANGLES);
-                }
                 strip_active=true;
                 tri_count = 0;
                 break;
               case STOP_STRIP:
-                if(strip_active)
-                  glEnd();
                 strip_active=false;
                 break;
               default:
