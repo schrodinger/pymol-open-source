@@ -32,19 +32,21 @@ class DictDBInfo:
    def __init__(self):
       self.used = 0   # bytes containing data
       self.wasted = 0 # bytes wasted (from deleted/overwitten records)
-
+      
 class DictDBLocal:
 
    __magic__ = r'*8#~'  # 32-bit record stamp for record
    __delete_magic__ = '*8#@'  # 32-bit record stamp for deleted record
    
 
-   def __init__(self,prefix,bin=1):
+   def __init__(self,prefix,bin=1,read_only=0):
 
       # store important information
       self.index_file = prefix + ".dbi"  # database information (can be reconstructed from .dbf) 
       self.data_file = prefix + ".dbf"   # database data 
       self.bin = bin
+      self.changed = 0
+      self.read_only = read_only
       
       # create lock
       self.lock = threading.RLock() # NOTE: recursive for convenience
@@ -101,7 +103,6 @@ class DictDBLocal:
 
    def __delitem__(self,key):
       result = None
-
       # restore dictionary (if nec.)      
       if not hasattr(self,'rec'):
          self._restore()
@@ -115,17 +116,21 @@ class DictDBLocal:
 
             # delete record
             del self.rec[key]
+
+            if not self.read_only:
+               # write delete magic to data file for recovery
+               f=open(self.data_file,'ab')
+               f.write(self.__delete_magic__) 
+               cPickle.dump(key,f,self.bin) 
+               f.close()
+
+               # write blank index to index file
+               f=open(self.index_file,'ab')
+               cPickle.dump((key,None),f,self.bin)
+               f.close()
             
-            # write delete magic to data file for recovery
-            f=open(self.data_file,'ab')
-            f.write(self.__delete_magic__) 
-            cPickle.dump(key,f,self.bin) 
-            f.close()
-            
-            # write blank index to index file
-            f=open(self.index_file,'ab')
-            cPickle.dump((key,None),f,self.bin)
-            f.close()
+            # note change
+            self.changed = 1
          else:
             raise KeyError(key)
       finally:
@@ -137,7 +142,7 @@ class DictDBLocal:
       result = None
 
       # only do something if dictionary is already in RAM
-      if hasattr(self,'rec'):
+      if hasattr(self,'rec') and not self.read_only:
          try:
             self.lock.acquire()
             
@@ -159,19 +164,20 @@ class DictDBLocal:
       try:
          self.lock.acquire()
 
+         if not self.read_only:
          # make sure files exist and are writable
 
-         f = open(self.index_file,'wb')
-         f.close()
+            f = open(self.index_file,'wb')
+            f.close()
 
-         f = open(self.data_file,'wb')
-         f.close()
+            f = open(self.data_file,'wb')
+            f.close()
 
          # new database information
          
          self.info = DictDBInfo()
          self.rec = {}
-
+         self.changed = 1
          self.standby() # write out blank indexes (important)
          
       finally:
@@ -180,47 +186,45 @@ class DictDBLocal:
       
    def purge(self):
       result = None
-
       # restore dictionary (if nec.)
       if not hasattr(self,'rec'):
          self._restore()
       try:
          self.lock.acquire()
+         if not self.read_only:
+            # open source and temporary data files
+            tmp_data = self.data_file + '_tmp'
+            f = open(self.data_file,'rb')
+            g = open(tmp_data,'wb')
+            rec = self.rec
+            used = 0
 
-         # open source and temporary data files
-         tmp_data = self.data_file + '_tmp'
-         f = open(self.data_file,'rb')
-         g = open(tmp_data,'wb')
-         rec = self.rec
-         used = 0
+            # iterate through records, copying only those which are extant
+            for key in self.rec.keys():
+               f.seek(rec[key][0])
+               g.write(self.__magic__)
+               cPickle.dump(key,g,self.bin);
+               start = g.tell()
+               g.write(f.read(rec[key][1]))
+               used = used + rec[key][1]
+               rec[key]=(start,rec[key][1]) # generate new record entry
+            f.close()
+            g.close()
 
-         # iterate through records, copying only those which are extant
-         for key in self.rec.keys():
-            f.seek(rec[key][0])
-            g.write(self.__magic__)
-            cPickle.dump(key,g,self.bin);
-            start = g.tell()
-            g.write(f.read(rec[key][1]))
-            used = used + rec[key][1]
-            rec[key]=(start,rec[key][1]) # generate new record entry
-         f.close()
-         g.close()
+            # now perform the switch-over 
+            os.unlink(self.index_file) # delete old index file...         
+            os.unlink(self.data_file)  # delete old data file
+            os.rename(tmp_data,self.data_file) # move new data file over old
 
-         # now perform the switch-over 
-         os.unlink(self.index_file) # delete old index file...         
-         os.unlink(self.data_file)  # delete old data file
-         os.rename(tmp_data,self.data_file) # move new data file over old
+            # update database information
+            self.info.used = used
+            self.info.wasted = 0
 
-         # update database information
-         self.info.used = used
-         self.info.wasted = 0
-
-         # write new index and information file
-         f=open(self.index_file,'wb')
-         cPickle.dump(self.info,f,self.bin)
-         cPickle.dump(self.rec,f,self.bin)
-         f.close()
-
+            # write new index and information file
+            f=open(self.index_file,'wb')
+            cPickle.dump(self.info,f,self.bin)
+            cPickle.dump(self.rec,f,self.bin)
+            f.close()
       finally:
          self.lock.release()
       return result
@@ -241,6 +245,7 @@ class DictDBLocal:
             f=open(self.data_file)
             f.seek(self.rec[key][0])
             result = cPickle.load(f)
+            f.close()
          else:
             raise KeyError(key)
       finally:
@@ -261,6 +266,7 @@ class DictDBLocal:
             f=open(self.data_file)
             f.seek(self.rec[key][0])
             result = f.read(self.rec[key][1])
+            f.close()
       finally:
          self.lock.release()
       return result
@@ -297,6 +303,9 @@ class DictDBLocal:
          f=open(self.index_file,'ab')
          cPickle.dump((key,record_info),f,self.bin)
          f.close()
+         
+         # note change
+         self.changed = 1
       finally:
          self.lock.release()
       return result
@@ -309,15 +318,17 @@ class DictDBLocal:
          self._restore()
       try:
          self.lock.acquire()
+         self.changed = 1
 
-         # append data onto data file         
-         f=open(self.data_file,'ab')
-         f.write(self.__magic__) # for recovery
-         cPickle.dump(key,f,self.bin) # for recovery
-         start = f.tell()
-         f.write(data_string)
-         record_info = (start,f.tell()-start)
-         f.close()
+         if not self.read_only:
+            # append data onto data file         
+            f=open(self.data_file,'ab')
+            f.write(self.__magic__) # for recovery
+            cPickle.dump(key,f,self.bin) # for recovery
+            start = f.tell()
+            f.write(data_string)
+            record_info = (start,f.tell()-start)
+            f.close()
 
          # account for space (if replacing)       
          if self.rec.has_key(key):
@@ -328,11 +339,12 @@ class DictDBLocal:
 
          # account for space
          self.info.used = self.info.used + record_info[1]
-         
-         # append new record onto index file
-         f=open(self.index_file,'ab')
-         cPickle.dump((key,record_info),f,self.bin)
-         f.close()
+
+         if not self.read_only:
+            # append new record onto index file
+            f=open(self.index_file,'ab')
+            cPickle.dump((key,record_info),f,self.bin)
+            f.close()
       finally:
          self.lock.release()
       return result
@@ -383,11 +395,12 @@ class DictDBLocal:
             print " dictdb error: database recovery failed."
             traceback.print_exc()
             sys.exit(1)
-         # write recovered indexes to a new index file
-         f = open(self.index_file,'wb')
-         cPickle.dump(self.info,f,self.bin)
-         cPickle.dump(self.rec,f,self.bin)
-         f.close()
+         if not self.read_only:
+            # write recovered indexes to a new index file
+            f = open(self.index_file,'wb')
+            cPickle.dump(self.info,f,self.bin)
+            cPickle.dump(self.rec,f,self.bin)
+            f.close()
       finally:
          self.lock.release()
       return result
@@ -484,6 +497,7 @@ class DictDBClient:
          raise KeyError(key)
 
    def __setitem__(self,key,object):
+      self.changed = 1
       return self._remote_call('_set',(key,cPickle.dumps(object)),{})
 
 

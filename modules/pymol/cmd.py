@@ -2126,7 +2126,7 @@ TO DOCUMENT
       unlock()
    return r
 
-def unprotect(*arg):
+def deprotect(*arg):
    '''
 TO DOCUMENT
 '''
@@ -4314,6 +4314,7 @@ keyword = {
    'cycle_valence' : [cycle_valence, 0 , 0 , ',' , 0 ],
    'create'        : [create       , 2 , 2 , '=' , 0 ],   
    'delete'        : [delete       , 1 , 1 , ',' , 0 ],
+   'deprotect'     : [deprotect    , 0 , 1 , ',' , 0 ],   
    'dir'           : [ls          , 0 , 1 , ',' , 0 ],  
    'disable'       : [disable      , 0 , 1 , ',' , 0 ],
    'dist'          : [dist         , 0 , 2 , '=' , 0 ],
@@ -4403,7 +4404,7 @@ keyword = {
    'unbond'        : [unbond       , 0 , 3 , ',' , 0 ],
    'undo'          : [undo         , 0 , 0 , ',' , 0 ],
    'unmask'        : [unmask       , 0 , 1 , ',' , 0 ],
-   'unprotect'     : [unprotect    , 0 , 1 , ',' , 0 ],
+   'unprotect'     : [deprotect    , 0 , 1 , ',' , 0 ],
    'update'        : [update       , 2 , 2 , ',' , 0 ],
    'viewport'      : [viewport     , 2 , 2 , ',' , 0 ],
    'wizard'        : [wizard       , 1 , 1 , ',' , 0 ],
