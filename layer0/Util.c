@@ -133,10 +133,11 @@ void *UtilArrayMalloc(unsigned int *dim,int ndim,unsigned int atom_size)
 void UtilSortIndex(int n,void *array,int *x,UtilOrderFn* fOrdered)
 {
   int l,a,r,t,i;
-  
+
+  if(n<1) return;
+  else if(n==1) { x[0]=0; return; }
   x--;
   for(a=1;a<=n;a++) x[a]=a;
-  if(n<=1) return;
   l=(n>>1)+1;
   r=n;
   while(1) {

@@ -186,7 +186,7 @@ Rep *RepRibbonNew(CoordSet *cs)
 		s=seg;
 		v=nv;
 		
-		tv = Alloc(float,nAt*3);
+		tv = Alloc(float,nAt*3+6);
 		v1=tv;
 		
 		*(v1++)=*(v++); /* first segment */
@@ -326,6 +326,11 @@ Rep *RepRibbonNew(CoordSet *cs)
 	 I->V=(float*)mrealloc(I->V,sizeof(float)*(v-I->V));
   else
 	 I->V=(float*)mrealloc(I->V,1);
+
+  if(I->NC) 
+	 I->VC=(float*)mrealloc(I->VC,sizeof(float)*(v-I->VC));
+  else
+	 I->VC=(float*)mrealloc(I->VC,1);
   
   return((void*)(struct Rep*)I);
 }
