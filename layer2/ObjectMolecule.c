@@ -136,8 +136,9 @@ static char *skip_fortran(int num,int per_line,char *p)
 }
 /*========================================================================*/
 
-ObjectMolecule *ObjectMoleculeLoadTRJFile(ObjectMolecule *I,
-                                          char *fname,int frame,int discrete)
+ObjectMolecule *ObjectMoleculeLoadTRJFile(ObjectMolecule *I,char *fname,int frame,
+                                          int interval,int average,int start,
+                                          int stop,int max)
 {
   int ok=true;
   FILE *f;
@@ -148,12 +149,19 @@ ObjectMolecule *ObjectMoleculeLoadTRJFile(ObjectMolecule *I,
   int skip_first_line = true;
   int periodic=false;
   float f0,f1,f2,f3,*fp;
-  int a,b,c;
+  int a,b,c,i;
   int zoom_flag=false;
   int cnt=0;
+  int n_avg=0;
+  int icnt;
+  int ncnt=0;
   CoordSet *cs = NULL;
 
-  #define BUFSIZE 1048576
+  if(interval<1)
+    interval=1;
+
+  icnt=interval;
+  #define BUFSIZE 4194304
   #define GETTING_LOW 10000
 
   f=fopen(fname,"rb");
@@ -162,9 +170,15 @@ ObjectMolecule *ObjectMoleculeLoadTRJFile(ObjectMolecule *I,
   else
 	 {
       cs=CoordSetCopy(I->CSet[0]);
+      if(!cs) {
+        PRINTFB(FB_Errors,FB_ObjectMolecule)
+          " ObjMolLoadTRJFile: Missing topology"
+          ENDFB;
+        return(I);
+      }
       cs->IsPlaceHolder=false;
       PRINTFB(FB_ObjectMolecule,FB_Blather) 
-        " ObjectMoleculeLoadTOPFile: Loading from %s.\n",fname
+        " ObjMolLoadTRJFile: Loading from '%s'.\n",fname
         ENDFB;
       buffer = (char*)mmalloc(BUFSIZE+1); /* 1 MB read buffer */
       p = buffer;
@@ -214,42 +228,108 @@ ObjectMolecule *ObjectMoleculeLoadTRJFile(ObjectMolecule *I,
                 }
               }
               if(!periodic) {
-                fp=cs->Coord+3*a;
-                *(fp++)=f0;
-                *(fp++)=f1;
-                *(fp++)=f2;
+                if((cnt+1)>=start) {
+                  if(icnt<=1) {
+                    fp=cs->Coord+3*a;
+                    if(n_avg) {
+                      *(fp++)+=f0;
+                      *(fp++)+=f1;
+                      *(fp++)+=f2;
+                    } else {
+                      *(fp++)=f0;
+                      *(fp++)=f1;
+                      *(fp++)=f2;
+                    }
+                  }
+                }
                 if((++a)==I->NAtom) {
-
+                  cnt++;
                   a=0;
                   if(b) p=nextline(p);
                   b=0;
-                  /* add new coord set */
-                  if(cs->fInvalidateRep)
-                    cs->fInvalidateRep(cs,cRepAll,cRepInvRep);
-                  frame=I->NCSet;
-                  if(frame) {
-                    if(I->CSet[frame-1])
-                      if(I->CSet[frame-1]->IsPlaceHolder) {
-                        /* replace PlaceHolder Coordinate Sets */
-                        frame--;
-                        zoom_flag=true;
+
+                  if((stop>0)&&(cnt>=stop))
+                    break;
+                  if(cnt>=start) {
+                    icnt--;                      
+                    if(icnt>0) {
+                      PRINTFB(FB_Details,FB_ObjectMolecule)
+                        " ObjectMolecule: skipping set %d...\n",cnt
+                        ENDFB;
+                    } else {
+                      icnt=interval;
+                      n_avg++;
+                    }
+                    
+                    if(icnt==interval) {
+                      if(n_avg<average) {
+                        PRINTFB(FB_Details,FB_ObjectMolecule)
+                          " ObjectMolecule: averaging set %d...\n",cnt
+                          ENDFB;
+                      } else {
+                        
+                        /* compute average */
+                        
+                        if(n_avg>1) {
+                          fp=cs->Coord;
+                          for(i=0;i<I->NAtom;i++) {
+                            *(fp++)/=n_avg;
+                            *(fp++)/=n_avg;
+                            *(fp++)/=n_avg;
+                          }
+                        }
+                        
+                        /* add new coord set */
+                        if(cs->fInvalidateRep)
+                          cs->fInvalidateRep(cs,cRepAll,cRepInvRep);
+                        if(frame<0) frame=I->NCSet;
+                        if(frame) {
+                          if(I->CSet[frame-1])
+                            if(I->CSet[frame-1]->IsPlaceHolder) {
+                              /* replace PlaceHolder Coordinate Sets */
+                              frame--;
+                              zoom_flag=true;
+                            }
+                        }
+                        
+                        VLACheck(I->CSet,CoordSet*,frame);
+                        if(I->NCSet<=frame) I->NCSet=frame+1;
+                        if(I->CSet[frame]) I->CSet[frame]->fFree(I->CSet[frame]);
+                        I->CSet[frame] = cs;
+                        ncnt++;
+                        
+                        if(average<2) {
+                          PRINTFB(FB_Details,FB_ObjectMolecule)
+                            " ObjectMolecule: read set %d into state %d...\n",cnt,frame+1
+                            ENDFB;
+                        } else {
+                          PRINTFB(FB_Details,FB_ObjectMolecule)
+                            " ObjectMolecule: averaging set %d...\n",cnt
+                            ENDFB;
+                          PRINTFB(FB_Details,FB_ObjectMolecule)
+                            " ObjectMolecule: average loaded into state %d...\n",frame+1
+                            ENDFB;
+                        }
+                        frame++;
+                        cs = CoordSetCopy(cs);
+                        n_avg=0;
+                        if((stop>0)&&(cnt>=stop))
+                          break;
+                        if((max>0)&&(ncnt>=max))
+                          break;
                       }
+                    }
+                  } else {
+                    PRINTFB(FB_Details,FB_ObjectMolecule)
+                      " ObjectMolecule: skipping set %d...\n",cnt
+                      ENDFB;
                   }
-                  VLACheck(I->CSet,CoordSet*,frame);
-                  if(I->NCSet<=frame) I->NCSet=frame+1;
-                  if(I->CSet[frame]) I->CSet[frame]->fFree(I->CSet[frame]);
-                  I->CSet[frame] = cs;
-                  cnt++;
-                  PRINTFB(FB_Details,FB_ObjectMolecule)
-                    " ObjectMolecule: read set %d into state %d...\n",cnt,frame+1
-                    ENDFB;
-                  cs = CoordSetCopy(cs);
                 }
               }
             }
           } else {
             PRINTFB(FB_Errors,FB_ObjectMolecule)
-              " ObjMolLoadTRJFile: atom/coordinate mismatch."
+              " ObjMolLoadTRJFile: atom/coordinate mismatch.\n"
               ENDFB;
             break;
           }
@@ -257,8 +337,132 @@ ObjectMolecule *ObjectMoleculeLoadTRJFile(ObjectMolecule *I,
 		mfree(buffer);
 	 }
   if(cs)
-    cs->fFree(cs);
+    if(!cs->IsPlaceHolder) 
+      cs->fFree(cs);
 
+  SceneChanged();
+  SceneCountFrames();
+  if(zoom_flag) 
+    if(SettingGet(cSetting_auto_zoom)) {
+      ExecutiveWindowZoom(I->Obj.Name,0.0,-1); /* auto zoom (all states) */
+    }
+  
+  return(I);
+}
+ObjectMolecule *ObjectMoleculeLoadRSTFile(ObjectMolecule *I,char *fname,int frame)
+
+{
+  int ok=true;
+  FILE *f;
+  char *buffer,*p;
+  char cc[MAXLINELEN];  
+  float f0,f1,f2,*fp;
+  int a,b,c;
+  int zoom_flag=false;
+  CoordSet *cs = NULL;
+  int size;
+
+  #define BUFSIZE 4194304
+  #define GETTING_LOW 10000
+
+  f=fopen(fname,"rb");
+  if(!f)
+	 ok=ErrMessage("ObjectMoleculeLoadTOPFile","Unable to open file!");
+  else
+	 {
+      cs=CoordSetCopy(I->CSet[0]);
+      if(!cs) {
+        PRINTFB(FB_Errors,FB_ObjectMolecule)
+          " ObjMolLoadTRJFile: Missing topology"
+          ENDFB;
+        return(I);
+      }
+      cs->IsPlaceHolder=false;
+      PRINTFB(FB_ObjectMolecule,FB_Blather) 
+        " ObjMolLoadTRJFile: Loading from '%s'.\n",fname
+        ENDFB;
+
+
+		fseek(f,0,SEEK_END);
+      size=ftell(f);
+		fseek(f,0,SEEK_SET);
+
+		buffer=(char*)mmalloc(size+255);
+		ErrChkPtr(buffer);
+		p=buffer;
+		fseek(f,0,SEEK_SET);
+		fread(p,size,1,f);
+		p[size]=0;
+		fclose(f);
+
+      p=nextline(p);
+      p=nextline(p);
+
+      a = 0;
+      b = 0;
+      c = 0;
+      f1=0.0;
+      f2=0.0;
+      while(*p)
+        {
+          p=ncopy(cc,p,12);
+          if((++b)==6) {
+            b=0;
+            p=nextline(p);
+          }
+          f0 = f1;
+          f1 = f2;
+          if(sscanf(cc,"%f",&f2)==1) {
+            if((++c)==3) {
+              c=0;
+              fp=cs->Coord+3*a;
+              *(fp++)=f0;
+              *(fp++)=f1;
+              *(fp++)=f2;
+              
+              if((++a)==I->NAtom) {
+                a=0;
+                if(b) p=nextline(p);
+                b=0;
+                /* add new coord set */
+                if(cs->fInvalidateRep)
+                  cs->fInvalidateRep(cs,cRepAll,cRepInvRep);
+                if(frame<0) frame=I->NCSet;
+                if(frame) {
+                  if(I->CSet[frame-1])
+                    if(I->CSet[frame-1]->IsPlaceHolder) {
+                      /* replace PlaceHolder Coordinate Sets */
+                      frame--;
+                      zoom_flag=true;
+                    }
+                }
+                
+                VLACheck(I->CSet,CoordSet*,frame);
+                if(I->NCSet<=frame) I->NCSet=frame+1;
+                if(I->CSet[frame]) I->CSet[frame]->fFree(I->CSet[frame]);
+                I->CSet[frame] = cs;
+                
+                PRINTFB(FB_Details,FB_ObjectMolecule)
+                  " ObjectMolecule: read coordinates into state %d...\n",frame+1
+                  ENDFB;
+               
+                cs = CoordSetCopy(cs);
+                break;
+              }
+            }
+          } else {
+            PRINTFB(FB_Errors,FB_ObjectMolecule)
+              " ObjMolLoadTRJFile: atom/coordinate mismatch.\n"
+              ENDFB;
+            break;
+          }
+        }
+		mfree(buffer);
+	 }
+  if(cs)
+    if(!cs->IsPlaceHolder) 
+      cs->fFree(cs);
+  
   SceneChanged();
   SceneCountFrames();
   if(zoom_flag) 
@@ -298,7 +502,7 @@ CoordSet *ObjectMoleculeTOPStr2CoordSet(char *buffer,
   int NBONA,NTHETA,NPHIA,NUMBND,NUMANG,NPTRA;
   int NATYP,NPHB,IFPERT,NBPER,NGPER,NDPER;
   int MBPER,MGPER,MDPER,IFBOX,NMXRS,IFCAP;
-  int NEXTRA,IPOL;
+  int NEXTRA,IPOL=0;
 
   AtomInfoPrimeColors();
 

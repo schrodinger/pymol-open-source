@@ -154,7 +154,7 @@ int ExecutiveSetCrystal(char *sele,float a,float b,float c,
   CObject *obj;
   ObjectMolecule *objMol;
   ObjectMap *objMap;
-  int ok;
+  int ok=true;
   CSymmetry *symmetry = NULL;
   CCrystal *crystal = NULL;
   int n_obj;

@@ -32,7 +32,7 @@ evolve.
      something I think should be done in a general way to facilitate
      use of PyMOL as a molecular modeling tool...
 
-   * support direct reading of DCD, Amber, and/or Gromacs trajectory files
+   * support direct reading of DCD, and/or Gromacs trajectory files
 
    * support output of Amber input files so that we can bypass xleap altogether
 
@@ -107,11 +107,10 @@ Current Bugs to Fix
 
 Changes up to 0.84
 
-   * Experimental ability to read Amber topology and trajectory files
+   * Can now read AMBER topology, coordinate, trajectory, and restart files
 
    * PyMOL now transforms 4-character atom names appropriately by default.
      Thus, 3HG2 in PDB file becomes an atom named "HG23"
-
      If you don't like this, "set pdb_literal_names=1".
 
    * PyMOL now preserves stereo field on MOL-files to better enable

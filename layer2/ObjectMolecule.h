@@ -149,7 +149,11 @@ ObjectMolecule *ObjectMoleculeLoadMMDFile(ObjectMolecule *obj,char *fname,
 ObjectMolecule *ObjectMoleculeLoadTOPFile(ObjectMolecule *obj,char *fname,int frame,int discrete);
 ObjectMolecule *ObjectMoleculeLoadChemPyModel(ObjectMolecule *I,PyObject *model,int frame,int discrete);
 
-ObjectMolecule *ObjectMoleculeLoadTRJFile(ObjectMolecule *obj,char *fname,int frame,int discrete);
+ObjectMolecule *ObjectMoleculeLoadTRJFile(ObjectMolecule *obj,char *fname,int frame,
+                                          int interval,int average,int start,
+                                          int stop,int max);
+
+ObjectMolecule *ObjectMoleculeLoadRSTFile(ObjectMolecule *obj,char *fname,int frame);
 
 ObjectMolecule *ObjectMoleculeLoadCoords(ObjectMolecule *I,PyObject *coords,int frame);
 
