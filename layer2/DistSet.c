@@ -24,15 +24,14 @@ Z* -------------------------------------------------------------------
 #include"Scene.h"
 #include"DistSet.h"
 #include"Color.h"
-
 #include"RepDistDash.h"
+#include"RepDistLabel.h"
 
 void DistSetUpdate(DistSet *I);
 void DistSetFree(DistSet *I);
 void DistSetRender(DistSet *I,CRay *ray,Pickable **pick);
 void DistSetStrip(DistSet *I);
 void DistSetInvalidateRep(DistSet *I,int type,int level);
-
 /*========================================================================*/
 void DistSetInvalidateRep(DistSet *I,int type,int level)
 {
@@ -72,8 +71,12 @@ void DistSetUpdate(DistSet *I)
 {
 
   OrthoBusyFast(0,I->NRep);
-  if(!I->Rep[cRepDistDash]) {
-    I->Rep[cRepDistDash]=RepDistDashNew(I);
+  if(!I->Rep[cRepDash]) {
+    I->Rep[cRepDash]=RepDistDashNew(I);
+    SceneDirty();
+  }
+  if(!I->Rep[cRepLabel]) {
+    I->Rep[cRepLabel]=RepDistLabelNew(I);
     SceneDirty();
   }
   OrthoBusyFast(1,1);
@@ -84,14 +87,15 @@ void DistSetRender(DistSet *I,CRay *ray,Pickable **pick)
   int a;
   for(a=0;a<I->NRep;a++)
 	 if(I->Rep[a]) 
-		{
-		  if(!ray) {
-			 ObjectUseColor((Object*)I->Obj);
-		  } else {
-			 ray->fColor3fv(ray,ColorGet(I->Obj->Obj.Color));
-		  }			 
-		  I->Rep[a]->fRender(I->Rep[a],ray,pick);
-		}
+      if(I->Obj->Obj.RepVis[a])
+        {
+          if(!ray) {
+            ObjectUseColor((Object*)I->Obj);
+          } else {
+            ray->fColor3fv(ray,ColorGet(I->Obj->Obj.Color));
+          }			 
+          I->Rep[a]->fRender(I->Rep[a],ray,pick);
+        }
 }
 /*========================================================================*/
 DistSet *DistSetNew(void)
@@ -106,7 +110,7 @@ DistSet *DistSetNew(void)
   I->NIndex=0;
   I->Coord = NULL;
   I->Rep=VLAlloc(Rep*,10);
-  I->NRep=cRepDistCnt;
+  I->NRep=cRepCnt;
 
   for(a=0;a<I->NRep;a++)
 	 I->Rep[a] = NULL;

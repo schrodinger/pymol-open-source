@@ -20,6 +20,7 @@ Z* -------------------------------------------------------------------
 
 #include"Base.h"
 #include"Ray.h"
+#include"Rep.h"
 
 #define ObjNameMax 255
 #define cObjectMolecule 1
@@ -36,6 +37,7 @@ typedef struct Object {
   int type;
   char Name[ObjNameMax];
   int Color;
+  int RepVis[cRepCnt]; /* currently used only by non atomic objects */
 } Object;
 
 
@@ -43,6 +45,7 @@ void ObjectInit(Object *I);
 void ObjectSetName(Object *I,char *name);
 void ObjectFree(Object *I);
 void ObjectUseColor(Object *I);
+void ObjectSetRepVis(Object *I,int rep,int state);
 
 #endif
 

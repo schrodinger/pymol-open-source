@@ -27,12 +27,11 @@ Z* -------------------------------------------------------------------
 #define cRepSphere  4
 #define cRepRibbon  5
 #define cRepSurface 6
+#define cRepDash    7
+#define cRepLabel   8
 
-#define cRepCnt  7
+#define cRepCnt      9
 
-#define cRepDistCnt 2
-#define cRepDistDash 0
-#define cRepDistLabel 1
 
 #define cRepInvVisib 10
 #define cRepInvColor 20

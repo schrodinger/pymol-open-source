@@ -42,3 +42,13 @@ def mol_hide(s):
            [ 0, ''          ,''                             ],
            [ 1, 'everything','pm.hide("('+s+')")'           ]]
 
+def dist_show(s):
+   return [[ 2, 'Show:'     ,''                             ],
+           [ 1, 'dashes'    ,'pm.show("dashes"    ,"'+s+'")'],
+           [ 1, 'labels'    ,'pm.show("labels"    ,"'+s+'")']]
+
+def dist_hide(s):
+   return [[ 2, 'Hide:'     ,''                             ],
+           [ 1, 'dashes'    ,'pm.hide("dashes"    ,"'+s+'")'],
+           [ 1, 'labels'    ,'pm.hide("labels"    ,"'+s+'")']]
+

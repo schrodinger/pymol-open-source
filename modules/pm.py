@@ -74,13 +74,17 @@ def mem():
    return r
 
 def dist(*arg):
-   if len(arg)==1:
+   la = len(arg)
+   if la<2:
       lock()
       cnt = _pm.get("dist_counter") + 1.0
       _pm.set("dist_counter","%1.0f" % cnt)
       nam = "dist%02.0f" % cnt
-      argst = arg[0]
       unlock()
+      if la==0:
+         argst = "(pk1),(pk3)"
+      else:
+         argst = arg[0]
    else:
       nam = arg[0]
       argst = arg[1]
@@ -862,7 +866,7 @@ keyword = {
    'count_states'  : [count_states , 0 , 1 , ',' , 0 ],   
    'delete'        : [delete       , 1 , 1 , ',' , 0 ],
    'disable'       : [disable      , 1 , 1 , ',' , 0 ],
-   'dist'          : [dist         , 1 , 2 , '=' , 0 ],
+   'dist'          : [dist         , 0 , 2 , '=' , 0 ],
    'distance'      : [distance     , 0 , 2 , '=' , 0 ],
    'dump'          : [dump         , 2 , 2 , ',' , 0 ],
    'enable'        : [enable       , 1 , 1 , ',' , 0 ],
@@ -927,7 +931,9 @@ repres = {
    'mesh'          : 3,
    'spheres'       : 4,
    'ribbon'        : 5,
-   'surface'       : 6
+   'surface'       : 6,
+   'dashes'        : 7,
+   'labels'        : 8
 }
 
 
