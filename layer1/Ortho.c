@@ -923,7 +923,7 @@ void OrthoReshape(int width, int height)
 
   OrthoPushMatrix();
   block=NULL;
-  while(ListIterate(I->Blocks,block,next,BlockList))
+  while(ListIterate(I->Blocks,block,next))
 	 if(block->fReshape)
 		block->fReshape(block,width,height);			
   OrthoPopMatrix();

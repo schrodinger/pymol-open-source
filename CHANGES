@@ -1,0 +1,51 @@
+Potential Changes
+
+   * Transparency support. 
+
+   * Specular lighting option under GL
+
+   * Auto-detection of stereo capability
+
+   * Generic volume data object (to supplement bricks and maps)
+
+Impending Changes
+
+   * Reimplmentation of the Settings subsystem to support object-
+   specific settings, direct access to setting from Python, and
+   complete browsing and access to internal settings from a GUI.
+
+   * Tuning-up of the Tk-based GUI
+
+   * Tracking down thread-related hangs upon program termination
+   
+Changes up to 0.50
+
+   * Additional test cases.
+
+   * Parser improved with a new argument parsing subsystem which has a
+   better mapping to standard Python arguments.  This has significant
+   potential to break existing code if there are any bugs, but I am
+   targeting 100% backward compatibility.  It will now be possible to
+   extend the parser to call arbitrary python functions (provided that
+   they  can handle/convert from string arguments).
+
+Changes up to 0.49
+
+   * Improved editor, hydrogens now auto-deleted.
+
+   * Visible selections.
+
+   * Default mouse actions changed for editing and atom selecting.
+
+   * Callback objects (for use with PyOpenGL) now have extents.
+
+   * get_state and get_frame API functions
+
+Important Changes 0.42-0.48
+
+   Too numerous to list them all...
+   
+   * Addition of support for PyOpenGL-based GL calls with callback objects
+
+   * Wizard feature, for grabbing mouse input -- still needs flushing out.
+

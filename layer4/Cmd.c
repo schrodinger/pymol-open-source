@@ -144,11 +144,13 @@ static PyObject *CmdFrame(PyObject *self, PyObject *args);
 static PyObject *CmdGet(PyObject *self, 	PyObject *args);
 static PyObject *CmdGetArea(PyObject *self, 	PyObject *args);
 static PyObject *CmdGetDihe(PyObject *self, 	PyObject *args);
+static PyObject *CmdGetFrame(PyObject *self, 	PyObject *args);
 static PyObject *CmdGetPDB(PyObject *dummy, PyObject *args);
 static PyObject *CmdGetMatrix(PyObject *self, 	PyObject *args);
 static PyObject *CmdGetMinMax(PyObject *self, 	PyObject *args);
 static PyObject *CmdGetModel(PyObject *dummy, PyObject *args);
 static PyObject *CmdGetNames(PyObject *self, 	PyObject *args);
+static PyObject *CmdGetState(PyObject *self, 	PyObject *args);
 static PyObject *CmdGetType(PyObject *self, 	PyObject *args);
 static PyObject *CmdGetFeedback(PyObject *dummy, PyObject *args);
 static PyObject *CmdGetMoment(PyObject *self, 	PyObject *args);
@@ -249,6 +251,7 @@ static PyMethodDef Cmd_methods[] = {
 	{"get",	                 CmdGet,          METH_VARARGS },
 	{"get_area",              CmdGetArea,      METH_VARARGS },
 	{"get_dihe",              CmdGetDihe,      METH_VARARGS },
+	{"get_frame",             CmdGetFrame,     METH_VARARGS },
 	{"get_feedback",          CmdGetFeedback,  METH_VARARGS },
 	{"get_matrix",	           CmdGetMatrix,    METH_VARARGS },
 	{"get_min_max",           CmdGetMinMax,    METH_VARARGS },
@@ -257,6 +260,7 @@ static PyMethodDef Cmd_methods[] = {
    {"get_names",             CmdGetNames,     METH_VARARGS },
 	{"get_pdb",	              CmdGetPDB,       METH_VARARGS },
 	{"get_setting",           CmdGetSetting,   METH_VARARGS },
+	{"get_state",             CmdGetState,     METH_VARARGS },
 	{"get_type",              CmdGetType,      METH_VARARGS },
    {"get_wizard",            CmdGetWizard,    METH_VARARGS },
 	{"h_add",                 CmdHAdd,         METH_VARARGS },
@@ -325,6 +329,21 @@ static PyMethodDef Cmd_methods[] = {
 	{NULL,		              NULL}     /* sentinel */        
 };
 
+static PyObject *CmdGetState(PyObject *self, 	PyObject *args)
+{
+  int result;
+  result = SceneGetState();
+  return(Py_BuildValue("i",result));
+}
+
+static PyObject *CmdGetFrame(PyObject *self, 	PyObject *args)
+{
+  int result;
+
+  result = SceneGetFrame();
+  return(Py_BuildValue("i",result));
+}
+
 
 static PyObject *CmdExportCoords(PyObject *self, 	PyObject *args)
 {
@@ -334,7 +353,7 @@ static PyObject *CmdExportCoords(PyObject *self, 	PyObject *args)
 
   PyArg_ParseTuple(args,"si",&str1,&int1);
   APIEntry();
-  result = ExportCoordsExport(str1,int1);
+  result = ExportCoordsExport(str1,int1,0);
   APIExit();
   if(result) {
     return(PyCObject_FromVoidPtr(result,(void(*)(void*))ExportCoordsFree));
@@ -359,7 +378,7 @@ static PyObject *CmdImportCoords(PyObject *self, 	PyObject *args)
     mmdat = PyCObject_AsVoidPtr(cObj);
   APIEntry();
   if(mmdat)
-    result = ExportCoordsImport(str1,int1,mmdat);
+    result = ExportCoordsImport(str1,int1,mmdat,0);
   APIExit();
   return(Py_BuildValue("i",result));
 }
@@ -1752,6 +1771,11 @@ static PyObject *CmdLoadObject(PyObject *self, PyObject *args)
   
   switch(type) {
   case cLoadTypeChemPyModel:
+    if(origObj)
+      if(origObj->type!=cObjectMolecule) {
+        ExecutiveDelete(oname);
+        origObj=NULL;
+      }
     PBlockAndUnlockAPI();
 	 obj=(Object*)ObjectMoleculeLoadChemPyModel((ObjectMolecule*)origObj,model,frame,discrete);
     PLockAPIAndUnblock();
@@ -1774,6 +1798,11 @@ static PyObject *CmdLoadObject(PyObject *self, PyObject *args)
 	 }
 	 break;
   case cLoadTypeChemPyBrick:
+    if(origObj)
+      if(origObj->type!=cObjectMap) {
+        ExecutiveDelete(oname);
+        origObj=NULL;
+      }
     PBlockAndUnlockAPI();
 	 obj=(Object*)ObjectMapLoadChemPyBrick((ObjectMap*)origObj,model,frame,discrete);
     PLockAPIAndUnblock();
@@ -1790,6 +1819,11 @@ static PyObject *CmdLoadObject(PyObject *self, PyObject *args)
 	 }
     break;
   case cLoadTypeChemPyMap:
+    if(origObj)
+      if(origObj->type!=cObjectMap) {
+        ExecutiveDelete(oname);
+        origObj=NULL;
+      }
     PBlockAndUnlockAPI();
 	 obj=(Object*)ObjectMapLoadChemPyMap((ObjectMap*)origObj,model,frame,discrete);
     PLockAPIAndUnblock();
@@ -1806,8 +1840,13 @@ static PyObject *CmdLoadObject(PyObject *self, PyObject *args)
 	 }
     break;
   case cLoadTypeCallback:
+    if(origObj)
+      if(origObj->type!=cObjectCallback) {
+        ExecutiveDelete(oname);
+        origObj=NULL;
+      }
     PBlockAndUnlockAPI();
-	 obj=(Object*)ObjectCallbackDefine((ObjectCallback*)origObj,model);
+	 obj=(Object*)ObjectCallbackDefine((ObjectCallback*)origObj,model,frame);
     PLockAPIAndUnblock();
 	 if(!origObj) {
 	   if(obj) {
@@ -1822,6 +1861,11 @@ static PyObject *CmdLoadObject(PyObject *self, PyObject *args)
 	 }
     break;
   case cLoadTypeCGO:
+    if(origObj)
+      if(origObj->type!=cObjectCGO) {
+        ExecutiveDelete(oname);
+        origObj=NULL;
+      }
     PBlockAndUnlockAPI();
 	 obj=(Object*)ObjectCGODefine((ObjectCGO*)origObj,model,frame);
     PLockAPIAndUnblock();

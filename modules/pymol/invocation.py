@@ -58,6 +58,8 @@ def parse_args(argv):
             options.gui = 'pmg_tk'
          if "w" in a:
             options.gui = 'pmg_wx'
+         if "d" in a:
+            options.deferred.append("_do_%s"%av.pop())
          if "l" in a:
             options.deferred.append("_do_spawn %s"%av.pop())
          if "r" in a:

@@ -20,23 +20,19 @@ Z* -------------------------------------------------------------------
 
 #include"Object.h"
 
+typedef struct {
+  PyObject *PObj;
+} ObjectCallbackState;
+
 typedef struct ObjectCallback {
   Object Obj;
-  PyObject *PObj;
+  ObjectCallbackState *State;
+  int NState;
 } ObjectCallback;
 
 ObjectCallback *ObjectCallbackNew(void);
-ObjectCallback *ObjectCallbackDefine(ObjectCallback *obj,PyObject *PObj);
+ObjectCallback *ObjectCallbackDefine(ObjectCallback *obj,PyObject *PObj,int state);
+void ObjectCallbackRecomputeExtent(ObjectCallback *I);
 
 #endif
-
-
-
-
-
-
-
-
-
-
 

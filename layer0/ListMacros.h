@@ -180,7 +180,7 @@ Z* -------------------------------------------------------------------
    mfree(ListType.copy); \
 }
 
-#define ListIterate(List,Counter,Link,ListType) \
+#define ListIterate(List,Counter,Link) \
    ( (Counter) = ((Counter) ? (Counter)->Link : (List)))
 
 /* Elem handling routines */

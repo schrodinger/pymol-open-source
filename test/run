@@ -23,7 +23,7 @@ ppath = ppath + os.getcwd() + "/../modules"
 
 os.environ['PYTHONPATH'] = ppath
 
-print ppath
+#print ppath
 
 # uniform parameter handling
 
