@@ -29,7 +29,7 @@ char *FeedbackMask;
 
 CFeedback Feedbk;
 
-void FeedbackInit(void)
+void FeedbackInit(int quiet)
 {
   int a;
   
@@ -39,10 +39,15 @@ void FeedbackInit(void)
   I->Depth=0;
   FeedbackMask = I->Stack;
 
-  for(a=0;a<FB_Total;a++) {
-    FeedbackMask[a] = FB_Output | FB_Results | FB_Errors | FB_Warnings | FB_Actions | FB_Details;
-	 /* | FB_Everything;*/
-  }  
+  if(quiet) {
+    for(a=0;a<FB_Total;a++) {
+      FeedbackMask[a] = 0;
+    }  
+  } else {
+    for(a=0;a<FB_Total;a++) {
+      FeedbackMask[a] = FB_Output | FB_Results | FB_Errors | FB_Warnings | FB_Actions | FB_Details;
+    }  
+  }
 }
 
 void FeedbackFree(void)

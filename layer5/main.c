@@ -84,7 +84,6 @@ static int myArgc;
 
 static int FinalInitFlag=1;
 
-
 int TheWindow;
 
 typedef struct {
@@ -134,6 +133,7 @@ static PyMOLOptionRec PyMOLOptionGlobal = {
   false, /* reuse helper */
   false, /* auto reinitialize */
   false, /* keep thread alive */
+  false, /* quiet */
   "", /* after_load_script */
 };
 
@@ -558,7 +558,7 @@ static void MainInit(void)
   }
 
   MemoryCacheInit();
-  FeedbackInit();
+  FeedbackInit(PyMOLOption->quiet);
   UtilInit();
   SettingInitGlobal(true,true);  
   SettingSet(cSetting_internal_gui,(float)InternalGUI);

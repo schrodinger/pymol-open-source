@@ -186,7 +186,7 @@ function name.
 
 extern char *FeedbackMask;
 
-void FeedbackInit(void);
+void FeedbackInit(int quiet);
 void FeedbackFree(void);
 void FeedbackPush(void);
 void FeedbackPop(void);
