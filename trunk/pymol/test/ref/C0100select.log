@@ -7,7 +7,7 @@ PyMOL>print cmd.get_names()
 PyMOL>select tst = (all)
  Selector: selection "tst" defined with 2121 atoms.
 PyMOL>select tst = (none)
- Selector: no atoms selected.
+ Selector: selection "tst" defined with 0 atoms.
 PyMOL>select tst = (name c)
  Selector: selection "tst" defined with 129 atoms.
 PyMOL>dele tst
@@ -60,7 +60,7 @@ PyMOL>select foo = (name c)
 PyMOL>select fie = (name n,c)
  Selector: selection "fie" defined with 257 atoms.
 PyMOL>select (foo and not fie)
- Selector: no atoms selected.
+ Selector: selection "sel18" defined with 0 atoms.
 PyMOL>select (fie &! foo)
  Selector: selection "sel19" defined with 128 atoms.
 PyMOL>select foe = (tiny a; 30)
@@ -80,7 +80,7 @@ PyMOL>select (b=0.0)
 PyMOL>load dat/pept.pdb
  Executive: object "pept" created.
 PyMOL>select tst,pept within 5 of tiny
- Selector: no atoms selected.
+ Selector: selection "tst" defined with 0 atoms.
 PyMOL>select tst,pept within 50 of tiny
  Selector: selection "tst" defined with 67 atoms.
 PyMOL>select tst, pept w. 1 of pept

@@ -262,7 +262,7 @@ PyMOL>hide (name o)
 PyMOL>ray
  RepSurface: 1683 surface points.
  RepSurface: 2634 triangles.
- RayRenderTest: obtained 2411 graphics primitives.
+ RayRenderTest: obtained 2412 graphics primitives.
 PyMOL>hide surf
 PyMOL>ray
  RayRenderTest: obtained 153 graphics primitives.

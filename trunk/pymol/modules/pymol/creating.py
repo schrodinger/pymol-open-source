@@ -375,7 +375,7 @@ USAGE
          if cmd._raising(): raise QuietException
       return r
 
-   def create(name,selection,source_state=0,target_state=0,discrete=1):
+   def create(name,selection,source_state=0,target_state=0,discrete=0):
       '''
 DESCRIPTION
 
