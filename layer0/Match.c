@@ -250,8 +250,8 @@ float MatchAlign(CMatch *I,float gap_penalty,float ext_penalty,int max_skip)
   int2 **point;
   float mxv;
   int mxa,mxb;
-  float tst;
-  int gap;
+  float tst=0.0;
+  int gap=0;
   int *p;
   int cnt;
 

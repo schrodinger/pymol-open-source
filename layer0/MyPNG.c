@@ -149,7 +149,7 @@ int MyPNGRead(char *file_name,unsigned char **p_ptr,unsigned int *width_ptr,unsi
   png_byte      *png_pixels = NULL;
   png_byte      **row_pointers = NULL;
   png_byte      *pix_ptr = NULL;
-  png_uint_32   row_bytes;
+  png_uint_32   row_bytes=0;
 
   png_uint_32   width;
   png_uint_32   height;
@@ -159,7 +159,7 @@ int MyPNGRead(char *file_name,unsigned char **p_ptr,unsigned int *width_ptr,unsi
   int           ret;
   int           i;
   int ok=true;
-  unsigned char *p;
+  unsigned char *p=NULL;
   double        file_gamma;
 
 
