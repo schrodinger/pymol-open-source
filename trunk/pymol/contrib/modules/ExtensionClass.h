@@ -1,41 +1,22 @@
+/*****************************************************************************
+
+  Copyright (c) 1996-2002 Zope Corporation and Contributors.
+  All Rights Reserved.
+
+  This software is subject to the provisions of the Zope Public License,
+  Version 2.0 (ZPL).  A copy of the ZPL should accompany this distribution.
+  THIS SOFTWARE IS PROVIDED "AS IS" AND ANY AND ALL EXPRESS OR IMPLIED
+  WARRANTIES ARE DISCLAIMED, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+  WARRANTIES OF TITLE, MERCHANTABILITY, AGAINST INFRINGEMENT, AND FITNESS
+  FOR A PARTICULAR PURPOSE
+
+ ****************************************************************************/
+
 /*
 
   $Id$
 
   Extension Class Definitions
-
-  Copyright (c) 1996-1998, Digital Creations, Fredericksburg, VA, USA.  
-  All rights reserved.
-  
-    Redistribution and use in source and binary forms, with or without
-    modification, are permitted provided that the following conditions are
-    met:
-    
-      o Redistributions of source code must retain the above copyright
-	notice, this list of conditions, and the disclaimer that follows.
-    
-      o Redistributions in binary form must reproduce the above copyright
-	notice, this list of conditions, and the following disclaimer in
-	the documentation and/or other materials provided with the
-	distribution.
-    
-      o Neither the name of Digital Creations nor the names of its
-	contributors may be used to endorse or promote products derived
-	from this software without specific prior written permission.
-    
-    
-    THIS SOFTWARE IS PROVIDED BY DIGITAL CREATIONS AND CONTRIBUTORS *AS
-    IS* AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
-    TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A
-    PARTICULAR PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL DIGITAL
-    CREATIONS OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
-    INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
-    BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS
-    OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
-    ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR
-    TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
-    USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH
-    DAMAGE.
 
   Implementing base extension classes
   
@@ -100,9 +81,8 @@
   
   If you have questions regarding this software,
   contact:
- 
-    Digital Creations L.C.  
-    info@digicool.com
+    Zope Corporation
+    info@zope.com
  
     (540) 371-6909
 
@@ -174,6 +154,10 @@ typedef struct {
 #define EXTENSIONCLASS_INSTDICT_FLAG      1 << 4
 #define EXTENSIONCLASS_NOINSTDICT_FLAG    1 << 5
 #define EXTENSIONCLASS_BASICNEW_FLAG      1 << 6
+#define EXTENSIONCLASS_PYTHONICATTR_FLAG  1 << 7
+#define EXTENSIONCLASS_USERGETATTR_FLAG   1 << 8
+#define EXTENSIONCLASS_USERSETATTR_FLAG   1 << 9
+#define EXTENSIONCLASS_USERDELATTR_FLAG   1 << 10
 
   /* The following flags are for use by extension class developers. */
 #define EXTENSIONCLASS_USER_FLAG1  	  1 << 16
@@ -420,7 +404,7 @@ typedef struct {
   PyTypeObject *type;
   PyObject     *self;
   PyObject     *meth;
-} PyECMethodObject;
+} PyECMethodObject; /* AKA PMethod */
 
 /* The following is to avoid whining from 1.5 :-) */
 #define PyCObject_Import PyCObject_Import14
