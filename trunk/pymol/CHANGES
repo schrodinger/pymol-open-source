@@ -179,6 +179,8 @@ CHANGE LOG
 
 Changes up to 0.94
 
+   * fixed bug in SelectorCountStates
+
    * default roving_polar_cutoff increased to 3.31 in order to show 
      marginal/potential hydrogen bonds
 

@@ -2182,8 +2182,9 @@ int SelectorCountStates(int sele)
               if(result<n_frame)
                 result=n_frame;
             }
+            last=obj;
+          
           }
-          last=obj;
         }
       }
   }
