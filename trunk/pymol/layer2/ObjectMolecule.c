@@ -5693,8 +5693,10 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(char *buffer,
 
           if(AFlag==1) 
             ai->hetatm=0;
-          else
+          else {
             ai->hetatm=1;
+            ai->flags=cAtomFlag_ignore;
+          }
           
           AtomInfoAssignParameters(ai);
           ai->color=AtomInfoGetColor(ai);

@@ -74,7 +74,7 @@ void RepMeshRender(RepMesh *I,CRay *ray,Pickable **pick)
   float *vc=I->VC;
   int *n=I->N;
   int c;
-  float *col;
+  float *col=NULL;
 
   if(ray) {
 	 if(n) {
@@ -191,6 +191,7 @@ void RepMeshColor(RepMesh *I,CoordSet *cs)
 
   obj=cs->Obj;
 
+  probe_radius = SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_solvent_radius);
   mesh_color = SettingGet_color(cs->Setting,obj->Obj.Setting,cSetting_mesh_color);
   mesh_mode = SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_mesh_mode);
   cullByFlag = (mesh_mode==cRepMesh_by_flags);
