@@ -677,7 +677,7 @@ USAGE
       unlock()
    return r
 
-def fragment(name):
+def fragment(name,object=None):
    '''
 DESCRIPTION
  
@@ -690,7 +690,9 @@ USAGE
 
 '''
    try:
-      load_model(fragments.get(name),name)
+      if object==None:
+         object=name
+      load_model(fragments.get(str(name)),str(object))
    except:
       print "Error: unable to load fragment %s" % name
 
