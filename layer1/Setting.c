@@ -508,9 +508,11 @@ void SettingGenerateSideEffects(int index,char *sele,int state)
   case cSetting_ribbon_sampling:
   case cSetting_ribbon_radius:
   case cSetting_ribbon_width:
+  case cSetting_ribbon_throw:
     ExecutiveInvalidateRep(inv_sele,cRepRibbon,cRepInvRep);
     SceneChanged();
     break;
+  case cSetting_cartoon_refine:
   case cSetting_cartoon_sampling:
   case cSetting_cartoon_loop_quality:
   case cSetting_cartoon_loop_radius:
@@ -532,6 +534,7 @@ void SettingGenerateSideEffects(int index,char *sele,int state)
   case cSetting_cartoon_dumbbell_radius:
   case cSetting_cartoon_fancy_helices:
   case cSetting_cartoon_fancy_sheets:
+  case cSetting_cartoon_throw:
   case cSetting_cartoon_debug:
     ExecutiveInvalidateRep(inv_sele,cRepCartoon,cRepInvRep);
     SceneChanged();
@@ -809,7 +812,7 @@ void SettingInitGlobal(void)
 
   SettingSet_f(I,cSetting_cull_spheres, 1.0);
 
-  SettingSet_f(I,cSetting_test1, 0.0);
+  SettingSet_f(I,cSetting_test1, 1.0);
 
   SettingSet_f(I,cSetting_test2, 1.0);
 
@@ -841,7 +844,7 @@ void SettingInitGlobal(void)
 
   SettingSet_f(I,cSetting_pickable, 1.0);
 
-  SettingSet_f(I,cSetting_autoshow_lines, 1.0);
+  SettingSet_f(I,cSetting_auto_show_lines, 1.0);
 
   SettingSet_f(I,cSetting_fast_idle, 20000);
 
@@ -883,7 +886,7 @@ void SettingInitGlobal(void)
 
   SettingSet_f(I,cSetting_spheroid_fill, 1.30);
 
-  SettingSet_f(I,cSetting_autoshow_nonbonded, 1.0);
+  SettingSet_f(I,cSetting_auto_show_nonbonded, 1.0);
 
   SettingSet_f(I,cSetting_mesh_radius, 0.05);
  
@@ -901,9 +904,9 @@ void SettingInitGlobal(void)
 
   SettingSet_f(I,cSetting_dot_width, 1.0);
 
-  SettingSet_f(I,cSetting_autoshow_selections, 1.0);
+  SettingSet_f(I,cSetting_auto_show_selections, 1.0);
 
-  SettingSet_f(I,cSetting_autohide_selections, 1.0);
+  SettingSet_f(I,cSetting_auto_hide_selections, 1.0);
 
   SettingSet_f(I,cSetting_selection_width, 5.0);
 
@@ -933,9 +936,9 @@ void SettingInitGlobal(void)
 
   SettingSet_f(I,cSetting_cartoon_loop_quality, 6);
 
-  SettingSet_f(I,cSetting_cartoon_power, 1.5);
+  SettingSet_f(I,cSetting_cartoon_power, 2.0);
 
-  SettingSet_f(I,cSetting_cartoon_power_b, 0.55);
+  SettingSet_f(I,cSetting_cartoon_power_b, 0.52);
 
   SettingSet_f(I,cSetting_cartoon_rect_length, 1.40);
 
@@ -986,6 +989,12 @@ void SettingInitGlobal(void)
   SettingSet_f(I,cSetting_cartoon_fancy_sheets, 1.0);  
 
   SettingSet_f(I,cSetting_ignore_pdb_segi, 0.0);  
+
+  SettingSet_f(I,cSetting_ribbon_throw, 1.35);  
+
+  SettingSet_f(I,cSetting_cartoon_throw, 1.35);  
+
+  SettingSet_f(I,cSetting_cartoon_refine, 5);  
 
 
 }

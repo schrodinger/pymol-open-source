@@ -97,7 +97,7 @@ void ControlRock(int mode)
 	break;
   }
   SceneRestartTimers();
-
+  OrthoDirty();
 }
 
 /*========================================================================*/

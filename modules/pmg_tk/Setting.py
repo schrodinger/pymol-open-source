@@ -54,6 +54,12 @@ class Setting:
       self.auto_zoom = IntVar()
       self.auto_zoom.set(int(cmd.get_setting_legacy('auto_zoom')))
 
+      self.auto_show_selections = IntVar()
+      self.auto_show_selections.set(int(cmd.get_setting_legacy('auto_show_selections')))
+
+      self.auto_hide_selections = IntVar()
+      self.auto_hide_selections.set(int(cmd.get_setting_legacy('auto_hide_selections')))
+
       self.static_singletons = IntVar()
       self.static_singletons.set(int(cmd.get_setting_legacy('static_singletons')))
 
@@ -105,6 +111,10 @@ class Setting:
          (lambda s,a: (cmd.set(a,("%1.0f" %( s.overlay.get()*5))))),
          'auto_zoom'       :
          (lambda s,a: (cmd.set(a,("%1.0f" % s.auto_zoom.get())))),
+         'auto_show_selections'       :
+         (lambda s,a: (cmd.set(a,("%1.0f" % s.auto_show_selections.get())))),
+         'auto_hide_selections'       :
+         (lambda s,a: (cmd.set(a,("%1.0f" % s.auto_hide_selections.get())))),
          'static_singletons'       :
          (lambda s,a: (cmd.set(a,("%1.0f" % s.static_singletons.get())))),
          'backface_cull'       :
@@ -147,6 +157,10 @@ class Setting:
          (lambda s,t: (s.valence.set(t[1][0]>0.0))),
          'auto_zoom':
          (lambda s,t: (s.auto_zoom.set(int(t[1][0])))), 
+         'auto_show_selections':
+         (lambda s,t: (s.auto_show_selections.set(int(t[1][0])))), 
+         'auto_hide_selections':
+         (lambda s,t: (s.auto_hide_selections.set(int(t[1][0])))), 
          'static_singletons':
          (lambda s,t: (s.static_singletons.set(int(t[1][0])))), 
          'backface_cull':
@@ -178,6 +192,8 @@ class Setting:
          pymol.setting._get_index("line_smooth"),
          pymol.setting._get_index("valence"),
          pymol.setting._get_index("auto_zoom"),
+         pymol.setting._get_index("auto_hide_selections"),
+         pymol.setting._get_index("auto_show_selections"),
          pymol.setting._get_index("static_singletons"),
          pymol.setting._get_index("backface_cull"),
          pymol.setting._get_index("depth_cue"),

@@ -17,6 +17,6 @@ Z* -------------------------------------------------------------------
 #define _H_MyPNG
 
 
-void MyPNGWrite(char *file_name,unsigned char *p,unsigned int width,unsigned int height);
+int MyPNGWrite(char *file_name,unsigned char *p,unsigned int width,unsigned int height);
 
 #endif

@@ -33,6 +33,9 @@ typedef struct {
 } CExtrude;
 
 CExtrude *ExtrudeNew(void);
+
+CExtrude *ExtrudeCopyPointsNormalsColors(CExtrude *orig);
+
 void ExtrudeAllocPointsNormalsColors(CExtrude *I,int n);
 void ExtrudeTruncate(CExtrude *I,int n);
 void ExtrudeFree(CExtrude *I);
@@ -53,5 +56,6 @@ void ExtrudeCGOTrace(CExtrude *I,CGO *cgo);
 void ExtrudeCGOTraceAxes(CExtrude *I,CGO *cgo);
 void ExtrudeDumbbell1(CExtrude *I,float width,float length);
 void ExtrudeDumbbell2(CExtrude *I, int n,int sign,float length,float size);
+void ExtrudeDumbbellEdge(CExtrude *I,int samp,int sign,float length);
 
 #endif

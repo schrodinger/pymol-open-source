@@ -29,7 +29,6 @@ void UtilInit(void) {
   UtilStartSec = (int)UtilGetSeconds();
 }
 
-
 int UtilCountStringVLA(char *vla)
 {
   int result=0;

@@ -35,7 +35,7 @@ Z* -------------------------------------------------------------------
 #endif
 
 
-void MyPNGWrite(char *file_name,unsigned char *p,unsigned int width,unsigned int height)
+int MyPNGWrite(char *file_name,unsigned char *p,unsigned int width,unsigned int height)
 {
 #ifdef _HAVE_LIBPNG
 
@@ -53,7 +53,7 @@ void MyPNGWrite(char *file_name,unsigned char *p,unsigned int width,unsigned int
    /* open the file */
    fp = fopen(file_name, "wb");
    if (fp == NULL)
-      return;
+     return 0;
 
    /* Create and initialize the png_struct with the desired error handler
     * functions.  If you want to use the default stderr and longjump method,
@@ -66,7 +66,7 @@ void MyPNGWrite(char *file_name,unsigned char *p,unsigned int width,unsigned int
    if (png_ptr == NULL)
    {
       fclose(fp);
-      return;
+      return 0;
    }
 
    /* Allocate/initialize the image information data.  REQUIRED */
@@ -75,7 +75,7 @@ void MyPNGWrite(char *file_name,unsigned char *p,unsigned int width,unsigned int
    {
       fclose(fp);
       png_destroy_write_struct(&png_ptr,  (png_infopp)NULL);
-      return;
+      return 0;
    }
 
    /* Set error handling.  REQUIRED if you aren't supplying your own
@@ -86,7 +86,7 @@ void MyPNGWrite(char *file_name,unsigned char *p,unsigned int width,unsigned int
       /* If we get here, we had a problem reading the file */
       fclose(fp);
       png_destroy_write_struct(&png_ptr,  (png_infopp)NULL);
-      return;
+      return 0;
    }
 
    /* set up the output control if you are using standard C streams */
@@ -129,9 +129,14 @@ void MyPNGWrite(char *file_name,unsigned char *p,unsigned int width,unsigned int
 	mfree(row_pointers);
    /* that's it */
 
+   return 1;
+
+#else
+   return 0;
 #endif
 
-   return;
+
+
 }
 
 

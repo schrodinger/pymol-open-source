@@ -52,10 +52,9 @@ void SceneReshape(Block *block,int width,int height);
 void SceneTest(void);
 void SceneIdle(void);
 void SceneFree(void);
-void SceneRay(void);
+void SceneRay(int width,int height);
 void SceneMakeMovieImage(void);
 void SceneCopy(int buffer);
-void SceneRay(void);
 
 void ScenePNG(char *png);
 void SceneResetMatrix(void);

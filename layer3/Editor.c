@@ -760,6 +760,7 @@ void EditorInactive(void)
   ExecutiveDelete(cEditorSele2);    
   ExecutiveDelete(cEditorRes);
   ExecutiveDelete(cEditorComp);
+  SceneDirty();
 }
 /*========================================================================*/
 void EditorSetActiveObject(ObjectMolecule *obj,int state)
@@ -782,7 +783,7 @@ void EditorSetActiveObject(ObjectMolecule *obj,int state)
                                          cEditorComp);
       I->ActiveState=state;
       
-      if(SettingGet(cSetting_autohide_selections))
+      if(SettingGet(cSetting_auto_hide_selections))
         ExecutiveHideSelections();
 
     } else {

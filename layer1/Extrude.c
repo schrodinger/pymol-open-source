@@ -25,6 +25,32 @@ Z* -------------------------------------------------------------------
 
 void ExtrudeInit(CExtrude *I);
 
+static float smooth(float x,float power)
+{
+
+  if(x<=0.5) {
+    if(x<=0.0) x=0.0;
+    return (0.5*pow(2.0*x,power));    
+  } else {
+    if(x>=1.0) x=1.0;
+    return (1.0-(0.5*pow(2*(1.0-x),power)));
+  }
+}
+
+CExtrude *ExtrudeCopyPointsNormalsColors(CExtrude *orig)
+{
+  OOAlloc(CExtrude);
+  
+  ExtrudeInit(I);
+
+  ExtrudeAllocPointsNormalsColors(I,orig->N);
+
+  CopyArray(I->p,orig->p,float,3*I->N);
+  CopyArray(I->n,orig->n,float,9*I->N);
+  CopyArray(I->c,orig->c,float,3*I->N);
+  return(I);
+}
+
 void ExtrudeInit(CExtrude *I)
 {
   I->N = 0;
@@ -260,6 +286,38 @@ void ExtrudeDumbbell1(CExtrude *I,float width,float length)
     ENDFD;
 
 }
+
+void ExtrudeDumbbellEdge(CExtrude *I,int samp,int sign,float length)
+{
+  int a;
+  float *n,*p,f,disp;
+
+  PRINTFD(FB_Extrude)
+    " ExtrudeDumbbellEdge-DEBUG: entered.\n"
+    ENDFD;
+  disp = (sign*sin(PI/4)*length);
+  p=I->p;
+  n=I->n;
+  for(a=0;a<=I->N;a++)
+	 {
+      if(a<=samp)
+        f=disp*smooth((a/((float)samp)),2);
+      else if(a>=(I->N-samp))
+        f=disp*smooth(((I->N-a-1)/((float)samp)),2);
+      else 
+        f = disp;
+      n+=6;
+      (*p++) += *(n++)*f;
+      (*p++) += *(n++)*f;
+      (*p++) += *(n++)*f;
+	 }
+  PRINTFD(FB_Extrude)
+    " ExtrudeDumbbellEdge-DEBUG: exiting...\n"
+    ENDFD;
+
+}
+
+
 
 void ExtrudeDumbbell2(CExtrude *I, int n,int sign,float length,float size)
 {
@@ -801,6 +859,132 @@ void ExtrudeCGOSurfacePolygon(CExtrude *I,CGO *cgo,int cap)
 
 }
 
+void ExtrudeCGOSurfacePolygonTaper(CExtrude *I,CGO *cgo,int sampling);
+
+void ExtrudeCGOSurfacePolygonTaper(CExtrude *I,CGO *cgo,int sampling)
+{
+  int a,b;
+  float *v;
+  float *n;
+  float *c;
+  float *sv,*sn,*tv,*tn,*tv1,*tn1,*TV,*TN;
+  float s0[3];
+  float f;
+  int subN;
+
+  subN=I->N-sampling;
+
+  PRINTFD(FB_Extrude)
+    " ExtrudeCGOSurfacePolygon-DEBUG: entered.\n"
+    ENDFD;
+  
+
+  if(I->N&&I->Ns) {
+
+    TV=Alloc(float,3*(I->Ns+1)*I->N);
+    TN=Alloc(float,3*(I->Ns+1)*I->N);
+    
+    /* compute transformed shape vertices */
+    
+    tn=TN;
+    tv=TV;
+
+    sv = I->sv;
+    sn = I->sn;
+    for(b=0;b<=I->Ns;b++) {
+      if(b==I->Ns) {
+        sv = I->sv;
+        sn = I->sn;
+      }
+      v=I->p;
+      n=I->n;
+      
+      for(a=0;a<I->N;a++) {
+        if((a>=sampling)&&(a<subN)) {
+
+          transform33Tf3f(n,sv,tv);
+          add3f(v,tv,tv);
+          tv+=3;
+          transform33Tf3f(n,sn,tn);
+          tn+=3;
+          n+=9;
+          v+=3;
+        } else {
+          copy3f(sv,s0);
+
+          if(a>=subN) {
+            f = ((I->N-a-1)/((float)sampling));
+          } else if(a<sampling) {
+            f= (a/((float)sampling));
+          }
+          f=smooth(f,2);
+          s0[2]*=f;
+
+          transform33Tf3f(n,s0,tv);
+          add3f(v,tv,tv);
+          tv+=3;
+          transform33Tf3f(n,sn,tn);
+          tn+=3;
+          n+=9;
+          v+=3;
+          
+        }
+      }
+      sv+=3;
+      sn+=3;
+    }
+    
+    /* fill in each strip separately */
+
+    tv = TV;
+    tn = TN;
+    
+    tv1 = TV+3*I->N;
+    tn1 = TN+3*I->N;
+
+    for(b=0;b<I->Ns;b+=2) {
+      if(SettingGet(cSetting_cartoon_debug)<1.5)
+        CGOBegin(cgo,GL_TRIANGLE_STRIP);
+      else {
+        CGOBegin(cgo,GL_LINE_STRIP);        
+        CGODisable(cgo,GL_LIGHTING);
+      }
+      c = I->c;
+      for(a=0;a<I->N;a++) {
+        CGOColorv(cgo,c);
+        CGONormalv(cgo,tn);
+        CGOVertexv(cgo,tv);
+        tn+=3;
+        tv+=3;
+        CGONormalv(cgo,tn1);
+        CGOVertexv(cgo,tv1);
+        tn1+=3;
+        tv1+=3;
+        c+=3;
+      }
+      tv+=3*I->N;
+      tn+=3*I->N;
+      tv1+=3*I->N;
+      tn1+=3*I->N;
+      CGOEnd(cgo);
+    }
+
+    if(SettingGet(cSetting_cartoon_debug)>1.5) {
+      CGOEnable(cgo,GL_LIGHTING);
+    }
+
+    FreeP(TV);
+    FreeP(TN);
+  }
+  
+  PRINTFD(FB_Extrude)
+    " ExtrudeCGOSurfacePolygon-DEBUG: exiting...\n"
+    ENDFD;
+  
+}
+
+
+
 
 
 void ExtrudeCGOSurfaceStrand(CExtrude *I,CGO *cgo,int sampling)
@@ -1060,9 +1244,9 @@ void ExtrudeAllocPointsNormalsColors(CExtrude *I,int n)
     FreeP(I->n);
     FreeP(I->c);
 
-    I->p = Alloc(float,3*n);
-    I->n = Alloc(float,9*n);
-    I->c = Alloc(float,3*n);
+    I->p = Alloc(float,3*(n+1));
+    I->n = Alloc(float,9*(n+1));
+    I->c = Alloc(float,3*(n+1));
   }
   I->N = n;
 }

@@ -1873,20 +1873,21 @@ SEE ALSO
       unlock()
    return r
 
-def ray():
+def ray(width=0,height=0):
    '''
 DESCRIPTION
   
    "ray" creates a ray traced image of the current frame. This
-   can take some time (up to several minutes).
+   can take some time (up to several minutes, depending on image
+   complexity).
       
 USAGE
  
-   ray
+   ray [width,height]
  
 PYMOL API
   
-   cmd.ray()
+   cmd.ray(int width,int height)
 
 SEE ALSO
 
@@ -1894,7 +1895,7 @@ SEE ALSO
    '''
    try:
       lock()   
-      r = _cmd.render()
+      r = _cmd.render(int(width),int(height))
    finally:
       unlock()
    return r

@@ -1651,9 +1651,9 @@ int ExecutiveCountStates(char *s1)
   return(result);
 }
 /*========================================================================*/
-void ExecutiveRay(void)
+void ExecutiveRay(int width,int height)
 {
-  SceneRay();
+  SceneRay(width,height);
 }
 /*========================================================================*/
 void ExecutiveSetSetting(int index,PyObject *tuple,char *sele,
@@ -2494,7 +2494,7 @@ void ExecutiveManageObject(Object *obj)
   CExecutive *I = &Executive;
   int exists=false;
 
-  if(SettingGet(cSetting_autohide_selections))
+  if(SettingGet(cSetting_auto_hide_selections))
     ExecutiveHideSelections();
   while(ListIterate(I->Spec,rec,next))
 	 {
@@ -2571,16 +2571,16 @@ void ExecutiveManageSelection(char *name)
     rec->type=cExecSelection;
     rec->next=NULL;
     rec->sele_color=-1;
-    rec->visible=true;
+    rec->visible=false;
     ListAppend(I->Spec,rec,next,SpecList);
   }
   if(rec) {
     for(a=0;a<cRepCnt;a++)
       rec->repOn[a]=false;
     if(name[0]!='_') {
-      if(SettingGet(cSetting_autohide_selections))
+      if(SettingGet(cSetting_auto_hide_selections))
         ExecutiveHideSelections();
-      if(SettingGet(cSetting_autoshow_selections)) {
+      if(SettingGet(cSetting_auto_show_selections)) {
         rec->visible=true;
       }
     }

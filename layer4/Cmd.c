@@ -1962,8 +1962,11 @@ static PyObject *CmdColorDef(PyObject *self, 	PyObject *args)
 
 static PyObject *CmdRay(PyObject *self, 	PyObject *args)
 {
+  int w,h;
+
+  PyArg_ParseTuple(args,"ii",&w,&h);
   APIEntry();
-  ExecutiveRay();
+  ExecutiveRay(w,h);
   APIExit();
   Py_INCREF(Py_None);
   return Py_None;

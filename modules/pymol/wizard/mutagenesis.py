@@ -27,7 +27,8 @@ class Mutagenesis(Wizard):
 
       Wizard.__init__(self)
 
-      self.library = io.pkl.fromFile(os.environ['PYMOL_PATH']+"/modules/chempy/sidechains/sc_library.pkl")
+      self.library = io.pkl.fromFile(os.environ['PYMOL_PATH']+
+                                     "/modules/chempy/sidechains/sc_library.pkl")
       
       self.status = 0 # 0 no selection, 1 mutagenizing
       self.error = None
@@ -71,6 +72,16 @@ class Mutagenesis(Wizard):
       for a in self.reps:
          smm.append([ 1, self.rep_name[a], 'cmd.get_wizard().set_rep("'+a+'")'])
       self.menu['rep']=smm
+
+      if 'pk1' in cmd.get_names('selections'):
+         cmd.select(sele_name,"(byres pk1)")
+         cmd.unpick()
+         cmd.enable(sele_name)
+         self.status = 1
+         self.error = None
+         self.do_library()
+         cmd.refresh_wizard()
+      
 
    def set_mode(self,mode):
       if mode in self.modes:
@@ -176,6 +187,12 @@ class Mutagenesis(Wizard):
       return self.prompt
 
    def do_library(self):
+      cmd.feedback("push")
+      cmd.feedback("disable","selector","everythin")
+      cmd.feedback("disable","editor","actions")
+
+      self.prompt = [ 'Loading rotamers...']
+      
       auto_zoom = cmd.get_setting_text('auto_zoom')
       cmd.set('auto_zoom',"0",quiet=1)
       cmd.frame(0)
@@ -247,7 +264,8 @@ class Mutagenesis(Wizard):
       cmd.delete(tmp_name)
       cmd.frame(0)
       cmd.unpick()
-         
+      cmd.feedback("pop")
+      
    def do_pick(self,bondFlag):
       if bondFlag:
          self.error = "Error: please select an atom, not a bond."
