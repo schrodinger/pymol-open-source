@@ -4119,9 +4119,9 @@ void SceneRender(PyMOLGlobals *G,Pickable *pick,int x,int y,Multipick *smp)
           glLightModeli(GL_LIGHT_MODEL_TWO_SIDE,GL_FALSE);
         }     
         
-        /* ambient component */
+        /* add half the ambient component (perceptive kludge) */
         
-        f=SettingGet(G,cSetting_ambient);
+        f=SettingGet(G,cSetting_ambient) * 0.5;
 
         vv[0]=f;
         vv[1]=f;
