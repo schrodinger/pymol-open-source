@@ -167,8 +167,8 @@ static PyObject *CmdMove(PyObject *self, 	PyObject *args);
 static PyObject *CmdMPlay(PyObject *self, 	PyObject *args);
 static PyObject *CmdMPNG(PyObject *self, 	PyObject *args);
 static PyObject *CmdMSet(PyObject *self, 	PyObject *args);
-static PyObject *CmdMMGet(PyObject *self, 	PyObject *args);
-static PyObject *CmdMMUpdate(PyObject *self, 	PyObject *args);
+static PyObject *CmdExportCoords(PyObject *self, 	PyObject *args);
+static PyObject *CmdImportCoords(PyObject *self, 	PyObject *args);
 static PyObject *CmdOrigin(PyObject *self, PyObject *args);
 static PyObject *CmdOnOff(PyObject *self, 	PyObject *args);
 static PyObject *CmdOrient(PyObject *dummy, PyObject *args);
@@ -238,6 +238,7 @@ static PyMethodDef Cmd_methods[] = {
    {"edit",                  CmdEdit,         METH_VARARGS },
    {"torsion",               CmdTorsion,      METH_VARARGS },
 	{"export_dots",           CmdExportDots,   METH_VARARGS },
+	{"export_coords",         CmdExportCoords, METH_VARARGS },
 	{"finish_object",         CmdFinishObject, METH_VARARGS },
 	{"fit",                   CmdFit,          METH_VARARGS },
 	{"fit_pairs",             CmdFitPairs,     METH_VARARGS },
@@ -261,6 +262,7 @@ static PyMethodDef Cmd_methods[] = {
 	{"h_add",                 CmdHAdd,         METH_VARARGS },
 	{"h_fill",                CmdHFill,        METH_VARARGS },
    {"identify",              CmdIdentify,     METH_VARARGS },
+	{"import_coords",         CmdImportCoords, METH_VARARGS },
 	{"intrafit",              CmdIntraFit,     METH_VARARGS },
    {"invert",                CmdInvert,       METH_VARARGS },
 	{"isomesh",	              CmdIsomesh,      METH_VARARGS },
@@ -278,8 +280,6 @@ static PyMethodDef Cmd_methods[] = {
 	{"mplay",	              CmdMPlay,        METH_VARARGS },
 	{"mpng_",	              CmdMPNG,         METH_VARARGS },
 	{"mmatrix",	              CmdMMatrix,      METH_VARARGS },
-	{"mm_get",	              CmdMMGet,        METH_VARARGS },
-	{"mm_update",             CmdMMUpdate,     METH_VARARGS },
 	{"origin",	              CmdOrigin,       METH_VARARGS },
 	{"orient",	              CmdOrient,       METH_VARARGS },
 	{"onoff",                 CmdOnOff,        METH_VARARGS },
@@ -326,7 +326,7 @@ static PyMethodDef Cmd_methods[] = {
 };
 
 
-static PyObject *CmdMMGet(PyObject *self, 	PyObject *args)
+static PyObject *CmdExportCoords(PyObject *self, 	PyObject *args)
 {
   void *result;
   char *str1;
@@ -334,17 +334,17 @@ static PyObject *CmdMMGet(PyObject *self, 	PyObject *args)
 
   PyArg_ParseTuple(args,"si",&str1,&int1);
   APIEntry();
-  result = ExportMMGet(str1,int1);
+  result = ExportCoordsExport(str1,int1);
   APIExit();
   if(result) {
-    return(PyCObject_FromVoidPtr(result,(void(*)(void*))ExportMMFree));
+    return(PyCObject_FromVoidPtr(result,(void(*)(void*))ExportCoordsFree));
   } else {
     Py_INCREF(Py_None);
     return(Py_None);
   }
 }
 
-static PyObject *CmdMMUpdate(PyObject *self, 	PyObject *args)
+static PyObject *CmdImportCoords(PyObject *self, 	PyObject *args)
 {
   char *str1;
   int int1;
@@ -359,7 +359,7 @@ static PyObject *CmdMMUpdate(PyObject *self, 	PyObject *args)
     mmdat = PyCObject_AsVoidPtr(cObj);
   APIEntry();
   if(mmdat)
-    result = ExportMMUpdate(str1,int1,mmdat);
+    result = ExportCoordsImport(str1,int1,mmdat);
   APIExit();
   return(Py_BuildValue("i",result));
 }
