@@ -4670,7 +4670,9 @@ void ExecutiveDrawNow(void)
     }
 
     SceneUpdate();
-    
+    if(WizardUpdate())
+      SceneUpdate();
+
     OrthoDoDraw();
     
     MainSwapBuffers();

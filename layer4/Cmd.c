@@ -1588,10 +1588,18 @@ static PyObject *CmdSetWizardStack(PyObject *dummy, PyObject *args)
 
 static PyObject *CmdRefreshWizard(PyObject *dummy, PyObject *args)
 {
-  
   APIEntry();
   WizardRefresh();
   OrthoDirty();
+  APIExit();
+  return(APISuccess());  
+}
+
+static PyObject *CmdDirtyWizard(PyObject *dummy, PyObject *args)
+{
+  
+  APIEntry();
+  WizardDirty();
   APIExit();
   return(APISuccess());  
 }
@@ -4668,6 +4676,8 @@ static PyMethodDef Cmd_methods[] = {
    {"gl_delete_lists",       CmdGLDeleteLists,        METH_VARARGS },
 	{"delete",                CmdDelete,               METH_VARARGS },
 	{"dirty",                 CmdDirty,                METH_VARARGS },
+	{"dirty_wizard",          CmdDirtyWizard,          METH_VARARGS },
+
 	{"distance",	           CmdDistance,             METH_VARARGS },
 	{"dist",    	           CmdDist,                 METH_VARARGS },
 	{"do",	                 CmdDo,                   METH_VARARGS },

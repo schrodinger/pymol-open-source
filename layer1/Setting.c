@@ -2277,7 +2277,7 @@ void SettingInitGlobal(int alloc,int reset_gui)
   SettingSet_i(I,cSetting_seq_view_label_mode,2);
   SettingSet_i(I,cSetting_surface_ramp_above_mode,0);
   SettingSet_b(I,cSetting_stereo,0);
-
+  SettingSet_i(I,cSetting_wizard_prompt_mode,1);
 }
 
 

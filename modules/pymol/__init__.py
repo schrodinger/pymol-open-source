@@ -123,6 +123,14 @@ if pymol_launch != 3: # if this isn't a dry run
 
    stored = Scratch_Storage()
 
+   # Create a permanent object in the PyMOL global namespace
+   # that will be picked and unpickled along with the session
+   
+   class Session_Storage:
+      pass
+
+   session = Session_Storage()
+   
    # This global will be non-None if logging is active
    # (global variable used for efficiency)
 

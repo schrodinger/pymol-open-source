@@ -362,7 +362,7 @@ void MainOnExit(void)
 #ifdef WIN32
 	TerminateProcess(GetCurrentProcess(),0); /* only way to avoid a crash */
 #endif
-    exit(0);
+    exit(EXIT_SUCCESS);
   }
 }
 /*========================================================================*/
