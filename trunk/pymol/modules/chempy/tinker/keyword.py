@@ -19,7 +19,7 @@ def get_restrain_positions(model,flag,f_cnst):
    mask = 1<<flag
    for a in model.atom:
       if (a.flags&mask):
-         list.append("RESTRAIN-POSITION %5d %8.3f %8.3f %8.3f %8.3f\n" %
+         list.append("RESTRAIN-POSITION %5d %12.6f %12.6f %12.6f %8.3f\n" %
                      (c,a.coord[0],a.coord[1],a.coord[2],f_cnst))
          n = n + 1
       c = c + 1
