@@ -218,11 +218,16 @@ float ShakerDoLine(float *v0,float *v1,float *v2,
 
 
 float ShakerDoPlan(float *v0,float *v1,float *v2,float *v3,
-                   float *p0,float *p1,float *p2,float *p3,float wt)
+                   float *p0,float *p1,float *p2,float *p3,
+                   float target, int fixed, float wt)
 {
+
+  float result;
+
+#if 0
   float vc[3],d0[3],d1[3],d2[3],cp[3];
   float push[3];
-  float cur,dev,sc,result;
+  float cur,dev,sc;
 
   average3f(v0,v3,vc);
 
@@ -262,9 +267,74 @@ float ShakerDoPlan(float *v0,float *v1,float *v2,float *v3,
     scale3f(d0,sc,push);
     add3f(push,p1,p1); 
     subtract3f(p3,push,p3);
-
-    
   } else
+
+#else
+    
+    float d01[3],d12[3],d23[3],cp0[3],cp1[3],dp,sc,dev,dp2,pos[3],d0[3],push[3];
+
+    subtract3f(v0,v1,d01);
+    subtract3f(v1,v2,d12);
+    subtract3f(v2,v3,d23);
+
+    cross_product3f(d01,d12,cp0);
+    cross_product3f(d12,d23,cp1);
+    
+    normalize3f(cp0);
+    normalize3f(cp1);
+
+    dp = dot_product3f(cp0,cp1);
+    
+    result = (dev = 1.0F - fabs(dp));
+    
+    if(dev>R_SMALL4) {
+
+      add3f(cp0,cp1,d0);
+      normalize3f(d0);
+
+      cross_product3f(cp0,d12,pos);
+      dp2 = dot_product3f(cp1,pos);
+      
+      if(fixed && (dp*target<0.0F)) {
+        if(dp<0.0F) {
+          sc = -wt*dev/2.0;
+        } else {
+          sc = wt*dev/2.0;
+        }
+      } else if(dp>0) {
+        sc = -wt*dev/2.0;
+      } else {
+        sc = wt*dev/2.0;
+      }
+
+      subtract3f(v0,v3,d0);
+      normalize3f(d0);
+      scale3f(d0,sc,push);
+      add3f(push,p0,p0); 
+      subtract3f(p3,push,p3);
+
+      subtract3f(v1,v2,d0);
+      normalize3f(d0);
+      scale3f(d0,sc,push);
+      add3f(push,p1,p1); 
+      subtract3f(p2,push,p2);
+
+      sc = -sc;
+      subtract3f(v0,v2,d0);
+      normalize3f(d0);
+      scale3f(d0,sc,push);
+      add3f(push,p0,p0); 
+      subtract3f(p2,push,p2);
+
+      subtract3f(v1,v3,d0);
+      normalize3f(d0);
+      scale3f(d0,sc,push);
+      add3f(push,p1,p1); 
+      subtract3f(p3,push,p3);
+
+    }
+    
+#endif    
     result = 0.0;
   return result;
 
@@ -301,7 +371,7 @@ void ShakerAddTorsCon(CShaker *I,int atom0,int atom1,int atom2,int atom3,int typ
 
 }
 
-void ShakerAddPlanCon(CShaker *I,int atom0,int atom1,int atom2,int atom3)
+void ShakerAddPlanCon(CShaker *I,int atom0,int atom1,int atom2,int atom3,float target, int fixed)
 {
   ShakerPlanCon *spc;
   
@@ -311,6 +381,8 @@ void ShakerAddPlanCon(CShaker *I,int atom0,int atom1,int atom2,int atom3)
   spc->at1=atom1;
   spc->at2=atom2;
   spc->at3=atom3;
+  spc->fixed=fixed;
+  spc->target=target;
   I->NPlanCon++;
 }
 

@@ -146,13 +146,18 @@ static float ShakerDoTors(int type,float *v0,float *v1,float *v2,float *v3,
 
   switch(type) {
   case cShakerTorsSP3SP3:
-    
     if(dp>-0.5F)
       return 0.0F;
     result = ((float)fabs(dp))-0.5F;
-    
     if(result<tole) /* discontinuous low bottom well */
       result = result/25.F;       
+    break;
+  case cShakerTorsAmide: /* strongly favor trans over cis */
+    if((dp>-0.9F)&&(dp<1.0f)) {
+      result = 1.0F-dp;
+    } else if((dp<-0.9F)&&(dp>-1.0F))
+      result = -1.0F-dp;
+    result *= 20.0F; /* emphasize */
     break;
   case cShakerTorsDisulfide:
     if(fabs(dp)<tole)
@@ -164,9 +169,9 @@ static float ShakerDoTors(int type,float *v0,float *v1,float *v2,float *v3,
   }
 
 
-    cross_product3f(perp0,perp1,dir);
-    sign = dot_product3f(axis,dir);
-
+  cross_product3f(perp0,perp1,dir);
+  sign = dot_product3f(axis,dir);
+  
   if(sign<0.0F)
     sc=wt*result;
   else
@@ -237,6 +242,7 @@ void SculptMeasureObject(CSculpt *I,ObjectMolecule *obj,int state)
   int n0,n1,n2;
   int *planer = NULL;
   int *linear = NULL;
+  int *single = NULL;
   int nex = 1;
   int *j,*k,xhash;
   int ex_type;
@@ -279,10 +285,12 @@ void SculptMeasureObject(CSculpt *I,ObjectMolecule *obj,int state)
 
           planer=Alloc(int,obj->NAtom);
           linear=Alloc(int,obj->NAtom);
+          single=Alloc(int,obj->NAtom);
           ai = obj->AtomInfo;
           for(a=0;a<obj->NAtom;a++) {
             planer[a]=(ai->geom==cAtomInfoPlaner);
             linear[a]=(ai->geom==cAtomInfoLinear);
+            single[a]=(ai->geom==cAtomInfoSingle);
             ai++;
           }
 
@@ -638,27 +646,33 @@ void SculptMeasureObject(CSculpt *I,ObjectMolecule *obj,int state)
         
           for(b0=0;b0<obj->NAtom;b0++) {
             n0 = obj->Neighbor[b0]+1;
-            while(obj->Neighbor[n0]>=0) {
-              b1 = obj->Neighbor[n0];
-
+            while((b1 = obj->Neighbor[n0])>=0) {
               n1 = obj->Neighbor[b0]+1;
-              while(obj->Neighbor[n1]>=0) {
-                b2 = obj->Neighbor[n1];
-
+              while((b2 = obj->Neighbor[n1])>=0) {
                 if(b1!=b2) {
                   n2 =  obj->Neighbor[b2]+1;
-                  while(obj->Neighbor[n2]>=0) {
-                    b3 = obj->Neighbor[n2];
+                  while((b3 = obj->Neighbor[n2])>=0) {
                     if((b3!=b0)&&(b3>b1)) {
-                      
                       if(!(planer[b0]||planer[b2]||linear[b0]||linear[b2])) {
                         int type;
                         if((oai[b0].protons == cAN_S)&&
                            (oai[b2].protons == cAN_S))
                           type = cShakerTorsDisulfide;
-                        else
+                        else 
                           type = cShakerTorsSP3SP3;
                         ShakerAddTorsCon(I->Shaker,b1,b0,b2,b3,type);
+                      } 
+                      if(planer[b0]&&planer[b2]) {
+                        if(((oai[b1].protons == cAN_H)&&single[b1]&&
+                            (oai[b0].protons == cAN_N)&&
+                            (oai[b2].protons == cAN_C)&&
+                            (oai[b3].protons == cAN_O)&&planer[b3])||
+                           ((oai[b1].protons == cAN_O)&&planer[b1]&&
+                            (oai[b0].protons == cAN_C)&&
+                            (oai[b2].protons == cAN_N)&&
+                            (oai[b3].protons == cAN_H)&&single[b3])) {
+                          ShakerAddTorsCon(I->Shaker,b1,b0,b2,b3,cShakerTorsAmide);
+                        }
                       }
                       /* check 1-4 exclusion */
                       xhash = ex_hash(b1,b3);
@@ -731,26 +745,98 @@ void SculptMeasureObject(CSculpt *I,ObjectMolecule *obj,int state)
                         v3 = cs->Coord+3*a3;
                         
                         d = 0.0;
-                        if(fabs(get_dihedral3f(v1,v0,v2,v3))<deg_to_rad(10.0))
-                          if(planer[b0]&&planer[b2]) {
+                        if(planer[b0]&&planer[b2]) {
+                          float deg = get_dihedral3f(v1,v0,v2,v3);
+                          if(fabs(deg)<deg_to_rad(10.0))
                             d = 1.0; 
+                          else if(fabs(deg)>deg_to_rad(170))
+                            d = -1.0;
+                          
+                          /*
+                            if(!(((oai[b1].protons == cAN_H)&&single[b1]&&
+                            (oai[b0].protons == cAN_N)&&planer[b0]&&
+                            (oai[b2].protons == cAN_C)&&planer[b2]&&
+                            (oai[b3].protons == cAN_O)&&planer[b3])||
+                            ((oai[b1].protons == cAN_O)&&planer[b1]&&
+                            (oai[b0].protons == cAN_C)&&planer[b0]&&
+                            (oai[b2].protons == cAN_N)&&planer[b2]&&
+                            (oai[b3].protons == cAN_H)&&single[b3]))) 
+                          */
+                          {
+                            int fixed = false;
+                            /* look for 4, 5, 6, 7, or 8 cycle that connects back to b1 
+                               if found, then this planer system is fixed (it can't flip it over) */
+                            {
+                              int b4,b5,b6,b7,b8,b9,b10;
+                              int n3,n4,n5,n6,n7,n8,n9;
+                              n3 = obj->Neighbor[b2]+1;
+                              while((!fixed)&&(b4 = obj->Neighbor[n3])>=0) {
+                                if(b4!=b0) {
+                                  n4 = obj->Neighbor[b4]+1;
+                                  while((!fixed)&&(b5 = obj->Neighbor[n4])>=0) {
+                                    if(b5!=b2) {
+                                      n5 = obj->Neighbor[b5]+1;
+                                      while((!fixed)&&(b6 = obj->Neighbor[n5])>=0) {
+                                        if(b6==b0) { /* 4-cycle */
+                                          fixed=true;
+                                        } else if(b6!=b4) {
+                                          n6 = obj->Neighbor[b6]+1;
+                                          while((!fixed)&&(b7 = obj->Neighbor[n6])>=0) {
+                                            if(b7==b0) {  /* 5-cycle */
+                                              fixed=true;
+                                            } else if(b7!=b5) {
+                                              n7 = obj->Neighbor[b7]+1;
+                                              while((!fixed)&&(b8 = obj->Neighbor[n7])>=0) {
+                                                if(b8==b0) {  /* 6-cycle */
+                                                  fixed=true;
+                                                } else if(b8!=b6) {
+                                                  n8 = obj->Neighbor[b8]+1;
+                                                  while((!fixed)&&(b9 = obj->Neighbor[n8])>=0) {
+                                                    if(b9==b0) {  /* 7-cycle */
+                                                      fixed=true;
+                                                    } else if(b9!=b7) {
+                                                      n9 = obj->Neighbor[b9]+1;
+                                                      while((!fixed)&&(b10 = obj->Neighbor[n9])>=0) {
+                                                        if(b10==b0) {  /* 8-cycle */
+                                                          fixed=true;
+                                                        } 
+                                                        n9+=2;
+                                                      }
+                                                    }
+                                                    n8+=2;
+                                                  }
+                                                }
+                                                n7+=2;
+                                              }
+                                            }
+                                            n6+=2;
+                                          }
+                                        }
+                                        n5+=2;
+                                      }
+                                    }
+                                    n4+=2;
+                                  }
+                                }
+                                n3+=2;
+                              }
+                            }
+                            if(use_cache) {
+                              if(!SculptCacheQuery(G,cSculptPlan,
+                                                   oai[b1].sculpt_id,
+                                                   oai[b0].sculpt_id,
+                                                   oai[b2].sculpt_id,
+                                                   oai[b3].sculpt_id,
+                                                   &d))
+                                SculptCacheStore(G,cSculptPlan,
+                                                 oai[b1].sculpt_id,
+                                                 oai[b0].sculpt_id,
+                                                 oai[b2].sculpt_id,
+                                                 oai[b3].sculpt_id,
+                                                 d);
+                            }
+                            ShakerAddPlanCon(I->Shaker,b1,b0,b2,b3,d,fixed); 
                           }
-                        if(use_cache) {
-                          if(!SculptCacheQuery(G,cSculptPlan,
-                                               oai[b1].sculpt_id,
-                                               oai[b0].sculpt_id,
-                                               oai[b2].sculpt_id,
-                                               oai[b3].sculpt_id,
-                                               &d))
-                            SculptCacheStore(G,cSculptPlan,
-                                             oai[b1].sculpt_id,
-                                             oai[b0].sculpt_id,
-                                             oai[b2].sculpt_id,
-                                             oai[b3].sculpt_id,
-                                             d);
-                        }
-                        if(d>0.0) {
-                          ShakerAddPlanCon(I->Shaker,b1,b0,b2,b3); 
                         }
                       }
                     }
@@ -764,9 +850,10 @@ void SculptMeasureObject(CSculpt *I,ObjectMolecule *obj,int state)
           }
           FreeP(planer);
           FreeP(linear);
+          FreeP(single);
         }
       }
-
+  
   PRINTFB(G,FB_Sculpt,FB_Blather)
     " Sculpt: I->Shaker->NDistCon %d\n",I->Shaker->NDistCon
     ENDFB(G);
@@ -776,13 +863,12 @@ void SculptMeasureObject(CSculpt *I,ObjectMolecule *obj,int state)
   PRINTFB(G,FB_Sculpt,FB_Blather)
     " Sculpt: I->Shaker->NPlanCon %d\n",I->Shaker->NPlanCon
     ENDFB(G);
-
-
- PRINTFD(G,FB_Sculpt)
+  
+  
+  PRINTFD(G,FB_Sculpt)
     " SculptMeasureObject-Debug: leaving...\n"
     ENDFD;
-
-
+  
 }
 #ifdef _PYMOL_INLINE
 __inline__
@@ -1110,6 +1196,8 @@ float SculptIterateObject(CSculpt *I,ObjectMolecule *obj,int state,int n_cycle)
                                              disp+b1*3,
                                              disp+b2*3,
                                              disp+b3*3,
+                                             snc->target,
+                                             snc->fixed,
                                              plan_wt);
                   total_count++;
                   cnt[b0]++;
