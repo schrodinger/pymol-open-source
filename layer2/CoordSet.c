@@ -606,7 +606,7 @@ CoordSet *CoordSetNew(void)
   I->NTmpLinkBond = 0;
   /*  I->Rep=VLAlloc(Rep*,cRepCnt);*/
   I->NRep=cRepCnt;
-  I->TmpSymmetry = NULL;
+  I->Symmetry = NULL;
   I->Name[0]=0;
   I->Obj = NULL;
   I->Spheroid = NULL;
@@ -627,6 +627,7 @@ CoordSet *CoordSetCopy(CoordSet *cs)
   OOAlloc(CoordSet);
 
   (*I)=(*cs);
+  I->Symmetry=SymmetryCopy(cs->Symmetry);
   I->Coord = VLAlloc(float,I->NIndex*3);
   v0=I->Coord;
   v1=cs->Coord;
@@ -781,7 +782,7 @@ void CoordSetFree(CoordSet *I)
     VLAFreeP(I->Coord);
     /*    VLAFreeP(I->Rep);*/
     VLAFreeP(I->TmpBond);
-    if(I->TmpSymmetry) SymmetryFree(I->TmpSymmetry);
+    if(I->Symmetry) SymmetryFree(I->Symmetry);
     FreeP(I->Spheroid);
     FreeP(I->SpheroidNormal);
     SettingFreeP(I->Setting);

@@ -146,6 +146,25 @@ unsigned int VLAGetSize(void *ptr)
   return(vla->nAlloc);
 }
 
+void *VLANewCopy(void *ptr)
+{
+  VLARec *vla,*new_vla;
+  unsigned int size;
+  vla = &((VLARec*)ptr)[-1];
+  size = (vla->recSize*vla->nAlloc)+sizeof(VLARec);
+  new_vla=(void*)mmalloc(size);
+  if(!new_vla)
+	 {
+		printf("VLACopy-ERR: mmalloc failed\n");
+		exit(EXIT_FAILURE);
+	 }
+  else
+    {
+      memcpy(new_vla,vla,size);
+    }
+  return((void*)&(new_vla[1]));
+}
+
 void *VLASetSize(void *ptr,unsigned int newSize)
 {
   VLARec *vla;

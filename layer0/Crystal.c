@@ -22,6 +22,7 @@ Z* -------------------------------------------------------------------
 #include"OOMac.h"
 #include"Crystal.h"
 #include"Feedback.h"
+#include"Util.h"
 
 void CrystalFree(CCrystal *I)
 {
@@ -51,6 +52,15 @@ CCrystal *CrystalNew(void)
   CrystalInit(I);
   return(I);
 }
+
+
+CCrystal *CrystalCopy(CCrystal *other)
+{
+  OOAlloc(CCrystal);
+  UtilCopyMem(I,other,sizeof(CCrystal));
+  return(I);
+}
+
 
 void CrystalUpdate(CCrystal *I) 
 {

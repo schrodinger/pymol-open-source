@@ -43,7 +43,7 @@ typedef struct CoordSet {
   int *TmpBond; /* actual bond info is stored in ObjectMolecule */
   int NTmpLinkBond; /* optional, temporary storage of linkage  info. */
   int *TmpLinkBond; /* first atom is in obj, second is in cset */
-  CSymmetry *TmpSymmetry;
+  CSymmetry *Symmetry;
   WordType Name;
   float *Spheroid;
   float *SpheroidNormal;
