@@ -1963,11 +1963,12 @@ static PyObject *CmdZoom(PyObject *self, PyObject *args)
 {
   char *str1;
   OrthoLineType s1;
+  float buffer;
 
-  PyArg_ParseTuple(args,"s",&str1);
+  PyArg_ParseTuple(args,"sf",&str1,&buffer);
   APIEntry();
   SelectorGetTmp(str1,s1);
-  ExecutiveWindowZoom(s1);
+  ExecutiveWindowZoom(s1,buffer);
   SelectorFreeTmp(s1);
   APIExit();
   Py_INCREF(Py_None);

@@ -1997,20 +1997,23 @@ DESCRIPTION
       
 USAGE
  
-   zoom object-or-selection
-   zoom (selection)
+   zoom object-or-selection [,buffer]
+   zoom (selection) [,buffer]
  
 PYMOL API
 
-   cmd.orient( string object-or-selection )
+   cmd.zoom( string object-or-selection [,float buffer] )
    '''
+   b=0.0
    if len(arg):
       a=arg[0]
+      if len(arg)>1:
+         b=float(arg[1])
    else:
       a="all"
    try:
       lock()   
-      r = _cmd.zoom(a)
+      r = _cmd.zoom(a,b)
    finally:
       unlock()
    return r
@@ -4081,7 +4084,7 @@ keyword = {
    'unprotect'     : [unprotect    , 0 , 1 , ',' , 0 ],
    'update'        : [update       , 2 , 2 , ',' , 0 ],
    'viewport'      : [viewport     , 2 , 2 , ',' , 0 ],
-   'zoom'          : [zoom         , 0 , 1 , ',' , 0 ],
+   'zoom'          : [zoom         , 0 , 2 , ',' , 0 ],
    }
 
 help_only = {  # for API-only features
