@@ -117,6 +117,7 @@ Z* -------------------------------------------------------------------
 #define P_GLUT_MOUSE_EVENT           3
 #define P_GLUT_MOTION_EVENT          4
 #define P_GLUT_CHAR_EVENT            5
+#define P_GLUT_SPECIAL_EVENT         6
 
 typedef struct {
   int event_code;
@@ -131,24 +132,45 @@ int p_glutGetRedisplay(void);
 
 /* here is the interface and constants for a pretend GLUT */
 
-#define P_GLUT_ACTIVE_ALT               32
-#define P_GLUT_ACTIVE_CTRL              64
-#define P_GLUT_ACTIVE_SHIFT             128
-#define P_GLUT_BITMAP_8_BY_13           ((void*)4)
-#define P_GLUT_DEPTH                    5
-#define P_GLUT_DISPLAY_MODE_POSSIBLE    6
-#define P_GLUT_DOUBLE                   7
-#define P_GLUT_RGBA                     8
-#define P_GLUT_DOWN                     9
-#define P_GLUT_UP                       10
-#define P_GLUT_KEY_DOWN                 11
-#define P_GLUT_KEY_LEFT                 12
-#define P_GLUT_KEY_RIGHT                13
-#define P_GLUT_KEY_UP                   14
-#define P_GLUT_LEFT_BUTTON              15
-#define P_GLUT_MIDDLE_BUTTON            16
-#define P_GLUT_RIGHT_BUTTON             17
-#define P_GLUT_STEREO                   18
+#define P_GLUT_RGBA                     0
+#define P_GLUT_DOUBLE                   2
+#define P_GLUT_ACTIVE_ALT               4
+#define P_GLUT_ACTIVE_CTRL              2
+#define P_GLUT_ACTIVE_SHIFT             1
+#define P_GLUT_BITMAP_8_BY_13           ((void*)3)
+#define P_GLUT_DEPTH                    16
+#define P_GLUT_DISPLAY_MODE_POSSIBLE    400
+
+#define P_GLUT_DOWN           0
+#define P_GLUT_UP             1
+
+#define P_GLUT_STEREO         256
+
+#define P_GLUT_KEY_F1         1
+#define P_GLUT_KEY_F2         2
+#define P_GLUT_KEY_F3         3
+#define P_GLUT_KEY_F4         4
+#define P_GLUT_KEY_F5         5
+#define P_GLUT_KEY_F6         6
+#define P_GLUT_KEY_F7         7
+#define P_GLUT_KEY_F8         8
+#define P_GLUT_KEY_F9         9
+#define P_GLUT_KEY_F10        10
+#define P_GLUT_KEY_F11        11
+#define P_GLUT_KEY_F12        12
+#define P_GLUT_KEY_LEFT       100
+#define P_GLUT_KEY_UP         101
+#define P_GLUT_KEY_RIGHT      102
+#define P_GLUT_KEY_DOWN       103
+#define P_GLUT_KEY_PAGE_UP    104
+#define P_GLUT_KEY_PAGE_DOWN  105
+#define P_GLUT_KEY_HOME       106
+#define P_GLUT_KEY_END        107
+#define P_GLUT_KEY_INSERT     108
+#define P_GLUT_LEFT_BUTTON    0
+#define P_GLUT_MIDDLE_BUTTON  1
+#define P_GLUT_RIGHT_BUTTON   2
+
 
 void     p_glutBitmapCharacter(void *font, int character);
 void     p_glutSwapBuffers(void);

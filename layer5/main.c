@@ -554,7 +554,7 @@ void launch(void)
     p_glutMotionFunc(          MainDrag );
     /*  p_glutPassiveMotionFunc(   MainMove );*/
     p_glutSpecialFunc(         MainSpecial );
-    p_glutIdleFunc(         MainBusyIdle );
+    p_glutIdleFunc(            MainBusyIdle );
 
     p_glutPostRedisplay();
   }

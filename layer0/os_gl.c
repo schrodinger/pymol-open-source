@@ -96,6 +96,7 @@ static void (*displayFunc)(void) = NULL;
 static void (*reshapeFunc)(int width,int height) = NULL;
 static void (*mouseFunc)(int button, int state,int x,int y) = NULL;
 static void (*keyboardFunc)(unsigned char key,int x,int y) = NULL;
+static void (*specialFunc)(int key,int x,int y) = NULL;
 static void (*motionFunc)(int x,int y) = NULL;
 static int WinX = 640,WinY=480;
 
@@ -132,6 +133,9 @@ void p_glutHandleEvent(p_glut_event *ev) {
     break;
   case P_GLUT_CHAR_EVENT:
     if(keyboardFunc) keyboardFunc((unsigned char)ev->input,ev->x,ev->y);
+    break;
+  case P_GLUT_SPECIAL_EVENT:
+    if(specialFunc) specialFunc(ev->input,ev->x,ev->y);
     break;
   }
 }
@@ -175,7 +179,7 @@ void     p_glutReshapeFunc(void (*func)(int width, int height)) { reshapeFunc = 
 void     p_glutKeyboardFunc(void (*func)(unsigned char key, int x, int y)) { keyboardFunc = func;}
 void     p_glutMouseFunc(void (*func)(int button, int state, int x, int y)) { mouseFunc = func;}
 void     p_glutMotionFunc(void (*func)(int x, int y)) { motionFunc=func;}
-void     p_glutSpecialFunc(void (*func)(int key, int x, int y)) {}
+void     p_glutSpecialFunc(void (*func)(int key, int x, int y)) { specialFunc=func;}
 void     p_glutIdleFunc(void (*func)(void)) { idleFunc = func; }
 
 #endif
