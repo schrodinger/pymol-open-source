@@ -51,8 +51,8 @@ ListVarDeclare(BlockList,Block);
 #define OrthoHistoryLines 0xFF
 
 #define cOrthoCharWidth 8
-#define cOrthoLeftMargin 8
-#define cOrthoBottomMargin 6
+#define cOrthoLeftMargin 3
+#define cOrthoBottomMargin 5
 
 #define WizardMargin 132
 
