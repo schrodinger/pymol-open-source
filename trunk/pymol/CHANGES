@@ -179,7 +179,13 @@ CHANGE LOG
 
 Changes up to 0.91
 
+   * fixed isosurface session save bug
+
+   * added high-quality transparency support to "isosurface"s
+
    * greatly improved quality of surface output by "isosurface"
+
+   * added support for Biosym/InsightII ASCII grid files
 
    * support for BRIX map format
 

@@ -667,7 +667,7 @@ int	TetsurfFindActiveBoxes(int mode,int *n_strip,int n_vert,
 	int i000,i001,i010,i011,i100,i101,i110,i111;
    float *c000,*c001,*c010,*c011,*c100,*c101,*c110,*c111;
    float d000,d001,d010,d011,d100,d101,d110,d111;
-   float *g000,*g001,*g010,*g011,*g100,*g101,*g110,*g111;
+   float *g000=NULL,*g001=NULL,*g010=NULL,*g011=NULL,*g100=NULL,*g101=NULL,*g110=NULL,*g111=NULL;
 
    int active;
    int n_active=0;
