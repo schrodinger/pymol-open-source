@@ -922,7 +922,7 @@ MFCD00115818
 MFCD00115818
 
 $$$$
-embed_end
+embed end
 load_embedded ligands
 hide everything, ligands
 show sticks, ligands

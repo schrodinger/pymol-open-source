@@ -271,7 +271,7 @@ if __name__=='pymol.parser':
                                     if l>2:
                                        embed_sentinel[nest] = args[nest][2]
                                     else:
-                                       embed_sentinel[nest] = "embed_end"
+                                       embed_sentinel[nest] = "embed end"
                                     list = []
                                     dict = embed_dict.get(nest,{})
                                     dict[key] = ( format, list )

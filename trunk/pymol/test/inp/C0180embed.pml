@@ -12,8 +12,13 @@ ray
 load dat/embed03.p1m
 ray
 
+load dat/embed04.p1m
+ray
+
+load dat/embed05.p1m
+ray
+
 print cmd.get_state()
 print cmd.get_names()
-
 
 /print "END-LOG"

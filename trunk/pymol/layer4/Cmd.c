@@ -107,6 +107,8 @@ Z* -------------------------------------------------------------------
 #define cLoadTypePQR 31
 #define cLoadTypeDXMap 32
 #define cLoadTypeMOL2 33
+#define cLoadTypeMOL2Str 34
+#define cLoadTypeP1M 35
 
 #define tmpSele "_tmp"
 #define tmpSele1 "_tmp1"
@@ -4199,6 +4201,7 @@ static PyObject *CmdLoad(PyObject *self, PyObject *args)
       case cLoadTypeTRJ:
       case cLoadTypeCRD:
       case cLoadTypeMOL2:
+      case cLoadTypeMOL2Str:
         new_type = cObjectMolecule;
         break;
       case cLoadTypeChemPyBrick:
@@ -4393,30 +4396,10 @@ static PyObject *CmdLoad(PyObject *self, PyObject *args)
     case cLoadTypeMOL2:
       ExecutiveLoadMOL2(TempPyMOLGlobals,origObj,fname,oname,frame,
                         discrete,finish,buf,multiplex,quiet,false);
-      /*
-      PRINTFD(TempPyMOLGlobals,FB_CCmd) " CmdLoad-DEBUG: loading MOL2\n" ENDFD;
-      obj=(CObject*)ObjectMoleculeLoadMOL2File(TempPyMOLGlobals,
-                                               (ObjectMolecule*)origObj,fname,
-                                               frame,discrete,multiplex);
-      if(!origObj) {
-        if(obj) {
-          ObjectSetName(obj,oname);
-          ExecutiveManageObject(TempPyMOLGlobals,obj,true,true);
-          if(frame<0)
-            frame = ((ObjectMolecule*)obj)->NCSet-1;
-          sprintf(buf," CmdLoad: \"%s\" loaded as \"%s\".\n",
-                  fname,oname);		  
-        }
-      } else if(origObj) {
-        if(finish)
-          ExecutiveUpdateObjectSelection(TempPyMOLGlobals,origObj);
-        if(frame<0)
-          frame = ((ObjectMolecule*)origObj)->NCSet-1;
-        sprintf(buf," CmdLoad: \"%s\" appended into object \"%s\", state %d.\n",
-                fname,oname,frame+1);
-                }
-      */
-
+      break;
+    case cLoadTypeMOL2Str:
+      ExecutiveLoadMOL2(TempPyMOLGlobals,origObj,fname,oname,frame,
+                        discrete,finish,buf,multiplex,quiet,true);
       break;
     case cLoadTypeMMD:
       PRINTFD(TempPyMOLGlobals,FB_CCmd) " CmdLoad-DEBUG: loading MMD\n" ENDFD;

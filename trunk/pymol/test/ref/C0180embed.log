@@ -2,6 +2,7 @@ PyMOL>load dat/embed01.p1m
 PyMOL>embed peptide
  Embed: read 108 lines.
 PyMOL>load_embedded peptide
+ CmdLoad: PDB-string loaded into object "peptide", state 1.
 PyMOL>hide everything, peptide
 PyMOL>show sticks, peptide
 PyMOL>set valence
@@ -14,6 +15,7 @@ PyMOL>load dat/embed02.p1m
 PyMOL>embed sm, mol
  Embed: read 78 lines.
 PyMOL>load_embedded sm
+ CmdLoad: MOL-string loaded as "sm".
 PyMOL>hide everything, sm
 PyMOL>show sticks, sm
 PyMOL>set valence
@@ -44,7 +46,51 @@ PyMOL>set valence
 PyMOL>frame 5
 PyMOL>ray
  RayRenderTest: obtained 343 graphics primitives.
+PyMOL>load dat/embed04.p1m
+PyMOL>embed m2, mol2
+ Embed: read 963 lines.
+PyMOL>load_embedded m2
+ ObjectMolReadMOL2Str: read molecule 1
+ ObjectMolReadMOL2Str: read molecule 2
+ ObjectMolReadMOL2Str: read molecule 3
+ ObjectMolReadMOL2Str: read molecule 4
+ ObjectMolReadMOL2Str: read molecule 5
+ ObjectMolReadMOL2Str: read molecule 6
+ ObjectMolReadMOL2Str: read molecule 7
+ ObjectMolReadMOL2Str: read molecule 8
+ ObjectMolReadMOL2Str: read molecule 9
+ ObjectMolReadMOL2Str: read molecule 10
+ ObjectMolReadMOL2Str: read molecule 11
+ ObjectMolReadMOL2Str: read molecule 12
+ ObjectMolReadMOL2Str: read molecule 13
+ ObjectMolReadMOL2Str: read molecule 14
+ ObjectMolReadMOL2Str: read molecule 15
+ ObjectMolReadMOL2Str: read molecule 16
+ CmdLoad: MOL2-string loaded into object "m2", state 16.
+PyMOL>hide everything, m2
+PyMOL>show sticks, m2
+PyMOL>set valence
+ Setting: valence set to on.
+PyMOL>ray
+ RayRenderTest: obtained 356 graphics primitives.
+PyMOL>load dat/embed05.p1m
+PyMOL>embed ligand, mol
+ Embed: read 77 lines.
+PyMOL>embed protein
+ Embed: read 227 lines.
+PyMOL>load_embedded ligand
+ CmdLoad: MOL-string loaded as "ligand".
+PyMOL>load_embedded protein
+ CmdLoad: PDB-string loaded into object "protein", state 1.
+PyMOL>hide lines, ligand
+PyMOL>show sticks, ligand
+PyMOL>set valence
+ Setting: valence set to on.
+PyMOL>dist hbond, protein, ligand, mode=2
+ Executive: object "hbond" created.
+PyMOL>ray
+ RayRenderTest: obtained 878 graphics primitives.
 PyMOL>print cmd.get_state()
 5
 PyMOL>print cmd.get_names()
-['peptide', 'sm', 'ligands']
+['peptide', 'sm', 'ligands', 'm2', 'ligand', 'protein', 'hbond']

@@ -77,7 +77,7 @@ MFCD00001453
  15 35  1  0  0  0  0
  34 36  1  0  0  0  0
 M  END
-embed_end
+embed end
 
 load_embedded sm
 hide everything, sm
