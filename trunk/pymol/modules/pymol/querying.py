@@ -384,6 +384,22 @@ SEE ALSO
          if cmd._raising(): raise QuietException
       return r
 
+   def get_atom_coords(selection, state=0,quiet=1):
+      # low performance way to get coords for a single atom
+      r = []
+      selection = selector.process(str(selection))
+      try:
+         lock()
+         r = _cmd.get_atom_coords(str(selection),int(state)-1,int(quiet))
+      finally:
+         unlock()
+      if r==None:
+         if cmd._raising(): raise QuietException
+      elif not quiet:
+         for a in r:
+            print " cmd.get_coords: [%8.3f,%8.3f,%8.3f]"%(a)
+      return r
+   
    def get_position(quiet=1):
       r = None
       try:

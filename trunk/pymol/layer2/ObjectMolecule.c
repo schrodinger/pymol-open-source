@@ -6621,7 +6621,6 @@ void ObjectMoleculeSeleOp(ObjectMolecule *I,int sele,ObjectMoleculeOpRec *op)
              s=ai->selEntry;
              if(SelectorIsMember(s,sele))
                {
-                 ai->deleteFlag=true; /* ?????? */
                  op->i1++;
 
                  if(I->DiscreteFlag) {
@@ -7574,7 +7573,8 @@ float ObjectMoleculeGetAvgHBondVector(ObjectMolecule *I,int atom,int state,float
 int ObjectMoleculeGetAtomVertex(ObjectMolecule *I,int state,int index,float *v)
 {
   int result = 0;
-  if(state<0) state=SceneGetState();
+  if(state<0) state=SettingGet_i(NULL,I->Obj.Setting,cSetting_state)-1;
+  if(state<0) state=SceneGetState(); 
   if(I->NCSet==1) state=0;
   state = state % I->NCSet;
   if(I->CSet[state]) 
@@ -7585,7 +7585,8 @@ int ObjectMoleculeGetAtomVertex(ObjectMolecule *I,int state,int index,float *v)
 int ObjectMoleculeSetAtomVertex(ObjectMolecule *I,int state,int index,float *v)
 {
   int result = 0;
-  if(state<0) state=0;
+  if(state<0) state=SettingGet_i(NULL,I->Obj.Setting,cSetting_state)-1;
+  if(state<0) state=SceneGetState();
   if(I->NCSet==1) state=0;
   state = state % I->NCSet;
   if(I->CSet[state]) 

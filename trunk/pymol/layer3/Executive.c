@@ -124,6 +124,17 @@ int ExecutiveGetObjectColorIndex(char *name)
   return(result);
 }
 
+int ExecutiveGetAtomVertex(char *s1,int state,int index,float *v)
+{
+  int ok=false;
+  int sele1 = SelectorIndexByName(s1);
+
+  if(sele1>=0) {
+    ok=SelectorGetSingleAtomVertex(sele1,state,v);
+  }
+  return ok;
+}
+
 void ExecutiveProcessPDBFile(CObject *origObj,char *fname, char *oname, 
                              int frame, int discrete,int finish,OrthoLineType buf)
 {
@@ -214,7 +225,7 @@ void ExecutiveProcessPDBFile(CObject *origObj,char *fname, char *oname,
                       }
                     }
                   }
-                  ObjectMoleculeFree(obj);
+                  ObjectMoleculeFree((ObjectMolecule*)obj);
                   obj=NULL;
                 }
               }

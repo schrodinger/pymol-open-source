@@ -2494,6 +2494,29 @@ static PyObject *CmdIntraFit(PyObject *dummy, PyObject *args)
   return APIAutoNone(result);
 }
 
+static PyObject *CmdGetAtomCoords(PyObject *dummy, PyObject *args)
+{
+  char *str1;
+  int state;
+  int quiet;
+  OrthoLineType s1;
+  float vertex[3];
+  PyObject *result=Py_None;
+  int ok=false;
+  ok = PyArg_ParseTuple(args,"sii",&str1,&state,&quiet);
+  if (ok) {
+    APIEntry();
+    SelectorGetTmp(str1,s1);
+    ok=ExecutiveGetAtomVertex(s1,state,quiet,vertex);
+    SelectorFreeTmp(s1);
+    APIExit();
+    if(ok) {
+      result=PConvFloatArrayToPyList(vertex,3);
+    }
+  }
+  return APIAutoNone(result);
+}
+
 static PyObject *CmdFit(PyObject *dummy, PyObject *args)
 {
   char *str1,*str2;
@@ -4461,6 +4484,7 @@ static PyMethodDef Cmd_methods[] = {
    {"fuse",                  CmdFuse,                 METH_VARARGS },
 	{"get",	                 CmdGet,                  METH_VARARGS },
 	{"get_area",              CmdGetArea,              METH_VARARGS },
+   {"get_atom_coords",       CmdGetAtomCoords,        METH_VARARGS },
    {"get_bond_print",        CmdGetBondPrint,         METH_VARARGS },
 	{"get_chains",            CmdGetChains,            METH_VARARGS },
 	{"get_color",             CmdGetColor,             METH_VARARGS },
