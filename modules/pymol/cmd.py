@@ -2202,6 +2202,16 @@ PYMOL API
       unlock()
    return r
 
+def load_png(filename):
+   r=None
+   try:
+      lock()   
+      r = _cmd.load_png(str(filename))
+   finally:
+      unlock()
+   return r
+
+
 def faster():
    '''
 RAY TRACING OPTIMIZATION
@@ -6086,6 +6096,7 @@ keyword = {
    'iterate_state' : [iterate_state, 0 , 0 , ''  , parsing.LITERAL2 ],
    'label'         : [label        , 0 , 0 , ''  , parsing.LITERAL1 ],
    'load'          : [load         , 0 , 0 , ''  , parsing.STRICT ],
+   'load_png'      : [load_png     , 0 , 0 , ''  , parsing.STRICT ],
    'log'           : [log          , 0 , 0 , ''  , parsing.STRICT ],
    'log_close'     : [log_close    , 0 , 0 , ''  , parsing.STRICT ],
    'log_open'      : [log_open     , 0 , 0 , ''  , parsing.STRICT ],
