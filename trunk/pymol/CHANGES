@@ -4,6 +4,8 @@ CHANGE LOG
 
 Changes up to 0.98
 
+   * cmd.get_color_index
+
    * passive motion outside of window kills passive menus...
 
    * faster coulomb_local + menu changes

@@ -7395,7 +7395,8 @@ void ObjectMoleculeSeleOp(ObjectMolecule *I,int sele,ObjectMoleculeOpRec *op)
                           ai_option = I->AtomInfo + a;
                         else
                           ai_option = NULL;
-                        if(PAlterAtomState(cs->Coord+(a1*3),op->s1,op->i3,ai_option)) {
+                        if(PAlterAtomState(cs->Coord+(a1*3),op->s1,op->i3,
+                                           ai_option,I->Obj.Name,a)) {
                           op->i1++;
                           hit_flag=true;
                         } else

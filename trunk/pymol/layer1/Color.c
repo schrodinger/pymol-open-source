@@ -410,7 +410,8 @@ char *ColorGetName(int index)
 /*========================================================================*/
 int ColorGetStatus(int index)
 {
-  CColor *I=&Color; /* return 0 if color is invalid, hidden; 1 otherwise */
+  CColor *I=&Color; /* return 0 if color is invalid, -1 if hidden; 
+                       1 otherwise */
   char *c;
   int result=0;
   if((index>=0)&&(index<I->NColor)) {
@@ -418,7 +419,7 @@ int ColorGetStatus(int index)
     result=1;
     while(*c) {
       if(((*c)>='0')&&((*c)<='9')) {
-        result=0;
+        result=-1;
         break;
       }
       c++;

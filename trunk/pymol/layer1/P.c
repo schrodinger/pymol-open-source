@@ -241,7 +241,7 @@ void PDumpException()
   PyObject_CallMethod(P_traceback,"print_exc","");
 }
 
-int PAlterAtomState(float *v,char *expr,int read_only,AtomInfoType *at) 
+int PAlterAtomState(float *v,char *expr,int read_only,AtomInfoType *at,char *model,int index) 
      /* assumes Blocked python interpreter*/
 {
   PyObject *dict; 
@@ -256,6 +256,11 @@ int PAlterAtomState(float *v,char *expr,int read_only,AtomInfoType *at)
       strcpy(atype,"HETATM");
     else
       strcpy(atype,"ATOM");
+
+    /* immutables */
+    PConvStringToPyDictItem(dict,"model",model);
+    PConvIntToPyDictItem(dict,"index",index+1);
+    
     PConvStringToPyDictItem(dict,"type",atype);
     PConvStringToPyDictItem(dict,"name",at->name);
     PConvStringToPyDictItem(dict,"resn",at->resn);
