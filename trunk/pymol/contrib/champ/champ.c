@@ -933,7 +933,7 @@ void ChampCountRings(CChamp *I,int index)
       if(!at->cycle)
         at->cycle=cH_Acyclic;
       if(!(at->class&(cH_Aromatic|cH_Aliphatic)))
-        at->class=cH_Aliphatic;
+        at->class|=cH_Aliphatic;
     }
 
     bi = pat->bond;
@@ -2766,7 +2766,6 @@ char *ChampPatToSmiVLA(CChamp *I,int index,char *vla)
   int a,c,l;
   int mark[MAX_RING];
   int mark_bond[MAX_RING];
-  int index1;
   int i;
   int left_to_do = 0;
   int next_mark =1;
@@ -2916,7 +2915,7 @@ char *ChampPatToSmiVLA(CChamp *I,int index,char *vla)
           concat_c('(');
           scp2->paren_flag=true;
           PRINTFD(FB_smiles_creation) 
-            " SmiToStrVLA: creating new scope %d vs old %d\n",index1,cur_scope
+            " SmiToStrVLA: creating new scope vs old %d\n",cur_scope
             ENDFD;
 
         } else if(left_to_do) { /* no we do not, so just extend current scope */
@@ -2968,7 +2967,7 @@ void ChampPatDump(CChamp *I,int index)
     ChampAtomToString(I,cur_atom,buf);
     printf(" atom %d %s 0x%08x",cur_atom,buf,at->atom);
     printf(" cy: %x",at->cycle);
-    printf(" bonds: ");
+    printf(" class: %x !class: %x bonds: ",at->class,at->not_class);
     for(a=0;a<MAX_BOND;a++) {
       if(!at->bond[a]) break;
       else printf("%d ",at->bond[a]);
