@@ -609,7 +609,7 @@ float ExecutiveAlign(char *s1,char *s2,char *mat_file,float gap,float extend,int
             PRINTFB(FB_Executive,FB_Actions)
               " ExecutiveAlign: %d atoms aligned.\n",c
               ENDFB;
-            ExecutiveRMS("_align1","_align2",2,cutoff,cycles,quiet,oname);
+            result =ExecutiveRMS("_align1","_align2",2,cutoff,cycles,quiet,oname);
             
           }
         }
