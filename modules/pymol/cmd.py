@@ -30,6 +30,7 @@ import os
 
 from chempy import io
 from chempy.sdf import SDF,SDFRec
+from chempy import fragments
 
 lock_api = pymol.lock_api
 
@@ -375,6 +376,12 @@ def cls():
    finally:
       unlock()
    return r
+
+def fragment(name):
+   try:
+      load_model(fragments.get(name),name)
+   except:
+      print "Error: unable to load fragment %s" % name
    
 def mem():
    '''
@@ -3093,6 +3100,7 @@ keyword = {
    'flag'          : [flag         , 2 , 2 , '=' , 0 ],
    'fork'          : [dummy        , 1 , 1 , ',' , 3 ],
    'forward'       : [forward      , 0 , 0 , ',' , 0 ],
+   'fragment'      : [fragment     , 1 , 1 , ',' , 0 ],
    'fuse'          : [fuse         , 0 , 2 , ',' , 0 ],
    'frame'         : [frame        , 1 , 1 , ',' , 0 ],
    'h_add'         : [h_add        , 0 , 1 , ',' , 0 ],

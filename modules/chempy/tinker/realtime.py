@@ -61,7 +61,8 @@ def setup(sele,preserve=0):
 
 #   param = Parameters(tinker.params_path+"parm99_wld.dat")
 #   param = Parameters(tinker.params_path+"simple_parm.dat")
-   param = Parameters("simple_parm.dat")
+#   param = Parameters("simple_parm.dat")
+   param = Parameters(tinker.params_path+"parm99_simple.dat")
    topo = Topology(model)
 
    subset = Subset(param,topo)
