@@ -38,11 +38,11 @@ LIBS = -lpng $(PYTHON_LIB) $(ZLIB) -lm -framework OpenGL \
 #--- PyMOL configuration
 DEFS = -D_PYMOL_MODULE -D_PYMOL_OSX -D_PYMOL_NUMPY
 #--- How we build shared libraries
-BUILD = -bundle -undefined warning -flat_namespace
+BUILD = -bundle -undefined suppress -flat_namespace
 #--- What are we trying to build?
 DEST = -o modules/pymol/_cmd.so
 #--- CC options
-CCOPT1 = -ffast-math
+CCOPT1 = -ffast-math -no-cpp-precomp
 #--- libraries for PyOpenGL 
 PYOGL_LIB = -framework OpenGL 
 #---------------------------------------------------------------------
