@@ -28,8 +28,9 @@ typedef struct RepSphere {
   float *V;
   float *VC;
   SphereRec *SP;
+  int *NT;
   int N,NC;
-
+  int cullFlag;
 } RepSphere;
 
 #include"ObjectMolecule.h"
@@ -45,6 +46,7 @@ void RepSphereFree(RepSphere *I)
 {
   FreeP(I->VC);
   FreeP(I->V);
+  FreeP(I->NT);
   OOFreeP(I);
 }
 
@@ -52,9 +54,10 @@ void RepSphereRender(RepSphere *I,CRay *ray,Pickable **pick)
 {
   float *v=I->V;
   int c=I->N;
-  int cc=0;
+  int cc=0,*nt=NULL;
   int a;
   SphereRec *sp;
+  float cont;
 
   if(ray) {
 	 v=I->VC;
@@ -67,16 +70,28 @@ void RepSphereRender(RepSphere *I,CRay *ray,Pickable **pick)
 	 }
   } else if(pick) {
   } else {
-	 sp=I->SP;
-
-	 while(c--)
-		{
-		  glColor3fv(v);
-		  v+=3;
-		  for(a=0;a<sp->NStrip;a++) {
+	 if(I->cullFlag) {
+		nt=I->NT;
+		while(c--)
+		  {
+			 glColor3fv(v);
+			 v+=3;
+			 cc=*(nt++);
 			 glBegin(GL_TRIANGLE_STRIP);
-			 cc=sp->StripLen[a];
 			 while(cc--) {
+				cont=*(v++);
+				if(!cont) {
+				  glEnd();
+				  glBegin(GL_TRIANGLE_STRIP);
+				  glNormal3fv(v);
+				  v+=3;
+				  glVertex3fv(v);
+				  v+=3;
+				  glNormal3fv(v);
+				  v+=3;
+				  glVertex3fv(v);
+				  v+=3;
+				}
 				glNormal3fv(v);
 				v+=3;
 				glVertex3fv(v);
@@ -84,18 +99,39 @@ void RepSphereRender(RepSphere *I,CRay *ray,Pickable **pick)
 			 }
 			 glEnd();
 		  }
-		}
+	 } else {
+		sp=I->SP;
+		while(c--)
+		  {
+			 glColor3fv(v);
+			 v+=3;
+			 for(a=0;a<sp->NStrip;a++) {
+				glBegin(GL_TRIANGLE_STRIP);
+				cc=sp->StripLen[a];
+				while(cc--) {
+				  glNormal3fv(v);
+				  v+=3;
+				  glVertex3fv(v);
+				  v+=3;
+				}
+				glEnd();
+			 }
+		  }
+	 }
   }
 }
 
 Rep *RepSphereNew(CoordSet *cs)
 {
   ObjectMolecule *obj;
-  int a,b,c,a1,c1;
-  float *v,*v0,*vc,vdw;
-  int *q, *s;
+  int a,b,c,a1,c1,a2,i,j,k,h,l;
+  float *v,*v0,*vc,vdw,v1[3];
+  float cont;
+  int *q, *s,q0,q1,q2;
   SphereRec *sp = Sphere0; 
-  int ds;
+  int ds,*nt,flag;
+  int *visFlag = NULL;
+  MapType *map = NULL;
 
   OOAlloc(RepSphere);
 
@@ -113,10 +149,14 @@ Rep *RepSphereNew(CoordSet *cs)
   obj = cs->Obj;
   I->R.fRender=(void (*)(struct Rep *, CRay *, Pickable **))RepSphereRender;
   I->R.fFree=(void (*)(struct Rep *))RepSphereFree;
+
+  /* raytracing primitives */
   
   I->VC=(float*)mmalloc(sizeof(float)*cs->NIndex*7);
   ErrChkPtr(I->VC);
   I->NC=0;
+
+  I->NT=NULL;
 
   v=I->VC; 
   for(a=0;a<cs->NIndex;a++)
@@ -143,52 +183,220 @@ Rep *RepSphereNew(CoordSet *cs)
   else
 	 I->VC=(float*)mrealloc(I->VC,1);
 
-  I->V=(float*)mmalloc(sizeof(float)*cs->NIndex*(3+sp->NVertTot*6));
-  ErrChkPtr(I->V);
+
+  if(SettingGet(cSetting_cull_spheres)) {
+	 I->V=(float*)mmalloc(sizeof(float)*cs->NIndex*(sp->NVertTot*19));
+	 ErrChkPtr(I->V);
+
+	 I->NT=Alloc(int,cs->NIndex);
+	 ErrChkPtr(I->NT);
+
+	 I->cullFlag = true;
+	 visFlag = Alloc(int,sp->nDot);
+	 ErrChkPtr(visFlag);
+
+	 if(I->cullFlag) {
+		map=MapNew(MAX_VDW,cs->Coord,cs->NIndex,NULL);
+		if(map) MapSetupExpress(map);
+	 }
+  } else {
+	 I->V=(float*)mmalloc(sizeof(float)*cs->NIndex*(3+sp->NVertTot*6));
+	 ErrChkPtr(I->V);
+
+	 I->cullFlag = false;
+  }
+
+  /* rendering primitives */
 
   I->N=0;
   I->SP=sp;
   v=I->V;
+  nt=I->NT;
 
   for(a=0;a<cs->NIndex;a++)
 	 {
 		a1 = cs->IdxToAtm[a];
 		if(obj->AtomInfo[a1].visRep[cRepSphere])
 		  {
-			 I->N++;
 			 c1=*(cs->Color+a);
 			 v0 = cs->Coord+3*a;
 			 vdw = cs->Obj->AtomInfo[a1].vdw;
-			 q=sp->Sequence;
-			 s=sp->StripLen;
 			 vc = ColorGet(c1);
 			 *(v++)=*(vc++);
 			 *(v++)=*(vc++);
 			 *(v++)=*(vc++);
-			 for(b=0;b<sp->NStrip;b++)
-				{
-				  for(c=0;c<(*s);c++)
-					 {
-						*(v++)=sp->dot[*q].v[0]; /* normal */
-						*(v++)=sp->dot[*q].v[1];
-						*(v++)=sp->dot[*q].v[2];
-						*(v++)=v0[0]+vdw*sp->dot[*q].v[0]; /* point */
-						*(v++)=v0[1]+vdw*sp->dot[*q].v[1];
-						*(v++)=v0[2]+vdw*sp->dot[*q].v[2];
-						q++;
+
+			 if(I->cullFlag) {
+				for(b=0;b<sp->nDot;b++) /* Sphere culling mode - more strips, but many fewer atoms */
+				  {
+					 v1[0]=v0[0]+vdw*sp->dot[b].v[0];
+					 v1[1]=v0[1]+vdw*sp->dot[b].v[1];
+					 v1[2]=v0[2]+vdw*sp->dot[b].v[2];
+					 
+					 MapLocus(map,v1,&h,&k,&l);
+					 
+					 visFlag[b]=1;
+					 i=*(MapEStart(map,h,k,l));
+					 if(i) {
+						j=map->EList[i++];
+						while(j>=0) {
+						  a2 = cs->IdxToAtm[j];
+						  if(obj->AtomInfo[a2].visRep[cRepSphere]) {
+							 if(j!=a)
+								if(within3f(cs->Coord+3*j,v1,cs->Obj->AtomInfo[a2].vdw))
+								  {
+									 visFlag[b]=0;
+									 break;
+								  }
+						  }
+						  j=map->EList[i++];
+						}
 					 }
-				  s++;
-				}
+				  }
+				q=sp->Sequence;
+				s=sp->StripLen;
+				for(b=0;b<sp->NStrip;b++) 
+				  /* this is an attempt to fill in *some* of the cracks
+					* by checking to see if the center of the triangle is visible 
+					* IMHO - the increase in framerates is worth missing a triangle
+					* here or there, and the user can always turn off sphere culling */
+				  {
+					 cont=0.0;
+					 q+=2;
+					 for(c=2;c<(*s);c++) {
+						  q0=*q;
+						  q1=*(q-1);
+						  q2=*(q-2);
+
+						  if((!visFlag[q0])&&(!visFlag[q1])&&(!visFlag[q2]))
+
+						  v1[0]=v0[0]+vdw*sp->dot[q0].v[0];
+						  v1[1]=v0[1]+vdw*sp->dot[q0].v[1];
+						  v1[2]=v0[2]+vdw*sp->dot[q0].v[2];
+
+						  v1[0]+=v0[0]+vdw*sp->dot[q1].v[0];
+						  v1[1]+=v0[1]+vdw*sp->dot[q1].v[1];
+						  v1[2]+=v0[2]+vdw*sp->dot[q1].v[2];
+
+						  v1[0]+=v0[0]+vdw*sp->dot[q2].v[0];
+						  v1[1]+=v0[1]+vdw*sp->dot[q2].v[1];
+						  v1[2]+=v0[2]+vdw*sp->dot[q2].v[2];
+
+						  v1[0]/=3;
+						  v1[1]/=3;
+						  v1[2]/=3;
+
+						  flag=true;
+						  i=*(MapEStart(map,h,k,l));
+						  if(i) {
+							 j=map->EList[i++];
+							 while(j>=0) {
+								a2 = cs->IdxToAtm[j];
+								if(obj->AtomInfo[a2].visRep[cRepSphere]) {
+								  if(j!=a)
+									 if(within3f(cs->Coord+3*j,v1,cs->Obj->AtomInfo[a2].vdw))
+										{
+										  flag=false;
+										  break;
+										}
+								}
+								j=map->EList[i++];
+							 }
+						  }
+						  if(flag)
+							 {
+								visFlag[q0]=1;
+								visFlag[q1]=1;
+								visFlag[q2]=1;
+							 }
+						  q++;
+					 }
+					 s++;
+				  }
+				
+				*(nt)=0;
+				q=sp->Sequence;
+				s=sp->StripLen;
+
+				for(b=0;b<sp->NStrip;b++)
+				  {
+					 cont=0.0;
+					 q+=2;
+					 for(c=2;c<(*s);c++)
+						{
+						  q0=*q;
+						  q1=*(q-1);
+						  q2=*(q-2);
+						  if(visFlag[q0]||(visFlag[q1])||(visFlag[q2]))
+							 {
+								*(v++) = cont;
+								if(!cont) {
+								  *(v++)=sp->dot[q2].v[0]; /* normal */
+								  *(v++)=sp->dot[q2].v[1];
+								  *(v++)=sp->dot[q2].v[2];
+								  *(v++)=v0[0]+vdw*sp->dot[q2].v[0]; /* point */
+								  *(v++)=v0[1]+vdw*sp->dot[q2].v[1];
+								  *(v++)=v0[2]+vdw*sp->dot[q2].v[2];
+								  *(v++)=sp->dot[q1].v[0]; /* normal */
+								  *(v++)=sp->dot[q1].v[1];
+								  *(v++)=sp->dot[q1].v[2];
+								  *(v++)=v0[0]+vdw*sp->dot[q1].v[0]; /* point */
+								  *(v++)=v0[1]+vdw*sp->dot[q1].v[1];
+								  *(v++)=v0[2]+vdw*sp->dot[q1].v[2];
+								}
+								*(v++)=sp->dot[q0].v[0]; /* normal */
+								*(v++)=sp->dot[q0].v[1];
+								*(v++)=sp->dot[q0].v[2];
+								*(v++)=v0[0]+vdw*sp->dot[q0].v[0]; /* point */
+								*(v++)=v0[1]+vdw*sp->dot[q0].v[1];
+								*(v++)=v0[2]+vdw*sp->dot[q0].v[2];
+								cont=1.0;
+								(*nt)++;
+							 } else {
+								cont = 0.0; /* next triangle is a new strip */
+							 }
+						  q++;
+						}
+					 s++;
+				  }
+			 } else {
+				q=sp->Sequence;
+				s=sp->StripLen;
+
+				for(b=0;b<sp->NStrip;b++)
+				  {
+					 for(c=0;c<(*s);c++)
+						{
+						  *(v++)=sp->dot[*q].v[0]; /* normal */
+						  *(v++)=sp->dot[*q].v[1];
+						  *(v++)=sp->dot[*q].v[2];
+						  *(v++)=v0[0]+vdw*sp->dot[*q].v[0]; /* point */
+						  *(v++)=v0[1]+vdw*sp->dot[*q].v[1];
+						  *(v++)=v0[2]+vdw*sp->dot[*q].v[2];
+						  q++;
+						}
+					 s++;
+				  }
+			 }
+			 I->N++;
+			 if(nt) nt++;
 		  }
 	 }
 
   /*TODO: NEED TO SHRINK POINTERS HERE*/
 
   if(I->N) 
-	 I->V=(float*)mrealloc(I->V,sizeof(float)*(v-I->V));
+	 {
+		I->V=(float*)mrealloc(I->V,sizeof(float)*(v-I->V));
+		if(I->NT) I->NT=Realloc(I->NT,int,nt-I->NT);
+	 }
   else
-	 I->V=(float*)mrealloc(I->V,1);
-  
+	 {
+		I->V=(float*)mrealloc(I->V,1);
+		if(I->NT) I->NT=Realloc(I->NT,int,1);
+	 }
+  FreeP(visFlag);
+  if(map)  MapFree(map);
   return((void*)(struct Rep*)I);
 }
 

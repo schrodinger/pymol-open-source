@@ -40,5 +40,6 @@ void ButModeInit(void);
 void ButModeFree(void);
 Block *ButModeGetBlock(void);
 void ButModeSetRate(float renderTime);
+void ButModeResetRate(void);
 
 #endif
