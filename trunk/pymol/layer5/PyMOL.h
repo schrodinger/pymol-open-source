@@ -155,4 +155,6 @@ int PyMOL_Show(CPyMOL *I,char *representation, char *selection);
 
 int PyMOL_Hide(CPyMOL *I,char *representation, char *selection);
 
+int PyMOL_Delete(CPyMOL *I,char *name);
+
 #endif
