@@ -1,0 +1,36 @@
+PyMOL>load dat/ligs3d.sdf
+ CmdLoad: MOL-string loaded as "ligs3d".
+ CmdLoad: MOL-string appended into object "ligs3d", state 2.
+ CmdLoad: MOL-string appended into object "ligs3d", state 3.
+ CmdLoad: MOL-string appended into object "ligs3d", state 4.
+ CmdLoad: MOL-string appended into object "ligs3d", state 5.
+ CmdLoad: MOL-string appended into object "ligs3d", state 6.
+ CmdLoad: MOL-string appended into object "ligs3d", state 7.
+ CmdLoad: MOL-string appended into object "ligs3d", state 8.
+ CmdLoad: MOL-string appended into object "ligs3d", state 9.
+ CmdLoad: MOL-string appended into object "ligs3d", state 10.
+PyMOL>zoom (ligs3d)
+PyMOL>set seq_view_format,4,ligs3d
+ Setting: seq_view_format set to 4 in object "ligs3d".
+PyMOL>print cmd.get_names()
+['ligs3d']
+PyMOL>print cmd.select("(all)")
+337
+PyMOL>set ray_default_renderer=2
+ Setting: ray_default_renderer set to 2.
+PyMOL>set valence
+ Setting: valence set to on.
+PyMOL>frame 1
+PyMOL>ray
+ RayRenderTest: obtained 91 graphics primitives.
+PyMOL>frame 10
+PyMOL>ray
+ RayRenderTest: obtained 70 graphics primitives.
+PyMOL>hide
+PyMOL>show sticks
+PyMOL>ray
+ RayRenderTest: obtained 70 graphics primitives.
+PyMOL>unset valence
+ Setting: valence set to off.
+PyMOL>ray
+ RayRenderTest: obtained 42 graphics primitives.
