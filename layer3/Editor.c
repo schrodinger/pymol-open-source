@@ -213,6 +213,7 @@ void EditorPrepareDrag(ObjectMolecule *obj,int index,int state)
     }
     if(seleFlag) {
 
+      PRINTF " Editor: grabbing (%s).",name ENDF
       I->DragIndex = index;
       I->DragSelection = sele0;
       I->DragObject = obj;

@@ -372,6 +372,12 @@ Rep *RepWireBondNew(CoordSet *cs)
 				  s1=obj->AtomInfo[b1].visRep[cRepLine];
 				  s2=obj->AtomInfo[b2].visRep[cRepLine];
 				  
+              if(!(s1&&s2))
+                if(!half_bonds) {
+                  s1 = 0;
+                  s2 = 0;
+                }
+
 				  if(s1||s2)
 					 {	
 						v1 = cs->Coord+3*a1;

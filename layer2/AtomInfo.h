@@ -26,6 +26,12 @@ Z* -------------------------------------------------------------------
 #define cTextTypeLen 20
 #define cLabelTypeLen 20
 
+#define cAtomInfoTetrahedral 4
+#define cAtomInfoPlaner 3
+#define cAtomInfoLinear 2
+#define cAtomInfoSingle 1
+#define cAtomInfoNone 5
+
 typedef char Chain[2];
 
 typedef char SegIdent[cSegiLen+1];
@@ -63,6 +69,9 @@ typedef struct AtomInfoType {
   int id; /* used for reading conect records */
   unsigned int flags;
   int bonded;
+  int chemFlag;
+  int geom;
+  int valence;
 } AtomInfoType;
 
 int *AtomInfoGetSortedIndex(AtomInfoType *rec,int n,int **outdex);

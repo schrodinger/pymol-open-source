@@ -1659,7 +1659,8 @@ static PyObject *CmdTest(PyObject *self, PyObject *args)
   Object *obj;
   APIEntry();
   obj=ExecutiveFindObjectByName("test");
-  if(obj) ObjectMoleculeBlindSymMovie((ObjectMolecule*)obj);
+  if(obj) ObjectMoleculeInferChemistry((ObjectMolecule*)obj,0);
+  if(obj) ObjectMoleculeInferAmidesAcids(obj,0);
   APIExit();
   Py_INCREF(Py_None);
   return Py_None;
