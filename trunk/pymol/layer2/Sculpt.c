@@ -18,19 +18,32 @@ Z* -------------------------------------------------------------------
 #include"os_gl.h"
 #include"OOMac.h"
 #include"Feedback.h"
-
-#include"Map.h"
-
+#include"Util.h"
 #include"Sculpt.h"
 
 #ifndef R_SMALL8
 #define R_SMALL8 0.00000001
 #endif
 
+#define HASH_SIZE 262144
+
+#define nb_hash(v) \
+((((64+(int)v)>> 1)&0x003F)|\
+ (((64+(int)*(v+1))<< 5)&0x0FC0)|\
+ (((64+(int)*(v+2))<<11)&0x3F00))
+
+#define nb_hash_off(v,d,e,f) \
+((((64+d+(int)*v)>> 1)&0x003F)|\
+ (((64+e+(int)*(v+1))<< 5)&0x0FC0)|\
+ (((64+f+(int)*(v+2))<<11)&0x3F00))
+
 CSculpt *SculptNew(void)
 {
   OOAlloc(CSculpt);
   I->Shaker = ShakerNew();
+  I->NBList = VLAlloc(int,150000);
+  I->NBHash = Alloc(int,HASH_SIZE);
+  UtilZeroMem(I->NBHash,HASH_SIZE*sizeof(int));
   return(I);
 }
 
@@ -42,165 +55,116 @@ void SculptMeasureObject(CSculpt *I,ObjectMolecule *obj,int state)
   CoordSet *cs;
   int n0,n1,n2;
   int *planer = NULL;
+
   AtomInfoType *ai;
 
   ShakerReset(I->Shaker);
 
   if(state<obj->NCSet)
     if(obj->CSet[state])
-      if(obj->NBond) {
-
-        planer=Alloc(int,obj->NAtom);
-        ai = obj->AtomInfo;
-        for(a=0;a<obj->NAtom;a++) {
-          planer[a]=(ai->geom==3);
-          ai++;
-        }
-
-        cs = obj->CSet[state];
-        b=obj->Bond;
-        for(a=0;a<obj->NBond;a++)
-          {
-            b1 = b->index[0];
-            b2 = b->index[1];
-            b++;
-            if(obj->DiscreteFlag) {
-              if((cs==obj->DiscreteCSet[b1])&&(cs==obj->DiscreteCSet[b2])) {
-                a1=obj->DiscreteAtmToIdx[b1];
-                a2=obj->DiscreteAtmToIdx[b2];
-              } else {
-                a1=-1;
-                a2=-1;
-              }
-            } else {
-              a1=cs->AtmToIdx[b1];
-              a2=cs->AtmToIdx[b2];
-            }
-            if((a1>=0)&&(a2>=0))
-              {
-                v1 = cs->Coord+3*a1;
-                v2 = cs->Coord+3*a2;
-                d = diff3f(v1,v2);
-                ShakerAddDistCon(I->Shaker,b1,b2,d); 
-                /* NOTE: storing atom indices, not coord. ind.! */
-              }
-          }
-
-        /* now pick up those 1-3 interations */
+      {
 
         ObjectMoleculeVerifyChemistry(obj);
         ObjectMoleculeUpdateNeighbors(obj);
 
-        for(b0=0;b0<obj->NAtom;b0++) {
-          n0 = obj->Neighbor[b0]+1;
-          while(obj->Neighbor[n0]>=0) {
-            b1 = obj->Neighbor[n0];
-            n1 = n0+2;
-            while(obj->Neighbor[n1]>=0) {
-              b2 = obj->Neighbor[n1];
+        cs = obj->CSet[state];
+
+        if(obj->NBond) {
+
+          planer=Alloc(int,obj->NAtom);
+          ai = obj->AtomInfo;
+          for(a=0;a<obj->NAtom;a++) {
+            planer[a]=(ai->geom==3);
+            ai++;
+          }
+          
+          b=obj->Bond;
+          for(a=0;a<obj->NBond;a++)
+            {
+              b1 = b->index[0];
+              b2 = b->index[1];
+              b++;
               if(obj->DiscreteFlag) {
-                if((cs==obj->DiscreteCSet[b0])&&(cs==obj->DiscreteCSet[b1])&&(cs==obj->DiscreteCSet[b2])) {
-                  a0=obj->DiscreteAtmToIdx[b0];
+                if((cs==obj->DiscreteCSet[b1])&&(cs==obj->DiscreteCSet[b2])) {
                   a1=obj->DiscreteAtmToIdx[b1];
                   a2=obj->DiscreteAtmToIdx[b2];
                 } else {
-                  a0=-1;
                   a1=-1;
                   a2=-1;
                 }
               } else {
-                a0=cs->AtmToIdx[b0];
                 a1=cs->AtmToIdx[b1];
                 a2=cs->AtmToIdx[b2];
               }
-              if((a0>=0)&&(a1>=0)&&(a2>=0)) {
-                v1 = cs->Coord+3*a1;
-                v2 = cs->Coord+3*a2;
-                d = diff3f(v1,v2);
-                ShakerAddDistCon(I->Shaker,b1,b2,d); 
-              }
-              n1+=2;
+              if((a1>=0)&&(a2>=0))
+                {
+                  v1 = cs->Coord+3*a1;
+                  v2 = cs->Coord+3*a2;
+                  d = diff3f(v1,v2);
+                  ShakerAddDistCon(I->Shaker,b1,b2,d); 
+                  /* NOTE: storing atom indices, not coord. ind.! */
+                }
             }
-            n0+=2;
-          }
-        }
-
-
-        /* and record the pyramidal and planer geometries */
-
-        for(b0=0;b0<obj->NAtom;b0++) {
-          n0 = obj->Neighbor[b0]+1;
-          while(obj->Neighbor[n0]>=0) {
-            b1 = obj->Neighbor[n0];
-            n1 = n0+2;
-            while(obj->Neighbor[n1]>=0) {
-              b2 = obj->Neighbor[n1];
-              n2 = n1+2;
-              while(obj->Neighbor[n2]>=0) {
-                b3 = obj->Neighbor[n2];
-
-
+          
+          /* now pick up those 1-3 interations */
+          
+          
+          for(b0=0;b0<obj->NAtom;b0++) {
+            n0 = obj->Neighbor[b0]+1;
+            while(obj->Neighbor[n0]>=0) {
+              b1 = obj->Neighbor[n0];
+              n1 = n0+2;
+              while(obj->Neighbor[n1]>=0) {
+                b2 = obj->Neighbor[n1];
                 if(obj->DiscreteFlag) {
                   if((cs==obj->DiscreteCSet[b0])&&(cs==obj->DiscreteCSet[b1])&&(cs==obj->DiscreteCSet[b2])) {
                     a0=obj->DiscreteAtmToIdx[b0];
                     a1=obj->DiscreteAtmToIdx[b1];
                     a2=obj->DiscreteAtmToIdx[b2];
-                    a2=obj->DiscreteAtmToIdx[b3];
                   } else {
                     a0=-1;
                     a1=-1;
                     a2=-1;
-                    a3=-1;
                   }
                 } else {
                   a0=cs->AtmToIdx[b0];
                   a1=cs->AtmToIdx[b1];
                   a2=cs->AtmToIdx[b2];
-                  a3=cs->AtmToIdx[b3];
                 }
-                if((a0>=0)&&(a1>=0)&&(a2>=0)&&(a3>=0)) {
-                  v0 = cs->Coord+3*a0;
+                if((a0>=0)&&(a1>=0)&&(a2>=0)) {
                   v1 = cs->Coord+3*a1;
                   v2 = cs->Coord+3*a2;
-                  v3 = cs->Coord+3*a3;
-                  d = ShakerGetPyra(v0,v1,v2,v3);
-                  if(fabs(d)<0.05) {
-                    planer[b0]=true;
-                  }
-                  if(planer[b0])
-                    d=0.0;
-                  ShakerAddPyraCon(I->Shaker,b0,b1,b2,b3,d); 
+                  d = diff3f(v1,v2);
+                  ShakerAddDistCon(I->Shaker,b1,b2,d); 
                 }
-                
-                n2+=2;
+                n1+=2;
               }
-              n1+=2;
+              n0+=2;
             }
-            n0+=2;
           }
-        }
-
-        /* b1\b0_b2/b3 */
-
-        for(b0=0;b0<obj->NAtom;b0++) {
-          n0 = obj->Neighbor[b0]+1;
-          while(obj->Neighbor[n0]>=0) {
-            b1 = obj->Neighbor[n0];
-            n1 = n0+2;
-            while(obj->Neighbor[n1]>=0) {
-              b2 = obj->Neighbor[n1];
-
-              n2 =  obj->Neighbor[b2]+1;
-              while(obj->Neighbor[n2]>=0) {
-                b3 = obj->Neighbor[n2];
-                if(b3!=b0) {
+          
+          /* and record the pyramidal and planer geometries */
+          
+          for(b0=0;b0<obj->NAtom;b0++) {
+            n0 = obj->Neighbor[b0]+1;
+            while(obj->Neighbor[n0]>=0) {
+              b1 = obj->Neighbor[n0];
+              n1 = n0+2;
+              while(obj->Neighbor[n1]>=0) {
+                b2 = obj->Neighbor[n1];
+                n2 = n1+2;
+                while(obj->Neighbor[n2]>=0) {
+                  b3 = obj->Neighbor[n2];
                   
+                
                   if(obj->DiscreteFlag) {
-                    if((cs==obj->DiscreteCSet[b0])&&(cs==obj->DiscreteCSet[b1])&&(cs==obj->DiscreteCSet[b2])) {
+                    if((cs==obj->DiscreteCSet[b0])&&
+                       (cs==obj->DiscreteCSet[b1])&&
+                       (cs==obj->DiscreteCSet[b2])) {
                       a0=obj->DiscreteAtmToIdx[b0];
                       a1=obj->DiscreteAtmToIdx[b1];
                       a2=obj->DiscreteAtmToIdx[b2];
-                      a2=obj->DiscreteAtmToIdx[b3];
+                      a3=obj->DiscreteAtmToIdx[b3];
                     } else {
                       a0=-1;
                       a1=-1;
@@ -218,30 +182,89 @@ void SculptMeasureObject(CSculpt *I,ObjectMolecule *obj,int state)
                     v1 = cs->Coord+3*a1;
                     v2 = cs->Coord+3*a2;
                     v3 = cs->Coord+3*a3;
-                    
-                    if(fabs(get_dihedral3f(v1,v0,v2,v3))<deg_to_rad(10.0))
-                      if(planer[b0]&&planer[b2])
-                        ShakerAddPlanCon(I->Shaker,b1,b0,b2,b3); 
+                    d = ShakerGetPyra(v0,v1,v2,v3);
+                    if(fabs(d)<0.05) {
+                      planer[b0]=true;
+                    }
+                    if(planer[b0])
+                      d=0.0;
+                    ShakerAddPyraCon(I->Shaker,b0,b1,b2,b3,d); 
                   }
+                
+                  n2+=2;
                 }
-                n2+=2;
+                n1+=2;
               }
-              n1+=2;
+              n0+=2;
             }
-            n0+=2;
           }
-        }
+
+          /* b1\b0_b2/b3 */
+        
+          for(b0=0;b0<obj->NAtom;b0++) {
+            n0 = obj->Neighbor[b0]+1;
+            while(obj->Neighbor[n0]>=0) {
+              b1 = obj->Neighbor[n0];
+              n1 = n0+2;
+              while(obj->Neighbor[n1]>=0) {
+                b2 = obj->Neighbor[n1];
+
+                n2 =  obj->Neighbor[b2]+1;
+                while(obj->Neighbor[n2]>=0) {
+                  b3 = obj->Neighbor[n2];
+                  if(b3!=b0) {
+                  
+                    if(obj->DiscreteFlag) {
+                      if((cs==obj->DiscreteCSet[b0])&&
+                         (cs==obj->DiscreteCSet[b1])&&
+                         (cs==obj->DiscreteCSet[b2])) {
+                        a0=obj->DiscreteAtmToIdx[b0];
+                        a1=obj->DiscreteAtmToIdx[b1];
+                        a2=obj->DiscreteAtmToIdx[b2];
+                        a3=obj->DiscreteAtmToIdx[b3];
+                      } else {
+                        a0=-1;
+                        a1=-1;
+                        a2=-1;
+                        a3=-1;
+                      }
+                    } else {
+                      a0=cs->AtmToIdx[b0];
+                      a1=cs->AtmToIdx[b1];
+                      a2=cs->AtmToIdx[b2];
+                      a3=cs->AtmToIdx[b3];
+                    }
+                    if((a0>=0)&&(a1>=0)&&(a2>=0)&&(a3>=0)) {
+                      v0 = cs->Coord+3*a0;
+                      v1 = cs->Coord+3*a1;
+                      v2 = cs->Coord+3*a2;
+                      v3 = cs->Coord+3*a3;
+                    
+                      if(fabs(get_dihedral3f(v1,v0,v2,v3))<deg_to_rad(10.0))
+                        if(planer[b0]&&planer[b2])
+                          ShakerAddPlanCon(I->Shaker,b1,b0,b2,b3); 
+                    }
+                  }
+                  n2+=2;
+                }
+                n1+=2;
+              }
+              n0+=2;
+            }
+          }
         FreeP(planer);
+        }
       }
+
   
-  PRINTFD(FB_Sculpt)
-    " Sculpt-Debug: I->Shaker->NDistCon %d\n",I->Shaker->NDistCon
+  PRINTFB(FB_Sculpt,FB_Blather)
+    " Sculpt: I->Shaker->NDistCon %d\n",I->Shaker->NDistCon
     ENDFD;
-  PRINTFD(FB_Sculpt)
-    " Sculpt-Debug: I->Shaker->NPyraCon %d\n",I->Shaker->NPyraCon
+  PRINTFB(FB_Sculpt,FB_Blather)
+    " Sculpt: I->Shaker->NPyraCon %d\n",I->Shaker->NPyraCon
     ENDFD;
-  PRINTFD(FB_Sculpt)
-    " Sculpt-Debug: I->Shaker->NPlanCon %d\n",I->Shaker->NPlanCon
+  PRINTFB(FB_Sculpt,FB_Blather)
+    " Sculpt: I->Shaker->NPlanCon %d\n",I->Shaker->NPlanCon
     ENDFD;
 }
        
@@ -258,7 +281,12 @@ void SculptIterateObject(CSculpt *I,ObjectMolecule *obj,int state,int n_cycle)
   float *v,*v0,*v1,*v2,*v3;
   int *atm2idx = NULL;
   int *cnt = NULL;
+  int *i;
   float sc;
+  int hash;
+  int nb_next;
+  int h,k,l;
+  int offset;
 
   PRINTFD(FB_Sculpt)
     " SculptIterateObject-Debug: entered state=%d n_cycle=%d\n",state,n_cycle
@@ -422,6 +450,77 @@ void SculptIterateObject(CSculpt *I,ObjectMolecule *obj,int state,int n_cycle)
           }
         }
         ObjectMoleculeInvalidate(obj,cRepAll,cRepInvCoord);
+
+
+/* compute non-bonded interations */
+
+        /* construct nonbonded hash */
+
+        nb_next = 1;
+        for(b0=0;b0<obj->NAtom;b0++) {
+          a0 = atm2idx[b0];
+          if(a0>=0) {
+            VLACheck(I->NBList,int,nb_next+2);
+            v0 = cs->Coord+3*a0;
+            hash = nb_hash(v0);
+            i = I->NBList+nb_next;
+            *(i++)=*(I->NBHash+hash);
+            *(i++)=hash;
+            *(i++)=b0;
+            *(I->NBHash+hash)=nb_next;
+            nb_next+=3;
+          }
+        }
+
+        /* find neighbors for each atom */
+
+
+        for(b0=0;b0<obj->NAtom;b0++) {
+          a0 = atm2idx[b0];
+          if(a0>=0) {
+            v0 = cs->Coord+3*a0;
+            for(h=-2;h<3;h+=2)
+              for(k=-2;k<3;k+=2)
+                for(l=-2;l<3;l+=2) 
+                  {
+                    hash = nb_hash_off(v0,h,k,l);
+                    offset = *(I->NBHash+hash);
+                    while(1) {
+                      if(!offset) break;
+                      i = I->NBList + offset;
+                      b1 = *(i+2);
+                      if(b1>b0) { /* just once per pair */
+                        a1 = atm2idx[b1];
+                        v1 = cs->Coord+3*a1;
+                        /*
+                        printf("%2d %2d %2d %8.3f %d %d\n",h,k,l,
+                               diff3f(v0,v1),
+                               nb_hash_off(v0,h,k,l),nb_hash(v1));
+                                                printf("%2d %2d %2d - ",h+(int)v0[0],
+                                                  k+(int)v0[1],l+(int)v0[2]);
+                                                  printf("%2d %2d %2d\n",(int)v1[0],
+                                                  +(int)v1[1],(int)v1[2]);
+                                                  
+                                                  printf("%02x %02x %02x - ",h+(int)v0[0],
+                                                  k+(int)v0[1],l+(int)v0[2]);
+                                                  printf("%02x %02x %02x\n",(int)v1[0],
+                                                  +(int)v1[1],(int)v1[2]);
+                        */
+                      }
+                      offset=(*i);
+                    }
+                  }
+          }
+        }
+        
+
+        /* clean up nonbonded hash */
+        i = I->NBList+2;
+        while(nb_next>1) {
+          *(I->NBHash+*i)=0; 
+          i+=3;
+          nb_next-=3;
+        }
         
         FreeP(cnt);
         FreeP(disp);
@@ -431,6 +530,8 @@ void SculptIterateObject(CSculpt *I,ObjectMolecule *obj,int state,int n_cycle)
 
 void SculptFree(CSculpt *I)
 {
+  VLAFreeP(I->NBList);
+  FreeP(I->NBHash);
   ShakerFree(I->Shaker);
   OOFreeP(I);
 }

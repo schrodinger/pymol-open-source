@@ -22,6 +22,9 @@ Z* -------------------------------------------------------------------
 typedef struct CSculpt {
   CShaker *Shaker;
   ObjectMolecule *Obj;
+  int *NBHash;
+  int *NBList;
+
 } CSculpt;
 
 CSculpt *SculptNew(void);

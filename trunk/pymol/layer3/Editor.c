@@ -948,8 +948,14 @@ void EditorPrepareDrag(ObjectMolecule *obj,int index,int state)
       I->DragObject=NULL;
     }
   }
-  if(I->DragObject)
+  if(I->DragObject) {
     ObjectMoleculeSaveUndo(I->DragObject,state,log_trans);
+    if(SettingGet(cSetting_auto_sculpt)) {
+      SettingSet(cSetting_sculpting,1);
+      if(!I->DragObject->Sculpt)
+        ObjectMoleculeSculptUpdate(I->DragObject,state);
+    }
+  }
   if(log_trans) PLogFlush();
 
   PRINTFD(FB_Editor)

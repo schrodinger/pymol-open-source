@@ -260,8 +260,9 @@ int SettingGetName(int index,SettingName name);
 #define cSetting_raise_exceptions            159
 #define cSetting_stop_on_exceptions          160
 #define cSetting_sculpting                   161
+#define cSetting_auto_sculpt                 162
 
-#define cSetting_INIT                        162
+#define cSetting_INIT                        163
 
 #endif
 

@@ -891,7 +891,7 @@ void SettingInitGlobal(void)
 
   SettingSet_f(I,cSetting_ribbon_radius, 0.4F);
 
-  SettingSet_f(I,cSetting_stick_radius, 0.3F);
+  SettingSet_f(I,cSetting_stick_radius, 0.25F);
 
   SettingSet_f(I,cSetting_hash_max, 100.0F);
 
@@ -1178,6 +1178,8 @@ void SettingInitGlobal(void)
   SettingSet_f(I,cSetting_stop_on_exceptions, 0.0F);  
 
   SettingSet_f(I,cSetting_sculpting, 0.0F);  
+
+  SettingSet_f(I,cSetting_auto_sculpt, 0.0F);  
 
 }
 
