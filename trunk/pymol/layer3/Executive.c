@@ -367,7 +367,7 @@ static int ExecutiveSetNamedEntries(PyObject *names)
       rec=NULL;
       ListElemAlloc(rec,SpecRec); 
       rec->next=NULL;
-
+      rec->name[0]=0;
       if(ok) ok = PyList_Check(cur);
       if(ok) ok = PConvPyStrToStr(PyList_GetItem(cur,0),rec->name,sizeof(WordType));
       if(ok) ok = PConvPyIntToInt(PyList_GetItem(cur,1),&rec->type);
@@ -412,6 +412,14 @@ static int ExecutiveSetNamedEntries(PyObject *names)
         rec->sele_color=extra_int;
         break;
       }
+
+      if(PyErr_Occurred()) {
+        PRINTFB(FB_Executive,FB_Errors)
+          "ExectiveSetNamedEntries-ERROR: after object '%s'.\n",rec->name
+          ENDFB;
+        PyErr_Print();  
+      }
+
       if(ok&&!skip) {
         switch(rec->type) {
         case cExecObject:        
@@ -572,12 +580,23 @@ int ExecutiveSetSession(PyObject *session)
       ok = ColorFromPyList(tmp);
     }
   }
-  
+  if(PyErr_Occurred()) {
+    PRINTFB(FB_Executive,FB_Errors)
+      "ExectiveSetSession-ERROR: after colors.\n"
+      ENDFB;
+    PyErr_Print();  
+  }
   if(ok) {
     tmp = PyDict_GetItemString(session,"color_ext");
     if(tmp) {
       ok = ColorExtFromPyList(tmp);
     }
+  }
+  if(PyErr_Occurred()) {
+    PRINTFB(FB_Executive,FB_Errors)
+      "ExectiveSetSession-ERROR: after color_ext.\n"
+      ENDFB;
+    PyErr_Print();  
   }
 
   if(ok) {
@@ -586,6 +605,14 @@ int ExecutiveSetSession(PyObject *session)
       ok = SettingSetGlobalsFromPyList(tmp);
     }
   }
+
+  if(PyErr_Occurred()) {
+    PRINTFB(FB_Executive,FB_Errors)
+      "ExectiveSetSession-ERROR: after settings.\n"
+      ENDFB;
+    PyErr_Print();  
+  }
+
   if(ok) {
     tmp = PyDict_GetItemString(session,"names");
     if(tmp) {
@@ -593,6 +620,13 @@ int ExecutiveSetSession(PyObject *session)
       if(ok) ok=ExecutiveSetSelections(tmp);
     }
   }
+  if(PyErr_Occurred()) {
+    PRINTFB(FB_Executive,FB_Errors)
+      "ExectiveSetSession-ERROR: after names.\n"
+      ENDFB;
+    PyErr_Print();  
+  }
+
   if(ok) {
     tmp = PyDict_GetItemString(session,"view");
     if(tmp) {
@@ -601,6 +635,14 @@ int ExecutiveSetSession(PyObject *session)
     if(ok) SceneSetView(sv);
         
   }
+
+  if(PyErr_Occurred()) {
+    PRINTFB(FB_Executive,FB_Errors)
+      "ExectiveSetSession-ERROR: after view.\n"
+      ENDFB;
+    PyErr_Print();  
+  }
+
   if(ok) {
     int warning;
     tmp = PyDict_GetItemString(session,"movie");
@@ -608,12 +650,28 @@ int ExecutiveSetSession(PyObject *session)
       ok = MovieFromPyList(tmp,&warning);
     }
   }
+
+  if(PyErr_Occurred()) {
+    PRINTFB(FB_Executive,FB_Errors)
+      "ExectiveSetSession-ERROR: after movie.\n"
+      ENDFB;
+    PyErr_Print();  
+  }
+
   if(ok) {
     tmp = PyDict_GetItemString(session,"editor");
     if(tmp) {
       ok = EditorFromPyList(tmp);
     }
   }
+
+  if(PyErr_Occurred()) {
+    PRINTFB(FB_Executive,FB_Errors)
+      "ExectiveSetSession-ERROR: after editor.\n"
+      ENDFB;
+    PyErr_Print();  
+  }
+
   if(ok) { /* update mouse in GUI */
     PParse("cmd.mouse(quiet=1)");
     PParse("viewport"); /* refresh window/internal_gui status */
@@ -624,6 +682,14 @@ int ExecutiveSetSession(PyObject *session)
       ok = MainFromPyList(tmp);
     }
   }
+
+  if(PyErr_Occurred()) {
+    PRINTFB(FB_Executive,FB_Errors)
+      "ExectiveSetSession-ERROR: after main.\n"
+      ENDFB;
+    PyErr_Print();  
+  }
+
   return(ok);
 }
 

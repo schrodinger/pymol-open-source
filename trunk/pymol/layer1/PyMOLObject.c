@@ -68,6 +68,7 @@ PyObject *ObjectAsPyList(CObject *I)
   PyList_SetItem(result,6,PyInt_FromLong(I->ExtentFlag));
   PyList_SetItem(result,7,PyInt_FromLong(I->TTTFlag));
   PyList_SetItem(result,8,SettingAsPyList(I->Setting));
+  
   PyList_SetItem(result,9,PyInt_FromLong(I->Enabled));
   PyList_SetItem(result,10,PyInt_FromLong(I->Context));
 
@@ -77,7 +78,10 @@ PyObject *ObjectAsPyList(CObject *I)
 int ObjectFromPyList(PyObject *list,CObject *I)
 {
   int ok=true;
+  int ll;
+
   if(ok) ok = PyList_Check(list);
+  if(ok) ll=PyList_Size(list);
   if(ok) ok = PConvPyIntToInt(PyList_GetItem(list,0),&I->type);
   if(ok) ok = PConvPyStrToStr(PyList_GetItem(list,1),I->Name,ObjNameMax);
   if(ok) ok = PConvPyIntToInt(PyList_GetItem(list,2),&I->Color);
@@ -88,7 +92,7 @@ int ObjectFromPyList(PyObject *list,CObject *I)
   if(ok) ok = PConvPyIntToInt(PyList_GetItem(list,7),&I->TTTFlag);
   if(ok) I->Setting=SettingNewFromPyList(PyList_GetItem(list,8));
   if(ok) ok = PConvPyIntToInt(PyList_GetItem(list,9),&I->Enabled);
-  if(ok) ok = PConvPyIntToInt(PyList_GetItem(list,10),&I->Context);
+  if(ok&&(ll>10)) ok = PConvPyIntToInt(PyList_GetItem(list,10),&I->Context);
   
   return(ok);
 }

@@ -124,27 +124,33 @@ static int set_list(CSetting *I,PyObject *list)
     if(ok) ok=PConvPyIntToInt(PyList_GetItem(list,0),&index);
     if(ok) ok=PConvPyIntToInt(PyList_GetItem(list,1),&setting_type);
     if(ok&&(index<cSetting_INIT)) { /* ignore unknown settings */
-      if(ok) switch(setting_type) {
-      case cSetting_boolean:
-      case cSetting_int:
-      case cSetting_color:
-        ok = PConvPyIntToInt(PyList_GetItem(list,2),
-                             (int*)SettingPtr(I,index,sizeof(int)));
+      switch(index) { 
+        /* don't restore the folllowing settings */
+      case cSetting_stereo_double_pump_mono: 
         break;
-      case cSetting_float:
-        ok = PConvPyFloatToFloat(PyList_GetItem(list,2),
-                                 (float*)SettingPtr(I,index,sizeof(float)));
-        break;
-      case cSetting_float3:
-        ok = PConvPyListToFloatArrayInPlaceAutoZero(PyList_GetItem(list,2),
-                                                    (float*)SettingPtr(I,index,3*sizeof(float)),3);
-        break;
-      case cSetting_string:
-        ok = PConvPyStrToStrPtr(PyList_GetItem(list,2),&str);
-        if(ok) {
-          strcpy(((char*)SettingPtr(I,index,strlen(str)+1)),str);
+      default:
+        if(ok) switch(setting_type) {
+        case cSetting_boolean:
+        case cSetting_int:
+        case cSetting_color:
+          ok = PConvPyIntToInt(PyList_GetItem(list,2),
+                               (int*)SettingPtr(I,index,sizeof(int)));
+          break;
+        case cSetting_float:
+          ok = PConvPyFloatToFloat(PyList_GetItem(list,2),
+                                   (float*)SettingPtr(I,index,sizeof(float)));
+          break;
+        case cSetting_float3:
+          ok = PConvPyListToFloatArrayInPlaceAutoZero(PyList_GetItem(list,2),
+                                                      (float*)SettingPtr(I,index,3*sizeof(float)),3);
+          break;
+        case cSetting_string:
+          ok = PConvPyStrToStrPtr(PyList_GetItem(list,2),&str);
+          if(ok) {
+            strcpy(((char*)SettingPtr(I,index,strlen(str)+1)),str);
+          }
+          break;
         }
-        break;
       }
       if(ok) I->info[index].type=setting_type;
     }
