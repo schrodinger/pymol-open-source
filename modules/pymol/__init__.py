@@ -21,7 +21,6 @@ import string
 import time
 import invocation
 import traceback
-import _cmd
 import math
 import threading
 
@@ -116,7 +115,11 @@ def launch_gui():
    if invocation.options.external_gui:
       __import__(invocation.options.gui)
 
+import _cmd
 import cmd
 
 if os.environ.has_key('DISPLAY'):
    from xwin import *
+
+
+
