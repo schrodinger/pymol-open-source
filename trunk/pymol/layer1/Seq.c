@@ -15,6 +15,7 @@ Z* -------------------------------------------------------------------
 */
 
 #include "os_gl.h"  
+#include "os_std.h"
 
 #include "Base.h"
 #include "Seq.h"
@@ -113,7 +114,7 @@ void SeqDirty(void)
 }
 static int SeqDrag(Block *block,int x,int y,int mod)
 {
-  CSeq *I=&Seq;
+  /*  CSeq *I=&Seq;*/
   return(1);
 }
 
@@ -186,7 +187,7 @@ void SeqSetHandler(CSeqHandler *handler)
   I->Handler = handler;
 }
 
-int SeqClick(Block *block,int button,int x,int y,int mod)
+static int SeqClick(Block *block,int button,int x,int y,int mod)
 {
   CSeq *I=&Seq;
   int pass = 0;
@@ -212,7 +213,7 @@ int SeqClick(Block *block,int button,int x,int y,int mod)
   return(1);
 }
 
-void SeqDraw(Block *block)
+static void SeqDraw(Block *block)
 {
   CSeq *I=&Seq;
 
@@ -239,8 +240,7 @@ void SeqDraw(Block *block)
       CSeqRow *row;
       CSeqCol *col;
       glColor3fv(white);	 
-      int xx,yy,len,ch_wid,pix_wid,tot_len;
-      int offset;
+      int xx,yy,ch_wid,pix_wid,tot_len;
       for(a=I->NRow-1;a>=0;a--) {
         row = I->Row+a;
         yy=y-2;
