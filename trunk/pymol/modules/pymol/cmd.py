@@ -495,7 +495,8 @@ PyMOL COMMAND LINE OPTIONS
    -w   Use wxPython based external GUI module (pmg_wx).
    -q   Quiet launch. Suppress splash screen.
    -p   Listen for commands on standard input.
-
+   -e   Start in full-screen mode
+   
    -f <# line> Controls display of commands and feedback in OpenGL (0=off).
    -r <file.py>[,global|local|module] Run a python program on startup.
    -l <file.py>[,global|local|module] Spawn a python program in new thread.
