@@ -238,6 +238,22 @@ int ExecutiveTranslateAtom(char *sele,float *v,int state,int mode,int log)
   return(ok);
 }
 
+int ExecutiveCombineObjectTTT(char *name,float *ttt)
+{
+  Object *obj = ExecutiveFindObjectByName(name);
+  int ok=true;
+
+  if(!obj) {
+    PRINTFB(FB_ObjectMolecule,FB_Errors)
+      "Error: object %s not found.\n",name 
+      ENDFB;
+    ok=false;
+  } else {
+    ObjectCombineTTT(obj,ttt);
+  }
+  return(ok);
+}
+
 int ExecutiveTransformObjectSelection(char *name,int state,char *s1,int log,float *ttt)
 {
   int sele=-1;
@@ -1292,6 +1308,7 @@ float ExecutiveDistance(char *s1,char *s2)
   
   sele1=SelectorIndexByName(s1);
   op1.i1=0;
+  op2.i2=0;
   if(sele1>=0) {
     op1.code = OMOP_SUMC;
     op1.v1[0]=0.0;
@@ -1304,6 +1321,7 @@ float ExecutiveDistance(char *s1,char *s2)
   
   sele2=SelectorIndexByName(s2);
   op2.i1=0;
+  op2.i2=0;
   if(sele2>=0) {
     op2.code = OMOP_SUMC;
     op2.v1[0]=0.0;
@@ -1881,10 +1899,21 @@ void ExecutiveUpdateObjectSelection(struct Object *obj)
   }
 }
 /*========================================================================*/
-void ExecutiveReset(int cmd)
+int ExecutiveReset(int cmd,char *name)
 {
-  SceneResetMatrix();
-  ExecutiveWindowZoom(cKeywordAll,0.0);
+  int ok=true;
+  Object *obj;
+  if(!name[0]) {
+    SceneResetMatrix();
+    ExecutiveWindowZoom(cKeywordAll,0.0);
+  } else {
+    obj = ExecutiveFindObjectByName(name);
+    if(!obj)
+      ok=false;
+    else
+      ObjectResetTTT(obj);
+  }
+  return(ok);
 }
 /*========================================================================*/
 void ExecutiveDrawNow(void) 
@@ -2117,7 +2146,7 @@ void ExecutiveObjMolSeleOp(int sele,ObjectMoleculeOpRec *op)
 }
 
 /*========================================================================*/
-int ExecutiveGetExtent(char *name,float *mn,float *mx)
+int ExecutiveGetExtent(char *name,float *mn,float *mx,int transformed)
 {
   int sele;
   ObjectMoleculeOpRec op,op2;
@@ -2156,6 +2185,7 @@ int ExecutiveGetExtent(char *name,float *mn,float *mx)
     op.v2[1]=FLT_MIN;
     op.v2[2]=FLT_MIN;
     op.i1 = 0;
+    op.i2 = transformed;
     ExecutiveObjMolSeleOp(sele,&op);
     if(op.i1)
       flag = true;
@@ -2176,6 +2206,7 @@ int ExecutiveGetExtent(char *name,float *mn,float *mx)
       }
     }
     op2.i1=0;
+    op2.i2=transformed;
 	 op2.code = OMOP_SUMC;
 	 op2.v1[0]=0.0;
 	 op2.v1[1]=0.0;
@@ -2255,7 +2286,7 @@ void ExecutiveWindowZoom(char *name,float buffer)
   float center[3],radius;
   float mn[3],mx[3];
 
-  if(ExecutiveGetExtent(name,mn,mx)) {
+  if(ExecutiveGetExtent(name,mn,mx,true)) {
     if(buffer!=0.0) {
       buffer = buffer;
       mx[0]+=buffer;
@@ -2282,16 +2313,30 @@ void ExecutiveWindowZoom(char *name,float buffer)
   }
 }
 /*========================================================================*/
-void ExecutiveCenter(char *name,int preserve)
+int ExecutiveCenter(char *name,int preserve,char *oname)
 {
   float center[3];
   float mn[3],mx[3];
-
-  if(ExecutiveGetExtent(name,mn,mx)) {
-    average3f(mn,mx,center);
-    SceneOriginSet(center,preserve);
-    SceneDirty();
+  int ok=true;
+  Object *obj;
+  if(oname[0]) {
+    obj = ExecutiveFindObjectByName(oname);
+    if(!obj)
+      ok=false;
   }
+  if(ok) 
+    ok = ExecutiveGetExtent(name,mn,mx,(oname[0]==0));
+  if(ok) {
+    average3f(mn,mx,center);
+    if(obj) {
+      ObjectSetTTTOrigin(obj,center);
+    } else {
+      SceneOriginSet(center,preserve);
+    }
+    SceneDirty();
+  } else
+    ok=false;
+  return(ok);
 }
 /*========================================================================*/
 int ExecutiveGetMoment(char *name,Matrix33d mi)
@@ -2314,6 +2359,7 @@ int ExecutiveGetMoment(char *name,Matrix33d mi)
 	 op.v1[1]=0.0;
 	 op.v1[2]=0.0;
 	 op.i1=0;
+    op.i2=0;
 	 
 	 ExecutiveObjMolSeleOp(sele,&op);
 	 
@@ -2689,6 +2735,7 @@ void ExecutiveSymExp(char *name,char *oname,char *s1,float cutoff)
       ENDFB;
 	 op.code = OMOP_SUMC;
 	 op.i1 =0;
+    op.i2 =0;
     op.v1[0]= 0.0;
     op.v1[1]= 0.0;
     op.v1[2]= 0.0;

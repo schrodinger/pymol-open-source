@@ -49,7 +49,9 @@ typedef struct Object {
   char Name[ObjNameMax];
   int Color;
   int RepVis[cRepCnt]; /* currently used only by non atomic objects */
-  float ExtentMin[3],ExtentMax[3],ExtentFlag;
+  float ExtentMin[3],ExtentMax[3];
+  int ExtentFlag,TTTFlag;
+  float TTT[16]; /* translate, transform, translate matrix */
   CSetting *Setting;
 } Object;
 
@@ -59,6 +61,10 @@ void ObjectSetName(Object *I,char *name);
 void ObjectFree(Object *I);
 void ObjectUseColor(Object *I);
 void ObjectSetRepVis(Object *I,int rep,int state);
+void ObjectPrepareContext(Object *I,CRay *ray);
+void ObjectCombineTTT(Object *I,float *ttt);
+void ObjectSetTTTOrigin(Object *I,float *origin);
+void ObjectResetTTT(Object *I);
 
 #endif
 

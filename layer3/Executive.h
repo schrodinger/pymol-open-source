@@ -54,14 +54,14 @@ float ExecutiveRMSPairs(WordType *sele,int pairs,int mode);
 float *ExecutiveRMSStates(char *s1,int target,int mode);
 int *ExecutiveIdentify(char *s1,int mode);
 int ExecutiveIndex(char *s1,int mode,int **indexVLA,ObjectMolecule ***objVLA);
-void ExecutiveReset(int cmd);
+int ExecutiveReset(int cmd,char *name);
 void ExecutiveDrawNow(void);
 int ExecutiveCartoon(int type,char *sele);
 void ExecutiveSetAllVisib(int state);
 void ExecutiveSetRepVisib(char *name,int rep,int state);
 void ExecutiveSetAllRepVisib(char *name,int rep,int state);
 void ExecutiveSetObjVisib(char *name,int state);
-void ExecutiveCenter(char *name,int preserve);
+int ExecutiveCenter(char *name,int preserve,char *oname);
 void ExecutiveWindowZoom(char *name,float buffer);
 int ExecutiveGetMoment(char *name,Matrix33d mi);
 void ExecutiveOrient(char *sele,Matrix33d mi);
@@ -71,7 +71,7 @@ void ExecutiveCopy(char *src,char *dst);
 float ExecutiveOverlap(char *s1,int state1,char *s2,int state2,float adjust);
 int ExecutiveCountStates(char *s1);
 void ExecutiveSymExp(char *name,char *obj,char *sele,float cutoff);
-int ExecutiveGetExtent(char *name,float *mn,float *mx);
+int ExecutiveGetExtent(char *name,float *mn,float *mx,int transformed);
 void ExecutiveSeleToObject(char *name,char *s1,int source,int target);
 PyObject *ExecutiveSeleToChemPyModel(char *s1,int state);
 void ExecutiveInvalidateRep(char *name,int rep,int level);
@@ -113,6 +113,7 @@ void ExecutiveSelectRect(BlockRect *rect,int mode);
 int ExecutiveMapSetBorder(char *name,float level);
 int ExecutiveMultiSave(char *fname,char *name,int state,int append);
 int ExecutiveIdentifyObjects(char *s1,int mode,int **indexVLA,ObjectMolecule ***objVLA);
+int ExecutiveCombineObjectTTT(char *name,float *ttt);
 
 #endif
 

@@ -171,6 +171,7 @@ static PyObject *CmdClip(PyObject *self, 	PyObject *args);
 static PyObject *CmdCls(PyObject *self, 	PyObject *args);
 static PyObject *CmdColor(PyObject *self, PyObject *args);
 static PyObject *CmdColorDef(PyObject *self, 	PyObject *args);
+static PyObject *CmdCombineObjectTTT(PyObject *self, 	PyObject *args);
 static PyObject *CmdCopy(PyObject *self, PyObject *args);
 static PyObject *CmdCountStates(PyObject *self, PyObject *args);
 static PyObject *CmdCreate(PyObject *self, PyObject *args);
@@ -310,6 +311,7 @@ static PyMethodDef Cmd_methods[] = {
 	{"cls",	                 CmdCls,                  METH_VARARGS },
 	{"color",	              CmdColor,                METH_VARARGS },
 	{"colordef",	           CmdColorDef,             METH_VARARGS },
+   {"combine_object_ttt",    CmdCombineObjectTTT,     METH_VARARGS },
 	{"copy",                  CmdCopy,                 METH_VARARGS },
 	{"create",                CmdCreate,               METH_VARARGS },
 	{"count_states",          CmdCountStates,          METH_VARARGS },
@@ -436,6 +438,28 @@ static PyMethodDef Cmd_methods[] = {
 	{"zoom",	                 CmdZoom,                 METH_VARARGS },
 	{NULL,		              NULL}     /* sentinel */        
 };
+
+static PyObject *CmdCombineObjectTTT(PyObject *self, 	PyObject *args)
+{
+  char *name;
+  PyObject *m;
+  float ttt[16];
+  int ok = false;
+  ok = PyArg_ParseTuple(args,"sO",&name,&m);
+  if(ok) {
+    if(PConvPyListToFloatArrayInPlace(m,ttt,16)) {
+      APIEntry();
+      ok = ExecutiveCombineObjectTTT(name,ttt);
+      APIExit();
+    } else {
+      PRINTFB(FB_CCmd,FB_Errors)
+        "CmdCombineObjectTTT-Error: bad matrix\n"
+        ENDFB;
+      ok=false;
+    }
+  }
+  return(APIStatus(ok));
+}
 
 static PyObject *CmdGetColor(PyObject *self, PyObject *args)
 {
@@ -1184,7 +1208,7 @@ static PyObject *CmdIsomesh(PyObject *self, 	PyObject *args) {
         break;
       case 1:
         SelectorGetTmp(str3,s1);
-        ExecutiveGetExtent(s1,mn,mx);
+        ExecutiveGetExtent(s1,mn,mx,false);
         if(carve>=0.0) {
           vert_vla = ExecutiveGetVertexVLA(s1,state);
           if(fbuf<=R_SMALL4)
@@ -2094,10 +2118,11 @@ static PyObject *CmdReset(PyObject *self, PyObject *args)
 {
   int cmd;
   int ok=false;
-  ok = PyArg_ParseTuple(args,"i",&cmd);
+  char *obj;
+  ok = PyArg_ParseTuple(args,"is",&cmd,&obj);
   if (ok) {
     APIEntry();
-    ExecutiveReset(cmd); /* TODO STATUS */
+    ok = ExecutiveReset(cmd,obj); 
     APIExit();
   }
   return(APIStatus(ok));
@@ -2134,7 +2159,7 @@ static PyObject *CmdGetMinMax(PyObject *self, 	PyObject *args)
   if (ok) {
     APIEntry();
     SelectorGetTmp(str1,s1);
-    flag = ExecutiveGetExtent(s1,mn,mx);
+    flag = ExecutiveGetExtent(s1,mn,mx,false);
     SelectorFreeTmp(s1);
     if(flag) 
       result = Py_BuildValue("[[fff],[fff]]", 
@@ -3094,15 +3119,15 @@ static PyObject *CmdLoad(PyObject *self, PyObject *args)
 
 static PyObject *CmdOrigin(PyObject *self, PyObject *args)
 {
-  char *str1;
+  char *str1,*obj;
   OrthoLineType s1;
   
   int ok=false;
-  ok = PyArg_ParseTuple(args,"s",&str1);
+  ok = PyArg_ParseTuple(args,"ss",&str1,&obj);
   if (ok) {
     APIEntry();
     SelectorGetTmp(str1,s1);
-    ExecutiveCenter(s1,1); /* TODO STATUS */
+    ok = ExecutiveCenter(s1,1,obj); /* TODO STATUS */
     SelectorFreeTmp(s1);
     APIExit();
   }
