@@ -418,6 +418,7 @@ if __name__=='pymol.setting':
       surface_optimize_subsets = (384, '')
       multiplex            = (385, '')
       texture_fonts             = (386, '')
+      pqr_no_chain_id           = (387, '')
 
    setting_sc = Shortcut(SettingIndex.__dict__.keys())
 

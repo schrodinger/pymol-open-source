@@ -123,6 +123,8 @@ char *SceneGetSeleModeKeyword(PyMOLGlobals *G);
 void SceneUpdateStereo(PyMOLGlobals *G);
 void ScenePushRasterMatrix(PyMOLGlobals *G,float *v);
 void ScenePopRasterMatrix(PyMOLGlobals *G);
+void ScenePrimeAnimation(PyMOLGlobals *G);
+void SceneLoadAnimation(PyMOLGlobals *G, double duration);
 
 #endif
 
