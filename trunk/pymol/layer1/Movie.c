@@ -100,40 +100,49 @@ void MoviePNG(char *prefix,int save)
   save = SettingGet(cSetting_cache_frames); 
   SettingSet(cSetting_cache_frames,1.0);
   OrthoBusyPrime();
-  sprintf(buffer,"Creating movie (%d frames)...",I->NFrame);
-  OrthoBusyMessage(buffer);
-  SceneSetFrame(0,0);
-  MoviePlay(cMoviePlay);
   nFrame = I->NFrame;
   if(!nFrame) {
 	 nFrame=SceneGetNFrame();
   }
+  sprintf(buffer,"Creating movie (%d frames)...",nFrame);
+  OrthoBusyMessage(buffer);
+  SceneSetFrame(0,0);
+  MoviePlay(cMoviePlay);
   VLACheck(I->Image,ImageType,nFrame);
-
-  OrthoBusySlow(a,I->NFrame);
+  OrthoBusySlow(0,nFrame);
   for(a=0;a<nFrame;a++)
 	 {
+      PRINTFB(FB_Movie,FB_Debugging)
+        " MoviePNG-DEBUG: Cycle %d...\n",a
+        ENDFB;
 		sprintf(fname,"%s_%04d.png",prefix,a+1);
 		SceneSetFrame(0,a);
 		MovieDoFrameCommand(a);
 		PFlush();
 		i=MovieFrameToImage(a);
+      VLACheck(I->Image,ImageType,i);
 		if(!I->Image[i]) {
 		  SceneMakeMovieImage();
 		}
-		if(!I->Image[i])
+		if(!I->Image[i]) 
 		  ErrFatal("MoviePNG","Missing rendering movie image!");
 		MyPNGWrite(fname,I->Image[i],I->Width,I->Height);		
 		ExecutiveDrawNow();
-		OrthoBusySlow(a,I->NFrame);
+		OrthoBusySlow(a,nFrame);
 		if(PMGUI) glutSwapBuffers();
+      PRINTFB(FB_Movie,FB_Debugging)
+        " MoviePNG-DEBUG: i = %d, I->Image[i] = %p\n",i,I->Image[i]
+        ENDFB;
       if(Feedback(FB_Movie,FB_Actions)) {
         printf(" MoviePNG: wrote %s\n",fname);
       }
-		/*		SceneDirty();*/
 		mfree(I->Image[i]);
 		I->Image[i]=NULL;
 	 }
+  SceneDirty(); /* important */
+  PRINTFB(FB_Movie,FB_Debugging)
+    " MoviePNG-DEBUG: done.\n"
+    ENDFB;
   SettingSet(cSetting_cache_frames,save);
   MoviePlay(cMovieStop);
 }
@@ -184,11 +193,16 @@ void MovieSequence(char *str)
 /*========================================================================*/
 int MovieFrameToImage(int frame)
 {
+  int result = 0;
   int single_image = (int)SettingGet(cSetting_single_image);
   if(single_image)
-	 return(MovieFrameToIndex(frame));
+	 result = MovieFrameToIndex(frame);
   else
-	 return(frame);
+    result = frame;
+  PRINTFB(FB_Movie,FB_Debugging)
+    " MovieFrameToImage-DEBUG: result %d\n",result
+    ENDFB;
+  return(result);
 }
 /*========================================================================*/
 int MovieFrameToIndex(int frame)
