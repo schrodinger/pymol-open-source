@@ -1005,6 +1005,47 @@ static void RayTraceStitch(CRayThreadInfo *Thread,int n_thread,unsigned int *ima
 }
 #endif
 
+static int find_edge(unsigned int *ptr,unsigned int width,int threshold)
+{
+  unsigned int shift = 0;
+  int compare[9];
+  int sum[9] = {0,0,0,0,0,0,0,0};
+  int current;
+  int a;
+
+  compare[0] = (signed int)*(ptr);
+  compare[1] = (signed int)*(ptr-1);
+  compare[2] = (signed int)*(ptr+1);
+  compare[3] = (signed int)*(ptr-width);
+  compare[4] = (signed int)*(ptr+width);
+  compare[5] = (signed int)*(ptr-width-1);
+  compare[6] = (signed int)*(ptr+width-1);
+  compare[7] = (signed int)*(ptr-width+1);
+  compare[8] = (signed int)*(ptr+width+1);
+  
+  for(a=0;a<4;a++) {
+    current = ((compare[0]>>shift)&0xFF);
+    sum[1] += abs(current - ((compare[1]>>shift)&0xFF));
+    sum[2] += abs(current - ((compare[2]>>shift)&0xFF));
+    if(sum[1]>=threshold) return 1;
+    sum[3] += abs(current - ((compare[3]>>shift)&0xFF));
+    if(sum[2]>=threshold) return 1;
+    sum[4] += abs(current - ((compare[4]>>shift)&0xFF));
+    if(sum[3]>=threshold) return 1;
+    sum[5] += abs(current - ((compare[5]>>shift)&0xFF));
+    if(sum[4]>=threshold) return 1;
+    sum[6] += abs(current - ((compare[6]>>shift)&0xFF));
+    if(sum[5]>=threshold) return 1;
+    sum[7] += abs(current - ((compare[7]>>shift)&0xFF));
+    if(sum[6]>=threshold) return 1;
+    sum[8] += abs(current - ((compare[8]>>shift)&0xFF));
+    if(sum[7]>=threshold) return 1;
+    if(sum[8]>=threshold) return 1;
+    shift+=8;
+  }
+  return 0;
+}
+
 int RayTraceThread(CRayThreadInfo *T)
 {
 	CRay *I=NULL;
@@ -1053,6 +1094,13 @@ int RayTraceThread(CRayThreadInfo *T)
 	int render_height;
 	int offset=0;
    BasisCallRec SceneCall,ShadeCall;
+   float border_offset;
+   int edge_sampling = false;
+   unsigned int edge_avg[4];
+   int edge_cnt;
+   float base[2];
+   float edge_width = 0.35356F;
+   float edge_height = 0.35356F;
 
 	_0		= 0.0F;
 	_1		= 1.0F;
@@ -1122,11 +1170,20 @@ int RayTraceThread(CRayThreadInfo *T)
 
 	/* ray-trace */
 	
-	invHgt				= _1 / (float) (T->height);
+   if(T->border) {
+     invHgt				= _1 / (float) (T->height-(3.0F+T->border));
+     invWdth             = _1 / (float) (T->width-(3.0F+T->border));
+   } else {
+
+     invHgt				= _1 / (float) (T->height);
+     invWdth             = _1 / (float) (T->width);
+   }
+
 	invFrontMinusBack	= _1 / (T->front - T->back);
-	invWdth             = _1 / (float) (T->width);
-	invWdthRange        = invWdth * I->Range[0]*(T->width/(T->width-2*T->border));
-   invHgtRange         = invHgt * I->Range[1]*(T->height/(T->height-2*T->border));
+	invWdthRange        = invWdth * I->Range[0];
+   invHgtRange         = invHgt * I->Range[1];
+   edge_width *= invWdthRange;
+   edge_height *= invHgtRange;
 	vol0 = I->Volume[0];
 	vol2 = I->Volume[2];
 	bp1  = I->Basis + 1;
@@ -1165,340 +1222,434 @@ int RayTraceThread(CRayThreadInfo *T)
      MapCacheInit(&ShadeCall.cache,I->Basis[2].Map,T->phase,cCache_map_shadow_cache);     
    }
 
+   if(T->border) {
+     border_offset = -1.50F+T->border/2.0F;
+   } else {
+     border_offset = 0.0F;
+   }
 	for(yy = T->y_start; (yy < T->y_stop); yy++)
 	{
 		
       y = T->y_start + ((yy-T->y_start) + offset) % ( render_height); /* make sure threads write to different pages */
 
-		if((!T->phase)&&!(yy & 0xF))
-			OrthoBusyFast(T->height/3 + y,4*T->height/3); /* don't slow down rendering too much */
-				
+		if((!T->phase)&&!(yy & 0xF)) { /* don't slow down rendering too much */
+        if(T->edging_cutoff) {
+          if(T->edging) {
+            OrthoBusyFast(2.5*T->height/3 + 0.5*y,4*T->height/3); 
+          } else {
+            OrthoBusyFast(T->height/3 + 0.5*y,4*T->height/3); 
+          }
+        } else {
+			OrthoBusyFast(T->height/3 + y,4*T->height/3); 
+        }
+      }
 		pixel = T->image + (T->width * y) + T->x_start;
 	
 		if((y % T->n_thread) == T->phase)	/* this is my scan line */
 		{	
-			r1.base[1]	= ((y-T->border) * invHgtRange) + vol2;
+			r1.base[1]	= ((y+0.5+border_offset) * invHgtRange) + vol2;
 			
 			for(x = T->x_start; (x < T->x_stop); x++)
 			{
-				exclude		= -1;
 				
-				r1.base[0]	= ((x-T->border) * invWdthRange)  + vol0;
-				
-				persist			= _1;
-				first_excess	= _0;
-				excl_trans		= _0;
-				pass			= 0;
-				new_front		= T->front;
-				
-				while((persist > _persistLimit) && (pass < 25))
-				{
-					pixel_flag		= false;
-					
-					SceneCall.except = exclude;
-               		SceneCall.front = new_front;
-               		SceneCall.excl_trans = excl_trans;
+				r1.base[0]	= (((x+0.5+border_offset)) * invWdthRange)  + vol0;
 
-#if SPLIT_BASIS
- 					i	= BasisHitNoShadow( &SceneCall );
-#else
- 					i	= BasisHit( &SceneCall );
-#endif               
-               		interior_flag = SceneCall.interior_flag;
-               							   
-				    if((i >= 0) || interior_flag) 
-					{
-						pixel_flag		= true;
-						n_hit++;
-						
-						if(interior_flag)
-						{
-							copy3f(r1.base,r1.impact);
-							r1.surfnormal[0]	= _0;
-							r1.surfnormal[1]	= _0;
-							r1.surfnormal[2]	= _1;
-							r1.impact[2]	-= T->front;
-							
-							if(interior_texture >= 0) 
-							{
-								texture_save		= r1.prim->texture; /* This is a no-no for multithreading! */
-								r1.prim->texture	= interior_texture;
-								
-								RayReflectAndTexture(I,&r1);
-								
-								r1.prim->texture	= texture_save;
-							}
-							else
-								RayReflectAndTexture(I,&r1);
-	
-							dotgle = -r1.dotgle;
-							copy3f(inter,fc);
-						}
-						else
-						{
-							new_front	= r1.dist;
-							if(r1.prim->type==cPrimTriangle) 
-							{
-								BasisGetTriangleNormal(bp1,&r1,i,fc);
-								
-								RayProjectTriangle(I, &r1, bp2->LightNormal,
-													bp1->Vertex+i*3,
-													bp1->Normal+bp1->Vert2Normal[i]*3+3,
-													project_triangle);
-													
-								RayReflectAndTexture(I,&r1);
-								BasisGetTriangleFlatDotgle(bp1,&r1,i);
-							}
-							else 
-							{
-								RayGetSphereNormal(I,&r1);
-								RayReflectAndTexture(I,&r1);
-								
-								if((r1.prim->type==cPrimCylinder) || (r1.prim->type==cPrimSausage)) 
-								{
-									ft = r1.tri1;
-									fc[0]=(r1.prim->c1[0]*(_1-ft))+(r1.prim->c2[0]*ft);
-									fc[1]=(r1.prim->c1[1]*(_1-ft))+(r1.prim->c2[1]*ft);
-									fc[2]=(r1.prim->c1[2]*(_1-ft))+(r1.prim->c2[2]*ft);
-								}
-								else 
-								{
-									fc[0]=r1.prim->c1[0];
-									fc[1]=r1.prim->c1[1];
-									fc[2]=r1.prim->c1[2];
-								}
-							}
-							dotgle=-r1.dotgle;
-							
-							if(r1.flat_dotgle < _0)
-							{
-								if((!two_sided_lighting) && (interior_color>=0)) 
-								{
-									interior_flag		= true;
-									r1.surfnormal[0]	= _0;
-									r1.surfnormal[1]	= _0;
-									r1.surfnormal[2]	= _1;
-									copy3f(r1.base,r1.impact);
-									r1.impact[2]		-= T->front;
-									r1.dist				= T->front;
-							
-									if(interior_texture >= 0)
-									{
-										texture_save		= r1.prim->texture;
-										r1.prim->texture	= interior_texture;
-										RayReflectAndTexture(I,&r1);
-										r1.prim->texture	= texture_save;
-									}
-									else
-										RayReflectAndTexture(I,&r1);
-							
-									dotgle	= -r1.dotgle;
-									copy3f(inter,fc);
-								}
-							}
-							
-							if((dotgle < _0) && (!interior_flag))
-							{
-								if(two_sided_lighting) 
-								{
-									dotgle	= -dotgle;
-									invert3f(r1.surfnormal);
-								}
-								else 
-									dotgle	= _0;
-							}
-						}
-						
-						direct_cmp = (float) ( (dotgle + (pow(dotgle, settingPower))) * _p5 );
-					  
-						lit = _1;
-						
-						if(shadows && ((!interior_flag)||(interior_shadows))) 
-						{
-							matrix_transform33f3f(bp2->Matrix,r1.impact,r2.base);
-							r2.base[2]-=shadow_fudge;
-                     		ShadeCall.except = i;
-#if SPLIT_BASIS
-							if(BasisHitShadow(&ShadeCall) > -1)
-								lit	= (float) pow(r2.prim->trans, _p5);
-#else
-							if(BasisHit(&ShadeCall) > -1)
-								lit	= (float) pow(r2.prim->trans, _p5);
-#endif
-						}
+            while(1) {
+              if(T->edging) {
+                if(!edge_sampling) {
+                  if(x&&y&&(x<(T->width-1))&&(y<(T->height-1))) { /* not on the edge... */
+                    if(find_edge(T->edging + (pixel - T->image),
+                                 T->width, T->edging_cutoff)) {
+                      unsigned int value;
+                      edge_cnt = 1;
+                      edge_sampling = true;
+                      value = *pixel;
+                      edge_avg[0] = value&0xFF;
+                      edge_avg[1] = (value>>8)&0xFF;
+                      edge_avg[2] = (value>>16)&0xFF;
+                      edge_avg[3] = (value>>24)&0xFF;
+                      base[0]=r1.base[0];
+                      base[1]=r1.base[1];
+                    }
+                  }
+                }
+                if(edge_sampling) {
+                  if(edge_cnt==5) {
+                    edge_sampling=false;
+                    /* done with edging, so store averaged value */
+
+                    edge_avg[0]/=edge_cnt;
+                    edge_avg[1]/=edge_cnt;
+                    edge_avg[2]/=edge_cnt;
+                    edge_avg[3]/=edge_cnt;
+
+                    *pixel = (((edge_avg[0]&0xFF)    )|
+                              ((edge_avg[1]&0xFF)<<8 )|
+                              ((edge_avg[2]&0xFF)<<16)|
+                              ((edge_avg[3]&0xFF)<<24));
+
+                    /**pixel = 0xFFFFFFFF-*pixel;*/
+                    /* restore X,Y coordinates */
+                    r1.base[0]=base[0];
+                    r1.base[1]=base[1];
+
+                    /**pixel = 0xFF00FFFF;*/
+                  } else {
+                    *pixel = T->background;
+                    switch(edge_cnt) {
+                    case 1:
+                      r1.base[0] = base[0]+edge_width;
+                      r1.base[1] = base[1]+edge_height;
+                      break;
+                    case 2:
+                      r1.base[0] = base[0]+edge_width;
+                      r1.base[1] = base[1]-edge_height;
+                      break;
+                    case 3:
+                      r1.base[0] = base[0]-edge_width;
+                      r1.base[1] = base[1]+edge_height;
+                      break;
+                    case 4:
+                      r1.base[0] = base[0]-edge_width;
+                      r1.base[1] = base[1]-edge_height;
+                      break;
+                    }
+                  }
+                }
+                if(!edge_sampling) /* not oversampling this edge or already done... */
+                  break;
+              }
+              
+              exclude		= -1;
+              persist			= _1;
+              first_excess	= _0;
+              excl_trans		= _0;
+              pass			= 0;
+              new_front		= T->front;
+              
+              while((persist > _persistLimit) && (pass < 25))
+                {
+                  pixel_flag		= false;
                   
-						if(lit>_0)
-						{
-							dotgle	= -dot_product3f(r1.surfnormal,bp2->LightNormal);
-							if(dotgle < _0) dotgle = _0;
-							
-							reflect_cmp	=(float)(lit * (dotgle + (pow(dotgle, settingReflectPower))) * _p5 );
-							dotgle	= -dot_product3f(r1.surfnormal,T->spec_vector);
-							if(dotgle < _0) dotgle=_0;
-							excess	= (float)( pow(dotgle, settingSpecPower) * settingSpecReflect * lit);
-						}
-						else 
-						{
-							excess		= _0;
-							reflect_cmp	= _0;
-						}
-					  
-						bright	= ambient + (_1-ambient) * (direct*direct_cmp + (_1-direct)*direct_cmp*lreflect*reflect_cmp);
-					  
-						if(bright > _1)			bright = _1;
-						else if(bright < _0)	bright = _0;
-						
-						fc[0] = (bright*fc[0]+excess);
-						fc[1] = (bright*fc[1]+excess);
-						fc[2] = (bright*fc[2]+excess);
-				  
-						if (fogFlag) 
-						{
-							ffact = fog*(T->front - r1.dist) * invFrontMinusBack;
-							if(fogRangeFlag)
-								ffact = (ffact - fog_start) * inv1minusFogStart;
-	
-							if(ffact<_0)	ffact = _0;
-							if(ffact>_1)	ffact = _0;
-							
-							ffact1m	= _1-ffact;
-							
-							if(opaque_back) 
-							{
-								fc[0]	= ffact*T->bkrd[0]+fc[0]*ffact1m;
-								fc[1]	= ffact*T->bkrd[1]+fc[1]*ffact1m;
-								fc[2]	= ffact*T->bkrd[2]+fc[2]*ffact1m;
-							}
-							else 
-							{
-								fc[3]=ffact1m;
-							}
-							
-							if(!pass)
-								first_excess = excess*ffact1m*ray_trans_spec;
-							else
-							{
-								fc[0]+=first_excess;
-								fc[1]+=first_excess;
-								fc[2]+=first_excess;
-							}
-						}
-						else 
-						{
-							if(!pass)
-								first_excess = excess*ray_trans_spec;
-							else 
-							{
-								fc[0]	+= first_excess;
-								fc[1]	+= first_excess;
-								fc[2]	+= first_excess;
-							}
-							fc[3]	= _1;
-						}
-					}
-					else if(pass) 
-					{
-						/* hit nothing, and we're on on second or greater pass */
-						fc[0] = first_excess+T->bkrd[0];
-						fc[1] = first_excess+T->bkrd[1];
-						fc[2] = first_excess+T->bkrd[2];
-						fc[3] = _1;
-
-						pixel_flag	= true;
-					}
-				
-					if(pixel_flag)
-					{
-						inp	= (fc[0]+fc[1]+fc[2]) * _inv3;
-						
-						if(inp < R_SMALL4) 
-							sig = _1;
-						else
-							sig = (float)(pow(inp,gamma) / inp);
-						
-						cc0 = (uint)(sig * fc[0] * _255);
-						cc1 = (uint)(sig * fc[1] * _255);
-						cc2 = (uint)(sig * fc[2] * _255);
-						
-						if(cc0 > 255) cc0 = 255;
-						if(cc1 > 255) cc1 = 255;
-						if(cc2 > 255) cc2 = 255;
-						
-						if(opaque_back) 
-						{ 
-							if(I->BigEndian) 
-								*pixel = T->fore_mask|(cc0<<24)|(cc1<<16)|(cc2<<8);
-							else
-								*pixel = T->fore_mask|(cc2<<16)|(cc1<<8)|cc0;
-						}
-						else	/* use alpha channel for fog with transparent backgrounds */
-						{
-							cc3	= (uint)(fc[3] * _255);
-							if(cc3 > 255) cc3 = 255;
-							
-							if(I->BigEndian)
-								*pixel = (cc0<<24)|(cc1<<16)|(cc2<<8)|cc3;
-							else
-								*pixel = (cc3<<24)|(cc2<<16)|(cc1<<8)|cc0;
-						}
-					}
-	
-					if(pass)	/* average all four channels */
-					{	
-						persist_inv = _1-persist;
-						fc[0]	= (0xFF&((*pixel)>>24)) * persist + (0xFF&(last_pixel>>24))*persist_inv;
-						fc[1]	= (0xFF&((*pixel)>>16)) * persist + (0xFF&(last_pixel>>16))*persist_inv;
-						fc[2]	= (0xFF&((*pixel)>>8))  * persist + (0xFF&(last_pixel>>8))*persist_inv;
-						fc[3]	= (0xFF&((*pixel)))     * persist + (0xFF&(last_pixel))*persist_inv;
-						
-						cc0		= (uint)(fc[0]);
-						cc1		= (uint)(fc[1]);
-						cc2		= (uint)(fc[2]);
-						cc3		= (uint)(fc[3]);
-						
-						if(cc0 > 255) cc0	= 255;
-						if(cc1 > 255) cc1	= 255;
-						if(cc2 > 255) cc2	= 255;
-						if(cc3 > 255) cc3	= 255;
-						
-						*pixel = (cc0<<24)|(cc1<<16)|(cc2<<8)|cc3;
-						
-					}
-					
-					if(i >= 0)
-					{
-						if(r1.prim->type == cPrimSausage)	/* carry ray through the stick */
-							excl_trans	= new_front+(2*r1.surfnormal[2]*r1.prim->r1);
-						
-						if(!backface_cull) 
-							persist	= persist * r1.prim->trans;
-						else 
-						{
-							if((persist < 0.9999) && (r1.prim->trans))	/* don't combine transparent surfaces */
-								*pixel	= last_pixel;
-							else
-								persist	= persist * r1.prim->trans;
-						}
-
-					}
-					
-					if( i < 0 )	/* nothing hit */
-					{
-						break;
-					}
-					else 
-					{
-						last_pixel	= *pixel;
-						exclude		= i;
-						pass++;
-					}
-
-				} /* end of while */
-				
-				pixel++;
-
-			}	/* end of for */
-			
+                  SceneCall.except = exclude;
+                  SceneCall.front = new_front;
+                  SceneCall.excl_trans = excl_trans;
+                  
+#if SPLIT_BASIS
+                  i	= BasisHitNoShadow( &SceneCall );
+#else
+                  i	= BasisHit( &SceneCall );
+#endif               
+                  interior_flag = SceneCall.interior_flag;
+                  
+                  if((i >= 0) || interior_flag) 
+                    {
+                      pixel_flag		= true;
+                      n_hit++;
+                      
+                      if(interior_flag)
+                        {
+                          copy3f(r1.base,r1.impact);
+                          r1.surfnormal[0]	= _0;
+                          r1.surfnormal[1]	= _0;
+                          r1.surfnormal[2]	= _1;
+                          r1.impact[2]	-= T->front;
+                          
+                          if(interior_texture >= 0) 
+                            {
+                              texture_save		= r1.prim->texture; /* This is a no-no for multithreading! */
+                              r1.prim->texture	= interior_texture;
+                              
+                              RayReflectAndTexture(I,&r1);
+                              
+                              r1.prim->texture	= texture_save;
+                            }
+                          else
+                            RayReflectAndTexture(I,&r1);
+                          
+                          dotgle = -r1.dotgle;
+                          copy3f(inter,fc);
+                        }
+                      else
+                        {
+                          new_front	= r1.dist;
+                          if(r1.prim->type==cPrimTriangle) 
+                            {
+                              BasisGetTriangleNormal(bp1,&r1,i,fc);
+                              
+                              RayProjectTriangle(I, &r1, bp2->LightNormal,
+                                                 bp1->Vertex+i*3,
+                                                 bp1->Normal+bp1->Vert2Normal[i]*3+3,
+                                                 project_triangle);
+                              
+                              RayReflectAndTexture(I,&r1);
+                              BasisGetTriangleFlatDotgle(bp1,&r1,i);
+                            }
+                          else 
+                            {
+                              RayGetSphereNormal(I,&r1);
+                              RayReflectAndTexture(I,&r1);
+                              
+                              if((r1.prim->type==cPrimCylinder) || (r1.prim->type==cPrimSausage)) 
+                                {
+                                  ft = r1.tri1;
+                                  fc[0]=(r1.prim->c1[0]*(_1-ft))+(r1.prim->c2[0]*ft);
+                                  fc[1]=(r1.prim->c1[1]*(_1-ft))+(r1.prim->c2[1]*ft);
+                                  fc[2]=(r1.prim->c1[2]*(_1-ft))+(r1.prim->c2[2]*ft);
+                                }
+                              else 
+                                {
+                                  fc[0]=r1.prim->c1[0];
+                                  fc[1]=r1.prim->c1[1];
+                                  fc[2]=r1.prim->c1[2];
+                                }
+                            }
+                          dotgle=-r1.dotgle;
+                          
+                          if(r1.flat_dotgle < _0)
+                            {
+                              if((!two_sided_lighting) && (interior_color>=0)) 
+                                {
+                                  interior_flag		= true;
+                                  r1.surfnormal[0]	= _0;
+                                  r1.surfnormal[1]	= _0;
+                                  r1.surfnormal[2]	= _1;
+                                  copy3f(r1.base,r1.impact);
+                                  r1.impact[2]		-= T->front;
+                                  r1.dist				= T->front;
+                                  
+                                  if(interior_texture >= 0)
+                                    {
+                                      texture_save		= r1.prim->texture;
+                                      r1.prim->texture	= interior_texture;
+                                      RayReflectAndTexture(I,&r1);
+                                      r1.prim->texture	= texture_save;
+                                    }
+                                  else
+                                    RayReflectAndTexture(I,&r1);
+                                  
+                                  dotgle	= -r1.dotgle;
+                                  copy3f(inter,fc);
+                                }
+                            }
+                          
+                          if((dotgle < _0) && (!interior_flag))
+                            {
+                              if(two_sided_lighting) 
+                                {
+                                  dotgle	= -dotgle;
+                                  invert3f(r1.surfnormal);
+                                }
+                              else 
+                                dotgle	= _0;
+                            }
+                        }
+                      
+                      direct_cmp = (float) ( (dotgle + (pow(dotgle, settingPower))) * _p5 );
+                      
+                      lit = _1;
+                      
+                      if(shadows && ((!interior_flag)||(interior_shadows))) 
+                        {
+                          matrix_transform33f3f(bp2->Matrix,r1.impact,r2.base);
+                          r2.base[2]-=shadow_fudge;
+                          ShadeCall.except = i;
+#if SPLIT_BASIS
+                          if(BasisHitShadow(&ShadeCall) > -1)
+                            lit	= (float) pow(r2.prim->trans, _p5);
+#else
+                          if(BasisHit(&ShadeCall) > -1)
+                            lit	= (float) pow(r2.prim->trans, _p5);
+#endif
+                        }
+                      
+                      if(lit>_0)
+                        {
+                          dotgle	= -dot_product3f(r1.surfnormal,bp2->LightNormal);
+                          if(dotgle < _0) dotgle = _0;
+                          
+                          reflect_cmp	=(float)(lit * (dotgle + (pow(dotgle, settingReflectPower))) * _p5 );
+                          dotgle	= -dot_product3f(r1.surfnormal,T->spec_vector);
+                          if(dotgle < _0) dotgle=_0;
+                          excess	= (float)( pow(dotgle, settingSpecPower) * settingSpecReflect * lit);
+                        }
+                      else 
+                        {
+                          excess		= _0;
+                          reflect_cmp	= _0;
+                        }
+                      
+                      bright	= ambient + (_1-ambient) * (direct*direct_cmp + (_1-direct)*direct_cmp*lreflect*reflect_cmp);
+                      
+                      if(bright > _1)			bright = _1;
+                      else if(bright < _0)	bright = _0;
+                      
+                      fc[0] = (bright*fc[0]+excess);
+                      fc[1] = (bright*fc[1]+excess);
+                      fc[2] = (bright*fc[2]+excess);
+                      
+                      if (fogFlag) 
+                        {
+                          ffact = fog*(T->front - r1.dist) * invFrontMinusBack;
+                          if(fogRangeFlag)
+                            ffact = (ffact - fog_start) * inv1minusFogStart;
+                          
+                          if(ffact<_0)	ffact = _0;
+                          if(ffact>_1)	ffact = _0;
+                          
+                          ffact1m	= _1-ffact;
+                          
+                          if(opaque_back) 
+                            {
+                              fc[0]	= ffact*T->bkrd[0]+fc[0]*ffact1m;
+                              fc[1]	= ffact*T->bkrd[1]+fc[1]*ffact1m;
+                              fc[2]	= ffact*T->bkrd[2]+fc[2]*ffact1m;
+                            }
+                          else 
+                            {
+                              fc[3]=ffact1m;
+                            }
+                          
+                          if(!pass)
+                            first_excess = excess*ffact1m*ray_trans_spec;
+                          else
+                            {
+                              fc[0]+=first_excess;
+                              fc[1]+=first_excess;
+                              fc[2]+=first_excess;
+                            }
+                        }
+                      else 
+                        {
+                          if(!pass)
+                            first_excess = excess*ray_trans_spec;
+                          else 
+                            {
+                              fc[0]	+= first_excess;
+                              fc[1]	+= first_excess;
+                              fc[2]	+= first_excess;
+                            }
+                          fc[3]	= _1;
+                        }
+                    }
+                  else if(pass) 
+                    {
+                      /* hit nothing, and we're on on second or greater pass */
+                      fc[0] = first_excess+T->bkrd[0];
+                      fc[1] = first_excess+T->bkrd[1];
+                      fc[2] = first_excess+T->bkrd[2];
+                      fc[3] = _1;
+                      
+                      pixel_flag	= true;
+                    }
+                  
+                  if(pixel_flag)
+                    {
+                      inp	= (fc[0]+fc[1]+fc[2]) * _inv3;
+                      
+                      if(inp < R_SMALL4) 
+                        sig = _1;
+                      else
+                        sig = (float)(pow(inp,gamma) / inp);
+                      
+                      cc0 = (uint)(sig * fc[0] * _255);
+                      cc1 = (uint)(sig * fc[1] * _255);
+                      cc2 = (uint)(sig * fc[2] * _255);
+                      
+                      if(cc0 > 255) cc0 = 255;
+                      if(cc1 > 255) cc1 = 255;
+                      if(cc2 > 255) cc2 = 255;
+                      
+                      if(opaque_back) 
+                        { 
+                          if(I->BigEndian) 
+                            *pixel = T->fore_mask|(cc0<<24)|(cc1<<16)|(cc2<<8);
+                          else
+                            *pixel = T->fore_mask|(cc2<<16)|(cc1<<8)|cc0;
+                        }
+                      else	/* use alpha channel for fog with transparent backgrounds */
+                        {
+                          cc3	= (uint)(fc[3] * _255);
+                          if(cc3 > 255) cc3 = 255;
+                          
+                          if(I->BigEndian)
+                            *pixel = (cc0<<24)|(cc1<<16)|(cc2<<8)|cc3;
+                          else
+                            *pixel = (cc3<<24)|(cc2<<16)|(cc1<<8)|cc0;
+                        }
+                    }
+                  
+                  if(pass)	/* average all four channels */
+                    {	
+                      persist_inv = _1-persist;
+                      fc[0]	= (0xFF&((*pixel)>>24)) * persist + (0xFF&(last_pixel>>24))*persist_inv;
+                      fc[1]	= (0xFF&((*pixel)>>16)) * persist + (0xFF&(last_pixel>>16))*persist_inv;
+                      fc[2]	= (0xFF&((*pixel)>>8))  * persist + (0xFF&(last_pixel>>8))*persist_inv;
+                      fc[3]	= (0xFF&((*pixel)))     * persist + (0xFF&(last_pixel))*persist_inv;
+                      
+                      cc0		= (uint)(fc[0]);
+                      cc1		= (uint)(fc[1]);
+                      cc2		= (uint)(fc[2]);
+                      cc3		= (uint)(fc[3]);
+                      
+                      if(cc0 > 255) cc0	= 255;
+                      if(cc1 > 255) cc1	= 255;
+                      if(cc2 > 255) cc2	= 255;
+                      if(cc3 > 255) cc3	= 255;
+                      
+                      *pixel = (cc0<<24)|(cc1<<16)|(cc2<<8)|cc3;
+                      
+                    }
+                  
+                  if(i >= 0)
+                    {
+                      if(r1.prim->type == cPrimSausage)	/* carry ray through the stick */
+                        excl_trans	= new_front+(2*r1.surfnormal[2]*r1.prim->r1);
+                      
+                      if(!backface_cull) 
+                        persist	= persist * r1.prim->trans;
+                      else 
+                        {
+                          if((persist < 0.9999) && (r1.prim->trans))	/* don't combine transparent surfaces */
+                            *pixel	= last_pixel;
+                          else
+                            persist	= persist * r1.prim->trans;
+                        }
+                      
+                    }
+                  
+                  if( i < 0 )	/* nothing hit */
+                    {
+                      break;
+                    }
+                  else 
+                    {
+                      last_pixel	= *pixel;
+                      exclude		= i;
+                      pass++;
+                    }
+                  
+                } /* end of ray while */
+          
+              if(!T->edging) break;
+              /* if here, then we're edging...
+                 so accumulate averages */
+              { 
+                unsigned int value;
+                value = *pixel;
+                edge_avg[0] += value&0xFF;
+                edge_avg[1] += (value>>8)&0xFF;
+                edge_avg[2] += (value>>16)&0xFF;
+                edge_avg[3] += (value>>24)&0xFF;
+                
+                edge_cnt++;
+              }
+              
+            } /* end of edging while */
+            pixel++;
+            
+         }	/* end of for */
+         
 		}	/* end of if */
 		
 	}	/* end of for */
@@ -1519,25 +1670,27 @@ int RayTraceThread(CRayThreadInfo *T)
    accumulates over a single large expression -- the difference is
    huge: over 10% !!! */
 
+
 #define combine4by4(var,src,mask) { \
   var =  ((src)[0 ] & mask)   ; \
   var += ((src)[1 ] & mask)   ; \
   var += ((src)[2 ] & mask)   ; \
   var += ((src)[3 ] & mask)   ; \
   var += ((src)[4 ] & mask)   ; \
-  var +=(((src)[5 ] & mask)*5); \
-  var +=(((src)[6 ] & mask)*5); \
+  var +=(((src)[5 ] & mask)*13); \
+  var +=(((src)[6 ] & mask)*13); \
   var += ((src)[7 ] & mask)   ; \
   var += ((src)[8 ] & mask)   ; \
-  var +=(((src)[9 ] & mask)*5); \
-  var +=(((src)[10] & mask)*5); \
+  var +=(((src)[9 ] & mask)*13); \
+  var +=(((src)[10] & mask)*13); \
   var += ((src)[11] & mask)   ; \
   var += ((src)[12] & mask)   ; \
   var += ((src)[13] & mask)   ; \
   var += ((src)[14] & mask)   ; \
   var += ((src)[15] & mask)   ; \
-  var = (var >> 5) & mask; \
- }
+  var = (var >> 6) & mask; \
+}
+
 
 #define combine5by5(var,src,mask) { \
   var =  ((src)[0 ] & mask)   ; \
@@ -1888,7 +2041,8 @@ void RayRender(CRay *I,int width,int height,unsigned int *image,
   int shadows;
   float spec_vector[3];
   int n_thread;
-  int mag=0;
+  int mag=1;
+  int oversample_cutoff;
 
 #ifdef PROFILE_BASIS
   n_cells = 0;
@@ -1910,16 +2064,19 @@ void RayRender(CRay *I,int width,int height,unsigned int *image,
   shadows = (int)SettingGet(cSetting_ray_shadows);
   antialias = (int)SettingGet(cSetting_antialias);
   if(antialias<0) antialias=0;
-  if(antialias>3) antialias=3;
-  mag = antialias + 1;
+  if(antialias>4) antialias=4;
+  mag = antialias;
+  if(mag<1) mag=1;
 
-  if(antialias) {
+  if(antialias>1) {
     width=(width+2)*mag;
     height=(height+2)*mag;
     image_copy = image;
     buffer_size = mag*mag*width*height;
-    image = (unsigned int*)CacheAlloc(char,buffer_size,0,cCache_ray_antialias_buffer);
+    image = CacheAlloc(unsigned int,buffer_size,0,cCache_ray_antialias_buffer);
     ErrChkPtr(image);
+  } else {
+    buffer_size = width*height;
   }
   bkrd=SettingGetfv(cSetting_bg_rgb);
   if(opaque_back) {
@@ -2075,7 +2232,6 @@ void RayRender(CRay *I,int width,int height,unsigned int *image,
 
 #endif
     /* IMAGING */
- 
         
     {
 		/* now spawn threads as needed */
@@ -2094,6 +2250,11 @@ void RayRender(CRay *I,int width,int height,unsigned int *image,
       if(x_stop>width) x_stop = width;
       if(y_stop>height) y_stop = height;
 
+      oversample_cutoff = (int)SettingGet(cSetting_ray_oversample_cutoff);
+
+      if(!antialias)
+        oversample_cutoff = 0;
+
 		for(a=0;a<n_thread;a++) 
 		{
 			rt[a].ray = I;
@@ -2104,7 +2265,7 @@ void RayRender(CRay *I,int width,int height,unsigned int *image,
          rt[a].y_start = y_start;
          rt[a].y_stop = y_stop;
 			rt[a].image = image;
-			rt[a].border = antialias;  
+			rt[a].border = mag-1;
 			rt[a].front = front;
 			rt[a].back = back;
 			rt[a].fore_mask = fore_mask;
@@ -2112,6 +2273,9 @@ void RayRender(CRay *I,int width,int height,unsigned int *image,
 			rt[a].background = background;
 			rt[a].phase = a;
 			rt[a].n_thread = n_thread;
+         rt[a].edging = NULL;
+         rt[a].edging_cutoff = oversample_cutoff; /* info needed for busy indicator */
+
 			copy3f(spec_vector,rt[a].spec_vector);
 			}
 		
@@ -2119,10 +2283,29 @@ void RayRender(CRay *I,int width,int height,unsigned int *image,
         RayTraceThread(rt);
 		else 
         RayTraceSpawn(rt,n_thread);
+
+      if(oversample_cutoff) { /* perform edge oversampling, if requested */
+        unsigned int *edging;
+
+        edging = CacheAlloc(unsigned int,buffer_size,0,cCache_ray_edging_buffer);
+        
+        memcpy(edging,image,buffer_size*sizeof(unsigned int));
+
+        for(a=0;a<n_thread;a++) {
+          rt[a].edging = edging;
+        }
+
+        if(n_thread<=1)
+          RayTraceThread(rt);
+        else 
+          RayTraceSpawn(rt,n_thread);
+
+        CacheFreeP(edging,0,cCache_ray_edging_buffer,false);
+      }
     }
   }
-
-  if(antialias) {
+  
+  if(antialias>1) {
     {
 		/* now spawn threads as needed */
 		CRayAntiThreadInfo rt[MAX_RAY_THREADS];

@@ -179,6 +179,19 @@ CHANGE LOG
 
 Changes up to 0.91
 
+   * updated ray tracer to support edge oversampling -- Antialiased rendering
+     is now significantly faster for simple scenes and is enabled by
+     default. Full scene supersampling is no longer necessary in most cases, but
+     if activated, it will provide superior image quality over previous releases.
+
+     Antialias setting can now have values of 0-4:
+       antialias 0: no antialiasing
+       antialias 1: edge-oversampling (as per ray_oversample_cutoff)
+       antialias 2: 2X full scene supersample plus edge oversampling
+       antialias 3: 3X full scene supersample plus edge oversampling
+       antialias 4: 4X full scene supersample plus edge oversampling
+ 
+
    * restored CRLFs on Windows versions of PyMOL so that
      python code can be viewed/edited with Notepad, etc.
 

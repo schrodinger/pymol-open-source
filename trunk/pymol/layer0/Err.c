@@ -43,9 +43,12 @@ int ErrMessage(const char *where,const char *what)
 void ErrPointer(const char *file,int line)
 {
   fprintf(stderr,"NULL-POINTER-ERROR: in %s line %i\n",file,line);
-  /*  fflush(stderr);
-      while(1);*/
-  exit(1);
+  printf("****************************************************************************\n");
+  printf("*** EEK!  PyMOL just ran out of memory and crashed.  To get around this, ***\n");
+  printf("*** you may need to reduce the quality, size, or complexity of the scene ***\n");
+  printf("*** that you are viewing or rendering.    Sorry for the inconvenience... ***\n");
+  printf("****************************************************************************\n");
+  exit(EXIT_FAILURE);
 }
 
 

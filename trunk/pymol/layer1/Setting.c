@@ -1510,7 +1510,7 @@ void SettingInitGlobal(int alloc)
 
   SettingSet_3f(I,cSetting_light, -0.4F, -0.4F, -1.0F);
 
-  SettingSet_i(I,cSetting_antialias, 0);
+  SettingSet_i(I,cSetting_antialias, 1);
 
   SettingSet_i(I,cSetting_cavity_cull, 10);
 
@@ -2074,6 +2074,8 @@ void SettingInitGlobal(int alloc)
   SettingSet_i(I,cSetting_pdb_use_ter_records,1);
 
   SettingSet_i(I,cSetting_cartoon_trace,0);
+
+  SettingSet_i(I,cSetting_ray_oversample_cutoff,64);
 
 }
 
