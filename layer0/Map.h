@@ -22,6 +22,7 @@ Z* -------------------------------------------------------------------
 
 typedef struct { 
   float Div;
+  float recipDiv;
   Vector3i Dim;
   int D1D2;
   Vector3i iMin,iMax;
