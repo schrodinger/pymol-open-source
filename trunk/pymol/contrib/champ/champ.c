@@ -51,13 +51,10 @@ int ChampFindUniqueStart(CChamp *I,int template,int target,int *multiplicity);
 int ChampUniqueListNew(CChamp *I,int atom, int unique_list);
 void ChampUniqueListFree(CChamp *I,int unique_list);
 
-void ChampPatConnect(CChamp *I,int index);
-void ChampPatDisconnect(CChamp *I,int index);
-
 void ChampMatchDump(CChamp *I,int match_idx);
 void ChampMatchFree(CChamp *I,int match_idx);
 void ChampMatchFreeChain(CChamp *I,int match_idx);
-
+void ChampPatReindex(CChamp *I,int index);
 
 #ifdef _HAPPY_UT
 
@@ -143,7 +140,7 @@ int main(int argc, char *argv[])
         p = h->Pat[p].link;
       }
       c++;
-      smi = ChampPatToSmiVLA(h,pp);
+      smi = ChampPatToSmiVLA(h,pp,NULL);
       printf("%d %d %s\n",c,n_mat,smi);
       pp = h->Pat[pp].link;
       vla_free(smi);
@@ -297,7 +294,7 @@ int main(int argc, char *argv[])
         p = ChampSmiToPat(h,buffer);
         if(p) {
           /*      ChampPatDump(h,p);*/
-          smi = ChampPatToSmiVLA(h,p);
+          smi = ChampPatToSmiVLA(h,p,NULL);
           fprintf(g,"%s\n",smi);
           diff(buffer,smi);
           vla_free(smi);
@@ -685,7 +682,8 @@ int ChampModelToPat(CChamp *I,PyObject *model)
   I->Pat[result].atom = cur_atom;
   I->Pat[result].bond = cur_bond;
   I->Pat[result].chempy_molecule = molec;
-
+    
+  if(result) ChampPatReindex(I,result);
   return(result);
 }
 /* =============================================================== 
@@ -760,7 +758,33 @@ void ChampFree(CChamp *I) {
   mac_free(I);
 }
 
-void ChampPatFree(CChamp *I,int index) {
+void ChampPatReindex(CChamp *I,int index)
+{
+  ListPat *pt;
+  ListAtom *at;
+  ListBond *bd;
+  int ai,bi;
+  int b_idx=0;
+  int a_idx=0;
+  if(index) {
+    pt = I->Pat + index;
+    ai = pt->atom;
+    while(ai) {
+      at = I->Atom + ai; 
+      at->index = a_idx++;
+      ai = at->link;
+    }
+    bi = pt->bond;
+    while(bi) {
+      bd = I->Bond + bi; 
+      bd->index = b_idx++;
+      bi = bd->link;
+    }
+  }
+}
+
+void ChampPatFree(CChamp *I,int index)
+{
   ListPat *pt;
   if(index) {
     pt = I->Pat + index;
@@ -888,9 +912,8 @@ void ChampUniqueListFree(CChamp *I,int unique_list)
  * Comparison
  * =============================================================== */
 
-int ChampSSS_1V1_B(CChamp *I,int pattern,int target)
+int ChampMatch_1V1_B(CChamp *I,int pattern,int target)
 {
- 
   if(!I->Pat[pattern].unique_atom)
     I->Pat[pattern].unique_atom = ChampUniqueListNew(I,I->Pat[pattern].atom,0);
   if(!I->Pat[target].unique_atom)
@@ -900,8 +923,20 @@ int ChampSSS_1V1_B(CChamp *I,int pattern,int target)
                     1,NULL));
 }
 
+int ChampMatch_1V1_Map(CChamp *I,int pattern,int target,int limit)
+{
+  int match_start = 0;
 
-int ChampSSS_1VN_N(CChamp *I,int pattern,int list)
+  if(!I->Pat[pattern].unique_atom)
+    I->Pat[pattern].unique_atom = ChampUniqueListNew(I,I->Pat[pattern].atom,0);
+  if(!I->Pat[target].unique_atom)
+    I->Pat[target].unique_atom = ChampUniqueListNew(I,I->Pat[target].atom,0);
+  return(ChampMatch(I,pattern,target,
+                    ChampFindUniqueStart(I,pattern,target,NULL),
+                    limit,&match_start));
+}
+
+int ChampMatch_1VN_N(CChamp *I,int pattern,int list)
 {
   int target;
   int c = 0;
@@ -1287,12 +1322,19 @@ int ChampMatch2(CChamp *I,int template,int target,
             atom_start=0;
             bond_start=0;
 
+            tmpl_idx = tmpl_stack; /* prepare to read... */
+            while(tmpl_idx) {
+              tmpl_ent = I->Tmpl + tmpl_idx;
+              I->Atom[tmpl_ent->atom].mark_read = false;
+              tmpl_idx = tmpl_ent->link;
+            }
             tmpl_idx = tmpl_stack;
             targ_idx = targ_stack;
             while(tmpl_idx&&targ_idx) {
               tmpl_ent = I->Tmpl + tmpl_idx;
               targ_ent = I->Targ + targ_idx;
-              if(I->Atom[tmpl_ent->atom].mark_tmpl<2) { /* save non-virtual atom match */
+              if(!I->Atom[tmpl_ent->atom].mark_read) { /* save non-virtual atom match */
+                I->Atom[tmpl_ent->atom].mark_read = true;
                 atom_start = ListElemPush(&I->Int2,atom_start);
                 int2 = I->Int2 + atom_start;
                 int2->value[0] = tmpl_ent->atom;
@@ -1306,9 +1348,8 @@ int ChampMatch2(CChamp *I,int template,int target,
                 int2->value[1] = targ_ent->bond;
               }
 
-              tmpl_idx = I->Tmpl[tmpl_idx].link;
-              targ_idx = I->Targ[targ_idx].link;
-
+              tmpl_idx = tmpl_ent->link;
+              targ_idx = targ_ent->link;
             }
             match_ent->atom = atom_start;
             match_ent->bond = bond_start;
@@ -1522,7 +1563,7 @@ char *ChampParseBlock(CChamp *I,char *c,int atom)
 #define cSym_CloseBlock 7
 #define cSym_Separator  8
 
-char *ChampPatToSmiVLA(CChamp *I,int index)
+char *ChampPatToSmiVLA(CChamp *I,int index,char *vla)
 {
   char *result;
   int n_atom;
@@ -1561,7 +1602,10 @@ char *ChampPatToSmiVLA(CChamp *I,int index)
 
   /*guestimate size requirements, and allocate */
 
-  vla_malloc(result,char,n_atom*4);
+  if(!vla)
+    vla_malloc(result,char,n_atom*4);
+  else
+    result = vla;
   result[0]=0;
   l = 0;
   
@@ -1843,6 +1887,7 @@ int ChampAtomToString(CChamp *I,int index,char *buf)
   return(strlen(buf));
 }
 
+
 int ChampAddBondToAtom(CChamp *I,int atom_index,int bond_index) 
 {
   int i;
@@ -2121,10 +2166,12 @@ int ChampSmiToPat(CChamp *I,char *c)
   }
   if(cur_atom) ChampAtomFree(I,cur_atom);
   if(cur_bond) ChampBondFree(I,cur_bond);
+  if(result) ChampPatReindex(I,result);
+
   PRINTFD(FB_smiles_parsing) 
     " ChampSmiToPtr: returning pattern %d atom_list %d bond_list %d\n",result,atom_list,bond_list
     ENDFD;
-
+  
   return(result);
 }  
 
