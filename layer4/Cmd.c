@@ -181,6 +181,7 @@ static PyObject *CmdCountStates(PyObject *self, PyObject *args);
 static PyObject *CmdCountFrames(PyObject *self, PyObject *args);
 static PyObject *CmdCreate(PyObject *self, PyObject *args);
 static PyObject *CmdCycleValence(PyObject *self, PyObject *args);
+static PyObject *CmdDebug(PyObject *self, PyObject *args);
 static PyObject *CmdDelete(PyObject *self, PyObject *args);
 static PyObject *CmdDirty(PyObject *self, 	PyObject *args);
 static PyObject *CmdDist(PyObject *dummy, PyObject *args);
@@ -210,6 +211,7 @@ static PyObject *CmdFinishObject(PyObject *self, PyObject *args);
 static PyObject *CmdFrame(PyObject *self, PyObject *args);
 static PyObject *CmdGet(PyObject *self, 	PyObject *args);
 static PyObject *CmdGetArea(PyObject *self, 	PyObject *args);
+static PyObject *CmdGetBondPrint(PyObject *self,PyObject *args);
 static PyObject *CmdGetColor(PyObject *self, 	PyObject *args);
 static PyObject *CmdGetDihe(PyObject *self, 	PyObject *args);
 static PyObject *CmdGetFeedback(PyObject *dummy, PyObject *args);
@@ -333,6 +335,7 @@ static PyMethodDef Cmd_methods[] = {
 	{"count_frames",          CmdCountFrames,          METH_VARARGS },
 	{"cycle_valence",         CmdCycleValence,         METH_VARARGS },
 	{"delete",                CmdDelete,               METH_VARARGS },
+   {"debug",                 CmdDebug,                METH_VARARGS },
 	{"dirty",                 CmdDirty,                METH_VARARGS },
 	{"distance",	           CmdDistance,             METH_VARARGS },
 	{"dist",    	           CmdDist,                 METH_VARARGS },
@@ -355,6 +358,7 @@ static PyMethodDef Cmd_methods[] = {
    {"fuse",                  CmdFuse,                 METH_VARARGS },
 	{"get",	                 CmdGet,                  METH_VARARGS },
 	{"get_area",              CmdGetArea,              METH_VARARGS },
+   {"get_bond_print",        CmdGetBondPrint,         METH_VARARGS },
 	{"get_color",             CmdGetColor,             METH_VARARGS },
 	{"get_dihe",              CmdGetDihe,              METH_VARARGS },
 	{"get_frame",             CmdGetFrame,             METH_VARARGS },
@@ -468,7 +472,38 @@ static PyMethodDef Cmd_methods[] = {
 	{"zoom",	                 CmdZoom,                 METH_VARARGS },
 	{NULL,		              NULL}     /* sentinel */        
 };
+static PyObject *CmdGetBondPrint(PyObject *self,PyObject *args)
+{
+  int ok=true;
+  char *str1;
+  int ***array = NULL;
+  PyObject *result = NULL;
+  int int1,int2;
+  int dim[3];
+  ok = PyArg_ParseTuple(args,"sii",&str1,&int1,&int2);
+  if(ok) {
+    APIEntry();
+    array = ExecutiveGetBondPrint(str1,int1,int2,dim);
+    APIExit();
+    if(array) {
+      result = PConv3DIntArrayTo3DPyList(array,dim);
+    }
+  }
+  return(APIAutoNone(result));
+}
 
+static PyObject *CmdDebug(PyObject *self,PyObject *args)
+{
+  int ok=true;
+  char *str1;
+  ok = PyArg_ParseTuple(args,"s",&str1);
+  if(ok) {
+    APIEntry();
+    ok = ExecutiveDebug(str1);
+    APIExit();
+  }
+  return(APIStatus(ok));
+}
 
 static PyObject *CmdPGlutGetRedisplay(PyObject *self, PyObject *args)
 {

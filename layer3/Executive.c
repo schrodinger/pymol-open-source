@@ -97,6 +97,38 @@ void ExecutiveReshape(Block *block,int width,int height);
 
 void ExecutiveObjMolSeleOp(int sele,ObjectMoleculeOpRec *op);
 
+int ExecutiveDebug(char *name)
+{
+  ObjectMolecule *obj;
+  ObjectMoleculeBPRec bp;
+  int a;
+
+  obj=(ObjectMolecule*)ExecutiveFindObjectByName(name);
+  if(obj) {
+    ObjectMoleculeInitBondPath(obj,&bp);
+    ObjectMoleculeGetBondPaths(obj,0,10,&bp);
+    for(a=0;a<bp.n_atom;a++) {
+      printf("%d %d %d\n",a,bp.list[a],bp.dist[bp.list[a]]);
+    }
+    
+    ObjectMoleculePurgeBondPath(obj,&bp);
+  }
+  return(1);
+}
+/*========================================================================*/
+int ***ExecutiveGetBondPrint(char *name,int max_bond,int max_type,int *dim)
+{
+  int ***result = NULL;
+  CObject *obj;
+  ObjectMolecule *objMol;
+
+  obj=ExecutiveFindObjectByName(name);
+  if(obj->type==cObjectMolecule) {
+    objMol = (ObjectMolecule*)obj;
+    result = ObjectMoleculeGetBondPrint(objMol,max_bond,max_type,dim);
+  }
+  return(result);
+}
 /*========================================================================*/
 int ExecutiveMapNew(char *name,int type,float *grid,
                     char *sele,float buffer,

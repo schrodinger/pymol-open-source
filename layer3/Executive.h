@@ -23,6 +23,7 @@ Z* -------------------------------------------------------------------
 #include"Ortho.h"
 #include"Word.h"
 
+int ExecutiveDebug(char *name);
 float ExecutiveAlign(char *s1,char *s2,char *mat_file,float gap,float extend,int skip,
                      float cutoff,int cycles,int quiet,char *oname);
 
@@ -124,6 +125,10 @@ int ExecutiveSculptActivate(char *name,int state);
 int ExecutiveSculptIterate(char *name,int state,int n_cycle);
 int ExecutiveMapNew(char *name,int type,float *grid,char *sele,
                     float buffer,float *minCorner,float *maxCorner);
+
+int ***ExecutiveGetBondPrint(char *name,int max_bond,int max_type,int *dim);
+
 #endif
+
 
 

@@ -395,6 +395,25 @@ PyObject *PConvIntVLAToPyList(int *f)
   return(result);
 }
 
+PyObject *PConv3DIntArrayTo3DPyList(int ***array,int *dim)
+{
+  int a,b,c;
+  PyObject *result,*pyB,*pyC;
+  result = PyList_New(dim[0]);
+  for(a=0;a<dim[0];a++) {
+    pyB = PyList_New(dim[1]);
+    PyList_SetItem(result,a,pyB);
+    for(b=0;b<dim[1];b++) {
+      pyC = PyList_New(dim[2]);
+      PyList_SetItem(pyB,b,pyC);
+      for(c=0;c<dim[2];c++) {
+        PyList_SetItem(pyC,c,PyInt_FromLong(array[a][b][c]));
+      }
+    }
+  }
+  return(result);
+}
+
 PyObject *PConvStringListToPyList(int l,char **str)
 {
   int a;

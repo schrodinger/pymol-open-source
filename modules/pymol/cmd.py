@@ -974,6 +974,7 @@ from experimenting import \
      check,              \
      dump,               \
      expfit,             \
+     get_bond_print,     \
      fast_minimize,      \
      focus,              \
      import_coords,      \

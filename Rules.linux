@@ -10,7 +10,7 @@ PYMOL_PATH = /users/warren/pymol
 #- Dependencies ------------------------------------------------------
 #--- X-windows
 XLIB_DIR = -L/usr/X11R6/lib
-XINC_DIR = -L/usr/X11R6/include
+XINC_DIR = -I/usr/X11R6/include
 #--- Python
 PYTHON_EXE = $(PYMOL_PATH)/ext/bin/python
 PYTHON_LIB = -lpython1.5

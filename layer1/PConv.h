@@ -101,6 +101,7 @@ PyObject *PConvFloatArrayToPyList(float *f,int l);
 
 int PConvPyListToIntArray(PyObject *obj,int **f);
 int PConvPyListToIntArrayInPlace(PyObject *obj,int *ff,int ll);
+PyObject *PConv3DIntArrayTo3DPyList(int ***array,int *dim);
 
 #endif
 
