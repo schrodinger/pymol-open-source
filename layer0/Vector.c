@@ -1000,7 +1000,6 @@ void matrot ( oMatrix5f nm, oMatrix5f om, int axis, float angle )
 void rotation_to_matrix(Matrix53f rot,float *axis, float angle)
 {
   rotation_matrix3f(angle,axis[0],axis[1],axis[2],&rot[0][0]);
-  dump3f(axis,"axis");
 }
 
 void matrix_interpolate(Matrix53f imat,Matrix53f mat,float *pivot,
@@ -1109,7 +1108,6 @@ void matrix_to_rotation(Matrix53f rot,float *axis, float *angle)
 
   find_axis(rot3d,axis);
 
-  dump3f(axis,"axis returned");
   /* find a perpendicular vector */
 
   perp[0]=axis[1]*axis[0]-axis[2]*axis[2];
@@ -1176,13 +1174,8 @@ void find_axis( Matrix33d a, float *axis)
 
   for(x=0;x<3;x++)
 	 {
-          printf("wr %8.3f\n",wr[x]);
-          printf("wi %8.3f\n",wi[x]);
 		for(y=0;y<3;y++)
 		  {
-          printf("vt %8.3f\n",vt[x][y]);
-
-  
 			 v[y][x] = vt[x][y];
 		  }
 	 } 
@@ -1192,20 +1185,24 @@ void find_axis( Matrix33d a, float *axis)
   axis[2]=0.0F;
 
   {
-    float max_real = wr[0];
-    float min_imag = wi[0];
+    float max_real = 0.0F;
 
-  for(x=0;x<3;x++) /* looking for an eigvalue of (1,0) */
-	 {
-		if((fabs(wr[x])>=max_real) &&
-         (fabs(wi[x])<=min_imag))
-		  for(y=0;y<3;y++)
-			 axis[y] = (float)v[y][x];
-      /*		else
-		  for(y=0;y<3;y++)
-        v[y][x]=_0;*/
-	 }
+    for(x=0;x<3;x++) { /* looking for an eigvalue of (1,0) */
+      /*      printf("wr %8.3f wi %8.3f\n",wr[x],wi[x]);
+      printf("%8.3f %8.3f %8.3f\n",
+      v[0][x],v[1][x],v[2][x]);*/
+
+      if(fabs(wr[x])>=max_real) {
+        for(y=0;y<3;y++)
+          axis[y] = (float)v[y][x];
+        max_real = wr[x];
+      } else {
+        /*for(y=0;y<3;y++)
+          v[y][x]=_0;*/
+      }
+    }
   }
+  dump3f(axis,"axis");
 
   /*
     printf("eigenvectors\n%8.3f %8.3f %8.3f\n",v[0][0],v[0][1],v[0][2]);

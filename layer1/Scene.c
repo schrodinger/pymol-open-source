@@ -391,7 +391,6 @@ void SceneFromViewElem(PyMOLGlobals *G,CViewElem *elem)
   if(elem->matrix_flag) {
     dp = elem->matrix;
     fp = I->RotMatrix;
-    dump3d(dp,"matrix");
 
     *(fp++) = (float) *(dp++);
     *(fp++) = (float) *(dp++);
