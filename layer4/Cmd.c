@@ -96,6 +96,7 @@ Z* -------------------------------------------------------------------
 #define cLoadTypeRST  24
 #define cLoadTypePSE  25
 #define cLoadTypeXPLORStr 26
+#define cLoadTypePHIMap  27
 
 #define tmpSele "_tmp"
 #define tmpSele1 "_tmp1"
@@ -277,6 +278,7 @@ static PyObject *CmdPNG(PyObject *self, 	PyObject *args);
 static PyObject *CmdProtect(PyObject *self, PyObject *args);
 static PyObject *CmdQuit(PyObject *self, 	PyObject *args);
 static PyObject *CmdRay(PyObject *self, 	PyObject *args);
+static PyObject *CmdRampNew(PyObject *self, 	PyObject *args);
 static PyObject *CmdRebuild(PyObject *self, PyObject *args);
 static PyObject *CmdRecolor(PyObject *self, PyObject *args);
 static PyObject *CmdHFill(PyObject *self, PyObject *args);
@@ -443,6 +445,7 @@ static PyMethodDef Cmd_methods[] = {
 	{"protect",	              CmdProtect,              METH_VARARGS },
 	{"push_undo",	           CmdPushUndo,             METH_VARARGS },
 	{"quit",	                 CmdQuit,                 METH_VARARGS },
+   {"ramp_new",              CmdRampNew,              METH_VARARGS },
 	{"ready",                 CmdReady,                METH_VARARGS },
    {"rebuild",               CmdRebuild,              METH_VARARGS },
    {"recolor",               CmdRecolor,              METH_VARARGS },
@@ -810,6 +813,22 @@ static PyObject *CmdMultiSave(PyObject *self, PyObject *args)
   if(ok) {
     APIEntry();
     ok = ExecutiveMultiSave(name,object,state,append);
+    APIExit();
+  }
+  return(APIStatus(ok));
+}
+
+static PyObject *CmdRampNew(PyObject *self, 	PyObject *args)
+{
+  char *name;
+  int ok = false;
+  char *map;
+  int map_state;
+  PyObject *range,*color;
+  ok = PyArg_ParseTuple(args,"ssOOi",&name,&map,&range,&color,&map_state);
+  if(ok) {
+    APIEntry();
+    ok = ExecutiveRampNew(name,map,range,color,map_state);
     APIExit();
   }
   return(APIStatus(ok));
@@ -1673,11 +1692,12 @@ static PyObject *CmdIsosurface(PyObject *self, 	PyObject *args) {
   ObjectMapState *ms;
   int map_state=0;
   int multi;
-
+  int side;
   /* oper 0 = all, 1 = sele + buffer, 2 = vector */
 
-  ok = PyArg_ParseTuple(args,"sisisffiifi",&str1,&frame,&str2,&oper,
-                   &str3,&fbuf,&lvl,&dotFlag,&state,&carve,&map_state);
+  ok = PyArg_ParseTuple(args,"sisisffiifii",&str1,&frame,&str2,&oper,
+                   &str3,&fbuf,&lvl,&dotFlag,&state,&carve,&map_state,
+                        &side);
   if (ok) {
     APIEntry();
 
@@ -1735,7 +1755,7 @@ static PyObject *CmdIsosurface(PyObject *self, 	PyObject *args) {
             ENDFB;
           obj=(CObject*)ObjectSurfaceFromBox((ObjectSurface*)origObj,mapObj,map_state,
                                              state,mn,mx,lvl,dotFlag,
-                                             carve,vert_vla);
+                                             carve,vert_vla,side);
           if(!origObj) {
             ObjectSetName(obj,str1);
             ExecutiveManageObject((CObject*)obj,true);
@@ -3782,7 +3802,7 @@ static PyObject *CmdLoad(PyObject *self, PyObject *args)
       }
       break;
     case cLoadTypeXPLORStr:
-      PRINTFD(FB_CCmd) " CmdLoad-DEBUG: loading XPLORStr\n" ENDFD;
+      PRINTFD(FB_CCmd) " CmdLoad-DEBUG: loading XPLOR string\n" ENDFD;
       if(!origObj) {
         obj=(CObject*)ObjectMapLoadXPLORFile(NULL,fname,frame,false);
         if(obj) {
@@ -3797,7 +3817,7 @@ static PyObject *CmdLoad(PyObject *self, PyObject *args)
       }
       break;
     case cLoadTypeCCP4Map:
-      PRINTFD(FB_CCmd) " CmdLoad-DEBUG: loading CCP4Map\n" ENDFD;
+      PRINTFD(FB_CCmd) " CmdLoad-DEBUG: loading CCP4 map\n" ENDFD;
       if(!origObj) {
         obj=(CObject*)ObjectMapLoadCCP4File(NULL,fname,frame);
         if(obj) {
@@ -3807,6 +3827,21 @@ static PyObject *CmdLoad(PyObject *self, PyObject *args)
         }
       } else {
         ObjectMapLoadCCP4File((ObjectMap*)origObj,fname,frame);
+        sprintf(buf," CmdLoad: \"%s\" appended into object \"%s\".\n",
+                fname,oname);
+      }
+      break;
+    case cLoadTypePHIMap:
+      PRINTFD(FB_CCmd) " CmdLoad-DEBUG: loading Delphi Map\n" ENDFD;
+      if(!origObj) {
+        obj=(CObject*)ObjectMapLoadPHIFile(NULL,fname,frame);
+        if(obj) {
+          ObjectSetName(obj,oname);
+          ExecutiveManageObject((CObject*)obj,true);
+          sprintf(buf," CmdLoad: \"%s\" loaded into object \"%s\".\n",fname,oname);
+        }
+      } else {
+        ObjectMapLoadPHIFile((ObjectMap*)origObj,fname,frame);
         sprintf(buf," CmdLoad: \"%s\" appended into object \"%s\".\n",
                 fname,oname);
       }

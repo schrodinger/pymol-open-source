@@ -18,13 +18,9 @@ Z* -------------------------------------------------------------------
 
 #include"Vector.h"
 
-typedef struct DotRec {
-  Vector3f v;
-  float area;
-} DotRec;
-
 typedef struct SphereRec {
-  DotRec *dot;
+  float *area;
+  Vector3f *dot;
   int *StripLen;
   int *Sequence;
   int NStrip,NVertTot;
@@ -39,7 +35,7 @@ extern SphereRec *Sphere0;
 extern SphereRec *Sphere1;
 extern SphereRec *Sphere2;
 extern SphereRec *Sphere3;
-
+extern SphereRec *Sphere4;
 
 void SphereInit(void);
 void SphereDone(void);

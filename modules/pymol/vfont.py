@@ -789,16 +789,26 @@ plain = {
           ],
    '.': [ isp,
           [
-            0, iw_2, 0.0,
-            1, iw_2, bvl/2.0,
+            0, iw_2-bvl/3.0, 0.0,
+            1, iw_2-bvl/3.0, 1.2*bvl,
+            1, iw_2+bvl/3.0, 1.2*bvl,
+            1, iw_2, 0.6*bvl,
+            1, iw_2+bvl/3.0, 0.0,
+            1, iw_2-bvl/3.0, 0.0,
+            ],
+          ],
+   ',': [ isp,
+          [
+            0, iw_2-bvl/2, 0.0,
+            1, iw_2+bvl/2, 2*bvl,
             ],
           ],
    '!': [ isp,
           [
             0, iw_2, 0.0,
-            1, iw_2, bvl/2.0,
+            1, iw_2, 1.2*bvl,
             0, iw_2, Ht,
-            1, iw_2, ht_2,
+            1, iw_2, ht_2+bvl/2,
             ],
           ],
    '*': [ Nsp,
@@ -907,6 +917,8 @@ plain = {
    
    }
 
+def get_font(size,face,style):
+   return plain
 
 
 

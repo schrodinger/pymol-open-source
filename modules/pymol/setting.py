@@ -232,6 +232,14 @@ if __name__=='pymol.setting':
       session_version_check = 200
       ray_transparency_specular = 201
       stereo_double_pump_mono = 202
+      sphere_solvent        = 203
+      mesh_quality          = 204
+      mesh_solvent          = 205
+      dot_solvent           = 206
+      ray_shadow_fudge      = 207
+      ray_triangle_fudge    = 208
+      debug_pick            = 209
+      dot_color             = 210
       
    setting_sc = Shortcut(SettingIndex.__dict__.keys())
 

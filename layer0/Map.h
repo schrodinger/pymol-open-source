@@ -46,6 +46,7 @@ void MapFree(MapType *I);
 
 #define MapNext(m,a) (*(m->Link+a))
 void MapLocus(MapType *map,float *v,int *a,int *b,int *c);
+int *MapLocusEStart(MapType *map,float *v);
 int MapExclLocus(MapType *map,float *v,int *a,int *b,int *c);
 
 #define MapCache(m,a) {m->Cache[a]=1;m->CacheLink[a]=m->CacheStart;m->CacheStart=a;}

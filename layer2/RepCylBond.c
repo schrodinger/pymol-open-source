@@ -367,7 +367,7 @@ Rep *RepCylBondNew(CoordSet *cs)
 				if(s1||s2)
 				  {
 					 
-					 if((c1==c2)&&s1&&s2)
+					 if((c1==c2)&&s1&&s2&&(!ColorCheckRamped(c1)))
 						{
 						  
 						  v1[0]=vv1[0];
@@ -421,11 +421,16 @@ Rep *RepCylBondNew(CoordSet *cs)
 						  
 						  if(s1) 
 							 {
-								v0 = ColorGet(c1);
-
-								*(vr++)=*(v0);
-								*(vr++)=*(v0+1);
-								*(vr++)=*(v0+2);
+                        if(ColorCheckRamped(c1)) {
+                          ColorGetRamped(c1,v1,vr);
+                          v0=vr;
+                          vr+=3;
+                        } else {
+                          v0 = ColorGet(c1);
+                          *(vr++)=*(v0);
+                          *(vr++)=*(v0+1);
+                          *(vr++)=*(v0+2);
+                        }
 								*(vr++)=radius;
 								
 								*(vr++)=*(v1);
@@ -452,12 +457,17 @@ Rep *RepCylBondNew(CoordSet *cs)
 						  
 						  if(s2) 
 							 {
-								v0 = ColorGet(c2);
+                        if(ColorCheckRamped(c2)) {
+                          ColorGetRamped(c2,v1,vr);
+                          v0=vr;
+                          vr+=3;
+                        } else {
+                          v0 = ColorGet(c2);
 
-
-								*(vr++)=*(v0);
-								*(vr++)=*(v0+1);
-								*(vr++)=*(v0+2);
+                          *(vr++)=*(v0);
+                          *(vr++)=*(v0+1);
+                          *(vr++)=*(v0+2);
+                        }
 								*(vr++)=radius;
 								
 								*(vr++)=*(v1);

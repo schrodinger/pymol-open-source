@@ -37,6 +37,7 @@ typedef struct {
   int Mode; /* 0 dots, 1 lines, 2 triangles */
   int DotFlag;
   CGO *UnitCellCGO;
+  int Side;
 } ObjectSurfaceState;
 
 typedef struct ObjectSurface {
@@ -49,7 +50,7 @@ ObjectSurface *ObjectSurfaceFromBox(ObjectSurface *obj,ObjectMap *map,
                                     int map_state,
                               int state,float *mn,float *mx,
                               float level,int mode,
-                              float carve,float *vert_vla);
+                              float carve,float *vert_vla,int side);
 void ObjectSurfaceDump(ObjectSurface *I,char *fname,int state);
 
 int ObjectSurfaceNewFromPyList(PyObject *list,ObjectSurface **result);

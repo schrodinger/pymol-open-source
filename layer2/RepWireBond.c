@@ -137,6 +137,8 @@ Rep *RepWireBondNew(CoordSet *cs)
   float *v,*v0,*v1,*v2,h[3];
   int visFlag;
   int maxBond;
+  float tmpColor[3];
+
   Pickable *rp;
   AtomInfoType *ai1,*ai2;
   OOAlloc(RepWireBond);
@@ -299,7 +301,7 @@ Rep *RepWireBondNew(CoordSet *cs)
 					 v1 = cs->Coord+3*a1;
 					 v2 = cs->Coord+3*a2;
 					 
-					 if((c1==c2)&&s1&&s2) {
+					 if((c1==c2)&&s1&&s2&&(!ColorCheckRamped(c1))) {
 						
 
 						v0 = ColorGet(c1);
@@ -330,8 +332,13 @@ Rep *RepWireBondNew(CoordSet *cs)
 						
 						if(s1)
 						  {
-
-							 v0 = ColorGet(c1);
+                      
+                      if(ColorCheckRamped(c1)) {
+                        ColorGetRamped(c1,v1,tmpColor);
+                        v0=tmpColor;
+                      } else {
+                        v0 = ColorGet(c1);
+                      }
 
 
                       if((valence!=0.0)&&(ord>1)&&(ord<4)) {
@@ -356,9 +363,13 @@ Rep *RepWireBondNew(CoordSet *cs)
                     }
 						if(s2)
 						  {
-                      
-							 v0 = ColorGet(c2);
-							 
+
+                      if(ColorCheckRamped(c2)) {
+                        ColorGetRamped(c2,v2,tmpColor);
+                        v0 = tmpColor;
+                      } else {
+                        v0 = ColorGet(c2);
+                      }
                       if((valence!=0.0)&&(ord>1)&&(ord<4)) {
                         RepValence(v,h,v2,other,a1,a2,cs->Coord,v0,ord,valence);
                         v+=ord*9;

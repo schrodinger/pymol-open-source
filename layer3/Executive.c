@@ -42,6 +42,7 @@ Z* -------------------------------------------------------------------
 #include"Wizard.h"
 #include"ScrollBar.h"
 #include"Movie.h"
+#include"ObjectGadgetRamp.h"
 
 #include"Menu.h"
 #include"Map.h"
@@ -105,6 +106,28 @@ int ExecutiveGetMaxDistance(char *name,float *pos,float *dev,int transformed,int
 #define ExecOpCnt 5
 #define ExecGreyVisible 0.45
 #define ExecGreyHidden 0.3
+
+int ExecutiveRampNew(char *name,char *map_name,PyObject *range,PyObject *color,int map_state)
+{
+  ObjectGadgetRamp *obj;
+  int ok =true;
+  CObject *map_obj;
+
+  map_obj = ExecutiveFindObjectByName(map_name);
+  if(map_obj) {
+    if(map_obj->type!=cObjectMap) {
+      PRINTFB(FB_Executive,FB_Errors)
+        "ExecutiveRampNew: Error: map not found.\n"
+        ENDFB;
+      ok=false;
+    }
+  }
+  ok = ok && (obj=ObjectGadgetRampNewAsDefined((ObjectMap*)map_obj,range,color,map_state));
+  ObjectSetName((CObject*)obj,name);
+  ColorRegisterExt(name,(void*)obj,cColorGadgetRamp);
+  ExecutiveManageObject((CObject*)obj,true);
+  return(ok);
+}
 
 static int ExecutiveCountNames(void)
 {
@@ -236,6 +259,7 @@ static int ExecutiveSetSelections(PyObject *names)
   PyObject *cur;
   SpecRec *rec = NULL;
   int extra;
+
   if(ok) ok = (names!=NULL);
   if(ok) ok = PyList_Check(names);
   if(ok) l = PyList_Size(names);
@@ -246,6 +270,7 @@ static int ExecutiveSetSelections(PyObject *names)
       ListElemAlloc(rec,SpecRec); 
       rec->next=NULL;
 
+  
       if(ok) ok = PyList_Check(cur);
       if(ok) ok = PConvPyStrToStr(PyList_GetItem(cur,0),rec->name,sizeof(WordType));
       if(ok) ok = PConvPyIntToInt(PyList_GetItem(cur,1),&rec->type);
@@ -335,10 +360,30 @@ int ExecutiveSetSession(PyObject *session)
   int ok=true;
   PyObject *tmp;
   SceneViewType sv;
+  int version=-1;
 
   ExecutiveDelete("all");
   ColorReset();
   if(ok) ok = PyDict_Check(session);
+
+  if(ok&&SettingGet(cSetting_session_version_check)) {
+    tmp = PyDict_GetItemString(session,"version");
+    if(tmp) {
+      ok = PConvPyIntToInt(tmp,&version);
+      if(ok) {
+        if(version>_PyMOL_VERSION_int) {
+          PRINTFB(FB_Executive,FB_Errors)
+            "Error: This session was created with a newer version of PyMOL (%1.2f).\n",version/100.0
+            ENDFB;
+          PRINTFB(FB_Executive,FB_Errors)
+            "Error: Please obtain a more recent version from http://www.pymol.org\n"
+            ENDFB;
+          ok=false;
+        }
+      }
+    }
+  }
+
   if(ok) {
     tmp = PyDict_GetItemString(session,"colors");
     if(tmp) {
@@ -3340,7 +3385,7 @@ int ExecutiveColor(char *name,char *color,int flags)
   char atms[]="s";
   char objs[]="s";
   col_ind = ColorGetIndex(color);
-  if(col_ind<0) {
+  if(col_ind==-1) {
     ErrMessage("Color","Unknown color.");
   } else {
     /* per atom */

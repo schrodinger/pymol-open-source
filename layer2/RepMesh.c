@@ -43,6 +43,7 @@ typedef struct RepMesh {
   CObject *Obj;
   int *LastVisib;
   int *LastColor;
+  float max_vdw;
 } RepMesh;
 
 #include"ObjectMolecule.h"
@@ -196,7 +197,7 @@ void RepMeshColor(RepMesh *I,CoordSet *cs)
   mesh_mode = SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_mesh_mode);
   cullByFlag = (mesh_mode==cRepMesh_by_flags);
   inclH = !(mesh_mode==cRepMesh_heavy_atoms);
-
+  
   if(!I->LastVisib) I->LastVisib = Alloc(int,cs->NIndex);
   if(!I->LastColor) I->LastColor = Alloc(int,cs->NIndex);
   lv = I->LastVisib;
@@ -214,12 +215,16 @@ void RepMeshColor(RepMesh *I,CoordSet *cs)
 
   if(I->NTot) {
 	 obj=cs->Obj;
-	 I->oneColorFlag=true;
+    if(ColorCheckRamped(mesh_color)) {
+      I->oneColorFlag=false;
+    } else {
+      I->oneColorFlag=true;
+    }
 	 first_color=-1;
 	 if(!I->VC) I->VC = Alloc(float,3*I->NTot);
 	 vc=I->VC;
 	 /* now, assign colors to each point */
-	 map=MapNew(MAX_VDW+probe_radius,cs->Coord,cs->NIndex,NULL);
+	 map=MapNew(I->max_vdw+probe_radius,cs->Coord,cs->NIndex,NULL);
 	 if(map)
 		{
 		  MapSetupExpress(map);
@@ -259,10 +264,20 @@ void RepMeshColor(RepMesh *I,CoordSet *cs)
 					 } else first_color=c1;
 				  }
 				}
-				c0 = ColorGet(c1);
-				*(vc++) = *(c0++);
-				*(vc++) = *(c0++);
-				*(vc++) = *(c0++);
+
+            if(ColorCheckRamped(mesh_color)) {
+              c1 = mesh_color;
+            }
+            if(ColorCheckRamped(c1)) {
+              I->oneColorFlag=false;
+              ColorGetRamped(c1,v0,vc);
+              vc+=3;
+            } else {
+              c0 = ColorGet(c1);
+              *(vc++) = *(c0++);
+              *(vc++) = *(c0++);
+              *(vc++) = *(c0++);
+            }
 			 }
 		  MapFree(map);
 		}
@@ -295,13 +310,15 @@ Rep *RepMeshNew(CoordSet *cs)
   float aLen;
   int cur;
   int meshFlag = false;
-  int escFlag;
+  int inSolvFlag;
   float probe_radius,probe_radius2;
   float min_spacing;
   int visFlag;
   int mesh_mode;
   int cullByFlag;
   int inclH;
+  int solv_acc;
+
   AtomInfoType *ai1;
 
   OOAlloc(RepMesh);
@@ -311,10 +328,15 @@ Rep *RepMeshNew(CoordSet *cs)
 	 ENDFD;
   obj = cs->Obj;
 
+  probe_radius = SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_solvent_radius);
+  probe_radius2 = probe_radius*probe_radius;
+  solv_acc = (SettingGet_i(cs->Setting,obj->Obj.Setting,cSetting_mesh_solvent));
+  
+  I->max_vdw = ObjectMoleculeGetMaxVDW(obj) + solv_acc*probe_radius;
+
   mesh_mode = SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_mesh_mode);
   cullByFlag = (mesh_mode==cRepMesh_by_flags);
   inclH = !(mesh_mode==cRepMesh_heavy_atoms);
-
   visFlag=false;
   for(a=0;a<cs->NIndex;a++) {
     ai1 = obj->AtomInfo+cs->IdxToAtm[a];
@@ -334,14 +356,14 @@ Rep *RepMeshNew(CoordSet *cs)
 
   RepInit(&I->R);
 
-  probe_radius = SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_solvent_radius);
-  probe_radius2 = probe_radius*probe_radius;
   min_spacing = SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_min_mesh_spacing);
 
   I->N=NULL;
   I->NTot=0;
   I->V=NULL;
   I->VC=NULL;
+  I->NDot=0;
+  I->Dot=NULL;
   I->R.fRender=(void (*)(struct Rep *, CRay *, Pickable **))RepMeshRender;
   I->R.fFree=(void (*)(struct Rep *))RepMeshFree;
   I->Obj = (CObject*)(cs->Obj);
@@ -392,8 +414,8 @@ Rep *RepMeshNew(CoordSet *cs)
 
 	  for(c=0;c<3;c++)
 		{
-		  minE[c]-=(MAX_VDW+0.25);
-		  maxE[c]+=(MAX_VDW+0.25);
+		  minE[c]-=(I->max_vdw+0.25);
+		  maxE[c]+=(I->max_vdw+0.25);
 		}
 
 	 subtract3f(maxE,minE,sizeE);
@@ -418,9 +440,10 @@ Rep *RepMeshNew(CoordSet *cs)
 			 F3(field->data,a,b,c) = 2.0;
 
 	 OrthoBusyFast(0,1);
-	 RepMeshGetSolventDots(I,cs,minE,maxE,probe_radius);
+	 if(!solv_acc)
+      RepMeshGetSolventDots(I,cs,minE,maxE,probe_radius);
 	 smap=MapNew(probe_radius,I->Dot,I->NDot,NULL);
-	 map=MapNew(MAX_VDW+probe_radius,cs->Coord,cs->NIndex,NULL);
+	 map=MapNew(I->max_vdw+probe_radius,cs->Coord,cs->NIndex,NULL);
 	 if(map&&smap)
 		{
 		  MapSetupExpress(smap);
@@ -457,12 +480,12 @@ Rep *RepMeshNew(CoordSet *cs)
 								cur=map->EList[d++];
 							 }
 						  }						
-						  if(aNear>=0)
+						  if(aNear>=0) /* near an atom... */
 							 {
 								pVal = sqrt1f(aLen); /* pVal is the distance from atom center */
-								vdw = cs->Obj->AtomInfo[cs->IdxToAtm[aNear]].vdw;
-								if((pVal>=vdw)&&(pVal<(vdw+(probe_radius*1.6)))) {
-								  escFlag=true;
+								vdw = cs->Obj->AtomInfo[cs->IdxToAtm[aNear]].vdw + solv_acc*probe_radius;
+								if((!solv_acc)&&(pVal>vdw)&&(pVal<(vdw+probe_radius))) { /* point outside an atom */
+								  inSolvFlag=false;
 								  /* this point lies within a water radius of the atom, so
 									  lets see if it is actually near a water*/
 								  aLen = MAXFLOAT;
@@ -472,29 +495,30 @@ Rep *RepMeshNew(CoordSet *cs)
 								  if(d) {
 									 cur=smap->EList[d++];
 									 while(cur>=0) {
-                                
                               vLen=diffsq3f(point,I->Dot+(cur*3));
-                              if(vLen<probe_radius2) {
-                                escFlag=false;
+                              if(vLen<probe_radius2) { /* within a water radius */
+                                inSolvFlag=true;
                                 break;
-                              } else if(vLen<aLen) {
-                                aLen=vLen;
+                              } else if(vLen<aLen) { /* not within water radius */
+                                aLen=vLen; /* but nearest distance anyway */
                               }
-                              
 										cur=smap->EList[d++];
 									 }
 								  }
-								  if(escFlag) {
-									 if(pVal<(vdw+probe_radius)) 
-										pVal=probe_radius/sqrt1f(aLen); /* yes it is - aLen is the distance*/
-									 else
-										pVal=0.0; /* out in bulk solvent */
-								  } else {
-									 pVal=pVal/vdw; 
-									 if(pVal<1.0) /* no it is not near a water, so set above 1.0 to get rid of speckles*/
-										pVal=1.1;
-								  }
-								} else { /* either too close, or too far from atom...*/
+								  if(inSolvFlag) { /* point is inside a water, so a linear crossing point works fine*/
+                            pVal=pVal/vdw;
+                          } else { /* point is not inside a water, so we need to guestimate a value depending
+                                    * on where the point is */
+                            aLen = sqrt1f(aLen); /* find out how far point is from water */
+                            if(aLen<(2*probe_radius)) {
+                              pVal=1.05*(2*probe_radius-aLen)/probe_radius; 
+                              /* within a radius, so assign based on water surface, but error on the side of exclusion */
+                              
+                            } else {
+                              pVal = 0.0; /* further than one water away... */
+                            }
+                          }
+								} else { /* either within atom or outside solvent shell */
 								  pVal=pVal/vdw;
 								}
 								if(pVal<F3(field->data,a,b,c))
@@ -527,7 +551,7 @@ void RepMeshGetSolventDots(RepMesh *I,CoordSet *cs,float *min,float *max,float p
   float *v,*v0,vdw;
   MapType *map;
   int inFlag,*p,*dot_flag;
-  SphereRec *sp = Sphere2;
+  SphereRec *sp = Sphere0;
   int cavity_cull;
   float probe_radius_plus;
   int dotCnt,maxCnt,maxDot=0;
@@ -535,6 +559,20 @@ void RepMeshGetSolventDots(RepMesh *I,CoordSet *cs,float *min,float *max,float p
   int inclH,mesh_mode,cullByFlag;
   AtomInfoType *ai1,*ai2;
   obj = cs->Obj;
+  
+  switch(SettingGet_i(cs->Setting,obj->Obj.Setting,cSetting_mesh_quality)) {
+  case 0: sp = Sphere0; break;
+  case 1: sp = Sphere1; break;
+  case 2: sp = Sphere2; break;
+  case 3: sp = Sphere3; break;
+  case 4: sp = Sphere4; break;
+  default:
+    if(SettingGet_i(cs->Setting,obj->Obj.Setting,cSetting_mesh_quality)>4)
+      sp = Sphere4; 
+    else
+      sp = Sphere0;      
+    break;
+  }
 
   cavity_cull = SettingGet_i(cs->Setting,obj->Obj.Setting,cSetting_cavity_cull);
 
@@ -548,7 +586,7 @@ void RepMeshGetSolventDots(RepMesh *I,CoordSet *cs,float *min,float *max,float p
   probe_radius_plus = probe_radius * 1.5;
 
   I->NDot=0;
-  map=MapNew(MAX_VDW+probe_radius,cs->Coord,cs->NIndex,NULL);
+  map=MapNew(I->max_vdw+probe_radius,cs->Coord,cs->NIndex,NULL);
   if(map)
 	 {
 		MapSetupExpress(map);
@@ -575,9 +613,9 @@ void RepMeshGetSolventDots(RepMesh *I,CoordSet *cs,float *min,float *max,float p
             if(inFlag)
               for(b=0;b<sp->nDot;b++)
                 {
-                  v[0]=v0[0]+vdw*sp->dot[b].v[0];
-                  v[1]=v0[1]+vdw*sp->dot[b].v[1];
-                  v[2]=v0[2]+vdw*sp->dot[b].v[2];
+                  v[0]=v0[0]+vdw*sp->dot[b][0];
+                  v[1]=v0[1]+vdw*sp->dot[b][1];
+                  v[2]=v0[2]+vdw*sp->dot[b][2];
                   MapLocus(map,v,&h,&k,&l);
                   flag=true;
                   i=*(MapEStart(map,h,k,l));

@@ -277,7 +277,7 @@ Rep *RepSphereNew(CoordSet *cs)
   int spheroidFlag = false;
   float spheroid_scale;
   float *sphLen,sphTmp,*sphNorm,*sphTmpN;
-  float sphere_scale;
+  float sphere_scale,sphere_add=0.0;
   int one_color;
 
 #ifdef _this_code_is_not_used
@@ -308,7 +308,8 @@ Rep *RepSphereNew(CoordSet *cs)
   case 0: sp=Sphere0; break;
   case 1: sp=Sphere1; break;
   case 2: sp=Sphere2; break;
-  default: sp=Sphere3; break;
+  case 3: sp=Sphere3; break;
+  default: sp=Sphere4; break;
   }
 
   one_color=SettingGet_color(cs->Setting,obj->Obj.Setting,cSetting_sphere_color);
@@ -339,6 +340,10 @@ Rep *RepSphereNew(CoordSet *cs)
   I->NT=NULL;
   
   v=I->VC; 
+
+  if(SettingGet_i(cs->Setting,obj->Obj.Setting,cSetting_sphere_solvent)) { /* are we generating a solvent surface? */
+    sphere_add = SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_solvent_radius); /* if so, get solvent radius */
+  }
   
   I->spheroidFlag=spheroidFlag;
   for(a=0;a<cs->NIndex;a++)
@@ -347,19 +352,24 @@ Rep *RepSphereNew(CoordSet *cs)
       if(obj->AtomInfo[a1].visRep[cRepSphere])
         {
           I->NC++;
-          if(one_color<0)
+          if(one_color==-1)
             c1=*(cs->Color+a);
           else
             c1=one_color;
-          vc = ColorGet(c1); /* save new color */
-          *(v++)=*(vc++);
-          *(v++)=*(vc++);
-          *(v++)=*(vc++);
           v0 = cs->Coord+3*a;			 
+          if(ColorCheckRamped(c1)) {
+            ColorGetRamped(c1,v0,v);
+            v+=3;
+          } else {
+            vc = ColorGet(c1); /* save new color */
+            *(v++)=*(vc++);
+            *(v++)=*(vc++);
+            *(v++)=*(vc++);
+          }
           *(v++)=*(v0++);
           *(v++)=*(v0++);
           *(v++)=*(v0++);
-          *(v++)=obj->AtomInfo[a1].vdw*sphere_scale;
+          *(v++)=obj->AtomInfo[a1].vdw*sphere_scale+sphere_add;
         }
     }
 
@@ -385,7 +395,7 @@ Rep *RepSphereNew(CoordSet *cs)
 	 visFlag = Alloc(int,sp->nDot);
 	 ErrChkPtr(visFlag);
 
-    map=MapNew(MAX_VDW*sphere_scale,cs->Coord,cs->NIndex,NULL);
+    map=MapNew(MAX_VDW*sphere_scale+sphere_add,cs->Coord,cs->NIndex,NULL);
     if(map) MapSetupExpress(map);
   } else {
 	 I->V=(float*)mmalloc(sizeof(float)*cs->NIndex*(3+sp->NVertTot*6));
@@ -404,23 +414,28 @@ Rep *RepSphereNew(CoordSet *cs)
 		a1 = cs->IdxToAtm[a];
 		if(obj->AtomInfo[a1].visRep[cRepSphere])
 		  {
-          if(one_color<0)
+          if(one_color==-1)
             c1=*(cs->Color+a);
           else
             c1=one_color;
 			 v0 = cs->Coord+3*a;
-			 vdw = cs->Obj->AtomInfo[a1].vdw*sphere_scale;
-			 vc = ColorGet(c1);
-			 *(v++)=*(vc++);
-			 *(v++)=*(vc++);
-			 *(v++)=*(vc++);
+			 vdw = cs->Obj->AtomInfo[a1].vdw*sphere_scale+sphere_add;
+          if(ColorCheckRamped(c1)) {
+            ColorGetRamped(c1,v0,v);
+            v+=3;
+          } else {
+            vc = ColorGet(c1);
+            *(v++)=*(vc++);
+            *(v++)=*(vc++);
+            *(v++)=*(vc++);
+          }
 
 			 if(I->cullFlag&&(!spheroidFlag)) {
 				for(b=0;b<sp->nDot;b++) /* Sphere culling mode - more strips, but many fewer atoms */
 				  {
-					 v1[0]=v0[0]+vdw*sp->dot[b].v[0];
-					 v1[1]=v0[1]+vdw*sp->dot[b].v[1];
-					 v1[2]=v0[2]+vdw*sp->dot[b].v[2];
+					 v1[0]=v0[0]+vdw*sp->dot[b][0];
+					 v1[1]=v0[1]+vdw*sp->dot[b][1];
+					 v1[2]=v0[2]+vdw*sp->dot[b][2];
 					 
 					 MapLocus(map,v1,&h,&k,&l);
 					 
@@ -432,7 +447,7 @@ Rep *RepSphereNew(CoordSet *cs)
 						  a2 = cs->IdxToAtm[j];
 						  if(obj->AtomInfo[a2].visRep[cRepSphere]) {
 							 if(j!=a)
-								if(within3f(cs->Coord+3*j,v1,cs->Obj->AtomInfo[a2].vdw*sphere_scale))
+								if(within3f(cs->Coord+3*j,v1,cs->Obj->AtomInfo[a2].vdw*sphere_scale + sphere_add))
 								  {
 									 visFlag[b]=0;
 									 break;
@@ -458,17 +473,17 @@ Rep *RepSphereNew(CoordSet *cs)
 
 						  if((!visFlag[q0])&&(!visFlag[q1])&&(!visFlag[q2]))
 
-						  v1[0]=v0[0]+vdw*sp->dot[q0].v[0];
-						  v1[1]=v0[1]+vdw*sp->dot[q0].v[1];
-						  v1[2]=v0[2]+vdw*sp->dot[q0].v[2];
+						  v1[0]=v0[0]+vdw*sp->dot[q0][0];
+						  v1[1]=v0[1]+vdw*sp->dot[q0][1];
+						  v1[2]=v0[2]+vdw*sp->dot[q0][2];
 
-						  v1[0]+=v0[0]+vdw*sp->dot[q1].v[0];
-						  v1[1]+=v0[1]+vdw*sp->dot[q1].v[1];
-						  v1[2]+=v0[2]+vdw*sp->dot[q1].v[2];
+						  v1[0]+=v0[0]+vdw*sp->dot[q1][0];
+						  v1[1]+=v0[1]+vdw*sp->dot[q1][1];
+						  v1[2]+=v0[2]+vdw*sp->dot[q1][2];
 
-						  v1[0]+=v0[0]+vdw*sp->dot[q2].v[0];
-						  v1[1]+=v0[1]+vdw*sp->dot[q2].v[1];
-						  v1[2]+=v0[2]+vdw*sp->dot[q2].v[2];
+						  v1[0]+=v0[0]+vdw*sp->dot[q2][0];
+						  v1[1]+=v0[1]+vdw*sp->dot[q2][1];
+						  v1[2]+=v0[2]+vdw*sp->dot[q2][2];
 
 						  v1[0]/=3;
 						  v1[1]/=3;
@@ -482,7 +497,7 @@ Rep *RepSphereNew(CoordSet *cs)
 								a2 = cs->IdxToAtm[j];
 								if(obj->AtomInfo[a2].visRep[cRepSphere]) {
 								  if(j!=a)
-									 if(within3f(cs->Coord+3*j,v1,cs->Obj->AtomInfo[a2].vdw*sphere_scale))
+									 if(within3f(cs->Coord+3*j,v1,cs->Obj->AtomInfo[a2].vdw*sphere_scale+sphere_add))
 										{
 										  flag=false;
 										  break;
@@ -522,31 +537,31 @@ Rep *RepSphereNew(CoordSet *cs)
                           if(restart) { /* not continuing...this is a new strip */
                             if(c&0x1) /* make sure strip starts off "right" */
                               *(v-1)=2.0;
-                            *(v++)=sp->dot[q2].v[0]; /* normal */
-                            *(v++)=sp->dot[q2].v[1];
-                            *(v++)=sp->dot[q2].v[2];
-                            *(v++)=v0[0]+vdw*sp->dot[q2].v[0]; /* point */
-                            *(v++)=v0[1]+vdw*sp->dot[q2].v[1];
-                            *(v++)=v0[2]+vdw*sp->dot[q2].v[2];
-                            *(v++)=sp->dot[q1].v[0]; /* normal */
-                            *(v++)=sp->dot[q1].v[1];
-                            *(v++)=sp->dot[q1].v[2];
-                            *(v++)=v0[0]+vdw*sp->dot[q1].v[0]; /* point */
-                            *(v++)=v0[1]+vdw*sp->dot[q1].v[1];
-                            *(v++)=v0[2]+vdw*sp->dot[q1].v[2];
-                            *(v++)=sp->dot[q0].v[0]; /* normal */
-                            *(v++)=sp->dot[q0].v[1];
-                            *(v++)=sp->dot[q0].v[2];
-                            *(v++)=v0[0]+vdw*sp->dot[q0].v[0]; /* point */
-                            *(v++)=v0[1]+vdw*sp->dot[q0].v[1];
-                            *(v++)=v0[2]+vdw*sp->dot[q0].v[2];
+                            *(v++)=sp->dot[q2][0]; /* normal */
+                            *(v++)=sp->dot[q2][1];
+                            *(v++)=sp->dot[q2][2];
+                            *(v++)=v0[0]+vdw*sp->dot[q2][0]; /* point */
+                            *(v++)=v0[1]+vdw*sp->dot[q2][1];
+                            *(v++)=v0[2]+vdw*sp->dot[q2][2];
+                            *(v++)=sp->dot[q1][0]; /* normal */
+                            *(v++)=sp->dot[q1][1];
+                            *(v++)=sp->dot[q1][2];
+                            *(v++)=v0[0]+vdw*sp->dot[q1][0]; /* point */
+                            *(v++)=v0[1]+vdw*sp->dot[q1][1];
+                            *(v++)=v0[2]+vdw*sp->dot[q1][2];
+                            *(v++)=sp->dot[q0][0]; /* normal */
+                            *(v++)=sp->dot[q0][1];
+                            *(v++)=sp->dot[q0][2];
+                            *(v++)=v0[0]+vdw*sp->dot[q0][0]; /* point */
+                            *(v++)=v0[1]+vdw*sp->dot[q0][1];
+                            *(v++)=v0[2]+vdw*sp->dot[q0][2];
                           } else { /* continue strip */
-                            *(v++)=sp->dot[q0].v[0]; /* normal */
-                            *(v++)=sp->dot[q0].v[1];
-                            *(v++)=sp->dot[q0].v[2];
-                            *(v++)=v0[0]+vdw*sp->dot[q0].v[0]; /* point */
-                            *(v++)=v0[1]+vdw*sp->dot[q0].v[1];
-                            *(v++)=v0[2]+vdw*sp->dot[q0].v[2];
+                            *(v++)=sp->dot[q0][0]; /* normal */
+                            *(v++)=sp->dot[q0][1];
+                            *(v++)=sp->dot[q0][2];
+                            *(v++)=v0[0]+vdw*sp->dot[q0][0]; /* point */
+                            *(v++)=v0[1]+vdw*sp->dot[q0][1];
+                            *(v++)=v0[2]+vdw*sp->dot[q0][2];
                           }
                           restart=0.0;
                           (*nt)++;
@@ -573,9 +588,9 @@ Rep *RepSphereNew(CoordSet *cs)
                       *(v++)=*(sphTmpN++);
                       *(v++)=*(sphTmpN++);
                       sphTmp = (*(sphLen+(*q)))*spheroid_scale;
-                      *(v++)=v0[0]+sphTmp*sp->dot[*q].v[0]; /* point */
-                      *(v++)=v0[1]+sphTmp*sp->dot[*q].v[1];
-                      *(v++)=v0[2]+sphTmp*sp->dot[*q].v[2];
+                      *(v++)=v0[0]+sphTmp*sp->dot[*q][0]; /* point */
+                      *(v++)=v0[1]+sphTmp*sp->dot[*q][1];
+                      *(v++)=v0[2]+sphTmp*sp->dot[*q][2];
                       q++;
                     }
 
@@ -586,12 +601,12 @@ Rep *RepSphereNew(CoordSet *cs)
                 {
                   for(c=0;c<(*s);c++)
                     {
-                      *(v++)=sp->dot[*q].v[0]; /* normal */
-                      *(v++)=sp->dot[*q].v[1];
-                      *(v++)=sp->dot[*q].v[2];
-                      *(v++)=v0[0]+vdw*sp->dot[*q].v[0]; /* point */
-                      *(v++)=v0[1]+vdw*sp->dot[*q].v[1];
-                      *(v++)=v0[2]+vdw*sp->dot[*q].v[2];
+                      *(v++)=sp->dot[*q][0]; /* normal */
+                      *(v++)=sp->dot[*q][1];
+                      *(v++)=sp->dot[*q][2];
+                      *(v++)=v0[0]+vdw*sp->dot[*q][0]; /* point */
+                      *(v++)=v0[1]+vdw*sp->dot[*q][1];
+                      *(v++)=v0[2]+vdw*sp->dot[*q][2];
                       q++;
                     }
                   s++;
@@ -610,7 +625,7 @@ Rep *RepSphereNew(CoordSet *cs)
   cc = cs->Color;
   obj=cs->Obj;
   ai2=obj->AtomInfo;
-  if(one_color<0) 
+  if(one_color==-1) 
     for(a=0;a<cs->NIndex;a++)
       {
         *(lv++) = (ai2 + cs->IdxToAtm[a])->visRep[cRepSphere];
@@ -653,17 +668,17 @@ Rep *RepSphereNew(CoordSet *cs)
 
                           /* compute point */
 
-                          vv0[0]=v0[0]+vdw*sp->dot[q2].v[0];
-                          vv0[1]=v0[1]+vdw*sp->dot[q2].v[1];
-                          vv0[2]=v0[2]+vdw*sp->dot[q2].v[2];
+                          vv0[0]=v0[0]+vdw*sp->dot[q2][0];
+                          vv0[1]=v0[1]+vdw*sp->dot[q2][1];
+                          vv0[2]=v0[2]+vdw*sp->dot[q2][2];
 
-                          vv1[0]=v0[0]+vdw*sp->dot[q1].v[0];
-                          vv1[1]=v0[1]+vdw*sp->dot[q1].v[1];
-                          vv1[2]=v0[2]+vdw*sp->dot[q1].v[2];
+                          vv1[0]=v0[0]+vdw*sp->dot[q1][0];
+                          vv1[1]=v0[1]+vdw*sp->dot[q1][1];
+                          vv1[2]=v0[2]+vdw*sp->dot[q1][2];
 
-                          vv2[0]=v0[0]+vdw*sp->dot[q0].v[0];
-                          vv2[1]=v0[1]+vdw*sp->dot[q0].v[1];
-                          vv2[2]=v0[2]+vdw*sp->dot[q0].v[2];
+                          vv2[0]=v0[0]+vdw*sp->dot[q0][0];
+                          vv2[1]=v0[1]+vdw*sp->dot[q0][1];
+                          vv2[2]=v0[2]+vdw*sp->dot[q0][2];
 
                           /* compute right-hand vector */
 

@@ -235,6 +235,7 @@ int ObjectMoleculeGetBondPath(ObjectMolecule *I,int atom,int max,ObjectMoleculeB
 int ***ObjectMoleculeGetBondPrint(ObjectMolecule *I,int max_bond,int max_type,int *dim);
 
 int ObjectMoleculeConnect(ObjectMolecule *I,BondType **bond,AtomInfoType *ai,struct CoordSet *cs,int searchFlag);
+float ObjectMoleculeGetMaxVDW(ObjectMolecule *I);
 
 /* legacy binary file suppoort */
 

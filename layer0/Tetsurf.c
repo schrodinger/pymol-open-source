@@ -104,7 +104,7 @@ void	TetsurfInterpolate8(float *pt,float *v0,float l0,float *v1,float l1,
 int	TetsurfFindActiveBoxes(int mode,int *n_strip,int n_vert,
                              int **strip_l,float **vert,
                              MapType *voxelmap,float *a_vert,
-                             float carvebuffer);
+                             float carvebuffer,int side);
 void	TetsurfCode(char *bits1,char *bits2);
 int	TetsurfPoints(void);
 
@@ -439,7 +439,7 @@ void TetsurfGetRange(Isofield *field,CCrystal *cryst,float *mn,float *mx,int *ra
   /*===========================================================================*/
 int	TetsurfVolume(Isofield *field,float level,int **num,float **vert,
                     int *range,int mode,MapType *voxelmap,float *a_vert,
-                    float carvebuffer)
+                    float carvebuffer, int side)
 {
 	int	ok=true;
 	int	Steps[3];
@@ -506,7 +506,8 @@ int	TetsurfVolume(Isofield *field,float level,int **num,float **vert,
            {
              if(TetsurfCodeVertices())
                n_vert=TetsurfFindActiveBoxes(mode,&n_strip,n_vert,num,vert,
-                                             voxelmap,a_vert,carvebuffer);
+                                             voxelmap,a_vert,carvebuffer,
+                                             side);
            }
          }
       TetsurfFree();
@@ -652,7 +653,8 @@ void	TetsurfInterpolate8(float *pt,float *v0,float l0,float *v1,float l1,
 /*===========================================================================*/
 int	TetsurfFindActiveBoxes(int mode,int *n_strip,int n_vert,
                              int **strip_l,float **vert,
-                             MapType *voxelmap,float *a_vert,float carvebuffer)
+                             MapType *voxelmap,float *a_vert,
+                             float carvebuffer,int side)
 {
   int	a,b,c,i,j,k,h,l;
 #ifdef Trace
@@ -1067,7 +1069,11 @@ int	TetsurfFindActiveBoxes(int mode,int *n_strip,int n_vert,
        
        subtract3f(v0,v2,vt1);
        subtract3f(v1,v2,vt2);
-       cross_product3f(vt2,vt1,tt->n);
+       if(side>=0) {
+         cross_product3f(vt2,vt1,tt->n);
+       } else {
+         cross_product3f(vt1,vt2,tt->n);
+       }
      }
      /* compute normals at active points */
      for(a=0;a<n_tri;a++) {
@@ -1148,26 +1154,51 @@ int	TetsurfFindActiveBoxes(int mode,int *n_strip,int n_vert,
 
          VLACheck(*vert,float,(n_vert*3)+200); 
 
-         /* switch order around to get "correct" triangles */
-         copy3fn(tt->p[1]->Normal,(*vert)+(n_vert*3));
-         n_vert++;
-         copy3fn(tt->p[1]->Point,(*vert)+(n_vert*3));
-         n_vert++;
+         if(side>=0) {
+           /* switch order around to get "correct" triangles */
+           
+           copy3fn(tt->p[1]->Normal,(*vert)+(n_vert*3));
+           n_vert++;
+           copy3fn(tt->p[1]->Point,(*vert)+(n_vert*3));
+           n_vert++;
+           
+           copy3fn(tt->p[0]->Normal,(*vert)+(n_vert*3));
+           n_vert++;
+           copy3fn(tt->p[0]->Point,(*vert)+(n_vert*3));
+           n_vert++;
+           
+           copy3fn(tt->p[2]->Normal,(*vert)+(n_vert*3));
+           n_vert++;
+           copy3fn(tt->p[2]->Point,(*vert)+(n_vert*3));
+           n_vert++;
+           
+           p0 = tt->p[0];
+           p1 = tt->p[2];
 
-         copy3fn(tt->p[0]->Normal,(*vert)+(n_vert*3));
-         n_vert++;
-         copy3fn(tt->p[0]->Point,(*vert)+(n_vert*3));
-         n_vert++;
-         
-         copy3fn(tt->p[2]->Normal,(*vert)+(n_vert*3));
-         n_vert++;
-         copy3fn(tt->p[2]->Point,(*vert)+(n_vert*3));
-         n_vert++;
+         } else {
+
+           copy3fn(tt->p[0]->Normal,(*vert)+(n_vert*3));
+           n_vert++;
+           copy3fn(tt->p[0]->Point,(*vert)+(n_vert*3));
+           n_vert++;
+           
+           copy3fn(tt->p[1]->Normal,(*vert)+(n_vert*3));
+           n_vert++;
+           copy3fn(tt->p[1]->Point,(*vert)+(n_vert*3));
+           n_vert++;
+           
+           copy3fn(tt->p[2]->Normal,(*vert)+(n_vert*3));
+           n_vert++;
+           copy3fn(tt->p[2]->Point,(*vert)+(n_vert*3));
+           n_vert++;
+
+           p0 = tt->p[1];
+           p1 = tt->p[2];
+           
+         }
          
          tt->done = true;
-
-         p0 = tt->p[0];
-         p1 = tt->p[2];
+           
          
          while(1) {
            p2 = NULL;

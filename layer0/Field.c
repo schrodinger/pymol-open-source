@@ -107,6 +107,17 @@ float FieldInterpolatef(CField *I,int a,int b,int c,float x,float y,float z)
   x1=1.0-x;
   y1=1.0-y;
   z1=1.0-z;
+  /*
+  printf("%8.5f %8.5f %8.5f %8.3f\n %8.5f %8.5f %8.5f %8.5f \n",
+         (Ffloat3(I,a  ,b  ,c  )),
+         (Ffloat3(I,a+1,b  ,c  )),
+         (Ffloat3(I,a  ,b+1,c  )),
+         (Ffloat3(I,a  ,b  ,c+1)),
+         (Ffloat3(I,a+1,b+1,c  )),
+         (Ffloat3(I,a  ,b+1,c+1)),
+         (Ffloat3(I,a+1,b  ,c+1)),
+         (Ffloat3(I,a+1,b+1,c+1)));*/
+
   return(
          (Ffloat3(I,a  ,b  ,c  ) *x1*y1*z1) +
          (Ffloat3(I,a+1,b  ,c  ) *x *y1*z1) +
@@ -116,6 +127,7 @@ float FieldInterpolatef(CField *I,int a,int b,int c,float x,float y,float z)
          (Ffloat3(I,a  ,b+1,c+1) *x1*y *z ) +
          (Ffloat3(I,a+1,b  ,c+1) *x *y1*z ) +
          (Ffloat3(I,a+1,b+1,c+1) *x *y *z ));
+
 }
 
 void FieldZero(CField *I)

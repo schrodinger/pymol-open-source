@@ -18,12 +18,15 @@ Z* -------------------------------------------------------------------
 #include"os_std.h"
 #include"os_gl.h"
 
+#include"Feedback.h"
 #include"CGO.h"
 #include"Base.h"
 #include"OOMac.h"
 #include"Setting.h"
 #include"Sphere.h"
 #include"PConv.h"
+#include"GadgetSet.h"
+#include"VFont.h"
 
 #define CGO_read_int(p) (*((int*)(p++)))
 #define CGO_get_int(p) (*((int*)(p)))
@@ -37,22 +40,43 @@ int CGO_sz[] = {
   CGO_NULL_SZ,
   CGO_BEGIN_SZ,
   CGO_END_SZ,
+
   CGO_VERTEX_SZ,
-  
   CGO_NORMAL_SZ,
   CGO_COLOR_SZ,
   CGO_SPHERE_SZ,
+
   CGO_TRIANGLE_SZ,
   CGO_CYLINDER_SZ,
-  
   CGO_LINEWIDTH_SZ,
   CGO_WIDTHSCALE_SZ,
+
   CGO_ENABLE_SZ,
   CGO_DISABLE_SZ,
   CGO_SAUSAGE_SZ,
   CGO_CUSTOM_CYLINDER_SZ,
+
+  CGO_DOTWIDTH_SZ,
   CGO_NULL_SZ,
-  CGO_NULL_SZ
+  CGO_NULL_SZ,
+  CGO_FONT_SZ,
+
+  CGO_FONT_SCALE_SZ,
+  CGO_FONT_VERTEX_SZ,
+  CGO_FONT_AXES_SZ,
+  CGO_CHAR_SZ,
+
+  CGO_INDENT_SZ,
+  CGO_NULL_SZ,
+  CGO_NULL_SZ,
+  CGO_NULL_SZ,
+
+  CGO_NULL_SZ,
+  CGO_NULL_SZ,
+  CGO_NULL_SZ,
+  CGO_PICK_COLOR_SZ,
+
+
 };
 
 typedef void CGO_op(float *);
@@ -64,6 +88,86 @@ static void subdivide( int n, float *x, float *y);
 void CGOSimpleCylinder(CGO *I,float *v1,float *v2,float tube_size,float *c1,float *c2,int cap1,int cap2);
 void CGOSimpleSphere(CGO *I,float *v,float vdw);
 
+CGO *CGOProcessShape(CGO *I,struct GadgetSet *gs,CGO *result)
+{
+  register float *p,*pc = I->op;
+  register float *n,*nc;
+  register int op;
+  int sz;
+
+  if(!result)
+    result = CGONew();
+  CGOReset(result);
+  VLACheck(result->op,float,I->c+32);
+  
+  while((op=(CGO_MASK&CGO_read_int(pc)))) {
+    sz=CGO_sz[op];
+    nc=CGO_add(result,sz+1);
+    *(nc++)=*(pc-1);
+    switch(op) {
+    case CGO_NORMAL:
+      GadgetSetFetchNormal(gs,pc,nc);
+      break;
+    case CGO_COLOR:
+      GadgetSetFetchColor(gs,pc,nc);
+      break;
+    case CGO_VERTEX:
+      GadgetSetFetch(gs,pc,nc);
+      break;
+    case CGO_FONT_VERTEX:
+      GadgetSetFetch(gs,pc,nc);
+      break;
+    case CGO_SPHERE:
+      GadgetSetFetch(gs,pc,nc);
+      *(nc+3)=*(pc+3);
+      break;
+    case CGO_CUSTOM_CYLINDER:
+      GadgetSetFetch(gs,pc,nc);
+      GadgetSetFetch(gs,pc+3,nc+3);
+      GadgetSetFetchColor(gs,pc+7,nc+7);
+      GadgetSetFetchColor(gs,pc+10,nc+10);
+      *(nc+6)=*(pc+6);
+      *(nc+13)=*(pc+13);
+      *(nc+14)=*(pc+14);
+      break;
+    case CGO_CYLINDER:
+      GadgetSetFetch(gs,pc,nc);
+      GadgetSetFetch(gs,pc+3,nc+3);
+      GadgetSetFetchColor(gs,pc+7,nc+7);
+      GadgetSetFetchColor(gs,pc+10,nc+10);
+      *(nc+6)=*(pc+6);
+      break;
+    case CGO_SAUSAGE:
+      GadgetSetFetch(gs,pc,nc);
+      GadgetSetFetch(gs,pc+3,nc+3);
+      GadgetSetFetchColor(gs,pc+7,nc+7);
+      GadgetSetFetchColor(gs,pc+10,nc+10);
+      *(nc+6)=*(pc+6);
+      break;
+    case CGO_TRIANGLE:
+      GadgetSetFetch(gs,pc,nc);
+      GadgetSetFetch(gs,pc+3,nc+3);
+      GadgetSetFetch(gs,pc+6,nc+6);
+      GadgetSetFetchNormal(gs,pc+9,nc+9);
+      GadgetSetFetchNormal(gs,pc+12,nc+12);
+      GadgetSetFetchNormal(gs,pc+15,nc+15);
+      GadgetSetFetchColor(gs,pc+18,nc+18);
+      GadgetSetFetchColor(gs,pc+21,nc+21);
+      GadgetSetFetchColor(gs,pc+24,nc+24);
+      break;
+    default:
+      p = pc;
+      n = nc;
+      while(sz--)
+        *(n++)=*(p++);
+      break;
+    }
+    pc+=CGO_sz[op];
+    nc+=CGO_sz[op];
+  }
+  CGOStop(result);
+  return(result);
+}
 
 PyObject *CGOAsPyList(CGO *I)
 {
@@ -226,6 +330,13 @@ void CGOLinewidth(CGO *I,float v)
   *(pc++)=v;
 }
 
+void CGODotwidth(CGO *I,float v)
+{
+  float *pc = CGO_add(I,2);
+  CGO_write_int(pc,CGO_DOTWIDTH);
+  *(pc++)=v;
+}
+
 void CGOCylinderv(CGO *I,float *p1,float *p2,float r,float *c1,float *c2)
 {
   float *pc = CGO_add(I,14);
@@ -268,6 +379,13 @@ void CGOCustomCylinderv(CGO *I,float *p1,float *p2,float r,float *c1,float *c2,
   *(pc++)=cap2;
 }
 
+void CGOPickColor(CGO *I,int index,int bond)
+{
+  float *pc = CGO_add(I,3);
+  CGO_write_int(pc,CGO_PICK_COLOR);
+  *(pc++)=(float)index;
+  *(pc++)=(float)bond;
+}
 
 void CGOVertex(CGO *I,float v1,float v2,float v3)
 {
@@ -314,6 +432,77 @@ void CGONormal(CGO *I,float v1,float v2,float v3)
   *(pc++)=v3;
 }
 
+void CGOFontVertexv(CGO *I,float *v)
+{
+  float *pc = CGO_add(I,4);
+  CGO_write_int(pc,CGO_FONT_VERTEX);
+  *(pc++)=*(v++);
+  *(pc++)=*(v++);
+  *(pc++)=*(v++);
+}
+
+void CGOFontVertex(CGO *I,float x,float y,float z)
+{
+  float *pc = CGO_add(I,4);
+  CGO_write_int(pc,CGO_FONT_VERTEX);
+  *(pc++)=x;
+  *(pc++)=y;
+  *(pc++)=z;
+}
+
+void CGOFontScale(CGO *I,float v1,float v2)
+{
+  float *pc = CGO_add(I,3);
+  CGO_write_int(pc,CGO_FONT_SCALE);
+  *(pc++)=v1;
+  *(pc++)=v2;
+}
+
+void CGOChar(CGO *I,char c)
+{
+  float *pc = CGO_add(I,2);
+  CGO_write_int(pc,CGO_CHAR);
+  *(pc++)=(float)c;
+}
+
+void CGOIndent(CGO *I,char c,float dir)
+{
+  float *pc = CGO_add(I,3);
+  CGO_write_int(pc,CGO_INDENT);
+  *(pc++)=(float)c;
+  *(pc++)=dir;
+}
+
+void CGOWrite(CGO *I,char *str)
+{
+  float *pc;
+
+  while(*str) {
+    pc = CGO_add(I,2);
+    CGO_write_int(pc,CGO_CHAR);
+    *(pc++)=(float)*(str++);
+  }
+}
+
+void CGOWriteLeft(CGO *I,char *str)
+{
+  float *pc;
+  char *s;
+  s = str;
+  while(*s) {
+    pc = CGO_add(I,3);
+    CGO_write_int(pc,CGO_INDENT);
+    *(pc++)=(float)*(s++);
+    *(pc++)=-1.0F;
+  }
+  s = str;
+  while(*s) {
+    pc = CGO_add(I,2);
+    CGO_write_int(pc,CGO_CHAR);
+    *(pc++)=(float)*(s++);
+  }
+}
+
 void CGONormalv(CGO *I,float *v)
 {
   float *pc = CGO_add(I,4);
@@ -332,7 +521,10 @@ void CGOEnd(CGO *I)
 void CGOStop(CGO *I)
 {
   /* add enough zeros to prevent overrun in the event of corruption
-   * (include more zeros than the longest instruction in the compiler */
+   * (include more zeros than the longest instruction in the compiler 
+
+   * although this is wasteful, it does prevent crashes...
+   */
 
   float *pc = CGO_size(I,I->c+32); 
 
@@ -403,6 +595,122 @@ int CGOCheckComplex(CGO *I)
     pc+=CGO_sz[op];
   }
   return(fc);
+}
+
+int CGOPreloadFonts(CGO *I)
+{ /* requires blocked intepreter */
+  int ok=true;
+  register float *pc = I->op;
+  int op;
+  int font_seen = false;
+  int font_id;
+
+  while((op=(CGO_MASK&CGO_read_int(pc)))) {
+    switch(op) {
+    case CGO_FONT:
+      ok = ok && (VFontLoad(1.0,1,1,true));
+      font_seen = true;
+      break;
+    case CGO_CHAR:
+      if(!font_seen) {
+        font_id = VFontLoad(1.0,1,1,true);
+        ok = ok && font_id;
+        font_seen=true;
+      }
+      break;
+    }
+    pc+=CGO_sz[op];
+  }
+  return(ok);
+}
+
+int CGOCheckForText(CGO *I)
+{
+  register float *pc = I->op;
+  int fc=0;
+  int op;
+  
+  while((op=(CGO_MASK&CGO_read_int(pc)))) {
+    switch(op) {
+    case CGO_FONT:
+    case CGO_FONT_AXES:
+    case CGO_FONT_SCALE:
+      fc++;
+      break;
+    case CGO_INDENT:
+    case CGO_FONT_VERTEX:
+      fc++;
+      break;
+    case CGO_CHAR:
+      fc+=3+2*3*10; /* est 10 lines per char */
+      break;
+    }
+    pc+=CGO_sz[op];
+  }
+  PRINTFD(FB_CGO)
+   " CGOCheckForText-Debug: %d\n",fc
+    ENDFD;
+
+  return(fc);
+}
+
+
+CGO *CGODrawText(CGO *I,int est,float *camera)
+{ /* assumes blocked intepreter */
+  CGO *cgo;
+
+  register float *pc = I->op;
+  register float *nc;
+  register int op;
+  float *save_pc;
+  int sz;
+  int font_id = 0;
+  char text[2] = " ";
+  float pos[] = {0.0F,0.0F,0.0F};
+  float axes[] = {1.0F,0.0F,0.0F,
+                0.0F,1.0F,0.0F,
+                0.0F,0.0F,1.0F};
+  float scale[2] = { 1.0,1.0};
+
+  cgo=CGONewSized(I->c+est);
+
+  while((op=(CGO_MASK&CGO_read_int(pc)))) {
+    save_pc=pc;
+    switch(op) {
+    case CGO_FONT:
+      break;
+    case CGO_FONT_AXES:
+      break;
+    case CGO_FONT_SCALE:
+      scale[0] = pc[0];
+      scale[1] = pc[1];
+      break;
+    case CGO_FONT_VERTEX:
+      copy3f(pc,pos);
+      break;
+    case CGO_INDENT:
+      text[0]=(unsigned char)*pc;
+      VFontIndent(font_id,text,pos,scale,axes,pc[1]);
+      break;
+    case CGO_CHAR:
+      if(!font_id) {
+        font_id = VFontLoad(1.0,1,1,false);
+      }
+      text[0]=(unsigned char)*pc;
+      VFontWriteToCGO(font_id,cgo,text,pos,scale,axes);
+      break;
+    default:
+      sz=CGO_sz[op];
+      nc=CGO_add(cgo,sz+1);
+      *(nc++)=*(pc-1);
+      while(sz--)
+        *(nc++)=*(pc++);
+    }
+    pc=save_pc;
+    pc+=CGO_sz[op];
+  }
+  CGOStop(cgo);
+  return(cgo);
 }
 
 CGO *CGOSimplify(CGO *I,int est)
@@ -654,6 +962,11 @@ static void CGO_gl_linewidth(float *pc)
   glLineWidth(*pc);
 }
 
+static void CGO_gl_dotwidth(float *pc)
+{
+  glPointSize(*pc);
+}
+
 static void CGO_gl_enable(float *pc)
 {
   glEnable(CGO_read_int(pc));
@@ -710,8 +1023,74 @@ CGO_op_fn CGO_gl[] = {
   CGO_gl_disable,          /* 0x0D */
   CGO_gl_null,             /* 0x0E */
   CGO_gl_null,             /* 0x0F */
-  CGO_gl_null,             /* 0X10 */
+
+  CGO_gl_dotwidth,         /* 0X10 */
+  CGO_gl_null,             /* 0x11 */
+  CGO_gl_null,             /* 0x12 */
+  CGO_gl_null,             /* 0X13 */
+
+  CGO_gl_null,             /* 0X14 */
+  CGO_gl_null,             /* 0x15 */
+  CGO_gl_null,             /* 0x16 */
+  CGO_gl_null,             /* 0X17 */
+
+  CGO_gl_null,             /* 0X18 */
+  CGO_gl_null,             /* 0x19 */
+  CGO_gl_null,             /* 0x1A */
+  CGO_gl_null,             /* 0X1B */
+
+  CGO_gl_null,             /* 0X1C */
+  CGO_gl_null,             /* 0x1D */
+  CGO_gl_null,             /* 0x1E */
+  CGO_gl_null,             /* 0X1F */
+
 };
+
+void CGORenderGLPickable(CGO *I,Pickable **pick,void *ptr,CSetting *set1,CSetting *set2)
+{
+  register float *pc = I->op;
+  register int op;
+  int i,j;
+  Pickable *p;
+
+  if(I->c) {
+    i=(*pick)->index;
+
+    glLineWidth(SettingGet_f(set1,set2,cSetting_cgo_line_width));
+
+    while((op=(CGO_MASK&CGO_read_int(pc)))) {
+      if(op!=CGO_PICK_COLOR) 
+        CGO_gl[op](pc);
+      else {
+        
+        i++;
+        if(!(*pick)[0].ptr) {
+          /* pass 1 - low order bits */
+          
+          glColor3ub((uchar)((i&0xF)<<4),(uchar)((i&0xF0)|0x8),(uchar)((i&0xF00)>>4)); /* we're encoding the index into the color */
+          VLACheck((*pick),Pickable,i);
+          p=(*pick)+i;
+          p->ptr = ptr;
+          p->index = (int)*pc;
+          p->bond = (int)*(pc+1); /* actually holds state information */
+        } else { 
+          /* pass 2 - high order bits */
+          
+          j=i>>12;
+          
+          glColor3ub((uchar)((j&0xF)<<4),(uchar)((j&0xF0)|0x8),(uchar)((j&0xF00)>>4)); 
+          
+        }			 
+        
+      }
+      pc+=CGO_sz[op];
+    }
+    (*pick)[0].index = i; /* pass the count */
+
+  }
+  
+}
+
 
 void CGORenderGL(CGO *I,float *color,CSetting *set1,CSetting *set2)
      /* this should be as fast as you can make it...
@@ -727,8 +1106,12 @@ void CGORenderGL(CGO *I,float *color,CSetting *set1,CSetting *set2)
     else
       glColor3f(1.0,1.0,1.0);
     glLineWidth(SettingGet_f(set1,set2,cSetting_cgo_line_width));
-    
+    glPointSize(SettingGet_f(set1,set2,cSetting_dot_width));
+
     while((op=(CGO_MASK&CGO_read_int(pc)))) {
+      /*      printf("%d\n",op);
+      if((op==CGO_VERTEX)||(op==CGO_COLOR))
+      dump3f(pc,"where");*/
       CGO_gl[op](pc);
       pc+=CGO_sz[op];
     }
@@ -762,10 +1145,10 @@ void CGOSimpleSphere(CGO *I,float *v,float vdw)
       CGOBegin(I,GL_TRIANGLE_STRIP);
       for(c=0;c<(*s);c++)
         {
-          CGONormalv(I,sp->dot[*q].v);
-          CGOVertex(I,v[0]+vdw*sp->dot[*q].v[0],
-                    v[1]+vdw*sp->dot[*q].v[1],
-                    v[2]+vdw*sp->dot[*q].v[2]);
+          CGONormalv(I,sp->dot[*q]);
+          CGOVertex(I,v[0]+vdw*sp->dot[*q][0],
+                    v[1]+vdw*sp->dot[*q][1],
+                    v[2]+vdw*sp->dot[*q][2]);
           q++;
         }
       CGOEnd(I);

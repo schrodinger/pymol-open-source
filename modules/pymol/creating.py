@@ -56,6 +56,17 @@ if __name__=='pymol.creating':
       finally:
          unlock()
 
+   def ramp_new(name,map_name,range=[-1.0,0.0,1.0],
+                color=[[1.0,0.0,0.0],[1.0,1.0,1.0],[0.0,0.0,1.0]],
+                map_state=1):
+      # preprocess selection
+      try:
+         lock()
+         r = _cmd.ramp_new(str(name),str(map_name),list(eval(str(range))),list(eval(str(color))),
+                           int(map_state)-1)
+      finally:
+         unlock()
+
    def isomesh(name,map,level=1.0,selection='',buffer=0.0,state=1,carve=None,source=-1):
       '''
 DESCRIPTION
@@ -111,7 +122,7 @@ SEE ALSO
       return r
 
    def isosurface(name,map,level=1.0,selection='',buffer=0.0,state=1,carve=None,
-                  source=-1):
+                  source=-1,side=1):
       '''
 DESCRIPTION
 
@@ -160,7 +171,7 @@ SEE ALSO
          r = _cmd.isosurface(str(name),0,str(map),int(mopt),
                           "("+str(selection)+")",float(buffer),
                              float(level),0,int(state)-1,float(carve),
-                             int(source)-1)
+                             int(source)-1,int(side))
       finally:
          unlock()
       return r

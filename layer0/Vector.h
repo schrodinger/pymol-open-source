@@ -39,6 +39,7 @@ void normalize3f( float *v1 );
 void normalize23f( float *v1 , float *v2);
 void normalize3d( double *v1 );
 
+void clamp3f(float *v1);
 void get_divergent3f(float *src,float *dst);
 void get_random3f(float *x);
 void scatter3f(float *v,float weight);
@@ -58,6 +59,7 @@ float distance_halfline2point3f(float *base,float *normal,float *point,float *al
 double diffsq3f ( float *v1, float *v2 );
 double diff3f ( float *v1, float *v2 );
 int within3f(float *v1,float *v2,float dist);
+int within3fsq(float *v1,float *v2,float dist,float dist2);
 
 int equal3f(float *v1,float *v2);
 

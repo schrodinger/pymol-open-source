@@ -36,6 +36,7 @@ Z* -------------------------------------------------------------------
 #define cMapSourceUndefined 0
 #define cMapSourceXPLOR 1
 #define cMapSourceCCP4 2
+#define cMapSourcePHI 3
 
 #ifdef _PYMOL_NUMPY
 typedef struct {
@@ -48,6 +49,82 @@ typedef struct {
   int flags;
 } MyArrayObject;
 #endif
+
+
+int ObjectMapInterpolate(ObjectMap *I,int state,float *array,float *result,int n)
+{
+  int ok=false;
+  if(state<0) state=0;
+  if(state<I->NState)
+    if(I->State[state].Active)
+      ok = ObjectMapStateInterpolate(&I->State[state],array,result,n);
+  if(!ok)
+    (*result)=0.0F;
+  return(ok);
+}
+
+int ObjectMapStateInterpolate(ObjectMapState *ms,float *array,float *result,int n)
+{
+  int ok=true;
+  float *inp;
+  float *out;
+  int a,b,c;
+  float x,y,z;
+  inp = array;
+  out = result;
+  
+  switch(ms->MapSource) {
+  case cMapSourcePHI:
+    while(n--) {
+
+      x = (inp[0] - ms->Origin[0])/ms->Grid[0];
+      y = (inp[1] - ms->Origin[1])/ms->Grid[1];
+      z = (inp[2] - ms->Origin[2])/ms->Grid[2];
+      inp+=3;
+      
+      a=floor(x);
+      b=floor(y);
+      c=floor(z);
+      x-=a;
+      y-=b;
+      z-=c;
+
+      if(a<ms->Min[0]) {
+        x=0.0F;
+        a=ms->Min[0];
+      } else if(a>=ms->Max[0]) {
+        x=1.0F;
+        a=ms->Max[0]-1;
+      }
+
+      if(b<ms->Min[1]) {
+        y=0.0F;
+        b=ms->Min[1];
+      } else if(b>=ms->Max[1]) {
+        y=1.0F;
+        b=ms->Min[1];
+      }
+
+      if(c<ms->Min[2]) {
+        z=0.0F;
+        c=ms->Min[2];
+      } else if(c>=ms->Max[2]) {
+        z=1.0F;
+        c=ms->Max[2]-1;
+      }
+      /*      printf("%d %d %d %8.3f %8.3f %8.3f\n",a,b,c,x,y,z);*/
+      *(result++)=FieldInterpolatef(ms->Field->data,
+                                    a-ms->Min[0],
+                                    b-ms->Min[1],
+                                    c-ms->Min[2],x,y,z);
+    }
+    break;
+  default:
+    ok=false;
+    break;
+  }
+  return(ok);
+}
 
 int ObjectMapNumPyArrayToMapState(ObjectMapState *I,PyObject *ary);
 
@@ -72,6 +149,19 @@ static void ObjectMapStateRegeneratePoints(ObjectMapState *ms)
         }
       }
     break;
+  case cMapSourcePHI:
+    for(c=0;c<ms->FDim[2];c++) {
+      v[2]=ms->Origin[2]+ms->Grid[2]*(c+ms->Min[2]);
+      for(b=0;b<ms->FDim[1];b++) {
+        v[1]=ms->Origin[1]+ms->Grid[1]*(b+ms->Min[1]);
+        for(a=0;a<ms->FDim[0];a++) {
+          v[0]=ms->Origin[0]+ms->Grid[0]*(a+ms->Min[0]);
+          for(e=0;e<3;e++) {
+            F4(ms->Field->points,a,b,c,e) = v[e];
+          }
+        }
+      }
+  }
   default: 
     break;
   }
@@ -230,8 +320,6 @@ static int ObjectMapAllStatesFromPyList(ObjectMap *I,PyObject *list)
 PyObject *ObjectMapAsPyList(ObjectMap *I)
 {
   PyObject *result = NULL;
-
-  /* first, dump the atoms */
 
   result = PyList_New(3);
   PyList_SetItem(result,0,ObjectAsPyList(&I->Obj));
@@ -955,6 +1043,222 @@ int ObjectMapCCP4StrToMap(ObjectMap *I,char *CCP4Str,int bytes,int state) {
   return(ok);
 }
 /*========================================================================*/
+static int ObjectMapPHIStrToMap(ObjectMap *I,char *PHIStr,int bytes,int state) {
+  
+  char *p;
+  float *f;
+  float dens,dens_rev;
+  int a,b,c,d,e;
+  float v[3],maxd,mind;
+  int ok = true;
+  int little_endian = 1;
+  /* PHI named from their docs */
+  
+  int map_dim;
+
+  ObjectMapState *ms;
+
+  char cc[MAXLINELEN];
+  char *rev;
+
+  little_endian = *((char*)&little_endian);
+
+  if(state<0) state=I->NState;
+  if(I->NState<=state) {
+    VLACheck(I->State,ObjectMapState,state);
+    I->NState=state+1;
+  }
+  ms=&I->State[state];
+  ObjectMapStateInit(ms);
+
+  maxd = FLT_MIN;
+  mind = FLT_MAX;
+  p=PHIStr;
+
+  p+=4;
+  ParseNCopy(cc,p,20);
+  PRINTFB(FB_ObjectMap,FB_Details)
+    " PHIMapToStr: %s\n",cc
+    ENDFB;
+  p+=20;
+  p+=4;
+
+  p+=4;
+  ParseNCopy(cc,p,10);
+  PRINTFB(FB_ObjectMap,FB_Details)
+    " PHIMapToStr: %s\n",cc
+    ENDFB;
+  p+=10;
+  ParseNCopy(cc,p,60);
+  PRINTFB(FB_ObjectMap,FB_Details)
+    " PHIMapToStr: %s\n",cc
+    ENDFB;
+  p+=60;
+  p+=4;
+
+  p+=4;
+
+  map_dim = 65;
+
+  ms->FDim[0] = map_dim;
+  ms->FDim[1] = map_dim;
+  ms->FDim[2] = map_dim;
+  ms->FDim[3] = 3;
+
+  ms->Div[0] = (map_dim-1)/2;
+  ms->Div[1] = (map_dim-1)/2;
+  ms->Div[2] = (map_dim-1)/2;
+  ms->Min[0] = -ms->Div[0];
+  ms->Min[1] = -ms->Div[1];
+  ms->Min[2] = -ms->Div[2];
+  ms->Max[0] = ms->Div[0];
+  ms->Max[1] = ms->Div[1];
+  ms->Max[2] = ms->Div[2];
+
+  ms->Field=IsosurfFieldAlloc(ms->FDim);
+  ms->MapSource = cMapSourcePHI;
+  ms->Field->save_points=false;
+
+  rev = (char*)&dens_rev;
+
+  for(c=0;c<ms->FDim[2];c++) { /* z y x ordering into c b a  so that x = a, etc. */
+    for(b=0;b<ms->FDim[1];b++) {
+      for(a=0;a<ms->FDim[0];a++) {
+
+        rev[0]=p[3];
+        rev[1]=p[2];
+        rev[2]=p[1];
+        rev[3]=p[0];
+        dens = *((float*)rev);
+        F3(ms->Field->data,a,b,c) = dens;
+        if(maxd<*f) maxd = dens;
+        if(mind>*f) mind = dens;
+        p+=4;
+      }
+    }
+  }
+  p+=4;
+
+
+  p+=4;
+  ParseNCopy(cc,p,16);
+  PRINTFB(FB_ObjectMap,FB_Details)
+    " PHIMapToStr: %s\n",cc
+    ENDFB;
+  p+=16;
+  p+=4;
+
+  ms->Grid = Alloc(float,3);
+  p+=4;
+  rev[0]=p[3];
+  rev[1]=p[2];
+  rev[2]=p[1];
+  rev[3]=p[0];
+  ms->Grid[0] = 1.0F/(*((float*)rev));
+  ms->Grid[1] = ms->Grid[0];
+  ms->Grid[2] = ms->Grid[0];
+  p+=4;
+
+  ms->Origin = Alloc(float,3);
+
+  rev[0]=p[3];
+  rev[1]=p[2];
+  rev[2]=p[1];
+  rev[3]=p[0];
+  ms->Origin[0] = *((float*)rev);
+  p+=4;
+
+  rev[0]=p[3];
+  rev[1]=p[2];
+  rev[2]=p[1];
+  rev[3]=p[0];
+  ms->Origin[1] = *((float*)rev);
+  p+=4;
+
+  rev[0]=p[3];
+  rev[1]=p[2];
+  rev[2]=p[1];
+  rev[3]=p[0];
+  ms->Origin[2] = *((float*)rev);
+  p+=4;
+
+  p+=4;
+
+  if(ok) {
+    for(e=0;e<3;e++) {
+      ms->ExtentMin[e] = ms->Origin[e]+ms->Grid[e]*ms->Min[e];
+      ms->ExtentMax[e] = ms->Origin[e]+ms->Grid[e]*ms->Max[e];
+    }
+  }
+
+  for(c=0;c<ms->FDim[2];c++) {
+    v[2]=ms->Origin[2]+ms->Grid[2]*(c+ms->Min[2]);
+    for(b=0;b<ms->FDim[1];b++) {
+      v[1]=ms->Origin[1]+ms->Grid[1]*(b+ms->Min[1]);
+      for(a=0;a<ms->FDim[0];a++) {
+        v[0]=ms->Origin[0]+ms->Grid[0]*(a+ms->Min[0]);
+        for(e=0;e<3;e++) {
+          F4(ms->Field->points,a,b,c,e) = v[e];
+        }
+      }
+    }
+  }
+
+  d=0;
+  for(c=0;c<ms->FDim[2];c+=ms->FDim[2]-1) {
+    v[2]=ms->Origin[2]+ms->Grid[2]*(c+ms->Min[2]);
+
+    for(b=0;b<ms->FDim[1];b+=ms->FDim[1]-1) {
+      v[1]=ms->Origin[1]+ms->Grid[1]*(b+ms->Min[1]);
+
+      for(a=0;a<ms->FDim[2];a+=ms->FDim[2]-1) {
+
+        v[0]=ms->Origin[0]+ms->Grid[0]*(a+ms->Min[0]);
+        F4(ms->Field->points,a,b,c,e) = v[e];
+        copy3f(v,ms->Corner[d]);
+        d++;
+      }
+    }
+  }
+
+  /* interpolation test code 
+  { 
+    float test[3];
+    float result;
+    float cmp;
+
+    for(c=0;c<ms->FDim[0]-1;c++) {
+      for(b=0;b<ms->FDim[1]-1;b++) {
+        for(a=0;a<ms->FDim[2]-1;a++) {
+          for(e=0;e<3;e++) {
+            test[e] = (F4(ms->Field->points,a,b,c,e)+
+                       F4(ms->Field->points,a,b,c,e))/2.0;
+          }
+          ObjectMapStateInterpolate(ms,test,&result,1);
+          cmp = (F3(ms->Field->data,a,b,c)+
+                 F3(ms->Field->data,a,b,c))/2.0;
+          if(fabs(cmp-result)>0.001) {
+            printf("%d %d %d\n",a,b,c);
+            printf("%8.5f %8.5f\n",
+                   cmp,
+                   result);
+          }
+        }
+      }
+    }
+  }
+  */
+
+  if(!ok) {
+    ErrMessage("ObjectMap","Error reading map");
+  } else {
+    ms->Active=true;
+    ObjectMapUpdateExtents(I);
+    printf(" ObjectMap: Map Read.  Range = %5.6f to %5.6f\n",mind,maxd);
+  }
+  return(ok);
+}
+/*========================================================================*/
 int ObjectMapXPLORStrToMap(ObjectMap *I,char *XPLORStr,int state) {
   
   char *p;
@@ -1196,6 +1500,84 @@ ObjectMap *ObjectMapLoadCCP4File(ObjectMap *obj,char *fname,int state)
 		fclose(f);
 
 		I=ObjectMapReadCCP4Str(obj,buffer,size,state);
+
+		mfree(buffer);
+      if(state<0)
+        state=I->NState-1;
+      if(state<I->NState) {
+        ObjectMapState *ms;
+        ms = &I->State[state];
+        if(ms->Active) {
+          CrystalDump(ms->Crystal);
+          multiply33f33f(ms->Crystal->FracToReal,ms->Crystal->RealToFrac,mat);
+        }
+      }
+    }
+#ifdef _UNDEFINED
+  {int a;
+  for(a=0;a<9;a++)
+    printf("%10.5f\n",mat[a]);
+  }
+#endif
+  return(I);
+
+}
+
+/*========================================================================*/
+static ObjectMap *ObjectMapReadPHIStr(ObjectMap *I,char *MapStr,int bytes,int state)
+{
+  int ok=true;
+  int isNew = true;
+
+  if(!I) 
+	 isNew=true;
+  else 
+	 isNew=false;
+  if(ok) {
+	 if(isNew) {
+		I=(ObjectMap*)ObjectMapNew();
+		isNew = true;
+	 } else {
+		isNew = false;
+	 }
+    ObjectMapPHIStrToMap(I,MapStr,bytes,state);
+    SceneChanged();
+    SceneCountFrames();
+  }
+  return(I);
+}
+/*========================================================================*/
+ObjectMap *ObjectMapLoadPHIFile(ObjectMap *obj,char *fname,int state)
+{
+  ObjectMap *I = NULL;
+  int ok=true;
+  FILE *f;
+  long size;
+  char *buffer,*p;
+  float mat[9];
+
+  f=fopen(fname,"rb");
+  if(!f)
+	 ok=ErrMessage("ObjectMapLoadPHIFile","Unable to open file!");
+  else
+	 {
+		if(Feedback(FB_ObjectMap,FB_Actions))
+		  {
+			printf(" ObjectMapLoadPHIFile: Loading from '%s'.\n",fname);
+		  }
+		
+		fseek(f,0,SEEK_END);
+      size=ftell(f);
+		fseek(f,0,SEEK_SET);
+
+		buffer=(char*)mmalloc(size);
+		ErrChkPtr(buffer);
+		p=buffer;
+		fseek(f,0,SEEK_SET);
+		fread(p,size,1,f);
+		fclose(f);
+
+		I=ObjectMapReadPHIStr(obj,buffer,size,state);
 
 		mfree(buffer);
       if(state<0)

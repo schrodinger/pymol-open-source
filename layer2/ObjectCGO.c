@@ -28,6 +28,7 @@ Z* -------------------------------------------------------------------
 #include"PConv.h"
 #include"main.h"
 #include"Color.h"
+#include"VFont.h"
 
 static void ObjectCGOFree(ObjectCGO *I);
 CGO *ObjectCGOPyListFloatToCGO(PyObject *list);
@@ -124,6 +125,7 @@ int ObjectCGONewFromPyList(PyObject *list,ObjectCGO **result)
   }
   return(ok);
 }
+
 
 
 
@@ -335,11 +337,29 @@ ObjectCGO *ObjectCGOFromCGO(ObjectCGO *obj,CGO *cgo,int state)
   return(I);
 }
 /*========================================================================*/
-ObjectCGO *ObjectCGODefine(ObjectCGO *obj,PyObject *pycgo,int state)
+
+ObjectCGO *ObjectCGONewVFontTest(char *text,float *pos)
 {
   ObjectCGO *I = NULL;
+  int font_id;
+  CGO *cgo = NULL;
+  float scale[2] = {1.0,1.0};
 
-  CGO *cgo;
+  font_id = VFontLoad(1,1,1,true);
+  cgo = CGONew();
+  VFontWriteToCGO(font_id,cgo,text,pos,scale,NULL);
+  I = ObjectCGOFromCGO(NULL,cgo,0);
+
+  return(I);
+}
+
+
+/*========================================================================*/
+ObjectCGO *ObjectCGODefine(ObjectCGO *obj,PyObject *pycgo,int state)
+{ /* assumes blocked interpreter */
+  ObjectCGO *I = NULL;
+
+  CGO *cgo,*font_cgo;
   int est;
 
   if(obj) {
@@ -368,6 +388,13 @@ ObjectCGO *ObjectCGODefine(ObjectCGO *obj,PyObject *pycgo,int state)
       if(PyFloat_Check(PyList_GetItem(pycgo,0))) {
         cgo=ObjectCGOPyListFloatToCGO(pycgo);
         if(cgo) {
+          est=CGOCheckForText(cgo);
+          if(est) {
+            CGOPreloadFonts(cgo);
+            font_cgo = CGODrawText(cgo,est,NULL);
+            CGOFree(cgo);
+            cgo=font_cgo;
+          }
           est=CGOCheckComplex(cgo);
           if(est) {
             I->State[state].ray=cgo;

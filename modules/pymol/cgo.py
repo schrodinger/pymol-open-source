@@ -46,6 +46,18 @@ DISABLE            = 13.0
 SAUSAGE            = 14.0
 CUSTOM_CYLINDER    = 15.0
 
+SHAPE_VERTEX       = 16.0
+SHAPE_COLOR        = 17.0
+SHAPE_NORMAL       = 18.0
+
+FONT               = 19.0
+FONT_SCALE         = 20.0
+FONT_VERTEX        = 21.0
+FONT_AXES          = 22.0
+
+CHAR               = 23.0
+
+
 LIGHTING           = float(0x0B50)
 
 def molauto(*arg):

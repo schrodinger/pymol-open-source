@@ -24,6 +24,11 @@ Z* -------------------------------------------------------------------
 #include"Feedback.h"
 #include"TestPyMOL.h"
 
+#include"ObjectCGO.h"
+#include"VFont.h"
+#include"ObjectGadget.h"
+#include"P.h"
+
 #include"ObjectMap.h"
 #include"Executive.h"
 
@@ -65,8 +70,41 @@ int TestPyMOLRun(CTestPyMOL *I,int group,int test)
   switch(group) {
   case 0: /* development tests */
     switch(test) {
-    case 0: TestPyMOL_00_00(I); break;
+    case 0:
+      TestPyMOL_00_00(I); break;
+      
+    case 1: 
+      PBlock();
+      VFontLoad(1,0,0,true); 
+      PUnblock();
+      break;
+    case 2: {
+      CObject *obj = NULL;
+      float pos[3] = {0.0,0.0,0.0};
+      PBlock();
+      obj = (CObject*)ObjectCGONewVFontTest("hello",pos);
+      PUnblock();
+      if(obj) {
+        ObjectSetName(obj,"hello");
+        ExecutiveManageObject(obj,true);
+      }
+    }
+    break;
+    case 3: {
+      CObject *obj = NULL;
+      obj = (CObject*)ObjectGadgetTest();
+      if(obj)  {
+        ObjectSetName(obj,"gadget");
+        ExecutiveManageObject(obj,true);
+      }
+    }
     }
   }
   return 1;
 }
+
+
+
+
+
+

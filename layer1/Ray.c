@@ -73,11 +73,51 @@ int PrimitiveSphereHit(CRay *I,float *v,float *n,float *minDist,int except);
 void RayGetSphereNormal(CRay *I,RayInfo *r);
 
 void RayTransformNormals33( unsigned int n, float3 *q, const float m[16],float3 *p );
+void RayTransformInverseNormals33( unsigned int n, float3 *q, const float m[16],float3 *p );
 void RayReflectAndTexture(CRay *I,RayInfo *r);
 void RayProjectTriangle(CRay *I,RayInfo *r,float *light,float *v0,float *n0,float scale);
 void RayCustomCylinder3fv(CRay *I,float *v1,float *v2,float r,
                           float *c1,float *c2,int cap1,int cap2);
+void RaySetContext(CRay *I,int context)
+{
+  I->Context=context;
+}
+void RayApplyContextToNormal(CRay *I,float *v);
+void RayApplyContextToVertex(CRay *I,float *v);
 
+void RayApplyContextToVertex(CRay *I,float *v)
+{
+  switch(I->Context) {
+  case 1:
+    {
+      float tw;
+      float th;
+      
+      if(I->AspRatio>1.0F) {
+        tw = I->AspRatio;
+        th = 1.0;
+      } else {
+        th = 1.0F/I->AspRatio;
+        tw = 1.0;
+      }
+      v[0]+=(tw-1.0)/2;
+      v[1]+=(th-1.0)/2;
+      v[0]=v[0]*(I->Range[0]/tw)+I->Volume[0];
+      v[1]=v[1]*(I->Range[1]/th)+I->Volume[2];
+      v[2]=v[2]*I->Range[2]-(I->Volume[4]+I->Volume[5])/2.0;
+      RayApplyMatrixInverse33(1,(float3*)v,I->ModelView,(float3*)v);    
+    }
+    break;
+  }
+}
+void RayApplyContextToNormal(CRay *I,float *v)
+{
+  switch(I->Context) {
+  case 1:
+    RayTransformInverseNormals33(1,(float3*)v,I->ModelView,(float3*)v);    
+    break;
+  }
+}
 /*========================================================================*/
 void RayGetSphereNormal(CRay *I,RayInfo *r)
 {
@@ -740,6 +780,8 @@ void RayRender(CRay *I,int width,int height,unsigned int *image,float front,floa
   float first_excess;
   int pixel_flag;
   float ray_trans_spec;
+  float fudge,shadow_fudge;
+
 
   project_triangle = SettingGet(cSetting_ray_improve_shadows);
   shadows = (int)SettingGet(cSetting_ray_shadows);
@@ -748,6 +790,9 @@ void RayRender(CRay *I,int width,int height,unsigned int *image,float front,floa
   opaque_back = (int)SettingGet(cSetting_ray_opaque_background);
   two_sided_lighting = (int)SettingGet(cSetting_two_sided_lighting);
   ray_trans_spec = SettingGet(cSetting_ray_transparency_specular);
+
+  fudge = SettingGet(cSetting_ray_triangle_fudge);
+  shadow_fudge = SettingGet(cSetting_ray_shadow_fudge);
 
   gamma = SettingGet(cSetting_gamma);
   if(gamma>R_SMALL4)
@@ -920,7 +965,7 @@ void RayRender(CRay *I,int width,int height,unsigned int *image,float front,floa
             while((persist>0.0001)&&(pass<25)) {
               pixel_flag=false;
               i=BasisHit(I->Basis+1,&r1,exclude,I->Vert2Prim,I->Primitive,false,
-                         new_front,back,excl_trans,trans_shadows);
+                         new_front,back,excl_trans,trans_shadows,fudge);
               if(i>=0) {
                 pixel_flag=true;
                 n_hit++;
@@ -960,9 +1005,9 @@ void RayRender(CRay *I,int width,int height,unsigned int *image,float front,floa
                 
                 if(shadows) {
                   matrix_transform33f3f(I->Basis[2].Matrix,r1.impact,r2.base);
-                  
+                  r2.base[2]-=shadow_fudge;
                   if(BasisHit(I->Basis+2,&r2,i,I->Vert2Prim,I->Primitive,
-                              true,0.0,0.0,0.0,trans_shadows)>=0) {
+                              true,0.0,0.0,0.0,trans_shadows,fudge)>=0) {
                     lit=pow(r2.prim->trans,0.5);
                   } else {
                     lit=1.0;
@@ -1376,6 +1421,8 @@ void RaySphere3fv(CRay *I,float *v,float r)
   (*vv++)=(*v++);
   (*vv++)=(*v++);
   (*vv++)=(*v++);
+
+
   vv=p->c1;
   v=I->CurColor;
   (*vv++)=(*v++);
@@ -1384,6 +1431,10 @@ void RaySphere3fv(CRay *I,float *v,float r)
 
   if(I->TTTFlag) {
     transformTTT44f3f(I->TTT,p->v1,p->v1);
+  }
+
+  if(I->Context) {
+    RayApplyContextToVertex(I,p->v1);
   }
 
   I->NPrimitive++;
@@ -1418,6 +1469,11 @@ void RayCylinder3fv(CRay *I,float *v1,float *v2,float r,float *c1,float *c2)
   if(I->TTTFlag) {
     transformTTT44f3f(I->TTT,p->v1,p->v1);
     transformTTT44f3f(I->TTT,p->v2,p->v2);
+  }
+
+  if(I->Context) {
+    RayApplyContextToVertex(I,p->v1);
+    RayApplyContextToVertex(I,p->v2);
   }
 
   vv=p->c1;
@@ -1464,6 +1520,11 @@ void RayCustomCylinder3fv(CRay *I,float *v1,float *v2,float r,
     transformTTT44f3f(I->TTT,p->v2,p->v2);
   }
 
+  if(I->Context) {
+    RayApplyContextToVertex(I,p->v1);
+    RayApplyContextToVertex(I,p->v2);
+  }
+
   vv=p->c1;
   (*vv++)=(*c1++);
   (*vv++)=(*c1++);
@@ -1503,6 +1564,11 @@ void RaySausage3fv(CRay *I,float *v1,float *v2,float r,float *c1,float *c2)
   if(I->TTTFlag) {
     transformTTT44f3f(I->TTT,p->v1,p->v1);
     transformTTT44f3f(I->TTT,p->v2,p->v2);
+  }
+
+  if(I->Context) {
+    RayApplyContextToVertex(I,p->v1);
+    RayApplyContextToVertex(I,p->v2);
   }
 
   vv=p->c1;
@@ -1631,6 +1697,16 @@ void RayTriangle3fv(CRay *I,
     transform_normalTTT44f3f(I->TTT,p->n3,p->n3);
   }
 
+  if(I->Context) {
+    RayApplyContextToVertex(I,p->v1);
+    RayApplyContextToVertex(I,p->v2);
+    RayApplyContextToVertex(I,p->v3);
+    RayApplyContextToNormal(I,p->n0);
+    RayApplyContextToNormal(I,p->n1);
+    RayApplyContextToNormal(I,p->n2);
+    RayApplyContextToNormal(I,p->n3);
+  }
+
   I->NPrimitive++;
 
 }
@@ -1680,7 +1756,8 @@ CRay *RayNew(void)
   return(I);
 }
 /*========================================================================*/
-void RayPrepare(CRay *I,float v0,float v1,float v2,float v3,float v4,float v5,float *mat)
+void RayPrepare(CRay *I,float v0,float v1,float v2,
+                float v3,float v4,float v5,float *mat,float aspRat)
 	  /*prepare for vertex calls */
 {
   int a;
@@ -1697,9 +1774,17 @@ void RayPrepare(CRay *I,float v0,float v1,float v2,float v3,float v4,float v5,fl
   I->Range[0]=I->Volume[1]-I->Volume[0];
   I->Range[1]=I->Volume[3]-I->Volume[2];
   I->Range[2]=I->Volume[5]-I->Volume[4];
+  I->AspRatio=aspRat;
 
-  for(a=0;a<16;a++)
-    I->ModelView[a]=mat[a];
+  if(mat)  
+    for(a=0;a<16;a++)
+      I->ModelView[a]=mat[a];
+  else {
+    for(a=0;a<16;a++)
+      I->ModelView[a]=0.0F;
+    for(a=0;a<3;a++)
+      I->ModelView[a*5]=1.0F;
+  }
 }
 /*========================================================================*/
 
@@ -1778,6 +1863,23 @@ void RayTransformNormals33( unsigned int n, float3 *q, const float m[16],float3 
     q[i][0] = m0 * p0 + m4  * p1 + m8 * p2;
     q[i][1] = m1 * p0 + m5  * p1 + m9 * p2;
     q[i][2] = m2 * p0 + m6 * p1 + m10 * p2;
+  }
+  for (i=0;i<n;i++) { /* renormalize - can we do this to the matrix instead? */
+    normalize3f(q[i]);
+  }
+}
+
+void RayTransformInverseNormals33( unsigned int n, float3 *q, const float m[16],float3 *p )
+{
+  unsigned int i;
+  float m0 = m[0],  m4 = m[4],  m8 = m[8];
+  float m1 = m[1],  m5 = m[5],  m9 = m[9];
+  float m2 = m[2],  m6 = m[6],  m10 = m[10];
+  for (i=0;i<n;i++) {
+    float p0 = p[i][0], p1 = p[i][1], p2 = p[i][2];
+    q[i][0] = m0 * p0 + m1  * p1 + m2 * p2;
+    q[i][1] = m4 * p0 + m5  * p1 + m6 * p2;
+    q[i][2] = m8 * p0 + m9 * p1 + m10 * p2;
   }
   for (i=0;i<n;i++) { /* renormalize - can we do this to the matrix instead? */
     normalize3f(q[i]);
