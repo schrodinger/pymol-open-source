@@ -830,6 +830,8 @@ void CoordSetRender(CoordSet *I,CRay *ray,Pickable **pick,int pass)
             } else 
               switch(a) {
               case cRepLabel:
+                if(pass==1) r->fRender(r,ray,pick);
+                break;
               case cRepNonbondedSphere:
               case cRepRibbon:
               case cRepDot:

@@ -61,8 +61,10 @@
 #include"Character.h"
 #include"Seq.h"
 #include"Seeker.h"
+#include"Texture.h"
 
 #include"PyMOLGlobals.h"
+#include"OVContext.h"
 #include"ClassPyMOL.h"
 
 void MainFree(void);
@@ -744,6 +746,7 @@ static void MainInit(PyMOLGlobals *G)
     glDisable(GL_BLEND);
   }
 
+  G->Context = OVContext_New();
   MemoryCacheInit(G);
   FeedbackInit(G,PyMOLOption->quiet);
   WordInit(G);
@@ -751,13 +754,12 @@ static void MainInit(PyMOLGlobals *G)
 
   I->IdleTime=(float)UtilGetSeconds(G);
 
-
-
   ColorInit(G);
   CGORendererInit(G);
   SettingInitGlobal(G,true,true);  
   SettingSet(G,cSetting_internal_gui,(float)InternalGUI);
   SettingSet(G,cSetting_internal_feedback,(float)InternalFeedback);
+  TextureInit(G);
   TextInit(G);
   CharacterInit(G);
   SphereInit(G);
@@ -777,6 +779,7 @@ static void MainInit(PyMOLGlobals *G)
   IsosurfInit(G);
   TetsurfInit(G);
   EditorInit(G);
+
 }
 
 
@@ -808,6 +811,7 @@ void MainFree(void)
   SettingFreeGlobal(G);
   CharacterFree(G);
   TextFree(G);
+  TextureFree(G);
   SphereFree(G);
   PFree();
   CGORendererFree(G);
@@ -816,6 +820,7 @@ void MainFree(void)
   WordFree(G);
   FeedbackFree(G);
   MemoryCacheDone(G);
+  OVContext_Del(G->Context);
                      
   ClassPyMOLFree(PyMOLInstance);
 

@@ -70,9 +70,7 @@ struct _CScene {
   float RotMatrix[16];
   float InvMatrix[16];
   float ModMatrix[16];
-  float VewMatrix[16];
   float ProMatrix[16];
-  float UnitMatrix[16];
   float Scale;
   int Width,Height;
   int Button;
@@ -136,6 +134,24 @@ static const char SelModeKW[][20]  = {
   "bymol",
   "bca.",
 };
+
+static void SceneUpdateInvMatrix(PyMOLGlobals *G)
+{
+  register CScene *I=G->Scene;
+  register float *rm=I->RotMatrix;
+  register float *im=I->InvMatrix;
+  UtilZeroMem(im,sizeof(float)*16);
+  im[0] = rm[0];
+  im[1] = rm[4];
+  im[2] = rm[8];
+  im[4] = rm[1];
+  im[5] = rm[5];
+  im[6] = rm[9];
+  im[8] = rm[2];
+  im[9] = rm[6];
+  im[10] = rm[10];
+  im[15] = 1.0F;
+}
 
 void SceneUpdateStereo(PyMOLGlobals *G)
 {
@@ -457,6 +473,7 @@ void SceneSetView(PyMOLGlobals *G,SceneViewType view,int quiet)
   p=view;
   for(a=0;a<16;a++)
     I->RotMatrix[a] = *(p++); 
+  SceneUpdateInvMatrix(G);
   I->Pos[0] = *(p++);
   I->Pos[1] = *(p++);
   I->Pos[2] = *(p++);
@@ -605,6 +622,7 @@ void SceneSetMatrix(PyMOLGlobals *G,float *m)
   int a;
   for(a=0;a<16;a++)
 	 I->RotMatrix[a]=m[a];
+  SceneUpdateInvMatrix(G);
 }
 /*========================================================================*/
 void SceneGetViewNormal(PyMOLGlobals *G,float *v)
@@ -2051,6 +2069,25 @@ int SceneClick(Block *block,int button,int x,int y,int mod)
   }
   return(1);
 }
+void ScenePushRasterMatrix(PyMOLGlobals *G,float *v) 
+{
+  register CScene *I=G->Scene;
+  float p0[3],p1[3];
+  float scale = SceneGetScreenVertexScale(G,v);
+  glMatrixMode(GL_MODELVIEW);
+  glPushMatrix();
+  glTranslatef(v[0],v[1],v[2]); /* go to this position */
+  glMultMatrixf(I->InvMatrix);
+  glScalef(scale,scale,scale);
+  /*  glTranslatef(-0.33F,-0.33F,0.0F);*/
+  
+}
+
+void ScenePopRasterMatrix(PyMOLGlobals *G)
+{
+  glMatrixMode(GL_MODELVIEW);
+  glPopMatrix();
+}
 /*========================================================================*/
 float SceneGetScreenVertexScale(PyMOLGlobals *G,float *v1)
 {
@@ -2065,7 +2102,7 @@ float SceneGetScreenVertexScale(PyMOLGlobals *G,float *v1)
   p2[0]+=1.0;
   MatrixTransform44f4f(I->ProMatrix,p1,p1); /* projection transformation */
   MatrixTransform44f4f(I->ProMatrix,p2,p2);
-  p1[0]=p1[0]/p1[3];/* perspective vision */
+  p1[0]=p1[0]/p1[3];/* perspective division */
   p1[1]=p1[1]/p1[3];
   p1[2]=0.0;
   p2[0]=p2[0]/p2[3];
@@ -2833,12 +2870,14 @@ void SceneResetMatrix(PyMOLGlobals *G)
 {
   register CScene *I=G->Scene;
   MatrixLoadIdentity44f(I->RotMatrix);
+  SceneUpdateInvMatrix(G);
 }
 /*========================================================================*/
 void SceneSetDefaultView(PyMOLGlobals *G) {
   register CScene *I=G->Scene;
 
   MatrixLoadIdentity44f(I->RotMatrix);
+  SceneUpdateInvMatrix(G);
 
   I->Pos[0] = 0.0;
   I->Pos[1] = 0.0;
@@ -3606,6 +3645,10 @@ void SceneRender(PyMOLGlobals *G,Pickable *pick,int x,int y,Multipick *smp)
       glShadeModel(GL_SMOOTH);
       glEnable(GL_COLOR_MATERIAL);
       glEnable(GL_DITHER);
+
+      glAlphaFunc(GL_GREATER, 0.05F);
+      glEnable(GL_ALPHA_TEST);
+
       if(PyMOLOption->multisample)
         glEnable(0x809D); /* GL_MULTISAMPLE_ARB */
 
@@ -3893,7 +3936,7 @@ void SceneRender(PyMOLGlobals *G,Pickable *pick,int x,int y,Multipick *smp)
 
         glPushMatrix(); /* 1 */
         ScenePrepareMatrix(G,stereo_as_mono ? 0 : 1);
-        for(pass=1;pass>=0;pass--) { /* render opaque then antialiased...*/
+        for(pass=1;pass>-2;pass--) { /* render opaque then antialiased...*/
           rec=NULL;
 
           SceneRenderAll(G,&context,normal,NULL,pass,false);
@@ -3949,7 +3992,7 @@ void SceneRender(PyMOLGlobals *G,Pickable *pick,int x,int y,Multipick *smp)
         glClear(GL_DEPTH_BUFFER_BIT);        
         glPushMatrix(); /* 1 */
         ScenePrepareMatrix(G,stereo_as_mono ? 0 : 2);
-        for(pass=1;pass>=0;pass--) { /* render opaque then antialiased...*/
+        for(pass=1;pass>-2;pass--) { /* render opaque then antialiased...*/
           
           SceneRenderAll(G,&context,normal,NULL,pass,false);
           
@@ -4000,7 +4043,7 @@ void SceneRender(PyMOLGlobals *G,Pickable *pick,int x,int y,Multipick *smp)
           " SceneRender: rendering opaque and antialiased...\n"
           ENDFD;
         
-        for(pass=1;pass>=0;pass--) { /* render opaque then antialiased...*/
+        for(pass=1;pass>-2;pass--) { /* render opaque then antialiased...*/
           SceneRenderAll(G,&context,normal,NULL,pass,false);
         }
 
@@ -4051,6 +4094,7 @@ void SceneRender(PyMOLGlobals *G,Pickable *pick,int x,int y,Multipick *smp)
     glDisable(GL_BLEND);
     glDisable(GL_NORMALIZE);
     glDisable(GL_DEPTH_TEST);
+    glDisable(GL_ALPHA_TEST);
     if(PyMOLOption->multisample)    
       glDisable(0x809D); /* GL_MULTISAMPLE_ARB */
     glViewport(view_save[0],view_save[1],view_save[2],view_save[3]);
@@ -4161,8 +4205,10 @@ void SceneRotate(PyMOLGlobals *G,float angle,float x,float y,float z)
   MatrixLoadIdentity44f(temp);
   MatrixRotate44f3f(temp,angle,x,y,z);
   MatrixMultiply44f(I->RotMatrix,temp);
-  for(a=0;a<16;a++)
+  for(a=0;a<16;a++) 
     I->RotMatrix[a]=temp[a];
+  SceneUpdateInvMatrix(G);
+
   SceneDirty(G);
 
     /*  glPushMatrix();

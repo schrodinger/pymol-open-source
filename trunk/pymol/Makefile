@@ -9,6 +9,7 @@ MINDEP=$(PYMOL_PATH)/products/unix-mindep
 MDP=$(MINDEP)/pymol
 
 .includes:
+	cd ov/src;$(PRIME)
 	cd layer0;$(PRIME)
 	cd layer1;$(PRIME)
 	cd layer2;$(PRIME)
@@ -18,6 +19,7 @@ MDP=$(MINDEP)/pymol
 	touch .includes
 
 .update:
+	cd ov/src;$(MAKE)
 	cd layer0;$(MAKE)
 	cd layer1;$(MAKE)
 	cd layer2;$(MAKE)
@@ -25,6 +27,9 @@ MDP=$(MINDEP)/pymol
 	cd layer4;$(MAKE)
 	cd layer5;$(MAKE)
 	touch .update
+
+ov: 
+	cd ov/src;$(MAKE)
 
 0:
 	cd layer0;$(MAKE)
@@ -46,6 +51,7 @@ MDP=$(MINDEP)/pymol
 
 .depends: 
 	/bin/rm -f .includes
+	cd ov/src;$(MAKE) depends
 	cd layer0;$(MAKE) depends
 	cd layer1;$(MAKE) depends
 	cd layer2;$(MAKE) depends
@@ -61,12 +67,12 @@ contrib: .contrib
 
 unix: .includes .depends .update 
 	/bin/rm -f .update .includes
-	$(CC) $(BUILD) $(DEST) */*.o $(CFLAGS)  $(LIB_DIRS) $(LIBS)	
+	$(CC) $(BUILD) $(DEST) */*.o ov/src/*.o $(CFLAGS)  $(LIB_DIRS) $(LIBS)	
 
 semistatic: .includes .depends .update
 	/bin/rm -f .update .includes
 	cd contrib;$(MAKE) static
-	$(CC) $(BUILD) $(DEST) */*.o $(CFLAGS)  $(LIB_DIRS) $(LIBS)	
+	$(CC) $(BUILD) $(DEST) */*.o ov/src/*.o $(CFLAGS)  $(LIB_DIRS) $(LIBS)	
 
 unix-mindep-build: semistatic
 	$(PYTHON_EXE) modules/compile_pymol.py
@@ -133,7 +139,7 @@ irix-mindep: semistatic
 
 fast: .update
 	/bin/rm -f .update 
-	$(CC) $(BUILD) */*.o $(CFLAGS) $(LIB_DIRS) $(LIBS)
+	$(CC) $(BUILD) */*.o ov/src/*.o $(CFLAGS) $(LIB_DIRS) $(LIBS)
 
 depends: 
 	/bin/rm -f */*.p
@@ -148,7 +154,7 @@ partial:
 
 clean: 
 	touch .no_fail
-	/bin/rm -f layer*/*.o layer*/*.p modules/*/*.pyc modules/*/*/*.pyc \
+	/bin/rm -f layer*/*.o ov/src/*.o layer*/*.p modules/*/*.pyc modules/*/*/*.pyc \
 	layer*/.files layer*/.depends layer*/.includes \
 	*.log core */core game.* log.* _cmd.def .update .contrib .no_fail*
 	cd contrib;$(MAKE) clean

@@ -263,9 +263,9 @@ class PMGApp(AbstractApp):
       self.bind_all('<F9>',lambda event,w=self.command,
                       e=self.entry,s=self:cmd.do("cmd._special(9,0,0)"))
       self.bind_all('<F10>',lambda event,w=self.command,
-                      e=self.entry,s=self:cmd.do("cmd._special_special(10,0,0)"))
+                      e=self.entry,s=self:cmd.do("cmd._special(10,0,0)"))
       self.bind_all('<F11>',lambda event,w=self.command,
-                      e=self.entry,s=self:cmd.do("cmd._special_special(11,0,0)"))
+                      e=self.entry,s=self:cmd.do("cmd._special(11,0,0)"))
       self.bind_all('<F12>',lambda event,w=self.command,
                       e=self.entry,s=self:cmd.do("cmd._special(12,0,0)"))
 

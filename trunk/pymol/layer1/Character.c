@@ -14,6 +14,8 @@ I* Additional authors of this source file include:
 Z* -------------------------------------------------------------------
 */
 
+#include"os_gl.h"
+
 #include"Base.h"
 #include"Character.h"
 #include"Pixmap.h"
@@ -21,6 +23,7 @@ Z* -------------------------------------------------------------------
 #include"MemoryDebug.h"
 #include"OOMac.h"
 #include"Vector.h"
+#include"Text.h"
 
 #define HASH_MASK 0x4FFF
 
@@ -56,6 +59,18 @@ int CharacterFind(PyMOLGlobals *G,CharFngrprnt *fprnt)
   register CCharacter *I = G->Character;
   unsigned int hash_code = get_hash(fprnt);
   int id = I->Hash[hash_code];
+  /*
+  printf("seeking %d %d %d %d %d %d %d\n",
+         fprnt->u.i.text_id,
+         fprnt->u.i.ch,
+         fprnt->u.i.height,
+         fprnt->u.i.color[0],
+         fprnt->u.i.color[1],
+         fprnt->u.i.color[2],
+         fprnt->u.i.color[3]);
+  */
+
+         
   while(id) {
     if(equal_fprnt(fprnt,&I->Char[id].Fngrprnt)) {
 
@@ -83,7 +98,18 @@ int CharacterFind(PyMOLGlobals *G,CharFngrprnt *fprnt)
   return 0;
 }
 
+unsigned char *CharacterGetPixmapBuffer(PyMOLGlobals *G,int id)
+{
+  register CCharacter *I = G->Character;
+  if(id) {
+    CharRec *rec = I->Char + id;
+    return rec->Pixmap.buffer;
+  }
+  return NULL;
+}
+                                   
 int CharacterNewFromBitmap(PyMOLGlobals *G, int width, int height,
+                           int advance,
                            unsigned char *bitmap,
                            CharFngrprnt *fprnt)
 {
@@ -95,7 +121,7 @@ int CharacterNewFromBitmap(PyMOLGlobals *G, int width, int height,
                          fprnt->u.i.color);    
     rec->Width = width;
     rec->Height = height;
-
+    rec->Advance = advance;
     { /* add this character to the hash */
       int hash_code = get_hash(fprnt);
       int cur_entry;
@@ -110,6 +136,41 @@ int CharacterNewFromBitmap(PyMOLGlobals *G, int width, int height,
     }
   }
   return id;
+}
+
+
+int CharacterRenderOpenGL(PyMOLGlobals *G,int id) /* need orientation matrix */
+{
+  register CCharacter *I = G->Character;
+  CharRec *rec = I->Char + id;
+
+  int texture_id = TextureGetFromChar(G,id,rec->extent);
+  if(texture_id) {
+    glEnable(GL_TEXTURE_2D);
+    glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
+    if(glIsTexture(texture_id)) {
+      float *v0;
+      float v1[3],v2[3];
+      glBindTexture(GL_TEXTURE_2D, texture_id);
+      v0 = TextGetPos(G);
+      copy3f(v0,v1);
+      v1[0] += rec->Width;
+      v1[1] += rec->Height;
+      /*      glColor4f(0.5F,0.5F,0.5F,1.0F);*/
+      glEnable(GL_BLEND);
+      glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+      glBegin(GL_QUADS);
+      glTexCoord2f(0.0F, 0.0F); glVertex3f(v0[0],v0[1],v0[2]);
+      glTexCoord2f(0.0F, rec->extent[1]); glVertex3f(v0[0],v1[1],v0[2]);
+      glTexCoord2f(rec->extent[0], rec->extent[1]); glVertex3f(v1[0],v1[1],v0[2]);
+      glTexCoord2f(rec->extent[0], 0.0F); glVertex3f(v1[0],v0[1],v0[2]);
+      glEnd();
+      copy3f(v0,v2);
+      v2[0] += rec->Advance;
+      TextSetPos(G,v2);
+    }
+    glDisable(GL_TEXTURE_2D);
+  }
 }
 
 int CharacterGetWidth(PyMOLGlobals *G,int id)

@@ -21,6 +21,7 @@ Z* -------------------------------------------------------------------
 #include "Text.h"
 #include "Ray.h"
 #include "Character.h"
+#include "Scene.h"
 
 static void FontGLUTSave(CFontGLUT *I)
 {
@@ -51,54 +52,71 @@ static void FontGLUTRestore(CFontGLUT *I)
 
 static char *FontGLUTRenderOpenGL(CFontGLUT *I,char *st)
 {
+  register PyMOLGlobals *G = I->Font.G;
   int c;
   FontGLUTBitmapFontRec *font_info = I->glutFont;
   int first,last;
   FontGLUTBitmapCharRec const *ch;
-
+  int textured = SettingGetGlobal_b(G,cSetting_texture_fonts);
   if(st&&(*st)) {
     
-    glColor3fv(TextGetColor(I->Font.G));
-    glRasterPos4fv(TextGetPos(I->Font.G));
-    FontGLUTSave(I);
+    if(!textured) {
+      glColor3fv(TextGetColor(G));
+      glRasterPos4fv(TextGetPos(G));
+      FontGLUTSave(I);
+    }
     
     first = font_info->first;
     last = first + font_info->num_chars;
+    
+    if(textured) {
+      float *v = TextGetPos(G);
+      float zero[3]= {0.0F,0.0F,0.0F};
+      ScenePushRasterMatrix(G,v);
+      TextSetPos(G,zero);
+    }
 
     while((c=*(st++))) {
       if ((c >= first) && (c < last))
         {
           ch = font_info->ch[c - first];
           if (ch) {
-            glBitmap(ch->width, ch->height, 
+            if(!textured) {
+              
+              glBitmap(ch->width, ch->height, 
                      ch->xorig, ch->yorig,
-                     ch->advance, 0, ch->bitmap);
-#if 0
-            /* testing code for Character engine */
-            { 
+                       ch->advance, 0, ch->bitmap);
+            } else {
               CharFngrprnt fprnt;
               unsigned char *rgba;
+              UtilZeroMem(&fprnt,sizeof(fprnt));
               fprnt.u.i.text_id = I->Font.TextID;
               rgba = fprnt.u.i.color;
-              TextGetColorUChar(I->Font.G,rgba,rgba+1,rgba+2,rgba+3);
+              TextGetColorUChar(G,rgba,rgba+1,rgba+2,rgba+3);
               fprnt.u.i.ch = c;
               {
-                int id = CharacterFind(I->Font.G,&fprnt);
+                int id = CharacterFind(G,&fprnt);
                 if(!id) {
-                  id = CharacterNewFromBitmap(ch->width, 
+                  id = CharacterNewFromBitmap(G,ch->width, 
                                               ch->height, 
+                                              ch->advance,
                                               (unsigned char*)ch->bitmap,
-                                            &fprnt);
+                                              &fprnt);
+                }
+                if(id) {
+                  CharacterRenderOpenGL(G,id);
                 }
               }
             }
-            /* end testing code */
-#endif
-
           }
         }
     }
-    FontGLUTRestore(I); 
+    if(textured) {
+      ScenePopRasterMatrix(G);
+    }
+    if(!textured) {
+      FontGLUTRestore(I); 
+    }
   }
   return st;
 }
@@ -113,6 +131,7 @@ static char *FontGLUTRenderRay(CRay *ray, CFontGLUT *I,char *st)
   unsigned char *rgba;
   
   if(st&&(*st)) {
+    UtilZeroMem(&fprnt,sizeof(fprnt));
     first = font_info->first;
     last = first + font_info->num_chars;
     fprnt.u.i.text_id = I->Font.TextID;
@@ -130,6 +149,7 @@ static char *FontGLUTRenderRay(CRay *ray, CFontGLUT *I,char *st)
               if(!id) {
                 id = CharacterNewFromBitmap(I->Font.G,ch->width, 
                                           ch->height, 
+                                            ch->advance,
                                           (unsigned char*)ch->bitmap,
                                           &fprnt);
               }

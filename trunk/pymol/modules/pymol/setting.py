@@ -417,7 +417,8 @@ if __name__=='pymol.setting':
       cartoon_side_chain_helper = (383, '')            
       surface_optimize_subsets = (384, '')
       multiplex            = (385, '')
-      
+      texture_fonts             = (386, '')
+
    setting_sc = Shortcut(SettingIndex.__dict__.keys())
 
    index_list = []
