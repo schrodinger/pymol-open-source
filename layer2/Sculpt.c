@@ -485,7 +485,7 @@ void SculptIterateObject(CSculpt *I,ObjectMolecule *obj,int state,int n_cycle)
             v = disp;
             i = cnt;
             for(a=0;a<obj->NAtom;a++) {
-              if(atm2idx[a]) {
+              if(atm2idx[a]>=0) {
                 *(v++)=0.0;
                 *(i++)=0;
                 *(v++)=0.0;          
@@ -692,7 +692,7 @@ void SculptIterateObject(CSculpt *I,ObjectMolecule *obj,int state,int n_cycle)
             /* average the displacements */
             
             for(a=0;a<obj->NAtom;a++) {
-              if(atm2idx[a]) 
+              if(atm2idx[a]>=0) 
                 if(cnt[a]) {
                   if(!obj->AtomInfo[a].protected) {
                     v1 = disp+3*a;
