@@ -805,8 +805,8 @@ static int Schoenflies_as_SgNumber(const char *Symbol)
 {
   int SgNumber;
 
-  range2(SgNumber, 1, 230)
-    if (CmpSchoenfliesSymbols(Symbol, Schoenflies_List[SgNumber]) == 0)
+  range2(SgNumber, 1, 231)
+    if (CmpSchoenfliesSymbols(Schoenflies_List[SgNumber], Symbol) == 0)
       return SgNumber;
 
   return 0;
