@@ -279,10 +279,10 @@ __inline__ static double inline_diffsq3f ( float *v1, float *v2 )
 __inline__ static int inline_within3f(float *v1,float *v2,float dist)
 {
   register float dx,dy,dz,dist2;
-  dx = fabs(v1[0]-v2[0]);
-  dy = fabs(v1[1]-v2[1]);
+  dx = (float)fabs(v1[0]-v2[0]);
+  dy = (float)fabs(v1[1]-v2[1]);
   if(dx>dist) return(0);
-  dz = fabs(v1[2]-v2[2]);
+  dz = (float)fabs(v1[2]-v2[2]);
   dx = dx * dx;
   if(dy>dist) return(0);
   dy = dy * dy;
@@ -297,13 +297,13 @@ __inline__ static int inline_within3fsq(float *v1,float *v2,float dist,float dis
   register float dx,dy,dz;
   dx = v1[0]-v2[0];
   dy = v1[1]-v2[1];
-  dx = fabs(dx);
-  dy = fabs(dy);
+  dx = (float)fabs(dx);
+  dy = (float)fabs(dy);
   if(dx>dist) return(0);
   dz = v1[2]-v2[2];
   dx = dx * dx;
   if(dy>dist) return(0);
-  dz = fabs(dz);
+  dz = (float)fabs(dz);
   dy = dy * dy;
   if(dz>dist) return(0);
   dx = dx + dy;

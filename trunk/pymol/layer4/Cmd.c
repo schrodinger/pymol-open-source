@@ -3009,7 +3009,7 @@ static PyObject *CmdGetObjectList(PyObject *self, 	PyObject *args)
       unsigned int size = VLAGetSize(list);
       result = PyList_New(size);
       if(result) {
-        int a;
+        unsigned int a;
         for(a=0;a<size;a++) {
           PyList_SetItem(result,a,PyString_FromString(list[a]->Obj.Name));
         }

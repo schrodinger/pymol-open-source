@@ -30,7 +30,7 @@ typedef struct VLARec {
 
 /* NOTE: in vla_check, rec is a zero based array index, not a record count */
 
-#define vla_check(ptr,type,rec) (ptr=(type*)((((rec)>=((VLARec*)(ptr))[-1].nAlloc) ? VLAExpand(ptr,(rec)) : (ptr))))
+#define vla_check(ptr,type,rec) (ptr=(type*)(((((unsigned int)(rec))>=((VLARec*)(ptr))[-1].nAlloc) ? VLAExpand(ptr,(rec)) : (ptr))))
 #define vla_malloc(ptr,type,initSize) (ptr=(type*)VLAMalloc(initSize,sizeof(type),5,0))
 #define vla_calloc(ptr,type,initSize) (ptr=(type*)VLAMalloc(initSize,sizeof(type),5,1))
 #define vla_free(ptr) {if(ptr) {VLAFree(ptr);ptr=NULL;}}

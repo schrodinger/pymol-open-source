@@ -5463,7 +5463,7 @@ ObjectMolecule *ObjectMoleculeLoadChemPyModel(PyMOLGlobals *G,ObjectMolecule *I,
   if(ok) {
 
       if(I->DiscreteFlag&&atInfo) {
-        int a;
+        unsigned int a;
         int fp1 = frame+1;
         AtomInfoType *ai = atInfo;
         for(a=0;a<nAtom;a++) {

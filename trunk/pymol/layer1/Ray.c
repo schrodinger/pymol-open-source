@@ -1369,7 +1369,7 @@ int RayTraceThread(CRayThreadInfo *T)
      float height_range, width_range;
 
      zero3f(eye);
-     half_height = -T->pos[2] * tan((T->fov/2.0F)*PI/180.0F);
+     half_height = -T->pos[2] * (float)tan((T->fov/2.0F)*PI/180.0F);
      front_ratio = -T->front/T->pos[2];
      height_range = front_ratio*2*half_height;
      width_range = height_range*(I->Range[0]/I->Range[1]);
