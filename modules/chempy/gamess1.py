@@ -162,11 +162,14 @@ class State:
       c = 0
       crd_list = []
       chg_list = []
+      nrg_list = []
       for a in list:
          if a[0:36] == ' COORDINATES OF ALL ATOMS ARE (ANGS)':
             crd_list.append(c+3)
          if a[0:13] == ' NET CHARGES:':
             chg_list.append(c+4)
+         if a[0:37] == '                       TOTAL ENERGY =':
+            nrg_list.append(c)
          c = c + 1
       atom = self.model.atom
       idx = {}
@@ -202,7 +205,13 @@ class State:
             cc = cc + 1
          if cc and feedback['gamess']:
             print " "+str(__name__)+': charges modified for %d atoms.' % (cc)
-      
+      if len(nrg_list):
+         a = nrg_list.pop()
+         l = list[a]
+         self.model.energy = float(string.strip(l[38:58]))
+         if feedback['gamess']:
+            print " "+str(__name__)+': energy updated %12.6f.' % self.model.energy
+         
    def read_punch_list(self,list):
       ll = len(list)
       c = 0
