@@ -687,7 +687,6 @@ void PInitEmbedded(int argc,char **argv)
   /* This routine is called if we are running with an embedded Python interpreter */
   
   PyObject *args,*pymol,*sys,*invocation;
-  OrthoLineType *line;
 
 #ifdef WIN32
   OrthoLineType path_buffer,command;
@@ -697,7 +696,18 @@ void PInitEmbedded(int argc,char **argv)
   int r1,r2;
 #endif
 
+
 #ifdef _PYMOL_SETUP_PY21
+{
+  OrthoLineType line;
+  char *pymol_path;
+
+  if(!getenv("PYMOL_PATH")) {
+    if(getenv("PWD")) {
+      setenv("PYMOL_PATH",getenv("PWD"),1);
+    }
+  }
+
   if(!getenv("PYTHONPATH")) {
     if(getenv("PYMOL_PATH")) {
       strcpy(line,getenv("PYMOL_PATH"));
@@ -705,6 +715,7 @@ void PInitEmbedded(int argc,char **argv)
       setenv("PYTHONPATH",line,1);
     }
   }
+}
 #endif
 
 #ifndef PYMOL_ACTIVEX
@@ -752,9 +763,8 @@ r1=RegOpenKeyEx(HKEY_CLASSES_ROOT,"Software\\DeLano Scientific\\PyMOL\\PYMOL_PAT
 	  }
 	RegCloseKey(phkResult);
 	} 
-#endif
-
   PyRun_SimpleString("if not os.environ.has_key('PYMOL_PATH'): os.environ['PYMOL_PATH']=os.getcwd()\n");
+#endif
 
 #ifdef _PYMOL_SETUP_TCLTK83
   PyRun_SimpleString("if not os.environ.has_key('TCL_LIBRARY') and os.path.exists(os.environ['PYMOL_PATH']+'/ext/lib/tcl8.3'): os.environ['TCL_LIBRARY']=os.environ['PYMOL_PATH']+'/ext/lib/tcl8.3'\n");
@@ -767,6 +777,7 @@ r1=RegOpenKeyEx(HKEY_CLASSES_ROOT,"Software\\DeLano Scientific\\PyMOL\\PYMOL_PAT
   pymol = PyImport_AddModule("pymol"); /* get it */
 
   sys = PyObject_GetAttrString(pymol,"sys");
+  if(!sys) ErrFatal("PyMOL","PYMOL_PATH may not be set properly.");
   if(!sys) ErrFatal("PyMOL","can't find 'pymol.sys'");
 
   if(!pymol) ErrFatal("PyMOL","can't find module 'pymol'");
