@@ -24,6 +24,12 @@ Z* -------------------------------------------------------------------
 #define MAX_BOND 12
 #define MAX_RING 50
 
+/* CUTOFF = 2*N/2*N+1 for the largest ring we spend time to detecting:
+   8 = 16-17 atom cycles 
+ */
+
+#define RING_SEARCH_CUTOFF 8
+
 /* atoms */
 
 #define cH_Any  0xFFFFFFFF

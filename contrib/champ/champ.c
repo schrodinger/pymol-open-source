@@ -620,7 +620,7 @@ void ChampCountRings(CChamp *I,int index)
       at->first_tmpl = lin_index;
       lin_index++;
       
-      while(sz<9) { /* while the potential loop is small...*/
+      while(sz<(RING_SEARCH_CUTOFF+1)) { /* while the potential loop is small...*/
 
         next = 0; /* start list of atoms for growth pass */
 
