@@ -184,15 +184,15 @@ if __name__=='pymol.cmd':
 #         print "lock: released by 0x%x (not glut), waiting queue"%thread.get_ident()
          lock_api.release()
          if _cmd.wait_queue(): # commands waiting to be executed?
-            w = 0.0025 # NOTE: affects API perf. for "do" and delayed-exec
-            while 1:
-               for a in range(1,10):
-                  e = threading.Event() 
-                  e.wait(w/10.0)   # stimulate lagging threads
-                  del e
-#                  time.sleep(w/10)
-               if not _cmd.wait_queue():
-                  break
+            e = threading.Event() # abdicate control for a 100 usec for quick tasks
+            e.wait(0.0001)
+            del e
+            # then give PyMOL increasingly longer intervals to get its work done...
+            w = 0.0005  # NOTE: affects API perf. for "do" and delayed-exec
+            while _cmd.wait_queue(): 
+               e = threading.Event() # abdicate control for a 100 usec for quick tasks
+               e.wait(w)
+               del e
                if w > 0.1: # wait up 0.2 sec max for PyMOL to flush queue
                   if _feedback(fb_module.cmd,fb_mask.debugging):
                      fb_debug.write("Debug: avoiding possible dead-lock?\n")
