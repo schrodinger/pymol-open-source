@@ -74,6 +74,7 @@ unix-mindep: semistatic
 	install -d $(MDP)/ext/lib
 	cp -r modules $(MDP)
 	cp -r test $(MDP)
+	cp -r data $(MDP)
 	cp -r examples $(MDP)
 	cp -r pymol.exe $(MDP)
 	cp -r ext/lib/python2.1 $(MDP)/ext/lib
@@ -93,6 +94,7 @@ unix-mindep22: semistatic
 	install -d $(MDP)/ext/lib
 	cp -r modules $(MDP)
 	cp -r test $(MDP)
+	cp -r data $(MDP)	
 	cp -r examples $(MDP)
 	cp -r pymol.exe $(MDP)
 	cp -r ext/lib/python2.2 $(MDP)/ext/lib
