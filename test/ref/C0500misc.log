@@ -139,7 +139,6 @@ PyMOL>remove (cpy and name c)
 PyMOL>edit (cpy and i;11 & n;ca)
  Selector: selection "pk1" defined with 1 atoms.
 PyMOL>remove_picked
- Selector: no atoms selected.
  Remove: eliminated 1 atoms in model 'cpy'.
 PyMOL>edit (cpy and i;5 & n;ca),(cpy and i;5 and n;cb)
  Selector: selection "pk1" defined with 1 atoms.
@@ -149,37 +148,28 @@ PyMOL>alter (cpy),name=''
 PyMOL>rename cpy
 PyMOL>rename cpy,1
 PyMOL>cycle_valence
- Selector: no atoms selected.
 Remove-ERR: no atoms removed.
- Selector: no atoms selected.
 Remove-ERR: no atoms removed.
 PyMOL>cycle_valence
  Remove: eliminated 1 atoms in model 'cpy'.
  Remove: eliminated 1 atoms in model 'cpy'.
 PyMOL>cycle_valence
- Selector: no atoms selected.
 Remove-ERR: no atoms removed.
- Selector: no atoms selected.
 Remove-ERR: no atoms removed.
 PyMOL>remove_picked
 PyMOL>edit (cpy and i;11 &n;n)
- Selector: no atoms selected.
 Editor-ERR: Invalid input.
 PyMOL>cmd.attach("H",1,1)
 PyMOL>create tmp = (cpy&i;5)
  Selector: found 13 atoms.
  Executive: object "tmp" created.
 PyMOL>fuse (cpy&i;11&n;cb),(tmp&n;cb)
- Selector: no atoms selected.
- Selector: no atoms selected.
 PyMOL>edit (cpy and i;10 & n;n)
- Selector: no atoms selected.
 Editor-ERR: Invalid input.
 PyMOL>h_fill
 PyMOL>h_fill
 PyMOL>h_add (cpy)
 PyMOL>edit (cpy and i;8 &n;o)
- Selector: no atoms selected.
 Editor-ERR: Invalid input.
 PyMOL>cmd.replace("S",3,1)
 PyMOL>delete tmp

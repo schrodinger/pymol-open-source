@@ -85,7 +85,10 @@ class PMGApp(AbstractApp):
                            (self.get_dataArea(),))
 
       text = self.output.component('text')
-      text.configure(font=('Courier',9))
+      if sys.platform!='win32':
+         text.configure(font=('Courier',12))         
+      else:
+         text.configure(font=('Courier',9))
       text.configure(width=72)
       self.output.after(1000,self.update_feedback)
       self.output.pack(side=BOTTOM,expand=YES,fill=BOTH)

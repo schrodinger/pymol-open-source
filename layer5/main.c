@@ -93,7 +93,8 @@ void MainOnExit(void);
 void MainOnExit(void)
 { /* 
      here we enter not knowing anything about the current state...
-     no graceful exit is possible.
+     so, no graceful exit is possible -- in fact under Window's we'll
+     crash unless we take the drastic way out 
   */
   if(!PyMOLTerminating) {
     PyMOLTerminating=true;
@@ -203,18 +204,7 @@ static void MainKey(unsigned char k, int x, int y)
 	 ((glMod&GLUT_ACTIVE_CTRL) ? cOrthoCTRL : 0) |
 	 ((glMod&GLUT_ACTIVE_ALT) ? cOrthoALT : 0);
 
-  switch (k) 
-	 {
-	 case 27: 
-      PLockAPIAsGlut();
-      PParse("_quit");
-      PFlush();
-      PUnlockAPIAsGlut();
-		break;
-	 default:
-		OrthoKey(k,x,y,Modifiers);
-		break;
-	 }
+  OrthoKey(k,x,y,Modifiers);
 
   PUnlockAPIAsGlut();
   
@@ -313,6 +303,7 @@ static void MainInit(void)
     glEnable(GL_NORMALIZE);*/
   }
 
+  FeedbackInit();
   UtilInit();
   SettingInit();  
   SphereInit();
@@ -342,7 +333,8 @@ void MainFree(void)
   ColorFree();
   SphereDone();
   PFree();
-  
+  FeedbackFree();
+
   MemoryDebugDump();
   printf(" PyMOL: normal program termination.\n");
   

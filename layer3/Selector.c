@@ -1567,7 +1567,6 @@ int SelectorCreate(char *sname,char *sele,ObjectMolecule *obj,int quiet)
   int *atom=NULL;
   OrthoLineType name;
   int ok=true;
-  char buffer[255];
   int c=0;
   if(sname[0]=='%')
 	 strcpy(name,&sname[1]);
@@ -1597,16 +1596,21 @@ int SelectorCreate(char *sname,char *sele,ObjectMolecule *obj,int quiet)
   SelectorClean();
   I->NAtom=0;
   if(!quiet) {
-    if(c) {
-      if(name[0]!='_') {
-        sprintf(buffer," Selector: selection \"%s\" defined with %d atoms.\n",name,c);
-        OrthoAddOutput(buffer);
+    if(name[0]!='_') {
+      if(c) {
+        PRINTFB(FB_Selector,FB_Results)
+          " Selector: selection \"%s\" defined with %d atoms.\n",name,c
+          ENDFB;
+      } else {
+        PRINTFB(FB_Selector,FB_Results)
+          " Selector: no atoms selected.\n"
+          ENDFB;
       }
-    } else {
-      sprintf(buffer," Selector: no atoms selected.\n");
-      OrthoAddOutput(buffer);
-    }
+    } 
   }
+  PRINTFD(FB_Selector)
+    " SelectorCreate: \"%s\" created with %d atoms.\n",name,c    
+    ENDFD
   return(c);
 }
 /*========================================================================*/

@@ -24,6 +24,7 @@ Z* -------------------------------------------------------------------
 #define cOrthoBottomSceneMargin 20
 
 #include"Block.h"
+#include"Feedback.h"
 
 #define cOrthoScene 1
 #define cOrthoTool 2
@@ -87,13 +88,6 @@ void OrthoReshapeWizard(int height);
 #define OrthoLineLength 1024
 typedef char OrthoLineType[OrthoLineLength];
 
-/* I hope there is a better way than the following to
- * wrap output while maintaining cross-platform compatiblity
- * with old C preprocessors that don't understand 
- * variable argument macro expansions */
-
-#define PRINTF { OrthoLineType _Ostr; sprintf( _Ostr,
-#define ENDF   ); OrthoAddOutput(_Ostr);}
 
 #endif
 

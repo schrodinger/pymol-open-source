@@ -178,6 +178,43 @@ returns list of tuples of strings: [(None,value),(name,value)...]
                raise QuietException
    return result
 
+def list_to_str_list(list,width=77,margin=2): # format strings into a list
+   result = []
+   ll=len(list)
+   if ll>0:
+      mxln = 1
+      for a in list:
+         if len(a)>mxln:
+            mxln = len(a)
+      n_col = width/mxln
+      width = width - margin
+      while (n_col * mxln + n_col*2)>width:
+         n_col = n_col - 1
+      if n_col < 1:
+         n_col = 1
+      ll = len(list)
+      n_row = len(list)/n_col
+      while (n_row*n_col)<ll:
+         n_row = n_row + 1
+      rows = []
+      for a in range(n_row):
+         rows.append([])
+      row = 0
+      pad_list = []
+      for a in list:
+         pad_list.append(("%-"+str(mxln)+"s")%a)
+      for a in pad_list:
+         rows[row].append(a)
+         row = row + 1
+         if row >= n_row:
+            row = 0
+      for a in rows:
+         st = margin*' '
+         row = 0
+         st = st + string.join(a,'  ')
+         result.append(st)
+   return result
+
 def dump_arg(name,arg_lst,nreq):
    ac = 0
    pc = 0
@@ -516,3 +553,6 @@ if __name__=='__main__':
    tv = prepare_call(fn4,parse_arg("dummy req1=hello,req2=world,opt2=hi")) 
    print tv==([], {'opt2': 'hi', 'req2': 'world', 'req1': 'hello'}),tv
 
+#   tv = list_to_str_list(['hello','world','this-long-string','hi','dude'])
+#   print tv
+   

@@ -35,6 +35,7 @@ Z* -------------------------------------------------------------------
 #include"main.h"
 #include"AtomInfo.h"
 #include"CoordSet.h"
+#include"Util.h"
 
 PyObject *P_globals = NULL;
 
@@ -45,6 +46,8 @@ PyObject *P_parser = NULL;
 
 PyObject *P_chempy = NULL;
 PyObject *P_models = NULL;
+
+PyObject *P_complete = NULL;
 
 PyObject *P_exec = NULL;
 PyObject *P_parse = NULL;
@@ -68,6 +71,28 @@ int P_glut_thread_keep_out = 0; /* enables us to keep glut out if by chance it g
 void PCatchInit(void);
 void my_interrupt(int a);
 char *getprogramname(void);
+
+int PComplete(char *str,int buf_size)
+{
+  int ret = false;
+  PyObject *result;
+  char *st2;
+  PBlockAndUnlockAPI();
+  if(P_complete) {
+    fflush(stdout);
+    result = PyObject_CallFunction(P_complete,"s",str);
+    if(result) {
+      if(PyString_Check(result)) {
+        st2 = PyString_AsString(result);
+        UtilNCopy(str,st2,buf_size);
+        ret=true;
+      }
+      Py_DECREF(result);
+    }
+  }
+  PLockAPIAndUnblock();
+  return(ret);
+}
 
 int PTruthCallStr(PyObject *object,char *method,char *argument)
 {
@@ -535,6 +560,9 @@ void PInit(void)
 
   P_parse = PyObject_GetAttrString(P_parser,"parse");
   if(!P_parse) ErrFatal("PyMOL","can't find 'parser.parse()'");
+
+  P_complete = PyObject_GetAttrString(P_parser,"complete");
+  if(!P_complete) ErrFatal("PyMOL","can't find 'parser.complete()'");
 
   PRunString("import chempy"); 
   P_chempy = PyDict_GetItemString(P_globals,"chempy");
