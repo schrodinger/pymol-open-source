@@ -34,7 +34,7 @@ Z* -------------------------------------------------------------------
 
 #define cRepCnt       11
 
-#define cRepInvVisib 10
+#define cRepInvVisib 15
 #define cRepInvColor 20
 #define cRepInvCoord 30
 #define cRepInvAll 100

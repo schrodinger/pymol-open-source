@@ -1,4 +1,4 @@
-# pymol
+# pymol -x
 
 from chempy import io
 from chempy import protein

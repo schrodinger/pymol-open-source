@@ -1,4 +1,4 @@
-# pymol
+# pymol -x
 
 load dat/water.pdb,wat
 load dat/helix_amber.pdb,prot
@@ -19,4 +19,4 @@ hide all
 show lines,(prot | t1)
 save cmp/cmd_gap01.01.pdb,(t3)
 
-#quit
+quit

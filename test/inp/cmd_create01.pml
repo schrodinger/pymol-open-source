@@ -1,4 +1,4 @@
-# pymol
+# pymol -x
 
 load dat/3al1.pdb,t0
 create t1 = (t0 & (alt '',A))

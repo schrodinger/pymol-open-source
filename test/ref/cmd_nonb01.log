@@ -1,0 +1,54 @@
+PyMOL Molecular Graphics System, Version 0.31.
+Copyright (C) 1998-2000 by DeLano Scientific.
+All Rights Reserved.
+ 
+Principle Author:  Warren L. DeLano, Ph.D.
+ 
+Major Authors and Contributors:
+ 
+      Ralf W. Grosse-Kunstleve, Ph.D.
+ 
+This software is open source and freely available.
+Updates can be found at "http://www.pymol.org".
+ 
+Enter "help commands" for a list of commands.
+Enter "help <command-name>" for information on a specific command.
+ 
+Hit TAB to toggle text or type "cls" to clear.
+ 
+ GL based graphics front end:
+  GL_VENDOR: SGI
+  GL_RENDERER: IMPACT/2/2/4
+  GL_VERSION: 1.1 Irix 6.5
+PyMOL>@inp/cmd_nonb01.pml
+ PDBStrToCoordSet: Attempting to read symmetry information
+ Crystal: Unit Cell           20.544   20.859   26.055
+ Crystal: Alpha Beta Gamma   101.160   97.030  118.060
+ Crystal: RealToFrac Matrix
+ Crystal:    0.04868    0.02595    0.01403
+ Crystal:    0.00000    0.05433    0.01626
+ Crystal:    0.00000    0.00000    0.04037
+ Crystal: FracToReal Matrix
+ Crystal:   20.54400   -9.81199   -3.18885
+ Crystal:    0.00000   18.40714   -7.41448
+ Crystal:    0.00000    0.00000   24.77337
+ Crystal: Unit Cell Volume 9368.203
+ Symmetry:      1.00000      0.00000      0.00000      0.00000
+ Symmetry:      0.00000      1.00000      0.00000      0.00000
+ Symmetry:      0.00000      0.00000      1.00000      0.00000
+ Symmetry:      0.00000      0.00000      0.00000      1.00000
+ Symmetry:     -1.00000      0.00000      0.00000      0.00000
+ Symmetry:      0.00000     -1.00000      0.00000      0.00000
+ Symmetry:      0.00000      0.00000     -1.00000      0.00000
+ Symmetry:      0.00000      0.00000      0.00000      1.00000
+ Executive: object "prot" created.
+ Executive: object "dist01" created.
+ Selector: found 64 atoms.
+ Executive: object "t2" created.
+ Selector: found 615 atoms.
+ Executive: object "t3" created.
+ ObjectMolecule: updating state 1 of "prot".
+ ObjectDist: updating state 1 of "dist01".
+ ObjectMolecule: updating state 1 of "t2".
+ ObjectMolecule: updating state 1 of "t3".
+ Memory Check: 0 blocks expected, 0 found, 112 maximum allocated.

@@ -49,7 +49,7 @@ def exec_deferred():
       elif re.search(r"\.py$",a):
          pm.do("run %s" % a)
       elif re.search(r"\.pdb$|\.mol$|\.mmod$|\.xplor$|\.pkl$",a):
-         pm.do("load %s" % a)
+         pm.load(a)
       elif re.search(r"\.pml$",a):
          pm.do("@%s" % a)
 

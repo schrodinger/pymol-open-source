@@ -150,26 +150,20 @@ Rep *RepNonbondedNew(CoordSet *cs)
   int a,a1,c1;
   float nonbonded_size;
   float *v,*v0,*v1;
-  int visFlag;
   int *active;
   AtomInfoType *ai;
+  int nAtom = 0;
   OOAlloc(RepNonbonded);
   obj = cs->Obj;
 
   active = Alloc(int,cs->NIndex);
-
+  
   for(a=0;a<cs->NIndex;a++) {
     ai = obj->AtomInfo+cs->IdxToAtm[a];
-    active[a] =(!ai->bonded) && (ai->visRep[ cRepNonbonded ]);
+    active[a] =(!ai->bonded) && (ai->visRep[ cRepNonbonded]);
+    if(active[a]) nAtom++;
   }
-
-  visFlag=false;
-  for(a=0;a<cs->NIndex;a++)
-    if(active[a]) {
-      visFlag=true;
-      break;
-    }
-  if(!visFlag) {
+  if(!nAtom) {
     OOFreeP(I);
     FreeP(active);
     return(NULL); /* skip if no dots are visible */
@@ -188,7 +182,7 @@ Rep *RepNonbondedNew(CoordSet *cs)
   I->R.P=NULL;
   I->R.fRecolor=NULL;
 
-  I->V=(float*)mmalloc(sizeof(float)*cs->NIndex*21);
+  I->V=(float*)mmalloc(sizeof(float)*nAtom*21);
   ErrChkPtr(I->V);
   v=I->V;
   for(a=0;a<cs->NIndex;a++) 
@@ -225,7 +219,7 @@ Rep *RepNonbondedNew(CoordSet *cs)
   /* now create pickable verson */
   
   if(SettingGet(cSetting_pickable)) {
-    I->VP=(float*)mmalloc(sizeof(float)*cs->NIndex*18);
+    I->VP=(float*)mmalloc(sizeof(float)*nAtom*18);
     ErrChkPtr(I->VP);
     
     I->R.P=Alloc(Pickable,cs->NIndex+1);

@@ -743,6 +743,7 @@ void SelectorCreateObjectMolecule(int sele,char *name,int target,int source)
 
     ObjectMoleculeMerge(targ,atInfo,cs,false); /* will free atInfo */
     ObjectMoleculeExtendIndices(targ);
+    ObjectMoleculeUpdateNonbonded(targ);
     
     if(!isNew) { /* recreate selection table */
       SelectorUpdateTable(); 

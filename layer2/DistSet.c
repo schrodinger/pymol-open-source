@@ -109,7 +109,7 @@ DistSet *DistSetNew(void)
   I->fInvalidateRep=DistSetInvalidateRep;
   I->NIndex=0;
   I->Coord = NULL;
-  I->Rep=VLAlloc(Rep*,10);
+  I->Rep=VLAlloc(Rep*,cRepCnt);
   I->NRep=cRepCnt;
 
   for(a=0;a<I->NRep;a++)

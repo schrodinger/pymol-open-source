@@ -49,7 +49,7 @@ for a in state.summary:
    print " test: summary ",a
 
 os.system("touch .no_fail tinker_*")
-os.system("/bin/rmodel.no_fail tinker_*")
+os.system("/bin/rm .no_fail tinker_*")
 
 
 
