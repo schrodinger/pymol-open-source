@@ -763,7 +763,7 @@ void ExtrudeCGOSurfaceVariableTube(CExtrude *I,CGO *cgo,int cap)
   float *v;
   float *n;
   float *c;
-  float *sv,*sn,*tv,*tn,*tv1,*tn1,*TV,*TN,*AN,*an;
+  float *sv,*sn,*tv,*tn,*tv1,*tn1,*TV=NULL,*TN=NULL,*AN=NULL,*an;
   float v0[3];
   float *sf;                            /* PUTTY: scale factor from ExtrudeMakeSausLUT() */
   int start,stop;
@@ -1023,6 +1023,7 @@ void ExtrudeCGOSurfaceVariableTube(CExtrude *I,CGO *cgo,int cap)
     }
     FreeP(TV);
     FreeP(TN);
+    FreeP(AN);
   }
   
   PRINTFD(I->G,FB_Extrude)

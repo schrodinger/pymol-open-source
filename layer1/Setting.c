@@ -2374,10 +2374,10 @@ void SettingInitGlobal(PyMOLGlobals *G,int alloc,int reset_gui)
   SettingSet_b(I,cSetting_pdb_insure_orthogonal, 1);
   SettingSet_f(I,cSetting_ray_direct_shade,0.0F);
   SettingSet_color(I,cSetting_stick_color,"-1");
-  SettingSet_f(I,cSetting_cartoon_putty_radius, 0.50F);
+  SettingSet_f(I,cSetting_cartoon_putty_radius, 0.40F);
   SettingSet_f(I,cSetting_cartoon_putty_quality, 11.0F);
-  SettingSet_f(I,cSetting_cartoon_putty_scale_min, 0.5F);
-  SettingSet_f(I,cSetting_cartoon_putty_scale_max, 3.0F);
+  SettingSet_f(I,cSetting_cartoon_putty_scale_min, 0.6F);
+  SettingSet_f(I,cSetting_cartoon_putty_scale_max, 4.0F);
   SettingSet_f(I,cSetting_cartoon_putty_scale_power, 1.5F);
   SettingSet_f(I,cSetting_cartoon_putty_range, 2.0F);
 
