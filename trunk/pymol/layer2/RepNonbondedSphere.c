@@ -28,7 +28,6 @@ typedef struct RepNonbondedSphere {
   float *V;
   float *VC;
   SphereRec *SP;
-  int *NT;
   int N,NC;
 } RepNonbondedSphere;
 
@@ -45,7 +44,6 @@ void RepNonbondedSphereFree(RepNonbondedSphere *I)
 {
   FreeP(I->VC);
   FreeP(I->V);
-  FreeP(I->NT);
   OOFreeP(I);
 }
 
@@ -92,12 +90,13 @@ Rep *RepNonbondedSphereNew(CoordSet *cs)
 {
   ObjectMolecule *obj;
   int a,c,d,a1,c1;
-  float *v,*v0,*vc,vdw;
+  float *v,*v0,*vc;
   float nonbonded_size;
   int *q, *s;
   SphereRec *sp = Sphere0; 
-  int ds,*nt;
-  int *active,visFlag;
+  int ds;
+  int *active=NULL;
+  int visFlag;
   AtomInfoType *ai;
   OOAlloc(RepNonbondedSphere);
   obj = cs->Obj;
@@ -115,7 +114,7 @@ Rep *RepNonbondedSphereNew(CoordSet *cs)
       visFlag=true;
       break;
     }
-  if(!visFlag) {
+  if((!visFlag)) {
     OOFreeP(I);
     FreeP(active);
     return(NULL); /* skip if no dots are visible */
@@ -144,8 +143,6 @@ Rep *RepNonbondedSphereNew(CoordSet *cs)
   I->VC=(float*)mmalloc(sizeof(float)*cs->NIndex*7);
   ErrChkPtr(I->VC);
   I->NC=0;
-
-  I->NT=NULL;
 
   v=I->VC; 
   for(a=0;a<cs->NIndex;a++)
@@ -181,8 +178,6 @@ Rep *RepNonbondedSphereNew(CoordSet *cs)
   I->N=0;
   I->SP=sp;
   v=I->V;
-  nt=I->NT;
-
   for(a=0;a<cs->NIndex;a++)
 	 {
 		if(active[a])
@@ -191,7 +186,6 @@ Rep *RepNonbondedSphereNew(CoordSet *cs)
 
 			 c1=*(cs->Color+a);
 			 v0 = cs->Coord+3*a;
-			 vdw = cs->Obj->AtomInfo[a1].vdw;
 			 vc = ColorGet(c1);
 			 *(v++)=*(vc++);
 			 *(v++)=*(vc++);
@@ -215,20 +209,13 @@ Rep *RepNonbondedSphereNew(CoordSet *cs)
               s++;
             }
 			 I->N++;
-			 if(nt) nt++;
 		  }
 	 }
   
   if(I->N) 
-	 {
-		I->V=(float*)mrealloc(I->V,sizeof(float)*(v-I->V));
-		if(I->NT) I->NT=Realloc(I->NT,int,nt-I->NT);
-	 }
+    I->V=(float*)mrealloc(I->V,sizeof(float)*(v-I->V));
   else
-	 {
-		I->V=(float*)mrealloc(I->V,1);
-		if(I->NT) I->NT=Realloc(I->NT,int,1);
-	 }
+    I->V=(float*)mrealloc(I->V,1);
   FreeP(active);
   return((void*)(struct Rep*)I);
 }
