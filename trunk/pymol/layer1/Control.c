@@ -140,7 +140,7 @@ int ControlClick(Block *block,int button,int x,int y,int mod)
 		if(mod&cOrthoSHIFT) {
 		  SceneSetFrame(1,-1);
 		} else {
-		  SceneSetFrame(0,0);
+		  SceneSetFrame(4,0);
 		}
 		break;
 	 case 3:
