@@ -15,6 +15,7 @@
 import string
 import os
 import copy
+import urllib
 
 #
 # Basic chempy types
@@ -157,6 +158,12 @@ class Molecule:
    
 class Storage:
 
+   def my_open(self,fname,mode='r'):
+      if (mode[0:1]=='r') and (string.find(fname,':')>1):
+         return urllib.urlopen(fname)
+      else:
+         return open(fname,mode)
+      
    def updateFromList(self,indexed,**params):
       pass
    
@@ -174,7 +181,7 @@ class Storage:
    def fromFile(self,fname,**params):
       if feedback['io']:
          print ' chempy: reading "%s".' % fname
-      fp = open(fname)
+      fp = self.my_open(fname)
       result = apply(self.fromList,(fp.readlines(),),params)
       fp.close()
       return result
@@ -199,7 +206,7 @@ class PseudoFile:
 
    def close(self):
       self.list = None
-      
+  
 feedback = { 'warnings': 1,
              'terse'   : 1,
              'io'      : 1,

@@ -77,7 +77,8 @@ if __name__=='pymol.cmd':
       import parsing
       import __main__
       import time
-
+      import urllib
+      
       from shortcut import Shortcut
 
       from chempy import io
@@ -711,6 +712,7 @@ DEVELOPMENT TO DO
 
       # loading
 
+      
       def _load(oname,finfo,state,ftype,finish,discrete,
                 quiet=1,multiplex=0,zoom=-1):
          # WARNING: internal routine, subject to change
@@ -734,6 +736,11 @@ DEVELOPMENT TO DO
                                    int(finish),int(discrete),
                                    int(quiet),int(zoom))            
             else:
+               if ftype in _load_str.keys() and (string.find(finfo,":")>1):
+                  tmp_file = urllib.urlopen(finfo)
+                  finfo = tmp_file.read(tmp_file) # WARNING: will block and hang -- thread instead?
+                  tmp_file.close()
+                  ftype = _load_str[ftype]
                r = _cmd.load(str(oname),finfo,int(state)-1,int(ftype),
                              int(finish),int(discrete),int(quiet),
                              int(multiplex),int(zoom))
@@ -2073,6 +2080,12 @@ SEE ALSO
          ]
 
       color_sc = None
+
+      _load_str = { loadable.pdb : loadable.pdbstr,
+                    loadable.mol : loadable.molstr,
+                    loadable.xplor : loadable.xplorstr,
+                    loadable.mol2 : loadable.molstr,
+                    loadable.mmod : loadable.mmodstr }
 
    except:
       print "Error: unable to initalize the pymol.cmd module"

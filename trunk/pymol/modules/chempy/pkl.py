@@ -20,7 +20,7 @@ import cPickle
 class PKL(Storage):
 
    def fromFile(self,fname,**params):
-      fp = open(fname,'rb')
+      fp = self.my_open(fname,'rb')
       result = cPickle.load(fp)
       fp.close()
       return result
