@@ -2190,8 +2190,20 @@ static int SceneClick(Block *block,int button,int x,int y,
           break;
           
         case cButModeOrigAt:
+#if 1
+          {
+            float v1[3];
+
+            if(ObjectMoleculeGetAtomVertex((ObjectMolecule*)obj,
+                                           SettingGetGlobal_i(G,cSetting_state)-1,
+                                           I->LastPicked.index,v1)) {
+              ExecutiveOrigin(G,NULL,true,NULL,v1,0);
+            }
+          }
+#else
           sprintf(buf2,"origin (%s)",buffer);        
           OrthoCommandIn(G,buf2);
+#endif
           if(obj->type==cObjectMolecule) {
             if(SettingGet(G,cSetting_logging)) {
               objMol = (ObjectMolecule*)obj;            
@@ -2212,19 +2224,27 @@ static int SceneClick(Block *block,int button,int x,int y,
             ENDFB(G);
           break;
         case cButModeCent:
+#if 1
+          {
+            float v1[3];
+
+            if(ObjectMoleculeGetAtomVertex((ObjectMolecule*)obj,
+                                           SettingGetGlobal_i(G,cSetting_state)-1,
+                                           I->LastPicked.index,v1)) {
+              ExecutiveCenter(G,NULL,0,true,-1,v1);
+            }
+          }
+          
+#else
           sprintf(buf2,"center (%s),state=-1,animate=-1",buffer);        
           OrthoCommandIn(G,buf2);
+#endif
           if(SettingGet(G,cSetting_logging)) {
             objMol = (ObjectMolecule*)obj;            
             ObjectMoleculeGetAtomSeleLog(objMol,I->LastPicked.index,buf1,false);
             sprintf(buffer,"cmd.center(\"%s\",state=-1)",buf1);
             PLog(buffer,cPLog_pym);
           }
-          /* 
-             PRINTFB(G,FB_Scene,FB_Actions) 
-             " Scene: Centered.\n"
-             ENDFB(G);
-          */
           break;
         }
         switch(mode) {

@@ -4703,7 +4703,7 @@ static PyObject *CmdCenter(PyObject *self, PyObject *args)
   if (ok) {
     APIEntry();
     SelectorGetTmp(TempPyMOLGlobals,str1,s1);
-    ok = ExecutiveCenter(TempPyMOLGlobals,s1,state,origin,animate);
+    ok = ExecutiveCenter(TempPyMOLGlobals,s1,state,origin,animate,NULL);
     SelectorFreeTmp(TempPyMOLGlobals,s1);
     APIExit();
   }

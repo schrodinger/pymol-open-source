@@ -7608,149 +7608,150 @@ void ObjectMoleculeSeleOp(ObjectMolecule *I,int sele,ObjectMoleculeOpRec *op)
          case OMOP_CSetMaxDistToPt:
          case OMOP_CSetSumVertices:
          case OMOP_CSetMoment: 
+           cs = NULL;
            if((op->cs1>=0)&&(op->cs1<I->NCSet)) {
-             /*
-               if((I->NCSet==1)&&(SettingGet_i(G,NULL,I->Obj.Setting,cSetting_static_singletons)))
-               cs=I->CSet[0]; treat static singletons as present in each state 
-               else
-             */
              cs=I->CSet[op->cs1];
-             if(cs) {
-               s=ai->selEntry;
-               if(SelectorIsMember(G,s,sele))
-                 {
-                   switch(op->code) {
-                   case OMOP_CSetSumVertices:
-                     if(I->DiscreteFlag) {
-                       if(cs==I->DiscreteCSet[a])
-                         a1=I->DiscreteAtmToIdx[a];
-                       else
-                         a1=-1;
-                     } else 
-                       a1=cs->AtmToIdx[a];
-                     if(a1>=0)
-                       {
-                         coord = cs->Coord+3*a1;
-                         if(op->i2) /* do we want object-transformed coordinates? */
-                           if(I->Obj.TTTFlag) {
-                             transformTTT44f3f(I->Obj.TTT,coord,v1);
-                             coord=v1;
-                           }
-                         add3f(op->v1,coord,op->v1);
-                         op->i1++;
-                       }
-                     break;
-                   case OMOP_CSetMinMax:
-                     if(I->DiscreteFlag) {
-                       if(cs==I->DiscreteCSet[a])
-                         a1=I->DiscreteAtmToIdx[a];
-                       else
-                         a1=-1;
-                     } else 
-                       a1=cs->AtmToIdx[a];
-                     if(a1>=0)
-                       {
-                         coord = cs->Coord+3*a1;
-                         if(op->i2) /* do we want object-transformed coordinates? */
-                           if(I->Obj.TTTFlag) {
-                             transformTTT44f3f(I->Obj.TTT,coord,v1);
-                             coord=v1;
-                           }
-                         if(op->i1) {
-                           for(c=0;c<3;c++) {
-                             if(*(op->v1+c)>*(coord+c)) *(op->v1+c)=*(coord+c);
-                             if(*(op->v2+c)<*(coord+c)) *(op->v2+c)=*(coord+c);
-                           }
-                         } else {
-                           for(c=0;c<3;c++) {
-                             *(op->v1+c)=*(coord+c);
-                             *(op->v2+c)=*(coord+c);
-                           }
-                         }
-                         op->i1++;
-                       }
-                     break;
-                   case OMOP_CSetCameraMinMax:
-                     if(I->DiscreteFlag) {
-                       if(cs==I->DiscreteCSet[a])
-                         a1=I->DiscreteAtmToIdx[a];
-                       else
-                         a1=-1;
-                     } else 
-                       a1=cs->AtmToIdx[a];
-                     if(a1>=0)
-                       {
-                         coord = cs->Coord+3*a1;
-                         if(op->i2) /* do we want object-transformed coordinates? */
-                           if(I->Obj.TTTFlag) {
-                             transformTTT44f3f(I->Obj.TTT,coord,v1);
-                             coord=v1;
-                           }
-                         MatrixTransform3f(op->mat1,coord,v1); /* convert to view-space */
-                         coord=v1;
-                         if(op->i1) {
-                           for(c=0;c<3;c++) {
-                             if(*(op->v1+c)>*(coord+c)) *(op->v1+c)=*(coord+c);
-                             if(*(op->v2+c)<*(coord+c)) *(op->v2+c)=*(coord+c);
-                           }
-                         } else {
-                           for(c=0;c<3;c++) {
-                             *(op->v1+c)=*(coord+c);
-                             *(op->v2+c)=*(coord+c);
-                           }
-                         }
-                         op->i1++;
-                       }
-                     break;
-                   case OMOP_CSetMaxDistToPt:
-                     if(I->DiscreteFlag) {
-                       if(cs==I->DiscreteCSet[a])
-                         a1=I->DiscreteAtmToIdx[a];
-                       else
-                         a1=-1;
-                     } else 
-                       a1=cs->AtmToIdx[a];
-                     if(a1>=0)
-                       {
-                         float dist;
-                         coord = cs->Coord+3*a1;
-                         if(op->i2) /* do we want object-transformed coordinates? */
-                           if(I->Obj.TTTFlag) {
-                             transformTTT44f3f(I->Obj.TTT,coord,v1);
-                             coord=v1;
-                           }
-                         dist = (float)diff3f(op->v1,coord);
-                         if(dist>op->f1)
-                           op->f1=dist;
-                         op->i1++;
-                       }
-                     break;
-                   case OMOP_CSetMoment: 
-                     if(I->DiscreteFlag) {
-                       if(cs==I->DiscreteCSet[a])
-                         a1=I->DiscreteAtmToIdx[a];
-                       else
-                         a1=-1;
-                     } else 
-                       a1=cs->AtmToIdx[a];
-                     if(a1>=0) {
-                       subtract3f(cs->Coord+(3*a1),op->v1,v1);
-                       v2=v1[0]*v1[0]+v1[1]*v1[1]+v1[2]*v1[2]; 
-                       op->d[0][0] += v2 - v1[0] * v1[0];
-                       op->d[0][1] +=    - v1[0] * v1[1];
-                       op->d[0][2] +=    - v1[0] * v1[2];
-                       op->d[1][0] +=    - v1[1] * v1[0];
-                       op->d[1][1] += v2 - v1[1] * v1[1];
-                       op->d[1][2] +=    - v1[1] * v1[2];
-                       op->d[2][0] +=    - v1[2] * v1[0];
-                       op->d[2][1] +=    - v1[2] * v1[1];
-                       op->d[2][2] += v2 - v1[2] * v1[2];
-                     }
-                     break;
-                     
-                   }
-                 }
+           } else if(op->include_static_singletons) {
+             if((I->NCSet==1)&&(SettingGet_b(G,NULL,I->Obj.Setting,cSetting_static_singletons))) {
+               cs=I->CSet[0]; /*treat static singletons as present in each state */
              }
+           }
+           
+           if(cs) {
+             s=ai->selEntry;
+             if(SelectorIsMember(G,s,sele))
+               {
+                 switch(op->code) {
+                 case OMOP_CSetSumVertices:
+                   if(I->DiscreteFlag) {
+                     if(cs==I->DiscreteCSet[a])
+                       a1=I->DiscreteAtmToIdx[a];
+                     else
+                       a1=-1;
+                   } else 
+                     a1=cs->AtmToIdx[a];
+                   if(a1>=0)
+                     {
+                       coord = cs->Coord+3*a1;
+                       if(op->i2) /* do we want object-transformed coordinates? */
+                         if(I->Obj.TTTFlag) {
+                           transformTTT44f3f(I->Obj.TTT,coord,v1);
+                           coord=v1;
+                         }
+                       add3f(op->v1,coord,op->v1);
+                       op->i1++;
+                     }
+                   break;
+                 case OMOP_CSetMinMax:
+                   if(I->DiscreteFlag) {
+                     if(cs==I->DiscreteCSet[a])
+                       a1=I->DiscreteAtmToIdx[a];
+                     else
+                       a1=-1;
+                   } else 
+                     a1=cs->AtmToIdx[a];
+                   if(a1>=0)
+                     {
+                       coord = cs->Coord+3*a1;
+                       if(op->i2) /* do we want object-transformed coordinates? */
+                         if(I->Obj.TTTFlag) {
+                           transformTTT44f3f(I->Obj.TTT,coord,v1);
+                           coord=v1;
+                         }
+                       if(op->i1) {
+                         for(c=0;c<3;c++) {
+                           if(*(op->v1+c)>*(coord+c)) *(op->v1+c)=*(coord+c);
+                           if(*(op->v2+c)<*(coord+c)) *(op->v2+c)=*(coord+c);
+                         }
+                       } else {
+                         for(c=0;c<3;c++) {
+                           *(op->v1+c)=*(coord+c);
+                           *(op->v2+c)=*(coord+c);
+                         }
+                       }
+                       op->i1++;
+                     }
+                   break;
+                 case OMOP_CSetCameraMinMax:
+                   if(I->DiscreteFlag) {
+                     if(cs==I->DiscreteCSet[a])
+                       a1=I->DiscreteAtmToIdx[a];
+                     else
+                       a1=-1;
+                   } else 
+                     a1=cs->AtmToIdx[a];
+                   if(a1>=0)
+                     {
+                       coord = cs->Coord+3*a1;
+                       if(op->i2) /* do we want object-transformed coordinates? */
+                         if(I->Obj.TTTFlag) {
+                           transformTTT44f3f(I->Obj.TTT,coord,v1);
+                           coord=v1;
+                         }
+                       MatrixTransform3f(op->mat1,coord,v1); /* convert to view-space */
+                       coord=v1;
+                       if(op->i1) {
+                         for(c=0;c<3;c++) {
+                           if(*(op->v1+c)>*(coord+c)) *(op->v1+c)=*(coord+c);
+                           if(*(op->v2+c)<*(coord+c)) *(op->v2+c)=*(coord+c);
+                         }
+                       } else {
+                         for(c=0;c<3;c++) {
+                           *(op->v1+c)=*(coord+c);
+                           *(op->v2+c)=*(coord+c);
+                         }
+                       }
+                       op->i1++;
+                     }
+                   break;
+                 case OMOP_CSetMaxDistToPt:
+                   if(I->DiscreteFlag) {
+                     if(cs==I->DiscreteCSet[a])
+                       a1=I->DiscreteAtmToIdx[a];
+                     else
+                       a1=-1;
+                   } else 
+                     a1=cs->AtmToIdx[a];
+                   if(a1>=0)
+                     {
+                       float dist;
+                       coord = cs->Coord+3*a1;
+                       if(op->i2) /* do we want object-transformed coordinates? */
+                         if(I->Obj.TTTFlag) {
+                           transformTTT44f3f(I->Obj.TTT,coord,v1);
+                           coord=v1;
+                         }
+                       dist = (float)diff3f(op->v1,coord);
+                       if(dist>op->f1)
+                         op->f1=dist;
+                       op->i1++;
+                     }
+                   break;
+                 case OMOP_CSetMoment: 
+                   if(I->DiscreteFlag) {
+                     if(cs==I->DiscreteCSet[a])
+                       a1=I->DiscreteAtmToIdx[a];
+                     else
+                       a1=-1;
+                   } else 
+                     a1=cs->AtmToIdx[a];
+                   if(a1>=0) {
+                     subtract3f(cs->Coord+(3*a1),op->v1,v1);
+                     v2=v1[0]*v1[0]+v1[1]*v1[1]+v1[2]*v1[2]; 
+                     op->d[0][0] += v2 - v1[0] * v1[0];
+                     op->d[0][1] +=    - v1[0] * v1[1];
+                     op->d[0][2] +=    - v1[0] * v1[2];
+                     op->d[1][0] +=    - v1[1] * v1[0];
+                     op->d[1][1] += v2 - v1[1] * v1[1];
+                     op->d[1][2] +=    - v1[1] * v1[2];
+                     op->d[2][0] +=    - v1[2] * v1[0];
+                     op->d[2][1] +=    - v1[2] * v1[1];
+                     op->d[2][2] += v2 - v1[2] * v1[2];
+                   }
+                   break;
+                     
+                 }
+               }
            }
            break;
 		   default: /* coord-set based properties, iterating as all coordsets within atoms */
@@ -7980,7 +7981,7 @@ void ObjectMoleculeSeleOp(ObjectMolecule *I,int sele,ObjectMoleculeOpRec *op)
                  }
                  if(I->DiscreteFlag) /* don't iterate every coordinate set for discrete objects! */
                    break;
-               } 
+               }
            } /* end coordset section */
            break;
          }
@@ -8347,7 +8348,7 @@ float ObjectMoleculeGetAvgHBondVector(ObjectMolecule *I,int atom,int state,float
 
   a1 = atom;
   if(state<0) state=0;
-  if(I->NCSet==1) state=0;
+  if(I->NCSet==1) state=0; 
   state = state % I->NCSet;
   cs = I->CSet[state];
   if(cs) {
@@ -8384,7 +8385,7 @@ int ObjectMoleculeGetAtomVertex(ObjectMolecule *I,int state,int index,float *v)
   int result = 0;
   if(state<0) state=SettingGet_i(I->Obj.G,NULL,I->Obj.Setting,cSetting_state)-1;
   if(state<0) state=SceneGetState(I->Obj.G); 
-  if(I->NCSet==1) state=0;
+  if(I->NCSet==1) state=0; /* static singletons always active here it seems */
   state = state % I->NCSet;
   if((!I->CSet[state])&&(SettingGet_b(I->Obj.G,I->Obj.Setting,NULL,cSetting_all_states)))
     state=0;
