@@ -6,7 +6,7 @@ Copyright: Python
 Group: Development/Tools
 URL: http://www.pymol.org
 Source: /usr/src/redhat/SOURCES/pymol-0_78-src.tgz
-BuildRoot: /usr/lib/python1.5/site-packages/pymol
+BuildRoot: /var/tmp/pymol-root
 
 %description
 PyMOL, a molecular graphics program with a Python API.
@@ -23,30 +23,36 @@ make compileall
 %install
 rm -rf ${RPM_BUILD_ROOT}
 mkdir -p ${RPM_BUILD_ROOT}
-cp -dprv modules ${RPM_BUILD_ROOT}/modules
-cp -dprv test ${RPM_BUILD_ROOT}/test
-install -m 755 pymol.com ${RPM_BUILD_ROOT}/
-mkdir -p /usr/doc/%{name}-%{version}-%{release}/
-install -m 644 LICENSE /usr/doc/%{name}-%{version}-%{release}/
-install -m 644 DEVELOPERS /usr/doc/%{name}-%{version}-%{release}/
-install -m 644 CHANGES /usr/doc/%{name}-%{version}-%{release}/
-install -m 644 sample.pymolrc /usr/doc/%{name}-%{version}-%{release}/
-cp -dprv examples /usr/doc/%{name}-%{version}-%{release}/
+mkdir -p ${RPM_BUILD_ROOT}/usr
+mkdir -p ${RPM_BUILD_ROOT}/usr/bin
+mkdir -p ${RPM_BUILD_ROOT}/usr/lib
+mkdir -p ${RPM_BUILD_ROOT}/usr/lib/python1.5
+mkdir -p ${RPM_BUILD_ROOT}/usr/lib/python1.5/site-packages/pymol
+cp -dprv modules ${RPM_BUILD_ROOT}/usr/lib/python1.5/site-packages/pymol/
+cp -dprv test ${RPM_BUILD_ROOT}/usr/lib/python1.5/site-packages/pymol/
+install -m 755 pymol.com ${RPM_BUILD_ROOT}/usr/bin/pymol
 
-rm -rf /usr/local/bin/pymol
-ln -s ${RPM_BUILD_ROOT}/pymol.com /usr/local/bin/pymol
+mkdir -p ${RPM_BUILD_ROOT}/usr/doc
+mkdir -p ${RPM_BUILD_ROOT}/usr/doc/%{name}-%{version}-%{release}/
+install -m 644 LICENSE ${RPM_BUILD_ROOT}/usr/doc/%{name}-%{version}-%{release}/
+install -m 644 DEVELOPERS ${RPM_BUILD_ROOT}/usr/doc/%{name}-%{version}-%{release}/
+install -m 644 CHANGES ${RPM_BUILD_ROOT}/usr/doc/%{name}-%{version}-%{release}/
+install -m 644 sample.pymolrc ${RPM_BUILD_ROOT}/usr/doc/%{name}-%{version}-%{release}/
+cp -dprv examples ${RPM_BUILD_ROOT}/usr/doc/%{name}-%{version}-%{release}/
 
 %clean
 rm -rf ${RPM_BUILD_ROOT}
 
 %files
-/modules/
-%doc LICENSE
-%doc DEVELOPERS
-%doc CHANGES
-%doc sample.pymolrc
-%doc examples/
-/pymol.com
+/usr/lib/python1.5/site-packages/pymol/modules/
+/usr/lib/python1.5/site-packages/pymol/test/
+/usr/doc/%{name}-%{version}-%{release}/LICENSE
+/usr/doc/%{name}-%{version}-%{release}/DEVELOPERS
+/usr/doc/%{name}-%{version}-%{release}/CHANGES
+/usr/doc/%{name}-%{version}-%{release}/sample.pymolrc
+/usr/doc/%{name}-%{version}-%{release}/examples/
+/usr/bin/pymol
+
 
 %changelog
 * Tue Feb 05 2002 Warren DeLano <warren@delanoscientific.com>
