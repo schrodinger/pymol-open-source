@@ -2118,6 +2118,22 @@ void SettingInitGlobal(int alloc)
 
   SettingSet_f(I,cSetting_h_bond_cone, 180.0F);
 
+  SettingSet_f(I,cSetting_ss_helix_psi_target, -48.0F);
+  SettingSet_f(I,cSetting_ss_helix_psi_include, 55.0F); /* 30 */
+  SettingSet_f(I,cSetting_ss_helix_psi_exclude, 85.0F);
+  
+  SettingSet_f(I,cSetting_ss_helix_phi_target, -57.0F);
+  SettingSet_f(I,cSetting_ss_helix_phi_include, 55.0F);
+  SettingSet_f(I,cSetting_ss_helix_phi_exclude, 85.0F);
+  
+  SettingSet_f(I,cSetting_ss_strand_psi_target, 124.0F); 
+  SettingSet_f(I,cSetting_ss_strand_psi_include, 40.0F); 
+  SettingSet_f(I,cSetting_ss_strand_psi_exclude, 90.0F); /* 80 */
+  
+  SettingSet_f(I,cSetting_ss_strand_phi_target, -129.0F); 
+  SettingSet_f(I,cSetting_ss_strand_phi_include, 40.0F); 
+  SettingSet_f(I,cSetting_ss_strand_phi_exclude, 100.0F);
+     
 }
 
 

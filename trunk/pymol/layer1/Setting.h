@@ -424,9 +424,25 @@ CSetting *SettingNewFromPyList(PyObject *list);
 #define cSetting_h_bond_power_b              285
 #define cSetting_h_bond_cone                 286
 
-/* cSetting_INIT must always be last setting_index +1 */
+#define cSetting_ss_helix_psi_target         287 
+#define cSetting_ss_helix_psi_include        288
+#define cSetting_ss_helix_psi_exclude        289
 
-#define cSetting_INIT                        287
+#define cSetting_ss_helix_phi_target         290
+#define cSetting_ss_helix_phi_include        291
+#define cSetting_ss_helix_phi_exclude        292
+
+#define cSetting_ss_strand_psi_target          293
+#define cSetting_ss_strand_psi_include         294
+#define cSetting_ss_strand_psi_exclude         295
+
+#define cSetting_ss_strand_phi_target          296
+#define cSetting_ss_strand_phi_include         297
+#define cSetting_ss_strand_phi_exclude         298
+
+/* cSetting_ss_INIT must always be last setting_index +1 */
+
+#define cSetting_INIT                        299
 
 #endif
 

@@ -320,6 +320,21 @@ if __name__=='pymol.setting':
       h_bond_power_a        = 284
       h_bond_power_b        = 285
       h_bond_cone           = 286
+      ss_helix_psi_target   = 287 
+      ss_helix_psi_include  = 288
+      ss_helix_psi_exclude  = 289
+
+      ss_helix_phi_target   = 290
+      ss_helix_phi_include  = 291
+      ss_helix_phi_exclude  = 292
+
+      ss_strand_psi_target  = 293
+      ss_strand_psi_include = 294
+      ss_strand_psi_exclude = 295
+
+      ss_strand_phi_target  = 296
+      ss_strand_phi_include = 297
+      ss_strand_phi_exclude = 298
       
    setting_sc = Shortcut(SettingIndex.__dict__.keys())
 
