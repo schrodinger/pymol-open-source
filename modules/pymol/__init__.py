@@ -22,6 +22,7 @@ import time
 import invocation
 import traceback
 import _cmd
+import math
 
 # PyMOL __init__.py
 
