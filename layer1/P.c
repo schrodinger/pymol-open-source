@@ -621,7 +621,7 @@ void PInitEmbedded(int argc,char **argv)
 {
   /* This routine is called if we are running with an embedded Python interpreter */
   
-  PyObject *args,*pymol,*invocation;
+  PyObject *args,*pymol,*sys,*invocation;
 
 
 #ifdef WIN32
@@ -682,6 +682,9 @@ r1=RegOpenKeyEx(HKEY_CLASSES_ROOT,"Software\\DeLano Scientific\\PyMOL\\PYMOL_PAT
   PyRun_SimpleString("import pymol"); /* create the global PyMOL namespace */
 
   pymol = PyImport_AddModule("pymol"); /* get it */
+
+  sys = PyObject_GetAttrString(pymol,"sys");
+  if(!sys) ErrFatal("PyMOL","can't find 'pymol.sys'");
 
   if(!pymol) ErrFatal("PyMOL","can't find module 'pymol'");
 
