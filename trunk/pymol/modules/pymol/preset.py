@@ -89,7 +89,17 @@ def ligands(selection="(all)"):
       cmd.delete(lig)
    except:
       traceback.print_exc()
-      
+
+def ball_and_stick(selection="(all)"):
+   s = tmp_sele
+   cmd.select(s,selection)
+   cmd.hide("everything",s)
+   cmd.set("stick_color","white",s)
+   cmd.set("stick_radius","0.14",s)
+   cmd.set("sphere_scale","0.25",s)
+   cmd.show("sticks",s)
+   cmd.show("spheres",s)
+   
 def ligand_sites(selection="(all)"):
    try:
       s = tmp_sele
@@ -155,7 +165,19 @@ def ligand_sites_trans(selection="(all)"):
    cmd.hide("lines",s+" and rep lines")
    cmd.set("transparency","0.33",s)
    cmd.set("surface_type",0,s)
+   cmd.set("surface_quality",0,s)
 
+def ligand_sites_trans_hq(selection="(all)"):
+   ligand_sites("all")
+   s = tmp_sele
+   cmd.select(s,selection)
+   cmd.show("sticks",s+" and rep lines")
+   cmd.hide("lines",s+" and rep lines")
+   cmd.set("transparency","0.33",s)
+   cmd.set("surface_type",0,s)
+   cmd.set("surface_quality",1,s)
+
+   
 def ligand_sites_mesh(selection="(all)"):
    ligand_sites("all")
    s = tmp_sele
@@ -164,8 +186,8 @@ def ligand_sites_mesh(selection="(all)"):
    cmd.hide("lines",s+" and rep lines")
    cmd.set("surface_type","2",s)
    cmd.set("surface_quality","0",s)
-   cmd.set("mesh_normals",0)
-
+   cmd.set("mesh_normals",0,s)
+   
 def ligand_sites_dots(selection="(all)"):
    ligand_sites("all")
    s = tmp_sele
@@ -174,7 +196,7 @@ def ligand_sites_dots(selection="(all)"):
    cmd.hide("lines",s+" and rep lines")
    cmd.set("surface_type","1",s)
    cmd.set("surface_quality","1",s)
-   cmd.set("dot_normals",0)
+   cmd.set("dot_normals",0,s)
 
 def technical(selection="(all)"):
    s = tmp_sele
@@ -249,11 +271,14 @@ def default(selection="(all)"):
    cmd.show("lines",s)
    cmd.show("nonbonded",s)
    cmd.unset("transparency",s)
-   cmd.set("two_sided_lighting",0)
+   cmd.set("two_sided_lighting",0) # global
    cmd.unset("dot_normals",s)
    cmd.unset("mesh_normals",s)
    cmd.unset("surface_quality",s)
    cmd.unset("surface_type",s)
+   cmd.unset("sphere_scale",s)
+   cmd.unset("stick_radius",s)
+   cmd.unset("stick_color",s)
    if polar_contacts in cmd.get_names():
       cmd.disable(polar_contacts)
    color=cmd.get_object_color_index(selection)

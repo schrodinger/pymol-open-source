@@ -27,8 +27,9 @@ Z* -------------------------------------------------------------------
 #define cCartoon_tube 4
 #define cCartoon_arrow 5
 #define cCartoon_dumbbell 6
-#define cCartoon_skip_helix -2
+#define cCartoon_putty 7
 
+#define cCartoon_skip_helix -2
 #define cRepAll       -1
 
 /* WARNING: don't change these -- you'll break sessions!

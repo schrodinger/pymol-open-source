@@ -18,15 +18,19 @@ Z* -------------------------------------------------------------------
 
 #include"Ray.h"
 #include"CGO.h"
+#include"ObjectMolecule.h"
+#include"CoordSet.h"
 
 typedef struct {
   PyMOLGlobals *G;
-  int N;
+  int N; /* number of points in the extrusion segment */
 
   float *p; /* points */
   float *n; /* normals (3x3f) at each point*/
   float *c; /* colors */
-  int   *i; /* indices */
+  int   *i; /* atom indices */
+  int 	*z; /* SAUSAGE: index of nearest atom to extrusion point 'p' */
+  float *sf; /* scale factors for variable-width extrusions (single point)*/
 
   float *sv,*tv;
   float *sn,*tn;
@@ -40,6 +44,10 @@ CExtrude *ExtrudeCopyPointsNormalsColors(CExtrude *orig);
 
 void ExtrudeAllocPointsNormalsColors(CExtrude *I,int n);
 void ExtrudeTruncate(CExtrude *I,int n);
+/* SAUSAGE: look-up table -- nearest neighbors to extrusion points */
+void ExtrudeMakePuttyLUT(CExtrude *I,ObjectMolecule *Sauce_obj);
+
+
 void ExtrudeFree(CExtrude *I);
 
 void ExtrudeCircle(CExtrude *I, int n, float size);
@@ -47,10 +55,17 @@ void ExtrudeRectangle(CExtrude *I,float width,float length,int mode);
 void ExtrudeOval(CExtrude *I,int n,float width,float length);
 
 
+void ExtrudeComputeScaleFactors(CExtrude *I,ObjectMolecule *obj,int source_field,
+                                float mean, float stdev, float power,
+                                float min_scale, float max_scale,
+                                int smooth_window);
+
 void ExtrudeBuildNormals1f(CExtrude *I);
 void ExtrudeBuildNormals2f(CExtrude *I);
 void ExtrudeComputeTangents(CExtrude *I);
 void ExtrudeCGOSurfaceTube(CExtrude *I,CGO *cgo,int cap,float *color_override);
+void ExtrudeCGOSurfaceVariableTube(CExtrude *I,CGO *cgo,int cap);
+
 void ExtrudeCGOSurfacePolygon(CExtrude *I,CGO *cgo,int cap,float *color_override);
 void ExtrudeCGOSurfacePolygonTaper(CExtrude *I,CGO *cgo,
                                    int sampling,float *color_override);

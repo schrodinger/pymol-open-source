@@ -406,8 +406,15 @@ if __name__=='pymol.setting':
       slice_dynamic_grid   =( 372,'','')
       slice_dynamic_grid_resolution =( 373,'','')
       pdb_insure_orthogonal =( 374,'','')
-      ray_direct_shade     =(375,'','')
-      
+      ray_direct_shade     =( 375,'','')
+      stick_color          =( 376, '', '')
+      cartoon_putty_radius = ( 377, '', '')
+      cartoon_putty_quality = ( 378, '', '')
+      cartoon_putty_scale_min = (379, '', '')
+      cartoon_putty_scale_max = (380, '', '')
+      cartoon_putty_scale_power = (381, '', '')
+
+   
    setting_sc = Shortcut(SettingIndex.__dict__.keys())
 
    index_list = []

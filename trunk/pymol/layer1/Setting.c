@@ -1240,6 +1240,7 @@ void SettingGenerateSideEffects(PyMOLGlobals *G,int index,char *sele,int state)
   case cSetting_stick_fixed_radius:
   case cSetting_stick_quality:
   case cSetting_stick_overlap:
+  case cSetting_stick_color:
     ExecutiveInvalidateRep(G,inv_sele,cRepCyl,cRepInvRep);
     SceneChanged(G);
     break;
@@ -1352,6 +1353,11 @@ void SettingGenerateSideEffects(PyMOLGlobals *G,int index,char *sele,int state)
   case cSetting_cartoon_loop_radius:
   case cSetting_cartoon_tube_quality:
   case cSetting_cartoon_tube_radius:
+  case cSetting_cartoon_putty_quality:
+  case cSetting_cartoon_putty_radius:
+  case cSetting_cartoon_putty_scale_min:
+  case cSetting_cartoon_putty_scale_max:
+  case cSetting_cartoon_putty_scale_power:
   case cSetting_cartoon_power:
   case cSetting_cartoon_power_b:
   case cSetting_cartoon_rect_length:
@@ -2367,6 +2373,12 @@ void SettingInitGlobal(PyMOLGlobals *G,int alloc,int reset_gui)
   SettingSet_f(I,cSetting_slice_dynamic_grid_resolution, 3.0F);
   SettingSet_b(I,cSetting_pdb_insure_orthogonal, 1);
   SettingSet_f(I,cSetting_ray_direct_shade,0.0F);
+  SettingSet_color(I,cSetting_stick_color,"-1");
+  SettingSet_f(I,cSetting_cartoon_putty_radius, 1.00F);
+  SettingSet_f(I,cSetting_cartoon_putty_quality, 11.0F);
+  SettingSet_f(I,cSetting_cartoon_putty_scale_min, 0.25F);
+  SettingSet_f(I,cSetting_cartoon_putty_scale_max, 2.0F);
+  SettingSet_f(I,cSetting_cartoon_putty_scale_power, 0.6666F);
 
 }
 
