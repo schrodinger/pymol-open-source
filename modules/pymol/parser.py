@@ -23,6 +23,8 @@ import cmd
 import exceptions
 import threading
 import new
+import re
+import sys
 
 from cmd import QuietException
       
@@ -42,6 +44,21 @@ args = {}
 
 com0[nest]=""
 cont[nest]=""
+
+def run_as_module(file,spawn=0):
+   name = re.sub('[^A-Za-z0-9]','_',file)
+   mod = new.module(name)
+   mod.__file__ = file
+   sys.modules[name]=mod
+   if spawn:
+      t = threading.Thread(target=execfile,
+         args=(file,mod.__dict__,mod.__dict__))
+      t.setDaemon(1)
+      t.start()
+   else:
+      execfile(file,mod.__dict__,mod.__dict__)
+      del sys.modules[name]
+      del mod
 
 def parse(s):
    global com0,com1,com2,cont,script,kw,input,next,nest,args,cmd,cont
@@ -107,15 +124,9 @@ def parse(s):
                         args[nest] = map(string.strip,args[nest])
                         if kw[nest][4]<2:
                            result=apply(kw[nest][0],args[nest])
-                        elif kw[nest][4]==3: # default: module
-                           if len(args[nest])==1:
-                              mod = new.module(args[nest][0])
-                              t = threading.Thread(target=execfile,
-                                                   args=(args[nest][0],
-                                                   mod.__dict__,
-                                                   mod.__dict__))
-                              t.setDaemon(1)
-                              t.start()
+                        elif kw[nest][4]==3: # spawn command
+                           if len(args[nest])==1: # default: module
+                              run_as_module(args[nest][0],spawn=1)
                            elif args[nest][1]=='local':
                               t = threading.Thread(target=execfile,
                                                    args=(args[nest][0],
@@ -129,13 +140,8 @@ def parse(s):
                               t.setDaemon(1)
                               t.start()
                            elif args[nest][1]=='module':
-                              mod = new.module(args[nest][0])
-                              t = threading.Thread(target=execfile,
-                                                   args=(args[nest][0],
-                                                   mod.__dict__,
-                                                   mod.__dict__))
-                              t.setDaemon(1)
-                              t.start()
+                              run_as_module(args[nest][0],spawn=1)
+                        # run command
                         elif len(args[nest])==1: # default: global
                            execfile(args[nest][0],pymol_names,pymol_names)
                         elif args[nest][1]=='local':
@@ -143,9 +149,7 @@ def parse(s):
                         elif args[nest][1]=='global':
                            execfile(args[nest][0],pymol_names,pymol_names)
                         elif args[nest][1]=='module':
-                           mod = new.module(args[nest][0])
-                           execfile(args[nest][0],mod.__dict__,mod.__dict__)
-                           del mod
+                           run_as_module(args[nest][0],spawn=0)
                      else:
                         print 'Error: invalid arguments for %s command.' % com
                   elif len(input[nest][0]):
