@@ -520,6 +520,8 @@ void SettingGenerateSideEffects(int index,char *sele,int state)
   case cSetting_cartoon_oval_length:
   case cSetting_cartoon_oval_width:
   case cSetting_cartoon_oval_quality:
+  case cSetting_cartoon_flat_helices:
+  case cSetting_cartoon_refine_normals:
   case cSetting_cartoon_debug:
     ExecutiveInvalidateRep(inv_sele,cRepCartoon,cRepInvRep);
     SceneChanged();
@@ -948,6 +950,10 @@ void SettingInitGlobal(void)
   SettingSet_f(I,cSetting_cgo_ray_width_scale, 0.15);
 
   SettingSet_f(I,cSetting_line_radius, 0.15);
+
+  SettingSet_f(I,cSetting_cartoon_flat_helices, 1.0);
+
+  SettingSet_f(I,cSetting_cartoon_refine_normals, 1.0);
   
 }
 

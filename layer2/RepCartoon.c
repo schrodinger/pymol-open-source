@@ -76,7 +76,7 @@ Rep *RepCartoonNew(CoordSet *cs)
 {
   ObjectMolecule *obj;
   int a,b,a1,a2,c1,c2,*i,*s,*at,*seg,nAt,*atp,a3,a4,*car,*cc,*helix;
-  float *v,*v0,*v1,*v2,*v3,*v4,*vo,*vn,*va;
+  float *v,*v0,*v1,*v2,*v3,*v4,*v5,*vo,*vn,*va;
   float *pv=NULL;
   float *pvo=NULL,*pva=NULL;
   float *dv=NULL;
@@ -272,7 +272,8 @@ ENDFD;
                     vo[2]=0.0;
                     vo+=3;
                   } else {
-                    
+                    /* generate orientation vectors...*/
+
                     subtract3f(v_n,v_c,t0);
                     normalize3f(t0);
                     subtract3f(v_n,v_o,t1);
@@ -368,153 +369,198 @@ ENDFD;
 		*(v1++)=*(v-2);
 		*(v1++)=*(v-1);
 
-PRINTFD(FB_RepCartoon)
-" RepCartoon-Debug: generating coordinate systems...\n"
-ENDFD;
+      PRINTFD(FB_RepCartoon)
+        " RepCartoon-Debug: generating coordinate systems...\n"
+        ENDFD;
       
-  /*  if(SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_cartoon_flat_helices)) {*/
-  if(1){
-    
-    v1 = NULL;
-    v2 = NULL;
-    v3 = NULL;
-    v4 = NULL;
-    v = pv;
-    hel = helix;
-    vo = pvo;
-    v0 = tv;
-    last = 0;
-    if(nAt>1) {
-      for(a=0;a<nAt;a++) {
-        v4 = v3;
-        v3 = v2;
-        v2 = v1;
-        if(*hel)
-          v1 = v;
-        else {
-          v1 = NULL;
-          last = 0;
-        }
-        if(v1&&v2&&v3&&v4) {
-          add3f(v1,v4,t0);
-          add3f(v2,v3,t1);
-          scale3f(t0,0.2024,t0);
-          scale3f(t1,0.2727,t1);
-          add3f(t0,t1,t0);
-          if(last) {
-            subtract3f(t2,t0,t1);
-            normalize3f(t1);
-            cross_product3f(t1,v0,vo);
-            normalize3f(vo);
-            cross_product3f(t1,v0-3,vo-3);
-            normalize3f(vo-3);
-            cross_product3f(t1,v0-6,vo-6);
-            normalize3f(vo-6);
-            if(last==1) {
-              cross_product3f(t1,v0-9,vo-9);
-              normalize3f(vo-6);
+      if(SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_cartoon_flat_helices)) {
+        v1 = NULL;
+        v2 = NULL;
+        v3 = NULL;
+        v4 = NULL;
+        v5 = NULL;
+        v = pv;
+        hel = helix;
+        vo = pvo;
+        v0 = tv;
+        last = 0;
+        if(nAt>1) {
+          for(a=0;a<nAt;a++) {
+            v5 = v4;
+            v4 = v3;
+            v3 = v2;
+            v2 = v1;
+            if(*hel)
+              v1 = v;
+            else {
+              if(last<2) {/* not 5+ turn helix, so just average the tangents */
+                if(v2&&v3) {
+                  copy3f(v0-3,t0);
+                  copy3f(v0-6,t1);
+                  if(dot_product3f(t0,t1)<0.0)
+                    invert3f(t1);
+                  add3f(t1,t0,t0);
+                  if(v4) {
+                    copy3f(v0-9,t1);
+                    if(dot_product3f(t0,t1)<0.0)
+                      invert3f(t1);
+                    add3f(t1,t0,t0);
+                  }
+                  if(v5) {
+                    copy3f(v0-12,t1);
+                    if(dot_product3f(t0,t1)<0.0)
+                      invert3f(t1);
+                    add3f(t1,t0,t0);
+                  }
+                  normalize3f(t0);
+                  cross_product3f(t0,v0-3,vo-3);
+                  normalize3f(vo-3);
+                  cross_product3f(t0,v0-6,vo-6);
+                  normalize3f(vo-6);
+                  if(v4) {
+                    cross_product3f(t0,v0-9,vo-9);
+                    normalize3f(vo-9);
+                  }
+                  if(v5) {
+                    cross_product3f(t0,v0-12,vo-12);
+                    normalize3f(vo-12);
+                  }
+                }
+              }
+              v1 = NULL;
+              v2 = NULL;
+              v3 = NULL;
+              v4 = NULL;
+              v5 = NULL;
+              last = 0;
             }
-            last++;
+            if(v1&&v2&&v3&&v4) {
+              add3f(v1,v4,t0);
+              add3f(v2,v3,t1);
+              scale3f(t0,0.2024,t0);
+              scale3f(t1,0.2727,t1);
+              add3f(t0,t1,t0);
+              if(last) { /* 5th CA or later... */
+                subtract3f(t2,t0,t1);
+                normalize3f(t1);
+                cross_product3f(t1,v0,vo);
+                normalize3f(vo);
+                cross_product3f(t1,v0-3,vo-3);
+                normalize3f(vo-3);
+                cross_product3f(t1,v0-6,vo-6);
+                normalize3f(vo-6);
+                if(last==1) { /* 5th */
+                  cross_product3f(t1,v0-9,vo-9);
+                  normalize3f(vo-9);
+                  cross_product3f(t1,v0-12,vo-12);
+                  normalize3f(vo-12);
+                }
+              }
+              last++;
+              copy3f(t0,t2);
+            }
+            v+=3;
+            hel++;
+            vo+=3;
+            v0+=3;
           }
-          copy3f(t0,t2);
-          last = 1;
         }
-        v+=3;
-        hel++;
-        vo+=3;
-        v0+=3;
-      }
-    }
-  }
-
-
-      /* now generate alternative orientation vectors */
-
-      v1 = tv;
-      va = pva;
-      vo = pvo;
-      hel = helix;
-      for(a=0;a<nAt;a++) { 
-
-        /* original */
-        copy3f(vo,va);
-        va+=3;
-
-        /* inverse */
-        copy3f(vo,va);
-        if(!*hel)
-          invert3f(va);
-        va+=3;
-
-        /* go on to next vertex */
-
-        v1+=3;
-        vo+=3;
-        hel++;
       }
       
-      /* now iterate through pairs*/
-
-      vo = pvo;
-      va = pva;
-      v  = nv; /* normals in direction of chain */
-      
-      for(a=1;a<nAt;a++) {
-
-        v1 = va+6; /* orientation vectors for next CA */
-        remove_component3f(vo  ,v,o0);
-       normalize3f(o0);
-       remove_component3f(v1  ,v,o1  ); 
-       remove_component3f(v1+3,v,o1+3);
-        normalize3f(o1);
-        normalize3f(o1+3);
-        max_dot = dot_product3f(o0,o1);
-        v0 = v1;
-
-        dp = dot_product3f(o0,o1+3);
-        if(dp>max_dot) {
-          v0 = v1+3;
-          max_dot = dp;
+      if(SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_cartoon_refine_normals)) {
+        /* now generate alternative orientation vectors */
+        
+        v1 = tv;
+        va = pva;
+        vo = pvo;
+        hel = helix;
+        for(a=0;a<nAt;a++) { 
+          
+          /* original */
+          copy3f(vo,va);
+          va+=3;
+          
+          /* inverse */
+          copy3f(vo,va);
+          if(!*hel)
+            invert3f(va);
+          va+=3;
+          
+          /* go on to next vertex */
+          
+          v1+=3;
+          vo+=3;
+          hel++;
         }
-
-        copy3f(v0,vo+3); /* update with optimal orientation vector */
-
-        vo+=3;
-        va+=6; /* candidate orientation vectors */
-        v+=3; /* normal */
+        
+        /* now iterate through pairs*/
+        
+        vo = pvo;
+        va = pva;
+        v  = nv; /* normals in direction of chain */
+        
+        for(a=1;a<nAt;a++) {
+          
+          v1 = va+6; /* orientation vectors for next CA */
+          remove_component3f(vo  ,v,o0);
+          normalize3f(o0);
+          remove_component3f(v1  ,v,o1  ); 
+          remove_component3f(v1+3,v,o1+3);
+          normalize3f(o1);
+          normalize3f(o1+3);
+          max_dot = dot_product3f(o0,o1);
+          v0 = v1;
+          
+          dp = dot_product3f(o0,o1+3);
+          if(dp>max_dot) {
+            v0 = v1+3;
+            max_dot = dp;
+          }
+          
+          copy3f(v0,vo+3); /* update with optimal orientation vector */
+          
+          vo+=3;
+          va+=6; /* candidate orientation vectors */
+          v+=3; /* normal */
+        }
       }
     }
 
   I->std = CGONew();
 
-  /*  if(SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_cartoon_flat_helices)) {*/
-  if((cartoon_debug>0.5)&&(cartoon_debug<2.5)) {
-    
-    v1 = NULL;
-    v2 = NULL;
-    v3 = NULL;
-    v4 = NULL;
-    v = pv;
-    if(nAt>1) {
+  if(SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_cartoon_flat_helices)) {
+    if((cartoon_debug>0.5)&&(cartoon_debug<2.5)) {
+      CGOColor(I->std,1.0,1.0,1.0);
+      CGODisable(I->std,GL_LIGHTING);
       CGOBegin(I->std,GL_LINE_STRIP);
-      for(a=0;a<nAt;a++) {
-        v4 = v3;
-        v3 = v2;
-        v2 = v1;
-        v1 = v;
-        if(v1&&v2&&v3&&v4) {
-          add3f(v1,v4,t0);
-          add3f(v2,v3,t1);
-          scale3f(t0,0.2024,t0);
-          scale3f(t1,0.2727,t1);
-          add3f(t0,t1,t0);
-          CGOVertexv(I->std,t0);
+      
+      
+      v1 = NULL;
+      v2 = NULL;
+      v3 = NULL;
+      v4 = NULL;
+      v = pv;
+      if(nAt>1) {
+        CGOBegin(I->std,GL_LINE_STRIP);
+        for(a=0;a<nAt;a++) {
+          v4 = v3;
+          v3 = v2;
+          v2 = v1;
+          v1 = v;
+          if(v1&&v2&&v3&&v4) {
+            add3f(v1,v4,t0);
+            add3f(v2,v3,t1);
+            scale3f(t0,0.2024,t0);
+            scale3f(t1,0.2727,t1);
+            add3f(t0,t1,t0);
+            CGOVertexv(I->std,t0);
+          }
+          v+=3;
         }
-        v+=3;
+        CGOEnd(I->std);
       }
-      CGOEnd(I->std);
     }
-  }
+ }
 
 PRINTFD(FB_RepCartoon)
 " RepCartoon-Debug: creating 3D scaffold...\n"
