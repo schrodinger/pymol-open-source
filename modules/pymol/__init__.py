@@ -223,6 +223,11 @@ if pymol_launch != 3: # if this isn't a dry run
                   print " Adapting to NVIDIA hardware on Mac..."
                   cmd.set('line_smooth',0,quiet=1)
                   cmd.set('fog',0.9,quiet=1)
+         elif renderer=='NVIDIA GeForce4 GPU OpenGL Engine':
+            if sys.platform=='darwin':
+               if invocation.options.show_splash:
+                  cmd.set('stereo_double_pump_mono',1,quiet=1)
+
          elif renderer[0:6]=='Quadro':
             print " Adapting to Quadro hardware..."
             cmd.set("stereo_double_pump_mono","1",quiet=1)
@@ -255,8 +260,9 @@ if pymol_launch != 3: # if this isn't a dry run
                         ncpu = int(ll[2])
                         if ncpu>0:
                            cmd.set("max_threads",ncpu)
-                           print "  Detected %d CPUs."%ncpu,
-                           print " Enabled multithreaded rendering."
+                           if invocation.options.show_splash:  
+                              print "  Detected %d CPUs."%ncpu,
+                              print " Enabled multithreaded rendering."
                      elif ll[0]=='hw.physmem':
                         mem = int(ll[2])
                         if mem>1000000000: # Gig or more

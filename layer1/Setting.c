@@ -1899,11 +1899,7 @@ void SettingInitGlobal(int alloc)
 
   SettingSet_f(I,cSetting_ray_transparency_specular,0.4F);
 
-#ifdef _PYMOL_OSX
-  SettingSet_b(I,cSetting_stereo_double_pump_mono,1);
-#else
   SettingSet_b(I,cSetting_stereo_double_pump_mono,0);
-#endif
 
   SettingSet_i(I,cSetting_sphere_solvent,0);
 

@@ -213,7 +213,6 @@ class Benchmark(Wizard):
       cmd.load("test/dat/pept.pdb")
       cmd.mset("1 x2")
       cmd.set('cache_frames',1)
-      cmd.set('stereo_double_pump_mono',0)
       cmd.rewind()
       cmd.refresh()
       cmd.turn('x',5)

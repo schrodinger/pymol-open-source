@@ -160,6 +160,8 @@ if __name__=='pymol.invocation':
             if "S" in a: # Force stereo on stereo hardware (OSX only)
                options.force_stereo = 1
                options.deferred.append("_do__ stereo on")
+               if sys.platform=='darwin': 
+                  options.deferred.append("_do__ set stereo_double_pump_mono,1,quiet=1")
             if "M" in a: # Force mono on stereo hardware (all)
                options.force_stereo = -1
             if "l" in a:
