@@ -219,7 +219,15 @@ if __name__=='pymol.invocation':
                options.deferred.append("_do__ feedback disable,all,everything")
                options.deferred.append("_do__ feedback enable,python,output")
                options.deferred.append("_do_ wizard benchmark")
-               options.deferred.append("_do_ cmd.get_wizard().run_cpu()")
+               if a[2:]=='':
+                  options.deferred.append("_do_ cmd.get_wizard().run_cpu()")
+               if a[2:]=='0':
+                  options.deferred.append("_do_ cmd.get_wizard().ray_trace0()")
+               if a[2:]=='1':
+                  options.deferred.append("_do_ cmd.get_wizard().ray_trace1()")
+               if a[2:]=='2':
+                  options.deferred.append("_do_ cmd.get_wizard().ray_trace2()")
+                  
          else: 
             if a[-4:] in (".pm5",".PM5",".p5m",".P5M"):
                # mode 5 helper application 

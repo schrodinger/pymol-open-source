@@ -47,7 +47,7 @@ Z* -------------------------------------------------------------------
 	2 contains transformed vertices for shadowing 
 */
 
-#define MAX_RAY_THREADS 8
+#define MAX_RAY_THREADS 12
 
 typedef float float3[3];
 typedef float float4[4];
