@@ -12,15 +12,15 @@ def get_partial_charge(model):
    return list
 
 
-def get_restrain_positions(model,flag,f_cnst):
+def get_restrain_positions(model,flag,w_width,f_cnst):
    list = []
    n = 0
    c = 1
    mask = 1<<flag
    for a in model.atom:
       if (a.flags&mask):
-         list.append("RESTRAIN-POSITION %5d %12.6f %12.6f %12.6f %8.3f\n" %
-                     (c,a.coord[0],a.coord[1],a.coord[2],f_cnst))
+         list.append("RESTRAIN-POSITION %5d %12.6f %12.6f %12.6f %6.3f %6.1f\n" %
+                     (c,a.coord[0],a.coord[1],a.coord[2],w_width,f_cnst))
          n = n + 1
       c = c + 1
    if chempy.feedback['actions']:
