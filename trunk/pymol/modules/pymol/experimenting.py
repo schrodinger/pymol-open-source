@@ -35,14 +35,6 @@ if __name__=='pymol.experimenting':
          unlock()
       return r
 
-   def focus():  # BROKEN
-      try:
-         lock()
-         r = _cmd.focus()
-      finally:
-         unlock()
-      return r
-
    def spheroid(object="",average=0):  # EXPERIMENTAL
       '''
 DESCRIPTION

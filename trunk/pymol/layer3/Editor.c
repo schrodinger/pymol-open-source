@@ -1119,7 +1119,7 @@ static void draw_string(float *v,char *l)
   }
   
   while(*l) {
-    p_glutBi tmapChar acter(P_GLUT_BITMAP_8_BY_13,*(l++));
+    p_g lutBi tmapChar acter(P_G LUT_BITMAP_8_BY_13,*(l++));
   }
 
   glEnable(GL_LIGHTING);

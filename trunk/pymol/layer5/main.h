@@ -16,29 +16,33 @@ Z* -------------------------------------------------------------------
 #ifndef _H_main
 #define _H_main
 
+
+int  MainSavingUnderWhileIdle(void);
+
+#ifdef _PYMOL_NO_MAIN
+
+#else
+
 #include"os_python.h"
 #include"PyMOLGlobals.h"
 
 void MainFree(void);
 void MainDoReshape(int width, int height);
-void MainDirty(void);
-void MainResetIdle(void);
-void MainSwapBuffers(void);
 void MainRefreshNow(void);
 void MainFlush(void);
 void MainFlushAsync(void);
-int MainSavingUnderWhileIdle(void);
+int  MainSavingUnderWhileIdle(void);
+
 int MainFromPyList(PyObject *list);
 PyObject *MainAsPyList(void);
-int MainCheckRedundantOpen(char *file);
-void MainDragDirty(void); 
+
 void MainRepositionWindowDefault(PyMOLGlobals *G);
-void MainSetPassiveDrag(int onOrOff);
 
 void MainSetWindowVisibility(int mode);
 
 #ifdef _PYMOL_OSX
 
+int MainCheckRedundantOpen(char *file);
 void MainRunString(char *str);
 PyObject *MainGetStringResult(char *str);
 void MainDoCommand(char *str1);
@@ -58,5 +62,6 @@ int MainSceneCopy(int width,int height,int rowbytes,void *ptr);
 int was_main(void);
 #endif
 
+#endif
 
 #endif

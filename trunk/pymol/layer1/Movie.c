@@ -32,6 +32,7 @@ Z* -------------------------------------------------------------------
 #include"PConv.h"
 #include"Util.h"
 #include"Parse.h"
+#include"PyMOL.h"
 
 struct _CMovie {
   ImageType *Image;
@@ -123,7 +124,7 @@ int MovieCopyFrame(PyMOLGlobals *G,int frame,int width,int height,int rowbytes,v
         result = true;
       }
       ExecutiveDrawNow(G);
-      if(G->HaveGUI) p_glutSwapBuffers();
+      if(G->HaveGUI) PyMOL_SwapBuffers(G->PyMOL);
     }
     if(!I->CacheSave) {
       if(I->Image[i])
@@ -439,7 +440,7 @@ int MoviePNG(PyMOLGlobals *G,char *prefix,int save,int start,int stop)
           MyPNGWrite(G,fname,I->Image[i],I->Width,I->Height);		
           ExecutiveDrawNow(G);
           OrthoBusySlow(G,a,nFrame);
-          if(G->HaveGUI) p_glutSwapBuffers();
+          if(G->HaveGUI) PyMOL_SwapBuffers(G->PyMOL);
           PRINTFB(G,FB_Movie,FB_Debugging)
             " MoviePNG-DEBUG: i = %d, I->Image[i] = %p\n",i,I->Image[i]
             ENDFB(G);

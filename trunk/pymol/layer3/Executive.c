@@ -52,6 +52,7 @@ Z* -------------------------------------------------------------------
 #include"RepDot.h"
 #include"Seq.h"
 #include"Text.h"
+#include"PyMOL.h"
 
 #define cExecObject 0
 #define cExecSelection 1
@@ -86,6 +87,8 @@ struct _CExecutive {
   SpecRec *LastChanged;
   int ReorderFlag;
   OrthoLineType ReorderLog;
+
+  int oldPX,oldPY,oldWidth,oldHeight,sizeFlag;
 };
 
 static SpecRec *ExecutiveFindSpec(PyMOLGlobals *G,char *name);
@@ -1613,9 +1616,11 @@ int ExecutiveGetSession(PyMOLGlobals *G,PyObject *dict)
   PyDict_SetItemString(dict,"editor",tmp);
   Py_XDECREF(tmp);
 
+#ifndef _PYMOL_NO_MAIN
   tmp = MainAsPyList();
   PyDict_SetItemString(dict,"main",tmp);
   Py_XDECREF(tmp);
+#endif
 
   if(Feedback(G,FB_Executive,FB_Errors)) {
     if(PyErr_Occurred()) {
@@ -1861,6 +1866,7 @@ int ExecutiveSetSession(PyMOLGlobals *G,PyObject *session)
     PParse("cmd.mouse(quiet=1)");
     PParse("viewport"); /* refresh window/internal_gui status */
   }
+#ifndef _PYMOL_NO_MAIN
   if(ok) {
     tmp = PyDict_GetItemString(session,"main");
     if(tmp) {
@@ -1876,6 +1882,7 @@ int ExecutiveSetSession(PyMOLGlobals *G,PyObject *session)
         ENDFB(G);
     }
   }
+#endif
   if(ok&&migrate_sessions) { /* migrate sessions */
     tmp = PyDict_GetItemString(session,"version");
     if(tmp) {
@@ -2951,13 +2958,6 @@ int ExecutivePairIndices(PyMOLGlobals *G,char *s1,char *s2,int state1,int state2
   return(result);
 }
 
-void ExecutiveFocus(PyMOLGlobals *G)
-{ /* unfortunately, this doesn't achieve the desired effect */
-  if(G->HaveGUI) {
-    p_glutPopWindow();
-    p_glutShowWindow();
-  }
-}
 
 int ExecutiveCartoon(PyMOLGlobals *G,int type,char *s1)
 {
@@ -5089,7 +5089,7 @@ void ExecutiveDrawNow(PyMOLGlobals *G)
 
     OrthoDoDraw(G);
     
-    MainSwapBuffers();
+    PyMOL_NeedSwap(G->PyMOL);
   }
 
   PRINTFD(G,FB_Executive)
@@ -6162,33 +6162,40 @@ void ExecutiveSetObjVisib(PyMOLGlobals *G,char *name,int state)
 
 }
 
-static int oldPX,oldPY,oldWidth,oldHeight,sizeFlag=false;
+
 
 /*========================================================================*/
 void ExecutiveFullScreen(PyMOLGlobals *G,int flag)
 {
+
+#ifndef _PYMOL_NO_GLUT
+  register CExecutive *I = G->Executive;
   if(G->HaveGUI) {
     if(!SettingGet(G,cSetting_full_screen))
       {
-        oldPX = p_glutGet(GLUT_WINDOW_X);
-        oldPY = p_glutGet(GLUT_WINDOW_Y);
-        oldWidth = p_glutGet(GLUT_WINDOW_WIDTH);
-        oldHeight = p_glutGet(GLUT_WINDOW_HEIGHT);
-        sizeFlag = true;
+        I->oldPX = p_glutGet(GLUT_WINDOW_X);
+        I->oldPY = p_glutGet(GLUT_WINDOW_Y);
+        I->oldWidth = p_glutGet(GLUT_WINDOW_WIDTH);
+        I->oldHeight = p_glutGet(GLUT_WINDOW_HEIGHT);
+        I->sizeFlag = true;
       }
       
     SettingSet(G,cSetting_full_screen,(float)flag);
     if(flag) {
       p_glutFullScreen();
     } else {
-      if(sizeFlag) {
-        p_glutPositionWindow(oldPX,oldPY);
-        p_glutReshapeWindow(oldWidth,oldHeight);
+      if(I->sizeFlag) {
+        p_glutPositionWindow(I->oldPX,I->oldPY);
+        p_glutReshapeWindow(I->oldWidth,I->oldHeight);
       } else {
+#ifndef _PYMOL_NO_MAIN
         MainRepositionWindowDefault(G);
+#endif
       }
     }
   }
+#endif
+
 }
 /*========================================================================*/
 void ExecutiveSetAllVisib(PyMOLGlobals *G,int state)
@@ -7189,8 +7196,7 @@ static int ExecutiveClick(Block *block,int button,int x,int y,int mod)
             a--;
           }
         }
-  MainDirty();
-  
+  PyMOL_NeedRedisplay(G->PyMOL);
   return(1);
 }
 /*========================================================================*/
@@ -7339,7 +7345,7 @@ static int ExecutiveRelease(Block *block,int button,int x,int y,int mod)
   I->Over = -1;
   I->Pressed = -1;
   OrthoUngrab(G);
-  MainDirty();
+  PyMOL_NeedRedisplay(G->PyMOL);
   return(1);
 }
 /*========================================================================*/
@@ -7881,6 +7887,8 @@ int ExecutiveInit(PyMOLGlobals *G)
   I->ReorderFlag=false;
   I->NSkip=0;
   I->HowFarDown=0;
+  I->sizeFlag=false;
+
   ListElemCalloc(G,rec,SpecRec);
   strcpy(rec->name,"(all)");
   rec->type=cExecAll;

@@ -38,6 +38,7 @@ Z* -------------------------------------------------------------------
 #include"Seq.h"
 #include"Text.h"
 #include"PyMOLOptions.h"
+#include"PyMOL.h"
 
 #ifndef true
 #define true 1
@@ -307,7 +308,7 @@ void OrthoDirty(PyMOLGlobals *G) {
 	 I->DirtyFlag = true;
   }
 
-  MainDirty();
+  PyMOL_NeedRedisplay(G->PyMOL);
 }
 /*========================================================================*/
 void OrthoBusyMessage(PyMOLGlobals *G,char *message)
@@ -698,7 +699,7 @@ void OrthoKey(PyMOLGlobals *G,unsigned char k,int x,int y,int mod)
       OrthoKeyControl(G,(unsigned char)(k+64));
 		break;
 	 }
-  MainDirty();
+  PyMOL_NeedRedisplay(G->PyMOL);
 }
 /*========================================================================*/
 void OrthoParseCurrentLine(PyMOLGlobals *G) 

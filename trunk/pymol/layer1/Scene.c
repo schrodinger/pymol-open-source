@@ -51,6 +51,7 @@ Z* -------------------------------------------------------------------
 #include"ObjectSlice.h"
 #include"Text.h"
 #include"PyMOLOptions.h"
+#include"PyMOL.h"
 
 #define cSliceMin 0.1F
 
@@ -3789,9 +3790,9 @@ void SceneRender(PyMOLGlobals *G,Pickable *pick,int x,int y,Multipick *smp)
 	  
 
       if(debug_pick) {
-        p_glutSwapBuffers();
+        PyMOL_SwapBuffers(G->PyMOL);
         PSleep(1000000*debug_pick/4);
-        p_glutSwapBuffers();
+        PyMOL_SwapBuffers(G->PyMOL);
       }
       lowBits = SceneFindTriplet(G,x,y,render_buffer);
 	
@@ -3803,9 +3804,9 @@ void SceneRender(PyMOLGlobals *G,Pickable *pick,int x,int y,Multipick *smp)
       SceneRenderAll(G,&context,NULL,&pickVLA,0,true);
 
       if(debug_pick) {
-        p_glutSwapBuffers();
+        PyMOL_SwapBuffers(G->PyMOL);
         PSleep(1000000*debug_pick/4);
-        p_glutSwapBuffers();
+        PyMOL_SwapBuffers(G->PyMOL);
       }
 
       highBits = SceneFindTriplet(G,x,y,render_buffer);

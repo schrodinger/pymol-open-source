@@ -30,6 +30,7 @@ Z* -------------------------------------------------------------------
 #include "Util.h"
 #include "Color.h"
 #include "Text.h"
+#include "PyMOL.h"
 
 #define cPopUpLineHeight 17
 #define cPopUpTitleHeight 19
@@ -373,7 +374,7 @@ int PopUpRelease(Block *block,int button,int x,int y,int mod)
     }
   }  
   if(gone_passive) {
-    MainSetPassiveDrag(true);
+    PyMOL_SetPassive(G->PyMOL,true);
   } else {
     OrthoUngrab(G);
     PopUpRecursiveDetach(block);
@@ -446,7 +447,7 @@ int PopUpDrag(Block *block,int x,int y,int mod)
           } else {
             I->Selected = a;
           }
-          MainDragDirty();
+          PyMOL_NeedFakeDrag(G->PyMOL);
         }
       }
       
@@ -457,7 +458,7 @@ int PopUpDrag(Block *block,int x,int y,int mod)
         if(!I->Child) {
           I->ChildLine = a;
           if(I->ChildDelay>UtilGetSeconds(G)) {
-            MainDragDirty(); /* keep coming back here... */
+            PyMOL_NeedFakeDrag(G->PyMOL); /* keep coming back here... */
           } else {
             I->Child = PopUpNew(G,I->LastX-300,I->LastY,I->LastX,I->LastY,I->Sub[a],I->Block);
             {
@@ -472,7 +473,7 @@ int PopUpDrag(Block *block,int x,int y,int mod)
             OrthoGrab(G,I->Block);
             I->ChildDelay = UtilGetSeconds(G) + cChildDelay; /* leave child up for a while */
           }
-          MainDragDirty(); /* keep coming back here... */
+          PyMOL_NeedFakeDrag(G->PyMOL); /* keep coming back here... */
         } else if(I->ChildLine==a) { /* on correct line */
           I->ChildDelay = UtilGetSeconds(G) + cChildDelay; /* keep child here for a while */
         }
@@ -485,7 +486,7 @@ int PopUpDrag(Block *block,int x,int y,int mod)
      can be comfortably accessed with sloppy mousing */
 
   if((I->Child)&&(I->Selected!=I->ChildLine))
-    MainDragDirty();
+    PyMOL_NeedFakeDrag(G->PyMOL);
 
   if(was!=I->Selected) {
 
@@ -493,7 +494,7 @@ int PopUpDrag(Block *block,int x,int y,int mod)
     if(!I->Child) {
       /* we moved, so renew the child delay */
       I->ChildDelay = UtilGetSeconds(G) + cChildDelay;
-      MainDragDirty();
+      PyMOL_NeedFakeDrag(G->PyMOL);
     }
 
     if((I->Child)&&(I->Selected!=I->ChildLine)) {
@@ -521,7 +522,7 @@ void PopUpDraw(Block *block)
   if(G->HaveGUI) {
 
   if((I->Child)&&(I->Selected!=I->ChildLine))
-    MainDragDirty();
+    PyMOL_NeedFakeDrag(G->PyMOL);
     
     /* put raised border around pop-up menu */
 

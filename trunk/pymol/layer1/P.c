@@ -1076,7 +1076,7 @@ r1=RegOpenKeyEx(HKEY_CLASSES_ROOT,"Software\\DeLano Scientific\\PyMOL\\PYMOL_PAT
 
 }
 
-void PGetOptions(COption *rec)
+void PGetOptions(CPyMOLOptions *rec)
 {
   PyObject *pymol,*invocation,*options;
   char *load_str;
@@ -1328,7 +1328,9 @@ void PExit(int code)
 {
   ExecutiveDelete(TempPyMOLGlobals,"all");
   PBlock();
+#ifndef _PYMOL_NO_MAIN
   MainFree();
+#endif
 
   /* we're having trouble with threading errors after calling Py_Exit,
      so for the time being, let's just take the process down at this
