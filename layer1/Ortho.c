@@ -1464,7 +1464,7 @@ void OrthoSplash(void)
     PRINTF " a current PyMOL subscription from DeLano Scientific LLC unless you meet the\n" ENDF;
     PRINTF " MacPyMOL incentive exemption criteria. \n \n" ENDF;
     PRINTF " Please visit http://www.pymol.org/funding.html for subscription information.\n \n"ENDF;
-    PRINTF " MacPyMOL is based on the PyMOL(TM) Molecular Graphics System, Version " ENDF;
+    PRINTF " Based on the PyMOL(TM) Molecular Graphics System, Version " ENDF;
     PRINTF _PyMOL_VERSION ENDF;
     PRINTF ".\n " ENDF;
   } else {
