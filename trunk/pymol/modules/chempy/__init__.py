@@ -172,6 +172,7 @@ feedback = { 'warnings': 1,
              'atoms'   : 0,
              'bonds'   : 0,                          
              'verbose' : 0,
+             'bmin'    : 1,
              }
 
 if os.environ.has_key('CHEMPY_PATH'):

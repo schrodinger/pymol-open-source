@@ -4755,7 +4755,14 @@ CoordSet *ObjectMoleculeMMDStr2CoordSet(char *buffer,AtomInfoType **atInfoPtr)
 				ok=ErrMessage("ReadMMDFile","bad coordinate");
 		  }
         if(ok) {
-          p=nskip(p,12);
+          p=nskip(p,1);
+          p=ncopy(cc,p,5);
+          if(sscanf(cc,"%d",&ai->resv)==1) {
+            sprintf(ai->resi,"%d",ai->resv); /* range check...*/
+          }
+        }
+        if(ok) {
+          p=nskip(p,6);
           p=ncopy(cc,p,9);
 			 if(sscanf(cc,"%f",&ai->partialCharge)!=1)
 				ok=ErrMessage("ReadMMDFile","bad charge");

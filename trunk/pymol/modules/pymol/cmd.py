@@ -2816,6 +2816,10 @@ PYMOL API
          format = 'pkl'
       elif re.search("\.pkl$",fname):
          format = 'pkla'
+      elif re.search("\.mmd$",fname):
+         format = 'mmod'
+      elif re.search("\.mmod$",fname):
+         format = 'mmod'
    if format=='pdb':
       fname = os.path.expanduser(fname)
       fname = os.path.expandvars(fname)
@@ -2834,6 +2838,9 @@ PYMOL API
       print " Save: wrote \""+fname+"\"."
    elif format=='pkla': # ascii override
       io.pkl.toFile(get_model(sele),fname,bin=0)
+      print " Save: wrote \""+fname+"\"."
+   elif format=='mmod': # macromodel
+      io.mmd.toFile(get_model(sele),fname)
       print " Save: wrote \""+fname+"\"."
    elif format=='mol': 
       io.mol.toFile(get_model(sele),fname)
