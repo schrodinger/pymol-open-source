@@ -1237,6 +1237,8 @@ void AtomInfoAssignParameters(AtomInfoType *I)
       switch(e[1]) {
       case 'I':
       case 'i': I->protons=cAN_Si; break;
+      case 'E':
+      case 'e': I->protons=cAN_Se; break;
       }
       break;
     }

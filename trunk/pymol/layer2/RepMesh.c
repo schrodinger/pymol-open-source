@@ -79,6 +79,13 @@ void RepMeshRender(RepMesh *I,CRay *ray,Pickable **pick)
 
   if(ray) {
 	 if(n) {
+      float radius;
+
+      if(I->Radius==0.0F) {
+        radius = ray->PixelRadius*I->Width/2.0F;
+      } else {
+        radius = I->Radius;
+      }
       if(I->oneColorFlag) 
         col=ColorGet(I->oneColor);
 		ray->fColor3fv(ray,ColorGet(I->Obj->Color));
@@ -92,14 +99,14 @@ void RepMeshRender(RepMesh *I,CRay *ray,Pickable **pick)
               if(I->oneColorFlag) {
                 while(c--)
                   {
-                    ray->fSausage3fv(ray,v-3,v,I->Radius,col,col);
+                    ray->fSausage3fv(ray,v-3,v,radius,col,col);
                     v+=3;
                     vc+=3;
                   }
               } else {
                 while(c--)
                   {
-                    ray->fSausage3fv(ray,v-3,v,I->Radius,vc-3,vc);
+                    ray->fSausage3fv(ray,v-3,v,radius,vc-3,vc);
                     v+=3;
                     vc+=3;
                   }

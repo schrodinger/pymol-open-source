@@ -1546,7 +1546,7 @@ void SettingInitGlobal(int alloc)
 
   SettingSet_b(I,cSetting_dot_hydrogens, 1);
 
-  SettingSet_f(I,cSetting_dot_radius, 0.20F);
+  SettingSet_f(I,cSetting_dot_radius, 0.0F);
 
   SettingSet_b(I,cSetting_ray_trace_frames, 0);
 
@@ -1636,7 +1636,7 @@ void SettingInitGlobal(int alloc)
 
   SettingSet_b(I,cSetting_auto_show_nonbonded, 1);
 
-  SettingSet_f(I,cSetting_mesh_radius, 0.025F);
+  SettingSet_f(I,cSetting_mesh_radius, 0.000F);
  
 #ifdef WIN32
   SettingSet_b(I,cSetting_cache_display, 0);
@@ -1712,11 +1712,11 @@ void SettingInitGlobal(int alloc)
 
   SettingSet_f(I,cSetting_dash_width, 3.0F);
 
-  SettingSet_f(I,cSetting_dash_radius, 0.09F);
+  SettingSet_f(I,cSetting_dash_radius, 0.00F);
 
   SettingSet_f(I,cSetting_cgo_ray_width_scale, -0.15F);
 
-  SettingSet_f(I,cSetting_line_radius, 0.15F);
+  SettingSet_f(I,cSetting_line_radius, 0.0F);
 
   SettingSet_b(I,cSetting_cartoon_round_helices, 1);
 
@@ -2045,7 +2045,7 @@ void SettingInitGlobal(int alloc)
 
   SettingSet_f(I,cSetting_scenes_changed, 1.0F);
 
-  SettingSet_f(I,cSetting_gaussian_lambda, 0.5F );
+  SettingSet_f(I,cSetting_gaussian_b_adjust, 0.0F );
 
   SettingSet_b(I,cSetting_pdb_standard_order, 0);
 
@@ -2077,8 +2077,11 @@ void SettingInitGlobal(int alloc)
 
   SettingSet_i(I,cSetting_ray_oversample_cutoff,64);
 
-}
+  SettingSet_f(I,cSetting_gaussian_resolution,2.0F);
 
+  SettingSet_f(I,cSetting_gaussian_b_floor,0.0F);
+
+}
 
 
 
