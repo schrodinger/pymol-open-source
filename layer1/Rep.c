@@ -120,10 +120,17 @@ void RepInit(Rep *I)
   I->cs = NULL;
   I->obj = NULL;
   I->MaxInvalid = 0;
+  I->displayList = 0;
 }
 /*========================================================================*/
 void RepFree(Rep *I)
 {
+  if(PMGUI) {
+    if(I->displayList) {
+      glDeleteLists(I->displayList,1);
+      I->displayList = 0;
+    }
+  }
   FreeP(I->P);
 }
 /*========================================================================*/

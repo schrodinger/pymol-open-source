@@ -73,7 +73,9 @@ void RepSphereRender(RepSphere *I,CRay *ray,Pickable **pick)
   SphereRec *sp;
   float restart;
   float alpha;
+  int use_dlst;
   alpha = SettingGet_f(I->R.cs->Setting,I->R.obj->Setting,cSetting_sphere_transparency);
+  use_dlst = (int)SettingGet(cSetting_use_display_lists);
   alpha=1.0-alpha;
   if(fabs(alpha-1.0)<R_SMALL4)
     alpha=1.0;
@@ -107,8 +109,20 @@ void RepSphereRender(RepSphere *I,CRay *ray,Pickable **pick)
     ray->fTransparentf(ray,0.0);
   } else if(pick&&PMGUI) {
   } else if(PMGUI) {
+    if(use_dlst&&I->R.displayList) {
+      glCallList(I->R.displayList);
+    } else { /* display list */
 
-	 if(I->cullFlag) {
+      if(use_dlst) {
+        if(!I->R.displayList) {
+          I->R.displayList = glGenLists(1);
+          if(I->R.displayList) {
+            glNewList(I->R.displayList,GL_COMPILE_AND_EXECUTE);
+          }
+        }
+      }
+
+      if(I->cullFlag) {
       
       if(alpha==1.0) {
         
@@ -227,6 +241,10 @@ void RepSphereRender(RepSphere *I,CRay *ray,Pickable **pick)
               glEnd();
             }
           }
+      }
+    }
+      if(use_dlst&&I->R.displayList) {
+        glEndList();
       }
     }
   }

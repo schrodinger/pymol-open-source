@@ -1962,11 +1962,11 @@ void RayRender(CRay *I,int width,int height,unsigned int *image,
       int x_start,y_start;
       int x_stop,y_stop;
 
-      x_start = (int)((width * (I->min_box[0] - I->Volume[0]))/I->Range[0]) - 1;
+      x_start = (int)((width * (I->min_box[0] - I->Volume[0]))/I->Range[0]) - 2;
       x_stop  = (int)((width * (I->max_box[0] - I->Volume[0]))/I->Range[0]) + 2;
       
       y_stop = (int)((height * (I->max_box[1] - I->Volume[2]))/I->Range[1]) + 2;
-      y_start  = (int)((height * (I->min_box[1] - I->Volume[2]))/I->Range[1]) - 1;
+      y_start  = (int)((height * (I->min_box[1] - I->Volume[2]))/I->Range[1]) - 2;
                       
       if(x_start<0) x_start = 0;
       if(y_start<0) y_start = 0;
