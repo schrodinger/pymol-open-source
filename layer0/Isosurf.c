@@ -441,20 +441,23 @@ int	IsosurfVolume(Isofield *field,float level,int **num,float **vert,int *range,
 		IsosurfFree();
 		}
    
-   Num[NSeg]=0;  /* important - must terminate the segment list */
-   
-   if(Feedback(FB_Isomesh,FB_Actions)) { 
-     if(mode)
-       printf(" IsosurfVolume: Surface generated using %d dots.\n",NLine); 
-     else
-       printf(" IsosurfVolume: Surface generated using %d lines.\n",NLine); 
+   if(mode) {
+     PRINTFB(FB_Isomesh,FB_Actions)
+       " IsosurfVolume: Surface generated using %d dots.\n",NLine
+     ENDFB;
+   } else {
+     PRINTFB(FB_Isomesh,FB_Actions)
+       " IsosurfVolume: Surface generated using %d lines.\n",NLine
+     ENDFB;
    }
 
    /* shrinks sizes for more efficient RAM usage */
 
-   VLASize(Line,float,NLine*3);
+   VLASize(Line,float,NLine*3+1);
    VLASize(Num,int,NSeg+1);
 
+   Num[NSeg]=0;  /* important - must terminate the segment list */
+   
 	*vert = Line;
 	*num = Num;
 	return(ok);
@@ -527,7 +530,7 @@ int	IsosurfPoints(void)
 	if(IsosurfCodeVertices())
 		{
 		if(ok) ok=IsosurfFindActiveEdges();
-		if(ok) ok=IsosurfDrawPoints();
+      if(ok) ok=IsosurfDrawPoints();
 		}
 	return(ok);
 }
@@ -538,137 +541,138 @@ int	IsosurfDrawPoints(void)
   int	i,j,k;
   int	ok=true;
   
- 	for(i=0;i<(Max[0]-1);i++)
-	for(j=0;j<Max[1];j++)
-	for(k=0;k<Max[2];k++)
-		{		
-		if((I3(VertexCodes,i,j,k))&&(!I3(VertexCodes,i+1,j,k)))
-			{
-			IsosurfInterpolate(
-				O4Ptr(Coord,i,j,k,0,CurOff),
-				O3Ptr(Data,i,j,k,CurOff),
-				O4Ptr(Coord,i+1,j,k,0,CurOff),
-				O3Ptr(Data,i+1,j,k,CurOff),
-				&(EdgePt(Point,i,j,k,0).Point[0]));
-         
-         VLACheck(Line,float,NLine*3+2);
-         a=Line+(NLine*3);
-         b=&(EdgePt(Point,i,j,k,0).Point[0]);
-         *(a++)=*(b++);
-         *(a++)=*(b++);
-         *a=*b;
-         NLine++;
-			}
-		else if(!(I3(VertexCodes,i,j,k))&&(I3(VertexCodes,i+1,j,k)))
-			{
-			IsosurfInterpolate(
-				O4Ptr(Coord,i,j,k,0,CurOff),
-				O3Ptr(Data,i,j,k,CurOff),
-				O4Ptr(Coord,i+1,j,k,0,CurOff),
-				O3Ptr(Data,i+1,j,k,CurOff),
-				&(EdgePt(Point,i,j,k,0).Point[0]));
-
-         VLACheck(Line,float,NLine*3+2);
-         a=Line+(NLine*3);
-         b=&(EdgePt(Point,i,j,k,0).Point[0]);
-         *(a++)=*(b++);
-         *(a++)=*(b++);
-         *a=*b;
-         NLine++;
-			}
-		else
-			I4(ActiveEdges,i,j,k,0)=0;
-		}
-
-	for(i=0;i<Max[0];i++)
-	for(j=0;j<(Max[1]-1);j++)
-	for(k=0;k<Max[2];k++)
-		{
-		if((I3(VertexCodes,i,j,k))&&(!I3(VertexCodes,i,j+1,k)))
-			{
-			I4(ActiveEdges,i,j,k,1)=2;
-			IsosurfInterpolate(
-				O4Ptr(Coord,i,j,k,0,CurOff),
-				O3Ptr(Data,i,j,k,CurOff),
-				O4Ptr(Coord,i,j+1,k,0,CurOff),
-				O3Ptr(Data,i,j+1,k,CurOff),
-				&(EdgePt(Point,i,j,k,1).Point[0]));
-
-         VLACheck(Line,float,NLine*3+2);
-         a=Line+(NLine*3);
-         b=&(EdgePt(Point,i,j,k,1).Point[0]);
-         *(a++)=*(b++);
-         *(a++)=*(b++);
-         *a=*b;
-         NLine++;
-
-			}
-		else if(!(I3(VertexCodes,i,j,k))&&(I3(VertexCodes,i,j+1,k)))
-			{
-			IsosurfInterpolate(
-				O4Ptr(Coord,i,j,k,0,CurOff),
-				O3Ptr(Data,i,j,k,CurOff),
-				O4Ptr(Coord,i,j+1,k,0,CurOff),
-				O3Ptr(Data,i,j+1,k,CurOff),
-				&(EdgePt(Point,i,j,k,1).Point[0]));
-
-         VLACheck(Line,float,NLine*3+2);
-         a=Line+(NLine*3);
-         b=&(EdgePt(Point,i,j,k,1).Point[0]);
-         *(a++)=*(b++);
-         *(a++)=*(b++);
-         *a=*b;
-         NLine++;
-
-			}
-		}
-
-	for(i=0;i<Max[0];i++)
-	for(j=0;j<Max[1];j++)
-	for(k=0;k<(Max[2]-1);k++)
-		{
-		if((I3(VertexCodes,i,j,k))&&(!I3(VertexCodes,i,j,k+1)))
-			{
-			IsosurfInterpolate(
-				O4Ptr(Coord,i,j,k,0,CurOff),
-				O3Ptr(Data,i,j,k,CurOff),
-				O4Ptr(Coord,i,j,k+1,0,CurOff),
-				O3Ptr(Data,i,j,k+1,CurOff),
-				&(EdgePt(Point,i,j,k,2).Point[0]));
-
-         VLACheck(Line,float,NLine*3+2);
-         a=Line+(NLine*3);
-         b=&(EdgePt(Point,i,j,k,2).Point[0]);
-         *(a++)=*(b++);
-         *(a++)=*(b++);
-         *a=*b;
-         NLine++;
-
-			}
-		else if(!(I3(VertexCodes,i,j,k))&&(I3(VertexCodes,i,j,k+1)))
-			{
-			IsosurfInterpolate(
-				O4Ptr(Coord,i,j,k,0,CurOff),
-				O3Ptr(Data,i,j,k,CurOff),
-				O4Ptr(Coord,i,j,k+1,0,CurOff),
-				O3Ptr(Data,i,j,k+1,CurOff),
-				&(EdgePt(Point,i,j,k,2).Point[0]));
-
-         VLACheck(Line,float,NLine*3+2);
-         a=Line+(NLine*3);
-         b=&(EdgePt(Point,i,j,k,2).Point[0]);
-         *(a++)=*(b++);
-         *(a++)=*(b++);
-         *a=*b;
-         NLine++;
-
-			}
-		}
-
-   Num[NSeg]=NLine-Num[NSeg];
-   NSeg++;
-   Num[NSeg]=NLine;
-	return(ok);
+  for(i=0;i<(Max[0]-1);i++)
+    for(j=0;j<Max[1];j++)
+      for(k=0;k<Max[2];k++)
+        {		
+          if((I3(VertexCodes,i,j,k))&&(!I3(VertexCodes,i+1,j,k)))
+            {
+              IsosurfInterpolate(
+                                 O4Ptr(Coord,i,j,k,0,CurOff),
+                                 O3Ptr(Data,i,j,k,CurOff),
+                                 O4Ptr(Coord,i+1,j,k,0,CurOff),
+                                 O3Ptr(Data,i+1,j,k,CurOff),
+                                 &(EdgePt(Point,i,j,k,0).Point[0]));
+              
+              VLACheck(Line,float,NLine*3+2);
+              a=Line+(NLine*3);
+              b=&(EdgePt(Point,i,j,k,0).Point[0]);
+              *(a++)=*(b++);
+              *(a++)=*(b++);
+              *a=*b;
+              NLine++;
+            }
+          else if(!(I3(VertexCodes,i,j,k))&&(I3(VertexCodes,i+1,j,k)))
+            {
+              IsosurfInterpolate(
+                                 O4Ptr(Coord,i,j,k,0,CurOff),
+                                 O3Ptr(Data,i,j,k,CurOff),
+                                 O4Ptr(Coord,i+1,j,k,0,CurOff),
+                                 O3Ptr(Data,i+1,j,k,CurOff),
+                                 &(EdgePt(Point,i,j,k,0).Point[0]));
+              
+              VLACheck(Line,float,NLine*3+2);
+              a=Line+(NLine*3);
+              b=&(EdgePt(Point,i,j,k,0).Point[0]);
+              *(a++)=*(b++);
+              *(a++)=*(b++);
+              *a=*b;
+              NLine++;
+            }
+          else
+            I4(ActiveEdges,i,j,k,0)=0;
+        }
+  
+  for(i=0;i<Max[0];i++)
+    for(j=0;j<(Max[1]-1);j++)
+      for(k=0;k<Max[2];k++)
+        {
+          if((I3(VertexCodes,i,j,k))&&(!I3(VertexCodes,i,j+1,k)))
+            {
+              I4(ActiveEdges,i,j,k,1)=2;
+              IsosurfInterpolate(
+                                 O4Ptr(Coord,i,j,k,0,CurOff),
+                                 O3Ptr(Data,i,j,k,CurOff),
+                                 O4Ptr(Coord,i,j+1,k,0,CurOff),
+                                 O3Ptr(Data,i,j+1,k,CurOff),
+                                 &(EdgePt(Point,i,j,k,1).Point[0]));
+              
+              VLACheck(Line,float,NLine*3+2);
+              a=Line+(NLine*3);
+              b=&(EdgePt(Point,i,j,k,1).Point[0]);
+              *(a++)=*(b++);
+              *(a++)=*(b++);
+              *a=*b;
+              NLine++;
+              
+            }
+          else if(!(I3(VertexCodes,i,j,k))&&(I3(VertexCodes,i,j+1,k)))
+            {
+              IsosurfInterpolate(
+                                 O4Ptr(Coord,i,j,k,0,CurOff),
+                                 O3Ptr(Data,i,j,k,CurOff),
+                                 O4Ptr(Coord,i,j+1,k,0,CurOff),
+                                 O3Ptr(Data,i,j+1,k,CurOff),
+                                 &(EdgePt(Point,i,j,k,1).Point[0]));
+              
+              VLACheck(Line,float,NLine*3+2);
+              a=Line+(NLine*3);
+              b=&(EdgePt(Point,i,j,k,1).Point[0]);
+              *(a++)=*(b++);
+              *(a++)=*(b++);
+              *a=*b;
+              NLine++;
+              
+            }
+        }
+  
+  for(i=0;i<Max[0];i++)
+    for(j=0;j<Max[1];j++)
+      for(k=0;k<(Max[2]-1);k++)
+        {
+          if((I3(VertexCodes,i,j,k))&&(!I3(VertexCodes,i,j,k+1)))
+            {
+              IsosurfInterpolate(
+                                 O4Ptr(Coord,i,j,k,0,CurOff),
+                                 O3Ptr(Data,i,j,k,CurOff),
+                                 O4Ptr(Coord,i,j,k+1,0,CurOff),
+                                 O3Ptr(Data,i,j,k+1,CurOff),
+                                 &(EdgePt(Point,i,j,k,2).Point[0]));
+              
+              VLACheck(Line,float,NLine*3+2);
+              a=Line+(NLine*3);
+              b=&(EdgePt(Point,i,j,k,2).Point[0]);
+              *(a++)=*(b++);
+              *(a++)=*(b++);
+              *a=*b;
+              NLine++;
+              
+            }
+          else if(!(I3(VertexCodes,i,j,k))&&(I3(VertexCodes,i,j,k+1)))
+            {
+              IsosurfInterpolate(
+                                 O4Ptr(Coord,i,j,k,0,CurOff),
+                                 O3Ptr(Data,i,j,k,CurOff),
+                                 O4Ptr(Coord,i,j,k+1,0,CurOff),
+                                 O3Ptr(Data,i,j,k+1,CurOff),
+                                 &(EdgePt(Point,i,j,k,2).Point[0]));
+              
+              VLACheck(Line,float,NLine*3+2);
+              a=Line+(NLine*3);
+              b=&(EdgePt(Point,i,j,k,2).Point[0]);
+              *(a++)=*(b++);
+              *(a++)=*(b++);
+              *a=*b;
+              NLine++;
+              
+            }
+        }
+  
+  VLACheck(Num,int,NSeg+1);
+  Num[NSeg]=NLine-Num[NSeg];
+  NSeg++;
+  Num[NSeg]=NLine;
+  return(ok);
 }
 /*===========================================================================*/
 int	IsosurfDrawLines(void)
@@ -758,6 +762,7 @@ int	IsosurfDrawLines(void)
 					LCount++;
 #endif
 					Cur=NULL;
+               VLACheck(Num,int,NSeg+1);
 					Num[NSeg]=NLine-Num[NSeg];
 					NSeg++;
 					VLACheck(Num,int,NSeg);

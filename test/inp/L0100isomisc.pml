@@ -15,7 +15,7 @@ ray renderer=2
 
 dele m1
 
-/for a in range(1,10): cmd.isosurf("m2","map",1.0+a/10.0,state=a)
+/for a in range(1,10): cmd.isosurface("m2","map",1.0+a/10.0,state=a)
 
 ray renderer=2
 
@@ -40,7 +40,7 @@ ray renderer=2
 
 dele m1
 
-/for a in range(1,10): cmd.isosurf("m2","map",1.0+a/10.0,state=a)
+/for a in range(1,10): cmd.isosurface("m2","map",1.0+a/10.0,state=a)
 
 ray renderer=2
 

@@ -166,6 +166,15 @@ CHANGE LOG
 =========================================================================
 Changes up to 0.88
 
+   * Fixed an ancient memory trasher bug in Isosurface, thank God for
+     test cases! 
+
+   * Wizards, as Python objects, are now saved with sessions! : )
+
+   * Wizard stack
+
+   * scene annotation
+
    * tearoff menus
 
    * pdb_standard_order setting 
