@@ -46,7 +46,7 @@ class Atom:
    def get_mass(self):
       return atomic_mass[self.symbol]
 
-   def get_implicit_valences(self):
+   def get_implicit_valence(self):
       return implicit_valence[self.symbol]
    
    def has(self,attr):

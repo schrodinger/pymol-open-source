@@ -59,15 +59,15 @@ class Base:
       for a in self.bond:
          ai0 = a.index[0]
          ai1 = a.index[1]
-         valence[ai0] = valence[ai0] + 1
-         valence[ai1] = valence[ai1] + 1
+         valence[ai0] = valence[ai0] + a.order
+         valence[ai1] = valence[ai1] + a.order
       c = 0
-      for a in model.atom:
+      for a in self.atom:
          valence[c] = valence[c] - a.formal_charge
-         implicit[c] = implicit_valence[a.symbol][valence[c]]
+         implicit[c] = a.get_implicit_valence()[valence[c]]
          c = c + 1
       h_count = reduce(operator.__add__,implicit)
-      hydrogen = Atom()
+      hydrogen = chempy.Atom()
       hydrogen.symbol='H'
       return self.get_mass()+hydrogen.get_mass()*h_count
 
