@@ -80,7 +80,7 @@ if pymol_launch != 3: # if this isn't a dry run
             # that didn't work, so check ther reverse situation "/modules/pymol/__init__.py"
             # which would right for an RPM install or simply import pymol with PYTHONPATH set
             else:
-               pymol_path = re.sub(r"[\/\\]modules[\/\\]pymol[\/\\]__init__\.py$","",pymol_file)
+               pymol_path = re.sub(r"[\/\\]modules[\/\\]pymol[\/\\]__init__\.py[c]*$","",pymol_file)
                if os.path.isdir(pymol_path):
                   os.environ['PYMOL_PATH'] = pymol_path
          except NameError:
