@@ -1954,9 +1954,13 @@ int RayTraceThread(CRayThreadInfo *T)
                   
                   if(i >= 0)
                     {
-                      if(r1.prim->type == cPrimSausage)	/* carry ray through the stick */
-                        excl_trans	= new_front+(2*r1.surfnormal[2]*r1.prim->r1);
-                      
+                      if(r1.prim->type == cPrimSausage) {	/* carry ray through the stick */
+                        if(perspective) 
+                          excl_trans = (2*r1.surfnormal[2]*r1.prim->r1/r1.dir[2]);                          
+                        else
+                          excl_trans = new_front+(2*r1.surfnormal[2]*r1.prim->r1);
+                      }
+
                       if((!backface_cull)&&(trans_mode!=2))
                         persist	= persist * r1.trans;
                       else 
