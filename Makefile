@@ -175,6 +175,7 @@ compileall:
 OSXPROD=products/MacPyMOL.app
 OSXFREE=products/PyMOL.app
 OSXFEDORA=products/FedoraPyMOL.app
+OSXFRWK=products/FrameworkPyMOL.app
 OSXDEMO=products/PyMOL\ Demos
 OSXPYMOL=$(OSXPROD)/pymol
 OSXEXE=$(OSXPROD)/Contents/MacOS/PyMOL
@@ -221,7 +222,6 @@ osx-product: osx
 	cp LICENSE $(OSXPYMOL)/
 	cp README $(OSXPYMOL)/
 
-osx-framework: osx-unwrap osx-python-framework osx-product
 
 osx-standalone: osx-unwrap osx-python-standalone osx-product
 	/bin/rm -rf $(OSXPY)
@@ -239,6 +239,14 @@ osx-demo-data:
 	cp -R demo_data/* $(OSXPYMOL)/data/demo/
 
 osx-demo: osx-standalone osx-demo-data osx-unwrap-demos 
+
+mac-framework: osx-unwrap osx-python-framework osx-product
+	/bin/rm -rf $(OSXFRWK)
+	/bin/cp -R $(OSXPROD) $(OSXFRWK)
+	sed 's/MacPyMOL/FrameworkPyMOL/' $(OSXFRWK)/Contents/Info.plist > $(OSXFRWK)/Contents/Info.plist.tmp
+	mv $(OSXFRWK)/Contents/Info.plist.tmp $(OSXFRWK)/Contents/Info.plist
+	/bin/rm -r $(OSXFRWK)/Contents/Resources/English.lproj/MainMenu.nib
+	/bin/rm -r $(OSXFRWK)/Contents/Resources/English.lproj/MainMenu~.nib
 
 mac: osx-standalone
 	/bin/cp layerOSX/bundle/splash.png $(OSXPYMOL)/data/pymol/
