@@ -91,8 +91,9 @@ void ExecutiveObjMolSeleOp(int sele,ObjectMoleculeOpRec *op);
 SpecRec *ExecutiveFindSpec(char *name);
 
 void ExecutiveFocus(void)
-{
+{ /* unfortunately, this doesn't achieve the desired effect */
   glutPopWindow();
+  glutShowWindow();
 }
 /*========================================================================*/
 void ExecutiveSetLastObjectEdited(Object *o)
