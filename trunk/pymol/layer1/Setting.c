@@ -914,9 +914,9 @@ void SettingInitGlobal(void)
 
   SettingSet_f(I,cSetting_cull_spheres, 1.0F);
 
-  SettingSet_f(I,cSetting_test1, 0.0F);
+  SettingSet_f(I,cSetting_test1, 1.0F);
 
-  SettingSet_f(I,cSetting_test2, 0.0F);
+  SettingSet_f(I,cSetting_test2, 1.0F);
 
   SettingSet_f(I,cSetting_surface_best, 0.2F);
 
