@@ -2,12 +2,6 @@
 PyMOL (C) 1998-2001 by Warren L. DeLano of DeLano Scientific.
 http://www.pymol.org  EMAIL: warren@delanoscientific.com
 ----------------------------------------------------------------------
-NOTICE NOTICE NOTICE NOTICE NOTICE NOTICE NOTICE NOTICE NOTICE NOTICE 
-** This is an early alpha-test release of the PyMOL that is not
-** intended for widespread usage. Please contact Warren L. DeLano 
-** directly if you would like to use this software or contribute 
-** to its development.
-----------------------------------------------------------------------
 PyMOL is an OPEN SOURCE program distributed under the "Python" license.
 Please see the LICENSE file for additional information.
 ----------------------------------------------------------------------
@@ -23,8 +17,8 @@ see INSTALL for installation instructions
 ----------------------------------------------------------------------
 Specific Acknowledgments:
 
-* Thanks to Ralf Grosse-Kunstleve for his contribution of the
-"sglite" space group and symmetry handling module.
+* Thanks to Ralf Grosse-Kunstleve for his contribution of the "sglite"
+space group and symmetry handling module.
 
 * Thanks to Brian Paul and the Precision Insight team for development
 of Mesa/DRI which greatly assisted in the early development of PyMOL.
