@@ -30,4 +30,5 @@ extern int StereoCapable;
 void was_main(int gui);
 #endif
 
+
 #endif

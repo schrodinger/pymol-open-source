@@ -34,7 +34,6 @@ Z* -------------------------------------------------------------------
 
 CMovie Movie;
 
-extern PyThreadState *_save;
 /*========================================================================*/
 int MoviePlaying(void)
 {
@@ -114,9 +113,7 @@ void MoviePNG(char *prefix,int save)
 		sprintf(fname,"%s_%04d.png",prefix,a+1);
 		SceneSetFrame(0,a);
 		MovieDoFrameCommand(a);
-		Py_UNBLOCK_THREADS;
-		PFlush(&_save);
-		Py_BLOCK_THREADS;
+		PFlush();
 		i=MovieFrameToImage(a);
 		if(!I->Image[i]) {
 		  SceneMakeMovieImage();

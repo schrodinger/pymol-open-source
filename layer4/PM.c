@@ -13,7 +13,28 @@ I* Additional authors of this source file include:
 -*
 Z* -------------------------------------------------------------------
 */
- 
+
+
+/* 
+   NOTICE:
+
+   Important thread safety tip:
+
+   PM operations which will ultimately call GLUT can only be called by
+   the main GLUT thread (with some exceptions, such as the simple
+   drawing operations which seem to be thread safe).
+
+   Thus, pm.py needs to guard against direct invocation of certain _pm
+   (API) calls from outside threads [Examples: _pm.png(..),
+   _pmmpng(..) ].  Instead, it needs to hand them over to the main
+   thread by way of a pm.mdo(...)  statement.
+
+   Note that current, most glut operations have been pushed into the
+   main event and redraw loops to avoid these kinds of problems - so
+   I'm not sure how important this really is anymore.
+
+*/
+   
 #include<stdlib.h>
 #include<Python.h>
 
@@ -41,6 +62,18 @@ Z* -------------------------------------------------------------------
 #define tmpSele2 "_tmp2"
 
 PyObject *PM_Globals = NULL;
+
+static void APIEntry(void)
+{
+  P_glut_thread_keep_out++;
+  PUnblock();
+}
+
+static void APIExit(void)
+{
+  P_glut_thread_keep_out--;
+  PBlock();
+}
 
 static PyObject *PMAlter(PyObject *self,   PyObject *args);
 static PyObject *PMClip(PyObject *self, 	PyObject *args);
@@ -169,7 +202,9 @@ static PyObject *PMDump(PyObject *dummy, PyObject *args)
 {
   char *str1,*str2;
   PyArg_ParseTuple(args,"ss",&str1,&str2);
+  APIEntry();
   ExecutiveDump(str1,str2);
+  APIExit();
   Py_INCREF(Py_None);
   return Py_None;  
 }
@@ -190,7 +225,7 @@ static PyObject *PMIsomesh(PyObject *self, 	PyObject *args) {
   /* oper 0 = all, 1 = sele + buffer, 2 = vector */
 
   PyArg_ParseTuple(args,"sisissfi",&str1,&frame,&str2,&oper,&str3,&str4,&lvl,&dotFlag);
-  
+  APIEntry();
   mObj=ExecutiveFindObjectByName(str2);  
   if(mObj) {
     if(mObj->type!=cObjectMap)
@@ -228,6 +263,7 @@ static PyObject *PMIsomesh(PyObject *self, 	PyObject *args) {
     sprintf(buf,"Map object '%s' not found.",str2);
     ErrMessage("Mesh",buf);
   }
+  APIExit();
   Py_INCREF(Py_None);
   return Py_None;  
 }
@@ -237,14 +273,18 @@ static PyObject *PMOverlap(PyObject *dummy, PyObject *args)
 {
   char *str1,*str2;
   int state1,state2;
+  float overlap;
   OrthoLineType s1,s2;
   PyObject *result;
   PyArg_ParseTuple(args,"ssii",&str1,&str2,&state1,&state2);
+  APIEntry();
   SelectorGetTmp(str1,s1);
   SelectorGetTmp(str2,s2);
-  result = Py_BuildValue("f",ExecutiveOverlap(s1,state1,s2,state2));
+  overlap = ExecutiveOverlap(s1,state1,s2,state2);
   SelectorFreeTmp(s1);
   SelectorFreeTmp(s2);
+  APIExit();
+  result = Py_BuildValue("f",overlap);
   return result;
 }
 
@@ -254,13 +294,14 @@ static PyObject *PMDist(PyObject *dummy, PyObject *args)
   float cutoff;
   int mode;
   OrthoLineType s1,s2;
-  PyObject *result;
   PyArg_ParseTuple(args,"sssif",&name,&str1,&str2,&mode,&cutoff);
+  APIEntry();
   SelectorGetTmp(str1,s1);
   SelectorGetTmp(str2,s2);
   ExecutiveDist(name,s1,s2,mode,cutoff);
   SelectorFreeTmp(s1);
   SelectorFreeTmp(s2);
+  APIExit();
   Py_INCREF(Py_None);
   return Py_None;  
 }
@@ -269,13 +310,17 @@ static PyObject *PMDistance(PyObject *dummy, PyObject *args)
 {
   char *str1,*str2;
   OrthoLineType s1,s2;
+  float dist;
   PyObject *result;
   PyArg_ParseTuple(args,"ss",&str1,&str2);
+  APIEntry();
   SelectorGetTmp(str1,s1);
   SelectorGetTmp(str2,s2);
-  result = Py_BuildValue("f",ExecutiveDistance(s1,s2));
+  dist = ExecutiveDistance(s1,s2);
   SelectorFreeTmp(s1);
   SelectorFreeTmp(s2);
+  APIExit();
+  result = Py_BuildValue("f",dist);
   return result;
 }
 
@@ -285,9 +330,11 @@ static PyObject *PMAlter(PyObject *self,   PyObject *args)
   OrthoLineType s1;
 
   PyArg_ParseTuple(args,"ss",&str1,&str2);
+  APIEntry();
   SelectorGetTmp(str1,s1);
   ExecutiveAlter(s1,str2);
   SelectorFreeTmp(s1);
+  APIExit();
   Py_INCREF(Py_None);
   return Py_None;
 
@@ -297,7 +344,9 @@ static PyObject *PMCopy(PyObject *self,   PyObject *args)
 {
   char *str1,*str2;
   PyArg_ParseTuple(args,"ss",&str1,&str2);
+  APIEntry();
   ExecutiveCopy(str1,str2);
+  APIExit();
   Py_INCREF(Py_None);
   return Py_None;
 }
@@ -306,7 +355,9 @@ static PyObject *PMResetRate(PyObject *dummy, PyObject *args)
 {
   PyObject *result = NULL;
   result=Py_None;
+  APIEntry();
   ButModeResetRate();
+  APIExit();
   Py_INCREF(result);
   return(result);
 }
@@ -343,10 +394,15 @@ static PyObject *PMCountStates(PyObject *dummy, PyObject *args)
   char *str1;
   OrthoLineType s1;
   PyObject *result;
+  int states;
+
   PyArg_ParseTuple(args,"s",&str1);
+  APIEntry();
   SelectorGetTmp(str1,s1);
-  result = Py_BuildValue("i",ExecutiveCountStates(s1));
+  states = ExecutiveCountStates(s1);
   SelectorFreeTmp(s1); 
+  APIExit();
+  result = Py_BuildValue("i",states);
   return(result);
 }
 
@@ -354,8 +410,13 @@ static PyObject *PMSystem(PyObject *dummy, PyObject *args)
 {
   char *str1;
   PyObject *result = NULL;
+  int code;
+
   PyArg_ParseTuple(args,"s",&str1);
-  result = Py_BuildValue("i",system(str1));
+  APIEntry();
+  code = system(str1);
+  APIExit();
+  result = Py_BuildValue("i",code);
   return(result);
 }
 
@@ -363,9 +424,11 @@ static PyObject *PMGetFeedback(PyObject *dummy, PyObject *args)
 {
   OrthoLineType buffer;
   PyObject *result = NULL;
+  int code;
 
-  if(OrthoFeedbackOut(buffer))
-	result = Py_BuildValue("s",buffer);
+  code = OrthoFeedbackOut(buffer);
+  if(code)
+    result = Py_BuildValue("s",buffer);
   if(!result) {
 	result=Py_None;
 	Py_INCREF(result);
@@ -384,9 +447,11 @@ static PyObject *PMGetPDB(PyObject *dummy, PyObject *args)
   PyObject *result = NULL;
   
   PyArg_ParseTuple(args,"si",&str1,&state);
+  APIEntry();
   SelectorGetTmp(str1,s1);
   pdb=ExecutiveSeleToPDBStr(s1,state,true);
   SelectorFreeTmp(s1);
+  APIExit();
   if(pdb)
     result = Py_BuildValue("s",pdb);
   if(!result) {
@@ -405,10 +470,12 @@ static PyObject *PMOrient(PyObject *dummy, PyObject *args)
   OrthoLineType s1;
 
   PyArg_ParseTuple(args,"s",&str1);
+  APIEntry();
   SelectorGetTmp(str1,s1);
   if(ExecutiveGetMoment(s1,m))
     ExecutiveOrient(s1,m);
   SelectorFreeTmp(s1); 
+  APIExit();
   Py_INCREF(Py_None);
   return Py_None;
 }
@@ -421,6 +488,7 @@ static PyObject *PMFitPairs(PyObject *dummy, PyObject *args)
   int a;
   int ok=true;
   PyObject *result = NULL;
+  float valu;
   PyArg_ParseTuple(args,"O",&list);
   ln = PyObject_Length(list);
   if(ln) {
@@ -436,7 +504,10 @@ static PyObject *PMFitPairs(PyObject *dummy, PyObject *args)
       SelectorGetTmp(PyString_AsString(PySequence_GetItem(list,a)),word[a]);
       a++;
     }
-    result=Py_BuildValue("f",ExecutiveRMSPairs(word,ln/2,2));
+    APIEntry();
+    valu = ExecutiveRMSPairs(word,ln/2,2);
+    APIExit();
+    result=Py_BuildValue("f",valu);
     for(a=0;a<ln;a++)
       SelectorFreeTmp(word[a]);
     FreeP(word);
@@ -457,14 +528,16 @@ static PyObject *PMIntraFit(PyObject *dummy, PyObject *args)
   float *fVLA;
   PyObject *result=Py_None;
   PyArg_ParseTuple(args,"sii",&str1,&state,&mode);
-  SelectorGetTmp(str1,s1);
   if(state<0) state=0;
+  APIEntry();
+  SelectorGetTmp(str1,s1);
   fVLA=ExecutiveRMSStates(s1,state,mode);
+  SelectorFreeTmp(s1);
+  APIExit();
   if(fVLA) {
     result=PFloatVLAToPyList(fVLA);
     VLAFreeP(fVLA);
   }
-  SelectorFreeTmp(s1);
   if(result==Py_None) Py_INCREF(result);
   return result;
 }
@@ -476,17 +549,21 @@ static PyObject *PMFit(PyObject *dummy, PyObject *args)
   OrthoLineType s1,s2;
   PyObject *result;
   PyArg_ParseTuple(args,"ssi",&str1,&str2,&mode);
+  APIEntry();
   SelectorGetTmp(str1,s1);
   SelectorGetTmp(str2,s2);
   result=Py_BuildValue("f",ExecutiveRMS(s1,s2,mode));
   SelectorFreeTmp(s1);
   SelectorFreeTmp(s2);
+  APIExit();
   return result;
 }
 
 static PyObject *PMDirty(PyObject *self, 	PyObject *args)
 {
+  APIEntry();
   OrthoDirty();
+  APIExit();
   Py_INCREF(Py_None);
   return Py_None;
 }
@@ -496,19 +573,23 @@ static PyObject *PMDo(PyObject *self, 	PyObject *args)
   char *str1;
 
   PyArg_ParseTuple(args,"s",&str1);
+  APIEntry();
   if(str1[0]!='_') {
     OrthoAddOutput("PyMOL>");
     OrthoAddOutput(str1);
   }
   PParse(str1);
   OrthoNewLine(NULL);
+  APIExit();
   Py_INCREF(Py_None);
   return Py_None;
 }
 
 static PyObject *PMRock(PyObject *self, PyObject *args)
 {
+  APIEntry();
   ControlRock(-1);
+  APIExit();
   return Py_None;
 }
 
@@ -519,8 +600,9 @@ static PyObject *PMGetMoment(PyObject *self, 	PyObject *args)
 
   char *str1;
   PyArg_ParseTuple(args,"s",&str1);
-
+  APIEntry();
   ExecutiveGetMoment(str1,m);
+  APIExit();
   result = Py_BuildValue("(ddd)(ddd)(ddd)", 
 								 m[0][0],m[0][1],m[0][2],
 								 m[1][0],m[1][1],m[1][2],
@@ -537,7 +619,9 @@ static PyObject *PMExportDots(PyObject *self, 	PyObject *args)
   int int1;
   
   PyArg_ParseTuple(args,"si",&str1,&int1);
+  APIEntry();
   obj = ExportDots(str1,int1-1);
+  APIExit();
   if(obj) 
 	 {
 		cObj = PyCObject_FromVoidPtr(obj,(void(*)(void*))ExportDeleteMDebug);
@@ -558,7 +642,9 @@ static PyObject *PMSetFrame(PyObject *self, PyObject *args)
 {
   int mode,frm;
   PyArg_ParseTuple(args,"ii",&mode,&frm);
+  APIEntry();
   SceneSetFrame(mode,frm);
+  APIExit();
   Py_INCREF(Py_None);
   return Py_None;
 }
@@ -569,7 +655,9 @@ static PyObject *PMFrame(PyObject *self, PyObject *args)
   PyArg_ParseTuple(args,"i",&frm);
   frm--;
   if(frm<0) frm=0;
+  APIEntry();
   SceneSetFrame(0,frm);
+  APIExit();
   Py_INCREF(Py_None);
   return Py_None;
 }
@@ -580,7 +668,9 @@ static PyObject *PMStereo(PyObject *self, PyObject *args)
   int i1;
   if(StereoCapable) {
   PyArg_ParseTuple(args,"i",&i1);
+  APIEntry();
   ExecutiveStereo(i1);
+  APIExit();
   result=Py_BuildValue("i",1);
   } else {
   result=Py_BuildValue("i",0);
@@ -592,7 +682,9 @@ static PyObject *PMReset(PyObject *self, PyObject *args)
 {
   int cmd;
   PyArg_ParseTuple(args,"i",&cmd);
+  APIEntry();
   ExecutiveReset(cmd);
+  APIExit();
   Py_INCREF(Py_None);
   return Py_None;
 }
@@ -605,7 +697,9 @@ static PyObject *PMSetMatrix(PyObject *self, 	PyObject *args)
 						 &m[4],&m[5],&m[6],&m[7],
 						 &m[8],&m[9],&m[10],&m[11],
 						 &m[12],&m[13],&m[14],&m[15]);
+  APIEntry();
   SceneSetMatrix(m);
+  APIExit();
   Py_INCREF(Py_None);
   return Py_None;
 }
@@ -614,8 +708,10 @@ static PyObject *PMGetMatrix(PyObject *self, 	PyObject *args)
 {
   float *f;
   PyObject *result;
-
+  
+  APIEntry();
   f=SceneGetMatrix();
+  APIExit();
   result = Py_BuildValue("ffffffffffffffff", 
 								 f[0],f[1],f[2],f[3],
 								 f[4],f[5],f[6],f[7],
@@ -630,7 +726,9 @@ static PyObject *PMMDo(PyObject *self, 	PyObject *args)
   char *cmd;
   int frame;
   PyArg_ParseTuple(args,"is",&frame,&cmd);
+  APIEntry();
   MovieSetCommand(frame,cmd);
+  APIExit();
   Py_INCREF(Py_None);
   return Py_None;
 }
@@ -639,7 +737,9 @@ static PyObject *PMMPlay(PyObject *self, 	PyObject *args)
 {
   int cmd;
   PyArg_ParseTuple(args,"i",&cmd);
+  APIEntry();
   MoviePlay(cmd);
+  APIExit();
   Py_INCREF(Py_None);
   return Py_None;
 }
@@ -648,7 +748,9 @@ static PyObject *PMMMatrix(PyObject *self, 	PyObject *args)
 {
   int cmd;
   PyArg_ParseTuple(args,"i",&cmd);
+  APIEntry();
   MovieMatrix(cmd);
+  APIExit();
   Py_INCREF(Py_None);
   return Py_None;
 }
@@ -662,7 +764,6 @@ static PyObject *PMSetGlobals(PyObject *dummy, PyObject *args)
   if(globals) {
 	 PM_Globals = globals;
   }
-
   result = Py_None;
   Py_INCREF(result);
   return result;
@@ -677,22 +778,28 @@ static PyObject *PMGetGlobals(PyObject *dummy, PyObject *args)
 
 static PyObject *PMMClear(PyObject *self, 	PyObject *args)
 {
+  APIEntry();
   MovieClearImages();
+  APIExit();
   Py_INCREF(Py_None);
   return Py_None;
 }
 
 static PyObject *PMRefresh(PyObject *self, 	PyObject *args)
 {
+  APIEntry();
   ExecutiveDrawNow();
+  APIExit();
   Py_INCREF(Py_None);
   return Py_None;
 }
 
 static PyObject *PMRefreshNow(PyObject *self, 	PyObject *args)
 {
+  APIEntry();
   ExecutiveDrawNow();
   MainRefreshNow();
+  APIExit();
   Py_INCREF(Py_None);
   return Py_None;
 }
@@ -701,8 +808,10 @@ static PyObject *PMPNG(PyObject *self, 	PyObject *args)
 {
   char *str1;
   PyArg_ParseTuple(args,"s",&str1);
-  ExecutiveDrawNow();
+  APIEntry();
+  ExecutiveDrawNow();		
   ScenePNG(str1);
+  APIExit();
   Py_INCREF(Py_None);
   return Py_None;
 }
@@ -711,7 +820,9 @@ static PyObject *PMMPNG(PyObject *self, 	PyObject *args)
 {
   char *str1;
   PyArg_ParseTuple(args,"s",&str1);
+  APIEntry();
   MoviePNG(str1,SettingGet(cSetting_cache_frames));
+  APIExit();
   Py_INCREF(Py_None);
   return Py_None;
 }
@@ -720,8 +831,10 @@ static PyObject *PMMSet(PyObject *self, 	PyObject *args)
 {
   char *str1;
   PyArg_ParseTuple(args,"s",&str1);
+  APIEntry();
   MovieSequence(str1);
   SceneCountFrames();
+  APIExit();
   Py_INCREF(Py_None);
   return Py_None;
 }
@@ -735,7 +848,9 @@ static PyObject *PMViewport(PyObject *self, 	PyObject *args)
 
   w+=cOrthoRightSceneMargin;
   h+=cOrthoBottomSceneMargin;
+  APIEntry();
   MainDoReshape(w,h); /* should be moved into Executive */
+  APIExit();
   Py_INCREF(Py_None);
   return Py_None;
 }
@@ -746,9 +861,11 @@ static PyObject *PMColor(PyObject *self, 	PyObject *args)
   int flags;
   OrthoLineType s1;
   PyArg_ParseTuple(args,"ssi",&color,&str1,&flags);
+  APIEntry();
   SelectorGetTmp(str1,s1);
   ExecutiveColor(s1,color,flags);
   SelectorFreeTmp(s1);
+  APIExit();
   Py_INCREF(Py_None);
   return Py_None;
 }
@@ -758,19 +875,18 @@ static PyObject *PMColorDef(PyObject *self, 	PyObject *args)
   char *color;
   float v[3];
   PyArg_ParseTuple(args,"sfff",&color,v,v+1,v+2);
+  APIEntry();
   ColorDef(color,v);
+  APIExit();
   Py_INCREF(Py_None);
   return Py_None;
 }
 
 static PyObject *PMRay(PyObject *self, 	PyObject *args)
 {
-  PyThreadState *_save;
-  Py_UNBLOCK_THREADS;
-
+  APIEntry();
   ExecutiveRay();
-
-  Py_BLOCK_THREADS;
+  APIExit();
   Py_INCREF(Py_None);
   return Py_None;
 }
@@ -780,6 +896,7 @@ static PyObject *PMClip(PyObject *self, 	PyObject *args)
   char *sname;
   float dist;
   PyArg_ParseTuple(args,"sf",&sname,&dist);
+  APIEntry();
   switch(sname[0]) {
   case 'n':
 	 SceneClip(0,dist);
@@ -788,6 +905,7 @@ static PyObject *PMClip(PyObject *self, 	PyObject *args)
 	 SceneClip(1,dist);
 	 break;
   }
+  APIExit();
   Py_INCREF(Py_None);
   return Py_None;
 
@@ -798,6 +916,7 @@ static PyObject *PMMove(PyObject *self, 	PyObject *args)
   char *sname;
   float dist;
   PyArg_ParseTuple(args,"sf",&sname,&dist);
+  APIEntry();
   switch(sname[0]) {
   case 'x':
 	 SceneTranslate(dist,0.0,0.0);
@@ -809,6 +928,7 @@ static PyObject *PMMove(PyObject *self, 	PyObject *args)
 	 SceneTranslate(0.0,0.0,dist);
 	 break;
   }
+  APIExit();
   Py_INCREF(Py_None);
   return Py_None;
 }
@@ -818,6 +938,7 @@ static PyObject *PMTurn(PyObject *self, 	PyObject *args)
   char *sname;
   float angle;
   PyArg_ParseTuple(args,"sf",&sname,&angle);
+  APIEntry();
   switch(sname[0]) {
   case 'x':
 	 SceneRotate(angle,1.0,0.0,0.0);
@@ -829,6 +950,7 @@ static PyObject *PMTurn(PyObject *self, 	PyObject *args)
 	 SceneRotate(angle,0.0,0.0,1.0);
 	 break;
   }
+  APIExit();
   Py_INCREF(Py_None);
   return Py_None;
 }
@@ -837,7 +959,9 @@ static PyObject *PMSet(PyObject *self, 	PyObject *args)
 {
   char *sname,*value;
   PyArg_ParseTuple(args,"ss",&sname,&value);
+  APIEntry();
   ExecutiveSetSetting(sname,value);
+  APIExit();
   Py_INCREF(Py_None);
   return Py_None;
 }
@@ -849,7 +973,9 @@ static PyObject *PMGet(PyObject *self, 	PyObject *args)
   PyObject *result;
 
   PyArg_ParseTuple(args,"s",&sname);
+  APIEntry();
   f=SettingGetNamed(sname);
+  APIExit();
   result = Py_BuildValue("f", f);
   return result;
 }
@@ -859,7 +985,9 @@ static PyObject *PMDelete(PyObject *self, 	PyObject *args)
   char *sname;
 
   PyArg_ParseTuple(args,"s",&sname);
+  APIEntry();
   ExecutiveDelete(sname);
+  APIExit();
   Py_INCREF(Py_None);
   return Py_None;
 }
@@ -871,6 +999,7 @@ static PyObject *PMShowHide(PyObject *self, 	PyObject *args)
   int state;
   OrthoLineType s1;
   PyArg_ParseTuple(args,"sii",&sname,&rep,&state);
+  APIEntry();
   if(sname[0]=='!') {
 	 ExecutiveSetAllVisib(state);
   } else {
@@ -878,6 +1007,7 @@ static PyObject *PMShowHide(PyObject *self, 	PyObject *args)
 	 ExecutiveSetRepVisib(s1,rep,state);
 	 SelectorFreeTmp(s1);
   }
+  APIExit();
   Py_INCREF(Py_None);
   return Py_None;
 }
@@ -887,7 +1017,9 @@ static PyObject *PMOnOff(PyObject *self, 	PyObject *args)
   char *name;
   int state;
   PyArg_ParseTuple(args,"si",&name,&state);
+  APIEntry();
   ExecutiveSetObjVisib(name,state);
+  APIExit();
   Py_INCREF(Py_None);
   return Py_None;
 }
@@ -904,8 +1036,10 @@ static PyObject *PMSelect(PyObject *self, PyObject *args)
   char *sname,*sele;
 
   PyArg_ParseTuple(args,"ss",&sname,&sele);
+  APIEntry();
   SelectorCreate(sname,sele,NULL);
   OrthoDirty();
+  APIExit();
   Py_INCREF(Py_None);
   return Py_None;
 }
@@ -929,6 +1063,7 @@ static PyObject *PMLoad(PyObject *self, PyObject *args)
 
   PyArg_ParseTuple(args,"ssii",&oname,&fname,&frame,&type);
 
+  APIEntry();
   origObj=ExecutiveFindObjectByName(oname);
 
       /* TODO check for existing object of wrong type */
@@ -1022,6 +1157,7 @@ static PyObject *PMLoad(PyObject *self, PyObject *args)
 	 OrthoAddOutput(buf);
 	 OrthoRestorePrompt();
   }
+  APIExit();
   Py_INCREF(Py_None);
   return Py_None;
 }
@@ -1032,9 +1168,11 @@ static PyObject *PMOrigin(PyObject *self, PyObject *args)
   OrthoLineType s1;
 
   PyArg_ParseTuple(args,"s",&str1);
+  APIEntry();
   SelectorGetTmp(str1,s1);
   ExecutiveCenter(s1,1);
   SelectorFreeTmp(s1);
+  APIExit();
   Py_INCREF(Py_None);
   return Py_None;
 }
@@ -1043,7 +1181,9 @@ static PyObject *PMSort(PyObject *self, PyObject *args)
 {
   char *name;
   PyArg_ParseTuple(args,"s",&name);
+  APIEntry();
   ExecutiveSort(name);
+  APIExit();
   Py_INCREF(Py_None);
   return Py_None;
 }
@@ -1054,10 +1194,12 @@ static PyObject *PMZoom(PyObject *self, PyObject *args)
   OrthoLineType s1;
 
   PyArg_ParseTuple(args,"s",&str1);
+  APIEntry();
   SelectorGetTmp(str1,s1);
   ExecutiveCenter(s1,1);
   ExecutiveWindowZoom(s1);
   SelectorFreeTmp(s1);
+  APIExit();
   Py_INCREF(Py_None);
   return Py_None;
 }

@@ -32,6 +32,15 @@ Z* -------------------------------------------------------------------
 #include"AtomInfo.h"
 #include"CoordSet.h"
 
+PyObject *P_pm = NULL;
+PyObject *P_pmm = NULL;
+PyObject *P_pmx = NULL;
+
+PyThreadState *P_glut_thread_state; /* this is the state for the main GUI thread */
+PyThreadState *P_api_thread_state; /* this is the thread state for an alternate thread */
+int P_glut_thread_active = 1;
+int P_glut_thread_keep_out = 0; /* enables us to keep glut out if by chance it grabs the API
+                                        * in the middle of a nested API based operation */
 
 void PSleep(int usec)
 { /* assumes threads have already been unblocked */
@@ -67,81 +76,78 @@ PyObject *PFloatVLAToPyList(float *f)
   return(result);
 }
 
-void PLock(int lock,PyThreadState **save)
-{
-  PyThreadState *_save;
-
-  _save = (*save);
-  Py_BLOCK_THREADS;
-  switch(lock) {
-  case cLockAPI:
-	 PyRun_SimpleString("pm.lock()");
-	 break;
-  }
-  Py_UNBLOCK_THREADS;
-  (*save)=_save;
-}
 
 int PAlterAtom(AtomInfoType *at,char *expr)
 {
   char atype[255],name[255],resi[255],chain[255],resn[255],segi[255];
   float b,q;
-  PyObject *input,*output;
+  PyObject *output;
   int result;
+
   if(at->hetatm)
     strcpy(atype,"HETATM");
   else
     strcpy(atype,"ATOM");
-  input = Py_BuildValue("[ssssssfffffs]",
-                        expr,
-                        atype,
-                        at->name,
-                        at->resn,
-                        at->chain,
-                        at->resi,
-                        0.0,0.0,0.0,
-                        at->q,
-                        at->b,
-                        at->segi);
-  PyDict_SetItemString(PM_Globals,"alter_inp",input);
-  Py_DECREF(input);
-  result = PyRun_SimpleString("alter_out = pm._alter_do(alter_inp)");
-  output = PyDict_GetItemString(PM_Globals,"alter_out");
-  if(output) {
-    strcpy(atype,PyString_AsString(PyList_GetItem(output,0)));
-    strcpy(name,PyString_AsString(PyList_GetItem(output,1)));
-    strcpy(resn,PyString_AsString(PyList_GetItem(output,2)));
-    strcpy(chain,PyString_AsString(PyList_GetItem(output,3)));
-    strcpy(resi,PyString_AsString(PyList_GetItem(output,4)));
-    q=PyFloat_AsDouble(PyList_GetItem(output,8));
-    b=PyFloat_AsDouble(PyList_GetItem(output,9));
-    strcpy(segi,PyString_AsString(PyList_GetItem(output,10)));
-    strcpy(at->name,name);
-    strcpy(at->resi,resi);
-    strcpy(at->chain,chain);
-    strcpy(at->resn,resn);
-    at->b = b;
-    at->q = q;
-    strcpy(at->segi,segi);
-    at->hetatm = (strcmp(atype,"HETATM")==0);
-    /*    printf("%s %s %s %s %s %8.3f %8.3f %s\n",
-          atype,name,resi,chain,resn,q,b,segi);*/
-  }
-  return(result);
+  PBlockAndUnlockAPI();
+  output = PyObject_CallMethod(P_pm,"_alter_do","[ssssssfffffs]",
+                               expr,
+                               atype,
+                               at->name,
+                               at->resn,
+                               at->chain,
+                               at->resi,
+                               0.0,0.0,0.0,
+                               at->q,
+                               at->b,
+                               at->segi);
+    if(output) {
+      result = 0;
+      strcpy(atype,PyString_AsString(PyList_GetItem(output,0)));
+      strcpy(name,PyString_AsString(PyList_GetItem(output,1)));
+      strcpy(resn,PyString_AsString(PyList_GetItem(output,2)));
+      strcpy(chain,PyString_AsString(PyList_GetItem(output,3)));
+      strcpy(resi,PyString_AsString(PyList_GetItem(output,4)));
+      q=PyFloat_AsDouble(PyList_GetItem(output,8));
+      b=PyFloat_AsDouble(PyList_GetItem(output,9));
+      strcpy(segi,PyString_AsString(PyList_GetItem(output,10)));
+      strcpy(at->name,name);
+      strcpy(at->resi,resi);
+      strcpy(at->chain,chain);
+      strcpy(at->resn,resn);
+      at->b = b;
+      at->q = q;
+      strcpy(at->segi,segi);
+      at->hetatm = (strcmp(atype,"HETATM")==0);
+      /*    printf("%s %s %s %s %s %8.3f %8.3f %s\n",
+            atype,name,resi,chain,resn,q,b,segi);*/
+      Py_DECREF(output);
+    } else {
+      result = -1;
+    }
+    PLockAPIAndUnblock();
+    return(result);
 }
 
-void PUnlock(int lock,PyThreadState **save)
+void PUnlockAPIAsGlut(void)
 {
-  PyThreadState *_save;
-  _save = (*save);
-  Py_BLOCK_THREADS;
-  switch(lock) {
-  case cLockAPI:
-	 PyRun_SimpleString("pm.unlock()\n");
-	 break;
+  PyEval_RestoreThread(P_glut_thread_state); /* grab python */
+  PyRun_SimpleString("pm.unlock()\n");
+  P_glut_thread_state = PyEval_SaveThread(); /* release python */
+}
+
+void PLockAPIAsGlut(void)
+{
+  PyEval_RestoreThread(P_glut_thread_state); /* grab python */
+  PyRun_SimpleString("pm.lock()");
+  while(P_glut_thread_keep_out) { /* IMPORTANT: keeps the glut thread out of an API operation... */
+	 PyRun_SimpleString("pm.unlock()");
+    P_glut_thread_state = PyEval_SaveThread(); /* release python */
+    PSleep(50000); /* wait 50 msec */
+    PyEval_RestoreThread(P_glut_thread_state); /* grab python */
+	 PyRun_SimpleString("pm.lock()");    
   }
-  Py_UNBLOCK_THREADS;
-  (*save)=_save;
+  P_glut_thread_state = PyEval_SaveThread(); /* release python */
+  P_glut_thread_active = 1; /* if we come in on a glut event - then it is the active thread */
 }
 
 void PInit(void)
@@ -164,16 +170,24 @@ void PInit(void)
   PyRun_SimpleString("import _pm\n"); /* the API */
   PyRun_SimpleString("import pcatch\n");
   
-   PyRun_SimpleString("sys.stdout = pcatch\n");
-   /*		PyRun_SimpleString("sys.stderr = pcatch\n");*/
-
+  PyRun_SimpleString("sys.stdout = pcatch\n");
+  /*		PyRun_SimpleString("sys.stderr = pcatch\n");*/
+  
   PyRun_SimpleString("_pm.set_globals(globals())");
   
   PyRun_SimpleString("import pm\n"); 
-  PyRun_SimpleString("import pmu\n");  
+  P_pm = PyDict_GetItemString(PM_Globals,"pm");
+
   PyRun_SimpleString("import pmm\n");  
-  PyRun_SimpleString("import string\n"); 
+  P_pmm = PyDict_GetItemString(PM_Globals,"pmm");
+
+  PyRun_SimpleString("import pmx\n");  
+  P_pmx = PyDict_GetItemString(PM_Globals,"pmx");
+
+  PyRun_SimpleString("import pmu\n");  
   PyRun_SimpleString("import sglite\n"); 
+  PyRun_SimpleString("import string\n"); 
+  
 
 #ifndef _PYMOL_MODULE
   PyRun_SimpleString("import thread\n"); 
@@ -218,52 +232,70 @@ void PParse(char *str)
   OrthoCommandIn(str);
 }
 
-void PFlush(PyThreadState **save) {  
+void PFlush(void) {  
   /* NOTE: ASSUMES we current have unblocked Python threads and a locked API */
   char buffer[OrthoLineLength+1];
   if(OrthoCommandOut(buffer)) {
 
-	PyThreadState *_save;
-	_save = (*save);
-
-	PUnlock(cLockAPI,&_save);
-	Py_BLOCK_THREADS;
+   PBlockAndUnlockAPI();
 
 	PyDict_SetItemString(PM_Globals,"pymol_cmd",PyString_FromString(buffer));
 	PyRun_SimpleString("pmp_cmd[pmp_nest] = pymol_cmd");
 	PyRun_SimpleString("exec(pymol,globals(),globals())");
 
-	Py_UNBLOCK_THREADS;
-	PLock(cLockAPI,&_save);
-
+   PLockAPIAndUnblock();
   }
 }
 
-void PBlock(PyThreadState **save)
+void PBlock(void)
 {
-  /* NOTE: ASSUMES we current have unblocked Python threads and a locked API */
+  /* synchronize python */
 
-  PyThreadState *_save;
-  _save = (*save);
-  Py_BLOCK_THREADS;
-  PyRun_SimpleString("pm.unlock()");
-  (*save)=_save;
+  if(P_glut_thread_active)
+    PyEval_RestoreThread(P_glut_thread_state);
+  else 
+    PyEval_RestoreThread(P_api_thread_state);
+
 }
 
-void PUnblock(PyThreadState **save)
+void PBlockAndUnlockAPI(void)
 {
-  /* NOTE: ASSUMES we current have blocked Python threads and an unlocked API */
-  PyThreadState *_save;
-  _save = (*save);
+  PBlock();
+  PyRun_SimpleString("pm.unlock()");
+}
+
+void PLockAPIAndUnblock(void)
+{
   PyRun_SimpleString("pm.lock()");
-  Py_UNBLOCK_THREADS;
-  (*save)=_save;
+  PUnblock();
+}
+
+void PUnblock(void)
+{
+  /* NOTE: ASSUMES a locked API */
+
+  PyObject *is_glut;
+
+  /* P_glut_thread_active will not change as long as lock holds */
+
+  is_glut = PyObject_CallMethod(P_pm,"is_glut_thread","");
+  P_glut_thread_active = PyInt_AsLong(is_glut);
+  Py_DECREF(is_glut);
+
+  /* allow python to run async */
+
+  if(P_glut_thread_active) 
+    P_glut_thread_state = PyEval_SaveThread();
+  else
+    P_api_thread_state = PyEval_SaveThread();
 }
 
 void PDefineFloat(char *name,float value) {
   char buffer[OrthoLineLength];
   sprintf(buffer,"%s = %f\n",name,value);
+  PBlock();
   PyRun_SimpleString(buffer);
+  PUnblock();
 }
 
 /* This function is called by the interpreter to get its own name */
@@ -297,9 +329,5 @@ void PCatchInit(void)
 	PyImport_AddModule("pcatch");
 	Py_InitModule("pcatch", PCatch_methods);
 }
-
-
-
-
 
 

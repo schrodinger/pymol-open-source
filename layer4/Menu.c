@@ -28,18 +28,18 @@ extern PyThreadState *_save;
 
 void MenuActivate(int x,int y,char *name,char *sele)
 {
-  /* assumes a locked API and unblocked python threads (GLUT event) */
+  /* assumes unblocked python threads (GLUT event), locked API */
 
   OrthoLineType buffer;
   PyObject *list;
 
-  PBlock(&_save);
+  PBlock(); /* pmm doesn't currently call API, so leave it locked */
 
-  sprintf(buffer,"pymol_menu = pmm.%s('%s')",name,sele);
-  PyRun_SimpleString(buffer);
-  list = PyDict_GetItemString(PM_Globals,"pymol_menu");
-  PopUpNew(x,y,list);
-
-  PUnblock(&_save);
+  list = PyObject_CallMethod(P_pmm,name,"s",sele); 
+  if(list) {
+    PopUpNew(x,y,list);
+    Py_DECREF(list);
+  }
+  PUnblock();
 }
 

@@ -26,7 +26,6 @@ import thread
 import __main__
 import os
 
-
 def split(str,tok):
    pair = { '(':')','[':']','{':'}',"'":"'",'"':'"' }
    plst = pair.keys()
@@ -426,9 +425,15 @@ def orient(*arg):
    unlock()
    return r
 
+def is_glut_thread():
+   if thread.get_ident() == __main__.glutThread:
+      return 1
+   else:
+      return 0
+
 def refresh():
    lock()
-   if thread.get_ident() ==__main__.glutThread:
+   if thread.get_ident() == __main__.glutThread:
       r = _pm.refresh_now()
    else:
       r = _pm.refresh()
@@ -481,6 +486,13 @@ def quit():
    return r
 
 def png(a):
+   if thread.get_ident() ==__main__.glutThread:
+      r = _png(a)
+   else:
+      r = _pm.do("pm._png('"+a+"')")
+   return r
+
+def _png(a):
    lock()   
    fname = a
    if not re.search("\.png$",fname):
