@@ -113,7 +113,7 @@ float ExecutiveRMS(PyMOLGlobals *G,char *sele1,char *sele2,int mode,float refine
                    int ordered_selections);
 void ExecutiveUpdateCmd(PyMOLGlobals *G,char *sele1,char *sele2,int sta1,int sta2);
 float ExecutiveRMSPairs(PyMOLGlobals *G,WordType *sele,int pairs,int mode);
-float *ExecutiveRMSStates(PyMOLGlobals *G,char *s1,int target,int mode,int quiet);
+float *ExecutiveRMSStates(PyMOLGlobals *G,char *s1,int target,int mode,int quiet, int mix);
 int *ExecutiveIdentify(PyMOLGlobals *G,char *s1,int mode);
 int ExecutiveIndex(PyMOLGlobals *G,char *s1,int mode,int **indexVLA,ObjectMolecule ***objVLA);
 int ExecutiveReset(PyMOLGlobals *G,int cmd,char *name);
