@@ -33,6 +33,7 @@ Z* -------------------------------------------------------------------
 typedef struct RepCartoon {
   Rep R; /* must be first! */
   CGO *ray,*std;
+
 } RepCartoon;
 
 #include"ObjectMolecule.h"
@@ -65,6 +66,10 @@ void RepCartoonRender(RepCartoon *I,CRay *ray,Pickable **pick)
       CGORenderRay(I->std,ray,NULL,I->R.cs->Setting,
                    I->R.obj->Setting);    
   } else if(pick&&PMGUI) {
+    if(I->std) {
+      CGORenderGLPickable(I->std,pick,I->R.obj,
+                          I->R.cs->Setting,I->R.obj->Setting);
+    }
   } else if(PMGUI) {
     
     int use_dlst;
@@ -112,7 +117,7 @@ static float smooth(float x,float power)
 Rep *RepCartoonNew(CoordSet *cs)
 {
   ObjectMolecule *obj;
-  int a,b,c,f,e,a1,a2,c1,c2,*i,*s,*at,*seg,nAt,*atp,a3,a4=0,*car,*cc,*sstype;
+  int a,b,c,f,e,a1,a2,c1,c2,i0,*i,*s,*at,*seg,nAt,*atp,a3,a4=0,*car,*cc,*sstype;
   float *v,*v0,*v1,*v2,*v3,*v4,*v5,*vo,*vn,*va;
   float *p0,*p1,*p2,*p3;
   float *pv=NULL;
@@ -123,6 +128,7 @@ Rep *RepCartoonNew(CoordSet *cs)
   float *vc=NULL;
   float *tmp=NULL;
   int last,first,end_flag;
+  int *vi,atom_index1,atom_index2;
   float f0,f1,f2,f3,f4,dev;
   float *d,dp;
   float *dl=NULL;
@@ -170,7 +176,7 @@ Rep *RepCartoonNew(CoordSet *cs)
   AtomInfoType *ai,*last_ai=NULL;
   float alpha;
 
-  /* THIS HAS GOT TO BE A CANDIDATE FOR THE WORST ROUTINE IN PYMOL
+  /* THIS HAS GOT TO BE A CANDIDATE FOR THE WORST ROUTINE IN PYMOL!
    * DEVELOP ON IT ONLY AT EXTREME RISK TO YOUR MENTAL HEALTH */
 
   OOAlloc(RepCartoon);
@@ -258,7 +264,7 @@ ENDFD;
 
   /* find all of the CA points */
 
-  at = Alloc(int,cs->NAtIndex);
+  at = Alloc(int,cs->NAtIndex); /* cs index pointers */
   pv = Alloc(float,cs->NAtIndex*3);
   tmp = Alloc(float,cs->NAtIndex*3);
   pvo = Alloc(float,cs->NAtIndex*3); /* orientation vector */
@@ -1085,6 +1091,8 @@ ENDFD;
     v = ex->p;
     vc = ex->c;
     vn = ex->n; 
+    vi = ex->i;
+
     last_color=-1;
     uniform_color=true;
 
@@ -1094,7 +1102,7 @@ ENDFD;
     d = dl;
 	 s=seg;
     cc=car;
-	 atp=at;
+	 atp=at; /* cs index pointer */
     a=0;
     contFlag=true;
     cur_car = cCartoon_skip;
@@ -1110,6 +1118,7 @@ ENDFD;
           n_p = 0;
           v = ex->p;
           vc = ex->c;
+          vi = ex->i;
           vn = ex->n;
           last_color=-1;
           uniform_color=true;
@@ -1124,6 +1133,7 @@ ENDFD;
             n_p = 0;
             v = ex->p;
             vc = ex->c;
+            vi = ex->i;
             vn = ex->n;
             last_color=-1;
             uniform_color=true;
@@ -1133,7 +1143,8 @@ ENDFD;
       if(!extrudeFlag) {
 		  if((a<(nAt-1))&&(*s==*(s+1))) /* working in the same segment... */
 			 {
-            
+            atom_index1 = cs->IdxToAtm[*atp];
+            atom_index2 = cs->IdxToAtm[*(atp+1)];
 				c1=*(cs->Color+*atp);
 				c2=*(cs->Color+*(atp+1));
             if(cartoon_color>=0) {
@@ -1176,15 +1187,18 @@ ENDFD;
             *(vc++)=*(v0++);
             *(vc++)=*(v0++);
             *(vc++)=*(v0++);
+            *(vi++)=atom_index1;
 
             v0 = ColorGet(c2); /* kludge */
             *(vc  )=*(v0++);
             *(vc+1)=*(v0++);
             *(vc+2)=*(v0++);
+            *(vi  )=atom_index2;
           }
-        else
+        else {
           vc+=3; /* part of kludge */
-        
+          vi++;
+        }
         if(cur_car==cCartoon_skip_helix) {
           if(!n_p) {
             h_start=v1;
@@ -1316,6 +1330,7 @@ ENDFD;
         n_p = 0;
         v = ex->p;
         vc = ex->c;
+        vi = ex->i;
         vn = ex->n;
         uniform_color=true;
         last_color=-1;
@@ -1329,14 +1344,15 @@ ENDFD;
       v = ex->p;
       vc = ex->c;
       vn = ex->n;
-      
+      vi = ex->i;      
+
       v1=pv; /* points */
       v2=tv; /* tangents */
       vo=pvo;
       d = dl;
       s=seg;
       cc=car;
-      atp=at;
+      atp=at; /* cs index pointer */
       a=0;
       contFlag=true;
       cur_car = cCartoon_skip;
@@ -1356,6 +1372,7 @@ ENDFD;
             v = ex->p;
             vc = ex->c;
             vn = ex->n;
+            vi = ex->i;
           }
         }
 
@@ -1373,6 +1390,7 @@ ENDFD;
               v = ex->p;
               vc = ex->c;
               vn = ex->n;
+              vi = ex->i;
             }
           }
         }
@@ -1387,6 +1405,7 @@ ENDFD;
               v = ex->p;
               vc = ex->c;
               vn = ex->n;
+              vi = ex->i;
             }
           }
         }
@@ -1395,6 +1414,8 @@ ENDFD;
             {
               c1=*(cs->Color+*atp);
               c2=*(cs->Color+*(atp+1));
+              atom_index1 = cs->IdxToAtm[*atp];
+              atom_index2 = cs->IdxToAtm[*(atp+1)];
 
               if(cartoon_color>=0) {
                 c1 = (c2 = cartoon_color);
@@ -1432,20 +1453,21 @@ ENDFD;
                     /* provide starting point on first point in segment only... */
 
                     f0 = ((float)b)/sampling; /* fraction of completion */
-                    f0 = smooth(f0,power_a); /* bias sampling towards the center of the curve */
-                  
-                    if(f0<0.5) {
+                    if(f0<=0.5) {
                       v0 = ColorGet(c1);
+                      i0 = atom_index1;
                     } else {
                       v0 = ColorGet(c2);
+                      i0 = atom_index2;
                     }
-
+                    f0 = smooth(f0,power_a); /* bias sampling towards the center of the curve */
+                  
                     /* store colors */
                   
                     *(vc++)=*(v0++);
                     *(vc++)=*(v0++);
                     *(vc++)=*(v0++);
-
+                    *(vi++)=i0;
                     /* start of line/cylinder */
                   
                     f1 = 1.0F-f0;
@@ -1471,20 +1493,22 @@ ENDFD;
                   }
 
                   f0=((float)b+1)/sampling;
-                  f0=smooth(f0,power_a); /* bias sampling towards the center of the curve */                
-                
-                  if(f0<0.5) {
+                  if(f0<=0.5) {
                     v0 = ColorGet(c1);
+                    i0 = atom_index1;
                   } else {
                     v0 = ColorGet(c2);
+                    i0 = atom_index2;
                   }
+                  f0=smooth(f0,power_a); /* bias sampling towards the center of the curve */                
+                
 
                   /* store colors */
                 
                   *(vc++)=*(v0++);
                   *(vc++)=*(v0++);
                   *(vc++)=*(v0++);
-                
+                  *(vi++)=i0;
                   /* end of line/cylinder */
                 
                   f1=1.0F-f0;

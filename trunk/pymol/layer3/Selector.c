@@ -5920,23 +5920,54 @@ int SelectorSelect0(EvalElem *base)
       base[0].sele[cDummyCenter]=true; 
       break;
 	 case SELE_VISz:
-		for(a=cNDummyAtoms;a<I->NAtom;a++)
-		  {
-          flag = false;
-          if(I->Obj[I->Table[a].model]->Obj.Enabled) {
-            vis = I->Obj[I->Table[a].model]->AtomInfo[I->Table[a].atom].visRep ;
-            
-            for(b=0;b<cRepCnt;b++) {
-              if(vis[b]) {
-                flag=true;
-                break;
+      {
+        ObjectMolecule *last_obj = NULL;
+        AtomInfoType *ai;
+        int bonded;
+        for(a=cNDummyAtoms;a<I->NAtom;a++)
+          {
+            flag = false;
+            obj = I->Obj[I->Table[a].model];
+            if(obj->Obj.Enabled) {
+              ai = obj->AtomInfo + I->Table[a].atom;
+              vis = ai->visRep;
+              bonded = ai->bonded;
+              
+              if(last_obj!=obj) {
+                ObjectMoleculeUpdateNeighbors(obj);
+                ObjectMoleculeVerifyChemistry(obj);
+                last_obj=obj;
+              }
+              
+              for(b=0;b<cRepCnt;b++) {
+                switch(b) {
+                case cRepCartoon:                  
+                case cRepRibbon:
+                case cRepLine:
+                case cRepCyl:
+                  if(bonded&&vis[b])
+                    flag=true;
+                  break;
+                case cRepNonbonded:
+                case cRepNonbondedSphere:
+                  if((!bonded)&&(vis[b]))
+                    flag = true;
+                  break;
+                default:
+                  if(vis[b]) {
+                    flag=true;
+                    break;
+                  }
+                }
+                if(flag)
+                  break;
               }
             }
+            base[0].sele[a]=flag;
+            if(flag)
+              c++;
           }
-          base[0].sele[a]=flag;
-          if(flag)
-            c++;
-		  }
+      }
       break;
 	 case SELE_ENAz:
 		for(a=cNDummyAtoms;a<I->NAtom;a++)
@@ -6818,7 +6849,6 @@ int SelectorLogic1(EvalElem *base)
           
           for(f=0;f<n_frag;f++) {
             sprintf(name,"%s%1d",cEditorFragPref,f+1);
-            printf("%s\n",name);
             fsele[f] = SelectorIndexByName(name);
           }
           

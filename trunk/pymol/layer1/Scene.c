@@ -3417,11 +3417,23 @@ void SceneRender(Pickable *pick,int x,int y,Multipick *smp)
       highBits = SceneFindTriplet(x,y,render_buffer);
       index = lowBits+(highBits<<12);
 
+      if(debug_pick) {
+        PRINTFB(FB_Scene,FB_Details)
+          " SceneClick-Detail: index %d < %d?\n",index,pickVLA[0].index
+          ENDFB;
+      }
+      
       if(index&&(index<=pickVLA[0].index)) {
         *pick = pickVLA[index]; /* return object info */
+        if(debug_pick) {
+          PRINTFB(FB_Scene,FB_Details)
+            " SceneClick-Detail: obj %p index %d bond %d\n",pick->ptr,pick->index,pick->bond
+            ENDFB;
+        }
       } else {
         pick->ptr = NULL;
       }
+      
 		VLAFree(pickVLA);
 		
     } else if(smp) {

@@ -19,7 +19,7 @@ import traceback
 polar_contacts = "preset_pc"
 
 def simple(selection="(all)"):
-   s = str(selection)
+   s = "("+str(selection)+")"
    util.cbc(s)
    cmd.hide("everything",s)
    cmd.show("ribbon",s)
@@ -38,10 +38,10 @@ def ligands(selection="(all)"):
       near_water = "_preset_water"
       lig = "_preset_lig"
       cmd.select(host,s+
-        "and resn ALA+CYS+ASP+GLU+PHE+GLY+HIS+ILE+LYS+LEU+MET+ASN+PRO+GLN+ARG+SER+THR+VAL+TRP+TYR+A+C+T+G+U")
-      cmd.select(water,""+s+" and resn WAT+HOH+H20")
-      cmd.select(lig,"not ("+host+"|"+water+")")
-      cmd.select(near_water,water+" within 5 of "+lig)
+        " and resn ALA+CYS+ASP+GLU+PHE+GLY+HIS+ILE+LYS+LEU+MET+ASN+PRO+GLN+ARG+SER+THR+VAL+TRP+TYR+A+C+T+G+U")
+      cmd.select(water,s+" and resn WAT+HOH+H20")
+      cmd.select(lig,s+" and not ("+host+"|"+water+")")
+      cmd.select(near_water,s+" and ("+water+" within 5 of "+lig+")")
 
       util.chainbow(host)
       util.cbc(lig)
@@ -84,7 +84,7 @@ def technical(selection="(all)"):
       cmd.hide("labels",polar_contacts)
    cmd.show("nonbonded","(hetatm and ("+s+"))")
 
-def beautiful(selection="(all)"):
+def pretty(selection="(all)"):
    s = str(selection)
    cmd.dss(s,preserve=1)
    cmd.hide("everything",s)
@@ -102,9 +102,9 @@ def beautiful(selection="(all)"):
    if cmd.count_atoms(s):
       cmd.center(s)
    
-def publishable(selection="(all)"):
+def publication(selection="(all)"):
    s = str(selection)
-   beautiful(s)
+   pretty(s)
    cmd.set("cartoon_smooth_loops",1)
    cmd.set("cartoon_highlight_color","grey50")
    cmd.set("cartoon_fancy_helices",1)

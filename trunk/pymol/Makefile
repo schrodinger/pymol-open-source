@@ -268,3 +268,7 @@ mac-free: mac
 	/bin/cp data/pymol/splash.png $(OSXFREE)/pymol/data/pymol/
 	/bin/rm -r $(OSXFREE)/Contents/Resources/English.lproj/MainMenu.nib
 	/bin/rm -r $(OSXFREE)/Contents/Resources/English.lproj/MainMenu~.nib
+
+mac-beta:
+	make distclean
+	make mac

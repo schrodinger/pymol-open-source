@@ -117,7 +117,7 @@ if __name__=='pymol.controlling':
                                  ('s','ctsh','none'),
                                  ('double_left','none','menu'),
                                  ('double_middle','none','cent'),
-                                 ('double_right','none', 'none'),
+                                 ('double_right','none', 'pkat'),
                                  ],
 
       'three_button_editing': [ ('l','none','rota'),
@@ -138,7 +138,7 @@ if __name__=='pymol.controlling':
                                 ('s','ctsh','none'),
                                 ('double_left','none','menu'),
                                 ('double_middle','none','cent'),
-                                ('double_right','none', 'none'),
+                                ('double_right','none', 'pkat'),
                                 ],
 
       'two_button_viewing' : [ ('l','none','rota'),

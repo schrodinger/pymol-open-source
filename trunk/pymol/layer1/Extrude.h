@@ -25,6 +25,7 @@ typedef struct {
   float *p; /* points */
   float *n; /* normals (3x3f) at each point*/
   float *c; /* colors */
+  int   *i; /* indices */
 
   float *sv,*tv;
   float *sn,*tn;

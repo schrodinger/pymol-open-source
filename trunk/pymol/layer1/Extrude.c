@@ -49,6 +49,7 @@ CExtrude *ExtrudeCopyPointsNormalsColors(CExtrude *orig)
   CopyArray(I->p,orig->p,float,3*I->N);
   CopyArray(I->n,orig->n,float,9*I->N);
   CopyArray(I->c,orig->c,float,3*I->N);
+  CopyArray(I->i,orig->i,int,    I->N);
   return(I);
 }
 
@@ -58,7 +59,8 @@ void ExtrudeInit(CExtrude *I)
   I->p = NULL;
   I->n = NULL;
   I->c = NULL;
-  
+  I->i = NULL;
+
   I->sv = NULL; /* shape vertices */
   I->sn = NULL; /* shape normals */
   I->tv = NULL; /* transformed vertices */
@@ -592,7 +594,7 @@ void ExtrudeCGOTraceFrame(CExtrude *I,CGO *cgo)
 
 void ExtrudeCGOSurfaceTube(CExtrude *I,CGO *cgo,int cap,float *color_override)
 {
-  int a,b;
+  int a,b,*i;
   float *v;
   float *n;
   float *c;
@@ -655,11 +657,13 @@ void ExtrudeCGOSurfaceTube(CExtrude *I,CGO *cgo,int cap,float *color_override)
         CGODisable(cgo,GL_LIGHTING);
       }
       c = I->c;
+      i = I->i;
       for(a=0;a<I->N;a++) {
         if(color_override&&(b>start)&&(b<stop))
           CGOColorv(cgo,color_override);
         else
           CGOColorv(cgo,c);
+        CGOPickColor(cgo,*i,-1);
         CGONormalv(cgo,tn);
         CGOVertexv(cgo,tv);
         tn+=3;
@@ -669,6 +673,7 @@ void ExtrudeCGOSurfaceTube(CExtrude *I,CGO *cgo,int cap,float *color_override)
         tn1+=3;
         tv1+=3;
         c+=3;
+        i++;
       }
       CGOEnd(cgo);
     }
@@ -698,6 +703,7 @@ void ExtrudeCGOSurfaceTube(CExtrude *I,CGO *cgo,int cap,float *color_override)
         CGOColorv(cgo,color_override);
       else
         CGOColorv(cgo,I->c);
+      CGOPickColor(cgo,I->i[0],-1);
       CGONormalv(cgo,v0);
       CGOVertexv(cgo,v);
       /* trace shape */
@@ -724,6 +730,7 @@ void ExtrudeCGOSurfaceTube(CExtrude *I,CGO *cgo,int cap,float *color_override)
         CGOColorv(cgo,color_override);
       else
         CGOColorv(cgo,I->c+3*(I->N-1));
+      CGOPickColor(cgo,I->i[I->N-1],-1);
       CGONormalv(cgo,n);
       CGOVertexv(cgo,v);
       /* trace shape */
@@ -747,7 +754,7 @@ void ExtrudeCGOSurfaceTube(CExtrude *I,CGO *cgo,int cap,float *color_override)
 
 void ExtrudeCGOSurfacePolygon(CExtrude *I,CGO *cgo,int cap,float *color_override)
 {
-  int a,b;
+  int a,b,*i;
   float *v;
   float *n;
   float *c;
@@ -810,9 +817,11 @@ void ExtrudeCGOSurfacePolygon(CExtrude *I,CGO *cgo,int cap,float *color_override
       if(color_override)
         CGOColorv(cgo,color_override);
       c = I->c;
+      i = I->i;
       for(a=0;a<I->N;a++) {
         if(!color_override)
           CGOColorv(cgo,c);
+        CGOPickColor(cgo,*i,-1);
         CGONormalv(cgo,tn);
         CGOVertexv(cgo,tv);
         tn+=3;
@@ -822,6 +831,7 @@ void ExtrudeCGOSurfacePolygon(CExtrude *I,CGO *cgo,int cap,float *color_override
         tn1+=3;
         tv1+=3;
         c+=3;
+        i++;
       }
       tv+=3*I->N;
       tn+=3*I->N;
@@ -855,6 +865,7 @@ void ExtrudeCGOSurfacePolygon(CExtrude *I,CGO *cgo,int cap,float *color_override
       invert3f(v0);
       if(!color_override)
         CGOColorv(cgo,I->c);
+      CGOPickColor(cgo,I->i[0],-1);
       CGONormalv(cgo,v0);
       CGOVertexv(cgo,v);
       /* trace shape */
@@ -878,6 +889,7 @@ void ExtrudeCGOSurfacePolygon(CExtrude *I,CGO *cgo,int cap,float *color_override
       CGOBegin(cgo,GL_TRIANGLE_FAN);
       if(!color_override)
         CGOColorv(cgo,I->c+3*(I->N-1));
+      CGOPickColor(cgo,I->i[I->N-1],-1);
       CGONormalv(cgo,n);
       CGOVertexv(cgo,v);
       /* trace shape */
@@ -900,7 +912,7 @@ void ExtrudeCGOSurfacePolygon(CExtrude *I,CGO *cgo,int cap,float *color_override
 
 void ExtrudeCGOSurfacePolygonTaper(CExtrude *I,CGO *cgo,int sampling,float *color_override)
 {
-  int a,b;
+  int a,b,*i;
   float *v;
   float *n;
   float *c;
@@ -990,9 +1002,11 @@ void ExtrudeCGOSurfacePolygonTaper(CExtrude *I,CGO *cgo,int sampling,float *colo
       if(color_override)
         CGOColorv(cgo,color_override);
       c = I->c;
+      i = I->i;
       for(a=0;a<I->N;a++) {
         if(!color_override)
           CGOColorv(cgo,c);
+        CGOPickColor(cgo,*i,-1);
         CGONormalv(cgo,tn);
         CGOVertexv(cgo,tv);
         tn+=3;
@@ -1002,6 +1016,7 @@ void ExtrudeCGOSurfacePolygonTaper(CExtrude *I,CGO *cgo,int sampling,float *colo
         tn1+=3;
         tv1+=3;
         c+=3;
+        i++;
       }
       tv+=3*I->N;
       tn+=3*I->N;
@@ -1030,7 +1045,7 @@ void ExtrudeCGOSurfacePolygonTaper(CExtrude *I,CGO *cgo,int sampling,float *colo
 
 void ExtrudeCGOSurfaceStrand(CExtrude *I,CGO *cgo,int sampling,float *color_override)
 {
-  int a,b;
+  int a,b,*i;
   float *v;
   float *n;
   float *c;
@@ -1098,12 +1113,14 @@ void ExtrudeCGOSurfaceStrand(CExtrude *I,CGO *cgo,int sampling,float *color_over
         CGODisable(cgo,GL_LIGHTING);
       }
       c = I->c;
+      i = I->i;
       for(a=0;a<I->N;a++) {
         if(a<=subN) {
           if(color_override&&((b==2)||(b==3)||(b==6)||(b==7)))
             CGOColorv(cgo,color_override);
           else
             CGOColorv(cgo,c);
+          CGOPickColor(cgo,*i,-1);
           CGONormalv(cgo,tn);
           CGOVertexv(cgo,tv);
         }
@@ -1116,6 +1133,7 @@ void ExtrudeCGOSurfaceStrand(CExtrude *I,CGO *cgo,int sampling,float *color_over
         tn1+=3;
         tv1+=3;
         c+=3;
+        i++;
       }
       tv+=3*I->N;
       tn+=3*I->N;
@@ -1148,6 +1166,7 @@ void ExtrudeCGOSurfaceStrand(CExtrude *I,CGO *cgo,int sampling,float *color_over
         CGOColorv(cgo,color_override);
       else
         CGOColorv(cgo,I->c);
+      CGOPickColor(cgo,I->i[0],-1);
       CGONormalv(cgo,v0);
       CGOVertexv(cgo,v);
       /* trace shape */
@@ -1207,12 +1226,14 @@ void ExtrudeCGOSurfaceStrand(CExtrude *I,CGO *cgo,int sampling,float *color_over
         CGODisable(cgo,GL_LIGHTING);
       }
       c = I->c;
+      i = I->i;
       for(a=0;a<I->N;a++) {
         if(a>=(subN-1)) {
           if(color_override&&((b==2)||(b==3)||(b==6)||(b==7)))
             CGOColorv(cgo,color_override);
           else
             CGOColorv(cgo,c);
+          CGOPickColor(cgo,*i,-1);
           CGONormalv(cgo,tn);
           CGOVertexv(cgo,tv);
         }
@@ -1225,6 +1246,7 @@ void ExtrudeCGOSurfaceStrand(CExtrude *I,CGO *cgo,int sampling,float *color_over
         tn1+=3;
         tv1+=3;
         c+=3;
+        i++;
       }
       tv+=3*I->N;
       tn+=3*I->N;
@@ -1255,6 +1277,7 @@ void ExtrudeCGOSurfaceStrand(CExtrude *I,CGO *cgo,int sampling,float *color_over
       CGOColorv(cgo,color_override);
     else
       CGOColorv(cgo,I->c+3*(subN-1));
+    CGOPickColor(cgo,I->i[(subN-1)],-1);
     CGONormalv(cgo,v0);
     CGOVertexv(cgo,v);
 
@@ -1292,10 +1315,11 @@ void ExtrudeAllocPointsNormalsColors(CExtrude *I,int n)
     FreeP(I->p);
     FreeP(I->n);
     FreeP(I->c);
-
+    FreeP(I->i);
     I->p = Alloc(float,3*(n+1));
     I->n = Alloc(float,9*(n+1));
     I->c = Alloc(float,3*(n+1));
+    I->i = Alloc(int,3*(n+1));
   }
   I->N = n;
 }
@@ -1309,7 +1333,7 @@ void ExtrudeFree(CExtrude *I)
   FreeP(I->tv);
   FreeP(I->sn);
   FreeP(I->sv);
-
+  FreeP(I->i);
   OOFreeP(I);
 }
 
