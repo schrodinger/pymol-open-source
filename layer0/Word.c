@@ -74,11 +74,21 @@ int WordMatchComma(char *p,char *q,int ignCase)
 {
   int i=0;
   int best_i=0;
-  char *q_copy;
+  char *q_copy,*p_copy;
   int blank;
 
+
   blank = (!*p);
+  p_copy=p;
+  while(*p) { /* this should not be done here... */
+    if(*p=='+')
+      if(!((*(p+1)==0)||(*(p+1)==',')||(*(p+1)=='+')))
+        *p=',';
+    p++;
+  }
   q_copy=q;
+  p=p_copy;
+  printf("%s\n",p);
   while(((*p)||(blank))&&(best_i>=0)) {
     blank=0;
     i=1;
@@ -114,7 +124,7 @@ int WordMatchComma(char *p,char *q,int ignCase)
       }
     if((!*q)&&((*p=='*')||(*p==',')))
       i=-i;
-    if((*p!='*')&&(*p!=',')) 
+    if((*p!='*')&&(*p!=','))
       if((*p)&&(!*q))
         i=0;
     if(i&&((!*p)&&(!*q))) /*exact match*/
