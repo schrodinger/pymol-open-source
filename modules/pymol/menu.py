@@ -19,6 +19,7 @@
 def mol_show(s):
    return [[ 2, 'Show:'     ,''                             ],
            [ 1, 'lines'     ,'cmd.show("lines"     ,"'+s+'")'],
+           [ 1, 'nonbonded' ,'cmd.show("nonbonded" ,"'+s+'")'],
            [ 1, 'sticks'    ,'cmd.show("sticks"    ,"'+s+'")'],
            [ 1, 'ribbon'    ,'cmd.show("ribbon"    ,"'+s+'")'],
            [ 0, ''          ,''                             ],
@@ -26,6 +27,7 @@ def mol_show(s):
            [ 0, ''          ,''                             ],
            [ 1, 'dots'      ,'cmd.show("dots"      ,"'+s+'")'],
            [ 1, 'spheres'   ,'cmd.show("spheres"   ,"'+s+'")'],
+           [ 1, 'nb_spheres','cmd.show("nb_spheres"   ,"'+s+'")'],
            [ 0, ''          ,''                             ],
            [ 1, 'mesh'      ,'cmd.show("mesh"      ,"'+s+'")'],
            [ 1, 'surface'   ,'cmd.show("surface"   ,"'+s+'")']]
@@ -33,6 +35,7 @@ def mol_show(s):
 def mol_hide(s):
    return [[ 2, 'Hide:'     ,''                             ],
            [ 1, 'lines'     ,'cmd.hide("lines"     ,"'+s+'")'],
+           [ 1, 'nonbonded' ,'cmd.hide("nonbonded" ,"'+s+'")'],           
            [ 1, 'sticks'    ,'cmd.hide("sticks"    ,"'+s+'")'],
            [ 1, 'ribbon'    ,'cmd.hide("ribbon"    ,"'+s+'")'],
            [ 0, ''          ,''                             ],
@@ -40,6 +43,7 @@ def mol_hide(s):
            [ 0, ''          ,''                             ],
            [ 1, 'dots'      ,'cmd.hide("dots"      ,"'+s+'")'],
            [ 1, 'spheres'   ,'cmd.hide("spheres"   ,"'+s+'")'],
+           [ 1, 'nb_spheres','cmd.hide("nb_spheres"   ,"'+s+'")'],           
            [ 0, ''          ,''                             ],
            [ 1, 'mesh'      ,'cmd.hide("mesh"      ,"'+s+'")'],
            [ 1, 'surface'   ,'cmd.hide("surface"   ,"'+s+'")'],

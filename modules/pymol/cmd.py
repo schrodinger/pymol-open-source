@@ -2236,10 +2236,11 @@ DESCRIPTION
   
    "show" turns on atom and bond representations.
  
-   The available representation are:
+   The available representations are:
     
       lines     spheres   mesh      ribbon
-      sticks    dots      surface     
+      sticks    dots      surface   labels
+      nonbonded
    
 USAGE
  
@@ -2298,10 +2299,11 @@ DESCRIPTION
   
    "hide" turns of atom and bond representations.
  
-   The available representation are:
+   The available representations are:
     
       lines     spheres   mesh      ribbon
-      sticks    dots      surface     
+      sticks    dots      surface   labels
+      nonbonded
    
 USAGE
  
@@ -2597,7 +2599,9 @@ repres = {
    'ribbon'        : 5,
    'surface'       : 6,
    'dashes'        : 7,
-   'labels'        : 8
+   'labels'        : 8,
+   'nonbonded'     : 9,
+   'nb_spheres'    : 10,
 }
 
 special = {
