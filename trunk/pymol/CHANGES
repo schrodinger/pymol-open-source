@@ -179,6 +179,8 @@ CHANGE LOG
 
 Changes up to 0.95
 
+   * ray-tracing of RGBA pixmap text now supported FINALLY.
+
    * pk1-4 now have different visual representations...
 
    * fixed hydrogen adding for amides/ureas
