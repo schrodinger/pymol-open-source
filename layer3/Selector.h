@@ -49,6 +49,13 @@ PyObject *SelectorGetChemPyModel(PyMOLGlobals *G,int sele,int state);
 float SelectorSumVDWOverlap(PyMOLGlobals *G,int sele1,int state1,int sele2,int state2,float adjust);
 DistSet *SelectorGetDistSet(PyMOLGlobals *G,int sele1,int state1,int sele2,int state2,int mode,
                             float cutoff,float *result);
+DistSet *SelectorGetAngleSet(PyMOLGlobals *G, DistSet *ds,
+                             int sele1,int state1,
+                             int sele2,int state2,
+                             int sele3,int state3,
+                             int mode, float *angle_sum,
+                             int *angle_cnt);
+
 int SelectorGetSeleNCSet(PyMOLGlobals *G,int sele);
 void SelectorCreateObjectMolecule(PyMOLGlobals *G,int sele,char *name,
                                   int target_state,int state,int discrete,

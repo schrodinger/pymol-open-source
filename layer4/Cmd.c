@@ -2277,6 +2277,54 @@ static PyObject *CmdDist(PyObject *dummy, PyObject *args)
   return(Py_BuildValue("f",result));
 }
 
+static PyObject *CmdAngle(PyObject *dummy, PyObject *args)
+{
+  char *name,*str1,*str2,*str3;
+  float result=-999.0;
+  int labels,quiet;
+  int mode;
+  OrthoLineType s1,s2,s3;
+  int ok=false;
+  int c1,c2,c3;
+  int reset, zoom;
+  ok = PyArg_ParseTuple(args,"ssssiiiii",
+                        &name,&str1,&str2,&str3,
+                        &mode,&labels,&reset,&zoom,&quiet);
+  if (ok) {
+    APIEntry();
+    c1 = SelectorGetTmp(TempPyMOLGlobals,str1,s1);
+    c2 = SelectorGetTmp(TempPyMOLGlobals,str2,s2);
+    c3 = SelectorGetTmp(TempPyMOLGlobals,str3,s3);
+    if(c1&&
+       (c2||WordMatch(TempPyMOLGlobals,cKeywordSame,s2,true))&&
+       (c3||WordMatch(TempPyMOLGlobals,cKeywordSame,s3,true)))
+      result = ExecutiveAngle(TempPyMOLGlobals,name,s1,s2,s3,mode,labels,reset,zoom,quiet);
+    else {
+      if((!quiet)&&(!c1)) {
+        PRINTFB(TempPyMOLGlobals,FB_Executive,FB_Errors)
+          " Distance-ERR: selection 1 contains no atoms.\n"
+          ENDFB(TempPyMOLGlobals);
+      } 
+      if((quiet!=2)&&(!c2)) {
+        PRINTFB(TempPyMOLGlobals,FB_Executive,FB_Errors)
+          " Distance-ERR: selection 2 contains no atoms.\n"
+          ENDFB(TempPyMOLGlobals);
+      }
+      if((quiet!=2)&&(!c3)) {
+        PRINTFB(TempPyMOLGlobals,FB_Executive,FB_Errors)
+          " Distance-ERR: selection 3 contains no atoms.\n"
+          ENDFB(TempPyMOLGlobals);
+      }
+      result = -1.0;
+    }
+    SelectorFreeTmp(TempPyMOLGlobals,s1);
+    SelectorFreeTmp(TempPyMOLGlobals,s2);
+    SelectorFreeTmp(TempPyMOLGlobals,s3);
+    APIExit();
+  }
+  return(Py_BuildValue("f",result));
+}
+
 static PyObject *CmdBond(PyObject *dummy, PyObject *args)
 {
   char *str1,*str2;
@@ -2296,6 +2344,7 @@ static PyObject *CmdBond(PyObject *dummy, PyObject *args)
   return(APIStatus(ok));  
 }
 
+/* 
 static PyObject *CmdDistance(PyObject *dummy, PyObject *args)
 {
   char *str1,*str2;
@@ -2314,6 +2363,7 @@ static PyObject *CmdDistance(PyObject *dummy, PyObject *args)
   }
   return(Py_BuildValue("f",dist));
 }
+*/
 
 static PyObject *CmdLabel(PyObject *self,   PyObject *args)
 {
@@ -5031,6 +5081,7 @@ static PyMethodDef Cmd_methods[] = {
 	{"alter",	              CmdAlter,                METH_VARARGS },
 	{"alter_list",            CmdAlterList,            METH_VARARGS },
 	{"alter_state",           CmdAlterState,           METH_VARARGS },
+   {"angle",                 CmdAngle,                METH_VARARGS },
 	{"attach",                CmdAttach,               METH_VARARGS },
    {"bg_color",              CmdBackgroundColor,      METH_VARARGS },
 	{"bond",                  CmdBond,                 METH_VARARGS },
@@ -5056,7 +5107,8 @@ static PyMethodDef Cmd_methods[] = {
 	{"dirty",                 CmdDirty,                METH_VARARGS },
 	{"dirty_wizard",          CmdDirtyWizard,          METH_VARARGS },
 
-	{"distance",	           CmdDistance,             METH_VARARGS },
+   /*	{"distance",	           CmdDistance,             METH_VARARGS },*/
+
 	{"dist",    	           CmdDist,                 METH_VARARGS },
 	{"do",	                 CmdDo,                   METH_VARARGS },
 	{"dump",	                 CmdDump,                 METH_VARARGS },

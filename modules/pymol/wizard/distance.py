@@ -8,10 +8,10 @@ import traceback
 sele_prefix = "_dw"
 sele_prefix_len = len(sele_prefix)
 
-dist_prefix = "wdist"
+dist_prefix = "dist"
 
 default_mode = 'pairs'
-default_object_mode  = 'overwr'
+default_object_mode  = 'append'
 dist_count = 0
 
 class Distance(Wizard):
@@ -36,6 +36,7 @@ class Distance(Wizard):
          'neigh',
          'pairs',
          ]
+      
       self.mode_name = {
          'polar':'Polar Neighbors',
          'heavy':'Heavy Neighbors',
@@ -57,8 +58,8 @@ class Distance(Wizard):
          'append',
          ]
       self.object_mode_name = {
-         'overwr':'Overwrite',
-         'append':'Append',         
+         'overwr':'Replace Previous',
+         'append':'Create New',         
          }
 
       smm = []
@@ -66,7 +67,10 @@ class Distance(Wizard):
       for a in self.object_modes:
          smm.append([ 1, self.object_mode_name[a], 'cmd.get_wizard().set_object_mode("'+a+'")'])
       self.menu['object_mode']=smm
-
+      self.selection_mode = cmd.get_setting_legacy("mouse_selection_mode")
+      cmd.set("mouse_selection_mode",0) # set selection mode to atomic
+      cmd.deselect() # disable the active selection (if any)
+      
 # generic set routines
 
    def set_mode(self,mode):
@@ -89,6 +93,7 @@ class Distance(Wizard):
          [ 3, self.mode_name[self.mode],'mode'],
          [ 3, self.object_mode_name[self.object_mode],'object_mode'],
          [ 2, 'Delete Last' , 'cmd.get_wizard().delete_last()'],
+         [ 2, 'Delete All' , 'cmd.get_wizard().delete_all()'],
          [ 2, 'Done','cmd.set_wizard()'],
          ]
 
@@ -97,6 +102,7 @@ class Distance(Wizard):
       default_mode = self.mode
       default_object_mode = self.object_mode
       self.clear()
+      cmd.set("mouse_selection_mode",self.selection_mode) # restore selection mode
       
    def clear(self):
       cmd.delete(sele_prefix+"*")
@@ -105,11 +111,11 @@ class Distance(Wizard):
       self.prompt = None
       if self.mode == 'pairs':
          if self.status==0:
-            self.prompt = [ 'Pick the first atom...']
+            self.prompt = [ 'Please click on the first atom...']
          elif self.status==1:
-            self.prompt = [ 'Pick the second atom...' ]
+            self.prompt = [ 'Please click on the second atom...' ]
       elif self.mode in [ 'polar', 'neigh' ]:
-         self.prompt = [ 'Pick an atom...']
+         self.prompt = [ 'Please click an atom...']
       if self.error!=None:
          self.prompt.append(self.error)
       return self.prompt
@@ -124,6 +130,21 @@ class Distance(Wizard):
       self.error = None
       self.clear()
       cmd.refresh_wizard()
+
+   def delete_all(self):
+      global dist_count
+      dist_count = 0
+      cmd.delete(dist_prefix+"*")
+      self.status=0
+      self.error = None
+      self.clear()
+      cmd.refresh_wizard()
+
+   def do_select(self,name): # map selects into picks
+      cmd.unpick()
+      cmd.edit(name)
+      cmd.delete(name)
+      self.do_pick(0)
       
    def do_pick(self,bondFlag):
       global dist_count
@@ -136,8 +157,6 @@ class Distance(Wizard):
             if self.status==0:
                name = sele_prefix 
                cmd.select(name,"(pk1)")
-               cmd.unpick()
-               cmd.enable(name)
                self.status = 1
                self.error = None
             elif self.status==1:

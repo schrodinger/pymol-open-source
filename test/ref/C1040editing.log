@@ -409,7 +409,6 @@ PyMOL>load dat/small01.mol
  CmdLoad: "dat/small01.mol" loaded as "small01".
 PyMOL>cmd.edit("(small01`3)",pkresi=1)
 PyMOL>cmd.edit_mode()
- mouse: three_button_editing
 PyMOL>cmd.push_undo("small01",1)
 PyMOL>get_extent
  cmd.extent: min: [ -15.344,  -2.159,  -3.683]
@@ -426,7 +425,6 @@ PyMOL>get_extent
  cmd.extent: max: [   2.256,   2.247,   2.517]
 PyMOL>cmd.set('valence','0.0500')
 PyMOL>cmd.edit_mode()
- mouse: three_button_editing
 PyMOL>cmd.push_undo("small01",1)
 PyMOL>cmd.translate_atom("/small01////C`",    0.020101367,   -0.020101367,    0.000000000,1,1,0)
 PyMOL>cmd.translate_atom("/small01////C`",    0.000000000,   -0.040202733,    0.000000000,1,1,0)

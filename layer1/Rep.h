@@ -53,7 +53,10 @@ Z* -------------------------------------------------------------------
 #define cRepExtent     15
 #define cRepSlice      16
 
-#define cRepCnt        17
+#define cRepAngle      17
+#define cRepDihedral    18
+
+#define cRepCnt        19
 
 /* Hierarchical invalidation scheme - 
  * each higher level event implies all of the lower levels 
