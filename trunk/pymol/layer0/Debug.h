@@ -21,6 +21,7 @@ Z* -------------------------------------------------------------------
 #define DebugParser   (1<<1)
 #define DebugMolecule (1<<2)
 #define DebugPython   (1<<3)
+#define DebugMap      (1<<4)
 
 extern unsigned int DebugState;
 

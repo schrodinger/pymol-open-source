@@ -116,8 +116,22 @@ Rep *RepDotNew(CoordSet *cs,int mode)
   float solv_rad=0.0;
   int inclH = true;
   int cullByFlag = false;
-
+  int visFlag;
   OOAlloc(RepDot);
+
+  obj = cs->Obj;
+  visFlag=false;
+  for(a=0;a<cs->NIndex;a++) {
+	 if(obj->AtomInfo[cs->IdxToAtm[a]].visRep[cRepDot])
+		{
+		  visFlag=true;
+		  break;
+		}
+  }
+  if(!visFlag) {
+    OOFreeP(I);
+    return(NULL); /* skip if no dots are visible */
+  }
 
   RepInit(&I->R);
   I->dotSize = SettingGet(cSetting_dot_size);
@@ -147,36 +161,9 @@ Rep *RepDotNew(CoordSet *cs,int mode)
   default: sp=Sphere3; break;
   }
 
-  obj = cs->Obj;
   I->R.fRender=(void (*)(struct Rep *, CRay *, Pickable **))RepDotRender;
   I->R.fFree=(void (*)(struct Rep *))RepDotFree;
   
-  /*  I->VC=(float*)mmalloc(sizeof(float)*cs->NIndex*7);
-  ErrChkPtr(I->VC);
-  I->NC=0;
-
-  v=I->VC; 
-  for(a=0;a<cs->NIndex;a++)
-	 {
-		a1 = cs->IdxToAtm[a];
-		if(obj->AtomInfo[a1].visRep[cRepDot])
-		  {
-			 I->NC++;
-			 c1=*(cs->Color+a);
-			 vc = ColorGet(c1); 
-			 *(v++)=*(vc++);
-			 *(v++)=*(vc++);
-			 *(v++)=*(vc++);
-			 v0 = cs->Coord+3*a;			 
-			 *(v++)=*(v0++);
-			 *(v++)=*(v0++);
-			 *(v++)=*(v0++);
-			 *(v++)=obj->AtomInfo[a1].vdw;
-		  }
-	 }
-  I->VC = Realloc(I->VC,float,(v-I->VC));
-  */
-
   I->V=(float*)mmalloc(sizeof(float)*cs->NIndex*sp->nDot*10);
   ErrChkPtr(I->V);
 

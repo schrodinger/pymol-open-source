@@ -15,6 +15,7 @@ Z* -------------------------------------------------------------------
 */
 
 #include<math.h>
+#include"Base.h"
 #include"Vector.h"
 #include"Matrix.h"
 #include"MemoryDebug.h"
@@ -142,7 +143,52 @@ void MatrixTransform3f(float *p, float *m, float *q)
 }
 
 /*========================================================================*/
+float MatrixGetRMS(int n,float *v1,float *v2,float *wt)
+{
+  /* Just Compute RMS given current coordinates */
 
+  float *vv1,*vv2;
+  float  err, etmp, tmp;
+  int a, c;
+  float sumwt = 0.0;
+
+  if(wt) {
+    for(c=0;c<n;c++)
+      if (wt[c]!=0.0) {
+        sumwt = sumwt + wt[c];
+      } else {
+        sumwt = sumwt + 1.0; /* WHAT IS THIS? */
+      }
+  } else {
+    for(c=0;c<n;c++)
+      sumwt+=1.0;
+  }
+  err = 0.0;
+  vv1=v1;
+  vv2=v2;
+  for(c=0;c<n;c++) {
+    etmp = 0.0;
+    for(a=0;a<3;a++) {
+      tmp = (vv2[a]-vv1[a]);
+      etmp += tmp*tmp;
+    }
+    if(wt)
+      err += wt[c] * etmp;
+    else 
+      err += etmp;
+    vv1+=3;
+    vv2+=3;
+  }
+  err=err/sumwt;
+  err=sqrt(err);
+
+  if(fabs(err)<R_SMALL4)
+    err=0.0;
+
+  return(err);
+}
+
+/*========================================================================*/
 float MatrixFitRMS(int n,float *v1,float *v2,float *wt,float *ttt)
 {
   /*
@@ -327,6 +373,9 @@ float MatrixFitRMS(int n,float *v1,float *v2,float *wt,float *ttt)
   ttt[13]=t2[1];
   ttt[14]=t2[2];
   ttt[15]=1.0; /* for compatibility with normal 4x4 matrices */
+
+  if(fabs(err)<R_SMALL4)
+    err=0.0;
 
   return(err);
 }

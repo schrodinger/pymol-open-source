@@ -31,6 +31,7 @@ void MatrixMultiply44f( const float *mat, float *product );
 
 void MatrixApplyTTTfn3f(unsigned int n, float *q, const float m[16], float *p );
 float MatrixFitRMS(int n,float *v1,float *v2,float *wt,float *ttt);
+float MatrixGetRMS(int n,float *v1,float *v2,float *wt);
 
 #endif
 

@@ -427,6 +427,11 @@ void SettingInit(void)
 			"pickable");
 
   I->NSetting++;
+  I->Setting[cSetting_autoshow_lines].Value[0] = 1.0;
+  strcpy(I->Setting[cSetting_autoshow_lines].Name,
+			"autoshow_lines");
+
+  I->NSetting++;
 #ifdef _PYMOL_WINDOWS
   I->Setting[cSetting_normal_workaround].Value[0] = 1;
 #else

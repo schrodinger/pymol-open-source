@@ -22,6 +22,7 @@ Z* -------------------------------------------------------------------
 #include <unistd.h>
 #include <GL/glut.h>
 
+#include"Word.h"
 #include"main.h"
 #include"Base.h"
 #include"MemoryDebug.h"
@@ -464,8 +465,9 @@ int SceneClick(Block *block,int button,int x,int y,int mod)
 {
   CScene *I=&Scene;
   Object *obj;
-  char buffer[1024];
-  if(mod==cOrthoCTRL) {
+  char buffer[OrthoLineLength],buf2[OrthoLineLength];
+  WordType selName;
+  if(mod&cOrthoCTRL) {
 	 SceneCopy(1);
 	 SceneRender(&I->LastPicked,x,y);
 	 if(I->LastPicked.ptr) {
@@ -477,22 +479,31 @@ int SceneClick(Block *block,int button,int x,int y,int mod)
 		
 		switch(button) {
 		case GLUT_LEFT_BUTTON:
-        SelectorCreate("%pk1",buffer,NULL);
+        strcpy(selName,"%pk1");
 		  break;
 		case GLUT_MIDDLE_BUTTON:
-        SelectorCreate("%pk2",buffer,NULL);
+        strcpy(selName,"%pk2");
 		  break;
 		case GLUT_RIGHT_BUTTON:
 		default:
-        SelectorCreate("%pk3",buffer,NULL);
+        strcpy(selName,"%pk3");
 		  break;
 		}
+      if(mod&cOrthoSHIFT) {
+        if(SelectorIndexByName(selName)>=0) {
+          sprintf(buf2,"( %s or (%s))",selName,buffer);
+          SelectorCreate(selName,buf2,NULL);
+        }
+        else 
+          SelectorCreate(selName,buffer,NULL);
+      } else {
+        SelectorCreate(selName,buffer,NULL);
+      }
 	 } else {
 		OrthoAddOutput("No atom!\n");
 		OrthoNewLine(NULL);
 		OrthoRestorePrompt();
 	 }
-	 
   } else {
 
 	 y=y-I->Block->margin.bottom;

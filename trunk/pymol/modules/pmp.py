@@ -77,7 +77,7 @@ if len(pmp_cmd1[pmp_nest]) > 0:\n\
             if pmp_kw[pmp_nest][1]<= len(pmp_args[pmp_nest]) <= pmp_kw[pmp_nest][2]:\n\
                pmp_args[pmp_nest] = map(string.strip,pmp_args[pmp_nest])\n\
                if pmp_kw[pmp_nest][4]<2:\n\
-                  apply(pmp_kw[pmp_nest][0],pmp_args[pmp_nest])\n\
+                  result=apply(pmp_kw[pmp_nest][0],pmp_args[pmp_nest])\n\
                elif pmp_kw[pmp_nest][4]==3:\n\
                   thread.start_new_thread(execfile,(pmp_args[pmp_nest][0],globals(),locals()))\n\
                elif len(pmp_args[pmp_nest])==1:\n\

@@ -133,8 +133,22 @@ Rep *RepSphereNew(CoordSet *cs)
   int ds,*nt,flag;
   int *visFlag = NULL;
   MapType *map = NULL;
-
+  int vFlag;
   OOAlloc(RepSphere);
+
+  obj = cs->Obj;
+  vFlag=false;
+  for(a=0;a<cs->NIndex;a++) {
+	 if(obj->AtomInfo[cs->IdxToAtm[a]].visRep[cRepSphere])
+		{
+		  vFlag=true;
+		  break;
+		}
+  }
+  if(!vFlag) {
+    OOFreeP(I);
+    return(NULL); /* skip if no dots are visible */
+  }
 
   RepInit(&I->R);
  /* get current dot sampling */

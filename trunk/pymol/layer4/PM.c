@@ -45,6 +45,7 @@ static PyObject *PMClip(PyObject *self, 	PyObject *args);
 static PyObject *PMColor(PyObject *self, PyObject *args);
 static PyObject *PMColorDef(PyObject *self, 	PyObject *args);
 static PyObject *PMCopy(PyObject *self, PyObject *args);
+static PyObject *PMCountStates(PyObject *self, PyObject *args);
 static PyObject *PMDelete(PyObject *self, PyObject *args);
 static PyObject *PMDirty(PyObject *self, 	PyObject *args);
 static PyObject *PMDistance(PyObject *dummy, PyObject *args);
@@ -72,6 +73,7 @@ static PyObject *PMMSet(PyObject *self, 	PyObject *args);
 static PyObject *PMOrigin(PyObject *self, PyObject *args);
 static PyObject *PMOnOff(PyObject *self, 	PyObject *args);
 static PyObject *PMOrient(PyObject *dummy, PyObject *args);
+static PyObject *PMOverlap(PyObject *self, 	PyObject *args);
 static PyObject *PMPNG(PyObject *self, 	PyObject *args);
 static PyObject *PMSelect(PyObject *self, PyObject *args);
 static PyObject *PMShowHide(PyObject *self, 	PyObject *args);
@@ -101,6 +103,7 @@ static PyMethodDef PM_methods[] = {
 	{"color",	     PMColor,        METH_VARARGS },
 	{"colordef",	  PMColorDef,     METH_VARARGS },
 	{"copy",         PMCopy,         METH_VARARGS },
+	{"count_states", PMCountStates,  METH_VARARGS },
 	{"delete",       PMDelete,       METH_VARARGS },
 	{"dirty",        PMDirty,        METH_VARARGS },
 	{"distance",	  PMDistance,     METH_VARARGS },
@@ -128,6 +131,7 @@ static PyMethodDef PM_methods[] = {
 	{"origin",	     PMOrigin,       METH_VARARGS },
 	{"orient",	     PMOrient,       METH_VARARGS },
 	{"onoff",        PMOnOff,        METH_VARARGS },
+	{"overlap",      PMOverlap,      METH_VARARGS },
 	{"png",	        PMPNG,          METH_VARARGS },
 	{"quit",	        PMQuit,         METH_VARARGS },
 	{"ready",        PMReady,        METH_VARARGS },
@@ -154,18 +158,33 @@ static PyMethodDef PM_methods[] = {
 };
 
 
+static PyObject *PMOverlap(PyObject *dummy, PyObject *args)
+{
+  char *str1,*str2;
+  int state1,state2;
+  OrthoLineType s1,s2;
+  PyObject *result;
+  PyArg_ParseTuple(args,"ssii",&str1,&str2,&state1,&state2);
+  SelectorGetTmp(str1,s1);
+  SelectorGetTmp(str2,s2);
+  result = Py_BuildValue("f",ExecutiveOverlap(s1,state1,s2,state2));
+  SelectorFreeTmp(s1);
+  SelectorFreeTmp(s2);
+  return result;
+}
+
 static PyObject *PMDistance(PyObject *dummy, PyObject *args)
 {
   char *str1,*str2;
   OrthoLineType s1,s2;
+  PyObject *result;
   PyArg_ParseTuple(args,"ss",&str1,&str2);
   SelectorGetTmp(str1,s1);
   SelectorGetTmp(str2,s2);
-  ExecutiveDistance(s1,s2);
+  result = Py_BuildValue("f",ExecutiveDistance(s1,s2));
   SelectorFreeTmp(s1);
   SelectorFreeTmp(s2);
-  Py_INCREF(Py_None);
-  return Py_None;
+  return result;
 }
 
 static PyObject *PMAlter(PyObject *self,   PyObject *args)
@@ -225,6 +244,18 @@ static PyObject *PMRunPyMOL(PyObject *dummy, PyObject *args)
 #endif
   Py_INCREF(Py_None);
   return Py_None;
+}
+
+static PyObject *PMCountStates(PyObject *dummy, PyObject *args)
+{
+  char *str1;
+  OrthoLineType s1;
+  int result;
+  PyArg_ParseTuple(args,"s",&str1);
+  SelectorGetTmp(str1,s1);
+  result = Py_BuildValue("i",ExecutiveCountStates(s1));
+  SelectorFreeTmp(s1); 
+  return(result);
 }
 
 static PyObject *PMSystem(PyObject *dummy, PyObject *args)
@@ -297,7 +328,7 @@ static PyObject *PMFitPairs(PyObject *dummy, PyObject *args)
   int ln=0;
   int a;
   int ok=true;
-
+  PyObject *result = NULL;
   PyArg_ParseTuple(args,"O",&list);
   ln = PyObject_Length(list);
   if(ln) {
@@ -313,44 +344,53 @@ static PyObject *PMFitPairs(PyObject *dummy, PyObject *args)
       SelectorGetTmp(PyString_AsString(PySequence_GetItem(list,a)),word[a]);
       a++;
     }
-    ExecutiveFitPairs(word,ln/2);
+    result=Py_BuildValue("f",ExecutiveRMSPairs(word,ln/2,2));
     for(a=0;a<ln;a++)
       SelectorFreeTmp(word[a]);
     FreeP(word);
   }
-  Py_INCREF(Py_None);
-  return Py_None;
+  if(!result) {
+    result=Py_None;
+    Py_INCREF(result);
+  }
+  return result;
 }
 
 static PyObject *PMIntraFit(PyObject *dummy, PyObject *args)
 {
   char *str1;
   int state;
+  int mode;
   OrthoLineType s1;
-
-  PyArg_ParseTuple(args,"si",&str1,&state);
+  float *fVLA;
+  PyObject *result=Py_None;
+  PyArg_ParseTuple(args,"sii",&str1,&state,&mode);
   SelectorGetTmp(str1,s1);
   if(state<0) state=0;
-  ExecutiveFitStates(s1,state);
+  fVLA=ExecutiveRMSStates(s1,state,mode);
+  if(fVLA) {
+    result=PFloatVLAToPyList(fVLA);
+    VLAFreeP(fVLA);
+  }
   SelectorFreeTmp(s1);
-  Py_INCREF(Py_None);
-  return Py_None;
+  if(result==Py_None) Py_INCREF(result);
+  return result;
 }
 
 
 static PyObject *PMFit(PyObject *dummy, PyObject *args)
 {
   char *str1,*str2;
+  int mode;
   OrthoLineType s1,s2;
-
-  PyArg_ParseTuple(args,"ss",&str1,&str2);
+  PyObject *result;
+  PyArg_ParseTuple(args,"ssi",&str1,&str2,&mode);
   SelectorGetTmp(str1,s1);
   SelectorGetTmp(str2,s2);
-  ExecutiveFit(s1,s2);
+  result=Py_BuildValue("f",ExecutiveRMS(s1,s2,mode));
   SelectorFreeTmp(s1);
   SelectorFreeTmp(s2);
-  Py_INCREF(Py_None);
-  return Py_None;
+  return result;
 }
 
 static PyObject *PMDirty(PyObject *self, 	PyObject *args)
@@ -793,6 +833,8 @@ static PyObject *PMLoad(PyObject *self, PyObject *args)
   #define cLoadTypeMOLStr 3
   #define cLoadTypeMMD 4
   #define cLoadTypeMMDSeparate 5
+  #define cLoadTypeMMDStr 6
+
   PyArg_ParseTuple(args,"ssii",&oname,&fname,&frame,&type);
 
   objMol=(ObjectMolecule*)ExecutiveFindObjectByName(oname);
@@ -860,10 +902,25 @@ static PyObject *PMLoad(PyObject *self, PyObject *args)
 				  fname,oname);
 	 }
     break;
-    
   case cLoadTypeMMDSeparate:
 	 ObjectMoleculeLoadMMDFile(objMol,fname,frame,oname);
     break;
+  case cLoadTypeMMDStr:
+	 obj=ObjectMoleculeReadMMDStr(objMol,fname,frame);
+	 if(!objMol) {
+	   if(obj) {
+		 ObjectSetName((Object*)obj,oname);
+		 ExecutiveManageObject((Object*)obj);
+		 sprintf(buf,"PMLoad: MMD-string loaded into object \"%s\".\n",
+				 oname);		  
+	   }
+	 } else if(objMol) {
+		ExecutiveUpdateObjectSelection((Object*)objMol);
+		sprintf(buf,"PMAppend: MMD-string appended into object \"%s\".\n",
+				  oname);
+	 }
+	 break;
+
   }
   if(objMol) {
 	 OrthoAddOutput(buf);
