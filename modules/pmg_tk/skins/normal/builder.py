@@ -306,20 +306,31 @@ class Builder(Frame):
         self.builder = self
 
         Frame.__init__(self, parent, *kw, **args)
-# get bitmaps for buttons
-#        imgDir = os.path.split(__file__)[0] + "/bitmaps/"
-        imgDir = os.path.join(os.environ['PYMOL_DATA'], "pmg_tk/bitmaps/builder")
-        print imgDir
-        imgList = glob("%s/aro*.gif" % imgDir) + glob("%s/cyc*.gif" % imgDir)
-        for imgFile in imgList:
-            imgName = os.path.splitext(os.path.split(imgFile)[1])[0]
-            if imgName not in imgDict.keys():
-                imgDict[imgName] = PhotoImage(file=imgFile)
+        self.deferred = 1
+        
+    def deferred_activate(self):
 
-        # construct everything
-        self.constructMain()
+        # avoids incurring the overhead of launching the builder unless
+        # we need it
+        
+        if self.deferred:
+            self.deferred = 0
+            
+            # get bitmaps for buttons
+            #        imgDir = os.path.split(__file__)[0] + "/bitmaps/"
+            
+            imgDir = os.path.join(os.environ['PYMOL_DATA'], "pmg_tk/bitmaps/builder")
+            print imgDir
+            imgList = glob("%s/aro*.gif" % imgDir) + glob("%s/cyc*.gif" % imgDir)
+            for imgFile in imgList:
+                imgName = os.path.splitext(os.path.split(imgFile)[1])[0]
+                if imgName not in imgDict.keys():
+                    imgDict[imgName] = PhotoImage(file=imgFile)
 
-        # unsafe approach
+            # construct everything
+            self.constructMain()
+
+        # unsafe approach disabled
         # self.bind_all("<ButtonRelease-1>", self.doSelect)
 
     def doAutoPick(self, *ignore):
