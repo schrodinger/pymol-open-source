@@ -777,7 +777,8 @@ void SelectorCreateObjectMolecule(int sele,char *name,int target,int source)
       }
     }
     
-    atInfo = VLAlloc(AtomInfoType,nAtom); /* copy the atom info records */
+    atInfo = VLAlloc(AtomInfoType,nAtom); 
+    /* copy the atom info records and create new zero-based IDs */
     c=0;
     for(a=0;a<I->NAtom;a++) {
       if(I->Table[a].index>=0) {

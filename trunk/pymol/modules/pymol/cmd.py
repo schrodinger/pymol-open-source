@@ -1932,6 +1932,27 @@ PYMOL API
       unlock()
    return r
 
+def id_atom(*arg):
+   r = -1
+   la = len(arg)
+   l = apply(identify,arg)
+   ll = len(l)
+   if not ll:
+      if la:
+         print "Error: atom %s not found by id_atom." % arg[0]
+      else:
+         print "Error: atom not found by id_atom."
+      raise RuntimeError
+   elif ll>1:
+      if la:
+         print "Error: multiple atoms %s found by id_atom." % arg[0]
+      else:
+         print "Error: multiple atoms found by id_atom."
+      raise RuntimeError
+   else:
+      r = l[0]
+   return r
+   
 def identify(*arg):
    '''
 DESCRIPTION

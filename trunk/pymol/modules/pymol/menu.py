@@ -134,7 +134,7 @@ def sele_action(s):
            [ 0, ''          ,''                           ],
            [ 1, 'Duplicate'    ,'cmd.select("('+s+')")'   ],
            [ 0, ''          ,''                           ],
-           [ 1, 'Residues' ,'cmd.select("'+s+'","(byres '+s+')")'                        ],
+           [ 1, 'Complete Residues' ,'cmd.select("'+s+'","(byres '+s+')")'                   ],
            [ 1, 'Residues within 3 A' ,'cmd.select("'+s+'","(byres ('+s+' expand 3))")'  ],
            [ 1, 'Residues within 7 A' ,'cmd.select("'+s+'","(byres ('+s+' expand 7))")'  ],
            [ 1, 'Residues within 10 A' ,'cmd.select("'+s+'","(byres ('+s+' expand 10))")'],
@@ -183,7 +183,7 @@ def mol_labels(s):
            [ 0, ''               , ''                                  ],
            [ 1, 'B-factor'       , 'cmd.label("'+s+'","\'%1.2f\'%b")'  ],         
            [ 1, 'Partial Charge' , 
-  'cmd.label("'+s+'","\'%1.2f\'%partial_charge")'                      ],
+  'cmd.label("'+s+'","\'%1.4f\'%partial_charge")'                      ],
            [ 0, ''               , ''                                  ],
            [ 1, 'Text Type'      , 'cmd.label("'+s+'","text_type")'    ],
            [ 1, 'Numeric Type'   , 'cmd.label("'+s+'","numeric_type")' ]
