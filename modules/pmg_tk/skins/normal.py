@@ -16,7 +16,7 @@ from pmg_tk.SetEditor import SetEditor
 from pmg_tk.ColorEditor import ColorEditor
 
 from pmg_tk.skins import PMGSkin
-from pmg_tk.builder import Builder
+#from pmg_tk.builder import Builder
 
 def complete(event,str,widget,self):
    st = parser.complete(str.get())
@@ -133,10 +133,10 @@ class Normal(PMGSkin):
       btn_last = self.buttonAdd(row1,'>|',lambda s=self: s.cmd.do("_ ending"))
       btn_ccache = self.buttonAdd(row1,'MClear',lambda s=self: s.cmd.do("_ mclear"))
 
-      row0 = self.app.createcomponent('row0', (), None,
-         Frame,self.commandFrame,bd=0)
-      row0.pack(side=TOP,fill=BOTH,expand=YES)      
-      btn_ccache = self.buttonAdd(row0,'Builder',lambda : Builder())
+#      row0 = self.app.createcomponent('row0', (), None,
+#         Frame,self.commandFrame,bd=0)
+#      row0.pack(side=TOP,fill=BOTH,expand=YES)      
+#      btn_ccache = self.buttonAdd(row0,'Builder',lambda : Builder())
 
    def my_show(self,win,center=1):
       if sys.platform!='linux2':
@@ -247,7 +247,7 @@ class Normal(PMGSkin):
       self.text = text
       self.font = 'lucida console'
       if sys.platform[:5]=='linux':
-         self.my_fw_font=(self.font,12)
+         self.my_fw_font=(self.font,11)
       elif sys.platform[:3]=='win':
          self.my_fw_font=(self.font,8) # Courier 9
       else:
