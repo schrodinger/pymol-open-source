@@ -420,8 +420,7 @@ PyMOL>load dat/small01.mol
 PyMOL>cmd.edit("(small01`3)",pkresi=1)
  Selector: selection "pk1" defined with 1 atoms.
 PyMOL>cmd.edit_mode()
- Setting: button_mode set to 1.000
- Mouse: configured for editing.
+ mouse: three_button_editing
 PyMOL>cmd.push_undo("small01",1)
 PyMOL>get_extent
  cmd.extent: min: [ -15.771,  -2.490,  -3.683]
@@ -438,8 +437,7 @@ PyMOL>get_extent
  cmd.extent: max: [   2.256,   2.247,   2.911]
 PyMOL>cmd.set('valence','0.0500')
 PyMOL>cmd.edit_mode()
- Setting: button_mode set to 0.000
- Mouse: configured for visualization.
+ mouse: three_button_editing
 PyMOL>cmd.push_undo("small01",1)
 PyMOL>cmd.translate_atom("/small01////C`",    0.020101367,   -0.020101367,    
 0.000000000,1,1,0)

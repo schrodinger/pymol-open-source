@@ -239,4 +239,4 @@ Warning: 'spheroid' is experimental, incomplete, and unstable.
 PyMOL>spheroid pept
 Warning: 'spheroid' is experimental, incomplete, and unstable.
 PyMOL>cmd.config_mouse(quiet=0)
- Mouse: configured for visualization.
+ config_mouse: three_button
