@@ -455,7 +455,7 @@ void EditorRemove(void)
   }
 }
 /*========================================================================*/
-void EditorRefill(void)
+void EditorHFill(void)
 {
 
   CEditor *I = &Editor;

@@ -38,42 +38,150 @@ class QuietException:
 
 lock_api = pymol.lock_api
 
-
 def commands():
    '''
 COMMANDS
  
-   INPUT/OUTPUT  load     save     delete   quit
-   VIEW          turn     move     clip     rock
-                 show     hide     enable   disable
-                 reset    refresh
-                 zoom     origin   orient
-   MOVIES        mplay    mstop    mset     mdo
-                 mpng     mmatrix  frame
-                 rewind   middle   ending
-                 forward  backward
-   IMAGING       png      mpng
-   RAYTRACING    ray      
-   MAPS          isomesh  isodot
-   DISPLAY       cls      viewport splash
-   SELECTIONS    select
+   INPUT/OUTPUT  load      save      delete    quit
+   VIEW          turn      move      clip      rock
+                 show      hide      enable    disable
+                 reset     refresh   rebuild
+                 zoom      origin    orient
+   MOVIES        mplay     mstop     mset      mdo
+                 mpng      mmatrix   frame
+                 rewind    middle    ending
+                 forward   backward
+   IMAGING       png       mpng
+   RAY TRACING   ray      
+   MAPS          isomesh   isodot
+   DISPLAY       cls       viewport  splash    
+   SELECTIONS    select    mask
    SETTINGS      set
-   ATOMS         alter
-   FITTING       fit      rms      rms_cur  intra_fit    
-   COLORS        color    set_color
-   HELP          help     commands
+   ATOMS         alter     alter_state
+   EDITING       create    replace   remove    h_fill   remove_picked
+                 edit      bond      unbond    h_add    fuse       
+                 undo      redo      protect   cycle_valence  
+   FITTING       fit       rms       rms_cur   pair_fit  
+                 intra_fit intra_rms intra_rms_cur   
+   COLORS        color     set_color
+   HELP          help      commands
    DISTANCES     dist      
    STEREO        stereo
    SYMMETRY      symexp
+   SCRIPTS       @         run
+
+Try "help <command-name>".  Also see the following extra topics:
  
-Try "help <command-name>" for more information on a given command.
- 
-Additional help topics include:
    "movies", "keyboard", "mouse", "selections",
-   "examples", "launching", and "api".
-   '''
+   "examples", "launching", "editing", and "api".
+'''
    help('commands')
 
+def editing():
+   '''
+
+   
+'''
+
+def edit_keys():
+   '''
+EDITING KEYS 
+
+   These are defaults, which can be redefined.  Note that while
+entering text on the command line, some of these control keys 
+take on text editing functions instead (CTRL - A, E, and K)
+
+ATOM REPLACEMENT
+ 
+   CTRL-C    Replace picked atom with carbon   (C)
+   CTRL-N    Replace picked atom with nitrogen (N)
+   CTRL-O    Replace picked atom with oxygen   (O)
+   CTRL-S    Replace picked atom with sulpher  (S)
+   CTRL-G    Replace picked atom with hydrogen (H)
+   CTRL-F    Replace picked atom with fluorene (F)
+   CTRL-L    Replace picked atom with chlorine (Cl)
+   CTRL-B    Replace picked atom with bromine  (Br)
+   CTRL-I    Replace picked atom with iodine   (I)
+   
+ATOM MODIFICATION
+  
+   CTRL-J    Set charge on picked atom to -1
+   CTRL-K    Set charge on picked atom to +1
+   CTRL-D    Remove atom or bond (DELETE works too).
+   CTRL-Y    Add a hydrogen to the current atom
+   CTRL-F    Adjust hydrogens to match valence.
+
+BONDS
+
+   CTRL-T    Connect atoms in the (lb) and (rb) selections.
+   CTRL-W    Cycle the bond valence on the picked bond.
+
+MISC
+
+   CTRL-Z    undo the previous conformational change.
+             (you can't currently undo modifications).
+   CTRL-A    redo the previous conformational change.
+
+'''
+   help('edit_keys')
+
+
+def at_sign():
+   '''
+DESCRIPTION
+ 
+"@" sources a PyMOL command script as if all of the commands in the
+file were typed into the PyMOL command line.
+
+USAGE
+  
+ @ <script-file>
+
+PYMOL API
+
+ Not directly available. Instead, use cmd.do("@...").
+ 
+'''
+   help(at_sign)
+
+def run():
+   '''
+DESCRIPTION
+ 
+"run" executes an external Python script in its own namespace (like a
+Python module, default), a local name space, or in the global
+namespace.
+ 
+USAGE
+  
+ run <python-script> [, (local | global | module) ]
+
+PYMOL API
+
+ Not directly available.  Instead, use cmd.do("run ...").
+ 
+'''
+   help(run)
+
+def spawn():
+   '''
+DESCRIPTION
+ 
+"spawn" launches a Python script in a new thread which will run
+concurrently with the PyMOL interpreter. It can be run in its own
+namespace (like a Python module, default), a local name space, or in
+the global namespace.
+ 
+USAGE
+  
+ run <python-script> [, (local | global | module )]
+
+PYMOL API
+
+ Not directly available.  Instead, use cmd.do("spawn ...").
+ 
+'''
+   help(spawn)
 
 def api():
    '''
@@ -104,28 +212,31 @@ NOTES
 
 def keyboard():
    '''
-KEYBOARD COMMANDS and MODIFIERS
+ KEYBOARD COMMANDS and MODIFIERS
  
    TAB          Toggle onscreen text.
- 
    INSERT       Toggle rocking.
  
-   LEFT ARROW   Go backwards one frame.
-   RIGHT ARROW  Go forwards one frame.
-   END          Go to end of movie.
-   HOME         Go to beginning of movie.
+   LEFT ARROW, RIGHT ARROW  Go backward or forward one frame.
+   HOME,       END          Go to the beginning or end of a movie.
  
- ATOM SELECTIONS (These only work on the "lines" representation!)
+ ATOM SELECTIONS (Only work on "lines and nonbonded" representations!)
   
-   CTRL/left mouse click    Pick atom and store as selection (lmb).
-   CTRL/middle mouse click  Pick atom and store as selection (mmb).
-   CTRL/right mouse click   Pick atom and store as selection (rmb).
+   CTRL/left mouse click    Pick atom and store as selection (lb).
+   CTRL/middle mouse click  Pick atom and store as selection (mb).
+   CTRL/right mouse click   Pick atom and store as selection (rb).
  
-   CTRL-SHIFT/left mouse click    Pick atom and add to selection (lmb).
-   CTRL-SHIFT/middle mouse click  Pick atom and add to selection (mmb).
-   CTRL-SHIFT/right mouse click   Pick atom and add to selection (rmb).
+   CTRL-SHIFT/left mouse click    Pick atom and add to selection (lb).
+   CTRL-SHIFT/middle mouse click  Pick atom and add to selection (mb).
+   CTRL-SHIFT/right mouse click   Pick atom and add to selection (rb).
+
+ EDITING 
+
+   type "help edit_keys" for keyboard shortcuts used in editing.
+   
    '''
    help('keyboard')
+
 
 def mouse():
    '''
@@ -182,20 +293,23 @@ def launching():
    '''
 PyMOL COMMAND LINE OPTIONS 
  
-   pymol.com [-cistwx] <file> ...
+   pymol.com [-cistwx] <file> [-p <file.py> ] ...
  
-   -c   Command line mode, no GUI at all.
+   -c   Command line mode, no GUI - great for batch opeations.
+
+   -s   Enable stereo mode (not currently autodetected).
+
+   -l <file.py> Launch a Python program in a concurrent thread.
   
    -i   Disable the internal OpenGL GUI (object list, menus, etc.)
  
-   -s   Enable stereo mode (not currently autodetected).
-  
-   -t   Use Tcl/Tk based external GUI module (pmg_tk).
-   -w   Use wxPython based external GUI module (pmg_wx).
- 
    -x   Disable the external GUI module.
  
-   <file> can have extension:
+   -t   Use Tcl/Tk based external GUI module (pmg_tk).
+   -w   Use wxPython based external GUI module (pmg_wx).
+
+   <file> can have one of the following extensions, and all 
+   files provided will be loaded or run after PyMOL starts.
     
       .pml    PyMOL command script to be run on startup
       .py     Python program to be run on startup
@@ -204,7 +318,7 @@ PyMOL COMMAND LINE OPTIONS
       .mmod   Macromodel format to be loaded on startup
       .mol    MDL MOL file to be loaded on startup
       .xplor  X-PLOR Map file to be loaded on startup
-      .pkl    Pickled Indexed Models from Chempy 
+      .pkl    Pickled ChemPy Model (class "chempy.model.Indexed")
    '''
    help('launching')
 
@@ -613,7 +727,6 @@ NOTES
    return r
 
 def show_help(cmd):
-   set("text","1")
    print "PyMOL>help %s\n" % cmd
    help(cmd)
    print "(Hit TAB to hide)"
@@ -638,6 +751,7 @@ USAGE
  
    help <command>
    '''
+   set("text","1")
    if len(arg):
       cmd = arg[0]
    else:
@@ -649,13 +763,13 @@ USAGE
    if keyword.has_key(cmd):
       doc = keyword[cmd][0].__doc__
       if doc:
-         print " \n",string.strip(doc),"\n \n"
+         print " \n",string.strip(doc),"\n"
       else:
          print "Error: sorry no help available on that command."
    elif help_only.has_key(cmd):
       doc = help_only[cmd][0].__doc__
       if doc:
-         print " \n",string.strip(doc),"\n \n"
+         print " \n",string.strip(doc),"\n"
       else:
          print "Error: sorry no help available on that command."      
    else:
@@ -1316,7 +1430,7 @@ DESCRIPTION
    
 USAGE
  
-   fit_pairs (selection), (selection), [ (selection), (selection) [ ...] ]
+   pair_fit (selection), (selection), [ (selection), (selection) [ ...] ]
    '''
    try:
       lock()   
@@ -1336,7 +1450,26 @@ def expfit(a,b):
       unlock()
    return r
 
+
 def remove(sele):
+   '''
+DESCRIPTION
+  
+   "remove" eleminates a selection of atoms from models.
+      
+USAGE
+ 
+   remove (selection)
+ 
+PYMOL API
+  
+   cmd.remove( string selection )
+    
+EXAMPLES
+ 
+   remove ( resi 124 )
+   
+'''
    r = 1
    try:
       lock()   
@@ -1346,6 +1479,26 @@ def remove(sele):
    return r
 
 def remove_picked():
+   '''
+DESCRIPTION
+  
+   "remove_picked" removes the atom or bond currently
+   picked for editing.
+      
+USAGE
+ 
+   remove_picked
+ 
+PYMOL API
+  
+   cmd.remove_picked()
+
+NOTES
+
+   This function is usually connected to the
+   DELETE key and "CTRL-D".
+    
+'''
    r = 1
    try:
       lock()   
@@ -1355,6 +1508,25 @@ def remove_picked():
    return r
 
 def cycle_valence():
+   '''
+DESCRIPTION
+  
+   "cycle_valnce" cycles the valence on the currently selected bond.
+      
+USAGE
+ 
+   cycle_valence
+ 
+PYMOL API
+  
+   cmd.remove_picked()
+
+NOTES
+
+   This function is usually connected to the
+   DELETE key and "CTRL-D".
+    
+'''
    r = 1
    try:
       lock()   
@@ -1365,6 +1537,24 @@ def cycle_valence():
 
 
 def attach(name,geom,valence):
+   '''
+DESCRIPTION
+  
+   "attach" adds a single atom onto the picked atom.
+      
+USAGE
+ 
+   attach name, geometry, valence
+ 
+PYMOL API
+  
+   cmd.attach( name, geometry, valence )
+
+NOTES
+
+   see code for details
+
+'''
    r = 1
    try:
       lock()   
@@ -1374,6 +1564,29 @@ def attach(name,geom,valence):
    return r
 
 def fuse(*arg):
+   '''
+DESCRIPTION
+  
+   "fuse" joins two objects into one by forming a bond. 
+   The first object is moved so as to form an approximately
+   resonable bond with the first. 
+      
+USAGE
+ 
+   fuse (selection), (selection)
+ 
+PYMOL API
+  
+   cmd.fuse( string selection, string selection )
+
+NOTES
+
+   Each selection must include a single atom in each object.
+   The atoms can both be hydrogens, in which case they are
+   eliminated, or they can both be non-hydrogens, in which
+   case a bond is formed between the two atoms.
+
+'''
    la = len(arg)
    if la==1:
       print "Error: invalid arguments for fuse command."
@@ -1393,6 +1606,26 @@ def fuse(*arg):
    return r
 
 def edit(*arg):
+   '''
+DESCRIPTION
+  
+   "edit" picks an atom or bond for editing.
+      
+USAGE
+ 
+   edit (selection) [ ,(selection) ]
+ 
+PYMOL API
+  
+   cmd.edit( string selection  [ ,string selection ] )
+
+NOTES
+
+   If only one selection is provided, an atom is picked.
+   If two selections are provided, the bond between them
+   is picked (if one exists).
+
+'''
    sel0=''
    sel1=''
    sel2=''
@@ -1415,6 +1648,23 @@ def edit(*arg):
    return r
 
 def torsion(deg):
+   '''
+DESCRIPTION
+  
+   "torsion" rotates the torsion on the bond currently
+   picked for editing.  The rotated fragment will correspond
+   to the first atom specified when picking the bond (or the
+   nearest atom, if picked using the mouse).
+      
+USAGE
+ 
+   torsion angle
+ 
+PYMOL API
+  
+   cmd.torsion( float angle )
+
+'''
    try:
       lock()   
       r = _cmd.torsion(float(deg))
@@ -1423,16 +1673,50 @@ def torsion(deg):
    return r
    
 
-def refill():
+def h_fill():
+   '''
+DESCRIPTION
+  
+   "h_fill" removes and replaces hydrogens on the atom
+   or bond picked for editing.  
+      
+USAGE
+ 
+   h_fill
+ 
+PYMOL API
+  
+   cmd.h_fill()
+
+NOTES
+   
+   This is useful for fixing hydrogens after changing
+   bond valences.
+'''
    r = 1
    try:
       lock()   
-      r = _cmd.refill()
+      r = _cmd.h_fill()
    finally:
       unlock()
    return r
 
 def h_add(*arg):
+   '''
+DESCRIPTION
+  
+   "h_add" uses a primitive algorithm to add hydrogens
+   onto a molecule.
+      
+USAGE
+ 
+   h_add (selection)
+ 
+PYMOL API
+  
+   cmd.h_add( string selection )
+
+'''
    r = 1
    if len(arg):
       sele = arg[0]
@@ -2035,12 +2319,7 @@ NOTES
 
 def dummy(*arg):
    '''
-DEBUGGING
    '''
-   try:
-      lock()   
-   finally:
-      unlock()
    return None
 
 def rock():
@@ -2196,7 +2475,8 @@ def save(*arg):
    '''
 DESCRIPTION
   
-   "save" writes selected atoms to a PDB file
+   "save" writes selected atoms to a file.  The file format is
+   autodetected if the extesion is ".pdb" or ".pkl"
  
 USAGE
  
@@ -2563,6 +2843,28 @@ PYMOL API
    return r
 
 def read_molstr(*arg):
+   '''
+DESCRIPTION
+  
+   "read_molstr" reads an MDL MOL format file as a string
+   
+PYMOL API ONLY
+ 
+   cmd.read_molstr( string MOL-content, string object name 
+   [ ,int state [ ,int finish [ ,int discrete ] ] ] )
+
+NOTES
+
+   "state" is a 1-based state index for the object.
+
+   "finish" is a flag (0 or 1) which can be set to zero to improve
+   performance when loading large numbers of objects, but you must
+   call "finish_object" when you are done.
+
+   "discrete" is a flag (0 or 1) which tells PyMOL that there will be
+   no overlapping atoms in the PDB files being loaded.  "discrete"
+   objects save memory but can't be edited.
+'''
    r = 1
    try:
       lock()
@@ -2601,6 +2903,28 @@ def read_mmodstr(*arg):
    return r
 
 def read_pdbstr(*arg):
+   '''
+DESCRIPTION
+  
+   "read_pdbstr" reads a pdb file as a string
+   
+PYMOL API ONLY
+ 
+   cmd.read_pdbstr( string pdb-content, string object name 
+   [ ,int state [ ,int finish [ ,int discrete ] ] ] )
+
+NOTES
+
+   "state" is a 1-based state index for the object.
+
+   "finish" is a flag (0 or 1) which can be set to zero to improve
+   performance when loading large numbers of objects, but you must
+   call "finish_object" when you are done.
+
+   "discrete" is a flag (0 or 1) which tells PyMOL that there will be
+   no overlapping atoms in the PDB files being loaded.  "discrete"
+   objects save memory but can't be edited.
+'''
    r = 1
    finish = 1
    discrete = 0
@@ -2757,6 +3081,21 @@ EXAMPLES
    return r
 
 def rebuild():
+   '''
+DESCRIPTION
+
+   "rebuild" forces PyMOL to recreate all geometric objects in
+   case any of them have gone out of sync.
+
+USAGE
+   
+   rebuild
+
+PYMOL API
+
+   cmd.rebuild()
+
+'''
    r = 1
    try:
       lock()
@@ -2813,7 +3152,7 @@ DESCRIPTION
     
       lines     spheres   mesh      ribbon
       sticks    dots      surface   labels
-      nonbonded
+      nonbonded nb_spheres
    
 USAGE
  
@@ -2876,7 +3215,7 @@ DESCRIPTION
     
       lines     spheres   mesh      ribbon
       sticks    dots      surface   labels
-      nonbonded
+      nonbonded nb_spheres
    
 USAGE
  
@@ -3176,6 +3515,7 @@ keyword = {
    'commands'      : [commands     , 0 , 0 , ',' , 0 ],
    'copy'          : [copy         , 2 , 2 , '=' , 0 ],
    'count_states'  : [count_states , 0 , 1 , ',' , 0 ],
+   'cycle_valence' : [cycle_valence, 0 , 0 , ',' , 0 ],
    'create'        : [create       , 2 , 2 , '=' , 0 ],   
    'delete'        : [delete       , 1 , 1 , ',' , 0 ],
    'disable'       : [disable      , 0 , 1 , ',' , 0 ],
@@ -3190,7 +3530,7 @@ keyword = {
    'fast_minimize' : [fast_minimize, 1,  4 , ',' , 0 ],
    'fit'           : [fit          , 2 , 2 , ',' , 0 ],
    'flag'          : [flag         , 2 , 2 , '=' , 0 ],
-   'fork'          : [dummy        , 1 , 2 , ',' , 3 ],
+   'fork'          : [spawn        , 1 , 2 , ',' , 3 ],
    'forward'       : [forward      , 0 , 0 , ',' , 0 ],
    'fragment'      : [fragment     , 1 , 1 , ',' , 0 ],
    'fuse'          : [fuse         , 0 , 2 , ',' , 0 ],
@@ -3227,14 +3567,16 @@ keyword = {
    'protect'       : [protect      , 0 , 1 , ',' , 0 ],
    'ray'           : [ray          , 0 , 0 , ',' , 0 ],
    'rebuild'       : [rebuild      , 0 , 0 , ',' , 0 ],
+   'redo'          : [redo         , 0 , 0 , ',' , 0 ],
    'refresh'       : [refresh      , 0 , 0 , ',' , 0 ],
    'remove'        : [remove       , 1 , 1 , ',' , 0 ],
+   'remove_picked' : [remove_picked, 1 , 1 , ',' , 0 ],
    'rename'        : [rename       , 1 , 1 , ',' , 0 ],
    'replace'       : [replace      , 3 , 3 , ',' , 0 ],
    'reset'         : [reset        , 0 , 0 , ',' , 0 ],
    'rewind'        : [rewind       , 0 , 0 , ',' , 0 ],
    'rock'          : [rock         , 0 , 0 , ',' , 0 ],
-   'run'           : [dummy        , 1 , 2 , ',' , 2 ],
+   'run'           : [run           , 1 , 2 , ',' , 2 ],
    'rms'           : [rms          , 2 , 2 , ',' , 0 ],
    'rms_cur'       : [rms_cur      , 2 , 2 , ',' , 0 ],
    'save'          : [save         , 0 , 4 , ',' , 0 ],
@@ -3244,7 +3586,7 @@ keyword = {
    'set_key'       : [set_key      , 2 , 1 , ',' , 0 ], # API only
    'show'          : [show         , 0 , 2 , ',' , 0 ],
    'sort'          : [sort         , 0 , 1 , ',' , 0 ],
-   'spawn'         : [dummy        , 1 , 2 , ',' , 3 ],
+   'spawn'         : [spawn        , 1 , 2 , ',' , 3 ],
    'spheroid'      : [spheroid     , 0 , 1 , ',' , 0 ],
    'splash'        : [splash       , 0 , 0 , ',' , 0 ],
    '_special'      : [_special     , 3 , 3 , ',' , 0 ],
@@ -3272,6 +3614,9 @@ help_only = {
    'examples'      : [examples     , 0 , 0 , ',' , 0 ],
    'launching'     : [launching    , 0 , 0 , ',' , 0 ],
    'movies'        : [movies       , 0 , 0 , ',' , 0 ],
+   'editing'       : [editing      , 0 , 0 , ',' , 0 ],  
+   'edit_keys'     : [edit_keys    , 0 , 0 , ',' , 0 ],  
+   '@'             : [at_sign      , 0 , 0 , ',' , 0 ],  
 }
 
 repres = {
@@ -3349,6 +3694,7 @@ special = {
 }
 
 ctrl = {
+   'A' : [ redo                   , 0 , None ],
    'B' : [ replace                , 1 , ('Br',1,1) ],
    'C' : [ replace                , 1 , ('C',4,4) ],
    'D' : [ remove_picked          , 0 , None ],   
@@ -3360,16 +3706,16 @@ ctrl = {
    'L' : [ replace                , 1 , ('Cl',1,1)],   
    'N' : [ replace                , 1 , ('N',4,3) ],
    'O' : [ replace                , 1 , ('O',4,2) ],   
-   'P' : [ replace                , 0 , ('P',4,1) ],
+   'P' : [ replace                , 1 , ('P',4,1) ],
    'Q' : [ h_add                  , 1 , ("ed1",) ],   
-   'R' : [ refill                 , 0 , None ],   
+   'R' : [ h_fill                 , 0 , None ],   
    'S' : [ replace                , 1 , ('S',4,2) ],
    'T' : [ bond                   , 0 , None ],   
    'U' : [ alter                  , 1 , ('ed1','formal_charge =0.0') ],
    'W' : [ cycle_valence          , 0 , None ],   
    'X' : [ None                   , 0 , None ],
    'Y' : [ attach                 , 1 , ('H',1,1) ],
-   'Z' : [ None                   , 0 , None ],   
+   'Z' : [ undo                   , 0 , None ],   
    }
 
 class loadable:

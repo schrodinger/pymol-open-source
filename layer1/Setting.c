@@ -69,6 +69,11 @@ void SettingSetfv(int index,float *v)
     I->Setting[index].Value[0]=v[0];
     SceneChanged();
     break;
+  case cSetting_button_mode:
+    EditorSetActiveObject(NULL,0);
+	 I->Setting[index].Value[0]=v[0];
+    SceneDirty();
+    break;
   case cSetting_stick_radius:
   case cSetting_stick_quality:
   case cSetting_stick_overlap:

@@ -440,7 +440,7 @@ void OrthoKey(unsigned char k,int x,int y,int mod)
     case 4:
     case 127: /* delete */     
       if((!I->CurChar)||(I->CurChar==I->PromptChar)) {
-        OrthoKeyControl(k);
+        OrthoKeyControl(4);
       } else {
         if(I->CursorChar>=0) {
           if(I->CursorChar<I->CurChar)
@@ -489,9 +489,11 @@ void OrthoKey(unsigned char k,int x,int y,int mod)
         I->CursorChar=-1;
       break;
     case 1: /* CTRL A -- beginning */
-      if(OrthoArrowsGrabbed())
+      if(OrthoArrowsGrabbed()) {
         if(I->CurChar)
           I->CursorChar=I->PromptChar;        
+      } else 
+        OrthoKeyControl(k);
       break;
 	 case 9: /* CTRL I -- tab */
       if(mod&cOrthoCTRL) {
@@ -618,14 +620,14 @@ void OrthoNewLine(char *prompt)
 
   /*  printf("orthoNewLine: CC: %d CL:%d PC: %d IF:L %d\n",I->CurChar,I->CurLine,
 		I->PromptChar,I->InputFlag);*/
-  if(I->CurChar)
-	 {
+  /*  if(I->CurChar)
+	 {*/
 	   OrthoFeedbackIn(I->Line[I->CurLine&OrthoSaveLines]);
 	   printf("%s\n",I->Line[I->CurLine&OrthoSaveLines]);
 	   fflush(stdout);
-	 }
+      /*	 }*/
 
-  if(I->Line[I->CurLine&OrthoSaveLines][0])
+      /*  if(I->Line[I->CurLine&OrthoSaveLines][0])*/
 	 I->CurLine++;
   curLine = I->CurLine&OrthoSaveLines;
 
@@ -911,19 +913,45 @@ int OrthoDrag(int x, int y,int mod)
 void OrthoSplash(void) 
 {
   OrthoNewLine(NULL);
-  OrthoAddOutput("PyMOL Molecular Graphics System, Version ");
+  OrthoAddOutput(" PyMOL Molecular Graphics System, Version ");
   OrthoAddOutput(_PyMOL_VERSION);
   OrthoAddOutput(".");
   OrthoNewLine(NULL);
-  OrthoAddOutput("Copyright (C) 1998-2000 by DeLano Scientific.\nAll Rights Reserved.\n \n");
-  OrthoAddOutput("Principle Author:  Warren L. DeLano, Ph.D.\n \n");
-  OrthoAddOutput("Major Authors and Contributors:\n \n");
-  OrthoAddOutput("      Ralf W. Grosse-Kunstleve, Ph.D.\n \n");
-  OrthoAddOutput("This software is open source and freely available.\n");
-  OrthoAddOutput("Updates can be found at \"http://www.pymol.org\".\n \n");
-  OrthoAddOutput("Enter \"help commands\" for a list of commands.\n");
-  OrthoAddOutput("Enter \"help <command-name>\" for information on a specific command.\n \n");
-  OrthoAddOutput("Hit TAB to toggle text or type \"cls\" to clear.\n \n");
+  OrthoAddOutput(" Copyright (C) 1998-2000 by DeLano Scientific.\n All Rights Reserved.\n \n");
+
+  OrthoAddOutput("    Created by:   Warren L. DeLano, Ph.D. \n \n");
+
+  OrthoAddOutput("    Other Major Authors and Contributors:\n");
+  OrthoAddOutput("       Ralf W. Grosse-Kunstleve, Ph.D.\n \n");
+
+  OrthoAddOutput("    This software is open source and freely available.\n");
+  OrthoAddOutput("    Updates can be found at \"http://www.pymol.org\".\n \n");
+
+  OrthoAddOutput("    Enter \"help commands\" for a list of commands.\n");
+  OrthoAddOutput("    Enter \"help <command-name>\" for information on a specific command.\n \n");
+
+  OrthoAddOutput(" NOTICE - PLEASE READ - NOTICE - PLEASE READ - NOTICE - PLEASE READ - NOTICE\n \n");
+
+  OrthoAddOutput("    PyMOL is now ready for users who prefer keyword commands and scripts,\n");
+  OrthoAddOutput("    and for Python developers who want to integrate PyMOL's visualization\n");
+  OrthoAddOutput("    and molecular editing capabilities into large modular systems.\n \n");
+
+  OrthoAddOutput("    This early release includes a diverse command language, a powerful\n");
+  OrthoAddOutput("    application programmers interface (API), and a variety of mouse and\n");
+  OrthoAddOutput("    keyboard driven functionality (such as molecular editing).\n \n");
+
+  OrthoAddOutput("    However, this release of PyMOL does NOT include an adequate graphical\n");
+  OrthoAddOutput("    user interface, menu bar, manual, test suite, or help system.\n \n");
+
+  OrthoAddOutput("    The Tkinter based window (above) and the OpenGL \"developers\" GUI (right)\n");
+  OrthoAddOutput("    are place-holders for a modern full-scale GUI to be built using wxPython.\n \n");
+
+  OrthoAddOutput("    For now, please limit your comments, suggests, and criticisms to issues\n");
+  OrthoAddOutput("    concerning the core functionaliy, such as graphics, commands, and the API.\n \n");
+
+  OrthoAddOutput("    - Warren L. DeLano (11/4/2000), warren@delanoscientific.com\n\n");
+
+  OrthoAddOutput(" Hit TAB to toggle text.\n");
 }
 /*========================================================================*/
 void OrthoInit(void)

@@ -17,6 +17,8 @@
 # This module unifies argument handling for embedded and modular PyMOL
 #
 
+import copy
+
 class generic:
    pass
 
@@ -30,9 +32,14 @@ options.external_gui = 1
 options.gui = 'pmg_tk'
 
 def parse_args(argv):
+   av = copy.deepcopy(argv)
+   av.reverse()
    global options
    options.deferred = []
-   for a in argv:
+   while 1:
+      if not len(av):
+         break
+      a = av.pop()
       if a[0:1]=='-':
          if "c" in a:
             options.no_gui=1
@@ -47,6 +54,8 @@ def parse_args(argv):
             options.gui = 'pmg_tk'
          if "w" in a:
             options.gui = 'pmg_wx'
+         if "l" in a:
+            options.deferred.append("_do_spawn %s"%av.pop())
       else:
          options.deferred.append(a)
 

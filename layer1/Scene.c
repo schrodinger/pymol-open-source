@@ -1278,7 +1278,6 @@ void SceneRender(Pickable *pick,int x,int y)
 
     glGetFloatv(GL_MODELVIEW_MATRIX,I->ModMatrix);
     glGetFloatv(GL_PROJECTION_MATRIX,I->ProMatrix);
-    glGetFloatv(GL_PROJECTION_MATRIX,I->ProMatrix);
   
     /* determine the direction in which we are looking relative*/
 

@@ -39,7 +39,7 @@ ObjectMolecule *EditorDragObject(void);
 void EditorReplace(char *elem,int geom,int valence);
 void EditorAttach(char *elem,int geom,int valence);
 void EditorRemove(void);
-void EditorRefill(void);
+void EditorHFill(void);
 void EditorCycleValence(void);
 void EditorInactive(void);
 ObjectMolecule *EditorGetActiveObject(void);
