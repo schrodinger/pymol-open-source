@@ -3,6 +3,8 @@ from pymol.wizard import Wizard
 from pymol import cmd
 import pymol
 
+default_mode = 'labchg'
+
 class Charge(Wizard):
 
    def __init__(self):
@@ -11,21 +13,29 @@ class Charge(Wizard):
       
       self.modes = [
          'labchg',
-         'cpychg',
          'addchg',
+         'cpychg',
          'zrochg',
+         'mzochg',
+         'cbachg',
+         'movchg',
+         'rbachg',
          'sumchg',
          ]
 
-      self.mode = 'labchg'
+      self.mode = default_mode
       self.status = 0
       
       self.mode_name = {
-         'labchg':'Show Charges',
-         'cpychg':'Copy Charges',
-         'addchg':'Add Charges',
-         'zrochg':'Zero Charges',
-         'sumchg':'Get Total Charge',
+         'labchg':'Show',
+         'cpychg':'Copy',
+         'addchg':'Add',
+         'zrochg':'Zero',
+         'mzochg':'Move & Zero (atom)',
+         'cbachg':'Move & Zero (resi)',
+         'movchg':'Move & Remove (atom)',
+         'rbachg':'Move & Remove (resi)',
+         'sumchg':'Get Total Charge'
          }
       
       # initialize mode menu
@@ -49,20 +59,22 @@ class Charge(Wizard):
          ]
 
    def cleanup(self):
+      global default_mode
+      default_mode = self.mode
       self.clear()
       
    def clear(self):
       self.set_status(0)
-      lst = cmd.get_names('selections')
-      if '_charge' in lst:
+      if 'wcharge' in cmd.get_names('selections'):
          if self.mode!='sumchg':
-            cmd.edit("_charge")
+            cmd.edit("wcharge")
             cmd.label("pkchain",'') # fastest clear command
          else:
-            cmd.label("_charge",'') # fastest clear command            
-         cmd.delete("_charge")
+            cmd.label("wcharge",'') # fastest clear command            
+         cmd.delete("wcharge")
          cmd.unpick()
       cmd.unpick()
+      cmd.refresh_wizard()
       
    def get_prompt(self):
       self.prompt = None
@@ -76,13 +88,32 @@ class Charge(Wizard):
             self.prompt = [ 'Pick source atom...' ]
          elif self.status==1:
             self.prompt = [ 'Pick destination atom on which to add charge %6.4f'%self.partial_charge ]
+      if self.mode == 'mzochg':
+         if self.status==0:
+            self.prompt = [ 'Pick source atom to copy and zero...' ]
+         elif self.status==1:
+            self.prompt = [ 'Pick destination atom on which to add charge %6.4f'%self.partial_charge ]
+      if self.mode == 'movchg':
+         if self.status==0:
+            self.prompt = [ 'Pick source atom to copy and destroy...' ]
+         elif self.status==1:
+            self.prompt = [ 'Pick destination atom on which to add charge %6.4f'%self.partial_charge ]
       if self.mode == 'sumchg':
          if self.status==0:
             self.prompt = [ 'Pick an atom on the chain...' ]
          if self.status==1:
             self.prompt = [ 'Total charge on the chain is %6.4f'%self.partial_charge,
                             'Pick an atom on the chain...' ]
-            
+      if self.mode == 'cbachg':
+         if self.status==0:
+            self.prompt = [ 'Pick source residue to copy and zero...' ]
+         elif self.status==1:
+            self.prompt = [ 'Pick destination residue on which to add charges.']
+      if self.mode == 'rbachg':
+         if self.status==0:
+            self.prompt = [ 'Pick source residue to copy and remove...' ]
+         elif self.status==1:
+            self.prompt = [ 'Pick destination residue on which to add charges.']
       if self.mode == 'zrochg':
             self.prompt = [ 'Pick atom on which to zero charge...' ]
 
@@ -90,7 +121,12 @@ class Charge(Wizard):
       if self.mode == 'labchg':
             self.prompt = [ 'Pick atom on which to show charge...' ]
 
-         
+      if "wcharge" in cmd.get_names('selections'):
+         pymol.stored.charge = 0
+         if cmd.iterate("(byres wcharge)",
+                        "stored.charge = stored.charge + partial_charge"):
+            self.prompt.insert(0,"Total charge on the residue is %6.4f"%pymol.stored.charge)
+            
       return self.prompt
    
    def set_mode(self,mode):
@@ -114,9 +150,9 @@ class Charge(Wizard):
                self.partial_charge = pymol.stored.charge
                self.status = 1
                cmd.label("(pk1)","'%6.4f'%partial_charge")
-               cmd.select("_charge","(pk1)")
+               cmd.select("wcharge","(pk1)")
                cmd.unpick()
-               cmd.enable("_charge")
+               cmd.enable("wcharge")
                
          # dropping off
          elif self.status==1:
@@ -124,9 +160,50 @@ class Charge(Wizard):
             if cmd.alter("(pk1)","partial_charge = stored.charge"):
                self.status = 0
                cmd.label("(pk1)","'%6.4f'%partial_charge")
-               cmd.select("_charge","(pk1)")
+               cmd.select("wcharge","(pk1)")
                cmd.unpick()
-               cmd.enable("_charge")
+               cmd.enable("wcharge")
+
+      if self.mode == 'cbachg' or self.mode == 'rbachg':
+         # picking up
+         if self.status==0:
+            pymol.stored.chg_dict = {}
+            if cmd.iterate("(byres pk1)","stored.chg_dict[name] = partial_charge"):
+               self.charge_dict = pymol.stored.chg_dict
+               self.status = 1
+               cmd.label("(byres pk1)","'%6.4f'%partial_charge")
+               cmd.select("wcharge","(byres pk1)")
+               cmd.unpick()
+               cmd.enable("wcharge")
+               
+         # dropping off
+         elif self.status==1:
+            pymol.stored.valid_atoms = []
+            if cmd.iterate("(byres pk1)","stored.valid_atoms.append(name)"):
+               kees = self.charge_dict.keys()
+               valid_dict = {}
+               for a in pymol.stored.valid_atoms:
+                  if a in kees:
+                     valid_dict[a] = 1
+               pymol.stored.chg_dict = self.charge_dict
+               # copy/add charges
+               for a in valid_dict.keys():
+                  cmd.alter("((byres pk1) and name %s)"%a,
+                            "partial_charge = partial_charge + stored.chg_dict[name]")
+                  if self.mode == 'rbachg':
+                     cmd.remove("((wcharge) and name %s)"%a)
+                  else:
+                     cmd.alter("((wcharge) and name %s)"%a,
+                               "partial_charge = 0")
+               self.status = 0
+               # update labels
+               cmd.label("(wcharge or (byres pk1))","'%6.4f'%partial_charge")
+               # show which atoms had charges moved
+               cmd.select("wcharge","(none)")
+               for a in valid_dict.keys():
+                  cmd.select("wcharge","(wcharge or ((byres pk1) and name %s))"%a)
+               cmd.unpick()
+               cmd.enable("wcharge")
 
       if self.mode == 'addchg':
          # picking up
@@ -135,9 +212,9 @@ class Charge(Wizard):
                self.partial_charge = pymol.stored.charge
                self.status = 1
                cmd.label("(pk1)","'%6.4f'%partial_charge")
-               cmd.select("_charge","(pk1)")
+               cmd.select("wcharge","(pk1)")
                cmd.unpick()
-               cmd.enable("_charge")
+               cmd.enable("wcharge")
                
          # dropping off
          elif self.status==1:
@@ -145,30 +222,75 @@ class Charge(Wizard):
             if cmd.alter("(pk1)","partial_charge = partial_charge + stored.charge"):
                self.status = 0
                cmd.label("(pk1)","'%6.4f'%partial_charge")
-               cmd.select("_charge","(pk1)")
+               cmd.select("wcharge","(pk1)")
                cmd.unpick()
-               cmd.enable("_charge")
+               cmd.enable("wcharge")
+               
+      if self.mode == 'mzochg':
+         # picking up
+         if self.status==0:
+            if cmd.iterate("(pk1)","stored.charge = partial_charge"):
+               self.partial_charge = pymol.stored.charge
+               self.status = 1
+               cmd.label("(pk1)","'%6.4f'%partial_charge")
+               cmd.select("wcharge","(pk1)")
+               cmd.unpick()
+               cmd.enable("wcharge")
+               
+         # dropping off
+         elif self.status==1:
+            pymol.stored.charge=self.partial_charge
+            if cmd.alter("(pk1)","partial_charge = partial_charge + stored.charge"):
+               self.status = 0
+               cmd.label("(pk1)","'%6.4f'%partial_charge")
+               cmd.alter("(wcharge)","partial_charge=0")
+               cmd.label("(wcharge)","'%6.4f'%partial_charge")               
+               cmd.select("wcharge","(pk1)")
+               cmd.unpick()
+               cmd.enable("wcharge")
+
+      if self.mode == 'movchg':
+         # picking up
+         if self.status==0:
+            if cmd.iterate("(pk1)","stored.charge = partial_charge"):
+               self.partial_charge = pymol.stored.charge
+               self.status = 1
+               cmd.label("(pk1)","'%6.4f'%partial_charge")
+               cmd.select("wcharge","(pk1)")
+               cmd.unpick()
+               cmd.enable("wcharge")
+               
+         # dropping off
+         elif self.status==1:
+            pymol.stored.charge=self.partial_charge
+            if cmd.alter("(pk1)","partial_charge = partial_charge + stored.charge"):
+               self.status = 0
+               cmd.label("(pk1)","'%6.4f'%partial_charge")
+               cmd.remove("wcharge")
+               cmd.select("wcharge","(pk1)")
+               cmd.unpick()
+               cmd.enable("wcharge")
 
       if self.mode == 'zrochg':
          if cmd.alter("(pk1)","partial_charge = 0.0"):
             cmd.label("(pk1)","'%6.4f'%partial_charge")
-            cmd.select("_charge","(pk1)")
+            cmd.select("wcharge","(pk1)")
             cmd.unpick()
-            cmd.enable("_charge")
+            cmd.enable("wcharge")
                
       if self.mode == 'labchg':
          cmd.label("(pk1)","'%6.4f'%partial_charge")
-         cmd.select("_charge","(pk1)")
+         cmd.select("wcharge","(pk1)")
          cmd.unpick()
-         cmd.enable("_charge")
+         cmd.enable("wcharge")
                
       if self.mode == 'sumchg':
          pymol.stored.charge = 0.0
          if cmd.iterate("(pkchain)","stored.charge = stored.charge + partial_charge"):
             self.partial_charge = pymol.stored.charge
             self.status = 1
-            cmd.select("_charge","(pkchain)")
+            cmd.select("wcharge","(pkchain)")
             cmd.unpick()
-            cmd.enable("_charge")
+            cmd.enable("wcharge")
          
       cmd.refresh_wizard()

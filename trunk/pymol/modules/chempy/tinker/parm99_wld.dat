@@ -197,6 +197,7 @@ CW-N2  481.0    1.340       WLD from CA-N2
 CV-NC  410.0    1.394       WLD from CV-NB
 CV-CW  518.0    1.371       WLD from CC-CW
 NB-OS  428.0    1.399       WLD, gross estimate
+CM-NC  428.0    1.380       WLD from CN-NA
 
 HW-OW-HW    100.      104.52    TIP3P water
 HW-HW-OW      0.      127.74    (found in crystallographic water with 3 bonds)
@@ -555,6 +556,16 @@ CC-OS-NB    60.0      117.00    WLD from C -OS-CT
 CA-OS-CC    60.0      117.00    WLD from C -OS-CT
 N -CT-S     50.0      114.70    WLD from CT-CT-S
 OH-CT-N     80.0      109.70    WLD from CT-CT-N
+C -CT-CA    63.0      111.10    WLD from C -CT-CT
+CA-NC-CA    70.0      112.20    WLD from CA-NC-CB
+CA-NC-CM    70.0      112.20    WLD from CA-NC-CB
+CA-CA-NC    70.0      120.00    WLD from CB-CA-NC
+CT-CA-NC    70.0      117.30    WLD from CB-CA-NC
+NC-CA-HA    50.0      120.00    WLD from CA-CA-HA
+CA-CA-CM    63.0      120.00    WLD from CA-CA-CA
+C -CA-CM    63.0      120.00    WLD from CA-CA-CA
+NC-CM-H4    50.0      120.00    WLD from CA-CA-HA
+CA-CM-NC    70.0      120.00    WLD from CB-CA-NC
 
 X -C -C -X    4   14.50        180.0             2.         Junmei et al, 1999
 X -C -CA-X    4   14.50        180.0             2.         intrpol.bsd.on C6H6
@@ -625,6 +636,7 @@ X -CB-CT-X    6    0.00          0.0             2.         WLD from X -C -CT-X
 X -CA-OS-X    2    2.40        180.0             4.         WLD gross est.
 X -CC-CA-X    4   20.60        180.0             2.         WLD from X -CC-CV-X
 X -CC-NC-X    2    8.30        180.0             2.         WLD from X -CB-NC-X
+X -CM-NC-X    2    8.30        180.0             2.         WLD from X -CB-NC-X
 X -CN-NC-X    2    8.30        180.0             2.         WLD from X -CB-NC-X
 X -CV-CW-X    4   21.50        180.0             2.         WLD From X -CC-CW-X
 X -C -NC-X    2    8.00        180.0             2.         WLD from X -C -NC-X
