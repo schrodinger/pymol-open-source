@@ -6325,6 +6325,36 @@ void ObjectMoleculeSeleOp(ObjectMolecule *I,int sele,ObjectMoleculeOpRec *op)
            ai++;
          }
      break;
+
+   case OMOP_GetChains:
+     ai=I->AtomInfo;
+     for(a=0;a<I->NAtom;a++)
+       {         
+         s=ai->selEntry;
+         if(SelectorIsMember(s,sele))
+           {
+             op->ii1[(int)ai->chain[0]]++;
+             op->i1++;
+           }
+         ai++;
+       }
+     break;
+
+   case OMOP_Spectrum:
+     ai=I->AtomInfo;
+     for(a=0;a<I->NAtom;a++)
+       {         
+         s=ai->selEntry;
+         if(SelectorIsMember(s,sele))
+           {
+             c = (int)(0.49999+op->i1*(op->ff1[op->i3] - op->f1)/op->f2);
+             ai->color=op->ii1[c];
+             op->i3++;
+           }
+         ai++;
+       }
+     break;
+
    case OMOP_SingleStateVertices: /* same as OMOP_VERT for a single state */
      ai=I->AtomInfo;
      if(op->cs1<I->NCSet) {

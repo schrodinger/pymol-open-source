@@ -1038,6 +1038,8 @@ void SettingGenerateSideEffects(int index,char *sele,int state)
   case cSetting_light:
   case cSetting_fog:
   case cSetting_fog_start:
+  case cSetting_two_sided_lighting:
+  case cSetting_transparency_mode:
 	 SceneDirty();
 	 break;
   case cSetting_stereo_shift:
@@ -1865,6 +1867,8 @@ void SettingInitGlobal(void)
   SettingSet_f(I,cSetting_mouse_limit,100.0F);
 
   SettingSet_f(I,cSetting_mouse_scale,1.3F);
+
+  SettingSet_i(I,cSetting_transparency_mode,2);
 }
 
 

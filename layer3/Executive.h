@@ -71,6 +71,9 @@ int ExecutiveOrigin(char *name,int preserve,char *oname,float *pos,int state);
 int ExecutiveCenter(char *name,int state,int inclusive);
 int ExecutiveWindowZoom(char *name,float buffer,int state,int inclusive);
 int ExecutiveGetMoment(char *name,Matrix33d mi,int state);
+
+char *ExecutiveGetChains(char *sele,int state,int *null_chain);
+
 void ExecutiveOrient(char *sele,Matrix33d mi,int state);
 char *ExecutiveSeleToPDBStr(char *s1,int state,int conectFlag);
 int ExecutiveStereo(int flag);
@@ -112,7 +115,8 @@ int ExecutivePairIndices(char *s1,char *s2,int state1,int state2,
                          int mode,float cutoff,float h_angle,
                          int **indexVLA, ObjectMolecule ***objVLA);
 void ExecutiveRebuildAllObjectDist(void);
-int ExecutivePhiPsi(char *s1,ObjectMolecule ***objVLA,int **iVLA,float **phiVLA,float **psiVLA,int state) ;
+int ExecutivePhiPsi(char *s1,ObjectMolecule ***objVLA,int **iVLA,
+                    float **phiVLA,float **psiVLA,int state) ;
 float *ExecutiveGetVertexVLA(char *s1,int state);
 int ExecutiveValidName(char *name);
 
@@ -148,7 +152,8 @@ int ExecutiveRampMapNew(char *name,char *map_name,PyObject *range,PyObject *colo
 
 int ExecutiveValidateObjectPtr(CObject *ptr,int object_type);
 
-
+int ExecutiveSpectrum(char *s1,char *expr,float min,float max,int first,int last,
+                      char *prefix,int digits,int byres);
 #endif
 
 

@@ -343,10 +343,11 @@ CSetting *SettingNewFromPyList(PyObject *list);
 #define cSetting_dot_color                   210
 #define cSetting_mouse_limit                 211
 #define cSetting_mouse_scale                 212
+#define cSetting_transparency_mode           213
 
 /* cSetting_INIT must always be last setting_index +1 */
 
-#define cSetting_INIT                        213
+#define cSetting_INIT                        214
 
 #endif
 

@@ -229,6 +229,13 @@ void SceneGetPos(float *pos)
     ENDFD3f(pos);
 
 }
+
+/*========================================================================*/
+void SceneApplyRotMatrix(float *src,float *dst)
+{
+  CScene *I=&Scene;
+  MatrixTransform3f(I->RotMatrix,src,dst);
+}
 /*========================================================================*/
 int SceneMultipick(Multipick *smp)
 {

@@ -1132,7 +1132,44 @@ EXAMPLES
          if _raising(): raise QuietException
       return r
 
+   def spectrum(expression,selection="(all)",
+                minimum=None,maximum=None,
+                palette='blue_red',byres=0):
+      '''
+DESCRIPTION
 
+   "spectrum" colors atoms using a spectrum
+   
+USAGE
+
+PYMOL API
+
+EXAMPLES 
+
+      '''
+      prefix="r"
+      digits="3"
+      first=0
+      last=999
+      if (maximum==None) or (mininum==None):
+         minimum = -9999
+         maximum = -10000
+         
+      # preprocess selection
+      selection = selector.process(selection)
+      #
+      try:
+         lock()
+         r = _cmd.spectrum(str(selection),str(expression),
+                           float(minimum),float(maximum),
+                           int(first),int(last),str(prefix),
+                           int(digits),int(byres))
+      finally:
+         unlock()
+      if not r:
+         if _raising(): raise QuietException
+      return r
+   
    def set_color(name,rgb):
       '''
 DESCRIPTION

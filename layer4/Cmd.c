@@ -248,6 +248,7 @@ static PyObject *CmdFrame(PyObject *self, PyObject *args);
 static PyObject *CmdGet(PyObject *self, 	PyObject *args);
 static PyObject *CmdGetArea(PyObject *self, 	PyObject *args);
 static PyObject *CmdGetBondPrint(PyObject *self,PyObject *args);
+static PyObject *CmdGetChains(PyObject *self, 	PyObject *args);
 static PyObject *CmdGetColor(PyObject *self, 	PyObject *args);
 static PyObject *CmdGetDihe(PyObject *self, 	PyObject *args);
 static PyObject *CmdGetFeedback(PyObject *dummy, PyObject *args);
@@ -341,6 +342,7 @@ static PyObject *CmdRefreshWizard(PyObject *dummy, PyObject *args);
 static PyObject *CmdShowHide(PyObject *self, 	PyObject *args);
 static PyObject *CmdSmooth(PyObject *self,PyObject *args);
 static PyObject *CmdSort(PyObject *dummy, PyObject *args);
+static PyObject *CmdSpectrum(PyObject *dummy, PyObject *args);
 static PyObject *CmdSplash(PyObject *dummy, PyObject *args);
 static PyObject *CmdSpheroid(PyObject *dummy, PyObject *args);
 static PyObject *CmdStereo(PyObject *self, PyObject *args);
@@ -407,6 +409,7 @@ static PyMethodDef Cmd_methods[] = {
 	{"get",	                 CmdGet,                  METH_VARARGS },
 	{"get_area",              CmdGetArea,              METH_VARARGS },
    {"get_bond_print",        CmdGetBondPrint,         METH_VARARGS },
+	{"get_chains",            CmdGetChains,            METH_VARARGS },
 	{"get_color",             CmdGetColor,             METH_VARARGS },
 	{"get_dihe",              CmdGetDihe,              METH_VARARGS },
 	{"get_frame",             CmdGetFrame,             METH_VARARGS },
@@ -512,6 +515,7 @@ static PyMethodDef Cmd_methods[] = {
 	{"set_matrix",	           CmdSetMatrix,            METH_VARARGS },
 	{"smooth",	              CmdSmooth,               METH_VARARGS },
 	{"sort",                  CmdSort,                 METH_VARARGS },
+   {"spectrum",              CmdSpectrum,             METH_VARARGS },
    {"spheroid",              CmdSpheroid,             METH_VARARGS },
 	{"splash",                CmdSplash,               METH_VARARGS },
 	{"stereo",	              CmdStereo,               METH_VARARGS },
@@ -530,6 +534,31 @@ static PyMethodDef Cmd_methods[] = {
 	{"zoom",	                 CmdZoom,                 METH_VARARGS },
 	{NULL,		              NULL}     /* sentinel */        
 };
+
+static PyObject *CmdSpectrum(PyObject *self, PyObject *args)
+{
+  
+  char *str1,*expr,*prefix;
+  OrthoLineType s1;
+  float min,max;
+  int digits,start,stop, byres;
+  int ok=false;
+  ok = PyArg_ParseTuple(args,"ssffiisii",&str1,&expr,
+                        &min,&max,&start,&stop,&prefix,
+                        &digits,&byres);
+  if (ok) {
+    APIEntry();
+    if(str1[0])
+      SelectorGetTmp(str1,s1);
+    else
+      s1[0]=0; /* no selection */
+    ok = ExecutiveSpectrum(s1,expr,min,max,start,stop,prefix,digits,byres);
+    if(str1[0])
+      SelectorFreeTmp(s1);
+    APIExit();
+  }
+  return(APIStatus(ok));
+}
 
 static PyObject *CmdMDump(PyObject *self, PyObject *args)
 {
@@ -829,6 +858,46 @@ static PyObject *CmdGetColor(PyObject *self, PyObject *args)
   }
   return(APIAutoNone(result));
 }
+
+static PyObject *CmdGetChains(PyObject *self, PyObject *args)
+{
+
+  char *str1;
+  int int1;
+  OrthoLineType s1="";
+  PyObject *result = NULL;
+  char *chain_str = NULL;
+  int ok=false;
+  int c1=0;
+  int a,l;
+  int null_chain = false;
+  ok = PyArg_ParseTuple(args,"si",&str1,&int1);
+  if(ok) {
+    APIEntry();
+    if(str1[0]) c1 = SelectorGetTmp(str1,s1);
+    if(c1)
+      chain_str = ExecutiveGetChains(s1,int1,&null_chain);
+    
+    if(chain_str) {
+      l=strlen(chain_str);
+      if(null_chain) l++; 
+      result = PyList_New(l);
+      if(null_chain) {
+        l--;
+        PyList_SetItem(result,l,PyString_FromString(""));
+      }
+      for(a=0;a<l;a++)
+        PyList_SetItem(result,a,PyString_FromStringAndSize(chain_str+a,1));
+
+    }
+    FreeP(chain_str);
+    if(s1[0]) SelectorFreeTmp(s1);
+    APIExit();
+  }
+  return(APIAutoNone(result));
+
+}
+
 
 static PyObject *CmdMultiSave(PyObject *self, PyObject *args)
 {

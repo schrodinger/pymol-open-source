@@ -868,6 +868,7 @@ if __name__=='pymol.cmd':
         export_dots,        \
         find_pairs,         \
         get_area,           \
+        get_chains,         \
         get_color_indices,  \
         get_color_tuple,    \
         get_dihedral,       \
@@ -1027,6 +1028,7 @@ if __name__=='pymol.cmd':
         set_color,          \
         set_view,           \
         show,               \
+        spectrum,           \
         stereo,             \
         turn,               \
         view,               \
@@ -1149,6 +1151,7 @@ if __name__=='pymol.cmd':
       'fuse'          : [ fuse              , 0 , 0 , ''  , parsing.STRICT ],
       'frame'         : [ frame             , 0 , 0 , ''  , parsing.STRICT ],
       'get_area'      : [ get_area          , 0 , 0 , ''  , parsing.STRICT ],
+      'get_chains'    : [ get_chains        , 0 , 0 , ''  , parsing.STRICT ],
       'get_dihedral'  : [ get_dihedral      , 0 , 0 , ''  , parsing.STRICT ],
       'get_extent'    : [ get_extent        , 0 , 0 , ''  , parsing.STRICT ],   
       'get_position'  : [ get_position      , 0 , 0 , ''  , parsing.STRICT ],
@@ -1237,6 +1240,7 @@ if __name__=='pymol.cmd':
       'sculpt_deactivate': [ sculpt_deactivate , 0 , 0 , ''  , parsing.STRICT ],
       'sculpt_activate': [ sculpt_activate  , 0 , 0 , ''  , parsing.STRICT ],
       'sculpt_iterate': [ sculpt_iterate    , 0 , 0 , ''  , parsing.STRICT ],
+      'spectrum'      : [ spectrum          , 0 , 0 , ''  , parsing.STRICT ],
       'select'        : [ select            , 0 , 0 , ''  , parsing.LEGACY ],
       'set'           : [ set               , 0 , 0 , ''  , parsing.LEGACY ],
       'set_color'     : [ set_color         , 0 , 0 , ''  , parsing.LEGACY ],
