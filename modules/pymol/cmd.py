@@ -148,10 +148,9 @@ def run():
    '''
 DESCRIPTION
  
-"run" executes an external Python script in its own namespace (like a
-Python module, default), a local name space, or in the global
-namespace.
- 
+"run" executes an external Python script in a local name space,
+the global namespace, or in its own namespace (as a module).
+
 USAGE
   
  run <python-script> [, (local | global | module) ]
@@ -159,7 +158,16 @@ USAGE
 PYMOL API
 
  Not directly available.  Instead, use cmd.do("run ...").
+
+NOTES
+
+ The default mode for run is "global".
  
+ Due to an idiosyncracy in Pickle, you can not pickle objects
+ directly created at the main level in a script run as "module",
+ (because the pickled object becomes dependent on that module).
+ Workaround: delegate construction to an imported module.
+
 '''
    help(run)
 
@@ -179,7 +187,16 @@ USAGE
 PYMOL API
 
  Not directly available.  Instead, use cmd.do("spawn ...").
+
+NOTES
+
+ The default mode for spawn is "module".
  
+ Due to an idiosyncracy in Pickle, you can not pickle objects
+ directly created at the main level in a script run as "module",
+ (because the pickled object becomes dependent on that module).
+ Workaround: delegate construction to an imported module.
+
 '''
    help(spawn)
 
@@ -293,14 +310,14 @@ def launching():
    '''
 PyMOL COMMAND LINE OPTIONS 
  
-   pymol.com [-cistwx] <file> [-p <file.py> ] ...
+   pymol.com [-cistwx] <file.xxx> [-p <file.py> ] ...
  
    -c   Command line mode, no GUI - great for batch opeations.
 
    -s   Enable stereo mode (not currently autodetected).
 
-   -l <file.py> Launch a Python program in a concurrent thread.
-   -g <file.py> Run a python program in global namespace on startup.
+   -r <file.py>[,global|local|module] Run a python program in on startup.
+   -l <file.py>[,global|local|module] Spawn a Python program in a thread.
    
    -i   Disable the internal OpenGL GUI (object list, menus, etc.)
    

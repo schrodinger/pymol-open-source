@@ -297,7 +297,6 @@ static PyObject *CmdGetArea(PyObject *self, 	PyObject *args)
 {
   char *str1;
   int int1;
-  WordType type = "";
   OrthoLineType s1="";
   float result;
 

@@ -937,6 +937,7 @@ PyObject *SelectorGetChemPyModel(int sele,int state)
         if(I->Table[a].index) {
           at=I->Table[a].atom;
           obj=I->Obj[I->Table[a].model];
+          cs=obj->CSet[state]; /* assuming this is valid... */
           if(obj->DiscreteFlag) {
             if(obj->CSet[state]==obj->DiscreteCSet[at])
               idx=obj->DiscreteAtmToIdx[at];
@@ -947,8 +948,8 @@ PyObject *SelectorGetChemPyModel(int sele,int state)
           if(idx>=0) {
             ai = obj->AtomInfo+at;
             PyList_SetItem(atom_list,c,
-                  CoordSetAtomToChemPyAtom(
-                      ai,obj->CSet[state]->Coord+(3*idx),at));
+                           CoordSetAtomToChemPyAtom(
+                       ai,obj->CSet[state]->Coord+(3*idx),at));
             c = c + 1;
           }
         }
