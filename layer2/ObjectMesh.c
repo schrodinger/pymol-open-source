@@ -541,6 +541,7 @@ static void ObjectMeshRender(ObjectMesh *I,int state,CRay *ray,Pickable **pick,i
                           I->Obj.Setting,NULL);
 
             SceneResetNormal(false);
+            ObjectUseColor(&I->Obj);
             use_dlst = (int)SettingGet(cSetting_use_display_lists);
             if(use_dlst&&ms->displayList) {
               glCallList(ms->displayList);
@@ -556,7 +557,6 @@ static void ObjectMeshRender(ObjectMesh *I,int state,CRay *ray,Pickable **pick,i
               }
 
             if(n&&v&&I->Obj.RepVis[cRepMesh]) {
-              ObjectUseColor(&I->Obj);
               glLineWidth(SettingGet_f(I->Obj.Setting,NULL,cSetting_mesh_width));
               while(*n)
                 {
