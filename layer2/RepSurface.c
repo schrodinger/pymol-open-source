@@ -277,7 +277,11 @@ void RepSurfaceRender(RepSurface *I,CRay *ray,Pickable **pick)
         glCallList(I->R.displayList);
       } else { 
 
-
+        int normals = SettingGet_b(I->R.cs->Setting,I->R.obj->Setting,cSetting_mesh_normals); 
+        
+        if(!normals)
+          SceneResetNormal(true);
+        
         glLineWidth(SettingGet_f(I->R.cs->Setting,I->R.obj->Setting,cSetting_mesh_width));
         
         if(use_dlst) {
@@ -297,22 +301,35 @@ void RepSurfaceRender(RepSurface *I,CRay *ray,Pickable **pick)
             while(c--) {
               if((I->proximity&&((*(vi+(*t)))||(*(vi+(*(t+1))))||(*(vi+(*(t+2))))))||
                  ((*(vi+(*t)))&&(*(vi+(*(t+1))))&&(*(vi+(*(t+2)))))) {
-                
-                glBegin(GL_LINE_STRIP);
-                
-                glNormal3fv(vn+(*(t+2))*3);
-                glVertex3fv(v+(*(t+2))*3);
-                
-                glNormal3fv(vn+(*t)*3);
-                glVertex3fv(v+(*t)*3);
-                t++;
-                glNormal3fv(vn+(*t)*3);
-                glVertex3fv(v+(*t)*3);
-                t++;
-                glNormal3fv(vn+(*t)*3);
-                glVertex3fv(v+(*t)*3);
-                t++;
-                glEnd();
+                if(normals) {
+
+                  glBegin(GL_LINE_STRIP);
+                  
+                  glNormal3fv(vn+(*(t+2))*3);
+                  glVertex3fv(v+(*(t+2))*3);
+                  
+                  glNormal3fv(vn+(*t)*3);
+                  glVertex3fv(v+(*t)*3);
+                  t++;
+                  glNormal3fv(vn+(*t)*3);
+                  glVertex3fv(v+(*t)*3);
+                  t++;
+                  glNormal3fv(vn+(*t)*3);
+                  glVertex3fv(v+(*t)*3);
+                  t++;
+                  glEnd();
+                } else {
+                  glBegin(GL_LINE_STRIP);
+                  
+                  glVertex3fv(v+(*(t+2))*3);
+                  glVertex3fv(v+(*t)*3);
+                  t++;
+                  glVertex3fv(v+(*t)*3);
+                  t++;
+                  glVertex3fv(v+(*t)*3);
+                  t++;
+                  glEnd();
+                }
               } else
                 t+=3;
             }
@@ -320,25 +337,45 @@ void RepSurfaceRender(RepSurface *I,CRay *ray,Pickable **pick)
             while(c--) {
               if((I->proximity&&((*(vi+(*t)))||(*(vi+(*(t+1))))||(*(vi+(*(t+2))))))||
                  ((*(vi+(*t)))&&(*(vi+(*(t+1))))&&(*(vi+(*(t+2)))))) {
-                glBegin(GL_LINE_STRIP);
-                
-                glColor3fv(vc+(*(t+2))*3);
-                glNormal3fv(vn+(*(t+2))*3);
-                glVertex3fv(v+(*(t+2))*3);
-                
-                glColor3fv(vc+(*t)*3);
-                glNormal3fv(vn+(*t)*3);
-                glVertex3fv(v+(*t)*3);
-                t++;
-                glColor3fv(vc+(*t)*3);
-                glNormal3fv(vn+(*t)*3);
-                glVertex3fv(v+(*t)*3);
-                t++;
-                glColor3fv(vc+(*t)*3);
-                glNormal3fv(vn+(*t)*3);
-                glVertex3fv(v+(*t)*3);
-                t++;
-                glEnd();
+                if(normals) {
+
+                  glBegin(GL_LINE_STRIP);
+                  
+                  glColor3fv(vc+(*(t+2))*3);
+                  glNormal3fv(vn+(*(t+2))*3);
+                  glVertex3fv(v+(*(t+2))*3);
+                  
+                  glColor3fv(vc+(*t)*3);
+                  glNormal3fv(vn+(*t)*3);
+                  glVertex3fv(v+(*t)*3);
+                  t++;
+                  glColor3fv(vc+(*t)*3);
+                  glNormal3fv(vn+(*t)*3);
+                  glVertex3fv(v+(*t)*3);
+                  t++;
+                  glColor3fv(vc+(*t)*3);
+                  glNormal3fv(vn+(*t)*3);
+                  glVertex3fv(v+(*t)*3);
+                  t++;
+                  glEnd();
+                } else {
+                  glBegin(GL_LINE_STRIP);
+                  
+                  glColor3fv(vc+(*(t+2))*3);
+                  glVertex3fv(v+(*(t+2))*3);
+                  
+                  glColor3fv(vc+(*t)*3);
+                  glVertex3fv(v+(*t)*3);
+                  t++;
+                  glColor3fv(vc+(*t)*3);
+                  glVertex3fv(v+(*t)*3);
+                  t++;
+                  glColor3fv(vc+(*t)*3);
+                  glVertex3fv(v+(*t)*3);
+                  t++;
+                  glEnd();
+
+                }
               } else
                 t+=3;
             }

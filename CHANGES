@@ -4,6 +4,8 @@ CHANGE LOG
 
 Changes up to 0.95
 
+   * mesh_normals setting for surface_type 2
+
    * launch option: -P # enables multisampling on Macs & Windows.
      NOTE: on windows, only "-P 4" works, and only tested on ATI cards.
 
