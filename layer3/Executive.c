@@ -1414,7 +1414,7 @@ float *ExecutiveGetVertexVLA(char *s1,int state)
 }
 /*========================================================================*/
 PyObject *ExecutiveGetSettingText(int index,char *object,int state)
-{
+{ /* Assumes blocked Python interpreter */
   PyObject *result;
   OrthoLineType buffer;
 
@@ -1431,13 +1431,13 @@ PyObject *ExecutiveGetSettingText(int index,char *object,int state)
 }
 /*========================================================================*/
 PyObject *ExecutiveGetSettingTuple(int index,char *object,int state)
-{
+{ /* Assumes blocked Python interpreter */
   PyObject *result = NULL;
   CSetting **handle = NULL;
   CObject *obj=NULL;
   int ok = true;
   PRINTFD(FB_Executive)
-    " ExecutiveGetSettingTuple: object %s object state %d\n",object,state
+    " ExecutiveGetSettingTuple: object %p state %d\n",object,state
     ENDFD;
 
   if(object[0]==0) /* global */

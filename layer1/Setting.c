@@ -303,7 +303,7 @@ int SettingSetTuple(CSetting *I,int index,PyObject *tuple)
 }
 /*========================================================================*/
 PyObject *SettingGetTuple(CSetting *set1,CSetting *set2,int index)
-{
+{  /* assumes blocked python interpeter */
   PyObject *result = NULL;
   float *ptr;
   int type = SettingGetType(index);
@@ -343,7 +343,7 @@ PyObject *SettingGetTuple(CSetting *set1,CSetting *set2,int index)
 }
 /*========================================================================*/
 PyObject *SettingGetDefinedTuple(CSetting *set1,int index)
-{
+{  /* Assumes blocked Python interpreter */
   PyObject *result = NULL;
   int defined = true;
   int type = SettingGetType(index);

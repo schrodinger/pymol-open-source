@@ -106,11 +106,11 @@ static int flush_count = 0;
 
 int run_only_once = true;
 
+int PyThread_get_thread_ident(void);
+
 /* NOTE: the glut_thread_keep_out variable can only be changed by the thread
    holding the API lock, therefore this is safe even through increment
    isn't (necessarily) atomic. */
-
-int PyThread_get_thread_ident(void);
 
 static void APIEntry(void) /* assumes API is locked */
 {
@@ -124,8 +124,42 @@ static void APIEntry(void) /* assumes API is locked */
 #endif
     exit(0);
   }
+
   P_glut_thread_keep_out++;  
   PUnblock();
+}
+
+static void APIEnterBlocked(void) /* assumes API is locked */
+{
+  PRINTFD(FB_API)
+    " APIEnterBlocked-DEBUG: as thread 0x%x.\n",PyThread_get_thread_ident()
+    ENDFD;
+
+  if(PyMOLTerminating) {/* try to bail */
+#ifdef WIN32
+    abort();
+#endif
+    exit(0);
+  }
+
+  P_glut_thread_keep_out++;  
+}
+
+static void APIExit(void) /* assumes API is locked */
+{
+  PBlock();
+  P_glut_thread_keep_out--;
+  PRINTFD(FB_API)
+    " APIExit-DEBUG: as thread 0x%x.\n",PyThread_get_thread_ident()
+    ENDFD;
+}
+
+static void APIExitBlocked(void) /* assumes API is locked */
+{
+  P_glut_thread_keep_out--;
+  PRINTFD(FB_API)
+    " APIExitBlocked-DEBUG: as thread 0x%x.\n",PyThread_get_thread_ident()
+    ENDFD;
 }
 
 static PyObject *APISuccess(void)
@@ -161,14 +195,6 @@ static PyObject *APIAutoNone(PyObject *result) /* automatically own Py_None */
 }
 
 
-static void APIExit(void) /* assumes API is locked */
-{
-  PBlock();
-  P_glut_thread_keep_out--;
-  PRINTFD(FB_API)
-    " APIExit-DEBUG: as thread 0x%x.\n",PyThread_get_thread_ident()
-    ENDFD;
-}
 
 static PyObject *CmdAccept(PyObject *self, 	PyObject *args);
 static PyObject *CmdAlign(PyObject *self,   PyObject *args);
@@ -2628,9 +2654,9 @@ static PyObject *CmdGetSettingTuple(PyObject *self, 	PyObject *args)
   int ok = false;
   ok = PyArg_ParseTuple(args,"isi",&int1,&str1,&int2); /* setting, object, state */
   if (ok) {
-    APIEntry();
+    APIEnterBlocked();
     result =  ExecutiveGetSettingTuple(int1,str1,int2);
-    APIExit();
+    APIExitBlocked();
   }
   return APIAutoNone(result);
 }
@@ -2643,9 +2669,9 @@ static PyObject *CmdGetSettingText(PyObject *self, 	PyObject *args)
   int ok=false;
   ok = PyArg_ParseTuple(args,"isi",&int1,&str1,&int2); /* setting, object, state */
   if (ok) {
-    APIEntry();
+    APIEnterBlocked();
     result =  ExecutiveGetSettingText(int1,str1,int2);
-    APIExit();
+    APIExitBlocked();
   }
   return APIAutoNone(result);
 }

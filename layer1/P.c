@@ -162,9 +162,15 @@ void PSleep(int usec)
 #ifndef WIN32
   struct timeval tv;
   PUnlockAPIAsGlut();
+  PRINTFD(FB_Threads)
+    " PSleep-DEBUG: napping.\n"
+  ENDFD;
   tv.tv_sec=0;
   tv.tv_usec=usec; 
   select(0,NULL,NULL,NULL,&tv);
+  PRINTFD(FB_Threads)
+    " PSleep-DEBUG: nap over.\n"
+  ENDFD;
   PLockAPIAsGlut();
 #else
   PBlockAndUnlockAPI();
@@ -1284,7 +1290,8 @@ void PFlushFast(void) {
   while(OrthoCommandOut(buffer)) {
     PMaintainObjectAll();
     PRINTFD(FB_Threads)
-      " PFlushFast-DEBUG: executing '%s'\n",buffer
+      " PFlushFast-DEBUG: executing '%s' as thread 0x%x\n",buffer,
+      PyThread_get_thread_ident()
       ENDFD;
     PXDecRef(PyObject_CallFunction(P_parse,"s",buffer));
     err = PyErr_Occurred();
@@ -1333,7 +1340,7 @@ int PAutoBlock(void)
       PXDecRef(PyObject_CallFunction(P_unlock_c,NULL));
 
       PRINTFD(FB_Threads)
-        " PBlock-DEBUG: blocked as thread 0x%x\n",PyThread_get_thread_ident()
+        " PAutoBlock-DEBUG: blocked as thread 0x%x\n",PyThread_get_thread_ident()
         ENDFD;
 
       return 1;
@@ -1374,7 +1381,7 @@ void PUnblock(void)
   PXDecRef(PyObject_CallFunction(P_unlock_c,NULL));
   (SavedThread+a)->state = PyEval_SaveThread();  
   PRINTFD(FB_Threads)
-    " PUnblock-DEBUG: stored in slot %d\n",a
+    " PUnblock-DEBUG: 0x%x stored in slot %d\n",(SavedThread+a)->id,a
     ENDFD;
 #endif
 }
