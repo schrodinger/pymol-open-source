@@ -6102,7 +6102,7 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(char *buffer,
   int ignore_pdb_segi = 0;
   int ss_valid;
   SSEntry *sst;
-  int ssi;
+  int ssi = 0;
 
   ignore_pdb_segi = SettingGet(cSetting_ignore_pdb_segi);
   AtomInfoPrimeColors();

@@ -24,7 +24,6 @@ float FieldInterpolatef(CField *I,int a,int b,int c,float x,float y,float z)
 {
   /* basic trilinear interpolation */
 
-  float *f;
   float x1,y1,z1;
   x1=1.0-x;
   y1=1.0-y;

@@ -56,8 +56,6 @@ struct Rep *RepRebuild(struct Rep *I,struct CoordSet *cs,int rep)
 struct Rep *RepUpdate(struct Rep *I,struct CoordSet *cs,int rep)
 {
 
-  Rep *tmp = NULL;
-
   PRINTFD(FB_Rep)
     " RepUpdate-Debug: entered: rep %d I->MaxInvalid %d\n",rep,I->MaxInvalid
     ENDFD;
