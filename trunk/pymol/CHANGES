@@ -78,8 +78,9 @@ Bugs to Fix
 Changes up to 0.64
 
    * LOG FILE CAPABILITIES:  logging of both PyMOL scripts (.pml) and
-     PyMOL program files (.pym)  resume command allows propagation
-     of "session"-like behavior
+     PyMOL program files (.pym). The "resume" command allows propagation
+     of session-like behavior.  This makes a huge difference in PyMOL
+     user-friendliness.
 
    * mesh_radius cut in half, for better default density figures
 
