@@ -44,6 +44,7 @@ Z* -------------------------------------------------------------------
 #define cAtomFlag_exfoliate     0x01000000
 /* FLAG 25 - ignore atoms altogether when surfacing */
 #define cAtomFlag_ignore        0x02000000
+#define cAtomFlag_no_smooth     0x04000000
 
 #define cResnLen 5
 #define cResiLen 5

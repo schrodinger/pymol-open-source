@@ -1461,6 +1461,7 @@ SEE ALSO
    # rendering
       'exfoliate'     : 24,
       'ignore'        : 25,
+      'no_smooth'     : 26,
    }
 
    flag_sc = Shortcut(flag_dict.keys())
@@ -1525,6 +1526,7 @@ RESERVED FLAGS
    Flags 24-31 are reserved for PyMOL internal usage
       exfoliate 24 = Remove surface from atoms when surfacing
       ignore    25 = Ignore atoms altogether when surfacing
+      no_smooth 26 = Don\'t smooth atom position
       '''
       # preprocess selection
       new_flag = flag_sc.interpret(str(flag))

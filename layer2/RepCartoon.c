@@ -128,7 +128,7 @@ Rep *RepCartoonNew(CoordSet *cs)
   float *dl=NULL;
   int nSeg;
   int sampling;
-  int *ss;
+  int *ss,*fp;
   float  power_a = 5;
   float power_b = 5;
   float loop_radius;
@@ -163,6 +163,7 @@ Rep *RepCartoonNew(CoordSet *cs)
   float helix_radius;
   float *h_start=NULL,*h_end=NULL;
   float *stmp;
+  int *ftmp;
   int smooth_first,smooth_last,smooth_cycles,flat_cycles;
   int trace;
   int skip_to;
@@ -266,6 +267,7 @@ ENDFD;
   car = Alloc(int,cs->NAtIndex);
   sstype = Alloc(int,cs->NAtIndex);
   stmp = Alloc(float,sampling*3);
+  ftmp = Alloc(int,cs->NAtIndex);
 
   i=at;
   v=pv;
@@ -273,6 +275,7 @@ ENDFD;
   s=seg;
   cc=car;
   ss=sstype;
+  fp = ftmp;
   nAt = 0;
   nSeg = 0;
   a2=-1;
@@ -323,6 +326,9 @@ ENDFD;
                 nAt++;
                 *(i++)=a;
                 cur_car = ai->cartoon;
+
+                *fp = ai->flags; /* store atom flags */
+
                 switch (ai->ssType[0]) {
                 case 'H':
                 case 'h':
@@ -363,6 +369,8 @@ ENDFD;
                 a2=a1;
                   
                 ss++;
+
+                fp++;
 
                 v_c = NULL;
                 v_n = NULL;
@@ -785,7 +793,9 @@ ENDFD;
                   scale3f(t0,1.0F/(f*2+1),tmp+b*3);
                 }
                 for(b=first+f;b<=last-f;b++) {
-                  copy3f(tmp+b*3,pv+b*3);
+                  if(!(*(ftmp+b)&cAtomFlag_no_smooth)) {
+                    copy3f(tmp+b*3,pv+b*3);
+                  }
                 }
                 for(b=first+f;b<=last-f;b++) { 
                   zero3f(t0);
@@ -868,7 +878,9 @@ ENDFD;
                     scale3f(t0,1.0F/(f*2+1),tmp+b*3);
                   }
                   for(b=first+f;b<=last-f;b++) {
-                    copy3f(tmp+b*3,pv+b*3);
+                    if(!(*(ftmp+b)&cAtomFlag_no_smooth)) {
+                      copy3f(tmp+b*3,pv+b*3);
+                    }
                   }
                   for(b=first+f;b<=last-f;b++) { 
                     zero3f(t0);
@@ -916,11 +928,11 @@ ENDFD;
           {
             if(*s==*(s+1))
               {
-		float d_1;
+                float d_1;
                 subtract3f(v+3,v,v1);
                 *d = (float)length3f(v1);
                 if(*d>R_SMALL4) {
-		  d_1 = 1.0F/(*d);
+                  d_1 = 1.0F/(*d);
                   scale3f(v1,d_1,v2);
                 } else if(a)  {
                   copy3f(v2-3,v2); 
@@ -1728,6 +1740,7 @@ ENDFD;
   FreeP(tmp);
   FreeP(sstype);
   FreeP(stmp);
+  FreeP(ftmp);
   return((void*)(struct Rep*)I);
 }
 
