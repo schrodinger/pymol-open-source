@@ -4,19 +4,19 @@
 #
 #- Choose One Set ----------------------------------------------------
 #--- Build for LINUX with embedded Python 
-XLIB_DIR = -L/usr/X11R6/lib 
-LIBS = -lpython1.5 -ltk8.0 -ltcl8.0 -lglut -lGL -lGLU -ldl -lX11 -lXext -lXmu -lXi -lpng $(ZLIB) -lm
-DEFS = -D_PYMOL_3DFX
-BUILD = -o pymol.exe
-#--- Build for LINUX as an importable module
-#XLIB_DIR = -L/usr/X11R6/lib
-#LIBS = -lpython1.5 -lglut -lGL -lGLU -ldl -lpng -lXmu $(ZLIB) -lm
+#XLIB_DIR = -L/usr/X11R6/lib 
+#LIBS = -lpython1.5 -ltk8.0 -ltcl8.0 -lglut -lGL -lGLU -ldl -lX11 -lXext -lXmu -lXi -lpng $(ZLIB) -lm
 #DEFS = -D_PYMOL_3DFX
-#BUILD = -shared -o modules/_pm.so
+#BUILD = -o pymol.exe
+#--- Build for LINUX as an importable module
+XLIB_DIR = -L/usr/X11R6/lib
+LIBS = -lpython1.5 -lglut -lGL -lGLU -ldl -lpng -lXmu $(ZLIB) -lm
+DEFS = -D_PYMOL_3DFX -D_PYMOL_MODULE
+BUILD = -shared -o modules/_pm.so
 #--- Build for unix as an importable module (SGI/IRIX)
 #XLIB_DIR = -L/usr/X11R6/lib
 #LIBS = -lpython1.5 -lglut -lGL -lGLU -lpng -lXmu $(ZLIB) -lm
-#DEFS = -D_PYMOL_MODULE -D_PYMOL_STEREO
+#DEFS = -D_PYMOL_MODULE 
 #BUILD = -shared -o modules/_pm.so
 #--- Build for Windows as an importable module
 #XLIB_DIR = 

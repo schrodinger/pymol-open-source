@@ -389,7 +389,7 @@ def save(*arg):
    if format=='pdb':
       f=open(fname,"w")
       if f:
-         f.write(_pm.get_pdb(sele,int(state)))
+         f.write(_pm.get_pdb(sele,int(state)-1))
          f.close()
          print " Save: wrote \""+fname+"\"."
    unlock()
