@@ -1565,7 +1565,7 @@ PYMOL API
    '''
    try:
       lock()   
-      r = _cmd.set(a,b)
+      r = _cmd.set(a,str(b))
    finally:
       unlock()
    return r

@@ -534,7 +534,8 @@ CoordSet *CoordSetCopy(CoordSet *cs)
 
   I->TmpBond=NULL;
   I->Color=NULL;
-
+  I->Spheroid=NULL;
+  I->SpheroidNormal=NULL;
   return(I);
 }
 /*========================================================================*/

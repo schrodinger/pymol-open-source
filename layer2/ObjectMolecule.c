@@ -76,15 +76,16 @@ void ObjectMoleculeCreateSpheroid(ObjectMolecule *I)
   int a,b,c,a0;
   SphereRec *sp;
   float *spl;
-  float *v,*v0,*s,*f;
+  float *v,*v0,*s,*f,ang,min_dist,*max_sq;
   int *i;
   float *center = NULL;
   float d0[3],n0[3],d1[3],d2[3];
   float p0[3],p1[3],p2[3];
   int t0,t1,t2,bt0,bt1,bt2;
-  float mx,dp,l,*fsum = NULL;
+  float dp,l,*fsum = NULL;
   float *norm = NULL;
-  int mxi,row,*count=NULL,base;
+  float spheroid_smooth,spheroid_ratio;
+  int row,*count=NULL,base;
   int nRow;
   sp=Sphere1;
   
@@ -93,8 +94,12 @@ void ObjectMoleculeCreateSpheroid(ObjectMolecule *I)
   center=Alloc(float,I->NAtom*3);
   count=Alloc(int,I->NAtom);
   fsum=Alloc(float,nRow);
+  max_sq = Alloc(float,I->NAtom);
+
   spl=spheroid;
 
+  spheroid_smooth=SettingGet(cSetting_spheroid_smooth);
+  spheroid_ratio=SettingGet(cSetting_spheroid_ratio);
   /* first compute average coordinate */
 
   v=center;
@@ -141,6 +146,10 @@ void ObjectMoleculeCreateSpheroid(ObjectMolecule *I)
     *(s++)=0.0; 
   }
 
+  v = max_sq;
+  for(a=0;a<I->NAtom;a++)
+    *(v++)=0.0;
+
   for(b=0;b<I->NCSet;b++) {
     cs=I->CSet[b];
     if(cs) {
@@ -150,16 +159,26 @@ void ObjectMoleculeCreateSpheroid(ObjectMolecule *I)
         base = (a0*sp->nDot);
         v0 = center+(3*a0);
         subtract3f(v,v0,d0); /* subtract from average */
-        l = length3f(d0);
-        if(l>0.0) scale3f(d0,1.0/l,n0);
-        mxi = 0;
-        mx = 0.0;
-        for(c=0;c<sp->nDot;c++) { /* find closest spoke */
-          dp=dot_product3f(sp->dot[c].v,n0);
-          if(dp>0.3) {
+        l = lengthsq3f(d0);
+        if(l>max_sq[a0])
+          max_sq[a0]=l;
+        if(l>0.0) {
+          scale3f(d0,1.0/sqrt(l),n0);
+          for(c=0;c<sp->nDot;c++) { /* average over spokes */
+            dp=dot_product3f(sp->dot[c].v,n0);
             row = base + c;
-            fsum[row] += dp;
-            spheroid[row]+=l*dp;
+            if(dp>=0.0) {
+              ang = acos(dp);
+              ang=(ang/spheroid_smooth)*(cPI/2.0); 
+              if(ang>1.25)
+                ang=1.25;
+              /* take envelop to zero over that angle */
+              if(ang<=(cPI/2.0)) {
+                dp = cos(ang);
+                fsum[row] += dp*dp;
+                spheroid[row] += l*dp*dp*dp;
+              }
+            }
           }
         }
         v+=3;
@@ -169,14 +188,17 @@ void ObjectMoleculeCreateSpheroid(ObjectMolecule *I)
 
   f=fsum;
   s=spheroid;
-  for(a=0;a<nRow;a++) {
-    if(*f>R_SMALL4) {
-      (*(s++))/=*(f++);
-      if(s[-1]<0.05)
-        s[-1]=0.05;
-    } else {
-      *(s++)=0.05; 
-      f++;
+  for(a=0;a<I->NAtom;a++) {
+    min_dist = spheroid_ratio*sqrt(max_sq[a]);
+    for(b=0;b<sp->nDot;b++) {
+      if(*f>R_SMALL4) {
+        (*s)=sqrt((*s)/(*(f++))); /* we put the "rm" in "rms" */
+      } else {
+        f++;
+      }
+      /*      if(*s<min_dist)
+       *s=min_dist;*/
+      s++;
     }
   }
 
@@ -247,6 +269,7 @@ void ObjectMoleculeCreateSpheroid(ObjectMolecule *I)
   FreeP(center);
   FreeP(count);
   FreeP(fsum);
+  FreeP(max_sq);
 
   for(b=1;b<I->NCSet;b++) { 
     cs=I->CSet[b];
@@ -272,7 +295,7 @@ void ObjectMoleculeReplaceAtom(ObjectMolecule *I,int index,AtomInfoType *ai)
 void ObjectMoleculeBracketResidue(ObjectMolecule *I,AtomInfoType *ai,int *st,int *nd)
 {
   /* inefficient but reliable way to find where residue atoms are located in an object 
-   * for */
+   * for purpose of residue-based operations */
   int a;
 
   *st=0;
