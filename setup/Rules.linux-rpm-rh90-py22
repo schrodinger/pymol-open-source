@@ -25,7 +25,9 @@ EXT_LIB_DIR =
 #
 #- Build for LINUX as an importable module ---------------------------
 #--- System libraries
-LIBS = $(PYTHON_LIB) -lglut -lGL -lGLU -ldl -lpng -lXmu $(ZLIB) -lm
+# NOTE: standard glut-devel is broken in RH9.0, so use static build!
+LIBS = $(PYTHON_LIB) /home/local/warren/ext/lib/libglut.a \
+-lGL -lGLU -ldl -lpng -lXmu $(ZLIB) -lm
 #--- PyMOL configuration
 DEFS = -D_PYMOL_MODULE 
 #--- How we build shared libraries
@@ -35,7 +37,7 @@ DEST = -o modules/pymol/_cmd.so
 #--- Gcc Options for Linux
 CCOPT1 = -march=i486 -D__i686__ -ffast-math -Wall -ansi -Wmissing-prototypes
 #--- libraries for PyOpenGL 
-PYOGL_LIB =  -lglut -lGL -lGLU -lXmu -lXi
+PYOGL_LIB = /home/local/warren/ext/lib/libglut.a -lGL -lGLU -lXmu -lXi
 #---------------------------------------------------------------------
 #
 #- Choose One --------------------------------------------------------
