@@ -1,0 +1,103 @@
+#---------------------------------------------------------------------
+# PyMOL Makefile Rules 
+#---------------------------------------------------------------------
+#
+# This makefile requires a special set of external dependencies which
+# are statically compiled as much as possible
+#
+#- Building ----------------------------------------------------------
+#--- Tell "make" how to get to PyMOL 
+PYMOL_PATH = /home/local/warren/pymol
+#---------------------------------------------------------------------
+#
+#- Dependencies ------------------------------------------------------
+#--- X-windows
+XLIB_DIR = -L/usr/openwin/lib
+XINC_DIR = -I/usr/openwin/include
+#--- Python
+PYTHON_EXE = $(PYMOL_PATH)/ext/bin/python
+PYTHON_LIB = -lpython2.2 -lpthread 
+PYTHON_LIB_DIR = -L$(PYMOL_PATH)/ext/lib/python2.2/config
+PYTHON_INC_DIR = -I$(PYMOL_PATH)/ext/include/python2.2
+#--- Other external dependencies
+EXT_INC_DIR = -I$(PYMOL_PATH)/ext/include
+EXT_LIB_DIR = -L$(PYMOL_PATH)/ext/lib 
+#---------------------------------------------------------------------
+#
+#- Build for LINUX as an importable module ---------------------------
+#--- System libraries
+LIBS = contrib/modules/*.o contrib/pyopengl/*.o contrib/sglite/*.o \
+ $(PYTHON_LIB) ext/lib/libglut.a \
+contrib/champ/*.o -lGL -lGLU -lX11 -lXi -lXmu -ldl -lnsl -lsocket -lm \
+ext/lib/libtcl8.4.a ext/lib/libtk8.4.a \
+ext/lib/libpng.a $(ZLIB)
+#--- PyMOL configuration
+DEFS = -D_PYMOL_MONOLITHIC -D_PYMOL_SETUP_TCLTK84 -D_PYMOL_SETUP_PY22
+#--- How we build shared libraries
+BUILD = 
+#--- What are we trying to build?
+DEST = -o pymol.exe
+#--- Gcc Options for Linux
+CCOPT1 = 
+#--- libraries for PyOpenGL 
+PYOGL_LIB = 
+#---------------------------------------------------------------------
+#
+#- Choose One --------------------------------------------------------
+#--- GCC Optimized
+CCOPT2 = -O -fast
+#--- GCC Profiling
+#CCOPT2 = -pg -O3 -funroll-loops
+#--- Debugging
+CCOPT2 = -O -fast 
+#---------------------------------------------------------------------
+#
+#- Choose One --------------------------------------------------------
+#--- Workaround for XFree86/DRI linux dll problem for module build
+#BUGS = -D_DRI_WORKAROUND
+#---
+BUGS =
+#---------------------------------------------------------------------
+#
+#- Choose One Pair ---------------------------------------------------
+#--- Libpng2 available and contains zlib 
+PNG = -D_HAVE_LIBPNG 
+ZLIB = ext/lib/libz.a
+#--- Libpng2 available but needs zlib 
+#PNG = -D_HAVE_LIBPNG 
+#ZLIB = -lz
+#--- Libpng2 not available
+#PNG = 
+#ZLIB = 
+#---------------------------------------------------------------------
+#
+#---------------------------------------------------------------------
+# No changes normally required below here
+#---------------------------------------------------------------------
+
+CC = cc
+
+LIB_DIRS = $(EXT_LIB_DIR) $(PYTHON_LIB_DIR) $(XLIB_DIR)
+
+# Enable source files to find headers
+PYMOL_INC_DIRS = -I$(PYMOL_PATH)/layer0 -I$(PYMOL_PATH)/layer1 -I$(PYMOL_PATH)/layer2 \
+   -I$(PYMOL_PATH)/layer3 -I$(PYMOL_PATH)/layer4 -I$(PYMOL_PATH)/layer5 
+
+C_FLAGS = $(CCOPT1) $(CCOPT2) $(EXT_INC_DIR) $(PYTHON_INC_DIR) \
+   $(XINC_DIR) $(PNG) $(DEFS) $(BUGS)
+
+CFLAGS = $(C_FLAGS)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
