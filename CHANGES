@@ -109,6 +109,9 @@ Current Bugs to Fix
 
 Changes up to 0.85
 
+   * PyMOL no longer wraps output lines by default "set wrap_output=78"
+     to get previous behavior
+
    * relocated binary shared objects from modules into the modules/pymol
      tree
 
@@ -117,8 +120,9 @@ Changes up to 0.85
 
    * added ability to build PyMOL using Python distutils
    
-   * worked over the PyMOL launch routine.  It should now be possible
-     to launch pymol simply with an "import pymol" statement : )!
+   * revamped the PyMOL launch process.  It should now be possible
+     to launch pymol simply with an "import pymol" statement, provided
+     that the modules are in the Python search path
 
    * fixed get_dihedral to use current state index
 

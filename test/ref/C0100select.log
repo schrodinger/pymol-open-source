@@ -51,9 +51,7 @@ PyMOL>hide (tiny)
 PyMOL>select (vis)
  Selector: selection "sel17" defined with 2084 atoms.
 PyMOL>print cmd.get_names('all')
-['tiny', 'il2', 'tst', 'sel01', 'sel02', 'sel03', 'sel04', 'sel05', 'sel06', '
-sel07', 'sel08', 'sel09', 'sel10', 'sel11', 'sel12', 'sel13', 'sel14', 'sel15',
- 'sel16', 'sel17']
+['tiny', 'il2', 'tst', 'sel01', 'sel02', 'sel03', 'sel04', 'sel05', 'sel06', 'sel07', 'sel08', 'sel09', 'sel10', 'sel11', 'sel12', 'sel13', 'sel14', 'sel15', 'sel16', 'sel17']
 PyMOL>delete sel*
 PyMOL>print cmd.get_names('all')
 ['tiny', 'il2', 'tst']

@@ -22,11 +22,9 @@ PyMOL>select bb = (not (not (name ca or name c or name n)))
  Selector: selection "bb" defined with 39 atoms.
 PyMOL>select bb = (not (not (n. c|n. ca|n. n)))
  Selector: selection "bb" defined with 39 atoms.
-PyMOL>select bb = (not (not (not (not (not (not (not (not (not (not (not (not 
-(not (not (*/ca,c,n)))))))))))))))
+PyMOL>select bb = (not (not (not (not (not (not (not (not (not (not (not (not (not (not (*/ca,c,n)))))))))))))))
  Selector: selection "bb" defined with 39 atoms.
-PyMOL>select bb = (all and all and all and (not (not all)) and (not none) and 
-all and not (not (n;ca,c,n)))
+PyMOL>select bb = (all and all and all and (not (not all)) and (not none) and all and not (not (n;ca,c,n)))
  Selector: selection "bb" defined with 39 atoms.
 PyMOL>select bb,(name ca or (n;c | (n. n) | (*/n)))
  Selector: selection "bb" defined with 39 atoms.
