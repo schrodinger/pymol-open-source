@@ -407,7 +407,7 @@ void BasisMakeMap(CBasis *I,int *vert2prim,CPrimitive *prim,float *volume)
   CPrimitive *prm;
   int a,b,c,i,n,h,q,x,y,z;
   int extra_vert = 0;
-  float p[3],dd[3];
+  float p[3],dd[3],*d1,*d2;
   float *tempVertex;
   int *tempRef,*ip,*sp;
   int remapMode=true; /* remap mode means that some objects will span more
@@ -417,6 +417,8 @@ void BasisMakeMap(CBasis *I,int *vert2prim,CPrimitive *prim,float *volume)
   float min[3],max[3],extent[6];
   float sep;
   float diagonal[3];
+  float l1,l2;
+  float bh,ch;
 
   sep = I->MinVoxel;
   if(sep==0.0)
@@ -464,16 +466,27 @@ void BasisMakeMap(CBasis *I,int *vert2prim,CPrimitive *prim,float *volume)
   /* here we have to carry out a complicated work-around in order to
 	* efficiently encode our lines into the map in a way that doesn't
    * require expanding the map cutoff to the size of the largest object*/
-
   if(remapMode) 
     for(a=0;a<I->NVertex;a++)
       {
         prm=prim+vert2prim[a];
-        if(prm->type==cPrimCylinder) {
+		  switch(prm->type) {
+		  case cPrimTriangle:
+			 if(a==prm->vert) { /* only do this calculation for one of the three vertices */
+				l1=length3f(I->Precomp+I->Vert2Normal[a]*3);
+				l2=length3f(I->Precomp+I->Vert2Normal[a]*3+3);
+				b = ceil(l1/sep)+1;
+				c = ceil(l2/sep)+1;
+				extra_vert += b*c;
+			 }
+			 break;
+		  case cPrimCylinder:
           extra_vert+= (ceil(prm->l1/sep)+1);
-        } else if (prm->type==cPrimSphere) {
+			 break;
+		  case cPrimSphere:
           b = 2*floor(prm->r1/sep)+1;
           extra_vert+= (b*b*b);
+			 break;
         } 
 		}
   if(remapMode) {
@@ -495,10 +508,53 @@ void BasisMakeMap(CBasis *I,int *vert2prim,CPrimitive *prim,float *volume)
 	 for(a=0;a<I->NVertex;a++)
 		{
 		  prm=prim+vert2prim[a];
-		  if(prm->type==cPrimCylinder) {
+		  switch(prm->type) {
+		  case cPrimTriangle:
+			 if(a==prm->vert) { /* only do this calculation for one of the three vertices */
+				d1=I->Precomp+I->Vert2Normal[a]*3;
+				d2=I->Precomp+I->Vert2Normal[a]*3+3;
+				vv=I->Vertex+a*3;
+				l1=length3f(d1);
+				l2=length3f(d2);
+				b = floor(l1/sep)+1;
+				c = floor(l2/sep)+1;
+				extra_vert += b*c;
+				bh=(b/2)+1;
+				ch=(c/2)+1;
+				
+				for(x=0;x<bh;x++)
+				  for(y=0;y<ch;y++) 
+					 {
+						*(v++) = vv[0]+(d1[0]*x)/b+(d2[0]*y)/c;
+						*(v++) = vv[1]+(d1[1]*x)/b+(d2[1]*y)/c;
+						*(v++) = vv[2]+(d1[2]*x)/b+(d2[2]*y)/c;
+						tempRef[n]=a;
+						n++;
+						
+					 }
+				for(x=0;x<bh;x++)
+				  for(y=0;y<ch;y++) 
+					 {
+						if(((((float)x)/b)+(((float)y)/c))<0.5) {
+						  *(v++) = vv[0]+d1[0]*(0.5+((float)x)/b)+(d2[0]*y)/c;
+						  *(v++) = vv[1]+d1[1]*(0.5+((float)x)/b)+(d2[1]*y)/c;
+						  *(v++) = vv[2]+d1[2]*(0.5+((float)x)/b)+(d2[2]*y)/c;
+						  tempRef[n]=a; 
+						  n++;
+
+						  *(v++) = vv[0]+(d1[0]*x)/b+d2[0]*(0.5+((float)y)/c);
+						  *(v++) = vv[1]+(d1[1]*x)/b+d2[1]*(0.5+((float)y)/c);
+						  *(v++) = vv[2]+(d1[2]*x)/b+d2[2]*(0.5+((float)y)/c);
+						  tempRef[n]=a;
+						  n++;
+						}
+					 }
+			 }
+			 break;
+		  case cPrimCylinder:
 			 d=I->Normal+3*I->Vert2Normal[a];
 			 vv=I->Vertex+a*3;
-
+			 
 			 *(v++) = vv[0]+d[0]*prm->l1;
 			 *(v++) = vv[1]+d[1]*prm->l1;
 			 *(v++) = vv[2]+d[2]*prm->l1;
@@ -521,7 +577,8 @@ void BasisMakeMap(CBasis *I,int *vert2prim,CPrimitive *prim,float *volume)
 				tempRef[n]=a; /* store reference to source vertex */
 				n++;
 			 }
-		  } else if(prm->type==cPrimSphere) {
+			 break;
+		  case cPrimSphere:
           q = floor(prm->r1/sep);
           vv=I->Vertex+a*3;
           
@@ -535,13 +592,14 @@ void BasisMakeMap(CBasis *I,int *vert2prim,CPrimitive *prim,float *volume)
                   tempRef[n]=a;
                   n++;
                 }
+			 break;
         }
       }
-    
+  
 	 if(n>extra_vert) {
 		exit(1);
 	 }
-    
+	 
 	 if(volume) {
 		v=tempVertex;
 		for(c=0;c<3;c++)
@@ -628,7 +686,7 @@ void BasisMakeMap(CBasis *I,int *vert2prim,CPrimitive *prim,float *volume)
 	 FreeP(tempVertex);
 	 FreeP(tempRef);
   } else {
-    /* simple sphere mode */
+	 /* simple sphere mode */
 	 I->Map=MapNew(-sep,I->Vertex,I->NVertex,NULL);
 	 MapSetupExpressXY(I->Map);
   }
