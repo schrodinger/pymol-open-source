@@ -22,4 +22,8 @@ Z* -------------------------------------------------------------------
 Rep *RepMeshNew(CoordSet *cset);
 void RepMeshInit(void);
 
+#define cRepMesh_by_flags     0
+#define cRepMesh_all          1
+#define cRepMesh_heavy_atoms  2
+
 #endif

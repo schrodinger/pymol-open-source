@@ -418,6 +418,26 @@ EDITING
    '''
    help('keyboard')
 
+def transparency():
+   '''
+TRANSPARENCY
+ 
+   As of version 0.68, trasparent surfaces are supported in both
+   realtime (OpenGL) rendering mode as well as with ray-traced images.
+
+   Transparency is currently managed by setting either the global
+   transparency variable or one attached to an individual molecule object.
+
+   It isn't yet possible to control transparency on a per-atom basis.
+   
+EXAMPLES
+
+   set transparency=0.5        # makes all surfaces 50% transparent
+   set transparency=0.5, mol3  # makes only mol3's surface transparent
+
+   '''
+   help('transparency')
+
 
 def mouse():
    '''
@@ -3360,6 +3380,9 @@ NOTES
                else:
                   v = value
                v = (float(v[0]),float(v[1]),float(v[2]))
+            elif type==5: # color
+               v = (str(value),)
+               
             v = (type,v)
             r = _cmd.set(int(index),v,
                          string.strip(str(selection)),
@@ -4803,7 +4826,8 @@ DESCRIPTION
    "flag" sets the indicated flag for atoms in the selection and
     clears the indicated flag for atoms not in the selection.  This
     is primarily useful for passing selection information into
-    Chempy models.
+    Chempy models, which have a 32 bit attribute "flag" which holds
+    this state information.
    
 USAGE
 
@@ -4819,7 +4843,19 @@ EXAMPLES
  
    flag 0, (name ca)
    flag 1, (resi 45 x; 6)
- 
+
+RESERVATIONS
+
+   Flags 0-7 are reserved for molecular modeling */
+      0  = Atoms of Interest (i.e. a ligand in an active site)
+      1  = Free Atoms (free to move subject to a force-field)
+      2  = Restrained Atoms (typically harmonically contrained)
+      3  = Fixed Atoms (no movement allowed)
+   Flags 8-15 are free for end users to manipulate
+   Flags 16-23 are reserved for external GUIs and linked applications
+   Flags 24-31 are reserved for PyMOL's internal usage
+      24 = Exclude atoms from surface related actions
+      25 = Ignore atoms altogether when surfacing
    '''
    # preprocess selection
    selection = selector.process(selection)
@@ -6076,7 +6112,8 @@ help_only = {  # for API-only features
    'edit_keys'     : [edit_keys    , 0 , 0 , ',' , 0 ],
    'get_names'     : [get_names    , 0 , 0 , ',' , 0 ],
    'get_type'      : [get_type     , 0 , 0 , ',' , 0 ],
-   'faster'        : [faster       , 0 , 0 , ',' , 0 ],  
+   'faster'        : [faster       , 0 , 0 , ',' , 0 ],
+   'transparency'  : [transparency , 0 , 0 , ',' , 0 ],  
    '@'             : [at_sign      , 0 , 0 , ',' , 0 ],  
 }
 

@@ -33,16 +33,16 @@ typedef struct {
   SettingRec *info;
 } CSetting;
 
-#define cSetting_boolean  1
-#define cSetting_int      2
-#define cSetting_float    3
-#define cSetting_float3   4
+#define cSetting_boolean     1
+#define cSetting_int         2
+#define cSetting_float       3
+#define cSetting_float3      4
+#define cSetting_color       5
 
 /* New API 
  * NOTE: get commands are not range-checked, so be careful
  * in contrast, set commands expand the current list 
  */
-
 
 void SettingInitGlobal(void);
 void SettingFreeGlobal(void);
@@ -73,12 +73,14 @@ int   SettingGetGlobal_i(int index); /* always succeed */
 float SettingGetGlobal_f(int index); /* always succeed */
 void  SettingGetGlobal_3f(int index,float *value); /* always succeeds */
 float *SettingGetGlobal_fv(int index); /* always succeed */
+int SettingSet_color(CSetting *I,int index, char *value);
 
 int   SettingGet_b  (CSetting *set1,CSetting *set2,int index);
 int   SettingGet_i  (CSetting *set1,CSetting *set2,int index);
 float SettingGet_f  (CSetting *set1,CSetting *set2,int index);
 void  SettingGet_3f (CSetting *set1,CSetting *set2,int index,float *value);
 float *SettingGet_fv (CSetting *set1,CSetting *set2,int index);
+int   SettingGet_color(CSetting *set1,CSetting *set2,int index);
 
 PyObject *SettingGetTuple(CSetting *set1,CSetting *set2,int index); /* (type,(value,)) */
 
@@ -239,7 +241,12 @@ int SettingGetName(int index,SettingName name);
 #define cSetting_ray_texture_settings        140
 #define cSetting_suspend_updates             141
 #define cSetting_full_screen                 142
-#define cSetting_INIT                        143
+#define cSetting_surface_mode                143
+#define cSetting_surface_color               144
+#define cSetting_mesh_mode                   145
+#define cSetting_mesh_color                  146
+
+#define cSetting_INIT                        150
 
 #endif
 

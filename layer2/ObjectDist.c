@@ -95,7 +95,7 @@ ObjectDist *ObjectDistNew(int sele1,int sele2,int mode,float cutoff,float *resul
   I->NAtom=0;
   I->DSet=VLAMalloc(10,sizeof(DistSet*),5,true); /* auto-zero */
   I->NDSet=0;
-  I->Obj.fRender=(void (*)(struct Object *, int, CRay *, Pickable **))ObjectDistRender;
+  I->Obj.fRender=(void (*)(struct Object *, int, CRay *, Pickable **,int))ObjectDistRender;
   I->Obj.fFree= (void (*)(struct Object *))ObjectDistFree;
   I->Obj.fUpdate= (void (*)(struct Object *)) ObjectDistUpdate;
   I->Obj.fGetNFrame = (int (*)(struct Object *)) ObjectDistGetNFrames;

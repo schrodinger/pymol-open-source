@@ -69,6 +69,7 @@ int SettingGetTextValue(CSetting *set1,CSetting *set2,int index,char *buffer)
 {
   int type;
   int ok=true;
+  int tmp1;
   float *ptr;
   type = SettingGetType(index);
   switch(type) {
@@ -88,6 +89,13 @@ int SettingGetTextValue(CSetting *set1,CSetting *set2,int index,char *buffer)
     ptr = SettingGet_fv(set1,set2,index);
     sprintf(buffer,"[ %1.5f, %1.5f, %1.5f ]",
             ptr[0],ptr[1],ptr[2]);
+    break;
+  case cSetting_color:
+    tmp1 = SettingGet_color(set1,set2,index);
+    if(tmp1<0) 
+      strcpy(buffer,"default");
+    else
+      strcpy(buffer,ColorGetName(tmp1));
     break;
   default:
     ok=false;
@@ -125,6 +133,10 @@ int SettingSetTuple(CSetting *I,int index,PyObject *tuple)
                   PyFloat_AsDouble(PyTuple_GetItem(value,1)),
                   PyFloat_AsDouble(PyTuple_GetItem(value,2)));
     break;
+  case cSetting_color:
+    SettingSet_color(I,index,
+                     PyString_AsString(PyTuple_GetItem(value,0)));
+    break;
   default:
     ok=false;
     break;
@@ -155,6 +167,10 @@ PyObject *SettingGetTuple(CSetting *set1,CSetting *set2,int index)
     ptr =  SettingGet_fv(set1,set2,index);
     result = Py_BuildValue("(i(fff))",type,
                            ptr[0],ptr[1],ptr[2]);
+    break;
+  case cSetting_color:
+    result = Py_BuildValue("(i(i))",type,
+                           SettingGet_color(set1,set2,index));
     break;
   default:
     Py_INCREF(Py_None);
@@ -245,6 +261,33 @@ int SettingSet_i(CSetting *I,int index, int value)
     VLACheck(I->info,SettingRec,index);
     *((int*)SettingPtr(I,index,sizeof(int))) = value;
     I->info[index].type = cSetting_int;
+  }
+  return(ok);
+}
+/*========================================================================*/
+int SettingSet_color(CSetting *I,int index, char *value)
+{
+  int ok=true;
+  int color_index;
+
+  if(Setting.info[index].type&&(Setting.info[index].type!=cSetting_color)) {
+    PRINTFB(FB_Setting,FB_Errors)
+      "Setting-Error: type mismatch (color)\n"
+      ENDFB
+      ok=false;
+  } else {
+    color_index=ColorGetIndex(value);
+    if((color_index<0)&&(strcmp(value,"-1"))) {
+      PRINTFB(FB_Setting,FB_Errors)
+        "Setting-Error: unknown color '%s'\n",value
+        ENDFB
+        ok=false;
+      
+    } else {
+      VLACheck(I->info,SettingRec,index);
+      *((int*)SettingPtr(I,index,sizeof(int))) = color_index;
+      I->info[index].type = cSetting_color;
+    }
   }
   return(ok);
 }
@@ -343,6 +386,21 @@ int   SettingGet_b  (CSetting *set1,CSetting *set2,int index)
 }
 /*========================================================================*/
 int   SettingGet_i  (CSetting *set1,CSetting *set2,int index)
+{
+  if(set1) {
+    if(set1->info[index].defined) {
+      return(*((int*)(set1->data+set1->info[index].offset)));
+    }
+  }
+  if(set2) { 
+    if(set2->info[index].defined) {
+      return(*((int*)(set2->data+set2->info[index].offset)));      
+    }
+  }
+  return(SettingGetGlobal_i(index));
+}
+/*========================================================================*/
+int   SettingGet_color(CSetting *set1,CSetting *set2,int index)
 {
   if(set1) {
     if(set1->info[index].defined) {
@@ -465,6 +523,7 @@ void SettingGenerateSideEffects(int index,char *sele,int state)
 	 SceneDirty();
 	 break;
   case cSetting_min_mesh_spacing:
+  case cSetting_mesh_mode:
     ExecutiveInvalidateRep(inv_sele,cRepMesh,cRepInvRep);
     SceneChanged();
     break;
@@ -504,6 +563,7 @@ void SettingGenerateSideEffects(int index,char *sele,int state)
     SceneChanged();
     break;
   case cSetting_mesh_width: 
+  case cSetting_mesh_color: 
     ExecutiveInvalidateRep(inv_sele,cRepMesh,cRepInvColor);
     SceneChanged();
     break;
@@ -521,7 +581,12 @@ void SettingGenerateSideEffects(int index,char *sele,int state)
     ExecutiveInvalidateRep(inv_sele,cRepMesh,cRepInvColor);
     SceneChanged();
     break;
+  case cSetting_surface_color:
+    ExecutiveInvalidateRep(inv_sele,cRepSurface,cRepInvColor);
+    SceneChanged();
+    break;
   case cSetting_surface_quality:
+  case cSetting_surface_mode:
     ExecutiveInvalidateRep(inv_sele,cRepSurface,cRepInvRep);
     SceneChanged();
     break;
@@ -566,6 +631,7 @@ void SettingGenerateSideEffects(int index,char *sele,int state)
   case cSetting_dot_width:
   case cSetting_dot_radius:
   case cSetting_dot_density:
+  case cSetting_dot_mode:
   case cSetting_dot_hydrogens:
     ExecutiveInvalidateRep(inv_sele,cRepDot,cRepInvRep);
     SceneChanged();
@@ -1068,6 +1134,14 @@ void SettingInitGlobal(void)
   SettingSet_f(I,cSetting_suspend_updates, 0.0F);
 
   SettingSet_f(I,cSetting_full_screen, 0.0F);
+
+  SettingSet_f(I,cSetting_surface_mode, 0.0F); /* by flag is the default */
+
+  SettingSet_color(I,cSetting_surface_color,"-1"); /* use atom colors by default */
+
+  SettingSet_f(I,cSetting_mesh_mode,0.0F); /* use atom colors by default */
+
+  SettingSet_color(I,cSetting_mesh_color,"-1"); /* use atom colors by default */
 
 }
 

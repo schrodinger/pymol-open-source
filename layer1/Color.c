@@ -69,10 +69,12 @@ int ColorGetIndex(char *name)
   int wm,best=0;
 
 
-  if((name[0]>='0')&&(name[0]<='9'))
+  if(((name[0]>='0')&&(name[0]<='9'))||(name[0]=='-'))
     if(sscanf(name,"%d",&i)) 
       if((i<I->NColor)&&(i>=0))
         return(i);
+  if(WordMatch(name,"default",true))
+    return(-1);
   for(a=0;a<I->NColor;a++)
 	 {
       wm = WordMatch(name,I->Color[a].Name,true);
