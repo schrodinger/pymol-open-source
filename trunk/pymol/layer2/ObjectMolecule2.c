@@ -1175,14 +1175,29 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(char *buffer,
           p=ncopy(cc,p,5);
           if(!sscanf(cc,"%d",&ai->id)) ai->id=0;
 
+
           p=nskip(p,1);/* to 12 */
           p=ncopy(cc,p,4); 
           if(!sscanf(cc,"%s",ai->name)) 
             ai->name[0]=0;
+          
+          p=ncopy(cc,p,1);
+          if(*cc==32)
+            ai->alt[0]=0;
           else {
+            ai->alt[0]=*cc;
+            ai->alt[1]=0;
+          }
+          
+          p=ncopy(cc,p,3); 
+          if(!sscanf(cc,"%s",ai->resn)) ai->resn[0]=0;
+          
+          if(ai->name[0]) {
+            int name_len = strlen(ai->name);
+            char name[4];
             switch(reformat_names) {
-            case 1: /* pdb compliant: HH12 becomes 2HH1 */
-              if(strlen(ai->name)>3) {
+            case 1: /* pdb compliant: HH12 becomes 2HH1, etc. */
+              if(name_len>3) {
                 if((ai->name[0]>='A')&&((ai->name[0]<='Z'))&&
                    (ai->name[3]>='0')&&(ai->name[3]<='9')) {
                   if(!(((ai->name[1]>='a')&&(ai->name[1]<='z'))||
@@ -1207,9 +1222,20 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(char *buffer,
                     ai->name[0]= ctmp;
                   }
                 }
+              } else if(name_len==3) {
+                if((ai->name[0]=='H')&&
+                   (ai->name[1]>='A')&&((ai->name[1]<='Z'))&&
+                   (ai->name[2]>='0')&&(ai->name[2]<='9')) {
+                  AtomInfoGetPDB3LetHydroName(ai->resn,ai->name,name);
+                  if(name[0]==' ')
+                    strcpy(ai->name,name+1);
+                  else
+                    strcpy(ai->name,name);
+                }
               }
               break;
             case 2: /* amber compliant: 2HH1 becomes HH12 */
+            case 3: /* pdb compliant, but use IUPAC within PyMOL */
               if(ai->name[0]) {
                 if((ai->name[0]>='0')&&(ai->name[0]<='9')&&
                    (!((ai->name[1]>='0')&&(ai->name[1]<='9')))&&
@@ -1241,19 +1267,9 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(char *buffer,
                   break;
                 }
               }
+              break;
             }
           }
-          
-          p=ncopy(cc,p,1);
-          if(*cc==32)
-            ai->alt[0]=0;
-          else {
-            ai->alt[0]=*cc;
-            ai->alt[1]=0;
-          }
-
-          p=ncopy(cc,p,3); 
-          if(!sscanf(cc,"%s",ai->resn)) ai->resn[0]=0;
 
           p=nskip(p,1);
           p=ncopy(cc,p,1);

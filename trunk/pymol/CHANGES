@@ -3,6 +3,12 @@ CHANGE LOG
 =========================================================================
 
 Changes up to 0.96
+ 
+   * API load actions now run quietly by default, like other functions.
+
+   * pdb_reformat_names_mode = 3 gives IUPAC internally with PDB I/O
+     pdb_reformat_names_mode = 1 (PDB) & 2 (Amber/IUPAC), now
+     correctly handle 3-letter names correctly for various hydrogens
 
    * fixed occasional "snail track" bug with surfaces
 

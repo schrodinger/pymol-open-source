@@ -179,6 +179,7 @@ int AtomResvFromResi(char *resi);
 
 int AtomInfoKnownWaterResName(char *resn);
 int AtomInfoKnownPolymerResName(char *resn);
+void AtomInfoGetPDB3LetHydroName(char *resn, char *iname, char *oname);
 
 #define cAIC_ct        0x0001
 #define cAIC_fc        0x0002

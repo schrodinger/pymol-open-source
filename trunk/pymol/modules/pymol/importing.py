@@ -83,7 +83,7 @@ if __name__=='pymol.importing':
          cmd.wizard("security")
       return r
 
-   def load_object(type,object,name,state=0,finish=1,discrete=0):
+   def load_object(type,object,name,state=0,finish=1,discrete=0,quiet=1):
       '''
 DESCRIPTION
 
@@ -99,12 +99,13 @@ PYMOL API
    name = object name (string)
    finish = perform (1) or defer (0) post-processing of structure after load
    discrete = treat each state as an independent, unrelated set of atoms
+   quiet = suppress chatter (default is yes)
       '''
       r = 1
       try:
          lock()   
          r = _cmd.load_object(str(name),object,int(state)-1,
-                                 int(type),int(finish),int(discrete))
+                                 int(type),int(finish),int(discrete),int(quiet))
       finally:
          unlock()
       return r
@@ -329,7 +330,7 @@ SEE ALSO
 
 
 
-   def load(filename,object='',state=0,format='',finish=1,discrete=0):
+   def load(filename,object='',state=0,format='',finish=1,discrete=0,quiet=1):
       '''
 DESCRIPTION
 
@@ -467,7 +468,7 @@ SEE ALSO
             while 1:
                rec = sdf.read()
                if not rec: break
-               r = _load(oname,string.join(rec.get('MOL'),''),state,ftype,0,1)
+               r = _load(oname,string.join(rec.get('MOL'),''),state,ftype,0,1,quiet)
             del sdf
             _cmd.finish_object(str(oname))
             _cmd.do("zoom (%s)"%oname,0)
@@ -496,7 +497,7 @@ SEE ALSO
    # standard file handling
 
          if ftype>=0:
-            r = _load(oname,fname,state,ftype,finish,discrete)
+            r = _load(oname,fname,state,ftype,finish,discrete,quiet)
       finally:
          unlock()
       return r

@@ -27,6 +27,274 @@ Z* -------------------------------------------------------------------
 
 
 static int NColor,CarbColor,HColor,OColor,SColor,MColor,IColor;
+/*========================================================================*/
+void AtomInfoGetPDB3LetHydroName(char *resn, char *iname, char *oname) 
+{
+  oname[0]=' ';	
+  strcpy(oname+1,iname);
+
+  switch(resn[0]) {
+  case 'A':
+    switch(resn[1]) {
+    case 'L': 
+      if(resn[2]=='A')
+        if((iname[0]=='H')&&
+           (iname[1]=='B')&&
+           ((iname[2]>='0')&&(iname[2]<='9'))) {
+          oname[0]=iname[2]; oname[1]=iname[0]; oname[2]=iname[1]; oname[3]=0;
+        }
+      break;
+    case 'R': 
+      if(resn[2]=='G')
+        if((iname[0]=='H')&&
+           ((iname[1]=='B')||(iname[1]=='G')||(iname[1]=='D'))&&
+           ((iname[2]>='0')&&(iname[2]<='9'))) {
+          oname[0]=iname[2]; oname[1]=iname[0]; oname[2]=iname[1]; oname[3]=0;
+        }
+      break;
+    case 'S': 
+      switch(resn[2]) {
+      case 'P':
+        if((iname[0]=='H')&&
+           (iname[1]=='B')&&
+           ((iname[2]>='0')&&(iname[2]<='9'))) {
+          oname[0]=iname[2]; oname[1]=iname[0]; oname[2]=iname[1]; oname[3]=0;
+        }
+        break;
+      case 'N':
+        if((iname[0]=='H')&&
+           (iname[1]=='B')&&
+           ((iname[2]>='0')&&(iname[2]<='9'))) {
+          oname[0]=iname[2]; oname[1]=iname[0]; oname[2]=iname[1]; oname[3]=0;
+        }
+        break;
+      }
+      break;
+    }
+    break;
+  case 'C':
+    switch(resn[1]) {
+    case 'Y': 
+      switch(resn[2]) {
+      case 'S':
+      case 'X':
+        if((iname[0]=='H')&&
+           (iname[1]=='B')&&
+           ((iname[2]>='0')&&(iname[2]<='9'))) {
+          oname[0]=iname[2]; oname[1]=iname[0]; oname[2]=iname[1]; oname[3]=0;
+        }
+        break;
+      }
+      break;
+    }
+    break;
+  case 'G':
+    switch(resn[1]) {
+    case 'L': 
+      switch(resn[2]) {
+      case 'N':
+        if((iname[0]=='H')&&
+           ((iname[1]=='B')||(iname[1]=='G'))&&
+           ((iname[2]>='0')&&(iname[2]<='9'))) {
+          oname[0]=iname[2]; oname[1]=iname[0]; oname[2]=iname[1]; oname[3]=0;
+        }
+        break;
+      case 'U':
+        if((iname[0]=='H')&&
+           ((iname[1]=='B')||(iname[1]=='G'))&&
+           ((iname[2]>='0')&&(iname[2]<='9'))) {
+          oname[0]=iname[2]; oname[1]=iname[0]; oname[2]=iname[1]; oname[3]=0;
+        }
+        break;
+      case 'Y':
+        if((iname[0]=='H')&&
+           (iname[1]=='A')&&
+           ((iname[2]>='0')&&(iname[2]<='9'))) {
+          oname[0]=iname[2]; oname[1]=iname[0]; oname[2]=iname[1]; oname[3]=0;
+        }
+        break;
+      }
+    }
+    break;
+  case 'H':
+    switch(resn[1]) {
+    case 'I': 
+      switch(resn[2]) {
+      case 'S':
+      case 'D':
+      case 'E':
+      case 'P':
+        if((iname[0]=='H')&&
+           (iname[1]=='B')&&
+           ((iname[2]>='0')&&(iname[2]<='9'))) {
+          oname[0]=iname[2]; oname[1]=iname[0]; oname[2]=iname[1]; oname[3]=0;
+        }
+        break;
+      }
+      break;
+    case 'O': 
+      switch(resn[2]) {
+      case 'H':
+        break;
+      }
+      break;
+    case '2': 
+      switch(resn[2]) {
+      case 'O':
+        break;
+      }
+      break;
+    }
+  case 'I':
+    switch(resn[1]) {
+    case 'L': 
+      switch(resn[2]) {
+      case 'E':
+        break;
+      }
+    }
+    break;
+  case 'L':
+    switch(resn[1]) {
+    case 'E': 
+      switch(resn[2]) {
+      case 'U':
+        if((iname[0]=='H')&&
+           (iname[1]=='B')&&
+           ((iname[2]>='0')&&(iname[2]<='9'))) {
+          oname[0]=iname[2]; oname[1]=iname[0]; oname[2]=iname[1]; oname[3]=0;
+        }
+        break;
+      }
+      break;
+    case 'Y': 
+      switch(resn[2]) {
+      case 'S':
+        if((iname[0]=='H')&&
+           ((iname[1]=='B')||(iname[1]=='G')||(iname[1]=='D')||(iname[1]=='E')||(iname[1]=='Z'))&&
+           ((iname[2]>='0')&&(iname[2]<='9'))) {
+          oname[0]=iname[2]; oname[1]=iname[0]; oname[2]=iname[1]; oname[3]=0;
+        }
+        break;
+      }
+      break;
+    }
+    break;
+  case 'M':
+    switch(resn[1]) {
+    case 'E': 
+      switch(resn[2]) {
+      case 'T':
+        if((iname[0]=='H')&&
+           ((iname[1]=='B')||(iname[1]=='G')||(iname[1]=='E'))&&
+           ((iname[2]>='0')&&(iname[2]<='9'))) {
+          oname[0]=iname[2]; oname[1]=iname[0]; oname[2]=iname[1]; oname[3]=0;
+        }
+        break;
+      }
+    }
+    break;
+  case 'P':
+    switch(resn[1]) {
+    case 'H':
+      switch(resn[2]) {
+      case 'E':
+        if((iname[0]=='H')&&
+           (iname[1]=='B')&&
+           ((iname[2]>='0')&&(iname[2]<='9'))) {
+          oname[0]=iname[2]; oname[1]=iname[0]; oname[2]=iname[1]; oname[3]=0;
+        }
+        break;
+      }
+      break;     
+    case 'R': 
+      switch(resn[2]) {
+      case 'O':
+        if((iname[0]=='H')&&
+           ((iname[1]=='B')||(iname[1]=='G')||(iname[1]=='D'))&&
+           ((iname[2]>='0')&&(iname[2]<='9'))) {
+          oname[0]=iname[2]; oname[1]=iname[0]; oname[2]=iname[1]; oname[3]=0;
+        }
+        break;
+      }
+      break;
+    }
+    break;
+  case 'S':
+    switch(resn[1]) {
+    case 'E': 
+      switch(resn[2]) {
+      case 'R':
+        if((iname[0]=='H')&&
+           (iname[1]=='B')&&
+           ((iname[2]>='0')&&(iname[2]<='9'))) {
+          oname[0]=iname[2]; oname[1]=iname[0]; oname[2]=iname[1]; oname[3]=0;
+        }
+        break;
+      }
+      break;
+    }
+    break;
+  case 'T':
+    switch(resn[1]) {
+    case 'H': 
+      switch(resn[2]) {
+      case 'R':
+        break;
+      }
+      break;
+    case 'I': 
+      switch(resn[2]) {
+      case 'P':
+        break;
+      }
+      break;
+    case 'R': 
+      switch(resn[2]) {
+      case 'P':
+        if((iname[0]=='H')&&
+           (iname[1]=='B')&&
+           ((iname[2]>='0')&&(iname[2]<='9'))) {
+          oname[0]=iname[2]; oname[1]=iname[0]; oname[2]=iname[1]; oname[3]=0;
+        }
+        break;
+      }
+      break;
+    case 'Y': 
+      switch(resn[2]) {
+      case 'R':
+        if((iname[0]=='H')&&
+           (iname[1]=='B')&&
+           ((iname[2]>='0')&&(iname[2]<='9'))) {
+          oname[0]=iname[2]; oname[1]=iname[0]; oname[2]=iname[1]; oname[3]=0;
+        }
+        break;
+      }
+      break;
+    }
+    break;
+  case 'V':
+    switch(resn[1]) {
+    case 'A': 
+      switch(resn[2]) {
+      case 'L':
+        break;
+      }
+      break;
+    }
+    break;
+  case 'W':
+    switch(resn[1]) {
+    case 'A': 
+      switch(resn[2]) {
+      case 'T':
+        break;
+      }
+      break;
+    }
+    break;
+  }
+}
 
 int AtomInfoKnownWaterResName(char *resn) 
 {
@@ -142,6 +410,7 @@ int AtomInfoKnownPolymerResName(char *resn)
       case 'S':
       case 'D':
       case 'E':
+      case 'P':
         return true;
         break;
       }
