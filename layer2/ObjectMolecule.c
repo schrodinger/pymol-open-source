@@ -4208,7 +4208,7 @@ void ObjectMoleculeSeleOp(ObjectMolecule *I,int sele,ObjectMoleculeOpRec *op)
   OrthoLineType buffer;
   int cnt,maxCnt;
   CoordSet *cs;
-  AtomInfoType *ai;
+  AtomInfoType *ai,*ai0;
 
   
   if(sele>=0) {
@@ -4254,6 +4254,36 @@ void ObjectMoleculeSeleOp(ObjectMolecule *I,int sele,ObjectMoleculeOpRec *op)
      break;
 #endif
 
+	case OMOP_PrepareFromTemplate:
+     ai0=op->ai; /* template atom */
+     for(a=0;a<I->NAtom;a++)
+       {
+         s=I->AtomInfo[a].selEntry;
+         if(SelectorIsMember(s,sele))
+           {
+             ai = I->AtomInfo + a;
+             ai->hetatm=ai0->hetatm;
+             ai->flags=ai0->flags;
+             strcpy(ai->chain,ai0->chain);
+             strcpy(ai->alt,ai0->alt);
+             strcpy(ai->segi,ai0->segi);
+             if(op->i2==1) { /* mode 1, merge residue information */
+               strcpy(ai->resi,ai0->resi);
+               ai->resv=ai0->resv;
+               strcpy(ai->resn,ai0->resn);    
+             }
+             if((ai->elem[0]==ai0->elem[0])&&(ai->elem[1]==ai0->elem[1]))
+               ai->color=ai0->color;
+             else
+               ai->color=AtomInfoGetColor(ai);
+             for(b=0;b<cRepCnt;b++)
+               ai->visRep[b]=ai0->visRep[b];
+             ai->id=-1;
+             op->i1++;
+           }
+       }
+     break;
+     
 	case OMOP_PDB1:
 	  for(b=0;b<I->NCSet;b++)
        if(I->CSet[b])
@@ -5273,6 +5303,8 @@ int ObjectMoleculeConnect(ObjectMolecule *I,BondType **bond,AtomInfoType *ai,
   int nBond;
   BondType *ii1,*ii2;
   int flag;
+  int order;
+  AtomInfoType *ai1,*ai2;
 
   /*  FeedbackMask[FB_ObjectMolecule]=0xFF;*/
   nBond = 0;
@@ -5315,12 +5347,163 @@ int ObjectMoleculeConnect(ObjectMolecule *I,BondType **bond,AtomInfoType *ai,
                                         flag=false;
                                   }
                                   if(flag) {
-                                    ai[a1].bonded=true;
-                                    ai[a2].bonded=true;
+                                    ai1=ai+a1;
+                                    ai2=ai+a2;
+                                    ai1->bonded=true;
+                                    ai2->bonded=true;
                                     VLACheck((*bond),BondType,nBond);
                                     (*bond)[nBond].index[0] = a1;
                                     (*bond)[nBond].index[1] = a2;
-                                    (*bond)[nBond].order = 1;
+                                    order = 1;
+                                    if((!ai1->hetatm)&&(!ai1->resn[3])) { /* Standard PDB residue */
+                                      if(AtomInfoSameResidue(ai1,ai2)) {
+                                        /* nasty high-speed hack to get bond valences and formal charges 
+                                           for standard residues */
+                                        if(((!ai1->name[1])&&(!ai2->name[1]))&&
+                                           (((ai1->name[0]=='C')&&(ai2->name[0]=='O'))||
+                                            ((ai1->name[0]=='O')&&(ai2->name[0]=='C')))) {
+                                          order=2;
+                                        } else {
+                                          switch(ai1->resn[0]) {
+                                          case 'A':
+                                            switch(ai1->resn[1]) {
+                                            case 'R': /* ARG */
+                                              if(!strcmp(ai1->name,"NH1")) 
+                                                ai1->formalCharge=1;
+                                              else if(!strcmp(ai2->name,"NH1")) 
+                                                ai2->formalCharge=1;
+                                              if(((!strcmp(ai1->name,"CZ"))&&(!strcmp(ai2->name,"NH1")))||
+                                                 ((!strcmp(ai2->name,"CZ"))&&(!strcmp(ai1->name,"NH1")))) 
+                                                order=2;
+                                              break;
+                                            case 'S': 
+                                              switch(ai1->resn[2]) {
+                                              case 'P': /* ASP */
+                                                if(!strcmp(ai1->name,"OD2")) 
+                                                  ai1->formalCharge=-1;
+                                                else if(!strcmp(ai2->name,"OD2")) 
+                                                  ai2->formalCharge=-1;
+                                              case 'N': /* ASN or ASP */
+                                                if(((!strcmp(ai1->name,"CG"))&&(!strcmp(ai2->name,"OD1")))||
+                                                   ((!strcmp(ai2->name,"CG"))&&(!strcmp(ai1->name,"OD1")))) 
+                                                  order=2;
+                                                break;
+                                              }
+                                            }
+                                          case 'G':
+                                            switch(ai1->resn[1]) {
+                                            case 'L': 
+                                              switch(ai1->resn[2]) {
+                                              case 'U': /* GLU */
+                                                if(!strcmp(ai1->name,"OE2")) 
+                                                  ai1->formalCharge=-1;
+                                                else if(!strcmp(ai2->name,"OE2")) 
+                                                  ai2->formalCharge=-1;
+                                              case 'N': /* GLN or GLU */
+                                                if(((!strcmp(ai1->name,"CD"))&&(!strcmp(ai2->name,"OE1")))||
+                                                   ((!strcmp(ai2->name,"CD"))&&(!strcmp(ai1->name,"OE1")))) 
+                                                  order=2;
+                                                break;
+                                              }
+                                            }
+                                            break;
+                                          case 'H':
+                                            switch(ai1->resn[1]) {
+                                            case 'I':
+                                              switch(ai1->resn[2]) {
+                                              case 'P':
+                                                if(!strcmp(ai1->name,"ND1")) 
+                                                  ai1->formalCharge=1;
+                                                else if(!strcmp(ai2->name,"ND1")) 
+                                                  ai2->formalCharge=1;
+                                              case 'S':
+                                              case 'E':
+                                                if(((!strcmp(ai1->name,"CG"))&&(!strcmp(ai2->name,"CD2")))||
+                                                   ((!strcmp(ai2->name,"CG"))&&(!strcmp(ai1->name,"CD2")))) 
+                                                  order=2;
+                                                else if(((!strcmp(ai1->name,"CE1"))&&(!strcmp(ai2->name,"ND1")))||
+                                                        ((!strcmp(ai2->name,"CE1"))&&(!strcmp(ai1->name,"ND1")))) 
+                                                  order=2;
+                                                break;
+                                                break;
+                                              case 'D':
+                                                if(((!strcmp(ai1->name,"CG"))&&(!strcmp(ai2->name,"CD2")))||
+                                                   ((!strcmp(ai2->name,"CG"))&&(!strcmp(ai1->name,"CD2")))) 
+                                                  order=2;
+                                                else if(((!strcmp(ai1->name,"CE1"))&&(!strcmp(ai2->name,"NE2")))||
+                                                        ((!strcmp(ai2->name,"CE1"))&&(!strcmp(ai1->name,"NE2")))) 
+                                                  order=2;
+                                                break;
+                                              }
+                                              break;
+                                            }
+                                            break;
+                                          case 'P':
+                                            switch(ai1->resn[1]) {
+                                            case 'H': /* PHE */
+                                              if(ai1->resn[2]=='E') {
+                                                if(((!strcmp(ai1->name,"CG"))&&(!strcmp(ai2->name,"CD1")))||
+                                                   ((!strcmp(ai2->name,"CG"))&&(!strcmp(ai1->name,"CD1")))) 
+                                                  order=2;
+                                                else if(((!strcmp(ai1->name,"CZ"))&&(!strcmp(ai2->name,"CE1")))||
+                                                        ((!strcmp(ai2->name,"CZ"))&&(!strcmp(ai1->name,"CE1")))) 
+                                                  order=2;
+                                                
+                                                else if(((!strcmp(ai1->name,"CE2"))&&(!strcmp(ai2->name,"CD2")))||
+                                                        ((!strcmp(ai2->name,"CE2"))&&(!strcmp(ai1->name,"CD2")))) 
+                                                  order=2;
+                                                break; 
+                                              }
+                                            }
+                                            break;
+                                          case 'L':
+                                            if(!strcmp(ai1->name,"NZ")) 
+                                              ai1->formalCharge=1;
+                                            else if(!strcmp(ai2->name,"NZ")) 
+                                              ai2->formalCharge=1;
+                                            break;
+                                          case 'T':
+                                            switch(ai1->resn[1]) {
+                                            case 'Y': /* TYR */
+                                              if(ai1->resn[2]=='R') {
+                                                if(((!strcmp(ai1->name,"CG"))&&(!strcmp(ai2->name,"CD1")))||
+                                                   ((!strcmp(ai2->name,"CG"))&&(!strcmp(ai1->name,"CD1")))) 
+                                                  order=2;
+                                                else if(((!strcmp(ai1->name,"CZ"))&&(!strcmp(ai2->name,"CE1")))||
+                                                        ((!strcmp(ai2->name,"CZ"))&&(!strcmp(ai1->name,"CE1")))) 
+                                                  order=2;
+                                                
+                                                else if(((!strcmp(ai1->name,"CE2"))&&(!strcmp(ai2->name,"CD2")))||
+                                                        ((!strcmp(ai2->name,"CE2"))&&(!strcmp(ai1->name,"CD2")))) 
+                                                  order=2;
+                                                break; 
+                                              }
+                                              break;
+                                            case 'R':
+                                              if(ai1->resn[2]=='P') {
+                                                if(((!strcmp(ai1->name,"CG"))&&(!strcmp(ai2->name,"CD1")))||
+                                                   ((!strcmp(ai2->name,"CG"))&&(!strcmp(ai1->name,"CD1")))) 
+                                                  order=2;
+                                                else if(((!strcmp(ai1->name,"CZ3"))&&(!strcmp(ai2->name,"CE3")))||
+                                                        ((!strcmp(ai2->name,"CZ3"))&&(!strcmp(ai1->name,"CE3")))) 
+                                                  order=2;
+                                                else if(((!strcmp(ai1->name,"CZ2"))&&(!strcmp(ai2->name,"CH2")))||
+                                                        ((!strcmp(ai2->name,"CZ2"))&&(!strcmp(ai1->name,"CH2")))) 
+                                                  order=2;
+                                                else if(((!strcmp(ai1->name,"CE2"))&&(!strcmp(ai2->name,"CD2")))||
+                                                        ((!strcmp(ai2->name,"CE2"))&&(!strcmp(ai1->name,"CD2")))) 
+                                                  order=2;
+                                                break; 
+                                              }
+
+                                              break;
+                                            }
+                                            
+                                          }
+                                        }
+                                      }
+                                    }
+                                    (*bond)[nBond].order = order;
                                     nBond++;
                                   }
                                 }

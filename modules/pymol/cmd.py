@@ -61,6 +61,7 @@ import selector
 import operator
 import time
 import math
+import editor
 
 from shortcut import Shortcut
 
@@ -2802,13 +2803,13 @@ NOTES
       unlock()
    return r
 
-def fuse(selection1="(lb)",selection2="(rb)"):
+def fuse(selection1="(lb)",selection2="(rb)",mode=0):
    '''
 DESCRIPTION
   
-   "fuse" joins two objectss into one by forming a bond.  A copy of
-   the object containing the second atom is moved so as to form an
-   approximately resonable bond with the first, and is then merged
+   "fuse" joins two objects into one by forming a bond.  A copy of
+   the object containing the first atom is moved so as to form an
+   approximately resonable bond with the second, and is then merged
    with the first object.
       
 USAGE
@@ -2836,7 +2837,7 @@ SEE ALSO
    #   
    try:
       lock()
-      r = _cmd.fuse(str(selection1),str(selection2))
+      r = _cmd.fuse(str(selection1),str(selection2),int(mode))
    finally:
       unlock()
    return r
@@ -3115,7 +3116,7 @@ SEE ALSO
       unlock()
    return r
 
-def replace(name,geometry,valence):
+def replace(name,geometry,valence,h_fill=1):
    '''
 DESCRIPTION
   
@@ -3139,6 +3140,8 @@ SEE ALSO
 '''
    r = 1
    try:
+      if h_fill: # strip off existing hydrogens
+         remove("((neighbor pk1) and elem h)")
       lock()
       r = _cmd.replace(str(name),int(geometry),int(valence))
    finally:
@@ -6107,8 +6110,16 @@ def _special(k,x,y): # INTERNAL (invoked when special key is pressed)
 
 def _ctrl(k):
    if ctrl.has_key(k):
-      if ctrl[k][0]!=None:
-         apply(ctrl[k][0],ctrl[k][1],ctrl[k][2])
+      ck = ctrl[k]
+      if ck[0]!=None:
+         apply(ck[0],ck[1],ck[2])
+   return None
+
+def _alt(k):
+   if alt.has_key(k):
+      ak=alt[k]
+      if ak[0]!=None:
+         apply(ak[0],ak[1],ak[2])
    return None
 
 def _png(a): # INTERNAL - can only be safely called by GLUT thread 
@@ -6475,7 +6486,6 @@ special = {
 }
 
 ctrl = {
-   '1' : [ sys.stdout.write       , ('hello\n',), {} ],
    'A' : [ redo                   , () , {}],
    'B' : [ replace                , ('Br',1,1), {} ],
    'C' : [ replace                , ('C',4,4), {} ],
@@ -6499,6 +6509,42 @@ ctrl = {
    'X' : [ None                   , () , {} ],
    'Y' : [ attach                 , ('H',1,1) , {} ],
    'Z' : [ undo                   , () , {} ],   
+   }
+
+alt = {
+   '1' : [ editor.attach_fragment , ("pk1","formamide",5,0), {}],
+   '2' : [ editor.attach_fragment , ("pk1","formamide",4,0), {}],
+   '3' : [ editor.attach_fragment , ("pk1","sulfone",3,1), {}],
+   '4' : [ editor.attach_fragment , ("pk1","cyclobutane",4,0), {}],
+   '5' : [ editor.attach_fragment , ("pk1","cyclopentane",5,0), {}],
+   '6' : [ editor.attach_fragment , ("pk1","cyclohexane",7,0), {}],
+   '7' : [ editor.attach_fragment , ("pk1","cycloheptane",8,0), {}],
+   '8' : [ editor.attach_fragment , ("pk1","cyclopentadiene",5,0), {}],
+   '9' : [ editor.attach_fragment , ("pk1","benzene",6,0), {}],
+   '0' : [ editor.attach_fragment , ("pk1","formaldehyde",2,0), {}],
+   'a' : [ redo                   , () , {}],
+   'b' : [ replace                , ('Br',1,1), {} ],
+   'c' : [ replace                , ('C',4,4), {} ],
+   'd' : [ remove_picked          , () , {} ],
+   'e' : [ invert                 , () , {} ],   
+   'f' : [ replace                , ('F',1,1), {} ],   
+   'g' : [ replace                , ('H',1,1), {} ],
+   'i' : [ replace                , ('I',1,1), {} ],
+   'j' : [ alter                  , ('pk1','formal_charge=-1.0'), {} ],
+   'k' : [ alter                  , ('pk1','formal_charge =1.0'), {} ],
+   'l' : [ replace                , ('Cl',1,1) , {}],   
+   'n' : [ replace                , ('N',4,3) , {}],
+   'o' : [ replace                , ('O',4,2) , {}],   
+   'p' : [ replace                , ('P',4,1) , {}],
+   'q' : [ h_add                  , ("pk1",) , {}],   
+   'r' : [ h_fill                 , () , {} ],   
+   's' : [ replace                , ('S',4,2) , {}],
+   't' : [ bond                   , () , {} ],   
+   'u' : [ alter                  , ('pk1','formal_charge =0.0') , {}],
+   'w' : [ cycle_valence          , () , {}],   
+   'x' : [ None                   , () , {} ],
+   'y' : [ attach                 , ('H',1,1) , {} ],
+   'z' : [ undo                   , () , {} ],   
    }
 
 def get_names_of_type(type):

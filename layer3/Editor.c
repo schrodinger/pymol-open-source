@@ -554,6 +554,7 @@ void EditorReplace(char *elem,int geom,int valence)
         ObjectMoleculePrepareAtom(I->Obj,i0,&ai);
         ObjectMoleculePreposReplAtom(I->Obj,i0,&ai);
         ObjectMoleculeReplaceAtom(I->Obj,i0,&ai); /* invalidates */
+        ObjectMoleculeVerifyChemistry(I->Obj);
         ObjectMoleculeFillOpenValences(I->Obj,i0);
         ObjectMoleculeSort(I->Obj);
         ObjectMoleculeUpdateIDNumbers(I->Obj);

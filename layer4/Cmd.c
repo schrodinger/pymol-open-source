@@ -3198,6 +3198,15 @@ static PyObject *CmdHAdd(PyObject *self, PyObject *args)
     SelectorGetTmp(str1,s1);
     ExecutiveAddHydrogens(s1); /* TODO STATUS */
     SelectorFreeTmp(s1);
+    SelectorGetTmp(str1,s1);
+    ExecutiveAddHydrogens(s1); /* TODO STATUS */
+    SelectorFreeTmp(s1);
+    SelectorGetTmp(str1,s1);
+    ExecutiveAddHydrogens(s1); /* TODO STATUS */
+    SelectorFreeTmp(s1);
+    SelectorGetTmp(str1,s1);
+    ExecutiveAddHydrogens(s1); /* TODO STATUS */
+    SelectorFreeTmp(s1);
     APIExit();
   }
   return(APIStatus(ok));
@@ -3282,15 +3291,16 @@ static PyObject *CmdAttach(PyObject *self, 	PyObject *args)
 static PyObject *CmdFuse(PyObject *self, 	PyObject *args)
 {
   char *str1,*str2;
+  int mode;
   OrthoLineType s1,s2;
 
   int ok=false;
-  ok = PyArg_ParseTuple(args,"ss",&str1,&str2);
+  ok = PyArg_ParseTuple(args,"ssi",&str1,&str2,&mode);
   if (ok) {
     APIEntry();
     SelectorGetTmp(str1,s1);
     SelectorGetTmp(str2,s2);
-    ExecutiveFuse(s1,s2);  /* TODO STATUS */
+    ExecutiveFuse(s1,s2,mode);  /* TODO STATUS */
     SelectorFreeTmp(s1);
     SelectorFreeTmp(s2);
     APIExit();
