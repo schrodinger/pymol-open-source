@@ -47,7 +47,9 @@ class AbstractApp(Pmw.MegaWidget):
       self.root.title(self.appname)
 
       if sys.platform=='win32':
-         self.frameAdjust = 51      
+         self.frameAdjust = 51
+      elif sys.platform[0:4]=='irix':
+         self.frameAdjust = 41
       elif sys.platform!='linux':
          self.frameAdjust = 31
       else:

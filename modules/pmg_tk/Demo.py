@@ -20,20 +20,22 @@ class Demo: # stateful class for doing effective demonstrations
                  
    def rep_old(self,cleanup=0):
       if not cleanup:
-         cmd.set("suspend_updates",1,quiet=1)
-         cmd.disable()
-         cmd.do("cd $PYMOL_PATH")
-         cmd.delete("pept")
-         cmd.delete("pept_dist")
-         cmd.load("test/dat/pept.pdb")
-         cmd.show("sticks","(pept and not i;5:7)")
-         cmd.show("surface","(pept and i;5,6)")
-         cmd.show("mesh","(pept and i;1,11,12,13)")
-         cmd.show("spheres","(pept and i;2,12,9,4 and not n;c,n,o,ca)")
-         cmd.show("dots","(i;8)")
-         cmd.dist("pept_dist","(pept and i;1&n;OD2)","(pept and i;13&n;OG1)")
-         cmd.set("dot_width","2");
-         cmd.set("suspend_updates",0,quiet=1)
+         try:
+            cmd.set("suspend_updates",1,quiet=1)
+            cmd.disable()
+            cmd.do("cd $PYMOL_PATH")
+            cmd.delete("pept")
+            cmd.delete("pept_dist")
+            cmd.load("test/dat/pept.pdb")
+            cmd.show("sticks","(pept and not i;5:7)")
+            cmd.show("surface","(pept and i;5,6)")
+            cmd.show("mesh","(pept and i;1,11,12,13)")
+            cmd.show("spheres","(pept and i;2,12,9,4 and not n;c,n,o,ca)")
+            cmd.show("dots","(i;8)")
+            cmd.dist("pept_dist","(pept and i;1&n;OD2)","(pept and i;13&n;OG1)")
+            cmd.set("dot_width","2");
+         finally:
+            cmd.set("suspend_updates",0,quiet=1)
       else:
          cmd.delete("pept")
          cmd.delete("pept_dist")
@@ -61,7 +63,8 @@ class Demo: # stateful class for doing effective demonstrations
             util.cbab("rep5")
             util.cbaw("rep6")            
             util.cbay("rep8")
-            
+
+
             cmd.set("suspend_updates",0,quiet=1)
             scale=0.5
             for b in range(1,20):
@@ -143,14 +146,16 @@ class Demo: # stateful class for doing effective demonstrations
          cmd.show("sticks","arg")
          cmd.feedback('dis','sel','res')
          for a in xrange(1,181):
-            cmd.set("suspend_updates",1,quiet=1)
-            cmd.edit("(arg and n;cd)","(arg and n;cg)",quiet=1)
-            cmd.torsion("6")
-            cmd.unpick()
-            cmd.edit("(arg and n;cb)","(arg and n;ca)",quiet=1)
-            cmd.torsion("2")
-            cmd.unpick()
-            cmd.set("suspend_updates",0,quiet=1)         
+            try:
+               cmd.set("suspend_updates",1,quiet=1)
+               cmd.edit("(arg and n;cd)","(arg and n;cg)",quiet=1)
+               cmd.torsion("6")
+               cmd.unpick()
+               cmd.edit("(arg and n;cb)","(arg and n;ca)",quiet=1)
+               cmd.torsion("2")
+               cmd.unpick()
+            finally:
+               cmd.set("suspend_updates",0,quiet=1)         
             cmd.refresh()
          cmd.feedback('ena','sel','res')
       else:
@@ -158,39 +163,43 @@ class Demo: # stateful class for doing effective demonstrations
 
    def anime(self,cleanup=0):
       if not cleanup:
-         cmd.set("suspend_updates",1,quiet=1)
-         cmd.disable()
-         cmd.load("$TUT/1hpv.pdb")
-         util.chainbow("1hpv")
-         cmd.hide("everything","1hpv")
-         cmd.show("cartoon","1hpv")
-         cmd.show("sticks","1hpv///200/")
-         cmd.create("1hpv_a","1hpv//A//")
-         cmd.set("cartoon_smooth_loops",0,"1hpv_a")
-         cmd.create("1hpv_b","1hpv//B//")
-         cmd.set("cartoon_smooth_loops",0,"1hpv_b")
-         cmd.create("1hpv_l","1hpv///200/")
-         util.cbay("1hpv_l")
-         cmd.delete("1hpv")
-         cmd.set_view ((\
-     0.374249548,   -0.517475128,    0.769516647,\
-     -0.214397043,   -0.855623126,   -0.471108317,\
-     0.902203023,    0.011330833,   -0.431161582,\
-     -0.000023194,   -0.000007302, -125.089942932,\
-     11.953758240,   20.323493958,    8.406080246,\
-     75.304412842,  189.396347046,    0.000000000 ))
-         cmd.translate([-20,0,0],object="1hpv_a")
-         cmd.translate([20,0,0],object="1hpv_b")
-         cmd.zoom("center",30)
-         cmd.translate([0,10,00],object="1hpv_l")
-         cmd.set("suspend_updates",0,quiet=1)
+         try:
+            cmd.set("suspend_updates",1,quiet=1)
+            cmd.disable()
+            cmd.load("$TUT/1hpv.pdb")
+            util.chainbow("1hpv")
+            cmd.hide("everything","1hpv")
+            cmd.show("cartoon","1hpv")
+            cmd.show("sticks","1hpv///200/")
+            cmd.create("1hpv_a","1hpv//A//")
+            cmd.set("cartoon_smooth_loops",0,"1hpv_a")
+            cmd.create("1hpv_b","1hpv//B//")
+            cmd.set("cartoon_smooth_loops",0,"1hpv_b")
+            cmd.create("1hpv_l","1hpv///200/")
+            util.cbay("1hpv_l")
+            cmd.delete("1hpv")
+            cmd.set_view ((\
+        0.374249548,   -0.517475128,    0.769516647,\
+        -0.214397043,   -0.855623126,   -0.471108317,\
+        0.902203023,    0.011330833,   -0.431161582,\
+        -0.000023194,   -0.000007302, -125.089942932,\
+        11.953758240,   20.323493958,    8.406080246,\
+        75.304412842,  189.396347046,    0.000000000 ))
+            cmd.translate([-20,0,0],object="1hpv_a")
+            cmd.translate([20,0,0],object="1hpv_b")
+            cmd.zoom("center",30)
+            cmd.translate([0,10,00],object="1hpv_l")
+         finally:
+            cmd.set("suspend_updates",0,quiet=1)
          cmd.refresh()
          for a in range(1,21):
-            cmd.set("suspend_updates",1,quiet=1)
-            cmd.translate([1,0,0],object="1hpv_a")
-            cmd.translate([-1,0,0],object="1hpv_b")
-            cmd.translate([0,-0.5,0],object="1hpv_l")
-            cmd.set("suspend_updates",0,quiet=1)
+            try:
+               cmd.set("suspend_updates",1,quiet=1)
+               cmd.translate([1,0,0],object="1hpv_a")
+               cmd.translate([-1,0,0],object="1hpv_b")
+               cmd.translate([0,-0.5,0],object="1hpv_l")
+            finally:
+               cmd.set("suspend_updates",0,quiet=1)
             cmd.refresh()
          for a in range(1,62):
             cmd.turn("y",6)
@@ -223,63 +232,70 @@ class Demo: # stateful class for doing effective demonstrations
          cmd.wizard("message","Middle-Click to rove...         CTRL-SHIFT-Middle-Click to center...")
       else:
          cmd.delete("il2")
-         cmd.delete("rov_*")
          cmd.set_wizard()         
          cmd.set("roving_detail",0)
          cmd.refresh()
+         cmd.delete("rov_*")
          
    def roving_density(self,cleanup=0):
       if not cleanup:
-         cmd.load("$PYMOL_PATH/test/dat/il2.pdb")
-         cmd.set("suspend_updates",1,quiet=1)
-         cmd.remove("hydro")
-         cmd.disable()
-         cmd.enable("il2")
-         cmd.map_new("map","gaussian","0.75","il2")
-         cmd.set("ribbon_color","purple","il2")
-         cmd.set("roving_detail",1)
-         cmd.set("roving_origin",1)
-         cmd.set("stick_radius",0.12,"il2")
-         cmd.set("roving_sticks",0)
-         cmd.set("roving_polar_contacts",0)
-         cmd.set("line_width","3")
-         cmd.set("roving_map1_name","map")
-         cmd.set_view ((\
-     0.132852688,   -0.729740858,    0.670686543,\
-     -0.228543565,    0.635894477,    0.737154961,\
-     -0.964425683,   -0.251212329,   -0.082298420,\
-     0.000062190,    0.000183226,  -58.861488342,\
-     13.349151611,   -1.565427899,   22.383148193,\
-     55.259441376,   63.259449005,    0.000000000 ))
-         cmd.wizard("message","Middle-Click to rove...         CTRL-SHIFT-Middle-Click to center...")
+         try:
+            cmd.load("$PYMOL_PATH/test/dat/il2.pdb")
+            cmd.set("suspend_updates",1,quiet=1)
+            cmd.remove("hydro")
+            cmd.disable()
+            cmd.enable("il2")
+            cmd.map_new("map","gaussian","0.75","il2")
+            cmd.set("ribbon_color","purple","il2")
+            cmd.set("roving_detail",1)
+            cmd.set("roving_origin",1)
+            cmd.set("stick_radius",0.12,"il2")
+            cmd.set("roving_sticks",0)
+            cmd.set("roving_polar_contacts",0)
+            cmd.set("line_width","3")
+            cmd.set("roving_map1_name","map")
+            cmd.isomesh("rov_m1","map",9999.0,"il2")
+            cmd.color("density","rov_m1")
+            
+            cmd.set_view ((\
+        0.132852688,   -0.729740858,    0.670686543,\
+        -0.228543565,    0.635894477,    0.737154961,\
+        -0.964425683,   -0.251212329,   -0.082298420,\
+        0.000062190,    0.000183226,  -58.861488342,\
+        13.349151611,   -1.565427899,   22.383148193,\
+        55.259441376,   63.259449005,    0.000000000 ))
+            cmd.wizard("message","Middle-Click to rove...         CTRL-SHIFT-Middle-Click to center...")
+
+         finally:
+            cmd.set("suspend_updates",0,quiet=1)
          cmd.refresh()
-         cmd.color("density","rov_m1")
-         cmd.set("suspend_updates",0,quiet=1)
       else:
          cmd.set("roving_map1_name","")
          cmd.set("roving_polar_contacts",7)
          cmd.set("roving_sticks",6)
          cmd.delete("il2")
          cmd.delete("map")
-         cmd.delete("rov_*")
          cmd.set("line_width",1.5)
          cmd.set_wizard()
          cmd.set("roving_detail",0)
          cmd.refresh()
+         cmd.delete("rov_*")
          
    def cartoon(self,cleanup=0):
       if not cleanup:
-         cmd.set("suspend_updates",1,quiet=1)
-         cmd.disable()
-         cmd.delete("1tii")      
-         cmd.load("$PYMOL_PATH/test/dat/1tii.pdb")
-         cmd.hide("(1tii)")
-         cmd.show("cartoon","1tii")
-         cmd.zoom("1tii")
-         cmd.spectrum("count","rainbow","1tii")
-         cmd.set("suspend_updates",0,quiet=1)
-         cmd.set("cartoon_highlight_color","grey50","1tii")
-         cmd.set("cartoon_fancy_helices",1,"1tii")
+         try:
+            cmd.set("suspend_updates",1,quiet=1)
+            cmd.disable()
+            cmd.delete("1tii")      
+            cmd.load("$PYMOL_PATH/test/dat/1tii.pdb")
+            cmd.hide("(1tii)")
+            cmd.show("cartoon","1tii")
+            cmd.zoom("1tii")
+            cmd.spectrum("count","rainbow","1tii")
+            cmd.set("cartoon_highlight_color","grey50","1tii")
+            cmd.set("cartoon_fancy_helices",1,"1tii")
+         finally:
+            cmd.set("suspend_updates",0,quiet=1)
          cmd.refresh()
       else:
          cmd.delete("1tii")
@@ -307,17 +323,19 @@ class Demo: # stateful class for doing effective demonstrations
          
    def trans(self,cleanup=0):
       if not cleanup:
-         cmd.set("suspend_updates",1,quiet=1)
-         cmd.disable()
-         cmd.delete("trans")
-         cmd.load("$PYMOL_PATH/test/dat/pept.pdb","trans")
-         cmd.hide("(trans)")
-         cmd.show("surface","trans")
-         cmd.show("sticks","trans")
-         cmd.set("surface_color","white","trans")
-         cmd.set("transparency",0.5,"trans")
-         cmd.zoom("trans")
-         cmd.set("suspend_updates",0,quiet=1)
+         try:
+            cmd.set("suspend_updates",1,quiet=1)
+            cmd.disable()
+            cmd.delete("trans")
+            cmd.load("$PYMOL_PATH/test/dat/pept.pdb","trans")
+            cmd.hide("(trans)")
+            cmd.show("surface","trans")
+            cmd.show("sticks","trans")
+            cmd.set("surface_color","white","trans")
+            cmd.set("transparency",0.5,"trans")
+            cmd.zoom("trans")
+         finally:
+            cmd.set("suspend_updates",0,quiet=1)
          cmd.refresh()
       else:
          cmd.delete("trans")
