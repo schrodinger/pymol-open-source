@@ -60,6 +60,7 @@ Z* -------------------------------------------------------------------
 #define cLoadTypeP1M 35
 
 
+int *ExecutiveGetG3d(PyMOLGlobals *G);
 int ExecutiveOrder(PyMOLGlobals *G, char *s1, int sort, int location);
 int ExecutiveFixChemistry(PyMOLGlobals *G,char *s1,char *s2,int invalidate, int quiet);
 int ExecutiveGetAtomVertex(PyMOLGlobals *G,char *s1,int state,int index,float *v);

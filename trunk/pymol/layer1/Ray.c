@@ -734,7 +734,110 @@ void RayRenderTest(CRay *I,int width,int height,float front,float back,float fov
     " RayRenderTest: obtained %i graphics primitives.\n",I->NPrimitive 
     ENDFB(I->G);
 }
+/*========================================================================*/
 
+G3dPrimitive *RayRenderG3d(CRay *I,int width, int height,float front, float back, float fov)
+{
+  /* generate a rendering stream for Miguel's G3d java rendering engine */
+
+  register float scale_x,scale_y,scale_z;
+  int shift_x,shift_y;
+  float *bkrd;
+  float fog_start=0.0F;
+  float gamma;
+  float *d;
+  CBasis *base;
+  CPrimitive *prim;
+  OrthoLineType buffer;
+  float *vert,*norm;
+  float vert2[3];
+  float light[3],*lightv;
+  int cc,hc;
+  int a;
+  int smooth_color_triangle;
+  int mesh_obj = false;
+  char *charVLA,*headerVLA;
+  char transmit[64];
+  G3dPrimitive *jprim = VLAlloc(G3dPrimitive,10000),*jp;
+  int n_jp = 0;
+  float z_range = back-front;
+
+#define convert_r(r) 2*(int)(r*scale_x);
+#define convert_x(x) shift_x + (int)(x*scale_x);
+#define convert_y(y) height - (shift_y + (int)(y*scale_y));
+#define convert_z(z) -(int)((z+front)*scale_x);
+
+  printf("%8.3f\n",z_range);
+  RayExpandPrimitives(I);
+  RayTransformFirst(I,0);
+
+  PRINTFB(I->G,FB_Ray,FB_Details)
+    " RayRenderG3d: processed %i graphics primitives.\n",I->NPrimitive 
+    ENDFB(I->G);
+  base = I->Basis+1;
+
+  /* always orthoscopic */
+  
+  /* front should give a zero Z, 
+     -I->Range[0] should be off the right hand size
+     I->Range[1] should be off the top */
+  scale_x = width/I->Range[0];
+  scale_y = height/I->Range[1];
+  scale_z = -4096.0F/(back-front);
+  shift_x = width/2;
+  shift_y = height/2;
+
+  for(a=0;a<I->NPrimitive;a++) {
+    prim = I->Primitive+a;
+    vert = base->Vertex+3*(prim->vert);
+    switch(prim->type) {
+	 case cPrimSphere:
+      VLACheck(jprim,G3dPrimitive,n_jp);
+      jp = jprim + n_jp;
+      jp->op = 1;
+      jp->r = convert_r(prim->r1);
+      jp->x1 = convert_x(vert[0]);
+      jp->y1 = convert_y(vert[1]);
+      jp->z1 = convert_z(vert[2]);
+      n_jp++;
+		break;
+    case cPrimSausage:
+      VLACheck(jprim,G3dPrimitive,n_jp);
+      d=base->Normal+3*base->Vert2Normal[prim->vert];
+      scale3f(d,prim->l1,vert2);
+      add3f(vert,vert2,vert2);
+
+      jp = jprim + n_jp;
+      jp->op = 3;
+      jp->r = convert_r(prim->r1);
+      jp->x1 = convert_x(vert[0]);
+      jp->y1 = convert_y(vert[1]);
+      jp->z1 = convert_z(vert[2]);
+      jp->x2 = convert_x(vert2[0]);
+      jp->y2 = convert_y(vert2[1]);
+      jp->z2 = convert_z(vert2[2]);
+      n_jp++;
+		break;
+	 case cPrimTriangle:
+      VLACheck(jprim,G3dPrimitive,n_jp);
+      jp = jprim + n_jp;
+      jp->op = 2;
+      jp->x1 = convert_x(vert[0]);
+      jp->y1 = convert_y(vert[1]);
+      jp->z1 = convert_z(vert[2]);
+      jp->x2 = convert_x(vert[3]);
+      jp->y2 = convert_y(vert[4]);
+      jp->z2 = convert_z(vert[5]);
+      jp->x3 = convert_x(vert[6]);
+      jp->y3 = convert_y(vert[7]);
+      jp->z3 = convert_z(vert[8]);
+      n_jp++;
+		break;
+    }
+  }
+  VLASize(jprim,G3dPrimitive,n_jp);
+  return jprim;
+}
 /*========================================================================*/
 void RayRenderPOV(CRay *I,int width,int height,char **headerVLA_ptr,
                   char **charVLA_ptr,float front,float back,float fov,

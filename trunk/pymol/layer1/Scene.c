@@ -1068,7 +1068,7 @@ void SceneMakeMovieImage(PyMOLGlobals *G) {
   I->DirtyFlag=false;
   if(SettingGet(G,cSetting_ray_trace_frames)) {
 	SceneRay(G,0,0,(int)SettingGet(G,cSetting_ray_default_renderer),NULL,NULL,
-            0.0F,0.0F,false); 
+            0.0F,0.0F,false,NULL); 
   } else {
 	 v=SettingGetfv(G,cSetting_bg_rgb);
     if(G->HaveGUI && G->ValidContext) {
@@ -3495,8 +3495,10 @@ static void SceneApplyImageGamma(PyMOLGlobals *G,unsigned int *buffer, int width
 
 static double accumTiming = 0.0; 
 
-void SceneRay(PyMOLGlobals *G,int ray_width,int ray_height,int mode,char **headerVLA_ptr,
-              char **charVLA_ptr,float angle,float shift,int quiet)
+void SceneRay(PyMOLGlobals *G,int ray_width,int ray_height,int mode,
+              char **headerVLA_ptr,
+              char **charVLA_ptr,float angle,float shift,int quiet,
+              G3dPrimitive **g3d)
 {
   register CScene *I=G->Scene;
   ObjRec *rec=NULL;
@@ -3538,7 +3540,6 @@ void SceneRay(PyMOLGlobals *G,int ray_width,int ray_height,int mode,char **heade
   
   /* start afresh, looking in the negative Z direction (0,0,-1) from (0,0,0) */
   MatrixLoadIdentity44f(rayView);
-
 
   /* move the camera to the location we are looking at */
   MatrixTranslate44f3f(rayView,I->Pos[0],I->Pos[1],I->Pos[2]);
@@ -3683,8 +3684,40 @@ void SceneRay(PyMOLGlobals *G,int ray_width,int ray_height,int mode,char **heade
   case 2: /* mode 2 is for testing of geometries */
     RayRenderTest(ray,ray_width,ray_height,I->FrontSafe,I->Back,fov);
     break;
+  case 3: /* mode 3 is for Jmol */
+    {
+      G3dPrimitive *jp = RayRenderG3d(ray,ray_width,ray_height,I->FrontSafe,I->Back,fov);
+      int cnt = VLAGetSize(jp);
+      int a;
+      for(a=0;a<cnt;a++) {
+        switch(jp[a].op) {
+        case 1:
+          printf("g3d.fillSphereCentered(gray,%d,%d,%d,%d);\n",jp[a].r,jp[a].x1,jp[a].y1,jp[a].z1);
+          break;
+        case 2:
+          printf("triangle(%d,%d,%d,%d,%d,%d,%d,%d,%d);\n",
+                 jp[a].x1,jp[a].y1,jp[a].z1,
+                 jp[a].x2,jp[a].y2,jp[a].z2,
+                 jp[a].x3,jp[a].y3,jp[a].z3
+                 );
+          break;
+        case 3:
+          printf("g3d.fillCylinder(gray,gray,(byte)3,%d,%d,%d,%d,%d,%d,%d);\n",
+                 jp[a].r,
+                 jp[a].x1,jp[a].y1,jp[a].z1,
+                 jp[a].x2,jp[a].y2,jp[a].z2
+                 );          
+          break;
+        }
+      }
+      if(g3d) {
+        *g3d = jp;
+      } else {
+        VLAFreeP(jp);
+      }
+    }
+    break;
   }
-
   timing = UtilGetSeconds(G)-timing;
   if(mode!=2) { /* don't show timings for tests */
 	accumTiming += timing; 
@@ -3817,7 +3850,7 @@ int SceneRenderCached(PyMOLGlobals *G)
         renderedFlag=true;
 		}
 	} else if(MoviePlaying(G)&&SettingGet(G,cSetting_ray_trace_frames)) {
-	  SceneRay(G,0,0,(int)SettingGet(G,cSetting_ray_default_renderer),NULL,NULL,0.0F,0.0F,false); 
+	  SceneRay(G,0,0,(int)SettingGet(G,cSetting_ray_default_renderer),NULL,NULL,0.0F,0.0F,false,NULL); 
 	} else {
 	  renderedFlag=false;
 	  I->CopyFlag = false;
