@@ -369,7 +369,6 @@ def mpng_(*args):
    _pm.mpng_(fname)
    unlock()
    
-
 def show(*args):
    lock()   
    if len(args)==2:

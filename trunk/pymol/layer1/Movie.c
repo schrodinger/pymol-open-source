@@ -86,6 +86,8 @@ void MovieSetSize(unsigned int width,unsigned int height)
 /*========================================================================*/
 void MoviePNG(char *prefix,int save)
 {
+  /* assumed locked api, blocked threads, and master thread on entry */
+
   /* writes the current movie sequence to a set of PNG files 
   * this routine can take a LOT of time -- 
   * TODO: develop an interrupt mechanism */
@@ -96,6 +98,7 @@ void MoviePNG(char *prefix,int save)
   char fname[255];
   char buffer[255];
 
+  fflush(stdout);
   save = SettingGet(cSetting_cache_frames);
   SettingSet(cSetting_cache_frames,1.0);
   OrthoBusyPrime();
@@ -109,7 +112,9 @@ void MoviePNG(char *prefix,int save)
 		sprintf(fname,"%s_%04d.png",prefix,a+1);
 		SceneSetFrame(0,a);
 		MovieDoFrameCommand(a);
+		Py_UNBLOCK_THREADS;
 		PFlush(&_save);
+		Py_BLOCK_THREADS;
 		i=MovieFrameToImage(a);
 		if(!I->Image[i]) {
 		  SceneMakeMovieImage();

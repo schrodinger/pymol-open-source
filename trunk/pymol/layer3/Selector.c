@@ -633,14 +633,14 @@ int SelectorLogic1(EvalElem *base)
 				 at1=&I->Obj[I->Table[a].model]->AtomInfo[I->Table[a].atom];
 				 for(b=0;b<I->NAtom;b++)
 				   if(!base[0].sele[b]) 
-					 if(I->Table[a].model==I->Table[b].model)
-					   {
-						 at2=&I->Obj[I->Table[b].model]->AtomInfo[I->Table[b].atom];
-						 if((tolower(at1->chain[0]))==at2->chain[0])
-						   if(WordMatch(at1->resi,at2->resi,I->IgnoreCase)<0)
-							 if(WordMatch(at1->resi,at2->segi,I->IgnoreCase)<0)
-							   base[0].sele[b]=true;
-					   }
+                 if(I->Table[a].model==I->Table[b].model)
+                   {
+                     at2=&I->Obj[I->Table[b].model]->AtomInfo[I->Table[b].atom];
+                     if(at1->chain[0]==at2->chain[0])
+                       if(WordMatch(at1->resi,at2->resi,I->IgnoreCase)<0)
+                         if(WordMatch(at1->segi,at2->segi,I->IgnoreCase)<0)
+                           base[0].sele[b]=true;
+                   }
 			   }
 		  }
 		break;
