@@ -1315,7 +1315,7 @@ int RayTraceThread(CRayThreadInfo *T)
 	int interior_wobble;
    float interior_reflect;
 	int wobble_save;
-	float		settingPower, settingReflectPower,settingSpecPower,settingSpecReflect, _0, _1, _p5, _255, _persistLimit, _inv3;
+	float		settingPower, settingReflectPower,settingSpecPower,settingSpecReflect;
 	float		invHgt, invFrontMinusBack, inv1minusFogStart,invWdth,invHgtRange;
 	register float       invWdthRange,vol0;
 	float       vol2;
@@ -1346,6 +1346,12 @@ int RayTraceThread(CRayThreadInfo *T)
    float eye[3];
    float half_height, front_ratio;
    float start[3],nudge[3];
+	const float _0		= 0.0F;
+	const float _1		= 1.0F;
+	const float _p5		= 0.5F;
+	const float _255	= 255.0F;
+   const float _p499 = 0.499F;
+	const float _persistLimit	= 0.0001F;
    
 	I = T->ray;
 
@@ -1356,12 +1362,6 @@ int RayTraceThread(CRayThreadInfo *T)
      BasisFudge1 = 1.0F+fudge;
    }
 
-	_0		= 0.0F;
-	_1		= 1.0F;
-	_p5		= 0.5F;
-	_255	= 255.0F;
-	_inv3	= _1/3.0F;
-	_persistLimit	= 0.0001F;
   	
 	/* SETUP */
 	
@@ -1993,28 +1993,43 @@ int RayTraceThread(CRayThreadInfo *T)
 
                       persist_inv = _1-mix_in;
 
-                      fc[0]	= (0xFF&((*pixel)>>24)) * mix_in + (0xFF&(last_pixel>>24))*persist_inv;
-                      fc[1]	= (0xFF&((*pixel)>>16)) * mix_in + (0xFF&(last_pixel>>16))*persist_inv;
-                      fc[2]	= (0xFF&((*pixel)>>8))  * mix_in + (0xFF&(last_pixel>>8))*persist_inv;
-                      fc[3]	= (0xFF&((*pixel)))     * mix_in + (0xFF&(last_pixel))*persist_inv;
-                      
                       if(!opaque_back) {
-                        if(i<0) { /* hit nothing -- so don't blend alpha*/
+                        if(i<0) { /* hit nothing -- so don't blend */
                           fc[0] = (float)(0xFF&(last_pixel>>24));
                           fc[1] = (float)(0xFF&(last_pixel>>16));
                           fc[2] = (float)(0xFF&(last_pixel>>8));
                           fc[3] = (float)(0xFF&(last_pixel));
+                          if(trans_cont_flag) { /* unless we are increasing contrast */
+                            float m;
+                            if(I->BigEndian) {
+                              m = _1 - (float)(0xFF&(last_pixel))/_255;
+                            } else {
+                              m = _1 - (float)(0xFF&(last_pixel>>24))/_255;
+                            }
+                            m = _1 - pow(m,trans_cont);
+                            if(I->BigEndian) {
+                              fc[3]	= m*_255 + _p499;
+                            } else {
+                              fc[0]	= m*_255 + _p499;
+                            }
+                          }
                         } else { /* hit something -- so keep blend and compute cumulative alpha*/
+                          
+                          fc[0]	= (0xFF&((*pixel)>>24)) * mix_in + (0xFF&(last_pixel>>24))*persist_inv;
+                          fc[1]	= (0xFF&((*pixel)>>16)) * mix_in + (0xFF&(last_pixel>>16))*persist_inv;
+                          fc[2]	= (0xFF&((*pixel)>>8))  * mix_in + (0xFF&(last_pixel>>8))*persist_inv;
+                          fc[3]	= (0xFF&((*pixel)))     * mix_in + (0xFF&(last_pixel))*persist_inv;
+                        
                           if(i>=0) { /* make sure opaque objects get opaque alpha*/
                             float o1,o2;
                             float m;
                             
                             if(I->BigEndian) {
-                              o1 = (float)(0xFF&(last_pixel))/255.0F;
-                              o2 = (float)(0xFF&(*pixel))/255.0F;
+                              o1 = (float)(0xFF&(last_pixel))/_255;
+                              o2 = (float)(0xFF&(*pixel))/_255;
                             } else {
-                              o1 = (float)(0xFF&(last_pixel>>24))/255.0F;
-                              o2 = (float)(0xFF&((*pixel)>>24))/255.0F;
+                              o1 = (float)(0xFF&(last_pixel>>24))/_255;
+                              o2 = (float)(0xFF&((*pixel)>>24))/_255;
                             }
                             
                             if(o1<o2) { /* make sure o1 is largest opacity*/
@@ -2024,14 +2039,19 @@ int RayTraceThread(CRayThreadInfo *T)
                             }
                             m = o1 + (1.0F - o1) * o2;
                             if(I->BigEndian) {
-                              fc[3]	= m*255.0F + 0.49F;
+                            fc[3]	= m*_255 + _p499;
                             } else {
-                              fc[0]	= m*255.0F + 0.49F;
+                              fc[0]	= m*_255 + _p499;
                             }
                           }
                         }
+                      } else { /* opaque background, so just blend */
+                        fc[0]	= (0xFF&((*pixel)>>24)) * mix_in + (0xFF&(last_pixel>>24))*persist_inv;
+                        fc[1]	= (0xFF&((*pixel)>>16)) * mix_in + (0xFF&(last_pixel>>16))*persist_inv;
+                        fc[2]	= (0xFF&((*pixel)>>8))  * mix_in + (0xFF&(last_pixel>>8))*persist_inv;
+                        fc[3]	= (0xFF&((*pixel)))     * mix_in + (0xFF&(last_pixel))*persist_inv;
                       }
-
+                      
                       cc0		= (uint)(fc[0]);
                       cc1		= (uint)(fc[1]);
                       cc2		= (uint)(fc[2]);
@@ -2561,7 +2581,7 @@ int opaque_back=0;
   int mag=1;
   int oversample_cutoff;
   int perspective = SettingGetGlobal_i(I->G,cSetting_ray_orthoscopic);
-  const float _0 = 0.0F;
+  const float _0 = 0.0F, _p499 = 0.499F;
   if(perspective<0)
     perspective = SettingGetGlobal_b(I->G,cSetting_ortho);
   perspective = !perspective;
@@ -2634,14 +2654,14 @@ int opaque_back=0;
   }
   if(I->BigEndian) {
      background = back_mask|
-      ((0xFF& ((unsigned int)(bkrd[0]*255+0.499))) <<24)|
-      ((0xFF& ((unsigned int)(bkrd[1]*255+0.499))) <<16)|
-      ((0xFF& ((unsigned int)(bkrd[2]*255+0.499))) <<8 );
+      ((0xFF& ((unsigned int)(bkrd[0]*255+_p499))) <<24)|
+      ((0xFF& ((unsigned int)(bkrd[1]*255+_p499))) <<16)|
+      ((0xFF& ((unsigned int)(bkrd[2]*255+_p499))) <<8 );
   } else {
     background = back_mask|
-      ((0xFF& ((unsigned int)(bkrd[2]*255+0.499))) <<16)|
-      ((0xFF& ((unsigned int)(bkrd[1]*255+0.499))) <<8)|
-      ((0xFF& ((unsigned int)(bkrd[0]*255+0.499))) );
+      ((0xFF& ((unsigned int)(bkrd[2]*255+_p499))) <<16)|
+      ((0xFF& ((unsigned int)(bkrd[1]*255+_p499))) <<8)|
+      ((0xFF& ((unsigned int)(bkrd[0]*255+_p499))) );
   }
 
   OrthoBusyFast(I->G,3,20);
