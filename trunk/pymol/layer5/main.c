@@ -317,6 +317,7 @@ static void MainInit(void)
     glDisable(GL_DEPTH_TEST);
     glDisable(GL_COLOR_MATERIAL);
     glDisable(GL_LINE_SMOOTH);
+    glDisable(GL_POLYGON_SMOOTH);
     glDisable(GL_DITHER);
     glDisable(GL_BLEND);
     /*    glDisable(GL_ALPHA_TEST);
