@@ -277,6 +277,10 @@ ObjectMolecule *ObjectMoleculeReadMOL2Str(PyMOLGlobals *G,ObjectMolecule *I,
                                           char *MOLStr,int frame,int discrete,
                                           int quiet,int multiplex, char *new_name,
                                           char **next_entry);
+ObjectMolecule *ObjectMoleculeReadStr(PyMOLGlobals *G,ObjectMolecule *I,
+                                   char *st,int content_format, int frame,int discrete,
+                                   int quiet,int multiplex, char *new_name,
+                                   char **next_entry);
 
 ObjectMolecule *ObjectMoleculeReadPDBStr(PyMOLGlobals *G,ObjectMolecule *obj,char *molstr,
                                          int frame,int discrete,

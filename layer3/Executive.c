@@ -459,7 +459,7 @@ int ExecutiveSetName(PyMOLGlobals *G,char *old_name, char *new_name)
     ok=false;
   return ok; 
 }
-
+#if 0
 void ExecutiveLoadMOL2(PyMOLGlobals *G,CObject *origObj,char *fname,
                        char *oname, int frame, int discrete,int finish,
                        OrthoLineType buf,int multiplex,int quiet,
@@ -515,7 +515,7 @@ void ExecutiveLoadMOL2(PyMOLGlobals *G,CObject *origObj,char *fname,
       is_repeat_pass = true;
     }
 
-    PRINTFD(G,FB_CCmd) " ExecutiveLoadMOL2-DEBUG: loading PDB\n" ENDFD;
+    PRINTFD(G,FB_CCmd) " ExecutiveLoadMOL2-DEBUG: loading...\n" ENDFD;
 
     repeat_flag=false;
     next_entry = NULL;
@@ -574,7 +574,7 @@ void ExecutiveLoadMOL2(PyMOLGlobals *G,CObject *origObj,char *fname,
         sprintf(buf," CmdLoad: \"%s\" appended into object \"%s\", state %d.\n",
                 fname,oname,eff_frame+1);
       else
-        sprintf(buf," CmdLoad: PDB-string appended into object \"%s\", state %d.\n",
+        sprintf(buf," CmdLoad: content appended into object \"%s\", state %d.\n",
                 oname,eff_frame+1);
       obj = origObj;
     }
@@ -588,6 +588,223 @@ void ExecutiveLoadMOL2(PyMOLGlobals *G,CObject *origObj,char *fname,
     mfree(buffer);
   }
   
+}
+#endif
+
+int ExecutiveLoad(PyMOLGlobals *G,CObject *origObj, 
+                   char *content, int content_length,
+                   int content_format,
+                   char *object_name, 
+                   int state, int zoom, 
+                   int discrete, int finish, 
+                   int multiplex, int quiet)
+{
+  int ok=true;
+  int is_string = false;
+  int is_handled_by_python = false;
+
+  switch(content_format) {
+  case cLoadTypePDBStr:
+  case cLoadTypeMOLStr:
+  case cLoadTypeMMDStr:
+  case cLoadTypeXPLORStr:
+  case cLoadTypeMOL2Str:
+  case cLoadTypeCCP4Str:
+  case cLoadTypeSDF2Str:
+    is_string = true;
+    break;
+  case cLoadTypeP1M:
+  case cLoadTypePMO:
+  case cLoadTypeXYZ:
+  case cLoadTypePDB:
+  case cLoadTypeMOL:
+  case cLoadTypeMMD:
+  case cLoadTypeMMDSeparate:
+  case cLoadTypeTOP:
+  case cLoadTypeTRJ:
+  case cLoadTypeCRD:
+  case cLoadTypeRST:
+  case cLoadTypePQR:
+  case cLoadTypeMOL2:
+  case cLoadTypeSDF2:
+  case cLoadTypeXPLORMap:
+  case cLoadTypeCCP4Map:
+  case cLoadTypePHIMap:
+  case cLoadTypeFLDMap:
+  case cLoadTypeBRIXMap:
+  case cLoadTypeGRDMap:
+  case cLoadTypeDXMap:
+    is_string = false;
+    break;
+  case cLoadTypePSE:
+  case cLoadTypeSDF:
+  case cLoadTypeChemPyModel:
+  case cLoadTypeChemPyBrick:
+  case cLoadTypeChemPyMap:
+  case cLoadTypeCallback:
+  case cLoadTypeCGO:
+  case cLoadTypeR3D:
+    /* should never get here... */
+
+    is_handled_by_python = true;
+    break;
+  }
+  
+  if(is_handled_by_python) {
+    PRINTFB(G,FB_Executive,FB_Errors)
+      "ExecutiveLoad-Error: unable to read that file type from C\n"
+      ENDFB(G);
+  } else {
+    OrthoLineType buf = "";
+    int already_handled = false;
+    
+    switch(content_format) {
+    case cLoadTypePDB:
+    case cLoadTypePDBStr:
+      {
+
+        ExecutiveProcessPDBFile(G,origObj,content,object_name,
+                                state,discrete,finish,buf,NULL,
+                                quiet,is_string,multiplex,zoom);
+        /* missing return status */
+      }
+      already_handled = true;
+      break;
+    }
+
+    if(!already_handled) {
+
+      FILE *f;
+      long size;
+      char *buffer=NULL,*p;
+      CObject *obj = NULL;
+      char new_name[ObjNameMax] = "";
+      char *next_entry = NULL;
+      int repeat_flag = true;
+      int n_processed = 0;
+      
+      if(is_string) {
+        buffer=content;
+        size = (long)content_length;
+      } else {
+        f=fopen(content,"rb");
+        
+        if(!f) {
+          PRINTFB(G,FB_Executive,FB_Errors)
+            " ExecutiveLoadMOL2-ERROR: Unable to open file '%s'\n",content
+            ENDFB(G);
+          ok=false;
+        } else {
+          
+          PRINTFB(G,FB_Executive,FB_Blather)
+            " ExecutiveLoadMOL2: Loading from %s.\n",content
+            ENDFB(G);
+          
+          fseek(f,0,SEEK_END);
+          size=ftell(f);
+          fseek(f,0,SEEK_SET);
+          
+          buffer=(char*)mmalloc(size+255);
+          ErrChkPtr(G,buffer);
+          p=buffer;
+          fseek(f,0,SEEK_SET);
+          fread(p,size,1,f);
+          p[size]=0;
+          fclose(f);
+        }
+      }
+      
+      while(repeat_flag&&ok) {
+        char *start_at = buffer;
+        int is_repeat_pass = false;
+        int eff_state = state;
+        int is_new = false;
+
+        if(next_entry) {
+          start_at = next_entry;
+          is_repeat_pass = true;
+        }
+        
+        PRINTFD(G,FB_CCmd) " ExecutiveLoad: loading...\n" ENDFD;
+        
+        repeat_flag=false;
+        next_entry = NULL;
+
+        if(!origObj) /* this is a new object */
+          is_new = true;
+        
+        new_name[0]=0;
+        
+        switch(content_format) {
+        case cLoadTypeMOL:
+        case cLoadTypeMOLStr:
+        case cLoadTypeMOL2:
+        case cLoadTypeMOL2Str:
+        case cLoadTypeSDF2:
+        case cLoadTypeSDF2Str:
+          obj=(CObject*)ObjectMoleculeReadStr(G,(ObjectMolecule*)origObj,
+                                              start_at,content_format,
+                                              eff_state,discrete,
+                                              quiet,multiplex,new_name,
+                                              &next_entry);
+          break;
+        }
+        if(obj) {
+          if(next_entry) { /* if set, then we will assume multiple objects are present,
+                              and thus need to give this object its own name */
+            repeat_flag=true;
+          }
+          
+          /* assign the name (if necessary) */
+          
+          if(next_entry||is_repeat_pass) {
+            if(is_new && (new_name[0]==0)) { /* if there wasn't a name assigned */
+              sprintf(new_name,"%s_%d",object_name,n_processed+1); /* assign a default name */
+            }
+
+            ObjectSetName(obj,new_name); /* from file */
+            ExecutiveDelete(G,new_name); /* just in case there is a collision */
+
+            is_new = true; /* from now on, treat this as a new object, since indeed it is */
+
+          } else {
+            ObjectSetName(obj,object_name); /* from filename/parameter */
+          }
+          
+          if(obj) {
+            if(is_new) 
+              ExecutiveManageObject(G,obj,-1,zoom);
+            if(finish)
+              ExecutiveUpdateObjectSelection(G,obj);
+
+            if(eff_state<0)
+              eff_state = ((ObjectMolecule*)obj)->NCSet-1;
+            if(n_processed>0) {
+              sprintf(buf," ExecutiveLoad: loaded %d objects from \"%s\".\n",n_processed+1,content);
+            } else {
+              if(!is_string)
+                sprintf(buf," ExecutiveLoad: \"%s\" loaded as \"%s\", through state %d.\n",
+                        content,object_name, eff_state+1);
+              else
+                sprintf(buf," ExecutiveLoad: content loaded into object \"%s\", through state %d.\n",
+                        object_name,eff_state+1);
+            }
+          }
+          n_processed++;
+        }
+      }
+      if((!is_string)&&buffer) {
+        mfree(buffer);
+      }
+    }
+
+    if(!quiet && buf[0]) {
+      PRINTFB(G,FB_Executive,FB_Actions) 
+        "%s",buf
+        ENDFB(G);
+    }
+  }
+  return(ok);
 }
 
 
@@ -614,6 +831,8 @@ CObject *ExecutiveGetExistingCompatible(PyMOLGlobals *G,char *oname,int type)
     case cLoadTypeCRD:
     case cLoadTypeMOL2:
     case cLoadTypeMOL2Str:
+    case cLoadTypeSDF2:
+    case cLoadTypeSDF2Str:
     case cLoadTypePQR:
       new_type = cObjectMolecule;
       break;
@@ -622,6 +841,7 @@ CObject *ExecutiveGetExistingCompatible(PyMOLGlobals *G,char *oname,int type)
     case cLoadTypeXPLORMap:
     case cLoadTypeXPLORStr:
     case cLoadTypeCCP4Map:
+    case cLoadTypeCCP4Str:
     case cLoadTypeFLDMap:
     case cLoadTypeGRDMap:
     case cLoadTypeDXMap:

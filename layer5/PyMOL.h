@@ -156,7 +156,7 @@ int PyMOL_Reinitialize(CPyMOL *I);
 int PyMOL_Load(CPyMOL *I,char *content, char *content_type, 
                int content_length, char *content_format, 
                char *object_name, 
-               int frame, int discrete, int finish, 
+               int state, int discrete, int finish, 
                int quiet, int multiplex, int zoom);
 
 int PyMOL_Zoom(CPyMOL *I,char *selection, float buffer,
