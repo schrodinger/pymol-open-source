@@ -1110,12 +1110,22 @@ for a in l:
    print a 
 print
 
+# missing general impropers
+l = [
+'X -X -DJ-JA         10.5         180.          2.           WLD from X -X -DJ-Q1',
+]
+for a in l:
+   if tmp.improper.has_key(a[0:11]):
+      sys.stderr.write("Duplicate improper: %s\n"%a)
+   print a 
+print
 kees = tmp.improper.keys()
 kees.sort()
 kees.reverse()
 for a in kees: # no major redundancy, just print the first record
    print "%-1s%s" %(a,tmp.improper[a][0][0])
-# missing specific impropers
+
+
 print '''
   A   Q2  0000.     0000.                                4.  flag for fast water
 
