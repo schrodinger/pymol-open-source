@@ -142,7 +142,7 @@ class SettingIndex:
    logging               =131
    
 setting_sc = Shortcut(SettingIndex.__dict__.keys())
-
+   
 index_list = []
 name_dict = {}
 name_list = SettingIndex.__dict__.keys()

@@ -1,6 +1,10 @@
 
 import copy
 import types
+import re
+import string
+
+abbr_re = re.compile(r"[^\_]*\_")
 
 def is_string(obj):
    return isinstance(obj,types.StringType)
@@ -13,10 +17,39 @@ class Shortcut:
       else:
          self.keywords = copy.deepcopy(list)
       self.shortcut = {}
+      self.abbr_dict = {}
       self.rebuild()
 
-   def rebuild(self):
+   def add_one(self,a):
+      # optimize symbols
       hash = self.shortcut
+      abbr_dict = self.abbr_dict
+      find = string.find
+      abbr_re_sub = abbr_re.sub
+      for b in range(1,len(a)):
+         sub = a[0:b]
+         if hash.has_key(sub):
+            hash[sub]=0
+         else:
+            hash[sub]=a
+      if find(a,"_")>=0:
+         abbr = abbr_re_sub(lambda x:x.group(0)[0]+"_",a)
+         if a!=abbr:
+            abbr_dict[abbr]=a
+            for b in range(string.find(abbr,'_')+2,len(abbr)):
+               sub = abbr[0:b]
+               if hash.has_key(sub):
+                  hash[sub]=0
+               else:
+                  hash[sub]=a
+      
+   def rebuild(self):
+      # optimize symbols
+      hash = self.shortcut
+      abbr_dict = self.abbr_dict
+      find = string.find
+      abbr_re_sub = abbr_re.sub
+      #
       for a in self.keywords:
          for b in range(1,len(a)):
             sub = a[0:b]
@@ -24,6 +57,19 @@ class Shortcut:
                hash[sub]=0
             else:
                hash[sub]=a
+         if find(a,"_")>=0:
+            abbr = abbr_re_sub(lambda x:x.group(0)[0]+"_",a)
+            if a!=abbr:
+               abbr_dict[abbr]=a
+               for b in range(string.find(abbr,'_')+2,len(abbr)):
+                  sub = abbr[0:b]
+                  if hash.has_key(sub):
+                     hash[sub]=0
+                  else:
+                     hash[sub]=a
+                     
+      for a in abbr_dict.keys():
+         hash[a]=abbr_dict[a]
       for a in self.keywords:
          hash[a]=a
 
@@ -57,13 +103,9 @@ class Shortcut:
       
    def append(self,kee):
       self.keywords.append(kee)
-      hash = self.shortcut
-      for b in range(1,len(kee)+1):
-         sub = kee[0:b]
-         if hash.has_key(sub):
-            hash[sub]=0
-         else:
-            hash[sub]=kee
+      self.add_one(kee)
+      for a in self.abbr_dict.keys():
+         hash[a]=self.abbr_dict[a]
       for a in self.keywords:
          hash[a]=a
 
