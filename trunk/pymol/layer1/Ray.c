@@ -737,7 +737,7 @@ void RayRender(CRay *I,int width,int height,unsigned int *image,float front,floa
   int shadows;
 
   project_triangle = SettingGet(cSetting_ray_improve_shadows);
-  shadows = SettingGet(cSetting_ray_shadows);
+  shadows = (int)SettingGet(cSetting_ray_shadows);
 
   backface_cull = (int)SettingGet(cSetting_backface_cull);
   opaque_back = (int)SettingGet(cSetting_ray_opaque_background);
