@@ -1,4 +1,4 @@
-#A* -------------------------------------------------------------------
+ #A* -------------------------------------------------------------------
 #B* This file contains source code for the PyMOL computer program
 #C* copyright 1998-2000 by Warren Lyford Delano of DeLano Scientific. 
 #D* -------------------------------------------------------------------
@@ -43,17 +43,19 @@ def exec_str(s):
    return None
    
 def exec_deferred():
-#   pm.do("@t.pml")
-   pm.config_mouse()
+   cmd.config_mouse()
    for a in invocation.options.deferred:
-      if re.search(r"pymol\.py$",a):
+      if a[0:4]=="_do_":
+         cmd.do(a[4:])
+      elif re.search(r"pymol\.py$",a):
          pass
       elif re.search(r"\.py$",a):
-         pm.do("run %s" % a)
+         cmd.do("run %s" % a)
       elif re.search(r"\.pdb$|\.mol$|\.mmod$|\.mmd$|\.xplor$|\.pkl$|\.sdf$",a):
-         pm.load(a)
+         cmd.load(a)
       elif re.search(r"\.pml$",a):
-         pm.do("@%s" % a)
+         cmd.do("@%s" % a)
+
 def launch_gui():
    if invocation.options.external_gui:
       __import__(invocation.options.gui)

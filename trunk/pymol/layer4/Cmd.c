@@ -156,7 +156,7 @@ static PyObject *CmdProtect(PyObject *self, PyObject *args);
 static PyObject *CmdQuit(PyObject *self, 	PyObject *args);
 static PyObject *CmdRay(PyObject *self, 	PyObject *args);
 static PyObject *CmdRebuild(PyObject *self, PyObject *args);
-static PyObject *CmdRefill(PyObject *self, PyObject *args);
+static PyObject *CmdHFill(PyObject *self, PyObject *args);
 static PyObject *CmdRemove(PyObject *self, PyObject *args);
 static PyObject *CmdRemovePicked(PyObject *self, PyObject *args);
 static PyObject *CmdRename(PyObject *self, 	PyObject *args);
@@ -225,6 +225,7 @@ static PyMethodDef Cmd_methods[] = {
 	{"get_pdb",	     CmdGetPDB,       METH_VARARGS },
 	{"get_setting",  CmdGetSetting,   METH_VARARGS },
 	{"h_add",        CmdHAdd,         METH_VARARGS },
+	{"h_fill",       CmdHFill,       METH_VARARGS },
    {"identify",     CmdIdentify,     METH_VARARGS },
 	{"intrafit",     CmdIntraFit,     METH_VARARGS },
    {"invert",       CmdInvert,       METH_VARARGS },
@@ -253,7 +254,6 @@ static PyMethodDef Cmd_methods[] = {
 	{"quit",	        CmdQuit,         METH_VARARGS },
 	{"ready",        CmdReady,        METH_VARARGS },
    {"rebuild",      CmdRebuild,      METH_VARARGS },
-	{"refill",       CmdRefill,       METH_VARARGS },
 	{"refresh",      CmdRefresh,      METH_VARARGS },
 	{"refresh_now",  CmdRefreshNow,   METH_VARARGS },
 	{"remove",	     CmdRemove,       METH_VARARGS },
@@ -1856,10 +1856,10 @@ static PyObject *CmdRemovePicked(PyObject *self, PyObject *args)
   return Py_None;
 }
 
-static PyObject *CmdRefill(PyObject *self, PyObject *args)
+static PyObject *CmdHFill(PyObject *self, PyObject *args)
 {
   APIEntry();
-  EditorRefill();
+  EditorHFill();
   APIExit();
   Py_INCREF(Py_None);
   return Py_None;

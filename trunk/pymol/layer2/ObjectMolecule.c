@@ -890,7 +890,7 @@ void ObjectMoleculePrepareAtom(ObjectMolecule *I,int index,AtomInfoType *ai)
     strcpy(ai->resi,ai0->resi);
     strcpy(ai->segi,ai0->segi);
     strcpy(ai->resn,ai0->resn);    
-    if((ai->elem[0]==ai0->elem[0])&&(ai->elem[1]==ai->elem[1]))
+    if((ai->elem[0]==ai0->elem[0])&&(ai->elem[1]==ai0->elem[1]))
       ai->color=ai0->color;
     else
       ai->color=AtomInfoGetColor(ai);
