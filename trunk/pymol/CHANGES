@@ -105,7 +105,6 @@ Current Bugs to Fix
    * superposition system fails with degenerate sets (planer atoms, etc).
      sometimes it just fails period
   
-   * intra_fit broken?
 
 Changes up to 0.75
 
@@ -120,7 +119,10 @@ Changes up to 0.75
    * gutted cmd.py, and created a bunch of sub-modules which contain the
      code previously in cmd.py.  
    
-   * superposition bugs fixed with multi-state objects
+   * superposition bugs fixed with multi-state objects (fit and intra_fit)
+
+   * cmd.set_key can now be used to redefine ALT and CTRL keys in addition
+     to function keys and other specials.
 
 Changes up to 0.74
 

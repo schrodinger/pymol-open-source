@@ -126,7 +126,7 @@ DESCRIPTION
   
    "set_key" binds a specific python function to a key press.
    
-PYMOL API
+PYMOL API (ONLY)
  
    cmd.set_key( string key, function fn, tuple arg=(), dict kw={})
  
@@ -134,26 +134,57 @@ PYTHON EXAMPLE
  
    from pymol import cmd
  
-   def color_blue(object):
-      cmd.color("blue",object)
+   def color_blue(object): cmd.color("blue",object)
     
    cmd.set_key( 'F1' , make_it_blue, ( "object1" ) )
-   cmd.set_key( 'F2' , make_it_blue, ( "object2" ) )
- 
    // would turn object1 blue when the F1 key is pressed and
+
+   cmd.set_key( 'F2' , make_it_blue, ( "object2" ) )
    // would turn object2 blue when the F2 key is pressed.
 
+   cmd.set_key( 'CTRL-C' , cmd.zoom )   
+   cmd.set_key( 'ALT-A' , cmd.turn, ('x',90) )
+
+KEYS WHICH CAN BE REDEFINED
+
+   F1 to F12
+   left, right, pgup, pgdn, home, insert
+   CTRL-A to CTRL-Z 
+   ALT-0 to ALT-9, ALT-A to ALT-Z
+   
 SEE ALSO
 
    button
    '''
    r = 0
-   for a in cmd.special.keys():
-      if cmd.special[a][0]==key:
-         cmd.special[a][1]=fn
-         cmd.special[a][2]=arg
-         cmd.special[a][3]=kw
-         r = 1
+   if key[0:5]=='CTRL-': 
+      pat=key[-1]
+      for a in cmd.ctrl.keys():
+         if a==pat:
+            cmd.ctrl[a][0]=fn
+            cmd.ctrl[a][1]=arg
+            cmd.ctrl[a][2]=kw
+            r = 1
+   elif key[0:4]=='ALT-':
+      pat=string.lower(key[-1])
+      for a in cmd.alt.keys():
+         if a==pat:
+            cmd.alt[a][0]=fn
+            cmd.alt[a][1]=arg
+            cmd.alt[a][2]=kw
+            r = 1
+   else:
+      if key[0]!='F':
+         pat=string.lower(key)
+      else:
+         pat=key
+      for a in cmd.special.keys():
+         if cmd.special[a][0]==pat:
+            cmd.special[a][1]=fn
+            cmd.special[a][2]=arg
+            cmd.special[a][3]=kw
+            r = 1
+            
    if not r:
       print "Error: special '%s' key not found."%key
       if cmd._raising(): raise QuietException

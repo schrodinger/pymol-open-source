@@ -379,7 +379,7 @@ float ExecutiveAlign(char *s1,char *s2)
             PRINTFB(FB_Executive,FB_Actions)
               " ExecutiveAlign: %d atoms aligned.\n",c
               ENDFB;
-              ExecutiveRMS("align1","align2",2,1.5);
+              ExecutiveRMS("align1","align2",2,1.5,0);
           }
         }
         if(match) 
@@ -1637,7 +1637,7 @@ void ExecutiveIterateState(int state,char *s1,char *expr,int read_only)
   }
 }
 /*========================================================================*/
-float ExecutiveRMS(char *s1,char *s2,int mode,float refine)
+float ExecutiveRMS(char *s1,char *s2,int mode,float refine,int quiet)
 {
   int sele1,sele2;
   float rms = -1.0;
@@ -1647,13 +1647,17 @@ float ExecutiveRMS(char *s1,char *s2,int mode,float refine)
   ObjectMoleculeOpRec op2;
   OrthoLineType buffer;
   int *flag;
+  int ok=true;
 
   sele1=SelectorIndexByName(s1);
   op1.vv1=NULL;
   op1.vc1=NULL;
   op2.vv1=NULL;
   op2.vc1=NULL;
+
   if(sele1>=0) {
+    
+    
     op1.code = OMOP_AVRT;
     op1.nvv1=0;
     op1.vc1=(int*)VLAMalloc(1000,sizeof(int),5,1);
@@ -1672,7 +1676,7 @@ float ExecutiveRMS(char *s1,char *s2,int mode,float refine)
           }
       }
   }
-
+  
   sele2=SelectorIndexByName(s2);
   if(sele2>=0) {
     op2.code = OMOP_AVRT;
@@ -1727,20 +1731,38 @@ float ExecutiveRMS(char *s1,char *s2,int mode,float refine)
 
   if(op1.vv1&&op2.vv1) {
     if(op1.nvv1!=op2.nvv1) {
-      sprintf(buffer,"Atom counts between selections don't match (%d vs %d)\n",
+      sprintf(buffer,"Atom counts between selections don't match (%d vs %d)",
               op1.nvv1,op2.nvv1);
       ErrMessage("ExecutiveRMS",buffer);
     } else if(op1.nvv1) {
+      if(!SelectorGetSingleObjectMolecule(sele1)) {
+        if(mode!=2) {
+          PRINTFB(FB_Executive,FB_Warnings)
+            "Executive-Warning: Mobile selection spans more than one object.\n"
+            ENDFB;
+        } else {
+          PRINTFB(FB_Executive,FB_Errors)
+            "Executive-Error: Mobile selection spans more than one object. Aborting.\n"
+            ENDFB;
+          ok=false;
+        }
+      }
       if(mode!=0) 
         rms = MatrixFitRMS(op1.nvv1,op1.vv1,op2.vv1,NULL,op2.ttt);
       else
         rms = MatrixGetRMS(op1.nvv1,op1.vv1,op2.vv1,NULL);
-      PRINTFB(FB_Executive,FB_Results) 
-        " Executive: RMS = %8.3f (%d to %d atoms)\n", rms,op1.nvv1,op2.nvv1 
-        ENDFB
-      if(mode==2) {
-        op2.code = OMOP_TTTF;
-        ExecutiveObjMolSeleOp(sele1,&op2);
+      if(ok) {
+        if(!quiet) {
+          PRINTFB(FB_Executive,FB_Results) 
+            " Executive: RMS = %8.3f (%d to %d atoms)\n", rms,op1.nvv1,op2.nvv1 
+            ENDFB
+            }
+        if(mode==2) {
+          if(ok) {
+            op2.code = OMOP_TTTF;
+            ExecutiveObjMolSeleOp(sele1,&op2);
+          }
+        }
       }
     } else {
       ErrMessage("ExecutiveRMS","No atoms selected.");
@@ -1808,14 +1830,32 @@ int ExecutiveIndex(char *s1,int mode,int **indexVLA,ObjectMolecule ***objVLA)
   return(op2.i1);
 }
 /*========================================================================*/
-float *ExecutiveRMSStates(char *s1,int target,int mode)
+float *ExecutiveRMSStates(char *s1,int target,int mode,int quiet)
 {
   int sele1;
   ObjectMoleculeOpRec op1;
   ObjectMoleculeOpRec op2;
   float *result = NULL;
+  int ok=true;
+  
+  op1.vv1=NULL;
+  op2.vv1=NULL;
   sele1=SelectorIndexByName(s1);
-  if(sele1>=0) {
+  
+  if(!SelectorGetSingleObjectMolecule(sele1)) {
+    if(mode!=2) {
+      PRINTFB(FB_Executive,FB_Warnings)
+        "Executive-Warning: Mobile selection spans more than one object.\n"
+        ENDFB;
+    } else {
+      PRINTFB(FB_Executive,FB_Errors)
+        "Executive-Error: Mobile selection spans more than one object. Aborting.\n\n"
+        ENDFB;
+      ok=false;
+    }
+  }
+
+  if(ok&&sele1>=0) {
     op1.code = OMOP_SVRT;
     op1.nvv1=0;
     op1.i1=target;
@@ -1833,9 +1873,9 @@ float *ExecutiveRMSStates(char *s1,int target,int mode)
     op2.nvv1=0;
     ExecutiveObjMolSeleOp(sele1,&op2);
     result=op2.f1VLA;
+    VLAFreeP(op1.vv1);
+    VLAFreeP(op2.vv1);
   } 
-  VLAFreeP(op1.vv1);
-  VLAFreeP(op2.vv1);
   return(result);
 }
 /*========================================================================*/

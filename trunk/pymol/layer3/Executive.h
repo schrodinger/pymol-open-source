@@ -48,10 +48,10 @@ int ExecutiveSetSetting(int index,PyObject *tuple,char *sele,int state,
 void ExecutiveRay(int width,int height,int mode);
 int ExecutiveGetDihe(char *s0,char *s1,char *s2,char *s3,float *value,int state);
 int ExecutiveSetDihe(char *s0,char *s1,char *s2,char *s3,float value,int state);
-float ExecutiveRMS(char *sele1,char *sele2,int mode,float refine);
+float ExecutiveRMS(char *sele1,char *sele2,int mode,float refine,int quiet);
 void ExecutiveUpdateCmd(char *sele1,char *sele2,int sta1,int sta2);
 float ExecutiveRMSPairs(WordType *sele,int pairs,int mode);
-float *ExecutiveRMSStates(char *s1,int target,int mode);
+float *ExecutiveRMSStates(char *s1,int target,int mode,int quiet);
 int *ExecutiveIdentify(char *s1,int mode);
 int ExecutiveIndex(char *s1,int mode,int **indexVLA,ObjectMolecule ***objVLA);
 int ExecutiveReset(int cmd,char *name);
