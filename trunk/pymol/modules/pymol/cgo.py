@@ -70,6 +70,37 @@ def molauto(*arg):
 #      rr = RenderReader(stdout)
 #      cmd.load_cgo(rr.obj,name)
 
+
+def text(cgo,font,pos,axis,text): # modifies pos
+   x = axis[0]
+   y = axis[1]
+   for char in text:
+      if font.has_key(char):
+         fc = font[char]
+         stroke = 0
+         w = fc[0]
+         f = fc[1]
+         c = 0
+         l = len(f)-2
+         while c<l:
+            if not f[c]:
+               if stroke: cgo.append(END)
+               cgo.append(BEGIN)
+               cgo.append(LINE_STRIP)
+               stroke = 1
+            ax = f[c+1]
+            ay = f[c+2]
+            cgo.append(VERTEX)
+            cgo.append(pos[0]+x[0]*ax+y[0]*ay)
+            cgo.append(pos[1]+x[1]*ax+y[1]*ay)
+            cgo.append(pos[2]+x[2]*ax+y[2]*ay)         
+            c = c + 3
+         pos[0] = pos[0] + w*x[0]
+         pos[0] = pos[0] + w*x[1]
+         pos[0] = pos[0] + w*x[2]
+         if stroke: cgo.append(END)
+
+
 def from_r3d(fname):
    result = None
    input = open(fname)
