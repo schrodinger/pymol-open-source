@@ -53,7 +53,9 @@ Z* -------------------------------------------------------------------
 
 typedef struct { 
   void *ptr;
-  int index; /* NOTE: that first record contains the list count...not pick info */
+  int index; /* atom index.
+                NOTE: that first record contains the list count...not pick info */
+  int bond; /* bond index, otherwise -1 */
 } Pickable;
 
 #define MAXLINELEN 1024

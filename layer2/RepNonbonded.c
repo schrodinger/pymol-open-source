@@ -236,7 +236,7 @@ Rep *RepNonbondedNew(CoordSet *cs)
         
         I->R.P[I->NP].ptr = (void*)obj;
         I->R.P[I->NP].index = a1;
-        
+        I->R.P[I->NP].bond = -1;
         v1 = cs->Coord+3*a;
         
         *(v++)=v1[0]-nonbonded_size;
