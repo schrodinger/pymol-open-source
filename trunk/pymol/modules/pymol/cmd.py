@@ -1106,18 +1106,19 @@ SEE ALSO
         load,               \
         load_brick,         \
         load_callback,      \
-        space,       \
         load_cgo,           \
+        load_embedded,      \
         load_map,           \
         load_model,         \
         load_object,        \
         load_traj,          \
+        loadable,           \
         read_mmodstr,       \
         read_molstr,        \
         read_pdbstr,        \
         read_xplorstr,      \
-        loadable,           \
-        set_session
+        set_session,        \
+        space              
 
    #--------------------------------------------------------------------
    import creating
@@ -1483,6 +1484,7 @@ SEE ALSO
       'edit_mode'     : [ edit_mode         , 0 , 0 , ''  , parsing.STRICT ],
       'elif'          : [ python_help       , 0 , 0 , ''  , parsing.PYTHON ],
       'else'          : [ python_help       , 0 , 0 , ''  , parsing.PYTHON ],
+      'embed'         : [ dummy             , 0 , 3 , ',' , parsing.EMBED  ],
       'enable'        : [ enable            , 0 , 0 , ''  , parsing.STRICT ],
       'ending'        : [ ending            , 0 , 0 , ''  , parsing.STRICT ],
       'except'        : [ python_help       , 0 , 0 , ''  , parsing.PYTHON ],      
@@ -1537,7 +1539,8 @@ SEE ALSO
       'iterate_state' : [ iterate_state     , 0 , 0 , ''  , parsing.LITERAL2 ],
       'label'         : [ label             , 0 , 0 , ''  , parsing.LITERAL1 ],
       'load'          : [ load              , 0 , 0 , ''  , parsing.STRICT ],
-      'space'         : [ space             , 0 , 0 , ''  , parsing.STRICT ],      
+      'space'         : [ space             , 0 , 0 , ''  , parsing.STRICT ],
+      'load_embedded' : [ load_embedded     , 0 , 0 , ''  , parsing.STRICT ],
       'load_png'      : [ load_png          , 0 , 0 , ''  , parsing.STRICT ],
       'load_traj'     : [ load_traj         , 0 , 0 , ''  , parsing.STRICT ],
       'log'           : [ log               , 0 , 0 , ''  , parsing.STRICT ],
@@ -1549,12 +1552,12 @@ SEE ALSO
       'map_set_border': [ map_set_border    , 0 , 0 , ''  , parsing.STRICT ],
       'map_double'    : [ map_double        , 0 , 0 , ''  , parsing.STRICT ],      
       'map_new'       : [ map_new           , 0 , 0 , ''  , parsing.STRICT ],    
-      'mappend'       : [ mappend           , 2 , 2 , ':' , parsing.SINGLE ], 
+      'mappend'       : [ mappend           , 2 , 2 , ':' , parsing.MOVIE  ], 
       'mem'           : [ mem               , 0 , 0 , ''  , parsing.STRICT ],
       'meter_reset'   : [ meter_reset       , 0 , 0 , ''  , parsing.STRICT ],
       'move'          : [ move              , 0 , 0 , ''  , parsing.STRICT ],
       'mset'          : [ mset              , 0 , 0 , ''  , parsing.STRICT ],
-      'mdo'           : [ mdo               , 2 , 2 , ':' , parsing.SINGLE ],
+      'mdo'           : [ mdo               , 2 , 2 , ':' , parsing.MOVIE  ],
       'mdump'         : [ mdump             , 0 , 0 , ''  , parsing.STRICT ],      
       'mpng'          : [ mpng              , 0 , 0 , ''  , parsing.STRICT ],
       'mplay'         : [ mplay             , 0 , 0 , ''  , parsing.STRICT ],

@@ -4,6 +4,8 @@ CHANGE LOG
 
 Changes up to 0.98
 
+   * P1M script format with embedded data
+
    * increased compatibility for variant MOL2 usage
 
    * various performance enhancements, esp. to MOL2 and SDF loads

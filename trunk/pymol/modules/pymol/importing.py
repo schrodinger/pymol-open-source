@@ -28,8 +28,9 @@ if __name__=='pymol.importing':
    except ImportError:
       m4x = None
 
+   from pymol import parser
    from chempy.sdf import SDF,SDFRec
-   from chempy import io
+   from chempy import io,PseudoFile
    import pymol
    import copy
    import traceback
@@ -66,6 +67,7 @@ if __name__=='pymol.importing':
       pqr = 31      # PQR file (modified PDB file for APBS)
       dx = 32       # DX file (APBS)
       mol2 = 33     # MOL2 file (TRIPOS)
+      p1m = 34      # P1M file (combined data & secure commands)
       
    loadable_sc = Shortcut(loadable.__dict__.keys()) 
 
@@ -338,8 +340,18 @@ SEE ALSO
          unlock()
       return r
 
-
-
+   def _processSDF(sdf,oname,state,quiet):
+      ftype = loadable.molstr
+      while 1:
+         rec = sdf.read()
+         if not rec: break
+         r = _load(oname,string.join(rec.get('MOL'),''),state,loadable.molstr,0,1,quiet)
+      del sdf
+      _cmd.finish_object(str(oname))
+      if _cmd.get_setting("auto_zoom")==1.0:
+         _cmd.do("zoom (%s)"%oname,0)
+      _cmd.do("set seq_view_format,4,"+oname,0)
+   
    def load(filename,object='',state=0,format='',finish=1,discrete=None,quiet=1,multiplex=None):
       '''
 DESCRIPTION
@@ -455,6 +467,8 @@ SEE ALSO
                ftype = loadable.brix
             elif re.search("\.grd$",filename,re.I):
                ftype = loadable.grd
+            elif re.search("\.p1m$",filename,re.I):
+               ftype = loadable.p1m
             else:
                ftype = loadable.pdb # default is PDB
          elif cmd.is_string(type):
@@ -482,19 +496,14 @@ SEE ALSO
 
    # special handling of sdf files
          if ftype == loadable.sdf:
-            ftype = loadable.molstr
             sdf = SDF(fname)
-            while 1:
-               rec = sdf.read()
-               if not rec: break
-               r = _load(oname,string.join(rec.get('MOL'),''),state,ftype,0,1,quiet)
-            del sdf
-            _cmd.finish_object(str(oname))
-            if _cmd.get_setting("auto_zoom")==1.0:
-               _cmd.do("zoom (%s)"%oname,0)
-            _cmd.do("set seq_view_format,4,"+oname,0)
+            _processSDF(sdf,oname,state,quiet)
             ftype = -1
 
+         if ftype == loadable.p1m:
+            _cmd.do("_ @"+fname,0)
+            ftype = -1
+            
    # special handling for AMBER trj failes
    #      if ftype == loadable.trj:
    #         ftype = -1
@@ -527,6 +536,35 @@ SEE ALSO
          unlock()
       return r
 
+   def load_embedded(key="embedded",name=None,state=0,finish=1,discrete=1,quiet=1):
+      r = 1
+      list = parser.get_embedded(key)
+      if list == None:
+         print "Error: embedded data '%s' not found."%key
+         r = None
+      else:
+         if name == None:
+            name = key
+         type = list[0]
+         data = list[1]
+         try:
+            ftype = int(type)
+         except:
+            type = loadable_sc.auto_err(type,'file type')
+            if hasattr(loadable,type):
+               ftype = getattr(loadable,type)
+            else:
+               print "Error: unknown type '%s'",type
+               raise QuietException
+         if ftype==loadable.pdb:
+            read_pdbstr(string.join(data,''),name,state=0,finish=1,discrete=0,quiet=1)
+         elif ftype==loadable.mol:
+            read_molstr(string.join(data,''),name,state=0,finish=1,discrete=0,quiet=1)
+         elif ftype==loadable.sdf:
+            sdf = SDF(PseudoFile(data),'pf')
+            _processSDF(sdf,name,state,quiet)
+      return r
+   
    def read_molstr(molstr,name,state=0,finish=1,discrete=1,quiet=1):
       '''
 DESCRIPTION

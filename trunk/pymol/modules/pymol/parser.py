@@ -51,7 +51,10 @@ if __name__=='pymol.parser':
    next = {}    # characters for next command (i.e., after ; )
    args = {}    # parsed non-keyword argument string
    kw_args = {} # parser keyword argument string
-
+   embed_dict = {}
+   embed_list = {}
+   embed_sentinel = {}
+   
    # The resulting value from a pymol command (if any) is stored in the
    # parser.result global variable.  However, script developers will
    # geerally want to switch to the Python API for any of this kind of
@@ -64,19 +67,30 @@ if __name__=='pymol.parser':
    nest=0
    com0[nest]=""
    cont[nest]=""
+   embed_sentinel[nest]=None
 
+   def get_embedded(key):
+      dict = embed_dict.get(nest,{})
+      return dict.get(key,None)
+      
    def exp_path(filename):
       return os.path.expandvars(os.path.expanduser(filename))
 
    # main parser routine
 
-   def parse(s):
+   def parse(s,secure=0):
       global com0,com1,com2,cont,script,kw,input
       global next,nest,args,kw_args,cmd,cont,result
    # report any uncaught errors...
       if sys.exc_info()!=(None,None,None):
          traceback.print_exc()
-   #
+      if embed_sentinel[nest]!=None:
+         if string.strip(s)==embed_sentinel[nest]:
+            print " Embed: read %d lines."%(len(embed_list[nest]))
+            embed_sentinel[nest]=None
+         else:
+            embed_list[nest].append(s)
+         return 1
       p_result = 1
       com0[nest] = s
       try:
@@ -105,7 +119,11 @@ if __name__=='pymol.parser':
                      # explicit literal python 
                      com2[nest] = string.strip(com2[nest][1:])
                      if len(com2[nest])>0:
-                         exec(com2[nest]+"\n",pymol_names,pymol_names)
+                        if not secure:
+                           exec(com2[nest]+"\n",pymol_names,pymol_names)
+                        else:
+                           print 'Error: Python expressions disallowed in this file.'
+                           return None
                   else:
                      # try to find a keyword which matches
                      if cmd.kwhash.has_key(com):
@@ -130,27 +148,40 @@ if __name__=='pymol.parser':
 
                            if kw[nest][4]>=parsing.LITERAL: # treat literally
                               next[nest] = ()
-                              com2[nest]=com1[nest]
+                              if not secure:
+                                 com2[nest]=com1[nest]
+                              else:
+                                 print 'Error: Python expressions disallowed in this file.  '
+                                 return 0
                            (args[nest],kw_args[nest]) = \
-                              parsing.prepare_call(
-                                 kw[nest][0],
-                                 parsing.parse_arg(com2[nest],mode=kw[nest][4]),
-                                 kw[nest][4]) # will raise exception on failure
+                                                      parsing.prepare_call(
+                              kw[nest][0],
+                              parsing.parse_arg(com2[nest],mode=kw[nest][4]),
+                              kw[nest][4]) # will raise exception on failure
                            result=apply(kw[nest][0],args[nest],kw_args[nest])
                         elif kw[nest][4]==parsing.PYTHON:
                               # handle python keyword
                               com2[nest] = string.strip(com2[nest])
                               if len(com2[nest])>0:
-                                 exec(com2[nest]+"\n",pymol_names,pymol_names)
+                                 if not secure:
+                                    exec(com2[nest]+"\n",pymol_names,pymol_names)
+                                 else:
+                                    next[nest] = ()                                    
+                                    print 'Error: Python expressions disallowed in this file.'
+                                    return None
                         else:
                            # remove line breaks (only important for Python expressions)
                            com2[nest]=string.replace(com2[nest],'\n','')
    # old parsing style, being phased out
                            if kw[nest][4]==parsing.ABORT:
                               return None # SCRIPT ABORT EXIT POINT
-                           if kw[nest][4]==parsing.SINGLE: # single line, no breaks
+                           if kw[nest][4]==parsing.MOVIE: # copy literal single line, no breaks
                               next[nest] = ()
-                              input[nest] = string.split(com1[nest],' ',1)
+                              if not secure:
+                                 input[nest] = string.split(com1[nest],' ',1)
+                              else:
+                                 print 'Error: Movie commands disallowed in this file. '
+                                 return None
                            if len(input[nest])>1:
                               args[nest] = parsing.split(input[nest][1],kw[nest][3])
                               while 1:
@@ -181,39 +212,73 @@ if __name__=='pymol.parser':
                                  result=apply(kw[nest][0],args[nest])
       #                           
                               elif kw[nest][4]==parsing.SPAWN:
-                                 # spawn command
-                                 if len(args[nest])==1: # default: module
-                                    parsing.run_as_module(exp_path(args[nest][0]),spawn=1)
-                                 elif args[nest][1]=='main':
-                                    parsing.run_as_thread(exp_path(args[nest][0]),
-                                                          __main__.__dict__,
-                                                          __main__.__dict__)
-                                 elif args[nest][1]=='private':
-                                    parsing.run_as_thread(exp_path(args[nest][0]),
-                                                          __main__.__dict__,
-                                                          {})
-                                 elif args[nest][1]=='local':
-                                    parsing.run_as_thread(exp_path(args[nest][0]),
-                                                          pymol_names,{})
-                                 elif args[nest][1]=='global':
-                                    parsing.run_as_thread(exp_path(args[nest][0]),
-                                                          pymol_names,pymol_names)
-                                 elif args[nest][1]=='module':
-                                    parsing.run_as_module(exp_path(args[nest][0]),spawn=1)
+                                 if not secure:
+                                    # spawn command
+                                    if len(args[nest])==1: # default: module
+                                       parsing.run_as_module(exp_path(args[nest][0]),spawn=1)
+                                    elif args[nest][1]=='main':
+                                       parsing.run_as_thread(exp_path(args[nest][0]),
+                                                             __main__.__dict__,
+                                                             __main__.__dict__)
+                                    elif args[nest][1]=='private':
+                                       parsing.run_as_thread(exp_path(args[nest][0]),
+                                                             __main__.__dict__,
+                                                             {})
+                                    elif args[nest][1]=='local':
+                                       parsing.run_as_thread(exp_path(args[nest][0]),
+                                                             pymol_names,{})
+                                    elif args[nest][1]=='global':
+                                       parsing.run_as_thread(exp_path(args[nest][0]),
+                                                             pymol_names,pymol_names)
+                                    elif args[nest][1]=='module':
+                                       parsing.run_as_module(exp_path(args[nest][0]),spawn=1)
+                                 else:
+                                    next[nest] = ()                                    
+                                    print 'Error: spawn disallowed in this file.'
+                                    return None
                               elif kw[nest][4]==parsing.RUN:
-                                 # run command
-                                 if len(args[nest])==1: # default: global
-                                    execfile(exp_path(args[nest][0]),pymol_names,pymol_names)
-                                 elif args[nest][1]=='main':
-                                    execfile(exp_path(args[nest][0]),__main__.__dict__,__main__.__dict__)
-                                 elif args[nest][1]=='private':
-                                    execfile(exp_path(args[nest][0]),__main__.__dict__,{})
-                                 elif args[nest][1]=='local':
-                                    execfile(exp_path(args[nest][0]),pymol_names,{})
-                                 elif args[nest][1]=='global':
-                                    execfile(exp_path(args[nest][0]),pymol_names,pymol_names)
-                                 elif args[nest][1]=='module':
-                                    parsing.run_as_module(exp_path(args[nest][0]),spawn=0)
+                                 if not secure:
+                                    # run command
+                                    if len(args[nest])==1: # default: global
+                                       execfile(exp_path(args[nest][0]),pymol_names,pymol_names)
+                                    elif args[nest][1]=='main':
+                                       execfile(exp_path(args[nest][0]),__main__.__dict__,__main__.__dict__)
+                                    elif args[nest][1]=='private':
+                                       execfile(exp_path(args[nest][0]),__main__.__dict__,{})
+                                    elif args[nest][1]=='local':
+                                       execfile(exp_path(args[nest][0]),pymol_names,{})
+                                    elif args[nest][1]=='global':
+                                       execfile(exp_path(args[nest][0]),pymol_names,pymol_names)
+                                    elif args[nest][1]=='module':
+                                       parsing.run_as_module(exp_path(args[nest][0]),spawn=0)
+                                 else:
+                                    next[nest] = ()                                    
+                                    print 'Error: run disallowed in this file.'
+                                    return None                                    
+                              elif (kw[nest][4]==parsing.EMBED):
+                                 next[nest] = ()
+                                 if secure:
+                                    l = len(args[nest])
+                                    if l>0:
+                                       key = args[nest][0]
+                                    else:
+                                       key = "embedded"
+                                    if l>1:
+                                       format = args[nest][1]
+                                    else:
+                                       format = 'pdb'
+                                    if l>2:
+                                       embed_sentinel[nest] = args[nest][2]
+                                    else:
+                                       embed_sentinel[nest] = "embed_end"
+                                    list = []
+                                    dict = embed_dict.get(nest,{})
+                                    dict[key] = ( format, list )
+                                    embed_dict[nest] = dict
+                                    embed_list[nest] = list
+                                 else:
+                                    print 'Error: embed only legal in p1m files'
+                                    raise None
                               else:
                                  print 'Error: unknown keyword mode: '+str(kw[nest][4])
                                  raise QuietException
@@ -224,10 +289,16 @@ if __name__=='pymol.parser':
    #
                      elif len(input[nest][0]):
                         if input[nest][0][0]=='@':
-                           script[nest] = open(os.path.expanduser(
-                  os.path.expandvars(string.strip(com2[nest][1:]))),'r')
+                           path = os.path.expanduser(
+                              os.path.expandvars(string.strip(com2[nest][1:])))
+                           if string.lower(path[-3:])=='p1m':
+                              nest_secure = 1
+                           else:
+                              nest_secure = secure
+                           script[nest] = open(path,'r')
                            nest=nest+1
                            cont[nest]=''
+                           embed_sentinel[nest]=None
                            while 1:
                               com0[nest]  = script[nest-1].readline()
                               if not com0[nest]: break
@@ -235,11 +306,12 @@ if __name__=='pymol.parser':
                               tmp_cmd = string.strip(inp_cmd)
                               if len(tmp_cmd):
                                  if tmp_cmd[0] not in ['#','_','/']: # suppress comments, internals, python
-                                    print "PyMOL>"+tmp_cmd
+                                    if embed_sentinel[nest]==None:
+                                       print "PyMOL>"+tmp_cmd
                                  elif tmp_cmd[0]=='_' and \
                                       tmp_cmd[1:2] in [' ','']: # "_ " remove echo suppression signal
                                     inp_cmd=inp_cmd[2:]
-                              pp_result = parse(inp_cmd)
+                              pp_result = parse(inp_cmd,nest_secure)
                               if pp_result==None: # RECURSION
                                  break # abort command gets us out
                               elif pp_result==0: # QuietException
@@ -252,13 +324,17 @@ if __name__=='pymol.parser':
                         else: # nothing found, try literal python
                            com2[nest] = string.strip(com2[nest])
                            if len(com2[nest])>0:
-                              exec(com2[nest]+"\n",pymol_names,pymol_names)
+                              if not secure:
+                                 exec(com2[nest]+"\n",pymol_names,pymol_names)
+                              else:
+                                 print 'Error: unrecognized keyword: '+input[nest][0]
                if (len(next[nest])>1) and p_result:
                        # continue parsing if no error or break has occurred
                   nest=nest+1
                   com0[nest] = next[nest-1][1]
                   next[nest-1]=()
                   cont[nest]=''
+                  embed_sentinel[nest]=None
                   p_result = parse(com0[nest]) # RECURSION
                   nest=nest-1
       except QuietException:

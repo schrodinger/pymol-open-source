@@ -74,11 +74,12 @@ if __name__=='pymol.parsing':
    # constants for keyword modes
 
    SIMPLE      = 0  # original pymol parsing (deprecated)
-   SINGLE      = 1  # ignore ";", treat entire line as a single command
+   MOVIE       = 1  # ignore ";", treat entire line as a single command
    RUN         = 2  # run command 
    SPAWN       = 3  # for spawn and fork commands
    ABORT       = 4  # terminates command script
    PYTHON      = 5  # pass entire line to python
+   EMBED       = 6  # embedded data
    NO_CHECK    = 10 # no error checking 
    STRICT      = 11 # strict name->argument checking
    LEGACY      = 12 # support legacy construct str1=val1,... -> str1,val1,...

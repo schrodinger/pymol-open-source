@@ -1,0 +1,50 @@
+PyMOL>load dat/embed01.p1m
+PyMOL>embed peptide
+ Embed: read 108 lines.
+PyMOL>load_embedded peptide
+PyMOL>hide everything, peptide
+PyMOL>show sticks, peptide
+PyMOL>set valence
+ Setting: valence set to on.
+PyMOL>set ray_default_renderer,2
+ Setting: ray_default_renderer set to 2.
+PyMOL>ray
+ RayRenderTest: obtained 207 graphics primitives.
+PyMOL>load dat/embed02.p1m
+PyMOL>embed sm, mol
+ Embed: read 78 lines.
+PyMOL>load_embedded sm
+PyMOL>hide everything, sm
+PyMOL>show sticks, sm
+PyMOL>set valence
+ Setting: valence set to on.
+PyMOL>ray
+ RayRenderTest: obtained 269 graphics primitives.
+PyMOL>load dat/embed03.p1m
+PyMOL>embed ligands,sdf
+ Embed: read 923 lines.
+PyMOL>load_embedded ligands
+ CmdLoad: MOL-string loaded as "ligands".
+ CmdLoad: MOL-string appended into object "ligands", state 2.
+ CmdLoad: MOL-string appended into object "ligands", state 3.
+ CmdLoad: MOL-string appended into object "ligands", state 4.
+ CmdLoad: MOL-string appended into object "ligands", state 5.
+ CmdLoad: MOL-string appended into object "ligands", state 6.
+ CmdLoad: MOL-string appended into object "ligands", state 7.
+ CmdLoad: MOL-string appended into object "ligands", state 8.
+ CmdLoad: MOL-string appended into object "ligands", state 9.
+ CmdLoad: MOL-string appended into object "ligands", state 10.
+PyMOL>zoom (ligands)
+PyMOL>set seq_view_format,4,ligands
+PyMOL>hide everything, ligands
+ Setting: seq_view_format set to 4 in object "ligands".
+PyMOL>show sticks, ligands
+PyMOL>set valence
+ Setting: valence set to on.
+PyMOL>frame 5
+PyMOL>ray
+ RayRenderTest: obtained 343 graphics primitives.
+PyMOL>print cmd.get_state()
+5
+PyMOL>print cmd.get_names()
+['peptide', 'sm', 'ligands']
