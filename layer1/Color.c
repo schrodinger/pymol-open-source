@@ -450,7 +450,6 @@ int ColorGetIndex(PyMOLGlobals *G,char *name)
 
     I->Lex = OVLexicon_New(G->Context->heap);
     I->Idx = OVOneToOne_New(G->Context->heap);
-    int new_idx;
     OVreturn_word result;
 
     for(a=0;a<I->NColor;a++) {
