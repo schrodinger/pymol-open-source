@@ -74,7 +74,8 @@ typedef struct _CPyMOL {
   /* dynamically mapped string constants */
 
   OVLexicon *Lex;
-  ov_word lex_pdb, lex_c_string, lex_c_filename;
+  ov_word lex_pdb, lex_mol2;
+  ov_word lex_c_string, lex_c_filename;
 
   OVOneToOne *Rep;
   ov_word lex_everything, lex_sticks, lex_spheres, lex_surface;
@@ -106,6 +107,7 @@ static OVstatus PyMOL_InitAPI(CPyMOL *I)
       I -> lex_ ## ARG = result.word;
   
   LEX(pdb);
+  LEX(mol2);
   LEX(c_string);
   LEX(c_filename);
 
@@ -215,16 +217,16 @@ int PyMOL_Reinitialize(CPyMOL *I)
   return ExecutiveReinitialize(I->G);
 }
 
-int PyMOL_Load(CPyMOL *I,char *content, char *content_type, 
-               char *content_format, char *object_name, 
-               int frame, int discrete, int finish, 
-               int quiet, int multiplex) /* ADD zoom */
+int PyMOL_Load(CPyMOL *I,char *content,  char *content_type, 
+               int content_length, char *content_format, 
+               char *object_name, int frame, 
+               int discrete, int finish, 
+               int quiet, int multiplex, int zoom)
 {
   OrthoLineType buf = "";
   OVreturn_word result;
   int type_code;
   int format_code;
-  int zoom = -1;
 
   if(!OVreturn_IS_OK( (result= OVLexicon_BorrowFromCString(I->Lex,content_type))))
     return OVstatus_FAILURE;
@@ -239,9 +241,7 @@ int PyMOL_Load(CPyMOL *I,char *content, char *content_type,
   if((type_code != I->lex_c_filename) &&
      (type_code != I->lex_c_string)) {
     return OVstatus_FAILURE;
-  } else if(format_code != I->lex_pdb) {
-    return OVstatus_FAILURE;
-  }
+  } 
   
   /* handling of multiplex option */
 
@@ -260,11 +260,20 @@ int PyMOL_Load(CPyMOL *I,char *content, char *content_type,
     else
       discrete=1; /* otherwise, allow discrete to be the default */
   }
+  if(format_code == I->lex_pdb) {
+    ExecutiveProcessPDBFile(I->G,ExecutiveGetExistingCompatible(I->G,object_name,cLoadTypePDB),content,
+                            object_name,frame-1,discrete,finish,
+                            buf,NULL,quiet,
+                            type_code==I->lex_c_string, multiplex,zoom);
+  } else if(format_code == I->lex_mol2) {
+    ExecutiveLoadMOL2(I->G,ExecutiveGetExistingCompatible(I->G,object_name,cLoadTypePDB),content,
+                      object_name,frame-1,discrete,finish,
+                      buf,multiplex,quiet,
+                      type_code==I->lex_c_string, zoom);
+  } else {
+    return OVstatus_FAILURE;
+  }
 
-  ExecutiveProcessPDBFile(I->G,ExecutiveGetExistingCompatible(I->G,object_name,cLoadTypePDB),content,
-                          object_name,frame-1,discrete,finish
-                          ,buf,NULL,quiet,
-                          type_code==I->lex_c_string, multiplex,zoom);
                           
   return OVstatus_SUCCESS;
 }

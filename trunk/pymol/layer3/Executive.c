@@ -463,7 +463,7 @@ int ExecutiveSetName(PyMOLGlobals *G,char *old_name, char *new_name)
 void ExecutiveLoadMOL2(PyMOLGlobals *G,CObject *origObj,char *fname,
                        char *oname, int frame, int discrete,int finish,
                        OrthoLineType buf,int multiplex,int quiet,
-                       int is_string)
+                       int is_string, int zoom)
 {
   int ok=true;
   FILE *f;
@@ -544,7 +544,7 @@ void ExecutiveLoadMOL2(PyMOLGlobals *G,CObject *origObj,char *fname,
         }
 
         if(obj) {
-          ExecutiveManageObject(G,obj,-1,true);
+          ExecutiveManageObject(G,obj,-1,zoom);
           if(eff_frame<0)
             eff_frame = ((ObjectMolecule*)obj)->NCSet-1;
           if(n_processed>0) {

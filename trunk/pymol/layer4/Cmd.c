@@ -4474,11 +4474,11 @@ static PyObject *CmdLoad(PyObject *self, PyObject *args)
       break;
     case cLoadTypeMOL2:
       ExecutiveLoadMOL2(TempPyMOLGlobals,origObj,fname,oname,frame,
-                        discrete,finish,buf,multiplex,quiet,false);
+                        discrete,finish,buf,multiplex,quiet,false,zoom);
       break;
     case cLoadTypeMOL2Str:
       ExecutiveLoadMOL2(TempPyMOLGlobals,origObj,fname,oname,frame,
-                        discrete,finish,buf,multiplex,quiet,true);
+                        discrete,finish,buf,multiplex,quiet,true,zoom);
       break;
     case cLoadTypeMMD:
       PRINTFD(TempPyMOLGlobals,FB_CCmd) " CmdLoad-DEBUG: loading MMD\n" ENDFD;

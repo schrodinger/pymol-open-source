@@ -71,7 +71,7 @@ void ExecutiveProcessPDBFile(PyMOLGlobals *G,CObject *origObj,char *fname, char 
 void ExecutiveLoadMOL2(PyMOLGlobals *G,CObject *origObj,char *fname,
                        char *oname, int frame, int discrete,int finish,
                        OrthoLineType buf,int multiplex,int quiet,
-                       int is_string);
+                       int is_string,int zoom);
 
 int ExecutiveDebug(PyMOLGlobals *G,char *name);
 float ExecutiveAlign(PyMOLGlobals *G,char *s1,char *s2,char *mat_file,float gap,float extend,int skip,
