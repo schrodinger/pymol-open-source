@@ -48,8 +48,8 @@ generics =  {
 
 class XYZ(Storage):
    
-#---------------------------------------------------------------------------------
-   def toList(self,model):
+#------------------------------------------------------------------------------
+   def toList(self,model,mapping=None):
 
       conn = copy.deepcopy(model)
       conn = conn.convert_to_connected()
@@ -57,10 +57,13 @@ class XYZ(Storage):
       list = []
 
       list.append("%6d\n" % conn.nAtom)
+      if not mapping:
+         mapping = generics
       c = 0
       for a in conn.atom:
-         st = "%6d  %-3s%12.6f%12.6f%12.6f%6d" % (
-            c+1,a.text_type,a.coord[0],a.coord[1],a.coord[2],generics[a.text_type])
+         st = "%6d  %-3s%12.6f%12.6f%12.6f%6s" % (
+            c+1,a.text_type,a.coord[0],a.coord[1],a.coord[2],
+            str(mapping[a.text_type]))
          for b in conn.bond[c]:
             idx = b.index[0]
             if idx == c:
@@ -71,7 +74,7 @@ class XYZ(Storage):
          c = c + 1
       return(list)
 
-#---------------------------------------------------------------------------------
+#----------------------------------------------------------------------------
    def updateFromList(self,model,list):
 
       c = 0

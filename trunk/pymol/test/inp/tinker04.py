@@ -22,14 +22,13 @@ s.echo = 0
 
 s.load_model(m)
 print " test: atom 0 position:",m.atom[0].coord
-s.energy()
+s.energy(kw=["debug\n"])
 
 print " test: energy is ->",s.energy
 
 for a in s.summary:
    print " test: summary ",a
 
-
-os.system("touch .no_fail tinker_*")
-os.system("/bin/rm .no_fail tinker_*")
+#os.system("touch .no_fail tinker_*")
+#os.system("/bin/rm .no_fail tinker_*")
 
