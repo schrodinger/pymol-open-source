@@ -245,7 +245,7 @@ PYMOL API
       else:
          try:
             lock()
-            _cmd.do("_ time.sleep(0.050);_cmd.quit()") # allow time for a graceful exit from the calling thread
+            _cmd.do("_ time.sleep(0.100);_cmd.quit()") # allow time for a graceful exit from the calling thread
             thread.exit()
          finally:
             unlock()
