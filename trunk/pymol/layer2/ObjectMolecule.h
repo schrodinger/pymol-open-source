@@ -133,7 +133,7 @@ typedef struct ObjectMoleculeOpRec {
 #include"CoordSet.h"
 
 int ObjectMoleculeNewFromPyList(PyObject *list,ObjectMolecule **result);
-PyObject *ObjectMoleculeGetPyList(ObjectMolecule *I);
+PyObject *ObjectMoleculeAsPyList(ObjectMolecule *I);
 int ObjectMoleculeGetSerial(ObjectMolecule *I);
 int ObjectMoleculeSetStateTitle(ObjectMolecule *I,int state,char *text);
 char *ObjectMoleculeGetStateTitle(ObjectMolecule *I,int state);

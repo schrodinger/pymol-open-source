@@ -41,7 +41,7 @@ int SettingSetGlobalsFromPyList(PyObject *list)
   CSetting *I=&Setting;
   if(list)
     if(PyList_Check(list)) 
-      ok = SettingSetPyList(I,list);
+      ok = SettingFromPyList(I,list);
   return(ok);
 }
 
@@ -49,7 +49,7 @@ PyObject *SettingGetGlobalsPyList(void)
 {
   PyObject *result = NULL;
   CSetting *I=&Setting;
-  result = SettingGetPyList(I);
+  result = SettingAsPyList(I);
   return(PConvAutoNone(result));
 }
 
@@ -89,7 +89,7 @@ static PyObject *get_list(CSetting *I,int index)
   return(PConvAutoNone(result));
 }
 
-PyObject *SettingGetPyList(CSetting *I)
+PyObject *SettingAsPyList(CSetting *I)
 {
   PyObject *result = NULL;
   int cnt = 0;
@@ -167,7 +167,7 @@ CSetting *SettingNewFromPyList(PyObject *list)
   return(I);
 }
 /*========================================================================*/
-int SettingSetPyList(CSetting *I,PyObject *list)
+int SettingFromPyList(CSetting *I,PyObject *list)
 {
   int ok=true;
   int size;

@@ -32,6 +32,115 @@ Z* -------------------------------------------------------------------
 static void ObjectCGOFree(ObjectCGO *I);
 CGO *ObjectCGOPyListFloatToCGO(PyObject *list);
 
+
+
+static PyObject *ObjectCGOStateAsPyList(ObjectCGOState *I)
+{
+  PyObject *result = NULL;
+
+  result = PyList_New(2);
+  if(I->std) 
+    PyList_SetItem(result,0,CGOAsPyList(I->std));
+  else
+    PyList_SetItem(result,0,PConvAutoNone(NULL));
+  if(I->ray) 
+    PyList_SetItem(result,1,CGOAsPyList(I->ray));
+  else
+    PyList_SetItem(result,1,PConvAutoNone(NULL));
+  return(PConvAutoNone(result));  
+}
+
+
+static PyObject *ObjectCGOAllStatesAsPyList(ObjectCGO *I)
+{
+  
+  PyObject *result=NULL;
+  int a;
+  result = PyList_New(I->NState);
+  for(a=0;a<I->NState;a++) {
+    PyList_SetItem(result,a,ObjectCGOStateAsPyList(I->State+a));
+  }
+  return(PConvAutoNone(result));  
+
+}
+
+static int ObjectCGOStateFromPyList(ObjectCGOState *I,PyObject *list)
+{
+  int ok=true;
+  PyObject *tmp;
+  if(ok) ok=(list!=NULL);
+  if(ok) ok=PyList_Check(list);
+  if(ok) {
+    tmp = PyList_GetItem(list,0);
+    if(tmp == Py_None)
+      I->std = NULL;
+    else 
+      ok = ((I->std=CGONewFromPyList(PyList_GetItem(list,0)))!=NULL);
+  }
+  if(ok) {
+    tmp = PyList_GetItem(list,0);
+    if(tmp == Py_None)
+      I->ray = NULL;
+    else 
+      ok = ((I->ray=CGONewFromPyList(PyList_GetItem(list,0)))!=NULL);
+  }
+  return(ok);
+}
+
+static int ObjectCGOAllStatesFromPyList(ObjectCGO *I,PyObject *list)
+{
+  int ok=true;
+  int a;
+  VLACheck(I->State,ObjectCGOState,I->NState);
+  if(ok) ok=PyList_Check(list);
+  if(ok) {
+    for(a=0;a<I->NState;a++) {
+      ok = ObjectCGOStateFromPyList(I->State+a,PyList_GetItem(list,a));
+      if(!ok) break;
+    }
+  }
+  return(ok);
+}
+
+int ObjectCGONewFromPyList(PyObject *list,ObjectCGO **result)
+{
+  int ok = true;
+  ObjectCGO *I=NULL;
+  (*result) = NULL;
+  if(ok) ok=(list!=Py_None);
+  if(ok) ok=PyList_Check(list);
+
+  I=ObjectCGONew();
+  if(ok) ok = (I!=NULL);
+
+  if(ok) ok = ObjectFromPyList(PyList_GetItem(list,0),&I->Obj);
+  if(ok) ok = PConvPyIntToInt(PyList_GetItem(list,1),&I->NState);
+  if(ok) ok = ObjectCGOAllStatesFromPyList(I,PyList_GetItem(list,2));
+  if(ok) {
+    (*result) = I;
+    ObjectCGORecomputeExtent(I);
+  } else {
+    /* cleanup? */
+  }
+  return(ok);
+}
+
+
+
+PyObject *ObjectCGOAsPyList(ObjectCGO *I)
+{
+  
+  PyObject *result=NULL;
+
+  result = PyList_New(3);
+  PyList_SetItem(result,0,ObjectAsPyList(&I->Obj));
+  PyList_SetItem(result,1,PyInt_FromLong(I->NState));
+  PyList_SetItem(result,2,ObjectCGOAllStatesAsPyList(I));
+
+  return(PConvAutoNone(result));  
+}
+
+
 /*========================================================================*/
 
 static void ObjectCGOFree(ObjectCGO *I) {

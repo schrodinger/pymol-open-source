@@ -33,6 +33,10 @@ Z* -------------------------------------------------------------------
 #include"Word.h"
 #include"Vector.h"
 
+#define cMapSourceUndefined 0
+#define cMapSourceXPLOR 1
+#define cMapSourceCCP4 2
+
 #ifdef _PYMOL_NUMPY
 typedef struct {
   PyObject_HEAD
@@ -46,6 +50,231 @@ typedef struct {
 #endif
 
 int ObjectMapNumPyArrayToMapState(ObjectMapState *I,PyObject *ary);
+
+static void ObjectMapStateRegeneratePoints(ObjectMapState *ms)
+{
+  int a,b,c,e;
+  float v[3],vr[3];
+  switch(ms->MapSource) {
+  case cMapSourceXPLOR:
+  case cMapSourceCCP4:
+    for(c=0;c<ms->FDim[2];c++)
+      {
+        v[2]=(c+ms->Min[2])/((float)ms->Div[2]);
+        for(b=0;b<ms->FDim[1];b++) {
+          v[1]=(b+ms->Min[1])/((float)ms->Div[1]);
+          for(a=0;a<ms->FDim[0];a++) {
+            v[0]=(a+ms->Min[0])/((float)ms->Div[0]);
+            transform33f3f(ms->Crystal->FracToReal,v,vr);
+            for(e=0;e<3;e++) 
+              F4(ms->Field->points,a,b,c,e) = vr[e];
+          }
+        }
+      }
+    break;
+  default: 
+    break;
+  }
+}
+
+static PyObject *ObjectMapStateAsPyList(ObjectMapState *I)
+{
+  PyObject *result = NULL;
+
+  result = PyList_New(15);
+  PyList_SetItem(result,0,PyInt_FromLong(I->Active));
+  if(I->Crystal) {
+    PyList_SetItem(result,1,CrystalAsPyList(I->Crystal));
+  } else {
+    PyList_SetItem(result,1,PConvAutoNone(Py_None));
+  }
+  if(I->Origin) {
+    PyList_SetItem(result,2,PConvFloatArrayToPyList(I->Origin,3));
+  } else {
+    PyList_SetItem(result,2,PConvAutoNone(Py_None));
+  }
+  if(I->Range) {
+    PyList_SetItem(result,3,PConvFloatArrayToPyList(I->Range,3));
+  } else {
+    PyList_SetItem(result,3,PConvAutoNone(Py_None));
+  }
+  if(I->Dim) {
+    PyList_SetItem(result,4,PConvIntArrayToPyList(I->Dim,3));
+  } else {
+    PyList_SetItem(result,4,PConvAutoNone(Py_None));
+  }
+  if(I->Grid) {
+    PyList_SetItem(result,5,PConvFloatArrayToPyList(I->Grid,3));
+  } else {
+    PyList_SetItem(result,5,PConvAutoNone(Py_None));
+  }
+  PyList_SetItem(result,6,PConvFloatArrayToPyList(&I->Corner[0][0],24));
+  PyList_SetItem(result,7,PConvFloatArrayToPyList(I->ExtentMin,3));
+  PyList_SetItem(result,8,PConvFloatArrayToPyList(I->ExtentMax,3));
+  PyList_SetItem(result,9,PyInt_FromLong(I->MapSource));
+
+  PyList_SetItem(result,10,PConvIntArrayToPyList(I->Div,3));
+  PyList_SetItem(result,11,PConvIntArrayToPyList(I->Min,3));
+  PyList_SetItem(result,12,PConvIntArrayToPyList(I->Max,3));
+  PyList_SetItem(result,13,PConvIntArrayToPyList(I->FDim,4));
+  
+  PyList_SetItem(result,14,IsosurfAsPyList(I->Field));
+#if 0
+  int Active;
+  CCrystal *Crystal;
+  int Div[3],Min[3],Max[3],FDim[4];
+  Isofield *Field;
+  float Corner[8][3];
+  int *Dim;
+  float *Origin;
+  float *Range;
+  float *Grid;
+  float ExtentMin[3],ExtentMax[3];
+#endif
+
+  return(PConvAutoNone(result));  
+}
+
+static PyObject *ObjectMapAllStatesAsPyList(ObjectMap *I)
+{
+  PyObject *result=NULL;
+  int a;
+  result = PyList_New(I->NState);
+  for(a=0;a<I->NState;a++) {
+    if(I->State[a].Active) {
+      PyList_SetItem(result,a,ObjectMapStateAsPyList(I->State+a));
+    } else {
+      PyList_SetItem(result,a,PConvAutoNone(NULL));
+    }
+  }
+  return(PConvAutoNone(result));  
+}
+
+static int ObjectMapStateFromPyList(ObjectMapState *I,PyObject *list)
+{
+  int ok=true;
+  PyObject *tmp;
+  if(ok) ok=(list!=NULL);
+  if(ok) {
+    if(!PyList_Check(list))
+      I->Active=false;
+    else {
+      if(ok) ok=PyList_Check(list);
+      if(ok) ok = PConvPyIntToInt(PyList_GetItem(list,0),&I->Active);
+      if(ok) {
+        tmp = PyList_GetItem(list,1);
+        if(tmp == Py_None)
+          I->Crystal = NULL;
+        else 
+          ok = ((I->Crystal=CrystalNewFromPyList(tmp))!=NULL);
+      }
+      if(ok) {
+        tmp = PyList_GetItem(list,2);
+        if(tmp == Py_None)
+          I->Origin = NULL;
+        else 
+          ok = PConvPyListToFloatArray(tmp,&I->Origin);
+      }
+      if(ok) {
+        tmp = PyList_GetItem(list,3);
+        if(tmp == Py_None)
+          I->Range = NULL;
+        else 
+          ok = PConvPyListToFloatArray(tmp,&I->Range);
+      }
+      if(ok) {
+        tmp = PyList_GetItem(list,4);
+        if(tmp == Py_None)
+          I->Dim = NULL;
+        else 
+          ok = PConvPyListToIntArray(tmp,&I->Dim);
+      }
+      if(ok) {
+        tmp = PyList_GetItem(list,5);
+        if(tmp == Py_None)
+          I->Grid = NULL;
+        else 
+          ok = PConvPyListToFloatArray(tmp,&I->Grid);
+      }
+      if(ok) ok = PConvPyListToFloatArrayInPlace(PyList_GetItem(list,6),&I->Corner[0][0],24);
+      if(ok) ok = PConvPyListToFloatArrayInPlace(PyList_GetItem(list,7),I->ExtentMin,3);
+      if(ok) ok = PConvPyListToFloatArrayInPlace(PyList_GetItem(list,8),I->ExtentMax,3);
+      if(ok) ok = PConvPyIntToInt(PyList_GetItem(list,9),&I->MapSource);
+      if(ok) ok = PConvPyListToIntArrayInPlace(PyList_GetItem(list,10),I->Div,3);
+      if(ok) ok = PConvPyListToIntArrayInPlace(PyList_GetItem(list,11),I->Min,3);
+      if(ok) ok = PConvPyListToIntArrayInPlace(PyList_GetItem(list,12),I->Max,3);
+      if(ok) ok = PConvPyListToIntArrayInPlace(PyList_GetItem(list,13),I->FDim,4);
+      if(ok) ok = ((I->Field=IsosurfNewFromPyList(PyList_GetItem(list,14)))!=NULL);
+      if(ok) ObjectMapStateRegeneratePoints(I);
+    }
+  }
+  return(ok);
+}
+
+static int ObjectMapAllStatesFromPyList(ObjectMap *I,PyObject *list)
+{
+  int ok=true;
+  int a;
+  VLACheck(I->State,ObjectMapState,I->NState);
+  if(ok) ok=PyList_Check(list);
+  if(ok) {
+    for(a=0;a<I->NState;a++) {
+      ok = ObjectMapStateFromPyList(I->State+a,PyList_GetItem(list,a));
+      if(!ok) break;
+    }
+  }
+  return(ok);
+}
+
+
+PyObject *ObjectMapAsPyList(ObjectMap *I)
+{
+  PyObject *result = NULL;
+
+  /* first, dump the atoms */
+
+  result = PyList_New(3);
+  PyList_SetItem(result,0,ObjectAsPyList(&I->Obj));
+  PyList_SetItem(result,1,PyInt_FromLong(I->NState));
+  PyList_SetItem(result,2,ObjectMapAllStatesAsPyList(I));
+
+  return(PConvAutoNone(result));  
+}
+
+int ObjectMapNewFromPyList(PyObject *list,ObjectMap **result)
+{
+  int ok = true;
+  ObjectMap *I=NULL;
+  (*result) = NULL;
+  
+  if(ok) ok=(list!=NULL);
+  if(ok) ok=PyList_Check(list);
+
+  I=ObjectMapNew();
+  if(ok) ok = (I!=NULL);
+
+  if(ok) ok = ObjectFromPyList(PyList_GetItem(list,0),&I->Obj);
+  if(ok) ok = PConvPyIntToInt(PyList_GetItem(list,1),&I->NState);
+  if(ok) ok = ObjectMapAllStatesFromPyList(I,PyList_GetItem(list,2));
+  if(ok) {
+    (*result) = I;
+    ObjectMapUpdateExtents(I);
+  } else {
+    /* cleanup? */
+  }
+
+  return(ok);
+}
+
+
+ObjectMapState *ObjectMapGetState(ObjectMap *I,int state)
+{
+  ObjectMapState *result = NULL;
+
+  if(state<I->NState)
+    result = &I->State[state];
+  return(result);
+}
 
 ObjectMapState *ObjectMapStatePrime(ObjectMap *I,int state)
 {
@@ -75,26 +304,6 @@ ObjectMapState *ObjectMapStateGetActive(ObjectMap *I,int state)
 }
 
 
-
-/*
-  int ObjectMapNewFromPyList(PyObject *list,ObjectMolecule **result)
-  {
-  int ok = true;
-  ObjectMolecule *I=NULL;
-  (*result) = NULL;
-  
-  if(ok) ok=PyList_Check(list);
-
-  I=ObjectMapNew();
-  if(ok) ok = (I!=NULL);
-
-  if(ok) ok = ObjectSetPyList(PyList_GetItem(list,0),&I->Obj);
-
-  if(ok) ok = PConvPyIntToInt(PyList_GetItem(list,1),&I->NState);
-  return(ok);
-}
-*/
-
 void ObjectMapUpdateExtents(ObjectMap *I)
 {
   int a;
@@ -113,6 +322,7 @@ void ObjectMapUpdateExtents(ObjectMap *I)
       }
   }
 }
+
 int ObjectMapStateSetBorder(ObjectMapState *I,float level)
 {
   int result = false;
@@ -663,6 +873,9 @@ int ObjectMapCCP4StrToMap(ObjectMap *I,char *CCP4Str,int bytes,int state) {
     CrystalDump(ms->Crystal);
     fflush(stdout);
     ms->Field=IsosurfFieldAlloc(ms->FDim);
+    ms->MapSource = cMapSourceCCP4;
+    ms->Field->save_points=false;
+
     for(cc[maps]=0;cc[maps]<ms->FDim[maps];cc[maps]++)
       {
         v[maps]=(cc[maps]+ms->Min[maps])/((float)ms->Div[maps]);
@@ -717,7 +930,6 @@ int ObjectMapCCP4StrToMap(ObjectMap *I,char *CCP4Str,int bytes,int state) {
     v[0]=((ms->FDim[0]-1)+ms->Min[0])/((float)ms->Div[0]);
     
     transform33f3f(ms->Crystal->FracToReal,v,ms->ExtentMax);
-    ObjectMapUpdateExtents(I);
   }
 #ifdef _UNDEFINED
   printf("%d %d %d %d %d %d %d %d %d\n",
@@ -737,6 +949,7 @@ int ObjectMapCCP4StrToMap(ObjectMap *I,char *CCP4Str,int bytes,int state) {
     ErrMessage("ObjectMap","Error reading map");
   } else {
     ms->Active=true;
+    ObjectMapUpdateExtents(I);
     printf(" ObjectMap: Map Read.  Range = %5.3f to %5.3f\n",mind,maxd);
   }
   return(ok);
@@ -809,6 +1022,7 @@ int ObjectMapXPLORStrToMap(ObjectMap *I,char *XPLORStr,int state) {
     ok=false;
   }
   if(ok) {
+    
     ms->FDim[0]=ms->Max[0]-ms->Min[0]+1;
     ms->FDim[1]=ms->Max[1]-ms->Min[1]+1;
     ms->FDim[2]=ms->Max[2]-ms->Min[2]+1;
@@ -818,6 +1032,8 @@ int ObjectMapXPLORStrToMap(ObjectMap *I,char *XPLORStr,int state) {
     else {
       CrystalUpdate(ms->Crystal);
       ms->Field=IsosurfFieldAlloc(ms->FDim);
+      ms->MapSource = cMapSourceXPLOR;
+      ms->Field->save_points=false;
       for(c=0;c<ms->FDim[2];c++)
         {
           v[2]=(c+ms->Min[2])/((float)ms->Div[2]);
@@ -876,7 +1092,6 @@ int ObjectMapXPLORStrToMap(ObjectMap *I,char *XPLORStr,int state) {
     v[0]=((ms->FDim[0]-1)+ms->Min[0])/((float)ms->Div[0]);
 
     transform33f3f(ms->Crystal->FracToReal,v,ms->ExtentMax);
-    ObjectMapUpdateExtents(I);
 
   }
 #ifdef _UNDEFINED
@@ -897,6 +1112,7 @@ int ObjectMapXPLORStrToMap(ObjectMap *I,char *XPLORStr,int state) {
     ErrMessage("ObjectMap","Error reading map");
   } else {
     ms->Active=true;
+    ObjectMapUpdateExtents(I);
     printf(" ObjectMap: Map Read.  Range = %5.3f to %5.3f\n",mind,maxd);
   }
     
@@ -1216,7 +1432,6 @@ ObjectMap *ObjectMapLoadChemPyBrick(ObjectMap *I,PyObject *Map,
         if(tmp) {
 
           ObjectMapNumPyArrayToMapState(ms,tmp);	 
-          ObjectMapUpdateExtents(I);
 
           Py_DECREF(tmp);
         } else
@@ -1225,8 +1440,11 @@ ObjectMap *ObjectMapLoadChemPyBrick(ObjectMap *I,PyObject *Map,
       }
     SceneChanged();
     SceneCountFrames();
-    if(ok)
+    if(ok) {
       ms->Active=true;
+      ObjectMapUpdateExtents(I);
+          
+    }
   }
   return(I);
 }
@@ -1372,7 +1590,6 @@ ObjectMap *ObjectMapLoadChemPyMap(ObjectMap *I,PyObject *Map,
       v[0]=((ms->FDim[0]-1)+ms->Min[0])/((float)ms->Div[0]);
       
       transform33f3f(ms->Crystal->FracToReal,v,ms->ExtentMax);
-      ObjectMapUpdateExtents(I);
 
     }
 
@@ -1380,6 +1597,7 @@ ObjectMap *ObjectMapLoadChemPyMap(ObjectMap *I,PyObject *Map,
       ErrMessage("ObjectMap","Error reading map");
     } else {
       ms->Active=true;
+      ObjectMapUpdateExtents(I);
 		if(Feedback(FB_ObjectMap,FB_Actions)) {
         printf(" ObjectMap: Map Read.  Range = %5.3f to %5.3f\n",mind,maxd);
       }

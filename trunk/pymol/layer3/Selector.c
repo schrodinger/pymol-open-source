@@ -277,7 +277,7 @@ int SelectorWalkTree(int *atom,int *comp,int *toDo,int **stk,
                      int stkDepth,ObjectMolecule *obj,int sele1,int sele2);
 
 
-PyObject *SelectorGetPyList(int sele1)
+PyObject *SelectorAsPyList(int sele1)
 {
   SelectorType *I=&Selector;
   int a,b;
@@ -351,7 +351,7 @@ PyObject *SelectorGetPyList(int sele1)
 }
 
 
-int SelectorSetPyList(char *name,PyObject *list)
+int SelectorFromPyList(char *name,PyObject *list)
 {
   int ok=true;
   SelectorType *I=&Selector;

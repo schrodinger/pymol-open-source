@@ -127,10 +127,22 @@ static PyObject *ExecutiveGetExecObject(SpecRec *rec)
   PyList_SetItem(result,4,PyInt_FromLong(rec->obj->type));
   switch(rec->obj->type) {
   case cObjectMolecule:
-    PyList_SetItem(result,5,ObjectMoleculeGetPyList((ObjectMolecule*)rec->obj));
+    PyList_SetItem(result,5,ObjectMoleculeAsPyList((ObjectMolecule*)rec->obj));
     break;
   case cObjectDist:
-    PyList_SetItem(result,5,ObjectDistGetPyList((ObjectDist*)rec->obj));
+    PyList_SetItem(result,5,ObjectDistAsPyList((ObjectDist*)rec->obj));
+    break;
+  case cObjectMap:
+    PyList_SetItem(result,5,ObjectMapAsPyList((ObjectMap*)rec->obj));
+    break;
+  case cObjectMesh:
+    PyList_SetItem(result,5,ObjectMeshAsPyList((ObjectMesh*)rec->obj));
+    break;
+  case cObjectSurface:
+    PyList_SetItem(result,5,ObjectSurfaceAsPyList((ObjectSurface*)rec->obj));
+    break;
+  case cObjectCGO:
+    PyList_SetItem(result,5,ObjectCGOAsPyList((ObjectCGO*)rec->obj));
     break;
   default: 
     PyList_SetItem(result,5,PConvAutoNone(NULL));
@@ -174,9 +186,24 @@ static int ExecutiveSetNamedEntries(PyObject *names)
         case cObjectDist:
           if(ok) ok = ObjectDistNewFromPyList(PyList_GetItem(cur,5),(ObjectDist**)&rec->obj);
           break;
+        case cObjectMap:
+          if(ok) ok = ObjectMapNewFromPyList(PyList_GetItem(cur,5),(ObjectMap**)&rec->obj);
+          break;
+        case cObjectMesh:
+          if(ok) ok = ObjectMeshNewFromPyList(PyList_GetItem(cur,5),(ObjectMesh**)&rec->obj);
+          break;
+        case cObjectSurface:
+          if(ok) ok = ObjectSurfaceNewFromPyList(PyList_GetItem(cur,5),(ObjectSurface**)&rec->obj);
+          break;
+        case cObjectCGO:
+          if(ok) ok = ObjectCGONewFromPyList(PyList_GetItem(cur,5),(ObjectCGO**)&rec->obj);
+          break;
+        default:
+          ok=false;
+          break;
         }
         break;
-      case cExecSelection: /* on the first past, just create an entry in the rec list */
+      case cExecSelection: /* on the first pass, just create an entry in the rec list */
         rec->sele_color=extra_int;
         break;
       }
@@ -227,7 +254,7 @@ static int ExecutiveSetSelections(PyObject *names)
       if(ok) ok = PConvPyIntToInt(PyList_GetItem(cur,4),&extra);
       switch(rec->type) {
       case cExecSelection:
-        ok = SelectorSetPyList(rec->name,PyList_GetItem(cur,5));
+        ok = SelectorFromPyList(rec->name,PyList_GetItem(cur,5));
         break;
       }
       ListElemFree(rec);
@@ -250,7 +277,7 @@ static PyObject *ExecutiveGetExecSelePyList(SpecRec *rec)
     PyList_SetItem(result,2,PyInt_FromLong(rec->visible));
     PyList_SetItem(result,3,PConvIntArrayToPyList(rec->repOn,cRepCnt));
     PyList_SetItem(result,4,PyInt_FromLong(-1));
-    PyList_SetItem(result,5,SelectorGetPyList(sele));
+    PyList_SetItem(result,5,SelectorAsPyList(sele));
   }
   return(PConvAutoNone(result));
 }
@@ -295,6 +322,7 @@ PyObject *ExecutiveGetSession(void)
   result = PyDict_New();
   PyDict_SetItemString(result,"names",ExecutiveGetNamedEntries());
   PyDict_SetItemString(result,"settings",SettingGetGlobalsPyList());
+  PyDict_SetItemString(result,"colors",ColorAsPyList());
   SceneGetView(sv);
   PyDict_SetItemString(result,"view",PConvFloatArrayToPyList(sv,cSceneViewSize));
   return(result);
@@ -308,7 +336,18 @@ int ExecutiveSetSession(PyObject *session)
   SceneViewType sv;
 
   ExecutiveDelete("all");
+  ColorReset();
   if(ok) ok = PyDict_Check(session);
+  if(ok) {
+    tmp = PyDict_GetItemString(session,"colors");
+    if(tmp) 
+      ok = ColorFromPyList(tmp);
+  }
+  if(ok) {
+    tmp = PyDict_GetItemString(session,"settings");
+    if(tmp) 
+      ok = SettingSetGlobalsFromPyList(tmp);
+  }
   if(ok) {
     tmp = PyDict_GetItemString(session,"names");
     if(tmp) {
@@ -316,11 +355,6 @@ int ExecutiveSetSession(PyObject *session)
       if(ok) ok=ExecutiveSetSelections(tmp);
         
     }
-  }
-  if(ok) {
-    tmp = PyDict_GetItemString(session,"settings");
-    if(tmp) 
-      ok = SettingSetGlobalsFromPyList(tmp);
   }
   if(ok) {
     tmp = PyDict_GetItemString(session,"view");
@@ -3291,8 +3325,14 @@ int ExecutiveGetExtent(char *name,float *mn,float *mx,int transformed,int state)
           copy3f(obj->ExtentMin,op.v1);
           copy3f(obj->ExtentMax,op.v2);
           flag = true;
-          break;
+        } else {
+
+          PRINTFD(FB_Executive)
+            " ExecutiveGetExtent: no extent for object %s\n",obj->Name
+            ENDFD;
+          
         }
+        break;
       }
     }
   }
@@ -3935,6 +3975,18 @@ CObject *ExecutiveFindObjectByName(char *name)
 	 }
   return(obj);
 }
+/*========================================================================*/
+ObjectMap *ExecutiveFindObjectMapByName(char *name)
+{
+  CObject *obj;
+  
+  obj = ExecutiveFindObjectByName(name);
+  if(obj)
+    if(obj->type!=cObjectMap)
+      obj=NULL;
+  return((ObjectMap*)obj);
+}
+
 /*========================================================================*/
 ObjectMolecule *ExecutiveFindObjectMoleculeByName(char *name)
 {

@@ -27,6 +27,7 @@ typedef struct ObjectMapState {
   int Active;
   CCrystal *Crystal;
   int Div[3],Min[3],Max[3],FDim[4];
+  int MapSource;
   Isofield *Field;
   float Corner[8][3];
   int *Dim;
@@ -80,6 +81,10 @@ ObjectMapState *ObjectMapStatePrime(ObjectMap *I,int state);
 ObjectMapState *ObjectMapStateGetActive(ObjectMap *I,int state);
 int ObjectMapGetNStates(ObjectMap *I);
 void ObjectMapUpdateExtents(ObjectMap *I);
+ObjectMapState *ObjectMapGetState(ObjectMap *I,int state);
+
+PyObject *ObjectMapAsPyList(ObjectMap *I);
+int ObjectMapNewFromPyList(PyObject *list,ObjectMap **result);
 
 #endif
 

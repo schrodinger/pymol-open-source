@@ -31,7 +31,7 @@ typedef struct ObjectDist {
 ObjectDist *ObjectDistNewFromSele(int sele1,int sele2,int mode,float cutoff,float *result);
 ObjectDist *ObjectDistNew(void);
 void ObjectDistInvalidateRep(ObjectDist *I,int rep);
-PyObject *ObjectDistGetPyList(ObjectDist *I);
+PyObject *ObjectDistAsPyList(ObjectDist *I);
 int ObjectDistNewFromPyList(PyObject *list,ObjectDist **result);
 
 #endif

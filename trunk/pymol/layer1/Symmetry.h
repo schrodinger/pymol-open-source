@@ -37,8 +37,8 @@ CSymmetry *SymmetryNew(void);
 void SymmetryUpdate(CSymmetry *I);
 void SymmetryDump(CSymmetry *I);
 CSymmetry *SymmetryCopy(CSymmetry *other);
-PyObject *SymmetryGetPyList(CSymmetry *I);
-int SymmetrySetPyList(CSymmetry *I,PyObject *list);
+PyObject *SymmetryAsPyList(CSymmetry *I);
+int SymmetryFromPyList(CSymmetry *I,PyObject *list);
 CSymmetry *SymmetryNewFromPyList(PyObject *list);
 void SymmetryReset(CSymmetry *I);
 

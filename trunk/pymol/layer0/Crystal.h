@@ -38,8 +38,8 @@ void CrystalUpdate(CCrystal *I);
 void CrystalDump(CCrystal *I);
 CGO *CrystalGetUnitCellCGO(CCrystal *I);
 CCrystal *CrystalNewFromPyList(PyObject *list);
-int CrystalSetPyList(CCrystal *I,PyObject *list);
-PyObject *CrystalGetPyList(CCrystal *I);
+int CrystalFromPyList(CCrystal *I,PyObject *list);
+PyObject *CrystalAsPyList(CCrystal *I);
 
 #endif
 

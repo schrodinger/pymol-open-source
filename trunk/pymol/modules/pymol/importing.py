@@ -28,6 +28,7 @@ except ImportError:
    m4x = None
 
 from chempy.sdf import SDF,SDFRec
+from chempy import io
 
 class loadable:
    pdb = 0
@@ -52,6 +53,7 @@ class loadable:
    trj = 22      # AMBER trajectory
    crd = 23      # AMBER coordinate
    rst = 24      # AMBER restart
+   pse = 25      # PyMOL session
    
 loadable_sc = Shortcut(loadable.__dict__.keys()) 
 
@@ -352,6 +354,8 @@ SEE ALSO
             ftype = loadable.crd
          elif re.search("\.rst$",filename,re.I):
             ftype = loadable.crd
+         elif re.search("\.pse$",filename,re.I):
+            ftype = loadable.pse
          else:
             ftype = loadable.pdb # default is PDB
       elif cmd.is_string(type):
@@ -402,6 +406,12 @@ SEE ALSO
          else:
             print " Error: CEX format not currently supported"
             raise QuietException
+
+# special handling of pse files
+
+      if ftype == loadable.pse:
+         ftype = -1
+         cmd.set_session(io.pkl.fromFile(filename))
          
 # standard file handling
 

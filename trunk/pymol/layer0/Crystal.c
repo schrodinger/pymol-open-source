@@ -32,7 +32,7 @@ CCrystal *CrystalNewFromPyList(PyObject *list)
   CCrystal *I=NULL;
   I=CrystalNew();
   if(I) {
-    if(!CrystalSetPyList(I,list)) {
+    if(!CrystalFromPyList(I,list)) {
       CrystalFree(I);
       I=NULL;
     }
@@ -40,7 +40,7 @@ CCrystal *CrystalNewFromPyList(PyObject *list)
   return(I);
 }
 
-PyObject *CrystalGetPyList(CCrystal *I)
+PyObject *CrystalAsPyList(CCrystal *I)
 {
   
   PyObject *result = NULL;
@@ -53,7 +53,7 @@ PyObject *CrystalGetPyList(CCrystal *I)
   return(PConvAutoNone(result));
 }
 
-int CrystalSetPyList(CCrystal *I,PyObject *list)
+int CrystalFromPyList(CCrystal *I,PyObject *list)
 {
   int ok=true;
   if(ok) ok = (I!=NULL);

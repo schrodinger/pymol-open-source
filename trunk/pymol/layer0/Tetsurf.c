@@ -543,15 +543,15 @@ int	TetsurfAlloc(void)
      dim4[a]=CurDim[a];
    dim4[3]=3;
    
-	VertexCodes=FieldNew(CurDim,3,sizeof(int));
+	VertexCodes=FieldNew(CurDim,3,sizeof(int),cFieldInt);
 	ErrChkPtr(VertexCodes);
-	ActiveEdges=FieldNew(CurDim,3,sizeof(int));
+	ActiveEdges=FieldNew(CurDim,3,sizeof(int),cFieldInt);
 	ErrChkPtr(ActiveEdges);
 
 
    
    dim4[3]=7; /* seven different ways now... */
-	Point=FieldNew(dim4,4,sizeof(PointType));
+	Point=FieldNew(dim4,4,sizeof(PointType),cFieldOther);
 	ErrChkPtr(Point);
 
    Tri = VLAlloc(TriangleType,50000);

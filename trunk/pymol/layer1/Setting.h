@@ -103,8 +103,8 @@ int SettingSetNamed(char *name,char *value);
 float SettingGetNamed(char *name);
 int SettingGetName(int index,SettingName name);
 
-PyObject *SettingGetPyList(CSetting *I);
-int SettingSetPyList(CSetting *I,PyObject *list);
+PyObject *SettingAsPyList(CSetting *I);
+int SettingFromPyList(CSetting *I,PyObject *list);
 int SettingSetGlobalsFromPyList(PyObject *list);
 PyObject *SettingGetGlobalsPyList(void);
 CSetting *SettingNewFromPyList(PyObject *list);

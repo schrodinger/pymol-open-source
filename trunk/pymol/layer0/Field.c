@@ -16,9 +16,88 @@ Z* -------------------------------------------------------------------
 
 #include"os_predef.h"
 #include"os_std.h"
+#include"Base.h"
+
 #include"OOMac.h"
+#include"PConv.h"
 
 #include"Field.h"
+
+PyObject *FieldAsPyList(CField *I)
+{
+ PyObject *result = NULL;
+ int n_elem;
+
+  /* first, dump the atoms */
+
+  result = PyList_New(7);
+  PyList_SetItem(result,0,PyInt_FromLong(I->type));
+  PyList_SetItem(result,1,PyInt_FromLong(I->n_dim));
+  PyList_SetItem(result,2,PyInt_FromLong(I->base_size));
+  PyList_SetItem(result,3,PyInt_FromLong(I->size));
+  PyList_SetItem(result,4,PConvIntArrayToPyList(I->dim,I->n_dim));
+  PyList_SetItem(result,5,PConvIntArrayToPyList(I->stride,I->n_dim));
+  n_elem = I->size/I->base_size;
+  switch(I->type) {
+  case cFieldInt:
+    PyList_SetItem(result,6,PConvIntArrayToPyList((int*)I->data,n_elem));
+    break;
+  case cFieldFloat:
+    PyList_SetItem(result,6,PConvFloatArrayToPyList((float*)I->data,n_elem));
+    break;
+  default:
+    PyList_SetItem(result,6,PConvAutoNone(Py_None));
+    break;
+  }
+
+#if 0
+  int type;
+  char *data;
+  unsigned int *dim;
+  unsigned int *stride;
+  int n_dim;
+  unsigned int size;
+  unsigned int base_size;
+#endif
+
+  return(PConvAutoNone(result));  
+}
+
+CField *FieldNewFromPyList(PyObject *list)
+{
+  int ok=true;
+  unsigned int n_elem;
+  OOAlloc(CField);
+
+  if(ok) ok=(list!=NULL);
+  if(ok) ok=PyList_Check(list);
+  if(ok) ok=PConvPyIntToInt(PyList_GetItem(list,0),&I->type);
+  if(ok) ok=PConvPyIntToInt(PyList_GetItem(list,1),&I->n_dim);
+  if(ok) ok=PConvPyIntToInt(PyList_GetItem(list,2),&I->base_size);
+  if(ok) ok=PConvPyIntToInt(PyList_GetItem(list,3),&I->size);
+  if(ok) ok=PConvPyListToIntArray(PyList_GetItem(list,4),(int**)&I->dim);
+  if(ok) ok=PConvPyListToIntArray(PyList_GetItem(list,5),(int**)&I->stride);
+
+  if(ok) {
+    n_elem = I->size/I->base_size;
+    switch(I->type) {
+    case cFieldInt:
+      ok=PConvPyListToIntArray(PyList_GetItem(list,6),(int**)&I->data);
+      break;
+    case cFieldFloat:
+      ok=PConvPyListToFloatArray(PyList_GetItem(list,6),(float**)&I->data);
+      break;
+    default:
+      I->data=(char*)mmalloc(I->size);
+      break;
+    }
+  }
+  if(!ok) {
+    OOFreeP(I);
+    I=NULL;
+  }
+  return(I);
+}
 
 float FieldInterpolatef(CField *I,int a,int b,int c,float x,float y,float z)
 {
@@ -47,13 +126,14 @@ void FieldZero(CField *I)
   MemoryZero(p,q);
 }
 
-CField *FieldNew(int *dim,int n_dim,unsigned int base_size)
+CField *FieldNew(int *dim,int n_dim,unsigned int base_size,int type)
 {
   unsigned int stride;
   int a;
 
   OOAlloc(CField);
-  
+  I->type=type;
+  I->base_size=base_size;
   I->stride=(unsigned int*)Alloc(int,n_dim);
   I->dim=(unsigned int*)Alloc(int,n_dim);
   

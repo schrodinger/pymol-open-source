@@ -23,8 +23,78 @@ Z* -------------------------------------------------------------------
 #include"Word.h"
 
 #include"Color.h"
+#include"PConv.h"
 
 CColor Color;
+
+
+
+/*========================================================================*/
+PyObject *ColorAsPyList()
+{
+  CColor *I=&Color;
+  PyObject *result,*list;
+  ColorRec *color;
+  int n_custom=0;
+  int a,c;
+  color=I->Color;
+  for(a=0;a<I->NColor;a++) {
+    if(color->Custom)
+      n_custom++;
+    color++;
+  }
+  result = PyList_New(n_custom);
+  c=0;
+  color=I->Color;
+  for(a=0;a<I->NColor;a++) {
+    if(color->Custom) {
+      list = PyList_New(3);
+      PyList_SetItem(list,0,PyString_FromString(color->Name));
+      PyList_SetItem(list,1,PyInt_FromLong(a));
+      PyList_SetItem(list,2,PConvFloatArrayToPyList(color->Color,3));
+      PyList_SetItem(result,c,list);
+      c++;
+    }
+    color++;
+  }
+  return(result);
+}
+
+/*========================================================================*/
+int ColorFromPyList(PyObject *list)
+{
+  int n_custom=0;
+  int a;
+  int index=0;
+  int ok=true;
+  CColor *I=&Color;
+  PyObject *rec;
+  ColorRec *color;
+  if(ok) ok=(list!=Py_None);
+  if(ok) ok=PyList_Check(list);
+  if(ok) {
+    n_custom=PyList_Size(list);
+    for(a=0;a<n_custom;a++) {
+      rec=PyList_GetItem(list,a);
+      if(ok) ok=(rec!=NULL);
+      if(ok) ok=PyList_Check(rec);
+      if(ok) ok=PConvPyIntToInt(PyList_GetItem(rec,1),&index);
+      if(ok) {
+        if(index>=I->NColor) {
+          VLACheck(I->Color,ColorRec,index); /* auto-zeros */
+          I->NColor=index+1;
+        }
+        color=I->Color+index;
+        if(ok) ok=PConvPyStrToStr(PyList_GetItem(rec,0),color->Name,sizeof(ColorName));
+        if(ok) ok=PConvPyListToFloatArrayInPlace(PyList_GetItem(rec,2),color->Color,3);
+        if(ok) {color->Custom=true;}
+      }
+      if(!ok) break;
+    }
+  }
+  return(ok);
+}
+
 /*========================================================================*/
 void ColorDef(char *name,float *v)
 {
@@ -55,6 +125,7 @@ void ColorDef(char *name,float *v)
   I->Color[color].Color[0]=v[0];
   I->Color[color].Color[1]=v[1];
   I->Color[color].Color[2]=v[2];
+  I->Color[color].Custom=true;
   PRINTFB(FB_Executive,FB_Actions)
     " Color: \"%s\" defined as [ %3.1f, %3.1f, %3.1f ].\n",name,v[0],v[1],v[2] 
     ENDFB;
@@ -136,7 +207,7 @@ void ColorFree(void)
 }
 
 /*========================================================================*/
-void ColorInit(void)
+void ColorReset(void)
 {
   CColor *I=&Color;
   int a;
@@ -158,7 +229,6 @@ void ColorInit(void)
     { 1.0, 0.0, 0.5 }
   };
 
-  I->Color=VLAlloc(ColorRec,2500);
   I->NColor=0;
 
   strcpy(I->Color[I->NColor].Name,"white");
@@ -509,6 +579,20 @@ void ColorInit(void)
 
     I->NColor++;
   }
+  for(a=0;a<I->NColor;a++) {
+    I->Color[a].Custom=false;
+  }
+
+}
+
+/*========================================================================*/
+void ColorInit(void)
+{
+  CColor *I=&Color;
+
+  I->Color=VLAMalloc(2500,sizeof(ColorRec),5,true);
+  I->NColor=0;
+  ColorReset();
 
 }
 

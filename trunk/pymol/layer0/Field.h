@@ -16,14 +16,20 @@ Z* -------------------------------------------------------------------
 #ifndef _H_Field
 #define _H_Field
 
+#include"os_python.h"
+
 #define cFieldFloat 0
+#define cFieldInt 1
+#define cFieldOther 2
 
 typedef struct {
+  int type;
   char *data;
   unsigned int *dim;
   unsigned int *stride;
   int n_dim;
   unsigned int size;
+  unsigned int base_size;
 } CField;
 
 #define Ffloat3(f,a,b,c) (*((float*)((f)->data + \
@@ -78,10 +84,12 @@ typedef struct {
                                      (c)*(f)->stride[2] + \
                                      (d)*(f)->stride[3]))
 
-CField *FieldNew(int *dim,int n_dim,unsigned int base_size);
+CField *FieldNew(int *dim,int n_dim,unsigned int base_size,int type);
 void FieldZero(CField *I);
 void FieldFree(CField *I);
 float FieldInterpolatef(CField *I,int a,int b,int c,float x,float y,float z);
 
+PyObject *FieldAsPyList(CField *I);
+CField *FieldNewFromPyList(PyObject *list);
 
 #endif

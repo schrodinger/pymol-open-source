@@ -57,14 +57,14 @@ void ObjectDistUpdateExtents(ObjectDist *I)
 
 
 
-static PyObject *ObjectDistGetDSetPyList(ObjectDist *I)
+static PyObject *ObjectDistDSetAsPyList(ObjectDist *I)
 {
   PyObject *result = NULL;
   int a;
   result = PyList_New(I->NDSet);
   for(a=0;a<I->NDSet;a++) {
     if(I->DSet[a]) {
-      PyList_SetItem(result,a,DistSetGetPyList(I->DSet[a]));
+      PyList_SetItem(result,a,DistSetAsPyList(I->DSet[a]));
     } else {
       PyList_SetItem(result,a,Py_None);
       Py_INCREF(Py_None);
@@ -73,7 +73,7 @@ static PyObject *ObjectDistGetDSetPyList(ObjectDist *I)
   return(PConvAutoNone(result));
 }
 
-static int ObjectDistSetDSetPyList(ObjectDist *I,PyObject *list)
+static int ObjectDistDSetFromPyList(ObjectDist *I,PyObject *list)
 {
   int ok=true;
   int a;
@@ -81,54 +81,23 @@ static int ObjectDistSetDSetPyList(ObjectDist *I,PyObject *list)
   if(ok) {
     VLACheck(I->DSet,DistSet*,I->NDSet);
     for(a=0;a<I->NDSet;a++) {
-      if(ok) ok = DistSetSetPyList(PyList_GetItem(list,a),&I->DSet[a]);
+      if(ok) ok = DistSetFromPyList(PyList_GetItem(list,a),&I->DSet[a]);
       if(ok) I->DSet[a]->Obj = I;
     }
   }
   return(ok);
 }
-
-/*static PyObject *ObjectDistGetAtomPyList(ObjectDist *I)
-{
-  PyObject *result = NULL;
-  AtomInfoType *ai;
-  int a;
-
-  result = PyList_New(I->NAtom);  
-  ai = I->AtomInfo;
-  for(a=0;a<I->NAtom;a++) {
-    PyList_SetItem(result,a,AtomInfoGetPyList(ai));
-    ai++;
-  }
-  return(PConvAutoNone(result));
-}
-
-static int ObjectDistSetAtomPyList(ObjectDist *I,PyObject *list) 
-{
-  int ok=true;
-  int a;
-  AtomInfoType *ai;
-  if(ok) ok=PyList_Check(list);  
-  VLACheck(I->AtomInfo,AtomInfoType,I->NAtom+1);
-  ai = I->AtomInfo;
-  for(a=0;a<I->NAtom;a++) {
-    if(ok) ok = AtomInfoSetPyList(ai,PyList_GetItem(list,a));
-    ai++;
-  }
-  return(ok);
-}
-*/
 /*========================================================================*/
-PyObject *ObjectDistGetPyList(ObjectDist *I)
+PyObject *ObjectDistAsPyList(ObjectDist *I)
 {
   PyObject *result = NULL;
 
   /* first, dump the atoms */
 
   result = PyList_New(4);
-  PyList_SetItem(result,0,ObjectGetPyList(&I->Obj));
+  PyList_SetItem(result,0,ObjectAsPyList(&I->Obj));
   PyList_SetItem(result,1,PyInt_FromLong(I->NDSet));
-  PyList_SetItem(result,2,ObjectDistGetDSetPyList(I));
+  PyList_SetItem(result,2,ObjectDistDSetAsPyList(I));
   PyList_SetItem(result,3,PyInt_FromLong(I->CurDSet));
 
 #if 0
@@ -154,9 +123,9 @@ int ObjectDistNewFromPyList(PyObject *list,ObjectDist **result)
   I=ObjectDistNew();
   if(ok) ok = (I!=NULL);
 
-  if(ok) ok = ObjectSetPyList(PyList_GetItem(list,0),&I->Obj);
+  if(ok) ok = ObjectFromPyList(PyList_GetItem(list,0),&I->Obj);
   if(ok) ok = PConvPyIntToInt(PyList_GetItem(list,1),&I->NDSet);
-  if(ok) ok = ObjectDistSetDSetPyList(I,PyList_GetItem(list,2));
+  if(ok) ok = ObjectDistDSetFromPyList(I,PyList_GetItem(list,2));
   if(ok) ok = PConvPyIntToInt(PyList_GetItem(list,3),&I->CurDSet);
   
   ObjectDistInvalidateRep(I,cRepAll);

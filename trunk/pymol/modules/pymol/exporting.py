@@ -112,6 +112,8 @@ SEE ALSO
          format = 'mmod'
       elif re.search("\.pmo$",filename):
          format = 'pmo'
+      elif re.search("\.pse$",filename):
+         format = 'pse'
    else:
       format = str(format)
    filename = os.path.expanduser(filename)
@@ -133,6 +135,9 @@ SEE ALSO
       print " Save: wrote \""+filename+"\"."
    elif format=='pkla': # ascii override
       io.pkl.toFile(cmd.get_model(selection),filename,bin=0)
+      print " Save: wrote \""+filename+"\"."
+   elif format=='pse': # PyMOL session
+      io.pkl.toFile(cmd.get_session(),filename)
       print " Save: wrote \""+filename+"\"."
    elif format=='mmod': # macromodel
       io.mmd.toFile(cmd.get_model(selection),filename)
