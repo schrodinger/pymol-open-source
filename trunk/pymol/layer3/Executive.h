@@ -40,6 +40,7 @@ void ExecutiveSetRepVisib(char *name,int rep,int state);
 void ExecutiveSetObjVisib(char *name,int state);
 void ExecutiveCenter(char *name,int preserve);
 void ExecutiveWindowZoom(char *name);
+void ExecutiveGetMoment(char *name,Matrix33f mi);
 
 
 #endif

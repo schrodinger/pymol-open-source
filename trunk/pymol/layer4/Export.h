@@ -32,14 +32,14 @@ typedef char ExportAtomType[5];
 typedef struct { 
   Export export;
   float *point;
+  float *normal;
   float *area;
   int *type;
+  int *flag;
   int nPoint;
 } ExportDotsObj;
 
 void ExportDeleteMDebug(struct Export *ex); /* for mmalloc/mfree blocks */
-
-void ExportDeletePyMem(struct Export *ex); /* for PyMemory blocks  */
 
 ExportDotsObj *ExportDots(char *sele,int coordSet);
 

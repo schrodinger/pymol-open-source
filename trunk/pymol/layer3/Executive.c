@@ -202,6 +202,43 @@ void ExecutiveWindowZoom(char *name)
   } 
 }
 /*========================================================================*/
+void ExecutiveGetMoment(char *name,Matrix33f mi)
+{
+  int sele;
+  ObjectMoleculeOpRec op;
+  int a,b;
+
+  for(a=0;a<3;a++)
+	 {
+		for(b=0;b<3;b++)
+		  mi[a][b]=0.0;
+		mi[a][a]=1.0;
+	 }
+  
+  sele=SelectorIndexByName(name);
+  if(sele>=0) {
+	 op.code = 'SUMC';
+	 op.v1[0]=0.0;
+	 op.v1[1]=0.0;
+	 op.v1[2]=0.0;
+	 op.i1=0;
+	 
+	 ExecutiveObjMolSeleOp(sele,&op);
+	 
+	 if(op.i1) {
+		scale3f(op.v1,1.0/op.i1,op.v1);
+		op.code = 'MOME';		
+		for(a=0;a<3;a++)
+		  for(b=0;b<3;b++)
+			 op.m[a][b]=0.0;
+		ExecutiveObjMolSeleOp(sele,&op);			 
+		for(a=0;a<3;a++)
+		  for(b=0;b<3;b++)
+			 mi[a][b]=op.m[a][b];
+	 }
+  } 
+}
+/*========================================================================*/
 void ExecutiveCenter(char *name,int preserve)
 {
   int sele;

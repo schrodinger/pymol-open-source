@@ -28,7 +28,6 @@ typedef struct ObjectMolecule {
   AtomInfoType *AtomInfo;
   int NAtom;
   int NBond;
-  int NCyl;
   int CurCSet;
   char Color[3];
   float FractionExposed;
@@ -39,6 +38,7 @@ typedef struct ObjectMoleculeOpRec {
   Vector3f v1;
   int i1,i2;
   float f1;
+  float m[3][3];
 } ObjectMoleculeOpRec;
 
 #include"CoordSet.h"
@@ -50,6 +50,7 @@ ObjectMolecule *ObjectMoleculeLoadMOLFile(ObjectMolecule *obj,char *fname,int fr
 
 ObjectMolecule *ObjectMoleculeReadMOLStr(ObjectMolecule *obj,char *molstr,int frame);
 ObjectMolecule *ObjectMoleculeReadPDBStr(ObjectMolecule *obj,char *molstr,int frame);
+
 
 void ObjectMoleculeInvalidateRep(ObjectMolecule *I,int rep);
 

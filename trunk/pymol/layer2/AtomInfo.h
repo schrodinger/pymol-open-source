@@ -40,6 +40,8 @@ typedef struct AtomInfoType {
   ResName resn;
   AtomName name;
   int ludiType;
+  int customType;
+  int customFlag;
   float b,vdw;
   int model; /* remaining items only used during selection */
   int atom; 

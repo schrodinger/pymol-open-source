@@ -38,6 +38,8 @@ void RepDotFree(RepDot *I)
   FreeP(I->VC);
   FreeP(I->V);
   FreeP(I->T);
+  FreeP(I->F);
+  FreeP(I->VN);
   FreeP(I->A);
   OOFreeP(I);
 }
@@ -49,14 +51,32 @@ void RepDotRender(RepDot *I,CRay *ray,Pickable **pick)
   int cc=0;
 
   if(ray) {
-	 v=I->VC;
+	 glBegin(GL_POINTS);
+	 while(c--)
+		{
+		  if(!cc) /* load up the current vertex color */
+			 {
+				cc=(*(v++));
+				ray->fColor3fv(ray,v);
+				v+=3;
+			 }
+		  v+=3;
+		  ray->fSphere3fv(ray,v,I->dotSize);
+		  glVertex3fv(v);
+		  v+=3;
+		  cc--;
+		}
+	 glEnd();
+
+	 /*	 v=I->VC;
 	 c=I->NC;
 	 while(c--) {
 		ray->fColor3fv(ray,v);
 		v+=3;
 		ray->fSphere3fv(ray,v,*(v+3));
 		v+=4;
-	 }
+		}*/
+
   } else if(pick) {
   } else {
 	 glBegin(GL_POINTS);
@@ -82,9 +102,10 @@ Rep *RepDotNew(CoordSet *cs,int mode)
 {
   ObjectMolecule *obj;
   int a,b,a1,a2,flag,h,k,l,i,j,c1;
-  float *v,*v0,*vc,vdw;
+  float *v,*v0,*vc,vdw,*vn;
   float *aa=NULL;
   int *tp=NULL;
+  int *tf=NULL;
   float *countPtr = NULL;
   int colorCnt,lastColor;
   Vector3f v1;
@@ -97,12 +118,16 @@ Rep *RepDotNew(CoordSet *cs,int mode)
 
   OOAlloc(RepDot);
 
+  I->dotSize = SettingGet(cSetting_dot_size);
+
   inclH = SettingGet(cSetting_dot_hydrogens);
 
   I->A=NULL;
   I->T=NULL;
+  I->F=NULL;
   I->V=NULL;
   I->VC=NULL;
+  I->VN=NULL;
 
   if(SettingGet(cSetting_dot_surface)>0.0) {
 	 solv_rad = SettingGet(cSetting_solvent_radius);
@@ -123,11 +148,11 @@ Rep *RepDotNew(CoordSet *cs,int mode)
   I->R.fRender=(void (*)(struct Rep *, CRay *, Pickable **))RepDotRender;
   I->R.fFree=(void (*)(struct Rep *))RepDotFree;
   
-  I->VC=(float*)mmalloc(sizeof(float)*cs->NIndex*7);
+  /*  I->VC=(float*)mmalloc(sizeof(float)*cs->NIndex*7);
   ErrChkPtr(I->VC);
   I->NC=0;
 
-  v=I->VC; /* save spheres for ray - this will move later */
+  v=I->VC; 
   for(a=0;a<cs->NIndex;a++)
 	 {
 		a1 = cs->IdxToAtm[a];
@@ -135,7 +160,7 @@ Rep *RepDotNew(CoordSet *cs,int mode)
 		  {
 			 I->NC++;
 			 c1=*(cs->Color+a);
-			 vc = ColorGet(c1); /* save new color */
+			 vc = ColorGet(c1); 
 			 *(v++)=*(vc++);
 			 *(v++)=*(vc++);
 			 *(v++)=*(vc++);
@@ -146,17 +171,21 @@ Rep *RepDotNew(CoordSet *cs,int mode)
 			 *(v++)=obj->AtomInfo[a1].vdw;
 		  }
 	 }
-
   I->VC = Realloc(I->VC,float,(v-I->VC));
-  
+  */
+
   I->V=(float*)mmalloc(sizeof(float)*cs->NIndex*sp->nDot*10);
   ErrChkPtr(I->V);
 
   if(mode==cRepDotAreaType) {
 	 I->A=Alloc(float,cs->NIndex*sp->nDot);
 	 I->T=Alloc(int,cs->NIndex*sp->nDot);
+	 I->F=Alloc(int,cs->NIndex*sp->nDot);
+	 I->VN=Alloc(float,cs->NIndex*sp->nDot*3);
 	 aa=I->A;
 	 tp=I->T;
+	 tf=I->F;
+	 vn=I->VN;
 	 inclH=true;
   }
 
@@ -172,7 +201,8 @@ Rep *RepDotNew(CoordSet *cs,int mode)
 		  {
 			 a1 = cs->IdxToAtm[a];
 			 if(obj->AtomInfo[a1].visRep[cRepDot])
-				if(inclH||(obj->AtomInfo[a1].name[0]!='H')) {
+				if((inclH||(obj->AtomInfo[a1].name[0]!='H'))&&
+					((mode!=cRepDotAreaType)||(!(obj->AtomInfo[a1].customFlag&0x2)))) { /* ignore if the "2" bit is set */
 				  c1=*(cs->Color+a);
 				  v0 = cs->Coord+3*a;
 				  vdw = cs->Obj->AtomInfo[a1].vdw+solv_rad;
@@ -191,7 +221,8 @@ Rep *RepDotNew(CoordSet *cs,int mode)
 						  j=map->EList[i++];
 						  while(j>=0) {
 							 a2 = cs->IdxToAtm[j];
-							 if(inclH||(obj->AtomInfo[a2].name[0]!='H'))
+							 if((inclH||(obj->AtomInfo[a2].name[0]!='H'))&&
+								 ((mode!=cRepDotAreaType)||(!(obj->AtomInfo[a2].customFlag&0x2))))  /* ignore if the "2" bit is set */
 								if(j!=a)
 								  if(within3f(cs->Coord+3*j,v1,
 												  cs->Obj->AtomInfo[a2].vdw+solv_rad))
@@ -233,7 +264,11 @@ Rep *RepDotNew(CoordSet *cs,int mode)
 								*(v++)=v1[1];
 								*(v++)=v1[2];
 								*(aa++)=vdw*vdw*sp->dot[b].area;
-								*(tp++)=cs->Obj->AtomInfo[a1].ludiType;
+								*(tp++)=cs->Obj->AtomInfo[a1].customType;
+								*(tf++)=cs->Obj->AtomInfo[a1].customFlag;
+								*(vn++)=sp->dot[b].v[0];
+								*(vn++)=sp->dot[b].v[1];
+								*(vn++)=sp->dot[b].v[2];
 								I->N++;
 								break;
 							 }
@@ -250,6 +285,8 @@ Rep *RepDotNew(CoordSet *cs,int mode)
   if(mode==cRepDotAreaType) {
 	 I->A = Realloc(I->A,float,(aa-I->A));
 	 I->T= Realloc(I->T,int,(tp-I->T));
+	 I->F= Realloc(I->F,int,(tf-I->F));
+	 I->VN= Realloc(I->VN,float,(vn-I->VN));
   }
   return((void*)(struct Rep*)I);
 }

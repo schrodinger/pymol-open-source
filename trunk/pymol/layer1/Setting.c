@@ -316,6 +316,11 @@ void SettingInit(void)
   strcpy(I->Setting[cSetting_dot_hydrogens].Name,
 			"dot_hydrogens");
 
+  I->NSetting++;
+  I->Setting[cSetting_dot_size].Value[0] = 0.06;
+  strcpy(I->Setting[cSetting_dot_size].Name,
+			"dot_size");
+
 
 }
 
