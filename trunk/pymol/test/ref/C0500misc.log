@@ -95,7 +95,7 @@ PyMOL>dist tst
  Executive: object "tst" created.
 PyMOL>dist tst2 = (lb),(rb)
  Executive: object "tst2" created.
-PyMOL>bond
+PyMOL>bond (lb),(rb)
  AddBond: 1 bonds added to model "pept".
 PyMOL>unbond
  RemoveBond: 1 bonds removed from model "pept".

@@ -203,8 +203,9 @@ void ExecutiveProcessPDBFile(CObject *origObj,char *fname, char *oname,
         } else if(is_repeat_pass) {
           ObjectSetName(obj,pdb_name); /* from PDB */
           ExecutiveDelete(pdb_name); /* just in case */
-        } else 
+        } else {
           ObjectSetName(obj,oname); /* from filename/parameter */
+        }
 
         ExecutiveManageObject(obj,true,false);
         if(frame<0)
@@ -231,6 +232,21 @@ void ExecutiveProcessPDBFile(CObject *origObj,char *fname, char *oname,
 
   /* BEGIN METAPHORICS ANNOTATION AND ALIGNMENT CODE */
 
+  /* sanity check -- make sure all objects are present */
+  if(ok&&n_processed) {
+    int a;
+    for(a=0; a<n_processed; a++) {
+      ProcPDBRec *current = processed + a;
+      if(!ExecutiveValidateObjectPtr((CObject*)current->obj,cObjectMolecule)) {
+        PRINTFB(FB_Executive,FB_Errors)
+          " Error: Missing object! possible invalid/corrupt p5m file.\n"
+          ENDFB;
+        ok=false;
+        break;
+      }
+    }
+  }
+  
   if(ok&&n_processed) { /* first, perform any Metaphorics alignment */
     /* is there a target structure? */
     {
@@ -257,7 +273,9 @@ void ExecutiveProcessPDBFile(CObject *origObj,char *fname, char *oname,
           ProcPDBRec *current = processed + a;
           M4XAnnoType *m4x = &current->m4x;
           if(m4x->align) {
-            ObjectMoleculeConvertIDsToIndices(current->obj, m4x->align->id_at_point, m4x->align->n_point);
+            ObjectMoleculeConvertIDsToIndices(current->obj, 
+                                              m4x->align->id_at_point,
+                                              m4x->align->n_point);
           }
         }
       }
@@ -730,10 +748,12 @@ int ExecutiveValidateObjectPtr(CObject *ptr,int object_type)
   SpecRec *rec = NULL;
 
   while(ListIterate(I->Spec,rec,next)) {
-    if(rec->type==cExecObject) {
-      if(rec->obj->type==object_type) {
-        ok=true;
-        break;
+    if(rec->obj == ptr) {
+      if(rec->type==cExecObject) {
+        if(rec->obj->type==object_type) {
+          ok=true;
+          break;
+        }
       }
     }
   }

@@ -867,7 +867,7 @@ void SceneWindowSphere(float *location,float radius)
   I->Pos[2]-=dist;
   I->Front=(-I->Pos[2]-radius*1.2F);
   I->FrontSafe=(I->Front<cFrontMin ? cFrontMin : I->Front);  
-  I->Back=(-I->Pos[2]+radius*1.55F);
+  I->Back=(-I->Pos[2]+radius*1.2F);
 
   SceneRovingDirty();
   /*printf("%8.3f %8.3f %8.3f\n",I->Front,I->Pos[2],I->Back);*/

@@ -140,7 +140,6 @@ PyMOL>load dat/small01.mol,m1
 PyMOL>load dat/small01.mol,m2
  Executive: object "m2" created.
 PyMOL>fuse m1 and id 31,m2 and id 31
-Editor-Error: Invalid selections. Requires two bonded atoms in the same moilecule
 PyMOL>dele m1
 PyMOL>zoom
 PyMOL>ray
@@ -154,7 +153,6 @@ PyMOL>remove id 30
  Remove: eliminated 1 atoms in model "m1".
  Remove: eliminated 1 atoms in model "m2".
 PyMOL>fuse m1 and id 12,m2 and id 12
-Editor-Error: Invalid selections. Requires two bonded atoms in the same moilecule
 PyMOL>dele m1
 PyMOL>zoom
 PyMOL>ray

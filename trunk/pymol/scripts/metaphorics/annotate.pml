@@ -65,3 +65,5 @@ _ color magenta, name ca and ss H and rep cartoon and ((not rep sticks) or (nbr.
 # set Ctrl Q to Quit 
 
 _ cmd.set_key('CTRL-Q',cmd.quit)
+_ feedback enable,python,output
+_ print ' '
