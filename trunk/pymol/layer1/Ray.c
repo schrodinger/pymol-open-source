@@ -737,6 +737,9 @@ void RayRender(CRay *I,int width,int height,unsigned int *image,float front,floa
   float excl_trans;
   int shadows;
   int trans_shadows;
+  float first_excess;
+  int pixel_flag;
+  float ray_trans_spec;
 
   project_triangle = SettingGet(cSetting_ray_improve_shadows);
   shadows = (int)SettingGet(cSetting_ray_shadows);
@@ -744,6 +747,7 @@ void RayRender(CRay *I,int width,int height,unsigned int *image,float front,floa
   backface_cull = (int)SettingGet(cSetting_backface_cull);
   opaque_back = (int)SettingGet(cSetting_ray_opaque_background);
   two_sided_lighting = (int)SettingGet(cSetting_two_sided_lighting);
+  ray_trans_spec = SettingGet(cSetting_ray_transparency_specular);
 
   gamma = SettingGet(cSetting_gamma);
   if(gamma>R_SMALL4)
@@ -909,13 +913,16 @@ void RayRender(CRay *I,int width,int height,unsigned int *image,float front,floa
             exclude = -1;
             r1.base[1]=(((float)y)/height)*I->Range[1]+I->Volume[2];
             persist = 1.0;
+            first_excess = 0.0;
             pass = 0;
             excl_trans=0.0;
             new_front=front;
             while((persist>0.0001)&&(pass<25)) {
+              pixel_flag=false;
               i=BasisHit(I->Basis+1,&r1,exclude,I->Vert2Prim,I->Primitive,false,
                          new_front,back,excl_trans,trans_shadows);
               if(i>=0) {
+                pixel_flag=true;
                 n_hit++;
                 new_front=r1.dist;
                 if(r1.prim->type==cPrimTriangle) {
@@ -970,7 +977,7 @@ void RayRender(CRay *I,int width,int height,unsigned int *image,float front,floa
                   reflect_cmp=lit*(dotgle+(pow(dotgle,SettingGet(cSetting_reflect_power))))/2.0;
                   dotgle=-dot_product3f(r1.surfnormal,spec_vector);
                   if(dotgle<0.0) dotgle=0.0;
-                  excess=pow(dotgle,SettingGet(cSetting_spec_power))*
+                  excess= pow(dotgle,SettingGet(cSetting_spec_power))*
                     SettingGet(cSetting_spec_reflect)*lit;
                 } else {
                   excess=0.0;
@@ -1004,10 +1011,36 @@ void RayRender(CRay *I,int width,int height,unsigned int *image,float front,floa
                   } else {
                     fc[3]=ffact1m;
                   }
+                  if(!pass)
+                    first_excess = excess*ffact1m*ray_trans_spec;
+                  else {
+                    fc[0]+=first_excess;
+                    fc[1]+=first_excess;
+                    fc[2]+=first_excess;
+                  }
                 } else {
+                  if(!pass)
+                    first_excess = excess*ray_trans_spec;
+                  else {
+                    fc[0]+=first_excess;
+                    fc[1]+=first_excess;
+                    fc[2]+=first_excess;
+                  }
                   fc[3]=1.0;
                 }
-                
+
+
+                pixel_flag=true;
+              } else if(pass) { 
+                /* on second or greater pass */
+                fc[0] = first_excess;
+                fc[1] = first_excess;
+                fc[2] = first_excess;
+                fc[3] = 1.0;
+                pixel_flag=true;
+              }
+              
+              if(pixel_flag) {
                 inp=(fc[0]+fc[1]+fc[2])/3.0;
                 if(inp<R_SMALL4) 
                   sig=1.0;
@@ -1049,11 +1082,12 @@ void RayRender(CRay *I,int width,int height,unsigned int *image,float front,floa
                   }
                 }
               } else {
-                *(image+((width)*y)+x)=
-                  background;
+                *(pixel) = background;
               }
-
+              
+              
               if(pass) { /* average all four channels */
+                
                 persist_inv = 1.0-persist;
                 fc[0] = (0xFF&((*pixel)>>24))*persist + (0xFF&(last_pixel>>24))*persist_inv;
                 fc[1] = (0xFF&((*pixel)>>16))*persist + (0xFF&(last_pixel>>16))*persist_inv;
