@@ -365,7 +365,7 @@ class PMGApp(AbstractApp):
          cmd.set('line_smooth',0)
          cmd.set('depth_cue',0)
          cmd.set('specular',0)
-         cmd.set('surface_quality',0)
+         cmd.set('surface_quality',-1) # new
          cmd.set('stick_quality',5)
          cmd.set('sphere_quality',0)
          cmd.set('cartoon_sampling',3)

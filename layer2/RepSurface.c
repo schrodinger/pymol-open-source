@@ -172,8 +172,8 @@ void RepSurfaceRender(RepSurface *I,CRay *ray,Pickable **pick)
 
       }
 	 }
-		/*
 
+    /*
 	c=I->NT;
 		if(c) {
 		glBegin(GL_TRIANGLES);
@@ -237,7 +237,8 @@ void RepSurfaceRender(RepSurface *I,CRay *ray,Pickable **pick)
   v+=3;
   }
   glEnd();
-*/
+    */
+
   }
 }
 
@@ -411,6 +412,7 @@ Rep *RepSurfaceNew(CoordSet *cs)
   int flag,*dot_flag,*p;
   float minimum_sep;
   int visFlag;
+  int surface_quality;
   SphereRec *sp = Sphere0;
   AtomInfoType *ai1,*ai2;
   OOAlloc(RepSurface);
@@ -431,18 +433,22 @@ Rep *RepSurfaceNew(CoordSet *cs)
 
   RepInit(&I->R);
 
-  if((int)SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_surface_quality)) {
+  surface_quality = SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_surface_quality);
+  if(surface_quality>=1) {
     minimum_sep = SettingGet(cSetting_surface_best);
     sp=Sphere2;
-  } else {
+  } else if(!surface_quality) {
     minimum_sep = SettingGet(cSetting_surface_normal);
+    sp=Sphere1;
+  } else { /* surface quality < 0 */
+    minimum_sep = SettingGet(cSetting_surface_poor);
     sp=Sphere1;
   }
 
-  cullByFlag = SettingGet(cSetting_trim_dots);
-  inclH = SettingGet(cSetting_dot_hydrogens);
+  cullByFlag =  SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_trim_dots);
+  inclH = SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_dot_hydrogens);
 
-  probe_radius = SettingGet(cSetting_solvent_radius);
+  probe_radius = SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_solvent_radius);
   probe_radius2 = probe_radius*probe_radius;
 
   I->N=0;
