@@ -1393,6 +1393,10 @@ int ChampModelToPat(CChamp *I,PyObject *model)
               break;
             }
             break;
+          case 'A':
+            ChampParseAliphaticAtom(I,c,cur_atom,cH_A,1,true);
+            std_flag = true;
+            break;      
           case 'P':
             ChampParseAliphaticAtom(I,c,cur_atom,cH_P,1,true);
             std_flag = true;
@@ -1431,6 +1435,10 @@ int ChampModelToPat(CChamp *I,PyObject *model)
             break;      
           case 'Q':
             ChampParseAliphaticAtom(I,c,cur_atom,cH_Q,1,false);
+            std_flag = true;
+            break;      
+          case 'R':
+            ChampParseAliphaticAtom(I,c,cur_atom,cH_R,1,false);
             std_flag = true;
             break;      
           case 'T':
@@ -2467,7 +2475,7 @@ int ChampParseAtomBlock(CChamp *I,char **c_ptr,int cur_atom)
     case '?': /* nonstandard */
       c = ChampParseBlockAtom(I,c,cur_atom,cH_NotH,1,not_flag);
       break;
-    case 'A':
+    case 'A': /* note there is no way to address the 'A' symbol ...*/
       if(not_flag) {
         I->Atom[cur_atom].neg_flag=true;
         I->Atom[cur_atom].not_class|=cH_Aliphatic;      
@@ -3021,8 +3029,8 @@ int ChampAtomToString(CChamp *I,int index,char *buf)
     trivial = trivial && !(at->class&cH_Aliphatic);
     trivial = trivial && !((at->atom!=cH_Any) &&
                            at->atom&( cH_Na | cH_K  | cH_Ca | cH_Mg | cH_Zn | cH_Fe | cH_Cu | cH_Se |
-                                       cH_B | cH_X1 | cH_E | cH_G | cH_J | cH_L | cH_M |
-                                      cH_Q | cH_X2 | cH_T | cH_X | cH_Z ));
+                                       cH_B | cH_A | cH_E | cH_G | cH_J | cH_L | cH_M |
+                                      cH_Q | cH_R | cH_T | cH_X | cH_Z ));
 
     if(trivial&&(at->atom!=cH_Any)) {
       /* check number of atoms represented */

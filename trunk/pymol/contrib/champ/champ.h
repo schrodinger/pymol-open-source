@@ -47,14 +47,14 @@ Z* -------------------------------------------------------------------
 #define cH_Cu   0x00020000
 #define cH_Se   0x00040000
 #define cH_B    0x00080000
-#define cH_X1   0x00100000
+#define cH_A    0x00100000
 #define cH_E    0x00200000
 #define cH_G    0x00400000
 #define cH_J    0x00800000
 #define cH_L    0x01000000
 #define cH_M    0x02000000
 #define cH_Q    0x04000000
-#define cH_X2   0x08000000
+#define cH_R    0x08000000
 #define cH_T    0x10000000
 #define cH_X    0x20000000
 #define cH_Z    0x40000000
