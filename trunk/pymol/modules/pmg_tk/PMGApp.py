@@ -1247,8 +1247,8 @@ class PMGApp(AbstractApp):
       self.menuBar.addmenu('Display', 'Display Control',tearoff=TRUE)
 
       self.menuBar.addmenuitem('Display', 'checkbutton',
-                         'Sequence View',
-                         label='Sequence View',
+                         'Sequence',
+                         label='Sequence',
                         variable = self.setting.seq_view,
                         command = lambda s=self: s.setting.update('seq_view'))      
 
@@ -1277,8 +1277,8 @@ class PMGApp(AbstractApp):
 
 
       self.menuBar.addmenuitem('Display', 'checkbutton',
-                         'Stereo View',
-                         label='Stereo View',
+                         'Stereo',
+                         label='Stereo',
                         variable = self.setting.stereo,
                         command = lambda s=self: cmd.do("_ stereo "+
                                                         ('off','on')[s.setting.stereo.get()]))
@@ -1411,8 +1411,8 @@ class PMGApp(AbstractApp):
                                label='RGB (default)',
                                command = lambda : cmd.do("_ cmd.space('rgb')"))
 
-      self.menuBar.addcascademenu('Display', 'Performance', 'Performance & Quality',
-                                  label='Performance & Quality')
+      self.menuBar.addcascademenu('Display', 'Performance', 'Quality',
+                                  label='Quality')
 
       self.menuBar.addmenuitem('Performance', 'command', 'Maximum Performance',
                                label='Maximum Performance',
@@ -1889,7 +1889,7 @@ class PMGApp(AbstractApp):
 
       self.menuBar.addmenuitem('SelectionMode', 'separator', '')
 
-      self.menuBar.addmenuitem('SelectionMode', 'command', 'Molecules',
+      self.menuBar.addmenuitem('SelectionMode', 'command', 'C-alphas',
                                label='C-alphas',
                                command = lambda :
                                cmd.do("_ set mouse_selection_mode,6,quiet=1"))
