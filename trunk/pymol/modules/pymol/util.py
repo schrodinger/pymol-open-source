@@ -592,7 +592,7 @@ def ss(selection="(name ca and alt '',A)",state=1): # NOT THREAD SAFE
       if ss[a1]=='S':
          a1 = gap[c]
          scr_a1 = scr_dict[a1]
-         # look for antiparallel 2:2 H-bonds (NH-O=C + C=O-HN) 
+         # look for hydrogen bonds to another sheet
          n_a1_atom = n_dict[scr_a1]
          o_a1_atom = o_dict[scr_a1]
          certain = 0
@@ -697,7 +697,8 @@ def ss(selection="(name ca and alt '',A)",state=1): # NOT THREAD SAFE
             (phi,psi) = phipsi[a1]
             if (phi>45) and (phi<160):
                ss[a1] = 'L'
-            if (psi<-30) and (psi>-150):
+#            if (psi<-30) and (psi>-150):
+            if (psi<-65) and (psi>-150):
                ss[a1] = 'L'
          
       c = c + 1
@@ -725,7 +726,7 @@ def ss(selection="(name ca and alt '',A)",state=1): # NOT THREAD SAFE
          if ss[a1]=='S':
             a1 = gap[c]
             scr_a1 = scr_dict[a1]
-            # look for antiparallel 2:2 H-bonds (NH-O=C + C=O-HN) 
+            # look for hydrogen bonds to another sheet
             n_a1_atom = n_dict[scr_a1]
             o_a1_atom = o_dict[scr_a1]
             certain = 0

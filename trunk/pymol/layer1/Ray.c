@@ -410,22 +410,26 @@ void RayRender(CRay *I,int width,int height,unsigned int *image,float front,floa
   unsigned int *p;
   float excess=0.0;
   float dotgle;
-  float bright,direct_cmp,reflect_cmp,*v,fc[3];
+  float bright,direct_cmp,reflect_cmp,*v,fc[4];
   float ambient,direct,lreflect,ft,ffact,ffact1m;
-  unsigned int c[3],aa;
+  unsigned int c[4],aa,za;
   unsigned int *image_copy = NULL;
   int i;
-  unsigned int background,buffer_size,z[16],tot;
+  unsigned int back_mask,fore_mask=0;
+  unsigned int background,buffer_size,z[16],zm[16],tot;
   int antialias;
   RayInfo r1,r2;
   int fogFlag=false;
   int fogRangeFlag=false;
+  int opaque_back=0;
+  
   float fog;
   float *bkrd;
   float fog_start=0.0;
   float gamma,inp,sig=1.0;
   double now;
 
+  opaque_back = SettingGet(cSetting_ray_opaque_background);
   gamma = SettingGet(cSetting_gamma);
   if(gamma>R_SMALL4)
     gamma=1.0/gamma;
@@ -456,16 +460,29 @@ void RayRender(CRay *I,int width,int height,unsigned int *image,float front,floa
   }
 
   bkrd=SettingGetfv(cSetting_bg_rgb);
-  if(I->BigEndian) {
-	 background = 0x000000FF|
-		((0xFF& ((unsigned int)(bkrd[0]*255))) <<24)|
-		((0xFF& ((unsigned int)(bkrd[1]*255))) <<16)|
-		((0xFF& ((unsigned int)(bkrd[2]*255))) <<8 );
+  if(opaque_back) {
+    if(I->BigEndian)
+      back_mask = 0x000000FF;
+    else
+      back_mask = 0xFF000000;
+    fore_mask = back_mask;
   } else {
-	 background = 0xFF000000|
-		((0xFF& ((unsigned int)(bkrd[2]*255))) <<16)|
-		((0xFF& ((unsigned int)(bkrd[1]*255))) <<8)|
-		((0xFF& ((unsigned int)(bkrd[0]*255))) );
+    if(I->BigEndian) {
+      back_mask = 0x00000000;
+    } else {
+      back_mask = 0x00000000;
+    }
+  }
+  if(I->BigEndian) {
+    background = back_mask|
+      ((0xFF& ((unsigned int)(bkrd[0]*255))) <<24)|
+      ((0xFF& ((unsigned int)(bkrd[1]*255))) <<16)|
+      ((0xFF& ((unsigned int)(bkrd[2]*255))) <<8 );
+  } else {
+    background = back_mask|
+      ((0xFF& ((unsigned int)(bkrd[2]*255))) <<16)|
+      ((0xFF& ((unsigned int)(bkrd[1]*255))) <<8)|
+      ((0xFF& ((unsigned int)(bkrd[0]*255))) );
   }
 
   PRINTFB(FB_Ray,FB_Blather) 
@@ -536,14 +553,9 @@ void RayRender(CRay *I,int width,int height,unsigned int *image,float front,floa
     /* erase buffer */
     
     p=(unsigned int*)image; 
-    if(I->BigEndian)
-      for(a=0;a<height;a++)
-        for(b=0;b<width;b++)
-          *p++=0x000000FF;  
-    else 
-      for(a=0;a<height;a++)
-        for(b=0;b<width;b++)
-          *p++=0xFF000000;  
+    for(a=0;a<height;a++)
+      for(b=0;b<width;b++)
+        *p++=back_mask;
     
     /* ray-trace */
 	 r1.base[2]=0.0;
@@ -613,9 +625,13 @@ void RayRender(CRay *I,int width,int height,unsigned int *image,float front,floa
                 if(ffact>1.0)
                   ffact=0.0;
                 ffact1m = 1.0-ffact;
-                fc[0]=ffact*bkrd[0]+fc[0]*ffact1m;
-                fc[1]=ffact*bkrd[1]+fc[1]*ffact1m;
-                fc[2]=ffact*bkrd[2]+fc[2]*ffact1m;
+                if(opaque_back) {
+                  fc[0]=ffact*bkrd[0]+fc[0]*ffact1m;
+                  fc[1]=ffact*bkrd[1]+fc[1]*ffact1m;
+                  fc[2]=ffact*bkrd[2]+fc[2]*ffact1m;
+                } else {
+                  fc[3]=1.0-ffact;
+                }
               }
 
               inp=(fc[0]+fc[1]+fc[2])/3.0;
@@ -641,12 +657,24 @@ void RayRender(CRay *I,int width,int height,unsigned int *image,float front,floa
                         }}
               */
               
-              if(I->BigEndian) {
-                *(image+((width)*y)+x)=
-                  0x000000FF|(c[0]<<24)|(c[1]<<16)|(c[2]<<8);
-              } else {
-                *(image+((width)*y)+x)=
-                  0xFF000000|(c[2]<<16)|(c[1]<<8)|c[0];
+              if(opaque_back) { 
+                if(I->BigEndian) {
+                  *(image+((width)*y)+x)=
+                    fore_mask|(c[0]<<24)|(c[1]<<16)|(c[2]<<8);
+                } else {
+                  *(image+((width)*y)+x)=
+                    fore_mask|(c[2]<<16)|(c[1]<<8)|c[0];
+                }
+              } else { /* use alpha channel for fog in transparent images */
+                c[3] = (uint)(fc[3]*255.0F);
+                if(c[3]>255) c[3]=255;
+                if(I->BigEndian) {
+                  *(image+((width)*y)+x)=
+                  (c[0]<<24)|(c[1]<<16)|(c[2]<<8)|c[3];
+                } else {
+                  *(image+((width)*y)+x)=
+                    (c[3]<<24)|(c[2]<<16)|(c[1]<<8)|c[0];
+                }
               }
             } else {
               
@@ -668,10 +696,10 @@ void RayRender(CRay *I,int width,int height,unsigned int *image,float front,floa
 
 			 p = image+((width*2)*(y*2-1))+(x*2);
 			 
-          /*     4  5  
-           *  6  0  1  7
-           *  8  2  3  9
-           *    10 11 
+          /*  12  4   5  13 
+           *  6   0   1   7
+           *  8   2   3   9
+           *  14 10  11  15
            *
            * 0-3 are weighted double
            */
@@ -697,9 +725,23 @@ void RayRender(CRay *I,int width,int height,unsigned int *image,float front,floa
           z[15] = (*(p+2));
 
 			 if(I->BigEndian) { 
-				for(a=0;a<16;a++)
+				for(a=0;a<16;a++) {
+              zm[a]=z[a]&0xFF; /* copy alpha channel */
 				  z[a]=z[a]>>8;
-			 }
+            }
+			 } else {
+				for(a=0;a<16;a++) {
+              zm[a]=z[a]>>24; /* copy alpha channel */
+            }
+          }
+          
+          
+			 tot=0;
+			 for(a=0;a<16;a++) /* average alpha channel */
+				tot+=(zm[a]&0xFF);
+			 for(a=0;a<4;a++)
+				tot+=(zm[a]&0xFF)<<2;
+			 za = (0xFF&(tot>>5));
 
 			 tot=0;
 			 for(a=0;a<16;a++)
@@ -723,10 +765,9 @@ void RayRender(CRay *I,int width,int height,unsigned int *image,float front,floa
 			 aa=aa|(0xFF0000&(tot>>5));			 
 			 
 			 if(I->BigEndian) {
-				aa=aa<<8;
-				aa=aa|0x000000FF;
+				aa=(aa<<8)|za;
 			 } else {
-				aa=aa|0xFF000000;
+				aa=aa|(za<<24);
 			 }
 			 
 			 *(image_copy+((width)*y)+x) = aa;			 
@@ -748,9 +789,20 @@ void RayRender(CRay *I,int width,int height,unsigned int *image,float front,floa
 			 z[3] = (*(p+1));
 
 			 if(I->BigEndian) { 
-				for(a=0;a<4;a++)
+				for(a=0;a<4;a++) {
+              zm[a]=z[a]&0xFF;
 				  z[a]=z[a]>>8;
-			 }
+            }
+			 } else {
+				for(a=0;a<4;a++) {
+              zm[a]=z[a]>>24; /* copy alpha channel */
+            }
+          }
+
+			 tot=0;
+			 for(a=0;a<4;a++)
+				tot+=(zm[a]&0xFF);
+			 za=(0xFF&(tot>>2));
 
 			 tot=0;
 			 for(a=0;a<4;a++)
@@ -768,10 +820,9 @@ void RayRender(CRay *I,int width,int height,unsigned int *image,float front,floa
 			 aa=aa|(0xFF0000&(tot>>2));			 
 			 
 			 if(I->BigEndian) {
-				aa=aa<<8;
-				aa=aa|0x000000FF;
+				aa=(aa<<8)|za;
 			 } else {
-				aa=aa|0xFF000000;
+				aa=aa|(za<<24);
 			 }
 			 *(image_copy+((width)*y)+x) = aa;			 
 		  }
@@ -792,9 +843,20 @@ void RayRender(CRay *I,int width,int height,unsigned int *image,float front,floa
 			 z[3] = (*(p+1));
 
 			 if(I->BigEndian) { 
-				for(a=0;a<4;a++)
+				for(a=0;a<4;a++) {
+              zm[a]=z[a]&0xFF;
 				  z[a]=z[a]>>8;
-			 }
+            }
+			 } else {
+				for(a=0;a<4;a++) {
+              zm[a]=z[a]>>24; /* copy alpha channel */
+            }
+          }
+
+			 tot=0;
+			 for(a=0;a<4;a++)
+				tot+=(zm[a]&0xFF);
+			 za=(0xFF&(tot>>2));
 
 			 tot=0;
 			 for(a=0;a<4;a++)
@@ -812,10 +874,9 @@ void RayRender(CRay *I,int width,int height,unsigned int *image,float front,floa
 			 aa=aa|(0xFF0000&(tot>>2));			 
 			 
 			 if(I->BigEndian) {
-				aa=aa<<8;
-				aa=aa|0x000000FF;
+				aa=(aa<<8)|za;
 			 } else {
-				aa=aa|0xFF000000;
+				aa=aa|(za<<24);
 			 }
 			 *(image_copy+((width)*y)+x) = aa;			 
 		  }

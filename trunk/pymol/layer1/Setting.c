@@ -1053,5 +1053,7 @@ void SettingInitGlobal(void)
 
   SettingSet_f(I,cSetting_surface_miserable, 0.8F);
 
+  SettingSet_f(I,cSetting_ray_opaque_background, 1.0F);
+
 }
 
