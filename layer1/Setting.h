@@ -67,6 +67,7 @@ float SettingGetNamed(char *name);
 #define cSetting_sweep_angle          26
 #define cSetting_sweep_speed          27
 #define cSetting_dot_hydrogens        28
+#define cSetting_dot_size             29
 
 #endif
 

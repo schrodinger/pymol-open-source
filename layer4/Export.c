@@ -65,8 +65,12 @@ ExportDotsObj *ExportDots(char *name,int csIndex)
 		/* cannabilize the data structures */
 		result->point=rep->V;
 		rep->V=NULL;
+		result->normal=rep->VN;
+		rep->VN=NULL;
 		result->type=rep->T;
 		rep->T=NULL;
+		result->flag=rep->F;
+		rep->F=NULL;
 		result->area=rep->A;
 		rep->A=NULL;
 		result->nPoint=rep->N;
@@ -80,7 +84,9 @@ void ExportDotsObjFree(ExportDotsObj *obj)
 {
   if(obj) {
 	 FreeP(obj->point);
+	 FreeP(obj->normal);
 	 FreeP(obj->type);
+	 FreeP(obj->flag);
 	 FreeP(obj->area);
   }
 }

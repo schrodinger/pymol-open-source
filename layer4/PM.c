@@ -64,6 +64,7 @@ static PyObject *PMGetMatrix(PyObject *self, 	PyObject *args);
 static PyObject *PMReset(PyObject *self, PyObject *args);
 static PyObject *PMFrame(PyObject *self, PyObject *args);
 static PyObject *PMExportDots(PyObject *self, PyObject *args);
+static PyObject *PMGetMoment(PyObject *self, 	PyObject *args);
 
 static PyMethodDef PM_methods[] = {
 	{"quit",	  PMQuit,   METH_VARARGS },
@@ -95,9 +96,26 @@ static PyMethodDef PM_methods[] = {
 	{"png",	 PMPNG,   METH_VARARGS },
 	{"set_matrix",	 PMSetMatrix,   METH_VARARGS },
 	{"get_matrix",	 PMGetMatrix,   METH_VARARGS },
+	{"get_moment",	 PMGetMoment,   METH_VARARGS },
 	{"export_dots", PMExportDots,   METH_VARARGS },
 	{NULL,		NULL}		/* sentinel */
 };
+
+static PyObject *PMGetMoment(PyObject *self, 	PyObject *args)
+{
+  Matrix33f m;
+  PyObject *result;
+
+  char *str1;
+  PyArg_ParseTuple(args,"s",&str1);
+
+  ExecutiveGetMoment(str1,m);
+  result = Py_BuildValue("(fff)(fff)(fff)", 
+								 m[0][0],m[0][1],m[0][2],
+								 m[1][0],m[1][1],m[1][2],
+								 m[2][0],m[2][1],m[2][2]);
+  return result;
+}
 
 static PyObject *PMExportDots(PyObject *self, 	PyObject *args)
 {

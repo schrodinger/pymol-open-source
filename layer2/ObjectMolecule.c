@@ -324,6 +324,31 @@ CoordSet *ObjectMoleculeMOLStr2CoordSet(char *buffer,AtomInfoType **atInfoPtr)
 				  }
 				}
 			 }
+		  } else if(strstr(cc,"<CUSTOM.TYPES>")) {
+			 p=nextline(p);
+			 p=nextline(p);
+			 p=wcopy(cc,p,MAXLINELEN);
+			 if(sscanf(cc,"%d",&nType)!=1)
+				ok=ErrMessage("ObjectMoleculeLoadMOLFile","bad custom type record");
+			 if(ok)
+				if(nType!=nAtom)
+				  ok=ErrMessage("ObjectMoleculeLoadMOLFile","custom atom type count mismatch");
+			 if(ok) {
+				for(a=0;a<nType;a++) {
+				  p=nextline(p);
+				  p+=8;
+				  p=ncopy(cc,p,3);
+				  if(sscanf(cc,"%d",&atInfo[a].customType)!=1) {
+					 ok=ErrMessage("ObjectMoleculeLoadMOLFile","bad custom atom type record-1");
+				  } else {
+					 p+=1;
+					 p=ncopy(cc,p,3);
+					 if(sscanf(cc,"%d",&atInfo[a].customFlag)!=1) {
+						ok=ErrMessage("ObjectMoleculeLoadMOLFile","bad custom atom type record-2");
+					 }
+				  } 
+				}
+			 }
 		  }
 		}
 		p=nextline(p);
@@ -800,6 +825,7 @@ void ObjectMoleculeSeleOp(ObjectMolecule *I,int sele,ObjectMoleculeOpRec *op)
   int a,b,s;
   int a1;
   float r;
+  float v1[3],v2;
   int inv_flag;
 
   if(sele>=0) {
@@ -847,7 +873,7 @@ void ObjectMoleculeSeleOp(ObjectMolecule *I,int sele,ObjectMoleculeOpRec *op)
 										  op->i1++;
 										}
 									 break;
-								  case 'MDST':
+								  case 'MDST': 
 									 a1=I->CSet[b]->AtmToIdx[a];
 									 if(a1>=0)
 										{
@@ -856,12 +882,30 @@ void ObjectMoleculeSeleOp(ObjectMolecule *I,int sele,ObjectMoleculeOpRec *op)
 											 op->f1=r;
 										}
 									 break;
-								  case 'INVA':
+								  case 'INVA': 
 									 if(I->CSet[b]->AtmToIdx[a]>=0)
 										inv_flag=true;
 									 break;
+
+/* Moment of inertia tensor - unweighted - assumes v1 is center of molecule */
+								  case 'MOME': 
+ 													
+									 a1=I->CSet[b]->AtmToIdx[a];
+									 if(a1>=0) {
+										subtract3f(I->CSet[b]->Coord+(3*a1),op->v1,v1);
+										v2=v1[0]*v1[0]+v1[1]*v1[1]+v1[2]*v1[2]; 
+										op->m[0][0] += v2 - v1[0] * v1[0];
+										op->m[0][1] +=    - v1[0] * v1[1];
+										op->m[0][2] +=    - v1[0] * v1[2];
+										op->m[1][0] +=    - v1[1] * v1[0];
+										op->m[1][1] += v2 - v1[1] * v1[1];
+										op->m[1][2] +=    - v1[1] * v1[2];
+										op->m[2][0] +=    - v1[2] * v1[0];
+										op->m[2][1] +=    - v1[2] * v1[1];
+										op->m[2][2] += v2 - v1[2] * v1[2];
+									 }
+									 break;
 								  }
-								  break;
 								}
 							 s=SelectorNext(s);
 						  }
@@ -935,7 +979,6 @@ ObjectMolecule *ObjectMoleculeNew(void)
   I->Obj.type=cObjectMolecule;
   I->NAtom=0;
   I->NBond=0;
-  I->NCyl=0;
   I->CSet=VLAMalloc(10,sizeof(CoordSet*),5,true); /* auto-zero */
   I->NCSet=0;
   I->Bond=NULL;

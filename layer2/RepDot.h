@@ -24,10 +24,13 @@ Z* -------------------------------------------------------------------
 
 typedef struct RepDot {
   Rep R;
+  float dotSize;
   float *V;
   float *VC;
   float *A;
+  float *VN; /* vector normal */
   int *T;
+  int *F;
   int N,NC;
 } RepDot;
 
