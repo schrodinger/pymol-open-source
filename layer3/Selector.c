@@ -60,7 +60,7 @@ static WordKeyValue rep_names[] = {
   { "spheres", cRepSphere },
   { "sticks", cRepCyl },
   { "surface", cRepSurface },
-  { "label", cRepLabel },
+  { "labels", cRepLabel },
   { "nb_spheres", cRepNonbondedSphere },
   { "cartoon", cRepCartoon },
   { "ribbon", cRepRibbon },

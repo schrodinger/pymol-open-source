@@ -302,7 +302,8 @@ void ButModeDraw(Block *block)
     glColor3fv(I->Block->TextColor);
     GrapDrawStr("Buttons ",x+1,y);
     glColor3fv(I->TextColor1);
-    GrapDrawStr("  Left Mddl Rght Scrl",x+48,y);
+    /*    GrapDrawStr("  Left Mddl Rght Scrl",x+48,y);*/
+    GrapDrawStr("    L    M    R  Wheel",x+43,y);
 
     y-=cButModeLineHeight;
     /*    glColor3fv(I->Block->TextColor);

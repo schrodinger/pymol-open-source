@@ -51,20 +51,30 @@ def process(sele): # expand slash notation into a standard atom selection
       if segment!='': lst.append("s;"+string.replace(segment,'+',','))
       if chain!='': lst.append("c;"+string.replace(chain,'+',','))
       if residue!='':
-         if num_re.search(residue)==None:
-            lst.append("r;"+string.replace(residue,'+',','))
-         else:
-            residue = string.replace(residue,'+',',')
-            residue = string.replace(residue,'-',':')
-            if ((string.find(residue,',')>=0) and # compound residue specification
-                (string.find(residue,':')>=0)):
-               new_list = []
-               for a in string.split(residue,','): # spread it out...
-                  new_list.append("i;"+a)
-               residue = "("+string.join(new_list,'|')+")"
-               lst.append(residue)
-            else:
-               lst.append("i;"+residue)                        
+         res_name = ''
+         res_id = ''
+         res_split=string.find(residue,'`')
+         if res_split>=0: # are resn or resi explicitly indicated using a forward apostrophe?
+            res_name = residue[0:res_split]
+            res_id = residue[res_split+1:]
+         elif num_re.search(residue)==None: # if residue has no numeric character, then treat as residue name...
+            res_name = residue
+         else: # otherwise treat as a residue identifier...
+            res_id = residue
+         if len(res_name):
+            lst.append("r;"+string.replace(res_name,'+',','))            
+         if len(res_id):
+               res_id = string.replace(res_id,'+',',')
+               res_id = string.replace(res_id,'-',':')
+               if ((string.find(res_id,',')>=0) and # compound residue specification
+                   (string.find(res_id,':')>=0)):
+                  new_list = []
+                  for a in string.split(res_id,','): # spread it out...
+                     new_list.append("i;"+a)
+                  res_id = "("+string.join(new_list,'|')+")"
+                  lst.append(res_id)
+               else:
+                  lst.append("i;"+res_id)                        
       if name!='':
          if(string.find(name,'`')>=0): # alternate conformations present
             (name,alt) = string.split(name,'`')
