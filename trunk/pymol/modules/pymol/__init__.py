@@ -43,6 +43,7 @@ def exec_str(s):
    return None
    
 def exec_deferred():
+#   pm.do("@t.pml")
    for a in invocation.options.deferred:
       if re.search(r"pymol\.py$",a):
          pass

@@ -64,7 +64,6 @@ int ObjectMoleculeConnect(int **bond,AtomInfoType *ai,CoordSet *cs,float cutoff,
 void ObjectMoleculeTransformTTTf(ObjectMolecule *I,float *ttt,int state);
 static int BondInOrder(int *a,int b1,int b2);
 static int BondCompare(int *a,int *b);
-void ObjectMoleculeUpdateNonbonded(ObjectMolecule *I);
 
 CoordSet *ObjectMoleculeChemPyModel2CoordSet(PyObject *model,AtomInfoType **atInfoPtr);
 
