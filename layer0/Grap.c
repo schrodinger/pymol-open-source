@@ -23,12 +23,12 @@ void GrapDrawStr(char *c,int x,int y)
 {
   glRasterPos4d((double)(x),(double)(y),0.0,1.0);
   while(*c) 
-    glutBitmapCharacter(GLUT_BITMAP_8_BY_13,*(c++));
+    p_glutBitmapCharacter(P_GLUT_BITMAP_8_BY_13,*(c++));
 }
 
 void GrapContStr(char *c)
 {
   while(*c) 
-    glutBitmapCharacter(GLUT_BITMAP_8_BY_13,*(c++));
+    p_glutBitmapCharacter(P_GLUT_BITMAP_8_BY_13,*(c++));
 }
 

@@ -120,7 +120,7 @@ void OrthoSpecial(int k,int x,int y)
   OrthoObject *I=&Ortho;
   int curLine = I->CurLine&OrthoSaveLines;
   switch(k) {
-  case GLUT_KEY_DOWN:
+  case P_GLUT_KEY_DOWN:
     if(I->CurChar&&(I->HistoryView==I->HistoryLine)) {
       strcpy(I->History[I->HistoryLine],I->Line[curLine]+I->PromptChar);
     }
@@ -136,7 +136,7 @@ void OrthoSpecial(int k,int x,int y)
     I->InputFlag=1;
     I->CursorChar=-1;
     break;
-  case GLUT_KEY_UP:
+  case P_GLUT_KEY_UP:
     if(I->CurChar&&(I->HistoryView==I->HistoryLine)) {
       strcpy(I->History[I->HistoryLine],I->Line[curLine]+I->PromptChar);
     }
@@ -152,7 +152,7 @@ void OrthoSpecial(int k,int x,int y)
     I->CursorChar=-1;
     I->InputFlag=1;
     break;
-  case GLUT_KEY_LEFT:
+  case P_GLUT_KEY_LEFT:
     if(I->CursorChar>=0) {
       I->CursorChar--;
     } else {
@@ -161,7 +161,7 @@ void OrthoSpecial(int k,int x,int y)
     if(I->CursorChar<I->PromptChar)
       I->CursorChar=I->PromptChar;
     break;
-  case GLUT_KEY_RIGHT:
+  case P_GLUT_KEY_RIGHT:
     if(I->CursorChar>=0) {
       I->CursorChar++;
     } else {
@@ -315,7 +315,7 @@ void OrthoBusyDraw(int force)
       if(*c) {
         glRasterPos4d(cBusyMargin,y-(cBusySpacing/2),0.0,1.0);
         while(*c)
-          glutBitmapCharacter(GLUT_BITMAP_8_BY_13,*(c++));
+          p_glutBitmapCharacter(P_GLUT_BITMAP_8_BY_13,*(c++));
         y-=cBusySpacing;
       }
       
@@ -837,12 +837,12 @@ void OrthoDoDraw()
           if(str)
             {
               while(*str)
-                glutBitmapCharacter(GLUT_BITMAP_8_BY_13,*(str++));
+                p_glutBitmapCharacter(P_GLUT_BITMAP_8_BY_13,*(str++));
               if((lcount==1)&&(I->InputFlag)) 
                 {
                   if(I->CursorChar>=0)  
                     glRasterPos4d((double)(x+8*I->CursorChar),(double)y,0.0,1.0);
-                  glutBitmapCharacter(GLUT_BITMAP_8_BY_13,'_');
+                  p_glutBitmapCharacter(P_GLUT_BITMAP_8_BY_13,'_');
                 }
             }
           l=(I->CurLine-lcount)&OrthoSaveLines;
@@ -921,7 +921,7 @@ static void OrthoDrawWizardPrompt(void)
       c=nChar;
       while(c--) {
         if(*p)
-          glutBitmapCharacter(GLUT_BITMAP_8_BY_13,*p);
+          p_glutBitmapCharacter(P_GLUT_BITMAP_8_BY_13,*p);
         if(!*(p++)) {
           y=y-cOrthoLineHeight;
           glRasterPos4d((double)x,(double)y,0.0,1.0);          
@@ -1045,7 +1045,7 @@ int OrthoButton(int button,int state,int x,int y,int mod)
   I->X=x;
   I->Y=y;
 
-  if(state==GLUT_DOWN)
+  if(state==P_GLUT_DOWN)
 	 {
 		I->ActiveButton = button;
 		if(I->GrabbedBy)
@@ -1066,7 +1066,7 @@ int OrthoButton(int button,int state,int x,int y,int mod)
 				}
 		  }
 	 }
-  else if(state==GLUT_UP)
+  else if(state==P_GLUT_UP)
 	 {
       if(I->GrabbedBy)
         {
@@ -1128,7 +1128,7 @@ void OrthoSplash(void)
 
   PRINTF "    Please cite PYMOL in publications and presentations:\n\n" ENDF;
   PRINTF "       Warren L. DeLano \"The PyMOL Molecular Graphics System.\"\n" ENDF;
-  PRINTF "       DeLano Scientific, Belmont, CA, USA. http://www.pymol.org \n\n" ENDF;
+  PRINTF "       DeLano Scientific, San Carlos, CA, USA. http://www.pymol.org\n\n" ENDF;
 
   PRINTF "    Enter \"help release\" for release notes (PLEASE READ!).\n" ENDF;
   PRINTF "    Enter \"help commands\" for a list of commands.\n" ENDF;

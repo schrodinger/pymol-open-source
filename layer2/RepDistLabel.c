@@ -72,7 +72,7 @@ void RepDistLabelRender(RepDistLabel *I,CRay *ray,Pickable **pick)
       cc = l[n];
 		v+=3;
       while(*cc) {
-        glutBitmapCharacter(GLUT_BITMAP_8_BY_13,*(cc++));
+        p_glutBitmapCharacter(P_GLUT_BITMAP_8_BY_13,*(cc++));
       }
       n++;
 	 }

@@ -46,8 +46,6 @@
  * 
 ***/
 
-#define GLUT	1
-
 #ifdef WIN32
 #define MS_WIN32
 #endif
@@ -4352,7 +4350,7 @@ init_opengl(void)
 #endif
     PyDict_SetItemString(d, "_numeric", nl);
     Py_DECREF(nl);
-#ifdef GLUT
+#ifndef _PYMOL_NO_GLUT
     gl = PyInt_FromLong(1L);
 #else
     gl = PyInt_FromLong(0L);

@@ -76,7 +76,7 @@ void RepLabelRender(RepLabel *I,CRay *ray,Pickable **pick)
       }
 		v+=6;
       while(*l) {
-        glutBitmapCharacter(GLUT_BITMAP_8_BY_13,*(l++));
+        p_glutBitmapCharacter(P_GLUT_BITMAP_8_BY_13,*(l++));
       }
       l++;
     }

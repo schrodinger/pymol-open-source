@@ -130,7 +130,7 @@ void MoviePNG(char *prefix,int save)
 		MyPNGWrite(fname,I->Image[i],I->Width,I->Height);		
 		ExecutiveDrawNow();
 		OrthoBusySlow(a,nFrame);
-		if(PMGUI) glutSwapBuffers();
+		if(PMGUI) p_glutSwapBuffers();
       PRINTFB(FB_Movie,FB_Debugging)
         " MoviePNG-DEBUG: i = %d, I->Image[i] = %p\n",i,I->Image[i]
         ENDFB;
