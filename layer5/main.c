@@ -774,6 +774,23 @@ void MainFree(void)
   if(PMGUI) p_glutDestroyWindow(TheWindow);
   TerminateProcess(GetCurrentProcess(),0); /* only way to avoid a crash */
 #endif
+#ifdef _PYMOL_OSX
+  if(PMGUI) {
+    if(GameMode) {
+      p_glutLeaveGameMode();
+      /* force a full-screen refresh to eliminate garbage on screen */
+      p_glutInitWindowPosition(0,0);
+      p_glutInitWindowSize(640,480);
+      p_glutInitDisplayMode(P_GLUT_RGBA | P_GLUT_DEPTH | P_GLUT_DOUBLE );            
+      if(p_glutGet(P_GLUT_DISPLAY_MODE_POSSIBLE)) {
+        TheWindow = p_glutCreateWindow("PyMOL Viewer");
+        p_glutFullScreen();
+        p_glutDestroyWindow(TheWindow);
+      }
+    } else 
+      p_glutDestroyWindow(TheWindow);
+  }
+#endif
 
 }
 /*========================================================================*/
@@ -1035,7 +1052,7 @@ SetConsoleCtrlHandler(
     case 1: /* force stereo (if possible) */
       p_glutInitDisplayMode(P_GLUT_RGBA | P_GLUT_DEPTH | P_GLUT_DOUBLE | P_GLUT_STEREO );
       if(!p_glutGet(P_GLUT_DISPLAY_MODE_POSSIBLE)) {
-        p_glutInitDisplayMode(P_GLUT_RGBA | P_GLUT_DEPTH | P_GLUT_DOUBLE );            
+
         StereoCapable = 0;
       } else {
         StereoCapable = 1;
