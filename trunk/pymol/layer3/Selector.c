@@ -181,7 +181,7 @@ int SelectorGetPDB(char **charVLA,int sele,int state,int conectFlag)
             ind=obj->CSet[state]->AtmToIdx[at];
             if(ind>=0) {
               I->Table[a].index=c+1;
-              CoordSetAtomToPDBStrVLA(charVLA,&cLen,obj->AtomInfo+a,
+              CoordSetAtomToPDBStrVLA(charVLA,&cLen,obj->AtomInfo+at,
                                       obj->CSet[state]->Coord+(3*ind),c);
               c++;
             }
