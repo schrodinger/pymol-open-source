@@ -946,7 +946,7 @@ void SeekerUpdate(void)
   int label_flag = true;
   int codes = 0;
   int max_row = 50;
-
+  int default_color = 0;
   CSeqRow *row_vla,*row,*lab=NULL;
   row_vla = VLACalloc(CSeqRow,10);
   /* FIRST PASS: get all the residues represented properly */
@@ -971,6 +971,8 @@ void SeekerUpdate(void)
         break;
 
       codes = SettingGet_i(obj->Obj.Setting,NULL,cSetting_seq_view_format);
+      default_color = SettingGet_i(obj->Obj.Setting,NULL,cSetting_seq_view_color);
+
       /* allocate a row for labels, if present
          the text for the labels and the residues will line up exactly 
       */
@@ -1162,7 +1164,10 @@ void SeekerUpdate(void)
               UtilConcatVLA(&row->txt,&row->len,abbr);
               r1->stop = row->len;
             }
-            r1->color = FindColor(ai,obj->NAtom-a);
+            if(default_color<0)
+              r1->color = FindColor(ai,obj->NAtom-a);
+            else
+              r1->color = default_color;
             nCol++;
             last_abbr=abbr[0];
           }
@@ -1184,7 +1189,10 @@ void SeekerUpdate(void)
             else
               UtilConcatVLA(&row->txt,&row->len,"''");
             r1->stop = row->len;
-            r1->color = FindColor(ai,obj->NAtom-a);
+            if(default_color<0)
+              r1->color = FindColor(ai,obj->NAtom-a);
+            else
+              r1->color = default_color;
             UtilConcatVLA(&row->txt,&row->len," ");
             nCol++;
           }
@@ -1199,7 +1207,10 @@ void SeekerUpdate(void)
           else
             UtilConcatVLA(&row->txt,&row->len,"''");
           r1->stop = row->len;
-          r1->color = ai->color;
+          if(default_color<0)
+            r1->color = ai->color;
+          else
+            r1->color = default_color;
           UtilConcatVLA(&row->txt,&row->len," ");
           nCol++;
           break;
@@ -1217,7 +1228,10 @@ void SeekerUpdate(void)
             else
               UtilConcatVLA(&row->txt,&row->len,"''");
             r1->stop = row->len;
-            r1->color = FindColor(ai,obj->NAtom-a);
+            if(default_color<0)
+              r1->color = FindColor(ai,obj->NAtom-a);
+            else
+              r1->color = default_color;
             UtilConcatVLA(&row->txt,&row->len," ");
             nCol++;
           }
@@ -1228,10 +1242,12 @@ void SeekerUpdate(void)
             if((cs = obj->DiscreteCSet[a])!=last_disc) {
               last_disc = cs;
               if(cs) {
-
+                default_color = SettingGet_i(cs->Setting,obj->Obj.Setting,
+                                             cSetting_seq_view_color);
                 VLACheck(row->col,CSeqCol,nCol);
                 r1 = row->col+nCol;
                 r1->start = row->len;
+                r1->color = default_color;
                 first_atom_in_label = true;
                 
                 if(cs->Name[0])
@@ -1257,12 +1273,15 @@ void SeekerUpdate(void)
               for(b=0;b<obj->NCSet;b++) {
                 cs = obj->CSet[b];
                 if(cs) {
+                  default_color = SettingGet_i(cs->Setting,obj->Obj.Setting,
+                                               cSetting_seq_view_color);
                   
                   VLACheck(row->col,CSeqCol,nCol);
                   r1 = row->col+nCol;
                   r1->state = b+1;
                   r1->start = row->len;
                   r1->atom_at = nListEntries + 1; /* tricky & dangerous */
+                  r1->color = default_color;
                   if(cs->Name[0])
                     UtilConcatVLA(&row->txt,&row->len,cs->Name);
                   else {

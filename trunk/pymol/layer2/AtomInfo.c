@@ -339,7 +339,7 @@ int AtomInfoFromPyList(AtomInfoType *I,PyObject *list)
 {
   int ok=true;
   int hetatm;
-  int ll;
+  int ll = 0;
   if(ok) ok = PyList_Check(list);
   if(ok) ll = PyList_Size(list);
   if(ok) ok = PConvPyIntToInt(PyList_GetItem(list, 0),&I->resv);

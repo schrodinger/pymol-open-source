@@ -1063,6 +1063,7 @@ void SettingGenerateSideEffects(int index,char *sele,int state)
   case cSetting_seq_view_label_spacing:
   case cSetting_seq_view_label_start:
   case cSetting_seq_view_format:
+  case cSetting_seq_view_color:
     SeqChanged();
     break;
   case cSetting_seq_view_location:
@@ -2265,6 +2266,7 @@ void SettingInitGlobal(int alloc,int reset_gui)
   SettingSet_b(I,cSetting_seq_view_overlay,0);
   SettingSet_b(I,cSetting_auto_classify_atoms,1);
   SettingSet_i(I,cSetting_cartoon_nucleic_acid_mode,0);
+  SettingSet_color(I,cSetting_seq_view_color, "-1");
 
 }
 
