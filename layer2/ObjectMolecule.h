@@ -44,6 +44,7 @@ typedef struct ObjectMolecule {
   CObject Obj;
   struct CoordSet **CSet;
   int NCSet;
+  struct CoordSet *CSTmpl; /* template for trajectories, etc.*/
   BondType *Bond;
   AtomInfoType *AtomInfo;
   int NAtom;
@@ -151,7 +152,7 @@ ObjectMolecule *ObjectMoleculeLoadChemPyModel(ObjectMolecule *I,PyObject *model,
 
 ObjectMolecule *ObjectMoleculeLoadTRJFile(ObjectMolecule *obj,char *fname,int frame,
                                           int interval,int average,int start,
-                                          int stop,int max);
+                                          int stop,int max,char *sele);
 
 ObjectMolecule *ObjectMoleculeLoadRSTFile(ObjectMolecule *obj,char *fname,int frame);
 

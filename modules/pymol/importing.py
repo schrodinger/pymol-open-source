@@ -20,7 +20,7 @@ from cmd import _cmd,lock,unlock,Shortcut,QuietException, \
      _feedback,fb_module,fb_mask, \
      file_ext_re,safe_oname_re, \
      _load
-import cmd
+import selector
 
 try:
    from pymol import m4x
@@ -146,7 +146,7 @@ PYMOL API
    return apply(load_object,lst,kw)
 
 def load_traj(filename,object='',state=0,format='',interval=1,
-              average=1,start=1,stop=-1,max=-1):
+              average=1,start=1,stop=-1,max=-1,selection='all'):
    '''
 DESCRIPTION
   
@@ -156,12 +156,12 @@ DESCRIPTION
 USAGE
  
    load_traj filename [,object [,state [,format [,interval [,average ]
-                      [,start [, stop ]]]]]]
+                      [,start [, stop [, selection ]]]]]]]
  
 PYMOL API
   
    cmd.load_traj( filename [,object [,state [,format [,interval [,average ]
-                      [,start [, stop [, max ]]]]]]]
+                      [,start [, stop [, max [, selection]]]]]]]]
 
 SEE ALSO
 
@@ -178,6 +178,9 @@ SEE ALSO
       start = int(start)
       stop = int(stop)
       max = int(max)
+      # preprocess selection
+      selection = selector.process(selection)
+      #   
 
       fname = filename
       fname = os.path.expanduser(fname)
@@ -215,7 +218,7 @@ SEE ALSO
       if ftype>=0:
          r = _cmd.load_traj(str(oname),fname,int(state)-1,int(ftype),
                             int(interval),int(average),int(start),
-                            int(stop),int(max))
+                            int(stop),int(max),str(selection))
    finally:
       unlock()
    return r

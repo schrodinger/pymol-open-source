@@ -466,7 +466,7 @@ int ExecutiveMapNew(char *name,int type,float *grid,
       }
 
       ObjectSetName((CObject*)objMap,name);
-      ExecutiveManageObject((CObject*)objMap);
+      ExecutiveManageObject((CObject*)objMap,true);
       SceneDirty();
     }
   }
@@ -1872,7 +1872,7 @@ float ExecutiveDist(char *nam,char *s1,char *s2,int mode,float cutoff)
       if(ExecutiveFindObjectByName(nam))
         ExecutiveDelete(nam);
       ObjectSetName((CObject*)obj,nam);
-      ExecutiveManageObject((CObject*)obj);
+      ExecutiveManageObject((CObject*)obj,true);
       ExecutiveSetRepVisib(nam,cRepLine,1);
     }
   } else if(sele1<0) {
@@ -2004,7 +2004,7 @@ void ExecutiveCopy(char *src,char *dst)
       oDst = ObjectMoleculeCopy(oSrc);
       if(oDst) {
         strcpy(oDst->Obj.Name,dst);
-        ExecutiveManageObject((CObject*)oDst);
+        ExecutiveManageObject((CObject*)oDst,true);
         rec1=ExecutiveFindSpec(oSrc->Obj.Name);
         rec2=ExecutiveFindSpec(oDst->Obj.Name);
         if(rec1&&rec2) {
@@ -2354,7 +2354,7 @@ float ExecutiveRMS(char *s1,char *s2,int mode,float refine,int max_cyc,int quiet
             ExecutiveDelete(oname);
             auto_save = SettingGet(cSetting_auto_zoom);
             SettingSet(cSetting_auto_zoom,0);
-            ExecutiveManageObject((CObject*)ocgo);
+            ExecutiveManageObject((CObject*)ocgo,true);
             SettingSet(cSetting_auto_zoom,auto_save);            
             SceneDirty();
           }
@@ -3641,7 +3641,7 @@ void ExecutiveSymExp(char *name,char *oname,char *s1,float cutoff) /* TODO state
                     sprintf(new_name,"%s%02d%02d%02d%02d",name,a,x,y,z);
                     ObjectSetName((CObject*)new_obj,new_name);
                     ExecutiveDelete(new_name);
-                    ExecutiveManageObject((CObject*)new_obj);
+                    ExecutiveManageObject((CObject*)new_obj,true);
                     SceneChanged();
                   } else {
                     ((CObject*)new_obj)->fFree((CObject*)new_obj);
@@ -3733,7 +3733,7 @@ void ExecutiveDump(char *fname,char *obj)
   
 }
 /*========================================================================*/
-void ExecutiveManageObject(CObject *obj)
+void ExecutiveManageObject(CObject *obj,int allow_zoom)
 {
   int a;
   SpecRec *rec = NULL;
@@ -3792,10 +3792,11 @@ void ExecutiveManageObject(CObject *obj)
   if(obj->type==cObjectMolecule) {
 	 ExecutiveUpdateObjectSelection(obj);
   }
-  if(!exists) 
-    if(SettingGet(cSetting_auto_zoom)) {
-      ExecutiveWindowZoom(obj->Name,0.0,-1); /* auto zoom (all states) */
-    }
+  if(allow_zoom)
+    if(!exists) 
+      if(SettingGet(cSetting_auto_zoom)) {
+        ExecutiveWindowZoom(obj->Name,0.0,-1); /* auto zoom (all states) */
+      }
 
 }
 /*========================================================================*/
