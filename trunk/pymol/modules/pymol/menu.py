@@ -219,23 +219,68 @@ def general_color(s):
            ]
 
 def presets(s):
-   return [
+   return [[ 2, 'Preset:'       ,''                        ],     
            [ 1, 'simple'   ,'preset.simple("'+s+'")'          ],
+           [ 1, 'simple (no solvent)'   ,'preset.simple_no_solv("'+s+'")'          ],           
            [ 1, 'technical'   , 'preset.technical("'+s+'")'          ],
            [ 1, 'ligands'   , 'preset.ligands("'+s+'")'          ],
            [ 1, 'pretty'     , 'preset.pretty("'+s+'")'          ],
-           [ 1, 'pretty_no_solv', 'preset.pretty_no_solv("'+s+'")'          ],
+           [ 1, 'pretty (no solvent)', 'preset.pretty_no_solv("'+s+'")'          ],
            [ 1, 'publication'   , 'preset.publication("'+s+'")'          ],
-           [ 1, 'pub_no_solv'   , 'preset.pub_no_solv("'+s+'")'          ],           
+           [ 1, 'publication (no solvent)'   , 'preset.pub_no_solv("'+s+'")'          ],
+           [ 0, ''               ,''                             ],                      
+           [ 1, 'default'   ,'preset.default("'+s+'")'          ],           
            ]
 
 def expand(s):
-   return [
-           [ 1, 'full residues'  ,'cmd.select("'+s+'","(byres '+s+')",show=1)'      ],
-           [ 1, 'expand by 4 A'  ,'cmd.select("'+s+'","('+s+' expand 4)",show=1)' ],
-           [ 1, 'expand by 8 A'  ,'cmd.select("'+s+'","('+s+' expand 8)",show=1)' ],
+   return [[ 2, 'Expand:'       ,''                        ],     
+           [ 1, 'complete resides'  ,'cmd.select("'+s+'","(byres '+s+')",show=1)'      ],
+           [ 0, ''               ,''                             ],           
+           [ 1, 'by 4 A'  ,'cmd.select("'+s+'","('+s+' expand 4)",show=1)' ],
+           [ 1, 'by 6 A'  ,'cmd.select("'+s+'","('+s+' expand 6)",show=1)' ],           
+           [ 1, 'by 8 A'  ,'cmd.select("'+s+'","('+s+' expand 8)",show=1)' ],
+           [ 1, 'by 12 A'  ,'cmd.select("'+s+'","('+s+' expand 12)",show=1)' ],
+           [ 1, 'by 16 A'  ,'cmd.select("'+s+'","('+s+' expand 16)",show=1)' ],
+           [ 1, 'by 20 A'  ,'cmd.select("'+s+'","('+s+' expand 20)",show=1)' ],           
+           [ 0, ''               ,''                             ],
+           [ 1, 'by 4 A, residues'  ,'cmd.select("'+s+'","(byres ('+s+' expand 4))",show=1)' ],
+           [ 1, 'by 6 A, residues'  ,'cmd.select("'+s+'","(byres ('+s+' expand 6))",show=1)' ],
+           [ 1, 'by 8 A, residues'   ,'cmd.select("'+s+'","(byres ('+s+' expand 8))",show=1)' ],
+           [ 1, 'by 12 A, residues'  ,'cmd.select("'+s+'","(byres ('+s+' expand 12))",show=1)' ],
+           [ 1, 'by 16 A, residues'  ,'cmd.select("'+s+'","(byres ('+s+' expand 16))",show=1)' ],
+           [ 1, 'by 20 A, residues'  ,'cmd.select("'+s+'","(byres ('+s+' expand 20))",show=1)' ],
+           ]
+
+def around(s):
+   return [[ 2, 'Around:'       ,''                        ],     
+           [ 1, 'atoms within 4 A'  ,'cmd.select("'+s+'","('+s+' around 4)",show=1)' ],
+           [ 1, 'atoms within 5 A'  ,'cmd.select("'+s+'","('+s+' around 5)",show=1)' ],           
+           [ 1, 'atoms within 6 A'  ,'cmd.select("'+s+'","('+s+' around 6)",show=1)' ],           
+           [ 1, 'atoms within 8 A'  ,'cmd.select("'+s+'","('+s+' around 8)",show=1)' ],
+           [ 0, ''               ,''                             ],           
+           [ 1, 'residues within 4 A'  ,'cmd.select("'+s+'","(byres ('+s+' around 4))",show=1)' ],
+           [ 1, 'residues within 5 A'  ,'cmd.select("'+s+'","(byres ('+s+' around 5))",show=1)' ],
+           [ 1, 'residues within 6 A'  ,'cmd.select("'+s+'","(byres ('+s+' around 6))",show=1)' ],
+           [ 1, 'residues within 8 A'  ,'cmd.select("'+s+'","(byres ('+s+' around 8))",show=1)' ],           
            ]
    
+def extend(s):
+   return [[ 2, 'Extend:'       ,''                        ],     
+           [ 1, 'by 1 bond'  ,'cmd.select("'+s+'","('+s+' extend 1)",show=1)' ],
+           [ 1, 'by 2 bonds'  ,'cmd.select("'+s+'","('+s+' extend 2)",show=1)' ],           
+           [ 1, 'by 3 bonds'  ,'cmd.select("'+s+'","('+s+' extend 3)",show=1)' ],
+           [ 1, 'by 4 bonds'  ,'cmd.select("'+s+'","('+s+' extend 4)",show=1)' ],
+           [ 1, 'by 5 bonds'  ,'cmd.select("'+s+'","('+s+' extend 5)",show=1)' ],
+           [ 1, 'by 6 bonds'  ,'cmd.select("'+s+'","('+s+' extend 6)",show=1)' ],           
+           [ 0, ''               ,''                             ],
+           [ 1, 'by 1 bond, residues'  ,'cmd.select("'+s+'","(byres ('+s+' extend 1))",show=1)' ],
+           [ 1, 'by 2 bonds, residues'  ,'cmd.select("'+s+'","(byres ('+s+' extend 2))",show=1)' ],
+           [ 1, 'by 3 bonds, residues'   ,'cmd.select("'+s+'","(byres ('+s+' extend 3))",show=1)' ],
+           [ 1, 'by 4 bonds, residues'  ,'cmd.select("'+s+'","(byres ('+s+' extend 4))",show=1)' ],
+           [ 1, 'by 5 bonds, residues'  ,'cmd.select("'+s+'","(byres ('+s+' extend 5))",show=1)' ],
+           [ 1, 'by 6 bonds, residues'  ,'cmd.select("'+s+'","(byres ('+s+' extend 6))",show=1)' ],
+           ]
+
 def sele_action(s):
    return [[ 2, 'Actions:'       ,''                        ],     
            [ 1, 'delete selection', 'cmd.delete("'+s+'")'          ],
@@ -249,14 +294,16 @@ def sele_action(s):
            [ 0, ''               ,''                             ],
            [ 1, 'remove atoms'   ,'cmd.remove("'+s+'")'          ],
            [ 0, ''               ,''                             ],
-           [ 1, 'polar contacts'  ,
-             'cmd.dist("'+s+'_pc","'+s+'&elem n+o","same",quiet=1,mode=2,labels=0)'
+           [ 1, 'find polar contacts'  ,
+             'cmd.dist("'+s+'_polar_conts","'+s+'&elem n+o","same",quiet=1,mode=2,labels=0)'
              ],                      
            [ 0, ''               ,''                             ],
            [ 1, 'expand'         , expand(s)         ],
+           [ 1, 'around'         , around(s)         ],           
+           [ 1, 'extend'         , extend(s)         ],           
            [ 0, ''          ,''                                              ],
-           [ 1, 'invert'         ,'cmd.select("'+s+'","(not '+s+')",show=1)'    ],
-           [ 1, 'duplicate'      ,'cmd.select("'+s+'")'          ],
+           [ 1, 'invert selection'     ,'cmd.select("'+s+'","(not '+s+')",show=1)'    ],
+           [ 1, 'duplicate selection'      ,'cmd.select("'+s+'")'          ],
            [ 1, 'create object'  ,'cmd.create(None,"'+s+'")'     ],           
            [ 0, ''          ,''                                  ],
            [ 1, 'mask'           ,'cmd.mask("'+s+'")'            ],
@@ -278,9 +325,9 @@ def mol_action(s):
            [ 0, ''          ,''                                              ],
            [ 1, 'preset'  , presets(s)       ],
            [ 0, ''               ,''                             ],
-           [ 1, 'assign S.S.'  ,'cmd.dss("'+s+'")'        ],
-           [ 1, 'polar contacts'  ,
-             'cmd.dist("'+s+'_pc","'+s+'&elem n+o","same",3.2,quiet=1,mode=1,labels=0)'
+           [ 1, 'assign sec. struc.'  ,'cmd.dss("'+s+'")'        ],
+           [ 1, 'find polar contacts'  ,
+             'cmd.dist("'+s+'_polar_conts","'+s+'&elem n+o","same",3.2,quiet=1,mode=1,labels=0)'
              ],                      
            [ 0, ''          ,''                                              ],
            [ 1, 'freeze state'  ,'cmd.set("state",cmd.get_state(),"'+s+'")'        ],
@@ -291,6 +338,7 @@ def mol_action(s):
            [ 0, ''          ,''                                              ],
            [ 1, 'add hydrogens' ,'cmd.h_add("'+s+'")'     ],           
            [ 1, 'remove hydrogens'  ,'cmd.remove("(elem h and ('+s+'))")'     ],
+           [ 1, 'remove waters'  ,'cmd.remove("(resn HOH+WAT and ('+s+'))")'     ],           
            [ 0, ''          ,''                                              ],
            [ 1, 'protect'  ,'cmd.protect("'+s+'")'        ],
            [ 1, 'deprotect'  ,'cmd.deprotect("'+s+'")'        ],
@@ -335,7 +383,8 @@ def all_action(s):
            [ 1, 'delete everything'  , 'cmd.delete("all")'     ],           
            [ 0, ''          ,''                                              ],
            [ 1, 'add hydrogens' ,'cmd.h_add("'+s+'")'     ],           
-           [ 1, 'remove hydrogens'  ,'cmd.remove("(elem h and ('+s+'))")'     ],           
+           [ 1, 'remove hydrogens'  ,'cmd.remove("(elem h and ('+s+'))")'     ],
+           [ 1, 'remove waters'  ,'cmd.remove("(resn HOH+WAT and ('+s+'))")'     ],                      
            [ 0, ''          ,''                                              ],
            [ 1, 'protect'        ,'cmd.protect("'+s+'")'         ],
            [ 1, 'deprotect'      ,'cmd.deprotect("'+s+'")'       ],

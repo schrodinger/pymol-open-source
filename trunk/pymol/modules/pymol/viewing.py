@@ -1531,7 +1531,7 @@ EXAMPLES
       '''
       # preprocess selection
       selection = selector.process(selection)
-      color = cmd._interpret_color(color)
+      color = cmd._interpret_color(str(color))
       #
       try:
          lock()

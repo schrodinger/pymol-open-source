@@ -690,7 +690,7 @@ void CoordSetUpdate(CoordSet *I)
 /*========================================================================*/
 void CoordSetRender(CoordSet *I,CRay *ray,Pickable **pick,int pass)
 {
-  int a;
+  int a,aa;
   Rep *r;
 
   PRINTFD(FB_CoordSet)
@@ -699,7 +699,15 @@ void CoordSetRender(CoordSet *I,CRay *ray,Pickable **pick,int pass)
 
   if((!pass)&&I->Name[0])
     ButModeCaption(I->Name);
-  for(a=0;a<I->NRep;a++)
+  for(aa=0;aa<I->NRep;aa++) {
+    if(aa==cRepSurface) { /* reorder */
+      a=cRepCell;
+    } else if(aa==cRepCell) {
+      a=cRepSurface;
+    } else {
+      a = aa;
+    }
+      
     if(I->Active[a])
       if(I->Rep[a]) 
         {
@@ -775,7 +783,7 @@ void CoordSetRender(CoordSet *I,CRay *ray,Pickable **pick,int pass)
           /*          if(ray)
                       ray->fWobble(ray,0,NULL);*/
         }
-  
+  }
   PRINTFD(FB_CoordSet)
     " CoordSetRender: leaving...\n"
     ENDFD;

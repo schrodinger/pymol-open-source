@@ -1529,6 +1529,12 @@ class PMGApp(AbstractApp):
       self.menuBar.addmenu('Mouse', 'Mouse Configuration',tearoff=TRUE)
 
       self.menuBar.addmenuitem('Mouse', 'checkbutton',
+                         'Virtual Trackball.',
+                         label=self.pad+'Virtual Trackball',
+                        variable = self.setting.virtual_trackball,
+                        command = lambda s=self: s.setting.update('virtual_trackball'))
+
+      self.menuBar.addmenuitem('Mouse', 'checkbutton',
                          'Roving Origin.',
                          label=self.pad+'Roving Origin',
                         variable = self.setting.roving_origin,
