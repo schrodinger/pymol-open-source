@@ -666,13 +666,12 @@ void CoordSetRender(CoordSet *I,CRay *ray,Pickable **pick,int pass)
         
           if(r->fRender) { /* do OpenGL rendering in three passes */
             if(ray||pick) {
-                  r->fRender(r,ray,pick);                
+              r->fRender(r,ray,pick);                
             } else 
               switch(a) {
               case cRepCyl:
               case cRepLabel:
               case cRepNonbondedSphere:
-              case cRepCartoon:
               case cRepRibbon:
               case cRepDot:
               case cRepCGO:
@@ -706,7 +705,18 @@ void CoordSetRender(CoordSet *I,CRay *ray,Pickable **pick,int pass)
                 } else if(pass==1)
                   r->fRender(r,ray,pick);
                 break;
+              case cRepCartoon:
+                if(SettingGet_f(r->cs->Setting,
+                                r->obj->Setting,
+                                cSetting_cartoon_transparency)>0.0001) {
+                  if(pass==-1)
+                    r->fRender(r,ray,pick);                                
+                } else if(pass==1)
+                  r->fRender(r,ray,pick);
+                break;
               }
+
+            
           }
           if(ray)
             ray->fTexture(ray,0,NULL);
