@@ -4,7 +4,10 @@ import os
 import sys
 import time
 
-sys.path.append(os.environ['PYMOL_PATH']+'/modules')
+modules_path = os.environ['PYMOL_PATH']+'/modules'
+
+if modules_path not in sys.path:
+   sys.path.append(modules_path)
 
 import pymol
 
