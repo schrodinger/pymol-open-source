@@ -2542,7 +2542,8 @@ int SelectorSelect1(EvalElem *base)
           }
       break;
 	 case SELE_RSIs:
-		if((p=strstr(base[1].text,":"))) /* range */
+		if((p=strstr(base[1].text,":"))/* range */
+         ||(p=strstr(base[1].text,"-")))/* range */
 		  {
 			 *p=' ';
 			 if(sscanf(base[1].text,"%i%i",&rmin,&rmax)!=2)
