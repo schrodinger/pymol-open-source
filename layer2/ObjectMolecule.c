@@ -5606,8 +5606,12 @@ void ObjectMoleculeMerge(ObjectMolecule *I,AtomInfoType *ai,
   if(nAt<I->NAtom) nAt=I->NAtom;
   a2i = Alloc(int,nAt);
   i2a = Alloc(int,cs->NIndex);
-  ErrChkPtr(a2i);
-  ErrChkPtr(i2a);
+  if(nAt) {
+    ErrChkPtr(a2i);
+  }
+  if(cs->NIndex){
+    ErrChkPtr(i2a);
+  }
   
   for(a=0;a<cs->NIndex;a++) /* a is in original file space */
     {

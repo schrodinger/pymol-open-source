@@ -813,9 +813,11 @@ void CoordSetExtendIndices(CoordSet *I,int nAtom)
 	 {
 		if(I->AtmToIdx) {
         I->AtmToIdx = Realloc(I->AtmToIdx,int,nAtom);
-        ErrChkPtr(I->AtmToIdx);
-        for(a=I->NAtIndex;a<nAtom;a++)
-          I->AtmToIdx[a]=-1;
+        if(nAtom){
+          ErrChkPtr(I->AtmToIdx);
+          for(a=I->NAtIndex;a<nAtom;a++)
+            I->AtmToIdx[a]=-1;
+        }
         I->NAtIndex = nAtom;
       } else if(!obj->DiscreteFlag) {
         I->AtmToIdx = Alloc(int,nAtom);
@@ -832,10 +834,11 @@ void CoordSetAppendIndices(CoordSet *I,int offset)
   ObjectMolecule *obj = I->Obj;
 
   I->IdxToAtm = Alloc(int,I->NIndex);
-  ErrChkPtr(I->IdxToAtm);
-  for(a=0;a<I->NIndex;a++)
-    I->IdxToAtm[a]=a+offset;
-  
+  if(I->NIndex){
+    ErrChkPtr(I->IdxToAtm);
+    for(a=0;a<I->NIndex;a++)
+      I->IdxToAtm[a]=a+offset;
+  }
   if(obj->DiscreteFlag) {
     VLACheck(obj->DiscreteAtmToIdx,int,a+offset);
     VLACheck(obj->DiscreteCSet,CoordSet*,a+offset);
@@ -846,11 +849,13 @@ void CoordSetAppendIndices(CoordSet *I,int offset)
     }
   } else {
     I->AtmToIdx = Alloc(int,I->NIndex+offset);
-    ErrChkPtr(I->AtmToIdx);
-    for(a=0;a<offset;a++)
-      I->AtmToIdx[a]=-1;
-    for(a=0;a<I->NIndex;a++) 
-      I->AtmToIdx[a+offset]=a;
+    if(I->NIndex+offset){
+      ErrChkPtr(I->AtmToIdx);
+      for(a=0;a<offset;a++)
+        I->AtmToIdx[a]=-1;
+      for(a=0;a<I->NIndex;a++) 
+        I->AtmToIdx[a+offset]=a;
+    }
   }
   I->NAtIndex = I->NIndex + offset;
 }
@@ -861,13 +866,15 @@ void CoordSetEnumIndices(CoordSet *I)
   int a;
   I->AtmToIdx = Alloc(int,I->NIndex);
   I->IdxToAtm = Alloc(int,I->NIndex);
-  ErrChkPtr(I->AtmToIdx);
-  ErrChkPtr(I->IdxToAtm);
-  for(a=0;a<I->NIndex;a++)
-	 {
-	 I->AtmToIdx[a]=a;
-	 I->IdxToAtm[a]=a;
-	 }
+  if(I->NIndex) {
+    ErrChkPtr(I->AtmToIdx);
+    ErrChkPtr(I->IdxToAtm);
+    for(a=0;a<I->NIndex;a++)
+      {
+        I->AtmToIdx[a]=a;
+        I->IdxToAtm[a]=a;
+      }
+  }
   I->NAtIndex = I->NIndex;
 }
 /*========================================================================*/

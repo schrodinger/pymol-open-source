@@ -562,7 +562,7 @@ int *AtomInfoGetSortedIndex(AtomInfoType *rec,int n,int **outdex)
   int a;
   index = Alloc(int,n+1);
   ErrChkPtr(index);
-  (*outdex)=Alloc(int,n);
+  (*outdex)=Alloc(int,n+1);
   ErrChkPtr(*outdex);
 
   UtilSortIndex(n,rec,index,(UtilOrderFn*)AtomInfoInOrder);
