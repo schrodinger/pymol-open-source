@@ -57,7 +57,7 @@ typedef struct {
 } CBasis;
 
 typedef struct {
-  float base[3];
+  float base[3]; /* where is this light ray starting from */
   CPrimitive *prim;
   float impact[3];
   float tri1,tri2;
@@ -67,6 +67,7 @@ typedef struct {
   float dotgle,flat_dotgle;
   float reflect[3];
   float trans;
+  float dir[3]; /* what is the direction of this light ray? */
 } RayInfo;
 
 typedef struct {
@@ -91,12 +92,13 @@ typedef struct {
 void BasisInit(PyMOLGlobals *G,CBasis *I,int group_id);
 void BasisFinish(CBasis *I,int group_id);
 void BasisMakeMap(CBasis *I,int *vert2prim,CPrimitive *prim,float *volume,
-                  int group_id,int block_base);
+                  int group_id,int block_base,int perspective);
 
 void BasisSetupMatrix(CBasis *I);
 void BasisGetTriangleNormal(CBasis *I,RayInfo *r,int i,float *fc);
 void BasisTrianglePrecompute(float *v1,float *v2,float *v3,float *pre);
 
+int BasisHitPerspective(BasisCallRec *BC);
 int BasisHitNoShadow(BasisCallRec *BC);
 int BasisHitShadow(BasisCallRec *BC);
 

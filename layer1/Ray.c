@@ -69,19 +69,21 @@ struct _CRayThreadInfo {
   int y_start,y_stop;
   unsigned int *edging;
   unsigned int edging_cutoff;
+  int perspective;
 };
 
  struct _CRayHashThreadInfo {
-  CBasis *basis;
-  int *vert2prim;
-  CPrimitive *prim;
-  float *clipBox;
-  unsigned int *image;
-  unsigned int background;
-  unsigned int bytes;
-  int phase;
-  CRay *ray;
-};
+   CBasis *basis;
+   int *vert2prim;
+   CPrimitive *prim;
+   float *clipBox;
+   unsigned int *image;
+   unsigned int background;
+   unsigned int bytes;
+   int perspective;
+   int phase;
+   CRay *ray;
+ };
 
  struct _CRayAntiThreadInfo {
   unsigned int *image;
@@ -118,8 +120,6 @@ void RayTransformFirst(CRay *I);
 void RayTransformBasis(CRay *I,CBasis *B,int group_id);
 
 int PrimitiveSphereHit(CRay *I,float *v,float *n,float *minDist,int except);
-
-void RayGetSphereNormal(CRay *I,RayInfo *r);
 
 void RayTransformNormals33( unsigned int n, float3 *q, const float m[16],float3 *p );
 void RayTransformInverseNormals33( unsigned int n, float3 *q, const float m[16],float3 *p );
@@ -175,7 +175,7 @@ int RayGetNPrimitives(CRay *I)
 #ifdef _PYMOL_INLINE
 __inline__
 #endif
-void RayGetSphereNormal(CRay *I,RayInfo *r)
+static void RayGetSphereNormal(CRay *I,RayInfo *r)
 {
   
   r->impact[0]=r->base[0]; 
@@ -187,7 +187,23 @@ void RayGetSphereNormal(CRay *I,RayInfo *r)
   r->surfnormal[2]=r->impact[2]-r->sphere[2];
   
   normalize3f(r->surfnormal);
+}
+
+#ifdef _PYMOL_INLINE
+__inline__
+#endif
+static void RayGetSphereNormalPerspective(CRay *I,RayInfo *r)
+{
   
+  r->impact[0]=r->base[0] + r->dist*r->dir[0];
+  r->impact[1]=r->base[1] + r->dist*r->dir[1];
+  r->impact[2]=r->base[2] + r->dist*r->dir[2];
+  
+  r->surfnormal[0]=r->impact[0]-r->sphere[0];
+  r->surfnormal[1]=r->impact[1]-r->sphere[1];
+  r->surfnormal[2]=r->impact[2]-r->sphere[2];
+  
+  normalize3f(r->surfnormal);
 }
 
 static void fill(unsigned int *buffer, unsigned int value,unsigned int cnt)
@@ -1048,7 +1064,7 @@ static void RayAntiSpawn(CRayAntiThreadInfo *Thread,int n_thread)
 
 int RayHashThread(CRayHashThreadInfo *T)
 {
-  BasisMakeMap(T->basis,T->vert2prim,T->prim,T->clipBox,T->phase,cCache_ray_map);
+  BasisMakeMap(T->basis,T->vert2prim,T->prim,T->clipBox,T->phase,cCache_ray_map,T->perspective);
 
   /* utilize a little extra wasted CPU time in thread 0 which computes the smaller map... */
 
@@ -1190,6 +1206,8 @@ int RayTraceThread(CRayThreadInfo *T)
    int blend_colors;
    int max_pass;
    float BasisFudge0,BasisFudge1;
+   int perspective = T->perspective;
+   float eye[3];
 
 	I = T->ray;
 
@@ -1313,6 +1331,12 @@ int RayTraceThread(CRayThreadInfo *T)
    edge_height *= invHgtRange;
 	vol0 = I->Volume[0];
 	vol2 = I->Volume[2];
+   if(perspective) {
+     eye[0] = (vol0+I->Volume[1])/2.0F;
+     eye[1] = (vol2+I->Volume[3])/2.0F;
+     eye[2] = 0.0F;
+   }
+
 	bp1  = I->Basis + 1;
 	bp2  = I->Basis + 2;
 	
@@ -1466,6 +1490,15 @@ int RayTraceThread(CRayThreadInfo *T)
               excl_trans		= _0;
               pass			= 0;
               new_front		= T->front;
+
+              if(perspective) {
+                r1.base[2] = -new_front;
+                r1.dir[0] =  (r1.base[0] - eye[0]);
+                r1.dir[1] =  (r1.base[1] - eye[1]);
+                r1.dir[2] = r1.base[2] - eye[2];
+                normalize3f(r1.dir);
+              }
+
               while((persist > _persistLimit) && (pass <= max_pass))
                 {
                   pixel_flag		= false;
@@ -1473,9 +1506,11 @@ int RayTraceThread(CRayThreadInfo *T)
                   SceneCall.front = new_front;
                   SceneCall.excl_trans = excl_trans;
                   
-
-                  i	= BasisHitNoShadow( &SceneCall );
-
+                  if(perspective) {
+                    i = BasisHitPerspective( &SceneCall );
+                  } else {
+                    i = BasisHitNoShadow( &SceneCall );
+                  }
                   interior_flag = SceneCall.interior_flag;
                   
                   if(((i >= 0) || interior_flag) && (pass < max_pass))
@@ -1496,7 +1531,7 @@ int RayTraceThread(CRayThreadInfo *T)
                               
                               RayReflectAndTexture(I,&r1);
                               
-                              r1.prim->wobble	= wobble_save;
+                                r1.prim->wobble	= wobble_save;
                             }
                           else
                             RayReflectAndTexture(I,&r1);
@@ -1524,29 +1559,34 @@ int RayTraceThread(CRayThreadInfo *T)
                             BasisGetTriangleNormal(bp1,&r1,i,fc);
                             
                             r1.trans = CharacterInterpolate(I->G,r1.prim->char_id,fc);
-
+                            
                             RayReflectAndTexture(I,&r1);
                             BasisGetTriangleFlatDotgle(bp1,&r1,i);
                             
-                          } else 
-                            {
+                          } else {
+
+                            if(perspective) {
+                              RayGetSphereNormalPerspective(I,&r1);
+                              RayReflectAndTexture(I,&r1);
+                            } else {
                               RayGetSphereNormal(I,&r1);
                               RayReflectAndTexture(I,&r1);
-                              
-                              if((r1.prim->type==cPrimCylinder) || (r1.prim->type==cPrimSausage)) 
-                                {
-                                  ft = r1.tri1;
-                                  fc[0]=(r1.prim->c1[0]*(_1-ft))+(r1.prim->c2[0]*ft);
-                                  fc[1]=(r1.prim->c1[1]*(_1-ft))+(r1.prim->c2[1]*ft);
-                                  fc[2]=(r1.prim->c1[2]*(_1-ft))+(r1.prim->c2[2]*ft);
-                                }
-                              else 
-                                {
-                                  fc[0]=r1.prim->c1[0];
-                                  fc[1]=r1.prim->c1[1];
-                                  fc[2]=r1.prim->c1[2];
-                                }
                             }
+                            
+                            if((r1.prim->type==cPrimCylinder) || (r1.prim->type==cPrimSausage)) 
+                              {
+                                ft = r1.tri1;
+                                fc[0]=(r1.prim->c1[0]*(_1-ft))+(r1.prim->c2[0]*ft);
+                                fc[1]=(r1.prim->c1[1]*(_1-ft))+(r1.prim->c2[1]*ft);
+                                fc[2]=(r1.prim->c1[2]*(_1-ft))+(r1.prim->c2[2]*ft);
+                              }
+                            else 
+                              {
+                                fc[0]=r1.prim->c1[0];
+                                fc[1]=r1.prim->c1[1];
+                                fc[2]=r1.prim->c1[2];
+                              }
+                          }
                           dotgle=-r1.dotgle;
                           
                           if(r1.flat_dotgle < _0)
@@ -2324,7 +2364,8 @@ void RayRender(CRay *I,int width,int height,unsigned int *image,
   int n_thread;
   int mag=1;
   int oversample_cutoff;
-  
+  int perspective = 0;
+
 #ifdef PROFILE_BASIS
   n_cells = 0;
   n_prims = 0;
@@ -2458,6 +2499,8 @@ void RayRender(CRay *I,int width,int height,unsigned int *image,
 
       CRayHashThreadInfo thread_info[2];
       
+      /* rendering map */
+
       thread_info[0].basis = I->Basis+1;
       thread_info[0].vert2prim = I->Vert2Prim;
       thread_info[0].prim = I->Primitive;
@@ -2467,20 +2510,24 @@ void RayRender(CRay *I,int width,int height,unsigned int *image,
       thread_info[0].bytes = width * (unsigned int)height;
       thread_info[0].phase = 0;
       thread_info[0].ray = I; /* for compute box */
+      thread_info[0].perspective = perspective;
+      
+      /* shadow map */
 
       thread_info[1].basis = I->Basis+2;
       thread_info[1].vert2prim = I->Vert2Prim;
       thread_info[1].prim = I->Primitive;
       thread_info[1].clipBox = NULL;
       thread_info[1].phase = 1;
+      thread_info[1].perspective = false; 
       RayHashSpawn(thread_info,2);
       
     } else
 #endif
       { /* serial execution */
-        BasisMakeMap(I->Basis+1,I->Vert2Prim,I->Primitive,I->Volume,0,cCache_ray_map);
+        BasisMakeMap(I->Basis+1,I->Vert2Prim,I->Primitive,I->Volume,0,cCache_ray_map,perspective);
         if(shadows) {
-          BasisMakeMap(I->Basis+2,I->Vert2Prim,I->Primitive,NULL,1,cCache_ray_map);
+          BasisMakeMap(I->Basis+2,I->Vert2Prim,I->Primitive,NULL,1,cCache_ray_map,false);
         }
 
       /* serial tasks which RayHashThread does in parallel mode */
@@ -2577,7 +2624,7 @@ void RayRender(CRay *I,int width,int height,unsigned int *image,
 			rt[a].n_thread = n_thread;
          rt[a].edging = NULL;
          rt[a].edging_cutoff = oversample_cutoff; /* info needed for busy indicator */
-
+         rt[a].perspective = perspective;
 			copy3f(spec_vector,rt[a].spec_vector);
 			}
 		

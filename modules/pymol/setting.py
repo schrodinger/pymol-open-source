@@ -422,7 +422,8 @@ if __name__=='pymol.setting':
       animation                 = (388, '')
       animation_duration        = (389, '')
       scene_animation           = (390, '')
-      
+      line_stick_helper         = (391, '')
+
    setting_sc = Shortcut(SettingIndex.__dict__.keys())
 
    index_list = []

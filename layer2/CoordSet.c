@@ -689,6 +689,13 @@ void CoordSetInvalidateRep(CoordSet *I,int type,int level)
         CoordSetInvalidateRep(I,cRepLine,cRepInvVisib2);
         CoordSetInvalidateRep(I,cRepCyl,cRepInvVisib2);
       }
+    } else if(SettingGet_b(I->G,I->Setting,I->Obj->Obj.Setting,
+                 cSetting_line_stick_helper)) {
+      if(type==cRepCyl)
+        CoordSetInvalidateRep(I,cRepLine,cRepInvVisib2);
+      else if(type==cRepLine) {
+        CoordSetInvalidateRep(I,cRepCyl,cRepInvVisib2);
+      }
     }
   }
 

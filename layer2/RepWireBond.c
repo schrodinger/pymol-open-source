@@ -473,6 +473,8 @@ Rep *RepWireBondNew(CoordSet *cs)
   Pickable *rp;
   AtomInfoType *ai1,*ai2;
   int cartoon_side_chain_helper = 0;
+  int line_stick_helper = 0;
+
   OOAlloc(G,RepWireBond);
   obj = cs->Obj;
 
@@ -505,6 +507,8 @@ Rep *RepWireBondNew(CoordSet *cs)
   valence_flag = (valence!=0.0F);
   cartoon_side_chain_helper = SettingGet_b(G,cs->Setting, obj->Obj.Setting,
                                          cSetting_cartoon_side_chain_helper);
+  line_stick_helper = SettingGet_b(G,cs->Setting, obj->Obj.Setting,
+                                   cSetting_line_stick_helper);
 
   half_bonds = SettingGet_i(G,cs->Setting,obj->Obj.Setting,cSetting_half_bonds);
 
@@ -594,8 +598,11 @@ Rep *RepWireBondNew(CoordSet *cs)
         }
 		  if((a1>=0)&&(a2>=0))
 			 {
-				s1=obj->AtomInfo[b1].visRep[cRepLine];
-				s2=obj->AtomInfo[b2].visRep[cRepLine];
+            register AtomInfoType *ati1=obj->AtomInfo+b1;
+            register AtomInfoType *ati2=obj->AtomInfo+b2;
+
+				s1=ati1->visRep[cRepLine];
+				s2=ati2->visRep[cRepLine];
 
 				if(!(s1&&s2))
               if(!half_bonds) {
@@ -613,8 +620,6 @@ Rep *RepWireBondNew(CoordSet *cs)
 					 
 
                 if(cartoon_side_chain_helper) {
-                  register AtomInfoType *ati1=obj->AtomInfo+b1;
-                  register AtomInfoType *ati2=obj->AtomInfo+b2;
                   if(ati1->visRep[cRepCartoon]&&
                      ati2->visRep[cRepCartoon]&&
                      (!ati1->hetatm)&&(!ati2->hetatm)) {
@@ -681,6 +686,12 @@ Rep *RepWireBondNew(CoordSet *cs)
                         s1 = s2 = 0; /* suppress C-O,OXT */
                     }
                   }
+                }
+
+                if(line_stick_helper) {
+                  if(ati1->visRep[cRepCyl] && 
+                     ati2->visRep[cRepCyl])
+                    s1 = s2 = 0;
                 }
 
 					 if((c1==c2)&&s1&&s2&&(!ColorCheckRamped(G,c1))) {
