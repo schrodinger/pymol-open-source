@@ -57,11 +57,11 @@ static char *FontGLUTRenderOpenGL(CFontGLUT *I,char *st)
   FontGLUTBitmapCharRec const *ch;
 
   if(st&&(*st)) {
-    FontGLUTSave(I);
     
     glColor3fv(TextGetColor());
     glRasterPos4fv(TextGetPos());
-
+    FontGLUTSave(I);
+    
     first = font_info->first;
     last = first + font_info->num_chars;
 
@@ -73,7 +73,6 @@ static char *FontGLUTRenderOpenGL(CFontGLUT *I,char *st)
             glBitmap(ch->width, ch->height, 
                      ch->xorig, ch->yorig,
                      ch->advance, 0, ch->bitmap);
-
 #if 0
             /* testing code for Character engine */
             { 

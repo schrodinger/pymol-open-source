@@ -5,6 +5,16 @@
 void plutBitmapCharacter(int c);
 #endif
 
+void PyMOLCheckOpenGLErr(char *pos)
+{
+    GLenum  glerr = glGetError( );
+	while( glerr != GL_NO_ERROR ) 
+	{
+		printf("OpenGL-Error: Where? %s: %s\n",pos,gluErrorString(glerr));
+		glerr = glGetError( );
+	}
+}
+
 #ifdef _PYMOL_MIN_GLUT
 
 /* NULL GLUT: Bare Minimum GLUT implementation for getting PyMOL up in 
@@ -19,6 +29,8 @@ void plutBitmapCharacter(int c);
 
 static void (*idleFunc)(void) = NULL;
 static int WinX = 640,WinY=480;
+
+
 
 int      p_glutCreateWindow(const char *title) {
 

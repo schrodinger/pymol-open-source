@@ -81,7 +81,6 @@ void RepDistLabelRender(RepDistLabel *I,CRay *ray,Pickable **pick)
     float_text = (int)SettingGet(cSetting_float_labels);
     if(float_text)
       glDisable(GL_DEPTH_TEST);	 
-
     glDisable(GL_LIGHTING);
     
     color = SettingGet_color(NULL,I->Obj->Setting,cSetting_label_color);
