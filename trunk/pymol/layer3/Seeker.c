@@ -260,8 +260,8 @@ void SeekerUpdate(void)
       int est_col = obj->NAtom/5+1;
       int est_char = obj->NAtom*4;
       int first_atom_in_label;
-      VLACheck(row,CSeqRow,nRow);
       CSeqCol *c1 = NULL;/* *col */
+      VLACheck(row,CSeqRow,nRow);
 
       r1 = row+nRow;
       r1->txt = VLAlloc(char,est_char);
@@ -275,8 +275,8 @@ void SeekerUpdate(void)
         switch(0) {
         case 0:
           if(!AtomInfoSameResidueP(last,ai)) {
-            last = ai;            
             char abbr[2] = "1";
+            last = ai;            
 
             VLACheck(r1->col,CSeqCol,nCol);
             c1 = r1->col+nCol;

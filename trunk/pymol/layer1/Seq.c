@@ -241,8 +241,8 @@ static void SeqDraw(Block *block)
       float black[3] = {0,0,0};
       CSeqRow *row;
       CSeqCol *col;
-      glColor3fv(white);	 
-      int xx,yy,ch_wid,pix_wid,tot_len;
+       int xx,yy,ch_wid,pix_wid,tot_len;
+     glColor3fv(white);	 
       for(a=I->NRow-1;a>=0;a--) {
         row = I->Row+a;
         yy=y-2;

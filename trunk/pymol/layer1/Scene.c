@@ -536,7 +536,7 @@ int  SceneCopyExternal(int width, int height,int rowbytes,unsigned char *dest)
     for (i=0; i< height; i++)
       {
         unsigned char *dst = dest + i * (rowbytes);
-        unsigned char *src = image + ((height-1)-i) * width*4;
+        unsigned char *src = ((char*)image) + ((height-1)-i) * width*4;
         for (j = 0; j < width; j++)
           {
             *dst++ = ((unsigned int)src[0]*src[3])/255; /* premultiply alpha */
@@ -3007,6 +3007,11 @@ static void SceneRenderAll(SceneUnitContext *context,float *normal,Pickable **pi
     }
 }
 
+#ifdef _PYMOL_SHARP3D
+void sharp3d_begin_left_stereo(void);
+void sharp3d_switch_to_right_stereo(void);
+void sharp3d_end_stereo(void);
+#endif
 /*========================================================================*/
 void SceneRender(Pickable *pick,int x,int y,Multipick *smp)
 {
@@ -3414,7 +3419,11 @@ void SceneRender(Pickable *pick,int x,int y,Multipick *smp)
           glDrawBuffer(GL_BACK_LEFT);
         } else switch(I->StereoMode) {
         case 1: /* hardware */
+#ifdef _PYMOL_SHARP3D
+          sharp3d_begin_left_stereo();
+#else
           glDrawBuffer(GL_BACK_LEFT);
+#endif
           break;
         case 2: /* side by side */
           glViewport(I->Block->rect.left+I->Width/2,I->Block->rect.bottom,I->Width/2,I->Height);
@@ -3461,7 +3470,11 @@ void SceneRender(Pickable *pick,int x,int y,Multipick *smp)
           glDrawBuffer(GL_BACK_RIGHT);
         } else switch(I->StereoMode) {
         case 1: /* hardware */
+#ifdef _PYMOL_SHARP3D
+          sharp3d_switch_to_right_stereo();
+#else
           glDrawBuffer(GL_BACK_RIGHT);
+#endif
           break;
         case 2: /* side by side */
           glViewport(I->Block->rect.left,I->Block->rect.bottom,I->Width/2,I->Height);
@@ -3498,11 +3511,15 @@ void SceneRender(Pickable *pick,int x,int y,Multipick *smp)
 
         /* restore draw buffer */
 
-        if(must_render_stereo) { /* double pumped mono */
+        if(stereo_as_mono) { /* double pumped mono */
           glDrawBuffer(GL_BACK);
         } else switch(I->StereoMode) {
         case 1: /* hardware */
+#ifdef _PYMOL_SHARP3D
+          sharp3d_end_stereo();
+#else
           glDrawBuffer(GL_BACK);
+#endif
           break;
         case 2: /* side by side */
         case 3:

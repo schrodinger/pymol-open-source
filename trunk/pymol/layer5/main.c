@@ -791,6 +791,9 @@ void MainBusyIdle(void)
 
         PRunString("adapt_to_hardware()");
         PRunString("exec_deferred()");
+#ifdef _PYMOL_SHARP3D
+PParse("load $TUT/1hpv.pdb;hide;show sticks;show surface;set surface_color,white;set transparency,0.5;stereo on");
+#endif
         PUnblock();
       }
     }
@@ -837,6 +840,10 @@ BOOL WINAPI HandlerRoutine(
 }
 #endif
 
+#ifdef _PYMOL_SHARP3D
+void sharp3d_prepare_context(void);
+#endif
+
 void launch(void)
 {
 
@@ -858,8 +865,11 @@ SetConsoleCtrlHandler(
 );
  
 #endif
+#ifdef _PYMOL_SHARP3D
+      sharp3d_prepare_context();
+#endif
 
-    p_glutInit(&myArgc, myArgv);
+      p_glutInit(&myArgc, myArgv);
 
     switch(ForceStereo) {
 
@@ -869,6 +879,15 @@ SetConsoleCtrlHandler(
       break;
 
     case 0: /* default/autodetect (stereo on win/unix; mono on macs) */
+#ifdef _PYMOL_SHARP3D
+      WinX = 1024;
+      WinY = 768;
+      WinPX = 0;
+      WinPY = 0;
+
+      glutInitDisplayMode( GLUT_RGBA| GLUT_MULTISAMPLE|GLUT_DOUBLE|GLUT_STENCIL );
+      StereoCapable = 1;
+#else
 #ifndef _PYMOL_OSX
       p_glutInitDisplayMode(P_GLUT_RGBA | P_GLUT_DEPTH | P_GLUT_DOUBLE | P_GLUT_STEREO );
       if(!p_glutGet(P_GLUT_DISPLAY_MODE_POSSIBLE)) {
@@ -879,6 +898,7 @@ SetConsoleCtrlHandler(
       } else {
         StereoCapable = 1;
       }
+#endif
 #endif
       break;
 
@@ -907,6 +927,13 @@ SetConsoleCtrlHandler(
       p_glutEnterGameMode(); 
     }
   } 
+
+  #ifdef _PYMOL_SHARP3D
+  	// Setup OpenGL
+	glEnable(GL_DEPTH_TEST);
+	glDepthFunc(GL_LESS);
+
+  #endif
 
   MainInit();
   PInit();
@@ -1010,6 +1037,13 @@ int was_main(void)
   WinPX = PyMOLOption->winPX;
   WinPY = PyMOLOption->winPY;
   ExternalGUI = PyMOLOption->external_gui;
+
+  
+#ifdef _PYMOL_SHARP3D
+  InternalGUI = 0;
+  InternalFeedback = 0;
+  ShowSplash = 0;
+#endif
 
   launch();
 

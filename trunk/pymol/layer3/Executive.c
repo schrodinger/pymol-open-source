@@ -6205,7 +6205,7 @@ void ExecutiveDraw(Block *block)
   int skip=0;
   int row = -1;
   if(PMGUI) {
-
+    int max_char;
 
 
     
@@ -6237,7 +6237,7 @@ void ExecutiveDraw(Block *block)
       I->NSkip =0;
     }
 
-    int max_char = (((I->Block->rect.right-I->Block->rect.left)-(ExecLeftMargin+ExecRightMargin+4)) -
+    max_char = (((I->Block->rect.right-I->Block->rect.left)-(ExecLeftMargin+ExecRightMargin+4)) -
                      (ExecOpCnt*ExecToggleWidth));
     if(I->ScrollBarActive) {
       max_char -= (ExecScrollBarMargin+ExecScrollBarWidth);
