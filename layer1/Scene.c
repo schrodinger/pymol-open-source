@@ -688,7 +688,7 @@ void SceneMakeMovieImage(void) {
   I->DirtyFlag=false;
   if(SettingGet(cSetting_ray_trace_frames)) {
 	SceneRay(0,0,(int)SettingGet(cSetting_ray_default_renderer),NULL,NULL,
-            0.0F,0.0F); 
+            0.0F,0.0F,false); 
   } else {
 	 v=SettingGetfv(cSetting_bg_rgb);
     if(PMGUI) {
@@ -2440,7 +2440,7 @@ void SceneResetNormal(int lines)
 static double accumTiming = 0.0; 
 
 void SceneRay(int ray_width,int ray_height,int mode,char **headerVLA_ptr,
-              char **charVLA_ptr,float angle,float shift)
+              char **charVLA_ptr,float angle,float shift,int quiet)
 {
   CScene *I=&Scene;
   ObjRec *rec=NULL;
@@ -2542,10 +2542,12 @@ void SceneRay(int ray_width,int ray_height,int mode,char **headerVLA_ptr,
   OrthoBusyFast(1,20);
 
   if(mode!=2) { /* don't show pixel count for tests */
+    if(!quiet) {
     PRINTFB(FB_Ray,FB_Blather)
       " Ray: tracing %dx%d = %d rays against %d primitives.\n",ray_width,ray_height,
       ray_width*ray_height,RayGetNPrimitives(ray)
       ENDFB;
+    }
   }
   switch(mode) {
   case 0: /* mode 0 is built-in */
@@ -2604,12 +2606,14 @@ void SceneRay(int ray_width,int ray_height,int mode,char **headerVLA_ptr,
   timing = UtilGetSeconds()-timing;
   if(mode!=2) { /* don't show timings for tests */
 	accumTiming += timing; 
-	
-    PRINTFB(FB_Ray,FB_Details)
-      " Ray: total time: %4.2f sec. = %3.1f frames/hour. (%4.2f sec. accum.)\n", 
-      timing,3600/timing, 
-	  accumTiming 
+
+	if(!quiet) {
+     PRINTFB(FB_Ray,FB_Details)
+       " Ray: total time: %4.2f sec. = %3.1f frames/hour. (%4.2f sec. accum.)\n", 
+       timing,3600/timing, 
+       accumTiming 
       ENDFB;
+   }
   }
   OrthoDirty();
   RayFree(ray);
@@ -2722,7 +2726,7 @@ int SceneRenderCached(void)
 		  renderedFlag=true;
 		}
 	} else if(MoviePlaying()&&SettingGet(cSetting_ray_trace_frames)) {
-	  SceneRay(0,0,(int)SettingGet(cSetting_ray_default_renderer),NULL,NULL,0.0F,0.0F); 
+	  SceneRay(0,0,(int)SettingGet(cSetting_ray_default_renderer),NULL,NULL,0.0F,0.0F,false); 
 	} else {
 	  renderedFlag=false;
 	  I->CopyFlag = false;

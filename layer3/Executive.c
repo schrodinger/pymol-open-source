@@ -3807,9 +3807,9 @@ int ExecutiveCountStates(char *s1)
   return(result);
 }
 /*========================================================================*/
-void ExecutiveRay(int width,int height,int mode,float angle,float shift)
+void ExecutiveRay(int width,int height,int mode,float angle,float shift,int quiet)
 {
-  SceneRay(width,height,mode,NULL,NULL,angle,shift);
+  SceneRay(width,height,mode,NULL,NULL,angle,shift,quiet);
 }
 /*========================================================================*/
 int  ExecutiveSetSetting(int index,PyObject *tuple,char *sele,

@@ -215,7 +215,12 @@ if __name__=='pymol.invocation':
                options.external_gui = 0
                options.internal_feedback = 0
                options.show_splash = 1
-         else:
+            if "b" in a: # CPU benchmark
+               options.deferred.append("_do__ feedback disable,all,everything")
+               options.deferred.append("_do__ feedback enable,python,output")
+               options.deferred.append("_do_ wizard benchmark")
+               options.deferred.append("_do_ cmd.get_wizard().run_cpu()")
+         else: 
             if a[-4:] in (".pm5",".PM5",".p5m",".P5M"):
                # mode 5 helper application 
                av.append("-A5")               
