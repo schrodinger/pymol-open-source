@@ -1315,6 +1315,7 @@ void SceneRender(Pickable *pick,int x,int y)
   unsigned int lowBits,highBits;
   static float white[4] =
   {1.0, 1.0, 1.0, 1.0};
+  float zero[4] = {0.0,0.0,0.0,0.0};
   float zAxis[4] = { 0.0, 0.0, 1.0, 0.0 };
   float normal[4] = { 0.0, 0.0, 1.0, 0.0 };
   float aspRat = ((float) I->Width) / ((float) I->Height);
@@ -1415,6 +1416,33 @@ void SceneRender(Pickable *pick,int x,int y)
       glLightModelfv(GL_LIGHT_MODEL_AMBIENT,vv);
       /*glLightModeli(GL_LIGHT_MODEL_TWO_SIDE,GL_FALSE);*/
 
+      f = SettingGet(cSetting_specular);
+      if(f>R_SMALL4) {
+        /*        glEnable(GL_LIGHT1);*/
+        /*        glLightfv(GL_LIGHT1,GL_AMBIENT,zero);*/
+        vv[0]=f;
+        vv[1]=f;
+        vv[2]=f;
+        vv[3]=1.0;
+
+        glEnable(GL_LIGHT1);
+        glLightfv(GL_LIGHT0,GL_SPECULAR,zero);
+        glLightfv(GL_LIGHT1,GL_SPECULAR,vv);
+        glLightfv(GL_LIGHT1,GL_DIFFUSE,zero);
+        glMaterialfv(GL_FRONT,GL_SPECULAR,vv);
+        vv[0]=50;
+        glMaterialfv(GL_FRONT,GL_SHININESS,vv);
+
+        copy3f(SettingGetGlobal_fv(cSetting_light),vv);
+        normalize3f(vv);
+        MatrixInvRotate44f3f(I->RotMatrix,vv,vv); 
+        invert3f(vv);
+        vv[3]=0.0;
+        glLightfv(GL_LIGHT1,GL_POSITION,vv);
+
+      } else {
+        glMaterialfv(GL_FRONT,GL_SPECULAR,zero); 
+      }
       if(SettingGet(cSetting_depth_cue)) {
 #ifdef _PYMOL_3DFX
         if(SettingGet(cSetting_ortho)==0.0) {
@@ -1577,6 +1605,7 @@ void SceneRender(Pickable *pick,int x,int y)
     if(!pick) {
       glDisable(GL_FOG);
       glDisable(GL_LIGHTING);
+      glDisable(GL_LIGHT1);
       glDisable(GL_COLOR_MATERIAL);
       glDisable(GL_DITHER);
     }

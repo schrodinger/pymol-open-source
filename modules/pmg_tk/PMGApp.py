@@ -548,16 +548,23 @@ class PMGApp(AbstractApp):
                         command = lambda s=self: s.setting.update('line_smooth'))
 
       self.menuBar.addmenuitem('Settings', 'checkbutton',
+                         'Depth Cue.',
+                         label='Depth Cue',
+                        variable = self.setting.depth_cue,
+                        command = lambda s=self: s.setting.update('depth_cue'))
+
+      self.menuBar.addmenuitem('Settings', 'checkbutton',
+                         'Specular Reflections.',
+                         label='Specular Reflections',
+                        variable = self.setting.specular,
+                        command = lambda s=self: s.setting.update('specular'))
+
+      self.menuBar.addmenuitem('Settings', 'checkbutton',
                          'Auto Zoom.',
                          label='Auto Zoom New Objects',
                         variable = self.setting.auto_zoom,
                         command = lambda s=self: s.setting.update('auto_zoom'))
 
-      self.menuBar.addmenuitem('Settings', 'checkbutton',
-                         'Depth Cue.',
-                         label='Depth Cue',
-                        variable = self.setting.depth_cue,
-                        command = lambda s=self: s.setting.update('depth_cue'))
 
       self.menuBar.addmenuitem('Settings', 'checkbutton',
                          'Overlay',

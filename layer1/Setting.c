@@ -470,6 +470,7 @@ void SettingGenerateSideEffects(int index,char *sele,int state)
   case cSetting_ambient:
   case cSetting_bg_rgb:
   case cSetting_depth_cue:
+  case cSetting_specular:
 	 SceneDirty();
   case cSetting_overlay:
   case cSetting_text:
@@ -829,6 +830,10 @@ void SettingInitGlobal(void)
   SettingSet_f(I,cSetting_max_triangles, 1000000.0);
 
   SettingSet_f(I,cSetting_depth_cue, 1.0);
+
+  SettingSet_f(I,cSetting_specular, 0.0);
+
+  SettingSet_f(I,cSetting_shininess, 40.0);
 
 }
 
