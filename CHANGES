@@ -4,7 +4,9 @@ CHANGE LOG
 
 Changes up to 0.96
 
-   * major bug in map ranging code
+   * tentative PQR file reading support
+
+   * fixed major bug in map ranging code
 
    -- beta 11
 
