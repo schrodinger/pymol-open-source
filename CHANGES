@@ -28,6 +28,10 @@ Goals for 0.52 release:
 
    * provide accurate documentation
 
+Changes up to 0.53
+
+   * fixed minor goof with cmd.dist retval in 0.52
+
 Changes up to 0.52
 
    * many improvements to online help

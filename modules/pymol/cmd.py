@@ -904,7 +904,7 @@ NOTES
 
 # LEGACY support for cmd.dist
 def dist(*arg,**kw):
-   apply(distance,arg,kw)
+   return apply(distance,arg,kw)
 #
 
 def get_view(output=1):
