@@ -160,13 +160,13 @@ static WordKeyValue Keyword[] =
   {  "nbr;",     SELE_NGH1 },
   {  "byresi",   SELE_BYR1 },
   {  "byres",    SELE_BYR1 },
+  {  "br;",      SELE_BYR1 },
+  {  "br.",      SELE_BYR1 },
+  {  "b;",       SELE_BYR1 }, /* deprecated */
   {  "byobj",    SELE_BYO1 },
   {  "byobject", SELE_BYO1 },
   {  "bo;",      SELE_BYO1 },
   {  "bo.",      SELE_BYO1 },
-  {  "br;",      SELE_BYR1 },
-  {  "br.",      SELE_BYR1 },
-  {  "b;",       SELE_BYR1 }, /* deprecated */
   {  "and",      SELE_AND2 },
   {  "&",        SELE_AND2 },
   {  "or",       SELE_OR_2 },

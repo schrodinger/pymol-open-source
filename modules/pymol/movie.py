@@ -50,8 +50,9 @@ def rock(first,last,angle=30,phase=0,loop=1,axis='y'):
       ang_cur = ang_cur + ang_inc
       disp = angle*math.sin(ang_cur)/2
       diff = disp-last
-      com = "mdo %d:turn %s,%8.3f" % (first+a,axis,diff)
-      cmd.do(com)
+      # com = "mdo %d:turn %s,%8.3f" % (first+a,axis,diff)
+      # cmd.do(com)
+      cmd.mdo("%d"%(first+a),"turn %s,%8.3f"% (axis,diff))      
       a = a + 1
 
 def roll(first,last,loop=1,axis='y'):
@@ -66,8 +67,9 @@ def roll(first,last,loop=1,axis='y'):
    a = 0
    deg = (180*step/math.pi)
    while a<=n:
-      com = "mdo %d:turn %s,%8.3f" % (first+a,axis,deg)
-      cmd.do(com)
+      # com = "mdo %d:turn %s,%8.3f" % (first+a,axis,deg)
+      # cmd.do(com)
+      cmd.mdo("%d" % (first+a), "turn %s,%8.3f" % (axis,deg))
       a = a + 1
 
 
@@ -84,8 +86,9 @@ def zoom(first,last,step=1,loop=1,axis='z'):
          s = -step
       else:
          s = step
-      com = "mdo %d:move %s,%8.3f" % (first+a,axis,s)
-      cmd.do(com)
+      # com = "mdo %d:move %s,%8.3f" % (first+a,axis,s)
+      # cmd.do(com)
+      cmd.mdo("%d" % (first+a),"move %s,%8.3f" % (axis,s))
       a = a + 1
       
 def screw(first,last,step=1,angle=30,phase=0,loop=1,axis='y'):
@@ -116,7 +119,8 @@ def screw(first,last,step=1,angle=30,phase=0,loop=1,axis='y'):
       ang_cur = ang_cur + ang_inc
       disp = angle*math.sin(ang_cur)/2
       diff = disp-last
-      com = "mdo %d:turn %s,%8.3f; move z,%8.3f" % (first+a,axis,diff,s)
-      cmd.do(com)
+      # com = "mdo %d:turn %s,%8.3f; move z,%8.3f" % (first+a,axis,diff,s)
+      # cmd.do(com)
+      cmd.mdo("%d" % (first+a), "turn %s,%8.3f; move z,%8.3f" % (axis,diff,s))
       a = a + 1
 
