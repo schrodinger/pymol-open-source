@@ -47,6 +47,7 @@ typedef struct CoordSet {
   float *Spheroid;
   float *SpheroidNormal;
   int NSpheroid;
+  int SpheroidSphereSize;
 } CoordSet;
 
 #include"ObjectMolecule.h"

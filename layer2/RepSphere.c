@@ -229,6 +229,7 @@ Rep *RepSphereNew(CoordSet *cs)
   else
     spheroidFlag=0;
 
+
   obj = cs->Obj;
   I->R.fRender=(void (*)(struct Rep *, CRay *, Pickable **))RepSphereRender;
   I->R.fFree=(void (*)(struct Rep *))RepSphereFree;
