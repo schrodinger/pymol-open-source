@@ -15,6 +15,10 @@ Z* -------------------------------------------------------------------
 */
 #include <Python.h>
 
+#ifdef WIN32
+#include<signal.h>
+#endif
+
 #include"os_std.h"
 #include"os_gl.h"
 
@@ -88,19 +92,16 @@ void MainOnExit(void);
 
 void MainOnExit(void)
 { /* 
-     here we enter not knowing anything about the current state, so the
-     best thing we can hope for is to shield PyMOL from against any
-     further API calls by setting a flag and trying to grab the
-     interpreter.  Otherwise, spontaneous asynchronous calls may cause
-     a crash (particularly under windows).
+     here we enter not knowing anything about the current state...
+     no graceful exit is possible.
   */
   if(!PyMOLTerminating) {
     PyMOLTerminating=true;
+	printf(" PyMOL: abrupt program termination.\n");
 #ifdef WIN32
-	_exit(0);
+	TerminateProcess(GetCurrentProcess(),0); /* only way to avoid a crash */
 #endif
-    PBlockForEmergencyShutdown();
-    printf(" PyMOL: abrupt program termination.\n");
+    exit(0);
   }
 }
 /*========================================================================*/
@@ -344,8 +345,9 @@ void MainFree(void)
   
   MemoryDebugDump();
   printf(" PyMOL: normal program termination.\n");
+  
 #ifdef WIN32
-	_exit(0);
+  ExitProcess(0); /* Py_Exit hangs on WIN32 for some reason */
 #endif
 
 }
