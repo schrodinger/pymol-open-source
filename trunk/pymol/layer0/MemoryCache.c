@@ -62,12 +62,13 @@ void *MemoryCacheCalloc(unsigned int number, unsigned int size,int group_id,int 
     rec->size = true_size;
     rec->ptr = mcalloc(number,size);
   } else if(rec->size<true_size) {
-    rec->size = true_size;
     mfree(rec->ptr);
+    rec->size = true_size;
     rec->ptr = mcalloc(number,size);
-    memset(rec->ptr,0,true_size);
   } else {
-    memset(rec->ptr,0,true_size);
+    mfree(rec->ptr);
+    rec->size = true_size;
+    rec->ptr = mcalloc(number,size);
   }
   return(rec->ptr);
 }
