@@ -604,7 +604,6 @@ class PMGApp(AbstractApp):
                         variable = self.setting.valence,
                         command = lambda s=self: s.setting.update('valence'))
 
-
       self.menuBar.addmenuitem('Settings', 'checkbutton',
                          'Disable perspective.',
                          label='Orthoscopic View',
@@ -630,18 +629,13 @@ class PMGApp(AbstractApp):
                         command = lambda s=self: s.setting.update('specular'))
 
       self.menuBar.addmenuitem('Settings', 'checkbutton',
-                         'Auto Zoom.',
-                         label='Auto Zoom New Objects',
-                        variable = self.setting.auto_zoom,
-                        command = lambda s=self: s.setting.update('auto_zoom'))
-
-
-      self.menuBar.addmenuitem('Settings', 'checkbutton',
                          'Overlay',
                          label='Overlay Text on Graphics',
                         variable = self.setting.overlay,
                         command = lambda s=self: s.setting.update('overlay'))
 
+      self.menuBar.addmenuitem('Settings', 'separator', '')
+      
       self.menuBar.addmenuitem('Settings', 'checkbutton',
                          'Smooth raytracing.',
                          label='Antialiased Rendering',
@@ -653,6 +647,22 @@ class PMGApp(AbstractApp):
                          label='Cull Backfaces when Rendering',
                         variable = self.setting.backface_cull,
                         command = lambda s=self: s.setting.update('backface_cull'))
+
+      self.menuBar.addmenuitem('Settings', 'separator', '')
+      
+      self.menuBar.addmenuitem('Settings', 'checkbutton',
+                         'Auto Zoom.',
+                         label='Auto Zoom New Objects',
+                        variable = self.setting.auto_zoom,
+                        command = lambda s=self: s.setting.update('auto_zoom'))
+
+      self.menuBar.addmenuitem('Settings', 'checkbutton',
+                         'Ignore PDB segi.',
+                         label='Ignore PDB Segment Identifier',
+                        variable = self.setting.ignore_pdb_segi,
+                        command = lambda s=self: s.setting.update('ignore_pdb_segi'))
+
+
 
       self.menuBar.addmenu('Mouse', 'Mouse Configuration')
 
