@@ -140,6 +140,7 @@ typedef struct ObjectMoleculeOpRec {
 #define OMOP_GetBFactors 48
 #define OMOP_GetOccupancies 49
 #define OMOP_GetPartialCharges 50
+#define OMOP_StateVRT 51
 
 #include"CoordSet.h"
 

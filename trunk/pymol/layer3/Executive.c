@@ -1478,7 +1478,8 @@ int ExecutivePhiPsi(char *s1,ObjectMolecule ***objVLA,int **iVLA,float **phiVLA,
 
 
 float ExecutiveAlign(char *s1,char *s2,char *mat_file,float gap,float extend,int skip,
-                     float cutoff,int cycles,int quiet,char *oname)
+                     float cutoff,int cycles,int quiet,char *oname,
+                     int state1,int state2)
 {
   int sele1=SelectorIndexByName(s1);
   int sele2=SelectorIndexByName(s2);
@@ -1511,7 +1512,8 @@ float ExecutiveAlign(char *s1,char *s2,char *mat_file,float gap,float extend,int
             PRINTFB(FB_Executive,FB_Actions)
               " ExecutiveAlign: %d atoms aligned.\n",c
               ENDFB;
-            result =ExecutiveRMS("_align1","_align2",2,cutoff,cycles,quiet,oname);
+            result =ExecutiveRMS("_align1","_align2",2,cutoff,cycles,quiet,oname,
+                                 state1,state2);
             
           }
         }
@@ -2833,7 +2835,8 @@ void ExecutiveIterateState(int state,char *s1,char *expr,int read_only,int atomi
   }
 }
 /*========================================================================*/
-float ExecutiveRMS(char *s1,char *s2,int mode,float refine,int max_cyc,int quiet,char *oname)
+float ExecutiveRMS(char *s1,char *s2,int mode,float refine,int max_cyc,
+                   int quiet,char *oname,int state1,int state2)
 {
   int sele1,sele2;
   float rms = -1.0;
@@ -2856,8 +2859,14 @@ float ExecutiveRMS(char *s1,char *s2,int mode,float refine,int max_cyc,int quiet
   op2.vv1=NULL;
   op2.vc1=NULL;
 
+  
   if(sele1>=0) {
-    op1.code = OMOP_AVRT;
+    if(state1<0) {
+      op1.code = OMOP_AVRT;
+    } else {
+      op1.code = OMOP_StateVRT;
+      op1.i1=state1;
+    }
     op1.nvv1=0;
     op1.vc1=(int*)VLAMalloc(1000,sizeof(int),5,1);
     op1.vv1=(float*)VLAMalloc(1000,sizeof(float),5,1);
@@ -2878,7 +2887,13 @@ float ExecutiveRMS(char *s1,char *s2,int mode,float refine,int max_cyc,int quiet
   
   sele2=SelectorIndexByName(s2);
   if(sele2>=0) {
-    op2.code = OMOP_AVRT;
+
+    if(state2<0) {
+      op2.code = OMOP_AVRT;
+    } else {
+      op2.code = OMOP_StateVRT;
+      op2.i1=state2;
+    }
     op2.nvv1=0;
     op2.vc1=(int*)VLAMalloc(1000,sizeof(int),5,1);
     op2.vv1=(float*)VLAMalloc(1000,sizeof(float),5,1);

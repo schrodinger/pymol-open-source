@@ -27,7 +27,7 @@ Z* -------------------------------------------------------------------
 
 int ExecutiveDebug(char *name);
 float ExecutiveAlign(char *s1,char *s2,char *mat_file,float gap,float extend,int skip,
-                     float cutoff,int cycles,int quiet,char *oname);
+                     float cutoff,int cycles,int quiet,char *oname,int state1,int state2);
 
 float ExecutiveDistance(char *sele1,char *sele2);
 float ExecutiveDist(char *nam,char *s1,char *s2,int mode,float cutoff,int labels,int quiet);
@@ -54,7 +54,8 @@ int ExecutiveSetSetting(int index,PyObject *tuple,char *sele,int state,
 void ExecutiveRay(int width,int height,int mode);
 int ExecutiveGetDihe(char *s0,char *s1,char *s2,char *s3,float *value,int state);
 int ExecutiveSetDihe(char *s0,char *s1,char *s2,char *s3,float value,int state);
-float ExecutiveRMS(char *sele1,char *sele2,int mode,float refine,int max_cyc,int quiet,char *oname);
+float ExecutiveRMS(char *sele1,char *sele2,int mode,float refine,int max_cyc,
+                   int quiet,char *oname,int state1,int state2);
 void ExecutiveUpdateCmd(char *sele1,char *sele2,int sta1,int sta2);
 float ExecutiveRMSPairs(WordType *sele,int pairs,int mode);
 float *ExecutiveRMSStates(char *s1,int target,int mode,int quiet);

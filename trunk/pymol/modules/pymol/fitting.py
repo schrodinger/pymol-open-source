@@ -22,7 +22,8 @@ if __name__=='pymol.fitting':
    from cmd import _cmd,lock,unlock,Shortcut,QuietException
 
    def align(source,target,cutoff=2.0,cycles=2,gap=-10.0,extend=-0.5,
-             skip=0,object=None,matrix="BLOSUM62",quiet=1): 
+             skip=0,object=None,matrix="BLOSUM62",
+             source_state=0,target_state=0,quiet=1): 
       '''
 DESCRIPTION
 
@@ -64,6 +65,7 @@ SEE ALSO
          lock()
          r = _cmd.align(source,target,float(cutoff),int(cycles),float(gap),
                         float(extend),int(skip),str(object),str(mfile),
+                        int(source_state)-1,int(target_state)-1,
                         int(quiet))
       finally:
          unlock()
@@ -202,7 +204,7 @@ SEE ALSO
             st = st + 1
       return r
 
-   def fit(selection,target,quiet=1):
+   def fit(selection,target,source_state=0,target_state=0,quiet=1):
       '''
 DESCRIPTION
 
@@ -231,12 +233,14 @@ SEE ALSO
       try:
          lock()   
          r = _cmd.fit("((%s) in (%s))" % (str(a),str(b)),
-                     "((%s) in (%s))" % (str(b),str(a)),2,int(quiet))
+                     "((%s) in (%s))" % (str(b),str(a)),2,
+                      int(source_state)-1,int(target_state)-1,
+                      int(quiet))
       finally:
          unlock()
       return r
 
-   def rms(selection,target,quiet=1):
+   def rms(selection,target,source_state=0,target_state=0,quiet=1):
       '''
 DESCRIPTION
 
@@ -264,12 +268,14 @@ SEE ALSO
       try:
          lock()   
          r = _cmd.fit("((%s) in (%s))" % (str(a),str(b)),
-                     "((%s) in (%s))" % (str(b),str(a)),1,int(quiet))
+                     "((%s) in (%s))" % (str(b),str(a)),1,
+                      int(source_state)-1,int(target_state)-1,
+                      int(quiet))
       finally:
          unlock()
       return r
 
-   def rms_cur(selection,target,quiet=1):
+   def rms_cur(selection,target,source_state=0,target_state=0,quiet=1):
       '''
 DESCRIPTION
 
@@ -293,7 +299,9 @@ SEE ALSO
       try:
          lock()   
          r = _cmd.fit("((%s) in (%s))" % (str(a),str(b)),
-                     "((%s) in (%s))" % (str(b),str(a)),0,int(quiet))
+                     "((%s) in (%s))" % (str(b),str(a)),0,
+                      int(source_state)-1,int(target_state)-1,
+                      int(quiet))
       finally:
          unlock()
       return r
