@@ -2144,44 +2144,47 @@ PYMOL API
    cmd.save(filename, selection, state)
    '''
    r = 1
-   try:
-      lock()
-      fname = 'save.pdb'
-      sele = '( all )'
-      state = -1
-      format = 'pdb'
-      if len(arg)==1:
-         fname = arg[0]
-      elif len(arg)==2:
-         fname = arg[0]
-         sele = arg[1]
-      elif len(arg)==3:
-         fname = arg[0]
-         sele = arg[1]
-         state = arg[2]
-      elif len(arg)==4:
-         fname = arg[0]
-         sele = arg[1]
-         state = arg[2]
-         format = arg[3]
-      if (len(arg)>0) and (len(arg)<4):
-         if re.search("\.pdb$",fname):
-            format = 'pdb'
-         elif re.search("\.mol$",fname):
-            formet = 'mol'
-         elif re.search("\.sdf$",fname):
-            formet = 'sdf'
-      if format=='pdb':
-         fname = os.path.expanduser(fname)
-         fname = os.path.expandvars(fname)
-         f=open(fname,"w")
-         if f:
+   fname = 'save.pdb'
+   sele = '( all )'
+   state = -1
+   format = 'pdb'
+   if len(arg)==1:
+      fname = arg[0]
+   elif len(arg)==2:
+      fname = arg[0]
+      sele = arg[1]
+   elif len(arg)==3:
+      fname = arg[0]
+      sele = arg[1]
+      state = arg[2]
+   elif len(arg)==4:
+      fname = arg[0]
+      sele = arg[1]
+      state = arg[2]
+      format = arg[3]
+   if (len(arg)>0) and (len(arg)<4):
+      if re.search("\.pdb$",fname):
+         format = 'pdb'
+      elif re.search("\.mol$",fname):
+         format = 'mol'
+      elif re.search("\.pkl$",fname):
+         format = 'pkl'
+   if format=='pdb':
+      fname = os.path.expanduser(fname)
+      fname = os.path.expandvars(fname)
+      f=open(fname,"w")
+      if f:
+         try:
+            lock()
             f.write(_cmd.get_pdb(sele,int(state)-1))
+         finally:
+            unlock()
             f.close()
-            r = None
-            print " Save: wrote \""+fname+"\"."
-   finally:
-      unlock()
+         r = None
+         print " Save: wrote \""+fname+"\"."
+   elif format=='pkl':
+      io.pkl.toFile(get_model(sele),fname)
+      print " Save: wrote \""+fname+"\"."
    return r
 
 def get_model(*arg):

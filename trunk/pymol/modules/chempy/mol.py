@@ -68,7 +68,7 @@ class MOL(Storage):
       molList.append("  ChemPy            %2s                             0\n" %
              model.molecule.dimcode)
       molList.append(model.molecule.comments+"\n")
-      molList.append("%3d%3d  0  0  %1d  0  0  0  0  0  1 V2000\n" %
+      molList.append("%3d%3d  0  0  %1d  0  0  0  0  0999 V2000\n" %
                      (model.nAtom, model.nBond, model.molecule.chiral))
 
       # write atom records

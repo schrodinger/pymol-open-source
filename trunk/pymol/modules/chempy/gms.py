@@ -55,9 +55,11 @@ class GMS(Storage):
       gmsList.append(model.molecule.title+" 6-31G* optimization\n")
       gmsList.append("C1\n")
 
-      # write atom records
+      # write atom records in an ordering compatible with internal
+      # coordinate generation
       c = 1
-      for a in model.atom:
+      for z in model.get_internal_tuples():
+         a = model.atom[z[0]]
          if not len(a.name):
             name = a.symbol + "%02d"%c
          else:

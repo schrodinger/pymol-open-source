@@ -1,5 +1,7 @@
 
 import chempy
+import copy
+from cpv import *
 
 class Base:
 
@@ -254,7 +256,155 @@ class Indexed(Base):
          b.index[1] = xref[b.index[1]]
       del old_index
       del xref
-         
+
+#------------------------------------------------------------------------------
+   def get_internal_tuples(self):
+      # generates raw atom sets needed to construct an internal coordinate
+      # description of the molecule
+      model = self
+      # get a connected version too
+      cmodel = copy.deepcopy(model).convert_to_connected()
+      center = [0.0,0.0,0.0]
+      nAtom = model.nAtom
+      to_go = nAtom
+      done = {}
+      if to_go<3:
+         z_set = [(0),(1,0)]
+      else:
+         # get center of molecule
+         for a in model.atom:
+            center = add(center,a.coord)
+         center = scale(center,1.0/nAtom)
+         # find most central multivalent atom
+         min_a = -1
+         c = 0
+         for a in model.atom:
+            if len(cmodel.bond[c])>1: # must have at least two neighbors
+               d = distance(a.coord,center)
+               if min_a < 0:
+                  min_d = d
+                  min_a = c
+               elif d<min_d:
+                  min_d=d
+                  min_a=c
+            c = c + 1
+         fst = min_a
+         # make this our first atom
+         z_set = [( fst, )]
+         done[fst] = 1
+         to_go = to_go - 1
+         # for the second atom, try to choose different multivalent neighbor
+         nxt = -1
+         for b in cmodel.bond[fst]:
+            nbr = b.index[0]
+            if nbr == fst:
+               nbr = b.index[1]
+            if len(cmodel.bond[nbr])>1:
+               nxt = nbr
+               break
+         # safety, choose any neighbor
+         if nxt<0:
+            nbr = b.index[0]
+            if nbr == fst:
+               nbr = b.index[1]
+            nxt = nbr
+         z_set.append((nxt,fst))
+         done[nxt] = 1
+         to_go = to_go - 1
+         # for the third atom, choose a different multivalent neighbor
+         trd = -1
+         for b in cmodel.bond[fst]:
+            nbr = b.index[0]
+            if nbr == fst:
+               nbr = b.index[1]
+            if len(cmodel.bond[nbr])>1:
+               if not done.has_key(nbr):
+                  trd = nbr
+                  break
+         # safety, choose any unchosen neighbor
+         if trd<0:
+            for b in cmodel.bond[fst]:
+               nbr = b.index[0]
+               if nbr == fst:
+                  nbr = b.index[1]
+               if not done.has_key(nbr):
+                  trd = nbr
+                  break
+         z_set.append((trd,fst,nxt))
+         done[trd] = 1
+         result = 1
+         to_go = to_go - 1
+         if to_go:
+            # now find all torsions in the molecule
+            tors = {}
+            for b in model.bond: # use bond as center of torsion
+               a1 = b.index[0]
+               a2 = b.index[1]
+               for c in cmodel.bond[a1]: 
+                  a0 = c.index[0] 
+                  if a0 not in (a1,a2): # outside atom
+                     for d in cmodel.bond[a2]:
+                        a3 = d.index[0] 
+                        if a3 not in (a0,a1,a2): # outside atom
+                           if a0 < a3:
+                              to = (a0,a1,a2,a3)
+                           else:
+                              to = (a3,a2,a1,a0)                        
+                           tors[to] = 1
+                        a3 = d.index[1] 
+                        if a3 not in (a0,a1,a2): # outside atom
+                           if a0 < a3:
+                              to = (a0,a1,a2,a3)
+                           else:
+                              to = (a3,a2,a1,a0)
+                           tors[to] = 1
+                  a0 = c.index[1] 
+                  if a0 not in (a1,a2): # outside atom
+                     for d in cmodel.bond[a2]:
+                        a3 = d.index[0] 
+                        if a3 not in (a0,a1,a2): # outside atom
+                           if a0 < a3:
+                              to = (a0,a1,a2,a3)
+                           else:
+                              to = (a3,a2,a1,a0)                        
+                           tors[to] = 1
+                        a3 = d.index[1] 
+                        if a3 not in (a0,a1,a2): # outside atom
+                           if a0 < a3:
+                              to = (a0,a1,a2,a3)
+                           else:
+                              to = (a3,a2,a1,a0)                        
+                           tors[to] = 1
+            if len(tors.keys()):
+               # choose remaining atoms based on existing atoms using torsion
+               while to_go:
+                  for tor in tors.keys():
+                     a0 = tor[0]
+                     a1 = tor[1]
+                     a2 = tor[2]
+                     a3 = tor[3]
+                     dh0 = done.has_key(a0)
+                     dh1 = done.has_key(a1)
+                     dh2 = done.has_key(a2)
+                     dh3 = done.has_key(a3)
+                     if ( (not dh0) and dh1 and dh2 and dh3 ):
+                        z_set.append((a0,a1,a2,a3))
+                        done[a0] = 1
+                        to_go = to_go - 1
+                     elif ( dh0 and dh1 and dh2 and (not dh3) ):
+                        z_set.append((a3,a2,a1,a0))
+                        done[a3] = 1
+                        to_go = to_go - 1
+            else: # for molecules with no torsions (dichloromethane, etc.)
+               for b in cmodel.bond[fst]:
+                  nbr = b.index[0]
+                  if nbr == fst:
+                     nbr = b.index[1]
+                     if not done.has_key(nbr):
+                        z_set.append((nbr,fst,nxt))
+                        to_go = to_go - 1
+                        done[nbr] = 1
+      return z_set
 #------------------------------------------------------------------------------
 #------------------------------------------------------------------------------
 #------------------------------------------------------------------------------
