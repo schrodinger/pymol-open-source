@@ -190,7 +190,9 @@ void OVHeap_Dump(OVHeap *I,ov_uint32 flags)
                         fprintf(OVHeap_ERROR_LOG,
 #endif
                                 " OVHeap:%8x -%8x (%7x) %c %s:%-4d",
-                                (unsigned int)rec+1,(unsigned int)((char*)(rec+1)+rec->size),(unsigned int)
+                                (unsigned int)rec+1,
+                                (unsigned int)((char*)(rec+1)+rec->size),
+                                (unsigned int)
                                 rec->size,type[rec->type],rec->file,rec->line);
                                 }
                         
