@@ -1755,7 +1755,7 @@ ObjectMolecule *ExecutiveFindObjectMoleculeByName(char *name)
   if(obj)
     if(obj->type!=cObjectMolecule)
       obj=NULL;
-  return(obj);
+  return((ObjectMolecule*)obj);
 }
 /*========================================================================*/
 Block *ExecutiveGetBlock(void)
