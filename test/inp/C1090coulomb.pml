@@ -1,5 +1,8 @@
 # -c
 
+feedback enable, repsurface, blather
+feedback enable, isomesh, blather
+
 /print "BEGIN-LOG"
 
 set auto_zoom,0

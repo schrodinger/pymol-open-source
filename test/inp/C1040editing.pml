@@ -2,6 +2,9 @@
 
 set ray_default_renderer=2
 
+feedback enable, repsurface, blather
+feedback enable, isomesh, blather
+i 
 /print "BEGIN-LOG"
 
 #     alter,              

@@ -1,6 +1,8 @@
 # -c
 
-
+feedback enable, repsurface, blather
+feedback enable, isomesh, blather
+ 
 print "BEGIN-LOG"
 
 load dat/pept.pdb,obj
