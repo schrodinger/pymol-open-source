@@ -51,8 +51,16 @@ void ObjectUpdate(struct Object *I)
   
 }
 /*========================================================================*/
+void ObjectPurge(Object *I)
+{
+  if(I) 
+    SettingFreeP(I->Setting);
+}
+/*========================================================================*/
 void ObjectFree(Object *I)
 {
+  if(I)
+    ObjectPurge(I);
 }
 /*========================================================================*/
 int ObjectGetNFrames(Object *I)
@@ -76,6 +84,7 @@ void ObjectInit(Object *I)
   I->Name[0]=0;
   I->Color=0;
   I->ExtentFlag=false;
+  I->Setting=NULL;
   OrthoRemoveSplash();
   for(a=0;a<cRepCnt;a++) I->RepVis[a]=true;
 }

@@ -96,6 +96,18 @@ void ExecutiveFocus(void)
   glutShowWindow();
 }
 /*========================================================================*/
+PyObject *ExecutiveGetSettingTuple(int index,char *object,int state)
+{
+  PyObject *result;
+  if(object[0]==0) /* global */
+    result = SettingGetTuple(NULL,NULL,index);
+  else {
+    Py_INCREF(Py_None);
+    result = Py_None;
+  }
+  return(result);
+}
+/*========================================================================*/
 void ExecutiveSetLastObjectEdited(Object *o)
 {
   CExecutive *I = &Executive;

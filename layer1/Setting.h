@@ -16,33 +16,67 @@ Z* -------------------------------------------------------------------
 #ifndef _H_Setting
 #define _H_Setting
 
+#include<Python.h>
+
 typedef char SettingName[255];
 
-/*
 typedef struct {
   int defined;
+  int changed;
   int type;
-  void *ptr;
+  unsigned int offset;
 } SettingRec;
-
-#define cSetting_boolean
-#define cSetting_int
-#define cSetting_float
-#define cSetting_float3
-*/
 
 typedef struct {
-  SettingName Name;
-  float Value[3];
-} SettingRec;
-
-typedef struct  {
-  SettingRec *Setting;
-  int NSetting;
+  unsigned int size;
+  char *data;
+  SettingRec *info;
 } CSetting;
 
-void SettingInit(void);
-void SettingFree(void);
+#define cSetting_boolean  1
+#define cSetting_int      2
+#define cSetting_float    3
+#define cSetting_float3   4
+
+/* New API 
+ * NOTE: get commands are not range-checked, so be careful
+ * in contrast, set commands expand the current list 
+ */
+
+
+void SettingInitGlobal(void);
+void SettingFreeGlobal(void);
+
+CSetting *SettingNew(void);
+void SettingFreeP(CSetting *I);
+void SettingInit(CSetting *I);
+void SettingPurge(CSetting *I);
+
+void SettingSet_b(CSetting *I,int index, int value);
+void SettingSet_i(CSetting *I,int index, int value);
+void SettingSet_f(CSetting *I,int index, float value);
+void SettingSet_3f(CSetting *I,int index, float value1,float value2,float value3);
+void SettingSet_3fv(CSetting *I,int index, float *value);
+
+void SettingClear(CSetting *I,int index); /* don't call this for the global list! */
+
+int SettingGetType(int index); /* based on global types, always succeeds */
+
+int   SettingGetGlobal_b(int index); /* always succeed */
+int   SettingGetGlobal_i(int index); /* always succeed */
+float SettingGetGlobal_f(int index); /* always succeed */
+void  SettingGetGlobal_3f(int index,float *value); /* always succeeds */
+float *SettingGetGlobal_fv(int index); /* always succeed */
+
+int   SettingGet_b  (CSetting *set1,CSetting *set2,int index);
+int   SettingGet_i  (CSetting *set1,CSetting *set2,int index);
+float SettingGet_f  (CSetting *set1,CSetting *set2,int index);
+void  SettingGet_3f (CSetting *set1,CSetting *set2,int index,float *value);
+float *SettingGet_fv (CSetting *set1,CSetting *set2,int index);
+
+PyObject *SettingGetTuple(CSetting *set1,CSetting *set2,int index); /* (type,(value,)) */
+
+/* Legacy API below */
 
 int SettingGetIndex(char *name);
 float SettingGet(int index);
@@ -51,6 +85,7 @@ void SettingSetfv(int index,float *value);
 float *SettingGetfv(int index);
 void SettingSetNamed(char *name,char *value);
 float SettingGetNamed(char *name);
+int SettingGetName(int index,SettingName name);
 
 #define cSetting_bonding_vdw_cutoff    0
 #define cSetting_min_mesh_spacing      1
@@ -135,6 +170,8 @@ float SettingGetNamed(char *name);
 #define cSetting_selection_width      80
 #define cSetting_selection_overlay    81
 #define cSetting_static_singletons    82
+
+#define cSetting_INIT                  85
 
 #endif
 

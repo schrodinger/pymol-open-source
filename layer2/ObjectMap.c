@@ -58,6 +58,7 @@ static void ObjectMapFree(ObjectMap *I) {
   FreeP(I->Range);
   FreeP(I->Grid);
   OOFreeP(I->Crystal);
+  ObjectPurge(&I->Obj);
   OOFreeP(I);
 }
 

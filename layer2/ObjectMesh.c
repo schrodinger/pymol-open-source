@@ -44,7 +44,7 @@ static void ObjectMeshFree(ObjectMesh *I) {
     VLAFreeP(I->State[a].V);
   }
   VLAFreeP(I->State);
-
+  ObjectPurge(&I->Obj);
   OOFreeP(I);
 }
 

@@ -15,7 +15,6 @@ Z* -------------------------------------------------------------------
 */
 
 #include"os_std.h"
-#include<Python.h>
 
 #include"Base.h"
 #include"OOMac.h"
@@ -27,9 +26,250 @@ Z* -------------------------------------------------------------------
 #include"Executive.h"
 #include"Editor.h"
 #include"P.h"
+#include"Util.h"
 
 CSetting Setting;
 
+static void *SettingPtr(CSetting *I,int index,unsigned int size);
+
+PyObject *SettingGetTuple(CSetting *set1,CSetting *set2,int index)
+{
+  PyObject *result;
+  float *ptr;
+  int type = SettingGetType(index);
+  switch(type) {
+  case cSetting_boolean:
+    result = Py_BuildValue("(i(i))",type,
+                           SettingGet_b(set1,set2,index));
+    break;
+  case cSetting_int:
+    result = Py_BuildValue("(i(i))",type,
+                           SettingGet_i(set1,set2,index));
+    break;
+  case cSetting_float:
+    result = Py_BuildValue("(i(f))",type,
+                           SettingGet_f(set1,set2,index));
+    break;
+  case cSetting_float3:
+    ptr =  SettingGet_fv(set1,set2,index);
+    result = Py_BuildValue("(i(fff)",type,
+                           ptr[0],ptr[1],ptr[2]);
+    break;
+  default:
+    Py_INCREF(Py_None);
+    result = Py_None;
+    break;
+  }
+  return result;
+}
+/*========================================================================*/
+CSetting *SettingNew(void)
+{
+  OOAlloc(CSetting);
+  SettingInit(I);
+  return(I);
+}
+/*========================================================================*/
+void SettingPurge(CSetting *I)
+{
+  if(I) {
+    VLAFreeP(I->data);
+    VLAFreeP(I->info);
+    I->size=0;
+  }
+}
+/*========================================================================*/
+void SettingFreeP(CSetting *I)
+{
+  if(I) SettingPurge(I);
+  OOFreeP(I);
+}
+/*========================================================================*/
+void SettingInit(CSetting *I)
+{
+  I->size=1;
+  I->data=VLAlloc(char,10);
+  I->info=VLAMalloc(cSetting_INIT,sizeof(SettingRec),5,1); /* auto-zero */
+}
+/*========================================================================*/
+void SettingClear(CSetting *I,int index)
+{
+  I->info[index].defined = false; 
+}
+/*========================================================================*/
+static void *SettingPtr(CSetting *I,int index,unsigned int size)
+{
+  SettingRec *sr = I->info+index;
+  if(!sr->offset) {
+    sr->offset=I->size;
+    I->size+=size;
+    VLACheck(I->data,char,I->size);
+    sr->defined = true;
+    sr->changed = true;
+  }
+  return(I->data+sr->offset);
+}
+int SettingGetType(int index)
+{
+  CSetting *I=&Setting;
+  return(I->info[index].type);
+}
+/*========================================================================*/
+void SettingSet_b(CSetting *I,int index, int value)
+{
+  VLACheck(I->info,SettingRec,index);
+  *((int*)SettingPtr(I,index,sizeof(int))) = value;
+  I->info[index].type = cSetting_boolean;
+
+}
+/*========================================================================*/
+void SettingSet_i(CSetting *I,int index, int value)
+{
+  VLACheck(I->info,SettingRec,index);
+  *((int*)SettingPtr(I,index,sizeof(int))) = value;
+  I->info[index].type = cSetting_int;
+}
+/*========================================================================*/
+void SettingSet_f(CSetting *I,int index, float value)
+{
+  VLACheck(I->info,SettingRec,index);
+  *((float*)SettingPtr(I,index,sizeof(float))) = value;
+  I->info[index].type = cSetting_float;
+}
+/*========================================================================*/
+void SettingSet_3f(CSetting *I,int index, float value1,float value2,float value3)
+{
+  float *ptr;
+  VLACheck(I->info,SettingRec,index);
+  ptr = (float*)SettingPtr(I,index,sizeof(float)*3);
+  ptr[0]=value1;
+  ptr[1]=value2;
+  ptr[2]=value3;
+  I->info[index].type = cSetting_float3;
+}
+/*========================================================================*/
+void SettingSet_3fv(CSetting *I,int index, float *vector)
+{
+  float *ptr;
+  VLACheck(I->info,SettingRec,index);
+  ptr = (float*)SettingPtr(I,index,sizeof(float)*3);
+  copy3f(vector,ptr);
+  I->info[index].type = cSetting_float3;
+}
+/*========================================================================*/
+int   SettingGetGlobal_b(int index) 
+{
+  CSetting *I=&Setting;
+  return(*((int*)(I->data+I->info[index].offset)));
+}
+/*========================================================================*/
+int   SettingGetGlobal_i(int index) 
+{
+  CSetting *I=&Setting;
+  return(*((int*)(I->data+I->info[index].offset)));
+}
+/*========================================================================*/
+float SettingGetGlobal_f(int index)
+{
+  CSetting *I=&Setting;
+  return(*((float*)(I->data+I->info[index].offset)));
+}
+/*========================================================================*/
+void  SettingGetGlobal_3f(int index,float *value)
+{
+  CSetting *I=&Setting;
+  float *ptr;
+  ptr = (float*)(I->data+I->info[index].offset);
+  copy3f(ptr,value);
+}
+/*========================================================================*/
+float *SettingGetGlobal_fv(int index)
+{
+  CSetting *I=&Setting;
+  return (float*)(I->data+I->info[index].offset);
+}
+/*========================================================================*/
+int   SettingGet_b  (CSetting *set1,CSetting *set2,int index)
+{
+  if(set1) {
+    if(set1->info[index].defined) {
+      return(*((int*)(set1->data+set1->info[index].offset)));
+    }
+  }
+  if(set2) { 
+    if(set2->info[index].defined) {
+      return(*((int*)(set2->data+set2->info[index].offset)));      
+    }
+  }
+  return(SettingGetGlobal_i(index));
+}
+/*========================================================================*/
+int   SettingGet_i  (CSetting *set1,CSetting *set2,int index)
+{
+  if(set1) {
+    if(set1->info[index].defined) {
+      return(*((int*)(set1->data+set1->info[index].offset)));
+    }
+  }
+  if(set2) { 
+    if(set2->info[index].defined) {
+      return(*((int*)(set2->data+set2->info[index].offset)));      
+    }
+  }
+  return(SettingGetGlobal_i(index));
+}
+/*========================================================================*/
+float SettingGet_f  (CSetting *set1,CSetting *set2,int index)
+{
+  if(set1) {
+    if(set1->info[index].defined) {
+      return(*((float*)(set1->data+set1->info[index].offset)));
+    }
+  }
+  if(set2) {
+    if(set2->info[index].defined) {
+      return(*((float*)(set2->data+set2->info[index].offset)));      
+    }
+  }
+  return(SettingGetGlobal_f(index));
+}
+/*========================================================================*/
+void  SettingGet_3f(CSetting *set1,CSetting *set2,int index,float *value)
+{
+  float *ptr;
+  if(set1) {
+    if(set1->info[index].defined) {
+      ptr = (float*)(set1->data+set1->info[index].offset);
+      copy3f(ptr,value);
+      return;
+    }
+  }
+  if(set2) {
+    if(set2->info[index].defined) {
+      ptr = (float*)(set2->data+set2->info[index].offset);
+      copy3f(ptr,value);
+      return;
+    }
+  }
+  SettingGetGlobal_3f(index,value);
+}
+/*========================================================================*/
+float *SettingGet_fv(CSetting *set1,CSetting *set2,int index)
+{
+  if(set1) {
+    if(set1->info[index].defined) {
+      return (float*)(set1->data+set1->info[index].offset);
+    }
+  }
+  if(set2) {
+    if(set2->info[index].defined) {
+      return (float*)(set2->data+set2->info[index].offset);
+    }
+  }
+  return(SettingGetGlobal_fv(index));
+}
+
+/*========================================================================*/
 /*========================================================================*/
 int SettingGetIndex(char *name) /* can be called from any thread state */
 {
@@ -51,56 +291,87 @@ int SettingGetIndex(char *name) /* can be called from any thread state */
   return(index);
 }
 /*========================================================================*/
+int SettingGetName(int index,SettingName name) /* can be called from any thread state */
+{
+  PyObject *tmp;
+  int unblock;
+  name[0]=0;
+  unblock = PAutoBlock();
+  if(P_setting) {
+    tmp = PyObject_CallMethod(P_setting,"_get_name","i",index);
+    if(tmp) {
+      if(PyString_Check(tmp))
+        UtilNCopy(name,PyString_AsString(tmp),sizeof(SettingName));
+      Py_DECREF(tmp);
+    }
+  }
+  PAutoUnblock(unblock);
+  return(name[0]!=0);
+}
+
+/*========================================================================*/
 void SettingSetfv(int index,float *v)
 {
   CSetting *I=&Setting;
   switch(index) {
   case cSetting_dot_mode:
-	 I->Setting[index].Value[0]=v[0];
+    SettingSet_f(I,index,v[0]);
+    /*I->Setting[index].Value[0]=v[0];*/
 	 break;
   case cSetting_bg_rgb:
   case cSetting_light:
-	 I->Setting[index].Value[0]=v[0];
-	 I->Setting[index].Value[1]=v[1];
-	 I->Setting[index].Value[2]=v[2];
+    SettingSet_3fv(I,index,v); 
+    /*
+      I->Setting[index].Value[0]=v[0];
+      I->Setting[index].Value[1]=v[1];
+      I->Setting[index].Value[2]=v[2];
+    */
 	 SceneDirty();
 	 break;
   case cSetting_valence:
     ExecutiveInvalidateRep("all",cRepLine,cRepInvRep);
-    I->Setting[index].Value[0]=v[0];
+    SettingSet_f(I,index,v[0]);
+    /*   I->Setting[index].Value[0]=v[0];    */
     SceneChanged();
     break;
   case cSetting_dash_length:
   case cSetting_dash_gap:
     ExecutiveInvalidateRep("all",cRepDash,cRepInvRep);
-    I->Setting[index].Value[0]=v[0];
+    SettingSet_f(I,index,v[0]);
+    /*    I->Setting[index].Value[0]=v[0];    */
     SceneChanged();
     break;
   case cSetting_button_mode:
-	 I->Setting[index].Value[0]=v[0];
+    SettingSet_f(I,index,v[0]);
+    /* I->Setting[index].Value[0]=v[0]; */
     SceneDirty();
     break;
   case cSetting_stick_radius:
   case cSetting_stick_quality:
   case cSetting_stick_overlap:
     ExecutiveInvalidateRep("all",cRepCyl,cRepInvRep);
-    I->Setting[index].Value[0]=v[0];
+    SettingSet_f(I,index,v[0]);
+    /*I->Setting[index].Value[0]=v[0];   */
     SceneChanged();
     break;
   case cSetting_label_color:
     ExecutiveInvalidateRep("all",cRepLabel,cRepInvRep);
-    I->Setting[index].Value[0]=v[0];
+    SettingSet_f(I,index,v[0]);
+    /* I->Setting[index].Value[0]=v[0]; */
     SceneChanged();
     break;
   case cSetting_all_states:
-	 I->Setting[index].Value[0]=v[0];
+    SettingSet_f(I,index,v[0]);
+    /* I->Setting[index].Value[0]=v[0];  */
     SceneChanged();
     break;
   case cSetting_dot_density:
-	 I->Setting[index].Value[0]=v[0];
+    SettingSet_f(I,index,v[0]);
+    /*I->Setting[index].Value[0]=v[0];*/
 	 break;
   case cSetting_sel_counter:
-	 I->Setting[index].Value[0]=v[0];
+    SettingSet_f(I,index,v[0]);
+    /*I->Setting[index].Value[0]=v[0];*/
 	 break;
   case cSetting_ortho:
   case cSetting_ambient:
@@ -109,7 +380,8 @@ void SettingSetfv(int index,float *v)
   case cSetting_text:
     OrthoDirty();
   default:
-	 I->Setting[index].Value[0]=v[0];
+    SettingSet_f(I,index,v[0]);
+    /*I->Setting[index].Value[0]=v[0];*/
 	 break;
   }
 }
@@ -121,38 +393,39 @@ void SettingSet(int index,float v)
 /*========================================================================*/
 void SettingSetNamed(char *name,char *value)
 {
-  CSetting *I=&Setting;
   int index = SettingGetIndex(name);
   float v,vv[3];
+  SettingName realName;
   char buffer[1024] = "";
   if(index>=0) {
+    SettingGetName(index,realName);
 	 switch(index) {
 	 case cSetting_dot_mode:
 		if(strcmp(value,"molecular")==0) {
 		  v=0.0;
 		  SettingSetfv(index,&v);
-		  sprintf(buffer," Setting: %s set to %s\n",I->Setting[index].Name,value);
+		  sprintf(buffer," Setting: %s set to %s\n",realName,value);
 		} else if(strcmp(value,"solvent_accessible")==0) {
 		  v=1.0;
 		  SettingSetfv(index,&v);
-		  sprintf(buffer," Setting: %s set to %s\n",I->Setting[index].Name,value);
+		  sprintf(buffer," Setting: %s set to %s\n",realName,value);
 		} else if(sscanf(value,"%f",&v)==1) {
 		  SettingSetfv(index,&v);
-		  sprintf(buffer," Setting: %s set to %s\n",I->Setting[index].Name,value);
+		  sprintf(buffer," Setting: %s set to %s\n",realName,value);
       }
 		break;
 	 case cSetting_bg_rgb:
 	 case cSetting_light:
 		if(sscanf(value,"%f%f%f",vv,vv+1,vv+2)==3) {
 		  SettingSetfv(index,vv);
-		  sprintf(buffer," Setting: %s set to %5.3f %8.3f %8.3f\n",I->Setting[index].Name,
+		  sprintf(buffer," Setting: %s set to %5.3f %8.3f %8.3f\n",realName,
 					 *vv,*(vv+1),*(vv+2));
 		}
 		break;
 	 case cSetting_dot_density:
 		sscanf(value,"%f",&v);
 		SettingSetfv(index,&v);
-		sprintf(buffer," Setting: %s set to %d\n",I->Setting[index].Name,(int)v);
+		sprintf(buffer," Setting: %s set to %d\n",realName,(int)v);
 		break;
 	 case cSetting_text:
 	 case cSetting_overlay:
@@ -166,22 +439,17 @@ void SettingSetNamed(char *name,char *value)
       if(v!=1.0)
         SettingSet(cSetting_line_smooth,0);
 		SettingSetfv(index,&v);
-		sprintf(buffer," Setting: %s set to %5.3f\n",I->Setting[index].Name,v);
+		sprintf(buffer," Setting: %s set to %5.3f\n",realName,v);
       break;
 	 default:
 		sscanf(value,"%f",&v);
 		SettingSetfv(index,&v);
-		sprintf(buffer," Setting: %s set to %5.3f\n",I->Setting[index].Name,v);
+		sprintf(buffer," Setting: %s set to %5.3f\n",realName,v);
 		break;
 	 }
   } else {
 	 OrthoAddOutput(" Error: Non-Existent Setting");
 	 OrthoNewLine(NULL);
-	 /*
-	 VLACheck(I->Setting,SettingRec,I->NSetting);
-	 I->Setting[I->NSetting].Value[0] = value;
-	 strcpy(I->Setting[I->NSetting].Name,name);
-	 I->NSetting++;*/
   }
   if(buffer[0]) {
 	 OrthoAddOutput(buffer);
@@ -195,459 +463,195 @@ float SettingGetNamed(char *name)
 /*========================================================================*/
 float SettingGet(int index)
 {
-  CSetting *I=&Setting;
-  if((index>=0)&&(index<I->NSetting))
-	 return(I->Setting[index].Value[0]);
-  else
-	 return(0.0);
+  return(SettingGetGlobal_f(index));
 }
-
+/*========================================================================*/
 float *SettingGetfv(int index)
 {
-  CSetting *I=&Setting;
-  if((index>=0)&&(index<I->NSetting))
-	 return(I->Setting[index].Value);
-  else
-	 return(NULL);
+  return(SettingGetGlobal_fv(index));
 }
 /*========================================================================*/
-void SettingFree(void)
+void SettingFreeGlobal(void)
 {
   CSetting *I=&Setting;
-  VLAFreeP(I->Setting);
+  SettingPurge(I);
 }
 /*========================================================================*/
-void SettingInit(void)
+void SettingInitGlobal(void)
 {
   CSetting *I=&Setting;
 
-  I->Setting=VLAlloc(SettingRec,100);
-  I->NSetting=0;
-
-  I->NSetting++;
-  I->Setting[cSetting_bonding_vdw_cutoff].Value[0] = 0.2;
-  strcpy(I->Setting[cSetting_bonding_vdw_cutoff].Name,
-			"bonding_vdw_cutoff");
-
-  I->NSetting++;
-  I->Setting[cSetting_min_mesh_spacing].Value[0] = 0.6;
-  strcpy(I->Setting[cSetting_min_mesh_spacing].Name,
-			"min_mesh_spacing");
-
-  I->NSetting++;
-  I->Setting[cSetting_dot_density].Value[0] = 2;
-  strcpy(I->Setting[cSetting_dot_density].Name,
-			"dot_density");
-
-  I->NSetting++;
-  I->Setting[cSetting_dot_mode].Value[0] = 0;
-  strcpy(I->Setting[cSetting_dot_mode].Name,
-			"dot_mode");
-
-  I->NSetting++;
-  I->Setting[cSetting_solvent_radius].Value[0] = 1.4;
-  strcpy(I->Setting[cSetting_solvent_radius].Name,
-			"solvent_radius");
-
-  I->NSetting++;
-  I->Setting[cSetting_sel_counter].Value[0] = 0.0;
-  strcpy(I->Setting[cSetting_sel_counter].Name,
-			"sel_counter");
-
-  I->NSetting++;
-  I->Setting[cSetting_bg_rgb].Value[0] = 0.0;
-  I->Setting[cSetting_bg_rgb].Value[1] = 0.0;
-  I->Setting[cSetting_bg_rgb].Value[2] = 0.0;
-  strcpy(I->Setting[cSetting_bg_rgb].Name,
-			"bg_rgb");
-
-  I->NSetting++;
-  I->Setting[cSetting_ambient].Value[0] = 0.30;
-  strcpy(I->Setting[cSetting_ambient].Name,
-			"ambient");
-
-  I->NSetting++;
-  I->Setting[cSetting_direct].Value[0] = 0.35;
-  strcpy(I->Setting[cSetting_direct].Name,
-			"direct");
-
-  I->NSetting++;
-  I->Setting[cSetting_reflect].Value[0] = 1.2;
-  strcpy(I->Setting[cSetting_reflect].Name,
-			"reflect");
-
-  I->NSetting++;
-  I->Setting[cSetting_light].Value[0] = -0.4;
-  I->Setting[cSetting_light].Value[1] = -0.4;
-  I->Setting[cSetting_light].Value[2] = -1.0;
-  strcpy(I->Setting[cSetting_light].Name,
-			"light");
-
-  I->NSetting++;
-  I->Setting[cSetting_antialias].Value[0] = 0.0;
-  strcpy(I->Setting[cSetting_antialias].Name,
-			"antialias");
-
-  I->NSetting++;
-  I->Setting[cSetting_cavity_cull].Value[0] = 10.0;
-  strcpy(I->Setting[cSetting_cavity_cull].Name,
-			"cavity_cull");
-
-  I->NSetting++;
-  I->Setting[cSetting_ambient_scale].Value[0] = 0.4;
-  strcpy(I->Setting[cSetting_ambient_scale].Name,
-			"ambient_scale");
-
-  I->NSetting++;
-  I->Setting[cSetting_single_image].Value[0] = 0.0;
-  strcpy(I->Setting[cSetting_single_image].Name,
-			"single_image");
-
-  I->NSetting++;
-  I->Setting[cSetting_movie_delay].Value[0] = 30;
-  strcpy(I->Setting[cSetting_movie_delay].Name,
-			"movie_delay");
-
-  I->NSetting++;
-  I->Setting[cSetting_ribbon_power].Value[0] = 5;
-  strcpy(I->Setting[cSetting_ribbon_power].Name,
-			"ribbon_power");
-
-  I->NSetting++;
-  I->Setting[cSetting_ribbon_power_b].Value[0] = 2.0;
-  strcpy(I->Setting[cSetting_ribbon_power_b].Name,
-			"ribbon_power_b");
-
-  I->NSetting++;
-  I->Setting[cSetting_ribbon_sampling].Value[0] = 16;
-  strcpy(I->Setting[cSetting_ribbon_sampling].Name,
-			"ribbon_sampling");
-
-  I->NSetting++;
-  I->Setting[cSetting_ribbon_radius].Value[0] = 0.4;
-  strcpy(I->Setting[cSetting_ribbon_radius].Name,
-			"ribbon_radius");
-
-  I->NSetting++;
-  I->Setting[cSetting_stick_radius].Value[0] = 0.3;
-  strcpy(I->Setting[cSetting_stick_radius].Name,
-			"stick_radius");
-
-  I->NSetting++;
-  I->Setting[cSetting_hash_max].Value[0] = 80;
-  strcpy(I->Setting[cSetting_hash_max].Name,
-			"hash_max");
-
-  I->NSetting++;
-  I->Setting[cSetting_ortho].Value[0] = 0;
-  strcpy(I->Setting[cSetting_ortho].Name,
-			"ortho");
-
-  I->NSetting++;
-  I->Setting[cSetting_power].Value[0] = 3.0;
-  strcpy(I->Setting[cSetting_power].Name,
-			"power");
-
-  I->NSetting++;
-  I->Setting[cSetting_spec_reflect].Value[0] = 0.4;
-  strcpy(I->Setting[cSetting_spec_reflect].Name,
-			"spec_reflect");
-
-  I->NSetting++;
-  I->Setting[cSetting_spec_power].Value[0] = 40;
-  strcpy(I->Setting[cSetting_spec_power].Name,
-			"spec_power");
-
-
-  I->NSetting++;
-  I->Setting[cSetting_sweep_angle].Value[0] = 15.0;
-  strcpy(I->Setting[cSetting_sweep_angle].Name,
-			"sweep_angle");
-
-  I->NSetting++;
-  I->Setting[cSetting_sweep_speed].Value[0] = 0.3;
-  strcpy(I->Setting[cSetting_sweep_speed].Name,
-			"sweep_speed");
-
-  I->NSetting++;
-  I->Setting[cSetting_dot_hydrogens].Value[0] = 1.0;
-  strcpy(I->Setting[cSetting_dot_hydrogens].Name,
-			"dot_hydrogens");
-
-  I->NSetting++;
-  I->Setting[cSetting_dot_size].Value[0] = 0.06;
-  strcpy(I->Setting[cSetting_dot_size].Name,
-			"dot_size");
-
-  I->NSetting++;
-  I->Setting[cSetting_ray_trace_frames].Value[0] = 0.0;
-  strcpy(I->Setting[cSetting_ray_trace_frames].Name,
-			"ray_trace_frames");
-
-  I->NSetting++;
-  I->Setting[cSetting_cache_frames].Value[0] = 0.0;
-  strcpy(I->Setting[cSetting_cache_frames].Name,
-			"cache_frames");
-
-  I->NSetting++;
-  I->Setting[cSetting_trim_dots].Value[0] = 1.0;
-  strcpy(I->Setting[cSetting_trim_dots].Name,
-			"trim_dots");
-
-  I->NSetting++;
-  I->Setting[cSetting_cull_spheres].Value[0] = 1.0;
-  strcpy(I->Setting[cSetting_cull_spheres].Name,
-			"cull_spheres");
-
-  I->NSetting++;
-  I->Setting[cSetting_test1].Value[0] = 1000000.0;
-  strcpy(I->Setting[cSetting_test1].Name,
-			"test1");
-
-  I->NSetting++;
-  I->Setting[cSetting_test2].Value[0] = 1.0;
-  strcpy(I->Setting[cSetting_test2].Name,
-			"test2");
-
-  I->NSetting++;
-  I->Setting[cSetting_surface_best].Value[0] = 0.2;
-  strcpy(I->Setting[cSetting_surface_best].Name,
-			"surface_best");
-
-  I->NSetting++;
-  I->Setting[cSetting_surface_normal].Value[0] = 0.5;
-  strcpy(I->Setting[cSetting_surface_normal].Name,
-			"surface_normal");
-
-  I->NSetting++;
-  I->Setting[cSetting_surface_quality].Value[0] = 0.0;
-  strcpy(I->Setting[cSetting_surface_quality].Name,
-			"surface_quality");
-
-  I->NSetting++;
-  I->Setting[cSetting_surface_proximity].Value[0] = 1.5;
-  strcpy(I->Setting[cSetting_surface_proximity].Name,
-			"surface_proximity");
-
-  I->NSetting++;
-  I->Setting[cSetting_stereo_angle].Value[0] = 2.1;
-  strcpy(I->Setting[cSetting_stereo_angle].Name,
-			"stereo_angle");
-
-  I->NSetting++;
-  I->Setting[cSetting_stereo_shift].Value[0] = 2.0;
-  strcpy(I->Setting[cSetting_stereo_shift].Name,
-			"stereo_shift");
-
-  I->NSetting++;
-  I->Setting[cSetting_line_smooth].Value[0] = 0.0;
-  strcpy(I->Setting[cSetting_line_smooth].Name,
-			"line_smooth");
-
-  I->NSetting++;
-  I->Setting[cSetting_line_width].Value[0] = 1.0;
-  strcpy(I->Setting[cSetting_line_width].Name,
-			"line_width");
-
-  I->NSetting++;
-  I->Setting[cSetting_half_bonds].Value[0] = 0.0;
-  strcpy(I->Setting[cSetting_half_bonds].Name,
-			"half_bonds");
-
-  I->NSetting++;
-  I->Setting[cSetting_stick_quality].Value[0] = 8.0;
-  strcpy(I->Setting[cSetting_stick_quality].Name,
-			"stick_quality");
-
-  I->NSetting++;
-  I->Setting[cSetting_stick_overlap].Value[0] = 0.2;
-  strcpy(I->Setting[cSetting_stick_overlap].Name,
-			"stick_overlap");
-
-  I->NSetting++;
-  I->Setting[cSetting_stick_nub].Value[0] = 0.7;
-  strcpy(I->Setting[cSetting_stick_nub].Name,
-			"stick_nub");
-
-  I->NSetting++;
-  I->Setting[cSetting_all_states].Value[0] = 0.0;
-  strcpy(I->Setting[cSetting_all_states].Name,
-			"all_states");
-
-  I->NSetting++;
-  I->Setting[cSetting_pickable].Value[0] = 1.0;
-  strcpy(I->Setting[cSetting_pickable].Name,
-			"pickable");
-
-  I->NSetting++;
-  I->Setting[cSetting_autoshow_lines].Value[0] = 1.0;
-  strcpy(I->Setting[cSetting_autoshow_lines].Name,
-			"autoshow_lines");
-
-  I->NSetting++;
-  I->Setting[cSetting_fast_idle].Value[0] = 20000;
-  strcpy(I->Setting[cSetting_fast_idle].Name,
-			"fast_idle");
-
-  I->NSetting++;
-  I->Setting[cSetting_no_idle].Value[0] = 5000;
-  strcpy(I->Setting[cSetting_no_idle].Name,
-			"no_idle");
-
-  I->NSetting++;
-  I->Setting[cSetting_slow_idle].Value[0] = 200000;
-  strcpy(I->Setting[cSetting_slow_idle].Name,
-			"slow_idle");
-
-  I->NSetting++;
-  I->Setting[cSetting_idle_delay].Value[0] = 1.5;
-  strcpy(I->Setting[cSetting_idle_delay].Name,
-			"idle_delay");
-
-  I->NSetting++;
-  I->Setting[cSetting_rock_delay].Value[0] = 30;
-  strcpy(I->Setting[cSetting_rock_delay].Name,
-			"rock_delay");
-
-  I->NSetting++;
-  I->Setting[cSetting_dist_counter].Value[0] = 0.0;
-  strcpy(I->Setting[cSetting_dist_counter].Name,
-			"dist_counter");
-
-  I->NSetting++;
-  I->Setting[cSetting_dash_length].Value[0] = 0.15;
-  strcpy(I->Setting[cSetting_dash_length].Name,
-			"dash_length");
-
-  I->NSetting++;
-  I->Setting[cSetting_dash_gap].Value[0] = 0.35;
-  strcpy(I->Setting[cSetting_dash_gap].Name,
-			"dash_gap");
-
-  I->NSetting++;
-  I->Setting[cSetting_auto_zoom].Value[0] = 1.0;
-  strcpy(I->Setting[cSetting_auto_zoom].Name,
-			"auto_zoom");
-
-  I->NSetting++;
-  I->Setting[cSetting_overlay].Value[0] = 0.0;
-  strcpy(I->Setting[cSetting_overlay].Name,
-			"overlay");
-
-  I->NSetting++;
-  I->Setting[cSetting_text].Value[0] = 0.0;
-  strcpy(I->Setting[cSetting_text].Name,
-			"text");
-
-  I->NSetting++;
-  I->Setting[cSetting_button_mode].Value[0] = 0.0;
-  strcpy(I->Setting[cSetting_button_mode].Name,
-			"button_mode"); 
-
-  I->NSetting++;
-  I->Setting[cSetting_valence].Value[0] = 0.0;
-  strcpy(I->Setting[cSetting_valence].Name,
-			"valence");
-
-  I->NSetting++;
-  I->Setting[cSetting_nonbonded_size].Value[0] = 0.25;
-  strcpy(I->Setting[cSetting_nonbonded_size].Name,
-			"nonbonded_size");
-
-  I->NSetting++;
-  I->Setting[cSetting_label_color].Value[0] = -1.0;
-  strcpy(I->Setting[cSetting_label_color].Name,
-			"label_color");
-
-  I->NSetting++;
-  I->Setting[cSetting_ray_trace_fog].Value[0] = 1.0;
-  strcpy(I->Setting[cSetting_ray_trace_fog].Name,
-			"ray_trace_fog");
-
-  I->NSetting++;
-  I->Setting[cSetting_spheroid_scale].Value[0] = 1.0;
-  strcpy(I->Setting[cSetting_spheroid_scale].Name,
-			"spheroid_scale");
-
-  I->NSetting++;
-  I->Setting[cSetting_ray_trace_fog_start].Value[0] = 0.30;
-  strcpy(I->Setting[cSetting_ray_trace_fog_start].Name,
-			"ray_trace_fog_start");
-
-  I->NSetting++;
-  I->Setting[cSetting_spheroid_smooth].Value[0] = 1.1;
-  strcpy(I->Setting[cSetting_spheroid_smooth].Name,
-			"spheroid_smooth");
-
-  I->NSetting++;
-  I->Setting[cSetting_spheroid_fill].Value[0] = 1.30;
-  strcpy(I->Setting[cSetting_spheroid_fill].Name,
-			"spheroid_fill");
-
-  I->NSetting++;
-  I->Setting[cSetting_autoshow_nonbonded].Value[0] = 1.0;
-  strcpy(I->Setting[cSetting_autoshow_nonbonded].Name,
-			"autoshow_nonbonded");
-
-  I->NSetting++;
-  I->Setting[cSetting_mesh_radius].Value[0] = 0.05;
-  strcpy(I->Setting[cSetting_mesh_radius].Name,
-			"mesh_radius");
-
-  I->NSetting++;
+  SettingInit(I);
+
+  SettingSet_f(I,cSetting_bonding_vdw_cutoff, 0.2);
+
+  SettingSet_f(I,cSetting_min_mesh_spacing, 0.6);
+
+  SettingSet_f(I,cSetting_dot_density, 2);
+
+  SettingSet_f(I,cSetting_dot_mode, 0);
+
+  SettingSet_f(I,cSetting_solvent_radius, 1.4);
+
+  SettingSet_f(I,cSetting_sel_counter, 0.0);
+
+  SettingSet_3f(I,cSetting_bg_rgb, 0.0, 0.0, 0.0);
+
+  SettingSet_f(I,cSetting_ambient, 0.30);
+
+  SettingSet_f(I,cSetting_direct, 0.35);
+
+  SettingSet_f(I,cSetting_reflect, 1.2);
+
+  SettingSet_3f(I,cSetting_light, -0.4, -0.4, -1.0);
+
+  SettingSet_f(I,cSetting_antialias, 0.0);
+
+  SettingSet_f(I,cSetting_cavity_cull, 10.0);
+
+  SettingSet_f(I,cSetting_ambient_scale, 0.4);
+
+  SettingSet_f(I,cSetting_single_image, 0.0);
+
+  SettingSet_f(I,cSetting_movie_delay, 30);
+
+  SettingSet_f(I,cSetting_ribbon_power, 5);
+
+  SettingSet_f(I,cSetting_ribbon_power_b, 2.0);
+
+  SettingSet_f(I,cSetting_ribbon_sampling, 16);
+
+  SettingSet_f(I,cSetting_ribbon_radius, 0.4);
+
+  SettingSet_f(I,cSetting_stick_radius, 0.3);
+
+  SettingSet_f(I,cSetting_hash_max, 80);
+
+  SettingSet_f(I,cSetting_ortho, 0);
+
+  SettingSet_f(I,cSetting_power, 3.0);
+
+  SettingSet_f(I,cSetting_spec_reflect, 0.4);
+
+  SettingSet_f(I,cSetting_spec_power, 40);
+
+  SettingSet_f(I,cSetting_sweep_angle, 15.0);
+
+  SettingSet_f(I,cSetting_sweep_speed, 0.3);
+
+  SettingSet_f(I,cSetting_dot_hydrogens, 1.0);
+
+  SettingSet_f(I,cSetting_dot_size, 0.06);
+
+  SettingSet_f(I,cSetting_ray_trace_frames, 0.0);
+
+  SettingSet_f(I,cSetting_cache_frames, 0.0);
+
+  SettingSet_f(I,cSetting_trim_dots, 1.0);
+
+  SettingSet_f(I,cSetting_cull_spheres, 1.0);
+
+  SettingSet_f(I,cSetting_test1, 1000000.0);
+
+  SettingSet_f(I,cSetting_test2, 1.0);
+
+  SettingSet_f(I,cSetting_surface_best, 0.2);
+
+  SettingSet_f(I,cSetting_surface_normal, 0.5);
+
+  SettingSet_f(I,cSetting_surface_quality, 0.0);
+
+  SettingSet_f(I,cSetting_surface_proximity, 1.5);
+
+  SettingSet_f(I,cSetting_stereo_angle, 2.1);
+
+  SettingSet_f(I,cSetting_stereo_shift, 2.0);
+
+  SettingSet_f(I,cSetting_line_smooth, 0.0);
+
+  SettingSet_f(I,cSetting_line_width, 1.0);
+
+  SettingSet_f(I,cSetting_half_bonds, 0.0);
+
+  SettingSet_f(I,cSetting_stick_quality, 8.0);
+
+  SettingSet_f(I,cSetting_stick_overlap, 0.2);
+
+  SettingSet_f(I,cSetting_stick_nub, 0.7);
+
+  SettingSet_f(I,cSetting_all_states, 0.0);
+
+  SettingSet_f(I,cSetting_pickable, 1.0);
+
+  SettingSet_f(I,cSetting_autoshow_lines, 1.0);
+
+  SettingSet_f(I,cSetting_fast_idle, 20000);
+
+  SettingSet_f(I,cSetting_no_idle, 5000);
+
+  SettingSet_f(I,cSetting_slow_idle, 200000);
+
+  SettingSet_f(I,cSetting_idle_delay, 1.5);
+
+  SettingSet_f(I,cSetting_rock_delay, 30);
+
+  SettingSet_f(I,cSetting_dist_counter, 0.0);
+
+  SettingSet_f(I,cSetting_dash_length, 0.15);
+
+  SettingSet_f(I,cSetting_dash_gap, 0.35);
+
+  SettingSet_f(I,cSetting_auto_zoom, 1.0);
+
+  SettingSet_f(I,cSetting_overlay, 0.0);
+
+  SettingSet_f(I,cSetting_text, 0.0);
+
+  SettingSet_f(I,cSetting_button_mode, 0.0);
+
+  SettingSet_f(I,cSetting_valence, 0.0);
+
+  SettingSet_f(I,cSetting_nonbonded_size, 0.25);
+
+  SettingSet_f(I,cSetting_label_color, -1.0);
+
+  SettingSet_f(I,cSetting_ray_trace_fog, 1.0);
+
+  SettingSet_f(I,cSetting_spheroid_scale, 1.0);
+
+  SettingSet_f(I,cSetting_ray_trace_fog_start, 0.30);
+
+  SettingSet_f(I,cSetting_spheroid_smooth, 1.1);
+
+  SettingSet_f(I,cSetting_spheroid_fill, 1.30);
+
+  SettingSet_f(I,cSetting_autoshow_nonbonded, 1.0);
+
+  SettingSet_f(I,cSetting_mesh_radius, 0.05);
+
 #ifdef WIN32
-  I->Setting[cSetting_cache_display].Value[0] = 0.0;
+  SettingSet_f(I,cSetting_cache_display, 0.0);
 #else
-  I->Setting[cSetting_cache_display].Value[0] = 1.0;
+  SettingSet_f(I,cSetting_cache_display, 1.0);
 #endif
-  strcpy(I->Setting[cSetting_cache_display].Name,
-			"cache_display");
 
-  I->NSetting++;
-  I->Setting[cSetting_normal_workaround].Value[0] = 0;
-  strcpy(I->Setting[cSetting_normal_workaround].Name,
-			"normal_workaround");
+  SettingSet_f(I,cSetting_normal_workaround, 0);
 
-  I->NSetting++;
-  I->Setting[cSetting_backface_cull].Value[0] = 1;
-  strcpy(I->Setting[cSetting_backface_cull].Name,
-			"backface_cull");
+  SettingSet_f(I,cSetting_backface_cull, 1);
 
-  I->NSetting++;
-  I->Setting[cSetting_gamma].Value[0] = 1.2;
-  strcpy(I->Setting[cSetting_gamma].Name,
-			"gamma");
+  SettingSet_f(I,cSetting_gamma, 1.2);
 
-  I->NSetting++;
-  I->Setting[cSetting_dot_width].Value[0] = 1.0;
-  strcpy(I->Setting[cSetting_dot_width].Name,
-			"dot_width");
+  SettingSet_f(I,cSetting_dot_width, 1.0);
 
-  I->NSetting++;
-  I->Setting[cSetting_autoshow_selections].Value[0] = 1.0;
-  strcpy(I->Setting[cSetting_autoshow_selections].Name,
-			"autoshow_selections");
+  SettingSet_f(I,cSetting_autoshow_selections, 1.0);
 
-  I->NSetting++;
-  I->Setting[cSetting_autohide_selections].Value[0] = 1.0;
-  strcpy(I->Setting[cSetting_autohide_selections].Name,
-			"autohide_selections");
+  SettingSet_f(I,cSetting_autohide_selections, 1.0);
 
-  I->NSetting++;
-  I->Setting[cSetting_selection_width].Value[0] = 5.0;
-  strcpy(I->Setting[cSetting_selection_width].Name,
-			"selection_width");
+  SettingSet_f(I,cSetting_selection_width, 5.0);
 
-  I->NSetting++;
-  I->Setting[cSetting_selection_overlay].Value[0] = 1.0;
-  strcpy(I->Setting[cSetting_selection_overlay].Name,
-			"selection_overlay");
+  SettingSet_f(I,cSetting_selection_overlay, 1.0);
 
-  I->NSetting++;
-  I->Setting[cSetting_static_singletons].Value[0] = 1.0;
-  strcpy(I->Setting[cSetting_static_singletons].Name,
-			"static_singletons");
-
+  SettingSet_f(I,cSetting_static_singletons, 1.0);
 
 }
 

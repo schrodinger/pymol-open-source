@@ -20,6 +20,7 @@ Z* -------------------------------------------------------------------
 #include"Rep.h"
 #include"Symmetry.h"
 #include"Word.h"
+#include"Setting.h"
 
 typedef struct CoordSet {
   void (*fUpdate)(struct CoordSet *I);
@@ -48,6 +49,7 @@ typedef struct CoordSet {
   float *SpheroidNormal;
   int NSpheroid;
   int SpheroidSphereSize;
+  CSetting *Setting;
 } CoordSet;
 
 #include"ObjectMolecule.h"
