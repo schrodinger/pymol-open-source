@@ -97,8 +97,8 @@ static PyObject *Cmd_Failure;
 
 static void APIEntry(void)
 {
-  if(PyMOLTerminating) /* hang safely until the thread is dropped (assumes daemonic)*/
-    while(1);
+  if(PyMOLTerminating) /* try to bail */
+    exit(0);
   P_glut_thread_keep_out++; 
   PUnblock();
 }
@@ -997,8 +997,8 @@ static PyObject *CmdGetFeedback(PyObject *dummy, PyObject *args)
   PyObject *result = NULL;
   int code;
 
-  if(PyMOLTerminating) /* hang safely until thread is dropped (assumes daemonic thread) */
-    while(1);
+  if(PyMOLTerminating) /* try to bail */
+    exit(0);
   code = OrthoFeedbackOut(buffer);
   if(code)
     result = Py_BuildValue("s",buffer);
