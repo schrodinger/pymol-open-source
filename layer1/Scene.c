@@ -1463,10 +1463,10 @@ void SceneRovingChanged(void)
 static void SceneRovingCleanup(void)
 {
   CScene *I=&Scene;  
-  I->RovingCleanupFlag=false;
-
   char *s;  
   char buffer[OrthoLineLength];
+
+  I->RovingCleanupFlag=false;
 
   s = SettingGet_s(NULL,NULL,cSetting_roving_selection);
 

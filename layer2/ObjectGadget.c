@@ -315,8 +315,8 @@ int ObjectGadgetNewFromPyList(PyObject *list,ObjectGadget **result)
 {
   int ok = true;
   ObjectGadget *I=NULL;
-  (*result) = NULL;
   int gadget_type = -1;
+  (*result) = NULL;
 
   if(ok) ok=(list!=NULL);
   if(ok) ok=PyList_Check(list);

@@ -901,11 +901,11 @@ int ColorTableLoad(char *fname,int quiet)
     unsigned int rc,bc,gc;
     unsigned int gf,bf,rf;
 
-    float green_max=0.75;
-    float red_max=0.95;
-    float blue_max=0.97;
+    float green_max=0.75F;
+    float red_max=0.95F;
+    float blue_max=0.97F;
     
-    float min_factor=0.15;
+    float min_factor=0.15F;
 
     red_max = SettingGet(cSetting_pymol_space_max_red);
     green_max = SettingGet(cSetting_pymol_space_max_green);
@@ -933,27 +933,27 @@ int ColorTableLoad(char *fname,int quiet)
 
         if((r>=g)&&(r>=b)) {
           if(rc>255*red_max) {
-            rc=red_max*255;
+            rc=(int)red_max*255;
             bc=bc*rc/r;
             gc=gc*rc/r;
           }
         } else if((g>=b)&&(g>=r)) {
           if(gc>255*green_max) {
-            gc=green_max*255;
+            gc=(int)green_max*255;
             bc=bc*gc/g;
             rc=rc*gc/g;
           }
         } else if((b>=g)&&(b>=r)) {
           if(bc>255*blue_max) {
-            bc=blue_max*255;
+            bc=(int)blue_max*255;
             gc=gc*bc/b;
             rc=rc*bc/b;
           }
         }
 
-        rf = (int)(min_factor*rc+0.49999);
-        gf = (int)(min_factor*gc+0.49999);
-        bf = (int)(min_factor*bc+0.49999);
+        rf = (int)(min_factor*rc+0.49999F);
+        gf = (int)(min_factor*gc+0.49999F);
+        bf = (int)(min_factor*bc+0.49999F);
         
         if (rc<gf) rc = (int)gf;
         if (bc<gf) bc = (int)gf;
@@ -1050,7 +1050,6 @@ void ColorUpdateClamp(int index)
 {
   int i;
   int once=false;
-  i = index;
   CColor *I=&Color; 
   unsigned int *entry;
   float *color,*new_color;
@@ -1060,6 +1059,7 @@ void ColorUpdateClamp(int index)
   float fr,fg,fb,frm1,fgm1,fbm1,rct,gct,bct;
   int x,y,z;
 
+  i = index;
   if(index>=0) {
     once=true;
   }
@@ -1114,11 +1114,11 @@ void ColorUpdateClamp(int index)
         fgm1 = gr/4.0F;
         fbm1 = br/4.0F;
         
-        fr = 1.0 - frm1;
-        fg = 1.0 - fgm1;
-        fb = 1.0 - fbm1;
+        fr = 1.0F - frm1;
+        fg = 1.0F - fgm1;
+        fb = 1.0F - fbm1;
 
-        rct = 0.4999 + 
+        rct = 0.4999F + 
           (fr   * fg   * fb   * rc[0][0][0]) + 
           (frm1 * fg   * fb   * rc[1][0][0]) + 
           (fr   * fgm1 * fb   * rc[0][1][0]) + 
@@ -1128,7 +1128,7 @@ void ColorUpdateClamp(int index)
           (frm1 * fg   * fbm1 * rc[1][0][1]) + 
           (frm1 * fgm1 * fbm1 * rc[1][1][1]);
 
-        gct = 0.4999 + 
+        gct = 0.4999F + 
           (fr   * fg   * fb   * gc[0][0][0]) + 
           (frm1 * fg   * fb   * gc[1][0][0]) + 
           (fr   * fgm1 * fb   * gc[0][1][0]) + 
@@ -1138,7 +1138,7 @@ void ColorUpdateClamp(int index)
           (frm1 * fg   * fbm1 * gc[1][0][1]) + 
           (frm1 * fgm1 * fbm1 * gc[1][1][1]);
 
-        bct = 0.4999 + 
+        bct = 0.4999F + 
           (fr   * fg   * fb   * bc[0][0][0]) + 
           (frm1 * fg   * fb   * bc[1][0][0]) + 
           (fr   * fgm1 * fb   * bc[0][1][0]) + 

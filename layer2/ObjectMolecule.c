@@ -7460,13 +7460,14 @@ void ObjectMoleculeDummyUpdate(ObjectMolecule *I,int mode)
 ObjectMolecule *ObjectMoleculeDummyNew(int type)
 {
   ObjectMolecule *I= NULL;
-  I=ObjectMoleculeNew(false);
-
+  
   int nAtom;
   float *coord = NULL;
   CoordSet *cset = NULL;
   AtomInfoType *atInfo = NULL;
   int frame=-1;
+
+  I=ObjectMoleculeNew(false);
 
   nAtom=1;
   coord=VLAlloc(float,3*nAtom);
