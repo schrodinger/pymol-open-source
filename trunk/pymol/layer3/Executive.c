@@ -5362,7 +5362,6 @@ int ExecutiveToggleRepVisib(char *name,int rep)
 {
   int ok =true;
   int sele;
-  int a;
   int handled = false;
   SpecRec *tRec;
   ObjectMoleculeOpRec op;
@@ -5492,6 +5491,32 @@ void ExecutiveSetRepVisib(char *name,int rep,int state)
     ENDFD;
 
 }
+
+/*========================================================================*/
+int ExecutiveSetOnOffBySele(char *name,int onoff)
+{
+  int sele;
+  SpecRec *tRec;
+  ObjectMoleculeOpRec op;
+
+  tRec = ExecutiveFindSpec(name);
+  if((!tRec)&&(!strcmp(name,cKeywordAll))) {
+    ExecutiveSetObjVisib(name,onoff);
+  }
+  if(tRec) {
+    sele=SelectorIndexByName(name);
+    if(sele>=0) {
+      ObjectMoleculeOpRecInit(&op);
+      
+      op.code=OMOP_OnOff;
+      op.i1=onoff;
+      ExecutiveObjMolSeleOp(sele,&op);
+    }
+  }
+  return 1;
+}
+
+
 /*========================================================================*/
 void ExecutiveSetAllRepVisib(char *name,int rep,int state)
 {
@@ -5499,7 +5524,6 @@ void ExecutiveSetAllRepVisib(char *name,int rep,int state)
   ObjectMolecule *obj;
   int sele;
   int a;
-  int is_on = false;
 
   CExecutive *I = &Executive;
   SpecRec *rec = NULL;

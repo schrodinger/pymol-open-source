@@ -153,7 +153,7 @@ typedef struct {
 #define OMOP_GetPartialCharges 50
 #define OMOP_StateVRT 51
 #define OMOP_CheckVis 52
-
+#define OMOP_OnOff 53
 
 #include"CoordSet.h"
 
@@ -218,6 +218,7 @@ int ObjectMoleculeGetSerial(ObjectMolecule *I);
 int ObjectMoleculeSetStateTitle(ObjectMolecule *I,int state,char *text);
 char *ObjectMoleculeGetStateTitle(ObjectMolecule *I,int state);
 
+void ObjectMoleculeFree(ObjectMolecule *I); /* only for friends of ObjectMolecule */
 
 ObjectMolecule *ObjectMoleculeNew(int discreteFlag);
 void ObjectMoleculeSort(ObjectMolecule *I);

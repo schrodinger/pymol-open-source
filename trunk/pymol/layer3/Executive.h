@@ -179,6 +179,7 @@ int ExecutiveGetCrystal(char *sele,float *a,float *b,float *c,
 int ExecutiveIterateObjectMolecule(ObjectMolecule **obj,void **hidden);
 int ExecutiveGetObjectColorIndex(char *name);
 void ExecutiveToggleAllRepVisib(char *name,int rep);
+int ExecutiveSetOnOffBySele(char *name,int onoff);
 
 #endif
 

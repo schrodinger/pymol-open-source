@@ -1637,7 +1637,11 @@ class PMGApp(AbstractApp):
 
 
       self.menuBar.addmenu('Wizard', 'Task Wizards',tearoff=TRUE)
-      
+
+      self.menuBar.addmenuitem('Wizard', 'command', 'Appearance',
+                               label='Appearance',
+                               command = lambda: cmd.do("_ wizard appearance"))
+
       self.menuBar.addmenuitem('Wizard', 'command', 'Density Map Wizard',
                                label='Density',
                                command = lambda: cmd.do("_ wizard density"))

@@ -3296,6 +3296,23 @@ static PyObject *CmdShowHide(PyObject *self, 	PyObject *args)
   return(APIStatus(ok));
 }
 
+static PyObject *CmdOnOffBySele(PyObject *self, 	PyObject *args)
+{
+  char *sname;
+  int onoff;
+  OrthoLineType s1;
+  int ok=false;
+  ok = PyArg_ParseTuple(args,"si",&sname,&onoff);
+  if (ok) { /* TODO STATUS */
+    APIEntry();
+    SelectorGetTmp(sname,s1);
+    ok = ExecutiveSetOnOffBySele(s1,onoff);
+    SelectorFreeTmp(s1);
+    APIExit();
+  }
+  return(APIStatus(ok));
+}
+
 static PyObject *CmdOnOff(PyObject *self, 	PyObject *args)
 {
   char *name;
@@ -4511,6 +4528,7 @@ static PyMethodDef Cmd_methods[] = {
 	{"origin",	              CmdOrigin,               METH_VARARGS },
 	{"orient",	              CmdOrient,               METH_VARARGS },
 	{"onoff",                 CmdOnOff,                METH_VARARGS },
+   {"onoff_by_sele",         CmdOnOffBySele,          METH_VARARGS },
 	{"overlap",               CmdOverlap,              METH_VARARGS },
 	{"p_glut_event",          CmdPGlutEvent,           METH_VARARGS },
    {"p_glut_get_redisplay",  CmdPGlutGetRedisplay,    METH_VARARGS },
