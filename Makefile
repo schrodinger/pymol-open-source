@@ -203,7 +203,7 @@ partial:
 clean: 
 	touch .no_fail
 	/bin/rm -f layer*/*.o ov/src/*.o layer*/*.p modules/*/*.pyc modules/*/*/*.pyc \
-	layer*/.files layer*/.depends layer*/.includes \
+	layer*/.files layer*/.depends layer*/.includes layerOSX*/src*/*.o \
 	*.log core */core game.* log.* _cmd.def .update .contrib .no_fail*
 	cd contrib;$(MAKE) clean
 
