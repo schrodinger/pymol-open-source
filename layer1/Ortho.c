@@ -800,7 +800,7 @@ void OrthoNewLine(char *prompt,int crlf)
     OrthoFeedbackIn(I->Line[I->CurLine&OrthoSaveLines]);
   else
     OrthoFeedbackIn(" ");
-  if(Feedback(FB_Ortho,FB_Details)) {
+  if(Feedback(FB_Python,FB_Output)) {
     if(crlf) {
       printf("%s\n",I->Line[I->CurLine&OrthoSaveLines]);
     } else {

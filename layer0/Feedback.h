@@ -169,12 +169,16 @@ function name.
 
 #define FB_None            0x00
 
-#define FB_Results         0x01
-#define FB_Errors          0x02
-#define FB_Actions         0x04
-#define FB_Warnings        0x08
-#define FB_Details         0x10
-#define FB_Blather         0x20
+#define FB_Output          0x01
+/* python/text output */
+#define FB_Results         0x02
+/* limited to actual results of an operation...requested measurements, etc. */
+#define FB_Errors          0x04
+#define FB_Actions         0x08
+/* advisories regarding the completion of a */
+#define FB_Warnings        0x10
+#define FB_Details         0x20
+#define FB_Blather         0x40
 #define FB_Debugging       0x80
 
 #define FB_Everything      0xFF 

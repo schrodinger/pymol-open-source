@@ -2880,11 +2880,11 @@ int SelectorCreate(char *sname,char *sele,ObjectMolecule *obj,int quiet,Multipic
   if(!quiet) {
     if(name[0]!='_') {
       if(c) {
-        PRINTFB(FB_Selector,FB_Results)
+        PRINTFB(FB_Selector,FB_Actions)
           " Selector: selection \"%s\" defined with %d atoms.\n",name,c
           ENDFB;
       } else {
-        PRINTFB(FB_Selector,FB_Results)
+        PRINTFB(FB_Selector,FB_Actions)
           " Selector: no atoms selected.\n"
           ENDFB;
       }
