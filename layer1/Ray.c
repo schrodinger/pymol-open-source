@@ -1631,12 +1631,23 @@ int RayTraceThread(CRayThreadInfo *T)
                   
                   if(pass)	/* average all four channels */
                     {	
-                      persist_inv = _1-persist;
+                      float mix_in;
+                      if(i>=0) {
+                        if(fogFlag) {
+                          mix_in = persist * (_1 - r1.trans*ffact);
+                        } else {
+                          mix_in = persist * (_1 - r1.trans);
+                        }
+                      } else {
+                        mix_in = persist;
+                      }
 
-                      fc[0]	= (0xFF&((*pixel)>>24)) * persist + (0xFF&(last_pixel>>24))*persist_inv;
-                      fc[1]	= (0xFF&((*pixel)>>16)) * persist + (0xFF&(last_pixel>>16))*persist_inv;
-                      fc[2]	= (0xFF&((*pixel)>>8))  * persist + (0xFF&(last_pixel>>8))*persist_inv;
-                      fc[3]	= (0xFF&((*pixel)))     * persist + (0xFF&(last_pixel))*persist_inv;
+                      persist_inv = _1-mix_in;
+
+                      fc[0]	= (0xFF&((*pixel)>>24)) * mix_in + (0xFF&(last_pixel>>24))*persist_inv;
+                      fc[1]	= (0xFF&((*pixel)>>16)) * mix_in + (0xFF&(last_pixel>>16))*persist_inv;
+                      fc[2]	= (0xFF&((*pixel)>>8))  * mix_in + (0xFF&(last_pixel>>8))*persist_inv;
+                      fc[3]	= (0xFF&((*pixel)))     * mix_in + (0xFF&(last_pixel))*persist_inv;
                       
                       if(!opaque_back) {
                         if(i<0) { /* hit nothing -- so don't blend alpha*/

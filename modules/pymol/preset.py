@@ -16,7 +16,7 @@ import cmd
 import util
 import traceback
 
-polar_contacts = "preset_pc"
+polar_contacts = "preset_polar_conts"
 
 def simple(selection="(all)"):
    s = "("+str(selection)+")"
@@ -29,6 +29,11 @@ def simple(selection="(all)"):
       cmd.disable(polar_contacts)
    if cmd.count_atoms(s):
       cmd.center(s)
+
+def simple_no_solv(selection="(all)"):
+   simple(selection)
+   s = "("+str(selection)+")"   
+   cmd.hide("nonbonded","("+s+" and (hetatm|hoh+wat+h2o/))")
 
 def ligands(selection="(all)"):
    try:
@@ -119,5 +124,18 @@ def publication(selection="(all)"):
 
 def pub_no_solv(selection="(all)"):
    publication(selection)
-   cmd.hide("nb_spheres","(hetatm|hoh+wat+h2o/)")
+   s = "("+str(selection)+")"
+   cmd.hide("nb_spheres","((hetatm|hoh+wat+h2o/) and "+s+")")
    
+def default(selection="(all)"):
+   s = "("+str(selection)+")"
+   cmd.hide("everything",s)
+   cmd.show("lines",s)
+   cmd.show("nonbonded",s)
+   color=cmd.get_object_color_index(selection)
+   if color<0:
+      util.cbag(selection)
+   else:
+      util.cnc(selection)
+      cmd.color(str(color),"("+s+") and elem c")
+      

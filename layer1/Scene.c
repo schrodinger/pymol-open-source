@@ -107,6 +107,7 @@ typedef struct {
   int RovingDirtyFlag;
   int RovingCleanupFlag;
   double RovingLastUpdate;
+  int Threshold, ThresholdX, ThresholdY;
 } CScene;
 
 CScene Scene;
@@ -1168,7 +1169,7 @@ unsigned int SceneFindTriplet(int x,int y,GLenum gl_buffer)
        for(a=-d;flag&&(a<=d);a++)
          for(b=-d;flag&&(b<=d);b++) {
            c = &buffer[a+cRange][b+cRange][0];
-           if(c[4]==bkrd_alpha) {
+           if(c[3]==bkrd_alpha) {
              check_alpha = true;
              flag=false;
            }
@@ -1240,7 +1241,7 @@ unsigned int *SceneReadTriplets(int x,int y,int w,int h,GLenum gl_buffer)
       for(b=0;b<h;b++)
         {
           c = &buffer[a+b*w][0];
-          if(c[4]==bkrd_alpha) {
+          if(c[3]==bkrd_alpha) {
             check_alpha = true;
           }
         }
@@ -1412,6 +1413,7 @@ int SceneClick(Block *block,int button,int x,int y,int mod)
   I->LastWinY = y;
   I->LastClickTime = UtilGetSeconds();
   I->LastButton = button;
+  I->Threshold = 0;
 
   if(double_click)
     mode = cButModeMenu;
@@ -1592,6 +1594,12 @@ int SceneClick(Block *block,int button,int x,int y,int mod)
       x=x-I->Block->margin.left;
       I->LastX=x;
       I->LastY=y;	
+
+      if(mode==cButModePkTorBnd) {
+        I->Threshold = 3;
+        I->ThresholdX = x;
+        I->ThresholdY = y;
+      }
 
       switch(obj->type) {
       case cObjectMolecule:
@@ -2313,44 +2321,52 @@ int SceneDrag(Block *block,int x,int y,int mod)
   case cButModeMoveAtom:
   case cButModePkTorBnd:
     obj=(CObject*)I->LastPicked.ptr;
-    if(obj)
-      switch(obj->type) {
-      case cObjectMolecule:
-        if(ObjectMoleculeGetAtomVertex((ObjectMolecule*)obj,
-                                       SettingGetGlobal_i(cSetting_state)-1,
-                                       I->LastPicked.index,v1)) {
-          /* scale properly given the current projection matrix */
-          vScale = SceneGetScreenVertexScale(v1);
-          if(I->StereoMode>1) {
-            x = x % (I->Width/2);
-            vScale*=2;
-          }
-          
-          v2[0] = (x-I->LastX)*vScale;
-          v2[1] = (y-I->LastY)*vScale;
-          v2[2] = 0;
-
-          v3[0] = 0.0F;
-          v3[1] = 0.0F;
-          v3[2] = 1.0F;
-
-          /* transform into model coodinate space */
-          MatrixInvTransform44fAs33f3f(I->RotMatrix,v2,v2); 
-          MatrixInvTransform44fAs33f3f(I->RotMatrix,v3,v3); 
-          if(mode!=cButModeMoveAtom) {
-            EditorDrag((ObjectMolecule*)obj,I->LastPicked.index,mode,
-                       SettingGetGlobal_i(cSetting_state)-1,v1,v2,v3);
-          } else {
-            int log_trans = (int)SettingGet(cSetting_log_conformations);
-            ObjectMoleculeMoveAtom((ObjectMolecule*)obj,SettingGetGlobal_i(cSetting_state)-1,
-                                   I->LastPicked.index,v2,1,log_trans);
-            SceneDirty();
-          }
+    if(obj) {
+      if(I->Threshold) {
+        if((abs(x-I->ThresholdX)>I->Threshold)||
+           (abs(y-I->ThresholdY)>I->Threshold)) {
+          I->Threshold = 0;
         }
-        break;
-      default:
-        break;
       }
+      if(!I->Threshold)
+        switch(obj->type) {
+        case cObjectMolecule:
+          if(ObjectMoleculeGetAtomVertex((ObjectMolecule*)obj,
+                                         SettingGetGlobal_i(cSetting_state)-1,
+                                         I->LastPicked.index,v1)) {
+            /* scale properly given the current projection matrix */
+            vScale = SceneGetScreenVertexScale(v1);
+            if(I->StereoMode>1) {
+              x = x % (I->Width/2);
+              vScale*=2;
+            }
+            
+            v2[0] = (x-I->LastX)*vScale;
+            v2[1] = (y-I->LastY)*vScale;
+            v2[2] = 0;
+            
+            v3[0] = 0.0F;
+            v3[1] = 0.0F;
+            v3[2] = 1.0F;
+            
+            /* transform into model coodinate space */
+            MatrixInvTransform44fAs33f3f(I->RotMatrix,v2,v2); 
+            MatrixInvTransform44fAs33f3f(I->RotMatrix,v3,v3); 
+            if(mode!=cButModeMoveAtom) {
+              EditorDrag((ObjectMolecule*)obj,I->LastPicked.index,mode,
+                         SettingGetGlobal_i(cSetting_state)-1,v1,v2,v3);
+            } else {
+              int log_trans = (int)SettingGet(cSetting_log_conformations);
+              ObjectMoleculeMoveAtom((ObjectMolecule*)obj,SettingGetGlobal_i(cSetting_state)-1,
+                                     I->LastPicked.index,v2,1,log_trans);
+              SceneDirty();
+            }
+          }
+          break;
+        default:
+          break;
+        }
+    }
     I->LastX=x;
     I->LastY=y;
     break;
@@ -2647,6 +2663,7 @@ void SceneInit(void)
   I->LastClickTime = UtilGetSeconds();
   I->LastWinX = 0;
   I->LastWinY = 0;
+  I->Threshold = 0;
 
   SceneSetDefaultView();
 
@@ -3688,14 +3705,13 @@ void SceneRender(Pickable *pick,int x,int y,Multipick *smp)
           ENDFD;
 
         glPushMatrix();
-        glNormal3fv(normal);
-        ExecutiveRenderSelections(curState);
-
         PRINTFD(FB_Scene)
           " SceneRender: rendering editing...\n"
           ENDFD;
-
         EditorRender(curState);
+
+        glNormal3fv(normal);
+        ExecutiveRenderSelections(curState);
 
         PRINTFD(FB_Scene)
           " SceneRender: rendering transparent objects...\n"

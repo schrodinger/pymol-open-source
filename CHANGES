@@ -179,6 +179,14 @@ CHANGE LOG
 
 Changes up to 0.95
 
+   * improved ray-tracer's ability to handle multiple transparent objects
+
+   * "Virtual trackball" toggle now in menu
+
+   * added variety of new functionality to pop-up menus
+
+   * fixed segmentation fault bug in atom picking (only seen on Mac?)
+
    * much-improved support for raytracing of large structures;
      various bugs fixed
 
