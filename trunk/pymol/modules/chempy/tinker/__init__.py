@@ -7,7 +7,7 @@ import string
 
 prefix = "tinker_run"
 
-def run(command,in_prefix,out_prefix,tokens):
+def run(command,in_prefix,out_prefix,tokens,capture=None):
    for a in glob.glob(prefix+".*"):
       os.unlink(a)
    for a in glob.glob(out_prefix+".*"):
@@ -16,7 +16,10 @@ def run(command,in_prefix,out_prefix,tokens):
       dst = string.split(src,'.')
       dst = prefix+'.'+dst[len(dst)-1]
       shutil.copyfile(src,dst)
-   pipe = os.popen(bin_path+command,"w")
+   if capture:
+      pipe = os.popen(bin_path+command+"> "+out_prefix+".out","w")      
+   else:
+      pipe = os.popen(bin_path+command,"w")
    if not pipe:
       print "Error: can't run tinker!!!"
       raise RunError

@@ -1,7 +1,7 @@
 #!/bin/csh 
 # CSH Setup script for Unix 
 #
-setenv PYMOL_PATH /apps/pymol/pymol/
+setenv PYMOL_PATH ${WLD_MTK}/pkg/pymol
 setenv PYMOL_EXTLIBPATH $PYMOL_PATH/ext/lib
 #
 # Tcl/Tk path
