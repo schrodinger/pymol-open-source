@@ -61,7 +61,7 @@ int MovieFromPyList(PyObject *list,int *warning)
   if(ok) ok=PConvPyIntToInt(PyList_GetItem(list,0),&I->NFrame);
   if(ok) ok=PConvPyIntToInt(PyList_GetItem(list,1),&I->MatrixFlag);
   if(ok&&I->MatrixFlag) 
-    ok=PConvPyListToFloatArrayInPlace(PyList_GetItem(list,2),I->Matrix,16);
+    ok=PConvPyListToFloatArrayInPlace(PyList_GetItem(list,2),I->Matrix,cSceneViewSize);
   if(ok) ok=PConvPyIntToInt(PyList_GetItem(list,3),&I->Playing);
   if(ok&&I->NFrame) {
     I->Sequence=Alloc(int,I->NFrame+1);
@@ -97,7 +97,7 @@ PyObject *MovieAsPyList(void)
   result = PyList_New(6);
   PyList_SetItem(result,0,PyInt_FromLong(I->NFrame));
   PyList_SetItem(result,1,PyInt_FromLong(I->MatrixFlag));
-  PyList_SetItem(result,2,PConvFloatArrayToPyList(I->Matrix,16));
+  PyList_SetItem(result,2,PConvFloatArrayToPyList(I->Matrix,cSceneViewSize));
   PyList_SetItem(result,3,PyInt_FromLong(I->Playing));
   if(I->Sequence) {
     PyList_SetItem(result,4,PConvIntArrayToPyList(I->Sequence,I->NFrame));
@@ -144,22 +144,18 @@ void MoviePlay(int cmd)
 void MovieMatrix(int action)
 {
   CMovie *I=&Movie;
-  int a;
-  float *m;
 
   switch(action) {
   case cMovieMatrixClear:
 	 I->MatrixFlag=false;
 	 break;
   case cMovieMatrixStore:
+    SceneGetView(I->Matrix);
 	 I->MatrixFlag=true;
-	 m=SceneGetMatrix();
-	 for(a=0;a<16;a++)
-		I->Matrix[a]=m[a];
 	 break;
   case cMovieMatrixRecall:
 	 if(I->MatrixFlag) 
-		SceneSetMatrix(I->Matrix);
+		SceneSetView(I->Matrix);
 	 break;
   }
 }

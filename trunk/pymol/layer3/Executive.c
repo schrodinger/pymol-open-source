@@ -18,6 +18,7 @@ Z* -------------------------------------------------------------------
 #include"os_std.h"
 #include"os_gl.h"
 
+#include"Version.h"
 #include"main.h"
 #include"Base.h"
 #include"OOMac.h"
@@ -156,7 +157,7 @@ static int ExecutiveSetNamedEntries(PyObject *names)
 {
   CExecutive *I = &Executive;  
   int ok=true;
-  int a=0,l;
+  int a=0,l=0;
   PyObject *cur;
   SpecRec *rec = NULL;
   int extra_int;
@@ -232,7 +233,7 @@ static int ExecutiveSetSelections(PyObject *names)
   /* must already have objects loaded at this point... */
 
   int ok=true;
-  int a=0,l;
+  int a=0,l=0;
   PyObject *cur;
   SpecRec *rec = NULL;
   int extra;
@@ -324,9 +325,11 @@ PyObject *ExecutiveGetSession(void)
   PyDict_SetItemString(result,"names",ExecutiveGetNamedEntries());
   PyDict_SetItemString(result,"settings",SettingGetGlobalsPyList());
   PyDict_SetItemString(result,"colors",ColorAsPyList());
+  PyDict_SetItemString(result,"version",PyInt_FromLong(_PyMOL_VERSION_int));
   SceneGetView(sv);
   PyDict_SetItemString(result,"view",PConvFloatArrayToPyList(sv,cSceneViewSize));
   PyDict_SetItemString(result,"movie",MovieAsPyList());
+  PyDict_SetItemString(result,"editor",EditorAsPyList());
   return(result);
 }
 
@@ -370,6 +373,14 @@ int ExecutiveSetSession(PyObject *session)
     tmp = PyDict_GetItemString(session,"movie");
     if(tmp) 
       ok = MovieFromPyList(tmp,&warning);
+  }
+  if(ok) {
+    tmp = PyDict_GetItemString(session,"editor");
+    if(tmp) 
+      ok = EditorFromPyList(tmp);
+  }
+  if(ok) { /* update mouse in GUI */
+    PParse("cmd.mouse(quiet=1)");
   }
   return(ok);
 }

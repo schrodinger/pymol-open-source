@@ -19,6 +19,7 @@ Z* -------------------------------------------------------------------
 #include"os_python.h"
 
 #include"Ortho.h"
+#include"Scene.h"
 
 typedef unsigned char *ImageType;
 typedef char MovieCmdType[OrthoLineLength];
@@ -30,7 +31,7 @@ typedef struct  {
   int NImage,NFrame;
   unsigned Width,Height;
   int MatrixFlag;
-  float Matrix[16];
+  SceneViewType Matrix;
   int Playing;
 } CMovie;
 

@@ -19,6 +19,7 @@ Z* -------------------------------------------------------------------
 #include"os_gl.h"
 #include"Err.h"
 
+#include"PConv.h"
 #include"MemoryDebug.h"
 #include"Vector.h"
 #include"Matrix.h"
@@ -50,6 +51,51 @@ typedef struct {
 }  CEditor;
 
 CEditor Editor;
+
+
+PyObject *EditorAsPyList(void)
+{
+  PyObject *result = NULL;
+  CEditor *I = &Editor;
+
+  if(!EditorActive()) {
+    result = PyList_New(0); /* not editing? return null list */
+  } else {
+    result = PyList_New(2);
+    PyList_SetItem(result,0,PyString_FromString(I->Obj->Obj.Name));
+    PyList_SetItem(result,1,PyInt_FromLong(I->ActiveState));
+  }
+  return(PConvAutoNone(result));
+}
+
+int EditorFromPyList(PyObject *list)
+{
+  int ok=true;
+  int active_flag = false;
+  ObjectMolecule *objMol;
+  int active_state;
+  WordType obj_name;
+
+  if(ok) ok=PyList_Check(list);
+  if(ok) active_flag=(PyList_Size(list)!=0);
+  if(!active_flag) {
+    EditorInactive();
+  } else {
+    if(ok) ok=PConvPyStrToStr(PyList_GetItem(list,0),obj_name,sizeof(WordType));
+    if(ok) ok=PConvPyIntToInt(PyList_GetItem(list,1),&active_state);
+    if(ok) {
+      objMol=ExecutiveFindObjectMoleculeByName(obj_name);
+      if(objMol)
+        EditorSetActiveObject(objMol,active_state);
+    } else {
+      EditorInactive();
+    }
+  }
+  if(!ok) {
+    EditorInactive();
+  }
+  return(ok);
+}
 
 int EditorActive(void) {
   CEditor *I = &Editor;
