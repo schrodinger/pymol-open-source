@@ -912,7 +912,7 @@ SetConsoleCtrlHandler(
     switch(ForceStereo) {
 
     case -1: /* force mono */
-      p_glutInitDisplayMode(P_GLUT_RGBA | P_GLUT_DEPTH | P_GLUT_DOUBLE );
+      p_glutInitDisplayMode(P_GLUT_RGBA | P_GLUT_DEPTH | multisample_mask | P_GLUT_DOUBLE );
       StereoCapable = 0;
       break;
 
