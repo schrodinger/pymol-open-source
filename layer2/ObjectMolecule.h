@@ -72,6 +72,7 @@ void ObjectMoleculeInvalidateRep(ObjectMolecule *I,int rep);
 void ObjectMoleculeSeleOp(ObjectMolecule *I,int sele,ObjectMoleculeOpRec *op);
 
 CoordSet *ObjectMoleculeGetCoordSet(ObjectMolecule *I,int setIndex);
+void ObjectMoleculeBlindSymMovie(ObjectMolecule *I);
 
 
 #endif

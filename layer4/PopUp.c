@@ -53,9 +53,10 @@ void PopUpNew(int x,int y,PyObject *list)
 {
   /* assumes blocked threads (calls the Python C API) */
 
-  int mx,a,l;
+  int mx,a,l,cl,cmx;
   int dim[2];
   PyObject *elem;
+  char *str,*c;
 
   OOAlloc(CPopUp);
 
@@ -69,6 +70,10 @@ void PopUpNew(int x,int y,PyObject *list)
   I->Block->TextColor[1]=1.0;
   I->Block->TextColor[2]=1.0;
 
+  I->Block->BackColor[0]=0.1;
+  I->Block->BackColor[1]=0.1;
+  I->Block->BackColor[2]=0.1;
+
   I->NLine=PyList_Size(list);
   I->Text = NULL;
   I->Command = NULL;
@@ -76,11 +81,23 @@ void PopUpNew(int x,int y,PyObject *list)
   I->Selected = -1;
 
   mx=1;
+  cmx=1;
   for(a=0;a<I->NLine;a++) {
-    l = PyString_Size(PyList_GetItem(PyList_GetItem(list,a),1));
+    elem = PyList_GetItem(PyList_GetItem(list,a),1);
+    l = PyString_Size(elem);
+    str  = PyString_AsString(elem);
+    cl=l;
+    c = str;
+    while(*c) {
+      if(*c=='`') { /* discount the markup */
+        cl-=4;
+      }
+      c++;
+    }
+    if(cl>cmx) cmx=cl;
     if(l>mx) mx=l;
   }
-  I->Width = (mx * cPopUpCharWidth) + 2 * cPopUpCharMargin;
+  I->Width = (cmx * cPopUpCharWidth) + 2 * cPopUpCharMargin;
   I->Height = (I->NLine * cPopUpLineHeight) + 2 * cPopUpCharMargin;
 
   dim[0]=I->NLine+1;
@@ -173,7 +190,7 @@ int PopUpDrag(Block *block,int x,int y,int mod)
 void PopUpDraw(Block *block)
 {
   CPopUp *I = (CPopUp*)block->reference;
-  int x,y,a;
+  int x,y,a,xx;
   char *c;
 
   if(PMGUI) {
@@ -219,10 +236,25 @@ void PopUpDraw(Block *block)
         else
           glColor3fv(I->Block->TextColor);          
         if(I->Code[a]) {
-          glRasterPos4d((double)(x),(double)(y+cPopUpCharLift),0.0,1.0);
           c=I->Text[a];
-          while(*c) 
+          xx=x;
+          while(*c) {
+            if(*c=='`') if(*(c+1)) if(*(c+2)) if(*(c+3)) {
+              if(*(c+1)=='---') {
+                if(a==I->Selected)
+                  glColor3fv(I->Block->BackColor);
+                else
+                  glColor3fv(I->Block->TextColor);          
+                c+=4;
+              } else {
+                glColor3f((*(c+1)-'0')/9.0,(*(c+2)-'0')/9.0,(*(c+3)-'0')/9.0);
+                c+=4;
+              }
+            }
+            glRasterPos4d((double)(xx),(double)(y+cPopUpCharLift),0.0,1.0);
             glutBitmapCharacter(GLUT_BITMAP_8_BY_13,*(c++));
+            xx = xx + 8;
+          }
         } else {
           glBegin(GL_LINES);
           glVertex2i(I->Block->rect.left,y+((cPopUpLineHeight+cPopUpCharMargin)/2)-1);
@@ -236,5 +268,5 @@ void PopUpDraw(Block *block)
     BlockOutline(block);
   }
 }
-
+  
 

@@ -34,6 +34,7 @@ Z* -------------------------------------------------------------------
 #include"Matrix.h"
 #include"PUtils.h"
 #include"Menu.h"
+#include"Map.h"
 
 #define cExecObject 0
 #define cExecSelection 1
@@ -692,7 +693,9 @@ void ExecutiveWindowZoom(char *name)
 		op.code = 'MDST';
 		op.f1 = 0.0;
 		op.i1 = 0.0;
-		ExecutiveObjMolSeleOp(sele,&op);			 
+		ExecutiveObjMolSeleOp(sele,&op);
+      if(op.f1==0.0)
+        op.f1=MAX_VDW;
 		op.f1 += MAX_VDW;
 		if(op.f1>0.0)
 		  {
@@ -949,6 +952,102 @@ void ExecutiveSetControlsOff(char *name)
 	 }
 }
 /*========================================================================*/
+void ExecutiveSymExp(char *name,char *oname,char *s1,float cutoff)
+{
+  Object *ob;
+  ObjectMolecule *obj = NULL;
+  ObjectMolecule *new_obj = NULL;
+  ObjectMoleculeOpRec op;
+  MapType *map;
+  int x,y,z,a,b,i,j,h,k,l,n;
+  CoordSet *cs;
+  int keepFlag,sele;
+  float *v2,m[16];
+  OrthoLineType new_name;
+  float auto_save;
+
+  auto_save = SettingGet(cSetting_auto_zoom);
+  SettingSet(cSetting_auto_zoom,0);
+  sele=SelectorIndexByName(s1);
+  ob = ExecutiveFindObjectByName(oname);
+  if(ob->type==cObjectMolecule)
+    obj=(ObjectMolecule*)ob;
+  if(!(obj&&sele)) {
+    ErrMessage("ExecutiveSymExp","Invalid object");
+  } else if(!obj->Symmetry) {
+    ErrMessage("ExecutiveSymExp","No symmetry loaded!");
+  } else if(!obj->Symmetry->NSymMat) {
+    ErrMessage("ExecutiveSymExp","No symmetry matrices!");    
+  } else {
+    ErrOk(" ExecutiveSymExp","Generating symmetry mates");
+	 op.code = 'VERT';
+	 op.nvv1 =0;
+    op.vv1 = VLAlloc(float,10000);
+    ExecutiveObjMolSeleOp(sele,&op);
+    
+    if(!op.nvv1) {
+      ErrMessage("ExecutiveSymExp","No atoms indicated!");          
+    } else {
+      map=MapNew(-cutoff,op.vv1,op.nvv1,NULL);
+      if(map) {
+        MapSetupExpress(map);  
+
+        for(x=-1;x<2;x++)
+          for(y=-1;y<2;y++)
+            for(z=-1;z<2;z++)
+              for(a=0;a<obj->Symmetry->NSymMat;a++) {
+                if(!((!a)&&(!x)&&(!y)&&(!z))) {
+                  new_obj = ObjectMoleculeCopy(obj);
+                  keepFlag=false;
+                  for(b=0;b<new_obj->NCSet;b++) 
+                    if(new_obj->CSet[b]) {
+                      cs = new_obj->CSet[b];
+                      CoordSetRealToFrac(cs,obj->Symmetry->Crystal);
+                      copy44f44f(obj->Symmetry->SymMatVLA+(a*16),m);
+                      m[3] += x;
+                      m[7] += y;
+                      m[11] += z; 
+                      CoordSetTransform44f(cs,m);
+                      CoordSetFracToReal(cs,obj->Symmetry->Crystal);
+                      if(!keepFlag) {
+                        v2 = cs->Coord;
+                        n=cs->NIndex;
+                        while(n--) {
+                          MapLocus(map,v2,&h,&k,&l);
+                          i=*(MapEStart(map,h,k,l));
+                          if(i) {
+                            j=map->EList[i++];
+                            while(j>=0) {
+                              if(within3f(op.vv1+3*j,v2,cutoff)) {
+                                keepFlag=true;
+                                break;
+                              }
+                              j=map->EList[i++];
+                            }
+                          }
+                          v2+=3;
+                          if(keepFlag) break;
+                        }
+                      }
+                    }
+                  if(keepFlag) { /* need to create new object */
+                    sprintf(new_name,"%s%02d%02d%02d%02d",name,a,x,y,z);
+                    ObjectSetName((Object*)new_obj,new_name);
+                    ExecutiveManageObject((Object*)new_obj);
+                    SceneChanged();
+                  } else {
+                    ((Object*)new_obj)->fFree(new_obj);
+                  }
+                }
+              }
+        MapFree(map);
+      }
+    }
+    VLAFreeP(op.vv1);
+  }
+  SettingSet(cSetting_auto_zoom,auto_save);
+}
+/*========================================================================*/
 void ExecutiveDelete(char *name)
 {
   CExecutive *I = &Executive;
@@ -959,7 +1058,7 @@ void ExecutiveDelete(char *name)
 	 {
 		if(rec->type==cExecObject)
 		  {
-			 if(all_flag||(WordMatch(rec->obj->Name,name,true)<0))
+			 if(all_flag||(WordMatch(name,rec->obj->Name,true)<0))
 				{
 				  SelectorDelete(rec->name);
 				  rec->obj->fFree(rec->obj);
@@ -971,7 +1070,7 @@ void ExecutiveDelete(char *name)
 		else if(rec->type==cExecSelection)
 		  {
 
-			 if(all_flag||(WordMatch(rec->name,name,true)<0))
+			 if(all_flag||(WordMatch(name,rec->name,true)<0))
 				{
 				  SelectorDelete(rec->name);
 				  ListDelete(I->Spec,rec,next,SpecList);
@@ -1054,8 +1153,10 @@ void ExecutiveManageObject(Object *obj)
   ListAppend(I->Spec,rec,next,SpecList);
   if(rec->obj->type==cObjectMolecule)
 	 ExecutiveUpdateObjectSelection(obj);
-  ExecutiveCenter(obj->Name,false);
-  ExecutiveWindowZoom(obj->Name);
+  if(SettingGet(cSetting_auto_zoom)) {
+    ExecutiveCenter(obj->Name,false);
+    ExecutiveWindowZoom(obj->Name);
+  }
 }
 /*========================================================================*/
 void ExecutiveManageSelection(char *name)
@@ -1092,7 +1193,26 @@ int ExecutiveClick(Block *block,int button,int x,int y,int mod)
             x = I->Block->rect.right-(ExecRightMargin + t*ExecToggleWidth);
             t = (ExecOpCnt-t)-1;
             switch(t) {
-            case 2:
+            case 0:
+              switch(rec->type) {
+              case cExecAll:
+                MenuActivate(x,y,"all_action",rec->name);
+                break;
+              case cExecSelection:
+                MenuActivate(x,y,"mol_action",rec->name);
+                break;
+              case cExecObject:
+                switch(rec->obj->type) {
+                case cObjectMolecule:
+                  MenuActivate(x,y,"mol_action",rec->obj->Name);
+                  break;
+                case cObjectDist:
+                  break;
+                }
+                break;
+              }
+              break;
+            case 1:
               switch(rec->type) {
               case cExecAll:
               case cExecSelection:
@@ -1110,7 +1230,7 @@ int ExecutiveClick(Block *block,int button,int x,int y,int mod)
                 break;
               }
               break;
-            case 3:
+            case 2:
               switch(rec->type) {
               case cExecAll:
               case cExecSelection:
@@ -1123,6 +1243,24 @@ int ExecutiveClick(Block *block,int button,int x,int y,int mod)
                   break;
                 case cObjectDist:
                   MenuActivate(x,y,"dist_hide",rec->obj->Name);
+                  break;
+                }
+                break;
+              }
+              break;
+            case 3:
+              switch(rec->type) {
+              case cExecAll:
+              case cExecSelection:
+                MenuActivate(x,y,"mol_color",rec->name);
+                break;
+              case cExecObject:
+                switch(rec->obj->type) {
+                case cObjectMolecule:
+                  MenuActivate(x,y,"mol_color",rec->obj->Name);
+                  break;
+                case cObjectDist:
+                  MenuActivate(x,y,"dist_color",rec->obj->Name);
                   break;
                 }
                 break;
@@ -1153,34 +1291,7 @@ int ExecutiveRelease(Block *block,int x,int y,int mod)
 		  {
 			 t = ((I->Block->rect.right-ExecRightMargin)-x)/ExecToggleWidth;
           if(t<ExecOpCnt) {
-            t = (ExecOpCnt-t)-1;
-            switch(t) {
-            case 0:
-              switch(rec->type) {
-              case cExecAll:
-                SelectorCreate("_all","all",NULL);
-                ExecutiveCenter("_all",1);
-                ExecutiveWindowZoom("_all");
-                ExecutiveDelete("_all"); 
-                break;
-              default:
-                ExecutiveCenter(rec->name,true);
-                ExecutiveWindowZoom(rec->name);
-              }
-              break;
-            case 1:
-              switch(rec->type) {
-              case cExecAll:
-                SelectorCreate("_all","all",NULL);
-                ExecutiveCenter("_all",1);
-                ExecutiveDelete("_all"); 
-                break;
-              default:
-                ExecutiveCenter(rec->name,true);
-                break;
-              }
-              break;
-            }
+            /* nothing to do anymore now that we have menus! */
           } else if(rec->type==cExecObject)
 				{
 				  if(rec->visible)
@@ -1228,27 +1339,23 @@ void ExecutiveDraw(Block *block)
       {
         x2=xx;
         y2=y-ExecToggleMargin;
+
+
         glColor3fv(toggleColor);
         for(a=0;a<ExecOpCnt;a++)
           {
             switch(a) {
             case 0:
-              glBegin(GL_LINE_LOOP);
-              glVertex2i(x2,y2+(ExecToggleSize-1)/2);
-              glVertex2i(x2+(ExecToggleSize-1)/2,y2);
-              glVertex2i(x2+ExecToggleSize-1,y2+(ExecToggleSize-1)/2);
-              glVertex2i(x2+(ExecToggleSize-1)/2,y2+ExecToggleSize-1);
+              glColor3fv(toggleColor);
+              glBegin(GL_POLYGON);
+              glVertex2i(x2,y2+(ExecToggleSize)/2);
+              glVertex2i(x2+(ExecToggleSize)/2,y2);
+              glVertex2i(x2+ExecToggleSize,y2+(ExecToggleSize)/2);
+              glVertex2i(x2+(ExecToggleSize)/2,y2+ExecToggleSize);
               glEnd();
               break;
             case 1:
-              glBegin(GL_LINES);
-              glVertex2i(x2,y2+(ExecToggleSize-1)/2);
-              glVertex2i(x2+ExecToggleSize-1,y2+(ExecToggleSize-1)/2);
-              glVertex2i(x2+(ExecToggleSize-1)/2,y2);
-              glVertex2i(x2+(ExecToggleSize-1)/2,y2+ExecToggleSize-1);
-              glEnd();				
-              break;
-            case 2:
+              glColor3fv(toggleColor);
               glBegin(GL_POLYGON);
               glVertex2i(x2,y2);
               glVertex2i(x2,y2+ExecToggleSize);
@@ -1259,9 +1366,8 @@ void ExecutiveDraw(Block *block)
               glRasterPos4d((double)(x2+2),(double)(y2+2),0.0,1.0);
               glutBitmapCharacter(GLUT_BITMAP_8_BY_13,'S');              
               glColor3fv(toggleColor);
-
               break;
-            case 3:
+            case 2:
               glColor3fv(toggleColor2);
               glBegin(GL_POLYGON);
               glVertex2i(x2,y2);
@@ -1272,6 +1378,22 @@ void ExecutiveDraw(Block *block)
               glColor3f(0.0,0.0,0.0);
               glRasterPos4d((double)(x2+2),(double)(y2+2),0.0,1.0);
               glutBitmapCharacter(GLUT_BITMAP_8_BY_13,'H');              
+              glColor3fv(toggleColor);
+              break;
+            case 3:
+              glBegin(GL_POLYGON);
+              glColor3f(1.0,0,0);
+              glVertex2i(x2,y2);
+              glColor3f(0.0,1.0,0);
+              glVertex2i(x2,y2+ExecToggleSize);
+              glColor3f(1.0,1.0,0);
+              glVertex2i(x2+ExecToggleSize,y2+ExecToggleSize);
+              glColor3f(0.0,1.0,1.0);
+              glVertex2i(x2+ExecToggleSize,y2);
+              glEnd();
+              glColor3f(0.0,0.0,0.0);
+              glRasterPos4d((double)(x2+2),(double)(y2+2),0.0,1.0);
+              glutBitmapCharacter(GLUT_BITMAP_8_BY_13,'C');              
               glColor3fv(toggleColor);
               break;
             }

@@ -104,6 +104,21 @@ def dist(*arg):
       unlock()
    return r
 
+def symexp(nam,argst):
+   arg = split(argst,',')
+   la = len(arg)
+   if la<3:
+      print " error: invalid symexp arguments"
+      raise RunError
+   else:
+      obj=arg[0]
+      sele=arg[1]
+      dist=arg[2]
+      lock()
+      r = _pm.symexp(nam,obj,sele,float(dist))
+      unlock()
+   return r
+
 def isomesh(nam,argst):
    arg = split(argst,',')
    la = len(arg)
@@ -603,6 +618,12 @@ def middle():
    unlock()
    return r
 
+def test(): # generic test routine for development
+   lock()   
+   r=_pm.test()
+   unlock()
+   return r
+
 def dump(fnam,obj):
    lock()
    r = _pm.dump(fnam,obj)
@@ -694,7 +715,6 @@ def load(*arg):
    unlock()
    return r
 
-   
 def read_molstr(*arg):
    r = 1
    lock()   
@@ -929,7 +949,9 @@ keyword = {
    'sort'          : [sort         , 0 , 1 , ',' , 0 ],
    '_special'      : [_special     , 3 , 3 , ',' , 0 ],
    'stereo'        : [stereo       , 1 , 1 , ',' , 0 ],
+   'symexp'        : [symexp       , 2 , 2 , '=' , 0 ],
    'system'        : [system       , 1 , 1 , ',' , 0 ],
+   'test'          : [test         , 0 , 0 , ',' , 0 ],
    'turn'          : [turn         , 2 , 2 , ',' , 0 ],
    'quit'          : [quit         , 0 , 0 , ',' , 0 ],
    '_quit'         : [_quit        , 0 , 0 , ',' , 0 ],

@@ -60,6 +60,7 @@ void SymmetryAttemptGeneration(CSymmetry *I)
 
 void SymmetryFree(CSymmetry *I)
 {
+  if(I->Crystal) CrystalFree(I->Crystal);
   VLAFreeP(I->SymMatVLA);
   VLAFreeP(I->SymOpVLA);
   OOFreeP(I);

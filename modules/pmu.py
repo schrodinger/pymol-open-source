@@ -18,6 +18,38 @@ import string
 
 from pmp import *
 
+def cbag(s):
+   pm.color("magenta","("+s+")")
+   pm.color("oxygen","(elem O and "+s+")")
+   pm.color("nitrogen","(elem N and "+s+")")
+   pm.color("sulfer","(elem S and "+s+")")
+   pm.color("hydrogen","(elem H and "+s+")")
+   pm.color("carbon","(elem C and "+s+")")
+
+def cbac(s):
+   pm.color("magenta","("+s+")")
+   pm.color("oxygen","(elem O and "+s+")")
+   pm.color("nitrogen","(elem N and "+s+")")
+   pm.color("sulfer","(elem S and "+s+")")
+   pm.color("hydrogen","(elem H and "+s+")")
+   pm.color("cyan","(elem C and "+s+")")
+
+def cbay(s):
+   pm.color("magenta","("+s+")")
+   pm.color("oxygen","(elem O and "+s+")")
+   pm.color("nitrogen","(elem N and "+s+")")
+   pm.color("sulfer","(elem S and "+s+")")
+   pm.color("hydrogen","(elem H and "+s+")")
+   pm.color("yellow","(elem C and "+s+")")
+
+def cbaw(s):
+   pm.color("magenta","("+s+")")
+   pm.color("oxygen","(elem O and "+s+")")
+   pm.color("nitrogen","(elem N and "+s+")")
+   pm.color("sulfer","(elem S and "+s+")")
+   pm.color("hydrogen","(elem H and "+s+")")
+   pm.color("hydrogen","(elem C and "+s+")")
+
 def mrock(fir,las,dsp,pha,loop):
 	global pmp_nest,pmp_cmd,pmp_cont,pymol
 	n = las - fir

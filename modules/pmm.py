@@ -53,3 +53,49 @@ def dist_hide(s):
            [ 1, 'dashes'    ,'pm.hide("dashes"    ,"'+s+'")'],
            [ 1, 'labels'    ,'pm.hide("labels"    ,"'+s+'")']]
 
+def mol_color(s):
+   return [[ 2, 'Color:'     ,''                        ],
+           [ 1, '`292C`777H`229N`922O`950S`905*'     ,'pmu.cbag("'+s+'")'],
+           [ 1, '`099C`777H`229N`922O`950S`905*'     ,'pmu.cbac("'+s+'")'],
+           [ 1, '`990C`777H`229N`922O`950S`905*'     ,'pmu.cbay("'+s+'")'],
+           [ 1, '`777C`777H`229N`922O`950S`905*'     ,'pmu.cbaw("'+s+'")'],
+           [ 0, ''          ,''                         ],
+           [ 1, '`900red'         ,'pm.color("red","'+s+'")'  ],
+           [ 1, '`090green'       ,'pm.color("green","'+s+'")'  ],
+           [ 1, '`009blue'        ,'pm.color("blue","'+s+'")'  ],
+           [ 1, '`990yellow'      ,'pm.color("yellow","'+s+'")'  ],
+           [ 1, '`909violet'  ,'pm.color("violet","'+s+'")'  ],
+           [ 1, '`099cyan'  ,'pm.color("cyan","'+s+'")'  ],           
+           [ 1, '`950orange'      ,'pm.color("orange","'+s+'")'  ],
+           [ 1, '`905magenta' ,'pm.color("magenta","'+s+'")'  ],
+           [ 1, '`505purple'  ,'pm.color("purple","'+s+'")'  ],
+           [ 1, '`055teal'  ,'pm.color("teal","'+s+'")'  ],
+           [ 1, '`550olive'   ,'pm.color("olive","'+s+'")'  ],
+           [ 1, '`999white'       ,'pm.color("white","'+s+'")'  ],
+           [ 1, '`555grey'    ,'pm.color("grey","'+s+'")'  ]
+           ]
+
+def dist_color(s):
+   return [[ 2, 'Color:'      ,''                            ],      
+           [ 1, 'yellow'      ,'pm.color("yellow","'+s+'")'  ],
+           [ 1, 'green'       ,'pm.color("green","'+s+'")'   ],
+           [ 1, 'orange'      ,'pm.color("orange","'+s+'")'  ],
+           [ 1, 'magenta'     ,'pm.color("magenta","'+s+'")' ]
+           ]
+
+def mol_action(s):
+   return [[ 2, 'Actions:'     ,''                      ],     
+           [ 1, 'Set Origin'   ,'pm.origin("'+s+'")'    ],
+           [ 1, 'Zoom'         ,'pm.zoom("'+s+'")'      ],
+           [ 0, ''          ,''                         ],
+           [ 1, 'Delete'       ,'pm.delete("'+s+'")'    ]
+           ]
+
+def all_action(s):
+   return [[ 2, 'Actions:'     ,''                      ],     
+           [ 1, 'Set Origin'   ,'pm.origin("'+s+'")'    ],
+           [ 1, 'Zoom'         ,'pm.zoom("'+s+'")'      ],
+           [ 0, ''          ,''                         ],
+           [ 1, 'Delete'       ,'pm.delete("'+s+'")'    ]
+           ]
+

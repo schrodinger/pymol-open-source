@@ -175,6 +175,7 @@ class PMGApp(AbstractApp):
 								label='Quit',
 								command=pm.quit)
 
+
 		self.menuBar.addmenu('Movie', 'Movie Control')
 
 		self.menuBar.addmenuitem('Movie', 'checkbutton',
@@ -188,6 +189,16 @@ class PMGApp(AbstractApp):
 							 	label='Cache Frames',
 								variable = self.setting.cache_frames,
 								command = lambda s=self: s.setting.update('cache_frames'))
+
+		self.menuBar.addmenu('Display', 'Display Control')
+      
+		self.menuBar.addmenuitem('Display', 'command', 'Stereo On',
+                               label='Stereo On',
+                               command = lambda: pm.stereo("on"))
+
+		self.menuBar.addmenuitem('Display', 'command', 'Stereo Off',
+                               label='Stereo Off',
+                               command = lambda: pm.stereo("off"))
 
 		self.menuBar.addmenu('Options', 'Configuration Control')
 
