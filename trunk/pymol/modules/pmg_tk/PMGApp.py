@@ -36,7 +36,7 @@ import Queue
 
 class PMGApp(AbstractApp):
 
-   appversion     = '0.64'
+   appversion     = '0.72'
    appname       = 'PyMOL Molecular Graphics System'
    copyright      = 'Copyright (C) 1998-2001 by Warren DeLano of\nDeLano Scientific. All rights reserved.'
    contactweb     = 'http://www.pymol.org'
@@ -267,7 +267,8 @@ class PMGApp(AbstractApp):
                                            ("PyMOL Script","*.pml"),
                                            ("PyMOL Program","*.pym"),
                                            ("Python Program","*.py"),
-                                           ("All Files","*.*"),                                           
+                                           ("All Files","*.*"),
+                                           ("All Files","*"),
                                            ])
       if len(sfile):
          self.initialdir = re.sub(r"[^\/\\]*$","",sfile)
@@ -283,6 +284,7 @@ class PMGApp(AbstractApp):
                               ("PyMOL Program","*.pym"),
                               ("Python Program","*.py"),
                               ("All Files","*.*"),                                           
+                              ("All Files","*"),
                               ])
       if len(ofile):
          self.initialdir = re.sub(r"[^\/\\]*$","",ofile)
@@ -299,6 +301,7 @@ class PMGApp(AbstractApp):
                               ("PyMOL Program","*.pym"),
                               ("Python Program","*.py"),
                               ("All Files","*.*"),                                           
+                              ("All Files","*"),
                               ])
       if len(ofile):
          self.initialdir = re.sub(r"[^\/\\]*$","",ofile)
@@ -348,10 +351,17 @@ class PMGApp(AbstractApp):
          
    def file_run(self):
       ofile = askopenfilename(initialdir = os.getcwd(),
-                   filetypes=[("PyMOL Script","*.pml"),
+                   filetypes=[("All Runnable","*.pml"),
+                              ("All Runnable","*.pym"),
+                              ("All Runnable","*.py"),
+                              ("All Runnable","*.pyc"),
+                              ("PyMOL Script","*.pml"),
                               ("Python Program","*.py"),
                               ("Python Program","*.pyc"),
-                              ("PyMOL Program","*.pym")])
+                              ("PyMOL Program","*.pym"),
+                              ("All Files","*.*"),                                           
+                              ("All Files","*"),
+                              ])
       if len(ofile):
          dir = re.sub(r"[^\/\\]*$","",ofile)
          os.chdir(dir)	

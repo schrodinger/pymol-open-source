@@ -5,6 +5,8 @@ import sys
 import re
 import glob
 import string
+import traceback
+import time
 
 # list of tests to run ...
 
@@ -66,38 +68,49 @@ for test in tests:
       opt = re.sub("^\s*\#","",opt)
       f.close()
       
-      tst = re.sub(r".*/","",ifil) # get exact test name without suffix
+      tst = re.sub(r".*/|.*\\","",ifil) # get exact test name without suffix
       tst = re.sub(r"\..*","",tst)
       
       print " run_tests: "+tst+"..."
-
-      syscmd = cmmd+" "+opt+" "+ifil+" | c:\program files\python\python.exe trim.py > "+cmp+"/"+tst+".log"
       
+      syscmd = cmmd+" -x "+opt+" "+ifil+" > tmp.txt"
+      print syscmd
       os.system(syscmd)
 
-      # check log file and any other output files
-      
-      for ref_fil in ( glob.glob(ref+"/"+tst+".*")):
-         postfx = re.sub(r".*/","",ref_fil)
-         cmp_fil = cmp+"/"+postfx
-         if os.path.exists(cmp_fil):
-            if os.system("diff  "+ref_fil+" "+cmp_fil+" >/dev/null"):
-               sys.stdout.flush()
-               df = os.popen("diff "+ref_fil+" "+cmp_fil)
-               diffs = df.readlines()
-               df.close()
-               print " run_tests: "+ \
-                  postfx+" DIFFERS over about %d lines." % int(len(diffs)/2)
-         else:
-            print " run_tests: "+postfx+" is missing."
-            
-      # check for extraneous, unverifiable files
-      
-      for cmp_fil in ( glob.glob(cmp+"/"+tst+".*")):
-         postfx = re.sub(r".*/","",cmp_fil)
-         ref_fil = ref+"/"+postfx
-         if not os.path.exists(ref_fil):
-            print " run_tests: no reference version for "+cmp+"/"+postfx+"."
+      # generate log file
+ 
+      f = open("tmp.txt")
+      g = open("cmp\\"+tst+".log","w")
 
+      echo = 0 
+      while 1:
+         l = f.readline()
+         if not l: break
+         ll=string.strip(l)
+         if ll=='BEGIN-LOG':
+            echo = 1
+         elif ll=='END-LOG':
+            echo = 0
+         elif echo:
+            g.write(l)
 
+      f.close()
+      g.close()
 
+# now compare
+
+      f = open("cmp\\"+tst+".log","r")
+      g = open("ref\\"+tst+".log","r")
+      while 1:
+         lf = f.readline()
+         lg = g.readline()
+         if (not lf) and not (lg):
+            break
+         if string.strip(lf)!=string.strip(lg):
+            print "<",lf
+            print ">",lg
+
+print "done"
+time.sleep(60)
+
+# 
