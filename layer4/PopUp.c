@@ -102,7 +102,7 @@ void PopUpNew(int x,int y,PyObject *list)
 
   dim[0]=I->NLine+1;
   dim[1]=mx+1;
-  I->Text = (char**)UtilArrayMalloc(dim,2,1);
+  I->Text = (char**)UtilArrayMalloc((unsigned int*)dim,2,1);
 
   mx=1;
   for(a=0;a<I->NLine;a++) {
@@ -111,7 +111,7 @@ void PopUpNew(int x,int y,PyObject *list)
   }
   dim[0]=I->NLine+1;
   dim[1]=mx+1;
-  I->Command = (char**)UtilArrayMalloc(dim,2,1);
+  I->Command = (char**)UtilArrayMalloc((unsigned int*)dim,2,1);
 
   I->Code = Alloc(int,I->NLine+1);
 
