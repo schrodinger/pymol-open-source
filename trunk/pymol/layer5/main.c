@@ -410,13 +410,17 @@ static void MainPassive(int x,int y)
   PyMOLGlobals *G = TempPyMOLGlobals;
   CMain *I = G->Main;
 
+  #define PASSIVE_EDGE 20
+
   if(PyMOL_GetPassive(G->PyMOL,false)) { /* a harmless race condition -- we don't want
                                            to slow Python down buy locking on passive
                                            mouse motion */
     
     PLockAPIAsGlut();
     
-    if((y<0)||(x<0)||(x>G->Option->winX)||(y>G->Option->winY)) {       
+    if((y<-PASSIVE_EDGE)||(x<-PASSIVE_EDGE)||
+       (x>(G->Option->winX+PASSIVE_EDGE))||
+       (y>(G->Option->winY+PASSIVE_EDGE))) {       
       /* release passive drag if mouse leaves window... */
       
       y=G->Option->winY-y;
