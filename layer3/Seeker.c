@@ -36,6 +36,7 @@ typedef struct {
   CSeqHandler handler; /* must be first */
   int drag_start_col, drag_last_col;
   int drag_row;
+  int drag_dir,drag_start_toggle;
   int dragging, drag_setting;
   int drag_button;
 } CSeeker;
@@ -116,11 +117,14 @@ static void SeekerSelectionToggle(CSeqRow* rowVLA,int row_num,
     col = row->col + col_num;
     if(!col->spacer) 
       if( ExecutiveFindObjectByName(row->name)) {
+        char *sele_mode_kw;
         atom_list = row->atom_lists + col->atom_at;
         
         /* build up a selection consisting of residue atoms */
         
         BuildSeleFromAtomList(row->name,atom_list,cTempSeekerSele,true);
+        sele_mode_kw = SceneGetSeleModeKeyword();
+
         if(logging) SelectorLogSele(cTempSeekerSele);
         
         if(!WizardDoSelect(cTempSeekerSele)) {
@@ -133,20 +137,20 @@ static void SeekerSelectionToggle(CSeqRow* rowVLA,int row_num,
             if(inc_or_excl) {
               if(!col->spacer) {
                 col->inverse = true;
-                sprintf(buf1,"((?%s) or (%s))",
-                        selName,cTempSeekerSele);
+                sprintf(buf1,"((%s(?%s)) or %s(%s))",
+                        sele_mode_kw,selName,sele_mode_kw,cTempSeekerSele);
               }
             } else {
               if(!col->spacer) {
                 col->inverse = false;
-                sprintf(buf1,"((?%s) and not (%s))",
-                        selName,cTempSeekerSele);
+                sprintf(buf1,"((%s(?%s)) and not %s(%s))",
+                        sele_mode_kw,selName,sele_mode_kw,cTempSeekerSele);
               }
             }
           } else {
             if(!col->spacer) {
               col->inverse = true;
-              sprintf(buf1,"(%s)",cTempSeekerSele);
+              sprintf(buf1,"%s(%s)",sele_mode_kw,cTempSeekerSele);
             }
           }
           
@@ -334,6 +338,8 @@ static CSeqRow* SeekerClick(CSeqRow* rowVLA,int button,int row_num,int col_num,i
         I->drag_start_col = col_num;
         I->drag_last_col = col_num;
         I->drag_row = row_num;
+        I->drag_dir = 0;
+        I->drag_start_toggle = true;
         I->dragging = true;
         I->drag_setting = true;
 
@@ -428,7 +434,35 @@ static CSeqRow* SeekerDrag(CSeqRow* rowVLA,int row,int col,int mod)
     case P_GLUT_LEFT_BUTTON:
       if(col != I->drag_last_col) {
 
-
+        if(I->drag_dir) {
+          if(I->drag_dir>0) {
+            if(col<=I->drag_start_col) {
+              col = I->drag_start_col;
+              if(I->drag_start_toggle) {
+                SeekerSelectionToggle(rowVLA,I->drag_row,I->drag_start_col,!I->drag_setting,false);  
+                I->drag_start_toggle = false;
+              }
+            } else if(col>I->drag_start_col) {
+              if(!I->drag_start_toggle) {
+                SeekerSelectionToggle(rowVLA,I->drag_row,I->drag_start_col,I->drag_setting,false);  
+                I->drag_start_toggle = true;
+              }
+            }
+          } else if(I->drag_dir<0) {
+            if(col>=I->drag_start_col) {
+              col = I->drag_start_col;
+              if(I->drag_start_toggle) {
+                SeekerSelectionToggle(rowVLA,I->drag_row,I->drag_start_col,!I->drag_setting,false);  
+                I->drag_start_toggle = false;
+              }
+            } else if (col<I->drag_start_col) {
+              if(!I->drag_start_toggle) {
+                SeekerSelectionToggle(rowVLA,I->drag_row,I->drag_start_col,I->drag_setting,false);  
+                I->drag_start_toggle = true;
+              }
+            }
+          }
+        }
         if(mod &cOrthoSHIFT) {
           if(I->drag_start_col == I->drag_last_col) {
             if(col>I->drag_start_col) {
@@ -468,9 +502,13 @@ static CSeqRow* SeekerDrag(CSeqRow* rowVLA,int row,int col,int mod)
           }
         if(I->drag_start_col == I->drag_last_col) {
           if(col>I->drag_start_col) {
+            if(!I->drag_dir)
+              I->drag_dir = 1;
             I->drag_last_col = I->drag_start_col+1;
             SeekerSelectionToggle(rowVLA,I->drag_row,I->drag_last_col,I->drag_setting,false);
           } else if(col<I->drag_start_col){
+            if(!I->drag_dir)
+              I->drag_dir = -1;
             I->drag_last_col = I->drag_start_col-1;          
             SeekerSelectionToggle(rowVLA,I->drag_row,I->drag_last_col,I->drag_setting,false);
           }
