@@ -30,6 +30,12 @@ Z* -------------------------------------------------------------------
 #include"Matrix.h"
 #include"P.h"
 
+#ifdef _PYMOL_INLINE
+#undef _PYMOL_INLINE
+#include"Basis.c"
+#define _PYMOL_INLINE
+#endif
+
 #ifndef RAY_SMALL
 #define RAY_SMALL 0.00001 
 #endif
@@ -124,6 +130,9 @@ void RayApplyContextToNormal(CRay *I,float *v)
   }
 }
 /*========================================================================*/
+#ifdef _PYMOL_INLINE
+__inline__
+#endif
 void RayGetSphereNormal(CRay *I,RayInfo *r)
 {
   
@@ -139,6 +148,9 @@ void RayGetSphereNormal(CRay *I,RayInfo *r)
   
 }
 /*========================================================================*/
+#ifdef _PYMOL_INLINE
+__inline__
+#endif
 void RayReflectAndTexture(CRay *I,RayInfo *r)
 {
   r->flat_dotgle = r->surfnormal[2];
@@ -1382,6 +1394,26 @@ static unsigned int *GetRenderBuffer(unsigned int inBuffSize, int inThreadIndex)
 	return NULL;
 }
 
+/* this is both an antialias and a slight blur */
+
+#define combine(src,mask) \
+( mask & ( \
+          (((src[0 ] & mask)<<2) + ((src[1 ] & mask)<<2) + ((src[2 ] & mask)<<2) + ((src[3 ] & mask)<<2)) + \
+          ( (src[0 ] & mask)     +  (src[1 ] & mask)     +  (src[2 ] & mask)     +  (src[3 ] & mask)    ) + \
+          ( (src[4 ] & mask)     +  (src[5 ] & mask)     +  (src[6 ] & mask)     +  (src[7 ] & mask)    ) + \
+          ( (src[8 ] & mask)     +  (src[9 ] & mask)     +  (src[10] & mask)     +  (src[11] & mask)    ) + \
+          ( (src[12] & mask)     +  (src[13] & mask)     +  (src[14] & mask)     +  (src[15] & mask)    )  \
+           ) \
+  >> 5)
+
+/* this (unused code) just plain antialiases */
+
+#define alt_combine(src,mask) \
+( mask & ( \
+          (((src[0 ] & mask)<<2) + ((src[1 ] & mask)<<2) + ((src[2 ] & mask)<<2) + ((src[3 ] & mask)<<2)) \
+          ) \
+  >> 4)
+
 
 /*========================================================================*/
 void RayRender(CRay *I,int width,int height,unsigned int *image,
@@ -1395,7 +1427,7 @@ void RayRender(CRay *I,int width,int height,unsigned int *image,
   unsigned int aa,za;
  unsigned int *image_copy = NULL;
   unsigned int back_mask,fore_mask=0;
-  unsigned int background,buffer_size,z[16],zm[16],tot;
+  unsigned int background,buffer_size;
   int antialias;
   int opaque_back=0;
   int n_hit=0;
@@ -1604,248 +1636,12 @@ void RayRender(CRay *I,int width,int height,unsigned int *image,
     " RayRender: n_hit %d\n",n_hit
     ENDFD;
 
-#if 0	/* original code */
-
-	if(antialias)
-	{	
-		int	w2;
-		int	isBigEndian	= I->BigEndian;
-		
-		OrthoBusyFast(9,10);
-		width	= width/2;
-		height	= height/2;
-		
-		w2	= width * 2;
-		
-		for(x=1;x<(width-1);x++)
-		{
-			for(y = 1; y < (height-1); y++)
-			{
-				aa = 0;
-		
-				p = image + (w2 * (y*2-1)) + (x*2);
-		
-				/*  12  4   5  13 
-				*  6   0   1   7
-				*  8   2   3   9
-				*  14 10  11  15
-				*
-				* 0-3 are weighted double
-				*/
-		
-				z[12]	= (*(p-1));
-				z[4]	= (*(p));
-				z[5]	= (*(p+1));
-				z[13]	= (*(p+2));
-				
-				p	+= w2;
-				
-				z[6]	= (*(p-1));
-				z[0]	= (*(p));
-				z[1]	= (*(p+1));
-				z[7]	= (*(p+2));
-				
-				p	+= w2;
-				
-				z[8]	= (*(p-1));
-				z[2]	= (*(p));
-				z[3]	= (*(p+1));
-				z[9]	= (*(p+2));
-				
-				p	+= w2;
-				
-				z[14]	= (*(p-1));
-				z[10]	= (*(p));
-				z[11]	= (*(p+1));
-				z[15]	= (*(p+2));
-		
-				if(isBigEndian) 
-				{ 
-					for(a=0;a<16;a++) 
-					{
-						zm[a] = z[a]&0xFF; /* copy alpha channel */
-						z[a] = z[a]>>8;
-					}
-				}
-				else
-				{
-					for(a=0;a<16;a++) 
-						zm[a]=z[a]>>24; /* copy alpha channel */
-				}
-		
-		
-				tot=0;
-				for(a=0;a<16;a++) /* average alpha channel */
-					tot+=(zm[a]&0xFF);
-					
-				for(a=0;a<4;a++)
-					tot+=(zm[a]&0xFF)<<2;
-					
-				za = (0xFF&(tot>>5));
-		
-				tot = 0;
-				for(a=0;a<16;a++)
-					tot+=(z[a]&0xFF);
-					
-				for(a=0;a<4;a++)
-					tot+=(z[a]&0xFF)<<2;
-					
-				aa	= aa|(0xFF&(tot>>5));
-		
-				tot = 0;
-				for(a=0;a<16;a++)
-					tot+=(z[a]&0xFF00);
-					
-				for(a=0;a<4;a++)
-					tot+=(z[a]&0xFF00)<<2;
-					
-				aa	= aa|(0xFF00&(tot>>5));
-		
-				tot	= 0;
-				for(a=0;a<16;a++)
-					tot	+=(z[a]&0xFF0000);
-				for(a=0;a<4;a++)
-					tot	+=(z[a]&0xFF0000)<<2;
-					
-				aa = aa|(0xFF0000&(tot>>5));			 
-		
-				if(isBigEndian) 
-					aa = (aa<<8)|za;
-				else 
-					aa = aa | (za<<24);
-		
-				*(image_copy + (width*y) + x) = aa;			 
-			}
-		}
-		
-		/* top and bottom edges */
-		
-		for(x=0;x<width;x++)
-		{
-			for(y=0;y<height;y=y+(height-1))
-			{
-				aa=0;
-				
-				p = image + (w2 * (y*2)) + (x*2);
-				
-				z[0] = (*(p));
-				z[1] = (*(p+1));
-				p	+=w2;
-				z[2] = (*(p));
-				z[3] = (*(p+1));
-				
-				if(isBigEndian) 
-				{ 
-					for(a=0;a<4;a++) 
-					{
-						zm[a]=z[a]&0xFF;
-						z[a]=z[a]>>8;
-					}
-				}
-				else 
-				{
-					for(a=0;a<4;a++)
-						zm[a]=z[a]>>24; /* copy alpha channel */
-				}
-				
-				tot=0;
-				for(a=0;a<4;a++)
-					tot+=(zm[a]&0xFF);
-				za=(0xFF&(tot>>2));
-				
-				tot=0;
-				for(a=0;a<4;a++)
-					tot+=(z[a]&0xFF);
-				aa=aa|(0xFF&(tot>>2));
-				
-				tot=0;
-				for(a=0;a<4;a++)
-					tot+=(z[a]&0xFF00);
-				aa=aa|(0xFF00&(tot>>2));
-				
-				tot=0;
-				for(a=0;a<4;a++)
-					tot+=(z[a]&0xFF0000);
-				aa=aa|(0xFF0000&(tot>>2));			 
-				
-				if(isBigEndian)
-					aa=(aa<<8)|za;
-				else
-					aa=aa|(za<<24);
-
-				*(image_copy + (width*y) + x) = aa;			 
-			}
-		}
-		
-		/* left and right edges */
-		for(x=0;x<width;x=x+(width-1))
-		{
-			for(y=0;y<height;y++)
-			{
-				aa=0;
-				
-				p = image+(w2*(y*2))+(x*2);
-				
-				z[0] = (*(p));
-				z[1] = (*(p+1));
-				p	+= w2;
-				z[2] = (*(p));
-				z[3] = (*(p+1));
-				
-				if(isBigEndian) 
-				{ 
-					for(a=0;a<4;a++) 
-					{
-						zm[a]=z[a]&0xFF;
-						z[a]=z[a]>>8;
-					}
-				}
-				else
-				{
-					for(a=0;a<4;a++)
-						zm[a]=z[a]>>24; /* copy alpha channel */
-				}
-				
-				tot=0;
-				for(a=0;a<4;a++)
-					tot+=(zm[a]&0xFF);
-				za=(0xFF&(tot>>2));
-				
-				tot=0;
-				for(a=0;a<4;a++)
-					tot+=(z[a]&0xFF);
-				aa=aa|(0xFF&(tot>>2));
-				
-				tot=0;
-				for(a=0;a<4;a++)
-					tot+=(z[a]&0xFF00);
-				aa=aa|(0xFF00&(tot>>2));
-				
-				tot=0;
-				for(a=0;a<4;a++)
-					tot+=(z[a]&0xFF0000);
-				aa=aa|(0xFF0000&(tot>>2));			 
-				
-				if(isBigEndian)
-					aa=(aa<<8)|za;
-				else
-					aa=aa|(za<<24);
-
-				*(image_copy+((width)*y)+x) = aa;			 
-			}
-		}
-
-		/* FreeP(image); */
-		image=image_copy;
-	}
-
-#else
-
-	if(antialias)
-	{	
+  if(antialias)
+    {	
 		int		w2;
 		int		isBigEndian	= I->BigEndian;
 		int		wid_1, hgt_1;
+		unsigned int z[16],zm[16],tot;
 		
 		unsigned int *pSrc;
 		unsigned int *pDst;
@@ -1868,8 +1664,8 @@ void RayRender(CRay *I,int width,int height,unsigned int *image,
 				aa	= 0;
 		
 				p	= pSrc + (x * 2);
-				
-			    z[12]	= (*(p-1));
+			
+		    z[12]	= (*(p-1));
 				z[4]	= (*(p));
 				z[5]	= (*(p+1));
 				z[13]	= (*(p+2));
@@ -1895,168 +1691,20 @@ void RayRender(CRay *I,int width,int height,unsigned int *image,
 				z[11]	= (*(p+1));
 				z[15]	= (*(p+2));
 
+            for( a = 0; a < 16; a += 4 ) 
+              {
+                zm[a   ] = z[a  ] & 0xFFFF; /* move half to zm */
+                zm[a+1 ] = z[a+1] & 0xFFFF;
+                zm[a+2 ] = z[a+2] & 0xFFFF;
+                zm[a+3 ] = z[a+3] & 0xFFFF;
+                
+                z[a   ]	>>= 16; /* keep rest in z */
+                z[a+1 ]	>>= 16;
+                z[a+2 ]	>>= 16;
+                z[a+3 ]	>>= 16;
+             }
 
-#if 0
-				if(isBigEndian) 
-				{ 
-					for( a = 0; a < 16; a += 4 ) 
-					{
-                 /* unroll a bit */
-						zm[a+0]	&= 0xFF;
-						zm[a+1]	&= 0xFF;
-						zm[a+2] &= 0xFF;
-						zm[a+3] &= 0xFF;
-
-						z[a+0]	>>= 8;
-						z[a+1]	>>= 8;
-						z[a+2]	>>= 8;
-						z[a+3]	>>= 8;
-					}
-				}
-				else
-				{
-					for(a=0;a<16;a++) 
-						zm[a] = z[a] >> 24; /* copy alpha channel */
-				}
-
-				tot	= 0;
-				for(a = 0; a < 16; a += 4) /* average alpha channel */
-				{
-					tot += (zm[a+0] & 0xFF) + (zm[a+1] & 0xFF) + (zm[a+2] & 0xFF) + (zm[a+3] & 0xFF);
-				}
-					
-				tot += ((zm[0] & 0xFF) << 2) + ((zm[1] & 0xFF) << 2) + ((zm[2] & 0xFF) << 2) +  ((zm[3] & 0xFF) << 2);
-
-				za = (0xFF & (tot>>5));
-		
-				tot = 0;
-				for(a = 0; a < 16; a += 4)
-				{
-					tot += (z[a+0] & 0xFF) + (z[a+1] & 0xFF) + (z[a+2] & 0xFF) + (z[a+3] & 0xFF);
-				}
-					
-				tot += ((z[0] & 0xFF)<<2) + ((z[1] & 0xFF)<<2) + ((z[2] & 0xFF)<<2) +  ((z[3] & 0xFF)<<2);
-					
-				aa	= aa | (0xFF & (tot>>5));
-		
-				tot = 0;
-				for(a = 0; a < 16; a += 4)
-				{
-					tot += (z[a+0] & 0xFF00) +  (z[a+1] & 0xFF00) + (z[a+2] & 0xFF00) + (z[a+3] & 0xFF00);
-				}
-					
-				tot += ((z[0] & 0xFF00)<<2) + ((z[1] & 0xFF00)<<2) + ((z[2] & 0xFF00)<<2) + ((z[3] & 0xFF00)<<2);
-					
-				aa	= aa | (0xFF00 & (tot>>5));
-		
-				tot	= 0;
-				for(a = 0; a < 16; a += 4)
-				{
-					tot	+= (z[a+0] & 0xFF0000) + (z[a+1] & 0xFF0000) + (z[a+2] & 0xFF0000) + (z[a+3] & 0xFF0000); 
-				}
-				tot	+= ((z[0] & 0xFF0000)<<2) + ((z[1] & 0xFF0000)<<2) + ((z[2] & 0xFF0000)<<2) +  ((z[3] & 0xFF0000)<<2);
-					
-				aa = aa | (0xFF0000&(tot>>5));			 
-		
-				if(isBigEndian) 
-					aa = (aa<<8) | za;
-				else 
-					aa = aa | (za<<24);
-		
-				*(pDst++) = aa;			 
-#else
-				if(isBigEndian) 
-				{ 
-					for( a = 0; a < 16; a += 4 ) 
-					{
-                 /* unroll a bit */
-						zm[a+0]	&= 0xFF;
-						zm[a+1]	&= 0xFF;
-						zm[a+2] &= 0xFF;
-						zm[a+3] &= 0xFF;
-
-						z[a+0]	>>= 8;
-						z[a+1]	>>= 8;
-						z[a+2]	>>= 8;
-						z[a+3]	>>= 8;
-					}
-				}
-				else
-				{
-					for(a=0;a<16;a++) 
-						zm[a] = z[a] >> 24; /* copy alpha channel */
-				}
-		
-				tot	= 0;
-				for(a = 0; a < 16; a += 4) /* average alpha channel */
-				{
-					tot += zm[a+0] & 0xFF;
-					tot += zm[a+1] & 0xFF;
-					tot += zm[a+2] & 0xFF;
-					tot += zm[a+3] & 0xFF;
-				}
-					
-				tot += (zm[0] & 0xFF) << 2;
-				tot += (zm[1] & 0xFF) << 2;
-				tot += (zm[2] & 0xFF) << 2;
-				tot += (zm[3] & 0xFF) << 2;
-
-				za = (0xFF & (tot>>5));
-		
-				tot = 0;
-				for(a = 0; a < 16; a += 4)
-				{
-					tot += z[a+0] & 0xFF;
-					tot += z[a+1] & 0xFF;
-					tot += z[a+2] & 0xFF;
-					tot += z[a+3] & 0xFF;
-				}
-					
-				tot += (z[0] & 0xFF)<<2;
-				tot += (z[1] & 0xFF)<<2;
-				tot += (z[2] & 0xFF)<<2;
-				tot += (z[3] & 0xFF)<<2;
-					
-				aa	= aa | (0xFF & (tot>>5));
-		
-				tot = 0;
-				for(a = 0; a < 16; a += 4)
-				{
-					tot += z[a+0] & 0xFF00;
-					tot += z[a+1] & 0xFF00;
-					tot += z[a+2] & 0xFF00;
-					tot += z[a+3] & 0xFF00;
-				}
-					
-				tot += (z[0] & 0xFF00)<<2;
-				tot += (z[1] & 0xFF00)<<2;
-				tot += (z[2] & 0xFF00)<<2;
-				tot += (z[3] & 0xFF00)<<2;
-					
-				aa	= aa | (0xFF00 & (tot>>5));
-		
-				tot	= 0;
-				for(a = 0; a < 16; a += 4)
-				{
-					tot	+= z[a+0] & 0xFF0000;
-					tot	+= z[a+1] & 0xFF0000;
-					tot	+= z[a+2] & 0xFF0000;
-					tot	+= z[a+3] & 0xFF0000;
-				}
-				tot	+= (z[0] & 0xFF0000)<<2;
-				tot	+= (z[1] & 0xFF0000)<<2;
-				tot	+= (z[2] & 0xFF0000)<<2;
-				tot	+= (z[3] & 0xFF0000)<<2;
-					
-				aa = aa | (0xFF0000&(tot>>5));			 
-		
-				if(isBigEndian) 
-					aa = (aa<<8) | za;
-				else 
-					aa = aa | (za<<24);
-		
-				*(pDst++) = aa;		
-#endif
+            *(pDst++) = combine(zm,0xFF) | (combine(zm,0xFF00)) | (combine(z,0xFF)<<16) | (combine(z,0xFF00)<<16);
 
 			}
 		}
@@ -2188,7 +1836,7 @@ void RayRender(CRay *I,int width,int height,unsigned int *image,
 		/* FreeP(image); */
 		image = image_copy;
 	}
-#endif
+
 }
 
 void RayRenderColorTable(CRay *I,int width,int height,int *image)
