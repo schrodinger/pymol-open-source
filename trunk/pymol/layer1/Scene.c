@@ -83,6 +83,8 @@ typedef struct {
   double LastRender,RenderTime,LastFrameTime;
   float LastRock;
   Pickable LastPicked;
+  int StereoMode;
+
 } CScene;
 
 CScene Scene;
@@ -91,8 +93,15 @@ unsigned int SceneFindTriplet(int x,int y);
 void SceneDraw(Block *block);
 int SceneClick(Block *block,int button,int x,int y,int mod);
 int SceneDrag(Block *block,int x,int y,int mod);
+void ScenePrepareMatrix(int mode);
 
+void SceneSetStereo(int flag)
+{
+  CScene *I=&Scene;
+  I->StereoMode=flag;
+  SceneDirty();
 
+}
 /*========================================================================*/
 void SceneTranslate(float x,float y, float z)
 {
@@ -327,7 +336,7 @@ void SceneWindowSphere(float *location,float radius)
   I->Pos[2]-=dist;
   I->Front=(-I->Pos[2]-radius*1.5);
   I->FrontSafe=(I->Front<cFrontMin ? cFrontMin : I->Front);  
-  I->Back=(-I->Pos[2]+radius*2);
+  I->Back=(-I->Pos[2]+radius*1.5);
   /*  printf("%8.3f %8.3f %8.3f\n",I->Front,I->Pos[2],I->Back);*/
 }
 /*========================================================================*/
@@ -628,6 +637,9 @@ void SceneFree(void)
   if(!I->MovieOwnsImageFlag)
 	 FreeP(I->ImageBuffer);
   
+  if(I->StereoMode) {
+    PStereoOff();
+  }
 }
 /*========================================================================*/
 void SceneResetMatrix(void)
@@ -823,6 +835,9 @@ void SceneCopy(int buffer)
 {
   CScene *I=&Scene;
   unsigned int buffer_size;
+
+  if(!I->StereoMode) { /* no copies while in stereo mode */
+
   if((!I->DirtyFlag)&&(!I->CopyFlag)) { 
     buffer_size = 4*I->Width*I->Height;
     if(buffer_size) {
@@ -849,6 +864,7 @@ void SceneCopy(int buffer)
       }
     }
     I->CopyFlag = true;
+  }
   }
 }
 
@@ -945,7 +961,7 @@ void SceneRender(Pickable *pick,int x,int y)
     
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
-  
+
     if(SettingGet(cSetting_ortho)==0.0) {
       gluPerspective(SceneFOV,aspRat,I->FrontSafe,I->Back);
     } else {
@@ -955,31 +971,9 @@ void SceneRender(Pickable *pick,int x,int y)
       glOrtho(-width,width,-height,height,
               I->FrontSafe,I->Back);
     }
-  
+
     glMatrixMode(GL_MODELVIEW);
-  
-    /* start afresh, looking in the negative Z direction (0,0,-1) from (0,0,0) */
-    glLoadIdentity();
-  
-    /* move the camera to the location we are looking at */
-    glTranslatef(I->Pos[0],I->Pos[1],I->Pos[2]);
-  
-    /* move the camera so that we can see the origin 
-     * NOTE, vector is given in the coordinates of the world's motion
-     * relative to the camera */
-  
-    glTranslatef(0.0,0.0,0.0);
-  
-    /* zoom the camera */
-    /*  glScalef(I->Scale,I->Scale,I->Scale);*/
-  
-    /* turn on depth cuing and all that jazz */
-  
-    /* 4. rotate about the origin (the the center of rotation) */
-    glMultMatrixf(I->RotMatrix);			
-  
-    /* 3. move the origin to the center of rotation */
-    glTranslatef(-I->Origin[0],-I->Origin[1],-I->Origin[2]);
+    ScenePrepareMatrix(0);
   
     /* determine the direction in which we are looking relative*/
 
@@ -1001,36 +995,50 @@ void SceneRender(Pickable *pick,int x,int y)
       I->LinesNormal[2]=I->ViewNormal[2];
     }
 
-  
+    glLineWidth(SettingGet(cSetting_line_width));
+    if(SettingGet(cSetting_line_smooth)) 
+      glEnable(GL_LINE_SMOOTH);
+    else
+      glDisable(GL_LINE_SMOOTH);
+    
     if(!pick) {
 	
+#ifdef _PYMOL_3DFX
       if(SettingGet(cSetting_ortho)==0.0) {
+#endif
+
         glEnable(GL_FOG);
+        glFogf(GL_FOG_MODE, GL_LINEAR);
         glHint(GL_FOG_HINT,GL_NICEST);
         glFogf(GL_FOG_START, I->FrontSafe);
         glFogf(GL_FOG_END, I->Back);
-	  
+#ifdef _PYMOL_3DFX
         if(I->Back>(I->FrontSafe*4.0))
           glFogf(GL_FOG_END, I->Back);
         else
           glFogf(GL_FOG_END,I->FrontSafe*4.0);
         fog_val+=0.0000001;
         if(fog_val>1.0) fog_val=0.99999;
-	  
         glFogf(GL_FOG_DENSITY, fog_val);
-        glFogf(GL_FOG_MODE, GL_LINEAR);
+#else
+        glFogf(GL_FOG_END,I->Back);
+        glFogf(GL_FOG_DENSITY, 1.0);
+#endif
         v=SettingGetfv(cSetting_bg_rgb);
         fog[0]=v[0];
         fog[1]=v[1];
         fog[2]=v[2];
         fog[3]=1.0;
         glFogfv(GL_FOG_COLOR, fog);
+#ifdef _PYMOL_3DFX
       } else {
         glDisable(GL_FOG);
       }
-	
+#endif
+
+
+
       glNormal3fv(normal);
-	
 	
       glMaterialfv(GL_FRONT, GL_AMBIENT_AND_DIFFUSE, white);
       glColorMaterial(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE);
@@ -1093,26 +1101,59 @@ void SceneRender(Pickable *pick,int x,int y)
 		VLAFree(pickVLA);
 		
     } else {
+      /* rendering for visualization */
 	
-	
-	
-      /* normal rendering */
-	
-      while(ListIterate(I->Obj,rec,next,ObjList))
-        {
-          glPushMatrix();
-          glNormal3fv(normal);
-          if(rec->obj->fRender)
-            rec->obj->fRender(rec->obj,I->ImageIndex,NULL,NULL);
-          glPopMatrix();
-        }
-	
+      if(I->StereoMode) {
+        /*stereo*/
+
+        glDrawBuffer(GL_BACK_LEFT);
+        glPushMatrix();
+        ScenePrepareMatrix(1);
+        rec=NULL;
+        while(ListIterate(I->Obj,rec,next,ObjList))
+          {
+            glPushMatrix();
+            glNormal3fv(normal);
+            if(rec->obj->fRender)
+              rec->obj->fRender(rec->obj,I->ImageIndex,NULL,NULL);
+            glPopMatrix();
+          }
+        glPopMatrix();
+        
+        glDrawBuffer(GL_BACK_RIGHT);
+        glClear(GL_DEPTH_BUFFER_BIT);        
+        glPushMatrix();
+        ScenePrepareMatrix(2);
+        rec=NULL;
+        while(ListIterate(I->Obj,rec,next,ObjList))
+          {
+            glPushMatrix();
+            glNormal3fv(normal);
+            if(rec->obj->fRender)
+              rec->obj->fRender(rec->obj,I->ImageIndex,NULL,NULL);
+            glPopMatrix();
+          }
+        glPopMatrix();        glDrawBuffer(GL_BACK);
+      } else {
+        
+        /* mono */
+        rec=NULL;
+        while(ListIterate(I->Obj,rec,next,ObjList))
+          {
+            glPushMatrix();
+            glNormal3fv(normal);
+            if(rec->obj->fRender)
+              rec->obj->fRender(rec->obj,I->ImageIndex,NULL,NULL);
+            glPopMatrix();
+          }
+      }
     }
   
     if(!pick) {
       glDisable(GL_FOG);
     }
-  
+    glLineWidth(1.0);
+    glDisable(GL_LINE_SMOOTH);
     glViewport(view_save[0],view_save[1],view_save[2],view_save[3]);
   }
   if(!pick) {
@@ -1128,6 +1169,55 @@ void SceneRestartTimers(void)
   CScene *I=&Scene;
   I->LastRender = UtilGetSeconds();
   I->RenderTime = 0;
+}
+/*========================================================================*/
+void ScenePrepareMatrix(int mode)
+{
+  CScene *I=&Scene;
+  float stAng,stShift;
+  
+  /* start afresh, looking in the negative Z direction (0,0,-1) from (0,0,0) */
+  glLoadIdentity();
+
+  if(!mode) {
+
+    /* mono */
+
+    /* move the camera to the location we are looking at */
+    glTranslatef(I->Pos[0],I->Pos[1],I->Pos[2]);
+  
+    /* rotate about the origin (the the center of rotation) */
+    glMultMatrixf(I->RotMatrix);			
+  
+    /* move the origin to the center of rotation */
+    glTranslatef(-I->Origin[0],-I->Origin[1],-I->Origin[2]);
+
+  } else {
+
+    /* stereo */
+
+    stAng = SettingGet(cSetting_stereo_angle);
+    stShift = SettingGet(cSetting_stereo_shift);
+
+    stShift = stShift*fabs(I->Pos[2])/100.0;
+
+    stAng = stAng*atan(stShift/fabs(I->Pos[2]))*90.0/PI;
+
+    if(mode==2) {
+      stAng=-stAng;
+      stShift=-stShift;
+    }
+
+    glRotatef(stAng,0.0,1.0,0.0);
+    glTranslatef(I->Pos[0],I->Pos[1],I->Pos[2]);
+    glTranslatef(stShift,0.0,0.0);
+
+    /* rotate about the origin (the the center of rotation) */
+    glMultMatrixf(I->RotMatrix);			
+
+    /* move the origin to the center of rotation */
+    glTranslatef(-I->Origin[0],-I->Origin[1],-I->Origin[2]);
+  }
 }
 /*========================================================================*/
 void SceneRotate(float angle,float x,float y,float z)

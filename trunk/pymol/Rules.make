@@ -3,26 +3,31 @@
 #---------------------------------------------------------------------
 #
 #- Choose One Set ----------------------------------------------------
-#--- Build for unix as an embedded Python interprete
-XLIB_DIR = -L/usr/X11R6/lib 
-LIBS = -lpython1.5 -ltk8.0 -ltcl8.0 -lglut -lGL -lGLU -ldl -lX11 -lXext -lXmu -lXi -lpng $(ZLIB) -lm
-MODULE = 
-BUILD = -o pymol.exe
-#--- Build for unix as an importable module
+#--- Build for LINUX with embedded Python 
+#XLIB_DIR = -L/usr/X11R6/lib 
+#LIBS = -lpython1.5 -ltk8.0 -ltcl8.0 -lglut -lGL -lGLU -ldl -lX11 -lXext -lXmu -lXi -lpng $(ZLIB) -lm
+#DEFS = -D_PYMOL_3DFX
+#BUILD = -o pymol.exe
+#--- Build for LINUX as an importable module
 #XLIB_DIR = -L/usr/X11R6/lib
 #LIBS = -lpython1.5 -lglut -lGL -lGLU -ldl -lpng -lXmu $(ZLIB) -lm
-#MODULE = -D_PYMOL_MODULE
+#DEFS = -D_PYMOL_3DFX
 #BUILD = -shared -o modules/_pm.so
+#--- Build for unix as an importable module (SGI/IRIX)
+XLIB_DIR = -L/usr/X11R6/lib
+LIBS = -lpython1.5 -lglut -lGL -lGLU -lpng -lXmu $(ZLIB) -lm
+DEFS = -D_PYMOL_MODULE -D_PYMOL_STEREO
+BUILD = -shared -o modules/_pm.so
 #--- Build for Windows as an importable module
 #XLIB_DIR = 
 #LIBS = -lpython15 -lopengl32 -lglu32 -lglut32 -lpng -lz
-#MODULE = -D_PYMOL_MODULE
+#DEFS = -D_PYMOL_MODULE
 #BUILD = -o modules/_pm.pyd
 #---------------------------------------------------------------------
 #
 #- Choose One --------------------------------------------------------
 #--- Workaround for XFree86/DRI linux dll problem for module build
-BUGS = -D_DRI_WORKAROUND
+#BUGS = -D_DRI_WORKAROUND
 #--- Running under windows (perhaps the biggest bug of all)
 #BUGS = -D_PYMOL_WINDOWS -DWIN32 -D_WIN32
 #---
@@ -31,9 +36,9 @@ BUGS = -D_DRI_WORKAROUND
 #
 #- Choose One --------------------------------------------------------
 #--- Gcc under Linux or Windows
-CCOPT1 = -m486 -D__i686__ -ffast-math -Wall -ansi -Wmissing-prototypes
+#CCOPT1 = -m486 -D__i686__ -ffast-math -Wall -ansi -Wmissing-prototypes
 #--- SGI Irix 6.x
-#CCOPT1 = -ansi -n32 -woff 1429,1204
+CCOPT1 = -ansi -n32 -woff 1429,1204
 #---------------------------------------------------------------------
 #
 #- Choose One --------------------------------------------------------
@@ -63,7 +68,7 @@ ZLIB = -lz
 # No changes normally required below here
 #---------------------------------------------------------------------
 
-CFLAGS = $(CCOPT1) $(CCOPT2) -D_PYMOL_THREADS $(INC_DIRS) $(PNG) $(MODULE) $(BUGS)
+CFLAGS = $(CCOPT1) $(CCOPT2) $(INC_DIRS) $(PNG) $(DEFS) $(BUGS)
 
 CC = cc
 

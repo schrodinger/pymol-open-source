@@ -317,13 +317,13 @@ void RepSurfaceColor(RepSurface *I,CoordSet *cs)
                 j=map->EList[i++];
                 while(j>=0) {
                   a2 = cs->IdxToAtm[j];
-                  if(obj->AtomInfo[cs->IdxToAtm[a2]].visRep[cRepSurface])
+                  if(obj->AtomInfo[a2].visRep[cRepSurface])
                     if((inclH||(obj->AtomInfo[a2].name[0]!='H'))&&
                        ((!cullByFlag)||(!(obj->AtomInfo[a2].customFlag&0x2))))  
                       /* ignore if the "2" bit is set */
                       {
                         dist = diff3f(v0,cs->Coord+j*3);
-                        if(dist<(obj->AtomInfo[cs->IdxToAtm[a2]].vdw+proximity)) {
+                        if(dist<(obj->AtomInfo[a2].vdw+proximity)) {
                           i0=j;
                           break;
                         }
@@ -400,10 +400,7 @@ Rep *RepSurfaceNew(CoordSet *cs)
   /* don't waist time computing a Surface unless we need it!! */
   for(a=0;a<cs->NIndex;a++) {
 	 if(obj->AtomInfo[cs->IdxToAtm[a]].visRep[cRepSurface])
-		{
-		  SurfaceFlag=true;
-		  break;
-		}
+      SurfaceFlag=true;
     else
       I->allVisibleFlag=false;
   }

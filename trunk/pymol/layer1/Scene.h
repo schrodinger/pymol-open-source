@@ -29,7 +29,7 @@ void SceneRender(Pickable *pick,int x,int y);
 void SceneSetFrame(int mode,int frame);
 int SceneGetFrame(void);
 void SceneDirty(void); /* must update transformation */
-void SceneChanged(void); /* must update actually 3D objects */
+void SceneChanged(void); /* must actually update 3D objects */
 void SceneCountFrames(void) ;
 void SceneSetMatrix(float *);
 float *SceneGetMatrix(void);
@@ -64,6 +64,7 @@ void SceneOriginSet(float *origin,int preserve);
 void SceneWindowSphere(float *location,float radius);
 Block *SceneGetBlock(void);
 void SceneApplyMatrix(float *m);
+void SceneSetStereo(int flag);
 
 #endif
 
