@@ -309,8 +309,8 @@ float SelectorSumVDWOverlap(int sele1,int state1,int sele2,int state2)
         
         ai1=obj1->AtomInfo+at1;
         ai2=obj2->AtomInfo+at2;
-        
-        idx1=cs1->AtmToIdx[at1];
+       
+        idx1=cs1->AtmToIdx[at1]; /* these are also pre-validated */
         idx2=cs2->AtmToIdx[at2];
         
         sumVDW=ai1->vdw+ai2->vdw;
@@ -359,7 +359,13 @@ int SelectorGetInterstateVLA(int sele1,int state1,int sele2,int state2,
             else
               cs=NULL;
 				if(cs) {
-				  idx=cs->AtmToIdx[at];
+              if(obj->DiscreteFlag) {
+                if(cs==obj->DiscreteCSet[at])
+                  idx=obj->DiscreteAtmToIdx[at];
+                else
+                  idx=-1;
+              } else 
+                idx=cs->AtmToIdx[at];
 				  if(idx>=0) {
 					 copy3f(cs->Coord+(3*idx),I->Vertex+3*a);
 					 I->Flag1[a]=true;
@@ -390,7 +396,13 @@ int SelectorGetInterstateVLA(int sele1,int state1,int sele2,int state2,
                 else
                   cs=NULL;
 					 if(cs) {
-						idx=cs->AtmToIdx[at];
+                  if(obj->DiscreteFlag) {
+                    if(cs==obj->DiscreteCSet[at])
+                      idx=obj->DiscreteAtmToIdx[at];
+                    else
+                      idx=-1;
+                  } else 
+                    idx=cs->AtmToIdx[at];
 						if(idx>=0) {
 						  v2 = cs->Coord+(3*idx);
 						  MapLocus(map,v2,&h,&k,&l);
@@ -424,7 +436,7 @@ int SelectorGetPDB(char **charVLA,int sele,int state,int conectFlag)
 {
   SelectorType *I=&Selector;
 
-  int a,b,b1,b2,c,d,*ii1,s,idx,at;
+  int a,b,b1,b2,c,d,*ii1,s,idx,at,a1,a2;
   int *bond=NULL;
   int nBond=0;
   int cLen =0;
@@ -448,7 +460,13 @@ int SelectorGetPDB(char **charVLA,int sele,int state,int conectFlag)
             else
               cs=NULL;
             if(cs) {
-              idx=cs->AtmToIdx[at];
+              if(obj->DiscreteFlag) {
+                if(cs==obj->DiscreteCSet[at])
+                  idx=obj->DiscreteAtmToIdx[at];
+                else
+                  idx=-1;
+              } else 
+                idx=cs->AtmToIdx[at];
               if(idx>=0) {
                 I->Table[a].index=c+1; /* NOTE marking with "1" based indexes here */
                 ai = obj->AtomInfo+at;
@@ -484,9 +502,21 @@ int SelectorGetPDB(char **charVLA,int sele,int state,int conectFlag)
         atInfo=obj->AtomInfo;
         for(b=0;b<obj->NBond;b++) {
           b1=ii1[0];
-          b2=ii1[1];        
-          if((cs->AtmToIdx[b1]>=0)&&(cs->AtmToIdx[b2]>=0)&&
-             (atInfo[b1].hetatm||atInfo[b2].hetatm)) {
+          b2=ii1[1];   
+          if(obj->DiscreteFlag) {
+            if((cs==obj->DiscreteCSet[b1])&&(cs==obj->DiscreteCSet[b2])) {
+              a1=obj->DiscreteAtmToIdx[b1];
+              a2=obj->DiscreteAtmToIdx[b2];
+            } else {
+              a1=-1;
+              a2=-1;
+            }
+          } else {
+            a1=cs->AtmToIdx[b1];
+            a2=cs->AtmToIdx[b2];
+          }
+          
+          if((a1>=0)&&(a2>=0)&&(atInfo[b1].hetatm||atInfo[b2].hetatm)) {
             b1+=obj->SeleBase;
             b2+=obj->SeleBase;
             if(I->Table[b1].index&&I->Table[b2].index) {
@@ -540,7 +570,7 @@ PyObject *SelectorGetChemPyModel(int sele,int state)
   SelectorType *I=&Selector;
   PyObject *model=NULL,*bnd=NULL;
   PyObject *atom_list=NULL,*bond_list=NULL;
-  int a,b,b1,b2,b3,c,*ii1,s,idx,at;
+  int a,b,b1,b2,b3,c,*ii1,s,idx,at,a1,a2;
   int *bond=NULL;
   int nBond=0;
   int ok =true;
@@ -568,7 +598,13 @@ PyObject *SelectorGetChemPyModel(int sele,int state)
               else
                 cs=NULL;
               if(cs) {
-                idx=cs->AtmToIdx[at];
+                if(obj->DiscreteFlag) {
+                  if(cs==obj->DiscreteCSet[at])
+                    idx=obj->DiscreteAtmToIdx[at];
+                  else
+                    idx=-1;
+                } else 
+                  idx=cs->AtmToIdx[at];
                 if(idx>=0) {
                   I->Table[a].index=c+1; /* NOTE marking with "1" based indexes here */
                   c++;
@@ -587,7 +623,13 @@ PyObject *SelectorGetChemPyModel(int sele,int state)
         if(I->Table[a].index) {
           at=I->Table[a].atom;
           obj=I->Obj[I->Table[a].model];
-          idx=cs->AtmToIdx[at];
+          if(obj->DiscreteFlag) {
+            if(obj->CSet[state]==obj->DiscreteCSet[at])
+              idx=obj->DiscreteAtmToIdx[at];
+            else
+              idx=-1;
+          } else 
+            idx=cs->AtmToIdx[at];
           if(idx>=0) {
             ai = obj->AtomInfo+at;
             PyList_SetItem(atom_list,c,
@@ -614,7 +656,20 @@ PyObject *SelectorGetChemPyModel(int sele,int state)
             b1=ii1[0];
             b2=ii1[1];        
             b3=ii1[2];
-            if((cs->AtmToIdx[b1]>=0)&&(cs->AtmToIdx[b2]>=0)) {
+            if(obj->DiscreteFlag) {
+              if((cs==obj->DiscreteCSet[b1])&&(cs==obj->DiscreteCSet[b2])) {
+                a1=obj->DiscreteAtmToIdx[b1];
+                a2=obj->DiscreteAtmToIdx[b2];
+              } else {
+                a1=-1;
+                a2=-1;
+              }
+            } else {
+              a1=cs->AtmToIdx[b1];
+              a2=cs->AtmToIdx[b2];
+            }
+
+            if((a1>=0)&&(a2>=0)) {
               b1+=obj->SeleBase;
               b2+=obj->SeleBase;
               if(I->Table[b1].index&&I->Table[b2].index) {
@@ -672,7 +727,7 @@ void SelectorCreateObjectMolecule(int sele,char *name,int target,int source)
       targ = (ObjectMolecule*)ob;
   if(!targ) {
     isNew=true;
-    targ = ObjectMoleculeNew();
+    targ = ObjectMoleculeNew(false);
     targ->Bond = VLAlloc(int,1);
   } else {
     isNew=false;
@@ -782,7 +837,14 @@ void SelectorCreateObjectMolecule(int sele,char *name,int target,int source)
             if(d<obj->NCSet) {
               cs1 = obj->CSet[d];
               if(cs1) {
-                if(cs1->AtmToIdx[at]>=0) {
+                if(obj->DiscreteFlag) {
+                  if(cs1==obj->DiscreteCSet[at])
+                    a1=obj->DiscreteAtmToIdx[at];
+                  else
+                    a1=-1;
+                } else 
+                  a1 = cs1->AtmToIdx[at];
+                if(a1>=0) {
                   csFlag=true;
                   break;
                 }
@@ -805,7 +867,13 @@ void SelectorCreateObjectMolecule(int sele,char *name,int target,int source)
               if(d<obj->NCSet) {
                 cs1 = obj->CSet[d];
                 if(cs1) {
-                  a1 = cs1->AtmToIdx[at]; /* coord index in existing object */
+                  if(obj->DiscreteFlag) {
+                    if(cs1==obj->DiscreteCSet[at])
+                      a1=obj->DiscreteAtmToIdx[at];
+                    else
+                      a1=-1;
+                  } else 
+                    a1 = cs1->AtmToIdx[at]; /* coord index in existing object */
                   if(a1>=0) {
                     copy3f(cs1->Coord+a1*3,cs2->Coord+c*3);
                     a2 = cs->IdxToAtm[c]; /* actual merged atom index */
@@ -837,6 +905,21 @@ void SelectorCreateObjectMolecule(int sele,char *name,int target,int source)
   VLAFreeP(bond); /* null-safe */
   if(cs) cs->fFree(cs);
   if(nAtom) {
+    if(targ->DiscreteFlag) { /* if the new object is discrete, then eliminate the AtmToIdx array */
+      for(d=0;d<targ->NCSet;d++) {
+        cs = targ->CSet[d];
+        if(cs) {
+          if(cs->AtmToIdx) {
+            for(a=0;a<cs->NIndex;a++) {
+              b = cs->IdxToAtm[a];
+              targ->DiscreteAtmToIdx[b] = a;
+              targ->DiscreteCSet[b] = cs;
+            }
+            FreeP(cs->AtmToIdx);
+          }
+        }
+      }
+    }
     SceneCountFrames();
     PRINTF " Selector: found %d atoms.\n",nAtom ENDF
     ObjectMoleculeSort(targ);
@@ -846,7 +929,6 @@ void SelectorCreateObjectMolecule(int sele,char *name,int target,int source)
     } else {
       ExecutiveUpdateObjectSelection((Object*)targ);
     }
-
     SceneChanged();
   } else {
     targ->Obj.fFree((Object*)targ);
@@ -1153,7 +1235,13 @@ int SelectorModulate1(EvalElem *base)
                 else
                   cs=NULL;
 					 if(cs) {
-						idx=cs->AtmToIdx[at];
+                  if(obj->DiscreteFlag) {
+                    if(cs==obj->DiscreteCSet[at])
+                      idx=obj->DiscreteAtmToIdx[at];
+                    else
+                      idx=-1;
+                  } else 
+                    idx=cs->AtmToIdx[at];
 						if(idx>=0) {
 						  copy3f(cs->Coord+(3*idx),I->Vertex+3*a);
 						  I->Flag1[a]=true;
@@ -1177,8 +1265,13 @@ int SelectorModulate1(EvalElem *base)
                           else
                             cs=NULL;
 								  if(cs) {
-									 idx=cs->AtmToIdx[at];
-
+                            if(obj->DiscreteFlag) {
+                              if(cs==obj->DiscreteCSet[at])
+                                idx=obj->DiscreteAtmToIdx[at];
+                              else
+                                idx=-1;
+                            } else 
+                              idx=cs->AtmToIdx[at];
 									 if(idx>=0) {
 										v2 = cs->Coord+(3*idx);
 										MapLocus(map,v2,&h,&k,&l);
@@ -1230,8 +1323,13 @@ int SelectorModulate1(EvalElem *base)
                 else
                   cs=NULL;
 					 if(cs) {
-
-						idx=cs->AtmToIdx[at];
+                  if(obj->DiscreteFlag) {
+                    if(cs==obj->DiscreteCSet[at])
+                      idx=obj->DiscreteAtmToIdx[at];
+                    else
+                      idx=-1;
+                  } else 
+                    idx=cs->AtmToIdx[at];
 						if(idx>=0) {
 						  copy3f(cs->Coord+(3*idx),I->Vertex+3*a);
 						  I->Flag1[a]=true;
@@ -1256,7 +1354,13 @@ int SelectorModulate1(EvalElem *base)
                           else
                             cs=NULL;
 								  if(cs) {
-									 idx=cs->AtmToIdx[at];
+                            if(obj->DiscreteFlag) {
+                              if(cs==obj->DiscreteCSet[at])
+                                idx=obj->DiscreteAtmToIdx[at];
+                              else
+                                idx=-1;
+                            } else 
+                              idx=cs->AtmToIdx[at];
 
 									 if(idx>=0) {
 										v2 = cs->Coord+(3*idx);

@@ -23,6 +23,7 @@ import _cmd
 import string
 import traceback
 import thread
+import threading
 import types
 import pymol
 import os
@@ -817,7 +818,10 @@ INTERNAL
    if thred == pymol.glutThread:
       _cmd.flush_now()
    else:
-      _cmd.wait_queue()
+      while _cmd.wait_queue():
+         e = threading.Event()
+         e.wait(0.05)
+         del e
    lock_api.acquire(1)
       
 def lock_attempt():
@@ -1326,7 +1330,7 @@ def dirty():
 INTERNAL
    '''
    try:
-      lock()   
+      lock()
       r = _cmd.dirty()
    finally:
       unlock()
@@ -1968,23 +1972,42 @@ def load_coords(*arg):
    '''
    r = 1
    try:
-      lock()   
-      ftype = 8
+      lock()
+      ok = 1
+      ftype = loadable.model
       state = -1
       model = arg[0];
-      if len(arg)==2:
+      finish = 1
+      discrete = 0
+      if len(arg)<2:
+         ok=0
+      if len(arg)>=2:
          oname = string.strip(arg[1])
+      if len(arg)>=3:
+         ftype = arg[1]
          r = _cmd.load_coords(oname,model,state,ftype)
       elif len(arg)==3:
          oname = string.strip(arg[1])
          state = int(arg[2])-1
+      if ok:
          r = _cmd.load_coords(oname,model,state,ftype)
-      else:
-         print "Error: invalid arguments."
+      print "Error: invalid arguments."
+
    finally:
       unlock()
    return r
 
+def finish_object(obj):
+   '''
+   '''
+   r = 1
+   try:
+      lock()   
+      r = _cmd.finish_object(obj)
+   finally:
+      unlock()
+   return r
+   
 def load_model(*arg):
    '''
    '''
@@ -1993,28 +2016,30 @@ def load_model(*arg):
       lock()   
       ftype = 8
       state = -1
+      finish = 1
+      discrete = 0
       model = arg[0];
       if len(arg)==2:
          oname = string.strip(arg[1])
-         r = _cmd.load_object(oname,model,state,ftype)
+         r = _cmd.load_object(oname,model,state,ftype,finish,discrete)
       elif len(arg)==3:
          oname = string.strip(arg[1])
          state = int(arg[2])-1
-         r = _cmd.load_object(oname,model,state,ftype)
+         r = _cmd.load_object(oname,model,state,ftype,finish,discrete)
       else:
          print "Error: invalid arguments."
    finally:
       unlock()
    return r
 
-def _load(oname,finfo,state,ftype):
+def _load(oname,finfo,state,ftype,finish,discrete):
    r = 1
-   if ftype!=8:
-      r = _cmd.load(oname,finfo,state,ftype)
+   if ftype!=loadable.model:
+      r = _cmd.load(oname,finfo,state,ftype,finish,discrete)
    else:
       try:
          x = io.pkl.fromFile(finfo)
-         r = _cmd.load_object(oname,x,state,ftype)            
+         r = _cmd.load_object(oname,x,state,ftype,finish,discrete)            
       except:
          print 'Error: can not load file "%s"' % finfo
    return r
@@ -2036,64 +2061,69 @@ DESCRIPTION
  
 USAGE
  
-   load filname [,object ,[state]]
+   load filename [,object [,state [,type [,finish [,discrete ]]]]]
  
 PYMOL API
   
-   cmd.load( filename [,object [,state]] )
+   cmd.load( filename [,object [,state [,type [,finish [,discrete ]]]]] 
    '''
    r = 1
    try:
       lock()   
       ftype = 0
       state = -1
+      finish = 1
+      discrete = 0
+      if len(arg)>4:
+         finish=int(arg[4])
+      if len(arg)>5:
+         discrete=int(arg[5])
       fname = arg[0];
       fname = os.path.expanduser(fname)
       fname = os.path.expandvars(fname)
       if re.search("\.pdb$",arg[0]):
-         ftype = 0
+         ftype = loadable.pdb
       elif re.search("\.mol$",arg[0]):
-         ftype = 1
+         ftype = loadable.mol
       elif re.search("\.mmod$",arg[0]):
-         ftype = 4
+         ftype = loadable.mmod
       elif re.search("\.xplor$",arg[0]):
-         ftype = 7
+         ftype = loadable.xplor
       elif re.search("\.pkl$",arg[0]):
-         ftype = 8
+         ftype = loadable.model
       elif re.search("\.sdf$",arg[0]):
          oname = re.sub("[^/]*\/","",arg[0])
          oname = re.sub("\.sdf$","",oname)
-         ftype = 3
+         ftype = loadable.molstr
          sdf = SDF(arg[0])
          while 1:
             rec = sdf.read()
             if not rec: break
-            r = _load(oname,string.join(rec.get('MOL'),''),state,ftype)
+            r = _load(oname,string.join(rec.get('MOL'),''),state,ftype,0,1)
          del sdf
+         _cmd.finish_object(oname)
          do("zoom (%s)"%oname)
          ftype = -1
       if ftype>=0:
+         ok = 1
+         if len(arg)<1:
+            ok = 0
          if len(arg)==1:
             oname = re.sub("[^/]*\/","",arg[0])
             oname = re.sub("\.pdb$|\.mol$|\.mmod$|\.xplor$|\.pkl$","",oname)
-            r = _load(oname,fname,state,ftype)
-         elif len(arg)==2:
+         else:
             oname = string.strip(arg[1])
-            r = _load(oname,fname,state,ftype)
-         elif len(arg)==3:
-            oname = string.strip(arg[1])
+         if len(arg)>2:
             state = int(arg[2])-1
-            r = _load(oname,fname,state,ftype)
-         elif len(arg)==4:
-            if loadable.has_key(arg[3]):
-               ftype = loadable[arg[3]]
+         if len(arg)>3:
+            if hasattr(loadable,str(arg[3])):
+               ftype = getattr(loadable,str(arg[3]))
             else:
                ftype = int(arg[3])
-            state = int(arg[2])-1
-            oname = string.strip(arg[1])
-            r = _load(oname,fname,state,ftype)
+         if ok:
+            r = _load(oname,fname,state,ftype,finish,discrete)
          else:
-            print "Error: invalid arguments."
+            print "Error: invalid arguments for dist command."
    finally:
       unlock()
    return r
@@ -2105,10 +2135,10 @@ def read_molstr(*arg):
       ftype = 3
       if len(arg)==2:
          oname = string.strip(arg[1])
-         r = _cmd.load(oname,arg[0],-1,ftype)
+         r = _cmd.load(oname,arg[0],-1,ftype,1,1)
       elif len(arg)==3:
          oname = string.strip(arg[1])
-         r = _cmd.load(oname,arg[0],int(arg[2])-1,ftype)
+         r = _cmd.load(oname,arg[0],int(arg[2])-1,ftype,1,1)
       else:
          print "argument error."
    finally:
@@ -2122,10 +2152,10 @@ def read_mmodstr(*arg):
       ftype = 6
       if len(arg)==2:
          oname = string.strip(arg[1])
-         r = _cmd.load(oname,arg[0],-1,ftype)
+         r = _cmd.load(oname,arg[0],-1,ftype,1,1)
       elif len(arg)==3:
          oname = string.strip(arg[1])
-         r = _cmd.load(oname,arg[0],int(arg[2])-1,ftype)
+         r = _cmd.load(oname,arg[0],int(arg[2])-1,ftype,1,1)
       else:
          print "argument error."
    finally:
@@ -2626,7 +2656,7 @@ keyword = {
    'isodot'        : [isodot       , 2 , 2 , '=' , 0 ],   
    'isomesh'       : [isomesh      , 2 , 2 , '=' , 0 ],
    'label'         : [label        , 1 , 2 , ',' , 0 ],
-   'load'          : [load         , 1 , 4 , ',' , 0 ],
+   'load'          : [load         , 1 , 6 , ',' , 0 ],
    'mem'           : [mem          , 0 , 0 , ',' , 0 ],
    'meter_reset'   : [meter_reset  , 0 , 0 , ',' , 0 ],
    'move'          : [move         , 2 , 2 , ',' , 0 ],
@@ -2719,13 +2749,13 @@ special = {
    108      : [ 'insert'    , rock                   , 0 , None ]   
 }
 
-loadable = {
-   'pdb'   : 0,
-   'mol'   : 1,
-   'mmod'  : 4,
-   'xplor' : 7,
-   'model' : 8,
-}
+class loadable:
+   pdb = 0
+   mol = 1
+   molstr = 3
+   mmod = 4
+   xplor = 7
+   model = 8
 
 # build shortcuts list
 

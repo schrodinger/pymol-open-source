@@ -107,7 +107,6 @@ float SettingGetNamed(char *name);
 #define cSetting_nonbonded_size       65
 #define cSetting_label_color          66
 #define cSetting_ray_trace_fog        67
-#define cSetting_discrete             68
 
 #endif
 

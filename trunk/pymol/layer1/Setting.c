@@ -550,11 +550,6 @@ void SettingInit(void)
   strcpy(I->Setting[cSetting_ray_trace_fog].Name,
 			"ray_trace_fog");
 
-  I->NSetting++;
-  I->Setting[cSetting_discrete].Value[0] = 0.0;
-  strcpy(I->Setting[cSetting_discrete].Name,
-			"discrete");
-
 
   I->NSetting++;
 #ifdef _PYMOL_WINDOWS

@@ -20,6 +20,7 @@ Z* -------------------------------------------------------------------
 #include "Base.h"
 #include "ButMode.h"
 #include "Scene.h"
+#include "Util.h"
 
 #define cButModeLineHeight 12
 #define cButModeLeftMargin 2

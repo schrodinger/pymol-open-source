@@ -94,7 +94,6 @@ int *AtomInfoGetSortedIndex(AtomInfoType *rec,int n,int **outdex)
   for(a=0;a<n;a++)
 	(*outdex)[index[a]]=a;
   return(index);
-
 }
 
 void AtomInfoFreeSortedIndexes(int *index,int *outdex)

@@ -32,7 +32,9 @@ typedef struct ObjectMolecule {
   AtomInfoType *AtomInfo;
   int NAtom;
   int NBond;
-  int Discrete;
+  int DiscreteFlag,NDiscrete;
+  int *DiscreteAtmToIdx;
+  struct CoordSet **DiscreteCSet;
   int CurCSet;
   char Color[3];
   float FractionExposed;
@@ -79,20 +81,20 @@ typedef struct ObjectMoleculeOpRec {
 
 #include"CoordSet.h"
 
-ObjectMolecule *ObjectMoleculeNew(void);
+ObjectMolecule *ObjectMoleculeNew(int discreteFlag);
 void ObjectMoleculeSort(ObjectMolecule *I);
 ObjectMolecule *ObjectMoleculeCopy(ObjectMolecule *obj);
 
-ObjectMolecule *ObjectMoleculeLoadPDBFile(ObjectMolecule *obj,char *fname,int frame);
-ObjectMolecule *ObjectMoleculeLoadMOLFile(ObjectMolecule *obj,char *fname,int frame);
+ObjectMolecule *ObjectMoleculeLoadPDBFile(ObjectMolecule *obj,char *fname,int frame,int discrete);
+ObjectMolecule *ObjectMoleculeLoadMOLFile(ObjectMolecule *obj,char *fname,int frame,int discrete);
 ObjectMolecule *ObjectMoleculeLoadMMDFile(ObjectMolecule *obj,char *fname,
-                                          int frame,char *sepPrefix);
-ObjectMolecule *ObjectMoleculeLoadChemPyModel(ObjectMolecule *I,PyObject *model,int frame);
+                                          int frame,char *sepPrefix,int discrete);
+ObjectMolecule *ObjectMoleculeLoadChemPyModel(ObjectMolecule *I,PyObject *model,int frame,int discrete);
 ObjectMolecule *ObjectMoleculeLoadCoords(ObjectMolecule *I,PyObject *coords,int frame);
 
-ObjectMolecule *ObjectMoleculeReadMOLStr(ObjectMolecule *obj,char *molstr,int frame);
-ObjectMolecule *ObjectMoleculeReadPDBStr(ObjectMolecule *obj,char *molstr,int frame);
-ObjectMolecule *ObjectMoleculeReadMMDStr(ObjectMolecule *I,char *MMDStr,int frame);
+ObjectMolecule *ObjectMoleculeReadMOLStr(ObjectMolecule *obj,char *molstr,int frame,int discrete);
+ObjectMolecule *ObjectMoleculeReadPDBStr(ObjectMolecule *obj,char *molstr,int frame,int discrete);
+ObjectMolecule *ObjectMoleculeReadMMDStr(ObjectMolecule *I,char *MMDStr,int frame,int discrete);
 void ObjectMoleculeExtendIndices(ObjectMolecule *I);
 
 void ObjectMoleculeInvalidateRep(ObjectMolecule *I,int rep);

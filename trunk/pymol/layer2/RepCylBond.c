@@ -177,9 +177,19 @@ Rep *RepCylBondNew(CoordSet *cs)
 		  b1 = *(b++);
 		  b2 = *(b++);
         b++;
-		  a1=cs->AtmToIdx[b1];
-		  a2=cs->AtmToIdx[b2];
-		  
+
+        if(obj->DiscreteFlag) {
+          if((cs==obj->DiscreteCSet[b1])&&(cs==obj->DiscreteCSet[b2])) {
+            a1=obj->DiscreteAtmToIdx[b1];
+            a2=obj->DiscreteAtmToIdx[b2];
+          } else {
+            a1=-1;
+            a2=-1;
+          }
+        } else {
+          a1=cs->AtmToIdx[b1];
+          a2=cs->AtmToIdx[b2];
+        }
 		  if((a1>=0)&&(a2>=0))
 			 {
 				c1=*(cs->Color+a1);

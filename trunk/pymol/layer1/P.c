@@ -33,7 +33,6 @@ Z* -------------------------------------------------------------------
 #include"CoordSet.h"
 
 
-#define _PYMOL_XRAY
 
 PyObject *P_globals = NULL;
 
@@ -419,7 +418,7 @@ void PInit(void)
   P_menu = PyDict_GetItemString(P_globals,"menu");
   if(!P_menu) ErrFatal("PyMOL","can't find module 'menu'");
 
-#ifdef PYMOL_XRAY
+#ifdef _PYMOL_XRAY
   PRunString("import xray\n");  
   P_xray = PyDict_GetItemString(P_globals,"xray");
   if(!P_xray) ErrFatal("PyMOL","can't find module 'xray'");
@@ -441,7 +440,7 @@ void PInit(void)
   if(!P_models) ErrFatal("PyMOL","can't find 'chempy.models'");
 
   PRunString("import util\n");  
-#ifdef PYMOL_XRAY
+#ifdef _PYMOL_XRAY
   PRunString("import sglite\n"); 
 #endif
   PRunString("import string\n"); 
