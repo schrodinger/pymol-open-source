@@ -1,7 +1,7 @@
 
-include ../Rules.make
+include ../../Rules.make
 
-CFLAGS = $(PYMOL_INC_DIRS) $(C_FLAGS) -I../ov/src
+CFLAGS =  $(C_FLAGS)
 
 all: layer
 

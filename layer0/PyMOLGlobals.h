@@ -48,6 +48,12 @@ typedef struct _CEditor CEditor;
 typedef struct _CExecutive CExecutive;
 typedef struct _CSeeker CSeeker;
 typedef struct _CSelector CSelector;
+typedef struct _CTexture CTexture;
+
+#ifndef OVCONTEXT_DEFINED
+typedef struct _OVContext OVContext;
+#define OVCONTEXT_DEFINED
+#endif
 
 typedef struct _PyMOLGlobals PyMOLGlobals;
 struct _PyMOLGlobals {
@@ -79,6 +85,8 @@ struct _PyMOLGlobals {
   CExecutive *Executive;
   CSeeker   *Seeker;
   CSelector *Selector;
+  CTexture  *Texture;
+  OVContext *Context;
 
 };
 

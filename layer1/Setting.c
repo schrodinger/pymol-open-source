@@ -1168,6 +1168,7 @@ void SettingGenerateSideEffects(PyMOLGlobals *G,int index,char *sele,int state)
 	 break;
   case cSetting_stereo_shift:
   case cSetting_stereo_angle:
+  case cSetting_texture_fonts:
 	 SceneDirty(G);
 	 break;
   case cSetting_dash_round_ends:
@@ -2399,7 +2400,7 @@ void SettingInitGlobal(PyMOLGlobals *G,int alloc,int reset_gui)
   SettingSet_b(I,cSetting_cartoon_side_chain_helper, 0);
   SettingSet_b(I,cSetting_surface_optimize_subsets, 1);
   SettingSet_i(I,cSetting_multiplex, -1);
-
+  SettingSet_b(I,cSetting_texture_fonts, 0);
 }
 
 

@@ -121,6 +121,9 @@ int SceneRelease(Block *block,int button,int x,int y,int mod);
 int SceneDrag(Block *block,int x,int y,int mod);
 char *SceneGetSeleModeKeyword(PyMOLGlobals *G);
 void SceneUpdateStereo(PyMOLGlobals *G);
+void ScenePushRasterMatrix(PyMOLGlobals *G,float *v);
+void ScenePopRasterMatrix(PyMOLGlobals *G);
+
 #endif
 
 
