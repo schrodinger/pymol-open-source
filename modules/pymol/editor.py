@@ -14,9 +14,13 @@ tpk2 = "_tmp_tpk2"
 
 def attach_fragment(selection,fragment,hydrogen,anchor):
    if not selection in cmd.get_names("selections"):
-      cmd.fragment(fragment)
-      if cmd.get_setting_legacy("auto_remove_hydrogens"):
-         cmd.remove("(hydro and %s)"%fragment)
+      if fragment in cmd.get_names("objects"):
+         print " Error: an object with than name already exists"
+         raise QuietException
+      else:
+         cmd.fragment(fragment)
+         if cmd.get_setting_legacy("auto_remove_hydrogens"):
+            cmd.remove("(hydro and %s)"%fragment)
    else:
       cmd.fragment(fragment,tmp_editor)
       if cmd.count_atoms("((%s) and elem h)"%selection,quiet=1):
@@ -32,6 +36,9 @@ def attach_fragment(selection,fragment,hydrogen,anchor):
       
 def attach_amino_acid(selection,amino_acid):
    if not selection in cmd.get_names("selections"):
+      if amino_acid in cmd.get_names("objects"):
+         print " Error: an object with than name already exists"
+         raise QuietException
       cmd.fragment(amino_acid)
       if cmd.get_setting_legacy("auto_remove_hydrogens"):
          cmd.remove("(hydro and %s)"%amino_acid)
