@@ -26,7 +26,7 @@ valuable tasks (such as editing PDB files) to assist you in your research.
 
 %setup
 cp Rules.linux-rpm-rh72-py21n Rules.make
-cp pymol.com.linux-rpm-rh72-py21n pymol.com
+cp pymol.com.linux-rpm-rh72-py21 pymol.com
 
 %build
 make
