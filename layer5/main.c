@@ -133,6 +133,7 @@ static PyMOLOptionRec PyMOLOptionGlobal = {
   true, /* siginthand */
   false, /* reuse helper */
   false, /* auto reinitialize */
+  false, /* keep thread alive */
   "", /* after_load_script */
 };
 
@@ -737,15 +738,16 @@ void MainBusyIdle(void)
   }
   if(!PMGUI) {
     if(!OrthoCommandWaiting()) {
-      I->IdleCount++;
-      if(I->IdleCount==10) {
-        PLockAPIAsGlut();
-        PParse("_quit");
-        PFlush();
-        PUnlockAPIAsGlut();
+      if(!PyMOLOption->keep_thread_alive) {
+        I->IdleCount++;
+        if(I->IdleCount==10) {
+          PLockAPIAsGlut();
+          PParse("_quit");
+          PFlush();
+          PUnlockAPIAsGlut();
+        }
       }
     }
-      
   }
   PRINTFD(FB_Main)
     " MainBusyIdle: leaving... IdleMode %d, DirtyFlag %d, SwapFlag %d\n",

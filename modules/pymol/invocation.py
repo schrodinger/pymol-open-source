@@ -51,6 +51,7 @@ if __name__=='pymol.invocation':
    options.sigint_handler = 1 # terminate on Ctrl-C?
    options.reuse_helper = 0
    options.auto_reinitialize = 0
+   options.keep_thread_alive = 0
    options.after_load_script = ""
    if sys.platform != 'win32':
       options.win_py = 200
@@ -200,6 +201,8 @@ if __name__=='pymol.invocation':
                options.security = 0
             if "R" in a:
                options.rpcServer = 1
+            if "K" in a:
+               options.keep_thread_alive = 1
             if "g" in a:
                options.deferred.append("_do_png %s"%av.pop())
             if "C" in a:
