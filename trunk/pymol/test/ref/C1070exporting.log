@@ -49,3 +49,9 @@ PyMOL>load tmp/small01.mol
  Executive: object "small01" created.
 PyMOL>count_atoms
  count_atoms: 36 atoms
+PyMOL>feedback disable,ray,details
+PyMOL>ray
+PyMOL>png tmp/tmp.png
+ ScenePNG: wrote 640x480 pixel image to file "tmp/tmp.png".
+PyMOL>load_png tmp/tmp.png
+ Scene: loaded image from 'tmp/tmp.png'.

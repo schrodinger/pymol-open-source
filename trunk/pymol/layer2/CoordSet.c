@@ -521,7 +521,7 @@ void CoordSetRender(CoordSet *I,CRay *ray,Pickable **pick,int pass)
     " CoordSetRender: entered (%p).\n",I
     ENDFD;
 
-  if(I->Name[0])
+  if((!pass)&&I->Name[0])
     ButModeCaption(I->Name);
   for(a=0;a<I->NRep;a++)
     if(I->Active[a])

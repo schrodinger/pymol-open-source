@@ -42,6 +42,11 @@ del all
 load tmp/small01.mol
 count_atoms
 
+feedback disable,ray,details
+ray
+png tmp/tmp.png
+load_png tmp/tmp.png
+
 /print "END-LOG"
 
 

@@ -666,7 +666,7 @@ int ExecutiveSetTitle(char *name,int state,char *text)
   } else {
     result = ObjectMoleculeSetStateTitle(obj,state,text);
   }
-  OrthoDirty();
+  SceneDirty();
   return(result);
 }
 /*========================================================================*/
