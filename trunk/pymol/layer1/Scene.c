@@ -3135,6 +3135,11 @@ void SceneUpdate(void)
       if(rec->obj->fUpdate) 
         rec->obj->fUpdate(rec->obj);
 	 I->ChangedFlag=false;
+    if(!MovieDefined()) {
+      if(SettingGetGlobal_i(cSetting_frame)!=
+         SettingGetGlobal_i(cSetting_state))
+        SettingSetGlobal_i(cSetting_frame,SettingGetGlobal_i(cSetting_state));
+    }
   }
   PRINTFD(FB_Scene)
     " SceneUpdate: leaving...\n"

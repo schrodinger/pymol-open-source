@@ -6925,16 +6925,21 @@ int SelectorSelect2(EvalElem *base)
   return(ok);
 }
 /*========================================================================*/
-int SelectorLogic1(EvalElem *base)
+int SelectorLogic1(EvalElem *inp_base)
 {
-  int a,b;
-  int c=0;
-  int flag;
+  register int a,b;
+  register int c=0;
+  register int flag;
+  register EvalElem *base = inp_base;
+  register AtomInfoType *at1,*at2;
+  register SelectorType *I=&Selector;
+  register TableRec *table = I->Table;
+  register ObjectMolecule **i_obj = I->Obj;
+  int ignore_case = I->IgnoreCase;
   int n;
   int a0,a1,a2;
-  AtomInfoType *at1,*at2;
-  SelectorType *I=&Selector;
   ObjectMolecule *lastObj = NULL;
+
   base[0].sele=base[1].sele;
   base[1].sele=NULL;
   base[0].type=STYP_LIST;
@@ -6953,11 +6958,11 @@ int SelectorLogic1(EvalElem *base)
       base[0].sele=Calloc(int,I->NAtom);
       for(a=cNDummyAtoms;a<I->NAtom;a++) {
         if(base[1].sele[a]) {
-          if(I->Obj[I->Table[a].model]!=lastObj) {
-            lastObj = I->Obj[I->Table[a].model];
+          if(i_obj[table[a].model]!=lastObj) {
+            lastObj = i_obj[table[a].model];
             ObjectMoleculeUpdateNeighbors(lastObj);
           }
-          a0= I->Table[a].atom;
+          a0= table[a].atom;
           n=lastObj->Neighbor[a0];
           n++;
           while(1) {
@@ -6977,11 +6982,11 @@ int SelectorLogic1(EvalElem *base)
       base[0].sele=Calloc(int,I->NAtom);
       for(a=cNDummyAtoms;a<I->NAtom;a++) {
         if(base[1].sele[a]) {
-          if(I->Obj[I->Table[a].model]!=lastObj) {
-            lastObj = I->Obj[I->Table[a].model];
+          if(i_obj[table[a].model]!=lastObj) {
+            lastObj = i_obj[table[a].model];
             ObjectMoleculeUpdateNeighbors(lastObj);
           }
-          a0= I->Table[a].atom;
+          a0= table[a].atom;
           n=lastObj->Neighbor[a0];
           n++;
           while(1) {
@@ -7000,18 +7005,18 @@ int SelectorLogic1(EvalElem *base)
       base[0].sele=Calloc(int,I->NAtom);
       for(a=cNDummyAtoms;a<I->NAtom;a++) {
         if(base[1].sele[a]) {
-          if(I->Obj[I->Table[a].model]!=lastObj) {
-            lastObj = I->Obj[I->Table[a].model];
+          if(i_obj[table[a].model]!=lastObj) {
+            lastObj = i_obj[table[a].model];
             b = a;
             while(b>=0) {
-              if(I->Obj[I->Table[b].model]!=lastObj) 
+              if(i_obj[table[b].model]!=lastObj) 
                 break;
               base[0].sele[b]=1;
               b--;
             }
             b=a+1;
             while(b<I->NAtom) {
-              if(I->Obj[I->Table[b].model]!=lastObj) 
+              if(i_obj[table[b].model]!=lastObj) 
                 break;
               base[0].sele[b]=1;
               b++;
@@ -7027,20 +7032,20 @@ int SelectorLogic1(EvalElem *base)
 		  {
 			 if(base[0].sele[a]) 
 			   {
-              at1=&I->Obj[I->Table[a].model]->AtomInfo[I->Table[a].atom];
+              at1=&i_obj[table[a].model]->AtomInfo[table[a].atom];
               b = a-1;
               while(b>=0) {
                 if(!base[0].sele[b]) {
                   flag = false;
-                  if(I->Table[a].model==I->Table[b].model)
+                  if(table[a].model==table[b].model)
                     {
-                      at2=&I->Obj[I->Table[b].model]->AtomInfo[I->Table[b].atom];
+                      at2=&i_obj[table[b].model]->AtomInfo[table[b].atom];
                       if(at1->chain[0]==at2->chain[0])
                         if(at1->resv==at2->resv)
                           if(at1->discrete_state==at2->discrete_state)
-                            if(WordMatch(at1->resi,at2->resi,I->IgnoreCase)<0)
-                              if(WordMatch(at1->resn,at2->resn,I->IgnoreCase)<0)
-                                if(WordMatch(at1->segi,at2->segi,I->IgnoreCase)<0) {
+                            if(WordMatch(at1->resi,at2->resi,ignore_case)<0)
+                              if(WordMatch(at1->resn,at2->resn,ignore_case)<0)
+                                if(WordMatch(at1->segi,at2->segi,ignore_case)<0) {
                                   base[0].sele[b]=true;
                                   c++;
                                   flag=1;
@@ -7055,15 +7060,15 @@ int SelectorLogic1(EvalElem *base)
               while(b<I->NAtom) {
                 if(!base[0].sele[b]) {
                   flag=false;
-                  if(I->Table[a].model==I->Table[b].model)
+                  if(table[a].model==table[b].model)
                     {
-                      at2=&I->Obj[I->Table[b].model]->AtomInfo[I->Table[b].atom];
+                      at2=&i_obj[table[b].model]->AtomInfo[table[b].atom];
                       if(at1->chain[0]==at2->chain[0])
                         if(at1->resv==at2->resv)
                           if(at1->discrete_state==at2->discrete_state)
-                            if(WordMatch(at1->resi,at2->resi,I->IgnoreCase)<0)
-                              if(WordMatch(at1->resn,at2->resn,I->IgnoreCase)<0)
-                                if(WordMatch(at1->segi,at2->segi,I->IgnoreCase)<0) {
+                            if(WordMatch(at1->resi,at2->resi,ignore_case)<0)
+                              if(WordMatch(at1->resn,at2->resn,ignore_case)<0)
+                                if(WordMatch(at1->segi,at2->segi,ignore_case)<0) {
                                   base[0].sele[b]=true;
                                   c++;
                                   flag=1;
@@ -7083,10 +7088,10 @@ int SelectorLogic1(EvalElem *base)
             {
               base[0].sele[a]=false;
               
-              if(I->Obj[I->Table[a].model]->AtomInfo[I->Table[a].atom].protons == cAN_C)
+              if(i_obj[table[a].model]->AtomInfo[table[a].atom].protons == cAN_C)
                 if(WordMatchCommaExact("CA",
-                                     I->Obj[I->Table[a].model]->AtomInfo[I->Table[a].atom].name,
-                                       I->IgnoreCase)<0)
+                                     i_obj[table[a].model]->AtomInfo[table[a].atom].name,
+                                       ignore_case)<0)
                   {
                     base[0].sele[a]=true;
                     c++;
@@ -7099,16 +7104,16 @@ int SelectorLogic1(EvalElem *base)
 		  {
 			 if(base[0].sele[a]) 
 			   {
-              at1=&I->Obj[I->Table[a].model]->AtomInfo[I->Table[a].atom];
+              at1=&i_obj[table[a].model]->AtomInfo[table[a].atom];
               b = a-1;
               while(b>=0) {
                 if(!base[0].sele[b]) {
                   flag = false;
-                  if(I->Table[a].model==I->Table[b].model)
+                  if(table[a].model==table[b].model)
                     {
-                      at2=&I->Obj[I->Table[b].model]->AtomInfo[I->Table[b].atom];
+                      at2=&i_obj[table[b].model]->AtomInfo[table[b].atom];
                         if(at1->chain[0]==at2->chain[0])
-                          if(WordMatch(at1->segi,at2->segi,I->IgnoreCase)<0) {
+                          if(WordMatch(at1->segi,at2->segi,ignore_case)<0) {
                             base[0].sele[b]=true;
                             c++;
                             flag=1;
@@ -7123,11 +7128,11 @@ int SelectorLogic1(EvalElem *base)
               while(b<I->NAtom) {
                 if(!base[0].sele[b]) {
                   flag=false;
-                  if(I->Table[a].model==I->Table[b].model)
+                  if(table[a].model==table[b].model)
                     {
-                      at2=&I->Obj[I->Table[b].model]->AtomInfo[I->Table[b].atom];
+                      at2=&i_obj[table[b].model]->AtomInfo[table[b].atom];
                       if(at1->chain[0]==at2->chain[0])
-                        if(WordMatch(at1->segi,at2->segi,I->IgnoreCase)<0) {
+                        if(WordMatch(at1->segi,at2->segi,ignore_case)<0) {
                           base[0].sele[b]=true;
                           c++;
                           flag=1;
@@ -7146,15 +7151,15 @@ int SelectorLogic1(EvalElem *base)
 		  {
 			 if(base[0].sele[a]) 
 			   {
-              at1=&I->Obj[I->Table[a].model]->AtomInfo[I->Table[a].atom];
+              at1=&i_obj[table[a].model]->AtomInfo[table[a].atom];
               b = a-1;
               while(b>=0) {
                 if(!base[0].sele[b]) {
                   flag = false;
-                  if(I->Table[a].model==I->Table[b].model)
+                  if(table[a].model==table[b].model)
                     {
-                      at2=&I->Obj[I->Table[b].model]->AtomInfo[I->Table[b].atom];
-                      if(WordMatch(at1->segi,at2->segi,I->IgnoreCase)<0) {
+                      at2=&i_obj[table[b].model]->AtomInfo[table[b].atom];
+                      if(WordMatch(at1->segi,at2->segi,ignore_case)<0) {
                         base[0].sele[b]=true;
                         c++;
                         flag=1;
@@ -7169,10 +7174,10 @@ int SelectorLogic1(EvalElem *base)
               while(b<I->NAtom) {
                 if(!base[0].sele[b]) {
                   flag=false;
-                  if(I->Table[a].model==I->Table[b].model)
+                  if(table[a].model==table[b].model)
                     {
-                      at2=&I->Obj[I->Table[b].model]->AtomInfo[I->Table[b].atom];
-                      if(WordMatch(at1->segi,at2->segi,I->IgnoreCase)<0) {
+                      at2=&i_obj[table[b].model]->AtomInfo[table[b].atom];
+                      if(WordMatch(at1->segi,at2->segi,ignore_case)<0) {
                         base[0].sele[b]=true;
                         c++;
                         flag=1;
@@ -7208,8 +7213,8 @@ int SelectorLogic1(EvalElem *base)
           
           /* mark atoms by fragment */
           for(a=0;a<I->NAtom;a++) {
-            at=I->Table[a].atom;
-            obj=I->Obj[I->Table[a].model];
+            at=table[a].atom;
+            obj=i_obj[table[a].model];
             s=obj->AtomInfo[at].selEntry;
             for(f=0;f<n_frag;f++) {
               if(SelectorIsMember(s,fsele[f])) {
@@ -7258,7 +7263,7 @@ int SelectorLogic1(EvalElem *base)
             stk[stkDepth]=a;
             stkDepth++;
 
-            obj=I->Obj[I->Table[a].model];
+            obj=i_obj[table[a].model];
             if(obj!=lastObj) {
               lastObj = obj;
               ObjectMoleculeUpdateNeighbors(obj);
@@ -7269,7 +7274,7 @@ int SelectorLogic1(EvalElem *base)
               a=stk[stkDepth];
               base[0].sele[a]=1;
               c++;
-              at=I->Table[a].atom; /* start walk from this location */
+              at=table[a].atom; /* start walk from this location */
               ai=obj->AtomInfo+at;
 
               s=obj->Neighbor[at]; /* add neighbors onto the stack */
