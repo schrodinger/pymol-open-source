@@ -164,6 +164,10 @@ if pymol_launch != 3: # if this isn't a dry run
       _session_save_tasks = [ None ]
       _session_restore_tasks = [ None ]
 
+      # standard input reading thread
+
+      _stdin_reader_thread = None
+      
       # special handling for win32
 
       if sys.platform=='win32':
@@ -194,17 +198,12 @@ if pymol_launch != 3: # if this isn't a dry run
             traceback.print_exc()
          return None
 
-      def stdin_reader(): # dedicated thread for reading standard input
-         import sys
-         from pymol import cmd
-         while 1:
-            l = sys.stdin.readline()
-            if l!="":
-               cmd.do(l)
-            else:
-               cmd.quit()
-
       def exec_deferred():
+         if invocation.options.read_stdin:
+            import parser
+            _stdin_reader_thread = threading.Thread(target=parser.stdin_reader)
+            _stdin_reader_thread.setDaemon(1)
+            _stdin_reader_thread.start()
          try:
             cmd.config_mouse(quiet=1)
             for a in invocation.options.deferred:
@@ -222,10 +221,6 @@ if pymol_launch != 3: # if this isn't a dry run
                   cmd.load(a,quiet=0)
          except:
             traceback.print_exc()
-         if invocation.options.read_stdin:
-            t = threading.Thread(target=stdin_reader)
-            t.setDaemon(1)
-            t.start()
 
       def adapt_to_hardware():
          (vendor,renderer,version) = cmd.get_renderer()

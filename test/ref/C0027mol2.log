@@ -63,7 +63,7 @@ PyMOL>count_atoms
  count_atoms: 387 atoms
 PyMOL>dele all
 PyMOL>load dat/small03.mol2, multiplex=1
- CmdLoad: loaded 15 objects.
+ CmdLoad: loaded 16 objects from "dat/small03.mol2".
 PyMOL>print cmd.get_names()
 ['AGLYSL01', 'AMHTAR01', 'AMPTRB10', 'ARGIND11', 'BAOXLM01', 'BBSPRT10', 'BEVJER10', 'BEWCUB', 'BEWKUJ04', 'BIHKEI01', 'BIPDEJ02', 'BIPJUF10', 'BIPYCL01', 'BITNAT10', 'BIYBIU10', 'BODKOU']
 PyMOL>print cmd.count_states()
@@ -74,7 +74,7 @@ PyMOL>dele all
 PyMOL>set multiplex, 1
  Setting: multiplex set to 1.
 PyMOL>load dat/small03.mol2
- CmdLoad: loaded 15 objects.
+ CmdLoad: loaded 16 objects from "dat/small03.mol2".
 PyMOL>print cmd.get_names()
 ['AGLYSL01', 'AMHTAR01', 'AMPTRB10', 'ARGIND11', 'BAOXLM01', 'BBSPRT10', 'BEVJER10', 'BEWCUB', 'BEWKUJ04', 'BIHKEI01', 'BIPDEJ02', 'BIPJUF10', 'BIPYCL01', 'BITNAT10', 'BIYBIU10', 'BODKOU']
 PyMOL>print cmd.count_states()

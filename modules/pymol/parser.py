@@ -71,6 +71,26 @@ if __name__=='pymol.parser':
    sc_path[nest]="default"
    embed_sentinel[nest]=None
 
+   def stdin_reader(): # dedicated thread for reading standard input
+      global nest, embed_sentinel
+      import sys
+      from pymol import cmd
+      while 1:
+         l = sys.stdin.readline()
+         if l!="":
+            if nest==0:
+               # if we're reading embedded input on stdin
+               # then bypass PyMOL C code altogether
+               if embed_sentinel[nest]!=None:
+                  parse(l)
+               else:
+                  cmd.do(l)
+            else:
+               cmd.do(l)
+         elif not pymol.invocation.options.keep_thread_alive:
+            cmd.quit()
+      pymol._stdin_reader_thread = None
+      
    def get_default_key():
       return os.path.splitext(os.path.basename(sc_path[nest]))[0]
 

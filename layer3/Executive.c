@@ -546,8 +546,8 @@ void ExecutiveLoadMOL2(PyMOLGlobals *G,CObject *origObj,char *fname,
           ExecutiveManageObject(G,obj,true,true);
           if(eff_frame<0)
             eff_frame = ((ObjectMolecule*)obj)->NCSet-1;
-          if(multiplex>0) {
-            sprintf(buf," CmdLoad: loaded %d objects.\n",n_processed);
+          if(n_processed>0) {
+            sprintf(buf," CmdLoad: loaded %d objects from \"%s\".\n",n_processed+1,fname);
           } else {
             if(!is_string)
               sprintf(buf," CmdLoad: \"%s\" loaded as \"%s\".\n",
@@ -777,7 +777,7 @@ void ExecutiveProcessPDBFile(PyMOLGlobals *G,CObject *origObj,char *fname,
               } else {
                 sprintf(pdb_name,"%s_%04d",oname,n_processed+1);
               }
-            } else {
+            } else if(multiplex) { 
               strcpy(cur_name,pdb_name);
               sprintf(pdb_name,"%s_%04d",cur_name,n_processed+1);
             }
@@ -793,7 +793,7 @@ void ExecutiveProcessPDBFile(PyMOLGlobals *G,CObject *origObj,char *fname,
           if(eff_frame<0)
             eff_frame = ((ObjectMolecule*)obj)->NCSet-1;
           if(buf) {
-            if(n_processed<2) {
+            if(n_processed<1) {
               if(!is_string)
                 sprintf(buf," CmdLoad: \"%s\" loaded as \"%s\".\n",
                         fname,oname);
@@ -801,7 +801,7 @@ void ExecutiveProcessPDBFile(PyMOLGlobals *G,CObject *origObj,char *fname,
                 sprintf(buf," CmdLoad: PDB-string loaded into object \"%s\", state %d.\n",
                         oname,eff_frame+1);
             } else {
-                sprintf(buf," CmdLoad: \"%s\" loaded.\n",fname);
+              sprintf(buf," CmdLoad: loaded %d objects from \"%s\".\n",n_processed+1,fname);
             }
           }
             

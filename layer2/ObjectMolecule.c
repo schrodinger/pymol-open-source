@@ -7117,7 +7117,7 @@ void ObjectMoleculeSeleOp(ObjectMolecule *I,int sele,ObjectMoleculeOpRec *op)
                              vv2=I->CSet[b]->Coord+(3*a1);
                              *(vt2)   = ((premult * (* vt2   )) + *(vv2++))/divisor;
                              *(vt2+1) = ((premult * (*(vt2+1))) + *(vv2++))/divisor;
-                             *(vt2+2) = ((premult * (*(vv2++))) + *(vv2++))/divisor;
+                             *(vt2+2) = ((premult * (*(vt2+2))) + *(vv2++))/divisor;
                            }
                          }
                        }
