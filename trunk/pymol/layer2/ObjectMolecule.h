@@ -135,9 +135,9 @@ void ObjectMoleculeUndo(ObjectMolecule *I,int dir);
 void ObjectMoleculePrepareAtom(ObjectMolecule *I,int index,AtomInfoType *ai);
 void ObjectMoleculeReplaceAtom(ObjectMolecule *I,int index,AtomInfoType *ai);
 void ObjectMoleculeGetUniqueName(ObjectMolecule *I,int index,AtomInfoType *ai);
-void ObjectMoleculePreposReplAtom(ObjectMolecule *I,int index,int state,
-                                   AtomInfoType *ai,float *v);
+void ObjectMoleculePreposReplAtom(ObjectMolecule *I,int index,AtomInfoType *ai);
 void ObjectMoleculeCreateSpheroid(ObjectMolecule *I);
+int ObjectMoleculeSetAtomVertex(ObjectMolecule *I,int state,int index,float *v);
 
 #endif
 

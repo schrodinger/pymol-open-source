@@ -1362,6 +1362,15 @@ def unmask(*arg):
       unlock()
    return r
 
+def replace(name,geom,valence):
+   r = 1
+   try:
+      lock()
+      r = _cmd.replace(str(name),int(geom),int(valence))
+   finally:
+      unlock()
+   return r
+
 def zoom(*arg):
    '''
 DESCRIPTION
@@ -1720,6 +1729,16 @@ def _special(k,x,y):
          else:
             apply(special[k][1],())
    return None
+
+def _ctrl(k):
+   if ctrl.has_key(k):
+      if ctrl[k][0]:
+         if ctrl[k][1]:
+            apply(ctrl[k][0],ctrl[k][2])
+         else:
+            apply(ctrl[k][0],())
+   return None
+
 
 def set_key(*arg):  
    '''
@@ -2989,8 +3008,8 @@ keyword = {
    'ray'           : [ray          , 0 , 0 , ',' , 0 ],
    'rebuild'       : [rebuild      , 0 , 0 , ',' , 0 ],
    'refresh'       : [refresh      , 0 , 0 , ',' , 0 ],
-   'refresh'       : [refresh      , 0 , 0 , ',' , 0 ],
    'remove'        : [remove       , 1 , 1 , ',' , 0 ],
+   'replace'       : [replace      , 3 , 3 , ',' , 0 ],
    'reset'         : [reset        , 0 , 0 , ',' , 0 ],
    'rewind'        : [rewind       , 0 , 0 , ',' , 0 ],
    'rock'          : [rock         , 0 , 0 , ',' , 0 ],
@@ -3107,27 +3126,27 @@ special = {
 }
 
 ctrl = {
-   'b' : [ None                   , 0 , None ],
-   'c' : [ None                   , 0 , None ],   
-   'f' : [ None                   , 0 , None ],   
-   'g' : [ None                   , 0 , None ],
-   'h' : [ None                   , 0 , None ],   
-   'j' : [ None                   , 0 , None ],
-   'k' : [ None                   , 0 , None ],   
-   'l' : [ None                   , 0 , None ],   
-   'n' : [ None                   , 0 , None ],   
-   'o' : [ None                   , 0 , None ],   
-   'p' : [ None                   , 0 , None ],
-   'q' : [ None                   , 0 , None ],   
-   'r' : [ ray                    , 0 , None ],   
-   's' : [ None                   , 0 , None ],
-   't' : [ None                   , 0 , None ],   
-   'u' : [ None                   , 0 , None ],   
-   'v' : [ None                   , 0 , None ],
-   'w' : [ None                   , 0 , None ],   
-   'x' : [ None                   , 0 , None ],
-   'y' : [ None                   , 0 , None ],
-   'z' : [ None                   , 0 , None ],   
+   'B' : [ None                   , 0 , None ],
+   'C' : [ replace                , 1 , ('C',4,4) ],   
+   'F' : [ None                   , 0 , None ],   
+   'G' : [ None                   , 0 , None ],
+   'H' : [ None                   , 0 , None ],   
+   'J' : [ None                   , 0 , None ],
+   'K' : [ None                   , 0 , None ],   
+   'L' : [ None                   , 0 , None ],   
+   'N' : [ None                   , 0 , None ],   
+   'O' : [ None                   , 0 , None ],   
+   'P' : [ None                   , 0 , None ],
+   'Q' : [ None                   , 0 , None ],   
+   'R' : [ ray                    , 0 , None ],   
+   'S' : [ None                   , 0 , None ],
+   'T' : [ None                   , 0 , None ],   
+   'U' : [ None                   , 0 , None ],   
+   'V' : [ None                   , 0 , None ],
+   'W' : [ None                   , 0 , None ],   
+   'X' : [ None                   , 0 , None ],
+   'Y' : [ None                   , 0 , None ],
+   'Z' : [ None                   , 0 , None ],   
    }
 class loadable:
    pdb = 0

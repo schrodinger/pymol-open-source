@@ -58,6 +58,7 @@ Z* -------------------------------------------------------------------
 #include"P.h"
 #include"PConv.h"
 #include"Control.h"
+#include"Editor.h"
 
 #define cLoadTypePDB 0
 #define cLoadTypeMOL 1
@@ -146,6 +147,8 @@ static PyObject *CmdPaste(PyObject *self, 	PyObject *args);
 static PyObject *CmdPNG(PyObject *self, 	PyObject *args);
 static PyObject *CmdProtect(PyObject *self, PyObject *args);
 static PyObject *CmdQuit(PyObject *self, 	PyObject *args);
+static PyObject *CmdReplace(PyObject *self, PyObject *args);
+
 static PyObject *CmdReset(PyObject *self, PyObject *args);
 static PyObject *CmdRay(PyObject *self, 	PyObject *args);
 static PyObject *CmdRebuild(PyObject *self, PyObject *args);
@@ -238,6 +241,7 @@ static PyMethodDef Cmd_methods[] = {
 	{"refresh_now",  CmdRefreshNow,   METH_VARARGS },
 	{"remove",	     CmdRemove,       METH_VARARGS },
 	{"render",	     CmdRay,          METH_VARARGS },
+   {"replace",      CmdReplace,      METH_VARARGS },
 	{"reset",        CmdReset,        METH_VARARGS },
 	{"reset_rate",	  CmdResetRate,    METH_VARARGS },
 	{"rock",	        CmdRock,         METH_VARARGS },
@@ -260,6 +264,18 @@ static PyMethodDef Cmd_methods[] = {
 	{"zoom",	        CmdZoom,         METH_VARARGS },
 	{NULL,		     NULL}		/* sentinel */
 };
+
+static PyObject *CmdReplace(PyObject *self, 	PyObject *args)
+{
+  int i1,i2;
+  char *str1;
+  PyArg_ParseTuple(args,"sii",&str1,&i1,&i2);
+  APIEntry();
+  EditorReplace(str1,i1,i2);
+  APIExit();
+  Py_INCREF(Py_None);
+  return Py_None;  
+}
 
 static PyObject *CmdUndo(PyObject *self, PyObject *args)
 {

@@ -185,6 +185,28 @@ int CoordSetGetAtomVertex(CoordSet *I,int at,float *v)
 }
 
 /*========================================================================*/
+int CoordSetSetAtomVertex(CoordSet *I,int at,float *v)
+{
+  ObjectMolecule *obj;
+  int a1 = 01;
+  int result = 0;
+
+  obj = I->Obj;
+  if(obj->DiscreteFlag) {
+    if(I==obj->DiscreteCSet[at])
+      a1=obj->DiscreteAtmToIdx[at];
+  } else 
+    a1=I->AtmToIdx[at];
+  
+  if(a1>=0) {
+    result = 1;
+    copy3f(v,I->Coord+3*a1);
+  }
+
+  return(result);
+}
+
+/*========================================================================*/
 void CoordSetRealToFrac(CoordSet *I,CCrystal *cryst)
 {
   int a;

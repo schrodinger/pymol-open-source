@@ -35,5 +35,6 @@ void EditorDrag(ObjectMolecule *obj,int index,int mode,int state,float *pt,float
 
 void EditorSetActiveObject(ObjectMolecule *obj,int state);
 ObjectMolecule *EditorDragObject(void);
+void EditorReplace(char *elem,int geom,int valence);
 
 #endif

@@ -388,41 +388,54 @@ void ObjectMoleculePrepareAtom(ObjectMolecule *I,int index,AtomInfoType *ai)
     strcpy(ai->resn,ai0->resn);    
     if((ai->elem[0]==ai0->elem[0])&&(ai->elem[1]==ai->elem[1]))
       ai->color=ai0->color;
+    else
+      ai->color=AtomInfoGetColor(ai);
     for(a=0;a<cRepCnt;a++)
       ai->visRep[a]=ai0->visRep[a];
     ObjectMoleculeGetUniqueName(I,index,ai);
+    AtomInfoAssignParameters(ai);
   }
 }
 /*========================================================================*/
-void ObjectMoleculePreposReplAtom(ObjectMolecule *I,int index,int state,
-                                   AtomInfoType *ai,float *v)
+void ObjectMoleculePreposReplAtom(ObjectMolecule *I,int index,
+                                   AtomInfoType *ai)
 {
   int n;
   int a1;
   AtomInfoType *ai1;
-  float v0[3],v1[3];
+  float v0[3],v1[3],v[3];
   float d0[3],d,n0[3];
+  int a;
   ObjectMoleculeUpdateNeighbors(I);
-  n = I->Neighbor[index];
-  n++; /* skip count */
-  if(ObjectMoleculeGetAtomVertex(I,state,index,v0)) {
-    copy3f(v0,v); /* default is direct superposition */
-    while(1) { /* look for an attached non-hydrogen as a base */
-      a1 = I->Neighbor[n];
-      n+=2;
-      if(a1<0) break;
-      ai1=I->AtomInfo+a1;
-      if(ai1->protons!=1) 
-        if(ObjectMoleculeGetAtomVertex(I,state,index,v1)) {        
-          d = AtomInfoGetBondLength(ai,ai1);
-          subtract3f(v0,v1,d0);
-          normalize3f(n0);
-          scale3f(n0,d,d0);
-          add3f(d0,v1,v);
-          break;
+  for(a=0;a<I->NCSet;a++) {
+    if(I->CSet[a]) {
+      if(ObjectMoleculeGetAtomVertex(I,a,index,v0)) {
+        copy3f(v0,v); /* default is direct superposition */
+        n = I->Neighbor[index];
+        n++; /* skip count */
+        while(1) { /* look for an attached non-hydrogen as a base */
+          a1 = I->Neighbor[n];
+          n+=2;
+          if(a1<0) break;
+          ai1=I->AtomInfo+a1;
+          if(ai1->protons!=1) 
+            if(ObjectMoleculeGetAtomVertex(I,a,a1,v1)) {        
+              d = AtomInfoGetBondLength(ai,ai1);
+              subtract3f(v0,v1,n0);
+              normalize3f(n0);
+              scale3f(n0,d,d0);
+              add3f(d0,v1,v);
+              dump3f(v1,"base");
+              dump3f(v,"new");
+              printf("D=%8.3f\n",d);
+              ObjectMoleculeSetAtomVertex(I,a,index,v);
+              break;
+            }
         }
+        
       }
     }
+  }
 }
 /*========================================================================*/
 void ObjectMoleculeSaveUndo(ObjectMolecule *I,int state)
@@ -3067,6 +3080,17 @@ int ObjectMoleculeGetAtomVertex(ObjectMolecule *I,int state,int index,float *v)
   state = state % I->NCSet;
   if(I->CSet[state]) 
     result = CoordSetGetAtomVertex(I->CSet[state],index,v);
+  return(result);
+}
+/*========================================================================*/
+int ObjectMoleculeSetAtomVertex(ObjectMolecule *I,int state,int index,float *v)
+{
+  int result = 0;
+  if(state<0) state=0;
+  if(I->NCSet==1) state=0;
+  state = state % I->NCSet;
+  if(I->CSet[state]) 
+    result = CoordSetSetAtomVertex(I->CSet[state],index,v);
   return(result);
 }
 /*========================================================================*/
