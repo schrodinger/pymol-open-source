@@ -271,12 +271,12 @@ if pymol_launch != 3: # if this isn't a dry run
             f=os.popen("grep -c processor /proc/cpuinfo")
             l=f.readlines()
             f.close()
-            ncpu=int(l)
+            ncpu=int(l[0][0])
          elif sys.platform[0:4]=='irix':
             f=os.popen("hinv | grep IP | grep Processor | grep HZ")
             l=f.readlines()
             f.close()
-            ncpu=int(l[0])
+            ncpu=int(l[0][0])
          if ncpu>1:
              cmd.set("max_threads",ncpu)
              if invocation.options.show_splash:  
