@@ -1054,6 +1054,7 @@ void SettingGenerateSideEffects(int index,char *sele,int state)
   case cSetting_fog_start:
   case cSetting_two_sided_lighting:
   case cSetting_transparency_mode:
+  case cSetting_dot_normals:
 	 SceneDirty();
 	 break;
   case cSetting_stereo_shift:

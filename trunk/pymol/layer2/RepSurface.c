@@ -217,8 +217,12 @@ void RepSurfaceRender(RepSurface *I,CRay *ray,Pickable **pick)
       CGORenderGL(I->debug,NULL,NULL,NULL);
 	 if(I->Type==1) {
       /* no triangle information, so we're rendering dots only */
-      
+
+    int normals = SettingGet_f(I->R.cs->Setting,I->R.obj->Setting,cSetting_dot_normals);
+    
       int use_dlst;
+      if(!normals)
+        SceneResetNormal(true);
       use_dlst = (int)SettingGet(cSetting_use_display_lists);
       if(use_dlst&&I->R.displayList) {
         glCallList(I->R.displayList);
@@ -249,7 +253,8 @@ void RepSurfaceRender(RepSurface *I,CRay *ray,Pickable **pick)
                 if(!I->oneColorFlag) {
                   glColor3fv(vc);
                 }
-                glNormal3fv(vn);
+                if(normals) 
+                  glNormal3fv(vn);
                 glVertex3fv(v);
               }
               vi++;
