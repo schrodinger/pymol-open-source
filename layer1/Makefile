@@ -10,7 +10,7 @@ include .includes
 layer: $(DEPS) $(OBJS)
 
 depends: $(DEPS)
-	cat *.p >> .depends;cat .files .depends > .includes;
+	cat *.p > .depends;cat .files .depends > .includes;
 
 
 

@@ -82,6 +82,44 @@ void ExecutiveReshape(Block *block,int width,int height);
 void ExecutiveObjMolSeleOp(int sele,ObjectMoleculeOpRec *op);
 SpecRec *ExecutiveFindSpec(char *name);
 
+/*========================================================================*/
+void ExecutiveRenameAtoms(char *s1)
+{
+}
+/*========================================================================*/
+void ExecutiveFuse(char *s0,char *s1)
+{
+  int i0=-1;
+  int i1=-1;
+  int sele0,sele1;
+  ObjectMolecule *obj0,*obj1;
+
+  sele0 = SelectorIndexByName(s0);
+  if(sele0>=0) {
+    sele1 = SelectorIndexByName(s1);
+    if(sele1>=0) {
+      EditorSetActiveObject(NULL,0);
+      obj0 = SelectorGetSingleObjectMolecule(sele0);
+      obj1 = SelectorGetSingleObjectMolecule(sele1);
+      if(obj0)
+        i0 = ObjectMoleculeGetAtomIndex(obj0,sele0);
+      if(obj1)
+        i1 = ObjectMoleculeGetAtomIndex(obj1,sele1);
+      if(obj0&&obj1&&(i0>=0)&&(i1>=0)&&(obj0!=obj1)) {
+        ObjectMoleculeVerifyChemistry(obj0);
+        ObjectMoleculeVerifyChemistry(obj1);
+        if((obj0->AtomInfo[i0].protons==1)&&
+           (obj1->AtomInfo[i1].protons==1))
+          ObjectMoleculeFuse(obj1,i1,obj0,i0,0);
+        else if((obj0->AtomInfo[i0].protons!=1)&&
+                (obj1->AtomInfo[i1].protons!=1))
+          ObjectMoleculeFuse(obj1,i1,obj0,i0,1);
+        else 
+          ErrMessage("Fuse","Can't fuse between a hydrogen and a non-hydrogen");
+      }
+    }
+  }
+}
 
 /*========================================================================*/
 void ExecutiveSpheroid(char *name)  /* EXPERIMENTAL */
@@ -893,8 +931,7 @@ float ExecutiveRMSPairs(WordType *sele,int pairs,int mode)
 void ExecutiveUpdateObjectSelection(struct Object *obj)
 {
   if(obj->type==cObjectMolecule) {
-    SelectorDelete(obj->Name);  
-    SelectorCreate(obj->Name,NULL,(ObjectMolecule*)obj,true); /* create a selection with same name */ 
+    SelectorUpdateObjectSele((ObjectMolecule*)obj);  
   }
 }
 /*========================================================================*/
@@ -1467,12 +1504,15 @@ void ExecutiveDelete(char *name)
   CExecutive *I = &Executive;
   SpecRec *rec = NULL;
   int all_flag=false;
+  WordType name_copy; /* needed in case the passed string changes */
+
   if(WordMatch(name,"all",true)<0) all_flag=true;
+  strcpy(name_copy,name);
   while(ListIterate(I->Spec,rec,next,SpecList))
 	 {
 		if(rec->type==cExecObject)
 		  {
-			 if(all_flag||(WordMatch(name,rec->obj->Name,true)<0))
+			 if(all_flag||(WordMatch(name_copy,rec->obj->Name,true)<0))
 				{
               if(rec->visible) 
                 SceneObjectDel(rec->obj);
@@ -1486,7 +1526,7 @@ void ExecutiveDelete(char *name)
 		else if(rec->type==cExecSelection)
 		  {
 
-			 if(all_flag||(WordMatch(name,rec->name,true)<0))
+			 if(all_flag||(WordMatch(name_copy,rec->name,true)<0))
 				{
 				  SelectorDelete(rec->name);
 				  ListDelete(I->Spec,rec,next,SpecList);

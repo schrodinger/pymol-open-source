@@ -28,8 +28,7 @@ void SelectorToggle(int rep,char *name);
 void SelectorCylinder(char *sele,char *onoff);
 int SelectorUpdateTable(void);
 int SelectorIndexByName(char *sele);
-int SelectorMatch(int ref,int sele);
-int SelectorNext(int ref);
+int SelectorIsMember(int start,int sele);
 void SelectorFree(void);
 void SelectorDelete(char *sele);
 void SelectorFreeTmp(char *name);
@@ -42,5 +41,8 @@ int SelectorGetSeleNCSet(int sele);
 void SelectorCreateObjectMolecule(int sele,char *name,int target_state,int state);
 int SelectorSubdivideObject(char *pref,ObjectMolecule *obj,int sele1,int sele2,
                             char *fragPref,char *compName);
+ObjectMolecule *SelectorGetSingleObjectMolecule(int sele);
+void SelectorUpdateObjectSele(ObjectMolecule *obj);
+void SelectorDeletePrefixSet(char *pref);
 
 #endif

@@ -1341,6 +1341,25 @@ def attach(name,geom,valence):
       unlock()
    return r
 
+def fuse(*arg):
+   la = len(arg)
+   if la==1:
+      print "Error: invalid arguments for fuse command."
+      raise RuntimeError
+   else:
+      if la>1:
+         sel1 = arg[0]
+         sel2 = arg[1]
+      else:
+         sel1 = "(pk1)"
+         sel2 = "(pk3)"
+      try:
+         lock()
+         r = _cmd.fuse(sel1,sel2)
+      finally:
+         unlock()
+   return r
+
 def refill():
    r = 1
    try:
@@ -1443,6 +1462,20 @@ PYMOL API
    try:
       lock()   
       r = _cmd.zoom(a)
+   finally:
+      unlock()
+   return r
+
+def rename(*arg):
+   '''
+   '''
+   if len(arg):
+      a=arg[0]
+   else:
+      a="(all)"
+   try:
+      lock()   
+      r = _cmd.rename(a)
    finally:
       unlock()
    return r
@@ -3026,6 +3059,7 @@ keyword = {
    'flag'          : [flag         , 2 , 2 , '=' , 0 ],
    'fork'          : [dummy        , 1 , 1 , ',' , 3 ],
    'forward'       : [forward      , 0 , 0 , ',' , 0 ],
+   'fuse'          : [fuse         , 0 , 2 , ',' , 0 ],
    'frame'         : [frame        , 1 , 1 , ',' , 0 ],
    'h_add'         : [h_add        , 0 , 1 , ',' , 0 ],
    'help'          : [help         , 0 , 1 , ',' , 0 ],
@@ -3059,6 +3093,7 @@ keyword = {
    'rebuild'       : [rebuild      , 0 , 0 , ',' , 0 ],
    'refresh'       : [refresh      , 0 , 0 , ',' , 0 ],
    'remove'        : [remove       , 1 , 1 , ',' , 0 ],
+   'rename'        : [rename       , 1 , 1 , ',' , 0 ],
    'replace'       : [replace      , 3 , 3 , ',' , 0 ],
    'reset'         : [reset        , 0 , 0 , ',' , 0 ],
    'rewind'        : [rewind       , 0 , 0 , ',' , 0 ],
@@ -3176,22 +3211,23 @@ special = {
 }
 
 ctrl = {
-   'B' : [ bond                   , 0 , None ],
+   'B' : [ replace                , 1 , ('Br',1,1) ],
    'C' : [ replace                , 1 , ('C',4,4) ],
    'D' : [ remove_picked          , 0 , None ],   
-   'F' : [ h_add                  , 1 , ("ed1",) ],   
+   'F' : [ replace                , 1 , ('F',1,1) ],   
    'G' : [ replace                , 1 , ('H',1,1) ],
-   'J' : [ None                   , 0 , None ],
-   'K' : [ None                   , 0 , None ],   
-   'L' : [ None                   , 0 , None ],   
+   'I' : [ replace                , 1 , ('I',1,1) ],
+   'J' : [ alter                  , 1 , ('ed1','formal_charge=-1.0') ],
+   'K' : [ alter                  , 1 , ('ed1','formal_charge =1.0') ],
+   'L' : [ replace                , 1 , ('Cl',1,1)],   
    'N' : [ replace                , 1 , ('N',4,3) ],
    'O' : [ replace                , 1 , ('O',4,2) ],   
    'P' : [ replace                , 0 , ('P',4,1) ],
-   'Q' : [ None                   , 0 , None ],   
+   'Q' : [ h_add                  , 1 , ("ed1",) ],   
    'R' : [ refill                 , 0 , None ],   
    'S' : [ replace                , 1 , ('S',4,2) ],
-   'T' : [ None                   , 0 , None ],   
-   'U' : [ None                   , 0 , None ],   
+   'T' : [ bond                   , 0 , None ],   
+   'U' : [ alter                  , 1 , ('ed1','formal_charge =0.0') ],
    'W' : [ cycle_valence          , 0 , None ],   
    'X' : [ None                   , 0 , None ],
    'Y' : [ attach                 , 1 , ('H',1,1) ],
