@@ -1413,13 +1413,13 @@ int SceneClick(Block *block,int button,int x,int y,int mod)
   ObjectMolecule *objMol;
   OrthoLineType buffer,buf1,buf2;
   WordType selName = "";
-  int mode;
   int atIndex;
   int double_click = false;
   char empty_string[1] = "";
   char *sel_mode_kw = empty_string;
-
-  if((!mod&(cOrthoCTRL+cOrthoSHIFT))&&(UtilGetSeconds()-I->LastClickTime)<cDoubleTime)
+  static int mode = 0; /* static declaration works around compiler bug in VC6 */
+  
+  if((!(mod&(cOrthoCTRL+cOrthoSHIFT)))&&(UtilGetSeconds()-I->LastClickTime)<cDoubleTime)
     {
       int dx,dy;
       dx = abs(I->LastWinX - x);
@@ -1448,10 +1448,9 @@ int SceneClick(Block *block,int button,int x,int y,int mod)
   if(double_click)
     mode = cButModeMenu;
   else
-    mode = ButModeTranslate(button,mod);
+    mode = ButModeTranslate(button,mod); 
   I->Button=button;    
   I->SculptingSave = 0;
-
   switch(mode) {
   case cButModeScaleSlabExpand:
     SceneClip(5,1.2F,NULL,0);
@@ -1754,6 +1753,7 @@ int SceneClick(Block *block,int button,int x,int y,int mod)
   case cButModeSeleSet:
   case cButModeSeleToggle:
       sel_mode_kw = SceneGetSeleModeKeyword();
+         
     /* intentional pass through */
 
   case cButModeLB:
@@ -1768,7 +1768,6 @@ int SceneClick(Block *block,int button,int x,int y,int mod)
     if(((int)SettingGet(cSetting_overlay))&&((int)SettingGet(cSetting_text)))
       SceneRender(NULL,0,0,NULL); /* remove overlay if present */
     SceneDontCopyNext();
-
     if(I->StereoMode>1)
       x = x % (I->Width/2);
 
@@ -1847,9 +1846,8 @@ int SceneClick(Block *block,int button,int x,int y,int mod)
         case cButModeMB:
         case cButModeRB:
         case cButModeSeleSet:
-          sprintf(buf2,"(((%s) or %s(%s)) and not ((%s(%s)) in %s(%s)))",
-                  selName,sel_mode_kw,buffer,sel_mode_kw,buffer,sel_mode_kw,selName);
-          SelectorCreate(selName,buf2,NULL,false,NULL);
+         sprintf(buf2,"(%s(%s))",sel_mode_kw,buffer);
+         SelectorCreate(selName,buf2,NULL,false,NULL);
           if(SettingGet(cSetting_auto_hide_selections))
             ExecutiveHideSelections();
           if(SettingGet(cSetting_auto_show_selections))
