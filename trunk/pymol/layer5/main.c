@@ -885,9 +885,10 @@ void MainBusyIdle(void)
   if(PMGUI) {
     if(WindowIsVisible!=PyMOLOption->window_visible) {
       WindowIsVisible = PyMOLOption->window_visible;
-      if(WindowIsVisible)
+      if(WindowIsVisible) {
         p_glutShowWindow();
-      else {
+        OrthoDirty();
+      } else {
         p_glutHideWindow();
       }
     }
