@@ -28,7 +28,8 @@ Z* -------------------------------------------------------------------
 int ExecutiveFixChemistry(char *s1,char *s2,int quiet);
 int ExecutiveGetAtomVertex(char *s1,int state,int index,float *v);
 void ExecutiveProcessPDBFile(CObject *origObj,char *fname, char *oname,
-                             int frame, int discrete,int finish,OrthoLineType buf);
+                             int frame, int discrete,int finish,OrthoLineType buf,
+                             PDBInfoRec *pdb_info);
 
 int ExecutiveDebug(char *name);
 float ExecutiveAlign(char *s1,char *s2,char *mat_file,float gap,float extend,int skip,

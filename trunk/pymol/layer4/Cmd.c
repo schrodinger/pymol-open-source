@@ -101,6 +101,7 @@ Z* -------------------------------------------------------------------
 #define cLoadTypeFLDMap 28
 #define cLoadTypeBRIXMap 29
 #define cLoadTypeGRDMap 30
+#define cLoadTypePQR 31
 
 #define tmpSele "_tmp"
 #define tmpSele1 "_tmp1"
@@ -3727,8 +3728,17 @@ static PyObject *CmdLoad(PyObject *self, PyObject *args)
     
     switch(type) {
     case cLoadTypePDB:
-      ExecutiveProcessPDBFile(origObj,fname,oname,frame,discrete,finish,buf);
+      ExecutiveProcessPDBFile(origObj,fname,oname,frame,discrete,finish,buf,NULL);
       /* special handler for concatenated and annotated files */
+      break;
+    case cLoadTypePQR:
+      {
+        PDBInfoRec pdb_info;
+        UtilZeroMem(&pdb_info,sizeof(PDBInfoRec));
+
+        pdb_info.is_pqr_file = true;        
+        ExecutiveProcessPDBFile(origObj,fname,oname,frame,discrete,finish,buf,&pdb_info);
+      }
       break;
     case cLoadTypeTOP:
       PRINTFD(FB_CCmd) " CmdLoad-DEBUG: loading TOP\n" ENDFD;
@@ -3837,7 +3847,9 @@ static PyObject *CmdLoad(PyObject *self, PyObject *args)
       break;
     case cLoadTypePDBStr:
       PRINTFD(FB_CCmd) " CmdLoad-DEBUG: loading PDBStr\n" ENDFD;
-      obj=(CObject*)ObjectMoleculeReadPDBStr((ObjectMolecule*)origObj,fname,frame,discrete,NULL,NULL,NULL);
+      obj=(CObject*)ObjectMoleculeReadPDBStr((ObjectMolecule*)origObj,
+                                             fname,frame,discrete,
+                                             NULL,NULL,NULL,NULL);
       if(!origObj) {
         if(obj) {
           ObjectSetName(obj,oname);

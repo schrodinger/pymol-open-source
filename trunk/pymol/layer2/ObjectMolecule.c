@@ -6067,7 +6067,8 @@ void ObjectMoleculeMerge(ObjectMolecule *I,AtomInfoType *ai,
 /*========================================================================*/
 #if 0
 ObjectMolecule *ObjectMoleculeLoadPDBFile(ObjectMolecule *obj,char *fname,
-                                          int frame,int discrete,M4XAnnoType *m4x)
+                                          int frame,int discrete,
+                                          M4XAnnoType *m4x,PDBInfoRec *pdb_info)
 {
   ObjectMolecule *I=NULL;
   int ok=true;
@@ -8120,7 +8121,7 @@ ObjectMolecule *ObjectMoleculeLoadMMDFile(ObjectMolecule *obj,char *fname,
 /*========================================================================*/
 ObjectMolecule *ObjectMoleculeReadPDBStr(ObjectMolecule *I,char *PDBStr,int frame,
                                          int discrete,M4XAnnoType *m4x,char *pdb_name,
-                                         char **next_pdb)
+                                         char **next_pdb,PDBInfoRec *pdb_info)
 {
   CoordSet *cset = NULL;
   AtomInfoType *atInfo;
@@ -8159,7 +8160,8 @@ ObjectMolecule *ObjectMoleculeReadPDBStr(ObjectMolecule *I,char *PDBStr,int fram
       }
 
       cset=ObjectMoleculePDBStr2CoordSet(start,&atInfo,&restart,
-                                         segi_override,m4x,pdb_name,next_pdb);	
+                                         segi_override,m4x,pdb_name,
+                                         next_pdb,pdb_info);	
       if(m4x) /* preserve original atom IDs for annotated Metaphorics files */
         if(m4x->annotated_flag)
           aic_mask = (cAIC_b|cAIC_q);

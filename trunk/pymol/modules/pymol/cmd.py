@@ -88,8 +88,8 @@ if __name__=='pymol.cmd':
       r"\.PDB$|\.pdb1$|\.ENT$|\.MOL$|\.P5M$|",
       r"\.mmod$|\.mmd$|\.dat$|\.out$|",
       r"\.MMOD$|\.MMD$|\.DAT$|\.OUT$|",
-      r"\.xplor$|\.pkl$|\.sdf$|", 
-      r"\.XPLOR$|\.PKL$|\.SDF$|",                        
+      r"\.xplor$|\.pkl$|\.sdf$|\.pqr|", 
+      r"\.XPLOR$|\.PKL$|\.SDF$|\.PQR|",                        
       r"\.r3d$|\.xyz$|\.xyz_[0-9]*$|", 
       r"\.R3D$|\.XYZ$|\.XYZ_[0-9]*$|",
       r"\.cc1$|\.cc2$|", # ChemDraw 3D

@@ -97,6 +97,10 @@ typedef struct {
   float cone_dangle;
 } HBondCriteria;
 
+typedef struct {
+  int is_pqr_file;
+} PDBInfoRec;
+
 /* these four letter code are left over from an 
    earlier multicharacter constant implementation
    and should be replaced with something more verbose */
@@ -227,7 +231,7 @@ ObjectMolecule *ObjectMoleculeCopy(ObjectMolecule *obj);
 void ObjectMoleculeFixChemistry(ObjectMolecule *I, int sele1, int sele2);
 
 ObjectMolecule *ObjectMoleculeLoadXYZFile(ObjectMolecule *obj,char *fname,int frame,int discrete);
-ObjectMolecule *ObjectMoleculeLoadPDBFile(ObjectMolecule *obj,char *fname,int frame,int discrete,M4XAnnoType *m4x);
+ObjectMolecule *ObjectMoleculeLoadPDBFile(ObjectMolecule *obj,char *fname,int frame,int discrete,M4XAnnoType *m4x,PDBInfoRec *pdb_info);
 ObjectMolecule *ObjectMoleculeLoadPMOFile(ObjectMolecule *obj,char *fname,int frame,int discrete);
 ObjectMolecule *ObjectMoleculeLoadMOLFile(ObjectMolecule *obj,char *fname,int frame,int discrete);
 ObjectMolecule *ObjectMoleculeLoadMMDFile(ObjectMolecule *obj,char *fname,
@@ -247,8 +251,11 @@ ObjectMolecule *ObjectMoleculeLoadCoords(ObjectMolecule *I,PyObject *coords,int 
 ObjectMolecule *ObjectMoleculeReadPMO(ObjectMolecule *obj,CRaw *pmo,int frame,int discrete);
 
 ObjectMolecule *ObjectMoleculeReadMOLStr(ObjectMolecule *obj,char *molstr,int frame,int discrete);
-ObjectMolecule *ObjectMoleculeReadPDBStr(ObjectMolecule *obj,char *molstr,int frame,int discrete,
-                                         M4XAnnoType *m4x,char *pdb_name,char **next_pdb);
+ObjectMolecule *ObjectMoleculeReadPDBStr(ObjectMolecule *obj,char *molstr,
+                                         int frame,int discrete,
+                                         M4XAnnoType *m4x,char *pdb_name,
+                                         char **next_pdb,PDBInfoRec *pdb_info);
+
 ObjectMolecule *ObjectMoleculeReadMMDStr(ObjectMolecule *I,char *MMDStr,int frame,int discrete);
 ObjectMolecule *ObjectMoleculeReadXYZStr(ObjectMolecule *I,char *PDBStr,int frame,int discrete);
 
@@ -338,12 +345,13 @@ void ObjectMoleculeDummyUpdate(ObjectMolecule *I,int mode);
 /* internal to ObjectMolecule */
 
 struct CoordSet *ObjectMoleculePDBStr2CoordSet(char *buffer,
-                                        AtomInfoType **atInfoPtr,
-                                        char **restart_model,
-                                        char *segi_override,
-                                        M4XAnnoType *m4x,
-                                        char *pdb_name,
-                                        char **next_pdb);
+                                               AtomInfoType **atInfoPtr,
+                                               char **restart_model,
+                                               char *segi_override,
+                                               M4XAnnoType *m4x,
+                                               char *pdb_name,
+                                               char **next_pdb,
+                                               PDBInfoRec *pdb_info);
 
 /* legacy binary file suppoort */
 

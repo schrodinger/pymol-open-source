@@ -445,7 +445,8 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(char *buffer,
                                         char *segi_override,
                                         M4XAnnoType *m4x,
                                         char *pdb_name,
-                                        char **next_pdb)
+                                        char **next_pdb,
+                                        PDBInfoRec *info)
 {
 
   char *p;
@@ -487,6 +488,8 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(char *buffer,
   int ignore_conect = false;
   int have_bond_order = false;
   int seen_model;
+  int have_vdw;
+  float vdw;
 
   if((int)SettingGet(cSetting_pdb_literal_names)) 
     reformat_names = 0;
@@ -1170,7 +1173,7 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(char *buffer,
       if(AFlag&&(!*restart_model))
         {
           ai=atInfo+atomCount;
-          
+          have_vdw = false;
           p=nskip(p,6);
           p=ncopy(cc,p,5);
           if(!sscanf(cc,"%d",&ai->id)) ai->id=0;
@@ -1296,59 +1299,87 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(char *buffer,
           } else {
             ai->cartoon = cCartoon_tube;
           }
-          p=nskip(p,3);
-          p=ncopy(cc,p,8);
-          sscanf(cc,"%f",coord+a);
-          p=ncopy(cc,p,8);
-          sscanf(cc,"%f",coord+(a+1));
-          p=ncopy(cc,p,8);
-          sscanf(cc,"%f",coord+(a+2));
+          if((!info)||(!info->is_pqr_file)) { /* standard PDB file */
 
-          p=ncopy(cc,p,6);
-          if(!sscanf(cc,"%f",&ai->q))
-            ai->q=1.0;
-          
-          p=ncopy(cc,p,6);
-          if(!sscanf(cc,"%f",&ai->b))
-            ai->b=0.0;
-
-          p=nskip(p,6);
-          p=ncopy(cc,p,4);
-          if(!ignore_pdb_segi) {
-            if(!segi_override[0])
-              {
-                if(!sscanf(cc,"%s",ai->segi)) 
-                  ai->segi[0]=0;
-                else {
-                  cc_saved=cc[3];
-                  ncopy(cc,p,4); 
-                  if((cc_saved=='1')&& /* atom ID overflow? (nonstandard use...)...*/
-                     (cc[0]=='0')&& 
-                     (cc[1]=='0')&&
-                     (cc[2]=='0')&&
-                     (cc[3]=='0')&&
-                     atomCount) {
-                    strcpy(segi_override,(ai-1)->segi);
-                    strcpy(ai->segi,(ai-1)->segi);
+            p=nskip(p,3);
+            p=ncopy(cc,p,8);
+            sscanf(cc,"%f",coord+a);
+            p=ncopy(cc,p,8);
+            sscanf(cc,"%f",coord+(a+1));
+            p=ncopy(cc,p,8);
+            sscanf(cc,"%f",coord+(a+2));
+            
+            p=ncopy(cc,p,6);
+            if(!sscanf(cc,"%f",&ai->q))
+              ai->q=1.0;
+            
+            p=ncopy(cc,p,6);
+            if(!sscanf(cc,"%f",&ai->b))
+              ai->b=0.0;
+            
+            p=nskip(p,6);
+            p=ncopy(cc,p,4);
+            if(!ignore_pdb_segi) {
+              if(!segi_override[0])
+                {
+                  if(!sscanf(cc,"%s",ai->segi)) 
+                    ai->segi[0]=0;
+                  else {
+                    cc_saved=cc[3];
+                    ncopy(cc,p,4); 
+                    if((cc_saved=='1')&& /* atom ID overflow? (nonstandard use...)...*/
+                       (cc[0]=='0')&& 
+                       (cc[1]=='0')&&
+                       (cc[2]=='0')&&
+                       (cc[3]=='0')&&
+                       atomCount) {
+                      strcpy(segi_override,(ai-1)->segi);
+                      strcpy(ai->segi,(ai-1)->segi);
+                    }
                   }
+                } else {
+                  strcpy(ai->segi,segi_override);
                 }
-              } else {
-                strcpy(ai->segi,segi_override);
-              }
-          } else {
-            ai->segi[0]=0;
-          }
+            } else {
+              ai->segi[0]=0;
+            }
           
-          p=ncopy(cc,p,2);
-          if(!sscanf(cc,"%s",ai->elem)) 
-            ai->elem[0]=0;          
-          else if(!(((ai->elem[0]>='a')&&(ai->elem[0]<='z'))|| /* don't get confused by PDB misuse */
-                    ((ai->elem[0]>='A')&&(ai->elem[0]<='Z'))))
-            ai->elem[0]=0;                      
+            p=ncopy(cc,p,2);
+            if(!sscanf(cc,"%s",ai->elem)) 
+              ai->elem[0]=0;          
+            else if(!(((ai->elem[0]>='a')&&(ai->elem[0]<='z'))|| /* don't get confused by PDB misuse */
+                      ((ai->elem[0]>='A')&&(ai->elem[0]<='Z'))))
+              ai->elem[0]=0;                      
+            
+            for(c=0;c<cRepCnt;c++) {
+              ai->visRep[c] = false;
+            }
+           
+            /* end normal PDB */
+          } else if(info&&info->is_pqr_file) {
+            /* PQR file format...not well defined, but basically PDB
+               with charge and radius instead of B and Q.  Right now,
+               we insist on PDB column format through the chain ID,
+               and then switch over to whitespace delimited parsing 
+               for the coordinates, charge, and radius */
 
-          for(c=0;c<cRepCnt;c++) {
-            ai->visRep[c] = false;
+            p=ParseWordCopy(cc,p,MAXLINELEN-1);
+            sscanf(cc,"%f",coord+a);
+            p=ParseWordCopy(cc,p,MAXLINELEN-1);
+            sscanf(cc,"%f",coord+(a+1));
+            p=ParseWordCopy(cc,p,MAXLINELEN-1);
+            sscanf(cc,"%f",coord+(a+2));
+
+            p=ParseWordCopy(cc,p,MAXLINELEN-1);
+            if(!sscanf(cc,"%f",&ai->partialCharge))
+              ai->partialCharge=0.0F;
+
+            p=ParseWordCopy(cc,p,MAXLINELEN-1);            
+            if(sscanf(cc,"%f",&vdw)==1)
+              have_vdw = true;
+            
           }
+
           ai->visRep[cRepLine] = auto_show_lines; /* show lines by default */
           ai->visRep[cRepNonbonded] = auto_show_nonbonded; /* show lines by default */
 
@@ -1360,6 +1391,7 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(char *buffer,
           }
           
           AtomInfoAssignParameters(ai);
+          if(have_vdw) ai->vdw = vdw; /* if we read VDW, then use it! */
           ai->color=AtomInfoGetColor(ai);
 
           PRINTFD(FB_ObjectMolecule)

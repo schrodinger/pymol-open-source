@@ -236,7 +236,8 @@ int ExecutiveSetName(char *old_name, char *new_name)
 }
 
 void ExecutiveProcessPDBFile(CObject *origObj,char *fname, char *oname, 
-                             int frame, int discrete,int finish,OrthoLineType buf)
+                             int frame, int discrete,int finish,
+                             OrthoLineType buf,PDBInfoRec *pdb_info)
 {
   int ok=true;
   FILE *f;
@@ -252,7 +253,6 @@ void ExecutiveProcessPDBFile(CObject *origObj,char *fname, char *oname,
   ProcPDBRec *target_rec = NULL;
   char nbrhood_sele[] = "m4x_nearby";
   ProcPDBRec *current = NULL;
-
   f=fopen(fname,"rb");
   if(!f) {
     PRINTFB(FB_ObjectMolecule,FB_Errors)
@@ -302,7 +302,9 @@ void ExecutiveProcessPDBFile(CObject *origObj,char *fname, char *oname,
     if(!origObj) {
 
       obj=(CObject*)ObjectMoleculeReadPDBStr((ObjectMolecule*)origObj,
-                                             start_at,frame,discrete,&current->m4x,pdb_name,&next_pdb);
+                                             start_at,frame,discrete,
+                                             &current->m4x,pdb_name,
+                                             &next_pdb,&pdb_info);
       if(obj) {
         if(next_pdb) { /* NOTE: if set, assume that multiple PDBs are present in the file */
           repeat_flag=true;
@@ -347,7 +349,8 @@ void ExecutiveProcessPDBFile(CObject *origObj,char *fname, char *oname,
       }
     } else {
       ObjectMoleculeReadPDBStr((ObjectMolecule*)origObj,
-                               start_at,frame,discrete,&current->m4x,pdb_name,&next_pdb);
+                               start_at,frame,discrete,&current->m4x,
+                               pdb_name,&next_pdb,&pdb_info);
       if(finish)
         ExecutiveUpdateObjectSelection(origObj);
       if(frame<0)
