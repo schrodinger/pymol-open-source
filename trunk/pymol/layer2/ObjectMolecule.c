@@ -169,6 +169,7 @@ void ObjectMoleculeAddSeleHydrogens(ObjectMolecule *I,int sele)
           FreeP(index);
           if(cs->fFree)
             cs->fFree(cs);
+          ObjectMoleculeSort(I);
         } else
           VLAFreeP(nai);
       }
@@ -288,7 +289,7 @@ void ObjectMoleculeFuse(ObjectMolecule *I,int index0,ObjectMolecule *src,int ind
     case 1:
       copy3f(backup+3*anch1,va1);
       ObjectMoleculeFindOpenValenceVector(src,state1,at1,x1);
-      scale3f(x0,-1.0,x1);
+      scale3f(x1,-1.0,x1);
       get_system1f3f(x1,y1,z1);      
       break;
     }
@@ -359,8 +360,8 @@ void ObjectMoleculeFuse(ObjectMolecule *I,int index0,ObjectMolecule *src,int ind
     case 0:
       ObjectMoleculePurge(I);
       break;
-    ObjectMoleculeSort(I);
     }
+    ObjectMoleculeSort(I);
   }
   if(cs->fFree)
     cs->fFree(cs);
