@@ -42,17 +42,17 @@ void ObjectMakeValidName(char *name)
          ((*p>90)&&(*p<94))||
          (*p==47)||(*p==60))
         /* must be an ASCII-visible character */
-        *p='_';
+        *p=1; /* placeholder for non-printable */
       p++;
     }
-    /* eliminate sequential and terminal underscores */
+    /* eliminate sequential and terminal nonprintables */
     p=name;
     q=name;
     while(*p) {
       if(q==name)
-        while(*p=='_')
+        while(*p==1)
           p++;
-      while((*p=='_')&&(p[1]=='_'))
+      while((*p==1)&&(p[1]==1))
         p++;
       *q++=*p++;
       if(!p[-1])
@@ -60,13 +60,19 @@ void ObjectMakeValidName(char *name)
     }
     *q=0;
     while(q>name) {
-      if(q[-1]=='_') {
+      if(q[-1]==1) {
         q[-1]=0;
         q--;
       } else
         break;
     }
-
+    /* convert invalides to underscore */
+    p=name;
+    while(*p) {
+      if(*p==1)
+        *p='_';
+      p++;
+    }
   }
 }
 
