@@ -359,6 +359,9 @@ class Demo: # stateful class for doing effective demonstrations
          cmd.set("antialias",0)
       else:
          cmd.delete("ray")
+         
+   def finish(self,cleanup=0):
+      pass
 
    def sculpt(self,cleanup=0):
       if not cleanup:
