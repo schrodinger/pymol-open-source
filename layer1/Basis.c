@@ -180,7 +180,7 @@ float ZLineClipPoint(float *base,float *point,float *alongNormalSq,float cutoff)
 	  MAXFLOAT if there isn't a relevant intersection
 
 	  NOTE: this routine has been optimized for normals along Z
-	  Optimizeds out vectors that are more than "cutoff" from "point" in x,y plane 
+	  Optimizes-out vectors that are more than "cutoff" from "point" in x,y plane 
   */
 
   hyp[0] = point[0] - base[0];
@@ -336,31 +336,83 @@ int BasisHit(CBasis *I,float *v,float *minDist,int except,
   return(minIndex);
 }
 /*========================================================================*/
-void BasisMakeMap(CBasis *I,float sep,int *vert2prim,CPrimitive *prim,float *volume)
+void BasisMakeMap(CBasis *I,int *vert2prim,CPrimitive *prim,float *volume)
 {
   float *v,*vv,*d;
   float l;
   CPrimitive *prm;
-  int a,b,c,i,n,h;
+  int a,b,c,i,n,h,q,x,y,z;
   int extra_vert = 0;
   float p[3],dd[3];
   float *tempVertex;
   int *tempRef,*ip,*sp;
-  int lineMode = false;
+  int remapMode=true; /* remap mode means that some objects will span more
+                         * than one voxel, so we have to worry about populating
+                         * those voxels and also about eliminating duplicates 
+                         * when traversing the neighbor lists */
   float min[3],max[3],extent[6];
+  float sep;
+  float diagonal[3];
+
+  sep = I->MinVoxel;
+  if(sep==0.0)
+    {
+      remapMode = false;
+      sep = I->MaxRadius; /* also will imply no remapping of vertices */
+    }
+  /* we need to get a sense of the actual size in order to avoid sep being too small */
+    
+  v=I->Vertex;
+  for(c=0;c<3;c++)
+    {
+      min[c] = v[c];
+      max[c] = v[c];
+    }
+  v+=3;
+  for(a=1;a<I->NVertex;a++)
+    {
+      for(c=0;c<3;c++)
+        {
+          if(min[c]>v[c])
+            min[c]=v[c];
+          if(max[c]<v[c])
+            max[c]=v[c];
+        }
+      v+=3;
+    }
+  if(volume) {
+    if(min[0]<volume[0])
+      min[0]=volume[0];
+    if(max[0]>volume[1])
+      max[0]=volume[1];
+    if(min[1]<volume[2])
+      min[1]=volume[2];
+    if(max[1]>volume[3])
+      max[1]=volume[3];
+    if(min[2]<(-volume[5]))
+      min[2]=(-volume[5]);
+    if(max[2]>(-volume[4]))
+		max[2]=(-volume[4]);
+  }
+  sep = MapGetSeparation(sep,max,min,diagonal); /* this needs to be a minimum 
+                                                 * estimate of the actual value */
 
   /* here we have to carry out a complicated work-around in order to
-	  efficiently encode our lines into the map */
+	* efficiently encode our lines into the map in a way that doesn't
+   * require expanding the map cutoff to the size of the largest object*/
 
-  for(a=0;a<I->NVertex;a++)
-	 {
-		prm=prim+vert2prim[a];
-		if(prm->type==cPrimCylinder) {
-		  lineMode=true;
-		  extra_vert+= (ceil(prm->l1/sep)+1);
+  if(remapMode) 
+    for(a=0;a<I->NVertex;a++)
+      {
+        prm=prim+vert2prim[a];
+        if(prm->type==cPrimCylinder) {
+          extra_vert+= (ceil(prm->l1/sep)+1);
+        } else if (prm->type==cPrimSphere) {
+          b = 2*floor(prm->r1/sep)+1;
+          extra_vert+= (b*b*b);
+        } 
 		}
-	 }
-  if(lineMode) {
+  if(remapMode) {
 	 extra_vert+=I->NVertex;
 	 tempVertex = Alloc(float,extra_vert*3);
 	 tempRef = Alloc(int,extra_vert); 
@@ -405,14 +457,27 @@ void BasisMakeMap(CBasis *I,float sep,int *vert2prim,CPrimitive *prim,float *vol
 				tempRef[n]=a; /* store reference to source vertex */
 				n++;
 			 }
-		  }
-		}
-
+		  } else if(prm->type==cPrimSphere) {
+          q = floor(prm->r1/sep);
+          vv=I->Vertex+a*3;
+          
+          for(x=-q;x<=q;x++)
+            for(y=-q;y<=q;y++)
+              for(z=-q;z<=q;z++)
+                {
+                  *(v++) = vv[0]+x*sep;
+                  *(v++) = vv[1]+y*sep;
+                  *(v++) = vv[2]+z*sep;
+                  tempRef[n]=a;
+                  n++;
+                }
+        }
+      }
+    
 	 if(n>extra_vert) {
 		exit(1);
 	 }
-
-
+    
 	 if(volume) {
 		v=tempVertex;
 		for(c=0;c<3;c++)
@@ -473,13 +538,12 @@ void BasisMakeMap(CBasis *I,float sep,int *vert2prim,CPrimitive *prim,float *vol
 				h=*MapEStart(I->Map,a,b,c);
 				if(h)
 				  {
-
 					 ip=I->Map->EList+h; 
 					 sp=ip;
 					 i=*(sp++);
 					 while(i>=0) {
 						if(i>=I->NVertex) i=tempRef[i];
-						if(!tempRef[i]) {
+						if(!tempRef[i]) { /*eliminate duplicates */
 						  *(ip++)=i;
 						  tempRef[i]=1;
 						}
@@ -500,6 +564,7 @@ void BasisMakeMap(CBasis *I,float sep,int *vert2prim,CPrimitive *prim,float *vol
 	 FreeP(tempVertex);
 	 FreeP(tempRef);
   } else {
+    /* simple sphere mode */
 	 I->Map=MapNew(-sep,I->Vertex,I->NVertex,NULL);
 	 MapSetupExpressXY(I->Map);
   }

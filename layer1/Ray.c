@@ -112,7 +112,8 @@ void RayExpandPrimitives(CRay *I)
   VLACheck(basis->Vert2Normal,int,nVert);
   VLACheck(basis->Normal,float,3*nNorm);
   VLACheck(I->Vert2Prim,int,nVert);
-  basis->MaxRadius=0.0;
+  basis->MaxRadius = 0.0;
+  basis->MinVoxel = 0.0;
   basis->NVertex=nVert;
   basis->NNormal=nNorm;
 
@@ -138,8 +139,8 @@ void RayExpandPrimitives(CRay *I)
 		I->Vert2Prim[nVert]=a;
 		basis->Radius[nVert]=I->Primitive[nVert].r1;
 		basis->Radius2[nVert]=I->Primitive[nVert].r1*I->Primitive[nVert].r1; /*precompute*/
-		if(basis->Radius[nVert]>basis->MaxRadius)
-		  basis->MaxRadius=basis->Radius[nVert];
+		if(basis->Radius[nVert]>basis->MinVoxel)
+		  basis->MinVoxel=basis->Radius[nVert];
 		subtract3f(I->Primitive[a].v2,I->Primitive[a].v1,n0);
 		I->Primitive[a].l1=length3f(n0);
 		normalize3f(n0);
@@ -181,6 +182,7 @@ void RayTransformFirst(CRay *I)
 	 }
 
   basis1->MaxRadius=basis0->MaxRadius;
+  basis1->MinVoxel=basis0->MinVoxel;
   basis1->NVertex=basis0->NVertex;
 
   RayTransformNormals33(basis0->NNormal,(GLfloat3*)basis1->Normal,
@@ -223,6 +225,7 @@ void RayTransformBasis(CRay *I,CBasis *basis1)
 		n1+=3;
 	 }
   basis1->MaxRadius=basis0->MaxRadius;
+  basis1->MinVoxel=basis0->MinVoxel;
   basis1->NVertex=basis0->NVertex;
   basis1->NNormal=basis0->NNormal;
 }
@@ -275,7 +278,7 @@ void RayRender(CRay *I,int width,int height,unsigned int *image,float front,floa
   RayExpandPrimitives(I);
   RayTransformFirst(I);
 
-  BasisMakeMap(I->Basis+1,I->Basis[1].MaxRadius,I->Vert2Prim,I->Primitive,I->Volume);
+  BasisMakeMap(I->Basis+1,I->Vert2Prim,I->Primitive,I->Volume);
 
   I->NBasis=3; /* light source */
   BasisInit(I->Basis+2);
@@ -289,7 +292,7 @@ void RayRender(CRay *I,int width,int height,unsigned int *image,float front,floa
   
   BasisSetupMatrix(I->Basis+2);
   RayTransformBasis(I,I->Basis+2);
-  BasisMakeMap(I->Basis+2,I->Basis[2].MaxRadius,I->Vert2Prim,I->Primitive,NULL);
+  BasisMakeMap(I->Basis+2,I->Vert2Prim,I->Primitive,NULL);
 
   /* IMAGING */
 

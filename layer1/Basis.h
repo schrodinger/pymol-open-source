@@ -33,7 +33,7 @@ typedef struct {
 typedef struct {
   MapType *Map;
   float *Vertex,*Normal;
-  float *Radius,*Radius2,MaxRadius;
+  float *Radius,*Radius2,MaxRadius,MinVoxel;
   int *Vert2Normal;
   int NVertex;
   int NNormal;
@@ -44,7 +44,7 @@ typedef struct {
 
 void BasisInit(CBasis *I);
 void BasisFinish(CBasis *I);
-void BasisMakeMap(CBasis *I,float sep,int *vert2prim,CPrimitive *prim,float *clipBox);
+void BasisMakeMap(CBasis *I,int *vert2prim,CPrimitive *prim,float *clipBox);
 void BasisSetupMatrix(CBasis *I);
 
 int BasisHit(CBasis *I,float *v,float *minDist,int except,
