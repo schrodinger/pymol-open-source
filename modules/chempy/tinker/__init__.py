@@ -107,6 +107,10 @@ if os.environ.has_key('TINKER_PATH'):
    base = os.environ['TINKER_PATH']
    bin_path = base + '/bin/'
    params_path = base + '/params/'
+elif os.environ.has_key('FREEMOL_ETC'):
+   base = os.environ['FREEMOL_ETC'] + '/tinker'
+   bin_path = base + '/bin/'
+   params_path = base + '/params/'
 else:
    base = ''
    bin_path = ''
