@@ -72,7 +72,7 @@ PyObject *AtomInfoAsPyList(AtomInfoType *I)
   PyList_SetItem(result,27,PyInt_FromLong((int)I->geom));
   PyList_SetItem(result,28,PyInt_FromLong((int)I->valence));
   PyList_SetItem(result,29,PyInt_FromLong((int)I->masked));
-  PyList_SetItem(result,30,PyInt_FromLong((int)I->protected));
+  PyList_SetItem(result,30,PyInt_FromLong((int)I->protekted));
   PyList_SetItem(result,31,PyInt_FromLong((int)I->protons));
   PyList_SetItem(result,32,PyInt_FromLong(I->sculpt_id));
   PyList_SetItem(result,33,PyInt_FromLong(I->stereo));
@@ -116,7 +116,7 @@ int AtomInfoFromPyList(AtomInfoType *I,PyObject *list)
   if(ok) ok = PConvPyIntToChar(PyList_GetItem(list,27),(char*)&I->geom);
   if(ok) ok = PConvPyIntToChar(PyList_GetItem(list,28),(char*)&I->valence);
   if(ok) ok = PConvPyIntToChar(PyList_GetItem(list,29),(char*)&I->masked);
-  if(ok) ok = PConvPyIntToChar(PyList_GetItem(list,30),(char*)&I->protected);
+  if(ok) ok = PConvPyIntToChar(PyList_GetItem(list,30),(char*)&I->protekted);
   if(ok) ok = PConvPyIntToChar(PyList_GetItem(list,31),(char*)&I->protons);
   if(ok) ok = PConvPyIntToInt(PyList_GetItem(list,32),&I->sculpt_id);
   if(ok) ok = PConvPyIntToInt(PyList_GetItem(list,33),&I->stereo);

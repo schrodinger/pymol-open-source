@@ -121,7 +121,7 @@ typedef struct AtomInfoType {
   signed char valence;
   signed char deleteFlag;
   signed char masked;
-  signed char protected;
+  signed char protekted;
   signed char protons;
   int temp1; /* kludge field - to remove */
   int sculpt_id; /* introduced in version 0.77 */
@@ -213,7 +213,7 @@ typedef struct AtomInfoType068 {
   signed char valence;
   signed char deleteFlag;
   signed char masked;
-  signed char protected;
+  signed char protekted;
   signed char protons;
 } AtomInfoType068;
 
@@ -249,7 +249,7 @@ typedef struct AtomInfoType076 {
   signed char valence;
   signed char deleteFlag;
   signed char masked;
-  signed char protected;
+  signed char protekted;
   signed char protons;
   int temp1; /* kludge field - to remove */
 } AtomInfoType076;
@@ -286,7 +286,7 @@ typedef struct AtomInfoType083 {
   signed char valence;
   signed char deleteFlag;
   signed char masked;
-  signed char protected;
+  signed char protekted;
   signed char protons;
   int temp1; /* kludge field - to remove */
   int sculpt_id; /* introduced in version 0.77 */

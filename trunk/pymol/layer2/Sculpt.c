@@ -926,7 +926,7 @@ void SculptIterateObject(CSculpt *I,ObjectMolecule *obj,int state,int n_cycle)
             for(aa=0;aa<n_active;aa++) {
               a = active[aa];
               if(cnt[a]) {
-                if(!obj->AtomInfo[a].protected) {
+                if(!obj->AtomInfo[a].protekted) {
                   v1 = disp+3*a;
                   sc = 0.99F/cnt[a];
                   scale3f(v1,sc,v1);

@@ -18,6 +18,10 @@ Z* -------------------------------------------------------------------
 
 #include"os_python.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include"AtomInfo.h"
 
 void PInit(void);
@@ -89,12 +93,16 @@ extern PyObject *P_xray;
 extern PyObject *P_chempy;
 extern PyObject *P_models;
 extern PyObject *P_setting;
-
+extern PyObject *P_embed; /* not set by PyMOL -- must be set by host context */
 
 extern PyThreadState *P_glut_thread_state; /* this is the state for the main GUI thread */
 extern PyThreadState *P_api_thread_state; /* this is the thread state for a non-glut API thread */
 extern int P_glut_thread_keep_out;
 extern unsigned int P_glut_thread_id;
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif
 

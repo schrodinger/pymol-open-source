@@ -154,8 +154,9 @@ class EmbeddedPyMOL:
       _cmd.p_glut_event(0,0,0,0,0,0)
 
    def ep_get_redisplay(self):
-      _cmd.runwxpymol() 
-      return _cmd.p_glut_get_redisplay()
+      _cmd.runwxpymol()
+      result = _cmd.p_glut_get_redisplay()
+      return result
    
    def ep_set_swap_callback(self,swap):
       self.ep_swap = swap
