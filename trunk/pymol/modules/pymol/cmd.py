@@ -1884,6 +1884,32 @@ PYMOL API
       unlock()
    return r
 
+def get_extent(*arg):
+   '''
+DESCRIPTION
+  
+   "get_model" returns a Chempy "Indexed" format model from a selection.
+ 
+PYMOL API
+ 
+   cmd.get_model( selection [,state] )
+ 
+   '''
+   r = 1
+   try:
+      lock()
+      sele = "(all)"
+      state = -1
+      if len(arg)==1:
+         sele = arg[0]
+      elif len(arg)==2:
+         sele = arg[0]
+         state = arg[1]
+      r = _cmd.get_min_max(sele,int(state)-1)
+   finally:
+      unlock()
+   return r
+
 def create(*arg):
    '''
 DESCRIPTION
