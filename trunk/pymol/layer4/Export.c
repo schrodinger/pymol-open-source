@@ -154,7 +154,7 @@ ExportDotsObj *ExportDots(char *name,int csIndex)
   Object *obj;
   ObjectMolecule *objMol;
   RepDot *rep;
-  CoordSet *cs;
+  CoordSet *cs=NULL;
   ExportDotsObj *result = NULL;
   int ok = true;
 

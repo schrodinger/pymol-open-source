@@ -75,6 +75,20 @@ Bugs to Fix
    * superposition system fails with degenerate sets (planer atoms, etc).
      sometimes it just fails period.
 
+Changes up to 0.64
+
+   * carve command on isomesh
+
+   * .pymolrc and .pymolrc.py(m) support
+ 
+   * isosurface speed boosted by about 33% using C-oriented Field object.
+
+   * fixed bugs with internal_gui options
+ 
+   * internal_feedback setting
+
+   * simple cartoon ribbon for DNA/RNA
+
 Changes up to 0.63
 
    * Density wizard
