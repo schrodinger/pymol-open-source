@@ -85,6 +85,8 @@ int CoordSetFromPyList(PyObject *list,CoordSet **cs)
   CoordSet *I = NULL;
   PyObject *tmp;
   int ok = true;
+  int ll;
+
   if(*cs) {
     CoordSetFree(*cs);
     *cs=NULL;
@@ -96,6 +98,11 @@ int CoordSetFromPyList(PyObject *list,CoordSet **cs)
   
     if(ok) I=CoordSetNew();
     if(ok) ok = (I!=NULL);
+    if(ok) ok = (list!=NULL);
+    if(ok) ok = PyList_Check(list);
+    if(ok) ll = PyList_Size(list);
+    /* TO SUPPORT BACKWARDS COMPATIBILITY...
+       Always check ll when adding new PyList_GetItem's */
     if(ok) ok = PConvPyIntToInt(PyList_GetItem(list,0),&I->NIndex);
     if(ok) ok = PConvPyIntToInt(PyList_GetItem(list,1),&I->NAtIndex);
     if(ok) ok = PConvPyListToFloatVLA(PyList_GetItem(list,2),&I->Coord);
@@ -105,7 +112,7 @@ int CoordSetFromPyList(PyObject *list,CoordSet **cs)
       if(tmp!=Py_None) 
         ok = PConvPyListToIntArray(tmp,&I->AtmToIdx);
     }
-    if(ok) ok = PConvPyStrToStr(PyList_GetItem(list,5),I->Name,sizeof(WordType));
+    if(ok&&(ll>5)) ok = PConvPyStrToStr(PyList_GetItem(list,5),I->Name,sizeof(WordType));
     
     if(!ok) {
       if(I)

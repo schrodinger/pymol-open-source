@@ -120,6 +120,7 @@ static int set_list(CSetting *I,PyObject *list)
   int setting_type;
   char *str;
   if(list!=Py_None) {
+    if(ok) ok=(list!=NULL);
     if(ok) ok=PyList_Check(list);
     if(ok) ok=PConvPyIntToInt(PyList_GetItem(list,0),&index);
     if(ok) ok=PConvPyIntToInt(PyList_GetItem(list,1),&setting_type);

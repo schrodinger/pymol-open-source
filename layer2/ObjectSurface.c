@@ -112,7 +112,7 @@ static PyObject *ObjectSurfaceAllStatesAsPyList(ObjectSurface *I)
 static int ObjectSurfaceStateFromPyList(ObjectSurfaceState *I,PyObject *list)
 {
   int ok=true;
-  int list_size=0;
+  int ll=0;
   PyObject *tmp;
   if(ok) ok=(list!=NULL);
   if(ok) {
@@ -121,7 +121,7 @@ static int ObjectSurfaceStateFromPyList(ObjectSurfaceState *I,PyObject *list)
     else {
       ObjectSurfaceStateInit(I);
       if(ok) ok=PyList_Check(list);
-      if(ok) list_size=PyList_Size(list);
+      if(ok) ll=PyList_Size(list);
       if(ok) ok = PConvPyIntToInt(PyList_GetItem(list,0),&I->Active);
       if(ok) ok = PConvPyStrToStr(PyList_GetItem(list,1),I->MapName,ObjNameMax);
       if(ok) ok = PConvPyIntToInt(PyList_GetItem(list,2),&I->MapState);
@@ -144,7 +144,7 @@ static int ObjectSurfaceStateFromPyList(ObjectSurfaceState *I,PyObject *list)
       if(ok) ok = PConvPyIntToInt(PyList_GetItem(list,13),&I->DotFlag);
       if(ok) ok = PConvPyIntToInt(PyList_GetItem(list,14),&I->Mode);
 
-      if(ok&&(list_size>15)) PConvPyIntToInt(PyList_GetItem(list,15),&I->Side);
+      if(ok&&(ll>15)) PConvPyIntToInt(PyList_GetItem(list,15),&I->Side);
 
       if(ok) {
         I->RefreshFlag=true;

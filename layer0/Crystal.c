@@ -56,11 +56,17 @@ PyObject *CrystalAsPyList(CCrystal *I)
 int CrystalFromPyList(CCrystal *I,PyObject *list)
 {
   int ok=true;
+  int ll;
   if(ok) ok = (I!=NULL);
   if(ok) ok = PyList_Check(list);
-  if(ok) ok = PConvPyListToFloatArrayInPlace(PyList_GetItem(list,0),I->Dim,3);
-  if(ok) ok = PConvPyListToFloatArrayInPlace(PyList_GetItem(list,1),I->Angle,3);
+  if(ok) ll = PyList_Size(list);
+  if(ok&&(ll>0)) ok = PConvPyListToFloatArrayInPlace(PyList_GetItem(list,0),I->Dim,3);
+  if(ok&&(ll>1)) ok = PConvPyListToFloatArrayInPlace(PyList_GetItem(list,1),I->Angle,3);
   if(ok) CrystalUpdate(I);
+
+  /* TO SUPPORT BACKWARDS COMPATIBILITY...
+   Always check ll when adding new PyList_GetItem's */
+
   return(ok);
 }
 

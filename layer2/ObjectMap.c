@@ -249,6 +249,7 @@ static PyObject *ObjectMapAllStatesAsPyList(ObjectMap *I)
 static int ObjectMapStateFromPyList(ObjectMapState *I,PyObject *list)
 {
   int ok=true;
+  int ll;
   PyObject *tmp;
   if(ok) ok=(list!=NULL);
   if(ok) {
@@ -256,6 +257,10 @@ static int ObjectMapStateFromPyList(ObjectMapState *I,PyObject *list)
       I->Active=false;
     else {
       if(ok) ok=PyList_Check(list);
+      if(ok) ll = PyList_Size(list);
+      /* TO SUPPORT BACKWARDS COMPATIBILITY...
+         Always check ll when adding new PyList_GetItem's */
+
       if(ok) ok = PConvPyIntToInt(PyList_GetItem(list,0),&I->Active);
       if(ok) {
         tmp = PyList_GetItem(list,1);
@@ -338,12 +343,15 @@ PyObject *ObjectMapAsPyList(ObjectMap *I)
 int ObjectMapNewFromPyList(PyObject *list,ObjectMap **result)
 {
   int ok = true;
+  int ll;
   ObjectMap *I=NULL;
   (*result) = NULL;
   
   if(ok) ok=(list!=NULL);
   if(ok) ok=PyList_Check(list);
-
+  if(ok) ll = PyList_Size(list);
+  /* TO SUPPORT BACKWARDS COMPATIBILITY...
+   Always check ll when adding new PyList_GetItem's */
   I=ObjectMapNew();
   if(ok) ok = (I!=NULL);
 

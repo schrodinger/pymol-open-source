@@ -68,9 +68,13 @@ static PyObject *ObjectCGOAllStatesAsPyList(ObjectCGO *I)
 static int ObjectCGOStateFromPyList(ObjectCGOState *I,PyObject *list)
 {
   int ok=true;
+  int ll;
   PyObject *tmp;
   if(ok) ok=(list!=NULL);
   if(ok) ok=PyList_Check(list);
+  if(ok) ll = PyList_Size(list);
+  /* TO SUPPORT BACKWARDS COMPATIBILITY...
+   Always check ll when adding new PyList_GetItem's */
   if(ok) {
     tmp = PyList_GetItem(list,0);
     if(tmp == Py_None)
@@ -79,11 +83,11 @@ static int ObjectCGOStateFromPyList(ObjectCGOState *I,PyObject *list)
       ok = ((I->std=CGONewFromPyList(PyList_GetItem(list,0)))!=NULL);
   }
   if(ok) {
-    tmp = PyList_GetItem(list,0);
+    tmp = PyList_GetItem(list,1);
     if(tmp == Py_None)
       I->ray = NULL;
     else 
-      ok = ((I->ray=CGONewFromPyList(PyList_GetItem(list,0)))!=NULL);
+      ok = ((I->ray=CGONewFromPyList(PyList_GetItem(list,1)))!=NULL);
   }
   return(ok);
 }

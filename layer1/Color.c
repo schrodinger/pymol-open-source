@@ -193,11 +193,17 @@ int ColorExtFromPyList(PyObject *list)
   int n_ext=0;
   int a;
   int ok=true;
+  int ll;
   CColor *I=&Color;
   PyObject *rec;
   ExtRec *ext;
-  if(ok) ok=(list!=Py_None);
+  if(ok) ok=(list!=NULL);
   if(ok) ok=PyList_Check(list);
+
+  if(ok) ll = PyList_Size(list);
+  /* TO SUPPORT BACKWARDS COMPATIBILITY...
+   Always check ll when adding new PyList_GetItem's */
+
   if(ok) {
     n_ext=PyList_Size(list);
     VLACheck(I->Ext,ExtRec,n_ext); 
@@ -223,10 +229,11 @@ int ColorFromPyList(PyObject *list)
   int a;
   int index=0;
   int ok=true;
+  int ll;
   CColor *I=&Color;
   PyObject *rec;
   ColorRec *color;
-  if(ok) ok=(list!=Py_None);
+  if(ok) ok=(list!=NULL);
   if(ok) ok=PyList_Check(list);
   if(ok) {
     n_custom=PyList_Size(list);
@@ -234,6 +241,9 @@ int ColorFromPyList(PyObject *list)
       rec=PyList_GetItem(list,a);
       if(ok) ok=(rec!=NULL);
       if(ok) ok=PyList_Check(rec);
+      if(ok) ll = PyList_Size(list);
+      /* TO SUPPORT BACKWARDS COMPATIBILITY...
+         Always check ll when adding new PyList_GetItem's */
       if(ok) ok=PConvPyIntToInt(PyList_GetItem(rec,1),&index);
       if(ok) {
         if(index>=I->NColor) {

@@ -166,11 +166,14 @@ int ObjectMoleculeNewFromPyList(PyObject *list,ObjectMolecule **result)
   int ok = true;
   ObjectMolecule *I=NULL;
   int discrete_flag;
+  int ll;
   (*result) = NULL;
   
 
   if(ok) ok=PyList_Check(list);
-
+  if(ok) ll = PyList_Size(list);
+  /* TO SUPPORT BACKWARDS COMPATIBILITY...
+   Always check ll when adding new PyList_GetItem's */
   if(ok) ok = PConvPyIntToInt(PyList_GetItem(list,8),&discrete_flag);
 
   I=ObjectMoleculeNew(discrete_flag);
