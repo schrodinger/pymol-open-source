@@ -93,6 +93,7 @@ static void APIExit(void)
 
 static PyObject *CmdAlter(PyObject *self,   PyObject *args);
 static PyObject *CmdAlterState(PyObject *self,   PyObject *args);
+static PyObject *CmdAttach(PyObject *self, 	PyObject *args);
 static PyObject *CmdBond(PyObject *dummy, PyObject *args);
 static PyObject *CmdButton(PyObject *dummy, PyObject *args);
 static PyObject *CmdClip(PyObject *self, 	PyObject *args);
@@ -102,6 +103,7 @@ static PyObject *CmdColorDef(PyObject *self, 	PyObject *args);
 static PyObject *CmdCopy(PyObject *self, PyObject *args);
 static PyObject *CmdCountStates(PyObject *self, PyObject *args);
 static PyObject *CmdCreate(PyObject *self, PyObject *args);
+static PyObject *CmdCycleValence(PyObject *self, PyObject *args);
 static PyObject *CmdDelete(PyObject *self, PyObject *args);
 static PyObject *CmdDirty(PyObject *self, 	PyObject *args);
 static PyObject *CmdDist(PyObject *dummy, PyObject *args);
@@ -148,12 +150,13 @@ static PyObject *CmdPaste(PyObject *self, 	PyObject *args);
 static PyObject *CmdPNG(PyObject *self, 	PyObject *args);
 static PyObject *CmdProtect(PyObject *self, PyObject *args);
 static PyObject *CmdQuit(PyObject *self, 	PyObject *args);
-static PyObject *CmdReplace(PyObject *self, PyObject *args);
-
-static PyObject *CmdReset(PyObject *self, PyObject *args);
 static PyObject *CmdRay(PyObject *self, 	PyObject *args);
 static PyObject *CmdRebuild(PyObject *self, PyObject *args);
+static PyObject *CmdRefill(PyObject *self, PyObject *args);
 static PyObject *CmdRemove(PyObject *self, PyObject *args);
+static PyObject *CmdRemovePicked(PyObject *self, PyObject *args);
+static PyObject *CmdReplace(PyObject *self, PyObject *args);
+static PyObject *CmdReset(PyObject *self, PyObject *args);
 static PyObject *CmdResetRate(PyObject *dummy, PyObject *args);
 static PyObject *CmdRefresh(PyObject *self, 	PyObject *args);
 static PyObject *CmdRefreshNow(PyObject *self, 	PyObject *args);
@@ -181,6 +184,7 @@ static PyObject *CmdUndo(PyObject *self, 	PyObject *args);
 static PyMethodDef Cmd_methods[] = {
 	{"alter",	     CmdAlter,        METH_VARARGS },
 	{"alter_state",  CmdAlterState,   METH_VARARGS },
+	{"attach",       CmdAttach,       METH_VARARGS },
 	{"bond",         CmdBond,         METH_VARARGS },
    {"button",       CmdButton,       METH_VARARGS },
 	{"clip",	        CmdClip,         METH_VARARGS },
@@ -190,6 +194,7 @@ static PyMethodDef Cmd_methods[] = {
 	{"copy",         CmdCopy,         METH_VARARGS },
 	{"create",       CmdCreate,       METH_VARARGS },
 	{"count_states", CmdCountStates,  METH_VARARGS },
+	{"cycle_valence",CmdCycleValence,  METH_VARARGS },
 	{"delete",       CmdDelete,       METH_VARARGS },
 	{"dirty",        CmdDirty,        METH_VARARGS },
 	{"distance",	  CmdDistance,     METH_VARARGS },
@@ -239,9 +244,11 @@ static PyMethodDef Cmd_methods[] = {
 	{"quit",	        CmdQuit,         METH_VARARGS },
 	{"ready",        CmdReady,        METH_VARARGS },
    {"rebuild",      CmdRebuild,      METH_VARARGS },
+	{"refill",       CmdRefill,       METH_VARARGS },
 	{"refresh",      CmdRefresh,      METH_VARARGS },
 	{"refresh_now",  CmdRefreshNow,   METH_VARARGS },
 	{"remove",	     CmdRemove,       METH_VARARGS },
+	{"remove_picked",CmdRemovePicked, METH_VARARGS },
 	{"render",	     CmdRay,          METH_VARARGS },
    {"replace",      CmdReplace,      METH_VARARGS },
 	{"reset",        CmdReset,        METH_VARARGS },
@@ -267,17 +274,6 @@ static PyMethodDef Cmd_methods[] = {
 	{NULL,		     NULL}		/* sentinel */
 };
 
-static PyObject *CmdReplace(PyObject *self, 	PyObject *args)
-{
-  int i1,i2;
-  char *str1;
-  PyArg_ParseTuple(args,"sii",&str1,&i1,&i2);
-  APIEntry();
-  EditorReplace(str1,i1,i2);
-  APIExit();
-  Py_INCREF(Py_None);
-  return Py_None;  
-}
 
 static PyObject *CmdUndo(PyObject *self, PyObject *args)
 {
@@ -1811,6 +1807,57 @@ static PyObject *CmdRemove(PyObject *self, PyObject *args)
   APIExit();
   Py_INCREF(Py_None);
   return Py_None;
+}
+
+static PyObject *CmdRemovePicked(PyObject *self, PyObject *args)
+{
+  APIEntry();
+  EditorRemove();
+  APIExit();
+  Py_INCREF(Py_None);
+  return Py_None;
+}
+
+static PyObject *CmdRefill(PyObject *self, PyObject *args)
+{
+  APIEntry();
+  EditorRefill();
+  APIExit();
+  Py_INCREF(Py_None);
+  return Py_None;
+}
+
+static PyObject *CmdCycleValence(PyObject *self, PyObject *args)
+{
+  APIEntry();
+  EditorCycleValence();
+  APIExit();
+  Py_INCREF(Py_None);
+  return Py_None;
+}
+
+static PyObject *CmdReplace(PyObject *self, 	PyObject *args)
+{
+  int i1,i2;
+  char *str1;
+  PyArg_ParseTuple(args,"sii",&str1,&i1,&i2);
+  APIEntry();
+  EditorReplace(str1,i1,i2);
+  APIExit();
+  Py_INCREF(Py_None);
+  return Py_None;  
+}
+
+static PyObject *CmdAttach(PyObject *self, 	PyObject *args)
+{
+  int i1,i2;
+  char *str1;
+  PyArg_ParseTuple(args,"sii",&str1,&i1,&i2);
+  APIEntry();
+  EditorAttach(str1,i1,i2);
+  APIExit();
+  Py_INCREF(Py_None);
+  return Py_None;  
 }
 
 void init_cmd(void)

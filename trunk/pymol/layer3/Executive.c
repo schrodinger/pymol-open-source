@@ -205,6 +205,7 @@ void ExecutiveRemoveAtoms(char *s1)
                   op.code = OMOP_Remove;
                   op.i1 = 0;
 						obj=(ObjectMolecule*)rec->obj;
+                  ObjectMoleculeVerifyChemistry(obj); /* remember chemistry for later */
 						ObjectMoleculeSeleOp(obj,sele,&op);
                   if(op.i1) {
                     ObjectMoleculePurge(obj);
@@ -337,12 +338,14 @@ void ExecutiveBond(char *s1,char *s2,int order,int add)
 				{
 				  if(rec->obj->type==cObjectMolecule)
 					 {
-                  if(add) {
+                  if(add==1) {
                     cnt = ObjectMoleculeAddBond((ObjectMolecule*)rec->obj,sele1,sele2,order);
                     if(cnt) {
                       PRINTF " AddBond: %d bonds added to model '%s'.\n",cnt,rec->obj->Name ENDF;
                       flag=true;
                     }
+                  } else if(add==2) {
+                    cnt = ObjectMoleculeAdjustBonds((ObjectMolecule*)rec->obj,sele1,sele2,1,order);                    
                   }
                   else {
                     cnt = ObjectMoleculeRemoveBonds((ObjectMolecule*)rec->obj,sele1,sele2);

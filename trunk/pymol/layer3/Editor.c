@@ -29,6 +29,7 @@ Z* -------------------------------------------------------------------
 #include"Color.h"
 #include"Setting.h"
 #include"Util.h"
+#include"Executive.h"
 
 typedef struct {
   ObjectMolecule *Obj;
@@ -37,7 +38,7 @@ typedef struct {
   int DragSelection;
   int DragSele0;
   int DragSele1;
-  int DragHaveAxis,DragHaveBase,DragBondFlag;
+  int DragHaveAxis,DragHaveBase,DragBondFlag,DragSlowFlag;
   ObjectMolecule *DragObject;
   int NFrag;
   float V0[3],V1[3],Axis[3],Center[3],DragBase[3];
@@ -70,46 +71,164 @@ static void subdivide( int n, float *x, float *y)
 		y[a]=sin(a*2*PI/n);
 	 }
 }
+
 /*========================================================================*/
-void EditorReplace(char *elem,int geom,int valence)
+void EditorCycleValence(void)
 {
   CEditor *I = &Editor;
-  int i0,i1;
-  float v0[3],v1[3];
   int sele0,sele1;
-  int state;
-  AtomInfoType ai;
   
-  UtilZeroMem(&ai,sizeof(AtomInfoType));
   if(I->Obj) {
-    state = SceneGetState();
+
+    ObjectMoleculeVerifyChemistry(I->Obj); /* remember chemistry for later */
 
     sele0 = SelectorIndexByName(cEditorSele1);
     if(sele0>=0) {
       sele1 = SelectorIndexByName(cEditorSele2);
       if(sele1>=0) {
         /* bond mode */
-        i0 = ObjectMoleculeGetAtomIndex(I->Obj,sele0); /* slow */
-        i1 = ObjectMoleculeGetAtomIndex(I->Obj,sele1); /* slow */
-        if((i0>=0)&&(i1>=0)) {
-          
-          ObjectMoleculeGetAtomVertex(I->Obj,state,i0,v0);
-          ObjectMoleculeGetAtomVertex(I->Obj,state,i1,v1);
-        }
-        
+        ObjectMoleculeAdjustBonds(I->Obj,sele0,sele1,0,0);
+      }
+    }
+  }
+
+}
+/*========================================================================*/
+void EditorAttach(char *elem,int geom,int valence)
+{
+  CEditor *I = &Editor;
+  int i0;
+  int sele0,sele1;
+  int state;
+  AtomInfoType *ai;
+  
+  ai=(AtomInfoType*)VLAMalloc(1,sizeof(AtomInfoType),1,true);
+  if(I->Obj) {
+
+    ObjectMoleculeVerifyChemistry(I->Obj); /* remember chemistry for later */
+
+    state = SceneGetState();
+
+    sele0 = SelectorIndexByName(cEditorSele1);
+    if(sele0>=0) {
+      sele1 = SelectorIndexByName(cEditorSele2);
+      if(sele1>=0) {
+        /* bond mode - behave like replace */
+        EditorReplace(elem,geom,valence);
       } else {
         /* atom mode */
         i0 = ObjectMoleculeGetAtomIndex(I->Obj,sele0); /* slox */
         if(i0>=0) {
-          UtilNCopy(ai.elem,elem,2);
-          ai.geom=geom;
-          ai.valence=valence;
-          ObjectMoleculePrepareAtom(I->Obj,i0,&ai);
-          ObjectMoleculePreposReplAtom(I->Obj,i0,&ai);
-          ObjectMoleculeReplaceAtom(I->Obj,i0,&ai); /* invalidates */
-          ObjectMoleculeFillOpenValences(I->Obj,i0);
+          UtilNCopy(ai->elem,elem,2);
+          ai->geom=geom;
+          ai->valence=valence;
+          ObjectMoleculeAttach(I->Obj,i0,ai); /* will free ai */
+        }
+      }
+    }
+  }
+}
+/*========================================================================*/
+void EditorRemove(void)
+{
+  CEditor *I = &Editor;
+  int sele0,sele1;
+  int i0;
+  
+  if(I->Obj) {
+    ObjectMoleculeVerifyChemistry(I->Obj); /* remember chemistry for later */
+    sele0 = SelectorIndexByName(cEditorSele1);
+    if(sele0>=0) {
+      sele1 = SelectorIndexByName(cEditorSele2);
+      if(sele1>=0) {
+        /* bond mode */
+        ObjectMoleculeRemoveBonds(I->Obj,sele0,sele1);
+        EditorSetActiveObject(NULL,0);        
+      } else {
+        /* atom mode */
+        i0 = ObjectMoleculeGetAtomIndex(I->Obj,sele0); /* slow */
+        if(i0>=0) {
+          ExecutiveRemoveAtoms(cEditorSele1);
           EditorSetActiveObject(NULL,0);
         }
+      }
+    }
+  }
+}
+/*========================================================================*/
+void EditorRefill(void)
+{
+
+  CEditor *I = &Editor;
+  int sele0,sele1;
+  int i0;
+  OrthoLineType buffer,s1;
+  
+  if(I->Obj) {
+    ObjectMoleculeVerifyChemistry(I->Obj); /* remember chemistry for later */
+    sele0 = SelectorIndexByName(cEditorSele1);
+    if(sele0>=0) {
+      sele1 = SelectorIndexByName(cEditorSele2);
+      if(sele0>=0) {
+        if(sele1>=0) 
+          sprintf(buffer,"((neighbor %s) and (elem h) and not %s)",
+                  cEditorSele1,cEditorSele2);
+        else 
+          sprintf(buffer,"((neighbor %s) and (elem h))",
+                  cEditorSele1);
+        SelectorGetTmp(buffer,s1);
+        ExecutiveRemoveAtoms(s1);
+        SelectorFreeTmp(s1);
+        i0 = ObjectMoleculeGetAtomIndex(I->Obj,sele0); 
+        I->Obj->AtomInfo[i0].chemFlag=false;
+        ExecutiveAddHydrogens(cEditorSele1);
+      }
+      if(sele1>=0) {
+        if(sele0>=0) 
+          sprintf(buffer,"((neighbor %s) and (elem h) and not %s)",
+                  cEditorSele2,cEditorSele1);
+        else 
+          sprintf(buffer,"((neighbor %s) and (elem h))",
+                  cEditorSele2);
+        SelectorGetTmp(buffer,s1);
+        ExecutiveRemoveAtoms(s1);
+        SelectorFreeTmp(s1);
+        i0 = ObjectMoleculeGetAtomIndex(I->Obj,sele1); 
+        I->Obj->AtomInfo[i0].chemFlag=false;
+        ExecutiveAddHydrogens(cEditorSele2);
+      }
+    }
+  }
+  
+}
+/*========================================================================*/
+void EditorReplace(char *elem,int geom,int valence)
+{
+  CEditor *I = &Editor;
+  int i0;
+  int sele0;
+  int state;
+  AtomInfoType ai;
+  
+  UtilZeroMem(&ai,sizeof(AtomInfoType));
+  if(I->Obj) {
+
+    ObjectMoleculeVerifyChemistry(I->Obj); /* remember chemistry for later */
+
+    state = SceneGetState();
+
+    sele0 = SelectorIndexByName(cEditorSele1);
+    if(sele0>=0) {
+      i0 = ObjectMoleculeGetAtomIndex(I->Obj,sele0); /* slox */
+      if(i0>=0) {
+        UtilNCopy(ai.elem,elem,2);
+        ai.geom=geom;
+        ai.valence=valence;
+        ObjectMoleculePrepareAtom(I->Obj,i0,&ai);
+        ObjectMoleculePreposReplAtom(I->Obj,i0,&ai);
+        ObjectMoleculeReplaceAtom(I->Obj,i0,&ai); /* invalidates */
+        ObjectMoleculeFillOpenValences(I->Obj,i0);
+        EditorSetActiveObject(NULL,0);
       }
     }
   }
@@ -227,15 +346,22 @@ void EditorSetActiveObject(ObjectMolecule *obj,int state)
     if(sele1>=0) {
       sele2 = SelectorIndexByName(cEditorSele2);
       I->NFrag = SelectorSubdivideObject(cEditorFragPref,obj,
-                                         sele1,sele2,cEditorBasePref);
+                                         sele1,sele2,
+                                         cEditorBasePref,
+                                         cEditorComp);
       I->ActiveState=state;
     } else {
       I->Obj=NULL;
+      ExecutiveDelete(cEditorSele1);      
+      ExecutiveDelete(cEditorSele2);      
     }
   } else {
     SelectorSubdivideObject(cEditorFragPref,NULL,0,0,
-                            cEditorBasePref);
+                            cEditorBasePref,
+                            cEditorComp);
     I->Obj=NULL;
+    ExecutiveDelete(cEditorSele1);      
+    ExecutiveDelete(cEditorSele2);      
   }
 }
 /*========================================================================*/
@@ -247,8 +373,9 @@ void EditorPrepareDrag(ObjectMolecule *obj,int index,int state)
   WordType name;
   int seleFlag= false;
   int i0,i1;
+  float t[3];
   CEditor *I = &Editor;
-  
+
   if(!I->Obj) { /* non-anchored */
     /* need to modify this code to move a complete covalent structure */
 
@@ -260,7 +387,7 @@ void EditorPrepareDrag(ObjectMolecule *obj,int index,int state)
     return;
   } else { /* anchored */
     for(frg=0;frg<I->NFrag;frg++) {
-      sprintf(name,"%s%02d",cEditorFragPref,frg);
+      sprintf(name,"%s%1d",cEditorFragPref,frg);
       sele0=SelectorIndexByName(name);
       if(sele0>=0) {
         s=obj->AtomInfo[index].selEntry;
@@ -275,17 +402,18 @@ void EditorPrepareDrag(ObjectMolecule *obj,int index,int state)
       if(seleFlag)
         break;
     }
-    if(seleFlag) {
-
+    if(seleFlag) { /* normal selection */
+      
       PRINTF " Editor: grabbing (%s).",name ENDF
-      I->DragIndex = index;
+        I->DragIndex = index;
       I->DragSelection = sele0;
       I->DragObject = obj;
       I->DragHaveAxis = false;
       I->DragHaveBase = false;
       I->DragBondFlag = false;
-
-      sprintf(name,"%s%02d",cEditorBasePref,frg); /* get relevant base vertex of bond */
+      I->DragSlowFlag = false;
+      
+      sprintf(name,"%s%1d",cEditorBasePref,frg); /* get relevant base vertex of bond */
       sele1 = SelectorIndexByName(name);
       if(sele1>=0) {
         i1 = ObjectMoleculeGetAtomIndex(obj,sele1);
@@ -314,20 +442,53 @@ void EditorPrepareDrag(ObjectMolecule *obj,int index,int state)
             normalize3f(I->Axis);
             I->DragHaveAxis=true;
           }
-        } else {
+        } else { /* atom mode */
           i0 = ObjectMoleculeGetAtomIndex(obj,sele0);
           if(i0>=0) 
             ObjectMoleculeGetAtomVertex(obj,state,i0,I->V0);      
           if(I->DragHaveBase) {
             copy3f(I->DragBase,I->V1)
-            subtract3f(I->V1,I->V0,I->Axis);
+              subtract3f(I->V1,I->V0,I->Axis);
             average3f(I->V1,I->V0,I->Center);
             normalize3f(I->Axis);
             I->DragHaveAxis=true;
           }
         }
       }
-    } else {
+    } else { /* clicked directly on anchor atom */
+
+      sele0=SelectorIndexByName(cEditorSele1);
+      if(sele0>=0) {
+        s=obj->AtomInfo[index].selEntry;
+        while(s) {
+          if(SelectorMatch(s,sele0)) {
+            seleFlag=true;
+            break;
+          }
+          s=SelectorNext(s);
+        }
+      }
+
+      PRINTF " Editor: grabbing all fragments." ENDF
+      I->DragIndex = index;
+      I->DragSelection = SelectorIndexByName(cEditorComp);
+      I->DragObject = obj;
+      I->DragHaveAxis = false;
+      I->DragHaveBase = false;
+      I->DragBondFlag = false;
+
+      I->DragSlowFlag = true;
+      
+      if(sele0>=0) { /* just provide a base vector, no valid axis exists */
+        i1 = ObjectMoleculeGetAtomIndex(obj,sele0);
+        if(i1>=0) {
+          ObjectMoleculeGetAtomVertex(obj,state,i1,I->DragBase);
+          I->DragHaveBase=true;
+          I->DragBondFlag=true;
+        }
+      }
+    } 
+    if(!seleFlag) {
       I->DragIndex=-1;
       I->DragSelection=-1;
       I->DragObject=NULL;
@@ -340,7 +501,7 @@ void EditorPrepareDrag(ObjectMolecule *obj,int index,int state)
 void EditorDrag(ObjectMolecule *obj,int index,int mode,int state,float *pt,float *mov)
 {
   CEditor *I = &Editor;
-  float v0[3],v1[3],v2[3],v3[3],cp[3];
+  float v0[3],v1[3],v2[3],v3[3],v4[4],cp[3];
   float d0[3],d1[3],d2[3],n0[3],n1[3],n2[3];
   float opp,adj,theta;
   float m[16];
@@ -390,9 +551,18 @@ void EditorDrag(ObjectMolecule *obj,int index,int mode,int state,float *pt,float
         } else {
           copy3f(I->V0,v3);
         }
-        subtract3f(pt,v3,n0);
-        add3f(pt,mov,n1);
-        subtract3f(n1,v3,n1);
+        if(I->DragSlowFlag) {
+          SceneGetViewNormal(v4);
+          scale3f(v4,-1.0,v4);
+          add3f(v3,v4,v4)
+          subtract3f(pt,v4,n0);
+          add3f(pt,mov,n1);
+          subtract3f(n1,v4,n1);
+        } else {
+          subtract3f(pt,v3,n0);
+          add3f(pt,mov,n1);
+          subtract3f(n1,v3,n1);
+        }
         normalize3f(n0);
         normalize3f(n1);
         cross_product3f(n0,n1,cp);
@@ -470,4 +640,5 @@ void EditorInit(void)
 void EditorFree(void)
 {
 }
+
 

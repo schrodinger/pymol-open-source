@@ -70,6 +70,7 @@ void SceneSetStereo(int flag);
 void ScenePurgeCopy(void);
 void SceneDontCopyNext(void);
 void ScenePrepareExit(void);
+void SceneGetViewNormal(float *v);
 
 
 #endif

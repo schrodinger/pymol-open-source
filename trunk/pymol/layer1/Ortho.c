@@ -440,7 +440,23 @@ void OrthoKey(unsigned char k,int x,int y,int mod)
           if(I->CursorChar==I->CurChar)
             I->CursorChar=-1;
         }
-      }
+        if(I->CurChar>I->PromptChar)
+          {
+            curLine=I->CurLine&OrthoSaveLines;
+            if(I->CursorChar>=0) {
+              if(I->CursorChar>I->PromptChar) {
+                strcpy(buffer,I->Line[curLine]+I->CursorChar);
+                I->Line[curLine][I->CursorChar]=k;
+                I->CursorChar--;
+                I->CurChar--;
+                strcpy(I->Line[curLine]+I->CursorChar,buffer);
+              }
+            } else {
+              I->CurChar--;
+              I->Line[curLine][I->CurChar]=0;
+            }
+          }
+      } 
       break;
 	 case 8:
 		if(I->CurChar>I->PromptChar)

@@ -309,7 +309,7 @@ void SettingInit(void)
 			"ribbon_radius");
 
   I->NSetting++;
-  I->Setting[cSetting_stick_radius].Value[0] = 0.4;
+  I->Setting[cSetting_stick_radius].Value[0] = 0.3;
   strcpy(I->Setting[cSetting_stick_radius].Name,
 			"stick_radius");
 
