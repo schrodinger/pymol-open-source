@@ -61,11 +61,11 @@ if __name__=='pymol.invocation':
    if sys.platform != 'win32':
       options.win_py = 200
    else:
-      options.win_py = 183 
-   options.ext_y = 120 # external gui height (eg. for Tcl/Tk top bar)
+      options.win_py = 230
+   options.ext_y = 168 # external gui height (eg. for Tcl/Tk top bar)
 
-   if sys.platform[:5] == 'linux':
-      options.ext_y = options.ext_y + 48
+#   if sys.platform[:5] == 'linux':
+#      options.ext_y = options.ext_y + 48
 
    options.blue_line = 0
 
