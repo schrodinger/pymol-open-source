@@ -16,6 +16,7 @@ Z* -------------------------------------------------------------------
 #include"os_predef.h"
 #include"os_std.h"
 #include"os_gl.h"
+#include"os_python.h"
 
 #include "OOMac.h"
 
@@ -97,7 +98,7 @@ Block *PopUpNew(int x,int y,int last_x,int last_y,PyObject *list,Block *parent)
   I->Selected = -1;
   I->LastX = last_x;
   I->LastY = last_y;
-  I->ChildDelay = UtilGetSeconds() + cChildDelay*2;
+  I->ChildDelay = UtilGetSeconds() + cChildDelay*2.5;
   I->DirtyDelay = false;
   I->DirtyDelayFlag = false;
   I->NeverDragged = true;
@@ -141,10 +142,11 @@ Block *PopUpNew(int x,int y,int last_x,int last_y,PyObject *list,Block *parent)
   I->Sub = Calloc(PyObject*,I->NLine+1);
   
   for(a=0;a<I->NLine;a++) {
+    PyObject *command;
     elem = PyList_GetItem(list,a);
     I->Code[a]=PyInt_AsLong(PyList_GetItem(elem,0));
     strcpy(I->Text[a],PyString_AsString(PyList_GetItem(elem,1)));
-    PyObject *command = (PyList_GetItem(elem,2));
+    command=PyList_GetItem(elem,2);
     if(PyString_Check(command)) {
       strcpy(I->Command[a],PyString_AsString(command));
     } else if(PyList_Check(command)) {
@@ -437,7 +439,7 @@ int PopUpDrag(Block *block,int x,int y,int mod)
 
     if(!I->Child) {
       /* we moved, so renew the child delay */
-      I->ChildDelay = UtilGetSeconds() + cChildDelay/2;
+      I->ChildDelay = UtilGetSeconds() + cChildDelay;
       MainDragDirty();
     }
 
