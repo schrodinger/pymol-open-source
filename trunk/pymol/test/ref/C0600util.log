@@ -1,0 +1,96 @@
+PyMOL>load dat/il2.pdb
+ Executive: object "il2" created.
+PyMOL>load dat/pept.pdb
+ Executive: object "pept" created.
+PyMOL>load dat/3al1.pdb
+ ObjectMolecule: read HELIX A 102 A 110
+ ObjectMolecule: read HELIX B 202 B 210
+ PDBStrToCoordSet: Attempting to read symmetry information
+ Crystal: Unit Cell           20.544   20.859   26.055
+ Crystal: Alpha Beta Gamma   101.160   97.030  118.060
+ Crystal: RealToFrac Matrix
+ Crystal:    0.04868    0.02595    0.01403
+ Crystal:    0.00000    0.05433    0.01626
+ Crystal:    0.00000    0.00000    0.04037
+ Crystal: FracToReal Matrix
+ Crystal:   20.54400   -9.81199   -3.18885
+ Crystal:    0.00000   18.40714   -7.41448
+ Crystal:    0.00000    0.00000   24.77337
+ Crystal: Unit Cell Volume 9368.204
+ Symmetry:      1.00000      0.00000      0.00000      0.00000
+ Symmetry:      0.00000      1.00000      0.00000      0.00000
+ Symmetry:      0.00000      0.00000      1.00000      0.00000
+ Symmetry:      0.00000      0.00000      0.00000      1.00000
+ Symmetry:     -1.00000      0.00000      0.00000      0.00000
+ Symmetry:      0.00000     -1.00000      0.00000      0.00000
+ Symmetry:      0.00000      0.00000     -1.00000      0.00000
+ Symmetry:      0.00000      0.00000      0.00000      1.00000
+ Executive: object "3al1" created.
+PyMOL>util.ss
+ util.ss: WARNING: This is not a "correct" secondary structure
+ util.ss: assignment algorithm!  Please use only as a last resort.
+ util.ss: initiating secondary structure assignment on 163 residues.
+ util.ss: extracting sequence and relationships...
+ util.ss: analyzing phi/psi angles (slow)...
+ util.ss: finding hydrogen bonds...
+ util.ss: verifying beta sheets...
+ util.ss: assignment complete.
+PyMOL>util.cbac
+ Executive: Colored 2870 atoms.
+ Executive: Colored 301 atoms.
+ Executive: Colored 223 atoms.
+ Executive: Colored 9 atoms.
+ Executive: Colored 1415 atoms.
+ Executive: Colored 922 atoms.
+PyMOL>util.cbay
+ Executive: Colored 2870 atoms.
+ Executive: Colored 301 atoms.
+ Executive: Colored 223 atoms.
+ Executive: Colored 9 atoms.
+ Executive: Colored 1415 atoms.
+ Executive: Colored 922 atoms.
+PyMOL>util.cbaw
+ Executive: Colored 2870 atoms.
+ Executive: Colored 301 atoms.
+ Executive: Colored 223 atoms.
+ Executive: Colored 9 atoms.
+ Executive: Colored 1415 atoms.
+ Executive: Colored 922 atoms.
+PyMOL>util.cbas
+ Executive: Colored 2870 atoms.
+ Executive: Colored 301 atoms.
+ Executive: Colored 223 atoms.
+ Executive: Colored 9 atoms.
+ Executive: Colored 1415 atoms.
+ Executive: Colored 922 atoms.
+PyMOL>util.cbc
+ Iterate: iterated over 2870 atoms.
+7,(chain E)
+ Executive: Colored 107 atoms.
+8,(chain B)
+ Executive: Colored 310 atoms.
+9,(chain '')
+ Executive: Colored 2174 atoms.
+10,(chain A)
+ Executive: Colored 279 atoms.
+PyMOL>hide
+PyMOL>show car
+PyMOL>zoom
+PyMOL>set ray_default_renderer=2
+ Setting: ray_default_renderer set to 2.00000.
+PyMOL>ray
+ RayRenderTest: obtained 19492 graphics primitives.
+PyMOL>util.rainbow("pept")
+ Executive: Colored 8 atoms.
+ Executive: Colored 6 atoms.
+ Executive: Colored 5 atoms.
+ Executive: Colored 14 atoms.
+ Executive: Colored 10 atoms.
+ Executive: Colored 8 atoms.
+ Executive: Colored 4 atoms.
+ Executive: Colored 9 atoms.
+ Executive: Colored 8 atoms.
+ Executive: Colored 7 atoms.
+ Executive: Colored 14 atoms.
+ Executive: Colored 6 atoms.
+ Executive: Colored 8 atoms.

@@ -909,7 +909,7 @@ void SettingInitGlobal(void)
 
   SettingSet_f(I,cSetting_dot_hydrogens, 1.0F);
 
-  SettingSet_f(I,cSetting_dot_radius, 0.06F);
+  SettingSet_f(I,cSetting_dot_radius, 0.20F);
 
   SettingSet_f(I,cSetting_ray_trace_frames, 0.0F);
 
@@ -1009,7 +1009,7 @@ void SettingInitGlobal(void)
 
   SettingSet_f(I,cSetting_gamma, 1.3F);
 
-  SettingSet_f(I,cSetting_dot_width, 1.0F);
+  SettingSet_f(I,cSetting_dot_width, 2.0F);
 
   SettingSet_f(I,cSetting_auto_show_selections, 1.0F);
 
@@ -1172,6 +1172,10 @@ void SettingInitGlobal(void)
   SettingSet_f(I,cSetting_secondary_structure, 1.0F);
 
   SettingSet_f(I,cSetting_auto_remove_hydrogens, 0.0F);
+
+  SettingSet_f(I,cSetting_raise_exceptions, 1.0F);
+
+  SettingSet_f(I,cSetting_stop_on_exceptions, 0.0F);  
 
 }
 

@@ -36,5 +36,7 @@ typedef struct DistSet {
 
 DistSet *DistSetNew(void);
 
+int DistSetGetExtent(DistSet *I,float *mn,float *mx);
+
 #endif
 

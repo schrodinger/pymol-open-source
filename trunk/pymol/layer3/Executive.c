@@ -2008,6 +2008,10 @@ int  ExecutiveSetSetting(int index,PyObject *tuple,char *sele,
   int nObj=0;
   int unblock;
   int ok =true;
+
+  PRINTFD(FB_Executive)
+    " ExecutiveSetSetting: entered. sele '%s'\n",sele
+    ENDFD;
   unblock = PAutoBlock();
   if(sele[0]==0) { 
     ok = SettingSetTuple(NULL,index,tuple);
@@ -2063,15 +2067,54 @@ int  ExecutiveSetSetting(int index,PyObject *tuple,char *sele,
       }
   } else { /* based on a selection/object name */
     sele1=SelectorIndexByName(sele);
-    while((sele1>=0)&&(ListIterate(I->Spec,rec,next)))
-      if(rec->type==cExecObject)
+    while((ListIterate(I->Spec,rec,next)))
+      if(rec->type==cExecObject) {
         if(rec->obj->type==cObjectMolecule)
           {
-            obj=(ObjectMolecule*)rec->obj;
-            op.code=OMOP_CountAtoms;
-            op.i1=0;
-            ObjectMoleculeSeleOp(obj,sele1,&op);
-            if(op.i1&&rec->obj->fGetSettingHandle) {
+            if(sele1>=0) {
+              obj=(ObjectMolecule*)rec->obj;
+              op.code=OMOP_CountAtoms;
+              op.i1=0;
+              ObjectMoleculeSeleOp(obj,sele1,&op);
+              if(op.i1&&rec->obj->fGetSettingHandle) {
+                handle = rec->obj->fGetSettingHandle(rec->obj,state);
+                if(handle) {
+                  SettingCheckHandle(handle);
+                  ok = SettingSetTuple(*handle,index,tuple);
+                  if(ok) {
+                    if(!quiet) {
+                      if(state<0) { /* object-specific */
+                        if(Feedback(FB_Setting,FB_Actions)) {
+                          SettingGetTextValue(*handle,NULL,index,value);
+                          SettingGetName(index,name);
+                          PRINTF
+                            " Setting: %s set to %s in object '%s'.\n",
+                            name,value,rec->obj->Name
+                            ENDF;
+                          if(updates)
+                            SettingGenerateSideEffects(index,sele,state);
+                          
+                        }
+                      } else { /* state-specific */
+                        if(Feedback(FB_Setting,FB_Actions)) {
+                          SettingGetTextValue(*handle,NULL,index,value);
+                          SettingGetName(index,name);
+                          PRINTF
+                            " Setting: %s set to %s in object '%s', state %d.\n",
+                            name,value,rec->obj->Name,state+1
+                            ENDF;
+                          if(updates) 
+                            SettingGenerateSideEffects(index,sele,state);
+                          
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          } else {
+            if(rec->obj->fGetSettingHandle) {
               handle = rec->obj->fGetSettingHandle(rec->obj,state);
               if(handle) {
                 SettingCheckHandle(handle);
@@ -2108,29 +2151,38 @@ int  ExecutiveSetSetting(int index,PyObject *tuple,char *sele,
               }
             }
           }
+      }
   }
   PAutoUnblock(unblock);
   return(ok);
 }
 /*========================================================================*/
-void ExecutiveColor(char *name,char *color,int flags)
+int ExecutiveColor(char *name,char *color,int flags)
 {
+  CExecutive *I = &Executive;
   SpecRec *rec = NULL;
   int sele;
   ObjectMoleculeOpRec op;
   int col_ind;
-
+  int ok=false;
+  int n_atm=0;
+  int n_obj=0;
+  char atms[]="s";
+  char objs[]="s";
   col_ind = ColorGetIndex(color);
   if(col_ind<0) {
-    ErrMessage("Color","unknown color.");
+    ErrMessage("Color","Unknown color.");
   } else {
     /* per atom */
     if(!(flags&0x1)) {
       sele=SelectorIndexByName(name);
       if(sele>=0) {
+        ok=true; 
         op.code = OMOP_COLR;
         op.i1= col_ind;
+        op.i2= 0;
         ExecutiveObjMolSeleOp(sele,&op);
+        n_atm = op.i2;
         op.code=OMOP_INVA;
         op.i1=cRepAll; 
         op.i2=cRepInvColor;
@@ -2138,14 +2190,46 @@ void ExecutiveColor(char *name,char *color,int flags)
       }
     }
     /* per object */
-    rec=ExecutiveFindSpec(name);
-    if(rec) {
-      if(rec->type==cExecObject) {
-        rec->obj->Color=col_ind;
-        SceneDirty();
+    if(strcmp(name,cKeywordAll)) {
+      rec=ExecutiveFindSpec(name);
+      if(rec) {
+        if(rec->type==cExecObject) {
+          rec->obj->Color=col_ind;
+          n_obj++;
+          ok=true;
+          SceneDirty();
+        }
+      } 
+    } else {
+      rec=NULL;
+      while(ListIterate(I->Spec,rec,next)) {
+        if(rec->type==cExecObject) {
+          rec->obj->Color=col_ind;
+          n_obj++;
+          ok=true;
+          SceneDirty();
+        }
+      }
+    }
+    if(n_obj||n_atm) {
+      if(n_obj<2) objs[0]=0;
+      if(n_atm<2) atms[0]=0;
+      if(n_obj&&n_atm) {
+        PRINTFB(FB_Executive,FB_Details)
+          " Executive: Colored %d atom%s and %d object%s.\n",n_atm,atms,n_obj,objs
+          ENDFB;
+      } else if (n_obj) {
+        PRINTFB(FB_Executive,FB_Details)
+          " Executive: Colored %d object%s.\n",n_obj,objs
+          ENDFB;
+      } else {
+        PRINTFB(FB_Executive,FB_Details)
+          " Executive: Colored %d atom%s.\n",n_atm,atms
+          ENDFB;
       }
     }
   }
+  return(ok);
 }
 /*========================================================================*/
 SpecRec *ExecutiveFindSpec(char *name)
@@ -2231,8 +2315,9 @@ int ExecutiveGetExtent(char *name,float *mn,float *mx,int transformed)
           obj=rec->obj;
           if(obj->ExtentFlag) 
             switch(obj->type) {
-            case cObjectMesh:
-            case cObjectMap:
+            case cObjectMolecule:
+              break;
+            default:
               min3f(obj->ExtentMin,op.v1,op.v1);
               max3f(obj->ExtentMax,op.v2,op.v2);
               flag = true;
@@ -2345,6 +2430,9 @@ void ExecutiveWindowZoom(char *name,float buffer)
       ENDFD;
     SceneOriginSet(center,false);
     SceneWindowSphere(center,radius);
+    SceneDirty();
+  } else {
+    SceneSetDefaultView();
     SceneDirty();
   }
 }

@@ -28,6 +28,9 @@ import glob
 import sys
 import os
 import setting
+
+from cmd import _feedback,fb_module,fb_mask
+
 QuietException = parsing.QuietException
       
 pymol_names = pymol.__dict__
@@ -68,6 +71,7 @@ def parse(s):
    if sys.exc_info()!=(None,None,None):
       traceback.print_exc()
 #
+   p_result = 1
    local_names = {}
    com0[nest] = s
    try:
@@ -200,28 +204,40 @@ def parse(s):
                               if tmp_cmd[0] not in ['#','_','/']: # suppress comments, internals, python
                                  print "PyMOL>"+tmp_cmd
                               elif tmp_cmd[0]=='_' and \
-                                   tmp_cmd[1:2] in [' ','']: # "_ " suppresses echo
+                                   tmp_cmd[1:2] in [' ','']: # "_ " remove echo suppression signal
                                  inp_cmd=inp_cmd[2:]
-                           if(parse(inp_cmd)==None): # RECURSION
+                           pp_result = parse(inp_cmd)
+                           if pp_result==None: # RECURSION
                               break # abort command gets us out
+                           elif pp_result==0: # QuietException
+                              if cmd.get_setting_legacy("stop_on_exceptions"):
+                                 p_result = 0 # signal an error occurred
+                                 print"PyMOL: stopped on exception."
+                                 break;
                         nest=nest-1
                         script[nest].close()
                      else: # nothing found, try literal python
                         com2[nest] = string.strip(com2[nest])
                         if len(com2[nest])>0:
                            exec(com2[nest],pymol_names,pymol_names)
-            if len(next[nest])>1:
+            if (len(next[nest])>1) and p_result:
+                    # continue parsing if no error or break has occurred
                nest=nest+1
                com0[nest] = next[nest-1][1]
                next[nest-1]=()
                cont[nest]=''
-               parse(com0[nest]) # RECURSION
+               p_result = parse(com0[nest]) # RECURSION
                nest=nest-1
    except QuietException:
-      pass
+      if cmd._feedback(fb_module.parser,fb_mask.blather):
+         print "PyMOL: Caught a quiet exception."
+      p_result = 0 # notify caller that an error was encountered
    except:
       traceback.print_exc()
-   return 1
+      if cmd._feedback(fb_module.parser,fb_mask.blather):
+         print "PyMOL: Caught an unknown exception."
+      p_result = 0 # notify caller that an error was encountered
+   return p_result  # 0 = QuietException, None = abort, 1 = ok
 
 # command and filename completion
 
@@ -309,6 +325,8 @@ def complete(st):
             print " parser: no matching files."
          elif lf==1:
             result = st[0:loc]+flist[0]
+            if os.path.isdir(flist[0]):
+               result = result + "/"
          else:
             flist.sort()
             print " parser: matching files:"

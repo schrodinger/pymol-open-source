@@ -1,0 +1,56 @@
+PyMOL>load dat/pept.pdb
+ Executive: object "pept" created.
+PyMOL>select (resi trp)
+ Selector: no atoms selected.
+PyMOL>indicate (name ca)
+PyMOL>deselect
+PyMOL>select 1/o
+ Selector: selection "sel02" defined with 1 atoms.
+PyMOL>select 1/o+ca+n
+ Selector: selection "sel03" defined with 3 atoms.
+PyMOL>select /pept
+ Selector: selection "sel04" defined with 107 atoms.
+PyMOL>select bb = (name ca or name c or name n)
+ Selector: selection "bb" defined with 39 atoms.
+PyMOL>select bb = (name ca,c,n)
+ Selector: selection "bb" defined with 39 atoms.
+PyMOL>select bb = */ca+c+n
+ Selector: selection "bb" defined with 39 atoms.
+PyMOL>select bb = (*/ca,c,n)
+ Selector: selection "bb" defined with 39 atoms.
+PyMOL>select bb = (not (not (name ca or name c or name n)))
+ Selector: selection "bb" defined with 39 atoms.
+PyMOL>select bb = (not (not (n. c|n. ca|n. n)))
+ Selector: selection "bb" defined with 39 atoms.
+PyMOL>select bb = (not (not (not (not (not (not (not (not (not (not (not (not 
+(not (not (*/ca,c,n)))))))))))))))
+ Selector: selection "bb" defined with 39 atoms.
+PyMOL>select bb = (all and all and all and (not (not all)) and (not none) and 
+all and not (not (n;ca,c,n)))
+ Selector: selection "bb" defined with 39 atoms.
+PyMOL>select bb,(name ca or (n;c | (n. n) | (*/n)))
+ Selector: selection "bb" defined with 39 atoms.
+PyMOL>select bb, \
+PyMOL>name ca \
+PyMOL>or name c \
+PyMOL>or name n
+ Selector: selection "bb" defined with 39 atoms.
+PyMOL>select bb = bb
+ Selector: selection "bb" defined with 39 atoms.
+PyMOL>select bb = not not bb
+ Selector: selection "bb" defined with 39 atoms.
+PyMOL>select cc = not bb
+ Selector: selection "cc" defined with 68 atoms.
+PyMOL>select bb = not cc
+ Selector: selection "bb" defined with 39 atoms.
+PyMOL>enable
+PyMOL>enable bb
+PyMOL>enable cc
+PyMOL>disable cc
+PyMOL>hide lines,cc
+PyMOL>hide lines,bb
+PyMOL>show (bb)
+PyMOL>set ray_default_renderer=2
+ Setting: ray_default_renderer set to 2.00000.
+PyMOL>ray
+ RayRenderTest: obtained 63 graphics primitives.

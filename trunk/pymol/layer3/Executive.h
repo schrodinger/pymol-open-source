@@ -29,7 +29,7 @@ void ExecutiveBond(char *s1,char *s2,int order,int add);
 int ExecutiveIterate(char *s1,char *expr,int read_only);
 void ExecutiveLabel(char *s1,char *expr);
 void ExecutiveIterateState(int i1,char *s1,char *expr,int read_only);
-void ExecutiveColor(char *name,char *color,int flags);
+int ExecutiveColor(char *name,char *color,int flags);
 void ExecutiveInit(void);
 void ExecutiveFree(void);
 void ExecutiveManageObject(struct Object *obj);

@@ -45,12 +45,15 @@ PyMOL>middle
 PyMOL>mplay
 PyMOL>mstop
 PyMOL>color red
+ Executive: Colored 107 atoms.
 PyMOL>color blue,(name n)
+ Executive: Colored 13 atoms.
 PyMOL>flag 3=(resn his)
  Flag: flag 3 is set in 10 of 107 atoms.
 PyMOL>set_color dude = [ 1.0,0.6,0.3]
  Color: "dude" defined as [ 1.0, 0.6, 0.3 ].
 PyMOL>color dude,(name o)
+ Executive: Colored 13 atoms.
 PyMOL>show sticks,(all)
 PyMOL>hide
 PyMOL>show lines
@@ -158,19 +161,19 @@ PyMOL>cycle_valence
 PyMOL>cycle_valence
 PyMOL>remove_picked
 PyMOL>edit (cpy and i;11 &n;n)
-Editor-ERR: Invalid input.
+Editor-Error: Invalid input.
 PyMOL>cmd.attach("H",1,1)
 PyMOL>create tmp = (cpy&i;5)
  Selector: found 13 atoms.
  Executive: object "tmp" created.
 PyMOL>fuse (cpy&i;11&n;cb),(tmp&n;cb)
 PyMOL>edit (cpy and i;10 & n;n)
-Editor-ERR: Invalid input.
+Editor-Error: Invalid input.
 PyMOL>h_fill
 PyMOL>h_fill
 PyMOL>h_add (cpy)
 PyMOL>edit (cpy and i;8 &n;o)
-Editor-ERR: Invalid input.
+Editor-Error: Invalid input.
 PyMOL>cmd.replace("S",3,1)
  Error: you must first pick an atom to replace.
 PyMOL>delete tmp

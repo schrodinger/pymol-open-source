@@ -1,0 +1,221 @@
+PyMOL>del all
+PyMOL>load dat/pept.pdb
+ Executive: object "pept" created.
+PyMOL>count_atoms
+ count_atoms: 107 atoms
+PyMOL>count_atoms name ca
+ count_atoms: 13 atoms
+PyMOL>count_states
+ cmd.count_states: 1 states.
+PyMOL>create pept,(all),1,2
+ Selector: found 107 atoms.
+PyMOL>create pept,(all),1,3
+ Selector: found 107 atoms.
+PyMOL>create pept,(none),1,2
+ Selector: found 0 atoms.
+PyMOL>create cpy,(all),1,1
+ Selector: found 107 atoms.
+ Executive: object "cpy" created.
+PyMOL>count_states
+ cmd.count_states: 3 states.
+PyMOL>count_states pept
+ cmd.count_states: 3 states.
+PyMOL>count_states cpy
+ cmd.count_states: 1 states.
+PyMOL>count_frames
+ cmd.count_frames: 3 frames
+PyMOL>mset 1 x10
+PyMOL>count_frames
+ cmd.count_frames: 10 frames
+PyMOL>cmd.count_frames()
+PyMOL>cmd.count_states()
+PyMOL>cmd.count_atoms()
+PyMOL>dist
+cmd-Error: The 'lb' selection is undefined.
+cmd-Error: The 'rb' selection is undefined.
+PyMOL>distance
+cmd-Error: The 'lb' selection is undefined.
+cmd-Error: The 'rb' selection is undefined.
+PyMOL>select lb,resi 5 and name ca
+ Selector: selection "lb" defined with 2 atoms.
+PyMOL>dist
+cmd-Error: The 'rb' selection is undefined.
+PyMOL>select rb,resi 8 and name ca
+ Selector: selection "rb" defined with 2 atoms.
+PyMOL>dist
+ Executive: object "dist01" created.
+PyMOL>dist (lb),resi 10 and name ca
+ Executive: object "dist02" created.
+PyMOL>distance resi 6 and name n,resi 9
+ Executive: object "dist03" created.
+PyMOL>distance resi 7 and name ca,all,3.0,zoom=1
+ Executive: object "dist04" created.
+PyMOL>print "%6.3f"%cmd.distance("resi 1 and name ca","resi 13 and name ca")
+ Executive: object "dist05" created.
+ 3.841
+PyMOL>print "%6.3f"%cmd.distance("resi 1 and name ca","resi 14 and name ca")
+ Distance-ERR: selection 2 contains no atoms.
+PyMOL>print cmd.find_pairs("name o","name n",mode=1,cutoff=3.4)
+[(('cpy', 107), ('pept', 1)), (('pept', 107), ('pept', 1)), (('cpy', 93), ('pe
+pt', 15)), (('pept', 93), ('pept', 15)), (('cpy', 64), ('pept', 34)), (('pept',
+ 64), ('pept', 34)), (('cpy', 51), ('pept', 56)), (('cpy', 43), ('pept', 56)), 
+(('pept', 51), ('pept', 56)), (('pept', 43), ('pept', 56)), (('cpy', 19), ('pep
+t', 73)), (('pept', 19), ('pept', 73)), (('cpy', 8), ('pept', 100)), (('pept', 
+8), ('pept', 100)), (('cpy', 107), ('cpy', 1)), (('pept', 107), ('cpy', 1)), ((
+'cpy', 93), ('cpy', 15)), (('pept', 93), ('cpy', 15)), (('cpy', 64), ('cpy', 34
+)), (('pept', 64), ('cpy', 34)), (('cpy', 51), ('cpy', 56)), (('cpy', 43), ('cp
+y', 56)), (('pept', 51), ('cpy', 56)), (('pept', 43), ('cpy', 56)), (('cpy', 19
+), ('cpy', 73)), (('pept', 19), ('cpy', 73)), (('cpy', 8), ('cpy', 100)), (('pe
+pt', 8), ('cpy', 100))]
+PyMOL>del all
+PyMOL>load dat/pept.pdb
+ Executive: object "pept" created.
+PyMOL>get_area (none)
+ cmd.get_area: 0.000 Angstroms^2.
+PyMOL>get_area
+ cmd.get_area: 1388.036 Angstroms^2.
+PyMOL>get_area state=2
+Area-Error: Invalid state.
+PyMOL>get_area name ca
+ cmd.get_area: 100.463 Angstroms^2.
+PyMOL>load dat/3al1.pdb
+ ObjectMolecule: read HELIX A 102 A 110
+ ObjectMolecule: read HELIX B 202 B 210
+ PDBStrToCoordSet: Attempting to read symmetry information
+ Crystal: Unit Cell           20.544   20.859   26.055
+ Crystal: Alpha Beta Gamma   101.160   97.030  118.060
+ Crystal: RealToFrac Matrix
+ Crystal:    0.04868    0.02595    0.01403
+ Crystal:    0.00000    0.05433    0.01626
+ Crystal:    0.00000    0.00000    0.04037
+ Crystal: FracToReal Matrix
+ Crystal:   20.54400   -9.81199   -3.18885
+ Crystal:    0.00000   18.40714   -7.41448
+ Crystal:    0.00000    0.00000   24.77337
+ Crystal: Unit Cell Volume 9368.204
+ Symmetry:      1.00000      0.00000      0.00000      0.00000
+ Symmetry:      0.00000      1.00000      0.00000      0.00000
+ Symmetry:      0.00000      0.00000      1.00000      0.00000
+ Symmetry:      0.00000      0.00000      0.00000      1.00000
+ Symmetry:     -1.00000      0.00000      0.00000      0.00000
+ Symmetry:      0.00000     -1.00000      0.00000      0.00000
+ Symmetry:      0.00000      0.00000     -1.00000      0.00000
+ Symmetry:      0.00000      0.00000      0.00000      1.00000
+ Executive: object "3al1" created.
+PyMOL>get_area
+Area-Error: Selection must be within a single object.
+PyMOL>del all
+PyMOL>print lst
+[('white', 0), ('black', 1), ('blue', 2), ('green', 3), ('red', 4), ('cyan', 5
+), ('yellow', 6), ('dash', 7), ('violet', 8), ('salmon', 9)]
+PyMOL>print cmd.get_color_tuple("red")
+(1.0, 0.0, 0.0)
+PyMOL>print cmd.get_color_tuple("blue")
+(0.0, 0.0, 1.0)
+PyMOL>print cmd.get_color_tuple("green")
+(0.0, 1.0, 0.0)
+PyMOL>print cmd.get_color_tuple("white")
+(1.0, 1.0, 1.0)
+PyMOL>del all
+PyMOL>load dat/pept.pdb
+ Executive: object "pept" created.
+PyMOL>get_dihedral 1/n,1/ca,1/c,1/o
+ cmd.get_dihedral: -8.586 degrees.
+ -6.471 -21.421  13.157   8.919   0.863  27.934
+ -5.165 -18.221  16.620   7.053  -2.295  25.698
+PyMOL>print len(cmd.get_model().atom)
+107
+PyMOL>print len(cmd.get_model("resi 1").bond)
+7
+PyMOL>del all
+PyMOL>print cmd.get_names()
+[]
+PyMOL>load dat/pept.pdb
+ Executive: object "pept" created.
+PyMOL>print cmd.get_names()
+['pept']
+PyMOL>edit 4/ca
+ Selector: selection "pk1" defined with 1 atoms.
+PyMOL>print cmd.get_names("all")
+['pept', 'pk1', '_pkbase1', 'pkfrag1', '_pkbase2', 'pkfrag2', 'pkchain']
+PyMOL>print cmd.get_names("selections")
+['pk1', '_pkbase1', 'pkfrag1', '_pkbase2', 'pkfrag2', 'pkchain']
+PyMOL>print cmd.get_names("objects")
+['pept']
+PyMOL>print cmd.get_names_of_type("object:molecule")
+['pept']
+PyMOL>print cmd.get_names_of_type("object:map")
+[]
+PyMOL>kee = pp.keys()[0]
+PyMOL>print kee
+('pept', 10)
+PyMOL>cmd._dump_floats(pp[kee])
+-124.163 170.604
+PyMOL>reset
+PyMOL>get_position
+ cmd.get_position: [   1.224, -10.279,  20.545]
+PyMOL>zoom resi 10
+PyMOL>get_position
+ cmd.get_position: [   2.395,  -9.290,  18.016]
+PyMOL>get_type
+Parsing-Error: missing required argument: name
+PyMOL>get_type nonexistent
+cmd-Error: unrecognized name.
+PyMOL>get_type pept
+object:molecule
+PyMOL>id_atom none
+cmd-Error: atom none not found by id_atom.
+PyMOL>id_atom all
+cmd-Error: multiple atoms all found by id_atom.
+PyMOL>id_atom 5/ca
+ cmd.id_atom: (id 35)
+PyMOL>identify name ca
+ cmd.identify: (id 2)
+ cmd.identify: (id 10)
+ cmd.identify: (id 16)
+ cmd.identify: (id 21)
+ cmd.identify: (id 35)
+ cmd.identify: (id 45)
+ cmd.identify: (id 53)
+ cmd.identify: (id 57)
+ cmd.identify: (id 66)
+ cmd.identify: (id 74)
+ cmd.identify: (id 81)
+ cmd.identify: (id 95)
+ cmd.identify: (id 101)
+PyMOL>index name ca
+ cmd.index: (pept`2)
+ cmd.index: (pept`10)
+ cmd.index: (pept`16)
+ cmd.index: (pept`21)
+ cmd.index: (pept`35)
+ cmd.index: (pept`45)
+ cmd.index: (pept`53)
+ cmd.index: (pept`57)
+ cmd.index: (pept`66)
+ cmd.index: (pept`74)
+ cmd.index: (pept`81)
+ cmd.index: (pept`95)
+ cmd.index: (pept`101)
+PyMOL>overlap pept,pept
+ cmd.overlap: 644.478 Angstroms.
+PyMOL>alter (all),vdw=0.0
+ Alter: modified 107 atoms.
+PyMOL>overlap pept,pept
+ cmd.overlap: 0.000 Angstroms.
+PyMOL>alter (all),vdw=0.5
+ Alter: modified 107 atoms.
+PyMOL>overlap pept,pept
+ cmd.overlap: 53.500 Angstroms.
+PyMOL>phi_psi all
+ CYS-2:    ( -124.2,  170.6 )
+ ALA-3:    ( -128.4,  140.0 )
+ TRP-4:    ( -128.5,  135.2 )
+ HIS-5:    ( -114.1,  109.1 )
+ LEU-6:    (   53.9,   41.8 )
+ GLY-7:    (   90.4,  -28.0 )
+ GLU-8:    (  -75.5,  138.7 )
+ LEU-9:    (  -73.5,  125.3 )
+ VAL-10:   (  -91.9,  -61.0 )
+ TRP-11:   ( -168.2,  159.0 )
+ CYS-12:   ( -138.9,  133.5 )

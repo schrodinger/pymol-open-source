@@ -26,6 +26,7 @@ Z* -------------------------------------------------------------------
 #include"Setting.h"
 #include"PConv.h"
 #include"main.h"
+#include"Color.h"
 
 static void ObjectCGOFree(ObjectCGO *I);
 CGO *ObjectCGOPyListFloatToCGO(PyObject *list);
@@ -85,6 +86,9 @@ static void ObjectCGORender(ObjectCGO *I,int state,CRay *ray,Pickable **pick,int
 {
   ObjectCGOState *sobj = NULL;
   int a;
+  float *color;
+
+  color = ColorGet(I->Obj.Color);
 
   if(!pass) {
     if(I->Obj.RepVis[cRepCGO]) {
@@ -97,13 +101,13 @@ static void ObjectCGORender(ObjectCGO *I,int state,CRay *ray,Pickable **pick,int
             sobj = I->State+a;
             if(ray) {    
               if(sobj->ray)
-                CGORenderRay(sobj->ray,ray,NULL,I->Obj.Setting,NULL);
+                CGORenderRay(sobj->ray,ray,color,I->Obj.Setting,NULL);
               else
-                CGORenderRay(sobj->std,ray,NULL,I->Obj.Setting,NULL);
+                CGORenderRay(sobj->std,ray,color,I->Obj.Setting,NULL);
             } else if(pick&&PMGUI) {
             } else if(PMGUI) {
               if(sobj->std)
-                CGORenderGL(sobj->std,NULL,I->Obj.Setting,NULL);
+                CGORenderGL(sobj->std,color,I->Obj.Setting,NULL);
             }
           }
         }
@@ -116,15 +120,15 @@ static void ObjectCGORender(ObjectCGO *I,int state,CRay *ray,Pickable **pick,int
           if(sobj)
             {
               if(sobj->ray)
-                CGORenderRay(sobj->ray,ray,NULL,I->Obj.Setting,NULL);
+                CGORenderRay(sobj->ray,ray,color,I->Obj.Setting,NULL);
               else
-                CGORenderRay(sobj->std,ray,NULL,I->Obj.Setting,NULL);
+                CGORenderRay(sobj->std,ray,color,I->Obj.Setting,NULL);
             }
         } else if(pick&&PMGUI) {
         } else if(PMGUI) {
           if(sobj)
             if(sobj->std)
-              CGORenderGL(sobj->std,NULL,I->Obj.Setting,NULL);
+              CGORenderGL(sobj->std,color,I->Obj.Setting,NULL);
         }
       }
     }

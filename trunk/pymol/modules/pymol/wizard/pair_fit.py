@@ -111,7 +111,7 @@ class Pair_fit(Wizard):
          if not len(lst): break
          b = lst.pop()
          name = dist_prefix+str(c)
-         cmd.dist(name,a,b)
+         cmd.dist(name,a,b,width=7,length=0.05,gap=0.05)
          cmd.hide('label',name)
          cmd.enable(name)
          c = c + 1

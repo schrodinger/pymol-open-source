@@ -13,3 +13,4 @@ Categories
 C : Automated command line tests
 G : Automated graphical tests
 T : Manual threading tests
+U : Unix tests

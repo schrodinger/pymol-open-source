@@ -421,6 +421,14 @@ void RayTransformBasis(CRay *I,CBasis *basis1)
   }
 }
 
+/*========================================================================*/
+void RayRenderTest(CRay *I,int width,int height,float front,float back,float fov)
+{
+
+  PRINTFB(FB_Ray,FB_Details)
+    " RayRenderTest: obtained %i graphics primitives.\n",I->NPrimitive 
+    ENDFB;
+}
 
 /*========================================================================*/
 void RayRenderPOV(CRay *I,int width,int height,char **headerVLA_ptr,char **charVLA_ptr,float front,float back,float fov)

@@ -25,6 +25,8 @@ import sys, string
 import pymol
 from pymol import cmd
 from pymol import util
+from pymol import parser
+
 import re
 import thread
 import threading
@@ -34,9 +36,17 @@ import __builtin__
 import traceback
 import Queue
 
+def complete(event,str,widget,self):
+   st = parser.complete(str.get())
+   if st:
+      str.set(st)
+      widget.icursor(len(st))
+   self.focus_entry = 1
+   return 1
+
 class PMGApp(AbstractApp):
 
-   appversion     = '0.73'
+   appversion     = '0.75'
    appname       = 'PyMOL Molecular Graphics System'
    copyright      = 'Copyright (C) 1998-2001 by Warren DeLano of\nDeLano Scientific. All rights reserved.'
    contactweb     = 'http://www.pymol.org'
@@ -142,7 +152,7 @@ class PMGApp(AbstractApp):
          win.deactivate()
       else: # autocenter, deiconify, and run mainloop
          win.destroy()
-      
+
    def createMain(self):
       self.command = StringVar()
       self.entry = self.createcomponent('entry', (), None,
@@ -155,20 +165,21 @@ class PMGApp(AbstractApp):
       self.entry.bind('<Return>',lambda event,w=self.command:
          (cmd.do(w.get()),cmd.dirty(),w.set('')))
 
+      self.entry.bind('<Tab>',lambda event,w=self.command,
+                      e=self.entry,s=self:
+                      complete(event,w,e,s))
+
       self.output = self.createcomponent('output', (), None,
                            Pmw.ScrolledText,
                            (self.get_dataArea(),))
 
       text = self.output.component('text')
       if sys.platform=='linux2':
-         self.my_fw_font=('lucida console',10)
-      elif sys.platform[:3]=='win':
-         self.my_fw_font=('lucida console',8) # Courier 9
-      else:
-         self.my_fw_font=('lucida console',10)
-         
+         self.my_fw_font=('lucida console',7)
+
       text.configure(font = self.my_fw_font)
       text.configure(width=72)
+      self.focus_entry=0
       self.output.after(1000,self.flush_commands)
       self.output.after(1000,self.update_feedback)
       self.output.after(1000,self.update_menus)
@@ -188,6 +199,9 @@ class PMGApp(AbstractApp):
       self.output.after(20,self.flush_commands) # 50X a second
       
    def update_feedback(self):
+      if self.focus_entry:
+         self.focus_entry=0
+         self.entry.focus_set()
       for a in cmd.get_feedback():
          self.output.insert(END,"\n")
          self.output.insert(END,a)
@@ -196,6 +210,7 @@ class PMGApp(AbstractApp):
          if self.lineCount > 10000:
             self.output.delete('0.0','%i.%i' % (self.lineCount-5000,0))
             self.lineCount=5000
+         self.entry.focus_set()
       self.output.after(100,self.update_feedback) # 10X a second
 
    def update_menus(self):

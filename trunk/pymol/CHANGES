@@ -72,11 +72,14 @@ Current and Ongoing Goals
    * make an ActiveX control which contains the core PyMOL viewer for 
      use in web browsers and many other crazy contexts.
 
-   * clean up return values in the API
+   * clean up return values in the API, and qualify exceptions, include the source
+     source module for error messages, and provide proper feedback conditionals
 
-   * complete first-round test-cases
+   * update expand and attach to take an atom name as well as an element symbol
 
-   * place feedback conditionals around all error output
+   * complete first-round test-cases.
+
+   * place feedback conditionals around all error output.
 
 Main Goals for 1.0 Release
 
@@ -103,6 +106,19 @@ Current Bugs to Fix
    * superposition flaky when fitting against multiple conformations...
 
    * intra_fit broken?
+
+Changes up to 0.75
+
+   * enabled automatic completion in the tcl/tk command window
+
+   * altered settings for dot representation
+
+   * created stop_on_exception and raise_exceptions settings.
+     WARNING: stop_on_exceptions is NOT set by default (this is so that
+     log files which contain errors will continue to function).
+
+   * gutted cmd.py, and created a bunch of sub-modules which contain the
+     code previously in cmd.py.  
 
 Changes up to 0.73
 

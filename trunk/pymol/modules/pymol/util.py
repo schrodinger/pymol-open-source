@@ -141,9 +141,11 @@ def hide_sele():
    for a in arg:
       cmd.disable(a)
 
-def hbond(a,b,cutoff=3.3):
-   st = "(%s and (%s around %4.2f) and elem N,O),(%s and (%s around %4.2f) and elem N,O),%4.2f" % (a,b,cutoff,b,a,cutoff,cutoff)
-#   cmd.dist("hbond",st)
+# FUBAR
+#def hbond(a,b,cutoff=3.3,name='hbond'):
+#   cmd.dist(name,"((%s) and ((%s) around %4.2f) and elem N,O)"%(a,b,cutoff),
+#            "((%s) and ((%s) around %4.2f) and elem N,O)"%(b,a,cutoff),
+#            cutoff)
 
 def cbc(selection='(all)',first_color=7): # NOT THREAD SAFE
    '''
@@ -162,7 +164,6 @@ def cbc(selection='(all)',first_color=7): # NOT THREAD SAFE
          cmd.color("%d"%c,"(chain '')")
          c = c + 1
          
-
 color_chains = cbc
 
 def sum_charge(*arg): # NOT THREAD SAFE
@@ -228,7 +229,6 @@ def ray_shadows(mode):
       cmd.set('reflect_power',1.7)
       cmd.set('gamma',1.55) 
 
-      
 def ff_copy(src,dst): # NOT THREAD SAFE
    pymol._rcopy = pymol.Scratch_Storage()
    pymol._rcopy.pc={}
