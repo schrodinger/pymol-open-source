@@ -153,7 +153,6 @@ Z* -------------------------------------------------------------------
 
 #define ListDetach(List,Elem,Link,ListType) \
 { \
-  ListType.copy = Elem; \
   ListType.current = List; \
   ListType.previous = NULL; \
   while(ListType.current) \
@@ -166,10 +165,10 @@ Z* -------------------------------------------------------------------
   if(ListType.current) \
 	 { \
 		if(ListType.previous) \
-        ListType.previous->Link = ListType.current->Link; \
-      else \
-        (List) = ListType.current->Link; \
-		(Elem)->Link = ListType.current; \
+		  ListType.previous->Link = ListType.current->Link; \
+        else \
+          (List) = ListType.current->Link; \
+	  (Elem)->Link = NULL; \
 	 } \
 }
 
