@@ -2,17 +2,17 @@
 
   Author: Greg Landrum (Landrum@RationalDiscovery.com)
   Created:       January 2002
-  $LastChangedDate: 2004-02-25 15:14:32 -0800 (Wed, 25 Feb 2004) $
+  $LastChangedDate: 2004-07-31 07:35:39 -0700 (Sat, 31 Jul 2004) $
   License:  PyMol
   Requires:
             - a python xmlrpclib distribution containing the SimpleXMLRPCServer
               module (1.0 or greater should be fine)
             - python with threading enabled  
              
-  RD Version: $Rev: 3199 $            
+  RD Version: $Rev: 3617 $            
 """
 import SimpleXMLRPCServer
-import threading,sys,time
+import threading,sys,time,types
 from pymol import cmd,cgo
 
 # initial port to try for the server
@@ -175,24 +175,34 @@ def rpcCylinder(end1,end2,rad,color1,id='cgo',color2=None,extend=1):
   cmd.load_cgo(obj,id,1)
   return 1
 
-def rpcShow(objName):
-  """ shows (enables) an object """
-  try:
-    cmd.enable(objName)
-  except:
-    res = 0
-  else:
-    res = 1
+def rpcShow(objs):
+  """ shows (enables) an object (or objects)"""
+  if type(objs) not in (types.ListType,types.TupleType):
+    objs = (objs,)
+
+  for objName in objs:
+    try:
+      cmd.enable(objName)
+    except:
+      res = 0
+      break
+    else:
+      res = 1
   return res  
 
-def rpcHide(objName):
-  """ hides (disables) an object """
-  try:
-    cmd.disable(objName)
-  except:
-    res = 0
-  else:
-    res = 1
+def rpcHide(objs):
+  """ hides (disables) an object (or objects) """
+  if type(objs) not in (types.ListType,types.TupleType):
+    objs = (objs,)
+
+  for objName in objs:
+    try:
+      cmd.disable(objName)
+    except:
+      res = 0
+      break
+    else:
+      res = 1
   return res  
 
 def rpcDeleteObject(objName):
@@ -325,9 +335,9 @@ def rpcTranslate(vect,objName='all',state=-1):
   """
   cmd.translate(vect,objNAme,state=state)
 
-def rpcGetNames(what='selections'):
+def rpcGetNames(what='selections',enabledOnly=1):
   """ returns the results of cmd.get_names(what) """
-  return cmd.get_names(what)
+  return cmd.get_names(what,enabled_only=enabledOnly)
 
 def rpcIdentify(what='all',mode=0):
   """ returns the results of cmd.identify(what,mode) """
@@ -426,3 +436,4 @@ def launch_XMLRPC(hostname='localhost',port=_xmlPort,nToTry=_nPortsToTry):
     t.start()
   else:
     print 'xml-rpc server could not be started'
+    
