@@ -108,13 +108,14 @@ Rep *RepLabelNew(CoordSet *cs)
   
   obj = cs->Obj;
   vFlag=false;
-  for(a=0;a<cs->NIndex;a++) {
-	 if(obj->AtomInfo[cs->IdxToAtm[a]].visRep[cRepLabel])
-		{
-		  vFlag=true;
-		  break;
-		}
-  }
+  if(obj->RepVisCache[cRepLabel])
+    for(a=0;a<cs->NIndex;a++) {
+      if(obj->AtomInfo[cs->IdxToAtm[a]].visRep[cRepLabel])
+        {
+          vFlag=true;
+          break;
+        }
+    }
   if(!vFlag) {
     OOFreeP(I);
     return(NULL); /* skip if no label are visible */

@@ -134,7 +134,7 @@ typedef struct AtomInfoType {
   short int model; /* obsolete?? */
   int atom;       /* obsolete?? */
   int selEntry;
-  short int visRep[cRepCnt];
+  short int visRep[cRepCnt]; /* why isn't this a char? */
   int color;
   int id; 
   int cartoon; /* 0 = default which is auto (use ssType) */

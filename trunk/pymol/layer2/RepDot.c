@@ -180,13 +180,14 @@ Rep *RepDotDoNew(CoordSet *cs,int mode)
     visFlag=true;
   } else {
     visFlag=false;
-    for(a=0;a<cs->NIndex;a++) {
-      if(obj->AtomInfo[cs->IdxToAtm[a]].visRep[cRepDot])
-        {
-          visFlag=true;
-          break;
-        }
-    }
+    if(obj->RepVisCache[cRepDot])
+      for(a=0;a<cs->NIndex;a++) {
+        if(obj->AtomInfo[cs->IdxToAtm[a]].visRep[cRepDot])
+          {
+            visFlag=true;
+            break;
+          }
+      }
   }
   if(!visFlag) {
     OOFreeP(I);

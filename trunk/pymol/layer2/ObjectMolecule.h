@@ -70,6 +70,7 @@ typedef struct ObjectMolecule {
   int BondCounter;
   int AtomCounter;
   struct CSculpt *Sculpt;
+  short int RepVisCache[cRepCnt]; /* for transient storage during updates */
 } ObjectMolecule;
 
 typedef struct ObjectMoleculeOpRec {
@@ -291,7 +292,7 @@ struct CoordSet *ObjectMoleculeGetCoordSet(ObjectMolecule *I,int setIndex);
 void ObjectMoleculeBlindSymMovie(ObjectMolecule *I);
 void ObjectMoleculeMerge(ObjectMolecule *I,AtomInfoType *ai,
                          struct CoordSet *cs,int bondSearchFlag,
-                         int aic_mask);
+                         int aic_mask,int invalidate);
 void ObjectMoleculeUpdateNonbonded(ObjectMolecule *I);
 void ObjectMoleculeUpdateNeighbors(ObjectMolecule *I);
 int ObjectMoleculeMoveAtom(ObjectMolecule *I,int state,int index,float *v,int mode,int log);

@@ -1141,8 +1141,9 @@ Rep *RepCylBondNew(CoordSet *cs)
 {
   PyMOLGlobals *G=cs->G;
   ObjectMolecule *obj;
-  int a,a1,a2,c1,c2,s1,s2,b1,b2;
-  BondType *b;
+  int a,a1,a2,c1,c2,s1,s2;
+  register int b1,b2;
+  register BondType *b;
   float *v,*vv1,*vv2,*v0,*vr,*vsp,*vspc;
   float v1[3],v2[3],h[3];
   float radius;
@@ -1157,7 +1158,7 @@ Rep *RepCylBondNew(CoordSet *cs)
   float stick_ball_ratio=1.0F;
   unsigned int v_size,vr_size,rp_size,vp_size;
   Pickable *rp;
-  AtomInfoType *ai1,*ai2;
+  register AtomInfoType *ai1,*ai2;
   SphereRec *sp = NULL;
   float *rgb1,*rgb2,rgb1_buf[3],rgb2_buf[3];
   int fixed_radius = false;
@@ -1174,18 +1175,20 @@ Rep *RepCylBondNew(CoordSet *cs)
   obj = cs->Obj;
   visFlag=false;
   b=obj->Bond;
-  for(a=0;a<obj->NBond;a++)
-    {
-      b1 = b->index[0];
-      b2 = b->index[1];
-
-      b++;
-      if(obj->AtomInfo[b1].visRep[cRepCyl]||
-         obj->AtomInfo[b2].visRep[cRepCyl]) {
-        visFlag=true;
-        break;
+  ai1=obj->AtomInfo;
+  if(obj->RepVisCache[cRepCyl])
+    for(a=0;a<obj->NBond;a++)
+      {
+        b1 = b->index[0];
+        b2 = b->index[1];
+        
+        b++;
+        if(ai1[b1].visRep[cRepCyl]||
+           ai1[b2].visRep[cRepCyl]) {
+          visFlag=true;
+          break;
+        }
       }
-    }
   if(!visFlag) {
     OOFreeP(I);
     return(NULL); /* skip if no dots are visible */

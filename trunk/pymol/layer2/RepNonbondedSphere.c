@@ -165,17 +165,18 @@ Rep *RepNonbondedSphereNew(CoordSet *cs)
 
   active = Alloc(int,cs->NIndex);
   
-  for(a=0;a<cs->NIndex;a++) {
-    ai = obj->AtomInfo+cs->IdxToAtm[a];
-    active[a] =(!ai->bonded) && (ai->visRep[ cRepNonbondedSphere ]);
-	if(active[a]) {
-		if(ai->masked)
-			active[a]=-1;
-		else
-			active[a]=1;
-	}
-    if(active[a]) nSphere++;
-  }
+  if(obj->RepVisCache[cRepNonbondedSphere])
+    for(a=0;a<cs->NIndex;a++) {
+      ai = obj->AtomInfo+cs->IdxToAtm[a];
+      active[a] =(!ai->bonded) && (ai->visRep[ cRepNonbondedSphere ]);
+      if(active[a]) {
+        if(ai->masked)
+          active[a]=-1;
+        else
+          active[a]=1;
+      }
+      if(active[a]) nSphere++;
+    }
   if(!nSphere) {
     OOFreeP(I);
     FreeP(active);

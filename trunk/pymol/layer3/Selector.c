@@ -5539,7 +5539,7 @@ void SelectorCreateObjectMolecule(PyMOLGlobals *G,int sele,char *name,int target
   cs->NTmpBond = nBond;
   bond=NULL;
   
-  ObjectMoleculeMerge(targ,atInfo,cs,false,cAIC_AllMask); /* will free atInfo */
+  ObjectMoleculeMerge(targ,atInfo,cs,false,cAIC_AllMask,true); /* will free atInfo */
   /* cs->IdxToAtm will now have the reverse mapping from the new subset
      to the new merged molecule */
 
