@@ -12,6 +12,9 @@
 set ray_default_renderer=2 
 # for counting graphics primitives
 
+feedback enable, repsurface, blather
+feedback enable, isomesh, blather
+
 /print "BEGIN-LOG"
 
 
