@@ -49,6 +49,7 @@ typedef struct RepSurface {
   int oneColorFlag,oneColor;
   int allVisibleFlag;
   Object *Obj;
+  CoordSet *cs;
   int *LastVisib;
   int *LastColor;
 } RepSurface;
@@ -87,15 +88,17 @@ void RepSurfaceRender(RepSurface *I,CRay *ray,Pickable **pick)
   int *vi=I->Vis;
 
   if(ray) {
+    ray->fTransparentf(ray,SettingGet_f(I->cs->Setting,I->Obj->Setting,cSetting_transparent));
 	 c=I->NT;
-      while(c--)
-        {
-          if((*(vi+(*t)))&&(*(vi+(*(t+1))))&&(*(vi+(*(t+2)))))
-            ray->fTriangle3fv(ray,v+(*t)*3,v+(*(t+1))*3,v+(*(t+2))*3,
-                              vn+(*t)*3,vn+(*(t+1))*3,vn+(*(t+2))*3,
-                              vc+(*t)*3,vc+(*(t+1))*3,vc+(*(t+2))*3);
-          t+=3;
-        }
+    while(c--)
+      {
+        if((*(vi+(*t)))&&(*(vi+(*(t+1))))&&(*(vi+(*(t+2)))))
+          ray->fTriangle3fv(ray,v+(*t)*3,v+(*(t+1))*3,v+(*(t+2))*3,
+                            vn+(*t)*3,vn+(*(t+1))*3,vn+(*(t+2))*3,
+                            vc+(*t)*3,vc+(*(t+1))*3,vc+(*(t+2))*3);
+        t+=3;
+      }
+    ray->fTransparentf(ray,0.0);
   } else if(pick&&PMGUI) {
   } else if(PMGUI) {
 
@@ -483,6 +486,7 @@ Rep *RepSurfaceNew(CoordSet *cs)
   I->R.fRecolor=(void (*)(struct Rep*, struct CoordSet*))RepSurfaceColor;
   I->R.fSameVis=(int (*)(struct Rep*, struct CoordSet*))RepSurfaceSameVis;
   I->Obj = (Object*)(cs->Obj);
+  I->cs = cs;
   I->Dot=NULL;
   I->allVisibleFlag=true;
 
