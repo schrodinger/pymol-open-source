@@ -97,7 +97,7 @@ print stored.cnt
 
 stored.x = 0
 iterate_state 1,(all),stored.x=stored.x+x
-print stored.x
+print "%8.5f"%stored.x
 
 alter (all),segi='PEPT'
 
@@ -105,7 +105,7 @@ alter_state 1,(all),x = x + 1.0
 
 # stuff which relies on explicit selections
 
-print cmd.get_dihedral("(i;11&n;n)","(i;11&n;ca)","(i;11&n;cb)","(i;11&n;cg)")
+print "%8.5f"%cmd.get_dihedral("(i;11&n;n)","(i;11&n;ca)","(i;11&n;cb)","(i;11&n;cg)")
 
 # stuff which relies on mouse button selections
 
@@ -209,13 +209,13 @@ torsion 180
 # API only
 
 print cmd.get_model().__class__
-print cmd.get_area()
-print cmd.get_area()
-print cmd.get_area("(name ca)")
+print "%8.5f"%cmd.get_area()
+print  "%8.5f"%cmd.get_area("(name ca)")
 print cmd.get_names()
 print cmd.get_type('pept')
 print cmd.identify("(i;7)")
-print cmd.get_extent()
+/ext=cmd.get_extent()
+print "%8.5f %8.5f %8.5f %8.5f %8.5f %8.5f"%(ext[0][0],ext[0][1],ext[0][2],ext[1][0],ext[1][1],ext[1][2])
 
 # unsupported features
 
