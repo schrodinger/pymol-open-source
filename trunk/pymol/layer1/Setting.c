@@ -1189,6 +1189,7 @@ void SettingGenerateSideEffects(PyMOLGlobals *G,int index,char *sele,int state)
     break;
   case cSetting_valence:
   case cSetting_half_bonds:
+  case cSetting_line_stick_helper:
     ExecutiveInvalidateRep(G,inv_sele,cRepLine,cRepInvRep);
     ExecutiveInvalidateRep(G,inv_sele,cRepCyl,cRepInvRep);
     SceneChanged(G);
@@ -2406,6 +2407,8 @@ void SettingInitGlobal(PyMOLGlobals *G,int alloc,int reset_gui)
   SettingSet_b(I,cSetting_animation, 1);
   SettingSet_f(I,cSetting_animation_duration, 0.75F);
   SettingSet_i(I,cSetting_scene_animation,-1);
+  SettingSet_b(I,cSetting_line_stick_helper, 0);
+
 }
 
 

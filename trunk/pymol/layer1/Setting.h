@@ -538,10 +538,11 @@ CSetting *SettingNewFromPyList(PyMOLGlobals *G,PyObject *list);
 #define cSetting_animation                  388
 #define cSetting_animation_duration         389
 #define cSetting_scene_animation            390
+#define cSetting_line_stick_helper          391
 
 /* cSetting_ss_INIT must always be last setting_index +1 */
 
-#define cSetting_INIT                       391
+#define cSetting_INIT                       392
 
 #endif
 

@@ -2274,6 +2274,7 @@ float SceneGetScreenVertexScale(PyMOLGlobals *G,float *v1)
   /* projection transformation */
   MatrixTransform44f4f(I->ProMatrix,p1,p1); 
   MatrixTransform44f4f(I->ProMatrix,p2,p2);
+  /*  dump44f(I->ProMatrix,"pro");*/
   /* perspective division */
   p1[0]=p1[0]/p1[3];
   p2[0]=p2[0]/p2[3];

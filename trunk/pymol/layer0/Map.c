@@ -105,6 +105,77 @@ void MapCacheFree(MapCache *M,int group_id,int block_base)
 
 #define MapSafety 0.01F
 
+int MapInside(MapType *I,float *v,int *a,int *b,int *c) /* special version for ray-tracing */
+{
+	int		atmp, btmp, ctmp;
+	const float	iDiv	= I->recipDiv; 
+		
+	atmp	= (int)((v[0] - I->Min[0]) * iDiv) + MapBorder;
+	btmp	= (int)((v[1] - I->Min[1]) * iDiv) + MapBorder;
+	ctmp	= (int)((v[2] - I->Min[2]) * iDiv) + MapBorder;
+
+	if(atmp < I->iMin[0])
+	{
+		if((I->iMin[0] - atmp) > 1)
+			return(-1);
+		else 
+			atmp = I->iMin[0]; 
+	}
+	else if(atmp > I->iMax[0]) 
+	{ 
+		if((atmp - I->iMax[0]) > 1) 
+			return(-1);
+		else 
+			atmp = I->iMax[0]; 
+	}
+
+	if(btmp < I->iMin[1]) 
+	{ 
+		if((I->iMin[1] - btmp) > 1) 
+			return(-1);
+		else 
+			btmp = I->iMin[1];
+	}
+	else if(btmp > I->iMax[1]) 
+	{
+		if((btmp - I->iMax[1]) > 1)
+			return(-1);
+		else 
+			btmp = I->iMax[1];
+	}
+
+   /*    printf("%d %d %d\n",ctmp,I->iMin[2],I->iMax[2]);*/
+	if(ctmp < I->iMin[2]) 
+	{ 
+		if((I->iMin[2] - ctmp) > 1) 
+			return(-1);
+		else 
+			ctmp = I->iMin[2];
+	}
+	else if(ctmp > I->iMax[2]) 
+	{
+		if((ctmp - I->iMax[2]) > 1)
+        return(0); /* just keep searching... */
+		else 
+			ctmp = I->iMax[2];
+	}
+
+   /*   printf("%d %d %d %d %d %d %d %d %d\n",
+          atmp,I->iMin[0],I->iMax[0],
+          btmp,I->iMin[1],I->iMax[1],
+          ctmp,I->iMin[2],I->iMax[2]);
+   */
+
+	if(!*(MapEStart(I,atmp,btmp,ctmp)))
+     return(0);
+		
+	*a		= atmp;
+	*b		= btmp;
+	*c		= ctmp;
+	
+	return(1);  
+}
+
 int MapInsideXY(MapType *I,float *v,int *a,int *b,int *c) /* special version for ray-tracing */
 {
 	int		atmp, btmp, ctmp;

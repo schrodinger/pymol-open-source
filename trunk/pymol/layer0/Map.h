@@ -74,6 +74,8 @@ float MapGetSeparation(PyMOLGlobals *G,float range,float *mx,float *mn,float *di
 
 /* special routines for raytracing */
 
+int MapInside(MapType *I,float *v,int *a,int *b,int *c);
+
 int MapInsideXY(MapType *I,float *v,int *a,int *b,int *c); 
 void MapSetupExpressXY(MapType *I,int n_vert);
 
