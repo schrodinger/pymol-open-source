@@ -62,6 +62,7 @@ import re
 import string
 import sys
 import threading
+import new
 
 class QuietException:
    def __init__(self,args=None):

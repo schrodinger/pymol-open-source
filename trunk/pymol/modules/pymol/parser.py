@@ -21,7 +21,6 @@ import traceback
 import string
 import cmd
 import exceptions
-import new
 import re
 import parsing
 import types
