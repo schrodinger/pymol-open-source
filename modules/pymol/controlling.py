@@ -325,6 +325,9 @@ SEE ALSO
          elif action in mode_dict.keys():
             mode = action
             cmd.set("button_mode_name",mode_name_dict.get(mode,mode))
+            if mode in mouse_ring:
+               bm = mouse_ring.index(mode)
+               cmd.set("button_mode",bm)
             mode_list = mode_dict[mode]
          if mode_list!=None:
             for a in mode_list:

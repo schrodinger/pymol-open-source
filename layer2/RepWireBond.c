@@ -506,7 +506,8 @@ Rep *RepWireBondNew(CoordSet *cs)
 
   valence = SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_valence);
   if(valence==1.0F) /* backwards compatibility... */
-    valence = SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_valence_size);
+    valence = SettingGet_f(G,cs->Setting,
+                           obj->Obj.Setting,cSetting_valence_size);  
   valence_flag = (valence!=0.0F);
   cartoon_side_chain_helper = SettingGet_b(G,cs->Setting, obj->Obj.Setting,
                                          cSetting_cartoon_side_chain_helper);
