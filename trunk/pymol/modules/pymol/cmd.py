@@ -847,6 +847,9 @@ from editing import \
      rename,             \
      replace,            \
      rotate,             \
+     sculpt_clear,       \
+     sculpt_imprint,     \
+     sculpt_iterate,     \
      set_dihedral,       \
      set_geometry,       \
      set_title,          \
@@ -1108,6 +1111,9 @@ keyword = {
    'rms'           : [ rms               , 0 , 0 , ''  , parsing.STRICT ],
    'rms_cur'       : [ rms_cur           , 0 , 0 , ''  , parsing.STRICT ],
    'save'          : [ save              , 0 , 0 , ''  , parsing.STRICT ],
+   'sculpt_clear'  : [ sculpt_clear      , 0 , 0 , ''  , parsing.STRICT ],
+   'sculpt_imprint': [ sculpt_imprint    , 0 , 0 , ''  , parsing.STRICT ],
+   'sculpt_iterate': [ sculpt_iterate    , 0 , 0 , ''  , parsing.STRICT ],
    'select'        : [ select            , 0 , 0 , ''  , parsing.LEGACY ],
    'set'           : [ set               , 0 , 0 , ''  , parsing.LEGACY ],
    'set_color'     : [ set_color         , 0 , 0 , ''  , parsing.LEGACY ],
@@ -1232,7 +1238,7 @@ ctrl = {
    'N' : [ replace                , ('N',4,3) , {}],
    'O' : [ replace                , ('O',4,2) , {}],   
    'P' : [ replace                , ('P',4,1) , {}],
-   'Q' : [ h_add                  , ("pk1",) , {}],   
+   'Q' : [ dist                   , () , {}],   
    'R' : [ h_fill                 , () , {} ],   
    'S' : [ replace                , ('S',4,2) , {}],
    'T' : [ bond                   , () , {} ],   

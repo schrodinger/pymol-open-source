@@ -1244,6 +1244,21 @@ class PMGApp(AbstractApp):
                                label='Charge',
                                command = lambda: cmd.do("_ wizard charge"))
 
+      self.menuBar.addmenu('Sculpt', 'Sculpt')
+
+      self.menuBar.addmenuitem('Sculpt', 'checkbutton',
+                         'Auto-Sculpt.',
+                         label=self.pad+'Auto-Sculpt',
+                        variable = self.setting.auto_sculpt,
+                        command = lambda s=self: s.setting.update('auto_sculpt'))
+
+      self.menuBar.addmenuitem('Sculpt', 'checkbutton',
+                         'Sculpting.',
+                         label=self.pad+'Sculpting',
+                        variable = self.setting.sculpting,
+                        command = lambda s=self: s.setting.update('sculpting'))
+
+      
       self.menuBar.addmenu('Demo', 'Demonstrations')
 
       self.menuBar.addmenuitem('Demo', 'command', 'Representations',

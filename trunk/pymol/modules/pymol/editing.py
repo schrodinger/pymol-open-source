@@ -20,6 +20,41 @@ import cmd
 from cmd import _cmd,lock,unlock,Shortcut,QuietException
 from chempy import cpv
 
+def sculpt_clear(object):
+   '''
+   undocumented
+'''
+   r = 0
+   try:
+      lock()
+      r = _cmd.sculpt_clear(str(object))
+   finally:
+      unlock()
+   return r
+   
+def sculpt_imprint(object):
+   '''
+undocumented.
+'''
+   r = 0
+   try:
+      lock()
+      r = _cmd.sculpt_imprint(str(object))
+   finally:
+      unlock()
+   return r
+
+def sculpt_iterate(object,state,cycles):
+   '''
+undocumented.
+'''
+   r = 0
+   try:
+      lock()
+      r = _cmd.sculpt_iterate(str(object),int(state)-1,int(cycles))
+   finally:
+      unlock()
+   return r
 
 def set_geometry(selection,geometry,valence):
    '''

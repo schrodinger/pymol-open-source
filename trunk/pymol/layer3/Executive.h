@@ -115,9 +115,10 @@ int ExecutiveMultiSave(char *fname,char *name,int state,int append);
 int ExecutiveIdentifyObjects(char *s1,int mode,int **indexVLA,ObjectMolecule ***objVLA);
 int ExecutiveCombineObjectTTT(char *name,float *ttt);
 int ExecutiveSetGeometry(char *s1,int geom,int valence);
-int ExecutiveObjectSculptUpdate(char *name,int state);
-int ExecutiveObjectSculptIterate(char *name,int state,int n_cycle);
 int ExecutiveSculptIterateAll(void);
+int ExecutiveSculptClear(char *name);
+int ExecutiveSculptImprint(char *name,int state);
+int ExecutiveSculptIterate(char *name,int state,int n_cycle);
 
 #endif
 

@@ -24,7 +24,8 @@ typedef struct CSculpt {
   ObjectMolecule *Obj;
   int *NBHash;
   int *NBList;
-
+  int *EXHash;
+  int *EXList;
 } CSculpt;
 
 CSculpt *SculptNew(void);

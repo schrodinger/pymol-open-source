@@ -1181,5 +1181,10 @@ void SettingInitGlobal(void)
 
   SettingSet_f(I,cSetting_auto_sculpt, 0.0F);  
 
-}
+  SettingSet_f(I,cSetting_sculpt_vdw, 0.96F);  
 
+  SettingSet_f(I,cSetting_sculpt_vdw14, 0.82F);  
+
+  SettingSet_f(I,cSetting_sculpting_cycles, 5.0F);  
+
+}

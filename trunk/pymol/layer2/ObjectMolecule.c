@@ -92,7 +92,17 @@ void ObjectMoleculeInferAmineGeomFromBonds(ObjectMolecule *I,int state);
 
 #define MAX_BOND_DIST 50
 
-void ObjectMoleculeSculptUpdate(ObjectMolecule *I,int state)
+void ObjectMoleculeSculptClear(ObjectMolecule *I)
+{
+  PRINTFD(FB_ObjectMolecule)
+    " ObjectMoleculeSculptClear: entered.\n"
+    ENDFD;
+
+  if(!I->Sculpt) SculptFree(I->Sculpt);
+  I->Sculpt=NULL;
+}
+
+void ObjectMoleculeSculptImprint(ObjectMolecule *I,int state)
 {
   PRINTFD(FB_ObjectMolecule)
     " ObjectMoleculeUpdateSculpt: entered.\n"
@@ -5184,9 +5194,9 @@ int ObjectMoleculeMoveAtom(ObjectMolecule *I,int state,int index,float *v,int mo
       PLog(line,cPLog_no_flush);
     }
   }
-  if(I->Sculpt) {
-    SculptIterateObject(I->Sculpt,I,state,1);
-  }
+  /*  if(I->Sculpt) {
+      SculptIterateObject(I->Sculpt,I,state,1);
+      }*/
   return(result);
 }
 /*========================================================================*/
