@@ -198,14 +198,46 @@ void ExecutiveStereo(int flag)
 void ExecutiveBond(char *s1,char *s2,int order,int add)
 {
   int sele1,sele2;
-  /*  Object *obj;
-  ObjectMolecule *objMol;
-  */
+  int cnt;
+  CExecutive *I=&Executive;
+  SpecRec *rec = NULL;
+  int flag = false;
+
   sele1=SelectorIndexByName(s1);
   sele2=SelectorIndexByName(s2);
   
   if((sele1>=0)&&(sele2>=0)) {
-    
+	 {
+		while(ListIterate(I->Spec,rec,next,SpecList))
+		  {
+			 if(rec->type==cExecObject)
+				{
+				  if(rec->obj->type==cObjectMolecule)
+					 {
+                  if(add) {
+                    cnt = ObjectMoleculeAddBond((ObjectMolecule*)rec->obj,sele1,sele2,order);
+                    if(cnt) {
+                      PRINTF " AddBond: %d bonds added to model '%s'.\n",cnt,rec->obj->Name ENDF;
+                      flag=true;
+                    }
+                  }
+                  else {
+                    cnt = ObjectMoleculeRemoveBonds((ObjectMolecule*)rec->obj,sele1,sele2);
+                    if(cnt) {
+                      PRINTF " RemoveBond: %d bonds removed from model '%s'.\n",cnt,rec->obj->Name ENDF;
+                      flag=true;
+                    }
+                  }
+                }
+            }
+        }
+      if(!flag) {
+        if(add) 
+          ErrMessage("AddBond","no bonds added.");
+        else
+          ErrMessage("RemoveBond","no bonds removed.");          
+      }
+    }
   } else if(sele1<0) {
     ErrMessage("ExecutiveBond","The first selection contains no atoms.");
   } else if(sele2<0) {

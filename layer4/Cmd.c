@@ -471,13 +471,13 @@ static PyObject *CmdDist(PyObject *dummy, PyObject *args)
 static PyObject *CmdBond(PyObject *dummy, PyObject *args)
 {
   char *str1,*str2;
-  int order;
+  int order,mode;
   OrthoLineType s1,s2;
-  PyArg_ParseTuple(args,"ssi",&str1,&str2,&order);
+  PyArg_ParseTuple(args,"ssii",&str1,&str2,&order,&mode);
   APIEntry();
   SelectorGetTmp(str1,s1);
   SelectorGetTmp(str2,s2);
-  ExecutiveBond(s1,s2,order,1);
+  ExecutiveBond(s1,s2,order,mode);
   SelectorFreeTmp(s1);
   SelectorFreeTmp(s2);
   APIExit();

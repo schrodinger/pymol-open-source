@@ -517,7 +517,7 @@ NOTES
 '''
    la = len(arg)
    if la==1:
-      print "Error: invalid arguments for dist command."
+      print "Error: invalid arguments for bond command."
       raise RuntimeError
    else:
       if la>1:
@@ -528,13 +528,46 @@ NOTES
          sel2 = "(pk3)"
       order = 1
       if(la>2):
-         order = int(arg[3])
+         order = int(arg[2])
       try:
          lock()
-         r = _cmd.bond(sel1,sel2,order)
+         r = _cmd.bond(sel1,sel2,order,1)
       finally:
          unlock()
    return r
+
+def unbond(*arg):
+   '''
+DESCRIPTION
+ 
+"unbond" removes all bonds between two selections.
+
+USAGE
+  
+PYMOL API
+ 
+NOTES
+ 
+'''
+   la = len(arg)
+   if la==1:
+      print "Error: invalid arguments for unbond command."
+      raise RuntimeError
+   else:
+      if la>1:
+         sel1 = arg[0]
+         sel2 = arg[1]
+      else:
+         sel1 = "(pk1)"
+         sel2 = "(pk3)"
+      try:
+         lock()
+         r = _cmd.bond(sel1,sel2,0,0)
+      finally:
+         unlock()
+   return r
+
+
 
 def show_help(cmd):
    set("text","1")
@@ -2895,7 +2928,8 @@ keyword = {
    '_quit'         : [_quit        , 0 , 0 , ',' , 0 ],
    'png'           : [png          , 1 , 1 , ',' , 0 ],
    'viewport'      : [viewport     , 2 , 2 , ',' , 0 ],
-   'zoom'          : [zoom         , 0 , 1 , ',' , 0 ]
+   'zoom'          : [zoom         , 0 , 1 , ',' , 0 ],
+   'unbond'        : [unbond       , 0 , 3 , ',' , 0 ],
    }
 
 help_only = {

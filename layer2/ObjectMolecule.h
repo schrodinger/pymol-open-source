@@ -119,6 +119,10 @@ void ObjectMoleculeInferChemForProtein(ObjectMolecule *I,int state);
 void ObjectMoleculeInferChemFromBonds(ObjectMolecule *I,int state);
 void ObjectMoleculePurge(ObjectMolecule *I);
 
+int ObjectMoleculeAddBond(ObjectMolecule *I,int sele0,int sele1,int order);
+int ObjectMoleculeRemoveBonds(ObjectMolecule *I,int sele1,int sele2);
+
+
 #endif
 
 

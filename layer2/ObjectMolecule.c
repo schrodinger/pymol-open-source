@@ -65,6 +65,141 @@ static int BondCompare(int *a,int *b);
 CoordSet *ObjectMoleculeChemPyModel2CoordSet(PyObject *model,AtomInfoType **atInfoPtr);
 
 int ObjectMoleculeGetAtomGeometry(ObjectMolecule *I,int state,int at);
+
+
+/*========================================================================*/
+int ObjectMoleculeAddBond(ObjectMolecule *I,int sele0,int sele1,int order)
+{
+  int a1,a2;
+  AtomInfoType *ai1,*ai2;
+  int s1,s2;
+  int c = 0;
+  int *bnd;
+
+  ai1=I->AtomInfo;
+  for(a1=0;a1<I->NAtom;a1++) {
+    s1=ai1->selEntry;
+    while(s1) 
+      {
+        if(SelectorMatch(s1,sele0))
+          {
+            ai2=I->AtomInfo;
+            for(a2=0;a2<I->NAtom;a2++) {
+              s2=ai2->selEntry;
+              while(s2) 
+                {
+                  if(SelectorMatch(s2,sele1))
+                    {
+                      VLACheck(I->Bond,int,I->NBond*3+2);
+                      bnd = I->Bond+(3*I->NBond);
+                      bnd[0]=a1;
+                      bnd[1]=a2;                      
+                      bnd[2]=order;
+                      I->NBond++;
+                      c++;
+                      break;
+                    }
+                  s2=SelectorNext(s2);
+                }
+              ai2++;
+            }
+            break;
+          }
+        s1=SelectorNext(s1);
+      }
+    ai1++;
+  }
+  if(c) {
+    ObjectMoleculeInvalidate(I,cRepLine,cRepInvBonds);
+    ObjectMoleculeInvalidate(I,cRepCyl,cRepInvBonds);
+  }
+  return(c);    
+}
+/*========================================================================*/
+int ObjectMoleculeRemoveBonds(ObjectMolecule *I,int sele0,int sele1)
+{
+  int a0,a1;
+  int offset=0;
+  int *b0,*b1;
+  int both;
+  int s;
+  int a;
+
+  offset=0;
+  b0=I->Bond;
+  b1=I->Bond;
+  for(a=0;a<I->NBond;a++) {
+    a0=b0[0];
+    a1=b0[1];
+    
+    both=0;
+    s=I->AtomInfo[a0].selEntry;
+    while(s) 
+      {
+        if(SelectorMatch(s,sele0))
+          {
+            both++;
+            break;
+          }
+        s=SelectorNext(s);
+      }
+    s=I->AtomInfo[a1].selEntry;
+    while(s) 
+      {
+        if(SelectorMatch(s,sele1))
+          {
+            both++;
+            break;
+          }
+        s=SelectorNext(s);
+      }
+    if(both<2) { /* reverse combo */
+      both=0;
+      
+      s=I->AtomInfo[a1].selEntry;
+      while(s) 
+        {
+          if(SelectorMatch(s,sele0))
+            {
+              both++;
+              break;
+            }
+          s=SelectorNext(s);
+        }
+      s=I->AtomInfo[a0].selEntry;
+      while(s) 
+        {
+          if(SelectorMatch(s,sele1))
+            {
+              both++;
+              break;
+            }
+          s=SelectorNext(s);
+        }
+    }
+    
+    if(both==2) {
+      offset--;
+      b0+=3;
+    } else if(offset) {
+      *(b1++)=*(b0++); /* copy bond info */
+      *(b1++)=*(b0++);
+      *(b1++)=*(b0++);
+    } else {
+      *(b1++)=*(b0++); /* copy bond info */
+      *(b1++)=*(b0++);
+      *(b1++)=*(b0++);
+    }
+  }
+  if(offset) {
+    I->NBond += offset;
+    VLASize(I->Bond,int,3*I->NBond);
+    ObjectMoleculeInvalidate(I,cRepLine,cRepInvBonds);
+    ObjectMoleculeInvalidate(I,cRepCyl,cRepInvBonds);
+  }
+
+  return(-offset);
+}
 /*========================================================================*/
 void ObjectMoleculePurge(ObjectMolecule *I)
 {

@@ -270,6 +270,7 @@ class PMGApp(AbstractApp):
 
 		self.menuBar.addmenu('Display', 'Display Control')
 
+
 		self.menuBar.addmenuitem('Display', 'command', 'Clear Text Output',
                                label='Clear Text',
                                command = lambda: cmd.cls())
@@ -293,6 +294,12 @@ class PMGApp(AbstractApp):
                                command = lambda: cmd.stereo("off"))
 
 		self.menuBar.addmenu('Options', 'Configuration Control')
+
+		self.menuBar.addmenuitem('Options', 'checkbutton',
+							 	'Show bond valences.',
+							 	label='Show bond valences',
+								variable = self.setting.valence,
+								command = lambda s=self: s.setting.update('valence'))
 
 		self.menuBar.addmenuitem('Options', 'checkbutton',
 							 	'Superimpose all molecular states.',
