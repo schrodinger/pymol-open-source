@@ -691,6 +691,9 @@ r1=RegOpenKeyEx(HKEY_CLASSES_ROOT,"Software\\DeLano Scientific\\PyMOL\\PYMOL_PAT
   args = PConvStringListToPyList(argc,argv); /* prepare our argument list */
   if(!pymol) ErrFatal("PyMOL","can't process arguments.");
 
+  /* copy arguments to sys.argv */
+  PyObject_SetAttrString(sys,"argv",args);
+
   PXDecRef(PyObject_CallMethod(invocation,"parse_args","O",args)); /* parse the arguments */
 
 }
