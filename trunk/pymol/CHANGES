@@ -4,6 +4,8 @@ CHANGE LOG
 
 Changes up to 0.98
 
+   * fixed long-standing transparency shadow bug
+
    * 64-bit cleanliness
 
    * fixed stereo rendering for selections and edit indicators
