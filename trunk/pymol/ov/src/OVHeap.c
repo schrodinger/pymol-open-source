@@ -63,7 +63,7 @@ OVHeap *_OVHeap_New(void)
 void _OVHeap_Del(OVHeap *I)
 {
 #ifdef OVHeap_DUMP_ON_DEL
-  OVHeap_Dump(I,OVHeap_DUMP_FILES_TOO);  
+  OVHeap_Dump(I,0);
 #endif
   ov_port_free((void*)I);
 }

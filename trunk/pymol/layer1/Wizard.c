@@ -795,7 +795,7 @@ int WizardInit(PyMOLGlobals *G)
 
   OrthoAttach(G,I->Block,cOrthoTool);
 
-  I->Line = VLAlloc(WizardLine,10);
+  I->Line = VLAlloc(WizardLine,1);
   I->NLine = 0;
   I->Pressed = -1;
   I->EventMask = 0;

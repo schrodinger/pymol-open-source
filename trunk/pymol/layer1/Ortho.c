@@ -1567,8 +1567,8 @@ int OrthoInit(PyMOLGlobals *G,int showSplash)
   ListInit(I->Blocks);
 
   I->Pushed = false;
-  I->cmds = QueueNew(G,0xFFFF);
-  I->feedback = QueueNew(G,0xFFFF);
+  I->cmds = QueueNew(G,0xFFF);
+  I->feedback = QueueNew(G,0xFFF);
   I->deferred = NULL;
 
   I->WizardBackColor[0]=0.2F;
