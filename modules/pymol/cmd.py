@@ -738,7 +738,19 @@ EXAMPLE
                do("refresh")
    except ImportError:
       print "Error: Sorry, couldn't find the '"+name+"' wizard."
-      
+
+def get_phipsi(sele1="(name ca)",state=-1):
+   # preprocess selections
+   sele1 = selector.process(sele1)
+   #   
+   r = None
+   try:
+      lock()
+      r = _cmd.get_phipsi(str(sele1),int(state)-1)
+   finally:
+      unlock()
+   return r
+
 def get_dihedral(atom1,atom2,atom3,atom4,state=1):
    # preprocess selections
    atom1 = selector.process(atom1)
@@ -2191,6 +2203,8 @@ cartoon_dict = {
    'rectangle'   : 2,
    'oval'        : 3,
    'tube'        : 4,
+   'arrow'       : 5,
+   'dumbbell'    : 6,   
 }
 
 cartoon_sc = Shortcut(cartoon_dict.keys())

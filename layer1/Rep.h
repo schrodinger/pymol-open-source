@@ -25,6 +25,8 @@ Z* -------------------------------------------------------------------
 #define cCartoon_rect 2
 #define cCartoon_oval 3
 #define cCartoon_tube 4
+#define cCartoon_arrow 5
+#define cCartoon_dumbbell 6
 
 #define cRepAll       -1
 

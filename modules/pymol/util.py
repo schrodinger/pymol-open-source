@@ -190,7 +190,7 @@ def b2vdw(*arg):
    # rms = sqrt(b/(8*(PI^2)))
    cmd.alter("(%s)"%sele,"vdw=math.sqrt(b/78.9568352087)")
    
-def phipsi(selection="(pk1)"): # NOT THREAD SAFE - REPLACE this with C for speed
+def phipsi(selection="(pk1)"): # NOT THREAD SAFE
    n_sele =   "((byres (%s)) & name n)"%selection
    c_sele =   "((byres (%s)) & name c)"%selection
    ca_sele =  "((byres (%s)) & name ca)"%selection
@@ -198,20 +198,25 @@ def phipsi(selection="(pk1)"): # NOT THREAD SAFE - REPLACE this with C for speed
    np_sele = "((neighbor (%s)) and not (byres (%s)))"%(c_sele,c_sele)
    cmd.feedback("push")
    cmd.feedback("disable","selector","everythin")
-   cm_cnt = cmd.select("pp_cm",cm_sele)
-   n_cnt = cmd.select("pp_n",n_sele)
-   c_cnt = cmd.select("pp_c",c_sele)
-   ca_cnt = cmd.select("pp_ca",ca_sele)
-   np_cnt = cmd.select("pp_np",np_sele)
+   cm_cnt = cmd.select("_pp_cm",cm_sele)
+   n_cnt = cmd.select("_pp_n",n_sele)
+   c_cnt = cmd.select("_pp_c",c_sele)
+   ca_cnt = cmd.select("_pp_ca",ca_sele)
+   np_cnt = cmd.select("_pp_np",np_sele)
    if(cm_cnt and n_cnt and ca_cnt and c_cnt):
-      phi = cmd.get_dihedral("pp_c","pp_ca","pp_n","pp_cm")
+      phi = cmd.get_dihedral("_pp_c","_pp_ca","_pp_n","_pp_cm")
    else:
       phi = None
    if(n_cnt and ca_cnt and c_cnt and np_cnt):
-      psi = cmd.get_dihedral("pp_np","pp_c","pp_ca","pp_n")
+      psi = cmd.get_dihedral("_pp_np","_pp_c","_pp_ca","_pp_n")
    else:
       psi = None
    cmd.feedback("pop")
+   cmd.delete("_pp_cm")
+   cmd.delete("_pp_n")
+   cmd.delete("_pp_c")
+   cmd.delete("_pp_ca")
+   cmd.delete("_pp_np")
    return (phi,psi)
 
 def rainbow(selection="(name ca and alt '',A)"): # NOT THREAD SAFE
@@ -248,7 +253,7 @@ def rainbow(selection="(name ca and alt '',A)"): # NOT THREAD SAFE
    c = 0
    for a in cas:
       col = int((120*c)/l)
-      cmd.color("rainbow%03d"%col,"(byres %s`%d)"%a)
+      cmd.color("rainbow%03d"%col,"((%s) and (byres %s`%d))"%(selection,a[0],a[1]))
       c = c + 1
 
    cmd.feedback("pop")
@@ -261,7 +266,7 @@ def ss(selection="(name ca and alt '',A)"): # NOT THREAD SAFE
    cmd.feedback("push")
    cmd.feedback("disable","executive","actions")
    
-   ss_pref = "sss"
+   ss_pref = "_sss"
    sss1 = ss_pref+"1"
    cnt = cmd.select(sss1,"((byres ("+selection+")) and name ca and not het)")
    print " util.ss: initiating secondary structure assignment on %d residues."%cnt
@@ -344,7 +349,10 @@ def ss(selection="(name ca and alt '',A)"): # NOT THREAD SAFE
    # make decisions based on phi/psi
 
    for a in cas:
-      (phi,psi) = phipsi("(%s`%d)"%(a[0],a[1]))
+      ss[a] = 'L' # default
+   phipsi = cmd.get_phipsi(sss1)
+   for a in phipsi.keys():
+      (phi,psi) = phipsi[a]
 #      print scr_dict[a],(phi,psi)
       if (phi!=None) and (psi!=None):
          if ((phi<-45) and (phi>-160) and
@@ -353,10 +361,6 @@ def ss(selection="(name ca and alt '',A)"): # NOT THREAD SAFE
          elif ((phi<-45) and (phi>-160) and
                (psi>-80) and (psi<-25)): # helix?
             ss[a] = 'H'
-         else: 
-            ss[a] = 'L'
-      else:
-         ss[a] = 'L'
             
    print " util.ss: finding hydrogen bonds..."
    
@@ -697,6 +701,7 @@ def ss(selection="(name ca and alt '',A)"): # NOT THREAD SAFE
    cmd.feedback("pop")
 
    del pymol._ss # IMPORTANT
+   cmd.delete(sss1)
    
    #
 #   print conn_hash.keys()

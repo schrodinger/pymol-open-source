@@ -173,7 +173,7 @@ Rep *RepRibbonNew(CoordSet *cs)
   }
   if(!visFlag) {
     OOFreeP(I);
-    return(NULL); /* skip if no dots are visible */
+    return(NULL); /* skip if not visible */
   }
 
   RepInit(&I->R);
@@ -219,12 +219,11 @@ Rep *RepRibbonNew(CoordSet *cs)
 				if(WordMatch("CA",obj->AtomInfo[a1].name,1)<0)
 				  {
 					 if(a2>=0) {
-						if((abs(obj->AtomInfo[a1].resv-obj->AtomInfo[a2].resv)>1)||
-							(obj->AtomInfo[a1].chain[0]!=obj->AtomInfo[a2].chain[0])||
-							(!WordMatch(obj->AtomInfo[a1].segi,obj->AtomInfo[a2].segi,1)))
-						  {
-							 a2=-1;
-						  }
+                  /*						if((abs(obj->AtomInfo[a1].resv-obj->AtomInfo[a2].resv)>1)||
+                                    (obj->AtomInfo[a1].chain[0]!=obj->AtomInfo[a2].chain[0])||
+                                    (!WordMatch(obj->AtomInfo[a1].segi,obj->AtomInfo[a2].segi,1)))*/
+                  if(!ObjectMoleculeCheckBondSep(obj,a1,a2,3)) /* CA->N->C->CA = 3 bonds */
+                    a2=-1;
 					 }
 					 if(a2<=0)
 						nSeg++;

@@ -54,7 +54,7 @@ typedef struct ObjectMoleculeOpRec {
   Vector3f v1,v2;
   int cs1;
   int i1,i2,i3,*vc1,*i1VLA;
-  float f1,*f1VLA;
+  float f1,*f1VLA,*f2VLA;
   double d[3][3];
   float *vv1,*vv2;
   char *charVLA;
@@ -96,6 +96,7 @@ typedef struct ObjectMoleculeOpRec {
 #define OMOP_CountAtoms 26
 #define OMOP_Cartoon 27
 #define OMOP_Index 28
+#define OMOP_PhiPsi 29
 
 #include"CoordSet.h"
 
@@ -161,6 +162,8 @@ void ObjectMoleculeRenameAtoms(ObjectMolecule *I,int force);
 int ObjectMoleculeAreAtomsBonded(ObjectMolecule *I,int i0,int i1);
 void ObjectGotoState(ObjectMolecule *I,int state);
 float ObjectMoleculeGetAvgHBondVector(ObjectMolecule *I,int atom,int state,float *v);
+int ObjectMoleculeCheckBondSep(ObjectMolecule *I,int a0,int a1,int dist);
+int ObjectMoleculeGetPhiPsi(ObjectMolecule *I,int ca,float *phi,float *psi,int state);
 
 #endif
 

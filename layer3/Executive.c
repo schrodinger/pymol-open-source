@@ -91,6 +91,39 @@ void ExecutiveReshape(Block *block,int width,int height);
 void ExecutiveObjMolSeleOp(int sele,ObjectMoleculeOpRec *op);
 SpecRec *ExecutiveFindSpec(char *name);
 
+int ExecutivePhiPsi(char *s1,ObjectMolecule ***objVLA,int **iVLA,float **phiVLA,float **psiVLA,int state) 
+{
+  int sele1=SelectorIndexByName(s1);
+  int result = false;
+  ObjectMoleculeOpRec op1;
+  if(sele1>=0) {
+    op1.i1 = 0;
+    op1.i2 = state;
+    op1.obj1VLA=VLAlloc(ObjectMolecule*,1000);
+    op1.i1VLA=VLAlloc(int,1000);
+    op1.f1VLA=VLAlloc(float,1000);
+    op1.f2VLA=VLAlloc(float,1000);
+    op1.code=OMOP_PhiPsi;
+    ExecutiveObjMolSeleOp(sele1,&op1);
+    result = op1.i1;
+    VLASize(op1.i1VLA,int,op1.i1);
+    VLASize(op1.obj1VLA,ObjectMolecule*,op1.i1);
+    VLASize(op1.f1VLA,float,op1.i1);
+    VLASize(op1.f2VLA,float,op1.i1);
+    *iVLA=op1.i1VLA;
+    *objVLA=op1.obj1VLA;
+    *phiVLA=op1.f1VLA;
+    *psiVLA=op1.f2VLA;
+  } else {
+    *objVLA=NULL;
+    *iVLA=NULL;
+    *phiVLA=NULL;
+    *psiVLA=NULL;
+  }
+  return(result);
+}
+
+
 float ExecutiveAlign(char *s1,char *s2)
 {
   int sele1=SelectorIndexByName(s1);

@@ -88,6 +88,7 @@ command_re = re.compile(r"[^\s]+")
 whitesp_re = re.compile(r"\s+")
 comma_re = re.compile(r"\s*,\s*")
 arg_name_re = re.compile(r"[A-Za-z0-9_]+\s*\=")
+nester_char_re = re.compile(r"\(|\)|\[|\]")
 arg_easy_nester_re = re.compile(r"\([^,]*\)|\[[^,]*\]")
 arg_hard_nester_re = re.compile(r"\(.*\)|\[.*\]")
 # NOTE '''sdf'sdfs''' doesn't work in below.
@@ -150,6 +151,10 @@ returns list of tuples of strings: [(None,value),(name,value)...]
          # special handling for nesters (selections, lists, tuples, etc.)
          mo = arg_easy_nester_re.match(st[cc:]) # no internal commas
          if mo:
+            cnt = len(nester_char_re.findall(mo.group(0))) 
+            if (2*(cnt/2))!=cnt: # make sure nesters are matched in count
+               mo = None
+         if mo:
             result.append((nam,string.strip(mo.group(0))))
             cc=cc+mo.end(0)
          else:
@@ -158,7 +163,7 @@ returns list of tuples of strings: [(None,value),(name,value)...]
                se = trim_nester(mo.group(0))
                if se==None:
                   print "Error: "+st
-                  print "Error: "+" "*cc+"^ syntax error."
+                  print "Error: "+" "*cc+"^ syntax error (type 1)."
                   raise QuietException
                else:
                   result.append((nam,se))
@@ -169,7 +174,7 @@ returns list of tuples of strings: [(None,value),(name,value)...]
                mo = arg_value_re.match(st[cc:])
                if not mo:
                   print "Error: "+st
-                  print "Error: "+" "*cc+"^ syntax error."
+                  print "Error: "+" "*cc+"^ syntax error (type 2)."
                   raise QuietException
                argval = mo.group(0)
                cc=cc+mo.end(0)
@@ -192,7 +197,7 @@ returns list of tuples of strings: [(None,value),(name,value)...]
                cc=cc+mo.end(0)
             else:
                print "Error: "+st
-               print "Error: "+" "*cc+"^ syntax error."
+               print "Error: "+" "*cc+"^ syntax error (type 3)."
                raise QuietException
    if cmd._feedback(cmd.fb_module.parser,cmd.fb_mask.debugging):
       cmd.fb_debug.write(" parsing-DEBUG: tup: "+str(result)+"\n")

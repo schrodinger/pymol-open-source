@@ -47,8 +47,11 @@ void ExtrudeBuildNormals2f(CExtrude *I);
 void ExtrudeComputeTangents(CExtrude *I);
 void ExtrudeCGOSurfaceTube(CExtrude *I,CGO *cgo,int cap);
 void ExtrudeCGOSurfacePolygon(CExtrude *I,CGO *cgo,int cap);
+void ExtrudeCGOSurfaceStrand(CExtrude *I,CGO *cgo,int sampling);
 void ExtrudeCGOTraceFrame(CExtrude *I,CGO *cgo);
 void ExtrudeCGOTrace(CExtrude *I,CGO *cgo);
 void ExtrudeCGOTraceAxes(CExtrude *I,CGO *cgo);
+void ExtrudeDumbbell1(CExtrude *I,float width,float length);
+void ExtrudeDumbbell2(CExtrude *I, int n,int sign,float length,float size);
 
 #endif

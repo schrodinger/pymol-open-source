@@ -181,6 +181,7 @@ static PyObject *CmdGetState(PyObject *self, 	PyObject *args);
 static PyObject *CmdGetType(PyObject *self, 	PyObject *args);
 static PyObject *CmdGetFeedback(PyObject *dummy, PyObject *args);
 static PyObject *CmdGetMoment(PyObject *self, 	PyObject *args);
+static PyObject *CmdGetPhiPsi(PyObject *self, 	PyObject *args);
 static PyObject *CmdGetSetting(PyObject *self, 	PyObject *args);
 static PyObject *CmdGetSettingText(PyObject *self, 	PyObject *args);
 static PyObject *CmdGetSettingTuple(PyObject *self, 	PyObject *args);
@@ -300,6 +301,7 @@ static PyMethodDef Cmd_methods[] = {
 	{"get_moment",	           CmdGetMoment,            METH_VARARGS },
    {"get_names",             CmdGetNames,             METH_VARARGS },
 	{"get_pdb",	              CmdGetPDB,               METH_VARARGS },
+   {"get_phipsi",            CmdGetPhiPsi,            METH_VARARGS },
 	{"get_setting",           CmdGetSetting,           METH_VARARGS },
 	{"get_setting_tuple",     CmdGetSettingTuple,      METH_VARARGS },
 	{"get_setting_text",      CmdGetSettingText,       METH_VARARGS },
@@ -379,6 +381,57 @@ static PyMethodDef Cmd_methods[] = {
 	{"zoom",	                 CmdZoom,                 METH_VARARGS },
 	{NULL,		              NULL}     /* sentinel */        
 };
+
+static PyObject *CmdGetPhiPsi(PyObject *self, 	PyObject *args)
+{
+  char *str1;
+  OrthoLineType s1;
+  int state;
+  PyObject *result = Py_None;
+  PyObject *key = Py_None;
+  PyObject *value = Py_None;
+  int *iVLA=NULL;
+  float *pVLA,*sVLA;
+  int l;
+  int *i;
+  ObjectMolecule **o,**oVLA=NULL;
+  int a;
+  float *s,*p;
+
+  PyArg_ParseTuple(args,"si",&str1,&state);
+  APIEntry();
+  SelectorGetTmp(str1,s1);
+  l = ExecutivePhiPsi(s1,&oVLA,&iVLA,&pVLA,&sVLA,state);
+  SelectorFreeTmp(s1);
+  APIExit();
+  if(iVLA) {
+    result=PyDict_New();
+    i = iVLA;
+    o = oVLA;
+    p = pVLA;
+    s = sVLA;
+    for(a=0;a<l;a++) {
+      key = PyTuple_New(2);      
+      PyTuple_SetItem(key,1,PyInt_FromLong(*(i++)+1)); /* +1 for index */
+      PyTuple_SetItem(key,0,PyString_FromString((*(o++))->Obj.Name));
+      value = PyTuple_New(2);      
+      PyTuple_SetItem(value,0,PyFloat_FromDouble(*(p++))); /* +1 for index */
+      PyTuple_SetItem(value,1,PyFloat_FromDouble(*(s++)));
+      PyDict_SetItem(result,key,value);
+      Py_DECREF(key);
+      Py_DECREF(value);
+    }
+  } else {
+    result = PyDict_New();
+  }
+  VLAFreeP(iVLA);
+  VLAFreeP(oVLA);
+  VLAFreeP(sVLA);
+  VLAFreeP(pVLA);
+  if(result==Py_None) Py_INCREF(result);
+  return(result);
+
+}
 
 static PyObject *CmdAlign(PyObject *self, 	PyObject *args) {
   char *str2,*str3;

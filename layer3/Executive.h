@@ -103,6 +103,7 @@ int ExecutivePairIndices(char *s1,char *s2,int state1,int state2,
                          int mode,float cutoff,float h_angle,
                          int **indexVLA, ObjectMolecule ***objVLA);
 void ExecutiveRebuildAllObjectDist(void);
+int ExecutivePhiPsi(char *s1,ObjectMolecule ***objVLA,int **iVLA,float **phiVLA,float **psiVLA,int state) ;
 
 #endif
 

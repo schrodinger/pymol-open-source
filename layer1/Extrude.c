@@ -170,7 +170,7 @@ void ExtrudeRectangle(CExtrude *I,float width,float length)
   *(v++) = -cos(PI/4)*width;
   *(v++) = sin(PI/4)*length;
 
-   *(vn++) = 0.0;
+  *(vn++) = 0.0;
   *(vn++) = -1.0;
   *(vn++) = 0.0;
   *(vn++) = 0.0;
@@ -201,6 +201,106 @@ void ExtrudeRectangle(CExtrude *I,float width,float length)
     ENDFD;
 
 }
+
+
+
+
+void ExtrudeDumbbell1(CExtrude *I,float width,float length)
+{
+  float *v,*vn;
+
+  PRINTFD(FB_Extrude)
+    " ExtrudeDumbbell1-DEBUG: entered...\n"
+    ENDFD;
+
+  I->Ns = 4;
+
+  FreeP(I->sv);
+  FreeP(I->sn);
+  FreeP(I->tv);
+  FreeP(I->tn);
+  
+  I->sv = Alloc(float,3*(I->Ns+1));
+  I->sn = Alloc(float,3*(I->Ns+1));
+  I->tv = Alloc(float,3*(I->Ns+1));
+  I->tn = Alloc(float,3*(I->Ns+1));
+  
+  v = I->sv;
+  vn = I->sn;
+
+  *(vn++) = 0.0;
+  *(vn++) = 1.0;
+  *(vn++) = 0.0;
+  *(vn++) = 0.0;
+  *(vn++) = 1.0;
+  *(vn++) = 0.0;
+  *(v++) = 0.0;
+  *(v++) = cos(PI/4)*width;
+  *(v++) = -sin(PI/4)*length;
+  *(v++) = 0.0;
+  *(v++) = cos(PI/4)*width;
+  *(v++) = sin(PI/4)*length;
+
+  *(vn++) = 0.0;
+  *(vn++) = -1.0;
+  *(vn++) = 0.0;
+  *(vn++) = 0.0;
+  *(vn++) = -1.0;
+  *(vn++) = 0.0;
+  *(v++) = 0.0;
+  *(v++) = -cos(PI/4)*width;
+  *(v++) = sin(PI/4)*length;
+  *(v++) = 0.0;
+  *(v++) = -cos(PI/4)*width;
+  *(v++) = -sin(PI/4)*length;
+
+
+  PRINTFD(FB_Extrude)
+    " ExtrudeDumbbell1-DEBUG: exiting...\n"
+    ENDFD;
+
+}
+
+void ExtrudeDumbbell2(CExtrude *I, int n,int sign,float length,float size)
+{
+  int a;
+  float *v,*vn;
+
+  PRINTFD(FB_Extrude)
+    " ExtrudeDumbbell2-DEBUG: entered.\n"
+    ENDFD;
+  if(n>20) n=20;
+  
+  FreeP(I->sv);
+  FreeP(I->sn);
+  FreeP(I->tv);
+  FreeP(I->tn);
+  
+  I->sv = Alloc(float,3*(n+1));
+  I->sn = Alloc(float,3*(n+1));
+  I->tv = Alloc(float,3*(n+1));
+  I->tn = Alloc(float,3*(n+1));
+  I->Ns = n;
+  
+  v = I->sv;
+  vn = I->sn;
+
+  for(a=0;a<=n;a++)
+	 {
+      *(vn++) = 0.0;
+      *(vn++) = cos(a*2*PI/n);
+      *(vn++) = sin(a*2*PI/n);
+      *(v++) = 0.0;
+      *(v++) = cos(a*2*PI/n)*size;
+      *(v++) = (sin(a*2*PI/n)*size)+(sign*sin(PI/4)*length);
+	 }
+
+  PRINTFD(FB_Extrude)
+    " ExtrudeDumbbell2-DEBUG: exiting...\n"
+    ENDFD;
+
+}
+
 
 CExtrude *ExtrudeNew(void)
 {
@@ -646,7 +746,7 @@ void ExtrudeCGOSurfacePolygon(CExtrude *I,CGO *cgo,int cap)
       tv = I->tv;
       for(b=0;b<I->Ns;b++) {
         transform33Tf3f(n,sv,tv);
-        add3f(v,tv,tv)
+        add3f(v,tv,tv);
         sv+=3;
         tv+=3;
       }
@@ -672,7 +772,7 @@ void ExtrudeCGOSurfacePolygon(CExtrude *I,CGO *cgo,int cap)
       tv = I->tv;
       for(b=0;b<I->Ns;b++) {
         transform33Tf3f(n,sv,tv);
-        add3f(v,tv,tv)
+        add3f(v,tv,tv);
         sv+=3;
         tv+=3;
       }
@@ -697,6 +797,248 @@ void ExtrudeCGOSurfacePolygon(CExtrude *I,CGO *cgo,int cap)
   
   PRINTFD(FB_Extrude)
     " ExtrudeCGOSurfacePolygon-DEBUG: exiting...\n"
+    ENDFD;
+
+}
+
+
+
+void ExtrudeCGOSurfaceStrand(CExtrude *I,CGO *cgo,int sampling)
+{
+  int a,b;
+  float *v;
+  float *n;
+  float *c;
+  float *sv,*sn,*tv,*tn,*tv1,*tn1,*TV,*TN;
+  float v0[3],n0[3],s0[3],z[3]={1.0,0.0,1.0};
+  int subN;
+  
+  subN=I->N-sampling;
+
+  PRINTFD(FB_Extrude)
+    " ExtrudeCGOSurfaceStrand-DEBUG: entered.\n"
+    ENDFD;
+  
+
+  if(I->N&&I->Ns) {
+
+    TV=Alloc(float,3*(I->Ns+1)*I->N);
+    TN=Alloc(float,3*(I->Ns+1)*I->N);
+    
+    /* compute transformed shape vertices */
+    
+    tn=TN;
+    tv=TV;
+
+    sv = I->sv;
+    sn = I->sn;
+    for(b=0;b<=I->Ns;b++) {
+      if(b==I->Ns) {
+        sv = I->sv;
+        sn = I->sn;
+      }
+      v=I->p;
+      n=I->n;
+      
+      for(a=0;a<I->N;a++) {
+        copy3f(sv,s0);
+        if(a==subN) {
+          scale3f(s0,0.50,s0);
+        }
+        transform33Tf3f(n,s0,tv);
+        add3f(v,tv,tv);
+        tv+=3;
+        transform33Tf3f(n,sn,tn);
+        tn+=3;
+        n+=9;
+        v+=3;
+      }
+      sv+=3;
+      sn+=3;
+    }
+  
+    /* fill in each strip separately */
+
+    tv = TV;
+    tn = TN;
+    
+    tv1 = TV+3*I->N;
+    tn1 = TN+3*I->N;
+
+    for(b=0;b<I->Ns;b+=2) {
+      if(SettingGet(cSetting_cartoon_debug)<1.5)
+        CGOBegin(cgo,GL_TRIANGLE_STRIP);
+      else {
+        CGOBegin(cgo,GL_LINE_STRIP);        
+        CGODisable(cgo,GL_LIGHTING);
+      }
+      c = I->c;
+      for(a=0;a<I->N;a++) {
+        if(a<=subN) {
+          CGOColorv(cgo,c);
+          CGONormalv(cgo,tn);
+          CGOVertexv(cgo,tv);
+        }
+        tn+=3;
+        tv+=3;
+        if(a<=subN) {
+          CGONormalv(cgo,tn1);
+          CGOVertexv(cgo,tv1);
+        }
+        tn1+=3;
+        tv1+=3;
+        c+=3;
+      }
+      tv+=3*I->N;
+      tn+=3*I->N;
+      tv1+=3*I->N;
+      tn1+=3*I->N;
+      CGOEnd(cgo);
+    }
+
+    if(SettingGet(cSetting_cartoon_debug)>1.5) {
+      CGOEnable(cgo,GL_LIGHTING);
+    }
+
+    if(1) {
+
+      n = I->n;
+      v = I->p;
+
+      sv = I->sv;
+      tv = I->tv;
+      for(b=0;b<I->Ns;b++) {
+        transform33Tf3f(n,sv,tv);
+        add3f(v,tv,tv);
+        sv+=3;
+        tv+=3;
+      }
+      CGOBegin(cgo,GL_TRIANGLE_FAN);
+      copy3f(I->n,v0);
+      invert3f(v0);
+      CGOColorv(cgo,I->c);
+      CGONormalv(cgo,v0);
+      CGOVertexv(cgo,v);
+      /* trace shape */
+      tv = I->tv;
+      for(b=0;b<I->Ns;b+=2) {
+        CGOVertexv(cgo,tv);
+        tv+=6;
+      }
+      CGOVertexv(cgo,I->tv);
+      CGOEnd(cgo);
+
+    }
+
+    /* now do the arrow part */
+
+
+    tn=TN;
+    tv=TV;
+
+    sv = I->sv;
+    sn = I->sn;
+    for(b=0;b<=I->Ns;b++) {
+      if(b==I->Ns) {
+        sv = I->sv;
+        sn = I->sn;
+      }
+      v=I->p;
+      n=I->n;
+      
+      for(a=0;a<I->N;a++) {
+        copy3f(sv,s0);
+        s0[2]=s0[2]*((1.5*((I->N-1)-a))/sampling);
+        transform33Tf3f(n,s0,tv);
+        add3f(v,tv,tv);
+        tv+=3;
+        copy3f(sn,n0);
+        if(fabs(dot_product3f(sn,z))>R_SMALL4) {
+          n0[0]+=0.4;
+          normalize3f(n0);
+        }
+        transform33Tf3f(n,n0,tn);
+        tn+=3;
+        n+=9;
+        v+=3;
+      }
+      sv+=3;
+      sn+=3;
+    }
+
+    tv = TV;
+    tn = TN;
+    
+    tv1 = TV+3*I->N;
+    tn1 = TN+3*I->N;
+
+    for(b=0;b<I->Ns;b+=2) {
+      if(SettingGet(cSetting_cartoon_debug)<1.5)
+        CGOBegin(cgo,GL_TRIANGLE_STRIP);
+      else {
+        CGOBegin(cgo,GL_LINE_STRIP);        
+        CGODisable(cgo,GL_LIGHTING);
+      }
+      c = I->c;
+      for(a=0;a<I->N;a++) {
+        if(a>=(subN-1)) {
+          CGOColorv(cgo,c);
+          CGONormalv(cgo,tn);
+          CGOVertexv(cgo,tv);
+        }
+        tn+=3;
+        tv+=3;
+        if(a>=(subN-1)) {
+          CGONormalv(cgo,tn1);
+          CGOVertexv(cgo,tv1);
+        }
+        tn1+=3;
+        tv1+=3;
+        c+=3;
+      }
+      tv+=3*I->N;
+      tn+=3*I->N;
+      tv1+=3*I->N;
+      tn1+=3*I->N;
+      CGOEnd(cgo);
+    }
+    
+    n = I->n+9*(subN-1);
+    v = I->p+3*(subN-1);
+
+    sv = I->sv;
+    tv = I->tv;
+
+    for(b=0;b<I->Ns;b++) {
+      copy3f(sv,s0);
+      s0[2]=s0[2]*1.5;
+      transform33Tf3f(n,s0,tv);
+      add3f(v,tv,tv);
+      sv+=3;
+      tv+=3;
+    }
+    
+    CGOBegin(cgo,GL_TRIANGLE_FAN);
+    copy3f(I->n,v0);
+    invert3f(v0);
+    CGOColorv(cgo,I->c+3*(subN-1));
+    CGONormalv(cgo,v0);
+    CGOVertexv(cgo,v);
+    /* trace shape */
+    tv = I->tv;
+    for(b=0;b<I->Ns;b+=2) {
+      CGOVertexv(cgo,tv);
+      tv+=6;
+    }
+    CGOVertexv(cgo,I->tv);
+    CGOEnd(cgo);
+    
+    FreeP(TV);
+    FreeP(TN);
+  }
+  
+  PRINTFD(FB_Extrude)
+    " ExtrudeCGOSurfaceStrand-DEBUG: exiting...\n"
     ENDFD;
 
 }

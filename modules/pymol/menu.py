@@ -86,7 +86,7 @@ def mol_color(s):
            [ 1, '`559C`777H`229N`922O`950S`905*'  , 'pmu.cbab("'+s+'")'],
            [ 0, ''                                , ''                 ],
            [ 1, '`900r`950a`990i`090n`099b`059o`009w', 'util.rainbow("'+s+'")'],
-#           [ 1, '`900r`950a`990i`090n`099b`059o`009w`999(*/ca)', 'util.rainbow("('+s+')&*/ca")'],                      
+           [ 1, '`900r`950a`990i`090n`099b`059o`009w`999(*/ca)', 'util.rainbow("('+s+')&*/ca")'],                      
            [ 0, ''                                , ''                 ],           
            [ 1, '`900red'         , 'cmd.color("red","'+s+'")'     ],
            [ 1, '`090green'       , 'cmd.color("green","'+s+'")'   ],
@@ -174,7 +174,9 @@ def mol_action(s):
            [ 1, 'Unmask'  ,'cmd.unmask("'+s+'")'        ],
            [ 0, ''          ,''                                              ],
            [ 1, 'Protect'  ,'cmd.protect("'+s+'")'        ],
-           [ 1, 'Deprotect'  ,'cmd.deprotect("'+s+'")'        ],           
+           [ 1, 'Deprotect'  ,'cmd.deprotect("'+s+'")'        ],
+           [ 0, ''          ,''                                              ],
+           [ 1, 'Assign S.S.'  ,'util.ss("'+s+'")'        ],           
            ]
 
 def simple_action(s):
