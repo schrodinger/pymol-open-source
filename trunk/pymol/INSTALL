@@ -4,6 +4,10 @@ http://www.pymol.org       EMAIL: warren@delanoscientific.com
 ----------------------------------------------------------------------
 INSTALLATION AND COMPILATION GUIDE
 
+NOTE: These are the general installation instructions (and somewhat
+dated) If you are on a common platform such as RedHat Linux, look for
+a INSTALL file which covers your platform.
+
 WARNING: You will need some basic knowledge of Makefiles, compilation
    flags, libraries, python, environment variables, and paths in order
    to compile PyMOL.  If you don't feel comfortable with this, then try
