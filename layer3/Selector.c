@@ -2749,7 +2749,7 @@ int SelectorSelect0(EvalElem *base)
 		break;
     case SELE_PREz:
       state = SceneGetState();
-      static_singletons = SettingGet(cSetting_static_singletons);
+      static_singletons = (int)SettingGet(cSetting_static_singletons);
       flag=false;
       cs = NULL;
       for(a=0;a<I->NAtom;a++)
