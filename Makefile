@@ -68,7 +68,7 @@ semistatic: .includes .depends .update
 	cd contrib;$(MAKE) static
 	cc $(BUILD) $(DEST) */*.o $(CFLAGS)  $(LIB_DIRS) $(LIBS)	
 
-unix-mindep: semistatic
+unix-mindep-build: semistatic
 	$(PYTHON_EXE) modules/compile_pymol.py
 	/bin/rm -rf $(MINDEP)
 	install -d $(MDP)/ext/lib
@@ -89,7 +89,13 @@ unix-mindep: semistatic
 	cp setup/setup.sh.unix-mindep $(MDP)/setup.sh
 	cd $(MINDEP);chown -R nobody pymol
 	cd $(MINDEP);chgrp -R nobody pymol
+
+unix-mindep: unix-mindep-build
 	cd $(MINDEP);tar -cvf - pymol | gzip > ../pymol-0_xx-bin-xxxxx-mindep.tgz
+
+unix-fedora: unix-mindep-build
+	cp setup/setup.sh.unix-fedora $(MDP)/setup.sh
+	cd $(MINDEP);tar -cvf - pymol | gzip > ../fedorapymol-0_xx-bin-xxxxx-mindep.tgz
 
 irix-mindep: semistatic
 	$(PYTHON_EXE) modules/compile_pymol.py
