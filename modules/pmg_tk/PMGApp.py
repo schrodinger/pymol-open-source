@@ -554,6 +554,12 @@ class PMGApp(AbstractApp):
                         command = lambda s=self: s.setting.update('auto_zoom'))
 
       self.menuBar.addmenuitem('Settings', 'checkbutton',
+                         'Depth Cue.',
+                         label='Cepth Cue',
+                        variable = self.setting.depth_cue,
+                        command = lambda s=self: s.setting.update('depth_cue'))
+
+      self.menuBar.addmenuitem('Settings', 'checkbutton',
                          'Overlay',
                          label='Overlay Text on Graphics',
                         variable = self.setting.overlay,

@@ -180,8 +180,9 @@ int SettingGetName(int index,SettingName name);
 #define cSetting_selection_overlay    81
 #define cSetting_static_singletons    82
 #define cSetting_max_triangles        83
+#define cSetting_depth_cue            84
 
-#define cSetting_INIT                  85
+#define cSetting_INIT                 85
 
 #endif
 

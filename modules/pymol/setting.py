@@ -92,6 +92,7 @@ class SettingIndex:
    selection_overlay    =81
    static_singletons    =82
    max_triangles        =83
+   depth_cue            =84
    
 setting_sc = Shortcut(SettingIndex.__dict__.keys())
 
