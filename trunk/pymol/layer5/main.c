@@ -83,6 +83,8 @@ static int myArgc;
 
 static int FinalInitFlag=1;
 
+int ExternalGUI=1;
+
 int TheWindow;
 
 typedef struct {
@@ -882,7 +884,8 @@ int was_main(void)
   PGetOptions(&PMGUI,&InternalGUI,&ShowSplash,
 	      &InternalFeedback,&Security,&GameMode,
 	      &ForceStereo,&WinX,&WinY,&BlueLine,
-	      &WinPX,&WinPY);
+	      &WinPX,&WinPY,&ExternalGUI);
+
   launch();
 
   return 0;

@@ -33,6 +33,7 @@ extern int PyMOLTerminating; /* flag to help prevent crashes on shutdown with Wi
 extern int PMGUI;
 extern int StereoCapable;
 extern int Security;
+extern int ExternalGUI;
 
 #ifdef _PYMOL_MODULE
 int was_main(void);
