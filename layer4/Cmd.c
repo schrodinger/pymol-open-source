@@ -80,6 +80,9 @@ int flush_count = 0;
 
 int run_only_once = true;
 
+static PyObject *Cmd_Success;
+static PyObject *Cmd_Failure;
+
 static void APIEntry(void)
 {
   P_glut_thread_keep_out++;
@@ -128,6 +131,7 @@ static PyObject *CmdFinishObject(PyObject *self, PyObject *args);
 static PyObject *CmdFrame(PyObject *self, PyObject *args);
 static PyObject *CmdGet(PyObject *self, 	PyObject *args);
 static PyObject *CmdGetArea(PyObject *self, 	PyObject *args);
+static PyObject *CmdGetDihe(PyObject *self, 	PyObject *args);
 static PyObject *CmdGetPDB(PyObject *dummy, PyObject *args);
 static PyObject *CmdGetMatrix(PyObject *self, 	PyObject *args);
 static PyObject *CmdGetMinMax(PyObject *self, 	PyObject *args);
@@ -175,6 +179,7 @@ static PyObject *CmdRunPyMOL(PyObject *dummy, PyObject *args);
 static PyObject *CmdSelect(PyObject *self, PyObject *args);
 static PyObject *CmdSetMatrix(PyObject *self, 	PyObject *args);
 static PyObject *CmdSet(PyObject *self, 	PyObject *args);
+static PyObject *CmdSetDihe(PyObject *self, 	PyObject *args);
 static PyObject *CmdSetFrame(PyObject *self, PyObject *args);
 static PyObject *CmdShowHide(PyObject *self, 	PyObject *args);
 static PyObject *CmdSort(PyObject *dummy, PyObject *args);
@@ -222,6 +227,8 @@ static PyMethodDef Cmd_methods[] = {
    {"flush_now",    CmdFlushNow,     METH_VARARGS },
    {"fuse",         CmdFuse,         METH_VARARGS },
 	{"get",	        CmdGet,          METH_VARARGS },
+	{"get_area",     CmdGetArea,      METH_VARARGS },
+	{"get_dihe",     CmdGetDihe,      METH_VARARGS },
 	{"get_feedback", CmdGetFeedback,  METH_VARARGS },
 	{"get_matrix",	  CmdGetMatrix,    METH_VARARGS },
 	{"get_min_max",  CmdGetMinMax,    METH_VARARGS },
@@ -231,7 +238,6 @@ static PyMethodDef Cmd_methods[] = {
 	{"get_pdb",	     CmdGetPDB,       METH_VARARGS },
 	{"get_setting",  CmdGetSetting,   METH_VARARGS },
 	{"get_type",     CmdGetType,      METH_VARARGS },
-	{"get_area",     CmdGetArea,      METH_VARARGS },
 	{"h_add",        CmdHAdd,         METH_VARARGS },
 	{"h_fill",       CmdHFill,        METH_VARARGS },
    {"identify",     CmdIdentify,     METH_VARARGS },
@@ -275,6 +281,7 @@ static PyMethodDef Cmd_methods[] = {
 	{"runpymol",	  CmdRunPyMOL,     METH_VARARGS },
 	{"select",       CmdSelect,       METH_VARARGS },
 	{"set",	        CmdSet,          METH_VARARGS },
+	{"set_dihe",     CmdSetDihe,      METH_VARARGS },
 	{"setframe",	  CmdSetFrame,     METH_VARARGS },
 	{"showhide",     CmdShowHide,     METH_VARARGS },
 	{"set_matrix",	  CmdSetMatrix,    METH_VARARGS },
@@ -1032,6 +1039,69 @@ static PyObject *CmdDirty(PyObject *self, 	PyObject *args)
   APIExit();
   Py_INCREF(Py_None);
   return Py_None;
+}
+
+static PyObject *CmdGetDihe(PyObject *self, 	PyObject *args)
+{
+  char *str1,*str2,*str3,*str4;
+  float result;
+  int ok = true;
+  int int1;
+
+  OrthoLineType s1,s2,s3,s4;
+  PyArg_ParseTuple(args,"ssss",&str1,&str2,&str3,&str4,&int1);
+
+  APIEntry();
+  SelectorGetTmp(str1,s1);
+  SelectorGetTmp(str2,s2);
+  SelectorGetTmp(str3,s3);
+  SelectorGetTmp(str4,s4);
+  ok = ExecutiveGetDihe(s1,s2,s3,s4,&result,int1);
+  SelectorFreeTmp(s1);
+  SelectorFreeTmp(s2);
+  SelectorFreeTmp(s3);
+  SelectorFreeTmp(s4);
+  APIExit();
+
+  if(ok) {
+    Py_INCREF(Cmd_Success);
+    return Cmd_Success;
+  } else {
+    Py_INCREF(Cmd_Failure);
+    return Cmd_Failure;
+  }
+}
+
+static PyObject *CmdSetDihe(PyObject *self, 	PyObject *args)
+{
+  char *str1,*str2,*str3,*str4;
+  float float1;
+  int int1;
+
+  int ok = true;
+
+  OrthoLineType s1,s2,s3,s4;
+  PyArg_ParseTuple(args,"ssssf",&str1,&str2,&str3,&str4,&float1,&int1);
+
+  APIEntry();
+  SelectorGetTmp(str1,s1);
+  SelectorGetTmp(str2,s2);
+  SelectorGetTmp(str3,s3);
+  SelectorGetTmp(str4,s4);
+  ok = ExecutiveSetDihe(s1,s2,s3,s4,float1,int1);
+  SelectorFreeTmp(s1);
+  SelectorFreeTmp(s2);
+  SelectorFreeTmp(s3);
+  SelectorFreeTmp(s4);
+  APIExit();
+
+  if(ok) {
+    Py_INCREF(Cmd_Success);
+    return Cmd_Success;
+  } else {
+    Py_INCREF(Cmd_Failure);
+    return Cmd_Failure;
+  }
 }
 
 static PyObject *CmdDo(PyObject *self, 	PyObject *args)
@@ -2046,5 +2116,8 @@ void init_cmd(void)
 {
   PyImport_AddModule("_cmd");
   Py_InitModule("_cmd", Cmd_methods);
+  Cmd_Success = Py_BuildValue("i",1);
+  Cmd_Failure = Py_None;
+  Py_INCREF(Py_None);
 }
 

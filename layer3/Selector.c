@@ -301,7 +301,49 @@ ObjectMolecule *SelectorGetSingleObjectMolecule(int sele)
     }
   return(result);
 }
+/*========================================================================*/
+int SelectorGetSingleAtomObjectIndex(int sele,ObjectMolecule **in_obj,int *index)
+{
+  int found_it = false;
+  int a;
+  Object *o = NULL;
+  void *hidden = NULL;
+  AtomInfoType *ai;
+  ObjectMolecule *obj;
+  int s;
+  while(ExecutiveIterateObject(&o,&hidden))
+	 {
+		if(o->type==cObjectMolecule)
+		  {
+			 obj=(ObjectMolecule*)o;
+          ai=obj->AtomInfo;
+			 for(a=0;a<obj->NAtom;a++)
+				{
+              s=ai[a].selEntry;
+              if(SelectorIsMember(s,sele))
+                if(found_it){
+                  return false; /* ADD'L EXIT POINT */
+                } else {
+                  found_it = true;
+                  (*in_obj)=obj;
+                  (*index)=a;
+                }
+            }
+        }
+    }
+  return(found_it);
+}
 
+/*========================================================================*/
+int SelectorGetSingleAtomVertex(int sele,int state,float *v)
+{
+  ObjectMolecule *obj;
+  int index;
+  int found_it = false;
+  if(SelectorGetSingleAtomObjectIndex(sele,&obj,&index))
+    found_it = ObjectMoleculeGetAtomVertex(obj,state,index,v);
+  return(found_it);
+}
 /*========================================================================*/
 void SelectorDeletePrefixSet(char *pref)
 {
