@@ -1,4 +1,5 @@
-PyMOL Copyright notice
+
+PyMOL Copyright Notice
 ======================
 
 The PyMOL source code is copyrighted, but you can freely use and 
@@ -30,5 +31,14 @@ OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE
 USE OR PERFORMANCE OF THIS SOFTWARE.
 ----------------------------------------------------------------------
 
+Where indicated, portions of the PyMOL system are instead protected
+under the copyrights of the respective authors.  However, all code in
+the PyMOL system is released as non-restrictive open-source software
+under the above license or an equivalent license.  
+
 --Warren L. DeLano (warren@delanoscientific.com)
+
+
+
+
 

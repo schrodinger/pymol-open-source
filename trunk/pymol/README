@@ -27,9 +27,44 @@ PyMOL has the following external dependencies:
   2. GLUT library for OpenGL
   3. Python (v 1.5.2 or better) compiled WITH thread support
   4. libpng (can compiled without it, but image saves won't work)
+  5. Tcl/Tk (technically optional)
 ----------------------------------------------------------------------
 see INSTALL for installation instructions
+----------------------------------------------------------------------
+Specific Acknowledgments:
 
+* Thanks for Ralf Grosse-Kunstleve for his contribution of the
+"sglite" space group and symmetry handling module.
 
+* Thanks to Brian Paul and the Precision Insight team for development
+of Mesa/DRI which greatly assisted in the early development of PyMOL.
+----------------------------------------------------------------------
+The PyMOL Team:
+
+   Founder and Principle Author:
+
+      Warren L. DeLano
+
+   Major Authors and Contributors (1000+ lines of code):
+
+      Ralf W. Gunstleve (SGLite Module)
+   
+   Minor Authors and Contributors:
+
+   Open-Source "Enablers" (essential, but not directly involved):
+
+      Brian Paul (Mesa)
+      Mark Kilgard (GLUT)
+      Guido van Rossom (Python)
+      Linux Torvalds (Linux Kernel)
+
+      Precision Insight (DRI)
+      The XFree86 Project (Free Windowing System)
+      VA Linux (CVS Hosting)
+      Free Software Foundation (GNU Suite)
+      The unknown authors of EISPACK (Linear Algebra)
+      
+----------------------------------------------------------------------
+      
 
 
