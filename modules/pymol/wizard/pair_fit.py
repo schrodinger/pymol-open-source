@@ -93,6 +93,9 @@ class Pair_fit(Wizard):
       lst = self.get_sele_list()
       if len(lst):
          cmd.delete(lst.pop())
+         if len(lst):
+            cmd.delete(lst.pop())         
+         self.n_pair = self.n_pair - 1
       self.update_dashes()
       self.status=0
       cmd.refresh_wizard()
@@ -109,6 +112,7 @@ class Pair_fit(Wizard):
          name = dist_prefix+str(c)
          cmd.dist(name,a,b)
          cmd.hide('label',name)
+         cmd.enable(name)
          c = c + 1
 
    def check_same_object(self,lst,sele):
