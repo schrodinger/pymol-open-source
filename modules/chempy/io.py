@@ -14,7 +14,7 @@ xyz = XYZ()
 mol = MOL()
 pkl = PKL()
 arc = ARC()
-gms = GMS()
+gms = GMS() # OBSOLETE - PLEASE DO NOT USE
 mmd = MMD()
 
 

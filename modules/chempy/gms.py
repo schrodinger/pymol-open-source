@@ -1,6 +1,10 @@
 from chempy.models import Indexed
 from chempy import Storage,Atom,Bond
 
+#
+# THIS MODULE IS OBSOLETE PLEASE DO NOT USE
+#
+
 import string
 
 atNum = {

@@ -70,6 +70,7 @@ Z* -------------------------------------------------------------------
 #define cLoadTypeXPLORMap 7
 #define cLoadTypeChemPyModel 8
 #define cLoadTypePDBStr 9
+#define cLoadTypeChemPyBrick 10
 
 #define tmpSele "_tmp"
 #define tmpSele1 "_tmp1"
@@ -506,7 +507,7 @@ static PyObject *CmdIsomesh(PyObject *self, 	PyObject *args) {
       OrthoAddOutput(buf);
     }
   } else {
-    sprintf(buf,"Map object '%s' not found.",str2);
+    sprintf(buf,"Map or brick object '%s' not found.",str2);
     ErrMessage("Mesh",buf);
   }
   APIExit();
@@ -961,7 +962,6 @@ static PyObject *CmdUpdate(PyObject *dummy, PyObject *args)
   char *str1,*str2;
   int int1,int2;
   OrthoLineType s1,s2;
-  PyObject *result;
   PyArg_ParseTuple(args,"ssii",&str1,&str2,&int1,&int2);
   APIEntry();
   SelectorGetTmp(str1,s1);
@@ -1541,7 +1541,7 @@ static PyObject *CmdLoadObject(PyObject *self, PyObject *args)
 		 ExecutiveManageObject(obj);
        if(frame<0)
          frame = ((ObjectMolecule*)obj)->NCSet-1;
-		 sprintf(buf," CmdLoad: ChemPy-model loaded into object \"%s\", frame %d.\n",
+		 sprintf(buf," CmdLoad: ChemPy-model loaded into object \"%s\", state %d.\n",
                oname,frame+1);		  
 	   }
 	 } else if(origObj) {
@@ -1549,10 +1549,25 @@ static PyObject *CmdLoadObject(PyObject *self, PyObject *args)
       ExecutiveUpdateObjectSelection(origObj);
        if(frame<0)
          frame = ((ObjectMolecule*)origObj)->NCSet-1;
-		sprintf(buf," CmdLoad: ChemPy-model appended into object \"%s\", frame %d.\n",
+		sprintf(buf," CmdLoad: ChemPy-model appended into object \"%s\", state %d.\n",
               oname,frame+1);
 	 }
 	 break;
+  case cLoadTypeChemPyBrick:
+    PBlockAndUnlockAPI();
+	 obj=(Object*)ObjectMapLoadChemPyBrick((ObjectMap*)origObj,model,frame,discrete);
+    PLockAPIAndUnblock();
+	 if(!origObj) {
+	   if(obj) {
+		 ObjectSetName(obj,oname);
+		 ExecutiveManageObject(obj);
+		 sprintf(buf," CmdLoad: ChemPy-brick loaded into object \"%s\"\n",
+               oname);		  
+	   }
+	 } else if(origObj) {
+		sprintf(buf," CmdLoad: ChemPy-brick appended into object \"%s\"\n",
+              oname);
+	 }
   }
   if(origObj) {
 	 OrthoAddOutput(buf);
