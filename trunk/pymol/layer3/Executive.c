@@ -2371,9 +2371,9 @@ void ExecutiveSelectRect(BlockRect *rect,int mode)
       PLogFlush();
     }
     ExecutiveDelete(cTempRectSele);
-    VLAFreeP(smp.picked);
     WizardDoSelect(selName);
   }
+  VLAFreeP(smp.picked);
 }
 
 int ExecutiveTranslateAtom(char *sele,float *v,int state,int mode,int log)

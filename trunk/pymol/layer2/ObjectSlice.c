@@ -194,23 +194,26 @@ PyObject *ObjectSliceAsPyList(ObjectSlice *I)
   return(PConvAutoNone(result));  
 }
 
-static void ObjectSliceStateFree(ObjectSliceState *ms)
+static void ObjectSliceStateFree(ObjectSliceState *oss)
 {
   if(PMGUI) {
-    if(ms->displayList) {
+    if(oss->displayList) {
       if(PIsGlutThread()) {
-        glDeleteLists(ms->displayList,1);
-        ms->displayList = 0;
+        glDeleteLists(oss->displayList,1);
+        oss->displayList = 0;
       } else {
         char buffer[255]; /* pass this off to the main thread */
-        sprintf(buffer,"_cmd.gl_delete_lists(%d,%d)\n",ms->displayList,1);
+        sprintf(buffer,"_cmd.gl_delete_lists(%d,%d)\n",oss->displayList,1);
         PParse(buffer);
       }
     }
   }
-  VLAFreeP(ms->values);
-  VLAFreeP(ms->points);
-  VLAFreeP(ms->flags);
+  VLAFreeP(oss->normals);
+  VLAFreeP(oss->colors);
+  VLAFreeP(oss->values);
+  VLAFreeP(oss->points);
+  VLAFreeP(oss->flags);
+  VLAFreeP(oss->strips);
 }
 
 static void ObjectSliceFree(ObjectSlice *I) {
