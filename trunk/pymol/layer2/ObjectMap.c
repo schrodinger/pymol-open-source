@@ -1141,7 +1141,7 @@ int ObjectMapCCP4StrToMap(ObjectMap *I,char *CCP4Str,int bytes,int state) {
   int ncstart,nrstart,nsstart;
   int nx,ny,nz;
   float xlen,ylen,zlen,alpha,beta,gamma;
-  int n_skip;
+  int sym_skip;
   int mapc,mapr,maps;
   int cc[3],xref[3];
   int n_pts;
@@ -1149,6 +1149,7 @@ int ObjectMapCCP4StrToMap(ObjectMap *I,char *CCP4Str,int bytes,int state) {
   float mean,stdev;
   int normalize;
   ObjectMapState *ms;
+  int expectation;
 
   if(state<0) state=I->NState;
   if(I->NState<=state) {
@@ -1260,7 +1261,8 @@ int ObjectMapCCP4StrToMap(ObjectMap *I,char *CCP4Str,int bytes,int state) {
     ENDFB(I->Obj.G);
 
   i+=4;
-  n_skip = *(i++);
+  sym_skip = *(i++);
+
   
   if(*(i++)) {
     PRINTFB(I->Obj.G,FB_ObjectMap,FB_Errors)
@@ -1270,16 +1272,35 @@ int ObjectMapCCP4StrToMap(ObjectMap *I,char *CCP4Str,int bytes,int state) {
   }
 
   n_pts = nc*ns*nr;
-  if((unsigned)bytes<(n_skip + sizeof(int)*(256+n_pts))) {
-    PRINTFB(I->Obj.G,FB_ObjectMap,FB_Errors)
-      " ObjectMapCCP4: Map appears to be truncated -- aborting.\n"
-      ENDFB(I->Obj.G);
-    return(0);
+
+  expectation = sym_skip + sizeof(int)*(256+n_pts);
+
+  PRINTFB(I->Obj.G,FB_ObjectMap,FB_Blather)
+    " ObjectMapCCP4: sym_skip %d bytes %d expectation %d\n",
+    sym_skip, bytes,  expectation
+    ENDFB(I->Obj.G);
+
+  if(bytes<expectation) {
+    if(bytes==(expectation-sym_skip)) { 
+      /* accomodate bogus CCP4 map files with bad symmetry length information */
+      PRINTFB(I->Obj.G,FB_ObjectMap,FB_Blather)
+        " ObjectMapCCP4: Map has invalid symmetry length -- working around.\n"
+        ENDFB(I->Obj.G);
+
+      expectation -= sym_skip;
+      sym_skip = 0;
+
+    } else {
+      PRINTFB(I->Obj.G,FB_ObjectMap,FB_Errors)
+        " ObjectMapCCP4: Map appears to be truncated -- aborting.\n"
+        ENDFB(I->Obj.G);
+      return(0);
+    }
   }
 
 
   if(n_pts>1) {
-    f = (float*)(p+(sizeof(int)*256)+n_skip);
+    f = (float*)(p+(sizeof(int)*256)+sym_skip);
     c = n_pts;
     sum = 0.0;
     sumsq = 0.0;
@@ -1310,7 +1331,7 @@ int ObjectMapCCP4StrToMap(ObjectMap *I,char *CCP4Str,int bytes,int state) {
     stdev = 1.0;
   }
   
-  f = (float*)(p+(sizeof(int)*256)+n_skip);
+  f = (float*)(p+(sizeof(int)*256)+sym_skip);
   mapc--; /* convert to C indexing... */
   mapr--;
   maps--;
@@ -1340,10 +1361,10 @@ int ObjectMapCCP4StrToMap(ObjectMap *I,char *CCP4Str,int bytes,int state) {
   ms->Max[maps] = ns+nsstart-1;
 
   if(Feedback(I->Obj.G,FB_ObjectMap,FB_Blather)) {
-    dump3i(ms->Div,"ms->Div");
-    dump3i(ms->Min,"ms->Min");
-    dump3i(ms->Max,"ms->Max");
-    dump3i(ms->FDim,"ms->FDim");
+    dump3i(ms->Div," ObjectMapCCP4: ms->Div");
+    dump3i(ms->Min," ObjectMapCCP4: ms->Min");
+    dump3i(ms->Max," ObjectMapCCP4: ms->Max");
+    dump3i(ms->FDim," ObjectMapCCP4: ms->FDim");
   }
 
   ms->Crystal->Dim[0] = xlen;
