@@ -133,13 +133,8 @@ PyMOL>refresh
  IsosurfVolume: Surface generated using 7583 lines.
 PyMOL>isomesh m4,tst4
 PyMOL>refresh
-PyMOL>isomesh m5a,tst5,source=1
-Traceback (most recent call last):
-  File "/users/warren/pymol/modules/pymol/parser.py", line 136, in parse
-    result=apply(kw[nest][0],args[nest],kw_args[nest])
-  File "/users/warren/pymol/modules/pymol/creating.py", line 141, in isomesh
-    float(level),0,int(state)-1,float(carve),
-ValueError: invalid literal for float(): source
+PyMOL>isomesh m5a,tst5,source_state=1
+ Isomesh-Warning: state 1 not present in map "tst5".
 PyMOL>refresh
 PyMOL>isomesh m5b,tst5
  Executive: object "m5b" created.
@@ -192,13 +187,8 @@ PyMOL>isosurface s4,tst5
 PyMOL>refresh
  ObjectSurface: updating "s4".
  TetsurfVolume: Surface generated using 18282 triangles.
-PyMOL>isosurface s5a,tst5,source=1
-Traceback (most recent call last):
-  File "/users/warren/pymol/modules/pymol/parser.py", line 136, in parse
-    result=apply(kw[nest][0],args[nest],kw_args[nest])
-  File "/users/warren/pymol/modules/pymol/creating.py", line 196, in isosurface
-    float(level),0,int(state)-1,float(carve),
-ValueError: invalid literal for float(): source
+PyMOL>isosurface s5a,tst5,source_state=1
+ Isosurface-Warning: state 1 not present in map "tst5".
 PyMOL>refresh
 PyMOL>isosurface s5b,tst5
  Executive: object "s5b" created.

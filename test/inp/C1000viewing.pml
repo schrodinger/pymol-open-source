@@ -274,7 +274,7 @@ view test
 cmd._dump_floats(cmd.get_view(0))
 view rest
 cmd._dump_floats(cmd.get_view(0))
-view rest,delete
+view rest,clear
 view rest
 cmd._dump_floats(cmd.get_view(0))
 view test

@@ -127,6 +127,22 @@ class Setting:
       self.cartoon_highlight_color = IntVar()
       self.cartoon_highlight_color.set(int(cmd.get_setting_legacy('ray_interior_color')!=-1))
 
+      self.F=[ None,
+               IntVar(),
+               IntVar(),
+               IntVar(),
+               IntVar(),
+               IntVar(),
+               IntVar(),
+
+               IntVar(),
+               IntVar(),
+               IntVar(),
+               IntVar(),
+               IntVar(),
+               IntVar(),
+               ]
+      
       self.xref = { 
          'ray_trace_frames':
          (lambda s,a: (cmd.set(a,("%1.0f" % s.ray_trace_frames.get()),log=1),
@@ -202,7 +218,7 @@ class Setting:
          'ray_interior_color'        :
          (lambda s,a: (s.ray_interior_color_set())),
          'cartoon_highlight_color'        :
-         (lambda s,a: (s.cartoon_highlight_color_set()))
+         (lambda s,a: (s.cartoon_highlight_color_set())),
          }
 
       self.update_code = {
@@ -270,7 +286,8 @@ class Setting:
          (lambda s,t: (s.ray_interior_color.set(t[1][0]!=-1))),
          'cartoon_highlight_color':
          (lambda s,t: (s.cartoon_highlight_color.set(t[1][0]!=-1))),
-
+         'scenes_changed' :
+         (lambda s,t: (s.update_scenes())),
         }
       self.active_list = [
          pymol.setting._get_index("ray_trace_frames"),
@@ -305,7 +322,8 @@ class Setting:
          pymol.setting._get_index("roving_origin"),
          pymol.setting._get_index("roving_detail"),                           
          pymol.setting._get_index("ray_interior_color"),
-         pymol.setting._get_index("cartoon_highlight_color"),                           
+         pymol.setting._get_index("cartoon_highlight_color"),
+         pymol.setting._get_index("scenes_changed")
          ]
 
       self.active_dict = {}
@@ -336,6 +354,14 @@ class Setting:
       set_fn = self.xref[sttng]
       set_fn(self,sttng)
 
+   def update_scenes(self):
+      dict = cmd.get_scene_dict()
+      for x in range(1,13):
+         if dict.has_key('F%d'%x):
+            self.F[x].set(1)
+         else:
+            self.F[x].set(0)
+            
    def refresh(self): # get any settings changes from PyMOL and update menus
       lst = cmd.get_setting_updates()
       for a in lst:

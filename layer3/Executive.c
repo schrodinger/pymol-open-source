@@ -186,7 +186,6 @@ int ExecutiveSetVisFromPyDict(PyObject *dict)
       } else {
         
         rec = ExecutiveFindSpec(name);
-        printf("%s\n",name);
         if(rec) {
           if(ok) ok = (list!=NULL);
           if(ok) ok = PyList_Check(list);
