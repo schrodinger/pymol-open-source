@@ -24,7 +24,8 @@ if __name__=='pymol.invocation':
    import os
    import glob
    import string
-
+   import sys
+   
    pattern1 = '.pymolrc*'
    pattern2 = 'pymolrc*'
 
@@ -48,7 +49,11 @@ if __name__=='pymol.invocation':
    options.win_y = 480
    options.win_px = 0 # signal to use platform-dependent default
    options.win_py = 175 # should be 200 for native mac version, but how do we know?
+   options.ext_y = 120 # external gui height (eg. for Tcl/Tk top bar)
 
+   if sys.platform[:5] == 'linux':
+      options.ext_y = options.ext_y + 24
+   
    options.blue_line = 0
    # Greg Landrum
    options.rpcServer = 0
@@ -131,6 +136,8 @@ if __name__=='pymol.invocation':
                options.win_px = int(av.pop())
             if "Y" in a:
                options.win_py = int(av.pop())
+            if "V" in a:
+               options.ext_y = int(av.pop())
             if "x" in a:
                options.external_gui = 0
             if "t" in a:

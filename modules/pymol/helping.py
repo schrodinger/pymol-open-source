@@ -445,6 +445,9 @@ PyMOL COMMAND LINE OPTIONS
    -e   Start in full-screen mode.
    -2   Start in two-button mouse mode.
    -o   Disable security.
+   -R   Launch Greg Landrum's XMLRPC listener
+      
+   -X <int> -Y <int> -W <int> -H <int> -V <int> Adjust window geometry.
 
    -f <# line> Controls display of commands and feedback in OpenGL (0=off).
    -r <file.py> Run a Python program (in __main__) on startup.
