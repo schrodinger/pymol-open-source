@@ -1235,9 +1235,9 @@ int RayTraceThread(CRayThreadInfo *T)
 		if((!T->phase)&&!(yy & 0xF)) { /* don't slow down rendering too much */
         if(T->edging_cutoff) {
           if(T->edging) {
-            OrthoBusyFast(2.5*T->height/3 + 0.5*y,4*T->height/3); 
+            OrthoBusyFast((int)(2.5F*T->height/3 + 0.5F*y),4*T->height/3); 
           } else {
-            OrthoBusyFast(T->height/3 + 0.5*y,4*T->height/3); 
+            OrthoBusyFast((int)(T->height/3 + 0.5F*y),4*T->height/3); 
           }
         } else {
 			OrthoBusyFast(T->height/3 + y,4*T->height/3); 

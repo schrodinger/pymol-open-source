@@ -1058,9 +1058,9 @@ Rep *RepCylBondNew(CoordSet *cs)
               if(stick_ball_ratio>=1.0F) /* don't use caps if spheres are big enough */
                 caps_req = false;
               if(s1&&(!obj->AtomInfo[b1].temp1)) { /* just once for each atom... */
-                obj->AtomInfo[b1].temp1=1;
                 int *q=sp->Sequence;
                 int *s=sp->StripLen;
+                obj->AtomInfo[b1].temp1=1;
                 {
                   if(ColorCheckRamped(c1)) {
                     ColorGetRamped(c1,vv1,rgb2_buf);
@@ -1094,9 +1094,9 @@ Rep *RepCylBondNew(CoordSet *cs)
                 I->NSPC++;
               }
               if(s2&&!(obj->AtomInfo[b2].temp1)) { /* just once for each atom... */
-                obj->AtomInfo[b2].temp1=1;
                 int *q=sp->Sequence;
                 int *s=sp->StripLen;
+                obj->AtomInfo[b2].temp1=1;
                 
                 if(ColorCheckRamped(c2)) {
                   ColorGetRamped(c2,vv2,rgb2_buf);
