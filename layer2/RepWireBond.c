@@ -519,11 +519,19 @@ void RepValence(float *v,float *v1,float *v2,int *other,
   cross_product3f(d,t,p1);
   
   normalize3f(p1);
-  
-  cross_product3f(d,p1,p2);
-  
-  normalize3f(p2);
-  
+
+  if(length3f(p1)==0.0) {
+    p1[0]=p0[1];
+    p1[1]=p0[2];
+    p1[2]=p0[0];
+    cross_product3f(p0,p1,p2);
+    normalize3f(p2);
+  } else {
+    cross_product3f(d,p1,p2);
+    
+    normalize3f(p2);
+  }
+
   /* now we have a coordinate system*/
   
   t[0] = p2[0]*tube_size;
