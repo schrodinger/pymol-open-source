@@ -5974,27 +5974,28 @@ static CoordSet *ObjectMoleculeMOL2Str2CoordSet(char *buffer,AtomInfoType **atIn
         f=coord;
         for(a=0;a<nAtom;a++) {
           if(ok) {
-            p=ParseWordCopy(cc,p,20);
+            p=ParseWordCopy(cc,p,MAXLINELEN);
             if(sscanf(cc,"%d",&atInfo[a].id)!=1)
               ok=ErrMessage("ReadMOL2File","bad atom id");
           }
           if(ok) {
-            p=ParseWordCopy(cc,p,4);
+            p=ParseWordCopy(cc,p,MAXLINELEN);
+            cc[cAtomNameLen] = 0; 
             if(sscanf(cc,"%s",atInfo[a].name)!=1)
               ok=ErrMessage("ReadMOL2File","bad atom name");
           }
           if(ok) {
-            p=ParseWordCopy(cc,p,200);
+            p=ParseWordCopy(cc,p,MAXLINELEN);
             if(sscanf(cc,"%f",f++)!=1)
               ok=ErrMessage("ReadMOL2File","bad x coordinate");
           }
           if(ok) {
-            p=ParseWordCopy(cc,p,20);
+            p=ParseWordCopy(cc,p,MAXLINELEN);
             if(sscanf(cc,"%f",f++)!=1)
               ok=ErrMessage("ReadMOL2File","bad y coordinate");
           }
           if(ok) {
-            p=ParseWordCopy(cc,p,20);
+            p=ParseWordCopy(cc,p,MAXLINELEN);
             if(sscanf(cc,"%f",f++)!=1)
               ok=ErrMessage("ReadMOL2File","bad z coordinate");
           }
