@@ -461,30 +461,27 @@ class DictDBClient:
    def __init__(self,host='localhost',port=8000):
       self.host=host
       self.port=port
-
+      self.sock = None
 
    def _remote_call(self,meth,args,kwds):
       result = None
-      s=socket.socket(socket.AF_INET,socket.SOCK_STREAM)
-      s.connect((self.host,self.port))
-      send = s.makefile('w')
-      recv = s.makefile('r')
-      cPickle.dump(meth,send,1) # binary by default
-      cPickle.dump(args,send,1)
-      cPickle.dump(kwds,send,1)
-      send.close()
-      result = cPickle.load(recv)
-      recv.close()
-      s.close()      
+      if self.sock == None:
+         self.sock=socket.socket(socket.AF_INET,socket.SOCK_STREAM)
+         self.sock.connect((self.host,self.port))
+         self.send = self.sock.makefile('w')
+         self.recv = self.sock.makefile('r')
+      cPickle.dump(meth,self.send,1) # binary by default
+      cPickle.dump(args,self.send,1)
+      cPickle.dump(kwds,self.send,1)
+      self.send.flush()
+      result = cPickle.load(self.recv)
       return result
-
 
    def __getitem__(self,key):
       if self._remote_call('has_key',(key,),{}):
          return cPickle.loads(self._remote_call('_get',(key,),{}))
       else:
          raise KeyError(key)
-
 
    def __setitem__(self,key,object):
       return self._remote_call('_set',(key,cPickle.dumps(object)),{})
@@ -496,16 +493,18 @@ class DictDBClient:
       else:
          raise KeyError(key)
 
-
-   def standby(self,key):
+   def standby(self):
       return self._remote_call('standby',(),{})
 
    def shutdown(self): 
       try:
-         # multiple calls are sometimes required...         
+         # multiple connections are sometimes required...         
          self._remote_call('shutdown',(),{})
+         self.sock=None
          self._remote_call('shutdown',(),{})
+         self.sock=None
          self._remote_call('shutdown',(),{})
+         self.sock=None
          self._remote_call('shutdown',(),{})
       except:
          pass
@@ -513,6 +512,9 @@ class DictDBClient:
 
    def purge(self):
       return self._remote_call('purge',(),{})
+
+   def reset(self):
+      return self._remote_call('reset',(),{})
 
    def keys(self):
       return self._remote_call('keys',(),{})
@@ -528,6 +530,8 @@ class DictDBClient:
 
 class DictDBServer:
    def __init__(self,prefix,port=''):
+
+      sys.setcheckinterval(0)
       
       server_address = ('', port)
 
@@ -561,28 +565,32 @@ class _DictDBServer(SocketServer.ThreadingTCPServer):
 class DictDBRequestHandler(SocketServer.StreamRequestHandler):
 
     def handle(self):
-       
-        # get method name from client
-        method = cPickle.load(self.rfile)
+       while self.server.keep_alive:
+          # get method name from client
 
-        # here is how we eventually kill the server
-        if method == 'shutdown':
-           self.server.keep_alive = 0
-           
-        # get arguments from client
-        args = cPickle.load(self.rfile)
-        kw = cPickle.load(self.rfile)
-        
-        # get method pointer
-        meth_obj = getattr(self.server.dictdb,method)
-#        print method,args,kw
-        
-        # call method and return result
-        cPickle.dump(apply(meth_obj,args,kw),self.wfile,1) # binary by default
+          try:
+             method = cPickle.load(self.rfile)
+          except EOFError,socket.error:
+             break
+
+          if method == 'shutdown':
+             self.server.keep_alive = 0
+             
+          # get arguments from client
+          args = cPickle.load(self.rfile)
+          kw = cPickle.load(self.rfile)
+
+          # get method pointer
+          meth_obj = getattr(self.server.dictdb,method)
+          #print method,args,kw
+
+          # call method and return result
+          cPickle.dump(apply(meth_obj,args,kw),self.wfile,1) # binary by default
+          self.wfile.flush()
 
 def server_test(port = 8000):
    print 'Testing DictDBServer on port',str(port)
-   fp = DictDBServer(port=port) # socket servers don't terminate
+   fp = DictDBServer('test_dictdb',port=port) # socket servers don't terminate
 
 def client_test(host,port=8000):
 
