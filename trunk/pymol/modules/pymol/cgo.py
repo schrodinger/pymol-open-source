@@ -55,7 +55,7 @@ def molauto(*arg):
    if la>2:
       marg = arg[2]
    cmd.save("molauto.pdb",sele)
-
+   print "molauto %s -nocentre molauto.pdb | molscript -r > molauto.r3d"%marg
    os.system("molauto %s -nocentre molauto.pdb | molscript -r > molauto.r3d"%marg)
    f = open("molauto.r3d")
    rr = RenderReader(f)
