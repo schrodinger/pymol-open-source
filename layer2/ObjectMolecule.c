@@ -140,10 +140,49 @@ CoordSet *ObjectMoleculeChempyModel2CoordSet(PyObject *model,AtomInfoType **atIn
           if (tmp)
             ok = PConvPyObjectToStrMaxClean(tmp,ai->name,sizeof(AtomName)-1);
           if(!ok) 
-            ErrMessage("ObjectMoleculeChempyModel2CoordSet","can't read coordinates");
+            ErrMessage("ObjectMoleculeChempyModel2CoordSet","can't read name");
           Py_XDECREF(tmp);
         }
-        
+
+        if(ok) {
+          if(PTruthCallStr(atom,"has","text_type")) { 
+            tmp = PyObject_GetAttrString(atom,"text_type");
+            if (tmp)
+              ok = PConvPyObjectToStrMaxClean(tmp,ai->textType,sizeof(TextType)-1);
+            if(!ok) 
+              ErrMessage("ObjectMoleculeChempyModel2CoordSet","can't read text_type");
+            Py_XDECREF(tmp);
+          } else {
+            ai->textType[0]=0;
+          }
+        }
+
+        if(ok) {
+          if(PTruthCallStr(atom,"has","numeric_type")) { 
+            tmp = PyObject_GetAttrString(atom,"numeric_type");
+            if (tmp)
+              ok = PConvPyObjectToInt(tmp,&ai->customType);
+            if(!ok) 
+              ErrMessage("ObjectMoleculeChempyModel2CoordSet","can't read numeric_type");
+            Py_XDECREF(tmp);
+          } else {
+            ai->customType = cAtomInfoNoType;
+          }
+        }
+
+        if(ok) {
+          if(PTruthCallStr(atom,"has","flags")) {         
+            tmp = PyObject_GetAttrString(atom,"flags");
+            if (tmp)
+              ok = PConvPyObjectToInt(tmp,(int*)&ai->flags);
+            if(!ok) 
+              ErrMessage("ObjectMoleculeChempyModel2CoordSet","can't read flags");
+            Py_XDECREF(tmp);
+          } else {
+            ai->flags = 0;
+          }
+        }
+
         if(ok) {
           tmp = PyObject_GetAttrString(atom,"resn");
           if (tmp)
@@ -172,6 +211,25 @@ CoordSet *ObjectMoleculeChempyModel2CoordSet(PyObject *model,AtomInfoType **atIn
             ErrMessage("ObjectMoleculeChempyModel2CoordSet","can't read segi");
           Py_XDECREF(tmp);
         }
+
+		  if(ok) {
+          tmp = PyObject_GetAttrString(atom,"b");
+          if (tmp)
+            ok = PConvPyObjectToFloat(tmp,&ai->b);
+          if(!ok) 
+            ErrMessage("ObjectMoleculeChempyModel2CoordSet","can't read b value");
+          Py_XDECREF(tmp);
+        }
+
+		  if(ok) {
+          tmp = PyObject_GetAttrString(atom,"q");
+          if (tmp)
+            ok = PConvPyObjectToFloat(tmp,&ai->q);
+          if(!ok) 
+            ErrMessage("ObjectMoleculeChempyModel2CoordSet","can't read occupancy");
+          Py_XDECREF(tmp);
+        }
+
         
 		  if(ok) {
           tmp = PyObject_GetAttrString(atom,"chain");
@@ -198,7 +256,7 @@ CoordSet *ObjectMoleculeChempyModel2CoordSet(PyObject *model,AtomInfoType **atIn
           if (tmp)
             ok = PConvPyObjectToStrMaxClean(tmp,ai->alt,sizeof(Chain)-1);
           if(!ok) 
-            ErrMessage("ObjectMoleculeChempyModel2CoordSet","can't read chain");
+            ErrMessage("ObjectMoleculeChempyModel2CoordSet","can't read alternate conformation");
           Py_XDECREF(tmp);
         }
 
@@ -1215,7 +1273,10 @@ void ObjectMoleculeSeleOp(ObjectMolecule *I,int sele,ObjectMoleculeOpRec *op)
 	   for(a=0;a<I->NAtom;a++)
 		 {
 		   switch(op->code) { 
-		   case OMOP_COLR: /* atom based loops */
+         case OMOP_Flag: 
+           I->AtomInfo[a].flags &= op->i2; /* clear flag using mask */
+           /* no break here - intentional  */
+		   case OMOP_COLR: /* normal atom based loops */
 		   case OMOP_VISI:
 		   case OMOP_TTTF:
          case OMOP_ALTR:
@@ -1226,6 +1287,10 @@ void ObjectMoleculeSeleOp(ObjectMolecule *I,int sele,ObjectMoleculeOpRec *op)
 				 if(SelectorMatch(s,sele))
 				   {
 					 switch(op->code) {
+                case OMOP_Flag:
+                  I->AtomInfo[a].flags |= op->i1; /* set flag */
+                  op->i3++;
+                  break;
 					 case OMOP_VISI:
                   if(op->i1<0)
                     for(d=0;d<cRepCnt;d++) 
@@ -1269,6 +1334,7 @@ void ObjectMoleculeSeleOp(ObjectMolecule *I,int sele,ObjectMoleculeOpRec *op)
 				 s=SelectorNext(s);
 			   }
 			 break;
+           
 #ifdef PYMOL_FUTURE_CODE
          case OMOP_CSOC: /* specific coordinate set based operations */
            if(I->NCSet<op->cs1) 

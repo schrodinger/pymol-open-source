@@ -16,6 +16,7 @@ Z* -------------------------------------------------------------------
 #ifndef _H_CoordSet
 #define _H_CoordSet
 
+#include<Python.h>
 #include"Rep.h"
 #include"Symmetry.h"
 
@@ -51,6 +52,7 @@ void CoordSetTransform44f(CoordSet *I,float *mat);
 void CoordSetRealToFrac(CoordSet *I,CCrystal *cryst);
 void CoordSetFracToReal(CoordSet *I,CCrystal *cryst);
 void CoordSetGetAverage(CoordSet *I,float *v0);
+PyObject *CoordSetAtomToChempyAtom(AtomInfoType *ai,float *v);
 
 #endif
 

@@ -41,6 +41,9 @@ PyObject *P_menu = NULL;
 PyObject *P_xray = NULL;
 PyObject *P_parser = NULL;
 
+PyObject *P_chempy = NULL;
+PyObject *P_models = NULL;
+
 PyObject *P_exec = NULL;
 PyObject *P_parse = NULL;
 PyObject *P_lock = NULL;
@@ -56,6 +59,19 @@ int P_glut_thread_keep_out = 0; /* enables us to keep glut out if by chance it g
 void PCatchInit(void);
 void my_interrupt(int a);
 char *getprogramname(void);
+
+int PTruthCallStr(PyObject *object,char *method,char *argument)
+{
+  int result = false;
+  PyObject *tmp;
+  tmp = PyObject_CallMethod(object,method,"s",argument);
+  if(tmp) {
+    if(PyObject_IsTrue(tmp))
+      result = 1;
+    Py_DECREF(tmp);
+  }
+  return(result);
+}
                                        
 void PXDecRef(PyObject *obj)
 {
@@ -329,6 +345,14 @@ void PInit(void)
 
   P_parse = PyObject_GetAttrString(P_parser,"parse");
   if(!P_parse) ErrFatal("PyMOL","can't find 'parser.parse()'");
+
+  PRunString("import chempy"); 
+  P_chempy = PyDict_GetItemString(P_globals,"chempy");
+  if(!P_chempy) ErrFatal("PyMOL","can't find 'chempy'");
+
+  PRunString("from chempy import models"); 
+  P_models = PyDict_GetItemString(P_globals,"models");
+  if(!P_models) ErrFatal("PyMOL","can't find 'chempy.models'");
 
   PRunString("import util\n");  
   PRunString("import sglite\n"); 

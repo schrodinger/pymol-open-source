@@ -24,6 +24,8 @@ Z* -------------------------------------------------------------------
 #include"Scene.h"
 #include"CoordSet.h"
 #include"Color.h"
+#include"PConv.h"
+#include"P.h"
 
 #include"RepWireBond.h"
 #include"RepCylBond.h"
@@ -136,6 +138,39 @@ void CoordSetAtomToPDBStrVLA(char **charVLA,int *c,AtomInfoType *ai,float *v,int
                 aType,cnt+1,name,ai->alt,ai->resn,
                 ai->chain,resi,*v,*(v+1),*(v+2),ai->q,ai->b,ai->segi,ai->elem);
   
+}
+/*========================================================================*/
+PyObject *CoordSetAtomToChempyAtom(AtomInfoType *ai,float *v)
+{
+  PyObject *atom;
+  int ok = true;
+
+  atom = PyObject_CallMethod(P_chempy,"Atom","");
+  if (!atom) 
+    ok = ErrMessage("CoordSetAtomToChempyAtom","can't create atom");
+  else {
+    PConvFloat3ToPyObjAttr(atom,"coord",v);
+    PConvStringToPyObjAttr(atom,"name",ai->name);
+    PConvStringToPyObjAttr(atom,"symbol",ai->elem);
+    PConvStringToPyObjAttr(atom,"resn",ai->resn);
+    PConvStringToPyObjAttr(atom,"resi",ai->resi);
+    PConvIntToPyObjAttr(atom,"resv",ai->resv);
+    PConvStringToPyObjAttr(atom,"chain",ai->chain);
+    if(ai->alt[0]) 
+      PConvStringToPyObjAttr(atom,"alt",ai->alt); 
+    PConvStringToPyObjAttr(atom,"segi",ai->segi);
+    PConvFloatToPyObjAttr(atom,"q",ai->q);
+    PConvFloatToPyObjAttr(atom,"b",ai->b);
+    if(ai->customType!=-9999)
+      PConvIntToPyObjAttr(atom,"numeric_type",ai->customType);
+    if(ai->textType[0])
+      PConvIntToPyObjAttr(atom,"text_type",ai->customType);      
+    PConvIntToPyObjAttr(atom,"hetatm",ai->hetatm);      
+    PConvIntToPyObjAttr(atom,"flags",ai->flags);      
+  }
+  if(PyErr_Occurred())
+    PyErr_Print();
+  return(atom);
 }
 /*========================================================================*/
 void CoordSetAtomToTERStrVLA(char **charVLA,int *c,AtomInfoType *ai,int cnt)

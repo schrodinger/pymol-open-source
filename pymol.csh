@@ -18,9 +18,9 @@ endif
 # python modules
 #
 if ( $?PYTHONPATH ) then
-setenv PYTHONPATH ${PYMOL_EXTLIBPATH}/python1.5:${PYTHONPATH}
+setenv PYTHONPATH ${PYMOL_PATH}/modules:${PYMOL_EXTLIBPATH}/python1.5:${PYTHONPATH}
 else
-setenv PYTHONPATH ${PYMOL_EXTLIBPATH}/python1.5
+setenv PYTHONPATH ${PYMOL_PATH}/modules:${PYMOL_EXTLIBPATH}/python1.5
 endif
 #
 

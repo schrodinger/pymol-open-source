@@ -16,6 +16,8 @@ Z* -------------------------------------------------------------------
 #ifndef _H_Executive
 #define _H_Executive
 
+#include<Python.h>
+
 #include"Object.h"
 #include"Ortho.h"
 #include"Word.h"
@@ -59,7 +61,9 @@ int ExecutiveCountStates(char *s1);
 void ExecutiveSymExp(char *name,char *obj,char *sele,float cutoff);
 int ExecutiveGetExtent(char *name,float *mn,float *mx);
 void ExecutiveSeleToObject(char *name,char *s1,int source,int target);
+PyObject *ExecutiveSeleToChempyModel(char *s1,int state);
 void ExecutiveInvalidateRep(char *name,int rep,int level);
+void ExecutiveFlag(int flag,char *s1);
 
 #endif
 
