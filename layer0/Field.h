@@ -76,7 +76,7 @@ typedef struct {
                                      (c)*(f)->stride[2] + \
                                      (d)*(f)->stride[3]))
 
-CField *FieldNew(unsigned int *dim,int n_dim,unsigned int base_size);
+CField *FieldNew(int *dim,int n_dim,unsigned int base_size);
 void FieldFree(CField *I);
 
 #endif
