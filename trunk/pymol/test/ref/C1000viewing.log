@@ -24,104 +24,9 @@ PyMOL>cmd._dump_floats(cmd.get_view(0))
   0.000   0.000 -50.000   0.000   0.000   0.000  43.000  93.000   0.000
 PyMOL>dele all
 PyMOL>load dat/1tii.pdb
- ObjectMolecule: read HELIX D 4 D 10
- ObjectMolecule: read HELIX D 57 D 74
- ObjectMolecule: read HELIX E 4 E 10
- ObjectMolecule: read HELIX E 57 E 74
- ObjectMolecule: read HELIX F 4 F 11
- ObjectMolecule: read HELIX F 57 F 74
- ObjectMolecule: read HELIX G 4 G 11
- ObjectMolecule: read HELIX G 57 G 74
- ObjectMolecule: read HELIX H 4 H 11
- ObjectMolecule: read HELIX H 57 H 74
- ObjectMolecule: read HELIX A 11 A 17
- ObjectMolecule: read HELIX A 39 A 44
- ObjectMolecule: read HELIX A 64 A 74
- ObjectMolecule: read HELIX A 95 A 102
- ObjectMolecule: read HELIX A 106 A 108
- ObjectMolecule: read HELIX A 119 A 121
- ObjectMolecule: read HELIX A 145 A 148
- ObjectMolecule: read HELIX A 156 A 162
- ObjectMolecule: read HELIX A 170 A 173
- ObjectMolecule: read HELIX A 177 A 179
- ObjectMolecule: read HELIX A 183 A 185
- ObjectMolecule: read HELIX C 197 C 228
- ObjectMolecule: read SHEET D 16 D 18
- ObjectMolecule: read SHEET D 78 D 83
- ObjectMolecule: read SHEET D 89 D 96
- ObjectMolecule: read SHEET D 46 D 49
- ObjectMolecule: read SHEET D 36 D 41
- ObjectMolecule: read SHEET D 23 D 29
- ObjectMolecule: read SHEET H 90 H 97
- ObjectMolecule: read SHEET H 78 H 83
- ObjectMolecule: read SHEET H 16 H 18
- ObjectMolecule: read SHEET D 93 D 97
- ObjectMolecule: read SHEET E 23 E 29
- ObjectMolecule: read SHEET E 36 E 41
- ObjectMolecule: read SHEET E 46 E 49
- ObjectMolecule: read SHEET E 89 E 96
- ObjectMolecule: read SHEET E 78 E 83
- ObjectMolecule: read SHEET E 16 E 18
- ObjectMolecule: read SHEET E 93 E 97
- ObjectMolecule: read SHEET F 23 F 29
- ObjectMolecule: read SHEET F 36 F 41
- ObjectMolecule: read SHEET F 46 F 49
- ObjectMolecule: read SHEET F 89 F 96
- ObjectMolecule: read SHEET F 78 F 83
- ObjectMolecule: read SHEET F 16 F 18
- ObjectMolecule: read SHEET F 93 F 97
- ObjectMolecule: read SHEET G 23 G 29
- ObjectMolecule: read SHEET G 36 G 41
- ObjectMolecule: read SHEET G 46 G 49
- ObjectMolecule: read SHEET G 89 G 96
- ObjectMolecule: read SHEET G 78 G 83
- ObjectMolecule: read SHEET G 16 G 18
- ObjectMolecule: read SHEET G 93 G 97
- ObjectMolecule: read SHEET H 23 H 29
- ObjectMolecule: read SHEET H 36 H 41
- ObjectMolecule: read SHEET H 46 H 49
- ObjectMolecule: read SHEET H 89 H 91
- ObjectMolecule: read SHEET A 2 A 7
- ObjectMolecule: read SHEET A 81 A 87
- ObjectMolecule: read SHEET A 122 A 128
- ObjectMolecule: read SHEET A 57 A 60
- ObjectMolecule: read SHEET A 111 A 114
- ObjectMolecule: read SHEET A 92 A 94
- Crystal: Unit Cell          105.700  105.700  171.600
- Crystal: Alpha Beta Gamma    90.000   90.000  120.000
- Crystal: RealToFrac Matrix
- Crystal:    0.0095    0.0055    0.0000
- Crystal:    0.0000    0.0109    0.0000
- Crystal:    0.0000    0.0000    0.0058
- Crystal: FracToReal Matrix
- Crystal:  105.7000  -52.8500    0.0000
- Crystal:    0.0000   91.5389    0.0000
- Crystal:    0.0000    0.0000  171.6000
- Crystal: Unit Cell Volume  1660343.
- Symmetry:      1.00000      0.00000      0.00000      0.00000
- Symmetry:      0.00000      1.00000      0.00000      0.00000
- Symmetry:      0.00000      0.00000      1.00000      0.00000
- Symmetry:      0.00000      0.00000      0.00000      1.00000
- Symmetry:      0.00000     -1.00000      0.00000      0.00000
- Symmetry:      1.00000     -1.00000      0.00000      0.00000
- Symmetry:      0.00000      0.00000      1.00000      0.33333
- Symmetry:      0.00000      0.00000      0.00000      1.00000
- Symmetry:     -1.00000      1.00000      0.00000      0.00000
- Symmetry:     -1.00000      0.00000      0.00000      0.00000
- Symmetry:      0.00000      0.00000      1.00000      0.66667
- Symmetry:      0.00000      0.00000      0.00000      1.00000
- Symmetry:      0.00000      1.00000      0.00000      0.00000
- Symmetry:      1.00000      0.00000      0.00000      0.00000
- Symmetry:      0.00000      0.00000     -1.00000      0.00000
- Symmetry:      0.00000      0.00000      0.00000      1.00000
- Symmetry:     -1.00000      0.00000      0.00000      0.00000
- Symmetry:     -1.00000      1.00000      0.00000      0.00000
- Symmetry:      0.00000      0.00000     -1.00000      0.33333
- Symmetry:      0.00000      0.00000      0.00000      1.00000
- Symmetry:      1.00000     -1.00000      0.00000      0.00000
- Symmetry:      0.00000     -1.00000      0.00000      0.00000
- Symmetry:      0.00000      0.00000     -1.00000      0.66667
- Symmetry:      0.00000      0.00000      0.00000      1.00000
+ ObjectMolecule: Read secondary structure assignments.
+ ObjectMolecule: Read crystal symmetry information.
+ Symmetry: Found 6 symmetry operators.
  Executive: object "1tii" created.
 PyMOL>hide
 PyMOL>show cartoon
@@ -182,27 +87,9 @@ PyMOL>dele all
 PyMOL>load dat/pept.pdb
  Executive: object "pept" created.
 PyMOL>load dat/3al1.pdb
- ObjectMolecule: read HELIX A 102 A 110
- ObjectMolecule: read HELIX B 202 B 210
- Crystal: Unit Cell           20.544   20.859   26.055
- Crystal: Alpha Beta Gamma   101.160   97.030  118.060
- Crystal: RealToFrac Matrix
- Crystal:    0.0487    0.0259    0.0140
- Crystal:    0.0000    0.0543    0.0163
- Crystal:    0.0000    0.0000    0.0404
- Crystal: FracToReal Matrix
- Crystal:   20.5440   -9.8120   -3.1888
- Crystal:    0.0000   18.4071   -7.4145
- Crystal:    0.0000    0.0000   24.7734
- Crystal: Unit Cell Volume     9368.
- Symmetry:      1.00000      0.00000      0.00000      0.00000
- Symmetry:      0.00000      1.00000      0.00000      0.00000
- Symmetry:      0.00000      0.00000      1.00000      0.00000
- Symmetry:      0.00000      0.00000      0.00000      1.00000
- Symmetry:     -1.00000      0.00000      0.00000      0.00000
- Symmetry:      0.00000     -1.00000      0.00000      0.00000
- Symmetry:      0.00000      0.00000     -1.00000      0.00000
- Symmetry:      0.00000      0.00000      0.00000      1.00000
+ ObjectMolecule: Read secondary structure assignments.
+ ObjectMolecule: Read crystal symmetry information.
+ Symmetry: Found 2 symmetry operators.
  Executive: object "3al1" created.
 PyMOL>disable
 PyMOL>enable pept
@@ -468,104 +355,9 @@ PyMOL>cmd._dump_floats(cmd.get_view(0))
   0.000   0.000 -44.770   0.247  -2.740  20.030  35.297  54.243   0.000
 PyMOL>dele all
 PyMOL>load dat/1tii.pdb,m1
- ObjectMolecule: read HELIX D 4 D 10
- ObjectMolecule: read HELIX D 57 D 74
- ObjectMolecule: read HELIX E 4 E 10
- ObjectMolecule: read HELIX E 57 E 74
- ObjectMolecule: read HELIX F 4 F 11
- ObjectMolecule: read HELIX F 57 F 74
- ObjectMolecule: read HELIX G 4 G 11
- ObjectMolecule: read HELIX G 57 G 74
- ObjectMolecule: read HELIX H 4 H 11
- ObjectMolecule: read HELIX H 57 H 74
- ObjectMolecule: read HELIX A 11 A 17
- ObjectMolecule: read HELIX A 39 A 44
- ObjectMolecule: read HELIX A 64 A 74
- ObjectMolecule: read HELIX A 95 A 102
- ObjectMolecule: read HELIX A 106 A 108
- ObjectMolecule: read HELIX A 119 A 121
- ObjectMolecule: read HELIX A 145 A 148
- ObjectMolecule: read HELIX A 156 A 162
- ObjectMolecule: read HELIX A 170 A 173
- ObjectMolecule: read HELIX A 177 A 179
- ObjectMolecule: read HELIX A 183 A 185
- ObjectMolecule: read HELIX C 197 C 228
- ObjectMolecule: read SHEET D 16 D 18
- ObjectMolecule: read SHEET D 78 D 83
- ObjectMolecule: read SHEET D 89 D 96
- ObjectMolecule: read SHEET D 46 D 49
- ObjectMolecule: read SHEET D 36 D 41
- ObjectMolecule: read SHEET D 23 D 29
- ObjectMolecule: read SHEET H 90 H 97
- ObjectMolecule: read SHEET H 78 H 83
- ObjectMolecule: read SHEET H 16 H 18
- ObjectMolecule: read SHEET D 93 D 97
- ObjectMolecule: read SHEET E 23 E 29
- ObjectMolecule: read SHEET E 36 E 41
- ObjectMolecule: read SHEET E 46 E 49
- ObjectMolecule: read SHEET E 89 E 96
- ObjectMolecule: read SHEET E 78 E 83
- ObjectMolecule: read SHEET E 16 E 18
- ObjectMolecule: read SHEET E 93 E 97
- ObjectMolecule: read SHEET F 23 F 29
- ObjectMolecule: read SHEET F 36 F 41
- ObjectMolecule: read SHEET F 46 F 49
- ObjectMolecule: read SHEET F 89 F 96
- ObjectMolecule: read SHEET F 78 F 83
- ObjectMolecule: read SHEET F 16 F 18
- ObjectMolecule: read SHEET F 93 F 97
- ObjectMolecule: read SHEET G 23 G 29
- ObjectMolecule: read SHEET G 36 G 41
- ObjectMolecule: read SHEET G 46 G 49
- ObjectMolecule: read SHEET G 89 G 96
- ObjectMolecule: read SHEET G 78 G 83
- ObjectMolecule: read SHEET G 16 G 18
- ObjectMolecule: read SHEET G 93 G 97
- ObjectMolecule: read SHEET H 23 H 29
- ObjectMolecule: read SHEET H 36 H 41
- ObjectMolecule: read SHEET H 46 H 49
- ObjectMolecule: read SHEET H 89 H 91
- ObjectMolecule: read SHEET A 2 A 7
- ObjectMolecule: read SHEET A 81 A 87
- ObjectMolecule: read SHEET A 122 A 128
- ObjectMolecule: read SHEET A 57 A 60
- ObjectMolecule: read SHEET A 111 A 114
- ObjectMolecule: read SHEET A 92 A 94
- Crystal: Unit Cell          105.700  105.700  171.600
- Crystal: Alpha Beta Gamma    90.000   90.000  120.000
- Crystal: RealToFrac Matrix
- Crystal:    0.0095    0.0055    0.0000
- Crystal:    0.0000    0.0109    0.0000
- Crystal:    0.0000    0.0000    0.0058
- Crystal: FracToReal Matrix
- Crystal:  105.7000  -52.8500    0.0000
- Crystal:    0.0000   91.5389    0.0000
- Crystal:    0.0000    0.0000  171.6000
- Crystal: Unit Cell Volume  1660343.
- Symmetry:      1.00000      0.00000      0.00000      0.00000
- Symmetry:      0.00000      1.00000      0.00000      0.00000
- Symmetry:      0.00000      0.00000      1.00000      0.00000
- Symmetry:      0.00000      0.00000      0.00000      1.00000
- Symmetry:      0.00000     -1.00000      0.00000      0.00000
- Symmetry:      1.00000     -1.00000      0.00000      0.00000
- Symmetry:      0.00000      0.00000      1.00000      0.33333
- Symmetry:      0.00000      0.00000      0.00000      1.00000
- Symmetry:     -1.00000      1.00000      0.00000      0.00000
- Symmetry:     -1.00000      0.00000      0.00000      0.00000
- Symmetry:      0.00000      0.00000      1.00000      0.66667
- Symmetry:      0.00000      0.00000      0.00000      1.00000
- Symmetry:      0.00000      1.00000      0.00000      0.00000
- Symmetry:      1.00000      0.00000      0.00000      0.00000
- Symmetry:      0.00000      0.00000     -1.00000      0.00000
- Symmetry:      0.00000      0.00000      0.00000      1.00000
- Symmetry:     -1.00000      0.00000      0.00000      0.00000
- Symmetry:     -1.00000      1.00000      0.00000      0.00000
- Symmetry:      0.00000      0.00000     -1.00000      0.33333
- Symmetry:      0.00000      0.00000      0.00000      1.00000
- Symmetry:      1.00000     -1.00000      0.00000      0.00000
- Symmetry:      0.00000     -1.00000      0.00000      0.00000
- Symmetry:      0.00000      0.00000     -1.00000      0.66667
- Symmetry:      0.00000      0.00000      0.00000      1.00000
+ ObjectMolecule: Read secondary structure assignments.
+ ObjectMolecule: Read crystal symmetry information.
+ Symmetry: Found 6 symmetry operators.
  Executive: object "m1" created.
 PyMOL>load dat/il2.pdb,m1
  CmdLoad: "dat/il2.pdb" appended into object "m1", state 2.

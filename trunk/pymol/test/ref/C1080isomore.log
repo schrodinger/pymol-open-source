@@ -3,27 +3,9 @@ PyMOL>load dat/pept.pdb,obj
 PyMOL>load dat/il2.pdb,obj
  CmdLoad: "dat/il2.pdb" appended into object "obj", state 2.
 PyMOL>load dat/3al1.pdb,obj,state=4
- ObjectMolecule: read HELIX A 102 A 110
- ObjectMolecule: read HELIX B 202 B 210
- Crystal: Unit Cell           20.544   20.859   26.055
- Crystal: Alpha Beta Gamma   101.160   97.030  118.060
- Crystal: RealToFrac Matrix
- Crystal:    0.0487    0.0259    0.0140
- Crystal:    0.0000    0.0543    0.0163
- Crystal:    0.0000    0.0000    0.0404
- Crystal: FracToReal Matrix
- Crystal:   20.5440   -9.8120   -3.1888
- Crystal:    0.0000   18.4071   -7.4145
- Crystal:    0.0000    0.0000   24.7734
- Crystal: Unit Cell Volume     9368.
- Symmetry:      1.00000      0.00000      0.00000      0.00000
- Symmetry:      0.00000      1.00000      0.00000      0.00000
- Symmetry:      0.00000      0.00000      1.00000      0.00000
- Symmetry:      0.00000      0.00000      0.00000      1.00000
- Symmetry:     -1.00000      0.00000      0.00000      0.00000
- Symmetry:      0.00000     -1.00000      0.00000      0.00000
- Symmetry:      0.00000      0.00000     -1.00000      0.00000
- Symmetry:      0.00000      0.00000      0.00000      1.00000
+ ObjectMolecule: Read secondary structure assignments.
+ ObjectMolecule: Read crystal symmetry information.
+ Symmetry: Found 2 symmetry operators.
  CmdLoad: "dat/3al1.pdb" appended into object "obj", state 4.
 PyMOL>map_new tst1,gaussian,1.0,state=-3
  ObjectMap: Map created.

@@ -71,27 +71,9 @@ Area-Error: Invalid state.
 PyMOL>get_area name ca
  cmd.get_area: 112.133 Angstroms^2.
 PyMOL>load dat/3al1.pdb
- ObjectMolecule: read HELIX A 102 A 110
- ObjectMolecule: read HELIX B 202 B 210
- Crystal: Unit Cell           20.544   20.859   26.055
- Crystal: Alpha Beta Gamma   101.160   97.030  118.060
- Crystal: RealToFrac Matrix
- Crystal:    0.0487    0.0259    0.0140
- Crystal:    0.0000    0.0543    0.0163
- Crystal:    0.0000    0.0000    0.0404
- Crystal: FracToReal Matrix
- Crystal:   20.5440   -9.8120   -3.1888
- Crystal:    0.0000   18.4071   -7.4145
- Crystal:    0.0000    0.0000   24.7734
- Crystal: Unit Cell Volume     9368.
- Symmetry:      1.00000      0.00000      0.00000      0.00000
- Symmetry:      0.00000      1.00000      0.00000      0.00000
- Symmetry:      0.00000      0.00000      1.00000      0.00000
- Symmetry:      0.00000      0.00000      0.00000      1.00000
- Symmetry:     -1.00000      0.00000      0.00000      0.00000
- Symmetry:      0.00000     -1.00000      0.00000      0.00000
- Symmetry:      0.00000      0.00000     -1.00000      0.00000
- Symmetry:      0.00000      0.00000      0.00000      1.00000
+ ObjectMolecule: Read secondary structure assignments.
+ ObjectMolecule: Read crystal symmetry information.
+ Symmetry: Found 2 symmetry operators.
  Executive: object "3al1" created.
 PyMOL>get_area
 Area-Error: Selection must be within a single object.
@@ -219,27 +201,9 @@ PyMOL>get_symmetry pept
 PyMOL>get_symmetry none
 Error: selection must refer to exactly one object.
 PyMOL>load dat/3al1.pdb
- ObjectMolecule: read HELIX A 102 A 110
- ObjectMolecule: read HELIX B 202 B 210
- Crystal: Unit Cell           20.544   20.859   26.055
- Crystal: Alpha Beta Gamma   101.160   97.030  118.060
- Crystal: RealToFrac Matrix
- Crystal:    0.0487    0.0259    0.0140
- Crystal:    0.0000    0.0543    0.0163
- Crystal:    0.0000    0.0000    0.0404
- Crystal: FracToReal Matrix
- Crystal:   20.5440   -9.8120   -3.1888
- Crystal:    0.0000   18.4071   -7.4145
- Crystal:    0.0000    0.0000   24.7734
- Crystal: Unit Cell Volume     9368.
- Symmetry:      1.00000      0.00000      0.00000      0.00000
- Symmetry:      0.00000      1.00000      0.00000      0.00000
- Symmetry:      0.00000      0.00000      1.00000      0.00000
- Symmetry:      0.00000      0.00000      0.00000      1.00000
- Symmetry:     -1.00000      0.00000      0.00000      0.00000
- Symmetry:      0.00000     -1.00000      0.00000      0.00000
- Symmetry:      0.00000      0.00000     -1.00000      0.00000
- Symmetry:      0.00000      0.00000      0.00000      1.00000
+ ObjectMolecule: Read secondary structure assignments.
+ ObjectMolecule: Read crystal symmetry information.
+ Symmetry: Found 2 symmetry operators.
  Executive: object "3al1" created.
 PyMOL>get_symmetry
 Error: selection must refer to exactly one object.
@@ -254,25 +218,7 @@ PyMOL>show cell,pept
 PyMOL>ray renderer=2
  RayRenderTest: obtained 0 graphics primitives.
 PyMOL>apply(cmd.set_symmetry,["pept"]+cmd.get_symmetry("3al1"))
- Crystal: Unit Cell           20.544   20.859   26.055
- Crystal: Alpha Beta Gamma   101.160   97.030  118.060
- Crystal: RealToFrac Matrix
- Crystal:    0.0487    0.0259    0.0140
- Crystal:    0.0000    0.0543    0.0163
- Crystal:    0.0000    0.0000    0.0404
- Crystal: FracToReal Matrix
- Crystal:   20.5440   -9.8120   -3.1888
- Crystal:    0.0000   18.4071   -7.4145
- Crystal:    0.0000    0.0000   24.7734
- Crystal: Unit Cell Volume     9368.
- Symmetry:      1.00000      0.00000      0.00000      0.00000
- Symmetry:      0.00000      1.00000      0.00000      0.00000
- Symmetry:      0.00000      0.00000      1.00000      0.00000
- Symmetry:      0.00000      0.00000      0.00000      1.00000
- Symmetry:     -1.00000      0.00000      0.00000      0.00000
- Symmetry:      0.00000     -1.00000      0.00000      0.00000
- Symmetry:      0.00000      0.00000     -1.00000      0.00000
- Symmetry:      0.00000      0.00000      0.00000      1.00000
+ Symmetry: Found 2 symmetry operators.
 PyMOL>get_symmetry pept
  get_symmetry: A     =  20.544 B    =  20.859 C     =  26.055
  get_symmetry: Alpha = 101.160 Beta =  97.030 Gamma = 118.060
