@@ -7490,6 +7490,8 @@ int ObjectMoleculeMoveAtom(ObjectMolecule *I,int state,int index,float *v,int mo
     if(state<0) state=0;
     if(I->NCSet==1) state=0;
     state = state % I->NCSet;
+    if((!I->CSet[state])&&(SettingGet_b(I->Obj.Setting,NULL,cSetting_all_states)))
+      state=0;
     cs = I->CSet[state];
     if(cs) {
       result = CoordSetMoveAtom(I->CSet[state],index,v,mode);
@@ -7667,6 +7669,8 @@ int ObjectMoleculeGetAtomVertex(ObjectMolecule *I,int state,int index,float *v)
   if(state<0) state=SceneGetState(); 
   if(I->NCSet==1) state=0;
   state = state % I->NCSet;
+  if((!I->CSet[state])&&(SettingGet_b(I->Obj.Setting,NULL,cSetting_all_states)))
+    state=0;
   if(I->CSet[state]) 
     result = CoordSetGetAtomVertex(I->CSet[state],index,v);
   return(result);
@@ -7679,6 +7683,8 @@ int ObjectMoleculeSetAtomVertex(ObjectMolecule *I,int state,int index,float *v)
   if(state<0) state=SceneGetState();
   if(I->NCSet==1) state=0;
   state = state % I->NCSet;
+  if((!I->CSet[state])&&(SettingGet_b(I->Obj.Setting,NULL,cSetting_all_states)))
+    state=0;
   if(I->CSet[state]) 
     result = CoordSetSetAtomVertex(I->CSet[state],index,v);
   return(result);
