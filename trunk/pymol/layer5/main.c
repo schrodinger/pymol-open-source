@@ -429,14 +429,14 @@ void was_main(int flags)
   if(myArgc>1)
     {
       if(strcmp(myArgv[1],"-c")==0)
-	PMGUI=false;
+		  PMGUI=false;
       if(strcmp(myArgv[1],"-s")==0)
-	StereoCapable=true;
+		  StereoCapable=true;
     }
 
   if (flags>=0) { /* started as a python module, flags passed in as args */
-    if(flags&0x1) 
-      PMGUI=true;
+	 if(!(flags&0x1)) 
+      PMGUI=false;
     if(flags&0x2)
       StereoCapable=true;
   }

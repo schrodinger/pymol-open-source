@@ -24,7 +24,7 @@ else:
 if "-s" in sys.argv:
    stereo=2
 else:
-   stereo=1
+   stereo=0
 
 def start_pymol():
 	global glutThread
