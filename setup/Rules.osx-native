@@ -47,7 +47,9 @@ PYOGL_LIB = -framework OpenGL
 #
 #- Choose One --------------------------------------------------------
 #--- GCC Optimized
-CCOPT2 = -O3 -ffast-math -funroll-loops -fomit-frame-pointer 
+CCOPT2 = -O3 -ffast-math -funroll-loops -fomit-frame-pointer \
+ -finline -D_PYMOL_INLINE
+
 
 #--- GCC Profiling
 #CCOPT2 = -pg -O3 -funroll-loops

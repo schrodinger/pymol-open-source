@@ -723,10 +723,16 @@ void MainBusyIdle(void)
         /* restore working directory if asked to */
         PRunString("if os.environ.has_key('PYMOL_WD'): os.chdir(os.environ['PYMOL_WD'])");
 
+        #ifdef _PYMOL_OSX
+        PRunString("if os.getcwd()[-23:]=='.app/Contents/Resources': os.chdir('../../..')");
+        #endif
+
         PRunString("launch_gui()");
-#ifndef _PYMOL_WX_GLUT
-        PRunString("launch_gui()");
-#endif
+
+        /*#ifndef _PYMOL_WX_GLUT
+         PRunString("launch_gui()");
+        #endif*/
+
         PRunString("adapt_to_hardware()");
         PRunString("exec_deferred()");
         PUnblock();
