@@ -75,10 +75,21 @@ void ObjectSurfaceDump(ObjectSurface *I,char *fname,int state)
       if(n&&v)
         while(*n)
           {
+            v+=12;
             c=*(n++);
-            while(c--) {
-              fprintf(f,"%10.4f%10.4f%10.4f\n",v[0],v[1],v[2]);
-              v+=3;
+            c-=4;
+            while(c>0) {
+              fprintf(f,
+"%10.4f%10.4f%10.4f%10.4f%10.4f%10.4f\n%10.4f%10.4f%10.4f%10.4f%10.4f%10.4f\n%10.4f%10.4f%10.4f%10.4f%10.4f%10.4f\n",
+                      *(v-9),*(v-8),*(v-7),
+                      *(v-12),*(v-11),*(v-10),
+                      *(v-3),*(v-2),*(v-1),
+                      *(v-6),*(v-5),*(v-4),
+                      *(v+3),*(v+4),*(v+5),
+                      *(v),  *(v+1),*(v+2));
+
+              v+=6;
+              c-=2;
             }
           }
     }

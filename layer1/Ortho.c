@@ -859,6 +859,16 @@ void OrthoDoDraw()
   int rightSceneMargin;
   int internal_feedback;
   
+  float *bg_color;
+
+  bg_color=SettingGet_fv(NULL,NULL,cSetting_bg_rgb);
+
+  I->OverlayColor[0]=1.0-bg_color[0];
+  I->OverlayColor[1]=1.0-bg_color[1];
+  I->OverlayColor[2]=1.0-bg_color[2];
+  if(diff3f(I->OverlayColor,bg_color)<0.25)
+    zero3f(I->OverlayColor);
+
   PRINTFD(FB_Ortho)
     " OrthoDoDraw: entered.\n"
     ENDFD;

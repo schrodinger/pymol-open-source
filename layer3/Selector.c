@@ -113,7 +113,7 @@ int *SelectorApplyMultipick(Multipick *mp);
 #define STYP_SEL3 8
 #define STYP_PVAL 0
 
-#
+
 #define SELE_NOT1 ( 0x0100 | STYP_OPR1 | 0x60 )
 #define SELE_BYR1 ( 0x0200 | STYP_OPR1 | 0x10 )
 #define SELE_AND2 ( 0x0300 | STYP_OPR2 | 0x50 )
@@ -3598,6 +3598,14 @@ int *SelectorEvaluate(WordType *word)
   /* converts all keywords into code, adds them into a operation list */
   while(ok&&word[c][0])
 	 {
+
+      if(word[c][0]=='#') {
+        if((!valueFlag)&&(!level)) {
+          word[c][0]=0; /* terminate selection if we encounter a comment */
+          word[c+1][0]=0;
+          break;
+        }
+      }
 		switch(word[c][0])
 		  {
         case 0:

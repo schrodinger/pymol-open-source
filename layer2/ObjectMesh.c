@@ -76,9 +76,12 @@ void ObjectMeshDump(ObjectMesh *I,char *fname,int state)
         while(*n)
           {
             c=*(n++);
+            if(!I->State[state].DotFlag) {
+              fprintf(f,"\n");
+            }
             while(c--) {
               fprintf(f,"%10.4f%10.4f%10.4f\n",v[0],v[1],v[2]);
-              v+=3;
+              v+=6;
             }
           }
     }

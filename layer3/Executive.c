@@ -24,6 +24,7 @@ Z* -------------------------------------------------------------------
 #include"Executive.h"
 #include"ObjectMesh.h"
 #include"ObjectDist.h"
+#include"ObjectSurface.h"
 #include"ListMacros.h"
 #include"Ortho.h"
 #include"Scene.h"
@@ -1885,6 +1886,7 @@ float ExecutiveRMS(char *s1,char *s2,int mode,float refine,int max_cyc,int quiet
   int *flag;
   int ok=true;
   int repeat;
+  int auto_save;
   CGO *cgo = NULL;
   ObjectCGO *ocgo;
   float v1[3],*v2;
@@ -2021,23 +2023,28 @@ float ExecutiveRMS(char *s1,char *s2,int mode,float refine,int max_cyc,int quiet
             " Executive: RMS = %8.3f (%d to %d atoms)\n", rms,op1.nvv1,op2.nvv1 
             ENDFB;
         }
-        if(oname) {
-          cgo=CGONew();
-          CGOColor(cgo,1.0,1.0,0.0);
-          CGOBegin(cgo,GL_LINES);
-          for(a=0;a<op1.nvv1;a++) {
-            CGOVertexv(cgo,op2.vv1+(a*3));
-            MatrixApplyTTTfn3f(1,v1,op2.ttt,op1.vv1+(a*3));
-            CGOVertexv(cgo,v1);
+        if(oname) 
+          if(oname[0]) {
+            cgo=CGONew();
+            CGOColor(cgo,1.0,1.0,0.0);
+            CGOLinewidth(cgo,3.0);
+            CGOBegin(cgo,GL_LINES);
+            for(a=0;a<op1.nvv1;a++) {
+              CGOVertexv(cgo,op2.vv1+(a*3));
+              MatrixApplyTTTfn3f(1,v1,op2.ttt,op1.vv1+(a*3));
+              CGOVertexv(cgo,v1);
+            }
+            CGOEnd(cgo);
+            CGOStop(cgo);
+            ocgo = ObjectCGOFromCGO(NULL,cgo,0);
+            ObjectSetName((CObject*)ocgo,oname);
+            ExecutiveDelete(oname);
+            auto_save = SettingGet(cSetting_auto_zoom);
+            SettingSet(cSetting_auto_zoom,0);
+            ExecutiveManageObject((CObject*)ocgo);
+            SettingSet(cSetting_auto_zoom,auto_save);            
+            SceneDirty();
           }
-          CGOEnd(cgo);
-          CGOStop(cgo);
-          ocgo = ObjectCGOFromCGO(NULL,cgo,0);
-          ObjectSetName((CObject*)ocgo,oname);
-          ExecutiveDelete(oname);
-          ExecutiveManageObject((CObject*)ocgo);
-          SceneDirty();
-        }
         if(mode==2) {
           if(ok) {
             op2.code = OMOP_TTTF;
@@ -3354,6 +3361,8 @@ void ExecutiveDump(char *fname,char *obj)
 	 { 
       if(rec->obj->type==cObjectMesh) {
         ObjectMeshDump((ObjectMesh*)rec->obj,fname,0);
+      } else if(rec->obj->type==cObjectSurface) {
+          ObjectSurfaceDump((ObjectSurface*)rec->obj,fname,0);
       } else {
         ErrMessage("ExecutiveDump","Invalid object type for this operation.");
       }

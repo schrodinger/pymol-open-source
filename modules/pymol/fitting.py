@@ -20,7 +20,7 @@ import os
 from cmd import _cmd,lock,unlock,Shortcut,QuietException
 
 def align(source,target,cutoff=2.0,cycles=2,gap=-10.0,extend=-0.5,
-          skip=0,object="aligned",matrix="BLOSUM62",quiet=1): # EXPERIMENTAL, BUGGY
+          skip=0,object=None,matrix="BLOSUM62",quiet=1): # EXPERIMENTAL, BUGGY
    r = None
    source = selector.process(source)
    target = selector.process(target)

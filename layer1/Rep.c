@@ -44,8 +44,7 @@ struct Rep *RepRebuild(struct Rep *I,struct CoordSet *cs,int rep)
     if(tmp) {
       tmp->fNew = I->fNew;
       I->fFree(I);
-    }
-    else {
+    } else { /* nothing returned -- visibility is zero... */
       cs->Active[rep] = false; /* keep the old object around, but inactive */
       tmp=I;
     }
@@ -56,6 +55,8 @@ struct Rep *RepRebuild(struct Rep *I,struct CoordSet *cs,int rep)
 /*========================================================================*/
 struct Rep *RepUpdate(struct Rep *I,struct CoordSet *cs,int rep)
 {
+
+  Rep *tmp = NULL;
 
   PRINTFD(FB_Rep)
     " RepUpdate-Debug: entered: rep %d I->MaxInvalid %d\n",rep,I->MaxInvalid
@@ -82,8 +83,21 @@ struct Rep *RepUpdate(struct Rep *I,struct CoordSet *cs,int rep)
           I=I->fRebuild(I,cs,rep);
       } else 
         I=I->fRebuild(I,cs,rep);
-    } else 
+    } else if(I->MaxInvalid>=cRepInvCoord) {
+      I=I->fRebuild(I,cs,rep);   
+      if(!cs->Active[rep])
+        {
+          I->fFree(I);
+          I = NULL;
+        }
+      /*      if(I->fNew) {
+              tmp = I->fNew(cs);
+              if(I->fFree) I->fFree(I);
+              I=tmp;
+      */
+    } else {
       I=I->fRebuild(I,cs,rep);    
+    }
     if(I)
       I->MaxInvalid=0;
   }

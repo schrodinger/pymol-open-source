@@ -21,10 +21,6 @@ evolve.
 
    * Real Edit Menu in Tk
 
-   * make commas optional in the PyMOL scripting language -- this would be
-     not be the default, but it could be an option.  The syntatic compilications
-     are difficult to fathom though.
-
    * CTRL and CTRL/SHIFT numbers should add aromatic and aliphatic
      ring systems in the builder respectively within the molecular editor.
 
@@ -111,6 +107,12 @@ Current Bugs to Fix
 
 Changes up to 0.80
 
+   * "command ?" now gives a list of arguments 
+
+   * fix spurious bugs reading files under unix
+
+   * added support for alternate residue id codes in secondary structure records
+
    * cylinders have become sausages, and...
       ...we now have flat-capped cylinders (0203)!
 
@@ -118,7 +120,15 @@ Changes up to 0.80
 
    * create a simple vector-based font (0203)
 
+   * 3D text in CGOs
+
+   * linear constraints in molecular sculpting engine
+
+   * acetylene buidling block
+
 Changes up to 0.79
+
+   * internal character set
 
    * solid isosurface rendering algorithm: "isosurface" command
 
@@ -130,6 +140,8 @@ Changes up to 0.79
    * fixed ribbon & cartoon display when N-terminal atom is the CA
 
    * changes to support MacOSX port (0203)
+
+   * ALIGN command
 
 Changes up to 0.78
 

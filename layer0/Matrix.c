@@ -23,6 +23,7 @@ Z* -------------------------------------------------------------------
 #include"MemoryDebug.h"
 #include"Ortho.h"
 #include"Feedback.h"
+#include"Setting.h"
 
 /* WARNING - MAJOR GOTCHA!  
 
@@ -572,11 +573,11 @@ float MatrixFitRMS(int n,float *v1,float *v2,float *wt,float *ttt)
   */
 
   float *vv1,*vv2;
-  float m[3][3],aa[3][3],x[3],xx[3];
-  float sumwt, tol, sig, gam;
-  float sg, bb, cc, err, etmp, tmp;
+  double m[3][3],aa[3][3],x[3],xx[3];
+  double sumwt, tol, sig, gam;
+  double sg, bb, cc, err, etmp, tmp;
   int a, b, c, maxiter, iters, ix, iy, iz;
-  float t1[3],t2[3];
+  double t1[3],t2[3];
 
   /* Initialize arrays. */
 
@@ -591,8 +592,8 @@ float MatrixFitRMS(int n,float *v1,float *v2,float *wt,float *ttt)
   }
 
   sumwt = 0.0F;
-  tol = 0.001F;
-  maxiter = 1000;
+  tol = SettingGet(cSetting_fit_tolerance);
+  maxiter = SettingGet(cSetting_fit_iterations);
 
   /* Calculate center-of-mass vectors */
 
@@ -653,59 +654,63 @@ float MatrixFitRMS(int n,float *v1,float *v2,float *wt,float *ttt)
 	  vv1+=3;
 	  vv2+=3;
 	}
-  /* Primary iteration scheme to determine rotation matrix for molecule 2 */
-  iters = 0;
-  while(1) {
-	/*	for(a=0;a<3;a++)
-		{
-		for(b=0;b<3;b++) 
-		printf("%8.3f ",m[a][b]);
-		printf("\n");
-		}
-		for(a=0;a<3;a++)
-		{
-		for(b=0;b<3;b++) 
-		printf("%8.3f ",aa[a][b]);
-		printf("\n");
-		}
-		printf("\n");
-	*/
-    
-	if(iters>=maxiter) 
-	  {
-       if(Feedback(FB_Matrix,FB_Debugging)) {
-         printf("Error in RMS fitting : maximum iterations exceeded.\n");
-       }
-		break;
-	  }
-	/* IX, IY, and IZ rotate 1-2-3, 2-3-1, 3-1-2, etc.*/
-	iz = (iters+1) % 3;
-	iy = (iz+1) % 3;
-	ix = (iy+1) % 3;
-	sig = aa[iz][iy] - aa[iy][iz];
-	gam = aa[iy][iy] + aa[iz][iz];
-	/* Determine size of off-diagonal element.  If off-diagonals exceed the
-	  diagonal elements * tolerance, perform Jacobi rotation. */
-	tmp = sig*sig + gam*gam;
-	sg = sqrt1f(tmp);
-	if((sg!=0.0) &&(fabs(sig)>(tol*fabs(gam)))) {
-	  sg = 1.0 / sg;
-	  for(a=0;a<3;a++)
-		{
-		  bb = gam*aa[iy][a] + sig*aa[iz][a];
-		  cc = gam*aa[iz][a] - sig*aa[iy][a];
-		  aa[iy][a] = bb*sg;
-		  aa[iz][a] = cc*sg;
-		  
-		  bb = gam*m[iy][a] + sig*m[iz][a];
-		  cc = gam*m[iz][a] - sig*m[iy][a];
-		  m[iy][a] = bb*sg;
-		  m[iz][a] = cc*sg;
-		}
-	} else {
-	  break;
-	}
-  iters++;
+  if(n>1) {
+    /* Primary iteration scheme to determine rotation matrix for molecule 2 */
+    iters = 0;
+    while(1) {
+      /*	for(a=0;a<3;a++)
+         {
+         for(b=0;b<3;b++) 
+         printf("%8.3f ",m[a][b]);
+         printf("\n");
+         }
+         for(a=0;a<3;a++)
+         {
+         for(b=0;b<3;b++) 
+         printf("%8.3f ",aa[a][b]);
+         printf("\n");
+         }
+         printf("\n");
+      */
+      
+      /* IX, IY, and IZ rotate 1-2-3, 2-3-1, 3-1-2, etc.*/
+      iz = (iters+1) % 3;
+      iy = (iz+1) % 3;
+      ix = (iy+1) % 3;
+      sig = aa[iz][iy] - aa[iy][iz];
+      gam = aa[iy][iy] + aa[iz][iz];
+
+      if(iters>=maxiter) 
+        {
+          PRINTFB(FB_Matrix,FB_Details)
+            " Matrix: Warning: no convergence (%1.8f<%1.8f after %d iterations).\n",(float)tol,(float)gam,iters
+            ENDFB;
+          break;
+        }
+
+      /* Determine size of off-diagonal element.  If off-diagonals exceed the
+         diagonal elements * tolerance, perform Jacobi rotation. */
+      tmp = sig*sig + gam*gam;
+      sg = sqrt1f(tmp);
+      if((sg!=0.0) &&(fabs(sig)>(tol*fabs(gam)))) {
+        sg = 1.0 / sg;
+        for(a=0;a<3;a++)
+          {
+            bb = gam*aa[iy][a] + sig*aa[iz][a];
+            cc = gam*aa[iz][a] - sig*aa[iy][a];
+            aa[iy][a] = bb*sg;
+            aa[iz][a] = cc*sg;
+            
+            bb = gam*m[iy][a] + sig*m[iz][a];
+            cc = gam*m[iz][a] - sig*m[iy][a];
+            m[iy][a] = bb*sg;
+            m[iz][a] = cc*sg;
+          }
+      } else {
+        break;
+      }
+      iters++;
+    }
   }
   /* At this point, we should have a converged rotation matrix (M).  Calculate
 	 the weighted RMS error. */
@@ -713,9 +718,9 @@ float MatrixFitRMS(int n,float *v1,float *v2,float *wt,float *ttt)
   vv1=v1;
   vv2=v2;
 
-  normalize3f(m[0]);
-  normalize3f(m[1]);
-  normalize3f(m[2]);
+  normalize3d(m[0]);
+  normalize3d(m[1]);
+  normalize3d(m[2]);
   for(c=0;c<n;c++) {
 	etmp = 0.0;
 	for(a=0;a<3;a++) {
