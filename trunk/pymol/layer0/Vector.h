@@ -28,6 +28,7 @@ typedef int Vector3i[3];
 typedef float Matrix33f[3][3]; 
 typedef double Matrix33d[3][3]; 
 
+unsigned int optimizer_workaround1u(unsigned int value);
 
 float get_random0to1f(void);
 
