@@ -16,6 +16,7 @@ import os
 import pymol
 import string
 import parsing
+import thread
 
 from glob import glob
 from cmd import _cmd,lock,unlock,Shortcut,QuietException
@@ -97,7 +98,7 @@ SEE ALSO
       print " ls: Nothing found.  Is that a valid path?"
    return 1
 
-def system(command):
+def system(command,sync=1):
    '''
 DESCRIPTION
 
@@ -105,17 +106,31 @@ DESCRIPTION
 
 USAGE
 
-   system command
+   system command 
 
 PYMOL API
 
-   cmd.system(string command)
+   cmd.system(string command,int sync=1)
 
+NOTES
+
+   sync can only be specified from the Python level (not the command language)
+   
+   if sync is 0, then the command is run in a separate thread (default 1)
+   whose identifier is returned in r
+
+   if sync is 1, then the result code from "system" is returned in r
+   
 SEE ALSO
 
    ls, cd, pwd
    '''
-   r = _cmd.system(str(command))
+   if sync:
+      r = _cmd.system(str(command),int(sync))
+   else:
+      r = thread.start_new(_cmd.system,(command,0))
+      print "hello"
+      
    return r # special meaning
 
 def paste(): # INTERNAL

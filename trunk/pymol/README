@@ -62,12 +62,12 @@ The PyMOL Team:
    
    Other Authors and Contributors: These are the people who have gone
       out of their way to help the project with their ideas, actions, 
-      information, support, or code.
+      advice, information, support, or code.
       
+      Daan van Aalten
       Paul Adams 
       Stephen Adler
       Jun Aishima 
-      Daan van Aalten
       Dennis Allison
       Daniel Appelman
       Michael Banck
@@ -75,14 +75,17 @@ The PyMOL Team:
       Jeff Bizzaro
       Jeff Blaney 
       Axel Brunger
+      Jacob Corn
       Andrew Dalke 
       Huub van Dam
       Byron DeLaBarre
       Bill DeGrado
       Scott Dixon 
       Thomas Earnest
+      Nathaniel Echols
       Tim Fenn
       Thierry Fischmann
+      Jonanthan Greene
       Peter Haebel 
       Uwe Hoffmann
       Andrey Khavryuchenko
@@ -95,6 +98,8 @@ The PyMOL Team:
       Ezequiel "Zac" Panepucci
       Michael Randal
       Ian Robinson
+      Kristian Rother
+      Marc Saric
       Paul Sherwood
       Paul Sprengeler
       John Stone
@@ -103,12 +108,6 @@ The PyMOL Team:
       Chris Wiesmann
       Richard Xie
    
-   People Who Nurtured The Nascent PyMOL Community...
-   (helping other users, answering questions, providing key feedback, etc.)
-
-      Jacob Corn
-      Marc Saric
-
    OSX Testing
 
       
