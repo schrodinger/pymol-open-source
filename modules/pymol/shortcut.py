@@ -36,7 +36,7 @@ class Shortcut:
          abbr = abbr_re_sub(lambda x:x.group(0)[0]+"_",a)
          if a!=abbr:
             abbr_dict[abbr]=a
-            for b in range(string.find(abbr,'_')+2,len(abbr)):
+            for b in range(string.find(abbr,'_')+1,len(abbr)):
                sub = abbr[0:b]
                if hash.has_key(sub):
                   hash[sub]=0
@@ -61,7 +61,7 @@ class Shortcut:
             abbr = abbr_re_sub(lambda x:x.group(0)[0]+"_",a)
             if a!=abbr:
                abbr_dict[abbr]=a
-               for b in range(string.find(abbr,'_')+2,len(abbr)):
+               for b in range(string.find(abbr,'_')+1,len(abbr)):
                   sub = abbr[0:b]
                   if hash.has_key(sub):
                      hash[sub]=0
@@ -84,6 +84,9 @@ class Shortcut:
          for a in self.keywords:
             if a[0:lcm] == kee:
                lst.append(a) # ambiguous returns list
+         for a in self.abbr_dict.keys():
+            if a[0:lcm] == kee:
+               lst.append(self.abbr_dict[a])
          return lst
       else:
          return self.shortcut[kee] # otherwise return string
