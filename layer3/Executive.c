@@ -118,11 +118,9 @@ void ExecutiveStereo(int flag)
 {
 
   if(PMGUI) {
-
-#ifdef _PYMOL_STEREO
+    if(StereoCapable) {
       SceneSetStereo(flag);
-#endif
-
+    }
   }
 }
 /*========================================================================*/
