@@ -109,6 +109,11 @@ Current Bugs to Fix
 
 Changes up to 0.79
 
+   * parser updated to handle selections like "resi 10 and (name c,n,o) and chain A"
+     which lack surrounding parentheses, but have them with delimiters inside
+
+   * parser updated to handle (alt A+'') and similar constructs (previously DOA).
+
    * fixed ribbon & cartoon display when N-terminal atom is the CA
 
 Changes up to 0.78

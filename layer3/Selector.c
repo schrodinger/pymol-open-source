@@ -178,7 +178,7 @@ static WordKeyValue Keyword[] =
   {  "l;",       SELE_LIK2 },
   {  "l.",       SELE_LIK2 },
   {  "all",      SELE_ALLz }, /* 0 parameter */
-  {  "+",        SELE_ALLz }, /* 0 parameter */
+  /*  {  "+",        SELE_ALLz },*/ /* 0 parameter */
   {  "none",     SELE_NONz }, /* 0 parameter */
   {  "hetatm",   SELE_HETz }, /* 0 parameter */
   {  "het",      SELE_HETz }, /* 0 parameter */
@@ -3575,8 +3575,18 @@ int *SelectorEvaluate(WordType *word)
               while(*cc1) { /* remove embedded quotes if any */
                 if((*cc1!=34)&&(*cc1!=39)) {
                   *(cc2++)=*(cc1++);
-                } else 
+                } else {
+                  if(cc2!=e->text) 
+                    if(*(cc2-1)=='+') { 
+                      /* workaround for things like (alt A+''), 
+                         which would fall back to atom name "A+" instead
+                         of "A,", which is what this kludge fixes
+                         -- this behavior necessary to accom. Na+, etc. */
+
+                      *(cc2-1)=',';
+                    }
                   cc1++;
+                }
               }
               *cc2=0;
 				  valueFlag--;

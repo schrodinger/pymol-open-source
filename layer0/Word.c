@@ -88,6 +88,7 @@ int WordMatchComma(char *p,char *q,int ignCase)
   int best_i=0;
   char *q_copy;
   int blank;
+  int trailing_comma=0;
 
   blank = (!*p);
   q_copy=q;
@@ -143,7 +144,14 @@ int WordMatchComma(char *p,char *q,int ignCase)
           break;
         p++;
       }
-      if(*p==',') p++;
+      if(*p==',') { /* handle special case, trailing comma */
+        if(*(p+1))
+          p++;
+        else if(!trailing_comma)
+          trailing_comma = 1;
+        else
+          p++;
+      }
     }
   }
   return(best_i);
