@@ -663,6 +663,30 @@ SEE ALSO
          unlock()
       return r
 
+   def get_colorection(key):
+      try:
+         lock()         
+         r = _cmd.get_colorection(key)
+      finally:
+         unlock()
+      return r
+
+   def set_colorection(dict,key):
+      try:
+         lock()         
+         r = _cmd.set_colorection(dict,key)
+      finally:
+         unlock()
+      return r
+
+   def del_colorection(dict,key):
+      try:
+         lock()         
+         r = _cmd.del_colorection(dict,key)
+      finally:
+         unlock()
+      return r
+
    def get_scene_dict():
       try:
          lock()
@@ -707,6 +731,16 @@ SEE ALSO
          if key=='*':
             action = view_sc.auto_err(action,'action')
             if action=='clear':
+
+               for key in scene_dict.keys():
+                  # free selections
+                  list = scene_dict[key]
+                  if len(list)>3:
+                     colorection = list[3]
+                     if colorection!=None:
+                        cmd.del_colorection(colorection,key) 
+                  name = "_scene_"+key+"_*"
+                  cmd.delete(name)
                scene_dict = {}
                scene_dict_sc = Shortcut(scene_dict.keys())                        
             else:
@@ -719,35 +753,58 @@ SEE ALSO
             if action=='recall':
                cmd.set("scenes_changed",1,quiet=1);
                key = scene_dict_sc.auto_err(key,'scene')
-               set_view(scene_dict[key][0])
+               list = scene_dict[key]
+               set_view(list[0])
                cmd.hide()
                cmd.disable()
-               cmd.set_vis(scene_dict[key][1])
-               cmd.frame(scene_dict[key][2])
+               cmd.set_vis(list[1])
+               cmd.frame(list[2])
+               if len(list)>3:
+                  if(list[3]!=None):
+                     cmd.set_colorection(list[3],key)
+                  
                for rep in rep_list:
                   name = "_scene_"+key+"_"+rep
                   cmd.show(rep,name)
                if _feedback(fb_module.scene,fb_mask.actions): # redundant
                   print " scene: \"%s\" recalled."%key
             elif action=='store':
-               scene_dict_sc.append(key)
+               if not scene_dict.has_key(key):
+                  scene_dict_sc.append(key)
+               else: # get rid of existing one (if exists)
+                  list = scene_dict[key]
+                  if len(list)>3:
+                     colorection = list[3]
+                     if colorection!=None:
+                        cmd.del_colorection(colorection,key) # important -- free RAM
+                  name = "_scene_"+key+"_*"
+                  cmd.delete(name)
                for rep in rep_list:
                   name = "_scene_"+key+"_"+rep
                   cmd.select(name,"rep "+rep)
                scene_dict[key]=[cmd.get_view(0),
                                 cmd.get_vis(),
-                                cmd.get_frame()]
+                                cmd.get_frame(),
+                                cmd.get_colorection(key)
+                                ]
                if _feedback(fb_module.scene,fb_mask.actions):
                   print " scene: scene stored as \"%s\"."%key
                cmd.set("scenes_changed",1,quiet=1);
             elif action=='clear':
                key = scene_dict_sc.auto_err(key,'view')
                if scene_dict.has_key(key):
+
+                  list = scene_dict[key]
+                  if len(list)>3:
+                     colorection = list[3]
+                     if colorection!=None:
+                        cmd.del_colorection(colorection,key) # important -- free RAM
+                  
                   cmd.set("scenes_changed",1,quiet=1);               
                   del scene_dict[key]
-                  scene_dict_sc = Shortcut(scene_dict.keys())            
                   name = "_scene_"+key+"_*"
                   cmd.delete(name)
+                  scene_dict_sc = Shortcut(scene_dict.keys())            
                   if _feedback(fb_module.scene,fb_mask.actions):
                      print " scene: '%s' deleted."%key
       finally:

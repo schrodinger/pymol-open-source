@@ -2436,7 +2436,8 @@ void SceneRay(int ray_width,int ray_height,int mode,char **headerVLA_ptr,
   height  = fabs(I->Pos[2])*tan((fov/2.0)*cPI/180.0);	 
   width = height*aspRat;
 
-  RayPrepare(ray,-width,width,-height,height,I->FrontSafe,I->Back,rayView,aspRat);
+  RayPrepare(ray,-width,width,-height,height,
+             I->FrontSafe,I->Back,rayView,aspRat,ray_width);
 
   while(ListIterate(I->Obj,rec,next))
 	 {

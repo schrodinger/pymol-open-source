@@ -1699,9 +1699,9 @@ void SettingInitGlobal(int alloc)
 
   SettingSet_f(I,cSetting_dash_width, 3.0F);
 
-  SettingSet_f(I,cSetting_dash_radius, 0.14F);
+  SettingSet_f(I,cSetting_dash_radius, 0.09F);
 
-  SettingSet_f(I,cSetting_cgo_ray_width_scale, 0.15F);
+  SettingSet_f(I,cSetting_cgo_ray_width_scale, -0.15F);
 
   SettingSet_f(I,cSetting_line_radius, 0.15F);
 
@@ -1741,9 +1741,9 @@ void SettingInitGlobal(int alloc)
 
   SettingSet_i(I,cSetting_internal_feedback, 1);  /* this has no effect - set by invocation.py */
 
-  SettingSet_f(I,cSetting_cgo_line_width, 1.00F);
+  SettingSet_f(I,cSetting_cgo_line_width, -1.00F);
 
-  SettingSet_f(I,cSetting_cgo_line_radius, 0.05F);
+  SettingSet_f(I,cSetting_cgo_line_radius, -0.05F);
 
   SettingSet_b(I,cSetting_logging, 0);
 

@@ -346,7 +346,7 @@ class Setting:
 
    def cartoon_highlight_color_set(self):
       if(self.cartoon_highlight_color.get()):
-         cmd.set("cartoon_highlight_color","grey70")
+         cmd.set("cartoon_highlight_color","grey50")
       else:
          cmd.set("cartoon_highlight_color","-1")
       

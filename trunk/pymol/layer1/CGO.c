@@ -893,8 +893,15 @@ void CGORenderRay(CGO *I,CRay *ray,float *color,CSetting *set1,CSetting *set2)
   int mode = -1;
 
   widthscale = SettingGet_f(set1,set2,cSetting_cgo_ray_width_scale);
+
+  /*  printf("debug %8.9f\n",SceneGetScreenVertexScale(zee));*/
   linewidth = SettingGet_f(set1,set2,cSetting_line_width);
   primwidth = SettingGet_f(set1,set2,cSetting_cgo_line_radius);
+
+  if(primwidth<0.0F) 
+    primwidth = ray->PixelRadius;
+  if(widthscale<0.0F)
+    widthscale = ray->PixelRadius;
 
   if(color)
     c0=color;
