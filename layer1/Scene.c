@@ -1041,12 +1041,14 @@ unsigned int SceneFindTriplet(int x,int y,GLenum gl_buffer)
      /* first, check to make sure bkrd_alpha is correct 
         (this is a bug for systems with broken alpha, such as Extreme 3D on Solaris 8 */
 
+     flag=true;
      for(d=0;flag&&(d<cRange);d++)
        for(a=-d;flag&&(a<=d);a++)
          for(b=-d;flag&&(b<=d);b++) {
            c = &buffer[a+cRange][b+cRange][0];
            if(c[4]==bkrd_alpha) {
              check_alpha = true;
+             flag=false;
            }
          }
 
