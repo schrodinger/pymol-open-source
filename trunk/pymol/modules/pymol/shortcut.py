@@ -112,6 +112,7 @@ class Shortcut:
    def append(self,kee):
       self.keywords.append(kee)
       self.add_one(kee)
+      hash = self.shortcut      
       for a in self.abbr_dict.keys():
          hash[a]=self.abbr_dict[a]
       for a in self.keywords:
