@@ -268,13 +268,12 @@ class Benchmark(Wizard):
    def ray_trace(self):
       self.configure()
       self.ray_tracing([
-         [1,80],
-         [2,80],
-         [4,80],
-         [8,80],
+         [1,90],
+         [2,90],
+         [4,90],
+         [8,90],
+         [1,120],
          [2,120],
-         [2,160],
-         [2,200],
          ])
 
    def ray_tracing(self,conditions):
