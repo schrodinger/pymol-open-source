@@ -1191,6 +1191,7 @@ SEE ALSO
         set_title,          \
         smooth,             \
         sort,               \
+        split_states,       \
         torsion,            \
         transform_object,   \
         transform_selection,\
@@ -1530,6 +1531,7 @@ SEE ALSO
       'spawn'         : [ helping.spawn     , 1 , 2 , ',' , parsing.SPAWN  ],
       'spheroid'      : [ spheroid          , 0 , 0 , ''  , parsing.STRICT ],
       'splash'        : [ splash            , 0 , 0 , ''  , parsing.STRICT ],
+      'split_states'  : [ split_states      , 0 , 0 , ''  , parsing.STRICT ],
       '_special'      : [ _special          , 0 , 0 , ''  , parsing.STRICT ],
       'stereo'        : [ stereo            , 0 , 0 , ''  , parsing.STRICT ],
       'symexp'        : [ symexp            , 0 , 0 , ''  , parsing.LEGACY ],

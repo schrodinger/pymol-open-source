@@ -551,7 +551,10 @@ int AtomInfoGetColor(AtomInfoType *at1)
     case 'B' : color = MColor; break;
     case 'S' : color = SColor; break;
     case 'F' : color = MColor; break;
-    case 'H' : color=HColor; break;
+    case 'H' :
+    case 'D' :
+      color=HColor; 
+      break;
     default  : color=MColor; break;
     }
 
@@ -922,6 +925,9 @@ void AtomInfoAssignParameters(AtomInfoType *I)
            ))
         *(e+1)=0;
       break;
+    case 'D': /* take deuterium to hydrogen */
+      *(e+1) = 0;
+      break;
     case 'N':
       if(!(
            (*(e+1)=='i')||(*(e+1)=='I')||
@@ -949,7 +955,10 @@ void AtomInfoAssignParameters(AtomInfoType *I)
     }
     if(*(e+1)) *(e+1)=tolower(*(e+1));
   }
-  I->hydrogen=(((*I->elem)=='H')&&(!(*(I->elem+1))));
+  I->hydrogen=((
+                ((*I->elem)=='H')||((*I->elem)=='D')
+                )&&(!(*(I->elem+1))));
+  
   n = I->name;
   while((*n>='0')&&(*n<='0')&&(*(n+1))) n++;
   if(toupper(*n)!=I->elem[0]) {
@@ -1026,6 +1035,7 @@ void AtomInfoAssignParameters(AtomInfoType *I)
           default: pri = 500; break;
           }
         break;
+      case 'D' :
       case 'H' :
         switch (*(n+1))
           {
@@ -1178,6 +1188,7 @@ void AtomInfoAssignParameters(AtomInfoType *I)
         }
       break;
     case 'H' :
+    case 'D' :
       vdw = 1.2F; /* WLD */
       break;
     default:
@@ -1200,6 +1211,7 @@ void AtomInfoAssignParameters(AtomInfoType *I)
   if(!e[1]) { /* single letter */
     switch(e[0]) {
     case 'H': I->protons=cAN_H; break;
+    case 'D': I->protons=cAN_H; break;
     case 'C': I->protons=cAN_C; break;
     case 'N': I->protons=cAN_N; break;
     case 'O': I->protons=cAN_O; break;

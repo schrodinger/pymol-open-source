@@ -57,6 +57,29 @@ if __name__=='pymol.editing':
          unlock()
       return r
 
+   def split_states(object,first=1,last=0):
+      '''
+      '''
+      r = 0
+      object = str(object)
+      first=int(first)
+      last=int(last)
+      n_state = cmd.count_states(object)
+      if last<1:
+         last = n_state
+      if last<10:
+         pat = "_%01d"
+      elif last<100:
+         pat = "_%02d"
+      elif last<1000:
+         pat = "_%03d"
+      else:
+         pat = "_%04d"
+      for a in range(first,last+1):
+         name = object+pat%a
+         cmd.create(name,object,a,1)
+      return r
+   
    def sculpt_iterate(object,state=0,cycles=10):
       '''
    undocumented.
