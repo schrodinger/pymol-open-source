@@ -19,6 +19,8 @@ Z* -------------------------------------------------------------------
 void UtilZeroMem(void *ptr,unsigned int howMuch);
 void *UtilArrayMalloc(unsigned int *dim,int ndim,unsigned int atom_size);
 char *UtilConcat(char *where,char *what);
+void UtilNConcat(char *dst,char *str,int n);
+void UtilNCopy(char *dst,char *src,int n);
 void UtilCleanStr(char *s);
 
 double UtilGetSeconds(void);

@@ -176,6 +176,17 @@ CoordSet *ObjectMoleculeChemPyModel2CoordSet(PyObject *model,AtomInfoType **atIn
         }
 
         if(ok) {
+          if(PTruthCallStr(atom,"has","vdw")) { 
+            tmp = PyObject_GetAttrString(atom,"vdw");
+            if (tmp)
+              ok = PConvPyObjectToFloat(tmp,&ai->vdw);
+            if(!ok) 
+              ErrMessage("ObjectMoleculeChemPyModel2CoordSet","can't read vdw radius");
+            Py_XDECREF(tmp);
+          }
+        }
+
+        if(ok) {
           if(PTruthCallStr(atom,"has","numeric_type")) { 
             tmp = PyObject_GetAttrString(atom,"numeric_type");
             if (tmp)
@@ -409,6 +420,7 @@ ObjectMolecule *ObjectMoleculeLoadChemPyModel(ObjectMolecule *I,PyObject *model,
   int ok=true;
   int isNew = true;
   unsigned int nAtom = 0;
+  PyObject *tmp,*mol;
 
   if(!I) 
 	 isNew=true;
@@ -426,6 +438,18 @@ ObjectMolecule *ObjectMoleculeLoadChemPyModel(ObjectMolecule *I,PyObject *model,
 		isNew = false;
 	 }
 	 cset=ObjectMoleculeChemPyModel2CoordSet(model,&atInfo);	 
+
+    mol = PyObject_GetAttrString(model,"molecule");
+    if(mol) {
+      if(PyObject_HasAttrString(mol,"title")) {
+        tmp = PyObject_GetAttrString(mol,"title");
+        if(tmp) {
+          UtilNCopy(cset->Name,PyString_AsString(tmp),sizeof(WordType));
+          Py_DECREF(tmp);
+        }
+      }
+      Py_DECREF(mol);
+    }
 	 nAtom=cset->NIndex;
   }
 
@@ -630,16 +654,17 @@ void ObjectMoleculeSort(ObjectMolecule *I) /* sorts atoms and bonds */
 CoordSet *ObjectMoleculeMOLStr2CoordSet(char *buffer,AtomInfoType **atInfoPtr)
 {
   char *p;
-  int nAtom,nBond,nType;
+  int nAtom,nBond;
   int a,c;
   float *coord = NULL;
   CoordSet *cset = NULL;
   AtomInfoType *atInfo = NULL;
-  char cc[MAXLINELEN],resn[MAXLINELEN];
+  char cc[MAXLINELEN],resn[MAXLINELEN] = "UNK";
   float *f;
   int *ii,*bond=NULL;
   int ok=true;
   int autoshow_lines;
+  WordType nameTmp;
 
   autoshow_lines = SettingGet(cSetting_autoshow_lines);
   AtomInfoPrimeColors();
@@ -649,8 +674,7 @@ CoordSet *ObjectMoleculeMOLStr2CoordSet(char *buffer,AtomInfoType **atInfoPtr)
   if(atInfoPtr)
 	 atInfo = *atInfoPtr;
 
-  p=ncopy(resn,p,sizeof(ResName)-1);
-  UtilCleanStr(resn);
+  p=ParseWordCopy(nameTmp,p,sizeof(WordType)-1);
   p=nextline(p); 
   p=nextline(p);
   p=nextline(p);
@@ -671,7 +695,6 @@ CoordSet *ObjectMoleculeMOLStr2CoordSet(char *buffer,AtomInfoType **atInfoPtr)
 	 coord=VLAlloc(float,3*nAtom);
 	 if(atInfo)
 		VLACheck(atInfo,AtomInfoType,nAtom);	 
-
   }
   
   p=nextline(p);
@@ -755,95 +778,13 @@ CoordSet *ObjectMoleculeMOLStr2CoordSet(char *buffer,AtomInfoType **atInfoPtr)
       ii++;
 	 }
   }
-  if(ok&&atInfo) 
-	 while(ok&&(*p)) {
-		if(*p== '>') {
-		  p=ncopy(cc,p,MAXLINELEN);
-		  if(strstr(cc,"<LUDI.TYPES>")) {
-			 p=nextline(p);
-			 p=wcopy(cc,p,MAXLINELEN);
-			 p=wcopy(cc,p,MAXLINELEN);
-			 if(sscanf(cc,"%d",&nType)!=1)
-				ok=ErrMessage("ObjectMoleculeLoadMOLFile","bad ludi record");
-			 if(ok)
-				if(nType!=nAtom)
-				  ok=ErrMessage("ObjectMoleculeLoadMOLFile","ludi atom count mismatch");
-			 if(ok) {
-				for(a=0;a<nType;a++) {
-				  p=nextline(p);
-				  p=nskip(p,16);
-				  p=ncopy(cc,p,6);
-				  if(sscanf(cc,"%d",&c)!=1)
-					 ok=ErrMessage("ObjectMoleculeLoadMOLFile","missing ludi type count");
-				  if(ok) {
-					 if(!c) 
-						{
-						  switch(atInfo[a].name[0]) {
-						  case 'S':
-							 atInfo[a].ludiType=17;
-							 break;
-						  case 'N':
-							 atInfo[a].ludiType=18;
-							 break;
-						  default:
-							 atInfo[a].ludiType=0;
-						  }
-						}
-					 else {
-						p=ncopy(cc,p,6);
-						if(sscanf(cc,"%d",&atInfo[a].ludiType)!=1) {
-						  ok=ErrMessage("ObjectMoleculeLoadMOLFile","missing ludi atom type");
-						} else {
-						  if(atInfo[a].name[0]=='0') 
-							 if(atInfo[a].ludiType==6) /* convert alcohol O into weak hbond acceptor */
-								atInfo[a].ludiType=-3;
-						}
-					 }
-				  }
-				}
-			 }
-		  } else if(strstr(cc,"<CUSTOM.TYPES>")) {
-			 p=nextline(p);
-			 p=nextline(p);
-			 p=wcopy(cc,p,MAXLINELEN);
-			 if(sscanf(cc,"%d",&nType)!=1)
-				ok=ErrMessage("ObjectMoleculeLoadMOLFile","bad custom type record");
-			 if(ok)
-				if(nType!=nAtom)
-				  ok=ErrMessage("ObjectMoleculeLoadMOLFile","custom atom type count mismatch");
-			 if(ok) {
-				for(a=0;a<nType;a++) {
-				  p=nextline(p);
-				  p=nskip(p,8);
-				  p=ncopy(cc,p,3);
-				  if(sscanf(cc,"%d",&atInfo[a].customType)!=1) {
-					 ok=ErrMessage("ObjectMoleculeLoadMOLFile","bad custom atom type record-1");
-				  } else {
-					 p=nskip(p,1);
-					 p=ncopy(cc,p,3);
-					 if(sscanf(cc,"%d",&atInfo[a].customFlag)!=1) {
-						ok=ErrMessage("ObjectMoleculeLoadMOLFile","bad custom atom type record-2");
-					 } else {
-					   p=nskip(p,1);
-					   p=ncopy(cc,p,6);
-					   if(sscanf(cc,"%f",&atInfo[a].vdw)!=1) {
-						 ok=ErrMessage("ObjectMoleculeLoadMOLFile","bad van der waals radius");
-					   } 
-					 }
-				  } 
-				}
-			 }
-		  }
-		}
-		p=nextline(p);
-	 }
-
   if(ok) {
 	 cset = CoordSetNew();
 	 cset->NIndex=nAtom;
 	 cset->Coord=coord;
 	 cset->NTmpBond=nBond;
 	 cset->TmpBond=bond;
+    strcpy(cset->Name,nameTmp);
   } else {
 	 VLAFreeP(bond);
 	 VLAFreeP(coord);
@@ -966,18 +907,20 @@ void ObjectMoleculeMerge(ObjectMolecule *I,AtomInfoType *ai,CoordSet *cs,int bon
   b=0;  
   for(a=0;a<cs->NIndex;a++) {
 	 found=false;
-	 lb=b;
-	 while(b<I->NAtom) {
-	   ac=(AtomInfoCompare(ai+a,I->AtomInfo+b));
-	   if(!ac) {
-		 found=true;
-		 break;
-	   }
-      else if(ac<0) {
-        break;
+    if(!I->Discrete) {/* don't even try to match for discrete objects */
+      lb=b;
+      while(b<I->NAtom) {
+        ac=(AtomInfoCompare(ai+a,I->AtomInfo+b));
+        if(!ac) {
+          found=true;
+          break;
+        }
+        else if(ac<0) {
+          break;
+        }
+        b++;
       }
-	   b++;
-	 }
+    }
 	 if(found) {
 		index[a]=b; /* store real atom index b for a in index[a] */
 		b++;
@@ -1680,6 +1623,7 @@ ObjectMolecule *ObjectMoleculeNew(void)
   I->CSet=VLAMalloc(10,sizeof(CoordSet*),5,true); /* auto-zero */
   I->NCSet=0;
   I->Bond=NULL;
+  I->Discrete=SettingGet(cSetting_discrete); /* kludge */
   I->Obj.fRender=(void (*)(struct Object *, int, CRay *, Pickable **))ObjectMoleculeRender;
   I->Obj.fFree= (void (*)(struct Object *))ObjectMoleculeFree;
   I->Obj.fUpdate=  (void (*)(struct Object *)) ObjectMoleculeUpdate;

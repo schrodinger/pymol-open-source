@@ -50,6 +50,7 @@ void MainTest(void);
 void MainBusyIdle(void);
 static void MainInit(void);
 void MainReshape(int width, int height);
+static void MainDrawLocked(void);
 
 GLuint obj;
 
@@ -143,13 +144,10 @@ static void MainDrag(int x,int y)
   PUnlockAPIAsGlut();
 
 }
-
 /*========================================================================*/
-static void MainDraw(void)
+static void MainDrawLocked(void)
 {
   CMain *I = &Main;
-
-  PLockAPIAsGlut();
   if(I->DirtyFlag) {
     I->DirtyFlag=false;
   }
@@ -162,9 +160,13 @@ static void MainDraw(void)
       if(PMGUI) glutSwapBuffers();
       I->SwapFlag=false;
     }
+}
+/*========================================================================*/
+static void MainDraw(void)
+{
+  PLockAPIAsGlut();
+  MainDrawLocked();
   PUnlockAPIAsGlut();
-
-
 }
 /*========================================================================*/
 static void MainKey(unsigned char k, int x, int y)
@@ -320,7 +322,7 @@ void MainFree(void)
 }
 /*========================================================================*/
 void MainRefreshNow(void) 
-{ /* should only be called by the master thread */
+{ /* should only be called by the master thread, with a locked API */
 
   CMain *I = &Main;
   if(I->SwapFlag)
@@ -333,7 +335,7 @@ void MainRefreshNow(void)
       if(PMGUI) 
         glutPostRedisplay();
       else
-        MainDraw();
+        MainDrawLocked();
       I->DirtyFlag=false;
     }
 }
@@ -373,7 +375,7 @@ void MainBusyIdle(void)
     if(PMGUI) 
       glutPostRedisplay();
     else
-      MainDraw();
+      MainDrawLocked();
     I->DirtyFlag=false;
   }
   
@@ -479,6 +481,7 @@ void launch(void)
     MainDraw(); /* for command line processing */
     while(1) {
       MainBusyIdle();
+      MainDraw();
     }
   }
 }

@@ -136,10 +136,10 @@ void RepMeshColor(RepMesh *I,CoordSet *cs)
   float probe_radius;
   float dist,minDist;
   int inclH;
-  int cullByFlag;
+  int cullByFlag = false;
   AtomInfoType *ai2;
 
-  cullByFlag = SettingGet(cSetting_trim_dots);
+  /*  cullByFlag = SettingGet(cSetting_trim_dots);*/
   inclH = SettingGet(cSetting_dot_hydrogens);
 
   probe_radius = SettingGet(cSetting_solvent_radius);
@@ -169,8 +169,9 @@ void RepMeshColor(RepMesh *I,CoordSet *cs)
 				  while(j>=0) {
 					 ai2=obj->AtomInfo+cs->IdxToAtm[j];
 					 if((inclH||(!ai2->hydrogen))&&
-						 ((!cullByFlag)||(!(ai2->customFlag&0x2))))  
-						/* ignore if the "2" bit is set */
+						 ((!cullByFlag)||
+                    (!(ai2->flags&0x2000000))))  
+						/* ignore presence of atom if flag 25 is set BROKEN */
 						{
 						  dist = diff3f(v0,cs->Coord+j*3);
 						  if(dist<minDist)

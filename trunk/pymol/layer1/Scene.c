@@ -1229,6 +1229,7 @@ void SceneRender(Pickable *pick,int x,int y)
 		VLAFree(pickVLA);
 		
     } else {
+      ButModeCaptionReset(); /* reset the frame caption if any */
       /* rendering for visualization */
 
       start_time = UtilGetSeconds();

@@ -32,6 +32,7 @@ typedef struct ObjectMolecule {
   AtomInfoType *AtomInfo;
   int NAtom;
   int NBond;
+  int Discrete;
   int CurCSet;
   char Color[3];
   float FractionExposed;
