@@ -393,7 +393,7 @@ NOTES
    'trj' : AMBER trajectory (use load_traj command for more control)
    'top' : AMBER topology file 'rst' : AMBER restart file
    'cex' : Metaphorics CEX format
-   'pse' : PyMOL Session file
+   'pse' : PyMOL Session file ('psp' PyMOL Session Presentation)
    'pqr' : PQR (a modified PDB file with charges and radii)
    'mol2' : MOL2
    
@@ -457,7 +457,7 @@ SEE ALSO
                ftype = loadable.crd
             elif re.search("\.rst$",filename,re.I):
                ftype = loadable.crd
-            elif re.search("\.pse$",filename,re.I):
+            elif re.search("\.pse$|\.psp$",filename,re.I):
                ftype = loadable.pse
             elif re.search("\.phi$",filename,re.I):
                ftype = loadable.phi

@@ -172,7 +172,7 @@ SEE ALSO
             format = 'pov'
          elif re.search("\.png$",lc_filename):
             format = 'png'
-         elif re.search("\.pse$",lc_filename):
+         elif re.search("\.pse$|\.psp$",lc_filename):
             format = 'pse'
       else:
          format = str(format)

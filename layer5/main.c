@@ -637,16 +637,21 @@ int MainFromPyList(PyObject *list)
   int ok=true;
   int win_x,win_y;
   int ll=0;
+  PyMOLGlobals *G = TempPyMOLGlobals;
   OrthoLineType buffer;
+
   if(ok) ok = (list!=NULL);
   if(ok) ok = PyList_Check(list);
   if(ok) ll=PyList_Size(list);
   if(ok&&(ll>=2)) {
-    if(ok) ok = PConvPyIntToInt(PyList_GetItem(list,0),&win_x);
-    if(ok) ok = PConvPyIntToInt(PyList_GetItem(list,1),&win_y);
-    if(ok) {
-      sprintf(buffer,"viewport %d, %d",win_x,win_y);
-      PParse(buffer);
+    if(!G->Option->presentation) {
+      if(ok) ok = PConvPyIntToInt(PyList_GetItem(list,0),&win_x);
+      if(ok) ok = PConvPyIntToInt(PyList_GetItem(list,1),&win_y);
+      BlockGetSize(SceneGetBlock(G),&win_x,&win_y);
+      if(ok) {
+        sprintf(buffer,"viewport %d, %d",win_x,win_y);
+        PParse(buffer);
+      }
     }
   }
   return(ok);

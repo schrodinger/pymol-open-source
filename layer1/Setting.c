@@ -57,7 +57,9 @@ int SettingSetGlobalsFromPyList(PyMOLGlobals *G,PyObject *list)
   int stereo=SettingGetGlobal_b(G,cSetting_stereo);
   int session_migration=SettingGetGlobal_b(G,cSetting_session_migration);
   int session_version_check=SettingGetGlobal_b(G,cSetting_session_version_check);
-
+  int full_screen = SettingGetGlobal_b(G,cSetting_full_screen);
+  int internal_gui = SettingGetGlobal_b(G,cSetting_internal_gui);
+ 
   register CSetting *I=G->Setting;
   if(list)
     if(PyList_Check(list)) 
@@ -67,6 +69,10 @@ int SettingSetGlobalsFromPyList(PyMOLGlobals *G,PyObject *list)
   SettingSet_b(I,cSetting_stereo,stereo); /* preserve current stereo mode */
   SettingSet_b(I,cSetting_session_migration,session_migration); /* preserve current migration info */
   SettingSet_b(I,cSetting_session_version_check,session_version_check);
+  if(G->Option->presentation) {
+      SettingSet_b(I,cSetting_full_screen,full_screen);
+      SettingSet_b(I,cSetting_internal_gui,internal_gui);
+  }
   return(ok);
 #endif
 }

@@ -44,13 +44,13 @@ struct _CPyMOLOptions {
   
   int multisample,
     window_visible, 
-    read_stdin;
+    read_stdin, presentation;
   
   /* WARNING: for the sake of forward compability, never delete or
-     more any fields in the above */
+     move any fields in the above */
 
-  /* WARNING: don't delete items or change order unless you also update
-     ClassPyMOL.c where this global structure is initialized */
+  /* WARNING: don't add, delete, or change item order unless you also update
+     PyMOL.c where this global structure is initialized */
 };
 
 #ifndef CPyMOLOptions_DEFINED

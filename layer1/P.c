@@ -1134,6 +1134,7 @@ void PGetOptions(CPyMOLOptions *rec)
   rec->multisample = PyInt_AsLong(PyObject_GetAttrString(options,"multisample"));
   rec->window_visible = PyInt_AsLong(PyObject_GetAttrString(options,"window_visible"));
   rec->read_stdin = PyInt_AsLong(PyObject_GetAttrString(options,"read_stdin"));
+  rec->presentation = PyInt_AsLong(PyObject_GetAttrString(options,"presentation"));
   load_str = PyString_AsString(PyObject_GetAttrString(options,"after_load_script"));
 
   if(load_str) {
