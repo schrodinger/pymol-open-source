@@ -235,7 +235,7 @@ void RepSurfaceRender(RepSurface *I,CRay *ray,Pickable **pick)
 void RepSurfaceColor(RepSurface *I,CoordSet *cs)
 {
   MapType *map;
-  int a,a2,i0,i,j,h,k,l,c1;
+  int a,i0,i,j,h,k,l,c1;
   float *v0,*vc,*c0;
   int *vi;
   int first_color;
@@ -245,8 +245,7 @@ void RepSurfaceColor(RepSurface *I,CoordSet *cs)
   float proximity,cutoff;
   int inclH;
   int cullByFlag;
-
-
+  AtomInfoType *ai2;
 
   cullByFlag = SettingGet(cSetting_trim_dots);
   inclH = SettingGet(cSetting_dot_hydrogens);
@@ -282,9 +281,9 @@ void RepSurfaceColor(RepSurface *I,CoordSet *cs)
 				if(i) {
 				  j=map->EList[i++];
 				  while(j>=0) {
-					 a2 = cs->IdxToAtm[j];
-					 if((inclH||(obj->AtomInfo[a2].name[0]!='H'))&&
-						 ((!cullByFlag)||(!(obj->AtomInfo[a2].customFlag&0x2))))  
+					 ai2 = obj->AtomInfo + cs->IdxToAtm[j];
+					 if((inclH||(!ai2->hydrogen))&&
+						 ((!cullByFlag)||(!(ai2->customFlag&0x2))))  
 						/* ignore if the "2" bit is set */
 						{
 						  dist = diff3f(v0,cs->Coord+j*3);
@@ -319,14 +318,14 @@ void RepSurfaceColor(RepSurface *I,CoordSet *cs)
               if(i) {
                 j=map->EList[i++];
                 while(j>=0) {
-                  a2 = cs->IdxToAtm[j];
-                  if(obj->AtomInfo[a2].visRep[cRepSurface])
-                    if((inclH||(obj->AtomInfo[a2].name[0]!='H'))&&
-                       ((!cullByFlag)||(!(obj->AtomInfo[a2].customFlag&0x2))))  
+                  ai2 = obj->AtomInfo+cs->IdxToAtm[j];
+                  if(ai2->visRep[cRepSurface])
+                    if((inclH||(!ai2->hydrogen))&&
+                       ((!cullByFlag)||(!(ai2->customFlag&0x2))))  
                       /* ignore if the "2" bit is set */
                       {
                         dist = diff3f(v0,cs->Coord+j*3);
-                        if(dist<(obj->AtomInfo[a2].vdw+proximity)) {
+                        if(dist<(ai2->vdw+proximity)) {
                           i0=j;
                           break;
                         }
@@ -361,11 +360,11 @@ Rep *RepSurfaceNew(CoordSet *cs)
   int inclH = true;
   int cullByFlag = false;
   int flag,*dot_flag,*p;
-  int a1,a2;
   int cnt;
   float minimum_sep;
   int visFlag;
   SphereRec *sp = Sphere0;
+  AtomInfoType *ai1,*ai2;
   OOAlloc(RepSurface);
 
   obj = cs->Obj;
@@ -445,13 +444,13 @@ Rep *RepSurfaceNew(CoordSet *cs)
 		  MapSetupExpress(map);
         for(a=0;a<cs->NIndex;a++)
           {
-            a1 = cs->IdxToAtm[a];
-            if((inclH||(obj->AtomInfo[a1].name[0]!='H'))&&
-               ((!cullByFlag)||(!(obj->AtomInfo[a1].customFlag&0x2)))) {
+            ai1 = obj->AtomInfo+cs->IdxToAtm[a];
+            if((inclH||(!ai1->hydrogen))&&
+               ((!cullByFlag)||(!(ai1->customFlag&0x2)))) {
               /* ignore if the "2" bit is set */
               c1=*(cs->Color+a);
               v0 = cs->Coord+3*a;
-              vdw = cs->Obj->AtomInfo[a1].vdw;
+              vdw = ai1->vdw;
               
               for(b=0;b<sp->nDot;b++)
                 {
@@ -467,12 +466,12 @@ Rep *RepSurfaceNew(CoordSet *cs)
                   if(i) {
                     j=map->EList[i++];
                     while(j>=0) {
-                      a2 = cs->IdxToAtm[j];
-                      if((inclH||(obj->AtomInfo[a2].name[0]!='H'))&&
-                           ((!cullByFlag)||(!(obj->AtomInfo[a2].customFlag&0x2))))  
+                      ai2 = obj->AtomInfo + cs->IdxToAtm[j];
+                      if((inclH||(!ai2->hydrogen))&&
+                           ((!cullByFlag)||(!(ai2->customFlag&0x2))))  
                         /* ignore if the "2" bit is set */
                         if(j!=a)
-                          if(within3f(cs->Coord+3*j,v1,cs->Obj->AtomInfo[a2].vdw))
+                          if(within3f(cs->Coord+3*j,v1,ai2->vdw))
                             {
                               flag=false;
                               break;
@@ -547,13 +546,12 @@ Rep *RepSurfaceNew(CoordSet *cs)
 							 if(i) {
 								j=map->EList[i++];
 								while(j>=0) {
-								  a2 = cs->IdxToAtm[j];
-								  if((inclH||(obj->AtomInfo[a2].name[0]!='H'))&&
-									  ((!cullByFlag)||(!(obj->AtomInfo[a2].customFlag&0x2))))  
+								  ai2 = obj->AtomInfo + cs->IdxToAtm[j];
+								  if((inclH||(!ai2->hydrogen))&&
+									  ((!cullByFlag)||(!(ai2->customFlag&0x2))))  
 										  /* ignore if the "2" bit is set */
 									 if(j!=a)
-										if(within3f(cs->Coord+3*j,v,
-														cs->Obj->AtomInfo[a2].vdw+probe_radius+solv_tole))
+										if(within3f(cs->Coord+3*j,v,ai2->vdw+probe_radius+solv_tole))
 										  {
 											 flag=false;
 											 break;
@@ -664,7 +662,7 @@ Rep *RepSurfaceNew(CoordSet *cs)
 void RepSurfaceGetSolventDots(RepSurface *I,CoordSet *cs,float probe_radius,SphereRec *sp,float *extent)
 {
   ObjectMolecule *obj;
-  int a,b,c,a1,a2,flag,i,h,k,l,j;
+  int a,b,c,a1,flag,i,h,k,l,j;
   float *v,*v0,vdw;
   MapType *map;
   int *p,*dot_flag;
@@ -691,9 +689,8 @@ void RepSurfaceGetSolventDots(RepSurface *I,CoordSet *cs,float probe_radius,Sphe
 		  {
 			 OrthoBusyFast(a,cs->NIndex*5);
 			 dotCnt=0;
-			 a1 = cs->IdxToAtm[a];
 			 v0 = cs->Coord+3*a;
-			 vdw = cs->Obj->AtomInfo[a1].vdw+probe_radius;
+			 vdw = cs->Obj->AtomInfo[cs->IdxToAtm[a]].vdw+probe_radius;
           for(b=0;b<sp->nDot;b++)
             {
               v[0]=v0[0]+vdw*sp->dot[b].v[0];
@@ -707,8 +704,7 @@ void RepSurfaceGetSolventDots(RepSurface *I,CoordSet *cs,float probe_radius,Sphe
                 while(j>=0) {
                   if(j!=a) 
                     {
-                      a2 = cs->IdxToAtm[j];
-                      if(within3f(cs->Coord+3*j,v,cs->Obj->AtomInfo[a2].vdw+probe_radius)) {
+                      if(within3f(cs->Coord+3*j,v,obj->AtomInfo[cs->IdxToAtm[j]].vdw+probe_radius)) {
                         flag=false;
                         break;
                       }

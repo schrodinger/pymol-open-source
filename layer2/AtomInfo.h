@@ -39,6 +39,8 @@ typedef struct AtomInfoType {
   SegIdent segi;
   ResName resn;
   AtomName name;
+  AtomName elem;
+  int hydrogen;
   int ludiType;
   int customType;
   int customFlag;
@@ -56,6 +58,9 @@ typedef struct AtomInfoType {
 int *AtomInfoGetSortedIndex(AtomInfoType *rec,int n,int **outdex);
 void AtomInfoAssignParameters(AtomInfoType *I);
 void AtomInfoFreeSortedIndexes(int *index,int *outdex);
+void AtomInfoPrimeColors(void);
+int AtomInfoGetColor(AtomInfoType *at1);
+
 int AtomInfoMatch(AtomInfoType *at1,AtomInfoType *at2);
 int AtomInfoCompare(AtomInfoType *at1,AtomInfoType *at2);
 

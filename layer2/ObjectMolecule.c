@@ -27,7 +27,6 @@ Z* -------------------------------------------------------------------
 #include"Err.h"
 #include"Map.h"
 #include"Selector.h"
-#include"Color.h"
 #include"ObjectMolecule.h"
 #include"Ortho.h"
 #include"Util.h"
@@ -214,19 +213,12 @@ CoordSet *ObjectMoleculeMOLStr2CoordSet(char *buffer,AtomInfoType **atInfoPtr)
   char cc[MAXLINELEN],resn[MAXLINELEN];
   float *f;
   int *ii,*bond=NULL;
-  int NColor,CColor,HColor,OColor,SColor,MColor;
-  int color=0;
   int ok=true;
   int autoshow_lines;
 
   autoshow_lines = SettingGet(cSetting_autoshow_lines);
-  NColor=ColorGetIndex("nitrogen");
-  CColor=ColorGetIndex("carbon");
-  HColor=ColorGetIndex("hydrogen");
-  OColor=ColorGetIndex("oxygen");
-  SColor=ColorGetIndex("sulfer");
-  MColor=ColorGetIndex("magenta");
-  
+  AtomInfoPrimeColors();
+
   p=buffer;
   nAtom=0;
   if(atInfoPtr)
@@ -294,30 +286,7 @@ CoordSet *ObjectMoleculeMOLStr2CoordSet(char *buffer,AtomInfoType **atInfoPtr)
 			 strcpy(atInfo[a].resn,resn);
 			 atInfo[a].hetatm=true;
 			 AtomInfoAssignParameters(atInfo+a);
-			 switch ( atInfo[a].name[0] ) /* need to move this stuff into parameters */
-				{
-				case 'N' : color = NColor; break;
-				case 'C' : 
-				  switch(atInfo[a].name[1]) {
-				  case 0:
-              case 32:
-                color = CColor; break;
-				  case 'l':
-				  case 'L':
-				  default:
-                color = MColor; break;
-				  }
-				  break;
-				case 'O' : color = OColor; break;
-				case 'I' : color = MColor; break;
-				case 'P' : color = MColor; break;
-				case 'B' : color = MColor; break;
-				case 'S' : color = SColor; break;
-				case 'F' : color = MColor; break;
-				case 'H' : color=HColor; break;
-				default  : color=MColor; break;
-				}
-			 atInfo[a].color=color;
+			 atInfo[a].color=AtomInfoGetColor(atInfo+a);
 		  }
 		  p=nextline(p);
 		  if(!ok)
@@ -483,7 +452,7 @@ ObjectMolecule *ObjectMoleculeReadMOLStr(ObjectMolecule *I,char *MOLStr,int fram
 		cset->fAppendIndices(cset,I->NAtom);
 		cset->Obj=I;
 		ObjectMoleculeAppendAtoms(I,atInfo,cset);
-      if(I->CSet[frame]) I->CSet[frame]->fFree();
+      if(I->CSet[frame]) I->CSet[frame]->fFree(I->CSet[frame]);
 		I->CSet[frame] = cset;
 		I->CSet[frame]->fInvalidateRep(I->CSet[frame],-1,0);
 		SceneCountFrames();
@@ -731,7 +700,7 @@ ObjectMolecule *ObjectMoleculeReadPDBStr(ObjectMolecule *I,char *PDBStr,int fram
     if(frame<0) frame=I->NCSet;
     VLACheck(I->CSet,CoordSet*,frame);
     if(I->NCSet<=frame) I->NCSet=frame+1;
-    if(I->CSet[frame]) I->CSet[frame]->fFree();
+    if(I->CSet[frame]) I->CSet[frame]->fFree(I->CSet[frame]);
     I->CSet[frame] = cset;
     if(isNew) I->NBond = ObjectMoleculeConnect(&I->Bond,I->AtomInfo,cset,0.2);
     SceneCountFrames();
@@ -843,7 +812,7 @@ void ObjectMoleculeTransformTTTf(ObjectMolecule *I,float *ttt,int frame)
 /*========================================================================*/
 void ObjectMoleculeSeleOp(ObjectMolecule *I,int sele,ObjectMoleculeOpRec *op)
 {
-  int a,b,s;
+  int a,b,s,d;
   int a1,ind;
   float r,rms;
   float v1[3],v2,*vv1,*vv2;
@@ -975,13 +944,17 @@ void ObjectMoleculeSeleOp(ObjectMolecule *I,int sele,ObjectMoleculeOpRec *op)
 		   case 'TTTF':
          case 'ALTR':
 			 s=I->AtomInfo[a].selEntry;
-			 while(s) 
+			 while(s)
 			   {
 				 if(SelectorMatch(s,sele))
 				   {
 					 switch(op->code) {
 					 case 'VISI':
-					   I->AtomInfo[a].visRep[op->i1]=op->i2;
+                  if(op->i1<0)
+                    for(d=0;d<cRepCnt;d++) 
+                      I->AtomInfo[a].visRep[d]=op->i2;                      
+                  else
+                    I->AtomInfo[a].visRep[op->i1]=op->i2;
 					   break;
 					 case 'COLR':
 					   I->AtomInfo[a].color=op->i1;
@@ -1084,8 +1057,13 @@ void ObjectMoleculeSeleOp(ObjectMolecule *I,int sele,ObjectMoleculeOpRec *op)
 					 }
 				   switch(op->code) {
 				   case 'INVA':
-					 if(inv_flag) 
-					   I->CSet[b]->fInvalidateRep(I->CSet[b],op->i1,op->i2);
+                 if(inv_flag) {
+                  if(op->i1<0)
+                      for(d=0;d<cRepCnt;d++) 
+                        I->CSet[b]->fInvalidateRep(I->CSet[b],d,op->i2);
+                  else
+                    I->CSet[b]->fInvalidateRep(I->CSet[b],op->i1,op->i2);
+                 }
 					 break;
 				   }
 				 }
@@ -1274,8 +1252,7 @@ int ObjectMoleculeConnect(int **bond,AtomInfoType *ai,CoordSet *cs,float cutoff)
 										dst -= ((ai[a1].vdw+ai[a2].vdw)/2);
 										
 										if( (dst <= cutoff)&&
-                                  (!((ai[a1].name[0]=='H')&& 
-                                     (ai[a2].name[0]=='H')))&&
+                                  (!(ai[a1].hydrogen&&ai[a2].hydrogen))&&
                                   ((!cs->TmpBond)||(!(ai[a1].hetatm||ai[a2].hetatm))))
 										  {
 											 VLACheck((*bond),int,nBond*3+2);
@@ -1445,8 +1422,6 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(char *buffer,AtomInfoType **atInfoPtr)
   char cc[MAXLINELEN];
   int AFlag;
   int atomCount;
-  int NColor,CColor,HColor,OColor,SColor,MColor;
-  int color=0;
   int conectFlag = false;
   int *bond=NULL,*ii1,*ii2,*idx;
   int nBond=0;
@@ -1455,12 +1430,7 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(char *buffer,AtomInfoType **atInfoPtr)
 
   autoshow_lines = SettingGet(cSetting_autoshow_lines);
 
-  NColor=ColorGetIndex("nitrogen");
-  CColor=ColorGetIndex("carbon");
-  HColor=ColorGetIndex("hydrogen");
-  OColor=ColorGetIndex("oxygen");
-  SColor=ColorGetIndex("sulfer");
-  MColor=ColorGetIndex("magenta");
+  AtomInfoPrimeColors();
 
   p=buffer;
   nAtom=0;
@@ -1598,21 +1568,7 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(char *buffer,AtomInfoType **atInfoPtr)
             ai->hetatm=1;
           
           AtomInfoAssignParameters(ai);
-          
-          switch ( ai->name[0] ) /* need to move this stuff into parameters */
-            {
-            case 'N' : color = NColor; break;
-            case 'C' : color = CColor; break;
-            case 'O' : color = OColor; break;
-            case 'I' : color = MColor; break;
-            case 'P' : color = MColor; break;
-            case 'B' : color = MColor; break;
-            case 'S' : color = SColor; break;
-            case 'F' : color = MColor; break;
-            case 'H' : color = HColor; break;
-            default  : color = MColor; break;
-            }
-          ai->color=color;
+          ai->color=AtomInfoGetColor(ai);
 
           if(DebugState&DebugMolecule)
             printf("%s %s %s %s %8.3f %8.3f %8.3f %6.2f %6.2f %s\n",
@@ -1710,19 +1666,12 @@ CoordSet *ObjectMoleculeMMDStr2CoordSet(char *buffer,AtomInfoType **atInfoPtr)
   char cc[MAXLINELEN];
   float *f;
   int *ii,*bond=NULL;
-  int NColor,CColor,HColor,OColor,SColor,MColor;
-  int color=0;
   int ok=true;
   int autoshow_lines;
 
   autoshow_lines = SettingGet(cSetting_autoshow_lines);
-  NColor=ColorGetIndex("nitrogen");
-  CColor=ColorGetIndex("carbon");
-  HColor=ColorGetIndex("hydrogen");
-  OColor=ColorGetIndex("oxygen");
-  SColor=ColorGetIndex("sulfer");
-  MColor=ColorGetIndex("magenta");
-  
+  AtomInfoPrimeColors();
+
   p=buffer;
   nAtom=0;
   if(atInfoPtr)
@@ -1838,36 +1787,8 @@ CoordSet *ObjectMoleculeMMDStr2CoordSet(char *buffer,AtomInfoType **atInfoPtr)
           }
         }
         if(ok) {
-          AtomInfoAssignParameters(atInfo+a);
-          switch ( ai->name[0] ) /* need to move this stuff into parameters */
-            {
-            case 'N' : color = NColor; break;
-            case 'C' : 
-              color=CColor;
-              if(ai->name[1]>'9') {
-                switch(ai->name[1]) {
-                case 0:
-                case 32:
-                  color = CColor; break;
-                case 'l':
-                case 'L':
-                  color = MColor; break;
-                  break;
-                default:
-                  break;
-                }
-              }
-              break;
-            case 'O' : color = OColor; break;
-            case 'I' : color = MColor; break;
-            case 'P' : color = MColor; break;
-            case 'B' : color = MColor; break;
-            case 'S' : color = SColor; break;
-            case 'F' : color = MColor; break;
-            case 'H' : color=HColor; break;
-            default  : color=MColor; break;
-            }
-          ai->color=color;
+          AtomInfoAssignParameters(ai);
+          ai->color = AtomInfoGetColor(ai);
         }
         if(!ok)
           break;

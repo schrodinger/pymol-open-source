@@ -101,7 +101,7 @@ void RepDotRender(RepDot *I,CRay *ray,Pickable **pick)
 Rep *RepDotNew(CoordSet *cs,int mode)
 {
   ObjectMolecule *obj;
-  int a,b,a1,a2,flag,h,k,l,i,j,c1;
+  int a,b,flag,h,k,l,i,j,c1;
   float *v,*v0,*vc,vdw,*vn;
   float *aa=NULL;
   int *tp=NULL;
@@ -117,6 +117,7 @@ Rep *RepDotNew(CoordSet *cs,int mode)
   int inclH = true;
   int cullByFlag = false;
   int visFlag;
+  AtomInfoType *ai1,*ai2;
   OOAlloc(RepDot);
 
   obj = cs->Obj;
@@ -190,13 +191,13 @@ Rep *RepDotNew(CoordSet *cs,int mode)
 		MapSetupExpress(map);
 		for(a=0;a<cs->NIndex;a++)
 		  {
-			 a1 = cs->IdxToAtm[a];
-			 if(obj->AtomInfo[a1].visRep[cRepDot])
-				if((inclH||(obj->AtomInfo[a1].name[0]!='H'))&&
-					((!cullByFlag)||(!(obj->AtomInfo[a1].customFlag&0x2)))) { /* ignore if the "2" bit is set */
+          ai1 = obj->AtomInfo+cs->IdxToAtm[a];
+			 if(ai1->visRep[cRepDot])
+				if((inclH||(!ai1->hydrogen))&&
+					((!cullByFlag)||(!(ai1->customFlag&0x2)))) { /* ignore if the "2" bit is set */
 				  c1=*(cs->Color+a);
 				  v0 = cs->Coord+3*a;
-				  vdw = cs->Obj->AtomInfo[a1].vdw+solv_rad;
+				  vdw = ai1->vdw+solv_rad;
 				  for(b=0;b<sp->nDot;b++)
 					 {
 						v1[0]=v0[0]+vdw*sp->dot[b].v[0];
@@ -211,12 +212,11 @@ Rep *RepDotNew(CoordSet *cs,int mode)
 						if(i) {
 						  j=map->EList[i++];
 						  while(j>=0) {
-							 a2 = cs->IdxToAtm[j];
-							 if((inclH||(obj->AtomInfo[a2].name[0]!='H'))&&
-								 ((!cullByFlag)||(!(obj->AtomInfo[a2].customFlag&0x2))))  /* ignore if the "2" bit is set */
+                      ai2 = obj->AtomInfo+cs->IdxToAtm[j];
+							 if((inclH||(!(ai2->hydrogen)))&&
+								 ((!cullByFlag)||(!(ai2->customFlag&0x2))))  /* ignore if the "2" bit is set */
 								if(j!=a)
-								  if(within3f(cs->Coord+3*j,v1,
-												  cs->Obj->AtomInfo[a2].vdw+solv_rad))
+								  if(within3f(cs->Coord+3*j,v1,ai2->vdw+solv_rad))
 									 {
 										flag=false;
 										break;
@@ -255,8 +255,8 @@ Rep *RepDotNew(CoordSet *cs,int mode)
 								*(v++)=v1[1];
 								*(v++)=v1[2];
 								*(aa++)=vdw*vdw*sp->dot[b].area;
-								*(tp++)=cs->Obj->AtomInfo[a1].customType;
-								*(tf++)=cs->Obj->AtomInfo[a1].customFlag;
+								*(tp++)=ai1->customType;
+								*(tf++)=ai1->customFlag;
 								*(vn++)=sp->dot[b].v[0];
 								*(vn++)=sp->dot[b].v[1];
 								*(vn++)=sp->dot[b].v[2];

@@ -129,23 +129,12 @@ int ControlClick(Block *block,int button,int x,int y,int mod)
 		ExecutiveDrawNow();
 		break;
 	 case 1:
-		if(!(mod&cOrthoCTRL)) {
+		if(mod&cOrthoCTRL) {
 		  SceneSetFrame(0,0);		
-		  if(mod&cOrthoSHIFT) {
-			/*
-			SettingSet(cSetting_cache_frames,0.0);
-			SettingSet(cSetting_render_frames,0.0);*/
-			MoviePlay(cMoviePlay);
-		  } else {
-			/*			SettingSet(cSetting_cache_frames,1.0);
-						SettingSet(cSetting_render_frames,1.0);*/
-			MoviePlay(cMoviePlay);
-		  }
-		} else {
-		  /*		  SettingSet(cSetting_cache_frames,0.0);
-					  SettingSet(cSetting_render_frames,0.0);*/
-		  MoviePlay(cMoviePlay);
-		}
+        MoviePlay(cMoviePlay);
+      } else {
+        MoviePlay(cMoviePlay);
+      }
 		break;
 	 case 2:
 		if(mod&cOrthoSHIFT) {

@@ -21,9 +21,64 @@ Z* -------------------------------------------------------------------
 #include"MemoryDebug.h"
 #include"Err.h"
 #include"Util.h"
+#include"Color.h"
 
+
+static int NColor,CarbColor,HColor,OColor,SColor,MColor,IColor;
 
 int AtomInfoInOrder(AtomInfoType *atom,int atom1,int atom2);
+
+void AtomInfoPrimeColors(void)
+{
+  NColor=ColorGetIndex("nitrogen");
+  CarbColor=ColorGetIndex("carbon");
+  HColor=ColorGetIndex("hydrogen");
+  OColor=ColorGetIndex("oxygen");
+  SColor=ColorGetIndex("sulfer");
+  MColor=ColorGetIndex("magenta");
+  IColor=ColorGetIndex("yellow");
+}
+
+int AtomInfoGetColor(AtomInfoType *at1)
+{
+  char *n=at1->elem;
+  int color = 0;
+
+  while(((*n)>='0')&&((*n)<='9')&&(*(n+1))) n++;
+  switch ( (*n) )
+    {
+    case 'N' : color = NColor; break;
+    case 'C' : 
+      n++;
+      switch(*(n)) {
+      case 'A':
+      case 'a':
+        if(at1->hetatm) 
+          color = IColor;
+        else
+          color = CarbColor;
+      case 0:
+      case 32:
+        color = CarbColor; 
+        break;
+      case 'l':
+      case 'L':
+      default:
+        color = MColor; break;
+      }
+      break;
+    case 'O' : color = OColor; break;
+    case 'I' : color = MColor; break;
+    case 'P' : color = MColor; break;
+    case 'B' : color = MColor; break;
+    case 'S' : color = SColor; break;
+    case 'F' : color = MColor; break;
+    case 'H' : color=HColor; break;
+    default  : color=MColor; break;
+    }
+  return(color);
+}
+
 
 int *AtomInfoGetSortedIndex(AtomInfoType *rec,int n,int **outdex)
 {
@@ -122,11 +177,31 @@ int AtomInfoMatch(AtomInfoType *at1,AtomInfoType *at2)
 
 void AtomInfoAssignParameters(AtomInfoType *I)
 {
-  char *n;
+  char *n,*e;
   int pri;
   float vdw;
-  
+
+  e=I->elem;
   n = I->name;
+  while(((*n)>='0')&&((*n)<='9')&&(*(n+1))) n++;  
+  while((((*n)>='A')&&((*n)<='Z'))||(((*n)>='a')&&((*n)<='z'))) {
+    *(e++)=*(n++);
+    }
+  *e=0;
+  e=I->elem;
+  switch ( *e ) {
+  case 'C':
+    if(!((*(e+1)=='l')||(*(e+1)=='L')))
+      if(!(((*(e+1))=='A')&&(I->hetatm)))
+        *(e+1)=0;
+    break;
+  default:
+    *(e+1)=0;
+    break;
+  }
+  I->hydrogen=(((*I->elem)=='H')&&(!(*(I->elem+1))));
+  n = I->name;
+  while((*n>='0')&&(*n<='0')&&(*(n+1))) n++;
   switch ( *n )
 	 {
 	 case 'N' : 
@@ -188,42 +263,43 @@ void AtomInfoAssignParameters(AtomInfoType *I)
 	 }
   I->priority=pri;
   n = I->name;  
+  while((*n>='0')&&(*n<='9')&&(*(n+1))) n++;
   switch ( *n )
-	{
-	case 'N' : vdw=1.8;  break;
-	case 'C' :	
-	  switch (*(n+1)) 
-		{
-		case 'U':
-		  vdw=1.35; break; /* CU */
-		case 0:
-		default:
-		  vdw=1.8;  break; /*incl C,CL*/
-		}
-     break;
-	case 'O' : vdw=1.5;  break;
-	case 'I' :	vdw=2.15; break;
-	case 'P' :	vdw=1.9; break;
-	case 'B' :	vdw=1.9; break; /* incl B, BR */
-	case 'S' :	vdw=1.9; break;
-	case 'F' : 
-	  switch (*(n+1))
-		{
-		case 0:
-		  vdw=1.35; break;
-		case 'E': 
-		  vdw=0.64; break;
-		default:
-		  vdw=1.35; break;
-		}
-	  break;
-   case 'H' :
-     vdw = 1.1;
-	  break;
-	default:
-	  vdw=1.8;
-	  break;
-	}
+    {
+    case 'N' : vdw=1.8;  break;
+    case 'C' :	
+      switch (*(n+1)) 
+        {
+        case 'U':
+          vdw=1.35; break; /* CU */
+        case 0:
+        default:
+          vdw=1.8;  break; /*incl C,CL*/
+        }
+      break;
+    case 'O' : vdw=1.5;  break;
+    case 'I' :	vdw=2.15; break;
+    case 'P' :	vdw=1.9; break;
+    case 'B' :	vdw=1.9; break; /* incl B, BR */
+    case 'S' :	vdw=1.9; break;
+    case 'F' : 
+      switch (*(n+1))
+        {
+        case 0:
+          vdw=1.35; break;
+        case 'E': 
+          vdw=0.64; break;
+        default:
+          vdw=1.35; break;
+        }
+      break;
+    case 'H' :
+      vdw = 1.1;
+      break;
+    default:
+      vdw=1.8;
+      break;
+    }
   I->vdw = vdw;
 }
 
