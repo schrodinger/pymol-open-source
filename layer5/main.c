@@ -65,8 +65,16 @@ static void MainDrawLocked(void);
 
 GLuint obj;
 
-static int WinX = 640;
+/* GLUT window size */
+
+static int WinX = 640; /* these values are overridden! */
 static int WinY = 480;
+
+/* GLUT window initial position */
+
+static int WinPX = 0;    /* these values are overridden! */
+static int WinPY = 175;
+
 static GLint Modifiers = 0;
 
 static char **myArgv,*myArgvv[2],myArgvvv[1024];
@@ -718,11 +726,14 @@ void launch(void)
     }
 
     if(!GameMode) {
-      #ifdef _PYMOL_OSX
-      p_glutInitWindowPosition(0, 200);
-      #else
-      p_glutInitWindowPosition(0, 175);
-      #endif
+      /*
+	#ifdef _PYMOL_OSX
+	p_glutInitWindowPosition(0, 200);
+	#else
+	p_glutInitWindowPosition(0, 175);
+	#endif
+      */
+      p_glutInitWindowPosition(WinPX,WinPY);
       p_glutInitWindowSize(WinX, WinY);
 
       TheWindow = p_glutCreateWindow("PyMOL Viewer");
@@ -812,7 +823,8 @@ int was_main(void)
 
   PGetOptions(&PMGUI,&InternalGUI,&ShowSplash,
 	      &InternalFeedback,&Security,&GameMode,
-	      &ForceStereo,&WinX,&WinY,&BlueLine);
+	      &ForceStereo,&WinX,&WinY,&BlueLine,
+	      &WinPX,&WinPY);
   launch();
 
   return 0;

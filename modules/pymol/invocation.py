@@ -46,6 +46,9 @@ if __name__=='pymol.invocation':
    options.read_stdin = 0
    options.win_x = 640
    options.win_y = 480
+   options.win_px = 0 # signal to use platform-dependent default
+   options.win_py = 175 # should be 200 for native mac version, but how do we know?
+
    options.blue_line = 0
    # Greg Landrum
    options.rpcServer = 0
@@ -124,6 +127,10 @@ if __name__=='pymol.invocation':
                options.win_x = int(av.pop())
             if "H" in a:
                options.win_y = int(av.pop())
+            if "X" in a:
+               options.win_px = int(av.pop())
+            if "Y" in a:
+               options.win_py = int(av.pop())
             if "x" in a:
                options.external_gui = 0
             if "t" in a:
@@ -155,7 +162,7 @@ if __name__=='pymol.invocation':
                options.read_stdin = 1
             if "o" in a:
                options.security = 0
-            if "X" in a:
+            if "R" in a:
                options.rpcServer = 1
             if "g" in a:
                options.deferred.append("_do_png %s"%av.pop())
