@@ -286,6 +286,10 @@ static void ObjectMeshInvalidate(ObjectMesh *I,int rep,int level,int state)
     if(state<0) once_flag=false;
     if(!once_flag) state=a;
     I->State[state].RefreshFlag=true;
+    if(level>=cRepInvAll) {
+      I->State[state].ResurfaceFlag=true;      
+      printf("here\n");
+    }
     if(once_flag) break;
   }
 }

@@ -2545,10 +2545,19 @@ void ExecutiveRebuildAll(void)
     ENDFD;
   while(ListIterate(I->Spec,rec,next)) {
     if(rec->type==cExecObject) {
-      if(rec->obj->type==cObjectMolecule) {
+      switch(rec->obj->type) {
+      case cObjectMolecule:
         ObjectMoleculeInvalidate((ObjectMolecule*)rec->obj,cRepAll,cRepInvRep);
-      } else if(rec->obj->type==cObjectDist) {
+        break;
+      case cObjectDist:
         ObjectDistInvalidateRep((ObjectDist*)rec->obj,cRepAll);
+        break;
+      case cObjectSurface:
+      case cObjectMesh:
+        if(rec->obj->fInvalidate) {
+          rec->obj->fInvalidate((CObject*)rec->obj,cRepAll,cRepInvAll,-1);
+        }
+        break;
       }
     }
   }
