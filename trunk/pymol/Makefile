@@ -73,10 +73,12 @@ depends:
 	/bin/rm -f */*.p
 	$(MAKE) .depends
 
-pytouch:
+partial:
 	touch layer5/main.c
 	touch layer1/P.c
 	touch layer4/Cmd.c
+	/bin/rm -f modules/_cmd.so pymol.exe
+	$(MAKE)
 
 clean: 
 	touch .no_fail

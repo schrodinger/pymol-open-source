@@ -1661,7 +1661,6 @@ ObjectMolecule *ObjectMoleculeLoadChemPyModel(ObjectMolecule *I,PyObject *model,
           PConvPyListToFloatArray(tmp,&cset->SpheroidNormal);
           Py_DECREF(tmp);
         }
-        printf("%p %p\n",cset->Spheroid,cset->SpheroidNormal);
       }
     mol = PyObject_GetAttrString(model,"molecule");
     

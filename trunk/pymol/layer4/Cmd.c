@@ -161,6 +161,7 @@ static PyObject *CmdSetFrame(PyObject *self, PyObject *args);
 static PyObject *CmdShowHide(PyObject *self, 	PyObject *args);
 static PyObject *CmdSort(PyObject *dummy, PyObject *args);
 static PyObject *CmdSplash(PyObject *dummy, PyObject *args);
+static PyObject *CmdSpheroid(PyObject *dummy, PyObject *args);
 static PyObject *CmdStereo(PyObject *self, PyObject *args);
 static PyObject *CmdSystem(PyObject *dummy, PyObject *args);
 static PyObject *CmdSymExp(PyObject *dummy, PyObject *args);
@@ -245,6 +246,7 @@ static PyMethodDef Cmd_methods[] = {
 	{"showhide",     CmdShowHide,     METH_VARARGS },
 	{"set_matrix",	  CmdSetMatrix,    METH_VARARGS },
 	{"sort",         CmdSort,         METH_VARARGS },
+   {"spheroid",     CmdSpheroid,     METH_VARARGS },
 	{"splash",       CmdSplash,       METH_VARARGS },
 	{"stereo",	     CmdStereo,       METH_VARARGS },
 	{"system",	     CmdSystem,       METH_VARARGS },
@@ -1712,6 +1714,19 @@ static PyObject *CmdSort(PyObject *self, PyObject *args)
   PyArg_ParseTuple(args,"s",&name);
   APIEntry();
   ExecutiveSort(name);
+  APIExit();
+  Py_INCREF(Py_None);
+  return Py_None;
+}
+
+static PyObject *CmdSpheroid(PyObject *self, PyObject *args)
+/* EXPERIMENTAL */
+{
+  char *name;
+  Object *obj;
+  PyArg_ParseTuple(args,"s",&name);
+  APIEntry();
+  ExecutiveSpheroid(name);
   APIExit();
   Py_INCREF(Py_None);
   return Py_None;

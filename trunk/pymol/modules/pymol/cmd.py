@@ -353,6 +353,20 @@ UNSUPPORTED - LIKELY TO BE REMOVED
       unlock()
    return r
 
+def spheroid(*arg):
+   '''
+EXPERIMENTAL
+'''
+   try:
+      lock()
+      if len(arg)==0:
+         r = _cmd.spheroid("")
+      else:
+         r = _cmd.spheroid(arg[0])
+   finally:
+      unlock()
+   return r
+
 def cls():
    try:
       lock()
