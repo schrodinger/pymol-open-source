@@ -5945,7 +5945,6 @@ ObjectMolecule *ObjectMoleculeReadPDBStr(ObjectMolecule *I,char *PDBStr,int fram
       repeatFlag=true;
       start=restart;
       frame=frame+1;
-      restart=NULL;
     }
   }
   return(I);
@@ -7980,6 +7979,7 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(char *buffer,
   int ss_valid;
   SSEntry *sst;
   int ssi = 0;
+  int only_read_one_model = false;
 
   ignore_pdb_segi = (int)SettingGet(cSetting_ignore_pdb_segi);
 
@@ -7990,6 +7990,9 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(char *buffer,
 
   if(!atInfo)
     ErrFatal("PDBStr2CoordSet","need atom information record!"); /* failsafe for old version..*/
+
+  if(buffer == *restart)
+    only_read_one_model = true;
 
   *restart = NULL;
   while(*p)
@@ -8008,8 +8011,11 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(char *buffer,
          (*(p+3)=='A')&&(*(p+4)=='T')&&(*(p+5)=='M')&&(!*restart))
         nAtom++;
 		else if((*p == 'E')&&(*(p+1)=='N')&&(*(p+2)=='D')&&
-         (*(p+3)=='M')&&(*(p+4)=='D')&&(*(p+5)=='L')&&(!*restart))
+              (*(p+3)=='M')&&(*(p+4)=='D')&&(*(p+5)=='L')&&(!*restart)) {
         *restart=nextline(p);
+        if(only_read_one_model) 
+          break;
+      }
 		else if((*p == 'C')&&(*(p+1)=='O')&&(*(p+2)=='N')&&
          (*(p+3)=='E')&&(*(p+4)=='C')&&(*(p+5)=='T'))
         conectFlag=true;
@@ -8116,9 +8122,11 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(char *buffer,
 
         }
 		else if((*p == 'E')&&(*(p+1)=='N')&&(*(p+2)=='D')&&
-         (*(p+3)=='M')&&(*(p+4)=='D')&&(*(p+5)=='L')&&(!*restart))
+              (*(p+3)=='M')&&(*(p+4)=='D')&&(*(p+5)=='L')&&(!*restart)) {
         *restart=nextline(p);
-		else if((*p == 'C')&&(*(p+1)=='R')&&(*(p+2)=='Y')&&
+        if(only_read_one_model) 
+          break;
+		} else if((*p == 'C')&&(*(p+1)=='R')&&(*(p+2)=='Y')&&
               (*(p+3)=='S')&&(*(p+4)=='T')&&(*(p+5)=='1')&&(!*restart))
         {
           if(!symmetry) symmetry=SymmetryNew();          
@@ -8153,7 +8161,7 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(char *buffer,
           }
         }
 		else if((*p == 'C')&&(*(p+1)=='O')&&(*(p+2)=='N')&&
-         (*(p+3)=='E')&&(*(p+4)=='C')&&(*(p+5)=='T'))
+         (*(p+3)=='E')&&(*(p+4)=='C')&&(*(p+5)=='T')&&bond)
         {
           p=nskip(p,6);
           p=ncopy(cc,p,5);
