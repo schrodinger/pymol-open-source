@@ -6,7 +6,7 @@
 #
 #- Building ----------------------------------------------------------
 #--- Tell "make" how to get to PyMOL 
-PYMOL_PATH = /Users/delwarl/pymol
+PYMOL_PATH = /Users/delwarl/fink/pymol
 #---------------------------------------------------------------------
 #
 #- Dependencies ------------------------------------------------------
@@ -14,11 +14,11 @@ PYMOL_PATH = /Users/delwarl/pymol
 XLIB_DIR = -L/usr/X11R6/lib
 XINC_DIR = -I/usr/X11R6/include
 #--- Python
-PYTHON_EXE = python
+PYTHON_EXE = /sw/bin/python2.3
 PYTHON_LIB =
 PYTHON_LIB_DIR = 
-PYTHON_INC_DIR = -I/sw/include/python2.2 \
-	-I/sw/include/python2.2/Numeric
+PYTHON_INC_DIR = -I/sw/include/python2.3 \
+	-I/sw/include/python2.3/Numeric
 #--- Other external dependencies
 EXT_INC_DIR = -I/sw/include
 EXT_LIB_DIR = -L/sw/lib
@@ -28,20 +28,20 @@ EXT_LIB_DIR = -L/sw/lib
 #--- System libraries
 LIBS = $(PYTHON_LIB) -lglut -lGL -lGLU -lpng $(ZLIB) -lm -lX11 -lXext
 #--- PyMOL configuration
-DEFS = -D_PYMOL_MODULE -D_PYMOL_NUMPY 
+DEFS = -D_PYMOL_MODULE -D_PYMOL_NUMPY -D_PYMOL_FINK
 #--- How we build shared libraries
-BUILD = -bundle -bundle_loader /sw/bin/python -flat_namespace -undefined suppress
+BUILD = -bundle -bundle_loader /sw/bin/python2.3 -flat_namespace -undefined suppress
 #--- What are we trying to build?
 DEST = -o modules/pymol/_cmd.so
 #--- Gcc Options for Linux
-CCOPT1 = -ffast-math -no-cpp-precomp -Wmissing-prototypes
+CCOPT1 = -no-cpp-precomp -Wmissing-prototypes -Wno-long-double
 #--- libraries for PyOpenGL 
 PYOGL_LIB =  -lglut -lGL -lGLU -lXmu -lXi
 #---------------------------------------------------------------------
 #
 #- Choose One --------------------------------------------------------
 #--- GCC Optimized
-CCOPT2 = -O3 -funroll-loops -fomit-frame-pointer
+CCOPT2 = -O3 -funroll-loops -fomit-frame-pointer -ffast-math 
 #--- GCC Profiling
 #CCOPT2 = -pg -O3 -funroll-loops
 #--- Debugging
