@@ -42,7 +42,7 @@ typedef struct Object {
   void (*fRender)(struct Object *I,int frame,CRay *ray,Pickable **pick);
   void (*fFree)(struct Object *I);
   int  (*fGetNFrame)(struct Object *I);
-  void (*fDescribeElement)(struct Object *I,int index);
+  void (*fDescribeElement)(struct Object *I,int index,char *buffer);
   CSetting **(*fGetSettingHandle)(struct Object *I,int state);
   int type;
   char Name[ObjNameMax];

@@ -198,7 +198,8 @@ def parse(s):
                            if len(tmp_cmd):
                               if tmp_cmd[0] not in ['#','_','/']: # suppress comments, internals, python
                                  print "PyMOL>"+tmp_cmd
-                              elif tmp_cmd[1:2] in [' ','']: # "_ " suppresses echo
+                              elif tmp_cmd[0]=='_' and \
+                                   tmp_cmd[1:2] in [' ','']: # "_ " suppresses echo
                                  inp_cmd=inp_cmd[2:]
                            if(parse(inp_cmd)==None): # RECURSION
                               break # abort command gets us out

@@ -59,7 +59,7 @@ void ObjectMoleculeFree(ObjectMolecule *I);
 void ObjectMoleculeUpdate(ObjectMolecule *I);
 int ObjectMoleculeGetNFrames(ObjectMolecule *I);
 
-void ObjectMoleculeDescribeElement(ObjectMolecule *I,int index);
+void ObjectMoleculeDescribeElement(ObjectMolecule *I,int index,char *buffer);
 
 void ObjectMoleculeSeleOp(ObjectMolecule *I,int sele,ObjectMoleculeOpRec *op);
 
@@ -4254,48 +4254,11 @@ void ObjectMoleculeSeleOp(ObjectMolecule *I,int sele,ObjectMoleculeOpRec *op)
   }
 }
 /*========================================================================*/
-void ObjectMoleculeDescribeElement(ObjectMolecule *I,int index) 
+void ObjectMoleculeDescribeElement(ObjectMolecule *I,int index, char *buffer) 
 {
   AtomInfoType *ai;
   ai=I->AtomInfo+index;
-  if(Feedback(FB_ObjectMolecule,FB_Results)) {
-    PRINTF " You clicked %s: ( /%s/%s/%s/%s/%s )",ai->resn,I->Obj.Name,ai->segi,ai->chain,ai->resi,ai->name
- ENDF;
-      
-    /*    PRINTF " Click: ( %s",I->Obj.Name ENDF;
-          if(ai->segi[0]) {
-          PRINTF " & segi %s",ai->segi ENDF;
-          } else {
-          PRINTF " & segi ''" ENDF;
-          }
-          if(ai->chain[0]) {
-          PRINTF " & chain %s",ai->chain ENDF;
-          } else {
-          PRINTF " & chain ''" ENDF;
-          }
-          if(ai->resn[0]) {
-          PRINTF " & resn %s",ai->resn ENDF;
-          } else {
-          PRINTF " & resn ''" ENDF;
-          }
-          if(ai->resi[0]) {
-          PRINTF " & resi %s",ai->resi ENDF;
-          } else {
-          PRINTF " & resi ''" ENDF;
-          }
-          if(ai->name[0]) {
-          PRINTF " & name %s",ai->name ENDF;
-          } else {
-          PRINTF " & name ''" ENDF;
-          }
-    PRINTF " )\n" ENDF;*/
-
-  }
-    /*    
-[#%d:%s:%s:%d]
-ai->id,ai->elem,
-          ai->textType,ai->customType,*/
-  OrthoRestorePrompt();
+  sprintf(buffer,"%s: ( /%s/%s/%s/%s/%s )",ai->resn,I->Obj.Name,ai->segi,ai->chain,ai->resi,ai->name);
 }
 /*========================================================================*/
 int ObjectMoleculeGetNFrames(ObjectMolecule *I)
@@ -4487,7 +4450,7 @@ ObjectMolecule *ObjectMoleculeNew(int discreteFlag)
   I->Obj.fFree= (void (*)(struct Object *))ObjectMoleculeFree;
   I->Obj.fUpdate=  (void (*)(struct Object *)) ObjectMoleculeUpdate;
   I->Obj.fGetNFrame = (int (*)(struct Object *)) ObjectMoleculeGetNFrames;
-  I->Obj.fDescribeElement = (void (*)(struct Object *,int index)) ObjectMoleculeDescribeElement;
+  I->Obj.fDescribeElement = (void (*)(struct Object *,int index,char *buffer)) ObjectMoleculeDescribeElement;
   I->Obj.fGetSettingHandle = (CSetting **(*)(struct Object *,int state))
     ObjectMoleculeGetSettingHandle;
   I->AtomInfo=VLAMalloc(10,sizeof(AtomInfoType),2,true); /* autozero here is important */

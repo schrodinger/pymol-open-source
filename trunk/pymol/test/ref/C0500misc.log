@@ -14,6 +14,7 @@ PyMOL>cmd.do("print 'it be done'")
 PyMOL>print 'it be done'
 it be done
 PyMOL>viewport 200,150
+height 170 width 360
 PyMOL>stereo on
 Error: stereo not available
 PyMOL>turn x,90
@@ -65,6 +66,7 @@ PyMOL>rebuild
 PyMOL>refresh
 PyMOL>set line_smooth=1
  Setting: line_smooth set to 1.00000.
+height 170 width 360
 PyMOL>label (all),chain
  Label: labelled 107 atoms.
 PyMOL>label (all),''
@@ -216,11 +218,11 @@ PyMOL>torsion 180
 PyMOL>print cmd.get_model().__class__
 chempy.models.Indexed
 PyMOL>print cmd.get_area()
-1388.0357666
+1388.03564453
 PyMOL>print cmd.get_area()
-1388.0357666
+1388.03564453
 PyMOL>print cmd.get_area("(name ca)")
-100.462539673
+100.462501526
 PyMOL>print cmd.get_names()
 ['pept', 'dist01', 'dist02', 'tst', 'tst2']
 PyMOL>print cmd.get_type('pept')
@@ -228,8 +230,8 @@ object:molecule
 PyMOL>print cmd.identify("(i;7)")
 [52, 53, 54, 55]
 PyMOL>print cmd.get_extent()
-[[-5.47092437744, -21.4213943481, 13.156999588], [9.91899967194, 0.86299991607
-7, 27.9338817596]]
+[[-5.4709239006, -21.4213943481, 13.156999588], [9.91899967194, 0.863000154495
+, 27.9338817596]]
 PyMOL>sort
 PyMOL>sort pept
 PyMOL>spheroid
