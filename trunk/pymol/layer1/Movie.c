@@ -109,6 +109,7 @@ void MoviePNG(char *prefix,int save)
   SceneSetFrame(0,0);
   MoviePlay(cMoviePlay);
   VLACheck(I->Image,ImageType,nFrame);
+
   OrthoBusySlow(0,nFrame);
   for(a=0;a<nFrame;a++)
 	 {
