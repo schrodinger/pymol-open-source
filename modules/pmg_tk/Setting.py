@@ -151,9 +151,9 @@ class Setting:
          'backface_cull'       :
          (lambda s,a: (cmd.set(a,("%1.0f" % s.backface_cull.get()),log=1))),
          'depth_cue'       :
-         (lambda s,a: s.depth_cue_set(a)),
+         (lambda s,a: s.depth_cue_set()),
          'specular'       :
-         (lambda s,a:s.specular_set(a)),
+         (lambda s,a:s.specular_set()),
 #         (lambda s,a: (cmd.set(a,("%1.0f" % (s.specular.get()*0.8)),log=1))),
 
          'cartoon_round_helices'       :
@@ -299,7 +299,7 @@ class Setting:
       cmd.set("depth_cue",("%1.0f" % self.depth_cue.get()),log=1)
       cmd.set("ray_trace_fog",("%1.0f" % self.depth_cue.get()),log=1)
 
-   def specular_set(self,sttng):
+   def specular_set(self):
       cmd.set("specular",("%0.3f" % (self.specular.get()*0.8)),log=1,quiet=0) # hardcoded workaround
       cmd.set("spec_reflect",("%0.3f" % (self.specular.get()*0.500)),log=1,quiet=0) # workaround 
       

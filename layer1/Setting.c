@@ -1203,6 +1203,7 @@ void SettingGenerateSideEffects(int index,char *sele,int state)
   case cSetting_cartoon_helix_radius:
   case cSetting_cartoon_throw:
   case cSetting_cartoon_debug:
+  case cSetting_cartoon_highlight_color:
   case cSetting_cartoon_discrete_colors:
     ExecutiveInvalidateRep(inv_sele,cRepCartoon,cRepInvRep);
     SceneChanged();
@@ -1952,6 +1953,8 @@ void SettingInitGlobal(void)
   SettingSet_i(I,cSetting_auto_color_next,0);
 
   SettingSet_color(I,cSetting_ray_interior_color,"-1"); /* no color */
+
+  SettingSet_color(I,cSetting_cartoon_highlight_color,"-1"); /* no color */
 
 }
 

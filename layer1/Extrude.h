@@ -41,21 +41,22 @@ void ExtrudeTruncate(CExtrude *I,int n);
 void ExtrudeFree(CExtrude *I);
 
 void ExtrudeCircle(CExtrude *I, int n, float size);
-void ExtrudeRectangle(CExtrude *I,float width,float length);
+void ExtrudeRectangle(CExtrude *I,float width,float length,int mode);
 void ExtrudeOval(CExtrude *I,int n,float width,float length);
 
 
 void ExtrudeBuildNormals1f(CExtrude *I);
 void ExtrudeBuildNormals2f(CExtrude *I);
 void ExtrudeComputeTangents(CExtrude *I);
-void ExtrudeCGOSurfaceTube(CExtrude *I,CGO *cgo,int cap);
-void ExtrudeCGOSurfacePolygon(CExtrude *I,CGO *cgo,int cap);
-void ExtrudeCGOSurfacePolygonTaper(CExtrude *I,CGO *cgo,int sampling);
-void ExtrudeCGOSurfaceStrand(CExtrude *I,CGO *cgo,int sampling);
+void ExtrudeCGOSurfaceTube(CExtrude *I,CGO *cgo,int cap,float *color_override);
+void ExtrudeCGOSurfacePolygon(CExtrude *I,CGO *cgo,int cap,float *color_override);
+void ExtrudeCGOSurfacePolygonTaper(CExtrude *I,CGO *cgo,
+                                   int sampling,float *color_override);
+void ExtrudeCGOSurfaceStrand(CExtrude *I,CGO *cgo,int sampling,float *color_override);
 void ExtrudeCGOTraceFrame(CExtrude *I,CGO *cgo);
 void ExtrudeCGOTrace(CExtrude *I,CGO *cgo);
 void ExtrudeCGOTraceAxes(CExtrude *I,CGO *cgo);
-void ExtrudeDumbbell1(CExtrude *I,float width,float length);
+void ExtrudeDumbbell1(CExtrude *I,float width,float length,int mode);
 void ExtrudeDumbbell2(CExtrude *I, int n,int sign,float length,float size);
 void ExtrudeDumbbellEdge(CExtrude *I,int samp,int sign,float length);
 
