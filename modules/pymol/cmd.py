@@ -716,6 +716,18 @@ def translate_atom(sele1,v0,v1,v2,state=0,mode=0,log=0):
       unlock()
    return r
 
+def get_color_tuple(name):
+   r = None
+   try:
+      lock()
+      r = _cmd.get_color(name,0)
+      if r==None:
+         print "Error: unknown color '%s'."%name
+         raise QuietException
+   finally:
+      unlock()
+   return r
+
 def get_color_indices():
    r = None
    try:
@@ -4889,6 +4901,34 @@ SEE ALSO
    finally:
       unlock()
 
+def recolor(selection='all',representation='everything'):
+   '''
+DESCRIPTION
+
+   "rebuild" forces PyMOL to reapply colors to geometric objects in
+   case any of them have gone out of sync.
+
+USAGE
+   
+   recolor [selection [, representation ]]
+   
+PYMOL API
+
+   cmd.recolor(string selection = 'all', string representation = 'everything')
+
+SEE ALSO
+
+   recolor
+'''
+   r = 1
+   selection = selector.process(selection)
+   representation = repres_sc.auto_err(representation,'representation')
+   repn = repres[representation];
+   try:
+      lock()
+      r = _cmd.recolor(selection,repn)
+   finally:
+      unlock()
 
 def set_title(object,state,text):
    '''
@@ -5951,6 +5991,7 @@ keyword = {
    'pwd'           : [pwd          , 0 , 0 , ''  , parsing.STRICT ],
    'ray'           : [ray          , 0 , 0 , ''  , parsing.STRICT ],
    'rebuild'       : [rebuild      , 0 , 0 , ''  , parsing.STRICT ],
+   'recolor'       : [recolor      , 0 , 0 , ''  , parsing.STRICT ],   
    'redo'          : [redo         , 0 , 0 , ''  , parsing.STRICT ],
    'refresh'       : [refresh      , 0 , 0 , ''  , parsing.STRICT ],
    'remove'        : [remove       , 0 , 0 , ''  , parsing.STRICT ],

@@ -251,6 +251,7 @@ static PyObject *CmdProtect(PyObject *self, PyObject *args);
 static PyObject *CmdQuit(PyObject *self, 	PyObject *args);
 static PyObject *CmdRay(PyObject *self, 	PyObject *args);
 static PyObject *CmdRebuild(PyObject *self, PyObject *args);
+static PyObject *CmdRecolor(PyObject *self, PyObject *args);
 static PyObject *CmdHFill(PyObject *self, PyObject *args);
 static PyObject *CmdRemove(PyObject *self, PyObject *args);
 static PyObject *CmdRemovePicked(PyObject *self, PyObject *args);
@@ -390,6 +391,7 @@ static PyMethodDef Cmd_methods[] = {
 	{"quit",	                 CmdQuit,                 METH_VARARGS },
 	{"ready",                 CmdReady,                METH_VARARGS },
    {"rebuild",               CmdRebuild,              METH_VARARGS },
+   {"recolor",               CmdRecolor,              METH_VARARGS },
 	{"refresh",               CmdRefresh,              METH_VARARGS },
 	{"refresh_now",           CmdRefreshNow,           METH_VARARGS },
 	{"refresh_wizard",        CmdRefreshWizard,        METH_VARARGS },
@@ -437,14 +439,26 @@ static PyObject *CmdGetColor(PyObject *self, PyObject *args)
   int mode;
   int ok = false;
   int a,nc,nvc;
+  float *rgb;
+  int index;
   PyObject *result = NULL;
-  PyObject *cname,*cindex;
   PyObject *tup;
   ok = PyArg_ParseTuple(args,"si",&name,&mode);
   if(ok) {
     APIEntry();
     switch(mode) {
-    case 1: /* get named color names (THOSE WITH NO NUMBERS) */
+    case 0: /* by name or index, return floats */
+      index = ColorGetIndex(name);
+      if(index>=0) {
+        rgb = ColorGet(index);
+        tup = PyTuple_New(3);
+        PyTuple_SetItem(tup,0,PyFloat_FromDouble(*(rgb++)));
+        PyTuple_SetItem(tup,1,PyFloat_FromDouble(*(rgb++)));
+        PyTuple_SetItem(tup,2,PyFloat_FromDouble(*rgb));
+        result=tup;
+      }
+      break;
+    case 1: /* get color names with NO NUMBERS in their names */
       PBlock();
       nc=ColorGetNColor();
       nvc=0;
@@ -1348,6 +1362,33 @@ static PyObject *CmdCopy(PyObject *self,   PyObject *args)
     APIEntry();
     ExecutiveCopy(str1,str2); /* TODO STATUS */
     APIExit();
+  }
+  return(APIStatus(ok));
+}
+
+static PyObject *CmdRecolor(PyObject *self,   PyObject *args)
+{
+  char *str1;
+  OrthoLineType s1;
+  int ok=true;
+  int rep=-1;
+  ok = PyArg_ParseTuple(args,"si",&str1,&rep);
+  PRINTFD(FB_CCmd)
+    " CmdRebuild: called with %s.\n",str1
+    ENDFD;
+
+  if (ok) {
+    APIEntry();
+    if(WordMatch(str1,"all",true)<0)
+      ExecutiveInvalidateRep(str1,rep,cRepInvColor);
+    else {
+      SelectorGetTmp(str1,s1);
+      ExecutiveInvalidateRep(s1,rep,cRepInvColor);
+      SelectorFreeTmp(s1); 
+    }
+    APIExit();
+  } else {
+    ok = -1; /* special error convention */
   }
   return(APIStatus(ok));
 }
