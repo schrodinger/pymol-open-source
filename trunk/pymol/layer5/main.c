@@ -446,7 +446,7 @@ void launch(void)
 {
   if(PMGUI) {
     
-    on_exit(MainOnExit,NULL); /* register callback to help prevent crashes
+    atexit(MainOnExit); /* register callback to help prevent crashes
                                  when GLUT spontaneously kills us */
   
     glutInit(&myArgc, myArgv);
