@@ -1491,7 +1491,7 @@ void SettingFreeGlobal(void)
   SettingPurge(I);
 }
 /*========================================================================*/
-void SettingInitGlobal(int alloc)
+void SettingInitGlobal(int alloc,int reset_gui)
 {
   CSetting *I=&Setting;
 
@@ -1702,9 +1702,11 @@ void SettingInitGlobal(int alloc)
 
   SettingSet_f(I,cSetting_cartoon_rect_width, 0.4F);
 
-  SettingSet_i(I,cSetting_internal_gui_width, cOrthoRightSceneMargin);
+  if(reset_gui) {
+    SettingSet_i(I,cSetting_internal_gui_width, cOrthoRightSceneMargin);
 
-  SettingSet_b(I,cSetting_internal_gui, 1);
+    SettingSet_b(I,cSetting_internal_gui, 1);
+  }
 
   SettingSet_f(I,cSetting_cartoon_oval_length, 1.35F);
 

@@ -127,13 +127,13 @@ if __name__=='pymol.invocation':
                break # double hypen signals end of PyMOL arguments
             if ("A" in a) or ("a" in a): # application configuration
                new_args = []
-               # ====== A5 - FEDORA: Protein Viewing ======
+               # ====== mode 5 - simple helper application ======
                if a[2:3] == "5": 
                   new_args = ["-qxiICUF",
                      "-X","68",
                      "-Y","100",
-                     "-L","$PYMOL_PATH/scripts/metaphorics/fedora.pml"]
-               # ==========================================
+                     ]
+               # ===============================================
                new_args.reverse()
                av = av + new_args
             if "c" in a:
@@ -210,12 +210,14 @@ if __name__=='pymol.invocation':
                options.auto_reinitialize = 1
             if "L" in a:
                options.after_load_script = av.pop()
-            if "h" in a:
+            if "h" in a: # generic helper application
                options.internal_gui = 0
                options.external_gui = 0
                options.internal_feedback = 0
                options.show_splash = 1
          else:
+            if a[-4:] in (".pm5",".PM5"): # mode 5 helper application 
+               av.append("-A5")               
             options.deferred.append(a)
             loaded_something = 1
       if loaded_something and (options.after_load_script!=""):
