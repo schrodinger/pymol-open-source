@@ -166,7 +166,7 @@ void CGORenderRay(CGO *I,CRay *ray,float *color,CSetting *set1,CSetting *set2);
 void CGOReset(CGO *I);
 
 PyObject *CGOAsPyList(CGO *I);
-CGO *CGONewFromPyList(PyObject *list);
+CGO *CGONewFromPyList(PyObject *list,int version);
 void CGOPickColor(CGO *I,int index,int bond);
 
 #endif

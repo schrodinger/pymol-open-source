@@ -65,7 +65,7 @@ static PyObject *ObjectCGOAllStatesAsPyList(ObjectCGO *I)
 
 }
 
-static int ObjectCGOStateFromPyList(ObjectCGOState *I,PyObject *list)
+static int ObjectCGOStateFromPyList(ObjectCGOState *I,PyObject *list,int version)
 {
   int ok=true;
   int ll;
@@ -80,19 +80,19 @@ static int ObjectCGOStateFromPyList(ObjectCGOState *I,PyObject *list)
     if(tmp == Py_None)
       I->std = NULL;
     else 
-      ok = ((I->std=CGONewFromPyList(PyList_GetItem(list,0)))!=NULL);
+      ok = ((I->std=CGONewFromPyList(PyList_GetItem(list,0),version))!=NULL);
   }
   if(ok) {
     tmp = PyList_GetItem(list,1);
     if(tmp == Py_None)
       I->ray = NULL;
     else 
-      ok = ((I->ray=CGONewFromPyList(PyList_GetItem(list,1)))!=NULL);
+      ok = ((I->ray=CGONewFromPyList(PyList_GetItem(list,1),version))!=NULL);
   }
   return(ok);
 }
 
-static int ObjectCGOAllStatesFromPyList(ObjectCGO *I,PyObject *list)
+static int ObjectCGOAllStatesFromPyList(ObjectCGO *I,PyObject *list,int version)
 {
   int ok=true;
   int a;
@@ -100,14 +100,14 @@ static int ObjectCGOAllStatesFromPyList(ObjectCGO *I,PyObject *list)
   if(ok) ok=PyList_Check(list);
   if(ok) {
     for(a=0;a<I->NState;a++) {
-      ok = ObjectCGOStateFromPyList(I->State+a,PyList_GetItem(list,a));
+      ok = ObjectCGOStateFromPyList(I->State+a,PyList_GetItem(list,a),version);
       if(!ok) break;
     }
   }
   return(ok);
 }
 
-int ObjectCGONewFromPyList(PyObject *list,ObjectCGO **result)
+int ObjectCGONewFromPyList(PyObject *list,ObjectCGO **result,int version)
 {
   int ok = true;
   ObjectCGO *I=NULL;
@@ -120,7 +120,7 @@ int ObjectCGONewFromPyList(PyObject *list,ObjectCGO **result)
 
   if(ok) ok = ObjectFromPyList(PyList_GetItem(list,0),&I->Obj);
   if(ok) ok = PConvPyIntToInt(PyList_GetItem(list,1),&I->NState);
-  if(ok) ok = ObjectCGOAllStatesFromPyList(I,PyList_GetItem(list,2));
+  if(ok) ok = ObjectCGOAllStatesFromPyList(I,PyList_GetItem(list,2),version);
   if(ok) {
     (*result) = I;
     ObjectCGORecomputeExtent(I);

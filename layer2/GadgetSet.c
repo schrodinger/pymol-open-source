@@ -167,7 +167,7 @@ int GadgetSetFetchNormal(GadgetSet *I,float *inp,float *out)
 }
 
 
-int GadgetSetFromPyList(PyObject *list,GadgetSet **gs)
+int GadgetSetFromPyList(PyObject *list,GadgetSet **gs,int version)
 {
   int ok = true;
   int ll;
@@ -201,10 +201,10 @@ int GadgetSetFromPyList(PyObject *list,GadgetSet **gs)
     if(ok&&I->NColor) ok = PConvPyListToFloatVLA(PyList_GetItem(list,5),&I->Color);
 
     if(ok) ok = ((tmp = PyList_GetItem(list,6))!=NULL);
-    if(ok&&(tmp!=Py_None)) ok = ((I->ShapeCGO=CGONewFromPyList(tmp))!=NULL);
+    if(ok&&(tmp!=Py_None)) ok = ((I->ShapeCGO=CGONewFromPyList(tmp,version))!=NULL);
 
     if(ok) ok = ((tmp = PyList_GetItem(list,7))!=NULL);
-    if(ok&&(tmp!=Py_None)) ok = ((I->PickShapeCGO=CGONewFromPyList(tmp))!=NULL);
+    if(ok&&(tmp!=Py_None)) ok = ((I->PickShapeCGO=CGONewFromPyList(tmp,version))!=NULL);
 
     if(ok&&I->ShapeCGO) if(CGOCheckForText(I->ShapeCGO)) {
       CGOPreloadFonts(I->ShapeCGO);

@@ -541,7 +541,7 @@ static PyObject *ExecutiveGetExecObject(SpecRec *rec)
   return(result);  
 }
 
-static int ExecutiveSetNamedEntries(PyObject *names)
+static int ExecutiveSetNamedEntries(PyObject *names,int version)
 {
   CExecutive *I = &Executive;  
   int ok=true;
@@ -588,10 +588,10 @@ static int ExecutiveSetNamedEntries(PyObject *names)
           if(ok) ok = ObjectSurfaceNewFromPyList(PyList_GetItem(cur,5),(ObjectSurface**)&rec->obj);
           break;
         case cObjectCGO:
-          if(ok) ok = ObjectCGONewFromPyList(PyList_GetItem(cur,5),(ObjectCGO**)&rec->obj);
+          if(ok) ok = ObjectCGONewFromPyList(PyList_GetItem(cur,5),(ObjectCGO**)&rec->obj,version);
           break;
         case cObjectGadget:
-          if(ok) ok = ObjectGadgetNewFromPyList(PyList_GetItem(cur,5),(ObjectGadget**)&rec->obj);
+          if(ok) ok = ObjectGadgetNewFromPyList(PyList_GetItem(cur,5),(ObjectGadget**)&rec->obj,version);
           break;
         default:
           PRINTFB(FB_Executive,FB_Errors)
@@ -857,7 +857,7 @@ int ExecutiveSetSession(PyObject *session)
   if(ok) {
     tmp = PyDict_GetItemString(session,"names");
     if(tmp) {
-      if(ok) ok=ExecutiveSetNamedEntries(tmp);
+      if(ok) ok=ExecutiveSetNamedEntries(tmp,version);
       if(ok) ok=ExecutiveSetSelections(tmp);
     }
     if(PyErr_Occurred()) {

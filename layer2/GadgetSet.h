@@ -46,7 +46,7 @@ typedef struct GadgetSet {
 
 GadgetSet *GadgetSetNew(void);
 PyObject *GadgetSetAsPyList(GadgetSet *I);
-int GadgetSetFromPyList(PyObject *list,GadgetSet **cs);
+int GadgetSetFromPyList(PyObject *list,GadgetSet **cs,int version);
 int GadgetSetGetExtent(GadgetSet *I,float *mn,float *mx);
 int GadgetSetFetch(GadgetSet *I,float *inp,float *out);
 int GadgetSetFetchColor(GadgetSet *I,float *inp,float *out);

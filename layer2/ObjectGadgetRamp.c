@@ -83,7 +83,7 @@ PyObject *ObjectGadgetRampAsPyList(ObjectGadgetRamp *I)
   return(PConvAutoNone(result));  
 }
 
-int ObjectGadgetRampNewFromPyList(PyObject *list,ObjectGadgetRamp **result)
+int ObjectGadgetRampNewFromPyList(PyObject *list,ObjectGadgetRamp **result,int version)
 {
   
   ObjectGadgetRamp *I = NULL;
@@ -98,7 +98,7 @@ int ObjectGadgetRampNewFromPyList(PyObject *list,ObjectGadgetRamp **result)
   /* TO SUPPORT BACKWARDS COMPATIBILITY...
    Always check ll when adding new PyList_GetItem's */
 
-  if(ok) ok = ObjectGadgetInitFromPyList(PyList_GetItem(list,0),&I->Gadget);
+  if(ok) ok = ObjectGadgetInitFromPyList(PyList_GetItem(list,0),&I->Gadget,version);
   if(ok) ok = PConvPyIntToInt(PyList_GetItem(list,1),&I->RampType);
   if(ok) ok = PConvPyIntToInt(PyList_GetItem(list,2),&I->NColor);
   if(ok&&I->NColor) ok = PConvPyListToFloatVLA(PyList_GetItem(list,3),&I->Level);
