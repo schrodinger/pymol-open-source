@@ -2556,7 +2556,7 @@ SEE ALSO
    '''
    try:
       lock()   
-      r = _cmd.zoom(str(selection),int(buffer))
+      r = _cmd.zoom(str(selection),float(buffer))
    finally:
       unlock()
    return r
