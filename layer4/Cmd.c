@@ -513,12 +513,12 @@ static PyObject *CmdSmooth(PyObject *self,PyObject *args)
   int ok=true;
   char *str1;
   OrthoLineType s1;
-  int int1,int2,int3,int4;
-  ok = PyArg_ParseTuple(args,"siiii",&str1,&int1,&int2,&int3,&int4);
+  int int1,int2,int3,int4,int5;
+  ok = PyArg_ParseTuple(args,"siiiii",&str1,&int1,&int2,&int3,&int4,&int5);
   if(ok) {
     SelectorGetTmp(str1,s1);
     APIEntry();
-    ok = ExecutiveSmooth(s1,int1,int2,int3,int4);
+    ok = ExecutiveSmooth(s1,int1,int2,int3,int4,int5);
     APIExit();
     SelectorFreeTmp(s1);
   }
@@ -3431,7 +3431,7 @@ static PyObject *CmdLoad(PyObject *self, PyObject *args)
       PRINTFD(FB_CCmd) " CmdLoad-DEBUG: loading TRJ\n" ENDFD;
       if(origObj) { /* always reinitialize topology objects from scratch */
         ObjectMoleculeLoadTRJFile((ObjectMolecule*)origObj,fname,frame,
-                                  1,1,1,-1,-1,NULL,1);
+                                  1,1,1,-1,-1,NULL,1,NULL);
         /* if(finish)
            ExecutiveUpdateObjectSelection(origObj); unnecc */
         sprintf(buf," CmdLoad: \"%s\" appended into object \"%s\".\n CmdLoad: %d total states in the object.\n",
@@ -3676,10 +3676,11 @@ static PyObject *CmdLoadTraj(PyObject *self, PyObject *args)
   OrthoLineType s1;
   char *str1;
   int ok=false;
+  float shift[3];
 
-  ok = PyArg_ParseTuple(args,"ssiiiiiiisi",&oname,&fname,&frame,&type,
+  ok = PyArg_ParseTuple(args,"ssiiiiiiisifff",&oname,&fname,&frame,&type,
                         &interval,&average,&start,&stop,&max,&str1,
-                        &image);
+                        &image,&shift[0],&shift[1],&shift[2]);
 
   buf[0]=0;
   if (ok) {
@@ -3708,7 +3709,7 @@ static PyObject *CmdLoadTraj(PyObject *self, PyObject *args)
       PRINTFD(FB_CCmd) " CmdLoadTraj-DEBUG: loading TRJ\n" ENDFD;
       if(origObj) { /* always reinitialize topology objects from scratch */
         ObjectMoleculeLoadTRJFile((ObjectMolecule*)origObj,fname,frame,
-                                  interval,average,start,stop,max,s1,image);
+                                  interval,average,start,stop,max,s1,image,shift);
         /* if(finish)
            ExecutiveUpdateObjectSelection(origObj); unnecc */
         sprintf(buf," CmdLoadTraj: \"%s\" appended into object \"%s\".\n CmdLoadTraj: %d total states in the object.\n",

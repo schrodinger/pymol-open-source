@@ -138,7 +138,8 @@ static char *skip_fortran(int num,int per_line,char *p)
 
 ObjectMolecule *ObjectMoleculeLoadTRJFile(ObjectMolecule *I,char *fname,int frame,
                                           int interval,int average,int start,
-                                          int stop,int max,char *sele,int image)
+                                          int stop,int max,char *sele,int image,
+                                          float *shift)
 {
   int ok=true;
   FILE *f;
@@ -150,7 +151,7 @@ ObjectMolecule *ObjectMoleculeLoadTRJFile(ObjectMolecule *I,char *fname,int fram
   int periodic=false;
   int angles=true;
   float f0,f1,f2,*fp;
-  float box[3],pre[3],post[3],angle[3];
+  float box[3],angle[3];
   float r_cent[3],r_trans[3];
   int r_act,r_val,r_cnt;
   float *r_fp_start=NULL,*r_fp_stop=NULL;
@@ -163,6 +164,10 @@ ObjectMolecule *ObjectMoleculeLoadTRJFile(ObjectMolecule *I,char *fname,int fram
   int ncnt=0;
   int sele0 = SelectorIndexByName(sele);
   int *xref = NULL;
+  float zerovector[3]={0.0,0.0,0.0};
+
+  if(!shift)
+    shift = zerovector;
   CoordSet *cs = NULL;
   if(interval<1)
     interval=1;
@@ -330,31 +335,15 @@ ObjectMolecule *ObjectMoleculeLoadTRJFile(ObjectMolecule *I,char *fname,int fram
                       cs->PeriodicBox->Angle[0] = angle[0];
                       cs->PeriodicBox->Angle[1] = angle[1];
                       cs->PeriodicBox->Angle[2] = angle[2];
-                    } else if(cs->PeriodicBoxType==cCSet_Octahedral) {
-                      cs->PeriodicBox->Angle[0]=90.0;
-                      cs->PeriodicBox->Angle[1]=90.0;
-                      cs->PeriodicBox->Angle[2]=90.0;
-                    }
+                    } 
                     CrystalUpdate(cs->PeriodicBox);
-                    CrystalDump(cs->PeriodicBox);
-                    pre[0]=1000.0;
-                    pre[1]=1000.0;
-                    pre[2]=1000.0;
-                    if(cs->PeriodicBoxType==cCSet_Octahedral) {
-                      pre[0]+=0.5;
-                      pre[1]+=0.5;
-                      pre[2]+=0.5;
-                      post[0]=-0.5;
-                      post[1]=-0.5;
-                      post[2]=-0.5;
-                    } else {
-                      post[0]=0.0;
-                      post[1]=0.0;
-                      post[2]=0.0;
-                    }
+                    /*                    CrystalDump(cs->PeriodicBox);*/
                     p=nextline(p);
                     b=0;
                   }
+
+                  if(cs->PeriodicBoxType==cCSet_Octahedral)
+                    periodic=false; /* can't handle this yet... */
                 }
                 
                 if((stop>0)&&(cnt>=stop))
@@ -451,9 +440,9 @@ ObjectMolecule *ObjectMoleculeLoadTRJFile(ObjectMolecule *I,char *fname,int fram
                               r_cent[1]/=r_cnt;
                               r_cent[2]/=r_cnt;
                               transform33f3f(cs->PeriodicBox->RealToFrac,r_cent,r_cent);
-                              r_trans[0]=fmod(pre[0]+r_cent[0],1.0)+post[0];
-                              r_trans[1]=fmod(pre[1]+r_cent[1],1.0)+post[1];
-                              r_trans[2]=fmod(pre[2]+r_cent[2],1.0)+post[2];
+                              r_trans[0]=fmod(1000.0+shift[0]+r_cent[0],1.0);
+                              r_trans[1]=fmod(1000.0+shift[1]+r_cent[1],1.0);
+                              r_trans[2]=fmod(1000.0+shift[2]+r_cent[2],1.0);
                               r_trans[0]-=r_cent[0];
                               r_trans[1]-=r_cent[1];
                               r_trans[2]-=r_cent[2];
@@ -864,6 +853,9 @@ CoordSet *ObjectMoleculeTOPStr2CoordSet(char *buffer,
   switch(IFBOX) {
   case 2:
     cset->PeriodicBoxType = cCSet_Octahedral;
+    PRINTFB(FB_ObjectMolecule,FB_Details)
+      " TOPStrToCoordSet: Warning: can't currently image a truncated octahedron...\n"
+      ENDFB;
     break;
   case 1:
     cset->PeriodicBoxType = cCSet_Orthogonal;
@@ -1333,25 +1325,21 @@ CoordSet *ObjectMoleculeTOPStr2CoordSet(char *buffer,
         cset->PeriodicBox->Dim[2] = BOX3;
         if((BETA > 109.47) && (BETA < 109.48)) {
           cset->PeriodicBoxType=cCSet_Octahedral;
-        }
-        if(cset->PeriodicBoxType==cCSet_Octahedral) {
-          cset->PeriodicBox->Angle[0]=90.0; 
+          cset->PeriodicBox->Angle[0]=2.0*acos(1.0/sqrt(3.0))*180.0/PI;
+          cset->PeriodicBox->Angle[1]=2.0*acos(1.0/sqrt(3.0))*180.0/PI;
+          cset->PeriodicBox->Angle[2]=2.0*acos(1.0/sqrt(3.0))*180.0/PI;
+        } else if(BETA==60.0) {
+          cset->PeriodicBox->Angle[0]=60.0; /* rhombic dodecahedron (from ptraj.c) */
           cset->PeriodicBox->Angle[1]=90.0;
-          cset->PeriodicBox->Angle[2]=90.0;
+          cset->PeriodicBox->Angle[2]=60.0;
         } else {
-          if(BETA==60.0) {
-            cset->PeriodicBox->Angle[0]=60.0; /* rhombic dodecahedron (from ptraj.c) */
-            cset->PeriodicBox->Angle[1]=90.0;
-            cset->PeriodicBox->Angle[2]=60.0;
-          } else {
-            cset->PeriodicBox->Angle[0]=90.0;
-            cset->PeriodicBox->Angle[1]=BETA;
-            cset->PeriodicBox->Angle[2]=90.0;
-          }
+          cset->PeriodicBox->Angle[0]=90.0;
+          cset->PeriodicBox->Angle[1]=BETA;
+          cset->PeriodicBox->Angle[2]=90.0;
         }
         
         CrystalUpdate(cset->PeriodicBox);
-        CrystalDump(cset->PeriodicBox);
+        /*        CrystalDump(cset->PeriodicBox);*/
       }
       /* skip periodic box */
       

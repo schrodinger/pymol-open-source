@@ -19,7 +19,7 @@ import cmd
 from cmd import _cmd,lock,unlock,Shortcut,QuietException, \
      _feedback,fb_module,fb_mask, \
      file_ext_re,safe_oname_re, \
-     _load
+     _load, is_list
 import selector
 
 try:
@@ -146,29 +146,39 @@ PYMOL API
    return apply(load_object,lst,kw)
 
 def load_traj(filename,object='',state=0,format='',interval=1,
-              average=1,start=1,stop=-1,max=-1,selection='all',image=1):
+              average=1,start=1,stop=-1,max=-1,selection='all',image=1,
+              shift=[0.0,0.0,0.0]):
    '''
 DESCRIPTION
   
    "load_traj" reads trajectory files (currently just AMBER files).
    The file extension is used to determine the format.
-   AMBER files must end in ".trj",
+   
+   AMBER files must end in ".trj" 
  
 USAGE
  
    load_traj filename [,object [,state [,format [,interval [,average ]
-                      [,start [, stop [, selection [, image ]]]]]]]]
+                      [,start [,stop [,max [,selection [,image [,shift
+                      ]]]]]]]]]
  
 PYMOL API
   
-   cmd.load_traj( filename [,object [,state [,format [,interval [,average ]
-                      [,start [, stop [, max [, selection [, image]]]]]]]]]
+   cmd.load_traj(filename,object='',state=0,format='',interval=1,
+              average=1,start=1,stop=-1,max=-1,selection='all',image=1,
+              shift=[0.0,0.0,0.0])
 
 NOTES
 
    You must first load a corresponding topology file before attempting
    to load a trajectory file.
-   
+
+   PyMOL does not know how to wrap the truncated octahedron used by Amber
+   You will need to use the "ptraj" program first to do this.
+
+   The average option is not a running average.  To perform this type of
+   average, use the "smooth" command after loading the trajectory file.
+
 SEE ALSO
 
    load
@@ -185,6 +195,12 @@ SEE ALSO
       stop = int(stop)
       max = int(max)
       image = int(image)
+      shift = eval(shift) # dangerous
+      if is_list(shift):
+         shift = [float(shift[0]),float(shift[1]),float(shift[2])]
+      else:
+         shift = [float(shift),float(shift),float(shift)]
+      
       # preprocess selection
       selection = selector.process(selection)
       #   
@@ -226,7 +242,9 @@ SEE ALSO
          r = _cmd.load_traj(str(oname),fname,int(state)-1,int(ftype),
                             int(interval),int(average),int(start),
                             int(stop),int(max),str(selection),
-                            int(image))
+                            int(image),
+                            float(shift[0]),float(shift[1]),
+                            float(shift[2]))
    finally:
       unlock()
    return r

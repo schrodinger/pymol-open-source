@@ -68,16 +68,40 @@ undocumented.
       unlock()
    return r
 
-def smooth(cycles,selection,first,last,window):
+def smooth(selection="all",first=1,last=0,window=5,passes=1,ends=1):
    '''
-undocumented
-   '''
+DESCRIPTION
+  
+   "smooth" performs a window average over a series of states.  This
+   type of averaging is often used to suppress high-frequency vibrations
+   in a molecular dynamics trajectory.
+   
+USAGE
+ 
+   smooth [selection [,window [,first [,last [,passes [, ends]]]]]]
+ 
+SEE ALSO
+
+   load_traj
+
+ARGUMENTS
+
+   ends (0 or 1) controls whether or not the end states are also smoothed
+
+NOTES
+
+   This function is not memory efficient.  For reasons of flexibility,
+   it uses two additional copies of every atomic coordinate for the
+   calculation.  So, if you are memory-constrained in visualizing MD
+   trajectories, you may want to use an external tool such as ptraj
+   to perform smoothing before loading coordinates into PyMOL.
+'''
    r = 0
    selection = selector.process(selection)   
    try:
       lock()
-      r = _cmd.smooth(str(selection),int(cycles),
-                      int(first)-1,int(last)-1,int(window))
+      r = _cmd.smooth(str(selection),int(passes),
+                      int(first)-1,int(last)-1,int(window),int(ends))
    finally:
       unlock()
    return r
@@ -121,7 +145,7 @@ def set_geometry(selection,geometry,valence):
    '''
 DESCRIPTION
   
-   "set_geometry" changes PyMOL's assumptions about the proper valence
+   "set_geometry" changes PyMOL\'s assumptions about the proper valence
    and geometry of the picked atom.
       
 USAGE

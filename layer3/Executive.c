@@ -226,7 +226,7 @@ if(crystal)
   return(ok);
 }
 
-int ExecutiveSmooth(char *name,int cycles,int first,int last,int window)
+int ExecutiveSmooth(char *name,int cycles,int first,int last,int window,int ends)
 {
   int sele = -1;
   ObjectMoleculeOpRec op;
@@ -235,12 +235,13 @@ int ExecutiveSmooth(char *name,int cycles,int first,int last,int window)
   int n_state;
   float *coord0=NULL,*coord1=NULL;
   int *flag0=NULL,*flag1=NULL;
-  int a,b,c,d,cnt;
+  int a,b,c,d,st,cnt;
   float i_cnt;
   int n_atom;
   int ok=true;
-  int half;
-  int range;
+  int backward;
+  int forward;
+  int range,offset;
   float *v0,*v1;
   float sum[3];
   WordType all = "_all";
@@ -256,7 +257,6 @@ int ExecutiveSmooth(char *name,int cycles,int first,int last,int window)
   }
   sele=SelectorIndexByName(name);
 
-
   if(sele>=0) {
     if(last<0) 
       last = ExecutiveCountStates(name);
@@ -267,12 +267,20 @@ int ExecutiveSmooth(char *name,int cycles,int first,int last,int window)
     }
     n_state=last-first+1;
 
-    half=window/2;
-    range = (last-half)-(first+half)+1;
+    backward=(window+1)/2;
+    forward=window/2;
+
+    if(ends) {
+      range = (last-first)+1;
+      offset = 0;
+    } else {
+      range = (last-forward)-(first+backward)+1;
+      offset = backward;
+    }
     
     PRINTFD(FB_Executive)
-      " ExecutiveSmooth: first %d last %d n_state %d half %d range %d\n",
-      first,last,n_state,half,range
+      " ExecutiveSmooth: first %d last %d n_state %d backward %d forward %d range %d\n",
+      first,last,n_state,backward,forward,range
       ENDFD;
 
     if(n_state>=window) {
@@ -289,79 +297,97 @@ int ExecutiveSmooth(char *name,int cycles,int first,int last,int window)
         flag0 = Alloc(int,n_atom*n_state);
         flag1 = Alloc(int,n_atom*n_state);
         
-	
-	/* clear the arrays */
-	
-	UtilZeroMem(coord0,sizeof(float)*3*n_atom*n_state);
-	UtilZeroMem(flag0,sizeof(int)*n_atom*n_state);
-	
-	/* get the data */
-	
-	op.code = OMOP_CSetIdxGetAndFlag;
-	op.i1 = n_atom; 
-	op.i2 = 0;
-	op.cs1 = first;
-	op.cs2 = last;
-	op.vv1 = coord0;
-	op.ii1 = flag0;
-	op.nvv1 = 0;          
-	ExecutiveObjMolSeleOp(sele,&op);    
+        /* clear the arrays */
+        
+        UtilZeroMem(coord0,sizeof(float)*3*n_atom*n_state);
+        UtilZeroMem(flag0,sizeof(int)*n_atom*n_state);
+        
+        /* get the data */
+        
+        PRINTFB(FB_Executive,FB_Actions)
+          " Smooth: copying coordinates to temporary arrays..\n"
+          ENDFB;
+        op.code = OMOP_CSetIdxGetAndFlag;
+        op.i1 = n_atom; 
+        op.i2 = 0;
+        op.cs1 = first;
+        op.cs2 = last;
+        op.vv1 = coord0;
+        op.ii1 = flag0;
+        op.nvv1 = 0;          
+        ExecutiveObjMolSeleOp(sele,&op);    
+        
+        PRINTFD(FB_Executive)  
+          " ExecutiveSmooth: got %d %d\n",op.i2,op.nvv1
+          ENDFD;
+        
+        UtilZeroMem(coord1,sizeof(float)*3*n_atom*n_state);
+        UtilZeroMem(flag1,sizeof(int)*n_atom*n_state);
+        
+        for(a=0;a<cycles;a++) {                
+          PRINTFB(FB_Executive,FB_Actions)
+            " Smooth: smoothing (cycle %d)...\n",a+1
+            ENDFB;
+          for(b=0;b<range;b++) {
+            for(c=0;c<n_atom;c++) {
+              zero3f(sum);
+              cnt = 0;
+              for(d=-backward;d<=forward;d++) {
+                st = b + d;
+                if((st>=0)&&(st<range)) {
+                  cnt+=flag0[(n_atom*st)+c];
+                  v0 = coord0 + 3*(n_atom*st+c);
+                  add3f(sum,v0,sum);
+                }
+              }
+              if(cnt) {
+                st = b + offset;
+                flag1[(n_atom*b)+c] = 1;
+                i_cnt = 1.0/cnt;
+                v1 = coord1 + 3*((n_atom*st)+c);
+                scale3f(sum,i_cnt,v1);
+              }
+            }
+          }
+          for(b=0;b<range;b++) {
+            for(c=0;c<n_atom;c++) {
+              if(flag1[(n_atom*b)+c]) {
+                st = b + offset;
+                v0 = coord0 + 3*((n_atom*st)+c);
+                v1 = coord1 + 3*((n_atom*st)+c);
+                copy3f(v1,v0);
+              }
+            }
+          }
+        }
 
-	PRINTFD(FB_Executive)  
-	  " ExecutiveSmooth: got %d %d\n",op.i2,op.nvv1
-	  ENDFD;
-	
-	UtilZeroMem(coord1,sizeof(float)*3*n_atom*n_state);
-	UtilZeroMem(flag1,sizeof(int)*n_atom*n_state);
-	
-	for(a=0;a<cycles;a++) {                
-	  for(b=0;b<range;b++) {
-	    for(c=0;c<n_atom;c++) {
-	      
-	      zero3f(sum);
-	      cnt = 0;
-	      for(d=0;d<window;d++) {
-		cnt+=flag0[(n_atom*(b+d))+c];
-		v0 = coord0 + 3*(n_atom*(b+d)+c);
-		add3f(sum,v0,sum);
-	      }
-	      if(cnt) {
-		flag1[(n_atom*b)+c] = 1;
-		i_cnt = 1.0/cnt;
-		v1 = coord1 + 3*((n_atom*b)+c);
-		scale3f(sum,i_cnt,v1);
-	      }
-	    }
-	  }
-	  for(b=0;b<range;b++) {
-	    for(c=0;c<n_atom;c++) {
-	      if(flag1[(n_atom*b)+c]) {
-		v0 = coord0 + 3*((n_atom*(b+half)+c));
-		v1 = coord1 + 3*((n_atom*b)+c);
-		copy3f(v1,v0);
-	      }
-	    }
-	  }
-	}
-	  
-	/* set the new coordinates */
-	
-	op.code = OMOP_CSetIdxSetFlagged;
-	op.i1 = n_atom; 
-	op.i2 = 0;
-	op.cs1 = first+half;
-	op.cs2 = last-half;
-	op.vv1 = coord1;
-	op.ii1 = flag1;
-	op.nvv1 = 0;
-	
-	ExecutiveObjMolSeleOp(sele,&op);      
-	PRINTFD(FB_Executive)  
-	  " ExecutiveSmooth: put %d %d\n",op.i2,op.nvv1
-	  ENDFD;
-	
-	
-	FreeP(coord0);
+        PRINTFB(FB_Executive,FB_Actions)
+          " Smooth: updating coordinates...\n"
+          ENDFB;
+        
+        /* set the new coordinates */
+        
+        op.code = OMOP_CSetIdxSetFlagged;
+        op.i1 = n_atom; 
+        op.i2 = 0;
+        if(ends) {
+          op.cs1 = first;
+          op.cs2 = last;
+        } else {
+          op.cs1 = first+backward;
+          op.cs2 = last-forward;
+        }
+        op.vv1 = coord1;
+        op.ii1 = flag1;
+        op.nvv1 = 0;
+        
+        ExecutiveObjMolSeleOp(sele,&op);      
+        PRINTFD(FB_Executive)  
+          " ExecutiveSmooth: put %d %d\n",op.i2,op.nvv1
+          ENDFD;
+        
+        
+        FreeP(coord0);
         FreeP(coord1);
         FreeP(flag0);
         FreeP(flag1);
