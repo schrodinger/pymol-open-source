@@ -56,7 +56,7 @@ int MainSavingUnderWhileIdle(void)
 
 #ifdef _PYMOL_OSX
 int *MacPyMOLReady = NULL;
-COption *MacPyMOLOption = NULL;
+CPyMOLOptions *MacPyMOLOption = NULL;
 #endif
 
 void MainFree(void);
@@ -636,7 +636,7 @@ void MainFree(void)
    int theWindow = G->Main->TheWindow;
 #endif
 #ifdef _PYMOL_OSX
-   int game_mode = G->game_mode;
+   int game_mode = G->Option->game_mode;
    int haveGUI = G->HaveGUI;
    int theWindow = G->Main->TheWindow;
 #endif
