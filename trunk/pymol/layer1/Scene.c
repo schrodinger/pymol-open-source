@@ -779,10 +779,10 @@ void SceneSetFrame(int mode,int frame)
   case -1: /* movie/frame override - go to this state absolutely! */
     newState=frame;
     break;
-  case 0: /* absolute */
+  case 0: /* absolute frame */
     newFrame=frame; 
 	 break;
-  case 1: /* relative */
+  case 1: /* relative frame */
     newFrame+=frame; 
 	 break;
   case 2: /* end */

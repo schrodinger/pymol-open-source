@@ -692,7 +692,9 @@ int MovieView(int action,int first,int last)
       for(frame=first;frame<=last;frame++) {
         if((frame>=0)&&(frame<I->NFrame)) {
           VLACheck(I->ViewElem,CViewElem,frame);
-          printf("MovieView: Setting frame %d.\n",frame+1);
+          PRINTFB(FB_Movie,FB_Details)
+            " MovieView: Setting frame %d.\n",frame+1
+            ENDFB;
           SceneToViewElem(I->ViewElem+frame);          
           I->ViewElem[frame].specified = true;
         }
@@ -722,6 +724,9 @@ int MovieView(int action,int first,int last)
         last = SceneGetNFrame()-1;
 
       VLACheck(I->ViewElem,CViewElem,last);
+      PRINTFB(FB_Movie,FB_Details)
+        " MovieView: interpolating frames %d to %d.\n",first+1,last+1
+        ENDFB;
       for(frame=first;frame<=last;frame++) {
         if((frame>=0)&&(frame<I->NFrame)) {
           if(!first_view) {
