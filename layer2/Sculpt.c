@@ -278,20 +278,94 @@ void SculptMeasureObject(CSculpt *I,ObjectMolecule *obj,int state)
             ai++;
           }
 
+          /* brain-dead donor/acceptor assignment
+           * REPLACE later on with pattern-based system */
+
+
+          /* pass 1 */
+
           b=obj->Bond;
           for(a=0;a<obj->NBond;a++)
             {
               b1 = b->index[0];
               b2 = b->index[1];
               
-              /* brain-dead donor/acceptor assignment
-               * REPLACE later on with pattern-based system */
-
               ai1=obj->AtomInfo+b1;
               ai2=obj->AtomInfo+b2;
-                            
-              if(ai1->protons==cAN_H) {
 
+              /* make blanket assumption that all nitrogens with 
+                 <3 bonds are donors -- we qualify this below...*/
+              
+              if(ai1->protons==cAN_N) {
+                n1 = obj->Neighbor[b1];
+                if(obj->Neighbor[n1]<3) { /* N with L.P. */
+                  I->Don[b1]=true;
+                }
+              }
+
+              if(ai2->protons==cAN_N) {
+                n2 = obj->Neighbor[b2];
+                if(obj->Neighbor[n2]<3) { /* N with L.P. */
+                  I->Don[b2]=true;
+                }
+              }
+
+              /* assume O is always an acceptor...*/
+              
+              if(ai1->protons==cAN_O) I->Acc[b1]=true;
+              if(ai2->protons==cAN_O) I->Acc[b2]=true;
+              b++;
+            }
+
+          /* pass 2 */
+          b=obj->Bond;             
+          for(a=0;a<obj->NBond;a++)
+            {
+              b1 = b->index[0];
+              b2 = b->index[1];
+
+              /* nitrogens with lone pairs are acceptors 
+                 (not donors as assumed above) */
+              
+              ai1=obj->AtomInfo+b1;
+              ai2=obj->AtomInfo+b2;
+              
+              if(ai1->protons==cAN_N) {
+                if(b->order==2) {
+                  n1 = obj->Neighbor[b1];
+                  if(obj->Neighbor[n1]<3) { /* N with L.P. */
+                    I->Acc[b1]=true;
+                    I->Don[b1]=false;
+                  }
+                }
+              }
+              if(ai2->protons==cAN_N) {
+                if(b->order==2) {
+                  n2 = obj->Neighbor[b2];
+                  if(obj->Neighbor[n2]<3) { /* N with L.P. */
+                    I->Acc[b2]=true;
+                    I->Don[b2]=false;
+                  }
+                }
+              }
+              b++;
+            }
+
+          /* pass 3 */
+          b=obj->Bond;
+          for(a=0;a<obj->NBond;a++)
+            {
+              b1 = b->index[0];
+              b2 = b->index[1];
+              
+              ai1=obj->AtomInfo+b1;
+              ai2=obj->AtomInfo+b2;
+                     
+              /* however, every NH is a donor, 
+                 even if it's SP2 */
+              
+              if(ai1->protons==cAN_H) {
+                
                 /* donors: any H attached to O, N */
                 switch(ai2->protons) {
                 case cAN_O: 
@@ -314,46 +388,45 @@ void SculptMeasureObject(CSculpt *I,ObjectMolecule *obj,int state)
                   I->Don[b2]=true; /* mark heavy atom too... */
                   break;
                 }
-              } else {
-                
-                /* assume O is always an acceptor...*/
-
-                if(ai1->protons==cAN_O) I->Acc[b1]=true;
-                if(ai2->protons==cAN_O) I->Acc[b2]=true;
-
-                /* nitrogens with lone pairs are acceptors */
-
-                if(b->order==2) {
-                  if(ai1->protons==cAN_N) {
-                    if(b->order==2) {
-                      n1 = obj->Neighbor[b1];
-                      if(obj->Neighbor[n1]<3) { /* N with L.P. */
-                        I->Acc[b1]=true;
-                      }
-                    }
-                  }
-                }
-                if(ai2->protons==cAN_N) {
-                  if(b->order==2) {
-                    n2 = obj->Neighbor[b2];
-                    if(obj->Neighbor[n2]<3) { /* N with L.P. */
-                      I->Acc[b2]=true;
-                    }
-                  }
-                }
               }
 
-              /*              if(Feedback(FB_Sculpt,FB_Debugging)) {
-                              for(a=0;a<obj->NAtom;a++) {
-                              I->Don[a]=false;
-                              I->Acc[a]=false;
-                              }
-                              
-                              }*/
+              b++;
+            }
 
+          /* atom pass */
+          ai1 = obj->AtomInfo;
+          for(a=0;a<obj->NAtom;a++) {
+            /* make sure all nonbonded atoms get categorized */
 
-              /* exclusions */
-
+            n0 = obj->Neighbor[a];
+            if(obj->Neighbor[n0]==0) { /* nonbonded */
+              if(ai1->protons==cAN_O) {
+                I->Don[a] = true;
+                I->Acc[a] = true;
+              } else if(ai1->protons==cAN_N) {
+                I->Don[a] = true;
+              } 
+            }
+            
+            if(I->Acc[a]) {
+              printf("ACC %s %s %s\n",ai1->chain,ai1->resi,ai1->name);
+            }
+            if(I->Don[a]) {
+              printf("DON %s %s %s\n",ai1->chain,ai1->resi,ai1->name);
+            }
+            ai1++;
+          }
+          
+          /*  exclusions */
+          b=obj->Bond;          
+          for(a=0;a<obj->NBond;a++)
+            {
+              b1 = b->index[0];
+              b2 = b->index[1];
+              
+              ai1=obj->AtomInfo+b1;
+              ai2=obj->AtomInfo+b2;
+          
               xhash = ( (b2>b1) ? ex_hash(b1,b2) : ex_hash(b2,b1));
               VLACheck(I->EXList,int,nex+3);
               j = I->EXList+nex;
@@ -370,7 +443,6 @@ void SculptMeasureObject(CSculpt *I,ObjectMolecule *obj,int state)
               nex+=4;
 
 
-              b++;
               if(obj->DiscreteFlag) {
                 if((cs==obj->DiscreteCSet[b1])&&(cs==obj->DiscreteCSet[b2])) {
                   a1=obj->DiscreteAtmToIdx[b1];
@@ -399,6 +471,7 @@ void SculptMeasureObject(CSculpt *I,ObjectMolecule *obj,int state)
                   ShakerAddDistCon(I->Shaker,b1,b2,d,cShakerDistBond); 
                   /* NOTE: storing atom indices, not coord. ind.! */
                 }
+              b++;
             }
           
           /* now pick up those 1-3 interations */
@@ -482,80 +555,6 @@ void SculptMeasureObject(CSculpt *I,ObjectMolecule *obj,int state)
               n0+=2;
             }
           }
-#if 0
- { int a4,b4,n3;
-  float *v4;
-
-          /* add additional long-range distance restraints into object (INEFFICIENT) */
-
-          /* b1-b0-b2-b3-b4 */
-
-          for(b0=0;b0<obj->NAtom;b0++) {
-            n0 = obj->Neighbor[b0]+1;
-            while(obj->Neighbor[n0]>=0) {
-              b1 = obj->Neighbor[n0];
-              n1 = obj->Neighbor[b0]+1;
-              while(obj->Neighbor[n1]>=0) {
-                b2 = obj->Neighbor[n1];
-                if(b1!=b2) {
-                  n2 =  obj->Neighbor[b2]+1;
-                  while(obj->Neighbor[n2]>=0) {
-                    b3 = obj->Neighbor[n2];
-                    if(b3!=b0) {
-                      n3 =  obj->Neighbor[b3]+1;
-                      while(obj->Neighbor[n3]>=0) {
-                        b4 = obj->Neighbor[n3];
-                        if(b2!=b4) {
-                          
-                          if(obj->DiscreteFlag) {
-                            if((cs==obj->DiscreteCSet[b0])&&
-                               (cs==obj->DiscreteCSet[b1])&&
-                               (cs==obj->DiscreteCSet[b2])&&
-                               (cs==obj->DiscreteCSet[b3])&&
-                               (cs==obj->DiscreteCSet[b4])
-                               ) {
-                              a0=obj->DiscreteAtmToIdx[b0];
-                              a1=obj->DiscreteAtmToIdx[b1];
-                              a2=obj->DiscreteAtmToIdx[b2];
-                              a3=obj->DiscreteAtmToIdx[b3];
-                              a4=obj->DiscreteAtmToIdx[b4];
-                            } else {
-                              a0=-1;
-                              a1=-1;
-                              a2=-1;
-                              a3=-1;
-                              a4=-1;
-                            }
-                          } else {
-                            a0=cs->AtmToIdx[b0];
-                            a1=cs->AtmToIdx[b1];
-                            a2=cs->AtmToIdx[b2];
-                            a3=cs->AtmToIdx[b3];
-                            a4=cs->AtmToIdx[b4];
-                          }
-                          if((a0>=0)&&(a1>=0)&&(a2>=0)&&(a3>=0)&&(a4>=0)) {
-                            v0 = cs->Coord+3*a0;
-                            v1 = cs->Coord+3*a1;
-                            v2 = cs->Coord+3*a2;
-                            v3 = cs->Coord+3*a3;
-                            v4 = cs->Coord+3*a4;
-                            d = diff3f(v0,v1)+diff3f(v0,v2)+diff3f(v2,v3)+diff3f(v3,v4);
-                            ShakerAddDistCon(I->Shaker,b0,b1,d,cShakerDistLimit); 
-                          }   
-                        }
-                        n3+=2;
-                      }                
-                    }
-                    n2+=2;
-                  }
-                }
-                n1+=2;
-              }
-              n0+=2;
-            }
-          }
- }
-#endif
 
           /* and record the pyramidal and planer geometries */
           
@@ -1507,4 +1506,80 @@ static int SculptDoBump14(float target,float actual,float *d,
   return 0;
 }
 
+#endif
+
+
+#if 0
+ { int a4,b4,n3;
+  float *v4;
+
+          /* add additional long-range distance restraints into object (INEFFICIENT) */
+
+          /* b1-b0-b2-b3-b4 */
+
+          for(b0=0;b0<obj->NAtom;b0++) {
+            n0 = obj->Neighbor[b0]+1;
+            while(obj->Neighbor[n0]>=0) {
+              b1 = obj->Neighbor[n0];
+              n1 = obj->Neighbor[b0]+1;
+              while(obj->Neighbor[n1]>=0) {
+                b2 = obj->Neighbor[n1];
+                if(b1!=b2) {
+                  n2 =  obj->Neighbor[b2]+1;
+                  while(obj->Neighbor[n2]>=0) {
+                    b3 = obj->Neighbor[n2];
+                    if(b3!=b0) {
+                      n3 =  obj->Neighbor[b3]+1;
+                      while(obj->Neighbor[n3]>=0) {
+                        b4 = obj->Neighbor[n3];
+                        if(b2!=b4) {
+                          
+                          if(obj->DiscreteFlag) {
+                            if((cs==obj->DiscreteCSet[b0])&&
+                               (cs==obj->DiscreteCSet[b1])&&
+                               (cs==obj->DiscreteCSet[b2])&&
+                               (cs==obj->DiscreteCSet[b3])&&
+                               (cs==obj->DiscreteCSet[b4])
+                               ) {
+                              a0=obj->DiscreteAtmToIdx[b0];
+                              a1=obj->DiscreteAtmToIdx[b1];
+                              a2=obj->DiscreteAtmToIdx[b2];
+                              a3=obj->DiscreteAtmToIdx[b3];
+                              a4=obj->DiscreteAtmToIdx[b4];
+                            } else {
+                              a0=-1;
+                              a1=-1;
+                              a2=-1;
+                              a3=-1;
+                              a4=-1;
+                            }
+                          } else {
+                            a0=cs->AtmToIdx[b0];
+                            a1=cs->AtmToIdx[b1];
+                            a2=cs->AtmToIdx[b2];
+                            a3=cs->AtmToIdx[b3];
+                            a4=cs->AtmToIdx[b4];
+                          }
+                          if((a0>=0)&&(a1>=0)&&(a2>=0)&&(a3>=0)&&(a4>=0)) {
+                            v0 = cs->Coord+3*a0;
+                            v1 = cs->Coord+3*a1;
+                            v2 = cs->Coord+3*a2;
+                            v3 = cs->Coord+3*a3;
+                            v4 = cs->Coord+3*a4;
+                            d = diff3f(v0,v1)+diff3f(v0,v2)+diff3f(v2,v3)+diff3f(v3,v4);
+                            ShakerAddDistCon(I->Shaker,b0,b1,d,cShakerDistLimit); 
+                          }   
+                        }
+                        n3+=2;
+                      }                
+                    }
+                    n2+=2;
+                  }
+                }
+                n1+=2;
+              }
+              n0+=2;
+            }
+          }
+ }
 #endif
