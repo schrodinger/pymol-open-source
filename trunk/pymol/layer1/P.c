@@ -1118,6 +1118,8 @@ putenv(line3);
 #ifndef _EPYMOL
   Py_Initialize();
   PyEval_InitThreads();
+  PyUnicode_SetDefaultEncoding("utf-8"); /* is this safe & legal? */
+
 #endif
 #endif
 
