@@ -179,6 +179,12 @@ CHANGE LOG
 
 Changes up to 0.94
 
+   * default roving_polar_cutoff increased to 3.31 in order to show 
+     marginal/potential hydrogen bonds
+
+   * adjusted Z origin movement strategy again, and fixed problem
+     with undesirable apparent z-translation in orthoscopic mode
+
    * pdb_insertions_go_first setting for handling structures where
      inserted residues come before, not after, the numbered residue.
      

@@ -212,6 +212,8 @@ void SceneSuppressMovieFrame(void)
 }
 void SceneGetPos(float *pos)
 {
+  /* returns realspace coordinates for center of screen */
+
   CScene *I=&Scene;  
   
   PRINTFD(FB_Scene)
@@ -2090,7 +2092,7 @@ int SceneDrag(Block *block,int x,int y,int mod)
       }
     
     if(moved_flag&&(int)SettingGet(cSetting_roving_origin)) {
-      SceneGetPos(v2);
+      SceneGetPos(v2); /* gets position of center of screen */
       SceneOriginSet(v2,true);
     }
     if(moved_flag&&(int)SettingGet(cSetting_roving_detail)) {    
@@ -2273,47 +2275,77 @@ int SceneDrag(Block *block,int x,int y,int mod)
 
       float delta_front,delta_back;
       float front_weight,back_weight,slab_width;
+      float z_buffer = 3.0;
+      float old_pos2 = 0.0F;
+
+      z_buffer = SettingGet(cSetting_roving_origin_z_cushion);
 
       delta_front = I->Front - old_front;
       delta_back = I->Back - old_back;
 
       zero3f(v2);
 
-      slab_width = I->Back - I->FrontSafe;
-      if(old_origin<old_front) {
+      slab_width = I->Back - I->Front;
+      
+      /* first, check to make sure that the origin isn't too close to either plane */
+      if((z_buffer*2)>slab_width)
+        z_buffer = slab_width*0.5F;      
+
+      if(old_origin<(I->Front+z_buffer)) { /* old origin behind front plane */
         front_weight = 1.0F;
-        if((old_origin+delta_front)<old_front)
-          delta_front = old_front-old_origin;
-      } else if(old_origin>old_back) {
+        delta_front = (I->Front+z_buffer)-old_origin; /* move origin into allowed regioin */
+      } else if(old_origin>(I->Back-z_buffer)) { /* old origin was behind back plane */
         front_weight = 0.0F;
-        if((old_origin+delta_back)>old_back)
-          delta_back = old_back-old_origin;
-      } else if(slab_width>=R_SMALL4) {
-        front_weight = (old_back-old_origin)/slab_width;
+        delta_back = (I->Back-z_buffer)-old_origin;
+
+      } else if(slab_width>=R_SMALL4) { /* otherwise, if slab exists */
+        front_weight = (old_back-old_origin)/slab_width; /* weight based on relative proximity */
       } else {
         front_weight = 0.5F;
       }
-      
+
       back_weight = 1.0F - front_weight;
-      if((front_weight>0.1)&&(back_weight>0.1)) {
-        if(delta_front*delta_back>0.0F) { /* same direction */
-          if(fabs(delta_front)>fabs(delta_back)) {
+
+      if((front_weight>0.2)&&(back_weight>0.2)) { /* origin not near edge */
+        if(delta_front*delta_back>0.0F) { /* planes moving in same direction */
+          if(fabs(delta_front)>fabs(delta_back)) { /* so stick with whichever moves less */
             v2[2] = delta_back;
           } else {
             v2[2] = delta_front;
           }
+        } else {
+          /* planes moving in opposite directions (increasing slab size) */
+          /* don't move origin */
         }
-      } else {
+      } else { /* origin is near edge -- move origin with plane having highest weight */
         if(front_weight<back_weight) {
           v2[2] = delta_back;
         } else {
           v2[2] = delta_front;
         }
       }
+      if(SettingGet(cSetting_ortho)) { 
+        old_pos2 = I->Pos[2];
+        /* we're orthoscopic, so we don't want the effective field of view 
+           to change.  Thus, we have to hold Pos[2] constant, and instead
+           move the planes.
+        */
+      }
+      MatrixInvTransform3f(I->RotMatrix,v2,v2); /* transform offset into realspace */
+      subtract3f(I->Origin,v2,v2); /* calculate new origin location */
+      SceneOriginSet(v2,true); /* move origin, preserving camera location */
+      
+      if(SettingGet(cSetting_ortho)) { 
+        float delta = old_pos2-I->Pos[2];
+        I->Pos[2] += delta;
+        SceneClipSet( I->Front - delta, I->Back - delta );
+      }
 
-      MatrixInvTransform3f(I->RotMatrix,v2,v2);
-      subtract3f(I->Origin,v2,v2);
-      SceneOriginSet(v2,true);
+      slab_width = I->Back - I->Front;
+      
+      /* first, check to make sure that the origin isn't too close to either plane */
+      if((z_buffer*2)>slab_width)
+        z_buffer = slab_width*0.5F;      
 
     }
     if((adjust_flag)&&(int)SettingGet(cSetting_roving_detail)) {    
@@ -3497,13 +3529,10 @@ void ScenePrepareMatrix(int mode)
       stShift=-stShift;
     }
 
-      PRINTFD(FB_Scene)
-        " StereoMatrix-Debug: mode %d stAng %8.3f stShift %8.3f \n",mode,stAng,stShift
-        ENDFD;
-
-
-    fflush(stdout);
-
+    PRINTFD(FB_Scene)
+      " StereoMatrix-Debug: mode %d stAng %8.3f stShift %8.3f \n",mode,stAng,stShift
+      ENDFD;
+    
     glRotatef(stAng,0.0,1.0,0.0);
     glTranslatef(I->Pos[0],I->Pos[1],I->Pos[2]);
     glTranslatef(stShift,0.0,0.0);

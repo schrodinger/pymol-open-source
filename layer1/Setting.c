@@ -1973,7 +1973,7 @@ void SettingInitGlobal(int alloc,int reset_gui)
 
   SettingSet_f(I,cSetting_roving_polar_contacts,7.0F);
 
-  SettingSet_f(I,cSetting_roving_polar_cutoff,3.2F);
+  SettingSet_f(I,cSetting_roving_polar_cutoff,3.31F);
 
   SettingSet_f(I,cSetting_roving_nonbonded,0.0F);
 
@@ -2150,4 +2150,7 @@ void SettingInitGlobal(int alloc,int reset_gui)
   SettingSet_b(I,cSetting_normalize_o_maps,1);
   SettingSet_b(I,cSetting_swap_dsn6_bytes,1);
   SettingSet_b(I,cSetting_pdb_insertions_go_first,0);
+  SettingSet_b(I,cSetting_roving_origin_z,1);
+  SettingSet_f(I,cSetting_roving_origin_z_cushion,3.0F);
+  
 }
