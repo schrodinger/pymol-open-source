@@ -759,7 +759,7 @@ int SceneClick(Block *block,int button,int x,int y,int mod)
           PRINTF " You clicked %s -> (%s)",buffer,cEditorSele1 ENDF;
           if(SettingGet(cSetting_logging)) {
             objMol = (ObjectMolecule*)obj;            
-            ObjectMoleculeGetAtomSele(objMol,I->LastPicked.index,buffer);
+            ObjectMoleculeGetAtomSeleLog(objMol,I->LastPicked.index,buffer);
             sprintf(buf2,"cmd.edit(\"%s\",pkresi=1)",buffer);
             PLog(buf2,cPLog_pym);
           }
@@ -817,8 +817,8 @@ int SceneClick(Block *block,int button,int x,int y,int mod)
 
           if(SettingGet(cSetting_logging)) {
             objMol = (ObjectMolecule*)obj;            
-            ObjectMoleculeGetAtomSele(objMol,I->LastPicked.index,buf1);
-            ObjectMoleculeGetAtomSele(objMol,atIndex,buf2);
+            ObjectMoleculeGetAtomSeleLog(objMol,I->LastPicked.index,buf1);
+            ObjectMoleculeGetAtomSeleLog(objMol,atIndex,buf2);
             sprintf(buffer,"cmd.edit(\"%s\",\"%s\")",buf1,buf2);
             PLog(buffer,cPLog_pym);
           }
@@ -901,7 +901,7 @@ int SceneClick(Block *block,int button,int x,int y,int mod)
         if(obj->type==cObjectMolecule) {
           if(SettingGet(cSetting_logging)) {
             objMol = (ObjectMolecule*)obj;            
-            ObjectMoleculeGetAtomSele(objMol,I->LastPicked.index,buf1);
+            ObjectMoleculeGetAtomSeleLog(objMol,I->LastPicked.index,buf1);
             sprintf(buffer,"cmd.origin(\"%s\")",buf1);
             PLog(buffer,cPLog_pym);
           }
@@ -923,7 +923,7 @@ int SceneClick(Block *block,int button,int x,int y,int mod)
         if(obj->type==cObjectMolecule) {
           if(SettingGet(cSetting_logging)) {
             objMol = (ObjectMolecule*)obj;            
-            ObjectMoleculeGetAtomSele(objMol,I->LastPicked.index,buf1);
+            ObjectMoleculeGetAtomSeleLog(objMol,I->LastPicked.index,buf1);
             sprintf(buffer,"cmd.select('%s',\"%s\")",selName,buf1);
             PLog(buffer,cPLog_pym);
           }
@@ -939,7 +939,7 @@ int SceneClick(Block *block,int button,int x,int y,int mod)
           if(obj->type==cObjectMolecule) {
             if(SettingGet(cSetting_logging)) {
               objMol = (ObjectMolecule*)obj;            
-              ObjectMoleculeGetAtomSele(objMol,I->LastPicked.index,buffer);
+              ObjectMoleculeGetAtomSeleLog(objMol,I->LastPicked.index,buffer);
               sprintf(buf2,"( ((%s) or (%s)) and not ((%s) in (%s)))",
                       selName,buffer,buffer,selName);
               sprintf(buffer,"cmd.select('%s',\"%s\")",selName,buf2);
@@ -951,7 +951,7 @@ int SceneClick(Block *block,int button,int x,int y,int mod)
           if(obj->type==cObjectMolecule) {
             if(SettingGet(cSetting_logging)) {
               objMol = (ObjectMolecule*)obj;            
-              ObjectMoleculeGetAtomSele(objMol,I->LastPicked.index,buf1);
+              ObjectMoleculeGetAtomSeleLog(objMol,I->LastPicked.index,buf1);
               sprintf(buffer,"cmd.select('%s',\"%s\")",selName,buf1);
               PLog(buffer,cPLog_pym);
             }
