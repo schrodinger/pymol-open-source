@@ -47,7 +47,7 @@ static PyObject *ObjectSurfaceStateAsPyList(ObjectSurfaceState *I)
 {
   PyObject *result = NULL;
 
-  result = PyList_New(15);
+  result = PyList_New(16);
   
   PyList_SetItem(result,0,PyInt_FromLong(I->Active));
   PyList_SetItem(result,1,PyString_FromString(I->MapName));

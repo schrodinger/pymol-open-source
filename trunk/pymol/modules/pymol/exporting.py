@@ -24,7 +24,8 @@ if __name__=='pymol.exporting':
    from cmd import _cmd,lock,unlock,Shortcut,QuietException
    from chempy import io
    from cmd import _feedback,fb_module,fb_mask
-
+   import traceback
+   
    def get_session():
       session = {}
       r = 1
@@ -39,7 +40,7 @@ if __name__=='pymol.exporting':
             try:
                r = apply(a,(session,))
             except:
-               print_exc()
+               traceback.print_exc()
                print "Error: An error occurred when trying to generate session."
                print "Error: The resulting session file may be incomplete."
       return session
