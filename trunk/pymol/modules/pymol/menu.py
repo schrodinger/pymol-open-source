@@ -193,7 +193,7 @@ def sele_action(s):
            [ 1, 'protect'        ,'cmd.protect("'+s+'")'         ],
            [ 1, 'deprotect'      ,'cmd.deprotect("'+s+'")'       ],
            [ 0, ''          ,''                                              ],
-           [ 1, 'count atoms'    ,'cmd.count_atoms("'+s+'")'     ],           
+           [ 1, 'count atoms'    ,'cmd.count_atoms("'+s+'",quiet=0)'     ],           
            ]
 
 def mol_action(s):
@@ -216,7 +216,7 @@ def mol_action(s):
            [ 1, 'add hydrogens' ,'cmd.h_add("'+s+'")'     ],           
            [ 1, 'remove hydrogens'  ,'cmd.remove("(elem h and ('+s+'))")'     ],
            [ 0, ''          ,''                                              ],
-           [ 1, 'count atoms'  ,'cmd.count_atoms("'+s+'")'        ],
+           [ 1, 'count atoms'  ,'cmd.count_atoms("'+s+'",quiet=0)'        ],
            ]
 
 def simple_action(s):
@@ -237,7 +237,7 @@ def all_action(s):
            [ 1, 'add hydrogens' ,'cmd.h_add("'+s+'")'     ],           
            [ 1, 'remove hydrogens'  ,'cmd.remove("(elem h and ('+s+'))")'     ],
            [ 0, ''             , ''                      ],
-           [ 1, 'count atoms'       , 'cmd.count_atoms("all")'     ]
+           [ 1, 'count atoms'       , 'cmd.count_atoms("all",quiet=0)'     ]
            ]
 
 

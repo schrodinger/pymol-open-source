@@ -214,20 +214,20 @@ PyMOL>ray
 PyMOL>disable
 PyMOL>enable 3al1
 PyMOL>ray
- RayRenderTest: obtained 1273 graphics primitives.
+ RayRenderTest: obtained 1262 graphics primitives.
 PyMOL>disable
 PyMOL>enable
 PyMOL>ray
- RayRenderTest: obtained 1439 graphics primitives.
+ RayRenderTest: obtained 1428 graphics primitives.
 PyMOL>disable
 PyMOL>enable all
 PyMOL>ray
- RayRenderTest: obtained 1439 graphics primitives.
+ RayRenderTest: obtained 1428 graphics primitives.
 PyMOL>disable
 PyMOL>enable 3al1
 PyMOL>enable pept
 PyMOL>ray
- RayRenderTest: obtained 1439 graphics primitives.
+ RayRenderTest: obtained 1428 graphics primitives.
 PyMOL>del all
 PyMOL>reset
 PyMOL>cmd._dump_floats(cmd.get_view(0))
@@ -323,8 +323,8 @@ PyMOL>orient
  Eigensolve:                 0.000    0.000    0.000
 PyMOL>orient (none)
 PyMOL>orient (name ca)
- Eigensolve: eigenvectors   -0.568    0.823   -0.076
- Eigensolve:                -0.821   -0.567   -0.010
+ Eigensolve: eigenvectors    0.568   -0.823    0.076
+ Eigensolve:                 0.821    0.567    0.010
  Eigensolve:                -0.051    0.056    0.996
  Eigensolve: eigenvalues    93.821  482.357  448.979
  Eigensolve:                 0.000    0.000    0.000

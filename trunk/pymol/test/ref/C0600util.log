@@ -81,16 +81,3 @@ PyMOL>set ray_default_renderer=2
 PyMOL>ray
  RayRenderTest: obtained 19492 graphics primitives.
 PyMOL>util.rainbow("pept")
- Executive: Colored 8 atoms.
- Executive: Colored 6 atoms.
- Executive: Colored 5 atoms.
- Executive: Colored 14 atoms.
- Executive: Colored 10 atoms.
- Executive: Colored 8 atoms.
- Executive: Colored 4 atoms.
- Executive: Colored 9 atoms.
- Executive: Colored 8 atoms.
- Executive: Colored 7 atoms.
- Executive: Colored 14 atoms.
- Executive: Colored 6 atoms.
- Executive: Colored 8 atoms.
