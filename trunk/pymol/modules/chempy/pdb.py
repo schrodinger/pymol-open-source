@@ -39,7 +39,7 @@ class PDB(Storage):
             at.symbol = string.strip(rec[76:78])
             if not len(at.symbol):
                at.symbol = at.name[0:1]
-               if at.symbol in '0123456780':
+               if at.symbol in '012345678':
                   at.symbol = at.name[1:2]
             cnt = cnt + 1
             model.add_atom(at)
