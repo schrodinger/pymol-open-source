@@ -511,9 +511,11 @@ int SceneClick(Block *block,int button,int x,int y,int mod)
   char buffer[OrthoLineLength],buf2[OrthoLineLength];
   WordType selName;
 
-  SceneDontCopyNext();
   if(mod&cOrthoCTRL) {
-	 SceneCopy(1);
+    if(((int)SettingGet(cSetting_overlay))&&((int)SettingGet(cSetting_text))) {
+      SceneRender(NULL,0,0);
+    }
+    SceneDontCopyNext();
 	 SceneRender(&I->LastPicked,x,y);
 	 if(I->LastPicked.ptr) {
 		obj=(Object*)I->LastPicked.ptr;
@@ -546,11 +548,12 @@ int SceneClick(Block *block,int button,int x,int y,int mod)
         SelectorCreate(selName,buffer,NULL);
       }
 	 } else {
-		OrthoAddOutput("No atom!\n");
+		OrthoAddOutput(" SceneClick: no atom found nearby.\n");
 		OrthoNewLine(NULL);
 		OrthoRestorePrompt();
 	 }
   } else {
+    SceneDontCopyNext();
 
 	 y=y-I->Block->margin.bottom;
 	 x=x-I->Block->margin.left;

@@ -43,6 +43,22 @@ def cbay(s):
    pm.color("hydrogen","(elem H and "+s+")")
    pm.color("yellow","(elem C and "+s+")")
 
+def cbas(s):
+   pm.color("magenta","("+s+")")
+   pm.color("oxygen","(elem O and "+s+")")
+   pm.color("nitrogen","(elem N and "+s+")")
+   pm.color("sulfer","(elem S and "+s+")")
+   pm.color("hydrogen","(elem H and "+s+")")
+   pm.color("salmon","(elem C and "+s+")")
+
+def cbap(s):
+   pm.color("magenta","("+s+")")
+   pm.color("oxygen","(elem O and "+s+")")
+   pm.color("nitrogen","(elem N and "+s+")")
+   pm.color("sulfer","(elem S and "+s+")")
+   pm.color("hydrogen","(elem H and "+s+")")
+   pm.color("purple","(elem C and "+s+")")
+
 def cbaw(s):
    pm.color("magenta","("+s+")")
    pm.color("oxygen","(elem O and "+s+")")
@@ -50,6 +66,7 @@ def cbaw(s):
    pm.color("sulfer","(elem S and "+s+")")
    pm.color("hydrogen","(elem H and "+s+")")
    pm.color("hydrogen","(elem C and "+s+")")
+
 
 def mrock(fir,las,dsp,pha,loop):
 	global pmp_nest,pmp_cmd,pmp_cont,pymol

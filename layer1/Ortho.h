@@ -48,7 +48,7 @@ void OrthoPopMatrix(void);
 
 int OrthoButton(int button,int state,int x,int y,int mod);
 
-void OrthoKey(unsigned char k,int x,int y);
+void OrthoKey(unsigned char k,int x,int y,int mod);
 
 void OrthoAddOutput(char *str);
 void OrthoNewLine(char *prompt);

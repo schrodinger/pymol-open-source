@@ -304,7 +304,7 @@ void OrthoRestorePrompt(void)
 	 }
 }
 /*========================================================================*/
-void OrthoKey(unsigned char k,int x,int y)
+void OrthoKey(unsigned char k,int x,int y,int mod)
 {
   OrthoObject *I=&Ortho;
   char buffer[OrthoLineLength];
@@ -354,11 +354,13 @@ void OrthoKey(unsigned char k,int x,int y)
 	 case 4:
 		exit(0);
 		break;
-	 case 9:
+	 case 9: /* tab */
       if(I->SplashFlag) {
         OrthoRemoveSplash();
       } else {
         SettingSet(cSetting_text,(float)(!((int)SettingGet(cSetting_text))));
+        if(mod&cOrthoSHIFT) 
+          SettingSet(cSetting_overlay,(float)(!((int)SettingGet(cSetting_overlay))));
       }
 		break;
 	 case 13:

@@ -883,11 +883,12 @@ int SelectorSelect1(EvalElem *base)
 		if(ok) {
 		  for(a=0;a<I->NAtom;a++)
 			 {
-				if(I->Table[a].atom==(index-1))
+				if(I->Table[a].atom==(index-1)) {
+              c++;
 				  base[0].sele[a]=true;
-				else 
+            } else {
 				  base[0].sele[a]=false;
-				c++;
+            }
 			 }
 		}
 		break;
@@ -957,9 +958,10 @@ int SelectorSelect1(EvalElem *base)
 					 if(sscanf(I->Obj[I->Table[a].model]->AtomInfo[I->Table[a].atom].resi,
 								  "%i",&rtest))
 						{
-						  if((rtest>=rmin)&&(rtest<=rmax))
+						  if((rtest>=rmin)&&(rtest<=rmax)) {
 							 base[0].sele[a]=true;
-						  else 
+                      c++;
+						  } else 
 							 base[0].sele[a]=false;
 						}
 					 else 
@@ -1020,32 +1022,26 @@ int SelectorSelect1(EvalElem *base)
 		break;
 	 case 'MODs':
 		model=0;
-		if(sscanf(base[1].text,"%i",&model)==1)
-		  {
-			 if(model<=0)
-				model=0;
-			 else if(model>I->NModel)
-				model=0;
-			 else if(!I->Obj[model])
-				model=0;
-		  }
-		else
-		  model=0;
-		if(!model)
-		  {
-			 obj=(ObjectMolecule*)ExecutiveFindObjectByName(base[1].text);
-			 if(!obj)
-				model=0;
-			 else
-				{
-				  for(a=0;a<I->NModel;a++)
-					 if(I->Obj[a]==obj)
-						{
-						  model=a+1;
-						  break;
-						}
-				}
-		  }
+      obj=(ObjectMolecule*)ExecutiveFindObjectByName(base[1].text);
+      if(obj)
+        {
+          for(a=0;a<I->NModel;a++)
+            if(I->Obj[a]==obj)
+              {
+                model=a+1;
+                break;
+              }
+        }
+      if(!model) 
+        if(sscanf(base[1].text,"%i",&model)==1)
+          {
+            if(model<=0)
+              model=0;
+            else if(model>I->NModel)
+              model=0;
+            else if(!I->Obj[model])
+              model=0;
+          }
 		if(model)
 		  {
 			 model--;

@@ -280,7 +280,8 @@ void ExecutiveOrient(char *sele,Matrix33d mi)
 {
   double egval[3],egvali[3];
   double evect[3][3];
-  float m[4][4];
+  float m[4][4],mt[4][4];
+  float t[3];
 
   int a,b;
 
@@ -290,25 +291,39 @@ void ExecutiveOrient(char *sele,Matrix33d mi)
 	 normalize3d(evect[1]);
 	 normalize3d(evect[2]);
 
-
 	 for(a=0;a<3;a++) {
 		for(b=0;b<3;b++) {
-		  m[a][b]=evect[b][a];
+		  m[a][b]=evect[b][a]; /* fill columns */
 		}
 	 }
 
-    for(a=0;a<3;a++)
+    for(a=0;a<3;a++) /* expand to 4x4 */
       {
         m[3][a]=0;
         m[a][3]=0;
       }
     m[3][3]=1.0;
 
-    normalize3f(m[0]);
+    normalize3f(m[0]); /* cross normalization (probably unnec.)  */
     normalize3f(m[1]);
     normalize3f(m[2]);
 
-    SceneSetMatrix(m[0]);
+    for(a=0;a<3;a++) /* convert to row-major */
+      for(b=0;b<3;b++)
+        mt[a][b]=m[b][a];
+
+    cross_product3f(mt[0],mt[1],t);     /* insure right-handed matrix */
+    if(dot_product3f(t,mt[2])<0.0) {
+      mt[2][0] = -mt[2][0];
+      mt[2][1] = -mt[2][1];
+      mt[2][2] = -mt[2][2];
+    }
+
+    for(a=0;a<3;a++) /* convert back to column major */
+      for(b=0;b<3;b++)
+        m[a][b]=mt[b][a];
+
+    SceneSetMatrix(m[0]); /* load matrix */
 
     /* there must  be a more elegant to get the PC on X and the SC
      * on Y then what is shown below, but I couldn't get it to work.
