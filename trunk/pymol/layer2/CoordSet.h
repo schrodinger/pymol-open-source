@@ -51,8 +51,14 @@ typedef struct CoordSet {
   int NSpheroid;
   int SpheroidSphereSize;
   CSetting *Setting;
+  /* for periodic MD boxes -- may be merge into symmetry lattice later... */
+  CCrystal *PeriodicBox;
+  int PeriodicBoxType;
 } CoordSet;
 
+#define cCSet_NoPeriodicity 0
+#define cCSet_Orthogonal 1
+#define cCSet_Octahedral 2
 
 CoordSet *CoordSetNew(void);
 void CoordSetAtomToPDBStrVLA(char **charVLA,int *c,AtomInfoType *ai,float *v,int cnt);

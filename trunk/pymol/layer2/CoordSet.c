@@ -628,6 +628,8 @@ CoordSet *CoordSetNew(void)
   I->TmpBond = NULL;
   I->TmpLinkBond = NULL;
   I->NTmpLinkBond = 0;
+  I->PeriodicBox=NULL;
+  I->PeriodicBoxType=cCSet_NoPeriodicity;
   /*  I->Rep=VLAlloc(Rep*,cRepCnt);*/
   I->NRep=cRepCnt;
   I->Symmetry = NULL;
@@ -652,6 +654,7 @@ CoordSet *CoordSetCopy(CoordSet *cs)
 
   (*I)=(*cs);
   I->Symmetry=SymmetryCopy(cs->Symmetry);
+  if(I->PeriodicBox) I->PeriodicBox=CrystalCopy(I->PeriodicBox);
   I->Coord = VLAlloc(float,I->NIndex*3);
   v0=I->Coord;
   v1=cs->Coord;
@@ -682,6 +685,7 @@ CoordSet *CoordSetCopy(CoordSet *cs)
     *(i0++)=*(i1++);
     I->Rep[a] = NULL;
   }
+
 
   I->TmpBond=NULL;
   I->Color=NULL;
@@ -807,6 +811,7 @@ void CoordSetFree(CoordSet *I)
     /*    VLAFreeP(I->Rep);*/
     VLAFreeP(I->TmpBond);
     if(I->Symmetry) SymmetryFree(I->Symmetry);
+    if(I->PeriodicBox) CrystalFree(I->PeriodicBox);
     FreeP(I->Spheroid);
     FreeP(I->SpheroidNormal);
     SettingFreeP(I->Setting);
