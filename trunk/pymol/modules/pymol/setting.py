@@ -114,6 +114,9 @@ class SettingIndex:
    cartoon_tube_radius  =103
    cartoon_tube_quality =104
    cartoon_debug        =105
+   ribbon_width         =106
+   dash_width           =107
+   dash_radius          =108
    
 setting_sc = Shortcut(SettingIndex.__dict__.keys())
 

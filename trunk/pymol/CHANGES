@@ -35,12 +35,18 @@ Ongoing Goals
 
 Changes up to 0.58
 
+   * added a coarse hydrogen-bond assessment feature (internal)
+
+   * added phi/psi measuring capability to util module
+
    * fixed selector memory leak on errors
 
    * added first-generation cartoon riboons 
      (higher-quality to come later)
 
-   * more work on settings change side effects 
+   * added more specific settings for mesh and ribbon width, etc.
+
+   * add more settings-change side-effects 
 
    * fix bugs with saving pkl files for state > 1
 

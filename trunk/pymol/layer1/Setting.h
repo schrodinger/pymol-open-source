@@ -202,6 +202,9 @@ int SettingGetName(int index,SettingName name);
 #define cSetting_cartoon_tube_radius         103
 #define cSetting_cartoon_tube_quality        104
 #define cSetting_cartoon_debug               105
+#define cSetting_ribbon_width                106
+#define cSetting_dash_width                  107
+#define cSetting_dash_radius                 108
 
 #define cSetting_INIT                        110
 
