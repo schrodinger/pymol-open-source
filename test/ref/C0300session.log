@@ -1,0 +1,26 @@
+PyMOL>load $PYMOL_PATH/test/dat/pept.pdb
+ Executive: object "pept" created.
+PyMOL>select cas,name ca
+ Selector: selection "cas" defined with 13 atoms.
+PyMOL>set line_width,5
+ Setting: line_width set to 5.00000.
+PyMOL>show spheres,name n
+PyMOL>save tmp/session.pse
+ Save: wrote "tmp/session.pse".
+PyMOL>reinitialize
+PyMOL>print cmd.get_names()
+[]
+PyMOL>get line_width
+ get: line_width = 1.00000
+PyMOL>count_atoms rep spheres
+ count_atoms: 0 atoms
+PyMOL>load tmp/sess.pse
+ Executive: Loading version 0.90 session...
+PyMOL>print cmd.get_names()
+['pept']
+PyMOL>get line_width
+ get: line_width = 5.00000
+PyMOL>count_atoms rep spheres
+ count_atoms: 13 atoms
+PyMOL>count_atoms cas
+ count_atoms: 13 atoms
