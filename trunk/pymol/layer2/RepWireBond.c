@@ -130,7 +130,8 @@ Rep *RepWireBondNew(CoordSet *cs)
 {
   ObjectMolecule *obj;
   int a,a1,a2,*b,c1,c2,s1,s2,b1,b2,ord,*o;
-  int half_bonds,valence,*other=NULL;
+  int half_bonds,*other=NULL;
+  float valence;
   float *v,*v0,*v1,*v2,h[3];
   int visFlag;
   Pickable *rp;
@@ -166,9 +167,9 @@ Rep *RepWireBondNew(CoordSet *cs)
   I->Radius = SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_line_radius);
 
   half_bonds = SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_half_bonds);
-  valence = (SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_valence)!=0.0);
+  valence = SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_valence);
 
-  if(valence) /* build list of up to 2 connected atoms for each atom */
+  if(valence!=0.0) /* build list of up to 2 connected atoms for each atom */
     {
       other=Alloc(int,2*obj->NAtom);
       o=other;
@@ -265,7 +266,7 @@ Rep *RepWireBondNew(CoordSet *cs)
 
 						v0 = ColorGet(c1);
 
-                  if(valence&&(ord>1)) {
+                  if((valence!=0.0)&&(ord>1)) {
                     RepValence(v,v1,v2,other,a1,a2,cs->Coord,v0,ord,valence);
                     v+=ord*9;
                     I->N+=ord;
@@ -295,7 +296,7 @@ Rep *RepWireBondNew(CoordSet *cs)
 							 v0 = ColorGet(c1);
 
 
-                      if(valence&&(ord>1)) {
+                      if((valence!=0.0)&&(ord>1)) {
                         RepValence(v,v1,h,other,a1,a2,cs->Coord,v0,ord,valence);
                         v+=ord*9;
                         I->N+=ord;
@@ -320,7 +321,7 @@ Rep *RepWireBondNew(CoordSet *cs)
                       
 							 v0 = ColorGet(c2);
 							 
-                      if(valence&&(ord>1)) {
+                      if((valence!=0.0)&&(ord>1)) {
                         RepValence(v,h,v2,other,a1,a2,cs->Coord,v0,ord,valence);
                         v+=ord*9;
                         I->N+=ord;
