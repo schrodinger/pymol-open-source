@@ -439,6 +439,7 @@ class PMGApp(AbstractApp):
    def demo5(self):
       cmd.set("suspend_updates",1,quiet=1)
       cmd.disable()
+      cmd.delete("1tii")      
       cmd.load("$PYMOL_PATH/test/dat/1tii.pdb")
       cmd.hide("(1tii)")
       cmd.show("cartoon","1tii")
@@ -450,6 +451,7 @@ class PMGApp(AbstractApp):
    def demo6(self):
       cmd.set("suspend_updates",1,quiet=1)
       cmd.disable()
+      cmd.delete("trans")
       cmd.load("$PYMOL_PATH/test/dat/pept.pdb","trans")
       cmd.hide("(tran)")
       cmd.show("surface","trans")
@@ -460,6 +462,21 @@ class PMGApp(AbstractApp):
       cmd.set("suspend_updates",0,quiet=1)
       cmd.refresh()
 
+   def demo7(self):
+      cmd.set("suspend_updates",1,quiet=1)
+      cmd.disable()
+      cmd.delete("ray")
+      cmd.load("$PYMOL_PATH/test/dat/il2.pdb","ray")
+      cmd.remove("(ray and hydro)")
+      cmd.hide("lines","ray")
+      cmd.show("spheres","ray")
+      cmd.orient("ray")
+      cmd.turn("x",90)
+      util.ray_shadows('heavy')
+      cmd.set("suspend_updates",0,quiet=1)
+      cmd.refresh()
+      cmd.do("ray")
+      
    def hide_sele(self):
       cmd.log("util.hide_sele()\n","util.hide_sele()\n")
       util.hide_sele()
@@ -939,6 +956,10 @@ class PMGApp(AbstractApp):
       self.menuBar.addmenuitem('Demos', 'command', 'Transparency',
                                label='Transparency',
                                command = self.demo6)
+
+      self.menuBar.addmenuitem('Demos', 'command', 'Ray Tracing',
+                               label='Ray Tracing',
+                               command = self.demo7)
 
       self.menuBar.addmenuitem('Demos', 'command', 'Scripted Animation',
                                label='Scripted Animation',

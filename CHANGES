@@ -112,6 +112,8 @@ Changes up to 0.71
 
    * two_sided_lighting option to help Jun at CCI project
 
+   * fixed triangle rendering on lower-end graphics cards
+
    * revamped PyMOL's internal bond handling data structure.  I've done my best
      to insure that this doesn't break anything, but it is a major change
      and has the potential to create huge problems...
