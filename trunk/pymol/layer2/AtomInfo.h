@@ -153,6 +153,7 @@ void AtomInfoBracketResidue(AtomInfoType *ai0,int n0,AtomInfoType *ai,int *st,in
 void AtomInfoBracketResidueFast(AtomInfoType *ai0,int n0,int cur,int *st,int *nd);
 
 void AtomInfoUniquefyNames(AtomInfoType *atInfo0,int n0,AtomInfoType *atInfo1,int n1);
+int AtomInfoGetCarbColor(void);
 
 
 #define cAIC_ct        0x0001

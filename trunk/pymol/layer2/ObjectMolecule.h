@@ -75,7 +75,7 @@ typedef struct ObjectMoleculeOpRec {
   unsigned int code;
   Vector3f v1,v2;
   int cs1,cs2;
-  int i1,i2,i3,i4,*vc1,*i1VLA,*ii1;
+  int i1,i2,i3,i4,*vc1,*i1VLA,*ii1,*vp1;
   float f1,f2,*f1VLA,*f2VLA,*ff1;
   double d[3][3];
   float *vv1,*vv2;
@@ -154,6 +154,15 @@ typedef struct {
 
 #include"CoordSet.h"
 
+typedef struct {
+  ObjectMolecule *trg_obj,*mbl_obj; /* target and mobile objects */
+  int *trg_vla,*mbl_vla;
+  int n_pair;
+} ObjMolPairwise;
+
+void ObjMolPairwiseInit(ObjMolPairwise *pairwise);
+void ObjMolPairwiseFree(ObjMolPairwise *pairwise);
+
 /* Metaphorics Annotated PDB stuff */
 
 typedef struct M4XBondType { /* now used for non-bonds as well as h-bonds */
@@ -172,19 +181,31 @@ typedef struct {
 } M4XContextType;
 
 typedef struct {
+  char target[ObjNameMax];
+  int n_point;
+  int *id_at_point;
+  float *fitness;
+} M4XAlignType;
+
+typedef struct {
   int annotated_flag;
   int n_context;
   M4XContextType *context;
   int xname_flag;
   char xname[ObjNameMax];
+  M4XAlignType *align;
 } M4XAnnoType;
 
 void M4XAnnoInit(M4XAnnoType *m4x);
 void M4XAnnoPurge(M4XAnnoType *m4x);
-void ObjectMoleculeM4XAnnotate(ObjectMolecule *I,M4XAnnoType *m4x,char *script_file);
+
+void M4XAlignInit(M4XAlignType *align);
+void M4XAlignPurge(M4XAlignType *align);
+
+void ObjectMoleculeM4XAnnotate(ObjectMolecule *I,M4XAnnoType *m4x,char *script_file,int match_colors);
 
 /* */
-
+void ObjectMoleculeOpRecInit(ObjectMoleculeOpRec *op);
 int ObjectMoleculeNewFromPyList(PyObject *list,ObjectMolecule **result);
 PyObject *ObjectMoleculeAsPyList(ObjectMolecule *I);
 int ObjectMoleculeGetSerial(ObjectMolecule *I);
@@ -297,6 +318,7 @@ int ObjectMoleculeGetCheckHBond(ObjectMolecule *don_obj,
                                 int acc_state,
                                 HBondCriteria *hbc);
 void ObjectMoleculeInitHBondCriteria(HBondCriteria *hbc);
+int ObjectMoleculeConvertIDsToIndices(ObjectMolecule *I,int *id,int n_id);
 
 #define cObjectMoleculeDummyOrigin 1
 #define cObjectMoleculeDummyCenter 2
@@ -304,6 +326,15 @@ void ObjectMoleculeInitHBondCriteria(HBondCriteria *hbc);
 ObjectMolecule *ObjectMoleculeDummyNew(int mode);
 void ObjectMoleculeDummyUpdate(ObjectMolecule *I,int mode);
 
+/* internal to ObjectMolecule */
+
+struct CoordSet *ObjectMoleculePDBStr2CoordSet(char *buffer,
+                                        AtomInfoType **atInfoPtr,
+                                        char **restart_model,
+                                        char *segi_override,
+                                        M4XAnnoType *m4x,
+                                        char *pdb_name,
+                                        char **next_pdb);
 
 /* legacy binary file suppoort */
 

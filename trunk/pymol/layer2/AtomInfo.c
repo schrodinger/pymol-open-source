@@ -291,7 +291,11 @@ void AtomInfoBracketResidueFast(AtomInfoType *ai0,int n0,int cur,int *st,int *nd
     *nd=a;
   }
 }
-
+/*========================================================================*/
+int AtomInfoGetCarbColor(void)
+{
+  return CarbColor;
+}
 /*========================================================================*/
 void AtomInfoPrimeColors(void)
 {

@@ -59,7 +59,8 @@ void ExecutiveRay(int width,int height,int mode,float angle,float shift,int quie
 int ExecutiveGetDihe(char *s0,char *s1,char *s2,char *s3,float *value,int state);
 int ExecutiveSetDihe(char *s0,char *s1,char *s2,char *s3,float value,int state);
 float ExecutiveRMS(char *sele1,char *sele2,int mode,float refine,int max_cyc,
-                   int quiet,char *oname,int state1,int state2);
+                   int quiet,char *oname,int state1,int state2,
+                   int ordered_selections);
 void ExecutiveUpdateCmd(char *sele1,char *sele2,int sta1,int sta2);
 float ExecutiveRMSPairs(WordType *sele,int pairs,int mode);
 float *ExecutiveRMSStates(char *s1,int target,int mode,int quiet);

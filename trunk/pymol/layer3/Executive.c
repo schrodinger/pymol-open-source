@@ -107,6 +107,11 @@ void ExecutiveObjMolSeleOp(int sele,ObjectMoleculeOpRec *op);
 #define ExecGreyVisible 0.45F
 #define ExecGreyHidden 0.3F
 
+typedef struct { 
+  M4XAnnoType m4x;
+  ObjectMolecule *obj;
+} ProcPDBRec;
+
 void ExecutiveProcessPDBFile(CObject *origObj,char *fname, char *oname, 
                              int frame, int discrete,int finish,OrthoLineType buf)
 {
@@ -118,6 +123,9 @@ void ExecutiveProcessPDBFile(CObject *origObj,char *fname, char *oname,
   char pdb_name[ObjNameMax] = "";
   char *next_pdb = NULL;
   int repeat_flag = true;
+  ProcPDBRec *processed;
+  int n_processed = 0;
+  int m4x_mode = 0; /* 0 = annotate, 1 = alignment */
 
   f=fopen(fname,"rb");
   if(!f) {
@@ -143,12 +151,18 @@ void ExecutiveProcessPDBFile(CObject *origObj,char *fname, char *oname,
 		p[size]=0;
 		fclose(f);
     }
-
+  if(ok) {
+    processed = VLACalloc(ProcPDBRec,10);
+  }
   while(repeat_flag&&ok) {
     char *start_at = buffer;
     int is_repeat_pass = false;
-    M4XAnnoType m4x;
-    M4XAnnoInit(&m4x);
+    ProcPDBRec *current;
+
+    VLACheck(processed,ProcPDBRec,n_processed);
+    current = processed + n_processed;
+
+    M4XAnnoInit(&current->m4x);
     PRINTFD(FB_CCmd) " ExecutiveProcessPDBFile-DEBUG: loading PDB\n" ENDFD;
 
     if(next_pdb) {
@@ -161,14 +175,14 @@ void ExecutiveProcessPDBFile(CObject *origObj,char *fname, char *oname,
     if(!origObj) {
 
       obj=(CObject*)ObjectMoleculeReadPDBStr((ObjectMolecule*)origObj,
-                                             start_at,frame,discrete,&m4x,pdb_name,&next_pdb);
+                                             start_at,frame,discrete,&current->m4x,pdb_name,&next_pdb);
       if(obj) {
         if(next_pdb) { /* NOTE: if set, assume that multiple PDBs are present in the file */
           repeat_flag=true;
         }
-        if(m4x.xname_flag) { /* USER XNAME trumps the PDB Header name */                 
-          ObjectSetName(obj,m4x.xname); /* from PDB */
-          ExecutiveDelete(m4x.xname); /* just in case */
+        if(current->m4x.xname_flag) { /* USER XNAME trumps the PDB Header name */                 
+          ObjectSetName(obj,current->m4x.xname); /* from PDB */
+          ExecutiveDelete(current->m4x.xname); /* just in case */
         } else if(next_pdb) {
           ObjectSetName(obj,pdb_name); /* from PDB */
           ExecutiveDelete(pdb_name); /* just in case */
@@ -186,7 +200,7 @@ void ExecutiveProcessPDBFile(CObject *origObj,char *fname, char *oname,
       }
     } else {
       ObjectMoleculeReadPDBStr((ObjectMolecule*)origObj,
-                               start_at,frame,discrete,&m4x,pdb_name,&next_pdb);
+                               start_at,frame,discrete,&current->m4x,pdb_name,&next_pdb);
       if(finish)
         ExecutiveUpdateObjectSelection(origObj);
       if(frame<0)
@@ -195,21 +209,162 @@ void ExecutiveProcessPDBFile(CObject *origObj,char *fname, char *oname,
               fname,oname,frame+1);
       obj = origObj;
     }
-    if(m4x.annotated_flag) {
-      char script[] = "@$PYMOL_SCRIPTS/metaphorics/annotate.pml";
-      char *script_file = NULL;
-
-      if(!repeat_flag) /* for multi-PDB files, don't execute script until after the last file */
-        script_file = script;
- 
-      ObjectMoleculeM4XAnnotate((ObjectMolecule*)obj,&m4x,script_file);
+    if(obj) {
+      current->obj = (ObjectMolecule*)obj;
+      n_processed++;
     }
-    M4XAnnoPurge(&m4x);
   }
+
+  /* BEGIN METAPHORICS ANNOTATION AND ALIGNMENT CODE */
+
+  if(ok&&n_processed) { /* first, perform any Metaphorics alignment */
+    ProcPDBRec *target_rec = NULL;
+
+    /* is there a target structure? */
+    {
+      int a;
+      for(a=0; a<n_processed; a++) {
+        ProcPDBRec *current = processed + a;
+        M4XAnnoType *m4x = &current->m4x;
+
+        if(m4x->annotated_flag && m4x->align) {
+          if(WordMatchExact(current->obj->Obj.Name,m4x->align->target,true)) {
+            target_rec = current;
+            break;
+          }
+        }
+      }
+    }
+    if(target_rec) { /* there is a target.. */
+
+      /* first, convert all IDs to genuine atom indices */
+
+      {
+        int a;
+        for(a=0; a<n_processed; a++) {
+          ProcPDBRec *current = processed + a;
+          M4XAnnoType *m4x = &current->m4x;
+          if(m4x->align) {
+            ObjectMoleculeConvertIDsToIndices(current->obj, m4x->align->id_at_point, m4x->align->n_point);
+          }
+        }
+      }
+
+      /* next, peform the alignments against the target */
+
+      {
+        int a;
+        char aligned_name[] = "m4x_aligned";
+        char tmp_sele[ObjNameMax*3];
+
+        SelectorCreateEmpty("m4x_aligned");
+                
+                
+        for(a=0; a<n_processed; a++) {
+          ProcPDBRec *current = processed + a;
+          if( current != target_rec ) {
+            M4XAnnoType *m4x = &current->m4x;
+            if(m4x->align) {
+              ObjMolPairwise pairwise;
+
+              m4x_mode = 1; /* performing an alignment */
+
+              ObjMolPairwiseInit(&pairwise);
+              pairwise.trg_obj = target_rec->obj;
+              pairwise.mbl_obj = current->obj;
+              
+              /* create ordered matches */
+
+              {
+                M4XAlignType *trg_align = target_rec->m4x.align;
+                M4XAlignType *mbl_align = m4x->align;
+
+                int n_point;
+                int a;
+                  
+                n_point = trg_align->n_point;
+                if(n_point > mbl_align->n_point) n_point = mbl_align->n_point;
+                
+                VLACheck(pairwise.trg_vla,int,n_point);
+                VLACheck(pairwise.mbl_vla,int,n_point);
+                
+                for(a=0;a<n_point;a++) {
+                  int trg_index = trg_align->id_at_point[a];
+                  int mbl_index = mbl_align->id_at_point[a];
+                  if((trg_index>=0)&&(mbl_index>=0)&&
+                     (mbl_align->fitness[a]>=0.0F)) {
+                    pairwise.trg_vla[pairwise.n_pair] = trg_index;
+                    pairwise.mbl_vla[pairwise.n_pair] = mbl_index;
+                    pairwise.n_pair++;
+                  }
+                }
+
+                {
+                  char trg_sele[ObjNameMax],mbl_sele[ObjNameMax];
+                  char align_name[ObjNameMax];
+                  SelectorGetUniqueTmpName(trg_sele);
+                  SelectorGetUniqueTmpName(mbl_sele);
+                  
+                  SelectorCreateOrderedFromObjectIndices(trg_sele,pairwise.trg_obj,
+                                                         pairwise.trg_vla,pairwise.n_pair);
+                  SelectorCreateOrderedFromObjectIndices(mbl_sele,pairwise.mbl_obj,
+                                                         pairwise.mbl_vla,pairwise.n_pair);
+                  
+                  sprintf(align_name,"%s_%s_alignment",
+                          pairwise.trg_obj->Obj.Name,
+                          pairwise.mbl_obj->Obj.Name);
+
+                  ExecutiveRMS(mbl_sele, trg_sele, 2, 0.0F, 0, 0, align_name, 0, 0, true);
+                  ExecutiveColor(align_name,"white",0,true);
+                  sprintf(tmp_sele, "%s | %s | %s",aligned_name, trg_sele, mbl_sele);
+                  SelectorCreateSimple(aligned_name, tmp_sele);
+                  /*ExecutiveDelete(trg_sele);
+                    ExecutiveDelete(mbl_sele);*/
+                }
+
+              }
+              ObjMolPairwisePurge(&pairwise);
+            }
+          }
+        }
+        sprintf(tmp_sele, "bychain %s", aligned_name);
+        SelectorCreateSimple(aligned_name, tmp_sele);
+      }
+    }
+  }
+  
+  if(ok&&n_processed) { /* next, perform any and all Metaphorics annotations */
+      int a;
+      for(a=0; a<n_processed; a++) {
+        ProcPDBRec *current = processed + a;
+        
+        if(current->m4x.annotated_flag) {
+          char annotate_script[] = "@$PYMOL_SCRIPTS/metaphorics/annotate.pml";
+          char align_script[] = "@$PYMOL_SCRIPTS/metaphorics/alignment.pml";
+          char *script_file = NULL;
+          
+          if(a==(n_processed-1)) { /* for multi-PDB files, don't execute script until after the last file */
+            switch(m4x_mode) {
+            case 0:
+              script_file = annotate_script;
+              break;
+            case 1:
+              script_file = align_script;
+              break;
+            }
+          }
+          ObjectMoleculeM4XAnnotate(current->obj,&current->m4x,script_file,(m4x_mode==1));
+          M4XAnnoPurge(&current->m4x);
+        }
+      }
+  }
+  /* END METAPHORICS ANNOTATION AND ALIGNMENT CODE */
+  
+  VLAFreeP(processed);
   if(buffer) {
     mfree(buffer);
   }
-      
+  
 }
 
 
@@ -435,6 +590,7 @@ int ExecutiveSpectrum(char *s1,char *expr,float min,float max,int first,int last
         sprintf(at,pat,b);
         color_index[a] = ColorGetIndex(buffer);
       }
+      ObjectMoleculeOpRecInit(&op);
       op.code = OMOP_CountAtoms;
       op.i1=0;
       ExecutiveObjMolSeleOp(sele1,&op);
@@ -522,9 +678,11 @@ char *ExecutiveGetChains(char *sele,int state,int *null_chain)
 
   sele1 = SelectorIndexByName(sele);
   if(sele1>=0) {
+
     for(a=0;a<256;a++) {
       chains[a]=0;
     }
+    ObjectMoleculeOpRecInit(&op);
     op.code=OMOP_GetChains;
     op.ii1 = chains;
     op.i1=0;
@@ -1105,6 +1263,7 @@ CObject **ExecutiveSeleToObjectVLA(char *s1)
   } else {
     sele = SelectorIndexByName(s1);
     if(sele>0) {
+      ObjectMoleculeOpRecInit(&op2);
       op2.code=OMOP_GetObjects;
       op2.obj1VLA=(ObjectMolecule**)result;
       op2.i1=0;
@@ -1316,6 +1475,7 @@ int ExecutiveSmooth(char *name,int cycles,int window,int first, int last, int en
     if(n_state>=window) {
       
       /* determine storage req */
+      ObjectMoleculeOpRecInit(&op);
       op.code = OMOP_CountAtoms;
       op.i1=0;
       ExecutiveObjMolSeleOp(sele,&op);
@@ -1729,6 +1889,7 @@ int ExecutiveSetGeometry(char *s1,int geom,int valence)
 
   sele1=SelectorIndexByName(s1);
   if(sele1>=0) {
+    ObjectMoleculeOpRecInit(&op1);
     op1.code = OMOP_SetGeometry;
     op1.i1 = geom;
     op1.i2 = valence;
@@ -1993,6 +2154,7 @@ int ExecutivePhiPsi(char *s1,ObjectMolecule ***objVLA,int **iVLA,
   int result = false;
   ObjectMoleculeOpRec op1;
   if(sele1>=0) {
+    ObjectMoleculeOpRecInit(&op1);
     op1.i1 = 0;
     op1.i2 = state;
     op1.obj1VLA=VLAlloc(ObjectMolecule*,1000);
@@ -2056,7 +2218,7 @@ float ExecutiveAlign(char *s1,char *s2,char *mat_file,float gap,float extend,int
               " ExecutiveAlign: %d atoms aligned.\n",c
               ENDFB;
             result =ExecutiveRMS("_align1","_align2",2,cutoff,cycles,quiet,oname,
-                                 state1,state2);
+                                 state1,state2,false);
             
           }
         }
@@ -2102,6 +2264,7 @@ int ExecutiveCartoon(int type,char *s1)
   ObjectMoleculeOpRec op1;
 
   sele1=SelectorIndexByName(s1);
+  ObjectMoleculeOpRecInit(&op1);
   op1.i2=0;
   if(sele1>=0) {
     op1.code=OMOP_INVA;
@@ -2127,6 +2290,7 @@ float *ExecutiveGetVertexVLA(char *s1,int state)
   int sele1;
   sele1 = SelectorIndexByName(s1);
   if(sele1>=0) {
+    ObjectMoleculeOpRecInit(&op1);
     op1.nvv1 = 0;
     op1.vv1=VLAlloc(float,1000);
     if(state>=0) {
@@ -2243,6 +2407,7 @@ int ExecutiveSaveUndo(char *s1,int state)
 
   if(state<0) state = SceneGetState();                
   sele1=SelectorIndexByName(s1);
+  ObjectMoleculeOpRecInit(&op1);
   op1.i2=0;
   if(sele1>=0) {
     op1.code = OMOP_SaveUndo;
@@ -2451,6 +2616,7 @@ float ExecutiveGetArea(char *s0,int sta0,int load_b)
 
           if(load_b) {
             /* zero out B-values within selection */
+            ObjectMoleculeOpRecInit(&op);
             op.code=OMOP_SetB;
             op.f1=0.0;
             op.i1=0;
@@ -2650,6 +2816,7 @@ void ExecutiveFuse(char *s0,char *s1,int mode)
         SelectorCreate(tmp_fuse_sele,NULL,obj0,1,NULL);
         sele2=SelectorIndexByName(tmp_fuse_sele);
         if(mode) {
+          ObjectMoleculeOpRecInit(&op);
           op.code=OMOP_PrepareFromTemplate;
           op.ai=obj1->AtomInfo+i1;
           op.i1=mode;
@@ -2807,6 +2974,7 @@ void ExecutiveSort(char *name)
             ObjectMoleculeSort(obj);
             sele=SelectorIndexByName(rec->obj->Name);
             if(sele>=0) {
+              ObjectMoleculeOpRecInit(&op);
               op.code=OMOP_INVA;
               op.i1=cRepAll; 
               op.i2=cRepInvRep;
@@ -2836,6 +3004,7 @@ void ExecutiveRemoveAtoms(char *s1)
 				{
 				  if(rec->obj->type==cObjectMolecule)
 					 {
+                  ObjectMoleculeOpRecInit(&op);
                   op.code = OMOP_Remove;
                   op.i1 = 0;
 						obj=(ObjectMolecule*)rec->obj;
@@ -2869,6 +3038,7 @@ void ExecutiveAddHydrogens(char *s1)
   
   sele1 = SelectorIndexByName(s1);
   if(sele1>=0) {
+    ObjectMoleculeOpRecInit(&op);
     op.code = OMOP_AddHydrogens; /* 4 passes completes the job */
     ExecutiveObjMolSeleOp(sele1,&op);    
   }
@@ -2882,6 +3052,7 @@ void ExecutiveFlag(int flag,char *s1,int action,int quiet)
   
   sele1 = SelectorIndexByName(s1);
   if(sele1>=0) {
+    ObjectMoleculeOpRecInit(&op);
     switch(action) {
     case 0: op.code = OMOP_Flag; break;
     case 1: op.code = OMOP_FlagSet; break;
@@ -2948,6 +3119,7 @@ void ExecutiveProtect(char *s1,int mode)
   
   sele1=SelectorIndexByName(s1);
   if(sele1>=0) {
+    ObjectMoleculeOpRecInit(&op);
     op.code = OMOP_Protect;
     op.i1 = mode;
     op.i2 = 0;
@@ -2971,6 +3143,7 @@ void ExecutiveMask(char *s1,int mode)
   
   sele1=SelectorIndexByName(s1);
   if(sele1>=0) {
+    ObjectMoleculeOpRecInit(&op);
     op.code = OMOP_Mask;
     op.i1 = mode;
     op.i2 = 0;
@@ -3128,6 +3301,8 @@ float ExecutiveDistance(char *s1,char *s2)
   ObjectMoleculeOpRec op1;
   ObjectMoleculeOpRec op2;
   
+  ObjectMoleculeOpRecInit(&op1);
+  ObjectMoleculeOpRecInit(&op2);
   sele1=SelectorIndexByName(s1);
   op1.i1=0;
   op2.i2=0;
@@ -3176,6 +3351,7 @@ char *ExecutiveSeleToPDBStr(char *s1,int state,int conectFlag)
   int sele1,l;
   char end_str[] = "END\n";
 
+  ObjectMoleculeOpRecInit(&op1);
   sele1=SelectorIndexByName(s1);
   op1.charVLA=VLAlloc(char,10000);
   if(state<0) state=SceneGetState();
@@ -3346,6 +3522,7 @@ void ExecutiveLabel(char *s1,char *expr,int quiet)
 
   sele1=SelectorIndexByName(s1);
   if(sele1>=0) {
+    ObjectMoleculeOpRecInit(&op1);
     op1.code = OMOP_LABL;
     op1.s1 = expr;
     op1.i1 = 0;
@@ -3376,7 +3553,7 @@ int ExecutiveIterate(char *s1,char *expr,int read_only,int quiet)
 {
   int sele1;
   ObjectMoleculeOpRec op1;
-  
+  ObjectMoleculeOpRecInit(&op1);
   op1.i1=0;
   sele1=SelectorIndexByName(s1);
   if(sele1>=0) {
@@ -3414,6 +3591,7 @@ void ExecutiveIterateState(int state,char *s1,char *expr,int read_only,
   
   sele1=SelectorIndexByName(s1);
   if(sele1>=0) {
+    ObjectMoleculeOpRecInit(&op1);
     op1.code = OMOP_AlterState;
     op1.s1 = expr;
     op1.i1 = 0;
@@ -3440,9 +3618,21 @@ void ExecutiveIterateState(int state,char *s1,char *expr,int read_only,
     }
   }
 }
+
+typedef struct {
+  int priority;
+  float vertex[3];
+} FitVertexRec;
+
+static int fVertexOrdered(FitVertexRec *array,int l, int r)
+{
+  return(array[l].priority<=array[r].priority);
+}
+
 /*========================================================================*/
 float ExecutiveRMS(char *s1,char *s2,int mode,float refine,int max_cyc,
-                   int quiet,char *oname,int state1,int state2)
+                   int quiet,char *oname,int state1,int state2,
+                   int ordered_selections)
 {
   int sele1,sele2;
   float rms = -1.0;
@@ -3460,6 +3650,9 @@ float ExecutiveRMS(char *s1,char *s2,int mode,float refine,int max_cyc,
   float v1[3],*v2;
 
   sele1=SelectorIndexByName(s1);
+
+  ObjectMoleculeOpRecInit(&op1);
+  ObjectMoleculeOpRecInit(&op2);
   op1.vv1=NULL;
   op1.vc1=NULL;
   op2.vv1=NULL;
@@ -3476,6 +3669,8 @@ float ExecutiveRMS(char *s1,char *s2,int mode,float refine,int max_cyc,
     op1.nvv1=0;
     op1.vc1=(int*)VLAMalloc(1000,sizeof(int),5,1);
     op1.vv1=(float*)VLAMalloc(1000,sizeof(float),5,1);
+    if(ordered_selections)
+      op1.vp1=VLAlloc(int,1000);
     ExecutiveObjMolSeleOp(sele1,&op1);
     for(a=0;a<op1.nvv1;a++)
       {
@@ -3503,6 +3698,8 @@ float ExecutiveRMS(char *s1,char *s2,int mode,float refine,int max_cyc,
     op2.nvv1=0;
     op2.vc1=(int*)VLAMalloc(1000,sizeof(int),5,1);
     op2.vv1=(float*)VLAMalloc(1000,sizeof(float),5,1);
+    if(ordered_selections)
+      op2.vp1=VLAlloc(int,1000);
     ExecutiveObjMolSeleOp(sele2,&op2);
     for(a=0;a<op2.nvv1;a++)
       {
@@ -3536,7 +3733,76 @@ float ExecutiveRMS(char *s1,char *s2,int mode,float refine,int max_cyc,
           ok=false;
         }
       }
-      
+
+      if(ordered_selections&&op1.vp1&&op2.vp1) {
+        /* if we expected ordered selections and have priorities, 
+           then we may need to sort vertices */
+
+        int sort_flag1 = false, sort_flag2 = false;
+        int well_defined1 = true, well_defined2 = true;
+        
+        for(a=0;a<(op1.nvv1-1);a++) {
+          /*          printf("op1 vertex %d priority %d\n",a,op1.vp1[a]);
+                      printf("op2 vertex %d priority %d\n",a,op2.vp1[a]);*/
+
+          if(op1.vp1[a]>op1.vp1[a+1])
+            sort_flag1 = true;
+          else if(op1.vp1[a]==op1.vp1[a+1])
+            well_defined1 = false;
+          if(op2.vp1[a]>op2.vp1[a+1])
+            sort_flag2 = true;
+          else if(op2.vp1[a]==op2.vp1[a+1])
+            well_defined2 = false;
+        }
+        
+        if(sort_flag1||sort_flag2) {
+          if(!(well_defined1||well_defined2)) {
+            PRINTFB(FB_Executive,FB_Warnings) 
+              "Executive-Warning: Ordering requested but not well defined.\n"
+               ENDFB;
+          } else {
+            FitVertexRec *vert = Alloc(FitVertexRec,op1.nvv1);
+
+            if(sort_flag1) {
+              float *src,*dst;
+              src = op1.vv1;
+              for(a=0;a<op1.nvv1;a++) {              
+                vert[a].priority = op1.vp1[a];
+                dst=vert[a].vertex;
+                copy3f(src,dst);
+                src+=3;
+              }
+              UtilSortInPlace(vert,op1.nvv1,sizeof(FitVertexRec),(UtilOrderFn*)fVertexOrdered);
+              dst = op1.vv1;
+              for(a=0;a<op1.nvv1;a++) {              
+                src=vert[a].vertex;
+                copy3f(src,dst);
+                dst+=3;
+              }
+            }
+
+            if(sort_flag2) {
+              float *src,*dst;
+              src = op2.vv1;
+              for(a=0;a<op2.nvv1;a++) {              
+                vert[a].priority = op2.vp1[a];
+                dst=vert[a].vertex;
+                copy3f(src,dst);
+                src+=3;
+              }
+              UtilSortInPlace(vert,op2.nvv1,sizeof(FitVertexRec),(UtilOrderFn*)fVertexOrdered);
+              dst = op2.vv1;
+              for(a=0;a<op2.nvv1;a++) {              
+                src=vert[a].vertex;
+                copy3f(src,dst);
+                dst+=3;
+              }
+            }
+            
+            FreeP(vert);
+          }
+        }
+      }
       if(mode!=0) {
         rms = MatrixFitRMS(op1.nvv1,op1.vv1,op2.vv1,NULL,op2.ttt);
         repeat=true;
@@ -3606,8 +3872,8 @@ float ExecutiveRMS(char *s1,char *s2,int mode,float refine,int max_cyc,
         if(oname) 
           if(oname[0]) {
             cgo=CGONew();
-            CGOColor(cgo,1.0,1.0,0.0);
-            CGOLinewidth(cgo,3.0);
+            /*             CGOColor(cgo,1.0,1.0,0.0); 
+                           CGOLinewidth(cgo,3.0);*/
             CGOBegin(cgo,GL_LINES);
             for(a=0;a<op1.nvv1;a++) {
               CGOVertexv(cgo,op2.vv1+(a*3));
@@ -3617,6 +3883,7 @@ float ExecutiveRMS(char *s1,char *s2,int mode,float refine,int max_cyc,
             CGOEnd(cgo);
             CGOStop(cgo);
             ocgo = ObjectCGOFromCGO(NULL,cgo,0);
+            ocgo->Obj.Color = ColorGetIndex("yellow");
             ObjectSetName((CObject*)ocgo,oname);
             ExecutiveDelete(oname);
             auto_save = (int)SettingGet(cSetting_auto_zoom);
@@ -3640,6 +3907,8 @@ float ExecutiveRMS(char *s1,char *s2,int mode,float refine,int max_cyc,
   VLAFreeP(op2.vv1);
   VLAFreeP(op1.vc1);
   VLAFreeP(op2.vc1);
+  VLAFreeP(op1.vp1);
+  VLAFreeP(op2.vp1);
   return(rms);
 }
 /*========================================================================*/
@@ -3650,6 +3919,7 @@ int *ExecutiveIdentify(char *s1,int mode)
   int *result = NULL;
   sele1=SelectorIndexByName(s1);
   if(sele1>=0) {
+    ObjectMoleculeOpRecInit(&op2);
     op2.code=OMOP_Identify;
     op2.i1=0;
     op2.i1VLA=VLAlloc(int,1000);
@@ -3666,6 +3936,7 @@ int ExecutiveIdentifyObjects(char *s1,int mode,int **indexVLA,ObjectMolecule ***
   ObjectMoleculeOpRec op2;
   sele1=SelectorIndexByName(s1);
   if(sele1>=0) {
+    ObjectMoleculeOpRecInit(&op2);
     op2.code=OMOP_IdentifyObjects;
     op2.obj1VLA=VLAlloc(ObjectMolecule*,1000);
     op2.i1VLA=VLAlloc(int,1000);
@@ -3685,6 +3956,7 @@ int ExecutiveIndex(char *s1,int mode,int **indexVLA,ObjectMolecule ***objVLA)
   ObjectMoleculeOpRec op2;
   sele1=SelectorIndexByName(s1);
   if(sele1>=0) {
+    ObjectMoleculeOpRecInit(&op2);
     op2.code=OMOP_Index;
     op2.obj1VLA=VLAlloc(ObjectMolecule*,1000);
     op2.i1VLA=VLAlloc(int,1000);
@@ -3706,6 +3978,8 @@ float *ExecutiveRMSStates(char *s1,int target,int mode,int quiet)
   float *result = NULL;
   int ok=true;
   
+  ObjectMoleculeOpRecInit(&op1);
+  ObjectMoleculeOpRecInit(&op2);
   op1.vv1=NULL;
   op2.vv1=NULL;
   sele1=SelectorIndexByName(s1);
@@ -3761,6 +4035,8 @@ float ExecutiveRMSPairs(WordType *sele,int pairs,int mode)
   ObjectMoleculeOpRec op2;
   OrthoLineType combi,s1;
 
+  ObjectMoleculeOpRecInit(&op1);
+  ObjectMoleculeOpRecInit(&op2);
   op1.nvv1=0;
   op1.vc1=(int*)VLAMalloc(1000,sizeof(int),5,1);
   op1.vv1=(float*)VLAMalloc(1000,sizeof(float),5,1); /* auto-zero */
@@ -4003,6 +4279,7 @@ int  ExecutiveSetSetting(int index,PyObject *tuple,char *sele,
           {
             if(sele1>=0) {
               obj=(ObjectMolecule*)rec->obj;
+              ObjectMoleculeOpRecInit(&op);
               op.code=OMOP_CountAtoms;
               op.i1=0;
               ObjectMoleculeSeleOp(obj,sele1,&op);
@@ -4143,6 +4420,7 @@ int  ExecutiveUnsetSetting(int index,char *sele,
           {
             if(sele1>=0) {
               obj=(ObjectMolecule*)rec->obj;
+              ObjectMoleculeOpRecInit(&op);
               op.code=OMOP_CountAtoms;
               op.i1=0;
               ObjectMoleculeSeleOp(obj,sele1,&op);
@@ -4238,6 +4516,7 @@ int ExecutiveColor(char *name,char *color,int flags,int quiet)
       sele=SelectorIndexByName(name);
       if(sele>=0) {
         ok=true; 
+        ObjectMoleculeOpRecInit(&op);
         op.code = OMOP_COLR;
         op.i1= col_ind;
         op.i2= 0;
@@ -4369,6 +4648,7 @@ int ExecutiveGetCameraExtent(char *name,float *mn,float *mx,int transformed,int 
   sele=SelectorIndexByName(name);
 
   if(sele>=0) { 
+    ObjectMoleculeOpRecInit(&op);
     if(state<0) {
       op.code = OMOP_CameraMinMax;
     } else {
@@ -4431,7 +4711,9 @@ int ExecutiveGetExtent(char *name,float *mn,float *mx,int transformed,int state,
   PRINTFD(FB_Executive)
     " ExecutiveGetExtent: name %s state %d\n",name,state
     ENDFD;
-  
+
+  ObjectMoleculeOpRecInit(&op);
+  ObjectMoleculeOpRecInit(&op2);  
   op2.i1 = 0;
   op2.v1[0]=-1.0;
   op2.v1[1]=-1.0;
@@ -4592,6 +4874,9 @@ int ExecutiveGetMaxDistance(char *name,float *pos,float *dev,int transformed,int
     " ExecutiveGetExtent: name %s state %d\n",name,state
     ENDFD;
   
+  ObjectMoleculeOpRecInit(&op);
+  ObjectMoleculeOpRecInit(&op2);
+
   op2.i1 = 0;
   op2.v1[0]=-1.0;
   op2.v1[1]=-1.0;
@@ -4839,6 +5124,7 @@ int ExecutiveGetMoment(char *name,Matrix33d mi,int state)
   
   sele=SelectorIndexByName(name);
   if(sele>=0) {
+    ObjectMoleculeOpRecInit(&op);
     if(state<0) {
       op.code = OMOP_SUMC;
     } else {
@@ -4963,6 +5249,8 @@ void ExecutiveSetAllVisib(int state)
           sele = SelectorIndexByName(obj->Obj.Name);
           for(rep=0;rep<cRepCnt;rep++) 
             rec->repOn[rep]=state;
+          ObjectMoleculeOpRecInit(&op);
+
           op.code=OMOP_VISI;
           op.i1=-1;
           op.i2=state;
@@ -5039,6 +5327,8 @@ void ExecutiveSetRepVisib(char *name,int rep,int state)
       case cExecObject:
         sele=SelectorIndexByName(name);
         if(sele>=0) {
+          ObjectMoleculeOpRecInit(&op);
+
           op.code=OMOP_VISI;
           op.i1=rep;
           op.i2=state;
@@ -5090,6 +5380,8 @@ void ExecutiveSetAllRepVisib(char *name,int rep,int state)
             }
             obj=(ObjectMolecule*)rec->obj;
             sele = SelectorIndexByName(obj->Obj.Name);
+            ObjectMoleculeOpRecInit(&op);
+
             op.code=OMOP_VISI;
             op.i1=rep;
             op.i2=state;
@@ -5135,6 +5427,7 @@ void ExecutiveInvalidateRep(char *name,int rep,int level)
   }
   sele=SelectorIndexByName(name);
   if(sele>=0) {
+    ObjectMoleculeOpRecInit(&op);
 	 op.code = OMOP_INVA;
 	 op.i1=rep;
 	 op.i2=level;
@@ -5238,6 +5531,7 @@ void ExecutiveSymExp(char *name,char *oname,char *s1,float cutoff) /* TODO state
     PRINTFB(FB_Executive,FB_Actions)
       " ExecutiveSymExp: Generating symmetry mates...\n"
       ENDFB;
+    ObjectMoleculeOpRecInit(&op);
 	 op.code = OMOP_SUMC;
 	 op.i1 =0;
     op.i2 =0;

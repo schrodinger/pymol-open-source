@@ -73,6 +73,7 @@ static WordKeyValue rep_names[] = {
 
 typedef struct {
   int selection;
+  int priority; /* must not be zero since it is also used as a boolean test for membership */
   int next;
 } MemberType;
 
@@ -128,7 +129,7 @@ int SelectorOperator22(EvalElem *base);
 int *SelectorEvaluate(SelectorWordType *word);
 SelectorWordType *SelectorParse(char *s);
 void SelectorPurgeMembers(int sele);
-int SelectorUpdateTableSingleObject(ObjectMolecule *obj,int no_dummies);
+int *SelectorUpdateTableSingleObject(ObjectMolecule *obj,int no_dummies,int *idx,int n_idx);
 int  SelectorEmbedSelection(int *atom, char *name, ObjectMolecule *obj,int no_dummies);
 void SelectorClean(void);
 void SelectorDeletePrefixSet(char *s);
@@ -198,6 +199,7 @@ int SelectorCheckNeighbors(int maxDepth,ObjectMolecule *obj,int at1,int at2,
 #define SELE_COLs ( 0x3100 | STYP_SEL1 | 0x70 )
 #define SELE_HBDs ( 0x3200 | STYP_SEL0 | 0x70 )
 #define SELE_HBAs ( 0x3300 | STYP_SEL0 | 0x70 )
+#define SELE_BYC1 ( 0x3400 | STYP_OPR1 | 0x10 )
 
 #define SEL_PREMAX 0x8
 
@@ -214,6 +216,8 @@ static WordKeyValue Keyword[] =
   {  "br;",      SELE_BYR1 },/* deprecated */
   {  "br.",      SELE_BYR1 },
   {  "b;",       SELE_BYR1 }, /* deprecated */
+  {  "bychain",  SELE_BYC1 },
+  {  "bc.",      SELE_BYC1 },
   {  "byobj",    SELE_BYO1 },
   {  "byobject", SELE_BYO1 },
   {  "bo;",      SELE_BYO1 },/* deprecated */
@@ -374,7 +378,7 @@ void SelectorSelectByID(char *name,ObjectMolecule *obj,int *id,int n_id)
   /* this routine only works if IDs cover a reasonable range --
      should rewrite using a hash table */
 
-  SelectorUpdateTableSingleObject(obj,true);
+  SelectorUpdateTableSingleObject(obj,true,NULL,0);
   atom = Calloc(int,I->NAtom);
   if(I->NAtom) {
 
@@ -1925,7 +1929,8 @@ int SelectorFromPyList(char *name,PyObject *list)
               m=I->NMember;
               VLACheck(I->Member,MemberType,m);
             }
-            I->Member[m].selection=sele;
+            I->Member[m].selection = sele;
+            I->Member[m].priority = 1; /* all restored selections are currently unordered */
             I->Member[m].next = ai->selEntry;
             ai->selEntry = m;
           }
@@ -2420,16 +2425,18 @@ int SelectorIsMember(int s,int sele)
 {
   SelectorType *I=&Selector;
   MemberType *member,*mem;
-  if(!sele) return true; /* "all" is selection number 0 */
+  if(!sele) return 1; /* "all" is selection number 0, unordered */
   member=I->Member;
   while(s) 
     {
       mem = member+s;
-      if(mem->selection==sele)
+      if(mem->selection==sele) {
+        return mem->priority;
         break;
+      }
       s = mem->next;
     }
-  return(s);
+  return false;
 }
 /*========================================================================*/
 ObjectMolecule *SelectorGetSingleObjectMolecule(int sele)
@@ -2671,7 +2678,7 @@ int SelectorSubdivideObject(char *pref,ObjectMolecule *obj,int sele1,int sele2,
   /* delete any existing matches */
   if(obj) {
     ObjectMoleculeUpdateNeighbors(obj);
-    SelectorUpdateTableSingleObject(obj,true);
+    SelectorUpdateTableSingleObject(obj,true,NULL,0);
     nAtom=obj->NAtom;
     if(nAtom) {
       comp = Alloc(int,nAtom);
@@ -4580,6 +4587,12 @@ void SelectorDelete(char *sele)
 	 }
 }
 /*========================================================================*/
+void SelectorGetUniqueTmpName(char *name_buffer)
+{
+  SelectorType *I=&Selector;
+  sprintf(name_buffer,"%s%d",cSelectorTmpPrefix,I->TmpCounter++);
+}
+/*========================================================================*/
 int SelectorGetTmp(char *input,char *store)
 {
   SelectorType *I=&Selector;
@@ -4626,7 +4639,7 @@ int  SelectorEmbedSelection(int *atom, char *name, ObjectMolecule *obj,int no_du
   /* either atom or obj should be NULL, not both and not neither */
 
   SelectorType *I=&Selector;
-  int flag;
+  int priority;
   int newFlag=true;
   int n,a,m,sele;
   int c=0;
@@ -4658,13 +4671,13 @@ int  SelectorEmbedSelection(int *atom, char *name, ObjectMolecule *obj,int no_du
   }
   for(a=start;a<I->NAtom;a++)
     {
-      flag=false;
+      priority = false;
       if(atom) {
-        if(atom[a]) flag=true;
+        if(atom[a]) priority = atom[a];
       } else {
-        if(I->Obj[I->Table[a].model]==obj) flag=true;
+        if(I->Obj[I->Table[a].model]==obj) priority = 1;
       }
-      if(flag)
+      if(priority)
         {
           ai = I->Obj[I->Table[a].model]->AtomInfo+I->Table[a].atom;
 
@@ -4677,12 +4690,15 @@ int  SelectorEmbedSelection(int *atom, char *name, ObjectMolecule *obj,int no_du
             m=I->NMember;
             VLACheck(I->Member,MemberType,m);
           }
-          I->Member[m].selection=sele;
+          I->Member[m].selection = sele;
+          I->Member[m].priority = priority; 
+          /* at runtime, selections can now have transient ordering --
+             but these are not yet persistent through session saves & restores */
           I->Member[m].next = ai->selEntry;
           ai->selEntry = m;
         }
     }
-  if(!obj) {
+  if(atom) {
     if(newFlag)
       ExecutiveManageSelection(name);
     else
@@ -4753,7 +4769,7 @@ int *SelectorApplyMultipick(Multipick *mp)
 
 static int _SelectorCreate(char *sname,char *sele,ObjectMolecule *obj,
                            int quiet,Multipick *mp,CSeqRow *rowVLA,
-                           int nRow) 
+                           int nRow,int *obj_idx,int n_idx)
 {
   SelectorType *I=&Selector;
   int *atom=NULL;
@@ -4783,10 +4799,10 @@ static int _SelectorCreate(char *sname,char *sele,ObjectMolecule *obj,
   if(ok)
 	 {
 	   if(sele) {
-		 atom=SelectorSelect(sele);
-		 if(!atom) ok=false;
+        atom=SelectorSelect(sele);
+        if(!atom) ok=false;
 	   } else if(obj) { /* optimized full-object selection */
-        SelectorUpdateTableSingleObject(obj,false);
+        atom=SelectorUpdateTableSingleObject(obj,false,obj_idx,n_idx);
 	   } else if(mp) {
         atom=SelectorApplyMultipick(mp);
       } else if(rowVLA) {
@@ -4814,17 +4830,28 @@ static int _SelectorCreate(char *sname,char *sele,ObjectMolecule *obj,
   PRINTFD(FB_Selector)
     " SelectorCreate: \"%s\" created with %d atoms.\n",name,c    
     ENDFD
-  return(c);
+    return(c);
 }
-
+int SelectorCreateEmpty(char *name)
+{
+  return _SelectorCreate(name, "none", NULL, 1, NULL, NULL, 0, NULL, 0);
+}
+int SelectorCreateSimple(char *name, char *sele)
+{
+  return _SelectorCreate(name, sele, NULL, 1, NULL, NULL, 0, NULL, 0);  
+}
+int SelectorCreateOrderedFromObjectIndices(char *sname, ObjectMolecule *obj, int *idx, int n_idx)
+{
+  return _SelectorCreate(sname,NULL,obj,true,NULL,NULL,0,idx,n_idx);
+}
 int SelectorCreateFromSeqRowVLA(char *sname,CSeqRow *rowVLA,int nRow)
 {
-  return _SelectorCreate(sname,NULL,NULL,true,NULL,rowVLA,nRow);
+  return _SelectorCreate(sname,NULL,NULL,true,NULL,rowVLA,nRow,NULL,0);
 }
 
 int SelectorCreate(char *sname,char *sele,ObjectMolecule *obj,int quiet,Multipick *mp)
 {
-  return _SelectorCreate(sname,sele,obj,quiet,mp,NULL,0);
+  return _SelectorCreate(sname,sele,obj,quiet,mp,NULL,0,NULL,0);
 }
 
 /*========================================================================*/
@@ -4838,19 +4865,18 @@ void SelectorClean(void)
   FreeP(I->Flag2);
 }
 /*========================================================================*/
-int SelectorUpdateTableSingleObject(ObjectMolecule *obj,int no_dummies)
+int *SelectorUpdateTableSingleObject(ObjectMolecule *obj,int no_dummies,int *idx,int n_idx)
 {
   int a=0;
   int c=0;
   int modelCnt;
-
+  int *result = NULL;
   SelectorType *I=&Selector;
 
   PRINTFD(FB_Selector)
     "SelectorUpdateTableSingleObject-Debug: entered..\n"
     ENDFD;
-  
-
+ 
   SelectorClean();
 
   I->NCSet = 0;
@@ -4884,6 +4910,15 @@ int SelectorUpdateTableSingleObject(ObjectMolecule *obj,int no_dummies)
       I->Table[c].atom=a;
       c++;
     }
+  if(idx&&n_idx) {
+    result = Calloc(int,c);
+    for(a=0; a< n_idx; a++) {
+      int at = idx[a];
+      if((at>=0)&&(at<obj->NAtom)) { /* create an ordered selection based on the input order of the object indices */
+        result[obj->SeleBase + at] = a+1; 
+      }
+    }
+  }
   modelCnt++;
   I->NModel=modelCnt;
   I->NAtom=c;
@@ -4898,7 +4933,7 @@ int SelectorUpdateTableSingleObject(ObjectMolecule *obj,int no_dummies)
     "SelectorUpdateTableSingleObject-Debug: leaving...\n"
     ENDFD;
 
-  return(true);
+  return(result);
 }
 
 /*========================================================================*/
@@ -6096,14 +6131,13 @@ int SelectorLogic1(EvalElem *base)
                   if(I->Table[a].model==I->Table[b].model)
                     {
                       at2=&I->Obj[I->Table[b].model]->AtomInfo[I->Table[b].atom];
-                      if(at1->hetatm==at2->hetatm)
-                        if(at1->chain[0]==at2->chain[0])
-                          if(WordMatch(at1->resi,at2->resi,I->IgnoreCase)<0)
-                            if(WordMatch(at1->segi,at2->segi,I->IgnoreCase)<0) {
-                              base[0].sele[b]=true;
-                              c++;
-                              flag=1;
-                            }
+                      if(at1->chain[0]==at2->chain[0])
+                        if(WordMatch(at1->resi,at2->resi,I->IgnoreCase)<0)
+                          if(WordMatch(at1->segi,at2->segi,I->IgnoreCase)<0) {
+                            base[0].sele[b]=true;
+                            c++;
+                            flag=1;
+                          }
                     }
                   if(!flag)
                     break;
@@ -6117,17 +6151,16 @@ int SelectorLogic1(EvalElem *base)
                   if(I->Table[a].model==I->Table[b].model)
                     {
                       at2=&I->Obj[I->Table[b].model]->AtomInfo[I->Table[b].atom];
-                      if(at1->hetatm==at2->hetatm)
-                        if(at1->chain[0]==at2->chain[0])
-                          if(WordMatch(at1->resi,at2->resi,I->IgnoreCase)<0)
-                            if(WordMatch(at1->segi,at2->segi,I->IgnoreCase)<0) {
-                              base[0].sele[b]=true;
-                              c++;
-                              flag=1;
-                            }
+                      if(at1->chain[0]==at2->chain[0])
+                        if(WordMatch(at1->resi,at2->resi,I->IgnoreCase)<0)
+                          if(WordMatch(at1->segi,at2->segi,I->IgnoreCase)<0) {
+                            base[0].sele[b]=true;
+                            c++;
+                            flag=1;
+                          }
                     }
-                if(!flag)
-                  break;
+                  if(!flag)
+                    break;
                 }
                 b++;
               }
@@ -6144,7 +6177,6 @@ int SelectorLogic1(EvalElem *base)
                  if(I->Table[a].model==I->Table[b].model)
                    {
                      at2=&I->Obj[I->Table[b].model]->AtomInfo[I->Table[b].atom];
-                     if(at1->hetatm==at2->hetatm)
                        if(at1->chain[0]==at2->chain[0])
                          if(WordMatch(at1->resi,at2->resi,I->IgnoreCase)<0)
                            if(WordMatch(at1->segi,at2->segi,I->IgnoreCase)<0) {
@@ -6156,6 +6188,55 @@ int SelectorLogic1(EvalElem *base)
 		  }
 #endif
 		break;
+
+	 case SELE_BYC1: /* ASSUMES atoms are sorted by chain */
+		for(a=cNDummyAtoms;a<I->NAtom;a++)
+		  {
+			 if(base[0].sele[a]) 
+			   {
+              at1=&I->Obj[I->Table[a].model]->AtomInfo[I->Table[a].atom];
+              b = a-1;
+              while(b>=0) {
+                if(!base[0].sele[b]) {
+                  flag = false;
+                  if(I->Table[a].model==I->Table[b].model)
+                    {
+                      at2=&I->Obj[I->Table[b].model]->AtomInfo[I->Table[b].atom];
+                        if(at1->chain[0]==at2->chain[0])
+                          if(WordMatch(at1->segi,at2->segi,I->IgnoreCase)<0) {
+                            base[0].sele[b]=true;
+                            c++;
+                            flag=1;
+                          }
+                    }
+                  if(!flag)
+                    break;
+                }
+                b--;
+              }
+              b = a + 1;
+              while(b<I->NAtom) {
+                if(!base[0].sele[b]) {
+                  flag=false;
+                  if(I->Table[a].model==I->Table[b].model)
+                    {
+                      at2=&I->Obj[I->Table[b].model]->AtomInfo[I->Table[b].atom];
+                      if(at1->chain[0]==at2->chain[0])
+                        if(WordMatch(at1->segi,at2->segi,I->IgnoreCase)<0) {
+                          base[0].sele[b]=true;
+                          c++;
+                          flag=1;
+                        }
+                    }
+                  if(!flag)
+                    break;
+                }
+                b++;
+              }
+			   }
+		  }
+		break;
+
 	 }
   PRINTFD(FB_Selector)
 	 " SelectorLogic1: %d atoms selected.\n",c

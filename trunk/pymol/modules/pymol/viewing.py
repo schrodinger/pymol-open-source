@@ -1173,7 +1173,7 @@ USAGE
 
 PYMOL API
 
-   cmd.color(string color="black")
+   cmd.bg_color(string color="black")
 
       '''
       r = None

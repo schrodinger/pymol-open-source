@@ -51,6 +51,19 @@ int ColorGetNext(void)
   return(result);
 }
 
+int ColorGetCurrent(void)
+{
+  int result;
+  int next;
+  next = (int)SettingGet(cSetting_auto_color_next);
+
+  next = (next&cAutoColorMask);
+  result = AutoColor[next];
+  next--;
+  next = (next&cAutoColorMask);
+  return(result);
+}
+
 int ColorCheckRamped(int index)
 {
   return(index<=(cColorExtCutoff));
