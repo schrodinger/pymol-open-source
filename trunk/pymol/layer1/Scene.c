@@ -3009,12 +3009,13 @@ static int SceneDrag(Block *block,int x,int y,int mod,double when)
   return(1);
 }
 
-static void SceneDeferredClick(DeferredMouse *dm)
+static int SceneDeferredClick(DeferredMouse *dm)
 {
   if(!SceneClick(dm->block, dm->button, dm->x, dm->y, dm->mod, dm->when))
     {
       
     }
+  return 1;
 }
 
 int SceneDeferClick(Block *block, int button, int x, int y, int mod)
@@ -3053,9 +3054,10 @@ static int SceneDeferClickWhen(Block *block, int button, int x, int y, double wh
   return 1;
 }
 
-static void SceneDeferredDrag(DeferredMouse *dm)
+static int SceneDeferredDrag(DeferredMouse *dm)
 {
   SceneDrag(dm->block, dm->x, dm->y, dm->mod, dm->when);
+  return 1;
 }
 
 int SceneDeferDrag(Block *block,int x,int y,int mod)
@@ -3075,9 +3077,10 @@ int SceneDeferDrag(Block *block,int x,int y,int mod)
   return 1;
 }
 
-static void SceneDeferredRelease(DeferredMouse *dm)
+static int SceneDeferredRelease(DeferredMouse *dm)
 {
   SceneRelease(dm->block, dm->button, dm->x, dm->y, dm->mod, dm->when);
+  return 1;
 }
 
 int SceneDeferRelease(Block *block,int button,int x,int y,int mod) 
