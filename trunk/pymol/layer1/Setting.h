@@ -531,10 +531,11 @@ CSetting *SettingNewFromPyList(PyMOLGlobals *G,PyObject *list);
 #define cSetting_cartoon_putty_scale_power  381
 #define cSetting_cartoon_putty_range        382
 #define cSetting_cartoon_side_chain_helper  383
+#define cSetting_surface_optimize_subsets   384
 
 /* cSetting_ss_INIT must always be last setting_index +1 */
 
-#define cSetting_INIT                       384
+#define cSetting_INIT                       385
 
 #endif
 

@@ -2394,6 +2394,7 @@ void SettingInitGlobal(PyMOLGlobals *G,int alloc,int reset_gui)
   SettingSet_f(I,cSetting_cartoon_putty_scale_power, 1.5F);
   SettingSet_f(I,cSetting_cartoon_putty_range, 2.0F);
   SettingSet_b(I,cSetting_cartoon_side_chain_helper, 0);
+  SettingSet_b(I,cSetting_surface_optimize_subsets, 1);
 
 }
 

@@ -5035,8 +5035,8 @@ static PyObject *CmdWindow(PyObject *self, 	PyObject *args)
 static PyObject *CmdGetCThreadingAPI(PyObject *self, 	PyObject *args)
 {
   PyObject *result = PyList_New(2);
-  PyList_SetItem(result,0,PyCObject_FromVoidPtr(PBlock,NULL));
-  PyList_SetItem(result,1,PyCObject_FromVoidPtr(PUnblock,NULL));
+  PyList_SetItem(result,0,PyCObject_FromVoidPtr((void*)PBlock,NULL));
+  PyList_SetItem(result,1,PyCObject_FromVoidPtr((void*)PUnblock,NULL));
   return result;
 }
 
