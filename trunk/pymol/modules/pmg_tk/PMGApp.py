@@ -362,6 +362,8 @@ class PMGApp(AbstractApp):
       if len(ofile):
          self.initialdir = re.sub(r"[^\/\\]*$","",ofile)         
          cmd.log("load %s\n"%ofile,"cmd.load('%s')\n"%ofile)
+         if (string.lower(ofile[-4:])=='.pse') and (ofile!=self.save_file):
+            self.save_file = '' # remove ambiguous default 
          cmd.load(ofile)
 
    def log_open(self):

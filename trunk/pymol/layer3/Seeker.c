@@ -37,7 +37,8 @@ CSeeker Seeker;
 
 CSeqHandler SeekerHandler;
 
-static CSeqRow* SeekerClick(CSeqRow* rowVLA,int button,int row_num,int col_num,int mod)
+
+static void SeekerSelectionToggle(CSeqRow* rowVLA,int row_num,int col_num,int inc_or_excl)
 {
   char selName[ObjNameMax];
   OrthoLineType buf1,buf2;
@@ -106,6 +107,22 @@ static CSeqRow* SeekerClick(CSeqRow* rowVLA,int button,int row_num,int col_num,i
     }
   }
   VLAFreeP(buf_vla);
+}
+
+static CSeqRow* SeekerClick(CSeqRow* rowVLA,int button,int row_num,int col_num,int mod)
+{
+  CSeqRow *row;
+  CSeqCol *col;
+  
+  row = rowVLA + row_num;
+  col = row->col + col_num;
+  
+  if(col->inverse) {
+    SeekerSelectionToggle(rowVLA,row_num,col_num,true);
+  } else {
+    SeekerSelectionToggle(rowVLA,row_num,col_num,false);
+  }
+
   return NULL;
 }
 
@@ -319,7 +336,7 @@ void SeekerUpdate(void)
   ObjectMolecule *obj;
   int nRow = 0;
   int label_flag = true;
-  CSeqRow *row_vla,*row,*lab;
+  CSeqRow *row_vla,*row,*lab=NULL;
   row_vla = VLACalloc(CSeqRow,10);
 
   /* FIRST PASS: get all the residues represented properly */

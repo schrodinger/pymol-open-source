@@ -348,7 +348,7 @@ PYMOL API
 
 NOTE
 
-   The invert function is usually bound to CTRL-X in editing mode.
+   The invert function is usually bound to CTRL-E in Editing Mode.
 
 
    '''
