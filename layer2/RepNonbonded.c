@@ -124,9 +124,9 @@ void RepNonbondedRender(RepNonbonded *I,CRay *ray,Pickable **pick)
 	 (*pick)[0].index = i;
   } else if(PMGUI) {
 
+    int use_dlst;
     glLineWidth(I->Width);
 
-    int use_dlst;
     use_dlst = (int)SettingGet(cSetting_use_display_lists);
     if(use_dlst&&I->R.displayList) {
       glCallList(I->R.displayList);
