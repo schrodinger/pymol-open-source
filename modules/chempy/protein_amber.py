@@ -407,6 +407,18 @@ normal = {
 ('TYR'  , 'N'    ) : { 'type' : 'N'    , 'charge' : -0.4157 } ,
 ('TYR'  , 'O'    ) : { 'type' : 'O'    , 'charge' : -0.5679 } ,
 ('TYR'  , 'OH'   ) : { 'type' : 'OH'   , 'charge' : -0.5579 } ,
+('NME'  , '1HH3' ) : { 'type' : 'H1'   , 'charge' :  0.0976 } ,
+('NME'  , '2HH3' ) : { 'type' : 'H1'   , 'charge' :  0.0976 } ,
+('NME'  , '3HH3' ) : { 'type' : 'H1'   , 'charge' :  0.0976 } ,
+('NME'  , 'CH3'  ) : { 'type' : 'CT'   , 'charge' : -0.1490 } ,
+('NME'  , 'H'    ) : { 'type' : 'H'    , 'charge' :  0.2719 } ,
+('NME'  , 'N'    ) : { 'type' : 'N'    , 'charge' : -0.4157 } ,
+('ACE'  , '1HH3' ) : { 'type' : 'HC'   , 'charge' :  0.1123 } ,
+('ACE'  , '2HH3' ) : { 'type' : 'HC'   , 'charge' :  0.1123 } ,
+('ACE'  , '3HH3' ) : { 'type' : 'HC'   , 'charge' :  0.1123 } ,
+('ACE'  , 'C'    ) : { 'type' : 'C'    , 'charge' :  0.5972 } ,
+('ACE'  , 'CH3'  ) : { 'type' : 'CT'   , 'charge' : -0.3662 } ,
+('ACE'  , 'O'    ) : { 'type' : 'O'    , 'charge' : -0.5679 } ,
 }
 n_terminal = {
 ('ALA'  , '1HB'  ) : { 'type' : 'HC'   , 'charge' :  0.0300 } ,
