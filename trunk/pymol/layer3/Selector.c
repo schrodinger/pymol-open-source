@@ -4287,6 +4287,7 @@ int SelectorGetPDB(char **charVLA,int sele,int state,int conectFlag)
   int newline;
   int use_ter = (int)SettingGet(cSetting_pdb_use_ter_records);
   int retain_ids = (int)SettingGet(cSetting_pdb_retain_ids);
+  int conect_all = (int)SettingGet(cSetting_pdb_conect_all);
 
   CoordSet *cs;
   ObjectMolecule *obj;
@@ -4414,7 +4415,7 @@ int SelectorGetPDB(char **charVLA,int sele,int state,int conectFlag)
             a2=cs->AtmToIdx[b2];
           }
           
-          if((a1>=0)&&(a2>=0)&&(atInfo[b1].hetatm||atInfo[b2].hetatm)) {
+          if((a1>=0)&&(a2>=0)&&(conect_all||atInfo[b1].hetatm||atInfo[b2].hetatm)) {
             b1+=obj->SeleBase;
             b2+=obj->SeleBase;
             if(I->Table[b1].index&&I->Table[b2].index) {

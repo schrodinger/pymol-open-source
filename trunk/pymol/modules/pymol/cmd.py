@@ -1195,6 +1195,7 @@ SEE ALSO
         deprotect,          \
         dss,                \
         edit,               \
+        fix_chemistry,      \
         flag,               \
         fuse,               \
         h_add,              \
@@ -1447,6 +1448,7 @@ SEE ALSO
       'feedback'      : [ feedback          , 0,  0 , ''  , parsing.STRICT ],
       'fit'           : [ fit               , 0 , 0 , ''  , parsing.STRICT ],
       'finally'       : [ python_help       , 0 , 0 , ''  , parsing.PYTHON ],
+      'fix_chemistry' : [ fix_chemistry     , 0 , 0 , ''  , parsing.STRICT ],
       'flag'          : [ flag              , 0 , 0 , ''  , parsing.LEGACY ],
       'for'           : [ python_help       , 0 , 0 , ''  , parsing.PYTHON ],
       'fork'          : [ helping.spawn     , 1 , 2 , ',' , parsing.SPAWN  ],
@@ -1758,7 +1760,7 @@ SEE ALSO
       'B' : [ replace                , ('Br',1,1), {} ],
       'C' : [ replace                , ('C',4,4), {} ],
       'D' : [ remove_picked          , () , {} ],
-      'E' : [ invert                 , () , {} ],   
+      'E' : [ dist                   , (None,'pk1','pk2') , {} ],   
       'F' : [ replace                , ('F',1,1), {} ],   
       'G' : [ replace                , ('H',1,1), {} ],
       'I' : [ replace                , ('I',1,1), {} ],
@@ -1768,13 +1770,13 @@ SEE ALSO
       'N' : [ replace                , ('N',4,3) , {}],
       'O' : [ replace                , ('O',4,2) , {}],   
       'P' : [ replace                , ('P',4,1) , {}],
-      'Q' : [ dist                   , () , {}],   
+      'Q' : [ None                   , () , {}],   
       'R' : [ h_fill                 , () , {} ],   
       'S' : [ replace                , ('S',4,2) , {}],
-      'T' : [ bond                   , () , {} ],   
+      'T' : [ bond                   , ('pk1','pk2') , {} ],   
       'U' : [ alter                  , ('pk1','formal_charge =0.0') , {}],
       'W' : [ cycle_valence          , () , {}],   
-      'X' : [ remove                 , ('pkfrag1',) , {} ],
+      'X' : [ invert                 , () , {'quiet':0} ],
       'Y' : [ attach                 , ('H',1,1) , {} ],
       'Z' : [ undo                   , () , {} ],   
       }

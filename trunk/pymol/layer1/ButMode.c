@@ -287,11 +287,19 @@ void ButModeDraw(Block *block)
   if(PMGUI) {
     glColor3fv(I->Block->BackColor);
     BlockFill(I->Block);
-    glColor3fv(I->Block->TextColor);
 
     x = I->Block->rect.left+cButModeLeftMargin;
     y = (I->Block->rect.top-cButModeLineHeight)-cButModeTopMargin;
 
+
+    glColor3fv(I->TextColor2);
+    GrapDrawStr("Mouse Mode ",x+1,y);
+    glColor3fv(I->TextColor3);
+    GrapDrawStr(SettingGetGlobal_s(cSetting_button_mode_name),x+88,y);
+    /*    GrapDrawStr("2-Bttn Selecting",x+88,y);*/
+    y-=cButModeLineHeight;
+
+    glColor3fv(I->Block->TextColor);
     GrapDrawStr("Buttons ",x+1,y);
     glColor3fv(I->TextColor1);
     GrapDrawStr("  Left Mddl Rght Scrl",x+48,y);
@@ -380,9 +388,7 @@ void ButModeDraw(Block *block)
     else 
       GrapContStr(I->Code[mode]);
 
-    glColor3fv(I->Block->TextColor);
     y-=cButModeLineHeight;
-
 
 
     glColor3fv(I->Block->TextColor);
@@ -414,9 +420,12 @@ void ButModeDraw(Block *block)
     nf = SceneGetNFrame();
     if(nf==0)
       nf=1;
-    sprintf(rateStr,"Frame [%3d/%3d] %d/sec",SceneGetFrame()+1,
+    glColor3fv(I->Block->TextColor);
+    GrapDrawStr("Frame ",x,y);
+    glColor3fv(I->TextColor2);
+    sprintf(rateStr,"[%3d/%3d] %d/sec",SceneGetFrame()+1,
             nf,(int)(rate+0.5F));
-    GrapDrawStr(rateStr,x,y);
+    GrapDrawStr(rateStr,x+48,y);
 
   }
 }

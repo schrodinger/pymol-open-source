@@ -1049,7 +1049,6 @@ int BasisHitShadow(BasisCallRec *BC)
    int      check_interior_flag;
    int      *elist, local_iflag = false;
    const float   _0   = 0.0F;
-   const float   _1   = 1.0F;
    /* local copies (eliminate these extra copies later on) */
 
    CBasis   *BI   = BC->Basis;

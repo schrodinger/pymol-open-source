@@ -42,6 +42,228 @@ Z* -------------------------------------------------------------------
 
 #define cResvMask 0x7FFF
 
+int ObjectMoleculeDoesAtomNeighborSele(ObjectMolecule *I, int index, int sele)
+{
+  int result = false;
+  ObjectMoleculeUpdateNeighbors(I);
+  if(index<I->NAtom) {
+    int a1;
+    int n;
+    AtomInfoType *ai;
+
+    n = I->Neighbor[index]+1;
+    while(1) { /* look for an attached non-hydrogen as a base */
+      a1 = I->Neighbor[n];
+      n+=2; 
+      if(a1<0) break;
+      ai = I->AtomInfo + a1;
+      if(SelectorIsMember(ai->selEntry,sele)) {
+        result=true;
+        break;
+      }
+    }
+  }
+  return result;
+}
+void ObjectMoleculeFixChemistry(ObjectMolecule *I, int sele1, int sele2) 
+{
+  int b;
+  int flag = false;
+  int s1,s2;
+  AtomInfoType *ai1,*ai2;
+  int order;
+  BondType *bond;
+  bond = I->Bond;
+  for(b=0;b<I->NBond;b++) {
+    flag = false;
+    ai1 = I->AtomInfo + bond->index[0];
+    ai2 = I->AtomInfo + bond->index[1];
+    s1=ai1->selEntry;
+    s2=ai2->selEntry;
+    
+    if((SelectorIsMember(s1,sele1)&&SelectorIsMember(s2,sele2))||
+       (SelectorIsMember(s2,sele1)&&SelectorIsMember(s1,sele2))) {
+      order = -1;
+      if(!ai1->resn[3]) { /* Standard disconnected PDB residue */
+        if(AtomInfoSameResidue(ai1,ai2)) {
+          /* nasty high-speed hack to get bond valences and formal charges 
+             for standard residues */
+          if(((!ai1->name[1])&&(!ai2->name[1]))&&
+             (((ai1->name[0]=='C')&&(ai2->name[0]=='O'))||
+              ((ai1->name[0]=='O')&&(ai2->name[0]=='C')))) {
+            order=2;
+          } else {
+            switch(ai1->resn[0]) {
+            case 'A':
+              switch(ai1->resn[1]) {
+              case 'R': /* ARG */
+                if(!strcmp(ai1->name,"NH1")) {
+                  ai1->formalCharge=1;
+                  ai1->chemFlag=false;
+                } else if(!strcmp(ai2->name,"NH1")) {
+                  ai2->formalCharge=1;
+                  ai2->chemFlag=false;
+                }
+                if(((!strcmp(ai1->name,"CZ"))&&(!strcmp(ai2->name,"NH1")))||
+                   ((!strcmp(ai2->name,"CZ"))&&(!strcmp(ai1->name,"NH1")))) 
+                  order=2;
+                break;
+              case 'S': 
+                switch(ai1->resn[2]) {
+                case 'P': /* ASP */
+                  if(!strcmp(ai1->name,"OD2")) {
+                    ai1->formalCharge=-1;
+                    ai1->chemFlag = false;
+                  } else if(!strcmp(ai2->name,"OD2")) {
+                    ai2->formalCharge=-1;
+                    ai2->chemFlag = false;
+                  } 
+                case 'N': /* ASN or ASP */
+                  if(((!strcmp(ai1->name,"CG"))&&(!strcmp(ai2->name,"OD1")))||
+                     ((!strcmp(ai2->name,"CG"))&&(!strcmp(ai1->name,"OD1")))) 
+                    order=2;
+                  break;
+                }
+              }
+            case 'G':
+              switch(ai1->resn[1]) {
+              case 'L': 
+                switch(ai1->resn[2]) {
+                case 'U': /* GLU */
+                  if(!strcmp(ai1->name,"OE2")) {
+                    ai1->formalCharge=-1;
+                    ai1->chemFlag = false;
+                  } else if(!strcmp(ai2->name,"OE2")) {
+                    ai2->formalCharge=-1;
+                    ai2->chemFlag = false;
+                  }
+                case 'N': /* GLN or GLU */
+                  if(((!strcmp(ai1->name,"CD"))&&(!strcmp(ai2->name,"OE1")))||
+                     ((!strcmp(ai2->name,"CD"))&&(!strcmp(ai1->name,"OE1")))) 
+                    order=2;
+                  break;
+                }
+              }
+              break;
+            case 'H':
+              switch(ai1->resn[1]) {
+              case 'I':
+                switch(ai1->resn[2]) {
+                case 'P':
+                  if(!strcmp(ai1->name,"ND1")) {
+                    ai1->formalCharge=1;
+                    ai1->chemFlag=false;
+                  } else if(!strcmp(ai2->name,"ND1")) {
+                    ai2->formalCharge=1;
+                    ai2->chemFlag=false;
+                  }
+                case 'S':
+                case 'E':
+                  if(((!strcmp(ai1->name,"CG"))&&(!strcmp(ai2->name,"CD2")))||
+                     ((!strcmp(ai2->name,"CG"))&&(!strcmp(ai1->name,"CD2")))) 
+                    order=2;
+                  else if(((!strcmp(ai1->name,"CE1"))&&(!strcmp(ai2->name,"ND1")))||
+                          ((!strcmp(ai2->name,"CE1"))&&(!strcmp(ai1->name,"ND1")))) 
+                    order=2;
+                  break;
+                  break;
+                case 'D':
+                  if(((!strcmp(ai1->name,"CG"))&&(!strcmp(ai2->name,"CD2")))||
+                     ((!strcmp(ai2->name,"CG"))&&(!strcmp(ai1->name,"CD2")))) 
+                    order=2;
+                  else if(((!strcmp(ai1->name,"CE1"))&&(!strcmp(ai2->name,"NE2")))||
+                          ((!strcmp(ai2->name,"CE1"))&&(!strcmp(ai1->name,"NE2")))) 
+                    order=2;
+                  break;
+                }
+                break;
+              }
+              break;
+            case 'P':
+              switch(ai1->resn[1]) {
+              case 'H': /* PHE */
+                if(ai1->resn[2]=='E') {
+                  if(((!strcmp(ai1->name,"CG"))&&(!strcmp(ai2->name,"CD1")))||
+                     ((!strcmp(ai2->name,"CG"))&&(!strcmp(ai1->name,"CD1")))) 
+                    order=2;
+                  else if(((!strcmp(ai1->name,"CZ"))&&(!strcmp(ai2->name,"CE1")))||
+                          ((!strcmp(ai2->name,"CZ"))&&(!strcmp(ai1->name,"CE1")))) 
+                    order=2;
+                  
+                  else if(((!strcmp(ai1->name,"CE2"))&&(!strcmp(ai2->name,"CD2")))||
+                          ((!strcmp(ai2->name,"CE2"))&&(!strcmp(ai1->name,"CD2")))) 
+                    order=2;
+                  break; 
+                }
+              }
+              break;
+            case 'L':
+              if(!strcmp(ai1->name,"NZ")) {
+                ai1->formalCharge=1;
+                ai1->chemFlag = false;
+              } else if(!strcmp(ai2->name,"NZ")) {
+                ai2->formalCharge=1;
+                ai2->chemFlag = false;
+              }
+              break;
+            case 'T':
+              switch(ai1->resn[1]) {
+              case 'Y': /* TYR */
+                if(ai1->resn[2]=='R') {
+                  if(((!strcmp(ai1->name,"CG"))&&(!strcmp(ai2->name,"CD1")))||
+                     ((!strcmp(ai2->name,"CG"))&&(!strcmp(ai1->name,"CD1")))) 
+                    order=2;
+                  else if(((!strcmp(ai1->name,"CZ"))&&(!strcmp(ai2->name,"CE1")))||
+                          ((!strcmp(ai2->name,"CZ"))&&(!strcmp(ai1->name,"CE1")))) 
+                    order=2;
+                  
+                  else if(((!strcmp(ai1->name,"CE2"))&&(!strcmp(ai2->name,"CD2")))||
+                          ((!strcmp(ai2->name,"CE2"))&&(!strcmp(ai1->name,"CD2")))) 
+                    order=2;
+                  break; 
+                }
+                break;
+              case 'R':
+                if(ai1->resn[2]=='P') {
+                  if(((!strcmp(ai1->name,"CG"))&&(!strcmp(ai2->name,"CD1")))||
+                     ((!strcmp(ai2->name,"CG"))&&(!strcmp(ai1->name,"CD1")))) 
+                    order=2;
+                  else if(((!strcmp(ai1->name,"CZ3"))&&(!strcmp(ai2->name,"CE3")))||
+                          ((!strcmp(ai2->name,"CZ3"))&&(!strcmp(ai1->name,"CE3")))) 
+                    order=2;
+                  else if(((!strcmp(ai1->name,"CZ2"))&&(!strcmp(ai2->name,"CH2")))||
+                          ((!strcmp(ai2->name,"CZ2"))&&(!strcmp(ai1->name,"CH2")))) 
+                    order=2;
+                  else if(((!strcmp(ai1->name,"CE2"))&&(!strcmp(ai2->name,"CD2")))||
+                          ((!strcmp(ai2->name,"CE2"))&&(!strcmp(ai1->name,"CD2")))) 
+                    order=2;
+                  break; 
+                }
+                
+                break;
+              }
+              
+            }
+          }
+        }
+      }
+      if(order>0) {
+        bond->order = order;
+        ai1->chemFlag=false;
+        ai2->chemFlag=false;
+        flag = true;
+      }
+    }
+    bond++;
+  }
+  if(flag) {
+    ObjectMoleculeInvalidate(I,cRepAll,cRepInvAll);
+    SceneChanged();
+  }
+}
+  
+
+
 void ObjMolPairwiseInit(ObjMolPairwise *pairwise)
 {
   UtilZeroMem((char*)pairwise,sizeof(ObjMolPairwise));

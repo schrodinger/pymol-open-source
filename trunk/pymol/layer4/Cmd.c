@@ -196,6 +196,24 @@ static PyObject *APIAutoNone(PyObject *result) /* automatically own Py_None */
   } 
   return(result);
 }
+static PyObject *CmdFixChemistry(PyObject *self, PyObject *args)
+{
+  char *str2,*str3;
+  OrthoLineType s2="",s3="";
+  int ok = false;
+  int quiet;
+  ok = PyArg_ParseTuple(args,"ssi",&str2,&str3,&quiet);
+  if(ok) {
+    APIEntry();
+    SelectorGetTmp(str2,s2);
+    SelectorGetTmp(str3,s3);
+    ok = ExecutiveFixChemistry(s2,s3,quiet);
+    SelectorFreeTmp(s2);
+    SelectorFreeTmp(s3);
+    APIExit();
+  }
+  return APIStatus(ok);
+}
 
 static PyObject *CmdGLDeleteLists(PyObject *self, PyObject *args)
 {
@@ -1258,16 +1276,11 @@ static PyObject *CmdInvert(PyObject *self, PyObject *args)
 {
   char *str0,*str1;
   int int1;
-  OrthoLineType s0="",s1="";
   int ok=false;
-  ok = PyArg_ParseTuple(args,"ssi",&str0,&str1,&int1);
+  ok = PyArg_ParseTuple(args,"i",&int1);
   if(ok) {
     APIEntry();
-    if(str0[0]) SelectorGetTmp(str0,s0);
-    if(str1[0]) SelectorGetTmp(str1,s1);
-    ok = ExecutiveInvert(s0,s1,int1);
-    if(s0[0]) SelectorFreeTmp(s0);
-    if(s1[0]) SelectorFreeTmp(s1);
+    ok = ExecutiveInvert(int1);
     APIExit();
   }
   return(APIStatus(ok));
@@ -1320,15 +1333,15 @@ static PyObject *CmdMask(PyObject *self, PyObject *args)
 static PyObject *CmdProtect(PyObject *self, PyObject *args)
 {
   char *str1;
-  int int1;
+  int int1,int2;
   OrthoLineType s1;
 
   int ok=false;
-  ok = PyArg_ParseTuple(args,"si",&str1,&int1);
+  ok = PyArg_ParseTuple(args,"sii",&str1,&int1,&int2);
   if (ok) {
     APIEntry();
     SelectorGetTmp(str1,s1);
-    ExecutiveProtect(s1,int1); /* TODO STATUS */
+    ExecutiveProtect(s1,int1,int2); /* TODO STATUS */
     SelectorFreeTmp(s1);
     APIExit();
   }
@@ -4474,6 +4487,7 @@ static PyMethodDef Cmd_methods[] = {
 	{"finish_object",         CmdFinishObject,         METH_VARARGS },
 	{"fit",                   CmdFit,                  METH_VARARGS },
 	{"fit_pairs",             CmdFitPairs,             METH_VARARGS },
+	{"fix_chemistry",         CmdFixChemistry,         METH_VARARGS },
 	{"flag",                  CmdFlag,                 METH_VARARGS },
 	{"frame",	              CmdFrame,                METH_VARARGS },
    {"flush_now",             CmdFlushNow,             METH_VARARGS },

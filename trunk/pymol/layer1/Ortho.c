@@ -55,7 +55,7 @@ ListVarDeclare(BlockList,Block);
 #define cOrthoLeftMargin 8
 #define cOrthoBottomMargin 10
 
-#define WizardMargin 128
+#define WizardMargin 132
 
 #define ButModeMargin 20
 #define ControlMargin 0

@@ -470,10 +470,11 @@ CSetting *SettingNewFromPyList(PyObject *list);
 #define cSetting_pdb_reformat_names_mode    326
 #define cSetting_ray_pixel_scale_to_window  327
 #define cSetting_label_font_id              328
-
+#define cSetting_pdb_conect_all             329
+#define cSetting_button_mode_name           330
 /* cSetting_ss_INIT must always be last setting_index +1 */
 
-#define cSetting_INIT                        329
+#define cSetting_INIT                        331
 
 #endif
 

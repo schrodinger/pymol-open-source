@@ -223,6 +223,7 @@ void ObjectMoleculeFree(ObjectMolecule *I); /* only for friends of ObjectMolecul
 ObjectMolecule *ObjectMoleculeNew(int discreteFlag);
 void ObjectMoleculeSort(ObjectMolecule *I);
 ObjectMolecule *ObjectMoleculeCopy(ObjectMolecule *obj);
+void ObjectMoleculeFixChemistry(ObjectMolecule *I, int sele1, int sele2);
 
 ObjectMolecule *ObjectMoleculeLoadXYZFile(ObjectMolecule *obj,char *fname,int frame,int discrete);
 ObjectMolecule *ObjectMoleculeLoadPDBFile(ObjectMolecule *obj,char *fname,int frame,int discrete,M4XAnnoType *m4x);
@@ -270,7 +271,7 @@ int ObjectMoleculeGetAtomVertex(ObjectMolecule *I,int state,int index,float *v);
 int ObjectMoleculeGetAtomIndex(ObjectMolecule *I,int sele);
 int ObjectMoleculeTransformSelection(ObjectMolecule *I,int state,
                                       int sele,float *TTT,int log,char *sname);
-
+int ObjectMoleculeDoesAtomNeighborSele(ObjectMolecule *I, int index, int sele);
 void ObjectMoleculeInferChemFromNeighGeom(ObjectMolecule *I,int state);
 void ObjectMoleculeInferChemForProtein(ObjectMolecule *I,int state);
 void ObjectMoleculeInferChemFromBonds(ObjectMolecule *I,int state);

@@ -254,6 +254,10 @@ void EditorGetNextMultiatom(char *name)
     I->NextPickSele=3;
     return;
   }
+  strcpy(name,cEditorSele4);
+  I->NextPickSele=3;
+  return;
+  /*
   I->NextPickSele = (++I->NextPickSele)&0x3;
   switch(I->NextPickSele) {
   case 0: strcpy(name,cEditorSele1); break;
@@ -262,17 +266,15 @@ void EditorGetNextMultiatom(char *name)
   case 3: strcpy(name,cEditorSele4); break;
   }
   return;    
+  */
 }
 
 /*========================================================================*/
-int EditorInvert(ObjectMolecule *obj,int isele0,int isele1,int mode)
+int EditorInvert(int quiet)
 {
   CEditor *I = &Editor;
-  int sele0,sele1,sele2,sele3;
+  int sele0,sele1,sele2;
   int i0,frg;
-  int a,s,n,a1;
-  int if0=-1;
-  int if1=-1;
   int ia0=-1;
   int ia1=-1;
   float v[3],v0[3],v1[3];
@@ -281,130 +283,78 @@ int EditorInvert(ObjectMolecule *obj,int isele0,int isele1,int mode)
   int state;
   int vf,vf0,vf1;
   int ok=false;
-  WordType name,bname;
+  int found=false;
+  WordType name;
 
-  if((!I->Obj)||(I->Obj!=obj)) { 
+  if(!EditorActive()) {
     ErrMessage("Editor","Must pick an atom to invert.");
   } else {
     sele0 = SelectorIndexByName(cEditorSele1);
-    if(sele0>=0) {
-      sele1 = SelectorIndexByName(cEditorSele2);
-      if(sele1>=0) {
-        ErrMessage("Editor","Must edit an atom, not a bond.");        
-      } else if(!(sele0>=0)) {
-        ErrMessage("Editor","Must pick an atom to invert.");        
-      } else {
+    sele1 = SelectorIndexByName(cEditorSele2);
+    sele2 = SelectorIndexByName(cEditorSele3);
+    if(sele0<0) {
+      ErrMessage("Editor","Must pick atom to invert as pk1.");        
+    } else if(sele1<0) {
+      ErrMessage("Editor","Must pick immobile atom in pk2.");
+    } else if(sele2<0) {
+      ErrMessage("Editor","Must pick immobile atom in pk3.");
+    } else {
         i0 = ObjectMoleculeGetAtomIndex(I->Obj,sele0);
+        ia0 = ObjectMoleculeGetAtomIndex(I->Obj,sele1);
+        ia1 = ObjectMoleculeGetAtomIndex(I->Obj,sele2);
+
+        state = SceneGetState();                
+        ObjectMoleculeSaveUndo(I->Obj,state,false);
         
-        if(i0>=0) {
+        vf  = ObjectMoleculeGetAtomVertex(I->Obj,state,i0,v);
+        vf0 = ObjectMoleculeGetAtomVertex(I->Obj,state,ia0,v0);
+        vf1 = ObjectMoleculeGetAtomVertex(I->Obj,state,ia1,v1);
+        
+        if(vf&vf0&vf1) {
+          subtract3f(v,v0,n0);
+          subtract3f(v,v1,n1);
+          normalize3f(n0);
+          normalize3f(n1);
+          
+          add3f(n0,n1,n0);
+          normalize3f(n0);
+          
+          MatrixRotation44f(m,(float)cPI,n0[0],n0[1],n0[2]);
+          m[3 ] = -v[0];
+          m[7 ] = -v[1];
+          m[11] = -v[2];
+          m[12] =  v[0];
+          m[13] =  v[1];
+          m[14] =  v[2];
+          
           for(frg=1;frg<=I->NFrag;frg++) {
             sprintf(name,"%s%1d",cEditorFragPref,frg);
             sele2=SelectorIndexByName(name);
-            if(sele2>=0) {
-              /* now find out which bonded atoms are immobilized */
-              for(a=0;a<obj->NAtom;a++) {
-                s=obj->AtomInfo[a].selEntry;                  
-                if(SelectorIsMember(s,sele2)) { /* atom in fragment */
-                  if(if0<0) {
-                    if(SelectorIsMember(s,isele0)) { /* atom in (lb) */
-                      if0=frg;
-                      sprintf(bname,"%s%1d",cEditorBasePref,frg); 
-                      sele3 = SelectorIndexByName(bname);
-                      ia0 = ObjectMoleculeGetAtomIndex(obj,sele3);
-                      /* this is the atom we want */
-                    }
-                  }
-                  if(if1<0) {
-                    if(SelectorIsMember(s,isele1)) { /* atom in (rb) */
-                      if1=frg;
-                      sprintf(bname,"%s%1d",cEditorBasePref,frg); 
-                      sele3 = SelectorIndexByName(bname);
-                      ia1 = ObjectMoleculeGetAtomIndex(obj,sele3);
-                      /* this is the atom we want */
-                    }
-                  }
-                  if((if0>=0)&&(if1>=0)) /* we got 'em */
-                    break;
-                }
-              }
+            
+            if(ObjectMoleculeDoesAtomNeighborSele(I->Obj,i0,sele2) &&
+               (!ObjectMoleculeDoesAtomNeighborSele(I->Obj,ia0,sele2)) &&
+               (!ObjectMoleculeDoesAtomNeighborSele(I->Obj,ia1,sele2))) {
+              found = true;
+              ok = ObjectMoleculeTransformSelection(I->Obj,state,sele2,m,false,NULL);
             }
           }
-          /* make sure the anchor atoms are unique (for instance,
-               * in the case of a cycle they won't be )*/
-
-          if((ia0>=0)&&(ia1>=0)&&(i0>=0)&&(ia0==ia1)) {
-            ObjectMoleculeUpdateNeighbors(obj);
-            ia1=-1;
-            sprintf(name,"%s%1d",cEditorFragPref,if0); 
-            sele3 = SelectorIndexByName(name);
-            n = obj->Neighbor[i0];
-            n++; /* skip count */
-            while(1) { /* look for another attached atom as a second base */
-              a1 = obj->Neighbor[n];
-              n+=2; 
-              if(a1<0) break;
-              if(a1!=ia0) {
-                s=obj->AtomInfo[a1].selEntry;
-                if(SelectorIsMember(s,sele3)) {
-                  ia1 = a1;
-                  break;
-                }
-              }
+          if(found) {
+            if(!quiet) {
+              PRINTFB(FB_Editor,FB_Actions) 
+                " Editor: Inverted atom.\n"
+                ENDFB;
             }
+          } else {
+            PRINTFB(FB_Editor,FB_Errors) 
+              " Editor-Error: No free fragments found for inversion.\n"
+              ENDFB;
           }
-          if((ia0<0)||(ia1<0)||(i0<0))
-            ErrMessage("Invert","couldn't find basis for inversion");
-          else {
 
-            state = SceneGetState();                
-            ObjectMoleculeSaveUndo(obj,state,false);
-
-            vf  = ObjectMoleculeGetAtomVertex(obj,state,i0,v);
-            vf0 = ObjectMoleculeGetAtomVertex(obj,state,ia0,v0);
-            vf1 = ObjectMoleculeGetAtomVertex(obj,state,ia1,v1);
-                
-            if(vf&vf0&vf1) {
-              subtract3f(v,v0,n0);
-              subtract3f(v,v1,n1);
-              normalize3f(n0);
-              normalize3f(n1);
-                
-              add3f(n0,n1,n0);
-              normalize3f(n0);
-
-              MatrixRotation44f(m,(float)cPI,n0[0],n0[1],n0[2]);
-              m[3 ] = -v[0];
-              m[7 ] = -v[1];
-              m[11] = -v[2];
-              m[12] =  v[0];
-              m[13] =  v[1];
-              m[14] =  v[2];
-
-              for(frg=1;frg<=I->NFrag;frg++)
-                switch(mode) {
-                case 0 :
-                  if((frg!=if0)&(frg!=if1)) {
-                    sprintf(name,"%s%1d",cEditorFragPref,frg);
-                    sele2=SelectorIndexByName(name);
-                    ok = ObjectMoleculeTransformSelection(obj,state,sele2,m,false,NULL);
-                  }
-                  break;
-                case 1:
-                  if((frg!=if0)&(frg!=if1)) {
-                    sprintf(name,"%s%1d",cEditorFragPref,frg);
-                    sele2=SelectorIndexByName(name);
-                    ok = ObjectMoleculeTransformSelection(obj,state,sele2,m,false,NULL);
-                  }
-                  break;
-                }
-              SceneDirty();
-              I->DragIndex=-1;
-              I->DragSelection=-1;
-              I->DragObject=NULL;
-            }
-          }
+          SceneDirty();
+          I->DragIndex=-1;
+          I->DragSelection=-1;
+          I->DragObject=NULL;
         }
-      }
     }
   }
   return(ok);

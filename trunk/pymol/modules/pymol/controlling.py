@@ -98,6 +98,14 @@ if __name__=='pymol.controlling':
 
    mouse_ring = ring_dict['three_button']
 
+   mode_name_dict = {
+      'three_button_viewing' : '3-Button Viewing',
+      'three_button_editing' : '3-Button Editing',
+      'two_button_viewing' : '2-Button Viewing',
+      'two_button_selecting' : '2-Btn. Selecting',
+      'two_button_editing' : '2-Button Editing',
+      }
+
    mode_dict = {
       'three_button_viewing' : [ ('l','none','rota'),
                                  ('m','none','move'),
@@ -107,10 +115,10 @@ if __name__=='pymol.controlling':
                                  ('r','shft','clip'),                 
                                  ('l','ctrl','+lb'),
                                  ('m','ctrl','pkat'),
-                                 ('r','ctrl','pkbd'),                 
+                                 ('r','ctrl','pk1'),                 
                                  ('l','ctsh','lb'),
                                  ('m','ctsh','cent'),
-                                 ('r','ctsh','rb'),
+                                 ('r','ctsh','menu'),
                                  ('s','none','slab'),
                                  ('s','shft','movs'),
                                  ('s','ctrl','none'),
@@ -144,12 +152,12 @@ if __name__=='pymol.controlling':
       'two_button_viewing' : [ ('l','none','rota'),
                                ('m','none','none'),
                                ('r','none','movz'),
-                               ('l','shft','pkat'),
+                               ('l','shft','pk1'),
                                ('m','shft','none'),
                                ('r','shft','clip'),                 
                                ('l','ctrl','move'),
                                ('m','ctrl','none'),
-                               ('r','ctrl','pkbd'),                 
+                               ('r','ctrl','pkat'),                 
                                ('l','ctsh','lb'),
                                ('m','ctsh','none'),
                                ('r','ctsh','cent'),
@@ -168,10 +176,10 @@ if __name__=='pymol.controlling':
                                  ('r','shft','-lbx'),                 
                                  ('l','ctrl','+lb'),
                                  ('m','ctrl','none'),
-                                 ('r','ctrl','+rb'),                 
+                                 ('r','ctrl','pkat'),                 
                                  ('l','ctsh','lb'),
                                  ('m','ctsh','none'),
-                                 ('r','ctsh','rb'),
+                                 ('r','ctsh','cent'),
                                  ('s','none','none'),
                                  ('s','shft','none'),
                                  ('s','ctrl','none'),
@@ -184,7 +192,7 @@ if __name__=='pymol.controlling':
       'two_button_editing' : [ ('l','none','rota'),
                                ('m','none','none'),
                                ('r','none','movz'),
-                               ('l','shft','pkma'),
+                               ('l','shft','pkat'),
                                ('m','shft','none'),
                                ('r','shft','clip'),                 
                                ('l','ctrl','torf'),
@@ -225,9 +233,11 @@ if __name__=='pymol.controlling':
             bm = _cmd.get_setting("button_mode")
             bm = int(bm) % len(mouse_ring)
             mode = mouse_ring[bm]
+            cmd.set("button_mode_name",mode_name_dict.get(mode,mode))
             mode_list = mode_dict[mode]
          elif action in mode_dict.keys():
             mode = action
+            cmd.set("button_mode_name",mode_name_dict.get(mode,mode))
             mode_list = mode_dict[mode]
          if mode_list!=None:
             for a in mode_list:

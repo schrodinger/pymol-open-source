@@ -2189,6 +2189,8 @@ void SettingInitGlobal(int alloc,int reset_gui)
                                                       */
   SettingSet_b(I,cSetting_ray_pixel_scale_to_window,1);
   SettingSet_i(I,cSetting_label_font_id,0);
+  SettingSet_b(I,cSetting_pdb_conect_all,0);
+  SettingSet_s(I,cSetting_button_mode_name,"");
 
 }
 

@@ -113,6 +113,25 @@ typedef struct {
   ObjectMolecule *obj;
 } ProcPDBRec;
 
+int ExecutiveFixChemistry(char *s1,char *s2,int quiet)
+{
+  int sele1=SelectorIndexByName(s1);
+  int sele2=SelectorIndexByName(s2);
+  int ok=true;
+  SpecRec *rec = NULL;
+  CExecutive *I = &Executive;
+
+  if((sele1>=0)&&(sele2>=0)) {
+    while(ListIterate(I->Spec,rec,next)) {
+      if(rec->type==cExecObject)
+        if(rec->obj->type==cObjectMolecule) {
+          ObjectMoleculeFixChemistry((ObjectMolecule*)rec->obj,sele1,sele2);
+        }
+    }
+  }
+  return ok;
+}
+
 int ExecutiveGetObjectColorIndex(char *name)
 {
   int result = -1;
@@ -2831,35 +2850,10 @@ void ExecutiveRenameObjectAtoms(char *name,int force)
 } 
 
 /*========================================================================*/
-int  ExecutiveInvert(char *s0,char *s1,int mode)
+int  ExecutiveInvert(int quiet)
 {
-  int i0=-1;
-  int i1=-1;
-  int sele0,sele1;
   int ok=false;
-  ObjectMolecule *obj0,*obj1;
-
-  sele0 = SelectorIndexByName(s0);
-  if(sele0<0) {
-    ErrMessage("Invert","Please indicate immobile fragments with (lb) and (rb).");
-  } else {
-    obj0 = SelectorGetSingleObjectMolecule(sele0);
-    sele1 = SelectorIndexByName(s1);
-    if(sele1>=0) {
-      obj1 = SelectorGetSingleObjectMolecule(sele1);
-    } else {
-      sele1=sele0;
-      obj1=obj0;
-    }
-    i0 = ObjectMoleculeGetAtomIndex(obj0,sele0);
-    if(obj1)
-      i1 = ObjectMoleculeGetAtomIndex(obj1,sele1);
-    if(!(obj0&&(obj0==obj1)&&(i0>=0)&&(i1>=0)))
-      ErrMessage("Invert","Invalid immobile atoms in (lb) and (rb).");
-    else {
-      ok = EditorInvert(obj0,sele0,sele1,mode);
-    }
-  }
+  ok = EditorInvert(quiet);
   return(ok);
 }
 /*========================================================================*/
@@ -3187,7 +3181,7 @@ float ExecutiveOverlap(char *s1,int state1,char *s2,int state2,float adjust)
   return(result);
 }
 /*========================================================================*/
-void ExecutiveProtect(char *s1,int mode)
+void ExecutiveProtect(char *s1,int mode,int quiet)
 {
   int sele1;
   ObjectMoleculeOpRec op;
@@ -3199,12 +3193,14 @@ void ExecutiveProtect(char *s1,int mode)
     op.i1 = mode;
     op.i2 = 0;
     ExecutiveObjMolSeleOp(sele1,&op);    
-    if(Feedback(FB_Executive,FB_Actions)) {
-      if(op.i2) {
-        if(mode) {
-          PRINTF " Protect: %d atoms protected from movement.\n",op.i2 ENDF;
-        } else {
-          PRINTF " Protect: %d atoms deprotected.\n", op.i2 ENDF;
+    if(!quiet) {
+      if(Feedback(FB_Executive,FB_Actions)) {
+        if(op.i2) {
+          if(mode) {
+            PRINTF " Protect: %d atoms protected from movement.\n",op.i2 ENDF;
+          } else {
+            PRINTF " Protect: %d atoms deprotected.\n", op.i2 ENDF;
+          }
         }
       }
     }
