@@ -5954,9 +5954,10 @@ int ExecutiveReinitialize(void)
 
   ExecutiveDelete(cKeywordAll);
   ColorReset();
-  SettingInitGlobal(false);
+  SettingInitGlobal(false,false);
   MovieReset();
   EditorInactive();
+
   blocked = PAutoBlock();
   PRunString("cmd.view('*','clear')");
   PRunString("cmd.scene('*','clear')");

@@ -6932,7 +6932,7 @@ DistSet *SelectorGetDistSet(int sele1,int state1,int sele2,int state2,
   hbc=&hbcRec;
   *result = 0.0;
   ds = DistSetNew();
-  vv = VLAlloc(float,10000);
+  vv = VLAlloc(float,100);
 
   SelectorUpdateTable(); 
 
@@ -7083,6 +7083,8 @@ DistSet *SelectorGetDistSet(int sele1,int state1,int sele2,int state2,
   FreeP(zero);
   FreeP(scratch);
   FreeP(coverage);
+  if(vv)
+    VLASize(vv,float,(nv+1)*3);
   ds->NIndex = nv;
   ds->Coord = vv;
   return(ds);

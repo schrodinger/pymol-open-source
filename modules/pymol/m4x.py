@@ -206,32 +206,38 @@ def setup_contexts(context_info):   # Author: Warren DeLano
         site = a+"_site"
         hbond = a+"_hbond"
         name_list = dict[a]
+        zoom_list = []
         if water in name_list:
             cmd.show("nonbonded",water)
             util.cbac(water)
+            zoom_list.append(water)
         if ligand in name_list:
             cmd.show("sticks",ligand)
             util.cbag(ligand)
+            zoom_list.append(ligand)
         if site in name_list:
-            if zoom_context == 1:
-                zoom_context = site
-            elif zoom_context not in (0,1):
-                zoom_context = 0
             cmd.show("sticks",site)
             util.cbac(site)
+            zoom_list.append(site)
+            # replace cartoon with explicit atoms for "site" atoms
+            cmd.hide("cartoon",site)
+            cmd.show("sticks","(byres (neighbor ("+site+" and name c))) and name n+ca")
+            cmd.show("sticks","(byres (neighbor ("+site+" and name n))) and name c+ca+o")
+        if len(zoom_list):
             if len(key_list):
                 key = key_list.pop(0)
-                cmd.set_key(key,lambda x=site:(cmd.zoom(x)))
+                zoom_str = string.join(zoom_list,' or ')
+                if zoom_context == 1:
+                    zoom_context = zoom_str
+                elif zoom_context not in (0,1):
+                    zoom_context = 0
+                cmd.set_key(key,lambda x=zoom_str:(cmd.zoom(x)))
                 mo = re.search("_([^_]+)$",a)
                 if mo:
                     cont_name = mo.groups()[0]
                 else:
                     cont_name = a
                 doc_list.append(key+": "+cont_name)
-            # replace cartoon with explicit atoms for "site" atoms
-            cmd.hide("cartoon",site)
-            cmd.show("sticks","(byres (neighbor ("+site+" and name c))) and name n+ca")
-            cmd.show("sticks","(byres (neighbor ("+site+" and name n))) and name c+ca+o")
                 
         if hbond in name_list:
             cmd.show("dashes",hbond)
@@ -240,13 +246,12 @@ def setup_contexts(context_info):   # Author: Warren DeLano
     if len(key_list):
         key = key_list.pop(0)
         cmd.set_key(key,toggle_labels)
-        doc_list.append(key+": HBond")        
+        doc_list.append(key+": Dist")        
         
     cmd.wizard("message",doc_list)
     if zoom_context not in (0,1):
         cmd.zoom(zoom_context)
-    else:
-        toggle_labels(0)
+    toggle_labels(0)
         
         
 
