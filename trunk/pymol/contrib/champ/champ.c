@@ -17,6 +17,8 @@ Z* -------------------------------------------------------------------
 #include"os_std.h"
 #include"os_memory.h"
 #include"const.h"
+#include"err.h"
+
 #include"feedback.h"
 
 #include"mac.h"
@@ -51,8 +53,6 @@ void ChampUniqueListFree(CChamp *I,int unique_list);
 
 void ChampPatConnect(CChamp *I,int index);
 void ChampPatDisconnect(CChamp *I,int index);
-
-char *ChampPatToSmiVLA(CChamp *I,int index);
 
 void ChampMatchDump(CChamp *I,int match_idx);
 void ChampMatchFree(CChamp *I,int match_idx);
@@ -321,13 +321,382 @@ int main(int argc, char *argv[])
 }
 
 #endif
+int PTruthCallStr(PyObject *object,char *method,char *argument);
+int PTruthCallStr(PyObject *object,char *method,char *argument)
+{
+  int result = false;
+  PyObject *tmp;
+  tmp = PyObject_CallMethod(object,method,"s",argument);
+  if(tmp) {
+    if(PyObject_IsTrue(tmp))
+      result = 1;
+    Py_DECREF(tmp);
+  }
+  return(result);
+}
 
+int PConvPyObjectToInt(PyObject *object,int *value);
+int PConvPyObjectToInt(PyObject *object,int *value)
+{
+  int result = true;
+  PyObject *tmp;
+  if(!object)
+    result=false;
+  else   if(PyInt_Check(object)) {
+    (*value) = (int)PyInt_AsLong(object);
+  } else {
+    tmp = PyNumber_Int(object);
+    if(tmp) {
+      (*value) = (int)PyInt_AsLong(tmp);
+      Py_DECREF(tmp);
+    } else 
+      result=false;
+  }
+  return(result);
+}
+
+void UtilCleanStr(char *s);
+void UtilCleanStr(char *s) /*remove flanking white and all unprintables*/
+{
+  char *p,*q;
+  p=s;
+  q=s;
+  while(*p)
+	 if(*p>32)
+		break;
+	 else 
+		p++;
+  while(*p)
+	 if(*p>=32)
+		(*q++)=(*p++);
+	 else
+		p++;
+  *q=0;
+  while(q>=s)
+	 {
+		if(*q>32)
+		  break;
+		else
+		  {
+			(*q)=0;
+			q--;
+		  }
+	 }
+}
+
+int PConvPyObjectToStrMaxClean(PyObject *object,char *value,int ln);
+int PConvPyObjectToStrMaxClean(PyObject *object,char *value,int ln)
+{
+  char *st;
+  PyObject *tmp;
+  int result=true;
+  if(!object)
+    result=false;
+  else if(PyString_Check(object)) {
+    st = PyString_AsString(object);
+    strncpy(value,st,ln);
+  } else {
+    tmp = PyObject_Str(object);
+    if(tmp) {
+      st = PyString_AsString(tmp);
+      strncpy(value,st,ln);
+      Py_DECREF(tmp);
+    } else
+      result=0;
+  }
+  if(ln>0)
+    value[ln]=0;
+  else
+    value[0]=0;
+  UtilCleanStr(value);
+  return(result);
+}
+
+int PConvPyObjectToStrMaxLen(PyObject *object,char *value,int ln);
+int PConvPyObjectToStrMaxLen(PyObject *object,char *value,int ln)
+{
+  char *st;
+  PyObject *tmp;
+  int result=true;
+  if(!object)
+    result=false;
+  else if(PyString_Check(object)) {
+    st = PyString_AsString(object);
+    strncpy(value,st,ln);
+  } else {
+    tmp = PyObject_Str(object);
+    if(tmp) {
+      st = PyString_AsString(tmp);
+      strncpy(value,st,ln);
+      Py_DECREF(tmp);
+    } else
+      result=0;
+  }
+  if(ln>0)
+    value[ln]=0;
+  else
+    value[0]=0;
+  return(result);
+}
+
+int PConvAttrToStrMaxLen(PyObject *obj,char *attr,char *str,int ll);
+int PConvAttrToStrMaxLen(PyObject *obj,char *attr,char *str,int ll)
+{
+  int ok=true;
+  PyObject *tmp;
+  if(PyObject_HasAttrString(obj,attr)) {
+    tmp = PyObject_GetAttrString(obj,attr);
+    ok = PConvPyObjectToStrMaxLen(tmp,str,ll);
+    Py_DECREF(tmp);
+  } else {
+    ok=false;
+  }
+  return(ok);
+}
+
+int ChampModelToPat(CChamp *I,PyObject *model) 
+{
+
+  int nAtom,nBond;
+  int a;
+  int ok=true;
+  int cur_atom,last_atom = 0;
+  ListAtom *at;
+  int cur_bond,last_bond = 0;
+  ListBond *bd;
+  int charge,order;
+  int result = 0;
+  int atom1,atom2;
+  int *atom_index = NULL;
+  int std_flag;
+  char *c;
+
+  PyObject *atomList = NULL;
+  PyObject *bondList = NULL;
+  PyObject *molec = NULL;
+  PyObject *atom = NULL;
+  PyObject *bnd = NULL;
+  PyObject *index = NULL;
+  PyObject *tmp = NULL;
+
+  nAtom=0;
+  nBond=0;
+
+  atomList = PyObject_GetAttrString(model,"atom");
+  if(atomList) 
+    nAtom = PyList_Size(atomList);
+  else 
+    ok=err_message("ChampModel2Pat","can't get atom list");
+
+  atom_index = mac_malloc_array(int,nAtom);
+
+  if(ok) { 
+	 for(a=nAtom-1;a>=0;a--) /* reverse order */
+		{
+        atom = PyList_GetItem(atomList,a);
+        if(!atom) 
+          ok=err_message("ChampModel2Pat","can't get atom");
+
+        cur_atom = ListElemNewZero(&I->Atom);
+        at = I->Atom + cur_atom;
+        at->link = last_atom;
+        last_atom = cur_atom;
+        at->chempy_atom = atom;
+
+        atom_index[a] = cur_atom; /* for bonds */
+
+        if(ok) {
+          tmp = PyObject_GetAttrString(atom,"name");
+          if (tmp)
+            ok = PConvPyObjectToStrMaxClean(tmp,at->name,NAM_SIZE-1);
+          if(!ok) 
+            err_message("ChampModel2Pat","can't read name");
+          Py_XDECREF(tmp);
+        }
+        
+        if(ok) {
+          if(PTruthCallStr(atom,"has","formal_charge")) { 
+            tmp = PyObject_GetAttrString(atom,"formal_charge");
+            if (tmp)
+              ok = PConvPyObjectToInt(tmp,&charge);
+            if(!ok) 
+              err_message("ChampModel2Pat","can't read formal_charge");
+            Py_XDECREF(tmp);
+          } else {
+            charge = 0;
+          }
+          
+          switch(charge) {
+          case 0: at->charge = cH_Neutral; break;
+          case 1: at->charge = cH_Cation; break;
+          case 2: at->charge = cH_Dication; break;
+          case -1: at->charge = cH_Anion; break;
+          case -2: at->charge = cH_Dianion; break;
+          }
+        }
+
+        if(ok) {
+          tmp = PyObject_GetAttrString(atom,"resn");
+          if (tmp)
+            ok = PConvPyObjectToStrMaxClean(tmp,at->residue,RES_SIZE-1);
+          if(!ok) 
+            err_message("ChampModel2Pat","can't read resn");
+          Py_XDECREF(tmp);
+        }
+        
+		  if(ok) {
+          tmp = PyObject_GetAttrString(atom,"symbol");
+          if (tmp)
+            ok = PConvPyObjectToStrMaxClean(tmp,at->symbol,SYM_SIZE-1);
+          if(!ok) 
+            err_message("ChampModel2Pat","can't read symbol");
+          c = at->symbol;
+          std_flag = false;
+          switch(*c) {
+          case 'C':
+            switch(*(c+1)) {
+            case 'l':
+              ChampParseAliphaticAtom(I,c,cur_atom,cH_Cl,2);
+              std_flag = true;
+              break;
+            default:
+              ChampParseAliphaticAtom(I,c,cur_atom,cH_C,1);
+              std_flag = true;
+              break;
+            }
+            break;
+          case 'H': /* nonstandard */
+            ChampParseAliphaticAtom(I,c,cur_atom,cH_H,1);
+            std_flag = true;
+            break;
+          case 'N':
+            ChampParseAliphaticAtom(I,c,cur_atom,cH_N,1);
+            std_flag = true;
+            break;      
+          case 'O':
+            ChampParseAliphaticAtom(I,c,cur_atom,cH_O,1);
+            std_flag = true;
+            break;      
+          case 'B':
+            switch(*(c+1)) {
+            case 'r':
+              ChampParseAliphaticAtom(I,c,cur_atom,cH_Br,2);
+              std_flag = true;
+              break;
+            default:
+              ChampParseAliphaticAtom(I,c,cur_atom,cH_B,1);
+              std_flag = true;
+              break;
+            }
+            break;
+          case 'P':
+            ChampParseAliphaticAtom(I,c,cur_atom,cH_P,1);
+            std_flag = true;
+            break;      
+          case 'S':
+            ChampParseAliphaticAtom(I,c,cur_atom,cH_S,1);
+            std_flag = true;
+            break;      
+          case 'F':
+            ChampParseAliphaticAtom(I,c,cur_atom,cH_F,1);
+            std_flag = true;
+            break;      
+          case 'I':
+            ChampParseAliphaticAtom(I,c,cur_atom,cH_I,1);
+            std_flag = true;
+            break;      
+          }
+          if(!std_flag) {
+            ChampParseAliphaticAtom(I,c,cur_atom,cH_Sym,strlen(c));
+          }
+          Py_XDECREF(tmp);
+        }
+        
+		  if(!ok)
+			 break;
+		}
+  }
+
+  bondList = PyObject_GetAttrString(model,"bond");
+  if(bondList) 
+    nBond = PyList_Size(bondList);
+  else
+    ok=err_message("ChampModel2Pat","can't get bond list");
+
+  if(ok) {
+	 for(a=nBond-1;a>=0;a--) /* reverse order */
+		{
+        bnd = PyList_GetItem(bondList,a);
+        if(!bnd) 
+          ok=err_message("ChampModel2Pat","can't get bond");
+
+        cur_bond = ListElemNewZero(&I->Bond);
+        bd = I->Bond + cur_bond;
+        bd->link = last_bond;
+        last_bond = cur_bond;
+        bd->chempy_bond = bnd;
+
+        if(ok) {
+          tmp = PyObject_GetAttrString(bnd,"order");
+          if (tmp)
+            ok = PConvPyObjectToInt(tmp,&order);
+          if(!ok) 
+            err_message("ChampModel2Pat","can't read bond order");
+          switch(order) {
+          case 1: bd->order = cH_Single; break;
+          case 2: bd->order = cH_Double; break;
+          case 3: bd->order = cH_Triple; break;
+          }
+          Py_XDECREF(tmp);
+        }
+        
+        index = PyObject_GetAttrString(bnd,"index");
+        if(!index) 
+          ok=err_message("ChampModel2Pat","can't get bond indices");
+        else {
+          if(ok) ok = PConvPyObjectToInt(PyList_GetItem(index,0),&atom1);
+          if(ok) ok = PConvPyObjectToInt(PyList_GetItem(index,1),&atom2);
+          if(!ok) 
+            err_message("ChampModel2Pat","can't read bond atoms");
+          else {
+            atom1 = atom_index[atom1];
+            atom2 = atom_index[atom2];
+            bd->atom[0]=atom1;
+            bd->atom[1]=atom2;
+            ChampAddBondToAtom(I,atom1,cur_bond);
+            ChampAddBondToAtom(I,atom2,cur_bond);
+          }
+        }
+        Py_XDECREF(index);
+      }
+  }
+  Py_XDECREF(atomList);
+  Py_XDECREF(bondList);
+
+  if(PyObject_HasAttrString(model,"molecule")) {
+    molec = PyObject_GetAttrString(model,"molecule");
+  } else {
+    molec = NULL;
+  }
+
+  mac_free(atom_index);
+
+  result = ListElemNewZero(&I->Pat);
+  I->Pat[result].atom = cur_atom;
+  I->Pat[result].bond = cur_bond;
+  I->Pat[result].chempy_molecule = molec;
+
+  return(result);
+}
 /* =============================================================== 
  * Class-specific Memory Management 
  * =============================================================== */
 
 CChamp *ChampNew(void) {
   CChamp *I;
+
+  FeedbackInit(); /* only has side-effects the first time */
+
   I = mac_calloc(CChamp); 
   I->Atom = (ListAtom*)ListNew(8000,sizeof(ListAtom));
   I->Bond = (ListBond*)ListNew(32000,sizeof(ListBond));
@@ -392,12 +761,61 @@ void ChampFree(CChamp *I) {
 }
 
 void ChampPatFree(CChamp *I,int index) {
+  ListPat *pt;
   if(index) {
-    ListElemFreeChain(I->Atom,I->Pat[index].atom);
-    ListElemFreeChain(I->Bond,I->Pat[index].bond);
+    pt = I->Pat + index;
+    ChampAtomFreeChain(I,I->Pat[index].atom);
+    ChampBondFreeChain(I,I->Pat[index].bond);
+    if(pt->chempy_molecule) {Py_DECREF(pt->chempy_molecule);}
     ChampUniqueListFree(I,I->Pat[index].unique_atom);
     ListElemFree(I->Pat,index);
   }
+}
+
+void ChampAtomFree(CChamp *I,int atom)
+{
+  ListAtom *at;
+  if(atom) {
+    at = I->Atom + atom;
+    if(at->chempy_atom) {Py_DECREF(at->chempy_atom);}
+  }
+  ListElemFree(I->Atom,atom);
+}
+
+void ChampAtomFreeChain(CChamp *I,int atom)
+{
+  ListAtom *at;
+  int i;
+  i = atom;
+  while(i) {
+    at = I->Atom + i;
+    if(at->chempy_atom) {Py_DECREF(at->chempy_atom);}
+    i = I->Atom[i].link;
+  }
+  ListElemFreeChain(I->Atom,atom);
+}
+
+void ChampBondFree(CChamp *I,int bond)
+{
+  ListBond *bd;
+  if(bond) {
+    bd = I->Bond + bond;
+    if(bd->chempy_bond) {Py_DECREF(bd->chempy_bond);}
+  }
+  ListElemFree(I->Bond,bond);
+}
+
+void ChampBondFreeChain(CChamp *I,int bond)
+{
+  ListBond *at;
+  int i;
+  i = bond;
+  while(i) {
+    at = I->Bond + i;
+    if(at->chempy_bond) {Py_DECREF(at->chempy_bond);}
+    i = I->Bond[i].link;
+  }
+  ListElemFreeChain(I->Bond,bond);
 }
 
 /* =============================================================== 
@@ -424,7 +842,7 @@ int ChampUniqueListNew(CChamp *I,int atom, int unique_list)
     unique = unique_list;
     while(unique) { /* check to see if it matches an existing unique atom */
       unique_atom = I->Int3[unique].value[0];
-      if(ChampPatternIdentical(I->Atom+cur_atom,I->Atom+unique_atom)) {
+      if(ChampPatIdentical(I->Atom+cur_atom,I->Atom+unique_atom)) {
         /* if so, then just add this atom the match list for this unique atom */
         I->Int3[unique].value[1]++; /* count */
         ident = ListElemNew(&I->Int); 
@@ -469,6 +887,42 @@ void ChampUniqueListFree(CChamp *I,int unique_list)
 /* =============================================================== 
  * Comparison
  * =============================================================== */
+
+int ChampSSS_1V1_B(CChamp *I,int pattern,int target)
+{
+ 
+  if(!I->Pat[pattern].unique_atom)
+    I->Pat[pattern].unique_atom = ChampUniqueListNew(I,I->Pat[pattern].atom,0);
+  if(!I->Pat[target].unique_atom)
+    I->Pat[target].unique_atom = ChampUniqueListNew(I,I->Pat[target].atom,0);
+  return(ChampMatch(I,pattern,target,
+                    ChampFindUniqueStart(I,pattern,target,NULL),
+                    1,NULL));
+}
+
+
+int ChampSSS_1VN_N(CChamp *I,int pattern,int list)
+{
+  int target;
+  int c = 0;
+  if(!I->Pat[pattern].unique_atom)
+    I->Pat[pattern].unique_atom = ChampUniqueListNew(I,I->Pat[pattern].atom,0);
+  while(list) {
+    target = I->Int[list].value;
+    
+    if(!I->Pat[target].unique_atom)
+      I->Pat[target].unique_atom = ChampUniqueListNew(I,I->Pat[target].atom,0);
+    
+    if(ChampMatch(I,pattern,target,
+                  ChampFindUniqueStart(I,pattern,target,NULL),
+                  1,NULL))
+      
+      c++;
+    list = I->Int[list].link;
+  }
+  return(c);
+}
+
 
 int ChampFindUniqueStart(CChamp *I,int template, int target,int *multiplicity)
 { /* returns zero for no match */
@@ -1077,6 +1531,7 @@ char *ChampPatToSmiVLA(CChamp *I,int index)
   int cur_bond = 0;
   int a,c,l;
   int mark[MAX_RING];
+  int mark_bond[MAX_RING];
   int index1;
   int i;
   int left_to_do = 0;
@@ -1137,6 +1592,8 @@ char *ChampPatToSmiVLA(CChamp *I,int index)
           at1->mark_tmpl = 1;
           c = ChampAtomToString(I,cur_atom,buf);
           concat_s(buf,c);
+          /*          sprintf(buf,":%d:",cur_atom);
+                      concat_s(buf,strlen(buf));*/
           
           /* write opening marks */
           
@@ -1157,6 +1614,7 @@ char *ChampPatToSmiVLA(CChamp *I,int index)
                   }
                   if(index<MAX_RING) {
                     mark[index]=bd1->atom[0]; /* save for matching other end of cycle */
+                    mark_bond[index]=cur_bond;
                     if(index<10) {
                       concat_c('0'+index);
                     } else {
@@ -1172,6 +1630,8 @@ char *ChampPatToSmiVLA(CChamp *I,int index)
           
           for(index=0;index<MAX_RING;index++) {
             if(mark[index]==cur_atom) {
+              c = ChampBondToString(I,mark_bond[index],buf);
+              concat_s(buf,c);
               if(index<10) {
                 concat_c('0'+index);
               } else {
@@ -1325,7 +1785,8 @@ int ChampAtomToString(CChamp *I,int index,char *buf)
                            at->atom&( cH_Na | cH_K  | cH_Ca | cH_Mg | cH_Zn | cH_Fe | cH_Cu | cH_Se |
                                        cH_X | cH_Y | cH_R0 | cH_R1 | cH_R2 | cH_R3 | cH_R4 |
                                       cH_R5 | cH_R6 | cH_R7 | cH_R8 | cH_R9 | cH_Sym));
-                         
+
+
     if(trivial&&(at->atom!=cH_Any)) {
       /* check number of atoms represented */
       c = 0;
@@ -1341,6 +1802,8 @@ int ChampAtomToString(CChamp *I,int index,char *buf)
         mask=mask*2;
       }
     }
+
+    trivial = true;
   
     if(trivial) {
       if(at->class&cH_Aromatic) {
@@ -1359,7 +1822,8 @@ int ChampAtomToString(CChamp *I,int index,char *buf)
         case cH_C: buf[0]='C'; buf[1]=0; break;
         case cH_N: buf[0]='N'; buf[1]=0; break;
         case cH_O: buf[0]='O'; buf[1]=0; break;
-        case cH_H: buf[0]='H'; buf[1]=0; break;
+          /*        case cH_H: buf[0]='H'; buf[1]=0; break;*/
+        case cH_H: strcpy(buf,"[H]"); break;
         case cH_S: buf[0]='S'; buf[1]=0; break;
         case cH_P: buf[0]='P'; buf[1]=0; break;
         case cH_F: buf[0]='F'; buf[1]=0; break;
@@ -1655,8 +2119,8 @@ int ChampSmiToPat(CChamp *I,char *c)
     I->Pat[result].atom = atom_list;
     I->Pat[result].bond = bond_list;
   }
-  if(cur_atom) ListElemFree(I->Atom,cur_atom);
-  if(cur_bond) ListElemFree(I->Bond,cur_bond);
+  if(cur_atom) ChampAtomFree(I,cur_atom);
+  if(cur_bond) ChampBondFree(I,cur_bond);
   PRINTFD(FB_smiles_parsing) 
     " ChampSmiToPtr: returning pattern %d atom_list %d bond_list %d\n",result,atom_list,bond_list
     ENDFD;
@@ -1668,7 +2132,7 @@ int ChampSmiToPat(CChamp *I,char *c)
  * Matching 
  * =============================================================== */
 
-int ChampPatternIdentical(ListAtom *p,ListAtom *a)
+int ChampPatIdentical(ListAtom *p,ListAtom *a)
 {
   if(p->pos_flag!=a->pos_flag)
     return 0;

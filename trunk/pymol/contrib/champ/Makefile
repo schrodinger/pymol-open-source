@@ -19,7 +19,7 @@ depends: $(DEPS)
 	cat *.p > .depends;cat .files .depends > .includes;
 
 clean:
-	/bin/rm -f *.o *.p *.so
+	/bin/rm -f *.o *.p *.so .depends .inclues .files
 
 
 

@@ -17,6 +17,7 @@ Z* -------------------------------------------------------------------
 #define _H_Champ
 
 #include"list.h"
+#include"os_python.h"
 
 /* max bonds an atom can have */
 
@@ -57,7 +58,7 @@ Z* -------------------------------------------------------------------
 #define cH_R9  0x10000000
 #define cH_X   0x20000000
 #define cH_Y   0x40000000
-#define cH_Sym 0x80000000 /* symbol name */
+#define cH_Sym 0x80000000 /* match symbol name */
 
 /* charge */
 
@@ -105,6 +106,10 @@ Z* -------------------------------------------------------------------
 
 typedef char AtomBuffer[255]; /* maximum length for a single atom */
 
+#define NAM_SIZE 4
+#define RES_SIZE 4
+#define SYM_SIZE 2
+
 typedef struct { 
   int link; /* memory management */
   int bond[MAX_BOND+1]; 
@@ -115,9 +120,9 @@ typedef struct {
   int class;
   int degree;
   int valence;
-  char symbol[3];
-  char name[5];
-  char residue[5];
+  char symbol[SYM_SIZE];
+  char name[NAM_SIZE];
+  char residue[RES_SIZE];
   int neg_flag;
   int not_atom;
   int not_charge;
@@ -128,6 +133,7 @@ typedef struct {
   int tag; /* string index for tag */
   int mark_tmpl,mark_targ; /* traversal */
   int first_tmpl,first_targ; /* first template stack entry */
+  PyObject *chempy_atom;
 } ListAtom;
 
 /* order */
@@ -147,6 +153,7 @@ typedef struct {
   int not_cycle;
   int tag; /* string index for tag */
   int mark_tmpl,mark_targ; /* traversal */
+  PyObject *chempy_bond;
 } ListBond;
 
 
@@ -162,6 +169,7 @@ typedef struct {
   int link;
   int atom; /* root of atom list (Pat) */ 
   int bond; /* root of bond list (Bond) */
+  PyObject *chempy_molecule;
   int unique_atom; /* list of unique atoms (Int) */
 } ListPat;
 
@@ -204,15 +212,26 @@ typedef struct {
 
 CChamp *ChampNew(void);
 void ChampFree(CChamp *I);
+
+void ChampAtomFree(CChamp *I,int atom);
+void ChampAtomFreeChain(CChamp *I,int atom);
+
+void ChampBondFree(CChamp *I,int bond);
+void ChampBondFreeChain(CChamp *I,int bond);
+
 void ChampPatFree(CChamp *I,int index);
 
-int ChampPatternIdentical(ListAtom *p,ListAtom *a);
+int ChampPatIdentical(ListAtom *p,ListAtom *a);
 int ChampAtomMatch(ListAtom *p,ListAtom *a);
 int ChampBondMatch(ListBond *p,ListBond *a);
 
 int ChampSmiToPat(CChamp *I,char *c);
 void ChampMemoryDump(CChamp *I);
 int ChampMemoryUsage(CChamp *I);
+int ChampSSS_1V1_B(CChamp *I,int pattern,int target);
+int ChampSSS_1VN_N(CChamp *I,int pattern,int list);
+int ChampModelToPat(CChamp *I,PyObject *model);
+char *ChampPatToSmiVLA(CChamp *I,int index);
 
 #endif
 

@@ -1,7 +1,7 @@
 #include"os_std.h"
+#include"const.h"
 #include"vla.h"
 #include"feedback.h"
-
 typedef struct {
   char *Stack;
   int Depth;
@@ -11,20 +11,26 @@ char *FeedbackMask;
 
 CFeedback Feedbk;
 
+static int feedback_init = true;
+
 void FeedbackInit(void)
 {
   int a;
-  
   CFeedback *I=&Feedbk;
 
-  vla_malloc(I->Stack,char,FB_total);
-  I->Depth=0;
-  FeedbackMask = I->Stack;
+  if(feedback_init) {
+    feedback_init=false;
 
-  for(a=0;a<FB_total;a++) {
-    FeedbackMask[a] = FB_results | FB_errors | FB_warnings | FB_actions | FB_details;
-    /*	  | FB_everything;*/
-  }  
+    
+    vla_malloc(I->Stack,char,FB_total);
+    I->Depth=0;
+    FeedbackMask = I->Stack;
+    
+    for(a=0;a<FB_total;a++) {
+      FeedbackMask[a] = FB_results | FB_errors | FB_warnings | FB_actions | FB_details;
+      /*	  | FB_everything;*/
+    }  
+  }
 
 }
 
