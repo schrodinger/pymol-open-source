@@ -41,7 +41,7 @@ typedef struct CSculpt {
 
 CSculpt *SculptNew(void);
 void SculptMeasureObject(CSculpt *I,ObjectMolecule *obj,int state);
-void SculptIterateObject(CSculpt *I,ObjectMolecule *obj,int state,int n_cycle);
+float SculptIterateObject(CSculpt *I,ObjectMolecule *obj,int state,int n_cycle);
 
 void SculptFree(CSculpt *I);
 

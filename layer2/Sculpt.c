@@ -45,7 +45,7 @@ Z* -------------------------------------------------------------------
  (((b)<< 8)&0xFF00))
 
 int SculptCheckBump(float *v1,float *v2,float *diff,float *dist,float cutoff);
-int SculptDoBump(float target,float actual,float *d,float *d0to1,float *d1to0,float wt);
+int SculptDoBump(float target,float actual,float *d,float *d0to1,float *d1to0,float wt,float *strain);
 
 CSculpt *SculptNew(void)
 {
@@ -626,14 +626,16 @@ int SculptCheckBump(float *v1,float *v2,float *diff,float *dist,float cutoff)
   return(false);
 }
 
-int SculptDoBump(float target,float actual,float *d,float *d0to1,float *d1to0,float wt)
+int SculptDoBump(float target,float actual,float *d,
+                 float *d0to1,float *d1to0,float wt,float *strain)
 {
   float push[3];
-  float dev,dev_2,sc;
+  float dev,dev_2,sc,abs_dev;
 
   dev = target-actual;
-  if(fabs(dev)>R_SMALL8) {
+  if((abs_dev=fabs(dev))>R_SMALL8) {
     dev_2 = wt*dev/2.0F;
+    (*strain) += abs_dev;
     if(actual>R_SMALL8) { /* nonoverlapping */
       sc = dev_2/actual;
       scale3f(d,sc,push);
@@ -648,7 +650,7 @@ int SculptDoBump(float target,float actual,float *d,float *d0to1,float *d1to0,fl
   return 0;
 }
        
-void SculptIterateObject(CSculpt *I,ObjectMolecule *obj,int state,int n_cycle)
+float SculptIterateObject(CSculpt *I,ObjectMolecule *obj,int state,int n_cycle)
 {
   CShaker *shk;
   int a,aa,a0,a1,a2,a3,b0,b1,b2,b3;
@@ -689,6 +691,8 @@ void SculptIterateObject(CSculpt *I,ObjectMolecule *obj,int state,int n_cycle)
   double task_time;
   float vdw_magnify;
   int nb_skip,nb_skip_count;
+  float total_strain=0.0F;
+  int total_count=1;
 
   PRINTFD(FB_Sculpt)
     " SculptIterateObject-Debug: entered state=%d n_cycle=%d\n",state,n_cycle
@@ -760,7 +764,9 @@ void SculptIterateObject(CSculpt *I,ObjectMolecule *obj,int state,int n_cycle)
           nb_skip_count = n_cycle - nb_skip * (n_cycle/nb_skip);
           if(!nb_skip_count) nb_skip_count = nb_skip;
           while(n_cycle--) {
-
+            
+            total_strain = 0.0F;
+            total_count = 0;
             /* initialize displacements to zero */
         
             v = disp;
@@ -811,9 +817,11 @@ void SculptIterateObject(CSculpt *I,ObjectMolecule *obj,int state,int n_cycle)
                     v1 = cs->Coord+3*a1;
                     v2 = cs->Coord+3*a2;
                     if(sdc->type!=cShakerDistLimit) {
-                      ShakerDoDist(sdc->targ,v1,v2,disp+b1*3,disp+b2*3,wt);
+                      total_strain+=ShakerDoDist(sdc->targ,v1,v2,disp+b1*3,disp+b2*3,wt);
+                      total_count++;
                     } else {
-                      ShakerDoDistLimit(sdc->targ,v1,v2,disp+b1*3,disp+b2*3,wt);
+                      total_strain+=ShakerDoDistLimit(sdc->targ,v1,v2,disp+b1*3,disp+b2*3,wt);
+                      total_count++;
                     }
                   }
               }
@@ -842,7 +850,8 @@ void SculptIterateObject(CSculpt *I,ObjectMolecule *obj,int state,int n_cycle)
                     v0 = cs->Coord+3*a0;
                     v1 = cs->Coord+3*a1;
                     v2 = cs->Coord+3*a2;
-                    ShakerDoLine(v0,v1,v2,disp+b0*3,disp+b1*3,disp+b2*3,line_wt);
+                    total_strain+=ShakerDoLine(v0,v1,v2,disp+b0*3,disp+b1*3,disp+b2*3,line_wt);
+                    total_count++;
                   }
                 slc++;
               }
@@ -868,14 +877,14 @@ void SculptIterateObject(CSculpt *I,ObjectMolecule *obj,int state,int n_cycle)
                   v1 = cs->Coord+3*a1;
                   v2 = cs->Coord+3*a2;
                   v3 = cs->Coord+3*a3;
-                  ShakerDoPyra(spc->targ,
+                  total_strain+=ShakerDoPyra(spc->targ,
                                v0,v1,v2,v3,
                                disp+b0*3,
                                disp+b1*3,
                                disp+b2*3,
                                disp+b3*3,
                                pyra_wt);
-                
+                  total_count++;
                 
                   cnt[b0]++;
                   cnt[b1]++;
@@ -907,12 +916,13 @@ void SculptIterateObject(CSculpt *I,ObjectMolecule *obj,int state,int n_cycle)
                   v1 = cs->Coord+3*a1;
                   v2 = cs->Coord+3*a2;
                   v3 = cs->Coord+3*a3;
-                  ShakerDoPlan(v0,v1,v2,v3,
-                               disp+b0*3,
-                               disp+b1*3,
-                               disp+b2*3,
-                               disp+b3*3,
-                               plan_wt);
+                  total_strain+=ShakerDoPlan(v0,v1,v2,v3,
+                                             disp+b0*3,
+                                             disp+b1*3,
+                                             disp+b2*3,
+                                             disp+b3*3,
+                                             plan_wt);
+                  total_count++;
                   cnt[b0]++;
                   cnt[b1]++;
                   cnt[b2]++;
@@ -1008,9 +1018,10 @@ void SculptIterateObject(CSculpt *I,ObjectMolecule *obj,int state,int n_cycle)
                                   v1 = cs->Coord+3*a1;
                                   if(SculptCheckBump(v0,v1,diff,&len,cutoff))
                                     if(SculptDoBump(cutoff,len,diff,
-                                                    disp+b0*3,disp+b1*3,wt)) {
+                                                    disp+b0*3,disp+b1*3,wt,&total_strain)) {
                                       cnt[b0]++;
                                       cnt[b1]++;
+                                      total_count++;
                                     }
                                 }
                               }
@@ -1065,8 +1076,12 @@ void SculptIterateObject(CSculpt *I,ObjectMolecule *obj,int state,int n_cycle)
           
           task_time = UtilGetSeconds() - task_time;
           PRINTFB(FB_Sculpt,FB_Blather)
-            " Sculpt: %2.5f seconds\n",task_time
+            " Sculpt: %2.5f seconds %8.3f %d %8.3f\n",task_time,total_strain,total_count,
+            100*total_strain/total_count
             ENDFB;
+
+          if(total_count) 
+            total_strain = (1000*total_strain)/total_count;
         }
         FreeP(active);
         FreeP(cnt);
@@ -1077,7 +1092,7 @@ void SculptIterateObject(CSculpt *I,ObjectMolecule *obj,int state,int n_cycle)
   PRINTFD(FB_Sculpt)
     " SculptIterateObject-Debug: leaving...\n"
     ENDFD;
-
+  return total_strain;
 }
 
 void SculptFree(CSculpt *I)

@@ -137,7 +137,7 @@ int ExecutiveSculptIterateAll(void);
 int ExecutiveSmooth(char *name,int cycles,int window,int first, int last, int ends);
 int ExecutiveSculptDeactivate(char *name);
 int ExecutiveSculptActivate(char *name,int state);
-int ExecutiveSculptIterate(char *name,int state,int n_cycle);
+float ExecutiveSculptIterate(char *name,int state,int n_cycle);
 int ExecutiveMapNew(char *name,int type,float *grid,char *sele,
                     float buffer,float *minCorner,float *maxCorner,
                     int state);
