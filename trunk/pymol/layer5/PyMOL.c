@@ -74,7 +74,8 @@ typedef struct _CPyMOL {
   /* dynamically mapped string constants */
 
   OVLexicon *Lex;
-  ov_word lex_pdb;
+  ov_word lex_pdb, lex_c_string, lex_c_filename;
+  
   
 } _CPyMOL;
 
@@ -83,13 +84,26 @@ static OVstatus PyMOL_InitAPI(CPyMOL *I)
   OVContext *C = I->G->Context;
   OVreturn_word result;
   I->Lex = OVLexicon_New(C->heap);
+
   if(!I->Lex) 
     return_OVstatus_FAILURE;
   
+  /* string constants that are accepted on input */
+
   if(!OVreturn_IS_OK( (result= OVLexicon_GetFromCString(I->Lex,"pdb")))) 
     return_OVstatus_FAILURE
   else
     I->lex_pdb = result.word;
+
+  if(!OVreturn_IS_OK( (result= OVLexicon_GetFromCString(I->Lex,"c_string")))) 
+    return_OVstatus_FAILURE
+  else
+    I->lex_c_string = result.word;
+
+  if(!OVreturn_IS_OK( (result= OVLexicon_GetFromCString(I->Lex,"c_filename")))) 
+    return_OVstatus_FAILURE
+  else
+    I->lex_c_filename = result.word;
 
  return_OVstatus_SUCCESS;
 }
@@ -100,10 +114,57 @@ static OVstatus PyMOL_PurgeAPI(CPyMOL *I)
   return_OVstatus_SUCCESS;
 }
 
-static void PyMOL_Load(CPyMOL *I,char *content, char *content_type, char *format, char *object, 
-                int frame, int discrete, int finish, int quiet)
+int PyMOL_Load(CPyMOL *I,char *content, char *content_type, 
+                           char *content_format, char *object_name, 
+                           int frame, int discrete, int finish, 
+                           int quiet, int multiplex)
 {
-  ExecutiveProcessPDBFile(I->G,origObj,fname,oname,frame,discrete,finish,buf,NULL,quiet,false);*/
+  OrthoLineType buf = "";
+  OVreturn_word result;
+  int type_code;
+  int format_code;
+  
+  if(!OVreturn_IS_OK( (result= OVLexicon_BorrowFromCString(I->Lex,content_type))))
+    return OVstatus_FAILURE;
+  else
+    type_code = result.word;
+
+  if(!OVreturn_IS_OK( (result= OVLexicon_BorrowFromCString(I->Lex,content_format))))
+    return OVstatus_FAILURE;
+  else
+    format_code = result.word;
+
+  if((type_code != I->lex_c_filename) &&
+     (type_code != I->lex_c_string)) {
+    return OVstatus_FAILURE;
+  } else if(format_code != I->lex_pdb) {
+    return OVstatus_FAILURE;
+  }
+  
+  /* handling of multiplex option */
+
+  if(multiplex==-2) /* use setting default value */
+    multiplex = SettingGetGlobal_i(TempPyMOLGlobals,cSetting_multiplex);
+  if(multiplex<0) /* default behavior is not to multiplex */
+    multiplex = 0;
+
+  /* handing of discete option */
+
+  if(discrete<0) {/* use default discrete behavior for the file format 
+                   * this will be the case for MOL2 and SDF */ 
+    if(multiplex==1) /* if also multiplexing, then default discrete
+                      * behavior is not load as discrete objects */
+      discrete=0;
+    else
+      discrete=1; /* otherwise, allow discrete to be the default */
+  }
+
+  ExecutiveProcessPDBFile(I->G,ExecutiveGetExistingCompatible(I->G,object_name,cLoadTypePDB),content,
+                          object_name,frame-1,discrete,finish
+                          ,buf,NULL,quiet,
+                          type_code==I->lex_c_string, multiplex);
+                          
+  return OVstatus_SUCCESS;
 }
 
 

@@ -803,7 +803,8 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(PyMOLGlobals *G,
 
   if(buffer == *restart_model)
     only_read_one_model = true;
-
+  else if(info && info->multiplex)
+    only_read_one_model = true;    
   /* PASS 1 */
 
   *restart_model = NULL;
@@ -1106,7 +1107,7 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(PyMOLGlobals *G,
               (p[5]=='L')&&
               (!*restart_model)) {
         *restart_model=nextline(p);
-        
+
         if(only_read_one_model) {
           char *pp;
           pp = nextline(p); 
@@ -1120,7 +1121,11 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(PyMOLGlobals *G,
                     (pp[2]=='D')&&
                     (pp[3]=='E')&&
                     (pp[4]=='L')) {
-            is_end_of_object = (info && info->multiplex); /* end object if we're multiplexing */
+            if(info && info->multiplex) { /* end object if we're multiplexing */
+              (*next_pdb) = pp;
+              (*restart_model) = NULL;
+            } else 
+              is_end_of_object = false;
           }
           break;
         }

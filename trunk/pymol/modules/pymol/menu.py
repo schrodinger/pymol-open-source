@@ -733,7 +733,7 @@ def all_action(s):
            [ 1, 'find', find("all") ],           
            [ 0, ''          ,''                                              ],
            [ 1, 'add hydrogens' ,'cmd.h_add("'+s+'")'     ],           
-           [ 1, 'remove hydrogens'  ,'cmd.remove("(elem h and ('+s+'))")'     ],
+           [ 1, 'remove hydrogens'  ,'cmd.remove("(hydro and ('+s+'))")'     ],
            [ 1, 'remove waters'  ,'cmd.remove("(solvent and ('+s+'))")'     ],                      
            [ 0, ''             , ''                      ],
            [ 1, 'delete selections'  , 'map(cmd.delete,cmd.get_names("selections"))'     ],           

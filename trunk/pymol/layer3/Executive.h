@@ -237,7 +237,7 @@ int ExecutiveSetOnOffBySele(PyMOLGlobals *G,char *name,int onoff);
 int ExecutiveSetName(PyMOLGlobals *G,char *old_name, char *new_name);
 int ExecutiveGetActiveSeleName(PyMOLGlobals *G,char *name, int create_new);
 int ExecutiveGetActiveSele(PyMOLGlobals *G);
-CObject *ExecutiveGetIfCompatible(PyMOLGlobals *G,char *oname,int type);
+CObject *ExecutiveGetExistingCompatible(PyMOLGlobals *G,char *oname,int type);
 
 #endif
 

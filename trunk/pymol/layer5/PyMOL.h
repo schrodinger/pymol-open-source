@@ -18,17 +18,19 @@ Z* -------------------------------------------------------------------
 #define _H_CPyMOL
 
 /* WARNING: This is a private interface to PyMOL for the exclusive
- * internal use of DeLano Scientific LLC in the development of wrapped 
- * PyMOL applications.
+ * internal use of DeLano Scientific LLC in development of wrapped
+ * PyMOL applications and as an interface layer for supporting
+ * public PyMOL APIs.
  *
- * DeLano Scientific LLC can and will change this interface suddenly
- * and without notice.  It may even vanish altogether.  Any and all
- * code you develop against this interface is guaranteed to be
- * fragile, expensive, and time-consuming to maintain.
+ * DeLano Scientific LLC will change this interface regularly and
+ * without notice.  It may even vanish altogether.  Any and all code
+ * you develop against this interface is guaranteed to be fragile,
+ * time-consuming, and expenses to maintain.
  * 
- * DO NOT UNDER ANY CIRCUMSTANCE MAKE USE OF THIS API...
- * 
- * YOU HAVE BEEN WARNED!
+ * For these reasons, DO NOT UNDER ANY CIRCUMSTANCE USE THIS API!
+ *
+ *                       You have been warned.
+ *
  */
 
 #define PYMOL_BUTTON_DOWN           0
@@ -135,5 +137,12 @@ int PyMOL_GetSwap(CPyMOL *I, int reset);
 
 struct _PyMOLGlobals *PyMOL_GetGlobals(CPyMOL *I);
 void PyMOL_RunTest(CPyMOL *I, int group, int test);
+
+/* Command API */
+
+int PyMOL_Load(CPyMOL *I,char *content, char *content_type, 
+                    char *content_format, char *object_name, 
+                    int frame, int discrete, int finish, 
+                    int quiet, int multiplex);
 
 #endif

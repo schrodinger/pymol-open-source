@@ -4177,7 +4177,7 @@ static PyObject *CmdLoad(PyObject *self, PyObject *args)
     }
 
     if(multiplex!=1)
-      origObj = ExecutiveGetIfCompatible(G,oname,type);
+      origObj = ExecutiveGetExistingCompatible(TempPyMOLGlobals,oname,type);
     
     switch(type) {
     case cLoadTypePDB:

@@ -15,10 +15,12 @@ PyMOL>cmd._dump_floats(cmd.get_view(0))
 PyMOL>scene 2,store
  scene: scene stored as "2".
 PyMOL>scene 1,recall
+ Scene: view updated.
  scene: "1" recalled.
 PyMOL>ray
  RayRenderTest: obtained 0 graphics primitives.
 PyMOL>scene 2
+ Scene: view updated.
  scene: "2" recalled.
 PyMOL>ray
  RayRenderTest: obtained 166 graphics primitives.
@@ -42,12 +44,14 @@ PyMOL>scene 4,store
 PyMOL>ray
  RayRenderTest: obtained 174 graphics primitives.
 PyMOL>scene 3
+ Scene: view updated.
  scene: "3" recalled.
 PyMOL>disable tst
 PyMOL>turn z,20
 PyMOL>scene 5,store
  scene: scene stored as "5".
 PyMOL>scene 1
+ Scene: view updated.
  scene: "1" recalled.
 PyMOL>cmd._dump_floats(cmd.get_view(0))
   1.000   0.000   0.000   0.000   1.000   0.000   0.000   0.000   1.000
@@ -55,6 +59,7 @@ PyMOL>cmd._dump_floats(cmd.get_view(0))
 PyMOL>ray
  RayRenderTest: obtained 0 graphics primitives.
 PyMOL>scene 2
+ Scene: view updated.
  scene: "2" recalled.
 PyMOL>cmd._dump_floats(cmd.get_view(0))
   1.000   0.000   0.000   0.000   1.000   0.000   0.000   0.000   1.000
@@ -62,6 +67,7 @@ PyMOL>cmd._dump_floats(cmd.get_view(0))
 PyMOL>ray
  RayRenderTest: obtained 166 graphics primitives.
 PyMOL>scene 3
+ Scene: view updated.
  scene: "3" recalled.
 PyMOL>cmd._dump_floats(cmd.get_view(0))
   1.000   0.000   0.000   0.000   0.996   0.087   0.000  -0.087   0.996
@@ -69,6 +75,7 @@ PyMOL>cmd._dump_floats(cmd.get_view(0))
 PyMOL>ray
  RayRenderTest: obtained 183 graphics primitives.
 PyMOL>scene 4
+ Scene: view updated.
  scene: "4" recalled.
 PyMOL>cmd._dump_floats(cmd.get_view(0))
   0.996   0.000  -0.087   0.008   0.996   0.087   0.087  -0.087   0.992
@@ -76,6 +83,7 @@ PyMOL>cmd._dump_floats(cmd.get_view(0))
 PyMOL>ray
  RayRenderTest: obtained 174 graphics primitives.
 PyMOL>scene 5
+ Scene: view updated.
  scene: "5" recalled.
 PyMOL>cmd._dump_floats(cmd.get_view(0))
   0.940   0.342   0.000  -0.341   0.936   0.087   0.030  -0.082   0.996

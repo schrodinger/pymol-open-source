@@ -589,7 +589,8 @@ void ExecutiveLoadMOL2(PyMOLGlobals *G,CObject *origObj,char *fname,
   
 }
 
-CObject *ExecutiveGetIfCompatible(PyMOLGlobals *G,char *oname,int type)
+
+CObject *ExecutiveGetExistingCompatible(PyMOLGlobals *G,char *oname,int type)
 {
   CObject *origObj = NULL;
   origObj=ExecutiveFindObjectByName(G,oname);
@@ -612,14 +613,17 @@ CObject *ExecutiveGetIfCompatible(PyMOLGlobals *G,char *oname,int type)
     case cLoadTypeCRD:
     case cLoadTypeMOL2:
     case cLoadTypeMOL2Str:
+    case cLoadTypePQR:
       new_type = cObjectMolecule;
       break;
     case cLoadTypeChemPyBrick:
     case cLoadTypeChemPyMap:
     case cLoadTypeXPLORMap:
+    case cLoadTypeXPLORStr:
     case cLoadTypeCCP4Map:
     case cLoadTypeFLDMap:
     case cLoadTypeGRDMap:
+    case cLoadTypeDXMap:
       new_type = cObjectMap;
       break;
     case cLoadTypeCallback:
@@ -648,6 +652,7 @@ void ExecutiveProcessPDBFile(PyMOLGlobals *G,CObject *origObj,char *fname,
   char *buffer=NULL,*p;
   CObject *obj;
   char pdb_name[ObjNameMax] = "";
+  char cur_name[ObjNameMax] = "";
   char *next_pdb = NULL;
   int repeat_flag = true;
   ProcPDBRec *processed= NULL;
@@ -662,7 +667,6 @@ void ExecutiveProcessPDBFile(PyMOLGlobals *G,CObject *origObj,char *fname,
     UtilZeroMem(&pdb_info_rec,sizeof(PDBInfoRec));
     pdb_info=&pdb_info_rec;
   }
- 
   pdb_info->multiplex = multiplex;
   if(is_string) {
     buffer=fname;
@@ -754,14 +758,28 @@ void ExecutiveProcessPDBFile(PyMOLGlobals *G,CObject *origObj,char *fname,
           }
         } else if(next_pdb) {
           if(pdb_name[0]==0) {
-            sprintf(pdb_name,"%s_%d",oname,n_processed+1);
+            if(cur_name[0]) {
+              sprintf(pdb_name,"%s_%04d",cur_name,n_processed+1);
+            } else {
+              sprintf(pdb_name,"%s_%04d",oname,n_processed+1);
+            }
+          } else if(multiplex) {
+            strcpy(cur_name,pdb_name);
+            sprintf(pdb_name,"%s_%04d",cur_name,n_processed+1);            
           }
-          ObjectSetName(obj,pdb_name); /* from PDB */
+          ObjectSetName(obj,pdb_name); 
           ExecutiveDelete(G,pdb_name); /* just in case */
         } else {
           if(is_repeat_pass) {
             if(pdb_name[0]==0) {
-              sprintf(pdb_name,"%s_%d",oname,n_processed+1);
+              if(cur_name[0]) {
+                sprintf(pdb_name,"%s_%04d",cur_name,n_processed+1);
+              } else {
+                sprintf(pdb_name,"%s_%04d",oname,n_processed+1);
+              }
+            } else {
+              strcpy(cur_name,pdb_name);
+              sprintf(pdb_name,"%s_%04d",cur_name,n_processed+1);
             }
             ObjectSetName(obj,pdb_name); /* from PDB */
             ExecutiveDelete(G,pdb_name); /* just in case */
@@ -775,12 +793,16 @@ void ExecutiveProcessPDBFile(PyMOLGlobals *G,CObject *origObj,char *fname,
           if(eff_frame<0)
             eff_frame = ((ObjectMolecule*)obj)->NCSet-1;
           if(buf) {
-            if(!is_string)
-              sprintf(buf," CmdLoad: \"%s\" loaded as \"%s\".\n",
-                      fname,oname);
-            else
-              sprintf(buf," CmdLoad: PDB-string loaded into object \"%s\", state %d.\n",
-                      oname,eff_frame+1);
+            if(n_processed<2) {
+              if(!is_string)
+                sprintf(buf," CmdLoad: \"%s\" loaded as \"%s\".\n",
+                        fname,oname);
+              else
+                sprintf(buf," CmdLoad: PDB-string loaded into object \"%s\", state %d.\n",
+                        oname,eff_frame+1);
+            } else {
+                sprintf(buf," CmdLoad: \"%s\" loaded.\n",fname);
+            }
           }
             
         }
