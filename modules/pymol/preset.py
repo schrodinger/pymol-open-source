@@ -21,7 +21,7 @@ default_polar_contacts = "polar_contacts"
 
 tmp_sele = "_p_tmp"
 
-prot_and_dna_sele = "(resn ALA+CYS+CYX+ASP+GLU+PHE+GLY+HIS+HID+HIE+HIP+ILE+LYS+LEU+MET+MSE+ASN+PRO+GLN+ARG+SER+THR+VAL+TRP+TYR+A+C+T+G+U)"
+prot_and_dna_sele = "(resn ALA+CYS+CYX+ASP+GLU+PHE+GLY+HIS+HID+HIE+HIP+HISE+HISD+HISP+ILE+LYS+LEU+MET+MSE+ASN+PRO+GLN+ARG+SER+THR+VAL+TRP+TYR+A+C+T+G+U)"
 wat_sele = "(resn WAT,H2O,HOH,TIP)"
 ion_sele = "(resn CA,HG,K,NA,ZN,MG,CL)"
 solv_sele = "("+wat_sele+"|"+ion_sele+")"
@@ -78,7 +78,7 @@ def simple(selection="(all)"):
    cmd.show("lines","(byres (("+s+" & r. CYS+CYX & n. SG) & bound_to ("+s+" & r. CYS+CYX & n. SG))) & n. CA+CB+SG")
    # try to show what covalent ligands are connected to...
    cmd.show("sticks","("+lig_sele+" and ("+s+")) extend 2")
-   cmd.show("sticks","byres (("+lig_sele+" and ("+s+")) extend 1)")
+   cmd.show("sticks","byres (("+lig_sele+" and ("+s+") and not resn ACE+NAC+NME+NH2) extend 1)")
    cmd.hide("sticks","("+s+") and ((not rep sticks) extend 1)")
    cmd.show("sticks","("+lig_sele+" and ("+s+")) extend 2")
    # color by atom if lines or sticks are shown

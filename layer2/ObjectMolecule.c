@@ -5393,7 +5393,11 @@ static CoordSet *ObjectMoleculeChemPyModel2CoordSet(PyMOLGlobals *G,PyObject *mo
 #endif
 
 /*========================================================================*/
-ObjectMolecule *ObjectMoleculeLoadChemPyModel(PyMOLGlobals *G,ObjectMolecule *I,PyObject *model,int frame,int discrete)
+ObjectMolecule *ObjectMoleculeLoadChemPyModel(PyMOLGlobals *G,
+                                              ObjectMolecule *I,
+                                              PyObject *model,
+                                              int frame,
+                                              int discrete)
 {
 #ifdef _PYMOL_NOPY
   return NULL;

@@ -7478,8 +7478,10 @@ static int ExecutiveClick(Block *block,int button,int x,int y,int mod)
                     I->ToggleMode = 5;
                     ExecutiveWindowZoom(G,rec->name,0.0F,-1,false,
                                         SettingGetGlobal_b(G,cSetting_animation));
-                    if(mod&cOrthoSHIFT) {
+                    I->LastZoomed = rec;
+                    if(mod&cOrthoSHIFT) { /* exclusive */
                       I->ToggleMode = 6;
+
                       ExecutiveSetObjVisib(G,cKeywordAll, false); /* need to log this */
                       if(!rec->visible)
                         ExecutiveSpecSetVisibility(G,rec,true,0);
@@ -7843,12 +7845,13 @@ static int ExecutiveDrag(Block *block,int x,int y,int mod)
                   case 6: /* zoom and make only object enabled */
                     if((row==I->Over)&&row) {
                       if(rec!=I->LastZoomed) { 
-                        ExecutiveSetObjVisib(G,cKeywordAll, false); /* need to log this */
+                        ExecutiveSpecSetVisibility(G,I->LastZoomed,false,mod);
                         ExecutiveWindowZoom(G,rec->name,0.0F,-1,false,
                                             SettingGetGlobal_b(G,cSetting_animation));
                         I->LastZoomed=rec;
                         ExecutiveSpecSetVisibility(G,rec,true,0);
                       }
+                      rec->hilight=true;
                     }
                   }
                 }

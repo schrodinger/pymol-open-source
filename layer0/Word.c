@@ -222,15 +222,18 @@ negative = perfect/wildcard match  */
   return(i);
 }
 
-int WordMatchComma(PyMOLGlobals *G,char *p,char *q,int ignCase) 
+int WordMatchComma(PyMOLGlobals *G,char *pp,char *qq,int ignCase) 
      /* allows for comma list in p, also allows wildcards (*) in p */
 {
-  int i=0;
+  register char *p=pp, *q=qq;
+  register i=0;
+  register char WILDCARD = G->Word->Wildcard;
+  register char pc,qc;
+  register int ic = ignCase;
   int best_i=0;
   char *q_copy;
   int blank;
   int trailing_comma=0;
-  register char WILDCARD = G->Word->Wildcard;
 
   blank = (!*p);
   q_copy=q;
@@ -238,20 +241,20 @@ int WordMatchComma(PyMOLGlobals *G,char *p,char *q,int ignCase)
     blank=0;
     i=1;
     q=q_copy;
-    while((*p)&&(*q))
+    while((pc=(*p))&&(qc=(*q)))
       {
-        if(*p==',')
+        if(pc==',')
           break;
-        if(*p!=*q)
+        if(pc!=qc)
           {
-            if(*p==WILDCARD)
+            if(pc==WILDCARD)
               {
                 i=-i;
                 break;
               }
-            if(ignCase)
+            if(ic)
               {
-                if(tolower(*p)!=tolower(*q))
+                if(tolower(pc)!=tolower(qc))
                   {
                     i=0;
                     break;
@@ -263,9 +266,9 @@ int WordMatchComma(PyMOLGlobals *G,char *p,char *q,int ignCase)
                 break;
               }
           }
-        i++;
         p++;
         q++;
+        i++;
       }
     if((!*q)&&((*p==WILDCARD)||(*p==',')))
       i=-i;
