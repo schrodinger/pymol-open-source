@@ -71,7 +71,7 @@ class QuietException:
 # constants for keyword modes
 
 SIMPLE      = 0  # original pymol parsing (deprecated)
-SINGLE      = 1  # arguments
+SINGLE      = 1  # ignore ";", treat entire line as a single command
 RUN         = 2  # run command 
 SPAWN       = 3  # for spawn and fork commands
 ABORT       = 4  # terminates command script

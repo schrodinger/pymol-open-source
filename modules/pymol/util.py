@@ -81,35 +81,37 @@ def cbab(selection):
    cmd.color("hydrogen","(elem H and "+s+")")
    cmd.color("slate","(elem C and "+s+")")
 
-def mrock(first,last,angle,phase,loop):
-   fir=int(first)
-   las=int(last)
-   dsp=float(angle)
-   pha=float(phase)
+def mrock(first,last,angle=30,phase=0,loop=1,axis='y'):
+   first=int(first)
+   last=int(last)
+   angle=float(angle)
+   phase=float(phase)
    loop=int(loop)
-   n = las - fir
-   ang = pha * math.pi
+   nstep = (last-first)+1
+   if nstep<0:
+      nstep = 1
    if loop:
-      step = 2*math.pi/(n+1)
-      last = -(math.sin(ang+step*n)*dsp);
+      subdiv = nstep
    else:
-      last=0
-      step = 2*math.pi/n   
+      subdiv = nstep+1
+   ang_cur = math.pi*phase/180
+   ang_inc = 2*math.pi/subdiv
+   ang_cur = ang_cur - ang_inc
    a = 0
-   while a<=n:
-      deg = (math.sin(ang)*dsp)
-      com = "mdo %d:turn y,%8.3f;turn y,%8.3f" % (fir+a,last,deg)
-      last = -deg;
-      print com
+   while a<nstep:
+      last = angle*math.sin(ang_cur)
+      ang_cur = ang_cur + ang_inc
+      disp = angle*math.sin(ang_cur)
+      diff = disp-last
+      com = "mdo %d:turn %s,%8.3f" % (first+a,axis,diff)
       cmd.do(com)
-      ang = ang + step
       a = a + 1
 
-def mroll(fir,las,loop):
-   fir=int(first)
-   las=int(last)
+def mroll(first,last,loop=1,axis='y'):
+   first=int(first)
+   last=int(last)
    loop=int(loop)
-   n = las - fir
+   n = last - first
    if loop:
       step = 2*math.pi/(n+1)
    else:
@@ -117,8 +119,7 @@ def mroll(fir,las,loop):
    a = 0
    deg = (180*step/math.pi)
    while a<=n:
-      com = "mdo %d:turn y,%8.3f" % (fir+a,deg)
-      print com
+      com = "mdo %d:turn %s,%8.3f" % (first+a,axis,deg)
       cmd.do(com)
       a = a + 1
 
