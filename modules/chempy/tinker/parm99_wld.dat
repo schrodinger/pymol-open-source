@@ -187,6 +187,7 @@ N3-SO  230.0    1.615       RSM, based on Xray analysis
 O2-SO  525.0    1.430       RSM, based on Xray analysis
 O -SO  525.0    1.430       RSM, based on Xray analysis, WLD O2->O
 CB-CT  317.0    1.510       WLD from CA-CT
+CA-OS  450.0    1.364       WLD from CA-OH
 
 HW-OW-HW    100.      104.52    TIP3P water
 HW-HW-OW      0.      127.74    (found in crystallographic water with 3 bonds)
@@ -503,6 +504,8 @@ Cl-CT-CA    50.0      113.50    WLD guess
 CB-CT-CT    63.0      111.10    WLD from C -CT-CT 
 C -CT-CB    63.0      111.10    WLD from C -CT-CT *
 CB-CT-HC    50.0      109.50    WLD from C -CT-HC
+CA-OS-CT    60.0      117.00    WLD from C -OS-CT
+CA-CA-OS    70.0      120.00    WLD from CA-CA-OH
 
 X -C -C -X    4   14.50        180.0             2.         Junmei et al, 1999
 X -C -CA-X    4   14.50        180.0             2.         intrpol.bsd.on C6H6
@@ -569,6 +572,8 @@ X -OH-P -X    3    0.75          0.0             3.         JCC,7,(1986),230
 X -OS-P -X    3    0.75          0.0             3.         JCC,7,(1986),230
 X -CA-SO-X    6    0.00          0.0             2.         RSM, estimated
 X -N3-SO-X    6    2.40          0.0             3.         RSM, estimated
+X -CB-CT-X    6    0.00          0.0             2.         WLD from X -C -CT-X 
+X -CA-OS-X    2    2.40        180.0             4.         WLD gross est.
 N -CT-C -N    1    1.700       180.000          -1.
 N -CT-C -N    1    2.000       180.000           2.
 C -N -CT-C    1    0.850       180.000          -2.
@@ -654,7 +659,6 @@ CT-CT-OS-LP   1    0.000         0.000           3.000
 CM-CM-OS-LP   1    0.000       180.000           2.000
 HA-CM-OS-LP   1    0.000       180.000           2.000
 H4-CM-OS-LP   1    0.000       180.000           2.000
-X -CB-CT-X    6    0.00          0.0             2.         WLD from X -C -CT-X 
 
 X -X -C -O          10.5         180.          2.           JCC,7,(1986),230
 X -O2-C -O2         10.5         180.          2.           JCC,7,(1986),230

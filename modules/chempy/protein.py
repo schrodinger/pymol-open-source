@@ -16,12 +16,22 @@ PEPT_CUTOFF = 1.7
 #---------------------------------------------------------------------------------
 def generate(model, forcefield = protein_amber, histidine = 'HIE',skip_sort=None ):
 
+   strip_atom_bonds(model) # remove bonds between non-hetatms (ATOM)
    add_bonds(model,forcefield=forcefield)   
    connected = model.convert_to_connected()
    add_hydrogens(connected,forcefield=forcefield,skip_sort=skip_sort)
    place.simple_unknowns(connected)
    return connected.convert_to_indexed()
 
+#---------------------------------------------------------------------------------
+def strip_atom_bonds(model):
+   new_bond = []
+   matom = model.atom
+   for a in model.bond:
+      if matom[a.index[0]].hetatm or matom[a.index[1]].hetatm:
+         new_bond.append(a)
+   model.bond = new_bond
+   
 #---------------------------------------------------------------------------------
 def assign_types(model, forcefield = protein_amber, histidine = 'HIE' ):
    '''   

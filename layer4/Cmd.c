@@ -287,7 +287,6 @@ static PyMethodDef Cmd_methods[] = {
 	{NULL,		     NULL}		/* sentinel */
 };
 
-
 static PyObject *CmdInvert(PyObject *self, PyObject *args)
 {
   char *str0,*str1;
@@ -946,14 +945,17 @@ static PyObject *CmdFit(PyObject *dummy, PyObject *args)
   int mode;
   OrthoLineType s1,s2;
   PyObject *result;
+  float tmp_result;
+  
   PyArg_ParseTuple(args,"ssi",&str1,&str2,&mode);
   APIEntry();
   SelectorGetTmp(str1,s1);
   SelectorGetTmp(str2,s2);
-  result=Py_BuildValue("f",ExecutiveRMS(s1,s2,mode));
+  tmp_result=ExecutiveRMS(s1,s2,mode);
   SelectorFreeTmp(s1);
   SelectorFreeTmp(s2);
   APIExit();
+  result=Py_BuildValue("f",tmp_result);
   return result;
 }
 

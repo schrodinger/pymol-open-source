@@ -28,33 +28,32 @@ atNum = {
    'I'  : 53,
    }
 
-# "do" is the preferred command for running tinker
-
 def do(input,run_prefix=None,echo=None,
-       punch=None,output=None):
+       punch=None,output=None,skip=None):
    if not run_prefix:
       run_prefix = 'gamess_run'
-   if feedback['gamess']:
-      print " "+str(__name__)+': creating temporary files "%s.*"' % (run_prefix)
-      print " "+str(__name__)+': launching gamess...' 
-   try:
-      for a in glob.glob(run_prefix+".*"):
-         os.unlink(a)
-   except:
-      pass
-   f = open(run_prefix+".inp",'w')
-   for a in input:
-      f.write(a)
-   f.close()
-   if echo:
-      os.system(rungms_path+' '+run_prefix+" 2>&1 | tee "+run_prefix+".out")
-   else:
-      os.system(rungms_path+' '+run_prefix+" > "+run_prefix+".out 2>&1")      
+   if not skip:
+      if feedback['gamess']:
+         print " "+str(__name__)+': creating temporary files "%s.*"' % (run_prefix)
+         print " "+str(__name__)+': launching gamess...' 
+      try:
+         for a in glob.glob(run_prefix+".*"):
+            os.unlink(a)
+      except:
+         pass
+      f = open(run_prefix+".inp",'w')
+      for a in input:
+         f.write(a)
+      f.close()
+      if echo:
+         os.system(rungms_path+' '+run_prefix+" 2>&1 | tee "+run_prefix+".out")
+      else:
+         os.system(rungms_path+' '+run_prefix+" > "+run_prefix+".out 2>&1")      
 # NFS workaround (flushes the directory cache so that glob will work)
-   try: os.unlink(".sync")
-   except: pass
-   f = open(".sync",'w')
-   f.close()
+      try: os.unlink(".sync")
+      except: pass
+      f = open(".sync",'w')
+      f.close()
 #
    if feedback['gamess']:
       print " "+str(__name__)+': job complete. '
@@ -173,7 +172,7 @@ class State:
       idx = {}
       c = 0
       for a in atom:
-         idx[a.name]=c
+         idx[string.upper(a.name)]=c  # games converts to uppercase
          c = c + 1
       if len(crd_list):
          a = crd_list.pop()
@@ -244,7 +243,7 @@ class State:
       idx = {}
       c = 0
       for a in self.model.atom:
-         idx[a.name]=c
+         idx[string.upper(a.name)]=c
          c = c + 1
       if self.data:
          flag = 1
@@ -463,10 +462,10 @@ class State:
       self.read_output_list(result[0])
       self.read_punch_list(result[1])
       
-   def get_optimized_charges(self,run_prefix=None):
+   def get_optimized_charges(self,run_prefix=None,skip=None):
       gmsList = self.get_optimize_charge_job()
       result = do(gmsList,output=1,punch=1,
-                  run_prefix=run_prefix)
+                  run_prefix=run_prefix,skip=skip)
       self.read_output_list(result[0])
       self.read_punch_list(result[1])
 

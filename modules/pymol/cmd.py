@@ -300,11 +300,11 @@ PyMOL COMMAND LINE OPTIONS
    -s   Enable stereo mode (not currently autodetected).
 
    -l <file.py> Launch a Python program in a concurrent thread.
-  
+   -g <file.py> Run a python program in global namespace on startup.
+   
    -i   Disable the internal OpenGL GUI (object list, menus, etc.)
- 
+   
    -x   Disable the external GUI module.
- 
    -t   Use Tcl/Tk based external GUI module (pmg_tk).
    -w   Use wxPython based external GUI module (pmg_wx).
 
