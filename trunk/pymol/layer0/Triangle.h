@@ -18,11 +18,7 @@ Z* -------------------------------------------------------------------
 
 #include"Vector.h"
 
-typedef struct {
-  int *Tri;
 
-} TriangleSurfaceRec;
-
-TriangleSurfaceRec *TrianglePointsToSurface(float *v,int n,float cutoff);
+int *TrianglePointsToSurface(float *v,float *vn,int n,float cutoff,int *nTri);
 
 #endif
