@@ -410,7 +410,7 @@ def setup_alignment_contexts(context_info):   # Author: Warren DeLano
         if cmd.count_atoms(site):
             if cmd.count_atoms(site+" & m4x_aligned"):
                 include_flag = 1
-        elif cmd.count_atoms(ligand):
+        if cmd.count_atoms(ligand):
             if cmd.count_atoms(ligand+" & m4x_nearby"):
                 include_flag = 1
         if include_flag:
