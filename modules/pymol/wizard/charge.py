@@ -55,8 +55,11 @@ class Charge(Wizard):
       self.set_status(0)
       lst = cmd.get_names('selections')
       if '_charge' in lst:
-         cmd.edit("_charge")
-         cmd.label("pkchain",'') # fastest clear command
+         if self.mode!='sumchg':
+            cmd.edit("_charge")
+            cmd.label("pkchain",'') # fastest clear command
+         else:
+            cmd.label("_charge",'') # fastest clear command            
          cmd.delete("_charge")
          cmd.unpick()
       cmd.unpick()
