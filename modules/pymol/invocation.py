@@ -36,9 +36,7 @@ options.read_stdin = 0
 
 def parse_args(argv):
    av = copy.deepcopy(argv)
-   print av
    av = av[1:] # throw out the executable path
-   print av
    av.reverse()
    global options
    options.deferred = []
