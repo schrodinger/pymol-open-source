@@ -315,6 +315,7 @@ static PyObject *CmdProtect(PyObject *self, PyObject *args);
 static PyObject *CmdQuit(PyObject *self, 	PyObject *args);
 static PyObject *CmdRay(PyObject *self, 	PyObject *args);
 static PyObject *CmdRayTraceThread(PyObject *self, 	PyObject *args);
+static PyObject *CmdRayHashThread(PyObject *self, 	PyObject *args);
 static PyObject *CmdRampMapNew(PyObject *self, 	PyObject *args);
 static PyObject *CmdRebuild(PyObject *self, PyObject *args);
 static PyObject *CmdRecolor(PyObject *self, PyObject *args);
@@ -495,7 +496,8 @@ static PyMethodDef Cmd_methods[] = {
 	{"protect",	              CmdProtect,              METH_VARARGS },
 	{"push_undo",	           CmdPushUndo,             METH_VARARGS },
 	{"quit",	                 CmdQuit,                 METH_VARARGS },
-   {"ray_trace_thread",      CmdRayTraceThread,            METH_VARARGS },
+   {"ray_trace_thread",      CmdRayTraceThread,       METH_VARARGS },
+   {"ray_hash_thread",       CmdRayHashThread,        METH_VARARGS },
    {"ramp_new",              CmdRampMapNew,           METH_VARARGS },
 	{"ready",                 CmdReady,                METH_VARARGS },
    {"rebuild",               CmdRebuild,              METH_VARARGS },
@@ -560,6 +562,25 @@ static PyMethodDef Cmd_methods[] = {
 	{"zoom",	                 CmdZoom,                 METH_VARARGS },
 	{NULL,		              NULL}     /* sentinel */        
 };
+
+static PyObject *CmdRayHashThread(PyObject *self, 	PyObject *args)
+{
+  int ok=true;
+  int routine;
+  PyObject *py_thread_info;
+
+  CRayHashThreadInfo *thread_info = NULL;
+
+  ok = PyArg_ParseTuple(args,"O",&py_thread_info);
+  if(ok) ok = PyCObject_Check(py_thread_info);
+  if(ok) ok = ((thread_info = PyCObject_AsVoidPtr(py_thread_info))!=NULL);
+  if (ok) {
+    PUnblock();
+    RayHashThread(thread_info);
+    PBlock();
+  }
+  return(APIStatus(ok));
+}
 
 static PyObject *CmdRayTraceThread(PyObject *self, 	PyObject *args)
 {

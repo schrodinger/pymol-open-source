@@ -1232,7 +1232,7 @@ void BasisMakeMap(CBasis *I,int *vert2prim,CPrimitive *prim,float *volume)
                         *(site_p++)=start; /* remember which indexes we've negated */
                         (*start)=-1;
                         n_site++;
-                      }
+                      } 
                     }
                   }
               }
