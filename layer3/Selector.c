@@ -38,6 +38,9 @@ Z* -------------------------------------------------------------------
 #include"Scene.h"
 #include"CGO.h"
 
+#define SelectorWordLength 1024
+typedef char SelectorWordType[SelectorWordLength];
+
 #define SelectorMaxDepth 1000
 
 #define cSelectorTmpPrefix "_sel_tmp_"
@@ -76,7 +79,7 @@ typedef struct {
   int level;
   int type; /* 0 = value 1 = operation 2 = pre-operation */
   unsigned int code; 
-  WordType text;
+  SelectorWordType text;
   int *sele;
 } EvalElem;
 
@@ -89,7 +92,7 @@ typedef struct {
 } TableRec;
 
 typedef struct {
-  WordType *Name;
+  SelectorWordType *Name;
   int *ID;
   int NSelection,NActive;
   int TmpCounter;
@@ -121,8 +124,8 @@ int SelectorSelect2(EvalElem *base);
 int SelectorLogic1(EvalElem *base);
 int SelectorLogic2(EvalElem *base);
 int SelectorOperator22(EvalElem *base);
-int *SelectorEvaluate(WordType *word);
-WordType *SelectorParse(char *s);
+int *SelectorEvaluate(SelectorWordType *word);
+SelectorWordType *SelectorParse(char *s);
 void SelectorPurgeMembers(int sele);
 int SelectorUpdateTableSingleObject(ObjectMolecule *obj,int no_dummies);
 int  SelectorEmbedSelection(int *atom, char *name, ObjectMolecule *obj,int no_dummies);
@@ -326,6 +329,40 @@ static WordKeyValue AtOper[] =
 static int IntInOrder(int *list,int a,int b)
 {
   return(list[a]<=list[b]);
+}
+
+static int SelectorWordIndex(SelectorWordType *list,char *word,int minMatch,int ignCase)
+{
+  int c,i,mi,mc;
+  int result = -1;
+  c=0;
+  mc=-1;
+  mi=-1;
+  while(list[c][0])
+	 {
+		i=WordMatch(word,list[c],ignCase);
+		if(i>0)
+		  {
+			 if(mi<i)
+				{
+				  mi=i;
+				  mc=c;
+				}
+		  }
+		else if(i<0)
+		  {
+			 if((-i)<minMatch)
+				mi=minMatch+1; /*exact match always matches */
+			 else
+				mi=(-i);
+			 mc=c;
+		  }
+		c++;
+	 }
+  if((mi>minMatch))
+	 result=mc;
+  return(result);  
+
 }
 
 void SelectorSelectByID(char *name,ObjectMolecule *obj,int *id,int n_id)
@@ -1591,7 +1628,7 @@ PyObject *SelectorColorectionGet(char *prefix)
     /* create selections */
 
     n=I->NActive;
-    VLACheck(I->Name,WordType,n+1);
+    VLACheck(I->Name,SelectorWordType,n+1);
     VLACheck(I->ID,int,n+1);
     sele = I->NSelection++;
     used[a].sele = sele;
@@ -1642,7 +1679,7 @@ int SelectorColorectionApply(PyObject *list,char *prefix)
   int a,b;
   AtomInfoType *ai;
   ObjectMolecule *obj,*last=NULL;
-  WordType name;
+  SelectorWordType name;
 
   if(ok) ok=(list!=NULL);
   if(ok) ok=PyList_Check(list);
@@ -1685,7 +1722,7 @@ int SelectorColorectionFree(PyObject *list,char *prefix)
   ColorectionRec *used=NULL;
   int n_used=0;
   int b;
-  WordType name;
+  SelectorWordType name;
 
   if(ok) ok=(list!=NULL);
   if(ok) ok=PyList_Check(list);
@@ -1742,7 +1779,7 @@ int SelectorSecretsFromPyList(PyObject *list)
   int n_secret=0;
   int a;
   PyObject *entry=NULL;
-  WordType name;
+  SelectorWordType name;
   int ll=0;
   if(ok) ok = (list!=NULL);
   if(ok) ok = PyList_Check(list);
@@ -1754,7 +1791,7 @@ int SelectorSecretsFromPyList(PyObject *list)
       if(ok) ok = PyList_Check(entry);
       if(ok) ll = PyList_Size(entry);
       if(ok&(ll>1)) {
-        if(ok) ok = PConvPyStrToStr(PyList_GetItem(entry,0),name,sizeof(WordType));
+        if(ok) ok = PConvPyStrToStr(PyList_GetItem(entry,0),name,sizeof(SelectorWordType));
         if(ok) ok = SelectorFromPyList(name,PyList_GetItem(entry,1));
       }
       if(!ok) break;
@@ -1851,13 +1888,13 @@ int SelectorFromPyList(char *name,PyObject *list)
   if(ok) ok=PyList_Check(list);
   if(ok) n_obj = PyList_Size(list);
     
-  n=WordIndex(I->Name,name,999,I->IgnoreCase); /* already exist? */
+  n=SelectorWordIndex(I->Name,name,999,I->IgnoreCase); /* already exist? */
   if(n>=0) /* get rid of existing selection*/ {
     SelectorDelete(I->Name[n]);
   }
 
   n=I->NActive;
-  VLACheck(I->Name,WordType,n+1);
+  VLACheck(I->Name,SelectorWordType,n+1);
   VLACheck(I->ID,int,n+1);
   strcpy(I->Name[n],name);
   I->Name[n+1][0]=0;
@@ -2497,10 +2534,10 @@ void SelectorDeletePrefixSet(char *pref)
 {
   int a;
   SelectorType *I=&Selector;
-  WordType name_copy; 
+  SelectorWordType name_copy; 
 
   while(1) {
-    a = WordIndex(I->Name,pref,strlen(pref),false);
+    a = SelectorWordIndex(I->Name,pref,strlen(pref),false);
     if(a>0) {
       strcpy(name_copy,I->Name[a]);
       ExecutiveDelete(name_copy); /* import to use a copy, otherwise 
@@ -2622,7 +2659,7 @@ int SelectorSubdivideObject(char *pref,ObjectMolecule *obj,int sele1,int sele2,
   int stkDepth;
   int c,s,n;
   int cycFlag=false;
-  WordType name;
+  SelectorWordType name;
 
   PRINTFD(FB_Selector)
     " SelectorSubdivideObject: entered...\n"
@@ -4448,7 +4485,7 @@ int SelectorIndexByName(char *sname)
      strcpy(name,&sname[1]);
    else
      strcpy(name,sname);		  
-   i = WordIndex(I->Name,name,1,I->IgnoreCase);
+   i = SelectorWordIndex(I->Name,name,1,I->IgnoreCase);
    if((i>=0)&&(name[0]!='_')) { /* don't do checking on internal selections */
      char *best;
      best = ExecutiveFindBestNameMatch(sname); /* suppress spurious matches
@@ -4534,7 +4571,7 @@ void SelectorDelete(char *sele)
 {
   SelectorType *I=&Selector;
   int n;
-  n=WordIndex(I->Name,sele,999,I->IgnoreCase); /* already exist? */
+  n=SelectorWordIndex(I->Name,sele,999,I->IgnoreCase); /* already exist? */
   if(n>0) /* get rid of existing selection -- but never selection 0 (all) */
 	 {
       SelectorDeleteOffset(n);
@@ -4544,7 +4581,7 @@ void SelectorDelete(char *sele)
 int SelectorGetTmp(char *input,char *store)
 {
   SelectorType *I=&Selector;
-  WordType name;
+  SelectorWordType name;
   OrthoLineType buffer;
   int count = 0;
   PRINTFD(FB_Selector)
@@ -4593,7 +4630,7 @@ int  SelectorEmbedSelection(int *atom, char *name, ObjectMolecule *obj,int no_du
   int c=0;
   int start=0;
   AtomInfoType *ai;
-  n=WordIndex(I->Name,name,999,I->IgnoreCase); /* already exist? */
+  n=SelectorWordIndex(I->Name,name,999,I->IgnoreCase); /* already exist? */
   if(n==0) /* don't allow redefinition of "all" */
     return 0;
   if(n>0) /* get rid of existing selection*/ {
@@ -4604,7 +4641,7 @@ int  SelectorEmbedSelection(int *atom, char *name, ObjectMolecule *obj,int no_du
   /*  printf("I->NMember %d I->FreeMember %d\n",I->NMember,I->FreeMember);*/
 
   n=I->NActive;
-  VLACheck(I->Name,WordType,n+1);
+  VLACheck(I->Name,SelectorWordType,n+1);
   VLACheck(I->ID,int,n+1);
   strcpy(I->Name[n],name);
   I->Name[n+1][0]=0;
@@ -4907,7 +4944,7 @@ int SelectorUpdateTable(void)
 /*========================================================================*/
 int *SelectorSelect(char *sele)
 {
-  WordType *parsed;
+  SelectorWordType *parsed;
   int *result=NULL;
   PRINTFD(FB_Selector)
     "SelectorSelect-DEBUG: sele = \"%s\"\n",sele
@@ -4917,7 +4954,7 @@ int *SelectorSelect(char *sele)
   if(parsed)
 	 {
       if(Feedback(FB_Selector,FB_Debugging)) {
-        WordType *a;
+        SelectorWordType *a;
         fprintf(stderr,"SelectorSelect-DEBUG: parsed tokens:\n");
         a = parsed;
         while(1) {
@@ -5633,7 +5670,7 @@ int SelectorSelect1(EvalElem *base)
 		  }
 		break;
 	 case SELE_SELs:
-		sele=WordIndex(I->Name,base[1].text,1,I->IgnoreCase);
+		sele=SelectorWordIndex(I->Name,base[1].text,1,I->IgnoreCase);
 		if(sele>=0)
 		  {
           sele=I->ID[sele];
@@ -6275,7 +6312,7 @@ static void remove_quotes(char *st)
 { 
   /* nasty */
 
-  WordType store;
+  SelectorWordType store;
   char *p,*q;
   char *quote_start = NULL;
   char active_quote = 0;
@@ -6319,7 +6356,7 @@ static void remove_quotes(char *st)
 }
 
 /*========================================================================*/
-int *SelectorEvaluate(WordType *word)
+int *SelectorEvaluate(SelectorWordType *word)
 {
   int level = 0;
   int depth = 0;
@@ -6336,7 +6373,7 @@ int *SelectorEvaluate(WordType *word)
   OrthoLineType line;
   EvalElem *Stack=NULL,*e;
   SelectorType *I=&Selector;
-  WordType tmpKW;
+  SelectorWordType tmpKW;
 
   Stack = Alloc(EvalElem,SelectorMaxDepth);
 
@@ -6705,17 +6742,17 @@ int *SelectorEvaluate(WordType *word)
 }
 
 /*========================================================================*/
-WordType *SelectorParse(char *s) {
+SelectorWordType *SelectorParse(char *s) {
 
   /* break a selection down into its constituent strings and
-	  return them in a WordType VLA, null string terminated */
+	  return them in a SelectorWordType VLA, null string terminated */
 
-  WordType *r = NULL;
+  SelectorWordType *r = NULL;
   int c=0;
   int w_flag=false;
   char *p = s;
   char *q = NULL, *q_base = NULL;
-  r=VLAlloc(WordType,100);
+  r=VLAlloc(SelectorWordType,100);
   while(*p) 
 	 {
 		if(w_flag) /* currently in a word, thus q is a valid pointer */
@@ -6742,7 +6779,7 @@ WordType *SelectorParse(char *s) {
 				case '%':
 				  *q=0; /* terminate current word */
 				  c++;
-				  VLACheck(r,WordType,c); /* add new word */
+				  VLACheck(r,SelectorWordType,c); /* add new word */
 				  q=r[c-1];
 				  *q++=*p;
 				  *q=0;  /* terminate current word */
@@ -6753,8 +6790,8 @@ WordType *SelectorParse(char *s) {
 				  break;
 				}
           if(w_flag) {
-            if((q-q_base)>=sizeof(WordType)) {
-              q_base[sizeof(WordType)-1]=0;
+            if((q-q_base)>=sizeof(SelectorWordType)) {
+              q_base[sizeof(SelectorWordType)-1]=0;
               w_flag=false;
               PRINTFB(FB_Selector,FB_Errors) 
                 "Selector-Error: Word too long. Truncated:\nSelector-Error: %s...\n",q_base
@@ -6768,7 +6805,7 @@ WordType *SelectorParse(char *s) {
 				{
 				case '*': /* special case */
 				  c++;
-				  VLACheck(r,WordType,c);
+				  VLACheck(r,SelectorWordType,c);
 				  q=r[c-1];
 				  *q++='+';
 				  *q=0;
@@ -6784,7 +6821,7 @@ WordType *SelectorParse(char *s) {
             case '=':
 				case '%':
 				  c++;
-				  VLACheck(r,WordType,c);
+				  VLACheck(r,SelectorWordType,c);
 				  q=r[c-1];
 				  *q++=(*p);
 				  *q=0;
@@ -6794,7 +6831,7 @@ WordType *SelectorParse(char *s) {
 				default:
 				  w_flag=true;
 				  c++;
-              VLACheck(r,WordType,c);
+              VLACheck(r,SelectorWordType,c);
 				  q=r[c-1];
               q_base = q;
 				  *q++=*p;
@@ -6868,7 +6905,7 @@ static void SelectorInit2(void)
     int n;
 
     n=I->NActive;
-    VLACheck(I->Name,WordType,n+1);
+    VLACheck(I->Name,SelectorWordType,n+1);
     VLACheck(I->ID,int,n+1);
     strcpy(I->Name[n],cKeywordAll); /* "all" selection */
     I->Name[n+1][0]=0;
@@ -6888,7 +6925,7 @@ void SelectorReinit(void)
 void SelectorInit(void)
 {
   SelectorType *I = &Selector;
-  I->Name = VLAlloc(WordType,100);
+  I->Name = VLAlloc(SelectorWordType,100);
   I->ID = VLAlloc(int,100);
   
   I->Member = (MemberType*)VLAMalloc(10000,sizeof(MemberType),5,true);

@@ -25,7 +25,7 @@ if __name__=='pymol.commanding':
    import cmd
    import pymol
    from cmd import _cmd,lock,unlock,Shortcut,QuietException
-   from cmd import _feedback,fb_module,fb_mask
+   from cmd import _feedback,fb_module,fb_mask,is_list
 
    def resume(fname):
       if os.path.exists(fname):
@@ -191,15 +191,20 @@ USAGE (PYTHON)
    from pymol import cmd
    cmd.do("load file.pdb")
       '''
-      lst = string.split(commands,"\n")   
-      try:
-         lock()
-         r = None
+      if is_list(commands):
+         cmmd_list = commands
+      else:
+         cmmd_list = [ commands ]
+      for cmmd in cmmd_list:
+         lst = string.split(cmmd,"\n")   
          for a in lst:
             if(len(a)):
-               r = _cmd.do(a)
-      finally:
-         unlock()
+               try:
+                  lock()
+                  r = None
+                  r = _cmd.do(a)
+               finally:
+                  unlock()
       return r
 
 
