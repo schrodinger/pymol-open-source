@@ -129,7 +129,6 @@ SEE ALSO
       r = _cmd.system(str(command),int(sync))
    else:
       r = thread.start_new(_cmd.system,(command,0))
-      print "hello"
       
    return r # special meaning
 

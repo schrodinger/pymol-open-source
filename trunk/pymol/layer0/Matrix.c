@@ -593,7 +593,7 @@ float MatrixFitRMS(int n,float *v1,float *v2,float *wt,float *ttt)
 
   sumwt = 0.0F;
   tol = SettingGet(cSetting_fit_tolerance);
-  maxiter = SettingGet(cSetting_fit_iterations);
+  maxiter = (int)SettingGet(cSetting_fit_iterations);
 
   /* Calculate center-of-mass vectors */
 

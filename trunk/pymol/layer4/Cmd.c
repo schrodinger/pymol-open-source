@@ -2047,7 +2047,6 @@ static PyObject *CmdSystem(PyObject *dummy, PyObject *args)
   int sync;
   ok = PyArg_ParseTuple(args,"si",&str1,&sync);
   if (ok) {
-    printf("%d\n",sync);
     if(!sync) {
       PUnblock(); /* free up PyMOL and the API */
     } else {
