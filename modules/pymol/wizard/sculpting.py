@@ -15,7 +15,7 @@ excl_sele = sele_pre+ "excl"
 
 default_mode = 'by_resi'
 default_radius = 6.0
-default_cushion = 4.0
+default_cushion = 6.0
 
 class Sculpting(Wizard):
 
@@ -35,13 +35,19 @@ class Sculpting(Wizard):
       
       self.mode = default_mode
       self.modes = [
-         'by_atom',
+         'ligand_rx',
+#         'ligand_re',         
+#         'by_atom',
          'by_resi',
          ]
 
       self.mode_name = {
-         'by_atom':'By Atom',
-         'by_resi':'By Residue',
+         'by_atom':'Atom Shells',
+         'by_resi':'Residue Shells',
+         'ligand_rx' :'Residue v. Fixed',
+         'ligand_re' :'Residue v. Free',                  
+         'ligand_cx' :'Chain v. Fixed',
+         'ligand_ce' :'Chain v. Free',                  
          }
 
       smm = []
@@ -65,7 +71,10 @@ class Sculpting(Wizard):
          [1, '3.0 A Cushion','cmd.get_wizard().set_cushion(3)'],
          [1, '4.0 A Cushion','cmd.get_wizard().set_cushion(4)'],
          [1, '6.0 A Cushion','cmd.get_wizard().set_cushion(6)'],
-         [1, '8.0 A Cushion','cmd.get_wizard().set_radius(8)'],
+         [1, '8.0 A Cushion','cmd.get_wizard().set_cushion(8)'],
+         [1, '10.0 A Cushion','cmd.get_wizard().set_cushion(10)'],
+         [1, '12.0 A Cushion','cmd.get_wizard().set_cushion(12)'],                              
+
          ]
 
 # generic set routines
@@ -94,20 +103,28 @@ class Sculpting(Wizard):
                        (cent_sele,free_sele,cent_sele,self.radius+self.cushion))
             cmd.select(excl_sele,"((byobj %s) and (not (%s|%s)))"%
                        (cent_sele,free_sele,fix_sele))
-            cmd.protect("(byobj %s)"%cent_sele)
-            cmd.deprotect(free_sele)
-            cmd.flag('exclude',"(byobj %s)"%cent_sele,"clear")
-            cmd.flag('exclude',excl_sele,"set")
-            cmd.color('grey',excl_sele)
-            cmd.zoom(free_sele,2.0)
-            util.cbac(fix_sele)
-            util.cbag(free_sele)
-            cmd.disable('indicate')
-            cmd.disable(cent_sele)            
-            cmd.disable(free_sele)
-            cmd.disable(fix_sele)
-            cmd.disable(excl_sele)
-            cmd.unpick()
+         elif self.mode=='ligand_rx':
+            cmd.select(free_sele,"((byobj %s) and byres (%s))"%
+                       (cent_sele,cent_sele))
+            cmd.select(fix_sele,"((byobj %s) and (not %s) and byres ((%s) x; %8.3f))"%
+                       (cent_sele,free_sele,free_sele,self.cushion))
+            cmd.select(excl_sele,"((byobj %s) and (not (%s|%s)))"%
+                       (cent_sele,free_sele,fix_sele))
+         cmd.protect("(byobj %s)"%cent_sele)
+         cmd.deprotect(free_sele)
+         cmd.flag('exclude',"(byobj %s)"%cent_sele,"clear")
+         cmd.flag('exclude',excl_sele,"set")
+         cmd.color('grey',excl_sele)
+         cmd.zoom(free_sele,3.0)
+         util.cbac(fix_sele)
+         util.cbag(free_sele)
+         cmd.disable('indicate')
+         cmd.disable(cent_sele)            
+         cmd.disable(free_sele)
+         cmd.disable(fix_sele)
+         cmd.disable(excl_sele)
+         cmd.unpick()
+         
          self.status = 1
          
    def set_object_mode(self,mode):
