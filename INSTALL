@@ -21,13 +21,16 @@ Approach 1 is recommended if:
 
   (B) you don't plan on doing any PyMOL development, or
 
-  (C) you are packaging PyMOL for distribution.
+  (C) you are packaging PyMOL for a standard distribution, or
+
+  (D) you are building on Windows using either Cygwin or Visual C.
 
 Approach 2 is recommended if:
 
   (A) you want to keep your Python installation free of PyMOL, or
 
-  (B) you plan on doing PyMOL development, or
+  (B) you plan on doing PyMOL development and need both fast/partial
+      recompiles, debugging support, and careful build control, or
 
   (C) you want to maintain multiple functioning versions of PyMOL
       on a single system.
