@@ -1,5 +1,5 @@
 PyMOL>load $PYMOL_PATH/test/dat/pept.pdb
- CmdLoad: "/home/local/warren/pymol/test/dat/pept.pdb" loaded as "pept".
+ CmdLoad: "/users/warren/pymol/test/dat/pept.pdb" loaded as "pept".
 PyMOL>select cas,name ca
  Selector: selection "cas" defined with 13 atoms.
 PyMOL>set line_width,5
@@ -11,7 +11,7 @@ PyMOL>reinitialize
 PyMOL>print cmd.get_names()
 []
 PyMOL>get line_width
- get: line_width = 1.00000
+ get: line_width = 1.50000
 PyMOL>count_atoms rep spheres
  count_atoms: 0 atoms
 PyMOL>load tmp/session.pse

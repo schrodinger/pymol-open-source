@@ -50,6 +50,7 @@ void get_divergent3f(float *src,float *dst);
 void get_random3f(float *x);
 void scatter3f(float *v,float weight);
 void wiggle3f(float *v,float *p,float *s);
+void extrapolate3f(float *v1, float *unit, float *result);
 
 void mix3f(float *v1,float *v2,float fxn,float *v3);
 void mix3d(double *v1,double *v2,double fxn,double *v3);

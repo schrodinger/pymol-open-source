@@ -36,6 +36,10 @@ ObjectDist *ObjectDistNewFromAngleSele(PyMOLGlobals *G,ObjectDist *oldObj,
                                        int sele1,int sele2,int sele3, int mode,
                                        int labels,float *result, int reset);
 
+ObjectDist *ObjectDistNewFromDihedralSele(PyMOLGlobals *G,ObjectDist *oldObj,
+                                        int sele1, int sele2, int sele3, int sele4,
+                                          int mode, int labels, float *result, int reset);
+
 ObjectDist *ObjectDistNew(PyMOLGlobals *G);
 void ObjectDistInvalidateRep(ObjectDist *I,int rep);
 PyObject *ObjectDistAsPyList(ObjectDist *I);

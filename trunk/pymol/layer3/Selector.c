@@ -9308,8 +9308,8 @@ DistSet *SelectorGetDihedralSet(PyMOLGlobals *G, DistSet *ds,
     ds = DistSetNew(G);
     vv = VLAlloc(float,10);
   } else {
-    vv = ds->AngleCoord;
-    nv = ds->NAngleIndex;
+    vv = ds->DihedralCoord;
+    nv = ds->NDihedralIndex;
   }
 
   SelectorUpdateTable(G); 
@@ -9367,10 +9367,11 @@ DistSet *SelectorGetDihedralSet(PyMOLGlobals *G, DistSet *ds,
     int n2 = 0;
     int n3 = 0;
     int n4 = 0;
+    int bonded12, bonded23, bonded34;
 
     /* now generate three lists of atoms, one for each selection set */
 
-    if(list1&&list2&&list3) {
+    if(list1&&list2&&list3&&list4) {
       for(a=cNDummyAtoms;a<I->NAtom;a++) {
         at=I->Table[a].atom;
         obj=I->Obj[I->Table[a].model];
@@ -9388,7 +9389,7 @@ DistSet *SelectorGetDihedralSet(PyMOLGlobals *G, DistSet *ds,
           list3[n3++] = a;
         }
         if(SelectorIsMember(G,s,sele4)) {
-          VLACheck(list4,int,n3);
+          VLACheck(list4,int,n4);
           list4[n4++] = a;
         }
       }
@@ -9452,6 +9453,8 @@ DistSet *SelectorGetDihedralSet(PyMOLGlobals *G, DistSet *ds,
                     
                       if(idx2>=0) {
                         
+                        bonded12 = ObjectMoleculeAreAtomsBonded2(obj1,at1,obj2,at2); 
+
                         for(i3=0;i3<n3;i3++) {
                           a3 = list3[i3];
                           at3=I->Table[a3].atom;
@@ -9473,7 +9476,8 @@ DistSet *SelectorGetDihedralSet(PyMOLGlobals *G, DistSet *ds,
                               }
                     
                               if(idx3>=0) {
-                        
+                                
+                                bonded23 = ObjectMoleculeAreAtomsBonded2(obj2,at2,obj3,at3); 
                                 for(i4=0;i4<n4;i4++) {
                                   a4 = list4[i4];
                           
@@ -9502,20 +9506,21 @@ DistSet *SelectorGetDihedralSet(PyMOLGlobals *G, DistSet *ds,
                                           if(idx4>=0) {
                                     
                                             /* check here to see if atoms are bonded a1-a2-a3, then set a_keeper */
+                                            bonded34 = ObjectMoleculeAreAtomsBonded2(obj3,at3,obj4,at4); 
                                     
                                             if(a_keeper) { /* store the 3 coordinates */
                                           
                                               v1 = cs1->Coord+3*idx1;
                                               v2 = cs2->Coord+3*idx2;
                                               v3 = cs3->Coord+3*idx3;
-                                              v4 = cs4->Coord+4*idx4;
+                                              v4 = cs4->Coord+3*idx4;
                                       
                                               angle = get_dihedral3f(v1,v2,v3,v4);
                                       
                                               (*angle_sum)+=angle;
                                               (*angle_cnt)++;
                                           
-                                              VLACheck(vv,float,(nv*3)+14);
+                                              VLACheck(vv,float,(nv*3)+17);
                                               vv0 = vv + (nv*3);
                                               *(vv0++) = *(v1++);
                                               *(vv0++) = *(v1++);
@@ -9529,10 +9534,13 @@ DistSet *SelectorGetDihedralSet(PyMOLGlobals *G, DistSet *ds,
                                               *(vv0++) = *(v4++);
                                               *(vv0++) = *(v4++);
                                               *(vv0++) = *(v4++);
+                                              *(vv0++) = (float)!bonded12;
+                                              *(vv0++) = (float)!bonded23;
+                                              *(vv0++) = (float)!bonded34;
                                               *(vv0++) = 0.0F; /* label x relative to v2+v3/2*/
                                               *(vv0++) = 0.0F; /* label y relative to v2+v3/2 */
                                               *(vv0++) = 0.0F; /* label z relative to v2+v3/2 */
-                                              nv+=5;
+                                              nv+=6;
                                             }
                                           }
                                         }
@@ -9562,8 +9570,8 @@ DistSet *SelectorGetDihedralSet(PyMOLGlobals *G, DistSet *ds,
   FreeP(coverage);
   if(vv)
     VLASize(vv,float,(nv+1)*3);
-  ds->NAngleIndex = nv;
-  ds->AngleCoord = vv;
+  ds->NDihedralIndex = nv;
+  ds->DihedralCoord = vv;
   return(ds);
 }
 

@@ -186,6 +186,17 @@ void get_system2f3f(float *x,float *y,float *z) /* make system in direction of x
   normalize3f(x);
 }
 
+void extrapolate3f(float *v1, float *unit, float *result)
+{
+  float lsq = lengthsq3f(v1);
+  float dp = dot_product3f(v1,unit);
+  if(dp!=0.0F) {
+    float l2 = lsq/dp;
+    scale3f(unit,l2,result);
+  }
+}
+
+
 void scatter3f(float *v,float weight)
 {
   float r[3];

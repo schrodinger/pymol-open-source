@@ -171,7 +171,8 @@ PYMOL API
             unlock()
       return r
 
-   def dihedral(name=None,selection1="(pk1)",selection2="(pk2)",selection3="(pk3)",selection4="(pk4)",
+   def dihedral(name=None,selection1="(pk1)",selection2="(pk2)",
+                selection3="(pk3)",selection4="(pk4)",
                 mode=None,labels=1,reset=0,zoom=0,quiet=1):
       r = 1
       if selection1=="(pk1)":
@@ -225,7 +226,7 @@ PYMOL API
                selection3 = "("+selection3+")"
             if selection4!="same":
                selection4 = "("+selection4+")"
-            r = _cmd.angle(str(nam),"("+str(selection1)+")",
+            r = _cmd.dihedral(str(nam),"("+str(selection1)+")",
                            str(selection2),
                            str(selection3),
                            str(selection4),
