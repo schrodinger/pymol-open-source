@@ -321,6 +321,12 @@ class PMGApp(AbstractApp):
                         command = lambda s=self: s.setting.update('antialias'))
 
       self.menuBar.addmenuitem('Options', 'checkbutton',
+                         'Auto Zoom.',
+                         label='Auto Zoom',
+                        variable = self.setting.auto_zoom,
+                        command = lambda s=self: s.setting.update('auto_zoom'))
+
+      self.menuBar.addmenuitem('Options', 'checkbutton',
                          'Overlay',
                          label='Overlay Text on Graphics',
                         variable = self.setting.overlay,
