@@ -333,17 +333,17 @@ origin m1,state=4
 cmd._dump_floats(cmd.get_view(0))
 
 orient m1
-cmd._dump_floats(cmd.get_view(0))
+cmd._dump_ufloats(cmd.get_view(0))
 orient m1,state=0
-cmd._dump_floats(cmd.get_view(0))
+cmd._dump_ufloats(cmd.get_view(0))
 orient m1,state=1
-cmd._dump_floats(cmd.get_view(0))
+cmd._dump_ufloats(cmd.get_view(0))
 orient m1,state=2
-cmd._dump_floats(cmd.get_view(0))
+cmd._dump_ufloats(cmd.get_view(0))
 orient m1,state=3
-cmd._dump_floats(cmd.get_view(0))
+cmd._dump_ufloats(cmd.get_view(0))
 orient m1,state=4
-cmd._dump_floats(cmd.get_view(0))
+cmd._dump_ufloats(cmd.get_view(0))
 
 
 
