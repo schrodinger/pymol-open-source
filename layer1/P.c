@@ -253,9 +253,9 @@ int PAlterAtomState(float *v,char *expr,int read_only,
   float f[3];
   PyObject *x_id1,*x_id2=NULL,*y_id1,*y_id2=NULL,*z_id1,*z_id2=NULL;
   char atype[7];
-  dict = PyDict_New();
   PyObject *flags_id1=NULL,*flags_id2=NULL;
   int flags;
+  dict = PyDict_New();
 
   if(at) {
     if(at->hetatm)
