@@ -151,6 +151,48 @@ void RayGetSphereNormal(CRay *I,RayInfo *r)
   normalize3f(r->surfnormal);
   
 }
+
+static void fill(unsigned int *buffer, unsigned int value,unsigned int cnt)
+{
+  while(cnt&0xFFFFFFF80) {
+    *(buffer++) = value;
+    *(buffer++) = value;
+    *(buffer++) = value;
+    *(buffer++) = value;
+    *(buffer++) = value;
+    *(buffer++) = value;
+    *(buffer++) = value;
+    *(buffer++) = value;
+    cnt-=0x20;
+    *(buffer++) = value;
+    *(buffer++) = value;
+    *(buffer++) = value;
+    *(buffer++) = value;
+    *(buffer++) = value;
+    *(buffer++) = value;
+    *(buffer++) = value;
+    *(buffer++) = value;
+    *(buffer++) = value;
+    *(buffer++) = value;
+    *(buffer++) = value;
+    *(buffer++) = value;
+    *(buffer++) = value;
+    *(buffer++) = value;
+    *(buffer++) = value;
+    *(buffer++) = value;
+    *(buffer++) = value;
+    *(buffer++) = value;
+    *(buffer++) = value;
+    *(buffer++) = value;
+    *(buffer++) = value;
+    *(buffer++) = value;
+    *(buffer++) = value;
+    *(buffer++) = value;
+  }
+  while(cnt--) {
+    *(buffer++) = value;
+  }
+}
 /*========================================================================*/
 #ifdef _PYMOL_INLINE
 __inline__
@@ -384,7 +426,7 @@ void RayExpandPrimitives(CRay *I)
 		printf("NPrimit  %d nvert %d\n",I->NPrimitive,nVert);*/
 }
 /*========================================================================*/
-static void RayComputeBox(CRay *I,float *mn,float *mx)
+static void RayComputeBox(CRay *I)
 {
 
 #define minmax(v,r) { \
@@ -447,10 +489,10 @@ static void RayComputeBox(CRay *I,float *mn,float *mx)
       }	/* end of switch */
 	 }
   }
-  mn[0] = xmin;
-  mn[1] = ymin;
-  mx[0] = xmax;
-  mx[1] = ymax;
+  I->min_box[0] = xmin;
+  I->min_box[1] = ymin;
+  I->max_box[0] = xmax;
+  I->max_box[1] = ymax;
 }
 
 void RayTransformFirst(CRay *I)
@@ -859,9 +901,35 @@ static void RayHashSpawn(CRayHashThreadInfo *Thread,int n_thread)
   PAutoUnblock(blocked);
 }
 
+static void RayAntiSpawn(CRayAntiThreadInfo *Thread,int n_thread)
+{
+  int blocked;
+  PyObject *info_list;
+  int a;
+  blocked = PAutoBlock();
+
+  PRINTFB(FB_Ray,FB_Details)
+    " Ray: antialiasing with %d threads...\n",n_thread
+  ENDFB;
+  info_list = PyList_New(n_thread);
+  for(a=0;a<n_thread;a++) {
+    PyList_SetItem(info_list,a,PyCObject_FromVoidPtr(Thread+a,NULL));
+  }
+  PyObject_CallMethod(P_cmd,"_ray_anti_spawn","O",info_list);
+  Py_DECREF(info_list);
+  PAutoUnblock(blocked);
+}
+
 int RayHashThread(CRayHashThreadInfo *T)
 {
   BasisMakeMap(T->basis,T->vert2prim,T->prim,T->clipBox);
+
+  /* utilize a little extra wasted CPU time in thread 0 which computes the smaller map... */
+
+  if(!T->phase) { 
+    fill(T->image,T->background,T->bytes);
+    RayComputeBox(T->ray);
+  }
   return 1;
 }
 
@@ -1401,7 +1469,10 @@ int RayTraceThread(CRayThreadInfo *T)
 
 
 
+#if 0 
 
+/* in reality, this doesn't buy us much -- for each cycles there's typically half a 
+   dozen allocations, amounting to several hundreded megabytes */
 
 typedef struct
 {
@@ -1462,6 +1533,7 @@ static unsigned int *GetRenderBuffer(unsigned int inBuffSize, int inThreadIndex)
      printf("DRSWAT: Oh no! No render buffer found.\n");*/
 	return NULL;
 }
+#endif
 
 /* this is both an antialias and a slight blur */
 
@@ -1503,59 +1575,200 @@ static unsigned int *GetRenderBuffer(unsigned int inBuffSize, int inThreadIndex)
  }
 
 
-
-static void fill(unsigned int *buffer, unsigned int value,unsigned int cnt)
+int RayAntiThread(CRayAntiThreadInfo *T)
 {
-  while(cnt&0xFFFFFFF80) {
-    *(buffer++) = value;
-    *(buffer++) = value;
-    *(buffer++) = value;
-    *(buffer++) = value;
-    *(buffer++) = value;
-    *(buffer++) = value;
-    *(buffer++) = value;
-    *(buffer++) = value;
-    cnt-=0x20;
-    *(buffer++) = value;
-    *(buffer++) = value;
-    *(buffer++) = value;
-    *(buffer++) = value;
-    *(buffer++) = value;
-    *(buffer++) = value;
-    *(buffer++) = value;
-    *(buffer++) = value;
-    *(buffer++) = value;
-    *(buffer++) = value;
-    *(buffer++) = value;
-    *(buffer++) = value;
-    *(buffer++) = value;
-    *(buffer++) = value;
-    *(buffer++) = value;
-    *(buffer++) = value;
-    *(buffer++) = value;
-    *(buffer++) = value;
-    *(buffer++) = value;
-    *(buffer++) = value;
-    *(buffer++) = value;
-    *(buffer++) = value;
-    *(buffer++) = value;
-    *(buffer++) = value;
-  }
-  while(cnt--) {
-    *(buffer++) = value;
-  }
+  int a;
+  int		w2;
+  int		wid_1, hgt_1;
+  register unsigned int part;
+  unsigned int acc;
+  unsigned int z[16],zm[16];
+  
+  unsigned int *pSrc;
+  unsigned int *pDst;
+  const unsigned int m00FF=0x00FF,mFF00=0xFF00,mFFFF=0xFFFF;
+  int width;
+  int height;
+  int x,y,yy;
+  unsigned int *p;
+  int offset = 0;
+  int y_range;
+
+  OrthoBusyFast(9,10);
+  width	= T->width/2;
+  height	= T->height/2;
+  
+  w2	= width * 2;
+  hgt_1	= height - 1;
+  wid_1	= width - 1;
+
+  y_range = hgt_1 - 1;
+  
+  offset = (T->phase * y_range)/T->n_thread;
+  offset = offset - (offset % T->n_thread) + T->phase;
+
+  for(yy = 0; yy< y_range; yy++ )
+    {
+        
+      y = 1 + (yy + offset) % y_range; /* make sure threads write to different pages */
+
+      pSrc  = T->image + w2 * (y*2 - 1);
+      pDst	= T->image_copy + width * y + 1;	/* Add 1 since x-wise inner loop (below) starts at 1 */
+      
+		if((y % T->n_thread) == T->phase)	/* this is my scan line */
+      for(x = 1; x < wid_1; x++)
+        {
+          p	= pSrc + (x * 2);
+          
+          z[12]	= (*(p-1));
+          z[4]	= (*(p));
+          z[5]	= (*(p+1));
+          z[13]	= (*(p+2));
+          
+          p	+= w2;
+          
+          z[6]	= (*(p-1));
+          z[0]	= (*(p));
+          z[1]	= (*(p+1));
+          z[7]	= (*(p+2));
+          
+          p	+= w2;
+          
+          z[8]	= (*(p-1));
+          z[2]	= (*(p));
+          z[3]	= (*(p+1));
+          z[9]	= (*(p+2));
+          
+          p	+= w2;
+				
+          z[14]	= (*(p-1));
+          z[10]	= (*(p));
+          z[11]	= (*(p+1));
+          z[15]	= (*(p+2));
+          
+          for( a = 0; a < 16; a += 4 ) 
+            {
+              zm[a+0 ] = z[a+0] & mFFFF; /* move half to zm */
+              zm[a+1 ] = z[a+1] & mFFFF;
+              zm[a+2 ] = z[a+2] & mFFFF;
+              zm[a+3 ] = z[a+3] & mFFFF;
+              
+              z[a   ]	>>= 16; /* keep rest in z */
+              z[a+1 ]	>>= 16;
+              z[a+2 ]	>>= 16;
+              z[a+3 ]	>>= 16;
+            }
+          
+          combine(part,z,m00FF);
+          acc=(part<<16);
+          combine(part,z,mFF00);
+          acc+=(part<<16);
+          combine(part,zm,m00FF);
+          acc+=part;
+          combine(part,zm,mFF00);
+          acc+=part;
+          *(pDst++) = acc;
+          
+        }
+    }
+  
+  /* top and bottom edges */		
+  for(y = 0; y < height; y = y + hgt_1)
+    {
+      pSrc  	= T->image + w2 * (y*2);
+      
+      pDst	= T->image_copy + width * y;
+      
+		if((y % T->n_thread) == T->phase)	/* this is my scan line */
+      for(x = 0; x < width; x++)
+        {
+          p		= pSrc + (x*2);
+          
+          z[0]	= *p;
+          z[1]	= *(p+1);
+          
+          p		+= w2;
+          
+          z[2]	= *(p);
+          z[3]	= *(p+1);
+          
+          zm[0] = z[0] & mFFFF; /* move half to zm */
+          zm[1] = z[1] & mFFFF;
+          zm[2] = z[2] & mFFFF;
+          zm[3] = z[3] & mFFFF;
+          
+          z[0]	>>= 16; /* keep rest in z */
+          z[1]	>>= 16;
+          z[2]	>>= 16;
+          z[3]	>>= 16;
+          
+          edge_combine(part,z,m00FF);
+          acc=(part<<16);
+          edge_combine(part,z,mFF00);
+          acc+=(part<<16);
+          edge_combine(part,zm,m00FF);
+          acc+=part;
+          edge_combine(part,zm,mFF00);
+          acc+=part;
+          *(pDst++) = acc;
+          
+        }
+    }
+  
+  /* left and right edges */
+  for(y = 0; y < height; y++)
+    {
+      pSrc	= T->image + w2 * (y*2);
+      pDst	= T->image_copy + width * y;
+      
+		if((y % T->n_thread) == T->phase)	/* this is my scan line */
+      for(x = 0; x < width; x += wid_1, pDst += wid_1 )
+        {
+          p		= pSrc + (x*2);
+          
+          z[0]	= *p;
+          z[1]	= *(p+1);
+          
+          p	+= w2;
+          
+          z[2]	= *p;
+          z[3]	= *(p+1);
+          
+          zm[0] = z[0] & mFFFF; /* move half to zm */
+          zm[1] = z[1] & mFFFF;
+          zm[2] = z[2] & mFFFF;
+          zm[3] = z[3] & mFFFF;
+          
+          z[0]	>>= 16; /* keep rest in z */
+          z[1]	>>= 16;
+          z[2]	>>= 16;
+          z[3]	>>= 16;
+          
+          edge_combine(part,z,m00FF);
+          acc=(part<<16);
+          edge_combine(part,z,mFF00);
+          acc+=(part<<16);
+          edge_combine(part,zm,m00FF);
+          acc+=part;
+          edge_combine(part,zm,mFF00);
+          acc+=part;
+          
+          *pDst = acc;
+          
+        }
+    }
+  return 1;
 }
+
+
 /*========================================================================*/
 void RayRender(CRay *I,int width,int height,unsigned int *image,
                float front,float back,
                double timing,float angle)
 {
-  int x,y;
   int a;
-  unsigned int *p;
   float *v,light[3];
-  unsigned int aa;
- unsigned int *image_copy = NULL;
+  unsigned int *image_copy = NULL;
   unsigned int back_mask,fore_mask=0;
   unsigned int background,buffer_size;
   int antialias;
@@ -1566,7 +1779,6 @@ void RayRender(CRay *I,int width,int height,unsigned int *image,
   int shadows;
   float spec_vector[3];
   int n_thread;
-  float min_box[2],max_box[2];
 
   n_thread  = (int)SettingGet(cSetting_max_threads);
   if(n_thread<1)
@@ -1582,8 +1794,12 @@ void RayRender(CRay *I,int width,int height,unsigned int *image,
 	 height=height*2;
 	 image_copy = image;
 	 buffer_size = 4*width*height;
-	image = GetRenderBuffer(buffer_size * sizeof(char), MAX_RAY_THREADS);
-	/* image = (void *)Alloc(char, buffer_size); */
+    #if 1
+    image = (void *)Alloc(char, buffer_size); 
+    #else
+    image = GetRenderBuffer(buffer_size * sizeof(char), MAX_RAY_THREADS);
+    #endif
+
 	 ErrChkPtr(image);
   }
 
@@ -1619,15 +1835,11 @@ void RayRender(CRay *I,int width,int height,unsigned int *image,
     ENDFB;
 
   if(!I->NPrimitive) { /* nothing to render! */
-    p=(unsigned int*)image; 
-    for(x=0;x<width;x++)
-      for(y=0;y<height;y++)
-        *(p++)=background;
+    fill(image,background,width * (unsigned int)height);
   } else {
     
     RayExpandPrimitives(I);
     RayTransformFirst(I);
-    RayComputeBox(I,min_box,max_box);
     
     now = UtilGetSeconds()-timing;
 
@@ -1673,12 +1885,17 @@ void RayRender(CRay *I,int width,int height,unsigned int *image,
       thread_info[0].vert2prim = I->Vert2Prim;
       thread_info[0].prim = I->Primitive;
       thread_info[0].clipBox = I->Volume;
-
+      thread_info[0].image = image;
+      thread_info[0].background = background;
+      thread_info[0].bytes = width * (unsigned int)height;
+      thread_info[0].phase = 0;
+      thread_info[0].ray = I; /* for compute box */
+      
       thread_info[1].basis = I->Basis+2;
       thread_info[1].vert2prim = I->Vert2Prim;
       thread_info[1].prim = I->Primitive;
       thread_info[1].clipBox = NULL;
-
+      thread_info[1].phase = 1;
       RayHashSpawn(thread_info,2);
       
     } else { /* serial execution */
@@ -1686,6 +1903,12 @@ void RayRender(CRay *I,int width,int height,unsigned int *image,
       if(shadows) {
         BasisMakeMap(I->Basis+2,I->Vert2Prim,I->Primitive,NULL);
       }
+
+      /* serial tasks which RayHashThread does in parallel mode */
+
+      fill(image,background,width * (unsigned int)height);
+      RayComputeBox(I);
+       
     }
 
     now = UtilGetSeconds()-timing;
@@ -1732,8 +1955,6 @@ void RayRender(CRay *I,int width,int height,unsigned int *image,
 #endif
     /* IMAGING */
  
- 
-    fill(image,background,width * (unsigned int)height);
         
     {
 		/* now spawn threads as needed */
@@ -1741,11 +1962,11 @@ void RayRender(CRay *I,int width,int height,unsigned int *image,
       int x_start,y_start;
       int x_stop,y_stop;
 
-      x_start = (int)((width * (min_box[0] - I->Volume[0]))/I->Range[0]) - 1;
-      x_stop  = (int)((width * (max_box[0] - I->Volume[0]))/I->Range[0]) + 2;
+      x_start = (int)((width * (I->min_box[0] - I->Volume[0]))/I->Range[0]) - 1;
+      x_stop  = (int)((width * (I->max_box[0] - I->Volume[0]))/I->Range[0]) + 2;
       
-      y_stop = (int)((height * (max_box[1] - I->Volume[2]))/I->Range[1]) + 2;
-      y_start  = (int)((height * (min_box[1] - I->Volume[2]))/I->Range[1]) - 1;
+      y_stop = (int)((height * (I->max_box[1] - I->Volume[2]))/I->Range[1]) + 2;
+      y_start  = (int)((height * (I->min_box[1] - I->Volume[2]))/I->Range[1]) - 1;
                       
       if(x_start<0) x_start = 0;
       if(y_start<0) y_start = 0;
@@ -1779,463 +2000,36 @@ void RayRender(CRay *I,int width,int height,unsigned int *image,
         RayTraceSpawn(rt,n_thread);
     }
   }
+
+  if(antialias) {
+    {
+		/* now spawn threads as needed */
+		CRayAntiThreadInfo rt[MAX_RAY_THREADS];
+
+		for(a=0;a<n_thread;a++) 
+		{
+			rt[a].width = width;
+			rt[a].height = height;
+         rt[a].image = image;
+         rt[a].image_copy = image_copy;
+         rt[a].phase = a;
+         rt[a].n_thread = n_thread;
+      }
+		
+		if(n_thread<=1)
+        RayAntiThread(rt);
+		else 
+        RayAntiSpawn(rt,n_thread);
+    }
+    #if 1
+    FreeP(image);
+    #endif
+    image = image_copy;
+  }
+
   PRINTFD(FB_Ray)
     " RayRender: n_hit %d\n",n_hit
     ENDFD;
-
-#if 1
-  
-  if(antialias)
-    {	
-		int		w2;
-		int		wid_1, hgt_1;
-      register unsigned int part;
-      unsigned int acc;
-		unsigned int z[16],zm[16];
-		
-		unsigned int *pSrc;
-		unsigned int *pDst;
-		const unsigned int m00FF=0x00FF,mFF00=0xFF00,mFFFF=0xFFFF;
-
-		OrthoBusyFast(9,10);
-		width	= width/2;
-		height	= height/2;
-		
-		w2	= width * 2;
-		hgt_1	= height - 1;
-		wid_1	= width - 1;
-		
-		for(y = 1; y < hgt_1; y++)
-		{
-			pSrc  	= image + w2 * (y*2 - 1);
-         pDst	= image_copy + width * y + 1;	/* Add 1 since x-wise inner loop (below) starts at 1 */
-			
-			for(x = 1; x < wid_1; x++)
-			{
-				aa	= 0;
-		
-				p	= pSrc + (x * 2);
-			
-            z[12]	= (*(p-1));
-				z[4]	= (*(p));
-				z[5]	= (*(p+1));
-				z[13]	= (*(p+2));
-				
-				p	+= w2;
-				
-				z[6]	= (*(p-1));
-				z[0]	= (*(p));
-				z[1]	= (*(p+1));
-				z[7]	= (*(p+2));
-				
-				p	+= w2;
-				
-				z[8]	= (*(p-1));
-				z[2]	= (*(p));
-				z[3]	= (*(p+1));
-				z[9]	= (*(p+2));
-				
-				p	+= w2;
-				
-				z[14]	= (*(p-1));
-				z[10]	= (*(p));
-				z[11]	= (*(p+1));
-				z[15]	= (*(p+2));
-
-            for( a = 0; a < 16; a += 4 ) 
-              {
-                zm[a+0 ] = z[a+0] & mFFFF; /* move half to zm */
-                zm[a+1 ] = z[a+1] & mFFFF;
-                zm[a+2 ] = z[a+2] & mFFFF;
-                zm[a+3 ] = z[a+3] & mFFFF;
-                
-                z[a   ]	>>= 16; /* keep rest in z */
-                z[a+1 ]	>>= 16;
-                z[a+2 ]	>>= 16;
-                z[a+3 ]	>>= 16;
-              }
-
-            combine(part,z,m00FF);
-            acc=(part<<16);
-            combine(part,z,mFF00);
-            acc+=(part<<16);
-            combine(part,zm,m00FF);
-            acc+=part;
-            combine(part,zm,mFF00);
-            acc+=part;
-            *(pDst++) = acc;
-
-			}
-		}
-		
-		/* top and bottom edges */		
-		for(y = 0; y < height; y = y + hgt_1)
-		{
-			pSrc  	= image + w2 * (y*2);
-
-			pDst	= image_copy + width * y;
-			
-			for(x = 0; x < width; x++)
-			{
-				aa		= 0;
-				p		= pSrc + (x*2);
-				
-				z[0]	= *p;
-				z[1]	= *(p+1);
-				
-				p		+= w2;
-				
-				z[2]	= *(p);
-				z[3]	= *(p+1);
-
-            zm[0] = z[0] & mFFFF; /* move half to zm */
-            zm[1] = z[1] & mFFFF;
-            zm[2] = z[2] & mFFFF;
-            zm[3] = z[3] & mFFFF;
-            
-            z[0]	>>= 16; /* keep rest in z */
-            z[1]	>>= 16;
-            z[2]	>>= 16;
-            z[3]	>>= 16;
-
-            edge_combine(part,z,m00FF);
-            acc=(part<<16);
-            edge_combine(part,z,mFF00);
-            acc+=(part<<16);
-            edge_combine(part,zm,m00FF);
-            acc+=part;
-            edge_combine(part,zm,mFF00);
-            acc+=part;
-            *(pDst++) = acc;
-				
-			}
-		}
-
-		/* left and right edges */
-		for(y = 0; y < height; y++)
-		{
-			pSrc	= image + w2 * (y*2);
-			pDst	= image_copy + width * y;
-			
-			for(x = 0; x < width; x += wid_1, pDst += wid_1 )
-			{
-				aa		= 0;
-				p		= pSrc + (x*2);
-				
-				z[0]	= *p;
-				z[1]	= *(p+1);
-				
-				p	+= w2;
-				
-				z[2]	= *p;
-				z[3]	= *(p+1);
-				
-            zm[0] = z[0] & mFFFF; /* move half to zm */
-            zm[1] = z[1] & mFFFF;
-            zm[2] = z[2] & mFFFF;
-            zm[3] = z[3] & mFFFF;
-            
-            z[0]	>>= 16; /* keep rest in z */
-            z[1]	>>= 16;
-            z[2]	>>= 16;
-            z[3]	>>= 16;
-
-            edge_combine(part,z,m00FF);
-            acc=(part<<16);
-            edge_combine(part,z,mFF00);
-            acc+=(part<<16);
-            edge_combine(part,zm,m00FF);
-            acc+=part;
-            edge_combine(part,zm,mFF00);
-            acc+=part;
-
-            *pDst = acc;
-
-			}
-		}
-		
-		/* FreeP(image); */
-		image = image_copy;
-	}
-#else
-
-	if(antialias)
-	{	
-		int		w2;
-		int		isBigEndian	= I->BigEndian;
-		int		wid_1, hgt_1;
-      unsigned int z[16],zm[16],tot,za;
-
-		unsigned int *pSrc;
-		unsigned int *pDst;
-		
-		OrthoBusyFast(9,10);
-		width	= width/2;
-		height	= height/2;
-		
-		w2	= width * 2;
-		hgt_1	= height - 1;
-		wid_1	= width - 1;
-		
-		for(y = 1; y < hgt_1; y++)
-		{
-			pSrc  	= image + w2 * (y*2 - 1);
-			pDst	= image_copy + width * y + 1;	/* Add 1 since x-wise inner loop (below) starts at 1 */
-			
-			for(x = 1; x < wid_1; x++)
-			{
-				aa	= 0;
-		
-				p	= pSrc + (x * 2);
-				
-			    z[12]	= (*(p-1));
-				z[4]	= (*(p));
-				z[5]	= (*(p+1));
-				z[13]	= (*(p+2));
-				
-				p	+= w2;
-				
-				z[6]	= (*(p-1));
-				z[0]	= (*(p));
-				z[1]	= (*(p+1));
-				z[7]	= (*(p+2));
-				
-				p	+= w2;
-				
-				z[8]	= (*(p-1));
-				z[2]	= (*(p));
-				z[3]	= (*(p+1));
-				z[9]	= (*(p+2));
-				
-				p	+= w2;
-				
-				z[14]	= (*(p-1));
-				z[10]	= (*(p));
-				z[11]	= (*(p+1));
-				z[15]	= (*(p+2));
-
-				if(isBigEndian) 
-				{ 
-					for( a = 0; a < 16; a += 4 ) 
-					{
-                 /* unroll a bit */
-						zm[a+0]	&= 0xFF;
-						zm[a+1]	&= 0xFF;
-						zm[a+2] &= 0xFF;
-						zm[a+3] &= 0xFF;
-
-						z[a+0]	>>= 8;
-						z[a+1]	>>= 8;
-						z[a+2]	>>= 8;
-						z[a+3]	>>= 8;
-					}
-				}
-				else
-				{
-					for(a=0;a<16;a++) 
-						zm[a] = z[a] >> 24; /* copy alpha channel */
-				}
-		
-				tot	= 0;
-				for(a = 0; a < 16; a += 4) /* average alpha channel */
-				{
-					tot += zm[a+0] & 0xFF;
-					tot += zm[a+1] & 0xFF;
-					tot += zm[a+2] & 0xFF;
-					tot += zm[a+3] & 0xFF;
-				}
-					
-				tot += (zm[0] & 0xFF) << 2;
-				tot += (zm[1] & 0xFF) << 2;
-				tot += (zm[2] & 0xFF) << 2;
-				tot += (zm[3] & 0xFF) << 2;
-
-				za = (0xFF & (tot>>5));
-		
-				tot = 0;
-				for(a = 0; a < 16; a += 4)
-				{
-					tot += z[a+0] & 0xFF;
-					tot += z[a+1] & 0xFF;
-					tot += z[a+2] & 0xFF;
-					tot += z[a+3] & 0xFF;
-				}
-					
-				tot += (z[0] & 0xFF)<<2;
-				tot += (z[1] & 0xFF)<<2;
-				tot += (z[2] & 0xFF)<<2;
-				tot += (z[3] & 0xFF)<<2;
-					
-				aa	= aa | (0xFF & (tot>>5));
-		
-				tot = 0;
-				for(a = 0; a < 16; a += 4)
-				{
-					tot += z[a+0] & 0xFF00;
-					tot += z[a+1] & 0xFF00;
-					tot += z[a+2] & 0xFF00;
-					tot += z[a+3] & 0xFF00;
-				}
-					
-				tot += (z[0] & 0xFF00)<<2;
-				tot += (z[1] & 0xFF00)<<2;
-				tot += (z[2] & 0xFF00)<<2;
-				tot += (z[3] & 0xFF00)<<2;
-					
-				aa	= aa | (0xFF00 & (tot>>5));
-		
-				tot	= 0;
-				for(a = 0; a < 16; a += 4)
-				{
-					tot	+= z[a+0] & 0xFF0000;
-					tot	+= z[a+1] & 0xFF0000;
-					tot	+= z[a+2] & 0xFF0000;
-					tot	+= z[a+3] & 0xFF0000;
-				}
-				tot	+= (z[0] & 0xFF0000)<<2;
-				tot	+= (z[1] & 0xFF0000)<<2;
-				tot	+= (z[2] & 0xFF0000)<<2;
-				tot	+= (z[3] & 0xFF0000)<<2;
-					
-				aa = aa | (0xFF0000&(tot>>5));			 
-		
-				if(isBigEndian) 
-					aa = (aa<<8) | za;
-				else 
-					aa = aa | (za<<24);
-		
-				*(pDst++) = aa;		
-
-			}
-		}
-		
-		/* top and bottom edges */		
-		for(y = 0; y < height; y = y + hgt_1)
-		{
-			pSrc  	= image + w2 * (y*2);
-			pDst	= image_copy + width * y;
-			
-			for(x = 0; x < width; x++)
-			{
-				aa		= 0;
-				p		= pSrc + (x*2);
-				
-				z[0]	= *p;
-				z[1]	= *(p+1);
-				
-				p		+= w2;
-				
-				z[2]	= *(p);
-				z[3]	= *(p+1);
-				
-				if(isBigEndian) 
-				{ 
-					for(a=0;a<4;a++) 
-					{
-						zm[a]=z[a]&0xFF;
-						z[a]=z[a]>>8;
-					}
-				}
-				else 
-				{
-					for(a=0;a<4;a++)
-						zm[a]=z[a]>>24; /* copy alpha channel */
-				}
-				
-				tot=0;
-				for(a=0;a<4;a++)
-					tot+=(zm[a]&0xFF);
-				za=(0xFF&(tot>>2));
-				
-				tot=0;
-				for(a=0;a<4;a++)
-					tot+=(z[a]&0xFF);
-				aa=aa|(0xFF&(tot>>2));
-				
-				tot=0;
-				for(a=0;a<4;a++)
-					tot+=(z[a]&0xFF00);
-				aa=aa|(0xFF00&(tot>>2));
-				
-				tot=0;
-				for(a=0;a<4;a++) 
-					tot+=(z[a]&0xFF0000);
-				aa=aa|(0xFF0000&(tot>>2));			 
-				
-				if(isBigEndian)
-					aa=(aa<<8)|za;
-				else
-					aa=aa|(za<<24);
-
-				*(pDst++) = aa;			 
-			}
-		}
-
-		/* left and right edges */
-		for(y = 0; y < height; y++)
-		{
-			pSrc	= image + w2 * (y*2);
-			pDst	= image_copy + width * y;
-			
-			for(x = 0; x < width; x += wid_1, pDst += wid_1 )
-			{
-				aa		= 0;
-				p		= pSrc + (x*2);
-				
-				z[0]	= *p;
-				z[1]	= *(p+1);
-				
-				p	+= w2;
-				
-				z[2]	= *p;
-				z[3]	= *(p+1);
-				
-				if(isBigEndian) 
-				{ 
-					for(a=0;a<4;a++) 
-					{
-						zm[a]	= z[a] & 0xFF;
-						z[a]	= z[a] >> 8;
-					}
-				}
-				else
-				{
-					for(a=0;a<4;a++)
-						zm[a]	= z[a]>>24; /* copy alpha channel */
-				}
-				
-				tot=0;
-				for(a=0;a<4;a++)
-					tot+=(zm[a]&0xFF);
-				za=(0xFF&(tot>>2));
-				
-				tot=0;
-				for(a=0;a<4;a++)
-					tot+=(z[a]&0xFF);
-				aa=aa|(0xFF&(tot>>2));
-				
-				tot=0;
-				for(a=0;a<4;a++)
-					tot+=(z[a]&0xFF00);
-				aa=aa|(0xFF00&(tot>>2));
-				
-				tot=0;
-				for(a=0;a<4;a++)
-					tot+=(z[a]&0xFF0000);
-				aa=aa|(0xFF0000&(tot>>2));			 
-				
-				if(isBigEndian)
-					aa=(aa<<8)|za;
-				else
-					aa=aa|(za<<24);
-
-				*pDst = aa;
-			}
-		}
-		/* FreeP(image); */
-		image = image_copy;
-	}
-#endif
 
 }
 
