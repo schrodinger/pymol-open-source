@@ -80,7 +80,7 @@ void ExecutiveRenameObjectAtoms(char *name,int force);
 void ExecutiveInvert(char *s0,char *s1,int mode);
 char *ExecutiveGetNames(int mode);
 void ExecutiveGetType(char *name,WordType type);
-float ExecutiveGetArea(char *s0,int sta0);
+float ExecutiveGetArea(char *s0,int sta0,int load_b);
 
 #endif
 

@@ -1187,7 +1187,7 @@ UNSUPPORTED FEATURE - LIKELY TO CHANGE
       if state[1]<1: state[1]=1
    try:
       lock()
-      r = _cmd.overlap(arg[0],arg[1],state[0]-1,state[1]-1,adjust)
+      r = _cmd.overlap(arg[0],arg[1],state[0]-1,state[1]-1,float(adjust))
    finally:
       unlock()
    return r
@@ -1372,7 +1372,7 @@ DESCRIPTION
    in the specified state.  It returns the rms values to python
    as an array.
       
-USAGE
+USAGE 
  
    intra_fit (selection),state
  
@@ -2735,13 +2735,16 @@ def get_area(*arg):
    la=len(arg)
    sele = "(all)"
    state = 1
+   load_b = 0
    if la>0:
       sele = arg[0]
    if la>1:
       state = int(arg[1])
+   if la>2:
+      load_b = int(arg[2])
    try:
       lock()
-      r = _cmd.get_area(sele,int(state)-1)
+      r = _cmd.get_area(sele,int(state)-1,load_b)
    finally:
       unlock()
    return r
@@ -2974,9 +2977,9 @@ def load_object(*arg): # assume first argument is the object type
       if la>3:
          state = int(arg[3])-1
       if la>4:
-         finish = int(arg[4])-1
+         finish = int(arg[4])
       if la>5:
-         discrete = int(arg[5])-1
+         discrete = int(arg[5])
       if la>1:
          r = _cmd.load_object(oname,object,state,ftype,finish,discrete)
       else:
