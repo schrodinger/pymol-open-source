@@ -135,10 +135,10 @@ def dump(fnam,obj):
 def dummy(*arg):
    return None
 
-def test(winid): # generic test routine for development
+def test(object,action): # generic test routine for development
    try:
       lock()   
-      r=_cmd.test(winid)
+      r=_cmd.test(str(object),int(action))
    finally:
       unlock()
    return r

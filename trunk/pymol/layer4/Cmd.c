@@ -824,7 +824,7 @@ static PyObject *CmdGetArea(PyObject *self, 	PyObject *args)
   OrthoLineType s1="";
   float result = -1.0;
   int ok=false;
-  int c1;
+  int c1=0;
   ok = PyArg_ParseTuple(args,"sii",&str1,&int1,&int2);
   if(ok) {
     APIEntry();
@@ -3213,7 +3213,30 @@ static PyObject *CmdSpheroid(PyObject *self, PyObject *args)
 static PyObject *CmdTest(PyObject *self, PyObject *args)
 {
   int ok=true;
-  /*  ok = PyArg_ParseTuple(args,"i",&int1);*/
+  int int1;
+  char *str1;
+  ok = PyArg_ParseTuple(args,"si",&str1,&int1);
+  if(ok) {
+    PRINTFB(FB_CCmd,FB_Details)
+      " Cmd: test called with %s %d\n",str1,int1
+      ENDFB;
+    APIEntry();
+    switch(int1) {
+    case 0:
+      PRINTFB(FB_CCmd,FB_Details)
+        " Cmd: updating sculpt...\n"
+      ENDFB;
+      ExecutiveObjectSculptUpdate(str1,0);
+      break;
+    default:
+      PRINTFB(FB_CCmd,FB_Details)
+        " Cmd: iterating sculpt...\n"
+      ENDFB;
+      ExecutiveObjectSculptIterate(str1,0,int1);
+      break;
+    }
+    APIExit();
+  }
   return(APIStatus(ok));
 }
 
