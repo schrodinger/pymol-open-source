@@ -964,6 +964,8 @@ unsigned int SceneFindTriplet(int x,int y,GLenum gl_buffer)
   unsigned char *c;
   int strict = false;
   GLint rb,gb,bb;
+  int bkrd_alpha = 0xFF;
+  int check_alpha = false;
 
   if(PMGUI) { /*just in case*/
   
@@ -1011,7 +1013,7 @@ unsigned int SceneFindTriplet(int x,int y,GLenum gl_buffer)
         printf(" SceneFindTriplet-WARNING: OpenGL glReadPixels may have damaged stack\n");
       }
     }*/
-    
+
 	  if(debug) {
       for(a=0;a<=(cRange*2);a++)
         {
@@ -1033,28 +1035,42 @@ unsigned int SceneFindTriplet(int x,int y,GLenum gl_buffer)
             printf("%02x%02x%02x ",(buffer[a][b][0])&0xFF,(buffer[a][b][1])&0xFF,(buffer[a][b][2])&0xFF);
           printf("\n");
         }
-      printf("\n");	 
-   }
-    
-    flag=true;
-    for(d=0;flag&&(d<cRange);d++)
-      for(a=-d;flag&&(a<=d);a++)
-		  for(b=-d;flag&&(b<=d);b++) {
-			c = &buffer[a+cRange][b+cRange][0];
-			if((c[3]==0xFF)&&
-				((c[1]&0x8)&&
-				 ((!strict)||
-				  (((c[1]&0xF)==8)&&
-				   ((c[0]&0xF)==0)&&
-				   ((c[2]&0xF)==0)
-					)))) { /* only consider intact, saturated pixels */
-                flag = false;
-                result =  ((c[0]>>4)&0xF)+(c[1]&0xF0)+((c[2]<<4)&0xF00);
-                if(debug) {
-                  printf("%2x %2x %2x %d\n",c[0],c[1],c[2],result);
-                }
+       printf("\n");	 
+     }
+
+     /* first, check to make sure bkrd_alpha is correct 
+        (this is a bug for systems with broken alpha, such as Extreme 3D on Solaris 8 */
+
+     for(d=0;flag&&(d<cRange);d++)
+       for(a=-d;flag&&(a<=d);a++)
+         for(b=-d;flag&&(b<=d);b++) {
+           c = &buffer[a+cRange][b+cRange][0];
+           if(c[4]==bkrd_alpha) {
+             check_alpha = true;
+           }
          }
-        }
+
+     /* now find the correct pixel */
+
+     flag=true;
+     for(d=0;flag&&(d<cRange);d++)
+       for(a=-d;flag&&(a<=d);a++)
+         for(b=-d;flag&&(b<=d);b++) {
+           c = &buffer[a+cRange][b+cRange][0];
+           if(((c[3]==bkrd_alpha)||(!check_alpha))&&
+              ((c[1]&0x8)&&
+               ((!strict)||
+                (((c[1]&0xF)==8)&&
+                 ((c[0]&0xF)==0)&&
+                 ((c[2]&0xF)==0)
+                 )))) { /* only consider intact, saturated pixels */
+             flag = false;
+             result =  ((c[0]>>4)&0xF)+(c[1]&0xF0)+((c[2]<<4)&0xF00);
+             if(debug) {
+               printf("%2x %2x %2x %d\n",c[0],c[1],c[2],result);
+             }
+           }
+         }
   }
   return(result);
 }
@@ -1068,6 +1084,9 @@ unsigned int *SceneReadTriplets(int x,int y,int w,int h,GLenum gl_buffer)
   int cc = 0;
   int dim[3];
   int strict = false;
+  int bkrd_alpha = 0xFF;
+  int check_alpha = false;
+
   GLint rb,gb,bb;
 
   dim[0]=w;
@@ -1090,11 +1109,25 @@ unsigned int *SceneReadTriplets(int x,int y,int w,int h,GLenum gl_buffer)
     glReadBuffer(gl_buffer);
     glReadPixels(x,y,w,h,GL_RGBA,GL_UNSIGNED_BYTE,&buffer[0][0]);
     
+     /* first, check to make sure bkrd_alpha is correct 
+        (this is a bug for systems with broken alpha, such as Extreme 3D on Solaris 8 */
+
     for(a=0;a<w;a++)
       for(b=0;b<h;b++)
         {
           c = &buffer[a+b*w][0];
-          if((c[3]==0xFF)&&
+          if(c[4]==bkrd_alpha) {
+            check_alpha = true;
+          }
+        }
+    
+    /* now read pixels */
+
+    for(a=0;a<w;a++)
+      for(b=0;b<h;b++)
+        {
+          c = &buffer[a+b*w][0];
+          if((((c[3]==bkrd_alpha)||(!check_alpha)))&&
              ((c[1]&0x8)&&
               ((!strict)||
                (((c[1]&0xF)==8)&&
