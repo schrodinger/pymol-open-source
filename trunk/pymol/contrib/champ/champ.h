@@ -143,10 +143,10 @@ typedef struct {
   int not_degree;
   int not_valence;
   int imp_hydro_flag;
-  int tag; /* string index for tag */
   int mark_tmpl,mark_targ,mark_read; /* traversal */
   int first_tmpl,first_targ; /* first template stack entry */
   int first_base; 
+  unsigned int tag,not_tag;
   PyObject *chempy_atom;
 } ListAtom;
 
@@ -167,8 +167,8 @@ typedef struct {
   int not_order;
   int not_class;
   int not_cycle;
-  int tag; /* string index for tag */
   int mark_tmpl,mark_targ; /* traversal */
+  unsigned int tag,not_tag;
   PyObject *chempy_bond;
 } ListBond;
 
@@ -247,6 +247,10 @@ int ChampMemoryUsage(CChamp *I);
 int ChampMatch_1V1_B(CChamp *I,int pattern,int target);
 int ChampMatch_1V1_Map(CChamp *I,int pattern,int target,int limit);
 int ChampMatch_1VN_N(CChamp *I,int pattern,int list);
+int ChampMatch_1V1_N(CChamp *I,int pattern,int target,int limit,int tag_flag);
+
+int ChampMatch_NV1_N(CChamp *I,int list,int target,int limit,int tag_flag);
+
 int ChampModelToPat(CChamp *I,PyObject *model);
 char *ChampPatToSmiVLA(CChamp *I,int index,char *vla);
 int ChampAtomToString(CChamp *I,int index,char *buf);

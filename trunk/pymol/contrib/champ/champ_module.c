@@ -264,6 +264,124 @@ static PyObject *pattern_get_codes(PyObject *self,      PyObject *args)
 }
 
 
+static PyObject *pattern_get_tags(PyObject *self,      PyObject *args)
+{
+  int ok=true;
+  int int1,ai,bi;
+  PyObject *result = NULL;
+  PyObject *O,*l1,*l2,*l3;
+  CChamp *I;
+  ListPat *pat;
+  ListAtom *at;
+  ListBond *bd;
+  int a,b,c;
+  int n_atom,n_bond;
+  int bit_mask;
+  int bit_no;
+  int n_bits;
+
+  ok = PyArg_ParseTuple(args,"Oi",&O,&int1);
+  ok = PyCObject_Check(O);
+  if(ok) {
+    I = PyCObject_AsVoidPtr(O);
+    pat = I->Pat+int1;
+    n_atom = ListLen(I->Atom,pat->atom);
+    ai = pat->atom;
+    l1 = PyList_New(n_atom);
+    for(a=0;a<n_atom;a++) {
+      at = I->Atom + ai;
+
+      n_bits = 0;
+      bit_mask = at->tag;
+      while(bit_mask) { /* count bits */
+        if(bit_mask&0x1) 
+          n_bits++;
+        bit_mask=((bit_mask>>1)&0x7FFFFFFF);
+      }
+      l3 = PyList_New(n_bits);
+      bit_no = 0;
+      bit_mask = at->tag;
+      c=0;
+      for(bit_no=0;bit_no<32;bit_no++) {
+        if(bit_mask&0x1) {
+          PyList_SetItem(l3,c,PyInt_FromLong(bit_no));
+          c++;
+        }
+        bit_mask=((bit_mask>>1)&0x7FFFFFFF);
+      }
+      PyList_SetItem(l1,a,l3);
+
+      ai = at->link;
+    }
+
+    n_bond = ListLen(I->Bond,pat->bond);
+    l2 = PyList_New(n_bond);
+    bi = pat->bond;
+    for(b=0;b<n_bond;b++) {
+      bd = I->Bond + bi;
+      n_bits = 0;
+      bit_mask = bd->tag;
+      while(bit_mask) { /* count bits */
+        if(bit_mask&0x1) 
+          n_bits++;
+        bit_mask=((bit_mask>>1)&0x7FFFFFFF);
+      }
+      l3 = PyList_New(n_bits);
+      bit_no = 0;
+      bit_mask = bd->tag;
+      c=0;
+      for(bit_no=0;bit_no<32;bit_no++) {
+        if(bit_mask&0x1) {
+          PyList_SetItem(l3,c,PyInt_FromLong(bit_no));
+          c++;
+        }
+        bit_mask=((bit_mask>>1)&0x7FFFFFFF);
+      }
+      PyList_SetItem(l2,b,l3);
+      bi = bd->link;
+    }
+
+    result = PyList_New(2);
+    PyList_SetItem(result,0,l1);
+    PyList_SetItem(result,1,l2);
+  }
+  return(RetObj(ok,result));
+}
+
+
+static PyObject *pattern_clear_tags(PyObject *self,      PyObject *args)
+{
+  int ok=true;
+  int int1,ai,bi;
+  PyObject *O;
+  CChamp *I;
+  ListPat *pat;
+  ListAtom *at;
+  ListBond *bd;
+
+  ok = PyArg_ParseTuple(args,"Oi",&O,&int1);
+  ok = PyCObject_Check(O);
+  if(ok) {
+    I = PyCObject_AsVoidPtr(O);
+    pat = I->Pat+int1;
+    ai = pat->atom;
+    while(ai) {
+      at = I->Atom + ai;
+      at->tag = 0;
+      ai = at->link;
+    }
+
+    bi = pat->bond;
+    while(bi) {
+      bd = I->Bond + bi;
+      bd->tag = 0;
+      bi = bd->link;
+    }
+  }
+  return(RetStatus(ok));
+}
+
+
 
 
 static PyObject *list_new(PyObject *self,      PyObject *args)
@@ -482,6 +600,24 @@ static PyObject *match_1v1_b(PyObject *self,      PyObject *args)
   return(RetInt(ok,result));
 }
 
+static PyObject *match_1v1_n(PyObject *self,      PyObject *args)
+{
+  int ok=true;
+  int result = 0;
+  int pat1,pat2;
+  int limit;
+  int tag;
+  PyObject *O;
+  CChamp *I;
+  ok = PyArg_ParseTuple(args,"Oiiii",&O,&pat1,&pat2,&limit,&tag);
+  ok = PyCObject_Check(O);
+  if(ok) {
+    I = PyCObject_AsVoidPtr(O);
+    result = ChampMatch_1V1_N(I,pat1,pat2,limit,tag);
+  }
+  return(RetInt(ok,result));
+}
+
 
 static PyObject *match_1v1_map(PyObject *self,      PyObject *args)
 {
@@ -582,6 +718,25 @@ static PyObject *match_1vN_n(PyObject *self,      PyObject *args)
   return(RetInt(ok,result));
 }
 
+static PyObject *match_Nv1_n(PyObject *self,      PyObject *args)
+{
+  int ok=true;
+  int result = 0;
+  int list_handle,list_index;
+  int pattern;
+  int limit,tag;
+  PyObject *O;
+  CChamp *I;
+  ok = PyArg_ParseTuple(args,"Oiiii",&O,&list_handle,&pattern,&limit,&tag);
+  ok = PyCObject_Check(O);
+  if(ok) {
+    I = PyCObject_AsVoidPtr(O);
+    list_index = I->Int[list_handle].link;
+    result = ChampMatch_NV1_N(I,list_index,pattern,limit,tag);
+  }
+  return(RetInt(ok,result));
+}
+
 static PyObject *insert_model(PyObject *self,      PyObject *args)
 {
   int ok=true;
@@ -605,9 +760,11 @@ static PyMethodDef champ_methods[] = {
   {"insert_pattern_string",     insert_pattern_string,          METH_VARARGS },
   {"insert_model",              insert_model,           METH_VARARGS },
   {"pattern_free",              pattern_free,          METH_VARARGS },
+  {"pattern_clear_tags",        pattern_clear_tags,      METH_VARARGS },
   {"pattern_get_cycle",   pattern_get_cycle,       METH_VARARGS },
   {"pattern_get_class",   pattern_get_class,       METH_VARARGS },
   {"pattern_get_codes",   pattern_get_codes,       METH_VARARGS },
+  {"pattern_get_tags",    pattern_get_tags,       METH_VARARGS },
   {"pattern_get_atom_symbols",  pattern_get_atom_symbols,     METH_VARARGS },
   {"pattern_dump",  pattern_dump,     METH_VARARGS },
   {"list_prepend_pattern_strings",  list_prepend_pattern_strings, METH_VARARGS },
@@ -617,7 +774,9 @@ static PyMethodDef champ_methods[] = {
   {"list_new",                  list_new,              METH_VARARGS },
   {"match_1v1_b",                 match_1v1_b,              METH_VARARGS },
   {"match_1v1_map",             match_1v1_map,           METH_VARARGS},
-  {"match_1vN_n",                 match_1vN_n,              METH_VARARGS },
+  {"match_1v1_n",               match_1v1_n,             METH_VARARGS},
+  {"match_1vN_n",               match_1vN_n,              METH_VARARGS },
+  {"match_Nv1_n",               match_Nv1_n,              METH_VARARGS },
   {NULL,		                    NULL}     /* sentinel */        
 };
 

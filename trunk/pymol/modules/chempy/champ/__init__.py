@@ -50,6 +50,14 @@ class Champ:
       (e,r) = _champ.pattern_free(self._champ,int(index))
       if e: raise RuntimeError
       return r
+
+   def pattern_clear_tags(self,index):
+      '''
+      resets a pattern\'s tags
+      '''
+      (e,r) = _champ.pattern_clear_tags(self._champ,int(index))
+      if e: raise RuntimeError
+      return r
       
    def get_pattern_string(self,index):
       '''
@@ -88,7 +96,7 @@ class Champ:
       '''
       destroys a list and associated patterns (if purge = 1)
       '''
-      (e,r) = _champ.list_free(self._champ,int(handle))
+      (e,r) = _champ.list_free(self._champ,int(handle),int(purge))
       if e: raise RuntimeError
       return r
 
@@ -118,6 +126,16 @@ class Champ:
       if e: raise RuntimeError
       return r
 
+   def match_1v1_n(self,pattern,target,limit,tag=0):
+      '''
+      returns tag list for single pattern on target
+      '''
+      (e,r) = _champ.match_1v1_n(self._champ,
+                           int(pattern),int(target),
+                                 int(limit),int(tag))
+      if e: raise RuntimeError
+      return r
+
    def match_1v1_map(self,pattern,target,limit): # boolean
       '''
       returns mappings (if any) between two patterns
@@ -127,6 +145,17 @@ class Champ:
       if e: raise RuntimeError
       return r
 
+   def match_Nv1_n(self,pattern,target,limit,tag):
+      '''
+      returns tag list for list of patterns onto a target
+      '''
+      (e,r) = _champ.match_Nv1_n(self._champ,
+                           int(pattern),int(target),
+                                 int(limit),int(tag))
+      if e: raise RuntimeError
+      return r
+
+      
    def match_1vN_n(self,pattern,handle):
       '''
       returns count of how many times pattern occurs in list
@@ -165,6 +194,14 @@ class Champ:
       debugging routine
       '''
       (e,r) = _champ.pattern_get_codes(self._champ,int(index))
+      if e: raise RuntimeError
+      return r
+
+   def pattern_get_tags(self,index):
+      '''
+      get atomic tags
+      '''
+      (e,r) = _champ.pattern_get_tags(self._champ,int(index))
       if e: raise RuntimeError
       return r
 
