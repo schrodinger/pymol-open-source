@@ -26,7 +26,8 @@ def simple(selection="(all)"):
    cmd.show("sticks","(hetatm and ("+s+"))")
    cmd.show("nonbonded","(hetatm and ("+s+"))")
    cmd.disable(polar_contacts)
-   cmd.center(s)
+   if cmd.count_atoms(s):
+      cmd.center(s)
 
 def ligands(selection="(all)"):
    try:
@@ -53,7 +54,8 @@ def ligands(selection="(all)"):
       cmd.hide("labels","polar_contacts")
       cmd.show("nonbonded",lig+"|"+host+"|"+near_water)
       cmd.enable(polar_contacts)
-      cmd.center(lig)
+      if cmd.count_atoms(lig):
+         cmd.center(lig)
       cmd.delete(host)
       cmd.delete(water)
       cmd.delete(near_water)
@@ -90,7 +92,8 @@ def beautiful(selection="(all)"):
    cmd.set("cartoon_fancy_helices",0)
    cmd.set("cartoon_smooth_loops",0)
    cmd.disable(polar_contacts)
-   cmd.center(s)
+   if cmd.count_atoms(s):
+      cmd.center(s)
    
 def publishable(selection="(all)"):
    s = str(selection)
@@ -99,4 +102,5 @@ def publishable(selection="(all)"):
    cmd.set("cartoon_highlight_color","grey50")
    cmd.set("cartoon_fancy_helices",1)
    cmd.disable(polar_contacts)
-   cmd.center(s)
+   if cmd.count_atoms(s):
+      cmd.center(s)
