@@ -1126,6 +1126,11 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(PyMOLGlobals *G,
               (*restart_model) = NULL;
             } else 
               is_end_of_object = false;
+          } else {
+            if(pp[0]>32) /* more content follows... */
+              (*next_pdb) = pp;
+            else
+              (*next_pdb) = NULL; /* at end of file */
           }
           break;
         }
