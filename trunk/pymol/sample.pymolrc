@@ -1,0 +1,8 @@
+_ feedback push
+_ feedback disable,all,everything
+# RENAME TO .pymolrc AND INSERT COMMANDS HERE
+
+
+# END COMMANDS
+_ feedback pop
+

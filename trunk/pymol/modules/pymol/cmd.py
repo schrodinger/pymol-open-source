@@ -5545,6 +5545,7 @@ SEE ALSO
    
 #####################################################################
 import util
+import movie
 
 keyword = {
 
@@ -5686,11 +5687,17 @@ keyword = {
    'util.cbaw'     : [util.cbaw    , 0 , 0 , ''  , parsing.STRICT ],
    'util.cbab'     : [util.cbab    , 0 , 0 , ''  , parsing.STRICT ],
    'util.cbc'      : [util.cbc     , 0 , 0 , ''  , parsing.STRICT ],
-   'util.mrock'    : [util.mrock   , 0 , 0 , ''  , parsing.STRICT ],
-   'util.mroll'    : [util.mroll   , 0 , 0 , ''  , parsing.STRICT ],
+   'util.mrock'    : [util.mrock   , 0 , 0 , ''  , parsing.STRICT ], # LEGACY
+   'util.mroll'    : [util.mroll   , 0 , 0 , ''  , parsing.STRICT ], # LEGACY
    'util.ss'       : [util.ss      , 0 , 0 , ''  , parsing.STRICT ],# secondary structure
    'util.rainbow'  : [util.rainbow , 0 , 0 , ''  , parsing.STRICT ],# secondary structure
-#   
+# movie programs
+   'movie.rock'    : [movie.rock   , 0 , 0 , ''  , parsing.STRICT ],
+   'movie.roll'    : [movie.roll   , 0 , 0 , ''  , parsing.STRICT ],
+   'movie.load'    : [movie.load   , 0 , 0 , ''  , parsing.STRICT ],
+   'movie.zoom'    : [movie.zoom   , 0 , 0 , ''  , parsing.STRICT ],
+   'movie.screw'   : [movie.screw  , 0 , 0 , ''  , parsing.STRICT ],
+#
    'update'        : [update       , 0 , 0 , ''  , parsing.STRICT ],
    'view'          : [view         , 0 , 0 , ''  , parsing.STRICT ],   
    'viewport'      : [viewport     , 0 , 0 , ''  , parsing.STRICT ],

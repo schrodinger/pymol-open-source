@@ -3121,7 +3121,7 @@ int *SelectorEvaluate(WordType *word)
   int *result = NULL;
   int opFlag,opFlag2,maxLevel;
   char *q,*cc1,*cc2;
-  int totDepth;
+  int totDepth=0;
   int exact;
   char *np;
   OrthoLineType line;

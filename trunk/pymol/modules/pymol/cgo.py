@@ -223,6 +223,8 @@ class RenderReader:
 
 
    def __init__(self,input):
+      # Author: Warren DeLano
+      # Modifications: Robert Campbell
       self.app_fn = None
       self.l_vert = None
       self.t_colr = None
@@ -250,13 +252,19 @@ class RenderReader:
          l = input.readline()
          if not l:
             break
-         v = string.split(l)
-         n=int(v[0])
-         if(n<ld):
-            dd = dispatch[n]
-            if dd:
-               apply(dd,(input,))
-
+         if l[0] != '#':
+            v = string.split(l)
+            n=int(v[0])
+            if(n<ld):
+               dd = dispatch[n]
+               if dd:
+                  apply(dd,(input,))
+               else:
+                  # skip over lines that don't match desired object type
+                  input.readline()
+            elif ( n != 9 ):
+               # don't read another line if render object type 0
+               input.readline()
       self.append_last()
       if self.tri_flag:
          self.obj.append(END)

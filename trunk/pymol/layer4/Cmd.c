@@ -1620,8 +1620,12 @@ static PyObject *CmdDo(PyObject *self, 	PyObject *args)
       OrthoAddOutput(str1);
       OrthoNewLine(NULL);
     }
+    PParse(str1);
+  } else if(str1[1]==' ') { /* "_ command" suppresses echoing of command */
+    PParse(str1+2);    
+  } else {
+    PParse(str1);
   }
-  PParse(str1);
   APIExit();
   Py_INCREF(Py_None);
   return Py_None;
@@ -2425,6 +2429,7 @@ static PyObject *CmdLoad(PyObject *self, PyObject *args)
   OrthoLineType buf;
   int frame,type;
   int finish,discrete;
+  int new_type;
 
   buf[0]=0;
 
@@ -2436,8 +2441,40 @@ static PyObject *CmdLoad(PyObject *self, PyObject *args)
     ENDFD;
   APIEntry();
   origObj=ExecutiveFindObjectByName(oname);
+  /* check for existing object of right type, delete if not */
+  if(origObj) {
+    new_type = -1;
+    switch(type) {
+    case cLoadTypeChemPyModel:
+    case cLoadTypePDB:
+    case cLoadTypeXYZ:
+    case cLoadTypePDBStr:
+    case cLoadTypeMOL:
+    case cLoadTypeMOLStr:
+    case cLoadTypeMMD:
+    case cLoadTypeMMDSeparate:
+    case cLoadTypeMMDStr:
+      new_type = cObjectMolecule;
+      break;
+    case cLoadTypeChemPyBrick:
+    case cLoadTypeChemPyMap:
+    case cLoadTypeXPLORMap:
+    case cLoadTypeCCP4Map:
+      new_type = cObjectMap;
+      break;
+    case cLoadTypeCallback:
+      new_type = cObjectCallback;
+      break;
+    case cLoadTypeCGO:
+      new_type = cObjectCGO;
+      break;
+    }
+    if (new_type!=origObj->type) {
+      ExecutiveDelete(origObj->Name);
+      origObj=NULL;
+    }
+  }
 
-      /* TODO check for existing object of wrong type */
   
   switch(type) {
   case cLoadTypePDB:

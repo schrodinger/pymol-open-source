@@ -17,6 +17,12 @@ import math
 import string
 import glob
 import pymol
+from pymol import movie
+# legacy mappings, remove in PyMOL 2.0
+
+mload = movie.load
+mrock = movie.rock
+mroll = movie.roll
 
 def cbag(selection):
    s = str(selection)
@@ -90,64 +96,10 @@ def cbab(selection):
    cmd.color("hydrogen","(elem H and "+s+")")
    cmd.color("slate","(elem C and "+s+")")
 
-def mrock(first,last,angle=30,phase=0,loop=1,axis='y'):
-   first=int(first)
-   last=int(last)
-   angle=float(angle)
-   phase=float(phase)
-   loop=int(loop)
-   nstep = (last-first)+1
-   if nstep<0:
-      nstep = 1
-   if loop:
-      subdiv = nstep
-   else:
-      subdiv = nstep+1
-   ang_cur = math.pi*phase/180
-   ang_inc = 2*math.pi/subdiv
-   ang_cur = ang_cur - ang_inc
-   a = 0
-   while a<nstep:
-      last = angle*math.sin(ang_cur)/2
-      ang_cur = ang_cur + ang_inc
-      disp = angle*math.sin(ang_cur)/2
-      diff = disp-last
-      com = "mdo %d:turn %s,%8.3f" % (first+a,axis,diff)
-      cmd.do(com)
-      a = a + 1
-
-def mroll(first,last,loop=1,axis='y'):
-   first=int(first)
-   last=int(last)
-   loop=int(loop)
-   n = last - first
-   if loop:
-      step = 2*math.pi/(n+1)
-   else:
-      step = 2*math.pi/n   
-   a = 0
-   deg = (180*step/math.pi)
-   while a<=n:
-      com = "mdo %d:turn %s,%8.3f" % (first+a,axis,deg)
-      cmd.do(com)
-      a = a + 1
-
 def hbond(a,b,cutoff=3.3):
    st = "(%s and (%s around %4.2f) and elem N,O),(%s and (%s around %4.2f) and elem N,O),%4.2f" % (a,b,cutoff,b,a,cutoff,cutoff)
 #   cmd.dist("hbond",st)
-        
-def mload(*args):
-   nam = "mov"
-   if len(args)>1:
-      nam = args[1]
-   fils = glob.glob(args[0])
-   fils.sort()
-   if not len(fils):
-      print "Error: no matching files"
-   else:
-      for a in fils:
-         cmd.load(a,nam)
-   
+
 def cbc(selection='(all)'): # NOT THREAD SAFE
    '''
    Color all chains a different color
@@ -758,5 +710,4 @@ def ss(selection="(name ca and alt '',A)",state=1): # NOT THREAD SAFE
    #
 #   print conn_hash.keys()
    print " util.ss: assignment complete."
-
 
