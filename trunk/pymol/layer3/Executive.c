@@ -2609,7 +2609,8 @@ int ExecutiveGetExtent(char *name,float *mn,float *mx,int transformed,int state)
   float f1,f2,fmx;
   int a;
 
-  
+  if(state==-2) state=SceneGetState();
+
   PRINTFD(FB_Executive)
     " ExecutiveGetExtent: name %s state %d\n",name,state
     ENDFD;
@@ -2843,6 +2844,9 @@ int ExecutiveGetMoment(char *name,Matrix33d mi,int state)
   ObjectMoleculeOpRec op;
   int a,b;
   int c=0;
+
+  if(state==-2) state=SceneGetState();
+
   for(a=0;a<3;a++)
 	 {
 		for(b=0;b<3;b++)

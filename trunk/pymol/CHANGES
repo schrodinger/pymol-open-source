@@ -116,7 +116,8 @@ Changes up to 0.82
 
    * visible selection operator no longer hits disabled objects
 
-   * origin, zoom, and orient now take "state" as an argument
+   * origin, zoom, and orient now take "state" as optional argument with special
+     handling for 0 (all states) and -1 (current state)
 
    * eigensolve output now considered blather
 
