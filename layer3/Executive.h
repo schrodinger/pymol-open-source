@@ -58,7 +58,7 @@ Z* -------------------------------------------------------------------
 #define cLoadTypeMOL2 33
 #define cLoadTypeMOL2Str 34
 #define cLoadTypeP1M 35
-
+#define cLoadTypeCCP4Str 36
 
 int *ExecutiveGetG3d(PyMOLGlobals *G);
 int ExecutiveOrder(PyMOLGlobals *G, char *s1, int sort, int location);

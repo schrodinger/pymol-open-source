@@ -4,6 +4,10 @@ CHANGE LOG
 
 Changes up to 0.98
 
+   * url support for pdb, mol, mol2, sdf, xplor, pkl, ccp4, and pse files.
+
+   beta29
+
    * angle & dihedral visualization
 
    * fixed control-panel click bug

@@ -4269,8 +4269,9 @@ static PyObject *CmdLoad(PyObject *self, PyObject *args)
   int ok=false;
   int multiplex;
   int zoom;
-  ok = PyArg_ParseTuple(args,"ssiiiiiii",
-                        &oname,&fname,&frame,&type,
+  int bytes;
+  ok = PyArg_ParseTuple(args,"ss#iiiiiii",
+                        &oname,&fname,&bytes,&frame,&type,
                         &finish,&discrete,&quiet,
                         &multiplex,&zoom);
 
@@ -4557,14 +4558,29 @@ static PyObject *CmdLoad(PyObject *self, PyObject *args)
     case cLoadTypeCCP4Map:
       PRINTFD(TempPyMOLGlobals,FB_CCmd) " CmdLoad-DEBUG: loading CCP4 map\n" ENDFD;
       if(!origObj) {
-        obj=(CObject*)ObjectMapLoadCCP4File(TempPyMOLGlobals,NULL,fname,frame);
+        obj=(CObject*)ObjectMapLoadCCP4(TempPyMOLGlobals,NULL,fname,frame,false,0);
         if(obj) {
           ObjectSetName(obj,oname);
           ExecutiveManageObject(TempPyMOLGlobals,(CObject*)obj,zoom,true);
           sprintf(buf," CmdLoad: \"%s\" loaded as \"%s\".\n",fname,oname);
         }
       } else {
-        ObjectMapLoadCCP4File(TempPyMOLGlobals,(ObjectMap*)origObj,fname,frame);
+        ObjectMapLoadCCP4(TempPyMOLGlobals,(ObjectMap*)origObj,fname,frame,false,0);
+        sprintf(buf," CmdLoad: \"%s\" appended into object \"%s\".\n",
+                fname,oname);
+      }
+      break;
+    case cLoadTypeCCP4Str:
+      PRINTFD(TempPyMOLGlobals,FB_CCmd) " CmdLoad-DEBUG: loading CCP4 map\n" ENDFD;
+      if(!origObj) {
+        obj=(CObject*)ObjectMapLoadCCP4(TempPyMOLGlobals,NULL,fname,frame,true,bytes);
+        if(obj) {
+          ObjectSetName(obj,oname);
+          ExecutiveManageObject(TempPyMOLGlobals,(CObject*)obj,zoom,true);
+          sprintf(buf," CmdLoad: \"%s\" loaded as \"%s\".\n",fname,oname);
+        }
+      } else {
+        ObjectMapLoadCCP4(TempPyMOLGlobals,(ObjectMap*)origObj,fname,frame,true,bytes);
         sprintf(buf," CmdLoad: \"%s\" appended into object \"%s\".\n",
                 fname,oname);
       }

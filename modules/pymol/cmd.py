@@ -719,6 +719,7 @@ DEVELOPMENT TO DO
          # caller must already hold API lock
          # NOTE: state index assumes 1-based state
          r = 1
+         size = 0
          if ftype not in (loadable.model,loadable.brick):
             if ftype == loadable.r3d:
                import cgo
@@ -736,11 +737,11 @@ DEVELOPMENT TO DO
                                    int(finish),int(discrete),
                                    int(quiet),int(zoom))            
             else:
-               if ftype in _load_str.keys() and (string.find(finfo,":")>1):
+               if ftype in _load2str.keys() and (string.find(finfo,":")>1):
                   tmp_file = urllib.urlopen(finfo)
                   finfo = tmp_file.read(tmp_file) # WARNING: will block and hang -- thread instead?
                   tmp_file.close()
-                  ftype = _load_str[ftype]
+                  ftype = _load2str[ftype]
                r = _cmd.load(str(oname),finfo,int(state)-1,int(ftype),
                              int(finish),int(discrete),int(quiet),
                              int(multiplex),int(zoom))
@@ -2081,11 +2082,12 @@ SEE ALSO
 
       color_sc = None
 
-      _load_str = { loadable.pdb : loadable.pdbstr,
+      _load2str = { loadable.pdb : loadable.pdbstr,
                     loadable.mol : loadable.molstr,
                     loadable.xplor : loadable.xplorstr,
-                    loadable.mol2 : loadable.molstr,
-                    loadable.mmod : loadable.mmodstr }
+                    loadable.mol2 : loadable.mol2str,
+                    loadable.mmod : loadable.mmodstr,
+                    loadable.ccp4 : loadable.ccp4str }
 
    except:
       print "Error: unable to initalize the pymol.cmd module"

@@ -2966,58 +2966,61 @@ ObjectMap *ObjectMapReadCCP4Str(PyMOLGlobals *G,ObjectMap *I,char *XPLORStr,int 
   return(I);
 }
 /*========================================================================*/
-ObjectMap *ObjectMapLoadCCP4File(PyMOLGlobals *G,ObjectMap *obj,char *fname,int state)
+ObjectMap *ObjectMapLoadCCP4(PyMOLGlobals *G,ObjectMap *obj,char *fname,int state,
+                             int is_string,int bytes)
 {
   ObjectMap *I = NULL;
   int ok=true;
-  FILE *f;
-  long size;
+  FILE *f = NULL;
   char *buffer,*p;
   float mat[9];
+  long size;
 
-  f=fopen(fname,"rb");
-  if(!f)
-	 ok=ErrMessage(G,"ObjectMapLoadCCP4File","Unable to open file!");
-  else
-	 {
-		if(Feedback(G,FB_ObjectMap,FB_Actions))
-		  {
-			printf(" ObjectMapLoadCCP4File: Loading from '%s'.\n",fname);
-		  }
-		
-		fseek(f,0,SEEK_END);
+  if(!is_string) {
+    
+    f=fopen(fname,"rb");
+    if(!f)
+      ok=ErrMessage(G,"ObjectMapLoadCCP4File","Unable to open file!");
+  } 
+  
+  if(f || is_string) {
+    
+    if(is_string && Feedback(G,FB_ObjectMap,FB_Actions)) {
+      printf(" ObjectMapLoadCCP4File: Loading from '%s'.\n",fname);
+    }
+    
+    if(!is_string) {
+      fseek(f,0,SEEK_END);
       size=ftell(f);
-		fseek(f,0,SEEK_SET);
-
+      fseek(f,0,SEEK_SET);
+      
 		buffer=(char*)mmalloc(size);
 		ErrChkPtr(G,buffer);
 		p=buffer;
 		fseek(f,0,SEEK_SET);
 		fread(p,size,1,f);
 		fclose(f);
+    } else {
+      buffer = fname;
+      size = (long)bytes;
+    }
 
-		I=ObjectMapReadCCP4Str(G,obj,buffer,size,state);
-
-		mfree(buffer);
-      if(state<0)
-        state=I->NState-1;
-      if(state<I->NState) {
-        ObjectMapState *ms;
-        ms = &I->State[state];
-        if(ms->Active) {
-          CrystalDump(ms->Crystal);
-          multiply33f33f(ms->Crystal->FracToReal,ms->Crystal->RealToFrac,mat);
-        }
+    I=ObjectMapReadCCP4Str(G,obj,buffer,size,state);
+    
+    if(!is_string) 
+      mfree(buffer);
+    if(state<0)
+      state=I->NState-1;
+    if(state<I->NState) {
+      ObjectMapState *ms;
+      ms = &I->State[state];
+      if(ms->Active) {
+        CrystalDump(ms->Crystal);
+        multiply33f33f(ms->Crystal->FracToReal,ms->Crystal->RealToFrac,mat);
       }
     }
-#ifdef _UNDEFINED
-  {int a;
-  for(a=0;a<9;a++)
-    printf("%10.5f\n",mat[a]);
   }
-#endif
   return(I);
-
 }
 /*========================================================================*/
 static ObjectMap *ObjectMapReadFLDStr(PyMOLGlobals *G,ObjectMap *I,char *MapStr,int bytes,int state)

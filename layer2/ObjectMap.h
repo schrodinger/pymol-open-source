@@ -64,7 +64,7 @@ ObjectMap *ObjectMapLoadXPLORFile(PyMOLGlobals *G,ObjectMap *obj,char *fname,int
 ObjectMap *ObjectMapReadXPLORStr(PyMOLGlobals *G,ObjectMap *I,char *XPLORStr,int state);
 int ObjectMapXPLORStrToMap(ObjectMap *I,char *XPLORStr,int state);
 
-ObjectMap *ObjectMapLoadCCP4File(PyMOLGlobals *G,ObjectMap *obj,char *fname,int state);
+ObjectMap *ObjectMapLoadCCP4(PyMOLGlobals *G,ObjectMap *obj,char *fname,int state,int is_string,int bytes);
 ObjectMap *ObjectMapReadCCP4Str(PyMOLGlobals *G,ObjectMap *I,char *XPLORStr,int bytes,int state);
 int ObjectMapCCP4StrToMap(ObjectMap *I,char *XPLORStr,int bytes,int state);
 

@@ -71,6 +71,7 @@ if __name__=='pymol.importing':
       mol2 = 33     # MOL2 file (TRIPOS)
       mol2str = 34  # MOL2 file string (TRIPOS)
       p1m = 35      # P1M file (combined data & secure commands)
+      ccp4str = 36  # CCP4 map string
       
    loadable_sc = Shortcut(loadable.__dict__.keys()) 
 
