@@ -23,8 +23,11 @@ class AbstractApp(Pmw.MegaWidget):
    contactweb      = ''
    contactemail    = ''
           
-   frameWidth       = 800
+   frameWidth      = 800 # these days, overriden by values in pymol.invocation
    frameHeight     = 120
+   frameXPos       = 0
+   frameYPos       = 0
+   
    padx         = 1
    pady         = 1
    balloonhelp    = 1
@@ -41,7 +44,17 @@ class AbstractApp(Pmw.MegaWidget):
       self.initializeTk(self.root)
       Pmw.initialise(self.root)
       self.root.title(self.appname)
-      self.root.geometry('%dx%d+0+0' % (self.frameWidth, self.frameHeight))
+
+      inv = sys.modules.get("pymol.invocation",None)
+      if inv!=None:
+         self.frameWidth = inv.options.win_x+160
+         self.frameXPos = inv.options.win_px
+         self.frameHeight = inv.options.ext_y
+         self.frameYPos = inv.options.win_py - (self.frameHeight + 31)
+         
+      self.root.geometry('%dx%d+%d+%d' % (
+         self.frameWidth, self.frameHeight,
+         self.frameXPos, self.frameYPos))
 
       # Initialize the base class
       Pmw.MegaWidget.__init__(self, parent=self.root)
@@ -76,7 +89,6 @@ class AbstractApp(Pmw.MegaWidget):
       elif sys.platform[:3] == 'win':
          self.__initializeTk_win32(root)
       elif sys.platform[:5] == 'linux':
-         self.frameHeight=self.frameHeight+24
          self.__initializeTk_unix(root)
       else:
          self.__initializeTk_unix(root)

@@ -98,6 +98,9 @@ Current Bugs to Fix
 
 Changes up to 0.88
 
+   * Tcl/Tk external gui now also follows -X, -Y, -W, and -V window parameters
+     "-V value" controls the size of the external Tcl/Tk GUI (if present)
+
    * INCOMPABILITY WARNING: "-X" option for launching rpcserver changed to "-R"
 	in order to make room for "-X" and "-Y" options for positioning GLUT window.
 
@@ -108,6 +111,7 @@ Changes up to 0.88
    * fixed session restore bug with editing mode
 
    * worked around Solaris compiler limitations.
+
 
 Changes up to 0.87
 
