@@ -28,6 +28,18 @@ def sweep(pause=0,cycles=1):
    movie_list = [ pass_string ] * cycles
    movie_string = string.join(movie_list," ")
    cmd.mset(movie_string)
+
+def pause(pause=15,cycles=1):
+   pause = int(pause)
+   cycles = int(cycles)
+   n_state = cmd.count_states("all")
+   if pause>0:
+      pass_string = "1 x%d 1 -%d %d x%d"%(pause, n_state, n_state, pause)
+   else:
+      pass_string = "1 -%d %d -1"%(n_state, n_state)
+   movie_list = [ pass_string ] * cycles
+   movie_string = string.join(movie_list," ")
+   cmd.mset(movie_string)
             
 def load(*args,**kw):
    nam = "mov"

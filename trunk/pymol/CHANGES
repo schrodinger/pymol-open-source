@@ -4,6 +4,11 @@ CHANGE LOG
 
 Changes up to 0.98
 
+   * support for 4-letter residue codes in PDB files
+
+   * new selection operator for proteins "peptide" with 1-letter
+     peptide codes
+
    * streamlined launch time in various ways
 
    * updated lighting model to increase WYSIWG characteristics

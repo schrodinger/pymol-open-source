@@ -228,7 +228,7 @@ int SelectorCheckNeighbors(PyMOLGlobals *G,int maxDepth,ObjectMolecule *obj,int 
 #define SELE_INOz ( 0x4600 | STYP_SEL0 | 0x80 )
 #define SELE_GIDz ( 0x4700 | STYP_SEL0 | 0x80 )
 #define SELE_RNKs ( 0x4800 | STYP_SEL1 | 0x70 )
-#define SELE_SEQs ( 0x4900 | STYP_SEL1 | 0x70 )
+#define SELE_PEPs ( 0x4900 | STYP_SEL1 | 0x70 )
 
 #define SEL_PREMAX 0x8
 
@@ -399,8 +399,9 @@ static WordKeyValue Keyword[] =
   {  "beyond",   SELE_BEY_ },
   {  "be.",      SELE_BEY_ },
 
-  {  "sequence", SELE_SEQs },
-  {  "seq.",     SELE_SEQs },
+  {  "peptide",  SELE_PEPs },
+  {  "pep.",     SELE_PEPs },
+  {  "p.",       SELE_PEPs },
  
   /*
   {  "nucleic",  SELE_NUCs },
@@ -6842,7 +6843,7 @@ int SelectorSelect1(PyMOLGlobals *G,EvalElem *base)
   ErrChkPtr(G,base->sele);
   switch(base->code)
 	 {
-    case SELE_SEQs:
+    case SELE_PEPs:
       if(base[1].text[0]) {
         AtomInfoType *last_ai0 = NULL, *ai0;
         for(a=cNDummyAtoms;a<I->NAtom;a++) {

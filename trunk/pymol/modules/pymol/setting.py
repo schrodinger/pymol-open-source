@@ -430,6 +430,7 @@ if __name__=='pymol.setting':
       scene_current_name        = (396, '')
       presentation              = (397, '')
       presentation_mode         = (398, '')
+      pdb_truncate_residue_name = (399, '')
       
    setting_sc = Shortcut(SettingIndex.__dict__.keys())
 
