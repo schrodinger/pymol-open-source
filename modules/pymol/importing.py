@@ -147,7 +147,7 @@ PYMOL API
 
 def load_traj(filename,object='',state=0,format='',interval=1,
               average=1,start=1,stop=-1,max=-1,selection='all',image=1,
-              shift=[0.0,0.0,0.0]):
+              shift="[0.0,0.0,0.0]"):
    '''
 DESCRIPTION
   
@@ -166,7 +166,7 @@ PYMOL API
   
    cmd.load_traj(filename,object='',state=0,format='',interval=1,
               average=1,start=1,stop=-1,max=-1,selection='all',image=1,
-              shift=[0.0,0.0,0.0])
+              shift="[0.0,0.0,0.0]")
 
 NOTES
 
