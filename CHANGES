@@ -4,6 +4,9 @@ CHANGE LOG
 
 Changes up to 0.96
 
+   * active_selections setting & changes to the selection paradigm 
+     in preparation for the sequence alignment tool : )
+
    * fixed minor bug in fitting code (faster convergence?)
 
    * added surface_trim_factor and surface_trim_factor settings

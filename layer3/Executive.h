@@ -183,6 +183,7 @@ int ExecutiveGetObjectColorIndex(char *name);
 void ExecutiveToggleAllRepVisib(char *name,int rep);
 int ExecutiveSetOnOffBySele(char *name,int onoff);
 int ExecutiveSetName(char *old_name, char *new_name);
+int ExecutiveGetActiveSeleName(char *name, int create_new);
 
 #endif
 

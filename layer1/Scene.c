@@ -1452,9 +1452,11 @@ int SceneClick(Block *block,int button,int x,int y,int mod)
       do_roving(old_front,old_back,old_origin,true);
     }
     break;
-  case cButModeRectAdd:
-  case cButModeRectSub:
-  case cButModeRect:
+  case cButModeRectAdd: /* deprecated */
+  case cButModeRectSub:/* deprecated */
+  case cButModeRect:/* deprecated */
+  case cButModeSeleAdd:
+  case cButModeSeleSub:
     return(0);
     break;
   case cButModeRotXYZ:
@@ -1728,6 +1730,9 @@ int SceneClick(Block *block,int button,int x,int y,int mod)
   case cButModeAddToLB:
   case cButModeAddToMB:
   case cButModeAddToRB:
+  case cButModeSeleSet:
+  case cButModeSeleToggle:
+
   case cButModeOrigAt:
   case cButModeCent:
     if(((int)SettingGet(cSetting_overlay))&&((int)SettingGet(cSetting_text)))
@@ -1764,6 +1769,11 @@ int SceneClick(Block *block,int button,int x,int y,int mod)
         case cButModeAddToRB:
           strcpy(selName,"rb");
           break;
+        case cButModeSeleSet:
+        case cButModeSeleToggle:
+          ExecutiveGetActiveSeleName(selName,true);
+          break;
+          
         case cButModeOrigAt:
           sprintf(buf2,"origin (%s)",buffer);        
           OrthoCommandIn(buf2);
@@ -1806,6 +1816,7 @@ int SceneClick(Block *block,int button,int x,int y,int mod)
         case cButModeLB:
         case cButModeMB:
         case cButModeRB:
+        case cButModeSeleSet:
           SelectorCreate(selName,buffer,NULL,false,NULL);
           if(SettingGet(cSetting_auto_hide_selections))
             ExecutiveHideSelections();
@@ -1824,6 +1835,8 @@ int SceneClick(Block *block,int button,int x,int y,int mod)
         case cButModeAddToLB:
         case cButModeAddToMB:
         case cButModeAddToRB:
+        case cButModeSeleToggle:
+
           if(SelectorIndexByName(selName)>=0) {
             sprintf(buf2,"( ((%s) or (%s)) and not ((%s) in (%s)))",
                     selName,buffer,buffer,selName);

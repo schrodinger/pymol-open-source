@@ -2230,6 +2230,7 @@ void SettingInitGlobal(int alloc,int reset_gui)
   SettingSet_f(I,cSetting_surface_trim_cutoff,0.2F);
   SettingSet_f(I,cSetting_surface_trim_factor,2.0F);
   SettingSet_i(I,cSetting_ray_max_passes,25);
+  SettingSet_b(I,cSetting_active_selections,true);
 
 }
 
