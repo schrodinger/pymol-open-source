@@ -112,6 +112,7 @@ typedef char AtomBuffer[255]; /* maximum length for a single atom */
 
 typedef struct { 
   int link; /* memory management */
+  int index;
   int bond[MAX_BOND+1]; 
   int pos_flag;
   int atom;
@@ -131,7 +132,7 @@ typedef struct {
   int not_degree;
   int not_valence;
   int tag; /* string index for tag */
-  int mark_tmpl,mark_targ; /* traversal */
+  int mark_tmpl,mark_targ,mark_read; /* traversal */
   int first_tmpl,first_targ; /* first template stack entry */
   PyObject *chempy_atom;
 } ListAtom;
@@ -144,6 +145,7 @@ typedef struct {
 
 typedef struct {
   int link;     /* memory management */
+  int index;
   int atom[2];  /* connected atoms  -- directionality must reflect tree */
   int order;
   int class;
@@ -155,7 +157,6 @@ typedef struct {
   int mark_tmpl,mark_targ; /* traversal */
   PyObject *chempy_bond;
 } ListBond;
-
 
 typedef struct {
   int link;
@@ -206,7 +207,7 @@ typedef struct {
   ListScope *Scope;
   ListMatch *Match;
   char *Str;
-} CChamp; /* scream class */
+} CChamp; /* champ class */
 
 /* prototypes */
 
@@ -228,10 +229,11 @@ int ChampBondMatch(ListBond *p,ListBond *a);
 int ChampSmiToPat(CChamp *I,char *c);
 void ChampMemoryDump(CChamp *I);
 int ChampMemoryUsage(CChamp *I);
-int ChampSSS_1V1_B(CChamp *I,int pattern,int target);
-int ChampSSS_1VN_N(CChamp *I,int pattern,int list);
+int ChampMatch_1V1_B(CChamp *I,int pattern,int target);
+int ChampMatch_1V1_Map(CChamp *I,int pattern,int target,int limit);
+int ChampMatch_1VN_N(CChamp *I,int pattern,int list);
 int ChampModelToPat(CChamp *I,PyObject *model);
-char *ChampPatToSmiVLA(CChamp *I,int index);
+char *ChampPatToSmiVLA(CChamp *I,int index,char *vla);
 
 #endif
 
