@@ -169,6 +169,7 @@ compileall:
 OSXPROD=products/PyMOL.app
 OSXPYMOL=$(OSXPROD)/pymol
 OSXEXE=$(OSXPROD)/Contents/MacOS/PyMOL
+OSXPY=$(OSXPROD)/py23
 
 osx-wrap:
 	/bin/rm -rf $(OSXPYMOL) $(OSXEXE)
@@ -178,10 +179,15 @@ osx-unwrap:
 	/bin/rm -rf $(OSXPROD)
 	/usr/local/bin/tar -xzvf layerOSX/bundle/app.hfstar
 
-osx-python:
+osx-python-framework:
 	cc layerOSX/bundle/python.c -o $(OSXEXE) \
--I/Library/Frameworks/Python.framework/Versions/2.3/include/python2.3/ \
+$(PYTHON_INC_DIR) \
 -framework CoreFoundation -framework Python -lc -Wno-long-double
+
+osx-python-standalone:
+	cc layerOSX/bundle/python.c -o $(OSXEXE) \
+$(PYTHON_INC_DIR) -Lext/lib -lpython2.3\
+-framework CoreFoundation -lc -Wno-long-double -D_PYMOL_OSX_PYTHONHOME
 
 osx: 
 	cd layerOSX; $(MAKE)
@@ -190,7 +196,7 @@ osx:
 osx-devel: osx
 	cp modules/pymol/_cmd.so $(OSXPYMOL)/modules/pymol
 
-osx-product: osx osx-unwrap osx-python
+osx-product: osx 
 	$(PYTHON_EXE) modules/compile_pymol.py
 	/bin/rm -rf $(OSXPYMOL)
 	install -d $(OSXPYMOL)
@@ -201,3 +207,9 @@ osx-product: osx osx-unwrap osx-python
 	cp LICENSE $(OSXPYMOL)/
 	cp README $(OSXPYMOL)/
 
+osx-framework: osx-unwrap osx-python-framework osx-product
+
+osx-standalone: osx-unwrap osx-python-standalone osx-product
+	/bin/rm -rf $(OSXPY)
+	install -d $(OSXPY)/lib
+	cp -R ext/lib/python2.3 $(OSXPY)/lib/
