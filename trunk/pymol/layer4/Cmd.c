@@ -4055,7 +4055,7 @@ static PyObject *CmdFinishObject(PyObject *self, PyObject *args)
       if(origObj->type==cObjectMolecule) {
         ObjectMoleculeUpdateIDNumbers((ObjectMolecule*)origObj);
         ObjectMoleculeUpdateNonbonded((ObjectMolecule*)origObj);
-        ObjectMoleculeInvalidate((ObjectMolecule*)origObj,cRepAll,cRepInvAll);
+        ObjectMoleculeInvalidate((ObjectMolecule*)origObj,cRepAll,cRepInvAll,-1);
       }
       ExecutiveUpdateObjectSelection(TempPyMOLGlobals,origObj); /* TODO STATUS */
     }
@@ -4463,7 +4463,7 @@ static PyObject *CmdLoad(PyObject *self, PyObject *args)
         }
       } else if(origObj) {
         if(finish) {
-          ObjectMoleculeInvalidate((ObjectMolecule*)origObj,cRepAll,cRepInvAll);
+          ObjectMoleculeInvalidate((ObjectMolecule*)origObj,cRepAll,cRepInvAll,-1);
           ObjectMoleculeUpdateIDNumbers((ObjectMolecule*)origObj);
           ObjectMoleculeUpdateNonbonded((ObjectMolecule*)origObj);
           ExecutiveUpdateObjectSelection(TempPyMOLGlobals,origObj);

@@ -1143,6 +1143,9 @@ void SettingGenerateSideEffects(PyMOLGlobals *G,int index,char *sele,int state)
     SceneChanged(G);
     
     break;
+  case cSetting_defer_builds_mode:
+    ExecutiveRebuildAll(G);
+    break;
   case cSetting_seq_view:
   case cSetting_seq_view_label_spacing:
   case cSetting_seq_view_label_mode:
@@ -2459,6 +2462,7 @@ void SettingInitGlobal(PyMOLGlobals *G,int alloc,int reset_gui)
   SettingSet_f(I,cSetting_angle_label_position, 0.5);
   SettingSet_f(I,cSetting_dihedral_size, 0.6666F);
   SettingSet_f(I,cSetting_dihedral_label_position, 1.2F);
+  SettingSet_i(I,cSetting_defer_builds_mode, G->Option->defer_builds_mode); 
 }
 
 

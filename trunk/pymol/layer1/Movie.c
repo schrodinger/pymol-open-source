@@ -433,6 +433,7 @@ int MoviePNG(PyMOLGlobals *G,char *prefix,int save,int start,int stop)
 		PFlush();
 		i=MovieFrameToImage(G,a);
       VLACheck(I->Image,ImageType,i);
+      printf("here %d\n",a);
       if((a>=start)&&(a<=stop)) { /* only render frames in the specified interval */
         if(!I->Image[i]) {
           SceneMakeMovieImage(G);

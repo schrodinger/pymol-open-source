@@ -349,6 +349,7 @@ const static CPyMOLOptions Defaults = {
   1, /* window_visible */
   0, /* read_stdin */
   0, /* presentation */
+  0, /* defer builds mode */
 };
 
 CPyMOLOptions *PyMOLOptions_New(void)

@@ -440,6 +440,7 @@ if __name__=='pymol.setting':
       angle_label_position      = (406, '')
       dihedral_size             = (407, '')
       dihedral_label_position   = (408, '')
+      defer_builds_mode         = (409, '')
       
    setting_sc = Shortcut(SettingIndex.__dict__.keys())
 

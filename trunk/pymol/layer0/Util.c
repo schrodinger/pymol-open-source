@@ -38,6 +38,18 @@ void UtilFree(PyMOLGlobals *G)
   FreeP(G->Util);
 }
 
+int UtilShouldWePrintQuantity(int quantity)
+{
+  if(quantity<10)
+    return 1;
+  if((quantity>0)&&(quantity<0x07FFFFFF)) /* avoids overflow, just in case */ {
+    int factor = 10;
+    while((factor*10)<quantity)
+      factor *= 10;
+    return ((quantity/factor)*factor == quantity);
+  }
+  return 0;
+}
 int UtilCountStringVLA(char *vla)
 {
   int result=0;

@@ -4,7 +4,11 @@ CHANGE LOG
 
 Changes up to 0.98
 
-   * switched SDF parsing into C -- it's "way faster dude!"
+   * defer_builds_mode setting for improved performance with long
+     trajectories -- now possible to work with files containing 
+     thousands of states, and to render impossibly long movies piecewise.
+
+   * switched SDF parsing into C -- "way faster dude!"
 
    * new "move" option for the fuse command
 

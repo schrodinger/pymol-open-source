@@ -292,7 +292,7 @@ ObjectMolecule *ObjectMoleculeReadXYZStr(PyMOLGlobals *G,ObjectMolecule *I,char 
 
 void ObjectMoleculeExtendIndices(ObjectMolecule *I);
 
-void ObjectMoleculeInvalidate(ObjectMolecule *I,int rep,int level);
+void ObjectMoleculeInvalidate(ObjectMolecule *I,int rep,int level,int state);
 
 void ObjectMoleculeRenderSele(ObjectMolecule *I,int curState,int sele);
 

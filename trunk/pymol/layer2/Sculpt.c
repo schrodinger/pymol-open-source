@@ -1417,7 +1417,7 @@ float SculptIterateObject(CSculpt *I,ObjectMolecule *obj,int state,int n_cycle)
             if(cs->fInvalidateRep) {
               cs->fInvalidateRep(cs,cRepAll,cRepInvCoord);
             } else {
-              ObjectMoleculeInvalidate(obj,cRepAll,cRepInvCoord);
+              ObjectMoleculeInvalidate(obj,cRepAll,cRepInvCoord,-1);
             }
           
           }

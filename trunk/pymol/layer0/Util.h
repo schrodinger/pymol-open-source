@@ -43,4 +43,5 @@ void UtilExpandArrayElements(void *src,void *dst,int n_entries,int old_rec_size,
 typedef int UtilOrderFnGlobals(PyMOLGlobals *G,void *array,int l,int r);
 void UtilSortIndexGlobals(PyMOLGlobals *G,int n,void *array,int *x,UtilOrderFnGlobals* fOrdered);
 
+int UtilShouldWePrintQuantity(int quantity);
 #endif

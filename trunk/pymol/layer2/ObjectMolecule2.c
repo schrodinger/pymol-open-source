@@ -673,7 +673,7 @@ void ObjectMoleculeFixChemistry(ObjectMolecule *I, int sele1, int sele2, int inv
     bond++;
   }
   if(flag) {
-    ObjectMoleculeInvalidate(I,cRepAll,cRepInvAll);
+    ObjectMoleculeInvalidate(I,cRepAll,cRepInvAll,-1);
     SceneChanged(I->Obj.G);
   }
 }
@@ -2597,7 +2597,7 @@ int ObjectMoleculeNewFromPyList(PyMOLGlobals *G,PyObject *list,ObjectMolecule **
     FreeP(dcs);
   }
   
-  ObjectMoleculeInvalidate(I,cRepAll,cRepInvAll);
+  ObjectMoleculeInvalidate(I,cRepAll,cRepInvAll,-1);
   if(ok) 
     (*result) = I;
   else {
@@ -3333,7 +3333,7 @@ void ObjectMoleculeSort(ObjectMolecule *I) /* sorts atoms and bonds */
     
     UtilSortInPlace(I->Obj.G,I->Bond,I->NBond,sizeof(BondType),(UtilOrderFn*)BondInOrder);
     /* sort...important! */
-    ObjectMoleculeInvalidate(I,cRepAll,cRepInvAtoms); /* important */
+    ObjectMoleculeInvalidate(I,cRepAll,cRepInvAtoms,-1); /* important */
     
   }
 }

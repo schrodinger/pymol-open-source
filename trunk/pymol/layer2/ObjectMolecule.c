@@ -3689,14 +3689,14 @@ void ObjectMoleculeCreateSpheroid(ObjectMolecule *I,int average)
   FreeP(fsum);
   FreeP(max_sq);
 
-  ObjectMoleculeInvalidate(I,cRepSphere,cRepInvProp);
+  ObjectMoleculeInvalidate(I,cRepSphere,cRepInvProp,-1);
 }
 /*========================================================================*/
 void ObjectMoleculeReplaceAtom(ObjectMolecule *I,int index,AtomInfoType *ai)
 {
   if((index>=0)&&(index<=I->NAtom)) {
     memcpy(I->AtomInfo+index,ai,sizeof(AtomInfoType));
-    ObjectMoleculeInvalidate(I,cRepAll,cRepInvAtoms);
+    ObjectMoleculeInvalidate(I,cRepAll,cRepInvAtoms,-1);
     /* could we put in a refinement step here? */
   }
 }
@@ -3896,12 +3896,12 @@ int ObjectMoleculeAddBond(ObjectMolecule *I,int sele0,int sele1,int order)
     ai1++;
   }
   if(c) {
-    ObjectMoleculeInvalidate(I,cRepLine,cRepInvBonds);
-    ObjectMoleculeInvalidate(I,cRepCyl,cRepInvBonds);
-    ObjectMoleculeInvalidate(I,cRepNonbonded,cRepInvBonds);
-    ObjectMoleculeInvalidate(I,cRepNonbondedSphere,cRepInvBonds);
-    ObjectMoleculeInvalidate(I,cRepRibbon,cRepInvBonds);
-    ObjectMoleculeInvalidate(I,cRepCartoon,cRepInvBonds);
+    ObjectMoleculeInvalidate(I,cRepLine,cRepInvBonds,-1);
+    ObjectMoleculeInvalidate(I,cRepCyl,cRepInvBonds,-1);
+    ObjectMoleculeInvalidate(I,cRepNonbonded,cRepInvBonds,-1);
+    ObjectMoleculeInvalidate(I,cRepNonbondedSphere,cRepInvBonds,-1);
+    ObjectMoleculeInvalidate(I,cRepRibbon,cRepInvBonds,-1);
+    ObjectMoleculeInvalidate(I,cRepCartoon,cRepInvBonds,-1);
     ObjectMoleculeUpdateIDNumbers(I);
   }
   return(c);    
@@ -3954,12 +3954,12 @@ int ObjectMoleculeAdjustBonds(ObjectMolecule *I,int sele0,int sele1,int mode,int
         I->AtomInfo[a1].chemFlag=false;
         break;
       }
-      ObjectMoleculeInvalidate(I,cRepLine,cRepInvBonds);
-      ObjectMoleculeInvalidate(I,cRepCyl,cRepInvBonds);
-      ObjectMoleculeInvalidate(I,cRepNonbonded,cRepInvBonds);
-      ObjectMoleculeInvalidate(I,cRepNonbondedSphere,cRepInvBonds);
-      ObjectMoleculeInvalidate(I,cRepRibbon,cRepInvBonds);
-      ObjectMoleculeInvalidate(I,cRepCartoon,cRepInvBonds);
+      ObjectMoleculeInvalidate(I,cRepLine,cRepInvBonds,-1);
+      ObjectMoleculeInvalidate(I,cRepCyl,cRepInvBonds,-1);
+      ObjectMoleculeInvalidate(I,cRepNonbonded,cRepInvBonds,-1);
+      ObjectMoleculeInvalidate(I,cRepNonbondedSphere,cRepInvBonds,-1);
+      ObjectMoleculeInvalidate(I,cRepRibbon,cRepInvBonds,-1);
+      ObjectMoleculeInvalidate(I,cRepCartoon,cRepInvBonds,-1);
     }
     b0++;
   }
@@ -4013,12 +4013,12 @@ int ObjectMoleculeRemoveBonds(ObjectMolecule *I,int sele0,int sele1)
   if(offset) {
     I->NBond += offset;
     VLASize(I->Bond,BondType,I->NBond);
-    ObjectMoleculeInvalidate(I,cRepLine,cRepInvBonds);
-    ObjectMoleculeInvalidate(I,cRepCyl,cRepInvBonds);
-    ObjectMoleculeInvalidate(I,cRepNonbonded,cRepInvBonds);
-    ObjectMoleculeInvalidate(I,cRepNonbondedSphere,cRepInvBonds);
-    ObjectMoleculeInvalidate(I,cRepRibbon,cRepInvBonds);
-    ObjectMoleculeInvalidate(I,cRepCartoon,cRepInvBonds);
+    ObjectMoleculeInvalidate(I,cRepLine,cRepInvBonds,-1);
+    ObjectMoleculeInvalidate(I,cRepCyl,cRepInvBonds,-1);
+    ObjectMoleculeInvalidate(I,cRepNonbonded,cRepInvBonds,-1);
+    ObjectMoleculeInvalidate(I,cRepNonbondedSphere,cRepInvBonds,-1);
+    ObjectMoleculeInvalidate(I,cRepRibbon,cRepInvBonds,-1);
+    ObjectMoleculeInvalidate(I,cRepCartoon,cRepInvBonds,-1);
   }
 
   return(-offset);
@@ -4116,7 +4116,7 @@ void ObjectMoleculePurge(ObjectMolecule *I)
     " ObjMolPurge-Debug: step 5, invalidate...\n"
     ENDFD;
 
-  ObjectMoleculeInvalidate(I,cRepAll,cRepInvAtoms);
+  ObjectMoleculeInvalidate(I,cRepAll,cRepInvAtoms,-1);
 
   PRINTFD(I->Obj.G,FB_ObjectMolecule)
     " ObjMolPurge-Debug: leaving...\n"
@@ -6495,12 +6495,14 @@ ObjectMolecule *ObjectMoleculeReadStr(PyMOLGlobals *G,ObjectMolecule *I,
         if(successCnt>1) {
           if(successCnt==2) {
             PRINTFB(G,FB_ObjectMolecule,FB_Actions)
-              " ObjectMoleculeReadStr: read molecule %d\n",1
+              " ObjectMoleculeReadStr: read molecule %d.\n",1
               ENDFB(G);
           }
-          PRINTFB(G,FB_ObjectMolecule,FB_Actions)
-            " ObjectMoleculeReadStr: read molecule %d\n",successCnt
-            ENDFB(G);
+          if(UtilShouldWePrintQuantity(successCnt)) {
+            PRINTFB(G,FB_ObjectMolecule,FB_Actions)
+              " ObjectMoleculeReadStr: read through molecule %d.\n",successCnt
+              ENDFB(G);
+          }
         }
       }
       
@@ -6518,7 +6520,7 @@ ObjectMolecule *ObjectMoleculeReadStr(PyMOLGlobals *G,ObjectMolecule *I,
   }
   if(deferred_tasks&&I) { /* defer time-consuming tasks until all states have been loaded */
     SceneCountFrames(G);
-    ObjectMoleculeInvalidate(I,cRepAll,cRepInvAll);
+    ObjectMoleculeInvalidate(I,cRepAll,cRepInvAll,-1);
     ObjectMoleculeUpdateIDNumbers(I);
     ObjectMoleculeUpdateNonbonded(I);
   }
@@ -6649,7 +6651,7 @@ ObjectMolecule *ObjectMoleculeReadMOL2Str(PyMOLGlobals *G,ObjectMolecule *I,
   }
   if(deferred_tasks&&I) { /* defer time-consuming tasks until all states have been loaded */
     SceneCountFrames(G);
-    ObjectMoleculeInvalidate(I,cRepAll,cRepInvAll);
+    ObjectMoleculeInvalidate(I,cRepAll,cRepInvAll,-1);
     ObjectMoleculeUpdateIDNumbers(I);
     ObjectMoleculeUpdateNonbonded(I);
   }
@@ -6852,10 +6854,10 @@ void ObjectMoleculeMerge(ObjectMolecule *I,AtomInfoType *ai,
     if(oldNAtom) {
       if(oldNAtom==I->NAtom) {
         if(oldNBond!=I->NBond) {
-          ObjectMoleculeInvalidate(I,cRepAll,cRepInvBonds);
+          ObjectMoleculeInvalidate(I,cRepAll,cRepInvBonds,-1);
         }
       } else {
-        ObjectMoleculeInvalidate(I,cRepAll,cRepInvAtoms);
+        ObjectMoleculeInvalidate(I,cRepAll,cRepInvAtoms,-1);
       }
     }
   }
@@ -8246,16 +8248,16 @@ void ObjectMoleculeSeleOp(ObjectMolecule *I,int sele,ObjectMoleculeOpRec *op)
        ObjectMoleculeTransformTTTf(I,op->ttt,-1);
        break;
 	  case OMOP_LABL:
-       ObjectMoleculeInvalidate(I,cRepLabel,cRepInvText);
+       ObjectMoleculeInvalidate(I,cRepLabel,cRepInvText,-1);
        break;
      case OMOP_AlterState: /* overly coarse - doing all states, could do just 1 */
        if(!op->i3) { /* not read_only? */
-         ObjectMoleculeInvalidate(I,-1,cRepInvRep);
+         ObjectMoleculeInvalidate(I,-1,cRepInvRep,-1);
          SceneChanged(G);
        }
        break;
      case OMOP_CSetIdxSetFlagged:
-       ObjectMoleculeInvalidate(I,-1,cRepInvRep);
+       ObjectMoleculeInvalidate(I,-1,cRepInvRep,-1);
        SceneChanged(G);
        break;
      case OMOP_SaveUndo:
@@ -8392,32 +8394,40 @@ void ObjectMoleculeUpdate(ObjectMolecule *I)
         I->RepVisCache[b]=1;
     }
   }
-  for(a=0;a<I->NCSet;a++)
-	 if(I->CSet[a]) {	
-	   OrthoBusySlow(I->Obj.G,a,I->NCSet);
-		PRINTFD(I->Obj.G,FB_ObjectMolecule)
-		  " ObjectMolecule-DEBUG: updating state %d of \"%s\".\n" 
-         , a+1, I->Obj.Name
-        ENDFD;
+  
+  {
+    int start = 0;
+    int stop = I->NCSet;
+       
+    ObjectAdjustStateRebuildRange(&I->Obj,&start,&stop);
 
-      if(I->CSet[a]->fUpdate)
-        I->CSet[a]->fUpdate(I->CSet[a]);
-	 }
-  if(I->Obj.RepVis[cRepCell]) {
-    if(I->Symmetry) {
-      if(I->Symmetry->Crystal) {
-        if(I->UnitCellCGO)
-          CGOFree(I->UnitCellCGO);
-        I->UnitCellCGO = CrystalGetUnitCellCGO(I->Symmetry->Crystal);
+    for(a=start;a<stop;a++)
+      if(I->CSet[a]) {	
+        OrthoBusySlow(I->Obj.G,a,I->NCSet);
+        PRINTFB(I->Obj.G,FB_ObjectMolecule,FB_Blather)
+          " ObjectMolecule-DEBUG: updating representations for state %d of \"%s\".\n" 
+          , a+1, I->Obj.Name
+          ENDFB(I->Obj.G);
+        if(I->CSet[a]->fUpdate)
+          I->CSet[a]->fUpdate(I->CSet[a]);
+      }
+    if(I->Obj.RepVis[cRepCell]) {
+      if(I->Symmetry) {
+        if(I->Symmetry->Crystal) {
+          if(I->UnitCellCGO)
+            CGOFree(I->UnitCellCGO);
+          I->UnitCellCGO = CrystalGetUnitCellCGO(I->Symmetry->Crystal);
+        }
       }
     }
   } 
+
   PRINTFD(I->Obj.G,FB_ObjectMolecule)
     " ObjectMolecule: updates complete for object %s.\n",I->Obj.Name
     ENDFD;
 }
 /*========================================================================*/
-void ObjectMoleculeInvalidate(ObjectMolecule *I,int rep,int level)
+void ObjectMoleculeInvalidate(ObjectMolecule *I,int rep,int level,int state)
 {
   int a;
   PRINTFD(I->Obj.G,FB_ObjectMolecule)
@@ -8439,11 +8449,23 @@ void ObjectMoleculeInvalidate(ObjectMolecule *I,int rep,int level)
     " ObjectMoleculeInvalidate: invalidating representations...\n"
     ENDFD;
 
-  for(a=0;a<I->NCSet;a++) 
-	 if(I->CSet[a]) {	 
-      if(I->CSet[a]->fInvalidateRep)
-        I->CSet[a]->fInvalidateRep(I->CSet[a],rep,level);
-	 }
+  {
+    int start = 0;
+    int stop = I->NCSet;
+    
+    if(state>=0) {
+      start = state;
+      stop = state+1;
+    } 
+    
+    for(a=start;a<stop;a++) {
+      if(I->CSet[a]) {	 
+        if(I->CSet[a]->fInvalidateRep) {
+          I->CSet[a]->fInvalidateRep(I->CSet[a],rep,level);
+        }
+      }
+    }
+  }
 
   PRINTFD(I->Obj.G,FB_ObjectMolecule)
     " ObjectMoleculeInvalidate: leaving...\n"
@@ -8665,7 +8687,7 @@ void ObjectMoleculeRender(ObjectMolecule *I,int state,CRay *ray,Pickable **pick,
   int a;
 
   PRINTFD(I->Obj.G,FB_ObjectMolecule)
-    " ObjectMolecule: rendering %s...\n",I->Obj.Name
+    " ObjectMolecule: rendering %s pass %d...\n",I->Obj.Name,pass
     ENDFD;
 
   ObjectPrepareContext(&I->Obj,ray);
@@ -8800,7 +8822,10 @@ ObjectMolecule *ObjectMoleculeNew(PyMOLGlobals *G,int discreteFlag)
   I->Obj.fFree= (void (*)(struct CObject *))ObjectMoleculeFree;
   I->Obj.fUpdate=  (void (*)(struct CObject *)) ObjectMoleculeUpdate;
   I->Obj.fGetNFrame = (int (*)(struct CObject *)) ObjectMoleculeGetNFrames;
-  I->Obj.fDescribeElement = (void (*)(struct CObject *,int index,char *buffer)) ObjectMoleculeDescribeElement;
+  I->Obj.fInvalidate = (void (*)(struct CObject *,int rep, int level, int state))
+    ObjectMoleculeInvalidate;
+  I->Obj.fDescribeElement = (void (*)(struct CObject *,int index,char *buffer))
+    ObjectMoleculeDescribeElement;
   I->Obj.fGetSettingHandle = (CSetting **(*)(struct CObject *,int state))
     ObjectMoleculeGetSettingHandle;
   I->Obj.fGetCaption = (char *(*)(struct CObject *))ObjectMoleculeGetCaption;
