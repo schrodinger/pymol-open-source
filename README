@@ -20,6 +20,9 @@ Specific Acknowledgments:
 * Thanks to Ralf Grosse-Kunstleve for his contribution of the "sglite"
 space group and symmetry handling module.
 
+* Thanks to the scientists and management of Sunesis Pharmaceuticals 
+for encouraging PyMOL development since its early days.
+
 * Thanks to the Computational Crystallography Initiative developers
 for their encouragement, ideas, and support. 
 
@@ -27,12 +30,12 @@ for their encouragement, ideas, and support.
 of Mesa/DRI which greatly assisted in the early development of PyMOL.
 
 * Thanks to Michael Love for the first major outside port of PyMOL
-(to GNU/Darwin and Mac OSX) and for constant encouragement.
+(to GNU/Darwin and Mac OSX) and for believing in the cause.
 
 * Thanks for Paul Sherwood for making a concerted effort to develop 
-using PyMOL long before the software and vision were mature.
+using PyMOL long before the software and vision had matured.
 
-* Thanks to the many PyMOL users for the many forms of feedback, 
+* Thanks to hundreds of PyMOL users for the many forms of feedback,
 bug sightings, and encouragement they've provided.
 ----------------------------------------------------------------------
 The PyMOL Team:
@@ -47,6 +50,7 @@ The PyMOL Team:
    
    Other Authors and Contributors:
 
+      Huub van Dam
       Peter Haebel
       Uwe Hoffmann
       Michael Love
