@@ -27,6 +27,7 @@ class AbstractApp(Pmw.MegaWidget):
    frameHeight     = 120
    frameXPos       = 0
    frameYPos       = 0
+   frameAdjust     = 51
    
    padx         = 1
    pady         = 1
@@ -45,12 +46,18 @@ class AbstractApp(Pmw.MegaWidget):
       Pmw.initialise(self.root)
       self.root.title(self.appname)
 
+      if sys.platform!='linux':
+         self.frameAdjust = 31
+      else:
+         self.frameAdjust = 51
+         
       inv = sys.modules.get("pymol.invocation",None)
       if inv!=None:
          self.frameWidth = inv.options.win_x+160
          self.frameXPos = inv.options.win_px
          self.frameHeight = inv.options.ext_y
-         self.frameYPos = inv.options.win_py - (self.frameHeight + 51)
+         self.frameYPos = inv.options.win_py - (
+            self.frameHeight + self.frameAdjust)
       self.root.geometry('%dx%d+%d+%d' % (
          self.frameWidth, self.frameHeight,
          self.frameXPos, self.frameYPos))
