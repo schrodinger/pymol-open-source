@@ -464,13 +464,12 @@ void SettingGenerateSideEffects(int index,char *sele,int state)
     SettingSet(cSetting_line_smooth,0);
     SceneChanged();
     break;
-  case cSetting_line_smooth:
   case cSetting_dot_width:
-    SceneDirty();
-    break;
+  case cSetting_line_smooth:
   case cSetting_ortho:
   case cSetting_ambient:
   case cSetting_bg_rgb:
+  case cSetting_depth_cue:
 	 SceneDirty();
   case cSetting_overlay:
   case cSetting_text:
@@ -828,6 +827,8 @@ void SettingInitGlobal(void)
   SettingSet_f(I,cSetting_static_singletons, 1.0);
 
   SettingSet_f(I,cSetting_max_triangles, 1000000.0);
+
+  SettingSet_f(I,cSetting_depth_cue, 1.0);
 
 }
 

@@ -1414,40 +1414,43 @@ void SceneRender(Pickable *pick,int x,int y)
       glEnable(GL_LIGHT0);
       glLightModelfv(GL_LIGHT_MODEL_AMBIENT,vv);
       /*glLightModeli(GL_LIGHT_MODEL_TWO_SIDE,GL_FALSE);*/
-	
-#ifdef _PYMOL_3DFX
-      if(SettingGet(cSetting_ortho)==0.0) {
-#endif
 
-        glEnable(GL_FOG);
-        glFogf(GL_FOG_MODE, GL_LINEAR);
-        glHint(GL_FOG_HINT,GL_NICEST);
-        glFogf(GL_FOG_START, I->FrontSafe);
-        glFogf(GL_FOG_END, I->Back);
+      if(SettingGet(cSetting_depth_cue)) {
 #ifdef _PYMOL_3DFX
-        if(I->Back>(I->FrontSafe*4.0))
+        if(SettingGet(cSetting_ortho)==0.0) {
+#endif
+          
+          glEnable(GL_FOG);
+          glFogf(GL_FOG_MODE, GL_LINEAR);
+          glHint(GL_FOG_HINT,GL_NICEST);
+          glFogf(GL_FOG_START, I->FrontSafe);
           glFogf(GL_FOG_END, I->Back);
-        else
-          glFogf(GL_FOG_END,I->FrontSafe*4.0);
-        fog_val+=0.0000001;
-        if(fog_val>1.0) fog_val=0.99999;
-        glFogf(GL_FOG_DENSITY, fog_val);
-#else
-        glFogf(GL_FOG_END,I->Back);
-        glFogf(GL_FOG_DENSITY, 1.0);
-#endif
-        v=SettingGetfv(cSetting_bg_rgb);
-        fog[0]=v[0];
-        fog[1]=v[1];
-        fog[2]=v[2];
-        fog[3]=1.0;
-        glFogfv(GL_FOG_COLOR, fog);
 #ifdef _PYMOL_3DFX
-      } else {
-        glDisable(GL_FOG);
-      }
+          if(I->Back>(I->FrontSafe*4.0))
+            glFogf(GL_FOG_END, I->Back);
+          else
+            glFogf(GL_FOG_END,I->FrontSafe*4.0);
+          fog_val+=0.0000001;
+          if(fog_val>1.0) fog_val=0.99999;
+          glFogf(GL_FOG_DENSITY, fog_val);
+#else
+          glFogf(GL_FOG_END,I->Back);
+          glFogf(GL_FOG_DENSITY, 1.0);
 #endif
-
+          v=SettingGetfv(cSetting_bg_rgb);
+          fog[0]=v[0];
+          fog[1]=v[1];
+          fog[2]=v[2];
+          fog[3]=1.0;
+          glFogfv(GL_FOG_COLOR, fog);
+#ifdef _PYMOL_3DFX
+        } else {
+          glDisable(GL_FOG);
+        }
+#endif
+      } else {
+          glDisable(GL_FOG);
+      }
       glColor4ub(255,255,255,255);
       glNormal3fv(normal);
       

@@ -60,6 +60,10 @@ class Setting:
       self.backface_cull = IntVar()
       self.backface_cull.set(int(cmd.get_setting_legacy('backface_cull')))
 
+      self.depth_cue = IntVar()
+      self.depth_cue.set(int(cmd.get_setting_legacy('depth_cue')))
+
+
       self.xref = { 
          'ray_trace_frames':
          (lambda s,a: (cmd.set(a,("%1.0f" % s.ray_trace_frames.get())),
@@ -85,6 +89,8 @@ class Setting:
          (lambda s,a: (cmd.set(a,("%1.0f" % s.static_singletons.get())))),
          'backface_cull'       :
          (lambda s,a: (cmd.set(a,("%1.0f" % s.backface_cull.get())))),
+         'depth_cue'       :
+         (lambda s,a: (cmd.set(a,("%1.0f" % s.depth_cue.get())))),
          }
 
       self.update_code = {
@@ -108,6 +114,8 @@ class Setting:
          (lambda s,t: (s.static_singletons.set(int(t[1][0])))), 
          'backface_cull':
          (lambda s,t: (s.backface_cull.set(int(t[1][0])))), 
+         'depth_cue'       :
+         (lambda s,t: (s.depth_cue.set(int(t[1][0])))), 
         }
       self.active_list = [
          pymol.setting._get_index("ray_trace_frames"),
@@ -121,6 +129,7 @@ class Setting:
          pymol.setting._get_index("auto_zoom"),
          pymol.setting._get_index("static_singletons"),
          pymol.setting._get_index("backface_cull"),
+         pymol.setting._get_index("depth_cue"),
          ]
 
       self.active_dict = {}
