@@ -1031,6 +1031,10 @@ void OrthoReshape(int width, int height)
   int internal_gui_width;
   int internal_feedback;
 
+  PRINTFD(FB_Ortho)
+    " OrthoReshape-Debug: %d %d\n",width,height
+    ENDFD;
+
   if((width!=I->Width)||(height!=I->Height)) {
   if(width<0) width=I->Width;
   if(height<0) height=I->Height;
@@ -1050,8 +1054,8 @@ void OrthoReshape(int width, int height)
     sceneRight = internal_gui_width;
   } else {
     sceneRight = 0;
+    internal_gui_width=0;
   }
-
   block=SceneGetBlock();
   BlockSetMargin(block,0,0,sceneBottom,sceneRight);
   BlockSetMargin(&I->LoopBlock,0,0,sceneBottom,sceneRight);

@@ -1346,7 +1346,7 @@ void SceneReshape(Block *block,int width,int height)
 
   I->Width = width;
   I->Height = height;
-  
+
   I->Block->rect.top = I->Height;
   I->Block->rect.left = 0;
   I->Block->rect.bottom = 0;
