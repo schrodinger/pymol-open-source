@@ -25,11 +25,13 @@ class State:
       
       f = open(self.prefix+".com",'w')
       # get home-relative path
-      pth = os.getcwd()
-      pth = re.sub(r".*\/"+getpass.getuser()+"\/",'',pth)
+#      pth = os.getcwd()
+#      pth = re.sub(r".*\/"+getpass.getuser()+"\/",'',pth)
       # provide io filenames
-      f.write("%s\n%s\n"%(pth+"/"+self.prefix+".dat",
-                          pth+"/"+self.prefix+".out"))
+#      f.write("%s\n%s\n"%(pth+"/"+self.prefix+".dat",
+#                          pth+"/"+self.prefix+".out"))
+      f.write("%s\n%s\n"%(self.prefix+".dat",
+                          self.prefix+".out"))
       f.write(" MMOD       0      1      0      0     0.0000     0.0000     0.0000     0.0000\n")
       # select forcefield treatments
       if not solvation: # no solvent, constant dielectric

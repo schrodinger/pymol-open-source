@@ -22,11 +22,17 @@ def do(run_prefix):
    for a in [ ".m1", ".m2", ".log", ".out" ]:
       if os.path.exists(run_prefix + a):
          os.unlink(run_prefix + a)
-   pth = os.getcwd()
-   pth = re.sub(r".*\/"+getpass.getuser()+"\/",'',pth)
-   cmd = "rsh "+socket.gethostname()+" "+bmin_path+" "+pth+"/"+run_prefix
+   pth = "."
+#   pth = os.getcwd()
+#   pth = re.sub(r".*\/"+getpass.getuser()+"\/",'',pth)
+#   cmd = "rsh "+socket.gethostname()+" "+bmin_path+" "+pth+"/"+run_prefix
+   cmd = bmin_path+" "+pth+"/"+run_prefix
    print cmd
    os.system(cmd)
+   os.system("ls")
+   while 1:
+      if os.path.exists(run_prefix+".out"): break
+      time.sleep(0.1)
    if feedback['bmin']:
       os.system("cat bmintmp.log")
       print " "+str(__name__)+': bmin job complete. ' 

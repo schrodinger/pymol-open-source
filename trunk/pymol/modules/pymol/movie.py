@@ -16,7 +16,7 @@ import cmd
 import glob
 import math
 
-def load(*args):
+def load(*args,**kw):
    nam = "mov"
    if len(args)>1:
       nam = args[1]
@@ -26,7 +26,8 @@ def load(*args):
       print "Error: no matching files"
    else:
       for a in fils:
-         cmd.load(a,nam)
+         apply(cmd.load,(a,nam),kw)
+#         cmd.load(a,nam)
 
 def rock(first,last,angle=30,phase=0,loop=1,axis='y'):
    first=int(first)
