@@ -61,6 +61,7 @@ if __name__=='pymol.importing':
       fld = 28      # AVS field format (not yet general -- just uniform allowed)
       brix = 29     # BRIX/DSN6/O map format
       grd = 30      # Insight II Grid format
+      pqr = 31      # PQR file (modified PDB file for APBS)
       
    loadable_sc = Shortcut(loadable.__dict__.keys()) 
 
@@ -365,7 +366,8 @@ NOTES
    'top' : AMBER topology file 'rst' : AMBER restart file
    'cex' : Metaphorics CEX format
    'pse' : PyMOL Session file
-
+   'pqr' : PQR (a modified PDB file with charges and radii)
+   
 SEE ALSO
 
    save
@@ -424,6 +426,8 @@ SEE ALSO
                ftype = loadable.phi
             elif re.search("\.fld$",filename,re.I):
                ftype = loadable.fld
+            elif re.search("\.pqr$",filename,re.I):
+               ftype = loadable.pqr
             elif re.search("\.o$|\.dsn6$|\.brix$|\.omap$",filename,re.I):
                ftype = loadable.brix
             elif re.search("\.grd$",filename,re.I):
