@@ -97,7 +97,7 @@ int ObjectFromPyList(PyObject *list,CObject *I)
   if(ok&&(ll>10)) ok = PConvPyIntToInt(PyList_GetItem(list,10),&I->Context);
   if(ok&&(ll>11)) ok = 
       PConvPyListToFloatArrayInPlaceAutoZero(
-            PyList_GetItem(list,11),&I->TTT,16);
+            PyList_GetItem(list,11),I->TTT,16);
 
   /* TO SUPPORT BACKWARDS COMPATIBILITY...
    Always check ll when adding new PyList_GetItem's */
