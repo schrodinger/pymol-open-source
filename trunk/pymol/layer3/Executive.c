@@ -1324,10 +1324,11 @@ int ExecutiveMapNew(char *name,int type,float *grid,
   int isNew=true;
   int n_state;
   int valid_extent=false;
-  md=&_md;
   int st;
   int st_once_flag=true;
   int n_st;
+
+  md=&_md;
 
   if(state==-2) state=SceneGetState();
 
@@ -4082,12 +4083,13 @@ int ExecutiveColor(char *name,char *color,int flags,int quiet)
 char *ExecutiveFindBestNameMatch(char *name)
 {
   char *result;
-  result = name;
   CExecutive *I = &Executive;
   SpecRec *rec=NULL,*best_rec = NULL;
   int best;
   int wm;
+
   best = 0;
+  result = name;
 
   while(ListIterate(I->Spec,rec,next)) {
     wm = WordMatch(name,rec->name,true);
