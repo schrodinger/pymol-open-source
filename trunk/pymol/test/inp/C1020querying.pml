@@ -165,6 +165,29 @@ overlap pept,pept
 
 phi_psi all
 
+# 
+
+dele all
+
+load dat/pept.pdb
+get_symmetry
+get_symmetry pept
+get_symmetry none
+load dat/3al1.pdb
+get_symmetry
+get_symmetry 3al1
+get_symmetry pept
+
+hide
+show cell,pept
+ray renderer=2
+
+apply(cmd.set_symmetry,["pept"]+cmd.get_symmetry("3al1"))
+
+get_symmetry pept
+get_symmetry 3al1
+ray renderer=2
+
 /print "END-LOG"
 
 
