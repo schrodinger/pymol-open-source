@@ -2700,14 +2700,14 @@ static PyObject *CmdFlag(PyObject *self, 	PyObject *args)
   char *str1;
   int flag;
   int action;
-  int indicate;
+  int quiet;
   OrthoLineType s1;
   int ok=false;
-  ok = PyArg_ParseTuple(args,"isii",&flag,&str1,&action,&indicate);
+  ok = PyArg_ParseTuple(args,"isii",&flag,&str1,&action,&quiet);
   if (ok) {
     APIEntry();
     SelectorGetTmp(str1,s1);
-    ExecutiveFlag(flag,s1,action,indicate);
+    ExecutiveFlag(flag,s1,action,quiet);
     SelectorFreeTmp(s1);
     APIExit();
   }

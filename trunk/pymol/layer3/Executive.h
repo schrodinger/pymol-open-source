@@ -79,7 +79,7 @@ int ExecutiveGetExtent(char *name,float *mn,float *mx,int transformed,int state)
 void ExecutiveSeleToObject(char *name,char *s1,int source,int target);
 PyObject *ExecutiveSeleToChemPyModel(char *s1,int state);
 void ExecutiveInvalidateRep(char *name,int rep,int level);
-void ExecutiveFlag(int flag,char *s1,int action,int indicate);
+void ExecutiveFlag(int flag,char *s1,int action,int quiet);
 void ExecutiveRemoveAtoms(char *s1);
 void ExecutiveProtect(char *s1,int mode);
 void ExecutiveMask(char *s1,int mode);

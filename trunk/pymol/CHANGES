@@ -107,6 +107,8 @@ Current Bugs to Fix
 
 Changes up to 0.82
 
+   * flag command no longer indicates atoms by default -- set "auto_indicate_flags"
+
    * cross-eye side-by-side stereo support
 
    * fixed bug in valency display code
