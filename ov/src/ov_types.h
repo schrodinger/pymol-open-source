@@ -19,7 +19,7 @@ typedef unsigned __int64     ov_uint64;
 #else
 typedef signed long long     ov_int64;
 typedef unsigned long long   ov_uint64;
-typedef 
+
 #endif
 typedef float                ov_float32;
 typedef double               ov_float64;   
