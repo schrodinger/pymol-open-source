@@ -31,6 +31,8 @@ typedef struct SphereRec {
   int nDot;
   int *Tri;
   int NTri;
+  int *Mesh;
+  int NMesh;
 } SphereRec;
 
 extern SphereRec *Sphere0;
