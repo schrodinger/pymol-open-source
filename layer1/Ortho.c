@@ -18,7 +18,6 @@ Z* -------------------------------------------------------------------
 #include"os_std.h"
 #include"os_gl.h"
 
-
 #include"main.h"
 #include"Version.h"
 #include"MemoryDebug.h"
@@ -433,9 +432,9 @@ void OrthoBusyDraw(int force)
           y-=cBusySpacing;
         }
         
-        glDrawBuffer(GL_BACK);
         glFlush();
-      }
+        glDrawBuffer(GL_BACK);
+       }
       OrthoPopMatrix();
       OrthoDirty();/* switched from SceneDirty */
     I->BusyLast=now;
@@ -1577,7 +1576,7 @@ void OrthoPushMatrix(void)
     glMatrixMode(GL_MODELVIEW);
     glPushMatrix();
     glLoadIdentity();
-    glTranslatef(0.375F,0.375F,0.0F);
+    glTranslatef(0.0F,0.0F,0.0F);
 
     glDisable(GL_LIGHTING);
     glDisable(GL_FOG);
@@ -1587,7 +1586,7 @@ void OrthoPushMatrix(void)
     glDisable(GL_LINE_SMOOTH);
     glDisable(GL_DITHER);
     glDisable(GL_BLEND);
-  }
+   }
   /*  glDisable(GL_ALPHA_TEST);
   glDisable(GL_CULL_FACE);
   glDisable(GL_POINT_SMOOTH);*/
