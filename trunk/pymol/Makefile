@@ -94,7 +94,7 @@ unix-mindep: unix-mindep-build
 	cd $(MINDEP);tar -cvf - pymol | gzip > ../pymol-0_xx-bin-xxxxx-mindep.tgz
 
 unix-helper: unix-mindep-build
-	cp setup/setup.sh.unix-fedora $(MDP)/setup.sh
+	cp setup/setup.sh.unix-helper $(MDP)/setup.sh
 	cd $(MINDEP);tar -cvf - pymol | gzip > ../helperpymol-0_xx-bin-xxxxx-mindep.tgz
 
 irix-mindep: semistatic
