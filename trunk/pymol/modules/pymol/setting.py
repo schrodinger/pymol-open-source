@@ -304,7 +304,7 @@ if __name__=='pymol.setting':
       ray_oversample_cutoff = 270
       gaussian_resolution   = 271
       gaussian_b_floor      = 272
-      sculpt_nb_skip        = 273
+      sculpt_nb_interval    = 273
       
    setting_sc = Shortcut(SettingIndex.__dict__.keys())
 
