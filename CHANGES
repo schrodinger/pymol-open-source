@@ -4,6 +4,8 @@ CHANGE LOG
 
 Changes up to 0.98
 
+   * fixed quiet setting for align function
+
    * surface optimize subsets setting
 
    * .pov file via save command

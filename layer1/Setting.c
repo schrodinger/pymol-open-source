@@ -1144,6 +1144,9 @@ void SettingGenerateSideEffects(PyMOLGlobals *G,int index,char *sele,int state)
   case cSetting_seq_view_color:
     SeqChanged(G);
     break;
+  case cSetting_static_singletons:
+    SeqChanged(G);
+    break;
   case cSetting_seq_view_location:
   case cSetting_seq_view_overlay:
     PParse("cmd.viewport(-1,-1)");
@@ -2395,6 +2398,7 @@ void SettingInitGlobal(PyMOLGlobals *G,int alloc,int reset_gui)
   SettingSet_f(I,cSetting_cartoon_putty_range, 2.0F);
   SettingSet_b(I,cSetting_cartoon_side_chain_helper, 0);
   SettingSet_b(I,cSetting_surface_optimize_subsets, 1);
+  SettingSet_i(I,cSetting_multiplex, -1);
 
 }
 

@@ -416,7 +416,8 @@ if __name__=='pymol.setting':
       cartoon_putty_range = (382, '', '')
       cartoon_side_chain_helper = (383, '')            
       surface_optimize_subsets = (384, '')
-   
+      multiplex            = (385, '')
+      
    setting_sc = Shortcut(SettingIndex.__dict__.keys())
 
    index_list = []

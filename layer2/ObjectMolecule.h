@@ -213,6 +213,10 @@ typedef struct {
   M4XAlignType *align;
 } M4XAnnoType;
 
+typedef struct {
+  char name[ObjNameMax];
+} ObjMolMultiplexType;
+
 void M4XAnnoInit(M4XAnnoType *m4x);
 void M4XAnnoPurge(M4XAnnoType *m4x);
 
@@ -245,7 +249,6 @@ ObjectMolecule *ObjectMoleculeLoadXYZFile(PyMOLGlobals *G,ObjectMolecule *obj,ch
 ObjectMolecule *ObjectMoleculeLoadPDBFile(PyMOLGlobals *G,ObjectMolecule *obj,char *fname,int frame,int discrete,M4XAnnoType *m4x,PDBInfoRec *pdb_info);
 ObjectMolecule *ObjectMoleculeLoadPMOFile(PyMOLGlobals *G,ObjectMolecule *obj,char *fname,int frame,int discrete);
 ObjectMolecule *ObjectMoleculeLoadMOLFile(PyMOLGlobals *G,ObjectMolecule *obj,char *fname,int frame,int discrete);
-ObjectMolecule *ObjectMoleculeLoadMOL2File(PyMOLGlobals *G,ObjectMolecule *obj,char *fname,int frame,int discrete);
 ObjectMolecule *ObjectMoleculeLoadMMDFile(PyMOLGlobals *G,ObjectMolecule *obj,char *fname,
                                           int frame,char *sepPrefix,int discrete);
 ObjectMolecule *ObjectMoleculeLoadTOPFile(PyMOLGlobals *G,ObjectMolecule *obj,char *fname,int frame,int discrete);
@@ -263,7 +266,11 @@ ObjectMolecule *ObjectMoleculeLoadCoords(PyMOLGlobals *G,ObjectMolecule *I,PyObj
 ObjectMolecule *ObjectMoleculeReadPMO(PyMOLGlobals *G,ObjectMolecule *obj,CRaw *pmo,int frame,int discrete);
 
 ObjectMolecule *ObjectMoleculeReadMOLStr(PyMOLGlobals *G,ObjectMolecule *obj,char *molstr,int frame,int discrete);
-ObjectMolecule *ObjectMoleculeReadMOL2Str(PyMOLGlobals *G,ObjectMolecule *obj,char *molstr,int frame,int discrete);
+ObjectMolecule *ObjectMoleculeReadMOL2Str(PyMOLGlobals *G,ObjectMolecule *I,
+                                          char *MOLStr,int frame,int discrete,
+                                          int quiet,int multiplex, char *new_name,
+                                          char **next_entry);
+
 ObjectMolecule *ObjectMoleculeReadPDBStr(PyMOLGlobals *G,ObjectMolecule *obj,char *molstr,
                                          int frame,int discrete,
                                          M4XAnnoType *m4x,char *pdb_name,

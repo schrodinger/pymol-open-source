@@ -135,13 +135,15 @@ int MatchResidueToCode(CMatch *I,int *vla,int n)
   return(ok);
 }
 
-int MatchPreScore(CMatch *I,int *vla1,int n1,int *vla2,int n2)
+int MatchPreScore(CMatch *I,int *vla1,int n1,int *vla2,int n2,int quiet)
 {
   PyMOLGlobals *G=I->G;
   int a,b;
-  PRINTFB(G,FB_Match,FB_Details)
-    " Match: assigning %d x %d pairwise scores.\n",n1,n2
-    ENDFB(G);
+  if(!quiet) {
+    PRINTFB(G,FB_Match,FB_Details)
+      " Match: assigning %d x %d pairwise scores.\n",n1,n2
+      ENDFB(G);
+  }
 
   for(a=0;a<n1;a++) {
     for(b=0;b<n2;b++) {
@@ -152,7 +154,7 @@ int MatchPreScore(CMatch *I,int *vla1,int n1,int *vla2,int n2)
 }
 
 
-int MatchMatrixFromFile(CMatch *I,char *fname)
+int MatchMatrixFromFile(CMatch *I,char *fname,int quiet)
 {
   PyMOLGlobals *G=I->G;
 
@@ -250,15 +252,17 @@ int MatchMatrixFromFile(CMatch *I,char *fname)
     }
   }
   if(ok) {
-    PRINTFB(G,FB_Match,FB_Details)
-      " Match: read scoring matrix.\n"
-      ENDFB(G);
+    if(!quiet) {
+      PRINTFB(G,FB_Match,FB_Details)
+        " Match: read scoring matrix.\n"
+        ENDFB(G);
+    }
   }
   FreeP(code);
   return(ok);
 }
 
-float MatchAlign(CMatch *I,float gap_penalty,float ext_penalty,int max_skip)
+float MatchAlign(CMatch *I,float gap_penalty,float ext_penalty,int max_skip,int quiet)
 {
   PyMOLGlobals *G=I->G;
   unsigned int dim[2];
@@ -277,9 +281,11 @@ float MatchAlign(CMatch *I,float gap_penalty,float ext_penalty,int max_skip)
   nf = I->na+2;
   ng = I->nb+2;
 
-  PRINTFB(G,FB_Match,FB_Actions)
-    " MatchAlign: aligning residues (%d vs %d)...\n",I->na,I->nb
-    ENDFB(G);
+  if(!quiet) {
+    PRINTFB(G,FB_Match,FB_Actions)
+      " MatchAlign: aligning residues (%d vs %d)...\n",I->na,I->nb
+      ENDFB(G);
+  }
 
   dim[0]=nf;
   dim[1]=ng;
@@ -406,9 +412,11 @@ float MatchAlign(CMatch *I,float gap_penalty,float ext_penalty,int max_skip)
   PRINTFD(G,FB_Match)
     " MatchAlign-DEBUG: best entry %8.3f %d %d %d\n",mxv,mxa,mxb,cnt
     ENDFD;
-  PRINTFB(G,FB_Match,FB_Results) 
-    " MatchAlign: score %1.3f\n",mxv
-    ENDFD;
+  if(!quiet) {
+    PRINTFB(G,FB_Match,FB_Results) 
+      " MatchAlign: score %1.3f\n",mxv
+      ENDFD;
+  }
   if(cnt)
     mxv = mxv/cnt;
   VLASize(I->pair,int,(p-I->pair));

@@ -5805,6 +5805,7 @@ static CoordSet *ObjectMoleculeMOLStr2CoordSet(PyMOLGlobals *G,char *buffer,Atom
 }
 
 /*========================================================================*/
+
 ObjectMolecule *ObjectMoleculeReadMOLStr(PyMOLGlobals *G,ObjectMolecule *I,char *MOLStr,int frame,int discrete)
 {
   int ok = true;
@@ -5924,7 +5925,9 @@ ObjectMolecule *ObjectMoleculeLoadMOLFile(PyMOLGlobals *G,ObjectMolecule *obj,ch
 }
 
 /*========================================================================*/
-static CoordSet *ObjectMoleculeMOL2Str2CoordSet(PyMOLGlobals *G,char *buffer,AtomInfoType **atInfoPtr,char **next_mol)
+
+static CoordSet *ObjectMoleculeMOL2Str2CoordSet(PyMOLGlobals *G,char *buffer,
+                                                AtomInfoType **atInfoPtr,char **next_mol)
 {
   char *p;
   int nAtom,nBond;
@@ -6164,7 +6167,11 @@ static CoordSet *ObjectMoleculeMOL2Str2CoordSet(PyMOLGlobals *G,char *buffer,Ato
 }
 
 /*========================================================================*/
-ObjectMolecule *ObjectMoleculeReadMOL2Str(PyMOLGlobals *G,ObjectMolecule *I,char *MOLStr,int frame,int discrete)
+
+ObjectMolecule *ObjectMoleculeReadMOL2Str(PyMOLGlobals *G,ObjectMolecule *I,
+                                          char *MOLStr,int frame,int discrete,
+                                          int quiet,int multiplex, char *new_name,
+                                          char **next_entry)
 {
   int ok = true;
   CoordSet *cset=NULL;
@@ -6174,7 +6181,9 @@ ObjectMolecule *ObjectMoleculeReadMOL2Str(PyMOLGlobals *G,ObjectMolecule *I,char
   char *restart=NULL,*start;
   int repeatFlag=true;
   int successCnt = 0;
+  char tmpName[ObjNameMax];
 
+  *next_entry = NULL;
 
   start=MOLStr;
   while(repeatFlag) {
@@ -6228,6 +6237,9 @@ ObjectMolecule *ObjectMoleculeReadMOL2Str(PyMOLGlobals *G,ObjectMolecule *I,char
           }
         }
 
+        if(multiplex>0) 
+          UtilNCopy(tmpName,cset->Name,ObjNameMax);
+
         cset->Obj = I;
         cset->fEnumIndices(cset);
         if(cset->fInvalidateRep)
@@ -6253,18 +6265,25 @@ ObjectMolecule *ObjectMoleculeReadMOL2Str(PyMOLGlobals *G,ObjectMolecule *I,char
         ObjectMoleculeUpdateIDNumbers(I);
         ObjectMoleculeUpdateNonbonded(I);
         successCnt++;
-        if(successCnt>1) {
-          if(successCnt==2) {
+        if(!quiet) {
+          if(successCnt>1) {
+            if(successCnt==2) {
+              PRINTFB(G,FB_ObjectMolecule,FB_Actions)
+                " ObjectMolReadMOL2Str: read molecule %d\n",1
+                ENDFB(G);
+            }
             PRINTFB(G,FB_ObjectMolecule,FB_Actions)
-              " ObjectMolReadMOL2Str: read molecule %d\n",1
+            " ObjectMolReadMOL2Str: read molecule %d\n",successCnt
               ENDFB(G);
           }
-          PRINTFB(G,FB_ObjectMolecule,FB_Actions)
-            " ObjectMolReadMOL2Str: read molecule %d\n",successCnt
-            ENDFB(G);
         }
       }
-    if(restart) {
+    if(multiplex>0) {
+      UtilNCopy(new_name,tmpName,ObjNameMax);
+      if(restart) {
+        *next_entry = restart;
+      }
+    } else if(restart) {
       repeatFlag=true;
       start=restart;
       frame=frame+1;
@@ -6272,8 +6291,13 @@ ObjectMolecule *ObjectMoleculeReadMOL2Str(PyMOLGlobals *G,ObjectMolecule *I,char
   }
   return(I);
 }
+#if 0
 /*========================================================================*/
-ObjectMolecule *ObjectMoleculeLoadMOL2File(PyMOLGlobals *G,ObjectMolecule *obj,char *fname,int frame,int discrete)
+ObjectMolecule *ObjectMoleculeLoadMOL2File(PyMOLGlobals *G,
+                                           ObjectMolecule *obj,
+                                           char *fname,int frame,
+                                           int discrete,int quiet,
+                                           int multiplex)
 {
   ObjectMolecule* I=NULL;
   int ok=true;
@@ -6301,13 +6325,13 @@ ObjectMolecule *ObjectMoleculeLoadMOL2File(PyMOLGlobals *G,ObjectMolecule *obj,c
 		fread(p,size,1,f);
 		p[size]=0;
 		fclose(f);
-		I=ObjectMoleculeReadMOL2Str(G,obj,buffer,frame,discrete);
+		I=ObjectMoleculeReadMOL2Str(G,obj,buffer,frame,discrete,multiplex,quiet);
 		mfree(buffer);
 	 }
 
   return(I);
 }
-
+#endif
 /*========================================================================*/
 void ObjectMoleculeMerge(ObjectMolecule *I,AtomInfoType *ai,
                          CoordSet *cs,int bondSearchFlag,int aic_mask)
@@ -6323,7 +6347,6 @@ void ObjectMoleculeMerge(ObjectMolecule *I,AtomInfoType *ai,
 
   oldNAtom = I->NAtom;
   oldNBond = I->NBond;
-
 
   /* first, sort the coodinate set */
   

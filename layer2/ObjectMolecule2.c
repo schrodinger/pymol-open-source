@@ -994,8 +994,22 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(PyMOLGlobals *G,
               (p[5]=='R'))
         {
           if(pdb_name) {
-            p=nskip(p,62);
-            p=ntrim(pdb_name,p,4);
+            if(atomCount>0) {
+              /* have we already read atoms?  then this is probably a new PDB file */
+              (*next_pdb) = p; /* found another PDB file after this one... */
+              break;
+            } else {
+              char *pp;
+              pp=nskip(p,62);
+              pp=ntrim(pdb_name,pp,4);
+              if(pdb_name[0]==0) {
+                p=nskip(p,6);
+                p=ntrim(cc,p,44);
+                UtilNCopy(pdb_name,cc,ObjNameMax-1);
+              } else {
+                p=pp;
+              }
+            }
           }
         }
 		else if((p[0]=='M')&& /* MODEL */

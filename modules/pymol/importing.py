@@ -340,18 +340,17 @@ SEE ALSO
 
 
 
-   def load(filename,object='',state=0,format='',finish=1,discrete=None,quiet=1):
+   def load(filename,object='',state=0,format='',finish=1,discrete=None,quiet=1,multiplex=None):
       '''
 DESCRIPTION
 
    "load" reads several file formats.  The file extension is used to
    determine the format.  PDB files must end in ".pdb", MOL files must
-   end in ".mol", Macromodel files must end in ".mmod", XPLOR
-   maps must end in ".xplor", CCP4 maps must end in ".ccp4",
-   Raster3D input (Molscript output) must end in ".r3d", PyMOL session
-   files must end in ".pse"
-
-   Pickled ChemPy models with a ".pkl" can also be directly read.
+   end in ".mol", Macromodel files must end in ".mmod", XPLOR maps
+   must end in ".xplor", CCP4 maps must end in ".ccp4", Raster3D input
+   (Molscript output) must end in ".r3d", PyMOL session files must end
+   in ".pse", and pickled ChemPy models with a ".pkl" can also be directly
+   read.
 
    If an object is specified, then the file is loaded into that object.
    Otherwise, an object is created with the same name as the file
@@ -398,6 +397,8 @@ SEE ALSO
          else:
             discrete_default = 0
             discrete = int(discrete)
+         if multiplex==None:
+            multiplex=-2
          fname = filename
          fname = os.path.expanduser(fname)
          fname = os.path.expandvars(fname)
@@ -517,12 +518,11 @@ SEE ALSO
 
          if ftype == loadable.mol2:
             if discrete_default==1: # make mol2 files discrete by default
-               discrete = 1
+               discrete = -1
                
    # standard file handling
-
          if ftype>=0:
-            r = _load(oname,fname,state,ftype,finish,discrete,quiet)
+            r = _load(oname,fname,state,ftype,finish,discrete,quiet,multiplex)
       finally:
          unlock()
       return r
@@ -554,7 +554,7 @@ NOTES
       try:
          lock()
          r = _cmd.load(str(name),str(molstr),int(state)-1,
-                       loadable.molstr,int(finish),int(discrete),int(quiet))
+                       loadable.molstr,int(finish),int(discrete),int(quiet),0)
       finally:
          unlock()
       return r
@@ -577,10 +577,10 @@ DESCRIPTION
             quiet = 1
          if len(arg)==2:
             oname = string.strip(arg[1])
-            r = _cmd.load(str(oname),arg[0],-1,int(ftype),1,1,quiet)
+            r = _cmd.load(str(oname),arg[0],-1,int(ftype),1,1,quiet,0)
          elif len(arg)==3:
             oname = string.strip(arg[1])
-            r = _cmd.load(str(oname),arg[0],int(arg[2])-1,int(ftype),1,1,quiet)
+            r = _cmd.load(str(oname),arg[0],int(arg[2])-1,int(ftype),1,1,quiet,0)
          else:
             print "argument error."
       finally:
@@ -618,7 +618,7 @@ NOTES
          ftype = loadable.pdbstr
          oname = string.strip(str(name))
          r = _cmd.load(str(oname),pdb,int(state)-1,int(ftype),
-                          int(finish),int(discrete),int(quiet))
+                          int(finish),int(discrete),int(quiet),0)
       finally:
          unlock()
       return r
@@ -647,7 +647,7 @@ NOTES
          ftype = loadable.xplorstr
          oname = string.strip(str(name))
          r = _cmd.load(str(oname),xplor,int(state)-1,int(ftype),
-                          int(finish),int(discrete),int(quiet))
+                          int(finish),int(discrete),int(quiet),0)
       finally:
          unlock()
       return r

@@ -32,6 +32,44 @@ int ObjectGetNFrames(CObject *I);
 void ObjectDescribeElement(struct CObject *I,int index,char *buffer);
 CSetting **ObjectGetSettingHandle(struct CObject *I,int state);
 
+void ObjectMakeValidName(char *name)
+{
+  char *p=name,*q;
+  if(p) {
+    while(*p) {
+      if((*p<45)||(*p>122)||
+         ((*p>57)&&(*p<65))||
+         ((*p>90)&&(*p<94))||
+         (*p==47)||(*p==60))
+        /* must be an ASCII-visible character */
+        *p='_';
+      p++;
+    }
+    /* eliminate sequential and terminal underscores */
+    p=name;
+    q=name;
+    while(*p) {
+      if(q==name)
+        while(*p=='_')
+          p++;
+      while((*p=='_')&&(p[1]=='_'))
+        p++;
+      *q++=*p++;
+      if(!p[-1])
+        break;
+    }
+    *q=0;
+    while(q>name) {
+      if(q[-1]=='_') {
+        q[-1]=0;
+        q--;
+      } else
+        break;
+    }
+
+  }
+}
+
 int ObjectGetCurrentState(CObject *I,int ignore_all_states)
 {
   int state=-2;
@@ -216,6 +254,7 @@ void ObjectSetRepVis(CObject *I,int rep,int state)
 void ObjectSetName(CObject *I,char *name)
 {
   UtilNCopy(I->Name,name,ObjNameMax);
+  ObjectMakeValidName(I->Name);
 }
 /*========================================================================*/
 void ObjectRenderUnitBox(struct CObject *this,int frame,CRay *ray,Pickable **pick,int pass);

@@ -78,6 +78,7 @@ void ObjectResetTTT(CObject *I);
 PyObject *ObjectAsPyList(CObject *I);
 int ObjectFromPyList(PyMOLGlobals *G,PyObject *list,CObject *I);
 int ObjectGetCurrentState(CObject *I,int ignore_all_states);
+void ObjectMakeValidName(char *name);
 
 #endif
 
