@@ -36,8 +36,8 @@ Z* -------------------------------------------------------------------
 #define cPopUpCharMargin 2
 #define cPopUpCharLift 2
 
-#define cChildDelay 0.30
-#define cDirtyDelay 0.1
+#define cChildDelay 0.25
+#define cDirtyDelay 0.05
 
 typedef struct CPopUp {
   Block *Block;
@@ -200,33 +200,40 @@ int PopUpConvertY(CPopUp *I,int value,int mode)
         }
       }
   } else {
-    result = 0;
     flag=false;
     /* height to line */
-    for(a=0;a<I->NLine;a++)
-      {
-        switch(I->Code[a]) {
-        case 0:
-          if(value<cPopUpBarHeight)
-            flag=true;
-          value-=cPopUpBarHeight;
-          break;
-        case 1:
-          if(value<cPopUpLineHeight)
-            flag=true;
-          value-=cPopUpLineHeight;
-          break;
-        case 2:
-          if(value<cPopUpLineHeight)
-            flag=true;
-          value-=cPopUpTitleHeight;
-          break;
+    if(value<0) {
+      result = -1;
+    } else {
+      result = 0;
+      for(a=0;a<I->NLine;a++)
+        {
+          switch(I->Code[a]) {
+          case 0:
+            if(value<cPopUpBarHeight)
+              flag=true;
+            value-=cPopUpBarHeight;
+            break;
+          case 1:
+            if(value<cPopUpLineHeight)
+              flag=true;
+            value-=cPopUpLineHeight;
+            break;
+          case 2:
+            if(value<cPopUpLineHeight)
+              flag=true;
+            value-=cPopUpTitleHeight;
+            break;
+          }
+          if(flag) break;
+          result++;
         }
-        if(flag) break;
-        result++;
-      }
-    if(result&&!I->Code[result])
-      result--;
+      if(!flag)
+        result = -1;
+      else
+        if(result&&!I->Code[result])
+          result--;
+    }
     /* height to line */
   }
   return(result);
@@ -430,7 +437,7 @@ int PopUpDrag(Block *block,int x,int y,int mod)
     }
   }
   /* delay updates, etc. so that child menus 
-     can be easily accessed with sloppy mousing */
+     can be comfortably accessed with sloppy mousing */
 
   if((I->Child)&&(I->Selected!=I->ChildLine))
     MainDragDirty();
@@ -560,8 +567,8 @@ void PopUpDraw(Block *block)
       glBegin(GL_POLYGON);
       glVertex2i(x,y);
       glVertex2i(x+I->Width,y);
-      glVertex2i(x+I->Width,y-(cPopUpLineHeight+cPopUpCharMargin));
-      glVertex2i(x,y-(cPopUpLineHeight+cPopUpCharMargin));
+      glVertex2i(x+I->Width,y-(cPopUpLineHeight+cPopUpCharMargin+1));
+      glVertex2i(x,y-(cPopUpLineHeight+cPopUpCharMargin+1));
       glEnd();
     }
 
