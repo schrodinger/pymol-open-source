@@ -1049,6 +1049,8 @@ void SettingGenerateSideEffects(int index,char *sele,int state)
   case cSetting_stereo_mode:
     SceneUpdateStereoMode();
     break;
+  case cSetting_dot_lighting:
+  case cSetting_mesh_lighting:
   case cSetting_light:
   case cSetting_fog:
   case cSetting_fog_start:
@@ -1071,6 +1073,7 @@ void SettingGenerateSideEffects(int index,char *sele,int state)
     break;
   case cSetting_min_mesh_spacing:
   case cSetting_mesh_mode:
+  case cSetting_mesh_type:
   case cSetting_mesh_solvent:
   case cSetting_mesh_quality:
     ExecutiveInvalidateRep(inv_sele,cRepMesh,cRepInvRep);
@@ -1586,7 +1589,7 @@ void SettingInitGlobal(int alloc,int reset_gui)
 
   SettingSet_f(I,cSetting_test2, 1.0F);
 
-  SettingSet_f(I,cSetting_surface_best, 0.2F);
+  SettingSet_f(I,cSetting_surface_best, 0.25F);
 
   SettingSet_f(I,cSetting_surface_normal, 0.5F);
 
@@ -2198,6 +2201,11 @@ void SettingInitGlobal(int alloc,int reset_gui)
   SettingSet_b(I,cSetting_dot_normals,1);
   SettingSet_b(I,cSetting_session_migration,1);
   SettingSet_b(I,cSetting_mesh_normals,1);
+  SettingSet_b(I,cSetting_mesh_type,0);
+
+  SettingSet_b(I,cSetting_dot_lighting,1);
+  SettingSet_b(I,cSetting_mesh_lighting,0);
+
 }
 
 

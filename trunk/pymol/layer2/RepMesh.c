@@ -40,10 +40,10 @@ typedef struct RepMesh {
   float Radius,Width;
   int oneColorFlag;
   int oneColor;
-  CObject *Obj;
   int *LastVisib;
   int *LastColor;
   float max_vdw;
+  int mesh_type;
 } RepMesh;
 
 #include"ObjectMolecule.h"
@@ -88,7 +88,7 @@ void RepMeshRender(RepMesh *I,CRay *ray,Pickable **pick)
       }
       if(I->oneColorFlag) 
         col=ColorGet(I->oneColor);
-		ray->fColor3fv(ray,ColorGet(I->Obj->Color));
+		ray->fColor3fv(ray,ColorGet(I->R.obj->Color));
 		while(*n)
 		  {
 			 c=*(n++);
@@ -116,8 +116,12 @@ void RepMeshRender(RepMesh *I,CRay *ray,Pickable **pick)
 	 }
   } else if(pick&&PMGUI) {
   } else if(PMGUI) {
-    
     int use_dlst;
+    int lighting = SettingGet_f(I->R.cs->Setting,I->R.obj->Setting,cSetting_mesh_lighting);
+    SceneResetNormal(true);
+    if(!lighting)
+      glDisable(GL_LIGHTING);
+    
     use_dlst = (int)SettingGet(cSetting_use_display_lists);
     if(use_dlst&&I->R.displayList) {
       glCallList(I->R.displayList);
@@ -133,44 +137,76 @@ void RepMeshRender(RepMesh *I,CRay *ray,Pickable **pick)
         }
       }
       
-      glLineWidth(I->Width);
-      if(n) {
-        glDisable(GL_LIGHTING);
-        if(I->oneColorFlag) {
-          while(*n)
-            {
-              glColor3fv(ColorGet(I->oneColor));
-              c=*(n++);
-              glBegin(GL_LINE_STRIP);
-              while(c--) {
-                glVertex3fv(v);
-                v+=3;
+      switch(I->mesh_type) {
+      case 0:
+        glLineWidth(I->Width);
+        if(n) {
+          if(I->oneColorFlag) {
+            while(*n)
+              {
+                glColor3fv(ColorGet(I->oneColor));
+                c=*(n++);
+                glBegin(GL_LINE_STRIP);
+                while(c--) {
+                  glVertex3fv(v);
+                  v+=3;
+                }
+                glEnd();
               }
-              glEnd();
-            }
-        } else {
-          while(*n)
-            {
-              c=*(n++);
-              glBegin(GL_LINE_STRIP);
-              while(c--) {
-                glColor3fv(vc);
-                vc+=3;
-                glVertex3fv(v);
-                v+=3;
+          } else {
+            while(*n)
+              {
+                c=*(n++);
+                glBegin(GL_LINE_STRIP);
+                while(c--) {
+                  glColor3fv(vc);
+                  vc+=3;
+                  glVertex3fv(v);
+                  v+=3;
+                }
+                glEnd();
               }
-              glEnd();
-            }
-          
-          
+          }
         }
-        glEnable(GL_LIGHTING);
+      break;
+      case 1:
+        glPointSize(SettingGet_f(I->R.cs->Setting,I->R.obj->Setting,cSetting_dot_width));
+        if(n) {
+          if(I->oneColorFlag) {
+            while(*n)
+              {
+                glColor3fv(ColorGet(I->oneColor));
+                c=*(n++);
+                glBegin(GL_POINTS);
+                while(c--) {
+                  glVertex3fv(v);
+                  v+=3;
+                }
+                glEnd();
+              }
+          } else {
+            while(*n)
+              {
+                c=*(n++);
+                glBegin(GL_POINTS);
+                while(c--) {
+                  glColor3fv(vc);
+                  vc+=3;
+                  glVertex3fv(v);
+                  v+=3;
+                }
+                glEnd();
+              }
+          }
+        }
+        break;
       }
-      glEnable(GL_LIGHTING);
       if(use_dlst&&I->R.displayList) {
         glEndList();
       }
     }
+    if(!lighting)
+      glEnable(GL_LIGHTING);
   }
 }
 
@@ -345,6 +381,7 @@ Rep *RepMeshNew(CoordSet *cs)
   int cullByFlag;
   int inclH;
   int solv_acc;
+  int mesh_type ;
 
   AtomInfoType *ai1;
 
@@ -358,7 +395,8 @@ Rep *RepMeshNew(CoordSet *cs)
   probe_radius = SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_solvent_radius);
   probe_radius2 = probe_radius*probe_radius;
   solv_acc = (SettingGet_i(cs->Setting,obj->Obj.Setting,cSetting_mesh_solvent));
-  
+  mesh_type = SettingGet_i(cs->Setting,obj->Obj.Setting,cSetting_mesh_type);
+
   I->max_vdw = ObjectMoleculeGetMaxVDW(obj) + solv_acc*probe_radius;
 
   mesh_mode = SettingGet_i(cs->Setting,obj->Obj.Setting,cSetting_mesh_mode);
@@ -393,12 +431,13 @@ Rep *RepMeshNew(CoordSet *cs)
   I->Dot=NULL;
   I->R.fRender=(void (*)(struct Rep *, CRay *, Pickable **))RepMeshRender;
   I->R.fFree=(void (*)(struct Rep *))RepMeshFree;
-  I->Obj = (CObject*)(cs->Obj);
+  I->R.obj = (CObject*)cs->Obj;
+  I->R.cs = cs;
   I->R.fRecolor=(void (*)(struct Rep*, struct CoordSet*))RepMeshColor;
   I->R.fSameVis=(int (*)(struct Rep*, struct CoordSet*))RepMeshSameVis;
   I->LastVisib=NULL;
   I->LastColor=NULL;
-
+  I->mesh_type = mesh_type;
   I->Radius = SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_mesh_radius);
 
   meshFlag=true;
@@ -565,8 +604,25 @@ Rep *RepMeshNew(CoordSet *cs)
 	 MapFree(map);
 	 FreeP(I->Dot);	 
 	 OrthoBusyFast(2,3);
-	 IsosurfVolume(field,1.0,&I->N,&I->V,NULL,0);
-	 IsosurfFieldFree(field);
+    IsosurfVolume(field,1.0,&I->N,&I->V,NULL,mesh_type);
+    IsosurfFieldFree(field);
+    
+    /* someday add support for solid mesh representation....
+       if(mesh_type==0||mesh_type==1) {
+       } else {
+       ms->nT=TetsurfVolume(field,
+       1.0F,
+       &I->N,
+       &I->V,
+       NULL,
+       ms->Mode,
+       NULL,
+       NULL,
+       0.0F,
+       0);
+       
+       }
+    */
 	 n=I->N;
 	 I->NTot=0;
 	 while(*n) I->NTot+=*(n++);
