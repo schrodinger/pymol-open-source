@@ -82,6 +82,8 @@ float *SettingGetGlobal_3fv(int index); /* always succeed */
 int   SettingSetGlobal_b(int index,int value);
 int   SettingSetGlobal_i(int index,int value);
 int   SettingSetGlobal_f(int index,float value);
+
+int   SettingSetSmart_i(CSetting *set1,CSetting *set2,int index, int value);
 /* more to come */
 
 int SettingGetIfDefined_i(CSetting *set1,int index,int *value);
@@ -498,7 +500,7 @@ CSetting *SettingNewFromPyList(PyObject *list);
 #define cSetting_mouse_selection_mode       354
 #define cSetting_seq_view_label_spacing     355
 #define cSetting_seq_view_label_start       356
-#define cSetting_seq_view_codes             357
+#define cSetting_seq_view_format            357
 
 
 /* cSetting_ss_INIT must always be last setting_index +1 */

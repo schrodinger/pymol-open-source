@@ -29,7 +29,10 @@ void SelectorInit(void);
 int *SelectorSelect(char *sele);
 int SelectorCreate(char *name,char *sele,ObjectMolecule *obj,int quiet,Multipick *mp);
 int SelectorCreateSimple(char *name, char *sele);
-int SelectorCreateOrderedFromObjectIndices(char *sname, ObjectMolecule *obj, int *idx, int n_idx);
+
+int SelectorCreateOrderedFromObjectIndices(char *sname, ObjectMolecule *obj, int *idx, int n_idx); 
+/* if n_idx is negative, then looks for negative *idx as the sentinel */
+
 int SelectorCreateEmpty(char *name);
 void SelectorToggle(int rep,char *name);
 void SelectorCylinder(char *sele,char *onoff);
@@ -46,7 +49,7 @@ float SelectorSumVDWOverlap(int sele1,int state1,int sele2,int state2,float adju
 DistSet *SelectorGetDistSet(int sele1,int state1,int sele2,int state2,int mode,
                             float cutoff,float *result);
 int SelectorGetSeleNCSet(int sele);
-void SelectorCreateObjectMolecule(int sele,char *name,int target_state,int state);
+void SelectorCreateObjectMolecule(int sele,char *name,int target_state,int state,int discrete);
 int SelectorSubdivide(char *pref,int sele1,int sele2,
                             int sele3,int sele4,
                             char *fragPref,char *compName,int *bondMode);

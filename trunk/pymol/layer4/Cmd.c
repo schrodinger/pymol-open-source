@@ -2427,14 +2427,14 @@ static PyObject *CmdGetModel(PyObject *dummy, PyObject *args)
 static PyObject *CmdCreate(PyObject *dummy, PyObject *args)
 {
   char *str1,*str2;
-  int target,source;
+  int target,source,discrete;
   OrthoLineType s1;
   int ok=false;
-  ok = PyArg_ParseTuple(args,"ssii",&str1,&str2,&source,&target);
+  ok = PyArg_ParseTuple(args,"ssiii",&str1,&str2,&source,&target,&discrete);
   if (ok) {
     APIEntry();
     SelectorGetTmp(str2,s1);
-    ExecutiveSeleToObject(str1,s1,source,target); /* TODO STATUS */
+    ExecutiveSeleToObject(str1,s1,source,target,discrete); /* TODO STATUS */
     SelectorFreeTmp(s1);
     APIExit();
   }
@@ -2661,9 +2661,9 @@ static PyObject *CmdSetDihe(PyObject *self, 	PyObject *args)
 static PyObject *CmdDo(PyObject *self, 	PyObject *args)
 {
   char *str1;
-
+  int log;
   int ok=false;
-  ok = PyArg_ParseTuple(args,"s",&str1);
+  ok = PyArg_ParseTuple(args,"si",&str1,&log);
   if (ok) {
     APIEntry();
     if(str1[0]!='_') { /* suppress internal call-backs */
@@ -2671,13 +2671,15 @@ static PyObject *CmdDo(PyObject *self, 	PyObject *args)
         OrthoAddOutput("PyMOL>");
         OrthoAddOutput(str1);
         OrthoNewLine(NULL,true);
-        if(WordMatch(str1,"quit",true)==0) /* don't log quit */
-          PLog(str1,cPLog_pml);
+        if(log) 
+          if(WordMatch(str1,"quit",true)==0) /* don't log quit */
+            PLog(str1,cPLog_pml);
       }
       PParse(str1);
     } else if(str1[1]==' ') { /* "_ command" suppresses echoing of command, but it is still logged */
-      if(WordMatch(str1+2,"quit",true)==0) /* don't log quit */
-        PLog(str1+2,cPLog_pml);
+      if(log)
+        if(WordMatch(str1+2,"quit",true)==0) /* don't log quit */
+          PLog(str1+2,cPLog_pml);
       PParse(str1+2);    
     } else {
       PParse(str1);

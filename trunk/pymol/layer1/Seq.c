@@ -76,25 +76,28 @@ static int FindRowCol(int x,int y,int *row_num_ptr,int *col_num_ptr,int fixed_ro
     CSeqRow *row;
     row = I->Row+row_num;
     char_num = (x-I->Block->rect.left-I->CharMargin)/I->CharWidth;
-    if(char_num<I->VisSize) {
-      char_num+=I->NSkip;
-      if(char_num<0) char_num=0;
-      if((char_num<row->ext_len)&&(row->char2col)) {
-        col_num = row->char2col[char_num];
-        if(col_num) {
-          col_num--;
-          if(col_num<row->nCol) {
-            result = true;
-          } else if(fixed_row>=0) {
-            if(col_num>0) 
+    if(row->nCol&&!row->label_flag) 
+      if(char_num<I->VisSize) {
+        char_num+=I->NSkip;
+        if((char_num>=0)&&(char_num<row->ext_len)&&(row->char2col)) {
+          col_num = row->char2col[char_num];
+          if(col_num) {
+            col_num--;
+            if(col_num<row->nCol) {
+              result = true;
+            } else if(fixed_row>=0) {
               col_num = row->nCol - 1;
-            if(col_num<0)
-              col_num = 0;
-            result = true;
+              result = true;
+            }
           }
+        } else if(char_num==0) {
+          col_num =0;
+          result=true;
+        } else {
+          col_num = row->nCol - 1;
+          result=true;
         }
       }
-    }
   }
   if(result) {
     *row_num_ptr = row_num;
@@ -209,6 +212,11 @@ static int SeqRelease(Block *block,int button,int x,int y,int mod)
         if(I->Handler->fRelease)
           I->Handler->fRelease(I->Row,button,row_num,col_num,mod);
       OrthoDirty();
+    } else {
+      if(I->Handler)
+        if(I->Handler->fRelease)
+          I->Handler->fRelease(I->Row,button,-1,-1,mod);
+      OrthoDirty();
     }
   }
   I->DragFlag=false;
@@ -260,12 +268,21 @@ static int SeqClick(Block *block,int button,int x,int y,int mod)
       I->LastRow = row_num;
       OrthoDirty();
     } else {
-      if(button == P_GLUT_RIGHT_BUTTON) {
-        char name[ObjNameMax];
-
-        if(ExecutiveGetActiveSeleName(name, false)) {
-          MenuActivate2Arg(x,y+20,x,y,"pick_option",name,name);
+      switch(button) {
+      case P_GLUT_RIGHT_BUTTON: 
+        {
+          char name[ObjNameMax];
+          
+          if(ExecutiveGetActiveSeleName(name, false)) {
+            MenuActivate2Arg(x,y+20,x,y,"pick_option",name,name);
+          }
         }
+        break;
+      case P_GLUT_LEFT_BUTTON:
+        if(I->Handler)
+          if(I->Handler->fClick)
+            I->Handler->fClick(I->Row,button,-1,-1,mod,x,y);
+        break;
       }
     }
   }
@@ -303,6 +320,45 @@ static void SeqDraw(Block *block)
       int y1=y;
       int max_len = 0;
       int n_real = 0;
+      int vis_size = I->VisSize;
+      int first_allowed;
+      int max_title_width = 0;
+
+      /* measure titles */
+
+      for(a=I->NRow-1;a>=0;a--) {
+        row = I->Row+a;
+        col = row->col;
+        if(row->label_flag) { 
+          row->title_width = col->offset+(col->stop-col->start);
+          if(max_title_width<row->title_width)
+            max_title_width = row->title_width;
+        }
+      }
+
+      /* draw titles */
+
+      cur_color = white;
+      glColor3fv(cur_color);
+      for(a=I->NRow-1;a>=0;a--) {
+        row = I->Row+a;
+        yy=y1-2;
+        col = row->col;
+        if(row->label_flag) { 
+          row->title_width = col->offset+(col->stop-col->start);
+          xx=x+I->CharMargin+I->CharWidth*(col->offset + (max_title_width-row->title_width));
+          ch_wid = (col->stop-col->start);
+          pix_wid = I->CharWidth * ch_wid;
+          tot_len = col->offset+ch_wid-I->NSkip;
+          if(tot_len<=vis_size) {
+            GrapDrawSubStrFast(row->txt,xx,y1,
+                               col->start,ch_wid);
+          }
+        }
+        y1+=I->LineHeight;
+      }
+
+      y1 = y;
       for(a=I->NRow-1;a>=0;a--) {
         row = I->Row+a;
         if(row->label_flag)
@@ -315,14 +371,22 @@ static void SeqDraw(Block *block)
           max_len = row->ext_len;
         if(!row->label_flag)
           n_real++;
-        for(b=0;b<row->nCol;b++) {
+        for(b=1;b<row->nCol;b++) {
           col = row->col+b;
-          if((col->offset+(col->stop-col->start))>=I->NSkip) {
+          if(row->label_flag) {
+            if(b>1) 
+              first_allowed = I->NSkip + row->title_width + 1;
+            else
+              first_allowed = I->NSkip + row->title_width;
+           }else
+            first_allowed = I->NSkip;
+
+          if(col->offset>=first_allowed) {
             xx=x+I->CharMargin+I->CharWidth*(col->offset-I->NSkip);
             ch_wid = (col->stop-col->start);
             pix_wid = I->CharWidth * ch_wid;
             tot_len = col->offset+ch_wid-I->NSkip;
-            if(tot_len<=I->VisSize) {
+            if(tot_len<=vis_size) {
               if(col->inverse) {
                 glColor3fv(cur_color);
                 glBegin(GL_POLYGON);
@@ -344,6 +408,7 @@ static void SeqDraw(Block *block)
         }
         y1+=I->LineHeight;
       }
+
       if(I->Handler->box_active) {
         int box_row = I->Handler->box_row;
         if((box_row>=0)&&(box_row<I->NRow)) {
@@ -361,7 +426,18 @@ static void SeqDraw(Block *block)
             CSeqCol *col2;
             col = row->col + start_col;
             col2 = row->col + stop_col;
-            
+
+            /* trim spacers (if any) */
+            while(col->spacer&&(start_col<stop_col)) {
+              start_col++;
+              col = row->col + start_col;
+            }
+            while(col2->spacer&&(start_col<stop_col)) {
+              stop_col--;
+              col2 = row->col + stop_col;
+            }
+
+                             
             yy=y+((I->NRow-1)-box_row)*I->LineHeight-2;
             xx=x+I->CharMargin+I->CharWidth*(col->offset-I->NSkip);
             xx2=x+I->CharMargin+I->CharWidth*(col2->offset+(col2->stop-col2->start)-I->NSkip);
@@ -382,6 +458,7 @@ static void SeqDraw(Block *block)
           int mode = 0;
           float width = I->Block->rect.right - I->Block->rect.left;
           float start,stop;
+          int right;
           float bot,top;
           float height = (I->ScrollBarWidth - I->ScrollBarMargin);
           cur_color = blue;
@@ -396,10 +473,10 @@ static void SeqDraw(Block *block)
                 col = row->col+b;
                 if(col->inverse&&(!mode)) {
                   start = (width*col->offset)/max_len;
+                  right = col->offset + (col->stop-col->start);
                   mode=1;
                 } else if((!col->inverse)&&(mode)) {
                   stop = (width*col->offset)/max_len;
-                  
                   glColor3fv(cur_color);
                   glBegin(GL_POLYGON);
                   glVertex2f(start,bot);
@@ -408,12 +485,13 @@ static void SeqDraw(Block *block)
                   glVertex2f(stop,bot);
                   glEnd();
                   mode = 0;
+                } else if(col->inverse&&mode) {
+                  right = col->offset + (col->stop-col->start);
                 }
               }
               
               if(mode) {
-                col = row->col+row->nCol-1;
-                stop = width*(col->offset+(col->stop-col->start)*I->CharWidth);
+                stop = width*right/max_len;
                 glColor3fv(cur_color);
                 glBegin(GL_POLYGON);
                 glVertex2f(start,bot);

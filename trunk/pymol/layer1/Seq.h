@@ -27,6 +27,7 @@ typedef struct {
   int atom_at; /* starting offset in list */
   int inverse;
   int spacer;
+  int state;
 } CSeqCol;
   
 typedef struct {
@@ -40,7 +41,7 @@ typedef struct {
   int *atom_lists;
   char name[ObjNameMax]; /* associated object */
   struct ObjectMolecule *obj; /* this pointer only valid during update */
-  int accum,current; /* temporary stores for aligning */
+  int accum,current,title_width; /* temporary stores for aligning */
 
 } CSeqRow;
 

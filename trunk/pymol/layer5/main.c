@@ -547,7 +547,8 @@ static void MainKey(unsigned char k, int x, int y)
 	 ((glMod&P_GLUT_ACTIVE_CTRL) ? cOrthoCTRL : 0) |
 	 ((glMod&P_GLUT_ACTIVE_ALT) ? cOrthoALT : 0);
 
-  OrthoKey(k,x,y,Modifiers);
+  if(!WizardDoKey(k,x,y,Modifiers))
+    OrthoKey(k,x,y,Modifiers);
 
   PUnlockAPIAsGlut();
   
@@ -567,6 +568,9 @@ static void MainSpecial(int k, int x, int y)
 	 ((glMod&P_GLUT_ACTIVE_CTRL) ? cOrthoCTRL : 0) |
 	 ((glMod&P_GLUT_ACTIVE_ALT) ? cOrthoALT : 0);
 
+  if(!grabbed)
+    grabbed = WizardDoKey(k,x,y,Modifiers);
+
   switch(k) {
     case P_GLUT_KEY_UP:
     case P_GLUT_KEY_DOWN:
@@ -581,6 +585,7 @@ static void MainSpecial(int k, int x, int y)
       }
       break;
   }
+
   if(!grabbed) {
     sprintf(buffer,"_special %d,%d,%d,%d",k,x,y,Modifiers);
     PLog(buffer,cPLog_pml);

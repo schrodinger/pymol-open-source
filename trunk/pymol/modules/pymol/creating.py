@@ -375,7 +375,7 @@ USAGE
          if cmd._raising(): raise QuietException
       return r
 
-   def create(name,selection,source_state=0,target_state=0):
+   def create(name,selection,source_state=0,target_state=0,discrete=1):
       '''
 DESCRIPTION
 
@@ -398,7 +398,7 @@ USAGE
 
 PYMOL API
 
-   cmd.create(string name, string selection, int state, int target_state)
+   cmd.create(string name, string selection, int state, int target_state,int discrete)
 
 NOTES
 
@@ -419,7 +419,7 @@ SEE ALSO
             _cmd.legacy_set("sel_counter","%1.0f" % sel_cnt)
             name = "obj%02.0f" % sel_cnt
          _cmd.create(str(name),"("+str(selection)+")",
-                     int(source_state)-1,int(target_state)-1)
+                     int(source_state)-1,int(target_state)-1,int(discrete))
       finally:
          unlock()
       return None

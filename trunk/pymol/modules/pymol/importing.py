@@ -463,7 +463,8 @@ SEE ALSO
                r = _load(oname,string.join(rec.get('MOL'),''),state,ftype,0,1)
             del sdf
             _cmd.finish_object(str(oname))
-            _cmd.do("zoom (%s)"%oname) 
+            _cmd.do("zoom (%s)"%oname,0)
+            _cmd.do("set seq_view_format,4,"+oname,0)
             ftype = -1
 
    # special handling for AMBER trj failes

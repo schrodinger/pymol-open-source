@@ -92,6 +92,19 @@ ObjectMolecule *ObjectMoleculeReadTOPStr(ObjectMolecule *I,char *TOPStr,int fram
 
 void ObjectMoleculeInferHBondFromChem(ObjectMolecule *I);
 
+static char *ObjectMoleculeGetCaption(ObjectMolecule *I)
+{
+  int state = ObjectGetCurrentState((CObject*)I,false);
+  
+  if((state>=0)&&(state<I->NCSet)) {
+    CoordSet *cs = I->CSet[state];
+    if(cs) {
+      return cs->Name;
+    }
+  }
+  return NULL;
+}
+
 #define MAX_BOND_DIST 50
 
 #if 0
@@ -1564,6 +1577,16 @@ ObjectMolecule *ObjectMoleculeReadTOPStr(ObjectMolecule *I,char *TOPStr,int fram
 
   /* include coordinate set */
   if(ok) {
+
+      if(I->DiscreteFlag&&atInfo) {
+        int a;
+        int fp1 = frame+1;
+        AtomInfoType *ai = atInfo;
+        for(a=0;a<nAtom;a++) {
+          (ai++)->discrete_state = fp1;
+        }
+      }
+
     cset->Obj = I;
     cset->fEnumIndices(cset);
     if(cset->fInvalidateRep)
@@ -1970,6 +1993,16 @@ ObjectMolecule *ObjectMoleculeReadPMO(ObjectMolecule *I,CRaw *pmo,int frame,int 
     
     /* include coordinate set */
     if(ok) {
+
+      if(I->DiscreteFlag&&atInfo) {
+        int a;
+        int fp1 = frame+1;
+        AtomInfoType *ai = atInfo;
+        for(a=0;a<nAtom;a++) {
+          (ai++)->discrete_state = fp1;
+        }
+      }
+
       cset->Obj = I;
       cset->fEnumIndices(cset);
       if(cset->fInvalidateRep)
@@ -2564,6 +2597,16 @@ ObjectMolecule *ObjectMoleculeReadXYZStr(ObjectMolecule *I,char *PDBStr,int fram
 
   /* include coordinate set */
   if(ok) {
+
+      if(I->DiscreteFlag&&atInfo) {
+        int a;
+        int fp1 = frame+1;
+        AtomInfoType *ai = atInfo;
+        for(a=0;a<nAtom;a++) {
+          (ai++)->discrete_state = fp1;
+        }
+      }
+
     cset->Obj = I;
     cset->fEnumIndices(cset);
     if(cset->fInvalidateRep)
@@ -5367,6 +5410,16 @@ ObjectMolecule *ObjectMoleculeLoadChemPyModel(ObjectMolecule *I,PyObject *model,
   }
   /* include coordinate set */
   if(ok) {
+
+      if(I->DiscreteFlag&&atInfo) {
+        int a;
+        int fp1 = frame+1;
+        AtomInfoType *ai = atInfo;
+        for(a=0;a<nAtom;a++) {
+          (ai++)->discrete_state = fp1;
+        }
+      }
+
     cset->Obj = I;
     cset->fEnumIndices(cset);
     if(cset->fInvalidateRep)
@@ -5736,7 +5789,16 @@ ObjectMolecule *ObjectMoleculeReadMOLStr(ObjectMolecule *I,char *MOLStr,int fram
 		VLACheck(I->CSet,CoordSet*,frame);
       
       nAtom=cset->NIndex;
-      
+
+      if(I->DiscreteFlag&&atInfo) {
+        int a;
+        int fp1 = frame+1;
+        AtomInfoType *ai = atInfo;
+        for(a=0;a<nAtom;a++) {
+          (ai++)->discrete_state = fp1;
+        }
+      }
+
       cset->Obj = I;
       cset->fEnumIndices(cset);
       if(cset->fInvalidateRep)
@@ -7831,6 +7893,7 @@ ObjectMolecule *ObjectMoleculeNew(int discreteFlag)
   I->Obj.fDescribeElement = (void (*)(struct CObject *,int index,char *buffer)) ObjectMoleculeDescribeElement;
   I->Obj.fGetSettingHandle = (CSetting **(*)(struct CObject *,int state))
     ObjectMoleculeGetSettingHandle;
+  I->Obj.fGetCaption = (char *(*)(struct CObject *))ObjectMoleculeGetCaption;
   I->AtomInfo=VLAMalloc(10,sizeof(AtomInfoType),2,true); /* autozero here is important */
   I->CurCSet=0;
   I->Symmetry=NULL;
@@ -7963,6 +8026,16 @@ ObjectMolecule *ObjectMoleculeReadMMDStr(ObjectMolecule *I,char *MMDStr,int fram
 		  I->NCSet=frame+1;
 		VLACheck(I->CSet,CoordSet*,frame);
       nAtom=cset->NIndex;
+
+      if(I->DiscreteFlag&&atInfo) {
+        int a;
+        int fp1 = frame+1;
+        AtomInfoType *ai = atInfo;
+        for(a=0;a<nAtom;a++) {
+          (ai++)->discrete_state = fp1;
+        }
+      }
+
       cset->Obj = I;
       if(cset->fEnumIndices)
         cset->fEnumIndices(cset);
@@ -8098,6 +8171,15 @@ ObjectMolecule *ObjectMoleculeReadPDBStr(ObjectMolecule *I,char *PDBStr,int fram
 
     /* include coordinate set */
     if(ok) {
+      
+      if(I->DiscreteFlag&&atInfo) {
+        int a;
+        int fp1 = frame+1;
+        AtomInfoType *ai = atInfo;
+        for(a=0;a<nAtom;a++) {
+          (ai++)->discrete_state = fp1;
+        }
+      }
 
       cset->Obj = I;
       cset->fEnumIndices(cset);

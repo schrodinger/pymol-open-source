@@ -48,6 +48,7 @@ typedef struct CObject {
   void (*fDescribeElement)(struct CObject *I,int index,char *buffer);
   void (*fInvalidate)(struct CObject *I,int rep,int level,int state);
   CSetting **(*fGetSettingHandle)(struct CObject *I,int state);
+  char *(*fGetCaption)(struct CObject *I);
   int type;
   char Name[ObjNameMax];
   int Color;

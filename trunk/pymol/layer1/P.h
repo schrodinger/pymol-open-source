@@ -81,6 +81,7 @@ int PComplete(char *str,int buf_size);
 
 int PTruthCallStr(PyObject *object,char *method,char *argument);
 int PTruthCallStr1i(PyObject *object,char *method,int argument);
+int PTruthCallStr4i(PyObject *object,char *method,int a1,int a2,int a3,int a4);
 int PPovrayRender(char *header,char *inp,char *file,int width,int height,int antialias);
 int PIsGlutThread(void);
 

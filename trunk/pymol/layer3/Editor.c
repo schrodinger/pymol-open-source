@@ -1238,7 +1238,7 @@ void EditorPrepareDrag(ObjectMolecule *obj,int index,int state)
     }
     if(seleFlag) { /* normal selection */
       
-      PRINTFB(FB_Editor,FB_Actions)
+      PRINTFB(FB_Editor,FB_Blather)
         " Editor: grabbing (%s).",name
         ENDFB;
 

@@ -228,7 +228,7 @@ PYMOL API
          r = cmd._mpng(prefix,int(first)-1,int(last)-1)
       else:
          r = _cmd.do('cmd._mpng("'+prefix+'","'+
-                     str(int(first)-1)+'","'+str(int(last)-1)+'")')
+                     str(int(first)-1)+'","'+str(int(last)-1)+'")',0)
       return r
 
    def mclear():

@@ -574,6 +574,12 @@ ImageType MovieGetImage(int index)
 	 return(NULL);
 }
 /*========================================================================*/
+int MovieDefined(void) 
+{
+  CMovie *I=&Movie;
+  return(I->NFrame>0);
+}
+/*========================================================================*/
 int MovieGetLength(void)
 {
   CMovie *I=&Movie;

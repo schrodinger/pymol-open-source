@@ -2640,7 +2640,7 @@ void SelectorLogSele(char *name)
               if(first) {
                 switch(logging) {
                 case cPLog_pml:
-                  sprintf(line,"_ cmd.select(\"%s\",\"(",name);
+                  sprintf(line,"cmd.select(\"%s\",\"(",name);
                   break;
                 case cPLog_pym:
                   sprintf(line,"cmd.select(\"%s\",\"(",name);
@@ -2652,7 +2652,7 @@ void SelectorLogSele(char *name)
               } else {
                 switch(logging) {
                 case cPLog_pml:
-                  sprintf(line,"_ cmd.select(\"%s\",\"(%s",name,name);
+                  sprintf(line,"cmd.select(\"%s\",\"(%s",name,name);
                   break;
                 case cPLog_pym:
                   sprintf(line,"cmd.select(\"%s\",\"(%s",name,name);
@@ -4991,7 +4991,7 @@ void SelectorUpdateCmd(int sele0,int sele1,int sta0, int sta1)
 }
 /*========================================================================*/
 
-void SelectorCreateObjectMolecule(int sele,char *name,int target,int source)
+void SelectorCreateObjectMolecule(int sele,char *name,int target,int source,int discrete)
 {
   SelectorType *I=&Selector;
 
@@ -5014,7 +5014,7 @@ void SelectorCreateObjectMolecule(int sele,char *name,int target,int source)
       targ = (ObjectMolecule*)ob;
   if(!targ) {
     isNew=true;
-    targ = ObjectMoleculeNew(false);
+    targ = ObjectMoleculeNew(discrete);
     targ->Bond = VLAlloc(BondType,1);
   } else {
     isNew=false;
@@ -5156,6 +5156,9 @@ void SelectorCreateObjectMolecule(int sele,char *name,int target,int source)
             if(d<obj->NCSet) {
               cs1 = obj->CSet[d];
               if(cs1) {
+                if((!cs2->Name[0])&&(cs1->Name[0])) /* copy the molecule name (if any) */
+                  strcpy(cs2->Name,cs1->Name);
+                  
                 if(obj->DiscreteFlag) {
                   if(cs1==obj->DiscreteCSet[at])
                     a1=obj->DiscreteAtmToIdx[at];
@@ -5702,10 +5705,21 @@ int *SelectorUpdateTableSingleObject(ObjectMolecule *obj,int no_dummies,int *idx
     }
   if(idx&&n_idx) {
     result = Calloc(int,c);
-    for(a=0; a< n_idx; a++) {
-      int at = idx[a];
-      if((at>=0)&&(at<obj->NAtom)) { /* create an ordered selection based on the input order of the object indices */
+    if(n_idx>0) {
+      for(a=0; a< n_idx; a++) {
+        int at = idx[a];
+        if((at>=0)&&(at<obj->NAtom)) { /* create an ordered selection based on the input order of the object indices */
         result[obj->SeleBase + at] = a+1; 
+        }
+      }
+    } else {
+      int *at_idx = idx;
+      int at;
+      a=0;
+      while((at=*(at_idx++))>=0) {
+        if((at>=0)&&(at<obj->NAtom)) { /* create an ordered selection based on the input order of the object indices */
+          result[obj->SeleBase + at] = (++a);
+        }
       }
     }
   }
@@ -7023,13 +7037,14 @@ int SelectorLogic1(EvalElem *base)
                       at2=&I->Obj[I->Table[b].model]->AtomInfo[I->Table[b].atom];
                       if(at1->chain[0]==at2->chain[0])
                         if(at1->resv==at2->resv)
-                          if(WordMatch(at1->resi,at2->resi,I->IgnoreCase)<0)
-                            if(WordMatch(at1->resn,at2->resn,I->IgnoreCase)<0)
-                              if(WordMatch(at1->segi,at2->segi,I->IgnoreCase)<0) {
-                                base[0].sele[b]=true;
-                                c++;
-                                flag=1;
-                              }
+                          if(at1->discrete_state==at2->discrete_state)
+                            if(WordMatch(at1->resi,at2->resi,I->IgnoreCase)<0)
+                              if(WordMatch(at1->resn,at2->resn,I->IgnoreCase)<0)
+                                if(WordMatch(at1->segi,at2->segi,I->IgnoreCase)<0) {
+                                  base[0].sele[b]=true;
+                                  c++;
+                                  flag=1;
+                                }
                     }
                   if(!flag)
                     break;
@@ -7045,13 +7060,14 @@ int SelectorLogic1(EvalElem *base)
                       at2=&I->Obj[I->Table[b].model]->AtomInfo[I->Table[b].atom];
                       if(at1->chain[0]==at2->chain[0])
                         if(at1->resv==at2->resv)
-                          if(WordMatch(at1->resi,at2->resi,I->IgnoreCase)<0)
-                            if(WordMatch(at1->resn,at2->resn,I->IgnoreCase)<0)
-                              if(WordMatch(at1->segi,at2->segi,I->IgnoreCase)<0) {
-                                base[0].sele[b]=true;
-                                c++;
-                                flag=1;
-                              }
+                          if(at1->discrete_state==at2->discrete_state)
+                            if(WordMatch(at1->resi,at2->resi,I->IgnoreCase)<0)
+                              if(WordMatch(at1->resn,at2->resn,I->IgnoreCase)<0)
+                                if(WordMatch(at1->segi,at2->segi,I->IgnoreCase)<0) {
+                                  base[0].sele[b]=true;
+                                  c++;
+                                  flag=1;
+                                }
                     }
                   if(!flag)
                     break;

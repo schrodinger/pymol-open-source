@@ -133,7 +133,11 @@ class Setting:
       self.virtual_trackball = IntVar()
       self.virtual_trackball.set(int(cmd.get_setting_legacy('virtual_trackball')))
 
-
+      self.stereo = IntVar()
+      
+      self.seq_view = IntVar()
+      self.seq_view.set(int(cmd.get_setting_legacy('seq_view')))
+      
       self.F=[ None,
                IntVar(),
                IntVar(),
@@ -231,6 +235,9 @@ class Setting:
          'virtual_trackball'         :
          (lambda s,a: (cmd.set(a,("%1.0f" % s.virtual_trackball.get()),log=1))),
          
+         'seq_view'         :
+         (lambda s,a: (cmd.set(a,("%d" % s.seq_view.get()),log=1))),
+         
          }
 
       self.update_code = {
@@ -304,6 +311,8 @@ class Setting:
          (lambda s,t: (s.use_display_lists.set(t[1][0]!=0))),
          'virtual_trackball':
          (lambda s,t: (s.virtual_trackball.set(t[1][0]!=0))),
+         'seq_view':
+         (lambda s,t: (s.seq_view.set(t[1][0]!=0))),
         }
       self.active_list = [
          pymol.setting._get_index("ray_trace_frames"),
@@ -341,7 +350,8 @@ class Setting:
          pymol.setting._get_index("cartoon_highlight_color"),
          pymol.setting._get_index("scenes_changed"),
          pymol.setting._get_index("use_display_lists"),
-         pymol.setting._get_index("virtual_trackball"),        
+         pymol.setting._get_index("virtual_trackball"),
+         pymol.setting._get_index("seq_view"),
          ]
 
       self.active_dict = {}

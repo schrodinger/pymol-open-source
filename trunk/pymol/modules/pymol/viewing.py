@@ -1142,7 +1142,7 @@ USAGE
       else:
          try:
             lock()
-            r = _cmd.do("_cmd.full_screen(%d)"%int(toggle))
+            r = _cmd.do("_cmd.full_screen(%d)"%int(toggle),0)
          finally:
             unlock()
       return r
@@ -1228,7 +1228,7 @@ PYMOL API
       '''
       r = None
       if not cmd.is_glut_thread():
-         cmd.do("viewport %d,%d"%(int(width),int(height)))
+         cmd.do("viewport %d,%d"%(int(width),int(height)),0)
       else:
          try:
             lock()
@@ -1387,7 +1387,7 @@ SEE ALSO
       else:
          try:
             lock()
-            r = _cmd.do("cmd._refresh()")
+            r = _cmd.do("cmd._refresh()",0)
          finally:
             unlock()
       return r

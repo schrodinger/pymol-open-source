@@ -1181,17 +1181,54 @@ class PMGApp(AbstractApp):
                         command = lambda s=self: s.setting.update('all_states'))
 
       self.menuBar.addmenu('Display', 'Display Control',tearoff=TRUE)
+
+      self.menuBar.addmenuitem('Display', 'checkbutton',
+                         'Sequence View',
+                         label='Sequence View',
+                        variable = self.setting.seq_view,
+                        command = lambda s=self: s.setting.update('seq_view'))      
+
+      self.menuBar.addcascademenu('Display', 'Sequence', 'Sequence Mode',
+                               label='Sequence Mode')
+
+      self.menuBar.addmenuitem('Sequence', 'command', 'Residue Codes',
+                               label='Residue Codes',
+                               command = lambda: cmd.do("_ set seq_view_format,0"))
+
+      self.menuBar.addmenuitem('Sequence', 'command', 'Residue Names',
+                               label='Residues',
+                               command = lambda: cmd.do("_ set seq_view_format,1"))
+
+      self.menuBar.addmenuitem('Sequence', 'command', 'Chain Identifiers',
+                               label='Chains',
+                               command = lambda: cmd.do("_ set seq_view_format,3"))
+
+      self.menuBar.addmenuitem('Sequence', 'command', 'Atom Names',
+                               label='Atoms',
+                               command = lambda: cmd.do("_ set seq_view_format,2"))
+
+      self.menuBar.addmenuitem('Sequence', 'command', 'States',
+                               label='States',
+                               command = lambda: cmd.do("_ set seq_view_format,4"))
+
+
+      self.menuBar.addmenuitem('Display', 'checkbutton',
+                         'Stereo View',
+                         label='Stereo View',
+                        variable = self.setting.stereo,
+                        command = lambda s=self: cmd.do("_ stereo "+
+                                                        ('off','on')[s.setting.stereo.get()]))
       
-      self.menuBar.addmenuitem('Display', 'command', 'Stereo On',
-                               label='Stereo On',
-                               command = lambda: cmd.do("_ stereo on"))
+#      self.menuBar.addmenuitem('Display', 'command', 'Stereo On',
+#                               label='Stereo On',
+#                              command = lambda: cmd.do("_ stereo on"))
 
-      self.menuBar.addmenuitem('Display', 'command', 'Stereo Off',
-                               label='Stereo Off',
-                               command = lambda: cmd.do("_ stereo off"))
+#      self.menuBar.addmenuitem('Display', 'command', 'Stereo Off',
+#                               label='Stereo Off',
+#                               command = lambda: cmd.do("_ stereo off"))
 
-      self.menuBar.addcascademenu('Display', 'Stereo', 'Stereo',
-                               label='Stereo')
+      self.menuBar.addcascademenu('Display', 'Stereo', 'Stereo Mode',
+                               label='Stereo Mode')
 
       self.menuBar.addmenuitem('Stereo', 'command', 'Cross-Eye Stereo',
                                label='Cross-Eye Stereo',
@@ -1207,6 +1244,7 @@ class PMGApp(AbstractApp):
 
       self.menuBar.addmenuitem('Stereo', 'separator', '')
 
+
       self.menuBar.addmenuitem('Stereo', 'command', 'Swap Sides',
                                label='Swap Sides',
                                command = lambda: cmd.do("_ stereo swap"))
@@ -1214,13 +1252,12 @@ class PMGApp(AbstractApp):
       self.menuBar.addmenuitem('Stereo', 'command', 'Swap Sides',
                                label='Swap Sides',
                                command = lambda: cmd.do("_ stereo swap"))
+
 
       self.menuBar.addmenuitem('Display', 'separator', '')
-
-
+      
       self.menuBar.addcascademenu('Display', 'Zoom', 'Zoom',
                                   label='Zoom')
-
 
       self.menuBar.addmenuitem('Zoom', 'command', '4 Angstrom Sphere',
                                label='4 Angstrom Sphere',
@@ -1246,11 +1283,15 @@ class PMGApp(AbstractApp):
                                label='All',
                                command = lambda: cmd.do("_ zoom all"))
 
+      self.menuBar.addmenuitem('Zoom', 'command', 'Complete',
+                               label='Complete',
+                               command = lambda: cmd.do("_ zoom all,complete=1"))
+
       self.menuBar.addcascademenu('Display', 'Clip', 'Clip',
                                   label='Clip')
 
-      self.menuBar.addmenuitem('Clip', 'command', 'None',
-                               label='None',
+      self.menuBar.addmenuitem('Clip', 'command', 'Nothing',
+                               label='Nothing',
                                command = lambda: cmd.do("_ clip atoms,5,all"))
 
       self.menuBar.addmenuitem('Clip', 'command', '8 Angstrom Slab',

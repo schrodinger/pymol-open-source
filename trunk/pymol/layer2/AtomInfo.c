@@ -55,7 +55,7 @@ PyObject *AtomInfoAsPyList(AtomInfoType *I)
 {
   PyObject *result = NULL;
 
-  result = PyList_New(34);
+  result = PyList_New(35);
   PyList_SetItem(result, 0,PyInt_FromLong(I->resv));
   PyList_SetItem(result, 1,PyString_FromString(I->chain));
   PyList_SetItem(result, 2,PyString_FromString(I->alt));
@@ -90,7 +90,7 @@ PyObject *AtomInfoAsPyList(AtomInfoType *I)
   PyList_SetItem(result,31,PyInt_FromLong((int)I->protons));
   PyList_SetItem(result,32,PyInt_FromLong(I->sculpt_id));
   PyList_SetItem(result,33,PyInt_FromLong(I->stereo));
-
+  PyList_SetItem(result,34,PyInt_FromLong(I->discrete_state));
   return(PConvAutoNone(result));
 }
 
@@ -98,7 +98,9 @@ int AtomInfoFromPyList(AtomInfoType *I,PyObject *list)
 {
   int ok=true;
   int hetatm;
+  int ll;
   if(ok) ok = PyList_Check(list);
+  if(ok) ll = PyList_Size(list);
   if(ok) ok = PConvPyIntToInt(PyList_GetItem(list, 0),&I->resv);
   if(ok) ok = PConvPyStrToStr(PyList_GetItem(list, 1),I->chain,sizeof(Chain));
   if(ok) ok = PConvPyStrToStr(PyList_GetItem(list, 2),I->alt,sizeof(Chain));
@@ -134,6 +136,7 @@ int AtomInfoFromPyList(AtomInfoType *I,PyObject *list)
   if(ok) ok = PConvPyIntToChar(PyList_GetItem(list,31),(char*)&I->protons);
   if(ok) ok = PConvPyIntToInt(PyList_GetItem(list,32),&I->sculpt_id);
   if(ok) ok = PConvPyIntToInt(PyList_GetItem(list,33),&I->stereo);
+  if(ok&&(ll>34)) ok = PConvPyIntToInt(PyList_GetItem(list,34),&I->discrete_state);
   return(ok);
 }
 
@@ -148,6 +151,7 @@ void AtomInfoCombine(AtomInfoType *dst,AtomInfoType *src,int mask)
   if(mask&cAIC_b) dst->b = src->b;
   if(mask&cAIC_q) dst->q = src->q;
   if(mask&cAIC_id) dst->id = src->id;
+  if(mask&cAIC_state) dst->discrete_state = src->discrete_state;
   dst->temp1 = src->temp1;
   dst->sculpt_id = src->sculpt_id;
   /* keep all existing names, identifiers, etc. */
@@ -651,18 +655,24 @@ int AtomInfoCompare(AtomInfoType *at1,AtomInfoType *at2)
           if(!wc) {
             wc=WordCompare(at1->resn,at2->resn,true);
             if(!wc) {
-              if(at1->priority==at2->priority) {
-                if(at1->alt[0]==at2->alt[0]) {
-                  result=AtomNameCompare(at1->name,at2->name);
-                } else if((!at2->alt[0])||(at1->alt[0]&&((at1->alt[0]<at2->alt[0])))) {
+              if(at1->discrete_state==at2->discrete_state) {
+                if(at1->priority==at2->priority) {
+                  if(at1->alt[0]==at2->alt[0]) {
+                    result=AtomNameCompare(at1->name,at2->name);
+                  } else if((!at2->alt[0])||(at1->alt[0]&&((at1->alt[0]<at2->alt[0])))) {
+                    result=-1;
+                  } else {
+                    result=1;
+                  }
+                } else if(at1->priority<at2->priority) {
                   result=-1;
                 } else {
                   result=1;
                 }
-              } else if(at1->priority<at2->priority) {
-                result=-1;
+              } else if(at1->discrete_state<at2->discrete_state) {
+                result = -1;
               } else {
-                result=1;
+                result = 1;
               }
             } else {
               result=wc;
@@ -727,18 +737,24 @@ int AtomInfoCompareIgnoreHet(AtomInfoType *at1,AtomInfoType *at2)
         if(!wc) {
           wc=WordCompare(at1->resn,at2->resn,true);
           if(!wc) {
-            if(at1->priority==at2->priority) {
-              if(at1->alt[0]==at2->alt[0]) {
-                result=AtomNameCompare(at1->name,at2->name);
-              } else if((!at2->alt[0])||(at1->alt[0]&&((at1->alt[0]<at2->alt[0])))) {
+            if(at1->discrete_state==at2->discrete_state) {
+              if(at1->priority==at2->priority) {
+                if(at1->alt[0]==at2->alt[0]) {
+                  result=AtomNameCompare(at1->name,at2->name);
+                } else if((!at2->alt[0])||(at1->alt[0]&&((at1->alt[0]<at2->alt[0])))) {
+                  result=-1;
+                } else {
+                  result=1;
+                }
+              } else if(at1->priority<at2->priority) {
                 result=-1;
               } else {
                 result=1;
               }
-            } else if(at1->priority<at2->priority) {
-              result=-1;
+            } else if(at1->discrete_state<at2->discrete_state) {
+              result = -1;
             } else {
-              result=1;
+              result = 1;
             }
           } else {
             result=wc;
@@ -824,10 +840,11 @@ int AtomInfoSameResidue(AtomInfoType *at1,AtomInfoType *at2)
   if(at1->hetatm==at2->hetatm)
     if(at1->chain[0]==at2->chain[0])
       if(at1->resv==at2->resv)
-        if(WordMatch(at1->resi,at2->resi,true)<0) 
-          if(WordMatch(at1->segi,at2->segi,true)<0) 
-            if(WordMatch(at1->resn,at2->resn,true)<0) 
-              return 1;
+        if(at1->discrete_state==at2->discrete_state)
+          if(WordMatch(at1->resi,at2->resi,true)<0) 
+            if(WordMatch(at1->segi,at2->segi,true)<0) 
+              if(WordMatch(at1->resn,at2->resn,true)<0) 
+                return 1;
   return 0;
 }
 
@@ -837,10 +854,11 @@ int AtomInfoSameResidueP(AtomInfoType *at1,AtomInfoType *at2)
     if(at1->hetatm==at2->hetatm)
       if(at1->chain[0]==at2->chain[0])
         if(at1->resv==at2->resv)
-          if(WordMatch(at1->resi,at2->resi,true)<0) 
-            if(WordMatch(at1->segi,at2->segi,true)<0) 
-              if(WordMatch(at1->resn,at2->resn,true)<0) 
-                return 1;
+          if(at1->discrete_state==at2->discrete_state)
+            if(WordMatch(at1->resi,at2->resi,true)<0) 
+              if(WordMatch(at1->segi,at2->segi,true)<0) 
+                if(WordMatch(at1->resn,at2->resn,true)<0) 
+                  return 1;
   return 0;
 }
 
@@ -848,8 +866,8 @@ int AtomInfoSameChainP(AtomInfoType *at1,AtomInfoType *at2)
 {
   if(at1&&at2)
     if(at1->chain[0]==at2->chain[0])
-      if(WordMatch(at1->segi,at2->segi,true)<0) 
-        return 1;
+        if(WordMatch(at1->segi,at2->segi,true)<0) 
+          return 1;
   return 0;
 }
 

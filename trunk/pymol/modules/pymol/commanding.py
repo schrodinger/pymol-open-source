@@ -176,7 +176,7 @@ SEE ALSO
                break
 
 
-   def do(commands):
+   def do(commands,log=1):
       # WARNING: don't call this routine if you already have the API lock
       '''
 DESCRIPTION
@@ -194,6 +194,7 @@ USAGE (PYTHON)
    cmd.do("load file.pdb")
       '''
       r = None
+      log = int(log)
       if is_list(commands):
          cmmd_list = commands
       else:
@@ -206,7 +207,7 @@ USAGE (PYTHON)
                   try:
                      lock()
                      r = None
-                     r = _cmd.do(a)
+                     r = _cmd.do(a,log)
                   finally:
                      unlock()
          else:
@@ -217,7 +218,7 @@ USAGE (PYTHON)
                   try:
                      lock()
                      r = None
-                     r = _cmd.do(a)
+                     r = _cmd.do(a,log)
                   finally:
                      unlock()
             cmd.set('defer_updates',defer)
@@ -243,7 +244,7 @@ PYMOL API
       else:
          try:
             lock()
-            _cmd.do("_ time.sleep(0.100);cmd._quit()") # allow time for a graceful exit from the calling thread
+            _cmd.do("_ time.sleep(0.100);cmd._quit()",0) # allow time for a graceful exit from the calling thread
             thread.exit()
          finally:
             unlock()
