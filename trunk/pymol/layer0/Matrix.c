@@ -377,6 +377,10 @@ float MatrixFitRMS(int n,float *v1,float *v2,float *wt,float *ttt)
   err = 0.0;
   vv1=v1;
   vv2=v2;
+
+  normalize3f(m[0]);
+  normalize3f(m[1]);
+  normalize3f(m[2]);
   for(c=0;c<n;c++) {
 	etmp = 0.0;
 	for(a=0;a<3;a++) {
@@ -688,12 +692,12 @@ int MatrixEigensolve33d(double *a, double *wr, double *wi, double *v)
      IS that because we're actually solving the transpose?
   */
 
-  printf(" Eigensolve: eigenvectors\n%8.3f %8.3f %8.3f\n",v[0],v[1],v[2]);
-  printf(" Eigensolve: %8.3f %8.3f %8.3f\n",v[3],v[4],v[5]);
-  printf(" Eigensolve: %8.3f %8.3f %8.3f\n",v[6],v[7],v[8]);
+  printf(" Eigensolve: eigenvectors %8.3f %8.3f %8.3f\n",v[0],v[1],v[2]);
+  printf(" Eigensolve:              %8.3f %8.3f %8.3f\n",v[3],v[4],v[5]);
+  printf(" Eigensolve:              %8.3f %8.3f %8.3f\n",v[6],v[7],v[8]);
   
-  printf(" Eigensolve: eigenvalues\n%8.3f %8.3f %8.3f\n",wr[0],wr[1],wr[2]);
-  printf(" Eigensolve: %8.3f %8.3f %8.3f\n",wi[0],wi[1],wi[2]);
+  printf(" Eigensolve: eigenvalues  %8.3f %8.3f %8.3f\n",wr[0],wr[1],wr[2]);
+  printf(" Eigensolve:              %8.3f %8.3f %8.3f\n",wi[0],wi[1],wi[2]);
   return(ierr);
 }
 

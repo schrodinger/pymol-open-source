@@ -235,7 +235,7 @@ static void MainKey(unsigned char k, int x, int y)
       PUnlockAPIAsGlut();
 		break;
 	 default:
-		OrthoKey(k,x,y,glMod);
+		OrthoKey(k,x,y,Modifiers);
 		break;
 	 }
 

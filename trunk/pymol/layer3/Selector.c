@@ -115,6 +115,8 @@ static WordType Keyword[] =
   "het",      "HETz", /* 0 parameter */
   "hydro",    "HYDz", /* 0 parameter */
   "h;",       "HYDz", /* 0 parameter */
+  "visi",     "VISz", /* 0 parameter */
+  "v;",       "VISz", /* 0 parameter */
   "around",   "ARD_", /* 1 parameter */
   "a;",       "ARD_", /* 1 parameter */
   "expand",   "EXP_", /* 1 parameter */
@@ -828,8 +830,10 @@ int SelectorModulate1(EvalElem *base)
 int SelectorSelect0(EvalElem *base)
 {
   SelectorType *I=&Selector;
-  int a;
+  int a,b,flag;
   int c=0;
+  short int *vis;
+
   base->type=SELE_LIST;
   base->sele=Alloc(int,I->NAtom);
   ErrChkPtr(base->sele);
@@ -852,6 +856,21 @@ int SelectorSelect0(EvalElem *base)
 		  {
 			 base[0].sele[a]=true;
 			 c++;
+		  }
+	 case 'VISz':
+		for(a=0;a<I->NAtom;a++)
+		  {
+          flag = false;
+          vis = I->Obj[I->Table[a].model]->AtomInfo[I->Table[a].atom].visRep; 
+          for(b=0;b<cRepCnt;b++) {
+            if(vis[b]) {
+              flag=true;
+              break;
+            }
+          }
+          base[0].sele[a]=flag;
+          if(flag)
+            c++;
 		  }
 		break;
 	 }

@@ -254,6 +254,10 @@ class PMGApp(AbstractApp):
                                label='5 FPS Maximum',
                                command = lambda: pm.set("movie_delay","200"))
 
+		self.menuBar.addmenuitem('Movie', 'command', '1 FPS Maximum',
+                               label='5 FPS Maximum',
+                               command = lambda: pm.set("movie_delay","1000"))
+
 		self.menuBar.addmenuitem('Movie', 'separator', '')
 
 		self.menuBar.addmenuitem('Movie', 'command', 'Reset Meter',

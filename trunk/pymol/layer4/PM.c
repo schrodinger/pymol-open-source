@@ -1260,7 +1260,6 @@ static PyObject *PMZoom(PyObject *self, PyObject *args)
   PyArg_ParseTuple(args,"s",&str1);
   APIEntry();
   SelectorGetTmp(str1,s1);
-  ExecutiveCenter(s1,1);
   ExecutiveWindowZoom(s1);
   SelectorFreeTmp(s1);
   APIExit();
