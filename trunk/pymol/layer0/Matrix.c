@@ -480,7 +480,7 @@ void MatrixTransform44f4f(float *m, float *q,float *p)
   *(p++) = m[ 3]*q0+m[ 7]*q1+m[11]*q2+m[15];
 }
 /*========================================================================*/
-void MatrixInvRotate44f3f(float *m, float *q,float *p)
+void MatrixInvTransform44fAs33f3f(float *m, float *q,float *p)
 {
   /* multiplying a column major rotation matrix as row-major will
    * give the inverse rotation */
@@ -490,7 +490,7 @@ void MatrixInvRotate44f3f(float *m, float *q,float *p)
   *(p++) = m[ 8]*q0+m[ 9]*q1+m[10]*q2;
 }
 /*========================================================================*/
-void MatrixTransform44fAs33f3f(float *q, float *m, float *p) 
+void MatrixTransform44fAs33f3f(float *m, float *q, float *p) 
 {
   register float q0  = *q    , q1  = *(q+1), q2  = *(q+2);
   *(p++) = m[ 0]*q0+m[ 4]*q1+m[ 8]*q2;

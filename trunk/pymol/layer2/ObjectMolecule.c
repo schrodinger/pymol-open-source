@@ -4261,6 +4261,9 @@ void ObjectMoleculeDescribeElement(ObjectMolecule *I,int index, char *buffer)
 {
   AtomInfoType *ai;
   ai=I->AtomInfo+index;
+  if(ai->alt[0])
+    sprintf(buffer,"%s: /%s/%s/%s/%s/%s`%s",ai->resn,I->Obj.Name,ai->segi,ai->chain,ai->resi,ai->name,ai->alt);
+    else
   sprintf(buffer,"%s: /%s/%s/%s/%s/%s",ai->resn,I->Obj.Name,ai->segi,ai->chain,ai->resi,ai->name);
 }
 /*========================================================================*/
@@ -4268,7 +4271,12 @@ void ObjectMoleculeGetAtomSele(ObjectMolecule *I,int index, char *buffer)
 {
   AtomInfoType *ai;
   ai=I->AtomInfo+index;
-  sprintf(buffer,"/%s/%s/%s/%s/%s",I->Obj.Name,ai->segi,ai->chain,ai->resi,ai->name);
+  if(ai->alt[0]) 
+    sprintf(buffer,"/%s/%s/%s/%s/%s`%s",I->Obj.Name,ai->segi,ai->chain,ai->resi,
+            ai->name,ai->alt);
+  else
+    sprintf(buffer,"/%s/%s/%s/%s/%s`",I->Obj.Name,ai->segi,ai->chain,ai->resi,
+            ai->name);   
 }
 /*========================================================================*/
 int ObjectMoleculeGetNFrames(ObjectMolecule *I)

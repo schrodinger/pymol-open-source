@@ -2042,6 +2042,13 @@ void ExecutiveWindowZoom(char *name,float buffer)
     average3f(mn,mx,center);
     if(radius<MAX_VDW)
       radius=MAX_VDW;
+    PRINTFD(FB_Executive)
+      " ExecutiveWindowZoom: zooming with radius %8.3f...\n",radius
+      ENDFD;
+    PRINTFD(FB_Executive)
+      " ExecutiveWindowZoom: on center %8.3f %8.3f %8.3f...\n",center[0],
+      center[1],center[2]
+      ENDFD;
     SceneOriginSet(center,false);
     SceneWindowSphere(center,radius);
     SceneDirty();

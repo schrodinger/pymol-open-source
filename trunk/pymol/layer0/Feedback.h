@@ -213,7 +213,11 @@ typedef char FeedbackLineType[FEEDBACK_MAX_OUTPUT];
 
 /* debugging: goes to stderr */
 
-#define PRINTFD(sysmod) {if(Feedback(sysmod,FB_Debugging)) fprintf(stderr,
-#define ENDFD   );fflush(stderr);}
+#define PRINTFD(sysmod) {if(Feedback(sysmod,FB_Debugging)) { fprintf(stderr,
+#define ENDFD   );fflush(stderr);}}
+
+/* convenient vector dumping routine */
+
+#define ENDFD3f(v) );fprintf(stderr,": %8.3f %8.3f %8.3f\n",v[0],v[1],v[2]);fflush(stderr);}}
 
 #endif
