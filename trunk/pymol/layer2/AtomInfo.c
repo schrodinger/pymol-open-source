@@ -705,7 +705,8 @@ int AtomInfoFromPyList(PyMOLGlobals *G,AtomInfoType *I,PyObject *list)
   if(ok&&(ll>36)) ok = PConvPyIntToInt(PyList_GetItem(list,36),&I->rank);
   if(ok&&(ll>37)) ok = PConvPyIntToChar(PyList_GetItem(list,37),(char*)&I->hb_donor);
   if(ok&&(ll>38)) ok = PConvPyIntToChar(PyList_GetItem(list,38),(char*)&I->hb_acceptor);
-  if(ok&&(ll>39)) ok = PConvPyIntToInt(PyList_GetItem(list,39),&I->atomic_color);
+  if(ok&&(ll>39)) 
+    ok = PConvPyIntToInt(PyList_GetItem(list,39),&I->atomic_color);
   else {
     I->atomic_color = AtomInfoGetColor(G,I);
   }
