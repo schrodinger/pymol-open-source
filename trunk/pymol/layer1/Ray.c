@@ -40,7 +40,7 @@ Z* -------------------------------------------------------------------
 #endif
 
 #ifndef RAY_SMALL
-#define RAY_SMALL 0.00001 
+#define RAY_SMALL 0.00001
 #endif
 
 /* BASES 
@@ -1979,7 +1979,8 @@ int RayTraceThread(CRayThreadInfo *T)
                   else 
                     {
                       if(perspective) {
-                        scale3f(r1.dir, r1.dist + RAY_SMALL, nudge);
+                        float extend = r1.dist + 0.00001F;
+                        scale3f(r1.dir, extend , nudge);
                       }
                       last_pixel	= *pixel;
                       exclude		= i;
