@@ -42,9 +42,6 @@ int ZLineToSphere(float *base,float *point,float *dir,float radius,float maxial,
 int ZLineToSphereCapped(float *base,float *point,float *dir,float radius,float maxial,
 						float *sphere,float *asum,int cap1,int cap2,float *pre);
 
-static int intersect_triangle(float orig[3], float *pre,float vert0[3], 
-										float *u, float *v, float *d);
-
 #define FASTER_ER	1
 
 #if FASTER_ER
@@ -1473,8 +1470,6 @@ int BasisHitShadow(BasisCallRec *BC)
 		int except = BC->except;
 		const int *vert2prim = BC->vert2prim;
 		const int trans_shadows = BC->trans_shadows;
-		const float front = BC->front;
-		const float back = BC->back;
 		const float excl_trans = BC->excl_trans;
 		MapCache *cache = &BC->cache;
 		
