@@ -237,6 +237,7 @@ int SettingGetName(int index,SettingName name);
 #define cSetting_transparent                 138
 #define cSetting_ray_texture                 139
 #define cSetting_ray_texture_settings        140
+#define cSetting_suspend_updates             141
 #define cSetting_INIT                        142
 
 #endif

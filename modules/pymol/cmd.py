@@ -59,6 +59,7 @@ import sys
 import copy
 import selector
 import operator
+import time
 
 from shortcut import Shortcut
 
@@ -2010,6 +2011,35 @@ def export_dots(object,state):
       unlock()
    return r
 
+def sync(timeout=1.0,poll=0.05):
+   '''
+DESCRIPTION
+
+   "sync" is an API-only function which waits until all current
+   commmands have been executed before returning.  A timeout
+   can be used to insure that this command eventually returns.
+
+PYMOL API
+
+   cmd.sync(float timeout=1.0,float poll=0.05)
+
+SEE ALSO
+
+   frame
+'''
+   now = time.time()
+   timeout = float(timeout)
+   poll = float(poll)
+   if _cmd.wait_queue(): # commands waiting to be executed?
+      while 1:
+         e = threading.Event() # using this for portable delay
+         e.wait(poll)
+         del e
+         if not _cmd.wait_queue():
+            break
+         if (time.time()-now)>timeout:
+            break
+            
 def count_states(selection="(all)"):
    '''
 DESCRIPTION
