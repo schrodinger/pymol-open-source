@@ -702,8 +702,8 @@ static void TriangleBuildLast(int i1,int i2,float *v,float *vn,int n)
 static void FollowActives(float *v,float *vn,int n,int mode)
 {
   TriangleSurfaceRec *I=&TriangleSurface;
-  int cnt;
   int i1,i2;
+  int cnt;
 
   cnt = SettingGet(cSetting_test1);
   
@@ -737,6 +737,7 @@ int *TrianglePointsToSurface(float *v,float *vn,int n,float cutoff,int *nTriPtr)
   int doneFlag = false;
   int lastTri,lastTri2,lastTri3;
   float dif,minDist,*v0;
+  int cnt;
 
   I->N=n;
   I->nActive = 0;
@@ -892,6 +893,11 @@ int *TrianglePointsToSurface(float *v,float *vn,int n,float cutoff,int *nTriPtr)
 		  printf("never %i\n",a);
 		  }*/
   printf("NTri: %i\n",I->nTri);
+
+  cnt = SettingGet(cSetting_test1);
+  if(I->nTri>cnt)
+	 I->nTri=cnt;
+
   (*nTriPtr)=I->nTri;
   VLAFreeP(I->active);
   VLAFreeP(I->link);

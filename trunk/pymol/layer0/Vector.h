@@ -37,7 +37,9 @@ void subtract3f ( float *v1, float *v2, float *v3 );
 
 void average3f ( float *v1, float *v2, float *avg );
 void scale3f ( float *v1, float v0, float *v2);
+
 float length3f ( float *v1 );
+void invert3f ( float *v );
 
 double length3d ( double *v1 );
 float lengthsq3f ( float *v1 );

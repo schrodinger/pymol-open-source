@@ -73,6 +73,13 @@ float project3f ( float *v1, float *v2, float *proj )
 	return(dot);
 }
 
+void invert3f (float *v)
+{
+  v[0]=-v[0];
+  v[1]=-v[1];
+  v[2]=-v[2];
+}
+
 void scale3f ( float *v1,float v0,float *v2)
 {
   v2[0]=v1[0]*v0;

@@ -32,11 +32,10 @@ Z* -------------------------------------------------------------------
 #endif
 
 /* BASES 
-
    0 contains untransformed vertices (vector size = 3)
 	1 contains transformed vertices (vector size = 3)
-
- */
+	2 contains transformed vertices for shadowing 
+*/
 
 typedef GLfloat GLfloat3[3];
 typedef GLfloat GLfloat4[4];
@@ -47,6 +46,12 @@ void RaySetup(CRay *I);
 void RayColor3fv(CRay *I,float *v);
 void RaySphere3fv(CRay *I,float *v,float r);
 void RayCylinder3fv(CRay *I,float *v1,float *v2,float r);
+
+void RayTriangle3fv(CRay *I,
+						  float *v1,float *v2,float *v3,
+						  float *n1,float *n2,float *n3,
+						  float *c1,float *c2,float *c3);
+
 void RayApplyMatrix33( GLuint n, GLfloat3 *q, const GLfloat m[16],
 							GLfloat3 *p );
 
@@ -56,37 +61,36 @@ void RayTransformBasis(CRay *I,CBasis *B);
 
 int PrimitiveSphereHit(CRay *I,float *v,float *n,float *minDist,int except);
 
-void RayReflect(CRay *I,float *v,float *n,float *p,float d,
-					 float *sn,float *ip,float *nn,float *dotgle);
+void RayReflectSphere(CRay *I,RayInfo *r);
+
 void RayTransformNormals33( GLuint n, GLfloat3 *q, const GLfloat m[16],GLfloat3 *p );
 
 /*========================================================================*/
-void RayReflect(CRay *I,float *v,float *n,float *p,float d,
-									 float *sn,float *ip,float *nn,float *dotgle)
+void RayReflectSphere(CRay *I,RayInfo *r)
 {
   
-  ip[0]=v[0]+d*n[0];
-  ip[1]=v[1]+d*n[1];
-  ip[2]=v[2]+d*n[2];
+  r->impact[0]=r->base[0]; 
+  r->impact[1]=r->base[1]; 
+  r->impact[2]=r->base[2]-r->dist;
   
-  sn[0]=ip[0]-p[0];
-  sn[1]=ip[1]-p[1];
-  sn[2]=ip[2]-p[2];
+  r->surfnormal[0]=r->impact[0]-r->sphere[0];
+  r->surfnormal[1]=r->impact[1]-r->sphere[1];
+  r->surfnormal[2]=r->impact[2]-r->sphere[2];
   
-  normalize3f(sn);
- 
-  (*dotgle) = n[0]*sn[0]+n[1]*sn[1]+n[2]*sn[2];
-
-  nn[0]=n[0]-2*(*dotgle)*sn[0];
-  nn[1]=n[1]-2*(*dotgle)*sn[1];
-  nn[2]=n[2]-2*(*dotgle)*sn[2];
-
+  normalize3f(r->surfnormal);
+  
+  r->dotgle = -r->surfnormal[2]; 
+  
+  r->reflect[0]= - ( 2 * r->dotgle * r->surfnormal[0] );
+  r->reflect[1]= - ( 2 * r->dotgle * r->surfnormal[1] );
+  r->reflect[2]= -1.0 - ( 2 * r->dotgle * r->surfnormal[2] );
+  
 }
 /*========================================================================*/
 void RayExpandPrimitives(CRay *I)
 {
   int a;
-  float *v0,*v1,*n0;
+  float *v0,*v1,*n0,*n1;
   CBasis *basis;
   int nVert, nNorm;
  
@@ -100,6 +104,10 @@ void RayExpandPrimitives(CRay *I)
 	 case cPrimCylinder:
 		nVert++;
 		nNorm++;
+		break;
+	 case cPrimTriangle:
+		nVert+=3;
+		nNorm+=4;
 		break;
 	 }
   }
@@ -123,11 +131,54 @@ void RayExpandPrimitives(CRay *I)
   n0=basis->Normal;
   for(a=0;a<I->NPrimitive;a++) {
 	 switch(I->Primitive[a].type) {
+	 case cPrimTriangle:
+		I->Primitive[a].vert=nVert;
+		I->Vert2Prim[nVert]=a;
+		I->Vert2Prim[nVert+1]=a;
+		I->Vert2Prim[nVert+2]=a;
+		basis->Radius[nVert]=I->Primitive[a].r1;
+		basis->Radius2[nVert]=I->Primitive[a].r1*I->Primitive[a].r1; /*necessary??*/
+		if(basis->Radius[nVert]>basis->MinVoxel)
+		  basis->MinVoxel=basis->Radius[nVert];
+		basis->Vert2Normal[nVert]=nNorm;
+		basis->Vert2Normal[nVert+1]=nNorm;
+		basis->Vert2Normal[nVert+2]=nNorm;
+		n1=I->Primitive[a].n0;
+		(*n0++)=(*n1++);
+		(*n0++)=(*n1++);
+		(*n0++)=(*n1++);
+		n1=I->Primitive[a].n1;
+		(*n0++)=(*n1++);
+		(*n0++)=(*n1++);
+		(*n0++)=(*n1++);
+		n1=I->Primitive[a].n2;
+		(*n0++)=(*n1++);
+		(*n0++)=(*n1++);
+		(*n0++)=(*n1++);
+		n1=I->Primitive[a].n3;
+		(*n0++)=(*n1++);
+		(*n0++)=(*n1++);
+		(*n0++)=(*n1++);
+		nNorm+=4;
+		v1=I->Primitive[a].v1;
+		(*v0++)=(*v1++);
+		(*v0++)=(*v1++);
+		(*v0++)=(*v1++);
+		v1=I->Primitive[a].v2;
+		(*v0++)=(*v1++);
+		(*v0++)=(*v1++);
+		(*v0++)=(*v1++);
+		v1=I->Primitive[a].v3;
+		(*v0++)=(*v1++);
+		(*v0++)=(*v1++);
+		(*v0++)=(*v1++);
+		nVert+=3;
+		break;
 	 case cPrimSphere:
 		I->Vert2Prim[nVert]=a;
 		v1=I->Primitive[a].v1;
-		basis->Radius[nVert]=I->Primitive[nVert].r1;
-		basis->Radius2[nVert]=I->Primitive[nVert].r1*I->Primitive[nVert].r1; /*precompute*/
+		basis->Radius[nVert]=I->Primitive[a].r1;
+		basis->Radius2[nVert]=I->Primitive[a].r1*I->Primitive[a].r1; /*precompute*/
 		if(basis->Radius[nVert]>basis->MaxRadius)
 		  basis->MaxRadius=basis->Radius[nVert];
 		(*v0++)=(*v1++);
@@ -137,8 +188,8 @@ void RayExpandPrimitives(CRay *I)
 		break;
 	 case cPrimCylinder:
 		I->Vert2Prim[nVert]=a;
-		basis->Radius[nVert]=I->Primitive[nVert].r1;
-		basis->Radius2[nVert]=I->Primitive[nVert].r1*I->Primitive[nVert].r1; /*precompute*/
+		basis->Radius[nVert]=I->Primitive[a].r1;
+		basis->Radius2[nVert]=I->Primitive[a].r1*I->Primitive[a].r1; /*precompute*/
 		if(basis->Radius[nVert]>basis->MinVoxel)
 		  basis->MinVoxel=basis->Radius[nVert];
 		subtract3f(I->Primitive[a].v2,I->Primitive[a].v1,n0);
@@ -155,11 +206,14 @@ void RayExpandPrimitives(CRay *I)
 		break;
 	 }
   }
+  printf("minvoxel  %8.3f\n",basis->MinVoxel);
+  printf("NPrimit  %d nvert %d\n",I->NPrimitive,nVert);
 }
 /*========================================================================*/
 void RayTransformFirst(CRay *I)
 {
   CBasis *basis0,*basis1;
+  CPrimitive *prm;
   int a;
 
   basis0 = I->Basis;
@@ -167,6 +221,7 @@ void RayTransformFirst(CRay *I)
   
   VLACheck(basis1->Vertex,float,3*basis0->NVertex);
   VLACheck(basis1->Normal,float,3*basis0->NNormal);
+  VLACheck(basis1->Precomp,float,3*basis0->NNormal);
   VLACheck(basis1->Vert2Normal,int,basis0->NVertex);
   VLACheck(basis1->Radius,float,basis0->NVertex);
   VLACheck(basis1->Radius2,float,basis0->NVertex);
@@ -189,26 +244,36 @@ void RayTransformFirst(CRay *I)
 					  I->ModelView,(GLfloat3*)basis0->Normal);
   
   basis1->NNormal=basis0->NNormal;
+
+  for(a=0;a<I->NPrimitive;a++) {
+	 prm=I->Primitive+a;
+	 if(prm->type==cPrimTriangle) {
+		BasisTrianglePrecompute(basis1->Vertex+prm->vert*3,
+										basis1->Vertex+prm->vert*3+3,
+										basis1->Vertex+prm->vert*3+6,
+										basis1->Precomp+basis1->Vert2Normal[prm->vert]*3);
+	 }
+  }
+
 }
 /*========================================================================*/
 void RayTransformBasis(CRay *I,CBasis *basis1)
 {
   CBasis *basis0;
   int a;
-  float *v0,*v1,*n0,*n1;
+  float *v0,*v1;
+  CPrimitive *prm;
 
   basis0 = I->Basis+1;
 
   VLACheck(basis1->Vertex,float,3*basis0->NVertex);
   VLACheck(basis1->Normal,float,3*basis0->NNormal);
+  VLACheck(basis1->Precomp,float,3*basis0->NNormal);
   VLACheck(basis1->Vert2Normal,int,basis0->NVertex);
   VLACheck(basis1->Radius,float,basis0->NVertex);
   VLACheck(basis1->Radius2,float,basis0->NVertex);
-
   v0=basis0->Vertex;
   v1=basis1->Vertex;
-  n0=basis0->Normal;
-  n1=basis1->Normal;
   for(a=0;a<basis0->NVertex;a++)
 	 {
 		transform33f3f(basis1->Matrix,v0,v1);
@@ -218,16 +283,31 @@ void RayTransformBasis(CRay *I,CBasis *basis1)
 		basis1->Radius2[a]=basis0->Radius2[a];
 		basis1->Vert2Normal[a]=basis0->Vert2Normal[a];
 	 }
+  v0=basis0->Normal;
+  v1=basis1->Normal;
   for(a=0;a<basis0->NNormal;a++)
 	 {
-		transform33f3f(basis1->Matrix,n0,n1);
-		n0+=3;
-		n1+=3;
+		transform33f3f(basis1->Matrix,v0,v1);
+		v0+=3;
+		v1+=3;
 	 }
   basis1->MaxRadius=basis0->MaxRadius;
   basis1->MinVoxel=basis0->MinVoxel;
   basis1->NVertex=basis0->NVertex;
   basis1->NNormal=basis0->NNormal;
+
+
+  for(a=0;a<I->NPrimitive;a++) {
+	 prm=I->Primitive+a;
+	 if(prm->type==cPrimTriangle) {
+		BasisTrianglePrecompute(basis1->Vertex+prm->vert*3,
+										basis1->Vertex+prm->vert*3+3,
+										basis1->Vertex+prm->vert*3+6,
+										basis1->Precomp+basis1->Vert2Normal[prm->vert]*3);
+	 }
+  }
+
+  
 }
 /*========================================================================*/
 void RayRender(CRay *I,int width,int height,unsigned int *image,float front,float back)
@@ -236,17 +316,16 @@ void RayRender(CRay *I,int width,int height,unsigned int *image,float front,floa
   int a,b;
   unsigned int *p;
   float excess=0.0;
-  float base[3],impact[3],reflect[3],surf[3],dist,dotgle,dist2;
-  float impact2[3],sphere[3];
+  float dotgle;
   float bright,direct_cmp,reflect_cmp,*v;
   float ambient,direct,lreflect;
   unsigned int c[3],aa;
   unsigned int *image_copy = NULL;
-  int i;
+  int i,pi;
   unsigned int background,buffer_size,z[12],tot;
   int antialias;
+  RayInfo r1,r2;
 
-  float zRay[3] = { 0.0,0.0,-1.0};
   /* SETUP */
 
   antialias = (int)SettingGet(cSetting_antialias);
@@ -317,30 +396,36 @@ void RayRender(CRay *I,int width,int height,unsigned int *image,float front,floa
           *p++=0xFF000000;  
     
     /* ray-trace */
-    base[2]=0.0;
+	 r1.base[2]=0.0;
     for(x=0;x<width;x++)
       {
         if(!(x&0xF)) OrthoBusyFast(x,width); /* don't slow down rendering too much */
-        base[0]=(((float)x)/width)*I->Range[0]+I->Volume[0];
+        r1.base[0]=(((float)x)/width)*I->Range[0]+I->Volume[0];
         for(y=0;y<height;y++)
           {
-            base[1]=(((float)y)/height)*I->Range[1]+I->Volume[2];
+            r1.base[1]=(((float)y)/height)*I->Range[1]+I->Volume[2];
             
-            i=BasisHit(I->Basis+1,base,&dist,-1,I->Vert2Prim,I->Primitive,sphere,false,
-                       front,back); 
+            i=BasisHit(I->Basis+1,&r1,-1,I->Vert2Prim,I->Primitive,false,front,back);
             
             if(i>=0) {
-              
-              RayReflect(I,base,zRay,sphere,dist,surf,impact,reflect,&dotgle);
-              dotgle=-dotgle;
+
+				  pi = I->Vert2Prim[i];
+
+              if(r1.type==cPrimTriangle) {
+					 BasisReflectTriangle(I->Basis+1,&r1,i);
+				  } else {
+					 RayReflectSphere(I,&r1);/*,zRay,sphere,dist,surf,impact,reflect,&dotgle);*/
+				  }
+				  
+
+              dotgle=-r1.dotgle;
               direct_cmp=(dotgle+(pow(dotgle,SettingGet(cSetting_power))))/2.0;
               
-              transform33f3f(I->Basis[2].Matrix,impact,impact2);
+              transform33f3f(I->Basis[2].Matrix,r1.impact,r2.base);
               
-              if(BasisHit(I->Basis+2,impact2,&dist2,i,
-                          I->Vert2Prim,I->Primitive,sphere,true,0,0)<0) {
-                
-                dotgle=-dot_product3f(surf,I->Basis[2].LightNormal);
+              if(BasisHit(I->Basis+2,&r2,i,I->Vert2Prim,I->Primitive,true,0.0,0.0)<0) {
+					 
+					 dotgle=-dot_product3f(r1.surfnormal,I->Basis[2].LightNormal);
                 if(dotgle<0.0) dotgle=0.0;
                 reflect_cmp=(dotgle+(pow(dotgle,SettingGet(cSetting_power))))/2.0;
                 excess=pow(dotgle,SettingGet(cSetting_spec_power))*
@@ -356,9 +441,9 @@ void RayRender(CRay *I,int width,int height,unsigned int *image,float front,floa
               
               if(bright>1.0) bright=1.0;
               if(bright<0.0) bright=0.0;
-              c[0]=(bright*I->Primitive[i].c1[0]+excess)*255.0;
-              c[1]=(bright*I->Primitive[i].c1[1]+excess)*255.0;
-              c[2]=(bright*I->Primitive[i].c1[2]+excess)*255.0;
+              c[0]=(bright*I->Primitive[pi].c1[0]+excess)*255.0;
+              c[1]=(bright*I->Primitive[pi].c1[1]+excess)*255.0;
+              c[2]=(bright*I->Primitive[pi].c1[2]+excess)*255.0;
               if(c[0]>255.0) c[0]=255.0;
               if(c[1]>255.0) c[1]=255.0;
               if(c[2]>255.0) c[2]=255.0;
@@ -599,6 +684,101 @@ void RayCylinder3fv(CRay *I,float *v1,float *v2,float r)
 
 }
 /*========================================================================*/
+void RayTriangle3fv(CRay *I,
+						  float *v1,float *v2,float *v3,
+						  float *n1,float *n2,float *n3,
+						  float *c1,float *c2,float *c3)
+{
+  CPrimitive *p;
+
+  float *vv;
+  float n0[3],nx[3],s1[3],s2[3],s3[3];
+  float l1,l2,l3;
+
+  VLACheck(I->Primitive,CPrimitive,I->NPrimitive);
+  p = I->Primitive+I->NPrimitive;
+
+  p->type = cPrimTriangle;
+
+  /* determine exact triangle normal */
+  add3f(n1,n2,nx);
+  add3f(n3,nx,nx);
+  subtract3f(v1,v2,s1);
+  subtract3f(v3,v2,s2);
+  subtract3f(v1,v3,s3);
+  cross_product3f(s1,s2,n0);
+  if((fabs(n0[0])<RAY_SMALL)&&
+	  (fabs(n0[1])<RAY_SMALL)&&
+	  (fabs(n0[2])<RAY_SMALL))
+	 copy3f(nx,n0); /* fall-back */
+  else if(dot_product3f(n0,nx)<0)
+	 invert3f(n0);
+  normalize3f(n0);
+
+  vv=p->n0;
+  (*vv++)=n0[0];
+  (*vv++)=n0[1];
+  (*vv++)=n0[2];
+
+  /* determine maximum distance from vertex to point */
+  l1=length3f(s1);
+  l2=length3f(s2);
+  l3=length3f(s3);
+  if(l2>l1) { if(l3>l2)	l1=l3; else	l1=l2;  }
+  /* store cutoff distance */
+
+  p->r1=l1*0.6;
+
+  /*  if(l1>20) {
+		printf("%8.3f\n",l1);
+		printf("%8.3f %8.3f %8.3f\n",s1[0],s1[1],s1[2]);
+		printf("%8.3f %8.3f %8.3f\n",s2[0],s2[1],s2[2]);
+		printf("%8.3f %8.3f %8.3f\n",s3[0],s3[1],s3[2]);
+		}*/
+
+  vv=p->v1;
+  (*vv++)=(*v1++);
+  (*vv++)=(*v1++);
+  (*vv++)=(*v1++);
+  vv=p->v2;
+  (*vv++)=(*v2++);
+  (*vv++)=(*v2++);
+  (*vv++)=(*v2++);
+  vv=p->v3;
+  (*vv++)=(*v3++);
+  (*vv++)=(*v3++);
+  (*vv++)=(*v3++);
+
+  vv=p->c1;
+  (*vv++)=(*c1++);
+  (*vv++)=(*c1++);
+  (*vv++)=(*c1++);
+  vv=p->c2;
+  (*vv++)=(*c2++);
+  (*vv++)=(*c2++);
+  (*vv++)=(*c2++);
+  vv=p->c3;
+  (*vv++)=(*c3++);
+  (*vv++)=(*c3++);
+  (*vv++)=(*c3++);
+
+  vv=p->n1;
+  (*vv++)=(*n1++);
+  (*vv++)=(*n1++);
+  (*vv++)=(*n1++);
+  vv=p->n2;
+  (*vv++)=(*n2++);
+  (*vv++)=(*n2++);
+  (*vv++)=(*n2++);
+  vv=p->n3;
+  (*vv++)=(*n3++);
+  (*vv++)=(*n3++);
+  (*vv++)=(*n3++);
+
+  I->NPrimitive++;
+
+}
+/*========================================================================*/
 CRay *RayNew(void)
 {
   unsigned int test;
@@ -620,6 +800,7 @@ CRay *RayNew(void)
   I->fColor3fv=RayColor3fv;
   I->fSphere3fv=RaySphere3fv;
   I->fCylinder3fv=RayCylinder3fv;
+  I->fTriangle3fv=RayTriangle3fv;
   
   return(I);
 }

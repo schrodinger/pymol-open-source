@@ -21,18 +21,20 @@ Z* -------------------------------------------------------------------
 
 #define cPrimSphere 1
 #define cPrimCylinder 2
+#define cPrimTriangle 3
 
 typedef struct {
-  int (*Intersect)(float *p,float *n,float **d);
-  int type;
-  float v1[3],v2[3];
-  float c1[3];
-  float r1,l1;
+  int type,vert;
+  float v1[3],v2[3],v3[3];
+  float n0[3],n1[3],n2[3],n3[3];
+  float c1[3],c2[3],c3[3];
+  float r1,l1; 
+
 } CPrimitive;
 
 typedef struct {
   MapType *Map;
-  float *Vertex,*Normal;
+  float *Vertex,*Normal,*Precomp;
   float *Radius,*Radius2,MaxRadius,MinVoxel;
   int *Vert2Normal;
   int NVertex;
@@ -42,14 +44,29 @@ typedef struct {
   Matrix33f Matrix;
 } CBasis;
 
+typedef struct {
+  float base[3];
+  int type;
+  float impact[3];
+  float tri1,tri2;
+  float sphere[3]; /* sphere location if reflecting off of one */
+  float surfnormal[3]; /* normal of reflecting surface */
+  float dist;
+  float dotgle;
+  float reflect[3];
+} RayInfo;
+
 void BasisInit(CBasis *I);
 void BasisFinish(CBasis *I);
 void BasisMakeMap(CBasis *I,int *vert2prim,CPrimitive *prim,float *clipBox);
 void BasisSetupMatrix(CBasis *I);
+void BasisReflectTriangle(CBasis *I,RayInfo *r,int i);
+void BasisTrianglePrecompute(float *v1,float *v2,float *v3,float *pre);
 
-int BasisHit(CBasis *I,float *v,float *minDist,int except,
-				 int *vert2prim,CPrimitive *prim,float *sphere,
+int BasisHit(CBasis *I,RayInfo *r,int except,
+				 int *vert2prim,CPrimitive *prim,
 				 int shadow,float front,float back);
+
 #endif
 
 

@@ -64,6 +64,15 @@ void RepSurfaceRender(RepSurface *I,CRay *ray,Pickable **pick)
   int c=I->N;
   
   if(ray) {
+	 float c1[3] = {0.9,0.9,0.9};
+	 c=I->NT;
+      while(c--)
+        {
+			 ray->fTriangle3fv(ray,v+(*t)*3,v+(*(t+1))*3,v+(*(t+2))*3,
+									 vn+(*t)*3,vn+(*(t+1))*3,vn+(*(t+2))*3,
+									 c1,c1,c1);
+			 t+=3;
+        }
   } else if(pick) {
   } else {
 	 c=I->NT;

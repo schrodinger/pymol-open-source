@@ -25,6 +25,10 @@ typedef struct CRay {
   void (*fSphere3fv)(struct CRay *ray,float *v,float r);
   void (*fCylinder3fv)(struct CRay *ray,float *v1,float *v2,float r);
   void (*fColor3fv)(struct CRay *ray,float *c);
+  void (*fTriangle3fv)(struct CRay *ray,
+							  float *v1,float *v2,float *v3,
+							  float *n1,float *n2,float *n3,
+							  float *c1,float *c2,float *c3);
   CPrimitive *Primitive;
   int NPrimitive;
   CBasis *Basis;

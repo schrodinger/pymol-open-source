@@ -30,6 +30,9 @@ void BasisFinish(CBasis *I);
 float ZLineClipPoint(float *base,float *point,float *alongNormalSq,float cutoff);
 int ZLineToSphere(float *base,float *point,float *dir,float radius,float maxial,float *sphere);
 
+static int intersect_triangle(float orig[3], float *pre,float vert0[3], float vert2[3],
+										float *u, float *v, float *d);
+
 /*========================================================================*/
 int ZLineToSphere(float *base,float *point,float *dir,float radius,float maxial,
 						float *sphere)
@@ -197,7 +200,6 @@ float ZLineClipPoint(float *base,float *point,float *alongNormalSq,float cutoff)
 	 return(MAXFLOAT);
   }
 }
-
 /*========================================================================*/
 void BasisSetupMatrix(CBasis *I)
 {
@@ -241,22 +243,55 @@ void BasisSetupMatrix(CBasis *I)
   */
 }
 
+
+
 /*========================================================================*/
-int BasisHit(CBasis *I,float *v,float *minDist,int except,
-				 int *vert2prim,CPrimitive *prim,float *sphere,
+void BasisReflectTriangle(CBasis *I,RayInfo *r,int i) 
+{
+  float *n0,w2;
+  float vt1[3];
+  int ni;
+
+  r->impact[0]=r->base[0]; 
+  r->impact[1]=r->base[1]; 
+  r->impact[2]=r->base[2]-r->dist;
+
+  ni = I->Vert2Normal[i];
+  n0 = I->Normal+3*ni+3; /* skip triangle normal */
+  w2 = 1.0-(r->tri1+r->tri2);
+  /*  printf("%8.3f %8.3f\n",r->tri[1],r->tri[2]);*/
+  scale3f(n0+3,r->tri1,r->surfnormal);
+  scale3f(n0+6,r->tri2,vt1);
+  add3f(vt1,r->surfnormal,r->surfnormal);
+
+  scale3f(n0,w2,vt1);
+  add3f(vt1,r->surfnormal,r->surfnormal);
+
+  normalize3f(r->surfnormal);
+  r->dotgle = -r->surfnormal[2]; 
+  
+  r->reflect[0]= - ( 2 * r->dotgle * r->surfnormal[0] );
+  r->reflect[1]= - ( 2 * r->dotgle * r->surfnormal[1] );
+  r->reflect[2]= -1.0 - ( 2 * r->dotgle * r->surfnormal[2] );
+
+}
+/*========================================================================*/
+int BasisHit(CBasis *I,RayInfo *r,int except,
+				 int *vert2prim,CPrimitive *prim,
 				 int shadow,float front,float back)
 {
-  float oppSq,dist,sph[3],*vv,vt[3];
+  float oppSq,dist,sph[3],*vv,vt[3],tri1,tri2;
   int minIndex;
   int a,b,c,h,i,*ip,aa,bb,cc;
   CPrimitive *prm;
   /* assumption: always heading in the negative Z direction with our vector... */
   minIndex = -1;
-  vt[0]=v[0];
-  vt[1]=v[1];
-  if(MapInsideXY(I->Map,v,&a,&b,&c))
+  vt[0]=r->base[0];
+  vt[1]=r->base[1];
+  if(except>=0) except=vert2prim[except];
+  if(MapInsideXY(I->Map,r->base,&a,&b,&c))
 	 {
-		(*minDist) = MAXFLOAT;
+		r->dist = MAXFLOAT;
 		MapCacheReset(I->Map);
 		while(1) {
 		  h=*MapEStart(I->Map,a,b,c);
@@ -264,46 +299,69 @@ int BasisHit(CBasis *I,float *v,float *minDist,int except,
 			 {
 				ip=I->Map->EList+h;
 				i=*(ip++);
+
 				while(i>=0) {
-				  if((i!=except)&&(!MapCached(I->Map,i))) {
+				  if((vert2prim[i]!=except)&&(!MapCached(I->Map,i))) {
 					 MapCache(I->Map,i);
 					 prm = prim+vert2prim[i];
 					 switch(prm->type) {
+					 case cPrimTriangle:
+
+						if(intersect_triangle(r->base,I->Precomp+I->Vert2Normal[i]*3,
+													 I->Vertex+prm->vert*3,I->Vertex+prm->vert*3+6,
+													 &tri1,&tri2,&dist)) 
+						  {
+							 if(shadow) {
+								if((dist>(-R_SMALL4))&&(dist<r->dist))
+								  return(1);
+							 } else {
+								if(dist<r->dist)
+								  if((dist>=front)&&(dist<=back)) {
+									 minIndex=i;
+									 r->tri1=tri1;
+									 r->tri2=tri2;
+									 r->dist=dist;
+								  }
+							 }
+						  }
+						break;
 					 case cPrimSphere:
-						oppSq = ZLineClipPoint(v,I->Vertex+i*3,&dist,I->Radius[i]);
+						oppSq = ZLineClipPoint(r->base,I->Vertex+i*3,&dist,I->Radius[i]);
 						if(oppSq<=I->Radius2[i])
 						  {
 							 dist=sqrt(dist)-sqrt((I->Radius2[i]-oppSq));
 							 if(shadow) {
-								if((dist>(-R_SMALL4))&&(dist<(*minDist)))
+								if((dist>(-R_SMALL4))&&(dist<r->dist))
 								  return(1);
 							 } else {
-								if((dist>=front)&&(dist<=back)&&(dist<(*minDist)))
-								  {
+								if(dist<r->dist)
+								  if((dist>=front)&&(dist<=back)) {
 									 minIndex=i;
-									 (*minDist)=dist;
+									 r->dist=dist;
 								  }
 							 }
 						  }
 						break;
 					 case cPrimCylinder:
-						  if(ZLineToSphere(v,I->Vertex+i*3,I->Normal+I->Vert2Normal[i]*3,I->Radius[i],prm->l1,sph))
+						  if(ZLineToSphere(r->base,I->Vertex+i*3,I->Normal+I->Vert2Normal[i]*3,I->Radius[i],prm->l1,sph))
 						  {
-							 oppSq = ZLineClipPoint(v,sph,&dist,I->Radius[i]);
+							 oppSq = ZLineClipPoint(r->base,sph,&dist,I->Radius[i]);
 							 if(oppSq<=I->Radius2[i])
 								{
 								  dist=sqrt(dist)-sqrt((I->Radius2[i]-oppSq));
 								  if(shadow) {
-									 if((dist>(-R_SMALL4))&&(dist<(*minDist)))
+									 if((dist>(-R_SMALL4))&&(dist<r->dist))
 										return(1);
 								  } else {
-									 if((dist>=front)&&(dist<=back)&&(dist<(*minDist))) {
-										sphere[0]=sph[0];
-										sphere[1]=sph[1];										
-										sphere[2]=sph[2];
-										minIndex=i;
-										(*minDist)=dist;
-									 }
+									 if(dist<r->dist)
+										if((dist>=front)&&(dist<=back)) {
+										  
+										  r->sphere[0]=sph[0];
+										  r->sphere[1]=sph[1];										
+										  r->sphere[2]=sph[2];
+										  minIndex=i;
+										  r->dist=dist;
+										}
 								  }
 								}
 						  }
@@ -315,7 +373,7 @@ int BasisHit(CBasis *I,float *v,float *minDist,int except,
 			 }
 		  if(minIndex>=0)
 			 {
-				vt[2]=v[2]-(*minDist);
+				vt[2]=r->base[2]-r->dist;
 				MapLocus(I->Map,vt,&aa,&bb,&cc);
 				if(cc>c)
 				  break;
@@ -326,11 +384,17 @@ int BasisHit(CBasis *I,float *v,float *minDist,int except,
 		}
 	 }
   if(minIndex>=0) {
-	 if(prim[vert2prim[minIndex]].type==cPrimSphere) {
+	 r->type=prim[vert2prim[minIndex]].type;
+	 switch(r->type) {
+	 case cPrimSphere:
+		
 		vv=I->Vertex+minIndex*3;
-		sphere[0]=vv[0];
-		sphere[1]=vv[1];
-		sphere[2]=vv[2];
+		r->sphere[0]=vv[0];
+		r->sphere[1]=vv[1];
+		r->sphere[2]=vv[2];
+		break;
+	 case cPrimTriangle:
+		break;
 	 }
   }
   return(minIndex);
@@ -578,6 +642,7 @@ void BasisInit(CBasis *I)
   I->Radius2 = VLAlloc(float,1);
   I->Normal = VLAlloc(float,1);
   I->Vert2Normal = VLAlloc(int,1);
+  I->Precomp = VLAlloc(float,1);
   I->Map=NULL;
   I->NVertex=0;
   I->NNormal=0;
@@ -595,19 +660,97 @@ void BasisFinish(CBasis *I)
   VLAFreeP(I->Vertex);
   VLAFreeP(I->Vert2Normal);
   VLAFreeP(I->Normal);
+  VLAFreeP(I->Precomp);
   I->Vertex=NULL;
 }
 
 
-#ifdef OLD_CODE_NOT_DEFINED
-					 i=I->Map->EList[h];
-					 while(i>=0) {
-						if(i>=I->NVertex) {
-						  I->Map->EList[h]=tempRef[i];
-						}
-						h++;
-						i=I->Map->EList[h];
-					 }
-#endif
+/*========================================================================*/
+
+#define EPSILON 0.000001
+
+void BasisTrianglePrecompute(float *v0,float *v1,float *v2,float *pre)
+{
+  float det;
+
+  subtract3f(v1,v0,pre);
+  subtract3f(v2,v0,pre+3);
+  det = pre[0]*pre[4] - pre[1]*pre[3];
+  if(fabs(det)<EPSILON) 
+	 *(pre+6)=0.0;
+  else {
+	 *(pre+6)=1.0;
+	 *(pre+7)=1.0/det;
+  }
+}
+
+#define CROSS(dest,v1,v2) {\
+          dest[0]=v1[1]*v2[2]-v1[2]*v2[1]; \
+          dest[1]=v1[2]*v2[0]-v1[0]*v2[2]; \
+          dest[2]=v1[0]*v2[1]-v1[1]*v2[0];}
+#define DOT(v1,v2) (v1[0]*v2[0]+v1[1]*v2[1]+v1[2]*v2[2])
+#define SUB(dest,v1,v2) {dest[0]=v1[0]-v2[0]; dest[1]=v1[1]-v2[1]; dest[2]=v1[2]-v2[2];} 
 
 
+static int intersect_triangle(float orig[3], float *pre,float vert0[3], float vert2[3],
+										float *u, float *v, float *d)
+{
+  float tvec[3],qvec[3];
+  /* float edge1[3], edge2[3],*/
+  /* float pvec[3] 
+	  float det,inv_det;*/
+
+	/*	printf("%8.3f %8.3f %8.3f origin\n",orig[0],orig[1],orig[2]);
+		printf("%8.3f %8.3f %8.3f v0\n",vert0[0],vert0[1],vert0[2]);
+		printf("%8.3f %8.3f %8.3f v1\n",vert1[0],vert1[1],vert1[2]);
+		printf("%8.3f %8.3f %8.3f v2\n",vert2[0],vert2[1],vert2[2]);*/
+   /* find vectors for two edges sharing vert0 */
+
+	/*   SUB(edge1, vert1, vert0); */
+	/*   SUB(edge2, vert2, vert0); */
+
+   /* begin calculating determinant - also used to calculate U parameter */
+	/*   CROSS(pvec, dir, edge2);*/
+
+   /* if determinant is near zero, ray lies in plane of triangle */
+	/*   det = DOT(edge1, pvec);*/
+	/*	det = edge1[0]*edge2[1] - edge1[1]*edge2[0];*/
+
+	/*   if (fabs(det)< EPSILON) return 0; */
+	/*   inv_det = 1.0 / det; */
+	if(!pre[6]) return 0;
+
+   /* calculate distance from vert0 to ray origin */
+   SUB(tvec, orig, vert0);
+
+   /* calculate U parameter and test bounds */
+	/*   *u = DOT(tvec, pvec) * inv_det;*/
+	/*	*u = (tvec[0]*edge2[1] - tvec[1]*edge2[0]) * inv_det;*/
+	*u = (tvec[0]*pre[4] - tvec[1]*pre[3]) * pre[7];
+   if ((*u < 0.0) || (*u > 1.0)) return 0;
+
+   /* prepare to test V parameter */
+	/*   CROSS(qvec, tvec, edge1);*/
+   CROSS(qvec, tvec, pre);
+
+   /* calculate V parameter and test bounds */
+	/*   *v = DOT(dir, qvec) * inv_det;*/
+   *v = -qvec[2] * pre[7];
+	
+   if ((*v < 0.0) || ((*u + *v) > 1.0)) return 0;
+
+   /* calculate t, ray intersects triangle */
+	/*   *t = DOT(edge2, qvec) * inv_det;*/
+
+	/*scale3f(edge1,*u,edge1);
+	  scale3f(edge2,*v,edge2);
+	  add3f(edge1,vert0,hit);
+	  add3f(edge2,hit,hit);
+	  subtract3f(hit,orig,pvec);
+	  (*d) = length3f(pvec);*/
+	
+	/*	*d = (orig[2]-((*u)*edge1[2])-((*v)*edge2[2])-vert0[2]);*/
+	*d = (orig[2]-((*u)*pre[2])-((*v)*pre[5])-vert0[2]);
+
+   return 1;
+}
