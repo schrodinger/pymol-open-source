@@ -21,7 +21,7 @@
 # assumed by the author(s) for any use or misuse of this software.
 
 import cmd
-from cmd import _cmd
+from cmd import _cmd, is_tuple
 
 from chempy import Storage,Atom,Bond
 from chempy.models import Indexed
@@ -251,13 +251,15 @@ def toggle_zooms(mode=-1):
         zooms = mode
     if zooms:
         cmd.zoom(m4x_ligands,2)
-        cmd.clip("slab",10)
     else:
         cmd.zoom("m4x_aligned")
 
 def setup_contexts(context_info):   # Author: Warren DeLano
     (list,dict) = context_info[0:2]
-    key_list = ['F1','F2','F3','F4','F5','F6','F7','F8','F9','F10']
+    key_list = [
+    'F1','F2','F3','F4','F5','F6','F7','F8','F9','F10','F11','F12',
+    'SHFT-F1','SHFT-F2','SHFT-F3','SHFT-F4','SHFT-F5','SHFT-F6','SHFT-F7',
+    'SHFT-F8','SHFT-F9','SHFT-F10','SHFT-F11','SHFT-F12']
     doc_list = ["Keys"]
     zoom_context = 1
     global labels
@@ -316,17 +318,45 @@ def setup_contexts(context_info):   # Author: Warren DeLano
             cmd.show("labels",hbond)
 
         
-    cmd.wizard("message",doc_list)
+    cmd.wizard("fedora",doc_list)
     if zoom_context not in (0,1):
         cmd.zoom(zoom_context)
     toggle_labels(0)
-
+    cmd.feedback("enable","python","output")
+    cmd.feedback("enable","objectmolecule","results")
+    cmd.feedback("disable","selector","actions")
+    cmd.feedback("disable","scene","actions")
+    print " "
+    cmd.set("internal_feedback",1)
+    cmd.set("internal_prompt",0)
+    
         
 def setup_alignment_contexts(context_info):   # Author: Warren DeLano
     (list,dict) = context_info[0:2]
-    key_list = ['F1','F2','F3','F4','F5','F6','F7','F8','F9','F10']
-    doc_list = ["Key Toggles"]
+    doc_list = ['`888Legend:']
+    obj_name_dict = {}
+    for a in list:
+        sf = string.find(a,"_")
+        if sf>=0:
+            object_name = a[0:sf]
+            if not obj_name_dict.has_key(object_name):
+                obj_name_dict[object_name] = 1
+                col_index = cmd.get_object_color_index(object_name)
+                if col_index>=0:
+                    col_tup = cmd.get_color_tuple(col_index)
+                    if is_tuple(col_tup):
+                        col_int = map(lambda x:int(x*9+0.49999),col_tup)
+                        col_str = string.join(map(lambda x:chr(ord('0')+x),col_int),'')
+                        doc_list.append("`"+col_str+object_name+"`---")
+                    
+    key_list = [
+    'F1','F2','F3','F4','F5','F6','F7','F8','F9','F10','F11','F12',
+    'SHFT-F1','SHFT-F2','SHFT-F3','SHFT-F4','SHFT-F5','SHFT-F6','SHFT-F7',
+    'SHFT-F8','SHFT-F9','SHFT-F10','SHFT-F11','SHFT-F12']
+    doc_list.append("")
+    doc_list.append("`888Toggles:")
     zoom_context = 1
+                                  
     global labels,ligands,waters,sites,cgos,zooms,dashes
     labels = 1
     ligands = 1
@@ -373,21 +403,28 @@ def setup_alignment_contexts(context_info):   # Author: Warren DeLano
         doc_list.append(key+": HB-Dists")        
     
     for a in list:
+        include_flag = 0
         water = a+"_water"
         ligand = a+"_ligand"
         site = a+"_site"
         hbond = a+"_hbond"
-        name_list = dict[a]
-        if water in name_list:
-            cmd.select(m4x_waters,m4x_waters+"|"+water)
-        if ligand in name_list:
-            cmd.select(m4x_ligands,m4x_ligands+"|"+ligand)
-        if site in name_list:
-            cmd.select(m4x_sites,m4x_sites+"|"+site+
-            "|((byres (neighbor ("+site+" and name c))) and name n+ca)"+
-            "|((byres (neighbor ("+site+" and name n))) and name c+ca+o)")
-
-    cmd.wizard("message",doc_list)
+        if cmd.count_atoms(site):
+            if cmd.count_atoms(site+" & m4x_aligned"):
+                include_flag = 1
+        elif cmd.count_atoms(ligand):
+            if cmd.count_atoms(ligand+" within 3.3 of m4x_aligned"):
+                include_flag = 1
+        if include_flag:
+            name_list = dict[a]
+            if water in name_list:
+                cmd.select(m4x_waters,m4x_waters+"|"+water)
+            if ligand in name_list:
+                cmd.select(m4x_ligands,m4x_ligands+"|"+ligand)
+            if site in name_list:
+                cmd.select(m4x_sites,m4x_sites+"|"+site+
+                "|((byres (neighbor ("+site+" and name c))) and name n+ca)"+
+                "|((byres (neighbor ("+site+" and name n))) and name c+ca+o)")
+    cmd.wizard("fedora",doc_list)
     toggle_cgos(1)
     toggle_labels(0)
     toggle_dashes(0)
@@ -396,6 +433,10 @@ def setup_alignment_contexts(context_info):   # Author: Warren DeLano
     toggle_waters(0)
     toggle_cgos(1)
     cmd.deselect()
-        
-
-    
+    cmd.feedback("enable","python","output")
+    cmd.feedback("enable","objectmolecule","results")
+    print " "
+    cmd.set("internal_feedback",1)
+    cmd.set("internal_prompt",0)
+    cmd.feedback("disable","selector","actions")
+    cmd.feedback("disable","scene","actions")

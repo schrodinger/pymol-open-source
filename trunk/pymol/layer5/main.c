@@ -370,13 +370,14 @@ static void MainButton(int button,int state,int x,int y)
   static int glMod;  
   /*  CMain *I = &Main;*/
 
+  glMod = p_glutGetModifiers();
+
   PLockAPIAsGlut();
 
   /* stay blocked here because Clicks->SetFrame->PParse */
 
   y=WinY-y;
 
-  glMod = p_glutGetModifiers();
   Modifiers = ((glMod&P_GLUT_ACTIVE_SHIFT) ? cOrthoSHIFT : 0) |
 	 ((glMod&P_GLUT_ACTIVE_CTRL) ? cOrthoCTRL : 0) |
 	 ((glMod&P_GLUT_ACTIVE_ALT) ? cOrthoALT : 0);
@@ -451,12 +452,13 @@ static void MainKey(unsigned char k, int x, int y)
   /*  CMain *I = &Main;*/
   int glMod;
 
+  glMod = p_glutGetModifiers();
+
   PRINTFD(FB_Main)
     " MainKey: %d %d %d\n",k,x,y
     ENDFD;
   PLockAPIAsGlut();
 
-  glMod = p_glutGetModifiers();
   Modifiers = ((glMod&P_GLUT_ACTIVE_SHIFT) ? cOrthoSHIFT : 0) |
 	 ((glMod&P_GLUT_ACTIVE_CTRL) ? cOrthoCTRL : 0) |
 	 ((glMod&P_GLUT_ACTIVE_ALT) ? cOrthoALT : 0);
@@ -472,23 +474,31 @@ static void MainSpecial(int k, int x, int y)
 {
   char buffer[255];
   int grabbed = false;
+  static int glMod;  
+
+  glMod = p_glutGetModifiers();
   PLockAPIAsGlut();
+
+  Modifiers = ((glMod&P_GLUT_ACTIVE_SHIFT) ? cOrthoSHIFT : 0) |
+	 ((glMod&P_GLUT_ACTIVE_CTRL) ? cOrthoCTRL : 0) |
+	 ((glMod&P_GLUT_ACTIVE_ALT) ? cOrthoALT : 0);
+
   switch(k) {
     case P_GLUT_KEY_UP:
     case P_GLUT_KEY_DOWN:
       grabbed=1;
-      OrthoSpecial(k,x,y);
+      OrthoSpecial(k,x,y,Modifiers);
       break;
     case P_GLUT_KEY_LEFT:
     case P_GLUT_KEY_RIGHT:      
       if(OrthoArrowsGrabbed()) {
         grabbed=1;
-        OrthoSpecial(k,x,y);
+        OrthoSpecial(k,x,y,Modifiers);
       }
       break;
   }
   if(!grabbed) {
-    sprintf(buffer,"_special %d,%d,%d ",k,x,y);
+    sprintf(buffer,"_special %d,%d,%d,%d",k,x,y,Modifiers);
     PLog(buffer,cPLog_pml);
     PParse(buffer);
     PFlush();

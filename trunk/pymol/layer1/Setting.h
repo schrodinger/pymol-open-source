@@ -454,11 +454,11 @@ CSetting *SettingNewFromPyList(PyObject *list);
 #define cSetting_specular_intensity         310
 #define cSetting_overlay_lines              311
 #define cSetting_ray_transparency_spec_cut  312
-
+#define cSetting_internal_prompt            313
 
 /* cSetting_ss_INIT must always be last setting_index +1 */
 
-#define cSetting_INIT                        313
+#define cSetting_INIT                        314
 
 #endif
 

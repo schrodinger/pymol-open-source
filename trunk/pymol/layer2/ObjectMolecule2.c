@@ -239,7 +239,11 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(char *buffer,
                 if(!m4x->align) {
                   m4x->align=Calloc(M4XAlignType,1);
                   M4XAlignInit(m4x->align);
+                  p = nskip(p,8);
+                  p = ntrim(cc,p,6); /* get visibility of this structure */
                 }
+              } else if(WordMatchExact("HIDE",cc,true)) {
+                m4x->invisible = 1;
               } else {
                 if(!m4x->context) {
                   m4x->context = VLACalloc(M4XContextType,10);

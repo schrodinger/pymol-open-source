@@ -162,7 +162,7 @@ void OrthoSetWizardPrompt(char *vla)
 }
 /*========================================================================*/
 
-void OrthoSpecial(int k,int x,int y)
+void OrthoSpecial(int k,int x,int y,int mod)
 {
   OrthoObject *I=&Ortho;
   int curLine = I->CurLine&OrthoSaveLines;
@@ -890,11 +890,16 @@ void OrthoDoDraw()
   int times=1;
   int double_pump=false;
   float *bg_color;
-  
+  int skip_prompt = 0;
   int render = false;
 
   if(!SettingGet(cSetting_test1))
     SeqUpdate(); 
+  if(SettingGet_i(NULL,NULL,cSetting_internal_prompt))
+    skip_prompt = 0;
+  else
+    skip_prompt = 1;
+     
   double_pump=SettingGet_i(NULL,NULL,cSetting_stereo_double_pump_mono);
   bg_color=SettingGet_3fv(NULL,NULL,cSetting_bg_rgb);
 
@@ -914,8 +919,9 @@ void OrthoDoDraw()
 
     v=SettingGetfv(cSetting_bg_rgb);
     overlay = (int)SettingGet(cSetting_overlay);
-    if(overlay==1)
+    if(overlay==1) {
       overlay = (int)SettingGet(cSetting_overlay_lines);
+    }
     text = (int)SettingGet(cSetting_text);
 
     if(text) overlay=0;
@@ -1011,7 +1017,6 @@ void OrthoDoDraw()
         /* now print the text */
         
         lcount = 0;
-        l=(I->CurLine-lcount)&OrthoSaveLines;
         x = cOrthoLeftMargin;
         y = cOrthoBottomMargin;
         
@@ -1021,10 +1026,14 @@ void OrthoDoDraw()
         else {
           int overlay2;
           overlay2 = (int)SettingGet(cSetting_overlay);
-          if(overlay2==1)
+          if(overlay2==1) {
             overlay2 = (int)SettingGet(cSetting_overlay_lines);
+          }
           showLines=internal_feedback+overlay2;
         }
+
+        l=(I->CurLine-(lcount+skip_prompt))&OrthoSaveLines;
+
         glColor3fv(I->TextColor);
         while(l>=0)
           {
@@ -1045,10 +1054,11 @@ void OrthoDoDraw()
                   {
                     if(I->CursorChar>=0)  
                       glRasterPos4d((double)(x+8*I->CursorChar),(double)y,0.0,1.0);
-                    p_glutBitmapCharacter(P_GLUT_BITMAP_8_BY_13,'_');
+                    if(!skip_prompt)
+                      p_glutBitmapCharacter(P_GLUT_BITMAP_8_BY_13,'_');
                   }
               }
-            l=(I->CurLine-lcount)&OrthoSaveLines;
+            l=(I->CurLine-(lcount+skip_prompt))&OrthoSaveLines;
             y=y+cOrthoLineHeight;
           }
       }
@@ -1073,7 +1083,7 @@ static void OrthoDrawWizardPrompt(void)
   
   char *vla,*p;
   int nLine;
-  int x,y;
+  int x,y,xx;
   int nChar,c,ll;
   int maxLen;
   BlockRect rect;
@@ -1091,13 +1101,24 @@ static void OrthoDrawWizardPrompt(void)
       p = vla;
       ll = 0;
       c=nChar;
-      while(c--) {
-        if(!*(p++)) {
+      while(c>0) {
+        if(!*p) {
           if(maxLen<ll)
             maxLen = ll;
           ll=0;
-        } else 
+          p++;
+          c--;
+        } else if(((*p)=='`')&& /* color encoded */
+                  (p[1]>='0')&&(p[1]<='9')&&
+                  (p[2]>='0')&&(p[2]<='9')&&
+                  (p[3]>='0')&&(p[3]<='9')) /* relying upon short-circuit logic to avoid overrun */ {
+          p+=4;
+          c-=4;
+        } else {
           ll++;
+          p++;
+          c--;
+        }
       }
       
       rect.top = I->Height-cWizardTopMargin;
@@ -1124,15 +1145,35 @@ static void OrthoDrawWizardPrompt(void)
       /* count max line length */
       
       glRasterPos4d((double)x,(double)y,0.0,1.0);
+      xx = x;
       p = vla;
       ll = 0;
       c=nChar;
-      while(c--) {
-        if(*p)
-          p_glutBitmapCharacter(P_GLUT_BITMAP_8_BY_13,*p);
-        if(!*(p++)) {
-          y=y-cOrthoLineHeight;
-          glRasterPos4d((double)x,(double)y,0.0,1.0);          
+      while(c>0) {
+        if(*p) {
+          if((*p=='`')&&(*(p+1))&&(*(p+2))&&(*(p+3))) {
+            if(*(p+1)=='-') {
+              glColor3fv(I->WizardTextColor);
+              p+=4;
+              c-=4;
+            } else {
+              glColor3f((*(p+1)-'0')/9.0F,(*(p+2)-'0')/9.0F,(*(p+3)-'0')/9.0F);
+              p+=4;
+              c-=4;
+            }
+            glRasterPos4d((double)(xx),(double)(y),0.0,1.0);
+          }
+        }
+        if(c--) {
+          if(*p) {
+            p_glutBitmapCharacter(P_GLUT_BITMAP_8_BY_13,*p);
+            xx = xx + 8;
+          }
+          if(!*(p++)) {
+            y=y-cOrthoLineHeight;
+            xx = x;
+            glRasterPos4d((double)x,(double)y,0.0,1.0);          
+          }
         }
       }
     }

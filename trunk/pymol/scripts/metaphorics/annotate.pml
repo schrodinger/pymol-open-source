@@ -58,10 +58,10 @@ m4x.setup_contexts(context_info)
 
 # color protein secondary structure (C-alpha atoms only)
 
-color white, name ca and ss ''+L and( rep cartoon and not rep sticks)
-color orange, name ca and ss S and rep cartoon and ((not rep sticks) or (nbr. nbr. nbr. rep cartoon))
-color magenta, name ca and ss H and rep cartoon and ((not rep sticks) or (nbr. nbr. nbr. rep cartoon))
+_ color white, name ca and ss ''+L and( rep cartoon and not rep sticks)
+_ color orange, name ca and ss S and rep cartoon and ((not rep sticks) or (nbr. nbr. nbr. rep cartoon))
+_ color magenta, name ca and ss H and rep cartoon and ((not rep sticks) or (nbr. nbr. nbr. rep cartoon))
 
 # set Ctrl Q to Quit 
 
-cmd.set_key('CTRL-Q',cmd.quit)
+_ cmd.set_key('CTRL-Q',cmd.quit)

@@ -325,8 +325,19 @@ SEE ALSO
       finally:
          unlock()
       return r
-      
+
+   def get_object_color_index(name):
+      name = str(name)
+      r = None
+      try:
+         lock()
+         r = _cmd.get_object_color_index(name)
+      finally:
+         unlock()      
+      return r
+   
    def get_color_tuple(name):
+      name=str(name)
       r = None
       try:
          lock()

@@ -179,6 +179,10 @@ CHANGE LOG
 
 Changes up to 0.95
 
+   * fix potential crasher bug with stick_balls
+
+   * SHFT-F# key support, for set_key, scenes, and views
+
    * cmd.extend now adds help for function (updated test case).
 
    * various changes here and there for Mac OS/MacPyMOL compatibility

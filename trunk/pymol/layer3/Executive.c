@@ -112,6 +112,17 @@ typedef struct {
   ObjectMolecule *obj;
 } ProcPDBRec;
 
+int ExecutiveGetObjectColorIndex(char *name)
+{
+  int result = -1;
+  CObject *obj = NULL;
+  obj = ExecutiveFindObjectByName(name);
+  if(obj) {
+    result=obj->Color;
+  }
+  return(result);
+}
+
 void ExecutiveProcessPDBFile(CObject *origObj,char *fname, char *oname, 
                              int frame, int discrete,int finish,OrthoLineType buf)
 {
@@ -126,6 +137,8 @@ void ExecutiveProcessPDBFile(CObject *origObj,char *fname, char *oname,
   ProcPDBRec *processed= NULL;
   int n_processed = 0;
   int m4x_mode = 0; /* 0 = annotate, 1 = alignment */
+  ProcPDBRec *target_rec = NULL;
+
 
   f=fopen(fname,"rb");
   if(!f) {
@@ -218,8 +231,6 @@ void ExecutiveProcessPDBFile(CObject *origObj,char *fname, char *oname,
   /* BEGIN METAPHORICS ANNOTATION AND ALIGNMENT CODE */
 
   if(ok&&n_processed) { /* first, perform any Metaphorics alignment */
-    ProcPDBRec *target_rec = NULL;
-
     /* is there a target structure? */
     {
       int a;
@@ -316,7 +327,10 @@ void ExecutiveProcessPDBFile(CObject *origObj,char *fname, char *oname,
 
                   ExecutiveRMS(mbl_sele, trg_sele, 2, 0.0F, 0, 0, align_name, 0, 0, true);
                   ExecutiveColor(align_name,"white",0,true);
-                  sprintf(tmp_sele, "%s | %s | %s",aligned_name, trg_sele, mbl_sele);
+                  if(target_rec->m4x.invisible) 
+                    sprintf(tmp_sele, "(%s) | (%s)",aligned_name,mbl_sele);
+                  else 
+                    sprintf(tmp_sele, "(%s) | (%s) | (%s)",aligned_name, trg_sele, mbl_sele);
                   SelectorCreateSimple(aligned_name, tmp_sele);
                   /*ExecutiveDelete(trg_sele);
                     ExecutiveDelete(mbl_sele);*/
@@ -337,7 +351,6 @@ void ExecutiveProcessPDBFile(CObject *origObj,char *fname, char *oname,
       int a;
       for(a=0; a<n_processed; a++) {
         ProcPDBRec *current = processed + a;
-        
         if(current->m4x.annotated_flag) {
           char annotate_script[] = "@$PYMOL_SCRIPTS/metaphorics/annotate.pml";
           char align_script[] = "@$PYMOL_SCRIPTS/metaphorics/alignment.pml";
@@ -353,7 +366,8 @@ void ExecutiveProcessPDBFile(CObject *origObj,char *fname, char *oname,
               break;
             }
           }
-          ObjectMoleculeM4XAnnotate(current->obj,&current->m4x,script_file,(m4x_mode==1));
+          if((current!=target_rec)||(!current->m4x.invisible)) /* suppress annotations if target invisible */
+              ObjectMoleculeM4XAnnotate(current->obj,&current->m4x,script_file,(m4x_mode==1));
           M4XAnnoPurge(&current->m4x);
         }
       }

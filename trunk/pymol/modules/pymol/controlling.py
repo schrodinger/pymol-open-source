@@ -256,22 +256,54 @@ SEE ALSO
    button
       '''
       r = 0
-      if key[0:5]=='CTRL-': 
-         pat=key[-1]
-         for a in cmd.ctrl.keys():
-            if a==pat:
-               cmd.ctrl[a][0]=fn
-               cmd.ctrl[a][1]=arg
-               cmd.ctrl[a][2]=kw
-               r = 1
+      if key[0:5]=='CTRL-':
+         pat=key[5:]
+         if len(pat)>1: # ctrl-special key
+            if pat[0]!='F':
+               pat=string.lower(pat)
+            for a in cmd.ctrl_special.keys():
+               if cmd.ctrl_special[a][0]==pat:
+                  cmd.ctrl_special[a][1]=fn
+                  cmd.ctrl_special[a][2]=arg
+                  cmd.ctrl_special[a][3]=kw
+                  r = 1
+         else: # std. ctrl key
+            for a in cmd.ctrl.keys():
+               if a==pat:
+                  cmd.ctrl[a][0]=fn
+                  cmd.ctrl[a][1]=arg
+                  cmd.ctrl[a][2]=kw
+                  r = 1
       elif key[0:4]=='ALT-':
-         pat=string.lower(key[-1])
-         for a in cmd.alt.keys():
-            if a==pat:
-               cmd.alt[a][0]=fn
-               cmd.alt[a][1]=arg
-               cmd.alt[a][2]=kw
-               r = 1
+         pat=key[4:]
+         if len(pat)>1: # alt-special key
+            if pat[0]!='F':
+               pat=string.lower(pat)
+            for a in cmd.alt_special.keys():
+               if cmd.alt_special[a][0]==pat:
+                  cmd.alt_special[a][1]=fn
+                  cmd.alt_special[a][2]=arg
+                  cmd.alt_special[a][3]=kw
+                  r = 1
+         else: # std. alt key
+            pat=string.lower(pat)
+            for a in cmd.alt.keys():
+               if a==pat:
+                  cmd.alt[a][0]=fn
+                  cmd.alt[a][1]=arg
+                  cmd.alt[a][2]=kw
+                  r = 1
+      elif key[0:5]=='SHFT-':
+         pat=key[5:]
+         if len(pat)>1: # shft-special key
+            if pat[0]!='F':
+               pat=string.lower(pat)
+            for a in cmd.shft_special.keys():
+               if cmd.shft_special[a][0]==pat:
+                  cmd.shft_special[a][1]=fn
+                  cmd.shft_special[a][2]=arg
+                  cmd.shft_special[a][3]=kw
+                  r = 1
       else:
          if key[0]!='F':
             pat=string.lower(key)

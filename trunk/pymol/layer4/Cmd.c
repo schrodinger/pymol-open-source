@@ -4183,6 +4183,20 @@ static PyObject *CmdHAdd(PyObject *self, PyObject *args)
   return(APIStatus(ok));
 }
 
+static PyObject *CmdGetObjectColorIndex(PyObject *self, PyObject *args)
+{
+  char *str1;
+  int result = -1;
+  int ok=false;
+  ok = PyArg_ParseTuple(args,"s",&str1);
+  if (ok) {
+    APIEntry();
+    result = ExecutiveGetObjectColorIndex(str1);
+    APIExit();
+  }
+  return(APIStatus(result));
+}
+
 static PyObject *CmdRemove(PyObject *self, PyObject *args)
 {
   char *str1;
@@ -4414,6 +4428,7 @@ static PyMethodDef Cmd_methods[] = {
 	{"get_moment",	           CmdGetMoment,            METH_VARARGS },
    {"get_movie_locked",      CmdGetMovieLocked,       METH_VARARGS },
    {"get_names",             CmdGetNames,             METH_VARARGS },
+   {"get_object_color_index",CmdGetObjectColorIndex,  METH_VARARGS },
 	{"get_position",	        CmdGetPosition,          METH_VARARGS },
 	{"get_povray",	           CmdGetPovRay,            METH_VARARGS },
 	{"get_pdb",	              CmdGetPDB,               METH_VARARGS },

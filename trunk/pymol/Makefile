@@ -202,8 +202,12 @@ osx:
 	cd layerOSX; $(MAKE)
 	$(MAKE) 
 
-osx-devel: osx
+osx-dev: osx
 	cp modules/pymol/_cmd.so $(OSXPYMOL)/modules/pymol
+
+osx-pdev:
+	/bin/rm -rf $(OSXPYMOL)/modules/pymol
+	cp -R modules/pymol $(OSXPYMOL)/modules/pymol
 
 osx-product: osx 
 	$(PYTHON_EXE) modules/compile_pymol.py
