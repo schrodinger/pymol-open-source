@@ -1,6 +1,7 @@
 
 from chempy import Storage
 
+import pickle
 import cPickle
 
 class PKL(Storage):
@@ -14,7 +15,10 @@ class PKL(Storage):
 #---------------------------------------------------------------------------
    def toFile(self,indexed,fname,**params):
       fp = open(fname,'w')
-      result = cPickle.dump(indexed,fp,1)
+      if(not params.has_key('bin')):
+         result = cPickle.dump(indexed,fp,1)
+      else:
+         result = cPickle.dump(indexed,fp,params['bin'])         
       fp.close()
       
 #---------------------------------------------------------------------------

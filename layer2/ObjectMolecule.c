@@ -2713,7 +2713,7 @@ ObjectMolecule *ObjectMoleculeLoadMOLFile(ObjectMolecule *obj,char *fname,int fr
   ObjectMolecule* I=NULL;
   int ok=true;
   FILE *f;
-  fpos_t size;
+  long size;
   char *buffer,*p;
 
   f=fopen(fname,"r");
@@ -2728,7 +2728,7 @@ ObjectMolecule *ObjectMoleculeLoadMOLFile(ObjectMolecule *obj,char *fname,int fr
 		  }
 		
 		fseek(f,0,SEEK_END);
-		fgetpos(f,&size);
+      size=ftell(f);
 		fseek(f,0,SEEK_SET);
 
 		buffer=(char*)mmalloc(size+255);
@@ -3007,7 +3007,7 @@ ObjectMolecule *ObjectMoleculeLoadPDBFile(ObjectMolecule *obj,char *fname,int fr
   ObjectMolecule *I=NULL;
   int ok=true;
   FILE *f;
-  fpos_t size;
+  long size;
   char *buffer,*p;
 
   f=fopen(fname,"r");
@@ -3021,7 +3021,7 @@ ObjectMolecule *ObjectMoleculeLoadPDBFile(ObjectMolecule *obj,char *fname,int fr
 		  }
 		
 		fseek(f,0,SEEK_END);
-		fgetpos(f,&size);
+      size=ftell(f);
 		fseek(f,0,SEEK_SET);
 
 		buffer=(char*)mmalloc(size+255);
@@ -4014,7 +4014,7 @@ ObjectMolecule *ObjectMoleculeLoadMMDFile(ObjectMolecule *obj,char *fname,
   int ok=true;
   FILE *f;
   int oCnt=0;
-  fpos_t size;
+  long size;
   char *buffer,*p;
   char cc[MAXLINELEN],oName[ObjNameMax];
   int nLines;
@@ -4029,7 +4029,7 @@ ObjectMolecule *ObjectMoleculeLoadMMDFile(ObjectMolecule *obj,char *fname,
 			 fflush(stdout);
 		  }		
 		fseek(f,0,SEEK_END);
-		fgetpos(f,&size);
+      size=ftell(f);
 		fseek(f,0,SEEK_SET);
 		buffer=(char*)mmalloc(size+255);
 		ErrChkPtr(buffer);

@@ -353,7 +353,7 @@ void SettingInit(void)
 			"sweep_angle");
 
   I->NSetting++;
-  I->Setting[cSetting_sweep_speed].Value[0] = 1.0;
+  I->Setting[cSetting_sweep_speed].Value[0] = 0.3;
   strcpy(I->Setting[cSetting_sweep_speed].Name,
 			"sweep_speed");
 

@@ -328,7 +328,7 @@ ObjectMap *ObjectMapLoadXPLORFile(ObjectMap *obj,char *fname,int frame)
   ObjectMap *I = NULL;
   int ok=true;
   FILE *f;
-  fpos_t size;
+  long size;
   char *buffer,*p;
   float mat[9];
 
@@ -343,7 +343,7 @@ ObjectMap *ObjectMapLoadXPLORFile(ObjectMap *obj,char *fname,int frame)
 		  }
 		
 		fseek(f,0,SEEK_END);
-		fgetpos(f,&size);
+      size=ftell(f);
 		fseek(f,0,SEEK_SET);
 
 		buffer=(char*)mmalloc(size+255);

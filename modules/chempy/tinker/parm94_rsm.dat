@@ -202,6 +202,7 @@ HS-SH  274.0    1.336       JCC,7,(1986),230; CYS
 S -S   166.0    2.038       JCC,7,(1986),230; CYX   (SCHERAGA)
 CT-F   367.0    1.380       JCC,13,(1992),963;CF4; R0=1.332 FOR CHF3
 
+
 HW-OW-HW    100.      104.52    TIP3P water
 HW-HW-OW      0.      127.74    (found in crystallographic water with 3 bonds)
 CA-C -O     80.0      120.00    RSM, estimated
