@@ -139,7 +139,6 @@ void ExecutiveRenderSelections(int curState)
           glEnd();
           if(no_depth)
             glEnable(GL_DEPTH_TEST);
-
         }
       }
     }
@@ -1965,7 +1964,6 @@ void ExecutiveManageObject(Object *obj)
 
   if(SettingGet(cSetting_autohide_selections))
     ExecutiveHideSelections();
-
   while(ListIterate(I->Spec,rec,next,SpecList))
 	 {
 		if(rec->obj==obj) {
