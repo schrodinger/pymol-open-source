@@ -1104,6 +1104,8 @@ static PyObject *CmdGetWizard(PyObject *dummy, PyObject *args)
   APIEntry();
   result = WizardGet();
   APIExit();
+  if(!result)
+    result=Py_None;
   return APIIncRef(result);
 }
 
