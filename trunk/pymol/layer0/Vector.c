@@ -537,9 +537,9 @@ float get_dihedral3f( float *v0, float *v1, float *v2, float *v3 )
   } else { 
     cross_product3f(d21,d01,dd1);
     cross_product3f(d21,d32,dd3);
-    if ((length3f(dd1)<R_SMALL)||(length3f(dd3)<R_SMALL)) /* degenerate cases */
+    if ((length3f(dd1)<R_SMALL)||(length3f(dd3)<R_SMALL)) {/* degenerate cases */
       result = get_angle3f(d01,d32); /* fall back to angle between vectors */
-    else {
+    }    else {
       result = get_angle3f(dd1,dd3);
       cross_product3f(d21,dd1,pos_d);
       if(dot_product3f(dd3,pos_d)<0.0)
@@ -555,21 +555,23 @@ float get_angle3f( float *v1, float *v2 )
   float result;
 
   denom = sqrt1f(((v1[0]*v1[0]) + 
-					 (v1[1]*v1[1]) + 
-					 (v1[2]*v1[2]))) *
-          sqrt1f(((v2[0]*v2[0]) + 
-					 (v2[1]*v2[1]) + 
-					 (v2[2]*v2[2])));
-
+                  (v1[1]*v1[1]) + 
+                  (v1[2]*v1[2]))) *
+    sqrt1f(((v2[0]*v2[0]) + 
+            (v2[1]*v2[1]) + 
+            (v2[2]*v2[2])));
+  
   if(denom>R_SMALL) 
     result = ( v1[0]*v2[0] + 
 					v1[1]*v2[1] + 
 					v1[2]*v2[2] ) / denom;
   else
     result = 0.0;
-  
+  if(result<-1.0) 
+    result=-1.0;
+  else if(result>1.0) 
+    result=1.0;
   result = acos(result);
-  
   return(result);
 } 
 

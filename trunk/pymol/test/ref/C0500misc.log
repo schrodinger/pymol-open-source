@@ -96,10 +96,14 @@ PyMOL>dist tst2 = (lb),(rb)
  Executive: object "tst2" created.
 PyMOL>bond
  AddBond: 1 bonds added to model 'pept'.
+ Selector: selection "pk1" defined with 1 atoms.
+ Selector: selection "pk2" defined with 1 atoms.
 PyMOL>unbond
  RemoveBond: 1 bonds removed from model 'pept'.
 PyMOL>bond (lb),(rb),2
  AddBond: 1 bonds added to model 'pept'.
+ Selector: selection "pk1" defined with 1 atoms.
+ Selector: selection "pk2" defined with 1 atoms.
 PyMOL>unbond (lb),(rb)
  RemoveBond: 1 bonds removed from model 'pept'.
 PyMOL>copy cpy=pept
@@ -148,14 +152,10 @@ PyMOL>alter (cpy),name=''
 PyMOL>rename cpy
 PyMOL>rename cpy,1
 PyMOL>cycle_valence
-Remove-ERR: no atoms removed.
-Remove-ERR: no atoms removed.
 PyMOL>cycle_valence
  Remove: eliminated 1 atoms in model 'cpy'.
  Remove: eliminated 1 atoms in model 'cpy'.
 PyMOL>cycle_valence
-Remove-ERR: no atoms removed.
-Remove-ERR: no atoms removed.
 PyMOL>remove_picked
 PyMOL>edit (cpy and i;11 &n;n)
 Editor-ERR: Invalid input.
@@ -172,6 +172,7 @@ PyMOL>h_add (cpy)
 PyMOL>edit (cpy and i;8 &n;o)
 Editor-ERR: Invalid input.
 PyMOL>cmd.replace("S",3,1)
+ Error: you must first pick an atom to replace.
 PyMOL>delete tmp
 PyMOL>delete cpy
 PyMOL>delete cpy_sel

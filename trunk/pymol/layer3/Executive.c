@@ -95,6 +95,27 @@ void ExecutiveReshape(Block *block,int width,int height);
 
 void ExecutiveObjMolSeleOp(int sele,ObjectMoleculeOpRec *op);
 
+/*========================================================================*/
+int ExecutiveSetGeometry(char *s1,int geom,int valence)
+{
+  int sele1;
+  ObjectMoleculeOpRec op1;
+  int ok=false;
+
+  sele1=SelectorIndexByName(s1);
+  if(sele1>=0) {
+    op1.code = OMOP_SetGeometry;
+    op1.i1 = geom;
+    op1.i2 = valence;
+    op1.i3 = 0;
+    ExecutiveObjMolSeleOp(sele1,&op1);
+    if(op1.i3) ok=true;
+  } else {
+    ErrMessage("SetGeometry","Invalid selection.");
+  }
+  return(ok);
+}
+/*========================================================================*/
 int ExecutiveMultiSave(char *fname,char *name,int state,int append)
 {
   int result=false;
@@ -1087,9 +1108,9 @@ void ExecutiveRemoveAtoms(char *s1)
   if(all_flag) {
     ExecutiveDelete(all);
   }
-  if(!flag) {
-    ErrMessage("Remove","no atoms removed.");
-  }
+  /*  if(!flag) {
+      ErrMessage("Remove","no atoms removed.");
+      }*/
 }
 /*========================================================================*/
 void ExecutiveAddHydrogens(char *s1)

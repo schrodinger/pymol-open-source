@@ -103,6 +103,9 @@ class Setting:
       self.two_sided_lighting = IntVar()
       self.two_sided_lighting.set(int(cmd.get_setting_legacy('two_sided_lighting')))
 
+      self.auto_remove_hydrogens = IntVar()
+      self.auto_remove_hydrogens.set(int(cmd.get_setting_legacy('auto_remove_hydrogens')))
+
       self.xref = { 
          'ray_trace_frames':
          (lambda s,a: (cmd.set(a,("%1.0f" % s.ray_trace_frames.get()),log=1),
@@ -159,6 +162,9 @@ class Setting:
 
          'two_sided_lighting'        :
          (lambda s,a: (cmd.set(a,("%1.0f" % (s.two_sided_lighting.get())),log=1))),
+
+         'auto_remove_hydrogens'        :
+         (lambda s,a: (cmd.set(a,("%1.0f" % (s.auto_remove_hydrogens.get())),log=1))),
          }
 
       self.update_code = {
@@ -210,6 +216,9 @@ class Setting:
          (lambda s,t: (s.log_conformations.set(t[1][0]!=0))),
          'two_sided_lighting':
          (lambda s,t: (s.two_sided_lighting.set(t[1][0]!=0))),
+         'auto_remove_hydrogens':
+         (lambda s,t: (s.auto_remove_hydrogens.set(t[1][0]!=0))),
+
         }
       self.active_list = [
          pymol.setting._get_index("ray_trace_frames"),
@@ -236,7 +245,8 @@ class Setting:
          pymol.setting._get_index("ignore_pdb_segi"),         
          pymol.setting._get_index("log_box_selections"),
          pymol.setting._get_index("log_conformations"),
-         pymol.setting._get_index("two_sided_lighting"),         
+         pymol.setting._get_index("two_sided_lighting"),
+         pymol.setting._get_index("auto_remove_hydrogens"),                  
          ]
 
       self.active_dict = {}

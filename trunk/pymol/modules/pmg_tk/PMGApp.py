@@ -635,73 +635,301 @@ class PMGApp(AbstractApp):
                                state='disabled',                               
                         command =  None)
 
+      self.menuBar.addmenuitem('Edit', 'separator', '')
 
-#      self.menuBar.addmenuitem('Edit', 'command',
-#                         'Test',
-#                         label='Test',
-#                        command =  lambda s=self: s.test())
+      self.menuBar.addmenuitem('Edit', 'command', 'Fill Hydrogen',
+                               label='Fill Hydrogens (Ctrl-R)',
+                               command = lambda: cmd.do("_ h_fill"))
 
-      self.menuBar.addmenu('Movies', 'Movie Control')
+      self.menuBar.addmenuitem('Edit', 'command', 'Fill Hydrogen',
+                               label='Fill Hydrogens (Ctrl-R)',
+                               command = lambda: cmd.do("_ h_fill"))
 
-      self.menuBar.addmenuitem('Movies', 'checkbutton',
+      self.menuBar.addmenuitem('Edit', 'command', 'Invert Picked Atom',
+                               label='Invert [lb,pk1,rb] (Ctrl-E)',
+                               command = lambda: cmd.do("_ invert"))
+
+      self.menuBar.addmenuitem('Edit', 'command', 'Form Bond',
+                               label='Form Bond [lb,rb] (Ctrl-T)',
+                               command = lambda: cmd.do("_ bond"))
+
+      self.menuBar.addmenuitem('Edit', 'command', 'Cycle Bond Valence',
+                               label='Cycle Bond Valence (Ctrl-W)',
+                               command = lambda: cmd.do("_ cycle_valence"))
+
+      self.menuBar.addmenuitem('Edit', 'separator', '')
+      
+      self.menuBar.addmenuitem('Edit', 'command', 'Remove Picked Atom',
+                               label='Remove Picked (Ctrl-D)',
+                               command = lambda: cmd.do("_ remove pk1"))
+
+      self.menuBar.addmenu('Fragment', 'Fragment')
+
+
+      self.menuBar.addmenuitem('Fragment', 'command', 'Amide N->C',
+                               label='Amide N->C (Alt-1)',
+                               command = lambda: cmd.do(
+         "_ editor.attach_fragment('pk1','formamide',3,1)"))
+
+      self.menuBar.addmenuitem('Fragment', 'command', 'Amide C->N',
+                               label='Amide C->N (Alt-2)',
+                               command = lambda: cmd.do(
+         "_ editor.attach_fragment('pk1','formamide',5,0)"))
+
+      self.menuBar.addmenuitem('Fragment', 'command', 'Bromine',
+                               label='Bromine (Ctrl-B)',
+                               command = lambda: cmd.do("_ replace Br,1,1"))
+
+      self.menuBar.addmenuitem('Fragment', 'command', 'Carbon',
+                               label='Carbon (Ctrl-C)',
+                               command = lambda: cmd.do("_ replace C,4,4"))
+
+      self.menuBar.addmenuitem('Fragment', 'command', 'Carbonyl',
+                               label='Carbonyl (Alt-0)',
+                               command = lambda: cmd.do(
+         "_ editor.attach_fragment('pk1','formaldehyde',2,0)"))
+
+      self.menuBar.addmenuitem('Fragment', 'command', 'Chlorine',
+                               label='Chlorine (Ctrl-L)',
+                               command = lambda: cmd.do("_ replace Cl,1,1"))
+
+      self.menuBar.addmenuitem('Fragment', 'command', 'Cyclobutyl',
+                               label='Cyclobutyl (Alt-4)',
+                               command = lambda: cmd.do(
+         "_ editor.attach_fragment('pk1','cyclobutane',4,0)"))
+
+      self.menuBar.addmenuitem('Fragment', 'command', 'Cyclopentyl',
+                               label='Cyclopentyl (Alt-5)',
+                               command = lambda: cmd.do(
+         "_ editor.attach_fragment('pk1','cyclopentane',5,0)"))
+
+      self.menuBar.addmenuitem('Fragment', 'command', 'Cyclopentadiene',
+                               label='Cyclopentadiene (Alt-8)',
+                               command = lambda: cmd.do(
+           "_ editor.attach_fragment('pk1','cyclopentadiene',5,0)"))
+
+      self.menuBar.addmenuitem('Fragment', 'command', 'Cyclohexyl',
+                               label='Cyclohexyl (Alt-6)',
+                               command = lambda: cmd.do(
+         "_ editor.attach_fragment('pk1','cyclohexane',7,0)"))
+
+      self.menuBar.addmenuitem('Fragment', 'command', 'Cycloheptyl',
+                               label='Cycloheptyl (Alt-7)',
+                               command = lambda: cmd.do(
+         "_ editor.attach_fragment('pk1','cycloheptane',8,0)"))
+
+      self.menuBar.addmenuitem('Fragment', 'command', 'Fluorene',
+                               label='Fluorene (Ctrl-F)',
+                               command = lambda: cmd.do("_ replace F,1,1"))
+
+      self.menuBar.addmenuitem('Fragment', 'command', 'Iodine',
+                               label='Iodine (Ctrl-I)',
+                               command = lambda: cmd.do("_ replace I,1,1"))
+
+      self.menuBar.addmenuitem('Fragment', 'command', 'Methane',
+                               label='Methane',
+                               command = lambda: cmd.do(
+         "_ editor.attach_fragment('pk1','methane',1,0)"))
+
+      self.menuBar.addmenuitem('Fragment', 'command', 'Nitrogen',
+                               label='Nitrogen (Ctrl-N)',
+                               command = lambda: cmd.do("_ replace N,4,3"))
+
+      self.menuBar.addmenuitem('Fragment', 'command', 'Oxygen',
+                               label='Oxygen (Ctrl-O)',
+                               command = lambda: cmd.do("_ replace O,4,2"))
+
+      self.menuBar.addmenuitem('Fragment', 'command', 'Phenyl',
+                               label='Phenyl (Alt-9)',
+                               command = lambda: cmd.do(
+         "_ editor.attach_fragment('pk1','benzene',6,0)"))
+
+      self.menuBar.addmenuitem('Fragment', 'command', 'Sulfer',
+                               label='Sulfer (Ctrl-S)',
+                               command = lambda: cmd.do("_ replace S,2,2"))
+
+      self.menuBar.addmenuitem('Fragment', 'command', 'Sulfonyl',
+                               label='Sulfonyl (Alt-3)',
+                               command = lambda: cmd.do(
+         "_ editor.attach_fragment('pk1','sulfone',3,1)"))
+
+      self.menuBar.addmenuitem('Fragment', 'command', 'Phosphorus',
+                               label='Phosphorus (Ctrl-P)',
+                               command = lambda: cmd.do("_ replace P,4,3"))
+
+      self.menuBar.addmenu('Residue', 'Residue')
+
+      self.menuBar.addmenuitem('Residue', 'command', 'Acetyl',
+                               label='Acetyl (Alt-B)',
+                               command = lambda: cmd.do(
+         "_ editor.attach_amino_acid('pk1','ace')"))
+
+      self.menuBar.addmenuitem('Residue', 'command', 'Alanine',
+                               label='Alanine (Alt-A)',
+                               command = lambda: cmd.do(
+         "_ editor.attach_amino_acid('pk1','ala')"))
+
+      self.menuBar.addmenuitem('Residue', 'command', 'Aspartate',
+                               label='Aspartate (Alt-D)',
+                               command = lambda: cmd.do(
+         "_ editor.attach_amino_acid('pk1','asp')"))
+
+      self.menuBar.addmenuitem('Residue', 'command', 'Asparagine',
+                               label='Asparagine (Alt-N)',
+                               command = lambda: cmd.do(
+         "_ editor.attach_amino_acid('pk1','asn')"))
+
+      self.menuBar.addmenuitem('Residue', 'command', 'Arginine',
+                               label='Arginine (Alt-R)',
+                               command = lambda: cmd.do(
+         "_ editor.attach_amino_acid('pk1','arg')"))
+
+      self.menuBar.addmenuitem('Residue', 'command', 'Cysteine',
+                               label='Cysteine (Alt-C)',
+                               command = lambda: cmd.do(
+         "_ editor.attach_amino_acid('pk1','cys')"))
+
+      self.menuBar.addmenuitem('Residue', 'command', 'Glutamate',
+                               label='Glutamate (Alt-E)',
+                               command = lambda: cmd.do(
+         "_ editor.attach_amino_acid('pk1','glu')"))
+
+      self.menuBar.addmenuitem('Residue', 'command', 'Glutamine',
+                               label='Glutamine (Alt-N)',
+                               command = lambda: cmd.do(
+         "_ editor.attach_amino_acid('pk1','gln')"))
+
+      self.menuBar.addmenuitem('Residue', 'command', 'Glycine',
+                               label='Glycine (Alt-G)',
+                               command = lambda: cmd.do(
+         "_ editor.attach_amino_acid('pk1','gly')"))
+
+      self.menuBar.addmenuitem('Residue', 'command', 'Histidine',
+                               label='Histidine (Alt-H)',
+                               command = lambda: cmd.do(
+         "_ editor.attach_amino_acid('pk1','his')"))
+
+      self.menuBar.addmenuitem('Residue', 'command', 'Isoleucine',
+                               label='Isoleucine (Alt-I)',
+                               command = lambda: cmd.do(
+         "_ editor.attach_amino_acid('pk1','ile')"))
+
+      self.menuBar.addmenuitem('Residue', 'command', 'Leucine',
+                               label='Leucine (Alt-L)',
+                               command = lambda: cmd.do(
+         "_ editor.attach_amino_acid('pk1','leu')"))
+
+      self.menuBar.addmenuitem('Residue', 'command', 'Lysine',
+                               label='Lysine (Alt-K)',
+                               command = lambda: cmd.do(
+         "_ editor.attach_amino_acid('pk1','lys')"))
+
+      self.menuBar.addmenuitem('Residue', 'command', 'Methionine',
+                               label='Methionine (Alt-M)',
+                               command = lambda: cmd.do(
+         "_ editor.attach_amino_acid('pk1','met')"))
+
+      self.menuBar.addmenuitem('Residue', 'command', 'N-Methyl',
+                               label='N-Methyl (Alt-Z)',
+                               command = lambda: cmd.do(
+         "_ editor.attach_amino_acid('pk1','nme')"))
+
+      self.menuBar.addmenuitem('Residue', 'command', 'Phenylalanine',
+                               label='Phenylalanine (Alt-F)',
+                               command = lambda: cmd.do(
+         "_ editor.attach_amino_acid('pk1','phe')"))
+
+      self.menuBar.addmenuitem('Residue', 'command', 'Proline',
+                               label='Proline (Alt-P)',
+                               command = lambda: cmd.do(
+         "_ editor.attach_amino_acid('pk1','pro')"))
+
+      self.menuBar.addmenuitem('Residue', 'command', 'Serine',
+                               label='Serine (Alt-S)',
+                               command = lambda: cmd.do(
+         "_ editor.attach_amino_acid('pk1','ser')"))
+
+      self.menuBar.addmenuitem('Residue', 'command', 'Threonine',
+                               label='Threonine (Alt-T)',
+                               command = lambda: cmd.do(
+         "_ editor.attach_amino_acid('pk1','thr')"))
+
+      self.menuBar.addmenuitem('Residue', 'command', 'Tryptophan',
+                               label='Tryptophan (Alt-W)',
+                               command = lambda: cmd.do(
+         "_ editor.attach_amino_acid('pk1','trp')"))
+
+      self.menuBar.addmenuitem('Residue', 'command', 'Tyrosine',
+                               label='Tyrosine (Alt-Y)',
+                               command = lambda: cmd.do(
+         "_ editor.attach_amino_acid('pk1','tyr')"))
+
+      self.menuBar.addmenuitem('Residue', 'command', 'Valine',
+                               label='Valine (Alt-V)',
+                               command = lambda: cmd.do(
+         "_ editor.attach_amino_acid('pk1','val')"))
+      
+      self.menuBar.addmenu('Movie', 'Movie Control')
+
+      self.menuBar.addmenuitem('Movie', 'checkbutton',
                          'Photorealistic images.',
                          label=self.pad+'Ray Trace Frames',
                         variable = self.setting.ray_trace_frames,
                         command = lambda s=self: s.setting.update('ray_trace_frames'))
 
-      self.menuBar.addmenuitem('Movies', 'checkbutton',
+      self.menuBar.addmenuitem('Movie', 'checkbutton',
                          'Save images in memory.',
                          label=self.pad+'Cache Frames',
                         variable = self.setting.cache_frames,
                         command = lambda s=self: s.setting.update('cache_frames'))
 
-      self.menuBar.addmenuitem('Movies', 'command', 'Flush Image Cache',
+      self.menuBar.addmenuitem('Movie', 'command', 'Flush Image Cache',
                                label=self.pad+'Flush Image Cache',
                                command = lambda: cmd.mclear())
 
-      self.menuBar.addmenuitem('Movies', 'separator', '')
+      self.menuBar.addmenuitem('Movie', 'separator', '')
 
-      self.menuBar.addmenuitem('Movies', 'checkbutton',
+      self.menuBar.addmenuitem('Movie', 'checkbutton',
                          'Static Singleton Objects.',
                          label=self.pad+'Static Singleton Objects',
                         variable = self.setting.static_singletons,
                         command = lambda s=self: s.setting.update('static_singletons'))
 
-      self.menuBar.addmenuitem('Movies', 'checkbutton',
+      self.menuBar.addmenuitem('Movie', 'checkbutton',
                          'Superimpose all molecular states.',
                          label=self.pad+'Show All States',
                         variable = self.setting.all_states,
                         command = lambda s=self: s.setting.update('all_states'))
 
-      self.menuBar.addmenuitem('Movies', 'separator', '')
+      self.menuBar.addmenuitem('Movie', 'separator', '')
       
-      self.menuBar.addmenuitem('Movies', 'command', 'Maximum Speed',
+      self.menuBar.addmenuitem('Movie', 'command', 'Maximum Speed',
                                label=self.pad+'Maximum Speed',
                                command = lambda: cmd.set("movie_delay","0",log=1))
 
-      self.menuBar.addmenuitem('Movies', 'command', '30 FPS',
+      self.menuBar.addmenuitem('Movie', 'command', '30 FPS',
                                label=self.pad+'30 FPS',
                                command = lambda: cmd.set("movie_delay","33",log=1))
 
-      self.menuBar.addmenuitem('Movies', 'command', '15 FPS',
+      self.menuBar.addmenuitem('Movie', 'command', '15 FPS',
                                label=self.pad+'15 FPS',
                                command = lambda: cmd.set("movie_delay","66",log=1))
 
-      self.menuBar.addmenuitem('Movies', 'command', '5 FPS',
+      self.menuBar.addmenuitem('Movie', 'command', '5 FPS',
                                label=self.pad+'5 FPS',
                                command = lambda: cmd.set("movie_delay","200",log=1))
 
-      self.menuBar.addmenuitem('Movies', 'command', '1 FPS',
+      self.menuBar.addmenuitem('Movie', 'command', '1 FPS',
                                label=self.pad+'1 FPS',
                                command = lambda: cmd.set("movie_delay","1000",log=1))
 
-      self.menuBar.addmenuitem('Movies', 'command', '0.3 FPS',
+      self.menuBar.addmenuitem('Movie', 'command', '0.3 FPS',
                                label=self.pad+'0.3 FPS',
                                command = lambda: cmd.set("movie_delay","3000",log=1))
 
-      self.menuBar.addmenuitem('Movies', 'separator', '')
+      self.menuBar.addmenuitem('Movie', 'separator', '')
 
-      self.menuBar.addmenuitem('Movies', 'command', 'Reset Meter',
+      self.menuBar.addmenuitem('Movie', 'command', 'Reset Meter',
                                label=self.pad+'Reset Meter',
                                command = lambda: cmd.do("_ meter_reset"))
 
@@ -770,101 +998,107 @@ class PMGApp(AbstractApp):
                                label='Black Shadows',
                                command = lambda : cmd.do("_ util.ray_shadows('black')"))
 
-      self.menuBar.addmenu('Settings', 'Configuration Control')
+      self.menuBar.addmenu('Setting', 'Configuration Control')
 
-      self.menuBar.addmenuitem('Settings', 'command',
+      self.menuBar.addmenuitem('Setting', 'command',
                          'Edit PyMOL Settings',
                          label=self.pad+'Edit All...',
                                command = lambda s=self: SetEditor(s))
 
-      self.menuBar.addmenuitem('Settings', 'command',
+      self.menuBar.addmenuitem('Setting', 'command',
                          'Edit PyMOL Colors',
                          label=self.pad+'Colors...',
                                command = lambda s=self: ColorEditor(s))
 
-      self.menuBar.addmenuitem('Settings', 'separator', '')
+      self.menuBar.addmenuitem('Setting', 'separator', '')
       
-      self.menuBar.addmenuitem('Settings', 'checkbutton',
+      self.menuBar.addmenuitem('Setting', 'checkbutton',
                          'Show Valences.',
                          label=self.pad+'Show Valences',
                         variable = self.setting.valence,
                         command = lambda s=self: s.setting.update('valence'))
 
-      self.menuBar.addmenuitem('Settings', 'checkbutton',
+      self.menuBar.addmenuitem('Setting', 'checkbutton',
                          'Disable perspective.',
                          label=self.pad+'Orthoscopic View',
                         variable = self.setting.ortho,
                         command = lambda s=self: s.setting.update('ortho'))
 
-      self.menuBar.addmenuitem('Settings', 'checkbutton',
+      self.menuBar.addmenuitem('Setting', 'checkbutton',
                          'Smooth Lines.',
                          label=self.pad+'Smooth Lines',
                         variable = self.setting.line_smooth,
                         command = lambda s=self: s.setting.update('line_smooth'))
 
-      self.menuBar.addmenuitem('Settings', 'checkbutton',
+      self.menuBar.addmenuitem('Setting', 'checkbutton',
                          'Depth Cue Fog.',
                          label=self.pad+'Depth Cue & Ray Trace Fog',
                         variable = self.setting.depth_cue,
                         command = lambda s=self: s.setting.update('depth_cue'))
 
-      self.menuBar.addmenuitem('Settings', 'checkbutton',
+      self.menuBar.addmenuitem('Setting', 'checkbutton',
                          'Two Sided Lighting.',
                          label=self.pad+'Two Sided Lighting',
                         variable = self.setting.two_sided_lighting,
                         command = lambda s=self: s.setting.update('two_sided_lighting'))
 
-      self.menuBar.addmenuitem('Settings', 'checkbutton',
+      self.menuBar.addmenuitem('Setting', 'checkbutton',
                          'Specular Reflections.',
                          label=self.pad+'Specular Reflections',
                         variable = self.setting.specular,
                         command = lambda s=self: s.setting.update('specular'))
 
-      self.menuBar.addmenuitem('Settings', 'checkbutton',
+      self.menuBar.addmenuitem('Setting', 'checkbutton',
                          'Overlay',
                          label=self.pad+'Overlay Text on Graphics',
                         variable = self.setting.overlay,
                         command = lambda s=self: s.setting.update('overlay'))
 
-      self.menuBar.addmenuitem('Settings', 'separator', '')
+      self.menuBar.addmenuitem('Setting', 'separator', '')
       
-      self.menuBar.addmenuitem('Settings', 'checkbutton',
+      self.menuBar.addmenuitem('Setting', 'checkbutton',
                          'Smooth raytracing.',
                          label=self.pad+'Antialiased Rendering',
                         variable = self.setting.antialias,
                         command = lambda s=self: s.setting.update('antialias'))
 
-      self.menuBar.addmenuitem('Settings', 'checkbutton',
+      self.menuBar.addmenuitem('Setting', 'checkbutton',
                          'Cull Backfaces when Rendering',
                          label=self.pad+'Cull Backfaces when Rendering',
                         variable = self.setting.backface_cull,
                         command = lambda s=self: s.setting.update('backface_cull'))
 
-      self.menuBar.addmenuitem('Settings', 'separator', '')
+      self.menuBar.addmenuitem('Setting', 'separator', '')
 
-      self.menuBar.addmenuitem('Settings', 'checkbutton',
+      self.menuBar.addmenuitem('Setting', 'checkbutton',
                                'Ignore PDB segi.',
                                label=self.pad+'Ignore PDB Segment Identifier',
                                variable = self.setting.ignore_pdb_segi,
                                command = lambda s=self: s.setting.update('ignore_pdb_segi'))
 
-      self.menuBar.addmenuitem('Settings', 'checkbutton',
+      self.menuBar.addmenuitem('Setting', 'checkbutton',
                          'Auto-Zoom.',
                          label=self.pad+'Auto-Zoom New Objects',
                         variable = self.setting.auto_zoom,
                         command = lambda s=self: s.setting.update('auto_zoom'))
 
-      self.menuBar.addmenuitem('Settings', 'checkbutton',
+      self.menuBar.addmenuitem('Setting', 'checkbutton',
                          'Auto-Show Selections.',
                          label=self.pad+'Auto-Show New Selections',
                         variable = self.setting.auto_show_selections,
                         command = lambda s=self: s.setting.update('auto_show_selections'))
 
-      self.menuBar.addmenuitem('Settings', 'checkbutton',
+      self.menuBar.addmenuitem('Setting', 'checkbutton',
                          'Auto-Hide Selections.',
                          label=self.pad+'Auto-Hide Selections',
                         variable = self.setting.auto_hide_selections,
                         command = lambda s=self: s.setting.update('auto_hide_selections'))
+
+      self.menuBar.addmenuitem('Setting', 'checkbutton',
+                         'Auto-Remove Hydrogens.',
+                         label=self.pad+'Auto-Remove Hydrogens',
+                        variable = self.setting.auto_remove_hydrogens,
+                        command = lambda s=self: s.setting.update('auto_remove_hydrogens'))
 
       
       self.menuBar.addmenu('Mouse', 'Mouse Configuration')
@@ -877,327 +1111,100 @@ class PMGApp(AbstractApp):
                                label='Editing',
                                command = lambda: cmd.edit_mode("on"))
 
-      self.menuBar.addmenu('Cartoons', 'Cartoon Properties')
+      self.menuBar.addmenu('Cartoon', 'Cartoon Properties')
 
-      self.menuBar.addmenuitem('Cartoons', 'checkbutton',
+      self.menuBar.addmenuitem('Cartoon', 'checkbutton',
                          'Round Helices',
                          label=self.pad+'Round Helices',
                         variable = self.setting.cartoon_round_helices,
                         command = lambda s=self: s.setting.update('cartoon_round_helices'))
 
-      self.menuBar.addmenuitem('Cartoons', 'checkbutton',
+      self.menuBar.addmenuitem('Cartoon', 'checkbutton',
                          'Fancy Helices',
                          label=self.pad+'Fancy Helices',
                         variable = self.setting.cartoon_fancy_helices,
                         command = lambda s=self: s.setting.update('cartoon_fancy_helices'))
 
 
-      self.menuBar.addmenuitem('Cartoons', 'checkbutton',
+      self.menuBar.addmenuitem('Cartoon', 'checkbutton',
                          'Flat Sheets',
                          label=self.pad+'Flat Sheets',
                         variable = self.setting.cartoon_flat_sheets,
                         command = lambda s=self: s.setting.update('cartoon_flat_sheets'))
 
 
-      self.menuBar.addmenuitem('Cartoons', 'checkbutton',
+      self.menuBar.addmenuitem('Cartoon', 'checkbutton',
                          'Fancy Sheets',
                          label=self.pad+'Fancy Sheets',
                         variable = self.setting.cartoon_fancy_sheets,
                         command = lambda s=self: s.setting.update('cartoon_fancy_sheets'))
 
-      self.menuBar.addmenuitem('Cartoons', 'checkbutton',
+      self.menuBar.addmenuitem('Cartoon', 'checkbutton',
                          'Smooth Loops',
                          label=self.pad+'Smooth Loops',
                         variable = self.setting.cartoon_smooth_loops,
                         command = lambda s=self: s.setting.update('cartoon_smooth_loops'))
 
-      self.menuBar.addmenuitem('Cartoons', 'checkbutton',
+      self.menuBar.addmenuitem('Cartoon', 'checkbutton',
                          'Discrete Colors',
                          label=self.pad+'Discrete Colors',
                         variable = self.setting.cartoon_discrete_colors,
                         command = lambda s=self: s.setting.update('cartoon_discrete_colors'))
 
 
-      self.menuBar.addmenu('Wizards', 'Task Wizards')
+      self.menuBar.addmenu('Wizard', 'Task Wizards')
       
-      self.menuBar.addmenuitem('Wizards', 'command', 'Density Map Wizard',
+      self.menuBar.addmenuitem('Wizard', 'command', 'Density Map Wizard',
                                label='Density',
                                command = lambda: cmd.do("wizard density"))
 
-      self.menuBar.addmenuitem('Wizards', 'command', 'Distance',
+      self.menuBar.addmenuitem('Wizard', 'command', 'Distance',
                                label='Distance',
                                command = lambda: cmd.do("_ wizard distance"))
 
-      self.menuBar.addmenuitem('Wizards', 'command', 'Mutagenesis',
+      self.menuBar.addmenuitem('Wizard', 'command', 'Mutagenesis',
                                label='Mutagenesis',
                                command = lambda: cmd.do("_ wizard mutagenesis"))
 
-      self.menuBar.addmenuitem('Wizards', 'command', 'Pair Fitting',
+      self.menuBar.addmenuitem('Wizard', 'command', 'Pair Fitting',
                                label='Pair Fitting',
                                command = lambda: cmd.do("_ wizard pair_fit"))
 
-      self.menuBar.addmenuitem('Wizards', 'command', 'Label',
+      self.menuBar.addmenuitem('Wizard', 'command', 'Label',
                                label='Label',
                                command = lambda: cmd.do("_ wizard label"))
 
-      self.menuBar.addmenuitem('Wizards', 'command', 'Charge',
+      self.menuBar.addmenuitem('Wizard', 'command', 'Charge',
                                label='Charge',
                                command = lambda: cmd.do("_ wizard charge"))
 
-      self.menuBar.addmenu('Fragments', 'Fragments')
+      self.menuBar.addmenu('Demo', 'Demonstrations')
 
-
-      self.menuBar.addmenuitem('Fragments', 'command', 'Amide N->C',
-                               label='Amide N->C (Alt-1)',
-                               command = lambda: cmd.do(
-         "_ editor.attach_fragment('pk1','formamide',3,1)"))
-
-      self.menuBar.addmenuitem('Fragments', 'command', 'Amide C->N',
-                               label='Amide C->N (Alt-2)',
-                               command = lambda: cmd.do(
-         "_ editor.attach_fragment('pk1','formamide',5,0)"))
-
-      self.menuBar.addmenuitem('Fragments', 'command', 'Bromine',
-                               label='Bromine (Ctrl-B)',
-                               command = lambda: cmd.do("_ replace Br,1,1"))
-
-      self.menuBar.addmenuitem('Fragments', 'command', 'Carbon',
-                               label='Carbon (Ctrl-C)',
-                               command = lambda: cmd.do("_ replace C,4,4"))
-
-      self.menuBar.addmenuitem('Fragments', 'command', 'Carbonyl',
-                               label='Carbonyl (Alt-0)',
-                               command = lambda: cmd.do(
-         "_ editor.attach_fragment('pk1','formaldehyde',2,0)"))
-
-      self.menuBar.addmenuitem('Fragments', 'command', 'Chlorine',
-                               label='Chlorine (Ctrl-L)',
-                               command = lambda: cmd.do("_ replace Cl,1,1"))
-
-      self.menuBar.addmenuitem('Fragments', 'command', 'Cyclobutyl',
-                               label='Cyclobutyl (Alt-4)',
-                               command = lambda: cmd.do(
-         "_ editor.attach_fragment('pk1','cyclobutane',4,0)"))
-
-      self.menuBar.addmenuitem('Fragments', 'command', 'Cyclopentyl',
-                               label='Cyclopentyl (Alt-5)',
-                               command = lambda: cmd.do(
-         "_ editor.attach_fragment('pk1','cyclopentane',5,0)"))
-
-      self.menuBar.addmenuitem('Fragments', 'command', 'Cyclopentadiene',
-                               label='Cyclopentadiene (Alt-8)',
-                               command = lambda: cmd.do(
-           "_ editor.attach_fragment('pk1','cyclopentadiene',5,0)"))
-
-      self.menuBar.addmenuitem('Fragments', 'command', 'Cyclohexyl',
-                               label='Cyclohexyl (Alt-6)',
-                               command = lambda: cmd.do(
-         "_ editor.attach_fragment('pk1','cyclohexane',7,0)"))
-
-      self.menuBar.addmenuitem('Fragments', 'command', 'Cycloheptyl',
-                               label='Cycloheptyl (Alt-7)',
-                               command = lambda: cmd.do(
-         "_ editor.attach_fragment('pk1','cycloheptane',8,0)"))
-
-      self.menuBar.addmenuitem('Fragments', 'command', 'Fluorene',
-                               label='Fluorene (Ctrl-F)',
-                               command = lambda: cmd.do("_ replace F,1,1"))
-
-      self.menuBar.addmenuitem('Fragments', 'command', 'Iodine',
-                               label='Iodine (Ctrl-I)',
-                               command = lambda: cmd.do("_ replace I,1,1"))
-
-      self.menuBar.addmenuitem('Fragments', 'command', 'Methane',
-                               label='Methane',
-                               command = lambda: cmd.do(
-         "_ editor.attach_fragment('pk1','methane',1,0)"))
-
-      self.menuBar.addmenuitem('Fragments', 'command', 'Nitrogen',
-                               label='Nitrogen (Ctrl-N)',
-                               command = lambda: cmd.do("_ replace N,4,3"))
-
-      self.menuBar.addmenuitem('Fragments', 'command', 'Oxygen',
-                               label='Oxygen (Ctrl-O)',
-                               command = lambda: cmd.do("_ replace O,4,2"))
-
-      self.menuBar.addmenuitem('Fragments', 'command', 'Phenyl',
-                               label='Phenyl (Alt-9)',
-                               command = lambda: cmd.do(
-         "_ editor.attach_fragment('pk1','benzene',6,0)"))
-
-      self.menuBar.addmenuitem('Fragments', 'command', 'Sulfer',
-                               label='Sulfer (Ctrl-S)',
-                               command = lambda: cmd.do("_ replace S,2,2"))
-
-      self.menuBar.addmenuitem('Fragments', 'command', 'Sulfonyl',
-                               label='Sulfonyl (Alt-3)',
-                               command = lambda: cmd.do(
-         "_ editor.attach_fragment('pk1','sulfone',3,1)"))
-
-      self.menuBar.addmenuitem('Fragments', 'separator', '')
-      
-      self.menuBar.addmenuitem('Fragments', 'command', 'Fill Hydrogens',
-                               label='Fill Hydrogens (Ctrl-R)',
-                               command = lambda: cmd.do("_ h_fill"))
-
-      self.menuBar.addmenuitem('Fragments', 'command', 'Invert',
-                               label='Invert [lb,pk1,rb] (Ctrl-E)',
-                               command = lambda: cmd.do("_ invert"))
-
-      self.menuBar.addmenuitem('Fragments', 'command', 'Form Bond',
-                               label='Form Bond [lb,rb] (Ctrl-T)',
-                               command = lambda: cmd.do("_ bond"))
-
-      self.menuBar.addmenuitem('Fragments', 'command', 'Cycle Valence',
-                               label='Cycle Valence (Ctrl-W)',
-                               command = lambda: cmd.do("_ cycle_valence"))
-
-      self.menuBar.addmenuitem('Fragments', 'separator', '')
-      
-      self.menuBar.addmenuitem('Fragments', 'command', 'Delete',
-                               label='Delete (Ctrl-D)',
-                               command = lambda: cmd.do("_ remove pk1"))
-
-
-      self.menuBar.addmenu('Residues', 'Residues')
-
-      self.menuBar.addmenuitem('Residues', 'command', 'Acetyl',
-                               label='Acetyl (Alt-B)',
-                               command = lambda: cmd.do(
-         "_ editor.attach_amino_acid('pk1','ace')"))
-
-      self.menuBar.addmenuitem('Residues', 'command', 'Alanine',
-                               label='Alanine (Alt-A)',
-                               command = lambda: cmd.do(
-         "_ editor.attach_amino_acid('pk1','ala')"))
-
-      self.menuBar.addmenuitem('Residues', 'command', 'Aspartate',
-                               label='Aspartate (Alt-D)',
-                               command = lambda: cmd.do(
-         "_ editor.attach_amino_acid('pk1','asp')"))
-
-      self.menuBar.addmenuitem('Residues', 'command', 'Asparagine',
-                               label='Asparagine (Alt-N)',
-                               command = lambda: cmd.do(
-         "_ editor.attach_amino_acid('pk1','asn')"))
-
-      self.menuBar.addmenuitem('Residues', 'command', 'Arginine',
-                               label='Arginine (Alt-R)',
-                               command = lambda: cmd.do(
-         "_ editor.attach_amino_acid('pk1','arg')"))
-
-      self.menuBar.addmenuitem('Residues', 'command', 'Cysteine',
-                               label='Cysteine (Alt-C)',
-                               command = lambda: cmd.do(
-         "_ editor.attach_amino_acid('pk1','cys')"))
-
-      self.menuBar.addmenuitem('Residues', 'command', 'Glutamate',
-                               label='Glutamate (Alt-E)',
-                               command = lambda: cmd.do(
-         "_ editor.attach_amino_acid('pk1','glu')"))
-
-      self.menuBar.addmenuitem('Residues', 'command', 'Glutamine',
-                               label='Glutamine (Alt-N)',
-                               command = lambda: cmd.do(
-         "_ editor.attach_amino_acid('pk1','gln')"))
-
-      self.menuBar.addmenuitem('Residues', 'command', 'Glycine',
-                               label='Glycine (Alt-G)',
-                               command = lambda: cmd.do(
-         "_ editor.attach_amino_acid('pk1','gly')"))
-
-      self.menuBar.addmenuitem('Residues', 'command', 'Histidine',
-                               label='Histidine (Alt-H)',
-                               command = lambda: cmd.do(
-         "_ editor.attach_amino_acid('pk1','his')"))
-
-      self.menuBar.addmenuitem('Residues', 'command', 'Isoleucine',
-                               label='Isoleucine (Alt-I)',
-                               command = lambda: cmd.do(
-         "_ editor.attach_amino_acid('pk1','ile')"))
-
-      self.menuBar.addmenuitem('Residues', 'command', 'Leucine',
-                               label='Leucine (Alt-L)',
-                               command = lambda: cmd.do(
-         "_ editor.attach_amino_acid('pk1','leu')"))
-
-      self.menuBar.addmenuitem('Residues', 'command', 'Lysine',
-                               label='Lysine (Alt-K)',
-                               command = lambda: cmd.do(
-         "_ editor.attach_amino_acid('pk1','lys')"))
-
-      self.menuBar.addmenuitem('Residues', 'command', 'Methionine',
-                               label='Methionine (Alt-M)',
-                               command = lambda: cmd.do(
-         "_ editor.attach_amino_acid('pk1','met')"))
-
-      self.menuBar.addmenuitem('Residues', 'command', 'N-Methyl',
-                               label='N-Methyl (Alt-Z)',
-                               command = lambda: cmd.do(
-         "_ editor.attach_amino_acid('pk1','nme')"))
-
-      self.menuBar.addmenuitem('Residues', 'command', 'Phenylalanine',
-                               label='Phenylalanine (Alt-F)',
-                               command = lambda: cmd.do(
-         "_ editor.attach_amino_acid('pk1','phe')"))
-
-      self.menuBar.addmenuitem('Residues', 'command', 'Proline',
-                               label='Proline (Alt-P)',
-                               command = lambda: cmd.do(
-         "_ editor.attach_amino_acid('pk1','pro')"))
-
-      self.menuBar.addmenuitem('Residues', 'command', 'Serine',
-                               label='Serine (Alt-S)',
-                               command = lambda: cmd.do(
-         "_ editor.attach_amino_acid('pk1','ser')"))
-
-      self.menuBar.addmenuitem('Residues', 'command', 'Threonine',
-                               label='Threonine (Alt-T)',
-                               command = lambda: cmd.do(
-         "_ editor.attach_amino_acid('pk1','thr')"))
-
-      self.menuBar.addmenuitem('Residues', 'command', 'Tryptophan',
-                               label='Tryptophan (Alt-W)',
-                               command = lambda: cmd.do(
-         "_ editor.attach_amino_acid('pk1','trp')"))
-
-      self.menuBar.addmenuitem('Residues', 'command', 'Tyrosine',
-                               label='Tyrosine (Alt-Y)',
-                               command = lambda: cmd.do(
-         "_ editor.attach_amino_acid('pk1','tyr')"))
-
-      self.menuBar.addmenuitem('Residues', 'command', 'Valine',
-                               label='Valine (Alt-V)',
-                               command = lambda: cmd.do(
-         "_ editor.attach_amino_acid('pk1','val')"))
-      
-      self.menuBar.addmenu('Demos', 'Demonstrations')
-
-      self.menuBar.addmenuitem('Demos', 'command', 'Representations',
+      self.menuBar.addmenuitem('Demo', 'command', 'Representations',
                                label='Representations',
                                command = self.demo1)
 
-      self.menuBar.addmenuitem('Demos', 'command', 'Cartoon Ribbons',
+      self.menuBar.addmenuitem('Demo', 'command', 'Cartoon Ribbons',
                                label='Cartoon Ribbons',
                                command = self.demo5)
 
-      self.menuBar.addmenuitem('Demos', 'command', 'Transparency',
+      self.menuBar.addmenuitem('Demo', 'command', 'Transparency',
                                label='Transparency',
                                command = self.demo6)
 
-      self.menuBar.addmenuitem('Demos', 'command', 'Ray Tracing',
+      self.menuBar.addmenuitem('Demo', 'command', 'Ray Tracing',
                                label='Ray Tracing',
                                command = self.demo7)
 
-      self.menuBar.addmenuitem('Demos', 'command', 'Scripted Animation',
+      self.menuBar.addmenuitem('Demo', 'command', 'Scripted Animation',
                                label='Scripted Animation',
                                command = self.demo4)
 
-      self.menuBar.addmenuitem('Demos', 'command', 'Molscript/Raster3D Input',
+      self.menuBar.addmenuitem('Demo', 'command', 'Molscript/Raster3D Input',
                                label='Molscript/Raster3D Input',
                                command = self.demo2)
 
-      self.menuBar.addmenuitem('Demos', 'command', 'Compiled Graphics Objects',
+      self.menuBar.addmenuitem('Demo', 'command', 'Compiled Graphics Objects',
                                label='Compiled Graphics Objects',
                                command = self.demo3)
 

@@ -248,15 +248,16 @@ int SettingGetName(int index,SettingName name);
 #define cSetting_auto_indicate_flags         147
 #define cSetting_surface_debug               148
 #define cSetting_ray_improve_shadows         149
-#define cSetting_smooth_color_triangle 150
+#define cSetting_smooth_color_triangle       150
 #define cSetting_ray_default_renderer        151
 #define cSetting_field_of_view               152
 #define cSetting_reflect_power               153
 #define cSetting_preserve_chempy_ids         154
 #define cSetting_sphere_scale                155
 #define cSetting_two_sided_lighting          156
-
-#define cSetting_INIT                        158
+#define cSetting_secondary_structure         157
+#define cSetting_auto_remove_hydrogens       158
+#define cSetting_INIT                        159
 
 #endif
 

@@ -41,6 +41,8 @@ Z* -------------------------------------------------------------------
 #include"main.h"
 #include"CGO.h"
 #include"Raw.h"
+#include"Editor.h"
+#include"Selector.h"
 
 #define cMaxNegResi 100
 
@@ -85,6 +87,7 @@ void ObjectMoleculeAddSeleHydrogens(ObjectMolecule *I,int sele);
 
 CoordSet *ObjectMoleculeXYZStr2CoordSet(char *buffer,AtomInfoType **atInfoPtr);
 CSetting **ObjectMoleculeGetSettingHandle(ObjectMolecule *I,int state);
+void ObjectMoleculeInferAmineGeomFromBonds(ObjectMolecule *I,int state);
 
 #define MAX_BOND_DIST 50
 
@@ -1041,7 +1044,7 @@ void ObjectMoleculeAddSeleHydrogens(ObjectMolecule *I,int sele)
               UtilNCopy((nai+nH)->elem,"H",2);
               (nai+nH)->geom=cAtomInfoSingle;
               (nai+nH)->valence=1;
-              (nai+nH)->tmp_index = a; /* borrowing this field temporarily */
+              (nai+nH)->temp1 = a; /* borrowing this field temporarily */
               ObjectMoleculePrepareAtom(I,a,nai+nH);
               nH++;
             }
@@ -1058,14 +1061,14 @@ void ObjectMoleculeAddSeleHydrogens(ObjectMolecule *I,int sele)
 
           index = Alloc(int,nH);
           for(a=0;a<nH;a++) {
-            index[a] = (nai+a)->tmp_index;
+            index[a] = (nai+a)->temp1;
           }
           
           if(cs->fEnumIndices) cs->fEnumIndices(cs);
 
           cs->TmpLinkBond = VLAlloc(BondType,nH);
           for(a=0;a<nH;a++) {
-            cs->TmpLinkBond[a].index[0] = (nai+a)->tmp_index;
+            cs->TmpLinkBond[a].index[0] = (nai+a)->temp1;
             cs->TmpLinkBond[a].index[1] = a;
             cs->TmpLinkBond[a].order = 1;
             cs->TmpLinkBond[a].id = -1;
@@ -1127,6 +1130,8 @@ void ObjectMoleculeFuse(ObjectMolecule *I,int index0,ObjectMolecule *src,int ind
   CoordSet *cs=NULL,*scs=NULL;
   int state1 = 0;
   CoordSet *tcs;
+  int edit=1;
+  OrthoLineType sele1,sele2,s1,s2;
 
   ObjectMoleculeUpdateNeighbors(I);
   ObjectMoleculeUpdateNeighbors(src);
@@ -1180,8 +1185,11 @@ void ObjectMoleculeFuse(ObjectMolecule *I,int index0,ObjectMolecule *src,int ind
       a1 = scs->IdxToAtm[a];
       *(nai+a) = *(ai1+a1);
       (nai+a)->selEntry=0; /* avoid duplicating selection references -> leads to hangs ! */
+      (nai+a)->temp1=0; /* clear marks */
     }
 
+    nai[at1].temp1=2; /* mark the connection point */
+    
     /* copy internal bond information*/
 
     cs->TmpBond = VLAlloc(BondType,src->NBond);
@@ -1237,7 +1245,18 @@ void ObjectMoleculeFuse(ObjectMolecule *I,int index0,ObjectMolecule *src,int ind
     d = AtomInfoGetBondLength(ai0+at0,ai1+at1);
 
     AtomInfoUniquefyNames(I->AtomInfo,I->NAtom,nai,cs->NIndex);
+
+    /* set up tags which will enable use to continue editing bond */
+
+    if(edit) {
+      for(a=0;a<I->NAtom;a++) {
+        I->AtomInfo[a].temp1=0;
+      }
+      I->AtomInfo[at0].temp1=1;
+    }
+
     ObjectMoleculeMerge(I,nai,cs,false); /* will free nai, cs->TmpBond and cs->TmpLinkBond  */
+
     ObjectMoleculeExtendIndices(I);
     ObjectMoleculeUpdateNeighbors(I);
     for(a=0;a<I->NCSet;a++) { /* add coordinate into the coordinate set */
@@ -1293,6 +1312,25 @@ void ObjectMoleculeFuse(ObjectMolecule *I,int index0,ObjectMolecule *src,int ind
     }
     ObjectMoleculeSort(I);
     ObjectMoleculeUpdateIDNumbers(I);
+    if(edit) { /* edit the resulting bond */
+      at0=-1;
+      at1=-1;
+      for(a=0;a<I->NAtom;a++) {
+        if(I->AtomInfo[a].temp1==1)
+          at0=a;
+        if(I->AtomInfo[a].temp1==2)
+          at1=a;
+      }
+      if((at0>=0)&&(at1>=0)) {
+        sprintf(sele1,"%s`%d",I->Obj.Name,at1+1); /* points outward... */
+        sprintf(sele2,"%s`%d",I->Obj.Name,at0+1);
+        SelectorGetTmp(sele1,s1);
+        SelectorGetTmp(sele2,s2);
+        EditorSelect(s1,s2,NULL,NULL,false);
+        SelectorFreeTmp(s1);
+        SelectorFreeTmp(s2);
+      }
+    }
   }
   if(cs)
     if(cs->fFree)
@@ -2485,6 +2523,7 @@ void ObjectMoleculeInferChemFromNeighGeom(ObjectMolecule *I,int state)
     }
   }
 }
+
 /*========================================================================*/
 void ObjectMoleculeInferChemFromBonds(ObjectMolecule *I,int state)
 {
@@ -2497,7 +2536,6 @@ void ObjectMoleculeInferChemFromBonds(ObjectMolecule *I,int state)
   int n,nn;
   int changedFlag;
   /* initialize accumulators on uncategorized atoms */
-
 
   ObjectMoleculeUpdateNeighbors(I);
   ai=I->AtomInfo;
@@ -2642,7 +2680,7 @@ void ObjectMoleculeInferChemFromBonds(ObjectMolecule *I,int state)
                 if(a0<0) break;
                 ai0 = I->AtomInfo+a0;
                 if((ai0->chemFlag)&&(ai0->geom==cAtomInfoPlaner)&&
-                   ((ai0->protons==cAN_C)||(ai1->protons==cAN_N))) {
+                   ((ai0->protons==cAN_C)||(ai0->protons==cAN_N))) {
                   ai->geom=cAtomInfoPlaner; /* found probable delocalization */
                   ai->valence=3; /* just in case...*/
                   changedFlag=true;
@@ -2672,7 +2710,7 @@ void ObjectMoleculeInferChemFromBonds(ObjectMolecule *I,int state)
                 if(a0<0) break;
                 ai0 = I->AtomInfo+a0;
                 if((ai0->chemFlag)&&(ai0->geom==cAtomInfoPlaner)&&
-                   ((ai0->protons==cAN_C)||(ai1->protons==cAN_N))) {
+                   ((ai0->protons==cAN_C)||(ai0->protons==cAN_N))) {
                   ai->geom=cAtomInfoPlaner; /* found probable delocalization */
                   changedFlag=true;
                   break;
@@ -4397,6 +4435,21 @@ void ObjectMoleculeSeleOp(ObjectMolecule *I,int sele,ObjectMoleculeOpRec *op)
        op->f1VLA[b]=rms;
      }
      VLASize(op->f1VLA,float,I->NCSet);  /* NOTE this action is object-specific! */
+     break;
+	case OMOP_SetGeometry: /* save undo */
+     for(a=0;a<I->NAtom;a++)
+       {
+         s=I->AtomInfo[a].selEntry;
+         if(SelectorIsMember(s,sele))
+           {
+             ai = I->AtomInfo + a;
+             ai->geom=op->i1;
+             ai->valence=op->i2;
+             op->i3++;
+             hit_flag=true;
+             break;
+           }
+       }
      break;
 	case OMOP_SaveUndo: /* save undo */
      for(a=0;a<I->NAtom;a++)
