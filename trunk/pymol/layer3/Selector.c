@@ -162,7 +162,9 @@ static WordKeyValue Keyword[] =
   {  "byobj",    SELE_BYO1 },
   {  "byobject", SELE_BYO1 },
   {  "bo;",      SELE_BYO1 },
+  {  "bo.",      SELE_BYO1 },
   {  "br;",      SELE_BYR1 },
+  {  "br.",      SELE_BYR1 },
   {  "b;",       SELE_BYR1 }, /* deprecated */
   {  "and",      SELE_AND2 },
   {  "&",        SELE_AND2 },
@@ -171,6 +173,7 @@ static WordKeyValue Keyword[] =
   {  "in",       SELE_IN_2 },
   {  "like",     SELE_LIK2 },
   {  "l;",       SELE_LIK2 },
+  {  "l.",       SELE_LIK2 },
   {  "all",      SELE_ALLz }, /* 0 parameter */
   {  "+",        SELE_ALLz }, /* 0 parameter */
   {  "none",     SELE_NONz }, /* 0 parameter */
@@ -178,45 +181,61 @@ static WordKeyValue Keyword[] =
   {  "het",      SELE_HETz }, /* 0 parameter */
   {  "hydro",    SELE_HYDz }, /* 0 parameter */
   {  "h;",       SELE_HYDz }, /* 0 parameter */
+  {  "h.",       SELE_HYDz }, /* 0 parameter */
   {  "visible",  SELE_VISz }, /* 0 parameter */
   {  "v;",       SELE_VISz }, /* 0 parameter */
+  {  "v.",       SELE_VISz }, /* 0 parameter */
   {  "around",   SELE_ARD_ }, /* 1 parameter */
   {  "a;",       SELE_ARD_ }, /* 1 parameter */
+  {  "a.",       SELE_ARD_ }, /* 1 parameter */
   {  "expand",   SELE_EXP_ }, /* 1 parameter */
   {  "x;",       SELE_EXP_ }, /* 1 parameter */
+  {  "x.",       SELE_EXP_ }, /* 1 parameter */
   {  "name",     SELE_NAMs },
   {  "n;",       SELE_NAMs },
+  {  "n.",       SELE_NAMs },
   {  "symbol",   SELE_ELEs },
   {  "element",  SELE_ELEs },
   {  "elem",     SELE_ELEs },
   {  "e;",       SELE_ELEs },
+  {  "e.",       SELE_ELEs },
   {  "resi",     SELE_RSIs },
   {  "resid",    SELE_RSIs },
   {  "i;",       SELE_RSIs },
+  {  "i.",       SELE_RSIs },
   {  "alt",      SELE_ALTs },
   {  "flag",     SELE_FLGs },
   {  "f;",       SELE_FLGs },
+  {  "f.",       SELE_FLGs },
   {  "gap",      SELE_GAP_ },
   {  "partial_charge",SELE_PCHx },
   {  "pc;",      SELE_PCHx },
+  {  "pc.",      SELE_PCHx },
   {  "formal_charge", SELE_FCHx },
   {  "fc;",      SELE_FCHx },
+  {  "fc.",      SELE_FCHx },
   {  "numeric_type",SELE_NTYs },
   {  "nt;",      SELE_NTYs },
+  {  "nt.",      SELE_NTYs },
   {  "text_type",SELE_TTYs },
   {  "tt;",      SELE_TTYs },
+  {  "tt.",      SELE_TTYs },
   {  "chain",    SELE_CHNs },
   {  "c;",       SELE_CHNs },
+  {  "c.",       SELE_CHNs },
   {  "bonded",   SELE_BNDz },
   {  "segi",     SELE_SEGs },
   {  "s;",       SELE_SEGs },
+  {  "s.",       SELE_SEGs },
   {  "ss",       SELE_SSTs },
   {  "model",    SELE_MODs },
   {  "m;",       SELE_MODs },
+  {  "m.",       SELE_MODs },
   {  "index",    SELE_IDXs },
   {  "id",       SELE_ID_s },
   {  "resn",     SELE_RSNs },
   {  "r;",       SELE_RSNs },
+  {  "r.",       SELE_RSNs },
   {  "%",        SELE_SELs },
   {  "b",        SELE_BVLx, }, /* 2 operand selection operator */ 
   {  "q",        SELE_QVLx, }, /* 2 operand selection operator */ 
