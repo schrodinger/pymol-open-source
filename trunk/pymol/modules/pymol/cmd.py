@@ -294,16 +294,16 @@ if __name__=='pymol.cmd':
 
    def unlock(): # INTERNAL
       if (thread.get_ident() == pymol.glutThread):
-         lock_api.release()
-#         print "lock: released by 0x%x (glut)"%thread.get_ident()
-         _cmd.flush_now()
+         global reaper
          if reaper:
             if not reaper.isAlive():
                if pymol.invocation.options.no_gui:
                   _cmd.quit()
                else:
-                  global reaper
                   reaper = None
+         lock_api.release()
+#         print "lock: released by 0x%x (glut)"%thread.get_ident()
+         _cmd.flush_now()
       else:
 #         print "lock: released by 0x%x (not glut), waiting queue"%thread.get_ident()
          lock_api.release()
