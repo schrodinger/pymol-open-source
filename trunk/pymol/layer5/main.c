@@ -68,6 +68,11 @@
 #include"ClassPyMOL.h"
 #include"PyMOLOptions.h"
 
+#ifdef _PYMOL_OSX
+int *MacPyMOLReady = NULL;
+COption *MacPyMOLOption = NULL;
+#endif
+
 void MainFree(void);
 void MainTest(void);
 void MainBusyIdle(void);
@@ -820,9 +825,10 @@ void MainFree(void)
 #endif
 #ifdef _PYMOL_OSX
   if(haveGUI) {
-    if(GameMode) {
+    if(G->Option->game_mode) {
       p_glutLeaveGameMode();
-      /* force a full-screen refresh to eliminate garbage on screen */
+      /* force a full-screen refresh to eliminate garbage on screen 
+       * NOTE that we currently have to patch Apple's GLUT to make this work */
       p_glutInitWindowPosition(0,0);
       p_glutInitWindowSize(640,480);
       p_glutInitDisplayMode(P_GLUT_RGBA | P_GLUT_DEPTH | P_GLUT_DOUBLE );            
@@ -1078,6 +1084,11 @@ static void launch(COption *options)
   PyMOLGlobals *G = NULL;
   PyMOLInstance = ClassPyMOLNewWithOptions(options);
   G = ClassPyMOLGetGlobals(PyMOLInstance);
+
+#ifdef _PYMOL_OSX
+  MacPyMOLOption = G->Option;
+  MacPyMOLReady = &G->Ready;
+#endif
   
   G->HaveGUI = G->Option->pmgui;
   G->Security = G->Option->security;
@@ -1259,6 +1270,8 @@ int MainCheckRedundantOpen(char *file)
 }
 
 /*========================================================================*/
+
+
 #ifndef _PYMOL_MODULE
 int main(int argc, char *argv[])
 {
