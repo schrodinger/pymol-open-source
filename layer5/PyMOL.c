@@ -582,7 +582,12 @@ static OVstatus PyMOL_InitAPI(CPyMOL *I)
   LEX_REP(extent,15);
   LEX_REP(slice,16);
 
-#define LEX_CLIP(NAME,CODE) LEX(NAME) \
+  /* workaround for unexplained bug with nested macro on VC6 */
+
+#define LEX_CLIP(NAME,CODE) {if(!OVreturn_IS_OK( (result= OVLexicon_GetFromCString(I->Lex,#NAME))))  \
+    return_OVstatus_FAILURE \
+    else \
+    I -> lex_ ## NAME = result.word;} \
     if(!OVreturn_IS_OK( OVOneToOne_Set(I->Clip,I->lex_ ## NAME, CODE)))  \
       return_OVstatus_FAILURE;
   
