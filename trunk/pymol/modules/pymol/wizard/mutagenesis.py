@@ -28,7 +28,7 @@ class Mutagenesis(Wizard):
       Wizard.__init__(self)
 
       self.library = io.pkl.fromFile(os.environ['PYMOL_PATH']+
-                                     "/modules/chempy/sidechains/sc_library.pkl")
+                                     "/data/chempy/sidechains/sc_library.pkl")
       
       self.status = 0 # 0 no selection, 1 mutagenizing
       self.error = None

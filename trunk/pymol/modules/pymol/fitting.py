@@ -56,7 +56,7 @@ SEE ALSO
    r = None
    source = selector.process(source)
    target = selector.process(target)
-   mfile = os.path.expandvars("$PYMOL_PATH/modules/pymol/matrices/"+matrix)
+   mfile = os.path.expandvars("$PYMOL_PATH/data/pymol/matrices/"+matrix)
    if object==None: object=''
    try:
       lock()

@@ -205,6 +205,7 @@ class SettingIndex:
    stereo_mode           =188
    cgo_sphere_quality    =189
    pdb_literal_names     =190
+   wrap_output           =191
    
 setting_sc = Shortcut(SettingIndex.__dict__.keys())
    

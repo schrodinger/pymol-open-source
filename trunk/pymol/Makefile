@@ -124,6 +124,7 @@ distclean: clean
 	cd contrib;$(MAKE) distclean
 
 pyclean: clean
+	/bin/rm -rf build
 	/bin/rm -rf ext/lib/python2.1/site-packages/pymol
 	/bin/rm -rf ext/lib/python2.1/site-packages/chempy
 	/bin/rm -rf ext/lib/python2.1/site-packages/pmg_tk

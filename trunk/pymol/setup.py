@@ -1,6 +1,9 @@
 #!/usr/bin/env python
-
-# PyMOL setup.py tested with Python 2.1
+#
+# This script only applies if you are performing a Python Distutils-based
+# installation of PyMOL.
+#
+# tested with Python 2.1
 
 from distutils.core import setup, Extension
 
@@ -102,10 +105,11 @@ setup ( # Distribution meta-data
    "layer5/main.c",
    ],
    include_dirs=["layer0","layer1","layer2","layer3","layer4","layer5"],
-   libraries=["GL","GLU","glut"],
+   libraries=["GL","GLU","glut","png"],
 #   library_dirs=["/usr/X11R6/lib"],             
    define_macros=[("_PYMOL_MODULE",None),
-                  ("_PYMOL_NUMPY",None)]
+                  ("_PYMOL_NUMPY",None),
+                  ("_HAVE_LIBPNG",None)]
              ),
    Extension("pymol.sglite", [
    "contrib/sglite/runtests.c",
@@ -142,4 +146,7 @@ setup ( # Distribution meta-data
    Extension("pymol.opengl.gl.openglutil_num", ["contrib/pyopengl/openglutil_num.c"])
 ])
 
-
+print '''
+ Be sure to run "python setup2.py" after "python setup.py install"
+ in order to complete the installation of PyMOL's files.
+'''

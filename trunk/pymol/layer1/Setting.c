@@ -1311,6 +1311,8 @@ void SettingInitGlobal(void)
 
   SettingSet_f(I,cSetting_pdb_literal_names, 0.0);
 
+  SettingSet_f(I,cSetting_wrap_output, 0.0);
+
 }
 
 

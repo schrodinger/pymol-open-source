@@ -963,7 +963,7 @@ USAGE
 def load_png(filename,movie=1,quiet=0):
    r=None
    try:
-      lock()   
+      lock()
       r = _cmd.load_png(str(filename),int(movie),int(quiet))
    finally:
       unlock()
