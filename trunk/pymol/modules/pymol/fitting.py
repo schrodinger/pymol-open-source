@@ -71,7 +71,7 @@ SEE ALSO
          unlock()
       return r
 
-   def intra_fit(selection,state=1,quiet=1):
+   def intra_fit(selection,state=1,quiet=1,mix=0):
       '''
 DESCRIPTION
 
@@ -105,9 +105,10 @@ SEE ALSO
       #   
       r = None
       state = int(state)
+      mix = int(mix)
       try:
          lock()
-         r = _cmd.intrafit("("+str(selection)+")",int(state)-1,2,int(quiet))
+         r = _cmd.intrafit("("+str(selection)+")",int(state)-1,2,int(quiet),int(mix))
       finally:
          unlock()
       if not r:
@@ -116,7 +117,10 @@ SEE ALSO
          st = 1
          for a in r:
             if a>=0.0:
-               print " cmd.intra_fit: %5.3f in state %d vs state %d"%(a,st,state)
+               if mix:
+                  print " cmd.intra_fit: %5.3f in state %d vs mixed target"%(a,st)
+               else:
+                  print " cmd.intra_fit: %5.3f in state %d vs state %d"%(a,st,state)
             st = st + 1
       return r
 
@@ -149,7 +153,7 @@ SEE ALSO
       state = int(state)
       try:
          lock()
-         r = _cmd.intrafit("("+str(selection)+")",int(state)-1,1,int(quiet))
+         r = _cmd.intrafit("("+str(selection)+")",int(state)-1,1,int(quiet),int(0))
       finally:
          unlock()
       if not r:
@@ -191,7 +195,7 @@ SEE ALSO
       state = int(state)
       try:
          lock()
-         r = _cmd.intrafit("("+str(selection)+")",int(state)-1,0,int(quiet))
+         r = _cmd.intrafit("("+str(selection)+")",int(state)-1,0,int(quiet),int(0))
       finally:
          unlock()
       if not r:

@@ -5123,7 +5123,7 @@ int ExecutiveIndex(PyMOLGlobals *G,char *s1,int mode,int **indexVLA,ObjectMolecu
   return(op2.i1);
 }
 /*========================================================================*/
-float *ExecutiveRMSStates(PyMOLGlobals *G,char *s1,int target,int mode,int quiet)
+float *ExecutiveRMSStates(PyMOLGlobals *G,char *s1,int target,int mode,int quiet,int mix)
 {
   int sele1;
   ObjectMoleculeOpRec op1;
@@ -5163,6 +5163,7 @@ float *ExecutiveRMSStates(PyMOLGlobals *G,char *s1,int target,int mode,int quiet
     op2.i1VLA=op1.i1VLA;
     op2.i2=target;
     op2.i1=mode;
+    op2.i3 = mix;
     op2.f1VLA=VLAlloc(float,10);
     VLASize(op2.f1VLA,float,0); /* failsafe */
     op2.vv1=(float*)VLAMalloc(1000,sizeof(float),5,0);

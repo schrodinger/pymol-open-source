@@ -7003,7 +7003,7 @@ void ObjectMoleculeSeleOp(ObjectMolecule *I,int sele,ObjectMoleculeOpRec *op)
        }
      break;
 	case OMOP_SFIT: /* state fitting within a single object */
-     vt = Alloc(float,3*op->nvv2);
+     vt = Alloc(float,3*op->nvv2); /* temporary (matching) target vertex pointers */
      cnt = 0;
      for(a=0;a<I->NAtom;a++)
        {
@@ -7076,8 +7076,54 @@ void ObjectMoleculeSeleOp(ObjectMolecule *I,int sele,ObjectMoleculeOpRec *op)
                  rms = MatrixFitRMS(G,op->nvv1,op->vv1,vt,NULL,op->ttt);
                else 
                  rms = MatrixGetRMS(G,op->nvv1,op->vv1,vt,NULL);
-               if(op->i1==2) 
+               if((op->i1==2)) { 
                  ObjectMoleculeTransformTTTf(I,op->ttt,b);
+                 
+                 if(op->i3) {
+                   const float divisor = (float)op->i3;
+                   const float premult = (float)op->i3-1.0F;
+
+                   /* mix flag is set, so average the prior target
+                      coordinates with these coordinates */
+                   
+                   vt2 = op->vv2;
+                   t_i = 0; /* original target vertex index */
+                   for(a=0;a<I->NAtom;a++) {
+                     s=I->AtomInfo[a].selEntry;
+                     if(SelectorIsMember(G,s,sele))
+                       {
+                         if(I->DiscreteFlag) {
+                           if(I->CSet[b]==I->DiscreteCSet[a])
+                             a1=I->DiscreteAtmToIdx[a];
+                           else
+                             a1=-1;
+                         } else 
+                           a1=I->CSet[b]->AtmToIdx[a];
+                         if(a1>=0) {
+                           
+                           match_flag=false;
+                           while(t_i<op->nvv2) {
+                             if(op->i1VLA[t_i]==a) {/* same atom? */
+                               match_flag=true;
+                               break;
+                             }
+                             if(op->i1VLA[t_i]<a) { /* catch up? */
+                               t_i++;
+                               vt2+=3;
+                             } else 
+                               break;
+                           }
+                           if(match_flag) {
+                             vv2=I->CSet[b]->Coord+(3*a1);
+                             *(vt2)   = ((premult * (* vt2   )) + *(vv2++))/divisor;
+                             *(vt2+1) = ((premult * (*(vt2+1))) + *(vv2++))/divisor;
+                             *(vt2+2) = ((premult * (*(vv2++))) + *(vv2++))/divisor;
+                           }
+                         }
+                       }
+                   }
+                 }
+               }
              } else {
                PRINTFB(G,FB_Executive,FB_Warnings)
                  "Executive-Warning: No matches found for state %d.\n",b+1

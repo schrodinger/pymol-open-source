@@ -2874,16 +2874,17 @@ static PyObject *CmdIntraFit(PyObject *dummy, PyObject *args)
   int state;
   int mode;
   int quiet;
+  int mix;
   OrthoLineType s1;
   float *fVLA;
   PyObject *result=Py_None;
   int ok=false;
-  ok = PyArg_ParseTuple(args,"siii",&str1,&state,&mode,&quiet);
+  ok = PyArg_ParseTuple(args,"siiii",&str1,&state,&mode,&quiet,&mix);
   if(state<0) state=0;
   if (ok) {
     APIEntry();
     SelectorGetTmp(TempPyMOLGlobals,str1,s1);
-    fVLA=ExecutiveRMSStates(TempPyMOLGlobals,s1,state,mode,quiet);
+    fVLA=ExecutiveRMSStates(TempPyMOLGlobals,s1,state,mode,quiet,mix);
     SelectorFreeTmp(TempPyMOLGlobals,s1);
     APIExit();
     if(fVLA) {
