@@ -507,7 +507,7 @@ void RayRender(CRay *I,int width,int height,unsigned int *image,float front,floa
 
 #ifdef _MemoryDebug_ON
     PRINTFB(FB_Ray,FB_Details)
-      " Ray: voxels loaded: [%4.2f:%dx%dx%d], [%4.2f:%dx%dx%d], %d MB, %4.2f sec.\n",
+      " Ray: voxels: [%4.2f:%dx%dx%d], [%4.2f:%dx%dx%d], %d MB, %4.2f sec.\n",
       I->Basis[1].Map->Div,   I->Basis[1].Map->Dim[0],
       I->Basis[1].Map->Dim[1],I->Basis[1].Map->Dim[2],
       I->Basis[2].Map->Div,   I->Basis[2].Map->Dim[0],
@@ -517,7 +517,7 @@ void RayRender(CRay *I,int width,int height,unsigned int *image,float front,floa
       ENDFB;
 #else
     PRINTFB(FB_Ray,FB_Details)
-      " Ray: voxels loaded: [%4.2f:%dx%dx%d], [%4.2f:%dx%dx%d], %4.2f sec.\n",
+      " Ray: voxels: [%4.2f:%dx%dx%d], [%4.2f:%dx%dx%d], %4.2f sec.\n",
       I->Basis[1].Map->Div,   I->Basis[1].Map->Dim[0],
       I->Basis[1].Map->Dim[1],I->Basis[1].Map->Dim[2],
       I->Basis[2].Map->Div,   I->Basis[2].Map->Dim[0],
