@@ -57,7 +57,6 @@ void SceneIdle(void);
 void SceneFree(void);
 void SceneRay(int width,int height,int mode,char **headerVLA,char **charVLA);
 void SceneMakeMovieImage(void);
-void SceneCopy(int buffer);
 
 void ScenePNG(char *png);
 void SceneResetMatrix(void);

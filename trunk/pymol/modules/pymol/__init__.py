@@ -222,6 +222,11 @@ if pymol_launch != 3: # if this isn't a dry run
                   print " Adapting to NVIDIA hardware on Mac..."
                   cmd.set('line_smooth',0,quiet=1)
                   cmd.set('fog',0.9,quiet=1)
+         elif renderer[0:6]=='Quadro':
+            print " Adapting to Quadro hardware..."
+            cmd.set("stereo_double_pump_mono","1",quiet=1)
+            cmd.set("line_width",1.4,quiet=1)
+         
       if vendor[0:3]=='ATI':
          if renderer[0:17]=='FireGL2 / FireGL3':
             if invocation.options.show_splash:

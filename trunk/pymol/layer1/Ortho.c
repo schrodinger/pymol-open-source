@@ -913,7 +913,7 @@ void OrthoDoDraw()
     
     glClearColor(v[0],v[1],v[2],1.0);
 
-    if(SceneGetStereo()&&double_pump) {
+    if(SceneGetStereo()||double_pump) {
       glDrawBuffer(GL_BACK_LEFT);
       glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
       glDrawBuffer(GL_BACK_RIGHT);

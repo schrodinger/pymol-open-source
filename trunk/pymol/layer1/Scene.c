@@ -106,8 +106,10 @@ typedef struct {
   float unit_left,unit_right,unit_top,unit_bottom,unit_front,unit_back;
 } SceneUnitContext;
 
-unsigned int SceneFindTriplet(int x,int y);
-unsigned int *SceneReadTriplets(int x,int y,int w,int h);
+void SceneCopy(GLenum buffer);
+
+unsigned int SceneFindTriplet(int x,int y,GLenum gl_buffer);
+unsigned int *SceneReadTriplets(int x,int y,int w,int h,GLenum gl_buffer);
 
 void SceneDraw(Block *block);
 int SceneClick(Block *block,int button,int x,int y,int mod);
@@ -605,7 +607,7 @@ void SceneMakeMovieImage(void) {
       glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
       glClearColor(0.0,0.0,0.0,1.0);
       SceneRender(NULL,0,0,NULL);
-      SceneCopy(0);
+      SceneCopy(GL_BACK);
     }
   }
   if(I->ImageBuffer&&(I->ImageBufferHeight==I->Height)&&(I->ImageBufferWidth==I->Width)) {
@@ -821,17 +823,18 @@ void SceneDraw(Block *block)
   CScene *I=&Scene;
   int overlay,text;
   int width,height;
+  int double_pump;
 
   if(PMGUI) {
     overlay = SettingGet(cSetting_overlay);
     text = SettingGet(cSetting_text);
+    double_pump = SettingGet(cSetting_stereo_double_pump_mono);
 
     if(overlay||(!text)) 
 
       if(I->CopyFlag)
         {
-          glReadBuffer(GL_BACK); /* neither of these seems to fix the nVidia driver under windows */
-          glDrawBuffer(GL_BACK); /* in full-screen mode...pixels still get written to the front buffer! */
+          glReadBuffer(GL_BACK); 
 
           if(I->ImageBufferHeight>I->Height||I->ImageBufferWidth>I->Width) {
             glColor3f(1.0,0.2,0.2);
@@ -847,7 +850,15 @@ void SceneDraw(Block *block)
             } else {
               glRasterPos3i(I->Block->rect.left,I->Block->rect.bottom,0);
             }
-            glDrawPixels(width,height,GL_RGBA,GL_UNSIGNED_BYTE,I->ImageBuffer);            
+            if(!double_pump) {
+              glDrawBuffer(GL_BACK);
+              glDrawPixels(width,height,GL_RGBA,GL_UNSIGNED_BYTE,I->ImageBuffer);            
+            } else {
+              glDrawBuffer(GL_BACK_LEFT);
+              glDrawPixels(width,height,GL_RGBA,GL_UNSIGNED_BYTE,I->ImageBuffer);            
+              glDrawBuffer(GL_BACK_RIGHT);
+              glDrawPixels(width,height,GL_RGBA,GL_UNSIGNED_BYTE,I->ImageBuffer);            
+            }
           }
           I->RenderTime = -I->LastRender;
           I->LastRender = UtilGetSeconds();
@@ -864,7 +875,7 @@ typedef unsigned char pix[4];
 #define cRange 5
 /*typedef pix pix_array[cRange*2+1][cRange*2+1];*/
 
-unsigned int SceneFindTriplet(int x,int y) 
+unsigned int SceneFindTriplet(int x,int y,GLenum gl_buffer) 
 {
   int result = 0;
   /*int before_check[100];
@@ -892,7 +903,7 @@ unsigned int SceneFindTriplet(int x,int y)
 
     if(Feedback(FB_Scene,FB_Debugging)) debug=true;
     
-    glReadBuffer(GL_BACK);
+    glReadBuffer(gl_buffer);
 
 /*	safe_place = (char*)malloc(1000000);
 	array_ptr = (pix_array*)(safe_place+500000);*/
@@ -975,7 +986,7 @@ unsigned int SceneFindTriplet(int x,int y)
   return(result);
 }
 /*========================================================================*/
-unsigned int *SceneReadTriplets(int x,int y,int w,int h)
+unsigned int *SceneReadTriplets(int x,int y,int w,int h,GLenum gl_buffer)
 { 
   unsigned int *result = NULL;
   pix *buffer=NULL;
@@ -1003,7 +1014,7 @@ unsigned int *SceneReadTriplets(int x,int y,int w,int h)
 	  
   buffer=Alloc(pix,w*h);
     result = VLAlloc(unsigned int,w*h);
-    glReadBuffer(GL_BACK);
+    glReadBuffer(gl_buffer);
     glReadPixels(x,y,w,h,GL_RGBA,GL_UNSIGNED_BYTE,&buffer[0][0]);
     
     for(a=0;a<w;a++)
@@ -1992,48 +2003,44 @@ void SceneRay(int ray_width,int ray_height,int mode,char **headerVLA_ptr,char **
   RayFree(ray);
 }
 /*========================================================================*/
-void SceneCopy(int buffer)
+void SceneCopy(GLenum buffer)
 {
   CScene *I=&Scene;
   unsigned int buffer_size;
 
-    if(!I->StereoMode) { /* no copies while in stereo mode */
-      if((!I->DirtyFlag)&&(!I->CopyFlag)) { 
-        buffer_size = 4*I->Width*I->Height;
-        if(buffer_size) {
-          if(I->ImageBuffer)	 {
-            if(I->MovieOwnsImageFlag) {
-              I->MovieOwnsImageFlag=false;
-              I->ImageBuffer=NULL;
-            } else if(I->ImageBufferSize!=buffer_size) {
-              FreeP(I->ImageBuffer);
-            }
-          }
-          if((I->ImageBufferWidth!=I->Width)||(I->ImageBufferHeight!=I->Height)) {
+  if(!I->StereoMode) { /* no copies while in stereo mode */
+    if((!I->DirtyFlag)&&(!I->CopyFlag)) { 
+      buffer_size = 4*I->Width*I->Height;
+      if(buffer_size) {
+        if(I->ImageBuffer)	 {
+          if(I->MovieOwnsImageFlag) {
+            I->MovieOwnsImageFlag=false;
+            I->ImageBuffer=NULL;
+          } else if(I->ImageBufferSize!=buffer_size) {
             FreeP(I->ImageBuffer);
           }
-          if(!I->ImageBuffer) {
-            I->ImageBuffer=(GLvoid*)Alloc(char,buffer_size);
-            ErrChkPtr(I->ImageBuffer);
-            I->ImageBufferSize = buffer_size;
-            I->ImageBufferWidth=I->Width;
-            I->ImageBufferHeight=I->Height;
-          }
-          if(PMGUI) {
-            if(buffer)
-              glReadBuffer(GL_FRONT);
-            else
-              glReadBuffer(GL_BACK);
-            glReadPixels(I->Block->rect.left,I->Block->rect.bottom,I->Width,I->Height,
-                         GL_RGBA,GL_UNSIGNED_BYTE,I->ImageBuffer);
-            I->ImageBufferWidth=I->Width;
-            I->ImageBufferHeight=I->Height;
-          }
         }
-        I->CopyFlag = true;
+        if((I->ImageBufferWidth!=I->Width)||(I->ImageBufferHeight!=I->Height)) {
+          FreeP(I->ImageBuffer);
+        }
+        if(!I->ImageBuffer) {
+          I->ImageBuffer=(GLvoid*)Alloc(char,buffer_size);
+          ErrChkPtr(I->ImageBuffer);
+          I->ImageBufferSize = buffer_size;
+          I->ImageBufferWidth=I->Width;
+          I->ImageBufferHeight=I->Height;
+        }
+        if(PMGUI) {
+          glReadBuffer(buffer);
+          glReadPixels(I->Block->rect.left,I->Block->rect.bottom,I->Width,I->Height,
+                       GL_RGBA,GL_UNSIGNED_BYTE,I->ImageBuffer);
+          I->ImageBufferWidth=I->Width;
+          I->ImageBufferHeight=I->Height;
+        }
       }
+      I->CopyFlag = true;
     }
-
+  }
 }
 
 /*========================================================================*/
@@ -2212,6 +2219,7 @@ void SceneRender(Pickable *pick,int x,int y,Multipick *smp)
   int must_render_stereo = false;
   int stereo_as_mono = false;
   int debug_pick = 0;
+  GLenum render_buffer = GL_BACK;
 
   SceneUnitContext context;
 
@@ -2227,7 +2235,21 @@ void SceneRender(Pickable *pick,int x,int y,Multipick *smp)
 
   fov=SettingGet(cSetting_field_of_view);
   if(PMGUI) {
-    glDrawBuffer(GL_BACK);
+
+    must_render_stereo = (I->StereoMode!=0);
+    if(!must_render_stereo) 
+      if(double_pump&&StereoCapable) {            /* force stereo rendering */
+        must_render_stereo=true;
+        stereo_as_mono=true; /* rendering stereo as mono */
+      }
+
+    if(must_render_stereo) {
+      glDrawBuffer(GL_BACK_LEFT);
+      render_buffer = GL_BACK_LEFT;
+    } else {
+      glDrawBuffer(GL_BACK);
+      render_buffer = GL_BACK;
+    }
   
     glGetIntegerv(GL_VIEWPORT,(GLint*)view_save);
     glViewport(I->Block->rect.left,I->Block->rect.bottom,I->Width,I->Height);
@@ -2446,7 +2468,7 @@ void SceneRender(Pickable *pick,int x,int y,Multipick *smp)
         PSleep(1000000*debug_pick/4);
         p_glutSwapBuffers();
       }
-      lowBits = SceneFindTriplet(x,y);
+      lowBits = SceneFindTriplet(x,y,render_buffer);
 	
       glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	
@@ -2461,7 +2483,7 @@ void SceneRender(Pickable *pick,int x,int y,Multipick *smp)
         p_glutSwapBuffers();
       }
 
-      highBits = SceneFindTriplet(x,y);
+      highBits = SceneFindTriplet(x,y,render_buffer);
       index = lowBits+(highBits<<12);
 
       if(index&&(index<=pickVLA[0].index)) {
@@ -2490,7 +2512,7 @@ void SceneRender(Pickable *pick,int x,int y,Multipick *smp)
       
       SceneRenderAll(&context,NULL,&pickVLA,0,true);
       
-      lowBitVLA = SceneReadTriplets(smp->x,smp->y,smp->w,smp->h);
+      lowBitVLA = SceneReadTriplets(smp->x,smp->y,smp->w,smp->h,render_buffer);
 
       glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	
@@ -2499,7 +2521,7 @@ void SceneRender(Pickable *pick,int x,int y,Multipick *smp)
 	
       SceneRenderAll(&context,NULL,&pickVLA,0,true);
 
-      highBitVLA = SceneReadTriplets(smp->x,smp->y,smp->w,smp->h);
+      highBitVLA = SceneReadTriplets(smp->x,smp->y,smp->w,smp->h,render_buffer);
       
       nLowBits = VLAGetSize(lowBitVLA);
       nHighBits = VLAGetSize(highBitVLA);
@@ -2546,12 +2568,6 @@ void SceneRender(Pickable *pick,int x,int y,Multipick *smp)
       ButModeCaptionReset(); /* reset the frame caption if any */
       /* rendering for visualization */
 
-      must_render_stereo = (I->StereoMode!=0);
-      if(!must_render_stereo) 
-        if(double_pump&&StereoCapable) {            /* force stereo rendering */
-          must_render_stereo=true;
-          stereo_as_mono=true; /* rendering stereo as mono */
-        }
 
       PRINTFD(FB_Scene)
         " SceneRender: I->StereoMode %d must_render_stereo %d\n    stereo_as_mono %d  StereoCapable %d\n",
@@ -2559,7 +2575,7 @@ void SceneRender(Pickable *pick,int x,int y,Multipick *smp)
         ENDFD;
 
       start_time = UtilGetSeconds();
-      if(I->StereoMode) {
+      if(must_render_stereo) {
         /*stereo*/
 
         PRINTFD(FB_Scene)
@@ -2735,8 +2751,9 @@ void SceneRender(Pickable *pick,int x,int y,Multipick *smp)
       start_time = I->LastRender - start_time;
       if((start_time>0.10)||(MainSavingUnderWhileIdle()))
         if(!(ControlIdling()))
-          if(SettingGet(cSetting_cache_display))
-            SceneCopy(0);
+          if(SettingGet(cSetting_cache_display)) {
+            SceneCopy(render_buffer);
+          }
     } else {
       I->CopyNextFlag=true;
     }
