@@ -2639,9 +2639,17 @@ PYMOL API
   
    cmd.viewport(int width, int height)
    '''
-   # Shouldn't this be protected by locks?  - WLD 010410
-   r = _cmd.viewport(int(width),int(height))
-   
+   r = None
+   if not is_glut_thread():
+      do("viewport %d,%d"%(int(width),int(height)))
+   else:
+      try:
+         lock()
+         r = _cmd.viewport(int(width),int(height))
+      finally:
+         unlock()
+   return r
+
 def mdo(a,b):
    '''
 DESCRIPTION

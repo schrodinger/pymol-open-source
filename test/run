@@ -40,8 +40,13 @@ cmd = "../pymol.com "
 cmp = "cmp"
 ref = "ref"
 inp = "inp"
+tmp = "tmp"
+
 if not os.path.exists(cmp):
    os.mkdir(cmp)
+
+if not os.path.exists(tmp):
+   os.mkdir(tmp)
 
 if len(argv)>1:
    tests = argv
