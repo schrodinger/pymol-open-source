@@ -1060,6 +1060,8 @@ static int find_edge(unsigned int *ptr,unsigned int width,int threshold)
   return 0;
 }
 
+#define RAY_MAX_PASS 25
+
 int RayTraceThread(CRayThreadInfo *T)
 {
 	CRay *I=NULL;
@@ -1363,10 +1365,9 @@ int RayTraceThread(CRayThreadInfo *T)
               excl_trans		= _0;
               pass			= 0;
               new_front		= T->front;
-              while((persist > _persistLimit) && (pass < 25))
+              while((persist > _persistLimit) && (pass <= RAY_MAX_PASS))
                 {
                   pixel_flag		= false;
-                  
                   SceneCall.except = exclude;
                   SceneCall.front = new_front;
                   SceneCall.excl_trans = excl_trans;
@@ -1376,7 +1377,7 @@ int RayTraceThread(CRayThreadInfo *T)
 
                   interior_flag = SceneCall.interior_flag;
                   
-                  if((i >= 0) || interior_flag) 
+                  if(((i >= 0) || interior_flag) && (pass < RAY_MAX_PASS)) 
                     {
                       pixel_flag		= true;
                       n_hit++;
@@ -1584,7 +1585,9 @@ int RayTraceThread(CRayThreadInfo *T)
                     }
                   else if(pass) 
                     {
-                      /* hit nothing, and we're on on second or greater pass */
+                      /* hit nothing, and we're on on second or greater pass,
+                         or we're on the last pass of a dead-end loop */
+                      i=-1;
 
                       fc[0] = first_excess+T->bkrd[0];
                       fc[1] = first_excess+T->bkrd[1];
@@ -1600,7 +1603,7 @@ int RayTraceThread(CRayThreadInfo *T)
                       
                       pixel_flag	= true;
                     }
-                  
+
                   if(pixel_flag)
                     {
                       inp	= (fc[0]+fc[1]+fc[2]) * _inv3;
@@ -1714,10 +1717,11 @@ int RayTraceThread(CRayThreadInfo *T)
                         persist	= persist * r1.trans;
                       else 
                         {
-                          if((persist < 0.9999) && (r1.trans))	/* don't combine transparent surfaces */
+                          if((persist < 0.9999) && (r1.trans))	/* don't combine transparent surfaces */ {
                             *pixel	= last_pixel;
-                          else
+                          } else {
                             persist	= persist * r1.trans;
+                          }
                         }
                       
                     }
@@ -1735,7 +1739,7 @@ int RayTraceThread(CRayThreadInfo *T)
                     }
                   
                 } /* end of ray while */
-              
+
               if(blend_colors) {
                 
                 float red_min = _0;
