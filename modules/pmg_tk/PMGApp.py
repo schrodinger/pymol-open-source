@@ -36,7 +36,7 @@ import Queue
 
 class PMGApp(AbstractApp):
 
-   appversion     = '0.72'
+   appversion     = '0.73'
    appname       = 'PyMOL Molecular Graphics System'
    copyright      = 'Copyright (C) 1998-2001 by Warren DeLano of\nDeLano Scientific. All rights reserved.'
    contactweb     = 'http://www.pymol.org'
@@ -61,7 +61,8 @@ class PMGApp(AbstractApp):
          Frame,self.get_commandFrame(),bd=0)
       row2.pack(side=TOP,fill=BOTH,expand=YES)
       btn_reset = self.buttonAdd(row2,'Reset',lambda: cmd.do("_ reset"))
-      btn_rtrace = self.buttonAdd(row2,'Ray Trace',lambda : cmd.do("_ ray"))
+      btn_reset = self.buttonAdd(row2,'Zoom',lambda: cmd.do("_ zoom"))      
+      btn_rtrace = self.buttonAdd(row2,'Ray',lambda : cmd.do("_ ray"))
       btn_reset = self.buttonAdd(row2,'Rock',lambda :cmd.do("_ rock"))
 
       row3 = self.createcomponent('row3', (), None,
@@ -671,15 +672,15 @@ class PMGApp(AbstractApp):
       self.menuBar.addmenuitem('Edit', 'separator', '')
       
       self.menuBar.addmenuitem('Edit', 'command', 'Make Positive',
-                               label='Make Positive [Ctrl-K]',
+                               label='Make (pk1) Positive [Ctrl-K]',
                                command = lambda: cmd.do("_ alter pk1,formal_charge=1.0"))
 
       self.menuBar.addmenuitem('Edit', 'command', 'Make Negative',
-                               label='Make Negative [Ctrl-J]',
+                               label='Make (pk1) Negative [Ctrl-J]',
                                command = lambda: cmd.do("_ alter pk1,formal_charge=-1.0"))
 
       self.menuBar.addmenuitem('Edit', 'command', 'Make Neutral',
-                               label='Make Neutral',
+                               label='Make (pk1) Neutral',
                                command = lambda: cmd.do("_ alter pk1,formal_charge=-0.0"))
 
 
