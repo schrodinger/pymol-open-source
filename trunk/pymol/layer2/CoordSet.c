@@ -34,6 +34,7 @@ Z* -------------------------------------------------------------------
 #include"RepSphere.h"
 #include"RepRibbon.h"
 #include"RepSurface.h"
+#include"RepLabel.h"
 
 void CoordSetUpdate(CoordSet *I);
 
@@ -143,31 +144,33 @@ void CoordSetAtomToPDBStrVLA(char **charVLA,int *c,AtomInfoType *ai,float *v,int
   
 }
 /*========================================================================*/
-PyObject *CoordSetAtomToChempyAtom(AtomInfoType *ai,float *v)
+PyObject *CoordSetAtomToChemPyAtom(AtomInfoType *ai,float *v)
 {
   PyObject *atom;
   int ok = true;
 
   atom = PyObject_CallMethod(P_chempy,"Atom","");
   if (!atom) 
-    ok = ErrMessage("CoordSetAtomToChempyAtom","can't create atom");
+    ok = ErrMessage("CoordSetAtomToChemPyAtom","can't create atom");
   else {
     PConvFloat3ToPyObjAttr(atom,"coord",v);
     PConvStringToPyObjAttr(atom,"name",ai->name);
     PConvStringToPyObjAttr(atom,"symbol",ai->elem);
     PConvStringToPyObjAttr(atom,"resn",ai->resn);
     PConvStringToPyObjAttr(atom,"resi",ai->resi);
-    PConvIntToPyObjAttr(atom,"resv",ai->resv);
+    PConvIntToPyObjAttr(atom,"resi_number",ai->resv);
     PConvStringToPyObjAttr(atom,"chain",ai->chain);
     if(ai->alt[0]) 
       PConvStringToPyObjAttr(atom,"alt",ai->alt); 
     PConvStringToPyObjAttr(atom,"segi",ai->segi);
     PConvFloatToPyObjAttr(atom,"q",ai->q);
     PConvFloatToPyObjAttr(atom,"b",ai->b);
+    PConvFloatToPyObjAttr(atom,"partial_charge",ai->partialCharge);
+    PConvIntToPyObjAttr(atom,"formal_charge",ai->formalCharge);
     if(ai->customType!=-9999)
       PConvIntToPyObjAttr(atom,"numeric_type",ai->customType);
     if(ai->textType[0])
-      PConvIntToPyObjAttr(atom,"text_type",ai->customType);      
+      PConvStringToPyObjAttr(atom,"text_type",ai->textType);      
     PConvIntToPyObjAttr(atom,"hetatm",ai->hetatm);      
     PConvIntToPyObjAttr(atom,"flags",ai->flags);      
   }
@@ -289,6 +292,14 @@ void CoordSetUpdate(CoordSet *I)
     SceneDirty();
   } else {
     I->Rep[cRepSurface]->fUpdate(I->Rep[cRepSurface],I);
+    SceneDirty();
+  }
+  OrthoBusyFast(8,I->NRep);
+  if(!I->Rep[cRepLabel]) {
+    I->Rep[cRepLabel]=RepLabelNew(I);
+    SceneDirty();
+  } else {
+    I->Rep[cRepLabel]->fUpdate(I->Rep[cRepLabel],I);
     SceneDirty();
   }
   OrthoBusyFast(1,1);

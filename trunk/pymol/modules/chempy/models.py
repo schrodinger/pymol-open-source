@@ -218,6 +218,24 @@ class Indexed(Base):
          bnd.order = b.order
          bnd.stereo = b.stereo
          self.bond.append(bnd)
+#------------------------------------------------------------------------------
+   def sort(self):
+      if chempy.feedback['verbose']:
+         print " "+__name__+": sorting..."
+      if not self.index:
+         self.update_index()
+      old_index = self.index
+      self.atom.sort()      
+      self.update_index()
+      xref = {}
+      new_index = self.index
+      for a in new_index.keys():
+         xref[old_index[a]] = new_index[a]
+      for b in self.bond:
+         b.index[0] = xref[b.index[0]]
+         b.index[1] = xref[b.index[1]]
+      del old_index
+      del xref
          
 #------------------------------------------------------------------------------
 #------------------------------------------------------------------------------

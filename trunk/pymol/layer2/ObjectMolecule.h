@@ -74,6 +74,7 @@ typedef struct ObjectMoleculeOpRec {
 #define OMOP_MNMX 15
 #define OMOP_AlterState 16
 #define OMOP_Flag 17
+#define OMOP_LABL 18
 
 #include"CoordSet.h"
 
@@ -85,7 +86,7 @@ ObjectMolecule *ObjectMoleculeLoadPDBFile(ObjectMolecule *obj,char *fname,int fr
 ObjectMolecule *ObjectMoleculeLoadMOLFile(ObjectMolecule *obj,char *fname,int frame);
 ObjectMolecule *ObjectMoleculeLoadMMDFile(ObjectMolecule *obj,char *fname,
                                           int frame,char *sepPrefix);
-ObjectMolecule *ObjectMoleculeLoadChempyModel(ObjectMolecule *I,PyObject *model,int frame);
+ObjectMolecule *ObjectMoleculeLoadChemPyModel(ObjectMolecule *I,PyObject *model,int frame);
 
 ObjectMolecule *ObjectMoleculeReadMOLStr(ObjectMolecule *obj,char *molstr,int frame);
 ObjectMolecule *ObjectMoleculeReadPDBStr(ObjectMolecule *obj,char *molstr,int frame);

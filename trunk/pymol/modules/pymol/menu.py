@@ -22,6 +22,8 @@ def mol_show(s):
            [ 1, 'sticks'    ,'cmd.show("sticks"    ,"'+s+'")'],
            [ 1, 'ribbon'    ,'cmd.show("ribbon"    ,"'+s+'")'],
            [ 0, ''          ,''                             ],
+           [ 1, 'labels'    ,'cmd.show("labels"    ,"'+s+'")'],
+           [ 0, ''          ,''                             ],
            [ 1, 'dots'      ,'cmd.show("dots"      ,"'+s+'")'],
            [ 1, 'spheres'   ,'cmd.show("spheres"   ,"'+s+'")'],
            [ 0, ''          ,''                             ],
@@ -33,6 +35,8 @@ def mol_hide(s):
            [ 1, 'lines'     ,'cmd.hide("lines"     ,"'+s+'")'],
            [ 1, 'sticks'    ,'cmd.hide("sticks"    ,"'+s+'")'],
            [ 1, 'ribbon'    ,'cmd.hide("ribbon"    ,"'+s+'")'],
+           [ 0, ''          ,''                             ],
+           [ 1, 'labels'    ,'cmd.hide("labels"    ,"'+s+'")'],
            [ 0, ''          ,''                             ],
            [ 1, 'dots'      ,'cmd.hide("dots"      ,"'+s+'")'],
            [ 1, 'spheres'   ,'cmd.hide("spheres"   ,"'+s+'")'],
@@ -124,14 +128,14 @@ def sele_action(s):
            [ 0, ''          ,''                         ],
            [ 1, 'Duplicate'    ,'cmd.select("('+s+')")'  ],
            [ 0, ''          ,''                         ],
-           [ 1, 'Full Residues' ,'cmd.select("'+s+'","(byres '+s+')")' ],
-           [ 1, 'Full Residues + 3 A' ,'cmd.select("'+s+'","(byres ('+s+' expand 3))")' ],
-           [ 1, 'Full Residues + 7 A' ,'cmd.select("'+s+'","(byres ('+s+' expand 7))")' ],
-           [ 1, 'Full Residues + 10 A' ,'cmd.select("'+s+'","(byres ('+s+' expand 10))")' ],
+           [ 1, 'Residues' ,'cmd.select("'+s+'","(byres '+s+')")' ],
+           [ 1, 'Residues within 3 A' ,'cmd.select("'+s+'","(byres ('+s+' expand 3))")' ],
+           [ 1, 'Residues within 7 A' ,'cmd.select("'+s+'","(byres ('+s+' expand 7))")' ],
+           [ 1, 'Residues within 10 A' ,'cmd.select("'+s+'","(byres ('+s+' expand 10))")' ],
            [ 0, ''          ,''                         ],
-           [ 1, 'Expand By 3 A'  ,'cmd.select("'+s+'","('+s+' expand 3)")' ],
-           [ 1, 'Expand By 7 A'  ,'cmd.select("'+s+'","('+s+' expand 7)")' ],
-           [ 1, 'Expand By 10 A'  ,'cmd.select("'+s+'","('+s+' expand 10)")' ],
+           [ 1, 'Expand by 3 A'  ,'cmd.select("'+s+'","('+s+' expand 3)")' ],
+           [ 1, 'Expand by 7 A'  ,'cmd.select("'+s+'","('+s+' expand 7)")' ],
+           [ 1, 'Expand by 10 A'  ,'cmd.select("'+s+'","('+s+' expand 10)")' ],
            [ 0, ''          ,''                         ],
            [ 1, 'Invert'  ,'cmd.select("'+s+'","(not '+s+')")' ],
            ]
@@ -143,6 +147,19 @@ def mol_action(s):
            [ 1, 'Orient'       ,'cmd.orient("'+s+'")'      ],
            [ 0, ''          ,''                         ],
            [ 1, 'Delete'       ,'cmd.delete("'+s+'")'    ],
+           ]
+
+def mol_labels(s):
+   return [[ 2, 'Labels:'     ,''                      ],
+           [ 1, 'Clear'    ,'cmd.label("'+s+'","\'\'")'    ],
+           [ 1, 'Residues'    ,'cmd.label("(name ca and (byres('+s+')))","\'%s-%s\'%(resn,resi)")'    ],
+           [ 1, 'Atoms'       ,'cmd.label("'+s+'","name")'    ],
+           [ 0, ''          ,''                         ],
+           [ 1, 'B-factor'   , 'cmd.label("'+s+'","\'%1.2f\'%b")'    ],         
+           [ 1, 'Partial Charge'   , 'cmd.label("'+s+'","\'%1.2f\'%partial_charge")'    ],
+           [ 0, ''          ,''                         ],
+           [ 1, 'Text Type'     ,'cmd.label("'+s+'","text_type")'    ],
+           [ 1, 'Numeric Type'  ,'cmd.label("'+s+'","numeric_type")'    ]
            ]
 
 def simple_action(s):

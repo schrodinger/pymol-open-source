@@ -127,8 +127,11 @@ ObjectDist *ObjectDistNew(int sele1,int sele2,int mode,float cutoff)
           I->NDSet=a+1;
         }
       }  
-  } else 
+  } else {
+    VLAFreeP(I->DSet);
     OOFreeP(I);
+
+  }
 
   SceneChanged();
   return(I);

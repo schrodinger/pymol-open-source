@@ -149,11 +149,14 @@ int PAlterAtom(AtomInfoType *at,char *expr)
   ResIdent resi;
   Chain chain,alt;
   SegIdent segi;
+  TextType textType;
   char atype[7];
-  float b,q;
+  float b,q,partialCharge;
+  int formalCharge,numericType;
+  
   PyObject *dict;
   int result;
-
+  
   if(at->hetatm)
     strcpy(atype,"HETATM");
   else
@@ -169,9 +172,14 @@ int PAlterAtom(AtomInfoType *at,char *expr)
   PConvStringToPyDictItem(dict,"chain",at->chain);
   PConvStringToPyDictItem(dict,"alt",at->alt);
   PConvStringToPyDictItem(dict,"segi",at->segi);
+  PConvStringToPyDictItem(dict,"text_type",at->textType);
+  if(at->customType!=cAtomInfoNoType)
+    PConvIntToPyDictItem(dict,"numeric_type",at->customType);
   PConvFloatToPyDictItem(dict,"q",at->q);
   PConvFloatToPyDictItem(dict,"b",at->b);
-
+  PConvFloatToPyDictItem(dict,"partial_charge",at->partialCharge);
+  PConvIntToPyDictItem(dict,"formal_charge",at->formalCharge);
+  
   PyRun_String(expr,Py_single_input,P_globals,dict);
   if(PyErr_Occurred()) {
     PyErr_Print();
@@ -192,10 +200,18 @@ int PAlterAtom(AtomInfoType *at,char *expr)
       result=false;
     else if(!PConvPyObjectToStrMaxLen(PyDict_GetItemString(dict,"chain"),chain,sizeof(Chain)-1))
       result=false;
+    else if(!PConvPyObjectToStrMaxLen(PyDict_GetItemString(dict,"text_type"),textType,sizeof(TextType)-1))
+      result=false;
     else if(!PConvPyObjectToFloat(PyDict_GetItemString(dict,"b"),&b))
       result=false;
     else if(!PConvPyObjectToFloat(PyDict_GetItemString(dict,"q"),&q))
       result=false;
+    else if(!PConvPyObjectToFloat(PyDict_GetItemString(dict,"partial_charge"),&partialCharge))
+      result=false;
+    else if(!PConvPyObjectToInt(PyDict_GetItemString(dict,"formal_charge"),&formalCharge))
+      result=false;
+    if(!PConvPyObjectToInt(PyDict_GetItemString(dict,"numeric_type"),&numericType))
+      numericType = cAtomInfoNoType;
     if(PyErr_Occurred()) {
       PyErr_Print();
       result=false;
@@ -211,13 +227,70 @@ int PAlterAtom(AtomInfoType *at,char *expr)
       strcpy(at->resi,resi);
       strcpy(at->segi,segi);
       strcpy(at->chain,chain);
+      strcpy(at->textType,textType);
       strcpy(at->alt,alt);
+      if(numericType!=cAtomInfoNoType)
+        at->customType = numericType;
       at->b=b;
       at->q=q;
+      at->partialCharge=partialCharge;
+      at->formalCharge=formalCharge;
     } else {
       ErrMessage("Alter","Aborting on error. Assignment may be incomplete.");
     }
   } 
+  Py_DECREF(dict);
+  PLockAPIAndUnblock();
+  return(result);
+}
+
+int PLabelAtom(AtomInfoType *at,char *expr)
+{
+  PyObject *dict;
+  int result;
+  LabelType label;
+  char atype[7];
+  if(at->hetatm)
+    strcpy(atype,"HETATM");
+  else
+    strcpy(atype,"ATOM");
+  PBlockAndUnlockAPI();
+
+  dict = PyDict_New();
+
+  PConvStringToPyDictItem(dict,"type",atype);
+  PConvStringToPyDictItem(dict,"name",at->name);
+  PConvStringToPyDictItem(dict,"resn",at->resn);
+  PConvStringToPyDictItem(dict,"resi",at->resi);
+  PConvStringToPyDictItem(dict,"chain",at->chain);
+  PConvStringToPyDictItem(dict,"alt",at->alt);
+  PConvStringToPyDictItem(dict,"segi",at->segi);
+  PConvStringToPyDictItem(dict,"text_type",at->textType);
+  PConvFloatToPyDictItem(dict,"q",at->q);
+  PConvFloatToPyDictItem(dict,"b",at->b);
+  if(at->customType!=cAtomInfoNoType)
+    PConvIntToPyDictItem(dict,"numeric_type",at->customType);
+  PConvFloatToPyDictItem(dict,"partial_charge",at->partialCharge);
+  PConvFloatToPyDictItem(dict,"formal_charge",at->formalCharge);
+  
+  PyRun_String(expr,Py_single_input,P_globals,dict);
+  if(PyErr_Occurred()) {
+    PyErr_Print();
+    result=false;
+  } else {
+    result=true;
+    if(!PConvPyObjectToStrMaxLen(PyDict_GetItemString(dict,"label"),label,sizeof(LabelType)-1))
+      result=false;
+    if(PyErr_Occurred()) {
+      PyErr_Print();
+      result=false;
+    }
+    if(result) { 
+      strcpy(at->label,label);
+    } else {
+      ErrMessage("Label","Aborting on error. Labels may be incomplete.");
+    }
+  }
   Py_DECREF(dict);
   PLockAPIAndUnblock();
   return(result);
