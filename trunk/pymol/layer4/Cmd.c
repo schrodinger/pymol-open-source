@@ -566,7 +566,6 @@ static PyMethodDef Cmd_methods[] = {
 static PyObject *CmdRayHashThread(PyObject *self, 	PyObject *args)
 {
   int ok=true;
-  int routine;
   PyObject *py_thread_info;
 
   CRayHashThreadInfo *thread_info = NULL;
@@ -2384,10 +2383,16 @@ static PyObject *CmdReady(PyObject *dummy, PyObject *args)
   return(APIStatus(PyMOLReady));
 }
 
+#if 1
+extern int _Py_CountReferences(void);
+#endif
 static PyObject *CmdMem(PyObject *dummy, PyObject *args)
 {
   MemoryDebugDump();
   SelectorMemoryDump();
+#if 1
+  printf(" Py_Debug: %d total references.\n",_Py_CountReferences());
+#endif
   return(APISuccess());
 }
 
