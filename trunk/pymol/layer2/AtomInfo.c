@@ -298,7 +298,6 @@ void AtomInfoGetPDB3LetHydroName(char *resn, char *iname, char *oname)
 
 int AtomInfoKnownWaterResName(char *resn) 
 {
-
   switch(resn[0]) {
   case 'H':
     switch(resn[1]) {
@@ -317,6 +316,17 @@ int AtomInfoKnownWaterResName(char *resn)
       }
       break;
     }
+  case 'D':
+    switch(resn[1]) {
+    case 'O': 
+      switch(resn[2]) {
+      case 'D':
+        return true;
+        break;
+      }
+      break;
+    }
+    break;
   case 'T':
     switch(resn[1]) {
     case 'I': 
@@ -333,6 +343,17 @@ int AtomInfoKnownWaterResName(char *resn)
     case 'A': 
       switch(resn[2]) {
       case 'T':
+        return true;
+        break;
+      }
+      break;
+    }
+    break;
+  case 'S':
+    switch(resn[1]) {
+    case 'O': 
+      switch(resn[2]) {
+      case 'L':
         return true;
         break;
       }

@@ -852,6 +852,13 @@ static char SeekerGetAbbr(char *abbr)
         break;
       }
       break;
+    case 'O':  /* SOL -- gromacs solvent residue */
+      switch(abbr[2]) {
+      case 'L':
+        return 'O';
+        break;
+      }
+      break;
     }
     break;
   case 'T':
