@@ -8,6 +8,8 @@ Changes up to 0.97
 
    * fixed sequence viewer bug -- GLU now shown as 'E' not 'D'!
 
+   * included Remote PDB loader and APBS plugin
+
 Changes up to 0.96
 
    * more VDW parameters & updated bond info for DNA/RNA

@@ -47,6 +47,15 @@ import distutils.spawn # used for find_executable
 APBS_BINARY_LOCATION = None
 APBS_PSIZE_LOCATION = None
 
+# Python backward-compatibility...
+try:
+    True
+except:
+    True = 1
+try:
+    False
+except:
+    False = 0
 #
 # Cheap hack for testing purposes
 #
