@@ -217,6 +217,8 @@ class Mutagenesis(Wizard):
          cmd.alter("(%s)"%tmp_name,"resi=stored.resi")
          cmd.iterate("(%s and n;ca)"%sele_name,"stored.segi=segi")
          cmd.alter("(%s)"%tmp_name,"segi=stored.segi")
+         cmd.iterate("(%s and n;ca)"%sele_name,"stored.ss=ss")
+         cmd.alter("(%s)"%tmp_name,"ss=stored.ss")
          # move the fragment
          if ((cmd.count_atoms("(%s and n;cb)"%tmp_name)>0) and
              (cmd.count_atoms("(%s and n;cb)"%sele_name)>0)):

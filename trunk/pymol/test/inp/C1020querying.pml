@@ -186,6 +186,7 @@ apply(cmd.set_symmetry,["pept"]+cmd.get_symmetry("3al1"))
 
 get_symmetry pept
 get_symmetry 3al1
+show cell,pept
 ray renderer=2
 
 /print "END-LOG"

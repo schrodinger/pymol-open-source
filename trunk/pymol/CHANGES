@@ -177,7 +177,15 @@ Current Bugs to Fix
 CHANGE LOG
 =========================================================================
 
-Changes up to 0.91
+Changes up to 0.92
+
+   * get_symmetry & set_symmetry commands for molecule objects
+
+   * mutagenesis wizard now preserves cartoon information
+
+   * fixed alpha channel handling for transparency OpenGL objects
+
+   * get_pdbstr API function
 
    * movie_loop setting
 

@@ -85,7 +85,7 @@ typedef struct {
   double RockTime;
   int DirtyFlag;
   int ChangedFlag;
-  int CopyFlag,CopyNextFlag;
+  int CopyFlag,CopyNextFlag,CopiedFromOpenGL;
   int NFrame;
   GLvoid *ImageBuffer;
   int ImageBufferHeight,ImageBufferWidth;
@@ -449,6 +449,7 @@ void ScenePNG(char *png)
   CScene *I=&Scene;
   unsigned int buffer_size;
   GLvoid *image;
+  int reset_alpha = false;
 
   buffer_size = 4*I->Width*I->Height;
   if(!I->CopyFlag) {
@@ -458,18 +459,31 @@ void ScenePNG(char *png)
       glReadBuffer(GL_BACK);
       glReadPixels(I->Block->rect.left,I->Block->rect.bottom,I->Width,I->Height,
                    GL_RGBA,GL_UNSIGNED_BYTE,image);
+      
+      reset_alpha = true;
       I->ImageBufferHeight=I->Height;
       I->ImageBufferWidth=I->Width;
     } else {
-      PRINTFB(FB_Scene,FB_Errors)
-        " ScenePNG-WARNING: writing a blank image buffer.\n"
-        ENDFB;
-    }
+       PRINTFB(FB_Scene,FB_Errors)
+         " ScenePNG-WARNING: writing a blank image buffer.\n"
+         ENDFB;
+     }
   } else {
     PRINTFB(FB_Scene,FB_Blather)
       " ScenePNG: writing cached image.\n"
       ENDFB;
-	 image=I->ImageBuffer;
+    image=I->ImageBuffer;
+    reset_alpha = I->CopiedFromOpenGL;
+  }
+  if(reset_alpha&&image) {
+    char *p = image;
+    int x,y;
+    for(y=0;y<I->Height;y++) {
+      for(x=0;x<I->Width;x++) {
+        p[3]=0xFF;
+        p+=4;
+      }
+    }
   }
   if(MyPNGWrite(png,image,I->ImageBufferWidth,I->ImageBufferHeight)) {
     PRINTFB(FB_Scene,FB_Actions) 
@@ -890,6 +904,7 @@ int SceneLoadPNG(char *fname,int movie_flag,int quiet)
         ENDFB;
     }
     I->CopyFlag=true;
+    I->CopiedFromOpenGL = false;
     OrthoRemoveSplash();
     SettingSet(cSetting_text,0.0);
     if(movie_flag&&I->ImageBuffer&&(I->ImageBufferHeight==I->Height)&&(I->ImageBufferWidth==I->Width)) {
@@ -2358,6 +2373,8 @@ void SceneInit(void)
   I->LastPicked.ptr = NULL;
 
   I->CopyNextFlag=true;
+  I->CopyFlag=false;
+  I->CopiedFromOpenGL=false;
   I->vendor[0]=0;
   I->renderer[0]=0;
   I->version[0]=0;
@@ -2559,6 +2576,7 @@ void SceneRay(int ray_width,int ray_height,int mode,char **headerVLA_ptr,
     I->ImageBufferHeight=ray_height;
     I->DirtyFlag=false;
     I->CopyFlag = true;
+    I->CopiedFromOpenGL = false;
     I->MovieOwnsImageFlag = false;
     break;
 
@@ -2638,6 +2656,7 @@ void SceneCopy(GLenum buffer,int force)
         }
       }
       I->CopyFlag = true;
+      I->CopiedFromOpenGL = true;
     }
   }
 }

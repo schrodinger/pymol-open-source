@@ -435,6 +435,42 @@ static PyObject *CmdSetCrystal(PyObject *self,PyObject *args)
   return(APIStatus(ok));
 }
 
+static PyObject *CmdGetCrystal(PyObject *self,PyObject *args)
+{
+  int ok=true;
+  char *str1;    
+  OrthoLineType s1;
+  float a,b,c,alpha,beta,gamma;
+  WordType sg;
+  PyObject *result = NULL;
+  int defined;
+  ok = PyArg_ParseTuple(args,"s",&str1);
+  if(ok) {
+    SelectorGetTmp(str1,s1);
+    APIEntry();
+    ok = ExecutiveGetCrystal(s1,&a,&b,&c,&alpha,&beta,&gamma,sg,&defined);
+    APIExit();
+    if(ok) {
+      if(defined) {
+        result = PyList_New(7);
+        if(result) {
+          PyList_SetItem(result,0,PyFloat_FromDouble(a));
+          PyList_SetItem(result,1,PyFloat_FromDouble(b));
+          PyList_SetItem(result,2,PyFloat_FromDouble(c));
+          PyList_SetItem(result,3,PyFloat_FromDouble(alpha));
+          PyList_SetItem(result,4,PyFloat_FromDouble(beta));
+          PyList_SetItem(result,5,PyFloat_FromDouble(gamma));
+          PyList_SetItem(result,6,PyString_FromString(sg));
+        }
+      } else { /* no symmetry defined, then return empty list */
+        result = PyList_New(0);
+      }
+    }
+    SelectorFreeTmp(s1);
+  }
+  return(APIAutoNone(result));
+}
+
 static PyObject *CmdSmooth(PyObject *self,PyObject *args)
 {
   int ok=true;
@@ -4404,6 +4440,7 @@ static PyMethodDef Cmd_methods[] = {
 	{"get_setting_tuple",     CmdGetSettingTuple,      METH_VARARGS },
 	{"get_setting_text",      CmdGetSettingText,       METH_VARARGS },
    {"get_setting_updates",   CmdGetSettingUpdates,    METH_VARARGS },
+   {"get_symmetry",          CmdGetCrystal,           METH_VARARGS },
 	{"get_state",             CmdGetState,             METH_VARARGS },
    {"get_title",             CmdGetTitle,             METH_VARARGS },
 	{"get_type",              CmdGetType,              METH_VARARGS },
