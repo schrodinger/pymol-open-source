@@ -1265,7 +1265,7 @@ void OrthoSplash(void)
   PRINTF " PyMOL Molecular Graphics System, Version " ENDF;
   PRINTF _PyMOL_VERSION ENDF;
   PRINTF ".\n" ENDF;
-  PRINTF " Copyright (C) 1998-2001 by DeLano Scientific.\n All Rights Reserved.\n \n" ENDF;
+  PRINTF " Copyright (C) 1998-2002 by DeLano Scientific.\n All Rights Reserved.\n \n" ENDF;
 
   PRINTF "    Created by Warren L. DeLano, Ph.D. \n \n" ENDF;
 
