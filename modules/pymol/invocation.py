@@ -23,8 +23,8 @@ import os
 import glob
 import string
 
-pattern = '.pymolrc*'
-
+pattern1 = '.pymolrc*'
+pattern2 = 'pymolrc*'
 
 class generic:
    pass
@@ -45,16 +45,26 @@ py_re = re.compile(r"\.py$|\.pym$\.PY$|\.PYM$")
 pyc_re = re.compile(r"\.pyc$|\.PYC$")
 
 def get_user_config():
-   lst = glob.glob(pattern)
+   lst = glob.glob(pattern1)
    if not len(lst): # unix
       if os.environ.has_key("HOME"):
-         lst = glob.glob(os.environ['HOME']+"/"+pattern)
+         lst = glob.glob(os.environ['HOME']+"/"+pattern1)
+   if not len(lst): # unix
+      if os.environ.has_key("HOME"):
+         lst = glob.glob(os.environ['HOME']+"/"+pattern2)
    if not len(lst): # win32
       if os.environ.has_key("HOMEPATH"):
-         lst = glob.glob(os.environ['HOMEPATH']+"/"+pattern)
+         lst = glob.glob(os.environ['HOMEPATH']+"/"+pattern1)
+   if not len(lst): # win32
+      if os.environ.has_key("HOMEPATH"):
+         lst = glob.glob(os.environ['HOMEPATH']+"/"+pattern2)
    if not len(lst): # all
       if os.environ.has_key("PYMOL_PATH"):
-         lst = glob.glob(os.environ['PYMOL_PATH']+"/"+pattern)
+         lst = glob.glob(os.environ['PYMOL_PATH']+"/"+pattern1)
+   if not len(lst): # all
+      if os.environ.has_key("PYMOL_PATH"):
+         lst = glob.glob(os.environ['PYMOL_PATH']+"/"+pattern2)
+
    first = []
    second = []
    for a in lst:
