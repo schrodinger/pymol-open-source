@@ -72,26 +72,27 @@ void RepLabelRender(RepLabel *I,CRay *ray,Pickable **pick)
       }
     }
     
-  } else if(pick&&G->HaveGUI) {
-  } else if(G->HaveGUI) {
-    ASSERT_VALID_CONTEXT(G);
+  } else if(G->HaveGUI && G->ValidContext) {
+    if(pick) {
+    } else {
 
-    if(c) {
-      int float_text;
-      float_text = (int)SettingGet(G,cSetting_float_labels);
-      if(float_text)
-        glDisable(GL_DEPTH_TEST);	 
-      glDisable(GL_LIGHTING);
-      while(c--) {
-        if(*l) {
-          TextSetPosNColor(G,v+3,v);
-          l = TextRenderOpenGL(G,font_id,l);
+      if(c) {
+        int float_text;
+        float_text = (int)SettingGet(G,cSetting_float_labels);
+        if(float_text)
+          glDisable(GL_DEPTH_TEST);	 
+        glDisable(GL_LIGHTING);
+        while(c--) {
+          if(*l) {
+            TextSetPosNColor(G,v+3,v);
+            l = TextRenderOpenGL(G,font_id,l);
+          }
+          v+=6;
         }
-        v+=6;
+        glEnable(GL_LIGHTING);
+        if(float_text)
+          glEnable(GL_DEPTH_TEST);	 
       }
-      glEnable(GL_LIGHTING);
-      if(float_text)
-        glEnable(GL_DEPTH_TEST);	 
     }
   }
 }

@@ -448,7 +448,7 @@ void PyMOL_SetSwapBuffersFn(CPyMOL *I, PyMOLSwapBuffersFn *fn)
 
 void PyMOL_SwapBuffers(CPyMOL *I)
 {
-  if(I->SwapFn) {
+  if(I->SwapFn && I->G->ValidContext) {
     I->SwapFn();
     I->SwapFlag = false;
   } else {

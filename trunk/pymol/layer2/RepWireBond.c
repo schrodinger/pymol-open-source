@@ -375,84 +375,84 @@ void RepWireBondRender(RepWireBond *I,CRay *ray,Pickable **pick)
 		v+=9;
 	 }
 
-  } else if(pick&&G->HaveGUI) {
-    ASSERT_VALID_CONTEXT(G);
+  } else if(G->HaveGUI && G->ValidContext) {
+    if(pick) {
 	 
-	 i=(*pick)->index;
+      i=(*pick)->index;
 
-	 v=I->VP;
-	 c=I->NP;
-	 p=I->R.P;
+      v=I->VP;
+      c=I->NP;
+      p=I->R.P;
 
-	 glBegin(GL_LINES);
+      glBegin(GL_LINES);
 	 
-	 while(c--) {
+      while(c--) {
 
-		i++;
+        i++;
 
-		if(!(*pick)[0].ptr) {
-		  /* pass 1 - low order bits */
+        if(!(*pick)[0].ptr) {
+          /* pass 1 - low order bits */
         
-        glColor3ub((uchar)((i&0xF)<<4),(uchar)((i&0xF0)|0x8),(uchar)((i&0xF00)>>4)); /* we're encoding the index into the color */
-		  VLACheck((*pick),Pickable,i);
-		  p++;
-		  (*pick)[i] = *p; /* copy object and atom info */
-		} else { 
-		  /* pass 2 - high order bits */
+          glColor3ub((uchar)((i&0xF)<<4),(uchar)((i&0xF0)|0x8),(uchar)((i&0xF00)>>4)); /* we're encoding the index into the color */
+          VLACheck((*pick),Pickable,i);
+          p++;
+          (*pick)[i] = *p; /* copy object and atom info */
+        } else { 
+          /* pass 2 - high order bits */
 
-		  j=i>>12;
+          j=i>>12;
 
           glColor3ub((uchar)((j&0xF)<<4),(uchar)((j&0xF0)|0x8),(uchar)((j&0xF00)>>4)); 
 
-		}			 
+        }			 
 
-		glVertex3fv(v);
-		v+=3;
-		glVertex3fv(v);
-		v+=3;
-
-	 }
-	 glEnd();
-	 (*pick)[0].index = i; /* pass the count */
-  } else if(G->HaveGUI) {
-    int use_dlst;
-    ASSERT_VALID_CONTEXT(G);
-    use_dlst = (int)SettingGet(G,cSetting_use_display_lists);
-    if(use_dlst&&I->R.displayList) {
-      glCallList(I->R.displayList);
-    } else { 
-
-      if(use_dlst) {
-        if(!I->R.displayList) {
-          I->R.displayList = glGenLists(1);
-          if(I->R.displayList) {
-            glNewList(I->R.displayList,GL_COMPILE_AND_EXECUTE);
-          }
-        }
-      }
-      
-      glLineWidth(I->Width);
-      
-      v=I->V;
-      c=I->N;
-      
-      glDisable(GL_LIGHTING); 
-      glBegin(GL_LINES);	 
-      SceneResetNormal(G,true);
-      while(c--) {
-        glColor3fv(v);
-        v+=3;
         glVertex3fv(v);
         v+=3;
         glVertex3fv(v);
         v+=3;
+
       }
       glEnd();
-      glEnable(GL_LIGHTING);
+      (*pick)[0].index = i; /* pass the count */
+    } else {
+      int use_dlst;
+      use_dlst = (int)SettingGet(G,cSetting_use_display_lists);
       if(use_dlst&&I->R.displayList) {
-        glEndList();
-      }
-    } 
+        glCallList(I->R.displayList);
+      } else { 
+
+        if(use_dlst) {
+          if(!I->R.displayList) {
+            I->R.displayList = glGenLists(1);
+            if(I->R.displayList) {
+              glNewList(I->R.displayList,GL_COMPILE_AND_EXECUTE);
+            }
+          }
+        }
+      
+        glLineWidth(I->Width);
+      
+        v=I->V;
+        c=I->N;
+      
+        glDisable(GL_LIGHTING); 
+        glBegin(GL_LINES);	 
+        SceneResetNormal(G,true);
+        while(c--) {
+          glColor3fv(v);
+          v+=3;
+          glVertex3fv(v);
+          v+=3;
+          glVertex3fv(v);
+          v+=3;
+        }
+        glEnd();
+        glEnable(GL_LIGHTING);
+        if(use_dlst&&I->R.displayList) {
+          glEndList();
+        }
+      } 
+    }
   }
 }
 

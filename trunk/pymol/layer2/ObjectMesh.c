@@ -586,9 +586,10 @@ static void ObjectMeshRender(ObjectMesh *I,int state,CRay *ray,Pickable **pick,i
                 }
             }
           }
-        } else if(pick&&G->HaveGUI) {
-        } else if(G->HaveGUI) {
-          if(!pass) {
+        } else if(G->HaveGUI && G->ValidContext) {
+          if(pick) {
+          } else {
+            if(!pass) {
 
             int use_dlst;
             if(ms->UnitCellCGO&&(I->Obj.RepVis[cRepCell]))
@@ -633,7 +634,7 @@ static void ObjectMeshRender(ObjectMesh *I,int state,CRay *ray,Pickable **pick,i
             if(use_dlst&&ms->displayList) {
               glEndList();
             }
-                  
+            }
             }
           }
         }

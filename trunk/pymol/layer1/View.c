@@ -212,10 +212,8 @@ int ViewIterate(CView *I,CViewIterator *iter,CRay *ray,int at_least_once)
   if(elem) { /* are we to apply a transformation? */
     if(ray) {
 
-    } else if(I->G->HaveGUI) {
+    } else if(I->G->HaveGUI && I->G->ValidContext) {
       
-      ASSERT_VALID_CONTEXT(I->G);
-
       if(elem->pre_flag) {
         /* move the camera to the location we are looking at */
         glTranslated(elem->pre[0],elem->pre[1],elem->pre[2]);

@@ -103,217 +103,218 @@ void RepCylBondRender(RepCylBond *I,CRay *ray,Pickable **pick)
     }
 
     ray->fTransparentf(ray,0.0);
-  } else if(pick&&G->HaveGUI) {
-    ASSERT_VALID_CONTEXT(G);
-  PRINTFD(G,FB_RepCylBond)
-    " RepCylBondRender: rendering pickable...\n"
-    ENDFD;
-
-	 i=(*pick)->index;
-
-	 v=I->VP;
-	 c=I->NP;
-	 p=I->R.P;
-
-	 while(c--) {
-
-		i++;
-
-		if(!(*pick)[0].ptr) {
-		  /* pass 1 - low order bits */
-
-		  glColor3ub((uchar)((i&0xF)<<4),(uchar)((i&0xF0)|0x8),(uchar)((i&0xF00)>>4)); 
-		  VLACheck((*pick),Pickable,i);
-		  p++;
-		  (*pick)[i] = *p; /* copy object and atom info */
-		} else { 
-		  /* pass 2 - high order bits */
-
-		  j=i>>12;
-
-		  glColor3ub((uchar)((j&0xF)<<4),(uchar)((j&0xF0)|0x8),(uchar)((j&0xF00)>>4)); 
-
-		}			 
-      
-      glBegin(GL_TRIANGLE_STRIP);
-
-		glVertex3fv(v+ 0);
-		glVertex3fv(v+ 3);
-
-		glVertex3fv(v+ 6);
-		glVertex3fv(v+ 9);
-
-		glVertex3fv(v+12);
-		glVertex3fv(v+15);
-
-		glVertex3fv(v+18);
-		glVertex3fv(v+21);
-
-		glVertex3fv(v+ 0);
-		glVertex3fv(v+ 3);
-
-      glEnd();
-
-      glBegin(GL_TRIANGLE_STRIP);
-      
-		glVertex3fv(v+ 0);
-		glVertex3fv(v+ 6);
-
-		glVertex3fv(v+18);
-		glVertex3fv(v+12);
-
-      glEnd();
-
-      glBegin(GL_TRIANGLE_STRIP);
-      
-		glVertex3fv(v+ 3);
-		glVertex3fv(v+ 9);
-
-		glVertex3fv(v+21);
-		glVertex3fv(v+15);
-
-      glEnd();
-
-      v+=24;
-
-	 }
-	 (*pick)[0].index = i; /* pass the count */
-
-  } else if(G->HaveGUI) {
-    int use_dlst;    
-    ASSERT_VALID_CONTEXT(G);
-
-    use_dlst = (int)SettingGet(G,cSetting_use_display_lists);
-    if(use_dlst&&I->R.displayList) {
-      glCallList(I->R.displayList);
-    } else { 
-      
-      if(use_dlst) {
-        if(!I->R.displayList) {
-          I->R.displayList = glGenLists(1);
-          if(I->R.displayList) {
-            glNewList(I->R.displayList,GL_COMPILE_AND_EXECUTE);
-          }
-        }
-      }
-      
-      v=I->V;
-      c=I->N;
+  } else if(G->HaveGUI && G->ValidContext) {
+    if(pick) {
       
       PRINTFD(G,FB_RepCylBond)
-        " RepCylBondRender: rendering GL...\n"
+        " RepCylBondRender: rendering pickable...\n"
         ENDFD;
+
+      i=(*pick)->index;
+
+      v=I->VP;
+      c=I->NP;
+      p=I->R.P;
+
+      while(c--) {
+
+        i++;
+
+        if(!(*pick)[0].ptr) {
+          /* pass 1 - low order bits */
+
+          glColor3ub((uchar)((i&0xF)<<4),(uchar)((i&0xF0)|0x8),(uchar)((i&0xF00)>>4)); 
+          VLACheck((*pick),Pickable,i);
+          p++;
+          (*pick)[i] = *p; /* copy object and atom info */
+        } else { 
+          /* pass 2 - high order bits */
+
+          j=i>>12;
+
+          glColor3ub((uchar)((j&0xF)<<4),(uchar)((j&0xF0)|0x8),(uchar)((j&0xF00)>>4)); 
+
+        }			 
       
-      while(c--)
-        {
-          /* cylinder entry consists of a color, a fan,
-             a cylinder, and another fan (if flagged) */
-          
-          if(alpha==1.0) {
-            glColor3fv(v);
-          } else {
-            glColor4f(v[0],v[1],v[2],alpha);
-          }
-          v+=3;
+        glBegin(GL_TRIANGLE_STRIP);
 
-          glBegin(GL_TRIANGLE_STRIP);
-          a=I->NEdge+1;
-          while(a--) {
-            glNormal3fv(v);
-            v+=3;
-            glVertex3fv(v);
-            v+=3;
-            glVertex3fv(v);
-            v+=3;
-          }
-          glEnd();
+        glVertex3fv(v+ 0);
+        glVertex3fv(v+ 3);
 
-          if(*(v++)) {          
-            glBegin(GL_TRIANGLE_FAN);
-            glNormal3fv(v);
-            v+=3;
-            glVertex3fv(v);
-            v+=3;
-            a=I->NEdge+1;
-            while(a--) {
-              glNormal3fv(v);
-              v+=3;
-              glVertex3fv(v);
-              v+=3;
-            }
-            glEnd();
-          }
-          
-          if(*(v++)) {
-            
-            glBegin(GL_TRIANGLE_FAN);
-            glNormal3fv(v);
-            v+=3;
-            glVertex3fv(v);
-            v+=3;
-            a=I->NEdge+1;
-            while(a--) {
-              glNormal3fv(v);
-              v+=3;
-              glVertex3fv(v);
-              v+=3;
-            }
-            glEnd();
-          }
-        }
+        glVertex3fv(v+ 6);
+        glVertex3fv(v+ 9);
 
-      if(I->VSP) { /* stick spheres, if present */
-        
-        v = I->VSP;
-        c = I->NSP;
-        if(alpha==1.0) {
-          
-          sp=I->SP;
-          while(c--)
-            {
-              glColor3fv(v);
-              v+=3;
-              for(a=0;a<sp->NStrip;a++) {
-                glBegin(GL_TRIANGLE_STRIP);
-                cc=sp->StripLen[a];
-                while(cc--) {
-                  glNormal3fv(v);
-                  v+=3;
-                  glVertex3fv(v);
-                  v+=3;
-                }
-                glEnd();
-              }
-            }
-        } else {
-          sp=I->SP;
-          while(c--)
-            {
-              glColor4f(v[0],v[1],v[2],alpha);
-              v+=3;
-              for(a=0;a<sp->NStrip;a++) {
-                glBegin(GL_TRIANGLE_STRIP);
-                cc=sp->StripLen[a];
-                while(cc--) {
-                  glNormal3fv(v);
-                  v+=3;
-                  glVertex3fv(v);
-                  v+=3;
-                }
-                glEnd();
-              }
-            }
-        }
-        
+        glVertex3fv(v+12);
+        glVertex3fv(v+15);
+
+        glVertex3fv(v+18);
+        glVertex3fv(v+21);
+
+        glVertex3fv(v+ 0);
+        glVertex3fv(v+ 3);
+
+        glEnd();
+
+        glBegin(GL_TRIANGLE_STRIP);
+      
+        glVertex3fv(v+ 0);
+        glVertex3fv(v+ 6);
+
+        glVertex3fv(v+18);
+        glVertex3fv(v+12);
+
+        glEnd();
+
+        glBegin(GL_TRIANGLE_STRIP);
+      
+        glVertex3fv(v+ 3);
+        glVertex3fv(v+ 9);
+
+        glVertex3fv(v+21);
+        glVertex3fv(v+15);
+
+        glEnd();
+
+        v+=24;
+
       }
-      
+      (*pick)[0].index = i; /* pass the count */
 
-      PRINTFD(G,FB_RepCylBond)
-        " RepCylBondRender: done.\n"
-        ENDFD;
-      
+    } else {
+      int use_dlst;    
+
+      use_dlst = (int)SettingGet(G,cSetting_use_display_lists);
       if(use_dlst&&I->R.displayList) {
-        glEndList();
+        glCallList(I->R.displayList);
+      } else { 
+      
+        if(use_dlst) {
+          if(!I->R.displayList) {
+            I->R.displayList = glGenLists(1);
+            if(I->R.displayList) {
+              glNewList(I->R.displayList,GL_COMPILE_AND_EXECUTE);
+            }
+          }
+        }
+      
+        v=I->V;
+        c=I->N;
+      
+        PRINTFD(G,FB_RepCylBond)
+          " RepCylBondRender: rendering GL...\n"
+          ENDFD;
+      
+        while(c--)
+          {
+            /* cylinder entry consists of a color, a fan,
+               a cylinder, and another fan (if flagged) */
+          
+            if(alpha==1.0) {
+              glColor3fv(v);
+            } else {
+              glColor4f(v[0],v[1],v[2],alpha);
+            }
+            v+=3;
+
+            glBegin(GL_TRIANGLE_STRIP);
+            a=I->NEdge+1;
+            while(a--) {
+              glNormal3fv(v);
+              v+=3;
+              glVertex3fv(v);
+              v+=3;
+              glVertex3fv(v);
+              v+=3;
+            }
+            glEnd();
+
+            if(*(v++)) {          
+              glBegin(GL_TRIANGLE_FAN);
+              glNormal3fv(v);
+              v+=3;
+              glVertex3fv(v);
+              v+=3;
+              a=I->NEdge+1;
+              while(a--) {
+                glNormal3fv(v);
+                v+=3;
+                glVertex3fv(v);
+                v+=3;
+              }
+              glEnd();
+            }
+          
+            if(*(v++)) {
+            
+              glBegin(GL_TRIANGLE_FAN);
+              glNormal3fv(v);
+              v+=3;
+              glVertex3fv(v);
+              v+=3;
+              a=I->NEdge+1;
+              while(a--) {
+                glNormal3fv(v);
+                v+=3;
+                glVertex3fv(v);
+                v+=3;
+              }
+              glEnd();
+            }
+          }
+
+        if(I->VSP) { /* stick spheres, if present */
+        
+          v = I->VSP;
+          c = I->NSP;
+          if(alpha==1.0) {
+          
+            sp=I->SP;
+            while(c--)
+              {
+                glColor3fv(v);
+                v+=3;
+                for(a=0;a<sp->NStrip;a++) {
+                  glBegin(GL_TRIANGLE_STRIP);
+                  cc=sp->StripLen[a];
+                  while(cc--) {
+                    glNormal3fv(v);
+                    v+=3;
+                    glVertex3fv(v);
+                    v+=3;
+                  }
+                  glEnd();
+                }
+              }
+          } else {
+            sp=I->SP;
+            while(c--)
+              {
+                glColor4f(v[0],v[1],v[2],alpha);
+                v+=3;
+                for(a=0;a<sp->NStrip;a++) {
+                  glBegin(GL_TRIANGLE_STRIP);
+                  cc=sp->StripLen[a];
+                  while(cc--) {
+                    glNormal3fv(v);
+                    v+=3;
+                    glVertex3fv(v);
+                    v+=3;
+                  }
+                  glEnd();
+                }
+              }
+          }
+        
+        }
+      
+
+        PRINTFD(G,FB_RepCylBond)
+          " RepCylBondRender: done.\n"
+          ENDFD;
+      
+        if(use_dlst&&I->R.displayList) {
+          glEndList();
+        }
       }
     }
   }

@@ -1006,9 +1006,9 @@ static void ObjectSliceRender(ObjectSlice *I,int state,CRay *ray,Pickable **pick
             }
           }
           ray->fTransparentf(ray,0.0);
-        } else if(pick&&G->HaveGUI) {
-          
-          ASSERT_VALID_CONTEXT(G);
+        } else if(G->HaveGUI && G->ValidContext) {
+          if(pick) {
+
           int i=(*pick)->index;
           int j;
           Pickable p;
@@ -1081,9 +1081,8 @@ static void ObjectSliceRender(ObjectSlice *I,int state,CRay *ray,Pickable **pick
             }
           }
           (*pick)[0].index = i; /* pass the count */
-        } else if(G->HaveGUI) {
+          } else {
 
-          ASSERT_VALID_CONTEXT(G);
           int render_now = false;
           if(alpha>0.0001) {
             render_now = (pass==-1);
@@ -1162,7 +1161,7 @@ static void ObjectSliceRender(ObjectSlice *I,int state,CRay *ray,Pickable **pick
             if(use_dlst&&oss->displayList) {
               glEndList();
             }
-            
+          }
           }
         }
       }

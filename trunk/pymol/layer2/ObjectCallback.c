@@ -80,13 +80,15 @@ static void ObjectCallbackRender(ObjectCallback *I,int state,CRay *ray,Pickable 
             sobj = I->State+a;
             pobj=sobj->PObj;
             if(ray) {    
-            } else if(pick&&G->HaveGUI) {
-            } else if(G->HaveGUI) {
-              if(PyObject_HasAttrString(pobj,"__call__")) {
-                Py_XDECREF(PyObject_CallMethod(pobj,"__call__",""));
+            } else if(G->HaveGUI && G->ValidContext) {
+              if(pick) {
+              } else {
+                if(PyObject_HasAttrString(pobj,"__call__")) {
+                  Py_XDECREF(PyObject_CallMethod(pobj,"__call__",""));
+                }
+                if(PyErr_Occurred())
+                  PyErr_Print();
               }
-              if(PyErr_Occurred())
-                PyErr_Print();
             }
           }
           PUnblock();
@@ -97,17 +99,19 @@ static void ObjectCallbackRender(ObjectCallback *I,int state,CRay *ray,Pickable 
             sobj = I->State;
         }
         if(ray) {    
-        } else if(pick&&G->HaveGUI) {
-        } else if(G->HaveGUI) {
-          if(sobj) {
-            pobj=sobj->PObj;
-            PBlock();
-            if(PyObject_HasAttrString(pobj,"__call__")) {
-              Py_XDECREF(PyObject_CallMethod(pobj,"__call__",""));
+        } else if(G->HaveGUI && G->ValidContext) {
+          if(pick) {
+          } else {
+            if(sobj) {
+              pobj=sobj->PObj;
+              PBlock();
+              if(PyObject_HasAttrString(pobj,"__call__")) {
+                Py_XDECREF(PyObject_CallMethod(pobj,"__call__",""));
+              }
+              if(PyErr_Occurred())
+                PyErr_Print();
+              PUnblock();
             }
-            if(PyErr_Occurred())
-            PyErr_Print();
-            PUnblock();
           }
         }
       }

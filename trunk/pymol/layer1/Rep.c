@@ -127,10 +127,11 @@ void RepInit(PyMOLGlobals *G,Rep *I)
 /*========================================================================*/
 void RepPurge(Rep *I)
 {
-  if(I->G->HaveGUI) {
+  register PyMOLGlobals *G = I->G;
+  if(G->HaveGUI) {
     if(I->displayList) {
       if(PIsGlutThread()) {
-        if(I->G->ValidContext) {
+        if(G->ValidContext) {
           glDeleteLists(I->displayList,1);
           I->displayList = 0;
         }
@@ -146,8 +147,8 @@ void RepPurge(Rep *I)
 /*========================================================================*/
 void RepRenderBox(struct Rep *this,CRay *ray,Pickable **pick)
 {
-  if(this->G->HaveGUI) {
-    ASSERT_VALID_CONTEXT(this->G);
+  register PyMOLGlobals *G = this->G;
+  if(G->HaveGUI && G->ValidContext) {
     glBegin(GL_LINE_LOOP);
     glVertex3f(-0.5F,-0.5F,-0.5F);
     glVertex3f(-0.5F,-0.5F, 0.5F);

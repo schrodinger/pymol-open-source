@@ -488,196 +488,197 @@ static void ObjectSurfaceRender(ObjectSurface *I,int state,CRay *ray,Pickable **
             
           }
           ray->fTransparentf(ray,0.0);
-        } else if(pick&&G->HaveGUI) {
-        } else if(G->HaveGUI) {
-          ASSERT_VALID_CONTEXT(G);
-
-          int render_now = false;
-          if(alpha>0.0001) {
-            render_now = (pass==-1);
-          } else 
-            render_now = (!pass);
-          if(render_now) {
-            int use_dlst;
-
-            if(ms->UnitCellCGO&&(I->Obj.RepVis[cRepCell]))
-              CGORenderGL(ms->UnitCellCGO,ColorGet(G,I->Obj.Color),
-                          I->Obj.Setting,NULL);
-
-            SceneResetNormal(G,false);
-            col = ColorGet(G,I->Obj.Color);
-            glColor4f(col[0],col[1],col[2],alpha);
-
-            use_dlst = (int)SettingGet(G,cSetting_use_display_lists);
-            if(use_dlst&&ms->displayList) {
-              glCallList(ms->displayList);
-            } else { 
+        } else if(G->HaveGUI && G->ValidContext) {
+          if(pick) {
+          } else {
+            
+            int render_now = false;
+            if(alpha>0.0001) {
+              render_now = (pass==-1);
+            } else 
+              render_now = (!pass);
+            if(render_now) {
+              int use_dlst;
               
-              if(use_dlst) {
-                if(!ms->displayList) {
-                  ms->displayList = glGenLists(1);
-                  if(ms->displayList) {
-                    glNewList(ms->displayList,GL_COMPILE_AND_EXECUTE);
+              if(ms->UnitCellCGO&&(I->Obj.RepVis[cRepCell]))
+                CGORenderGL(ms->UnitCellCGO,ColorGet(G,I->Obj.Color),
+                            I->Obj.Setting,NULL);
+              
+              SceneResetNormal(G,false);
+              col = ColorGet(G,I->Obj.Color);
+              glColor4f(col[0],col[1],col[2],alpha);
+              
+              use_dlst = (int)SettingGet(G,cSetting_use_display_lists);
+              if(use_dlst&&ms->displayList) {
+                glCallList(ms->displayList);
+              } else { 
+                
+                if(use_dlst) {
+                  if(!ms->displayList) {
+                    ms->displayList = glGenLists(1);
+                    if(ms->displayList) {
+                      glNewList(ms->displayList,GL_COMPILE_AND_EXECUTE);
+                    }
                   }
                 }
-              }
-
-            
-              if(n&&v&&I->Obj.RepVis[cRepSurface]) {
-
-                if((ms->Mode>1)&&(alpha!=1.0)) { /* transparent */
                 
-                  int t_mode;
-
-                  t_mode  = SettingGet_i(G,NULL,I->Obj.Setting,cSetting_transparency_mode);
                 
-                  if(t_mode) { /* high quality (sorted) transparency? */
+                if(n&&v&&I->Obj.RepVis[cRepSurface]) {
                   
-                    float **t_buf=NULL,**tb;
-                    float *z_value=NULL,*zv;
-                    int *ix=NULL;
-                    int n_tri = 0;
-                    float sum[3];
-                    float matrix[16];
-                    int parity;
-                    glGetFloatv(GL_MODELVIEW_MATRIX,matrix);
-                  
-                    t_buf = Alloc(float*,ms->nT*9);
-                  
-                    z_value = Alloc(float,ms->nT);
-                    ix = Alloc(int,ms->nT);
-                  
-                    zv = z_value;
-                    tb = t_buf;
-
-                    while(*n)
-                      {
-                        parity=true;
-                        c=*(n++);
-                        v+=12;
-                        c-=4;
-                        while(c>0) {
-
-                          if(parity) {
-                            *(tb++) = v-12;
-                            *(tb++) = v-9;
-                            *(tb++) = v-6;
-                            *(tb++) = v-3;
-                            *(tb++) = v;
-                            *(tb++) = v+3;
-                          } else {
-                            *(tb++) = v-12;
-                            *(tb++) = v-9;
-                            *(tb++) = v;
-                            *(tb++) = v+3;
-                            *(tb++) = v-6;
-                            *(tb++) = v-3;
+                  if((ms->Mode>1)&&(alpha!=1.0)) { /* transparent */
+                    
+                    int t_mode;
+                    
+                    t_mode  = SettingGet_i(G,NULL,I->Obj.Setting,cSetting_transparency_mode);
+                    
+                    if(t_mode) { /* high quality (sorted) transparency? */
+                      
+                      float **t_buf=NULL,**tb;
+                      float *z_value=NULL,*zv;
+                      int *ix=NULL;
+                      int n_tri = 0;
+                      float sum[3];
+                      float matrix[16];
+                      int parity;
+                      glGetFloatv(GL_MODELVIEW_MATRIX,matrix);
+                      
+                      t_buf = Alloc(float*,ms->nT*9);
+                      
+                      z_value = Alloc(float,ms->nT);
+                      ix = Alloc(int,ms->nT);
+                      
+                      zv = z_value;
+                      tb = t_buf;
+                      
+                      while(*n)
+                        {
+                          parity=true;
+                          c=*(n++);
+                          v+=12;
+                          c-=4;
+                          while(c>0) {
+                            
+                            if(parity) {
+                              *(tb++) = v-12;
+                              *(tb++) = v-9;
+                              *(tb++) = v-6;
+                              *(tb++) = v-3;
+                              *(tb++) = v;
+                              *(tb++) = v+3;
+                            } else {
+                              *(tb++) = v-12;
+                              *(tb++) = v-9;
+                              *(tb++) = v;
+                              *(tb++) = v+3;
+                              *(tb++) = v-6;
+                              *(tb++) = v-3;
+                            }
+                            
+                            parity=!parity;
+                            
+                            add3f(tb[-1],tb[-3],sum);
+                            add3f(sum,tb[-5],sum);
+                            
+                            *(zv++) = matrix[2]*sum[0]+matrix[6]*sum[1]+matrix[10]*sum[2];
+                            n_tri++;
+                            
+                            v+=6;
+                            c-=2;
                           }
-                        
-                          parity=!parity;
-
-                          add3f(tb[-1],tb[-3],sum);
-                          add3f(sum,tb[-5],sum);
-                        
-                          *(zv++) = matrix[2]*sum[0]+matrix[6]*sum[1]+matrix[10]*sum[2];
-                          n_tri++;
-                        
-                          v+=6;
-                          c-=2;
                         }
+                      switch(t_mode) {
+                      case 1:
+                        UtilSortIndex(n_tri,z_value,ix,(UtilOrderFn*)ZOrderFn);
+                        break;
+                      default:
+                        UtilSortIndex(n_tri,z_value,ix,(UtilOrderFn*)ZRevOrderFn);
+                        break;
                       }
-                    switch(t_mode) {
-                    case 1:
-                      UtilSortIndex(n_tri,z_value,ix,(UtilOrderFn*)ZOrderFn);
-                      break;
-                    default:
-                      UtilSortIndex(n_tri,z_value,ix,(UtilOrderFn*)ZRevOrderFn);
-                      break;
-                    }
-                    
-                    c=n_tri;
-                    
-                    col=ColorGet(G,I->Obj.Color);
-                    
-                    glColor4f(col[0],col[1],col[2],alpha);
-                    glBegin(GL_TRIANGLES);
-                    for(c=0;c<n_tri;c++) {
                       
-                      tb = t_buf+6*ix[c];
+                      c=n_tri;
                       
-                      glNormal3fv(*(tb++));
-                      glVertex3fv(*(tb++));
-                      glNormal3fv(*(tb++));
-                      glVertex3fv(*(tb++));
-                      glNormal3fv(*(tb++));
-                      glVertex3fv(*(tb++));
+                      col=ColorGet(G,I->Obj.Color);
+                      
+                      glColor4f(col[0],col[1],col[2],alpha);
+                      glBegin(GL_TRIANGLES);
+                      for(c=0;c<n_tri;c++) {
+                        
+                        tb = t_buf+6*ix[c];
+                        
+                        glNormal3fv(*(tb++));
+                        glVertex3fv(*(tb++));
+                        glNormal3fv(*(tb++));
+                        glVertex3fv(*(tb++));
+                        glNormal3fv(*(tb++));
+                        glVertex3fv(*(tb++));
+                      }
+                      glEnd();
+                      
+                      FreeP(ix);
+                      FreeP(z_value);
+                      FreeP(t_buf);
+                    } else { 
+                      while(*n)
+                        {
+                          c=*(n++);
+                          
+                          glBegin(GL_TRIANGLE_STRIP);
+                          while(c>0) {
+                            glNormal3fv(v);
+                            v+=3;
+                            glVertex3fv(v);
+                            v+=3;
+                            c-=2;
+                          }
+                          glEnd();
+                        }
                     }
-                    glEnd();
-                    
-                    FreeP(ix);
-                    FreeP(z_value);
-                    FreeP(t_buf);
-                  } else { 
+                  } else {
+                    glLineWidth(SettingGet_f(G,I->Obj.Setting,NULL,cSetting_mesh_width));
                     while(*n)
                       {
                         c=*(n++);
-                    
-                        glBegin(GL_TRIANGLE_STRIP);
-                        while(c>0) {
-                          glNormal3fv(v);
-                          v+=3;
-                          glVertex3fv(v);
-                          v+=3;
-                          c-=2;
+                        switch(ms->Mode) {
+                        case 3:
+                        case 2:
+                          glBegin(GL_TRIANGLE_STRIP);
+                          while(c>0) {
+                            glNormal3fv(v);
+                            v+=3;
+                            glVertex3fv(v);
+                            v+=3;
+                            c-=2;
+                          }
+                          glEnd();
+                          break;
+                        case 1:
+                          glBegin(GL_LINES);
+                          while(c>0) {
+                            glVertex3fv(v);
+                            v+=3;
+                            c--;
+                          }
+                          glEnd();
+                          break;
+                        case 0:
+                        default:
+                          glBegin(GL_POINTS);
+                          while(c>0) {
+                            glVertex3fv(v);
+                            v+=3;
+                            c--;
+                          }
+                          glEnd();
+                          break;
                         }
-                        glEnd();
                       }
                   }
-                } else {
-                  glLineWidth(SettingGet_f(G,I->Obj.Setting,NULL,cSetting_mesh_width));
-                  while(*n)
-                    {
-                      c=*(n++);
-                      switch(ms->Mode) {
-                      case 3:
-                      case 2:
-                        glBegin(GL_TRIANGLE_STRIP);
-                        while(c>0) {
-                          glNormal3fv(v);
-                          v+=3;
-                          glVertex3fv(v);
-                          v+=3;
-                          c-=2;
-                        }
-                        glEnd();
-                        break;
-                      case 1:
-                        glBegin(GL_LINES);
-                        while(c>0) {
-                          glVertex3fv(v);
-                          v+=3;
-                          c--;
-                        }
-                        glEnd();
-                        break;
-                      case 0:
-                      default:
-                        glBegin(GL_POINTS);
-                        while(c>0) {
-                          glVertex3fv(v);
-                          v+=3;
-                          c--;
-                        }
-                        glEnd();
-                        break;
-                      }
-                    }
                 }
               }
-            }
             
-            if(use_dlst&&ms->displayList) {
-              glEndList();
+              if(use_dlst&&ms->displayList) {
+                glEndList();
+              }
             }
           }
         }

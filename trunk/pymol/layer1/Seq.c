@@ -297,9 +297,7 @@ static void SeqDraw(Block *block)
   PyMOLGlobals *G=block->G;
   register CSeq *I=G->Seq;
   
-  if(block->G->HaveGUI) {
-
-    ASSERT_VALID_CONTEXT(block->G);
+  if(G->HaveGUI && G->ValidContext ) {
 
     int x = I->Block->rect.left;
     int y = I->Block->rect.bottom+I->ScrollBarMargin+1;

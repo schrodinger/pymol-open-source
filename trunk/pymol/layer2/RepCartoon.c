@@ -66,40 +66,39 @@ void RepCartoonRender(RepCartoon *I,CRay *ray,Pickable **pick)
     else if(I->std)
       CGORenderRay(I->std,ray,NULL,I->R.cs->Setting,
                    I->R.obj->Setting);    
-  } else if(pick&&G->HaveGUI) {
-    ASSERT_VALID_CONTEXT(G);
-
-    if(I->std) {
-      CGORenderGLPickable(I->std,pick,I->R.obj,
-                          I->R.cs->Setting,I->R.obj->Setting);
-    }
-  } else if(G->HaveGUI) {
-    int use_dlst;
-    ASSERT_VALID_CONTEXT(G);
-    use_dlst = (int)SettingGet(G,cSetting_use_display_lists);
-    if(use_dlst&&I->R.displayList) {
-      glCallList(I->R.displayList);
-    } else { 
-
-      if(use_dlst) {
-        if(!I->R.displayList) {
-          I->R.displayList = glGenLists(1);
-          if(I->R.displayList) {
-            glNewList(I->R.displayList,GL_COMPILE_AND_EXECUTE);
+  } else if(G->HaveGUI && G->ValidContext) {
+    if(pick) {
+      if(I->std) {
+        CGORenderGLPickable(I->std,pick,I->R.obj,
+                            I->R.cs->Setting,I->R.obj->Setting);
+      }
+    } else {
+      int use_dlst;
+      use_dlst = (int)SettingGet(G,cSetting_use_display_lists);
+      if(use_dlst&&I->R.displayList) {
+        glCallList(I->R.displayList);
+      } else { 
+        
+        if(use_dlst) {
+          if(!I->R.displayList) {
+            I->R.displayList = glGenLists(1);
+            if(I->R.displayList) {
+              glNewList(I->R.displayList,GL_COMPILE_AND_EXECUTE);
+            }
           }
         }
-      }
-
-    PRINTFD(G,FB_RepCartoon)
-      " RepCartoonRender: rendering GL...\n"
-      ENDFD;
-
-    if(I->std) 
-      CGORenderGL(I->std,NULL,I->R.cs->Setting,
-                   I->R.obj->Setting);
-
-      if(use_dlst&&I->R.displayList) {
-        glEndList();
+        
+        PRINTFD(G,FB_RepCartoon)
+          " RepCartoonRender: rendering GL...\n"
+          ENDFD;
+        
+        if(I->std) 
+          CGORenderGL(I->std,NULL,I->R.cs->Setting,
+                      I->R.obj->Setting);
+        
+        if(use_dlst&&I->R.displayList) {
+          glEndList();
+        }
       }
     }
   }

@@ -116,102 +116,102 @@ void RepMeshRender(RepMesh *I,CRay *ray,Pickable **pick)
 				}
 		  }
 	 }
-  } else if(pick&&G->HaveGUI) {
-  } else if(G->HaveGUI) {
-    int use_dlst;
-    int lighting = SettingGet_f(G,I->R.cs->Setting,I->R.obj->Setting,cSetting_mesh_lighting);
+  } else if(G->HaveGUI && G->ValidContext) {
+    if(pick) {
+    } else {
+      int use_dlst;
+      int lighting = SettingGet_f(G,I->R.cs->Setting,I->R.obj->Setting,cSetting_mesh_lighting);
 
-    ASSERT_VALID_CONTEXT(G);
-
-    SceneResetNormal(G,true);
-    if(!lighting)
-      glDisable(GL_LIGHTING);
+      SceneResetNormal(G,true);
+      if(!lighting)
+        glDisable(GL_LIGHTING);
     
-    use_dlst = (int)SettingGet(G,cSetting_use_display_lists);
-    if(use_dlst&&I->R.displayList) {
-      glCallList(I->R.displayList);
-    } else { 
-      SceneResetNormal(G,false);
-
-      if(use_dlst) {
-        if(!I->R.displayList) {
-          I->R.displayList = glGenLists(1);
-          if(I->R.displayList) {
-            glNewList(I->R.displayList,GL_COMPILE_AND_EXECUTE);
-          }
-        }
-      }
-      
-      switch(I->mesh_type) {
-      case 0:
-        glLineWidth(I->Width);
-        if(n) {
-          if(I->oneColorFlag) {
-            while(*n)
-              {
-                glColor3fv(ColorGet(G,I->oneColor));
-                c=*(n++);
-                glBegin(GL_LINE_STRIP);
-                while(c--) {
-                  glVertex3fv(v);
-                  v+=3;
-                }
-                glEnd();
-              }
-          } else {
-            while(*n)
-              {
-                c=*(n++);
-                glBegin(GL_LINE_STRIP);
-                while(c--) {
-                  glColor3fv(vc);
-                  vc+=3;
-                  glVertex3fv(v);
-                  v+=3;
-                }
-                glEnd();
-              }
-          }
-        }
-      break;
-      case 1:
-        glPointSize(SettingGet_f(G,I->R.cs->Setting,I->R.obj->Setting,cSetting_dot_width));
-        if(n) {
-          if(I->oneColorFlag) {
-            while(*n)
-              {
-                glColor3fv(ColorGet(G,I->oneColor));
-                c=*(n++);
-                glBegin(GL_POINTS);
-                while(c--) {
-                  glVertex3fv(v);
-                  v+=3;
-                }
-                glEnd();
-              }
-          } else {
-            while(*n)
-              {
-                c=*(n++);
-                glBegin(GL_POINTS);
-                while(c--) {
-                  glColor3fv(vc);
-                  vc+=3;
-                  glVertex3fv(v);
-                  v+=3;
-                }
-                glEnd();
-              }
-          }
-        }
-        break;
-      }
+      use_dlst = (int)SettingGet(G,cSetting_use_display_lists);
       if(use_dlst&&I->R.displayList) {
-        glEndList();
+        glCallList(I->R.displayList);
+      } else { 
+        SceneResetNormal(G,false);
+
+        if(use_dlst) {
+          if(!I->R.displayList) {
+            I->R.displayList = glGenLists(1);
+            if(I->R.displayList) {
+              glNewList(I->R.displayList,GL_COMPILE_AND_EXECUTE);
+            }
+          }
+        }
+      
+        switch(I->mesh_type) {
+        case 0:
+          glLineWidth(I->Width);
+          if(n) {
+            if(I->oneColorFlag) {
+              while(*n)
+                {
+                  glColor3fv(ColorGet(G,I->oneColor));
+                  c=*(n++);
+                  glBegin(GL_LINE_STRIP);
+                  while(c--) {
+                    glVertex3fv(v);
+                    v+=3;
+                  }
+                  glEnd();
+                }
+            } else {
+              while(*n)
+                {
+                  c=*(n++);
+                  glBegin(GL_LINE_STRIP);
+                  while(c--) {
+                    glColor3fv(vc);
+                    vc+=3;
+                    glVertex3fv(v);
+                    v+=3;
+                  }
+                  glEnd();
+                }
+            }
+          }
+          break;
+        case 1:
+          glPointSize(SettingGet_f(G,I->R.cs->Setting,I->R.obj->Setting,cSetting_dot_width));
+          if(n) {
+            if(I->oneColorFlag) {
+              while(*n)
+                {
+                  glColor3fv(ColorGet(G,I->oneColor));
+                  c=*(n++);
+                  glBegin(GL_POINTS);
+                  while(c--) {
+                    glVertex3fv(v);
+                    v+=3;
+                  }
+                  glEnd();
+                }
+            } else {
+              while(*n)
+                {
+                  c=*(n++);
+                  glBegin(GL_POINTS);
+                  while(c--) {
+                    glColor3fv(vc);
+                    vc+=3;
+                    glVertex3fv(v);
+                    v+=3;
+                  }
+                  glEnd();
+                }
+            }
+          }
+          break;
+        }
+        if(use_dlst&&I->R.displayList) {
+          glEndList();
+        }
       }
+      if(!lighting)
+        glEnable(GL_LIGHTING);
     }
-    if(!lighting)
-      glEnable(GL_LIGHTING);
   }
 }
 

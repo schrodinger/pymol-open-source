@@ -1144,9 +1144,7 @@ void EditorRender(PyMOLGlobals *G,int state)
       " EditorRender-Debug: rendering...\n"
       ENDFD;
 
-    if(G->HaveGUI) {
-      
-      ASSERT_VALID_CONTEXT(G);
+    if(G->HaveGUI && G->ValidContext) {
 
       sele1 = SelectorIndexByName(G,cEditorSele1);
       sele2 = SelectorIndexByName(G,cEditorSele2);

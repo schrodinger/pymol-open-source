@@ -76,32 +76,33 @@ void RepDistLabelRender(RepDistLabel *I,CRay *ray,Pickable **pick)
       v+=3;
       n++;
 	 }
-  } else if(pick&&G->HaveGUI) {
-  } else if(G->HaveGUI) {
-    int float_text;
+  } else if(G->HaveGUI && G->ValidContext) {
+    if(pick) {
+    } else {
+      int float_text;
 	 
-    ASSERT_VALID_CONTEXT(G);
-    float_text = (int)SettingGet(G,cSetting_float_labels);
-    if(float_text)
-      glDisable(GL_DEPTH_TEST);	 
-    glDisable(GL_LIGHTING);
+      float_text = (int)SettingGet(G,cSetting_float_labels);
+      if(float_text)
+        glDisable(GL_DEPTH_TEST);	 
+      glDisable(GL_LIGHTING);
     
-    color = SettingGet_color(G,NULL,I->Obj->Setting,cSetting_label_color);
+      color = SettingGet_color(G,NULL,I->Obj->Setting,cSetting_label_color);
     
-    if(color>=0)
-      TextSetColor(G,ColorGet(G,color));
-    else
-      TextSetColor(G,ColorGet(G,I->Obj->Color));
-	 while(c--) {
+      if(color>=0)
+        TextSetColor(G,ColorGet(G,color));
+      else
+        TextSetColor(G,ColorGet(G,I->Obj->Color));
+      while(c--) {
 
-      TextSetPos(G,v);
-      TextRenderOpenGL(G,font_id,l[n]);
-      v+=3;
-      n++;
-	 }
-    glEnable(GL_LIGHTING);
-    if(float_text)
-      glEnable(GL_DEPTH_TEST);	 
+        TextSetPos(G,v);
+        TextRenderOpenGL(G,font_id,l[n]);
+        v+=3;
+        n++;
+      }
+      glEnable(GL_LIGHTING);
+      if(float_text)
+        glEnable(GL_DEPTH_TEST);	 
+    }
   }
 }
 

@@ -80,6 +80,7 @@ void ScrollBarUpdate(struct CScrollBar *I)
 
 static  void ScrollBarDraw(Block *block)
 {
+  PyMOLGlobals *G=block->G;
   float value;
   int top,left,bottom,right;
 
@@ -109,9 +110,7 @@ static  void ScrollBarDraw(Block *block)
     I->BarMax = bottom;
   }
 
-  if(block->G->HaveGUI) {
-
-    ASSERT_VALID_CONTEXT(block->G);
+  if(G->HaveGUI && G->ValidContext) {
 
     glColor3f(0.8F,0.8F,0.8F);
     glBegin(GL_POLYGON);
@@ -152,6 +151,7 @@ void ScrollBarDrawHandle(struct CScrollBar *I,float alpha)
   float value;
   int top,left,bottom,right;
   Block *block = I->Block;
+  PyMOLGlobals *G=block->G;
 
   value = I->Value;
   if(value>I->ValueMax)
@@ -169,9 +169,7 @@ void ScrollBarDrawHandle(struct CScrollBar *I,float alpha)
     right = block->rect.right-1;
   }
 
-  if(block->G->HaveGUI) {
-
-    ASSERT_VALID_CONTEXT(block->G);
+  if(G->HaveGUI && G->ValidContext ) {
 
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);

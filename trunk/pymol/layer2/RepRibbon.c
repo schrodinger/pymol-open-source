@@ -95,123 +95,122 @@ void RepRibbonRender(RepRibbon *I,CRay *ray,Pickable **pick)
         v+=18;
       }
     }
-  } else if(pick&&G->HaveGUI) {
+  } else if(G->HaveGUI && G->ValidContext) {
+    if(pick) {
 
-    ASSERT_VALID_CONTEXT(G);
-
-    PRINTFD(G,FB_RepRibbon)
-      " RepRibbonRender: rendering pickable...\n"
-      ENDFD;
-
-	 if(c) {
-      i=(*pick)->index;
-      p=I->R.P;
-      last=-1;
-      glBegin(GL_LINES);
-      while(c--)
-        {
-          ip=(int)*(v);
-          if(ip!=last) {
-            i++;
-            last=ip;
-            if(!(*pick)[0].ptr) {
-              /* pass 1 - low order bits */
-              
-              glColor3ub((uchar)((i&0xF)<<4),(uchar)((i&0xF0)|0x8),(uchar)((i&0xF00)>>4)); /* we're encoding the index into the color */
-              VLACheck((*pick),Pickable,i);
-              (*pick)[i] = p[ip]; /* copy object and atom info */
-            } else { 
-              /* pass 2 - high order bits */
-              j=i>>12;
-              glColor3ub((uchar)((j&0xF)<<4),(uchar)((j&0xF0)|0x8),(uchar)((j&0xF00)>>4)); 
-            }
-          }	 
-          glVertex3fv(v+4);
-          ip=(int)*(v+7);
-          if(ip!=last) {
-            glVertex3fv(v+15); /* switch colors at midpoint */
-            glVertex3fv(v+15);
-            i++;
-            last=ip;
-            if(!(*pick)[0].ptr) {
-              /* pass 1 - low order bits */
-              
-              glColor3ub((uchar)((i&0xF)<<4),(uchar)((i&0xF0)|0x8),(uchar)((i&0xF00)>>4)); /* we're encoding the index into the color */
-              VLACheck((*pick),Pickable,i);
-              (*pick)[i] = p[ip]; /* copy object and atom info */
-            } else { 
-              /* pass 2 - high order bits */
-              j=i>>12;
-              glColor3ub((uchar)((j&0xF)<<4),(uchar)((j&0xF0)|0x8),(uchar)((j&0xF00)>>4)); 
-            }
-          }	 
-          glVertex3fv(v+11);
-          v+=18;
-        }
-      glEnd();
-      (*pick)[0].index = i; /* pass the count */
-    }
-  } else if(G->HaveGUI) {    
-    int use_dlst;
-    ASSERT_VALID_CONTEXT(G);
-
-    use_dlst = (int)SettingGet(G,cSetting_use_display_lists);
-    if(use_dlst&&I->R.displayList) {
-      glCallList(I->R.displayList);
-    } else { 
-
-      SceneResetNormal(G,true);
-      if(use_dlst) {
-        if(!I->R.displayList) {
-          I->R.displayList = glGenLists(1);
-          if(I->R.displayList) {
-            glNewList(I->R.displayList,GL_COMPILE_AND_EXECUTE);
-          }
-        }
-      }
-      
       PRINTFD(G,FB_RepRibbon)
-        " RepRibbonRender: rendering GL...\n"
+        " RepRibbonRender: rendering pickable...\n"
         ENDFD;
-      
-      glLineWidth(I->linewidth);
-      
+
       if(c) {
-        
-        int ribbon_smooth;
-        int first = true;
-        
-        ribbon_smooth=SettingGet_i(G,NULL,I->R.obj->Setting,cSetting_ribbon_smooth);
-        if(!ribbon_smooth)
-          glDisable(GL_LINE_SMOOTH);
-        glDisable(GL_LIGHTING);
-        glBegin(GL_LINE_STRIP);
+        i=(*pick)->index;
+        p=I->R.P;
+        last=-1;
+        glBegin(GL_LINES);
         while(c--)
           {
-            if(first) {
-              glColor3fv(v+1);
-              glVertex3fv(v+4);
-              first=false;
-            } else if(
-                      (v[4]!=v[-11])||
-                      (v[5]!=v[-10])||
-                      (v[6]!=v[-9 ])) {
-              glEnd();
-              glBegin(GL_LINE_STRIP);
-              glColor3fv(v+1);
-              glVertex3fv(v+4);
-            }
-            glColor3fv(v+8);
+            ip=(int)*(v);
+            if(ip!=last) {
+              i++;
+              last=ip;
+              if(!(*pick)[0].ptr) {
+                /* pass 1 - low order bits */
+              
+                glColor3ub((uchar)((i&0xF)<<4),(uchar)((i&0xF0)|0x8),(uchar)((i&0xF00)>>4)); /* we're encoding the index into the color */
+                VLACheck((*pick),Pickable,i);
+                (*pick)[i] = p[ip]; /* copy object and atom info */
+              } else { 
+                /* pass 2 - high order bits */
+                j=i>>12;
+                glColor3ub((uchar)((j&0xF)<<4),(uchar)((j&0xF0)|0x8),(uchar)((j&0xF00)>>4)); 
+              }
+            }	 
+            glVertex3fv(v+4);
+            ip=(int)*(v+7);
+            if(ip!=last) {
+              glVertex3fv(v+15); /* switch colors at midpoint */
+              glVertex3fv(v+15);
+              i++;
+              last=ip;
+              if(!(*pick)[0].ptr) {
+                /* pass 1 - low order bits */
+              
+                glColor3ub((uchar)((i&0xF)<<4),(uchar)((i&0xF0)|0x8),(uchar)((i&0xF00)>>4)); /* we're encoding the index into the color */
+                VLACheck((*pick),Pickable,i);
+                (*pick)[i] = p[ip]; /* copy object and atom info */
+              } else { 
+                /* pass 2 - high order bits */
+                j=i>>12;
+                glColor3ub((uchar)((j&0xF)<<4),(uchar)((j&0xF0)|0x8),(uchar)((j&0xF00)>>4)); 
+              }
+            }	 
             glVertex3fv(v+11);
             v+=18;
           }
         glEnd();
-        glEnable(GL_LIGHTING);
-        if(SettingGet(G,cSetting_line_smooth))
-          glEnable(GL_LINE_SMOOTH);
+        (*pick)[0].index = i; /* pass the count */
       }
+    } else {
+      int use_dlst;
+
+      use_dlst = (int)SettingGet(G,cSetting_use_display_lists);
       if(use_dlst&&I->R.displayList) {
-        glEndList();
+        glCallList(I->R.displayList);
+      } else { 
+
+        SceneResetNormal(G,true);
+        if(use_dlst) {
+          if(!I->R.displayList) {
+            I->R.displayList = glGenLists(1);
+            if(I->R.displayList) {
+              glNewList(I->R.displayList,GL_COMPILE_AND_EXECUTE);
+            }
+          }
+        }
+      
+        PRINTFD(G,FB_RepRibbon)
+          " RepRibbonRender: rendering GL...\n"
+          ENDFD;
+      
+        glLineWidth(I->linewidth);
+      
+        if(c) {
+        
+          int ribbon_smooth;
+          int first = true;
+        
+          ribbon_smooth=SettingGet_i(G,NULL,I->R.obj->Setting,cSetting_ribbon_smooth);
+          if(!ribbon_smooth)
+            glDisable(GL_LINE_SMOOTH);
+          glDisable(GL_LIGHTING);
+          glBegin(GL_LINE_STRIP);
+          while(c--)
+            {
+              if(first) {
+                glColor3fv(v+1);
+                glVertex3fv(v+4);
+                first=false;
+              } else if(
+                        (v[4]!=v[-11])||
+                        (v[5]!=v[-10])||
+                        (v[6]!=v[-9 ])) {
+                glEnd();
+                glBegin(GL_LINE_STRIP);
+                glColor3fv(v+1);
+                glVertex3fv(v+4);
+              }
+              glColor3fv(v+8);
+              glVertex3fv(v+11);
+              v+=18;
+            }
+          glEnd();
+          glEnable(GL_LIGHTING);
+          if(SettingGet(G,cSetting_line_smooth))
+            glEnable(GL_LINE_SMOOTH);
+        }
+        if(use_dlst&&I->R.displayList) {
+          glEndList();
+        }
       }
     }
   }

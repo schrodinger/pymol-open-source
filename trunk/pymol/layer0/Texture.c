@@ -56,8 +56,7 @@ int TextureGetFromChar(PyMOLGlobals *G, int char_id,float *extent)
   CTexture *I=G->Texture;
   int is_new = false;
 
-  if(G->HaveGUI) {
-    ASSERT_VALID_CONTEXT(G);
+  if(G->HaveGUI && G->ValidContext) {
     if(OVreturn_IS_OK(result = OVOneToOne_GetForward(I->ch2tex,char_id))) {
       return result.word;
     } else {

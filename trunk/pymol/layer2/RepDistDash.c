@@ -86,47 +86,47 @@ void RepDistDashRender(RepDistDash *I,CRay *ray,Pickable **pick)
       c-=2;
 	 }
 
-  } else if(pick&&G->HaveGUI) {
-  } else if(G->HaveGUI) {
-    int use_dlst;
-    ASSERT_VALID_CONTEXT(G);
-    use_dlst = (int)SettingGet(G,cSetting_use_display_lists);
-    if(use_dlst&&I->R.displayList) {
-      glCallList(I->R.displayList);
-    } else { 
+  } else if(G->HaveGUI && G->ValidContext) {
+    if(pick) {
+    } else {
+      int use_dlst;
+      use_dlst = (int)SettingGet(G,cSetting_use_display_lists);
+      if(use_dlst&&I->R.displayList) {
+        glCallList(I->R.displayList);
+      } else { 
 
-      SceneResetNormal(G,true);
+        SceneResetNormal(G,true);
 
-      if(use_dlst) {
-        if(!I->R.displayList) {
-          I->R.displayList = glGenLists(1);
-          if(I->R.displayList) {
-            glNewList(I->R.displayList,GL_COMPILE_AND_EXECUTE);
+        if(use_dlst) {
+          if(!I->R.displayList) {
+            I->R.displayList = glGenLists(1);
+            if(I->R.displayList) {
+              glNewList(I->R.displayList,GL_COMPILE_AND_EXECUTE);
+            }
           }
         }
-      }
       
-      v=I->V;
-      c=I->N;
+        v=I->V;
+        c=I->N;
       
-      glDisable(GL_LIGHTING);
-      glLineWidth(I->linewidth);
-      glBegin(GL_LINES);	 
-      while(c>0) {
-        glVertex3fv(v);
-        v+=3;
-        glVertex3fv(v);
-        v+=3;
-        c-=2;
-      }
-      glEnd();
-      glEnable(GL_LIGHTING);
+        glDisable(GL_LIGHTING);
+        glLineWidth(I->linewidth);
+        glBegin(GL_LINES);	 
+        while(c>0) {
+          glVertex3fv(v);
+          v+=3;
+          glVertex3fv(v);
+          v+=3;
+          c-=2;
+        }
+        glEnd();
+        glEnable(GL_LIGHTING);
 
-      glEnable(GL_LIGHTING);
-      if(use_dlst&&I->R.displayList) {
-        glEndList();
+        glEnable(GL_LIGHTING);
+        if(use_dlst&&I->R.displayList) {
+          glEndList();
+        }
       }
-      
     }
   }
 }

@@ -2388,8 +2388,8 @@ void ObjectMoleculeRenderSele(ObjectMolecule *I,int curState,int sele)
   CoordSet *cs;
   int a,at;
 
-  if(G->HaveGUI) {
-    ASSERT_VALID_CONTEXT(G);
+  if(G->HaveGUI && G->ValidContext) {
+
     if(curState>=0) {
       if(curState<I->NCSet) {
         if(I->CSet[curState]) {
@@ -8423,12 +8423,13 @@ void ObjectMoleculeRender(ObjectMolecule *I,int state,CRay *ray,Pickable **pick,
       
       CGORenderRay(I->UnitCellCGO,ray,ColorGet(I->Obj.G,I->Obj.Color),
                          I->Obj.Setting,NULL);
-    } else if(pick&&G->HaveGUI) {
-    } else if(G->HaveGUI) {
-      ASSERT_VALID_CONTEXT(G);
-      ObjectUseColor(&I->Obj);
-      CGORenderGL(I->UnitCellCGO,ColorGet(I->Obj.G,I->Obj.Color),
-                         I->Obj.Setting,NULL);
+    } else if(G->HaveGUI && G->ValidContext) {
+      if(pick) {
+      } else {
+        ObjectUseColor(&I->Obj);
+        CGORenderGL(I->UnitCellCGO,ColorGet(I->Obj.G,I->Obj.Color),
+                    I->Obj.Setting,NULL);
+      }
     }
   }
 

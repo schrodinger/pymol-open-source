@@ -304,8 +304,8 @@ static void ControlDraw(Block *block)
   float darkEdge[3] = {0.3F, 0.3F, 0.3F};
   float active[3] = {0.8F,0.8F,0.8F};
 
-  if(G->HaveGUI) {
-    ASSERT_VALID_CONTEXT(block->G);
+  if(G->HaveGUI && G->ValidContext ) {
+
     int control_width = I->Block->rect.right - (I->Block->rect.left+cControlLeftMargin);
 
     glColor3fv(I->Block->BackColor);

@@ -54,77 +54,79 @@ static void FontGLUTRestore(CFontGLUT *I)
 static char *FontGLUTRenderOpenGL(CFontGLUT *I,char *st)
 {
   register PyMOLGlobals *G = I->Font.G;
-  int c;
-  FontGLUTBitmapFontRec *font_info = I->glutFont;
-  int first,last;
-  FontGLUTBitmapCharRec const *ch;
-  int textured = SettingGetGlobal_b(G,cSetting_texture_fonts);
-  int pushed = OrthoGetPushed(G);
-
-  ASSERT_VALID_CONTEXT(G);
-  if(st&&(*st)) {
+  if(G->ValidContext) {
+    int c;
+    FontGLUTBitmapFontRec *font_info = I->glutFont;
+    int first,last;
+    FontGLUTBitmapCharRec const *ch;
+    int textured = SettingGetGlobal_b(G,cSetting_texture_fonts);
+    int pushed = OrthoGetPushed(G);
     
-    if(!textured) {
-      glColor3fv(TextGetColor(G));
-      glRasterPos4fv(TextGetPos(G));
-      FontGLUTSave(I);
-    }
     
-    first = font_info->first;
-    last = first + font_info->num_chars;
-    
-
-
-    if(textured && !pushed) {
-      float *v = TextGetPos(G);
-      float zero[3]= {0.0F,0.0F,0.0F};
-      ScenePushRasterMatrix(G,v);
-      TextSetPos(G,zero);
-    }
-
-    while((c=*(st++))) {
-      if ((c >= first) && (c < last))
-        {
-          ch = font_info->ch[c - first];
-          if (ch) {
-            if(!textured) {
-              
-              glBitmap(ch->width, ch->height, 
-                     ch->xorig, ch->yorig,
-                       ch->advance, 0, ch->bitmap);
-              TextAdvance(G,ch->advance);
-            } else {
-              CharFngrprnt fprnt;
-              unsigned char *rgba;
-              UtilZeroMem(&fprnt,sizeof(fprnt));
-              fprnt.u.i.text_id = I->Font.TextID;
-              rgba = fprnt.u.i.color;
-              TextGetColorUChar(G,rgba,rgba+1,rgba+2,rgba+3);
-              fprnt.u.i.ch = c;
-              {
-                int id = CharacterFind(G,&fprnt);
-                if(!id) {
-                  id = CharacterNewFromBitmap(G,ch->width, 
-                                              ch->height, 
-                                              (unsigned char*)ch->bitmap,
-                                              &fprnt);
-                }
-                if(id) {
-                  CharacterRenderOpenGL(G,id,
-                                        (float)ch->xorig,
-                                        (float)ch->yorig,
-                                        (float)ch->advance); /* handles advance */
+    if(st&&(*st)) {
+      
+      if(!textured) {
+        glColor3fv(TextGetColor(G));
+        glRasterPos4fv(TextGetPos(G));
+        FontGLUTSave(I);
+      }
+      
+      first = font_info->first;
+      last = first + font_info->num_chars;
+      
+      
+      
+      if(textured && !pushed) {
+        float *v = TextGetPos(G);
+        float zero[3]= {0.0F,0.0F,0.0F};
+        ScenePushRasterMatrix(G,v);
+        TextSetPos(G,zero);
+      }
+      
+      while((c=*(st++))) {
+        if ((c >= first) && (c < last))
+          {
+            ch = font_info->ch[c - first];
+            if (ch) {
+              if(!textured) {
+                
+                glBitmap(ch->width, ch->height, 
+                         ch->xorig, ch->yorig,
+                         ch->advance, 0, ch->bitmap);
+                TextAdvance(G,ch->advance);
+              } else {
+                CharFngrprnt fprnt;
+                unsigned char *rgba;
+                UtilZeroMem(&fprnt,sizeof(fprnt));
+                fprnt.u.i.text_id = I->Font.TextID;
+                rgba = fprnt.u.i.color;
+                TextGetColorUChar(G,rgba,rgba+1,rgba+2,rgba+3);
+                fprnt.u.i.ch = c;
+                {
+                  int id = CharacterFind(G,&fprnt);
+                  if(!id) {
+                    id = CharacterNewFromBitmap(G,ch->width, 
+                                                ch->height, 
+                                                (unsigned char*)ch->bitmap,
+                                                &fprnt);
+                  }
+                  if(id) {
+                    CharacterRenderOpenGL(G,id,
+                                          (float)ch->xorig,
+                                          (float)ch->yorig,
+                                          (float)ch->advance); /* handles advance */
+                  }
                 }
               }
             }
           }
-        }
-    }
-    if(textured && !pushed) {
-      ScenePopRasterMatrix(G);
-    }
-    if(!textured) {
-      FontGLUTRestore(I); 
+      }
+      if(textured && !pushed) {
+        ScenePopRasterMatrix(G);
+      }
+      if(!textured) {
+        FontGLUTRestore(I); 
+      }
     }
   }
   return st;
