@@ -29,9 +29,9 @@ class Density(Wizard):
                              [1, '6.0 A Radius','cmd.get_wizard().set_radius(6)'],
                              [1, '8.0 A Radius','cmd.get_wizard().set_radius(8)'],
                              [1, '10.0 A Radius','cmd.get_wizard().set_radius(10)'],
-                             [1, '10.0 A Radius','cmd.get_wizard().set_radius(15)'],
+                             [1, '15.0 A Radius','cmd.get_wizard().set_radius(15)'],
                              [1, '20.0 A Radius','cmd.get_wizard().set_radius(20)'],
-                             [1, '20.0 A Radius','cmd.get_wizard().set_radius(50)'],
+                             [1, '50.0 A Radius','cmd.get_wizard().set_radius(50)'],
                              ]
                               
       self.menu['map0'] = []
