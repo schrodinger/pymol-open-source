@@ -106,6 +106,7 @@ if len(pmp_cmd1[pmp_nest]) > 0:\n\
       if len(pmp_next[pmp_nest])>1:\n\
          pmp_nest=pmp_nest+1\n\
          pmp_cmd[pmp_nest] = pmp_next[pmp_nest-1][1]\n\
+         pmp_cont[pmp_nest]=''\n\
          exec(pymol,globals(),globals())\n\
          pmp_nest=pmp_nest-1\n"
 
