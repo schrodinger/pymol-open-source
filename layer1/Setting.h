@@ -66,6 +66,7 @@ int SettingSet_3fv(CSetting *I,int index, float *value);
 int SettingGetTextValue(CSetting *set1,CSetting *set2,int index,char *buffer);
 
 int SettingSetTuple(CSetting *I,int index,PyObject *tuple);
+int SettingUnset(CSetting *I,int index);
 
 void SettingClear(CSetting *I,int index); /* don't call this for the global list! */
 
@@ -77,7 +78,17 @@ float SettingGetGlobal_f(int index); /* always succeed */
 char *SettingGetGlobal_s(int index); /* always succeeds */
 void  SettingGetGlobal_3f(int index,float *value); /* always succeeds */
 float *SettingGetGlobal_3fv(int index); /* always succeed */
+
+int   SettingSetGlobal_b(int index,int value);
+int   SettingSetGlobal_i(int index,int value);
+int   SettingSetGlobal_f(int index,float value);
+/* more to come */
+
+int SettingGetIfDefined_i(CSetting *set1,int index,int *value);
+/* more to come */
+
 int SettingSet_color(CSetting *I,int index, char *value);
+
 
 int   SettingGet_b  (CSetting *set1,CSetting *set2,int index);
 int   SettingGet_i  (CSetting *set1,CSetting *set2,int index);
@@ -305,10 +316,12 @@ CSetting *SettingNewFromPyList(PyObject *list);
 #define cSetting_pdb_literal_names           190
 #define cSetting_wrap_output                 191
 #define cSetting_fog_start                   192
+#define cSetting_state                       193
+#define cSetting_frame                       194
 
 /* cSetting_INIT must always be last setting_index +1 */
 
-#define cSetting_INIT                        193
+#define cSetting_INIT                        195
 
 #endif
 

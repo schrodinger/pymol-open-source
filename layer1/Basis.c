@@ -785,7 +785,7 @@ void BasisMakeMap(CBasis *I,int *vert2prim,CPrimitive *prim,float *volume)
 		  case cPrimCylinder:
         case cPrimSausage:
           q = ((int)(2*(floor(prm->r1/sep)+1)))+1;
-          q = q * q * ((int)ceil(prm->l1/sep)+1);
+          q = q * q * ((int)ceil((prm->l1+2*prm->r1)/sep)+1);
           extra_vert+= q;
 			 break;
 		  case cPrimSphere:
@@ -872,13 +872,13 @@ void BasisMakeMap(CBasis *I,int *vert2prim,CPrimitive *prim,float *volume)
           
           get_system1f3f(d,cx,cy); /* creates an orthogonal system about d */
           
-          p[0]=vv[0];
-          p[1]=vv[1];
-          p[2]=vv[2];
+          p[0]=vv[0]-d[0]*prm->r1;
+          p[1]=vv[1]-d[1]*prm->r1;
+          p[2]=vv[2]-d[2]*prm->r1;
           dd[0]=d[0]*sep;
           dd[1]=d[1]*sep;
           dd[2]=d[2]*sep;
-          l=prm->l1;
+          l=prm->l1+2*prm->r1;
 
           q = (int)floor(prm->r1/sep)+1;
           while(1) {

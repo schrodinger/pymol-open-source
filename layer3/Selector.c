@@ -167,6 +167,7 @@ static WordKeyValue Keyword[] =
   {  "neighbor", SELE_NGH1 },
   {  "nbr;",     SELE_NGH1 }, /* deprecated */
   {  "nbr.",     SELE_NGH1 },
+  {  "byresidue",SELE_BYR1 },
   {  "byresi",   SELE_BYR1 },
   {  "byres",    SELE_BYR1 },
   {  "br;",      SELE_BYR1 },/* deprecated */
@@ -190,6 +191,7 @@ static WordKeyValue Keyword[] =
   {  "hetatm",   SELE_HETz }, /* 0 parameter */
   {  "het",      SELE_HETz }, /* 0 parameter */
   {  "hydro",    SELE_HYDz }, /* 0 parameter */
+  {  "hydrogens",SELE_HYDz }, /* 0 parameter */
   {  "h;",       SELE_HYDz }, /* deprecated */
   {  "h.",       SELE_HYDz }, /* 0 parameter */
   {  "visible",  SELE_VISz }, /* 0 parameter */
@@ -211,6 +213,7 @@ static WordKeyValue Keyword[] =
   {  "e.",       SELE_ELEs },
   {  "resi",     SELE_RSIs },
   {  "resid",    SELE_RSIs },
+  {  "residue",  SELE_RSIs },
   {  "i;",       SELE_RSIs },/* deprecated */
   {  "i.",       SELE_RSIs },
   {  "alt",      SELE_ALTs },
@@ -235,19 +238,25 @@ static WordKeyValue Keyword[] =
   {  "c.",       SELE_CHNs },
   {  "bonded",   SELE_BNDz },
   {  "segi",     SELE_SEGs },
+  {  "segid",    SELE_SEGs },
   {  "s;",       SELE_SEGs },/* deprecated */
   {  "s.",       SELE_SEGs },
   {  "ss",       SELE_SSTs },
   {  "state",    SELE_STAs },
+  {  "object",   SELE_MODs },
+  {  "o.",       SELE_MODs },
   {  "model",    SELE_MODs },
   {  "m;",       SELE_MODs },/* deprecated */
   {  "m.",       SELE_MODs },
   {  "index",    SELE_IDXs },
+  {  "idx.",     SELE_IDXs },
   {  "id",       SELE_ID_s },
-  {  "resn",     SELE_RSNs },
   {  "within",   SELE_WIT_ },
   {  "present",  SELE_PREz },
+  {  "pr.",      SELE_PREz },
   {  "w.",       SELE_WIT_ },
+  {  "resn",     SELE_RSNs },
+  {  "resname",  SELE_RSNs },
   {  "r;",       SELE_RSNs },/* deprecated */
   {  "r.",       SELE_RSNs },
   {  "%",        SELE_SELs },

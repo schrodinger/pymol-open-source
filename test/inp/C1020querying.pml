@@ -25,7 +25,7 @@
 
 /print "BEGIN-LOG"
 
-del all
+dele all
 load dat/pept.pdb
 count_atoms
 count_atoms name ca
@@ -67,7 +67,7 @@ print cmd.find_pairs("name o","name n",mode=1,cutoff=3.4)
 
 # get_area
 
-del all
+dele all
 load dat/pept.pdb 
 get_area (none)
 get_area
@@ -75,7 +75,7 @@ get_area state=2
 get_area name ca
 load dat/3al1.pdb
 get_area
-del all
+dele all
 
 # get_color_indices
 
@@ -91,7 +91,7 @@ print cmd.get_color_tuple("white")
 
 #
 
-del all
+dele all
 load dat/pept.pdb
 get_dihedral 1/n,1/ca,1/c,1/o
 
@@ -105,7 +105,7 @@ print len(cmd.get_model("resi 1").bond)
 
 # 
 
-del all
+dele all
 print cmd.get_names()
 load dat/pept.pdb
 print cmd.get_names()

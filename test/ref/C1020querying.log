@@ -1,4 +1,4 @@
-PyMOL>del all
+PyMOL>dele all
 PyMOL>load dat/pept.pdb
  Executive: object "pept" created.
 PyMOL>count_atoms
@@ -57,7 +57,7 @@ PyMOL>print "%6.3f"%cmd.distance("resi 1 and name ca","resi 14 and name ca")
  Distance-ERR: selection 2 contains no atoms.
 PyMOL>print cmd.find_pairs("name o","name n",mode=1,cutoff=3.4)
 [(('cpy', 107), ('pept', 1)), (('pept', 107), ('pept', 1)), (('cpy', 93), ('pept', 15)), (('pept', 93), ('pept', 15)), (('cpy', 64), ('pept', 34)), (('pept', 64), ('pept', 34)), (('cpy', 51), ('pept', 56)), (('cpy', 43), ('pept', 56)), (('pept', 51), ('pept', 56)), (('pept', 43), ('pept', 56)), (('cpy', 19), ('pept', 73)), (('pept', 19), ('pept', 73)), (('cpy', 8), ('pept', 100)), (('pept', 8), ('pept', 100)), (('cpy', 107), ('cpy', 1)), (('pept', 107), ('cpy', 1)), (('cpy', 93), ('cpy', 15)), (('pept', 93), ('cpy', 15)), (('cpy', 64), ('cpy', 34)), (('pept', 64), ('cpy', 34)), (('cpy', 51), ('cpy', 56)), (('cpy', 43), ('cpy', 56)), (('pept', 51), ('cpy', 56)), (('pept', 43), ('cpy', 56)), (('cpy', 19), ('cpy', 73)), (('pept', 19), ('cpy', 73)), (('cpy', 8), ('cpy', 100)), (('pept', 8), ('cpy', 100))]
-PyMOL>del all
+PyMOL>dele all
 PyMOL>load dat/pept.pdb
  Executive: object "pept" created.
 PyMOL>get_area (none)
@@ -94,7 +94,7 @@ PyMOL>load dat/3al1.pdb
  Executive: object "3al1" created.
 PyMOL>get_area
 Area-Error: Selection must be within a single object.
-PyMOL>del all
+PyMOL>dele all
 PyMOL>print lst
 [('white', 0), ('black', 1), ('blue', 2), ('green', 3), ('red', 4), ('cyan', 5), ('yellow', 6), ('dash', 7), ('violet', 8), ('salmon', 9)]
 PyMOL>print cmd.get_color_tuple("red")
@@ -105,7 +105,7 @@ PyMOL>print cmd.get_color_tuple("green")
 (0.0, 1.0, 0.0)
 PyMOL>print cmd.get_color_tuple("white")
 (1.0, 1.0, 1.0)
-PyMOL>del all
+PyMOL>dele all
 PyMOL>load dat/pept.pdb
  Executive: object "pept" created.
 PyMOL>get_dihedral 1/n,1/ca,1/c,1/o
@@ -116,7 +116,7 @@ PyMOL>print len(cmd.get_model().atom)
 107
 PyMOL>print len(cmd.get_model("resi 1").bond)
 7
-PyMOL>del all
+PyMOL>dele all
 PyMOL>print cmd.get_names()
 []
 PyMOL>load dat/pept.pdb

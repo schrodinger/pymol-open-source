@@ -40,6 +40,7 @@ Z* -------------------------------------------------------------------
 #include"Util.h"
 #include"Wizard.h"
 #include"ScrollBar.h"
+#include"Movie.h"
 
 #include"Menu.h"
 #include"Map.h"
@@ -325,6 +326,7 @@ PyObject *ExecutiveGetSession(void)
   PyDict_SetItemString(result,"colors",ColorAsPyList());
   SceneGetView(sv);
   PyDict_SetItemString(result,"view",PConvFloatArrayToPyList(sv,cSceneViewSize));
+  PyDict_SetItemString(result,"movie",MovieAsPyList());
   return(result);
 }
 
@@ -362,6 +364,12 @@ int ExecutiveSetSession(PyObject *session)
       ok = PConvPyListToFloatArrayInPlace(tmp,sv,cSceneViewSize);
     if(ok) SceneSetView(sv);
         
+  }
+  if(ok) {
+    int warning;
+    tmp = PyDict_GetItemString(session,"movie");
+    if(tmp) 
+      ok = MovieFromPyList(tmp,&warning);
   }
   return(ok);
 }
@@ -2993,18 +3001,18 @@ int  ExecutiveSetSetting(int index,PyObject *tuple,char *sele,
             if(handle) {
               SettingCheckHandle(handle);
               ok = SettingSetTuple(*handle,index,tuple);
-              if(updates) 
-                SettingGenerateSideEffects(index,sele,state);
               nObj++;
             }
           }
+        }
+        if(nObj) {
+          if(updates) 
+            SettingGenerateSideEffects(index,sele,state);
         }
         if(Feedback(FB_Setting,FB_Actions)) {
           if(nObj&&handle) {
             SettingGetTextValue(*handle,NULL,index,value);
             SettingGetName(index,name);
-            if(updates)
-              SettingGenerateSideEffects(index,sele,state);
             if(!quiet) {
               if(state<0) {
                 PRINTF
@@ -3037,6 +3045,8 @@ int  ExecutiveSetSetting(int index,PyObject *tuple,char *sele,
                   SettingCheckHandle(handle);
                   ok = SettingSetTuple(*handle,index,tuple);
                   if(ok) {
+                    if(updates) 
+                      SettingGenerateSideEffects(index,sele,state);
                     if(!quiet) {
                       if(state<0) { /* object-specific */
                         if(Feedback(FB_Setting,FB_Actions)) {
@@ -3046,9 +3056,6 @@ int  ExecutiveSetSetting(int index,PyObject *tuple,char *sele,
                             " Setting: %s set to %s in object '%s'.\n",
                             name,value,rec->obj->Name
                             ENDF;
-                          if(updates)
-                            SettingGenerateSideEffects(index,sele,state);
-                          
                         }
                       } else { /* state-specific */
                         if(Feedback(FB_Setting,FB_Actions)) {
@@ -3058,9 +3065,6 @@ int  ExecutiveSetSetting(int index,PyObject *tuple,char *sele,
                             " Setting: %s set to %s in object '%s', state %d.\n",
                             name,value,rec->obj->Name,state+1
                             ENDF;
-                          if(updates) 
-                            SettingGenerateSideEffects(index,sele,state);
-                          
                         }
                       }
                     }
@@ -3071,11 +3075,12 @@ int  ExecutiveSetSetting(int index,PyObject *tuple,char *sele,
           } else if(strcmp(rec->obj->Name,sele)==0) {
             if(rec->obj->fGetSettingHandle) {
               handle = rec->obj->fGetSettingHandle(rec->obj,state);
-              printf("handle %p %p\n",handle,rec->obj);
               if(handle) {
                 SettingCheckHandle(handle);
                 ok = SettingSetTuple(*handle,index,tuple);
                 if(ok) {
+                  if(updates)
+                    SettingGenerateSideEffects(index,sele,state);
                   if(!quiet) {
                     if(state<0) { /* object-specific */
                       if(Feedback(FB_Setting,FB_Actions)) {
@@ -3085,9 +3090,6 @@ int  ExecutiveSetSetting(int index,PyObject *tuple,char *sele,
                           " Setting: %s set to %s in object '%s'.\n",
                           name,value,rec->obj->Name
                           ENDF;
-                        if(updates)
-                          SettingGenerateSideEffects(index,sele,state);
-                        
                       }
                     } else { /* state-specific */
                       if(Feedback(FB_Setting,FB_Actions)) {
@@ -3097,9 +3099,142 @@ int  ExecutiveSetSetting(int index,PyObject *tuple,char *sele,
                           " Setting: %s set to %s in object '%s', state %d.\n",
                           name,value,rec->obj->Name,state+1
                           ENDF;
-                        if(updates) 
-                          SettingGenerateSideEffects(index,sele,state);
-                        
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+      }
+  }
+  PAutoUnblock(unblock);
+  return(ok);
+}
+/*========================================================================*/
+int  ExecutiveUnsetSetting(int index,char *sele,
+                         int state,int quiet,int updates)
+{
+  CExecutive *I=&Executive;
+  SpecRec *rec = NULL;
+  ObjectMolecule *obj = NULL;
+  int sele1;
+  ObjectMoleculeOpRec op;
+  CSetting **handle=NULL;
+  SettingName name;
+  int nObj=0;
+  int unblock;
+  int ok =true;
+
+  PRINTFD(FB_Executive)
+    " ExecutiveSetSetting: entered. sele '%s'\n",sele
+    ENDFD;
+  unblock = PAutoBlock();
+  if(sele[0]==0) { 
+    /* do nothing */
+  } 
+  else if(!strcmp(cKeywordAll,sele)) { /* all objects setting */
+    while(ListIterate(I->Spec,rec,next))
+      {
+        if(rec->type==cExecObject) {
+          if(rec->obj->fGetSettingHandle) {
+            handle = rec->obj->fGetSettingHandle(rec->obj,state);
+            if(handle) {
+              SettingCheckHandle(handle);
+              ok = SettingUnset(*handle,index);
+              nObj++;
+            }
+          }
+        }
+        if(nObj) {
+          if(updates) 
+            SettingGenerateSideEffects(index,sele,state);
+        }
+        if(Feedback(FB_Setting,FB_Actions)) {
+          if(nObj&&handle) {
+            SettingGetName(index,name);
+            if(!quiet) {
+              if(state<0) {
+                PRINTF
+                  " Setting: %s unset in %d objects.\n",name,nObj
+                  ENDF;
+              } else {
+                PRINTF
+                  " Setting: %s unset in %d objects, state %d.\n",
+                  name,nObj,state+1
+                  ENDF;
+              }
+            }
+          }
+        }
+      }
+  } else { /* based on a selection/object name */
+    sele1=SelectorIndexByName(sele);
+    while((ListIterate(I->Spec,rec,next)))
+      if(rec->type==cExecObject) {
+        if(rec->obj->type==cObjectMolecule)
+          {
+            if(sele1>=0) {
+              obj=(ObjectMolecule*)rec->obj;
+              op.code=OMOP_CountAtoms;
+              op.i1=0;
+              ObjectMoleculeSeleOp(obj,sele1,&op);
+              if(op.i1&&rec->obj->fGetSettingHandle) {
+                handle = rec->obj->fGetSettingHandle(rec->obj,state);
+                if(handle) {
+                  SettingCheckHandle(handle);
+                  ok = SettingUnset(*handle,index);
+                  if(ok) {
+                    if(updates) 
+                      SettingGenerateSideEffects(index,sele,state);
+                    if(!quiet) {
+                      if(state<0) { /* object-specific */
+                        if(Feedback(FB_Setting,FB_Actions)) {
+                          SettingGetName(index,name);
+                          PRINTF
+                            " Setting: %s unset in object '%s'.\n",
+                            name,rec->obj->Name
+                            ENDF;
+                        }
+                      } else { /* state-specific */
+                        if(Feedback(FB_Setting,FB_Actions)) {
+                          SettingGetName(index,name);
+                          PRINTF
+                            " Setting: %s unset in object '%s', state %d.\n",
+                            name,rec->obj->Name,state+1
+                            ENDF;
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          } else if(strcmp(rec->obj->Name,sele)==0) {
+            if(rec->obj->fGetSettingHandle) {
+              handle = rec->obj->fGetSettingHandle(rec->obj,state);
+              if(handle) {
+                SettingCheckHandle(handle);
+                ok = SettingUnset(*handle,index);
+                if(ok) {
+                  if(updates)
+                    SettingGenerateSideEffects(index,sele,state);
+                  if(!quiet) {
+                    if(state<0) { /* object-specific */
+                      if(Feedback(FB_Setting,FB_Actions)) {
+                        SettingGetName(index,name);
+                        PRINTF
+                          " Setting: %s unset in object '%s'.\n",
+                          name,rec->obj->Name
+                          ENDF;
+                      }
+                    } else { /* state-specific */
+                      if(Feedback(FB_Setting,FB_Actions)) {
+                        SettingGetName(index,name);
+                        PRINTF
+                          " Setting: %s unset in object '%s', state %d.\n",
+                          name,rec->obj->Name,state+1
+                          ENDF;
                       }
                     }
                   }
@@ -4284,10 +4419,16 @@ void ExecutiveManageObject(CObject *obj,int allow_zoom)
 	 ExecutiveUpdateObjectSelection(obj);
   }
   if(allow_zoom)
-    if(!exists) 
-      if(SettingGet(cSetting_auto_zoom)) {
+    if(!exists) {
+      switch(SettingGetGlobal_i(cSetting_auto_zoom)) {
+      case 1: /* zoom new one */
         ExecutiveWindowZoom(obj->Name,0.0,-1,0); /* auto zoom (all states) */
+        break;
+      case 2: /* zoom all */
+        ExecutiveWindowZoom(cKeywordAll,0.0,-1,0);
+        break;
       }
+    }
 
 }
 /*========================================================================*/

@@ -137,6 +137,10 @@ int ExecutiveSetCrystal(char *sele,float a,float b,float c,
 PyObject *ExecutiveGetSession(void);
 int ExecutiveSetSession(PyObject *session);
 ObjectMap *ExecutiveFindObjectMapByName(char *name);
+
+int  ExecutiveUnsetSetting(int index,char *sele,
+                           int state,int quiet,int updates);
+
 #endif
 
 

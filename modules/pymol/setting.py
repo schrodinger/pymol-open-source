@@ -207,6 +207,8 @@ class SettingIndex:
    pdb_literal_names     =190
    wrap_output           =191
    fog_start             =192
+   state                 =193
+   frame                 =194
    
 setting_sc = Shortcut(SettingIndex.__dict__.keys())
    
@@ -271,9 +273,6 @@ USAGE
    set name, value [,object-or-selection [,state ]]
 
    set name = value      # (DEPRECATED)
-
-   WARNING: object and state specific settings are not yet fully
-     implemented -- look for them in version 0.51.
  
 PYMOL API
  
@@ -296,7 +295,7 @@ NOTES
    '''
    r = None
    if log:
-      cmd.log("set %s=%s\n"%(name,value))
+      cmd.log("set %s,%s\n"%(str(name),str(value)))
    index = _get_index(str(name))
    if(index<0):
       print "Error: unknown setting '%s'."%name
@@ -314,8 +313,16 @@ NOTES
                v = (boolean_dict[
                       boolean_sc.auto_err(
                          str(value),"boolean")],)
-            elif type==2: # int
-               v = (int(value),)
+            elif type==2: # int (also supports boolean language for 0,1)
+               try:
+                  if boolean_sc.has_key(str(value)):
+                     v = (boolean_dict[
+                        boolean_sc.auto_err(
+                        str(value),"boolean")],)
+                  else:
+                     v = (int(value),)
+               except:
+                  traceback.print_exc()
             elif type==3: # float
                v = (float(value),)
             elif type==4: # float3 - some legacy handling req.
@@ -345,6 +352,48 @@ NOTES
       finally:
          unlock()
    return r
+
+def unset(name,selection='all',state=0,quiet=1,updates=1,log=0):
+   '''
+DESCRIPTION
+  
+   "unset" undefines an object-specific or state-specific setting so
+   that the global setting will be in effect.
+
+USAGE
+ 
+   unset name [,selection [,state ]]
+ 
+PYMOL API
+ 
+   cmd.unset ( string name, string selection='all',
+            int state=0, int quiet=0, int updates=1 )
+
+   '''
+   r = None
+   if log:
+      cmd.log("unset %s,%s\n"%(str(name),str(selection)))
+   index = _get_index(str(name))
+   if(index<0):
+      print "Error: unknown setting '%s'."%name
+      raise QuietException
+   else:
+      success = 0
+      try:
+         lock()
+         try:
+            r = _cmd.unset(int(index),string.strip(str(selection)),
+                        int(state)-1,int(quiet),
+                        int(updates))
+         except:
+            if(_feedback(fb_module.cmd,fb_mask.debugging)):
+               traceback.print_exc()
+               raise QuietException
+            print "Error: unable to unset setting value."
+      finally:
+         unlock()
+   return r
+
 
 def get_setting(name,object='',state=0): # INTERNAL
    r = None

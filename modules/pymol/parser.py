@@ -78,10 +78,15 @@ def parse(s):
       com1[nest] = string.rstrip(com0[nest]) # strips trailing whitespace
       if len(com1[nest]) > 0:
          if str(com1[nest][-1]) == "\\":
-            cont[nest] = cont[nest] + com1[nest][:-1]
-         else:
+            # prepend leftovers
             if cont[nest] != '':
-               com1[nest] = cont[nest] + com1[nest]
+               cont[nest] = cont[nest] + "\n" + com1[nest][:-1]
+            else:
+               cont[nest] = com1[nest][:-1]
+         else:
+            # prepend leftovers
+            if cont[nest] != '':
+               com1[nest] = cont[nest] + "\n" + com1[nest]
                cont[nest] = ''
 # this routine splits up the line first based on semicolon 
             next[nest] = parsing.split(com1[nest],';',1)
@@ -95,8 +100,10 @@ def parse(s):
                   # explicit literal python 
                   com2[nest] = string.strip(com2[nest][1:])
                   if len(com2[nest])>0:
-                      exec(com2[nest],pymol_names,pymol_names)
+                      exec(com2[nest]+"\n",pymol_names,pymol_names)
                else:
+                  # remove line breaks (only important for Python expressions)
+                  com2[nest]=string.replace(com2[nest],'\n','')
                   # try to find a keyword which matches
                   if cmd.kwhash.has_key(com):
                      amb = cmd.kwhash.interpret(com)
@@ -124,6 +131,12 @@ def parse(s):
                               parsing.parse_arg(com2[nest],mode=kw[nest][4]),
                               kw[nest][4]) # will raise exception on failure
                         result=apply(kw[nest][0],args[nest],kw_args[nest])
+                     elif kw[nest][4]==parsing.PYTHON:
+                           # handle python keyword
+                           com2[nest] = string.strip(com2[nest])
+                           if len(com2[nest])>0:
+                              print com2[nest]+"\n"
+                              exec(com2[nest]+"\n",pymol_names,pymol_names)
                      else:
 # old parsing style, being phased out
                         if kw[nest][4]==parsing.ABORT:
@@ -231,7 +244,7 @@ def parse(s):
                      else: # nothing found, try literal python
                         com2[nest] = string.strip(com2[nest])
                         if len(com2[nest])>0:
-                           exec(com2[nest],pymol_names,pymol_names)
+                           exec(com2[nest]+"\n",pymol_names,pymol_names)
             if (len(next[nest])>1) and p_result:
                     # continue parsing if no error or break has occurred
                nest=nest+1

@@ -10,7 +10,7 @@ PyMOL>select tst = (none)
  Selector: no atoms selected.
 PyMOL>select tst = (name c)
  Selector: selection "tst" defined with 129 atoms.
-PyMOL>del tst
+PyMOL>dele tst
 PyMOL>select tst = (segi e)
  Selector: selection "tst" defined with 9 atoms.
 PyMOL>select tst = (all)
@@ -88,7 +88,7 @@ PyMOL>select tst, pept w. 1 of pept
 PyMOL>print cmd.select("(none)")
  Selector: no atoms selected.
 0
-PyMOL>del all
+PyMOL>dele all
 PyMOL>load dat/pept.pdb,mult
  Executive: object "mult" created.
 PyMOL>load dat/il2.pdb,mult

@@ -13,7 +13,7 @@ ray renderer=2
 isosurf m1,map,-3000
 ray renderer=2
 
-del m1
+dele m1
 
 /for a in range(1,10): cmd.isosurf("m2","map",1.0+a/10.0,state=a)
 
@@ -25,7 +25,7 @@ ray renderer=2
 frame 8
 ray renderer=2
 
-del all
+dele all
 
 load lrg/map.xplor
 
@@ -38,7 +38,7 @@ ray renderer=2
 isosurf m1,map,-3000
 ray renderer=2
 
-del m1
+dele m1
 
 /for a in range(1,10): cmd.isosurf("m2","map",1.0+a/10.0,state=a)
 
@@ -50,7 +50,7 @@ ray renderer=2
 frame 8
 ray renderer=2
 
-del all
+dele all
 
 load lrg/map.ccp4
 
@@ -89,7 +89,7 @@ ray renderer=2
 isosurf m1,map,1.0,A/53/,carve=0.0
 ray renderer=2
 
-del all
+dele all
 
 load lrg/map.ccp4
 
@@ -102,7 +102,7 @@ ray renderer=2
 isodot m1,map,-3000
 ray renderer=2
 
-del m1
+dele m1
 
 /for a in range(1,10): cmd.isodot("m2","map",1.0+a/10.0,state=a)
 
@@ -114,7 +114,7 @@ ray renderer=2
 frame 8
 ray renderer=2
 
-del all
+dele all
 
 load lrg/map.xplor
 
@@ -127,7 +127,7 @@ ray renderer=2
 isodot m1,map,-3000
 ray renderer=2
 
-del m1
+dele m1
 
 /for a in range(1,10): cmd.isodot("m2","map",1.0+a/10.0,state=a)
 
@@ -139,7 +139,7 @@ ray renderer=2
 frame 8
 ray renderer=2
 
-del all
+dele all
 
 load lrg/map.ccp4
 

@@ -29,9 +29,97 @@ Z* -------------------------------------------------------------------
 #include"P.h"
 #include"Setting.h"
 #include"main.h"
+#include"PConv.h"
 
 CMovie Movie;
 
+/*========================================================================*/
+static int MovieCmdFromPyList(PyObject *list,int *warning)
+{
+  CMovie *I=&Movie;
+  int ok=true;
+  int a;
+  int warn=false;
+
+  if(ok) ok=PyList_Check(list);
+  
+  for(a=0;a<I->NFrame;a++) {
+    if(ok) ok=PConvPyStrToStr(PyList_GetItem(list,a),I->Cmd[a],OrthoLineLength);
+    if(ok) warn=warn||I->Cmd[a][0];
+  }
+  *warning=warn;
+  return(ok);
+}
+/*========================================================================*/
+int MovieFromPyList(PyObject *list,int *warning)
+{
+  int ok=true;
+  CMovie *I=&Movie;
+
+  MovieReset();
+  if(ok) ok=PyList_Check(list);
+  if(ok) ok=PConvPyIntToInt(PyList_GetItem(list,0),&I->NFrame);
+  if(ok) ok=PConvPyIntToInt(PyList_GetItem(list,1),&I->MatrixFlag);
+  if(ok&&I->MatrixFlag) 
+    ok=PConvPyListToFloatArrayInPlace(PyList_GetItem(list,2),I->Matrix,16);
+  if(ok) ok=PConvPyIntToInt(PyList_GetItem(list,3),&I->Playing);
+  if(ok&&I->NFrame) {
+    I->Sequence=Alloc(int,I->NFrame+1);
+    I->Cmd=Alloc(MovieCmdType,I->NFrame+1);
+    if(ok) ok=PConvPyListToIntArrayInPlace(PyList_GetItem(list,4),I->Sequence,I->NFrame);
+    if(ok) ok=MovieCmdFromPyList(PyList_GetItem(list,5),warning);
+  }
+  if(!ok) {
+    MovieReset();
+  }
+  return(ok);
+}
+/*========================================================================*/
+static PyObject *MovieCmdAsPyList(void)
+{
+  CMovie *I=&Movie;
+  PyObject *result=NULL;
+  int a;
+
+  result = PyList_New(I->NFrame);
+  for(a=0;a<I->NFrame;a++) {
+    PyList_SetItem(result,a,PyString_FromString(I->Cmd[a]));
+  }
+  return(PConvAutoNone(result));
+}
+
+/*========================================================================*/
+PyObject *MovieAsPyList(void)
+{
+  CMovie *I=&Movie;
+  PyObject *result = NULL;
+
+  result = PyList_New(6);
+  PyList_SetItem(result,0,PyInt_FromLong(I->NFrame));
+  PyList_SetItem(result,1,PyInt_FromLong(I->MatrixFlag));
+  PyList_SetItem(result,2,PConvFloatArrayToPyList(I->Matrix,16));
+  PyList_SetItem(result,3,PyInt_FromLong(I->Playing));
+  if(I->Sequence) {
+    PyList_SetItem(result,4,PConvIntArrayToPyList(I->Sequence,I->NFrame));
+  } else {
+    PyList_SetItem(result,4,PConvAutoNone(NULL));
+  }
+  if(I->Cmd) {
+    PyList_SetItem(result,5,MovieCmdAsPyList());
+  } else {
+    PyList_SetItem(result,5,PConvAutoNone(NULL));
+  }
+/*   ImageType *Image;
+  int *Sequence;
+  MovieCmdType *Cmd;
+  int NImage,NFrame;
+  unsigned Width,Height;
+  int MatrixFlag;
+  float Matrix[16];
+  int Playing;
+*/
+  return(PConvAutoNone(result));
+}
 /*========================================================================*/
 int MoviePlaying(void)
 {
@@ -333,6 +421,15 @@ void MovieClearImages(void)
   SceneDirty();
 }
 /*========================================================================*/
+void MovieReset(void) {
+  CMovie *I=&Movie;
+  MovieClearImages();
+  FreeP(I->Cmd);
+  FreeP(I->Sequence);
+  I->NFrame=0;
+  I->MatrixFlag=false;
+}
+/*========================================================================*/
 void MovieFree(void)
 {
   CMovie *I=&Movie;
@@ -340,21 +437,21 @@ void MovieFree(void)
   VLAFree(I->Image);
   FreeP(I->Cmd);
   FreeP(I->Sequence);
-  I->Sequence=NULL;
 }
 /*========================================================================*/
 void MovieInit(void)
 {
   CMovie *I=&Movie;
-
+  int a;
   I->Playing=false;
   I->Image=VLAMalloc(10,sizeof(ImageType),5,true); /* auto-zero */
   I->Sequence=NULL;
   I->Cmd=NULL;
   I->NImage=0;
   I->NFrame=0;
+  for(a=0;a<16;a++)
+    I->Matrix[a]=0.0F;
   I->MatrixFlag=false;
-
 }
 
 

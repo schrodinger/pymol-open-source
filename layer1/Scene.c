@@ -84,7 +84,7 @@ typedef struct {
   int DirtyFlag;
   int ChangedFlag;
   int CopyFlag,CopyNextFlag;
-  int StateIndex,Frame,NFrame;
+  int NFrame;
   GLvoid *ImageBuffer;
   int ImageBufferHeight,ImageBufferWidth;
   int MovieOwnsImageFlag;
@@ -110,6 +110,19 @@ int SceneRelease(Block *block,int button,int x,int y,int mod);
 
 int SceneDrag(Block *block,int x,int y,int mod);
 void ScenePrepareMatrix(int mode);
+
+static int SceneGetObjState(CObject *obj,int state)
+{
+  int objState;
+  if(SettingGetIfDefined_i(obj->Setting,cSetting_state,&objState)) {
+    if(objState>0) {
+      state=objState-1;
+    } if(objState<0) {
+      state=-1;
+    }
+  }
+  return(state);
+}
 
 void SceneSetCardInfo(char *vendor,char *renderer,char *version){
   CScene *I=&Scene;  
@@ -309,8 +322,7 @@ void SceneGetViewNormal(float *v)
 /*========================================================================*/
 int SceneGetState(void)
 {
-  CScene *I=&Scene;
-  return(I->StateIndex);
+  return(SettingGetGlobal_i(cSetting_state)-1);
 }
 /*========================================================================*/
 float *SceneGetMatrix()
@@ -372,9 +384,7 @@ void ScenePerspective(int flag)
 /*========================================================================*/
 int SceneGetFrame(void)
 {
-  CScene *I=&Scene;
-  
-  return(I->Frame);
+  return(SettingGetGlobal_i(cSetting_frame)-1);
 }
 /*========================================================================*/
 void SceneCountFrames() 
@@ -409,44 +419,50 @@ void SceneCountFrames()
 void SceneSetFrame(int mode,int frame)
 {
   CScene *I=&Scene;
+  int newFrame;
+  int newState;
+
+  newFrame = SettingGetGlobal_i(cSetting_frame) -1;
   PRINTFD(FB_Scene)
     " SceneSetFrame: entered.\n"
     ENDFD;
   switch(mode) {
   case 0:
-	 I->Frame=frame;
+    newFrame=frame; 
 	 break;
   case 1:
-	 I->Frame+=frame;
+    newFrame+=frame; 
 	 break;
   case 2:
-	 I->Frame=I->NFrame-1;
+    newFrame=I->NFrame-1; 
 	 break;
   case 3:
-	 I->Frame=I->NFrame/2;
+	 newFrame=I->NFrame/2;
 	 break;
   case 4:
-	 I->Frame=frame;
+	 newFrame=frame;
 	 break;
   case 5:
-	 I->Frame+=frame;
+	 newFrame+=frame;
 	 break;
   case 6: /* movie/frame override - go to this state absolutely! */
-    I->StateIndex = frame;
+    newState = frame;
     break;
   }
   SceneCountFrames();
   if (mode<6) { 
-    if(I->Frame>=I->NFrame) I->Frame=I->NFrame-1;
-    if(I->Frame<0) I->Frame=0;
-    I->StateIndex = MovieFrameToIndex(I->Frame);
+    if(newFrame>=I->NFrame) newFrame=I->NFrame-1;
+    if(newFrame<0) newFrame=0;
+    newState = MovieFrameToIndex(newFrame);
     if(mode&4) 
-      MovieDoFrameCommand(I->Frame);
-    if(I->Frame==0)
+      MovieDoFrameCommand(newFrame);
+    if(newFrame==0)
       MovieMatrix(cMovieMatrixRecall);
     if(SettingGet(cSetting_cache_frames))
       I->MovieFrameFlag=true;
   }
+  SettingSetGlobal_i(cSetting_frame,newFrame+1);
+  SettingSetGlobal_i(cSetting_state,newState+1);
   SceneDirty();
   PRINTFD(FB_Scene)
     " SceneSetFrame: leaving...\n"
@@ -512,7 +528,8 @@ void SceneMakeMovieImage(void) {
     }
   }
   if(I->ImageBuffer&&(I->ImageBufferHeight==I->Height)&&(I->ImageBufferWidth==I->Width)) {
-	 MovieSetImage(MovieFrameToImage(I->Frame),I->ImageBuffer);
+	 MovieSetImage(MovieFrameToImage(SettingGetGlobal_i(cSetting_frame)-1)
+                                    ,I->ImageBuffer);
     I->MovieOwnsImageFlag=true;
   } else {
     I->MovieOwnsImageFlag=false;
@@ -561,8 +578,7 @@ void SceneIdle(void)
   if(MoviePlaying()&&frameFlag)
 	 {
       I->LastFrameTime = UtilGetSeconds();
-
-      if(I->Frame==I->NFrame-1)
+      if((SettingGetGlobal_i(cSetting_frame)-1)==(I->NFrame-1))
         SceneSetFrame(4,0);
       else
         SceneSetFrame(5,1);
@@ -700,7 +716,8 @@ int SceneLoadPNG(char *fname,int movie_flag,int quiet)
     OrthoRemoveSplash();
     SettingSet(cSetting_text,0.0);
     if(movie_flag&&I->ImageBuffer&&(I->ImageBufferHeight==I->Height)&&(I->ImageBufferWidth==I->Width)) {
-      MovieSetImage(MovieFrameToImage(I->Frame),I->ImageBuffer);
+      MovieSetImage(MovieFrameToImage(SettingGetGlobal_i(cSetting_frame)-1)
+                    ,I->ImageBuffer);
       I->MovieOwnsImageFlag=true;
       I->MovieFrameFlag=true;
     } else {
@@ -973,7 +990,8 @@ int SceneClick(Block *block,int button,int x,int y,int mod)
                 obj->Name,I->LastPicked.index+1);    
         SelectorCreate(cEditorSele1,buffer,NULL,true,NULL);
         ExecutiveDelete(cEditorSele2);
-        EditorSetActiveObject((ObjectMolecule*)obj,I->StateIndex);
+        EditorSetActiveObject((ObjectMolecule*)obj,
+                              SettingGetGlobal_i(cSetting_state)-1);
         if(EditorActive()) {
           SelectorCreate(cEditorRes,"(byres pk1)",NULL,true,NULL);
           if(SettingGet(cSetting_auto_hide_selections))
@@ -1033,7 +1051,8 @@ int SceneClick(Block *block,int button,int x,int y,int mod)
           sprintf(buffer,"%s`%d",
                   obj->Name,atIndex+1);    
           SelectorCreate(cEditorSele2,buffer,NULL,true,NULL);
-          EditorSetActiveObject(objMol,I->StateIndex);
+          EditorSetActiveObject(objMol,
+                                SettingGetGlobal_i(cSetting_state)-1);
           WizardDoPick(1);
 
         }
@@ -1064,7 +1083,8 @@ int SceneClick(Block *block,int button,int x,int y,int mod)
         OrthoRestorePrompt();
       }
       objMol = (ObjectMolecule*)obj;
-      EditorPrepareDrag(objMol,I->LastPicked.index,I->StateIndex);
+      EditorPrepareDrag(objMol,I->LastPicked.index,
+                        SettingGetGlobal_i(cSetting_state)-1);
       y=y-I->Block->margin.bottom;
       x=x-I->Block->margin.left;
 
@@ -1256,7 +1276,8 @@ int SceneDrag(Block *block,int x,int y,int mod)
     obj=(CObject*)I->LastPicked.ptr;
     if(obj)
       if(obj->type==cObjectMolecule) {
-        if(ObjectMoleculeGetAtomVertex((ObjectMolecule*)obj,I->StateIndex,
+        if(ObjectMoleculeGetAtomVertex((ObjectMolecule*)obj,
+                                       SettingGetGlobal_i(cSetting_state)-1,
                                        I->LastPicked.index,v1)) {
           /* scale properly given the current projection matrix */
           vScale = SceneGetScreenVertexScale(v1);
@@ -1270,7 +1291,8 @@ int SceneDrag(Block *block,int x,int y,int mod)
           v2[2] = 0;
           /* transform into model coodinate space */
           MatrixInvTransform44fAs33f3f(I->RotMatrix,v2,v2); 
-          EditorDrag((ObjectMolecule*)obj,I->LastPicked.index,mode,I->StateIndex,v1,v2);
+          EditorDrag((ObjectMolecule*)obj,I->LastPicked.index,mode,
+                     SettingGetGlobal_i(cSetting_state)-1,v1,v2);
         }
       }
     I->LastX=x;
@@ -1511,9 +1533,6 @@ void SceneInit(void)
 
   I->NFrame = 0;
   I->Scale = 1.0;
-  I->Frame=0;
-  I->StateIndex=0;
-  
   I->Block = OrthoNewBlock(NULL);
   I->Block->fClick   = SceneClick;
   I->Block->fRelease = SceneRelease;
@@ -1633,7 +1652,7 @@ void SceneRay(int ray_width,int ray_height,int mode,char **headerVLA_ptr,char **
   if(SettingGet(cSetting_all_states)) {
     curState=-1;
   } else {
-    curState=I->StateIndex;
+    curState=SettingGetGlobal_i(cSetting_state)-1;
   }
 
   ray = RayNew();
@@ -1679,7 +1698,7 @@ void SceneRay(int ray_width,int ray_height,int mode,char **headerVLA_ptr,char **
 	 {
 		if(rec->obj->fRender) {
 		  ray->fColor3fv(ray,white);
-		  rec->obj->fRender(rec->obj,curState,ray,NULL,0);
+		  rec->obj->fRender(rec->obj,SceneGetObjState(rec->obj,curState),ray,NULL,0);
 		}
 	 }
 
@@ -1830,7 +1849,7 @@ int SceneRenderCached(void)
 	if(I->MovieFrameFlag||
 	   (MoviePlaying()&&SettingGet(cSetting_cache_frames))) {
 	  I->MovieFrameFlag=false;
-	  image = MovieGetImage(MovieFrameToImage(I->Frame));
+	  image = MovieGetImage(MovieFrameToImage(SettingGetGlobal_i(cSetting_frame)-1));
 	  if(image)
 		{
 		  if(I->ImageBuffer)
@@ -1926,7 +1945,7 @@ void SceneRender(Pickable *pick,int x,int y,Multipick *smp)
     if(SettingGet(cSetting_all_states)) {
       curState=-1;
     } else {
-      curState=I->StateIndex;
+      curState=SettingGetGlobal_i(cSetting_state)-1;
     }
 
     if(SettingGet(cSetting_ortho)==0.0) {
@@ -2113,7 +2132,7 @@ void SceneRender(Pickable *pick,int x,int y,Multipick *smp)
 		  glLineWidth(3.0); /* insure some 100% pixels */
           glPushMatrix();
           if(rec->obj->fRender)
-            rec->obj->fRender(rec->obj,curState,NULL,&pickVLA,0);
+            rec->obj->fRender(rec->obj,SceneGetObjState(rec->obj,curState),NULL,&pickVLA,0);
           glPopMatrix();
         }
 
@@ -2133,7 +2152,7 @@ void SceneRender(Pickable *pick,int x,int y,Multipick *smp)
 		  glLineWidth(3.0); /* insure some 100% pixels */
           glPushMatrix();
           if(rec->obj->fRender)
-            rec->obj->fRender(rec->obj,curState,NULL,&pickVLA,0);
+            rec->obj->fRender(rec->obj,SceneGetObjState(rec->obj,curState),NULL,&pickVLA,0);
           glPopMatrix();
         }
 
@@ -2173,7 +2192,7 @@ void SceneRender(Pickable *pick,int x,int y,Multipick *smp)
 		  glLineWidth(3.0); /* insure some 100% pixels */
           glPushMatrix();
 			 if(rec->obj->fRender)
-			   rec->obj->fRender(rec->obj,curState,NULL,&pickVLA,0);
+			   rec->obj->fRender(rec->obj,SceneGetObjState(rec->obj,curState),NULL,&pickVLA,0);
 			 glPopMatrix();
         }
 
@@ -2190,7 +2209,7 @@ void SceneRender(Pickable *pick,int x,int y,Multipick *smp)
 		  glLineWidth(3.0); /* insure some 100% pixels */
           glPushMatrix();
           if(rec->obj->fRender)
-            rec->obj->fRender(rec->obj,curState,NULL,&pickVLA,0);
+            rec->obj->fRender(rec->obj,SceneGetObjState(rec->obj,curState),NULL,&pickVLA,0);
           glPopMatrix();
         }
       
@@ -2261,7 +2280,7 @@ void SceneRender(Pickable *pick,int x,int y,Multipick *smp)
               glPushMatrix();
               glNormal3fv(normal);
               if(rec->obj->fRender)
-                rec->obj->fRender(rec->obj,curState,NULL,NULL,pass);
+                rec->obj->fRender(rec->obj,SceneGetObjState(rec->obj,curState),NULL,NULL,pass);
               glPopMatrix();
             }
         }
@@ -2283,7 +2302,7 @@ void SceneRender(Pickable *pick,int x,int y,Multipick *smp)
             glPushMatrix();
             glNormal3fv(normal);
             if(rec->obj->fRender)
-              rec->obj->fRender(rec->obj,curState,NULL,NULL,-1);
+              rec->obj->fRender(rec->obj,SceneGetObjState(rec->obj,curState),NULL,NULL,-1);
             glPopMatrix();
           }
         glPopMatrix();
@@ -2309,7 +2328,7 @@ void SceneRender(Pickable *pick,int x,int y,Multipick *smp)
               glPushMatrix();
               glNormal3fv(normal);
               if(rec->obj->fRender)
-                rec->obj->fRender(rec->obj,curState,NULL,NULL,pass);
+                rec->obj->fRender(rec->obj,SceneGetObjState(rec->obj,curState),NULL,NULL,pass);
               glPopMatrix();
             }
         }
@@ -2331,7 +2350,7 @@ void SceneRender(Pickable *pick,int x,int y,Multipick *smp)
             glPushMatrix();
             glNormal3fv(normal);
             if(rec->obj->fRender)
-              rec->obj->fRender(rec->obj,curState,NULL,NULL,-1);
+              rec->obj->fRender(rec->obj,SceneGetObjState(rec->obj,curState),NULL,NULL,-1);
             glPopMatrix();
           }
 
@@ -2358,7 +2377,7 @@ void SceneRender(Pickable *pick,int x,int y,Multipick *smp)
               glPushMatrix();
               glNormal3fv(normal);
               if(rec->obj->fRender)
-                rec->obj->fRender(rec->obj,curState,NULL,NULL,pass);
+                rec->obj->fRender(rec->obj,SceneGetObjState(rec->obj,curState),NULL,NULL,pass);
               glPopMatrix();
             }
         }
@@ -2396,7 +2415,7 @@ void SceneRender(Pickable *pick,int x,int y,Multipick *smp)
             glPushMatrix();
             glNormal3fv(normal);
             if(rec->obj->fRender)
-              rec->obj->fRender(rec->obj,curState,NULL,NULL,pass); 
+              rec->obj->fRender(rec->obj,SceneGetObjState(rec->obj,curState),NULL,NULL,pass); 
             glPopMatrix();
           }
 

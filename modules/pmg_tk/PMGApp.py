@@ -56,6 +56,7 @@ class PMGApp(AbstractApp):
    def appInit(self): # create a global variable for the external gui
       pymol._ext_gui = self
       self.fifo = Queue.Queue(0)
+      self.save_file = ''
 
    def execute(self,cmmd): 
       self.fifo.put(cmmd)
@@ -260,11 +261,14 @@ class PMGApp(AbstractApp):
                                          ("All Readable","*.out"),
                                          ("All Readable","*.mmd"),
                                          ("All Readable","*.mmod"),
+                                         ("All Readable","*.pse"),                                         
                                          ("PDB File","*.pdb"),
                                          ("All Files","*.*"),
                                          ("All Files","*"),                                         
-                                         ("CCP4 Map","*.ccp4"),                                         
                                          ("PDB File","*.ent"),
+                                         ("PyMOL Session","*.pse"),
+                                         ("CCP4 Map","*.ccp4"),                                         
+                                         ("XPLOR Map","*.xplor"),
                                          ("Macromodel File","*.dat"),
                                          ("Macromodel File","*.out"),
                                          ("Macromodel File","*.mmd"),
@@ -273,7 +277,6 @@ class PMGApp(AbstractApp):
                                          ("ChemPy Model","*.pkl"),
                                          ("Raster3D Scene","*.r3d"),
                                          ("SDF File","*.sdf"),
-                                         ("XPLOR Map","*.xplor"),
                                          ("ChemDraw3D File","*.cc1"),
                                          ("ChemDraw3D File","*.cc2"),
                                          ("Tinker XYZ File","*.xyz")
@@ -332,6 +335,29 @@ class PMGApp(AbstractApp):
          os.chdir(self.initialdir)	         
          cmd.log_open(ofile,'a')
 
+   def session_save(self):
+      if self.save_file!='':
+         cmd.log("save %s,format=pse\n"%(self.save_file),
+                 "cmd.save('%s',format='pse')\n"%(self.save_file))
+         cmd.save(self.save_file,"","pse")
+      else:
+         self.session_save_as()
+
+   def session_save_as(self):
+      sfile = asksaveasfilename(initialfile = self.save_file,
+                                initialdir = self.initialdir,
+                                filetypes=[
+         ("PyMOL Session File","*.pse"),
+         ])
+      if len(sfile):
+         if re.search(r"\.pse$|\.PSE$",sfile)==None:
+            sfile=sfile+".pse"
+         self.initialdir = re.sub(r"[^\/\\]*$","",sfile)
+         cmd.log("save %s,format=pse\n"%(sfile),
+                 "cmd.save('%s',format='pse')\n"%(sfile))
+         cmd.save(sfile,"",format='pse')
+         self.save_file = sfile
+   
    def file_save(self):
       lst = cmd.get_names('all')
       lst = filter(lambda x:x[0]!="_",lst)
@@ -491,6 +517,15 @@ class PMGApp(AbstractApp):
       self.menuBar.addmenuitem('File', 'command', 'Open structure file.',
                         label=self.pad+'Open...',
                         command=self.file_open)
+
+
+      self.menuBar.addmenuitem('File', 'command', 'Save session.',
+                        label=self.pad+'Save Session',
+                        command=self.session_save)
+
+      self.menuBar.addmenuitem('File', 'command', 'Save session.',
+                        label=self.pad+'Save Session As...',
+                        command=self.session_save_as)
 
       self.menuBar.addmenuitem('File', 'command', 'Save structure file.',
                         label=self.pad+'Save Molecule...',

@@ -15,6 +15,7 @@
 import os
 import thread
 import selector
+import string
 import re
 
 import pymol
@@ -98,21 +99,22 @@ SEE ALSO
    r = 1
    if format=='':
       format = 'pdb'
-      if re.search("\.pdb$|\.ent$",filename):
+      lc_filename=string.lower(filename)
+      if re.search("\.pdb$|\.ent$",lc_filename):
          format = 'pdb'
-      elif re.search("\.mol$",filename):
+      elif re.search("\.mol$",lc_filename):
          format = 'mol'
-      elif re.search("\.pkl$",filename):
+      elif re.search("\.pkl$",lc_filename):
          format = 'pkl'
-      elif re.search("\.pkl$",filename):
+      elif re.search("\.pkl$",lc_filename):
          format = 'pkla'
-      elif re.search("\.mmd$",filename):
+      elif re.search("\.mmd$",lc_filename):
          format = 'mmod'
-      elif re.search("\.mmod$",filename):
+      elif re.search("\.mmod$",lc_filename):
          format = 'mmod'
-      elif re.search("\.pmo$",filename):
+      elif re.search("\.pmo$",lc_filename):
          format = 'pmo'
-      elif re.search("\.pse$",filename):
+      elif re.search("\.pse$",lc_filename):
          format = 'pse'
    else:
       format = str(format)

@@ -15,30 +15,30 @@ save tmp/small01.pdb
 
 multisave tmp/small01.pmo,small01
 
-del all
+dele all
 load tmp/small01.pmo
 
-del all
+dele all
 load tmp/small01.pdb
 count_atoms
 
-del all
+dele all
 load tmp/small01.mmd
 count_atoms
 
-del all
+dele all
 load tmp/small01.mmod
 count_atoms
 
-del all
+dele all
 load tmp/small01.pkl
 count_atoms
 
-del all
+dele all
 load tmp/small02.pkl
 count_atoms
 
-del all
+dele all
 load tmp/small01.mol
 count_atoms
 
