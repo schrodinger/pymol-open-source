@@ -2975,6 +2975,12 @@ EXAMPLE
       unlock()
    return r
 
+def check(obj):
+   # NOTE: the realtime module relies on code that is not yet part of PyMOL/ChemPy
+   from chempy.tinker import realtime
+   realtime.setup("("+obj+")")
+   realtime.check()
+   
 def minimize(*arg):
    # NOTE: the realtime module relies on code that is not yet part of PyMOL/ChemPy
    from chempy.tinker import realtime  
@@ -3062,6 +3068,7 @@ keyword = {
    'backward'      : [backward     , 0 , 0 , ',' , 0 ],
    'bond'          : [bond         , 0 , 3 , ',' , 0 ],
    'button'        : [button       , 3 , 3 , ',' , 0 ],
+   'check'         : [check        , 1 , 1 , ',' , 0 ],
    'clip'          : [clip         , 2 , 2 , ',' , 0 ],
    'cls'           : [cls          , 0 , 0 , ',' , 0 ],
    'color'         : [color        , 1 , 2 , ',' , 0 ],
