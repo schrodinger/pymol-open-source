@@ -762,6 +762,7 @@ void ExecutiveRemoveAtoms(char *s1)
   ObjectMoleculeOpRec op;
   int flag = false;
 
+
   sele=SelectorIndexByName(s1);
   if(sele>=0)
 	 {
@@ -777,6 +778,10 @@ void ExecutiveRemoveAtoms(char *s1)
                   ObjectMoleculeVerifyChemistry(obj); /* remember chemistry for later */
 						ObjectMoleculeSeleOp(obj,sele,&op);
                   if(op.i1) {
+                    PRINTFD(FB_Editor)
+                      " ExecutiveRemove-Debug: purging %i of %i atoms in %s\n",
+                      op.i1,obj->NAtom,obj->Obj.Name
+                      ENDFD;
                     ObjectMoleculePurge(obj);
                     PRINTFB(FB_Editor,FB_Actions)
                       " Remove: eliminated %d atoms in model '%s'.\n",
@@ -1462,7 +1467,7 @@ float *ExecutiveRMSStates(char *s1,int target,int mode)
     op2.i2=target;
     op2.i1=mode;
     op2.f1VLA=VLAlloc(float,10);
-    VLASetSize(op2.f1VLA,0); /* failsafe */
+    VLASize(op2.f1VLA,float,0); /* failsafe */
     op2.vv1=(float*)VLAMalloc(1000,sizeof(float),5,0);
     op2.code = OMOP_SFIT;
     op2.nvv1=0;

@@ -32,6 +32,10 @@ void ZeroMem(char *p,char *q)
   register unsigned long count;
   register long *a;
 
+  /*  fprintf(stderr,"ZeroMem: start %p stop %p\n",p,q);
+      fflush(stderr);
+  */
+
   count = q-p;
   a=(long*)p;
   while(count>(sizeof(long)*16))
@@ -41,14 +45,17 @@ void ZeroMem(char *p,char *q)
 		*a++=0;
 		*a++=0;
 		*a++=0;
+
 		*a++=0;
 		*a++=0;
 		*a++=0;
 		*a++=0;
+
 		*a++=0;
 		*a++=0;
 		*a++=0;
 		*a++=0;
+
 		*a++=0;
 		*a++=0;
 		*a++=0;
@@ -60,6 +67,7 @@ void ZeroMem(char *p,char *q)
 		*p++=0;
 		count--;
 	 }
+  /*  if(p!=q) ErrFatal("ZeroMem","is broken.");*/
 }
 
 void *VLAExpand(void *ptr,unsigned int rec)
@@ -145,9 +153,11 @@ void *VLASetSize(void *ptr,unsigned int newSize)
   VLARec *vla;
   char *start=NULL;
   char *stop;
+  unsigned int soffset;
   vla = &((VLARec*)ptr)[-1];
-  if(vla->autoZero)
-	 start = ((char*)vla)+sizeof(VLARec)+(vla->recSize*vla->nAlloc);
+  if(vla->autoZero) {
+	 soffset = sizeof(VLARec)+(vla->recSize*vla->nAlloc);
+  }
   vla->nAlloc = newSize;
   vla=(void*)mrealloc(vla,(vla->recSize*vla->nAlloc)+sizeof(VLARec));
   if(!vla)
@@ -157,6 +167,7 @@ void *VLASetSize(void *ptr,unsigned int newSize)
 	 }
   if(vla->autoZero)
 	 {
+      start = ((char*)vla)+soffset;
 		stop = ((char*)vla)+sizeof(VLARec)+(vla->recSize*vla->nAlloc);
 		if(start<stop)
 		  ZeroMem(start,stop);
@@ -428,8 +439,8 @@ void *MemoryDebugRealloc(void *ptr,size_t size,const char *file,
 		  {
 			 if(rec->type!=type)
 				{
-				  printf("MemoryDebug-ERR: ptr is of wrong type: %i!=%i (%s:%i)\n",
-							rec->type,type,file,line);
+				  printf("MemoryDebug-ERR: ptr %p is of wrong type: %i!=%i (%s:%i)\n",
+							ptr,rec->type,type,file,line);
 #ifdef GDB_ENTRY
               MemoryDebugDump();
 				  printf("hit ctrl/c to enter debugger\n");
@@ -475,8 +486,8 @@ void MemoryDebugQuietFree(void *ptr,int type)
     {
       if(rec->type!=type)
 		  {
-			 printf("MemoryDebug-ERR: ptr is of wrong type: %i!=%i (allocated %s:%i)\n",
-					  rec->type,type,rec->file,rec->line);
+			 printf("MemoryDebug-ERR: ptr %p is of wrong type: %i!=%i (allocated %s:%i)\n",
+					  ptr,rec->type,type,rec->file,rec->line);
 #ifdef GDB_ENTRY
   MemoryDebugDump();
   printf("hit ctrl/c to enter debugger\n");
@@ -512,8 +523,8 @@ void MemoryDebugFree(void *ptr,const char*file,int line,int type)
     {
       if(rec->type!=type)
 		  {
-			 printf("MemoryDebug-ERR: ptr is of wrong type: %i!=%i (%s:%i)\n",
-					  rec->type,type,file,line);
+			 printf("MemoryDebug-ERR: ptr %p is of wrong type: %i!=%i (%s:%i)\n",
+					  ptr,rec->type,type,file,line);
 #ifdef GDB_ENTRY
           MemoryDebugDump();
           printf("hit ctrl/c to enter debugger\n");

@@ -442,7 +442,7 @@ int PConvPyListToStringVLA(PyObject *obj,char **vla_ptr)
         }
       }
       vla=VLAlloc(char,ll);
-      VLASetSize(vla,ll);
+      VLASize(vla,char,ll);
       q=vla;
       for(a=0;a<l;a++) {
         i = PyList_GetItem(obj,a);

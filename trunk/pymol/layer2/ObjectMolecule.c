@@ -1488,12 +1488,24 @@ void ObjectMoleculePurge(ObjectMolecule *I)
   int offset=0;
   int *b0,*b1;
   AtomInfoType *ai0,*ai1;
+  
+  PRINTFD(FB_ObjectMolecule)
+    " ObjMolPurge-Debug: step 1, delete object selection\n"
+    ENDFD;
 
   SelectorDelete(I->Obj.Name); /* remove the object selection and free up any selection entries*/
+
+  PRINTFD(FB_ObjectMolecule)
+    " ObjMolPurge-Debug: step 2, purge coordinate sets\n"
+    ENDFD;
 
   for(a=0;a<I->NCSet;a++)
 	 if(I->CSet[a]) 
       CoordSetPurge(I->CSet[a]);
+
+  PRINTFD(FB_ObjectMolecule)
+    " ObjMolPurge-Debug: step 3, old-to-new mapping\n"
+    ENDFD;
 
   oldToNew = Alloc(int,I->NAtom);
   ai0=I->AtomInfo;
@@ -1512,6 +1524,7 @@ void ObjectMoleculePurge(ObjectMolecule *I)
       ai1++;
     }
   }
+
   if(offset) {
     I->NAtom += offset;
     VLASize(I->AtomInfo,AtomInfoType,I->NAtom);
@@ -1519,6 +1532,10 @@ void ObjectMoleculePurge(ObjectMolecule *I)
       if(I->CSet[a])
         CoordSetAdjustAtmIdx(I->CSet[a],oldToNew,I->NAtom);
   }
+
+  PRINTFD(FB_ObjectMolecule)
+    " ObjMolPurge-Debug: step 4, bonds\n"
+    ENDFD;
   
   offset=0;
   b0=I->Bond;
@@ -1544,8 +1561,16 @@ void ObjectMoleculePurge(ObjectMolecule *I)
     VLASize(I->Bond,int,3*I->NBond);
   }
   FreeP(oldToNew);
-    
+
+  PRINTFD(FB_ObjectMolecule)
+    " ObjMolPurge-Debug: step 5, invalidate...\n"
+    ENDFD;
+
   ObjectMoleculeInvalidate(I,cRepAll,cRepInvAtoms);
+
+  PRINTFD(FB_ObjectMolecule)
+    " ObjMolPurge-Debug: leaving...\n"
+    ENDFD;
 
 }
 /*========================================================================*/
@@ -3632,7 +3657,7 @@ void ObjectMoleculeSeleOp(ObjectMolecule *I,int sele,ObjectMoleculeOpRec *op)
        VLACheck(op->f1VLA,float,b);
        op->f1VLA[b]=rms;
      }
-     VLASetSize(op->f1VLA,I->NCSet);  /* NOTE this action is object-specific! */
+     VLASize(op->f1VLA,float,I->NCSet);  /* NOTE this action is object-specific! */
      break;
 	case OMOP_SaveUndo: /* save undo */
      for(a=0;a<I->NAtom;a++)
@@ -4111,6 +4136,10 @@ void ObjectMoleculeUpdate(ObjectMolecule *I)
 void ObjectMoleculeInvalidate(ObjectMolecule *I,int rep,int level)
 {
   int a;
+  PRINTFD(FB_ObjectMolecule)
+    " ObjectMoleculeInvalidate: entered.\n"
+    ENDFD;
+
   if(level>=cRepInvBonds) {
     VLAFreeP(I->Neighbor);
     ObjectMoleculeUpdateNonbonded(I);
@@ -4118,11 +4147,20 @@ void ObjectMoleculeInvalidate(ObjectMolecule *I,int rep,int level)
       SelectorUpdateObjectSele(I);
     }
   }
+  PRINTFD(FB_ObjectMolecule)
+    " ObjectMoleculeInvalidate: invalidating representations...\n"
+    ENDFD;
+
   for(a=0;a<I->NCSet;a++) 
 	 if(I->CSet[a]) {	 
       if(I->CSet[a]->fInvalidateRep)
         I->CSet[a]->fInvalidateRep(I->CSet[a],rep,level);
 	 }
+
+  PRINTFD(FB_ObjectMolecule)
+    " ObjectMoleculeInvalidate: leaving...\n"
+    ENDFD;
+
 }
 /*========================================================================*/
 int ObjectMoleculeMoveAtom(ObjectMolecule *I,int state,int index,float *v,int mode)
@@ -5209,7 +5247,7 @@ CoordSet *ObjectMoleculeMMDStr2CoordSet(char *buffer,AtomInfoType **atInfoPtr)
       }
   }
   if(ok)
-    bond=VLASetSize(bond,3*nBond);
+    VLASize(bond,int,3*nBond);
   if(ok) {
 	 cset = CoordSetNew();
 	 cset->NIndex=nAtom;

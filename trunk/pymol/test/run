@@ -81,7 +81,7 @@ for test in tests:
          postfx = re.sub(r".*/","",ref_fil)
          cmp_fil = cmp+"/"+postfx
          if os.path.exists(cmp_fil):
-            if os.system("diff -q "+ref_fil+" "+cmp_fil+" >/dev/null"):
+            if os.system("diff  "+ref_fil+" "+cmp_fil+" >/dev/null"):
                sys.stdout.flush()
                df = os.popen("diff "+ref_fil+" "+cmp_fil)
                diffs = df.readlines()

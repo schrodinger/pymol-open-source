@@ -222,6 +222,7 @@ print cmd.get_extent()
 sort
 sort pept
 
+feedback ena,objectmol,debug
 spheroid
 spheroid pept
 
