@@ -939,7 +939,7 @@ class PMGApp(AbstractApp):
 
       self.menuBar.addmenuitem('Stereo', 'command', 'Quad-Buffered Stereo',
                                label='Quad-Buffered Stereo',
-                               command = lambda: cmd.do("_ stereo on"))
+                               command = lambda: cmd.do("_ stereo quadbuffer"))
 
       self.menuBar.addmenuitem('Stereo', 'command', 'Cross-Eye Stereo',
                                label='Cross-Eye Stereo',

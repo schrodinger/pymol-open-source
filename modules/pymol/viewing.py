@@ -562,6 +562,12 @@ USAGE
    stereo off
    stereo swap
    stereo crosseye 
+   stereo quadbuffer
+
+NOTES
+
+   quadbuffer is the default stereo mode if hardware stereo is available
+   otherwise, crosseye is the default
    
 PYMOL API
 
@@ -574,6 +580,8 @@ PYMOL API
       if state>1:
          if state==2: # cross-eye
             cmd.set("stereo_mode","2",quiet=1)
+         elif state==3: # quad
+            cmd.set("stereo_mode","1",quiet=1)
          state=1
       if not _cmd.stereo(state):
          print "Error: Selected stereo mode is not available."

@@ -89,7 +89,8 @@ QuietException = parsing.QuietException
 toggle_dict = {'on':1,'off':0,'1':1,'0':0}
 toggle_sc = Shortcut(toggle_dict.keys())
 
-stereo_dict = {'on':1,'off':0,'1':1,'0':0,'swap':-1,'crosseye':2} #,'walleye':3}
+stereo_dict = {'on':1,'off':0,'1':1,'0':0,'swap':-1,
+               'crosseye':2,'quadbuffer':3} #,'walleye':3}
 stereo_sc = Shortcut(stereo_dict.keys())
 
 repres = {
