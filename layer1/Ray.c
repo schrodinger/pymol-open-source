@@ -1279,7 +1279,7 @@ void RayRender(CRay *I,int width,int height,unsigned int *image,
     n_thread=1;
   if(n_thread>MAX_RAY_THREADS)
     n_thread = MAX_RAY_THREADS;
-
+  opaque_back = (int)SettingGet(cSetting_ray_opaque_background);
   BasisSetFudge(SettingGet(cSetting_ray_triangle_fudge));
   shadows = (int)SettingGet(cSetting_ray_shadows);
   antialias = (int)SettingGet(cSetting_antialias);
