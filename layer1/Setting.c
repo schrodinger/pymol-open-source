@@ -525,7 +525,7 @@ int SettingSet_b(CSetting *I,int index, int value)
       *((int*)SettingPtr(I,index,sizeof(int))) = value;
       break;
     case cSetting_float:
-      *((float*)SettingPtr(I,index,sizeof(float))) = value;
+      *((float*)SettingPtr(I,index,sizeof(float))) = (float)value;
       break;
     default:
       PRINTFB(FB_Setting,FB_Errors)
@@ -555,7 +555,7 @@ int SettingSet_i(CSetting *I,int index, int value)
       *((int*)SettingPtr(I,index,sizeof(int))) = value;
       break;
     case cSetting_float:
-      *((float*)SettingPtr(I,index,sizeof(float))) = value;
+      *((float*)SettingPtr(I,index,sizeof(float))) = (float)value;
       break;
     default:
       PRINTFB(FB_Setting,FB_Errors)
@@ -595,7 +595,7 @@ int SettingSet_color(CSetting *I,int index, char *value)
         *((int*)SettingPtr(I,index,sizeof(int))) = color_index;
         break;
       case cSetting_float:
-        *((float*)SettingPtr(I,index,sizeof(float))) = color_index;
+        *((float*)SettingPtr(I,index,sizeof(float))) = (float)color_index;
         break;
       default:
         PRINTFB(FB_Setting,FB_Errors)
@@ -1388,7 +1388,7 @@ void SettingInitGlobal(void)
 
   SettingSet_b(I,cSetting_half_bonds, 0);
 
-  SettingSet_i(I,cSetting_stick_quality, 8.0F);
+  SettingSet_i(I,cSetting_stick_quality, 8.0);
 
   SettingSet_f(I,cSetting_stick_overlap, 0.2F);
 
@@ -1602,7 +1602,7 @@ void SettingInitGlobal(void)
 
   SettingSet_b(I,cSetting_auto_indicate_flags,0); 
 
-  SettingSet_i(I,cSetting_surface_debug,0.0F);
+  SettingSet_i(I,cSetting_surface_debug,0.0);
 
   SettingSet_f(I,cSetting_ray_improve_shadows,0.1F);
 
