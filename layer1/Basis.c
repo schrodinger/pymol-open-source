@@ -391,7 +391,7 @@ int ZLineToSphereCapped(float *base,float *point,float *dir,float radius,float m
       vradial[0]=point[0]-base[0];
       vradial[1]=point[1]-base[1];
       vradial[2]=0.0F;
-      radial = length3f(vradial);
+      radial = (float)length3f(vradial);
       if(radial>radius)
         return 0;
       if(dangle>0.0) {
