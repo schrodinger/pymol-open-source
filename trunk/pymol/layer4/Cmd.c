@@ -692,7 +692,7 @@ static PyObject *CmdAccept(PyObject *self,PyObject *args)
     APIEntry();
     MovieSetLock(false);
     PRINTFB(FB_Movie,FB_Actions)
-      " Movie: Risk accepted by user.  Movie commands are enabled.\n"
+      " Movie: Risk accepted by user.  Movie commands have been enabled.\n"
       ENDFB;
     APIExit();
   }
@@ -707,7 +707,7 @@ static PyObject *CmdDecline(PyObject *self,PyObject *args)
     APIEntry();
     MovieReset();
     PRINTFB(FB_Movie,FB_Actions)
-      " Movie: Risk declined by user.  Movie commands deleted.\n"
+      " Movie: Risk declined by user.  Movie commands have been deleted.\n"
       ENDFB;
     APIExit();
   }
