@@ -158,6 +158,7 @@ void ExecutiveSelectRect(BlockRect *rect,int mode)
   if(log_box) {
     sprintf(buf2,"%scmd.delete(\"%s\")\n",prefix,cTempRectSele);
     PLog(buf2,cPLog_no_flush);
+    PLogFlush();
   }
   ExecutiveDelete(cTempRectSele);
   }
