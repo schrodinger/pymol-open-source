@@ -2,6 +2,7 @@
 import chempy
 import copy
 from cpv import *
+import operator
 
 class Base:
 
@@ -47,6 +48,28 @@ class Base:
       for a in self.atom:
          sm = sm + a.get_mass()
       return sm
+
+#------------------------------------------------------------------------------
+   def get_implicit_mass(self):
+      # mass calculation for implicit models
+
+      valence = [0]*len(self.atom)
+      implicit = [0]*len(self.atom)
+      
+      for a in self.bond:
+         ai0 = a.index[0]
+         ai1 = a.index[1]
+         valence[ai0] = valence[ai0] + 1
+         valence[ai1] = valence[ai1] + 1
+      c = 0
+      for a in model.atom:
+         valence[c] = valence[c] - a.formal_charge
+         implicit[c] = implicit_valence[a.symbol][valence[c]]
+         c = c + 1
+      h_count = reduce(operator.__add__,implicit)
+      hydrogen = Atom()
+      hydrogen.symbol='H'
+      return self.get_mass()+hydrogen.get_mass()*h_count
 
 #------------------------------------------------------------------------------
    def assign_names(self,preserve=1):
