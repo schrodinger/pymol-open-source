@@ -1864,9 +1864,10 @@ int ChampMatch_1V1_Map(CChamp *I,int pattern,int target,int limit,int tag_flag)
 
   ChampPreparePattern(I,pattern);
   ChampPrepareTarget(I,target);
-  return(ChampMatch(I,pattern,target,
-                    ChampFindUniqueStart(I,pattern,target,NULL),
-                    limit,&match_start,tag_flag));
+  ChampMatch(I,pattern,target,
+             ChampFindUniqueStart(I,pattern,target,NULL),
+             limit,&match_start,tag_flag);
+  return(match_start);
 }
 
 int ChampMatch_1VN_N(CChamp *I,int pattern,int list)
@@ -2004,10 +2005,10 @@ void ChampMatchDump(CChamp *I,int match_idx)
     while(m_atom_idx) {
       atom_idx = I->Int2[m_atom_idx].value[0];
       ChampAtomDump(I,atom_idx);
-      printf("(%2d)-",atom_idx);
+      printf("(%2d,%2d)-",atom_idx,I->Atom[atom_idx].index);
       atom_idx = I->Int2[m_atom_idx].value[1];
       ChampAtomDump(I,atom_idx);
-      printf("(%2d)\n",atom_idx);
+      printf("(%2d,%2d)\n",atom_idx,I->Atom[atom_idx].index);
       m_atom_idx = I->Int2[m_atom_idx].link;
     }
     while(m_bond_idx) {
