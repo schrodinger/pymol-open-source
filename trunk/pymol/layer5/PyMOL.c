@@ -674,6 +674,8 @@ void PyMOL_SetDefaultMouse(CPyMOL *I)
   ButModeSet(G,13,cButModeMoveSlab);
   ButModeSet(G,5,cButModeClipNF);
   ButModeSet(G,14,cButModeMoveSlabAndZoom);
+  ButModeSet(G,20,cButModeCent);
+  ButModeSet(G,10,cButModeOrigAt);
 
 }
 

@@ -321,14 +321,7 @@ int TestPyMOLRun(PyMOLGlobals *G,int group,int test)
   case 1: 
     /* set up for test usage as a simple viewer */
     
-    ButModeSet(G,0,cButModeRotXYZ);
-    ButModeSet(G,1,cButModeTransXY);
-    ButModeSet(G,2,cButModeTransZ);
-    ButModeSet(G,12,cButModeScaleSlab);
-    ButModeSet(G,13,cButModeMoveSlab);
-    ButModeSet(G,5,cButModeClipNF);
-    ButModeSet(G,14,cButModeMoveSlabAndZoom);
-    /*    ButModeSet(G,20,cButModeCent);*/
+    PyMOL_SetDefaultMouse(G->PyMOL);
 
     switch(test) {
     case 1: 
