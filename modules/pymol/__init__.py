@@ -66,7 +66,7 @@ lock_api_c = threading.RLock() # mutex for C management of python threads
 def start_pymol():
    global glutThread
    glutThread = thread.get_ident()
-   _cmd.runpymol()
+   _cmd.runpymol() # only returns if we are running pretend GLUT
    from pymol import wxpymol # never returns
 
 def exec_str(s):
@@ -81,6 +81,7 @@ def stdin_reader(): # dedicated thread for reading standard input
 	from pymol import cmd
 	while 1:
 		cmd.do(sys.stdin.readline())
+
 			   
 def exec_deferred():
    
@@ -110,8 +111,10 @@ def adapt_to_hardware():
    (vendor,renderer,version) = cmd.get_renderer()
    if vendor[0:6]=='NVIDIA':
       if renderer[0:7]=='GeForce':
-         print " Adapting to GeForce hardware..."
+         if invocation.options.show_splash:
+            print " Adapting to GeForce hardware..."
          cmd.set('line_width','2',quiet=1)
+         
 # NEED SOME CONTRIBUTIONS HERE!
 
 def launch_gui():

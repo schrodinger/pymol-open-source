@@ -118,7 +118,7 @@ def parse_args(argv):
          if "l" in a:
             options.deferred.append("_do_spawn %s"%av.pop())
          if "r" in a:
-            options.deferred.append("_do_run %s"%av.pop())
+            options.deferred.append("_do_run %s,main"%av.pop())
          if "u" in a:
             options.deferred.append("_do_resume %s"%av.pop())
          if "s" in a:
