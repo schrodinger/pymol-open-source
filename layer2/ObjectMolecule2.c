@@ -488,8 +488,6 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(char *buffer,
   int ignore_conect = false;
   int have_bond_order = false;
   int seen_model;
-  int have_vdw;
-  float vdw;
 
   if((int)SettingGet(cSetting_pdb_literal_names)) 
     reformat_names = 0;
@@ -1173,7 +1171,6 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(char *buffer,
       if(AFlag&&(!*restart_model))
         {
           ai=atInfo+atomCount;
-          have_vdw = false;
           p=nskip(p,6);
           p=ncopy(cc,p,5);
           if(!sscanf(cc,"%d",&ai->id)) ai->id=0;
@@ -1375,9 +1372,8 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(char *buffer,
               ai->partialCharge=0.0F;
 
             p=ParseWordCopy(cc,p,MAXLINELEN-1);            
-            if(sscanf(cc,"%f",&vdw)==1)
-              have_vdw = true;
-            
+            if(sscanf(cc,"%f",&ai->bohr_radius)!=1)
+              ai->bohr_radius = 0.0F;
           }
 
           ai->visRep[cRepLine] = auto_show_lines; /* show lines by default */
@@ -1391,7 +1387,6 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(char *buffer,
           }
           
           AtomInfoAssignParameters(ai);
-          if(have_vdw) ai->vdw = vdw; /* if we read VDW, then use it! */
           ai->color=AtomInfoGetColor(ai);
 
           PRINTFD(FB_ObjectMolecule)
@@ -2337,7 +2332,57 @@ int ObjectMoleculeConnect(ObjectMolecule *I,BondType **bond,AtomInfoType *ai,
                                     if(water_flag) /* hack to clean up water bonds */
                                       if(!AtomInfoSameResidue(ai1,ai2))
                                         flag=false;
-                                  
+                                  #if 0
+
+                                  /* 
+                                     Problem: PQR files have bohr radii, not vdw radius.
+                                     Solution: add a separate atom property for bohr radius
+                                               that PyMOL assigns and remembers...
+                                     Alternative (NOT TAKEN): eliminate extraneous bonds (not USED).
+                                  */
+
+                                  if(flag&!water_flag) {
+                                    if(AtomInfoSameResidue(ai1,ai2)) {
+                                      switch(ai1->resn[0]) {
+                                      case 'H':
+                                        switch(ai1->resn[1]) {
+                                        case 'I':
+                                          switch(ai1->resn[2]) {
+                                          case 'S':
+                                          case 'E':
+                                          case 'D':
+                                            if(!strcmp(ai1->name,"CG")) {
+                                              if((!strcmp(ai2->name,"NE2"))&&
+                                                 (!strcmp(ai2->name,"CE1")))
+                                                flag=false;
+                                            } else if(!strcmp(ai1->name,"CD2")) {
+                                              if((!strcmp(ai2->name,"CE1"))&&
+                                                 (!strcmp(ai2->name,"ND1")))
+                                                flag=false;
+                                            } else if(!strcmp(ai1->name,"NE2")) {
+                                              if((!strcmp(ai2->name,"ND1"))&&
+                                                 (!strcmp(ai2->name,"CG")))
+                                                flag=false;
+                                            } else if(!strcmp(ai1->name,"CE1")) {
+                                              if((!strcmp(ai2->name,"CD2"))&&
+                                                 (!strcmp(ai2->name,"CG")))
+                                                flag=false;
+                                            } else if(!strcmp(ai1->name,"ND1")) {
+                                              if((!strcmp(ai2->name,"CD2"))&&
+                                                 (!strcmp(ai2->name,"NE2")))
+                                                flag=false;
+                                            }
+                                            break;
+                                          }
+                                          break;
+                                        }
+                                        break;
+                                      }
+                                    }
+                                  }
+
+                                  #endif
+
                                   if(flag) {
                                     VLACheck((*bond),BondType,nBond);
                                     (*bond)[nBond].index[0] = a1;

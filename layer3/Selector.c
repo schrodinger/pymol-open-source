@@ -4804,7 +4804,8 @@ int SelectorMapCoulomb(int sele1,ObjectMapState *oMap,float cutoff,int state)
 }
 
 /*========================================================================*/
-int SelectorGetPDB(char **charVLA,int cLen,int sele,int state,int conectFlag)
+int SelectorGetPDB(char **charVLA,int cLen,int sele,int state,
+                   int conectFlag,PDBInfoRec *pdb_info)
 {
   SelectorType *I=&Selector;
 
@@ -4816,11 +4817,11 @@ int SelectorGetPDB(char **charVLA,int cLen,int sele,int state,int conectFlag)
   int use_ter = (int)SettingGet(cSetting_pdb_use_ter_records);
   int retain_ids = (int)SettingGet(cSetting_pdb_retain_ids);
   int conect_all = (int)SettingGet(cSetting_pdb_conect_all);
-
   CoordSet *cs;
   ObjectMolecule *obj;
   AtomInfoType *atInfo,*ai,*last = NULL;
   SelectorUpdateTable();
+
   c=0;
     /*  if(SettingGet(cSetting_save_pdb_ss)) {
   SSEntry *ss = NULL;
@@ -4907,7 +4908,7 @@ int SelectorGetPDB(char **charVLA,int cLen,int sele,int state,int conectFlag)
               I->Table[a].index = c+1; /* NOTE marking with "1" based indexes here */
             }
             CoordSetAtomToPDBStrVLA(charVLA,&cLen,ai,
-                                    obj->CSet[state]->Coord+(3*idx),c);
+                                    obj->CSet[state]->Coord+(3*idx),c,pdb_info);
             last = ai;
             c++;
           }

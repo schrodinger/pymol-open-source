@@ -87,7 +87,7 @@ int ExecutiveGetMoment(char *name,Matrix33d mi,int state);
 char *ExecutiveGetChains(char *sele,int state,int *null_chain);
 
 void ExecutiveOrient(char *sele,Matrix33d mi,int state);
-char *ExecutiveSeleToPDBStr(char *s1,int state,int conectFlag);
+char *ExecutiveSeleToPDBStr(char *s1,int state,int conectFlag,int mode);
 int ExecutiveStereo(int flag);
 void ExecutiveCopy(char *src,char *dst);
 float ExecutiveOverlap(char *s1,int state1,char *s2,int state2,float adjust);

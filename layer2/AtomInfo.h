@@ -148,6 +148,7 @@ typedef struct AtomInfoType {
   int hb_donor; 
   int hb_acceptor;
   int discrete_state; /* state+1 for atoms in discrete objects */
+  float bohr_radius;
 } AtomInfoType;
 
 int *AtomInfoGetSortedIndex(AtomInfoType *rec,int n,int **outdex);

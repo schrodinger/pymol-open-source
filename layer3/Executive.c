@@ -3582,7 +3582,7 @@ float ExecutiveDistance(char *s1,char *s2)
   return(dist);
 }
 /*========================================================================*/
-char *ExecutiveSeleToPDBStr(char *s1,int state,int conectFlag)
+char *ExecutiveSeleToPDBStr(char *s1,int state,int conectFlag,int mode)
 {
   char *result=NULL;
   ObjectMoleculeOpRec op1;
@@ -3593,7 +3593,9 @@ char *ExecutiveSeleToPDBStr(char *s1,int state,int conectFlag)
   int n_state = 1;
   int a;
   char model_record[50];
+  PDBInfoRec pdb_info;
 
+  UtilZeroMem((void*)&pdb_info,sizeof(PDBInfoRec));
   ObjectMoleculeOpRecInit(&op1);
   sele1=SelectorIndexByName(s1);
   op1.i2 = 0;
@@ -3601,6 +3603,11 @@ char *ExecutiveSeleToPDBStr(char *s1,int state,int conectFlag)
   if(state==-2) { /* multimodel PDB */
     n_state = ExecutiveCountStates(s1);
   }
+
+  if(mode==1) {
+    pdb_info.is_pqr_file = true;    
+  }
+
   for(a=0;a<n_state;a++) {
     switch(state) {
     case -2:
@@ -3617,7 +3624,8 @@ char *ExecutiveSeleToPDBStr(char *s1,int state,int conectFlag)
     }
     
     if(conectFlag) {
-      op1.i2=SelectorGetPDB(&op1.charVLA,op1.i2,sele1,actual_state,conectFlag);
+      op1.i2=SelectorGetPDB(&op1.charVLA,op1.i2,sele1,
+                            actual_state,conectFlag,&pdb_info);
     } else {
       op1.i3 = 0; /* atIndex */
       if(sele1>=0) {
@@ -3626,7 +3634,8 @@ char *ExecutiveSeleToPDBStr(char *s1,int state,int conectFlag)
         ExecutiveObjMolSeleOp(sele1,&op1);
       }
     }
-    if(!(int)SettingGet(cSetting_pdb_no_end_record)) /* terminate with END */
+    if(!(SettingGetGlobal_i(cSetting_pdb_no_end_record)))
+      /* terminate with END */
       UtilConcatVLA(&op1.charVLA,&op1.i2,end_str);
     switch(state) {
     case -2:

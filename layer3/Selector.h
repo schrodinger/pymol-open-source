@@ -43,7 +43,8 @@ void SelectorFree(void);
 void SelectorDelete(char *sele);
 void SelectorFreeTmp(char *name);
 int SelectorGetTmp(char *input,char *store);
-int SelectorGetPDB(char **charVLA,int cLen,int sele,int state,int conectFlag);
+int SelectorGetPDB(char **charVLA,int cLen,int sele,int state,
+                   int conectFlag,PDBInfoRec *pdb_info);
 PyObject *SelectorGetChemPyModel(int sele,int state);
 float SelectorSumVDWOverlap(int sele1,int state1,int sele2,int state2,float adjust);
 DistSet *SelectorGetDistSet(int sele1,int state1,int sele2,int state2,int mode,

@@ -48,7 +48,7 @@ NOTES
       r = None
       try:
          lock()   
-         r = _cmd.get_pdb(str(selection),int(state)-1)
+         r = _cmd.get_pdb(str(selection),int(state)-1,0)
       finally:
          unlock()
       return r
@@ -149,6 +149,8 @@ SEE ALSO
          lc_filename=string.lower(filename)
          if re.search("\.pdb$|\.ent$",lc_filename):
             format = 'pdb'
+         elif re.search("\.pqr$",lc_filename):
+            format = 'pqr'
          elif re.search("\.mol$",lc_filename):
             format = 'mol'
          elif re.search("\.pkl$",lc_filename):
@@ -169,12 +171,25 @@ SEE ALSO
          format = str(format)
       filename = os.path.expanduser(filename)
       filename = os.path.expandvars(filename)
-      if format=='pdb':
+      if format=='pdb': # standard PDB file 
          f=open(filename,"w")
          if f:
             try:
                lock()
-               st = _cmd.get_pdb("("+str(selection)+")",int(state)-1)
+               st = _cmd.get_pdb("("+str(selection)+")",int(state)-1,0)
+            finally:
+               unlock()
+               f.write(st)
+               f.close()
+            r = None
+            if not quiet:
+               print " Save: wrote \""+filename+"\"."
+      elif format=='pqr': # PQR (modified PDB file)
+         f=open(filename,"w")
+         if f:
+            try:
+               lock()
+               st = _cmd.get_pdb("("+str(selection)+")",int(state)-1,1)
             finally:
                unlock()
                f.write(st)
