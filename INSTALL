@@ -71,8 +71,7 @@ STEP (5) ALTERNATE APPROACH: (only recommended for easier debugging on linux)
  appropriate environment variables.  If you're going to use pymol a lot,
  add this file to your .cshrc login script
 
-	cd $HOME/pymol
-	source pymol.csh
+	source $HOME/pymol/pymol.csh
 
  You should be all set to run pymol.
 
