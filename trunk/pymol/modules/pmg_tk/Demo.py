@@ -1,3 +1,7 @@
+from pymol.vfont import plain
+from pymol.cgo import *
+import string
+import traceback
 
 from pymol import cmd
 from pymol import util
@@ -14,7 +18,7 @@ class Demo: # stateful class for doing effective demonstrations
          self.last = getattr(self,name)
          self.last()
                  
-   def rep(self,cleanup=0):
+   def rep_old(self,cleanup=0):
       if not cleanup:
          cmd.set("suspend_updates",1,quiet=1)
          cmd.disable()
@@ -33,7 +37,78 @@ class Demo: # stateful class for doing effective demonstrations
       else:
          cmd.delete("pept")
          cmd.delete("pept_dist")
-      
+
+   def rep(self,cleanup=0):
+      rep_list = [ "lines","sticks","spheres","surface","mesh","dots","ribbon","cartoon" ]
+      try:
+         if not cleanup:
+            cmd.set("suspend_updates",1,quiet=1)
+            cmd.load("$PYMOL_PATH/test/dat/pept.pdb","rep1")
+            cmd.alter("rep1///1-5+8-13/","ss='S'")
+            cmd.cartoon("auto")
+            cmd.hide("everything","rep1")
+            for a in range(2,9):
+               cmd.create("rep%d"%a,"rep1")
+            map(lambda x,y:cmd.show(x,"rep%d"%y),
+                rep_list,
+                range(1,9))
+            cmd.reset()
+            cmd.zoom("rep1",24)
+            util.cbay("rep2")
+            util.cbac("rep3")
+            util.cbas("rep4")
+            util.cbab("rep5")
+            util.cbaw("rep6")            
+            util.cbay("rep8")
+            
+            cmd.set("suspend_updates",0,quiet=1)
+            scale=0.5
+            for b in range(1,20):
+               cmd.set("suspend_updates",0,quiet=1)
+               cmd.refresh()
+               cmd.set("suspend_updates",1,quiet=1)
+               xt=-3.2
+               yt=1.6
+               for a in range(1,5):
+                  cmd.translate([xt*scale,yt*scale,0],object="rep%d"%a,camera=0)
+                  xt=xt+2
+               yt=-yt
+               xt=-3.2
+               for a in range(5,9):
+                  cmd.translate([xt*scale,yt*scale,0],object="rep%d"%a,camera=0)
+                  xt=xt+2
+            for a in range(1,9):
+               cmd.origin("rep%d"%a,object="rep%d"%a)
+            cmd.mset("1")
+            st = string.join(map(lambda x,y:"rotate angle=3,object=rep%d,axis=%s;"%(x,y),range(1,9),
+                                 ['x','y','x','y','x','y','x','y']))
+            cmd.mdo(1,st)
+            cmd.set("suspend_updates",0,quiet=1)
+            cmd.mplay()
+
+            cgo = []
+            axes = [[4.5,0.0,0.0],[0.0,3.0,0.0],[0.0,0.0,3.0]]
+
+            c = 1
+            for a in rep_list:
+               ext = cmd.get_extent("rep%d"%c)
+               pos = [(ext[0][0]+ext[1][0])/2,
+                      (ext[0][1]+ext[1][1])/2+14,
+                      (ext[0][2]+ext[1][2])/2]
+               c = c + 1
+               pos[0]=pos[0]-(measure_text(plain,a,axes)/2)
+               wire_text(cgo,plain,pos,a,axes)
+            cmd.set("cgo_line_width",1.5)
+            cmd.set("auto_zoom",0)
+            cmd.load_cgo(cgo,'reps')
+            cmd.set("auto_zoom",1)
+         else:
+            cmd.delete("rep*")
+            cmd.mset()
+            cmd.mstop()
+      except:
+         traceback.print_exc()
+         
    def raster3d(self,cleanup=0):
       if not cleanup:
          cmd.disable()
@@ -55,6 +130,8 @@ class Demo: # stateful class for doing effective demonstrations
          cmd.do("run examples/devel/cgo03.py")
       else:
          cmd.delete("cgo03")
+         cmd.mset()
+         cmd.mstop()
 
    def anime(self,cleanup=0):
       if not cleanup:

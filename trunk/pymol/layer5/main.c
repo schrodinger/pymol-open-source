@@ -53,6 +53,7 @@ Z* -------------------------------------------------------------------
 #include"SculptCache.h"
 #include"Isosurf.h"
 #include"Tetsurf.h"
+#include"PConv.h"
 
 void MainFree(void);
 void MainTest(void);
@@ -302,6 +303,36 @@ void MainReshape(int width, int height) /* called by Glut */
   
 
   OrthoReshape(width,height);
+}
+/*========================================================================*/
+
+PyObject *MainAsPyList(void) 
+{
+  PyObject *result=NULL;
+  result = PyList_New(2);
+  PyList_SetItem(result,0,PyInt_FromLong(WinX));
+  PyList_SetItem(result,1,PyInt_FromLong(WinY));
+  return(PConvAutoNone(result));
+}
+
+int MainFromPyList(PyObject *list)
+{
+  int ok=true;
+  int win_x,win_y;
+  int size;
+  OrthoLineType buffer;
+  if(ok) ok = (list!=NULL);
+  if(ok) ok = PyList_Check(list);
+  if(ok) size=PyList_Size(list);
+  if(ok&&(size>=2)) {
+    if(ok) ok = PConvPyIntToInt(PyList_GetItem(list,0),&win_x);
+    if(ok) ok = PConvPyIntToInt(PyList_GetItem(list,1),&win_y);
+    if(ok) {
+      sprintf(buffer,"viewport %d, %d",win_x,win_y);
+      PParse(buffer);
+    }
+  }
+  return(ok);
 }
 /*========================================================================*/
 void MainDoReshape(int width, int height) /* called internally */

@@ -78,7 +78,8 @@ void ExecutiveCopy(char *src,char *dst);
 float ExecutiveOverlap(char *s1,int state1,char *s2,int state2,float adjust);
 int ExecutiveCountStates(char *s1);
 void ExecutiveSymExp(char *name,char *obj,char *sele,float cutoff);
-int ExecutiveGetExtent(char *name,float *mn,float *mx,int transformed,int state);
+int ExecutiveGetExtent(char *name,float *mn,float *mx,int transformed,int state,int weighted);
+int ExecutiveGetCameraExtent(char *name,float *mn,float *mx,int transformed,int state);
 void ExecutiveSeleToObject(char *name,char *s1,int source,int target);
 PyObject *ExecutiveSeleToChemPyModel(char *s1,int state);
 void ExecutiveInvalidateRep(char *name,int rep,int level);
@@ -116,6 +117,7 @@ float *ExecutiveGetVertexVLA(char *s1,int state);
 int ExecutiveValidName(char *name);
 
 int ExecutiveTransformObjectSelection(char *name,int state,char *s1,int log,float *ttt);
+int ExecutiveTransformSelection(int state,char *s1,int log,float *ttt);
 int ExecutiveTranslateAtom(char *sele,float *v,int state,int mode,int log);
 void ExecutiveSelectRect(BlockRect *rect,int mode);
 int ExecutiveMapSetBorder(char *name,float level);
@@ -134,7 +136,7 @@ int ExecutiveMapNew(char *name,int type,float *grid,char *sele,
 int ***ExecutiveGetBondPrint(char *name,int max_bond,int max_type,int *dim);
 int ExecutiveSetCrystal(char *sele,float a,float b,float c,
                          float alpha,float beta,float gamma,char *sgroup);
-PyObject *ExecutiveGetSession(void);
+int ExecutiveGetSession(PyObject *dict);
 int ExecutiveSetSession(PyObject *session);
 ObjectMap *ExecutiveFindObjectMapByName(char *name);
 

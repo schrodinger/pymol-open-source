@@ -279,8 +279,6 @@ static WordKeyValue AtOper[] =
  { "", 0 }
 };
 
-static int BondInOrder(BondType *a,int b1,int b2);
-static int BondCompare(BondType *a,BondType *b);
 
 int SelectorWalkTree(int *atom,int *comp,int *toDo,int **stk,
                      int stkDepth,ObjectMolecule *obj,int sele1,int sele2);
@@ -856,6 +854,7 @@ int SelectorIsMember(int s,int sele)
 {
   SelectorType *I=&Selector;
   MemberType *member,*mem;
+  if(!sele) return true; /* "all" is selection number 0 */
   member=I->Member;
   while(s) 
     {
@@ -893,6 +892,35 @@ ObjectMolecule *SelectorGetSingleObjectMolecule(int sele)
     }
   return(result);
 }
+/*========================================================================*/
+ObjectMolecule **SelectorGetObjectMoleculeVLA(int sele)
+{
+  int a;
+  ObjectMolecule *last = NULL;
+  ObjectMolecule *obj,**result = NULL;  
+  SelectorType *I=&Selector;
+  int at1;
+  SelectorUpdateTable();
+  int n=0;
+
+  result = VLAlloc(ObjectMolecule*,10);
+  for(a=0;a<I->NAtom;a++)
+    {
+      obj=I->Obj[I->Table[a].model];
+      at1=I->Table[a].atom;
+      if(SelectorIsMember(obj->AtomInfo[at1].selEntry,sele)) {
+        if(obj!=last) {
+          VLACheck(result,ObjectMolecule*,n);
+          result[n]=obj;
+          last=obj;
+          n++;
+        }
+      }
+    }
+  VLASize(result,ObjectMolecule,n);
+  return(result);
+}
+
 /*========================================================================*/
 int SelectorGetSingleAtomObjectIndex(int sele,ObjectMolecule **in_obj,int *index)
 {
@@ -946,7 +974,7 @@ void SelectorDeletePrefixSet(char *pref)
 
   while(1) {
     a = WordIndex(I->Name,pref,strlen(pref),false);
-    if(a>=0) {
+    if(a>0) {
       strcpy(name_copy,I->Name[a]);
       ExecutiveDelete(name_copy); /* import to use a copy, otherwise 
                                    * you'll delete all objects  */
@@ -1190,30 +1218,6 @@ int SelectorSubdivideObject(char *pref,ObjectMolecule *obj,int sele1,int sele2,
     ENDFD;
 
   return(nFrag);
-}
-/*========================================================================*/
-static int BondInOrder(BondType *a,int b1,int b2)
-{
-  return(BondCompare(a+b1,a+b2)<=0);
-}
-/*========================================================================*/
-static int BondCompare(BondType *a,BondType *b)
-{
-  int result;
-  if(a->index[0]==b->index[0]) {
-	if(a->index[1]==b->index[1]) {
-	  result=0;
-	} else if(a->index[1]>b->index[1]) {
-	  result=1;
-	} else {
-	  result=-1;
-	}
-  } else if(a->index[0]>b->index[0]) {
-	result=1;
-  } else {
-	result=-1;
-  }
-  return(result);
 }
 
 /*========================================================================*/
@@ -2693,7 +2697,7 @@ void SelectorDelete(char *sele)
   int n;
   int index;
   n=WordIndex(I->Name,sele,999,I->IgnoreCase); /* already exist? */
-  if(n>=0) /* get rid of existing selection*/
+  if(n>0) /* get rid of existing selection -- but not selection 0 (all) */
 	 {
       index = I->ID[n];
 		SelectorPurgeMembers(index);
@@ -2721,13 +2725,15 @@ int SelectorGetTmp(char *input,char *store)
   } else {
     if(ExecutiveValidName(input))
       strcpy(store,input);
-    else {
+    else if(input[0]) {
       strcpy(buffer,"(");
       strcat(buffer,input);
       strcat(buffer,")");
       sprintf(name,"%s%d",cSelectorTmpPrefix,I->TmpCounter++);      
       count = SelectorCreate(name,buffer,NULL,false,NULL);
       strcpy(store,name);
+    } else {
+      store[0]=0;
     }
   }
   PRINTFD(FB_Selector)
@@ -2754,7 +2760,9 @@ int  SelectorEmbedSelection(int *atom, char *name, ObjectMolecule *obj)
   int c=0;
   AtomInfoType *ai;
   n=WordIndex(I->Name,name,999,I->IgnoreCase); /* already exist? */
-  if(n>=0) /* get rid of existing selection*/ {
+  if(n==0) /* don't allow redefinition of "all" */
+    return 0;
+  if(n>0) /* get rid of existing selection*/ {
     SelectorDelete(I->Name[n]);
     newFlag = false;
   }
@@ -2841,6 +2849,9 @@ int SelectorCreate(char *sname,char *sele,ObjectMolecule *obj,int quiet,Multipic
 	 strcpy(name,&sname[1]);
   else
 	 strcpy(name,sname);		  
+  if(WordMatch(cKeywordAll,name,true)<0) {
+    name[0]=0; /* force error */
+  }
   UtilCleanStr(name);
   if(!name[0])
 	 {
@@ -4849,6 +4860,19 @@ void SelectorInit(void)
   I->Flag1=NULL;
   I->Flag2=NULL;
   I->Vertex=NULL;
+
+  {  /* create placeholder "all" selection, which is selection 0 */
+    int n;
+
+    n=I->NActive;
+    VLACheck(I->Name,WordType,n+1);
+    VLACheck(I->ID,int,n+1);
+    strcpy(I->Name[n],cKeywordAll); /* "all" selection */
+    I->Name[n+1][0]=0;
+    I->ID[n] = I->NSelection++;
+    I->NActive++;
+  }
+
 }
 /*========================================================================*/
 

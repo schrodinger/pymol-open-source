@@ -52,7 +52,6 @@ Z* -------------------------------------------------------------------
 #define cExecSelection 1
 #define cExecAll 2
 
-#define cKeywordAll "all"
 #define cTempRectSele "_rect"
 #define cLeftButSele "lb"
 #define cIndicateSele "indicate"
@@ -315,24 +314,21 @@ static PyObject *ExecutiveGetNamedEntries(void)
   return(PConvAutoNone(result));
 }
 
-PyObject *ExecutiveGetSession(void)
+int ExecutiveGetSession(PyObject *dict)
 {
-  PyObject *result = NULL;
-
+  int ok=true;
   SceneViewType sv;
-
-  result = PyDict_New();
-  PyDict_SetItemString(result,"names",ExecutiveGetNamedEntries());
-  PyDict_SetItemString(result,"settings",SettingGetGlobalsPyList());
-  PyDict_SetItemString(result,"colors",ColorAsPyList());
-  PyDict_SetItemString(result,"version",PyInt_FromLong(_PyMOL_VERSION_int));
+  PyDict_SetItemString(dict,"names",ExecutiveGetNamedEntries());
+  PyDict_SetItemString(dict,"settings",SettingGetGlobalsPyList());
+  PyDict_SetItemString(dict,"colors",ColorAsPyList());
+  PyDict_SetItemString(dict,"version",PyInt_FromLong(_PyMOL_VERSION_int));
   SceneGetView(sv);
-  PyDict_SetItemString(result,"view",PConvFloatArrayToPyList(sv,cSceneViewSize));
-  PyDict_SetItemString(result,"movie",MovieAsPyList());
-  PyDict_SetItemString(result,"editor",EditorAsPyList());
-  return(result);
+  PyDict_SetItemString(dict,"view",PConvFloatArrayToPyList(sv,cSceneViewSize));
+  PyDict_SetItemString(dict,"movie",MovieAsPyList());
+  PyDict_SetItemString(dict,"editor",EditorAsPyList());
+  PyDict_SetItemString(dict,"main",MainAsPyList());
+  return(ok);
 }
-
 
 int ExecutiveSetSession(PyObject *session)
 {
@@ -345,42 +341,53 @@ int ExecutiveSetSession(PyObject *session)
   if(ok) ok = PyDict_Check(session);
   if(ok) {
     tmp = PyDict_GetItemString(session,"colors");
-    if(tmp) 
+    if(tmp) {
       ok = ColorFromPyList(tmp);
+    }
   }
   if(ok) {
     tmp = PyDict_GetItemString(session,"settings");
-    if(tmp) 
+    if(tmp) {
       ok = SettingSetGlobalsFromPyList(tmp);
+    }
   }
   if(ok) {
     tmp = PyDict_GetItemString(session,"names");
     if(tmp) {
       if(ok) ok=ExecutiveSetNamedEntries(tmp);
       if(ok) ok=ExecutiveSetSelections(tmp);
-        
     }
   }
   if(ok) {
     tmp = PyDict_GetItemString(session,"view");
-    if(tmp) 
+    if(tmp) {
       ok = PConvPyListToFloatArrayInPlace(tmp,sv,cSceneViewSize);
+    }
     if(ok) SceneSetView(sv);
         
   }
   if(ok) {
     int warning;
     tmp = PyDict_GetItemString(session,"movie");
-    if(tmp) 
+    if(tmp) {
       ok = MovieFromPyList(tmp,&warning);
+    }
   }
   if(ok) {
     tmp = PyDict_GetItemString(session,"editor");
-    if(tmp) 
+    if(tmp) {
       ok = EditorFromPyList(tmp);
+    }
   }
   if(ok) { /* update mouse in GUI */
     PParse("cmd.mouse(quiet=1)");
+    PParse("viewport"); /* refresh window/internal_gui status */
+  }
+  if(ok) {
+    tmp = PyDict_GetItemString(session,"main");
+    if(tmp) {
+      ok = MainFromPyList(tmp);
+    }
   }
   return(ok);
 }
@@ -519,7 +526,6 @@ int ExecutiveSmooth(char *name,int cycles,int first,int last,int window,int ends
 {
   int sele = -1;
   ObjectMoleculeOpRec op;
-  int all_flag=false;
   int state;
   int n_state;
   float *coord0=NULL,*coord1=NULL;
@@ -533,17 +539,12 @@ int ExecutiveSmooth(char *name,int cycles,int first,int last,int window,int ends
   int range,offset;
   float *v0,*v1;
   float sum[3];
-  WordType all = "_all";
+  /*  WordType all = "_all";*/
 
   PRINTFD(FB_Executive)
     " ExecutiveSmooth: entered %s\n",name
     ENDFD;
 
-  if(WordMatch(cKeywordAll,name,true)<0) {
-    name=all;
-    all_flag=true;
-    SelectorCreate(all,"(all)",NULL,true,NULL);
-  }
   sele=SelectorIndexByName(name);
 
   if(sele>=0) {
@@ -688,9 +689,6 @@ int ExecutiveSmooth(char *name,int cycles,int first,int last,int window,int ends
       }
     }
   }
-  if(all_flag) {
-    ExecutiveDelete(all);
-  }
   return(ok);
 }
 /*========================================================================*/
@@ -751,7 +749,7 @@ int ExecutiveMapNew(char *name,int type,float *grid,
   }
   
   if(strlen(sele)) {
-    ok = ExecutiveGetExtent(sele,md->MinCorner,md->MaxCorner,true,-1); /* TODO restrict to state */
+    ok = ExecutiveGetExtent(sele,md->MinCorner,md->MaxCorner,true,-1,false); /* TODO restrict to state */
   } else {
     copy3f(minCorner,md->MinCorner);
     copy3f(maxCorner,md->MaxCorner);
@@ -1112,6 +1110,34 @@ int ExecutiveCombineObjectTTT(char *name,float *ttt)
   return(ok);
 }
 
+int ExecutiveTransformSelection(int state,char *s1,int log,float *ttt)
+{
+  int sele=-1;
+  ObjectMolecule *obj = NULL;
+  ObjectMolecule **vla = NULL;
+  int nObj;
+  int ok=true;
+  int a;
+
+  sele = SelectorIndexByName(s1);
+  if(sele<0)
+    ok=false;
+  if(ok) {
+    vla=SelectorGetObjectMoleculeVLA(sele);
+    if(!vla) ok=false;
+  }
+  if(ok) {
+    nObj = VLAGetSize(vla);
+    for(a=0;a<nObj;a++) {
+      obj=vla[a];
+      ObjectMoleculeTransformSelection(obj,state,sele,ttt,log,s1);
+    }
+  }
+  SceneDirty();
+  VLAFreeP(vla);
+  return(ok);
+}
+
 int ExecutiveTransformObjectSelection(char *name,int state,char *s1,int log,float *ttt)
 {
   int sele=-1;
@@ -1141,6 +1167,7 @@ int ExecutiveTransformObjectSelection(char *name,int state,char *s1,int log,floa
 int ExecutiveValidName(char *name)
 {
   int result=true;
+
   if(!ExecutiveFindSpec(name)) {
     if(!WordMatch(name,cKeywordAll,true))
       result=false;
@@ -1919,18 +1946,8 @@ void ExecutiveRemoveAtoms(char *s1)
   ObjectMolecule *obj = NULL;
   ObjectMoleculeOpRec op;
   int flag = false;
-  int all_flag=false;
-  WordType all = "_all";
 
   sele=SelectorIndexByName(s1);
-  if(sele<0) {
-    if(WordMatch(cKeywordAll,s1,true)<0) {
-      all_flag=true;
-      SelectorCreate(all,"(all)",NULL,true,NULL);
-    }
-    sele=SelectorIndexByName(all);
-  }
-
   if(sele>=0)
 	 {
 		while(ListIterate(I->Spec,rec,next))
@@ -1960,9 +1977,6 @@ void ExecutiveRemoveAtoms(char *s1)
 				}
 		  }
 	 }
-  if(all_flag) {
-    ExecutiveDelete(all);
-  }
   /*  if(!flag) {
       ErrMessage("Remove","no atoms removed.");
       }*/
@@ -3368,16 +3382,65 @@ void ExecutiveObjMolSeleOp(int sele,ObjectMoleculeOpRec *op)
 }
 
 /*========================================================================*/
-int ExecutiveGetExtent(char *name,float *mn,float *mx,int transformed,int state)
+int ExecutiveGetCameraExtent(char *name,float *mn,float *mx,int transformed,int state)
+{
+  int sele;
+  ObjectMoleculeOpRec op;
+  int flag = false;
+
+  if(state==-2) state=SceneGetState();
+
+  PRINTFD(FB_Executive)
+    " ExecutiveGetCameraExtent: name %s state %d\n",name,state
+    ENDFD;
+  
+  sele=SelectorIndexByName(name);
+
+  if(sele>=0) { 
+    if(state<0) {
+      op.code = OMOP_CameraMinMax;
+    } else {
+      op.code = OMOP_CSetCameraMinMax;
+      op.cs1 = state;
+    }
+	 op.v1[0]=FLT_MAX;
+	 op.v1[1]=FLT_MAX;
+	 op.v1[2]=FLT_MAX;
+    op.v2[0]=FLT_MIN;
+    op.v2[1]=FLT_MIN;
+    op.v2[2]=FLT_MIN;
+    op.i1 = 0;
+    op.i2 = transformed;
+    op.mat1=SceneGetMatrix();
+
+    ExecutiveObjMolSeleOp(sele,&op);
+
+    PRINTFD(FB_Executive)
+      " ExecutiveGetCameraExtent: minmax over %d vertices\n",op.i1
+      ENDFD;
+    if(op.i1)
+      flag = true;
+  }
+  copy3f(op.v1,mn);
+  copy3f(op.v2,mx);
+  
+  PRINTFD(FB_Executive)
+    " ExecutiveGetCameraExtent: returning %d\n",flag
+    ENDFD;
+
+  return(flag);  
+}
+
+/*========================================================================*/
+int ExecutiveGetExtent(char *name,float *mn,float *mx,int transformed,int state,int weighted)
 {
   int sele;
   ObjectMoleculeOpRec op,op2;
   CExecutive *I=&Executive;
   CObject *obj;
   int flag = false;
-  int all_flag = false;
   SpecRec *rec = NULL;
-  WordType all = "_all";
+  int all_flag = false;
   float f1,f2,fmx;
   int a;
 
@@ -3396,13 +3459,11 @@ int ExecutiveGetExtent(char *name,float *mn,float *mx,int transformed,int state)
   op2.v2[2]=1.0;
   
   if(WordMatch(cKeywordAll,name,true)<0) {
-    name=all;
     all_flag=true;
-    SelectorCreate(all,"(all)",NULL,true,NULL);
   }
   sele=SelectorIndexByName(name);
 
-  if(sele>=0) {
+  if(sele>=0) { 
     if(state<0) {
       op.code = OMOP_MNMX;
     } else {
@@ -3442,23 +3503,25 @@ int ExecutiveGetExtent(char *name,float *mn,float *mx,int transformed,int state)
         }
       }
     }
-    op2.i1=0;
-    op2.i2=transformed;
-    if(state<0) 
-      op2.code = OMOP_SUMC;
-    else {
-      op2.code = OMOP_CSetSumVertices;
-      op2.cs1 = state;
-    }
+    if(weighted) {
+      op2.i1=0;
+      op2.i2=transformed;
+      if(state<0) 
+        op2.code = OMOP_SUMC;
+      else {
+        op2.code = OMOP_CSetSumVertices;
+        op2.cs1 = state;
+      }
       
-	 op2.v1[0]=0.0;
-	 op2.v1[1]=0.0;
-	 op2.v1[2]=0.0;
-    ExecutiveObjMolSeleOp(sele,&op2);
-    if(op2.i1) {
-      op2.v1[0]/=op2.i1;
-      op2.v1[1]/=op2.i1;
-      op2.v1[2]/=op2.i1;
+      op2.v1[0]=0.0;
+      op2.v1[1]=0.0;
+      op2.v1[2]=0.0;
+      ExecutiveObjMolSeleOp(sele,&op2);
+      if(op2.i1) {
+        op2.v1[0]/=op2.i1;
+        op2.v1[1]/=op2.i1;
+        op2.v1[2]/=op2.i1;
+      }
     }
   } else {
     obj = ExecutiveFindObjectByName(name);
@@ -3482,11 +3545,7 @@ int ExecutiveGetExtent(char *name,float *mn,float *mx,int transformed,int state)
       }
     }
   }
-  if(all_flag) {
-    ExecutiveDelete(all);
-  }
-
-  if(flag) { 
+  if(flag&&weighted) { 
     if(op2.i1) { 
       for (a=0;a<3;a++) { /* this puts origin at the weighted center */
         f1 = op2.v1[a] - op.v1[a];
@@ -3527,6 +3586,10 @@ int ExecutiveGetExtent(char *name,float *mn,float *mx,int transformed,int state)
       }
     }
   }
+  PRINTFD(FB_Executive)
+    " ExecutiveGetExtent: returning %d\n",flag
+    ENDFD;
+
   return(flag);  
 }
 /*========================================================================*/
@@ -3537,9 +3600,8 @@ int ExecutiveGetMaxDistance(char *name,float *pos,float *dev,int transformed,int
   CExecutive *I=&Executive;
   CObject *obj;
   int flag = false;
-  int all_flag = false;
   SpecRec *rec = NULL;
-  WordType all = "_all";
+  int all_flag = false;
   float f1,fmx=0.0F;
 
   if(state==-2) state=SceneGetState();
@@ -3557,9 +3619,7 @@ int ExecutiveGetMaxDistance(char *name,float *pos,float *dev,int transformed,int
   op2.v2[2]=1.0;
   
   if(WordMatch(cKeywordAll,name,true)<0) {
-    name=all;
-    all_flag=true;
-    SelectorCreate(all,"(all)",NULL,true,NULL);
+      all_flag=true;
   }
   sele=SelectorIndexByName(name);
 
@@ -3637,9 +3697,6 @@ int ExecutiveGetMaxDistance(char *name,float *pos,float *dev,int transformed,int
       }
     }
   }
-  if(all_flag) {
-    ExecutiveDelete(all);
-  }
   *dev = fmx;
   return(flag);  
 }
@@ -3650,7 +3707,7 @@ int ExecutiveWindowZoom(char *name,float buffer,int state,int inclusive)
   float mn[3],mx[3],df[3];
   int sele0;
   int ok=true;
-  if(ExecutiveGetExtent(name,mn,mx,true,state)) {
+  if(ExecutiveGetExtent(name,mn,mx,true,state,true)) {
     if(buffer!=0.0) {
       buffer = buffer;
       mx[0]+=buffer;
@@ -3685,7 +3742,7 @@ int ExecutiveWindowZoom(char *name,float buffer,int state,int inclusive)
     SceneDirty();
   } else {
     sele0 = SelectorIndexByName(name);
-    if(sele0>=0) {
+    if(sele0>0) { /* any valid selection except "all" */
       ErrMessage("ExecutiveWindowZoom","selection doesn't specify any coordinates.");
       ok=false;
     } else if(ExecutiveValidName(name)) {
@@ -3705,7 +3762,7 @@ int ExecutiveCenter(char *name,int state,int origin)
   float mn[3],mx[3],df[3];
   int sele0;
   int ok=true;
-  if(ExecutiveGetExtent(name,mn,mx,true,state)) {
+  if(ExecutiveGetExtent(name,mn,mx,true,state,true)) {
     subtract3f(mx,mn,df);
     average3f(mn,mx,center);
     PRINTFD(FB_Executive)
@@ -3721,7 +3778,7 @@ int ExecutiveCenter(char *name,int state,int origin)
     SceneDirty();
   } else {
     sele0 = SelectorIndexByName(name);
-    if(sele0>=0) {
+    if(sele0>=0) { /* any valid selection except "all" */
       ErrMessage("ExecutiveCenter","selection doesn't specify any coordinates.");
       ok=false;
     } else if(ExecutiveValidName(name)) {
@@ -3748,7 +3805,7 @@ int ExecutiveOrigin(char *name,int preserve,char *oname,float *pos,int state)
   }
   if(ok) {
     if(name[0]) {
-      ok = ExecutiveGetExtent(name,mn,mx,(oname[0]==0),state);
+      ok = ExecutiveGetExtent(name,mn,mx,(oname[0]==0),state,true);
       if(ok) 
         average3f(mn,mx,center);
     } else {
@@ -4079,15 +4136,12 @@ void ExecutiveInvalidateRep(char *name,int rep,int level)
 {
   int sele = -1;
   ObjectMoleculeOpRec op;
-  WordType all = "_all";
   int all_flag=false;
   PRINTFD(FB_Executive)
     "ExecInvRep-Debug: %s %d %d\n",name,rep,level
     ENDFD;
   if(WordMatch(cKeywordAll,name,true)<0) {
-    name=all;
     all_flag=true;
-    SelectorCreate(all,"(all)",NULL,true,NULL);
   }
   sele=SelectorIndexByName(name);
   if(sele>=0) {
@@ -4095,9 +4149,6 @@ void ExecutiveInvalidateRep(char *name,int rep,int level)
 	 op.i1=rep;
 	 op.i2=level;
 	 ExecutiveObjMolSeleOp(sele,&op);
-  }
-  if(all_flag) {
-    ExecutiveDelete(all);
   }
 }
 
@@ -4410,6 +4461,13 @@ void ExecutiveManageObject(CObject *obj,int allow_zoom)
       }
     if(!rec)
       ListElemAlloc(rec,SpecRec);
+
+    if(WordMatch(cKeywordAll,obj->Name,true)<0) {
+      PRINTFB(FB_Executive,FB_Warnings) 
+        " Executive: object name '%s' is illegal -- renamed to 'all_'.",obj->Name
+        ENDFB;
+      strcat(obj->Name,"_"); /* don't allow object named "all" */
+    }
     strcpy(rec->name,obj->Name);
     rec->type=cExecObject;
     rec->next=NULL;

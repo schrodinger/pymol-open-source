@@ -25,16 +25,20 @@ from chempy import io
 from cmd import _feedback,fb_module,fb_mask
 
 def get_session():
-   '''
-NOT YET IMPLEMENTED
-'''
-   r = None
-   try:
-      lock()   
-      r = _cmd.get_session(1)
-   finally:
-      unlock()
-   return r
+   session = {}
+   r = 1
+   for a in pymol._session_save_tasks:
+      if a==None:
+         try:
+            lock()
+            r = None
+            r = _cmd.get_session(session)
+         finally:
+            unlock()
+      else:
+         r = apply(a,(session,))
+      if not r: break
+   return session
 
 def png(filename):
    '''
@@ -79,8 +83,13 @@ def save(filename,selection='(all)',state=0,format=''):
 DESCRIPTION
   
    "save" writes selected atoms to a file.  The file format is
-   autodetected if the extesion is ".pdb" or ".pkl"
- 
+   autodetected if the extesion is ".pdb", ".pse", ".mol", ".mmod", or
+   ".pkl"
+
+   Note that if the file extension ends in ".pse" (PyMOL Session), the
+   complete PyMOL state is always saved to the file (the selection and
+   state parameters are thus ignored).
+      
 USAGE
  
    save file [,(selection) [,state [,format]] ]

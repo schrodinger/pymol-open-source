@@ -17,127 +17,129 @@
 # This module unifies argument handling for embedded and modular PyMOL
 #
 
-import copy
-import re
-import os
-import glob
-import string
+if __name__=='pymol.invocation':
 
-pattern1 = '.pymolrc*'
-pattern2 = 'pymolrc*'
+   import copy
+   import re
+   import os
+   import glob
+   import string
 
-class generic:
-   pass
+   pattern1 = '.pymolrc*'
+   pattern2 = 'pymolrc*'
 
-options = generic();
+   class generic:
+      pass
 
-options.stereo_capable = 0
-options.deferred = []
-options.no_gui = 0
-options.internal_gui = 1
-options.internal_feedback = 1
-options.external_gui = 1
-options.gui = 'pmg_tk'
-options.show_splash = 1
-options.read_stdin = 0
-# Greg Landrum
-options.rpcServer = 0
+   options = generic();
 
-pml_re = re.compile(r"pymolrc$|\.pml$|\.PML$")
-py_re = re.compile(r"\.py$|\.pym$|\.PY$|\.PYM$")
-pyc_re = re.compile(r"\.pyc$|\.PYC$") # not yet used
-
-def get_user_config():
-   lst = glob.glob(pattern1)
-   if not len(lst): # unix
-      if os.environ.has_key("HOME"):
-         lst = glob.glob(os.environ['HOME']+"/"+pattern1)
-   if not len(lst): # unix
-      if os.environ.has_key("HOME"):
-         lst = glob.glob(os.environ['HOME']+"/"+pattern2)
-   if not len(lst): # win32
-      if os.environ.has_key("HOMEPATH") and os.environ.has_key("HOMEDRIVE"):
-         lst = glob.glob(os.environ['HOMEDRIVE']+os.environ['HOMEPATH']+"/"+pattern1)
-   if not len(lst): # win32
-      if os.environ.has_key("HOMEPATH") and os.environ.has_key("HOMEDRIVE"):
-         lst = glob.glob(os.environ['HOMEDRIVE']+os.environ['HOMEPATH']+"/"+pattern2)
-   if not len(lst): # all
-      if os.environ.has_key("PYMOL_PATH"):
-         lst = glob.glob(os.environ['PYMOL_PATH']+"/"+pattern1)
-   if not len(lst): # all
-      if os.environ.has_key("PYMOL_PATH"):
-         lst = glob.glob(os.environ['PYMOL_PATH']+"/"+pattern2)
-
-   first = []
-   second = []
-   for a in lst:
-      if py_re.search(a):
-         first.append("_do__ run "+a) # preceeding "_ " cloaks
-      elif pml_re.search(a):
-         second.append("_do__ @"+a) # preceeding "_ " cloaks 
-#      elif pyc_re.search(a): # ignore compiled versions for now
-#         first.append("_do__ run "+a) # preceeding "_ " cloaks
-
-
-   first.sort()
-   second.sort()
-   return first+second
-
-def parse_args(argv):
-   av = copy.deepcopy(argv)
-   av = av[1:] # throw out the executable path
-   av.reverse()
-   global options
+   options.stereo_capable = 0
    options.deferred = []
-   # append user settings file as an option
-   options.deferred.extend(get_user_config())
-   while 1:
-      if not len(av):
-         break
-      a = av.pop()
-      a = re.sub(r'''^"|"$|^'|'$''','',a) # strip extra quotes
-      if a[0:1]=='-':
-         if a[1:2]=='-':
-            break # double hypen signal end of PyMOL arguments
-         if "c" in a:
-            options.no_gui=1
-            options.external_gui=0
-         if "s" in a:
-            pass # stereo now autodetected
-         if "2" in a:
-            options.deferred.append("_do__ config_mouse two_button")
-         if "q" in a:
-            options.show_splash = 0
-         if "i" in a:
-            options.internal_gui = 0
-         if "f" in a:
-            options.internal_feedback = int(av.pop())
-         if "x" in a:
-            options.external_gui = 0
-         if "t" in a:
-            options.gui = 'pmg_tk'
-         if "w" in a:
-            options.gui = 'pmg_wx'
-         if "d" in a:
-            options.deferred.append("_do_%s"%string.replace(av.pop(),'%',' '))
-         if "e" in a:
-            options.deferred.append("_do__ full_screen on")
-         if "l" in a:
-            options.deferred.append("_do_spawn %s"%av.pop())
-         if "r" in a:
-            options.deferred.append("_do_run %s,main"%av.pop())
-         if "u" in a:
-            options.deferred.append("_do_resume %s"%av.pop())
-         if "s" in a:
-            options.deferred.append("_do_log_open %s"%av.pop())
-         if "p" in a:
-            options.read_stdin = 1
-         if "X" in a:
-            options.rpcServer = 1
-         if "g" in a:
-            options.deferred.append("_do_png %s"%av.pop())
-         
-      else:
-         options.deferred.append(a)
-   if options.show_splash and not options.no_gui:
-      options.deferred.insert(0,"_do__ cmd.splash(1)")
+   options.no_gui = 0
+   options.internal_gui = 1
+   options.internal_feedback = 1
+   options.external_gui = 1
+   options.gui = 'pmg_tk'
+   options.show_splash = 1
+   options.read_stdin = 0
+   # Greg Landrum
+   options.rpcServer = 0
+
+   pml_re = re.compile(r"pymolrc$|\.pml$|\.PML$")
+   py_re = re.compile(r"\.py$|\.pym$|\.PY$|\.PYM$")
+   pyc_re = re.compile(r"\.pyc$|\.PYC$") # not yet used
+
+   def get_user_config():
+      lst = glob.glob(pattern1)
+      if not len(lst): # unix
+         if os.environ.has_key("HOME"):
+            lst = glob.glob(os.environ['HOME']+"/"+pattern1)
+      if not len(lst): # unix
+         if os.environ.has_key("HOME"):
+            lst = glob.glob(os.environ['HOME']+"/"+pattern2)
+      if not len(lst): # win32
+         if os.environ.has_key("HOMEPATH") and os.environ.has_key("HOMEDRIVE"):
+            lst = glob.glob(os.environ['HOMEDRIVE']+os.environ['HOMEPATH']+"/"+pattern1)
+      if not len(lst): # win32
+         if os.environ.has_key("HOMEPATH") and os.environ.has_key("HOMEDRIVE"):
+            lst = glob.glob(os.environ['HOMEDRIVE']+os.environ['HOMEPATH']+"/"+pattern2)
+      if not len(lst): # all
+         if os.environ.has_key("PYMOL_PATH"):
+            lst = glob.glob(os.environ['PYMOL_PATH']+"/"+pattern1)
+      if not len(lst): # all
+         if os.environ.has_key("PYMOL_PATH"):
+            lst = glob.glob(os.environ['PYMOL_PATH']+"/"+pattern2)
+
+      first = []
+      second = []
+      for a in lst:
+         if py_re.search(a):
+            first.append("_do__ run "+a) # preceeding "_ " cloaks
+         elif pml_re.search(a):
+            second.append("_do__ @"+a) # preceeding "_ " cloaks 
+   #      elif pyc_re.search(a): # ignore compiled versions for now
+   #         first.append("_do__ run "+a) # preceeding "_ " cloaks
+
+
+      first.sort()
+      second.sort()
+      return first+second
+
+   def parse_args(argv):
+      av = copy.deepcopy(argv)
+      av = av[1:] # throw out the executable path
+      av.reverse()
+      global options
+      options.deferred = []
+      # append user settings file as an option
+      options.deferred.extend(get_user_config())
+      while 1:
+         if not len(av):
+            break
+         a = av.pop()
+         a = re.sub(r'''^"|"$|^'|'$''','',a) # strip extra quotes
+         if a[0:1]=='-':
+            if a[1:2]=='-':
+               break # double hypen signal end of PyMOL arguments
+            if "c" in a:
+               options.no_gui=1
+               options.external_gui=0
+            if "s" in a:
+               pass # stereo now autodetected
+            if "2" in a:
+               options.deferred.append("_do__ config_mouse two_button")
+            if "q" in a:
+               options.show_splash = 0
+            if "i" in a:
+               options.internal_gui = 0
+            if "f" in a:
+               options.internal_feedback = int(av.pop())
+            if "x" in a:
+               options.external_gui = 0
+            if "t" in a:
+               options.gui = 'pmg_tk'
+            if "w" in a:
+               options.gui = 'pmg_wx'
+            if "d" in a:
+               options.deferred.append("_do_%s"%string.replace(av.pop(),'%',' '))
+            if "e" in a:
+               options.deferred.append("_do__ full_screen on")
+            if "l" in a:
+               options.deferred.append("_do_spawn %s"%av.pop())
+            if "r" in a:
+               options.deferred.append("_do_run %s,main"%av.pop())
+            if "u" in a:
+               options.deferred.append("_do_resume %s"%av.pop())
+            if "s" in a:
+               options.deferred.append("_do_log_open %s"%av.pop())
+            if "p" in a:
+               options.read_stdin = 1
+            if "X" in a:
+               options.rpcServer = 1
+            if "g" in a:
+               options.deferred.append("_do_png %s"%av.pop())
+
+         else:
+            options.deferred.append(a)
+      if options.show_splash and not options.no_gui:
+         options.deferred.insert(0,"_do__ cmd.splash(1)")

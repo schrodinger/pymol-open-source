@@ -32,6 +32,29 @@ int ObjectGetNFrames(CObject *I);
 void ObjectDescribeElement(struct CObject *I,int index,char *buffer);
 CSetting **ObjectGetSettingHandle(struct CObject *I,int state);
 
+int ObjectGetCurrentState(CObject *I,int ignore_all_states)
+{
+  int state=-2;
+  int objState;
+
+  if(SettingGetIfDefined_i(I->Setting,cSetting_state,&objState)) {
+    if(objState>0) { /* a specific state */
+      state=objState-1;
+    } if(objState<0) {
+      state=-1; /* all states */
+    }
+  }
+  if(state==-2) { /* default -- use global state */
+    state = SettingGetGlobal_i(cSetting_state)-1;
+  }
+  if(!(ignore_all_states)&&(state>=0) )
+    if(SettingGet_i(I->Setting,NULL,cSetting_all_states))
+      state=-1;
+  if(state<-1)
+    state=-1;
+  return(state);
+}
+
 PyObject *ObjectAsPyList(CObject *I)
 {
   PyObject *result = NULL;

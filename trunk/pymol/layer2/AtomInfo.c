@@ -28,6 +28,9 @@ Z* -------------------------------------------------------------------
 
 static int NColor,CarbColor,HColor,OColor,SColor,MColor,IColor;
 
+
+/*========================================================================*/
+
 int AtomInfoInOrder(AtomInfoType *atom,int atom1,int atom2);
 
 /*========================================================================*/
@@ -677,7 +680,6 @@ int AtomInfoSequential(AtomInfoType *at1,AtomInfoType *at2)
     if(at1->chain[0]==at2->chain[0]) {
       if(WordMatch(at1->segi,at2->segi,true)<0) {
         if(at1->resv==at2->resv) {
-          at1->resi;
           p=at1->resi;
           while(*p) {
             last1=(*p++);

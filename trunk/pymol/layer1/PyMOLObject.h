@@ -71,6 +71,7 @@ void ObjectSetTTTOrigin(CObject *I,float *origin);
 void ObjectResetTTT(CObject *I);
 PyObject *ObjectAsPyList(CObject *I);
 int ObjectFromPyList(PyObject *list,CObject *I);
+int ObjectGetCurrentState(CObject *I,int ignore_all_states);
 
 #endif
 

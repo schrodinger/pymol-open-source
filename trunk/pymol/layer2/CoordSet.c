@@ -55,6 +55,31 @@ void CoordSetAppendIndices(CoordSet *I,int offset);
 static  char sATOM[]="ATOM  ";
 static  char sHETATM[]="HETATM";
 
+/*========================================================================*/
+int BondInOrder(BondType *a,int b1,int b2)
+{
+  return(BondCompare(a+b1,a+b2)<=0);
+}
+/*========================================================================*/
+int BondCompare(BondType *a,BondType *b)
+{
+  int result;
+  if(a->index[0]==b->index[0]) {
+	if(a->index[1]==b->index[1]) {
+	  result=0;
+	} else if(a->index[1]>b->index[1]) {
+	  result=1;
+	} else {
+	  result=-1;
+	}
+  } else if(a->index[0]>b->index[0]) {
+	result=1;
+  } else {
+	result=-1;
+  }
+  return(result);
+}
+
 int CoordSetFromPyList(PyObject *list,CoordSet **cs)
 {
   CoordSet *I = NULL;

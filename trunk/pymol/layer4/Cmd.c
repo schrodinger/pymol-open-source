@@ -115,13 +115,13 @@ static void APIEntry(void) /* assumes API is locked */
     " APIEntry-DEBUG: as thread 0x%x.\n",PyThread_get_thread_ident()
     ENDFD;
 
-if(PyMOLTerminating) {/* try to bail */
+  if(PyMOLTerminating) {/* try to bail */
 #ifdef WIN32
-	abort();
+    abort();
 #endif
     exit(0);
-	}
- P_glut_thread_keep_out++;  
+  }
+  P_glut_thread_keep_out++;  
   PUnblock();
 }
 
@@ -315,6 +315,7 @@ static PyObject *CmdSystem(PyObject *dummy, PyObject *args);
 static PyObject *CmdSymExp(PyObject *dummy, PyObject *args);
 static PyObject *CmdTest(PyObject *self, 	PyObject *args);
 static PyObject *CmdTransformObject(PyObject *self, 	PyObject *args);
+static PyObject *CmdTransformSelection(PyObject *self, 	PyObject *args);
 static PyObject *CmdTranslateAtom(PyObject *self, PyObject *args);
 static PyObject *CmdTurn(PyObject *self, 	PyObject *args);
 static PyObject *CmdViewport(PyObject *self, 	PyObject *args);
@@ -482,6 +483,7 @@ static PyMethodDef Cmd_methods[] = {
 	{"symexp",	              CmdSymExp,               METH_VARARGS },
 	{"test",	                 CmdTest,                 METH_VARARGS },
 	{"transform_object",      CmdTransformObject,      METH_VARARGS },
+	{"transform_selection",   CmdTransformSelection,   METH_VARARGS },
 	{"translate_atom",        CmdTranslateAtom,        METH_VARARGS },
 	{"turn",	                 CmdTurn,                 METH_VARARGS },
 	{"viewport",              CmdViewport,             METH_VARARGS },
@@ -532,18 +534,17 @@ static PyObject *CmdSmooth(PyObject *self,PyObject *args)
 static PyObject *CmdGetSession(PyObject *self, PyObject *args)
 {
   int ok=true;
-  PyObject *result = NULL;
-  int int1;
+  PyObject *dict;
 
-  ok = PyArg_ParseTuple(args,"i",&int1);
+  ok = PyArg_ParseTuple(args,"O",&dict);
   if(ok) {
     APIEntry();
     PBlock();
-    result = ExecutiveGetSession();
+    ok = ExecutiveGetSession(dict);
     PUnblock();
     APIExit();
   }
-  return(APIAutoNone(result));
+  return(APIStatus(ok));
 }
 
 static PyObject *CmdSetSession(PyObject *self, PyObject *args)
@@ -848,6 +849,32 @@ static PyObject *CmdTransformObject(PyObject *self, PyObject *args)
     } else {
       PRINTFB(FB_CCmd,FB_Errors)
         "CmdTransformObject-DEBUG: bad matrix\n"
+        ENDFB;
+      ok=false;
+    }
+  }
+  return(APIStatus(ok));
+}
+
+static PyObject *CmdTransformSelection(PyObject *self, PyObject *args)
+{
+  char *sele;
+  int state,log;
+  PyObject *m;
+  float ttt[16];
+  OrthoLineType s1;
+  int ok = false;
+  ok = PyArg_ParseTuple(args,"siOi",&sele,&state,&m,&log);
+  if(ok) {
+    if(PConvPyListToFloatArrayInPlace(m,ttt,16)>0) {
+      APIEntry();
+      SelectorGetTmp(sele,s1);
+      ok = ExecutiveTransformSelection(state,s1,log,ttt);
+      SelectorFreeTmp(s1);
+      APIExit();
+    } else {
+      PRINTFB(FB_CCmd,FB_Errors)
+        "CmdTransformSelection-DEBUG: bad matrix\n"
         ENDFB;
       ok=false;
     }
@@ -1526,7 +1553,7 @@ static PyObject *CmdIsomesh(PyObject *self, 	PyObject *args) {
             break;
           case 1:
             SelectorGetTmp(str3,s1);
-            ExecutiveGetExtent(s1,mn,mx,false,-1); /* TODO state */
+            ExecutiveGetExtent(s1,mn,mx,false,-1,false); /* TODO state */
             if(carve>=0.0) {
               vert_vla = ExecutiveGetVertexVLA(s1,state);
               if(fbuf<=R_SMALL4)
@@ -1642,7 +1669,7 @@ static PyObject *CmdIsosurface(PyObject *self, 	PyObject *args) {
             break;
           case 1:
             SelectorGetTmp(str3,s1);
-            ExecutiveGetExtent(s1,mn,mx,false,-1); /* TODO state */
+            ExecutiveGetExtent(s1,mn,mx,false,-1,false); /* TODO state */
             if(carve>=0.0) {
               vert_vla = ExecutiveGetVertexVLA(s1,state);
               if(fbuf<=R_SMALL4)
@@ -2668,7 +2695,7 @@ static PyObject *CmdGetMinMax(PyObject *self, 	PyObject *args)
   if (ok) {
     APIEntry();
     SelectorGetTmp(str1,s1);
-    flag = ExecutiveGetExtent(s1,mn,mx,false,state);
+    flag = ExecutiveGetExtent(s1,mn,mx,true,state,false);
     SelectorFreeTmp(s1);
     if(flag) 
       result = Py_BuildValue("[[fff],[fff]]", 
@@ -2913,24 +2940,37 @@ static PyObject *CmdClip(PyObject *self, 	PyObject *args)
 {
   char *sname;
   float dist;
+  char *str1;
+  int state;
+  OrthoLineType s1;
   int ok=false;
-  ok = PyArg_ParseTuple(args,"sf",&sname,&dist);
+  ok = PyArg_ParseTuple(args,"sfsi",&sname,&dist,&str1,&state);
   if (ok) {
     APIEntry();
+    SelectorGetTmp(str1,s1);
     switch(sname[0]) { /* TODO STATUS */
+    case 'N':
     case 'n':
-      SceneClip(0,dist);
+      SceneClip(0,dist,s1,state);
       break;
     case 'f':
-      SceneClip(1,dist);
+    case 'F':
+      SceneClip(1,dist,s1,state);
       break;
     case 'm':
-      SceneClip(2,dist);
+    case 'M':
+      SceneClip(2,dist,s1,state);
       break;
     case 's':
-      SceneClip(3,dist);
+    case 'S':
+      SceneClip(3,dist,s1,state);
+      break;
+    case 'a':
+    case 'A':
+      SceneClip(4,dist,s1,state);
       break;
     }
+    SelectorFreeTmp(s1);
     APIExit();
   }
   return(APIStatus(ok));
@@ -3977,12 +4017,12 @@ static PyObject *CmdCycleValence(PyObject *self, PyObject *args)
 static PyObject *CmdReplace(PyObject *self, 	PyObject *args)
 {
   int i1,i2;
-  char *str1;
+  char *str1,*str2;
   int ok=false;
-  ok = PyArg_ParseTuple(args,"sii",&str1,&i1,&i2);
+  ok = PyArg_ParseTuple(args,"siis",&str1,&i1,&i2,&str2);
   if (ok) {
     APIEntry();
-    EditorReplace(str1,i1,i2);  /* TODO STATUS */
+    EditorReplace(str1,i1,i2,str2);  /* TODO STATUS */
     APIExit();
   }
   return(APIStatus(ok));  
@@ -4010,10 +4050,11 @@ static PyObject *CmdAttach(PyObject *self, 	PyObject *args)
   int i1,i2;
   char *str1;
   int ok=false;
-  ok = PyArg_ParseTuple(args,"sii",&str1,&i1,&i2);
+  char *name;
+  ok = PyArg_ParseTuple(args,"siis",&str1,&i1,&i2,&name);
   if (ok) {
     APIEntry();
-    EditorAttach(str1,i1,i2);  /* TODO STATUS */
+    EditorAttach(str1,i1,i2,name);  /* TODO STATUS */
     APIExit();
   }
   return(APIStatus(ok));  
