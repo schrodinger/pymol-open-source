@@ -1,8 +1,8 @@
 include ../../Rules.make
 
-CFLAGS = $(CCOPT1) $(CCOPT2) -I../../ext/include/python1.5 -I../../ext/include -DHAVE_ARRAYOBJECT_H $(DEFS) -I/usr/X11R6/include
+CFLAGS = $(C_FLAGS) -DHAVE_ARRAYOBJECT_H
 
-GLLIBS = -L../../ext/lib $(XLIB_DIR) -lglut -lGL -lGLU -lXmu -lXi
+GLLIBS = $(LIB_DIRS) -lglut -lGL -lGLU -lXmu -lXi
 all: \
 _glu_nummodule.so \
 _glumodule.so \
