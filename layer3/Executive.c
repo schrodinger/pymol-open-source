@@ -881,7 +881,7 @@ void ExecutiveFuse(char *s0,char *s1,int mode)
         
         SelectorCreate(tmp_fuse_sele,NULL,obj0,1,NULL);
         sele2=SelectorIndexByName(tmp_fuse_sele);
-        if(mode==1) {
+        if(mode) {
           op.code=OMOP_PrepareFromTemplate;
           op.ai=obj1->AtomInfo+i1;
           op.i1=mode;
