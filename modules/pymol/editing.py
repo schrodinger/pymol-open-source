@@ -956,10 +956,10 @@ def translate(vector=[0.0,0.0,0.0],selection="all",state=0,camera=1,object=None)
       if camera:
          mat = [ view[0:3],view[3:6],view[6:9] ]
          shift = cpv.transform(mat,vector)
-         print "hi",camera,camera and 1
+#         print "hi",camera,camera and 1
       else:
          shift = vector
-      print shift,camera
+#      print shift,camera
       if object==None:
          ttt = [1.0,0.0,0.0,0.0,
                 0.0,1.0,0.0,0.0,

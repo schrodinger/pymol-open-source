@@ -1023,7 +1023,11 @@ void SettingInitGlobal(void)
 
   SettingSet_f(I,cSetting_no_idle, 5000.0F);
 
+#ifdef _PYMOL_OSX
+  SettingSet_f(I,cSetting_slow_idle, 40000.0F);
+#else
   SettingSet_f(I,cSetting_slow_idle, 200000.0F);
+#endif
 
   SettingSet_f(I,cSetting_idle_delay, 1.5F);
 
