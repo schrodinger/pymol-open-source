@@ -16,6 +16,7 @@ void plutBitmapCharacter(int c);
 #define NULL ((void*)0)
 #endif
 
+
 static void (*idleFunc)(void) = NULL;
 static int WinX = 640,WinY=480;
 
@@ -71,7 +72,6 @@ void     p_glutIdleFunc(void (*func)(void)) { idleFunc = func; }
 
 #endif
 
-
 #ifdef _PYMOL_WX_GLUT
 
 #include"P.h"
@@ -116,13 +116,13 @@ void p_glutHandleEvent(p_glut_event *ev) {
   modifiers = ev->mod;
   switch(ev->event_code) {
   case P_GLUT_IDLE_EVENT:
-    if(idleFunc) idleFunc();
+	  if(idleFunc) idleFunc();
     break;
   case P_GLUT_DISPLAY_EVENT:
-    if(displayFunc) displayFunc();
+	  if(displayFunc) displayFunc();
     break;
   case P_GLUT_RESHAPE_EVENT:
-    if(reshapeFunc) reshapeFunc(ev->x,ev->y);
+	  if(reshapeFunc) reshapeFunc(ev->x,ev->y);
     break;
   case P_GLUT_MOUSE_EVENT:
     if(mouseFunc) mouseFunc(ev->input,ev->state,ev->x,ev->y);
@@ -131,7 +131,7 @@ void p_glutHandleEvent(p_glut_event *ev) {
     if(motionFunc) motionFunc(ev->x,ev->y);
     break;
   case P_GLUT_CHAR_EVENT:
-    if(keyboardFunc) keyboardFunc(ev->input,ev->x,ev->y);
+    if(keyboardFunc) keyboardFunc((unsigned char)ev->input,ev->x,ev->y);
     break;
   }
 }
