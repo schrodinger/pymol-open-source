@@ -132,7 +132,7 @@ SphereRec sSphere0,sSphere1,sSphere2,sSphere3,sSphere4,sSphere5;
 
 #endif
 
-
+#if 0
 static void SphereDump(FILE *f,char *prefix,SphereRec *sp)
 {
   int a;
@@ -194,7 +194,7 @@ static void SphereDump(FILE *f,char *prefix,SphereRec *sp)
 
 }
 
-/*static void SphereDumpAll(void)
+static void SphereDumpAll(void)
 {
   FILE *f;
   f = fopen("SphereData.h","w");
@@ -205,7 +205,8 @@ static void SphereDump(FILE *f,char *prefix,SphereRec *sp)
   SphereDump(f,"Sphere4",Sphere4);
   fclose(f);
 }
-*/
+#endif
+
 
 void SphereInit(void)
 {

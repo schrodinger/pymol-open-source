@@ -45,7 +45,7 @@ Z* -------------------------------------------------------------------
 /* WARNING!!! MemoryDebug is not thread safe...it must be disabled
    for stable multi-threaded operation within the PyMOL core */
 
-#define _MemoryDebug_OFF
+#define _MemoryDebug_ON
 
 /* ================================================================ 
  * Don't touch below unless you know what you are doing */
@@ -65,6 +65,11 @@ typedef struct VLARec {
 /* NOTE: in VLACheck, rec is a zero based array index, not a record count */
 #define VLACheck(ptr,type,rec) (ptr=(type*)(((((unsigned)rec)>=((VLARec*)(ptr))[-1].nAlloc) ? VLAExpand(ptr,(rec)) : (ptr))))
 
+#define VLACacheCheck(ptr,type,rec,t,i) (ptr=(type*)(((((unsigned)rec)>=((VLARec*)(ptr))[-1].nAlloc) ? VLACacheExpand(ptr,(rec),t,i) : (ptr))))
+#define VLACacheAlloc(type,initSize,t,i) (type*)VLACacheMalloc(initSize,sizeof(type),5,0,t,i)
+#define VLACacheFreeP(ptr,t,i,f) {if(ptr) {VLACacheFree(ptr,t,i,f);ptr=NULL;}}
+#define VLACacheSize(ptr,type,size,t,i) {ptr=(type*)VLACacheSetSize(ptr,size,t,i);}
+
 #define VLAlloc(type,initSize) (type*)VLAMalloc(initSize,sizeof(type),5,0)
 #define VLAFreeP(ptr) {if(ptr) {VLAFree(ptr);ptr=NULL;}}
 #define VLASize(ptr,type,size) {ptr=(type*)VLASetSize(ptr,size);}
@@ -77,16 +82,25 @@ typedef struct VLARec {
 #define FreeP(ptr) {if(ptr) {mfree(ptr);ptr=NULL;}}
 
 void *VLAExpand(void *ptr,unsigned int rec); /* NOTE: rec is index (total-1) */
+void *VLACacheExpand(void *ptr,unsigned int rec,int thread_index,int block_id);
 
 #ifndef _MemoryDebug_ON
 void *VLAMalloc(unsigned int initSize,unsigned int recSize,unsigned int growFactor,int autoZero); /*growfactor 1-10*/
+
+void *VLACacheMalloc(unsigned int initSize,unsigned int recSize,unsigned int growFactor,int autoZero,int thread,int index); /*growfactor 1-10*/
 #else
 #define VLAMalloc(a,b,c,d) _VLAMalloc(__FILE__,__LINE__,a,b,c,d)
+
 void *_VLAMalloc(const char *file,int line,unsigned int initSize,unsigned int recSize,unsigned int growFactor,int autoZero); /*growfactor 1-10*/
+#define VLACacheMalloc(a,b,c,d,t,i) _VLACacheMalloc(__FILE__,__LINE__,a,b,c,d,t,i)
+void *_VLACacheMalloc(const char *file,int line,unsigned int initSize,unsigned int recSize,unsigned int growFactor,int autoZero,int thread,int index); /*growfactor 1-10*/
 #endif
 
 void VLAFree(void *ptr);
+void VLACacheFree(void *ptr,int thread,int id,int force);
+
 void *VLASetSize(void *ptr,unsigned int newSize);
+void *VLACacheSetSize(void *ptr,unsigned int newSize,int group_id,int block_id);
 unsigned int VLAGetSize(void *ptr);
 void *VLANewCopy(void *ptr);
 void MemoryZero(char *p,char *q);

@@ -23,6 +23,7 @@ Z* ------------------------------------------------------------------- */
 #include"Map.h"
 #include"Setting.h"
 #include"Feedback.h"
+#include"MemoryCache.h"
 
 #ifndef true
 #define true 1
@@ -32,27 +33,30 @@ Z* ------------------------------------------------------------------- */
 #define false 0
 #endif
 
-static MapType *_MapNew(float range,float *vert,int nVert,float *extent,int *flag);
+static MapType *_MapNew(float range,float *vert,int nVert,
+                        float *extent,int *flag,int group_id,int block_id);
 
 void MapFree(MapType *I)
 {
   if(I)
 	 {
-		FreeP(I->Head);
-		FreeP(I->Link);
-		FreeP(I->EHead);
-		FreeP(I->EMask);
-		VLAFreeP(I->EList);
+		CacheFreeP(I->Head,I->group_id,I->block_base + cCache_map_head_offset,false);
+		CacheFreeP(I->Link,I->group_id,I->block_base + cCache_map_link_offset,false);
+		CacheFreeP(I->EHead,I->group_id,I->block_base + cCache_map_ehead_offset,false);
+		CacheFreeP(I->EMask,I->group_id,I->block_base + cCache_map_emask_offset,false);
+		VLACacheFreeP(I->EList,I->group_id,I->block_base + cCache_map_elist_offset,false);
 	 }
   OOFreeP(I);
 }
 
-void MapCacheInit(MapCache *M,MapType *I) 
+void MapCacheInit(MapCache *M,MapType *I)
 {
   int a,*p;
 
-  M->Cache = Alloc(int,I->NVert);
-  M->CacheLink = Alloc(int,I->NVert);
+  M->block_base = I->block_base;
+  M->group_id = I->group_id;
+  M->Cache = CacheAlloc(int,I->NVert,M->group_id,M->block_base + cCache_map_cache_offset);
+  M->CacheLink = CacheAlloc(int,I->NVert,M->group_id,M->block_base + cCache_map_cache_link_offset);
   M->CacheStart = -1;
   p=M->Cache;
   for(a=0;a<I->NVert;a++)
@@ -93,8 +97,8 @@ void MapCacheReset(MapCache *M)
 
 void MapCacheFree(MapCache *M)
 {
-  FreeP(M->Cache);
-  FreeP(M->CacheLink);
+  CacheFreeP(M->Cache,M->group_id,M->block_base + cCache_map_cache_offset,false);
+  CacheFreeP(M->CacheLink,M->group_id,M->block_base + cCache_map_cache_link_offset,false);
 }
 
 #define MapSafety 0.01F
@@ -166,10 +170,12 @@ void MapSetupExpressXY(MapType *I,int n_vert) /* setup a list of XY neighbors fo
 	ENDFD;
 	
 	mapSize		= I->Dim[0]*I->Dim[1]*I->Dim[2];
-	I->EHead	= Calloc(int,mapSize);
-	I->EMask    = Calloc(int,I->Dim[0]*I->Dim[1]);
+	I->EHead	= CacheCalloc(int,mapSize,I->group_id,I->block_base + cCache_map_ehead_offset);
+	I->EMask    = CacheCalloc(int,I->Dim[0]*I->Dim[1],
+                             I->group_id,I->block_base + cCache_map_emask_offset);
 	ErrChkPtr(I->EHead);
-	I->EList	= VLAMalloc(n_alloc,sizeof(int),5,0); 
+	I->EList	= VLACacheMalloc(n_alloc,sizeof(int),5,0,
+                             I->group_id,I->block_base + cCache_map_elist_offset); 
 	
 	n		= 1;
 	dim2	= I->Dim[2];
@@ -199,7 +205,7 @@ void MapSetupExpressXY(MapType *I,int n_vert) /* setup a list of XY neighbors fo
 							flag	= true;
 							while(i >= 0)
 							{
-								VLACheck(I->EList,int,n);
+								VLACacheCheck(I->EList,int,n,I->group_id,I->block_base + cCache_map_elist_offset);
 								I->EList[n]	= i;
 								n++;
 								i	= MapNext(I,i);
@@ -216,7 +222,7 @@ void MapSetupExpressXY(MapType *I,int n_vert) /* setup a list of XY neighbors fo
 				{
 					*(I->EMask + I->Dim[1]*a + b) = true;
 					*(MapEStart(I,a,b,c))=st;
-					VLACheck(I->EList,int,n);
+					VLACacheCheck(I->EList,int,n,I->group_id,I->block_base + cCache_map_elist_offset);
 					I->EList[n]=-1;
 					n++;
 				}
@@ -225,14 +231,14 @@ void MapSetupExpressXY(MapType *I,int n_vert) /* setup a list of XY neighbors fo
 	}
 		
 	I->NEElem=n;
-	VLASize(I->EList,int,I->NEElem);
+	VLACacheSize(I->EList,int,I->NEElem,I->group_id,I->block_base + cCache_map_elist_offset);
 	PRINTFD(FB_Map)
 		" MapSetupExpressXY-Debug: leaving...\n"
 	ENDFD;
 }
 
 
-#if 1
+
 void MapSetupExpressXYVert(MapType *I,float *vert,int n_vert) /* setup a list of XY neighbors for each square */
 {
 	int		h, n, a,b,c;
@@ -247,10 +253,13 @@ void MapSetupExpressXYVert(MapType *I,float *vert,int n_vert) /* setup a list of
 	ENDFD;
 	
 	/*mapSize 	= I->Dim[0]*I->Dim[1]*I->Dim[2];*/
-	I->EHead	= Calloc(int, I->Dim[0]*I->Dim[1]*I->Dim[2]);
-	I->EMask    = Calloc(int,I->Dim[0]*I->Dim[1]);
+	I->EHead	= CacheCalloc(int, I->Dim[0]*I->Dim[1]*I->Dim[2],
+                          I->group_id,I->block_base + cCache_map_ehead_offset);
+	I->EMask    = CacheCalloc(int,I->Dim[0]*I->Dim[1],
+                             I->group_id,I->block_base + cCache_map_emask_offset);
 	ErrChkPtr(I->EHead);
-	I->EList	= VLAMalloc(n_alloc,sizeof(int),5,0); /* autozero */
+	I->EList	= VLACacheMalloc(n_alloc,sizeof(int),5,0,
+                             I->group_id,I->block_base + cCache_map_elist_offset); /* autozero */
 	
 	n		= 1;
 	v		= vert;
@@ -290,7 +299,7 @@ void MapSetupExpressXYVert(MapType *I,float *vert,int n_vert) /* setup a list of
 								flag = true;
 								while(i > -1) 
 								{
-									VLACheck(I->EList,int,n);
+									VLACacheCheck(I->EList,int,n,I->group_id,I->block_base + cCache_map_elist_offset);
 									I->EList[n]	= i;
 									n++;
 									i = MapNext(I,i);
@@ -307,7 +316,7 @@ void MapSetupExpressXYVert(MapType *I,float *vert,int n_vert) /* setup a list of
 					{
 						*(I->EMask + I->Dim[1]*a + b) = true;
 						*(MapEStart(I,a,b,c))	= st;
-						VLACheck(I->EList,int,n);
+						VLACacheCheck(I->EList,int,n,I->group_id,I->block_base + cCache_map_elist_offset);
 						I->EList[n] = -1;
 						n++;
 					}
@@ -329,71 +338,6 @@ void MapSetupExpressXYVert(MapType *I,float *vert,int n_vert) /* setup a list of
 	ENDFD;
 }
 
-#else
-
-void MapSetupExpressXYVert(MapType *I,float *vert,int n_vert) /* setup a list of XY neighbors for each square */
-{
-  int n=0;
-  int a,b,c,flag;
-  register int d,e,i;
-  unsigned int mapSize;
-  int st;
-  float *v;
-  int h;
-  int j,k;
-
-  PRINTFD(FB_Map)
-    " MapSetupExpressXY-Debug: entered.\n"
-    ENDFD;
-  mapSize = I->Dim[0]*I->Dim[1]*I->Dim[2];
-  I->EHead=Calloc(int,mapSize);
-  ErrChkPtr(I->EHead);
-  I->EList=VLAMalloc(256000,sizeof(int),5,0); /* autozero */
-
-  
-  n=1;
-  v = vert;
-  for(h=0;h<n_vert;h++) { 
-    MapLocus(I,v,&j,&k,&c);
-    for(a=j-1;a<=j+1;a++)
-      for(b=k-1;b<=k+1;b++) {
-        if(!*(MapEStart(I,a,b,c))) {
-          st=n;
-          flag=false;
-          for(d=a-1;d<=a+1;d++)
-            for(e=b-1;e<=b+1;e++)
-              {
-                i=*MapFirst(I,d,e,c);
-                if(i>=0) {
-                  flag=true;
-                  while(i>=0) {
-                    VLACheck(I->EList,int,n);
-                    I->EList[n]=i;
-                    n++;
-                    i=MapNext(I,i);
-                  }
-                }
-              }
-          if(flag) {
-            *(MapEStart(I,a,b,c))=st;
-            VLACheck(I->EList,int,n);
-            I->EList[n]=-1;
-            n++;
-          }
-        }
-      }
-    v+=3;
-  }
-  I->NEElem=n;
-  PRINTFD(FB_Map)
-    " MapSetupExpressXY-Debug: leaving...\n"
-    ENDFD;
-  
-}
-
-#endif
-
-
 void MapSetupExpress(MapType *I) /* setup a list of neighbors for each square */
 {
   int n=0;
@@ -406,9 +350,11 @@ void MapSetupExpress(MapType *I) /* setup a list of neighbors for each square */
     ENDFD;
 
   mapSize = I->Dim[0]*I->Dim[1]*I->Dim[2];
-  I->EHead=Alloc(int,mapSize);
+  I->EHead=CacheAlloc(int,mapSize,
+                 I->group_id,I->block_base + cCache_map_ehead_offset);
   ErrChkPtr(I->EHead);
-  I->EList=VLAMalloc(1000,sizeof(int),5,0);
+  I->EList=VLACacheMalloc(1000,sizeof(int),5,0,
+                     I->group_id,I->block_base + cCache_map_elist_offset);
 
   n=1;
   for(a=(I->iMin[0]-1);a<=(I->iMax[0]+1);a++)
@@ -425,7 +371,7 @@ void MapSetupExpress(MapType *I) /* setup a list of neighbors for each square */
 						if(i>=0) {
 						  flag=true;
 						  while(i>=0) {
-							 VLACheck(I->EList,int,n);
+							 VLACacheCheck(I->EList,int,n,I->group_id,I->block_base + cCache_map_elist_offset);
 							 I->EList[n]=i;
 							 n++;
 							 i=MapNext(I,i);
@@ -434,7 +380,7 @@ void MapSetupExpress(MapType *I) /* setup a list of neighbors for each square */
 					 }
 			 if(flag) {
 				*(MapEStart(I,a,b,c))=st;
-				VLACheck(I->EList,int,n);
+				VLACacheCheck(I->EList,int,n,I->group_id,I->block_base + cCache_map_elist_offset);
 				I->EList[n]=-1;
 				n++;
 			 } else {
@@ -545,15 +491,21 @@ float MapGetSeparation(float range,float *mx,float *mn,float *diagonal)
 
 MapType *MapNew(float range,float *vert,int nVert,float *extent)
 {
-  return(_MapNew(range,vert,nVert,extent,NULL));
+  return(_MapNew(range,vert,nVert,extent,NULL,-1,0));
+}
+
+MapType *MapNewCached(float range,float *vert,int nVert,float *extent,int group_id,int block_id)
+{
+  return(_MapNew(range,vert,nVert,extent,NULL,group_id,block_id));
 }
 
 MapType *MapNewFlagged(float range,float *vert,int nVert,float *extent,int *flag)
 {
-  return(_MapNew(range,vert,nVert,extent,flag));
+  return(_MapNew(range,vert,nVert,extent,flag,-1,0));
 }
 
-static MapType *_MapNew(float range,float *vert,int nVert,float *extent,int *flag)
+static MapType *_MapNew(float range,float *vert,int nVert,float *extent,int *flag,
+                        int group_id,int block_base)
 {
   int a,c;
   int mapSize;
@@ -569,6 +521,8 @@ static MapType *_MapNew(float range,float *vert,int nVert,float *extent,int *fla
     " MapNew-Debug: entered.\n"
     ENDFD;
 
+  I->group_id = group_id;
+  I->block_base = block_base;
   I->Head = NULL;
   I->Link = NULL;
   I->EHead = NULL;
@@ -576,7 +530,7 @@ static MapType *_MapNew(float range,float *vert,int nVert,float *extent,int *fla
   I->EMask = NULL;
   I->NEElem=0;
   
-  I->Link=Alloc(int,nVert);
+  I->Link=CacheAlloc(int,nVert,group_id,block_base + cCache_map_link_offset);
   ErrChkPtr(I->Link);
 
   for(a=0;a<nVert;a++)
@@ -707,7 +661,7 @@ static MapType *_MapNew(float range,float *vert,int nVert,float *extent,int *fla
 
   /* compute size and allocate */
   mapSize = I->Dim[0]*I->Dim[1]*I->Dim[2];
-  I->Head=Alloc(int,mapSize);
+  I->Head=CacheAlloc(int,mapSize,group_id,block_base + cCache_map_head_offset);
   /*printf("%d\n",mapSize);*/
   ErrChkPtr(I->Head);
 
@@ -803,3 +757,4 @@ static MapType *_MapNew(float range,float *vert,int nVert,float *extent,int *fla
 
   return(I);
 }
+

@@ -29,6 +29,7 @@ Z* -------------------------------------------------------------------
 #include"Color.h"
 #include"Matrix.h"
 #include"P.h"
+#include"MemoryCache.h"
 
 #ifdef _PYMOL_INLINE
 #undef _PYMOL_INLINE
@@ -77,7 +78,7 @@ void RayApplyMatrixInverse33( unsigned int n, float3 *q, const float m[16],
 
 void RayExpandPrimitives(CRay *I);
 void RayTransformFirst(CRay *I);
-void RayTransformBasis(CRay *I,CBasis *B);
+void RayTransformBasis(CRay *I,CBasis *B,int group_id);
 
 int PrimitiveSphereHit(CRay *I,float *v,float *n,float *minDist,int except);
 
@@ -325,12 +326,14 @@ void RayExpandPrimitives(CRay *I)
 
   basis = I->Basis;
   
-  VLACheck(basis->Vertex,float,3*nVert);
-  VLACheck(basis->Radius,float,nVert);
-  VLACheck(basis->Radius2,float,nVert);
-  VLACheck(basis->Vert2Normal,int,nVert);
-  VLACheck(basis->Normal,float,3*nNorm);
-  VLACheck(I->Vert2Prim,int,nVert);
+  VLACacheCheck(basis->Vertex,float,3*nVert,0,cCache_basis_vertex);
+  VLACacheCheck(basis->Radius,float,nVert,0,cCache_basis_radius);
+  VLACacheCheck(basis->Radius2,float,nVert,0,cCache_basis_radius2);
+  VLACacheCheck(basis->Vert2Normal,int,nVert,0,cCache_basis_vert2normal);
+  VLACacheCheck(basis->Normal,float,3*nNorm,0,cCache_basis_normal);
+
+  VLACacheCheck(I->Vert2Prim,int,nVert,0,cCache_ray_vert2prim);
+
   basis->MaxRadius = 0.0F;
   basis->MinVoxel = 0.0F;
   basis->NVertex=nVert;
@@ -512,12 +515,12 @@ void RayTransformFirst(CRay *I)
   basis0 = I->Basis;
   basis1 = I->Basis+1;
   
-  VLACheck(basis1->Vertex,float,3*basis0->NVertex);
-  VLACheck(basis1->Normal,float,3*basis0->NNormal);
-  VLACheck(basis1->Precomp,float,3*basis0->NNormal);
-  VLACheck(basis1->Vert2Normal,int,basis0->NVertex);
-  VLACheck(basis1->Radius,float,basis0->NVertex);
-  VLACheck(basis1->Radius2,float,basis0->NVertex);
+  VLACacheCheck(basis1->Vertex,float,3*basis0->NVertex,1,cCache_basis_vertex);
+  VLACacheCheck(basis1->Normal,float,3*basis0->NNormal,1,cCache_basis_normal);
+  VLACacheCheck(basis1->Precomp,float,3*basis0->NNormal,1,cCache_basis_precomp);
+  VLACacheCheck(basis1->Vert2Normal,int,basis0->NVertex,1,cCache_basis_vert2normal);
+  VLACacheCheck(basis1->Radius,float,basis0->NVertex,1,cCache_basis_radius);
+  VLACacheCheck(basis1->Radius2,float,basis0->NVertex,1,cCache_basis_radius2);
   
   RayApplyMatrix33(basis0->NVertex,(float3*)basis1->Vertex,
 					  I->ModelView,(float3*)basis0->Vertex);
@@ -558,7 +561,7 @@ void RayTransformFirst(CRay *I)
   }
 }
 /*========================================================================*/
-void RayTransformBasis(CRay *I,CBasis *basis1)
+void RayTransformBasis(CRay *I,CBasis *basis1,int group_id)
 {
   CBasis *basis0;
   int a;
@@ -567,12 +570,12 @@ void RayTransformBasis(CRay *I,CBasis *basis1)
 
   basis0 = I->Basis+1;
 
-  VLACheck(basis1->Vertex,float,3*basis0->NVertex);
-  VLACheck(basis1->Normal,float,3*basis0->NNormal);
-  VLACheck(basis1->Precomp,float,3*basis0->NNormal);
-  VLACheck(basis1->Vert2Normal,int,basis0->NVertex);
-  VLACheck(basis1->Radius,float,basis0->NVertex);
-  VLACheck(basis1->Radius2,float,basis0->NVertex);
+  VLACacheCheck(basis1->Vertex,float,3*basis0->NVertex,group_id,cCache_basis_vertex);
+  VLACacheCheck(basis1->Normal,float,3*basis0->NNormal,group_id,cCache_basis_normal);
+  VLACacheCheck(basis1->Precomp,float,3*basis0->NNormal,group_id,cCache_basis_precomp);
+  VLACacheCheck(basis1->Vert2Normal,int,basis0->NVertex,group_id,cCache_basis_vert2normal);
+  VLACacheCheck(basis1->Radius,float,basis0->NVertex,group_id,cCache_basis_radius);
+  VLACacheCheck(basis1->Radius2,float,basis0->NVertex,group_id,cCache_basis_radius2);
   v0=basis0->Vertex;
   v1=basis1->Vertex;
   for(a=0;a<basis0->NVertex;a++)
@@ -936,7 +939,7 @@ static void RayAntiSpawn(CRayAntiThreadInfo *Thread,int n_thread)
 
 int RayHashThread(CRayHashThreadInfo *T)
 {
-  BasisMakeMap(T->basis,T->vert2prim,T->prim,T->clipBox);
+  BasisMakeMap(T->basis,T->vert2prim,T->prim,T->clipBox,T->phase,cCache_ray_map);
 
   /* utilize a little extra wasted CPU time in thread 0 which computes the smaller map... */
 
@@ -1510,74 +1513,6 @@ int RayTraceThread(CRayThreadInfo *T)
 	return (n_hit);
 }
 
-
-
-#if 0 
-
-/* in reality, this doesn't buy us much -- for each cycles there's typically half a 
-   dozen allocations, amounting to several hundreded megabytes */
-
-typedef struct
-{
-	unsigned int				*buff;
-	unsigned int				buffSize;
-} RenderBuff;
-
-#define kRenderCacheSize		(MAX_RAY_THREADS + 1)
-#define	kMaxBuffIndex			(kRenderCacheSize - 1)
-static RenderBuff				RenderCache[kRenderCacheSize];
-
-static unsigned int *GetRenderBuffer(unsigned int inBuffSize, int inThreadIndex)
-{
-	static int RenderCacheInited = 0;
-
-	/* WARREN -- TO DO -- STRIP OUT THREADING STUFF, and ADD A CLEANUP ROUTINE */
-
-   /*	if (inThreadIndex > kMaxBuffIndex)
-		printf(" DRSWAT: OoR thread index: %d.\n", inThreadIndex);*/
-
-	if (RenderCacheInited == 0)
-	{
-		int i;
-		for (i = 0; i < kRenderCacheSize; ++i)
-		{
-			RenderCache[i].buff = NULL;
-			RenderCache[i].buffSize = 0;
-		}
-
-		RenderCacheInited = 1;
-	}
-
-	if (RenderCache[inThreadIndex].buff == NULL)
-	{
-     /*		printf("DRSWAT: Allocated render buffer first time. Thread: %d. Size: %d.\n", inThreadIndex, inBuffSize); */
-
-		RenderCache[inThreadIndex].buff = (void *)Alloc(char, inBuffSize);
-		RenderCache[inThreadIndex].buffSize = inBuffSize;
-
-		return RenderCache[inThreadIndex].buff;
-	}
-	else
-	{
-		if (RenderCache[inThreadIndex].buffSize == inBuffSize)
-			return RenderCache[inThreadIndex].buff;
-		else
-		{
-			printf("DRSWAT: Render buffer miss. Thread: %d. Size: %d.\n", inThreadIndex, inBuffSize);
-
-			FreeP(RenderCache[inThreadIndex].buff);
-			RenderCache[inThreadIndex].buff = (void *)Alloc(char, inBuffSize);
-			RenderCache[inThreadIndex].buffSize = inBuffSize;
-
-			return RenderCache[inThreadIndex].buff;
-		}
-	}
-   /*
-     printf("DRSWAT: Oh no! No render buffer found.\n");*/
-	return NULL;
-}
-#endif
-
 /* this is both an antialias and a slight blur */
 
 /* for whatever reason, greatly GCC perfers a linear sequence of
@@ -1858,11 +1793,7 @@ void RayRender(CRay *I,int width,int height,unsigned int *image,
 	 height=height*2;
 	 image_copy = image;
 	 buffer_size = 4*width*height;
-    #if 1
-    image = (void *)Alloc(char, buffer_size); 
-    #else
-    image = GetRenderBuffer(buffer_size * sizeof(char), MAX_RAY_THREADS);
-    #endif
+    image = (int*)CacheAlloc(char,buffer_size,0,cCache_ray_antialias_buffer);
 
 	 ErrChkPtr(image);
   }
@@ -1914,7 +1845,7 @@ void RayRender(CRay *I,int width,int height,unsigned int *image,
       ENDFB;
 
     I->NBasis=3; /* light source */
-    BasisInit(I->Basis+2);
+    BasisInit(I->Basis+2,2);
     
     { /* setup light & rotate if necessary  */
       v=SettingGetfv(cSetting_light);
@@ -1940,7 +1871,7 @@ void RayRender(CRay *I,int width,int height,unsigned int *image,
 
     if(shadows) { /* don't waste time on shadows unless needed */
       BasisSetupMatrix(I->Basis+2);
-      RayTransformBasis(I,I->Basis+2);
+      RayTransformBasis(I,I->Basis+2,2);
     }
 
     if(shadows&&(n_thread>1)) { /* parallel execution */
@@ -1965,9 +1896,9 @@ void RayRender(CRay *I,int width,int height,unsigned int *image,
       RayHashSpawn(thread_info,2);
       
     } else { /* serial execution */
-      BasisMakeMap(I->Basis+1,I->Vert2Prim,I->Primitive,I->Volume);
+      BasisMakeMap(I->Basis+1,I->Vert2Prim,I->Primitive,I->Volume,0,cCache_ray_map);
       if(shadows) {
-        BasisMakeMap(I->Basis+2,I->Vert2Prim,I->Primitive,NULL);
+        BasisMakeMap(I->Basis+2,I->Vert2Prim,I->Primitive,NULL,1,cCache_ray_map);
       }
 
       /* serial tasks which RayHashThread does in parallel mode */
@@ -2088,9 +2019,7 @@ void RayRender(CRay *I,int width,int height,unsigned int *image,
 		else 
         RayAntiSpawn(rt,n_thread);
     }
-    #if 1
-    FreeP(image);
-    #endif
+    CacheFreeP(image,0,cCache_ray_antialias_buffer,false);
     image = image_copy;
   }
 
@@ -2179,7 +2108,7 @@ void RaySphere3fv(CRay *I,float *v,float r)
 
   float *vv;
 
-  VLACheck(I->Primitive,CPrimitive,I->NPrimitive);
+  VLACacheCheck(I->Primitive,CPrimitive,I->NPrimitive,0,cCache_ray_primitive);
   p = I->Primitive+I->NPrimitive;
 
   p->type = cPrimSphere;
@@ -2216,7 +2145,7 @@ void RayCylinder3fv(CRay *I,float *v1,float *v2,float r,float *c1,float *c2)
 
   float *vv;
 
-  VLACheck(I->Primitive,CPrimitive,I->NPrimitive);
+  VLACacheCheck(I->Primitive,CPrimitive,I->NPrimitive,0,cCache_ray_primitive);
   p = I->Primitive+I->NPrimitive;
 
   p->type = cPrimCylinder;
@@ -2265,7 +2194,7 @@ void RayCustomCylinder3fv(CRay *I,float *v1,float *v2,float r,
 
   float *vv;
 
-  VLACheck(I->Primitive,CPrimitive,I->NPrimitive);
+  VLACacheCheck(I->Primitive,CPrimitive,I->NPrimitive,0,cCache_ray_primitive);
   p = I->Primitive+I->NPrimitive;
 
   p->type = cPrimCylinder;
@@ -2313,7 +2242,7 @@ void RaySausage3fv(CRay *I,float *v1,float *v2,float r,float *c1,float *c2)
 
   float *vv;
 
-  VLACheck(I->Primitive,CPrimitive,I->NPrimitive);
+  VLACacheCheck(I->Primitive,CPrimitive,I->NPrimitive,0,cCache_ray_primitive);
   p = I->Primitive+I->NPrimitive;
 
   p->type = cPrimSausage;
@@ -2373,7 +2302,7 @@ void RayTriangle3fv(CRay *I,
   dump3f(c1," c1");
   dump3f(c2," c2");
   dump3f(c3," c3");*/
-  VLACheck(I->Primitive,CPrimitive,I->NPrimitive);
+  VLACacheCheck(I->Primitive,CPrimitive,I->NPrimitive,0,cCache_ray_primitive);
   p = I->Primitive+I->NPrimitive;
 
   p->type = cPrimTriangle;
@@ -2496,15 +2425,14 @@ CRay *RayNew(void)
   I->Texture=0;
   I->TTTFlag=false;
   zero3f(I->TextureParam);
-
   PRINTFB(FB_Ray,FB_Blather) 
     " RayNew: BigEndian = %d\n",I->BigEndian
     ENDFB;
 
-  I->Basis=VLAlloc(CBasis,10);
-  BasisInit(I->Basis);
-  BasisInit(I->Basis+1);
-  I->Vert2Prim=VLAlloc(int,1);
+  I->Basis=CacheAlloc(CBasis,3,0,cCache_ray_basis);
+  BasisInit(I->Basis,0);
+  BasisInit(I->Basis+1,1);
+  I->Vert2Prim=VLACacheAlloc(int,1,0,cCache_ray_vert2prim);
   I->NBasis=2;
   I->Primitive=NULL;
   I->NPrimitive=0;
@@ -2533,9 +2461,9 @@ void RayPrepare(CRay *I,float v0,float v1,float v2,
 {
   int a;
   if(!I->Primitive) 
-	 I->Primitive=VLAlloc(CPrimitive,100);  
+	 I->Primitive=VLACacheAlloc(CPrimitive,100,0,cCache_ray_primitive);  
   if(!I->Vert2Prim) 
-	 I->Vert2Prim=VLAlloc(int,100);
+	 I->Vert2Prim=VLACacheAlloc(int,100,0,cCache_ray_vert2prim);
   I->Volume[0]=v0;
   I->Volume[1]=v1;
   I->Volume[2]=v2;
@@ -2577,18 +2505,18 @@ void RayRelease(CRay *I)
   int a;
 
   for(a=0;a<I->NBasis;a++) {
-	 BasisFinish(&I->Basis[a]);
+	 BasisFinish(&I->Basis[a],a);
   }
   I->NBasis=0;
-  VLAFreeP(I->Primitive);
-  VLAFreeP(I->Vert2Prim);
+  VLACacheFreeP(I->Primitive,0,cCache_ray_primitive,false);
+  VLACacheFreeP(I->Vert2Prim,0,cCache_ray_vert2prim,false);
 }
 /*========================================================================*/
 void RayFree(CRay *I)
 {
   RayRelease(I);
-  VLAFreeP(I->Basis);
-  VLAFreeP(I->Vert2Prim);
+  CacheFreeP(I->Basis,0,cCache_ray_basis,false);
+  VLACacheFreeP(I->Vert2Prim,0,cCache_ray_vert2prim,false);
   OOFreeP(I);
 }
 /*========================================================================*/

@@ -31,9 +31,6 @@ static const float kR_SMALL4 = 0.0001F;
 static float BasisFudge0;
 static float BasisFudge1;
 
-void BasisInit(CBasis *I);
-void BasisFinish(CBasis *I);
-
 float ZLineClipPoint(float *base,float *point,float *alongNormalSq,float cutoff);
 
 int ZLineToSphere(float *base,float *point,float *dir,float radius,float maxial,
@@ -41,9 +38,6 @@ int ZLineToSphere(float *base,float *point,float *dir,float radius,float maxial,
 
 int ZLineToSphereCapped(float *base,float *point,float *dir,float radius,float maxial,
 						float *sphere,float *asum,int cap1,int cap2,float *pre);
-
-static int intersect_triangle(float orig[3], float *pre,float vert0[3], 
-										float *u, float *v, float *d);
 
 #define FASTER_ER	1
 
@@ -1795,7 +1789,8 @@ void BasisOptimizeMap(CBasis *I,float *vertex,int n,int *vert2prim)
 #endif
 
 /*========================================================================*/
-void BasisMakeMap(CBasis *I,int *vert2prim,CPrimitive *prim,float *volume)
+void BasisMakeMap(CBasis *I,int *vert2prim,CPrimitive *prim,float *volume,
+                  int group_id,int block_base)
 {
 	float *v,*vv,*d;
 	float l;
@@ -1939,8 +1934,8 @@ void BasisMakeMap(CBasis *I,int *vert2prim,CPrimitive *prim,float *volume)
 		}	/* for */
 	
 		extra_vert	+= I->NVertex;
-		tempVertex	= Alloc(float,extra_vert*3);
-		tempRef		= Alloc(int,extra_vert); 
+		tempVertex	= CacheAlloc(float,extra_vert*3,group_id,cCache_basis_tempVertex);
+		tempRef		= CacheAlloc(int,extra_vert,group_id,cCache_basis_tempRef); 
 		
 		ErrChkPtr(tempVertex); /* can happen if extra vert is unreasonable */
 		ErrChkPtr(tempRef);
@@ -2157,11 +2152,11 @@ void BasisMakeMap(CBasis *I,int *vert2prim,CPrimitive *prim,float *volume)
 			extent[5]	= max[2];
 			/*		printf("%8.3f %8.3f %8.3f %8.3f %8.3f %8.3f",
 			extent[0],extent[1],extent[2],extent[3],extent[4],extent[5]);*/
-			I->Map	= MapNew(-sep,tempVertex,n,extent);
+			I->Map	= MapNewCached(-sep,tempVertex,n,extent,group_id,block_base);
 		}
 		else
 		{
-			I->Map	= MapNew(sep,tempVertex,n,NULL);
+			I->Map	= MapNewCached(sep,tempVertex,n,NULL,group_id,block_base);
 		}
 
 		n_voxel = I->Map->Dim[0]*I->Map->Dim[1]*I->Map->Dim[2];
@@ -2238,8 +2233,8 @@ void BasisMakeMap(CBasis *I,int *vert2prim,CPrimitive *prim,float *volume)
 			MapType	*mapPtr	= I->Map;
 			
 			max_site	= extra_vert;
-			site		= Alloc(int*,max_site);
-			value		= Alloc(int,max_site);
+			site		= CacheAlloc(int*,max_site,group_id,cCache_basis_site);
+			value		= CacheAlloc(int,max_site,group_id,cCache_basis_value);
 			
 			site_p		= site;
 			value_p		= value;
@@ -2340,48 +2335,48 @@ void BasisMakeMap(CBasis *I,int *vert2prim,CPrimitive *prim,float *volume)
 				**(site_p++)	= *(value_p++);
 			}
 #endif			
-			FreeP(value);
-			FreeP(site);
+			CacheFreeP(value,group_id,cCache_basis_value,false);
+			CacheFreeP(site,group_id,cCache_basis_site,false);
 		}
 		
-		FreeP(tempVertex);
-		FreeP(tempRef);
+		CacheFreeP(tempVertex,group_id,cCache_basis_tempVertex,false);
+		CacheFreeP(tempRef,group_id,cCache_basis_tempRef,false);
 	}
 	else
 	{
 		/* simple sphere mode */
-		I->Map	= MapNew(-sep,I->Vertex,I->NVertex,NULL);
+		I->Map	= MapNewCached(-sep,I->Vertex,I->NVertex,NULL,group_id,block_base);
 		MapSetupExpressXYVert(I->Map,I->Vertex,I->NVertex);
 	}
 }
 
 /*========================================================================*/
-void BasisInit(CBasis *I)
+void BasisInit(CBasis *I,int group_id)
 {
-  I->Vertex = VLAlloc(float,1);
-  I->Radius = VLAlloc(float,1);
-  I->Radius2 = VLAlloc(float,1);
-  I->Normal = VLAlloc(float,1);
-  I->Vert2Normal = VLAlloc(int,1);
-  I->Precomp = VLAlloc(float,1);
+  I->Vertex = VLACacheAlloc(float,1,group_id,cCache_basis_vertex);
+  I->Radius = VLACacheAlloc(float,1,group_id,cCache_basis_radius);
+  I->Radius2 = VLACacheAlloc(float,1,group_id,cCache_basis_radius2);
+  I->Normal = VLACacheAlloc(float,1,group_id,cCache_basis_normal);
+  I->Vert2Normal = VLACacheAlloc(int,1,group_id,cCache_basis_vert2normal);
+  I->Precomp = VLACacheAlloc(float,1,group_id,cCache_basis_precomp);
   I->Map=NULL;
   I->NVertex=0;
   I->NNormal=0;
 }
 /*========================================================================*/
-void BasisFinish(CBasis *I)
+void BasisFinish(CBasis *I,int group_id)
 {
   if(I->Map) 
 	 {
 		MapFree(I->Map);
 		I->Map=NULL;
 	 }  
-  VLAFreeP(I->Radius2);
-  VLAFreeP(I->Radius);
-  VLAFreeP(I->Vertex);
-  VLAFreeP(I->Vert2Normal);
-  VLAFreeP(I->Normal);
-  VLAFreeP(I->Precomp);
+  VLACacheFreeP(I->Radius2,group_id,cCache_basis_radius2,false);
+  VLACacheFreeP(I->Radius,group_id,cCache_basis_radius,false);
+  VLACacheFreeP(I->Vertex,group_id,cCache_basis_vertex,false);
+  VLACacheFreeP(I->Vert2Normal,group_id,cCache_basis_vert2normal,false);
+  VLACacheFreeP(I->Normal,group_id,cCache_basis_normal,false);
+  VLACacheFreeP(I->Precomp,group_id,cCache_basis_precomp,false);
   I->Vertex=NULL;
 }
 
