@@ -1072,14 +1072,12 @@ static PyObject *CmdGetPDB(PyObject *dummy, PyObject *args)
   char *pdb = NULL;
   int state;
   OrthoLineType s1 = "";
-  char debug_buffer[] = "Warren is a crappy programmer";
   PyObject *result = NULL;
   
   PyArg_ParseTuple(args,"si",&str1,&state);
   APIEntry();
-  /* SelectorGetTmp(str1,s1);
-     pdb=ExecutiveSeleToPDBStr(s1,state,true);*/
-  pdb = debug_buffer;
+  SelectorGetTmp(str1,s1);
+  pdb=ExecutiveSeleToPDBStr(s1,state,true);
   SelectorFreeTmp(s1);
   APIExit();
   if(pdb)
@@ -1088,7 +1086,7 @@ static PyObject *CmdGetPDB(PyObject *dummy, PyObject *args)
     result=Py_None;
     Py_INCREF(result);
   }
-  /*  FreeP(pdb);*/
+  FreeP(pdb);
   return(result);
 }
 
