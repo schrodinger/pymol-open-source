@@ -61,13 +61,32 @@ void MapCacheInit(MapCache *M,MapType *I)
 
 void MapCacheReset(MapCache *M)
 {
-  int i;
-  i=M->CacheStart;
-  while(i>=0) {
-	 M->Cache[i]=0;
-	 i=M->CacheLink[i];
-  }
-  M->CacheStart=-1;
+	int		i		= M->CacheStart;
+	register int* 	cachep	= M->Cache;
+	register int* 	clinkp	= M->CacheLink;
+	register int    i1 = 0, i2 = 0, i3 = 0, i4 = 0;
+	while(i >= 0)  /* believe it or not, unrolling gives us almost 10%!!! */
+	{
+		i1 = i;
+		i = clinkp[i];
+		if(i >= 0) {
+			i2 = i;
+			i = clinkp[i];
+		}
+		if(i >= 0) {
+			i3 = i;
+			i = clinkp[i];
+		}	
+		if(i >= 0) {
+			i4 = i;
+			i = clinkp[i];
+		}	
+		cachep[i1] = 0;
+		cachep[i2] = 0;
+		cachep[i3] = 0;
+		cachep[i4] = 0;
+	}
+	M->CacheStart = -1;
 }
 
 void MapCacheFree(MapCache *M)
@@ -80,35 +99,53 @@ void MapCacheFree(MapCache *M)
 
 int MapInsideXY(MapType *I,float *v,int *a,int *b,int *c) /* special version for ray-tracing */
 {
-  *a=(int)(((v[0]-I->Min[0])/I->Div)+MapBorder);
-  if(*a<I->iMin[0]) { 
-	 if((I->iMin[0]-*a)>1) 
-		return(false);
-	 else 
-		*a=I->iMin[0]; 
-  } else if(*a>I->iMax[0]) { 
-	 if((*a-I->iMax[0])>1) 
-		return(false);
-	 else 
-		*a=I->iMax[0]; 
-  }
-  *b=(int)(((v[1]-I->Min[1])/I->Div)+MapBorder);
-  if(*b<I->iMin[1]) { 
-	 if((I->iMin[1]-*b)>1) 
-		return(false);
-	 else 
-		*b=I->iMin[1];
-  } else if(*b>I->iMax[1]) {
-	 if((*b-I->iMax[1])>1) 
-		return(false);
-	 else 
-		*b=I->iMax[1];
-  }
-  *c=(int)(((v[2]-I->Min[2])/I->Div)+MapBorder+1);
-  if(*c<I->iMin[2]) *c=I->iMin[2];
-  else if(*c>I->iMax[2]) *c=I->iMax[2];
+	int		atmp, btmp, ctmp;
+	const float	iDiv	= I->recipDiv; 
+		
+	atmp	= (int)((v[0] - I->Min[0]) * iDiv) + MapBorder;
+	btmp	= (int)((v[1] - I->Min[1]) * iDiv) + MapBorder;
+	ctmp	= (int)((v[2] - I->Min[2]) * iDiv) + MapBorder + 1;
 
-  return(true);  
+	if(atmp < I->iMin[0])
+	{
+		if((I->iMin[0] - atmp) > 1)
+			return(false);
+		else 
+			atmp = I->iMin[0]; 
+	}
+	else if(atmp > I->iMax[0]) 
+	{ 
+		if((atmp - I->iMax[0]) > 1) 
+			return(false);
+		else 
+			atmp = I->iMax[0]; 
+	}
+
+	if(btmp < I->iMin[1]) 
+	{ 
+		if((I->iMin[1] - btmp) > 1) 
+			return(false);
+		else 
+			btmp = I->iMin[1];
+	}
+	else if(btmp > I->iMax[1]) 
+	{
+		if((btmp - I->iMax[1]) > 1)
+			return(false);
+		else 
+			btmp = I->iMax[1];
+	}
+
+	if(ctmp < I->iMin[2])
+		ctmp = I->iMin[2];
+	else if(ctmp > I->iMax[2])
+		ctmp = I->iMax[2];
+
+	*a		= atmp;
+	*b		= btmp;
+	*c		= ctmp;
+	
+	return(true);  
 }
 
 void MapSetupExpressXY(MapType *I) /* setup a list of XY neighbors for each square */
@@ -282,46 +319,73 @@ void MapSetupExpress(MapType *I) /* setup a list of neighbors for each square */
 
 }
 
+static __inline__ int iclamp(int x, int l, int h)
+{
+	unsigned int hl = h - l; int xl = x - l;
+	return (unsigned int)(xl) > hl ? ((int)hl & ~(xl >> 31)) + l : x;
+}
+
 void MapLocus(MapType *I,float *v,int *a,int *b,int *c)
 {
-  *a=(int)(((v[0]-I->Min[0])/I->Div)+MapBorder);
-  *b=(int)(((v[1]-I->Min[1])/I->Div)+MapBorder);
-  *c=(int)(((v[2]-I->Min[2])/I->Div)+MapBorder);
-  /* range checking...*/
-  if(*a<I->iMin[0]) *a=I->iMin[0];
-  else if(*a>I->iMax[0]) *a=I->iMax[0];
-  if(*b<I->iMin[1]) *b=I->iMin[1];
-  else if(*b>I->iMax[1]) *b=I->iMax[1];
-  if(*c<I->iMin[2]) *c=I->iMin[2];
-  else if(*c>I->iMax[2]) *c=I->iMax[2];
+#if 1
+	int		at, bt, ct;
+	float	invDiv	= I->recipDiv; 
+	
+	at	= (int)((v[0] - I->Min[0]) * invDiv) + MapBorder;
+	bt	= (int)((v[1] - I->Min[1]) * invDiv) + MapBorder;
+	ct	= (int)((v[2] - I->Min[2]) * invDiv) + MapBorder;
+	
+	/* range checking...*/
+	if(at < I->iMin[0])			at = I->iMin[0];
+	else if(at > I->iMax[0])	at = I->iMax[0];
+	
+	if(bt < I->iMin[1])			bt = I->iMin[1];
+	else if(bt > I->iMax[1])	bt = I->iMax[1];
+	
+	if(ct < I->iMin[2])			ct = I->iMin[2];
+	else if(ct > I->iMax[2])	ct = I->iMax[2];
+	
+	*a	= at;
+	*b	= bt;
+	*c	= ct;
+#else
+	float	invDiv	= I->recipDiv; 
+		
+	/* range checking...*/
+	*a	= iclamp( (int)((v[0] - I->Min[0]) * invDiv) + MapBorder, I->iMin[0], I->iMax[0] );
+	*b	= iclamp( (int)((v[1] - I->Min[1]) * invDiv) + MapBorder, I->iMin[1], I->iMax[1] );
+	*c	= iclamp( (int)((v[2] - I->Min[2]) * invDiv) + MapBorder, I->iMin[2], I->iMax[2] );
+#endif
 }
 
 int *MapLocusEStart(MapType *I,float *v)
 {
-  register int a,b,c;
+	register int a,b,c;
+	float invDiv = I->recipDiv; 
 
-  a=(int)(((v[0]-I->Min[0])/I->Div)+MapBorder);
-  b=(int)(((v[1]-I->Min[1])/I->Div)+MapBorder);
-  c=(int)(((v[2]-I->Min[2])/I->Div)+MapBorder);
-  if(a<I->iMin[0]) a=I->iMin[0];
-  else if(a>I->iMax[0]) a=I->iMax[0];
-  if(b<I->iMin[1]) b=I->iMin[1];
-  else if(b>I->iMax[1]) b=I->iMax[1];
-  if(c<I->iMin[2]) c=I->iMin[2];
-  else if(c>I->iMax[2]) c=I->iMax[2];
-  return (I->EHead + ((a) * I->D1D2) + ((b)*I->Dim[2]) + (c));
-
+	a=(int)(((v[0]-I->Min[0])*invDiv)+MapBorder);
+	b=(int)(((v[1]-I->Min[1])*invDiv)+MapBorder);
+	c=(int)(((v[2]-I->Min[2])*invDiv)+MapBorder);
+	if(a<I->iMin[0]) a=I->iMin[0];
+	else if(a>I->iMax[0]) a=I->iMax[0];
+	if(b<I->iMin[1]) b=I->iMin[1];
+	else if(b>I->iMax[1]) b=I->iMax[1];
+	if(c<I->iMin[2]) c=I->iMin[2];
+	else if(c>I->iMax[2]) c=I->iMax[2];
+	return (I->EHead + ((a) * I->D1D2) + ((b)*I->Dim[2]) + (c));
 }
 
 int MapExclLocus(MapType *I,float *v,int *a,int *b,int *c)
 {
-  *a=(int)(((v[0]-I->Min[0])/I->Div)+MapBorder);
+  float invDiv = I->recipDiv; 
+
+  *a=(int)(((v[0]-I->Min[0])*invDiv)+MapBorder);
   if(*a<I->iMin[0]) return(0);
   else if(*a>I->iMax[0]) return(0);
-  *b=(int)(((v[1]-I->Min[1])/I->Div)+MapBorder);
+  *b=(int)(((v[1]-I->Min[1])*invDiv)+MapBorder);
   if(*b<I->iMin[1]) return(0);
   else if(*b>I->iMax[1]) return(0);
-  *c=(int)(((v[2]-I->Min[2])/I->Div)+MapBorder);
+  *c=(int)(((v[2]-I->Min[2])*invDiv)+MapBorder);
   if(*c<I->iMin[2]) return(0);
   else if(*c>I->iMax[2]) return(0);
   return(1);
@@ -499,6 +563,7 @@ static MapType *_MapNew(float range,float *vert,int nVert,float *extent,int *fla
 
   /* compute final box size */
   I->Div = MapGetSeparation(range,I->Max,I->Min,diagonal);
+  I->recipDiv = 1.0F/(I->Div); /* cache this */
 
   /* add borders to avoid special edge cases */
   I->Dim[0]=(int)((diagonal[0]/I->Div)+1+(2*MapBorder)); 

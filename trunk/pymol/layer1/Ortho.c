@@ -942,13 +942,12 @@ void OrthoDoDraw()
           glDrawBuffer(GL_BACK_RIGHT);
         break;
       case 0:
-        if(double_pump)
+        if(double_pump) {
           glDrawBuffer(GL_BACK_LEFT);
-        else
+        } else
           glDrawBuffer(GL_BACK);
         break;
       }
-
       OrthoPushMatrix();
       
       x = I->X;
