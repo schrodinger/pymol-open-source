@@ -417,9 +417,9 @@ static void TriangleAdd(int i0,int i1,int i2,float *tNorm,float *v,float *vn)
 		TriangleEdgeSetStatus(i0,i1,-s01);
 		I->vertActive[i0]--; /* deactivate when all active edges are closed */
 		I->vertActive[i1]--;
-	 } else {
+	 } /*else {
       ErrFatal("TriangleAdd","Invalid triangle - s01 negative");
-	 }
+      }*/
   } else {
 	 VLACheck(I->edge,EdgeRec,I->nEdge);
 	 I->edge[I->nEdge].vert3 = i2;
@@ -437,9 +437,9 @@ static void TriangleAdd(int i0,int i1,int i2,float *tNorm,float *v,float *vn)
 		TriangleEdgeSetStatus(i0,i2,-s02);
 		I->vertActive[i0]--; /* deactivate when all active edges are closed */
 		I->vertActive[i2]--;
-	 } else {
+	 } /*else {
       ErrFatal("TriangleAdd","Invalid triangle - s02 negative");
-	 }
+      }*/
   } else {
 	 VLACheck(I->edge,EdgeRec,I->nEdge);
 	 I->edge[I->nEdge].vert3 = i1;
@@ -457,9 +457,9 @@ static void TriangleAdd(int i0,int i1,int i2,float *tNorm,float *v,float *vn)
 		TriangleEdgeSetStatus(i1,i2,-s12); 
 		I->vertActive[i1]--; /* deactivate when all active edges are closed */
 		I->vertActive[i2]--;
-	 } else {
+	 } /*else {
       ErrFatal("TriangleAdd","Invalid triangle - s12 negative");
-	 }
+      }*/
   } else {
 	 VLACheck(I->edge,EdgeRec,I->nEdge);
 	 I->edge[I->nEdge].vert3 = i0;
@@ -1289,6 +1289,119 @@ static void TriangleFixProblems(float *v,float *vn,int n)
   FreeP(pFlag);
 }
 
+static void TriangleBruteForceClosure(float *v,float *vn,int n) 
+{
+  TriangleSurfaceRec *I=&TriangleSurface;
+  int a,b,c,d;
+  int i0,i1,i2;
+  float *v1,*v2,*v0,vt1[3],vt2[3],vt3[3],vt4[3],*n0,*n1,*n2,tNorm[3];
+  int *pFlag = NULL;
+  int *pair = NULL;
+  int pc;
+  int *active = NULL;
+  int ac;
+  int hits;
+  int p1,p2;
+  float dp;
+
+  active = Alloc(int,n);
+  ac = 0;
+  pair = Alloc(int,n*2); 
+  pc = 0;
+  pFlag=Alloc(int,n);  
+  for(a=0;a<n;a++) {
+	 if(I->vertActive[a]) {
+		pFlag[a]=1;
+      active[ac]=a;
+      ac++;
+	 } else {
+		pFlag[a]=0;
+	 }
+  }
+  if(ac<80)  /* there is a limit to how much we can brute force... */
+	 {
+		a=0;
+		while(a<I->nTri&&(pc<n)) {
+        i0=I->tri[a*3];
+        i1=I->tri[a*3+1];
+        i2=I->tri[a*3+2];
+        if(pFlag[i0]&&pFlag[i1]) {
+          if(i0<i1) {
+            pair[pc*2] = i0;
+            pair[pc*2+1] = i1;
+          } else {
+            pair[pc*2] = i1;
+            pair[pc*2+1] = i0;
+          }
+          pc++;
+        }
+        if(pFlag[i1]&&pFlag[i2]) {
+          if(i1<i2) {
+            pair[pc*2] = i1;
+            pair[pc*2+1] = i2;
+          } else {
+            pair[pc*2] = i2;
+            pair[pc*2+1] = i1;
+          }
+          pc++;
+        }
+        if(pFlag[i2]&&pFlag[i0]) {
+          if(i2<i0) {
+            pair[pc*2] = i2;
+            pair[pc*2+1] = i0;
+          } else {
+            pair[pc*2] = i0;
+            pair[pc*2+1] = i2;
+          }
+          pc++;
+        }
+		  a++;
+      }
+      PRINTFD(FB_Triangle)
+        " Triangle-BFS: ac %d pc %d\n",ac,pc
+        ENDFD;
+        
+      for(a=0;a<ac;a++) {
+        i0 = active[a];
+        for(b=a+1;b<ac;b++) {
+          i1 = active[b];
+          for(c=b+1;c<ac;c++) { /* consider all three-way possibilities */
+            i2 = active[c];
+            hits = 0;
+            for(d=0;d<pc;d++) {
+              p1 = *(pair + d*2 );
+              p2 = *(pair + d*2 +1);
+              if((p1==i0)&&(p2==i1))
+                hits++;
+              else if((p1==i1)&&(p2==i2))
+                hits++;
+              else if((p1==i0)&&(p2==i2))
+                hits++;
+            }
+            if(hits>=3) {
+              v0=v+i0*3; v1=v+i1*3; v2=v+i2*3;
+              n0 = vn+3*i0; n1 = vn+3*i1; n2 = vn+3*i2;							 
+              add3f(n0,n1,vt1);
+              add3f(n2,vt1,vt2);
+              subtract3f(v1,v0,vt3);
+              subtract3f(v2,v0,vt4);
+              cross_product3f(vt3,vt4,tNorm); 
+              normalize3f(tNorm); 							 
+              dp = dot_product3f(vt2,tNorm);
+              if(dp<0) scale3f(tNorm,-1.0,tNorm);
+              TriangleAdd(i0,i1,i2,tNorm,v,vn);
+            }
+          }
+        }
+      }
+	 }
+  FreeP(active);
+  FreeP(pair);
+  FreeP(pFlag);
+}
+
+
+
 int *TrianglePointsToSurface(float *v,float *vn,int n,float cutoff,int *nTriPtr,int **stripPtr,float *extent)
 {
   TriangleSurfaceRec *I=&TriangleSurface;
@@ -1346,8 +1459,10 @@ int *TrianglePointsToSurface(float *v,float *vn,int n,float cutoff,int *nTriPtr,
       if(I->vertActive[a])
         printf(" TrianglePTS-DEBUG: after fix %i %i\n",a,I->vertActive[a]);
   }
-  /*  for(a=0;a<n;a++) 
-	 if(I->vertActive[a])
+  /*  { int l; 
+
+NTestLine=0; for(a=0;a<n;a++) 
+    if(I->vertActive[a])
 		printf("after fix %i %i\n",a,I->vertActive[a]);
   for(a=0;a<n;a++) 
 	 if(I->vertActive[a])
@@ -1367,7 +1482,9 @@ int *TrianglePointsToSurface(float *v,float *vn,int n,float cutoff,int *nTriPtr,
 		l=I->link[l].next;
 	 }
   }
+  }
   */
+  TriangleBruteForceClosure(v,vn,n); /* abandon algorithm, just CLOSE THOSE GAPS! (/
 
   TriangleAdjustNormals(v,vn,n);
 
