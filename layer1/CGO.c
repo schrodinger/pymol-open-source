@@ -713,8 +713,16 @@ void CGOSimpleSphere(CGO *I,float *v,float vdw)
   SphereRec *sp;
   int *q,*s;
   int b,c;
+  int ds;
 
-  sp = Sphere1;
+  ds = (int)SettingGet_f(NULL,NULL,cSetting_cgo_sphere_quality);
+  if(ds<0) ds=0;
+  switch(ds) {
+  case 0: sp=Sphere0; break;
+  case 1: sp=Sphere1; break;
+  case 2: sp=Sphere2; break;
+  default: sp=Sphere3; break;
+  }
   
   q=sp->Sequence;
 

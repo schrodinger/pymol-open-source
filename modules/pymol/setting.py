@@ -203,6 +203,7 @@ class SettingIndex:
    fit_tolerance         =186
    batch_prefix          =187
    stereo_mode           =188
+   cgo_sphere_quality    =189
    
 setting_sc = Shortcut(SettingIndex.__dict__.keys())
    
