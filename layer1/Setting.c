@@ -2418,7 +2418,7 @@ void SettingInitGlobal(PyMOLGlobals *G,int alloc,int reset_gui)
   SettingSet_b(I,cSetting_line_stick_helper, 1);
   SettingSet_i(I,cSetting_ray_orthoscopic, -1);
   SettingSet_i(I,cSetting_ribbon_side_chain_helper, 0);
-  SettingSet_f(I,cSetting_selection_width_max,12.0F);
+  SettingSet_f(I,cSetting_selection_width_max,6.0F);
   SettingSet_f(I,cSetting_selection_width_scale,1.0F);
 
 }

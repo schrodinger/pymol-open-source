@@ -898,10 +898,6 @@ DEVELOPMENT TO DO
                key = scene_dict_sc.auto_err(key,'scene')
                list = scene_dict[key]
                ll = len(list)
-               if (ll>0) and (view):
-                  if list[0]!=None:
-                     set_view(list[0],
-                              animate=int(cmd.get_setting_legacy("scene_animation")))
                if (ll>1) and (active):
                   if list[1]!=None:
                      cmd.disable()
@@ -949,6 +945,10 @@ DEVELOPMENT TO DO
                         mess_flag = 1
                if replace_flag and not mess_flag:
                   cmd.wizard()
+               if (ll>0) and (view):
+                  if list[0]!=None:
+                     set_view(list[0],
+                              animate=int(cmd.get_setting_legacy("scene_animation")))
                if _feedback(fb_module.scene,fb_mask.actions): # redundant
                   print " scene: \"%s\" recalled."%key
             elif action=='store':

@@ -3267,9 +3267,9 @@ void ExecutiveRenderSelections(PyMOLGlobals *G,int curState)
             glColor3fv(ColorGet(G,rec->sele_color));
 
           gl_width=(float)width;
-          if(width>5) {
+          if(width>6) {
             if(width&0x1) {
-              width++;
+              width--;
               gl_width = (float)width;
             }
           }
