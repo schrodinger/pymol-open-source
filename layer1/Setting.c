@@ -98,6 +98,9 @@ int SettingGetTextValue(CSetting *set1,CSetting *set2,int index,char *buffer)
     else
       strcpy(buffer,ColorGetName(tmp1));
     break;
+  case cSetting_string:
+    strcpy(buffer,SettingGet_s(set1,set2,index));
+    break;
   default:
     ok=false;
     break;
@@ -138,6 +141,10 @@ int SettingSetTuple(CSetting *I,int index,PyObject *tuple)
     SettingSet_color(I,index,
                      PyString_AsString(PyTuple_GetItem(value,0)));
     break;
+  case cSetting_string:
+    SettingSet_s(I,index,
+                 PyString_AsString(PyTuple_GetItem(value,0)));
+    break;
   default:
     ok=false;
     break;
@@ -172,6 +179,10 @@ PyObject *SettingGetTuple(CSetting *set1,CSetting *set2,int index)
   case cSetting_color:
     result = Py_BuildValue("(i(i))",type,
                            SettingGet_color(set1,set2,index));
+    break;
+  case cSetting_string:
+    result = Py_BuildValue("(i(s))",type,
+                           SettingGet_s(set1,set2,index));
     break;
   default:
     Py_INCREF(Py_None);
@@ -218,9 +229,10 @@ void SettingClear(CSetting *I,int index)
 static void *SettingPtr(CSetting *I,int index,unsigned int size)
 {
   SettingRec *sr = I->info+index;
-  if(!sr->offset) {
+  if((!sr->offset)||(sr->max_size<size)) { 
     sr->offset=I->size;
     I->size+=size;
+    sr->max_size=size;
     VLACheck(I->data,char,I->size);
   }
   sr->defined = true;
@@ -309,6 +321,22 @@ int SettingSet_f(CSetting *I,int index, float value)
   return(ok);
 }
 /*========================================================================*/
+int SettingSet_s(CSetting *I,int index, char *value)
+{
+  int ok=true;
+  if(Setting.info[index].type&&(Setting.info[index].type!=cSetting_string)) {
+    PRINTFB(FB_Setting,FB_Errors)
+      "Setting-Error: type mismatch (string)\n"
+      ENDFB
+      ok=false;
+  } else {
+    VLACheck(I->info,SettingRec,index);
+    strcpy(((char*)SettingPtr(I,index,strlen(value)+1)),value);
+    I->info[index].type = cSetting_string;
+  }
+  return(ok);
+}
+/*========================================================================*/
 int SettingSet_3f(CSetting *I,int index, float value1,float value2,float value3)
 {
   float *ptr;
@@ -355,6 +383,12 @@ float SettingGetGlobal_f(int index)
 {
   CSetting *I=&Setting;
   return(*((float*)(I->data+I->info[index].offset)));
+}
+/*========================================================================*/
+char *SettingGetGlobal_s(int index)
+{
+  CSetting *I=&Setting;
+  return((char*)(I->data+I->info[index].offset));
 }
 /*========================================================================*/
 void  SettingGetGlobal_3f(int index,float *value)
@@ -429,6 +463,21 @@ float SettingGet_f  (CSetting *set1,CSetting *set2,int index)
     }
   }
   return(SettingGetGlobal_f(index));
+}
+/*========================================================================*/
+char *SettingGet_s(CSetting *set1,CSetting *set2,int index)
+{
+  if(set1) {
+    if(set1->info[index].defined) {
+      return((char*)(set1->data+set1->info[index].offset));
+    }
+  }
+  if(set2) {
+    if(set2->info[index].defined) {
+      return((char*)(set2->data+set2->info[index].offset));      
+    }
+  }
+  return(SettingGetGlobal_s(index));
 }
 /*========================================================================*/
 void  SettingGet_3f(CSetting *set1,CSetting *set2,int index,float *value)
@@ -1238,6 +1287,8 @@ void SettingInitGlobal(void)
   SettingSet_f(I,cSetting_fit_iterations, 1000.0F);
 
   SettingSet_f(I,cSetting_fit_tolerance, 0.00001F);
+
+  SettingSet_s(I,cSetting_batch_prefix,"tmp_pymol");
 
 }
 

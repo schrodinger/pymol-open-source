@@ -808,7 +808,7 @@ DESCRIPTION
       
 USAGE
  
-   ray [width,height [,renderer]]
+   ray [width,height [,renderer ]]
 
 EXAMPLES
 
@@ -818,7 +818,7 @@ EXAMPLES
    
 PYMOL API
   
-   cmd.ray(int width,int height,int renderer=-1)
+   cmd.ray(int width,int height,int renderer=-1,string prefix)
 
 NOTES
 

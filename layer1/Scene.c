@@ -1485,6 +1485,7 @@ void SceneRay(int ray_width,int ray_height,int mode,char **headerVLA_ptr,char **
   char *charVLA = NULL;
   char *headerVLA = NULL;
   float fov;
+  OrthoLineType prefix = "";
 
   if((!ray_width)||(!ray_height)) {
     ray_width=I->Width;
@@ -1584,8 +1585,10 @@ void SceneRay(int ray_width,int ray_height,int mode,char **headerVLA_ptr,char **
     headerVLA=VLAlloc(char,2000);
     RayRenderPOV(ray,ray_width,ray_height,&headerVLA,&charVLA,I->FrontSafe,I->Back,fov);
     if(!(charVLA_ptr&&headerVLA_ptr)) { /* immediate mode */
-      if(PPovrayRender(headerVLA,charVLA,"tmp_pymol",ray_width,ray_height,SettingGet(cSetting_antialias))) {
-        SceneLoadPNG("tmp_pymol.png",false,false);
+      strcpy(prefix,SettingGet_s(NULL,NULL,cSetting_batch_prefix));
+      if(PPovrayRender(headerVLA,charVLA,prefix,ray_width,ray_height,SettingGet(cSetting_antialias))) {
+        strcat(prefix,".png");
+        SceneLoadPNG(prefix,false,false);
         I->DirtyFlag=false;
       }
       VLAFreeP(charVLA);

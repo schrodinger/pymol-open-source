@@ -788,9 +788,10 @@ static PyObject *CmdBackgroundColor(PyObject *self, PyObject *args)
     idx = ColorGetIndex(str1);
     if(idx>=0)
       ok = SettingSetfv(cSetting_bg_rgb,ColorGet(idx));
-    else
+    else {
       ErrMessage("Color","Bad color name.");
       ok = false; /* bad color */
+    }
     APIExit();
   }
   return(APIStatus(ok));
