@@ -157,6 +157,24 @@ void ExecutiveStereo(int flag)
   }
 }
 /*========================================================================*/
+void ExecutiveBond(char *s1,char *s2,int order,int add)
+{
+  int sele1,sele2;
+  Object *obj;
+  ObjectMolecule *objMol;
+
+  sele1=SelectorIndexByName(s1);
+  sele2=SelectorIndexByName(s2);
+  
+  if((sele1>=0)&&(sele2>=0)) {
+    
+  } else if(sele1<0) {
+    ErrMessage("ExecutiveBond","The first selection contains no atoms.");
+  } else if(sele2<0) {
+    ErrMessage("ExecutiveBond","The second selection contains no atoms.");
+  }
+}
+/*========================================================================*/
 void ExecutiveDist(char *nam,char *s1,char *s2,int mode,float cutoff)
 {
   int sele1,sele2;

@@ -23,7 +23,7 @@ Z* -------------------------------------------------------------------
 #define cResiLen 5
 #define cAtomNameLen 4
 #define cSegiLen 4
-#define cTextTypeLen 10
+#define cTextTypeLen 20
 #define cLabelTypeLen 20
 
 typedef char Chain[2];

@@ -505,7 +505,10 @@ int SceneClick(Block *block,int button,int x,int y,int mod)
         obj->fDescribeElement(obj,I->LastPicked.index);
 		  sprintf(buffer,"model %s and index %i",
 					 obj->Name,I->LastPicked.index+1);
-		
+        /*        if(I->LastPicked.bond>=0)
+          printf("Bond: %d %d %d\n",I->LastPicked.bond,
+                 ((ObjectMolecule*)obj)->Bond[I->LastPicked.bond*3],
+                 ((ObjectMolecule*)obj)->Bond[I->LastPicked.bond*3+1]);*/
 		switch(button) {
 		case GLUT_LEFT_BUTTON:
         strcpy(selName,"%pk1");

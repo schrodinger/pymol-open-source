@@ -203,7 +203,10 @@ Rep *RepDotDoNew(CoordSet *cs,int mode)
                ((!cullByFlag)||
                 (!(ai1->flags&0x1000000)))) {
               /* don't surface if flag 24 (bit 23) is set */
-				  c1=*(cs->Color+a);
+              if(cs->Color)
+                c1=*(cs->Color+a);
+              else
+                c1 = 0;
 				  v0 = cs->Coord+3*a;
 				  vdw = ai1->vdw+solv_rad;
 				  for(b=0;b<sp->nDot;b++)

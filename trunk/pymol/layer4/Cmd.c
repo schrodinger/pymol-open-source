@@ -87,6 +87,7 @@ static void APIExit(void)
 
 static PyObject *CmdAlter(PyObject *self,   PyObject *args);
 static PyObject *CmdAlterState(PyObject *self,   PyObject *args);
+static PyObject *CmdBond(PyObject *dummy, PyObject *args);
 static PyObject *CmdClip(PyObject *self, 	PyObject *args);
 static PyObject *CmdCls(PyObject *self, 	PyObject *args);
 static PyObject *CmdColor(PyObject *self, PyObject *args);
@@ -162,6 +163,7 @@ static PyObject *CmdWaitQueue(PyObject *self, 	PyObject *args);
 static PyMethodDef Cmd_methods[] = {
 	{"alter",	     CmdAlter,        METH_VARARGS },
 	{"alter_state",  CmdAlterState,   METH_VARARGS },
+	{"bond",         CmdBond,         METH_VARARGS },
 	{"clip",	        CmdClip,         METH_VARARGS },
 	{"cls",	        CmdCls,          METH_VARARGS },
 	{"color",	     CmdColor,        METH_VARARGS },
@@ -433,6 +435,23 @@ static PyObject *CmdDist(PyObject *dummy, PyObject *args)
   SelectorGetTmp(str1,s1);
   SelectorGetTmp(str2,s2);
   ExecutiveDist(name,s1,s2,mode,cutoff);
+  SelectorFreeTmp(s1);
+  SelectorFreeTmp(s2);
+  APIExit();
+  Py_INCREF(Py_None);
+  return Py_None;  
+}
+
+static PyObject *CmdBond(PyObject *dummy, PyObject *args)
+{
+  char *str1,*str2;
+  int order;
+  OrthoLineType s1,s2;
+  PyArg_ParseTuple(args,"ssi",&str1,&str2,&order);
+  APIEntry();
+  SelectorGetTmp(str1,s1);
+  SelectorGetTmp(str2,s2);
+  ExecutiveBond(s1,s2,order,1);
   SelectorFreeTmp(s1);
   SelectorFreeTmp(s2);
   APIExit();
