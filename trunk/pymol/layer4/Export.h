@@ -44,8 +44,8 @@ typedef struct {
   float *coord;
 } ExportCoords;
 
-ExportCoords *ExportCoordsExport(char *name,int state);
-int ExportCoordsImport(char *name,int state,ExportCoords *io);
+ExportCoords *ExportCoordsExport(char *name,int state,int order);
+int ExportCoordsImport(char *name,int state,ExportCoords *io,int order);
 void ExportCoordsFree(ExportCoords *io);
 
 void ExportDeleteMDebug(struct Export *ex); /* for mmalloc/mfree blocks */

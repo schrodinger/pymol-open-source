@@ -148,7 +148,6 @@ void EditorInvert(ObjectMolecule *obj,int isele0,int isele1,int mode)
               }
             }
           }
-
           if((ia0<0)||(ia1<0)||(i0<0))
             ErrMessage("Invert","couldn't find basis for inversion");
           else {

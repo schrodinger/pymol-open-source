@@ -53,8 +53,10 @@ typedef struct SpecRec {
   int sele_color;
 } SpecRec; /* specification record (a line in the executive window) */
 
-ListVarDeclare(SpecList,SpecRec);
-ListVarDeclare(SpecList1,SpecRec);
+ListVarDeclare(SpecList,SpecRec); 
+/* NOTE: these vars are only used within calls -- not between them
+ * However, they should be replaced with local vars declared inside
+ * macros (assuming that's legal with all C compilers) */
 
 typedef struct Executive {
   Block *Block;
@@ -91,7 +93,7 @@ void ExecutiveHideSelections(void)
   CExecutive *I = &Executive;
   SpecRec *rec = NULL;
 
-  while(ListIterate(I->Spec,rec,next,SpecList)) {
+  while(ListIterate(I->Spec,rec,next)) {
     if(rec->type==cExecSelection) {
       if(rec->visible) {
         rec->visible=false;
@@ -113,7 +115,7 @@ void ExecutiveRenderSelections(int curState)
   no_depth = SettingGet(cSetting_selection_overlay);
   width = SettingGet(cSetting_selection_width);
 
-  while(ListIterate(I->Spec,rec,next,SpecList)) {
+  while(ListIterate(I->Spec,rec,next)) {
     if(rec->type==cExecSelection) {
 
       if(rec->visible) {
@@ -128,7 +130,7 @@ void ExecutiveRenderSelections(int curState)
           if(no_depth)
             glDisable(GL_DEPTH_TEST);
           glBegin(GL_POINTS);
-          while(ListIterate(I->Spec,rec1,next,SpecList1)) {
+          while(ListIterate(I->Spec,rec1,next)) {
             if(rec1->type==cExecObject) {
               if(rec1->obj->type==cObjectMolecule) {
                 ObjectMoleculeRenderSele((ObjectMolecule*)rec1->obj,curState,sele);
@@ -286,7 +288,7 @@ char *ExecutiveGetNames(int mode)
   int stlen;
   result=VLAlloc(char,1000);
 
-  while(ListIterate(I->Spec,rec,next,SpecList)) {
+  while(ListIterate(I->Spec,rec,next)) {
     if(
        (rec->type==cExecObject&&((!mode)||(mode==1)))||
        (rec->type==cExecSelection&&((!mode)||(mode==2))))
@@ -357,7 +359,7 @@ void ExecutiveRenameObjectAtoms(char *name,int force)
   }
   
   if(os||(!strlen(name))) { /* sort one or all */
-    while(ListIterate(I->Spec,rec,next,SpecList)) {
+    while(ListIterate(I->Spec,rec,next)) {
       if(rec->type==cExecObject)
         if(rec->obj->type==cObjectMolecule)
           if((!os)||(rec->obj==os)) {
@@ -453,7 +455,7 @@ void ExecutiveSpheroid(char *name)  /* EXPERIMENTAL */
   }
   
   if(os||(!strlen(name))) { /* sort one or all */
-    while(ListIterate(I->Spec,rec,next,SpecList)) {
+    while(ListIterate(I->Spec,rec,next)) {
       if(rec->type==cExecObject)
         if(rec->obj->type==cObjectMolecule)
           if((!os)||(rec->obj==os)) {
@@ -469,7 +471,7 @@ void ExecutiveRebuildAll(void)
 {
   CExecutive *I = &Executive;
   SpecRec *rec = NULL;
-  while(ListIterate(I->Spec,rec,next,SpecList)) {
+  while(ListIterate(I->Spec,rec,next)) {
     if(rec->type==cExecObject)
       if(rec->obj->type==cObjectMolecule) {
         ObjectMoleculeInvalidate((ObjectMolecule*)rec->obj,cRepAll,cRepInvRep);
@@ -487,7 +489,7 @@ void ExecutiveUndo(int dir)
   obj = EditorDragObject();
 
   /* make sure this is still a real object */
-  while(ListIterate(I->Spec,rec,next,SpecList)) {
+  while(ListIterate(I->Spec,rec,next)) {
     if(rec->type==cExecObject)
       if(rec->obj->type==cObjectMolecule) {
         compObj=(ObjectMolecule*)rec->obj;
@@ -518,7 +520,7 @@ void ExecutiveSort(char *name)
   }
   
   if(os||(!strlen(name))) { /* sort one or all */
-    while(ListIterate(I->Spec,rec,next,SpecList)) {
+    while(ListIterate(I->Spec,rec,next)) {
       if(rec->type==cExecObject)
         if(rec->obj->type==cObjectMolecule)
           if((!os)||(rec->obj==os)) {
@@ -549,7 +551,7 @@ void ExecutiveRemoveAtoms(char *s1)
   sele=SelectorIndexByName(s1);
   if(sele>=0)
 	 {
-		while(ListIterate(I->Spec,rec,next,SpecList))
+		while(ListIterate(I->Spec,rec,next))
 		  {
 			 if(rec->type==cExecObject)
 				{
@@ -692,7 +694,7 @@ void ExecutiveBond(char *s1,char *s2,int order,int add)
   
   if((sele1>=0)&&(sele2>=0)) {
 	 {
-		while(ListIterate(I->Spec,rec,next,SpecList))
+		while(ListIterate(I->Spec,rec,next))
 		  {
 			 if(rec->type==cExecObject)
 				{
@@ -1038,10 +1040,15 @@ void ExecutiveIterateState(int state,char *s1,char *expr,int read_only)
     op1.i2 = state;
     op1.i3 = read_only;
     ExecutiveObjMolSeleOp(sele1,&op1);
-    sprintf(buffer,"modified %i atoms.",op1.i1);
-    ErrOk(" Alter",buffer);
+    if(!read_only) {
+      sprintf(buffer,"modified %i atom states.",op1.i1);
+      ErrOk(" Alter",buffer);
+    } else {
+      sprintf(buffer,"iterated over %i atom states.",op1.i1);
+      ErrOk(" Iterate",buffer);
+    }
   } else {
-    ErrMessage("ExecutiveAlterState","No atoms selected.");
+    ErrMessage("ExecutiveIterateState","No atoms selected.");
   }
 }
 /*========================================================================*/
@@ -1352,7 +1359,7 @@ SpecRec *ExecutiveFindSpec(char *name)
 {
   CExecutive *I = &Executive;
   SpecRec *rec = NULL;
-  while(ListIterate(I->Spec,rec,next,SpecList)) {
+  while(ListIterate(I->Spec,rec,next)) {
 	 if(strcmp(rec->name,name)==0) 
 		break;
   }
@@ -1367,7 +1374,7 @@ void ExecutiveObjMolSeleOp(int sele,ObjectMoleculeOpRec *op)
 
   if(sele>=0)
 	 {
-		while(ListIterate(I->Spec,rec,next,SpecList))
+		while(ListIterate(I->Spec,rec,next))
 		  {
 			 if(rec->type==cExecObject)
 				{
@@ -1425,7 +1432,7 @@ int ExecutiveGetExtent(char *name,float *mn,float *mx)
     if(op.i1)
       flag = true;
     if(all_flag) {
-      while(ListIterate(I->Spec,rec,next,SpecList)) {
+      while(ListIterate(I->Spec,rec,next)) {
         if(rec->type==cExecObject) {
           obj=rec->obj;
           if(obj->ExtentFlag) 
@@ -1490,7 +1497,7 @@ int ExecutiveGetExtent(char *name,float *mn,float *mx)
   
   if(all_flag) {
     rec=NULL;
-    while(ListIterate(I->Spec,rec,next,SpecList)) {
+    while(ListIterate(I->Spec,rec,next)) {
       if(rec->type==cExecObject) {
         obj=rec->obj;
         switch(rec->obj->type) {
@@ -1597,7 +1604,7 @@ void ExecutiveSetObjVisib(char *name,int state)
   SpecRec *tRec;
   if(strcmp(name,"all")==0) {
     tRec=NULL;
-    while(ListIterate(I->Spec,tRec,next,SpecList)) {
+    while(ListIterate(I->Spec,tRec,next)) {
       if(state!=tRec->visible) {
         if(tRec->type==cExecObject) {
           if(tRec->visible)
@@ -1623,8 +1630,10 @@ void ExecutiveSetObjVisib(char *name,int state)
           }
       }
       else if(tRec->type==cExecSelection) {
-        if(tRec->visible!=state)
+        if(tRec->visible!=state) {
           tRec->visible=!tRec->visible;
+          SceneChanged();
+        }
       }
     }
   }
@@ -1638,7 +1647,7 @@ void ExecutiveSetAllVisib(int state)
   int sele;
   CExecutive *I = &Executive;
   SpecRec *rec = NULL;
-  while(ListIterate(I->Spec,rec,next,SpecList)) {
+  while(ListIterate(I->Spec,rec,next)) {
 	 if(rec->type==cExecObject)
 		{
 		  if(rec->obj->type==cObjectMolecule)
@@ -1732,7 +1741,7 @@ Object *ExecutiveFindObjectByName(char *name)
   CExecutive *I = &Executive;
   SpecRec *rec = NULL;
   Object *obj=NULL;
-  while(ListIterate(I->Spec,rec,next,SpecList))
+  while(ListIterate(I->Spec,rec,next))
 	 {
 		if(rec->type==cExecObject)
 		  {
@@ -1748,7 +1757,6 @@ Object *ExecutiveFindObjectByName(char *name)
 /*========================================================================*/
 ObjectMolecule *ExecutiveFindObjectMoleculeByName(char *name)
 {
-  CExecutive *I = &Executive;
   Object *obj;
   
   obj = ExecutiveFindObjectByName(name);
@@ -1907,7 +1915,7 @@ void ExecutiveDelete(char *name)
 
   if(WordMatch(name,"all",true)<0) all_flag=true;
   strcpy(name_copy,name);
-  while(ListIterate(I->Spec,rec,next,SpecList))
+  while(ListIterate(I->Spec,rec,next))
 	 {
 		if(rec->type==cExecObject)
 		  {
@@ -1944,7 +1952,7 @@ void ExecutiveDump(char *fname,char *obj)
 
   SceneUpdate();
 
-  while(ListIterate(I->Spec,rec,next,SpecList))
+  while(ListIterate(I->Spec,rec,next))
 	 {
 		if(rec->type==cExecObject)
 		  {
@@ -1975,14 +1983,14 @@ void ExecutiveManageObject(Object *obj)
 
   if(SettingGet(cSetting_autohide_selections))
     ExecutiveHideSelections();
-  while(ListIterate(I->Spec,rec,next,SpecList))
+  while(ListIterate(I->Spec,rec,next))
 	 {
 		if(rec->obj==obj) {
         exists = true;
       }
 	 }
   if(!exists) {
-    while(ListIterate(I->Spec,rec,next,SpecList))
+    while(ListIterate(I->Spec,rec,next))
       {
         if(rec->type==cExecObject)
           {
@@ -2034,7 +2042,7 @@ void ExecutiveManageSelection(char *name)
   SpecRec *rec = NULL;
   CExecutive *I = &Executive;
   
-  while(ListIterate(I->Spec,rec,next,SpecList))
+  while(ListIterate(I->Spec,rec,next))
     {
       if(rec->type==cExecSelection)
         if(strcmp(rec->name,name)==0) 
@@ -2072,7 +2080,7 @@ int ExecutiveClick(Block *block,int button,int x,int y,int mod)
   n=((I->Block->rect.top-(y+2))-ExecTopMargin)/ExecLineHeight;
   a=n;
 
-  while(ListIterate(I->Spec,rec,next,SpecList))
+  while(ListIterate(I->Spec,rec,next))
     if(rec->name[0]!='_')
 	 {
 		if(!a)
@@ -2208,7 +2216,7 @@ int ExecutiveRelease(Block *block,int button,int x,int y,int mod)
 
   n=((I->Block->rect.top-(y+2))-ExecTopMargin)/ExecLineHeight;
 
-  while(ListIterate(I->Spec,rec,next,SpecList))
+  while(ListIterate(I->Spec,rec,next))
     if(rec->name[0]!='_')
       {
         if(!n)
@@ -2280,7 +2288,7 @@ void ExecutiveDraw(Block *block)
     /*    xx = I->Block->rect.right-ExecRightMargin-ExecToggleWidth*(cRepCnt+ExecOpCnt);*/
     xx = I->Block->rect.right-ExecRightMargin-ExecToggleWidth*(ExecOpCnt);
     
-    while(ListIterate(I->Spec,rec,next,SpecList))
+    while(ListIterate(I->Spec,rec,next))
       if(rec->name[0]!='_')
       {
         x2=xx;
@@ -2434,7 +2442,7 @@ int ExecutiveIterateObject(Object **obj,void **hidden)
   SpecRec **rec=(SpecRec**)hidden;
   while(!flag)
 	 {
-		result = (int)ListIterate(I->Spec,(*rec),next,SpecList);
+		result = (int)ListIterate(I->Spec,(*rec),next);
 		if(!(*rec))
 		  flag=true;
 		else if((*rec)->type==cExecObject)
@@ -2490,7 +2498,7 @@ void ExecutiveFree(void)
 {
   CExecutive *I = &Executive;
   SpecRec *rec=NULL;
-  while(ListIterate(I->Spec,rec,next,SpecList))
+  while(ListIterate(I->Spec,rec,next))
 	 {
 		if(rec->type==cExecObject)
 		  rec->obj->fFree(rec->obj);

@@ -25,16 +25,22 @@ Z* -------------------------------------------------------------------
 #include"Scene.h"
 #include"PConv.h"
 #include"main.h"
-
+#include"Setting.h"
 
 static void ObjectCallbackFree(ObjectCallback *I);
 
 /*========================================================================*/
 
 static void ObjectCallbackFree(ObjectCallback *I) {
-  if(I->PObj) {
-    Py_DECREF(I->PObj);
+
+  int a;
+  for(a=0;a<I->NState;a++) {
+    if(I->State[a].PObj) {
+      Py_DECREF(I->State[a].PObj);
+      I->State[a].PObj=NULL;
+    }
   }
+  VLAFreeP(I->State);
   OOFreeP(I);
 }
 
@@ -46,15 +52,29 @@ static void ObjectCallbackUpdate(ObjectCallback *I) {
 
 /*========================================================================*/
 
-static void ObjectCallbackRender(ObjectCallback *I,int frame,CRay *ray,Pickable **pick)
+static void ObjectCallbackRender(ObjectCallback *I,int state,CRay *ray,Pickable **pick)
 {
+  ObjectCallbackState *sobj = NULL;
+
+  PyObject *pobj = NULL;
+
+  if(state<I->NState) {
+    sobj = I->State+state;
+  }
+  if(!sobj) {
+    if(I->NState&&SettingGet(cSetting_static_singletons)) 
+      sobj = I->State;
+  }
+
   if(ray) {    
   } else if(pick&&PMGUI) {
   } else if(PMGUI) {
-    if(I->PObj) {
+    if(sobj) {
+      pobj=sobj->PObj;
       PBlock();
-      if(PyObject_HasAttrString(I->PObj,"__call__"))
-         PyObject_CallMethod(I->PObj,"__call__","");
+      if(PyObject_HasAttrString(pobj,"__call__")) {
+        Py_XDECREF(PyObject_CallMethod(pobj,"__call__",""));
+      }
       if(PyErr_Occurred())
         PyErr_Print();
       PUnblock();
@@ -63,32 +83,90 @@ static void ObjectCallbackRender(ObjectCallback *I,int frame,CRay *ray,Pickable 
 }
 
 /*========================================================================*/
+static int ObjectCallbackGetNStates(ObjectCallback *I)
+{
+  return(I->NState);
+}
+/*========================================================================*/
 ObjectCallback *ObjectCallbackNew(void)
 {
   OOAlloc(ObjectCallback);
-
+  
   ObjectInit((Object*)I);
-
-  I->PObj = NULL;
-
+  
+  I->State=VLAMalloc(10,sizeof(ObjectCallbackState),5,true); /* autozero */
+  I->NState=0;
+  
   I->Obj.type = cObjectCallback;
   I->Obj.fFree = (void (*)(struct Object *))ObjectCallbackFree;
   I->Obj.fUpdate =  (void (*)(struct Object *)) ObjectCallbackUpdate;
   I->Obj.fRender =(void (*)(struct Object *, int, CRay *, Pickable **))ObjectCallbackRender;
-
-#ifdef _NOT_YET_NEEDED
-  I->Obj.fGetNFrame = (int (*)(struct Object *)) ObjectCallbackGetNFrames;
-#endif
+  I->Obj.fGetNFrame = (int (*)(struct Object *)) ObjectCallbackGetNStates;
 
   return(I);
 }
 /*========================================================================*/
-ObjectCallback *ObjectCallbackDefine(ObjectCallback *obj,PyObject *pobj)
+ObjectCallback *ObjectCallbackDefine(ObjectCallback *obj,PyObject *pobj,int state)
 {
   ObjectCallback *I = NULL;
-  I=ObjectCallbackNew();
-  I->PObj = pobj; /* need to set extents */
-  Py_INCREF(I->PObj);
+
+  if(!obj) {
+    I=ObjectCallbackNew();
+  } else {
+    I=obj;
+  }
+
+  if(state<0) state=I->NState;
+  if(I->NState<=state) {
+    VLACheck(I->State,ObjectCallbackState,state);
+    I->NState=state+1;
+  }
+
+  if(I->State[state].PObj) {
+    Py_DECREF(I->State[state].PObj);
+  }
+  I->State[state].PObj=pobj;
+  Py_INCREF(pobj);
+  if(I->NState<=state)
+    I->NState=state+1;
+
+  if(I) {
+    ObjectCallbackRecomputeExtent(I);
+  }
   SceneChanged();
+
   return(I);
+}
+/*========================================================================*/
+
+void ObjectCallbackRecomputeExtent(ObjectCallback *I)
+{
+  float mx[3],mn[3];
+  int extent_flag = false;
+  int a;
+  PyObject *py_ext;
+
+  for(a=0;a<I->NState;a++) 
+    if(I->State[a].PObj) {
+      if(PyObject_HasAttrString(I->State[a].PObj,"get_extent")) {
+        py_ext = PyObject_CallMethod(I->State[a].PObj,"get_extent","");
+        if(PyErr_Occurred())
+          PyErr_Print();
+        if(py_ext) {
+          if(PConvPyListToExtent(py_ext,mn,mx)) {
+            if(!extent_flag) {
+              extent_flag=true;
+              copy3f(mx,I->Obj.ExtentMax);
+              copy3f(mn,I->Obj.ExtentMin);
+            } else {
+              max3f(mx,I->Obj.ExtentMax,I->Obj.ExtentMax);
+              min3f(mn,I->Obj.ExtentMin,I->Obj.ExtentMin);
+            }
+          }
+          Py_DECREF(py_ext);
+        }
+      }
+    }
+
+  I->Obj.ExtentFlag=extent_flag;
 }

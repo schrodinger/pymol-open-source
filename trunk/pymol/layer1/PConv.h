@@ -38,12 +38,14 @@ Z* -------------------------------------------------------------------
 
 */
 
-/* == error-checking routines: true = success, false = failure */
+/* == error-checking routines: true = success, false = failure. */
 
 /* NOTE: the string routines will write strings up to the specified
  * length, PLUS a NULL...so watch out for array overruns */
 
 int PConvAttrToStrMaxLen(PyObject *obj,char *attr,char *str,int ll);
+
+int PConvPyListToExtent(PyObject *obj,float *mn,float *mx);
 
 int PConvAttrToFloatArrayInPlace(PyObject *obj,char *attr,float *ff,int ll);
 int PConvAttrToIntArrayInPlace(PyObject *obj,char *attr,int *ff,int ll);

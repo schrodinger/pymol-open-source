@@ -121,6 +121,7 @@ float SettingGetNamed(char *name);
 #define cSetting_autohide_selections  79
 #define cSetting_selection_width      80
 #define cSetting_selection_overlay    81
+#define cSetting_static_singletons    82
 
 #endif
 

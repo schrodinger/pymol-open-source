@@ -222,7 +222,7 @@ void SceneCountFrames()
   int frame;
 
   I->NFrame=0;
-  while(ListIterate(I->Obj,rec,next,ObjList))
+  while(ListIterate(I->Obj,rec,next))
 	 {
       if(rec->obj->fGetNFrame)
         n=rec->obj->fGetNFrame(rec->obj);
@@ -434,7 +434,7 @@ void SceneObjectDel(Object *obj)
   CScene *I=&Scene;
   ObjRec *rec = NULL;
 
-  while(ListIterate(I->Obj,rec,next,ObjList))
+  while(ListIterate(I->Obj,rec,next))
 	 if(rec->obj==obj)
 		break;
   if(rec) {
@@ -1101,7 +1101,7 @@ void SceneRay(void)
 
   RayPrepare(ray,-width,width,-height,height,I->FrontSafe,I->Back,rayView);
 
-  while(ListIterate(I->Obj,rec,next,ObjList))
+  while(ListIterate(I->Obj,rec,next))
 	 {
 		if(rec->obj->fRender) {
 		  ray->fColor3fv(ray,white);
@@ -1179,7 +1179,7 @@ void SceneUpdate(void)
 
   if(I->ChangedFlag) {
     SceneCountFrames();
-	 while(ListIterate(I->Obj,rec,next,ObjList))
+	 while(ListIterate(I->Obj,rec,next))
       if(rec->obj->fUpdate) 
         rec->obj->fUpdate(rec->obj);
 	 I->ChangedFlag=false;
@@ -1400,7 +1400,7 @@ void SceneRender(Pickable *pick,int x,int y)
       pickVLA=VLAlloc(Pickable,1000);
       pickVLA[0].index=0;
       pickVLA[0].ptr=NULL;
-      while(ListIterate(I->Obj,rec,next,ObjList))
+      while(ListIterate(I->Obj,rec,next))
         {
           glPushMatrix();
 			 if(rec->obj->fRender)
@@ -1415,7 +1415,7 @@ void SceneRender(Pickable *pick,int x,int y)
       pickVLA[0].index=0;
       pickVLA[0].ptr=(void*)pick; /* this is just a flag */
 	
-      while(ListIterate(I->Obj,rec,next,ObjList))
+      while(ListIterate(I->Obj,rec,next))
         {
           glPushMatrix();
           if(rec->obj->fRender)
@@ -1444,7 +1444,7 @@ void SceneRender(Pickable *pick,int x,int y)
         glPushMatrix();
         ScenePrepareMatrix(1);
         rec=NULL;
-        while(ListIterate(I->Obj,rec,next,ObjList))
+        while(ListIterate(I->Obj,rec,next))
           {
             glPushMatrix();
             glNormal3fv(normal);
@@ -1465,7 +1465,7 @@ void SceneRender(Pickable *pick,int x,int y)
         glPushMatrix();
         ScenePrepareMatrix(2);
         rec=NULL;
-        while(ListIterate(I->Obj,rec,next,ObjList))
+        while(ListIterate(I->Obj,rec,next))
           {
             glPushMatrix();
             glNormal3fv(normal);
@@ -1486,7 +1486,7 @@ void SceneRender(Pickable *pick,int x,int y)
         
         /* mono */
         rec=NULL;
-        while(ListIterate(I->Obj,rec,next,ObjList))
+        while(ListIterate(I->Obj,rec,next))
           {
             glPushMatrix();
             glNormal3fv(normal);

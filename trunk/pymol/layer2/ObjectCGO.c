@@ -23,6 +23,7 @@ Z* -------------------------------------------------------------------
 #include"MemoryDebug.h"
 #include"CGO.h"
 #include"Scene.h"
+#include"Setting.h"
 #include"PConv.h"
 #include"main.h"
 
@@ -59,7 +60,7 @@ void ObjectCGORecomputeExtent(ObjectCGO *I)
           copy3f(mn,I->Obj.ExtentMin);
         } else {
           max3f(mx,I->Obj.ExtentMax,I->Obj.ExtentMax);
-          min3f(mx,I->Obj.ExtentMax,I->Obj.ExtentMax);
+          min3f(mn,I->Obj.ExtentMin,I->Obj.ExtentMin);
         }
       }
     }
@@ -81,20 +82,29 @@ static int ObjectCGOGetNState(ObjectCGO *I) {
 
 static void ObjectCGORender(ObjectCGO *I,int state,CRay *ray,Pickable **pick)
 {
+  ObjectCGOState *sobj = NULL;
+
+  if(state<I->NState) {
+    sobj = I->State+state;
+  }
+  if(!sobj) {
+    if(I->NState&&SettingGet(cSetting_static_singletons)) 
+      sobj = I->State;
+  }
+  
   if(ray) {    
-    if(state<I->NState)
-      if(I->State[state].std)
-        {
-          if(I->State[state].ray)
-            CGORenderRay(I->State[state].ray,ray);
-          else
-            CGORenderRay(I->State[state].std,ray);
-        }
+    if(sobj)
+      {
+        if(sobj->ray)
+          CGORenderRay(sobj->ray,ray);
+        else
+          CGORenderRay(sobj->std,ray);
+      }
   } else if(pick&&PMGUI) {
   } else if(PMGUI) {
-    if(state<I->NState)
-      if(I->State[state].std)
-        CGORenderGL(I->State[state].std);
+    if(sobj)
+      if(sobj->std)
+        CGORenderGL(sobj->std);
   }
 }
 
@@ -165,7 +175,13 @@ ObjectCGO *ObjectCGODefine(ObjectCGO *obj,PyObject *pycgo,int state)
     VLACheck(I->State,ObjectCGOState,state);
     I->NState=state+1;
   }
-    
+
+  if(I->State[state].std) {
+    CGOFree(I->State[state].std);
+  }
+  if(I->State[state].ray) {
+    CGOFree(I->State[state].ray);
+  }
   if(PyList_Check(pycgo)) {
     if(PyList_Size(pycgo)) {
       if(PyFloat_Check(PyList_GetItem(pycgo,0))) {

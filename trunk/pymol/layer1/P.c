@@ -148,6 +148,8 @@ int PAlterAtomState(float *v,char *expr,int read_only)
       v[2]=f[2];
       result=true;
     }
+  } else {
+    result=true;
   }
   Py_DECREF(dict);
   PLockAPIAndUnblock();

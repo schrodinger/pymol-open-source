@@ -34,12 +34,12 @@ void ExportDotsObjFree(ExportDotsObj *rec);
 
 /* routines for shuttling coordinates to and from molecular mechanics routines */
 
-ExportCoords *ExportCoordsExport(char *name,int state)
+ExportCoords *ExportCoordsExport(char *name,int state,int order)
 {
   ExportCoords *io = NULL;
   ObjectMolecule *obj;
   CoordSet *cs;
-  int a;
+  int a,a0;
   float *crd0,*crd1;
 
   obj = ExecutiveFindObjectMoleculeByName(name);
@@ -56,11 +56,24 @@ ExportCoords *ExportCoordsExport(char *name,int state)
 
         crd0=cs->Coord;
         crd1=io->coord;
-
-        for(a=0;a<cs->NIndex;a++) {
-          *(crd1++) = *(crd0++);
-          *(crd1++) = *(crd0++);
-          *(crd1++) = *(crd0++);
+        if(order) {
+          /* Coordinate Set Order */
+          for(a=0;a<cs->NIndex;a++) {
+            *(crd1++) = *(crd0++);
+            *(crd1++) = *(crd0++);
+            *(crd1++) = *(crd0++);
+          }
+        } else {
+          /* PyMOL Atom Order */
+          for(a=0;a<obj->NAtom;a++) {
+            a0 = cs->AtmToIdx[a];
+            if(a0>=0) {
+              crd0 = cs->Coord+3*a0;
+              *(crd1++) = *(crd0++);
+              *(crd1++) = *(crd0++);
+              *(crd1++) = *(crd0++);
+            }
+          }
         }
       }
     }
@@ -68,12 +81,12 @@ ExportCoords *ExportCoordsExport(char *name,int state)
   return((void*)io);
 }
 
-int ExportCoordsImport(char *name,int state,ExportCoords *io)
+int ExportCoordsImport(char *name,int state,ExportCoords *io,int order)
 {
   int result = false;
   ObjectMolecule *obj;
   CoordSet *cs;
-  int a;
+  int a,a0,cc;
   float *crd0,*crd1;
 
   obj = ExecutiveFindObjectMoleculeByName(name);
@@ -95,10 +108,25 @@ int ExportCoordsImport(char *name,int state,ExportCoords *io)
 
             crd0=cs->Coord;
             crd1=io->coord;
-            for(a=0;a<cs->NIndex;a++) {
-              *(crd0++) = *(crd1++);
-              *(crd0++) = *(crd1++);
-              *(crd0++) = *(crd1++);
+            if(order) {
+              /* Coordinate Set Ordering */
+              for(a=0;a<cs->NIndex;a++) {
+                *(crd0++) = *(crd1++);
+                *(crd0++) = *(crd1++);
+                *(crd0++) = *(crd1++);
+              }
+            } else {
+              cc = cs->NIndex; /* array range safety */
+              /* PyMOL Atom Ordering */
+              for(a=0;a<obj->NAtom;a++) {
+                a0 = cs->AtmToIdx[a];
+                if((a0>=0)&&(cc--)) {
+                  crd0 = cs->Coord+3*a0;
+                  *(crd0++) = *(crd1++);
+                  *(crd0++) = *(crd1++);
+                  *(crd0++) = *(crd1++);
+                }
+              }
             }
 
             if(cs->fInvalidateRep)

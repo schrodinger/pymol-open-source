@@ -28,6 +28,22 @@ Z* -------------------------------------------------------------------
 
 /* Error-checked utility routines */
 
+int PConvPyListToExtent(PyObject *obj,float *mn,float *mx) /* [[min_x,min_y,min_z],
+                                                              [max_x,max_y,max_z]] */
+{
+  int ok=false;
+  PyObject *t1,*t2;
+  if(PyList_Check(obj))
+    if(PyList_Size(obj)==2) {
+      t1 = PyList_GetItem(obj,0);
+      t2 = PyList_GetItem(obj,1);
+      if(PConvPyListToFloatArrayInPlace(t1,mn,3)&&
+         PConvPyListToFloatArrayInPlace(t2,mx,3))
+        ok=true;
+    }
+  return(ok);
+}
+
 int PConvAttrToIntArrayInPlace(PyObject *obj,char *attr,int *f,int ll)
 {
   int ok=true;
@@ -326,6 +342,8 @@ int PConvPyListToIntArrayInPlace(PyObject *obj,int *ii,int ll)
   int ok = true;
   int a,l;
   if(!obj) 
+    ok=false;
+  else if(!PyList_Check(obj)) 
     ok=false;
   else {
     l=PyList_Size(obj);

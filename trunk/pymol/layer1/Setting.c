@@ -630,6 +630,12 @@ void SettingInit(void)
   strcpy(I->Setting[cSetting_selection_overlay].Name,
 			"selection_overlay");
 
+  I->NSetting++;
+  I->Setting[cSetting_static_singletons].Value[0] = 1.0;
+  strcpy(I->Setting[cSetting_static_singletons].Name,
+			"static_singletons");
+
+
 }
 
 
