@@ -47,6 +47,9 @@ typedef struct  {
   int BigEndian;
 } CColor;
 
+
+
+
 void ColorInit(void);
 void ColorFree(void);
 
@@ -63,6 +66,9 @@ void ColorReset(void);
 
 int ColorGetRamped(int index,float *vertex,float *color);
 int ColorCheckRamped(int index);
+
+struct ObjectGadgetRamp* ColorGetRamp(int index);
+
 
 void ColorRegisterExt(char *name,void *extPtr,int type);
 void ColorForgetExt(char *name);

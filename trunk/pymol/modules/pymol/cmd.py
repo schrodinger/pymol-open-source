@@ -1358,7 +1358,6 @@ SEE ALSO
         recolour,           \
         refresh,            \
         reset,              \
-        rgbfunction,        \
         rock,               \
         scene,              \
         set_color,          \
@@ -1367,9 +1366,6 @@ SEE ALSO
         set_vis,            \
         set_view,           \
         show,               \
-        slice_lock,         \
-        slice_unlock,       \
-        slice_heightmap,    \
         spectrum,           \
         stereo,             \
         toggle,             \
@@ -1378,6 +1374,10 @@ SEE ALSO
         viewport,           \
         window,             \
         zoom
+#        rgbfunction,        \
+#        slice_lock,         \
+#        slice_unlock,       \
+#        slice_heightmap,    \
 
    #--------------------------------------------------------------------
    import setting
@@ -1590,7 +1590,7 @@ SEE ALSO
       'resume'        : [ resume            , 0 , 0 , ''  , parsing.STRICT ],
       'return'        : [ python_help       , 0 , 0 , ''  , parsing.PYTHON ],   
       'rewind'        : [ rewind            , 0 , 0 , ''  , parsing.STRICT ],
-      'rgbfunction'   : [ rgbfunction       , 0 , 0 , ''  , parsing.LEGACY ],         
+#      'rgbfunction'   : [ rgbfunction       , 0 , 0 , ''  , parsing.LEGACY ],         
       'rock'          : [ rock              , 0 , 0 , ''  , parsing.STRICT ],
       'rotate'        : [ rotate            , 0 , 0 , ''  , parsing.STRICT ],   
       'run'           : [ helping.run       , 1 , 2 , ',' , parsing.RUN    ],
@@ -1615,8 +1615,8 @@ SEE ALSO
       'set_view'      : [ set_view          , 0 , 0 , ''  , parsing.STRICT ],   
       'show'          : [ show              , 0 , 0 , ''  , parsing.STRICT ],
       'slice_map'     : [ slice_map         , 0 , 0 , ''  , parsing.LEGACY ],
-      'slice_lock'    : [ slice_lock        , 0 , 0 , ''  , parsing.LEGACY ],
-      'slice_unlock'  : [ slice_unlock      , 0 , 0 , ''  , parsing.LEGACY ],
+#      'slice_lock'    : [ slice_lock        , 0 , 0 , ''  , parsing.LEGACY ],
+#      'slice_unlock'  : [ slice_unlock      , 0 , 0 , ''  , parsing.LEGACY ],
       'smooth'        : [ smooth            , 0 , 0 , ''  , parsing.STRICT ],
       'sort'          : [ sort              , 0 , 0 , ''  , parsing.STRICT ],
       'spawn'         : [ helping.spawn     , 1 , 2 , ',' , parsing.SPAWN  ],

@@ -5072,6 +5072,8 @@ int ExecutiveColor(char *name,char *color,int flags,int quiet)
       if(rec) {
         if(rec->type==cExecObject) {
           rec->obj->Color=col_ind;
+          if(rec->obj->fInvalidate)
+            rec->obj->fInvalidate(rec->obj,cRepAll,cRepInvColor,cRepAll);
           n_obj++;
           ok=true;
           SceneDirty();
@@ -5082,6 +5084,8 @@ int ExecutiveColor(char *name,char *color,int flags,int quiet)
       while(ListIterate(I->Spec,rec,next)) {
         if(rec->type==cExecObject) {
           rec->obj->Color=col_ind;
+          if(rec->obj->fInvalidate)
+            rec->obj->fInvalidate(rec->obj,cRepAll,cRepInvColor,cRepAll);
           n_obj++;
           ok=true;
           SceneDirty();
@@ -6096,22 +6100,34 @@ void ExecutiveToggleAllRepVisib(char *name,int rep)
 /*========================================================================*/
 void ExecutiveInvalidateRep(char *name,int rep,int level)
 {
+  CExecutive *I = &Executive;
   int sele = -1;
   ObjectMoleculeOpRec op;
   int all_flag=false;
+  SpecRec *rec = NULL;
   PRINTFD(FB_Executive)
     "ExecInvRep-Debug: %s %d %d\n",name,rep,level
     ENDFD;
   if(WordMatch(cKeywordAll,name,true)<0) {
     all_flag=true;
   }
-  sele=SelectorIndexByName(name);
-  if(sele>=0) {
-    ObjectMoleculeOpRecInit(&op);
-	 op.code = OMOP_INVA;
-	 op.i1=rep;
-	 op.i2=level;
-	 ExecutiveObjMolSeleOp(sele,&op);
+  if(all_flag) {
+    while(ListIterate(I->Spec,rec,next))
+      if(rec->type==cExecObject) {
+        if(rec->obj->fInvalidate) {
+          rec->obj->fInvalidate(rec->obj,rep,cRepInvColor,cRepAll);
+          SceneDirty();
+        }
+      }
+  } else {
+    sele=SelectorIndexByName(name);
+    if(sele>=0) {
+      ObjectMoleculeOpRecInit(&op);
+      op.code = OMOP_INVA;
+      op.i1=rep;
+      op.i2=level;
+      ExecutiveObjMolSeleOp(sele,&op);
+    }
   }
 }
 

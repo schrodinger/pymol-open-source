@@ -69,6 +69,24 @@ int ColorCheckRamped(int index)
   return(index<=(cColorExtCutoff));
 }
 
+ObjectGadgetRamp* ColorGetRamp(int index)
+{
+  CColor *I=&Color;
+  ObjectGadgetRamp *result = NULL;
+  if(index<=cColorExtCutoff) {
+    index = cColorExtCutoff - index;
+    if(index<I->NExt) {
+      if(!I->Ext[index].Ptr) {
+        if(I->Ext[index].Name)
+          I->Ext[index].Ptr = (void*)ExecutiveFindObjectByName(I->Ext[index].Name);
+      }
+      if(I->Ext[index].Ptr) 
+        result = (ObjectGadgetRamp*)I->Ext[index].Ptr;
+    }
+  }
+  return result;
+}
+
 int ColorGetRamped(int index,float *vertex,float *color)
 {
   CColor *I=&Color;
