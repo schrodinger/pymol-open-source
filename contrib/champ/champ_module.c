@@ -102,6 +102,22 @@ static PyObject *pattern_free(PyObject *self,      PyObject *args)
   return(RetStatus(ok));
 }
 
+
+static PyObject *pattern_orient_bonds(PyObject *self,      PyObject *args)
+{
+  int ok=true;
+  int int1;
+  PyObject *O;
+  CChamp *I;
+  ok = PyArg_ParseTuple(args,"Oi",&O,&int1);
+  ok = PyCObject_Check(O);
+  if(ok) {
+    I = PyCObject_AsVoidPtr(O);
+    ChampOrientBonds(I,int1);
+  }
+  return(RetStatus(ok));
+}
+
 static PyObject *pattern_get_cycle(PyObject *self,      PyObject *args)
 {
   int ok=true;
@@ -767,6 +783,7 @@ static PyMethodDef champ_methods[] = {
   {"pattern_get_tags",    pattern_get_tags,       METH_VARARGS },
   {"pattern_get_atom_symbols",  pattern_get_atom_symbols,     METH_VARARGS },
   {"pattern_dump",  pattern_dump,     METH_VARARGS },
+  {"pattern_orient_bonds",   pattern_orient_bonds,       METH_VARARGS },
   {"list_prepend_pattern_strings",  list_prepend_pattern_strings, METH_VARARGS },
   {"list_get_pattern_indices",  list_get_pattern_indices,       METH_VARARGS },
   {"list_get_pattern_strings",      list_get_pattern_strings,       METH_VARARGS },

@@ -177,6 +177,7 @@ typedef struct {
   int atom;
   int bond; /* bond index index in atom */
   int base_bond; /* absolute bond index */
+  int base_atom; /* absolute atom index */
   int paren_flag;
 } ListScope;
 
@@ -257,6 +258,7 @@ int ChampAtomToString(CChamp *I,int index,char *buf);
 int ChampBondToString(CChamp *I,int index,char *buf);
 void ChampPatReindex(CChamp *I,int index);
 void ChampPatDump(CChamp *I,int index);
+void ChampOrientBonds(CChamp *I,int index);
 
 
 #endif
