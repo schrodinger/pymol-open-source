@@ -270,7 +270,7 @@ def performance(mode):
       cmd.set('sphere_quality',1)
       cmd.set('cartoon_sampling',6)
       cmd.set('transparency_mode',2)
-      cmd.set('stick_balls',0.0)
+      cmd.set('stick_ball',0.0)
       cmd.do("rebuild")         
    else: # maximum performance
       cmd.set('line_smooth',0)
@@ -281,7 +281,7 @@ def performance(mode):
       cmd.set('sphere_quality',0)
       cmd.set('cartoon_sampling',3)
       cmd.set('transparency_mode',0)
-      cmd.set('stick_balls',0.0)
+      cmd.set('stick_ball',0.0)
       cmd.do("rebuild")         
    
    
