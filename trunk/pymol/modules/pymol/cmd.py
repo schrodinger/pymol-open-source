@@ -79,7 +79,9 @@ Try "help <command-name>".  Also see the following extra topics:
 
 def editing():
    '''
+SUMMARY
 
+   PyMOL has a minimal but functional molecular structure editing capability.
    
 '''
 
@@ -3684,15 +3686,28 @@ EXAMPLE
    return r
 
 def check(obj):
+   '''
+UNSUPPORTED
+
+This function relies on code that is not currently part of PyMOL/ChemPy
+   '''
    # NOTE: the realtime module relies on code that is not yet part of PyMOL/ChemPy
    from chempy.tinker import realtime
    realtime.assign("("+obj+")")
    realtime.setup("("+obj+")")
 
 def fast_minimize(*arg):
-   # NOTE: the realtime module relies on code that is not yet part of PyMOL/ChemPy
-   # assumes that the molecular state has already been accurately defined
-   # and that no changes have been made to atom types
+   '''
+DESCRIPTION
+
+Runs Tinker's minimize routine without executing the setup procedure.
+
+NOTES
+
+Assumes that the molecular state has already been set up and that no
+subsequent changes have been made to atom types.
+
+   '''
    from chempy.tinker import realtime  
    grad  = 0.01
    iter = 500
@@ -3711,6 +3726,17 @@ def fast_minimize(*arg):
       t.start()
    
 def minimize(*arg):
+   '''
+DESCRIPTION
+
+Minimizes the current molecular structure after running an automated
+topology and parameter setup routine which generates a custom parameter
+file for Tinker based on the current text atom types ("text_type" field).
+
+USAGE
+
+minimize object name
+   '''
    # NOTE: the realtime module relies on code that is not yet part of PyMOL/ChemPy
    from chempy.tinker import realtime  
    grad  = 0.01
