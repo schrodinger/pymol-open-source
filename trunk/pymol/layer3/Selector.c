@@ -1245,6 +1245,183 @@ int SelectorGetInterstateVLA(int sele1,int state1,int sele2,int state2,
   }
   return(c);
 }
+
+
+/*========================================================================*/
+int SelectorMapMaskVDW(int sele1,ObjectMap *oMap,float buffer)
+{
+  SelectorType *I=&Selector;
+  MapType *map;
+  float *v2;
+  int n1,n2;
+  int a,b,c,i,j,h,k,l;
+  int at;
+  int s,idx;
+  AtomInfoType *ai;
+  ObjectMolecule *obj;
+  CoordSet *cs;
+  int state1;
+
+  state1 = SceneGetState();
+  c=0;
+  n1=0;
+  SelectorUpdateTable();
+
+  for(a=0;a<I->NAtom;a++) {
+	 I->Flag1[a]=false;
+    at=I->Table[a].atom;
+    obj=I->Obj[I->Table[a].model];
+    s=obj->AtomInfo[at].selEntry;
+    if(SelectorIsMember(s,sele1))
+      {
+        if(state1<obj->NCSet) 
+          cs=obj->CSet[state1];
+        else
+          cs=NULL;
+        if(cs) {
+          if(obj->DiscreteFlag) {
+            if(cs==obj->DiscreteCSet[at])
+              idx=obj->DiscreteAtmToIdx[at];
+            else
+              idx=-1;
+          } else 
+            idx=cs->AtmToIdx[at];
+          if(idx>=0) {
+            copy3f(cs->Coord+(3*idx),I->Vertex+3*a);
+            I->Flag1[a]=true;
+            n1++;
+          }
+        }
+      }
+  }
+  /* now create and apply voxel map */
+  c=0;
+  if(n1) {
+	 n2=0;
+	 map=MapNewFlagged(-(buffer+MAX_VDW),I->Vertex,I->NAtom,NULL,I->Flag1);
+	 if(map) {
+		MapSetupExpress(map);
+      
+      for(a=oMap->Min[0];a<oMap->Max[0];a++) {      
+        for(b=oMap->Min[1];b<oMap->Max[1];b++) {      
+          for(c=oMap->Min[2];c<oMap->Max[2];c++) {      
+            F3(oMap->Field->data,a,b,c)=0.0;            
+
+            v2 = F4Ptr(oMap->Field->points,a,b,c,0);
+            
+            if(MapExclLocus(map,v2,&h,&k,&l)) {
+              i=*(MapEStart(map,h,k,l));
+              if(i) {
+                j=map->EList[i++];
+                while(j>=0) {
+                  ai = I->Obj[I->Table[j].model]->AtomInfo+I->Table[j].atom;
+                  if(within3f(I->Vertex+3*j,v2,ai->vdw+buffer)) {
+                    F3(oMap->Field->data,a,b,c)=1.0;
+                  }
+                  j=map->EList[i++];
+                }
+              }
+            }
+          }
+        }
+		}
+		MapFree(map);
+	 }
+  }
+  return(c);
+}
+
+
+/*========================================================================*/
+int SelectorMapCoulomb(int sele1,ObjectMap *oMap,float cutoff)
+{
+  SelectorType *I=&Selector;
+  MapType *map;
+  float *v2;
+  float distsq;
+  int n1,n2;
+  int a,b,c,i,j,h,k,l;
+  int at;
+  int s,idx;
+  AtomInfoType *ai;
+  ObjectMolecule *obj;
+  CoordSet *cs;
+  int state1;
+  int constant;
+
+  constant = 1.0;
+
+  state1 = SceneGetState();
+  c=0;
+  n1=0;
+  SelectorUpdateTable();
+
+  for(a=0;a<I->NAtom;a++) {
+	 I->Flag1[a]=false;
+    at=I->Table[a].atom;
+    obj=I->Obj[I->Table[a].model];
+    s=obj->AtomInfo[at].selEntry;
+    if(SelectorIsMember(s,sele1))
+      {
+        if(state1<obj->NCSet) 
+          cs=obj->CSet[state1];
+        else
+          cs=NULL;
+        if(cs) {
+          if(obj->DiscreteFlag) {
+            if(cs==obj->DiscreteCSet[at])
+              idx=obj->DiscreteAtmToIdx[at];
+            else
+              idx=-1;
+          } else 
+            idx=cs->AtmToIdx[at];
+          if(idx>=0) {
+            copy3f(cs->Coord+(3*idx),I->Vertex+3*a);
+            I->Flag1[a]=true;
+            n1++;
+          }
+        }
+      }
+  }
+  /* now create and apply voxel map */
+  c=0;
+  if(n1) {
+	 n2=0;
+	 map=MapNewFlagged(-(cutoff),I->Vertex,I->NAtom,NULL,I->Flag1);
+	 if(map) {
+		MapSetupExpress(map);
+      
+      for(a=oMap->Min[0];a<oMap->Max[0];a++) {      
+        for(b=oMap->Min[1];b<oMap->Max[1];b++) {      
+          for(c=oMap->Min[2];c<oMap->Max[2];c++) {      
+            F3(oMap->Field->data,a,b,c)=0.0;            
+
+            v2 = F4Ptr(oMap->Field->points,a,b,c,0);
+            
+            if(MapExclLocus(map,v2,&h,&k,&l)) {
+              i=*(MapEStart(map,h,k,l));
+              if(i) {
+                j=map->EList[i++];
+                while(j>=0) {
+                  ai = I->Obj[I->Table[j].model]->AtomInfo+I->Table[j].atom;
+                  distsq = diffsq3f(I->Vertex+3*j,v2);
+                  if(distsq>R_SMALL8) {
+                    F3(oMap->Field->data,a,b,c)+=
+                      -ai->partialCharge/distsq;
+                  }
+                  j=map->EList[i++];
+                }
+              }
+            }
+          }
+        }
+		}
+		MapFree(map);
+	 }
+  }
+  return(c);
+}
+
 /*========================================================================*/
 int SelectorGetPDB(char **charVLA,int sele,int state,int conectFlag)
 {

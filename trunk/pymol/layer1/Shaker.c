@@ -16,15 +16,12 @@ Z* -------------------------------------------------------------------
 
 #include"os_std.h"
 #include"os_gl.h"
+#include"Base.h"
 #include"OOMac.h"
 
 #include"Map.h"
 
 #include"Shaker.h"
-
-#ifndef R_SMALL8
-#define R_SMALL8 0.00000001
-#endif
 
 CShaker *ShakerNew(void)
 {

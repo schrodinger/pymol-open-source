@@ -189,36 +189,73 @@ OOAlloc(ObjectMap);
   return(I);
 }
 /*========================================================================*/
-ObjectMap *ObjectMapNewFromDesc(ObjectMapDesc *md);
 ObjectMap *ObjectMapNewFromDesc(ObjectMapDesc *md)
 {
   ObjectMap *I;
   int ok=true;
   float v[3];
-  int a,b,c;
+  int a,b,c,d;
   float *fp;
 
   I = (ObjectMap*)ObjectMapNew();
-  
+  if(I) {
+    I->Origin=Alloc(float,3);
+    I->Range=Alloc(float,3);
+    I->Dim=Alloc(int,3);
+    I->Grid=Alloc(float,3);
+  }
   switch(md->mode) {
-  case 0: /* Orthorhombic: min, max, spacing, centered over range  */
+  case cObjectMap_OrthoMinMaxGrid: /* Orthorhombic: min, max, spacing, centered over range  */
 
-    subtract3f(md->Max,md->Min,v);
-    for(a=0;a<3;a++) { if(v[a]<0.0) swap1f(md->Max+a,md->Min+a); };
-    subtract3f(md->Max,md->Min,v);
+    subtract3f(md->MaxCorner,md->MinCorner,v);
+    for(a=0;a<3;a++) { if(v[a]<0.0) swap1f(md->MaxCorner+a,md->MinCorner+a); };
+    subtract3f(md->MaxCorner,md->MinCorner,v);
     for(a=0;a<3;a++) {
-      md->Dim[a] = v[a]/md->Spacing[a];
+      md->Dim[a] = v[a]/md->Grid[a];
       if(md->Dim[a]<1) md->Dim[a]=1;
-      if((md->Dim[a]*md->Spacing[a])<v[a]) md->Dim[a]++;
+      if((md->Dim[a]*md->Grid[a])<v[a]) md->Dim[a]++;
     }
-    average3f(md->Max,md->Min,v);
-    for(a=0;a<3;a++) { md->Min[a] = v[a]-0.5*md->Dim[a]*md->Spacing[a]; }
 
+    PRINTFB(FB_ObjectMap,FB_Blather)
+      " ObjectMap: Dim %d %d %d\n",md->Dim[0],md->Dim[1],md->Dim[2]
+      ENDFB;
+
+    average3f(md->MaxCorner,md->MinCorner,v);
+    for(a=0;a<3;a++) { md->MinCorner[a] = v[a]-0.5*md->Dim[a]*md->Grid[a]; }
+
+    if(Feedback(FB_ObjectMap,FB_Blather)) {
+      dump3f(md->MinCorner," ObjectMap: MinCorner:");
+      dump3f(md->MaxCorner," ObjectMap: MaxCorner:");
+      dump3f(md->Grid," ObjectMap: Grid:");
+    }
+    
     /* now populate the map data structure */
 
-    copy3f(md->Min,I->Origin);
+    copy3f(md->MinCorner,I->Origin);
+    for(a=0;a<3;a++) I->Range[a] = md->Grid[a] * md->Dim[a];
+
+    /* these maps start at zero */
     for(a=0;a<3;a++) I->Min[a]=0; 
     copy3f(md->Dim,I->Max);
+
+    /* define corners */
+
+    for(a=0;a<8;a++) copy3f(I->Origin,I->Corner[a]);
+
+    d = 0;
+    for(c=0;c<2;c++) {
+      {
+        v[2] = (c ? I->Range[2] : 0.0);
+        for(b=0;b<2;b++) {
+          v[1]= (b ? I->Range[1] : 0.0);
+          for(a=0;a<2;a++) {
+            v[0]= (a ? I->Range[0] : 0.0);
+            add3f(v,I->Corner[d],I->Corner[d]);
+            d++;
+          }
+        }
+      }
+    }
     for(a=0;a<3;a++) I->FDim[a] = I->Max[a];
     I->FDim[3] = 3; 
 
@@ -227,11 +264,11 @@ ObjectMap *ObjectMapNewFromDesc(ObjectMapDesc *md)
       ok=false;
     else {
       for(a=0;a<md->Dim[0];a++) {
-        v[0] = md->Min[0] + a * md->Spacing[0];
+        v[0] = md->MinCorner[0] + a * md->Grid[0];
         for(b=0;b<md->Dim[1];b++) {
-          v[1] = md->Min[1] + a * md->Spacing[1];
+          v[1] = md->MinCorner[1] + b * md->Grid[1];
           for(c=0;c<md->Dim[2];c++) {
-            v[2] = md->Min[2] + a * md->Spacing[2];
+            v[2] = md->MinCorner[2] + c * md->Grid[2];
             fp = F4Ptr(I->Field->points,a,b,c,0);
             copy3f(v,fp);
           }
@@ -239,8 +276,47 @@ ObjectMap *ObjectMapNewFromDesc(ObjectMapDesc *md)
       }
     }
     break;
+  default:
+    ok = false;
+  }
+  if(ok) {
+    switch(md->init_mode) {
+    case 0:
+      for(a=0;a<md->Dim[0];a++) {      
+        for(b=0;b<md->Dim[1];b++) {
+          for(c=0;c<md->Dim[2];c++) {
+            F3(I->Field->data,a,b,c)=0.0F;
+          }
+        }
+      }
+      break;
+    case 1:
+      for(a=0;a<md->Dim[0];a++) {      
+        for(b=0;b<md->Dim[1];b++) {
+          for(c=0;c<md->Dim[2];c++) {
+            F3(I->Field->data,a,b,c)=1.0F;
+          }
+        }
+      }
+      break;
+    case -2: /* for testing... */
+      for(a=0;a<md->Dim[0];a++) {      
+        for(b=0;b<md->Dim[1];b++) {
+          for(c=0;c<md->Dim[2];c++) {
+            F3(I->Field->data,a,b,c)=sqrt1f(a*a+b*b+c*c);
+          }
+        }
+      }
+      break;
+    }
   }
   
+  if(ok) {
+    copy3f(I->Origin,I->Obj.ExtentMin);
+    copy3f(I->Origin,I->Obj.ExtentMax);
+    add3f(I->Range,I->Obj.ExtentMax,I->Obj.ExtentMax);
+    I->Obj.ExtentFlag=true;
+  }
   if(!ok) {
     ErrMessage("ObjectMap","Unable to create map");
     ObjectMapFree(I);
