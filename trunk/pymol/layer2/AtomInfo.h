@@ -145,6 +145,7 @@ int AtomInfoCompare(AtomInfoType *at1,AtomInfoType *at2);
 int AtomInfoCompareIgnoreHet(AtomInfoType *at1,AtomInfoType *at2);
 float AtomInfoGetBondLength(AtomInfoType *ai1,AtomInfoType *ai2);
 int AtomInfoSameResidue(AtomInfoType *at1,AtomInfoType *at2);
+int AtomInfoSameResidueP(AtomInfoType *at1,AtomInfoType *at2);
 int AtomInfoSequential(AtomInfoType *at1,AtomInfoType *at2);
 
 void AtomInfoBracketResidue(AtomInfoType *ai0,int n0,AtomInfoType *ai,int *st,int *nd);

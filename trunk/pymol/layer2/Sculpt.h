@@ -26,6 +26,7 @@ Z* -------------------------------------------------------------------
 #define cSculptLine  0x10
 #define cSculptVDW   0x20
 #define cSculptVDW14 0x40
+#define cSculptTors  0x80
 
 typedef struct CSculpt {
   CShaker *Shaker;

@@ -30,6 +30,8 @@ typedef struct RepNonbonded {
   float *V,*VP;
   Pickable *P;
   int N,NP;
+  float Width;
+  float Radius;
 } RepNonbonded;
 
 #include"ObjectMolecule.h"
@@ -54,14 +56,22 @@ void RepNonbondedRender(RepNonbonded *I,CRay *ray,Pickable **pick)
 
   if(ray) {
 
+    float radius;
+    
+    if(I->Radius==0.0F) {
+      radius = ray->PixelRadius*I->Width/2.0F;
+    } else {
+      radius = I->Radius;
+    }
+
 	 v=I->V;
 	 c=I->N;
 	 
 	 while(c--) {
       /*      printf("%8.3f %8.3f %8.3f   %8.3f %8.3f %8.3f \n",v[3],v[4],v[5],v[6],v[7],v[8]);*/
-      ray->fSausage3fv(ray,v+3,v+6,0.15F,v,v);
-      ray->fSausage3fv(ray,v+9,v+12,0.15F,v,v);
-      ray->fSausage3fv(ray,v+15,v+18,0.15F,v,v);
+      ray->fSausage3fv(ray,v+3,v+6,radius,v,v);
+      ray->fSausage3fv(ray,v+9,v+12,radius,v,v);
+      ray->fSausage3fv(ray,v+15,v+18,radius,v,v);
 		v+=21;
 	 }
 
@@ -113,6 +123,8 @@ void RepNonbondedRender(RepNonbonded *I,CRay *ray,Pickable **pick)
 
 	 (*pick)[0].index = i;
   } else if(PMGUI) {
+
+    glLineWidth(I->Width);
 
     int use_dlst;
     use_dlst = (int)SettingGet(cSetting_use_display_lists);
@@ -211,6 +223,8 @@ Rep *RepNonbondedNew(CoordSet *cs)
   I->R.P=NULL;
   I->R.fRecolor=NULL;
 
+  I->Width = SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_line_width);
+  I->Radius = SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_line_radius);
   I->V=(float*)mmalloc(sizeof(float)*nAtom*21);
   ErrChkPtr(I->V);
   v=I->V;

@@ -32,6 +32,7 @@ typedef struct RepRibbon {
   Rep R;
   float *V;
   float linewidth;
+  float radius;
   int N;
   int NS;
   int NP;
@@ -74,13 +75,22 @@ void RepRibbonRender(RepRibbon *I,CRay *ray,Pickable **pick)
   */
 
   if(ray) {
+
+    float radius;
+    
+    if(I->radius==0.0F) {
+      radius = ray->PixelRadius*I->linewidth/2.0F;
+    } else {
+      radius = I->radius;
+    }
+
     PRINTFD(FB_RepRibbon)
       " RepRibbonRender: rendering raytracable...\n"
       ENDFD;
 
     if(c>0) {
       while(c--) {
-		  ray->fSausage3fv(ray,v+4,v+11,*(v+14),v+1,v+8);
+		  ray->fSausage3fv(ray,v+4,v+11,radius,v+1,v+8);
         v+=18;
       }
     }
@@ -232,7 +242,7 @@ Rep *RepRibbonNew(CoordSet *cs)
   int sampling;
   float  power_a = 5;
   float power_b = 5;
-  float radius,throw;
+  float throw;
   int visFlag;
   float dev;
   int trace;
@@ -265,8 +275,7 @@ Rep *RepRibbonNew(CoordSet *cs)
 
   sampling=SettingGet_i(cs->Setting,obj->Obj.Setting,cSetting_ribbon_sampling);
   if(sampling<1) sampling=1;
-  radius=SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_ribbon_radius);
-  if(radius<0.01F) radius=0.01F;
+  I->radius=SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_ribbon_radius);
 
   I->R.fRender=(void (*)(struct Rep *, CRay *, Pickable **))RepRibbonRender;
   I->R.fFree=(void (*)(struct Rep *))RepRibbonFree;
@@ -542,7 +551,7 @@ Rep *RepRibbonNew(CoordSet *cs)
                 *(v++)=f1*v1[2]+f0*v1[5]+
                   f4*( f3*v2[2]-f2*v2[5] );
 
-					 *(v++)=radius;
+					 v++; /* radius no longer stored here... */
 
                 average3f(v-4,v-11,v);
 
@@ -581,62 +590,3 @@ Rep *RepRibbonNew(CoordSet *cs)
 
 
 
-
-#ifdef _OLD_CODE
-
-				for(b=0;b<sampling;b++) /* needs optimization */
-				  {
-
-					 f0=((float)b)/sampling;
-					 if(f0<0.5) {
-						v0 = ColorGet(c1);
-					 } else {
-						v0 = ColorGet(c2);
-					 }
-
-					 *(v++)=*(v0);
-					 *(vc++)=*(v0++);
-					 *(v++)=*(v0);
-					 *(vc++)=*(v0++);
-					 *(v++)=*(v0);
-					 *(vc++)=*(v0);
-
-					 f1=2*(f0-0.5);
-					 if(f1<0.0) 
-						f0=(-pow(-f1,1.0/(power_b))+1.0)/2.0;
-					 else
-						f0=(pow(f1,1.0/(power_b))+1.0)/2.0;
-					 f1=1-f0;
-					 f2=1-(f0*2);
-					 f3=1-fabs(pow(f2,power_a));
-					 f4=f0;
-					 *(v++)=v1[0]+f4*v3[0]+f3*((v2[0]*f1)-(v2[3]*f0));
-					 *(v++)=v1[1]+f4*v3[1]+f3*((v2[1]*f1)-(v2[4]*f0));
-					 *(v++)=v1[2]+f4*v3[2]+f3*((v2[2]*f1)-(v2[5]*f0));
-					 *(vc++)=radius;
-					 *(vc++)=*(v-3);
-					 *(vc++)=*(v-2);
-					 *(vc++)=*(v-1);
-
-					 f0=((float)b+1)/sampling;
-					 f1=2*(f0-0.5);
-					 if(f1<0.0) 
-						f0=(-pow(-f1,1.0/(power_b))+1.0)/2.0;
-					 else
-						f0=(pow(f1,1.0/(power_b))+1.0)/2.0;
-					 f1=1-f0;
-					 f2=1-(f0*2);
-					 f3=1-fabs(pow(f2,power_a));
-					 f4=f0;
-
-					 *(v++)=v1[0]+f4*v3[0]+f3*((v2[0]*f1)-(v2[3]*f0));
-					 *(v++)=v1[1]+f4*v3[1]+f3*((v2[1]*f1)-(v2[4]*f0));
-					 *(v++)=v1[2]+f4*v3[2]+f3*((v2[2]*f1)-(v2[5]*f0));
-					 *(vc++)=*(v-3);
-					 *(vc++)=*(v-2);
-					 *(vc++)=*(v-1);
-					 I->NC++;
-					 I->N++;
-				  }
-
-#endif

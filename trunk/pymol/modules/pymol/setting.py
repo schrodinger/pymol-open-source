@@ -305,6 +305,8 @@ if __name__=='pymol.setting':
       gaussian_resolution   = 271
       gaussian_b_floor      = 272
       sculpt_nb_interval    = 273
+      sculpt_tors_weight    = 274
+      sculpt_tors_tolerance = 275
       
    setting_sc = Shortcut(SettingIndex.__dict__.keys())
 

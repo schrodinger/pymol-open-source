@@ -75,8 +75,9 @@ void RepDistLabelRender(RepDistLabel *I,CRay *ray,Pickable **pick)
       glColor3fv(ColorGet(color));
     else
       glColor3fv(ColorGet(I->Obj->Color));
-          
-    /*	 SceneResetNormal(true);*/
+    /*    printf("color %d %d \n",color,I->Obj->Color);
+          dump3f(ColorGet(I->Obj->Color),"components");*/
+ /*	 SceneResetNormal(true);*/
 	 while(c--) {
 
       glRasterPos4f(v[0],v[1],v[2],1.0);

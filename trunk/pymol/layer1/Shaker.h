@@ -26,12 +26,17 @@ typedef struct {
   float targ,targ2;
 } ShakerDistCon;
 
+#define cShakerTorsAlkane 1
+#define cShakerTors
+
 typedef struct {
-  int at0,at1;
+  int at0,at1,at2,at3;
   int type;
-  float targ;
 } ShakerTorsCon;
 
+#define cShakerTorsSP3SP3      1
+#define cShakerTorsDisulfide   2
+ 
 typedef struct {
   int at0,at1,at2,at3;
   float targ;
@@ -54,12 +59,14 @@ typedef struct {
   int NPlanCon;
   ShakerLineCon *LineCon;
   int NLineCon;
+  ShakerTorsCon *TorsCon;
+  int NTorsCon;
 } CShaker;
 
 CShaker *ShakerNew(void);
 void ShakerReset(CShaker *I);
 void ShakerAddDistCon(CShaker *I,int atom0,int atom1,float dist,int type);
-
+void ShakerAddTorsCon(CShaker *I,int atom0,int atom1,int atom2,int atom3,int type);
 void ShakerAddPyraCon(CShaker *I,int atom0,int atom1,int atom2,int atom3,float target);
 void ShakerAddPlanCon(CShaker *I,int atom0,int atom1,int atom2,int atom3);
 
@@ -69,6 +76,10 @@ float ShakerGetPyra(float *v0,float *v1,float *v2,float *v3);
 
 /* the following fn's have been inlined in Sculpt.c  
 float ShakerDoDist(float target,float *v0,float *v1,float *d0to1,float *d1to0,float wt);
+
+float ShakerDoTors(int type, float *v0,float *v1,float *v2,float *v3,
+                   float *p0,float *p1,float *p2,float *p3,float wt);
+
 */
 
 float ShakerDoPyra(float target,float *v0,float *v1,float *v2,float *v3,
@@ -82,6 +93,7 @@ float ShakerDoLine(float *v0,float *v1,float *v2,
 float ShakerDoPlan(float *v0,float *v1,float *v2,float *v3,
                    float *p0,float *p1,float *p2,float *p3,float wt);
 
+                   
 void ShakerFree(CShaker *I);
 
 #endif

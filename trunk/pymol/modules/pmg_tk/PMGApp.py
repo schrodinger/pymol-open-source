@@ -1687,26 +1687,45 @@ class PMGApp(AbstractApp):
 
       self.menuBar.addmenuitem('Sculpting', 'separator', '')
 
+#define cSculptBond  0x01
+#define cSculptAngl  0x02
+#define cSculptPyra  0x04
+#define cSculptPlan  0x08
+#define cSculptLine  0x10
+#define cSculptVDW   0x20
+#define cSculptVDW14 0x40
+#define cSculptTors  0x80
+
       self.menuBar.addmenuitem('Sculpting', 'command', 'Bonds Only',
                                label='Bonds Only',
-                               command = lambda: cmd.do("_ set sculpt_field_mask=1"))
+                               command = lambda: cmd.do("_ set sculpt_field_mask=%d"%(
+         0x01)))
 
       self.menuBar.addmenuitem('Sculpting', 'command', 'Bonds & Angles Only',
                                label='Bonds & Angles Only',
-                               command = lambda: cmd.do("_ set sculpt_field_mask=3"))
+                               command = lambda: cmd.do("_ set sculpt_field_mask=%d"%(
+         0x01+0x02)))
+      
+      self.menuBar.addmenuitem('Sculpting', 'command', 'Local Geometry Only',
+                               label='Local Geometry Only',
+                               command = lambda: cmd.do("_ set sculpt_field_mask=%d"%(
+         0x01+0x02+0x04+0x08+0x10)))
 
       self.menuBar.addmenuitem('Sculpting', 'command', 'All Except VDW',
                                label='All Except VDW',
-                               command = lambda: cmd.do("_ set sculpt_field_mask=31"))
+                               command = lambda: cmd.do("_ set sculpt_field_mask=%d"%(
+         0x01+0x02+0x04+0x08+0x10+0x80)))
 
-      self.menuBar.addmenuitem('Sculpting', 'command', 'All Except 1-4 VDW',
-                               label='All Except 1-4 VDW',
-                               command = lambda: cmd.do("_ set sculpt_field_mask=63"))
+      self.menuBar.addmenuitem('Sculpting', 'command', 'All Except 1-4 VDW & Torsions',
+                               label='All Except 1-4 VDW & Torsions',
+                               command = lambda: cmd.do("_ set sculpt_field_mask=%d"%(
+         0x01+0x02+0x04+0x08+0x10+0x20)))
 
       self.menuBar.addmenuitem('Sculpting', 'command', 'All Terms',
                                label='All Terms',
-                               command = lambda: cmd.do("_ set sculpt_field_mask=127"))
-
+                               command = lambda: cmd.do("_ set sculpt_field_mask=%d"%(
+         0xFF)))
+      
       self.menuBar.addmenu('Demo', 'Demonstrations',tearoff=TRUE)
 
       

@@ -1140,6 +1140,7 @@ void SettingGenerateSideEffects(int index,char *sele,int state)
     /*    SettingSet(cSetting_line_smooth,0);  NO LONGER */
   case cSetting_line_radius:
     ExecutiveInvalidateRep(inv_sele,cRepLine,cRepInvRep);
+    ExecutiveInvalidateRep(inv_sele,cRepNonbonded,cRepInvRep);
     SceneChanged();
     break;
   case cSetting_mesh_width: 
@@ -1526,7 +1527,7 @@ void SettingInitGlobal(int alloc)
 
   SettingSet_i(I,cSetting_ribbon_sampling, 16);
 
-  SettingSet_f(I,cSetting_ribbon_radius, 0.4F);
+  SettingSet_f(I,cSetting_ribbon_radius, 0.0F);
 
   SettingSet_f(I,cSetting_stick_radius, 0.25F);
 
@@ -1708,7 +1709,7 @@ void SettingInitGlobal(int alloc)
 
   SettingSet_i(I,cSetting_cartoon_debug, 0);
 
-  SettingSet_f(I,cSetting_ribbon_width, 2.0F);
+  SettingSet_f(I,cSetting_ribbon_width, 3.0F);
 
   SettingSet_f(I,cSetting_dash_width, 3.0F);
 
@@ -1828,7 +1829,7 @@ void SettingInitGlobal(int alloc)
 
   SettingSet_f(I,cSetting_sculpt_vdw_weight, 1.0F);  
 
-  SettingSet_f(I,cSetting_sculpt_vdw_weight14, 1.0F);  
+  SettingSet_f(I,cSetting_sculpt_vdw_weight14, 0.33F);  
 
   SettingSet_f(I,cSetting_sculpt_bond_weight, 2.25F);  
 
@@ -1838,13 +1839,13 @@ void SettingInitGlobal(int alloc)
 
   SettingSet_f(I,cSetting_sculpt_plan_weight, 1.0F);  
 
-  SettingSet_i(I,cSetting_sculpting_cycles, 5);  
+  SettingSet_i(I,cSetting_sculpting_cycles, 10);  
 
   SettingSet_f(I,cSetting_sphere_transparency, 0.0F);
 
   SettingSet_color(I,cSetting_sphere_color,"-1"); /* use atom colors by default */
 
-  SettingSet_f(I,cSetting_sculpt_field_mask, (float)0x3F );  
+  SettingSet_f(I,cSetting_sculpt_field_mask, (float)0xFF );  /* all terms */
 
   SettingSet_f(I,cSetting_sculpt_hb_overlap, 1.0F);
 
@@ -2082,6 +2083,10 @@ void SettingInitGlobal(int alloc)
   SettingSet_f(I,cSetting_gaussian_b_floor,0.0F);
 
   SettingSet_i(I,cSetting_sculpt_nb_interval,17);
+
+  SettingSet_f(I,cSetting_sculpt_tors_weight,0.05F);
+
+  SettingSet_f(I,cSetting_sculpt_tors_tolerance,0.05F);
 
 }
 
