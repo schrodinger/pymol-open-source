@@ -393,6 +393,7 @@ void CoordSetFracToReal(CoordSet *I,CCrystal *cryst)
     v+=3;
   }
 }
+
 /*========================================================================*/
 void CoordSetAtomToPDBStrVLA(char **charVLA,int *c,AtomInfoType *ai,
                              float *v,int cnt,PDBInfoRec *pdb_info)
@@ -432,9 +433,26 @@ void CoordSetAtomToPDBStrVLA(char **charVLA,int *c,AtomInfoType *ai,
           /* starts with corrent atomic symbol, so */
           if(strlen(ai->elem)>1) { /* if atom symbol is length 2 */
             strcpy(name,ai->name); /* then start in column 0 */
-          } else { /* otherwise, start in column 1 */
-            name[0]=' ';	
-            strcpy(name+1,ai->name);
+          } else { 
+            switch(reformat) {
+            case 2: /* amber/iupac */
+              name[0]=' ';	
+              strcpy(name+1,ai->name);
+              break;
+            case 1: /* pdb with internal pdb */
+            case 3: /* pdb with internal iupac */
+              if((ai->elem[0]=='H')&&(!ai->elem[1])&&(ai->name[2])) {
+                AtomInfoGetPDB3LetHydroName(ai->resn,ai->name,name);
+              } else {
+                name[0]=' ';	
+                strcpy(name+1,ai->name);
+              }
+              break;
+            default: /* otherwise, start in column 1 */
+              name[0]=' ';	
+              strcpy(name+1,ai->name);
+              break;
+            } 
           }
         } else { /* name doesn't start with atomic symbol */
           /* then just place it in column 1 as usual */
@@ -442,16 +460,35 @@ void CoordSetAtomToPDBStrVLA(char **charVLA,int *c,AtomInfoType *ai,
           strcpy(name+1,ai->name);
         }
       } else { /* name starts with a number */
-        strcpy(name,ai->name); 
+        switch(reformat) {
+        case 2: /* make Amber compliant */
+          if((ai->elem[0]==ai->name[1]) && 
+             ((!ai->elem[1]) || (toupper(ai->elem[1])==toupper(ai->name[2])))) {
+            /* rotate the name to place atom symbol in column 0 to comply with Amber PDB format */
+            name[0]=' ';
+            name[1]=ai->name[1];
+            name[2]=ai->name[2];
+            name[3]=ai->name[0];
+            name[4]=0;
+          } else {
+            strcpy(name,ai->name);
+          }
+          break;
+        default: /* otherwise, assume that number goes in column 0 */
+          strcpy(name,ai->name);
+          break;
+        }
       } /* just stick it in column 0 and hope for the best */
     } else { /* if name is length 4 */
       if((ai->elem[0]==ai->name[0]) &&
          ((!ai->elem[1]) || /* symbol len = 1 */
           (toupper(ai->elem[1])==toupper(ai->name[1])))) { /* matched len 2 */
         /* name starts with the atomic symbol */
-        if(!ai->elem[1]) { /* but if atomic symbol is only length 1 */
-          if((ai->name[3]>='0')&&(ai->name[3]<='9')) { /* and last character is a number */
-            if(reformat==1) { /* PDB compliance mode */
+        if((!ai->elem[1]) && (ai->elem[0])) { /* but if element is one letter... */
+          switch(reformat) {
+          case 1: /* retaining PDB compliance throughout, or */
+          case 3: /* saving as PDB compliant, but use IUPAC within PyMOL */
+            if((ai->name[3]>='0')&&(ai->name[3]<='9')) { /* and last character is a number */
               /* rotate the name to place atom symbol in column 1 to comply with PDB format */
               name[0]=ai->name[3];
               name[1]=ai->name[0];
@@ -461,13 +498,15 @@ void CoordSetAtomToPDBStrVLA(char **charVLA,int *c,AtomInfoType *ai,
             } else {
               strcpy(name,ai->name);
             }
-          } else {
+            break;
+          default: /* no changes */
             strcpy(name,ai->name);
+            break;
           }
         } else {
           strcpy(name,ai->name);
         }
-      } else { /* name does not start with symbol... */
+      } else { /* name does not start with the symbol... */
         if(reformat==2) { /* AMBER compliance mode */
           if((ai->name[0]>='0')&&(ai->name[0]<='9')) {
             if((ai->elem[0]==ai->name[1]) &&
@@ -490,7 +529,7 @@ void CoordSetAtomToPDBStrVLA(char **charVLA,int *c,AtomInfoType *ai,
         }
       }
     }
-  } else { /* preserve what was in the original PDB as best PyMOL can 
+  } else { /* LITERAL mode: preserve what was in the original PDB as best PyMOL can 
             this should enable people to open and save amber pdb files without issues */
     if(strlen(ai->name)<4) { /* under length 4? */
       name[0] = ' ';

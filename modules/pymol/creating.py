@@ -15,7 +15,7 @@
 if __name__=='pymol.creating':
    
    import selector
-
+   import traceback
    import operator
    import cmd
    from cmd import _cmd,lock,unlock,Shortcut,QuietException,is_list
@@ -330,7 +330,7 @@ SEE ALSO
          unlock()
       return r
 
-   def fragment(name,object=None,origin=1,zoom=0):
+   def fragment(name,object=None,origin=1,zoom=0,quiet=1):
       '''
 DESCRIPTION
 
@@ -365,10 +365,11 @@ USAGE
                   reduce(operator.__add__,map(lambda a:a.coord[0],model.atom)),
                   reduce(operator.__add__,map(lambda a:a.coord[1],model.atom)),
                   reduce(operator.__add__,map(lambda a:a.coord[2],model.atom))])
-            cmd.load_model(model,str(object))
+            cmd.load_model(model,str(object),quiet=quiet)
          finally:
             cmd.set('auto_zoom',save,quiet=1)
       except:
+         traceback.print_exc()
          print "Error: unable to load fragment %s" % name
          r = 0
       if not r:

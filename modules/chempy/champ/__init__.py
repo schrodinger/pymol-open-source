@@ -73,14 +73,23 @@ class Champ:
       if e: raise RuntimeError
       return r
       
-   def get_pattern_string(self,index):
+   
+   def pattern_get_string(self,index):
       '''
       retrieves the smiles string for a given pattern index
       '''
-      (e,r) = _champ.get_pattern_string(self._champ,int(index))
+      (e,r) = _champ.pattern_get_string(self._champ,int(index),0)
       if e: raise RuntimeError
       return r
-   
+
+   def pattern_get_string_with_names(self,index):
+      '''
+      retrieves the smiles string for a given pattern index
+      '''
+      (e,r) = _champ.pattern_get_string(self._champ,int(index),1)
+      if e: raise RuntimeError
+      return r
+
    def insert_model(self,model):
       '''
       inserts the pattern from a ChemPy model pattern and returns the index
@@ -254,6 +263,14 @@ class Champ:
       if e: raise RuntimeError
       return r
 
+   def pattern_get_atom_names(self,index):
+      '''
+      debugging routine
+      '''
+      (e,r) = _champ.pattern_get_atom_names(self._champ,int(index))
+      if e: raise RuntimeError
+      return r
+
    def pattern_dump(self,index):
       '''
       debugging routine
@@ -267,6 +284,14 @@ class Champ:
       experimental
       '''
       (e,r) = _champ.pattern_orient_bonds(self._champ,int(index))
+      if e: raise RuntimeError
+      return r
+
+   def pattern_detect_chirality(self,index):
+      '''
+      experimental
+      '''
+      (e,r) = _champ.pattern_detect_chirality(self._champ,int(index))
       if e: raise RuntimeError
       return r
 

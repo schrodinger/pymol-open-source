@@ -2908,20 +2908,17 @@ static int ObjectMapDXStrToMap(ObjectMap *I,char *DXStr,int bytes,int state) {
   int n_items = 0;
 
   char *p;
-  float dens,dens_rev;
+  float dens;
   int a,b,c,d,e;
   float v[3],maxd,mind;
   int ok = true;
   /* DX named from their docs */
-  int map_dim[3];
 
-  int map_bytes;
   int stage = 0;
 
   ObjectMapState *ms;
 
   char cc[MAXLINELEN];
-  char *rev;
 
 
   if(state<0) state=I->NState;

@@ -2229,7 +2229,8 @@ void SettingInitGlobal(int alloc,int reset_gui)
   SettingSet_i(I,cSetting_pdb_reformat_names_mode,0); /*
                                                         0 = no reformatting, 
                                                         1 = pdb compliant,
-                                                        2 = amber compliant 
+                                                        2 = amber compliant,
+                                                        3 = pdb I/O, but iupac inside
                                                       */
   SettingSet_b(I,cSetting_ray_pixel_scale_to_window,1);
   SettingSet_i(I,cSetting_label_font_id,0);

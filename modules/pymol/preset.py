@@ -19,7 +19,7 @@ import traceback
 polar_contacts = "p_polar_contacts"
 tmp_sele = "_p_tmp"
 
-prot_and_dna_sele = "(resn ALA+CYS+CYX+ASP+GLU+PHE+GLY+HIS+ILE+LYS+LEU+MET+MSE+ASN+PRO+GLN+ARG+SER+THR+VAL+TRP+TYR+A+C+T+G+U)"
+prot_and_dna_sele = "(resn ALA+CYS+CYX+ASP+GLU+PHE+GLY+HIS+HID+HIE+HIP+ILE+LYS+LEU+MET+MSE+ASN+PRO+GLN+ARG+SER+THR+VAL+TRP+TYR+A+C+T+G+U)"
 wat_sele = "(resn WAT,H2O,HOH,TIP)"
 ion_sele = "(resn CA,HG,K,NA,ZN,MG,CL)"
 solv_sele = "("+wat_sele+"|"+ion_sele+")"
