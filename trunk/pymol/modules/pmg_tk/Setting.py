@@ -81,6 +81,9 @@ class Setting:
       self.cartoon_smooth_loops = IntVar()
       self.cartoon_smooth_loops.set(int(cmd.get_setting_legacy('cartoon_smooth_loops')))
 
+      self.ignore_pdb_segi = IntVar()
+      self.ignore_pdb_segi.set(int(cmd.get_setting_legacy('ignore_pdb_segi')))
+
       self.xref = { 
          'ray_trace_frames':
          (lambda s,a: (cmd.set(a,("%1.0f" % s.ray_trace_frames.get())),
@@ -121,7 +124,10 @@ class Setting:
          (lambda s,a: (cmd.set(a,("%1.0f" % (s.cartoon_fancy_sheets.get()))))),
          'cartoon_smooth_loops'        :
          (lambda s,a: (cmd.set(a,("%1.0f" % (s.cartoon_smooth_loops.get()))))),
-         
+
+         'ignore_pdb_segi'        :
+         (lambda s,a: (cmd.set(a,("%1.0f" % (s.ignore_pdb_segi.get()))))),
+
          }
 
       self.update_code = {
@@ -159,6 +165,8 @@ class Setting:
          (lambda s,t: (s.cartoon_fancy_sheets.set(t[1][0]!=0))),
          'cartoon_smooth_loops':
          (lambda s,t: (s.cartoon_smooth_loops.set(t[1][0]!=0))),
+         'ignore_pdb_segi':
+         (lambda s,t: (s.ignore_pdb_segi.set(t[1][0]!=0))),
         }
       self.active_list = [
          pymol.setting._get_index("ray_trace_frames"),
@@ -178,7 +186,8 @@ class Setting:
          pymol.setting._get_index("cartoon_fancy_helices"),
          pymol.setting._get_index("cartoon_flat_sheets"),
          pymol.setting._get_index("cartoon_fancy_sheets"),
-         pymol.setting._get_index("cartoon_smooth_loops"),         
+         pymol.setting._get_index("cartoon_smooth_loops"),
+         pymol.setting._get_index("ignore_pdb_segi"),         
          ]
 
       self.active_dict = {}
