@@ -169,7 +169,7 @@ if __name__=='pymol.controlling':
                                 ('double_right','none', 'pkat'),
                                 ('single_left','none','pkat'),
                                 ('single_middle','none','cent'),
-                                ('single_right','none', 'pkbd'),
+                                ('single_right','none', 'menu'),
                                 ],
 
       'two_button_viewing' : [ ('l','none','rota'),
