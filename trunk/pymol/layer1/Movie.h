@@ -20,6 +20,7 @@ Z* -------------------------------------------------------------------
 
 #include"Ortho.h"
 #include"Scene.h"
+#include"View.h"
 
 typedef unsigned char *ImageType;
 typedef char MovieCmdType[OrthoLineLength];
@@ -35,6 +36,7 @@ typedef struct  {
   int Playing;
   int Locked;
   int CacheSave;
+  CViewElem *ViewElem;
 } CMovie;
 
 int MovieFromPyList(PyObject *list,int *warning);
@@ -72,6 +74,7 @@ int MovieFrameToIndex(int frame);
 int MovieLocked(void);
 void MovieSetLock(int);
 int MovieDefined(void);
+int MovieView(int action,int first,int last);
 
 #define cMovieMatrixClear  0
 #define cMovieMatrixStore  1

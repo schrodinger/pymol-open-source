@@ -28,6 +28,7 @@ typedef struct CScrollBar {
   int ListSize;
   int DisplaySize;
   int BarSize;
+  float ExactBarSize;
   float Value;
   float StartValue;
   float ValueMax;
@@ -62,7 +63,8 @@ void ScrollBarUpdate(struct CScrollBar *I)
   } else {
     range = (I->Block->rect.top-I->Block->rect.bottom);
   }
-  I->BarSize = (range*I->DisplaySize)/I->ListSize;
+  I->ExactBarSize = (range*I->DisplaySize)/I->ListSize;
+  I->BarSize = (int)I->ExactBarSize;
   if(I->BarSize<4)
     I->BarSize=4;
   I->BarRange = range - I->BarSize;
@@ -221,14 +223,41 @@ static int ScrollBarClick(Block *block,int button,int x,int y,int mod)
 
   if(I->HorV) {
     if(x>I->BarMax) {
-      I->Value+=I->DisplaySize;
-      if(I->Value > I->ValueMax)
-        I->Value = I->ValueMax;
+      switch(button) {
+      case P_GLUT_MIDDLE_BUTTON:
+        {
+          I->Value= (I->ListSize*(x-block->rect.left))/(block->rect.right - block->rect.left) - I->DisplaySize*0.5;
+          if(I->Value > I->ValueMax)
+            I->Value = I->ValueMax;
+          OrthoGrab(I->Block);
+          I->StartPos = x;
+          I->StartValue=I->Value;
+        }
+        break;
+      default:
+        I->Value+=I->DisplaySize;
+        if(I->Value > I->ValueMax)
+          I->Value = I->ValueMax;
+      }
+
       OrthoDirty();
     } else if(x<I->BarMin){
-      I->Value-=I->DisplaySize;
-      if(I->Value<0.0)
-        I->Value=0.0F;
+      switch(button) {
+      case P_GLUT_MIDDLE_BUTTON:
+        {
+          I->Value= (I->ListSize*(x-block->rect.left))/(block->rect.right - block->rect.left) - I->DisplaySize*0.5;
+          if(I->Value<0.0)
+            I->Value=0.0F;
+          OrthoGrab(I->Block);
+          I->StartPos = x;
+          I->StartValue=I->Value;
+        }
+        break;
+      default:
+        I->Value-=I->DisplaySize;
+        if(I->Value<0.0)
+          I->Value=0.0F;
+      }
       OrthoDirty();
     } else {
       OrthoGrab(I->Block);
@@ -238,14 +267,40 @@ static int ScrollBarClick(Block *block,int button,int x,int y,int mod)
     } 
   } else {
     if(y>I->BarMin) {
-      I->Value-=I->DisplaySize;
-      if(I->Value<0.0)
-        I->Value=0.0F;
+      switch(button) {
+      case P_GLUT_MIDDLE_BUTTON:
+        {
+          I->Value= (I->ListSize*(y-block->rect.top))/(block->rect.bottom - block->rect.top) - I->DisplaySize*0.5;
+          if(I->Value<0.0)
+            I->Value=0.0F;
+          OrthoGrab(I->Block);
+          I->StartPos = y;
+          I->StartValue=I->Value;
+        }
+        break;
+      default:
+        I->Value-=I->DisplaySize;
+        if(I->Value<0.0)
+          I->Value=0.0F;
+      }
       OrthoDirty();
     } else if(y<I->BarMax) {
-      I->Value+=I->DisplaySize;
-      if(I->Value > I->ValueMax)
-        I->Value = I->ValueMax;
+      switch(button) {
+      case P_GLUT_MIDDLE_BUTTON:
+        {
+          I->Value= (I->ListSize*(y-block->rect.top))/(block->rect.bottom - block->rect.top) - I->DisplaySize*0.5;
+          if(I->Value > I->ValueMax)
+            I->Value = I->ValueMax;
+          OrthoGrab(I->Block);
+          I->StartPos = y;
+          I->StartValue=I->Value;
+        }
+        break;
+      default:
+        I->Value+=I->DisplaySize;
+        if(I->Value > I->ValueMax)
+          I->Value = I->ValueMax;
+      }
       OrthoDirty();
     } else {
       OrthoGrab(I->Block);

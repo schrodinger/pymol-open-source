@@ -30,6 +30,8 @@ Z* -------------------------------------------------------------------
 #include"Setting.h"
 #include"main.h"
 #include"PConv.h"
+#include"Util.h"
+
 
 CMovie Movie;
 
@@ -441,11 +443,12 @@ void MovieSequence(char *str)
   }
   FreeP(I->Sequence);
   FreeP(I->Cmd);
+  VLAFreeP(I->ViewElem);
   I->NFrame=0;
   if(str[0]) { /* not just a reset */
     I->Sequence=Alloc(int,c+1);
     I->Cmd=Alloc(MovieCmdType,c+1);
-    
+    I->ViewElem=VLACalloc(CViewElem,c+1);
     for(i=0;i<c;i++)
       I->Cmd[i][0]=0;
     c=0;
@@ -520,6 +523,8 @@ void MovieDoFrameCommand(int frame)
       {
         if(I->Cmd[frame][0]) 
           PParse(I->Cmd[frame]);
+        if(I->ViewElem) 
+          SceneFromViewElem(I->ViewElem+frame);
       }
   }
 }
@@ -542,6 +547,201 @@ void MovieSetCommand(int frame,char *command)
       " Movie-Error: frame %d does not exist.  Use 'mset' to define movie first.\n",frame+1
       ENDFB;
   }
+}
+
+static int interpolate_view(CViewElem *first,CViewElem *last)
+{
+  float first3x3[9];
+  float last3x3[9];
+  float inverse3x3[9];
+  float inter3x3[9];
+  float rot_axis[3],trans[3];
+  float angle;
+  CViewElem *current;
+  int n = (last-first)-1;
+  Matrix53f rot,imat;
+  int a;
+  float tVector[3],tCenter[3],tDir[3];
+  float tLen;
+  float pLen;
+  float v1[3],v2[3],sProj[3];
+  float tAngle;
+  float tLinear = true; /* always do linear for now... */
+  float pivot[3];
+
+  /* I have no clue whether we're column or row major at this
+     point...but it hardly matters!  */
+
+  copy44d33f(first->matrix,first3x3);
+  copy44d33f(last->matrix,last3x3);
+  transpose33f33f(first3x3,inverse3x3);
+
+  copy3f(first->pre,&rot[3][0]);
+  copy3f(last->pre,&rot[4][0]);
+  multiply33f33f(inverse3x3,last3x3,&rot[0][0]);
+
+  matrix_to_rotation(rot,rot_axis,&angle);
+
+  if(!tLinear) {
+    subtract3f(last->pre,first->pre,tVector);
+    normalize23f(tVector,tDir);
+    tLen = length3f(tVector); 
+    
+    average3f(last->pre,first->pre,tCenter); /* center of translation */
+    
+    pLen = dot_product3f(tDir,rot_axis); /* project translation vector onto rotation axis */
+    
+    trans[0] -= tDir[0] * pLen; /* subtract component of translation from rotation axis*/
+    trans[1] -= tDir[1] * pLen; /* why??? */
+    trans[2] -= tDir[2] * pLen;
+    normalize3f(trans);
+    
+    /* rotation axis must be perpendicular to the direction of translation */
+    
+    cross_product3f(tDir,trans,v1);
+    
+    normalize3f(v1);
+    
+    transform33f3f(&rot[0][0],v1,v2);
+
+    project3f(v2,trans,sProj);  /* project vector onto plane _|_ to axis */
+    subtract3f(v2,sProj,v2); 
+    normalize3f(v2);
+  
+    tAngle = acos(dot_product3f(v1,v2));
+    
+    if(fabs(tAngle)>fabs(angle))
+      tAngle = fabs(angle)*(tAngle/fabs(angle));
+    
+    /* if translation angle > rotation angle then sets translation angle 
+     * to same as rotation angle, with proper sign of course */
+    
+    if (tAngle>0.0001) 
+      {
+        pLen = tan(tAngle/2); 
+        if(fabs(pLen)>0.0000001)
+          pLen = (tLen/2)/pLen;
+        else
+          {
+            pLen = 1000.0;
+            tLinear = true;
+          }
+      }
+    else
+      {
+        pLen = 1000.0;
+        tLinear = true;
+      }
+  
+    pivot[0] = tCenter[0] - pLen * v1[0];
+    pivot[1] = tCenter[1] - pLen * v1[1];
+    pivot[2] = tCenter[2] - pLen * v1[2];
+  }
+
+  current = first+1;
+  
+  for(a=0;a<n;a++) {
+    float fxn = ((float)a+1)/(n+1);
+    float fxn_1 = 1.0F - fxn;
+    *current = *first;
+    matrix_interpolate(imat,rot,pivot,rot_axis,angle,tAngle,false,tLinear,fxn);
+    current->matrix_flag = true;
+    multiply33f33f(first3x3,&imat[0][0],inter3x3);
+
+    copy33f44d(inter3x3,current->matrix);
+
+    if(first->pre_flag && last->pre_flag) {
+      copy3f(&imat[4][0],current->pre);
+      current->pre_flag=true;
+    } else {
+      current->pre_flag=false;
+    }
+
+    if(first->clip_flag && last->clip_flag) {
+      current->front = first->front * fxn_1 + last->front * fxn;
+      current->back = first->back * fxn_1 + last->back * fxn;
+      current->clip_flag = true;
+    } else {
+      current->clip_flag = false;
+    }
+
+    if(first->post_flag && last->post_flag) {
+      mix3d(first->post,last->post,(double)fxn,current->post);
+      current->post_flag=true;
+    } else {
+      current->post_flag=false;
+    }
+    current->specified = false;
+    current++;
+  }
+
+  return 1;
+}
+/*========================================================================*/
+int MovieView(int action,int first,int last)
+{
+  CMovie *I=&Movie;
+  int frame;
+  switch(action) {
+  case 0: /* set */
+    if(I->ViewElem) {
+      if(first<0)
+        first = SceneGetFrame();
+      if(last<0)
+        last = first;
+      for(frame=first;frame<=last;frame++) {
+        if((frame>=0)&&(frame<I->NFrame)) {
+          VLACheck(I->ViewElem,CViewElem,frame);
+          printf("MovieView: Setting frame %d.\n",frame+1);
+          SceneToViewElem(I->ViewElem+frame);          
+          I->ViewElem[frame].specified = true;
+        }
+      }
+    }
+    break;
+  case 1: /* clear */
+    if(I->ViewElem) {
+      if(first<0)
+        first = SceneGetFrame();
+      if(last<0)
+        last = first;
+      for(frame=first;frame<=last;frame++) {
+        if((frame>=0)&&(frame<I->NFrame)) {
+          VLACheck(I->ViewElem,CViewElem,frame);
+          UtilZeroMem((void*)(I->ViewElem+frame),sizeof(CViewElem));
+        }
+      }
+    }
+    break;
+  case 2: /* interpolate */
+    {
+      CViewElem *first_view=NULL,*last_view=NULL;
+      if(first<0)
+        first = 0;
+      if(last<0)
+        last = SceneGetNFrame()-1;
+
+      VLACheck(I->ViewElem,CViewElem,last);
+      for(frame=first;frame<=last;frame++) {
+        if((frame>=0)&&(frame<I->NFrame)) {
+          if(!first_view) {
+            if(I->ViewElem[frame].specified) {
+              first_view = I->ViewElem + frame;
+            }
+          } else {
+            if(I->ViewElem[frame].specified) {
+              last_view = I->ViewElem + frame;
+              interpolate_view(first_view,last_view);
+              first_view = last_view;
+              last_view = NULL;
+            }
+          }
+        }
+      }
+    }
+    break;
+  }
+  return 1;
 }
 /*========================================================================*/
 void MovieAppendCommand(int frame,char *command)
@@ -629,6 +829,7 @@ void MovieFree(void)
   CMovie *I=&Movie;
   MovieClearImages();
   VLAFree(I->Image);
+  VLAFreeP(I->ViewElem);
   FreeP(I->Cmd);
   FreeP(I->Sequence);
 }
@@ -641,6 +842,7 @@ void MovieInit(void)
   I->Image=VLAMalloc(10,sizeof(ImageType),5,true); /* auto-zero */
   I->Sequence=NULL;
   I->Cmd=NULL;
+  I->ViewElem = NULL;
   I->NImage=0;
   I->NFrame=0;
   for(a=0;a<16;a++)

@@ -42,6 +42,22 @@ static const float _0		= 0.0F;
 static const float _1		= 1.0F;
 static const double _d0		= 0.0;
 
+void mix3f(float *v1,float *v2,float fxn,float *v3)
+{
+  float fxn_1 = 1.0F - fxn;
+  v3[0] = v1[0] * fxn_1 + v2[0] * fxn;
+  v3[1] = v1[1] * fxn_1 + v2[1] * fxn;
+  v3[2] = v1[2] * fxn_1 + v2[2] * fxn;
+}
+
+void mix3d(double *v1,double *v2,double fxn,double *v3)
+{
+  double fxn_1 = 1.0F - fxn;
+  v3[0] = v1[0] * fxn_1 + v2[0] * fxn;
+  v3[1] = v1[1] * fxn_1 + v2[1] * fxn;
+  v3[2] = v1[2] * fxn_1 + v2[2] * fxn;
+}
+
 unsigned int optimizer_workaround1u(unsigned int value)
 {
   return value;
@@ -332,6 +348,48 @@ void copy44f ( float *src, float *dst )
   *(dst++)=*(src++);
 }
 
+void copy44d33f ( double *src, float *dst )
+{
+  *(dst++)=(float)*(src++);
+  *(dst++)=(float)*(src++);
+  *(dst++)=(float)*(src++);
+  src++;
+
+  *(dst++)=(float)*(src++);
+  *(dst++)=(float)*(src++);
+  *(dst++)=(float)*(src++);
+  src++;
+
+  *(dst++)=(float)*(src++);
+  *(dst++)=(float)*(src++);
+  *(dst++)=(float)*(src++);
+  src++;
+}
+
+void copy33f44d ( float *src, double *dst )
+{
+  const float _0 = 0.0;
+  *(dst++)=(double)*(src++);
+  *(dst++)=(double)*(src++);
+  *(dst++)=(double)*(src++);
+  *(dst++)=_0;
+
+  *(dst++)=(double)*(src++);
+  *(dst++)=(double)*(src++);
+  *(dst++)=(double)*(src++);
+  *(dst++)=_0;
+
+  *(dst++)=(double)*(src++);
+  *(dst++)=(double)*(src++);
+  *(dst++)=(double)*(src++);
+  *(dst++)=_0;
+
+  *(dst++)=_0;
+  *(dst++)=_0;
+  *(dst++)=_0;
+  *(dst++)=_1;
+}
+
 void transform33f3f (float *m1, float *m2, float *m3) 
 {
   float m2r0=m2[0];
@@ -340,6 +398,19 @@ void transform33f3f (float *m1, float *m2, float *m3)
   m3[0] = m1[ 0] * m2r0 + m1[ 1] * m2r1 + m1[ 2] * m2r2;
   m3[1] = m1[ 3] * m2r0 + m1[ 4] * m2r1 + m1[ 5] * m2r2;
   m3[2] = m1[ 6] * m2r0 + m1[ 7] * m2r1 + m1[ 8] * m2r2;
+}
+
+void transpose33f33f ( float  *m1, float  *m2)
+{
+  m2[0] = m1[0];
+  m2[1] = m1[3];
+  m2[2] = m1[6];
+  m2[3] = m1[1];
+  m2[4] = m1[4];
+  m2[5] = m1[7];
+  m2[6] = m1[2];
+  m2[7] = m1[5];
+  m2[8] = m1[8];
 }
 
 void transform33Tf3f (float *m1, float *m2, float *m3) 
@@ -788,7 +859,6 @@ void matrix_transform33f3f(Matrix33f m1,float *v1,float *v2)
 #endif
 }
 
-
 #if 0
 double matdiffsq ( float *v1, oMatrix5f m, float *v2 )
 {
@@ -810,6 +880,8 @@ double matdiffsq ( float *v1, oMatrix5f m, float *v2 )
   return( dx*dx + dy*dy + dz*dz );
 
 }
+#endif
+
 void transform5f3f (oMatrix5f m, float *v1, float *v2 )
 {
   register double dx,dy,dz;
@@ -837,6 +909,15 @@ void transform3d3f ( oMatrix3d m1,float *v1,float *v2)
 		m1[b][1]*v1[1] + m1[b][2]*v1[2];
 }
 
+void transform33d3f ( Matrix33d m1,float *v1,float *v2)
+{
+  int b;
+  for(b=0;b<3;b++)
+	 v2[b] = m1[b][0]*v1[0] +
+		m1[b][1]*v1[1] + m1[b][2]*v1[2];
+}
+
+/*
 
 void matcopy  ( oMatrix5f to,oMatrix5f from )
 {
@@ -896,13 +977,14 @@ void matrot ( oMatrix5f nm, oMatrix5f om, int axis, float angle )
   normalize3f(nm[2]);
 
 }
+*/
 
-void rotation_to_matrix(oMatrix5f rot,float *axis, float angle)
+void rotation_to_matrix(Matrix53f rot,float *axis, float angle)
 {
   rotation_matrix3f(angle,axis[0],axis[1],axis[2],&rot[0][0]);
 }
 
-void matrix_interpolate(oMatrix5f imat,oMatrix5f mat,float *pivot,
+void matrix_interpolate(Matrix53f imat,Matrix53f mat,float *pivot,
 								float *axis,float angle,float tAngle,
 								int linear,int tLinear,float fxn)
 {
@@ -959,18 +1041,19 @@ void matrix_interpolate(oMatrix5f imat,oMatrix5f mat,float *pivot,
 		
 		tAlpha = fabs(0.5-fxn)*tAngle;
 		
-		opplen = fabs(hyplen * sin(deg_to_rad(tAlpha)));
-		adjlen = fabs(hyplen * cos(deg_to_rad(tAlpha)));
+		opplen = fabs(hyplen * sin(tAlpha));
+		adjlen = fabs(hyplen * cos(tAlpha));
 		
 		scale3f(oppdir,opplen,opp);
 		scale3f(adjdir,adjlen,adj);
 		
 		add3f(pivot,adj,pos);
 		
-		if(fxn<=0.5)
+		if(fxn<=0.5) {
 		  add3f(pos,opp,pos);
-		else
+		} else {
 		  subtract3f(pos,opp,pos);
+      }
 	 }
   else
 	 {
@@ -986,14 +1069,13 @@ void matrix_interpolate(oMatrix5f imat,oMatrix5f mat,float *pivot,
 
 }
 
-#ifdef FIND_AXIS
-void matrix_to_rotation(oMatrix5f rot,float *axis, float *angle)
+void matrix_to_rotation(Matrix53f rot,float *axis, float *angle)
 {
   float perp[3],tmp[3],rperp[3],dirck[3];
-  oMatrix3d rot3d;
-  oMatrix5f rotck;
+  Matrix33d rot3d;
+  Matrix53f rotck;
   int a,b;
-  
+
 #ifdef MATCHK
   printf("starting matrix\n");
   for(a=0;a<5;a++)
@@ -1022,7 +1104,7 @@ void matrix_to_rotation(oMatrix5f rot,float *axis, float *angle)
 
   normalize3f(perp);
 
-  transform3d3f(rot3d,perp,rperp);
+  transform33d3f(rot3d,perp,rperp);
 
   *angle = get_angle3f(perp,rperp);
 
@@ -1044,18 +1126,27 @@ void matrix_to_rotation(oMatrix5f rot,float *axis, float *angle)
 #endif
 
 }
-#endif
+
+typedef long int integer;
+typedef double doublereal;
+
+int pymol_rg_( /* defined in Matrix.c */
+integer *nm, integer *n,
+doublereal *a, doublereal *wr, doublereal *wi,
+integer *matz,
+doublereal *z__,
+integer *iv1,
+doublereal *fv1,
+integer *ierr);
 
 
-
-#ifdef NOT_USED
-void find_axis( oMatrix3d a, float *axis)
+void find_axis( Matrix33d a, float *axis)
 {
-  double at[3][3],v[3][3],vt[3][3],fv1[3][3];
-  int iv1[3];
-  int ierr;
-  int nm,n,matz;
-  double wr[3],wi[3];
+  doublereal at[3][3],v[3][3],vt[3][3],fv1[3][3];
+  integer iv1[3];
+  integer ierr;
+  integer nm,n,matz;
+  doublereal wr[3],wi[3];
   /*p[3][3];*/
   int x,y;
 
@@ -1070,8 +1161,9 @@ void find_axis( oMatrix3d a, float *axis)
 			 at[y][x] = a[x][y];
 		  }
 	 } 
+
  
-  /*  rg_(&nm,&n,&at[0][0],wr,wi,&matz,&vt[0][0],iv1,&fv1[0][0],&ierr);*/
+  pymol_rg_(&nm,&n,&at[0][0],wr,wi,&matz,&vt[0][0],iv1,&fv1[0][0],&ierr);
 
   for(x=0;x<3;x++)
 	 {
@@ -1108,7 +1200,5 @@ void find_axis( oMatrix3d a, float *axis)
   printf("%8.3f %8.3f %8.3f\n",p[2][0],p[2][1],p[2][2]);
   */
 }
-#endif
-#endif
 
 
