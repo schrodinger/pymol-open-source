@@ -434,7 +434,7 @@ int PConvPyListToStringVLA(PyObject *obj,char **vla_ptr)
       }
     }
   (*vla_ptr)=vla;
-  return(vla);
+  return(vla&&1);
 }
 
 void PConv44PyListTo44f(PyObject *src,float *dest) /* note lost of precision */
