@@ -105,6 +105,10 @@ Current Bugs to Fix
    * superposition system fails with degenerate sets (planer atoms, etc).
      sometimes it just fails period
 
+Changes up to 0.81
+
+   * fixed bug in bg_color API function
+
 Changes up to 0.80
 
    * major bug fix to "carve" in isomesh

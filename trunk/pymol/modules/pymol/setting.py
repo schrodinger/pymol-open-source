@@ -201,6 +201,7 @@ class SettingIndex:
    sculpt_line_weight    =184
    fit_iterations        =185
    fit_tolerance         =186
+   batch_prefix          =187
    
 setting_sc = Shortcut(SettingIndex.__dict__.keys())
    
@@ -319,6 +320,8 @@ NOTES
                   v = value
                v = (float(v[0]),float(v[1]),float(v[2]))
             elif type==5: # color
+               v = (str(value),)
+            elif type==6: # string
                v = (str(value),)
                
             v = (type,v)

@@ -25,6 +25,7 @@ typedef struct {
   int changed;
   int type;
   unsigned int offset;
+  unsigned int max_size;
 } SettingRec;
 
 typedef struct {
@@ -38,6 +39,7 @@ typedef struct {
 #define cSetting_float       3
 #define cSetting_float3      4
 #define cSetting_color       5
+#define cSetting_string      6
 
 /* New API 
  * NOTE: get commands are not range-checked, so be careful
@@ -56,11 +58,11 @@ void SettingCheckHandle(CSetting **handle);
 int SettingSet_b(CSetting *I,int index, int value);
 int SettingSet_i(CSetting *I,int index, int value);
 int SettingSet_f(CSetting *I,int index, float value);
+int SettingSet_s(CSetting *I,int index, char *value);
 int SettingSet_3f(CSetting *I,int index, float value1,float value2,float value3);
 int SettingSet_3fv(CSetting *I,int index, float *value);
 
 int SettingGetTextValue(CSetting *set1,CSetting *set2,int index,char *buffer);
-
 
 int SettingSetTuple(CSetting *I,int index,PyObject *tuple);
 
@@ -71,6 +73,7 @@ int SettingGetType(int index); /* based on global types, always succeeds */
 int   SettingGetGlobal_b(int index); /* always succeed */
 int   SettingGetGlobal_i(int index); /* always succeed */
 float SettingGetGlobal_f(int index); /* always succeed */
+char *SettingGetGlobal_s(int index); /* always succeeds */
 void  SettingGetGlobal_3f(int index,float *value); /* always succeeds */
 float *SettingGetGlobal_fv(int index); /* always succeed */
 int SettingSet_color(CSetting *I,int index, char *value);
@@ -78,6 +81,7 @@ int SettingSet_color(CSetting *I,int index, char *value);
 int   SettingGet_b  (CSetting *set1,CSetting *set2,int index);
 int   SettingGet_i  (CSetting *set1,CSetting *set2,int index);
 float SettingGet_f  (CSetting *set1,CSetting *set2,int index);
+char  *SettingGet_s  (CSetting *set1,CSetting *set2,int index);
 void  SettingGet_3f (CSetting *set1,CSetting *set2,int index,float *value);
 float *SettingGet_fv (CSetting *set1,CSetting *set2,int index);
 int   SettingGet_color(CSetting *set1,CSetting *set2,int index);
@@ -285,7 +289,8 @@ int SettingGetName(int index,SettingName name);
 #define cSetting_sculpt_line_weight          184
 #define cSetting_fit_iterations              185
 #define cSetting_fit_tolerance               186
-#define cSetting_INIT                        187
+#define cSetting_batch_prefix                187
+#define cSetting_INIT                        188
 
 #endif
 
