@@ -1120,7 +1120,7 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(PyMOLGlobals *G,
                     (pp[2]=='D')&&
                     (pp[3]=='E')&&
                     (pp[4]=='L')) {
-            is_end_of_object = false;
+            is_end_of_object = (info && info->multiplex); /* end object if we're multiplexing */
           }
           break;
         }
