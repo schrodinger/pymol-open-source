@@ -53,6 +53,7 @@ Z* -------------------------------------------------------------------
 #include"Seq.h"
 #include"Text.h"
 #include"PyMOL.h"
+#include"PyMOLOptions.h"
 
 #define cExecObject 0
 #define cExecSelection 1
@@ -1980,7 +1981,8 @@ int ExecutiveSetSession(PyMOLGlobals *G,PyObject *session)
   }
   if(ok) { /* update mouse in GUI */
     PParse("cmd.mouse(quiet=1)");
-    PParse("viewport"); /* refresh window/internal_gui status */
+    if(!G->Option->presentation)
+      PParse("viewport"); /* refresh window/internal_gui status */
   }
 #ifndef _PYMOL_NO_MAIN
   if(ok) {

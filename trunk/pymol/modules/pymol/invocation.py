@@ -58,6 +58,7 @@ if __name__=='pymol.invocation':
    options.multisample = 0
    options.incentive_product = 0
    options.window_visible = 1
+   options.presentation = 0
    if sys.platform != 'win32':
       options.win_py = 200
    else:
@@ -167,6 +168,12 @@ if __name__=='pymol.invocation':
                         "-X","68",
                         "-Y","100",
                         ]
+               # ====== mode 6 - mode 6 presentation (no GUI) ======
+               if a[2:3] == "6": 
+                  if not once_dict.has_key('A6'):
+                     once_dict['A6'] = 1
+                     new_args = ["-QxiIeCUFP",
+                        ]
                # ===============================================
                new_args.reverse()
                av = av + new_args
@@ -185,8 +192,10 @@ if __name__=='pymol.invocation':
                options.internal_feedback = 0
             if "B" in a:
                options.blue_line = 1
-            if "P" in a:
+            if "E" in a:
                options.multisample = int(av.pop())
+            if "P" in a:
+               options.presentation = 1 
             if "W" in a:
                options.win_x = int(av.pop())
             if "H" in a:
@@ -280,7 +289,10 @@ if __name__=='pymol.invocation':
          else: 
             if a[-4:] in (".p5m",".P5M"):
                # mode 5 helper application 
-               av.append("-A5")               
+               av.append("-A5")
+            if a[-4:] in (".psp",".PSP"):
+               # presentation mode
+               av.append("-A6")               
             options.deferred.append(a)
             loaded_something = 1
       if loaded_something and (options.after_load_script!=""):

@@ -306,6 +306,7 @@ const static CPyMOLOptions Defaults = {
   0, /* multisample */
   1, /* window_visible */
   0, /* read_stdin */
+  0, /* presentation */
 };
 
 CPyMOLOptions *PyMOLOptions_New(void)
