@@ -626,7 +626,6 @@ void CGORenderGL(CGO *I) /* this should be as fast as you can make it...
 {
   register float *pc = I->op;
   register int op;
-  float linewidth;
 
   glColor3f(1.0,1.0,1.0);
   glLineWidth(SettingGet(cSetting_line_width));
