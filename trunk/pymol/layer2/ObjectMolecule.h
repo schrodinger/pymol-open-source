@@ -153,7 +153,8 @@ ObjectMolecule *ObjectMoleculeLoadChemPyModel(ObjectMolecule *I,PyObject *model,
 
 ObjectMolecule *ObjectMoleculeLoadTRJFile(ObjectMolecule *obj,char *fname,int frame,
                                           int interval,int average,int start,
-                                          int stop,int max,char *sele,int image);
+                                          int stop,int max,char *sele,int image,
+                                          float *shift);
 
 ObjectMolecule *ObjectMoleculeLoadRSTFile(ObjectMolecule *obj,char *fname,int frame);
 
