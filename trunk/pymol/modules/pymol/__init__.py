@@ -55,7 +55,7 @@ def exec_str(s):
    return None
    
 def exec_deferred():
-   cmd.config_mouse()
+   cmd.config_mouse(quiet=1)
    for a in invocation.options.deferred:
       if a[0:4]=="_do_":
          cmd.do(a[4:])

@@ -30,6 +30,7 @@ options.no_gui = 0
 options.internal_gui = 1
 options.external_gui = 1
 options.gui = 'pmg_tk'
+options.show_splash = 1
 
 def parse_args(argv):
    av = copy.deepcopy(argv)
@@ -46,6 +47,8 @@ def parse_args(argv):
             options.external_gui=0
          if "s" in a:
             options.stereo_capable = 2
+         if "q" in a:
+            options.show_splash = 0
          if "i" in a:
             options.internal_gui = 0
          if "x" in a:
