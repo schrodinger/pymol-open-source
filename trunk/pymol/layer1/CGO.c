@@ -979,6 +979,9 @@ static void CGO_gl_disable(float *pc)
 
 static void CGO_gl_null(float *pc) {
 }
+#ifdef CYGWIN
+#define WIN32
+#endif
 
 #ifdef WIN32
 

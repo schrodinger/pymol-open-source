@@ -12,10 +12,12 @@ import re
 import sys
 from distutils import dir_util,file_util
 
-if sys.platform!='win32':
-   launch_script = "pymol.com"
-else:
+if sys.platform=='win32':
    launch_script = "pymol.bat"
+elif sys.platform=='cygwin':
+   launch_script = "pymol"
+else:
+   launch_script = "pymol.com"
    
 try:
    pymol_launch = 3
@@ -55,8 +57,8 @@ try:
       os.chmod(launch_script,0755)
       print '''
 
-Created "%s" which can be used to launch PyMOL.  You may wish to copy this file
-into a standard location such as /usr/bin or /usr/local/bin.
+Created "%s" which can be used to launch PyMOL.  You may wish to copy
+this file into a standard location such as /usr/bin or /usr/local/bin.
 
 '''%launch_script
       
