@@ -18,6 +18,7 @@ Z* -------------------------------------------------------------------
 #include"os_gl.h"
 
 #include"main.h"
+#include"Feedback.h"
 #include"Rep.h"
 #include"MemoryDebug.h"
 #include"CoordSet.h"
@@ -32,7 +33,11 @@ struct Rep *RepRebuild(struct Rep *I,struct CoordSet *cs,int rep);
 struct Rep *RepRebuild(struct Rep *I,struct CoordSet *cs,int rep)
 {
   Rep *tmp = NULL;
-  /*  printf("here1\n");*/
+
+  PRINTFD(FB_Rep)
+    " RepRebuild-Debug: entered: rep %d I->fNew %p\n",rep,I->fNew
+    ENDFD;
+
   if(I->fNew) {
     tmp = I->fNew(cs);
     if(tmp) {
@@ -50,9 +55,20 @@ struct Rep *RepRebuild(struct Rep *I,struct CoordSet *cs,int rep)
 /*========================================================================*/
 struct Rep *RepUpdate(struct Rep *I,struct CoordSet *cs,int rep)
 {
-  if(I->MaxInvalid) {
-    /*  printf("here2 %p\n",I->fRebuild);*/
 
+  PRINTFD(FB_Rep)
+    " RepUpdate-Debug: entered: rep %d I->MaxInvalid %d\n",rep,I->MaxInvalid
+    ENDFD;
+
+  if(I->MaxInvalid) {
+    if(I->MaxInvalid==cRepInvPick) {
+      if((rep==cRepLine)||
+         (rep==cRepCyl)||
+         (rep==cRepRibbon)||
+         (rep==cRepNonbonded))
+        I->MaxInvalid=cRepInvRep;
+    }
+    
     if(I->MaxInvalid<=cRepInvColor) {
       if(I->fRecolor) {
         I->fRecolor(I,cs);

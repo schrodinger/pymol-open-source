@@ -1131,7 +1131,7 @@ void ExecutiveMask(char *s1,int mode)
         }
       }
       op.code = OMOP_INVA; /* need to invalidate all pickable representations */
-      op.i1 = cRepLine;
+      op.i1 = cRepAll;
       op.i2 = cRepInvPick;
       ExecutiveObjMolSeleOp(sele1,&op);    
   }

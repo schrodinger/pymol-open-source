@@ -161,7 +161,7 @@ Rep *RepNonbondedNew(CoordSet *cs)
   
   for(a=0;a<cs->NIndex;a++) {
     ai = obj->AtomInfo+cs->IdxToAtm[a];
-    active[a] =(!ai->bonded) && (ai->visRep[ cRepNonbonded]);
+    active[a] =(!ai->bonded) && (ai->visRep[ cRepNonbonded]) && (!ai->masked);
     if(active[a]) nAtom++;
   }
   if(!nAtom) {

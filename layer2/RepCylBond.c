@@ -234,6 +234,10 @@ Rep *RepCylBondNew(CoordSet *cs)
 
   OOAlloc(RepCylBond);
 
+  PRINTFD(FB_RepCylBond)
+    " RepCylBondNew-Debug: entered.\n"
+    ENDFD;
+
   obj = cs->Obj;
   visFlag=false;
   b=obj->Bond;

@@ -103,10 +103,16 @@ void RepRibbonRender(RepRibbon *I,CRay *ray,Pickable **pick)
               glColor3ub((uchar)((j&0xF)<<4),(uchar)((j&0xF0)|0x8),(uchar)((j&0xF00)>>4)); 
             }
           }	 
-          v+=3;
-          glVertex3fv(v);
-          v+=3;
-          glVertex3fv(v);
+          if(p[ip].index>=0) {
+            v+=3;
+            glVertex3fv(v);
+            v+=3;
+            glVertex3fv(v);
+          } else {
+            glEnd();
+            v+=6;
+            glBegin(GL_LINES);
+          }
           v+=3;
         }
       glEnd();
@@ -356,6 +362,8 @@ Rep *RepRibbonNew(CoordSet *cs)
 	 atp=at;
     rp->ptr = (void*)obj;
     rp->index = cs->IdxToAtm[*atp];
+    if(obj->AtomInfo[cs->IdxToAtm[*atp]].masked)
+      rp->index = -1; 
     rp->bond = -1;
     I->NP++;
     rp++;
@@ -363,7 +371,9 @@ Rep *RepRibbonNew(CoordSet *cs)
 		{
         rp->ptr = (void*)obj;
         rp->index = cs->IdxToAtm[*(atp+1)]; /* store pickable for n+2 */
-        rp->bond = -1;
+        if(obj->AtomInfo[cs->IdxToAtm[*atp]].masked)
+          rp->index = -1;
+          rp->bond = -1;
         rp++;
         I->NP++;
 		  if(*s==*(s+1))
