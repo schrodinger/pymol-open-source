@@ -121,49 +121,67 @@ void RepRibbonRender(RepRibbon *I,CRay *ray,Pickable **pick)
     }
   } else if(PMGUI) {
     
+    int use_dlst;
+    use_dlst = (int)SettingGet(cSetting_use_display_lists);
+    if(use_dlst&&I->R.displayList) {
+      glCallList(I->R.displayList);
+    } else { 
 
-    PRINTFD(FB_RepRibbon)
-      " RepRibbonRender: rendering GL...\n"
-      ENDFD;
-
-    glLineWidth(I->linewidth);
-	 
-    if(c) {
-
-      int ribbon_smooth;
-      int first = true;
-
-      ribbon_smooth=SettingGet_i(NULL,I->R.obj->Setting,cSetting_ribbon_smooth);
-      if(!ribbon_smooth)
-        glDisable(GL_LINE_SMOOTH);
-	   glDisable(GL_LIGHTING);
-      glBegin(GL_LINE_STRIP);
       SceneResetNormal(true);
-      while(c--)
-        {
-          v++;
-          glColor3fv(v);
-          v+=3;
-          if(first) {
-            glVertex3fv(v);
-            first=false;
-          } else if(
-                    (v[0]!=v[-7])||
-                    (v[1]!=v[-6])||
-                    (v[2]!=v[-5])) {
-            glEnd();
-            glBegin(GL_LINE_STRIP);
-            glVertex3fv(v);
+      if(use_dlst) {
+        if(!I->R.displayList) {
+          I->R.displayList = glGenLists(1);
+          if(I->R.displayList) {
+            glNewList(I->R.displayList,GL_COMPILE_AND_EXECUTE);
           }
-          v+=3;
-          glVertex3fv(v);
-          v+=3;
         }
-      glEnd();
-      glEnable(GL_LIGHTING);
-      if(SettingGet(cSetting_line_smooth))
-        glEnable(GL_LINE_SMOOTH);
-	 }
+      }
+      
+      PRINTFD(FB_RepRibbon)
+        " RepRibbonRender: rendering GL...\n"
+        ENDFD;
+      
+      glLineWidth(I->linewidth);
+      
+      if(c) {
+        
+        int ribbon_smooth;
+        int first = true;
+        
+        ribbon_smooth=SettingGet_i(NULL,I->R.obj->Setting,cSetting_ribbon_smooth);
+        if(!ribbon_smooth)
+          glDisable(GL_LINE_SMOOTH);
+        glDisable(GL_LIGHTING);
+        glBegin(GL_LINE_STRIP);
+         while(c--)
+          {
+            v++;
+            glColor3fv(v);
+            v+=3;
+            if(first) {
+              glVertex3fv(v);
+              first=false;
+            } else if(
+                      (v[0]!=v[-7])||
+                      (v[1]!=v[-6])||
+                      (v[2]!=v[-5])) {
+              glEnd();
+              glBegin(GL_LINE_STRIP);
+              glVertex3fv(v);
+            }
+            v+=3;
+            glVertex3fv(v);
+            v+=3;
+          }
+        glEnd();
+        glEnable(GL_LIGHTING);
+        if(SettingGet(cSetting_line_smooth))
+          glEnable(GL_LINE_SMOOTH);
+      }
+      if(use_dlst&&I->R.displayList) {
+        glEndList();
+      }
+    }
   }
 }
 

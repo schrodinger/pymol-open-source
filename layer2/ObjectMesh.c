@@ -213,6 +213,12 @@ PyObject *ObjectMeshAsPyList(ObjectMesh *I)
 
 static void ObjectMeshStateFree(ObjectMeshState *ms)
 {
+  if(PMGUI) {
+    if(ms->displayList) {
+      glDeleteLists(ms->displayList,1);
+      ms->displayList = 0;
+    }
+  }
   VLAFreeP(ms->N);
   VLAFreeP(ms->V);
   VLAFreeP(ms->AtomVertex);
@@ -528,9 +534,27 @@ static void ObjectMeshRender(ObjectMesh *I,int state,CRay *ray,Pickable **pick,i
         } else if(pick&&PMGUI) {
         } else if(PMGUI) {
           if(!pass) {
+
+            int use_dlst;
             if(ms->UnitCellCGO&&(I->Obj.RepVis[cRepCell]))
               CGORenderGL(ms->UnitCellCGO,ColorGet(I->Obj.Color),
                           I->Obj.Setting,NULL);
+
+            SceneResetNormal(false);
+            use_dlst = (int)SettingGet(cSetting_use_display_lists);
+            if(use_dlst&&ms->displayList) {
+              glCallList(ms->displayList);
+            } else { 
+              
+              if(use_dlst) {
+                if(!ms->displayList) {
+                  ms->displayList = glGenLists(1);
+                  if(ms->displayList) {
+                    glNewList(ms->displayList,GL_COMPILE_AND_EXECUTE);
+                  }
+                }
+              }
+
             if(n&&v&&I->Obj.RepVis[cRepMesh]) {
               ObjectUseColor(&I->Obj);
               glLineWidth(SettingGet_f(I->Obj.Setting,NULL,cSetting_mesh_width));
@@ -541,13 +565,17 @@ static void ObjectMeshRender(ObjectMesh *I,int state,CRay *ray,Pickable **pick,i
                     glBegin(GL_POINTS);
                   else 
                     glBegin(GL_LINE_STRIP);
-                  SceneResetNormal(false);
                   while(c--) {
                     glVertex3fv(v);
                     v+=3;
                   }
                   glEnd();
                 }
+            }
+            if(use_dlst&&ms->displayList) {
+              glEndList();
+            }
+                  
             }
           }
         }
@@ -606,6 +634,7 @@ void ObjectMeshStateInit(ObjectMeshState *ms)
   ms->CarveBuffer=0.0;
   ms->AtomVertex=NULL;
   ms->UnitCellCGO=NULL;
+  ms->displayList=0;
 }
 
 /*========================================================================*/

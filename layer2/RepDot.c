@@ -79,6 +79,21 @@ void RepDotRender(RepDot *I,CRay *ray,Pickable **pick)
   } else if(pick&&PMGUI) {
   } else if(PMGUI) {
 
+    int use_dlst;
+    use_dlst = (int)SettingGet(cSetting_use_display_lists);
+    if(use_dlst&&I->R.displayList) {
+      glCallList(I->R.displayList);
+    } else { 
+
+      if(use_dlst) {
+        if(!I->R.displayList) {
+          I->R.displayList = glGenLists(1);
+          if(I->R.displayList) {
+            glNewList(I->R.displayList,GL_COMPILE_AND_EXECUTE);
+          }
+        }
+      }
+
     glPointSize(I->Width);
 	 glBegin(GL_POINTS);
 	 while(c--)
@@ -96,6 +111,12 @@ void RepDotRender(RepDot *I,CRay *ray,Pickable **pick)
 		  cc--;
 		}
 	 glEnd();
+    
+    if(use_dlst&&I->R.displayList) {
+      glEndList();
+    }
+    
+    }
   }
 }
 
