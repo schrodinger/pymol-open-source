@@ -157,12 +157,25 @@ void RepCylBondRender(RepCylBond *I,CRay *ray,Pickable **pick)
 	 (*pick)[0].index = i; /* pass the count */
 
   } else if(PMGUI) {
-
-    {
+    
+    int use_dlst;
+    use_dlst = (int)SettingGet(cSetting_use_display_lists);
+    if(use_dlst&&I->R.displayList) {
+      glCallList(I->R.displayList);
+    } else { 
+      
+      if(use_dlst) {
+        if(!I->R.displayList) {
+          I->R.displayList = glGenLists(1);
+          if(I->R.displayList) {
+            glNewList(I->R.displayList,GL_COMPILE_AND_EXECUTE);
+          }
+        }
+      }
       
       v=I->V;
       c=I->N;
-
+      
       PRINTFD(FB_RepCylBond)
         " RepCylBondRender: rendering GL...\n"
         ENDFD;
@@ -223,6 +236,10 @@ void RepCylBondRender(RepCylBond *I,CRay *ray,Pickable **pick)
       PRINTFD(FB_RepCylBond)
         " RepCylBondRender: done.\n"
         ENDFD;
+      
+      if(use_dlst&&I->R.displayList) {
+        glEndList();
+      }
     }
   }
 }

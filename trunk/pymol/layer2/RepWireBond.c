@@ -106,24 +106,43 @@ void RepWireBondRender(RepWireBond *I,CRay *ray,Pickable **pick)
 	 (*pick)[0].index = i; /* pass the count */
   } else if(PMGUI) {
 
-    glLineWidth(I->Width);
-	 
-	 v=I->V;
-	 c=I->N;
-    
-    glDisable(GL_LIGHTING); 
-	 glBegin(GL_LINES);	 
-	 SceneResetNormal(true);
-	 while(c--) {
-		glColor3fv(v);
-		v+=3;
-		glVertex3fv(v);
-		v+=3;
-		glVertex3fv(v);
-		v+=3;
-	 }
-	 glEnd();
-     glEnable(GL_LIGHTING);
+    int use_dlst;
+    use_dlst = (int)SettingGet(cSetting_use_display_lists);
+    if(use_dlst&&I->R.displayList) {
+      glCallList(I->R.displayList);
+    } else { 
+
+      if(use_dlst) {
+        if(!I->R.displayList) {
+          I->R.displayList = glGenLists(1);
+          if(I->R.displayList) {
+            glNewList(I->R.displayList,GL_COMPILE_AND_EXECUTE);
+          }
+        }
+      }
+      
+      glLineWidth(I->Width);
+      
+      v=I->V;
+      c=I->N;
+      
+      glDisable(GL_LIGHTING); 
+      glBegin(GL_LINES);	 
+      SceneResetNormal(true);
+      while(c--) {
+        glColor3fv(v);
+        v+=3;
+        glVertex3fv(v);
+        v+=3;
+        glVertex3fv(v);
+        v+=3;
+      }
+      glEnd();
+      glEnable(GL_LIGHTING);
+      if(use_dlst&&I->R.displayList) {
+        glEndList();
+      }
+    } 
   }
 }
 
