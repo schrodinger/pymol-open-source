@@ -1744,7 +1744,6 @@ int *SelectorSelect(char *sele)
         }
         fprintf(stderr,"SelectorSelect-DEBUG: end of tokens.\n");
       }
-      MemoryDebugDump();
 		result=SelectorEvaluate(parsed);
 		VLAFreeP(parsed);
 	 }
