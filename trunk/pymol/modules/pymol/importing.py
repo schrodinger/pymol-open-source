@@ -102,10 +102,10 @@ DESCRIPTION
 
 PYMOL API
 
-   cmd.load_object(type,object,name,state=0,finish=1,discrete=0)
+   cmd.load_object(type,object,name,state=0,finish=1,discrete=0,quiet=1)
 
-   type = one one of the numberic cmd.loadable types
-   object =
+   type = one one of the numeric cmd.loadable types
+   object = 
    name = object name (string)
    finish = perform (1) or defer (0) post-processing of structure after load
    discrete = treat each state as an independent, unrelated set of atoms

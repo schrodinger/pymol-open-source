@@ -7,7 +7,7 @@
 #G* Please see the accompanying LICENSE file for further information. 
 #H* -------------------------------------------------------------------
 #I* Additional authors of this source file include:
-#-* 
+#-* Filipe Maia (slicing code)
 #-* 
 #-*
 #Z* -------------------------------------------------------------------
@@ -155,6 +155,42 @@ SEE ALSO
       finally:
          unlock()
       return r
+
+   def slice_map(name,map,opacity=1.0,resolution=5,state=1,source_state=0):
+      '''
+DESCRIPTION
+
+   "slice_map" creates a slice object from a map object.
+
+USAGE
+
+   slice_map name, map, [opacity, [resolution, [state, [source_state]]]]
+
+   name = the name for the new slice object.
+
+   map = the name of the map object to use for computing the slice.
+
+   opacity = opacity of the new slice (default=1)
+
+   resolution = the number of pixels per sampling (default=5)
+
+   state = the state into which the object should be loaded (default=1)
+      (set state=0 to append new mesh as a new state)
+
+   source_state = the state of the map from which the object should be loaded (default=0)
+   
+SEE ALSO
+
+   isomesh, isodot, load
+'''
+
+      try:
+         lock()
+         r = _cmd.slice_map(str(name),str(map),float(opacity),int(resolution),int(state)-1,int(source_state)-1)
+      finally:
+         unlock()
+      return r
+
 
    def isosurface(name,map,level=1.0,selection='',buffer=0.0,state=1,carve=None,
                   source_state=0,side=1,mode=3):

@@ -49,6 +49,7 @@ Z* -------------------------------------------------------------------
 #include"Seq.h"
 #include"Menu.h"
 #include"View.h"
+#include"ObjectSlice.h"
 
 #define cSliceMin 0.1F
 
@@ -109,6 +110,9 @@ typedef struct {
   double RovingLastUpdate;
   int Threshold, ThresholdX, ThresholdY;
   CView *View;
+  float LastPickVertex[3];
+  int LastPickVertexFlag;
+
 } CScene;
 
 CScene Scene;
@@ -1435,6 +1439,7 @@ int SceneRelease(Block *block,int button,int x,int y,int mod)
     }
     I->SculptingFlag=0;
   }
+  I->LastPickVertexFlag=false;
   return(1);
 }
 /*========================================================================*/
@@ -1861,6 +1866,12 @@ int SceneClick(Block *block,int button,int x,int y,int mod)
         I->SculptingFlag = 1;
         I->SculptingSave =  objMol->AtomInfo[I->LastPicked.index].protekted;
         objMol->AtomInfo[I->LastPicked.index].protekted=2;
+        break;
+      case cObjectSlice:
+        
+        if(ObjectSliceGetVertex((ObjectSlice*)obj,I->LastPicked.index,I->LastPicked.bond,I->LastPickVertex)) {
+          I->LastPickVertexFlag=true;
+        }
         break;
       case cObjectGadget:
         break;
@@ -2426,7 +2437,6 @@ void SceneRovingUpdate(void)
   } 
 }
 
-
 /*========================================================================*/
 int SceneDrag(Block *block,int x,int y,int mod)
 {
@@ -2526,7 +2536,7 @@ int SceneDrag(Block *block,int x,int y,int mod)
               x = x % (I->Width/2);
               vScale*=2;
             }
-            
+
             v2[0] = (x-I->LastX)*vScale;
             v2[1] = (y-I->LastY)*vScale;
             v2[2] = 0;
@@ -2547,6 +2557,37 @@ int SceneDrag(Block *block,int x,int y,int mod)
               ObjectMoleculeMoveAtom((ObjectMolecule*)obj,SettingGetGlobal_i(cSetting_state)-1,
                                      I->LastPicked.index,v2,1,log_trans);
               SceneDirty();
+            }
+          }
+          break;
+        case cObjectSlice:
+          {
+            ObjectSlice *slice = (ObjectSlice*)obj;
+
+            if(I->LastPickVertexFlag) {
+              
+              copy3f(I->LastPickVertex,v1);
+
+              vScale = SceneGetScreenVertexScale(v1);
+
+              if(I->StereoMode>1) {
+                x = x % (I->Width/2);
+                vScale*=2;
+              }
+              
+              v2[0] = (x-I->LastX)*vScale;
+              v2[1] = (y-I->LastY)*vScale;
+              v2[2] = 0;
+              
+              v3[0] = 0.0F;
+              v3[1] = 0.0F;
+              v3[2] = 1.0F;
+              
+              /* transform into model coodinate space */
+              MatrixInvTransform44fAs33f3f(I->RotMatrix,v2,v2); 
+              MatrixInvTransform44fAs33f3f(I->RotMatrix,v3,v3); 
+
+              ObjectSliceDrag(slice,SceneGetState(),mode,v1,v2,v3);
             }
           }
           break;
@@ -2850,6 +2891,7 @@ void SceneInit(void)
   I->LastWinX = 0;
   I->LastWinY = 0;
   I->Threshold = 0;
+  I->LastPickVertexFlag = false;
 
   SceneSetDefaultView();
 

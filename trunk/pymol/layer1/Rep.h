@@ -50,8 +50,9 @@ Z* -------------------------------------------------------------------
 #define cRepCGO        13
 #define cRepCallback   14
 #define cRepExtent     15
+#define cRepSlice      16
 
-#define cRepCnt        16
+#define cRepCnt        17
 
 /* Hierarchical invalidation scheme - 
  * each higher level event implies all of the lower levels 
