@@ -1912,7 +1912,7 @@ int SelectorMapGaussian(int sele1,ObjectMapState *oMap,float buffer,int state)
   float lambda = 1.0;
 
   for(a=0;a<256;a++) {
-    sf[256][0]=-1.0;
+    sf[a][0]=-1.0;
   }
 
   sf[cAN_H][0] =  0.493002F;
