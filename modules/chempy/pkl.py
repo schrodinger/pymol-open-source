@@ -7,14 +7,14 @@ import cPickle
 class PKL(Storage):
 
    def fromFile(self,fname,**params):
-      fp = open(fname)
+      fp = open(fname,'rb')
       result = cPickle.load(fp)
       fp.close()
       return result
 
 #---------------------------------------------------------------------------
    def toFile(self,indexed,fname,**params):
-      fp = open(fname,'w')
+      fp = open(fname,'wb')
       if(not params.has_key('bin')):
          result = cPickle.dump(indexed,fp,1)
       else:

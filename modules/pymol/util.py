@@ -66,6 +66,14 @@ def cbaw(s):
    cmd.color("hydrogen","(elem H and "+s+")")
    cmd.color("hydrogen","(elem C and "+s+")")
 
+def cbab(s):
+   cmd.color("magenta","("+s+")")
+   cmd.color("oxygen","(elem O and "+s+")")
+   cmd.color("nitrogen","(elem N and "+s+")")
+   cmd.color("sulfer","(elem S and "+s+")")
+   cmd.color("hydrogen","(elem H and "+s+")")
+   cmd.color("slate","(elem C and "+s+")")
+
 
 def mrock(fir,las,dsp,pha,loop):
    n = las - fir
