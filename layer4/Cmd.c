@@ -2926,17 +2926,20 @@ static PyObject *CmdFit(PyObject *dummy, PyObject *args)
   OrthoLineType s1,s2;
   PyObject *result;
   float tmp_result = -1.0;
+  float cutoff;
   int state1,state2;
   int ok=false;
-  int matchmaker;
-  ok = PyArg_ParseTuple(args,"ssiiiii",&str1,&str2,&mode,
-                        &state1,&state2,&quiet,&matchmaker);
+  int matchmaker,cycles;
+  char *object;
+  ok = PyArg_ParseTuple(args,"ssiiiiifis",&str1,&str2,&mode,
+                        &state1,&state2,&quiet,&matchmaker,&cutoff,&cycles,&object);
   if (ok) {
     APIEntry();
     SelectorGetTmp(TempPyMOLGlobals,str1,s1);
     SelectorGetTmp(TempPyMOLGlobals,str2,s2);
     tmp_result=ExecutiveRMS(TempPyMOLGlobals,s1,s2,mode,
-                            0.0,0,quiet,NULL,state1,state2,false,
+                            cutoff,cycles,quiet,object,state1,state2,
+                            false,
                             matchmaker);
     SelectorFreeTmp(TempPyMOLGlobals,s1);
     SelectorFreeTmp(TempPyMOLGlobals,s2);

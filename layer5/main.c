@@ -1006,7 +1006,11 @@ SetConsoleCtrlHandler(
 
       if(!p_glutGet(P_GLUT_DISPLAY_MODE_POSSIBLE)) {
         p_glutInitDisplayMode( P_GLUT_RGBA| P_GLUT_DOUBLE | P_GLUT_STENCIL );
+        if(multisample_mask && G->Option->show_splash) {
+          printf(" Sorry, multisampling not available.\n");
+        }
       }
+      
       G->StereoCapable = 1;
 #else
 #ifndef _PYMOL_OSX
@@ -1016,6 +1020,9 @@ SetConsoleCtrlHandler(
 #endif
         p_glutInitDisplayMode(P_GLUT_RGBA | P_GLUT_DEPTH | multisample_mask | P_GLUT_DOUBLE );
         if(!p_glutGet(P_GLUT_DISPLAY_MODE_POSSIBLE)) {
+          if(multisample_mask && G->Option->show_splash) {
+            printf(" Sorry, multisampling not available.\n");
+          }
           p_glutInitDisplayMode(P_GLUT_RGBA | P_GLUT_DEPTH | P_GLUT_DOUBLE );
         }
         G->StereoCapable = 0;

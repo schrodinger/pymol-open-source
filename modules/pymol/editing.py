@@ -1315,7 +1315,7 @@ y2 = m2*(x0+m3) + m6*(x1+m7) + m10*(x2+m11) + m14
          unlock()
       return r
 
-   def update(target,source,target_state=0,source_state=0,method=0,quiet=1):
+   def update(target,source,target_state=0,source_state=0,matchmaker=1,quiet=1):
       '''
 DESCRIPTION
 
@@ -1348,7 +1348,7 @@ SEE ALSO
       try:
          lock()   
          r = _cmd.update(str(a),str(b),int(target_state)-1,
-                         int(source_state)-1,int(method),int(quiet))
+                         int(source_state)-1,int(matchmaker),int(quiet))
       finally:
          unlock()
       return r
