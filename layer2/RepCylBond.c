@@ -1409,7 +1409,7 @@ Rep *RepCylBondNew(CoordSet *cs)
       if((signed)rp_size<=(I->NP))
         ErrFatal("RepCylBond","RP array overrun.");
 
-		I->R.P = ReallocForSure(I->R.P,Pickable,I->NP+1);
+		I->R.P = Realloc(I->R.P,Pickable,I->NP+1);
 		I->R.P[0].index = I->NP;
       I->VP = ReallocForSure(I->VP,float,(v-I->VP));
 
