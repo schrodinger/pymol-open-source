@@ -4541,6 +4541,23 @@ void ObjectMoleculeUpdateNonbonded(ObjectMolecule *I)
   }
 }
 /*========================================================================*/
+int ObjectMoleculeGetTotalAtomValence(ObjectMolecule *I,int atom)
+{
+  int result = 0;
+  int n0;
+  ObjectMoleculeUpdateNeighbors(I);
+  if(atom<I->NAtom) {
+    n0 = I->Neighbor[atom]+1;
+    while(I->Neighbor[n0]>=0) {
+      result+=I->Neighbor[n0+1];
+    }
+    n0+=2;
+  } else {
+    result = -1; /* error */
+  }
+  return result;
+}
+/*========================================================================*/
 void ObjectMoleculeUpdateNeighbors(ObjectMolecule *I)
 {
   /* neighbor storage structure: VERY COMPLICATED...

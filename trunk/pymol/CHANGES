@@ -179,6 +179,7 @@ CHANGE LOG
 
 Changes up to 0.91
 
+   * taught sculpting engine to treat unbound waters as donor/acceptors */
 
    * stick_ball, and stick_ball_ratio can be used to quikly generate ball
      and stick representation without messing around with spheres...
