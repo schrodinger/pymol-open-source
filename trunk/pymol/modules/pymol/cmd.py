@@ -1613,8 +1613,8 @@ def lock_attempt(): # INTERNAL
 def unlock(): # INTERNAL
    thred = thread.get_ident()
    if (thred == pymol.glutThread):
-      _cmd.flush_now()
       lock_api.release()
+      _cmd.flush_now()
    else:
       lock_api.release()
       while _cmd.wait_queue(): # wait till our instruction (if any)
