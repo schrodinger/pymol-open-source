@@ -87,7 +87,7 @@ SpecRec *ExecutiveFindSpec(char *name);
 int ExecutiveGetDihe(char *s0,char *s1,char *s2,char *s3,float *value,int state)
 {
   Vector3f v0,v1,v2,v3;
-  int sele0,sele1,sele2,sele3;
+  int sele0=-1,sele1=-1,sele2=-1,sele3=-1;
   int ok=true;
   
   if((sele0 = SelectorIndexByName(s0))<0)
@@ -117,7 +117,7 @@ int ExecutiveGetDihe(char *s0,char *s1,char *s2,char *s3,float *value,int state)
 int ExecutiveSetDihe(char *s0,char *s1,char *s2,char *s3,float value,int state)
 {
   Vector3f v0,v1,v2,v3;
-  int sele0,sele1,sele2,sele3;
+  int sele0=-1,sele1=-1,sele2=-1,sele3=-1;
   int ok=true;
   float current;
 
@@ -157,7 +157,7 @@ float ExecutiveGetArea(char *s0,int sta0,int load_b)
   int is_member;
   int *ati;
   float *area;
-  AtomInfoType *ai;
+  AtomInfoType *ai=NULL;
   ObjectMoleculeOpRec op;
   sele0 = SelectorIndexByName(s0);
   if(sele0<0) {
@@ -189,14 +189,16 @@ float ExecutiveGetArea(char *s0,int sta0,int load_b)
           area=rep->A;
           ati=rep->Atom;
           
+          is_member = false;
+
           for(a=0;a<rep->N;a++) {
             
             if(known_member!=(*ati)) {
               known_member=(*ati);
               ai=obj0->AtomInfo+known_member;
               is_member = SelectorIsMember(ai->selEntry,sele0);
-            }
-            
+            } 
+
             if(is_member) {
               result+=(*area);
               if(load_b)
@@ -1114,7 +1116,7 @@ float ExecutiveRMSPairs(WordType *sele,int pairs,int mode)
 {
   int sele1,sele2;
   int a,c;
-  float rms,inv,*f;
+  float rms=0.0,inv,*f;
   OrthoLineType buffer;
 
   ObjectMoleculeOpRec op1;
@@ -1331,6 +1333,8 @@ int ExecutiveGetExtent(char *name,float *mn,float *mx)
   float f1,f2,fmx;
   int a;
 
+
+
   op2.i1 = 0;
   op2.v1[0]=-1.0;
   op2.v1[1]=-1.0;
@@ -1389,8 +1393,9 @@ int ExecutiveGetExtent(char *name,float *mn,float *mx)
     obj = ExecutiveFindObjectByName(name);
     if(obj) {
       switch(obj->type) {
-      case cObjectMesh:
-      case cObjectMap:
+      case cObjectMolecule:
+        break;
+      default:
         if(obj->ExtentFlag) {
           copy3f(obj->ExtentMin,op.v1);
           copy3f(obj->ExtentMax,op.v2);
@@ -1400,8 +1405,10 @@ int ExecutiveGetExtent(char *name,float *mn,float *mx)
       }
     }
   }
-  if(all_flag)
+  if(all_flag) {
     ExecutiveDelete(all);
+  }
+
   if(flag) { 
     if(op2.i1) { 
       for (a=0;a<3;a++) { /* this puts origin at the weighted center */
@@ -1418,6 +1425,31 @@ int ExecutiveGetExtent(char *name,float *mn,float *mx)
   }
   copy3f(op.v1,mn);
   copy3f(op.v2,mx);
+  
+  if(all_flag) {
+    rec=NULL;
+    while(ListIterate(I->Spec,rec,next,SpecList)) {
+      if(rec->type==cExecObject) {
+        obj=rec->obj;
+        switch(rec->obj->type) {
+        case cObjectMolecule:
+          break;
+        default:
+          if(obj->ExtentFlag) {
+            if(!flag) {
+              copy3f(obj->ExtentMax,mx);
+              copy3f(obj->ExtentMin,mn);
+              flag=true;
+            } else {
+              max3f(obj->ExtentMax,mx,mx);
+              min3f(obj->ExtentMin,mn,mn);
+            }
+          }
+          break;
+        }
+      }
+    }
+  }
   return(flag);  
 }
 /*========================================================================*/

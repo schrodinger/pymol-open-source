@@ -117,10 +117,7 @@ int ZLineToSphere(float *base,float *point,float *dir,float radius,float maxial,
 	 axial_perp = sqrt1f(radialsq)/tan_acos_dangle;
   
   axial = lengthsq3f(intra_p)-radialsq;
-  if(axial<0.0) 
-	 axial=0.0;
-  else
-	 axial = sqrt1f(axial);
+  axial = sqrt1f(axial);
 
   /*
   printf("radial %8.3f\n",radial);
@@ -147,10 +144,7 @@ int ZLineToSphere(float *base,float *point,float *dir,float radius,float maxial,
 	  is parallel to the line, so we can compute the radial component to this point */
 
   radial = radius*radius-perpDist*perpDist;
-  if(radial<0.0)
-	 radial=0.0;
-  else
-	 radial = sqrt1f(radial);
+  radial = sqrt1f(radial);
 
   /* now the trick is figuring out how to adjust the axial distance to get the actual
 	  position along the cyl line which will give us a representative sphere */

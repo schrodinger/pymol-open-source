@@ -119,7 +119,7 @@ void PDumpTraceback(PyObject *err)
 int PAlterAtomState(float *v,char *expr,int read_only)
 {
   PyObject *dict; /* TODO: this function badly need error checking code */
-  int result;
+  int result=false;
   float f[3];
   PBlockAndUnlockAPI();
 
@@ -165,7 +165,7 @@ int PAlterAtom(AtomInfoType *at,char *expr,int read_only)
   int formalCharge,numericType;
   
   PyObject *dict;
-  int result;
+  int result=false;
   
   if(at->hetatm)
     strcpy(atype,"HETATM");

@@ -337,7 +337,14 @@ void RayRender(CRay *I,int width,int height,unsigned int *image,float front,floa
   int fogRangeFlag=false;
   float fog;
   float *bkrd;
-  float fog_start;
+  float fog_start=0.0;
+  float gamma,inp,sig=1.0;
+ 
+  gamma = SettingGet(cSetting_gamma);
+  if(gamma>R_SMALL4)
+    gamma=1.0/gamma;
+  else
+    gamma=1.0;
 
   fog = SettingGet(cSetting_ray_trace_fog);
   if(fog!=0.0) {
@@ -498,9 +505,16 @@ void RayRender(CRay *I,int width,int height,unsigned int *image,float front,floa
                 fc[2]=ffact*bkrd[2]+fc[2]*ffact1m;
               }
 
-				  c[0]=fc[0]*255.0;
-				  c[1]=fc[1]*255.0;
-				  c[2]=fc[2]*255.0;
+              inp=(fc[0]+fc[1]+fc[2])/3.0;
+              if(inp<R_SMALL4) 
+                sig=1.0;
+              else {
+                sig = pow(inp,gamma)/inp;
+              }
+
+				  c[0]=sig*fc[0]*255.0;
+				  c[1]=sig*fc[1]*255.0;
+				  c[2]=sig*fc[2]*255.0;
 
               if(c[0]>255.0) c[0]=255.0;
               if(c[1]>255.0) c[1]=255.0;

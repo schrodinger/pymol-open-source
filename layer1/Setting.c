@@ -601,6 +601,11 @@ void SettingInit(void)
   strcpy(I->Setting[cSetting_backface_cull].Name,
 			"backface_cull");
 
+  I->NSetting++;
+  I->Setting[cSetting_gamma].Value[0] = 1.2;
+  strcpy(I->Setting[cSetting_gamma].Name,
+			"gamma");
+
 }
 
 

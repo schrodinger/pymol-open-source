@@ -129,7 +129,7 @@ Rep *RepDotDoNew(CoordSet *cs,int mode)
   int inclH = true;
   int cullByFlag = false;
   int visFlag;
-  int atm,*ati;
+  int atm,*ati=NULL;
   AtomInfoType *ai1,*ai2;
 
   OOAlloc(RepDot);

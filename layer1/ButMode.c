@@ -24,6 +24,7 @@ Z* -------------------------------------------------------------------
 #include "Util.h"
 #include "Grap.h"
 #include "Ortho.h"
+#include "Setting.h"
 
 #define cButModeLineHeight 12
 #define cButModeLeftMargin 2

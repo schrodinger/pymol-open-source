@@ -4066,6 +4066,8 @@ USAGE
    cd <path>
 
    '''
+   dir = os.path.expanduser(dir)
+   dir = os.path.expandvars(dir)
    os.chdir(dir)
 
 def pwd():
@@ -4097,6 +4099,8 @@ USAGE
    pat = "*"
    if len(arg):
       pat = arg[0]
+      pat = os.path.expanduser(pat)
+      pat = os.path.expandvars(pat)
    for a in glob(pat):
       print a   
       
