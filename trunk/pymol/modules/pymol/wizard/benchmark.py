@@ -42,7 +42,7 @@ class Benchmark(Wizard):
       self.configure()
       self.mesh_calculation()
       self.configure()
-      self.ray_trace()
+      self.ray_trace1()
       self.configure()
 
    def run_gl(self):
@@ -265,7 +265,13 @@ class Benchmark(Wizard):
          elapsed = time.time()-start
       report('MESH_CALCULATION_V1',60*cnt/elapsed)
 
-   def ray_trace(self):
+   def ray_trace0(self): # Interactive benchmark
+      self.configure()
+      self.ray_tracing([
+         [2,90],
+         ])
+
+   def ray_trace1(self): # Standard benchmark
       self.configure()
       self.ray_tracing([
          [1,90],
@@ -274,9 +280,30 @@ class Benchmark(Wizard):
          [8,90],
          [1,120],
          [2,120],
+         [1,160],
+         [2,160],
+         [1,200],
+         [2,200],
          ])
 
-   def ray_tracing(self,conditions):
+   def ray_trace2(self): # Heavy-duty SMP workout
+      self.configure()
+      self.ray_tracing([
+         [1,200],
+         [2,200],
+         [3,200],
+         [4,200],
+         [5,200],
+         [6,200],
+         [7,200],
+         [8,200],
+         [9,200],
+         [10,200],
+         [11,200],
+         [12,200],
+         ],width=3600,height=2700)
+      
+   def ray_tracing(self,conditions,width=640,height=480):
       cmd.load("$PYMOL_DATA/demo/1tii.pdb")
       cmd.zoom(complete=1)
       cmd.hide()
@@ -298,10 +325,11 @@ class Benchmark(Wizard):
          cmd.refresh()
          start = time.time()
          while elapsed<self.long_cpu:
-            cmd.ray(320,240,quiet=1)
+            cmd.ray(width,height,quiet=1)
             cnt = cnt + 1
             elapsed = time.time()-start
-         report('RAY_V2_THREADS%02d_HASH%03d'%(max_threads,hash_max),60*cnt/elapsed)
+         report('RAY_V2_PX%d_TH%02d_HSH%03d'%(width*height,
+                                                     max_threads,hash_max),60*cnt/elapsed)
       
    def get_prompt(self):
       self.prompt = self.message
@@ -334,7 +362,7 @@ class Benchmark(Wizard):
          [ 2, 'Blits', 'cmd.get_wizard().delay_launch("blits")'],                                    
          [ 2, 'Surface Calculation', 'cmd.get_wizard().delay_launch("surface_calculation")'],
          [ 2, 'Mesh Calculation', 'cmd.get_wizard().delay_launch("surface_calculation")'],
-         [ 2, 'Ray Tracing', 'cmd.get_wizard().delay_launch("ray_trace")'],
+         [ 2, 'Ray Tracing', 'cmd.get_wizard().delay_launch("ray_trace0")'],
          [ 2, 'End Demonstration', 'cmd.set_wizard()' ]
          ]
 
