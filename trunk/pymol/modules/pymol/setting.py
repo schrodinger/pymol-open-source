@@ -228,7 +228,7 @@ if __name__=='pymol.setting':
       frame                 =(194,'','')
       ray_shadows           =(195, '','') # legacy
       ray_shadow            =(195, '','') # improved ease of use..(for ray_sh <Tab> ),'','')
-      ribbon_trace          =(196,'','')
+      ribbon_trace_atoms    =(196,'','')
       security              =(197,'','')
       stick_transparency    =(198,'','')
       ray_transparency_shadows =( 199,'','')
@@ -300,7 +300,7 @@ if __name__=='pymol.setting':
       retain_order          =( 266,'','')
       pdb_hetatm_sort       =( 267,'','')
       pdb_use_ter_records   =( 268,'','')
-      cartoon_trace         =( 269,'','')
+      cartoon_trace_atoms   =( 269,'','')
       ray_oversample_cutoff =( 270,'','')
       gaussian_resolution   =( 271,'','')
       gaussian_b_floor      =( 272,'','')

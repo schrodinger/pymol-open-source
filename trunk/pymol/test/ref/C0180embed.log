@@ -28,18 +28,17 @@ PyMOL>load dat/embed03.p1m
 PyMOL>embed ligands,sdf
  Embed: read 923 lines.
 PyMOL>load_embedded ligands
- ExecutiveLoad: content loaded into object "ligands", through state 1.
- ExecutiveLoad: content loaded into object "ligands", through state 2.
- ExecutiveLoad: content loaded into object "ligands", through state 3.
- ExecutiveLoad: content loaded into object "ligands", through state 4.
- ExecutiveLoad: content loaded into object "ligands", through state 5.
- ExecutiveLoad: content loaded into object "ligands", through state 6.
- ExecutiveLoad: content loaded into object "ligands", through state 7.
- ExecutiveLoad: content loaded into object "ligands", through state 8.
- ExecutiveLoad: content loaded into object "ligands", through state 9.
+ ObjectMoleculeReadStr: read through molecule 1.
+ ObjectMoleculeReadStr: read through molecule 2.
+ ObjectMoleculeReadStr: read through molecule 3.
+ ObjectMoleculeReadStr: read through molecule 4.
+ ObjectMoleculeReadStr: read through molecule 5.
+ ObjectMoleculeReadStr: read through molecule 6.
+ ObjectMoleculeReadStr: read through molecule 7.
+ ObjectMoleculeReadStr: read through molecule 8.
+ ObjectMoleculeReadStr: read through molecule 9.
+ ObjectMoleculeReadStr: read through molecule 10.
  ExecutiveLoad: content loaded into object "ligands", through state 10.
-PyMOL>zoom (ligands)
-PyMOL>set seq_view_format,4,ligands,quiet=1
 PyMOL>hide everything, ligands
 PyMOL>show sticks, ligands
 PyMOL>set valence
