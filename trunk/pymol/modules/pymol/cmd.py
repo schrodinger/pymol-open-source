@@ -2975,6 +2975,8 @@ PYMOL API
          format = 'mol'
       elif re.search("\.pkl$",fname):
          format = 'pkl'
+      elif re.search("\.pkl$",fname):
+         format = 'pkla'
    if format=='pdb':
       fname = os.path.expanduser(fname)
       fname = os.path.expandvars(fname)
