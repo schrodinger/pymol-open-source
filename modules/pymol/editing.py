@@ -69,7 +69,7 @@ if __name__=='pymol.editing':
          unlock()
       return r
 
-   def smooth(selection="all",first=1,last=0,window=5,passes=1,ends=1):
+   def smooth(selection="all",passes=1,window=5,first=1,last=0,ends=0):
       '''
 DESCRIPTION
 
@@ -79,7 +79,7 @@ DESCRIPTION
 
 USAGE
 
-   smooth [selection [,window [,first [,last [,passes [, ends]]]]]]
+   smooth [selection [, passes [,window [,first [,last [, ends]]]]]]
 
 SEE ALSO
 
@@ -88,22 +88,23 @@ SEE ALSO
 ARGUMENTS
 
    ends (0 or 1) controls whether or not the end states are also smoothed
-   using a partial asymmetric window
+   using a weighted asymmetric window
 
 NOTES
 
    This function is not memory efficient.  For reasons of flexibility,
    it uses two additional copies of every atomic coordinate for the
    calculation.  So, if you are memory-constrained in visualizing MD
-   trajectories, you may want to use an external tool such as ptraj
+   trajectories, you may want to use an external tool such as Amber\'s ptraj
    to perform smoothing before loading coordinates into PyMOL.
    '''
       r = 0
       selection = selector.process(selection)   
       try:
          lock()
-         r = _cmd.smooth(str(selection),int(passes),
-                         int(first)-1,int(last)-1,int(window),int(ends))
+         r = _cmd.smooth(str(selection),int(passes),int(window),
+                         int(first)-1,int(last)-1,int(ends))
+
       finally:
          unlock()
       return r
