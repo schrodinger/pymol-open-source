@@ -762,7 +762,7 @@ int BasisHitNoShadow(BasisCallRec *BC)
    int      excl_trans_flag;
    int      check_interior_flag;
    int      *elist, local_iflag = false;
-   const float   _0   = 0.0F;
+   const float   _0   = 0.0F, _1 = 1.0F;
    
    CBasis *BI = BC->Basis;
    RayInfo *r = BC->rr;
@@ -840,17 +840,19 @@ int BasisHitNoShadow(BasisCallRec *BC)
                               tri1      = (tvec0 * pre[4] - tvec1 * pre[3]) * pre[7];
                               tri2      = -(tvec0 * pre[1] - tvec1 * pre[0]) * pre[7];
                               
-                              if( !( (tri1 < BasisFudge0) || (tri2 < BasisFudge0) || (tri1 > BasisFudge1) || ((tri1 + tri2) > BasisFudge1) ) )
+                              if( !( (tri1 < BasisFudge0) || (tri2 < BasisFudge0) || 
+                                     (tri1 > BasisFudge1) || ((tri1 + tri2) > BasisFudge1) ) )
                               {
                                  dist   = (r->base[2] - (tri1*pre[2]) - (tri2*pre[5]) - vert0[2]);
 
-                                 if( (dist < r_dist) && (dist >= front) && (dist <= back) ) 
-                                 {
-                                    minIndex   = prm->vert;
-                                    r_tri1      = tri1;
-                                    r_tri2      = tri2;
-                                    r_dist      = dist;
-                                 }
+                                 if( (dist < r_dist) && (dist >= front) && 
+                                     (dist <= back) && (prm->trans != _1) ) 
+                                     {
+                                       minIndex   = prm->vert;
+                                       r_tri1      = tri1;
+                                       r_tri2      = tri2;
+                                       r_dist      = dist;
+                                     }
                               }
                            }
                         }
@@ -862,7 +864,7 @@ int BasisHitNoShadow(BasisCallRec *BC)
                         {
                            dist   = (float)(sqrt1f(dist) - sqrt1f((BI->Radius2[i]-oppSq)));
 
-                           if(dist < r_dist) 
+                           if((dist < r_dist) && (prm->trans != _1))
                            {
                               if((dist >= front) && (dist <= back)) 
                               {
@@ -872,12 +874,12 @@ int BasisHitNoShadow(BasisCallRec *BC)
                               else if(check_interior_flag) 
                               {
                                  if(diffsq3f(vt,BI->Vertex+i*3) < BI->Radius2[i]) 
-                                 {
-                                    local_iflag   = true;
-                                    r_prim      = prm;
-                                    r_dist    = front;
-                                    minIndex   = prm->vert;
-                                 }
+                                   {
+                                     local_iflag   = true;
+                                     r_prim      = prm;
+                                     r_dist    = front;
+                                     minIndex   = prm->vert;
+                                   }
                               }
                            }
                         }
@@ -894,7 +896,7 @@ int BasisHitNoShadow(BasisCallRec *BC)
                            {
                               dist   = (float)(sqrt1f(dist)-sqrt1f((BI->Radius2[i]-oppSq)));
 
-                              if(dist < r_dist) 
+                              if((dist < r_dist) && (prm->trans != _1))
                               {
                                  if((dist >= front) && (dist <= back)) 
                                  {
@@ -939,7 +941,7 @@ int BasisHitNoShadow(BasisCallRec *BC)
                               int   tmp_flag = false;
                               
                               dist   = (float)(sqrt1f(dist)-sqrt1f((BI->Radius2[i]-oppSq)));
-                              if(dist<r_dist)
+                              if((dist<r_dist)  && (prm->trans != _1) )
                               {
                                  if((dist >= front) && (dist <= back)) 
                                  {
