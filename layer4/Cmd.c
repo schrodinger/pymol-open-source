@@ -2351,7 +2351,7 @@ static PyObject *CmdRay(PyObject *self, 	PyObject *args)
   if (ok) {
     APIEntry();
     if(mode<0)
-      mode=SettingGet(cSetting_ray_default_renderer);
+      mode=(int)SettingGet(cSetting_ray_default_renderer);
     ExecutiveRay(w,h,mode); /* TODO STATUS */
     APIExit();
   }

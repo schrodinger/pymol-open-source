@@ -448,7 +448,7 @@ void RayRenderPOV(CRay *I,int width,int height,char **headerVLA_ptr,char **charV
 
   charVLA=*charVLA_ptr;
   headerVLA=*headerVLA_ptr;
-  smooth_color_triangle=SettingGet(cSetting_smooth_color_triangle);
+  smooth_color_triangle=(int)SettingGet(cSetting_smooth_color_triangle);
   PRINTFB(FB_Ray,FB_Details)
     " RayRenderPOV: w %d h %d f %8.3f b %8.3f\n",width,height,front,back
     ENDFB;
