@@ -622,8 +622,19 @@ static PyObject *PCatchWrite(PyObject *self, 	PyObject *args)
   return Py_None;
 }
 
+static PyObject *PCatchFlush(PyObject *self, 	PyObject *args)
+{
+  char *str;
+  
+  fflush(stdout);
+  fflush(stderr);
+  Py_INCREF(Py_None);
+  return Py_None;
+}
+
 static PyMethodDef PCatch_methods[] = {
 	{"write",	  PCatchWrite,   METH_VARARGS},
+	{"flush",	  PCatchFlush,   METH_VARARGS},
 	{NULL,		NULL}		/* sentinel */
 };
 

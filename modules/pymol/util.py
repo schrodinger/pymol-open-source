@@ -116,12 +116,16 @@ def mload(*args):
       for a in fils:
          cmd.load(a,nam)
    
-def color_chains():
+def color_chains(*arg):
    '''
    Color all chains a different color
    '''
+   if not len(arg):
+      sele = 'all'
+   else:
+      sele = arg[0]
    pymol.stored.chain = {}
-   cmd.iterate("(all)","stored.chain[chain]=1")
+   cmd.iterate("(%s)"%sele,"stored.chain[chain]=1")
    c = 7
    for a in pymol.stored.chain.keys():
       print ("%d,(chain %s)"%(c,a))
@@ -143,3 +147,24 @@ def sum_charge(*arg):
    except:
       print " sum_charge: an error occurred."
    return result
+
+
+def ff_copy(src,dst):
+   pymol._rcopy = pymol.Scratch_Storage()
+   pymol._rcopy.pc={}
+   pymol._rcopy.tt={}
+   cmd.iterate("(%s)"%src,"_rcopy.pc[name]=partial_charge")
+   cmd.alter("(%s)"%dst,"partial_charge=_rcopy.pc[name]")
+   cmd.iterate("(%s)"%src,"_rcopy.tt[name]=text_type")
+   cmd.alter("(%s)"%dst,"text_type=_rcopy.tt[name]")
+   del pymol._rcopy
+   
+def b2vdw(*arg):
+   if not len(arg):
+      sele = 'all'
+   else:
+      sele = arg[0]
+   # use B values to create RMS VDW spheres
+   # rms = sqrt(b/(8*(PI^2)))
+   cmd.alter("(%s)"%sele,"vdw=math.sqrt(b/78.9568352087)")
+   

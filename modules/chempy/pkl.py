@@ -20,9 +20,23 @@ class PKL(Storage):
       else:
          result = cPickle.dump(indexed,fp,params['bin'])         
       fp.close()
-      
+
 #---------------------------------------------------------------------------
-   def fromString(self,st):   
+   def fromStream(self,fp,**params):
+      try:
+         return cPickle.load(fp)
+      except EOFError:
+         return None
+
+#---------------------------------------------------------------------------
+   def toStream(self,indexed,fp,**params):
+      if(not params.has_key('bin')):
+         result = cPickle.dump(indexed,fp,1)
+      else:
+         result = cPickle.dump(indexed,fp,params['bin'])         
+ 
+#---------------------------------------------------------------------------
+   def fromString(self,st):
       return cPickle.loads(st)
 
 #---------------------------------------------------------------------------
