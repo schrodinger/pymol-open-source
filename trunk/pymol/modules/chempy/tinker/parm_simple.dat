@@ -1012,6 +1012,7 @@ A -T2-T2-D4   1    3.50          0.0            -2.         WLD from D4-T2-T2-D4
 A -T2-T2-D4   1    0.60          0.0             3.         WLD from D4-T2-T2-D4
 
 X -X -DJ-JA         10.5         180.          2.           WLD from X -X -DJ-Q1
+X -X -DJ-QN         10.5         180.          2.           WLD from X -X -DJ-Q1
 
 X -X -J3-DA         1.0          180.          2.           RSM, estimated
 X -X -J3-D4         10.5         180.          2.           RSM, korig = 1.0
