@@ -49,14 +49,13 @@ void MapFree(MapType *I)
   OOFreeP(I);
 }
 
-void MapCacheInit(MapCache *M,MapType *I)
+void MapCacheInit(MapCache *M,MapType *I,int group_id,int block_base)
 {
   int a,*p;
 
   M->block_base = I->block_base;
-  M->group_id = I->group_id;
-  M->Cache = CacheAlloc(int,I->NVert,M->group_id,M->block_base + cCache_map_cache_offset);
-  M->CacheLink = CacheAlloc(int,I->NVert,M->group_id,M->block_base + cCache_map_cache_link_offset);
+  M->Cache = CacheAlloc(int,I->NVert,group_id,block_base + cCache_map_cache_offset);
+  M->CacheLink = CacheAlloc(int,I->NVert,group_id,block_base + cCache_map_cache_link_offset);
   M->CacheStart = -1;
   p=M->Cache;
   for(a=0;a<I->NVert;a++)
@@ -95,10 +94,10 @@ void MapCacheReset(MapCache *M)
 	M->CacheStart = -1;
 }
 
-void MapCacheFree(MapCache *M)
+void MapCacheFree(MapCache *M,int group_id,int block_base)
 {
-  CacheFreeP(M->Cache,M->group_id,M->block_base + cCache_map_cache_offset,false);
-  CacheFreeP(M->CacheLink,M->group_id,M->block_base + cCache_map_cache_link_offset,false);
+  CacheFreeP(M->Cache,group_id,block_base + cCache_map_cache_offset,false);
+  CacheFreeP(M->CacheLink,group_id,block_base + cCache_map_cache_link_offset,false);
 }
 
 #define MapSafety 0.01F

@@ -43,8 +43,6 @@ Z* -------------------------------------------------------------------
 #define cCache_map_ehead_offset                          3
 #define cCache_map_emask_offset                          4
 #define cCache_map_elist_offset                          5
-#define cCache_map_cache_offset                          6
-#define cCache_map_cache_link_offset                     7
 
 #define cCache_basis_tempVertex                          31
 #define cCache_basis_tempRef                             32
@@ -52,6 +50,10 @@ Z* -------------------------------------------------------------------
 #define cCache_basis_site                                33
 #define cCache_basis_value                               34
 
+#define cCache_map_scene_cache                           40
+#define cCache_map_shadow_cache                          44
+#define cCache_map_cache_offset                          1
+#define cCache_map_cache_link_offset                     2
 
 /* other constants */
 

@@ -38,7 +38,6 @@ typedef struct {
 
 typedef struct {
   int *Cache,*CacheLink,CacheStart;
-  int group_id;
   int block_base;
   
 } MapCache;
@@ -64,9 +63,9 @@ int MapExclLocus(MapType *map,float *v,int *a,int *b,int *c);
 #define MapCache(m,a) {m->Cache[a]=1;m->CacheLink[a]=m->CacheStart;m->CacheStart=a;}
 #define MapCached(m,a) (m->Cache[a])
 
-void MapCacheInit(MapCache *M,MapType *I);
+void MapCacheInit(MapCache *M,MapType *I,int group_id,int block_base);
 void MapCacheReset(MapCache *M);
-void MapCacheFree(MapCache *M);
+void MapCacheFree(MapCache *M,int group_id,int block_base);
 
 float MapGetSeparation(float range,float *mx,float *mn,float *diagonal);
 
