@@ -821,7 +821,7 @@ void ColorReset(void)
 
   #define A_DIV 83.333333333F
 
-  /* full spectrum ("s..." colors) */
+  /* full spectrum (s000-s999) */
 
   for(a=0;a<1000;a=a+1) {
     set1=(int)(a/A_DIV);
@@ -833,7 +833,7 @@ void ColorReset(void)
     I->NColor++;
   }
 
-  /* full spectrum ("r..." colors) */
+  /* offset & reversed full spectrum (r000-r999) */
 
   for(a=0;a<1000;a=a+1) {
     set1=(int)(a/A_DIV);
@@ -845,7 +845,7 @@ void ColorReset(void)
     I->NColor++;
   }
 
-  /* complementary ("c..." colors) */
+  /* complementary spectra (c000-c999) */
 
   for(a=0;a<1000;a=a+1) {
     set1=(int)(a/A_DIV);
@@ -857,10 +857,9 @@ void ColorReset(void)
     I->NColor++;
   }
 
-
   #define W_DIV 41.666666667F
 
-  /* full spectrum ("W..." colors) */
+  /* complementary spectra separated by white (w000-w999) */
 
   for(a=0;a<1000;a=a+1) {
     set1=(int)(a/W_DIV);
@@ -933,19 +932,19 @@ int ColorTableLoad(char *fname,int quiet)
 
         if((r>=g)&&(r>=b)) {
           if(rc>255*red_max) {
-            rc=(int)red_max*255;
+            rc=(unsigned int)(red_max*255);
             bc=bc*rc/r;
             gc=gc*rc/r;
           }
         } else if((g>=b)&&(g>=r)) {
           if(gc>255*green_max) {
-            gc=(int)green_max*255;
+            gc=(unsigned int)(green_max*255);
             bc=bc*gc/g;
             rc=rc*gc/g;
           }
         } else if((b>=g)&&(b>=r)) {
           if(bc>255*blue_max) {
-            bc=(int)blue_max*255;
+            bc=(unsigned int)(blue_max*255);
             gc=gc*bc/b;
             rc=rc*bc/b;
           }
