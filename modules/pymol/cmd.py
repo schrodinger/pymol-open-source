@@ -1153,7 +1153,7 @@ keyword = {
    '_special'      : [ _special          , 0 , 0 , ''  , parsing.STRICT ],
    'stereo'        : [ stereo            , 0 , 0 , ''  , parsing.STRICT ],
    'symexp'        : [ symexp            , 0 , 0 , ''  , parsing.LEGACY ],
-   'system'        : [ system            , 0 , 0 , ''  , parsing.STRICT ],
+   'system'        : [ system            , 0 , 0 , ''  , parsing.LITERAL1 ],
    'test'          : [ test              , 0 , 0 , ''  , parsing.STRICT ],
    'torsion'       : [ torsion           , 0 , 0 , ''  , parsing.STRICT ],
    'translate'     : [ translate         , 0 , 0 , ''  , parsing.STRICT ],
@@ -1217,6 +1217,7 @@ help_only = {
    'get_names'     : [ get_names             , 0 , 0 , '' , 0 ],
    'get_type'      : [ get_type              , 0 , 0 , '' , 0 ],
    'faster'        : [ helping.faster       , 0 , 0 , '' , 0 ],
+   'sync'          : [ sync                 , 0 , 0 , '' , 0],
    'transparency'  : [ helping.transparency , 0 , 0 , '' , 0 ],  
    '@'             : [ helping.at_sign      , 0 , 0 , '' , 0 ],  
 }
