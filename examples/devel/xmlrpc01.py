@@ -5,7 +5,7 @@
 # Commentary by Warren DeLano
 
 # To Try:
-# (1) in one process launch PyMOL with "-X" option "./pymol.com -X"
+# (1) in one process launch PyMOL with "-R" option "./pymol.com -R"
 # (2) in another process "python xmlrpc01.py"
 
 molData="""foo
