@@ -465,6 +465,9 @@ static void TriangleAdd(int i0,int i1,int i2,float *tNorm,float *v,float *vn)
   float *v0,*v1,*v2,*n0,*n1,*n2,*ft;
   float vt[3],vt1[3],vt2[3],vt3[3];
   int e1,e2,e3,h,j,k,l;
+  MapType *map = I->map;
+  MapCache *cache = &I->map_cache;
+
   v0 = v+3*i0;
   v1 = v+3*i1;
   v2 = v+3*i2;
@@ -475,8 +478,6 @@ static void TriangleAdd(int i0,int i1,int i2,float *tNorm,float *v,float *vn)
   /* mark this quadrant as visited so that further activity in this
      quadrant won't prolong the rendering process indefinitely */
   
-  MapType *map = I->map;
-  MapCache *cache = &I->map_cache;
   
   MapLocus(map,v0,&h,&k,&l);
   e1=*(MapEStart(map,h,k,l));

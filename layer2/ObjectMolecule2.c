@@ -510,20 +510,20 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(char *buffer,
   *restart_model = NULL;
   while(*p)
 	 {
-		if((p[0]== 'A')&&(p[1]=='T')&&(p[2]=='O')&&(p[3]=='M')
+		if((p[0]== 'A')&&(p[1]=='T')&&(p[2]=='O')&&(p[3]=='M') /* ATOM */
          &&(!*restart_model))
 		  nAtom++;
-		else if((p[0]== 'H')&&(p[1]=='E')&&(p[2]=='L')&&(p[3]=='I')&&(p[4]=='X'))
+		else if((p[0]== 'H')&&(p[1]=='E')&&(p[2]=='L')&&(p[3]=='I')&&(p[4]=='X')) /* HELIX */
         ssFlag=true;
-		else if((p[0]== 'S')&&(p[1]=='H')&&(p[2]=='E')&&(p[3]=='E')&&(p[4]=='T'))
+		else if((p[0]== 'S')&&(p[1]=='H')&&(p[2]=='E')&&(p[3]=='E')&&(p[4]=='T')) /* SHEET */
         ssFlag=true;
-		else if((p[0]== 'A')&&(p[1]=='T')&&(p[2]=='O')&&(p[3]=='M')
+		else if((p[0]== 'A')&&(p[1]=='T')&&(p[2]=='O')&&(p[3]=='M') /* ATOM */
          &&(!*restart_model))
 		  nAtom++;
-		else if((p[0]== 'H')&&(p[1]=='E')&&(p[2]=='T')&&
+		else if((p[0]== 'H')&&(p[1]=='E')&&(p[2]=='T')&& /* HETATM */
          (p[3]=='A')&&(p[4]=='T')&&(p[5]=='M')&&(!*restart_model))
         nAtom++;
-		else if((p[0]== 'E')&&(p[1]=='N')&&(p[2]=='D')&&
+		else if((p[0]== 'E')&&(p[1]=='N')&&(p[2]=='D')&& /* ENDMDL */
               (p[3]=='M')&&(p[4]=='D')&&(p[5]=='L')&&(!*restart_model)) {
         *restart_model=nextline(p);
         if(only_read_one_model) 
@@ -677,21 +677,22 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(char *buffer,
 
   while(*p)
 	 {
+      /*      printf("%c%c%c%c%c%c\n",p[0],p[1],p[2],p[3],p[4],p[5]);*/
 		AFlag=false;
       SSCode=0;
-		if((p[0]=='A')&&
+		if((p[0]=='A')&& /* ATOM */
          (p[1]=='T')&&
          (p[2]=='O')&&
          (p[3]=='M'))
 		  AFlag = 1;
-		else if((p[0]=='H')&&
+		else if((p[0]=='H')&& /* HETATM */
               (p[1]=='E')&&
               (p[2]=='T')&&
               (p[3]=='A')&&
               (p[4]=='T')&&
               (p[5]=='M'))
         AFlag = 2;
-		else if((p[0]=='H')&&
+		else if((p[0]=='H')&& /* HEADER */
               (p[1]=='E')&&
               (p[2]=='A')&&
               (p[3]=='D')&&
@@ -703,7 +704,7 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(char *buffer,
             p=ntrim(pdb_name,p,4);
           }
         }
-		else if((p[0]=='M')&&
+		else if((p[0]=='M')&& /* MODEL */
               (p[1]=='O')&&
               (p[2]=='D')&&
               (p[3]=='E')&&
@@ -711,7 +712,7 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(char *buffer,
         {
           seen_model = true;
         }
-		else if((p[0]=='H')&&
+		else if((p[0]=='H')&& /* HELIX */
               (p[1]=='E')&&
               (p[2]=='L')&&
               (p[3]=='I')&&
@@ -746,7 +747,7 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(char *buffer,
           if(ss_chain2==' ') ss_chain2=0;          
 
         }
-		else if((p[0]=='S')&&
+		else if((p[0]=='S')&& /* SHEET */
               (p[1]=='H')&&
               (p[2]=='E')&&
               (p[3]=='E')&&
@@ -778,7 +779,7 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(char *buffer,
           if(ss_chain2==' ') ss_chain2=0;   
 
         }
-		else if((p[0]=='E')&&
+		else if((p[0]=='E')&& /* ENDMDL */
               (p[1]=='N')&&
               (p[2]=='D')&&
               (p[3]=='M')&&
@@ -788,23 +789,27 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(char *buffer,
         *restart_model=nextline(p);
         if(only_read_one_model) 
           break;
-      } else if((p[0]=='E')&&
+      } else if((p[0]=='E')&& /* END */
                 (p[1]=='N')&&
                 (p[2]=='D')) { 
         ntrim(cc,p,6);
         if(strcmp("END",cc)==0) { /* stop parsing here...*/
           char *pp;
           pp = nextline(p); /* ...unless we're in MODEL or next line is itself ENDMDL */
-          if(!(seen_model ||
-               (((pp[0] =='E')&&
-                 (pp[1] =='N')&&
-                 (pp[2] =='D')&&
-                 (pp[3] =='M')&&
-                 (pp[4] =='D')&&
-                 (pp[5] =='L')))))
-            break; 
+          if(!((pp[0] =='E')&&
+               (pp[1] =='N')&&
+               (pp[2] =='D')&&
+               (pp[3] =='M')&&
+               (pp[4] =='D')&&
+               (pp[5] =='L')))
+            {
+              if(!seen_model)
+                break;
+              if(*next_pdb)
+                break;
+            }
         }
-      } else if((p[0]=='C')&&
+      } else if((p[0]=='C')&& /* CRYST1 */
                 (p[1]=='R')&&
                 (p[2]=='Y')&&
                 (p[3]=='S')&&
@@ -842,7 +847,7 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(char *buffer,
             }
           }
         }
-		else if((p[0]=='C')&&
+		else if((p[0]=='C')&& /* CONECT */
               (p[1]=='O')&&
               (p[2]=='N')&&
               (p[3]=='E')&&
@@ -877,7 +882,7 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(char *buffer,
               }
             }
         }
-		else if((p[0]=='U')&&
+		else if((p[0]=='U')&& /* USER */
               (p[1]=='S')&&
               (p[2]=='E')&&
               (p[3]=='R')&&
