@@ -24,6 +24,8 @@ import exceptions
 import new
 import re
 import parsing
+import types
+import glob
 
 QuietException = parsing.QuietException
       
@@ -56,6 +58,8 @@ nest=0
 com0[nest]=""
 cont[nest]=""
 
+# main parser routine
+
 def parse(s):
    global com0,com1,com2,cont,script,kw,input
    global next,nest,args,kw_args,cmd,cont,result
@@ -64,6 +68,8 @@ def parse(s):
    try:
       com1[nest] = string.rstrip(com0[nest]) # strips trailing whitespace
       if len(com1[nest]) > 0:
+#         print com1
+#         print com1[nest]
          if str(com1[nest][-1]) == "\\":
             cont[nest] = cont[nest] + com1[nest][:-1]
          else:
@@ -86,15 +92,17 @@ def parse(s):
                else:
                   # try to find a keyword which matches
                   if cmd.kwhash.has_key(com):
-                     com = cmd.kwhash[com]
-                     if not com:
-                        print 'Error: ambiguous command: ',
-                        com = input[nest][0]
-                        lcm = len(com)
-                        for a in cmd.keyword.keys():
-                           if a[0:lcm] == com:
-                              print a+' ',
+                     amb = cmd.kwhash.interpret(com)
+                     if amb == None:
+                        com = cmd.kwhash[com]
+                     elif type(amb)!=types.StringType:
+                        print 'Error: ambiguous command: '
+                        amb.sort()
+                        amb = parsing.list_to_str_list(amb)
+                        for a in amb:
+                           print a
                         raise QuietException
+                     com = amb
                   if cmd.keyword.has_key(com):
 # here is the command and argument handling section
                      kw[nest] = cmd.keyword[com]
@@ -209,3 +217,61 @@ def parse(s):
       traceback.print_exc()
    return 1
 
+# command and filename completion
+
+def _same_(a,b):
+   if a==b:
+      return a
+   else:
+      return None
+   
+def complete(st):
+   result = None
+   if string.find(st,' ')<0:
+      amb = cmd.kwhash.interpret(st)
+      if amb==None:
+         print " parser: no matching commands."
+      elif type(amb)==types.StringType:
+         result = amb+' '
+      else:
+         amb.sort()
+         print " parser: possibilities:"
+         flist = filter(lambda x:x[0]!='_',amb)
+         lst = parsing.list_to_str_list(flist)
+         for a in lst:
+            print a
+   else: # filename completion
+      lst = map(None,st)
+      lst.reverse()
+      st2 = string.join(lst,'')
+      mo = re.search("^[^,\[\( ]+",st2,1)
+      if mo!=None:
+         pat = mo.group(0)
+         lst = map(None,pat)
+         lst.reverse()
+         st3 = string.join(lst,'')
+         loc = string.find(st,st3)
+      else:
+         st3 = ''
+         loc = len(st)
+      flist = glob.glob(st3+"*")
+      lf = len(flist)
+      if lf == 0:
+         print " parser: no matching files."
+      elif lf==1:
+         result = st[0:loc]+flist[0]
+      else:
+         flist.sort()
+         print " parser: possibilities:"
+         lst = parsing.list_to_str_list(flist)
+         css = map(None,flist[0])
+         for a in lst:
+            print a
+         for a in flist:
+            ac = map(None,a)
+            css = map(_same_,css,ac)
+         css = filter(None,css)
+         css = string.join(css,'')
+         if len(css)>len(st3):
+            result = st[0:loc]+css
+   return result

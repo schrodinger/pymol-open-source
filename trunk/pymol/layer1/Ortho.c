@@ -455,7 +455,6 @@ void OrthoKey(unsigned char k,int x,int y,int mod)
 	 }
   else switch(k)
 	 {
-    case 4:
     case 127: /* delete */     
       if((!I->CurChar)||(I->CurChar==I->PromptChar)) {
         OrthoKeyControl(4);
@@ -484,7 +483,7 @@ void OrthoKey(unsigned char k,int x,int y,int mod)
           }
       } 
       break;
-	 case 8:
+	 case 8: /* backspace */
 		if(I->CurChar>I->PromptChar)
 		  {
           curLine=I->CurLine&OrthoSaveLines;
@@ -513,17 +512,43 @@ void OrthoKey(unsigned char k,int x,int y,int mod)
       } else 
         OrthoKeyControl(k);
       break;
+    case 4: /* CTRL D */
+      if((!I->CurChar)||(I->CurChar==I->PromptChar)) {
+        OrthoKeyControl(4);
+      } else {
+        curLine=I->CurLine&OrthoSaveLines;
+        if(I->PromptChar) {
+          strcpy(buffer,I->Line[curLine]);
+          PComplete(buffer+I->PromptChar,
+                    sizeof(OrthoLineType)-I->PromptChar); /* just print, don't complete */
+        }
+      }
 	 case 9: /* CTRL I -- tab */
       if(mod&cOrthoCTRL) {
         OrthoKeyControl(k); 
       } else {
-        if(I->SplashFlag) {
-          OrthoRemoveSplash();
-        } else {
-          SettingSet(cSetting_text,(float)(!((int)SettingGet(cSetting_text))));
-          if(mod&cOrthoSHIFT) 
-            SettingSet(cSetting_overlay,(float)(!((int)SettingGet(cSetting_overlay))));
+        curLine=I->CurLine&OrthoSaveLines;
+        if(I->PromptChar) {
+          strcpy(buffer,I->Line[curLine]);
+          
+          if(PComplete(buffer+I->PromptChar,
+                       sizeof(OrthoLineType)-I->PromptChar))
+            {
+              OrthoRestorePrompt();
+              curLine=I->CurLine&OrthoSaveLines;
+              strcpy(I->Line[curLine],buffer);
+              I->CurChar = strlen(I->Line[curLine]);
+            }
         }
+      }
+      break;
+    case 27: /* ESCAPE */
+      if(I->SplashFlag) {
+        OrthoRemoveSplash();
+      } else {
+        SettingSet(cSetting_text,(float)(!((int)SettingGet(cSetting_text))));
+        if(mod&cOrthoSHIFT) 
+          SettingSet(cSetting_overlay,(float)(!((int)SettingGet(cSetting_overlay))));
       }
 		break;
 	 case 13: /* CTRL M -- carriage return */
@@ -1066,7 +1091,7 @@ void OrthoSplash(void)
   OrthoAddOutput("    Enter \"help commands\" for a list of commands.\n");
   OrthoAddOutput("    Enter \"help <command-name>\" for information on a specific command.\n \n");
 
-  OrthoAddOutput(" Hit TAB anytime to toggle between text and graphics.\n");
+  OrthoAddOutput(" Hit ESC anytime to toggle between text and graphics.\n");
 }
 /*========================================================================*/
 void OrthoInit(int showSplash)

@@ -135,6 +135,7 @@ static PyObject *CmdDump(PyObject *self, 	PyObject *args);
 static PyObject *CmdEdit(PyObject *self, 	PyObject *args);
 static PyObject *CmdTorsion(PyObject *self, PyObject *args);
 static PyObject *CmdExportDots(PyObject *self, PyObject *args);
+static PyObject *CmdFeedback(PyObject *dummy, PyObject *args);
 static PyObject *CmdFit(PyObject *dummy, PyObject *args);
 static PyObject *CmdFitPairs(PyObject *dummy, PyObject *args);
 static PyObject *CmdFlag(PyObject *self, 	PyObject *args);
@@ -205,6 +206,7 @@ static PyObject *CmdSelect(PyObject *self, PyObject *args);
 static PyObject *CmdSetMatrix(PyObject *self, 	PyObject *args);
 static PyObject *CmdSet(PyObject *self, 	PyObject *args);
 static PyObject *CmdSetDihe(PyObject *self, 	PyObject *args);
+static PyObject *CmdSetFeedbackMask(PyObject *dummy, PyObject *args);
 static PyObject *CmdSetFrame(PyObject *self, PyObject *args);
 static PyObject *CmdSetTitle(PyObject *self, PyObject *args);
 static PyObject *CmdSetWizard(PyObject *self, PyObject *args);
@@ -227,118 +229,120 @@ static PyObject *CmdUndo(PyObject *self, 	PyObject *args);
 static PyObject *CmdPushUndo(PyObject *self, 	PyObject *args);
 
 static PyMethodDef Cmd_methods[] = {
-	{"alter",	              CmdAlter,        METH_VARARGS },
-	{"alter_state",           CmdAlterState,   METH_VARARGS },
-	{"attach",                CmdAttach,       METH_VARARGS },
-	{"bond",                  CmdBond,         METH_VARARGS },
-   {"button",                CmdButton,       METH_VARARGS },
-	{"clip",	                 CmdClip,         METH_VARARGS },
-	{"cls",	                 CmdCls,          METH_VARARGS },
-	{"color",	              CmdColor,        METH_VARARGS },
-	{"colordef",	           CmdColorDef,     METH_VARARGS },
-	{"copy",                  CmdCopy,         METH_VARARGS },
-	{"create",                CmdCreate,       METH_VARARGS },
-	{"count_states",          CmdCountStates,  METH_VARARGS },
-	{"cycle_valence",         CmdCycleValence, METH_VARARGS },
-	{"delete",                CmdDelete,       METH_VARARGS },
-	{"dirty",                 CmdDirty,        METH_VARARGS },
-	{"distance",	           CmdDistance,     METH_VARARGS },
-	{"dist",    	           CmdDist,         METH_VARARGS },
-	{"do",	                 CmdDo,           METH_VARARGS },
-	{"dump",	                 CmdDump,         METH_VARARGS },
-   {"edit",                  CmdEdit,         METH_VARARGS },
-   {"torsion",               CmdTorsion,      METH_VARARGS },
-	{"export_dots",           CmdExportDots,   METH_VARARGS },
-	{"export_coords",         CmdExportCoords, METH_VARARGS },
-	{"finish_object",         CmdFinishObject, METH_VARARGS },
-	{"fit",                   CmdFit,          METH_VARARGS },
-	{"fit_pairs",             CmdFitPairs,     METH_VARARGS },
-	{"flag",                  CmdFlag,         METH_VARARGS },
-	{"frame",	              CmdFrame,        METH_VARARGS },
-   {"flush_now",             CmdFlushNow,     METH_VARARGS },
-   {"focus",                 CmdFocus,        METH_VARARGS },
-   {"full_screen",           CmdFullScreen,   METH_VARARGS },
-   {"fuse",                  CmdFuse,         METH_VARARGS },
-	{"get",	                 CmdGet,          METH_VARARGS },
-	{"get_area",              CmdGetArea,      METH_VARARGS },
-	{"get_dihe",              CmdGetDihe,      METH_VARARGS },
-	{"get_frame",             CmdGetFrame,     METH_VARARGS },
-	{"get_feedback",          CmdGetFeedback,  METH_VARARGS },
-	{"get_matrix",	           CmdGetMatrix,    METH_VARARGS },
-	{"get_min_max",           CmdGetMinMax,    METH_VARARGS },
-	{"get_model",	           CmdGetModel,     METH_VARARGS },
-	{"get_moment",	           CmdGetMoment,    METH_VARARGS },
-   {"get_names",             CmdGetNames,     METH_VARARGS },
-	{"get_pdb",	              CmdGetPDB,       METH_VARARGS },
-	{"get_setting",           CmdGetSetting,   METH_VARARGS },
-	{"get_state",             CmdGetState,     METH_VARARGS },
-	{"get_type",              CmdGetType,      METH_VARARGS },
-   {"get_wizard",            CmdGetWizard,    METH_VARARGS },
-	{"h_add",                 CmdHAdd,         METH_VARARGS },
-	{"h_fill",                CmdHFill,        METH_VARARGS },
-   {"identify",              CmdIdentify,     METH_VARARGS },
-	{"import_coords",         CmdImportCoords, METH_VARARGS },
-	{"intrafit",              CmdIntraFit,     METH_VARARGS },
-   {"invert",                CmdInvert,       METH_VARARGS },
-	{"isomesh",	              CmdIsomesh,      METH_VARARGS },
-   {"wait_queue",            CmdWaitQueue,    METH_VARARGS },
-   {"label",                 CmdLabel,        METH_VARARGS },
-	{"load",	                 CmdLoad,         METH_VARARGS },
-	{"load_coords",           CmdLoadCoords,   METH_VARARGS },
-	{"load_object",           CmdLoadObject,   METH_VARARGS },
-	{"mask",	                 CmdMask,         METH_VARARGS },
-	{"mclear",	              CmdMClear,       METH_VARARGS },
-	{"mdo",	                 CmdMDo,          METH_VARARGS },
-	{"mem",	                 CmdMem,          METH_VARARGS },
-	{"move",	                 CmdMove,         METH_VARARGS },
-	{"mset",	                 CmdMSet,         METH_VARARGS },
-	{"mplay",	              CmdMPlay,        METH_VARARGS },
-	{"mpng_",	              CmdMPNG,         METH_VARARGS },
-	{"mmatrix",	              CmdMMatrix,      METH_VARARGS },
-	{"origin",	              CmdOrigin,       METH_VARARGS },
-	{"orient",	              CmdOrient,       METH_VARARGS },
-	{"onoff",                 CmdOnOff,        METH_VARARGS },
-	{"overlap",               CmdOverlap,      METH_VARARGS },
-	{"paste",	              CmdPaste,        METH_VARARGS },
-	{"png",	                 CmdPNG,          METH_VARARGS },
-	{"protect",	              CmdProtect,      METH_VARARGS },
-	{"push_undo",	           CmdPushUndo,     METH_VARARGS },
-	{"quit",	                 CmdQuit,         METH_VARARGS },
-	{"ready",                 CmdReady,        METH_VARARGS },
-   {"rebuild",               CmdRebuild,      METH_VARARGS },
-	{"refresh",               CmdRefresh,      METH_VARARGS },
-	{"refresh_now",           CmdRefreshNow,   METH_VARARGS },
-	{"refresh_wizard",        CmdRefreshWizard,METH_VARARGS },
-	{"remove",	              CmdRemove,       METH_VARARGS },
-	{"remove_picked",         CmdRemovePicked, METH_VARARGS },
-	{"render",	              CmdRay,          METH_VARARGS },
-   {"rename",                CmdRename,       METH_VARARGS },
-   {"replace",               CmdReplace,      METH_VARARGS },
-	{"reset",                 CmdReset,        METH_VARARGS },
-	{"reset_rate",	           CmdResetRate,    METH_VARARGS },
-	{"rock",	                 CmdRock,         METH_VARARGS },
-	{"runpymol",	           CmdRunPyMOL,     METH_VARARGS },
-	{"select",                CmdSelect,       METH_VARARGS },
-	{"set",	                 CmdSet,          METH_VARARGS },
-	{"set_dihe",              CmdSetDihe,      METH_VARARGS },
-	{"set_title",             CmdSetTitle,     METH_VARARGS },
-	{"set_wizard",            CmdSetWizard,    METH_VARARGS },
-	{"setframe",	           CmdSetFrame,     METH_VARARGS },
-	{"showhide",              CmdShowHide,     METH_VARARGS },
-	{"set_matrix",	           CmdSetMatrix,    METH_VARARGS },
-	{"sort",                  CmdSort,         METH_VARARGS },
-   {"spheroid",              CmdSpheroid,     METH_VARARGS },
-	{"splash",                CmdSplash,       METH_VARARGS },
-	{"stereo",	              CmdStereo,       METH_VARARGS },
-	{"system",	              CmdSystem,       METH_VARARGS },
-	{"symexp",	              CmdSymExp,       METH_VARARGS },
-	{"test",	                 CmdTest,         METH_VARARGS },
-	{"turn",	                 CmdTurn,         METH_VARARGS },
-	{"viewport",              CmdViewport,     METH_VARARGS },
-	{"undo",                  CmdUndo,         METH_VARARGS },
-	{"unpick",                CmdUnpick,       METH_VARARGS },
-	{"update",                CmdUpdate,       METH_VARARGS },
-	{"zoom",	                 CmdZoom,         METH_VARARGS },
+	{"alter",	              CmdAlter,                METH_VARARGS },
+	{"alter_state",           CmdAlterState,           METH_VARARGS },
+	{"attach",                CmdAttach,               METH_VARARGS },
+	{"bond",                  CmdBond,                 METH_VARARGS },
+   {"button",                CmdButton,               METH_VARARGS },
+	{"clip",	                 CmdClip,                 METH_VARARGS },
+	{"cls",	                 CmdCls,                  METH_VARARGS },
+	{"color",	              CmdColor,                METH_VARARGS },
+	{"colordef",	           CmdColorDef,             METH_VARARGS },
+	{"copy",                  CmdCopy,                 METH_VARARGS },
+	{"create",                CmdCreate,               METH_VARARGS },
+	{"count_states",          CmdCountStates,          METH_VARARGS },
+	{"cycle_valence",         CmdCycleValence,         METH_VARARGS },
+	{"delete",                CmdDelete,               METH_VARARGS },
+	{"dirty",                 CmdDirty,                METH_VARARGS },
+	{"distance",	           CmdDistance,             METH_VARARGS },
+	{"dist",    	           CmdDist,                 METH_VARARGS },
+	{"do",	                 CmdDo,                   METH_VARARGS },
+	{"dump",	                 CmdDump,                 METH_VARARGS },
+   {"edit",                  CmdEdit,                 METH_VARARGS },
+   {"torsion",               CmdTorsion,              METH_VARARGS },
+	{"export_dots",           CmdExportDots,           METH_VARARGS },
+	{"export_coords",         CmdExportCoords,         METH_VARARGS },
+	{"feedback",              CmdFeedback,             METH_VARARGS },
+	{"finish_object",         CmdFinishObject,         METH_VARARGS },
+	{"fit",                   CmdFit,                  METH_VARARGS },
+	{"fit_pairs",             CmdFitPairs,             METH_VARARGS },
+	{"flag",                  CmdFlag,                 METH_VARARGS },
+	{"frame",	              CmdFrame,                METH_VARARGS },
+   {"flush_now",             CmdFlushNow,             METH_VARARGS },
+   {"focus",                 CmdFocus,                METH_VARARGS },
+   {"full_screen",           CmdFullScreen,           METH_VARARGS },
+   {"fuse",                  CmdFuse,                 METH_VARARGS },
+	{"get",	                 CmdGet,                  METH_VARARGS },
+	{"get_area",              CmdGetArea,              METH_VARARGS },
+	{"get_dihe",              CmdGetDihe,              METH_VARARGS },
+	{"get_frame",             CmdGetFrame,             METH_VARARGS },
+	{"get_feedback",          CmdGetFeedback,          METH_VARARGS },
+	{"get_matrix",	           CmdGetMatrix,            METH_VARARGS },
+	{"get_min_max",           CmdGetMinMax,            METH_VARARGS },
+	{"get_model",	           CmdGetModel,             METH_VARARGS },
+	{"get_moment",	           CmdGetMoment,            METH_VARARGS },
+   {"get_names",             CmdGetNames,             METH_VARARGS },
+	{"get_pdb",	              CmdGetPDB,               METH_VARARGS },
+	{"get_setting",           CmdGetSetting,           METH_VARARGS },
+	{"get_state",             CmdGetState,             METH_VARARGS },
+	{"get_type",              CmdGetType,              METH_VARARGS },
+   {"get_wizard",            CmdGetWizard,            METH_VARARGS },
+	{"h_add",                 CmdHAdd,                 METH_VARARGS },
+	{"h_fill",                CmdHFill,                METH_VARARGS },
+   {"identify",              CmdIdentify,             METH_VARARGS },
+	{"import_coords",         CmdImportCoords,         METH_VARARGS },
+	{"intrafit",              CmdIntraFit,             METH_VARARGS },
+   {"invert",                CmdInvert,               METH_VARARGS },
+	{"isomesh",	              CmdIsomesh,              METH_VARARGS },
+   {"wait_queue",            CmdWaitQueue,            METH_VARARGS },
+   {"label",                 CmdLabel,                METH_VARARGS },
+	{"load",	                 CmdLoad,                 METH_VARARGS },
+	{"load_coords",           CmdLoadCoords,           METH_VARARGS },
+	{"load_object",           CmdLoadObject,           METH_VARARGS },
+	{"mask",	                 CmdMask,                 METH_VARARGS },
+	{"mclear",	              CmdMClear,               METH_VARARGS },
+	{"mdo",	                 CmdMDo,                  METH_VARARGS },
+	{"mem",	                 CmdMem,                  METH_VARARGS },
+	{"move",	                 CmdMove,                 METH_VARARGS },
+	{"mset",	                 CmdMSet,                 METH_VARARGS },
+	{"mplay",	              CmdMPlay,                METH_VARARGS },
+	{"mpng_",	              CmdMPNG,                 METH_VARARGS },
+	{"mmatrix",	              CmdMMatrix,              METH_VARARGS },
+	{"origin",	              CmdOrigin,               METH_VARARGS },
+	{"orient",	              CmdOrient,               METH_VARARGS },
+	{"onoff",                 CmdOnOff,                METH_VARARGS },
+	{"overlap",               CmdOverlap,              METH_VARARGS },
+	{"paste",	              CmdPaste,                METH_VARARGS },
+	{"png",	                 CmdPNG,                  METH_VARARGS },
+	{"protect",	              CmdProtect,              METH_VARARGS },
+	{"push_undo",	           CmdPushUndo,             METH_VARARGS },
+	{"quit",	                 CmdQuit,                 METH_VARARGS },
+	{"ready",                 CmdReady,                METH_VARARGS },
+   {"rebuild",               CmdRebuild,              METH_VARARGS },
+	{"refresh",               CmdRefresh,              METH_VARARGS },
+	{"refresh_now",           CmdRefreshNow,           METH_VARARGS },
+	{"refresh_wizard",        CmdRefreshWizard,        METH_VARARGS },
+	{"remove",	              CmdRemove,               METH_VARARGS },
+	{"remove_picked",         CmdRemovePicked,         METH_VARARGS },
+	{"render",	              CmdRay,                  METH_VARARGS },
+   {"rename",                CmdRename,               METH_VARARGS },
+   {"replace",               CmdReplace,              METH_VARARGS },
+	{"reset",                 CmdReset,                METH_VARARGS },
+	{"reset_rate",	           CmdResetRate,            METH_VARARGS },
+	{"rock",	                 CmdRock,                 METH_VARARGS },
+	{"runpymol",	           CmdRunPyMOL,             METH_VARARGS },
+	{"select",                CmdSelect,               METH_VARARGS },
+	{"set",	                 CmdSet,                  METH_VARARGS },
+	{"set_dihe",              CmdSetDihe,              METH_VARARGS },
+	{"set_feedback",          CmdSetFeedbackMask,      METH_VARARGS },
+	{"set_title",             CmdSetTitle,             METH_VARARGS },
+	{"set_wizard",            CmdSetWizard,            METH_VARARGS },
+	{"setframe",	           CmdSetFrame,             METH_VARARGS },
+	{"showhide",              CmdShowHide,             METH_VARARGS },
+	{"set_matrix",	           CmdSetMatrix,            METH_VARARGS },
+	{"sort",                  CmdSort,                 METH_VARARGS },
+   {"spheroid",              CmdSpheroid,             METH_VARARGS },
+	{"splash",                CmdSplash,               METH_VARARGS },
+	{"stereo",	              CmdStereo,               METH_VARARGS },
+	{"system",	              CmdSystem,               METH_VARARGS },
+	{"symexp",	              CmdSymExp,               METH_VARARGS },
+	{"test",	                 CmdTest,                 METH_VARARGS },
+	{"turn",	                 CmdTurn,                 METH_VARARGS },
+	{"viewport",              CmdViewport,             METH_VARARGS },
+	{"undo",                  CmdUndo,                 METH_VARARGS },
+	{"unpick",                CmdUnpick,               METH_VARARGS },
+	{"update",                CmdUpdate,               METH_VARARGS },
+	{"zoom",	                 CmdZoom,                 METH_VARARGS },
 	{NULL,		              NULL}     /* sentinel */        
 };
 
@@ -551,6 +555,37 @@ static PyObject *CmdButton(PyObject *self, 	PyObject *args)
   PyArg_ParseTuple(args,"ii",&i1,&i2);
   APIEntry();
   ButModeSet(i1,i2);
+  APIExit();
+  Py_INCREF(Py_None);
+  return Py_None;  
+}
+
+static PyObject *CmdFeedback(PyObject *self, 	PyObject *args)
+{
+  int i1,i2,result;
+  PyArg_ParseTuple(args,"ii",&i1,&i2);
+  APIEntry();
+  result = Feedback(i1,i2);
+  APIExit();
+  return Py_BuildValue("i",result);
+}
+
+static PyObject *CmdSetFeedbackMask(PyObject *self, 	PyObject *args)
+{
+  int i1,i2,i3;
+  PyArg_ParseTuple(args,"iii",&i1,&i2,&i3);
+  APIEntry();
+  switch(i1) {
+  case 0: 
+    FeedbackSetMask(i2,i3);
+    break;
+  case 1:
+    FeedbackEnable(i2,i3);
+    break;
+  case 2:
+    FeedbackDisable(i2,i3);
+    break;
+  }
   APIExit();
   Py_INCREF(Py_None);
   return Py_None;  
@@ -1022,7 +1057,7 @@ static PyObject *CmdGetFeedback(PyObject *dummy, PyObject *args)
 #endif
     exit(0);
   }
-  code = OrthoFeedbackOut(buffer);
+  code = OrthoFeedbackOut(buffer); 
   if(code)
     result = Py_BuildValue("s",buffer);
   if(!result) {

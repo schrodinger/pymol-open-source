@@ -36,6 +36,7 @@ import pymol
 import os
 import imp
 import parsing
+from shortcut import Shortcut
 
 from glob import glob
 
@@ -49,6 +50,9 @@ QuietException = parsing.QuietException
 # one active thread enters PyMOL at a given time. 
 # 
 lock_api = pymol.lock_api
+
+def is_string(obj):
+   return isinstance(obj,types.StringType)
 
 def write_html_ref(file):
    lst = globals()
@@ -64,7 +68,7 @@ def write_html_ref(file):
                                        'real_system',
                                        ]):
             doc = lst[a].__doc__
-            if type(doc) is types.StringType:
+            if is_string(doc):
                if len(doc):
                   doc = string.strip(doc)
                   doc = string.replace(doc,"<","&lt;")
@@ -331,7 +335,7 @@ def keyboard():
    '''
  KEYBOARD COMMANDS and MODIFIERS
  
-   TAB          Toggle onscreen text.
+   ESC          Toggle onscreen text.
    INSERT       Toggle rocking.
  
    LEFT ARROW, RIGHT ARROW  Go backward or forward one frame.
@@ -834,7 +838,7 @@ NOTES
 def show_help(cmd):
    print "PyMOL>help %s\n" % cmd
    help(cmd)
-   print "(Hit TAB to hide)"
+   print "(Hit ESC to hide)"
 
 def set_wizard(*arg):
    '''
@@ -3660,7 +3664,7 @@ EXAMPLES
    set_color red = [ 1.0, 0.0, 0.0 ]
    '''
    r = 1
-   if isinstance(col,types.StringType):
+   if is_string(col):
       col = eval(col)
    if not (isinstance(col,types.ListType) or isinstance(col,types.TupleType)):
       print "Error: color specification must be a list such as [ 1.0, 0.0, 0.0 ]"
@@ -4286,7 +4290,124 @@ PYTHON EXAMPLE
    
    '''
    keyword[name] = [function, 0,0,',',parsing.STRICT]
-   rebuild_shortcuts()
+   kwhash.append(name)
+   
+class fb_action:
+   set = 0
+   enable = 1
+   disable = 2
+
+fb_action_sc = Shortcut(fb_action.__dict__.keys())
+
+class fb_sysmod:
+   all =               0
+   main =              1
+   parser =            2
+   selector =          3
+   executive =         4
+   feedback =          5
+
+#define FB_Main              1   
+#define FB_Parser            2
+#define FB_Selector          3
+#define FB_Executive         4
+#define FB_Feedback          5
+   
+#define FB_Total             6 /* total number of systems */
+
+fb_sysmod_sc = Shortcut(fb_sysmod.__dict__.keys())
+
+class fb_mask:
+   results =             0x01
+   errors =              0x02
+   actions =             0x04
+   warnings =            0x08
+   details =             0x10
+   blather =             0x20
+   debugging =           0x80
+   everything =          0xFF
+   
+fb_mask_sc = Shortcut(fb_mask.__dict__.keys())
+
+def feedback(action="?",module="?",mask="?"):
+   '''
+DESCRIPTION
+
+   "feedback" allows you to control what and how much text is output
+   from PyMOL.
+
+USAGE
+   
+   feedback action,module,mask
+
+   action is one of ['set','enable','disable']
+   module is a space-separated list of strings or simply "all"
+   mask is a space-separated list of strings or simply "everything"
+
+NOTES:
+
+   "feedback" alone will print a list of the available choices
+   
+PYMOL API
+
+   cmd.feedback(string action,string module,string mask)
+   
+EXAMPLES
+
+   feedback enable, all , debugging
+   feedback disable, selector, warnings actions
+   feedback enable, main, blather
+'''
+   r = None
+   if "?" in [action,module,mask]:
+      if action=="?":
+         print " feedback: available actions: set, enable, disable"
+      if module=="?":
+         print " feedback: available modules:"
+         for a in fb_sysmod.__dict__.keys():
+            if a[0]!='_':
+               print "   ",a
+      if mask=="?":
+         print " feedback: available masks:"
+         for a in fb_mask.__dict__.keys():
+            if a[0]!='_':
+               print "   ",a
+   else:
+
+      act_kee = fb_action_sc.interpret(action)
+      mod_kee = fb_sysmod_sc.interpret(module)
+      mask_kee = fb_mask_sc.interpret(mask)
+
+      if act_kee == None:
+         print "Error: invalid feedback action '%s'."%action
+         raise QuietException
+      elif mod_kee == None:
+         print "Error: invalid feedback module '%s'."%module
+         raise QuietException         
+      elif mask_kee == None:
+         print "Error: invalid feedback mask '%s'."%mask
+         raise QuietException
+
+      if not is_string(act_kee):
+         print "Error: ambiguous feedback action '%s'."%action
+         print action_amb
+         raise QuietException
+      elif not is_string(mod_kee):
+         print "Error: ambiguous feedback module '%s'."%module
+         raise QuietException         
+      elif not is_string(mask_kee):
+         print "Error: ambiguous feedback mask '%s'."%mask
+         raise QuietException
+
+      try:
+         lock()
+         r = _cmd.set_feedback(int(getattr(fb_action,act_kee)),
+                               int(getattr(fb_sysmod,mod_kee)),
+                               int(getattr(fb_mask,mask_kee)))
+      finally:
+         unlock()
+
+   return r
 
 def alias(name,command):
    '''
@@ -4307,8 +4428,8 @@ EXAMPLES
    alias go,load "test.pdb"; zoom (i;500); show sticks,(i;500 a;4)
    go
    '''
-   keyword[name] = [eval("lambda :do('''%s ''')"%command), 0,0,',',parsing.STRICT]   
-   rebuild_shortcuts()
+   keyword[name] = [eval("lambda :do('''%s ''')"%command), 0,0,',',parsing.STRICT]
+   kwhash.append(name)
 
 keyword = {
 
@@ -4352,6 +4473,7 @@ keyword = {
    'export_dots'   : [export_dots  , 2 , 2 , ',' , parsing.SIMPLE  ],
    'extend'        : [extend       , 0 , 0 , ',' , parsing.STRICT ],
    'fast_minimize' : [fast_minimize, 1,  4 , ',' , parsing.SIMPLE  ],
+   'feedback'      : [feedback     , 0,  0 , ',' , parsing.STRICT ],
    'fit'           : [fit          , 2 , 2 , ',' , parsing.STRICT ],
    'flag'          : [flag         , 2 , 2 , '=' , parsing.SIMPLE  ],
    'fork'          : [spawn        , 1 , 2 , ',' , parsing.SPAWN  ],
@@ -4441,6 +4563,8 @@ keyword = {
    'zoom'          : [zoom         , 0 , 2 , ',' , parsing.STRICT ],
    }
 
+kwhash = Shortcut(keyword.keys())
+
 help_only = {  # for API-only features
    'selections'    : [selections   , 0 , 0 , ',' , 0 ],
    'keyboard'      : [keyboard     , 0 , 0 , ',' , 0 ],
@@ -4471,6 +4595,8 @@ repres = {
    'nonbonded'     : 9,
    'nb_spheres'    : 10,
 }
+
+rephash = Shortcut(repres.keys())
 
 button_code = {
    'l' : 0,
@@ -4572,41 +4698,5 @@ class loadable:
    r3d = 14      # r3d, only used within cmd.py
    xyz = 15      # xyz, tinker format
    
-# build keyword shortcuts
-
-def rebuild_shortcuts():
-   '''
-   INTERNAL
-   '''
-   global kwhash
-   kwhash = {}
-   
-   for a in keyword.keys():
-      for b in range(1,len(a)):
-         sub = a[0:b]
-         if kwhash.has_key(sub):
-            kwhash[sub]=0
-         else:
-            kwhash[sub]=a
-
-   for a in keyword.keys():
-      kwhash[a]=a
-
-rebuild_shortcuts()
-
-# build representation shortcuts
-
-rephash = {}
-
-for a in repres.keys():
-   for b in range(1,len(a)):
-      sub = a[0:b]
-      if rephash.has_key(sub):
-         rephash[sub]=0
-      else:
-         rephash[sub]=a
-
-for a in repres.keys():
-   rephash[a]=a
-
+loadable_sc = Shortcut(loadable.__dict__.keys()) 
 

@@ -4,8 +4,6 @@ Changes Under Consideration
 
    * Specular lighting option under GL
 
-   * Auto-detection of stereo capability
-
    * Generic volume data object (to supplement bricks and maps)
 
    * "Pickable" stick representation
@@ -17,6 +15,8 @@ Changes Under Consideration
    * Protein side-chain rotamer wizard.
 
    * "Tinker" wizard 
+
+   * Save dialog for objects/selections
 
 Impending Changes
 
@@ -30,6 +30,14 @@ Impending Changes
 
 Changes up to 0.50
 
+   * TAB-activated filename and command completion (CTRL-D too)
+
+   * former TAB functionality moved to ESC (text/graphics toggle)
+
+   * Auto-detection of stereo capability
+
+   * Robust Feedback control mechanism
+
    * Eliminated hangs and crashes upon program termination with Win2k/NT.
    
    * "Distances" wizard (internal gui;replace with external version later)
@@ -38,7 +46,7 @@ Changes up to 0.50
 
    * Mesh objects now have states, and new meshes are appended.
 
-   * Modified raytrace antialiasing transfer function to improve contrast.
+   * Modified raytrace antialiasing transfer function to improve sharpness.
 
    * Created alias and extend commands so that python scripts can extend the
    pymol language on the fly.

@@ -57,6 +57,8 @@ void PDefineFloat(char *name,float value);
 void PRunString(char *str);
 void PDumpTraceback(PyObject *err);
 
+int PComplete(char *str,int buf_size);
+
 int PTruthCallStr(PyObject *object,char *method,char *argument);
 
 void PBlockForEmergencyShutdown(void);
