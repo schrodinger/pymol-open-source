@@ -19,13 +19,6 @@ from pmg_tk.ColorEditor import ColorEditor
 from pmg_tk.skins import PMGSkin
 from builder import Builder
 
-def complete(event,str,widget,self):
-   st = parser.complete(str.get())
-   if st:
-      str.set(st)
-      widget.icursor(len(st))
-   self.focus_entry = 1
-   return 1
 
 class Normal(PMGSkin):
 
@@ -39,7 +32,15 @@ class Normal(PMGSkin):
    contactemail   = 'warren@delanoscientific.com'
    
    # responsible for setup and takedown of the normal skin
-   
+
+   def complete(self,event):
+      st = parser.complete(self.command.get())
+      if st:
+         self.command.set(st)
+         self.entry.icursor(len(st))
+      self.focus_entry = 1
+      return 1
+
    def createDataArea(self):
       # Create data area where data entry widgets are placed.
       self.dataArea = self.app.createcomponent('dataarea',
@@ -241,7 +242,7 @@ class Normal(PMGSkin):
 
       self.entry.bind('<Return>', lambda e, s=self:
           (s.do(s.command.get()), s.cmd.dirty(), s.command.set('')))
-      self.entry.bind('<Tab>', lambda e, s=self: s.complete())
+      self.entry.bind('<Tab>', lambda e, s=self: s.complete(e))
       self.entry.bind('<Up>', lambda e, s=self: s.back())
       self.entry.bind('<Down>', lambda e, s=self: s.forward())
 
