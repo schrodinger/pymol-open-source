@@ -437,6 +437,11 @@ static void MainDrawLocked(void)
 
   OrthoBusyPrime();
   ExecutiveDrawNow();
+
+  if(Feedback(FB_Main,FB_Errors)) {
+    PyMOLCheckOpenGLErr("During Rendering");
+  }
+
   if(I->SwapFlag)
     {
       if(!(int)SettingGet(cSetting_suspend_updates))

@@ -37,6 +37,7 @@ Z* -------------------------------------------------------------------
 #define P_GLUT_DOUBLE_MIDDLE 6
 #define P_GLUT_DOUBLE_RIGHT 7
 
+void PyMOLCheckOpenGLErr(char *pos);
 
 /* determine whether or not we have a real GLUT */
 

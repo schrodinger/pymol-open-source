@@ -242,6 +242,8 @@ static void ObjectGadgetRampUpdateCGO(ObjectGadgetRamp *I,GadgetSet *gs)
 
   }
   gs->NCoord = c;
+  /* center */
+  CGOEnd(cgo);
 
 
   CGOColor(cgo,0.5F,0.5F,0.5F);
@@ -288,8 +290,6 @@ static void ObjectGadgetRampUpdateCGO(ObjectGadgetRamp *I,GadgetSet *gs)
   ShapeVertex(cgo,REL,4);
   CGOEnd(cgo);
 
-  /* center */
-  CGOEnd(cgo);
 
   CGOStop(cgo);
 

@@ -3204,7 +3204,7 @@ void SceneRender(Pickable *pick,int x,int y,Multipick *smp)
   
     glGetIntegerv(GL_VIEWPORT,(GLint*)view_save);
     glViewport(I->Block->rect.left,I->Block->rect.bottom,I->Width,I->Height);
-    
+   
     debug_pick = (int)SettingGet(cSetting_debug_pick);
 
     if(SettingGet(cSetting_line_smooth)) {
@@ -3212,11 +3212,11 @@ void SceneRender(Pickable *pick,int x,int y,Multipick *smp)
         glEnable(GL_LINE_SMOOTH);
         glHint(GL_LINE_SMOOTH_HINT,GL_NICEST);
       }
-      glLineWidth(0.0);
     } else {
-      glLineWidth(SettingGet(cSetting_line_width));
       glDisable(GL_LINE_SMOOTH);
     }
+    glLineWidth(SettingGet(cSetting_line_width));
+      
 
     glPointSize(SettingGet(cSetting_dot_width));
 
@@ -3231,7 +3231,8 @@ void SceneRender(Pickable *pick,int x,int y,Multipick *smp)
     glLoadIdentity();
 
     ScenePrepareUnitContext(&context,I->Width,I->Height);
-
+ 
+ 
     /* do standard 3D objects */
 
     /* Set up the clipping planes */
