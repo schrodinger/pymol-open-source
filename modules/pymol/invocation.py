@@ -31,6 +31,7 @@ options.internal_gui = 1
 options.external_gui = 1
 options.gui = 'pmg_tk'
 options.show_splash = 1
+options.read_stdin = 0
 
 def parse_args(argv):
    av = copy.deepcopy(argv)
@@ -61,6 +62,8 @@ def parse_args(argv):
             options.deferred.append("_do_spawn %s"%av.pop())
          if "r" in a:
             options.deferred.append("_do_run %s"%av.pop())
+         if "p" in a:
+            options.read_stdin = 1 
       else:
          options.deferred.append(a)
 
