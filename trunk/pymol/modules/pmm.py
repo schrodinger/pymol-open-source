@@ -90,6 +90,7 @@ def sele_action(s):
    return [[ 2, 'Actions:'     ,''                      ],     
            [ 1, 'Set Origin'   ,'pm.origin("'+s+'")'    ],
            [ 1, 'Zoom'         ,'pm.zoom("'+s+'")'      ],
+           [ 1, 'Orient'       ,'pm.orient("'+s+'")'      ],
            [ 0, ''          ,''                         ],
            [ 1, 'Delete'       ,'pm.delete("'+s+'")'    ],
            [ 0, ''          ,''                         ],
@@ -106,6 +107,7 @@ def mol_action(s):
    return [[ 2, 'Actions:'     ,''                      ],     
            [ 1, 'Set Origin'   ,'pm.origin("'+s+'")'    ],
            [ 1, 'Zoom'         ,'pm.zoom("'+s+'")'      ],
+           [ 1, 'Orient'       ,'pm.orient("'+s+'")'      ],
            [ 0, ''          ,''                         ],
            [ 1, 'Delete'       ,'pm.delete("'+s+'")'    ],
            ]

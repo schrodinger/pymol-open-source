@@ -159,7 +159,7 @@ void PInit(void)
   PyRun_SimpleString("import pcatch\n");
   
   PyRun_SimpleString("sys.stdout = pcatch\n");
-  /*		PyRun_SimpleString("sys.stderr = pcatch\n");*/
+  PyRun_SimpleString("sys.stderr = pcatch\n");
   
   PyRun_SimpleString("_pm.set_globals(globals())");
   
