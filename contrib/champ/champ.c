@@ -2141,20 +2141,24 @@ int ChampMatch2(CChamp *I,int template,int target,
         while(tmpl_par) {
           tmpl_ent = I->Tmpl + tmpl_par;
           tmpl_at = I->Atom + tmpl_ent->atom; /* get atom record */
-          if(tmpl_at->mark_tmpl>1) { /* virtual atom */
-            bond_idx = 0; /* not qualified for futher branching... */
-          } else {
-            bond_off = 0;  
-            bond_idx = tmpl_at->bond[bond_off];
-            while(bond_idx) {  /* iterate over all bonds */
-              if(I->Bond[bond_idx].mark_tmpl) { /* skip over marked bonds...*/
-                bond_off++;
-                bond_idx = tmpl_at->bond[bond_off];
-              } else
-                break; /* found an open bond */
-            }
+          /*
+            if(tmpl_at->mark_tmpl>1) { 
+            bond_idx = 0; 
+            } else 
+            {
+          */
+          
+          bond_off = 0;  
+          bond_idx = tmpl_at->bond[bond_off];
+          while(bond_idx) {  /* iterate over all bonds */
+            if(I->Bond[bond_idx].mark_tmpl) { /* skip over marked bonds...*/
+              bond_off++;
+              bond_idx = tmpl_at->bond[bond_off];
+            } else
+              break; /* found an open bond */
           }
-
+          /*  }*/
+          
           if(bond_idx) { /* there is an open bond */
 
 #ifdef MATCHDEBUG
@@ -2203,33 +2207,32 @@ int ChampMatch2(CChamp *I,int template,int target,
           }
         }
         if(!tmpl_par) { /* no open bonds-> complete match */
-
+          
 #ifdef MATCHDEBUG2
           printf(" tmpl: EXACT MATCH DETECTED\n");
           printf(" %d %d %d %d\n",template,target,start_tmpl,start_targ);
-      printf("tmpl: ");
-      tmpl_ent = I->Tmpl + tmpl_stack;
-      while(1) {
-        ChampAtomDump(I,tmpl_ent->atom);
-        printf("(%2d) ",tmpl_ent->atom);
-
-        if(tmpl_ent->link)
-          tmpl_ent=I->Tmpl + tmpl_ent->link;
-        else
-          break;
-      }
-      printf("\ntarg: ");
-      targ_ent = I->Targ + targ_stack;
-      while(1) {
-        ChampAtomDump(I,targ_ent->atom);
-        printf("(%2d) ",targ_ent->atom); 
-        if(targ_ent->link)
-          targ_ent=I->Targ + targ_ent->link;
-        else
-          break;
-      }
-      printf("\n");
-
+          printf("tmpl: ");
+          tmpl_ent = I->Tmpl + tmpl_stack;
+          while(1) {
+            ChampAtomDump(I,tmpl_ent->atom);
+            printf("(%2d) ",tmpl_ent->atom);
+            
+            if(tmpl_ent->link)
+              tmpl_ent=I->Tmpl + tmpl_ent->link;
+            else
+              break;
+          }
+          printf("\ntarg: ");
+          targ_ent = I->Targ + targ_stack;
+          while(1) {
+            ChampAtomDump(I,targ_ent->atom);
+            printf("(%2d) ",targ_ent->atom); 
+            if(targ_ent->link)
+              targ_ent=I->Targ + targ_ent->link;
+            else
+              break;
+          }
+          printf("\n");
 #endif
           n_match++;
 
@@ -2449,6 +2452,11 @@ int ChampMatch2(CChamp *I,int template,int target,
     ListElemFreeChain(I->Tmpl,tmpl_stack);
     ListElemFreeChain(I->Targ,targ_stack);
   }
+#ifdef MATCHDEBUG
+  printf(" ChampMatch2: returning n_match = %d\n",
+         n_match);
+#endif
+
   return n_match;
 }
 
