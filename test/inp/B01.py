@@ -34,6 +34,9 @@ cycle_time = 2.0
 
 cmd.set("line_width","2")
 cmd.set("cartoon_tube_radius","0.2")
+cmd.set("cartoon_side_chain_helper")
+cmd.set("cartoon_discrete_colors",1)
+
 def load():
    global last1,last2
    list = glob("pdb/*/*") 
@@ -48,16 +51,20 @@ def load():
          cmd.set("suspend_updates","1")  
          cmd.delete('pdb')
          cmd.load(file,'pdb')
+         cmd.set_title('pdb',1,os.path.split(file)[-1])
+         cmd.rewind()
          print file,last1,last2
          last2 = last1
          last1 = file
 #      cmd.refresh()
 #      cmd.hide()
          cmd.show('cartoon')
-         cmd.color('red','ss h')
-         cmd.color('yellow','ss s')
+         cmd.color('auto','ss h')
+         cmd.color('auto','ss s')
          cmd.orient('pdb')
-         cmd.move('z',-100.0)
+         cmd.color('auto','organic and elem c')
+         cmd.show('spheres','organic')
+         cmd.move('z',-50.0)
          sys.__stderr__.write(".")
          sys.__stderr__.flush()
          n = cmd.count_states()
