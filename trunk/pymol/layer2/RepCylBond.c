@@ -36,7 +36,8 @@ typedef struct RepCylBond {
 
 void RepCylBondRender(RepCylBond *I,CRay *ray,Pickable **pick);
 static void subdivide( int n, float *x, float *y);
-float *RepCylinder(float *v,float *v1,float *v2,int nEdge,int endCap);
+float *RepCylinder(float *v,float *v1,float *v2,int nEdge,int endCap,CoordSet *cs,
+                   ObjectMolecule *obj);
 
 void RepCylBondFree(RepCylBond *I);
 
@@ -147,7 +148,7 @@ Rep *RepCylBondNew(CoordSet *cs)
   }
 
   nEdge = SettingGet(cSetting_stick_quality);
-  radius = SettingGet(cSetting_stick_radius);
+  radius = SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_stick_radius);
   half_bonds = SettingGet(cSetting_half_bonds);  
 
   RepInit(&I->R);
@@ -248,7 +249,7 @@ Rep *RepCylBondNew(CoordSet *cs)
 						  I->N++;
 						  
 
-						  v=RepCylinder(v,v1,v2,nEdge,1);
+						  v=RepCylinder(v,v1,v2,nEdge,1,cs,obj);
 						  
 						}
 					 else
@@ -286,7 +287,7 @@ Rep *RepCylBondNew(CoordSet *cs)
 								*(v++)=*(v0++);
 
 								I->N++;
-								v=RepCylinder(v,v1,v2,nEdge,0);
+								v=RepCylinder(v,v1,v2,nEdge,0,cs,obj);
 							 }
 						  
 						  v1[0]=vv2[0];
@@ -318,7 +319,7 @@ Rep *RepCylBondNew(CoordSet *cs)
 								*(v++)=*(v0++);
 								
 								I->N++;
-								v=RepCylinder(v,v1,v2,nEdge,0);
+								v=RepCylinder(v,v1,v2,nEdge,0,cs,obj);
 							 }
 						}
 				  }
@@ -342,7 +343,8 @@ static void subdivide( int n, float *x, float *y)
 	 }
 }
 
-float *RepCylinder(float *v,float *v1,float *v2,int nEdge,int endCap)
+float *RepCylinder(float *v,float *v1,float *v2,int nEdge,int endCap,
+                   CoordSet *cs,ObjectMolecule *obj)
 {
 
   float d[3],t[3],p0[3],p1[3],p2[3];
@@ -352,7 +354,7 @@ float *RepCylinder(float *v,float *v1,float *v2,int nEdge,int endCap)
   float nub;
   int c;
 
-  tube_size = SettingGet(cSetting_stick_radius);
+  tube_size = SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_stick_radius);
   overlap = tube_size*SettingGet(cSetting_stick_overlap);
   nub = tube_size*SettingGet(cSetting_stick_nub);
 

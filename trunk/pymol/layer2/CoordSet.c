@@ -540,6 +540,7 @@ CoordSet *CoordSetNew(void)
   I->SpheroidSphereSize = Sphere1->nDot;
   for(a=0;a<I->NRep;a++)
 	 I->Rep[a] = NULL;
+  I->Setting=NULL;
   return(I);
 }
 /*========================================================================*/
@@ -709,6 +710,7 @@ void CoordSetFree(CoordSet *I)
     if(I->TmpSymmetry) SymmetryFree(I->TmpSymmetry);
     FreeP(I->Spheroid);
     FreeP(I->SpheroidNormal);
+    SettingFreeP(I->Setting);
     OOFreeP(I);
   }
 }

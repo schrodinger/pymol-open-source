@@ -92,6 +92,7 @@ typedef struct ObjectMoleculeOpRec {
 #define OMOP_AddHydrogens 23
 #define OMOP_SetB 24
 #define OMOP_SaveUndo 25
+#define OMOP_CountAtoms 26
 
 #include"CoordSet.h"
 
@@ -155,6 +156,7 @@ void ObjectMoleculeAttach(ObjectMolecule *I,int index,AtomInfoType *nai);
 void ObjectMoleculeFuse(ObjectMolecule *I,int index0,ObjectMolecule *src,int index1,int mode);
 void ObjectMoleculeRenameAtoms(ObjectMolecule *I,int force);
 int ObjectMoleculeAreAtomsBonded(ObjectMolecule *I,int i0,int i1);
+
 #endif
 
 

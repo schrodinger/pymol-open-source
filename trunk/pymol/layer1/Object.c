@@ -25,7 +25,13 @@ Z* -------------------------------------------------------------------
 int ObjectGetNFrames(Object *I);
 
 void ObjectDescribeElement(struct Object *I,int index);
+CSetting **ObjectGetSettingHandle(struct Object *I,int state);
 
+/*========================================================================*/
+CSetting **ObjectGetSettingHandle(struct Object *I,int state)
+{
+  return(&I->Setting);
+}
 /*========================================================================*/
 void ObjectDescribeElement(struct Object *I,int index)
 {
@@ -81,6 +87,7 @@ void ObjectInit(Object *I)
   I->fUpdate = ObjectUpdate;
   I->fGetNFrame = ObjectGetNFrames;
   I->fDescribeElement = ObjectDescribeElement;
+  I->fGetSettingHandle = ObjectGetSettingHandle;
   I->Name[0]=0;
   I->Color=0;
   I->ExtentFlag=false;

@@ -74,7 +74,24 @@ int ObjectMoleculeFindOpenValenceVector(ObjectMolecule *I,int state,int index,fl
 void ObjectMoleculeAddSeleHydrogens(ObjectMolecule *I,int sele);
 
 CoordSet *ObjectMoleculeXYZStr2CoordSet(char *buffer,AtomInfoType **atInfoPtr);
+CSetting **ObjectMoleculeGetSettingHandle(ObjectMolecule *I,int state);
 
+/*========================================================================*/
+CSetting **ObjectMoleculeGetSettingHandle(ObjectMolecule *I,int state)
+{
+  
+  if(state<0) {
+    return(&I->Obj.Setting);
+  } else if(state<I->NCSet) {
+    if(I->CSet[state]) {
+      return(&I->CSet[state]->Setting);
+    } else {
+      return(NULL);
+    }
+  } else {
+    return(NULL);
+  }
+}
 /*========================================================================*/
 int ObjectMoleculeSetStateTitle(ObjectMolecule *I,int state,char *text)
 {
@@ -3563,6 +3580,16 @@ void ObjectMoleculeSeleOp(ObjectMolecule *I,int sele,ObjectMoleculeOpRec *op)
            }
        }
      break;
+	case OMOP_CountAtoms: /* count atoms in object, in selection */
+     ai=I->AtomInfo;
+     for(a=0;a<I->NAtom;a++)
+       {
+         s=ai->selEntry;
+         if(SelectorIsMember(s,sele))
+           op->i1++;
+         ai++;
+       }
+     break;
 	case OMOP_Protect: /* protect atoms from movement */
      ai=I->AtomInfo;
      for(a=0;a<I->NAtom;a++)
@@ -4037,6 +4064,8 @@ ObjectMolecule *ObjectMoleculeNew(int discreteFlag)
   I->Obj.fUpdate=  (void (*)(struct Object *)) ObjectMoleculeUpdate;
   I->Obj.fGetNFrame = (int (*)(struct Object *)) ObjectMoleculeGetNFrames;
   I->Obj.fDescribeElement = (void (*)(struct Object *,int index)) ObjectMoleculeDescribeElement;
+  I->Obj.fGetSettingHandle = (CSetting **(*)(struct Object *,int state))
+    ObjectMoleculeGetSettingHandle;
   I->AtomInfo=VLAMalloc(10,sizeof(AtomInfoType),2,true); /* autozero here is important */
   I->CurCSet=0;
   I->Symmetry=NULL;

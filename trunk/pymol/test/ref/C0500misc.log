@@ -64,7 +64,7 @@ PyMOL>refresh
 PyMOL>rebuild
 PyMOL>refresh
 PyMOL>set line_smooth=1
- Setting: line_smooth set to 1.000
+ Setting: line_smooth set to 1.00000.
 PyMOL>label (all),chain
  Label: labelled 107 atoms.
 PyMOL>label (all),''

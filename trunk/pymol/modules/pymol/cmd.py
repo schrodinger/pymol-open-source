@@ -49,6 +49,9 @@ from chempy import io
 from chempy.sdf import SDF,SDFRec
 from chempy import fragments
 
+import setting
+
+
 file_ext_re= re.compile(string.join([
    "\.pdb$|\.ent$|\.mol$|",
    r"\.PDB$|\.ENT$|\.MOL$|",
@@ -675,14 +678,14 @@ TO DOCUMENT, REVISION IMPENDING
       r = int(r)
       if mode==None:
          if r:
-            _cmd.set("button_mode","0")
+            _cmd.legacy_set("button_mode","0")
          else:
-            _cmd.set("button_mode","1")            
+            _cmd.legacy_set("button_mode","1")            
       else:
          if mode=='on':
-            _cmd.set("button_mode","1")
+            _cmd.legacy_set("button_mode","1")
          if mode=='off':
-            _cmd.set("button_mode","0")
+            _cmd.legacy_set("button_mode","0")
       config_mouse()
    finally:
       unlock()
@@ -784,7 +787,7 @@ NOTES
       try:
          lock()
          cnt = _cmd.get("dist_counter") + 1.0
-         _cmd.set("dist_counter","%1.0f" % cnt)
+         _cmd.legacy_set("dist_counter","%1.0f" % cnt)
          nam = "dist%02.0f" % cnt
       finally:
          unlock()
@@ -1151,7 +1154,7 @@ USAGE
 
    copy target, source
 
-   DEPRECATED: copy target = source
+   copy target = source (DEPRECATED)
  
 PYMOL API
  
@@ -2435,25 +2438,78 @@ INTERNAL
       unlock()
    return r
 
-def set(setting,value):
+
+def set(name,value,selection='',state=0,suppress=0):
    '''
 DESCRIPTION
   
-   "set" changes one of the PyMOL state variables
+   "set" changes one of the PyMOL state variables,
       
 USAGE
  
-   set setting = value
+   set name, value [,object-or-selection [,state ]]
+
+   set name = value (DEPRECATED)
  
 PYMOL API
  
-   cmd.set ( string setting, string value )
+   cmd.set ( string name, string value, string selection='', int state=0)
+
+NOTES
+
+   The default behavior (with a blank selection) changes the global
+   settings database.  If the selection is 'all', then the settings
+   database in all individual objects will be changed.  Likewise, for
+   a given object, if state is zero, then the object database will be
+   modified.  Otherwise, the settings database for the indicated state
+   within the object will be modified.
+
+   If a selection is provided, then all objects in the selection will
+   be affected. 
+   
    '''
-   try:
-      lock()   
-      r = _cmd.set(str(setting),str(value))
-   finally:
-      unlock()
+   r = None
+   index = setting._get_index(str(name))
+   if(index<0):
+      print "Error: unknown setting '%s'."%name
+      raise QuietException
+   else:
+      success = 0
+      try:
+         lock()
+         type = _cmd.get_setting_tuple(index,"",-1)[0]
+         if type==None:
+            print "Error: unable to get setting type."
+            raise QuietException
+         try:
+            if type==1: # boolean
+               v = (setting.boolean_dict[
+                      setting.boolean_sc.auto_err(
+                         str(value),"boolean")],)
+            elif type==2: # int
+               v = (int(value),)
+            elif type==3: # float
+               v = (float(value),)
+            elif type==4: # float3 - some legacy handling req.
+               if is_string(value):
+                  if not ',' in value:
+                     v = string.split(value)
+                  else:
+                     v = eval(value)
+               else:
+                  v = value
+               v = (float(v[0]),float(v[1]),float(v[2]))
+            v = (type,v)
+            r = _cmd.set(index,v,
+                         string.strip(str(selection)),
+                         int(state)-1,int(suppress))
+         except:
+            if(_feedback(fb_module.cmd,fb_mask.debugging)):
+               traceback.print_exc()
+               raise QuietException
+            print "Error: unable to read setting value."
+      finally:
+         unlock()
    return r
 
 def reset():
@@ -3717,7 +3773,7 @@ NOTES
       lock()   
       if len(arg)==1:
          sel_cnt = _cmd.get("sel_counter") + 1.0
-         _cmd.set("sel_counter","%1.0f" % sel_cnt)
+         _cmd.legacy_set("sel_counter","%1.0f" % sel_cnt)
          sel_name = "sel%02.0f" % sel_cnt
          sel = arg[0]
       else:
@@ -4488,7 +4544,7 @@ class fb_module:
    threads                   =14  
    symmetry                  =15
    ray                       =16
-   settings                  =17
+   setting                   =17
    object                    =18
    ortho                     =19
 

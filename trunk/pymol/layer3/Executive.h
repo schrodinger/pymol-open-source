@@ -43,7 +43,7 @@ void ExecutiveDelete(char *name);
 void ExecutiveDump(char *fname,char *obj);
 void ExecutiveSetControlsOff(char *name);
 void ExecutiveSort(char *name);
-void ExecutiveSetSetting(char *sname,char *value);
+void ExecutiveSetSetting(int index,PyObject *tuple,char *sele,int state,int suppress);
 void ExecutiveRay(void);
 int ExecutiveGetDihe(char *s0,char *s1,char *s2,char *s3,float *value,int state);
 int ExecutiveSetDihe(char *s0,char *s1,char *s2,char *s3,float value,int state);
