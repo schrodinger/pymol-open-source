@@ -81,6 +81,8 @@ typedef struct ObjectMoleculeOpRec {
 #define OMOP_LABL 18
 #define OMOP_Identify    19
 #define OMOP_Remove 20
+#define OMOP_Protect 21
+#define OMOP_Mask 22
 
 #include"CoordSet.h"
 

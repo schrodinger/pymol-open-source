@@ -247,12 +247,15 @@ int SelectorWalkTree(int *atom,int *toDo,int **stk,
   int c = 0;
   int a,a1;
   int seleFlag;
+  AtomInfoType *ai;
+
   while(stkDepth) { /* this will explore a tree */
     stkDepth--;
     a=(*stk)[stkDepth];
     toDo[a]=0;
     seleFlag=false;
-    s=obj->AtomInfo[a].selEntry;
+    ai=obj->AtomInfo+a;
+    s=ai->selEntry;
     while(s) 
       {
         if(SelectorMatch(s,sele1)) {
@@ -267,7 +270,8 @@ int SelectorWalkTree(int *atom,int *toDo,int **stk,
         s=SelectorNext(s);
       }
     if(!seleFlag) {
-      atom[a]=1; /* mark this atom into the selection */
+      if(!ai->protected) /* if not explicitly protected...*/
+        atom[a]=1; /* mark this atom into the selection */
       s=obj->Neighbor[a]; /* add neighbors onto the stack */
       s++; /* skip count */
       while(1) {

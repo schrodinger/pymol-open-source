@@ -72,6 +72,8 @@ typedef struct AtomInfoType {
   signed char geom;
   signed char valence;
   signed char deleteFlag;
+  signed char masked;
+  signed char protected;
 } AtomInfoType;
 
 int *AtomInfoGetSortedIndex(AtomInfoType *rec,int n,int **outdex);
