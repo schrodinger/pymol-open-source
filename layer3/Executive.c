@@ -3231,10 +3231,24 @@ void ExecutiveRenderSelections(PyMOLGlobals *G,int curState)
   SpecRec *rec1;
   int sele;
   int no_depth;
-  float width;
+  float min_width;
+  float gl_width;
+  int width;
+  int max_width = (int)SettingGetGlobal_f(G,cSetting_selection_width_max);
+  float width_scale = SettingGetGlobal_f(G,cSetting_selection_width_scale);
+
+  min_width = SettingGetGlobal_f(G,cSetting_selection_width);
+
+  if(width_scale>=0.0F) {
+    width = (int)((2*SettingGetGlobal_f(G,cSetting_stick_radius)/SceneGetScreenVertexScale(G,NULL)));
+  if(width<min_width)
+    width = min_width;
+  if(width>max_width)
+    width = max_width;
+  } else
+    width = min_width;
 
   no_depth = (int)SettingGet(G,cSetting_selection_overlay);
-  width = SettingGet(G,cSetting_selection_width);
 
   while(ListIterate(I->Spec,rec,next)) {
     if(rec->type==cExecSelection) {
@@ -3242,16 +3256,26 @@ void ExecutiveRenderSelections(PyMOLGlobals *G,int curState)
       if(rec->visible) {
         sele = SelectorIndexByName(G,rec->name); /* TODO: speed this up */
         if(sele>=0) {
-          rec1 = NULL;
-          if(rec->sele_color<0)
-            glColor3f(1.0F,0.2F,0.8F);
-          else
-            glColor3fv(ColorGet(G,rec->sele_color));
-          glPointSize(width);
+
           if(no_depth)
             glDisable(GL_DEPTH_TEST);
           glDisable(GL_FOG);
+
+          if(rec->sele_color<0)
+            glColor3f(1.0F,0.2F,0.6F);
+          else
+            glColor3fv(ColorGet(G,rec->sele_color));
+
+          gl_width=(float)width;
+          if(width>5) {
+            if(width&0x1) {
+              width++;
+              gl_width = (float)width;
+            }
+          }
+          glPointSize(gl_width);
           glBegin(GL_POINTS);
+          rec1 = NULL;
           while(ListIterate(I->Spec,rec1,next)) {
             if(rec1->type==cExecObject) {
               if(rec1->obj->type==cObjectMolecule) {
@@ -3260,6 +3284,48 @@ void ExecutiveRenderSelections(PyMOLGlobals *G,int curState)
             }
           }
           glEnd();
+
+          if(width>4) {
+            if(width>5) 
+              glPointSize(4.0F);
+            else 
+              glPointSize(3.0F);
+            glColor3f(1.0F,1.0F,1.0F);
+            
+            glBegin(GL_POINTS);
+            rec1 = NULL;
+            while(ListIterate(I->Spec,rec1,next)) {
+              if(rec1->type==cExecObject) {
+                if(rec1->obj->type==cObjectMolecule) {
+                  ObjectMoleculeRenderSele((ObjectMolecule*)rec1->obj,curState,sele);
+                }
+              }
+            }
+            glEnd();
+          }
+
+          if(width>2) {
+            if(width>5)
+              glPointSize(2.0F);
+            else if(width&0x1)
+              glPointSize(1.0F);
+            else
+              glPointSize(2.0F);              
+
+            glColor3f(0.0F,0.0F,0.0F);
+            glBegin(GL_POINTS);
+            rec1 = NULL;
+            while(ListIterate(I->Spec,rec1,next)) {
+              if(rec1->type==cExecObject) {
+                if(rec1->obj->type==cObjectMolecule) {
+                  ObjectMoleculeRenderSele((ObjectMolecule*)rec1->obj,curState,sele);
+                }
+              }
+            }
+            glEnd();
+          }
+
+
           if(no_depth)
             glEnable(GL_DEPTH_TEST);
           glEnable(GL_FOG);

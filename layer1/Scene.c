@@ -95,7 +95,7 @@ struct _CScene {
   int LastButton;
   int PossibleSingleClick;
   double LastReleaseTime;
-
+  double SingleClickDelay;
   float ViewNormal[3],LinesNormal[3];
   float Pos[3],Origin[3];
   float H;
@@ -1091,7 +1091,7 @@ void SceneIdle(PyMOLGlobals *G)
 
   if(I->PossibleSingleClick==2) {
     double now = UtilGetSeconds(G);
-    double single_click_delay = 0.15;
+    double single_click_delay = I->SingleClickDelay;
     double diff = now-I->LastReleaseTime;
     if(diff>single_click_delay) {
       /* post a single click processing event */
@@ -1576,8 +1576,28 @@ static int SceneRelease(Block *block,int button,int x,int y,int mod, double when
     double diff = when-I->LastClickTime;
     if((diff<0.0)||(diff>slowest_single_click))
       I->PossibleSingleClick = 0;
-    else
+    else {
+      int but = -1;
       I->PossibleSingleClick = 2;
+      I->SingleClickDelay = 0.15;
+
+      switch(I->LastButton) {
+      case P_GLUT_LEFT_BUTTON:
+        but = P_GLUT_DOUBLE_LEFT;
+        break;
+      case P_GLUT_MIDDLE_BUTTON:
+        but = P_GLUT_DOUBLE_MIDDLE;
+        break;
+      case P_GLUT_RIGHT_BUTTON:
+        but = P_GLUT_DOUBLE_RIGHT;
+        break;
+      }
+      if(but>0) {
+        int mode=ButModeTranslate(G,but, 0);
+        if(mode == cButModeNone)
+          I->SingleClickDelay = 0.0;
+      }
+    }
   }
   if(I->LoopFlag)
     return SceneLoopRelease(block,button,x,y,mod);
@@ -1593,7 +1613,9 @@ static int SceneRelease(Block *block,int button,int x,int y,int mod, double when
   return 1;
 }
 /*========================================================================*/
-static void SceneDoRoving(PyMOLGlobals *G,float old_front,float old_back,float old_origin,int adjust_flag)
+static void SceneDoRoving(PyMOLGlobals *G,float old_front,
+                          float old_back,float old_origin,
+                          int adjust_flag,int zoom_flag)
 {
   if((int)SettingGet(G,cSetting_roving_origin)) {
 
@@ -1650,23 +1672,22 @@ static void SceneDoRoving(PyMOLGlobals *G,float old_front,float old_back,float o
         v2[2] = delta_front;
       }
     }
-    if(SettingGet(G,cSetting_ortho)) { 
-      old_pos2 = I->Pos[2];
-      /* we're orthoscopic, so we don't want the effective field of view 
-         to change.  Thus, we have to hold Pos[2] constant, and instead
-         move the planes.
-      */
-    }
+
+    old_pos2 = I->Pos[2];
+
     MatrixInvTransform3f(I->RotMatrix,v2,v2); /* transform offset into realspace */
     subtract3f(I->Origin,v2,v2); /* calculate new origin location */
     SceneOriginSet(G,v2,true); /* move origin, preserving camera location */
     
-    if(SettingGet(G,cSetting_ortho)) { 
+    if(SettingGet(G,cSetting_ortho) || zoom_flag) { 
+      /* we're orthoscopic, so we don't want the effective field of view 
+         to change.  Thus, we have to hold Pos[2] constant, and instead
+         move the planes.
+      */
       float delta = old_pos2-I->Pos[2];
       I->Pos[2] += delta;
       SceneClipSet(G, I->Front - delta, I->Back - delta );
     }
-    
     slab_width = I->Back - I->Front;
     
     /* first, check to make sure that the origin isn't too close to either plane */
@@ -1759,13 +1780,12 @@ static int SceneClick(Block *block,int button,int x,int y,
     SceneClip(G,5,0.8F,NULL,0);
     break;
   case cButModeMoveSlabForward:
-
     {
       float old_front = I->Front;
       float old_back = I->Back;
       float old_origin = -I->Pos[2];
       SceneClip(G,6,0.1F,NULL,0);
-      SceneDoRoving(G,old_front,old_back,old_origin,true);
+      SceneDoRoving(G,old_front,old_back,old_origin,true,false);
     }
     break;
   case cButModeMoveSlabBackward:
@@ -1774,7 +1794,59 @@ static int SceneClick(Block *block,int button,int x,int y,
       float old_back = I->Back;
       float old_origin = -I->Pos[2];
       SceneClip(G,6,-0.1F,NULL,0);
-      SceneDoRoving(G,old_front,old_back,old_origin,true);
+      SceneDoRoving(G,old_front,old_back,old_origin,true,false);
+    }
+    break;
+  case cButModeZoomForward:
+    {
+      float old_front = I->Front;
+      float old_back = I->Back;
+      float old_origin = -I->Pos[2];
+
+      float factor;
+      factor = -((I->FrontSafe+I->Back)/2)*0.1F;
+      if(factor<=0.0F) {
+        I->Pos[2]+=factor;
+        I->Front-=factor;
+        I->Back-=factor;
+        I->FrontSafe = GetFrontSafe(I->Front,I->Back);
+        SceneDoRoving(G,old_front,old_back,old_origin,true,false);
+      }
+    }
+    break;
+  case cButModeZoomBackward:
+    {
+      float old_front = I->Front;
+      float old_back = I->Back;
+      float old_origin = -I->Pos[2];
+
+      float factor;
+      factor = ((I->FrontSafe+I->Back)/2)*0.1F;
+      if(factor>=0.0F) {
+        I->Pos[2]+=factor;
+        I->Front-=factor;
+        I->Back-=factor;
+        I->FrontSafe = GetFrontSafe(I->Front,I->Back);
+        SceneDoRoving(G,old_front,old_back,old_origin,true,false);
+      }
+    }
+    break;
+  case cButModeMoveSlabAndZoomForward:
+    {
+      float old_front = I->Front;
+      float old_back = I->Back;
+      float old_origin = -I->Pos[2];
+      SceneClip(G,6,0.15F,NULL,0);
+      SceneDoRoving(G,old_front,old_back,old_origin,true,true);
+    }
+    break;
+  case cButModeMoveSlabAndZoomBackward:
+    {
+      float old_front = I->Front;
+      float old_back = I->Back;
+      float old_origin = -I->Pos[2];
+      SceneClip(G,6,-0.15F,NULL,0);
+      SceneDoRoving(G,old_front,old_back,old_origin,true,true);
     }
     break;
   case cButModeRectAdd: /* deprecated */
@@ -2264,6 +2336,8 @@ float SceneGetScreenVertexScale(PyMOLGlobals *G,float *v1)
   register CScene *I=G->Scene;
   float vl,p1[4],p2[4];
   float width_factor = I->Width/2.0F;
+
+  if(!v1) v1 = I->Origin;
 
   /* now, scale properly given the current projection matrix */
   copy3f(v1,p1);
@@ -3039,7 +3113,7 @@ static int SceneDrag(Block *block,int x,int y,int mod,double when)
 		break;
     }
     if(moved_flag)
-      SceneDoRoving(G,old_front,old_back,old_origin,adjust_flag);
+      SceneDoRoving(G,old_front,old_back,old_origin,adjust_flag,false);
   }
   if(I->PossibleSingleClick) {
     int max_single_click_drag = 4;
@@ -3156,7 +3230,7 @@ void SceneFree(PyMOLGlobals *G)
   
   CGOFree(G->DebugCGO);
   FreeP(G->Scene);
-                      
+  
 }
 /*========================================================================*/
 void SceneResetMatrix(PyMOLGlobals *G)
@@ -3247,6 +3321,7 @@ int  SceneInit(PyMOLGlobals *G)
     I->LastRender = UtilGetSeconds(G);
     I->LastFrameTime = UtilGetSeconds(G);
     I->LastRockTime = UtilGetSeconds(G);
+    I->SingleClickDelay = 0.0;
     I->LastPicked.ptr = NULL;
     
     I->CopyNextFlag=true;
@@ -3804,7 +3879,6 @@ void SceneRender(PyMOLGlobals *G,Pickable *pick,int x,int y,Multipick *smp)
 {
   /* think in terms of the camera's world */
   register CScene *I=G->Scene;
-  ObjRec *rec=NULL;
   float fog[4];
   float *v,vv[4],f;
   unsigned int lowBits,highBits;
@@ -4270,33 +4344,34 @@ void SceneRender(PyMOLGlobals *G,Pickable *pick,int x,int y,Multipick *smp)
           glViewport(I->Block->rect.left,I->Block->rect.bottom,I->Width/2,I->Height);
           break;
         }
-        
 
-        glPushMatrix(); /* 1 */
-        ScenePrepareMatrix(G,stereo_as_mono ? 0 : 1);
-        for(pass=1;pass>-2;pass--) { /* render opaque then antialiased...*/
-          rec=NULL;
+        /* render picked atoms */
 
-          SceneRenderAll(G,&context,normal,NULL,pass,false);
+        glPushMatrix(); /* 2 */
+        glNormal3fv(normal);
+        EditorRender(G,curState);
+        glPopMatrix(); /* 1 */
 
-        }
+        /* render the debugging CGO */
 
         glPushMatrix();  /* 2 */
         glNormal3fv(normal);
         CGORenderGL(G->DebugCGO,NULL,NULL,NULL);
         glPopMatrix();  /* 1 */
 
+        /* render all objects */
 
-        glPushMatrix(); /* 2 */
+        glPushMatrix(); /* 1 */
+        ScenePrepareMatrix(G,stereo_as_mono ? 0 : 1);
+        for(pass=1;pass>-2;pass--) { /* render opaque, then antialiased, then transparent...*/
+          SceneRenderAll(G,&context,normal,NULL,pass,false);
+        }
+        glPopMatrix(); /* 0 */
+
+        /* render selections */
+        glPushMatrix(); /* 1 */
         glNormal3fv(normal);
         ExecutiveRenderSelections(G,curState);
-        EditorRender(G,curState);
-        glPopMatrix(); /* 1 */
-
-        /* render transparent */
-
-        SceneRenderAll(G,&context,normal,NULL,-1,false);
-
         glPopMatrix(); /* 0 */
 
         /* RIGHT HAND STEREO */
@@ -4325,31 +4400,35 @@ void SceneRender(PyMOLGlobals *G,Pickable *pick,int x,int y,Multipick *smp)
           glViewport(I->Block->rect.left+I->Width/2,I->Block->rect.bottom,I->Width/2,I->Height);
           break;
         }
-
         
+        /* render picked atoms */
+
+        glPushMatrix(); /* 2 */
+        glNormal3fv(normal);
+        EditorRender(G,curState);
+        glPopMatrix(); /* 1 */
+
+        /* render the debugging CGO */
+
+        glPushMatrix();  /* 2 */
+        glNormal3fv(normal);
+        CGORenderGL(G->DebugCGO,NULL,NULL,NULL);
+        glPopMatrix();  /* 1 */
+
+        /* render all objects */
+
         glClear(GL_DEPTH_BUFFER_BIT);        
         glPushMatrix(); /* 1 */
         ScenePrepareMatrix(G,stereo_as_mono ? 0 : 2);
-        for(pass=1;pass>-2;pass--) { /* render opaque then antialiased...*/
-          
+        for(pass=1;pass>-2;pass--) { /* render opaque, then antialiased, then transparent...*/
           SceneRenderAll(G,&context,normal,NULL,pass,false);
-          
-        }
-        
-        glPushMatrix(); /* 2 */
-        glNormal3fv(normal);
-        CGORenderGL(G->DebugCGO,NULL,NULL,NULL);
-        glPopMatrix(); /* 1 */
-        
-        glPushMatrix(); /* 2 */
+        }        
+        glPopMatrix(); /* 0 */
+
+        /* render selections */
+        glPushMatrix(); /* 1 */
         glNormal3fv(normal);
         ExecutiveRenderSelections(G,curState);
-        EditorRender(G,curState);
-        glPopMatrix(); /* 1 */
-        
-        /* render transparent */
-        SceneRenderAll(G,&context,normal,NULL,-1,false);
-        
         glPopMatrix(); /* 0 */
 
         /* restore draw buffer */
@@ -4378,14 +4457,6 @@ void SceneRender(PyMOLGlobals *G,Pickable *pick,int x,int y,Multipick *smp)
         /* mono rendering */
 
         PRINTFD(G,FB_Scene)
-          " SceneRender: rendering opaque and antialiased...\n"
-          ENDFD;
-        
-        for(pass=1;pass>-2;pass--) { /* render opaque then antialiased...*/
-          SceneRenderAll(G,&context,normal,NULL,pass,false);
-        }
-
-        PRINTFD(G,FB_Scene)
           " SceneRender: rendering DebugCGO...\n"
           ENDFD;
         
@@ -4394,15 +4465,25 @@ void SceneRender(PyMOLGlobals *G,Pickable *pick,int x,int y,Multipick *smp)
         CGORenderGL(G->DebugCGO,NULL,NULL,NULL);
         glPopMatrix();
 
+        glPushMatrix();
         PRINTFD(G,FB_Scene)
-          " SceneRender: rendering selections...\n"
+          " SceneRender: rendering picked atoms...\n"
           ENDFD;
+        EditorRender(G,curState);
+        glPopMatrix();
+
+        PRINTFD(G,FB_Scene)
+          " SceneRender: rendering opaque and antialiased...\n"
+          ENDFD;
+        
+        for(pass=1;pass>-2;pass--) { /* render opaque then antialiased...*/
+          SceneRenderAll(G,&context,normal,NULL,pass,false);
+        }
 
         glPushMatrix();
         PRINTFD(G,FB_Scene)
-          " SceneRender: rendering editing...\n"
+          " SceneRender: rendering selections...\n"
           ENDFD;
-        EditorRender(G,curState);
 
         glNormal3fv(normal);
         ExecutiveRenderSelections(G,curState);

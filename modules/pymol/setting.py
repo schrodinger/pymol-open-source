@@ -424,6 +424,9 @@ if __name__=='pymol.setting':
       scene_animation           = (390, '')
       line_stick_helper         = (391, '')
       ray_orthoscopic           = (392, '')
+      ribbon_side_chain_helper  = (393, '')
+      selection_width_max       = (394, '')
+      selection_width_scale     = (395, '')
       
    setting_sc = Shortcut(SettingIndex.__dict__.keys())
 

@@ -54,15 +54,20 @@ Z* -------------------------------------------------------------------
 #define cButModeSeleToggle 31
 #define cButModeSeleAdd  32
 #define cButModeSeleSub  33
+#define cButModeMoveSlabAndZoom 34
 
-#define cButModeCount    34
+#define cButModeCount    35
 
-/* remaineder only used in scene... */
+/* remainder only used in scene... */
 
 #define cButModeScaleSlabShrink 101
 #define cButModeScaleSlabExpand 102
 #define cButModeMoveSlabForward 103
 #define cButModeMoveSlabBackward 104
+#define cButModeMoveSlabAndZoomForward 105
+#define cButModeMoveSlabAndZoomBackward 106
+#define cButModeZoomForward 107
+#define cButModeZoomBackward 108
 
 typedef char CodeType[10];
 

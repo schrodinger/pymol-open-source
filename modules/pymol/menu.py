@@ -121,18 +121,76 @@ def slice_hide(s):
            [ 1, 'slice'        , 'cmd.hide("slice","'+s+'")'     ],
            ]
 
+def by_elem2(s):
+   return [
+      [ 2, 'Atoms'     ,''                               ],
+      [1,'\\494C\\777H\\229N\\922O\\950S...','util.cba(10,"'+s+'")'],# lime
+      [1,'\\155C\\777H\\229N\\922O\\950S...','util.cba(5262,"'+s+'")'],# deepteal
+      [1,'\\904C\\777H\\229N\\922O\\950S...','util.cba(12,"'+s+'")'],# hotpink
+      [1,'\\983C\\777H\\229N\\922O\\950S...','util.cba(36,"'+s+'")'],# yelloworange
+      [1,'\\525C\\777H\\229N\\922O\\950S...','util.cba(5271,"'+s+'")'],# violetpurple
+      [1,'\\666C\\777H\\229N\\922O\\950S...','util.cba(124,"'+s+'")'],# grey70
+      [1,'\\049C\\777H\\229N\\922O\\950S...','util.cba(17,"'+s+'")'],# marine
+      [1,'\\760C\\777H\\229N\\922O\\950S...','util.cba(18,"'+s+'")'],# olive
+      ]
+      
+def by_elem3(s):
+   return [
+      [ 2, 'Atoms'     ,''                               ],
+      [1,'\\564C\\777H\\229N\\922O\\950S...','util.cba(5270,"'+s+'")'],# smudge
+      [1,'\\077C\\777H\\229N\\922O\\950S...','util.cba(20,"'+s+'")'],# teal
+      [1,'\\644C\\777H\\229N\\922O\\950S...','util.cba(5272,"'+s+'")'],# dirtyviolet
+      [1,'\\976C\\777H\\229N\\922O\\950S...','util.cba(52,"'+s+'")'],# wheat
+      [1,'\\944C\\777H\\229N\\922O\\950S...','util.cba(5258,"'+s+'")'],# deepsalmon
+      [1,'\\978C\\777H\\229N\\922O\\950S...','util.cba(5274,"'+s+'")'],# lightpink
+      [1,'\\499C\\777H\\229N\\922O\\950S...','util.cba(5257,"'+s+'")'],# aquamarine
+      [1,'\\994C\\777H\\229N\\922O\\950S...','util.cba(5256,"'+s+'")'],# paleyellow
+      ]
+   
+def by_elem4(s):
+   return [
+      [ 2, 'Atoms'     ,''                               ],
+      [1,'\\094C\\777H\\229N\\922O\\950S...','util.cba(15,"'+s+'")'],# limegreen
+      [1,'\\247C\\777H\\229N\\922O\\950S...','util.cba(5277,"'+s+'")'],# skyblue
+      [1,'\\824C\\777H\\229N\\922O\\950S...','util.cba(5279,"'+s+'")'],# warmpink
+      [1,'\\792C\\777H\\229N\\922O\\950S...','util.cba(5276,"'+s+'")'],# limon
+      [1,'\\949C\\777H\\229N\\922O\\950S...','util.cba(53,"'+s+'")'],# violet
+      [1,'\\889C\\777H\\229N\\922O\\950S...','util.cba(5278,"'+s+'")'],# bluewhite
+      [1,'\\297C\\777H\\229N\\922O\\950S...','util.cba(5275,"'+s+'")'],# greencyan
+      [1,'\\653C\\777H\\229N\\922O\\950S...','util.cba(5269,"'+s+'")'],# sand
+      ]
+
+def by_elem5(s):
+   return [
+      [ 2, 'Atoms'     ,''                               ],
+[1,'\\252C\\777H\\229N\\922O\\950S...','util.cba(22,"'+s+'")'],# forest
+[1,'\\466C\\777H\\229N\\922O\\950S...','util.cba(5266,"'+s+'")'],# lightteal
+[1,'\\755C\\777H\\229N\\922O\\950S...','util.cba(5280,"'+s+'")'],# darksalmon
+[1,'\\570C\\777H\\229N\\922O\\950S...','util.cba(5267,"'+s+'")'],# splitpea
+[1,'\\634C\\777H\\229N\\922O\\950S...','util.cba(5268,"'+s+'")'],# raspberry
+[1,'\\555C\\777H\\229N\\922O\\950S...','util.cba(104,"'+s+'")'],# grey50
+[1,'\\226C\\777H\\229N\\922O\\950S...','util.cba(23,"'+s+'")'],# deepblue
+[1,'\\632C\\777H\\229N\\922O\\950S...','util.cba(51,"'+s+'")'],# brown
+           ]
+   
 def by_elem(s):
    return [
-      [ 2, 'By Element:'     ,''                               ],
-      [ 1, '\\292C\\777H\\229N\\922O\\950S\\905*'  , 'util.cbag("'+s+'")'],
-   [ 1, '\\099C\\777H\\229N\\922O\\950S\\905*'  , 'util.cbac("'+s+'")'],
-   [ 1, '\\909C\\777H\\229N\\922O\\950S\\905*'  , 'util.cbam("'+s+'")'],           
-   [ 1, '\\990C\\777H\\229N\\922O\\950S\\905*'  , 'util.cbay("'+s+'")'],
-   [ 1, '\\955C\\777H\\229N\\922O\\950S\\905*'  , 'util.cbas("'+s+'")'],
-   [ 1, '\\777C\\777H\\229N\\922O\\950S\\905*'  , 'util.cbaw("'+s+'")'],
-   [ 1, '\\559C\\777H\\229N\\922O\\950S\\905*'  , 'util.cbab("'+s+'")'],
-   [ 1, '\\972C\\777H\\229N\\922O\\950S\\905*'  , 'util.cbao("'+s+'")'],
-   [ 1, ' \\777H\\229N\\922O\\950S\\905*'  , 'util.cnc("'+s+'")']]                     
+      [ 2, 'Atoms'     ,''                               ],
+      [1,' \\777H\\229N\\922O\\950S...','util.cnc("'+s+'")'],
+
+[1,'\\292C\\777H\\229N\\922O\\950S...','util.cba(26,"'+s+'")'],# carbon
+[1,'\\099C\\777H\\229N\\922O\\950S...','util.cba(5,"'+s+'")'],# cyan
+[1,'\\927C\\777H\\229N\\922O\\950S...','util.cba(154,"'+s+'")'],# lightmagenta
+[1,'\\990C\\777H\\229N\\922O\\950S...','util.cba(6,"'+s+'")'],# yellow
+[1,'\\955C\\777H\\229N\\922O\\950S...','util.cba(9,"'+s+'")'],# salmon
+[1,'\\888C\\777H\\229N\\922O\\950S...','util.cba(29,"'+s+'")'],# hydrogen
+[1,'\\449C\\777H\\229N\\922O\\950S...','util.cba(11,"'+s+'")'],# slate
+[1,'\\962C\\777H\\229N\\922O\\950S...','util.cba(30,"'+s+'")'],# brightorange
+      [ 1, 'set 2'     ,by_elem2(s)                    ],
+      [ 1, 'set 3'     ,by_elem3(s)                    ],
+      [ 1, 'set 4'     ,by_elem4(s)                    ],
+      [ 1, 'set 5'     ,by_elem5(s)                    ],      
+           ]
 
 def by_ss(s):
    return [
@@ -169,68 +227,169 @@ def by_chain(s):
              'util.chainbow("('+s+')")'],                                 
       ]
 
+
+def reds(s):
+   return [
+      [1,'\\900red','cmd.color(4,"'+s+'")'],
+      [1,'\\922tv_red','cmd.color(32,"'+s+'")'],
+      [1,'\\634raspberry','cmd.color(5268,"'+s+'")'],
+      [1,'\\755darksalmon','cmd.color(5280,"'+s+'")'],
+      [1,'\\955salmon','cmd.color(9,"'+s+'")'],
+      [1,'\\944deepsalmon','cmd.color(5258,"'+s+'")'],
+      [1,'\\824warmpink','cmd.color(5279,"'+s+'")'],
+      [1,'\\611firebrick','cmd.color(49,"'+s+'")'],
+      [1,'\\522ruby','cmd.color(21,"'+s+'")'],
+      [1,'\\521chocolate','cmd.color(50,"'+s+'")'],
+      [1,'\\632brown','cmd.color(51,"'+s+'")'],
+      ]
+
+def greens(s):
+   return [
+      [ 2, 'Greens'     ,''                               ],
+      [1,'\\090green','cmd.color(3,"'+s+'")'],
+      [1,'\\292tv_green','cmd.color(33,"'+s+'")'],
+      [1,'\\490chartreuse','cmd.color(14,"'+s+'")'],
+      [1,'\\570splitpea','cmd.color(5267,"'+s+'")'],
+      [1,'\\564smudge','cmd.color(5\270,"'+s+'")'],
+      [1,'\\686palegreen','cmd.color(5259,"'+s+'")'],
+      [1,'\\094limegreen','cmd.color(15,"'+s+'")'],
+      [1,'\\494lime','cmd.color(10,"'+s+'")'],
+      [1,'\\792limon','cmd.color(5276,"'+s+'")'],      
+      [1,'\\252forest','cmd.color(22,"'+s+'")'],
+      ]
+
+def blues(s):
+   return [
+      [ 2, 'Blues'     ,''                               ],
+      [1,'\\009blue','cmd.color(2,"'+s+'")'],
+      [1,'\\339tv_blue','cmd.color(34,"'+s+'")'],
+      [1,'\\049marine','cmd.color(17,"'+s+'")'],
+      [1,'\\449slate','cmd.color(11,"'+s+'")'],
+      [1,'\\779lightblue','cmd.color(5263,"'+s+'")'],
+      [1,'\\247skyblue','cmd.color(5277,"'+s+'")'],
+      [1,'\\409purpleblue','cmd.color(16,"'+s+'")'],
+      [1,'\\226deepblue','cmd.color(23,"'+s+'")'],
+      [1,'\\115density','cmd.color(4155,"'+s+'")'],
+      ]
+
+def yellows(s):
+   return [
+      [ 2, 'Yellows'     ,''                               ],
+      [1,'\\990yellow','cmd.color(6,"'+s+'")'],
+      [1,'\\992tv_yellow','cmd.color(35,"'+s+'")'],
+      [1,'\\994paleyellow','cmd.color(5256,"'+s+'")'],
+      [1,'\\983yelloworange','cmd.color(36,"'+s+'")'],            
+      [1,'\\792limon','cmd.color(5276,"'+s+'")'],
+      [1,'\\976wheat','cmd.color(52,"'+s+'")'],
+      [1,'\\653sand','cmd.color(5269,"'+s+'")'],
+      ]
+
+def magentas(s):
+   return [
+      [ 2, 'Magentas'     ,''                               ],
+
+      [1,'\\909magenta','cmd.color(8,"'+s+'")'],
+      [1,'\\927lightmagenta','cmd.color(154,"'+s+'")'],
+      [1,'\\904hotpink','cmd.color(12,"'+s+'")'],
+      [1,'\\968pink','cmd.color(48,"'+s+'")'],
+      [1,'\\978lightpink','cmd.color(5274,"'+s+'")'],
+      [1,'\\644dirtyviolet','cmd.color(5272,"'+s+'")'],
+      [1,'\\949violet','cmd.color(53,"'+s+'")'],
+      [1,'\\525violetpurple','cmd.color(5271,"'+s+'")'],
+      [1,'\\707purple','cmd.color(19,"'+s+'")'],
+      [1,'\\515deeppurple','cmd.color(5261,"'+s+'")'],
+      ]
+
+def cyans(s):
+   return [
+      [ 2, 'Cyans'     ,''                               ],
+      [1,'\\099cyan','cmd.color(5,"'+s+'")'],
+      [1,'\\799palecyan','cmd.color(5265,"'+s+'")'],
+      [1,'\\499aquamarine','cmd.color(5257,"'+s+'")'],
+      [1,'\\297greencyan','cmd.color(5275,"'+s+'")'],
+      [1,'\\077teal','cmd.color(20,"'+s+'")'],
+      [1,'\\155deepteal','cmd.color(5262,"'+s+'")'],
+      [1,'\\466lightteal','cmd.color(5266,"'+s+'")'],
+      ]
+
+def oranges(s):
+   return [
+      [ 2, 'Oranges'     ,''                               ],
+      [1,'\\950orange','cmd.color(13,"'+s+'")'],
+      [1,'\\951tv_orange','cmd.color(37,"'+s+'")'],
+      [1,'\\962brightorange','cmd.color(30,"'+s+'")'],
+      [1,'\\985lightorange','cmd.color(5264,"'+s+'")'],      
+      [1,'\\983yelloworange','cmd.color(36,"'+s+'")'],      
+      [1,'\\760olive','cmd.color(18,"'+s+'")'],
+      [1,'\\551deepolive','cmd.color(5260,"'+s+'")'],
+      ]
+
+def tints(s):
+   return [
+      [ 2, 'Tints'     ,''                               ],
+      [1,'\\976wheat','cmd.color(52,"'+s+'")'],
+      [1,'\\686palegreen','cmd.color(5259,"'+s+'")'],
+      [1,'\\779lightblue','cmd.color(5263,"'+s+'")'],      
+      [1,'\\994paleyellow','cmd.color(5256,"'+s+'")'],
+      [1,'\\978lightpink','cmd.color(5274,"'+s+'")'],
+      [1,'\\799palecyan','cmd.color(5265,"'+s+'")'],
+      [1,'\\985lightorange','cmd.color(5264,"'+s+'")'],            
+      [1,'\\889bluewhite','cmd.color(5278,"'+s+'")'],
+      ]
+   
+def grays(s):
+   return [
+      [ 1, '\\999white ', 'cmd.color("white","'+s+'")'  ],
+      [ 1, '\\999gray90 ', 'cmd.color("grey90","'+s+'")'  ],
+      [ 1, '\\888gray80 ', 'cmd.color("grey80","'+s+'")'  ],
+      [ 1, '\\777gray70 ', 'cmd.color("grey70","'+s+'")'  ],
+      [ 1, '\\666gray60 ', 'cmd.color("grey60","'+s+'")'  ],
+      [ 1, '\\555gray50 ', 'cmd.color("grey50","'+s+'")'  ],
+      [ 1, '\\444gray40 ', 'cmd.color("grey40","'+s+'")'  ],
+      [ 1, '\\333gray30 ', 'cmd.color("grey30","'+s+'")'  ],
+      [ 1, '\\222gray20 ', 'cmd.color("grey20","'+s+'")'  ],
+      [ 1, '\\222gray10 ', 'cmd.color("grey10","'+s+'")'  ],
+      [ 1, '\\222black ', 'cmd.color("black","'+s+'")'  ],
+      ]
+
+def all_colors(s):
+   return [
+   [ 1, '\\900reds'        ,reds(s) ],
+   [ 1, '\\090greens'      ,greens(s) ],
+   [ 1, '\\009blues'       ,blues(s) ],
+   [ 1, '\\990yellows'      ,yellows(s) ],
+   [ 1, '\\909magentas'    , magentas(s) ],
+   [ 1, '\\099cyans'        , cyans(s) ],
+   [ 1, '\\950oranges'        , oranges(s) ],   
+   [ 1, '\\978tints'        ,tints(s) ],
+   [ 1, '\\666grays'        ,grays(s) ],
+#   [ 0, '', ''],
+#   [ 1, '\\900red'         ,'cmd.color("red","'+s+'")'  ],
+#   [ 1, '\\090green'       ,'cmd.color("green","'+s+'")'  ],
+#   [ 1, '\\009blue'        ,'cmd.color("blue","'+s+'")'  ],
+#   [ 1, '\\990yellow'      ,'cmd.color("yellow","'+s+'")'  ],
+#   [ 1, '\\909magenta' ,'cmd.color("magenta","'+s+'")'  ],
+#   [ 1, '\\099cyan'  ,'cmd.color("cyan","'+s+'")'  ],           
+#   [ 1, '\\955salmon'      ,'cmd.color("salmon","'+s+'")'  ],
+#   [1,  '\\940orange','cmd.color(13,"'+s+'")'],
+#   
+#   [ 1, '\\555gray'    ,'cmd.color("gray","'+s+'")'  ],
+#   [ 1, '\\999white'       ,'cmd.color("white","'+s+'")'  ],
+   
+      ]
+   
 def mol_color(s):
-   return [[ 2, 'Color:'     ,''                               ],
-           [ 1, 'by chain' , by_chain(s) ],
-           [ 1, 'by element'  , by_elem(s) ],
-           [ 1, 'by ss  '  , by_ss(s) ],
-           [ 1, '\\900s\\950p\\990e\\090c\\099t\\059r\\009u\\555m', spectrum(s) ],
-           [ 0, ''                                , ''                 ],           
-           [ 1, '\\900red'         , 'cmd.color("red","'+s+'")'     ],
-           [ 1, '\\090green'       , 'cmd.color("green","'+s+'")'   ],
-           [ 1, '\\009blue'        , 'cmd.color("blue","'+s+'")'    ],
-           [ 1, '\\990yellow'      , 'cmd.color("yellow","'+s+'")'  ],
-           [ 1, '\\909magenta'     , 'cmd.color("magenta","'+s+'")' ],
-           [ 1, '\\099cyan'        , 'cmd.color("cyan","'+s+'")'    ],           
-           [ 1, '\\955salmon'      , 'cmd.color("salmon","'+s+'")'  ],
-           [ 1, '\\595lime'        , 'cmd.color("lime","'+s+'")'    ],
-           [ 1, '\\967pink'  ,'cmd.color("pink","'+s+'")'  ],
-           [ 1, '\\559slate'       , 'cmd.color("slate","'+s+'")'   ],
-           [ 1, '\\949violet'      , 'cmd.color("violet","'+s+'")'  ],
-           [ 1, '\\950orange'      , 'cmd.color("orange","'+s+'")'  ],
-           [ 1, '\\059marine'      , 'cmd.color("marine","'+s+'")'  ],
-           [ 1, '\\905hotpink' ,'cmd.color("hotpink","'+s+'")'  ],
-           [ 1, '\\599aquamarine' ,'cmd.color("aquamarine","'+s+'")'  ],
-#           [ 1, '\\551olive'       , 'cmd.color("olive","'+s+'")'   ],
-#           [ 1, '\\626purple'      , 'cmd.color("purple","'+s+'")'  ],
-#           [ 1, '\\266teal'        , 'cmd.color("teal","'+s+'")'    ],
-#           [ 1, '\\151forest'      , 'cmd.color("forest","'+s+'")'  ],
-#           [ 1, '\\611firebrick'   , 'cmd.color("firebrick","'+s+'")'  ],
-#           [ 1, '\\631chocolate'   , 'cmd.color("chocolate","'+s+'")'  ],           
-           [ 1, '\\999white'       , 'cmd.color("white","'+s+'")'   ],
-           [ 1, '\\987wheat'       , 'cmd.color("wheat","'+s+'")'   ],
-           [ 1, '\\555grey'        , 'cmd.color("grey","'+s+'")'    ],
-           [ 1, '\\222black'    ,'cmd.color("grey","'+s+'")'  ]
-           ]
+   return (
+      [[ 2, 'Color:'     ,''                               ],
+       [ 1, 'by chain' , by_chain(s) ],
+       [ 1, 'by element'  , by_elem(s) ],
+       [ 1, 'by ss  '  , by_ss(s) ],
+       [ 1, '\\900s\\950p\\990e\\090c\\099t\\059r\\009u\\555m', spectrum(s) ],
+       [ 0, ''                                , ''                 ]] +
+      all_colors(s))
 
 def general_color(s):
-   return [[ 2, 'Color:'     ,''                        ],
-           [ 1, '\\900red'         ,'cmd.color("red","'+s+'")'  ],
-           [ 1, '\\090green'       ,'cmd.color("green","'+s+'")'  ],
-           [ 1, '\\009blue'        ,'cmd.color("blue","'+s+'")'  ],
-           [ 1, '\\990yellow'      ,'cmd.color("yellow","'+s+'")'  ],
-           [ 1, '\\909magenta' ,'cmd.color("magenta","'+s+'")'  ],
-           [ 1, '\\099cyan'  ,'cmd.color("cyan","'+s+'")'  ],           
-           [ 1, '\\955salmon'      ,'cmd.color("salmon","'+s+'")'  ],
-           [ 1, '\\595lime' ,'cmd.color("lime","'+s+'")'  ],
-           [ 1, '\\967pink'  ,'cmd.color("pink","'+s+'")'  ],
-           [ 1, '\\559slate'  ,'cmd.color("slate","'+s+'")'  ],
-           [ 1, '\\949violet'  ,'cmd.color("violet","'+s+'")'  ],
-           [ 1, '\\950orange'      ,'cmd.color("orange","'+s+'")'  ],
-           [ 1, '\\059marine'      ,'cmd.color("marine","'+s+'")'  ],
-           [ 1, '\\905hotpink' ,'cmd.color("hotpink","'+s+'")'  ],
-#           [ 1, '\\551olive'   ,'cmd.color("olive","'+s+'")'  ],
-#           [ 1, '\\626purple'  ,'cmd.color("purple","'+s+'")'  ],
-#           [ 1, '\\266teal'  ,'cmd.color("teal","'+s+'")'  ],
-#           [ 1, '\\151forest'  ,'cmd.color("forest","'+s+'")'  ],
-#           [ 1, '\\611firebrick'   , 'cmd.color("firebrick","'+s+'")'  ],
-#           [ 1, '\\631chocolate'   , 'cmd.color("chocolate","'+s+'")'  ],
-           [ 1, '\\116density'     ,'cmd.color("density","'+s+'")'  ],
-           [ 1, '\\999white'       ,'cmd.color("white","'+s+'")'  ],
-           [ 1, '\\987wheat'       , 'cmd.color("wheat","'+s+'")'   ],
-           [ 1, '\\555grey'    ,'cmd.color("grey","'+s+'")'  ],
-           [ 1, '\\222black'    ,'cmd.color("grey","'+s+'")'  ]
-           ]
+   return [[ 2, 'Color:'     ,''                        ]] + all_colors(s)
 
 def preset_ligand_sites(s):
    return [[ 2, 'Ligand Sites:', ''],
@@ -721,7 +880,7 @@ def pick_option(title,s,object=0):
       [ 0, ''             , ''                      ],
       [ 1, 'labels'      , mol_labels(s) ],
       ]
-   
+  
    if object:
       result.extend([
          [ 0, ''             , ''                      ],         

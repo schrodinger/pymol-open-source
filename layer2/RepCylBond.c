@@ -1169,6 +1169,8 @@ Rep *RepCylBondNew(CoordSet *cs)
   int valence_flag = false;
   int stick_color = 0;
   int cartoon_side_chain_helper = 0;
+  int ribbon_side_chain_helper = 1;
+
   OOAlloc(G,RepCylBond);
 
   PRINTFD(G,FB_RepCylBond)
@@ -1204,6 +1206,8 @@ Rep *RepCylBondNew(CoordSet *cs)
   stick_color = SettingGet_color(G,cs->Setting,obj->Obj.Setting,cSetting_stick_color);
   cartoon_side_chain_helper = SettingGet_b(G,cs->Setting, obj->Obj.Setting,
                                          cSetting_cartoon_side_chain_helper);
+  ribbon_side_chain_helper = SettingGet_b(G,cs->Setting, obj->Obj.Setting,
+                                         cSetting_ribbon_side_chain_helper);
                                                                    
   b=obj->Bond;
   for(a=0;a<obj->NBond;a++)
@@ -1343,6 +1347,9 @@ Rep *RepCylBondNew(CoordSet *cs)
         }
 		  if((a1>=0)&&(a2>=0))
 			 {
+            register AtomInfoType *ati1=obj->AtomInfo+b1;
+            register AtomInfoType *ati2=obj->AtomInfo+b2;
+
             if(stick_color<0) {
               c1=*(cs->Color+a1);
               c2=*(cs->Color+a2);
@@ -1353,8 +1360,8 @@ Rep *RepCylBondNew(CoordSet *cs)
 				vv1 = cs->Coord+3*a1;
 				vv2 = cs->Coord+3*a2;
 				
-				s1=obj->AtomInfo[b1].visRep[cRepCyl];
-				s2=obj->AtomInfo[b2].visRep[cRepCyl];
+				s1=ati1->visRep[cRepCyl];
+				s2=ati2->visRep[cRepCyl];
 
 				if(!(s1&&s2))
               if(!half_bonds) {
@@ -1362,12 +1369,10 @@ Rep *RepCylBondNew(CoordSet *cs)
                 s2 = 0;
               }
 
-            if(cartoon_side_chain_helper) {
-              register AtomInfoType *ati1=obj->AtomInfo+b1;
-              register AtomInfoType *ati2=obj->AtomInfo+b2;
-              if(ati1->visRep[cRepCartoon]&&
-                 ati2->visRep[cRepCartoon]&&
-                 (!ati1->hetatm)&&(!ati2->hetatm)) {
+            if( (!ati1->hetatm) && (!ati2->hetatm) &&
+                ((cartoon_side_chain_helper && ati1->visRep[cRepCartoon] && ati2->visRep[cRepCartoon]) ||
+                 (ribbon_side_chain_helper && ati1->visRep[cRepRibbon] && ati2->visRep[cRepRibbon]))) {
+
                 register char *name1=ati1->name;
                 register int prot1=ati1->protons;
                 register char *name2=ati2->name;
@@ -1684,8 +1689,7 @@ Rep *RepCylBondNew(CoordSet *cs)
                     }
                 }
 				  }
-			 }
-		}
+      }
 	 PRINTFD(G,FB_RepCylBond)
       " RepCylBond-DEBUG: %d triplets\n",(v-I->V)/3
       ENDFD;

@@ -31,11 +31,46 @@ Z* -------------------------------------------------------------------
 #include"Scene.h"
 
 static int AutoColor[] = { 
-  26, 5, 154, 6, 9, 29, 11, 30,
-  10, 5262, 12, 36, 5271, 124, 17, 18,
-  5270, 20, 5272, 52, 5258, 5274, 5257, 5256,
-  15, 5277, 5279, 5276, 53, 5278, 5275,5269,
-  22, 5266, 5280, 5267, 5268, 104, 23,  51,
+26   , /* carbon */
+5    , /* cyan */
+154  , /* lightmagenta */
+6    , /* yellow */
+9    , /* salmon */
+29   , /* hydrogen */
+11   , /* slate */
+30   , /* brightorange */
+10   , /* lime */
+5262 , /* deepteal */
+12   , /* hotpink */
+36   , /* yelloworange */
+5271 , /* violetpurple */
+124  , /* grey70 */
+17   , /* marine */
+18   , /* olive */
+5270 , /* smudge */
+20   , /* teal */
+5272 , /* dirtyviolet */
+52   , /* wheat */
+5258 , /* deepsalmon */
+5274 , /* lightpink */
+5257 , /* aquamarine */
+5256 , /* paleyellow */
+15   , /* limegreen */
+5277 , /* skyblue */
+5279 , /* warmpink */
+5276 , /* limon */
+53   , /* violet */
+5278 , /* bluewhite */
+5275 , /* greencyan */
+5269 , /* sand */
+22   , /* forest */
+5266 , /* lightteal */
+5280 , /* darksalmon */
+5267 , /* splitpea */
+5268 , /* raspberry */
+104  , /* grey50 */
+23   , /* deepblue */
+51   , /* brown */
 };
 
 static int nAutoColor = 40;
@@ -745,19 +780,19 @@ void ColorReset(PyMOLGlobals *G)
   I->Color[I->NColor].Color[2]=0.0F;
   I->NColor++;
 
-  strcpy(I->Color[I->NColor].Name,"yellowgreen"); /* AKA puke green */
+  strcpy(I->Color[I->NColor].Name,"chartreuse"); /* AKA puke green */
   I->Color[I->NColor].Color[0]=0.5F;
   I->Color[I->NColor].Color[1]=1.0F;
   I->Color[I->NColor].Color[2]=0.0F;
   I->NColor++;
 
-  strcpy(I->Color[I->NColor].Name,"bluegreen"); /* legacy name -- same as limegreen */
+  strcpy(I->Color[I->NColor].Name,"limegreen");
   I->Color[I->NColor].Color[0]=0.0F;
   I->Color[I->NColor].Color[1]=1.0F;
   I->Color[I->NColor].Color[2]=0.5F;
   I->NColor++;
 
-  strcpy(I->Color[I->NColor].Name,"blueviolet"); /* legacy name */
+  strcpy(I->Color[I->NColor].Name,"purpleblue"); /* legacy name */
   I->Color[I->NColor].Color[0]=0.5F;
   I->Color[I->NColor].Color[1]=0.0F;
   I->Color[I->NColor].Color[2]=1.0F;
@@ -1123,21 +1158,21 @@ void ColorReset(PyMOLGlobals *G)
   I->Color[I->NColor].Color[2]=0.6F;
   I->NColor++;
 
-  strcpy(I->Color[I->NColor].Name,"chartreuse");
-  I->Color[I->NColor].Color[0]=0.5F;
-  I->Color[I->NColor].Color[1]=1.0F;
-  I->Color[I->NColor].Color[2]=0.0F;
+  strcpy(I->Color[I->NColor].Name,"lightblue");
+  I->Color[I->NColor].Color[0]=0.75F;
+  I->Color[I->NColor].Color[1]=0.75;
+  I->Color[I->NColor].Color[2]=1.0F;
   I->NColor++;
 
-  strcpy(I->Color[I->NColor].Name,"limegreen"); /* same as bluegreen */
-  I->Color[I->NColor].Color[0]=0.0F;
-  I->Color[I->NColor].Color[1]=1.0F;
+  strcpy(I->Color[I->NColor].Name,"lightorange"); 
+  I->Color[I->NColor].Color[0]=1.0F;
+  I->Color[I->NColor].Color[1]=0.8F;
   I->Color[I->NColor].Color[2]=0.5F;
   I->NColor++;
 
-  strcpy(I->Color[I->NColor].Name,"purpleblue"); 
-  I->Color[I->NColor].Color[0]=0.5F;
-  I->Color[I->NColor].Color[1]=0.0F;
+  strcpy(I->Color[I->NColor].Name,"palecyan"); 
+  I->Color[I->NColor].Color[0]=0.8F;
+  I->Color[I->NColor].Color[1]=1.0F;
   I->Color[I->NColor].Color[2]=1.0F;
   I->NColor++;
 

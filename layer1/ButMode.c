@@ -403,6 +403,7 @@ int ButModeInit(PyMOLGlobals *G)
     strcpy(I->Code[cButModeSeleToggle], "+/-  ");
     strcpy(I->Code[cButModeSeleAdd], "+Box ");
     strcpy(I->Code[cButModeSeleSub], "-Box ");  
+    strcpy(I->Code[cButModeMoveSlabAndZoom], "MvSZ ");  
 
 
     I->Block = OrthoNewBlock(G,NULL);
@@ -477,6 +478,20 @@ int ButModeTranslate(PyMOLGlobals *G,int button, int mod)
         return cButModeMoveSlabForward;
       } else {
         return cButModeMoveSlabBackward;
+      }
+      break;
+    case cButModeMoveSlabAndZoom:
+      if(button==P_GLUT_BUTTON_SCROLL_FORWARD) {
+        return cButModeMoveSlabAndZoomForward;
+      } else {
+        return cButModeMoveSlabAndZoomBackward;
+      }
+      break;
+    case cButModeTransZ:
+      if(button==P_GLUT_BUTTON_SCROLL_FORWARD) {
+        return cButModeZoomForward;
+      } else {
+        return cButModeZoomBackward;
       }
       break;
     }

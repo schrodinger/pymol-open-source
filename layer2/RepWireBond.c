@@ -473,6 +473,7 @@ Rep *RepWireBondNew(CoordSet *cs)
   Pickable *rp;
   AtomInfoType *ai1,*ai2;
   int cartoon_side_chain_helper = 0;
+  int ribbon_side_chain_helper = 0;
   int line_stick_helper = 0;
 
   OOAlloc(G,RepWireBond);
@@ -507,6 +508,8 @@ Rep *RepWireBondNew(CoordSet *cs)
   valence_flag = (valence!=0.0F);
   cartoon_side_chain_helper = SettingGet_b(G,cs->Setting, obj->Obj.Setting,
                                          cSetting_cartoon_side_chain_helper);
+  ribbon_side_chain_helper = SettingGet_b(G,cs->Setting, obj->Obj.Setting,
+                                         cSetting_ribbon_side_chain_helper);
   line_stick_helper = SettingGet_b(G,cs->Setting, obj->Obj.Setting,
                                    cSetting_line_stick_helper);
 
@@ -619,10 +622,10 @@ Rep *RepWireBondNew(CoordSet *cs)
 					 v2 = cs->Coord+3*a2;
 					 
 
-                if(cartoon_side_chain_helper) {
-                  if(ati1->visRep[cRepCartoon]&&
-                     ati2->visRep[cRepCartoon]&&
-                     (!ati1->hetatm)&&(!ati2->hetatm)) {
+                if( (!ati1->hetatm) && (!ati2->hetatm) &&
+                    ((cartoon_side_chain_helper && ati1->visRep[cRepCartoon] && ati2->visRep[cRepCartoon]) ||
+                     (ribbon_side_chain_helper && ati1->visRep[cRepRibbon] && ati2->visRep[cRepRibbon]))) {
+
                     register char *name1=ati1->name;
                     register int prot1=ati1->protons;
                     register char *name2=ati2->name;
@@ -788,9 +791,8 @@ Rep *RepWireBondNew(CoordSet *cs)
                       
 						  }
 					 }
-				  }
-			 }
-		}
+          }
+      }
 
 	 I->V = ReallocForSure(I->V,float,(v-I->V));
 
