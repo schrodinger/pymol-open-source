@@ -511,7 +511,7 @@ void BasisMakeMap(CBasis *I,int *vert2prim,CPrimitive *prim,float *volume)
 				l2=length3f(I->Precomp+I->Vert2Normal[a]*3+3);
 				b = (int)ceil(l1/sep)+1;
 				c = (int)ceil(l2/sep)+1;
-				extra_vert += b*c;
+				extra_vert += 4*b*c;
 			 }
 			 break;
 		  case cPrimCylinder:
