@@ -40,6 +40,7 @@ Z* -------------------------------------------------------------------
 
 static const float _0		= 0.0F;
 static const float _1		= 1.0F;
+static const double _d0		= 0.0;
 
 
 float get_random0to1f()
@@ -51,14 +52,14 @@ double slow_sqrt1f(float f) { /* no good as a macro because f is used twice */
   if(f>_0)
 	 return(sqrt(f));
   else
-	 return(_0);
+	 return _d0;
 }
 
 double slow_sqrt1d(double f) { /* no good as a macro because f is used twice */
   if(f>_0)
 	 return(sqrt(f));
   else
-	 return(_0);
+	 return _d0;
 }
 
 void dump3f( float *v, char *prefix ) /* for debugging */

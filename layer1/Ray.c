@@ -154,7 +154,7 @@ void RayGetSphereNormal(CRay *I,RayInfo *r)
 
 static void fill(unsigned int *buffer, unsigned int value,unsigned int cnt)
 {
-  while(cnt&0xFFFFFFF80) {
+  while(cnt&0xFFFFFF80) {
     *(buffer++) = value;
     *(buffer++) = value;
     *(buffer++) = value;
@@ -539,16 +539,23 @@ void RayTransformFirst(CRay *I)
 
   for(a=0;a<I->NPrimitive;a++) {
 	 prm=I->Primitive+a;
-	 if(prm->type==cPrimTriangle) {
-		BasisTrianglePrecompute(basis1->Vertex+prm->vert*3,
-										basis1->Vertex+prm->vert*3+3,
-										basis1->Vertex+prm->vert*3+6,
-										basis1->Precomp+basis1->Vert2Normal[prm->vert]*3);
-      v0 = basis1->Normal + (basis1->Vert2Normal[prm->vert]*3 + 3);
-      prm->cull = backface_cull&&((v0[2]<0.0F)&&(v0[5]<0.0F)&&(v0[8]<0.0F));
+    switch(prm->type) {
+    case cPrimTriangle:
+        BasisTrianglePrecompute(basis1->Vertex+prm->vert*3,
+                                basis1->Vertex+prm->vert*3+3,
+                                basis1->Vertex+prm->vert*3+6,
+                                basis1->Precomp+basis1->Vert2Normal[prm->vert]*3);
+        v0 = basis1->Normal + (basis1->Vert2Normal[prm->vert]*3 + 3);
+        prm->cull = backface_cull&&((v0[2]<0.0F)&&(v0[5]<0.0F)&&(v0[8]<0.0F));
+        break;
+    case cPrimSausage:
+    case cPrimCylinder:
+      BasisCylinderSausagePrecompute(basis1->Normal + basis1->Vert2Normal[prm->vert]*3,
+                                     basis1->Precomp + basis1->Vert2Normal[prm->vert]*3);
+      break;
+      
 	 }
   }
-
 }
 /*========================================================================*/
 void RayTransformBasis(CRay *I,CBasis *basis1)
@@ -593,12 +600,19 @@ void RayTransformBasis(CRay *I,CBasis *basis1)
 
   for(a=0;a<I->NPrimitive;a++) {
 	 prm=I->Primitive+a;
-	 if(prm->type==cPrimTriangle) {
-		BasisTrianglePrecompute(basis1->Vertex+prm->vert*3,
-										basis1->Vertex+prm->vert*3+3,
-										basis1->Vertex+prm->vert*3+6,
-										basis1->Precomp+basis1->Vert2Normal[prm->vert]*3);
-
+    switch(prm->type) {
+    case cPrimTriangle:
+        BasisTrianglePrecompute(basis1->Vertex+prm->vert*3,
+                                basis1->Vertex+prm->vert*3+3,
+                                basis1->Vertex+prm->vert*3+6,
+                                basis1->Precomp+basis1->Vert2Normal[prm->vert]*3);
+        break;
+    case cPrimSausage:
+    case cPrimCylinder:
+      BasisCylinderSausagePrecompute(basis1->Normal + basis1->Vert2Normal[prm->vert]*3,
+                                     basis1->Precomp + basis1->Vert2Normal[prm->vert]*3);
+      break;
+      
 	 }
   }
 }
@@ -889,7 +903,7 @@ static void RayHashSpawn(CRayHashThreadInfo *Thread,int n_thread)
   int a;
   blocked = PAutoBlock();
 
-  PRINTFB(FB_Ray,FB_Details)
+  PRINTFB(FB_Ray,FB_Blather)
     " Ray: filling voxels with %d threads...\n",n_thread
   ENDFB;
   info_list = PyList_New(n_thread);
@@ -908,7 +922,7 @@ static void RayAntiSpawn(CRayAntiThreadInfo *Thread,int n_thread)
   int a;
   blocked = PAutoBlock();
 
-  PRINTFB(FB_Ray,FB_Details)
+  PRINTFB(FB_Ray,FB_Blather)
     " Ray: antialiasing with %d threads...\n",n_thread
   ENDFB;
   info_list = PyList_New(n_thread);
@@ -940,7 +954,7 @@ static void RayTraceSpawn(CRayThreadInfo *Thread,int n_thread)
   int a;
   blocked = PAutoBlock();
 
-  PRINTFB(FB_Ray,FB_Details)
+  PRINTFB(FB_Ray,FB_Blather)
     " Ray: rendering with %d threads...\n",n_thread
   ENDFB;
   info_list = PyList_New(n_thread);
@@ -1027,9 +1041,7 @@ int RayTraceThread(CRayThreadInfo *T)
 	int interior_flag;
 	int interior_shadows;
 	int interior_texture;
-	int dummy;
 	int texture_save;
-	MapCache cache,shadow_cache;
 	float		settingPower, settingReflectPower,settingSpecPower,settingSpecReflect, _0, _1, _p5, _255, _persistLimit, _inv3;
 	float		invHgt, invFrontMinusBack, inv1minusFogStart,invWdth,invHgtRange;
 	register float       invWdthRange,vol0;
@@ -1037,6 +1049,7 @@ int RayTraceThread(CRayThreadInfo *T)
 	CBasis      *bp1,*bp2;
 	int render_height;
 	int offset=0;
+   BasisCallRec SceneCall,ShadeCall;
 
 	_0		= 0.0F;
 	_1		= 1.0F;
@@ -1072,9 +1085,6 @@ int RayTraceThread(CRayThreadInfo *T)
 	settingSpecPower	= SettingGet(cSetting_spec_power);
 	settingSpecReflect	= SettingGet(cSetting_spec_reflect);	
 	
-	MapCacheInit(&cache,I->Basis[1].Map);
-	if(shadows&&(I->NBasis>1))
-		MapCacheInit(&shadow_cache,I->Basis[2].Map);
     
 	if((interior_color>=0)||(two_sided_lighting))
 		backface_cull	= 0;
@@ -1127,7 +1137,31 @@ int RayTraceThread(CRayThreadInfo *T)
    }
      
 	r1.base[2]	= _0;
-		
+
+   SceneCall.Basis = I->Basis + 1;
+   SceneCall.rr = &r1;
+   SceneCall.vert2prim = I->Vert2Prim;
+   SceneCall.prim = I->Primitive;
+   SceneCall.shadow = false;
+   SceneCall.back = T->back;
+   SceneCall.trans_shadows = trans_shadows;
+   SceneCall.check_interior = (interior_color >= 0);
+	MapCacheInit(&SceneCall.cache,I->Basis[1].Map);
+
+   if(shadows&&(I->NBasis>1)) {
+     ShadeCall.Basis = I->Basis + 2;
+     ShadeCall.rr = &r2;
+     ShadeCall.vert2prim = I->Vert2Prim;
+     ShadeCall.prim = I->Primitive;
+     ShadeCall.shadow = true;
+     ShadeCall.front = _0;
+     ShadeCall.back = _0;
+     ShadeCall.excl_trans = _0;
+     ShadeCall.trans_shadows = trans_shadows;
+     ShadeCall.check_interior = false;
+     MapCacheInit(&ShadeCall.cache,I->Basis[2].Map);     
+   }
+
 	for(yy = T->y_start; (yy < T->y_stop); yy++)
 	{
 		
@@ -1158,12 +1192,17 @@ int RayTraceThread(CRayThreadInfo *T)
 				{
 					pixel_flag		= false;
 					
-					interior_flag	= (interior_color >= 0);
-					
-					i	= BasisHit( bp1, &r1, exclude, I->Vert2Prim, I->Primitive,
-									false, new_front, T->back, excl_trans,
-									trans_shadows, &interior_flag, &cache);
-							   
+					SceneCall.except = exclude;
+               		SceneCall.front = new_front;
+               		SceneCall.excl_trans = excl_trans;
+
+#if SPLIT_BASIS
+ 					i	= BasisHitNoShadow( &SceneCall );
+#else
+ 					i	= BasisHit( &SceneCall );
+#endif               
+               		interior_flag = SceneCall.interior_flag;
+               							   
 				    if((i >= 0) || interior_flag) 
 					{
 						pixel_flag		= true;
@@ -1271,16 +1310,20 @@ int RayTraceThread(CRayThreadInfo *T)
 					  
 						lit = _1;
 						
-						if(shadows&&((!interior_flag)||(interior_shadows))) 
+						if(shadows && ((!interior_flag)||(interior_shadows))) 
 						{
 							matrix_transform33f3f(bp2->Matrix,r1.impact,r2.base);
 							r2.base[2]-=shadow_fudge;
-							if(BasisHit(bp2,&r2,i,I->Vert2Prim,I->Primitive, true,_0,_0,_0,trans_shadows,&dummy, &shadow_cache) >= 0) 
-							{
+                     		ShadeCall.except = i;
+#if SPLIT_BASIS
+							if(BasisHitShadow(&ShadeCall) > -1)
 								lit	= (float) pow(r2.prim->trans, _p5);
-							} 
+#else
+							if(BasisHit(&ShadeCall) > -1)
+								lit	= (float) pow(r2.prim->trans, _p5);
+#endif
 						}
-					  
+                  
 						if(lit>_0)
 						{
 							dotgle	= -dot_product3f(r1.surfnormal,bp2->LightNormal);
@@ -1459,10 +1502,10 @@ int RayTraceThread(CRayThreadInfo *T)
 	
 	/*  if(T->n_thread>1) 
 	  printf(" Ray: Thread %d: Complete.\n",T->phase+1);*/
-	MapCacheFree(&cache);
+	MapCacheFree(&SceneCall.cache);
 	
 	if(shadows&&(I->NBasis>1))
-		MapCacheFree(&shadow_cache);
+		MapCacheFree(&ShadeCall.cache);
 	
 	return (n_hit);
 }
@@ -1542,224 +1585,235 @@ static unsigned int *GetRenderBuffer(unsigned int inBuffSize, int inThreadIndex)
    huge: over 10% !!! */
 
 #define combine(var,src,mask) { \
-  var = ((src[0 ] & mask)*5);\
-  var += ((src[1 ] & mask)*5);\
-  var += ((src[2 ] & mask)*5);\
-  var += ((src[3 ] & mask)*5);\
-  var += (src[4 ] & mask);\
-  var += (src[5 ] & mask);\
-  var += (src[6 ] & mask);\
-  var += (src[7 ] & mask);\
-  var += (src[8 ] & mask);\
-  var += (src[9 ] & mask);\
-  var += (src[10] & mask);\
-  var += (src[11] & mask);\
-  var += (src[12] & mask);\
-  var += (src[13] & mask);\
-  var += (src[14] & mask);\
-  var += (src[15] & mask);\
-  var >>= 5; \
-  var &= mask; \
+  var = ((src[0] & mask)*5); \
+  var +=((src[1] & mask)*5); \
+  var +=((src[2] & mask)*5); \
+  var +=((src[3] & mask)*5); \
+  var += (src[4] & mask);  \
+  var += (src[5] & mask);  \
+  var += (src[6] & mask);  \
+  var += (src[7] & mask);  \
+  var += (src[8] & mask);  \
+  var += (src[9] & mask);  \
+  var += (src[10] & mask); \
+  var += (src[11] & mask); \
+  var += (src[12] & mask); \
+  var += (src[13] & mask); \
+  var += (src[14] & mask); \
+  var += (src[15] & mask); \
+  var = (var >> 5) & mask; \
  }
 
 /* this is just a simple antialias */
 
-#define edge_combine(var,src,mask) \
-{\
-  var =  (src[0 ] & mask);\
-  var += (src[1 ] & mask);\
-  var += (src[2 ] & mask);\
-  var += (src[3 ] & mask);\
-  var >>= 4; \
-  var &= mask;\
+#define edge_combine(var,src,mask) { \
+  var =  (src[0 ] & mask); \
+  var += (src[1 ] & mask); \
+  var += (src[2 ] & mask); \
+  var += (src[3 ] & mask); \
+  var = (var >> 4) & mask; \
  }
 
 
+#define m00FF 0x00FF
+#define mFF00 0xFF00
+#define mFFFF 0xFFFF
+
 int RayAntiThread(CRayAntiThreadInfo *T)
 {
-  int a;
-  int		w2;
-  int		wid_1, hgt_1;
-  register unsigned int part;
-  unsigned int acc;
-  unsigned int z[16],zm[16];
-  
-  unsigned int *pSrc;
-  unsigned int *pDst;
-  const unsigned int m00FF=0x00FF,mFF00=0xFF00,mFFFF=0xFFFF;
-  int width;
-  int height;
-  int x,y,yy;
-  unsigned int *p;
-  int offset = 0;
-  int y_range;
+	int a;
+	int		w2;
+	int		wid_1, hgt_1;
+	register unsigned int part;
+	unsigned int acc;
+	unsigned int z[16],zm[16];
+	
+	unsigned int *pSrc;
+	unsigned int *pDst;
+	/*const unsigned int m00FF=0x00FF,mFF00=0xFF00,mFFFF=0xFFFF;*/
+	int width;
+	int height;
+	int x,y,yy;
+	unsigned int *p;
+	int offset = 0;
+	int y_range;
+	
+	OrthoBusyFast(9,10);
+	width	= T->width/2;
+	height	= T->height/2;
+	
+	w2	= width * 2;
+	hgt_1	= height - 1;
+	wid_1	= width - 1;
+	
+	y_range = hgt_1 - 1;
+	
+	offset = (T->phase * y_range)/T->n_thread;
+	offset = offset - (offset % T->n_thread) + T->phase;
 
-  OrthoBusyFast(9,10);
-  width	= T->width/2;
-  height	= T->height/2;
-  
-  w2	= width * 2;
-  hgt_1	= height - 1;
-  wid_1	= width - 1;
-
-  y_range = hgt_1 - 1;
-  
-  offset = (T->phase * y_range)/T->n_thread;
-  offset = offset - (offset % T->n_thread) + T->phase;
-
-  for(yy = 0; yy< y_range; yy++ )
-    {
-        
-      y = 1 + (yy + offset) % y_range; /* make sure threads write to different pages */
-
-      pSrc  = T->image + w2 * (y*2 - 1);
-      pDst	= T->image_copy + width * y + 1;	/* Add 1 since x-wise inner loop (below) starts at 1 */
-      
-		if((y % T->n_thread) == T->phase)	/* this is my scan line */
-      for(x = 1; x < wid_1; x++)
-        {
-          p	= pSrc + (x * 2);
-          
-          z[12]	= (*(p-1));
-          z[4]	= (*(p));
-          z[5]	= (*(p+1));
-          z[13]	= (*(p+2));
-          
-          p	+= w2;
-          
-          z[6]	= (*(p-1));
-          z[0]	= (*(p));
-          z[1]	= (*(p+1));
-          z[7]	= (*(p+2));
-          
-          p	+= w2;
-          
-          z[8]	= (*(p-1));
-          z[2]	= (*(p));
-          z[3]	= (*(p+1));
-          z[9]	= (*(p+2));
-          
-          p	+= w2;
+	for(yy = 0; yy< y_range; yy++ )
+	{
+		y = 1 + (yy + offset) % y_range; /* make sure threads write to different pages */
 				
-          z[14]	= (*(p-1));
-          z[10]	= (*(p));
-          z[11]	= (*(p+1));
-          z[15]	= (*(p+2));
-          
-          for( a = 0; a < 16; a += 4 ) 
-            {
-              zm[a+0 ] = z[a+0] & mFFFF; /* move half to zm */
-              zm[a+1 ] = z[a+1] & mFFFF;
-              zm[a+2 ] = z[a+2] & mFFFF;
-              zm[a+3 ] = z[a+3] & mFFFF;
-              
-              z[a   ]	>>= 16; /* keep rest in z */
-              z[a+1 ]	>>= 16;
-              z[a+2 ]	>>= 16;
-              z[a+3 ]	>>= 16;
-            }
-          
-          combine(part,z,m00FF);
-          acc=(part<<16);
-          combine(part,z,mFF00);
-          acc+=(part<<16);
-          combine(part,zm,m00FF);
-          acc+=part;
-          combine(part,zm,mFF00);
-          acc+=part;
-          *(pDst++) = acc;
-          
-        }
-    }
-  
-  /* top and bottom edges */		
-  for(y = 0; y < height; y = y + hgt_1)
-    {
-      pSrc  	= T->image + w2 * (y*2);
-      
-      pDst	= T->image_copy + width * y;
-      
 		if((y % T->n_thread) == T->phase)	/* this is my scan line */
-      for(x = 0; x < width; x++)
-        {
-          p		= pSrc + (x*2);
-          
-          z[0]	= *p;
-          z[1]	= *(p+1);
-          
-          p		+= w2;
-          
-          z[2]	= *(p);
-          z[3]	= *(p+1);
-          
-          zm[0] = z[0] & mFFFF; /* move half to zm */
-          zm[1] = z[1] & mFFFF;
-          zm[2] = z[2] & mFFFF;
-          zm[3] = z[3] & mFFFF;
-          
-          z[0]	>>= 16; /* keep rest in z */
-          z[1]	>>= 16;
-          z[2]	>>= 16;
-          z[3]	>>= 16;
-          
-          edge_combine(part,z,m00FF);
-          acc=(part<<16);
-          edge_combine(part,z,mFF00);
-          acc+=(part<<16);
-          edge_combine(part,zm,m00FF);
-          acc+=part;
-          edge_combine(part,zm,mFF00);
-          acc+=part;
-          *(pDst++) = acc;
-          
-        }
-    }
+		{
+			pSrc	= T->image + w2 * (y*2 - 1);
+			pDst	= T->image_copy + width * y + 1;	/* Add 1 since x-wise inner loop (below) starts at 1 */
+			
+			for(x = 1; x < wid_1; x++)
+			{
+				p	= pSrc + (x * 2);
+				
+				z[12]	= (*(p-1));
+				z[4]	= (*(p));
+				z[5]	= (*(p+1));
+				z[13]	= (*(p+2));
+				
+				p	+= w2;
+				
+				z[6]	= (*(p-1));
+				z[0]	= (*(p));
+				z[1]	= (*(p+1));
+				z[7]	= (*(p+2));
+				
+				p	+= w2;
+				
+				z[8]	= (*(p-1));
+				z[2]	= (*(p));
+				z[3]	= (*(p+1));
+				z[9]	= (*(p+2));
+				
+				p	+= w2;
+					
+				z[14]	= (*(p-1));
+				z[10]	= (*(p));
+				z[11]	= (*(p+1));
+				z[15]	= (*(p+2));
+				
+				for( a = 0; a < 16; a += 4 ) 
+				{
+					zm[a+0 ] = z[a+0] & mFFFF; /* move half to zm */
+					zm[a+1 ] = z[a+1] & mFFFF;
+					zm[a+2 ] = z[a+2] & mFFFF;
+					zm[a+3 ] = z[a+3] & mFFFF;
+					
+					z[a   ]	>>= 16; /* keep rest in z */
+					z[a+1 ]	>>= 16;
+					z[a+2 ]	>>= 16;
+					z[a+3 ]	>>= 16;
+				}
+				
+				combine(part,z,m00FF);
+				acc	= (part<<16);
+				combine(part,z,mFF00);
+				acc	+= (part<<16);
+				combine(part,zm,m00FF);
+				acc	+= part;
+				combine(part,zm,mFF00);
+
+				*(pDst++) = (acc + part);
+			}
+		}
+	}
   
-  /* left and right edges */
-  for(y = 0; y < height; y++)
-    {
-      pSrc	= T->image + w2 * (y*2);
-      pDst	= T->image_copy + width * y;
-      
+	/* top and bottom edges */		
+	for(y = 0; y < height; y = y + hgt_1)
+	{
 		if((y % T->n_thread) == T->phase)	/* this is my scan line */
-      for(x = 0; x < width; x += wid_1, pDst += wid_1 )
-        {
-          p		= pSrc + (x*2);
-          
-          z[0]	= *p;
-          z[1]	= *(p+1);
-          
-          p	+= w2;
-          
-          z[2]	= *p;
-          z[3]	= *(p+1);
-          
-          zm[0] = z[0] & mFFFF; /* move half to zm */
-          zm[1] = z[1] & mFFFF;
-          zm[2] = z[2] & mFFFF;
-          zm[3] = z[3] & mFFFF;
-          
-          z[0]	>>= 16; /* keep rest in z */
-          z[1]	>>= 16;
-          z[2]	>>= 16;
-          z[3]	>>= 16;
-          
-          edge_combine(part,z,m00FF);
-          acc=(part<<16);
-          edge_combine(part,z,mFF00);
-          acc+=(part<<16);
-          edge_combine(part,zm,m00FF);
-          acc+=part;
-          edge_combine(part,zm,mFF00);
-          acc+=part;
-          
-          *pDst = acc;
-          
-        }
-    }
-  return 1;
+		{
+			pSrc  	= T->image + w2 * (y*2);
+			pDst	= T->image_copy + width * y;
+			
+			for(x = 0; x < width; x++)
+			{
+				p		= pSrc + (x*2);
+				
+				z[0]	= *p;
+				z[1]	= *(p+1);
+				
+				p		+= w2;
+				
+				z[2]	= *(p);
+				z[3]	= *(p+1);
+				
+				zm[0] = z[0] & mFFFF; /* move half to zm */
+				zm[1] = z[1] & mFFFF;
+				zm[2] = z[2] & mFFFF;
+				zm[3] = z[3] & mFFFF;
+				
+				z[0]	>>= 16; /* keep rest in z */
+				z[1]	>>= 16;
+				z[2]	>>= 16;
+				z[3]	>>= 16;
+				
+				edge_combine(part,z,m00FF);
+				acc=(part<<16);
+				edge_combine(part,z,mFF00);
+				acc+=(part<<16);
+				edge_combine(part,zm,m00FF);
+				acc+=part;
+				edge_combine(part,zm,mFF00);
+
+				*(pDst++) = (acc + part);
+			}
+		}
+	}
+  
+	/* left and right edges */
+	for(y = 0; y < height; y++)
+	{
+		if((y % T->n_thread) == T->phase)	/* this is my scan line */
+		{
+			pSrc	= T->image + w2 * (y*2);
+			pDst	= T->image_copy + width * y;
+			
+			for(x = 0; x < width; x += wid_1, pDst += wid_1 )
+			{
+				p		= pSrc + (x*2);
+				
+				z[0]	= *p;
+				z[1]	= *(p+1);
+				
+				p	+= w2;
+				
+				z[2]	= *p;
+				z[3]	= *(p+1);
+				
+				zm[0] = z[0] & mFFFF; /* move half to zm */
+				zm[1] = z[1] & mFFFF;
+				zm[2] = z[2] & mFFFF;
+				zm[3] = z[3] & mFFFF;
+				
+				z[0]	>>= 16; /* keep rest in z */
+				z[1]	>>= 16;
+				z[2]	>>= 16;
+				z[3]	>>= 16;
+				
+				edge_combine(part,z,m00FF);
+				acc	= (part<<16);
+				edge_combine(part,z,mFF00);
+				acc	+= (part<<16);
+				edge_combine(part,zm,m00FF);
+				acc	+= part;
+				edge_combine(part,zm,mFF00);
+				
+				*pDst = (acc + part);
+			}
+		}
+	}
+	
+	return 1;
 }
 
+#ifdef PROFILE_BASIS
+extern int n_cells;
+extern int n_prims;
+extern int n_triangles;
+extern int n_spheres;
+extern int n_cylinders;
+extern int n_sausages;
+extern int n_skipped;
+#endif
 
 /*========================================================================*/
 void RayRender(CRay *I,int width,int height,unsigned int *image,
@@ -1779,6 +1833,16 @@ void RayRender(CRay *I,int width,int height,unsigned int *image,
   int shadows;
   float spec_vector[3];
   int n_thread;
+
+#ifdef PROFILE_BASIS
+  n_cells = 0;
+  n_prims = 0;
+  n_triangles = 0;
+  n_spheres = 0;
+  n_cylinders = 0;
+  n_sausages = 0;
+  n_skipped = 0;
+#endif
 
   n_thread  = (int)SettingGet(cSetting_max_threads);
   if(n_thread<1)
@@ -1918,7 +1982,7 @@ void RayRender(CRay *I,int width,int height,unsigned int *image,
 
 #ifdef _MemoryDebug_ON
     if(shadows) {
-      PRINTFB(FB_Ray,FB_Details)
+      PRINTFB(FB_Ray,FB_Blather)
         " Ray: voxels: [%4.2f:%dx%dx%d], [%4.2f:%dx%dx%d], %d MB, %4.2f sec.\n",
         I->Basis[1].Map->Div,   I->Basis[1].Map->Dim[0],
         I->Basis[1].Map->Dim[1],I->Basis[1].Map->Dim[2],
@@ -1928,7 +1992,7 @@ void RayRender(CRay *I,int width,int height,unsigned int *image,
         now
         ENDFB;
     } else {
-      PRINTFB(FB_Ray,FB_Details)
+      PRINTFB(FB_Ray,FB_Blather)
         " Ray: voxels: [%4.2f:%dx%dx%d], %d MB, %4.2f sec.\n",
         I->Basis[1].Map->Div,   I->Basis[1].Map->Dim[0],
         I->Basis[1].Map->Dim[1],I->Basis[1].Map->Dim[2],
@@ -1938,7 +2002,7 @@ void RayRender(CRay *I,int width,int height,unsigned int *image,
     }
 #else
     if(shadows) {
-      PRINTFB(FB_Ray,FB_Details)
+      PRINTFB(FB_Ray,FB_Blather)
         " Ray: voxels: [%4.2f:%dx%dx%d], [%4.2f:%dx%dx%d], %4.2f sec.\n",
         I->Basis[1].Map->Div,   I->Basis[1].Map->Dim[0],
         I->Basis[1].Map->Dim[1],I->Basis[1].Map->Dim[2],
@@ -1947,7 +2011,7 @@ void RayRender(CRay *I,int width,int height,unsigned int *image,
         now
         ENDFB;
     } else {
-      PRINTFB(FB_Ray,FB_Details)
+      PRINTFB(FB_Ray,FB_Blather)
         " Ray: voxels: [%4.2f:%dx%dx%d], %4.2f sec.\n",
         I->Basis[1].Map->Div,   I->Basis[1].Map->Dim[0],
         I->Basis[1].Map->Dim[1],I->Basis[1].Map->Dim[2],
@@ -2033,6 +2097,17 @@ void RayRender(CRay *I,int width,int height,unsigned int *image,
   PRINTFD(FB_Ray)
     " RayRender: n_hit %d\n",n_hit
     ENDFD;
+#ifdef PROFILE_BASIS
+
+  printf("int n_cells = %d;\nint n_prims = %d;\nint n_triangles = %8.3f;\nint n_spheres = %8.3f;\nint n_cylinders = %8.3f;\nint n_sausages = %8.3f;\nint n_skipped = %8.3f;\n",
+         n_cells,
+         n_prims,
+         n_triangles/((float)n_cells),
+         n_spheres/((float)n_cells),
+         n_cylinders/((float)n_cells),
+         n_sausages/((float)n_cells),
+         n_skipped/((float)n_cells));
+#endif
 
 }
 

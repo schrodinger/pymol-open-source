@@ -2463,7 +2463,7 @@ void SceneRay(int ray_width,int ray_height,int mode,char **headerVLA_ptr,
   OrthoBusyFast(1,20);
 
   if(mode!=2) { /* don't show pixel count for tests */
-    PRINTFB(FB_Ray,FB_Details)
+    PRINTFB(FB_Ray,FB_Blather)
       " Ray: tracing %dx%d = %d rays against %d primitives.\n",ray_width,ray_height,
       ray_width*ray_height,RayGetNPrimitives(ray)
       ENDFB;
