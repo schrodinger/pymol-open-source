@@ -36,7 +36,6 @@
 # pymol directory
 
 import __main__
-
 if __name__!='__main__':
    import invocation
    
@@ -70,8 +69,8 @@ if pymol_launch != 3: # if this isn't a dry run
    if __name__!='__main__':
       if not os.environ.has_key("PYMOL_PATH"):
          try:
-            pymol_path = re.sub(r"\/[^\/]*$","/pymol_path",__file__)
-            if pymol_path[0:1]!='/': 
+            pymol_path = re.sub(r"[\/\\][^\/\\]*$","/pymol_path",__file__)
+            if pymol_path[0:1]!='/' and pymol_path[1:2]!=':': 
                pymol_path = os.getcwd()+"/"+pymol_path # make path absolute
             if os.path.isdir(pymol_path):
                os.environ['PYMOL_PATH'] = pymol_path
@@ -145,11 +144,19 @@ if pymol_launch != 3: # if this isn't a dry run
    _session_save_tasks = [ None ]
    _session_restore_tasks = [ None ]
    
-   # include installed numpy on win32 
+   # special handling for win32
 
    if sys.platform=='win32':
-      sys.path.append(os.environ['PYMOL_PATH']+'/modules/numeric')
-
+      # include modules directory (if it isn't already and it exists)
+      loc2 = os.environ['PYMOL_PATH']+'/modules'
+      if os.path.exists(loc2):
+         if loc2 not in sys.path:
+            sys.path.append(loc2)
+      # include installed numpy
+      loc1 = os.environ['PYMOL_PATH']+'/modules/numeric'
+      if os.path.exists(loc1):
+         sys.path.append(loc1)
+      
    sys.setcheckinterval(1) # maximize responsiveness
 
    lock_api = threading.RLock() # mutex for API 
