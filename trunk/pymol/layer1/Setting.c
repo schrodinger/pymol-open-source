@@ -1388,7 +1388,7 @@ void SettingInitGlobal(void)
 
   SettingSet_b(I,cSetting_half_bonds, 0);
 
-  SettingSet_i(I,cSetting_stick_quality, 8.0);
+  SettingSet_i(I,cSetting_stick_quality, 8);
 
   SettingSet_f(I,cSetting_stick_overlap, 0.2F);
 
@@ -1602,7 +1602,7 @@ void SettingInitGlobal(void)
 
   SettingSet_b(I,cSetting_auto_indicate_flags,0); 
 
-  SettingSet_i(I,cSetting_surface_debug,0.0);
+  SettingSet_i(I,cSetting_surface_debug,0);
 
   SettingSet_f(I,cSetting_ray_improve_shadows,0.1F);
 
