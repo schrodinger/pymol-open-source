@@ -22,11 +22,20 @@ restriction, and there will be no exceptions.
 (3) Develop independent functionality which makes use of the PyMOL
 Python API.  With this approach, your project need not become part of
 the PyMOL distribution, and you can attach whatever restrictions you
-would like to usage and distribution of your code.  Of course, you
-must therefore also assume the responsibility for distributing your
-software.  If you want your code to become part of the official PyMOL
-package, then you will need to release it under the "Python" license
-or an equivalent.
+would like to usage and distribution of your code.  However, if you
+attach restrictions, then you must also assume responsibility for
+distributing the software.  If you want your code to become part of
+the official PyMOL package, then you will need to release it under the
+"Python" license or an equivalent non-restrictive open source license.
+
+All contributors to the PyMOL project who donate source code will be
+permanently acknowledged by name in the individual source files and in
+the main PyMOL README file (unless they request otherwise).  E-mail
+addresses will only be included upon request.  Major contributors
+(1000+ non-blank, non-comment lines of code) will be acknowledged on
+the initial "splash" screen as space permits.  Self-contained packages
+for the contrib directory should contain separate LICENSE statements
+and copyright notices.
 
 These are draft rules, and I would appreciate feedback and comments
 (email to warren@delanoscientific.com).  However, I am absolutely
@@ -102,9 +111,9 @@ support, and maintain compatability with the free version of the
 source code, and the market value of their product will mainly reflect
 the functionality that extends beyond PyMOL.
 
-Of course, development of free and open-source systems built using
-PyMOL will be even more exciting, but these kinds of commercial uses
-of PyMOL can only help to further advance the PyMOL project and should
+Of course, development of free open-source tools built using PyMOL
+will be even more exciting, but even these commercial uses of PyMOL
+can only help to further advance the PyMOL project and should
 therefore be encouraged.
 
 It is my hope to eventually see a completely free and open-source
