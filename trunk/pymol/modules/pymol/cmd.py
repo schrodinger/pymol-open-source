@@ -79,7 +79,7 @@ COMMANDS
    INPUT/OUTPUT  load      save      delete    quit
    VIEW          turn      move      clip      rock
                  show      hide      enable    disable
-                 reset     refresh   rebuild
+                 reset     refresh   rebuil
                  zoom      origin    orient
    MOVIES        mplay     mstop     mset      mdo
                  mpng      mmatrix   frame
@@ -1806,11 +1806,11 @@ NOTES
       unlock()
    return r
 
-def cycle_valence():
+def cycle_valence(*arg):
    '''
 DESCRIPTION
   
-   "cycle_valnce" cycles the valence on the currently selected bond.
+   "cycle_valence" cycles the valence on the currently selected bond.
       
 USAGE
  
@@ -1823,15 +1823,20 @@ PYMOL API
 NOTES
 
    This function is usually connected to the
-   DELETE key and "CTRL-D".
+   DELETE key and "CTRL-W".
     
 '''
+   fill=1
+   if len(arg):
+      fill=int(arg[0])
    r = 1
    try:
       lock()   
       r = _cmd.cycle_valence()
    finally:
       unlock()
+   if fill:
+      h_fill()
    return r
 
 
