@@ -28,6 +28,7 @@ Z* -------------------------------------------------------------------
 
 #define _MATCHDEBUG
 #define _MATCHDEBUG2
+#define _RINGDEBUG
 
 char *ChampParseAliphaticAtom(CChamp *I,char *c,int atom,int mask,int len);
 char *ChampParseAromaticAtom(CChamp *I,char *c,int atom,int mask,int len);
@@ -36,6 +37,7 @@ char *ChampParseBlock(CChamp *I,char *c,int atom);
 
 void ChampPatDump(CChamp *I,int index);
 void ChampAtomDump(CChamp *I,int index);
+void ChampAtomFlagDump(CChamp *I,int index);
 
 int ChampAtomToString(CChamp *I,int index,char *buf);
 int ChampBondToString(CChamp *I,int index,char *buf);
@@ -59,6 +61,21 @@ void ChampCountRings(CChamp *I,int index);
 void ChampPrepareTarget(CChamp *I,int index);
 void ChampPreparePattern(CChamp *I,int index);
 
+static int ring_mask[12] = { 
+  0,
+  0,
+  0,
+  cH_Ring3,
+  cH_Ring4,
+  cH_Ring5,
+  cH_Ring6,
+
+  cH_Ring7,
+  cH_Ring8,
+  0,
+  0,
+  0,};
+
 #ifdef _HAPPY_UT
 
 static void diff(char *p,char *q)
@@ -81,6 +98,7 @@ static void diff(char *p,char *q)
   if(!same)
     printf("%s\n%s\n",s1,s2);
 }
+
 int main(int argc, char *argv[])
 {
   CChamp *h;
@@ -367,14 +385,20 @@ static int combine_lineage(CChamp *I,int src,int dst,int *lin_mask)
 static int unrelated_lineage(CChamp *I,int index,int *lin_mask)
 {
   int result = true;
+#ifdef RINGDEBUG
   printf("%d %d %d %d %d\n",
          lin_mask[0],
          lin_mask[1],
          lin_mask[2],
          lin_mask[3],
          lin_mask[4]);
+#endif
+
   while(index) {
+#ifdef RINGDEBUG
     printf(" lineage: %d %d\n",I->Int[index].value,lin_mask[I->Int[index].value]);
+#endif
+
     if(lin_mask[I->Int[index].value]) {
       result=false;
       break;
@@ -388,11 +412,12 @@ void ChampCountRings(CChamp *I,int index)
 {
   ListPat *pat;
   ListBond *bd;
-  ListAtom *at,*at0,*at1;
-  int a,a0,a1,ai,bi,ai0,ai1,a2;
-  int i2,i0;
+  ListAtom *at,*at0,*at1,*at2;
+  int a,a0,a1,ai,bi,ai0,ai1,ai2,a2,bd_a0,bd_a1;
+  int i2,i0,i1;
   int ni1;
   int n_atom = 0;
+  int ring_size;
   pat = I->Pat + index;
   
   ai = pat->atom;
@@ -404,6 +429,7 @@ void ChampCountRings(CChamp *I,int index)
 
   if(n_atom) {
     ListAtom **atom = NULL;
+    int *atom_idx;
     int *bonds = NULL; 
     int *neighbors = NULL;
     int lin_mask_size;
@@ -414,12 +440,14 @@ void ChampCountRings(CChamp *I,int index)
     /* create a packed array of the atom pointers -- these will be our
        atom indices for this routine */
 
-    atom = (ListAtom**)os_malloc(n_atom*sizeof(ListAtom*));
+    atom = mac_malloc_array(ListAtom*,n_atom);
+    atom_idx = mac_malloc_array(int,n_atom);
     a = 0;
     ai = pat->atom;
     while(ai) { /* load array and provide back-reference in mark_targ */
       at = I->Atom + ai;
       atom[a] = at;
+      atom_idx[a] = ai;
       at->mark_targ = a; /* used for back-link */
       at->mark_read = 0; /* used to mark exclusion */
       at->mark_tmpl = 0; /* used to mark as dirty */
@@ -448,9 +476,15 @@ void ChampCountRings(CChamp *I,int index)
       bonds[a0] = ListElemPushInt(&I->Int,bonds[a0],bi); /* enter this bond */
       bonds[a1] = ListElemPushInt(&I->Int,bonds[a1],bi);
       neighbors[a0] = ListElemPushInt(&I->Int,neighbors[a0],a1); /* cross-enter neighbors */
+
+#ifdef RINGDEBUG
       printf(" ring: neighbor of %d is %d (%d)\n",a0,a1,neighbors[a0]);
+#endif
+
       neighbors[a1] = ListElemPushInt(&I->Int,neighbors[a1],a0);
+#ifdef RINGDEBUG
       printf(" ring: neighbor of %d is %d (%d)\n",a1,a0,neighbors[a1]);
+#endif
       
       bi = bd->link;
     }
@@ -459,7 +493,6 @@ void ChampCountRings(CChamp *I,int index)
 
     lin_mask_size = sizeof(int)*n_atom;
     lin_mask_vla = (int**)VLAMalloc(100,lin_mask_size,5,1); /* auto-zero */
-    lin_index = 1;
 
     /* okay, repeat the ring finding process for each atom in the molecule 
        (optimize later to exclude dead-ends */
@@ -470,8 +503,13 @@ void ChampCountRings(CChamp *I,int index)
       int sz;
       int next;
 
+      lin_index = 1;
+
+#ifdef RINGDEBUG
       printf("==========\n");
       printf(" ring: starting with atom %d\n",a);
+      ChampMemoryDump(I);
+#endif
       expand = 0;
       clean_up = 0;
       sz = 1;
@@ -484,7 +522,6 @@ void ChampCountRings(CChamp *I,int index)
       at->mark_read = true; /* exclude this atom */
 
       expand = ListElemPushInt(&I->Int,expand,a); /* store this atom for the expansion cycle */
-      
       vla_check(lin_mask_vla,int*,lin_index); /* assign blank lineage for this atom */
       at->first_tmpl = lin_index;
       lin_index++;
@@ -493,53 +530,88 @@ void ChampCountRings(CChamp *I,int index)
 
         next = 0; /* start list of atoms for growth pass */
 
-        /* odd cycle finder */
+        /* find odd cycles and note growth opportunies */
 
         while(expand) { /* iterate over each atom to expand */
           expand = ListElemPopInt(I->Int,expand,&a0);
 
+#ifdef RINGDEBUG
           printf(" ring: expand sz %d a0 %d\n",sz,a0);
+#endif
 
           ni1 = neighbors[a0]; 
           while(ni1) { /* iterate over each neighbor of that atom */
-            printf(" ring: ni1 %d\n",ni1);
-            ni1 = ListElemGetInt(I->Int,ni1,&a1);
-            printf(" ring: neighbor of %d is %d\n",a0,a1);
 
+#ifdef RINGDEBUG
+            printf(" ring: ni1 %d\n",ni1);
+#endif
+            ni1 = ListElemGetInt(I->Int,ni1,&a1);
+#ifdef RINGDEBUG
+            printf(" ring: neighbor of %d is %d\n",a0,a1);
             printf(" ring: neighbor %d mark_read %d\n",a1,atom[a1]->mark_read);
+#endif
+
             if(!atom[a1]->mark_read) { /* if that neighbor hasn't yet been covered... */
-              if(!atom[a1]->first_base) 
+              if(!atom[a1]->first_base) {
                 next = ListElemPushInt(&I->Int,next,a1);  /* store it for growth pass */
+              }
               atom[a1]->first_base = /* and record this entry to it */
                 ListElemPushInt(&I->Int,atom[a1]->first_base,a0); 
-              if(!atom[a1]->mark_tmpl) /* mark for later clean_up */
+              if(!atom[a1]->mark_tmpl) {/* mark for later clean_up */
                 clean_up = ListElemPushInt(&I->Int,clean_up,a1);
+                atom[a1]->mark_tmpl = true;
+              }
 
             } else if(sz==atom[a1]->mark_read) { /* ...or if the neighbor has an equal exclusion level... */
+
+#ifdef RINGDEBUG
               printf(" ring: checking lineage between %d %d\n",a0,a1);
+#endif
               if(unrelated_lineage(I,atom[a0]->first_targ, /* unrelated? */
                                    (int*)(((char*)lin_mask_vla)+(atom[a1]->first_tmpl*lin_mask_size))))
                 {
-                  printf(" ring: found odd cycle %d\n",sz*2-1);
+                  ring_size = sz*2-1;
+#ifdef RINGDEBUG
+                  printf(" ring: #### found odd cycle %d\n",ring_size);
+#endif
                   /* then we have a cycle of size sz*2-1 (odd) */
+                  at0 = atom[a0];
+                  at1 = atom[a1];
                   merge_lineages(I,
-                                 &atom[a0]->first_targ,
-                                 (int*)(((char*)lin_mask_vla)+(atom[a0]->first_tmpl*lin_mask_size)),
-                                 &atom[a1]->first_targ,
-                                 (int*)(((char*)lin_mask_vla)+(atom[a1]->first_tmpl*lin_mask_size)));
-                  /* set the atom and bond bits appropriately */
+                                 &at0->first_targ,
+                                 (int*)(((char*)lin_mask_vla)+(at0->first_tmpl*lin_mask_size)),
+                                 &at1->first_targ,
+                                 (int*)(((char*)lin_mask_vla)+(at1->first_tmpl*lin_mask_size)));
+                  /* set the atom bits appropriately */
+                  at0->cycle|=ring_mask[ring_size];
+                  at1->cycle|=ring_mask[ring_size];
+                  i0 = bonds[a0];
+                  ai0 = atom_idx[a0];
+                  ai1 = atom_idx[a1];
+                  while(i0) {
+                    i0 = ListElemGetInt(I->Int,i0,&bi);
+                    bd = I->Bond+bi;
+                    bd_a0=bd->atom[0];
+                    bd_a1=bd->atom[1];
+                    if(((bd_a0==ai0)&&(bd_a1==ai1))||
+                       ((bd_a1==ai0)&&(bd_a0==ai1)))
+                      bd->cycle|=ring_mask[ring_size];
+                  }
                 }
             }
           }
         }
         
-        /* even cycle finder and growth pass */
+        /* find even cycles and grow pass */
 
         n_expand = 0;
         while(next) { /* iterate over potential branches */
           next = ListElemPopInt(I->Int,next,&a1);
 
+#ifdef RINGDEBUG
           printf(" ring: next %d\n",a1);
+#endif
+
           at1 = atom[a1];
 
           /* see if the base atoms form distinct cycles */
@@ -554,7 +626,32 @@ void ChampCountRings(CChamp *I,int index)
               if(unrelated_lineage(I,atom[a0]->first_targ,
                                    (int*)(((char*)lin_mask_vla)+(atom[a2]->first_tmpl*lin_mask_size))))
                 {
-                  printf(" ring: found even cycle %d %d %d\n",sz*2,i0,i2);
+                  ring_size = sz*2;
+                  at0 = atom[a0];
+                  at2 = atom[a2];
+#ifdef RINGDEBUG
+                  printf(" ring: #### found even cycle %d %d %d\n",ring_size,i0,i2);
+#endif
+                  at0->cycle|=ring_mask[ring_size];
+                  at1->cycle|=ring_mask[ring_size];
+                  at2->cycle|=ring_mask[ring_size];
+
+                  i1 = bonds[a1];
+                  ai0 = atom_idx[a0];
+                  ai1 = atom_idx[a1];
+                  ai2 = atom_idx[a2];
+                  while(i1) {
+                    i1 = ListElemGetInt(I->Int,i1,&bi);
+                    bd = I->Bond+bi;
+                    bd_a0=bd->atom[0];
+                    bd_a1=bd->atom[1];
+                    if(((bd_a0==ai0)&&(bd_a1==ai1))||
+                       ((bd_a1==ai0)&&(bd_a0==ai1))||
+                       ((bd_a0==ai2)&&(bd_a1==ai1))||
+                       ((bd_a1==ai2)&&(bd_a0==ai1)))
+                      bd->cycle|=ring_mask[ring_size];
+                  }
+
                   /* we have a cycle of size sz*2 */
                   /* set atom and bond bits appropriately */
                 }
@@ -569,7 +666,7 @@ void ChampCountRings(CChamp *I,int index)
           lin_mask = (int*)(((char*)lin_mask_vla)+(lin_mask_size*at1->first_tmpl));
           lin_index++;
 
-          /* extend this particular lineage with each linking atom's linkage*/
+          /* extend this particular lineage with each linking atom's lineage*/
 
           i0 = atom[a1]->first_base;
           a0 = I->Int[i0].value;
@@ -604,14 +701,18 @@ void ChampCountRings(CChamp *I,int index)
 
         }
         sz++;
-        if(n_expand<2) /* on a branch, so no point in continuing */
+        if(n_expand<2) {/* on a uniconnected branch, so no point in continuing */
           break;
+        }
       }
 
+      /* clean-up expansion list */
+      ListElemFreeChain(I->Int,expand);
+      expand = 0;
+
       while(clean_up) {
-        a0 = I->Int[clean_up].value;
+        clean_up=ListElemPopInt(I->Int,clean_up,&a0);
         at = atom[a0];
-        at->mark_read = false; /* reinitialize exclusion list */
         
         /* reset lineage list and mask */
         lin_mask = (int*)(((char*)lin_mask_vla)+ (lin_mask_size*at->first_tmpl));
@@ -619,8 +720,13 @@ void ChampCountRings(CChamp *I,int index)
           at->first_targ = ListElemPopInt(I->Int, at->first_targ,&a1);
           lin_mask[a1] = 0;
         }
+#ifdef RINGDEBUG
+        for(i0=0;i0<n_atom;i0++) {
+          if(lin_mask[i0])
+            printf("lineage mask unclean !\n");
+        }
+#endif
 
-        at->mark_targ = a; /* used for back-link */
         at->mark_read = 0; /* used to mark exclusion */
         at->mark_tmpl = 0; /* used to mark as dirty */
         
@@ -629,10 +735,9 @@ void ChampCountRings(CChamp *I,int index)
         
         at->first_base = 0; /* used for storing branches */
 
-        clean_up=ListElemPop(I->Int,clean_up);
+
       }
     }
-
 
     /* now, clean up our efficient bond and neighbor lists */
 
@@ -642,6 +747,7 @@ void ChampCountRings(CChamp *I,int index)
     }
     mac_free(neighbors);
     mac_free(atom);
+    mac_free(atom_idx);
     mac_free(bonds);
       
     /* and free the other data structures */
@@ -649,6 +755,9 @@ void ChampCountRings(CChamp *I,int index)
     vla_free(lin_mask_vla);
 
   }
+#ifdef RINGDEBUG
+  ChampPatDump(I,index);
+#endif
 }
 
 
@@ -661,6 +770,7 @@ void ChampPrepareTarget(CChamp *I,int index)
     pat->target_prep=1;
 
     ChampCountRings(I,index);
+    printf("index %d\n",index);
     if(pat->unique_atom) 
       ChampUniqueListFree(I,pat->unique_atom);
     pat->unique_atom = ChampUniqueListNew(I,pat->atom,0);
@@ -1770,8 +1880,8 @@ int ChampMatch2(CChamp *I,int template,int target,
             targ_at = I->Atom+atom_idx;
 
             if((tmpl_at->mark_tmpl-targ_at->mark_targ)==1) /* is atom available? */
-              if(ChampBondMatch(I->Bond+bond_idx, /* does bond match? */
-                                 I->Bond+tmpl_ent->bond))
+              if(ChampBondMatch(I->Bond+tmpl_ent->bond,
+                                I->Bond+bond_idx)) /* does bond match? */
                 if(ChampAtomMatch(tmpl_at,targ_at)) /* does atom match? */
                   
                   {
@@ -2122,7 +2232,9 @@ void ChampPatDump(CChamp *I,int index)
   while(cur_atom) {
     at = I->Atom+cur_atom;
     ChampAtomToString(I,cur_atom,buf);
-    printf(" atom %d %s 0x%08x bonds: ",cur_atom,buf,at->atom);
+    printf(" atom %d %s 0x%08x",cur_atom,buf,at->atom);
+    printf(" cy: %x",at->cycle);
+    printf(" bonds: ");
     for(a=0;a<MAX_BOND;a++) {
       if(!at->bond[a]) break;
       else printf("%d ",at->bond[a]);
@@ -2133,8 +2245,8 @@ void ChampPatDump(CChamp *I,int index)
   cur_bond = I->Pat[index].bond;
   while(cur_bond) {
     bd = I->Bond+cur_bond;
-    printf(" bond %d 0x%01x atoms %d %d order 0x%01x\n",
-           cur_bond,bd->order,bd->atom[0],bd->atom[1],bd->order);
+    printf(" bond %d 0x%01x atoms %d %d order 0x%01x cycle %x\n",
+           cur_bond,bd->order,bd->atom[0],bd->atom[1],bd->order,bd->cycle);
     cur_bond = I->Bond[cur_bond].link;
   }
   fflush(stdout);
@@ -2431,7 +2543,7 @@ int ChampSmiToPat(CChamp *I,char *c)
     }
     if(sym==cSym_Null) {
       PRINTFB(FB_smiles_parsing,FB_errors)
-        " champ: error parsing smiles string\n"
+        " champ: error parsing smiles string at '%c'\n",*c
         ENDFB;
       ok=false;
     }
@@ -2590,10 +2702,11 @@ int ChampBondMatch(ListBond *p,ListBond *a)
   return((((!p->order)||(p->order&a->order))&&
           ((!p->class)||(p->class&a->class))&&
           ((!p->cycle)||(p->cycle&a->cycle))&&   
-          ((!p->not_order)||(p->not_order&a->not_order))&&   
-          ((!p->not_class)||(p->not_class&a->not_class))&&
-          ((!p->not_cycle)||(p->not_cycle&a->not_cycle))));
+          ((!p->not_order)||(!(p->not_order&a->order)))&&   
+          ((!p->not_class)||(!(p->not_class&a->class)))&&
+          ((!p->not_cycle)||(!(p->not_cycle&a->cycle)))));
 }
+
 
 
 

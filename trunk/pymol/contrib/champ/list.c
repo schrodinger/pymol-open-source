@@ -197,6 +197,7 @@ void *ListNew(int init_size,int rec_size)
   List *I;
   I = (List*)VLAMalloc(init_size+1,rec_size,5,0);
   I->rec_size = rec_size;
+  I->next_avail = 0;
   ListPrime(I,1,init_size+1);
   return I;
 }
