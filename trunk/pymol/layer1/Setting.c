@@ -1899,7 +1899,7 @@ void SettingInitGlobal(void)
 
   SettingSet_i(I,cSetting_transparency_mode,2);
 
-  SettingSet_i(I,cSetting_clamp_colors,1);
+  SettingSet_b(I,cSetting_clamp_colors,1);
 
   SettingSet_f(I,cSetting_pymol_space_max_red,0.90F);
 
@@ -1909,7 +1909,7 @@ void SettingInitGlobal(void)
 
   SettingSet_f(I,cSetting_pymol_space_min_factor,0.15F);
 
-  SettingSet_i(I,cSetting_roving_origin,1);
+  SettingSet_b(I,cSetting_roving_origin,1);
 
   SettingSet_f(I,cSetting_roving_sticks,6.0F);
 
@@ -1923,7 +1923,7 @@ void SettingInitGlobal(void)
 
   SettingSet_s(I,cSetting_roving_selection,"all");
 
-  SettingSet_i(I,cSetting_roving_byres,1);
+  SettingSet_b(I,cSetting_roving_byres,1);
 
   SettingSet_f(I,cSetting_roving_ribbon,-7.0F);
   
@@ -1935,9 +1935,9 @@ void SettingInitGlobal(void)
 
   SettingSet_f(I,cSetting_roving_nonbonded,0.0F);
 
-  SettingSet_f(I,cSetting_float_labels,1.0F);
+  SettingSet_i(I,cSetting_float_labels,0);
 
-  SettingSet_f(I,cSetting_roving_detail,0.0F);
+  SettingSet_b(I,cSetting_roving_detail,0);
 
   SettingSet_f(I,cSetting_roving_nb_spheres,8.0F);
 

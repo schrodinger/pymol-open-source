@@ -907,7 +907,6 @@ static PyObject *CmdGetChains(PyObject *self, PyObject *args)
 
 }
 
-
 static PyObject *CmdMultiSave(PyObject *self, PyObject *args)
 {
   char *name,*object;
@@ -2039,13 +2038,13 @@ static PyObject *CmdLabel(PyObject *self,   PyObject *args)
 {
   char *str1,*str2;
   OrthoLineType s1;
-
+  int quiet;
   int ok=false;
-  ok = PyArg_ParseTuple(args,"ss",&str1,&str2);
+  ok = PyArg_ParseTuple(args,"ssi",&str1,&str2,&quiet);
   if (ok) {
     APIEntry();
     SelectorGetTmp(str1,s1);
-    ExecutiveLabel(s1,str2); /* TODO STATUS */
+    ExecutiveLabel(s1,str2,quiet); /* TODO STATUS */
     SelectorFreeTmp(s1);
     APIExit();
   }

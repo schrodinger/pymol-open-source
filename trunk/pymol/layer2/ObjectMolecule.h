@@ -137,6 +137,8 @@ typedef struct ObjectMoleculeOpRec {
 #define OMOP_GetChains 46
 #define OMOP_Spectrum 47
 #define OMOP_GetBFactors 48
+#define OMOP_GetOccupancies 49
+#define OMOP_GetPartialCharges 50
 
 #include"CoordSet.h"
 

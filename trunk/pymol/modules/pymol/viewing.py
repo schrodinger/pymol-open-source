@@ -763,7 +763,7 @@ PYMOL API
          unlock()
       return r
 
-   def label(selection="(all)",expression=""):
+   def label(selection="(all)",expression="",quiet=1):
       '''
 DESCRIPTION
 
@@ -797,9 +797,9 @@ EXAMPLES
       try:
          lock()
          if len(str(expression))==0:
-            r= _cmd.label("("+str(selection)+")",'')
+            r= _cmd.label("("+str(selection)+")",'',quiet)
          else:
-            r = _cmd.label("("+str(selection)+")",'label='+str(expression))
+            r = _cmd.label("("+str(selection)+")",'label='+str(expression),quiet)
       finally:
          unlock()   
       return r

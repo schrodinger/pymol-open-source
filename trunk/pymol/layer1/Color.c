@@ -847,7 +847,7 @@ void ColorReset(void)
 
   for(a=0;a<1000;a=a+1) {
     set1=(int)(a/W_DIV);
-    sprintf(I->Color[I->NColor].Name,"w%02d",a);
+    sprintf(I->Color[I->NColor].Name,"w%03d",a);
     f = 1.0F-(a-(set1*W_DIV))/W_DIV;
     I->Color[I->NColor].Color[0]=f*spectrumW[set1][0]+(1.0F-f)*spectrumW[set1+1][0];
     I->Color[I->NColor].Color[1]=f*spectrumW[set1][1]+(1.0F-f)*spectrumW[set1+1][1];
