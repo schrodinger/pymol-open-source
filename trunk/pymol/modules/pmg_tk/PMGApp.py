@@ -1319,7 +1319,15 @@ class PMGApp(AbstractApp):
       self.menuBar.addmenuitem('Sculpt', 'command', '30 Cycles/Update',
                                label='30 Cycles per Update',
                                command = lambda: cmd.do("_ set sculpting_cycles=30"))
-      
+
+      self.menuBar.addmenuitem('Sculpt', 'command', '100 Cycles/Update',
+                               label='100 Cycles per Update',
+                               command = lambda: cmd.do("_ set sculpting_cycles=100"))
+
+      self.menuBar.addmenuitem('Sculpt', 'command', '300 Cycles/Update',
+                               label='300 Cycles per Update',
+                               command = lambda: cmd.do("_ set sculpting_cycles=300"))
+
       self.menuBar.addmenu('Demo', 'Demonstrations')
 
       self.menuBar.addmenuitem('Demo', 'command', 'Representations',

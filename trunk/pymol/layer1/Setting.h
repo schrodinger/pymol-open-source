@@ -273,7 +273,9 @@ int SettingGetName(int index,SettingName name);
 #define cSetting_sphere_transparency         172
 #define cSetting_sphere_color                173
 #define cSetting_sculpt_field_mask           174
-#define cSetting_INIT                        175
+#define cSetting_sculpt_hb_overlap           175
+#define cSetting_sculpt_hb_overlap_base      176
+#define cSetting_INIT                        178
 
 #endif
 
