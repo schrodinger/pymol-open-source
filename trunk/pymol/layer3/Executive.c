@@ -83,9 +83,36 @@ void ExecutiveObjMolSeleOp(int sele,ObjectMoleculeOpRec *op);
 SpecRec *ExecutiveFindSpec(char *name);
 
 /*========================================================================*/
-void ExecutiveRenameAtoms(char *s1)
+void ExecutiveRenameObjectAtoms(char *name,int force) 
 {
-}
+  CExecutive *I = &Executive;
+  Object *os=NULL;
+  ObjectMolecule *obj;
+  SpecRec *rec = NULL;
+
+  if(strlen(name)) {
+    os=ExecutiveFindObjectByName(name);
+    if(!os)
+      ErrMessage(" Executive","object not found.");
+    else if(os->type!=cObjectMolecule) {
+      ErrMessage(" Executive","bad object type.");
+      os = NULL;
+    }
+  }
+  
+  if(os||(!strlen(name))) { /* sort one or all */
+    while(ListIterate(I->Spec,rec,next,SpecList)) {
+      if(rec->type==cExecObject)
+        if(rec->obj->type==cObjectMolecule)
+          if((!os)||(rec->obj==os)) {
+            obj =(ObjectMolecule*)rec->obj;
+            ObjectMoleculeRenameAtoms(obj,force);  
+          }
+    }
+    SceneChanged();
+  }
+} 
+
 /*========================================================================*/
 void ExecutiveFuse(char *s0,char *s1)
 {
@@ -133,8 +160,10 @@ void ExecutiveSpheroid(char *name)  /* EXPERIMENTAL */
     os=ExecutiveFindObjectByName(name);
     if(!os)
       ErrMessage(" Executive","object not found.");
-    else if(os->type!=cObjectMolecule)
+    else if(os->type!=cObjectMolecule) {
       ErrMessage(" Executive","bad object type.");
+      os=NULL;
+    }
   }
   
   if(os||(!strlen(name))) { /* sort one or all */
@@ -143,7 +172,7 @@ void ExecutiveSpheroid(char *name)  /* EXPERIMENTAL */
         if(rec->obj->type==cObjectMolecule)
           if((!os)||(rec->obj==os)) {
             obj =(ObjectMolecule*)rec->obj;
-            ObjectMoleculeCreateSpheroid((ObjectMolecule*)obj);  
+            ObjectMoleculeCreateSpheroid(obj);  
           }
     }
     SceneChanged();

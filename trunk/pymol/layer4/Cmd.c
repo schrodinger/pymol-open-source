@@ -1889,7 +1889,7 @@ static PyObject *CmdRename(PyObject *self, 	PyObject *args)
   PyArg_ParseTuple(args,"s",&str1);
   APIEntry();
   SelectorGetTmp(str1,s1);
-  ExecutiveRenameAtoms(s1);
+  ExecutiveRenameObjectAtoms(s1,1);
   SelectorFreeTmp(s1);
   APIExit();
   Py_INCREF(Py_None);
