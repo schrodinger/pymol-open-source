@@ -3365,7 +3365,7 @@ static PyObject *CmdLoad(PyObject *self, PyObject *args)
       PRINTFD(FB_CCmd) " CmdLoad-DEBUG: loading TRJ\n" ENDFD;
       if(origObj) { /* always reinitialize topology objects from scratch */
         ObjectMoleculeLoadTRJFile((ObjectMolecule*)origObj,fname,frame,
-                                  1,1,1,-1,-1,NULL);
+                                  1,1,1,-1,-1,NULL,1);
         /* if(finish)
            ExecutiveUpdateObjectSelection(origObj); unnecc */
         sprintf(buf," CmdLoad: \"%s\" appended into object \"%s\".\n CmdLoad: %d total states in the object.\n",
@@ -3606,13 +3606,14 @@ static PyObject *CmdLoadTraj(PyObject *self, PyObject *args)
   OrthoLineType buf;
   int frame,type;
   int new_type;
-  int interval,average,start,stop,max;
+  int interval,average,start,stop,max,image;
   OrthoLineType s1;
   char *str1;
   int ok=false;
 
-  ok = PyArg_ParseTuple(args,"ssiiiiiiis",&oname,&fname,&frame,&type,
-                        &interval,&average,&start,&stop,&max,&str1);
+  ok = PyArg_ParseTuple(args,"ssiiiiiiisi",&oname,&fname,&frame,&type,
+                        &interval,&average,&start,&stop,&max,&str1,
+                        &image);
 
   buf[0]=0;
   if (ok) {
@@ -3641,7 +3642,7 @@ static PyObject *CmdLoadTraj(PyObject *self, PyObject *args)
       PRINTFD(FB_CCmd) " CmdLoadTraj-DEBUG: loading TRJ\n" ENDFD;
       if(origObj) { /* always reinitialize topology objects from scratch */
         ObjectMoleculeLoadTRJFile((ObjectMolecule*)origObj,fname,frame,
-                                  interval,average,start,stop,max,s1);
+                                  interval,average,start,stop,max,s1,image);
         /* if(finish)
            ExecutiveUpdateObjectSelection(origObj); unnecc */
         sprintf(buf," CmdLoadTraj: \"%s\" appended into object \"%s\".\n CmdLoadTraj: %d total states in the object.\n",
