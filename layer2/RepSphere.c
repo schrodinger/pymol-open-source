@@ -36,7 +36,7 @@ typedef struct RepSphere {
   SphereRec *SP;
   int *NT;
   int N,NC;
-  int cullFlag;
+  int cullFlag,spheroidFlag;
   int *LastVisib;
   int *LastColor;
 } RepSphere;
@@ -63,7 +63,7 @@ void RepSphereFree(RepSphere *I)
 
 void RepSphereRender(RepSphere *I,CRay *ray,Pickable **pick)
 {
-  float *v=I->V;
+  float *v=I->V,*vc;
   int c=I->N;
   int cc=0,*nt=NULL;
   int a;
@@ -71,14 +71,31 @@ void RepSphereRender(RepSphere *I,CRay *ray,Pickable **pick)
   float cont;
 
   if(ray) {
-	 v=I->VC;
-	 c=I->NC;
-	 while(c--) {
-		ray->fColor3fv(ray,v);
-		v+=3;
-		ray->fSphere3fv(ray,v,*(v+3));
-		v+=4;
-	 }
+    if(I->spheroidFlag) {
+		sp=I->SP;
+      while(c--)
+        {
+          vc = v;
+          v+=3;
+          for(a=0;a<sp->NStrip;a++) {
+            cc=sp->StripLen[a];
+            while((cc--)>2) {
+              ray->fTriangle3fv(ray,v+3,v+9,v+15,v,v+6,v+12,vc,vc,vc);
+              v+=6;
+            }
+            v+=12;
+          }
+        }
+    } else {
+      v=I->VC;
+      c=I->NC;
+      while(c--) {
+        ray->fColor3fv(ray,v);
+        v+=3;
+        ray->fSphere3fv(ray,v,*(v+3));
+        v+=4;
+      }
+    }
   } else if(pick&&PMGUI) {
   } else if(PMGUI) {
 	 if(I->cullFlag) {
@@ -111,24 +128,24 @@ void RepSphereRender(RepSphere *I,CRay *ray,Pickable **pick)
 			 glEnd();
 		  }
 	 } else {
-		sp=I->SP;
-		while(c--)
-		  {
-			 glColor3fv(v);
-			 v+=3;
-			 for(a=0;a<sp->NStrip;a++) {
-				glBegin(GL_TRIANGLE_STRIP);
-				cc=sp->StripLen[a];
-				while(cc--) {
-				  glNormal3fv(v);
-				  v+=3;
-				  glVertex3fv(v);
-				  v+=3;
-				}
-				glEnd();
-			 }
-		  }
-	 }
+      sp=I->SP;
+      while(c--)
+        {
+          glColor3fv(v);
+          v+=3;
+          for(a=0;a<sp->NStrip;a++) {
+            glBegin(GL_TRIANGLE_STRIP);
+            cc=sp->StripLen[a];
+            while(cc--) {
+              glNormal3fv(v);
+              v+=3;
+              glVertex3fv(v);
+              v+=3;
+            }
+            glEnd();
+          }
+        }
+    }
   }
 }
 
@@ -222,31 +239,34 @@ Rep *RepSphereNew(CoordSet *cs)
 
   /* raytracing primitives */
   
+
   I->VC=(float*)mmalloc(sizeof(float)*cs->NIndex*7);
   ErrChkPtr(I->VC);
   I->NC=0;
-
+  
   I->NT=NULL;
-
+  
   v=I->VC; 
+  
+  I->spheroidFlag=spheroidFlag;
   for(a=0;a<cs->NIndex;a++)
-	 {
-		a1 = cs->IdxToAtm[a];
-		if(obj->AtomInfo[a1].visRep[cRepSphere])
-		  {
-			 I->NC++;
-			 c1=*(cs->Color+a);
-			 vc = ColorGet(c1); /* save new color */
-			 *(v++)=*(vc++);
-			 *(v++)=*(vc++);
-			 *(v++)=*(vc++);
-			 v0 = cs->Coord+3*a;			 
-			 *(v++)=*(v0++);
-			 *(v++)=*(v0++);
-			 *(v++)=*(v0++);
-			 *(v++)=obj->AtomInfo[a1].vdw;
-		  }
-	 }
+    {
+      a1 = cs->IdxToAtm[a];
+      if(obj->AtomInfo[a1].visRep[cRepSphere])
+        {
+          I->NC++;
+          c1=*(cs->Color+a);
+          vc = ColorGet(c1); /* save new color */
+          *(v++)=*(vc++);
+          *(v++)=*(vc++);
+          *(v++)=*(vc++);
+          v0 = cs->Coord+3*a;			 
+          *(v++)=*(v0++);
+          *(v++)=*(v0++);
+          *(v++)=*(v0++);
+          *(v++)=obj->AtomInfo[a1].vdw;
+        }
+    }
 
   if(I->NC) 
 	 I->VC=(float*)mrealloc(I->VC,sizeof(float)*(v-I->VC));

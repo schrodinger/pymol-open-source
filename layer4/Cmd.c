@@ -76,6 +76,8 @@ Z* -------------------------------------------------------------------
 
 int flush_count = 0;
 
+int run_only_once = true;
+
 static void APIEntry(void)
 {
   P_glut_thread_keep_out++;
@@ -655,9 +657,12 @@ static PyObject *CmdMem(PyObject *dummy, PyObject *args)
 
 static PyObject *CmdRunPyMOL(PyObject *dummy, PyObject *args)
 {
+  if(run_only_once) {
+    run_only_once=false;
 #ifdef _PYMOL_MODULE
-  was_main();
+    was_main();
 #endif
+  }
   Py_INCREF(Py_None);
   return Py_None;
 }
@@ -1723,7 +1728,6 @@ static PyObject *CmdSpheroid(PyObject *self, PyObject *args)
 /* EXPERIMENTAL */
 {
   char *name;
-  Object *obj;
   PyArg_ParseTuple(args,"s",&name);
   APIEntry();
   ExecutiveSpheroid(name);

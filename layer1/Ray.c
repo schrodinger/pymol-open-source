@@ -326,14 +326,23 @@ void RayRender(CRay *I,int width,int height,unsigned int *image,float front,floa
   int antialias;
   RayInfo r1,r2;
   double timing;
-  int fogFlag=0;
+  int fogFlag=false;
+  int fogRangeFlag=false;
   float fog;
   float *bkrd;
+  float fog_start;
 
   fog = SettingGet(cSetting_ray_trace_fog);
-  if(fog!=0.0)
+  if(fog!=0.0) {
     fogFlag=true;
+    fog_start = SettingGet(cSetting_ray_trace_fog_start);
+    if(fog_start>R_SMALL4) {
+      fogRangeFlag=true;
+      if(fabs(fog_start-1.0)<R_SMALL4) /* prevent div/0 */
+        fogFlag=false;
 
+    }
+  }
   /* SETUP */
   
   timing = UtilGetSeconds();
@@ -469,6 +478,9 @@ void RayRender(CRay *I,int width,int height,unsigned int *image,float front,floa
               
               if (fogFlag) {
                 ffact = fog*(front-r1.dist)/(front-back);
+                if(fogRangeFlag) {
+                  ffact = (ffact-fog_start)/(1.0-fog_start);
+                }
                 if(ffact<0.0)
                   ffact=0.0;
                 if(ffact>1.0)
@@ -743,6 +755,15 @@ void RayTriangle3fv(CRay *I,
   float n0[3],nx[3],s1[3],s2[3],s3[3];
   float l1,l2,l3;
 
+  /*  dump3f(v1," v1");
+  dump3f(v2," v2");
+  dump3f(v3," v3");
+  dump3f(n1," n1");
+  dump3f(n2," n2");
+  dump3f(n3," n3");
+  dump3f(c1," c1");
+  dump3f(c2," c2");
+  dump3f(c3," c3");*/
   VLACheck(I->Primitive,CPrimitive,I->NPrimitive);
   p = I->Primitive+I->NPrimitive;
 

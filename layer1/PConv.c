@@ -204,7 +204,7 @@ int PConvPyListToFloatArray(PyObject *obj,float **f)
   ff = (*f);
   for(a=0;a<l;a++)
     *(ff++) = PyFloat_AsDouble(PyList_GetItem(obj,a));
-  return(f);
+  return(l);
 }
 
 PyObject *PConvFloatArrayToPyList(float *f,int l)
