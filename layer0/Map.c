@@ -319,7 +319,11 @@ void MapSetupExpress(MapType *I) /* setup a list of neighbors for each square */
 
 }
 
+#ifdef _PYMOL_OSX
 static __inline__ int iclamp(int x, int l, int h)
+#else
+static int iclamp(int x, int l, int h)
+#endif
 {
 	unsigned int hl = h - l; int xl = x - l;
 	return (unsigned int)(xl) > hl ? ((int)hl & ~(xl >> 31)) + l : x;

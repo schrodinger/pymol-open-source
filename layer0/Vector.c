@@ -626,7 +626,7 @@ void normalize3f( float *v1 )
 	double vlen = length3f(v1);
 	if(vlen > R_SMALL)
 	{
-		float	inV	= _1 / vlen;
+		float	inV	= (float)(_1 / vlen);
 		v1[0] *= inV;
 		v1[1] *= inV;
 		v1[2] *= inV;

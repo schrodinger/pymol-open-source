@@ -256,28 +256,22 @@ if pymol_launch != 3: # if this isn't a dry run
                         if ncpu>0:
                            cmd.set("max_threads",ncpu)
                            print "  Detected %d CPUs."%ncpu,
-                           print " Enabling multithreaded rendering."
+                           print " Enabled multithreaded rendering."
                      elif ll[0]=='hw.physmem':
                         mem = int(ll[2])
-                        flag = 0
                         if mem>1000000000: # Gig or more
                            cmd.set("hash_max",160)
-                           flag = 1
                         elif mem>500000000:
                            cmd.set("hash_max",120)
-                           flag = 1
                         elif mem<256000000:
                            cmd.set("hash_max",80)
-                           flag = 1
-                        if flag: 
-                           print "  Optimizing for available RAM."
       except:
          pass
                      
    # NEED SOME CONTRIBUTIONS HERE!
 
    def launch_gui():
-      if invocation.options.external_gui:
+      if invocation.options.external_gui==1:
          __import__(invocation.options.gui)
 
    # -- Greg Landrum's RPC stuff

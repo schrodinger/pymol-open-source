@@ -143,6 +143,8 @@ if __name__=='pymol.invocation':
                options.ext_y = int(av.pop())
             if "x" in a:
                options.external_gui = 0
+            if "m" in a: # mac external GUI
+               options.external_gui = 2
             if "t" in a:
                options.gui = 'pmg_tk'
             if "w" in a:
