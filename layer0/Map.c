@@ -325,7 +325,7 @@ MapType *MapNew(float range,float *vert,int nVert,float *extent)
   I->Dim[1]=(diagonal[1]/I->Div)+1+(2*MapBorder);
   I->Dim[2]=(diagonal[2]/I->Div)+1+(2*MapBorder);
 
-  /*  printf(" MapSetup: I->Div: %8.3f\n",I->Div);
+  /*   printf(" MapSetup: I->Div: %8.3f\n",I->Div);
   printf(" MapSetup: %8.3f %8.3f %8.3f %8.3f %8.3f %8.3f\n",
 			I->Min[0],I->Min[1],I->Min[2],
 			I->Max[0],I->Max[1],I->Max[2]);

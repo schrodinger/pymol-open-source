@@ -502,7 +502,8 @@ repres = {
    'dots'        : 2,
    'mesh'        : 3,
    'spheres'     : 4,
-   'ribbon'      : 5
+   'ribbon'      : 5,
+   'surface'     : 6
 }
 
 
