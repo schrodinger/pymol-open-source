@@ -1212,7 +1212,7 @@ void SettingInitGlobal(void)
 
   SettingSet_color(I,cSetting_mesh_color,"-1"); /* use atom colors by default */
 
-  SettingSet_f(I,cSetting_auto_indicate_flags,1.0F); 
+  SettingSet_f(I,cSetting_auto_indicate_flags,0.0F); 
 
   SettingSet_f(I,cSetting_surface_debug,0.0F);
 

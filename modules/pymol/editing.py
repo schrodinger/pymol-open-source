@@ -1183,7 +1183,7 @@ DESCRIPTION
     clears the indicated flag for atoms not in the selection.  This
     is primarily useful for passing selection information into
     Chempy models, which have a 32 bit attribute "flag" which holds
-    this state information.
+    this information.
    
 USAGE
 
@@ -1195,17 +1195,25 @@ USAGE
      "reset" (default) sets flag on selection, clear it on other atoms 
      "set" sets the flag for selected atoms, leaves other atoms unchanged
      "clear" clear the flag for selected atoms, leaves other atoms unchanged
-   
+
 PYMOL API
   
-   cmd.flag( int number, string selection, string action="reset" )
-   cmd.flag( string flag_name, string selection, string action="reset" )
+   cmd.flag( int flag, string selection, string action="reset",
+             int indicate=0)
+   cmd.flag( string flag, string selection, string action="reset",
+             int indicate=0)
  
 EXAMPLES  
  
    flag free, (resi 45 x; 6)
 
-RESERVATIONS
+NOTE
+
+   If the 'auto_indicate_flags' setting is true, then PyMOL will automatically
+   create a selection called "indicate" which contains all atoms with that flag
+   after applying the command.
+   
+RESERVED FLAGS
 
    Flags 0-7 are reserved for molecular modeling */
       focus      0 = Atoms of Interest (i.e. a ligand in an active site)
@@ -1232,7 +1240,8 @@ RESERVATIONS
    #      
    try:
       lock()
-      r = _cmd.flag(int(flag),"("+str(selection)+")",int(action),int(not quiet))
+      r = _cmd.flag(int(flag),"("+str(selection)+")",
+                    int(action),int(quiet))
    finally:
       unlock()
    return r

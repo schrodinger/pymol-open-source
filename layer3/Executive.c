@@ -1377,7 +1377,7 @@ void ExecutiveAddHydrogens(char *s1)
   }
 }
 /*========================================================================*/
-void ExecutiveFlag(int flag,char *s1,int action,int indicate)
+void ExecutiveFlag(int flag,char *s1,int action,int quiet)
 {
   int sele1;
   OrthoLineType buffer;
@@ -1399,23 +1399,25 @@ void ExecutiveFlag(int flag,char *s1,int action,int indicate)
     op.i4 = 0;
     ExecutiveObjMolSeleOp(sele1,&op);    
     if(Feedback(FB_Executive,FB_Actions)) {
-      switch(action) {
-      case 0:
-        if(op.i3) {
-          PRINTF " Flag: flag %d is set in %d of %d atoms.\n", flag, op.i3, op.i4 ENDF;
-        } else {
-          PRINTF " Flag: flag %d cleared on all atoms.\n", flag ENDF;
+      if(!quiet) {
+        switch(action) {
+        case 0:
+          if(op.i3) {
+            PRINTF " Flag: flag %d is set in %d of %d atoms.\n", flag, op.i3, op.i4 ENDF;
+          } else {
+            PRINTF " Flag: flag %d cleared on all atoms.\n", flag ENDF;
+          }
+          break;
+        case 1:
+          PRINTF " Flag: flag %d set on %d atoms.\n", flag, op.i3 ENDF;
+          break;
+        case 2:
+          PRINTF " Flag: flag %d cleared on %d atoms.\n", flag, op.i3 ENDF;
+          break;
         }
-        break;
-      case 1:
-        PRINTF " Flag: flag %d set on %d atoms.\n", flag, op.i3 ENDF;
-        break;
-      case 2:
-        PRINTF " Flag: flag %d cleared on %d atoms.\n", flag, op.i3 ENDF;
-        break;
       }
     }
-    if((int)SettingGet(cSetting_auto_indicate_flags)&&indicate) {
+    if((int)SettingGet(cSetting_auto_indicate_flags)) {
       sprintf(buffer,"(flag %d)",flag);
       SelectorCreate(cIndicateSele,buffer,NULL,true,NULL);
       ExecutiveSetObjVisib(cIndicateSele,true);
