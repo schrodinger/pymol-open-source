@@ -408,7 +408,7 @@ class PMGApp(AbstractApp):
 
       self.menuBar.addmenuitem('Edit', 'command',
                          'To Paste, Use Ctrl-V',
-                         label='To copy text use Ctrl-V',
+                         label='To paste text use Ctrl-V',
                                state='disabled',                               
                         command =  None)
 
