@@ -110,6 +110,9 @@ for fyle in glob("source/*"):
    cmd.remove("(het)")
    cmd.remove("(hydro or not alt '')")
    cmd.remove("(byres b>25)") # only use well-defined residues
+   cmd.remove("(not (byres name ca))")
+   cmd.remove("(not (byres name n))")
+   cmd.remove("(not (byres name c))")   
    cmd.refresh()
    measure_all_torsions("all",sc_dict)
    cmd.delete("all")
