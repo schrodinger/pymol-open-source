@@ -436,10 +436,12 @@ int WizardSetStack(PyObject *list)
     if(ok) ok = PyList_Check(list);
     if(ok) {
       I->Stack = PyList_Size(list)-1;
-      VLACheck(I->Wiz,PyObject*,I->Stack);
-      for(a=I->Stack;a>=0;a--) {
-        I->Wiz[a] = PyList_GetItem(list,a);
-        Py_INCREF(I->Wiz[a]); 
+      if(I->Stack>=0) {
+        VLACheck(I->Wiz,PyObject*,I->Stack);
+        for(a=I->Stack;a>=0;a--) {
+          I->Wiz[a] = PyList_GetItem(list,a);
+          Py_INCREF(I->Wiz[a]);
+        }
       }
     }
     if(ok) WizardRefresh();
