@@ -40,6 +40,7 @@ def mol_hide(s):
            [ 1, 'mesh'      ,'pm.hide("mesh"      ,"'+s+'")'],
            [ 1, 'surface'   ,'pm.hide("surface"   ,"'+s+'")'],
            [ 0, ''          ,''                             ],
+           [ 1, 'hydrogens' ,'pm.hide("('+s+' and hydro)")' ],
            [ 1, 'everything','pm.hide("('+s+')")'           ]]
 
 def dist_show(s):

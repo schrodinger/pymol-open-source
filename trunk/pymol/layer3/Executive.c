@@ -794,18 +794,34 @@ void ExecutiveCenter(char *name,int preserve)
 /*========================================================================*/
 void ExecutiveSetObjVisib(char *name,int state)
 {
+  CExecutive *I = &Executive;
   SpecRec *tRec;
-  tRec = ExecutiveFindSpec(name);
-  if(tRec) {
-	 if(tRec->type==cExecObject)
-		if(tRec->visible!=state)
-		  {
-			 if(tRec->visible)
-				SceneObjectDel(tRec->obj);				
-			 else 
-				SceneObjectAdd(tRec->obj);
-			 tRec->visible=!tRec->visible;
-		  }
+  if(strcmp(name,"all")==0) {
+    tRec=NULL;
+    while(ListIterate(I->Spec,tRec,next,SpecList)) {
+      if(state!=tRec->visible) {
+        if((tRec->type==cExecObject)||(tRec->type==cExecSelection)) {
+          if(tRec->visible)
+            SceneObjectDel(tRec->obj);				
+          else 
+            SceneObjectAdd(tRec->obj);
+        }
+        tRec->visible=!tRec->visible;
+      }
+    }
+  } else {
+    tRec = ExecutiveFindSpec(name);
+    if(tRec) {
+      if(tRec->type==cExecObject)
+        if(tRec->visible!=state)
+          {
+            if(tRec->visible)
+              SceneObjectDel(tRec->obj);				
+            else 
+              SceneObjectAdd(tRec->obj);
+            tRec->visible=!tRec->visible;
+          }
+    }
   }
 }
 /*========================================================================*/
@@ -1174,6 +1190,10 @@ int ExecutiveRelease(Block *block,int x,int y,int mod)
 				  rec->visible=!rec->visible;
               SceneChanged();
 				}
+          else if(rec->type==cExecAll)
+            {
+              ExecutiveSetObjVisib("all",!rec->visible);
+            }
         }
 		n--;
 	 }
@@ -1284,7 +1304,7 @@ void ExecutiveDraw(Block *block)
 
         glColor3fv(I->Block->TextColor);
         glRasterPos4d((double)(x),(double)(y),0.0,1.0);
-        if(rec->type==cExecObject)
+        if((rec->type==cExecObject)||(rec->type==cExecAll))
           {
             y2=y-ExecToggleMargin;
             if(rec->visible)
@@ -1297,17 +1317,16 @@ void ExecutiveDraw(Block *block)
             glVertex2i(xx-ExecToggleMargin,y2+ExecToggleSize);
             glVertex2i(x-ExecToggleMargin,y2+ExecToggleSize);
             glEnd();
-            c=rec->obj->Name;
             glColor3fv(I->Block->TextColor);
-		
+
+            if(rec->type==cExecAll)
+              c=rec->name;
+            else 
+              c=rec->obj->Name;
           }
         else if(rec->type==cExecSelection)
           {
             glutBitmapCharacter(GLUT_BITMAP_8_BY_13,'(');
-            c=rec->name;
-          }
-        else if(rec->type==cExecAll)
-          {
             c=rec->name;
           }
 
@@ -1378,6 +1397,7 @@ void ExecutiveInit(void)
   ListElemAlloc(rec,SpecRec);
   strcpy(rec->name,"(all)");
   rec->type=cExecAll;
+  rec->visible=true;
   rec->next=NULL;
   for(a=0;a<cRepCnt;a++)
 	 rec->repOn[a]=false;
