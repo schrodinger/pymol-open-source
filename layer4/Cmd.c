@@ -1786,12 +1786,11 @@ static PyObject *CmdSliceNew(PyObject *self, 	PyObject *args)
   char * map;
   float opacity = -1;
   int state,map_state;
-  float grid;
   CObject *obj=NULL,*mObj,*origObj;
   ObjectMap *mapObj;
   ObjectMapState *ms;
 
-  ok = PyArg_ParseTuple(args,"ssfii",&slice,&map,&grid,&state,&map_state);  
+  ok = PyArg_ParseTuple(args,"ssii",&slice,&map,&state,&map_state);  
   if (ok) {
     APIEntry();
     if(opacity == -1){
@@ -1841,7 +1840,7 @@ static PyObject *CmdSliceNew(PyObject *self, 	PyObject *args)
         ms = ObjectMapStateGetActive(mapObj,map_state);
         if(ms) {
           obj=(CObject*)ObjectSliceFromMap((ObjectSlice*)origObj,mapObj,
-                                           grid,state,map_state);
+                                           state,map_state);
      
           if(!origObj) {
             ObjectSetName(obj,slice);
@@ -5151,8 +5150,6 @@ static PyMethodDef Cmd_methods[] = {
 	{"setframe",	           CmdSetFrame,             METH_VARARGS },
 	{"showhide",              CmdShowHide,             METH_VARARGS },
 	{"slice_new",                 CmdSliceNew,              METH_VARARGS },
-   /*	{"slice_setlock",             CmdSliceSetLock,              METH_VARARGS}, */
-   /*	{"slice_heightmap",           CmdSliceHeightmap,              METH_VARARGS},*/
 	{"smooth",	              CmdSmooth,               METH_VARARGS },
 	{"sort",                  CmdSort,                 METH_VARARGS },
    {"spectrum",              CmdSpectrum,             METH_VARARGS },

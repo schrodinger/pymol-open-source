@@ -55,48 +55,28 @@ static PyObject *ObjectSliceStateAsPyList(ObjectSliceState *I)
 {
   PyObject *result = NULL;
 
-#if 0
-  result = PyList_New(18);
+  result = PyList_New(8);
   
   PyList_SetItem(result,0,PyInt_FromLong(I->Active));
   PyList_SetItem(result,1,PyString_FromString(I->MapName));
   PyList_SetItem(result,2,PyInt_FromLong(I->MapState));
-  PyList_SetItem(result,4,PyFloat_FromDouble(I->opacity));
-  PyList_SetItem(result,5,PyInt_FromLong(I->x_samples));
-  PyList_SetItem(result,6,PyInt_FromLong(I->y_samples));
-  PyList_SetItem(result,7,PConvFloatArrayToPyList(I->values,I->x_samples*I->y_samples));
-  PyList_SetItem(result,8,PConvFloatArrayToPyList(I->points,3*I->x_samples*I->y_samples));
-  PyList_SetItem(result,9,PyFloat_FromDouble(I->norm_factor));
-  PyList_SetItem(result,10,PyFloat_FromDouble(I->norm_constant));
-  PyList_SetItem(result,11,PConvFloatArrayToPyList(I->ExtentMin,3));
-  PyList_SetItem(result,12,PConvFloatArrayToPyList(I->ExtentMax,3));
-  PyList_SetItem(result,13,PyInt_FromLong(I->ExtentFlag));
-  PyList_SetItem(result,14,PyInt_FromLong(I->LockedFlag));
-  PyList_SetItem(result,15,PyInt_FromLong(I->RGBFunction));
-  PyList_SetItem(result,16,PConvFloatArrayToPyList(I->up,3));
-#endif
+  PyList_SetItem(result,3,PConvFloatArrayToPyList(I->ExtentMin,3));
+  PyList_SetItem(result,4,PConvFloatArrayToPyList(I->ExtentMax,3));
+  PyList_SetItem(result,5,PyInt_FromLong(I->ExtentFlag));
+  PyList_SetItem(result,6,PConvFloatArrayToPyList(I->origin,3));
+  PyList_SetItem(result,7,PConvFloatArrayToPyList(I->system,9));
 
 #if 0
   int Active;
   char MapName[ObjNameMax];
   int MapState;
-  float opacity;  
-  int displayList;
-  int RefreshFlag;
-  int LockedFlag;
-  /* the data is normalized for easier ploting */
-  float * values;
-  float * points;
-  /* orig_data = values*norm_factor+norm_constant */
-  float norm_factor;
-  float norm_constant;
-  int x_samples;
-  int y_samples;
   float ExtentMin[3];
   float ExtentMax[3];
   int ExtentFlag;
-  int LockedFlag;
-  CGO *UnitCellCGO;
+
+  float origin[3]; /* the origin of the plane */
+  float system[9]; /* x, y, and z of the system */
+  float grid;   /* sampling interval for the map */
 #endif
 
   return(PConvAutoNone(result));  
@@ -122,7 +102,7 @@ static PyObject *ObjectSliceAllStatesAsPyList(ObjectSlice *I)
 static int ObjectSliceStateFromPyList(ObjectSliceState *I,PyObject *list)
 {
   int ok=true;
-#if 0
+
   int ll;
   if(ok) ok=(list!=NULL);
   if(ok) {
@@ -134,32 +114,20 @@ static int ObjectSliceStateFromPyList(ObjectSliceState *I,PyObject *list)
       if(ok) ok=PyList_Check(list);
       if(ok) ll = PyList_Size(list);
       /* TO SUPPORT BACKWARDS COMPATIBILITY...
-         Always check ll when adding new PyList_GetItem's */
-      
+         Always check ll when adding new PyList_GetItem's */      
+
       if(ok) ok = PConvPyIntToInt(PyList_GetItem(list,0),&I->Active);
       if(ok) ok = PConvPyStrToStr(PyList_GetItem(list,1),I->MapName,ObjNameMax);
       if(ok) ok = PConvPyIntToInt(PyList_GetItem(list,2),&I->MapState);
-      if(ok) ok = PConvPyFloatToFloat(PyList_GetItem(list,4),&I->opacity);
-      if(ok) ok = PConvPyIntToInt(PyList_GetItem(list,5),&I->x_samples);
-      if(ok) ok = PConvPyIntToInt(PyList_GetItem(list,6),&I->y_samples);
-      I->points = VLAMalloc((I->x_samples)*(I->y_samples)*3,sizeof(float),5,false);
-      I->values = VLAMalloc((I->x_samples)*(I->y_samples),sizeof(float),5,false);
-      if(ok) ok = PConvPyListToFloatArrayInPlace(PyList_GetItem(list,7),I->values,I->x_samples*I->y_samples);
-      if(ok) ok = PConvPyListToFloatArrayInPlace(PyList_GetItem(list,8),I->points,3*I->x_samples*I->y_samples);
-      if(ok) ok = PConvPyFloatToFloat(PyList_GetItem(list,9),&I->norm_factor);
-      if(ok) ok = PConvPyFloatToFloat(PyList_GetItem(list,10),&I->norm_constant);
-      if(ok) ok = PConvPyListToFloatArrayInPlace(PyList_GetItem(list,11),I->ExtentMin,3);
-      if(ok) ok = PConvPyListToFloatArrayInPlace(PyList_GetItem(list,12),I->ExtentMax,3);
-      if(ok) ok = PConvPyIntToInt(PyList_GetItem(list,13),&I->ExtentFlag);
-      if(ok) ok = PConvPyIntToInt(PyList_GetItem(list,14),&I->LockedFlag);
-      if(ok) ok = PConvPyIntToInt(PyList_GetItem(list,15),&I->RGBFunction);
-      if(ok) ok = PConvPyListToFloatArrayInPlace(PyList_GetItem(list,16),I->up,3);
-      I->flags = VLAMalloc((I->x_samples)*(I->y_samples),sizeof(char),5,false);
+      if(ok) ok = PConvPyListToFloatArrayInPlace(PyList_GetItem(list,3),I->ExtentMin,3);
+      if(ok) ok = PConvPyListToFloatArrayInPlace(PyList_GetItem(list,4),I->ExtentMax,3);
+      if(ok) ok = PConvPyIntToInt(PyList_GetItem(list,5),&I->ExtentFlag);
+      if(ok) ok = PConvPyListToFloatArrayInPlace(PyList_GetItem(list,6),I->origin,3);
+      if(ok) ok = PConvPyListToFloatArrayInPlace(PyList_GetItem(list,7),I->system,9);
 
       I->RefreshFlag=true;
     }
   }
-#endif
 
   return(ok);
 }
@@ -266,34 +234,6 @@ static void ObjectSliceInvalidate(ObjectSlice *I,int rep,int level,int state)
   }
 }
 
-int ObjectSliceSetOpacity(ObjectSlice *I,float opacity,int state)
-{
-  int a;
-  int ok=true;
-  int once_flag=true;
-  ObjectSliceState *ms;
-  if(state>=I->NState) {
-    ok=false;
-  } else {
-    for(a=0;a<I->NState;a++) {
-      if(state<0) {
-        once_flag=false;
-      }
-      if(!once_flag) {
-        state = a;
-      }
-      ms = I->State + state;
-      if(ms->Active) {
-        ms->RefreshFlag=true;
-        ms->opacity = opacity;
-      }
-      if(once_flag) {
-        break;
-      }
-    }
-  }
-  return(ok);
-}
 
 static void ObjectSliceStateAssignColors(ObjectSliceState *oss, ObjectGadgetRamp *ogr)
 {
@@ -324,12 +264,15 @@ static void ObjectSliceStateUpdate(ObjectSlice *I,ObjectSliceState *oss, ObjectM
   int ok=true;
   int min[2] = {0,0}, max[2] = {0,0}; /* limits of the rectangle */
   int need_normals = false;
+  float grid = SettingGet_f(NULL,I->Obj.Setting,cSetting_slice_grid);  
+  if(grid<0.01F)
+    grid=0.01F;
 
   /* for the given map, compute a new set of interpolated point with accompanying levels */
 
   /* first, find the limits of the enclosing rectangle, starting at the slice origin, 
      via a simple brute-force approach... */
-  
+
   if(ok) {
     int size = 1, minus_size;
     int a;
@@ -343,8 +286,8 @@ static void ObjectSliceStateUpdate(ObjectSlice *I,ObjectSliceState *oss, ObjectM
       for(a=-size;a<=size;a++) {
         
         if(max[1]!=size) {
-          point[0] = oss->grid*a;
-          point[1] = oss->grid*size;
+          point[0] = grid*a;
+          point[1] = grid*size;
           point[2] = 0.0F;
           transform33f3f(oss->system, point, point);
           add3f(oss->origin, point, point);
@@ -355,8 +298,8 @@ static void ObjectSliceStateUpdate(ObjectSlice *I,ObjectSliceState *oss, ObjectM
         }
 
         if(min[1]!=minus_size) {
-          point[0] = oss->grid*a;
-          point[1] = oss->grid*minus_size;
+          point[0] = grid*a;
+          point[1] = grid*minus_size;
           point[2] = 0.0F;
           transform33f3f(oss->system, point, point);
           add3f(oss->origin, point, point);
@@ -368,8 +311,8 @@ static void ObjectSliceStateUpdate(ObjectSlice *I,ObjectSliceState *oss, ObjectM
         }
         
         if(max[0]!=size) {
-          point[0] = oss->grid*size;
-          point[1] = oss->grid*a;
+          point[0] = grid*size;
+          point[1] = grid*a;
           point[2] = 0.0F;
           transform33f3f(oss->system, point, point);
           add3f(oss->origin, point, point);
@@ -380,8 +323,8 @@ static void ObjectSliceStateUpdate(ObjectSlice *I,ObjectSliceState *oss, ObjectM
         }
         
         if(min[0]!=minus_size) {
-          point[0] = oss->grid*minus_size;
-          point[1] = oss->grid*a;
+          point[0] = grid*minus_size;
+          point[1] = grid*a;
           point[2] = 0.0F;
           transform33f3f(oss->system, point, point);
           add3f(oss->origin, point, point);
@@ -446,8 +389,8 @@ static void ObjectSliceStateUpdate(ObjectSlice *I,ObjectSliceState *oss, ObjectM
     float *point = oss->points;
     for(y=min[1];y<=max[1];y++) {
       for(x=min[0];x<=max[0];x++) {
-        point[0] = oss->grid*x;
-        point[1] = oss->grid*y;
+        point[0] = grid*x;
+        point[1] = grid*y;
         point[2] = 0.0F;
         transform33f3f(oss->system, point, point);
         add3f(oss->origin, point, point);
@@ -732,7 +675,7 @@ void ObjectSliceDrag(ObjectSlice *I, int state, int mode, float *pt, float *mov,
 
   if(oss) {
     switch(mode) {
-    case cButModeRotFrag:
+    case cButModeRotFrag: /* rotated about origin */
       {
         float v3[3];
         float n0[3];
@@ -765,7 +708,7 @@ void ObjectSliceDrag(ObjectSlice *I, int state, int mode, float *pt, float *mov,
         
       }
       break;
-    case cButModeMovFrag:
+    case cButModeMovFrag: /* move along "up" direction */
       {
         float up[3],v1[3];
         up[0]=oss->system[2];
@@ -778,7 +721,7 @@ void ObjectSliceDrag(ObjectSlice *I, int state, int mode, float *pt, float *mov,
         SceneDirty();
       }
       break;
-    case cButModeTorFrag:
+    case cButModeTorFrag: 
       break;
     }
   }
@@ -1204,7 +1147,6 @@ ObjectSlice *ObjectSliceNew(void)
 void ObjectSliceStateInit(ObjectSliceState *oss)
 {
   oss->displayList=0;
-  oss->opacity=1;
   oss->Active=true;
   oss->RefreshFlag=true;  
   oss->ExtentFlag=false;
@@ -1214,7 +1156,6 @@ void ObjectSliceStateInit(ObjectSliceState *oss)
   oss->flags=NULL;
   oss->colors=NULL;
   oss->strips=NULL;
-  oss->grid = 0.5F;
 
   oss->n_points = 0;
   oss->n_strips = 0;
@@ -1229,7 +1170,7 @@ void ObjectSliceStateInit(ObjectSliceState *oss)
 }
 
 /*========================================================================*/
-ObjectSlice *ObjectSliceFromMap(ObjectSlice * obj,ObjectMap *map,float grid,int state,int map_state)
+ObjectSlice *ObjectSliceFromMap(ObjectSlice * obj,ObjectMap *map,int state,int map_state)
 {
   ObjectSlice *I;
   ObjectSliceState *oss;
@@ -1251,7 +1192,6 @@ ObjectSlice *ObjectSliceFromMap(ObjectSlice * obj,ObjectMap *map,float grid,int 
 
   ObjectSliceStateInit(oss);
   oss->MapState = map_state;
-  oss->grid = grid;
   oms = ObjectMapGetState(map,map_state);
   if(oms) {
     if(oss->points) {

@@ -513,10 +513,11 @@ CSetting *SettingNewFromPyList(PyObject *list);
 #define cSetting_coulomb_cutoff             367
 #define cSetting_slice_track_camera         368
 #define cSetting_slice_height_scale         369
+#define cSetting_slice_grid                 370
 
 /* cSetting_ss_INIT must always be last setting_index +1 */
 
-#define cSetting_INIT                       370
+#define cSetting_INIT                       371
 
 #endif
 

@@ -1115,6 +1115,7 @@ void SettingGenerateSideEffects(int index,char *sele,int state)
     SceneChanged();
     break;
   case cSetting_slice_height_scale:
+  case cSetting_slice_grid:
     ExecutiveInvalidateRep(inv_sele,cRepSlice,cRepInvRep);    
     SceneChanged();
     break;
@@ -2285,6 +2286,7 @@ void SettingInitGlobal(int alloc,int reset_gui)
   SettingSet_f(I,cSetting_coulomb_cutoff,0.0F);
   SettingSet_b(I,cSetting_slice_track_camera, 0);
   SettingSet_f(I,cSetting_slice_height_scale, 0.0F);
+  SettingSet_f(I,cSetting_slice_grid, 0.3F);
 
 }
 

@@ -18,6 +18,7 @@ if __name__=='pymol.creating':
    import traceback
    import operator
    import cmd
+   import string
    from cmd import _cmd,lock,unlock,Shortcut,QuietException,is_list,is_string
    from cmd import file_ext_re, sanitize_list_re
    from chempy import fragments
@@ -84,7 +85,7 @@ if __name__=='pymol.creating':
                 map_state=1,selection='',
                 beyond=2.0,within=6.0,
                 sigma=2.0,zero=1):
-      safe_color = sanitize_list_re.sub(color,"")
+      safe_color = string.strip(str(color))
       if(safe_color[0:1]=="["): # looks like a list
          color = eval(str(safe_color))
       else: # looks like a literal
@@ -177,7 +178,7 @@ SEE ALSO
          unlock()
       return r
 
-   def slice_new(name,map,grid=0.33,state=1,source_state=0):
+   def slice_new(name,map,state=1,source_state=0):
       '''
 DESCRIPTION
 
@@ -207,7 +208,7 @@ SEE ALSO
 
       try:
          lock()
-         r = _cmd.slice_new(str(name),str(map),float(grid),int(state)-1,int(source_state)-1)
+         r = _cmd.slice_new(str(name),str(map),int(state)-1,int(source_state)-1)
       finally:
          unlock()
       return r
