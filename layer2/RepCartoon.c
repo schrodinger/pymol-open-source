@@ -66,7 +66,8 @@ void RepCartoonRender(RepCartoon *I,CRay *ray,Pickable **pick)
     PRINTFD(FB_RepCartoon)
       " RepCartoonRender: rendering GL...\n"
       ENDFD;
-    if(I->std)
+
+    if(I->std) 
       CGORenderGL(I->std);
   }
 }
@@ -74,15 +75,16 @@ void RepCartoonRender(RepCartoon *I,CRay *ray,Pickable **pick)
 Rep *RepCartoonNew(CoordSet *cs)
 {
   ObjectMolecule *obj;
-  int a,b,a1,a2,c1,c2,*i,*s,*at,*seg,nAt,*atp;
-  float *v,*v0,*v1,*v2,*v3;
+  int a,b,a1,a2,c1,c2,*i,*s,*at,*seg,nAt,*atp,a3,a4;
+  float *v,*v0,*v1,*v2,*v3,*vo,*vn,*va;
   float *pv=NULL;
+  float *pvo=NULL,*pva=NULL;
   float *dv=NULL;
   float *nv=NULL;
   float *tv=NULL;
   float *vc=NULL;
   float f0,f1,f2,f3,len_seg;
-  float *d;
+  float *d,dp;
   float *dl=NULL;
   int nSeg;
   int sampling;
@@ -93,6 +95,10 @@ Rep *RepCartoonNew(CoordSet *cs)
   CExtrude *ex;
   int n_p;
   int loop_quality;
+  int st,nd;
+  float *v_c,*v_n,*v_o,*v_ca;
+  float t0[3],t1[3],o0[12],o1[12];
+  float max_dot;
 
   OOAlloc(RepCartoon);
 
@@ -132,10 +138,13 @@ Rep *RepCartoonNew(CoordSet *cs)
 
   at = Alloc(int,cs->NIndex);
   pv = Alloc(float,cs->NIndex*3);
+  pvo = Alloc(float,cs->NIndex*3); /* orientation vector */
+  pva = Alloc(float,2*cs->NIndex*3); /* alternative orientation vectors */
   seg = Alloc(int,cs->NIndex);
   
   i=at;
   v=pv;
+  vo=pvo;
   s=seg;
 
   nAt = 0;
@@ -169,13 +178,65 @@ Rep *RepCartoonNew(CoordSet *cs)
 					 nAt++;
 					 *(i++)=a;
 					 v1 = cs->Coord+3*a;		
+                v_ca = v1;
 					 *(v++)=*(v1++);
 					 *(v++)=*(v1++);
 					 *(v++)=*(v1++);
-					 
 					 a2=a1;
+
+                v_c = NULL;
+                v_n = NULL;
+                v_o = NULL;
+
+                AtomInfoBracketResidueFast(obj->AtomInfo,obj->NAtom,a1,&st,&nd);
+
+                for(a3=st;a3<=nd;a3++) {
+                  
+                  if(obj->DiscreteFlag) {
+                    if(cs==obj->DiscreteCSet[a4]) 
+                      a4=obj->DiscreteAtmToIdx[a4];
+                    else 
+                      a4=-1;
+                  } else 
+                    a4=cs->AtmToIdx[a3];
+                  if(a4>=0) {
+                    if(WordMatch("C",obj->AtomInfo[a3].name,1)<0) {
+                      v_c = cs->Coord+3*a4;		
+                    } else if(WordMatch("N",obj->AtomInfo[a3].name,1)<0) {
+                      v_n = cs->Coord+3*a4;
+                    } else if(WordMatch("O",obj->AtomInfo[a3].name,1)<0) {
+                      v_o = cs->Coord+3*a4;
+                    }
+                  }
+                }
+                if(!(v_c&&v_n&&v_o)) {
+                  vo[0]=0.0;
+                  vo[1]=0.0;
+                  vo[2]=0.0;
+                  vo+=3;
+                  pva+=6;
+                } else {
+                  /*
+                  subtract3f(v_ca,v_c,t0);
+                  normalize3f(t0);
+                  subtract3f(v_o,v_c,t1);
+                  normalize3f(t1);
+                  cross_product3f(t0,t1,vo);
+                  normalize3f(vo);*/
+
+                  subtract3f(v_n,v_c,t0);
+                  normalize3f(t0);
+                  subtract3f(v_n,v_o,t1);
+                  normalize3f(t1);
+                  cross_product3f(t0,t1,vo);
+                  normalize3f(vo);
+
+                  vo+=3;
+                }
 				  }
 	 }
+
+
   if(nAt)
 	 {
 		/* compute differences and normals */
@@ -189,7 +250,6 @@ Rep *RepCartoonNew(CoordSet *cs)
 		v1=dv;
 		v2=nv;
 		d=dl;
-		
 		for(a=0;a<(nAt-1);a++)
 		  {
 			 if(*s==*(s+1))
@@ -245,9 +305,87 @@ Rep *RepCartoonNew(CoordSet *cs)
 		*(v1++)=*(v-3); /* last segment */
 		*(v1++)=*(v-2);
 		*(v1++)=*(v-1);
-		
-	 }
 
+
+      /* generate new orientation vectors which are perpendicular to both the tangent 
+         original orientation vector */
+      
+      v1 = tv;
+		vo = pvo;
+
+      for(a=0;a<nAt;a++) { 
+        /*        cross_product3f(v1,vo,t0);
+                  normalize23f(t0,vo);*/
+
+        /*        cross_product3f(v1,vo,t0);
+        normalize3f(t0);
+        cross_product3f(t0,v1,vo);*/
+        v1+=3;
+        vo+=3;
+      }
+
+      if(SettingGet(cSetting_test1)<0.5) {
+      /* now generate alternative orientation vectors */
+
+      v1 = tv;
+      va = pva;
+      vo = pvo;
+
+      for(a=0;a<nAt;a++) { 
+
+        /* original */
+        copy3f(vo,va);
+        va+=3;
+
+        /* inverse */
+        copy3f(vo,va);
+        invert3f(va);
+        va+=3;
+
+        /* go on to next vertex */
+
+        v1+=3;
+        vo+=3;
+      }
+
+      /* now iterate through pairs*/
+
+      vo = pvo;
+      va = pva;
+      v  = nv; /* normals in direction of chain */
+      
+      for(a=1;a<nAt;a++) {
+
+        v1 = va+6; /* orientation vectors for next CA */
+        
+        for(b=0;b<4;b++) {
+          remove_component3f(vo  ,v,o0);
+          normalize3f(o0);
+          remove_component3f(v1  ,v,o1  ); 
+          remove_component3f(v1+3,v,o1+3);
+          normalize3f(o1);
+          normalize3f(o1+3);
+        }
+        
+        max_dot = dot_product3f(o0,o1);
+        v0 = v1;
+
+        dp = dot_product3f(o0,o1+3);
+        if(dp>max_dot) {
+          v0 = v1+3;
+          max_dot = dp;
+        }
+
+        copy3f(v0,vo+3); /* update with optimal orientation vector */
+
+        vo+=3;
+        va+=6; /* candidate orientation vectors */
+        v+=3; /* normal */
+      }
+      }
+    }
+
+   
   /* okay, we now have enough info to generate smooth interpolations */
 
   I->std = CGONew();
@@ -255,11 +393,14 @@ Rep *RepCartoonNew(CoordSet *cs)
   n_p = 0;
   if(nAt) {
     ex = ExtrudeNew();
-    ExtrudeCircle(ex,loop_quality,loop_radius);
+    /*ExtrudeCircle(ex,loop_quality,loop_radius);*/
+    ExtrudeRectangle(ex,0.2,1.0);
+    
     ExtrudeAllocPointsNormalsColors(ex,cs->NIndex*(3*sampling+3));
 	 v1=pv; /* points */
 	 v2=tv; /* tangents */
 	 v3=dv; /* direction vector */
+    vo=pvo;
     d = dl;
 	 s=seg;
 	 atp=at;
@@ -269,13 +410,16 @@ Rep *RepCartoonNew(CoordSet *cs)
           if(n_p) {
             ExtrudeTruncate(ex,n_p);
             ExtrudeComputeTangents(ex);
-            ExtrudeBuildNormals1f(ex);
-            ExtrudeCGOSurfaceTube(ex,I->std,1);
+            /*ExtrudeBuildNormals1f(ex);
+              ExtrudeCGOSurfaceTube(ex,I->std,1);*/
+            ExtrudeBuildNormals2f(ex);
+            ExtrudeCGOSurfacePolygon(ex,I->std,1);
           }
 
           ExtrudeTruncate(ex,0);
           v = ex->p;
           vc = ex->c;
+          vn = ex->n;
           n_p = 0;
         }
 		  if(ex&&(*s==*(s+1))) /* working in the same segment... */
@@ -332,17 +476,19 @@ Rep *RepCartoonNew(CoordSet *cs)
                     f0*(v1[5]-v2[5]*len_seg*f3);
 
 
-                  /* compute tangent vector at point 
+                  /* compute orientation vector at point, and store
+                   in second position of axes */
                      
-                   *(vn++)=f1*(v2[0]*f2)+
-                   f0*(v2[3]*f3);
-                   *(vn++)=f1*(v2[1]*f2)+
-                   f0*(v2[4]*f3);
-                   *(vn++)=f1*(v2[2]*f2)+
-                   f0*(v2[5]*f3);                 
-                   vn+=6;
-                  */
-
+                  vn+=3;
+                  *(vn++)=f1*(vo[0]*f2)+
+                    f0*(vo[3]*f3);
+                  *(vn++)=f1*(vo[1]*f2)+
+                    f0*(vo[4]*f3);
+                  *(vn++)=f1*(vo[2]*f2)+
+                    f0*(vo[5]*f3);     
+                  vn+=3;
+                  
+                  copy3f(vo,vn-6); /* starter... */
                   n_p++;
 
                 }
@@ -379,32 +525,25 @@ Rep *RepCartoonNew(CoordSet *cs)
                 *(v++)=f1*(v1[2]+v2[2]*len_seg*f2)+
                   f0*(v1[5]-v2[5]*len_seg*f3);
 
-                /* 
-                 *(vn++)=f1*(v2[0]*f2)+
-                 f0*(v2[3]*f3);
-                 *(vn++)=f1*(v2[1]*f2)+
-                 f0*(v2[4]*f3);
-                 *(vn++)=f1*(v2[2]*f2)+
-                 f0*(v2[5]*f3);                 
-                 vn+=6;
+                vn+=3;
+                *(vn++)=f1*(vo[0]*f2)+
+                  f0*(vo[3]*f3);
+                *(vn++)=f1*(vo[1]*f2)+
+                  f0*(vo[4]*f3);
+                *(vn++)=f1*(vo[2]*f2)+
+                  f0*(vo[5]*f3);                 
+                vn+=3;
                  
-                 if(n_p==1) { 
-                                 copy3f(vn-9,vn-18);
-                                 }
-                */
-
+                if(b==sampling-1)
+                  copy3f(vo+3,vn-6); /* starter... */                  
 					 n_p++;
 
 				  }
-            /*
-              if(sampling>1) {
-              copy3f(vn-18,vn-9);
-              }
-            */
 			 }
 		  v1+=3;
 		  v2+=3;
 		  v3+=3;
+        vo+=3;
         d++;
 		  atp+=1;
 		  s++;
@@ -413,20 +552,45 @@ Rep *RepCartoonNew(CoordSet *cs)
     if(n_p) {
       ExtrudeTruncate(ex,n_p);
       ExtrudeComputeTangents(ex);
-      ExtrudeBuildNormals1f(ex);
-      ExtrudeCGOSurfaceTube(ex,I->std,1);
+
+      /*      ExtrudeBuildNormals1f(ex);
+              ExtrudeCGOSurfaceTube(ex,I->std,1);*/
+      ExtrudeBuildNormals2f(ex);
+      ExtrudeCGOSurfacePolygon(ex,I->std,1);
     }
     ExtrudeFree(ex);
 	 FreeP(dv);
 	 FreeP(dl);
 	 FreeP(tv);
 	 FreeP(nv);
+
+    /*
+    CGOColor(I->std,1.0,1.0,1.0);
+    CGOEnable(I->std,GL_LIGHTING);
+    CGOBegin(I->std,GL_LINES);
+    v1=pv;
+    v2=pvo;
+    for(a=0;a<nAt;a++) 
+      {
+        CGOVertexv(I->std,v1);
+        add3f(v1,v2,t0);
+        add3f(v2,t0,t0);
+        CGOVertexv(I->std,t0);
+        v1+=3;
+        v2+=3;
+      }
+    CGOEnd(I->std);
+    CGODisable(I->std,GL_LIGHTING);
+    CGOStop(I->std);
+    */
   }
 
   FreeP(at);
   FreeP(seg);
   FreeP(pv);
-  
+  FreeP(pvo);
+  FreeP(pva);
+
   return((void*)(struct Rep*)I);
 }
 

@@ -43,10 +43,11 @@ int CGO_sz[] = {
   
   CGO_LINEWIDTH_SZ,
   CGO_WIDTHSCALE_SZ,
+  CGO_ENABLE_SZ,
+  CGO_DISABLE_SZ,
   CGO_NULL_SZ,
   CGO_NULL_SZ,
   CGO_NULL_SZ,
-
   CGO_NULL_SZ
 };
 
@@ -162,6 +163,20 @@ void CGOBegin(CGO *I,int mode)
 {
   float *pc = CGO_add(I,2);
   CGO_write_int(pc,CGO_BEGIN);
+  CGO_write_int(pc,mode);
+}
+
+void CGOEnable(CGO *I,int mode)
+{
+  float *pc = CGO_add(I,2);
+  CGO_write_int(pc,CGO_ENABLE);
+  CGO_write_int(pc,mode);
+}
+
+void CGODisable(CGO *I,int mode)
+{
+  float *pc = CGO_add(I,2);
+  CGO_write_int(pc,CGO_DISABLE);
   CGO_write_int(pc,mode);
 }
 
@@ -501,6 +516,8 @@ void CGORenderRay(CGO *I,CRay *ray)
     case CGO_TRIANGLE:
       ray->fTriangle3fv(ray,pc,pc+3,pc+6,pc+9,pc+12,pc+15,pc+18,pc+21,pc+24);
       break;
+    default:
+      break;
     }
     pc+=CGO_sz[op];
   }
@@ -522,6 +539,16 @@ static void CGO_gl_end(float *pc)
 static void CGO_gl_linewidth(float *pc)
 {
   glLineWidth(*pc);
+}
+
+static void CGO_gl_enable(float *pc)
+{
+  glEnable(CGO_read_int(pc));
+}
+
+static void CGO_gl_disable(float *pc)
+{
+  glDisable(CGO_read_int(pc));
 }
 
 static void CGO_gl_null(float *pc) {
@@ -565,6 +592,8 @@ CGO_op_fn CGO_gl[] = {
   CGO_gl_null,
   
   CGO_gl_linewidth,
+  CGO_gl_enable,
+  CGO_gl_disable,
   CGO_gl_null,
   CGO_gl_null,
   CGO_gl_null,

@@ -70,10 +70,14 @@ typedef struct {
 #define CGO_TRIANGLE_SZ          27
 #define CGO_CYLINDER             0x09
 #define CGO_CYLINDER_SZ          13
-#define CGO_LINEWIDTH            0x10
+#define CGO_LINEWIDTH            0x0A
 #define CGO_LINEWIDTH_SZ         1
-#define CGO_WIDTHSCALE           0x11
+#define CGO_WIDTHSCALE           0x0B
 #define CGO_WIDTHSCALE_SZ        1
+#define CGO_ENABLE               0x0C
+#define CGO_ENABLE_SZ            1
+#define CGO_DISABLE              0x0D
+#define CGO_DISABLE_SZ           1
 
 #define CGO_MASK                 0x0F
                
@@ -99,6 +103,9 @@ void CGOColor(CGO *I,float v1,float v2,float v3);
 void CGOColorv(CGO *I,float *v);
 void CGONormal(CGO *I,float v1,float v2,float v3);
 void CGONormalv(CGO *I,float *v);
+
+void CGOEnable(CGO *I,int mode);
+void CGODisable(CGO *I,int mode);
 
 void CGOStop(CGO *I);
 

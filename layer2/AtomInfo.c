@@ -172,6 +172,31 @@ void AtomInfoBracketResidue(AtomInfoType *ai0,int n0,AtomInfoType *ai,int *st,in
   }
 }
 /*========================================================================*/
+void AtomInfoBracketResidueFast(AtomInfoType *ai0,int n0,int cur,int *st,int *nd)
+{
+  /* efficient but unreliable way to find where residue atoms are located in an object 
+   * for purpose of residue-based operations */
+  int a;
+  AtomInfoType *ai1;
+  
+  *st=cur;
+  *nd=cur;
+  ai0=ai0+cur;
+  ai1=ai0-1;
+  for(a=cur-1;a>=0;a--) {
+    if(!AtomInfoSameResidue(ai0,ai1--))
+      break;
+    *st=a;
+  }
+  ai1=ai0+1;
+  for(a=cur+1;a<n0;a++) {
+    if(!AtomInfoSameResidue(ai0,ai1++))
+      break;
+    *nd=a;
+  }
+}
+
+/*========================================================================*/
 void AtomInfoPrimeColors(void)
 {
   NColor=ColorGetIndex("nitrogen");
