@@ -27,7 +27,7 @@ typedef struct {
   int D1D2;
   Vector3i iMin,iMax;
   int *Head,*Link;
-  int *EHead,*EList;
+  int *EHead,*EList,*EMask;
   int NVert;
   int NEElem;
   Vector3f Max,Min;
@@ -65,7 +65,7 @@ float MapGetSeparation(float range,float *mx,float *mn,float *diagonal);
 /* special routines for raytracing */
 
 int MapInsideXY(MapType *I,float *v,int *a,int *b,int *c); 
-void MapSetupExpressXY(MapType *I);
+void MapSetupExpressXY(MapType *I,int n_vert);
 
 void MapSetupExpressXYVert(MapType *I,float *vert,int n_vert);
 

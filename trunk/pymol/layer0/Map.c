@@ -11,8 +11,7 @@ I* Additional authors of this source file include:
 -* 
 -* 
 -*
-Z* -------------------------------------------------------------------
-*/
+Z* ------------------------------------------------------------------- */
 
 #include"os_predef.h"
 #include"os_std.h"
@@ -42,6 +41,7 @@ void MapFree(MapType *I)
 		FreeP(I->Head);
 		FreeP(I->Link);
 		FreeP(I->EHead);
+		FreeP(I->EMask);
 		VLAFreeP(I->EList);
 	 }
   OOFreeP(I);
@@ -80,7 +80,9 @@ void MapCacheReset(MapCache *M)
 		if(i >= 0) {
 			i4 = i;
 			i = clinkp[i];
-		}	
+		}
+      
+      /* this doesn't look safe, but it is. i1-i4 are always valid indices*/	
 		cachep[i1] = 0;
 		cachep[i2] = 0;
 		cachep[i3] = 0;
@@ -136,6 +138,9 @@ int MapInsideXY(MapType *I,float *v,int *a,int *b,int *c) /* special version for
 			btmp = I->iMax[1];
 	}
 
+	if(!*(I->EMask + I->Dim[1]*atmp + btmp))
+		return(false);
+		
 	if(ctmp < I->iMin[2])
 		ctmp = I->iMin[2];
 	else if(ctmp > I->iMax[2])
@@ -148,106 +153,137 @@ int MapInsideXY(MapType *I,float *v,int *a,int *b,int *c) /* special version for
 	return(true);  
 }
 
-void MapSetupExpressXY(MapType *I) /* setup a list of XY neighbors for each square */
+void MapSetupExpressXY(MapType *I,int n_vert) /* setup a list of XY neighbors for each square */
 {
-  int n=0;
-  int a,b,c,flag;
-  register int d,e,i;
-  unsigned int mapSize;
-  int st;
+	int n, a,b,c,flag;
+	register int d,e,i;
+	unsigned int mapSize;
+	int st, dim2;
+	int n_alloc = n_vert * 15; /* emprical est. */
 
-  PRINTFD(FB_Map)
-    " MapSetupExpressXY-Debug: entered.\n"
-    ENDFD;
-  mapSize = I->Dim[0]*I->Dim[1]*I->Dim[2];
-  I->EHead=Calloc(int,mapSize);
-  ErrChkPtr(I->EHead);
-  I->EList=VLAMalloc(256000,sizeof(int),5,0); 
-
-  n=1;
-  for(a=I->iMin[0];a<=I->iMax[0];a++)
-	 for(b=I->iMin[1];b<=I->iMax[1];b++)
-		for(c=I->iMin[2];c<=I->iMax[2];c++) /* a better alternative exists... */
-		  {
-			 st=n;
-			 flag=false;
-			 for(d=a-1;d<=a+1;d++)
-				for(e=b-1;e<=b+1;e++)
-				  {
-					 i=*MapFirst(I,d,e,c);
-					 if(i>=0) {
-						flag=true;
-						while(i>=0) {
-						  VLACheck(I->EList,int,n);
-						  I->EList[n]=i;
-						  n++;
-						  i=MapNext(I,i);
+	PRINTFD(FB_Map)
+	" MapSetupExpressXY-Debug: entered.\n"
+	ENDFD;
+	
+	mapSize		= I->Dim[0]*I->Dim[1]*I->Dim[2];
+	I->EHead	= Calloc(int,mapSize);
+	I->EMask    = Calloc(int,I->Dim[0]*I->Dim[1]);
+	ErrChkPtr(I->EHead);
+	I->EList	= VLAMalloc(n_alloc,sizeof(int),5,0); 
+	
+	n		= 1;
+	dim2	= I->Dim[2];
+	
+	for(a = I->iMin[0]; a <= I->iMax[0]; a++)
+	{
+		for(b = I->iMin[1]; b <= I->iMax[1]; b++)
+		{
+			for(c = I->iMin[2]; c <= I->iMax[2]; c++) /* a better alternative exists... */
+			{
+				int	*iPtr1	= (I->Head + ((a-1) * I->D1D2) + ((b-1)*dim2) + c);
+				
+				st		= n;
+				flag	= false;
+				
+				for(d = a-1; d <= a+1; d++)
+				{
+					/*int	*iPtr2	= (I->Head + (d * I->D1D2) + ((b-1)*dim2) + c);*/
+					int	*iPtr2	= iPtr1;
+					
+					for(e = b-1; e <= b+1; e++)
+					{
+						/*i	= *MapFirst(I,d,e,c);*/
+						i	= *iPtr2;
+						if(i >= 0)
+						{
+							flag	= true;
+							while(i >= 0)
+							{
+								VLACheck(I->EList,int,n);
+								I->EList[n]	= i;
+								n++;
+								i	= MapNext(I,i);
+							}
 						}
-					 }
-				  }
-			 if(flag) {
-				*(MapEStart(I,a,b,c))=st;
-				VLACheck(I->EList,int,n);
-				I->EList[n]=-1;
-				n++;
-          } /*else {
-            *(MapEStart(I,a,b,c))=0;
-            }*/
-		  }
-  I->NEElem=n;
-  VLASize(I->EList,int,I->NEElem);
-  PRINTFD(FB_Map)
-    " MapSetupExpressXY-Debug: leaving...\n"
-    ENDFD;
-
+						
+						iPtr2	+= dim2;
+					}
+					
+					iPtr1 += I->D1D2;
+				}
+				
+				if(flag) 
+				{
+					*(I->EMask + I->Dim[1]*a + b) = true;
+					*(MapEStart(I,a,b,c))=st;
+					VLACheck(I->EList,int,n);
+					I->EList[n]=-1;
+					n++;
+				}
+			}
+		}
+	}
+		
+	I->NEElem=n;
+	VLASize(I->EList,int,I->NEElem);
+	PRINTFD(FB_Map)
+		" MapSetupExpressXY-Debug: leaving...\n"
+	ENDFD;
 }
 
 
 #if 1
 void MapSetupExpressXYVert(MapType *I,float *vert,int n_vert) /* setup a list of XY neighbors for each square */
 {
-	int n=0;
-	int a,b,c,flag;
-	register int d,e,i;
-	unsigned int mapSize;
-	int st;
-	float *v;
-	int h;
-	int j,k;
+	int		h, n, a,b,c;
+	int		j,k,dim2;
+	int		d,e;
+	float	*v;
+	int		*eBase, *hBase;
+	int      n_alloc = n_vert * 15; /* emprical est. */
 	
 	PRINTFD(FB_Map)
 		" MapSetupExpressXY-Debug: entered.\n"
 	ENDFD;
 	
-	mapSize 	= I->Dim[0]*I->Dim[1]*I->Dim[2];
-	I->EHead	= Calloc(int,mapSize);
+	/*mapSize 	= I->Dim[0]*I->Dim[1]*I->Dim[2];*/
+	I->EHead	= Calloc(int, I->Dim[0]*I->Dim[1]*I->Dim[2]);
+	I->EMask    = Calloc(int,I->Dim[0]*I->Dim[1]);
 	ErrChkPtr(I->EHead);
-	I->EList	= VLAMalloc(256000,sizeof(int),5,0); /* autozero */
+	I->EList	= VLAMalloc(n_alloc,sizeof(int),5,0); /* autozero */
 	
-	n	= 1;
-	v	= vert;
-	
+	n		= 1;
+	v		= vert;
+	dim2	= I->Dim[2];
+		
 	for(h = 0; h < n_vert; h++) 
 	{ 
 		MapLocus(I,v,&j,&k,&c);
+
+		eBase	= I->EHead + ((j-1) * I->D1D2) + ((k-1)*dim2) + c;
+		hBase	= I->Head + (((j-1)-1) * I->D1D2) + c;
 		
 		for(a = j-1; a <= j+1; a++)
 		{
+			int		*ePtr1	= eBase;
+			
 			for(b = k-1; b <= k+1; b++)
 			{
-				if(!*(MapEStart(I,a,b,c)))
+				if( *ePtr1 == 0 )
 				{
-					st		= n;
-					flag	= false;
+					int *hPtr1	= hBase + ((b-1) * dim2);
+					int	st		= n;
+					int	flag	= false;
 					
-					for(d = a-1; d <= a+1;d++)
+					for(d = a-1; d <= a+1; d++)
 					{
-						int *iPtr	= I->Head + (d * I->D1D2) + c;
+						int *hPtr2	= hPtr1;
 						
 						for(e = b-1; e <= b+1; e++)
 						{
-							i	= *(iPtr + (e * I->Dim[2]));
-							/*i	= *MapFirst(I,d,e,c); */
+							int	i	= *hPtr2;
+							/*i	= *(iPtr + (e * dim2));*/
+							/*i	= *MapFirst(I,d,e,c);*/
 							
 							if(i > -1)
 							{
@@ -260,19 +296,30 @@ void MapSetupExpressXYVert(MapType *I,float *vert,int n_vert) /* setup a list of
 									i = MapNext(I,i);
 								}
 							}
+							
+							hPtr2	+= dim2;
 						}
-					}
+
+						hPtr1	+= I->D1D2;
+					}					
 					
 					if(flag) 
 					{
+						*(I->EMask + I->Dim[1]*a + b) = true;
 						*(MapEStart(I,a,b,c))	= st;
 						VLACheck(I->EList,int,n);
 						I->EList[n] = -1;
 						n++;
 					}
 				}
+				
+				ePtr1	+= dim2;
 			}
+			
+			eBase	+= I->D1D2;
+			hBase	+= I->D1D2;
 		}
+		
 		v += 3;
 	}
 
@@ -281,7 +328,9 @@ void MapSetupExpressXYVert(MapType *I,float *vert,int n_vert) /* setup a list of
 		" MapSetupExpressXY-Debug: leaving...\n"
 	ENDFD;
 }
+
 #else
+
 void MapSetupExpressXYVert(MapType *I,float *vert,int n_vert) /* setup a list of XY neighbors for each square */
 {
   int n=0;
@@ -341,7 +390,9 @@ void MapSetupExpressXYVert(MapType *I,float *vert,int n_vert) /* setup a list of
     ENDFD;
   
 }
+
 #endif
+
 
 void MapSetupExpress(MapType *I) /* setup a list of neighbors for each square */
 {
@@ -398,19 +449,8 @@ void MapSetupExpress(MapType *I) /* setup a list of neighbors for each square */
 
 }
 
-#ifdef _PYMOL_OSX
-static __inline__ int iclamp(int x, int l, int h)
-#else
-static int iclamp(int x, int l, int h)
-#endif
-{
-	unsigned int hl = h - l; int xl = x - l;
-	return (unsigned int)(xl) > hl ? ((int)hl & ~(xl >> 31)) + l : x;
-}
-
 void MapLocus(MapType *I,float *v,int *a,int *b,int *c)
 {
-#if 1
 	int		at, bt, ct;
 	float	invDiv	= I->recipDiv; 
 	
@@ -431,14 +471,6 @@ void MapLocus(MapType *I,float *v,int *a,int *b,int *c)
 	*a	= at;
 	*b	= bt;
 	*c	= ct;
-#else
-	float	invDiv	= I->recipDiv; 
-		
-	/* range checking...*/
-	*a	= iclamp( (int)((v[0] - I->Min[0]) * invDiv) + MapBorder, I->iMin[0], I->iMax[0] );
-	*b	= iclamp( (int)((v[1] - I->Min[1]) * invDiv) + MapBorder, I->iMin[1], I->iMax[1] );
-	*c	= iclamp( (int)((v[2] - I->Min[2]) * invDiv) + MapBorder, I->iMin[2], I->iMax[2] );
-#endif
 }
 
 int *MapLocusEStart(MapType *I,float *v)
@@ -526,6 +558,7 @@ static MapType *_MapNew(float range,float *vert,int nVert,float *extent,int *fla
   int a,c;
   int mapSize;
   int h,k,l;
+  int *i;
   int *list;
   float *v,tmp_f;
   int firstFlag;
@@ -541,6 +574,7 @@ static MapType *_MapNew(float range,float *vert,int nVert,float *extent,int *fla
   I->Link = NULL;
   I->EHead = NULL;
   I->EList = NULL;
+  I->EMask = NULL;
   I->NEElem=0;
   
   I->Link=Alloc(int,nVert);

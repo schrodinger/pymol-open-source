@@ -42,6 +42,9 @@ int ZLineToSphere(float *base,float *point,float *dir,float radius,float maxial,
 int ZLineToSphereCapped(float *base,float *point,float *dir,float radius,float maxial,
 						float *sphere,float *asum,int cap1,int cap2,float *pre);
 
+static int intersect_triangle(float orig[3], float *pre,float vert0[3], 
+										float *u, float *v, float *d);
+
 #define FASTER_ER	1
 
 #if FASTER_ER
@@ -1170,11 +1173,11 @@ int BasisHitNoShadow(BasisCallRec *BC)
 	
 	if( MapInsideXY(BI->Map, r->base, &a, &b, &c) )
 	{
-		const int	*xxtmp	= BI->Map->EHead + (a * BI->Map->D1D2) + (b * BI->Map->Dim[2]);
 		register int		minIndex=-1;
 		int     v2p;
 	    int     i,ii;
-	    
+		int		*xxtmp;
+			    
 		int except = BC->except;
 		const int *vert2prim = BC->vert2prim;
 		const float front = BC->front;
@@ -1200,7 +1203,7 @@ int BasisHitNoShadow(BasisCallRec *BC)
 		
 		r_dist = MAXFLOAT;
 
-		xxtmp	= BI->Map->EHead + (a * BI->Map->D1D2) + (b * BI->Map->Dim[2]);
+		xxtmp	= BI->Map->EHead + (a * BI->Map->D1D2) + (b * BI->Map->Dim[2]) + c;
 
 		MapCacheReset(cache);
 
@@ -1208,8 +1211,7 @@ int BasisHitNoShadow(BasisCallRec *BC)
 	
 		while(c >= MapBorder) 
 		{
-			h	= *(xxtmp + c);
-		
+			h	= *xxtmp;		
 			if(h)
 			{
 				ip	= elist + h;
@@ -1408,6 +1410,7 @@ int BasisHitNoShadow(BasisCallRec *BC)
 			}
 			
 			c--;
+			xxtmp--;
 				
 		} /* end of while */
 		
@@ -1449,7 +1452,7 @@ __inline__
 int BasisHitShadow(BasisCallRec *BC)
 {
 	float	oppSq,dist,sph[3],vt[3],tri1,tri2; 
-	int		a,b,c,h,*ip;
+	int		h,a,b,c,*ip;
 	int		excl_trans_flag;
 	int		check_interior_flag;
 	int		*elist, local_iflag = false;
@@ -1462,14 +1465,16 @@ int BasisHitShadow(BasisCallRec *BC)
 
    if( MapInsideXY(BI->Map,r->base, &a, &b, &c) )
 	{
-		const int	*xxtmp	= BI->Map->EHead + (a * BI->Map->D1D2) + (b * BI->Map->Dim[2]);
 		register int		minIndex=-1;
 		int     v2p;
 	    int     i,ii;
-	    
+		int		*xxtmp;
+			    
 		int except = BC->except;
 		const int *vert2prim = BC->vert2prim;
 		const int trans_shadows = BC->trans_shadows;
+		const float front = BC->front;
+		const float back = BC->back;
 		const float excl_trans = BC->excl_trans;
 		MapCache *cache = &BC->cache;
 		
@@ -1490,7 +1495,7 @@ int BasisHitShadow(BasisCallRec *BC)
 		
 		r_dist = MAXFLOAT;
 
-		xxtmp	= BI->Map->EHead + (a * BI->Map->D1D2) + (b * BI->Map->Dim[2]);
+		xxtmp	= BI->Map->EHead + (a * BI->Map->D1D2) + (b * BI->Map->Dim[2]) + c;
 
 		MapCacheReset(cache);
 
@@ -1498,9 +1503,8 @@ int BasisHitShadow(BasisCallRec *BC)
 	
 		while(c >= MapBorder) 
 		{
-			h	= *(xxtmp + c);
-		
-			if(h)
+			h	= *xxtmp;
+			if( h )
 			{
 				ip	= elist + h;
 				i	= *(ip++);
@@ -1560,6 +1564,7 @@ int BasisHitShadow(BasisCallRec *BC)
 							break;
 							
 							case cPrimSphere:
+                      
 								oppSq = ZLineClipPoint( r->base, BI->Vertex + i*3, &dist, BI->Radius[i] );
 								if(oppSq <= BI->Radius2[i])
 								{
@@ -1682,6 +1687,7 @@ int BasisHitShadow(BasisCallRec *BC)
 			}
 			
 			c--;
+			xxtmp--;
 				
 		} /* end of while */
 		
@@ -1789,435 +1795,568 @@ void BasisOptimizeMap(CBasis *I,float *vertex,int n,int *vert2prim)
 
 }
 #endif
+
 /*========================================================================*/
 void BasisMakeMap(CBasis *I,int *vert2prim,CPrimitive *prim,float *volume)
 {
-  float *v,*vv,*d;
-  float l;
-  CPrimitive *prm;
-  int a,b,c,i,n,h,q,x,y,z,j,k,e;
-  int extra_vert = 0;
-  float p[3],dd[3],*d1,*d2,vd[3],cx[3],cy[3];
-  float *tempVertex;
-  float xs,ys;
-  int *tempRef,*ip,*sp;
-  int remapMode=true; /* remap mode means that some objects will span more
-                         * than one voxel, so we have to worry about populating
-                         * those voxels and also about eliminating duplicates 
-                         * when traversing the neighbor lists */
-  float min[3],max[3],extent[6];
-  float sep;
-  float diagonal[3];
-  float l1,l2;
-  float bh,ch;
-  int n_voxel;
+	float *v,*vv,*d;
+	float l;
+	CPrimitive *prm;
+	int a,b,c,i,n,h,q,x,y,z,j,k,e;
+	int extra_vert = 0;
+	float p[3],dd[3],*d1,*d2,vd[3],cx[3],cy[3];
+	float *tempVertex;
+	float xs,ys;
+	int *tempRef,*ip,*sp;
+	int remapMode = true; /* remap mode means that some objects will span more
+						 * than one voxel, so we have to worry about populating
+						 * those voxels and also about eliminating duplicates 
+						 * when traversing the neighbor lists */
+	float min[3],max[3],extent[6];
+	float sep;
+	float diagonal[3];
+	float l1,l2;
+	float bh,ch;
+	int n_voxel;
+	
+	const float _0	= 0.0;
+	const float _p5	= 0.5;
+	
+	PRINTFD(FB_Ray)
+		" BasisMakeMap: I->NVertex %d\n",I->NVertex
+	ENDFD;
+	
+	sep	= I->MinVoxel;
+	if(sep == _0)
+	{
+		remapMode	= false;
+		sep			= I->MaxRadius; /* also will imply no remapping of vertices */
+	}
+	/* we need to get a sense of the actual size in order to avoid sep being too small */
+	
+	v	= I->Vertex;
+	
+#if 0
+	for(c = 0; c < 3; c++)
+		min[c] = max[c] = v[c];
+#else
+	min[0] = max[0] = v[0];
+	min[1] = max[1] = v[1];
+	min[2] = max[2] = v[2];
+#endif
+	
+	v	+= 3;
+	
+	for(a = 1; a < I->NVertex; a++)
+	{
+#if 0
+		for(c = 0; c < 3; c++)
+		{
+			if(min[c] > v[c])		min[c]	= v[c];
+			if(max[c] < v[c])		max[c]	= v[c];
+		}
+#else
+		if(min[0] > v[0])		min[0]	= v[0];
+		if(max[0] < v[0])		max[0]	= v[0];
 
+		if(min[1] > v[1])		min[1]	= v[1];
+		if(max[1] < v[1])		max[1]	= v[1];
 
-  PRINTFD(FB_Ray)
-    " BasisMakeMap: I->NVertex %d\n",I->NVertex
-    ENDFD;
-  sep = I->MinVoxel;
-  if(sep==0.0)
-    {
-      remapMode = false;
-      sep = I->MaxRadius; /* also will imply no remapping of vertices */
-    }
-  /* we need to get a sense of the actual size in order to avoid sep being too small */
-    
-  v=I->Vertex;
-  for(c=0;c<3;c++)
-    {
-      min[c] = v[c];
-      max[c] = v[c];
-    }
-  v+=3;
-  for(a=1;a<I->NVertex;a++)
-    {
-      for(c=0;c<3;c++)
-        {
-          if(min[c]>v[c])
-            min[c]=v[c];
-          if(max[c]<v[c])
-            max[c]=v[c];
-        }
-      v+=3;
-    }
-  if(volume) {
-    if(min[0]>volume[0])
-      min[0]=volume[0];
-    if(max[0]<volume[1])
-      max[0]=volume[1];
-    if(min[1]>volume[2])
-      min[1]=volume[2];
-    if(max[1]<volume[3])
-      max[1]=volume[3];
-    if(min[2]>(-volume[5]))
-      min[2]=(-volume[5]);
-    if(max[2]<(-volume[4]))
-		max[2]=(-volume[4]);
+		if(min[2] > v[2])		min[2]	= v[2];
+		if(max[2] < v[2])		max[2]	= v[2];
+#endif
+		v	+= 3;
+	}
+	
+	if(volume)
+	{
+		if(min[0] > volume[0])		min[0]	= volume[0];
+		if(max[0] < volume[1])		max[0]	= volume[1];
+		if(min[1] > volume[2])		min[1]	= volume[2];
+		if(max[1] < volume[3])		max[1]	= volume[3];
+		if(min[2] > (-volume[5]))	min[2]	= (-volume[5]);
+		if(max[2] < (-volume[4]))	max[2]	= (-volume[4]);
+		
+		if(Feedback(FB_Ray,FB_Debugging)) {
+			dump3f(volume," BasisMakeMap: volume");
+			dump3f(volume+3," BasisMakeMap: volume+3");
+		}
+	}
+	
+	/* don't break up space unnecessarily if we only have a few vertices... */
 
-    if(Feedback(FB_Ray,FB_Debugging)) {
-      dump3f(volume," BasisMakeMap: volume");
-      dump3f(volume+3," BasisMakeMap: volume+3");
-    }
-  }
+	if(I->NVertex)
+	{
+		l1 = (float)fabs(max[0]-min[0]);
+		l2 = (float)fabs(max[1]-min[1]);
+		
+		if(l1 < l2) l1 = l2;  
+		
+		l2 = (float)fabs(max[2]-min[2]);
+		
+		if(l1 < l2) l1 = l2;
+		
+		if(l1 < kR_SMALL4) l1 = 100.0;
+		
+		if(I->NVertex < (l1/sep))
+			sep	= (l1/I->NVertex);
+	}
 
-  /* don't break up space unnecessarily if we only have a few vertices... */
-
-  if(I->NVertex) {
-    l1 = (float)fabs(max[0]-min[0]);
-    l2 = (float)fabs(max[1]-min[1]);
-    if(l1<l2) l1 = l2;  
-    l2 = (float)fabs(max[2]-min[2]);
-    if(l1<l2) l1 = l2;      
-    if(l1<kR_SMALL4) l1=100.0;
-    if(I->NVertex<(l1/sep))
-      sep=(l1/I->NVertex);
-  }
-
-  sep = MapGetSeparation(sep,max,min,diagonal); /* this needs to be a minimum 
-                                                 * estimate of the actual value */
-
-  /* here we have to carry out a complicated work-around in order to
+	sep = MapGetSeparation(sep,max,min,diagonal); /* this needs to be a minimum 
+												 * estimate of the actual value */
+	
+	/* here we have to carry out a complicated work-around in order to
 	* efficiently encode our lines into the map in a way that doesn't
-   * require expanding the map cutoff to the size of the largest object*/
-  if(remapMode) 
-    for(a=0;a<I->NVertex;a++)
-      {
-        prm=prim+vert2prim[a];
-		  switch(prm->type) {
-		  case cPrimTriangle:
-			 if(a==prm->vert) { /* only do this calculation for one of the three vertices */
-				l1=(float)length3f(I->Precomp+I->Vert2Normal[a]*3);
-				l2=(float)length3f(I->Precomp+I->Vert2Normal[a]*3+3);
-				b = (int)ceil(l1/sep)+1;
-				c = (int)ceil(l2/sep)+1;
-				extra_vert += 4*b*c;
-			 }
-			 break;
-		  case cPrimCylinder:
-        case cPrimSausage:
-          q = ((int)(2*(floor(prm->r1/sep)+1)))+1;
-          q = q * q * ((int)ceil((prm->l1+2*prm->r1)/sep)+1);
-          extra_vert+= q;
-			 break;
-		  case cPrimSphere:
-          b = (int)(2*floor(prm->r1/sep)+1);
-          extra_vert+= (b*b*b);
-			 break;
-        } 
-		}
-  /*  printf("sep %8.3f extra_vert %d\n",sep,extra_vert);*/
-
-  if(remapMode) {
-	 extra_vert+=I->NVertex;
-	 tempVertex = Alloc(float,extra_vert*3);
-	 tempRef = Alloc(int,extra_vert); 
-
-    ErrChkPtr(tempVertex); /* can happen if extra vert is unreasonable */
-    ErrChkPtr(tempRef);
-
-	 /* lower indexes->flags, top is ref->lower index*/
-	 
-	 v=tempVertex;
-	 vv=I->Vertex;
-	 for(a=0;a<I->NVertex;a++)
+	* require expanding the map cutoff to the size of the largest object*/
+	if(remapMode) 
+	{
+		for(a = 0; a < I->NVertex; a++)
 		{
-		  *(v++)=*(vv++);
-		  *(v++)=*(vv++);
-		  *(v++)=*(vv++);
-		}
-	 
-	 n=I->NVertex;
-	 for(a=0;a<I->NVertex;a++)
-		{
-		  prm=prim+vert2prim[a];
-		  switch(prm->type) {
-		  case cPrimTriangle:
-			 if(a==prm->vert) {
-            {
-/* only do this calculation for one of the three vertices */
-				d1=I->Precomp+I->Vert2Normal[a]*3;
-				d2=I->Precomp+I->Vert2Normal[a]*3+3;
-				vv=I->Vertex+a*3;
-				l1=(float)length3f(d1);
-				l2=(float)length3f(d2);
-				b = (int)floor(l1/sep)+1;
-				c = (int)floor(l2/sep)+1;
-				extra_vert += b*c;
-				bh=(float)(b/2)+1;
-				ch=(float)(c/2)+1;
+			prm	= prim + vert2prim[a];
+			
+			switch(prm->type)
+			{
+				case cPrimTriangle:
+					if(a == prm->vert) { /* only do this calculation for one of the three vertices */
+						l1	= (float)length3f(I->Precomp+I->Vert2Normal[a]*3);
+						l2	= (float)length3f(I->Precomp+I->Vert2Normal[a]*3+3);
+						b	= (int)ceil(l1/sep)+1;
+						c	= (int)ceil(l2/sep)+1;
+						extra_vert += 4*b*c;
+					}
+				break;
 				
-				for(x=0;x<bh;x++)
-				  for(y=0;y<ch;y++) 
-					 {
-						*(v++) = vv[0]+(d1[0]*x)/b+(d2[0]*y)/c;
-						*(v++) = vv[1]+(d1[1]*x)/b+(d2[1]*y)/c;
-						*(v++) = vv[2]+(d1[2]*x)/b+(d2[2]*y)/c;
-						tempRef[n]=a;
-						n++;
+				case cPrimCylinder:
+				case cPrimSausage:
+					q = ((int)(2*(floor(prm->r1/sep)+1)))+1;
+					q = q * q * ((int)ceil((prm->l1+2*prm->r1)/sep)+1);
+					extra_vert+= q;
+				break;
+	
+				case cPrimSphere:
+					b = (int)(2*floor(prm->r1/sep)+1);
+					extra_vert	+= (b*b*b);
+				break;
+			}
+		}	/* for */
+	
+		extra_vert	+= I->NVertex;
+		tempVertex	= Alloc(float,extra_vert*3);
+		tempRef		= Alloc(int,extra_vert); 
+		
+		ErrChkPtr(tempVertex); /* can happen if extra vert is unreasonable */
+		ErrChkPtr(tempRef);
+		
+		/* lower indexes->flags, top is ref->lower index*/
+		
+		n	= I->NVertex;
+
+		v	= tempVertex;
+		vv	= I->Vertex;
+
+#if 0
+		for(a = 0; a < n; a++)
+		{
+			*(v++)	= *(vv++);
+			*(v++)	= *(vv++);
+			*(v++)	= *(vv++);
+		}
+#else
+		memcpy( v, vv, n * sizeof(float) * 3 );
+		vv	+= n * 3;
+		v	+= n * 3;
+#endif
+	 
+		
+		for(a = 0; a < I->NVertex; a++)
+		{
+			prm	= prim + vert2prim[a];
+			
+			switch(prm->type)
+			{
+				case cPrimTriangle:
+					if(a == prm->vert)
+					{
+						/* only do this calculation for one of the three vertices */
+						d1	= I->Precomp + I->Vert2Normal[a]*3;
+						d2	= I->Precomp + I->Vert2Normal[a]*3+3;
+						vv	= I->Vertex + a*3;
+						l1	= (float)length3f(d1);
+						l2	= (float)length3f(d2);
+						b	= (int)floor(l1/sep)+1;
+						c	= (int)floor(l2/sep)+1;
+						extra_vert += b*c;
+						bh	= (float)(b/2)+1;
+						ch	= (float)(c/2)+1;
 						
-					 }
-				for(x=0;x<bh;x++)
-				  for(y=0;y<ch;y++) 
-					 {
-						if(((((float)x)/b)+(((float)y)/c))<0.5) {
-						  *(v++) = vv[0]+d1[0]*(0.5F+((float)x)/b)+(d2[0]*y)/c;
-						  *(v++) = vv[1]+d1[1]*(0.5F+((float)x)/b)+(d2[1]*y)/c;
-						  *(v++) = vv[2]+d1[2]*(0.5F+((float)x)/b)+(d2[2]*y)/c;
-						  tempRef[n]=a; 
-						  n++;
-
-						  *(v++) = vv[0]+(d1[0]*x)/b+d2[0]*(0.5F+((float)y)/c);
-						  *(v++) = vv[1]+(d1[1]*x)/b+d2[1]*(0.5F+((float)y)/c);
-						  *(v++) = vv[2]+(d1[2]*x)/b+d2[2]*(0.5F+((float)y)/c);
-						  tempRef[n]=a;
-						  n++;
+						for(x = 0; x < bh; x++)
+						{
+							const float	xb	= (float)x / b;
+							
+							for(y = 0; y < ch; y++) 
+							{
+								const float	yc	= (float)y / c;
+								
+								*(v++)	= vv[0] + (d1[0] * xb) + (d2[0] * yc);
+								*(v++)	= vv[1] + (d1[1] * xb) + (d2[1] * yc);
+								*(v++)	= vv[2] + (d1[2] * xb) + (d2[2] * yc);
+								
+								tempRef[n++]	= a;
+							}
 						}
-					 }
-            }
-			 }
-			 break;
-		  case cPrimCylinder:
-        case cPrimSausage:
-          d=I->Normal+3*I->Vert2Normal[a];
-          vv=I->Vertex+a*3;
-          
-          get_system1f3f(d,cx,cy); /* creates an orthogonal system about d */
-          
-          p[0]=vv[0]-d[0]*prm->r1;
-          p[1]=vv[1]-d[1]*prm->r1;
-          p[2]=vv[2]-d[2]*prm->r1;
-          dd[0]=d[0]*sep;
-          dd[1]=d[1]*sep;
-          dd[2]=d[2]*sep;
-          l=prm->l1+2*prm->r1;
+							 
+						for(x = 0; x < bh; x++)
+						{
+							const float	xb	= (float)x / b;
+							
+							for(y = 0; y < ch; y++) 
+							{
+								const float	yc	= (float)y/c;
+								
+								if( (xb + yc) < _p5 )
+								{
+									*(v++)	= vv[0] + d1[0] * (_p5 + xb) + (d2[0]*yc);
+									*(v++)	= vv[1] + d1[1] * (_p5 + xb) + (d2[1]*yc);
+									*(v++)	= vv[2] + d1[2] * (_p5 + xb) + (d2[2]*yc);
+									
+									tempRef[n++]	= a; 
+									
+									*(v++)	= vv[0] + (d1[0]*xb) + d2[0]*(_p5 + yc);
+									*(v++)	= vv[1] + (d1[1]*xb) + d2[1]*(_p5 + yc);
+									*(v++)	= vv[2] + (d1[2]*xb) + d2[2]*(_p5 + yc);
+									
+									tempRef[n++] = a;
+								}
+							}
+						}
+					}	/* if */
+					break;
+			 
+				case cPrimCylinder:
+				case cPrimSausage:
+				
+					d	= I->Normal+3*I->Vert2Normal[a];
+					vv	= I->Vertex+a*3;
+				
+					get_system1f3f(d,cx,cy); /* creates an orthogonal system about d */
+					
+					p[0]	= vv[0]-d[0]*prm->r1;
+					p[1]	= vv[1]-d[1]*prm->r1;
+					p[2]	= vv[2]-d[2]*prm->r1;
+					dd[0]	= d[0]*sep;
+					dd[1]	= d[1]*sep;
+					dd[2]	= d[2]*sep;
+					l	= prm->l1+2*prm->r1;
+				
+					q	= (int)floor(prm->r1 / sep) + 1;
+					
+					while(1)
+					{
+						vd[0]	= (p[0] += dd[0]);
+						vd[1]	= (p[1] += dd[1]);
+						vd[2]	= (p[2] += dd[2]);
+					
+						for(x = -q; x <= q; x++)
+						{
+							for(y = -q; y <= q; y++)
+							{
+								xs		= x*sep;
+								ys		= y*sep;
+								*(v++)	= vd[0] + xs*cx[0] + ys*cy[0];
+								*(v++)	= vd[1] + xs*cx[1] + ys*cy[1];
+								*(v++)	= vd[2] + xs*cx[2] + ys*cy[2];
 
-          q = (int)floor(prm->r1/sep)+1;
-          while(1) {
+								tempRef[n++]	= a;
+							}
+						}
+							
+						if(l <= _0)
+							break;
+						l	-= sep;
+					}
+				break;
+			 
+				case cPrimSphere:
+					q	= (int)floor(prm->r1 / sep);
+					vv	= I->Vertex + a*3;
+				
+					for(x = -q; x <= q; x++)
+					{
+						for(y = -q; y <= q; y++)
+						{
+							for( z = -q; z <= q; z++)
+							{
+								*(v++)	= vv[0] + x * sep;
+								*(v++)	= vv[1] + y * sep;
+								*(v++)	= vv[2] + z * sep;
 
-            vd[0] = (p[0]+=dd[0]);
-            vd[1] = (p[1]+=dd[1]);
-            vd[2] = (p[2]+=dd[2]);
-            
-            for(x=-q;x<=q;x++)
-              for(y=-q;y<=q;y++)
-                  {
-                    xs = x*sep;
-                    ys = y*sep;
-                    *(v++) = vd[0] + xs*cx[0] + ys*cy[0];
-                    *(v++) = vd[1] + xs*cx[1] + ys*cy[1];
-                    *(v++) = vd[2] + xs*cx[2] + ys*cy[2];
-                    tempRef[n]=a;
-                    n++;
-                  }
-            if(l<=0.0)
-              break;
-            l-=sep;
-          }
-
-            
-			 break;
-		  case cPrimSphere:
-          q = (int)floor(prm->r1/sep);
-          vv=I->Vertex+a*3;
-          
-          for(x=-q;x<=q;x++)
-            for(y=-q;y<=q;y++)
-              for(z=-q;z<=q;z++)
-                {
-                  *(v++) = vv[0]+x*sep;
-                  *(v++) = vv[1]+y*sep;
-                  *(v++) = vv[2]+z*sep;
-                  tempRef[n]=a;
-                  n++;
-                }
-			 break;
-        }
-      }
+								tempRef[n++]	= a;
+							}
+						}
+					}
+				break;
+			}	/* end of switch */
+		}
   
-	 if(n>extra_vert) {
-      printf("BasisMakeMap: %d>%d\n",n,extra_vert);
-      ErrFatal("BasisMakeMap","used too many extra vertices (this indicates a bug)...\n");
-	 }
+		if(n > extra_vert)
+		{
+			printf("BasisMakeMap: %d>%d\n",n,extra_vert);
+			ErrFatal("BasisMakeMap","used too many extra vertices (this indicates a bug)...\n");
+		}
 
-      
-	 if(volume) {
-		v=tempVertex;
-		for(c=0;c<3;c++)
-		  {
-			 min[c] = v[c];
-			 max[c] = v[c];
-		  }
-		v+=3;
-		for(a=1;a<n;a++)
-		  {
-			 for(c=0;c<3;c++)
+		if(volume)
+		{
+			v	= tempVertex;
+#if 0
+			for(c = 0; c < 3; c++)
+			{
+				min[c] = max[c]	= v[c];
+			}
+#else
+			min[0]	= max[0]	= v[0];
+			min[1]	= max[1]	= v[1];
+			min[2]	= max[2]	= v[2];
+#endif
+
+			v += 3;
+			
+			for(a = 1; a < n; a++)
+			{
+#if 0
+				for(c = 0; c < 3; c++)
 				{
-				  if(min[c]>v[c])
-					 min[c]=v[c];
-				  if(max[c]<v[c])
-					 max[c]=v[c];
+					if(min[c] > v[c])	min[c]	= v[c];
+					if(max[c] < v[c])	max[c]	= v[c];
 				}
-			 v+=3;
-		  }
-		if(min[0]<volume[0])
-		  min[0]=volume[0];
-		if(max[0]>volume[1])
-		  max[0]=volume[1];
-		if(min[1]<volume[2])
-		  min[1]=volume[2];
-		if(max[1]>volume[3])
-		  max[1]=volume[3];
-		/*		printf("%8.3f %8.3f\n",volume[4],volume[5]);*/
-		if(min[2]<(-volume[5]))
-		  min[2]=(-volume[5]);
-		if(max[2]>(-volume[4]))
-		max[2]=(-volume[4]);
-		extent[0]=min[0];
-		extent[1]=max[0];
-		extent[2]=min[1];
-		extent[3]=max[1];
-		extent[4]=min[2];
-		extent[5]=max[2];
-		/*		printf("%8.3f %8.3f %8.3f %8.3f %8.3f %8.3f",
-				extent[0],extent[1],extent[2],extent[3],extent[4],extent[5]);*/
-		I->Map=MapNew(-sep,tempVertex,n,extent);
-	 } else {
-		I->Map=MapNew(sep,tempVertex,n,NULL);
-	 }
+#else
+				if(min[0] > v[0])	min[0]	= v[0];
+				if(max[0] < v[0])	max[0]	= v[0];
 
-    n_voxel = I->Map->Dim[0]*I->Map->Dim[1]*I->Map->Dim[2];
+				if(min[1] > v[1])	min[1]	= v[1];
+				if(max[1] < v[1])	max[1]	= v[1];
 
-    if(n_voxel<(3*n)) {
-      MapSetupExpressXY(I->Map);      
-    } else { 
-      MapSetupExpressXYVert(I->Map,tempVertex,n);
-    }
+				if(min[2] > v[2])	min[2]	= v[2];
+				if(max[2] < v[2])	max[2]	= v[2];
+#endif
+				v	+= 3;
+			}
+			
+			if(min[0] < volume[0])		min[0]	= volume[0];
+			if(max[0] > volume[1])		max[0]	= volume[1];
+			if(min[1] < volume[2])		min[1]	= volume[2];
+			if(max[1] > volume[3])		max[1]	= volume[3];
+			
+			/*printf("%8.3f %8.3f\n",volume[4],volume[5]);*/
+			
+			if(min[2] < (-volume[5]))	min[2]	= (-volume[5]);
+			if(max[2] > (-volume[4]))	max[2]	= (-volume[4]);
+				
+			extent[0]	= min[0];
+			extent[1]	= max[0];
+			extent[2]	= min[1];
+			extent[3]	= max[1];
+			extent[4]	= min[2];
+			extent[5]	= max[2];
+			/*		printf("%8.3f %8.3f %8.3f %8.3f %8.3f %8.3f",
+			extent[0],extent[1],extent[2],extent[3],extent[4],extent[5]);*/
+			I->Map	= MapNew(-sep,tempVertex,n,extent);
+		}
+		else
+		{
+			I->Map	= MapNew(sep,tempVertex,n,NULL);
+		}
 
-	 /* now do a filter-reassignment pass to remap fake vertices
-	  to the original line vertex while deleting duplicate entries */
+		n_voxel = I->Map->Dim[0]*I->Map->Dim[1]*I->Map->Dim[2];
+		
+		if(n_voxel < (3*n))
+			MapSetupExpressXY(I->Map,n);      
+		else
+			MapSetupExpressXYVert(I->Map,tempVertex,n);
 
-	 ip=tempRef;
-	 for(i=0;i<I->NVertex;i++)
-		*(ip++)=0; /* clear flags */
+		/* now do a filter-reassignment pass to remap fake vertices
+		to the original line vertex while deleting duplicate entries */
+		
+#if 0
+		ip	= tempRef;
+		for(i = 0; i < I->NVertex; i++)
+			*(ip++)	= 0; /* clear flags */
+#else
+		memset( tempRef, 0, sizeof(int) * I->NVertex );
+#endif
 
-    if(n_voxel<(3*n)) {
-      int *start;
-      for(a=I->Map->iMin[0];a<=I->Map->iMax[0];a++)
-        for(b=I->Map->iMin[1];b<=I->Map->iMax[1];b++)
-          for(c=I->Map->iMin[2];c<=I->Map->iMax[2];c++)
-            {
-              start = MapEStart(I->Map,a,b,c);
-              h=*start;
-              if(h>0)
-                {
-                  ip=I->Map->EList+h; 
-                  sp=ip;
-                  i=*(sp++);
-                  while(i>=0) {
-                    if(i>=I->NVertex) i=tempRef[i];
-                    if(!tempRef[i]) { /*eliminate duplicates */
-                      *(ip++)=i;
-                      tempRef[i]=1;
-                    }
-                    i=*(sp++);
-                  }
-                  *(ip)=-1; /* terminate list */
-                  /* now reset flags efficiently */
-                  h = *(start);
-                  ip=I->Map->EList+h;
-                  i=*(ip++);
-                  while(i>=0) {
-                    tempRef[i]=0;
-                    i=*(ip++);
-                  }
-                }
-            }
-    } else {
-      
-      int **site_p, **site = NULL;
-      int *value_p, *value = NULL;
-      int max_site;
-      int *start;
-      int n_site = 0;
-	  int j_p1;
-	  int k_p1;
-      max_site = extra_vert;
-      site = Alloc(int*,max_site);
-      value = Alloc(int,max_site);
-
-      site_p = site;
-      value_p = value;
-      v = tempVertex;
-      for(e=0;e<n;e++) { 
-      
-        MapLocus(I->Map,v,&j,&k,&c);
-        j_p1=j+1;
-      	k_p1=k+1;
-      	for(a=j-1;a<=j_p1;a++)
-          for(b=k-1;b<=k_p1;b++) {
-            if((a>=I->Map->iMin[0])&&(a<=I->Map->iMax[0])&&
-               (b>=I->Map->iMin[1])&&(b<=I->Map->iMax[1])&&
-               (c>=I->Map->iMin[2])&&(c<=I->Map->iMax[2]))
-              {
-                start = MapEStart(I->Map,a,b,c);
-                h=*start;
-                if(h>0)
-                  {
-                    int ii;
-                    ip=I->Map->EList+h; 
-                    sp=ip;
-                    i=*(sp++);
-                    while(i>=0) {
-                      if(i>=I->NVertex) i=tempRef[i];
-                      ii=*(sp++);
-                      if(!tempRef[i]) { /*eliminate duplicates */
-                        *(ip++)=i;
-                        tempRef[i]=1;
-                      }
-                      i=ii;
-                    }
-                    *(ip)=-1; /* terminate list */
-                    /* now reset flags efficiently */
-                    h = *(start);
-                    ip=I->Map->EList+h;
-                    i=*(ip++);
-                    while(i>=0) {
-                      tempRef[i]=0;
-                      i=*(ip++);
-                    }
-                    if(h>0) {
-                      if(n_site<max_site) {
-                        *(value_p++)=(*start);
-                        *(site_p++)=start; /* remember which indexes we've negated */
-                        (*start)=-1;
-                        n_site++;
-                      } 
-                    }
-                  }
-              }
-          }
-        v+=3; 
-      }
-      value_p=value;
-      site_p=site;
-      while(n_site--) {
-        start = *(site_p++);
-        *start = *(value_p++);
-      }
-      FreeP(value);
-      FreeP(site);
-    }
-    
-    FreeP(tempVertex);
-    FreeP(tempRef);
-  } else {
-	 /* simple sphere mode */
-	 I->Map=MapNew(-sep,I->Vertex,I->NVertex,NULL);
-	 MapSetupExpressXYVert(I->Map,I->Vertex,I->NVertex);
-  }
+		if(n_voxel < (3*n))
+		{
+			int	*start;
+			
+			for(a = I->Map->iMin[0]; a <= I->Map->iMax[0]; a++)
+			{
+				for(b = I->Map->iMin[1]; b <= I->Map->iMax[1]; b++)
+				{
+					for(c = I->Map->iMin[2]; c <= I->Map->iMax[2]; c++)
+					{
+						start	= MapEStart(I->Map,a,b,c);
+						h		= *start;
+						if(h > 0)
+						{
+							ip	= I->Map->EList+h; 
+							sp	= ip;
+							i	= *(sp++);
+							while(i>=0)
+							{
+								if(i >= I->NVertex)
+									i	= tempRef[i];
+									
+								if(!tempRef[i]) { /*eliminate duplicates */
+									*(ip++)		= i;
+									tempRef[i]	= 1;
+								}
+								i	= *(sp++);
+							}
+							
+							*(ip)	= -1; /* terminate list */
+							/* now reset flags efficiently */
+							h	= *(start);
+							ip	= I->Map->EList+h;
+							i	= *(ip++);
+							
+							while(i>=0)
+							{
+								tempRef[i]	= 0;
+								i			= *(ip++);
+							}
+						}
+					}	/* for c */
+				}	/* for b */
+			}	/* for a */
+		}
+		else
+		{
+			int		**site_p, **site = NULL;
+			int		*value_p, *value = NULL;
+			int		max_site;
+			int		*start;
+			int		n_site = 0;
+			
+			MapType	*mapPtr	= I->Map;
+			
+			max_site	= extra_vert;
+			site		= Alloc(int*,max_site);
+			value		= Alloc(int,max_site);
+			
+			site_p		= site;
+			value_p		= value;
+			v			= tempVertex;
+			
+			for(e = 0; e < n; e++)
+			{
+				MapLocus(mapPtr,v, &j, &k, &c);
+				
+				//if( (c >= mapPtr->iMin[2]) && (c <= mapPtr->iMax[2]) )
+				if( (c >= mapPtr->iMin[2]) && (c <= mapPtr->iMax[2]) && ((j-1) <= mapPtr->iMax[0]) && ((k-1) <= mapPtr->iMax[1]) )
+				{
+					int	*iPtr1	= mapPtr->EHead + ((j-1) * mapPtr->D1D2) + ((k-1) * mapPtr->Dim[2]) + c;
+					
+					for(a = j-1; a <= j+1; a++)
+					{
+						if( (a >= mapPtr->iMin[0]) && (a <= mapPtr->iMax[0]) )
+						{
+							int	*iPtr2	= iPtr1;
+							
+							for(b = k-1; b <= k+1; b++)
+							{
+								if( (b >= mapPtr->iMin[1]) && (b <= mapPtr->iMax[1]) )
+								{
+									start	= iPtr2;
+									/*start	= MapEStart(mapPtr,a,b,c);*/
+									h		= *start;
+									if(h > 0)
+									{
+										int		ii;
+										
+										ip	= mapPtr->EList + h; 
+										sp	= ip;
+										i	= *(sp++);
+										
+										while(i >= 0)
+										{
+											if(i >= I->NVertex)
+												i	= tempRef[i];
+												
+											ii	= *(sp++);
+											
+											if(!tempRef[i]) { /*eliminate duplicates */
+												*(ip++)		= i;
+												tempRef[i]	= 1;
+											}
+											i = ii;
+										}
+										
+										*(ip)	= -1; /* terminate list */
+										/* now reset flags efficiently */
+										/*h		= *(start);*/
+										ip		= mapPtr->EList + h;
+										i		= *(ip++);
+										
+										while(i >= 0)
+										{
+											tempRef[i]	= 0;
+											i			= *(ip++);
+										}
+										
+										if((h > 0) && (n_site < max_site))
+										{
+											*(value_p++)	=(*start);
+											*(site_p++)		= start; /* remember which indexes we've negated */
+											(*start)		= -1;
+											n_site++;
+										} 
+									}	/* h > 0 */
+								}
+								
+								iPtr2	+= mapPtr->Dim[2];
+								
+							}	/* for b */
+						}
+						
+						iPtr1	+= mapPtr->D1D2;
+						
+					}	/* for a */
+				}
+				
+				v	+= 3;	/* happens for EVERY e! */
+				
+			}	/* for e */
+			
+			value_p	= value;
+			site_p	= site;
+			
+#if 0
+			while(n_site--)
+			{
+				start	= *(site_p++);
+				*start	= *(value_p++);
+			}
+#else
+			while( n_site-- )
+			{
+				**(site_p++)	= *(value_p++);
+			}
+#endif			
+			FreeP(value);
+			FreeP(site);
+		}
+		
+		FreeP(tempVertex);
+		FreeP(tempRef);
+	}
+	else
+	{
+		/* simple sphere mode */
+		I->Map	= MapNew(-sep,I->Vertex,I->NVertex,NULL);
+		MapSetupExpressXYVert(I->Map,I->Vertex,I->NVertex);
+	}
 }
+
 /*========================================================================*/
 void BasisInit(CBasis *I)
 {
