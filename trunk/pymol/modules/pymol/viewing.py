@@ -127,7 +127,8 @@ SEE ALSO
       if object==None: object=''
       if position==None: position=(0.0,0.0,0.0)
       else:
-         position = eval(position)
+         if cmd.is_string(position):
+            position = eval(position)
          selection = ''
       r = _cmd.origin(selection,str(object),
                       (float(position[0]),

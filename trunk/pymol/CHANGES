@@ -106,7 +106,16 @@ Current Bugs to Fix
 
    * superposition system fails with degenerate sets (planer atoms, etc).
      sometimes it just fails period
-  
+
+Changes up to 0.76
+
+   * VDW radii adjusted.  Use "set legacy_vdw_radii=1" on start-up for old values.
+
+   * Sculpt functionality.  Who needs gummy bears when you can have gummy molecules?
+
+   * Numerous back-end bugs addressed.
+
+   * transparent spheres
 
 Changes up to 0.75
 
