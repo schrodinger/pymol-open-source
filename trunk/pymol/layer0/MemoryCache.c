@@ -40,81 +40,92 @@ void MemoryCacheInit(PyMOLGlobals *G)
 
 void *MemoryCacheMalloc(PyMOLGlobals *G,unsigned int size,int group_id,int block_id)
 {
-  register CMemoryCache *I = G->MemoryCache;
-  register MemoryCacheRec *rec = &I->Cache[group_id][block_id];
-  
-  if((group_id<0)||(!SettingGet(G,cSetting_cache_memory)))
+  if((group_id<0)||(!SettingGetGlobal_b(G,cSetting_cache_memory)))
     return(mmalloc(size));
-  if(!rec->ptr) {
-    rec->size = size;
-    rec->ptr = mmalloc(size);
-  } else if(rec->size<size) {
-    rec->size = size;
-    mfree(rec->ptr);
-    rec->ptr = mmalloc(size);
+
+  {
+    register CMemoryCache *I = G->MemoryCache;
+    register MemoryCacheRec *rec = &I->Cache[group_id][block_id];
+    
+    if(!rec->ptr) {
+      rec->size = size;
+      rec->ptr = mmalloc(size);
+    } else if(rec->size<size) {
+      rec->size = size;
+      mfree(rec->ptr);
+      rec->ptr = mmalloc(size);
+    }
+    return(rec->ptr);
   }
-  return(rec->ptr);
 }
 
 void *MemoryCacheCalloc(PyMOLGlobals *G,unsigned int number, unsigned int size,int group_id,int block_id)
 {
-  register CMemoryCache *I = G->MemoryCache;
-  register MemoryCacheRec *rec = &I->Cache[group_id][block_id];
-  unsigned int true_size = number * size;
-
-  /* interesting result: calloc is faster than cacheing */
-
-  if((group_id<0)||(!(int)SettingGet(G,cSetting_cache_memory)))
+  if((group_id<0)||(!SettingGetGlobal_b(G,cSetting_cache_memory)))
     return(mcalloc(number,size));
-  if(!rec->ptr) {
-    rec->size = true_size;
-    rec->ptr = mcalloc(number,size);
-  } else if(rec->size<true_size) {
-    mfree(rec->ptr);
-    rec->size = true_size;
-    rec->ptr = mcalloc(number,size);
-  } else {
-    mfree(rec->ptr);
-    rec->size = true_size;
-    rec->ptr = mcalloc(number,size);
+
+  {
+    register CMemoryCache *I = G->MemoryCache;
+    register MemoryCacheRec *rec = &I->Cache[group_id][block_id];
+    unsigned int true_size = number * size;
+    
+    /* interesting result: calloc is faster than cacheing */
+    
+    if(!rec->ptr) {
+      rec->size = true_size;
+      rec->ptr = mcalloc(number,size);
+    } else if(rec->size<true_size) {
+      mfree(rec->ptr);
+      rec->size = true_size;
+      rec->ptr = mcalloc(number,size);
+    } else {
+      mfree(rec->ptr);
+      rec->size = true_size;
+      rec->ptr = mcalloc(number,size);
+    }
+    return(rec->ptr);
   }
-  return(rec->ptr);
 }
 
 void *MemoryCacheRealloc(PyMOLGlobals *G,void *ptr, unsigned int size,int group_id, int block_id)
 {
   /* no checking done */
-  register CMemoryCache *I = G->MemoryCache;
-  register MemoryCacheRec *rec = &I->Cache[group_id][block_id];
 
-  if((group_id<0)||(!(int)SettingGet(G,cSetting_cache_memory)))
+  if((group_id<0)||(!SettingGetGlobal_b(G,cSetting_cache_memory)))
     return(mrealloc(ptr,size));
-  if(ptr!=rec->ptr)
-    printf("Error: Memory Cache Mismatch 2 %d %d\n",group_id,block_id);
-  if(!rec->ptr) {
-    rec->size= size;
-    rec->ptr = mrealloc(ptr,size);
-  } else if(rec->size<size) {
-    rec->size = size;
-    rec->ptr = mrealloc(ptr,size);
+  {
+    register CMemoryCache *I = G->MemoryCache;
+    register MemoryCacheRec *rec = &I->Cache[group_id][block_id];
+
+    if(ptr!=rec->ptr)
+      printf("Error: Memory Cache Mismatch 2 %d %d\n",group_id,block_id);
+    if(!rec->ptr) {
+      rec->size= size;
+      rec->ptr = mrealloc(ptr,size);
+    } else if(rec->size<size) {
+      rec->size = size;
+      rec->ptr = mrealloc(ptr,size);
+    }
+    return(rec->ptr);
   }
-  return(rec->ptr);
 }
 
 void MemoryCacheFree(PyMOLGlobals *G,void *ptr,int group_id, int block_id,int force)
 {
-  register CMemoryCache *I = G->MemoryCache;
-  MemoryCacheRec *rec = &I->Cache[group_id][block_id];
-  if((group_id<0)||(!(int)SettingGet(G,cSetting_cache_memory))) {
+  if((group_id<0)||(!SettingGetGlobal_b(G,cSetting_cache_memory))) {
     mfree(ptr);
     return;
   }
-  if(rec->ptr&&(ptr!=rec->ptr))
-    printf("Error: Memory Cache Mismatch 2 %d %d\n",group_id,block_id);
-  if(force) {
-    if(rec->ptr) 
-      mfree(rec->ptr);
-    rec->ptr = NULL;
+  {
+    register CMemoryCache *I = G->MemoryCache;
+    MemoryCacheRec *rec = &I->Cache[group_id][block_id];
+    if(rec->ptr&&(ptr!=rec->ptr))
+      printf("Error: Memory Cache Mismatch 2 %d %d\n",group_id,block_id);
+    if(force) {
+      if(rec->ptr) 
+        mfree(rec->ptr);
+      rec->ptr = NULL;
+    }
   }
 }
 

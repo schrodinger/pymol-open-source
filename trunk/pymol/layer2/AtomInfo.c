@@ -912,7 +912,7 @@ void AtomInfoPrimeColors(PyMOLGlobals *G)
   I->FColor=ColorGetIndex(G,"fluorine");
   I->IColor=ColorGetIndex(G,"iodine");
 
-  I->PColor=ColorGetIndex(G,"phosporus");
+  I->PColor=ColorGetIndex(G,"phosphorus");
 
   I->MgColor=ColorGetIndex(G,"magnesium");
   I->MnColor=ColorGetIndex(G,"manganese");

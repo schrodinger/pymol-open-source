@@ -30,6 +30,9 @@ Z* -------------------------------------------------------------------
 #include"MyPNG.h"
 #include"Scene.h"
 
+#include"OVContext.h"
+#include"OVreturns.h"
+
 static int AutoColor[] = { 
 26   , /* carbon */
 5    , /* cyan */
@@ -407,13 +410,14 @@ int ColorGetIndex(PyMOLGlobals *G,char *name)
   int i;
   int wm,best=0;
   int ext_best=0;
-  int is_numeric = 1;
+  int is_numeric = true;
+  int found = false;
 
   {
     char *c;
     c=name;
     while(*c) {
-      if(!(((*c>='0')&&(*c<='9'))||(*c=='-'))) {
+      if((((*c)<='0')||((*c)>='9'))&&((*c)!='-')) {
         is_numeric=false;
         break;
       }
@@ -421,7 +425,7 @@ int ColorGetIndex(PyMOLGlobals *G,char *name)
     }
   }
   
-  if(is_numeric&&(((name[0]>='0')&&(name[0]<='9'))||(name[0]=='-')))
+  if(is_numeric) {
     if(sscanf(name,"%d",&i)) {
       if((i<I->NColor)&&(i>=0))
         return(i);
@@ -429,7 +433,10 @@ int ColorGetIndex(PyMOLGlobals *G,char *name)
         return(ColorGetNext(G));
       else if(i==cColorCurAuto)
         return(ColorGetCurrent(G));
+      else if(i==-1)
+        return -1;
     }
+  }
   if(WordMatch(G,name,"default",true))
     return(-1);
   if(WordMatch(G,name,"auto",true))
@@ -438,10 +445,32 @@ int ColorGetIndex(PyMOLGlobals *G,char *name)
     return(ColorGetCurrent(G));
   if(WordMatch(G,name,"atomic",true))
     return(cColorAtomic);
-  for(a=0;a<I->NColor;a++) /* we have simply got to replace this with a dictionary */
-	 {
-      wm = WordMatch(G,name,I->Color[a].Name,true);
-      if(wm<0) {
+
+  if(!I->Lex) { /* populate the dictionary */
+
+    I->Lex = OVLexicon_New(G->Context->heap);
+    I->Idx = OVOneToOne_New(G->Context->heap);
+    int new_idx;
+    OVreturn_word result;
+
+    for(a=0;a<I->NColor;a++) {
+      if(OVreturn_IS_OK(result = OVLexicon_GetFromCString(I->Lex,I->Color[a].Name)))
+        OVOneToOne_Set(I->Idx, result.word, a);
+    }
+  }
+  if(I->Lex) { /* search for a perfect match (fast!) */
+    OVreturn_word result;
+    if(OVreturn_IS_OK(result = OVLexicon_BorrowFromCString(I->Lex, name))) 
+      if(OVreturn_IS_OK(result = OVOneToOne_GetForward(I->Idx, result.word))) {
+        found = true;
+        color = result.word;
+      }
+  }
+  if(!found) { /* search for an imperfect match */
+    for(a=0;a<I->NColor;a++) 
+      {
+        wm = WordMatch(G,name,I->Color[a].Name,true);
+        if(wm<0) {
         color=a;
         best=0;
         break;
@@ -450,12 +479,13 @@ int ColorGetIndex(PyMOLGlobals *G,char *name)
         best=wm;
       }
 	 }
-  if(best||(color<0)) {
-    ext_color = ColorFindExtByName(G,name,false,&ext_best);
-    if(ext_color>=0) {
-      ext_color = -10-ext_color; /* indicates external */
-      if((!ext_best)||(ext_best>best)) /* perfect or better match? */
-        color = ext_color;
+    if(best||(color<0)) {
+      ext_color = ColorFindExtByName(G,name,false,&ext_best);
+      if(ext_color>=0) {
+        ext_color = -10-ext_color; /* indicates external */
+        if((!ext_best)||(ext_best>best)) /* perfect or better match? */
+          color = ext_color;
+      }
     }
   }
   return(color);
@@ -509,6 +539,10 @@ void ColorFree(PyMOLGlobals *G)
   }
   VLAFreeP(I->Color);
   VLAFreeP(I->Ext);
+  if(I->Lex)
+    OVLexicon_Del(I->Lex);
+  if(I->Idx)
+    OVOneToOne_Del(I->Idx);
   FreeP(I);
 }
 
@@ -555,6 +589,10 @@ void ColorReset(PyMOLGlobals *G)
 */
 
   register CColor *I=G->Color;
+  register ColorRec *color=I->Color;
+  register int n_color = 0;
+
+  char name[10];
   int a;
   int set1;
   float f;
@@ -694,1216 +732,1250 @@ void ColorReset(PyMOLGlobals *G)
   /* BLUE->CYAN->GREEN->YELLOW->RED s182 to s909 */
   /* BLUE->WHITE->RED w00 to */
 
-  I->NColor=0;
+  strcpy(color[n_color].Name,"white");
+  color[n_color].Color[0]=1.0F;
+  color[n_color].Color[1]=1.0F;
+  color[n_color].Color[2]=1.0F;
+  n_color++;
 
-  strcpy(I->Color[I->NColor].Name,"white");
-  I->Color[I->NColor].Color[0]=1.0F;
-  I->Color[I->NColor].Color[1]=1.0F;
-  I->Color[I->NColor].Color[2]=1.0F;
-  I->NColor++;
+  strcpy(color[n_color].Name,"black");
+  color[n_color].Color[0]=0.0F;
+  color[n_color].Color[1]=0.0F;
+  color[n_color].Color[2]=0.0F;
+  n_color++;
 
-  strcpy(I->Color[I->NColor].Name,"black");
-  I->Color[I->NColor].Color[0]=0.0F;
-  I->Color[I->NColor].Color[1]=0.0F;
-  I->Color[I->NColor].Color[2]=0.0F;
-  I->NColor++;
+  strcpy(color[n_color].Name,"blue");
+  color[n_color].Color[0]=0.0F;
+  color[n_color].Color[1]=0.0F;
+  color[n_color].Color[2]=1.0F;
+  n_color++;
 
-  strcpy(I->Color[I->NColor].Name,"blue");
-  I->Color[I->NColor].Color[0]=0.0F;
-  I->Color[I->NColor].Color[1]=0.0F;
-  I->Color[I->NColor].Color[2]=1.0F;
-  I->NColor++;
+  strcpy(color[n_color].Name,"green");
+  color[n_color].Color[0]=0.0F;
+  color[n_color].Color[1]=1.0F;
+  color[n_color].Color[2]=0.0F;
+  n_color++;
 
-  strcpy(I->Color[I->NColor].Name,"green");
-  I->Color[I->NColor].Color[0]=0.0F;
-  I->Color[I->NColor].Color[1]=1.0F;
-  I->Color[I->NColor].Color[2]=0.0F;
-  I->NColor++;
+  strcpy(color[n_color].Name,"red");
+  color[n_color].Color[0]=1.0F;
+  color[n_color].Color[1]=0.0F;
+  color[n_color].Color[2]=0.0F;
+  n_color++;
 
-  strcpy(I->Color[I->NColor].Name,"red");
-  I->Color[I->NColor].Color[0]=1.0F;
-  I->Color[I->NColor].Color[1]=0.0F;
-  I->Color[I->NColor].Color[2]=0.0F;
-  I->NColor++;
+  strcpy(color[n_color].Name,"cyan");
+  color[n_color].Color[0]=0.0F;
+  color[n_color].Color[1]=1.0F;
+  color[n_color].Color[2]=1.0F;
+  n_color++;
 
-  strcpy(I->Color[I->NColor].Name,"cyan");
-  I->Color[I->NColor].Color[0]=0.0F;
-  I->Color[I->NColor].Color[1]=1.0F;
-  I->Color[I->NColor].Color[2]=1.0F;
-  I->NColor++;
+  strcpy(color[n_color].Name,"yellow");
+  color[n_color].Color[0]=1.0F;
+  color[n_color].Color[1]=1.0F;
+  color[n_color].Color[2]=0.0F;
+  n_color++;
 
-  strcpy(I->Color[I->NColor].Name,"yellow");
-  I->Color[I->NColor].Color[0]=1.0F;
-  I->Color[I->NColor].Color[1]=1.0F;
-  I->Color[I->NColor].Color[2]=0.0F;
-  I->NColor++;
+  strcpy(color[n_color].Name,"dash");
+  color[n_color].Color[0]=1.0F;
+  color[n_color].Color[1]=1.0F;
+  color[n_color].Color[2]=0.0F;
+  n_color++;
 
-  strcpy(I->Color[I->NColor].Name,"dash");
-  I->Color[I->NColor].Color[0]=1.0F;
-  I->Color[I->NColor].Color[1]=1.0F;
-  I->Color[I->NColor].Color[2]=0.0F;
-  I->NColor++;
+  strcpy(color[n_color].Name,"magenta");
+  color[n_color].Color[0]=1.0F;
+  color[n_color].Color[1]=0.0F;
+  color[n_color].Color[2]=1.0F;
+  n_color++;
 
-  strcpy(I->Color[I->NColor].Name,"magenta");
-  I->Color[I->NColor].Color[0]=1.0F;
-  I->Color[I->NColor].Color[1]=0.0F;
-  I->Color[I->NColor].Color[2]=1.0F;
-  I->NColor++;
+  strcpy(color[n_color].Name,"salmon");
+  color[n_color].Color[0]=1.0F;
+  color[n_color].Color[1]=0.6F; /* was 0.5 */
+  color[n_color].Color[2]=0.6F; /* wat 0.5 */
+  n_color++;
 
-  strcpy(I->Color[I->NColor].Name,"salmon");
-  I->Color[I->NColor].Color[0]=1.0F;
-  I->Color[I->NColor].Color[1]=0.6F; /* was 0.5 */
-  I->Color[I->NColor].Color[2]=0.6F; /* wat 0.5 */
-  I->NColor++;
+  strcpy(color[n_color].Name,"lime");
+  color[n_color].Color[0]=0.5F;
+  color[n_color].Color[1]=1.0F;
+  color[n_color].Color[2]=0.5F;
+  n_color++;
 
-  strcpy(I->Color[I->NColor].Name,"lime");
-  I->Color[I->NColor].Color[0]=0.5F;
-  I->Color[I->NColor].Color[1]=1.0F;
-  I->Color[I->NColor].Color[2]=0.5F;
-  I->NColor++;
+  strcpy(color[n_color].Name,"slate");
+  color[n_color].Color[0]=0.5F;
+  color[n_color].Color[1]=0.5F;
+  color[n_color].Color[2]=1.0F;
+  n_color++;
 
-  strcpy(I->Color[I->NColor].Name,"slate");
-  I->Color[I->NColor].Color[0]=0.5F;
-  I->Color[I->NColor].Color[1]=0.5F;
-  I->Color[I->NColor].Color[2]=1.0F;
-  I->NColor++;
+  strcpy(color[n_color].Name,"hotpink");
+  color[n_color].Color[0]=1.0F;
+  color[n_color].Color[1]=0.0F;
+  color[n_color].Color[2]=0.5F;
+  n_color++;
 
-  strcpy(I->Color[I->NColor].Name,"hotpink");
-  I->Color[I->NColor].Color[0]=1.0F;
-  I->Color[I->NColor].Color[1]=0.0F;
-  I->Color[I->NColor].Color[2]=0.5F;
-  I->NColor++;
+  strcpy(color[n_color].Name,"orange");
+  color[n_color].Color[0]=1.0F;
+  color[n_color].Color[1]=0.5F;
+  color[n_color].Color[2]=0.0F;
+  n_color++;
 
-  strcpy(I->Color[I->NColor].Name,"orange");
-  I->Color[I->NColor].Color[0]=1.0F;
-  I->Color[I->NColor].Color[1]=0.5F;
-  I->Color[I->NColor].Color[2]=0.0F;
-  I->NColor++;
+  strcpy(color[n_color].Name,"chartreuse"); /* AKA puke green */
+  color[n_color].Color[0]=0.5F;
+  color[n_color].Color[1]=1.0F;
+  color[n_color].Color[2]=0.0F;
+  n_color++;
 
-  strcpy(I->Color[I->NColor].Name,"chartreuse"); /* AKA puke green */
-  I->Color[I->NColor].Color[0]=0.5F;
-  I->Color[I->NColor].Color[1]=1.0F;
-  I->Color[I->NColor].Color[2]=0.0F;
-  I->NColor++;
+  strcpy(color[n_color].Name,"limegreen");
+  color[n_color].Color[0]=0.0F;
+  color[n_color].Color[1]=1.0F;
+  color[n_color].Color[2]=0.5F;
+  n_color++;
 
-  strcpy(I->Color[I->NColor].Name,"limegreen");
-  I->Color[I->NColor].Color[0]=0.0F;
-  I->Color[I->NColor].Color[1]=1.0F;
-  I->Color[I->NColor].Color[2]=0.5F;
-  I->NColor++;
+  strcpy(color[n_color].Name,"purpleblue"); /* legacy name */
+  color[n_color].Color[0]=0.5F;
+  color[n_color].Color[1]=0.0F;
+  color[n_color].Color[2]=1.0F;
+  n_color++;
 
-  strcpy(I->Color[I->NColor].Name,"purpleblue"); /* legacy name */
-  I->Color[I->NColor].Color[0]=0.5F;
-  I->Color[I->NColor].Color[1]=0.0F;
-  I->Color[I->NColor].Color[2]=1.0F;
-  I->NColor++;
+  strcpy(color[n_color].Name,"marine");
+  color[n_color].Color[0]=0.0F;
+  color[n_color].Color[1]=0.5F;
+  color[n_color].Color[2]=1.0F;
+  n_color++;
 
-  strcpy(I->Color[I->NColor].Name,"marine");
-  I->Color[I->NColor].Color[0]=0.0F;
-  I->Color[I->NColor].Color[1]=0.5F;
-  I->Color[I->NColor].Color[2]=1.0F;
-  I->NColor++;
+  strcpy(color[n_color].Name,"olive");
+  color[n_color].Color[0]=0.77F;
+  color[n_color].Color[1]=0.70F;
+  color[n_color].Color[2]=0.00F;
+  n_color++;
 
-  strcpy(I->Color[I->NColor].Name,"olive");
-  I->Color[I->NColor].Color[0]=0.77F;
-  I->Color[I->NColor].Color[1]=0.70F;
-  I->Color[I->NColor].Color[2]=0.00F;
-  I->NColor++;
+  strcpy(color[n_color].Name,"purple");
+  color[n_color].Color[0]=0.75F;
+  color[n_color].Color[1]=0.00F;
+  color[n_color].Color[2]=0.75F;
+  n_color++;
 
-  strcpy(I->Color[I->NColor].Name,"purple");
-  I->Color[I->NColor].Color[0]=0.75F;
-  I->Color[I->NColor].Color[1]=0.00F;
-  I->Color[I->NColor].Color[2]=0.75F;
-  I->NColor++;
+  strcpy(color[n_color].Name,"teal");
+  color[n_color].Color[0]=0.00F;
+  color[n_color].Color[1]=0.75F;
+  color[n_color].Color[2]=0.75F;
+  n_color++;
 
-  strcpy(I->Color[I->NColor].Name,"teal");
-  I->Color[I->NColor].Color[0]=0.00F;
-  I->Color[I->NColor].Color[1]=0.75F;
-  I->Color[I->NColor].Color[2]=0.75F;
-  I->NColor++;
+  strcpy(color[n_color].Name,"ruby");
+  color[n_color].Color[0]=0.6F;
+  color[n_color].Color[1]=0.2F;
+  color[n_color].Color[2]=0.2F;
+  n_color++;
 
-  strcpy(I->Color[I->NColor].Name,"ruby");
-  I->Color[I->NColor].Color[0]=0.6F;
-  I->Color[I->NColor].Color[1]=0.2F;
-  I->Color[I->NColor].Color[2]=0.2F;
-  I->NColor++;
+  strcpy(color[n_color].Name,"forest");
+  color[n_color].Color[0]=0.2F;
+  color[n_color].Color[1]=0.6F;
+  color[n_color].Color[2]=0.2F;
+  n_color++;
 
-  strcpy(I->Color[I->NColor].Name,"forest");
-  I->Color[I->NColor].Color[0]=0.2F;
-  I->Color[I->NColor].Color[1]=0.6F;
-  I->Color[I->NColor].Color[2]=0.2F;
-  I->NColor++;
+  strcpy(color[n_color].Name,"deepblue"); /* was "deep" */
+  color[n_color].Color[0]=0.25F;
+  color[n_color].Color[1]=0.25F;
+  color[n_color].Color[2]=0.65F;
+  n_color++;
 
-  strcpy(I->Color[I->NColor].Name,"deepblue"); /* was "deep" */
-  I->Color[I->NColor].Color[0]=0.25F;
-  I->Color[I->NColor].Color[1]=0.25F;
-  I->Color[I->NColor].Color[2]=0.65F;
-  I->NColor++;
+  strcpy(color[n_color].Name,"grey"); /* english spelling */
+  color[n_color].Color[0]=0.5F;
+  color[n_color].Color[1]=0.5F;
+  color[n_color].Color[2]=0.5F;
+  n_color++;
 
-  strcpy(I->Color[I->NColor].Name,"grey"); /* english spelling */
-  I->Color[I->NColor].Color[0]=0.5F;
-  I->Color[I->NColor].Color[1]=0.5F;
-  I->Color[I->NColor].Color[2]=0.5F;
-  I->NColor++;
+  strcpy(color[n_color].Name,"gray"); /* american spelling */
+  color[n_color].Color[0]=0.5F;
+  color[n_color].Color[1]=0.5F;
+  color[n_color].Color[2]=0.5F;
+  n_color++;
 
-  strcpy(I->Color[I->NColor].Name,"gray"); /* american spelling */
-  I->Color[I->NColor].Color[0]=0.5F;
-  I->Color[I->NColor].Color[1]=0.5F;
-  I->Color[I->NColor].Color[2]=0.5F;
-  I->NColor++;
+  strcpy(color[n_color].Name,"carbon");
+  color[n_color].Color[0]=0.2F;
+  color[n_color].Color[1]=1.0F;
+  color[n_color].Color[2]=0.2F;
+  n_color++;
 
-  strcpy(I->Color[I->NColor].Name,"carbon");
-  I->Color[I->NColor].Color[0]=0.2F;
-  I->Color[I->NColor].Color[1]=1.0F;
-  I->Color[I->NColor].Color[2]=0.2F;
-  I->NColor++;
+  strcpy(color[n_color].Name,"nitrogen");
+  color[n_color].Color[0]=0.2F;
+  color[n_color].Color[1]=0.2F;
+  color[n_color].Color[2]=1.0F;
+  n_color++;
 
-  strcpy(I->Color[I->NColor].Name,"nitrogen");
-  I->Color[I->NColor].Color[0]=0.2F;
-  I->Color[I->NColor].Color[1]=0.2F;
-  I->Color[I->NColor].Color[2]=1.0F;
-  I->NColor++;
+  strcpy(color[n_color].Name,"oxygen");
+  color[n_color].Color[0]=1.0F;
+  color[n_color].Color[1]=0.3F;
+  color[n_color].Color[2]=0.3F;
+  n_color++;
 
-  strcpy(I->Color[I->NColor].Name,"oxygen");
-  I->Color[I->NColor].Color[0]=1.0F;
-  I->Color[I->NColor].Color[1]=0.3F;
-  I->Color[I->NColor].Color[2]=0.3F;
-  I->NColor++;
+  strcpy(color[n_color].Name,"hydrogen");
+  color[n_color].Color[0]=0.9F;
+  color[n_color].Color[1]=0.9F;
+  color[n_color].Color[2]=0.9F;
+  n_color++;
 
-  strcpy(I->Color[I->NColor].Name,"hydrogen");
-  I->Color[I->NColor].Color[0]=0.9F;
-  I->Color[I->NColor].Color[1]=0.9F;
-  I->Color[I->NColor].Color[2]=0.9F;
-  I->NColor++;
+  strcpy(color[n_color].Name,"brightorange");
+  color[n_color].Color[0]=1.0F;
+  color[n_color].Color[1]=0.7F;
+  color[n_color].Color[2]=0.2F;
+  n_color++;
 
-  strcpy(I->Color[I->NColor].Name,"brightorange");
-  I->Color[I->NColor].Color[0]=1.0F;
-  I->Color[I->NColor].Color[1]=0.7F;
-  I->Color[I->NColor].Color[2]=0.2F;
-  I->NColor++;
+  strcpy(color[n_color].Name,"sulfur");
+  color[n_color].Color[0]=1.0F;
+  color[n_color].Color[1]=0.5F;
+  color[n_color].Color[2]=0.0F;
+  n_color++;
 
-  strcpy(I->Color[I->NColor].Name,"sulfur");
-  I->Color[I->NColor].Color[0]=1.0F;
-  I->Color[I->NColor].Color[1]=0.5F;
-  I->Color[I->NColor].Color[2]=0.0F;
-  I->NColor++;
+  strcpy(color[n_color].Name,"tv_red");
+  color[n_color].Color[0]=1.0F;
+  color[n_color].Color[1]=0.2F;
+  color[n_color].Color[2]=0.2F;
+  n_color++;
 
-  strcpy(I->Color[I->NColor].Name,"tv_red");
-  I->Color[I->NColor].Color[0]=1.0F;
-  I->Color[I->NColor].Color[1]=0.2F;
-  I->Color[I->NColor].Color[2]=0.2F;
-  I->NColor++;
+  strcpy(color[n_color].Name,"tv_green");
+  color[n_color].Color[0]=0.2F;
+  color[n_color].Color[1]=1.0F;
+  color[n_color].Color[2]=0.2F;
+  n_color++;
 
-  strcpy(I->Color[I->NColor].Name,"tv_green");
-  I->Color[I->NColor].Color[0]=0.2F;
-  I->Color[I->NColor].Color[1]=1.0F;
-  I->Color[I->NColor].Color[2]=0.2F;
-  I->NColor++;
+  strcpy(color[n_color].Name,"tv_blue");
+  color[n_color].Color[0]=0.3F;
+  color[n_color].Color[1]=0.3F;
+  color[n_color].Color[2]=1.0F;
+  n_color++;
 
-  strcpy(I->Color[I->NColor].Name,"tv_blue");
-  I->Color[I->NColor].Color[0]=0.3F;
-  I->Color[I->NColor].Color[1]=0.3F;
-  I->Color[I->NColor].Color[2]=1.0F;
-  I->NColor++;
+  strcpy(color[n_color].Name,"tv_yellow");
+  color[n_color].Color[0]=1.0F;
+  color[n_color].Color[1]=1.0F;
+  color[n_color].Color[2]=0.2F;
+  n_color++;
 
-  strcpy(I->Color[I->NColor].Name,"tv_yellow");
-  I->Color[I->NColor].Color[0]=1.0F;
-  I->Color[I->NColor].Color[1]=1.0F;
-  I->Color[I->NColor].Color[2]=0.2F;
-  I->NColor++;
+  strcpy(color[n_color].Name,"yelloworange");
+  color[n_color].Color[0]=1.0F;
+  color[n_color].Color[1]=0.87F;
+  color[n_color].Color[2]=0.37F;
+  n_color++;
 
-  strcpy(I->Color[I->NColor].Name,"yelloworange");
-  I->Color[I->NColor].Color[0]=1.0F;
-  I->Color[I->NColor].Color[1]=0.87F;
-  I->Color[I->NColor].Color[2]=0.37F;
-  I->NColor++;
+  strcpy(color[n_color].Name,"tv_orange");
+  color[n_color].Color[0]=1.0F;
+  color[n_color].Color[1]=0.55F;
+  color[n_color].Color[2]=0.15F;
+  n_color++;
 
-  strcpy(I->Color[I->NColor].Name,"tv_orange");
-  I->Color[I->NColor].Color[0]=1.0F;
-  I->Color[I->NColor].Color[1]=0.55F;
-  I->Color[I->NColor].Color[2]=0.15F;
-  I->NColor++;
+  strcpy(color[n_color].Name,"br0");
+  color[n_color].Color[0]=0.1F;
+  color[n_color].Color[1]=0.1F;
+  color[n_color].Color[2]=1.0F;
+  n_color++;
 
-  strcpy(I->Color[I->NColor].Name,"br0");
-  I->Color[I->NColor].Color[0]=0.1F;
-  I->Color[I->NColor].Color[1]=0.1F;
-  I->Color[I->NColor].Color[2]=1.0F;
-  I->NColor++;
+  strcpy(color[n_color].Name,"br1");
+  color[n_color].Color[0]=0.2F;
+  color[n_color].Color[1]=0.1F;
+  color[n_color].Color[2]=0.9F;
+  n_color++;
 
-  strcpy(I->Color[I->NColor].Name,"br1");
-  I->Color[I->NColor].Color[0]=0.2F;
-  I->Color[I->NColor].Color[1]=0.1F;
-  I->Color[I->NColor].Color[2]=0.9F;
-  I->NColor++;
+  strcpy(color[n_color].Name,"br2");
+  color[n_color].Color[0]=0.3F;
+  color[n_color].Color[1]=0.1F;
+  color[n_color].Color[2]=0.8F;
+  n_color++;
 
-  strcpy(I->Color[I->NColor].Name,"br2");
-  I->Color[I->NColor].Color[0]=0.3F;
-  I->Color[I->NColor].Color[1]=0.1F;
-  I->Color[I->NColor].Color[2]=0.8F;
-  I->NColor++;
+  strcpy(color[n_color].Name,"br3");
+  color[n_color].Color[0]=0.4F;
+  color[n_color].Color[1]=0.1F;
+  color[n_color].Color[2]=0.7F;
+  n_color++;
 
-  strcpy(I->Color[I->NColor].Name,"br3");
-  I->Color[I->NColor].Color[0]=0.4F;
-  I->Color[I->NColor].Color[1]=0.1F;
-  I->Color[I->NColor].Color[2]=0.7F;
-  I->NColor++;
+  strcpy(color[n_color].Name,"br4");
+  color[n_color].Color[0]=0.5F;
+  color[n_color].Color[1]=0.1F;
+  color[n_color].Color[2]=0.6F;
+  n_color++;
 
-  strcpy(I->Color[I->NColor].Name,"br4");
-  I->Color[I->NColor].Color[0]=0.5F;
-  I->Color[I->NColor].Color[1]=0.1F;
-  I->Color[I->NColor].Color[2]=0.6F;
-  I->NColor++;
+  strcpy(color[n_color].Name,"br5");
+  color[n_color].Color[0]=0.6F;
+  color[n_color].Color[1]=0.1F;
+  color[n_color].Color[2]=0.5F;
+  n_color++;
 
-  strcpy(I->Color[I->NColor].Name,"br5");
-  I->Color[I->NColor].Color[0]=0.6F;
-  I->Color[I->NColor].Color[1]=0.1F;
-  I->Color[I->NColor].Color[2]=0.5F;
-  I->NColor++;
+  strcpy(color[n_color].Name,"br6");
+  color[n_color].Color[0]=0.7F;
+  color[n_color].Color[1]=0.1F;
+  color[n_color].Color[2]=0.4F;
+  n_color++;
 
-  strcpy(I->Color[I->NColor].Name,"br6");
-  I->Color[I->NColor].Color[0]=0.7F;
-  I->Color[I->NColor].Color[1]=0.1F;
-  I->Color[I->NColor].Color[2]=0.4F;
-  I->NColor++;
+  strcpy(color[n_color].Name,"br7");
+  color[n_color].Color[0]=0.8F;
+  color[n_color].Color[1]=0.1F;
+  color[n_color].Color[2]=0.3F;
+  n_color++;
 
-  strcpy(I->Color[I->NColor].Name,"br7");
-  I->Color[I->NColor].Color[0]=0.8F;
-  I->Color[I->NColor].Color[1]=0.1F;
-  I->Color[I->NColor].Color[2]=0.3F;
-  I->NColor++;
+  strcpy(color[n_color].Name,"br8");
+  color[n_color].Color[0]=0.9F;
+  color[n_color].Color[1]=0.1F;
+  color[n_color].Color[2]=0.2F;
+  n_color++;
 
-  strcpy(I->Color[I->NColor].Name,"br8");
-  I->Color[I->NColor].Color[0]=0.9F;
-  I->Color[I->NColor].Color[1]=0.1F;
-  I->Color[I->NColor].Color[2]=0.2F;
-  I->NColor++;
+  strcpy(color[n_color].Name,"br9");
+  color[n_color].Color[0]=1.0F;
+  color[n_color].Color[1]=0.1F;
+  color[n_color].Color[2]=0.1F;
+  n_color++;
 
-  strcpy(I->Color[I->NColor].Name,"br9");
-  I->Color[I->NColor].Color[0]=1.0F;
-  I->Color[I->NColor].Color[1]=0.1F;
-  I->Color[I->NColor].Color[2]=0.1F;
-  I->NColor++;
+  strcpy(color[n_color].Name,"pink");
+  color[n_color].Color[0]=1.0F;
+  color[n_color].Color[1]=0.65F;
+  color[n_color].Color[2]=0.85F;
+  n_color++;
 
-  strcpy(I->Color[I->NColor].Name,"pink");
-  I->Color[I->NColor].Color[0]=1.0F;
-  I->Color[I->NColor].Color[1]=0.65F;
-  I->Color[I->NColor].Color[2]=0.85F;
-  I->NColor++;
+  strcpy(color[n_color].Name,"firebrick");
+  color[n_color].Color[0]=0.698F;
+  color[n_color].Color[1]=0.13F;
+  color[n_color].Color[2]=0.13F;
+  n_color++;
 
-  strcpy(I->Color[I->NColor].Name,"firebrick");
-  I->Color[I->NColor].Color[0]=0.698F;
-  I->Color[I->NColor].Color[1]=0.13F;
-  I->Color[I->NColor].Color[2]=0.13F;
-  I->NColor++;
+  strcpy(color[n_color].Name,"chocolate");
+  color[n_color].Color[0]=0.555F;
+  color[n_color].Color[1]=0.222F;
+  color[n_color].Color[2]=0.111F;
+  n_color++;
 
-  strcpy(I->Color[I->NColor].Name,"chocolate");
-  I->Color[I->NColor].Color[0]=0.555F;
-  I->Color[I->NColor].Color[1]=0.222F;
-  I->Color[I->NColor].Color[2]=0.111F;
-  I->NColor++;
+  strcpy(color[n_color].Name,"brown");
+  color[n_color].Color[0]=0.65F;
+  color[n_color].Color[1]=0.32F;
+  color[n_color].Color[2]=0.17F;
+  n_color++;
 
-  strcpy(I->Color[I->NColor].Name,"brown");
-  I->Color[I->NColor].Color[0]=0.65F;
-  I->Color[I->NColor].Color[1]=0.32F;
-  I->Color[I->NColor].Color[2]=0.17F;
-  I->NColor++;
+  strcpy(color[n_color].Name,"wheat");
+  color[n_color].Color[0]=0.99F;
+  color[n_color].Color[1]=0.82F;
+  color[n_color].Color[2]=0.65F;
+  n_color++;
 
-  strcpy(I->Color[I->NColor].Name,"wheat");
-  I->Color[I->NColor].Color[0]=0.99F;
-  I->Color[I->NColor].Color[1]=0.82F;
-  I->Color[I->NColor].Color[2]=0.65F;
-  I->NColor++;
-
-  strcpy(I->Color[I->NColor].Name,"violet");
-  I->Color[I->NColor].Color[0]=1.0F;
-  I->Color[I->NColor].Color[1]=0.5F;
-  I->Color[I->NColor].Color[2]=1.0F;
-  I->NColor++;
+  strcpy(color[n_color].Name,"violet");
+  color[n_color].Color[0]=1.0F;
+  color[n_color].Color[1]=0.5F;
+  color[n_color].Color[2]=1.0F;
+  n_color++;
 
   /* greybow */
 
+  strcpy(name,"grey00");  /* english spelling */
   for(a=0;a<100;a=a+1) {
-    sprintf(I->Color[I->NColor].Name,"grey%02d",a); /* english spelling */
-    I->Color[I->NColor].Color[0]=a/99.0F;
-    I->Color[I->NColor].Color[1]=a/99.0F;
-    I->Color[I->NColor].Color[2]=a/99.0F;
-    I->NColor++;
+    name[5] = (a % 10) + '0';
+    name[4] = ((a % 100) / 10) + '0';
+    /* sprintf(color[n_color].Name,"grey%02d",a); */
+    strcpy(color[n_color].Name,name);
+    color[n_color].Color[0]=a/99.0F;
+    color[n_color].Color[1]=a/99.0F;
+    color[n_color].Color[2]=a/99.0F;
+    n_color++;
   }
 
-  strcpy(I->Color[I->NColor].Name,"lightmagenta");
-  I->Color[I->NColor].Color[0]=1.0F;
-  I->Color[I->NColor].Color[1]=0.2F;
-  I->Color[I->NColor].Color[2]=0.8F;
-  I->NColor++;
+  strcpy(color[n_color].Name,"lightmagenta");
+  color[n_color].Color[0]=1.0F;
+  color[n_color].Color[1]=0.2F;
+  color[n_color].Color[2]=0.8F;
+  n_color++;
 
   #define A_DIV 83.333333333F
 
   /* full spectrum (s000-s999) */
 
+  strcpy(name,"s000");
   for(a=0;a<1000;a=a+1) {
     set1=(int)(a/A_DIV);
-    sprintf(I->Color[I->NColor].Name,"s%03d",a);
+    name[3] = (a % 10) + '0';
+    name[2] = ((a % 100) / 10) + '0';
+    name[1] = ((a % 1000) / 100) + '0';
+    /* sprintf(color[n_color].Name,"s%03d",a); */
     f = 1.0F-(a-(set1*A_DIV))/A_DIV;
-    I->Color[I->NColor].Color[0]=f*spectrumS[set1][0]+(1.0F-f)*spectrumS[set1+1][0];
-    I->Color[I->NColor].Color[1]=f*spectrumS[set1][1]+(1.0F-f)*spectrumS[set1+1][1];
-    I->Color[I->NColor].Color[2]=f*spectrumS[set1][2]+(1.0F-f)*spectrumS[set1+1][2];
-    I->NColor++;
+    strcpy(color[n_color].Name,name);
+    color[n_color].Color[0]=f*spectrumS[set1][0]+(1.0F-f)*spectrumS[set1+1][0];
+    color[n_color].Color[1]=f*spectrumS[set1][1]+(1.0F-f)*spectrumS[set1+1][1];
+    color[n_color].Color[2]=f*spectrumS[set1][2]+(1.0F-f)*spectrumS[set1+1][2];
+    n_color++;
   }
 
   /* offset & reversed full spectrum (r000-r999) */
 
+  strcpy(name,"r000");
   for(a=0;a<1000;a=a+1) {
     set1=(int)(a/A_DIV);
-    sprintf(I->Color[I->NColor].Name,"r%03d",a);
+    /* sprintf(color[n_color].Name,"r%03d",a); */
+    name[3] = (a % 10) + '0';
+    name[2] = ((a % 100) / 10) + '0';
+    name[1] = ((a % 1000) / 100) + '0';
     f = 1.0F-(a-(set1*A_DIV))/A_DIV;
-    I->Color[I->NColor].Color[0]=f*spectrumR[set1][0]+(1.0F-f)*spectrumR[set1+1][0];
-    I->Color[I->NColor].Color[1]=f*spectrumR[set1][1]+(1.0F-f)*spectrumR[set1+1][1];
-    I->Color[I->NColor].Color[2]=f*spectrumR[set1][2]+(1.0F-f)*spectrumR[set1+1][2];
-    I->NColor++;
+    strcpy(color[n_color].Name,name);
+    color[n_color].Color[0]=f*spectrumR[set1][0]+(1.0F-f)*spectrumR[set1+1][0];
+    color[n_color].Color[1]=f*spectrumR[set1][1]+(1.0F-f)*spectrumR[set1+1][1];
+    color[n_color].Color[2]=f*spectrumR[set1][2]+(1.0F-f)*spectrumR[set1+1][2];
+    n_color++;
   }
 
   /* complementary spectra (c000-c999) */
 
+  strcpy(name,"c000");
   for(a=0;a<1000;a=a+1) {
     set1=(int)(a/A_DIV);
-    sprintf(I->Color[I->NColor].Name,"c%03d",a);
+    /*     sprintf(color[n_color].Name,"c%03d",a); */
+    name[3] = (a % 10) + '0';
+    name[2] = ((a % 100) / 10) + '0';
+    name[1] = ((a % 1000) / 100) + '0';
     f = 1.0F-(a-(set1*A_DIV))/A_DIV;
-    I->Color[I->NColor].Color[0]=f*spectrumC[set1][0]+(1.0F-f)*spectrumC[set1+1][0];
-    I->Color[I->NColor].Color[1]=f*spectrumC[set1][1]+(1.0F-f)*spectrumC[set1+1][1];
-    I->Color[I->NColor].Color[2]=f*spectrumC[set1][2]+(1.0F-f)*spectrumC[set1+1][2];
-    I->NColor++;
+    strcpy(color[n_color].Name,name);
+    color[n_color].Color[0]=f*spectrumC[set1][0]+(1.0F-f)*spectrumC[set1+1][0];
+    color[n_color].Color[1]=f*spectrumC[set1][1]+(1.0F-f)*spectrumC[set1+1][1];
+    color[n_color].Color[2]=f*spectrumC[set1][2]+(1.0F-f)*spectrumC[set1+1][2];
+    n_color++;
   }
 
   #define W_DIV 41.666666667F
 
   /* complementary spectra separated by white (w000-w999) */
 
+  strcpy(name,"w000");
   for(a=0;a<1000;a=a+1) {
     set1=(int)(a/W_DIV);
-    sprintf(I->Color[I->NColor].Name,"w%03d",a);
+    /* sprintf(color[n_color].Name,"w%03d",a); */
+    name[3] = (a % 10) + '0';
+    name[2] = ((a % 100) / 10) + '0';
+    name[1] = ((a % 1000) / 100) + '0';
     f = 1.0F-(a-(set1*W_DIV))/W_DIV;
-    I->Color[I->NColor].Color[0]=f*spectrumW[set1][0]+(1.0F-f)*spectrumW[set1+1][0];
-    I->Color[I->NColor].Color[1]=f*spectrumW[set1][1]+(1.0F-f)*spectrumW[set1+1][1];
-    I->Color[I->NColor].Color[2]=f*spectrumW[set1][2]+(1.0F-f)*spectrumW[set1+1][2];
-    I->NColor++;
+    strcpy(color[n_color].Name,name);
+    color[n_color].Color[0]=f*spectrumW[set1][0]+(1.0F-f)*spectrumW[set1+1][0];
+    color[n_color].Color[1]=f*spectrumW[set1][1]+(1.0F-f)*spectrumW[set1+1][1];
+    color[n_color].Color[2]=f*spectrumW[set1][2]+(1.0F-f)*spectrumW[set1+1][2];
+    n_color++;
   }
 
-  strcpy(I->Color[I->NColor].Name,"density");
-  I->Color[I->NColor].Color[0]=0.1F;
-  I->Color[I->NColor].Color[1]=0.1F;
-  I->Color[I->NColor].Color[2]=0.6F;
-  I->NColor++;
+  strcpy(color[n_color].Name,"density");
+  color[n_color].Color[0]=0.1F;
+  color[n_color].Color[1]=0.1F;
+  color[n_color].Color[2]=0.6F;
+  n_color++;
 
+  strcpy(name,"gray00");/* american */
   for(a=0;a<100;a=a+1) {
-    sprintf(I->Color[I->NColor].Name,"gray%02d",a); /* american */
-    I->Color[I->NColor].Color[0]=a/99.0F;
-    I->Color[I->NColor].Color[1]=a/99.0F;
-    I->Color[I->NColor].Color[2]=a/99.0F;
-    I->NColor++;
+    name[5] = (a % 10) + '0';
+    name[4] = ((a % 100) / 10) + '0';
+    /* sprintf(color[n_color].Name,"gray%02d",a); */
+    strcpy(color[n_color].Name,name);
+    color[n_color].Color[0]=a/99.0F;
+    color[n_color].Color[1]=a/99.0F;
+    color[n_color].Color[2]=a/99.0F;
+    n_color++;
   }
 
   /* original full spectrum, with extra blue and red at the ends (o000-o999) */
 
   #define B_DIV 35.7143F
 
+  strcpy(name,"o000");
   for(a=0;a<1000;a=a+1) {
     set1=(int)(a/B_DIV);
-    sprintf(I->Color[I->NColor].Name,"o%03d",a);
+    name[3] = (a % 10) + '0';
+    name[2] = ((a % 100) / 10) + '0';
+    name[1] = ((a % 1000) / 100) + '0';
+    /* sprintf(color[n_color].Name,"o%03d",a); */
     f = 1.0F-(a-(set1*B_DIV))/B_DIV;
-    I->Color[I->NColor].Color[0]=f*spectrumO[set1][0]+(1.0F-f)*spectrumO[set1+1][0];
-    I->Color[I->NColor].Color[1]=f*spectrumO[set1][1]+(1.0F-f)*spectrumO[set1+1][1];
-    I->Color[I->NColor].Color[2]=f*spectrumO[set1][2]+(1.0F-f)*spectrumO[set1+1][2];
-    I->NColor++;
+    strcpy(color[n_color].Name,name);
+    color[n_color].Color[0]=f*spectrumO[set1][0]+(1.0F-f)*spectrumO[set1+1][0];
+    color[n_color].Color[1]=f*spectrumO[set1][1]+(1.0F-f)*spectrumO[set1+1][1];
+    color[n_color].Color[2]=f*spectrumO[set1][2]+(1.0F-f)*spectrumO[set1+1][2];
+    n_color++;
   }
 
-  strcpy(I->Color[I->NColor].Name,"paleyellow");
-  I->Color[I->NColor].Color[0]=1.0F;
-  I->Color[I->NColor].Color[1]=1.0F;
-  I->Color[I->NColor].Color[2]=0.5F;
-  I->NColor++;
-
-  strcpy(I->Color[I->NColor].Name,"aquamarine");
-  I->Color[I->NColor].Color[0]=0.5F;
-  I->Color[I->NColor].Color[1]=1.0F;
-  I->Color[I->NColor].Color[2]=1.0F;
-  I->NColor++;
-
-  strcpy(I->Color[I->NColor].Name,"deepsalmon");
-  I->Color[I->NColor].Color[0]=1.0F;
-  I->Color[I->NColor].Color[1]=0.5F;
-  I->Color[I->NColor].Color[2]=0.5F;
-  I->NColor++;
-
-  strcpy(I->Color[I->NColor].Name,"palegreen");
-  I->Color[I->NColor].Color[0]=0.65F;
-  I->Color[I->NColor].Color[1]=0.9F;
-  I->Color[I->NColor].Color[2]=0.65F;
-  I->NColor++;
-
-  strcpy(I->Color[I->NColor].Name,"deepolive");
-  I->Color[I->NColor].Color[0]=0.6F;
-  I->Color[I->NColor].Color[1]=0.6F;
-  I->Color[I->NColor].Color[2]=0.1F;
-  I->NColor++;
-
-  strcpy(I->Color[I->NColor].Name,"deeppurple");
-  I->Color[I->NColor].Color[0]=0.6F;
-  I->Color[I->NColor].Color[1]=0.1F;
-  I->Color[I->NColor].Color[2]=0.6F;
-  I->NColor++;
-
-  strcpy(I->Color[I->NColor].Name,"deepteal");
-  I->Color[I->NColor].Color[0]=0.1F;
-  I->Color[I->NColor].Color[1]=0.6F;
-  I->Color[I->NColor].Color[2]=0.6F;
-  I->NColor++;
-
-  strcpy(I->Color[I->NColor].Name,"lightblue");
-  I->Color[I->NColor].Color[0]=0.75F;
-  I->Color[I->NColor].Color[1]=0.75;
-  I->Color[I->NColor].Color[2]=1.0F;
-  I->NColor++;
-
-  strcpy(I->Color[I->NColor].Name,"lightorange"); 
-  I->Color[I->NColor].Color[0]=1.0F;
-  I->Color[I->NColor].Color[1]=0.8F;
-  I->Color[I->NColor].Color[2]=0.5F;
-  I->NColor++;
-
-  strcpy(I->Color[I->NColor].Name,"palecyan"); 
-  I->Color[I->NColor].Color[0]=0.8F;
-  I->Color[I->NColor].Color[1]=1.0F;
-  I->Color[I->NColor].Color[2]=1.0F;
-  I->NColor++;
-
-  strcpy(I->Color[I->NColor].Name,"lightteal"); 
-  I->Color[I->NColor].Color[0]=0.4F;
-  I->Color[I->NColor].Color[1]=0.7F;
-  I->Color[I->NColor].Color[2]=0.7F;
-  I->NColor++;
-
-  strcpy(I->Color[I->NColor].Name,"splitpea"); 
-  I->Color[I->NColor].Color[0]=0.52F;
-  I->Color[I->NColor].Color[1]=0.75F;
-  I->Color[I->NColor].Color[2]=0.00F;
-  I->NColor++;
-
-  strcpy(I->Color[I->NColor].Name,"raspberry"); 
-  I->Color[I->NColor].Color[0]=0.70F;
-  I->Color[I->NColor].Color[1]=0.30F;
-  I->Color[I->NColor].Color[2]=0.40F;
-  I->NColor++;
-
-  strcpy(I->Color[I->NColor].Name,"sand"); 
-  I->Color[I->NColor].Color[0]=0.72F;
-  I->Color[I->NColor].Color[1]=0.55F;
-  I->Color[I->NColor].Color[2]=0.30F;
-  I->NColor++;
-
-  strcpy(I->Color[I->NColor].Name,"smudge"); 
-  I->Color[I->NColor].Color[0]=0.55F;
-  I->Color[I->NColor].Color[1]=0.70F;
-  I->Color[I->NColor].Color[2]=0.40F;
-  I->NColor++;
-
-  strcpy(I->Color[I->NColor].Name,"violetpurple");
-  I->Color[I->NColor].Color[0]=0.55F;
-  I->Color[I->NColor].Color[1]=0.25F;
-  I->Color[I->NColor].Color[2]=0.60F;
-  I->NColor++;
-
-  strcpy(I->Color[I->NColor].Name,"dirtyviolet");
-  I->Color[I->NColor].Color[0]=0.70F;
-  I->Color[I->NColor].Color[1]=0.50F;
-  I->Color[I->NColor].Color[2]=0.50F;
-  I->NColor++;
-
-
-  strcpy(I->Color[I->NColor].Name,"deepsalmon");
-  I->Color[I->NColor].Color[0]=1.00F;
-  I->Color[I->NColor].Color[1]=0.42F;
-  I->Color[I->NColor].Color[2]=0.42F;
-  I->NColor++;
-
-  strcpy(I->Color[I->NColor].Name,"lightpink");
-  I->Color[I->NColor].Color[0]=1.00F;
-  I->Color[I->NColor].Color[1]=0.75F;
-  I->Color[I->NColor].Color[2]=0.87F;
-  I->NColor++;
-
-  strcpy(I->Color[I->NColor].Name,"greencyan");
-  I->Color[I->NColor].Color[0]=0.25F;
-  I->Color[I->NColor].Color[1]=1.00F;
-  I->Color[I->NColor].Color[2]=0.75F;
-  I->NColor++;
-
-  strcpy(I->Color[I->NColor].Name,"limon");
-  I->Color[I->NColor].Color[0]=0.75F;
-  I->Color[I->NColor].Color[1]=1.00F;
-  I->Color[I->NColor].Color[2]=0.25F;
-  I->NColor++;
-
-
-  strcpy(I->Color[I->NColor].Name,"skyblue");
-  I->Color[I->NColor].Color[0]=0.20F;
-  I->Color[I->NColor].Color[1]=0.50F;
-  I->Color[I->NColor].Color[2]=0.80F;
-  I->NColor++;
-
-  strcpy(I->Color[I->NColor].Name,"bluewhite");
-  I->Color[I->NColor].Color[0]=0.85F;
-  I->Color[I->NColor].Color[1]=0.85F;
-  I->Color[I->NColor].Color[2]=1.00F;
-  I->NColor++;
-
-  strcpy(I->Color[I->NColor].Name,"warmpink");
-  I->Color[I->NColor].Color[0]=0.85F;
-  I->Color[I->NColor].Color[1]=0.20F;
-  I->Color[I->NColor].Color[2]=0.50F;
-  I->NColor++;
-
-  strcpy(I->Color[I->NColor].Name,"darksalmon");
-  I->Color[I->NColor].Color[0]=0.73F;
-  I->Color[I->NColor].Color[1]=0.55F;
-  I->Color[I->NColor].Color[2]=0.52F;
-  I->NColor++;
-
-  strcpy(I->Color[I->NColor].Name,"helium");
-  I->Color[I->NColor].Color[0]= 0.850980392F;
-  I->Color[I->NColor].Color[1]= 1.000000000F;
-  I->Color[I->NColor].Color[2]= 1.000000000F;
-  I->NColor++;
-
-  strcpy(I->Color[I->NColor].Name,"lithium");
-  I->Color[I->NColor].Color[0]= 0.800000000F;
-  I->Color[I->NColor].Color[1]= 0.501960784F;
-  I->Color[I->NColor].Color[2]= 1.000000000F;
-  I->NColor++;
-
-  strcpy(I->Color[I->NColor].Name,"beryllium");
-  I->Color[I->NColor].Color[0]= 0.760784314F;
-  I->Color[I->NColor].Color[1]= 1.000000000F;
-  I->Color[I->NColor].Color[2]= 0.000000000F;
-  I->NColor++;
-
-  strcpy(I->Color[I->NColor].Name,"boron");
-  I->Color[I->NColor].Color[0]= 1.000000000F;
-  I->Color[I->NColor].Color[1]= 0.709803922F;
-  I->Color[I->NColor].Color[2]= 0.709803922F;
-  I->NColor++;
-
-  strcpy(I->Color[I->NColor].Name,"fluorine");
-  I->Color[I->NColor].Color[0]= 0.701960784F;
-  I->Color[I->NColor].Color[1]= 1.000000000F;
-  I->Color[I->NColor].Color[2]= 1.000000000F;
-  I->NColor++;
-
-  strcpy(I->Color[I->NColor].Name,"neon");
-  I->Color[I->NColor].Color[0]= 0.701960784F;
-  I->Color[I->NColor].Color[1]= 0.890196078F;
-  I->Color[I->NColor].Color[2]= 0.960784314F;
-  I->NColor++;
-
-  strcpy(I->Color[I->NColor].Name,"sodium");
-  I->Color[I->NColor].Color[0]= 0.670588235F;
-  I->Color[I->NColor].Color[1]= 0.360784314F;
-  I->Color[I->NColor].Color[2]= 0.949019608F;
-  I->NColor++;
-
-  strcpy(I->Color[I->NColor].Name,"magnesium");
-  I->Color[I->NColor].Color[0]= 0.541176471F;
-  I->Color[I->NColor].Color[1]= 1.000000000F;
-  I->Color[I->NColor].Color[2]= 0.000000000F;
-  I->NColor++;
-
-  strcpy(I->Color[I->NColor].Name,"aluminum");
-  I->Color[I->NColor].Color[0]= 0.749019608F;
-  I->Color[I->NColor].Color[1]= 0.650980392F;
-  I->Color[I->NColor].Color[2]= 0.650980392F;
-  I->NColor++;
-
-  strcpy(I->Color[I->NColor].Name,"silicon");
-  I->Color[I->NColor].Color[0]= 0.941176471F;
-  I->Color[I->NColor].Color[1]= 0.784313725F;
-  I->Color[I->NColor].Color[2]= 0.627450980F;
-  I->NColor++;
-
-  strcpy(I->Color[I->NColor].Name,"phosphorus");
-  I->Color[I->NColor].Color[0]= 1.000000000F;
-  I->Color[I->NColor].Color[1]= 0.501960784F;
-  I->Color[I->NColor].Color[2]= 0.000000000F;
-  I->NColor++;
-
-  strcpy(I->Color[I->NColor].Name,"chlorine");
-  I->Color[I->NColor].Color[0]= 0.121568627F;
-  I->Color[I->NColor].Color[1]= 0.941176471F;
-  I->Color[I->NColor].Color[2]= 0.121568627F;
-  I->NColor++;
-
-  strcpy(I->Color[I->NColor].Name,"argon");
-  I->Color[I->NColor].Color[0]= 0.501960784F;
-  I->Color[I->NColor].Color[1]= 0.819607843F;
-  I->Color[I->NColor].Color[2]= 0.890196078F;
-  I->NColor++;
-
-  strcpy(I->Color[I->NColor].Name,"potassium");
-  I->Color[I->NColor].Color[0]= 0.560784314F;
-  I->Color[I->NColor].Color[1]= 0.250980392F;
-  I->Color[I->NColor].Color[2]= 0.831372549F;
-  I->NColor++;
-
-  strcpy(I->Color[I->NColor].Name,"calcium");
-  I->Color[I->NColor].Color[0]= 0.239215686F;
-  I->Color[I->NColor].Color[1]= 1.000000000F;
-  I->Color[I->NColor].Color[2]= 0.000000000F;
-  I->NColor++;
-
-  strcpy(I->Color[I->NColor].Name,"scandium");
-  I->Color[I->NColor].Color[0]= 0.901960784F;
-  I->Color[I->NColor].Color[1]= 0.901960784F;
-  I->Color[I->NColor].Color[2]= 0.901960784F;
-  I->NColor++;
-
-  strcpy(I->Color[I->NColor].Name,"titanium");
-  I->Color[I->NColor].Color[0]= 0.749019608F;
-  I->Color[I->NColor].Color[1]= 0.760784314F;
-  I->Color[I->NColor].Color[2]= 0.780392157F;
-  I->NColor++;
-
-  strcpy(I->Color[I->NColor].Name,"vanadium");
-  I->Color[I->NColor].Color[0]= 0.650980392F;
-  I->Color[I->NColor].Color[1]= 0.650980392F;
-  I->Color[I->NColor].Color[2]= 0.670588235F;
-  I->NColor++;
-
-  strcpy(I->Color[I->NColor].Name,"chromium");
-  I->Color[I->NColor].Color[0]= 0.541176471F;
-  I->Color[I->NColor].Color[1]= 0.600000000F;
-  I->Color[I->NColor].Color[2]= 0.780392157F;
-  I->NColor++;
-
-  strcpy(I->Color[I->NColor].Name,"manganese");
-  I->Color[I->NColor].Color[0]= 0.611764706F;
-  I->Color[I->NColor].Color[1]= 0.478431373F;
-  I->Color[I->NColor].Color[2]= 0.780392157F;
-  I->NColor++;
-
-  strcpy(I->Color[I->NColor].Name,"iron");
-  I->Color[I->NColor].Color[0]= 0.878431373F;
-  I->Color[I->NColor].Color[1]= 0.400000000F;
-  I->Color[I->NColor].Color[2]= 0.200000000F;
-  I->NColor++;
-
-  strcpy(I->Color[I->NColor].Name,"cobalt");
-  I->Color[I->NColor].Color[0]= 0.941176471F;
-  I->Color[I->NColor].Color[1]= 0.564705882F;
-  I->Color[I->NColor].Color[2]= 0.627450980F;
-  I->NColor++;
-
-  strcpy(I->Color[I->NColor].Name,"nickel");
-  I->Color[I->NColor].Color[0]= 0.313725490F;
-  I->Color[I->NColor].Color[1]= 0.815686275F;
-  I->Color[I->NColor].Color[2]= 0.313725490F;
-  I->NColor++;
-
-  strcpy(I->Color[I->NColor].Name,"copper");
-  I->Color[I->NColor].Color[0]= 0.784313725F;
-  I->Color[I->NColor].Color[1]= 0.501960784F;
-  I->Color[I->NColor].Color[2]= 0.200000000F;
-  I->NColor++;
-
-  strcpy(I->Color[I->NColor].Name,"zinc");
-  I->Color[I->NColor].Color[0]= 0.490196078F;
-  I->Color[I->NColor].Color[1]= 0.501960784F;
-  I->Color[I->NColor].Color[2]= 0.690196078F;
-  I->NColor++;
-
-  strcpy(I->Color[I->NColor].Name,"gallium");
-  I->Color[I->NColor].Color[0]= 0.760784314F;
-  I->Color[I->NColor].Color[1]= 0.560784314F;
-  I->Color[I->NColor].Color[2]= 0.560784314F;
-  I->NColor++;
-
-  strcpy(I->Color[I->NColor].Name,"germanium");
-  I->Color[I->NColor].Color[0]= 0.400000000F;
-  I->Color[I->NColor].Color[1]= 0.560784314F;
-  I->Color[I->NColor].Color[2]= 0.560784314F;
-  I->NColor++;
-
-  strcpy(I->Color[I->NColor].Name,"arsenic");
-  I->Color[I->NColor].Color[0]= 0.741176471F;
-  I->Color[I->NColor].Color[1]= 0.501960784F;
-  I->Color[I->NColor].Color[2]= 0.890196078F;
-  I->NColor++;
-
-  strcpy(I->Color[I->NColor].Name,"selenium");
-  I->Color[I->NColor].Color[0]= 1.000000000F;
-  I->Color[I->NColor].Color[1]= 0.631372549F;
-  I->Color[I->NColor].Color[2]= 0.000000000F;
-  I->NColor++;
-
-  strcpy(I->Color[I->NColor].Name,"bromine");
-  I->Color[I->NColor].Color[0]= 0.650980392F;
-  I->Color[I->NColor].Color[1]= 0.160784314F;
-  I->Color[I->NColor].Color[2]= 0.160784314F;
-  I->NColor++;
-
-  strcpy(I->Color[I->NColor].Name,"krypton");
-  I->Color[I->NColor].Color[0]= 0.360784314F;
-  I->Color[I->NColor].Color[1]= 0.721568627F;
-  I->Color[I->NColor].Color[2]= 0.819607843F;
-  I->NColor++;
-
-  strcpy(I->Color[I->NColor].Name,"rubidium");
-  I->Color[I->NColor].Color[0]= 0.439215686F;
-  I->Color[I->NColor].Color[1]= 0.180392157F;
-  I->Color[I->NColor].Color[2]= 0.690196078F;
-  I->NColor++;
-
-  strcpy(I->Color[I->NColor].Name,"strontium");
-  I->Color[I->NColor].Color[0]= 0.000000000F;
-  I->Color[I->NColor].Color[1]= 1.000000000F;
-  I->Color[I->NColor].Color[2]= 0.000000000F;
-  I->NColor++;
-
-  strcpy(I->Color[I->NColor].Name,"yttrium");
-  I->Color[I->NColor].Color[0]= 0.580392157F;
-  I->Color[I->NColor].Color[1]= 1.000000000F;
-  I->Color[I->NColor].Color[2]= 1.000000000F;
-  I->NColor++;
-
-  strcpy(I->Color[I->NColor].Name,"zirconium");
-  I->Color[I->NColor].Color[0]= 0.580392157F;
-  I->Color[I->NColor].Color[1]= 0.878431373F;
-  I->Color[I->NColor].Color[2]= 0.878431373F;
-  I->NColor++;
-
-  strcpy(I->Color[I->NColor].Name,"niobium");
-  I->Color[I->NColor].Color[0]= 0.450980392F;
-  I->Color[I->NColor].Color[1]= 0.760784314F;
-  I->Color[I->NColor].Color[2]= 0.788235294F;
-  I->NColor++;
-
-  strcpy(I->Color[I->NColor].Name,"molybdenum");
-  I->Color[I->NColor].Color[0]= 0.329411765F;
-  I->Color[I->NColor].Color[1]= 0.709803922F;
-  I->Color[I->NColor].Color[2]= 0.709803922F;
-  I->NColor++;
-
-  strcpy(I->Color[I->NColor].Name,"technetium");
-  I->Color[I->NColor].Color[0]= 0.231372549F;
-  I->Color[I->NColor].Color[1]= 0.619607843F;
-  I->Color[I->NColor].Color[2]= 0.619607843F;
-  I->NColor++;
-
-  strcpy(I->Color[I->NColor].Name,"ruthenium");
-  I->Color[I->NColor].Color[0]= 0.141176471F;
-  I->Color[I->NColor].Color[1]= 0.560784314F;
-  I->Color[I->NColor].Color[2]= 0.560784314F;
-  I->NColor++;
-
-  strcpy(I->Color[I->NColor].Name,"rhodium");
-  I->Color[I->NColor].Color[0]= 0.039215686F;
-  I->Color[I->NColor].Color[1]= 0.490196078F;
-  I->Color[I->NColor].Color[2]= 0.549019608F;
-  I->NColor++;
-
-  strcpy(I->Color[I->NColor].Name,"palladium");
-  I->Color[I->NColor].Color[0]= 0.000000000F;
-  I->Color[I->NColor].Color[1]= 0.411764706F;
-  I->Color[I->NColor].Color[2]= 0.521568627F;
-  I->NColor++;
-
-  strcpy(I->Color[I->NColor].Name,"silver");
-  I->Color[I->NColor].Color[0]= 0.752941176F;
-  I->Color[I->NColor].Color[1]= 0.752941176F;
-  I->Color[I->NColor].Color[2]= 0.752941176F;
-  I->NColor++;
-
-  strcpy(I->Color[I->NColor].Name,"cadmium");
-  I->Color[I->NColor].Color[0]= 1.000000000F;
-  I->Color[I->NColor].Color[1]= 0.850980392F;
-  I->Color[I->NColor].Color[2]= 0.560784314F;
-  I->NColor++;
-
-  strcpy(I->Color[I->NColor].Name,"indium");
-  I->Color[I->NColor].Color[0]= 0.650980392F;
-  I->Color[I->NColor].Color[1]= 0.458823529F;
-  I->Color[I->NColor].Color[2]= 0.450980392F;
-  I->NColor++;
-
-  strcpy(I->Color[I->NColor].Name,"tin");
-  I->Color[I->NColor].Color[0]= 0.400000000F;
-  I->Color[I->NColor].Color[1]= 0.501960784F;
-  I->Color[I->NColor].Color[2]= 0.501960784F;
-  I->NColor++;
-
-  strcpy(I->Color[I->NColor].Name,"antimony");
-  I->Color[I->NColor].Color[0]= 0.619607843F;
-  I->Color[I->NColor].Color[1]= 0.388235294F;
-  I->Color[I->NColor].Color[2]= 0.709803922F;
-  I->NColor++;
-
-  strcpy(I->Color[I->NColor].Name,"tellurium");
-  I->Color[I->NColor].Color[0]= 0.831372549F;
-  I->Color[I->NColor].Color[1]= 0.478431373F;
-  I->Color[I->NColor].Color[2]= 0.000000000F;
-  I->NColor++;
-
-  strcpy(I->Color[I->NColor].Name,"iodine");
-  I->Color[I->NColor].Color[0]= 0.580392157F;
-  I->Color[I->NColor].Color[1]= 0.000000000F;
-  I->Color[I->NColor].Color[2]= 0.580392157F;
-  I->NColor++;
-
-  strcpy(I->Color[I->NColor].Name,"xenon");
-  I->Color[I->NColor].Color[0]= 0.258823529F;
-  I->Color[I->NColor].Color[1]= 0.619607843F;
-  I->Color[I->NColor].Color[2]= 0.690196078F;
-  I->NColor++;
-
-  strcpy(I->Color[I->NColor].Name,"cesium");
-  I->Color[I->NColor].Color[0]= 0.341176471F;
-  I->Color[I->NColor].Color[1]= 0.090196078F;
-  I->Color[I->NColor].Color[2]= 0.560784314F;
-  I->NColor++;
-
-  strcpy(I->Color[I->NColor].Name,"barium");
-  I->Color[I->NColor].Color[0]= 0.000000000F;
-  I->Color[I->NColor].Color[1]= 0.788235294F;
-  I->Color[I->NColor].Color[2]= 0.000000000F;
-  I->NColor++;
-
-  strcpy(I->Color[I->NColor].Name,"lanthanum");
-  I->Color[I->NColor].Color[0]= 0.439215686F;
-  I->Color[I->NColor].Color[1]= 0.831372549F;
-  I->Color[I->NColor].Color[2]= 1.000000000F;
-  I->NColor++;
-
-  strcpy(I->Color[I->NColor].Name,"cerium");
-  I->Color[I->NColor].Color[0]= 1.000000000F;
-  I->Color[I->NColor].Color[1]= 1.000000000F;
-  I->Color[I->NColor].Color[2]= 0.780392157F;
-  I->NColor++;
-
-  strcpy(I->Color[I->NColor].Name,"praseodymium");
-  I->Color[I->NColor].Color[0]= 0.850980392F;
-  I->Color[I->NColor].Color[1]= 1.000000000F;
-  I->Color[I->NColor].Color[2]= 0.780392157F;
-  I->NColor++;
-
-  strcpy(I->Color[I->NColor].Name,"neodymium");
-  I->Color[I->NColor].Color[0]= 0.780392157F;
-  I->Color[I->NColor].Color[1]= 1.000000000F;
-  I->Color[I->NColor].Color[2]= 0.780392157F;
-  I->NColor++;
-
-  strcpy(I->Color[I->NColor].Name,"promethium");
-  I->Color[I->NColor].Color[0]= 0.639215686F;
-  I->Color[I->NColor].Color[1]= 1.000000000F;
-  I->Color[I->NColor].Color[2]= 0.780392157F;
-  I->NColor++;
-
-  strcpy(I->Color[I->NColor].Name,"samarium");
-  I->Color[I->NColor].Color[0]= 0.560784314F;
-  I->Color[I->NColor].Color[1]= 1.000000000F;
-  I->Color[I->NColor].Color[2]= 0.780392157F;
-  I->NColor++;
-
-  strcpy(I->Color[I->NColor].Name,"europium");
-  I->Color[I->NColor].Color[0]= 0.380392157F;
-  I->Color[I->NColor].Color[1]= 1.000000000F;
-  I->Color[I->NColor].Color[2]= 0.780392157F;
-  I->NColor++;
-
-  strcpy(I->Color[I->NColor].Name,"gadolinium");
-  I->Color[I->NColor].Color[0]= 0.270588235F;
-  I->Color[I->NColor].Color[1]= 1.000000000F;
-  I->Color[I->NColor].Color[2]= 0.780392157F;
-  I->NColor++;
-
-  strcpy(I->Color[I->NColor].Name,"terbium");
-  I->Color[I->NColor].Color[0]= 0.188235294F;
-  I->Color[I->NColor].Color[1]= 1.000000000F;
-  I->Color[I->NColor].Color[2]= 0.780392157F;
-  I->NColor++;
-
-  strcpy(I->Color[I->NColor].Name,"dysprosium");
-  I->Color[I->NColor].Color[0]= 0.121568627F;
-  I->Color[I->NColor].Color[1]= 1.000000000F;
-  I->Color[I->NColor].Color[2]= 0.780392157F;
-  I->NColor++;
-
-  strcpy(I->Color[I->NColor].Name,"holmium");
-  I->Color[I->NColor].Color[0]= 0.000000000F;
-  I->Color[I->NColor].Color[1]= 1.000000000F;
-  I->Color[I->NColor].Color[2]= 0.611764706F;
-  I->NColor++;
-
-  strcpy(I->Color[I->NColor].Name,"erbium");
-  I->Color[I->NColor].Color[0]= 0.000000000F;
-  I->Color[I->NColor].Color[1]= 0.901960784F;
-  I->Color[I->NColor].Color[2]= 0.458823529F;
-  I->NColor++;
-
-  strcpy(I->Color[I->NColor].Name,"thulium");
-  I->Color[I->NColor].Color[0]= 0.000000000F;
-  I->Color[I->NColor].Color[1]= 0.831372549F;
-  I->Color[I->NColor].Color[2]= 0.321568627F;
-  I->NColor++;
-
-  strcpy(I->Color[I->NColor].Name,"ytterbium");
-  I->Color[I->NColor].Color[0]= 0.000000000F;
-  I->Color[I->NColor].Color[1]= 0.749019608F;
-  I->Color[I->NColor].Color[2]= 0.219607843F;
-  I->NColor++;
-
-  strcpy(I->Color[I->NColor].Name,"lutetium");
-  I->Color[I->NColor].Color[0]= 0.000000000F;
-  I->Color[I->NColor].Color[1]= 0.670588235F;
-  I->Color[I->NColor].Color[2]= 0.141176471F;
-  I->NColor++;
-
-  strcpy(I->Color[I->NColor].Name,"hafnium");
-  I->Color[I->NColor].Color[0]= 0.301960784F;
-  I->Color[I->NColor].Color[1]= 0.760784314F;
-  I->Color[I->NColor].Color[2]= 1.000000000F;
-  I->NColor++;
-
-  strcpy(I->Color[I->NColor].Name,"tantalum");
-  I->Color[I->NColor].Color[0]= 0.301960784F;
-  I->Color[I->NColor].Color[1]= 0.650980392F;
-  I->Color[I->NColor].Color[2]= 1.000000000F;
-  I->NColor++;
-
-  strcpy(I->Color[I->NColor].Name,"tungsten");
-  I->Color[I->NColor].Color[0]= 0.129411765F;
-  I->Color[I->NColor].Color[1]= 0.580392157F;
-  I->Color[I->NColor].Color[2]= 0.839215686F;
-  I->NColor++;
-
-  strcpy(I->Color[I->NColor].Name,"rhenium");
-  I->Color[I->NColor].Color[0]= 0.149019608F;
-  I->Color[I->NColor].Color[1]= 0.490196078F;
-  I->Color[I->NColor].Color[2]= 0.670588235F;
-  I->NColor++;
-
-  strcpy(I->Color[I->NColor].Name,"osmium");
-  I->Color[I->NColor].Color[0]= 0.149019608F;
-  I->Color[I->NColor].Color[1]= 0.400000000F;
-  I->Color[I->NColor].Color[2]= 0.588235294F;
-  I->NColor++;
-
-  strcpy(I->Color[I->NColor].Name,"iridium");
-  I->Color[I->NColor].Color[0]= 0.090196078F;
-  I->Color[I->NColor].Color[1]= 0.329411765F;
-  I->Color[I->NColor].Color[2]= 0.529411765F;
-  I->NColor++;
-
-  strcpy(I->Color[I->NColor].Name,"platinum");
-  I->Color[I->NColor].Color[0]= 0.815686275F;
-  I->Color[I->NColor].Color[1]= 0.815686275F;
-  I->Color[I->NColor].Color[2]= 0.878431373F;
-  I->NColor++;
-
-  strcpy(I->Color[I->NColor].Name,"gold");
-  I->Color[I->NColor].Color[0]= 1.000000000F;
-  I->Color[I->NColor].Color[1]= 0.819607843F;
-  I->Color[I->NColor].Color[2]= 0.137254902F;
-  I->NColor++;
-
-  strcpy(I->Color[I->NColor].Name,"mercury");
-  I->Color[I->NColor].Color[0]= 0.721568627F;
-  I->Color[I->NColor].Color[1]= 0.721568627F;
-  I->Color[I->NColor].Color[2]= 0.815686275F;
-  I->NColor++;
-
-  strcpy(I->Color[I->NColor].Name,"thallium");
-  I->Color[I->NColor].Color[0]= 0.650980392F;
-  I->Color[I->NColor].Color[1]= 0.329411765F;
-  I->Color[I->NColor].Color[2]= 0.301960784F;
-  I->NColor++;
-
-  strcpy(I->Color[I->NColor].Name,"lead");
-  I->Color[I->NColor].Color[0]= 0.341176471F;
-  I->Color[I->NColor].Color[1]= 0.349019608F;
-  I->Color[I->NColor].Color[2]= 0.380392157F;
-  I->NColor++;
-
-  strcpy(I->Color[I->NColor].Name,"bismuth");
-  I->Color[I->NColor].Color[0]= 0.619607843F;
-  I->Color[I->NColor].Color[1]= 0.309803922F;
-  I->Color[I->NColor].Color[2]= 0.709803922F;
-  I->NColor++;
-
-  strcpy(I->Color[I->NColor].Name,"polonium");
-  I->Color[I->NColor].Color[0]= 0.670588235F;
-  I->Color[I->NColor].Color[1]= 0.360784314F;
-  I->Color[I->NColor].Color[2]= 0.000000000F;
-  I->NColor++;
-
-  strcpy(I->Color[I->NColor].Name,"astatine");
-  I->Color[I->NColor].Color[0]= 0.458823529F;
-  I->Color[I->NColor].Color[1]= 0.309803922F;
-  I->Color[I->NColor].Color[2]= 0.270588235F;
-  I->NColor++;
-
-  strcpy(I->Color[I->NColor].Name,"radon");
-  I->Color[I->NColor].Color[0]= 0.258823529F;
-  I->Color[I->NColor].Color[1]= 0.509803922F;
-  I->Color[I->NColor].Color[2]= 0.588235294F;
-  I->NColor++;
-
-  strcpy(I->Color[I->NColor].Name,"francium");
-  I->Color[I->NColor].Color[0]= 0.258823529F;
-  I->Color[I->NColor].Color[1]= 0.000000000F;
-  I->Color[I->NColor].Color[2]= 0.400000000F;
-  I->NColor++;
-
-  strcpy(I->Color[I->NColor].Name,"radium");
-  I->Color[I->NColor].Color[0]= 0.000000000F;
-  I->Color[I->NColor].Color[1]= 0.490196078F;
-  I->Color[I->NColor].Color[2]= 0.000000000F;
-  I->NColor++;
-
-  strcpy(I->Color[I->NColor].Name,"actinium");
-  I->Color[I->NColor].Color[0]= 0.439215686F;
-  I->Color[I->NColor].Color[1]= 0.670588235F;
-  I->Color[I->NColor].Color[2]= 0.980392157F;
-  I->NColor++;
-
-  strcpy(I->Color[I->NColor].Name,"thorium");
-  I->Color[I->NColor].Color[0]= 0.000000000F;
-  I->Color[I->NColor].Color[1]= 0.729411765F;
-  I->Color[I->NColor].Color[2]= 1.000000000F;
-  I->NColor++;
-
-  strcpy(I->Color[I->NColor].Name,"protactinium");
-  I->Color[I->NColor].Color[0]= 0.000000000F;
-  I->Color[I->NColor].Color[1]= 0.631372549F;
-  I->Color[I->NColor].Color[2]= 1.000000000F;
-  I->NColor++;
-
-  strcpy(I->Color[I->NColor].Name,"uranium");
-  I->Color[I->NColor].Color[0]= 0.000000000F;
-  I->Color[I->NColor].Color[1]= 0.560784314F;
-  I->Color[I->NColor].Color[2]= 1.000000000F;
-  I->NColor++;
-
-  strcpy(I->Color[I->NColor].Name,"neptunium");
-  I->Color[I->NColor].Color[0]= 0.000000000F;
-  I->Color[I->NColor].Color[1]= 0.501960784F;
-  I->Color[I->NColor].Color[2]= 1.000000000F;
-  I->NColor++;
-
-  strcpy(I->Color[I->NColor].Name,"plutonium");
-  I->Color[I->NColor].Color[0]= 0.000000000F;
-  I->Color[I->NColor].Color[1]= 0.419607843F;
-  I->Color[I->NColor].Color[2]= 1.000000000F;
-  I->NColor++;
-
-  strcpy(I->Color[I->NColor].Name,"americium");
-  I->Color[I->NColor].Color[0]= 0.329411765F;
-  I->Color[I->NColor].Color[1]= 0.360784314F;
-  I->Color[I->NColor].Color[2]= 0.949019608F;
-  I->NColor++;
-
-  strcpy(I->Color[I->NColor].Name,"curium");
-  I->Color[I->NColor].Color[0]= 0.470588235F;
-  I->Color[I->NColor].Color[1]= 0.360784314F;
-  I->Color[I->NColor].Color[2]= 0.890196078F;
-  I->NColor++;
-
-  strcpy(I->Color[I->NColor].Name,"berkelium");
-  I->Color[I->NColor].Color[0]= 0.541176471F;
-  I->Color[I->NColor].Color[1]= 0.309803922F;
-  I->Color[I->NColor].Color[2]= 0.890196078F;
-  I->NColor++;
-
-  strcpy(I->Color[I->NColor].Name,"californium");
-  I->Color[I->NColor].Color[0]= 0.631372549F;
-  I->Color[I->NColor].Color[1]= 0.211764706F;
-  I->Color[I->NColor].Color[2]= 0.831372549F;
-  I->NColor++;
-
-  strcpy(I->Color[I->NColor].Name,"einsteinium");
-  I->Color[I->NColor].Color[0]= 0.701960784F;
-  I->Color[I->NColor].Color[1]= 0.121568627F;
-  I->Color[I->NColor].Color[2]= 0.831372549F;
-  I->NColor++;
-
-  strcpy(I->Color[I->NColor].Name,"fermium");
-  I->Color[I->NColor].Color[0]= 0.701960784F;
-  I->Color[I->NColor].Color[1]= 0.121568627F;
-  I->Color[I->NColor].Color[2]= 0.729411765F;
-  I->NColor++;
-
-  strcpy(I->Color[I->NColor].Name,"mendelevium");
-  I->Color[I->NColor].Color[0]= 0.701960784F;
-  I->Color[I->NColor].Color[1]= 0.050980392F;
-  I->Color[I->NColor].Color[2]= 0.650980392F;
-  I->NColor++;
-
-  strcpy(I->Color[I->NColor].Name,"nobelium");
-  I->Color[I->NColor].Color[0]= 0.741176471F;
-  I->Color[I->NColor].Color[1]= 0.050980392F;
-  I->Color[I->NColor].Color[2]= 0.529411765F;
-  I->NColor++;
-
-  strcpy(I->Color[I->NColor].Name,"lawrencium");
-  I->Color[I->NColor].Color[0]= 0.780392157F;
-  I->Color[I->NColor].Color[1]= 0.000000000F;
-  I->Color[I->NColor].Color[2]= 0.400000000F;
-  I->NColor++;
-
-  strcpy(I->Color[I->NColor].Name,"rutherfordium");
-  I->Color[I->NColor].Color[0]= 0.800000000F;
-  I->Color[I->NColor].Color[1]= 0.000000000F;
-  I->Color[I->NColor].Color[2]= 0.349019608F;
-  I->NColor++;
-
-  strcpy(I->Color[I->NColor].Name,"dubnium");
-  I->Color[I->NColor].Color[0]= 0.819607843F;
-  I->Color[I->NColor].Color[1]= 0.000000000F;
-  I->Color[I->NColor].Color[2]= 0.309803922F;
-  I->NColor++;
-
-  strcpy(I->Color[I->NColor].Name,"seaborgium");
-  I->Color[I->NColor].Color[0]= 0.850980392F;
-  I->Color[I->NColor].Color[1]= 0.000000000F;
-  I->Color[I->NColor].Color[2]= 0.270588235F;
-  I->NColor++;
-
-  strcpy(I->Color[I->NColor].Name,"bohrium");
-  I->Color[I->NColor].Color[0]= 0.878431373F;
-  I->Color[I->NColor].Color[1]= 0.000000000F;
-  I->Color[I->NColor].Color[2]= 0.219607843F;
-  I->NColor++;
-
-  strcpy(I->Color[I->NColor].Name,"hassium");
-  I->Color[I->NColor].Color[0]= 0.901960784F;
-  I->Color[I->NColor].Color[1]= 0.000000000F;
-  I->Color[I->NColor].Color[2]= 0.180392157F;
-  I->NColor++;
-
-  strcpy(I->Color[I->NColor].Name,"meitnerium");
-  I->Color[I->NColor].Color[0]= 0.921568627F;
-  I->Color[I->NColor].Color[1]= 0.000000000F;
-  I->Color[I->NColor].Color[2]= 0.149019608F;
-  I->NColor++;
-
-  strcpy(I->Color[I->NColor].Name,"deuterium");
-  I->Color[I->NColor].Color[0]=0.9F;
-  I->Color[I->NColor].Color[1]=0.9F;
-  I->Color[I->NColor].Color[2]=0.9F;
-  I->NColor++;
+  strcpy(color[n_color].Name,"paleyellow");
+  color[n_color].Color[0]=1.0F;
+  color[n_color].Color[1]=1.0F;
+  color[n_color].Color[2]=0.5F;
+  n_color++;
+
+  strcpy(color[n_color].Name,"aquamarine");
+  color[n_color].Color[0]=0.5F;
+  color[n_color].Color[1]=1.0F;
+  color[n_color].Color[2]=1.0F;
+  n_color++;
+
+  strcpy(color[n_color].Name,"deepsalmon");
+  color[n_color].Color[0]=1.0F;
+  color[n_color].Color[1]=0.5F;
+  color[n_color].Color[2]=0.5F;
+  n_color++;
+
+  strcpy(color[n_color].Name,"palegreen");
+  color[n_color].Color[0]=0.65F;
+  color[n_color].Color[1]=0.9F;
+  color[n_color].Color[2]=0.65F;
+  n_color++;
+
+  strcpy(color[n_color].Name,"deepolive");
+  color[n_color].Color[0]=0.6F;
+  color[n_color].Color[1]=0.6F;
+  color[n_color].Color[2]=0.1F;
+  n_color++;
+
+  strcpy(color[n_color].Name,"deeppurple");
+  color[n_color].Color[0]=0.6F;
+  color[n_color].Color[1]=0.1F;
+  color[n_color].Color[2]=0.6F;
+  n_color++;
+
+  strcpy(color[n_color].Name,"deepteal");
+  color[n_color].Color[0]=0.1F;
+  color[n_color].Color[1]=0.6F;
+  color[n_color].Color[2]=0.6F;
+  n_color++;
+
+  strcpy(color[n_color].Name,"lightblue");
+  color[n_color].Color[0]=0.75F;
+  color[n_color].Color[1]=0.75;
+  color[n_color].Color[2]=1.0F;
+  n_color++;
+
+  strcpy(color[n_color].Name,"lightorange"); 
+  color[n_color].Color[0]=1.0F;
+  color[n_color].Color[1]=0.8F;
+  color[n_color].Color[2]=0.5F;
+  n_color++;
+
+  strcpy(color[n_color].Name,"palecyan"); 
+  color[n_color].Color[0]=0.8F;
+  color[n_color].Color[1]=1.0F;
+  color[n_color].Color[2]=1.0F;
+  n_color++;
+
+  strcpy(color[n_color].Name,"lightteal"); 
+  color[n_color].Color[0]=0.4F;
+  color[n_color].Color[1]=0.7F;
+  color[n_color].Color[2]=0.7F;
+  n_color++;
+
+  strcpy(color[n_color].Name,"splitpea"); 
+  color[n_color].Color[0]=0.52F;
+  color[n_color].Color[1]=0.75F;
+  color[n_color].Color[2]=0.00F;
+  n_color++;
+
+  strcpy(color[n_color].Name,"raspberry"); 
+  color[n_color].Color[0]=0.70F;
+  color[n_color].Color[1]=0.30F;
+  color[n_color].Color[2]=0.40F;
+  n_color++;
+
+  strcpy(color[n_color].Name,"sand"); 
+  color[n_color].Color[0]=0.72F;
+  color[n_color].Color[1]=0.55F;
+  color[n_color].Color[2]=0.30F;
+  n_color++;
+
+  strcpy(color[n_color].Name,"smudge"); 
+  color[n_color].Color[0]=0.55F;
+  color[n_color].Color[1]=0.70F;
+  color[n_color].Color[2]=0.40F;
+  n_color++;
+
+  strcpy(color[n_color].Name,"violetpurple");
+  color[n_color].Color[0]=0.55F;
+  color[n_color].Color[1]=0.25F;
+  color[n_color].Color[2]=0.60F;
+  n_color++;
+
+  strcpy(color[n_color].Name,"dirtyviolet");
+  color[n_color].Color[0]=0.70F;
+  color[n_color].Color[1]=0.50F;
+  color[n_color].Color[2]=0.50F;
+  n_color++;
+
+
+  strcpy(color[n_color].Name,"deepsalmon");
+  color[n_color].Color[0]=1.00F;
+  color[n_color].Color[1]=0.42F;
+  color[n_color].Color[2]=0.42F;
+  n_color++;
+
+  strcpy(color[n_color].Name,"lightpink");
+  color[n_color].Color[0]=1.00F;
+  color[n_color].Color[1]=0.75F;
+  color[n_color].Color[2]=0.87F;
+  n_color++;
+
+  strcpy(color[n_color].Name,"greencyan");
+  color[n_color].Color[0]=0.25F;
+  color[n_color].Color[1]=1.00F;
+  color[n_color].Color[2]=0.75F;
+  n_color++;
+
+  strcpy(color[n_color].Name,"limon");
+  color[n_color].Color[0]=0.75F;
+  color[n_color].Color[1]=1.00F;
+  color[n_color].Color[2]=0.25F;
+  n_color++;
+
+
+  strcpy(color[n_color].Name,"skyblue");
+  color[n_color].Color[0]=0.20F;
+  color[n_color].Color[1]=0.50F;
+  color[n_color].Color[2]=0.80F;
+  n_color++;
+
+  strcpy(color[n_color].Name,"bluewhite");
+  color[n_color].Color[0]=0.85F;
+  color[n_color].Color[1]=0.85F;
+  color[n_color].Color[2]=1.00F;
+  n_color++;
+
+  strcpy(color[n_color].Name,"warmpink");
+  color[n_color].Color[0]=0.85F;
+  color[n_color].Color[1]=0.20F;
+  color[n_color].Color[2]=0.50F;
+  n_color++;
+
+  strcpy(color[n_color].Name,"darksalmon");
+  color[n_color].Color[0]=0.73F;
+  color[n_color].Color[1]=0.55F;
+  color[n_color].Color[2]=0.52F;
+  n_color++;
+
+  strcpy(color[n_color].Name,"helium");
+  color[n_color].Color[0]= 0.850980392F;
+  color[n_color].Color[1]= 1.000000000F;
+  color[n_color].Color[2]= 1.000000000F;
+  n_color++;
+
+  strcpy(color[n_color].Name,"lithium");
+  color[n_color].Color[0]= 0.800000000F;
+  color[n_color].Color[1]= 0.501960784F;
+  color[n_color].Color[2]= 1.000000000F;
+  n_color++;
+
+  strcpy(color[n_color].Name,"beryllium");
+  color[n_color].Color[0]= 0.760784314F;
+  color[n_color].Color[1]= 1.000000000F;
+  color[n_color].Color[2]= 0.000000000F;
+  n_color++;
+
+  strcpy(color[n_color].Name,"boron");
+  color[n_color].Color[0]= 1.000000000F;
+  color[n_color].Color[1]= 0.709803922F;
+  color[n_color].Color[2]= 0.709803922F;
+  n_color++;
+
+  strcpy(color[n_color].Name,"fluorine");
+  color[n_color].Color[0]= 0.701960784F;
+  color[n_color].Color[1]= 1.000000000F;
+  color[n_color].Color[2]= 1.000000000F;
+  n_color++;
+
+  strcpy(color[n_color].Name,"neon");
+  color[n_color].Color[0]= 0.701960784F;
+  color[n_color].Color[1]= 0.890196078F;
+  color[n_color].Color[2]= 0.960784314F;
+  n_color++;
+
+  strcpy(color[n_color].Name,"sodium");
+  color[n_color].Color[0]= 0.670588235F;
+  color[n_color].Color[1]= 0.360784314F;
+  color[n_color].Color[2]= 0.949019608F;
+  n_color++;
+
+  strcpy(color[n_color].Name,"magnesium");
+  color[n_color].Color[0]= 0.541176471F;
+  color[n_color].Color[1]= 1.000000000F;
+  color[n_color].Color[2]= 0.000000000F;
+  n_color++;
+
+  strcpy(color[n_color].Name,"aluminum");
+  color[n_color].Color[0]= 0.749019608F;
+  color[n_color].Color[1]= 0.650980392F;
+  color[n_color].Color[2]= 0.650980392F;
+  n_color++;
+
+  strcpy(color[n_color].Name,"silicon");
+  color[n_color].Color[0]= 0.941176471F;
+  color[n_color].Color[1]= 0.784313725F;
+  color[n_color].Color[2]= 0.627450980F;
+  n_color++;
+
+  strcpy(color[n_color].Name,"phosphorus");
+  color[n_color].Color[0]= 1.000000000F;
+  color[n_color].Color[1]= 0.501960784F;
+  color[n_color].Color[2]= 0.000000000F;
+  n_color++;
+
+  strcpy(color[n_color].Name,"chlorine");
+  color[n_color].Color[0]= 0.121568627F;
+  color[n_color].Color[1]= 0.941176471F;
+  color[n_color].Color[2]= 0.121568627F;
+  n_color++;
+
+  strcpy(color[n_color].Name,"argon");
+  color[n_color].Color[0]= 0.501960784F;
+  color[n_color].Color[1]= 0.819607843F;
+  color[n_color].Color[2]= 0.890196078F;
+  n_color++;
+
+  strcpy(color[n_color].Name,"potassium");
+  color[n_color].Color[0]= 0.560784314F;
+  color[n_color].Color[1]= 0.250980392F;
+  color[n_color].Color[2]= 0.831372549F;
+  n_color++;
+
+  strcpy(color[n_color].Name,"calcium");
+  color[n_color].Color[0]= 0.239215686F;
+  color[n_color].Color[1]= 1.000000000F;
+  color[n_color].Color[2]= 0.000000000F;
+  n_color++;
+
+  strcpy(color[n_color].Name,"scandium");
+  color[n_color].Color[0]= 0.901960784F;
+  color[n_color].Color[1]= 0.901960784F;
+  color[n_color].Color[2]= 0.901960784F;
+  n_color++;
+
+  strcpy(color[n_color].Name,"titanium");
+  color[n_color].Color[0]= 0.749019608F;
+  color[n_color].Color[1]= 0.760784314F;
+  color[n_color].Color[2]= 0.780392157F;
+  n_color++;
+
+  strcpy(color[n_color].Name,"vanadium");
+  color[n_color].Color[0]= 0.650980392F;
+  color[n_color].Color[1]= 0.650980392F;
+  color[n_color].Color[2]= 0.670588235F;
+  n_color++;
+
+  strcpy(color[n_color].Name,"chromium");
+  color[n_color].Color[0]= 0.541176471F;
+  color[n_color].Color[1]= 0.600000000F;
+  color[n_color].Color[2]= 0.780392157F;
+  n_color++;
+
+  strcpy(color[n_color].Name,"manganese");
+  color[n_color].Color[0]= 0.611764706F;
+  color[n_color].Color[1]= 0.478431373F;
+  color[n_color].Color[2]= 0.780392157F;
+  n_color++;
+
+  strcpy(color[n_color].Name,"iron");
+  color[n_color].Color[0]= 0.878431373F;
+  color[n_color].Color[1]= 0.400000000F;
+  color[n_color].Color[2]= 0.200000000F;
+  n_color++;
+
+  strcpy(color[n_color].Name,"cobalt");
+  color[n_color].Color[0]= 0.941176471F;
+  color[n_color].Color[1]= 0.564705882F;
+  color[n_color].Color[2]= 0.627450980F;
+  n_color++;
+
+  strcpy(color[n_color].Name,"nickel");
+  color[n_color].Color[0]= 0.313725490F;
+  color[n_color].Color[1]= 0.815686275F;
+  color[n_color].Color[2]= 0.313725490F;
+  n_color++;
+
+  strcpy(color[n_color].Name,"copper");
+  color[n_color].Color[0]= 0.784313725F;
+  color[n_color].Color[1]= 0.501960784F;
+  color[n_color].Color[2]= 0.200000000F;
+  n_color++;
+
+  strcpy(color[n_color].Name,"zinc");
+  color[n_color].Color[0]= 0.490196078F;
+  color[n_color].Color[1]= 0.501960784F;
+  color[n_color].Color[2]= 0.690196078F;
+  n_color++;
+
+  strcpy(color[n_color].Name,"gallium");
+  color[n_color].Color[0]= 0.760784314F;
+  color[n_color].Color[1]= 0.560784314F;
+  color[n_color].Color[2]= 0.560784314F;
+  n_color++;
+
+  strcpy(color[n_color].Name,"germanium");
+  color[n_color].Color[0]= 0.400000000F;
+  color[n_color].Color[1]= 0.560784314F;
+  color[n_color].Color[2]= 0.560784314F;
+  n_color++;
+
+  strcpy(color[n_color].Name,"arsenic");
+  color[n_color].Color[0]= 0.741176471F;
+  color[n_color].Color[1]= 0.501960784F;
+  color[n_color].Color[2]= 0.890196078F;
+  n_color++;
+
+  strcpy(color[n_color].Name,"selenium");
+  color[n_color].Color[0]= 1.000000000F;
+  color[n_color].Color[1]= 0.631372549F;
+  color[n_color].Color[2]= 0.000000000F;
+  n_color++;
+
+  strcpy(color[n_color].Name,"bromine");
+  color[n_color].Color[0]= 0.650980392F;
+  color[n_color].Color[1]= 0.160784314F;
+  color[n_color].Color[2]= 0.160784314F;
+  n_color++;
+
+  strcpy(color[n_color].Name,"krypton");
+  color[n_color].Color[0]= 0.360784314F;
+  color[n_color].Color[1]= 0.721568627F;
+  color[n_color].Color[2]= 0.819607843F;
+  n_color++;
+
+  strcpy(color[n_color].Name,"rubidium");
+  color[n_color].Color[0]= 0.439215686F;
+  color[n_color].Color[1]= 0.180392157F;
+  color[n_color].Color[2]= 0.690196078F;
+  n_color++;
+
+  strcpy(color[n_color].Name,"strontium");
+  color[n_color].Color[0]= 0.000000000F;
+  color[n_color].Color[1]= 1.000000000F;
+  color[n_color].Color[2]= 0.000000000F;
+  n_color++;
+
+  strcpy(color[n_color].Name,"yttrium");
+  color[n_color].Color[0]= 0.580392157F;
+  color[n_color].Color[1]= 1.000000000F;
+  color[n_color].Color[2]= 1.000000000F;
+  n_color++;
+
+  strcpy(color[n_color].Name,"zirconium");
+  color[n_color].Color[0]= 0.580392157F;
+  color[n_color].Color[1]= 0.878431373F;
+  color[n_color].Color[2]= 0.878431373F;
+  n_color++;
+
+  strcpy(color[n_color].Name,"niobium");
+  color[n_color].Color[0]= 0.450980392F;
+  color[n_color].Color[1]= 0.760784314F;
+  color[n_color].Color[2]= 0.788235294F;
+  n_color++;
+
+  strcpy(color[n_color].Name,"molybdenum");
+  color[n_color].Color[0]= 0.329411765F;
+  color[n_color].Color[1]= 0.709803922F;
+  color[n_color].Color[2]= 0.709803922F;
+  n_color++;
+
+  strcpy(color[n_color].Name,"technetium");
+  color[n_color].Color[0]= 0.231372549F;
+  color[n_color].Color[1]= 0.619607843F;
+  color[n_color].Color[2]= 0.619607843F;
+  n_color++;
+
+  strcpy(color[n_color].Name,"ruthenium");
+  color[n_color].Color[0]= 0.141176471F;
+  color[n_color].Color[1]= 0.560784314F;
+  color[n_color].Color[2]= 0.560784314F;
+  n_color++;
+
+  strcpy(color[n_color].Name,"rhodium");
+  color[n_color].Color[0]= 0.039215686F;
+  color[n_color].Color[1]= 0.490196078F;
+  color[n_color].Color[2]= 0.549019608F;
+  n_color++;
+
+  strcpy(color[n_color].Name,"palladium");
+  color[n_color].Color[0]= 0.000000000F;
+  color[n_color].Color[1]= 0.411764706F;
+  color[n_color].Color[2]= 0.521568627F;
+  n_color++;
+
+  strcpy(color[n_color].Name,"silver");
+  color[n_color].Color[0]= 0.752941176F;
+  color[n_color].Color[1]= 0.752941176F;
+  color[n_color].Color[2]= 0.752941176F;
+  n_color++;
+
+  strcpy(color[n_color].Name,"cadmium");
+  color[n_color].Color[0]= 1.000000000F;
+  color[n_color].Color[1]= 0.850980392F;
+  color[n_color].Color[2]= 0.560784314F;
+  n_color++;
+
+  strcpy(color[n_color].Name,"indium");
+  color[n_color].Color[0]= 0.650980392F;
+  color[n_color].Color[1]= 0.458823529F;
+  color[n_color].Color[2]= 0.450980392F;
+  n_color++;
+
+  strcpy(color[n_color].Name,"tin");
+  color[n_color].Color[0]= 0.400000000F;
+  color[n_color].Color[1]= 0.501960784F;
+  color[n_color].Color[2]= 0.501960784F;
+  n_color++;
+
+  strcpy(color[n_color].Name,"antimony");
+  color[n_color].Color[0]= 0.619607843F;
+  color[n_color].Color[1]= 0.388235294F;
+  color[n_color].Color[2]= 0.709803922F;
+  n_color++;
+
+  strcpy(color[n_color].Name,"tellurium");
+  color[n_color].Color[0]= 0.831372549F;
+  color[n_color].Color[1]= 0.478431373F;
+  color[n_color].Color[2]= 0.000000000F;
+  n_color++;
+
+  strcpy(color[n_color].Name,"iodine");
+  color[n_color].Color[0]= 0.580392157F;
+  color[n_color].Color[1]= 0.000000000F;
+  color[n_color].Color[2]= 0.580392157F;
+  n_color++;
+
+  strcpy(color[n_color].Name,"xenon");
+  color[n_color].Color[0]= 0.258823529F;
+  color[n_color].Color[1]= 0.619607843F;
+  color[n_color].Color[2]= 0.690196078F;
+  n_color++;
+
+  strcpy(color[n_color].Name,"cesium");
+  color[n_color].Color[0]= 0.341176471F;
+  color[n_color].Color[1]= 0.090196078F;
+  color[n_color].Color[2]= 0.560784314F;
+  n_color++;
+
+  strcpy(color[n_color].Name,"barium");
+  color[n_color].Color[0]= 0.000000000F;
+  color[n_color].Color[1]= 0.788235294F;
+  color[n_color].Color[2]= 0.000000000F;
+  n_color++;
+
+  strcpy(color[n_color].Name,"lanthanum");
+  color[n_color].Color[0]= 0.439215686F;
+  color[n_color].Color[1]= 0.831372549F;
+  color[n_color].Color[2]= 1.000000000F;
+  n_color++;
+
+  strcpy(color[n_color].Name,"cerium");
+  color[n_color].Color[0]= 1.000000000F;
+  color[n_color].Color[1]= 1.000000000F;
+  color[n_color].Color[2]= 0.780392157F;
+  n_color++;
+
+  strcpy(color[n_color].Name,"praseodymium");
+  color[n_color].Color[0]= 0.850980392F;
+  color[n_color].Color[1]= 1.000000000F;
+  color[n_color].Color[2]= 0.780392157F;
+  n_color++;
+
+  strcpy(color[n_color].Name,"neodymium");
+  color[n_color].Color[0]= 0.780392157F;
+  color[n_color].Color[1]= 1.000000000F;
+  color[n_color].Color[2]= 0.780392157F;
+  n_color++;
+
+  strcpy(color[n_color].Name,"promethium");
+  color[n_color].Color[0]= 0.639215686F;
+  color[n_color].Color[1]= 1.000000000F;
+  color[n_color].Color[2]= 0.780392157F;
+  n_color++;
+
+  strcpy(color[n_color].Name,"samarium");
+  color[n_color].Color[0]= 0.560784314F;
+  color[n_color].Color[1]= 1.000000000F;
+  color[n_color].Color[2]= 0.780392157F;
+  n_color++;
+
+  strcpy(color[n_color].Name,"europium");
+  color[n_color].Color[0]= 0.380392157F;
+  color[n_color].Color[1]= 1.000000000F;
+  color[n_color].Color[2]= 0.780392157F;
+  n_color++;
+
+  strcpy(color[n_color].Name,"gadolinium");
+  color[n_color].Color[0]= 0.270588235F;
+  color[n_color].Color[1]= 1.000000000F;
+  color[n_color].Color[2]= 0.780392157F;
+  n_color++;
+
+  strcpy(color[n_color].Name,"terbium");
+  color[n_color].Color[0]= 0.188235294F;
+  color[n_color].Color[1]= 1.000000000F;
+  color[n_color].Color[2]= 0.780392157F;
+  n_color++;
+
+  strcpy(color[n_color].Name,"dysprosium");
+  color[n_color].Color[0]= 0.121568627F;
+  color[n_color].Color[1]= 1.000000000F;
+  color[n_color].Color[2]= 0.780392157F;
+  n_color++;
+
+  strcpy(color[n_color].Name,"holmium");
+  color[n_color].Color[0]= 0.000000000F;
+  color[n_color].Color[1]= 1.000000000F;
+  color[n_color].Color[2]= 0.611764706F;
+  n_color++;
+
+  strcpy(color[n_color].Name,"erbium");
+  color[n_color].Color[0]= 0.000000000F;
+  color[n_color].Color[1]= 0.901960784F;
+  color[n_color].Color[2]= 0.458823529F;
+  n_color++;
+
+  strcpy(color[n_color].Name,"thulium");
+  color[n_color].Color[0]= 0.000000000F;
+  color[n_color].Color[1]= 0.831372549F;
+  color[n_color].Color[2]= 0.321568627F;
+  n_color++;
+
+  strcpy(color[n_color].Name,"ytterbium");
+  color[n_color].Color[0]= 0.000000000F;
+  color[n_color].Color[1]= 0.749019608F;
+  color[n_color].Color[2]= 0.219607843F;
+  n_color++;
+
+  strcpy(color[n_color].Name,"lutetium");
+  color[n_color].Color[0]= 0.000000000F;
+  color[n_color].Color[1]= 0.670588235F;
+  color[n_color].Color[2]= 0.141176471F;
+  n_color++;
+
+  strcpy(color[n_color].Name,"hafnium");
+  color[n_color].Color[0]= 0.301960784F;
+  color[n_color].Color[1]= 0.760784314F;
+  color[n_color].Color[2]= 1.000000000F;
+  n_color++;
+
+  strcpy(color[n_color].Name,"tantalum");
+  color[n_color].Color[0]= 0.301960784F;
+  color[n_color].Color[1]= 0.650980392F;
+  color[n_color].Color[2]= 1.000000000F;
+  n_color++;
+
+  strcpy(color[n_color].Name,"tungsten");
+  color[n_color].Color[0]= 0.129411765F;
+  color[n_color].Color[1]= 0.580392157F;
+  color[n_color].Color[2]= 0.839215686F;
+  n_color++;
+
+  strcpy(color[n_color].Name,"rhenium");
+  color[n_color].Color[0]= 0.149019608F;
+  color[n_color].Color[1]= 0.490196078F;
+  color[n_color].Color[2]= 0.670588235F;
+  n_color++;
+
+  strcpy(color[n_color].Name,"osmium");
+  color[n_color].Color[0]= 0.149019608F;
+  color[n_color].Color[1]= 0.400000000F;
+  color[n_color].Color[2]= 0.588235294F;
+  n_color++;
+
+  strcpy(color[n_color].Name,"iridium");
+  color[n_color].Color[0]= 0.090196078F;
+  color[n_color].Color[1]= 0.329411765F;
+  color[n_color].Color[2]= 0.529411765F;
+  n_color++;
+
+  strcpy(color[n_color].Name,"platinum");
+  color[n_color].Color[0]= 0.815686275F;
+  color[n_color].Color[1]= 0.815686275F;
+  color[n_color].Color[2]= 0.878431373F;
+  n_color++;
+
+  strcpy(color[n_color].Name,"gold");
+  color[n_color].Color[0]= 1.000000000F;
+  color[n_color].Color[1]= 0.819607843F;
+  color[n_color].Color[2]= 0.137254902F;
+  n_color++;
+
+  strcpy(color[n_color].Name,"mercury");
+  color[n_color].Color[0]= 0.721568627F;
+  color[n_color].Color[1]= 0.721568627F;
+  color[n_color].Color[2]= 0.815686275F;
+  n_color++;
+
+  strcpy(color[n_color].Name,"thallium");
+  color[n_color].Color[0]= 0.650980392F;
+  color[n_color].Color[1]= 0.329411765F;
+  color[n_color].Color[2]= 0.301960784F;
+  n_color++;
+
+  strcpy(color[n_color].Name,"lead");
+  color[n_color].Color[0]= 0.341176471F;
+  color[n_color].Color[1]= 0.349019608F;
+  color[n_color].Color[2]= 0.380392157F;
+  n_color++;
+
+  strcpy(color[n_color].Name,"bismuth");
+  color[n_color].Color[0]= 0.619607843F;
+  color[n_color].Color[1]= 0.309803922F;
+  color[n_color].Color[2]= 0.709803922F;
+  n_color++;
+
+  strcpy(color[n_color].Name,"polonium");
+  color[n_color].Color[0]= 0.670588235F;
+  color[n_color].Color[1]= 0.360784314F;
+  color[n_color].Color[2]= 0.000000000F;
+  n_color++;
+
+  strcpy(color[n_color].Name,"astatine");
+  color[n_color].Color[0]= 0.458823529F;
+  color[n_color].Color[1]= 0.309803922F;
+  color[n_color].Color[2]= 0.270588235F;
+  n_color++;
+
+  strcpy(color[n_color].Name,"radon");
+  color[n_color].Color[0]= 0.258823529F;
+  color[n_color].Color[1]= 0.509803922F;
+  color[n_color].Color[2]= 0.588235294F;
+  n_color++;
+
+  strcpy(color[n_color].Name,"francium");
+  color[n_color].Color[0]= 0.258823529F;
+  color[n_color].Color[1]= 0.000000000F;
+  color[n_color].Color[2]= 0.400000000F;
+  n_color++;
+
+  strcpy(color[n_color].Name,"radium");
+  color[n_color].Color[0]= 0.000000000F;
+  color[n_color].Color[1]= 0.490196078F;
+  color[n_color].Color[2]= 0.000000000F;
+  n_color++;
+
+  strcpy(color[n_color].Name,"actinium");
+  color[n_color].Color[0]= 0.439215686F;
+  color[n_color].Color[1]= 0.670588235F;
+  color[n_color].Color[2]= 0.980392157F;
+  n_color++;
+
+  strcpy(color[n_color].Name,"thorium");
+  color[n_color].Color[0]= 0.000000000F;
+  color[n_color].Color[1]= 0.729411765F;
+  color[n_color].Color[2]= 1.000000000F;
+  n_color++;
+
+  strcpy(color[n_color].Name,"protactinium");
+  color[n_color].Color[0]= 0.000000000F;
+  color[n_color].Color[1]= 0.631372549F;
+  color[n_color].Color[2]= 1.000000000F;
+  n_color++;
+
+  strcpy(color[n_color].Name,"uranium");
+  color[n_color].Color[0]= 0.000000000F;
+  color[n_color].Color[1]= 0.560784314F;
+  color[n_color].Color[2]= 1.000000000F;
+  n_color++;
+
+  strcpy(color[n_color].Name,"neptunium");
+  color[n_color].Color[0]= 0.000000000F;
+  color[n_color].Color[1]= 0.501960784F;
+  color[n_color].Color[2]= 1.000000000F;
+  n_color++;
+
+  strcpy(color[n_color].Name,"plutonium");
+  color[n_color].Color[0]= 0.000000000F;
+  color[n_color].Color[1]= 0.419607843F;
+  color[n_color].Color[2]= 1.000000000F;
+  n_color++;
+
+  strcpy(color[n_color].Name,"americium");
+  color[n_color].Color[0]= 0.329411765F;
+  color[n_color].Color[1]= 0.360784314F;
+  color[n_color].Color[2]= 0.949019608F;
+  n_color++;
+
+  strcpy(color[n_color].Name,"curium");
+  color[n_color].Color[0]= 0.470588235F;
+  color[n_color].Color[1]= 0.360784314F;
+  color[n_color].Color[2]= 0.890196078F;
+  n_color++;
+
+  strcpy(color[n_color].Name,"berkelium");
+  color[n_color].Color[0]= 0.541176471F;
+  color[n_color].Color[1]= 0.309803922F;
+  color[n_color].Color[2]= 0.890196078F;
+  n_color++;
+
+  strcpy(color[n_color].Name,"californium");
+  color[n_color].Color[0]= 0.631372549F;
+  color[n_color].Color[1]= 0.211764706F;
+  color[n_color].Color[2]= 0.831372549F;
+  n_color++;
+
+  strcpy(color[n_color].Name,"einsteinium");
+  color[n_color].Color[0]= 0.701960784F;
+  color[n_color].Color[1]= 0.121568627F;
+  color[n_color].Color[2]= 0.831372549F;
+  n_color++;
+
+  strcpy(color[n_color].Name,"fermium");
+  color[n_color].Color[0]= 0.701960784F;
+  color[n_color].Color[1]= 0.121568627F;
+  color[n_color].Color[2]= 0.729411765F;
+  n_color++;
+
+  strcpy(color[n_color].Name,"mendelevium");
+  color[n_color].Color[0]= 0.701960784F;
+  color[n_color].Color[1]= 0.050980392F;
+  color[n_color].Color[2]= 0.650980392F;
+  n_color++;
+
+  strcpy(color[n_color].Name,"nobelium");
+  color[n_color].Color[0]= 0.741176471F;
+  color[n_color].Color[1]= 0.050980392F;
+  color[n_color].Color[2]= 0.529411765F;
+  n_color++;
+
+  strcpy(color[n_color].Name,"lawrencium");
+  color[n_color].Color[0]= 0.780392157F;
+  color[n_color].Color[1]= 0.000000000F;
+  color[n_color].Color[2]= 0.400000000F;
+  n_color++;
+
+  strcpy(color[n_color].Name,"rutherfordium");
+  color[n_color].Color[0]= 0.800000000F;
+  color[n_color].Color[1]= 0.000000000F;
+  color[n_color].Color[2]= 0.349019608F;
+  n_color++;
+
+  strcpy(color[n_color].Name,"dubnium");
+  color[n_color].Color[0]= 0.819607843F;
+  color[n_color].Color[1]= 0.000000000F;
+  color[n_color].Color[2]= 0.309803922F;
+  n_color++;
+
+  strcpy(color[n_color].Name,"seaborgium");
+  color[n_color].Color[0]= 0.850980392F;
+  color[n_color].Color[1]= 0.000000000F;
+  color[n_color].Color[2]= 0.270588235F;
+  n_color++;
+
+  strcpy(color[n_color].Name,"bohrium");
+  color[n_color].Color[0]= 0.878431373F;
+  color[n_color].Color[1]= 0.000000000F;
+  color[n_color].Color[2]= 0.219607843F;
+  n_color++;
+
+  strcpy(color[n_color].Name,"hassium");
+  color[n_color].Color[0]= 0.901960784F;
+  color[n_color].Color[1]= 0.000000000F;
+  color[n_color].Color[2]= 0.180392157F;
+  n_color++;
+
+  strcpy(color[n_color].Name,"meitnerium");
+  color[n_color].Color[0]= 0.921568627F;
+  color[n_color].Color[1]= 0.000000000F;
+  color[n_color].Color[2]= 0.149019608F;
+  n_color++;
+
+  strcpy(color[n_color].Name,"deuterium");
+  color[n_color].Color[0]=0.9F;
+  color[n_color].Color[1]=0.9F;
+  color[n_color].Color[2]=0.9F;
+
+  n_color++;
 
   /* if any more colors need to be added, add them here at the end so that existing files won't have their colors changed */
 
-  for(a=0;a<I->NColor;a++) { 
+  for(a=0;a<n_color;a++) { 
     /* mark all current colors non-custom so that they don't get saved in session files */
-    I->Color[a].Custom=false;
+    color[a].Custom=false;
   }
+
+  I->NColor = n_color;
   I->NExt = 0;
 
 }

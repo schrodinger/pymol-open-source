@@ -22,6 +22,9 @@ Z* -------------------------------------------------------------------
 #include"Vector.h"
 #include"PyMOLGlobals.h"
 
+#include"OVLexicon.h"
+#include"OVOneToOne.h"
+
 typedef char ColorName[64];
 
 #define cColorGadgetRamp  1
@@ -50,6 +53,8 @@ struct _CColor {
   int NExt;
   unsigned int *ColorTable;
   int BigEndian;
+  OVLexicon *Lex;
+  OVOneToOne *Idx;
 };
 
 int ColorInit(PyMOLGlobals *G);
