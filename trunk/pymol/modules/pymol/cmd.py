@@ -1426,10 +1426,10 @@ DESCRIPTION
    using the python evaluator with a separate name space for each
    atom.  The symbols defined in the name space are:
  
-      name, resn, resi, chain, alt,
+      name, resn, resi, chain, alt, elem
       q, b, segi, and type (ATOM,HETATM),
       partial_charge, formal_charge,
-      text_type, numeric_type
+      text_type, numeric_type, ID
    
    All strings in the expression must be explicitly quoted.  This
    operation typically takes several seconds per thousand atoms
@@ -1471,10 +1471,10 @@ DESCRIPTION
 
    The local namespace for "iterate" contains the following names
 
-      name, resn, resi, chain, alt,
+      name, resn, resi, chain, alt, elem,
       q, b, segi, and type (ATOM,HETATM),
       partial_charge, formal_charge,
-      text_type, numeric_type
+      text_type, numeric_type, ID
  
    All strings in the expression must be explicitly quoted.  This
    operation typically takes a second per thousand atoms.
@@ -5239,7 +5239,7 @@ keyword = {
    'meter_reset'   : [meter_reset  , 0 , 0 , ''  , parsing.STRICT ],
    'move'          : [move         , 0 , 0 , ''  , parsing.STRICT ],
    'mset'          : [mset         , 0 , 0 , ''  , parsing.STRICT ],
-   'mdo'           : [mdo          , 2 , 2 , ':' , parsing.SIMPLE ],
+   'mdo'           : [mdo          , 2 , 2 , ':' , parsing.SINGLE ],
    'mpng'          : [mpng         , 0 , 0 , ''  , parsing.STRICT ],
    'mplay'         : [mplay        , 0 , 0 , ''  , parsing.STRICT ],
    'mray'          : [mray         , 0 , 0 , ''  , parsing.STRICT ],

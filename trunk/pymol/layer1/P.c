@@ -198,7 +198,7 @@ int PAlterAtomState(float *v,char *expr,int read_only)
 
 int PAlterAtom(AtomInfoType *at,char *expr,int read_only)
 {
-  AtomName name;
+  AtomName name,elem;
   ResName resn;
   ResIdent resi;
   Chain chain,alt;
@@ -207,7 +207,8 @@ int PAlterAtom(AtomInfoType *at,char *expr,int read_only)
   char atype[7];
   float b,q,partialCharge,vdw;
   int formalCharge,numericType;
-  
+  int id;
+
   PyObject *dict;
   int result=false;
   
@@ -228,6 +229,7 @@ int PAlterAtom(AtomInfoType *at,char *expr,int read_only)
   PConvStringToPyDictItem(dict,"chain",at->chain);
   PConvStringToPyDictItem(dict,"alt",at->alt);
   PConvStringToPyDictItem(dict,"segi",at->segi);
+  PConvStringToPyDictItem(dict,"elem",at->elem);
   PConvStringToPyDictItem(dict,"text_type",at->textType);
   if(at->customType!=cAtomInfoNoType)
     PConvIntToPyDictItem(dict,"numeric_type",at->customType);
@@ -236,6 +238,7 @@ int PAlterAtom(AtomInfoType *at,char *expr,int read_only)
   PConvFloatToPyDictItem(dict,"vdw",at->vdw);
   PConvFloatToPyDictItem(dict,"partial_charge",at->partialCharge);
   PConvIntToPyDictItem(dict,"formal_charge",at->formalCharge);
+  PConvIntToPyDictItem(dict,"ID",at->id);
   
   PyRun_String(expr,Py_single_input,P_globals,dict);
   if(PyErr_Occurred()) {
@@ -248,6 +251,8 @@ int PAlterAtom(AtomInfoType *at,char *expr,int read_only)
     if(!PConvPyObjectToStrMaxLen(PyDict_GetItemString(dict,"type"),atype,6)) 
       result=false;
     else if(!PConvPyObjectToStrMaxLen(PyDict_GetItemString(dict,"name"),name,sizeof(AtomName)-1))
+      result=false;
+    else if(!PConvPyObjectToStrMaxLen(PyDict_GetItemString(dict,"elem"),elem,sizeof(AtomName)-1))
       result=false;
     else if(!PConvPyObjectToStrMaxLen(PyDict_GetItemString(dict,"resn"),resn,sizeof(ResName)-1))
       result=false;
@@ -265,6 +270,7 @@ int PAlterAtom(AtomInfoType *at,char *expr,int read_only)
       result=false;
     else if(!PConvPyObjectToFloat(PyDict_GetItemString(dict,"q"),&q))
       result=false;
+
     else if(!PConvPyObjectToFloat(PyDict_GetItemString(dict,"vdw"),&vdw))
       result=false;
     else if(!PConvPyObjectToFloat(PyDict_GetItemString(dict,"partial_charge"),&partialCharge))
@@ -273,6 +279,8 @@ int PAlterAtom(AtomInfoType *at,char *expr,int read_only)
       result=false;
     if(!PConvPyObjectToInt(PyDict_GetItemString(dict,"numeric_type"),&numericType))
       numericType = cAtomInfoNoType;
+    if(!PConvPyObjectToInt(PyDict_GetItemString(dict,"ID"),&id))
+      result=false;
     if(PyErr_Occurred()) {
       PyErr_Print();
       result=false;
@@ -282,6 +290,7 @@ int PAlterAtom(AtomInfoType *at,char *expr,int read_only)
       strcpy(at->name,name);
       strcpy(at->chain,chain);
       strcpy(at->resn,resn);
+      strcpy(at->elem,elem);
       if(strcmp(at->resi,resi)!=0)
         if(!sscanf(resi,"%i",&at->resv))
           at->resv=1;
@@ -297,6 +306,7 @@ int PAlterAtom(AtomInfoType *at,char *expr,int read_only)
       at->vdw=vdw;
       at->partialCharge=partialCharge;
       at->formalCharge=formalCharge;
+      at->id=id;
     } else {
       ErrMessage("Alter","Aborting on error. Assignment may be incomplete.");
     }
