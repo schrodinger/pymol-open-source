@@ -4452,17 +4452,19 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(char *buffer,AtomInfoType **atInfoPtr)
               if(sscanf(cc,"%d",&b2)!=1)
                 break;
               else {
-                VLACheck(bond,int,(nBond*3)+2);
-                if(b1<=b2) {
-                  bond[nBond*3]=b1; /* temporarily store the atom indexes */
-                  bond[nBond*3+1]=b2;
-                  bond[nBond*3+2]=1;
-                } else {
-                  bond[nBond*3]=b2;
-                  bond[nBond*3+1]=b1;
-                  bond[nBond*3+2]=1;
+                if((b1>=0)&&(b2>=0)) { /* IDs must be positive */
+                  VLACheck(bond,int,(nBond*3)+2);
+                  if(b1<=b2) {
+                    bond[nBond*3]=b1; /* temporarily store the atom indexes */
+                    bond[nBond*3+1]=b2;
+                    bond[nBond*3+2]=1;
+                  } else {
+                    bond[nBond*3]=b2;
+                    bond[nBond*3+1]=b1;
+                    bond[nBond*3+2]=1;
+                  }
+                  nBond++;
                 }
-                nBond++;
               }
             }
         }
@@ -4575,6 +4577,7 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(char *buffer,AtomInfoType **atInfoPtr)
         ii2+=3;
         a--;
       }
+
       nBond=nReal;
       /* now, find atoms we're looking for */
       maxAt=nAtom;
@@ -4596,14 +4599,16 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(char *buffer,AtomInfoType **atInfoPtr)
       ii2=bond;
       nReal=0;
       for(a=0;a<nBond;a++) {
-        ii2[0]=idx[ii1[0]];
-        ii2[1]=idx[ii1[1]];
-        if((ii2[0]>=0)&&(ii2[1]>=0)) {
-          if(ii1[2]<=2) ii2[2]=1;
-          else if(ii1[2]<=4) ii2[2]=2;
-          else ii2[2]=3;
-          nReal++;
-          ii2+=3;
+        if((idx[ii1[0]]>=0)&&(idx[ii1[1]]>0)) { /* in case PDB file has bad bonds */
+          ii2[0]=idx[ii1[0]];
+          ii2[1]=idx[ii1[1]];
+          if((ii2[0]>=0)&&(ii2[1]>=0)) {
+            if(ii1[2]<=2) ii2[2]=1;
+            else if(ii1[2]<=4) ii2[2]=2;
+            else ii2[2]=3;
+            nReal++;
+            ii2+=3;
+          }
         }
         ii1+=3;
       }
