@@ -183,6 +183,8 @@ int SettingGetName(int index,SettingName name);
 #define cSetting_depth_cue            84
 #define cSetting_specular             85
 #define cSetting_shininess            86
+#define cSetting_sphere_quality       87
+#define cSetting_fog                  88
 
 #define cSetting_INIT                 90
 

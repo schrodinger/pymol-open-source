@@ -212,9 +212,7 @@ Rep *RepSphereNew(CoordSet *cs)
   }
 
   RepInit(&I->R);
- /* get current dot sampling */
-  ds = (int)SettingGet(cSetting_dot_density);
-  ds=1;
+  ds = (int)SettingGet(cSetting_sphere_quality);
   if(ds<0) ds=0;
   switch(ds) {
   case 0: sp=Sphere0; break;

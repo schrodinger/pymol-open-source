@@ -36,6 +36,9 @@ Goals for 0.51 release:
 
 Changes up to 0.51
 
+   * sphere quality setting
+   
+    
    * depth_cue toggle setting (important for low-end PC hardware)
  
    * specular reflections

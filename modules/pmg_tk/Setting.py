@@ -95,7 +95,7 @@ class Setting:
          'depth_cue'       :
          (lambda s,a: (cmd.set(a,("%1.0f" % s.depth_cue.get())))),
          'specular'       :
-         (lambda s,a: (cmd.set(a,("%1.0f" % s.specular.get())))),
+         (lambda s,a: (cmd.set(a,("%1.0f" % (s.specular.get()*0.8))))),
          }
 
       self.update_code = {
@@ -122,8 +122,7 @@ class Setting:
          'depth_cue'       :
          (lambda s,t: (s.depth_cue.set(int(t[1][0])))), 
          'specular'       :
-         (lambda s,t: (s.specular.set(int(t[1][0])))), 
-
+         (lambda s,t: (s.specular.set(t[1][0]>0.0))), 
         }
       self.active_list = [
          pymol.setting._get_index("ray_trace_frames"),

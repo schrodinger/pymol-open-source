@@ -303,7 +303,41 @@ class PMGApp(AbstractApp):
          cmd.unpick()
          cmd.refresh()
       cmd.feedback('ena','sel','res')
-      
+
+   def performance(self,mode):
+      if mode==0: # maximum quality
+         cmd.set('line_smooth',1)
+         cmd.set('depth_cue',1)         
+         cmd.set('specular',1)
+         cmd.set('surface_quality',1)
+         cmd.set('stick_quality',15)
+         cmd.set('sphere_quality',2)
+         cmd.do("rebuild")
+      elif mode==33:
+         cmd.set('line_smooth',1)         
+         cmd.set('depth_cue',1)         
+         cmd.set('specular',1)
+         cmd.set('surface_quality',0)
+         cmd.set('stick_quality',8)
+         cmd.set('sphere_quality',1)
+         cmd.do("rebuild")
+      elif mode==66: # good perfomance
+         cmd.set('line_smooth',0)
+         cmd.set('depth_cue',0)         
+         cmd.set('specular',1)
+         cmd.set('surface_quality',0)
+         cmd.set('stick_quality',8)
+         cmd.set('sphere_quality',1)
+         cmd.do("rebuild")         
+      else: # maximum performance
+         cmd.set('line_smooth',0)
+         cmd.set('depth_cue',0)
+         cmd.set('specular',0)
+         cmd.set('surface_quality',0)
+         cmd.set('stick_quality',5)
+         cmd.set('sphere_quality',0)
+         cmd.do("rebuild")         
+         
    def createMenuBar(self):
       self.menuBar.addmenuitem('Help', 'command',
                                'Get information on application', 
@@ -517,6 +551,24 @@ class PMGApp(AbstractApp):
       self.menuBar.addmenuitem('Display', 'command', 'Stereo Off',
                                label='Stereo Off',
                                command = lambda: cmd.stereo("off"))
+
+      self.menuBar.addmenuitem('Display', 'separator', '')
+
+      self.menuBar.addmenuitem('Display', 'command', 'Maximum Performance',
+                               label='Maximum Performance',
+                               command = lambda s=self: s.performance(100))
+
+      self.menuBar.addmenuitem('Display', 'command', 'Reasonable Performance',
+                               label='Reasonable Performance',
+                               command = lambda s=self: s.performance(66))
+
+      self.menuBar.addmenuitem('Display', 'command', 'Reasonable Quality',
+                               label='Reasonable Quality',
+                               command = lambda s=self: s.performance(33))
+
+      self.menuBar.addmenuitem('Display', 'command', 'Maximum Quality',
+                               label='Maximum Quality',
+                               command = lambda s=self: s.performance(0))
 
       self.menuBar.addmenu('Settings', 'Configuration Control')
 
