@@ -41,7 +41,8 @@ stored = Scratch_Storage()
 sys.path.append(os.environ['PYMOL_PATH']+'/modules')
 
 sys.setcheckinterval(1)
-lock_api = threading.RLock()
+lock_api = threading.RLock() # mutex for API 
+lock_api_c = threading.RLock() # mutex for C management of python threads
 
 def start_pymol():
 	global glutThread

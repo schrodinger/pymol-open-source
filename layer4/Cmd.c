@@ -100,7 +100,7 @@ static PyObject *Cmd_Failure;
    holding the API lock, therefore this is safe even through increment
    isn't (necessarily) atomic. */
 
-static void APIEntry(void)
+static void APIEntry(void) /* assumes API is locked */
 {
   PRINTFD(FB_API)
     " APIEntry-DEBUG: called.\n"
@@ -112,11 +112,11 @@ if(PyMOLTerminating) {/* try to bail */
 #endif
     exit(0);
 	}
-  P_glut_thread_keep_out++; 
+ P_glut_thread_keep_out++;  
   PUnblock();
 }
 
-static void APIExit(void)
+static void APIExit(void) /* assumes API is locked */
 {
   PRINTFD(FB_API)
     " APIExit-DEBUG: called.\n"

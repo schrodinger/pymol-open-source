@@ -52,8 +52,11 @@ PyObject *P_complete = NULL;
 
 PyObject *P_exec = NULL;
 PyObject *P_parse = NULL;
-PyObject *P_lock = NULL;
+PyObject *P_lock = NULL; /* API locks */
 PyObject *P_unlock = NULL;
+
+PyObject *P_lock_c = NULL; /* C locks */
+PyObject *P_unlock_c = NULL;
 
 PyObject *P_time = NULL;
 PyObject *P_sleep = NULL;
@@ -65,9 +68,8 @@ typedef struct {
   PyThreadState *state;
 } SavedThreadRec;
 
-#define MAX_SAVED_THREAD 255
+#define MAX_SAVED_THREAD 20
 
-int NSavedThread = 0;
 SavedThreadRec SavedThread[MAX_SAVED_THREAD];
 
 int P_glut_thread_keep_out = 0; 
@@ -394,14 +396,14 @@ void PLockAPIAsGlut(void) /* must call with an unblocked interpreter */
       tv.tv_sec=0;
       tv.tv_usec=50000; 
       select(0,NULL,NULL,NULL,&tv);
-      PBlock();
+      PBlock(); 
     } 
 #else
     PXDecRef(PyObject_CallFunction(P_sleep,"f",0.050));
 #endif
-    PXDecRef(PyObject_CallFunction(P_lock,NULL));
+    PXDecRef(PyObject_CallFunction(P_lock,NULL)); 
   }
-  PUnblock();
+  PUnblock(); /* API is now locked, so we can free up Python...*/
 }
 
 /* THESE CALLS ARE REQUIRED FOR MONOLITHIC COMPILATION TO SUCCEED UNDER WINDOWS. */
@@ -424,6 +426,7 @@ void PInitEmbedded(int argc,char **argv)
   
   PyObject *args,*pymol,*invocation;
 
+
 #ifdef WIN32
   OrthoLineType path_buffer,command;
   HKEY phkResult;
@@ -431,6 +434,7 @@ void PInitEmbedded(int argc,char **argv)
   int lpType = REG_SZ;
   int r1,r2;
 #endif
+
 
   Py_Initialize();
   PyEval_InitThreads();
@@ -513,6 +517,11 @@ void PRunString(char *str) /* runs a string in the global PyMOL module namespace
 void PInit(void) 
 {
   PyObject *pymol,*sys,*pcatch;
+  int a;
+
+  for(a=0;a<MAX_SAVED_THREAD;a++) {
+    SavedThread[a].id=-1;
+  }
 
   PCatchInit();   /* setup standard-output catch routine */
 
@@ -541,6 +550,12 @@ void PInit(void)
 
   P_unlock = PyObject_GetAttrString(P_cmd,"unlock");
   if(!P_unlock) ErrFatal("PyMOL","can't find 'pm.unlock()'");
+
+  P_lock_c = PyObject_GetAttrString(P_cmd,"lock_c");
+  if(!P_lock_c) ErrFatal("PyMOL","can't find 'pm.lock_c()'");
+
+  P_unlock_c = PyObject_GetAttrString(P_cmd,"unlock_c");
+  if(!P_unlock_c) ErrFatal("PyMOL","can't find 'pm.unlock_c()'");
 
   PRunString("import menu\n");  
   P_menu = PyDict_GetItemString(P_globals,"menu");
@@ -646,27 +661,14 @@ void PFlushFast(void) {
 
 void PBlock(void)
 {
-  int a,id;
-  /* synchronize python */
-
   PRINTFD(FB_Threads)
     " PBlock-DEBUG: entered as thread 0x%x\n",PyThread_get_thread_ident()
     ENDFD;
 
-  id = PyThread_get_thread_ident();
-  a = NSavedThread;
-  while(a) {
-    a--;
-    if(SavedThread[a].id==id) {
-      PyEval_RestoreThread(SavedThread[a].state);
-      NSavedThread--;
-      if(NSavedThread) {
-        SavedThread[a] = SavedThread[NSavedThread];
-      }
-      return;
-    }
+  if(!PAutoBlock()) {
+    printf("%d\n",P_glut_thread_keep_out);
+    ErrFatal("PBlock","oops, no saved thread -- your threads must be tangled!");
   }
-  ErrFatal("PBlock","oops, no saved thread -- your threads must be tangled!");
 }
 
 int PAutoBlock(void)
@@ -675,23 +677,44 @@ int PAutoBlock(void)
   /* synchronize python */
 
   id = PyThread_get_thread_ident();
-  a = NSavedThread;
+  a = MAX_SAVED_THREAD-1;
   while(a) {
-    a--;
-    if(SavedThread[a].id==id) {
+    if(SavedThread[a].id==id) { 
       PyEval_RestoreThread(SavedThread[a].state);
-      NSavedThread--;
-      if(NSavedThread) {
-        SavedThread[a] = SavedThread[NSavedThread];
-      }
-      PRINTFD(FB_Threads)
-        " PAutoBlock-DEBUG: saved thread 0x%x\n",PyThread_get_thread_ident()
-        ENDFD;
+
+      PXDecRef(PyObject_CallFunction(P_lock_c,NULL));
+      SavedThread[a].id = -1; /* this is the only safe time we can change things */
+      PXDecRef(PyObject_CallFunction(P_unlock_c,NULL));
       return 1;
     }
+    a--;
   }
   return 0;
 }
+
+void PUnblock(void)
+{
+  int a;
+  /* NOTE: ASSUMES a locked API */
+
+  PRINTFD(FB_Threads)
+    " PUnblock-DEBUG: entered as thread 0x%x\n",PyThread_get_thread_ident()
+    ENDFD;
+
+  /* reserve a space while we have a lock */
+  PXDecRef(PyObject_CallFunction(P_lock_c,NULL));
+  a = MAX_SAVED_THREAD-1;
+  while(a) {
+    if(SavedThread[a].id == -1 ) {
+      SavedThread[a].id = PyThread_get_thread_ident();
+      break;
+    }
+    a--;
+  }
+  PXDecRef(PyObject_CallFunction(P_unlock_c,NULL));
+  SavedThread[a].state = PyEval_SaveThread();  
+}
+
 
 void PAutoUnblock(int flag)
 {
@@ -708,19 +731,6 @@ void PLockAPIAndUnblock(void)
 {
   PXDecRef(PyObject_CallFunction(P_lock,NULL));
   PUnblock();
-}
-
-void PUnblock(void)
-{
-  /* NOTE: ASSUMES a locked API */
-
-  PRINTFD(FB_Threads)
-    " PUnblock-DEBUG: entered as thread 0x%x\n",PyThread_get_thread_ident()
-    ENDFD;
-
-  SavedThread[NSavedThread].id = PyThread_get_thread_ident();
-  SavedThread[NSavedThread].state = PyEval_SaveThread();  
-  NSavedThread++;
 }
 
 void PDefineFloat(char *name,float value) {

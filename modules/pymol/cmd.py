@@ -66,6 +66,7 @@ QuietException = parsing.QuietException
 # one active thread enters PyMOL at a given time. 
 # 
 lock_api = pymol.lock_api
+lock_api_c = pymol.lock_api_c
 
 def is_string(obj):
    return isinstance(obj,types.StringType)
@@ -1461,6 +1462,18 @@ INTERNAL
    '''
    pass
 #   pymol.lock_api = _cmd.get_globals()['lock_api']
+
+def lock_c():
+   '''
+INTERNAL
+'''
+   lock_api_c.acquire(1)
+
+def unlock_c():
+   '''
+INTERNAL
+'''
+   lock_api_c.release()
 
 def lock():
    '''
