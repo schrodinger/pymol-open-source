@@ -38,6 +38,7 @@ Z* -------------------------------------------------------------------
 #include"CoordSet.h"
 #include"Util.h"
 #include"Executive.h"
+#include"PyMOLOptions.h"
 
 PyObject *P_globals = NULL;
 
@@ -1075,7 +1076,7 @@ r1=RegOpenKeyEx(HKEY_CLASSES_ROOT,"Software\\DeLano Scientific\\PyMOL\\PYMOL_PAT
 
 }
 
-void PGetOptions(PyMOLOptionRec *rec)
+void PGetOptions(COption *rec)
 {
   PyObject *pymol,*invocation,*options;
   char *load_str;
@@ -1128,7 +1129,7 @@ void PRunString(char *str) /* runs a string in the global PyMOL module namespace
   PXDecRef(PyObject_CallFunction(P_exec,"s",str));
 }
 
-void PInit(void) 
+void PInit(PyMOLGlobals *G) 
 {
   PyObject *pymol,*sys,*pcatch;
   int a;
@@ -1278,7 +1279,7 @@ void PInit(void)
   P_glut_thread_id = PyThread_get_thread_ident();
 
   #ifndef WIN32
-  if(PyMOLOption->siginthand) {
+  if(G->Option->siginthand) {
     signal(SIGINT,my_interrupt);
   }
   #endif

@@ -3931,7 +3931,7 @@ int ExecutiveStereo(PyMOLGlobals *G,int flag)
       
       switch(stereo_mode) {
       case 1: /* hardware stereo-in-a-window*/
-        if(StereoCapable||SceneGetStereo(G)) {
+        if(G->StereoCapable||SceneGetStereo(G)) {
           SceneSetStereo(G,flag);
           PSGIStereo(flag);
         } else {
@@ -6185,7 +6185,7 @@ void ExecutiveFullScreen(PyMOLGlobals *G,int flag)
         p_glutPositionWindow(oldPX,oldPY);
         p_glutReshapeWindow(oldWidth,oldHeight);
       } else {
-        MainRepositionWindowDefault();
+        MainRepositionWindowDefault(G);
       }
     }
   }

@@ -63,7 +63,7 @@ Z* -------------------------------------------------------------------
 #define PSleep(a)
 
 #define PFree()
-#define PInit()
+#define PInit(PyMOLGlobals *G)
 #define PInitEmbedded(a,b)
 #define PGetOptions(a)
 
@@ -73,12 +73,12 @@ Z* -------------------------------------------------------------------
 
 #else
 
-void PInit(void);
+void PInit(PyMOLGlobals *G);
 void PInitEmbedded(int argc,char **argv);
 
   struct PyMOLOptionRec;
 
-void PGetOptions(struct PyMOLOptionRec *rec);
+void PGetOptions(COption *rec);
 
 void PFree(void);
 void PExit(int code);

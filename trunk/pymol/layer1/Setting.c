@@ -32,6 +32,7 @@ Z* -------------------------------------------------------------------
 #include"PConv.h"
 #include"Wizard.h"
 #include"Seq.h"
+#include"PyMOLOptions.h"
 
 static void *SettingPtr(CSetting *I,int index,unsigned int size);
 
@@ -62,7 +63,7 @@ int SettingSetGlobalsFromPyList(PyMOLGlobals *G,PyObject *list)
     if(PyList_Check(list)) 
       ok = SettingFromPyList(I,list);
   
-  SettingSet_i(I,cSetting_security,Security); /* always override Security setting with global variable */
+  SettingSet_i(I,cSetting_security,G->Security); /* always override Security setting with global variable */
   SettingSet_b(I,cSetting_stereo,stereo); /* preserve current stereo mode */
   SettingSet_b(I,cSetting_session_migration,session_migration); /* preserve current migration info */
   SettingSet_b(I,cSetting_session_version_check,session_version_check);
@@ -1452,7 +1453,7 @@ void SettingGenerateSideEffects(PyMOLGlobals *G,int index,char *sele,int state)
       SceneChanged(G); /* force big update upon resumption */
     break;
   case cSetting_security:
-    Security = (int)SettingGet(G,cSetting_security);
+    G->Security = (int)SettingGet(G,cSetting_security);
     break;
   case cSetting_state:
   case cSetting_frame:
@@ -1929,7 +1930,7 @@ void SettingInitGlobal(PyMOLGlobals *G,int alloc,int reset_gui)
 
   SettingSet_f(I,cSetting_surface_poor, 0.85F);  
 
-  SettingSet_i(I,cSetting_internal_feedback, PyMOLOption->internal_feedback);
+  SettingSet_i(I,cSetting_internal_feedback, G->Option->internal_feedback);
 
   SettingSet_f(I,cSetting_cgo_line_width, 1.00F);
 
@@ -2049,7 +2050,7 @@ void SettingInitGlobal(PyMOLGlobals *G,int alloc,int reset_gui)
 
   SettingSet_s(I,cSetting_batch_prefix,"tmp_pymol");
 
-  if(StereoCapable) {
+  if(G->StereoCapable) {
     SettingSet_i(I,cSetting_stereo_mode, 1); 
   } else {
     SettingSet_i(I,cSetting_stereo_mode, 2);

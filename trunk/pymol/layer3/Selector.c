@@ -130,8 +130,6 @@ typedef struct {
   int frag;
 } WalkDepthRec;
 
-CSelector Selector;
-
 int SelectorGetInterstateVLA(PyMOLGlobals *G,int sele1,int state1,int sele2,int state2,
 									  float cutoff,int **vla);
 int SelectorGetArrayNCSet(PyMOLGlobals *G,int *array);

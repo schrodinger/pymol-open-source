@@ -17,12 +17,22 @@ Z* -------------------------------------------------------------------
 #ifndef _H_ClassPyMOL
 #define _H_ClassPyMOL
 
+#ifndef COption_DEFINED
+typedef struct _COption COption;
+#define COption_DEFINED
+#endif
+
 /* creation and destruction */
 
 typedef struct _ClassPyMOL ClassPyMOL;
 
 ClassPyMOL *ClassPyMOLNew(void);
+ClassPyMOL *ClassPyMOLNewWithOptions(COption *option);
+
 void ClassPyMOLFree(ClassPyMOL *I);
+
+COption *ClassPyMOLOptionsNew(void);
+void ClassPyMOLOptionsFree(COption *option);
 
 /* developer/transient privates */
 

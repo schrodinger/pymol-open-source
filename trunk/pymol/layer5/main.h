@@ -17,6 +17,7 @@ Z* -------------------------------------------------------------------
 #define _H_main
 
 #include"os_python.h"
+#include"PyMOLGlobals.h"
 
 void MainFree(void);
 void MainDoReshape(int width, int height);
@@ -31,7 +32,7 @@ int MainFromPyList(PyObject *list);
 PyObject *MainAsPyList(void);
 int MainCheckRedundantOpen(char *file);
 void MainDragDirty(void); 
-void MainRepositionWindowDefault(void);
+void MainRepositionWindowDefault(PyMOLGlobals *G);
 void MainSetPassiveDrag(int onOrOff);
 
 void MainSetWindowVisibility(int mode);
@@ -51,33 +52,7 @@ void MainSceneGetSize(int *width,int *height);
 int MainSceneCopy(int width,int height,int rowbytes,void *ptr);
 #endif
 
-extern int PyMOLReady;
-extern int PyMOLTerminating; /* flag to help prevent crashes on shutdown with Windows */
-
-/* note that the following four options are also contained in
-   PyMOLOption global -- they exist here as independent globals only
-   because changes haven't yet been made throughout code */
-
-extern int StereoCapable;
-extern int Security;
-extern int ExternalGUI;
-
 #define PYMOL_MAX_OPT_STR  1025
-
-typedef struct PyMOLOptionRec {
-  /* WARNING: don't delete items or change order unless you also update
-     main.c where this global structure is initialized */
-  int pmgui, internal_gui, show_splash,
-    internal_feedback, security, game_mode,
-    force_stereo, winX, winY, blue_line,
-    winPX, winPY, external_gui, siginthand,
-    reuse_helper, auto_reinitialize, keep_thread_alive, 
-    quiet, incentive_product;
-  char after_load_script[PYMOL_MAX_OPT_STR];
-  int multisample,window_visible, read_stdin;
-} PyMOLOptionRec;
-
-extern PyMOLOptionRec *PyMOLOption;
 
 #ifdef _PYMOL_MODULE
 int was_main(void);
