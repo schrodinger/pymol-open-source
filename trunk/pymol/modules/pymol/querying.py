@@ -154,7 +154,9 @@ NOTES
          # now do the deed
          try:
             lock()
-            r = _cmd.dist(str(nam),str(selection1),
+            if selection2!="same":
+               selection2 = "("+selection2+")"
+            r = _cmd.dist(str(nam),"("+str(selection1)+")",
                           str(selection2),int(mode),float(cutoff),int(labels))
             if width!=None:
                cmd.set("dash_width",width,nam)

@@ -56,30 +56,31 @@ void RepLabelRender(RepLabel *I,CRay *ray,Pickable **pick)
   float *v=I->V;
   int c=I->N;
   char *l=I->L;
+
   if(ray) {
   } else if(pick&&PMGUI) {
   } else if(PMGUI) {
+
     if(c) {
+      int float_text;
+      float_text = (int)SettingGet(cSetting_float_labels);
+      if(float_text)
+        glDisable(GL_DEPTH_TEST);	 
       glDisable(GL_LIGHTING);
-#ifdef _DRI_WORKAROUND
-      glDisable(GL_DEPTH_TEST);	 
-#endif
-      /*      SceneResetNormal(false);*/
-	 while(c--) {
-      if(*l) {
-        glColor3fv(v);
-        glRasterPos4f(v[3],v[4],v[5],1.0);
+      while(c--) {
+        if(*l) {
+          glColor3fv(v);
+          glRasterPos4f(v[3],v[4],v[5],1.0);
+        }
+        v+=6;
+        while(*l) {
+          p_glutBitmapCharacter(P_GLUT_BITMAP_8_BY_13,*(l++));
+        }
+        l++;
       }
-		v+=6;
-      while(*l) {
-        p_glutBitmapCharacter(P_GLUT_BITMAP_8_BY_13,*(l++));
-      }
-      l++;
-    }
-	 glEnable(GL_LIGHTING);
-#ifdef _DRI_WORKAROUND
-    glEnable(GL_DEPTH_TEST);	 
-#endif
+      glEnable(GL_LIGHTING);
+      if(float_text)
+        glEnable(GL_DEPTH_TEST);	 
     }
   }
 }

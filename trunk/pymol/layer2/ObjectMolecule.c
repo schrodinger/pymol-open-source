@@ -7682,7 +7682,7 @@ ObjectMolecule *ObjectMoleculeLoadMMDFile(ObjectMolecule *obj,char *fname,
             oCnt++;
             sprintf(oName,"%s-%02d",sepPrefix,oCnt);
             ObjectSetName((CObject*)I,oName);
-            ExecutiveManageObject((CObject*)I,true);
+            ExecutiveManageObject((CObject*)I,true,false);
           } else {
             I=ObjectMoleculeReadMMDStr(obj,p,frame,discrete);
             obj=I;

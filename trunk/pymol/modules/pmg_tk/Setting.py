@@ -115,6 +115,9 @@ class Setting:
       self.sculpting = IntVar()
       self.sculpting.set(int(cmd.get_setting_legacy('sculpting')))
 
+      self.roving_origin = IntVar()
+      self.roving_origin.set(int(cmd.get_setting_legacy('roving_origin')))
+
       self.xref = { 
          'ray_trace_frames':
          (lambda s,a: (cmd.set(a,("%1.0f" % s.ray_trace_frames.get()),log=1),
@@ -180,6 +183,8 @@ class Setting:
          (lambda s,a: (cmd.set(a,("%1.0f" % (s.auto_sculpt.get())),log=1))),
          'sculpting'        :
          (lambda s,a: (cmd.set(a,("%1.0f" % (s.sculpting.get())),log=1))),
+         'roving_origin'        :
+         (lambda s,a: (cmd.set(a,("%1.0f" % (s.roving_origin.get())),log=1))),
          }
 
       self.update_code = {
@@ -239,6 +244,8 @@ class Setting:
          (lambda s,t: (s.auto_sculpt.set(t[1][0]!=0))),
          'sculpting':
          (lambda s,t: (s.sculpting.set(t[1][0]!=0))),
+         'roving_origin':
+         (lambda s,t: (s.roving_origin.set(t[1][0]!=0))),
 
         }
       self.active_list = [
@@ -270,7 +277,8 @@ class Setting:
          pymol.setting._get_index("two_sided_lighting"),
          pymol.setting._get_index("auto_remove_hydrogens"),
          pymol.setting._get_index("auto_sculpt"),
-         pymol.setting._get_index("sculpting"),                  
+         pymol.setting._get_index("sculpting"),
+         pymol.setting._get_index("roving_origin"),                  
          ]
 
       self.active_dict = {}
