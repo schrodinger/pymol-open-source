@@ -232,7 +232,10 @@ class PMGApp(AbstractApp):
          
    def file_run(self):
       ofile = askopenfilename(initialdir = os.getcwd(),
-                   filetypes=[("PyMOL Script","*.pml"),("Python Program","*.py")])
+                   filetypes=[("PyMOL Script","*.pml"),
+                              ("Python Program","*.py"),
+                              ("Python Program","*.pyc"),
+                              ("PyMOL Program","*.pym")])
       if len(ofile):
          dir = re.sub(r"[^\/\\]*$","",ofile)
          os.chdir(dir)	

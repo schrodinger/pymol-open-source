@@ -54,7 +54,6 @@ void ObjectMeshDump(ObjectMesh *I,char *fname,int state)
   int *n;
   int c;
   FILE *f;
-  OrthoLineType buf;
   f=fopen(fname,"w");
   if(!f) 
     ErrMessage("ObjectMeshDump","can't open file for writing");
