@@ -647,10 +647,11 @@ int MainFromPyList(PyObject *list)
     if(!G->Option->presentation) {
       if(ok) ok = PConvPyIntToInt(PyList_GetItem(list,0),&win_x);
       if(ok) ok = PConvPyIntToInt(PyList_GetItem(list,1),&win_y);
-      BlockGetSize(SceneGetBlock(G),&win_x,&win_y);
+      /* BlockGetSize(SceneGetBlock(G),&win_x,&win_y); * so how did this get into 0.98beta29?  */
       if(ok) {
         sprintf(buffer,"viewport %d, %d",win_x,win_y);
         PParse(buffer);
+        
       }
     }
   }
