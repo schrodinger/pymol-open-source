@@ -21,11 +21,12 @@ import os
 #
 # get_info() returns DictDBInfo object containing database statistics
 #
-# shutdown() terminates database server process (for remote database clients)
+# shutdown() terminates the database server (only useful for remote clients)
 #
+# reset() clears database
 
 # PART 1
-# local dictionary database class, with a thread-safe API
+# Database Engine, with a thread-safe API
 
 class DictDBInfo:
    def __init__(self):
@@ -37,29 +38,41 @@ class DictDBLocal:
    __magic__ = r'*8#~'  # 32-bit record stamp for record
    __delete_magic__ = '*8#@'  # 32-bit record stamp for deleted record
    
-   def __init__(self,prefix="test_dictdb",bin=1):
 
-      self.index_file = prefix + ".dbi"
-      self.data_file = prefix + ".dbf"
+   def __init__(self,prefix,bin=1):
+
+      # store important information
+      self.index_file = prefix + ".dbi"  # database information (can be reconstructed from .dbf) 
+      self.data_file = prefix + ".dbf"   # database data 
       self.bin = bin
+      
       # create lock
-      self.lock = threading.RLock()
+      self.lock = threading.RLock() # NOTE: recursive for convenience
+      
       # restore indexed into memory
       self._restore()
 
+
    def get_info(self):
       result = None
+
+      # restore dictionary (if nec.)
       if not hasattr(self,'rec'):
          self._restore()
       try:
          self.lock.acquire()
+
+         # generate independent copy for calling thread
          result = copy.deepcopy(self.info)
       finally:
          self.lock.release()
       return result
 
+
    def has_key(self,key):
       result = None
+
+      # restore dictionary (if nec.)      
       if not hasattr(self,'rec'):
          self._restore()
       try:
@@ -69,30 +82,46 @@ class DictDBLocal:
          self.lock.release()
       return result
 
+
    def keys(self):
       result = None
+
+      # restore dictionary (if nec.)      
       if not hasattr(self,'rec'):
          self._restore()
       try:
          self.lock.acquire()
+         
+         # get list of keys (thread safe...result is a new object)
          result = self.rec.keys()
       finally:
          self.lock.release()
       return result
 
+
    def __delitem__(self,key):
       result = None
+
+      # restore dictionary (if nec.)      
       if not hasattr(self,'rec'):
          self._restore()
       try:
          self.lock.acquire()
          if self.rec.has_key(key):
+            
+            # account for space
+            if self.rec.has_key(key):
+               self.info.wasted = self.info.wasted + self.rec[key][1]
+
+            # delete record
             del self.rec[key]
-            # write Delete magic to data file for recovery
+            
+            # write delete magic to data file for recovery
             f=open(self.data_file,'ab')
             f.write(self.__delete_magic__) 
             cPickle.dump(key,f,self.bin) 
             f.close()
+            
             # write blank index to index file
             f=open(self.index_file,'ab')
             cPickle.dump((key,None),f,self.bin)
@@ -103,71 +132,112 @@ class DictDBLocal:
          self.lock.release()
       return result
 
+
    def standby(self):
       result = None
+
+      # only do something if dictionary is already in RAM
       if hasattr(self,'rec'):
          try:
             self.lock.acquire()
+            
             # write index file
             f=open(self.index_file,'wb')
             cPickle.dump(self.info,f,self.bin)
             cPickle.dump(self.rec,f,self.bin)
             f.close()
+            
+            # free memory
             del self.rec
             del self.info
          finally:
             self.lock.release()
       return result
 
+   def reset(self):
+      result = None
+      try:
+         self.lock.acquire()
+
+         # make sure files exist and are writable
+
+         f = open(self.index_file,'wb')
+         f.close()
+
+         f = open(self.data_file,'wb')
+         f.close()
+
+         # new database information
+         
+         self.info = DictDBInfo()
+         self.rec = {}
+
+         self.standby() # write out blank indexes (important)
+         
+      finally:
+         self.lock.release()
+      return result
+      
    def purge(self):
       result = None
+
+      # restore dictionary (if nec.)
       if not hasattr(self,'rec'):
          self._restore()
       try:
          self.lock.acquire()
+
+         # open source and temporary data files
          tmp_data = self.data_file + '_tmp'
          f = open(self.data_file,'rb')
          g = open(tmp_data,'wb')
          rec = self.rec
          used = 0
+
+         # iterate through records, copying only those which are extant
          for key in self.rec.keys():
             f.seek(rec[key][0])
             g.write(self.__magic__)
-            cPickle.dump(key,g);
+            cPickle.dump(key,g,self.bin);
+            start = g.tell()
             g.write(f.read(rec[key][1]))
             used = used + rec[key][1]
+            rec[key]=(start,rec[key][1]) # generate new record entry
          f.close()
          g.close()
-         os.unlink(self.index_file) # delete index file...         
-         os.unlink(self.data_file)
-         os.rename(tmp_data,self.data_file)
-         # write index file
+
+         # now perform the switch-over 
+         os.unlink(self.index_file) # delete old index file...         
+         os.unlink(self.data_file)  # delete old data file
+         os.rename(tmp_data,self.data_file) # move new data file over old
+
+         # update database information
+         self.info.used = used
+         self.info.wasted = 0
+
+         # write new index and information file
          f=open(self.index_file,'wb')
          cPickle.dump(self.info,f,self.bin)
          cPickle.dump(self.rec,f,self.bin)
          f.close()
-         self.info.used = used
-         self.info.wasted = 0
+
       finally:
          self.lock.release()
-      self.standby()
       return result
 
-   def shutdown(self): # rebuild index from data file
-      try:
-         self.lock.acquire()
-         sys.exit(0)
-      except:
-         self.lock.release()
-         
-   def __getitem__(self,key):
+   def shutdown(self): # dummy
+      return None
+
+   def __getitem__(self,key): # get with object
       result = None
+      # restore dictionary (if nec.)
       if not hasattr(self,'rec'):
          self._restore()
       try:
          self.lock.acquire()
-         result = None # default 
          if self.rec.has_key(key):
+
+            # locate and retrieve object
             f=open(self.data_file)
             f.seek(self.rec[key][0])
             result = cPickle.load(f)
@@ -177,14 +247,17 @@ class DictDBLocal:
          self.lock.release()
       return result
 
-   def _get(self,key): # get with string
+
+   def _get(self,key): # get with string (for remote connections)
       result = None
+      # restore dictionary (if nec.)
       if not hasattr(self,'rec'):
          self._restore()
       try:
          self.lock.acquire()
-         result = None # default 
          if self.rec.has_key(key):
+
+            # locate and retrieve string            
             f=open(self.data_file)
             f.seek(self.rec[key][0])
             result = f.read(self.rec[key][1])
@@ -192,13 +265,16 @@ class DictDBLocal:
          self.lock.release()
       return result
 
+
    def __setitem__(self,key,object):
       result = None
+      # restore dictionary (if nec.)
       if not hasattr(self,'rec'):
          self._restore()
       try:
          self.lock.acquire()
-         # write data
+         
+         # append data onto data file
          f=open(self.data_file,'ab')
          f.write(self.__magic__) # for recovery
          cPickle.dump(key,f,self.bin) # for recovery
@@ -206,11 +282,18 @@ class DictDBLocal:
          cPickle.dump(object,f,self.bin)
          record_info = (start,f.tell()-start)
          f.close()
+         
+         # account for space (if replacing)
          if self.rec.has_key(key):
             self.info.wasted = self.info.wasted + self.rec[key][1]
+
+         # update record info
          self.rec[key] = record_info
+
+         # account for space
          self.info.used = self.info.used + record_info[1]
-         # append index file
+         
+         # append new record  onto index file
          f=open(self.index_file,'ab')
          cPickle.dump((key,record_info),f,self.bin)
          f.close()
@@ -218,13 +301,16 @@ class DictDBLocal:
          self.lock.release()
       return result
 
-   def _set(self,key,data_string): # set with string
+
+   def _set(self,key,data_string): # set with string (for remote connections)
       result = None
+      # restore dictionary (if nec.)
       if not hasattr(self,'rec'):
          self._restore()
       try:
          self.lock.acquire()
-         # write data
+
+         # append data onto data file         
          f=open(self.data_file,'ab')
          f.write(self.__magic__) # for recovery
          cPickle.dump(key,f,self.bin) # for recovery
@@ -232,17 +318,25 @@ class DictDBLocal:
          f.write(data_string)
          record_info = (start,f.tell()-start)
          f.close()
+
+         # account for space (if replacing)       
          if self.rec.has_key(key):
             self.info.wasted = self.info.wasted + self.rec[key][1]
+
+         # update record info            
          self.rec[key] = record_info
+
+         # account for space
          self.info.used = self.info.used + record_info[1]
-         # append index file
+         
+         # append new record onto index file
          f=open(self.index_file,'ab')
          cPickle.dump((key,record_info),f,self.bin)
          f.close()
       finally:
          self.lock.release()
       return result
+
 
    def _recover(self): # rebuild index from data file
       result = None
@@ -253,37 +347,43 @@ class DictDBLocal:
          try:
             self.lock.acquire()
             f=open(self.data_file,'rb')
+            
             # find length of file
             f.seek(0,2)
             eof = f.tell()
             f.seek(0,0)
-            if eof:
-               print " Warning: Bad index file -- attempting database recovery"
+
+            # create locals for better performance
             rec = self.rec
             self_info = self.info
             while f.tell()!=eof:
                chk = f.read(4)
-               if chk==self.__magic__: # recover record
+               if chk==self.__magic__: # recover extant record
                   key = cPickle.load(f)
                   start = f.tell()
                   data = cPickle.load(f)
                   record_info = (start,f.tell()-start)
+                  
+                  # account for space (if replacing)
                   if rec.has_key(key):
                      self_info.wasted = self_info.wasted + rec[key][1]                  
                   rec[key] = record_info
+
+                  # account for psace
                   self_info.used = self_info.used + record_info[1]
-               elif chk==self.__delete_magic__: # delete record
+               elif chk==self.__delete_magic__: # delete already recovered record
                   key = cPickle.load(f)
                   if rec.has_key(key):
+                     # account for space
                      self_info.wasted = self_info.wasted + rec[key][1]
                      del rec[key]
                else:
-                  raise 'Bad Magic'
+                  raise RuntimeError('Bad Magic')
          except:
-            print " database recovery failed."
+            print " dictdb error: database recovery failed."
             traceback.print_exc()
             sys.exit(1)
-         # now write recovered indexes
+         # write recovered indexes to a new index file
          f = open(self.index_file,'wb')
          cPickle.dump(self.info,f,self.bin)
          cPickle.dump(self.rec,f,self.bin)
@@ -292,6 +392,7 @@ class DictDBLocal:
          self.lock.release()
       return result
    
+
    def _restore(self):
       result = None
       try:
@@ -320,22 +421,32 @@ class DictDBLocal:
          try:
             self.info = cPickle.load(f)
             self.rec = cPickle.load(f)
+
+            # use locals for better performance 
             rec = self.rec
             cPickle_load = cPickle.load
             self_info = self.info
+            
             while f.tell()!=eof:
                key, info = cPickle_load(f)
                if info!=None:
+
+                  # account for space (if replacing)
                   if rec.has_key(key):
-                     self_info.wasted = self_info.wasted + rec[key][1]                     
+                     self_info.wasted = self_info.wasted + rec[key][1]
+
+                  # set record infor
                   rec[key] = info
+
+                  # account for space
                   self_info.used = self_info.used + info[1]
                else:
+                  # account for space (if deleting object)
                   self_info.wasted = self_info.wasted + rec[key][1]
                   del rec[key]
             f.close()
          except EOFError:
-            # if error reading indexes, then do datafile recovery
+            # if error occurs when reading indexes, then do a datafile-based recovery
             f.close()
             self._recover()
       finally:
@@ -350,6 +461,7 @@ class DictDBClient:
    def __init__(self,host='localhost',port=8000):
       self.host=host
       self.port=port
+
 
    def _remote_call(self,meth,args,kwds):
       result = None
@@ -366,14 +478,17 @@ class DictDBClient:
       s.close()      
       return result
 
+
    def __getitem__(self,key):
       if self._remote_call('has_key',(key,),{}):
          return cPickle.loads(self._remote_call('_get',(key,),{}))
       else:
          raise KeyError(key)
 
+
    def __setitem__(self,key,object):
       return self._remote_call('_set',(key,cPickle.dumps(object)),{})
+
 
    def __delitem__(self,key):
       if self._remote_call('has_key',(key,),{}):
@@ -381,8 +496,20 @@ class DictDBClient:
       else:
          raise KeyError(key)
 
+
    def standby(self,key):
       return self._remote_call('standby',(),{})
+
+   def shutdown(self): 
+      try:
+         # multiple calls are sometimes required...         
+         self._remote_call('shutdown',(),{})
+         self._remote_call('shutdown',(),{})
+         self._remote_call('shutdown',(),{})
+         self._remote_call('shutdown',(),{})
+      except:
+         pass
+      return None
 
    def purge(self):
       return self._remote_call('purge',(),{})
@@ -396,15 +523,11 @@ class DictDBClient:
    def get_info(self):
       return self._remote_call('get_info',(),{})
 
-def server_test(port = 8000):
-   print 'Testing DictDBServer on port',str(port)
-   fp = DictDBServer(port=port) # socket servers don't terminate
-
 # PART 3
 # Database Socket Server
 
 class DictDBServer:
-   def __init__(self,prefix='',port=''):
+   def __init__(self,prefix,port=''):
       
       server_address = ('', port)
 
@@ -414,7 +537,9 @@ class DictDBServer:
       ddbs.dictdb = DictDBLocal(prefix)
 
       # now serve requests forever
-      ddbs.serve_forever()
+      ddbs.keep_alive = 1
+      while ddbs.keep_alive:
+         ddbs.handle_request()
       
 class _DictDBServer(SocketServer.ThreadingTCPServer):
 
@@ -436,16 +561,28 @@ class _DictDBServer(SocketServer.ThreadingTCPServer):
 class DictDBRequestHandler(SocketServer.StreamRequestHandler):
 
     def handle(self):
+       
         # get method name from client
         method = cPickle.load(self.rfile)
+
+        # here is how we eventually kill the server
+        if method == 'shutdown':
+           self.server.keep_alive = 0
+           
         # get arguments from client
         args = cPickle.load(self.rfile)
         kw = cPickle.load(self.rfile)
+        
         # get method pointer
         meth_obj = getattr(self.server.dictdb,method)
-        print method,args,kw
+#        print method,args,kw
+        
         # call method and return result
         cPickle.dump(apply(meth_obj,args,kw),self.wfile,1) # binary by default
+
+def server_test(port = 8000):
+   print 'Testing DictDBServer on port',str(port)
+   fp = DictDBServer(port=port) # socket servers don't terminate
 
 def client_test(host,port=8000):
 
@@ -471,7 +608,7 @@ if __name__=='__main__':
    
    print '***Testing DictDB***:'
 
-   ddb = DictDBLocal()
+   ddb = DictDBLocal('test_dictdb')
    print ddb.keys()
    ddb['test']='some data object'
    print ddb['test']
@@ -481,7 +618,7 @@ if __name__=='__main__':
    print ddb['test']
    del ddb
 
-   ddb = DictDBLocal()
+   ddb = DictDBLocal('test_dictdb')
    ddb['whoa']='whoa data object'
    print ddb['test'] 
    ddb['dude']='dude data object'
@@ -491,7 +628,7 @@ if __name__=='__main__':
    ddb.standby()
    del ddb
 
-   ddb = DictDBLocal()
+   ddb = DictDBLocal('test_dictdb')
    print 'Current keys:'+str(ddb.keys())
 
    print ddb['test']
@@ -509,24 +646,24 @@ if __name__=='__main__':
    del ddb
    
    os.unlink("test_dictdb.dbi")
-   ddb = DictDBLocal()
+   ddb = DictDBLocal('test_dictdb')
    info = ddb.get_info()
    print info.used,info.wasted,info.used-info.wasted
    del ddb
 
    os.unlink("test_dictdb.dbi")
-   ddb = DictDBLocal()
+   ddb = DictDBLocal('test_dictdb')
    info = ddb.get_info()
    print info.used,info.wasted,info.used-info.wasted
    ddb.standby()
    del ddb
 
-   ddb = DictDBLocal()
+   ddb = DictDBLocal('test_dictdb')
    info = ddb.get_info()
    print info.used,info.wasted,info.used-info.wasted
    del ddb
 
-   ddb = DictDBLocal()
+   ddb = DictDBLocal('test_dictdb')
    ddb.standby()
    ddb['reactivated'] = 1234
    print ddb.has_key('reactivated')
@@ -550,12 +687,146 @@ if __name__=='__main__':
    print info.used,info.wasted,info.used-info.wasted
    del ddb
 
-   ddb = DictDBLocal()
+   ddb = DictDBLocal('test_dictdb')
    info = ddb.get_info()
    print info.used,info.wasted,info.used-info.wasted
-   del ddb
+
+   ddb['hello']=10
+   ddb[123] = 'bacon'
+   ddb['green']= 'color'
+
+   print ddb['hello']
+
+   print ddb.keys()
+
+   print ddb.has_key('green')
+   print ddb.has_key('blue')
+
+   del ddb['hello']
+
+   try:
+      print ddb['hello']       
+   except KeyError:
+      print ' got expected key error 1'
+
+   try:
+      del ddb['hello']       
+   except KeyError:
+      print ' got expected key error 2'
+
+   info = ddb.get_info()
+   print info.used,info.wasted,info.used-info.wasted
+   ddb.purge()
+   info = ddb.get_info()
+   print info.used,info.wasted,info.used-info.wasted
+   print ddb['green']
+
+   import whrandom
+   
+   ddc=DictDBLocal('test_dictdb')
+
+   print "loading..."
+
+   lst = []
+   for a in xrange(1,250):
+      ddc[a]=str(a)
+      lst.append([whrandom.random(),a])
+      ddc[str(a)] = a
+
+   info = ddc.get_info()
+   print 'used:',info.used,'wasted:',info.wasted,'extant:',info.used-info.wasted
+
+   print 'verifying...'
+   for a in xrange(1,250):
+      if ddc[a]!=str(a):
+         raise RuntimeError
+
+   for a in xrange(1,250):
+      del ddc[str(a)]
+
+   info = ddc.get_info()
+   print 'used:',info.used,'wasted:',info.wasted,'extant:',info.used-info.wasted
+
+   print 'verifying...'
+   for a in xrange(1,250):
+      if ddc[a]!=str(a):
+         raise RuntimeError
+
+   del ddc
+   ddc=DictDBLocal('test_dictdb')
+
+   info = ddc.get_info()
+   print 'used:',info.used,'wasted:',info.wasted,'extant:',info.used-info.wasted
+
+   print 'verifying...'
+   for a in xrange(1,250):
+      if ddc[a]!=str(a):
+         raise RuntimeError
+
+   ddc.standby()
+
+   del ddc
+
+   os.unlink("test_dictdb.dbi")
+   print "unlink test"
+   
+   ddc=DictDBLocal('test_dictdb')
+
+   info = ddc.get_info()
+   print 'used:',info.used,'wasted:',info.wasted,'extant:',info.used-info.wasted
+
+   print 'verifying...'
+   for a in xrange(1,250):
+      if ddc[a]!=str(a):
+         raise RuntimeError
+
+   ddc.purge()
+
+   info = ddc.get_info()
+   print 'used:',info.used,'wasted:',info.wasted,'extant:',info.used-info.wasted
+
+   print 'verifying...'
+   for a in xrange(1,250):
+      if ddc[a]!=str(a):
+         raise RuntimeError
+
+   info = ddc.get_info()
+   print 'used:',info.used,'wasted:',info.wasted,'extant:',info.used-info.wasted
+
+   lst.sort()
+
+   for a in lst:
+      del ddc[a[1]]
+
+   info = ddc.get_info()
+   print 'used:',info.used,'wasted:',info.wasted,'extant:',info.used-info.wasted
+
+   del ddc
+   ddc=DictDBLocal('test_dictdb')
+
+   info = ddc.get_info()
+   print 'used:',info.used,'wasted:',info.wasted,'extant:',info.used-info.wasted
+
+   ddc.purge()
+
+   info = ddc.get_info()
+   print 'used:',info.used,'wasted:',info.wasted,'extant:',info.used-info.wasted
+
+   del ddc
+   ddc=DictDBLocal('test_dictdb')
+
+   info = ddc.get_info()
+   print 'used:',info.used,'wasted:',info.wasted,'extant:',info.used-info.wasted
+
+   print ddc.keys()
+   
+   ddc.reset()
+   
+   del ddc
+   ddc=DictDBLocal('test_dictdb')
+
+   info = ddc.get_info()
+   print 'used:',info.used,'wasted:',info.wasted,'extant:',info.used-info.wasted
 
 
    
-   
-
