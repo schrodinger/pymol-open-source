@@ -267,10 +267,9 @@ if __name__=='pymol.cmd':
          w = 0.001
          while 1:
 #            print " lock: ... as 0x%x"%thread.get_ident(),(thread.get_ident() == pymol.glutThread)
-            for a in range(1,10):
-               e = threading.Event() 
-               e.wait(w/10)          # stimulate lagging threads...
-               del e
+            e = threading.Event() 
+            e.wait(w)  
+            del e
             if lock_api.acquire(0):
                break
             if w<0.1:
