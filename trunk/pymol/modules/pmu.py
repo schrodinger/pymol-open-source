@@ -15,6 +15,7 @@
 import pm
 import math
 import string
+import glob
 
 from pmp import *
 
@@ -97,5 +98,10 @@ def hbond(a,b,cutoff=3.3):
    st = "(%s and (%s around %4.2f) and elem N,O),(%s and (%s around %4.2f) and elem N,O),%4.2f" % (a,b,cutoff,b,a,cutoff,cutoff)
    pm.dist("hbond",st)
         
-          
-
+def mload(*args):
+   nam = "mov"
+   if len(args)>1:
+      nam = args[1]
+   for a in glob.glob(args[0]):
+      pm.load(a,nam)
+   
