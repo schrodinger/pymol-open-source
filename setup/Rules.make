@@ -4,7 +4,7 @@
 #
 #- Building ----------------------------------------------------------
 #--- Tell "make" how to get to PyMOL 
-PYMOL_PATH = /usr/home/warren/pymol
+PYMOL_PATH = /users/warren/pymol
 #---------------------------------------------------------------------
 #
 #- Dependencies ------------------------------------------------------
@@ -15,8 +15,8 @@ XINC_DIR = -I/usr/X11R6/include
 PYTHON_EXE = $(PYMOL_PATH)/ext/bin/python
 PYTHON_LIB =
 PYTHON_LIB_DIR = 
-PYTHON_INC_DIR = -I$(PYMOL_PATH)/ext/include/python2.1 \
-	-I$(PYMOL_PATH)/ext/include/python2.1/Numeric
+PYTHON_INC_DIR = -I$(PYMOL_PATH)/ext/include/python2.2 \
+	-I$(PYMOL_PATH)/ext/include/python2.2/Numeric
 #--- Other external dependencies
 EXT_INC_DIR = -I$(PYMOL_PATH)/ext/include
 EXT_LIB_DIR = -L$(PYMOL_PATH)/ext/lib
@@ -24,7 +24,7 @@ EXT_LIB_DIR = -L$(PYMOL_PATH)/ext/lib
 #
 #- Build for LINUX as an importable module ---------------------------
 #--- System libraries
-LIBS = $(PYTHON_LIB) -lglut -lGL -lGLU -ldl -lpng -lXmu $(ZLIB) -lm
+LIBS = $(PYTHON_LIB) -lglut -lGL -lGLU -lpng -lXmu $(ZLIB) -lm
 #--- PyMOL configuration
 DEFS = -D_PYMOL_MODULE -D_PYMOL_NUMPY 
 #--- How we build shared libraries
@@ -47,10 +47,10 @@ CCOPT2 = -O3 -funroll-loops -fomit-frame-pointer
 #---------------------------------------------------------------------
 #
 #- Choose One --------------------------------------------------------
-#--- Workaround for XFree86/DRI linux dll problem for module build
-BUGS = -D_DRI_WORKAROUND
+#--- Workaround for very old XFree86/DRI linux dll problem
+#BUGS = -D_DRI_WORKAROUND
 #---
-#BUGS =
+BUGS =
 #---------------------------------------------------------------------
 #
 #- Choose One Pair ---------------------------------------------------
