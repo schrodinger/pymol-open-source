@@ -282,6 +282,15 @@ SEE ALSO
          unlock()
       return r
 
+   def get_movie_locked():
+      r = None
+      try:
+         lock()
+         r = _cmd.get_movie_locked()
+      finally:
+         unlock()
+      return r
+      
    def get_color_tuple(name):
       r = None
       try:

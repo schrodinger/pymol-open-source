@@ -19,7 +19,6 @@ from AbstractApp import AbstractApp
 from Setting import Setting
 from SetEditor import SetEditor
 from ColorEditor import ColorEditor
-from pymol.wizard.demo import singleton_DemoState
 
 import Pmw
 import sys, string
@@ -1687,7 +1686,6 @@ class PMGApp(AbstractApp):
 
       self.menuBar.addmenu('Demo', 'Demonstrations',tearoff=TRUE)
 
-      self.demo = singleton_DemoState
       
       self.menuBar.addmenuitem('Demo', 'command', 'Representations',
                                label='Representations',

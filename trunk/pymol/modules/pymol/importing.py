@@ -74,6 +74,8 @@ if __name__=='pymol.importing':
          else:
             r = apply(a,(session,))
          if not r: break
+      if cmd.get_movie_locked():
+         cmd.wizard("security")
       return r
 
    def load_object(type,object,name,state=0,finish=1,discrete=0):
