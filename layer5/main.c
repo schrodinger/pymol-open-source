@@ -60,6 +60,7 @@
 #include"Text.h"
 #include"Character.h"
 #include"Seq.h"
+#include"Seeker.h"
 
 void MainFree(void);
 void MainTest(void);
@@ -716,6 +717,7 @@ static void MainInit(void)
   SelectorInit();
   MovieInit();
   SceneInit();
+  SeekerInit();
   ButModeInit();
   ControlInit();
   SculptCacheInit();
@@ -742,6 +744,7 @@ void MainFree(void)
   SculptCacheFree();
   ButModeFree();
   ControlFree();
+  SeekerFree();
   SceneFree();
   MovieFree();
   SelectorFree();

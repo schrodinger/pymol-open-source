@@ -70,26 +70,26 @@ static void SeekerSelectionToggleRange(CSeqRow* rowVLA,int row_num,
   char selName[ObjNameMax];
   OrthoLineType buf1,buf2;
 
-  
-  {
+  if(row_num>=0) {
     CSeqRow *row;
     CSeqCol *col;
-    int *atom_list;
     char prefix[3]="";
     int logging = SettingGet(cSetting_logging);
     int col_num;
-    int first_pass=true;
+    register int *atom_vla = NULL;
+    register int n_at = 0;
+    register int at_idx;
+    register int *atom_list;
+
+    ObjectMolecule *obj;
     if(logging==cPLog_pml)
       strcpy(prefix,"_ ");
     row = rowVLA + row_num;
-    if( ExecutiveFindObjectByName(row->name)) {
-      
+    if( (obj = ExecutiveFindObjectMoleculeByName(row->name)) ) {
+      atom_vla = VLAlloc(int,obj->NAtom/10);
       for(col_num=col_first;col_num<=col_last;col_num++) {
         col = row->col + col_num;
         if(!col->spacer) {
-          atom_list = row->atom_lists + col->atom_at;
-          BuildSeleFromAtomList(row->name,atom_list,cTempSeekerSele,first_pass);        
-          first_pass=false;
           if(!start_over) {
             if(inc_or_excl)
               col->inverse = true;
@@ -98,13 +98,20 @@ static void SeekerSelectionToggleRange(CSeqRow* rowVLA,int row_num,
           } else {
             col->inverse = true;
           }
+          atom_list = row->atom_lists + col->atom_at;
+          while((at_idx=(*(atom_list++)))>=0) { /* build one extra long list 
+                                    so that we only call selector once*/
+            VLACheck(atom_vla,int,n_at);
+            atom_vla[n_at++] = at_idx;
+          }
         }
       }
+      VLACheck(atom_vla,int,n_at);
+      atom_vla[n_at]=-1;
+      BuildSeleFromAtomList(row->name,atom_vla,cTempSeekerSele,true);
+      VLAFreeP(atom_vla);
       
-      if(!start_over) {
-        
-        /* build up a selection consisting of residue atoms */
-        
+      {      
         char *sele_mode_kw;
         sele_mode_kw = SceneGetSeleModeKeyword();
         
@@ -159,8 +166,7 @@ static void SeekerSelectionToggle(CSeqRow* rowVLA,int row_num,
   char selName[ObjNameMax];
   OrthoLineType buf1,buf2;
 
-  
-  {
+  if(row_num>=0) {
     CSeqRow *row;
     CSeqCol *col;
     int *atom_list;
@@ -249,20 +255,22 @@ static void SeekerSelectionUpdateCenter(CSeqRow* rowVLA,int row_num,int col_num,
 
     if(logging==cPLog_pml)
       strcpy(prefix,"_ ");
-    row = rowVLA + row_num;
-    col = row->col + col_num;
-    
-    if(!col->spacer)
-      if( (obj = ExecutiveFindObjectByName(row->name))){
-        
-        if(col->state&& obj )
-          SettingSetSmart_i(obj->Setting,NULL,cSetting_state,col->state);
-        
-        atom_list = row->atom_lists + col->atom_at;
-        
-        BuildSeleFromAtomList(row->name,atom_list,cTempCenterSele,start_over);
-        if(logging) SelectorLogSele(cTempCenterSele);
-      }
+    if(row_num>=0) {
+      row = rowVLA + row_num;
+      col = row->col + col_num;
+      
+      if(!col->spacer)
+        if( (obj = ExecutiveFindObjectByName(row->name))){
+          
+          if(col->state&& obj )
+            SettingSetSmart_i(obj->Setting,NULL,cSetting_state,col->state);
+          
+          atom_list = row->atom_lists + col->atom_at;
+          
+          BuildSeleFromAtomList(row->name,atom_list,cTempCenterSele,start_over);
+          if(logging) SelectorLogSele(cTempCenterSele);
+        }
+    }
   }
 
 }
@@ -348,6 +356,7 @@ static CSeqRow* SeekerClick(CSeqRow* rowVLA,int button,int row_num,int col_num,i
        (mod & cOrthoSHIFT)) {
       continuation = true;
     } else {
+      I->drag_row = -1; /* invalidate */
       I->handler.box_start_col = col_num;
     }
     
@@ -402,8 +411,10 @@ static CSeqRow* SeekerClick(CSeqRow* rowVLA,int button,int row_num,int col_num,i
         else
           SeekerSelectionCenter(0);
         I->handler.box_active=true;
-        if(col->state && (obj = ExecutiveFindObjectMoleculeByName(row->name) ))
+        if(col->state && (obj = ExecutiveFindObjectMoleculeByName(row->name) )) {
           SettingSetSmart_i(obj->Obj.Setting,NULL,cSetting_state,col->state);
+          SceneChanged();
+        }
       }
       break;
     case P_GLUT_LEFT_BUTTON:
@@ -414,7 +425,6 @@ static CSeqRow* SeekerClick(CSeqRow* rowVLA,int button,int row_num,int col_num,i
         if(mod & cOrthoCTRL) {
           center = 2;
         }
-
         if(!continuation) {
           I->drag_start_col = col_num;
           I->drag_last_col = col_num;
@@ -449,8 +459,10 @@ static CSeqRow* SeekerClick(CSeqRow* rowVLA,int button,int row_num,int col_num,i
         if(center)
           SeekerSelectionCenter(2);
 
-        if(col->state && (obj = ExecutiveFindObjectMoleculeByName(row->name) ))
+        if(col->state && (obj = ExecutiveFindObjectMoleculeByName(row->name))) {
           SettingSetSmart_i(obj->Obj.Setting,NULL,cSetting_state,col->state);
+          SceneChanged();
+        }
       }
       break;
     }
@@ -520,14 +532,13 @@ static CSeqRow* SeekerDrag(CSeqRow* rowVLA,int row,int col,int mod)
 {
   CSeeker *I = &Seeker;    
   int a;
-  
-  if(I->dragging) {
+
+  if((row>=0)&&(col>=0)&&(I->dragging)) {
     I->handler.box_stop_col = col;
     
     switch(I->drag_button) {
     case P_GLUT_LEFT_BUTTON:
       if(col != I->drag_last_col) {
-
 
         if(I->drag_dir) {
           if(I->drag_dir>0) {
@@ -1459,14 +1470,11 @@ void SeekerUpdate(void)
       }
     }
   }
-
-  SeqSetRowVLA(row_vla,nRow);
   Seeker.handler.fClick = SeekerClick;
   Seeker.handler.fRelease = SeekerRelease;
   Seeker.handler.fDrag = SeekerDrag;
   Seeker.handler.fRefresh = SeekerRefresh;
-  Seeker.LastClickTime = UtilGetSeconds() - 1.0F;
-  Seeker.drag_row = -1; /* invalidate */
+  SeqSetRowVLA(row_vla,nRow);
   SeqSetHandler(&Seeker.handler);
 }
 
@@ -1474,6 +1482,8 @@ void SeekerInit(void)
 {
   CSeeker *I = &Seeker;  
   UtilZeroMem(I,sizeof(CSeeker));
+  I->drag_row = -1;
+  I->LastClickTime = UtilGetSeconds() - 1.0F;
 }
 
 void SeekerFree(void)
