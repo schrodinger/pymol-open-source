@@ -68,12 +68,12 @@ def exec_deferred():
          cmd.do(a[4:])
       elif re.search(r"pymol\.py$",a):
          pass
-      elif re.search(r"\.py$",a):
+      elif re.search(r"\.py$",a,re.I):
          cmd.do("run %s" % a)
       elif re.search(
-r"\.pdb$|\.ent$|\.mol$|\.mmod$|\.mmd$|\.xplor$|\.pkl$|\.sdf$|\.r3d$|\.xyz$|\.xyz_[0-9]*$",a):
+r"\.pdb$|\.ent$|\.mol$|\.mmod$|\.mmd$|\.xplor$|\.pkl$|\.sdf$|\.r3d$|\.xyz$|\.xyz_[0-9]*$",a,re.I):
          cmd.load(a)
-      elif re.search(r"\.pml$",a):
+      elif re.search(r"\.pml$",a,re.I):
          cmd.do("@%s" % a)
    if invocation.options.read_stdin:
       t = threading.Thread(target=stdin_reader)
