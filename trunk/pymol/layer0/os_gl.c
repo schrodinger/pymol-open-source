@@ -94,8 +94,8 @@ static void (*mouseFunc)(int button, int state,int x,int y) = NULL;
 static void (*motionFunc)(int x,int y) = NULL;
 static int WinX = 640,WinY=480;
 
-static int swap_buffer=false;
 static int redisplay=true;
+static int modifiers=0;
 
 int p_glutGetRedisplay(void)
 {
@@ -108,6 +108,7 @@ void p_glutHandleEvent(p_glut_event *ev) {
   /* NOTE: this function should be called with an unblocked interpreter,
    just as if it were an asychronous thread */
 
+  modifiers = ev->mod;
   switch(ev->event_code) {
   case P_GLUT_IDLE_EVENT:
     if(idleFunc) idleFunc();
@@ -154,7 +155,7 @@ void     p_glutInitWindowPosition(int x, int y) {}
 void     p_glutInitWindowSize(int width, int height) { WinX=width;WinY=height;}
 
 int      p_glutGet(GLenum type) {return 0;}
-int      p_glutGetModifiers(void) {return 0;}
+int      p_glutGetModifiers(void) {return modifiers;}
 
 void     p_glutDisplayFunc(void (*func)(void)) { displayFunc = func;}
 void     p_glutReshapeFunc(void (*func)(int width, int height)) { reshapeFunc = func;}
