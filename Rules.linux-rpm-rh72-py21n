@@ -2,7 +2,7 @@
 # PyMOL Makefile Rules 
 #---------------------------------------------------------------------
 #
-# This version is for RedHat 7.x with Numeric Python and Python 2.1
+# This version is for RedHat 7.x, Python 2.1, with Numeric Python
 #
 #- Building ----------------------------------------------------------
 #--- Tell "make" how to get to PyMOL during build
@@ -14,7 +14,7 @@ PYMOL_PATH = /var/tmp/pymol-root/usr/lib/python2.1/site-packages/pymol
 XLIB_DIR = -L/usr/X11R6/lib
 XINC_DIR = -L/usr/X11R6/include
 #--- Python
-PYTHON_EXE = /usr/bin/python2
+PYTHON_EXE = /usr/bin/python2.1
 PYTHON_LIB = -lpython2.1
 PYTHON_LIB_DIR = -L/usr/lib/python2.1/config
 PYTHON_INC_DIR = -I/usr/include/python2.1 -I/usr/include/python2.1/Numeric
