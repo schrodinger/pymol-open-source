@@ -72,7 +72,7 @@ ring_dict = {
                             ]
    }
 
-def config_mouse(mode='three_button',quiet=0):
+def config_mouse(mode='three_button',quiet=1):
    global mouse_ring
    if ring_dict.has_key(mode):
       mouse_ring = ring_dict[mode]
@@ -155,7 +155,7 @@ mode_dict = {
                             ],
    }
 
-def mouse(action=None,quiet=0):# INTERNAL
+def mouse(action=None,quiet=1):# INTERNAL
    # NOTE: PyMOL automatically runs this routine upon start-up
    try:
       lock()

@@ -1253,7 +1253,7 @@ void ExecutiveAddHydrogens(char *s1)
   }
 }
 /*========================================================================*/
-void ExecutiveFlag(int flag,char *s1,int action)
+void ExecutiveFlag(int flag,char *s1,int action,int indicate)
 {
   int sele1;
   OrthoLineType buffer;
@@ -1291,7 +1291,7 @@ void ExecutiveFlag(int flag,char *s1,int action)
         break;
       }
     }
-    if((int)SettingGet(cSetting_auto_indicate_flags)) {
+    if((int)SettingGet(cSetting_auto_indicate_flags)&&indicate) {
       sprintf(buffer,"(flag %d)",flag);
       SelectorCreate(cIndicateSele,buffer,NULL,true,NULL);
       ExecutiveSetObjVisib(cIndicateSele,true);

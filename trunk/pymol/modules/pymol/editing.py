@@ -1171,7 +1171,7 @@ flag_action_dict = {
 flag_action_sc = Shortcut(flag_action_dict.keys())
 
    
-def flag(flag,selection,action="reset"):
+def flag(flag,selection,action="reset",quiet=1):
    '''
 DESCRIPTION
   
@@ -1228,7 +1228,7 @@ RESERVATIONS
    #      
    try:
       lock()
-      r = _cmd.flag(int(flag),"("+str(selection)+")",int(action))
+      r = _cmd.flag(int(flag),"("+str(selection)+")",int(action),int(not quiet))
    finally:
       unlock()
    return r
