@@ -52,7 +52,7 @@ ListVarDeclare(BlockList,Block);
 
 #define cOrthoCharWidth 8
 #define cOrthoLeftMargin 8
-#define cOrthoBottomMargin 10
+#define cOrthoBottomMargin 6
 
 #define WizardMargin 132
 
@@ -1441,7 +1441,7 @@ void OrthoSplash(void)
   OrthoNewLine(NULL,true);
   if(PyMOLOption->incentive_product) {
     PRINTF " This PyMOL Incentive Product is\n" ENDF;
-    PRINTF " Copyright (C) 1998-2003 by DeLano Scientific LLC.\n All Rights Reserved.\n \n" ENDF;    
+    PRINTF " Copyright (C) 2004 by DeLano Scientific LLC.\n All Rights Reserved.\n \n" ENDF;    
     PRINTF " Legal usage of this product beyond your free 90 evaluation period requires\n" ENDF;
     PRINTF " a current PyMOL subscription from DeLano Scientific LLC unless you meet the\n" ENDF;
     PRINTF " MacPyMOL incentive exemption criteria. \n \n" ENDF;
@@ -1453,7 +1453,7 @@ void OrthoSplash(void)
     PRINTF " PyMOL(TM) Molecular Graphics System, Version " ENDF;
     PRINTF _PyMOL_VERSION ENDF;
     PRINTF ".\n" ENDF;
-    PRINTF " Copyright (C) 1998-2003 by DeLano Scientific LLC.\n All Rights Reserved.\n \n" ENDF;
+    PRINTF " Copyright (C) 2004 by DeLano Scientific LLC.\n All Rights Reserved.\n \n" ENDF;
     
     PRINTF "    Created by Warren L. DeLano, Ph.D. \n \n" ENDF;
     
