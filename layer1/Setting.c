@@ -87,7 +87,7 @@ void SettingFreeP(CSetting *I)
 /*========================================================================*/
 void SettingInit(CSetting *I)
 {
-  I->size=1;
+  I->size=sizeof(int); /* insures offset is never zero, except when undef */
   I->data=VLAlloc(char,10);
   I->info=VLAMalloc(cSetting_INIT,sizeof(SettingRec),5,1); /* auto-zero */
 }
@@ -132,8 +132,10 @@ void SettingSet_i(CSetting *I,int index, int value)
 /*========================================================================*/
 void SettingSet_f(CSetting *I,int index, float value)
 {
+  char *p;
+  float *ptr;
   VLACheck(I->info,SettingRec,index);
-  *((float*)SettingPtr(I,index,sizeof(float))) = value;
+  *((float*)SettingPtr(I,index,sizeof(float)))=value;
   I->info[index].type = cSetting_float;
 }
 /*========================================================================*/
