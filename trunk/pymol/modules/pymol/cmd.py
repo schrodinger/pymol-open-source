@@ -4189,7 +4189,7 @@ PYMOL API
       r = l[0]
    return r
 
-def identify(selection="(all)"):
+def identify(selection="(all)",mode=0):
    '''
 DESCRIPTION
   
@@ -4198,8 +4198,13 @@ DESCRIPTION
  
 PYMOL API
  
-   list = cmd.identify(string selection="(all)")
- 
+   list = cmd.identify(string selection="(all)",int mode=0)
+
+NOTES
+
+   mode 0 (default): only return a list of identifier
+   mode 1: return a list of tuples of the object name and the identifier
+
    '''
    # preprocess selection
    selection = selector.process(selection)
@@ -4207,7 +4212,7 @@ PYMOL API
    r = []
    try:
       lock()
-      r = _cmd.identify(str(selection),0) # 0 = default mode
+      r = _cmd.identify(str(selection),int(mode)) # 0 = default mode
    finally:
       unlock()
    return r

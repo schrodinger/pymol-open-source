@@ -112,7 +112,7 @@ int ExecutiveTranslateAtom(char *sele,float *v,int state,int mode,int log);
 void ExecutiveSelectRect(BlockRect *rect,int mode);
 int ExecutiveMapSetBorder(char *name,float level);
 int ExecutiveMultiSave(char *fname,char *name,int state,int append);
-
+int ExecutiveIdentifyObjects(char *s1,int mode,int **indexVLA,ObjectMolecule ***objVLA);
 
 #endif
 
