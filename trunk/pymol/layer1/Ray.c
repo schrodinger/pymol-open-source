@@ -1730,25 +1730,25 @@ int RayTraceThread(CRayThreadInfo *T)
                             lit	= (float) pow(r2.trans, _p5);
                         }
                       
-                      if(lit>_0)
-                        {
-                          dotgle	= -dot_product3f(r1.surfnormal,bp2->LightNormal);
-                          if(dotgle < _0) dotgle = _0;
-                          
-                          reflect_cmp	=(float)(lit * (dotgle + (pow(dotgle, settingReflectPower))) * _p5 );
-                          dotgle	= -dot_product3f(r1.surfnormal,T->spec_vector);
-                          if(dotgle < _0) dotgle=_0;
-                          excess	= (float)( pow(dotgle, settingSpecPower) * settingSpecReflect * lit);
-                        }
-                      else 
-                        {
-                          excess		= _0;
-                          reflect_cmp	= _0;
-                        }
-                      bright	= ambient + (_1-ambient) * (((_1-direct_shade)+direct_shade*lit) * direct*direct_cmp +
-                                                          (_1-direct)*direct_cmp*lreflect*reflect_cmp);
-                      if(bright > _1)			bright = _1;
-                      else if(bright < _0)	bright = _0;
+                      if(lit>_0) {
+                        dotgle	= -dot_product3f(r1.surfnormal,bp2->LightNormal);
+                        if(dotgle < _0) dotgle = _0;
+                        
+                        reflect_cmp	=(float)(lit * (dotgle + (pow(dotgle, settingReflectPower))) * _p5 );
+                        dotgle	= -dot_product3f(r1.surfnormal,T->spec_vector);
+                        if(dotgle < _0) dotgle=_0;
+                        excess	= (float)( pow(dotgle, settingSpecPower) * settingSpecReflect * lit);
+                      } else {
+                        excess		= _0;
+                        reflect_cmp	= _0;
+                      }
+
+                      bright	= ambient + (_1-ambient) * 
+                        (((_1-direct_shade)+direct_shade*lit) * direct*direct_cmp +
+                         (_1-direct)*direct_cmp*lreflect*reflect_cmp);
+
+                      if(bright > _1) bright = _1;
+                      else if(bright < _0) bright = _0;
                       
                       fc[0] = (bright*fc[0]+excess);
                       fc[1] = (bright*fc[1]+excess);
@@ -1769,14 +1769,11 @@ int RayTraceThread(CRayThreadInfo *T)
                           
                           ffact1m	= _1-ffact;
                           
-                          if(opaque_back) 
-                            {
+                          if(opaque_back) {
                               fc[0]	= ffact*T->bkrd[0]+fc[0]*ffact1m;
                               fc[1]	= ffact*T->bkrd[1]+fc[1]*ffact1m;
                               fc[2]	= ffact*T->bkrd[2]+fc[2]*ffact1m;
-                            }
-                          else 
-                            {
+                            } else {
                               fc[3] = ffact1m*(_1 - r1.trans);
                             }
                           

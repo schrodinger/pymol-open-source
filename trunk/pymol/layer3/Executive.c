@@ -4411,8 +4411,8 @@ void ExecutiveOrient(PyMOLGlobals *G,char *sele,Matrix33d mi,
     {
       float old_mat[16];
       float new_mat[16];
-      copy44f(SceneGetMatrix(G),old_mat);
       float x,y,z;
+      copy44f(SceneGetMatrix(G),old_mat);
       
       SceneSetMatrix(G,m[0]); /* load matrix */
       
