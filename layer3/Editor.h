@@ -37,8 +37,8 @@ void EditorDrag(ObjectMolecule *obj,int index,int mode,int state,float *pt,float
 
 void EditorSetActiveObject(ObjectMolecule *obj,int state);
 ObjectMolecule *EditorDragObject(void);
-void EditorReplace(char *elem,int geom,int valence);
-void EditorAttach(char *elem,int geom,int valence);
+void EditorReplace(char *elem,int geom,int valence,char *name);
+void EditorAttach(char *elem,int geom,int valence,char *name);
 void EditorRemove(int hydrogen);
 void EditorHFill(void);
 void EditorCycleValence(void);

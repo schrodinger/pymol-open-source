@@ -47,9 +47,9 @@ def complete(event,str,widget,self):
 
 class PMGApp(AbstractApp):
 
-   appversion     = '0.82'
+   appversion     = '0.86'
    appname       = 'PyMOL Molecular Graphics System'
-   copyright      = 'Copyright (C) 1998-2002 by Warren DeLano of\nDeLano Scientific. All rights reserved.'
+   copyright      = 'Copyright (C) 1998-2002 by Warren DeLano of\nDeLano Scientific LLC. All rights reserved.'
    contactweb     = 'http://www.pymol.org'
    contactemail   = 'warren@delanoscientific.com'
 

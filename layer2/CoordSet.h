@@ -61,6 +61,9 @@ typedef struct CoordSet {
 #define cCSet_Orthogonal 1
 #define cCSet_Octahedral 2
 
+int BondInOrder(BondType *a,int b1,int b2);
+int BondCompare(BondType *a,BondType *b);
+
 PyObject *CoordSetAsPyList(CoordSet *I);
 int CoordSetFromPyList(PyObject *list,CoordSet **cs);
 

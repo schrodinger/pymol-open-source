@@ -74,10 +74,8 @@ void ObjectMoleculeDescribeElement(ObjectMolecule *I,int index,char *buffer);
 
 void ObjectMoleculeSeleOp(ObjectMolecule *I,int sele,ObjectMoleculeOpRec *op);
 
-int ObjectMoleculeConnect(ObjectMolecule *I,BondType **bond,AtomInfoType *ai,CoordSet *cs,int searchFlag);
 void ObjectMoleculeTransformTTTf(ObjectMolecule *I,float *ttt,int state);
-static int BondInOrder(BondType *a,int b1,int b2);
-static int BondCompare(BondType *a,BondType *b);
+
 
 CoordSet *ObjectMoleculeChemPyModel2CoordSet(PyObject *model,AtomInfoType **atInfoPtr);
 
@@ -4418,36 +4416,57 @@ int ObjectMoleculeTransformSelection(ObjectMolecule *I,int state,
   CoordSet *cs;
   AtomInfoType *ai;
   int logging;
+  int all_states=false,inp_state;
   int ok=true;
-  if(state<0) state=0;
-  if(I->NCSet==1) state=0;
-  state = state % I->NCSet;
-  cs = I->CSet[state];
-  if(cs) {
-    if(sele>=0) {
-      ai=I->AtomInfo;
-      for(a=0;a<I->NAtom;a++) {
-        s=ai->selEntry;
-        if(!(ai->protected==1))
-          if(SelectorIsMember(s,sele))
-            {
-              CoordSetTransformAtom(cs,a,TTT);
-              flag=true;
-            }
-        ai++;
-      }
-    } else {
-      ai=I->AtomInfo;
-      for(a=0;a<I->NAtom;a++) {
-        if(!(ai->protected==1))
-          CoordSetTransformAtom(cs,a,TTT);
-        ai++;
-      }
-      flag=true;
-    }
-    if(flag) 
-      cs->fInvalidateRep(cs,cRepAll,cRepInvCoord);
+  inp_state=state;
+  if(state==-1) 
+    state=ObjectGetCurrentState(&I->Obj,false);
+  if(state<0) {
+    all_states=true;
+    state=-1;
   }
+  PRINTFD(FB_ObjectMolecule)
+    "ObjMolTransSele-Debug: state %d\n",state
+    ENDFD;
+  while(1) {
+    if(all_states) {
+      state++;
+      if(state>=I->NCSet)
+        break;
+    }
+    if(state<I->NCSet) {
+      cs = I->CSet[state];
+      if(cs) {
+        if(sele>=0) {
+          ai=I->AtomInfo;
+          for(a=0;a<I->NAtom;a++) {
+            s=ai->selEntry;
+            if(!(ai->protected==1))
+              if(SelectorIsMember(s,sele))
+                {
+                  CoordSetTransformAtom(cs,a,TTT);
+                  flag=true;
+                }
+            ai++;
+          }
+        } else {
+          ai=I->AtomInfo;
+          for(a=0;a<I->NAtom;a++) {
+            if(!(ai->protected==1))
+              CoordSetTransformAtom(cs,a,TTT);
+            ai++;
+          }
+          flag=true;
+        }
+        if(flag) 
+          cs->fInvalidateRep(cs,cRepAll,cRepInvCoord);
+      }
+    }
+    if(!all_states)
+      break;
+  }
+
+  
   if(log) {
     OrthoLineType line;
     WordType sele_str = ",'";
@@ -4466,7 +4485,7 @@ int ObjectMoleculeTransformSelection(ObjectMolecule *I,int state,
               TTT[ 0],TTT[ 1],TTT[ 2],TTT[ 3],
               TTT[ 4],TTT[ 5],TTT[ 6],TTT[ 7],
               TTT[ 8],TTT[ 9],TTT[10],TTT[11],
-              TTT[12],TTT[13],TTT[14],TTT[15],state+1,log,sele_str);
+              TTT[12],TTT[13],TTT[14],TTT[15],inp_state+1,log,sele_str);
       PLog(line,cPLog_no_flush);
       break;
     case cPLog_pym:
@@ -4477,7 +4496,7 @@ int ObjectMoleculeTransformSelection(ObjectMolecule *I,int state,
               TTT[ 0],TTT[ 1],TTT[ 2],TTT[ 3],
               TTT[ 4],TTT[ 5],TTT[ 6],TTT[ 7],
               TTT[ 8],TTT[ 9],TTT[10],TTT[11],
-              TTT[12],TTT[13],TTT[14],TTT[15],state+1,log,sele_str);
+              TTT[12],TTT[13],TTT[14],TTT[15],inp_state+1,log,sele_str);
       PLog(line,cPLog_no_flush);
       break;
     default:
@@ -5149,30 +5168,6 @@ ObjectMolecule *ObjectMoleculeLoadCoords(ObjectMolecule *I,PyObject *coords,int 
 }
 
 /*========================================================================*/
-static int BondInOrder(BondType *a,int b1,int b2)
-{
-  return(BondCompare(a+b1,a+b2)<=0);
-}
-/*========================================================================*/
-static int BondCompare(BondType *a,BondType *b)
-{
-  int result;
-  if(a->index[0]==b->index[0]) {
-	if(a->index[1]==b->index[1]) {
-	  result=0;
-	} else if(a->index[1]>b->index[1]) {
-	  result=1;
-	} else {
-	  result=-1;
-	}
-  } else if(a->index[0]>b->index[0]) {
-	result=1;
-  } else {
-	result=-1;
-  }
-  return(result);
-}
-/*========================================================================*/
 void ObjectMoleculeBlindSymMovie(ObjectMolecule *I)
 {
   CoordSet *frac;
@@ -5226,71 +5221,6 @@ void ObjectMoleculeExtendIndices(ObjectMolecule *I)
 	 if(cs)
       if(cs->fExtendIndices)
         cs->fExtendIndices(cs,I->NAtom);
-  }
-}
-/*========================================================================*/
-void ObjectMoleculeSort(ObjectMolecule *I) /* sorts atoms and bonds */
-{
-  int *index,*outdex;
-  int a,b;
-  CoordSet *cs,**dcs;
-  AtomInfoType *atInfo;
-  int *dAtmToIdx;
-
-  if(!I->DiscreteFlag) {
-
-    index=AtomInfoGetSortedIndex(I->AtomInfo,I->NAtom,&outdex);
-    for(a=0;a<I->NBond;a++) { /* bonds */
-      I->Bond[a].index[0]=outdex[I->Bond[a].index[0]];
-      I->Bond[a].index[1]=outdex[I->Bond[a].index[1]];
-    }
-    
-    for(a=-1;a<I->NCSet;a++) { /* coordinate set mapping */
-      if(a<0) {
-        cs=I->CSTmpl;
-      } else {
-        cs=I->CSet[a];
-      }
-      
-      if(cs) {
-        for(b=0;b<cs->NIndex;b++)
-          cs->IdxToAtm[b]=outdex[cs->IdxToAtm[b]];
-        if(cs->AtmToIdx) {
-          for(b=0;b<I->NAtom;b++)
-            cs->AtmToIdx[b]=-1;
-          for(b=0;b<cs->NIndex;b++) {
-            cs->AtmToIdx[cs->IdxToAtm[b]]=b;
-          }
-        }
-      }
-    }
-    
-    atInfo=(AtomInfoType*)VLAMalloc(I->NAtom,sizeof(AtomInfoType),5,true);
-    /* autozero here is important */
-    for(a=0;a<I->NAtom;a++)
-      atInfo[a]=I->AtomInfo[index[a]];
-    VLAFreeP(I->AtomInfo);
-    I->AtomInfo=atInfo;
-    
-    if(I->DiscreteFlag) {
-      dcs = VLAlloc(CoordSet*,I->NAtom);
-      dAtmToIdx = VLAlloc(int,I->NAtom);
-      for(a=0;a<I->NAtom;a++) {
-        b=index[a];
-        dcs[a] = I->DiscreteCSet[b];
-        dAtmToIdx[a] = I->DiscreteAtmToIdx[b];
-      }
-      VLAFreeP(I->DiscreteCSet);
-      VLAFreeP(I->DiscreteAtmToIdx);
-      I->DiscreteCSet = dcs;
-      I->DiscreteAtmToIdx = dAtmToIdx;
-    }
-    AtomInfoFreeSortedIndexes(index,outdex);
-
-    UtilSortInPlace(I->Bond,I->NBond,sizeof(BondType),(UtilOrderFn*)BondInOrder);
-    /* sort...important! */
-    ObjectMoleculeInvalidate(I,cRepAll,cRepInvAtoms); /* important */
-
   }
 }
 /*========================================================================*/
@@ -6467,6 +6397,7 @@ void ObjectMoleculeSeleOp(ObjectMolecule *I,int sele,ObjectMoleculeOpRec *op)
      break;
    case OMOP_CSetIdxSetFlagged:
      ai=I->AtomInfo;
+     hit_flag=false;
      for(a=0;a<I->NAtom;a++)
        {         
          s=ai->selEntry;
@@ -6491,6 +6422,7 @@ void ObjectMoleculeSeleOp(ObjectMolecule *I,int sele,ObjectMoleculeOpRec *op)
                        *(vv2++)=*(vv1++);
                        *(vv2++)=*(vv1++);
                        op->nvv1++;
+                       hit_flag=true;
                      }
                    }
                  }
@@ -6609,6 +6541,7 @@ void ObjectMoleculeSeleOp(ObjectMolecule *I,int sele,ObjectMoleculeOpRec *op)
 
           /* coord-set based properties, iterating only a single coordinate set */
          case OMOP_CSetMinMax:          
+         case OMOP_CSetCameraMinMax:          
          case OMOP_CSetMaxDistToPt:
          case OMOP_CSetSumVertices:
          case OMOP_CSetMoment: 
@@ -6655,6 +6588,38 @@ void ObjectMoleculeSeleOp(ObjectMolecule *I,int sele,ObjectMoleculeOpRec *op)
                              transformTTT44f3f(I->Obj.TTT,coord,v1);
                              coord=v1;
                            }
+                         if(op->i1) {
+                           for(c=0;c<3;c++) {
+                             if(*(op->v1+c)>*(coord+c)) *(op->v1+c)=*(coord+c);
+                             if(*(op->v2+c)<*(coord+c)) *(op->v2+c)=*(coord+c);
+                           }
+                         } else {
+                           for(c=0;c<3;c++) {
+                             *(op->v1+c)=*(coord+c);
+                             *(op->v2+c)=*(coord+c);
+                           }
+                         }
+                         op->i1++;
+                       }
+                     break;
+                   case OMOP_CSetCameraMinMax:
+                     if(I->DiscreteFlag) {
+                       if(cs==I->DiscreteCSet[a])
+                         a1=I->DiscreteAtmToIdx[a];
+                       else
+                         a1=-1;
+                     } else 
+                       a1=cs->AtmToIdx[a];
+                     if(a1>=0)
+                       {
+                         coord = cs->Coord+3*a1;
+                         if(op->i2) /* do we want object-transformed coordinates? */
+                           if(I->Obj.TTTFlag) {
+                             transformTTT44f3f(I->Obj.TTT,coord,v1);
+                             coord=v1;
+                           }
+                         MatrixTransform3f(op->mat1,coord,v1); /* convert to view-space */
+                         coord=v1;
                          if(op->i1) {
                            for(c=0;c<3;c++) {
                              if(*(op->v1+c)>*(coord+c)) *(op->v1+c)=*(coord+c);
@@ -6766,6 +6731,38 @@ void ObjectMoleculeSeleOp(ObjectMolecule *I,int sele,ObjectMoleculeOpRec *op)
                               transformTTT44f3f(I->Obj.TTT,coord,v1);
                               coord=v1;
                             }
+                          if(op->i1) {
+                            for(c=0;c<3;c++) {
+                              if(*(op->v1+c)>*(coord+c)) *(op->v1+c)=*(coord+c);
+                              if(*(op->v2+c)<*(coord+c)) *(op->v2+c)=*(coord+c);
+                            }
+                          } else {
+                            for(c=0;c<3;c++) {
+                              *(op->v1+c)=*(coord+c);
+                              *(op->v2+c)=*(coord+c);
+                            }
+                          }
+                          op->i1++;
+							   }
+							 break;
+                    case OMOP_CameraMinMax:
+                      if(I->DiscreteFlag) {
+                        if(cs==I->DiscreteCSet[a])
+                          a1=I->DiscreteAtmToIdx[a];
+                        else
+                          a1=-1;
+                      } else 
+                        a1=cs->AtmToIdx[a];
+							 if(a1>=0)
+							   {
+                          coord = cs->Coord+3*a1;
+                          if(op->i2) /* do we want object-transformed coordinates? */
+                            if(I->Obj.TTTFlag) {
+                              transformTTT44f3f(I->Obj.TTT,coord,v1);
+                              coord=v1;
+                            }
+                          MatrixTransform3f(op->mat1,coord,v1); /* convert to view-space */
+                          coord=v1;
                           if(op->i1) {
                             for(c=0;c<3;c++) {
                               if(*(op->v1+c)>*(coord+c)) *(op->v1+c)=*(coord+c);
@@ -6924,6 +6921,7 @@ void ObjectMoleculeSeleOp(ObjectMolecule *I,int sele,ObjectMoleculeOpRec *op)
        ObjectMoleculeInvalidate(I,cRepLabel,cRepInvText);
        break;
      case OMOP_AlterState: /* overly coarse - doing all states, could do just 1 */
+     case OMOP_CSetIdxSetFlagged:
        ObjectMoleculeInvalidate(I,-1,cRepInvRep);
        SceneChanged();
        break;
@@ -7458,391 +7456,6 @@ void ObjectMoleculeFree(ObjectMolecule *I)
       I->CSTmpl->fFree(I->CSTmpl);
   ObjectPurge(&I->Obj);
   OOFreeP(I);
-}
-
-/*========================================================================*/
-int ObjectMoleculeConnect(ObjectMolecule *I,BondType **bond,AtomInfoType *ai,
-                          CoordSet *cs,int bondSearchFlag)
-{
-  #define cMULT 1
-
-  int a,b,c,d,e,f,i,j;
-  int a1,a2;
-  float *v1,*v2,dst;
-  int maxBond;
-  MapType *map;
-  int nBond;
-  BondType *ii1,*ii2;
-  int flag;
-  int order;
-  AtomInfoType *ai1,*ai2;
-  float cutoff_s;
-  float cutoff_h;
-  float cutoff_v;
-  float cutoff;
-  float max_cutoff;
-  int water_flag;
-
-  cutoff_v=SettingGet(cSetting_connect_cutoff);
-  cutoff_s=cutoff_v + 0.2;
-  cutoff_h=cutoff_v - 0.2;
-  max_cutoff = cutoff_s;
-
-  /*  FeedbackMask[FB_ObjectMolecule]=0xFF;*/
-  nBond = 0;
-  maxBond = cs->NIndex * 8;
-  (*bond) = VLAlloc(BondType,maxBond);
-  if(cs->NIndex&&bondSearchFlag) /* &&(!I->DiscreteFlag) WLD 010527 */
-	 {
-      switch((int)SettingGet(cSetting_connect_mode)) {
-      case 0:
-        /* distance-based bond location  */
-
-      map=MapNew(max_cutoff+MAX_VDW,cs->Coord,cs->NIndex,NULL);
-      if(map)
-        {
-          for(i=0;i<cs->NIndex;i++)
-            {
-              v1=cs->Coord+(3*i);
-              MapLocus(map,v1,&a,&b,&c);
-              for(d=a-1;d<=a+1;d++)
-                for(e=b-1;e<=b+1;e++)
-                  for(f=c-1;f<=c+1;f++)
-                    {
-                      j = *(MapFirst(map,d,e,f));
-                      while(j>=0)
-                        {
-                          if(i<j)
-                            {
-                              v2 = cs->Coord + (3*j);
-                              dst = diff3f(v1,v2);										
-                              
-                              a1=cs->IdxToAtm[i];
-                              a2=cs->IdxToAtm[j];
-
-                              ai1=ai+a1;
-                              ai2=ai+a2;
-                                    
-                              dst -= ((ai1->vdw+ai2->vdw)/2);
-
-                              /* quick hack for water detection.  
-                                 they don't usually don't have CONECT records 
-                                 and may not be HETATMs though they are supposed to be... */
-                              
-                              water_flag=false;
-                              if((ai1->resn[0]=='W')&&
-                                 (ai1->resn[1]=='A')&&
-                                 (ai1->resn[2]=='T')&&
-                                 (!ai1->resn[3]))
-                                water_flag=true;
-                              else if((ai1->resn[0]=='H')&&
-                                      (ai1->resn[1]=='O')&&
-                                      (ai1->resn[2]=='H')&&
-                                      (!ai1->resn[3]))
-                                water_flag=true;
-                              if((ai2->resn[0]=='W')&&
-                                 (ai2->resn[1]=='A')&&
-                                 (ai2->resn[2]=='T')&&
-                                 (!ai2->resn[3]))
-                                water_flag=true;
-                              else if((ai2->resn[0]=='H')&&
-                                      (ai2->resn[1]=='O')&&
-                                      (ai2->resn[2]=='H')&&
-                                      (!ai2->resn[3]))
-                                water_flag=true;
-                              
-                              cutoff = cutoff_h;
-                              
-                              /* workaround for hydrogens and sulfurs... */
-                              
-                              if(ai1->hydrogen||ai2->hydrogen)
-                                cutoff = cutoff_h;
-                              else if(((ai1->elem[0]=='S')&&(!ai1->elem[1]))||
-                                   ((ai2->elem[0]=='S')&&(!ai2->elem[1])))
-                                cutoff = cutoff_s;
-                              else
-                                cutoff = cutoff_v;
-                              if( (dst <= cutoff)&&
-                                  (!(ai1->hydrogen&&ai2->hydrogen))&&
-                                  (water_flag||(!cs->TmpBond)||(!(ai1->hetatm&&ai2->hetatm))))
-                                {
-                                  flag=true;
-                                  if(ai1->alt[0]!=ai2->alt[0]) { /* handle alternate conformers */
-                                    if(ai1->alt[0]&&ai2->alt[0])
-                                        flag=false; /* don't connect atoms with different, non-NULL
-                                                       alternate conformations */
-                                  } else if(ai1->alt[0]&&ai2->alt[0])
-                                    if(!AtomInfoSameResidue(ai1,ai2))
-                                      flag=false; /* don't connect non-NULL, alt conformations in 
-                                                     different residues */
-                                  if(ai1->alt[0]||ai2->alt[0]) 
-                                  if(water_flag) /* hack to clean up water bonds */
-                                    if(!AtomInfoSameResidue(ai1,ai2))
-                                      flag=false;
-                                      
-                                  if(flag) {
-                                    ai1->bonded=true;
-                                    ai2->bonded=true;
-                                    VLACheck((*bond),BondType,nBond);
-                                    (*bond)[nBond].index[0] = a1;
-                                    (*bond)[nBond].index[1] = a2;
-                                    (*bond)[nBond].stereo = 0;
-                                    order = 1;
-                                    if((!ai1->hetatm)&&(!ai1->resn[3])) { /* Standard PDB residue */
-                                      if(AtomInfoSameResidue(ai1,ai2)) {
-                                        /* nasty high-speed hack to get bond valences and formal charges 
-                                           for standard residues */
-                                        if(((!ai1->name[1])&&(!ai2->name[1]))&&
-                                           (((ai1->name[0]=='C')&&(ai2->name[0]=='O'))||
-                                            ((ai1->name[0]=='O')&&(ai2->name[0]=='C')))) {
-                                          order=2;
-                                        } else {
-                                          switch(ai1->resn[0]) {
-                                          case 'A':
-                                            switch(ai1->resn[1]) {
-                                            case 'R': /* ARG */
-                                              if(!strcmp(ai1->name,"NH1")) 
-                                                ai1->formalCharge=1;
-                                              else if(!strcmp(ai2->name,"NH1")) 
-                                                ai2->formalCharge=1;
-                                              if(((!strcmp(ai1->name,"CZ"))&&(!strcmp(ai2->name,"NH1")))||
-                                                 ((!strcmp(ai2->name,"CZ"))&&(!strcmp(ai1->name,"NH1")))) 
-                                                order=2;
-                                              break;
-                                            case 'S': 
-                                              switch(ai1->resn[2]) {
-                                              case 'P': /* ASP */
-                                                if(!strcmp(ai1->name,"OD2")) 
-                                                  ai1->formalCharge=-1;
-                                                else if(!strcmp(ai2->name,"OD2")) 
-                                                  ai2->formalCharge=-1;
-                                              case 'N': /* ASN or ASP */
-                                                if(((!strcmp(ai1->name,"CG"))&&(!strcmp(ai2->name,"OD1")))||
-                                                   ((!strcmp(ai2->name,"CG"))&&(!strcmp(ai1->name,"OD1")))) 
-                                                  order=2;
-                                                break;
-                                              }
-                                            }
-                                          case 'G':
-                                            switch(ai1->resn[1]) {
-                                            case 'L': 
-                                              switch(ai1->resn[2]) {
-                                              case 'U': /* GLU */
-                                                if(!strcmp(ai1->name,"OE2")) 
-                                                  ai1->formalCharge=-1;
-                                                else if(!strcmp(ai2->name,"OE2")) 
-                                                  ai2->formalCharge=-1;
-                                              case 'N': /* GLN or GLU */
-                                                if(((!strcmp(ai1->name,"CD"))&&(!strcmp(ai2->name,"OE1")))||
-                                                   ((!strcmp(ai2->name,"CD"))&&(!strcmp(ai1->name,"OE1")))) 
-                                                  order=2;
-                                                break;
-                                              }
-                                            }
-                                            break;
-                                          case 'H':
-                                            switch(ai1->resn[1]) {
-                                            case 'I':
-                                              switch(ai1->resn[2]) {
-                                              case 'P':
-                                                if(!strcmp(ai1->name,"ND1")) 
-                                                  ai1->formalCharge=1;
-                                                else if(!strcmp(ai2->name,"ND1")) 
-                                                  ai2->formalCharge=1;
-                                              case 'S':
-                                              case 'E':
-                                                if(((!strcmp(ai1->name,"CG"))&&(!strcmp(ai2->name,"CD2")))||
-                                                   ((!strcmp(ai2->name,"CG"))&&(!strcmp(ai1->name,"CD2")))) 
-                                                  order=2;
-                                                else if(((!strcmp(ai1->name,"CE1"))&&(!strcmp(ai2->name,"ND1")))||
-                                                        ((!strcmp(ai2->name,"CE1"))&&(!strcmp(ai1->name,"ND1")))) 
-                                                  order=2;
-                                                break;
-                                                break;
-                                              case 'D':
-                                                if(((!strcmp(ai1->name,"CG"))&&(!strcmp(ai2->name,"CD2")))||
-                                                   ((!strcmp(ai2->name,"CG"))&&(!strcmp(ai1->name,"CD2")))) 
-                                                  order=2;
-                                                else if(((!strcmp(ai1->name,"CE1"))&&(!strcmp(ai2->name,"NE2")))||
-                                                        ((!strcmp(ai2->name,"CE1"))&&(!strcmp(ai1->name,"NE2")))) 
-                                                  order=2;
-                                                break;
-                                              }
-                                              break;
-                                            }
-                                            break;
-                                          case 'P':
-                                            switch(ai1->resn[1]) {
-                                            case 'H': /* PHE */
-                                              if(ai1->resn[2]=='E') {
-                                                if(((!strcmp(ai1->name,"CG"))&&(!strcmp(ai2->name,"CD1")))||
-                                                   ((!strcmp(ai2->name,"CG"))&&(!strcmp(ai1->name,"CD1")))) 
-                                                  order=2;
-                                                else if(((!strcmp(ai1->name,"CZ"))&&(!strcmp(ai2->name,"CE1")))||
-                                                        ((!strcmp(ai2->name,"CZ"))&&(!strcmp(ai1->name,"CE1")))) 
-                                                  order=2;
-                                                
-                                                else if(((!strcmp(ai1->name,"CE2"))&&(!strcmp(ai2->name,"CD2")))||
-                                                        ((!strcmp(ai2->name,"CE2"))&&(!strcmp(ai1->name,"CD2")))) 
-                                                  order=2;
-                                                break; 
-                                              }
-                                            }
-                                            break;
-                                          case 'L':
-                                            if(!strcmp(ai1->name,"NZ")) 
-                                              ai1->formalCharge=1;
-                                            else if(!strcmp(ai2->name,"NZ")) 
-                                              ai2->formalCharge=1;
-                                            break;
-                                          case 'T':
-                                            switch(ai1->resn[1]) {
-                                            case 'Y': /* TYR */
-                                              if(ai1->resn[2]=='R') {
-                                                if(((!strcmp(ai1->name,"CG"))&&(!strcmp(ai2->name,"CD1")))||
-                                                   ((!strcmp(ai2->name,"CG"))&&(!strcmp(ai1->name,"CD1")))) 
-                                                  order=2;
-                                                else if(((!strcmp(ai1->name,"CZ"))&&(!strcmp(ai2->name,"CE1")))||
-                                                        ((!strcmp(ai2->name,"CZ"))&&(!strcmp(ai1->name,"CE1")))) 
-                                                  order=2;
-                                                
-                                                else if(((!strcmp(ai1->name,"CE2"))&&(!strcmp(ai2->name,"CD2")))||
-                                                        ((!strcmp(ai2->name,"CE2"))&&(!strcmp(ai1->name,"CD2")))) 
-                                                  order=2;
-                                                break; 
-                                              }
-                                              break;
-                                            case 'R':
-                                              if(ai1->resn[2]=='P') {
-                                                if(((!strcmp(ai1->name,"CG"))&&(!strcmp(ai2->name,"CD1")))||
-                                                   ((!strcmp(ai2->name,"CG"))&&(!strcmp(ai1->name,"CD1")))) 
-                                                  order=2;
-                                                else if(((!strcmp(ai1->name,"CZ3"))&&(!strcmp(ai2->name,"CE3")))||
-                                                        ((!strcmp(ai2->name,"CZ3"))&&(!strcmp(ai1->name,"CE3")))) 
-                                                  order=2;
-                                                else if(((!strcmp(ai1->name,"CZ2"))&&(!strcmp(ai2->name,"CH2")))||
-                                                        ((!strcmp(ai2->name,"CZ2"))&&(!strcmp(ai1->name,"CH2")))) 
-                                                  order=2;
-                                                else if(((!strcmp(ai1->name,"CE2"))&&(!strcmp(ai2->name,"CD2")))||
-                                                        ((!strcmp(ai2->name,"CE2"))&&(!strcmp(ai1->name,"CD2")))) 
-                                                  order=2;
-                                                break; 
-                                              }
-
-                                              break;
-                                            }
-                                            
-                                          }
-                                        }
-                                      }
-                                    }
-                                    (*bond)[nBond].order = order;
-                                    nBond++;
-                                  }
-                                }
-                            }
-                          j=MapNext(map,j);
-                        }
-                    }
-            }
-          MapFree(map);
-        case 1: /* dictionary-based connectivity */
-          /* TODO */
-          
-          break;
-        }
-      }
-      PRINTFB(FB_ObjectMolecule,FB_Blather)
-        " ObjectMoleculeConnect: Found %d bonds.\n",nBond
-        ENDFB;
-      if(Feedback(FB_ObjectMolecule,FB_Debugging)) {
-        for(a=0;a<nBond;a++)
-          printf(" ObjectMoleculeConnect: bond %d ind0 %d ind1 %d\n",
-                 a,(*bond)[a].index[0],(*bond)[a].index[1]);
-      }
-    }
-
-  if(cs->NTmpBond&&cs->TmpBond) {
-      PRINTFB(FB_ObjectMolecule,FB_Blather) 
-      " ObjectMoleculeConnect: incorporating explicit bonds. %d %d\n",
-             nBond,cs->NTmpBond
-        ENDFB;
-    VLACheck((*bond),BondType,(nBond+cs->NTmpBond));
-    ii1=(*bond)+nBond;
-    ii2=cs->TmpBond;
-    for(a=0;a<cs->NTmpBond;a++)
-      {
-        a1 = cs->IdxToAtm[ii2->index[0]]; /* convert bonds from index space */
-        a2 = cs->IdxToAtm[ii2->index[1]]; /* to atom space */
-        ai[a1].bonded=true;
-        ai[a2].bonded=true;
-        ii1->index[0]=a1;
-        ii1->index[1]=a2;
-        ii1->order = ii2->order;
-        ii1->stereo = ii2->stereo;
-        ii1++;
-        ii2++;
-
-      }
-    nBond=nBond+cs->NTmpBond;
-    VLAFreeP(cs->TmpBond);
-    cs->NTmpBond=0;
-  }
-
-  if(cs->NTmpLinkBond&&cs->TmpLinkBond) {
-    PRINTFB(FB_ObjectMolecule,FB_Blather) 
-      "ObjectMoleculeConnect: incorporating linkage bonds. %d %d\n",
-      nBond,cs->NTmpLinkBond
-      ENDFB;
-    VLACheck((*bond),BondType,(nBond+cs->NTmpLinkBond));
-    ii1=(*bond)+nBond;
-    ii2=cs->TmpLinkBond;
-    for(a=0;a<cs->NTmpLinkBond;a++)
-      {
-        a1 = ii2->index[0]; /* first atom is in object */
-        a2 = cs->IdxToAtm[ii2->index[1]]; /* second is in the cset */
-        ai[a1].bonded=true;
-        ai[a2].bonded=true;
-        ii1->index[0]=a1;
-        ii1->index[1]=a2;
-        ii1->order = ii2->order;
-        ii1->stereo = ii2->stereo;
-        ii1++;
-        ii2++;
-      }
-    nBond=nBond+cs->NTmpLinkBond;
-    VLAFreeP(cs->TmpLinkBond);
-    cs->NTmpLinkBond=0;
-  }
-
-  PRINTFD(FB_ObjectMolecule)
-    " ObjectMoleculeConnect: elminating duplicates with %d bonds...\n",nBond
-    ENDFD;
-
-  if(!I->DiscreteFlag) {
-    UtilSortInPlace((*bond),nBond,sizeof(BondType),(UtilOrderFn*)BondInOrder);
-    if(nBond) { /* eliminate duplicates */
-      ii1=(*bond)+1;
-      ii2=(*bond)+1;
-      a=nBond-1;
-      nBond=1;
-      if(a>0) 
-        while(a--) { 
-          if((ii2->index[0]!=(ii1-1)->index[0])||
-             (ii2->index[1]!=(ii1-1)->index[1])) {
-            *(ii1++)=*(ii2++); /* copy bond */
-            nBond++;
-          } else {
-            ii2++; /* skip bond */
-          }
-        }
-      VLASize((*bond),BondType,nBond);
-    }
-  }
-  PRINTFD(FB_ObjectMolecule)
-    " ObjectMoleculeConnect: leaving with %d bonds...\n",nBond
-    ENDFD;
-  return(nBond);
 }
 
 /*========================================================================*/
@@ -8715,72 +8328,3 @@ CoordSet *ObjectMoleculeMMDStr2CoordSet(char *buffer,AtomInfoType **atInfoPtr)
 	 *atInfoPtr = atInfo;
   return(cset);
 }
-
-
-#ifdef _NO_LONGER_USED
-/*========================================================================*/
-static char *nextline(char *p) {
-  while(*p) {
-	 if(*p==0xD) { /* Mac or PC */
-		if(*(p+1)==0xA) /* PC */
-		  p++;
-		p++;
-		break;
-	 }
-	 if(*p==0xA) /* Unix */
-		{
-		  p++;
-		  break;
-		}
-	 p++;
-  }
-  return p;
-}
-/*========================================================================*/
-static char *wcopy(char *q,char *p,int n) { /* word copy */
-  while(*p) {
-	 if(*p<=32) 
-		p++;
-	 else
-		break;
-  }
-  while(*p) {
-	 if(*p<=32)
-		break;
-	 if(!n)
-		break;
-	 if((*p==0xD)||(*p==0xA)) /* don't copy end of lines */
-		break;
-	 *(q++)=*(p++);
-	 n--;
-  }
-  *q=0;
-  return p;
-}
-/*========================================================================*/
-static char *ncopy(char *q,char *p,int n) {  /* n character copy */
-  while(*p) {
-	 if(!n)
-		break;
-	 if((*p==0xD)||(*p==0xA)) /* don't copy end of lines */
-		break;
-	 *(q++)=*(p++);
-	 n--;
-  }
-  *q=0;
-  return p;
-}
-/*========================================================================*/
-static char *nskip(char *p,int n) {  /* n character skip */
-  while(*p) {
-	 if(!n)
-		break;
-	 if((*p==0xD)||(*p==0xA)) /* stop at newlines */
-		break;
-    p++;
-	 n--;
-  }
-  return p;
-}
-
-#endif

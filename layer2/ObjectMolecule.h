@@ -25,6 +25,8 @@ Z* -------------------------------------------------------------------
 #include"Symmetry.h"
 #include"Raw.h"
 
+#define cKeywordAll "all"
+
 #define cUndoMask 0x7
 
 typedef struct {
@@ -78,7 +80,7 @@ typedef struct ObjectMoleculeOpRec {
   char *s1;
   ObjectMolecule **obj1VLA;
   AtomInfoType *ai;
-  float ttt[16];
+  float ttt[16],*mat1;
   int nvv1,nvv2;
 } ObjectMoleculeOpRec;
 
@@ -129,6 +131,8 @@ typedef struct ObjectMoleculeOpRec {
 #define OMOP_GetObjects 41
 #define OMOP_CSetMaxDistToPt 42
 #define OMOP_MaxDistToPt 43
+#define OMOP_CameraMinMax 44
+#define OMOP_CSetCameraMinMax 45
 
 #include"CoordSet.h"
 
@@ -137,6 +141,7 @@ PyObject *ObjectMoleculeAsPyList(ObjectMolecule *I);
 int ObjectMoleculeGetSerial(ObjectMolecule *I);
 int ObjectMoleculeSetStateTitle(ObjectMolecule *I,int state,char *text);
 char *ObjectMoleculeGetStateTitle(ObjectMolecule *I,int state);
+
 
 ObjectMolecule *ObjectMoleculeNew(int discreteFlag);
 void ObjectMoleculeSort(ObjectMolecule *I);
@@ -228,6 +233,8 @@ int ObjectMoleculeInitBondPath(ObjectMolecule *I,ObjectMoleculeBPRec *bp);
 int ObjectMoleculePurgeBondPath(ObjectMolecule *I,ObjectMoleculeBPRec *bp);
 int ObjectMoleculeGetBondPath(ObjectMolecule *I,int atom,int max,ObjectMoleculeBPRec *bp);
 int ***ObjectMoleculeGetBondPrint(ObjectMolecule *I,int max_bond,int max_type,int *dim);
+
+int ObjectMoleculeConnect(ObjectMolecule *I,BondType **bond,AtomInfoType *ai,struct CoordSet *cs,int searchFlag);
 
 /* legacy binary file suppoort */
 

@@ -80,6 +80,8 @@ typedef struct {
 static SavedThreadRec SavedThread[MAX_SAVED_THREAD];
 
 int P_glut_thread_keep_out = 0; 
+unsigned int P_glut_thread_id;
+
 /* enables us to keep glut out if by chance it grabs the API
  * in the middle of a nested API based operation */
 
@@ -922,6 +924,7 @@ void PInit(void)
   int a;
 
 #ifdef WIN32
+#ifdef _PYMOL_MONOLITHIC
 	/* Win32 module build: includes pyopengl, numpy, and sglite */
 	/* sglite */
 	initExtensionClass();
@@ -941,6 +944,7 @@ void PInit(void)
     init_glut();
     initopenglutil();
 	initopenglutil_num();
+#endif
 #endif
 
   for(a=0;a<MAX_SAVED_THREAD;a++) {
@@ -1045,6 +1049,8 @@ void PInit(void)
   PRunString("pmu = util\n");  
 
   PRunString("glutThread = thread.get_ident()");
+
+  P_glut_thread_id = PyThread_get_thread_ident();
 
 #ifndef WIN32
   signal(SIGINT,my_interrupt);
@@ -1170,7 +1176,7 @@ static void PDeleteAll(void *p)
     PyObject_CallMethod(P_cmd,"delete","s","all");
 }
 
-void PMaintainObjectAll(void) 
+static void PMaintainObjectAll(void) 
 /* legacy exception for "del all", which is broken by version 0.86
    "del all" now means what it should in Python: delete an object
    referenced by "all".  In order to support old scripts, we create an
@@ -1274,6 +1280,11 @@ int PAutoBlock(void)
 #else
   return 1;
 #endif
+}
+
+int PIsGlutThread(void)
+{
+  return(PyThread_get_thread_ident()==P_glut_thread_id);
 }
 
 void PUnblock(void)

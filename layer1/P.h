@@ -73,6 +73,7 @@ int PComplete(char *str,int buf_size);
 
 int PTruthCallStr(PyObject *object,char *method,char *argument);
 int PPovrayRender(char *header,char *inp,char *file,int width,int height,int antialias);
+int PIsGlutThread(void);
 
 PyObject *GetBondsDict(void);
 
@@ -85,9 +86,11 @@ extern PyObject *P_chempy;
 extern PyObject *P_models;
 extern PyObject *P_setting;
 
+
 extern PyThreadState *P_glut_thread_state; /* this is the state for the main GUI thread */
 extern PyThreadState *P_api_thread_state; /* this is the thread state for a non-glut API thread */
 extern int P_glut_thread_keep_out;
+extern unsigned int P_glut_thread_id;
 
 #endif
 

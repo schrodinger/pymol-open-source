@@ -449,7 +449,7 @@ void EditorCycleValence(void)
 
 }
 /*========================================================================*/
-void EditorAttach(char *elem,int geom,int valence)
+void EditorAttach(char *elem,int geom,int valence,char *name)
 {
   CEditor *I = &Editor;
   int i0;
@@ -469,14 +469,16 @@ void EditorAttach(char *elem,int geom,int valence)
       sele1 = SelectorIndexByName(cEditorSele2);
       if(sele1>=0) {
         /* bond mode - behave like replace */
-        EditorReplace(elem,geom,valence);
+        EditorReplace(elem,geom,valence,name);
       } else {
         /* atom mode */
-        i0 = ObjectMoleculeGetAtomIndex(I->Obj,sele0); /* slox */
+        i0 = ObjectMoleculeGetAtomIndex(I->Obj,sele0); /* slow */
         if(i0>=0) {
-          UtilNCopy(ai->elem,elem,2);
+          UtilNCopy(ai->elem,elem,sizeof(AtomName));
           ai->geom=geom;
           ai->valence=valence;
+          if(name[0])
+            UtilNCopy(ai->name,name,sizeof(AtomName));
           ObjectMoleculeAttach(I->Obj,i0,ai); /* will free ai */
         }
       }
@@ -576,7 +578,7 @@ void EditorHFill(void)
   
 }
 /*========================================================================*/
-void EditorReplace(char *elem,int geom,int valence)
+void EditorReplace(char *elem,int geom,int valence,char *name)
 {
   CEditor *I = &Editor;
   int i0;
@@ -593,9 +595,11 @@ void EditorReplace(char *elem,int geom,int valence)
 
     sele0 = SelectorIndexByName(cEditorSele1);
     if(sele0>=0) {
-      i0 = ObjectMoleculeGetAtomIndex(I->Obj,sele0); /* slox */
+      i0 = ObjectMoleculeGetAtomIndex(I->Obj,sele0); /* slow */
       if(i0>=0) {
-        UtilNCopy(ai.elem,elem,2);
+        UtilNCopy(ai.elem,elem,sizeof(AtomName));
+        if(name[0])
+          UtilNCopy(ai.name,name,sizeof(AtomName));
         ai.geom=geom;
         ai.valence=valence;
         ObjectMoleculePrepareAtom(I->Obj,i0,&ai);
@@ -1022,7 +1026,7 @@ void EditorDrag(ObjectMolecule *obj,int index,int mode,int state,float *pt,float
   int log_trans = SettingGet(cSetting_log_conformations);
 
   PRINTFD(FB_Editor)
-    " EditorDrag-Debug: entered. obj %p index %d mode %d \nIndex %d Sele %d Object %p\n Axis %d Base %d BondFlag %d SlowFlag %d\n", obj,index,mode,
+    " EditorDrag-Debug: entered. obj %p state %d index %d mode %d \nIndex %d Sele %d Object %p\n Axis %d Base %d BondFlag %d SlowFlag %d\n", obj,state,index,mode,
     I->DragIndex,I->DragSelection,I->DragObject,I->DragHaveAxis,I->DragHaveBase,
     I->DragBondFlag,I->DragSlowFlag
     ENDFD;

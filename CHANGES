@@ -46,8 +46,6 @@ evolve.
 
    * support CML via some "swallowable" python XML parser
  
-   * add in support for CGL's annotated PDB file format
-
    * make PyMOL a compliant extension for the Chimera environment
 
    * add a dynamic 3-D based tutorial
@@ -75,8 +73,6 @@ Current and Ongoing Goals
    * clean up return values in the API and qualify exceptions.  Include the source
      module name in messages, and provide proper feedback conditionals
 
-   * update 'expand' and 'attach' to take an atom name as well as an element symbol
-
    * complete first-round test-cases.
 
    * complete matrix-based object translation and rotation
@@ -100,18 +96,15 @@ Current Bugs to Fix
    * superposition system fails with degenerate sets (planer systems, etc).
      sometimes it just fails period
 
-In Progress
-
-   * real session saves nearing completion...
-
 Changes up to 0.86
+
+   * session saves completed -- boy that was a lot of work!
 
    * reorganized tcltk menu structure
 
-   * 
    * minimal texture options exposed in menu (slow!)
 
-   * better support for Python in PyMOL command scripts ('\' works for multiline exprs).
+   * better support for Python in PyMOL command scripts ('\' works for multiline blocks).
 
    * freeze state and thaw state added to mol_action menu
 
@@ -119,9 +112,13 @@ Changes up to 0.86
 
    * ribbon_trace can be used to view CA-only models
 
-   * ray_shadows setting enables disabling of shadows in raytracer (slight performance inc.)
+   * ray_shadows setting can disable shadows in raytracer (slight performance inc.)
 
    * added secondary structure to chemical python model data structure
+
+   * fixed slab mode of clip statement
+
+   * update 'expand' and 'attach' can now take an atom name as well as an element symbol
 
 Changes up to 0.85
 

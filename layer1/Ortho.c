@@ -352,79 +352,82 @@ void OrthoBusyDraw(int force)
   busyTime = (-I->BusyLast) + now;
   if(force||(busyTime>cBusyUpdate)) {
 
-	 OrthoPushMatrix();
+    if(PIsGlutThread()) {
+      OrthoPushMatrix();
 	 
-    if(PMGUI) {
-      glDrawBuffer(GL_FRONT);
-      glClear(GL_DEPTH_BUFFER_BIT);
-      
-      glColor3fv(black);
-      glBegin(GL_POLYGON);
-      glVertex2i(0,I->Height);
-      glVertex2i(cBusyWidth,I->Height);
-      glVertex2i(cBusyWidth,I->Height-cBusyHeight);
-      glVertex2i(0,I->Height-cBusyHeight);
-      glVertex2i(0,I->Height); /* needed on old buggy Mesa */
-      glEnd();
-      
-      glColor3fv(white);	 
-      
-      y=I->Height-cBusyMargin;
-      c=I->BusyMessage;
-      if(*c) {
-        glRasterPos4d(cBusyMargin,y-(cBusySpacing/2),0.0,1.0);
-        while(*c)
-          p_glutBitmapCharacter(P_GLUT_BITMAP_8_BY_13,*(c++));
-        y-=cBusySpacing;
-      }
-      
-      if(I->BusyStatus[1]) {
-        glBegin(GL_LINE_LOOP);
-        glVertex2i(cBusyMargin,y);
-        glVertex2i(cBusyWidth-cBusyMargin,y);
-        glVertex2i(cBusyWidth-cBusyMargin,y-cBusyBar);
-        glVertex2i(cBusyMargin,y-cBusyBar);
-        glVertex2i(cBusyMargin,y); /* needed on old buggy Mesa */
-        glEnd();
-        glColor3fv(white);	 
+      if(PMGUI) {
+        glDrawBuffer(GL_FRONT);
+        glClear(GL_DEPTH_BUFFER_BIT);
+        
+        glColor3fv(black);
         glBegin(GL_POLYGON);
-        glVertex2i(cBusyMargin,y);
-        x=(I->BusyStatus[0]*(cBusyWidth-2*cBusyMargin)/I->BusyStatus[1])+cBusyMargin;
-        glVertex2i(x,y);
-        glVertex2i(x,y-cBusyBar);
-        glVertex2i(cBusyMargin,y-cBusyBar);
-        glVertex2i(cBusyMargin,y); /* needed on old buggy Mesa */
+        glVertex2i(0,I->Height);
+        glVertex2i(cBusyWidth,I->Height);
+        glVertex2i(cBusyWidth,I->Height-cBusyHeight);
+        glVertex2i(0,I->Height-cBusyHeight);
+        glVertex2i(0,I->Height); /* needed on old buggy Mesa */
         glEnd();
-        y-=cBusySpacing;
-      }
-      
-      if(I->BusyStatus[3]) {
+        
         glColor3fv(white);	 
-        glBegin(GL_LINE_LOOP);
-        glVertex2i(cBusyMargin,y);
-        glVertex2i(cBusyWidth-cBusyMargin,y);
-        glVertex2i(cBusyWidth-cBusyMargin,y-cBusyBar);
-        glVertex2i(cBusyMargin,y-cBusyBar);
-        glVertex2i(cBusyMargin,y); /* needed on old buggy Mesa */
-        glEnd();
-        x=(I->BusyStatus[2]*(cBusyWidth-2*cBusyMargin)/I->BusyStatus[3])+cBusyMargin;
-        glColor3fv(white);	 
-        glBegin(GL_POLYGON);
-        glVertex2i(cBusyMargin,y);
-        glVertex2i(x,y);
-        glVertex2i(x,y-cBusyBar);
-        glVertex2i(cBusyMargin,y-cBusyBar);
-        glVertex2i(cBusyMargin,y); /* needed on old buggy Mesa */
-        glEnd();
-        y-=cBusySpacing;
+        
+        y=I->Height-cBusyMargin;
+        c=I->BusyMessage;
+        if(*c) {
+          glRasterPos4d(cBusyMargin,y-(cBusySpacing/2),0.0,1.0);
+          while(*c)
+            p_glutBitmapCharacter(P_GLUT_BITMAP_8_BY_13,*(c++));
+          y-=cBusySpacing;
+        }
+        
+        if(I->BusyStatus[1]) {
+          glBegin(GL_LINE_LOOP);
+          glVertex2i(cBusyMargin,y);
+          glVertex2i(cBusyWidth-cBusyMargin,y);
+          glVertex2i(cBusyWidth-cBusyMargin,y-cBusyBar);
+          glVertex2i(cBusyMargin,y-cBusyBar);
+          glVertex2i(cBusyMargin,y); /* needed on old buggy Mesa */
+          glEnd();
+          glColor3fv(white);	 
+          glBegin(GL_POLYGON);
+          glVertex2i(cBusyMargin,y);
+          x=(I->BusyStatus[0]*(cBusyWidth-2*cBusyMargin)/I->BusyStatus[1])+cBusyMargin;
+          glVertex2i(x,y);
+          glVertex2i(x,y-cBusyBar);
+          glVertex2i(cBusyMargin,y-cBusyBar);
+          glVertex2i(cBusyMargin,y); /* needed on old buggy Mesa */
+          glEnd();
+          y-=cBusySpacing;
+        }
+        
+        if(I->BusyStatus[3]) {
+          glColor3fv(white);	 
+          glBegin(GL_LINE_LOOP);
+          glVertex2i(cBusyMargin,y);
+          glVertex2i(cBusyWidth-cBusyMargin,y);
+          glVertex2i(cBusyWidth-cBusyMargin,y-cBusyBar);
+          glVertex2i(cBusyMargin,y-cBusyBar);
+          glVertex2i(cBusyMargin,y); /* needed on old buggy Mesa */
+          glEnd();
+          x=(I->BusyStatus[2]*(cBusyWidth-2*cBusyMargin)/I->BusyStatus[3])+cBusyMargin;
+          glColor3fv(white);	 
+          glBegin(GL_POLYGON);
+          glVertex2i(cBusyMargin,y);
+          glVertex2i(x,y);
+          glVertex2i(x,y-cBusyBar);
+          glVertex2i(cBusyMargin,y-cBusyBar);
+          glVertex2i(cBusyMargin,y); /* needed on old buggy Mesa */
+          glEnd();
+          y-=cBusySpacing;
+        }
+        
+        glDrawBuffer(GL_BACK);
+        glFlush();
       }
-      
-      glDrawBuffer(GL_BACK);
-      glFlush();
+      OrthoPopMatrix();
+      OrthoDirty();/* switched from SceneDirty */
     }
-	 OrthoPopMatrix();
-	 OrthoDirty();/* switched from SceneDirty */
-	 I->BusyLast=now;
+    I->BusyLast=now;
+    
   }
   PRINTFD(FB_Ortho)
     " OrthoBusyDraw: leaving...\n"
@@ -1302,26 +1305,27 @@ void OrthoSplash(void)
   PRINTF " PyMOL(TM) Molecular Graphics System, Version " ENDF;
   PRINTF _PyMOL_VERSION ENDF;
   PRINTF ".\n" ENDF;
-  PRINTF " Copyright (C) 1998-2002 by DeLano Scientific.\n All Rights Reserved.\n \n" ENDF;
+  PRINTF " Copyright (C) 1998-2003 by DeLano Scientific LLC.\n All Rights Reserved.\n \n" ENDF;
 
   PRINTF "    Created by Warren L. DeLano, Ph.D. \n \n" ENDF;
 
   PRINTF "    Other Major Authors and Contributors:\n\n" ENDF;
   PRINTF "       Ralf W. Grosse-Kunstleve, Ph.D.\n \n" ENDF;
 
-  PRINTF "    This software is open source and freely available.\n" ENDF;
-  PRINTF "    Updates can be found at \"http://www.pymol.org\".\n \n" ENDF;
+  PRINTF "    PyMOL is user-supported open-source software and is NOT public domain.\n \n" ENDF;
 
-  PRINTF "    Is PyMOL a free and open-source project worthy of your support?\n\n" ENDF;
-  PRINTF "    Then visit the home page to learn what you can do to contribute!\n\n" ENDF;
+  PRINTF "    If PyMOL is helpful in your work or study, then please volunteer \n" ENDF;
+  PRINTF "    support for our ongoing campaign to create open and affordable software \n" ENDF;
+  PRINTF "    for molecular research.\n \n" ENDF;
 
-  PRINTF "    Also, please cite PyMOL in publications and presentations:\n\n" ENDF;
+  PRINTF "    Updates and other information can be found at \"http://www.pymol.org\".\n \n" ENDF;
+
+  PRINTF "    Please cite PyMOL in publications and presentations:\n \n" ENDF;
   PRINTF "       Warren L. DeLano \"The PyMOL Molecular Graphics System.\"\n" ENDF;
-  PRINTF "       DeLano Scientific, San Carlos, CA, USA. http://www.pymol.org\n\n" ENDF;
+  PRINTF "       DeLano Scientific LLC, San Carlos, CA, USA. http://www.pymol.org\n \n" ENDF;
 
 
-  PRINTF "    Enter \"help release\" for release notes (PLEASE READ!).\n" ENDF;
-  PRINTF "    Enter \"help commands\" for a list of commands.\n" ENDF;
+  PRINTF "    Enter \"help\" for a list of commands.\n" ENDF;
   PRINTF 
     "    Enter \"help <command-name>\" for information on a specific command.\n\n"
     ENDF;

@@ -63,5 +63,6 @@ int SelectorMapCoulomb(int sele1,ObjectMapState *oMap,float cutoff);
 int SelectorMapGaussian(int sele1,ObjectMapState *oMap,float buffer);
 PyObject *SelectorAsPyList(int sele1);
 int SelectorFromPyList(char *name,PyObject *list);
+ObjectMolecule **SelectorGetObjectMoleculeVLA(int sele);
 
 #endif

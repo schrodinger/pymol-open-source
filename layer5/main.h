@@ -16,13 +16,17 @@ Z* -------------------------------------------------------------------
 #ifndef _H_main
 #define _H_main
 
+#include"os_python.h"
+
 void MainFree(void);
 void MainDoReshape(int width, int height);
 void MainDirty(void);
 void MainSwapBuffers(void);
 void MainRefreshNow(void);
 int MainSavingUnderWhileIdle(void);
- 
+int MainFromPyList(PyObject *list);
+PyObject *MainAsPyList(void);
+
 extern int PyMOLReady;
 extern int PyMOLTerminating; /* flag to help prevent crashes on shutdown with Windows */
 extern int PMGUI;

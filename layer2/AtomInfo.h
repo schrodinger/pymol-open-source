@@ -150,6 +150,7 @@ void AtomInfoBracketResidueFast(AtomInfoType *ai0,int n0,int cur,int *st,int *nd
 
 void AtomInfoUniquefyNames(AtomInfoType *atInfo0,int n0,AtomInfoType *atInfo1,int n1);
 
+
 #define cAIC_ct        0x0001
 #define cAIC_fc        0x0002
 #define cAIC_pc        0x0004
@@ -290,5 +291,6 @@ typedef struct AtomInfoType083 {
   int sculpt_id; /* introduced in version 0.77 */
   int stereo; /* for 2D representation */
 } AtomInfoType083;
+
 
 #endif

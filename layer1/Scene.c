@@ -111,18 +111,24 @@ int SceneRelease(Block *block,int button,int x,int y,int mod);
 int SceneDrag(Block *block,int x,int y,int mod);
 void ScenePrepareMatrix(int mode);
 
+#if 0
 static int SceneGetObjState(CObject *obj,int state)
 {
   int objState;
   if(SettingGetIfDefined_i(obj->Setting,cSetting_state,&objState)) {
-    if(objState>0) {
+    if(objState>0) { /* specific state */
       state=objState-1;
-    } if(objState<0) {
+    } if(objState<0) { /* all states */
       state=-1;
     }
   }
+  if(state>=0) { /* if all states for object is set */
+    if(SettingGet_i(obj->Setting,NULL,cSetting_all_states))
+      state=-1;
+  }
   return(state);
 }
+#endif
 
 void SceneSetCardInfo(char *vendor,char *renderer,char *version){
   CScene *I=&Scene;  
@@ -284,24 +290,55 @@ void SceneClipSet(float front,float back)
   SceneDirty();
 }
 /*========================================================================*/
-void SceneClip(int plane,float movement) /* 0=front, 1=back*/
+void SceneClip(int plane,float movement,char *sele,int state) /* 0=front, 1=back*/
 {
   CScene *I=&Scene;
   float avg;
-
+  float mn[3],mx[3],cent[3],v0[3],offset[3],origin[3];
   switch(plane) {
   case 0: /* near */
     SceneClipSet(I->Front-movement,I->Back);
     break;
   case 1: /* far */
-    SceneClipSet(I->Front,I->Back-movement);
+    SceneClipSet(I->Front,I->Back-movement);      
     break;
   case 2: /* move */
     SceneClipSet(I->Front-movement,I->Back-movement);    
     break;
   case 3: /* slab */
+    if(sele[0]) {
+      if(!ExecutiveGetExtent(sele,mn,mx,true,state,false))
+        sele = NULL;
+      else {
+        average3f(mn,mx,cent); /* get center of selection */
+        subtract3f(cent,I->Origin,v0); /* how far from origin? */
+        MatrixTransform3f(I->RotMatrix,v0,offset); /* convert to view-space */
+      }
+    } else {
+      sele = NULL;
+    }
     avg = (I->Front+I->Back)/2.0;
+    movement/=2.0;
+    if(sele) {
+      avg = -I->Pos[2]-offset[2];
+    }
     SceneClipSet(avg-movement,avg+movement);
+    break;
+  case 4: /* atoms */
+    if(!sele[0]) {
+      sele=cKeywordAll;
+    } 
+    if(!ExecutiveGetCameraExtent(sele,mn,mx,true,state))
+      sele = NULL;
+    if(sele[0]) {
+      average3f(mn,mx,cent); /* get center of selection */
+      MatrixTransform3f(I->RotMatrix,I->Origin,origin); /* convert to view-space */
+      subtract3f(mx,origin,mx); /* how far from origin? */
+      subtract3f(mn,origin,mn); /* how far from origin? */
+      SceneClipSet(-I->Pos[2]-mx[2]-movement,-I->Pos[2]-mn[2]+movement);
+    } else {
+      sele = NULL;
+    }
     break;
   }
 }
@@ -607,9 +644,9 @@ void SceneWindowSphere(float *location,float radius)
   dist = radius/tan((fov/2.0)*cPI/180.0);
 
   I->Pos[2]-=dist;
-  I->Front=(-I->Pos[2]-radius*1.1);
+  I->Front=(-I->Pos[2]-radius*1.2);
   I->FrontSafe=(I->Front<cFrontMin ? cFrontMin : I->Front);  
-  I->Back=(-I->Pos[2]+radius*1.4);
+  I->Back=(-I->Pos[2]+radius*1.55);
   /*printf("%8.3f %8.3f %8.3f\n",I->Front,I->Pos[2],I->Back);*/
 }
 /*========================================================================*/
@@ -623,7 +660,6 @@ void SceneRelocate(float *location)
   slab_width = I->Back-I->Front;
 
   /* find out how far camera was from previous origin */
-  MatrixTransform3f(I->RotMatrix,I->Origin,v0); 
   dist = I->Pos[2];
 
   /* find where this point is in relationship to the origin */
@@ -1698,7 +1734,8 @@ void SceneRay(int ray_width,int ray_height,int mode,char **headerVLA_ptr,char **
 	 {
 		if(rec->obj->fRender) {
 		  ray->fColor3fv(ray,white);
-		  rec->obj->fRender(rec->obj,SceneGetObjState(rec->obj,curState),ray,NULL,0);
+		  rec->obj->fRender(rec->obj,
+                          ObjectGetCurrentState(rec->obj,false),ray,NULL,0);
 		}
 	 }
 
@@ -2132,7 +2169,8 @@ void SceneRender(Pickable *pick,int x,int y,Multipick *smp)
 		  glLineWidth(3.0); /* insure some 100% pixels */
           glPushMatrix();
           if(rec->obj->fRender)
-            rec->obj->fRender(rec->obj,SceneGetObjState(rec->obj,curState),NULL,&pickVLA,0);
+            rec->obj->fRender(rec->obj,
+                              ObjectGetCurrentState(rec->obj,false),NULL,&pickVLA,0);
           glPopMatrix();
         }
 
@@ -2152,7 +2190,8 @@ void SceneRender(Pickable *pick,int x,int y,Multipick *smp)
 		  glLineWidth(3.0); /* insure some 100% pixels */
           glPushMatrix();
           if(rec->obj->fRender)
-            rec->obj->fRender(rec->obj,SceneGetObjState(rec->obj,curState),NULL,&pickVLA,0);
+            rec->obj->fRender(rec->obj,
+                              ObjectGetCurrentState(rec->obj,false),NULL,&pickVLA,0);
           glPopMatrix();
         }
 
@@ -2192,7 +2231,8 @@ void SceneRender(Pickable *pick,int x,int y,Multipick *smp)
 		  glLineWidth(3.0); /* insure some 100% pixels */
           glPushMatrix();
 			 if(rec->obj->fRender)
-			   rec->obj->fRender(rec->obj,SceneGetObjState(rec->obj,curState),NULL,&pickVLA,0);
+			   rec->obj->fRender(rec->obj,
+                              ObjectGetCurrentState(rec->obj,false),NULL,&pickVLA,0);
 			 glPopMatrix();
         }
 
@@ -2209,7 +2249,8 @@ void SceneRender(Pickable *pick,int x,int y,Multipick *smp)
 		  glLineWidth(3.0); /* insure some 100% pixels */
           glPushMatrix();
           if(rec->obj->fRender)
-            rec->obj->fRender(rec->obj,SceneGetObjState(rec->obj,curState),NULL,&pickVLA,0);
+            rec->obj->fRender(rec->obj,
+                              ObjectGetCurrentState(rec->obj,false),NULL,&pickVLA,0);
           glPopMatrix();
         }
       
@@ -2280,7 +2321,8 @@ void SceneRender(Pickable *pick,int x,int y,Multipick *smp)
               glPushMatrix();
               glNormal3fv(normal);
               if(rec->obj->fRender)
-                rec->obj->fRender(rec->obj,SceneGetObjState(rec->obj,curState),NULL,NULL,pass);
+                rec->obj->fRender(rec->obj,
+                                  ObjectGetCurrentState(rec->obj,false),NULL,NULL,pass);
               glPopMatrix();
             }
         }
@@ -2302,7 +2344,8 @@ void SceneRender(Pickable *pick,int x,int y,Multipick *smp)
             glPushMatrix();
             glNormal3fv(normal);
             if(rec->obj->fRender)
-              rec->obj->fRender(rec->obj,SceneGetObjState(rec->obj,curState),NULL,NULL,-1);
+              rec->obj->fRender(rec->obj,
+                                ObjectGetCurrentState(rec->obj,false),NULL,NULL,-1);
             glPopMatrix();
           }
         glPopMatrix();
@@ -2328,7 +2371,8 @@ void SceneRender(Pickable *pick,int x,int y,Multipick *smp)
               glPushMatrix();
               glNormal3fv(normal);
               if(rec->obj->fRender)
-                rec->obj->fRender(rec->obj,SceneGetObjState(rec->obj,curState),NULL,NULL,pass);
+                rec->obj->fRender(rec->obj,
+                                  ObjectGetCurrentState(rec->obj,false),NULL,NULL,pass);
               glPopMatrix();
             }
         }
@@ -2350,7 +2394,8 @@ void SceneRender(Pickable *pick,int x,int y,Multipick *smp)
             glPushMatrix();
             glNormal3fv(normal);
             if(rec->obj->fRender)
-              rec->obj->fRender(rec->obj,SceneGetObjState(rec->obj,curState),NULL,NULL,-1);
+              rec->obj->fRender(rec->obj,
+                                ObjectGetCurrentState(rec->obj,false),NULL,NULL,-1);
             glPopMatrix();
           }
 
@@ -2377,7 +2422,8 @@ void SceneRender(Pickable *pick,int x,int y,Multipick *smp)
               glPushMatrix();
               glNormal3fv(normal);
               if(rec->obj->fRender)
-                rec->obj->fRender(rec->obj,SceneGetObjState(rec->obj,curState),NULL,NULL,pass);
+                rec->obj->fRender(rec->obj,
+                                  ObjectGetCurrentState(rec->obj,false),NULL,NULL,pass);
               glPopMatrix();
             }
         }
@@ -2415,7 +2461,8 @@ void SceneRender(Pickable *pick,int x,int y,Multipick *smp)
             glPushMatrix();
             glNormal3fv(normal);
             if(rec->obj->fRender)
-              rec->obj->fRender(rec->obj,SceneGetObjState(rec->obj,curState),NULL,NULL,pass); 
+              rec->obj->fRender(rec->obj,
+                                ObjectGetCurrentState(rec->obj,false),NULL,NULL,pass); 
             glPopMatrix();
           }
 

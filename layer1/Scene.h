@@ -68,7 +68,7 @@ void ScenePerspective(int flag);
 
 void SceneRotate(float angle,float x,float y,float z);
 void SceneTranslate(float x,float y, float z);
-void SceneClip(int plane,float movement);
+void SceneClip(int plane,float movement,char *sele,int state);
 
 void SceneScale(float scale);
 void SceneResetNormal(int lines);

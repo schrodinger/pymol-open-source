@@ -139,6 +139,12 @@ if pymol_launch != 3: # if this isn't a dry run
 
    _ext_gui = None
 
+   # lists of functions to call when saving and restoring pymol session objects
+   # The entry 'None' represents the PyMOL C-API function call
+   
+   _session_save_tasks = [ None ]
+   _session_restore_tasks = [ None ]
+   
    # include installed numpy on win32 
 
    if sys.platform=='win32':
