@@ -275,7 +275,7 @@ void MainDoReshape(int width, int height) /* called internally */
     p_glutReshapeWindow(width,height);
     glViewport(0, 0, (GLint) width, (GLint) height);
   }
-
+  printf("height %d width %d\n",height,width);
   OrthoReshape(width,height);
 }
 /*========================================================================*/
@@ -469,6 +469,11 @@ void MainBusyIdle(void)
 
 void launch(void)
 {
+  if(InternalGUI)
+    WinX+=cOrthoRightSceneMargin;
+  if(InternalFeedback)
+    WinY+= (InternalFeedback-1)*cOrthoLineHeight + cOrthoBottomSceneMargin;
+
   if(PMGUI) {
     
     atexit(MainOnExit); /* register callback to help prevent crashes
@@ -483,18 +488,13 @@ void launch(void)
     } else {
       StereoCapable = 1;
     }
-    
-    if(InternalGUI)
-      WinX+=cOrthoRightSceneMargin;
-    if(InternalFeedback)
-      WinY+= (InternalFeedback-1)*cOrthoLineHeight + cOrthoBottomSceneMargin;
 
     p_glutInitWindowPosition(0, 175);
     p_glutInitWindowSize(WinX, WinY);
     
     TheWindow = p_glutCreateWindow("PyMOL Viewer");
 
-  }
+  } 
 
   MainInit();
 
