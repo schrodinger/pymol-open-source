@@ -3884,6 +3884,7 @@ ObjectMolecule *ObjectMoleculeReadMOLStr(ObjectMolecule *I,char *MOLStr,int fram
   if(!cset) 
 	 {
       ObjectMoleculeFree(I);
+      I=NULL;
 		ok=false;
 	 }
   

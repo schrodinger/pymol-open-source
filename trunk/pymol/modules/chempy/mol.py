@@ -13,7 +13,10 @@ class MOL(Storage):
       model.molecule.title = string.strip(molList[0])
       model.molecule.dim_code = string.strip(molList[1][20:22])
       model.molecule.comments = string.strip(molList[2])
-      model.molecule.chiral = int(molList[3][12:15])
+      try:
+         model.molecule.chiral = int(molList[3][12:15])
+      except:
+         model.molecule.chiral = 0
       nAtom = int(molList[3][0:3])
       nBond = int(molList[3][3:6])
 
@@ -27,7 +30,10 @@ class MOL(Storage):
          at.coord = [float(molList[irec][0:10]), 
             float(molList[irec][10:20]),float(molList[irec][20:30])]
          at.symbol = string.strip(molList[irec][31:33])
-         at.stereo = int(molList[irec][39:42])         
+         try:
+            at.stereo = int(molList[irec][39:42])
+         except:
+            at.stereo = 0
          chg=int(molList[irec][36:39])
          if chg>0: chg=4-chg
          at.formal_charge = chg
@@ -40,7 +46,10 @@ class MOL(Storage):
          bnd = Bond()
          bnd.index = [ int(molList[irec][0:3])-1,int(molList[irec][3:6])-1 ]
          bnd.order = int(molList[irec][6:9])
-         bnd.stereo = int(molList[irec][9:12])
+         try:
+            bnd.stereo = int(molList[irec][9:12])
+         except:
+            bnd.stereo = 0
          model.bond.append(bnd)
          irec = irec+1
 

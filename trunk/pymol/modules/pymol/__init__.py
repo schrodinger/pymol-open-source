@@ -120,6 +120,11 @@ def adapt_to_hardware():
                print " Adapting to NVIDIA hardware on Mac..."
                cmd.set('line_smooth',0,quiet=1)
                cmd.set('fog',0.9,quiet=1)
+   if vendor[0:3]=='ATI':
+      if renderer[0:17]=='FireGL2 / FireGL3':
+         if invocation.options.show_splash:
+            print " Adapting to FireGL hardware..."
+         cmd.set('line_width','2',quiet=1)            
 
          
 # NEED SOME CONTRIBUTIONS HERE!

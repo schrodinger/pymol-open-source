@@ -1624,12 +1624,15 @@ PyObject *SelectorGetChemPyModel(int sele,int state)
   PyObject *model=NULL,*bnd=NULL;
   PyObject *atom_list=NULL,*bond_list=NULL;
   PyObject *tmp;
+  PyObject *molecule = NULL;
   int a,b,b1,b2,c,s,idx,at,a1,a2;
   BondType *ii1;
   BondType *bond=NULL;
   int nBond=0;
   int ok =true;
   CoordSet *cs;
+  int single_flag = true;
+  CoordSet *single_cs = NULL;
   ObjectMolecule *obj;
   AtomInfoType *atInfo,*ai;
   SelectorUpdateTable();
@@ -1682,6 +1685,14 @@ PyObject *SelectorGetChemPyModel(int sele,int state)
           } else 
             idx=cs->AtmToIdx[at];
           if(idx>=0) {
+            if(single_flag) { /* remember whether all atoms come from a single coordinate set...*/
+              if(single_cs) {
+                if(single_cs!=cs)
+                  single_flag=false;
+              } else {
+                single_cs = cs;
+              }
+            }
             ai = obj->AtomInfo+at;
             PyList_SetItem(atom_list,c,
                            CoordSetAtomToChemPyAtom(
@@ -1691,6 +1702,17 @@ PyObject *SelectorGetChemPyModel(int sele,int state)
         }
       }
       Py_XDECREF(atom_list);
+
+      if(single_flag&&single_cs) { /* single coordinate set?  then set coordinate set info */
+        molecule = PyObject_GetAttrString(model,"molecule");
+        if(molecule) {
+          if(single_cs->Name[0]) {
+            PyObject_SetAttrString(molecule,"title",           /* including name/title */
+                                   PyString_FromString(single_cs->Name)); 
+          }
+        }
+        Py_XDECREF(molecule);
+      }
 
       nBond = 0;
       bond = VLAlloc(BondType,1000);
