@@ -901,7 +901,7 @@ void SettingInitGlobal(void)
 
   SettingSet_f(I,cSetting_cartoon_power_b, 0.45);
 
-  SettingSet_f(I,cSetting_cartoon_rect_width, 1.30);
+  SettingSet_f(I,cSetting_cartoon_rect_width, 1.20);
 
   SettingSet_f(I,cSetting_cartoon_rect_thickness, 0.4);
   
