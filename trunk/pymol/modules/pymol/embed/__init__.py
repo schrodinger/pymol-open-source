@@ -94,12 +94,14 @@ class EmbeddedPyMOL:
       self.ep_swap = None
       
    def ep_reshape(self, width, height):
+      _cmd.runwxpymol() 
       _cmd.p_glut_event(P_GLUT_RESHAPE_EVENT,width,height,0,0,0)
 
    def ep_char(self, x, y, code, shift, control, meta):
       self.ep_mod = mod_dict.get((shift,control,meta))
       if self.ep_mod == None:
          self.ep_mod = get_mod_value(shift,control,meta)
+      _cmd.runwxpymol() 
       _cmd.p_glut_event(P_GLUT_CHAR_EVENT,x,y,code,0,self.ep_mod)
 
    def ep_special(self,x,y,code,shift,control,meta):
@@ -108,6 +110,7 @@ class EmbeddedPyMOL:
          self.ep_mod = get_mod_value(shift,control,meta)
       code = special_dict.get(code)
       if code!=None:
+         _cmd.runwxpymol() 
          _cmd.p_glut_event(P_GLUT_SPECIAL_EVENT,x,y,code,0,self.ep_mod)
    
    def ep_mouse_down(self,x,y,left,middle,right,shift,control,meta):
@@ -120,10 +123,12 @@ class EmbeddedPyMOL:
          self.ep_button = P_GLUT_MIDDLE_BUTTON
       elif right:
          self.ep_button = P_GLUT_RIGHT_BUTTON
+      _cmd.runwxpymol() 
       _cmd.p_glut_event(P_GLUT_MOUSE_EVENT,x,y,self.ep_button,P_GLUT_DOWN,self.ep_mod)
       
    def ep_mouse_up(self, x, y):
       if self.ep_button != None:
+         _cmd.runwxpymol() 
          _cmd.p_glut_event(P_GLUT_MOUSE_EVENT,x,y,self.ep_button,P_GLUT_UP,self.ep_mod)
       self.ep_button = None
       
@@ -137,15 +142,19 @@ class EmbeddedPyMOL:
          self.ep_button = P_GLUT_MIDDLE_BUTTON
       elif right:
          self.ep_button = P_GLUT_RIGHT_BUTTON
+      _cmd.runwxpymol() 
       _cmd.p_glut_event(P_GLUT_MOTION_EVENT,x,y,self.ep_button,0,self.ep_mod)
 
    def ep_draw(self):
+      _cmd.runwxpymol() 
       _cmd.p_glut_event(P_GLUT_DISPLAY_EVENT,0,0,0,0,0) # draw event
 
    def ep_idle(self):
+      _cmd.runwxpymol() 
       _cmd.p_glut_event(0,0,0,0,0,0)
 
    def ep_get_redisplay(self):
+      _cmd.runwxpymol() 
       return _cmd.p_glut_get_redisplay()
    
    def ep_set_swap_callback(self,swap):
