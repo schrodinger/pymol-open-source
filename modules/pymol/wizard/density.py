@@ -5,7 +5,7 @@ import pymol
 import copy
 
 default_map = [ '', '', '']
-default_level = [ 1.0, 3.0, 1.0]
+default_level = [ 1.0, 3.0, -3.0]
 default_radius = 8.0
 default_track = 0
 
@@ -42,7 +42,8 @@ class Density(Wizard):
                               [1, '1.5 sigma','cmd.get_wizard().set_level(%d,1.5)'%x],
                               [1, '2.0 sigma','cmd.get_wizard().set_level(%d,2.0)'%x],
                               [1, '3.0 sigma','cmd.get_wizard().set_level(%d,3.0)'%x],
-                              [1, '5.0 sigma','cmd.get_wizard().set_level(%d,5.0)'%x]]
+                              [1, '5.0 sigma','cmd.get_wizard().set_level(%d,5.0)'%x],
+                              [1, '-3.0 sigma','cmd.get_wizard().set_level(%d,-3.0)'%x]]
       
       self.menu['level0'] = level_menu(0)
       self.menu['level1'] = level_menu(1)
@@ -60,6 +61,9 @@ class Density(Wizard):
                self.map[0]=a
                break
       self.update_map_menus()
+
+      cmd.set_key('pgup',lambda c=cmd:c.get_wizard().next_res(d=-1))
+      cmd.set_key('pgdn',lambda c=cmd:c.get_wizard().next_res())      
       
    def update_map_menus(self):
 
@@ -149,6 +153,8 @@ class Density(Wizard):
          [ 1, 'Density Map Wizard',''],
          [ 2, 'Update Maps' , 'cmd.get_wizard().update_maps()'],
          [ 2, 'Zoom' , 'cmd.get_wizard().zoom()'],         
+         [ 2, 'Next Res. (PgDown)' , 'cmd.get_wizard().next_res()'],
+         [ 2, 'Previous Res. (PgUp)' , 'cmd.get_wizard().next_res(d=-1)'],
          [ 3, "Radius: %3.1f A"%self.radius,'radius'],
          [ 3, "Map 1: "+self.map[0],'map0'],
          [ 3, "       @ "+str(self.level[0])+" sigma",'level0'],
@@ -167,6 +173,8 @@ class Density(Wizard):
       default_level = self.level
       default_track = self.track
       self.clear()
+      cmd.set_key('pgup',None)
+      cmd.set_key('pgdn',None)
       
    def clear(self):
       pass
@@ -176,4 +184,44 @@ class Density(Wizard):
       if not bondFlag:
          if self.track<2:
             self.update_maps()
-         
+
+   def next_res(self, d=1):
+      # Donated by Tom Lee
+      if not ('pk1' in cmd.get_names('selections')):
+         print "Pick an atom in current residue."
+      else:
+         obj = cmd.index('pk1')[0][0]
+         a0 = cmd.get_model('pk1').atom[0]
+         cmd.select("_res0", "byres (pk1)")
+         res0 = cmd.get_model("_res0")
+         atn = a0.name
+         for a in res0.atom:
+            if (a.name == 'CA'):
+               atn = 'CA'
+               break
+            elif (a.name == 'C1*'):
+               atn = 'C1*'
+               break
+            elif (a.name == 'C1\''):
+               atn = 'C1\''
+               break
+         n = cmd.select('_pk1', ''+obj+'/'+a0.segi+'/'+a0.chain+'/'+str(a0.resi_number+d)+'/'+atn)
+         if (n == 0):  # deal with gaps in sequence:
+            cmd.select('_chain', ''+obj+'/'+a0.segi+'/'+a0.chain+'//'+atn)
+            chain = cmd.get_model('_chain')
+            resids = []
+            for a in chain.atom:
+               resids.append(a.resi)
+               if (a.resi_number == a0.resi_number):
+                  i = len(resids) - 1
+            next_i = i + d
+            if ((next_i < 0) or (next_i >= len(resids))):
+               print "Current residue is the end of a chain."
+            else:
+               n = cmd.select('_pk1', ''+obj+'/'+a0.segi+'/'+a0.chain+'/'+resids[next_i]+'/'+atn)
+         if (n > 0):
+            cmd.hide("labels", "(pk1)") 
+            cmd.select('pk1', '_pk1')
+            cmd.select('pkresi', 'byres _pk1')
+            cmd.label('(pk1)', '" %s%s %s" % (chain,resi,resn)')
+            self.update_maps()
