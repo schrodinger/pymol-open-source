@@ -358,7 +358,7 @@ class DemoInfo:
             cmd.hide("(1tii)")
             cmd.show("cartoon","1tii")
             cmd.zoom("1tii")
-            cmd.spectrum("count","rainbow","1tii")
+            cmd.spectrum("count","rainbow","1tii////ca")
             cmd.set("cartoon_highlight_color","grey50","1tii")
             cmd.set("cartoon_fancy_helices",1,"1tii")
          finally:
