@@ -76,10 +76,10 @@ void CoordSetGetAverage(CoordSet *I,float *v0)
   float *v;
   double accum[3];
   if(I->NIndex) {
+    v=I->Coord;
     accum[0]=*(v++);
     accum[1]=*(v++);
     accum[2]=*(v++);
-    v=I->Coord;
     for(a=1;a<I->NIndex;a++) {
       accum[0]+=*(v++);
       accum[1]+=*(v++);

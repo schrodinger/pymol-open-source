@@ -996,7 +996,7 @@ void ExecutiveSymExp(char *name,char *oname,char *s1,float cutoff)
       tc[2]/=op.i1;
     }
     transform33f3f(obj->Symmetry->Crystal->RealToFrac,tc,tc);
-    
+
 	 op.code = 'VERT';
 	 op.nvv1 =0;
     op.vv1 = VLAlloc(float,10000);
@@ -1409,18 +1409,18 @@ void ExecutiveDraw(Block *block)
               break;
             case 3:
               glBegin(GL_POLYGON);
-              glColor3f(1.0,0,0);
+              glColor3f(1.0,0.1,0.1);
               glVertex2i(x2,y2);
-              glColor3f(0.0,1.0,0);
+              glColor3f(0.1,1.0,0.1);
               glVertex2i(x2,y2+ExecToggleSize);
-              glColor3f(1.0,1.0,0);
+              glColor3f(1.0,1.0,0.1);
               glVertex2i(x2+ExecToggleSize,y2+ExecToggleSize);
-              glColor3f(0.0,1.0,1.0);
+              glColor3f(0.1,0.1,1.0);
               glVertex2i(x2+ExecToggleSize,y2);
               glEnd();
-              glColor3f(0.0,0.0,0.0);
+              /*              glColor3f(0.0,0.0,0.0);
               glRasterPos4d((double)(x2+2),(double)(y2+2),0.0,1.0);
-              glutBitmapCharacter(GLUT_BITMAP_8_BY_13,'C');              
+              glutBitmapCharacter(GLUT_BITMAP_8_BY_13,'C');              */
               glColor3fv(toggleColor);
               break;
             }
