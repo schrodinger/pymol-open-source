@@ -20,6 +20,10 @@ make-pyopengl:
 	cd pyopengl;$(MAKE) 
 	mv pyopengl/*.so ../modules
 
+make-champ:
+	cd champ;$(MAKE) 
+	mv champ/*.so ../modules
+
 clean: 
 	cd sglite;$(MAKE) clean
 
