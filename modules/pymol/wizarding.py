@@ -53,8 +53,10 @@ EXAMPLE
             if wiz:
                set_wizard(wiz)
                cmd.do("refresh")
+      else:
+         print "Error: Sorry, couldn't import the '"+name+"' wizard."         
    except ImportError:
-      print "Error: Sorry, couldn't find the '"+name+"' wizard."
+      print "Error: Sorry, couldn't import the '"+name+"' wizard."
 
 
 def set_wizard(*arg): # INTERNAL
