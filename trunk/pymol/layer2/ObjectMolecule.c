@@ -2119,13 +2119,16 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(char *buffer,AtomInfoType **atInfoPtr)
           p=ncopy(cc,p,6);
           sscanf(cc,"%f",&ai->b);
 
-          p=nskip(p,3);
+          p=nskip(p,6);
           p=ncopy(cc,p,4);
           if(!sscanf(cc,"%s",ai->segi)) ai->segi[0]=0;
           
           p=ncopy(cc,p,2);
-          if(!sscanf(cc,"%s",ai->elem)) ai->elem[0]=0;          
-
+          if(!sscanf(cc,"%s",ai->elem)) 
+            ai->elem[0]=0;          
+          else if(!(((ai->elem[0]>='a')&&(ai->elem[0]<='z'))||
+                    ((ai->elem[0]>='A')&&(ai->elem[0]<='Z'))))
+            ai->elem[0]=0;                      
           ai->visRep[0] = autoshow_lines;
           for(c=1;c<cRepCnt;c++) {
             ai->visRep[c] = false;
