@@ -113,6 +113,30 @@ typedef struct {
   ObjectMolecule *obj;
 } ProcPDBRec;
 
+int ExecutiveGetActiveSeleName(char *name, int create_new)
+{
+  int result=false;
+  SpecRec *rec = NULL;
+  CExecutive *I = &Executive;
+
+  while(ListIterate(I->Spec,rec,next)) {
+    if(rec->type==cExecSelection)
+      if(rec->visible) {
+        strcpy(name,rec->name);
+        result = true;
+      }
+  }
+  if((!result)&&create_new) {
+    int sel_num = SettingGetGlobal_i(cSetting_sel_counter) + 1;
+
+    SettingSetGlobal_i(cSetting_sel_counter,sel_num);
+    sprintf(name,"sel%02d",sel_num);
+    SelectorCreateEmpty(name);
+  }
+  return result;
+}
+
+
 int ExecutiveFixChemistry(char *s1,char *s2,int quiet)
 {
   int sele1=SelectorIndexByName(s1);
@@ -2144,6 +2168,7 @@ void ExecutiveSelectRect(BlockRect *rect,int mode)
 {
   Multipick smp;
   OrthoLineType buffer,buf2;
+  char selName[ObjNameMax] = cLeftButSele;
   char prefix[3]="";
   int log_box = 0;
   int logging;
@@ -2161,45 +2186,57 @@ void ExecutiveSelectRect(BlockRect *rect,int mode)
   if(smp.picked[0].index) {
     SelectorCreate(cTempRectSele,NULL,NULL,1,&smp);
     if(log_box) SelectorLogSele(cTempRectSele);
-    if(mode==cButModeRect) {
-      SelectorCreate(cLeftButSele,cTempRectSele,NULL,1,NULL);
-      if(log_box) {
-        sprintf(buf2,"%scmd.select(\"%s\",\"%s\",quiet=1)\n",prefix,cLeftButSele,cTempRectSele);
-        PLog(buf2,cPLog_no_flush);
-      }
-    } else if(SelectorIndexByName(cLeftButSele)>=0) {
-      if(mode==cButModeRectAdd) {
-        sprintf(buffer,"(%s or %s)",cLeftButSele,cTempRectSele);
-        SelectorCreate(cLeftButSele,buffer,NULL,0,NULL);
+    switch(mode) {
+    case cButModeRect:
+      if(mode==cButModeRect) {
+        SelectorCreate(cLeftButSele,cTempRectSele,NULL,1,NULL);
         if(log_box) {
-          sprintf(buf2,"%scmd.select(\"%s\",\"%s\")\n",prefix,cLeftButSele,buffer);
+          sprintf(buf2,"%scmd.select(\"%s\",\"%s\",quiet=1)\n",prefix,cLeftButSele,cTempRectSele);
           PLog(buf2,cPLog_no_flush);
+        }
+      } 
+      break;
+    case cButModeSeleAdd:
+    case cButModeSeleSub:
+        ExecutiveGetActiveSeleName(selName,true);
+        /* intentional omission of break! */
+    case cButModeRectAdd:
+    case cButModeRectSub:
+      if(SelectorIndexByName(selName)>=0) {
+        if((mode==cButModeRectAdd)||(mode==cButModeSeleAdd)) {
+          sprintf(buffer,"(?%s or %s)",selName,cTempRectSele);
+          SelectorCreate(selName,buffer,NULL,0,NULL);
+          if(log_box) {
+            sprintf(buf2,"%scmd.select(\"%s\",\"%s\")\n",prefix,selName,buffer);
+            PLog(buf2,cPLog_no_flush);
+          }
+        } else {
+          sprintf(buffer,"(?%s and not %s)",selName,cTempRectSele);
+          SelectorCreate(selName,buffer,NULL,0,NULL);
+          if(log_box) {
+            sprintf(buf2,"%scmd.select(\"%s\",\"%s\")\n",prefix,selName,buffer);
+            PLog(buf2,cPLog_no_flush);
+          }
         }
       } else {
-        sprintf(buffer,"(%s and not %s)",cLeftButSele,cTempRectSele);
-        SelectorCreate(cLeftButSele,buffer,NULL,0,NULL);
-        if(log_box) {
-          sprintf(buf2,"%scmd.select(\"%s\",\"%s\")\n",prefix,cLeftButSele,buffer);
-          PLog(buf2,cPLog_no_flush);
+        if((mode==cButModeRectAdd)||(mode=cButModeSeleAdd)) {
+          SelectorCreate(selName,cTempRectSele,NULL,0,NULL);
+          if(log_box) {
+            sprintf(buf2,"%scmd.select(\"%s\",\"%s\")\n",prefix,selName,cTempRectSele);
+            PLog(buf2,cPLog_no_flush);
+          }
+        } else {
+          SelectorCreate(selName,"(none)",NULL,0,NULL);
+          if(log_box) {
+            sprintf(buf2,"%scmd.select(\"%s\",\"(none)\")\n",prefix,selName);
+            PLog(buf2,cPLog_no_flush);
+          }
         }
       }
-    } else {
-      if(mode==cButModeRectAdd) {
-        SelectorCreate(cLeftButSele,cTempRectSele,NULL,0,NULL);
-        if(log_box) {
-          sprintf(buf2,"%scmd.select(\"%s\",\"%s\")\n",prefix,cLeftButSele,cTempRectSele);
-          PLog(buf2,cPLog_no_flush);
-        }
-      } else {
-        SelectorCreate(cLeftButSele,"(none)",NULL,0,NULL);
-        if(log_box) {
-          sprintf(buf2,"%scmd.select(\"%s\",\"(none)\")\n",prefix,cLeftButSele);
-          PLog(buf2,cPLog_no_flush);
-        }
+      if(SettingGet(cSetting_auto_show_selections)) {
+        ExecutiveSetObjVisib(selName,true);
       }
-    }
-    if(SettingGet(cSetting_auto_show_selections)) {
-      ExecutiveSetObjVisib(cLeftButSele,true);
+      break;
     }
     if(log_box) {
       sprintf(buf2,"%scmd.delete(\"%s\")\n",prefix,cTempRectSele);
@@ -2207,9 +2244,9 @@ void ExecutiveSelectRect(BlockRect *rect,int mode)
       PLogFlush();
     }
     ExecutiveDelete(cTempRectSele);
+    VLAFreeP(smp.picked);
+    WizardDoSelect(selName);
   }
-  VLAFreeP(smp.picked);
-  WizardDoSelect(cLeftButSele);
 }
 
 int ExecutiveTranslateAtom(char *sele,float *v,int state,int mode,int log)
@@ -5365,6 +5402,11 @@ void ExecutiveSetObjVisib(char *name,int state)
       else if(tRec->type==cExecSelection) {
         if(tRec->visible!=state) {
           tRec->visible=!tRec->visible;
+          if(tRec->visible)
+            if(SettingGetGlobal_b(cSetting_active_selections)) {
+              ExecutiveHideSelections();
+              tRec->visible=true;
+            }
           SceneChanged();
         }
       }
@@ -6104,13 +6146,23 @@ void ExecutiveManageSelection(char *name)
   int a;
   SpecRec *rec = NULL;
   CExecutive *I = &Executive;
-  
+  int hide_all  = SettingGetGlobal_b(cSetting_active_selections);
+  if(name[0]=='_')
+    hide_all = false; /* hidden selections don't change active selection */
   while(ListIterate(I->Spec,rec,next))
     {
-      if(rec->type==cExecSelection)
+      if(rec->type==cExecSelection) {
         if(strcmp(rec->name,name)==0) 
           break;
+        if(hide_all)
+          rec->visible=false;
+      }
     }
+  if(rec&&hide_all)
+    while(ListIterate(I->Spec,rec,next))
+      if(rec->type==cExecSelection)
+        rec->visible=false;
+
   if(!rec) {
     ListElemAlloc(rec,SpecRec);
     strcpy(rec->name,name);
@@ -6441,6 +6493,12 @@ int ExecutiveRelease(Block *block,int button,int x,int y,int mod)
                         PLog(buffer,cPLog_pym);
                       }
                       rec->visible=!rec->visible; 
+                      if(rec->visible)
+                        if(SettingGetGlobal_b(cSetting_active_selections)) {
+                          ExecutiveHideSelections();
+                          rec->visible=true;
+                        }
+                      
                     }
                     SceneChanged();
                   }

@@ -50,7 +50,13 @@ Z* -------------------------------------------------------------------
 #define cButModeMoveAtom 28
 #define cButModeMenu     29
 
-#define cButModeCount    30
+#define cButModeSeleSet  30
+#define cButModeSeleToggle 31
+#define cButModeSeleAdd  32
+#define cButModeSeleSub  33
+
+
+#define cButModeCount    34
 
 /* remaineder only used in scene... */
 

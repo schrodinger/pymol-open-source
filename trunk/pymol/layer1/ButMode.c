@@ -156,6 +156,11 @@ void ButModeInit(void)
   strcpy(I->Code[cButModePickAtom1], "Pk1  ");
   strcpy(I->Code[cButModeMoveAtom], "MovA ");
   strcpy(I->Code[cButModeMenu], "Menu ");
+  strcpy(I->Code[cButModeSeleSet], "Sele ");
+  strcpy(I->Code[cButModeSeleToggle], "+/-  ");
+  strcpy(I->Code[cButModeSeleAdd], "+Box ");
+  strcpy(I->Code[cButModeSeleSub], "-Box ");  
+
 
   I->Block = OrthoNewBlock(NULL);
   I->Block->fClick = ButModeClick;
