@@ -39,7 +39,7 @@ typedef struct RepMesh {
   float Radius,Width;
   int oneColorFlag;
   int oneColor;
-  Object *Obj;
+  CObject *Obj;
   int *LastVisib;
   int *LastColor;
 } RepMesh;
@@ -344,7 +344,7 @@ Rep *RepMeshNew(CoordSet *cs)
   I->VC=NULL;
   I->R.fRender=(void (*)(struct Rep *, CRay *, Pickable **))RepMeshRender;
   I->R.fFree=(void (*)(struct Rep *))RepMeshFree;
-  I->Obj = (Object*)(cs->Obj);
+  I->Obj = (CObject*)(cs->Obj);
   I->R.fRecolor=(void (*)(struct Rep*, struct CoordSet*))RepMeshColor;
   I->R.fSameVis=(int (*)(struct Rep*, struct CoordSet*))RepMeshSameVis;
   I->LastVisib=NULL;

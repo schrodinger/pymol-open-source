@@ -52,7 +52,7 @@ Z* -------------------------------------------------------------------
 typedef struct SpecRec {
   int type;
   WordType  name; /*only used for selections*/
-  struct Object *obj;  
+  struct CObject *obj;  
   struct SpecRec *next;
   int repOn[cRepCnt];
   int visible;
@@ -68,7 +68,7 @@ typedef struct Executive {
   Block *Block;
   SpecRec *Spec;
   int Width,Height;
-  Object *LastEdited;
+  CObject *LastEdited;
 } CExecutive;
 
 CExecutive Executive;
@@ -100,7 +100,7 @@ int ExecutiveMapNew(char *name,int type,float *grid,
                     char *sele,float buffer,
                     float *minCorner,float *maxCorner)
 {
-  Object *origObj;
+  CObject *origObj;
   ObjectMap *objMap;
   int a;
   float v[3];
@@ -158,8 +158,8 @@ int ExecutiveMapNew(char *name,int type,float *grid,
         break;
       }
 
-      ObjectSetName((Object*)objMap,name);
-      ExecutiveManageObject((Object*)objMap);
+      ObjectSetName((CObject*)objMap,name);
+      ExecutiveManageObject((CObject*)objMap);
       SceneDirty();
     }
   }
@@ -193,7 +193,7 @@ int ExecutiveSculptIterateAll(void)
 /*========================================================================*/
 int ExecutiveSculptIterate(char *name,int state,int n_cycle)
 {
-  Object *obj = ExecutiveFindObjectByName(name);
+  CObject *obj = ExecutiveFindObjectByName(name);
   CExecutive *I = &Executive;
   int ok=true;
   SpecRec *rec = NULL;
@@ -228,7 +228,7 @@ int ExecutiveSculptIterate(char *name,int state,int n_cycle)
 /*========================================================================*/
 int ExecutiveSculptActivate(char *name,int state)
 {
-  Object *obj = ExecutiveFindObjectByName(name);
+  CObject *obj = ExecutiveFindObjectByName(name);
   SpecRec *rec = NULL;
   ObjectMolecule *objMol;
   CExecutive *I = &Executive;
@@ -262,7 +262,7 @@ int ExecutiveSculptActivate(char *name,int state)
 /*========================================================================*/
 int ExecutiveSculptDeactivate(char *name)
 {
-  Object *obj = ExecutiveFindObjectByName(name);
+  CObject *obj = ExecutiveFindObjectByName(name);
   SpecRec *rec = NULL;
   ObjectMolecule *objMol;
   CExecutive *I = &Executive;
@@ -459,7 +459,7 @@ int ExecutiveTranslateAtom(char *sele,float *v,int state,int mode,int log)
 
 int ExecutiveCombineObjectTTT(char *name,float *ttt)
 {
-  Object *obj = ExecutiveFindObjectByName(name);
+  CObject *obj = ExecutiveFindObjectByName(name);
   int ok=true;
 
   if(!obj) {
@@ -695,13 +695,13 @@ PyObject *ExecutiveGetSettingTuple(int index,char *object,int state)
   return(result);
 }
 /*========================================================================*/
-void ExecutiveSetLastObjectEdited(Object *o)
+void ExecutiveSetLastObjectEdited(CObject *o)
 {
   CExecutive *I = &Executive;
   I->LastEdited = o;
 }
 /*========================================================================*/
-Object *ExecutiveGetLastObjectEdited(void)
+CObject *ExecutiveGetLastObjectEdited(void)
 {
   CExecutive *I = &Executive;
   return(I->LastEdited);
@@ -1013,7 +1013,7 @@ void ExecutiveUpdateCmd(char *s0,char *s1,int sta0,int sta1)
 void ExecutiveRenameObjectAtoms(char *name,int force) 
 {
   CExecutive *I = &Executive;
-  Object *os=NULL;
+  CObject *os=NULL;
   ObjectMolecule *obj;
   SpecRec *rec = NULL;
 
@@ -1126,7 +1126,7 @@ void ExecutiveFuse(char *s0,char *s1,int mode)
 void ExecutiveSpheroid(char *name)  /* EXPERIMENTAL */
 {
   CExecutive *I = &Executive;
-  Object *os=NULL;
+  CObject *os=NULL;
   ObjectMolecule *obj;
   SpecRec *rec = NULL;
 
@@ -1190,7 +1190,7 @@ void ExecutiveRebuildAllObjectDist(void)
 void ExecutiveUndo(int dir)
 {
   CExecutive *I = &Executive;
-  Object *o;
+  CObject *o;
   ObjectMolecule *obj=NULL,*compObj;
   SpecRec *rec = NULL;
 
@@ -1220,7 +1220,7 @@ void ExecutiveUndo(int dir)
 void ExecutiveSort(char *name)
 {
   CExecutive *I = &Executive;
-  Object *os=NULL;
+  CObject *os=NULL;
   ObjectMolecule *obj;
   SpecRec *rec = NULL;
   ObjectMoleculeOpRec op;
@@ -1520,8 +1520,8 @@ float ExecutiveDist(char *nam,char *s1,char *s2,int mode,float cutoff)
     } else {
       if(ExecutiveFindObjectByName(nam))
         ExecutiveDelete(nam);
-      ObjectSetName((Object*)obj,nam);
-      ExecutiveManageObject((Object*)obj);
+      ObjectSetName((CObject*)obj,nam);
+      ExecutiveManageObject((CObject*)obj);
       ExecutiveSetRepVisib(nam,cRepLine,1);
     }
   } else if(sele1<0) {
@@ -1637,7 +1637,7 @@ void ExecutiveSeleToObject(char *name,char *s1,int source,int target)
 /*========================================================================*/
 void ExecutiveCopy(char *src,char *dst)
 {
-  Object *os;
+  CObject *os;
   ObjectMolecule *oSrc,*oDst;
   SpecRec *rec1 = NULL,*rec2=NULL;
   int a;
@@ -1653,7 +1653,7 @@ void ExecutiveCopy(char *src,char *dst)
       oDst = ObjectMoleculeCopy(oSrc);
       if(oDst) {
         strcpy(oDst->Obj.Name,dst);
-        ExecutiveManageObject((Object*)oDst);
+        ExecutiveManageObject((CObject*)oDst);
         rec1=ExecutiveFindSpec(oSrc->Obj.Name);
         rec2=ExecutiveFindSpec(oDst->Obj.Name);
         if(rec1&&rec2) {
@@ -2170,7 +2170,7 @@ float ExecutiveRMSPairs(WordType *sele,int pairs,int mode)
   return(rms);
 }
 /*========================================================================*/
-void ExecutiveUpdateObjectSelection(struct Object *obj)
+void ExecutiveUpdateObjectSelection(struct CObject *obj)
 {
   if(obj->type==cObjectMolecule) {
     SelectorUpdateObjectSele((ObjectMolecule*)obj);  
@@ -2180,7 +2180,7 @@ void ExecutiveUpdateObjectSelection(struct Object *obj)
 int ExecutiveReset(int cmd,char *name)
 {
   int ok=true;
-  Object *obj;
+  CObject *obj;
   if(!name[0]) {
     SceneResetMatrix();
     ExecutiveWindowZoom(cKeywordAll,0.0);
@@ -2512,7 +2512,7 @@ int ExecutiveGetExtent(char *name,float *mn,float *mx,int transformed)
   int sele;
   ObjectMoleculeOpRec op,op2;
   CExecutive *I=&Executive;
-  Object *obj;
+  CObject *obj;
   int flag = false;
   int all_flag = false;
   SpecRec *rec = NULL;
@@ -2683,7 +2683,7 @@ int ExecutiveCenter(char *name,int preserve,char *oname,float *pos)
   float center[3];
   float mn[3],mx[3];
   int ok=true;
-  Object *obj = NULL;
+  CObject *obj = NULL;
   if(oname[0]) {
     obj = ExecutiveFindObjectByName(oname);
     if(!obj)
@@ -3030,11 +3030,11 @@ void ExecutiveInvalidateRep(char *name,int rep,int level)
   }
 }
 /*========================================================================*/
-Object *ExecutiveFindObjectByName(char *name)
+CObject *ExecutiveFindObjectByName(char *name)
 {
   CExecutive *I = &Executive;
   SpecRec *rec = NULL;
-  Object *obj=NULL;
+  CObject *obj=NULL;
   while(ListIterate(I->Spec,rec,next))
 	 {
 		if(rec->type==cExecObject)
@@ -3051,7 +3051,7 @@ Object *ExecutiveFindObjectByName(char *name)
 /*========================================================================*/
 ObjectMolecule *ExecutiveFindObjectMoleculeByName(char *name)
 {
-  Object *obj;
+  CObject *obj;
   
   obj = ExecutiveFindObjectByName(name);
   if(obj)
@@ -3080,7 +3080,7 @@ void ExecutiveSetControlsOff(char *name)
 /*========================================================================*/
 void ExecutiveSymExp(char *name,char *oname,char *s1,float cutoff)
 {
-  Object *ob;
+  CObject *ob;
   ObjectMolecule *obj = NULL;
   ObjectMolecule *new_obj = NULL;
   ObjectMoleculeOpRec op;
@@ -3191,11 +3191,11 @@ void ExecutiveSymExp(char *name,char *oname,char *s1,float cutoff)
                     }
                   if(keepFlag) { /* need to create new object */
                     sprintf(new_name,"%s%02d%02d%02d%02d",name,a,x,y,z);
-                    ObjectSetName((Object*)new_obj,new_name);
-                    ExecutiveManageObject((Object*)new_obj);
+                    ObjectSetName((CObject*)new_obj,new_name);
+                    ExecutiveManageObject((CObject*)new_obj);
                     SceneChanged();
                   } else {
-                    ((Object*)new_obj)->fFree((Object*)new_obj);
+                    ((CObject*)new_obj)->fFree((CObject*)new_obj);
                   }
                 }
               }
@@ -3227,7 +3227,7 @@ void ExecutiveDelete(char *name)
             I->LastEdited=NULL;
 			 if(all_flag||(WordMatch(name_copy,rec->obj->Name,true)<0))
 				{
-              if(rec->obj==(Object*)EditorGetActiveObject())
+              if(rec->obj==(CObject*)EditorGetActiveObject())
                 EditorSetActiveObject(NULL,0);
               if(rec->visible) 
                 SceneObjectDel(rec->obj);
@@ -3282,7 +3282,7 @@ void ExecutiveDump(char *fname,char *obj)
   
 }
 /*========================================================================*/
-void ExecutiveManageObject(Object *obj)
+void ExecutiveManageObject(CObject *obj)
 {
   int a;
   SpecRec *rec = NULL;
@@ -3789,7 +3789,7 @@ void ExecutiveDraw(Block *block)
   }
 }
 /*========================================================================*/
-int ExecutiveIterateObject(Object **obj,void **hidden)
+int ExecutiveIterateObject(CObject **obj,void **hidden)
 {
   int result;
   CExecutive *I = &Executive;

@@ -140,16 +140,16 @@ ObjectCGO *ObjectCGONew(void)
 {
   OOAlloc(ObjectCGO);
 
-  ObjectInit((Object*)I);
+  ObjectInit((CObject*)I);
 
   I->State=VLAMalloc(10,sizeof(ObjectCGOState),5,true);
   I->NState=0;
 
   I->Obj.type = cObjectCGO;
-  I->Obj.fFree = (void (*)(struct Object *))ObjectCGOFree;
-  I->Obj.fUpdate =(void (*)(struct Object *)) ObjectCGOUpdate;
-  I->Obj.fRender =(void (*)(struct Object *, int, CRay *, Pickable **,int))ObjectCGORender;
-  I->Obj.fGetNFrame = (int (*)(struct Object *)) ObjectCGOGetNState;
+  I->Obj.fFree = (void (*)(struct CObject *))ObjectCGOFree;
+  I->Obj.fUpdate =(void (*)(struct CObject *)) ObjectCGOUpdate;
+  I->Obj.fRender =(void (*)(struct CObject *, int, CRay *, Pickable **,int))ObjectCGORender;
+  I->Obj.fGetNFrame = (int (*)(struct CObject *)) ObjectCGOGetNState;
 
   return(I);
 }

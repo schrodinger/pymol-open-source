@@ -1975,7 +1975,7 @@ void ObjectMoleculeSaveUndo(ObjectMolecule *I,int state,int log)
     I->UndoNIndex[I->UndoIter] = cs->NIndex;
   }
   I->UndoIter=cUndoMask&(I->UndoIter+1);
-  ExecutiveSetLastObjectEdited((Object*)I);
+  ExecutiveSetLastObjectEdited((CObject*)I);
   if(log) {
     OrthoLineType line;
     if(SettingGet(cSetting_logging)) {
@@ -5360,7 +5360,7 @@ ObjectMolecule *ObjectMoleculeNew(int discreteFlag)
 {
   int a;
   OOAlloc(ObjectMolecule);
-  ObjectInit((Object*)I);
+  ObjectInit((CObject*)I);
   I->Obj.type=cObjectMolecule;
   I->NAtom=0;
   I->NBond=0;
@@ -5380,12 +5380,12 @@ ObjectMolecule *ObjectMoleculeNew(int discreteFlag)
     I->DiscreteAtmToIdx = NULL;
     I->DiscreteCSet = NULL;
   }    
-  I->Obj.fRender=(void (*)(struct Object *, int, CRay *, Pickable **,int))ObjectMoleculeRender;
-  I->Obj.fFree= (void (*)(struct Object *))ObjectMoleculeFree;
-  I->Obj.fUpdate=  (void (*)(struct Object *)) ObjectMoleculeUpdate;
-  I->Obj.fGetNFrame = (int (*)(struct Object *)) ObjectMoleculeGetNFrames;
-  I->Obj.fDescribeElement = (void (*)(struct Object *,int index,char *buffer)) ObjectMoleculeDescribeElement;
-  I->Obj.fGetSettingHandle = (CSetting **(*)(struct Object *,int state))
+  I->Obj.fRender=(void (*)(struct CObject *, int, CRay *, Pickable **,int))ObjectMoleculeRender;
+  I->Obj.fFree= (void (*)(struct CObject *))ObjectMoleculeFree;
+  I->Obj.fUpdate=  (void (*)(struct CObject *)) ObjectMoleculeUpdate;
+  I->Obj.fGetNFrame = (int (*)(struct CObject *)) ObjectMoleculeGetNFrames;
+  I->Obj.fDescribeElement = (void (*)(struct CObject *,int index,char *buffer)) ObjectMoleculeDescribeElement;
+  I->Obj.fGetSettingHandle = (CSetting **(*)(struct CObject *,int state))
     ObjectMoleculeGetSettingHandle;
   I->AtomInfo=VLAMalloc(10,sizeof(AtomInfoType),2,true); /* autozero here is important */
   I->CurCSet=0;
@@ -5442,7 +5442,7 @@ ObjectMolecule *ObjectMoleculeCopy(ObjectMolecule *obj)
 void ObjectMoleculeFree(ObjectMolecule *I)
 {
   int a;
-  SceneObjectDel((Object*)I);
+  SceneObjectDel((CObject*)I);
 
   for(a=0;a<I->NCSet;a++)
 	 if(I->CSet[a]) {
@@ -5886,8 +5886,8 @@ ObjectMolecule *ObjectMoleculeLoadMMDFile(ObjectMolecule *obj,char *fname,
             I=ObjectMoleculeReadMMDStr(NULL,p,frame,discrete);
             oCnt++;
             sprintf(oName,"%s-%02d",sepPrefix,oCnt);
-            ObjectSetName((Object*)I,oName);
-            ExecutiveManageObject((Object*)I);
+            ObjectSetName((CObject*)I,oName);
+            ExecutiveManageObject((CObject*)I);
           } else {
             I=ObjectMoleculeReadMMDStr(obj,p,frame,discrete);
             obj=I;

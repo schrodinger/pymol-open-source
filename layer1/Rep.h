@@ -85,7 +85,7 @@ typedef struct Rep {
   void        (*fInvalidate)(struct Rep *I,struct CoordSet *cs,int level);
   void              (*fFree)(struct Rep* I);
   int MaxInvalid,Active;
-  struct Object *obj;
+  struct CObject *obj;
   struct CoordSet *cs;
   Pickable *P;
   /* private */

@@ -34,7 +34,7 @@ typedef struct RepDistLabel {
   float *V;
   int N;
   DistLabel *L;
-  Object *Obj;
+  CObject *Obj;
 } RepDistLabel;
 
 #include"ObjectDist.h"
@@ -107,7 +107,7 @@ Rep *RepDistLabelNew(DistSet *ds)
   I->N=0;
   I->V=NULL;
   I->R.P=NULL;
-  I->Obj = (Object*)ds->Obj;
+  I->Obj = (CObject*)ds->Obj;
 
   n=0;
   if(ds->NIndex) {

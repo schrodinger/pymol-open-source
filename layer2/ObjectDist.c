@@ -96,16 +96,16 @@ ObjectDist *ObjectDistNew(int sele1,int sele2,int mode,float cutoff,float *resul
   float minv[3] = {-FLT_MAX,-FLT_MAX,-FLT_MAX};
   DistSet *ds;
   OOAlloc(ObjectDist);
-  ObjectInit((Object*)I);
+  ObjectInit((CObject*)I);
   *result = 0.0;
   I->Obj.type=cObjectDist;
   I->NAtom=0;
   I->DSet=VLAMalloc(10,sizeof(DistSet*),5,true); /* auto-zero */
   I->NDSet=0;
-  I->Obj.fRender=(void (*)(struct Object *, int, CRay *, Pickable **,int))ObjectDistRender;
-  I->Obj.fFree= (void (*)(struct Object *))ObjectDistFree;
-  I->Obj.fUpdate= (void (*)(struct Object *)) ObjectDistUpdate;
-  I->Obj.fGetNFrame = (int (*)(struct Object *)) ObjectDistGetNFrames;
+  I->Obj.fRender=(void (*)(struct CObject *, int, CRay *, Pickable **,int))ObjectDistRender;
+  I->Obj.fFree= (void (*)(struct CObject *))ObjectDistFree;
+  I->Obj.fUpdate= (void (*)(struct CObject *)) ObjectDistUpdate;
+  I->Obj.fGetNFrame = (int (*)(struct CObject *)) ObjectDistGetNFrames;
   I->Obj.fDescribeElement = NULL;
   I->CurDSet=0;
   I->Obj.Color=ColorGetIndex("dash");
@@ -159,7 +159,7 @@ ObjectDist *ObjectDistNew(int sele1,int sele2,int mode,float cutoff,float *resul
 void ObjectDistFree(ObjectDist *I)
 {
   int a;
-  SceneObjectDel((Object*)I);
+  SceneObjectDel((CObject*)I);
   for(a=0;a<I->NDSet;a++)
 	 if(I->DSet[a]) {
       if(I->DSet[a]->fFree)

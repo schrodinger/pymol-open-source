@@ -631,7 +631,7 @@ Rep *RepSurfaceNew(CoordSet *cs)
   I->R.fFree=(void (*)(struct Rep *))RepSurfaceFree;
   I->R.fRecolor=(void (*)(struct Rep*, struct CoordSet*))RepSurfaceColor;
   I->R.fSameVis=(int (*)(struct Rep*, struct CoordSet*))RepSurfaceSameVis;
-  I->R.obj = (Object*)(cs->Obj);
+  I->R.obj = (CObject*)(cs->Obj);
   I->R.cs = cs;
   I->Dot=NULL;
   I->allVisibleFlag=true;

@@ -70,7 +70,7 @@ if 1:
                 self.mod = self.mod + P_GLUT_ACTIVE_CTRL
             if evt.MetaDown():
                 self.mod = self.mod + P_GLUT_ACTIVE_ALT
-            _cmd.p_glut_event(P_GLUT_CHAR_EVENT,evt.GetX(),evt.GetY(),evt.GetKeyCode(),0,0)
+            _cmd.p_glut_event(P_GLUT_CHAR_EVENT,evt.GetX(),evt.GetY(),evt.GetKeyCode(),0,self.mod)
                               
         def OnPaint(self, event):
             dc = wxPaintDC(self)
@@ -170,15 +170,91 @@ overview = """\
 """
 #----------------------------------------------------------------------
 
+ID_ABOUT=101  
+ID_OPEN=102 
+ID_BUTTON1=110 
+ID_EXIT=200
+        
+class MainWindow(wxFrame):
+   def __init__(self,parent,id,title):  
+      self.dirname='' 
+      wxFrame.__init__(self,parent,-4, title, style=wxDEFAULT_FRAME_STYLE|  
+                              wxNO_FULL_REPAINT_ON_RESIZE)  
+      self.control = wxTextCtrl(self, 1, style=wxTE_MULTILINE)  
+      self.CreateStatusBar() # A Statusbar in the bottom of the window  
+      # Setting up the menu.  
+      filemenu= wxMenu()  
+      filemenu.Append(ID_OPEN, "&Open"," Open a file to edit")  
+      filemenu.AppendSeparator()  
+      filemenu.Append(ID_ABOUT, "&About"," Information about this program")  
+      filemenu.AppendSeparator()  
+      filemenu.Append(ID_EXIT,"E&xit"," Terminate the program")  
+      # Creating the menubar.  
+      menuBar = wxMenuBar()  
+      menuBar.Append(filemenu,"&File") # Adding the "filemenu" to the MenuBar  
+      self.SetMenuBar(menuBar)  # Adding the MenuBar to the Frame content.  
+      EVT_MENU(self, ID_ABOUT, self.OnAbout) 
+      EVT_MENU(self, ID_EXIT, self.OnExit) 
+      EVT_MENU(self, ID_OPEN, self.OnOpen) 
+
+      self.sizer2 = wxBoxSizer(wxHORIZONTAL) 
+      self.buttons=[] 
+      for i in range(0,6): 
+         self.buttons.append(wxButton(self, ID_BUTTON1+i, "Button &"+`i`)) 
+         self.sizer2.Add(self.buttons[i],1,wxEXPAND) 
+
+      self.canvas = CubeCanvas(self)
+
+      # Use some sizers to see layout options 
+      self.sizer=wxBoxSizer(wxVERTICAL) 
+      self.sizer.Add(self.control,1,wxEXPAND) 
+      self.sizer.Add(self.sizer2,0,wxEXPAND) 
+      self.sizer.Add(self.canvas,1,wxEXPAND)
+      
+      #Layout sizers 
+      self.SetSizer(self.sizer) 
+      self.SetAutoLayout(1) 
+      self.sizer.Fit(self) 
+
+      self.Show(1)  
+
+   def OnAbout(self,e):  
+      d= wxMessageDialog( self, " A sample editor \n"  
+                     " in wxPython","About Sample Editor", wxOK)  
+                     # Create a message dialog box  
+      d.ShowModal() # Shows it  
+      d.Destroy() # finally destroy it when finished.  
+
+   def OnExit(self,e):  
+      self.Close(true)  # Close the frame.  
+
+   def OnOpen(self,e):  
+      """ Open a file""" 
+      dlg = wxFileDialog(self, "Choose a file", self.dirname, "", "*.*", wxOPEN)  
+      if dlg.ShowModal() == wxID_OK:  
+         self.filename=dlg.GetFilename()  
+         self.dirname=dlg.GetDirectory()  
+         f=open(self.dirname+'\\'+self.filename,'r')  
+         self.control.SetValue(f.read())  
+         f.close()  
+      dlg.Destroy()  
+       
+   
 class MyApp(wxApp):
   def OnInit(self):
-      frame = wxFrame(None, -1, "PyMOL", size=(800,500))
-      canvas = CubeCanvas(frame)
-      frame.Show(true)
-      self.SetTopWindow(frame)
-
+      mw = MainWindow(None, -1,"PyMOL")
       import threading
       return TRUE
+
+#      frame = wxFrame(None, -1, "PyMOL", size=(1024,768))
+#      frame.canvas = CubeCanvas(frame)
+#      frame.control = wxTextCtrl(frame,1,style=wxTE_MULTILINE)
+#      frame.sizer = wxBoxSizer(wxVERTICAL)
+#      frame.sizer.Add(frame.canvas,1,wxEXPAND)
+#      frame.sizer.Add(frame.control,1,wxEXPAND)
+#      frame.sizer.Fit(frame)
+#      frame.Show(true)
+#      self.SetTopWindow(frame)
 
 app = MyApp(0)
 app.MainLoop()

@@ -25,7 +25,7 @@ typedef struct {
 } ObjectCallbackState;
 
 typedef struct ObjectCallback {
-  Object Obj;
+  CObject Obj;
   ObjectCallbackState *State;
   int NState;
 } ObjectCallback;

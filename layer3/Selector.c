@@ -743,7 +743,7 @@ int SelectorGetSingleAtomObjectIndex(int sele,ObjectMolecule **in_obj,int *index
 {
   int found_it = false;
   int a;
-  Object *o = NULL;
+  CObject *o = NULL;
   void *hidden = NULL;
   AtomInfoType *ai;
   ObjectMolecule *obj;
@@ -1819,7 +1819,7 @@ void SelectorCreateObjectMolecule(int sele,char *name,int target,int source)
   CoordSet *cs = NULL;
   CoordSet *cs1,*cs2;
   ObjectMolecule *obj;
-  Object *ob;
+  CObject *ob;
   ObjectMolecule *targ = NULL;
   ObjectMolecule *info_src = NULL;
 
@@ -2024,10 +2024,10 @@ void SelectorCreateObjectMolecule(int sele,char *name,int target,int source)
     ENDFB
     ObjectMoleculeSort(targ);
   if(isNew) {
-    ObjectSetName((Object*)targ,name);
-    ExecutiveManageObject((Object*)targ);
+    ObjectSetName((CObject*)targ,name);
+    ExecutiveManageObject((CObject*)targ);
   } else {
-    ExecutiveUpdateObjectSelection((Object*)targ);
+    ExecutiveUpdateObjectSelection((CObject*)targ);
   }
   SceneChanged();
 }
@@ -2054,7 +2054,7 @@ void SelectorPurgeMembers(int sele)
   int s=0;
   int l;
   int nxt;
-  Object *o = NULL;
+  CObject *o = NULL;
   void *hidden = NULL;
   ObjectMolecule *obj;
 
@@ -2357,7 +2357,7 @@ int SelectorUpdateTable(void)
   int a=0;
   int c=0;
   int modelCnt;
-  Object *o = NULL;
+  CObject *o = NULL;
   void *hidden = NULL;
   ObjectMolecule *obj;
 

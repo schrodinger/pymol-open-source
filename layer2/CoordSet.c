@@ -529,7 +529,7 @@ void CoordSetRender(CoordSet *I,CRay *ray,Pickable **pick,int pass)
         {
           r = I->Rep[a];
           if(!ray) {
-            ObjectUseColor((Object*)I->Obj);
+            ObjectUseColor((CObject*)I->Obj);
           } else {
             if(I->Obj) 
               ray->fTexture(ray,

@@ -35,7 +35,7 @@ typedef struct {
 
 
 typedef struct ObjectMolecule {
-  Object Obj;
+  CObject Obj;
   struct CoordSet **CSet;
   int NCSet;
   BondType *Bond;

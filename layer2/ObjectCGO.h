@@ -27,7 +27,7 @@ typedef struct ObjectCGOState {
 } ObjectCGOState;
 
 typedef struct ObjectCGO {
-  Object Obj;
+  CObject Obj;
   ObjectCGOState *State;
   int NState;
 } ObjectCGO;

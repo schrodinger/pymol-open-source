@@ -119,17 +119,17 @@ ObjectCallback *ObjectCallbackNew(void)
 {
   OOAlloc(ObjectCallback);
   
-  ObjectInit((Object*)I);
+  ObjectInit((CObject*)I);
   
   I->State=VLAMalloc(10,sizeof(ObjectCallbackState),5,true); /* autozero */
   I->NState=0;
   
   I->Obj.type = cObjectCallback;
-  I->Obj.fFree = (void (*)(struct Object *))ObjectCallbackFree;
-  I->Obj.fUpdate =  (void (*)(struct Object *)) ObjectCallbackUpdate;
-  I->Obj.fRender =(void (*)(struct Object *, int, CRay *, Pickable **,int pass))
+  I->Obj.fFree = (void (*)(struct CObject *))ObjectCallbackFree;
+  I->Obj.fUpdate =  (void (*)(struct CObject *)) ObjectCallbackUpdate;
+  I->Obj.fRender =(void (*)(struct CObject *, int, CRay *, Pickable **,int pass))
     ObjectCallbackRender;
-  I->Obj.fGetNFrame = (int (*)(struct Object *)) ObjectCallbackGetNStates;
+  I->Obj.fGetNFrame = (int (*)(struct CObject *)) ObjectCallbackGetNStates;
 
   return(I);
 }
