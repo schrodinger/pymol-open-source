@@ -98,8 +98,15 @@ typedef struct {
 } HBondCriteria;
 
 typedef struct {
+  int flag[3];
+  float matrix[16];
+} PDBScale;
+
+typedef struct {
   int is_pqr_file;
+  PDBScale scale;
 } PDBInfoRec;
+
 
 /* these four letter code are left over from an 
    earlier multicharacter constant implementation
@@ -358,7 +365,8 @@ struct CoordSet *ObjectMoleculePDBStr2CoordSet(PyMOLGlobals *G,
                                                M4XAnnoType *m4x,
                                                char *pdb_name,
                                                char **next_pdb,
-                                               PDBInfoRec *pdb_info);
+                                               PDBInfoRec *pdb_info,
+                                               int quiet);
 
 /* legacy binary file suppoort */
 

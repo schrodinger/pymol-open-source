@@ -8618,7 +8618,7 @@ ObjectMolecule *ObjectMoleculeReadPDBStr(PyMOLGlobals *G,ObjectMolecule *I,char 
 
       cset=ObjectMoleculePDBStr2CoordSet(G,start,&atInfo,&restart,
                                          segi_override,m4x,pdb_name,
-                                         next_pdb,pdb_info);	
+                                         next_pdb,pdb_info,quiet);	
       if(m4x) /* preserve original atom IDs for annotated Metaphorics files */
         if(m4x->annotated_flag)
           aic_mask = (cAIC_b|cAIC_q);
@@ -8658,7 +8658,41 @@ ObjectMolecule *ObjectMoleculeReadPDBStr(PyMOLGlobals *G,ObjectMolecule *I,char 
       if(isNew) I->NBond = ObjectMoleculeConnect(I,&I->Bond,I->AtomInfo,cset,true);
       if(cset->Symmetry&&(!I->Symmetry)) {
         I->Symmetry=SymmetryCopy(cset->Symmetry);
-        SymmetryAttemptGeneration(I->Symmetry,false,quiet);
+        if(SymmetryAttemptGeneration(I->Symmetry,false,quiet)) {
+          /* check scale records */
+          if(pdb_info &&
+             SettingGetGlobal_b(G,cSetting_pdb_insure_orthogonal) &&
+             pdb_info->scale.flag[0] &&
+             pdb_info->scale.flag[1] &&
+             pdb_info->scale.flag[2] ) {
+
+            int matched=true;
+            float threshold = 0.001F;
+            float *r2f = I->Symmetry->Crystal->RealToFrac, *sca = pdb_info->scale.matrix;
+
+            /* are the matrices sufficiently close to be the same? */
+            if(     fabs(r2f[0]-sca[0])>threshold) matched=false;
+            else if(fabs(r2f[1]-sca[1])>threshold) matched=false;
+            else if(fabs(r2f[2]-sca[2])>threshold) matched=false;
+            else if(fabs(r2f[3]-sca[4])>threshold) matched=false;
+            else if(fabs(r2f[4]-sca[5])>threshold) matched=false;
+            else if(fabs(r2f[5]-sca[6])>threshold) matched=false;
+            else if(fabs(r2f[6]-sca[8])>threshold) matched=false;
+            else if(fabs(r2f[7]-sca[9])>threshold) matched=false;
+            else if(fabs(r2f[8]-sca[10])>threshold) matched=false;
+            else if(fabs(sca[3])>threshold) matched=false;
+            else if(fabs(sca[7])>threshold) matched=false;
+            else if(fabs(sca[11])>threshold) matched=false;
+              
+            if(!matched) {
+              PRINTFB(G,FB_ObjectMolecule,FB_Actions)
+                " ObjectMolReadPDBStr: using SCALEn to compute orthogonal coordinates.\n"
+                ENDFB(G);
+              CoordSetTransform44f(cset, pdb_info->scale.matrix);
+              CoordSetTransform33f(cset, I->Symmetry->Crystal->FracToReal);
+            }
+          }
+        }
       }
       SceneCountFrames(G);
       ObjectMoleculeExtendIndices(I);

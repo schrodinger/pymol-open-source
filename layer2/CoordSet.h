@@ -75,6 +75,7 @@ void CoordSetAtomToTERStrVLA(PyMOLGlobals *G,char **charVLA,int *c,AtomInfoType 
 CoordSet *CoordSetCopy(CoordSet *cs);
 
 void CoordSetTransform44f(CoordSet *I,float *mat);
+void CoordSetTransform33f(CoordSet *I,float *mat);
 void CoordSetRealToFrac(CoordSet *I,CCrystal *cryst);
 void CoordSetFracToReal(CoordSet *I,CCrystal *cryst);
 void CoordSetGetAverage(CoordSet *I,float *v0);

@@ -521,10 +521,11 @@ CSetting *SettingNewFromPyList(PyMOLGlobals *G,PyObject *list);
 #define cSetting_slice_grid                 371
 #define cSetting_slice_dynamic_grid         372
 #define cSetting_slice_dynamic_grid_resolution 373
+#define cSetting_pdb_insure_orthogonal        374
 
 /* cSetting_ss_INIT must always be last setting_index +1 */
 
-#define cSetting_INIT                       374
+#define cSetting_INIT                       375
 
 #endif
 

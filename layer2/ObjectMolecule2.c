@@ -740,7 +740,8 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(PyMOLGlobals *G,
                                         M4XAnnoType *m4x,
                                         char *pdb_name,
                                         char **next_pdb,
-                                        PDBInfoRec *info)
+                                        PDBInfoRec *info,
+                                        int quiet)
 {
 
   char *p;
@@ -758,7 +759,6 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(PyMOLGlobals *G,
   int nBond=0;
   int b1,b2,nReal,maxAt;
   CSymmetry *symmetry = NULL;
-  int symFlag;
   int auto_show_lines = (int)SettingGet(G,cSetting_auto_show_lines);
   int auto_show_nonbonded = (int)SettingGet(G,cSetting_auto_show_nonbonded);
   int reformat_names = (int)SettingGet(G,cSetting_pdb_reformat_names_mode);
@@ -770,12 +770,12 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(PyMOLGlobals *G,
   SSEntry *ss_list = NULL;
   int n_ss = 1;
   int *(ss[256]); /* one array for each chain identifier */
-  
+
   char cc[MAXLINELEN];
   char cc_saved,ctmp;
   int index;
   int ignore_pdb_segi = 0;
-  int ss_valid;
+  int ss_valid,ss_found=false;
   SSEntry *sst;
   int ssi = 0;
   int only_read_one_model = false;
@@ -1030,7 +1030,7 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(PyMOLGlobals *G,
           if(!sscanf(cc,"%d",&ss_resv2)) ss_valid=false;
     
           if(ss_valid) {
-            PRINTFB(G,FB_ObjectMolecule,FB_Details)
+            PRINTFB(G,FB_ObjectMolecule,FB_Blather)
               " ObjectMolecule: read HELIX %c %s %c %s\n",
               ss_chain1,ss_resi1,ss_chain2,ss_resi2
               ENDFB(G);
@@ -1062,7 +1062,7 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(PyMOLGlobals *G,
           if(!sscanf(cc,"%d",&ss_resv2)) ss_valid=false;
        
           if(ss_valid) {
-            PRINTFB(G,FB_ObjectMolecule,FB_Details)
+            PRINTFB(G,FB_ObjectMolecule,FB_Blather)
               " ObjectMolecule: read SHEET %c %s %c %s\n",
               ss_chain1,ss_resi1,ss_chain2,ss_resi2
               ENDFB(G);
@@ -1108,37 +1108,74 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(PyMOLGlobals *G,
                 (p[2]=='Y')&&
                 (p[3]=='S')&&
                 (p[4]=='T')&&
-                (p[5]=='1')&& (!*restart_model))
-          {
-            if(!symmetry) symmetry=SymmetryNew(G);          
-            if(symmetry) {
+                (p[5]=='1')&& (!*restart_model))      {
+        if(!symmetry) symmetry=SymmetryNew(G);          
+        if(symmetry) {
+          int symFlag=true;
+          PRINTFB(G,FB_ObjectMolecule,FB_Blather)
+            " PDBStrToCoordSet: Attempting to read symmetry information\n"
+            ENDFB(G);
+          p=nskip(p,6);
+          symFlag=true;
+          p=ncopy(cc,p,9);
+          if(sscanf(cc,"%f",&symmetry->Crystal->Dim[0])!=1) symFlag=false;
+          p=ncopy(cc,p,9);
+          if(sscanf(cc,"%f",&symmetry->Crystal->Dim[1])!=1) symFlag=false;
+          p=ncopy(cc,p,9);
+          if(sscanf(cc,"%f",&symmetry->Crystal->Dim[2])!=1) symFlag=false;
+          p=ncopy(cc,p,7);
+          if(sscanf(cc,"%f",&symmetry->Crystal->Angle[0])!=1) symFlag=false;
+          p=ncopy(cc,p,7);
+          if(sscanf(cc,"%f",&symmetry->Crystal->Angle[1])!=1) symFlag=false;
+          p=ncopy(cc,p,7);
+          if(sscanf(cc,"%f",&symmetry->Crystal->Angle[2])!=1) symFlag=false;
+          p=nskip(p,1);
+          p=ncopy(symmetry->SpaceGroup,p,10);
+          UtilCleanStr(symmetry->SpaceGroup);
+          p=ncopy(cc,p,4);
+          if(sscanf(cc,"%d",&symmetry->PDBZValue)!=1) symmetry->PDBZValue=1;
+          if(!symFlag) {
+            ErrMessage(G,"PDBStrToCoordSet","Error reading CRYST1 record\n");
+            SymmetryFree(symmetry);
+            symmetry=NULL;
+          }
+        }
+      } else if((p[0]=='S')&& /* SCALEn */
+                (p[1]=='C')&&
+                (p[2]=='A')&&
+                (p[3]=='L')&&
+                (p[4]=='E')&&
+                (!*restart_model)&&info)
+        {
+          switch(p[5]) {
+          case '1':
+          case '2':
+          case '3':
+            {
+              int flag=(p[5]-'1');
+              int offset=flag*4;
+              int scale_flag=true;
+              p=nskip(p,10);
+              p=ncopy(cc,p,10);
+              if(sscanf(cc,"%f",&info->scale.matrix[offset])!=1) scale_flag=false;
+              p=ncopy(cc,p,10);
+              if(sscanf(cc,"%f",&info->scale.matrix[offset+1])!=1) scale_flag=false;
+              p=ncopy(cc,p,10);
+              if(sscanf(cc,"%f",&info->scale.matrix[offset+2])!=1) scale_flag=false;
+              p=nskip(p,5);
+              p=ncopy(cc,p,10);
+              if(sscanf(cc,"%f",&info->scale.matrix[offset+3])!=1) scale_flag=false;                
+              if(scale_flag)
+                info->scale.flag[flag]=true;
               PRINTFB(G,FB_ObjectMolecule,FB_Blather)
-                " PDBStrToCoordSet: Attempting to read symmetry information\n"
+                " PDBStrToCoordSet: SCALE%d %8.4f %8.4f %8.4f %8.4f\n",flag+1,
+                info->scale.matrix[offset],
+                info->scale.matrix[offset+1],
+                info->scale.matrix[offset+2],
+                info->scale.matrix[offset+3]
                 ENDFB(G);
-              p=nskip(p,6);
-              symFlag=true;
-              p=ncopy(cc,p,9);
-              if(sscanf(cc,"%f",&symmetry->Crystal->Dim[0])!=1) symFlag=false;
-              p=ncopy(cc,p,9);
-              if(sscanf(cc,"%f",&symmetry->Crystal->Dim[1])!=1) symFlag=false;
-              p=ncopy(cc,p,9);
-              if(sscanf(cc,"%f",&symmetry->Crystal->Dim[2])!=1) symFlag=false;
-              p=ncopy(cc,p,7);
-              if(sscanf(cc,"%f",&symmetry->Crystal->Angle[0])!=1) symFlag=false;
-              p=ncopy(cc,p,7);
-              if(sscanf(cc,"%f",&symmetry->Crystal->Angle[1])!=1) symFlag=false;
-              p=ncopy(cc,p,7);
-              if(sscanf(cc,"%f",&symmetry->Crystal->Angle[2])!=1) symFlag=false;
-              p=nskip(p,1);
-              p=ncopy(symmetry->SpaceGroup,p,10);
-              UtilCleanStr(symmetry->SpaceGroup);
-              p=ncopy(cc,p,4);
-              if(sscanf(cc,"%d",&symmetry->PDBZValue)!=1) symmetry->PDBZValue=1;
-              if(!symFlag) {
-              ErrMessage(G,"PDBStrToCoordSet","Error reading CRYST1 record\n");
-              SymmetryFree(symmetry);
-              symmetry=NULL;
             }
+            break;
           }
         }
 		else if((p[0]=='C')&& /* CONECT */
@@ -1408,6 +1445,7 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(PyMOLGlobals *G,
 
       
       if(SSCode) {
+
         
         /* pretty confusing how this works... the following efficient (i.e. array-based)
            secondary structure lookup even when there are multiple insertion codes
@@ -1433,6 +1471,7 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(PyMOLGlobals *G,
             sst->type=SSCode;
             strcpy(sst->resi1,ss_resi1);
             strcpy(sst->resi2,ss_resi2);
+            ss_found=true;
           }
           sst->next = ss[ss_chain1][index];
           ss[ss_chain1][index]=ssi;
@@ -1795,6 +1834,16 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(PyMOLGlobals *G,
       nBond=nReal;
       FreeP(idx);
     }
+  }
+  if(ss_found&&!quiet) {
+    PRINTFB(G,FB_ObjectMolecule,FB_Details)
+      " ObjectMolecule: Read secondary structure assignments.\n"
+      ENDFB(G);
+  }
+  if(symmetry&&!quiet) {
+    PRINTFB(G,FB_ObjectMolecule,FB_Details)
+      " ObjectMolecule: Read crystal symmetry information.\n"
+      ENDFB(G);
   }
   PRINTFB(G,FB_ObjectMolecule,FB_Blather)
    " PDBStr2CoordSet: Read %d bonds from CONECT records (%p).\n",nBond,

@@ -266,9 +266,10 @@ int ExecutiveSetName(PyMOLGlobals *G,char *old_name, char *new_name)
   return ok; 
 }
 
-void ExecutiveProcessPDBFile(PyMOLGlobals *G,CObject *origObj,char *fname, char *oname, 
-                             int frame, int discrete,int finish,
-                             OrthoLineType buf,PDBInfoRec *pdb_info,int quiet)
+void ExecutiveProcessPDBFile(PyMOLGlobals *G,CObject *origObj,char *fname,
+                             char *oname, int frame, int discrete,int finish,
+                             OrthoLineType buf,PDBInfoRec *pdb_info,int quiet,
+                             int is_string)
 {
   int ok=true;
   FILE *f;
@@ -284,30 +285,43 @@ void ExecutiveProcessPDBFile(PyMOLGlobals *G,CObject *origObj,char *fname, char 
   ProcPDBRec *target_rec = NULL;
   char nbrhood_sele[] = "m4x_nearby";
   ProcPDBRec *current = NULL;
-  f=fopen(fname,"rb");
-  if(!f) {
-    PRINTFB(G,FB_ObjectMolecule,FB_Errors)
-      "ObjectMolecule-ERROR: Unable to open file '%s'\n",fname
-      ENDFB(G);
-    ok=false;
-  } else
-	 {
-      PRINTFB(G,FB_ObjectMolecule,FB_Blather)
-        " ObjectMoleculeLoadPDBFile: Loading from %s.\n",fname
-        ENDFB(G);
-		
-		fseek(f,0,SEEK_END);
-      size=ftell(f);
-		fseek(f,0,SEEK_SET);
+  PDBInfoRec pdb_info_rec;
 
-		buffer=(char*)mmalloc(size+255);
-		ErrChkPtr(G,buffer);
-		p=buffer;
-		fseek(f,0,SEEK_SET);
-		fread(p,size,1,f);
-		p[size]=0;
-		fclose(f);
-    }
+  if(!pdb_info) {
+    UtilZeroMem(&pdb_info_rec,sizeof(PDBInfoRec));
+    pdb_info=&pdb_info_rec;
+  }
+
+  if(is_string) {
+    buffer=fname;
+  } else {
+    f=fopen(fname,"rb");
+    
+    if(!f) {
+      PRINTFB(G,FB_ObjectMolecule,FB_Errors)
+        "ObjectMolecule-ERROR: Unable to open file '%s'\n",fname
+        ENDFB(G);
+      ok=false;
+    } else
+      {
+        PRINTFB(G,FB_ObjectMolecule,FB_Blather)
+          " ObjectMoleculeLoadPDBFile: Loading from %s.\n",fname
+          ENDFB(G);
+        
+        fseek(f,0,SEEK_END);
+        size=ftell(f);
+        fseek(f,0,SEEK_SET);
+        
+        buffer=(char*)mmalloc(size+255);
+        ErrChkPtr(G,buffer);
+        p=buffer;
+        fseek(f,0,SEEK_SET);
+        fread(p,size,1,f);
+        p[size]=0;
+        fclose(f);
+      }
+  }
+
   if(ok) {
     processed = VLACalloc(ProcPDBRec,10);
   }
@@ -385,11 +399,16 @@ void ExecutiveProcessPDBFile(PyMOLGlobals *G,CObject *origObj,char *fname, char 
         }
 
         if(obj) {
-          ExecutiveManageObject(G,obj,true,quiet);
+          ExecutiveManageObject(G,obj,true,true);
           if(eff_frame<0)
             eff_frame = ((ObjectMolecule*)obj)->NCSet-1;
-          sprintf(buf," CmdLoad: \"%s\" loaded into object \"%s\", state %d.\n",
-                  fname,oname,eff_frame+1);
+          if(!is_string)
+            sprintf(buf," CmdLoad: \"%s\" loaded as \"%s\".\n",
+                    fname,oname);
+          else
+            sprintf(buf," CmdLoad: PDB-string loaded into object \"%s\", state %d.\n",
+                    oname,eff_frame+1);
+            
         }
       }
     } else {
@@ -400,8 +419,12 @@ void ExecutiveProcessPDBFile(PyMOLGlobals *G,CObject *origObj,char *fname, char 
         ExecutiveUpdateObjectSelection(G,origObj);
       if(eff_frame<0)
         eff_frame = ((ObjectMolecule*)origObj)->NCSet-1;
-      sprintf(buf," CmdLoad: \"%s\" appended into object \"%s\", state %d.\n",
-              fname,oname,eff_frame+1);
+      if(!is_string) 
+        sprintf(buf," CmdLoad: \"%s\" appended into object \"%s\", state %d.\n",
+                fname,oname,eff_frame+1);
+      else
+        sprintf(buf," CmdLoad: PDB-string appended into object \"%s\", state %d.\n",
+                oname,eff_frame+1);
       obj = origObj;
     }
 
@@ -581,7 +604,7 @@ void ExecutiveProcessPDBFile(PyMOLGlobals *G,CObject *origObj,char *fname, char 
   /* END METAPHORICS ANNOTATION AND ALIGNMENT CODE */
   
   VLAFreeP(processed);
-  if(buffer) {
+  if((!is_string)&&buffer) {
     mfree(buffer);
   }
   

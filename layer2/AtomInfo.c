@@ -1220,7 +1220,12 @@ int AtomInfoCompare(PyMOLGlobals *G,AtomInfoType *at1,AtomInfoType *at2)
               if(at1->discrete_state==at2->discrete_state) {
                 if(at1->priority==at2->priority) {
                   if(at1->alt[0]==at2->alt[0]) {
-                    result=AtomInfoNameCompare(G,at1->name,at2->name);
+                    if( (result=AtomInfoNameCompare(G,at1->name,at2->name))==0) {
+                      if(at1->rank<at2->rank)
+                        result = -1;
+                      else if(at1->rank>at2->rank)
+                        result = 1;
+                    }
                   } else if((!at2->alt[0])||(at1->alt[0]&&((at1->alt[0]<at2->alt[0])))) {
                     result=-1;
                   } else {
@@ -1302,7 +1307,12 @@ int AtomInfoCompareIgnoreHet(PyMOLGlobals *G,AtomInfoType *at1,AtomInfoType *at2
             if(at1->discrete_state==at2->discrete_state) {
               if(at1->priority==at2->priority) {
                 if(at1->alt[0]==at2->alt[0]) {
-                  result=AtomInfoNameCompare(G,at1->name,at2->name);
+                  if( (result=AtomInfoNameCompare(G,at1->name,at2->name))==0) {
+                    if(at1->rank<at2->rank)
+                      result = -1;
+                    else if(at1->rank>at2->rank)
+                      result = 1;
+                  }
                 } else if((!at2->alt[0])||(at1->alt[0]&&((at1->alt[0]<at2->alt[0])))) {
                   result=-1;
                 } else {
