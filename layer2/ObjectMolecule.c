@@ -5917,6 +5917,7 @@ void ObjectMoleculeSeleOp(ObjectMolecule *I,int sele,ObjectMoleculeOpRec *op)
   int hit_flag = false;
   int ok = true;
   int cnt;
+  int skip_flag;
   int match_flag=false;
   int offset;
   CoordSet *cs;
@@ -6342,14 +6343,43 @@ void ObjectMoleculeSeleOp(ObjectMolecule *I,int sele,ObjectMoleculeOpRec *op)
 
    case OMOP_Spectrum:
      ai=I->AtomInfo;
+     ai0=NULL;
      for(a=0;a<I->NAtom;a++)
        {         
          s=ai->selEntry;
          if(SelectorIsMember(s,sele))
            {
-             c = (int)(0.49999+op->i1*(op->ff1[op->i3] - op->f1)/op->f2);
-             ai->color=op->ii1[c];
              op->i3++;
+             skip_flag=false;
+             if(op->i4&&ai0) /* byres and we've done a residue */
+               if(AtomInfoSameResidue(ai,ai0))
+                 skip_flag=true;
+             if(!skip_flag) {
+               c = (int)(0.49999+op->i1*(op->ff1[op->i3] - op->f1)/op->f2);
+               ai->color=op->ii1[c];
+               
+               if(op->i4) { /* byres */
+                 offset = -1;
+                 while((a+offset)>=0) {
+                   ai0 = I->AtomInfo + a + offset;
+                   if(AtomInfoSameResidue(ai,ai0)) {
+                     ai0->color = op->ii1[c];
+                   } else 
+                     break;
+                   offset--;
+                 }
+                 offset = 1;
+                 while((a+offset)<I->NAtom) {
+                   ai0 = I->AtomInfo + a + offset;
+                   if(AtomInfoSameResidue(ai,ai0)) {
+                     ai0->color = op->ii1[c];
+                   } else 
+                     break;
+                   offset++;
+                 }
+               }
+               ai0=ai;
+             }
            }
          ai++;
        }

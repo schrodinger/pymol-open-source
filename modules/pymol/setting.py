@@ -243,6 +243,11 @@ if __name__=='pymol.setting':
       mouse_limit           = 211
       mouse_scale           = 212
       transparency_mode     = 213
+      clamp_colors          = 214
+      pymol_space_max_red   = 215
+      pymol_space_max_green = 216
+      pymol_space_max_blue  = 217
+      pymol_space_min_factor= 218
       
    setting_sc = Shortcut(SettingIndex.__dict__.keys())
 

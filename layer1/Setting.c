@@ -1073,6 +1073,10 @@ void SettingGenerateSideEffects(int index,char *sele,int state)
     ExecutiveInvalidateRep(inv_sele,cRepCyl,cRepInvRep);
     SceneChanged();
     break;
+  case cSetting_clamp_colors:
+    ExecutiveInvalidateRep(inv_sele,cRepAll,cRepInvColor);
+    SceneChanged();
+    break;
   case cSetting_label_color:
     ExecutiveInvalidateRep(inv_sele,cRepLabel,cRepInvRep);
     SceneChanged();
@@ -1869,6 +1873,17 @@ void SettingInitGlobal(void)
   SettingSet_f(I,cSetting_mouse_scale,1.3F);
 
   SettingSet_i(I,cSetting_transparency_mode,2);
+
+  SettingSet_i(I,cSetting_clamp_colors,1);
+
+  SettingSet_f(I,cSetting_pymol_space_max_red,0.90F);
+
+  SettingSet_f(I,cSetting_pymol_space_max_green,0.75F);
+
+  SettingSet_f(I,cSetting_pymol_space_max_blue,0.90F);
+
+  SettingSet_f(I,cSetting_pymol_space_min_factor,0.15F);
+
 }
 
 

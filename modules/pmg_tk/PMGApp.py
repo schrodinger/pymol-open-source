@@ -993,8 +993,6 @@ class PMGApp(AbstractApp):
 
 
       self.menuBar.addmenu('Display', 'Display Control')
-
-
       
       self.menuBar.addmenuitem('Display', 'command', 'Stereo On',
                                label='Stereo On',
@@ -1043,6 +1041,21 @@ class PMGApp(AbstractApp):
                                label='Black',
                                command = lambda : cmd.do("_ cmd.bg_color('black')"))
 
+      self.menuBar.addcascademenu('Display', 'Color Space', 'Color Space',
+                                  label='Color Space')
+
+      self.menuBar.addmenuitem('Color Space', 'command', 'CMYK (for publications)',
+                               label='CMYK (for publications)',
+                               command = lambda : cmd.do("_ cmd.space('cmyk')"))
+
+      self.menuBar.addmenuitem('Color Space', 'command', 'PyMOL (for web & video)',
+                               label='PyMOL (for web & video)',
+                               command = lambda : cmd.do("_ cmd.space('pymol')"))
+
+      self.menuBar.addmenuitem('Color Space', 'command', 'RGB (default)',
+                               label='RGB (default)',
+                               command = lambda : cmd.do("_ cmd.space('rgb')"))
+
       self.menuBar.addcascademenu('Display', 'Performance', 'Performance',
                                   label='Performance')
 
@@ -1062,6 +1075,25 @@ class PMGApp(AbstractApp):
                                label='Maximum Quality',
                                command = lambda : cmd.do("_ util.performance(0)"))
 
+      self.menuBar.addcascademenu('Display', 'Transparency', 'Transparency',
+                                  label='Transparency')
+
+
+      self.menuBar.addmenuitem('Transparency', 'command', 'Uni-Layer',
+                               label='Uni-Layer',
+                               command = lambda : cmd.do(
+         "_ cmd.set('transparency_mode',2);cmd.set('backface_cull',0);cmd.set('two_sided_lighting',0)"))
+
+      self.menuBar.addmenuitem('Transparency', 'command', 'Multi Layer',
+                               label='Multi Layer',
+                               command = lambda : cmd.do(
+         "_ cmd.set('transparency_mode',1);cmd.set('backface_cull',0);cmd.set('two_sided_lighting',1)"))
+
+      self.menuBar.addmenuitem('Transparency', 'command', 'Fast and Ugly',
+                               label='Fast and Ugly',
+                               command = lambda : cmd.do(
+         "_ cmd.set('transparency_mode',0);cmd.set('backface_cull',0);cmd.set('two_sided_lighting',0)"))
+      
       self.menuBar.addcascademenu('Display', 'Rendering', 'Rendering',
                                   label='Rendering')
 

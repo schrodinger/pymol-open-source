@@ -21,7 +21,7 @@ if __name__=='pymol.importing':
    from cmd import _cmd,lock,unlock,Shortcut,QuietException, \
         _feedback,fb_module,fb_mask, \
         file_ext_re,safe_oname_re, \
-        _load, is_list
+        _load, is_list, space_sc
    import selector
    try:
       from pymol import m4x
@@ -115,6 +115,34 @@ PYMOL API
       lst = [loadable.map]
       lst.extend(list(arg))
       return apply(load_object,lst)
+
+   def space(space="",quiet=0):
+      r=None
+      
+      tables = { 'cmyk' : "$PYMOL_PATH/data/pymol/cmyk.png",
+                 'pymol' : 'pymol',
+                 'rgb' : 'rgb' }
+
+      space_auto = space_sc.interpret(space)
+      if (space_auto != None) and not is_list(space_auto):
+         space = space_auto
+         
+      if space=="": 
+         filename = ""
+      else:         
+         filename = tables.get(string.lower(space),"")
+         if filename == "":
+            print "Error: unknown color space '%s'\n"%space
+            raise QuietException
+      try:
+         filename = os.path.expanduser(filename)
+         filename = os.path.expandvars(filename)
+
+         lock()
+         r = _cmd.load_color_table(str(filename),int(quiet))
+      finally:
+         unlock()
+      return r
 
    def load_callback(*arg):
       '''

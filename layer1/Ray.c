@@ -1383,6 +1383,48 @@ void RayRender(CRay *I,int width,int height,unsigned int *image,float front,floa
   }
 }
 
+void RayRenderColorTable(CRay *I,int width,int height,int *image)
+{
+  int x,y;
+  unsigned int r=0,g=0,b=0;
+  unsigned int *pixel,mask,*p;
+
+  if(I->BigEndian)
+    mask = 0x000000FF;
+  else
+    mask = 0xFF000000;
+
+  p=(unsigned int*)image; 
+  for(x=0;x<width;x++)
+    for(y=0;y<height;y++)
+      *(p++)=mask;
+  
+  if((width>=512)&&(height>=512)) {
+    
+    
+    for(y=0;y<512;y++) 
+      for(x=0;x<512;x++)        
+        {
+          pixel = image+((width)*y)+x;
+          if(I->BigEndian) {
+            *(pixel)=
+              mask|(r<<24)|(g<<16)|(b<<8);
+          } else {
+            *(pixel)=
+              mask|(b<<16)|(g<<8)|r;
+          }
+          b = b + 4;
+          if(!(0xFF&b)) { 
+            b=0;
+            g=g+4;
+            if(!(0xFF&g)) {           
+              g=0;
+              r=r+4;
+            }
+          }
+        }
+  }
+}
 /*========================================================================*/
 void RayTexture(CRay *I,int mode,float *v)
 {
@@ -1721,7 +1763,7 @@ CRay *RayNew(void)
   
   test = 0xFF000000;
   testPtr = (unsigned char*)&test;
-  I->BigEndian = *testPtr&&1;
+  I->BigEndian = (*testPtr)&&1;
   I->Trans=0.0F;
   I->Texture=0;
   I->TTTFlag=false;

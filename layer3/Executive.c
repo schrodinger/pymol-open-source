@@ -170,6 +170,7 @@ int ExecutiveSpectrum(char *s1,char *expr,float min,float max,int first,int last
         op.i1 = n_color-1;
         op.i2 = n_atom;
         op.i3 = 0;
+        op.i4 = byres;
         op.ii1 = color_index;
         op.ff1 = value;
         op.f1 = min;
