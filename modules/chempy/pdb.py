@@ -27,8 +27,14 @@ class PDB(Storage):
             at.coord = [float(rec[30:38]), 
                         float(rec[38:46]),
                         float(rec[46:54])]
-            at.q = float(rec[54:60])
-            at.b = float(rec[60:66])
+            try:
+               at.q = float(rec[54:60])
+            except ValueError:
+               at.q = 1.0
+            try:               
+               at.b = float(rec[60:66])
+            except ValueError:
+               at.b = 0.0
             at.segi = string.strip(rec[72:76])
             at.symbol = string.strip(rec[76:78])
             if not len(at.symbol):

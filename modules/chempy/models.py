@@ -149,7 +149,21 @@ class Indexed(Base):
    def remove_bond(self,index):
       nBond=len(self.Bond)
       del self.bond[index]
-
+#------------------------------------------------------------------------------
+   def convert_to_connected(self):
+      model = Connected()
+      model.molecule = self.molecule
+      model.atom = self.atom
+      model.bond = []
+      model.index = None
+      for a in model.atom:
+         model.bond.append([])
+      for b in self.bond:
+         model.bond[b.index[0]].append(b) # note two refs to same object
+         model.bond[b.index[1]].append(b) # note two refs to same object 
+      self.reset()
+      return model
+   
 #------------------------------------------------------------------------------
 #------------------------------------------------------------------------------
 #------------------------------------------------------------------------------
@@ -166,20 +180,8 @@ class Connected(Base):
          raise AttributeError(attr)
       
 #------------------------------------------------------------------------------
-   def __init__(self,indexed):
-      if indexed:
-         self.molecule=indexed.molecule
-         self.atom = indexed.atom
-         self.bond = []
-         self.index = None
-         for a in self.atom:
-            self.bond.append([])
-         for b in indexed.bond:
-            self.bond[b.index[0]].append(b) # note two refs to same object
-            self.bond[b.index[1]].append(b) # note two refs to same object 
-         indexed.reset()
-      else:
-         self.reset()
+   def __init__(self):
+      self.reset()
   
 #------------------------------------------------------------------------------
    def reset(self):
