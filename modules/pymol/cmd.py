@@ -2155,7 +2155,7 @@ SEE ALSO
       unlock()
    return r
 
-def ray(width=0,height=0):
+def ray(width=0,height=0,renderer=-1):
    '''
 DESCRIPTION
   
@@ -2165,11 +2165,11 @@ DESCRIPTION
       
 USAGE
  
-   ray [width,height]
+   ray [width,height [,renderer]]
  
 PYMOL API
   
-   cmd.ray(int width,int height)
+   cmd.ray(int width,int height,int renderer=-1)
 
 SEE ALSO
 
@@ -2177,7 +2177,27 @@ SEE ALSO
    '''
    try:
       lock()   
-      r = _cmd.render(int(width),int(height))
+      r = _cmd.render(int(width),int(height),int(renderer))
+   finally:
+      unlock()
+   return r
+
+def get_povray():
+   '''
+DESCRIPTION
+  
+   "get_povray" returns a tuple corresponding to strings
+   for a PovRay input file.
+      
+PYMOL API
+  
+   cmd.get_povray()
+
+   '''
+   r=None
+   try:
+      lock()   
+      r = _cmd.get_povray()
    finally:
       unlock()
    return r
@@ -2207,8 +2227,13 @@ RAY TRACING OPTIMIZATION
       
    3. Recompiling with optimizations on usually gives a 25-33%
       performance boost for ray tracing.
+
+   The built-in RayTracer is faster than PovRay for most simple
+   figures (spheres and cylinders), but PovRay blows past PyMOL when
+   it comes to rendering systems with many triangles.
    
-'''
+   '''
+
    help('faster')
 
 def system(command):

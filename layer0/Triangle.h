@@ -20,6 +20,8 @@ Z* -------------------------------------------------------------------
 
 int *TrianglePointsToSurface(float *v,float *vn,int n,float cutoff,int *nTriPtr,int **stripPtr,float *extent);
 
+int TriangleDegenerate(float *v1,float *n1,float *v2,float *n2,float *v3,float *n3);
+
 extern float TestLine[10000];
 extern int NTestLine;
 

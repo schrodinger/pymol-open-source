@@ -53,8 +53,6 @@ Z* -------------------------------------------------------------------
 #define SceneBottomMargin 3
 #define SceneLeftMargin 3
 
-#define SceneFOV 20.0
-
 typedef struct ObjRec {
   struct Object *obj;  
   struct ObjRec *next;
@@ -482,7 +480,7 @@ void SceneMakeMovieImage(void) {
 
   I->DirtyFlag=false;
   if(SettingGet(cSetting_ray_trace_frames)) {
-	SceneRay(0,0); 
+	SceneRay(0,0,SettingGet(cSetting_ray_default_renderer),NULL,NULL); 
   } else {
 	 v=SettingGetfv(cSetting_bg_rgb);
     if(PMGUI) {
@@ -496,8 +494,10 @@ void SceneMakeMovieImage(void) {
   }
   if(I->ImageBuffer&&(I->ImageBufferHeight==I->Height)&&(I->ImageBufferWidth==I->Width)) {
 	 MovieSetImage(MovieFrameToImage(I->Frame),I->ImageBuffer);
+    I->MovieOwnsImageFlag=true;
+  } else {
+    I->MovieOwnsImageFlag=false;
   }
-  I->MovieOwnsImageFlag=true;
   I->CopyFlag=true;
 }
 /*========================================================================*/
@@ -560,7 +560,7 @@ void SceneWindowSphere(float *location,float radius)
   /*  printf("%8.3f %8.3f %8.3f\n",I->Front,I->Pos[2],I->Back);*/
 
   MatrixTransform3f(I->RotMatrix,v0,I->Pos); /* convert to view-space */
-  dist = radius/tan((SceneFOV/2.0)*cPI/180.0);
+  dist = radius/tan((SettingGet(cSetting_field_of_view)/2.0)*cPI/180.0);
 
   I->Pos[2]-=dist;
   I->Front=(-I->Pos[2]-radius*1.5);
@@ -618,6 +618,39 @@ void SceneObjectDel(Object *obj)
   }
   SceneCountFrames();
   SceneDirty();
+}
+/*========================================================================*/
+int SceneLoadPNG(char *fname,int movie_flag) 
+{
+  CScene *I=&Scene;
+  int ok=false;
+  if(I->ImageBuffer) {
+	 if(I->MovieOwnsImageFlag) {
+		I->MovieOwnsImageFlag=false;
+		I->ImageBuffer=NULL;
+	 } else {
+		FreeP(I->ImageBuffer);
+	 }
+  }
+  if(MyPNGRead(fname,(unsigned char**)&I->ImageBuffer,&I->ImageBufferWidth,&I->ImageBufferHeight)) {
+    PRINTFB(FB_Scene,FB_Details)
+      " Scene: loaded image from '%s'.\n",fname
+      ENDFB;
+    I->CopyFlag=true;
+    if(movie_flag&&I->ImageBuffer&&(I->ImageBufferHeight==I->Height)&&(I->ImageBufferWidth==I->Width)) {
+      MovieSetImage(MovieFrameToImage(I->Frame),I->ImageBuffer);
+      I->MovieOwnsImageFlag=true;
+    } else {
+      I->MovieOwnsImageFlag=false;
+    }
+    OrthoDirty();
+    ok=true;
+  } else {
+    PRINTFB(FB_Scene,FB_Errors)
+      " Scene: unable to load image from '%s'.\n",fname
+      ENDFB;
+  }
+  return(ok);
 }
 /*========================================================================*/
 void SceneDraw(Block *block)
@@ -1387,7 +1420,7 @@ void SceneResetNormal(int lines)
 }
 
 /*========================================================================*/
-void SceneRay(int ray_width,int ray_height)
+void SceneRay(int ray_width,int ray_height,int mode,char **headerVLA_ptr,char **charVLA_ptr)
 {
   CScene *I=&Scene;
   ObjRec *rec=NULL;
@@ -1400,12 +1433,16 @@ void SceneRay(int ray_width,int ray_height)
   float rayView[16];
   int curState;
   double timing;
+  char *charVLA = NULL;
+  char *headerVLA = NULL;
+  float fov;
 
   if((!ray_width)||(!ray_height)) {
     ray_width=I->Width;
     ray_height=I->Height;
   }
 
+  fov=SettingGet(cSetting_field_of_view);
   aspRat = ((float) ray_width) / ((float) ray_height);
 
   if(SettingGet(cSetting_all_states)) {
@@ -1440,7 +1477,7 @@ void SceneRay(int ray_width,int ray_height)
 
   /* define the viewing volume */
 
-  height  = abs(I->Pos[2])*tan((SceneFOV/2.0)*cPI/180.0);	 
+  height  = abs(I->Pos[2])*tan((fov/2.0)*cPI/180.0);	 
   width = height*aspRat;
 
   RayPrepare(ray,-width,width,-height,height,I->FrontSafe,I->Back,rayView);
@@ -1453,43 +1490,58 @@ void SceneRay(int ray_width,int ray_height)
 		}
 	 }
 
-  buffer_size = 4*ray_width*ray_height;
-  buffer=(GLvoid*)Alloc(char,buffer_size);
-  ErrChkPtr(buffer);
 
   PRINTFB(FB_Ray,FB_Details)
     " Ray: tracing %dx%d = %d rays...\n",ray_width,ray_height,
     ray_width*ray_height
     ENDFB;
 
-  RayRender(ray,ray_width,ray_height,buffer,I->Front,I->Back,timing);
+  if(mode) { /* mode==1 is povray */
+    charVLA=VLAlloc(char,100000); 
+    headerVLA=VLAlloc(char,2000);
+    RayRenderPOV(ray,ray_width,ray_height,&headerVLA,&charVLA,I->Front,I->Back,fov);
+    if(!(charVLA_ptr&&headerVLA_ptr)) { /* immediate mode */
+      if(PPovrayRender(headerVLA,charVLA,"tmp_pymol",ray_width,ray_height,SettingGet(cSetting_antialias))) {
+        SceneLoadPNG("tmp_pymol.png",false);
+        I->DirtyFlag=false;
+      }
+      VLAFreeP(charVLA);
+      VLAFreeP(headerVLA);
+    } else { /* get_povray mode */
+      *charVLA_ptr=charVLA;
+      *headerVLA_ptr=headerVLA;
+    }
+  } else { /* mode==0 is built-in */
+    buffer_size = 4*ray_width*ray_height;
+    buffer=(GLvoid*)Alloc(char,buffer_size);
+    ErrChkPtr(buffer);
+
+    RayRender(ray,ray_width,ray_height,buffer,I->Front,I->Back,timing);
+
+    if(I->ImageBuffer) {
+      if(I->MovieOwnsImageFlag) {
+        I->MovieOwnsImageFlag=false;
+        I->ImageBuffer=NULL;
+      } else {
+        FreeP(I->ImageBuffer);
+      }
+    }
+    
+    I->ImageBuffer = buffer;
+    I->ImageBufferSize = buffer_size;
+    I->ImageBufferWidth=ray_width;
+    I->ImageBufferHeight=ray_height;
+    I->DirtyFlag=false;
+    I->CopyFlag = true;
+    I->MovieOwnsImageFlag = false;
+  }
+
 
   timing = UtilGetSeconds()-timing;
   PRINTFB(FB_Ray,FB_Details)
     " Ray: total rendering time: %4.2f sec. = %3.1f frames per hour.\n", 
     timing,3600/timing 
     ENDFB;
-
-  /*
-  RayRenderPOV(ray,I->Width,I->Height,NULL,I->Front,I->Back,SceneFOV);
-  */
-
-  if(I->ImageBuffer) {
-	 if(I->MovieOwnsImageFlag) {
-		I->MovieOwnsImageFlag=false;
-		I->ImageBuffer=NULL;
-	 } else {
-		FreeP(I->ImageBuffer);
-	 }
-  }
-
-  I->ImageBuffer = buffer;
-  I->ImageBufferSize = buffer_size;
-  I->ImageBufferWidth=ray_width;
-  I->ImageBufferHeight=ray_height;
-  I->DirtyFlag=false;
-  I->CopyFlag = true;
-  I->MovieOwnsImageFlag = false;
 
   OrthoDirty();
   RayFree(ray);
@@ -1597,7 +1649,7 @@ int SceneRenderCached(void)
 		  renderedFlag=true;
 		}
 	} else if(MoviePlaying()&&SettingGet(cSetting_ray_trace_frames)) {
-	  SceneRay(0,0); 
+	  SceneRay(0,0,SettingGet(cSetting_ray_default_renderer),NULL,NULL); 
 	} else {
 	  renderedFlag=false;
 	  I->CopyFlag = false;
@@ -1646,12 +1698,14 @@ void SceneRender(Pickable *pick,int x,int y,Multipick *smp)
   int nPick,nBits;
   int a;
   int pass;
+  float fov;
+
   PRINTFD(FB_Scene)
     " SceneRender: entered. pick %p x %d y %d smp %p\n",
     pick,x,y,smp
     ENDFD;
 
-
+  fov=SettingGet(cSetting_field_of_view);
   if(PMGUI) {
     glDrawBuffer(GL_BACK);
   
@@ -1670,9 +1724,9 @@ void SceneRender(Pickable *pick,int x,int y,Multipick *smp)
     }
 
     if(SettingGet(cSetting_ortho)==0.0) {
-      gluPerspective(SceneFOV,aspRat,I->FrontSafe,I->Back);
+      gluPerspective(fov,aspRat,I->FrontSafe,I->Back);
     } else {
-      height  = abs(I->Pos[2])*tan((SceneFOV/2.0)*cPI/180.0);	 
+      height  = abs(I->Pos[2])*tan((fov/2.0)*cPI/180.0);	 
       width = height*aspRat;
 	
       glOrtho(-width,width,-height,height,

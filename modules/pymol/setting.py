@@ -158,6 +158,10 @@ class SettingIndex:
    auto_indicate_flags   =147
    surface_debug         =148
    ray_improve_shadows   =149
+   smooth_color_triangle = 150
+   ray_default_renderer  =151
+   field_of_view         =152
+   reflect_power         =153
    
 setting_sc = Shortcut(SettingIndex.__dict__.keys())
    

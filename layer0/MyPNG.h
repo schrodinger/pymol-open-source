@@ -18,5 +18,6 @@ Z* -------------------------------------------------------------------
 
 
 int MyPNGWrite(char *file_name,unsigned char *p,unsigned int width,unsigned int height);
+int MyPNGRead(char *file_name,unsigned char **p_ptr,unsigned int *width_ptr,unsigned int *height_ptr);
 
 #endif

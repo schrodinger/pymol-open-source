@@ -103,8 +103,13 @@ Current Bugs to Fix
   
    * intra_fit broken?
 
-Changes up to 0.68
+Changes up to 0.69
 
+   * PNG reading
+
+   * First generation PovRay interface...whoopee!
+
+Changes up to 0.68
 
    * HETATMS are no longer surfaced by default.  Clear the "ignore" flag or
      set surface_mode=1 to restore their surfaces.

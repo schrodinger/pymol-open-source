@@ -182,34 +182,52 @@ def sum_charge(*arg): # NOT THREAD SAFE
 
 def ray_shadows(mode):
    if mode=='light': # maximum quality
-      cmd.set('power',3.0)
       cmd.set('ambient',0.3)
+      cmd.set('spec_reflect',0.4)
       cmd.set('spec_power',40)
-      cmd.set('reflect',1.2)         
+      cmd.set('reflect',1.2)
+      cmd.set('reflect_power',1.0)         
       cmd.set('direct',0.35)
+      cmd.set('power',3.0)
       cmd.set('gamma',1.2)
    elif mode=='matte':
-      cmd.set('power',1.5) 
+      cmd.set('spec_reflect',0.4)
       cmd.set('spec_power',20)
       cmd.set('ambient',0.12)
-      cmd.set('reflect',0.9) 
+      cmd.set('reflect',0.9)
+      cmd.set('reflect_power',1.0)
+      cmd.set('power',1.5) 
       cmd.set('direct',0.25)
       cmd.set('gamma',1.30)
    elif mode=='medium':
       cmd.set('power',1.0) # 0.7
+      cmd.set('reflect_power',1.0)
+      cmd.set('spec_reflect',0.5)
       cmd.set('spec_power',60) # was 50
       cmd.set('ambient',0.12)
       cmd.set('reflect',0.9) 
       cmd.set('direct',0.25) 
       cmd.set('gamma',1.3) 
    elif mode=='heavy':
-      cmd.set('power',0.3) 
+      cmd.set('reflect_power',1.0)
+      cmd.set('spec_reflect',0.5)
       cmd.set('spec_power',90) # was 60
       cmd.set('ambient',0.08)
       cmd.set('reflect',0.65) # was 0.75         
       cmd.set('direct',0.06)
+      cmd.set('power',0.3)
       cmd.set('gamma',1.4) # was 1.5
-   
+   elif mode=='black':
+      cmd.set('power',0.3)
+      cmd.set('spec_reflect',0.6)
+      cmd.set('spec_power',90) # was 60
+      cmd.set('ambient',0.00)
+      cmd.set('reflect',0.75) # was 0.75         
+      cmd.set('direct',0.00)
+      cmd.set('reflect_power',1.0)
+      cmd.set('gamma',1.55) # was 1.5
+
+      
 def ff_copy(src,dst): # NOT THREAD SAFE
    pymol._rcopy = pymol.Scratch_Storage()
    pymol._rcopy.pc={}

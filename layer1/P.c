@@ -45,6 +45,7 @@ PyObject *P_menu = NULL;
 PyObject *P_xray = NULL;
 PyObject *P_parser = NULL;
 PyObject *P_setting = NULL;
+PyObject *P_povray = NULL;
 
 PyObject *P_chempy = NULL;
 PyObject *P_models = NULL;
@@ -780,6 +781,10 @@ void PInit(void)
   P_setting = PyDict_GetItemString(P_globals,"setting");
   if(!P_setting) ErrFatal("PyMOL","can't find module 'setting'");
 
+  PRunString("import povray\n");  
+  P_povray = PyDict_GetItemString(P_globals,"povray");
+  if(!P_povray) ErrFatal("PyMOL","can't find module 'povray'");
+
 #ifdef _PYMOL_XRAY
   PRunString("import xray\n");  
   P_xray = PyDict_GetItemString(P_globals,"xray");
@@ -831,6 +836,18 @@ void PInit(void)
   signal(SIGINT,my_interrupt);
 #endif
 
+}
+
+int PPovrayRender(char *header,char *inp,char *file,int width,int height,int antialias) 
+{
+  PyObject *result;
+  int ok;
+  PBlock();
+  result = PyObject_CallMethod(P_povray,"render_from_string","sssiii",header,inp,file,width,height,antialias);
+  ok = PyObject_IsTrue(result);
+  Py_DECREF(result);
+  PUnblock();
+  return(ok);
 }
 
 void PStereoOff(void) 

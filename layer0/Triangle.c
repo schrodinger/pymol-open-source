@@ -85,6 +85,28 @@ static int TriangleEdgeStatus(int i1,int i2)
   return(0);
 }
 
+int TriangleDegenerate(float *v1,float *n1,float *v2,float *n2,float *v3,float *n3)
+{
+  float axis1[3];
+  float axis2[3];
+  float axis3[3];
+  float norm[3];
+  float dot[3];
+
+  add3f(n1,n2,norm);
+  add3f(n3,norm,norm);
+  subtract3f(v1,v2,axis1);
+  subtract3f(v3,v2,axis2);
+  cross_product3f(axis1,axis2,axis3);
+  dot[0]=dot_product3f(axis3,n1);
+  dot[1]=dot_product3f(axis3,n2);
+  dot[2]=dot_product3f(axis3,n3);
+  return(!(
+           ((dot[0]>0.0F)&&(dot[1]>0.0F)&&(dot[2]>0.0F))||
+           ((dot[0]<0.0F)&&(dot[1]<0.0F)&&(dot[2]<0.0F))
+           ));
+}
+
 static int *TriangleMakeStripVLA(float *v,float *vn,int n) 
 {
   TriangleSurfaceRec *I=&TriangleSurface;

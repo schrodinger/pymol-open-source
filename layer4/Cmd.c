@@ -205,23 +205,24 @@ static PyObject *CmdGet(PyObject *self, 	PyObject *args);
 static PyObject *CmdGetArea(PyObject *self, 	PyObject *args);
 static PyObject *CmdGetColor(PyObject *self, 	PyObject *args);
 static PyObject *CmdGetDihe(PyObject *self, 	PyObject *args);
+static PyObject *CmdGetFeedback(PyObject *dummy, PyObject *args);
 static PyObject *CmdGetFrame(PyObject *self, 	PyObject *args);
 static PyObject *CmdGetPDB(PyObject *dummy, PyObject *args);
 static PyObject *CmdGetMatrix(PyObject *self, 	PyObject *args);
 static PyObject *CmdGetMinMax(PyObject *self, 	PyObject *args);
 static PyObject *CmdGetModel(PyObject *dummy, PyObject *args);
-static PyObject *CmdGetNames(PyObject *self, 	PyObject *args);
-static PyObject *CmdGetState(PyObject *self, 	PyObject *args);
-static PyObject *CmdGetType(PyObject *self, 	PyObject *args);
-static PyObject *CmdGetFeedback(PyObject *dummy, PyObject *args);
 static PyObject *CmdGetMoment(PyObject *self, 	PyObject *args);
+static PyObject *CmdGetNames(PyObject *self, 	PyObject *args);
 static PyObject *CmdGetPhiPsi(PyObject *self, 	PyObject *args);
 static PyObject *CmdGetPosition(PyObject *self, 	PyObject *args);
+static PyObject *CmdGetPovRay(PyObject *dummy, PyObject *args);
 static PyObject *CmdGetRenderer(PyObject *self,  PyObject *args);
 static PyObject *CmdGetSetting(PyObject *self, 	PyObject *args);
 static PyObject *CmdGetSettingText(PyObject *self, 	PyObject *args);
 static PyObject *CmdGetSettingTuple(PyObject *self, 	PyObject *args);
 static PyObject *CmdGetSettingUpdates(PyObject *self, 	PyObject *args);
+static PyObject *CmdGetState(PyObject *self, 	PyObject *args);
+static PyObject *CmdGetType(PyObject *self, 	PyObject *args);
 static PyObject *CmdGetWizard(PyObject *self, PyObject *args);
 static PyObject *CmdGetView(PyObject *self, 	PyObject *args);
 static PyObject *CmdMask(PyObject *self, PyObject *args);
@@ -345,6 +346,7 @@ static PyMethodDef Cmd_methods[] = {
 	{"get_moment",	           CmdGetMoment,            METH_VARARGS },
    {"get_names",             CmdGetNames,             METH_VARARGS },
 	{"get_position",	        CmdGetPosition,          METH_VARARGS },
+	{"get_povray",	           CmdGetPovRay,            METH_VARARGS },
 	{"get_pdb",	              CmdGetPDB,               METH_VARARGS },
    {"get_phipsi",            CmdGetPhiPsi,            METH_VARARGS },
    {"get_renderer",          CmdGetRenderer,          METH_VARARGS },
@@ -1038,6 +1040,21 @@ static PyObject *CmdPaste(PyObject *dummy, PyObject *args)
       }
   }
   return(APIStatus(ok));  
+}
+
+static PyObject *CmdGetPovRay(PyObject *dummy, PyObject *args)
+{
+  PyObject *result = NULL;
+  char *header=NULL,*geom=NULL;
+  APIEntry();
+  SceneRay(0,0,1,&header,&geom);
+  if(header&&geom) {
+    result = Py_BuildValue("(ss)",header,geom);
+  }
+  VLAFreeP(header);
+  VLAFreeP(geom);
+  APIExit();
+  return(APIAutoNone(result));
 }
 
 static PyObject *CmdGetWizard(PyObject *dummy, PyObject *args)
@@ -2327,13 +2344,15 @@ static PyObject *CmdColorDef(PyObject *self, 	PyObject *args)
 
 static PyObject *CmdRay(PyObject *self, 	PyObject *args)
 {
-  int w,h;
+  int w,h,mode;
 
   int ok=false;
-  ok = PyArg_ParseTuple(args,"ii",&w,&h);
+  ok = PyArg_ParseTuple(args,"iii",&w,&h,&mode);
   if (ok) {
     APIEntry();
-    ExecutiveRay(w,h); /* TODO STATUS */
+    if(mode<0)
+      mode=SettingGet(cSetting_ray_default_renderer);
+    ExecutiveRay(w,h,mode); /* TODO STATUS */
     APIExit();
   }
   return(APIStatus(ok));
@@ -3104,9 +3123,8 @@ static PyObject *CmdSpheroid(PyObject *self, PyObject *args)
 
 static PyObject *CmdTest(PyObject *self, PyObject *args)
 {
-  int int1;
-  int ok=false;
-  ok = PyArg_ParseTuple(args,"i",&int1);
+  int ok=true;
+  /*  ok = PyArg_ParseTuple(args,"i",&int1);*/
   return(APIStatus(ok));
 }
 

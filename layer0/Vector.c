@@ -80,6 +80,12 @@ void get_divergent3f(float *src,float *dst)
   }
 }
 
+int equal3f(float *v1,float *v2)
+{
+  return((fabs(v1[0]-v2[0])<R_SMALL)&&
+         (fabs(v1[1]-v2[1])<R_SMALL)&&
+         (fabs(v1[2]-v2[2])<R_SMALL));
+}
 
 void get_random3f(float *x) /* this needs to be fixed as in Tinker */
 {

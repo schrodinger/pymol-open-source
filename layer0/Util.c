@@ -60,9 +60,26 @@ double UtilGetSeconds(void)
 char *UtilConcat(char *where,char *what)
 {
   while(*what)
-	 *where++=*what++;
+	 *(where++)=*(what++);
   *where=0;
   return(where);
+}
+
+
+void UtilConcatVLA(char **vla,int *cc,char *str)
+{
+  char *what;
+  char *where;
+  int len;
+
+  len=strlen(str);
+  VLACheck((*vla),char,len+*cc+1); 
+  where = (*cc)+(*vla);
+  what = str;
+  while(*what)
+	 *(where++)=*(what++);
+  *where=0;
+  *(cc)+=len;
 }
 
 void UtilNConcat(char *dst,char *src,int n) { /* copies up to N-1 chars */
