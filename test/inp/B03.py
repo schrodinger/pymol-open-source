@@ -14,8 +14,6 @@ ent_dir = "pdb/*"
 
 def load():
    try:
-      cmd.set("movie_delay","333")
-      cmd.mplay()
       r = 0
       reps = [ "lines", "sticks", "cartoon" ]
       list = glob(ent_dir)
