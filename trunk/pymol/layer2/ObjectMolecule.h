@@ -31,14 +31,19 @@ typedef struct ObjectMolecule {
   int CurCSet;
   char Color[3];
   float FractionExposed;
+
 } ObjectMolecule;
 
 typedef struct ObjectMoleculeOpRec {
   unsigned long code;
   Vector3f v1;
-  int i1,i2;
+  int i1,i2,i3;
   float f1;
-  float m[3][3];
+  double d[3][3];
+  float *vv1;
+  char *charVLA;
+  float ttt[16];
+  int nvv1;
 } ObjectMoleculeOpRec;
 
 #include"CoordSet.h"
@@ -54,11 +59,11 @@ ObjectMolecule *ObjectMoleculeReadPDBStr(ObjectMolecule *obj,char *molstr,int fr
 
 void ObjectMoleculeInvalidateRep(ObjectMolecule *I,int rep);
 
-void ObjectMoleculeConnect(ObjectMolecule *this,CoordSet *that,float cutoff);
-
 void ObjectMoleculeSeleOp(ObjectMolecule *I,int sele,ObjectMoleculeOpRec *op);
 
 CoordSet *ObjectMoleculeGetCoordSet(ObjectMolecule *I,int setIndex);
+
+char *ObjectMoleculeCoordSetToPDBStr(ObjectMolecule *I,int state);
 
 #endif
 

@@ -25,6 +25,8 @@ Z* -------------------------------------------------------------------
 
 #include"MemoryDebug.h"
 
+#define GDB_ENTRY
+
 void ZeroMem(char *p,char *q);
 
 void ZeroMem(char *p,char *q)

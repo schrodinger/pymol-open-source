@@ -30,5 +30,6 @@ void ControlFree(void);
 Block *ControlGetBlock(void);
 int ControlIdling(void);
 void ControlInterrupt(void);
+void ControlRock(int mode);
 
 #endif

@@ -19,82 +19,283 @@
 # **PyMol Programs
 
 import re
-import pmx
+import _pm
 import string
 import traceback
+import thread
+import threading
+import __main__
+
+def ready():
+	return _pm.ready()
+
+def setup_global_locks():
+	__main__.lock_api = _pm.get_globals()['lock_api']
+	
+def lock():
+	__main__.lock_api.acquire(1)
+
+def lock_attempt():
+	res = __main__.lock_api.acquire(blocking=0)
+	if res:
+		_pm.get_globals()['lock_state'] = 1;
+	else:
+		_pm.get_globals()['lock_state'] = None;
+
+def unlock():
+	__main__.lock_api.release()
 
 def export_dots(a,b):
-	return pmx.export_dots(a,int(b))
+	lock()
+	r = _pm.export_dots(a,int(b))
+	unlock()
+	return r
 
 def do(a):
-	pmx.do(a);
-
+	lock()
+	_pm.do(a);
+	unlock()
+	
 def turn(a,b):
-	pmx.turn(a,float(b))
-
+	lock()
+	_pm.turn(a,float(b))
+	unlock()
+	
 def render():
-	pmx.render()
-
+	lock()	
+	_pm.render()
+	unlock()
+	
 def ray():
-	pmx.render()
+	lock()	
+	_pm.render()
+	unlock()
 
+def real_system(a):
+	_pm.system(a)
+	
+def system(a):
+	threading.Thread(target=real_system,args=([a])).start()
+	lock()
+	unlock()
+
+def fit(a,b):
+	if a[0]!='(': a="(%"+a+")"
+	if b[0]!='(': b="(%"+b+")"
+	lock()	
+	_pm.fit("(%s in %s)" % (a,b),
+			"(%s in %s)" % (b,a))
+	unlock()
+
+def expfit(a,b):
+	lock()	
+	_pm.fit(a,b)
+	unlock()
+	
 def zoom(a):
-	pmx.zoom(a)
-
+	lock()	
+	_pm.zoom(a)
+	unlock()
+	
 def frame(a):
-	pmx.frame(int(a))
-
+	lock()	
+	_pm.frame(int(a))
+	unlock()
+	
 def move(a,b):
-	pmx.move(a,float(b))
+	lock()	
+	_pm.move(a,float(b))
+	unlock()
+	
 
 def clip(a,b):
-	pmx.clip(a,float(b))
+	lock()	
+	_pm.clip(a,float(b))
+	unlock()
+	
 
 def origin(a):
-	pmx.origin(a)
+	lock()	
+	_pm.origin(a)
+	unlock()
+
+def orient(*arg):
+	lock()
+	if len(arg)<1:
+		a = "(all)"
+	else:
+		a = arg[0]
+	_pm.orient(a)
+	unlock()
+	
 
 def refresh():
-	pmx.refresh()
+	lock()
+	if thread.get_ident() ==__main__.glutThread:
+		_pm.refresh_now()
+	else:
+		_pm.refresh()
+	unlock()
+	
+
+def dirty():
+	lock()	
+	_pm.dirty()
+	unlock()
 
 def set(a,b):
-	pmx.set(a,b)
+	lock()	
+	_pm.set(a,b)
+	unlock()
+	
 
 def reset():
-	pmx.reset(0)
+	lock()	
+	_pm.reset(0)
+	unlock()
+	
 	
 def delete(a):
-	pmx.delete(a)
-
+	lock()	
+	_pm.delete(a)
+	unlock()
+	
 
 def quit():
-	pmx.quit()
+	lock()	
+	_pm.quit()
+	unlock()
+	
 
 def png(a):
-	pmx.png(a)
+	lock()	
+	fname = a
+	if not re.search("\.png$",fname):
+		fname = fname +".png"
+	_pm.png(fname)
+	unlock()
+	
 
 def mclear():
-	pmx.mclear()
+	lock()	
+	_pm.mclear()
+	unlock()
+	
 
 def mstop():
-	pmx.mplay(0)
+	lock()	
+	_pm.mplay(0)
+	unlock()
+	
 
 def mplay():
-	pmx.mplay(1)
+	lock()	
+	_pm.mplay(1)
+	unlock()
+	
 
 def mray():
-	pmx.mplay(2)
+	lock()	
+	_pm.mplay(2)
+	unlock()
+	
 
 def viewport(a,b):
-	pmx.viewport(int(a),int(b))
+	lock()	
+	_pm.viewport(int(a),int(b))
+	unlock()
+	
 
 def mdo(a,b):
-	pmx.mdo(int(a)-1,b)
+	lock()	
+	_pm.mdo(int(a)-1,b)
+	unlock()
+	
 
-def run(*args):
-# dummy. This functionality now provided directly by the parser.
+def dummy(*args):
+	lock()	
 	pass
+	unlock()
+	
+
+def rock():
+	lock()	
+	_pm.rock()
+	unlock()
+	
+
+def forward():
+	lock()	
+	_pm.setframe(5,1)
+	unlock()
+
+def backward():
+	lock()	
+	_pm.setframe(5,-1)
+	unlock()
+
+def beginning():
+	lock()	
+	_pm.setframe(0,0)
+	unlock()
+
+def ending():
+	lock()	
+	_pm.setframe(2,0)
+	unlock()
 			
+def middle():
+	lock()	
+	_pm.setframe(3,0)
+	unlock()
+	
+def save(*arg):
+	lock()
+	fname = 'save.pdb'
+	sele = '( all )'
+	state = -1
+	format = 'pdb'
+	if len(arg)==1:
+		fname = arg[0]
+	elif len(arg)==2:
+		fname = arg[0]
+		sele = arg[1]
+	elif len(arg)==3:
+		fname = arg[0]
+		sele = arg[1]
+		state = arg[2]
+	elif len(arg)==4:
+		fname = arg[0]
+		sele = arg[1]
+		state = arg[2]
+		format = arg[3]
+	if (len(arg)>0) and (len(arg)<4):
+		if re.search("\.pdb$",fname):
+			format = 'pdb'
+		elif re.search("\.mol$",fname):
+			formet = 'mol'
+		elif re.search("\.sdf$",fname):
+			formet = 'sdf'
+	if format=='pdb':
+		f=open(fname,"w")
+		if f:
+			f.write(_pm.get_pdb(sele,int(state)))
+			f.close()
+		
+	unlock()
+
+def get_feedback():
+	l = []
+	lock()
+	unlock()
+	r = _pm.get_feedback()
+	while r:
+		l.append(r)
+		r = _pm.get_feedback()
+	return l
+
 def load(*args):
+	lock()	
 	ftype = 0
 	if re.search("\.pdb$",args[0]):
 		ftype = 0
@@ -103,83 +304,114 @@ def load(*args):
 	if len(args)==1:
 		oname = re.sub("[^/]*\/","",args[0])
 		oname = re.sub("\.pdb|\.mol","",oname)
-		pmx.load(oname,args[0],-1,ftype)
+		_pm.load(oname,args[0],-1,ftype)
 	elif len(args)==2:
 		oname = string.strip(args[1])
-		pmx.load(oname,args[0],-1,ftype)
+		_pm.load(oname,args[0],-1,ftype)
 	elif len(args)==3:
 		oname = string.strip(args[1])
-		pmx.load(oname,args[0],int(args[2])-1,ftype)
+		_pm.load(oname,args[0],int(args[2])-1,ftype)
 	else:
 		print "argument error."
+	unlock()
+	
 
 def read_mol(*args):
+	lock()	
 	ftype = 3
 	if len(args)==2:
 		oname = string.strip(args[1])
-		pmx.load(oname,args[0],-1,ftype)
+		_pm.load(oname,args[0],-1,ftype)
 	elif len(args)==3:
 		oname = string.strip(args[1])
-		pmx.load(oname,args[0],int(args[2])-1,ftype)
+		_pm.load(oname,args[0],int(args[2])-1,ftype)
 	else:
 		print "argument error."
+	unlock()
+	
 
 def select(*args):
+	lock()	
 	if len(args)==1:
-		sel_cnt = pmx.get("sel_counter") + 1.0
-		pmx.set("sel_counter","%1.0f" % sel_cnt)
+		sel_cnt = _pm.get("sel_counter") + 1.0
+		_pm.set("sel_counter","%1.0f" % sel_cnt)
 		sel_name = "sel%02.0f" % sel_cnt
 		sel = args[0]
 	else:
 		sel_name = args[0]
 		sel = args[1]
-	pmx.select(sel_name,sel)
+	_pm.select(sel_name,sel)
+	unlock()
+	
 
 def color(*args):
+	lock()	
 	if len(args)==2:
-		pmx.color(args[0],args[1],0)
+		_pm.color(args[0],args[1],0)
 	else:
-		pmx.color(args[0],args[1],1)	
+		_pm.color(args[0],args[1],1)	
+	unlock()
+	
 
-def mpng(*args):
-	if len(args)==1:
-		pmx.mpng(args[0],1)	
-	elif args[1]=='purge':
-		pmx.mpng(args[0],0);
-	else:
-		pmx.mpng(args[0],1);
+def mpng(a):
+	_pm.do("pm.mpng_('"+a+"')")
+
+def mpng_(*args):
+	lock()	
+	fname = args[0]
+	if re.search("\.png$",fname):
+		fname = re.sub("\.png$","",fname)
+	_pm.mpng_(fname)
+	unlock()
+	
 
 def show(*args):
+	lock()	
 	if len(args)==2:
 		if repres.has_key(args[0]):		
 			repn = repres[args[0]];
-			pmx.showhide(args[1],repn,1);
+			_pm.showhide(args[1],repn,1);
 	elif args[0]=='all':
-			pmx.showhide("!",0,1);
+			_pm.showhide("!",0,1);
+	unlock()
+	
 
 def hide(*args):
+	lock()	
 	if len(args)==2:
 		if repres.has_key(args[0]):		
 			repn = repres[args[0]];
-			pmx.showhide(args[1],repn,0);
+			_pm.showhide(args[1],repn,0);
 	elif args[0]=='all':
-			pmx.showhide("!",0,0);
+			_pm.showhide("!",0,0);
+	unlock()
+	
 
 def mmatrix(a):
+	lock()	
 	if a=="clear":
-		pmx.mmatrix(0)
+		_pm.mmatrix(0)
 	elif a=="store":
-		pmx.mmatrix(1)
+		_pm.mmatrix(1)
 	elif a=="recall":
-		pmx.mmatrix(2)
+		_pm.mmatrix(2)
+	unlock()
+	
 
 def enable(nam):
-	pmx.onoff(nam,1);
+	lock()	
+	_pm.onoff(nam,1);
+	unlock()
+	
 
 def disable(nam):
-	pmx.onoff(nam,0);
+	lock()	
+	_pm.onoff(nam,0);
+	unlock()
+	
 
 def mset(seq):
+	lock()	
 	output=[]
 	input = string.split(seq," ")
 	last = 0
@@ -203,41 +435,54 @@ def mset(seq):
 			val = int(x) - 1
 			output.append(str(val))
 			last=val
-	pmx.mset(string.join(output," "))
+	_pm.mset(string.join(output," "))
+	unlock()
+	
 	
 keyword = { 
-	'load'        : [load         , 1 , 3 , ',' , 0 ],
-	'refresh'     : [refresh      , 0 , 0 , ',' , 0 ],
-	'render'      : [render       , 0 , 0 , ',' , 0 ],
-	'ray'         : [render       , 0 , 0 , ',' , 0 ],
-	'select'      : [select       , 1 , 2 , '=' , 0 ],
-	'set'         : [set          , 2 , 2 , '=' , 0 ],
-	'frame'       : [frame        , 1 , 1 , ',' , 0 ],
-	'turn'        : [turn         , 2 , 2 , ',' , 0 ],
-	'move'        : [move         , 2 , 2 , ',' , 0 ],
+	'backward'    : [backward     , 0 , 0 , ',' , 0 ],
+	'beginning'   : [beginning    , 0 , 0 , ',' , 0 ],
 	'clip'        : [clip         , 2 , 2 , ',' , 0 ],
-	'show'        : [show         , 1 , 2 , ',' , 0 ],
-	'hide'        : [hide         , 1 , 2 , ',' , 0 ],
-	'disable'     : [disable      , 1 , 1 , ',' , 0 ],
-	'enable'      : [enable       , 1 , 1 , ',' , 0 ],
-	'delete'      : [delete       , 1 , 1 , ',' , 0 ],
-	'zoom'        : [zoom         , 1 , 1 , ',' , 0 ],
-	'origin'      : [origin       , 1 , 1 , ',' , 0 ],
 	'color'       : [color        , 2 , 3 , ',' , 0 ],
-	'quit'        : [quit         , 0 , 0 , ',' , 0 ],
+	'disable'     : [disable      , 1 , 1 , ',' , 0 ],
+	'delete'      : [delete       , 1 , 1 , ',' , 0 ],
+	'enable'      : [enable       , 1 , 1 , ',' , 0 ],
+	'export_dots' : [export_dots  , 2 , 2 , ',' , 0 ],
+	'fit'         : [fit          , 2 , 2 , ',' , 0 ],
+	'fork'        : [dummy        , 1 , 1 , ',' , 3 ],
+	'forward'     : [forward      , 0 , 0 , ',' , 0 ],
+	'frame'       : [frame        , 1 , 1 , ',' , 0 ],
+	'hide'        : [hide         , 1 , 2 , ',' , 0 ],
+	'load'        : [load         , 1 , 3 , ',' , 0 ],
+	'move'        : [move         , 2 , 2 , ',' , 0 ],
 	'mset'        : [mset         , 1 , 1 , ',' , 0 ],
-	'png'         : [png          , 1 , 1 , ',' , 0 ],
 	'mdo'         : [mdo          , 2 , 2 , ':' , 1 ],
 	'mpng'        : [mpng         , 1 , 2 , ',' , 0 ],
 	'mplay'       : [mplay        , 0 , 0 , ',' , 0 ],
 	'mray'        : [mray         , 0 , 0 , ',' , 0 ],
 	'mstop'       : [mstop        , 0 , 0 , ',' , 0 ],
 	'mclear'      : [mclear       , 0 , 0 , ',' , 0 ],
+	'middle'      : [middle       , 0 , 0 , ',' , 0 ],
 	'mmatrix'     : [mmatrix      , 1 , 1 , ',' , 0 ],
-	'viewport'    : [viewport     , 2 , 2 , ',' , 0 ],
+	'origin'      : [origin       , 1 , 1 , ',' , 0 ],
+	'orient'      : [orient       , 0 , 1 , ',' , 0 ],
+	'ray'         : [render       , 0 , 0 , ',' , 0 ],
+	'refresh'     : [refresh      , 0 , 0 , ',' , 0 ],
+	'render'      : [render       , 0 , 0 , ',' , 0 ],
 	'reset'       : [reset        , 0 , 0 , ',' , 0 ],
-	'export_dots' : [export_dots  , 2 , 2 , ',' , 0 ],
-	'run'         : [run          , 1 , 2 , ',' , 2 ]
+	'rewind'      : [beginning    , 0 , 0 , ',' , 0 ],
+	'rock'        : [rock         , 0 , 0 , ',' , 0 ],
+	'run'         : [dummy        , 1 , 2 , ',' , 2 ],
+	'select'      : [select       , 1 , 2 , '=' , 0 ],
+	'set'         : [set          , 2 , 2 , '=' , 0 ],
+	'show'        : [show         , 1 , 2 , ',' , 0 ],
+	'system'      : [system       , 1 , 1 , ',' , 0 ],
+	'turn'        : [turn         , 2 , 2 , ',' , 0 ],
+	'quit'        : [quit         , 0 , 0 , ',' , 0 ],
+	'png'         : [png          , 1 , 1 , ',' , 0 ],
+	'viewport'    : [viewport     , 2 , 2 , ',' , 0 ],
+	'save'        : [save         , 0 , 4 , ',' , 0 ],
+	'zoom'        : [zoom         , 1 , 1 , ',' , 0 ]
 	}
 
 repres = {

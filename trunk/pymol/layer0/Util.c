@@ -15,7 +15,9 @@ Z* -------------------------------------------------------------------
 */
 #include"Util.h"
 #include"MemoryDebug.h"
+#include"Err.h"
 #include<sys/time.h>
+#include<string.h>
 
 static unsigned int UtilStartSec;
 
@@ -39,6 +41,7 @@ char *UtilConcat(char *where,char *what)
   *where=0;
   return(where);
 }
+
 
 void UtilCleanStr(char *s) /*remove flanking white and all unprintables*/
 {
@@ -125,4 +128,89 @@ void *UtilArrayMalloc(unsigned int *dim,int ndim,unsigned int atom_size)
 		  }
 	 }
   return(result);
+}
+
+void UtilSortIndex(int n,void *array,int *x,UtilOrderFn* fOrdered)
+{
+  int l,a,r,t,i;
+  
+  x--;
+  for(a=1;a<=n;a++) x[a]=a;
+  if(n<=1) return;
+  l=(n>>1)+1;
+  r=n;
+  while(1) {
+	if(l>1)
+	  t = x[--l];
+	else {
+	  t = x[r];
+	  x[r] = x[1];
+	  if( --r == 1) {
+		x[1] = t;
+		break;
+	  }
+	}
+	i=l;
+	a=l << 1;
+	while (a <= r) {
+	  if (a < r && (!fOrdered(array,x[a+1]-1,x[a]-1))) a++;
+	  if (!fOrdered(array,x[a]-1,t-1)) {
+		x[i] = x[a];
+		a += (i=a);
+	  } else
+		a = r + 1;
+	}
+	x[i] = t;
+  }
+  x++;
+  for(a=0;a<n;a++) x[a]--;
+}
+
+
+void UtilSortInPlace(void *array,int nItem,
+					 unsigned int itemSize,
+					 UtilOrderFn *fOrdered)
+
+{
+  char *tmp;
+  int *index;
+  int ia;
+  int a;
+  if(nItem>0)
+	 {
+	   tmp = Alloc(char,(itemSize*nItem));
+	   index = Alloc(int,nItem+1);
+	   ErrChkPtr(tmp);
+	   ErrChkPtr(index);
+	   UtilSortIndex(nItem,array,index,fOrdered);
+	   for(a=0;a<nItem;a++) index[a]++; /* ^tricky index adjustment to avoid flag array */
+	   for(a=0;a<nItem;a++)
+		 {
+		   ia = abs(index[a])-1; /* ^ */
+		   if(ia!=a)
+			 {
+			   if(index[a]>0) /* this record not yet copied, so save copy */
+				 {
+				   memcpy(((char*)tmp  )+(a*itemSize),
+						  ((char*)array)+(a*itemSize),
+						  itemSize);
+				   index[a] = -index[a]; /* set nega-flag */
+				 }
+			   if(index[ia]<0) /* nega-flag, so record is stored in tmp */
+				 memcpy(((char*)array)+(a*itemSize),
+						((char*)tmp  )+(ia*itemSize),
+						itemSize);
+			   else
+				 {
+				   memcpy(((char*)array)+(a*itemSize),
+						  ((char*)array)+(ia*itemSize),
+						  itemSize);
+				   index[ia] = -index[ia]; 
+				   /* nega-flag: record doesn't need to be backed up */
+				 }
+			 }
+		 }
+	   mfree(tmp);
+	   mfree(index);
+	 }
 }

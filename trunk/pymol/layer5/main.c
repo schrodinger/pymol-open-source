@@ -19,6 +19,10 @@ Z* -------------------------------------------------------------------
 #include <GL/glut.h>
 #include <Python.h>
 
+#ifdef _PYMOL_MODULE
+#include <dlfcn.h>
+#endif
+
 #include"MemoryDebug.h"
 #include"Err.h"
 #include"Util.h"
@@ -50,7 +54,7 @@ GLuint obj;
 
 int TheWindow;
 
-static PyThreadState *_save;
+ PyThreadState *_save;
 
 static GLint WinX = 640+cOrthoRightSceneMargin;
 static GLint WinY = 480+cOrthoBottomSceneMargin;
@@ -61,6 +65,27 @@ static int myArgc;
 
 static int FinalInitFlag=1;
 
+typedef struct {
+  int DirtyFlag;
+  int IdleFlag;
+  int SwapFlag;
+} CMain;
+
+static CMain Main;
+int PyMOLReady = false;
+
+/*========================================================================*/
+void MainDirty(void)
+{
+  CMain *I = &Main;
+  I->DirtyFlag=true;
+}
+/*========================================================================*/
+void MainSwapBuffers(void)
+{
+  CMain *I = &Main;
+  I->SwapFlag=true;
+}
 /*========================================================================*/
 void MainTest(void)
 {
@@ -69,8 +94,11 @@ void MainTest(void)
 static void MainButton(int button,int state,int x,int y)
 {
   static int glMod;  
+  CMain *I = &Main;
 
-  Py_BLOCK_THREADS
+  PLock(cLockAPI,&_save);
+
+  /* stay blocked here because Clicks->SetFrame->PParse */
 
   y=WinY-y;
 
@@ -82,50 +110,59 @@ static void MainButton(int button,int state,int x,int y)
   if(!OrthoButton(button,state,x,y,Modifiers))
     {
     }
+  if(I->SwapFlag)
+	 {
+		glutSwapBuffers();
+		I->SwapFlag=false;
+	 }
 
-  if(ControlIdling()) {
-	 glutIdleFunc(MainBusyIdle);
-	 SceneRestartTimers();
-  }
+  PUnlock(cLockAPI,&_save);
 
-  Py_UNBLOCK_THREADS
 }
 /*========================================================================*/
 static void MainDrag(int x,int y)
 {
-  Py_BLOCK_THREADS
+  CMain *I = &Main;
+
+   PLock(cLockAPI,&_save);
 
   y=WinY-y;
   if(!OrthoDrag(x,y,Modifiers))
     {
 	 }
 
-  Py_UNBLOCK_THREADS
-}
-/*========================================================================*/
-static void MainMove(int x,int y)
-{
-  Py_BLOCK_THREADS
+  if(I->SwapFlag)
+	 {
+		glutSwapBuffers();
+		I->SwapFlag=false;
+	 }
 
-  y=WinY-y;
-  OrthoCursor(x,y);
+   PUnlock(cLockAPI,&_save);
 
-  Py_UNBLOCK_THREADS
 }
+
 /*========================================================================*/
 static void MainDraw(void)
 {
+  CMain *I = &Main;
+#ifndef _PYMOL_MODULE
   int a,l;
   char *p;
   char buffer[300];
+#endif
 
-  Py_BLOCK_THREADS
+  PLock(cLockAPI,&_save);
+
+  if(I->DirtyFlag) I->DirtyFlag=false;
 
   OrthoBusyPrime();
   ExecutiveDrawNow();
   if(FinalInitFlag)
 	 {
+		Py_BLOCK_THREADS;
 		FinalInitFlag=0;
+
+#ifndef _PYMOL_MODULE
 		for(a=1;a<myArgc;a++)
 		  {
 			 l=strlen(myArgv[a]);
@@ -157,24 +194,30 @@ static void MainDraw(void)
 					 }
 				  }
 		  }
+#endif
+
 		OrthoRestorePrompt();
+		Py_UNBLOCK_THREADS;
 	 }
-  if(ControlIdling()) 
-	 glutIdleFunc(MainBusyIdle);
 
-  Py_UNBLOCK_THREADS
-
+  if(I->SwapFlag)
+	 {
+		glutSwapBuffers();
+		I->SwapFlag=false;
+	 }
+    PUnlock(cLockAPI,&_save);
 }
 /*========================================================================*/
 static void MainKey(unsigned char k, int x, int y)
 {
+  CMain *I = &Main;
 
-
-  Py_BLOCK_THREADS
+  PLock(cLockAPI,&_save);
 
   switch (k) 
 	 {
 	 case 27: 
+		Py_BLOCK_THREADS;
 		PExit(EXIT_SUCCESS);
 		break;
 	 default:
@@ -182,22 +225,36 @@ static void MainKey(unsigned char k, int x, int y)
 		break;
 	 }
 
-  Py_UNBLOCK_THREADS
+  if(I->SwapFlag)
+	 {
+		glutSwapBuffers();
+		I->SwapFlag=false;
+	 }
+
+  PUnlock(cLockAPI,&_save);
+  
 }
 
 /*========================================================================*/
 static void MainSpecial(int k, int x, int y)
 {
+  CMain *I = &Main;
 
-  Py_BLOCK_THREADS
+  PLock(cLockAPI,&_save);
 
   switch (k)
 	 {
 	 default:
 		break;
 	 }
+  if(I->SwapFlag)
+	 {
+		glutSwapBuffers();
+		I->SwapFlag=false;
+	 }
 
-  Py_UNBLOCK_THREADS
+  PUnlock(cLockAPI,&_save);
+
 }
 
 /* new window size or exposure */
@@ -206,7 +263,7 @@ void MainReshape(int width, int height)
 {
   float h;
 
-  Py_BLOCK_THREADS
+  PLock(cLockAPI,&_save);
 
   WinX = width;
   WinY = height;
@@ -222,7 +279,7 @@ void MainReshape(int width, int height)
   glutReshapeWindow(width, height);
   OrthoReshape(width,height);
 
-  Py_UNBLOCK_THREADS
+  PUnlock(cLockAPI,&_save);
 }
 
 /*========================================================================*/
@@ -230,6 +287,11 @@ static void MainInit(void)
 {
   /*  GLfloat one[4] = { 1,1,1,1 };*/
   GLfloat low[4] = { 0.20,0.20,0.20,1 };
+
+  CMain *I = &Main;
+
+  I->DirtyFlag=true;
+  I->IdleFlag=false;
 
   glMatrixMode(GL_MODELVIEW);
   glLoadIdentity();
@@ -275,34 +337,117 @@ void MainFree(void)
   SettingFree();
   ColorFree();
   SphereDone();
+  PFree();
   /*  glutDestroyWindow(TheWindow);*/
   
   MemoryDebugDump();
 }
-
 /*========================================================================*/
-void MainBusyIdle(void) 
-{
-  Py_BLOCK_THREADS
+void MainRefreshNow(void) 
+{ /* should only be called by the master thread */
 
-  if(!ControlIdling()) glutIdleFunc(NULL);
-  SceneIdle();
-
-  Py_UNBLOCK_THREADS
+  CMain *I = &Main;
+  if(I->SwapFlag)
+	 {
+	   glutSwapBuffers();
+	   I->SwapFlag=false;
+	 }
+  if(I->DirtyFlag)
+	{
+	  glutPostRedisplay();
+	  I->DirtyFlag=false;
+	}
 }
 /*========================================================================*/
+
+void MainBusyIdle(void) 
+{
+  /* This is one of the few places in the program where we can be sure 
+	* that we have the "glut" thread...glut doesn't seem to be completely
+	* thread safe or rather thread consistent
+   */
+
+
+  CMain *I = &Main;
+  int wasDirty = false;
+
+  /* flush command and output queues */
+
+  PLock(cLockAPI,&_save);
+
+  if(ControlIdling()) {
+	 SceneIdle(); 
+	 I->IdleFlag=false;
+  } else {
+	 I->IdleFlag=true;
+  }
+
+  PFlush(&_save);
+
+  if(I->SwapFlag)
+	 {
+		glutSwapBuffers();
+		I->SwapFlag=false;
+	 }
+
+  if(I->DirtyFlag)
+	 {
+	   wasDirty=true;
+		glutPostRedisplay();
+		I->DirtyFlag=false;
+	 }
+  if(!wasDirty) {
+	if(false&&I->IdleFlag) { /* select to avoid racing the CPU */
+
+	  PUnlock(cLockAPI,&_save);
+	  PSleep(2000);
+	  PLock(cLockAPI,&_save);
+	  
+
+	  if(I->SwapFlag)
+		{
+		  glutSwapBuffers();
+		  I->SwapFlag=false;
+		}
+	  if(I->DirtyFlag) 
+		{
+		  glutPostRedisplay();
+		  I->DirtyFlag=false;
+		}
+	}
+  }
+
+  PUnlock(cLockAPI,&_save);
+}
+/*========================================================================*/
+
+#ifndef _PYMOL_MODULE
 int main(int argc, char *argv[])
 {
   myArgc=argc;
   myArgv=argv;
+
+#else
+void was_main(void) 
+{
+  int argc = 0;
+  char *argv[1],argvv[2] = "\0";
+  argv[0]=argvv;
+
+  dlopen("libGL.so.1",RTLD_LAZY|RTLD_GLOBAL);
+
+#endif  
+	  
+  myArgc=argc;
+  myArgv=argv;
   
   glutInit(&argc, argv);
-
+  
   glutInitDisplayMode(GLUT_RGB | GLUT_DEPTH | GLUT_DOUBLE);
-
-  glutInitWindowPosition(0, 158);
+  
+  glutInitWindowPosition(0, 175);
   glutInitWindowSize(WinX, WinY);
-
+  
   TheWindow = glutCreateWindow("PyMol Viewer");
   
   MainInit();
@@ -314,17 +459,22 @@ int main(int argc, char *argv[])
   glutKeyboardFunc(        MainKey );
   glutMouseFunc(           MainButton );
   glutMotionFunc(          MainDrag );
-  glutPassiveMotionFunc(   MainMove );
+  /*  glutPassiveMotionFunc(   MainMove );*/
   glutSpecialFunc(         MainSpecial );
   glutIdleFunc(         MainBusyIdle );
 
   glutPostRedisplay();
 
-  Py_UNBLOCK_THREADS
+  Py_UNBLOCK_THREADS;
+  
+  PyMOLReady = true;
 
   glutMainLoop();
 
+#ifndef _PYMOL_MODULE
   return 0;
+#endif
+
 }
 
 

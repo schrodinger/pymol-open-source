@@ -21,6 +21,7 @@ Z* -------------------------------------------------------------------
 #include <stdio.h>
 #include <unistd.h>
 
+#include"main.h"
 #include"Version.h"
 #include"MemoryDebug.h"
 #include"Err.h"
@@ -33,6 +34,7 @@ Z* -------------------------------------------------------------------
 #include"ButMode.h"
 #include"Control.h"
 #include"Setting.h"
+#include"Queue.h"
 
 #ifndef true
 #define true 1
@@ -61,8 +63,9 @@ typedef struct {
   int X,Y,Height,Width;
   int ActiveButton;
   int DrawText;
-  int CursorFlag,InputFlag;
+  int InputFlag;
   OrthoLineType Line[OrthoSaveLines+1];
+  OrthoLineType Command;
   int CurLine,CurChar,PromptChar;
   FILE *Pipe;
   char Prompt[255];
@@ -74,6 +77,8 @@ typedef struct {
   float BusyLast;
   int BusyStatus[4];
   char BusyMessage[255];
+  CQueue *cmds;
+  CQueue *feedback;
 
 } OrthoObject;
 
@@ -90,12 +95,37 @@ Block *OrthoFindBlock(int x,int y);
 #define cBusyUpdate 1.0
 
 /*========================================================================*/
+int  OrthoCommandOut(char *buffer)
+{
+  OrthoObject *I=&Ortho;
+  if(I->cmds)
+	return(QueueStrOut(I->cmds,buffer));
+  else
+	return(0);
+}
+/*========================================================================*/
+void OrthoFeedbackIn(char *buffer)
+{
+  OrthoObject *I=&Ortho;
+  if(I->feedback)
+	QueueStrIn(I->feedback,buffer);
+}
+/*========================================================================*/
+int OrthoFeedbackOut(char *buffer)
+{
+  OrthoObject *I=&Ortho;
+  if(I->feedback)
+	return(QueueStrOut(I->feedback,buffer));
+  else
+	return(0);
+}
+/*========================================================================*/
 void OrthoDirty(void) {
   OrthoObject *I=&Ortho;
   if(!I->DirtyFlag) {
 	 I->DirtyFlag = true;
-	 glutPostRedisplay();
   }
+  MainDirty();
 }
 /*========================================================================*/
 void OrthoBusyMessage(char *message)
@@ -156,6 +186,7 @@ void OrthoBusyDraw(int force)
 	 glVertex2i(cBusyWidth,I->Height);
 	 glVertex2i(cBusyWidth,I->Height-cBusyHeight);
 	 glVertex2i(0,I->Height-cBusyHeight);
+	 glVertex2i(0,I->Height); /* needed on old buggy Mesa */
 	 glEnd();
 
 	 glColor3fv(white);	 
@@ -175,6 +206,7 @@ void OrthoBusyDraw(int force)
 		glVertex2i(cBusyWidth-cBusyMargin,y);
 		glVertex2i(cBusyWidth-cBusyMargin,y-cBusyBar);
 		glVertex2i(cBusyMargin,y-cBusyBar);
+		glVertex2i(cBusyMargin,y); /* needed on old buggy Mesa */
 		glEnd();
 		glColor3fv(white);	 
 		glBegin(GL_POLYGON);
@@ -183,6 +215,7 @@ void OrthoBusyDraw(int force)
 		glVertex2i(x,y);
 		glVertex2i(x,y-cBusyBar);
 		glVertex2i(cBusyMargin,y-cBusyBar);
+		glVertex2i(cBusyMargin,y); /* needed on old buggy Mesa */
 		glEnd();
 		y-=cBusySpacing;
 	 }
@@ -194,6 +227,7 @@ void OrthoBusyDraw(int force)
 		glVertex2i(cBusyWidth-cBusyMargin,y);
 		glVertex2i(cBusyWidth-cBusyMargin,y-cBusyBar);
 		glVertex2i(cBusyMargin,y-cBusyBar);
+		glVertex2i(cBusyMargin,y); /* needed on old buggy Mesa */
 		glEnd();
 		x=(I->BusyStatus[2]*(cBusyWidth-2*cBusyMargin)/I->BusyStatus[3])+cBusyMargin;
 		glColor3fv(white);	 
@@ -202,6 +236,7 @@ void OrthoBusyDraw(int force)
 		glVertex2i(x,y);
 		glVertex2i(x,y-cBusyBar);
 		glVertex2i(cBusyMargin,y-cBusyBar);
+		glVertex2i(cBusyMargin,y); /* needed on old buggy Mesa */
 		glEnd();
 		y-=cBusySpacing;
 	 }
@@ -243,7 +278,7 @@ void OrthoRestorePrompt(void)
 			 }
 		}
 	 I->InputFlag=1;
-  }
+	 }
 }
 /*========================================================================*/
 void OrthoKey(unsigned char k,int x,int y)
@@ -316,7 +351,7 @@ void OrthoKey(unsigned char k,int x,int y)
 	 default:
 		break;
 	 }
-  glutPostRedisplay();
+  MainDirty();
 }
 /*========================================================================*/
 void OrthoAddOutput(char *str)
@@ -383,8 +418,9 @@ void OrthoNewLine(char *prompt)
 		I->PromptChar,I->InputFlag);*/
   if(I->CurChar)
 	 {
-		printf("%s\n",I->Line[I->CurLine&OrthoSaveLines]);
-		fflush(stdout);
+	   OrthoFeedbackIn(I->Line[I->CurLine&OrthoSaveLines]);
+	   printf("%s\n",I->Line[I->CurLine&OrthoSaveLines]);
+	   fflush(stdout);
 	 }
 
   if(I->Line[I->CurLine&OrthoSaveLines][0])
@@ -458,7 +494,7 @@ void OrthoDoDraw()
 
   SceneUpdate();
 
-  SceneCopy(); /* Copy if necessary before clear */
+  SceneCopy(1); /* Copy if necessary before clear */
 
   v=SettingGetfv(cSetting_bg_rgb);
 
@@ -467,23 +503,18 @@ void OrthoDoDraw()
   glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
   glClearColor(0.0,0.0,0.0,1.0);
 
-  SceneRender(NULL,0,0);
+  if(!SceneRenderCached())
+	  SceneRender(NULL,0,0);
 
   OrthoPushMatrix();
     
   x = I->X;
   y = I->Y;
   
-  if(I->CursorFlag)
-	 {
-		glBegin(GL_LINES);
-		glVertex3i(I->X,I->Y-1,0);
-		glVertex3i(I->X+1,I->Y,0);
-		glEnd();
-	 }
   
   BlockRecursiveDraw(I->Blocks);
   
+  OrthoRestorePrompt();
 
   if(I->DrawText) {	 
 	 /* now print the text */
@@ -520,6 +551,7 @@ void OrthoDoDraw()
 		  y=y+cOrthoLineHeight;
 		}
   }
+
   OrthoPopMatrix();
   I->DirtyFlag =false;
 }
@@ -532,7 +564,6 @@ void OrthoReshape(int width, int height)
 
   I->Height=height;
   I->Width=width;
-
 
   block=SceneGetBlock();
   BlockSetMargin(block,0,0,cOrthoBottomSceneMargin,cOrthoRightSceneMargin);
@@ -567,7 +598,9 @@ int OrthoButton(int button,int state,int x,int y,int mod)
 
   Block *block;
   int handled = 0;
-  OrthoCursor(x,y);
+
+  I->X=x;
+  I->Y=y;
 
   if(state==GLUT_DOWN)
 	 {
@@ -604,39 +637,6 @@ int OrthoButton(int button,int state,int x,int y,int mod)
 	 }
   return(handled);
 }
-/*========================================================================*/
-int OrthoCursor(int x,int y)
-{
-  OrthoObject *I=&Ortho;
-
-  int handled = 0;
-  if(I->CursorFlag)
-	 {
-		glDrawBuffer(GL_FRONT);
-		OrthoPushMatrix();
-		glColor3f(0.0,0.0,0.0);
-
-		glBegin(GL_LINES);
-		glVertex3i(I->X,I->Y-1,0);
-		glVertex3i(I->X+1,I->Y,0);
-		glEnd();
-
-		glColor3f(1.0,1.0,1.0);
-
-		glBegin(GL_LINES);
-		glVertex3i(x,y-1,0);
-		glVertex3i(x+1,y,0);
-		glEnd();
-		
-		OrthoPopMatrix();
-		glDrawBuffer(GL_BACK);
-	 }
-
-  I->X=x;
-  I->Y=y;
-
-  return(handled);
-}
 /*========================================================================*/ 
 int OrthoDrag(int x, int y,int mod)
 {
@@ -662,7 +662,8 @@ void OrthoInit(void)
 {
   OrthoObject *I=&Ortho;
   
-  char *c;
+  I->cmds = QueueNew(0xFFFF);
+  I->feedback = QueueNew(0xFFFF);
 
   I->Blocks = NULL;
   I->GrabbedBy = NULL;
@@ -676,11 +677,6 @@ void OrthoInit(void)
   I->CurChar=0;
   I->Line[I->CurLine&OrthoSaveLines][I->CurChar]=0;
 
-  c = getenv("MESA_GLX_FX");
-  if(c)
-	 I->CursorFlag = (c[0] == 'f');
-  else
-	 I->CursorFlag = 0;
   I->ShowLines = 1;
   I->Saved[0]=0;
   I->DirtyFlag = true;
@@ -702,9 +698,13 @@ void OrthoInit(void)
 /*========================================================================*/
 void OrthoFree(void)
 {
+  OrthoObject *I=&Ortho;
   ButModeFree();
   ControlFree();
-
+  QueueFree(I->cmds);
+  I->cmds=NULL;
+  QueueFree(I->feedback);
+  I->feedback=NULL;
 }
 /*========================================================================*/
 void OrthoPushMatrix(void)
@@ -732,6 +732,13 @@ void OrthoPopMatrix(void)
   glMatrixMode(GL_MODELVIEW);
 }
 
+/*========================================================================*/
+void OrthoCommandIn(char *buffer)
+{
+  OrthoObject *I=&Ortho;
+  if(I->cmds) 
+	QueueStrIn(I->cmds,buffer);
+}
 
 
 

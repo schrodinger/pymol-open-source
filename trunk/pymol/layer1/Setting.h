@@ -33,6 +33,7 @@ void SettingFree(void);
 
 int SettingGetIndex(char *name);
 float SettingGet(int index);
+void SettingSet(int index,float v);
 void SettingSetfv(int index,float *value);
 float *SettingGetfv(int index);
 void SettingSetNamed(char *name,char *value);
@@ -68,6 +69,9 @@ float SettingGetNamed(char *name);
 #define cSetting_sweep_speed          27
 #define cSetting_dot_hydrogens        28
 #define cSetting_dot_size             29
+#define cSetting_ray_trace_frames     30
+#define cSetting_cache_frames         31
+#define cSetting_trim_dots            32
 
 #endif
 

@@ -120,7 +120,7 @@ void RepCylBondRender(RepCylBond *I,CRay *ray,Pickable **pick)
 Rep *RepCylBondNew(CoordSet *cs)
 {
   ObjectMolecule *obj;
-  int a,a1,a2,*b,c1,c2,s1,s2;
+  int a,a1,a2,*b,c1,c2,s1,s2,b1,b2;
   float *v,*vv1,*vv2,*v0,*vr;
   float v1[3],v2[3];
   float radius;
@@ -153,8 +153,10 @@ Rep *RepCylBondNew(CoordSet *cs)
 	 b=obj->Bond;
 	 for(a=0;a<obj->NBond;a++)
 		{
-		  a1=cs->AtmToIdx[*(b++)];
-		  a2=cs->AtmToIdx[*(b++)];
+		  b1 = *(b++);
+		  b2 = *(b++);
+		  a1=cs->AtmToIdx[b1];
+		  a2=cs->AtmToIdx[b2];
 		  
 		  if((a1>=0)&&(a2>=0))
 			 {
@@ -164,8 +166,8 @@ Rep *RepCylBondNew(CoordSet *cs)
 				vv1 = cs->Coord+3*a1;
 				vv2 = cs->Coord+3*a2;
 				
-				s1=obj->AtomInfo[a1].visRep[cRepCyl];
-				s2=obj->AtomInfo[a2].visRep[cRepCyl];
+				s1=obj->AtomInfo[b1].visRep[cRepCyl];
+				s2=obj->AtomInfo[b2].visRep[cRepCyl];
 				
 				if(s1||s2)
 				  {

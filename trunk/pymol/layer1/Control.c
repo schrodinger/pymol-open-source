@@ -22,6 +22,8 @@ Z* -------------------------------------------------------------------
 #include "Control.h"
 #include "Scene.h"
 #include "Executive.h"
+#include "Setting.h"
+
 #include"Movie.h"
 
 #define cControlBoxSize 25
@@ -82,6 +84,25 @@ void ControlFree(void)
   OrthoFreeBlock(I->Block);
 }
 /*========================================================================*/
+void ControlRock(int mode)
+{
+  CControl *I=&Control;
+  switch(mode) {
+  case -1:
+	I->Rocking=!I->Rocking;
+	break;
+  case 0:
+	I->Rocking=false;
+	break;
+  case 1:
+	I->Rocking=true;
+	break;
+  }
+  SceneRestartTimers();
+
+}
+
+/*========================================================================*/
 int ControlClick(Block *block,int button,int x,int y,int mod)
 {
   CControl *I=&Control;
@@ -109,11 +130,19 @@ int ControlClick(Block *block,int button,int x,int y,int mod)
 	 case 1:
 		if(!(mod&cOrthoCTRL)) {
 		  SceneSetFrame(0,0);		
-		  if(mod&cOrthoSHIFT) 
-			 MoviePlay(cMoviePlayRendered);
-		  else 
-			 MoviePlay(cMoviePlay);
+		  if(mod&cOrthoSHIFT) {
+			/*
+			SettingSet(cSetting_cache_frames,0.0);
+			SettingSet(cSetting_render_frames,0.0);*/
+			MoviePlay(cMoviePlay);
+		  } else {
+			/*			SettingSet(cSetting_cache_frames,1.0);
+						SettingSet(cSetting_render_frames,1.0);*/
+			MoviePlay(cMoviePlay);
+		  }
 		} else {
+		  /*		  SettingSet(cSetting_cache_frames,0.0);
+					  SettingSet(cSetting_render_frames,0.0);*/
 		  MoviePlay(cMoviePlay);
 		}
 		break;
@@ -135,6 +164,7 @@ int ControlClick(Block *block,int button,int x,int y,int mod)
 		break;
 	 case 4:
 		I->Rocking=!I->Rocking;
+		SceneRestartTimers();
 		break;
 	 }
   }

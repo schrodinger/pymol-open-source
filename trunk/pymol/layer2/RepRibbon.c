@@ -96,7 +96,6 @@ Rep *RepRibbonNew(CoordSet *cs)
   float  power_a = 5;
   float power_b = 5;
   float radius;
-
   OOAlloc(RepRibbon);
 
   power_a=SettingGet(cSetting_ribbon_power);
@@ -114,7 +113,7 @@ Rep *RepRibbonNew(CoordSet *cs)
   at = Alloc(int,cs->NIndex);
   pv = Alloc(float,cs->NIndex*3);
   seg = Alloc(int,cs->NIndex);
-
+  
   i=at;
   v=pv;
   s=seg;
@@ -122,36 +121,38 @@ Rep *RepRibbonNew(CoordSet *cs)
   nAt = 0;
   nSeg = 0;
   a2=-1;
-  for(a=0;a<cs->NIndex;a++)
+  for(a1=0;a1<cs->NAtIndex;a1++)
 	 {
-		a1 = cs->IdxToAtm[a];
-		if(obj->AtomInfo[a1].visRep[cRepRibbon])
-		  if(WordMatch("CA",obj->AtomInfo[a1].name,1)<0)
-			 {
-				if(a2>=0) {
-				  if((abs(obj->AtomInfo[a1].resv-obj->AtomInfo[a2].resv)>1)||
-					  (obj->AtomInfo[a1].chain[0]!=obj->AtomInfo[a2].chain[0])||
-					  (!WordMatch(obj->AtomInfo[a1].segi,obj->AtomInfo[a2].segi,1)))
-					 {
-						a2=-1;
+		a=cs->AtmToIdx[a1];
+		if(a>=0)
+		  if(obj->AtomInfo[a1].visRep[cRepRibbon])
+			 if(!obj->AtomInfo[a1].hetatm)
+				if(WordMatch("CA",obj->AtomInfo[a1].name,1)<0)
+				  {
+					 if(a2>=0) {
+						if((abs(obj->AtomInfo[a1].resv-obj->AtomInfo[a2].resv)>1)||
+							(obj->AtomInfo[a1].chain[0]!=obj->AtomInfo[a2].chain[0])||
+							(!WordMatch(obj->AtomInfo[a1].segi,obj->AtomInfo[a2].segi,1)))
+						  {
+							 a2=-1;
+						  }
 					 }
-				}
-				if(a2<=0)
-				  nSeg++;
-				*(s++) = nSeg;
-				nAt++;
-				*(i++)=a1;
-				v1 = cs->Coord+3*a1;		
-				*(v++)=*(v1++);
-				*(v++)=*(v1++);
-				*(v++)=*(v1++);
-				
-				a2=a1;
-			 }
+					 if(a2<=0)
+						nSeg++;
+					 *(s++) = nSeg;
+					 nAt++;
+					 *(i++)=a;
+					 v1 = cs->Coord+3*a;		
+					 *(v++)=*(v1++);
+					 *(v++)=*(v1++);
+					 *(v++)=*(v1++);
+					 
+					 a2=a1;
+				  }
 	 }
   if(nAt)
 	 {
-  /* compute differences and normals */
+		/* compute differences and normals */
 
 		s=seg;
 		v=pv;

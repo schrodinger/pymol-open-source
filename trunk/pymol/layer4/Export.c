@@ -42,22 +42,22 @@ ExportDotsObj *ExportDots(char *name,int csIndex)
 
   obj=ExecutiveFindObjectByName(name);
   if(!obj) 
-	 ok=ErrMessage("ExportDotss","Not a valid object name.");
+	 ok=ErrMessage("ExportDots","Not a valid object name.");
   else if(obj->type!=cObjectMolecule)
-	 ok=ErrMessage("ExportDotss","Not molecule object.");
+	 ok=ErrMessage("ExportDots","Not molecule object.");
 
   if(ok) {
 	 ExecutiveSetRepVisib(name,cRepDot,1); 
 	 objMol = (ObjectMolecule*)obj;
 	 cs = ObjectMoleculeGetCoordSet(objMol,csIndex);
 	 if(!cs)
-		ok=ErrMessage("ExportDotss","Invalid coordinate set number.");
+		ok=ErrMessage("ExportDots","Invalid coordinate set number.");
   }
 
   if(ok) {
 	 rep = (RepDot*)RepDotNew(cs,cRepDotAreaType);
 	 if(!rep) 
-		ok=ErrMessage("ExportDotss","Couldn't get dot representation.");
+		ok=ErrMessage("ExportDots","Couldn't get dot representation.");
 	 else {
 		result=Alloc(ExportDotsObj,1);
 		ErrChkPtr(result);

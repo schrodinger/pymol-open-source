@@ -115,11 +115,12 @@ Rep *RepDotNew(CoordSet *cs,int mode)
   float max_vdw = MAX_VDW;
   float solv_rad=0.0;
   int inclH = true;
+  int cullByFlag = false;
 
   OOAlloc(RepDot);
 
   I->dotSize = SettingGet(cSetting_dot_size);
-
+  cullByFlag = SettingGet(cSetting_trim_dots);
   inclH = SettingGet(cSetting_dot_hydrogens);
 
   I->A=NULL;
@@ -187,6 +188,7 @@ Rep *RepDotNew(CoordSet *cs,int mode)
 	 tf=I->F;
 	 vn=I->VN;
 	 inclH=true;
+	 cullByFlag=true;
   }
 
   I->N=0;
@@ -202,7 +204,7 @@ Rep *RepDotNew(CoordSet *cs,int mode)
 			 a1 = cs->IdxToAtm[a];
 			 if(obj->AtomInfo[a1].visRep[cRepDot])
 				if((inclH||(obj->AtomInfo[a1].name[0]!='H'))&&
-					((mode!=cRepDotAreaType)||(!(obj->AtomInfo[a1].customFlag&0x2)))) { /* ignore if the "2" bit is set */
+					((!cullByFlag)||(!(obj->AtomInfo[a1].customFlag&0x2)))) { /* ignore if the "2" bit is set */
 				  c1=*(cs->Color+a);
 				  v0 = cs->Coord+3*a;
 				  vdw = cs->Obj->AtomInfo[a1].vdw+solv_rad;
@@ -222,7 +224,7 @@ Rep *RepDotNew(CoordSet *cs,int mode)
 						  while(j>=0) {
 							 a2 = cs->IdxToAtm[j];
 							 if((inclH||(obj->AtomInfo[a2].name[0]!='H'))&&
-								 ((mode!=cRepDotAreaType)||(!(obj->AtomInfo[a2].customFlag&0x2))))  /* ignore if the "2" bit is set */
+								 ((!cullByFlag)||(!(obj->AtomInfo[a2].customFlag&0x2))))  /* ignore if the "2" bit is set */
 								if(j!=a)
 								  if(within3f(cs->Coord+3*j,v1,
 												  cs->Obj->AtomInfo[a2].vdw+solv_rad))

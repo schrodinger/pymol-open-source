@@ -16,10 +16,20 @@ Z* -------------------------------------------------------------------
 #ifndef _H_PUtils
 #define _H_PUtils
 
-void PRunStr(char *str);
+#include<Python.h>
+
 
 void PInit(void);
+void PFree(void);
 void PExit(int code);
 void PParse(char *str);
 
+#define cLockAPI 1
+#define cLockInbox 2
+#define cLockOutbox 3
+
+void PSleep(int usec);
+void PLock(int lock,PyThreadState **save);
+void PUnlock(int lock,PyThreadState **save);
+void PFlush(PyThreadState **save);
 #endif

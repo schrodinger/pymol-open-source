@@ -21,15 +21,15 @@
 
 pmp_nest=0
 
-pmp_cmd = {};
-pmp_cmd1 = {};
-pmp_cmd2 = {};
-pmp_cont = {};
-pmp_script = {};
-pmp_kw = {};
-pmp_input = {};
-pmp_next = {};
-pmp_args = {};
+pmp_cmd = {}
+pmp_cmd1 = {}
+pmp_cmd2 = {}
+pmp_cont = {}
+pmp_script = {}
+pmp_kw = {}
+pmp_input = {}
+pmp_next = {}
+pmp_args = {}
 
 pmp_cmd[pmp_nest]=""
 pmp_cont[pmp_nest]=""
@@ -61,14 +61,16 @@ if len(pmp_cmd1[pmp_nest]) > 0:\n\
 					pmp_args[pmp_nest] = []\n\
 				if pmp_kw[pmp_nest][1]<= len(pmp_args[pmp_nest]) <= pmp_kw[pmp_nest][2]:\n\
 					pmp_args[pmp_nest] = map(string.strip,pmp_args[pmp_nest])\n\
-					if pmp_kw[pmp_nest][4]!=2:\n\
-						apply(pmp_kw[pmp_nest][0],pmp_args[pmp_nest])\n\
+					if pmp_kw[pmp_nest][4]<2:\n\
+					   apply(pmp_kw[pmp_nest][0],pmp_args[pmp_nest])\n\
+					elif pmp_kw[pmp_nest][4]==3:\n\
+						thread.start_new_thread(execfile,(pmp_args[pmp_nest][0],globals(),locals()))\n\
 					elif len(pmp_args[pmp_nest])==1:\n\
-						execfile(pmp_args[pmp_nest][0],globals(),locals());\n\
+						execfile(pmp_args[pmp_nest][0],globals(),locals())\n\
 					elif pmp_args[pmp_nest][1]=='local':\n\
-						execfile(pmp_args[pmp_nest][0],globals(),{});\n\
+						execfile(pmp_args[pmp_nest][0],globals(),{})\n\
 					elif pmp_args[pmp_nest][1]=='global':\n\
-						execfile(pmp_args[pmp_nest][0],globals(),locals());\n\
+						execfile(pmp_args[pmp_nest][0],globals(),locals())\n\
 				else:\n\
 					print 'invalid arguments'\n\
 			elif len(pmp_input[pmp_nest][0]):\n\

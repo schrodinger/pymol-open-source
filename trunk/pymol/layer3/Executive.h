@@ -33,6 +33,7 @@ void ExecutiveDelete(char *name);
 void ExecutiveSetControlsOff(char *name);
 void ExecutiveSetSetting(char *sname,char *value);
 void ExecutiveRay(void);
+void ExecutiveFit(char *sele1,char *sele2);
 void ExecutiveReset(int cmd);
 void ExecutiveDrawNow(void);
 void ExecutiveSetAllVisib(int state);
@@ -40,8 +41,11 @@ void ExecutiveSetRepVisib(char *name,int rep,int state);
 void ExecutiveSetObjVisib(char *name,int state);
 void ExecutiveCenter(char *name,int preserve);
 void ExecutiveWindowZoom(char *name);
-void ExecutiveGetMoment(char *name,Matrix33f mi);
-
+int ExecutiveGetMoment(char *name,Matrix33d mi);
+void ExecutiveOrient(char *sele,Matrix33d mi);
+char *ExecutiveSeleToPDBStr(char *s1,int state);
 
 #endif
+
+
 

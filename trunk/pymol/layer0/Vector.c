@@ -47,6 +47,20 @@ float dot_product3f ( float *v1, float *v2 )
   return( v1[0]*v2[0] + v1[1]*v2[1] + v1[2]*v2[2]);
 }
 
+double dot_product3d ( double *v1, double *v2 )
+{
+  return( v1[0]*v2[0] + v1[1]*v2[1] + v1[2]*v2[2]);
+}
+
+void multiply3d3d ( Matrix33d m1,Matrix33d m2,Matrix33d m3)
+{
+  int a,b;
+  for(a=0;a<3;a++)
+	 for(b=0;b<3;b++)
+		  m3[b][a] = m1[b][0]*m2[0][a] +
+			 m1[b][1]*m2[1][a] + m1[b][2]*m2[2][a];
+}
+
 float project3f ( float *v1, float *v2, float *proj )
 {
    float dot;
@@ -176,6 +190,24 @@ void normalize3f( float *v1 )
 {
   float vlen;
   vlen = length3f(v1);
+  if(vlen>R_SMALL)
+	 {
+		v1[0]/=vlen;
+		v1[1]/=vlen;
+		v1[2]/=vlen;
+	 }
+  else
+	 {
+		v1[0]=0.0;
+		v1[1]=0.0;
+		v1[2]=0.0;
+	 }
+} 
+
+void normalize3d( double *v1 )
+{
+  double vlen;
+  vlen = length3d(v1);
   if(vlen>R_SMALL)
 	 {
 		v1[0]/=vlen;
@@ -363,15 +395,6 @@ void transform5f3f (oMatrix5f m, float *v1, float *v2 )
   v2[1] = (vy+m[4][1]);
   v2[2] = (vz+m[4][2]);
 
-}
-
-void multiply3d3d ( oMatrix3d m1,oMatrix3d m2,oMatrix3d m3)
-{
-  int a,b;
-  for(a=0;a<3;a++)
-	 for(b=0;b<3;b++)
-		  m3[b][a] = m1[b][0]*m2[0][a] +
-			 m1[b][1]*m2[1][a] + m1[b][2]*m2[2][a];
 }
 
 void transform3d3f ( oMatrix3d m1,float *v1,float *v2)
