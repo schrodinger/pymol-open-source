@@ -1232,6 +1232,7 @@ USAGE
 NOTES
 
    unsupported.
+   
 SEE ALSO
 
    load
@@ -1243,7 +1244,26 @@ SEE ALSO
          unlock()
       return r
 
+   def map_double(name,state=0):
+      '''
+DESCRIPTION
 
+   "map_double" resamples a map at twice the current resolution.  The
+   amount of memory required to store the map will increase
+   eight-fold.
+
+USAGE
+
+   map_double map_name, state
+      '''
+      try:
+         lock()
+         r = _cmd.map_double(str(name),int(state)-1)
+      finally:
+         unlock()
+      return r
+      
+   
    def protect(selection="(all)"):
       '''
 DESCRIPTION

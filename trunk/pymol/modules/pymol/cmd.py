@@ -106,6 +106,7 @@ if __name__=='pymol.cmd':
       r"\.phi$|\.PHI$|", # PHI format (delphi)
       r"\.fld$|\.FLD$|", # FLD format (AVS)
       r"\.o$|\.O$|\.omap$|\.OMAP$|\.brix$|\.BRIX$", # BRIX/O format
+      r"|\.grd$|\.GRD$", # InsightII Grid format
       ],''))
 
    safe_oname_re = re.compile(r"\ |\+|\(|\)|\||\&|\!|\,")  # quash reserved characters
@@ -1156,6 +1157,7 @@ SEE ALSO
         iterate,            \
         iterate_state,      \
         map_set_border,     \
+        map_double,         \
         protect,            \
         push_undo,          \
         redo,               \
@@ -1438,6 +1440,7 @@ SEE ALSO
       'ls'            : [ ls                , 0 , 0 , ''  , parsing.STRICT ],  
       'mask'          : [ mask              , 0 , 0 , ''  , parsing.STRICT ],
       'map_set_border': [ map_set_border    , 0 , 0 , ''  , parsing.STRICT ],
+      'map_double'    : [ map_double        , 0 , 0 , ''  , parsing.STRICT ],      
       'map_new'       : [ map_new           , 0 , 0 , ''  , parsing.STRICT ],    
       'mappend'       : [ mappend           , 2 , 2 , ':' , parsing.SINGLE ], 
       'mem'           : [ mem               , 0 , 0 , ''  , parsing.STRICT ],

@@ -46,7 +46,7 @@ def complete(event,str,widget,self):
 
 class PMGApp(AbstractApp):
 
-   appversion     = '0.90'
+   appversion     = '0.91'
    appname       = 'PyMOL Tcl/Tk GUI'
    copyright      = 'Copyright (C) 1998-2003 by Warren DeLano of\nDeLano Scientific LLC. All rights reserved.'
    contactweb     = 'http://www.pymol.org'
@@ -322,7 +322,12 @@ class PMGApp(AbstractApp):
                                          ("All Readable","*.out"),
                                          ("All Readable","*.mmd"),
                                          ("All Readable","*.mmod"),
-                                         ("All Readable","*.pse"),                                         
+                                         ("All Readable","*.pse"),
+                                         ("All Readable","*.phi"),
+                                         ("All Readable","*.fld"),
+                                         ("All Readable","*.o"),
+                                         ("All Readable","*.omap"),                                         
+                                         ("All Readable","*.brix"),
                                          ("PDB File","*.pdb"),
                                          ("All Files","*.*"),
                                          ("All Files","*"),                                         
@@ -334,6 +339,10 @@ class PMGApp(AbstractApp):
                                          ("Macromodel File","*.out"),
                                          ("Macromodel File","*.mmd"),
                                          ("Macromodel File","*.mmod"),
+                                         ("BRIX/O Map","*.o"),
+                                         ("BRIX/O Map","*.omap"),
+                                         ("BRIX/O Map","*.brix"),
+                                         ("AVS (MEAD) Field","*.fld"),                                         
                                          ("MOL File","*.mol"),
                                          ("ChemPy Model","*.pkl"),
                                          ("Raster3D Scene","*.r3d"),

@@ -27,6 +27,7 @@ typedef struct {
   int save_points;
   CField *points;
   CField *data;
+  CField *gradients;
 } Isofield;
 
 #define F3(field,P1,P2,P3) Ffloat3(field,P1,P2,P3)
@@ -40,6 +41,8 @@ void IsosurfFieldFree(Isofield *field);
 
 int	IsosurfVolume(Isofield *field,float level,int **num,float **vert,int *range,int mode);
 void IsosurfGetRange(Isofield *field,CCrystal *cryst,float *mn,float *mx,int *range);
+
+void IsofieldComputeGradients(Isofield *field);
 
 int	IsosurfInit(void);
 

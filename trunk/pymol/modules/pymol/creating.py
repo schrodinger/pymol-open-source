@@ -147,7 +147,7 @@ SEE ALSO
       return r
 
    def isosurface(name,map,level=1.0,selection='',buffer=0.0,state=1,carve=None,
-                  source_state=0,side=1):
+                  source_state=0,side=1,mode=3):
       '''
 DESCRIPTION
 
@@ -197,7 +197,7 @@ SEE ALSO
          lock()
          r = _cmd.isosurface(str(name),0,str(map),int(mopt),
                              selection,float(buffer),
-                             float(level),0,int(state)-1,float(carve),
+                             float(level),int(mode),int(state)-1,float(carve),
                              int(source_state)-1,int(side))
       finally:
          unlock()
