@@ -188,6 +188,73 @@ def toggle_labels(mode=-1):
     else:
         cmd.hide("labels")
 
+def toggle_cgos(mode=-1):
+    global cgos
+    if mode<0:
+        cgos = not cgos
+    else:
+        cgos = mode
+    if cgos:
+        cmd.show("cgo")
+    else:
+        cmd.hide("cgo")
+
+def toggle_ligands(mode=-1):
+    global ligands
+    if mode<0:
+        ligands = not ligands
+    else:
+        ligands = mode
+    if ligands:
+        cmd.show("sticks",m4x_ligands)
+    else:
+        cmd.hide("sticks",m4x_ligands)
+
+def toggle_sites(mode=-1):
+    global sites
+    if mode<0:
+        sites = not sites
+    else:
+        sites = mode
+    if sites:
+        cmd.show("lines",m4x_sites)
+    else:
+        cmd.hide("lines",m4x_sites)
+
+def toggle_waters(mode=-1):
+    global waters
+    if mode<0:
+        waters = not waters
+    else:
+        waters = mode
+    if waters:
+        cmd.show("nonbonded",m4x_waters)
+    else:
+        cmd.hide("nonbonded",m4x_waters)
+
+def toggle_dashes(mode=-1):
+    global dashes
+    if mode<0:
+        dashes = not dashes
+    else:
+        dashes = mode
+    if dashes:
+        cmd.show("dashes")
+    else:
+        cmd.hide("dashes")
+
+def toggle_zooms(mode=-1):
+    global zooms
+    if mode<0:
+        zooms = not zooms
+    else:
+        zooms = mode
+    if zooms:
+        cmd.zoom(m4x_ligands)
+        cmd.clip("slab",10)
+    else:
+        cmd.zoom("m4x_aligned")
+
 def setup_contexts(context_info):   # Author: Warren DeLano
     (list,dict) = context_info[0:2]
     key_list = ['F1','F2','F3','F4','F5','F6','F7','F8','F9','F10']
@@ -198,11 +265,11 @@ def setup_contexts(context_info):   # Author: Warren DeLano
     if len(key_list):
         key = key_list.pop(0)
         cmd.set_key(key,toggle_labels)
-        doc_list.append(key+": Dist")        
+        doc_list.append(key+": Toggle Dist")        
     if len(key_list):
         key = key_list.pop(0)
         cmd.set_key(key,lambda :(cmd.zoom(),toggle_labels(0)))
-        doc_list.append(key+": All")
+        doc_list.append(key+": Zoom All")
     
     for a in list:
         water = a+"_water"
@@ -242,7 +309,7 @@ def setup_contexts(context_info):   # Author: Warren DeLano
                     cont_name = mo.groups()[0]
                 else:
                     cont_name = a
-                doc_list.append(key+": "+cont_name)
+                doc_list.append(key+": Zoom "+cont_name)
                 
         if hbond in name_list:
             cmd.show("dashes",hbond)
@@ -253,7 +320,82 @@ def setup_contexts(context_info):   # Author: Warren DeLano
     if zoom_context not in (0,1):
         cmd.zoom(zoom_context)
     toggle_labels(0)
+
         
+def setup_alignment_contexts(context_info):   # Author: Warren DeLano
+    (list,dict) = context_info[0:2]
+    key_list = ['F1','F2','F3','F4','F5','F6','F7','F8','F9','F10']
+    doc_list = ["Key Toggles"]
+    zoom_context = 1
+    global labels,ligands,waters,sites,cgos,zooms,dashes
+    labels = 1
+    ligands = 1
+    waters = 1
+    sites = 1
+    cgos = 0
+    zooms = 0
+    dashes = 1
+    global m4x_sites,m4x_ligands,m4x_waters
+    m4x_sites = "m4x_sites"
+    m4x_ligands = "m4x_ligands"
+    m4x_waters = "m4x_waters"
+
+    cmd.select(m4x_sites,"none")
+    cmd.select(m4x_ligands,"none")
+    cmd.select(m4x_waters,"none")   
+    if len(key_list):
+        key = key_list.pop(0)
+        cmd.set_key(key,toggle_zooms)
+        doc_list.append(key+": Zoom")
+    if len(key_list):
+        key = key_list.pop(0)
+        cmd.set_key(key,toggle_sites)
+        doc_list.append(key+": Sites")        
+    if len(key_list):
+        key = key_list.pop(0)
+        cmd.set_key(key,toggle_waters)
+        doc_list.append(key+": Waters")        
+    if len(key_list):
+        key = key_list.pop(0)
+        cmd.set_key(key,toggle_dashes)
+        doc_list.append(key+": H-Bonds")        
+    if len(key_list):
+        key = key_list.pop(0)
+        cmd.set_key(key,toggle_cgos)
+        doc_list.append(key+": Fits")        
+    if len(key_list):
+        key = key_list.pop(0)
+        cmd.set_key(key,toggle_ligands)
+        doc_list.append(key+": Ligands")        
+    if len(key_list):
+        key = key_list.pop(0)
+        cmd.set_key(key,toggle_labels)
+        doc_list.append(key+": HB-Dists")        
+    
+    for a in list:
+        water = a+"_water"
+        ligand = a+"_ligand"
+        site = a+"_site"
+        hbond = a+"_hbond"
+        name_list = dict[a]
+        if water in name_list:
+            cmd.select(m4x_waters,m4x_waters+"|"+water)
+        if ligand in name_list:
+            cmd.select(m4x_ligands,m4x_ligands+"|"+ligand)
+        if site in name_list:
+            cmd.select(m4x_sites,m4x_sites+"|"+site+
+            "|((byres (neighbor ("+site+" and name c))) and name n+ca)"+
+            "|((byres (neighbor ("+site+" and name n))) and name c+ca+o)")
+
+    cmd.wizard("message",doc_list)
+    toggle_cgos(1)
+    toggle_labels(0)
+    toggle_dashes(0)
+    toggle_ligands(1)
+    toggle_sites(0)
+    toggle_waters(0)
+    toggle_cgos(1)
+    cmd.deselect()
         
 
     

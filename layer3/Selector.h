@@ -25,6 +25,9 @@ Z* -------------------------------------------------------------------
 void SelectorInit(void);
 int *SelectorSelect(char *sele);
 int SelectorCreate(char *name,char *sele,ObjectMolecule *obj,int quiet,Multipick *mp);
+int SelectorCreateSimple(char *name, char *sele);
+int SelectorCreateOrderedFromObjectIndices(char *sname, ObjectMolecule *obj, int *idx, int n_idx);
+int SelectorCreateEmpty(char *name);
 void SelectorToggle(int rep,char *name);
 void SelectorCylinder(char *sele,char *onoff);
 int SelectorUpdateTable(void);
@@ -80,5 +83,6 @@ int SelectorAssignSS(int target,int present,int state_value,int preserve,int qui
 int SelectorPurgeObjectMembers(ObjectMolecule *obj);
 void SelectorDefragment(void);
 void SelectorSelectByID(char *name,ObjectMolecule *obj,int *id,int n_id);
+void SelectorGetUniqueTmpName(char *name_buffer);
 
 #endif

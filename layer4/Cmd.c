@@ -2503,7 +2503,7 @@ static PyObject *CmdFit(PyObject *dummy, PyObject *args)
     APIEntry();
     SelectorGetTmp(str1,s1);
     SelectorGetTmp(str2,s2);
-    tmp_result=ExecutiveRMS(s1,s2,mode,0.0,0,quiet,NULL,state1,state2);
+    tmp_result=ExecutiveRMS(s1,s2,mode,0.0,0,quiet,NULL,state1,state2,false);
     SelectorFreeTmp(s1);
     SelectorFreeTmp(s2);
     APIExit();
