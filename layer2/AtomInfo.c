@@ -779,28 +779,32 @@ void AtomInfoAssignParameters(AtomInfoType *I)
   while((*e>='0')&&(*e<='9')&&(*(e+1))) e++;
   switch ( *e )
     {
-    case 'N' : vdw=1.8F;  break;
+    case 'N' : vdw=1.55F;  break;
     case 'C' :	
       switch (*(e+1)) 
         {
         case 'U':
         case 'u':
-          vdw=1.35F; break; /* CU */
+          vdw=1.40F; break; /* Cu */
+        case 'L':
+        case 'l':
+          vdw=1.75F; break; /* Cl */
         case 0:
+          vdw=1.7F;  break; /* Carbon */
         default:
-          vdw=1.8F;  break; /*incl C,CL*/
+          vdw=1.8F;  break; 
         }
       break;
-    case 'O' : vdw=1.5F;  break;
-    case 'I' :	vdw=2.15F; break;
-    case 'P' :	vdw=1.9F; break;
-    case 'B' :	vdw=1.9F; break; /* incl B, BR */
-    case 'S' :	vdw=1.9F; break;
+    case 'O' : vdw=1.52F;  break;
+    case 'I' :	vdw=1.98F; break;
+    case 'P' :	vdw=1.80F; break;
+    case 'B' :	vdw=1.85F; break; /* incl B, BR */
+    case 'S' :	vdw=1.80F; break;
     case 'F' : 
       switch (*(e+1))
         {
         case 0:
-          vdw=1.35F; break;
+          vdw=1.47F; break;
         case 'E': 
         case 'e': 
           vdw=0.64F; break;
@@ -809,7 +813,7 @@ void AtomInfoAssignParameters(AtomInfoType *I)
         }
       break;
     case 'H' :
-      vdw = 1.1F;
+      vdw = 1.2F; /* WLD */
       break;
     default:
       vdw=1.8F;
