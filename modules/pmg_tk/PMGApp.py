@@ -578,15 +578,15 @@ class PMGApp(AbstractApp):
 
       self.menuBar.addmenuitem('Display', 'command', 'Light Shadows',
                                label='Light Shadows',
-                               command = lambda u=util: u.ray_lighting('light'))
+                               command = lambda u=util: u.ray_shadows('light'))
 
       self.menuBar.addmenuitem('Display', 'command', 'Medium Shadows',
                                label='Medium Shadows',
-                               command = lambda u=util: u.ray_lighting('medium'))
+                               command = lambda u=util: u.ray_shadows('medium'))
 
       self.menuBar.addmenuitem('Display', 'command', 'Heavy Shadows',
                                label='Heavy Shadows',
-                               command = lambda u=util: u.ray_lighting('heavy'))
+                               command = lambda u=util: u.ray_shadows('heavy'))
       
       self.menuBar.addmenu('Settings', 'Configuration Control')
 
