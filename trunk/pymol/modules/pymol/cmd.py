@@ -1417,7 +1417,7 @@ SEE ALSO
    r = None
    try:
       lock()
-      r = _cmd.push_undo(str(selection),int(state)-1)
+      r = _cmd.push_undo("("+str(selection)+")",int(state)-1)
    finally:
       unlock()
    return r
@@ -1497,7 +1497,7 @@ SEE ALSO
    #
    try:
       lock()
-      r = _cmd.symexp(str(prefix),str(object),str(selection),float(cutoff))
+      r = _cmd.symexp(str(prefix),str(object),"("+str(selection)+")",float(cutoff))
    finally:
       unlock()
    return r
@@ -1573,7 +1573,7 @@ SEE ALSO
    try:
       lock()
       r = _cmd.isomesh(str(name),0,str(map),int(mopt),
-                       str(selection),float(buffer),
+                       "("+str(selection)+")",float(buffer),
                        float(level),0,int(state)-1,float(carve))
    finally:
       unlock()
@@ -1615,7 +1615,7 @@ SEE ALSO
    try:
       lock()
       r = _cmd.isomesh(str(name),0,str(map),int(mopt),
-                       str(selection),float(buffer),
+                       "("+str(selection)+")",float(buffer),
                        float(level),1,int(state)-1,float(carve))
    finally:
       unlock()
@@ -1731,9 +1731,9 @@ EXAMPLES
    try:
       lock()
       if len(str(expression))==0:
-         r= _cmd.label(str(selection),'')
+         r= _cmd.label("("+str(selection)+")",'')
       else:
-         r = _cmd.label(str(selection),'label='+str(expression))
+         r = _cmd.label("("+str(selection)+")",'label='+str(expression))
    finally:
       unlock()   
    return r
@@ -1937,7 +1937,7 @@ SEE ALSO
    #
    try:
       lock()
-      r = _cmd.alter_state(int(state)-1,str(selection),str(expression),1)
+      r = _cmd.alter_state(int(state)-1,"("+str(selection)+")",str(expression),1)
    finally:
       unlock()   
    return r
@@ -2267,7 +2267,7 @@ SEE ALSO
    r = -1.0
    try:
       lock()
-      r = _cmd.intrafit(str(selection),int(state)-1,2)
+      r = _cmd.intrafit("("+str(selection)+")",int(state)-1,2)
    finally:
       unlock()
    return r
@@ -2300,7 +2300,7 @@ SEE ALSO
    r = -1.0
    try:
       lock()
-      r = _cmd.intrafit(str(selection),int(state)-1,1)
+      r = _cmd.intrafit("("+str(selection)+")",int(state)-1,1)
    finally:
       unlock()
    return r
@@ -2333,7 +2333,7 @@ SEE ALSO
    r = -1.0
    try:
       lock()
-      r = _cmd.intrafit(str(selection),int(state)-1,0)
+      r = _cmd.intrafit("("+str(selection)+")",int(state)-1,0)
    finally:
       unlock()
    return r
@@ -2561,7 +2561,7 @@ NOTES
    r = 1
    try:
       lock()   
-      r = _cmd.cartoon(str(selection),int(type))
+      r = _cmd.cartoon("("+str(selection)+")",int(type))
    finally:
       unlock()
    return r
@@ -2924,7 +2924,7 @@ SEE ALSO
    #   
    try:
       lock()   
-      r = _cmd.protect(str(selection),1)
+      r = _cmd.protect("("+str(selection)+")",1)
    finally:
       unlock()
    return r
@@ -2952,7 +2952,7 @@ SEE ALSO
    #   
    try:
       lock()   
-      r = _cmd.protect(str(selection),0)
+      r = _cmd.protect("("+str(selection)+")",0)
    finally:
       unlock()
    return r
@@ -2983,7 +2983,7 @@ SEE ALSO
    #
    try:
       lock()   
-      r = _cmd.mask(str(selection),1)
+      r = _cmd.mask("("+str(selection)+")",1)
    finally:
       unlock()
    return r
@@ -3011,7 +3011,7 @@ SEE ALSO
    #   
    try:
       lock()   
-      r = _cmd.mask(str(selection),0)
+      r = _cmd.mask("("+str(selection)+")",0)
    finally:
       unlock()
    return r
@@ -3982,7 +3982,7 @@ SEE ALSO
       if f:
          try:
             lock()
-            st = _cmd.get_pdb(str(selection),int(state)-1)
+            st = _cmd.get_pdb("("+str(selection)+")",int(state)-1)
          finally:
             unlock()
             f.write(st)
@@ -4020,7 +4020,7 @@ PYMOL API
    r = 1
    try:
       lock()
-      r = _cmd.get_model(str(selection),int(state)-1)
+      r = _cmd.get_model("("+str(selection)+")",int(state)-1)
    finally:
       unlock()
    return r
@@ -4034,7 +4034,7 @@ def get_area(selection="(all)",state=1,load_b=0):
    #      
    try:
       lock()
-      r = _cmd.get_area(str(selection),int(state)-1,int(load_b))
+      r = _cmd.get_area("("+str(selection)+")",int(state)-1,int(load_b))
    finally:
       unlock()
    return r
@@ -4203,7 +4203,7 @@ NOTES
    r = []
    try:
       lock()
-      r = _cmd.identify(str(selection),int(mode)) # 0 = default mode
+      r = _cmd.identify("("+str(selection)+")",int(mode)) # 0 = default mode
    finally:
       unlock()
    return r
@@ -4232,7 +4232,7 @@ NOTE
    r = []
    try:
       lock()
-      r = _cmd.index(str(selection),0) # 0 = default mode
+      r = _cmd.index("("+str(selection)+")",0) # 0 = default mode
    finally:
       unlock()
    return r
@@ -4277,7 +4277,7 @@ PYMOL API
    r = 1
    try:
       lock()
-      r = _cmd.get_min_max(str(selection),int(state)-1)
+      r = _cmd.get_min_max("("+str(selection)+")",int(state)-1)
    finally:
       unlock()
    return r
@@ -4325,7 +4325,7 @@ SEE ALSO
          sel_cnt = _cmd.get("sel_counter") + 1.0
          _cmd.legacy_set("sel_counter","%1.0f" % sel_cnt)
          name = "obj%02.0f" % sel_cnt
-      _cmd.create(str(name),str(selection),
+      _cmd.create(str(name),"("+str(selection)+")",
                   int(source_state)-1,int(target_state)-1)
    finally:
       unlock()
@@ -4780,12 +4780,38 @@ PYMOL API
    #      
    try:
       lock()   
-      r = _cmd.select("_count_tmp",str(selection),1)
+      r = _cmd.select("_count_tmp","("+str(selection)+")",1)
       _cmd.delete("_count_tmp")
    finally:
       unlock()
    if not int(quiet):
       print " count_atoms: %d atoms"%r
+   return r
+
+def indicate(selection="(all)"):
+   '''
+DESCRIPTION
+  
+   "indicate" shows a visual representation of an atom selection.
+ 
+USAGE
+ 
+   indicate (selection)
+ 
+PYMOL API
+  
+   cmd.count(string selection)
+ 
+   '''
+   # preprocess selection
+   selection = selector.process(selection)
+   #      
+   try:
+      lock()   
+      r = _cmd.select("_indicate","("+str(selection)+")",1)
+      enable("_indicate")
+   finally:
+      unlock()
    return r
    
 def color(color,selection="(all)"):
@@ -4819,7 +4845,30 @@ EXAMPLES
       unlock()
    return r
 
-def flag(number,selection):
+flag_dict = {
+# simulation 
+   'focus'         : 0,
+   'free'          : 1,
+   'restrain'      : 2,
+   'fix'           : 3,
+   'exclude'       : 4,
+# rendering
+   'exfoliate'     : 24,
+   'ignore'        : 25,
+}
+
+flag_sc = Shortcut(flag_dict.keys())
+
+flag_action_dict = {
+   'reset' : 0,
+   'set'   : 1,
+   'clear' : 2,
+   }
+
+flag_action_sc = Shortcut(flag_action_dict.keys())
+
+   
+def flag(flag,selection,action="reset"):
    '''
 DESCRIPTION
   
@@ -4831,38 +4880,52 @@ DESCRIPTION
    
 USAGE
 
-   flag number, selection
-   
-   flag number = selection     # (DEPRECATED)
+   flag flag, selection [ ,action ]
+    
+   flag flag = selection [ ,action ]      # (DEPRECATED)
 
+   action can be:
+     "reset" (default) sets flag on selection, clear it on other atoms 
+     "set" sets the flag for selected atoms, leaves other atoms unchanged
+     "clear" clear the flag for selected atoms, leaves other atoms unchanged
+   
 PYMOL API
   
-   cmd.flag( int number, string selection )
+   cmd.flag( int number, string selection, string action="reset" )
+   cmd.flag( string flag_name, string selection, string action="reset" )
  
 EXAMPLES  
  
-   flag 0, (name ca)
-   flag 1, (resi 45 x; 6)
+   flag free, (resi 45 x; 6)
 
 RESERVATIONS
 
    Flags 0-7 are reserved for molecular modeling */
-      0  = Atoms of Interest (i.e. a ligand in an active site)
-      1  = Free Atoms (free to move subject to a force-field)
-      2  = Restrained Atoms (typically harmonically contrained)
-      3  = Fixed Atoms (no movement allowed)
+      focus      0 = Atoms of Interest (i.e. a ligand in an active site)
+      free       1 = Free Atoms (free to move subject to a force-field)
+      restrain   2 = Restrained Atoms (typically harmonically contrained)
+      fix        3 = Fixed Atoms (no movement allowed)
+      ignore     4 = Atoms which should not be part of any simulation
    Flags 8-15 are free for end users to manipulate
    Flags 16-23 are reserved for external GUIs and linked applications
-   Flags 24-31 are reserved for PyMOL's internal usage
-      24 = Exclude atoms from surface related actions
-      25 = Ignore atoms altogether when surfacing
+   Flags 24-31 are reserved for PyMOL internal usage
+      exfoliate 24 = Remove surface from atoms when surfacing
+      ignore    25 = Ignore atoms altogether when surfacing
    '''
    # preprocess selection
+   new_flag = flag_sc.interpret(str(flag))
+   if new_flag:
+      if is_string(new_flag):
+         flag = flag_dict[new_flag]
+      else:
+         flag_sc.auto_err(flag,'flag')
+   # preprocess selection
    selection = selector.process(selection)
+   action = flag_action_dict[flag_action_sc.auto_err(action,'action')]
    #      
    try:
-      lock()   
-      r = _cmd.flag(int(number),str(selection))
+      lock()
+      r = _cmd.flag(int(flag),"("+str(selection)+")",int(action))
    finally:
       unlock()
    return r
@@ -5893,7 +5956,7 @@ def _stereo(flag): # SGI-SPECIFIC - bad bad bad
       os.system("/usr/gfx/setmon -n 1024x768_96s")
    else:
       os.system("/usr/gfx/setmon -n 72hz")
-
+   
 def _interpret_color(color):
    _validate_color_sc()
    new_color = color_sc.interpret(color)
@@ -5987,6 +6050,7 @@ keyword = {
    'h_fill'        : [h_fill       , 0 , 0 , ''  , parsing.STRICT ],
    'help'          : [help         , 0 , 0 , ''  , parsing.STRICT ],
    'hide'          : [hide         , 0 , 0 , ''  , parsing.STRICT ],
+   'indicate'      : [indicate     , 0 , 0 , ''  , parsing.STRICT ],   
    'intra_fit'     : [intra_fit    , 0 , 0 , ''  , parsing.STRICT ],
    'intra_rms'     : [intra_rms    , 0 , 0 , ''  , parsing.STRICT ],
    'intra_rms_cur' : [intra_rms_cur, 0 , 0 , ''  , parsing.STRICT ],

@@ -22,13 +22,15 @@ Z* -------------------------------------------------------------------
 /* FLAGS 0-3 have the following conventional usage for molecular modeling */
 
 /* FLAG 0 - Atoms of interest - i.e. a ligand in an active site */
-#define cAtomFlag_interesting     0x00000001
+#define cAtomFlag_focus         0x00000001
 /* FLAG 1 - Free atoms - those which can move subject to a force-field */
-#define cAtomFlag_free            0x00000002
+#define cAtomFlag_free          0x00000002
 /* FLAG 2 - Restrained atoms - atoms subject to a harmonic restraint */
-#define cAtomFlag_restrained      0x00000004
+#define cAtomFlag_restrain      0x00000004
 /* FLAG 3 - Fixed atoms - no movement allowed */
-#define cAtomFlag_fixed           0x00000008
+#define cAtomFlag_fix           0x00000008
+/* FLAG 4 - Exclude these atoms when performing simulation, minimization */
+#define cAtomFlag_exclude       0x00000010
 
 /* FLAGS 4-7 are reserved for additional molecular modeling tasks */
 
@@ -38,10 +40,10 @@ Z* -------------------------------------------------------------------
 
 /* FLAGS 24-31 are reserved for PyMOL's internal use */
 
-/* FLAG 24 - Exclude atoms from surfacing actions */
-#define cAtomFlag_exclude         0x01000000
-/* FLAG 25 - Ignore atoms altogether when surfacing */
-#define cAtomFlag_ignore          0x02000000
+/* FLAG 24 - don't surface these atoms (waters, ligands, etc.) */
+#define cAtomFlag_exfoliate     0x01000000
+/* FLAG 25 - ignore atoms altogether when surfacing */
+#define cAtomFlag_ignore        0x02000000
 
 #define cResnLen 5
 #define cResiLen 5

@@ -245,6 +245,7 @@ int SettingGetName(int index,SettingName name);
 #define cSetting_surface_color               144
 #define cSetting_mesh_mode                   145
 #define cSetting_mesh_color                  146
+#define cSetting_auto_indicate_flags         147
 
 #define cSetting_INIT                        150
 
