@@ -592,16 +592,6 @@ int AtomInfoMatch(AtomInfoType *at1,AtomInfoType *at2)
   return 0;
 }
 
-int AtomInfoAltMatch(AtomInfoType *at1,AtomInfoType *at2)
-{
-  if((tolower(at1->chain[0]))==(tolower(at2->chain[0])))
-    if(WordMatch(at1->resi,at2->resi,true)<0)
-      if(WordMatch(at1->resn,at2->resn,true)<0)
-        if(WordMatch(at1->segi,at2->segi,true)<0)
-            return 1;
-  return 0;
-}
-
 int AtomInfoGetExpectedValence(AtomInfoType *I) {
   int result=-1; /* negative indicates minimum expected valence (abs)
                 but it could be higher  */

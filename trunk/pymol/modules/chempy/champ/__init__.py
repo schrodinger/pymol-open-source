@@ -111,7 +111,7 @@ class Champ:
       '''
       returns pattern indices in a list as a list
       '''
-      (e,r) = _champ.list_get_pattern_list(self._champ,int(handle))
+      (e,r) = _champ.list_get_pattern_indices(self._champ,int(handle))
       if e: raise RuntimeError
       return r
 
