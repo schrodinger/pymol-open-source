@@ -33,8 +33,8 @@ def load():
             if cmd.count_atoms()<0:
                break
             cmd.save(out_file)
-            os.system("awk '/^ATOM  /{print substr($0,12,16)+\" \"};{next;}' < %s | sed 's/  */ /g' > %s"%(out_file,cmp_file))
-            os.system("awk '/^ATOM  /{print substr($0,12,16)+\" \"};{next;}' < %s | sed 's/  */ /g' > %s"%(file,ref_file))
+            os.system("awk '/^ATOM  /{print substr($0,12,16),\" \"};{next;}' < %s | sed 's/  */ /g' > %s"%(out_file,cmp_file))
+            os.system("awk '/^ATOM  /{print substr($0,12,16),\" \"};{next;}' < %s | sed 's/  */ /g' > %s"%(file,ref_file))
             os.system("diff %s %s > %s"%(ref_file,cmp_file,dif_file))
                       
             f=open(dif_file)
