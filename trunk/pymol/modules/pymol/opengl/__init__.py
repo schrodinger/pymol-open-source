@@ -1,3 +1,5 @@
+# PyOpenGL: modified for usage inside of PyMOL
+
 try:
     import multiarray
     _numeric = 1

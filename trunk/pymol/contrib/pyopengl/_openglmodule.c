@@ -3,7 +3,7 @@
  *
  * OpenGL Module for Python
  * 
- * Version: 0.9
+ * Version: 0.9.PyMOL (modified for usage with PyMOL)
  *
  * Date:    1998/01/15
  *
@@ -43,7 +43,7 @@
  *     1998/01/16: moved all non-OpenGL spec stuff into openglutil.c
  *                 [DA & MS]
  *
- *     
+ * 
 ***/
 
 #define GLUT	1

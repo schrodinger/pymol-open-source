@@ -3221,6 +3221,15 @@ TO DOCUMENT
    lst.extend(list(arg))
    return apply(load_object,lst)
 
+def load_cgo(*arg):
+   '''
+TO DOCUMENT
+'''
+   
+   lst = [loadable.cgo]
+   lst.extend(list(arg))
+   return apply(load_object,lst)
+
 def load_model(*arg):
    '''
 DESCRIPTION
@@ -4375,10 +4384,11 @@ class loadable:
    mmod = 4
    xplor = 7
    model = 8
-   pdbstr = 9
-   brick = 10
-   map = 11
-   callback = 12
+   pdbstr = 9    
+   brick = 10    # chempy.brick object
+   map = 11      # chempy.map object
+   callback = 12 # pymol callback obejct
+   cgo = 13      # compiled graphic object
    
 # build shortcuts list
 

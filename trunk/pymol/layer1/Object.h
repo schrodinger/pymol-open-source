@@ -22,12 +22,13 @@ Z* -------------------------------------------------------------------
 #include"Ray.h"
 #include"Rep.h"
 
-#define ObjNameMax 255
-#define cObjectMolecule 1
-#define cObjectMap 2
-#define cObjectMesh 3
-#define cObjectDist 4
-#define cObjectCallback 5
+#define ObjNameMax        255
+#define cObjectMolecule     1
+#define cObjectMap          2
+#define cObjectMesh         3
+#define cObjectDist         4
+#define cObjectCallback     5
+#define cObjectCGO          6
 
 typedef struct Object {
   void (*fUpdate)(struct Object *I); /* update representations */

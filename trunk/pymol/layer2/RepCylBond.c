@@ -35,7 +35,7 @@ typedef struct RepCylBond {
 } RepCylBond;
 
 void RepCylBondRender(RepCylBond *I,CRay *ray,Pickable **pick);
-void subdivide( int n, float *x, float *y);
+static void subdivide( int n, float *x, float *y);
 float *RepCylinder(float *v,float *v1,float *v2,int nEdge,int endCap);
 
 void RepCylBondFree(RepCylBond *I);
@@ -331,7 +331,7 @@ Rep *RepCylBondNew(CoordSet *cs)
   return((void*)(struct Rep*)I);
 }
 
-void subdivide( int n, float *x, float *y)
+static void subdivide( int n, float *x, float *y)
 {
   int a;
   if(n<3) {n=3;}

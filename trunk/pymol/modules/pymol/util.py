@@ -168,3 +168,4 @@ def b2vdw(*arg):
    # rms = sqrt(b/(8*(PI^2)))
    cmd.alter("(%s)"%sele,"vdw=math.sqrt(b/78.9568352087)")
    
+   
