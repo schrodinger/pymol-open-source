@@ -322,7 +322,7 @@ int SelectorGetSingleAtomObjectIndex(int sele,ObjectMolecule **in_obj,int *index
 			 for(a=0;a<obj->NAtom;a++)
 				{
               s=ai[a].selEntry;
-              if(SelectorIsMember(s,sele))
+              if(SelectorIsMember(s,sele)) {
                 if(found_it){
                   return false; /* ADD'L EXIT POINT */
                 } else {
@@ -330,6 +330,7 @@ int SelectorGetSingleAtomObjectIndex(int sele,ObjectMolecule **in_obj,int *index
                   (*in_obj)=obj;
                   (*index)=a;
                 }
+              }
             }
         }
     }
@@ -883,7 +884,7 @@ int SelectorGetPDB(char **charVLA,int sele,int state,int conectFlag)
             b1+=obj->SeleBase;
             b2+=obj->SeleBase;
             if(I->Table[b1].index&&I->Table[b2].index) {
-              VLACheck(bond,int,nBond*2+12);
+              VLACheck(bond,int,nBond*2+ii1[2]*4+12);
               b1=I->Table[b1].index;
               b2=I->Table[b2].index;
               for(d=0;d<ii1[2];d++) {
@@ -909,6 +910,7 @@ int SelectorGetPDB(char **charVLA,int sele,int state,int conectFlag)
       if(a<(nBond-1)) 
         if((ii1[0]==ii1[2])&&(ii1[1]==ii1[3])) newline=true;
       if((b1!=ii1[0])||((b1==ii1[0])&&(b2==ii1[1]))||newline) {
+        VLACheck((*charVLA),char,cLen+255);
         if(a) cLen+=sprintf((*charVLA)+cLen,"\n");
         cLen+=sprintf((*charVLA)+cLen,"CONECT%5d%5d",
                       ii1[0],ii1[1]);
@@ -922,9 +924,11 @@ int SelectorGetPDB(char **charVLA,int sele,int state,int conectFlag)
       b2=ii1[1];
       ii1+=2;
     }
-    if(cLen) 
+    if(cLen) {
+      VLACheck((*charVLA),char,cLen+4);
       if(*((*charVLA)+cLen-1)!='\n')
         cLen+=sprintf((*charVLA)+cLen,"\n");
+    }
     VLAFree(bond);
   }
   return(cLen);

@@ -3248,7 +3248,15 @@ PYMOL API
 def _load(oname,finfo,state,ftype,finish,discrete):
    r = 1
    if ftype not in (loadable.model,loadable.brick):
-      r = _cmd.load(oname,finfo,state,ftype,finish,discrete)
+      if ftype == loadable.r3d:
+         import cgo
+         obj = cgo.from_r3d(finfo)
+         if obj:
+            _cmd.load_object(oname,obj,state,loadable.cgo,finish,discrete)
+         else:
+            print " load: couldn't load raster3d file."
+      else:
+         r = _cmd.load(oname,finfo,state,ftype,finish,discrete)
    else:
       try:
          x = io.pkl.fromFile(finfo)
@@ -3313,6 +3321,8 @@ PYMOL API
          ftype = loadable.xplor
       elif re.search("\.pkl$",arg[0]):
          ftype = loadable.model
+      elif re.search("\.r3d$",arg[0]):
+         ftype = loadable.r3d
       elif re.search("\.sdf$",arg[0]):
          oname = re.sub("[^/]*\/","",arg[0])
          oname = re.sub("\.sdf$","",oname)
@@ -4389,6 +4399,7 @@ class loadable:
    map = 11      # chempy.map object
    callback = 12 # pymol callback obejct
    cgo = 13      # compiled graphic object
+   r3d = 14      # r3d, only used within cmd.py
    
 # build shortcuts list
 
