@@ -767,6 +767,7 @@ void EditorInactive(void)
   ExecutiveDelete(cEditorSele2);    
   ExecutiveDelete(cEditorRes);
   ExecutiveDelete(cEditorComp);
+  if(SettingGet(cSetting_log_conformations)) PLogFlush();
   SceneDirty();
 }
 /*========================================================================*/

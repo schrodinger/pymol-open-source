@@ -685,8 +685,10 @@ unsigned int *SceneReadTriplets(int x,int y,int w,int h)
   dim[0]=w;
   dim[1]=h;
 
+  if(w<1) w=1;
+  if(h<1) h=1;
   if(PMGUI) { /*just in case*/
-	buffer=Alloc(pix,w*h);
+    buffer=Alloc(pix,w*h);
     result = VLAlloc(unsigned int,w*h);
     glReadBuffer(GL_BACK);
     glReadPixels(x,y,w,h,GL_RGBA,GL_UNSIGNED_BYTE,&buffer[0][0]);
@@ -695,12 +697,12 @@ unsigned int *SceneReadTriplets(int x,int y,int w,int h)
       for(b=0;b<h;b++)
         {
           for(e=0;e<3;e++)
-            if(buffer[a*w+b][e]) {
-              c=&buffer[a*w+b][0];
+            if(buffer[a+b*w][e]) {
+              c=&buffer[a+b*w][0];
               VLACheck(result,unsigned int,cc);
               result[cc] =  ((c[0]>>4)&0xF)+(c[1]&0xF0)+((c[2]<<4)&0xF00);
               /*printf("%2x %2x %2x %d\n",c[0],c[1],c[2],result[cc]);*/
-
+              
               cc++;
               break;
             }
