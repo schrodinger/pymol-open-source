@@ -49,6 +49,11 @@ typedef struct _CExecutive CExecutive;
 typedef struct _CSeeker CSeeker;
 typedef struct _CSelector CSelector;
 typedef struct _CTexture CTexture;
+typedef struct _CMain CMain;
+#ifndef COption_DEFINED
+typedef struct _COption COption;
+#define COption_DEFINED
+#endif
 
 #ifndef OVCONTEXT_DEFINED
 typedef struct _OVContext OVContext;
@@ -57,6 +62,8 @@ typedef struct _OVContext OVContext;
 
 typedef struct _PyMOLGlobals PyMOLGlobals;
 struct _PyMOLGlobals {
+
+  /* singleton objects */
 
   CMemoryCache *MemoryCache; /* could probably eliminate this... */
   CIsosurf  *Isosurf;
@@ -87,8 +94,27 @@ struct _PyMOLGlobals {
   CSelector *Selector;
   CTexture  *Texture;
   OVContext *Context;
+  COption   *Option;
+  CMain     *Main;
 
-  int     HaveGUI;
+  /* global variables */
+
+  int HaveGUI; /* do we have an OpenGL graphics window/context?
+                    * or are will command-only? */
+
+  int Ready; /* is the program fully initialized and ready to
+                   * receive messages? */
+
+  int Terminating; /* is the program shutting down? */
+  
+  /* note that the following four options are also contained in
+   * PyMOLOption global -- they exist here as independent globals only
+   * because changes haven't yet been made throughout code */
+
+  int StereoCapable; /* the current graphics context quad buffered? */
+  
+  int Security; /* do we warn the use before potentially executing any
+                 * Python code and ask for their informed consent? */
 
 };
 
@@ -97,7 +123,8 @@ struct _PyMOLGlobals {
    
 extern PyMOLGlobals *TempPyMOLGlobals;
 
-/* not a global, but CRay widely used and Ray.h isn't lightweight... */
+/* not a global, but CRay widely used and Ray.h definitely isn't a
+ * lightweight include... */
 
 typedef struct _CRay               CRay;
 

@@ -235,7 +235,7 @@ int MovieFromPyList(PyMOLGlobals *G,PyObject *list,int *warning)
     I->Cmd=VLACalloc(MovieCmdType,I->NFrame);
     if(ok) ok=PConvPyListToIntArrayInPlace(PyList_GetItem(list,4),I->Sequence,I->NFrame);
     if(ok) ok=MovieCmdFromPyList(G,PyList_GetItem(list,5),warning);
-    if((*warning)&&Security) {
+    if((*warning)&&G->Security) {
       MovieSetLock(G,true);
     }
   }

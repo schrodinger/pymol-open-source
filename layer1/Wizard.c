@@ -66,8 +66,6 @@ struct _CWizard {
   
 };
 
-CWizard Wizard;
-
 #define cWizardLeftMargin 2
 #define cWizardTopMargin 0
 #define cWizardClickOffset 2

@@ -50,6 +50,7 @@ Z* -------------------------------------------------------------------
 #include"View.h"
 #include"ObjectSlice.h"
 #include"Text.h"
+#include"PyMOLOptions.h"
 
 #define cSliceMin 0.1F
 
@@ -3543,7 +3544,7 @@ void SceneRender(PyMOLGlobals *G,Pickable *pick,int x,int y,Multipick *smp)
 
     must_render_stereo = (I->StereoMode!=0);
     if(!must_render_stereo) 
-      if(double_pump&&StereoCapable) {            /* force stereo rendering */
+      if(double_pump&&G->StereoCapable) {            /* force stereo rendering */
         must_render_stereo=true;
         stereo_as_mono=true; /* rendering stereo as mono */
       }
@@ -3658,7 +3659,7 @@ void SceneRender(PyMOLGlobals *G,Pickable *pick,int x,int y,Multipick *smp)
       glAlphaFunc(GL_GREATER, 0.05F);
       glEnable(GL_ALPHA_TEST);
 
-      if(PyMOLOption->multisample)
+      if(G->Option->multisample)
         glEnable(0x809D); /* GL_MULTISAMPLE_ARB */
 
       f=SettingGet(G,cSetting_gl_ambient);
@@ -3755,7 +3756,7 @@ void SceneRender(PyMOLGlobals *G,Pickable *pick,int x,int y,Multipick *smp)
       glDisable(GL_BLEND);
       glDisable(GL_LINE_SMOOTH);
       glDisable(GL_POLYGON_SMOOTH);
-      if(PyMOLOption->multisample)    
+      if(G->Option->multisample)    
         glDisable(0x809D); /* GL_MULTISAMPLE_ARB */
       glShadeModel(GL_FLAT);
 
@@ -3908,7 +3909,7 @@ void SceneRender(PyMOLGlobals *G,Pickable *pick,int x,int y,Multipick *smp)
 
       PRINTFD(G,FB_Scene)
         " SceneRender: I->StereoMode %d must_render_stereo %d\n    stereo_as_mono %d  StereoCapable %d\n",
-        I->StereoMode, must_render_stereo, stereo_as_mono, StereoCapable
+        I->StereoMode, must_render_stereo, stereo_as_mono, G->StereoCapable
         ENDFD;
 
       start_time = UtilGetSeconds(G);
@@ -4104,7 +4105,7 @@ void SceneRender(PyMOLGlobals *G,Pickable *pick,int x,int y,Multipick *smp)
     glDisable(GL_NORMALIZE);
     glDisable(GL_DEPTH_TEST);
     glDisable(GL_ALPHA_TEST);
-    if(PyMOLOption->multisample)    
+    if(G->Option->multisample)    
       glDisable(0x809D); /* GL_MULTISAMPLE_ARB */
     glViewport(view_save[0],view_save[1],view_save[2],view_save[3]);
 

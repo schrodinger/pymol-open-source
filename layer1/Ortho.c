@@ -37,6 +37,7 @@ Z* -------------------------------------------------------------------
 #include"Pop.h"
 #include"Seq.h"
 #include"Text.h"
+#include"PyMOLOptions.h"
 
 #ifndef true
 #define true 1
@@ -1511,7 +1512,7 @@ int OrthoDrag(PyMOLGlobals *G,int x, int y,int mod)
 void OrthoSplash(PyMOLGlobals *G) 
 {
   OrthoNewLine(G,NULL,true);
-  if(PyMOLOption->incentive_product) {
+  if(G->Option->incentive_product) {
     PRINTF " This PyMOL Incentive Product is\n" ENDF(G);
     PRINTF " Copyright (C) 2004 by DeLano Scientific LLC.\n All Rights Reserved.\n \n" ENDF(G);    
     PRINTF " Legal usage of this product beyond your free 90 evaluation period requires\n" ENDF(G);
@@ -1665,7 +1666,7 @@ void OrthoPushMatrix(PyMOLGlobals *G)
     glDisable(GL_LINE_SMOOTH);
     glDisable(GL_DITHER);
     glDisable(GL_BLEND);
-    if(PyMOLOption->multisample)    
+    if(G->Option->multisample)    
       glDisable(0x809D); /* GL_MULTISAMPLE_ARB */
    }
   I->Pushed=true;

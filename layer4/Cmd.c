@@ -130,7 +130,7 @@ static void APIEntry(void) /* assumes API is locked */
     " APIEntry-DEBUG: as thread 0x%x.\n",PyThread_get_thread_ident()
     ENDFD;
 
-  if(PyMOLTerminating) {/* try to bail */
+  if(TempPyMOLGlobals->Terminating) {/* try to bail */
 #ifdef WIN32
     abort();
 #endif
@@ -147,7 +147,7 @@ static void APIEnterBlocked(void) /* assumes API is locked */
     " APIEnterBlocked-DEBUG: as thread 0x%x.\n",PyThread_get_thread_ident()
     ENDFD;
 
-  if(PyMOLTerminating) {/* try to bail */
+  if(TempPyMOLGlobals->Terminating) {/* try to bail */
 #ifdef WIN32
     abort();
 #endif
@@ -1509,7 +1509,7 @@ static PyObject *CmdWaitQueue(PyObject *self, 	PyObject *args)
 {
   /* called by non-GLUT thread with unlocked API, blocked interpreter */
   PyObject *result = NULL;
-  if(!PyMOLTerminating) {
+  if(!TempPyMOLGlobals->Terminating) {
     APIEnterBlocked();
     if(OrthoCommandWaiting(TempPyMOLGlobals)||(flush_count>1)) 
       result = PyInt_FromLong(1);
@@ -2513,7 +2513,7 @@ static PyObject *CmdResetRate(PyObject *dummy, PyObject *args)
 
 static PyObject *CmdReady(PyObject *dummy, PyObject *args)
 {
-  return(APIStatus(PyMOLReady));
+  return(APIStatus(TempPyMOLGlobals->Ready));
 }
 
 #if 0
@@ -2756,7 +2756,7 @@ static PyObject *CmdGetFeedback(PyObject *dummy, PyObject *args)
   OrthoLineType buffer;
   int ok;
 
-  if(PyMOLTerminating) { /* try to bail */
+  if(TempPyMOLGlobals->Terminating) { /* try to bail */
 #ifdef WIN32
 	abort();
 #endif
@@ -3894,7 +3894,7 @@ static PyObject *CmdToggle(PyObject *self, 	PyObject *args)
 static PyObject *CmdQuit(PyObject *self, 	PyObject *args)
 {
   APIEntry();
-  PyMOLTerminating=true;
+  TempPyMOLGlobals->Terminating=true;
   PExit(EXIT_SUCCESS);
   APIExit();
   return(APISuccess());
