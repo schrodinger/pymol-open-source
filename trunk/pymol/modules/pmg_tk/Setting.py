@@ -44,6 +44,9 @@ class Setting:
 		self.normal_workaround = IntVar()
 		self.normal_workaround.set(0)
 
+		self.valence = IntVar()
+		self.valence.set(0)
+
 		self.xref = { 
 'ray_trace_frames' : (lambda s,a: (
 	cmd.set(a,("%1.0f" % s.ray_trace_frames.get())),
@@ -52,6 +55,7 @@ class Setting:
 'cache_frames'  : (lambda s,a: (cmd.set(a,("%1.0f" % s.cache_frames.get())))),
 'ortho'         : (lambda s,a: (cmd.set(a,("%1.0f" % s.ortho.get())))),
 'antialias'     : (lambda s,a: (cmd.set(a,("%1.0f" % s.antialias.get())))),
+'valence'       : (lambda s,a: (cmd.set(a,("%1.2f" % (float(s.valence.get())/20.0))))),
 'all_states'    : (lambda s,a: (cmd.set(a,("%1.0f" % s.all_states.get())))),
 'normal_workaround': (lambda s,a: (cmd.set(a,("%1.0f" % s.normal_workaround.get())))),
 'overlay'       : (lambda s,a: (cmd.set(a,("%1.0f" % s.overlay.get()))))
