@@ -477,15 +477,15 @@ PyMOL COMMAND LINE OPTIONS
    <file> can have one of the following extensions, and all 
    files provided will be loaded or run after PyMOL starts.
     
-      .pml     PyMOL command script to be run on startup
-      .py .pym, .pyc Python program to be run on startup
-       
-      .pdb     Protein Data Bank format file to be loaded on startup
-      .mmod    Macromodel format to be loaded on startup
-      .mol     MDL MOL file to be loaded on startup
-      .xplor   X-PLOR Map file to be loaded on startup
-      .pkl     Pickled ChemPy Model (class "chempy.model.Indexed")
-      .r3d     Raster3D Object
+    .pml            PyMOL command script to be run on startup
+    .py, .pym, .pyc Python program to be run on startup
+    .pdb            Protein Data Bank format file to be loaded on startup
+    .mmod           Macromodel format to be loaded on startup
+    .mol            MDL MOL file to be loaded on startup
+    .xplor          X-PLOR Map file to be loaded on startup
+    .pkl            Pickled ChemPy Model (class "chempy.model.Indexed")
+    .r3d            Raster3D Object
+    .cc1, .cc2      ChemDraw 3D cartesian coordinate file
    '''
    help('launching')
 
