@@ -1067,7 +1067,7 @@ int BasisHitPerspective(BasisCallRec *BC)
   register float min1 = map->Min[1] * iDiv;
   register float min2 = map->Min[2] * iDiv;
   RayInfo *r = BC->rr;
-  float   oppSq,sph[3],vt[3],tri1,tri2; 
+  float   sph[3],vt[3],tri1,tri2; 
   const float   _0   = 0.0F, _1 = 1.0F;
   float r_tri1=_0, r_tri2=_0, r_dist, dist; /* zero inits to suppress compiler warnings */
   float r_sphere0=_0,r_sphere1=_0,r_sphere2=_0;
