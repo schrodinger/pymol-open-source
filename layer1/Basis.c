@@ -386,21 +386,43 @@ int ZLineToSphereCapped(float *base,float *point,float *dir,float radius,float m
 
   dangle = -dir[2]; /* was dot(MinusZ,dir) */
   ab_dangle= (float)fabs(dangle);
-  if(ab_dangle>(1-kR_SMALL4))
+  if(ab_dangle>(1-kR_SMALL4)) /* vector inline with light ray... */
 	 {
+      vradial[0]=point[0]-base[0];
+      vradial[1]=point[1]-base[1];
+      vradial[2]=0.0F;
+      radial = length3f(vradial);
+      if(radial>radius)
+        return 0;
 		if(dangle>0.0) {
-		  sphere[0]=point[0];
-		  sphere[1]=point[1];
-		  sphere[2]=point[2];
+        switch(cap1) {
+        case cCylCapFlat:
+          sphere[0]=base[0];
+          sphere[1]=base[1];
+          sphere[2]=point[2]-radius;
+          break;
+        case cCylCapRound:
+          sphere[0]=point[0];
+          sphere[1]=point[1];
+          sphere[2]=point[2];
+        }
 		  return(1);
 		} else {
-		  sphere[0]=dir[0]*maxial+point[0];
-		  sphere[1]=dir[1]*maxial+point[1];
-		  sphere[2]=dir[2]*maxial+point[2];
+        switch(cap1) {
+        case cCylCapFlat:
+          sphere[0]=base[0];
+          sphere[1]=base[1];
+          sphere[2]=dir[2]*maxial+point[2]-radius;
+          break;
+        case cCylCapRound:
+          sphere[0]=dir[0]*maxial+point[0];
+          sphere[1]=dir[1]*maxial+point[1];
+          sphere[2]=dir[2]*maxial+point[2];
+        }
 		  return(1);
-		  }
+      }
 	 }
-
+  
   /*tan_acos_dangle = tan(acos(dangle));*/
   tan_acos_dangle = (float)sqrt1f(1-dangle*dangle)/dangle;
 
@@ -469,9 +491,10 @@ int ZLineToSphereCapped(float *base,float *point,float *dir,float radius,float m
   else
 	 axial_sum = axial;
 
-  /*
-	 printf("radial2 %8.3f \n",radial);*/
-
+  /*	 printf("ab_dangle %8.3f \n",ab_dangle);
+ 
+	 printf("axial_sum %8.3f \n",axial_sum);
+  */
   if(axial_sum<0) {
     switch(cap1) {
     case cCylCapFlat:
@@ -508,6 +531,7 @@ int ZLineToSphereCapped(float *base,float *point,float *dir,float radius,float m
     }
   } else if(axial_sum>maxial) {
     switch(cap2) {
+
     case cCylCapFlat:
       scale3f(dir,maxial,fpoint);
       add3f(fpoint,point,fpoint);
