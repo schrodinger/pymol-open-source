@@ -4,6 +4,12 @@ CHANGE LOG
 
 Changes up to 0.95
 
+   * changed cartoon_tube_radius to a more aestically pleasing 0.5A
+
+   * ribbon now shows nuc. acid backbone too
+
+   * added presets for ligand sites, including our new surface reps.
+
    * fixed bug with scene coloring
 
    * adjusted clipping plane bounds to eliminate shingle effect from

@@ -1730,7 +1730,7 @@ void SettingInitGlobal(int alloc,int reset_gui)
 
   SettingSet_f(I,cSetting_cartoon_oval_quality, 10.0F);
 
-  SettingSet_f(I,cSetting_cartoon_tube_radius, 0.9F);
+  SettingSet_f(I,cSetting_cartoon_tube_radius, 0.5F);
 
   SettingSet_f(I,cSetting_cartoon_tube_quality, 9.0F);
 
