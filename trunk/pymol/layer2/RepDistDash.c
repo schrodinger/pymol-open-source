@@ -63,7 +63,7 @@ void RepDistDashRender(RepDistDash *I,CRay *ray,Pickable **pick)
 	 
 	 while(c>0) {
       /*      printf("%8.3f %8.3f %8.3f   %8.3f %8.3f %8.3f \n",v[3],v[4],v[5],v[6],v[7],v[8]);*/
-		ray->fCylinder3fv(ray,v,v+3,I->radius,vc,vc);
+		ray->fSausage3fv(ray,v,v+3,I->radius,vc,vc);
 		v+=6;
       c-=2;
 	 }

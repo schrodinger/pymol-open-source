@@ -62,7 +62,7 @@ void RepWireBondRender(RepWireBond *I,CRay *ray,Pickable **pick)
 	 
 	 while(c--) {
       /*      printf("%8.3f %8.3f %8.3f   %8.3f %8.3f %8.3f \n",v[3],v[4],v[5],v[6],v[7],v[8]);*/
-      ray->fCylinder3fv(ray,v+3,v+6,I->Radius,v,v);
+      ray->fSausage3fv(ray,v+3,v+6,I->Radius,v,v);
 		v+=9;
 	 }
 

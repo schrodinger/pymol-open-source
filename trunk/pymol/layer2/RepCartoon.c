@@ -116,15 +116,15 @@ Rep *RepCartoonNew(CoordSet *cs)
   float loop_radius;
   float tube_radius,tube_quality;
   int visFlag;
-  CExtrude *ex,*ex1;
-  int n_p;
+  CExtrude *ex=NULL,*ex1;
+  int n_p,n_pm1,n_pm2;
   int loop_quality;
   float oval_quality,oval_width,oval_length;
   float dumbbell_radius,dumbbell_width,dumbbell_length;
   float throw;
   int st,nd;
   float *v_c,*v_n,*v_o,*v_ca;
-  float t0[3],t1[3],t2[3],o0[12],o1[12];
+  float t0[3],t1[3],t2[3],t3[3],t4[3],o0[12],o1[12];
   float max_dot;
   float length,width;
   int cur_car;
@@ -135,8 +135,16 @@ Rep *RepCartoonNew(CoordSet *cs)
   int refine;
   int contigFlag;
   int discrete_colors;
-
+  int cylindrical_helices;
+  int last_color,uniform_color;
+  int round_helices;
+  int smooth_loops;
   float refine_tips;
+  float helix_radius;
+  float *h_start=NULL,*h_end=NULL;
+
+  /* THIS HAS GOT TO BE A CANDIDATE FOR THE WORST ROUTINE IN PYMOL
+   * DEVELOP ON IT ONLY AT EXTREME RISK TO YOUR MENTAL HEALTH */
 
   OOAlloc(RepCartoon);
 
@@ -193,10 +201,14 @@ ENDFD;
 
   fancy_helices = SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_cartoon_fancy_helices);
   fancy_sheets = SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_cartoon_fancy_sheets);
+  cylindrical_helices = SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_cartoon_cylindrical_helices);
   refine = SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_cartoon_refine);
   refine_tips = SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_cartoon_refine_tips);
 
   discrete_colors = SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_cartoon_discrete_colors);
+  round_helices = SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_cartoon_round_helices);
+  smooth_loops = SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_cartoon_smooth_loops);
+  helix_radius = SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_cartoon_helix_radius);
 
   I->R.fRender=(void (*)(struct Rep *, CRay *, Pickable **))RepCartoonRender;
   I->R.fFree=(void (*)(struct Rep *))RepCartoonFree;
@@ -269,7 +281,9 @@ ENDFD;
                   case 'H':
                   case 'h':
                     if (cur_car==cCartoon_auto) {
-                      if(fancy_helices)
+                      if(cylindrical_helices) 
+                        cur_car = cCartoon_skip_helix;
+                      else if(fancy_helices)
                         cur_car = cCartoon_dumbbell;
                       else
                         cur_car = cCartoon_oval;
@@ -507,7 +521,7 @@ ENDFD;
         " RepCartoon-Debug: generating coordinate systems...\n"
         ENDFD;
       
-      if(SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_cartoon_round_helices)) {
+      if(round_helices) {
         v1 = NULL;
         v2 = NULL;
         v3 = NULL;
@@ -538,39 +552,8 @@ ENDFD;
             if(*ss==1)
               v1 = v;
             else {
-              if(last<2) {/* not 5+ turn helix, so just average the tangents */
-                /*                if(v2&&v3) {
-                                  copy3f(v0-3,t0);
-                                  copy3f(v0-6,t1);
-                                  if(dot_product3f(t0,t1)<0.0)
-                                  invert3f(t1);
-                                  add3f(t1,t0,t0);
-                                  if(v4) {
-                                  copy3f(v0-9,t1);
-                                  if(dot_product3f(t0,t1)<0.0)
-                                  invert3f(t1);
-                                  add3f(t1,t0,t0);
-                                  }
-                                  if(v5) {
-                                  copy3f(v0-12,t1);
-                                  if(dot_product3f(t0,t1)<0.0)
-                                  invert3f(t1);
-                                  add3f(t1,t0,t0);
-                                  }
-                                  normalize3f(t0);
-                                  cross_product3f(t0,v0-3,vo-3);
-                                  normalize3f(vo-3);
-                                  cross_product3f(t0,v0-6,vo-6);
-                                  normalize3f(vo-6);
-                                  if(v4) {
-                                  cross_product3f(t0,v0-9,vo-9);
-                                  normalize3f(vo-9);
-                                  }
-                                  if(v5) {
-                                  cross_product3f(t0,v0-12,vo-12);
-                                  normalize3f(vo-12);
-                                  }
-                */
+              if(last<2) {
+
                 zero3f(t0);
                 if(v2&&v3) {
                   subtract3f(v2,v,t0);
@@ -613,8 +596,9 @@ ENDFD;
             if(v1&&v2&&v3&&v4) {
               add3f(v1,v4,t0);
               add3f(v2,v3,t1);
-              scale3f(t0,0.2024,t0);
-              scale3f(t1,0.2727,t1);
+              scale3f(t0,0.2130,t0);
+              scale3f(t1,0.2870,t1);
+
               add3f(t0,t1,t0);
               if(last) { /* 5th CA or later... */
                 subtract3f(t2,t0,t1);
@@ -701,7 +685,6 @@ ENDFD;
           v+=3; /* normal */
         }
 
-
       }
 
       if(SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_cartoon_flat_sheets)) {
@@ -772,7 +755,7 @@ ENDFD;
 
       }
 
-      if(SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_cartoon_smooth_loops)) {
+      if(smooth_loops) {
 
         s = seg;
         v = pv;
@@ -848,7 +831,7 @@ ENDFD;
         }
       }
       
-      if(SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_cartoon_smooth_loops)||
+      if(smooth_loops ||
          SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_cartoon_flat_sheets)) {
         
         /* recompute differences and normals */
@@ -951,15 +934,15 @@ ENDFD;
       }
     }
 
-  
-  I->std = CGONew();
+
+  I->ray = CGONew();
 
   /* debugging output */
-  if(SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_cartoon_round_helices)) {
+  if(round_helices) {
     if((cartoon_debug>0.5)&&(cartoon_debug<2.5)) {
-      CGOColor(I->std,1.0,1.0,1.0);
-      CGODisable(I->std,GL_LIGHTING);
-      CGOBegin(I->std,GL_LINE_STRIP);
+      CGOColor(I->ray,1.0,1.0,1.0);
+      CGODisable(I->ray,GL_LIGHTING);
+      CGOBegin(I->ray,GL_LINE_STRIP);
             
       v1 = NULL;
       v2 = NULL;
@@ -967,7 +950,7 @@ ENDFD;
       v4 = NULL;
       v = pv;
       if(nAt>1) {
-        CGOBegin(I->std,GL_LINE_STRIP);
+        CGOBegin(I->ray,GL_LINE_STRIP);
         for(a=0;a<nAt;a++) {
           v4 = v3;
           v3 = v2;
@@ -976,14 +959,18 @@ ENDFD;
           if(v1&&v2&&v3&&v4) {
             add3f(v1,v4,t0);
             add3f(v2,v3,t1);
-            scale3f(t0,0.2024,t0);
-            scale3f(t1,0.2727,t1);
+            /*            scale3f(t0,0.2024,t0);
+                          scale3f(t1,0.2727,t1);*/
+
+            scale3f(t0,0.2130,t0);
+            scale3f(t1,0.2870,t1);
+
             add3f(t0,t1,t0);
-            CGOVertexv(I->std,t0);
+            CGOVertexv(I->ray,t0);
           }
           v+=3;
         }
-        CGOEnd(I->std);
+        CGOEnd(I->ray);
       }
     }
   }
@@ -991,18 +978,28 @@ ENDFD;
 PRINTFD(FB_RepCartoon)
 " RepCartoon-Debug: creating 3D scaffold...\n"
 ENDFD;
-   
-  /* okay, we now have enough info to generate smooth interpolations */
 
+/* okay, we now have enough info to generate smooth interpolations */
 
   if(nAt>1) {
     ex = ExtrudeNew();
     ExtrudeAllocPointsNormalsColors(ex,cs->NIndex*(3*sampling+3));
+  }
+
+/* process cylindrical helices first */
+
+  if((nAt>1)&&cylindrical_helices) {
+
+    /* this is confusing because we're borrowing Extrude's arrays 
+     * for convenient storage, but not actually calling Extrude */
+
     n_p = 0;
     v = ex->p;
     vc = ex->c;
-    vn = ex->n;
-    
+    vn = ex->n; 
+    last_color=-1;
+    uniform_color=true;
+
 	 v1=pv; /* points */
 	 v2=tv; /* tangents */
     vo=pvo;
@@ -1017,52 +1014,38 @@ ENDFD;
     contigFlag=false;
 
     while(contFlag) {
-
-
       if ((*cc)!=cur_car) { /* new cartoon type */
         if(n_p) { /* any cartoon points? */
           extrudeFlag=true;
         } else {
-          cur_car = *(cc); /* no: go ahead and switch cartoons */
-          ExtrudeTruncate(ex,0);
+          cur_car = *(cc); /* now: go ahead and switch cartoons */
           n_p = 0;
           v = ex->p;
           vc = ex->c;
           vn = ex->n;
+          last_color=-1;
+          uniform_color=true;
         }
       }
-      if(a<nAt) {
-        /* put a setting controlled conditional here.. */
-        if (((*(cc+1))!=cur_car)&&(cur_car!=cCartoon_loop)) { /* end of segment */
-          if(n_p) { /* any cartoon points? */
-            extrudeFlag=true;
-          } else {
-            cur_car = cCartoon_loop; /* no: go ahead and switch cartoons */
-            ExtrudeTruncate(ex,0);
-            n_p = 0;
-            v = ex->p;
-            vc = ex->c;
-            vn = ex->n;
-          }
-        }
-      }
-      if((a<(nAt-1))&&!extrudeFlag) {
-        if((*s)!=*(s+1)) { /* new segment */
+      if(a&&!extrudeFlag) {
+        if((*s)!=*(s-1)) { /* new segment */
           contigFlag=false;
           if(n_p) { /* any cartoon points? */
             extrudeFlag=true;
           } else {
-            ExtrudeTruncate(ex,0);
             n_p = 0;
             v = ex->p;
             vc = ex->c;
             vn = ex->n;
+            last_color=-1;
+            uniform_color=true;
           }
         }
       }
       if(!extrudeFlag) {
 		  if((a<(nAt-1))&&(*s==*(s+1))) /* working in the same segment... */
 			 {
+            
 				c1=*(cs->Color+*atp);
 				c2=*(cs->Color+*(atp+1));
             if(discrete_colors) {
@@ -1088,17 +1071,312 @@ ENDFD;
               }/* not contig */
               
             }
-            dev = throw*(*d);
-				for(b=0;b<sampling;b++) /* needs optimization */
-				  {
-                
-                if(n_p==0) {
-                  
-                  /* provide starting point on first point in segment only... */
+            
+            if((*(cc)==*(cc+1))&&(c1!=c2)) 
+              uniform_color=false;
+            if(last_color>=0) {
+              if(c1!=last_color)
+                uniform_color=false;
+            }
+            last_color=c1;
 
-                  f0=((float)b)/sampling; /* fraction of completion */
-                  f0=smooth(f0,power_a); /* bias sampling towards the center of the curve */
+            v0 = ColorGet(c1);
+            *(vc++)=*(v0++);
+            *(vc++)=*(v0++);
+            *(vc++)=*(v0++);
+
+            v0 = ColorGet(c2); /* kludge */
+            *(vc  )=*(v0++);
+            *(vc+1)=*(v0++);
+            *(vc+2)=*(v0++);
+          }
+        else
+          vc+=3; /* part of kludge */
+        
+        if(cur_car==cCartoon_skip_helix) {
+          if(!n_p) {
+            h_start=v1;
+            h_end=v1;
+          } else {
+            h_end = v1;
+          }
+          copy3f(v1,v); /* just store coordinates until we have a complete cylinder */
+          v+=3;
+          n_p++;
+        }
+        v1+=3;
+        v2+=3;
+        v3+=3;
+        vo+=3;
+        d++;
+        atp++;
+        s++;
+        cc++;
+      } 
+      
+      a++;
+      if(a==nAt) {
+        contFlag=false;
+        if(n_p) 
+          extrudeFlag=true;
+      }
+      
+      if(extrudeFlag) { /* generate cylinder */
+        contigFlag=true;
+        if((a<nAt)&&extrudeFlag) {
+          if(*(s-1)!=*(s))
+            contigFlag=false;
+        }
+        
+        if(n_p) {
+          c1=*(cs->Color+*(atp-1));
+          if(n_p<5) {
+            copy3f(ex->p,t3);
+            copy3f(v-3,t4);
+          } else {
+            add3f(ex->p,ex->p+9,t0);
+            add3f(ex->p+3,ex->p+6,t1);
+            scale3f(t0,0.2130,t0);
+            scale3f(t1,0.2870,t1);
+            add3f(t0,t1,t3);
+
+            add3f(v-3,v-12,t0);
+            add3f(v-6,v-9,t1);
+            scale3f(t0,0.2130,t0);
+            scale3f(t1,0.2870,t1);
+            add3f(t0,t1,t4);
+
+            /* extend helix to line up with CA */
+            subtract3f(t4,t3,t0);
+            normalize3f(t0);
+            subtract3f(v-3,t3,t1);
+            project3f(t1,t0,t4);
+            add3f(t3,t4,t4);
+            invert3f(t0);
+            subtract3f(ex->p,t4,t1);
+            project3f(t1,t0,t3);
+            add3f(t3,t4,t3);
+
+            /* relocate CA to touch helix.. */
+            
+            if(smooth_loops) {
+              if(h_start&&h_end) {
+                subtract3f(h_start,t3,t0);
+                f0 = helix_radius-loop_radius*2;
+                if(length3f(t0)>f0) {
+                  normalize3f(t0);
+                  scale3f(t0,f0,t1);
+                  add3f(t1,t3,h_start)
+                }
+
+                subtract3f(h_end,t4,t0);
+                if(length3f(t0)>f0) {
+                  normalize3f(t0);
+                  scale3f(t0,f0,t1);
+                  add3f(t1,t4,h_end)
+                }
+              }
+            }
+          }
+
+          /* push helix out a tad to consume loop */
+          
+          subtract3f(t4,t3,t0);
+          normalize3f(t0);
+          scale3f(t0,loop_radius*2,t0);
+          add3f(t0,t4,t4);
+          invert3f(t0);
+          add3f(t0,t3,t3);
+
+          if(uniform_color) {
+            CGOCylinderv(I->ray,t3,t4,helix_radius,ex->c,ex->c);
+            
+          } else {
+            subtract3f(t4,t3,t0);
+            n_pm1=n_p-1;
+            n_pm2=n_p-2;
+            for(b=0;b<n_pm1;b++) {
+              if(!b) {
+                scale3f(t0,((float)b-0.005)/n_pm1,t1); /* add small overlap */
+              } else {
+                scale3f(t0,((float)b)/n_pm1,t1);
+              }
+              if(b<n_pm2) {
+                scale3f(t0,((float)b+1.005)/n_pm1,t2);
+              } else {
+                scale3f(t0,((float)b+1)/n_pm1,t2);                
+              }
+              add3f(t3,t1,t1);
+              add3f(t3,t2,t2);
+              CGOCustomCylinderv(I->ray,t1,t2,helix_radius,ex->c+(b*3),ex->c+(b+1)*3,
+                                 (float)(b ? 0 : cCylCapFlat),
+                                 (float)(b == n_pm2 ? cCylCapFlat : 0 ));
+            }
+          }
+        }
+        a--; /* undo above... */
+        extrudeFlag=false;
+        n_p = 0;
+        v = ex->p;
+        vc = ex->c;
+        vn = ex->n;
+        uniform_color=true;
+        last_color=-1;
+      }
+    }
+  }
+  
+  if(nAt>1) 
+    {
+      n_p = 0;
+      v = ex->p;
+      vc = ex->c;
+      vn = ex->n;
+      
+      v1=pv; /* points */
+      v2=tv; /* tangents */
+      vo=pvo;
+      d = dl;
+      s=seg;
+      cc=car;
+      atp=at;
+      a=0;
+      contFlag=true;
+      cur_car = cCartoon_skip;
+      extrudeFlag=false;
+      contigFlag=false;
+      
+      while(contFlag) {
+        
+
+        if ((*cc)!=cur_car) { /* new cartoon type */
+          if(n_p) { /* any cartoon points? */
+            extrudeFlag=true;
+          } else {
+            cur_car = *(cc); /* no: go ahead and switch cartoons */
+            ExtrudeTruncate(ex,0);
+            n_p = 0;
+            v = ex->p;
+            vc = ex->c;
+            vn = ex->n;
+          }
+        }
+
+        /* CONFUSION ALERT -- I don't understand the following code (anymore) */
+
+        if(a<(nAt-1)) {
+          /* put a setting controlled conditional here.. */
+          if (((*(cc+1))!=cur_car)&&(cur_car!=cCartoon_loop)) { /* end of segment */
+            if(n_p) { /* any cartoon points? */
+              extrudeFlag=true;
+            } else {
+              cur_car = cCartoon_loop; /* no: go ahead and switch cartoons */
+              ExtrudeTruncate(ex,0);
+              n_p = 0;
+              v = ex->p;
+              vc = ex->c;
+              vn = ex->n;
+            }
+          }
+        }
+        if((a<(nAt-1))&&!extrudeFlag) {
+          if((*s)!=*(s+1)) { /* new segment */
+            contigFlag=false;
+            if(n_p) { /* any cartoon points? */
+              extrudeFlag=true;
+            } else {
+              ExtrudeTruncate(ex,0);
+              n_p = 0;
+              v = ex->p;
+              vc = ex->c;
+              vn = ex->n;
+            }
+          }
+        }
+        if(!extrudeFlag) {
+          if((a<(nAt-1))&&(*s==*(s+1))) /* working in the same segment... */
+            {
+              c1=*(cs->Color+*atp);
+              c2=*(cs->Color+*(atp+1));
+              if(discrete_colors) {
+                if(n_p==0) {
+                  if(contigFlag) {
+                    if(cur_car!=cCartoon_loop)
+                      c2=c1;
+                    else {
+                      if ((*cc+1)==cur_car)
+                        c2=c1;
+                      else
+                        c1=c2;
+                    }
+                  } else if((cur_car==cCartoon_loop)&&
+                            (*(cc+1)!=cCartoon_loop)) {
+                    c2=c1;
+                  }
+                } else {
+                  if((cur_car==cCartoon_loop)&&
+                     (*(cc+1)!=cCartoon_loop)) {
+                    c2=c1;
+                  }
+                }/* not contig */
+              
+              }
+              dev = throw*(*d);
+              for(b=0;b<sampling;b++) /* needs optimization */
+                {
+                
+                  if(n_p==0) {
                   
+                    /* provide starting point on first point in segment only... */
+
+                    f0=((float)b)/sampling; /* fraction of completion */
+                    f0=smooth(f0,power_a); /* bias sampling towards the center of the curve */
+                  
+                    if(f0<0.5) {
+                      v0 = ColorGet(c1);
+                    } else {
+                      v0 = ColorGet(c2);
+                    }
+
+                    /* store colors */
+                  
+                    *(vc++)=*(v0++);
+                    *(vc++)=*(v0++);
+                    *(vc++)=*(v0++);
+
+                    /* start of line/cylinder */
+                  
+                    f1=1.0-f0;
+                    f2=smooth(f0,power_b);
+                    f3=smooth(f1,power_b);
+                    f4 = dev*f2*f3; /* displacement magnitude */
+
+                    *(v++)=f1*v1[0]+f0*v1[3]+
+                      f4*( f3*v2[0]-f2*v2[3] );
+
+                    *(v++)=f1*v1[1]+f0*v1[4]+
+                      f4*( f3*v2[1]-f2*v2[4] );
+
+                    *(v++)=f1*v1[2]+f0*v1[5]+
+                      f4*( f3*v2[2]-f2*v2[5] );
+
+                    /* compute orientation vector at point, and store
+                       in second position of axes */
+                     
+                    vn+=3;
+                    *(vn++)=f1*(vo[0]*f2)+f0*(vo[3]*f3);
+                    *(vn++)=f1*(vo[1]*f2)+f0*(vo[4]*f3);
+                    *(vn++)=f1*(vo[2]*f2)+f0*(vo[5]*f3);     
+                    vn+=3;
+                  
+                    copy3f(vo,vn-6); /* starter... */
+                    n_p++;
+
+                  }
+
+                  f0=((float)b+1)/sampling;
+                  f0=smooth(f0,power_a); /* bias sampling towards the center of the curve */                
+                
                   if(f0<0.5) {
                     v0 = ColorGet(c1);
                   } else {
@@ -1106,240 +1384,199 @@ ENDFD;
                   }
 
                   /* store colors */
-                  
+                
                   *(vc++)=*(v0++);
                   *(vc++)=*(v0++);
                   *(vc++)=*(v0++);
-
-                  /* start of line/cylinder */
-                  
+                
+                  /* end of line/cylinder */
+                
                   f1=1.0-f0;
                   f2=smooth(f0,power_b);
                   f3=smooth(f1,power_b);
                   f4 = dev*f2*f3; /* displacement magnitude */
-
+                
                   *(v++)=f1*v1[0]+f0*v1[3]+
                     f4*( f3*v2[0]-f2*v2[3] );
-
+                
                   *(v++)=f1*v1[1]+f0*v1[4]+
                     f4*( f3*v2[1]-f2*v2[4] );
-
+                
                   *(v++)=f1*v1[2]+f0*v1[5]+
                     f4*( f3*v2[2]-f2*v2[5] );
-
-                  /* compute orientation vector at point, and store
-                   in second position of axes */
-                     
+                
+                  /*                remove_component3f(vo,v2,o0);
+                                    remove_component3f(vo+3,v2,o0+3);*/
+                
                   vn+=3;
                   *(vn++)=f1*(vo[0]*f2)+f0*(vo[3]*f3);
                   *(vn++)=f1*(vo[1]*f2)+f0*(vo[4]*f3);
-                  *(vn++)=f1*(vo[2]*f2)+f0*(vo[5]*f3);     
+                  *(vn++)=f1*(vo[2]*f2)+f0*(vo[5]*f3);                 
                   vn+=3;
-                  
-                  copy3f(vo,vn-6); /* starter... */
+                
+                  if(b==sampling-1)
+                    copy3f(vo+3,vn-6); /* starter... */                  
                   n_p++;
-
+                
                 }
 
-					 f0=((float)b+1)/sampling;
-                f0=smooth(f0,power_a); /* bias sampling towards the center of the curve */                
-                
-                if(f0<0.5) {
-                  v0 = ColorGet(c1);
-                } else {
-                  v0 = ColorGet(c2);
-                }
+              /* now do a smoothing pass along orientation 
+                 vector to smooth helices, etc... */
 
-                /* store colors */
-                
-                *(vc++)=*(v0++);
-                *(vc++)=*(v0++);
-                *(vc++)=*(v0++);
-                
-                /* end of line/cylinder */
-                
-                f1=1.0-f0;
-                f2=smooth(f0,power_b);
-                f3=smooth(f1,power_b);
-                f4 = dev*f2*f3; /* displacement magnitude */
-                
-                *(v++)=f1*v1[0]+f0*v1[3]+
-                  f4*( f3*v2[0]-f2*v2[3] );
-                
-                *(v++)=f1*v1[1]+f0*v1[4]+
-                  f4*( f3*v2[1]-f2*v2[4] );
-                
-                *(v++)=f1*v1[2]+f0*v1[5]+
-                  f4*( f3*v2[2]-f2*v2[5] );
-                
-                /*                remove_component3f(vo,v2,o0);
-                                  remove_component3f(vo+3,v2,o0+3);*/
-                
-                vn+=3;
-                *(vn++)=f1*(vo[0]*f2)+f0*(vo[3]*f3);
-                *(vn++)=f1*(vo[1]*f2)+f0*(vo[4]*f3);
-                *(vn++)=f1*(vo[2]*f2)+f0*(vo[5]*f3);                 
-                vn+=3;
-                
-                if(b==sampling-1)
-                  copy3f(vo+3,vn-6); /* starter... */                  
-					 n_p++;
-                
-				  }
+              c = refine;
+              cross_product3f(vn+3-(sampling*9),vn+3-9,t0);
+              if((sampling>1)&&length3f(t0)>R_SMALL4) {
 
-            /* now do a smoothing pass along orientation 
-               vector to smooth helices, etc... */
-
-            c = refine;
-            cross_product3f(vn+3-(sampling*9),vn+3-9,t0);
-            if((sampling>1)&&length3f(t0)>R_SMALL4) {
-
-              normalize3f(t0);
-              while(c--) {
-                p0=v-(sampling*3)-3;
-                p1=v-(sampling*3);
-                p2=v-(sampling*3)+3;
-                for(b=0;b<(sampling-1);b++) {
-                  f0=dot_product3f(t0,p0);
-                  f1=dot_product3f(t0,p1);
-                  f2=dot_product3f(t0,p2);
+                normalize3f(t0);
+                while(c--) {
+                  p0=v-(sampling*3)-3;
+                  p1=v-(sampling*3);
+                  p2=v-(sampling*3)+3;
+                  for(b=0;b<(sampling-1);b++) {
+                    f0=dot_product3f(t0,p0);
+                    f1=dot_product3f(t0,p1);
+                    f2=dot_product3f(t0,p2);
                   
-                  f3 = (f2+f0)/2.0;
-                  scale3f(t0,f3-f1,t1);
-                  add3f(t1,p1,p1);
+                    f3 = (f2+f0)/2.0;
+                    scale3f(t0,f3-f1,t1);
+                    add3f(t1,p1,p1);
 
-                  f0=dot_product3f(t0,p0);
-                  f1=dot_product3f(t0,p1);
-                  f2=dot_product3f(t0,p2);
+                    f0=dot_product3f(t0,p0);
+                    f1=dot_product3f(t0,p1);
+                    f2=dot_product3f(t0,p2);
                   
-                  p0=p1;
-                  p1=p2;
-                  p2+=3;
+                    p0=p1;
+                    p1=p2;
+                    p2+=3;
+                  }
                 }
               }
             }
-			 }
-		  v1+=3;
-		  v2+=3;
-		  v3+=3;
-        vo+=3;
-        d++;
-		  atp+=1;
-		  s++;
-        cc++;
+          v1+=3;
+          v2+=3;
+          v3+=3;
+          vo+=3;
+          d++;
+          atp+=1;
+          s++;
+          cc++;
 
-      }
-
-
-      a++;
-      if(a==nAt) {
-        contFlag=false;
-        if(n_p) 
-          extrudeFlag=true;
-      }
-      if(extrudeFlag) {
-        contigFlag=true;
-        if((a<nAt)&&extrudeFlag) {
-          if(*(s-1)!=*(s))
-            contigFlag=false;
         }
 
-        if(cur_car!=cCartoon_skip) {
-          ExtrudeTruncate(ex,n_p);
-          ExtrudeComputeTangents(ex);
-          
-          /* set up shape */
-          switch(cur_car) {
-          case cCartoon_tube:
-            ExtrudeCircle(ex,tube_quality,tube_radius);
-            ExtrudeBuildNormals1f(ex);
-            ExtrudeCGOSurfaceTube(ex,I->std,1);
-            break;
-          case cCartoon_loop:
-            ExtrudeCircle(ex,loop_quality,loop_radius);
-            ExtrudeBuildNormals1f(ex);
-            ExtrudeCGOSurfaceTube(ex,I->std,1);
-            break;
-          case cCartoon_rect:
-            ExtrudeRectangle(ex,width,length);
-            ExtrudeBuildNormals2f(ex);
-            ExtrudeCGOSurfacePolygon(ex,I->std,1);
-            break;
-          case cCartoon_oval:
-            ExtrudeOval(ex,oval_quality,oval_width,oval_length);
-            ExtrudeBuildNormals2f(ex);
-            ExtrudeCGOSurfaceTube(ex,I->std,1);
-            break;
-          case cCartoon_arrow:
-            ExtrudeRectangle(ex,width,length);
-            ExtrudeBuildNormals2f(ex);
-            ExtrudeCGOSurfaceStrand(ex,I->std,sampling);
-            break;
-          case cCartoon_dumbbell:
-            ExtrudeDumbbell1(ex,dumbbell_width,dumbbell_length);
-            ExtrudeBuildNormals2f(ex);
-            ExtrudeCGOSurfacePolygonTaper(ex,I->std,sampling);
-            /*
-                          ExtrudeCGOSurfacePolygonX(ex,I->std,1);*/
 
-            ex1 = ExtrudeCopyPointsNormalsColors(ex);
-            ExtrudeDumbbellEdge(ex1,sampling,-1,dumbbell_length);
-            ExtrudeComputeTangents(ex1);
-            ExtrudeCircle(ex1,loop_quality,dumbbell_radius);
-            ExtrudeBuildNormals1f(ex1);
-            ExtrudeCGOSurfaceTube(ex1,I->std,1);
-            ExtrudeFree(ex1);
-
-            ex1 = ExtrudeCopyPointsNormalsColors(ex);
-            ExtrudeDumbbellEdge(ex1,sampling,1,dumbbell_length);
-            ExtrudeComputeTangents(ex1);
-            ExtrudeCircle(ex1,loop_quality,dumbbell_radius);
-            ExtrudeBuildNormals1f(ex1);
-            ExtrudeCGOSurfaceTube(ex1,I->std,1);
-            ExtrudeFree(ex1);
-
-            break;
+        a++;
+        if(a==nAt) {
+          contFlag=false;
+          if(n_p) 
+            extrudeFlag=true;
+        }
+        if(extrudeFlag) {
+          contigFlag=true;
+          if((a<nAt)&&extrudeFlag) {
+            if(*(s-1)!=*(s))
+              contigFlag=false;
           }
+
+          if((cur_car!=cCartoon_skip)&&
+             (cur_car!=cCartoon_skip_helix)) {
+            ExtrudeTruncate(ex,n_p);
+            ExtrudeComputeTangents(ex);
+          
+            /* set up shape */
+            switch(cur_car) {
+            case cCartoon_tube:
+              ExtrudeCircle(ex,tube_quality,tube_radius);
+              ExtrudeBuildNormals1f(ex);
+              ExtrudeCGOSurfaceTube(ex,I->ray,1);
+              break;
+            case cCartoon_loop:
+              ExtrudeCircle(ex,loop_quality,loop_radius);
+              ExtrudeBuildNormals1f(ex);
+              ExtrudeCGOSurfaceTube(ex,I->ray,1);
+              break;
+            case cCartoon_rect:
+              ExtrudeRectangle(ex,width,length);
+              ExtrudeBuildNormals2f(ex);
+              ExtrudeCGOSurfacePolygon(ex,I->ray,1);
+              break;
+            case cCartoon_oval:
+              ExtrudeOval(ex,oval_quality,oval_width,oval_length);
+              ExtrudeBuildNormals2f(ex);
+              ExtrudeCGOSurfaceTube(ex,I->ray,1);
+              break;
+            case cCartoon_arrow:
+              ExtrudeRectangle(ex,width,length);
+              ExtrudeBuildNormals2f(ex);
+              ExtrudeCGOSurfaceStrand(ex,I->ray,sampling);
+              break;
+            case cCartoon_dumbbell:
+              ExtrudeDumbbell1(ex,dumbbell_width,dumbbell_length);
+              ExtrudeBuildNormals2f(ex);
+              ExtrudeCGOSurfacePolygonTaper(ex,I->ray,sampling);
+              /*
+                ExtrudeCGOSurfacePolygonX(ex,I->ray,1);*/
+
+              ex1 = ExtrudeCopyPointsNormalsColors(ex);
+              ExtrudeDumbbellEdge(ex1,sampling,-1,dumbbell_length);
+              ExtrudeComputeTangents(ex1);
+              ExtrudeCircle(ex1,loop_quality,dumbbell_radius);
+              ExtrudeBuildNormals1f(ex1);
+              ExtrudeCGOSurfaceTube(ex1,I->ray,1);
+              ExtrudeFree(ex1);
+
+              ex1 = ExtrudeCopyPointsNormalsColors(ex);
+              ExtrudeDumbbellEdge(ex1,sampling,1,dumbbell_length);
+              ExtrudeComputeTangents(ex1);
+              ExtrudeCircle(ex1,loop_quality,dumbbell_radius);
+              ExtrudeBuildNormals1f(ex1);
+              ExtrudeCGOSurfaceTube(ex1,I->ray,1);
+              ExtrudeFree(ex1);
+
+              break;
+            }
+          }
+          a--; /* undo above... */
+          extrudeFlag=false;
+          ExtrudeTruncate(ex,0);
+          n_p = 0;
+          v = ex->p;
+          vc = ex->c;
+          vn = ex->n;
         }
-        a--; /* undo above... */
-        extrudeFlag=false;
-        ExtrudeTruncate(ex,0);
-        n_p = 0;
-        v = ex->p;
-        vc = ex->c;
-        vn = ex->n;
       }
-      }
+    }
+  if(ex) {
     ExtrudeFree(ex); 
+  }
+  if(nAt>1) {
     if((cartoon_debug>0.5)&&(cartoon_debug<2.5)) {
-      CGOColor(I->std,1.0,1.0,1.0);
-      CGODisable(I->std,GL_LIGHTING);
-      CGOBegin(I->std,GL_LINES);
+      CGOColor(I->ray,1.0,1.0,1.0);
+      CGODisable(I->ray,GL_LIGHTING);
+      CGOBegin(I->ray,GL_LINES);
       v1=pv;
       v2=pvo;
       v3=tv;
       for(a=0;a<nAt;a++) 
         {
-          CGOVertexv(I->std,v1);
+          CGOVertexv(I->ray,v1);
           add3f(v1,v2,t0);
           add3f(v2,t0,t0);
-          CGOVertexv(I->std,t0);
+          CGOVertexv(I->ray,t0);
           subtract3f(v1,v3,t0);
-          CGOVertexv(I->std,t0);
+          CGOVertexv(I->ray,t0);
           add3f(v1,v3,t0);
-          CGOVertexv(I->std,t0);
+          CGOVertexv(I->ray,t0);
           v1+=3;
           v2+=3;
           v3+=3;
         }
-      CGOEnd(I->std);
-      CGOEnable(I->std,GL_LIGHTING);
+      CGOEnd(I->ray);
+      CGOEnable(I->ray,GL_LIGHTING);
     }
   }
-  
 
-  CGOStop(I->std);
-    
+  CGOStop(I->ray);
+  I->std = CGOSimplify(I->ray,0);
   FreeP(dv);
   FreeP(dl);
   FreeP(tv);

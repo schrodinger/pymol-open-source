@@ -34,6 +34,9 @@ float ZLineClipPoint(float *base,float *point,float *alongNormalSq,float cutoff)
 int ZLineToSphere(float *base,float *point,float *dir,float radius,float maxial,
 						float *sphere,float *asum);
 
+int ZLineToSphereCapped(float *base,float *point,float *dir,float radius,float maxial,
+						float *sphere,float *asum,int cap1,int cap2);
+
 static int intersect_triangle(float orig[3], float *pre,float vert0[3], 
 										float *u, float *v, float *d);
 
@@ -164,11 +167,211 @@ int ZLineToSphere(float *base,float *point,float *dir,float radius,float maxial,
   sphere[0]=dir[0]*axial_sum+point[0];
   sphere[1]=dir[1]*axial_sum+point[1];
   sphere[2]=dir[2]*axial_sum+point[2];
-
+  
   *asum = axial_sum;
   /*  printf("==>%8.3f sphere %8.3f %8.3f %8.3f\n",base[1],sphere[1],axial_perp,axial);*/
   return(1);
 
+}
+/*========================================================================*/
+int ZLineToSphereCapped(float *base,float *point,float *dir,float radius,float maxial,
+						float *sphere,float *asum,int cap1,int cap2)
+{
+  /* Strategy - find an imaginary sphere that lies at the correct point on
+	  the line segment, then treat as a sphere reflection */
+
+  float perpAxis[3],intra_p[3];
+  float perpDist,radial,axial,axial_sum,dangle,ab_dangle,axial_perp;
+  float radialsq,tan_acos_dangle;
+  float len_proj;
+  float intra[3],vradial[3],ln;
+  float diff[3],fpoint[3];
+  float proj[3];
+
+  ln = sqrt1f(dir[1]*dir[1]+dir[0]*dir[0]);
+
+  perpAxis[0] = dir[1]/ln; /* was cross_product(MinusZ,dir,perpAxis),normalize */
+  perpAxis[1] = -dir[0]/ln;
+
+ /* the perpAxis defines a perp-plane which includes the cyl-axis */
+  
+  intra[0]=point[0]-base[0];
+  intra[1]=point[1]-base[1];
+
+  /* get minimum distance between the lines */
+
+  perpDist = intra[0]*perpAxis[0] + intra[1]*perpAxis[1];
+  /* was dot_product3f(intra,perpAxis); */
+
+  if(fabs(perpDist)>radius) {
+	 return(0);
+  }
+
+  perpAxis[2] = 0.0;
+  intra[2]=point[2]-base[2];
+
+  dangle = -dir[2]; /* was dot(MinusZ,dir) */
+  ab_dangle=fabs(dangle);
+  if(ab_dangle>(1-R_SMALL4))
+	 {
+		if(dangle>0.0) {
+		  sphere[0]=point[0];
+		  sphere[1]=point[1];
+		  sphere[2]=point[2];
+		  return(1);
+		} else {
+		  sphere[0]=dir[0]*maxial+point[0];
+		  sphere[1]=dir[1]*maxial+point[1];
+		  sphere[2]=dir[2]*maxial+point[2];
+		  return(1);
+		  }
+	 }
+
+  /*tan_acos_dangle = tan(acos(dangle));*/
+  tan_acos_dangle = sqrt1f(1-dangle*dangle)/dangle;
+
+  /*
+  printf("perpDist %8.3f\n",perpDist);
+  printf("dir %8.3f %8.3f %8.3f\n",dir[0],dir[1],dir[2]);
+  printf("base %8.3f %8.3f %8.3f\n",base[0],base[1],base[2]);
+  printf("point %8.3f %8.3f %8.3f\n",point[0],point[1],point[2]);
+  printf("intra %8.3f %8.3f %8.3f\n",intra[0],intra[1],intra[2]);
+  printf("perpAxis %8.3f %8.3f %8.3f\n",perpAxis[0],perpAxis[1],perpAxis[2]);
+  */
+
+  /* now we need to define the triangle in the perp-plane  
+	  to figure out where the projected line intersection point is */
+
+  /* first, compute radial distance in the perp-plane between the two starting points */
+
+  remove_component3f(intra,perpAxis,intra_p);
+  remove_component3f(intra_p,dir,vradial);
+
+  radialsq = lengthsq3f(vradial);
+
+  /* now figure out the axial distance along the cyl-line that will give us
+	  the point of closest approach */
+
+  if(ab_dangle<R_SMALL4)
+	 axial_perp=0;
+  else
+	 axial_perp = sqrt1f(radialsq)/tan_acos_dangle;
+  
+  axial = lengthsq3f(intra_p)-radialsq;
+  axial = sqrt1f(axial);
+
+  /*
+  printf("radial %8.3f\n",radial);
+  printf("vradial %8.3f %8.3f %8.3f\n",vradial[0],vradial[1],vradial[2]);
+  printf("radial %8.3f\n",radial);
+  printf("dangle %8.3f \n",dangle);
+  printf("axial_perp %8.3f \n",axial_perp);
+  printf("axial1 %8.3f \n",axial);
+  printf("%8.3f\n",dot_product3f(intra_p,dir));
+  */
+
+  if(dot_product3f(intra_p,dir)>=0.0)
+	 axial = axial_perp - axial;
+  else
+	 axial = axial_perp + axial;
+
+  /*
+  printf("axial2 %8.3f\n",axial);
+  */
+  
+  /* now we have to think about where the vector will actually strike the cylinder*/
+
+  /* by definition, it must be perpdist away from the perp-plane becuase the perp-plane
+	  is parallel to the line, so we can compute the radial component to this point */
+
+  radial = radius*radius-perpDist*perpDist;
+  radial = sqrt1f(radial);
+
+  /* now the trick is figuring out how to adjust the axial distance to get the actual
+	  position along the cyl line which will give us a representative sphere */
+
+  if(ab_dangle>R_SMALL4)
+	 axial_sum = axial - radial/tan_acos_dangle;
+  else
+	 axial_sum = axial;
+  /*
+	 printf("radial2 %8.3f \n",radial);*/
+
+  if(axial_sum<0) {
+    switch(cap1) {
+    case cCylCapFlat:
+      subtract3f(point,base,diff);
+      project3f(diff,dir,proj);
+      len_proj = length3f(proj);
+      dangle = -proj[2]/len_proj;
+      if(fabs(dangle)<R_SMALL4) 
+        return 0;
+      sphere[0]=base[0];
+      sphere[1]=base[1];
+      sphere[2]=base[2]-len_proj/dangle;
+      if(diff3f(sphere,point)>radius)
+        return 0; 
+      sphere[0]+=dir[0]*radius;
+      sphere[1]+=dir[1]*radius;
+      sphere[2]+=dir[2]*radius;
+      *asum=0;
+      break;
+    case cCylCapRound:
+      axial_sum=0;
+      sphere[0]=dir[0]*axial_sum+point[0];
+      sphere[1]=dir[1]*axial_sum+point[1];
+      sphere[2]=dir[2]*axial_sum+point[2];
+      *asum = axial_sum;
+      break;
+    case cCylCapNone:
+    default:
+      return 0;
+      break;
+    }
+  } else if(axial_sum>maxial) {
+    switch(cap2) {
+    case cCylCapFlat:
+      scale3f(dir,maxial,fpoint);
+      add3f(fpoint,point,fpoint);
+      subtract3f(fpoint,base,diff);
+      project3f(diff,dir,proj);
+      len_proj = length3f(proj);
+      dangle = -proj[2]/len_proj;
+      if(fabs(dangle)<R_SMALL4) 
+        return 0;
+      sphere[0]=base[0];
+      sphere[1]=base[1];
+      sphere[2]=base[2]-len_proj/dangle;
+      if(diff3f(sphere,fpoint)>radius)
+        return 0; 
+      sphere[0]-=dir[0]*radius;
+      sphere[1]-=dir[1]*radius;
+      sphere[2]-=dir[2]*radius;
+      *asum=maxial;
+      break;
+    case cCylCapRound:
+      axial_sum=maxial;
+      sphere[0]=dir[0]*axial_sum+point[0];
+      sphere[1]=dir[1]*axial_sum+point[1];
+      sphere[2]=dir[2]*axial_sum+point[2];
+      *asum = axial_sum;
+      break;
+    case cCylCapNone:
+    default:
+      return 0;
+      break;
+    }
+  } else {
+    sphere[0]=dir[0]*axial_sum+point[0];
+    sphere[1]=dir[1]*axial_sum+point[1];
+    sphere[2]=dir[2]*axial_sum+point[2];
+  
+    *asum = axial_sum;
+
+    /*  printf("==>%8.3f sphere %8.3f %8.3f %8.3f\n",base[1],sphere[1],axial_perp,axial);*/
+  }
+  return(1);
+  
 }
 /*========================================================================*/
 float ZLineClipPoint(float *base,float *point,float *alongNormalSq,float cutoff)
@@ -361,6 +564,47 @@ int BasisHit(CBasis *I,RayInfo *r,int except,
 						  }
 						break;
 					 case cPrimCylinder:
+						  if(ZLineToSphereCapped(r->base,I->Vertex+i*3,
+												 I->Normal+I->Vert2Normal[i]*3,I->Radius[i],
+												 prm->l1,sph,&tri1,prm->cap1,prm->cap2))
+						  {
+							 oppSq = ZLineClipPoint(r->base,sph,&dist,I->Radius[i]);
+							 if(oppSq<=I->Radius2[i])
+								{
+								  dist=sqrt1f(dist)-sqrt1f((I->Radius2[i]-oppSq));
+								  if(shadow) {
+                            if(prm->trans==0.0) {
+                              if((dist>(-R_SMALL4))&&(dist<r->dist)) {
+                                r->prim = prm;
+                                return(1);
+                              }
+                            } else {
+                              if((dist>(-R_SMALL4))&&(dist<r->dist)) {
+                                if(prm->l1>R_SMALL4)
+                                  r->tri1=tri1/prm->l1;
+										  r->sphere[0]=sph[0];
+										  r->sphere[1]=sph[1];										
+										  r->sphere[2]=sph[2];
+										  minIndex=prm->vert;
+										  r->dist=dist;
+                              }
+                            }
+								  } else {
+									 if(dist<r->dist)
+										if((dist>=front)&&(dist<=back)) {
+                                if(prm->l1>R_SMALL4)
+                                  r->tri1=tri1/prm->l1;
+										  r->sphere[0]=sph[0];
+										  r->sphere[1]=sph[1];										
+										  r->sphere[2]=sph[2];
+										  minIndex=prm->vert;
+										  r->dist=dist;
+										}
+								  }
+								}
+						  }
+                    break;
+					 case cPrimSausage:
 						  if(ZLineToSphere(r->base,I->Vertex+i*3,
 												 I->Normal+I->Vert2Normal[i]*3,I->Radius[i],
 												 prm->l1,sph,&tri1))
@@ -442,8 +686,9 @@ void BasisMakeMap(CBasis *I,int *vert2prim,CPrimitive *prim,float *volume)
   CPrimitive *prm;
   int a,b,c,i,n,h,q,x,y,z;
   int extra_vert = 0;
-  float p[3],dd[3],*d1,*d2;
+  float p[3],dd[3],*d1,*d2,vd[3],cx[3],cy[3];
   float *tempVertex;
+  float xs,ys;
   int *tempRef,*ip,*sp;
   int remapMode=true; /* remap mode means that some objects will span more
                          * than one voxel, so we have to worry about populating
@@ -504,6 +749,19 @@ void BasisMakeMap(CBasis *I,int *vert2prim,CPrimitive *prim,float *volume)
     }
   }
 
+  /* don't break up space unnecessarily if we only have a few vertices... */
+
+  if(I->NVertex) {
+    l2 = fabs(max[0]-min[0]);
+    if(l1<l2) l1 = l2;  
+    l2 = fabs(max[1]-min[1]);
+    if(l1<l2) l1 = l2;  
+    l2 = fabs(max[2]-min[2]);
+    if(l1<l2) l1 = l2;      
+    if(l1<R_SMALL4) l1=100.0;
+    if(I->NVertex<(l1/sep))
+      sep=(l1/I->NVertex);
+  }
 
   sep = MapGetSeparation(sep,max,min,diagonal); /* this needs to be a minimum 
                                                  * estimate of the actual value */
@@ -526,7 +784,10 @@ void BasisMakeMap(CBasis *I,int *vert2prim,CPrimitive *prim,float *volume)
 			 }
 			 break;
 		  case cPrimCylinder:
-          extra_vert+= (int)(ceil(prm->l1/sep)+1);
+        case cPrimSausage:
+          extra_vert+= (int)(ceil(prm->l1/sep)+2)*
+            (int)(2*floor(prm->r1/sep)+2)*
+            (int)(2*floor(prm->r1/sep)+2);
 			 break;
 		  case cPrimSphere:
           b = (int)(2*floor(prm->r1/sep)+1);
@@ -606,31 +867,45 @@ void BasisMakeMap(CBasis *I,int *vert2prim,CPrimitive *prim,float *volume)
 			 }
 			 break;
 		  case cPrimCylinder:
-			 d=I->Normal+3*I->Vert2Normal[a];
-			 vv=I->Vertex+a*3;
-			 
-			 *(v++) = vv[0]+d[0]*prm->l1;
-			 *(v++) = vv[1]+d[1]*prm->l1;
-			 *(v++) = vv[2]+d[2]*prm->l1;
-			 tempRef[n]=a;
-			 n++;
+        case cPrimSausage:
+          fflush(stdout);
+          d=I->Normal+3*I->Vert2Normal[a];
+          vv=I->Vertex+a*3;
+          
 
-			 p[0]=vv[0];
-			 p[1]=vv[1];
-			 p[2]=vv[2];
-			 dd[0]=d[0]*sep;
-			 dd[1]=d[1]*sep;
-			 dd[2]=d[2]*sep;
-			 l=prm->l1;
-			 l-=sep;
-			 while(l>=0.0) {
-				*(v++) = (p[0]+=dd[0]);
-				*(v++) = (p[1]+=dd[1]);
-				*(v++) = (p[2]+=dd[2]);
-				l-=sep;
-				tempRef[n]=a; /* store reference to source vertex */
-				n++;
-			 }
+          get_system1f3f(d,cx,cy); /* creates an orthogonal system about d */
+          
+          p[0]=vv[0];
+          p[1]=vv[1];
+          p[2]=vv[2];
+          dd[0]=d[0]*sep;
+          dd[1]=d[1]*sep;
+          dd[2]=d[2]*sep;
+          l=prm->l1;
+          
+          q = (int)floor(prm->r1/sep)+1;
+          while(1) {
+
+            vd[0] = (p[0]+=dd[0]);
+            vd[1] = (p[1]+=dd[1]);
+            vd[2] = (p[2]+=dd[2]);
+            
+            for(x=-q;x<=q;x++)
+              for(y=-q;y<=q;y++)
+                  {
+                    xs = x*sep;
+                    ys = y*sep;
+                    *(v++) = vd[0] + xs*cx[0] + ys*cy[0];
+                    *(v++) = vd[1] + xs*cx[1] + ys*cy[1];
+                    *(v++) = vd[2] + xs*cx[2] + ys*cy[2];
+                    tempRef[n]=a;
+                    n++;
+                  }
+            if(l<0.0)
+              break;
+            l-=sep;
+          }
+
 			 break;
 		  case cPrimSphere:
           q = (int)floor(prm->r1/sep);
@@ -651,7 +926,8 @@ void BasisMakeMap(CBasis *I,int *vert2prim,CPrimitive *prim,float *volume)
       }
   
 	 if(n>extra_vert) {
-		exit(1);
+      printf("BasisMakeMap: %d>%d\n",n,extra_vert);
+      ErrFatal("BasisMakeMap","used too many extra vertices (this is a bug)...\n");
 	 }
 	 
 	 if(volume) {

@@ -81,7 +81,10 @@ extern CGO *DebugCGO; /* for programming... initialized in Scene.c */
 #define CGO_ENABLE_SZ            1
 #define CGO_DISABLE              0x0D
 #define CGO_DISABLE_SZ           1
-
+#define CGO_SAUSAGE              0x0E
+#define CGO_SAUSAGE_SZ           13
+#define CGO_CUSTOM_CYLINDER      0x0F
+#define CGO_CUSTOM_CYLINDER_SZ   15
 #define CGO_MASK                 0x0F
                
 CGO *CGONew(void);
@@ -113,6 +116,9 @@ void CGODisable(CGO *I,int mode);
 
 void CGOStop(CGO *I);
 
+void CGOCylinderv(CGO *I,float *p1,float *p2,float r,float *c1,float *c2);
+void CGOCustomCylinderv(CGO *I,float *p1,float *p2,float r,float *c1,float *c2,
+                        float cap1,float cap2);
 
 void CGORenderGL(CGO *I,float *color,CSetting *set1,CSetting *set2);
 void CGORenderRay(CGO *I,CRay *ray,float *color,CSetting *set1,CSetting *set2);

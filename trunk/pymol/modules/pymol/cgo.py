@@ -41,7 +41,12 @@ TRIANGLE           =  8.0
 CYLINDER           =  9.0
 LINEWIDTH          = 10.0
 WIDTHSCALE         = 11.0
+ENABLE             = 12.0
+DISABLE            = 13.0
+SAUSAGE            = 14.0
+CUSTOM_CYLINDER    = 15.0
 
+LIGHTING           = float(0x0B50)
 
 def molauto(*arg):
    name = "mols"
@@ -108,6 +113,40 @@ def wire_text(cgo,font,pos,text,
          pos[1] = pos[1] + w*x[1]
          pos[2] = pos[2] + w*x[2]
          if stroke: cgo.append(END)
+
+def cyl_text(cgo,font,pos,text,radius=0.1,color=[1.0,1.0,1.0],
+              axes = [[1.0,0.0,0.0],[0.0,1.0,0.0],[0.0,0.0,1.0]]): # modifies pos
+   x = axes[0]
+   y = axes[1]
+   for char in text:
+      if font.has_key(char):
+         fc = font[char]
+         stroke = 0
+         w = fc[0]
+         f = fc[1]
+         c = 0
+         l = len(f)-2
+         while c<l:
+            ax = f[c+1]
+            ay = f[c+2]
+            next = [(pos[0]+x[0]*ax+y[0]*ay),
+                    (pos[1]+x[1]*ax+y[1]*ay),
+                    (pos[2]+x[2]*ax+y[2]*ay)]
+            if f[c]:
+               if stroke:
+                  cgo.append(SAUSAGE)
+                  cgo.extend(last)
+                  cgo.extend(next)
+                  cgo.append(radius)
+                  cgo.extend(color)
+                  cgo.extend(color)
+            else:
+               stroke = 1
+            last = next
+            c = c + 3
+         pos[0] = pos[0] + w*x[0]
+         pos[1] = pos[1] + w*x[1]
+         pos[2] = pos[2] + w*x[2]
 
 
 def from_r3d(fname):
@@ -206,7 +245,7 @@ class RenderReader:
          if self.tri_flag:
             self.tri_flag=0
             self.obj.append(END)
-         self.obj.append(CYLINDER)
+         self.obj.append(SAUSAGE)
          d = cpv.sub(self.l_vert[1],self.l_vert[0])
          d = cpv.normalize_failsafe(d)
          d0 = cpv.scale(d,self.l_radi/4.0)

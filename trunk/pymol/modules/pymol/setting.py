@@ -192,6 +192,10 @@ class SettingIndex:
    sculpt_hb_overlap     =175
    sculpt_hb_overlap_base=176
    legacy_vdw_radii      =177
+   sculpt_memory         =178
+   connect_mode          =179
+   cartoon_cylindrical_helices = 180
+   cartoon_helix_radius  =181
    
 setting_sc = Shortcut(SettingIndex.__dict__.keys())
    

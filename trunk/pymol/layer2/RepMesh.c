@@ -91,14 +91,14 @@ void RepMeshRender(RepMesh *I,CRay *ray,Pickable **pick)
               if(I->oneColorFlag) {
                 while(c--)
                   {
-                    ray->fCylinder3fv(ray,v-3,v,I->Radius,col,col);
+                    ray->fSausage3fv(ray,v-3,v,I->Radius,col,col);
                     v+=3;
                     vc+=3;
                   }
               } else {
                 while(c--)
                   {
-                    ray->fCylinder3fv(ray,v-3,v,I->Radius,vc-3,vc);
+                    ray->fSausage3fv(ray,v-3,v,I->Radius,vc-3,vc);
                     v+=3;
                     vc+=3;
                   }

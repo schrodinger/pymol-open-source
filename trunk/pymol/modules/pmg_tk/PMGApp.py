@@ -971,6 +971,17 @@ class PMGApp(AbstractApp):
                                label='Black Shadows',
                                command = lambda : cmd.do("_ util.ray_shadows('black')"))
 
+      self.menuBar.addmenuitem('Display', 'separator', '')
+
+      self.menuBar.addmenuitem('Display', 'command', 'White Background',
+                               label='White Background',
+                               command = lambda : cmd.do("_ cmd.bg_color('white')"))
+
+      self.menuBar.addmenuitem('Display', 'command', 'Black Background',
+                               label='Black Background',
+                               command = lambda : cmd.do("_ cmd.bg_color('black')"))
+
+      
       self.menuBar.addmenu('Setting', 'Configuration Control')
 
       self.menuBar.addmenuitem('Setting', 'command',
@@ -1124,6 +1135,11 @@ class PMGApp(AbstractApp):
                         variable = self.setting.cartoon_fancy_helices,
                         command = lambda s=self: s.setting.update('cartoon_fancy_helices'))
 
+      self.menuBar.addmenuitem('Cartoon', 'checkbutton',
+                         'Cylindrical Helices',
+                         label=self.pad+'Cylindrical Helices',
+                        variable = self.setting.cartoon_cylindrical_helices,
+                        command = lambda s=self: s.setting.update('cartoon_cylindrical_helices'))
 
       self.menuBar.addmenuitem('Cartoon', 'checkbutton',
                          'Flat Sheets',

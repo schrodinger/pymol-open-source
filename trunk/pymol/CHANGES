@@ -111,9 +111,12 @@ Current Bugs to Fix
 
 Changes up to 0.80
 
+   * cylinders have become sausages, and...
+      ...we now have flat-capped cylinders (0203)!
+
    * fixed duplicate logging with Run command
 
-   * create a simple vector-based fond (0203)
+   * create a simple vector-based font (0203)
 
 Changes up to 0.79
 
