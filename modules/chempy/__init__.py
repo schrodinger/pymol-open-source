@@ -37,7 +37,10 @@ class Atom:
          return Atom.defaults[attr]
       else:
          raise AttributeError(attr)
-      
+
+   def get_mass(self):
+      return atomic_mass[self.symbol]
+   
    def has(self,attr):
       return self.__dict__.has_key(attr) 
 
@@ -172,4 +175,25 @@ elif os.environ.has_key('PYMOL_PATH'):
    path = os.environ['PYMOL_PATH'] + '/modules/chempy/'
 else:
    path = ''
+
+# double check these values...
+
+atomic_mass = {
+   'H'  :   1.008,
+   'C'  :  12.011,
+   'N'  :  14.006,
+   'O'  :  15.999,
+   'F'  :  18.998,
+   'Cl' :  35.453,
+   'Br' :  79.904,
+   'I'  : 126.904,
+   'S'  :  32.064,
+   'Na' :  22.990,
+   'K'  :  39.102,
+   'Cu' :  63.546,
+   'Zn' :  65.370,
+   'Mg' :  24.312,
+   'Ca' :  40.080,
+   'P'  :  30.974
+   }
 
