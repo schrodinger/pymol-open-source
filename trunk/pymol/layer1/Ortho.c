@@ -498,7 +498,7 @@ void OrthoDoDraw()
 
   SceneUpdate();
   
-  SceneCopy(1); /* Copy if necessary before clear */
+  /*  SceneCopy(1);*/ /* Copy if necessary before clear */
   
   if(PMGUI) {
 
