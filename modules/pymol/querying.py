@@ -448,7 +448,7 @@ PYMOL API
       return r
 
 
-   def get_names(type='objects'):
+   def get_names(type='objects',enabled_only=0):
       '''
 DESCRIPTION
 
@@ -477,7 +477,7 @@ SEE ALSO
          mode = 3
       try:
          lock()
-         r = _cmd.get_names(int(mode))
+         r = _cmd.get_names(int(mode),int(enabled_only))
       finally:
          unlock()
       return r

@@ -240,6 +240,7 @@ static PyObject *CmdFuse(PyObject *self, 	PyObject *args);
 static PyObject *CmdHAdd(PyObject *self, PyObject *args);
 static PyObject *CmdIdentify(PyObject *dummy, PyObject *args);
 static PyObject *CmdIndex(PyObject *dummy, PyObject *args);
+static PyObject *CmdReinitialize(PyObject *dummy, PyObject *args);
 static PyObject *CmdIntraFit(PyObject *dummy, PyObject *args);
 static PyObject *CmdInvert(PyObject *self, PyObject *args);
 static PyObject *CmdIsomesh(PyObject *self, 	PyObject *args);
@@ -489,6 +490,7 @@ static PyMethodDef Cmd_methods[] = {
 	{"render",	              CmdRay,                  METH_VARARGS },
    {"rename",                CmdRename,               METH_VARARGS },
    {"replace",               CmdReplace,              METH_VARARGS },
+   {"reinitialize",          CmdReinitialize,         METH_VARARGS },
 	{"reset",                 CmdReset,                METH_VARARGS },
 	{"reset_rate",	           CmdResetRate,            METH_VARARGS },
 	{"rock",	                 CmdRock,                 METH_VARARGS },
@@ -538,6 +540,19 @@ static PyMethodDef Cmd_methods[] = {
 	{NULL,		              NULL}     /* sentinel */        
 };
 
+
+
+static PyObject *CmdReinitialize(PyObject *dummy, PyObject *args)
+{
+  int ok=true;
+  if (ok) {
+    APIEntry();
+    ok = ExecutiveReinitialize();
+    APIExit();
+  }
+  return(APIStatus(ok));
+
+}
 static PyObject *CmdSpectrum(PyObject *self, PyObject *args)
 {
   char *str1,*expr,*prefix;
@@ -1221,7 +1236,8 @@ static PyObject *CmdGetView(PyObject *self, 	PyObject *args)
 static PyObject *CmdSetView(PyObject *self, 	PyObject *args)
 {
   SceneViewType view;
-  int ok=PyArg_ParseTuple(args,"(fffffffffffffffffffffffff)",
+  int quiet;
+  int ok=PyArg_ParseTuple(args,"(fffffffffffffffffffffffff)i",
                    &view[ 0],&view[ 1],&view[ 2],&view[ 3], /* 4x4 mat */
                    &view[ 4],&view[ 5],&view[ 6],&view[ 7],
                    &view[ 8],&view[ 9],&view[10],&view[11],
@@ -1229,11 +1245,11 @@ static PyObject *CmdSetView(PyObject *self, 	PyObject *args)
                    &view[16],&view[17],&view[18], /* pos */
                    &view[19],&view[20],&view[21], /* origin */
                    &view[22],&view[23], /* clip */
-                   &view[24] /* orthoscopic*/
-                   );
+                   &view[24], /* orthoscopic*/
+                   &quiet);
   if(ok) {
     APIEntry();
-    SceneSetView(view); /* TODO STATUS */
+    SceneSetView(view,quiet); /* TODO STATUS */
     APIExit();
   }
   return(APIStatus(ok));
@@ -1374,14 +1390,14 @@ static PyObject *CmdGetType(PyObject *self, 	PyObject *args)
 }
 static PyObject *CmdGetNames(PyObject *self, 	PyObject *args)
 {
-  int int1;
+  int int1,int2;
   char *vla = NULL;
   PyObject *result = Py_None;
   int ok=false;
-  ok = PyArg_ParseTuple(args,"i",&int1);
+  ok = PyArg_ParseTuple(args,"ii",&int1,&int2);
   if(ok) {
     APIEntry();
-    vla = ExecutiveGetNames(int1);
+    vla = ExecutiveGetNames(int1,int2);
     APIExit();
     result = PConvStringVLAToPyList(vla);
     VLAFreeP(vla);

@@ -763,9 +763,9 @@ void PInitEmbedded(int argc,char **argv)
   /* used by semistatic PyMOL */
 {
   char line[5000];
-static line1[5000];
-static line2[5000];
-static line3[5000];
+  static line1[5000];
+  static line2[5000];
+  static line3[5000];
   char *pymol_path;
 
   if(!getenv("PYMOL_PATH")) {
@@ -1135,6 +1135,8 @@ void PInit(void)
 
   P_glut_thread_id = PyThread_get_thread_ident();
 
+  PyRun_SimpleString(
+"if os.environ.has_key('PYMOL_PATH'): os.environ['TUT']=os.environ['PYMOL_PATH']+'/data/tut'");
 
 }
 

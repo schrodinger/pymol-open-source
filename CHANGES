@@ -164,6 +164,10 @@ CHANGE LOG
 =========================================================================
 Changes up to 0.88
 
+   * scene commands
+
+   * $TUT environment variable points at $PYMOL_PATH/data/tut
+
    * fixed quadro stereo support with sessions...
 
    * cartoon_highlight_color now provides Molscript-like cartoon coloring

@@ -48,6 +48,22 @@ Z* -------------------------------------------------------------------
 #define cDummyOrigin 0
 #define cDummyCenter 1
 
+static WordKeyValue rep_names[] = { 
+  { "spheres", cRepSphere },
+  { "sticks", cRepCyl },
+  { "surface", cRepSurface },
+  { "label", cRepLabel },
+  { "nb_spheres", cRepNonbondedSphere },
+  { "cartoon", cRepCartoon },
+  { "ribbon", cRepRibbon },
+  { "lines", cRepLine },
+  { "dots", cRepDot },
+  { "mesh", cRepMesh },
+  { "nonbonded", cRepNonbonded },
+  { "", },
+};
+
+
 typedef struct {
   int selection;
   int next;
@@ -171,6 +187,7 @@ int SelectorCheckNeighbors(int maxDepth,ObjectMolecule *obj,int at1,int at2,
 #define SELE_ORIz ( 0x2700 | STYP_SEL0 | 0x80 )
 #define SELE_CENz ( 0x2800 | STYP_SEL0 | 0x80 )
 #define SELE_ENAz ( 0x2900 | STYP_SEL0 | 0x80 )
+#define SELE_REPs ( 0x3000 | STYP_SEL1 | 0x70 )
 
 #define SEL_PREMAX 0x8
 
@@ -229,6 +246,7 @@ static WordKeyValue Keyword[] =
   {  "resi",     SELE_RSIs },
   {  "resid",    SELE_RSIs },
   {  "residue",  SELE_RSIs },
+  {  "rep",      SELE_REPs },
   {  "i;",       SELE_RSIs },/* deprecated */
   {  "i.",       SELE_RSIs },
   {  "alt",      SELE_ALTs },
@@ -3518,13 +3536,15 @@ int SelectorSelect0(EvalElem *base)
 /*========================================================================*/
 int SelectorSelect1(EvalElem *base)
 {
-  int a,model,sele,s,at_idx;
+  int a,b,model,sele,s,at_idx;
   int c=0;
   int ok=true;
   int rmin,rmax,rtest,index,numeric,state;
   int flag;
   char *p;
   char *np;
+  int rep_mask[cRepCnt];
+
   SelectorType *I=&Selector;
   ObjectMolecule *obj,*cur_obj = NULL;
   CoordSet *cs=NULL;
@@ -3624,6 +3644,31 @@ int SelectorSelect1(EvalElem *base)
 				}
 			 else
 				base[0].sele[a]=false;
+		  }
+		break;
+	 case SELE_REPs:
+      for(a=0;a<cRepCnt;a++)
+        rep_mask[a]=false;
+      WordPrimeCommaMatch(base[1].text);
+      a=0;
+      while(1) {
+        if(!rep_names[a].word[0]) break;
+        if(WordMatchComma(base[1].text,
+                          rep_names[a].word,
+                          I->IgnoreCase)<0)
+          rep_mask[rep_names[a].value]=true;
+        a++;
+      }
+		for(a=cNDummyAtoms;a<I->NAtom;a++)
+		  {
+          base[0].sele[a]=false;
+          for(b=0;b<cRepCnt;b++) {
+            if(rep_mask[b]&&I->Obj[I->Table[a].model]->AtomInfo[I->Table[a].atom].visRep[b]) {
+              base[0].sele[a]=true;
+              c++;
+              break;
+            }
+          }
 		  }
 		break;
 	 case SELE_CHNs:

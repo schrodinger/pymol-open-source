@@ -292,15 +292,18 @@ if __name__=='pymol.parser':
          for a in lst:
             print a
          # now append up to point of ambiguity
-         css = map(None,flist[0]) # common sub-string (css)
-         for a in flist:
-            ac = map(None,a)
-            tmp = css
+         if not len(flist):
             css = []
-            for c in range(len(tmp)):
-               if tmp[c]!=ac[c]:
-                  break
-               css.append(tmp[c])
+         else:
+            css = map(None,flist[0]) # common sub-string (css)
+            for a in flist:
+               ac = map(None,a)
+               tmp = css
+               css = []
+               for c in range(len(tmp)):
+                  if tmp[c]!=ac[c]:
+                     break
+                  css.append(tmp[c])
          css = filter(None,css)
          css = string.join(css,'')
          if len(css)>len(st):

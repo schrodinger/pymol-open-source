@@ -1457,11 +1457,12 @@ void SettingFreeGlobal(void)
   SettingPurge(I);
 }
 /*========================================================================*/
-void SettingInitGlobal(void)
+void SettingInitGlobal(int alloc)
 {
   CSetting *I=&Setting;
 
-  SettingInit(I);
+  if(alloc)
+    SettingInit(I);
 
   SettingSet_f(I,cSetting_bonding_vdw_cutoff, 0.2F);
 

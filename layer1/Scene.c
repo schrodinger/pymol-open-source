@@ -285,7 +285,7 @@ void SceneGetView(SceneViewType view)
   *(p++) = SettingGet(cSetting_ortho);
 }
 /*========================================================================*/
-void SceneSetView(SceneViewType view)
+void SceneSetView(SceneViewType view,int quiet)
 {
   float *p;
   int a;
@@ -302,10 +302,11 @@ void SceneSetView(SceneViewType view)
   SceneClipSet(p[0],p[1]);
   p+=2;
   SettingSet(cSetting_ortho,*(p++));
-  PRINTFB(FB_Scene,FB_Actions)
-    " Scene: view updated.\n"
-    ENDFB;
-
+  if(!quiet) { 
+    PRINTFB(FB_Scene,FB_Actions)
+      " Scene: view updated.\n"
+      ENDFB;
+  }
 }
 /*========================================================================*/
 void SceneDontCopyNext(void)
@@ -2076,6 +2077,15 @@ void SceneSetDefaultView(void) {
 
   I->Scale = 1.0;
   
+}
+int SceneReinitialize(void)
+{
+  int ok=true;
+  SceneSetDefaultView();
+  SceneCountFrames();
+  SceneSetFrame(0,0);
+  SceneDirty();
+  return(ok);
 }
 /*========================================================================*/
 void SceneInit(void)

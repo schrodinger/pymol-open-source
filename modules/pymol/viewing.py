@@ -30,10 +30,17 @@ if __name__=='pymol.viewing':
         toggle_dict,toggle_sc,stereo_dict,stereo_sc, \
         palette_dict ,palette_sc
 
+   rep_list = [ "lines","sticks","spheres",
+                "dots","surface","mesh",
+                "nonbonded", "nb_spheres",
+                "cartoon","ribbon","labels"]
 
+   view_sc = Shortcut(['store','recall','delete'])
    view_dict = {}
-   view_sc = Shortcut(['store','recall'])
    view_dict_sc = Shortcut([])
+
+   scene_dict = {}
+   scene_dict_sc = Shortcut([])
 
    def zoom(selection="all",buffer=0.0,state=0,complete=0):
       '''
@@ -534,7 +541,7 @@ API USAGE
       r = r[0:3]+r[4:7]+r[8:11]+r[16:25]
       return r
 
-   def set_view(view):
+   def set_view(view,quiet=1):
       '''
 DESCRIPTION
 
@@ -572,7 +579,7 @@ PYMOL API
                0.0,0.0,0.0,1.0,
                float(view[ 9]),float(view[10]),float(view[11]),
                float(view[12]),float(view[13]),float(view[14]),
-               float(view[15]),float(view[16]),float(view[17])))
+               float(view[15]),float(view[16]),float(view[17])),quiet)
          finally:
             unlock()
       return r
@@ -605,28 +612,120 @@ SEE ALSO
 
    set_view, get_view
       '''
+      global view_dict,view_dict_sc
+   
       if key=='*':
-         print " view: stored views:"
-         lst = view_dict.keys()
-         lst.sort()
-         parsing.dump_str_list(lst)
+         action = view_sc.auto_err(action,'action')
+         if action=='delete':
+            view_dict = {}
+            view_dict_sc = Shortcut(view_dict.keys())                        
+         else:
+            print " view: stored views:"
+            lst = view_dict.keys()
+            lst.sort()
+            parsing.dump_str_list(lst)
+            
       else:
          action = view_sc.auto_err(action,'action')
          if action=='recall':
             key = view_dict_sc.auto_err(key,'view')
             set_view(view_dict[key])
-            if _feedback(fb_module.scene,fb_mask.blather): # redundant
-               print " view: recalled."
+            if _feedback(fb_module.scene,fb_mask.actions): # redundant
+               print " view: '%s' recalled."%key
          elif action=='store':
             view_dict_sc.append(key)
             view_dict[key]=cmd.get_view(0)
             if _feedback(fb_module.scene,fb_mask.actions):
                print " view: view stored as '%s'."%key
+         elif action=='delete':
+            key = view_dict_sc.auto_err(key,'view')
+            if view_dict.has_key(key):
+               del view_dict[key]
+               view_dict_sc = Shortcut(view_dict.keys())            
+               if _feedback(fb_module.scene,fb_mask.actions): # redundant
+                  print " view: '%s' deleted."%key
 
+
+   def scene(key,action='recall'):
+      '''
+DESCRIPTION
+
+   "scene" makes it possible to save and restore scenes
+   scene within a single session.
+
+USAGE
+
+   scene key[,action]
+   scene *
+
+   key can be any string
+   action should be 'store' or 'recall' (default: 'recall')
+
+PYMOL API
+
+   cmd.scene(string key,string action)
+
+EXAMPLES
+
+   scene 0,store
+   scene 0
+
+SEE ALSO
+
+   view, set_view, get_view
+      '''
+      global scene_dict,scene_dict_sc
+   
+      if key=='*':
+         action = view_sc.auto_err(action,'action')
+         if action=='delete':
+            scene_dict = {}
+            scene_dict_sc = Shortcut(scene_dict.keys())                        
+         else:
+            print " scene: stored scenes:"
+            lst = scene_dict.keys()
+            lst.sort()
+            parsing.dump_str_list(lst)
+            
+      else:
+         action = view_sc.auto_err(action,'action')
+         if action=='recall':
+            key = scene_dict_sc.auto_err(key,'scene')
+            set_view(scene_dict[key][0])
+            cmd.hide()
+            cmd.disable()
+            for a in scene_dict[key][1]:
+               cmd.enable(a)
+            cmd.frame(scene_dict[key][2])
+            for rep in rep_list:
+               name = "_scene_"+key+"_"+rep
+               cmd.show(rep,name)
+            if _feedback(fb_module.scene,fb_mask.actions): # redundant
+               print " scene: '%s' recalled."%key
+         elif action=='store':
+            scene_dict_sc.append(key)
+            scene_dict[key]=[cmd.get_view(0),
+                             cmd.get_names("all",1),
+                             cmd.get_frame()]
+            for rep in rep_list:
+               name = "_scene_"+key+"_"+rep
+               cmd.select(name,"rep "+rep)
+            if _feedback(fb_module.scene,fb_mask.actions):
+               print " scene: scene stored as '%s'."%key
+         elif action=='delete':
+            key = scene_dict_sc.auto_err(key,'view')
+            if scene_dict.has_key(key):
+               del scene_dict[key]
+               scene_dict_sc = Shortcut(scene_dict.keys())            
+               name = "_scene_"+key+"_*"
+               cmd.delete(name)
+               if _feedback(fb_module.scene,fb_mask.actions):
+                  print " scene: '%s' deleted."%key
+
+               
    def session_save_views(session):
       session['view_dict']=copy.deepcopy(view_dict)
       return 1
-
 
    def session_restore_views(session):
       global view_dict,view_dict_sc
@@ -640,6 +739,23 @@ SEE ALSO
 
    if session_save_views not in pymol._session_save_tasks:
       pymol._session_save_tasks.append(session_save_views)
+
+   def session_save_scenes(session):
+      session['scene_dict']=copy.deepcopy(scene_dict)
+      return 1
+
+   def session_restore_scenes(session):
+      global scene_dict,scene_dict_sc
+      if session.has_key('scene_dict'):
+         scene_dict=copy.deepcopy(session['scene_dict'])
+         scene_dict_sc = Shortcut(scene_dict.keys())
+      return 1
+
+   if session_restore_scenes not in pymol._session_restore_tasks:
+      pymol._session_restore_tasks.append(session_restore_scenes)
+
+   if session_save_scenes not in pymol._session_save_tasks:
+      pymol._session_save_tasks.append(session_save_scenes)
 
    def stereo(state='on'):
       '''

@@ -47,7 +47,7 @@ typedef struct {
  * in contrast, set commands expand the current list 
  */
 
-void SettingInitGlobal(void);
+void SettingInitGlobal(int alloc);
 void SettingFreeGlobal(void);
 
 CSetting *SettingNew(void);

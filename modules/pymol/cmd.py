@@ -633,6 +633,12 @@ if __name__=='pymol.cmd':
       if special.has_key(k):
          if special[k][1]:
             apply(special[k][1],special[k][2],special[k][3])
+         else:
+            key = special[k][0]
+            if viewing.scene_dict.has_key(key):
+               scene(key)
+            elif viewing.view_dict.has_key(key):
+               view(key)
       return None
 
    # control keys
@@ -955,6 +961,7 @@ if __name__=='pymol.cmd':
         quit,               \
         resume,             \
         splash,             \
+        reinitialize,       \
         sync
 
    #--------------------------------------------------------------------
@@ -1135,6 +1142,7 @@ if __name__=='pymol.cmd':
         refresh,            \
         reset,              \
         rock,               \
+        scene,              \
         set_color,          \
         set_view,           \
         show,               \
@@ -1332,6 +1340,7 @@ if __name__=='pymol.cmd':
       'rebuild'       : [ rebuild           , 0 , 0 , ''  , parsing.STRICT ],
       'recolor'       : [ recolor           , 0 , 0 , ''  , parsing.STRICT ],   
       'redo'          : [ redo              , 0 , 0 , ''  , parsing.STRICT ],
+      'reinitialize'  : [ reinitialize      , 0 , 0 , ''  , parsing.STRICT ],      
       'refresh'       : [ refresh           , 0 , 0 , ''  , parsing.STRICT ],
       'remove'        : [ remove            , 0 , 0 , ''  , parsing.STRICT ],
       'remove_picked' : [ remove_picked     , 0 , 0 , ''  , parsing.STRICT ],
@@ -1347,6 +1356,7 @@ if __name__=='pymol.cmd':
       'rms'           : [ rms               , 0 , 0 , ''  , parsing.STRICT ],
       'rms_cur'       : [ rms_cur           , 0 , 0 , ''  , parsing.STRICT ],
       'save'          : [ save              , 0 , 0 , ''  , parsing.STRICT ],
+      'scene'         : [ scene             , 0 , 0 , ''  , parsing.STRICT ],
       'sculpt_purge'  : [ sculpt_purge      , 0 , 0 , ''  , parsing.STRICT ],   
       'sculpt_deactivate': [ sculpt_deactivate , 0 , 0 , ''  , parsing.STRICT ],
       'sculpt_activate': [ sculpt_activate  , 0 , 0 , ''  , parsing.STRICT ],
@@ -1572,7 +1582,9 @@ if __name__=='pymol.cmd':
       'iterate_state'  : [ selection_sc           , 'selection'       , ''   ],
       'smooth'         : [ selection_sc           , 'selection'       , ''   ],
       'help'           : [ help_sc                , 'selection'       , ''   ],
-      'unset'          : [ setting.setting_sc     , 'setting'         , ','  ],   
+      'unset'          : [ setting.setting_sc     , 'setting'         , ','  ],
+      'view'           : [ viewing.view_dict_sc   , 'view'            , ''   ],                              
+      'scene'          : [ viewing.scene_dict_sc  , 'scene'           , ''   ],                        
       },
       {
       'align'          : [ selection_sc           , 'selection'       , ''   ],
@@ -1588,12 +1600,13 @@ if __name__=='pymol.cmd':
       'load_traj'      : [ selection_sc           , 'selection'       , ', ' ],
       'create'         : [ selection_sc           , 'selection'       , ', ' ],
       'map_new'        : [ creating.map_type_sc   , 'map type'        , ', ' ],
-      'spectrum'       : [ palette_sc             , 'palette'       , ''   ],      
+      'spectrum'       : [ palette_sc             , 'palette'         , ''   ],      
 
       'symexp'         : [ object_sc              , 'object'          , ', ' ],   
       'isomesh'        : [ map_sc                 , 'map object'      , ', ' ],
-      'view'           : [ viewing.view_sc        , 'view action'     , ''   ],            
-      'unset'          : [ selection_sc           , 'selection'         , ','  ],   
+      'view'           : [ viewing.view_sc        , 'view action'     , ''   ],
+      'scene'          : [ viewing.view_sc        , 'scene action'    , ''   ],                  
+      'unset'          : [ selection_sc           , 'selection'        , ','  ],   
       },
       {
       'spectrum'       : [ selection_sc           , 'selection'       , ''   ],

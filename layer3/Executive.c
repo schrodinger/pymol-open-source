@@ -43,6 +43,7 @@ Z* -------------------------------------------------------------------
 #include"ScrollBar.h"
 #include"Movie.h"
 #include"ObjectGadgetRamp.h"
+#include"SculptCache.h"
 
 #include"Menu.h"
 #include"Map.h"
@@ -633,7 +634,7 @@ int ExecutiveSetSession(PyObject *session)
     if(tmp) {
       ok = PConvPyListToFloatArrayInPlace(tmp,sv,cSceneViewSize);
     }
-    if(ok) SceneSetView(sv);
+    if(ok) SceneSetView(sv,true);
         
   }
 
@@ -1988,7 +1989,7 @@ float ExecutiveGetArea(char *s0,int sta0,int load_b)
 }
 
 /*========================================================================*/
-char *ExecutiveGetNames(int mode)
+char *ExecutiveGetNames(int mode,int enabled_only)
 {
   CExecutive *I = &Executive;
   SpecRec *rec = NULL;
@@ -2003,10 +2004,12 @@ char *ExecutiveGetNames(int mode)
        (rec->type==cExecSelection&&((!mode)||(mode==2)||(mode==3))))
       {
         if((mode!=3)||(rec->name[0]!='_')) {
-          stlen = strlen(rec->name);
-          VLACheck(result,char,size+stlen+1);
-          strcpy(result+size,rec->name);
-          size+=stlen+1;
+          if((!enabled_only)||(rec->visible)) {
+            stlen = strlen(rec->name);
+            VLACheck(result,char,size+stlen+1);
+            strcpy(result+size,rec->name);
+            size+=stlen+1;
+          }
         }
       }
   }
@@ -5461,6 +5464,25 @@ void ExecutiveReshape(Block *block,int width,int height)
   I->Width = block->rect.right-block->rect.left+1;
   I->Height = block->rect.top-block->rect.bottom+1;
   
+}
+
+/*========================================================================*/
+int ExecutiveReinitialize(void)
+{ 
+  int ok=true;
+  int blocked = false;
+  /* reinitialize PyMOL */
+  ExecutiveDelete("all");
+  ColorReset();
+  SettingInitGlobal(false);
+  MovieReset();
+  EditorInactive();
+  blocked = PAutoBlock();
+  PRunString("cmd.view('*','delete')"); /* this function doesn't re-enter the PyMOL API */
+  PAutoUnblock(blocked);
+  SculptCachePurge();
+  SceneReinitialize();
+  return(ok);
 }
 /*========================================================================*/
 void ExecutiveInit(void)
