@@ -33,6 +33,7 @@ Z* -------------------------------------------------------------------
 #include"Setting.h"
 #include"Executive.h"
 #include"PConv.h"
+#include"P.h"
 
 ObjectMesh *ObjectMeshNew(void);
 
@@ -215,8 +216,14 @@ static void ObjectMeshStateFree(ObjectMeshState *ms)
 {
   if(PMGUI) {
     if(ms->displayList) {
-      glDeleteLists(ms->displayList,1);
-      ms->displayList = 0;
+      if(PIsGlutThread()) {
+        glDeleteLists(ms->displayList,1);
+        ms->displayList = 0;
+      } else {
+        char buffer[255]; /* pass this off to the main thread */
+        sprintf(buffer,"_cmd.gl_delete_lists(%d,%d)\n",ms->displayList,1);
+        PParse(buffer);
+      }
     }
   }
   VLAFreeP(ms->N);
