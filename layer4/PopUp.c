@@ -28,12 +28,12 @@ Z* -------------------------------------------------------------------
 #include "P.h"
 #include "Util.h"
 
-#define cPopUpLineHeight 14
-#define cPopUpTitleHeight 17
+#define cPopUpLineHeight 16
+#define cPopUpTitleHeight 18
 #define cPopUpBarHeight 4
 #define cPopUpCharWidth 8
 #define cPopUpCharMargin 2
-#define cPopUpCharLift 1
+#define cPopUpCharLift 2
 
 #define cChildDelay 0.30
 #define cDirtyDelay 0.1

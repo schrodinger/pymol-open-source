@@ -322,11 +322,10 @@ def setup_contexts(context_info):   # Author: Warren DeLano
     if zoom_context not in (0,1):
         cmd.zoom(zoom_context)
     toggle_labels(0)
-    cmd.feedback("enable","python","output")
+#    cmd.feedback("enable","python","output")
     cmd.feedback("enable","objectmolecule","results")
     cmd.feedback("disable","selector","actions")
     cmd.feedback("disable","scene","actions")
-    print " "
     cmd.set("internal_feedback",1)
     cmd.set("internal_prompt",0)
     
@@ -433,9 +432,8 @@ def setup_alignment_contexts(context_info):   # Author: Warren DeLano
     toggle_waters(0)
     toggle_cgos(1)
     cmd.deselect()
-    cmd.feedback("enable","python","output")
+#    cmd.feedback("enable","python","output")
     cmd.feedback("enable","objectmolecule","results")
-    print " "
     cmd.set("internal_feedback",1)
     cmd.set("internal_prompt",0)
     cmd.feedback("disable","selector","actions")

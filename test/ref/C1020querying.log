@@ -124,9 +124,9 @@ PyMOL>print cmd.get_names()
 PyMOL>edit 4/ca
  Selector: selection "pk1" defined with 1 atoms.
 PyMOL>print cmd.get_names("all")
-['pept', 'pk1', '_pkbase1', 'pkfrag1', '_pkbase2', 'pkfrag2', 'pkchain']
+['pept', 'pk1', '_pkbase1', '_pkfrag1', '_pkbase2', '_pkfrag2', 'pkmol']
 PyMOL>print cmd.get_names("selections")
-['pk1', '_pkbase1', 'pkfrag1', '_pkbase2', 'pkfrag2', 'pkchain']
+['pk1', '_pkbase1', '_pkfrag1', '_pkbase2', '_pkfrag2', 'pkmol']
 PyMOL>print cmd.get_names("objects")
 ['pept']
 PyMOL>print cmd.get_names_of_type("object:molecule")

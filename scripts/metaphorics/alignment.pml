@@ -62,4 +62,6 @@ m4x.setup_alignment_contexts(context_info)
 # set Ctrl Q to Quit 
 
 _ cmd.set_key('CTRL-Q',cmd.quit)
+_ feedback enable,python,output
+_ print ' '
 

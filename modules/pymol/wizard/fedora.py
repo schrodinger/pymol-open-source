@@ -12,8 +12,6 @@ class Fedora(Wizard):
             self.message.append(a)
          else:
             self.message.extend(a)
-      for a in self.message:
-         print a
          
    def get_prompt(self):
       self.prompt = self.message

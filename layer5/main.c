@@ -907,7 +907,7 @@ SetConsoleCtrlHandler(
       p_glutInitDisplayMode(P_GLUT_RGBA | P_GLUT_DEPTH | P_GLUT_DOUBLE | P_GLUT_STEREO );
       if(!p_glutGet(P_GLUT_DISPLAY_MODE_POSSIBLE)) {
 #endif
-        p_glutInitDisplayMode(P_GLUT_RGBA | P_GLUT_DEPTH | P_GLUT_DOUBLE );            
+        p_glutInitDisplayMode(P_GLUT_RGBA | P_GLUT_DEPTH | P_GLUT_DOUBLE );
         StereoCapable = 0;
 #ifndef _PYMOL_OSX
       } else {
