@@ -538,7 +538,7 @@ SEE ALSO
          unlock()
       return r
 
-   def load_embedded(key="embedded",name=None,state=0,finish=1,discrete=1,quiet=1):
+   def load_embedded(key=None,name=None,state=0,finish=1,discrete=1,quiet=1):
       r = 1
       list = parser.get_embedded(key)
       if list == None:
@@ -546,7 +546,10 @@ SEE ALSO
          r = None
       else:
          if name == None:
-            name = key
+            if key != None:
+               name = key
+            else:
+               name = parser.get_default_key()
          type = list[0]
          data = list[1]
          try:
