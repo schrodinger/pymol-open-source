@@ -205,7 +205,7 @@ static void CharacterPurgeOldest(void)
 
   while(I->NUsed > I->TargetMaxUsage) {
     if(!(max_kill--)) break; /* if over, only purge a few entries at a time */
-
+    {
     int id = I->OldestUsed;
     
     if(id) {
@@ -220,7 +220,7 @@ static void CharacterPurgeOldest(void)
       
       { /* excise character from hash table linked list */
         int hash_code = I->Char[id].Fngrprnt.hash_code;
-        int hash_prev = I->Char[id].HashPrev;;
+        int hash_prev = I->Char[id].HashPrev;
         int hash_next = I->Char[id].HashNext ;
         
         if(hash_prev) {
@@ -244,6 +244,7 @@ static void CharacterPurgeOldest(void)
       I->Char[id].Prev = I->LastFree;
       I->LastFree = id;
       I->NUsed--;
+    }
     }
   }
 }

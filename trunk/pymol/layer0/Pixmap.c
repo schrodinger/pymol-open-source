@@ -40,13 +40,13 @@ void PixmapInitFromBitmap(CPixmap *I,int width, int height,
                              unsigned char *rgba)
 {
   if(I) {
-    PixmapInit(I,width,height);
  
     int x,y,bit_cnt;
     unsigned char cur;
     unsigned char *src;
     unsigned char *dst;
     register unsigned char red,blue,green,alpha;
+    PixmapInit(I,width,height);
     red = rgba[0];
     green = rgba[1];
     blue = rgba[2];

@@ -46,7 +46,7 @@ typedef struct {
   const char *name;
   const int num_chars;
   const int first;
-  FontGLUTBitmapCharRec **ch;
+  const FontGLUTBitmapCharRec * const *ch;
 } FontGLUTBitmapFontRec, *FontGLUTBitmapFontPtr;
 
 typedef void *GLUTbitmapFont;
