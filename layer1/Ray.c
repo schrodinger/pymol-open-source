@@ -1325,9 +1325,11 @@ static RenderBuff				RenderCache[kRenderCacheSize];
 static unsigned int *GetRenderBuffer(unsigned int inBuffSize, int inThreadIndex)
 {
 	static int RenderCacheInited = 0;
-	
-	if (inThreadIndex > kMaxBuffIndex)
-		printf("DRSWAT: OoR thread index: %d.\n", inThreadIndex);
+
+	/* WARREN -- TO DO -- STRIP OUT THREADING STUFF, and ADD A CLEANUP ROUTINE */
+
+   /*	if (inThreadIndex > kMaxBuffIndex)
+		printf(" DRSWAT: OoR thread index: %d.\n", inThreadIndex);*/
 
 	if (RenderCacheInited == 0)
 	{
@@ -1343,7 +1345,7 @@ static unsigned int *GetRenderBuffer(unsigned int inBuffSize, int inThreadIndex)
 
 	if (RenderCache[inThreadIndex].buff == NULL)
 	{
-		printf("DRSWAT: Allocated render buffer first time. Thread: %d. Size: %d.\n", inThreadIndex, inBuffSize);
+     /*		printf("DRSWAT: Allocated render buffer first time. Thread: %d. Size: %d.\n", inThreadIndex, inBuffSize); */
 
 		RenderCache[inThreadIndex].buff = (void *)Alloc(char, inBuffSize);
 		RenderCache[inThreadIndex].buffSize = inBuffSize;
@@ -1365,8 +1367,8 @@ static unsigned int *GetRenderBuffer(unsigned int inBuffSize, int inThreadIndex)
 			return RenderCache[inThreadIndex].buff;
 		}
 	}
-
-	printf("DRSWAT: Oh no! No render buffer found.\n");
+   /*
+     printf("DRSWAT: Oh no! No render buffer found.\n");*/
 	return NULL;
 }
 
