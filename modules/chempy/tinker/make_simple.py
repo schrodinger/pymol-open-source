@@ -1113,6 +1113,7 @@ print
 # missing general impropers
 l = [
 'X -X -DJ-JA         10.5         180.          2.           WLD from X -X -DJ-Q1',
+'X -X -DJ-QN         10.5         180.          2.           WLD from X -X -DJ-Q1',
 ]
 for a in l:
    if tmp.improper.has_key(a[0:11]):
