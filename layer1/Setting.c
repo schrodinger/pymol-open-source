@@ -1712,6 +1712,8 @@ void SettingInitGlobal(void)
 
   SettingSet_i(I,cSetting_ray_transparency_shadows,1);
 
+  SettingSet_i(I,cSetting_session_version_check,1);
+
   SettingSet_f(I,cSetting_ray_transparency_specular,1.0F);
 
 }
