@@ -244,7 +244,7 @@ static int CGOArrayFromPyListInPlace(PyObject *list,CGO *I)
       }
       
       for(a=0;a<sz;a++) {
-        CGO_write_int(pc,(int)PyFloat_AsDouble(PyList_GetItem(list,cc++)));
+        *(pc++)=PyFloat_AsDouble(PyList_GetItem(list,cc++));
         c--;
       }
     }

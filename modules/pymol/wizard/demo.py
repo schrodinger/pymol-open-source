@@ -3,7 +3,8 @@ from pymol import cmd
 import pymol
 import types
 
-last = None
+saved = {}
+
 
 class Demo(Wizard):
 
@@ -11,9 +12,11 @@ class Demo(Wizard):
       return None
 
    def __init__(self,*arg):
-      global last
-      self.last = last
       self.message = []
+      self.last = None
+      if saved.has_key('last'):
+         self.last = saved['last']
+      print "init called"
       if not len(arg):
          cmd.set_wizard()
       else:
@@ -31,9 +34,10 @@ class Demo(Wizard):
             self.message = demo.message_dict.get(name,None)
          else:
             self.last = None
-         last = self.last
-         
+         saved['last']=self.last
+      
    def get_prompt(self):
+      saved['last']=self.last
       self.prompt = self.message
       return self.prompt
 
@@ -331,21 +335,21 @@ class DemoInfo:
         0.000062190,    0.000183226,  -58.861488342,\
         13.349151611,   -1.565427899,   22.383148193,\
         55.259441376,   63.259449005,    0.000000000 ))
-
-
          finally:
             cmd.set("suspend_updates",0,quiet=1)
          cmd.refresh()
       else:
+         cmd.set("roving_detail",0)
          cmd.set("roving_map1_name","")
          cmd.set("roving_polar_contacts",7)
          cmd.set("roving_sticks",6)
          cmd.delete("il2")
          cmd.delete("map")
          cmd.set("line_width",1.5)
-         cmd.set("roving_detail",0)
          cmd.refresh()
+         cmd.set("roving_detail",0)
          cmd.delete("rov_*")
+         cmd.sync()
          
    def cartoon(self,cleanup=0):
       if not cleanup:
