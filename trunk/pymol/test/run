@@ -80,7 +80,6 @@ for test in tests:
       syscmd = cmd+" "+opt+" "+ifil+" | "+python_exe+" trim.py > "+cmp+"/"+tst+".log 2>&1"
 
       os.system(syscmd)
-      os.system("unixtext "+cmp+"/"+tst+".log")
       # check log file and any other output files
       
       for ref_fil in ( glob.glob(ref+"/"+tst+".*")):
