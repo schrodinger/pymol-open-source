@@ -16,12 +16,12 @@ standard_prefixes = ['C', 'G' ]
 
 # set module path for generic python stuff
 
-ppath = ''
-if os.environ.has_key('PYTHONPATH'):
-   ppath = os.environ['PYTHONPATH'] + ":"
-ppath = ppath + os.getcwd() + "/../modules"
+#ppath = ''
+#if os.environ.has_key('PYTHONPATH'):
+#   ppath = os.environ['PYTHONPATH'] + ":"
+#ppath = ppath + os.getcwd() + "/../modules"
 
-os.environ['PYTHONPATH'] = ppath
+#os.environ['PYTHONPATH'] = ppath
 
 #print ppath
 
@@ -78,7 +78,7 @@ for test in tests:
       print " run_tests: "+tst+"..."
 
       syscmd = cmd+" "+opt+" "+ifil+" | "+python_exe+" trim.py > "+cmp+"/"+tst+".log 2>&1"
-      
+
       os.system(syscmd)
 
       # check log file and any other output files

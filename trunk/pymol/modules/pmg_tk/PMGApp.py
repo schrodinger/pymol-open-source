@@ -61,9 +61,9 @@ class PMGApp(AbstractApp):
       self.fifo.put(cmmd)
 
    def buttonAdd(self,frame,text,cmd):
-      newBtn=self.createcomponent('button', (), None,
-         Button,frame,text=text,highlightthickness=0,
-         command=cmd,padx=0,pady=0)
+      newBtn=Button(frame,
+                    text=text,highlightthickness=0,
+                    command=cmd,padx=0,pady=0)
       newBtn.pack(side=LEFT,fill=BOTH,expand=YES)
       
    def createButtons(self):

@@ -22,6 +22,8 @@ try:
       print ' Please run "python setup2.py" from the PyMOL source directory.'
    else:
       pymol_file = sys.modules['pymol'].__file__
+      if pymol_file[-4:]==".pyc":
+         pymol_file = pymol_file[0:-1]
       pymol_path = re.sub(r"\/[^\/]*$","/pymol_path",pymol_file)
       
       # Create PYMOL_PATH directory
