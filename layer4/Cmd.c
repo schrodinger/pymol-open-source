@@ -208,6 +208,7 @@ static PyObject *CmdGetColor(PyObject *self, 	PyObject *args);
 static PyObject *CmdGetDihe(PyObject *self, 	PyObject *args);
 static PyObject *CmdGetFeedback(PyObject *dummy, PyObject *args);
 static PyObject *CmdGetFrame(PyObject *self, 	PyObject *args);
+static PyObject *CmdSetGeometry(PyObject *self, 	PyObject *args);
 static PyObject *CmdGetPDB(PyObject *dummy, PyObject *args);
 static PyObject *CmdGetMatrix(PyObject *self, 	PyObject *args);
 static PyObject *CmdGetMinMax(PyObject *self, 	PyObject *args);
@@ -415,6 +416,7 @@ static PyMethodDef Cmd_methods[] = {
 	{"legacy_set",            CmdLegacySet,            METH_VARARGS },
 	{"set_dihe",              CmdSetDihe,              METH_VARARGS },
 	{"set_feedback",          CmdSetFeedbackMask,      METH_VARARGS },
+   {"set_geometry",          CmdSetGeometry,          METH_VARARGS },
 	{"set_title",             CmdSetTitle,             METH_VARARGS },
 	{"set_wizard",            CmdSetWizard,            METH_VARARGS },
    {"set_view",              CmdSetView,              METH_VARARGS },
@@ -3269,6 +3271,23 @@ static PyObject *CmdReplace(PyObject *self, 	PyObject *args)
   if (ok) {
     APIEntry();
     EditorReplace(str1,i1,i2);  /* TODO STATUS */
+    APIExit();
+  }
+  return(APIStatus(ok));  
+}
+
+static PyObject *CmdSetGeometry(PyObject *self, 	PyObject *args)
+{
+  int i1,i2;
+  char *str1;
+  OrthoLineType s1;
+  int ok=false;
+  ok = PyArg_ParseTuple(args,"sii",&str1,&i1,&i2);
+  if (ok) {
+    APIEntry();
+    SelectorGetTmp(str1,s1);
+    ok = ExecutiveSetGeometry(s1,i1,i2);  /* TODO STATUS */
+    SelectorFreeTmp(s1);
     APIExit();
   }
   return(APIStatus(ok));  

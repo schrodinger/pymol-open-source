@@ -39,7 +39,7 @@ void AtomInfoCombine(AtomInfoType *dst,AtomInfoType *src)
   dst->b = src->b;
   dst->q = src->q;
   dst->id = src->id;
-
+  dst->temp1 = src->temp1;
   /* keep all existing names, identifiers, etc. */
   /* also keep all existing selections,
      colors, masks, and visible representations*/

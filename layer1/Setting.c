@@ -1169,5 +1169,9 @@ void SettingInitGlobal(void)
 
   SettingSet_f(I,cSetting_two_sided_lighting, 0.0F);
 
+  SettingSet_f(I,cSetting_secondary_structure, 1.0F);
+
+  SettingSet_f(I,cSetting_auto_remove_hydrogens, 0.0F);
+
 }
 

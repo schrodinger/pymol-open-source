@@ -121,7 +121,7 @@ typedef struct AtomInfoType {
   signed char masked;
   signed char protected;
   signed char protons;
-  int tmp_index; /* kludge field - to remove */
+  int temp1; /* kludge field - to remove */
 } AtomInfoType;
 
 

@@ -27,7 +27,7 @@ Z* -------------------------------------------------------------------
 #include"Matrix.h"
 #include"P.h"
 #include"PConv.h"
-
+#include"Util.h"
 
 void SymmetryAttemptGeneration(CSymmetry *I)
 {

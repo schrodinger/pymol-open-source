@@ -115,6 +115,7 @@ typedef struct ObjectMoleculeOpRec {
 #define OMOP_FlagSet 32
 #define OMOP_FlagClear 33
 #define OMOP_PrepareFromTemplate 34
+#define OMOP_SetGeometry 35
 
 #include"CoordSet.h"
 

@@ -806,7 +806,30 @@ def get_color_indices():
    finally:
       unlock()
    return r
-      
+
+def get_setting(name,object='',state=0): # INTERNAL
+   r = None
+   if is_string(name):
+      i = setting._get_index(name)
+   else:
+      i = int(name)
+   if i<0:
+      print "Error: unknown setting"
+      raise QuietException
+   try:
+      lock()
+      r = _cmd.get_setting_tuple(i,str(object),int(state)-1)
+      typ = r[0]
+      if typ<3:
+         r = int(r[1][0])
+      elif typ<4:
+         r = r[1][0]
+      elif typ<5:
+         r = r[1]
+   finally:
+      unlock()
+   return r
+
 def get_setting_tuple(name,object='',state=0): # INTERNAL
    r = None
    if is_string(name):
@@ -1281,7 +1304,7 @@ PYMOL API
          unlock()
    return r
 
-def bond(atom1="(lb)",atom2="(rb)",order=1):
+def bond(atom1="(lb)",atom2="(rb)",order=1,edit=1):
    '''
 DESCRIPTION
  
@@ -1313,6 +1336,9 @@ SEE ALSO
    try:
       lock()
       r = _cmd.bond(atom1,atom2,int(order),1)
+      if r and edit:
+         _cmd.edit(str(atom1),str(atom2),'','',0)
+
    finally:
       unlock()
    return r
@@ -3147,6 +3173,39 @@ SEE ALSO
          remove("((neighbor pk1) and elem h)")
       lock()
       r = _cmd.replace(str(name),int(geometry),int(valence))
+   finally:
+      unlock()
+   return r
+
+def set_geometry(selection,geometry,valence):
+   '''
+DESCRIPTION
+  
+   "set_geometry" changes PyMOL's assumptions about the proper valence
+   and geometry of the picked atom.
+      
+USAGE
+ 
+   set_geometry geometry, valence
+ 
+PYMOL API
+  
+   cmd.set_geometry(int geometry,int valence )
+
+NOTES
+
+   Immature functionality. See code for details.
+
+SEE ALSO
+
+   remove, attach, fuse, bond, unbond
+'''
+   r = 0
+   # preprocess selection
+   selection = selector.process(selection)
+   try:
+      lock()
+      r = _cmd.set_geometry(str(selection),int(geometry),int(valence))
    finally:
       unlock()
    return r
@@ -6322,6 +6381,7 @@ keyword = {
    'select'        : [select       , 0 , 0 , ''  , parsing.LEGACY ],
    'set'           : [set          , 0 , 0 , ''  , parsing.LEGACY ],
    'set_color'     : [set_color    , 0 , 0 , ''  , parsing.LEGACY ],
+   'set_geometry'  : [set_geometry , 0 , 0 , ''  , parsing.STRICT ],      
    'set_title'     : [set_title    , 0 , 0 , ''  , parsing.STRICT ],   
    'set_key'       : [set_key      , 0 , 0 , ''  , parsing.STRICT ], # API only
    'set_view'      : [set_view     , 0 , 0 , ''  , parsing.STRICT ],   
@@ -6509,7 +6569,7 @@ ctrl = {
    'T' : [ bond                   , () , {} ],   
    'U' : [ alter                  , ('pk1','formal_charge =0.0') , {}],
    'W' : [ cycle_valence          , () , {}],   
-   'X' : [ None                   , () , {} ],
+   'X' : [ remove                 , ('pkfrag1',) , {} ],
    'Y' : [ attach                 , ('H',1,1) , {} ],
    'Z' : [ undo                   , () , {} ],   
    }

@@ -165,6 +165,8 @@ class SettingIndex:
    preserve_chempy_ids   =154
    sphere_scale          =155
    two_sided_lighting    =156
+   secondary_structure   =157
+   auto_remove_hydrogens =158
    
 setting_sc = Shortcut(SettingIndex.__dict__.keys())
    

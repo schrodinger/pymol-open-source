@@ -36,7 +36,7 @@ if len(argv):
 # ---
 
 pymol = "pymol"
-cmmd = "c:\pymolws\pymol.bat "
+cmd = "../pymol.com "
 cmp = "cmp"
 ref = "ref"
 inp = "inp"
@@ -71,7 +71,7 @@ for test in tests:
       
       print " run_tests: "+tst+"..."
 
-      syscmd = cmmd+" "+opt+" "+ifil+" | c:\program files\python\python.exe trim.py > "+cmp+"/"+tst+".log"
+      syscmd = cmd+" "+opt+" "+ifil+" | ../ext/bin/python trim.py > "+cmp+"/"+tst+".log 2>&1"
       
       os.system(syscmd)
 

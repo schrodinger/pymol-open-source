@@ -190,7 +190,7 @@ Rep *RepSphereNew(CoordSet *cs)
 {
   ObjectMolecule *obj;
   int a,b,c,a1,c1,a2,i,j,k,h,l;
-  float *v,*v0,*vc,vdw,v1[3],vv0[3],vv1[3],vv2[3];
+  float *v,*v0,*vc,vdw,v1[3];
   float restart;
   int *q, *s,q0,q1,q2;
   int *lv,*lc,*cc;
@@ -204,7 +204,11 @@ Rep *RepSphereNew(CoordSet *cs)
   float spheroid_scale;
   float *sphLen,sphTmp,*sphNorm,*sphTmpN;
   float sphere_scale;
+  
+#ifdef _this_code_is_not_used
+  float vv0[3],vv1[3],vv2[3];
   float tn[3],vt1[3],vt2[3],xtn[3],*tn0,*tn1,*tn2;
+#endif
 
   OOAlloc(RepSphere);
 
