@@ -1149,7 +1149,7 @@ int RayTraceThread(CRayThreadInfo *T)
    SceneCall.back = T->back;
    SceneCall.trans_shadows = trans_shadows;
    SceneCall.check_interior = (interior_color >= 0);
-	MapCacheInit(&SceneCall.cache,I->Basis[1].Map);
+	MapCacheInit(&SceneCall.cache,I->Basis[1].Map,T->phase,cCache_map_scene_cache);
 
    if(shadows&&(I->NBasis>1)) {
      ShadeCall.Basis = I->Basis + 2;
@@ -1162,7 +1162,7 @@ int RayTraceThread(CRayThreadInfo *T)
      ShadeCall.excl_trans = _0;
      ShadeCall.trans_shadows = trans_shadows;
      ShadeCall.check_interior = false;
-     MapCacheInit(&ShadeCall.cache,I->Basis[2].Map);     
+     MapCacheInit(&ShadeCall.cache,I->Basis[2].Map,T->phase,cCache_map_shadow_cache);     
    }
 
 	for(yy = T->y_start; (yy < T->y_stop); yy++)
@@ -1505,10 +1505,10 @@ int RayTraceThread(CRayThreadInfo *T)
 	
 	/*  if(T->n_thread>1) 
 	  printf(" Ray: Thread %d: Complete.\n",T->phase+1);*/
-	MapCacheFree(&SceneCall.cache);
+	MapCacheFree(&SceneCall.cache,T->phase,cCache_map_scene_cache);
 	
 	if(shadows&&(I->NBasis>1))
-		MapCacheFree(&ShadeCall.cache);
+		MapCacheFree(&ShadeCall.cache,T->phase,cCache_map_shadow_cache);
 	
 	return (n_hit);
 }
