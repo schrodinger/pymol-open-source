@@ -4,7 +4,8 @@ Changes Under Consideration
 
    * Generic volume data object (to supplement bricks and maps)
 
-   * Log file generation capability
+   * Log file generation capability so that you can automatically 
+     redo everything you've done just like in Grasp.
 
    * "Builder" wizard, tied into the fragments subsystem.
 
@@ -12,17 +13,22 @@ Changes Under Consideration
 
    * Real Edit Menu in Tk
 
-   * draw all solid representations before drawing lines
-     in order to improve antialiasing overlap.
+   * making commas optional in PyMOL command arguments -- this would be
+     not be the default, but it could be an option
 
-   * consider making commas optional in PyMOL command arguments
+   * adopt standardized conventions for reading user-specific startup
+     scripts and initializing external GUI modules.
 
    * CTRL and CTRL/SHIFT numbers should add aromatic and aliphatic
-     ring systems in the builder respectively.
+     ring systems in the builder respectively within the molecular editor.
 
-Ongoing Goals
+   * support anisotropic B-factor renditions (ellipsoids)
 
-   * fill-out object/coord set specific settings
+Current and Ongoing Goals
+
+   * make an ActiveX control which contains core PyMOL for use in web browsers.
+
+   * fill-out object and coord. set specific settings
 
    * clean-up return conventions in cmd.py
 
@@ -31,11 +37,13 @@ Ongoing Goals
    * feedback conditionals placed around all error output
 
    * draw all solid representations before drawing lines
-     in order to improve antialiasing.
+     in order to improve antialiasing -- these means that every
+     object will need to rendering method calls.
 
 Bugs to Fix
 
-   * superpositions system fails with degenerate sets (planer atoms, etc).
+   * superposition system fails with degenerate sets (planer atoms, etc).
+     sometimes it just fails period.
 
 Changes up to 0.63
 
