@@ -107,6 +107,8 @@ Current Bugs to Fix
 
 Changes up to 0.80
 
+   * major bug fix to "carve" in isomesh
+
    * "command ?" now gives a list of arguments 
 
    * fix spurious bugs reading files under unix
