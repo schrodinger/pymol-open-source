@@ -22,6 +22,11 @@ from cmd import _cmd,lock,unlock,Shortcut,QuietException, \
      _load
 import cmd
 
+try:
+   from pymol import m4x
+except ImportError:
+   m4x = None
+
 from chempy.sdf import SDF,SDFRec
 
 class loadable:
@@ -42,6 +47,7 @@ class loadable:
    cc1 = 17      # cc1 and cc2, only used within cmd.py
    ccp4 = 18     # CCP4 map, under development
    pmo = 19      # pmo, experimental molecular object format
+   cex = 20      # cex format
    
 loadable_sc = Shortcut(loadable.__dict__.keys()) 
 
@@ -209,6 +215,8 @@ SEE ALSO
             ftype = loadable.xyz
          elif re.search("\.sdf$",filename,re.I):
             ftype = loadable.sdf
+         elif re.search("\.cex$",filename,re.I):
+            ftype = loadable.cex
          elif re.search("\.pmo$",filename,re.I):
             ftype = loadable.pmo
          else:
@@ -248,6 +256,15 @@ SEE ALSO
          _cmd.finish_object(str(oname))
          _cmd.do("zoom (%s)"%oname) 
          ftype = -1
+
+# special handling of cex files
+      if ftype == loadable.cex:
+         ftype = -1
+         if m4x!=None:
+            m4x.readCEX(fname,str(oname)) # state, format, discrete?
+         else:
+            print " Error: CEX format not currently supported"
+            raise QuietException
          
 # standard file handling
 
