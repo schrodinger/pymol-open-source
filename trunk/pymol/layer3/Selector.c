@@ -2677,6 +2677,8 @@ int *SelectorEvaluate(WordType *word)
   OrthoLineType line;
   EvalElem Stack[SelectorMaxDepth],*e;
   SelectorType *I=&Selector;
+  Stack[0].sele=NULL;
+  Stack[0].type=0;
   /* converts all keywords into code, adds them into a operation list */
   while(ok&&word[c][0])
 	 {
