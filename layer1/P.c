@@ -1152,12 +1152,13 @@ int PPovrayRender(char *header,char *inp,char *file,int width,int height,int ant
 
 void PSGIStereo(int flag) 
 {
-  PBlock();
+  int blocked;
+  blocked = PAutoBlock();
   if(flag) 
     PRunString("cmd._sgi_stereo(1)");
   else
     PRunString("cmd._sgi_stereo(0)");
-  PUnblock();
+  if(blocked) PUnblock();
 }
 
 void PFree(void)
