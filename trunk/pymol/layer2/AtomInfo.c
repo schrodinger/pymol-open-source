@@ -210,7 +210,7 @@ void AtomInfoPrimeColors(void)
 /*========================================================================*/
 float AtomInfoGetBondLength(AtomInfoType *ai1,AtomInfoType *ai2)
 {
-  float result = 1.6;
+  float result = 1.6F;
 
   /* very simple for now just CC and CH, 
      flush this out with decent parameters later */
@@ -218,18 +218,18 @@ float AtomInfoGetBondLength(AtomInfoType *ai1,AtomInfoType *ai2)
   if((ai1->protons>1)&&(ai2->protons>1)) {
     result=0.0;
     switch(ai1->geom) {
-    case cAtomInfoLinear: result+=1.20; break;
-    case cAtomInfoPlaner: result+=1.34; break;
-    default: result+= 1.54; break;
+    case cAtomInfoLinear: result+=1.20F; break;
+    case cAtomInfoPlaner: result+=1.34F; break;
+    default: result+= 1.54F; break;
     }
     switch(ai2->geom) {
-    case cAtomInfoLinear: result+=1.20; break;
-    case cAtomInfoPlaner: result+=1.34; break;
-    default: result+= 1.54; break;
+    case cAtomInfoLinear: result+=1.20F; break;
+    case cAtomInfoPlaner: result+=1.34F; break;
+    default: result+= 1.54F; break;
     }    
-    result/=2.0;
+    result/=2.0F;
   } else {
-    result=1.05;
+    result=1.05F;
   }
   return(result);
 }
@@ -570,40 +570,40 @@ void AtomInfoAssignParameters(AtomInfoType *I)
   while((*e>='0')&&(*e<='9')&&(*(e+1))) e++;
   switch ( *e )
     {
-    case 'N' : vdw=1.8;  break;
+    case 'N' : vdw=1.8F;  break;
     case 'C' :	
       switch (*(e+1)) 
         {
         case 'U':
         case 'u':
-          vdw=1.35; break; /* CU */
+          vdw=1.35F; break; /* CU */
         case 0:
         default:
-          vdw=1.8;  break; /*incl C,CL*/
+          vdw=1.8F;  break; /*incl C,CL*/
         }
       break;
-    case 'O' : vdw=1.5;  break;
-    case 'I' :	vdw=2.15; break;
-    case 'P' :	vdw=1.9; break;
-    case 'B' :	vdw=1.9; break; /* incl B, BR */
-    case 'S' :	vdw=1.9; break;
+    case 'O' : vdw=1.5F;  break;
+    case 'I' :	vdw=2.15F; break;
+    case 'P' :	vdw=1.9F; break;
+    case 'B' :	vdw=1.9F; break; /* incl B, BR */
+    case 'S' :	vdw=1.9F; break;
     case 'F' : 
       switch (*(e+1))
         {
         case 0:
-          vdw=1.35; break;
+          vdw=1.35F; break;
         case 'E': 
         case 'e': 
-          vdw=0.64; break;
+          vdw=0.64F; break;
         default:
-          vdw=1.35; break;
+          vdw=1.35F; break;
         }
       break;
     case 'H' :
-      vdw = 1.1;
+      vdw = 1.1F;
       break;
     default:
-      vdw=1.8;
+      vdw=1.8F;
       break;
     }
 

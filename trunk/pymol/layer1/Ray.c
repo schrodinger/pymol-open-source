@@ -138,8 +138,8 @@ void RayExpandPrimitives(CRay *I)
 		basis->Radius2[nVert]=I->Primitive[a].r1*I->Primitive[a].r1; /*necessary??*/
 		/*		if(basis->Radius[nVert]>basis->MinVoxel)
 				basis->MinVoxel=basis->Radius[nVert];*/
-		if(basis->MinVoxel<0.001)
-		  basis->MinVoxel=0.001;
+		if(basis->MinVoxel<0.001F)
+		  basis->MinVoxel=0.001F;
 		basis->Vert2Normal[nVert]=nNorm;
 		basis->Vert2Normal[nVert+1]=nNorm;
 		basis->Vert2Normal[nVert+2]=nNorm;
@@ -625,13 +625,13 @@ void RayRender(CRay *I,int width,int height,unsigned int *image,float front,floa
                 sig = pow(inp,gamma)/inp;
               }
 
-				  c[0]=sig*fc[0]*255.0;
-				  c[1]=sig*fc[1]*255.0;
-				  c[2]=sig*fc[2]*255.0;
+				  c[0]=(uint)(sig*fc[0]*255.0F);
+				  c[1]=(uint)(sig*fc[1]*255.0F);
+				  c[2]=(uint)(sig*fc[2]*255.0F);
 
-              if(c[0]>255.0) c[0]=255.0;
-              if(c[1]>255.0) c[1]=255.0;
-              if(c[2]>255.0) c[2]=255.0;
+              if(c[0]>255) c[0]=255;
+              if(c[1]>255) c[1]=255;
+              if(c[2]>255) c[2]=255;
               /*			{ int a1,b1,c1;
                         if(MapInsideXY(I->Basis[1].Map,base,&a1,&b1,&c1))				
                         {

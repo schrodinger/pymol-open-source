@@ -1016,7 +1016,7 @@ static void FollowActives(float *v,float *vn,int n,int mode)
     n,mode,I->nTri,I->nActive
     ENDFD;
 
-  cnt = SettingGet(cSetting_max_triangles);
+  cnt = (int)SettingGet(cSetting_max_triangles);
   
   OrthoBusyFast((I->N*2)+I->nTri,I->N*4);
 
@@ -1490,7 +1490,7 @@ NTestLine=0; for(a=0;a<n;a++)
 
   *(stripPtr) = TriangleMakeStripVLA(v,vn,n);
 
-  cnt = SettingGet(cSetting_max_triangles);
+  cnt = (int)SettingGet(cSetting_max_triangles);
   if(I->nTri>cnt)
 	 I->nTri=cnt;
 

@@ -40,6 +40,10 @@ Z* -------------------------------------------------------------------
 #define uchar unsigned char
 #endif
 
+#ifndef uint
+#define uint unsigned int
+#endif
+
 #define MAX_VDW 2.5  /* this has to go */
 
 

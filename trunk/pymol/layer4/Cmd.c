@@ -805,13 +805,13 @@ static PyObject *CmdSetFeedbackMask(PyObject *self, 	PyObject *args)
   APIEntry();
   switch(i1) {
   case 0: 
-    FeedbackSetMask(i2,i3);
+    FeedbackSetMask(i2,(uchar)i3);
     break;
   case 1:
-    FeedbackEnable(i2,i3);
+    FeedbackEnable(i2,(uchar)i3);
     break;
   case 2:
-    FeedbackDisable(i2,i3);
+    FeedbackDisable(i2,(uchar)i3);
     break;
   case 3:
     FeedbackPush();
@@ -1967,7 +1967,7 @@ static PyObject *CmdMPNG(PyObject *self, 	PyObject *args)
   char *str1;
   PyArg_ParseTuple(args,"s",&str1);
   APIEntry();
-  MoviePNG(str1,SettingGet(cSetting_cache_frames));
+  MoviePNG(str1,(int)SettingGet(cSetting_cache_frames));
   APIExit();
   Py_INCREF(Py_None);
   return Py_None;
@@ -1993,9 +1993,9 @@ static PyObject *CmdViewport(PyObject *self, 	PyObject *args)
     if(w<10) w=10;
     if(h<10) h=10;
     if(SettingGet(cSetting_internal_gui)) 
-      w+=SettingGet(cSetting_internal_gui_width);
+      w+=(int)SettingGet(cSetting_internal_gui_width);
     if(SettingGet(cSetting_internal_feedback))
-      h+=(SettingGet(cSetting_internal_feedback)-1)*cOrthoLineHeight +
+      h+=(int)(SettingGet(cSetting_internal_feedback)-1)*cOrthoLineHeight +
         cOrthoBottomSceneMargin;
   } else {
     w=-1;

@@ -748,281 +748,281 @@ void SettingInitGlobal(void)
 
   SettingInit(I);
 
-  SettingSet_f(I,cSetting_bonding_vdw_cutoff, 0.2);
+  SettingSet_f(I,cSetting_bonding_vdw_cutoff, 0.2F);
 
-  SettingSet_f(I,cSetting_min_mesh_spacing, 0.6);
+  SettingSet_f(I,cSetting_min_mesh_spacing, 0.6F);
 
-  SettingSet_f(I,cSetting_dot_density, 2);
+  SettingSet_f(I,cSetting_dot_density, 2.0F);
 
-  SettingSet_f(I,cSetting_dot_mode, 0);
+  SettingSet_f(I,cSetting_dot_mode, 0.0F);
 
-  SettingSet_f(I,cSetting_solvent_radius, 1.4);
+  SettingSet_f(I,cSetting_solvent_radius, 1.4F);
 
-  SettingSet_f(I,cSetting_sel_counter, 0.0);
+  SettingSet_f(I,cSetting_sel_counter, 0.0F);
 
-  SettingSet_3f(I,cSetting_bg_rgb, 0.0, 0.0, 0.0);
+  SettingSet_3f(I,cSetting_bg_rgb, 0.0F, 0.0F, 0.0F);
 
-  SettingSet_f(I,cSetting_ambient, 0.30);
+  SettingSet_f(I,cSetting_ambient, 0.30F);
 
-  SettingSet_f(I,cSetting_direct, 0.35);
+  SettingSet_f(I,cSetting_direct, 0.35F);
 
-  SettingSet_f(I,cSetting_reflect, 1.2);
+  SettingSet_f(I,cSetting_reflect, 1.2F);
 
-  SettingSet_3f(I,cSetting_light, -0.4, -0.4, -1.0);
+  SettingSet_3f(I,cSetting_light, -0.4F, -0.4F, -1.0F);
 
-  SettingSet_f(I,cSetting_antialias, 0.0);
+  SettingSet_f(I,cSetting_antialias, 0.0F);
 
-  SettingSet_f(I,cSetting_cavity_cull, 10.0);
+  SettingSet_f(I,cSetting_cavity_cull, 10.0F);
 
-  SettingSet_f(I,cSetting_gl_ambient,  0.12);
+  SettingSet_f(I,cSetting_gl_ambient,  0.12F);
 
-  SettingSet_f(I,cSetting_single_image, 0.0);
+  SettingSet_f(I,cSetting_single_image, 0.0F);
 
-  SettingSet_f(I,cSetting_movie_delay, 30);
+  SettingSet_f(I,cSetting_movie_delay, 30.0F);
 
-  SettingSet_f(I,cSetting_ribbon_power, 2);
+  SettingSet_f(I,cSetting_ribbon_power, 2.0F);
 
-  SettingSet_f(I,cSetting_ribbon_power_b, 0.5);
+  SettingSet_f(I,cSetting_ribbon_power_b, 0.5F);
 
-  SettingSet_f(I,cSetting_ribbon_sampling, 16);
+  SettingSet_f(I,cSetting_ribbon_sampling, 16.0F);
 
-  SettingSet_f(I,cSetting_ribbon_radius, 0.4);
+  SettingSet_f(I,cSetting_ribbon_radius, 0.4F);
 
-  SettingSet_f(I,cSetting_stick_radius, 0.3);
+  SettingSet_f(I,cSetting_stick_radius, 0.3F);
 
-  SettingSet_f(I,cSetting_hash_max, 100);
+  SettingSet_f(I,cSetting_hash_max, 100.0F);
 
-  SettingSet_f(I,cSetting_ortho, 0);
+  SettingSet_f(I,cSetting_ortho, 0.0F);
 
-  SettingSet_f(I,cSetting_power, 3.0);
+  SettingSet_f(I,cSetting_power, 3.0F);
 
-  SettingSet_f(I,cSetting_spec_reflect, 0.4);
+  SettingSet_f(I,cSetting_spec_reflect, 0.4F);
 
-  SettingSet_f(I,cSetting_spec_power, 40);
+  SettingSet_f(I,cSetting_spec_power, 40.0F);
 
-  SettingSet_f(I,cSetting_sweep_angle, 15.0);
+  SettingSet_f(I,cSetting_sweep_angle, 15.0F);
 
-  SettingSet_f(I,cSetting_sweep_speed, 0.3);
+  SettingSet_f(I,cSetting_sweep_speed, 0.3F);
 
-  SettingSet_f(I,cSetting_dot_hydrogens, 1.0);
+  SettingSet_f(I,cSetting_dot_hydrogens, 1.0F);
 
-  SettingSet_f(I,cSetting_dot_radius, 0.06);
+  SettingSet_f(I,cSetting_dot_radius, 0.06F);
 
-  SettingSet_f(I,cSetting_ray_trace_frames, 0.0);
+  SettingSet_f(I,cSetting_ray_trace_frames, 0.0F);
 
-  SettingSet_f(I,cSetting_cache_frames, 0.0);
+  SettingSet_f(I,cSetting_cache_frames, 0.0F);
 
-  SettingSet_f(I,cSetting_trim_dots, 1.0);
+  SettingSet_f(I,cSetting_trim_dots, 1.0F);
 
-  SettingSet_f(I,cSetting_cull_spheres, 1.0);
+  SettingSet_f(I,cSetting_cull_spheres, 1.0F);
 
-  SettingSet_f(I,cSetting_test1, 1.0);
+  SettingSet_f(I,cSetting_test1, 1.0F);
 
-  SettingSet_f(I,cSetting_test2, 1.0);
+  SettingSet_f(I,cSetting_test2, 1.0F);
 
-  SettingSet_f(I,cSetting_surface_best, 0.2);
+  SettingSet_f(I,cSetting_surface_best, 0.2F);
 
-  SettingSet_f(I,cSetting_surface_normal, 0.5);
+  SettingSet_f(I,cSetting_surface_normal, 0.5F);
 
-  SettingSet_f(I,cSetting_surface_quality, 0.0);
+  SettingSet_f(I,cSetting_surface_quality, 0.0F);
 
-  SettingSet_f(I,cSetting_surface_proximity, 1.5);
+  SettingSet_f(I,cSetting_surface_proximity, 1.5F);
 
-  SettingSet_f(I,cSetting_stereo_angle, 2.1);
+  SettingSet_f(I,cSetting_stereo_angle, 2.1F);
 
-  SettingSet_f(I,cSetting_stereo_shift, 2.0);
+  SettingSet_f(I,cSetting_stereo_shift, 2.0F);
 
-  SettingSet_f(I,cSetting_line_smooth, 1.0);
+  SettingSet_f(I,cSetting_line_smooth, 1.0F);
 
-  SettingSet_f(I,cSetting_line_width, 1.0);
+  SettingSet_f(I,cSetting_line_width, 1.0F);
 
-  SettingSet_f(I,cSetting_half_bonds, 0.0);
+  SettingSet_f(I,cSetting_half_bonds, 0.0F);
 
-  SettingSet_f(I,cSetting_stick_quality, 8.0);
+  SettingSet_f(I,cSetting_stick_quality, 8.0F);
 
-  SettingSet_f(I,cSetting_stick_overlap, 0.2);
+  SettingSet_f(I,cSetting_stick_overlap, 0.2F);
 
-  SettingSet_f(I,cSetting_stick_nub, 0.7);
+  SettingSet_f(I,cSetting_stick_nub, 0.7F);
 
-  SettingSet_f(I,cSetting_all_states, 0.0);
+  SettingSet_f(I,cSetting_all_states, 0.0F);
 
-  SettingSet_f(I,cSetting_pickable, 1.0);
+  SettingSet_f(I,cSetting_pickable, 1.0F);
 
-  SettingSet_f(I,cSetting_auto_show_lines, 1.0);
+  SettingSet_f(I,cSetting_auto_show_lines, 1.0F);
 
-  SettingSet_f(I,cSetting_fast_idle, 20000);
+  SettingSet_f(I,cSetting_fast_idle, 20000.0F);
 
-  SettingSet_f(I,cSetting_no_idle, 5000);
+  SettingSet_f(I,cSetting_no_idle, 5000.0F);
 
-  SettingSet_f(I,cSetting_slow_idle, 200000);
+  SettingSet_f(I,cSetting_slow_idle, 200000.0F);
 
-  SettingSet_f(I,cSetting_idle_delay, 1.5);
+  SettingSet_f(I,cSetting_idle_delay, 1.5F);
 
-  SettingSet_f(I,cSetting_rock_delay, 30);
+  SettingSet_f(I,cSetting_rock_delay, 30.0F);
 
-  SettingSet_f(I,cSetting_dist_counter, 0.0);
+  SettingSet_f(I,cSetting_dist_counter, 0.0F);
 
-  SettingSet_f(I,cSetting_dash_length, 0.15);
+  SettingSet_f(I,cSetting_dash_length, 0.15F);
 
-  SettingSet_f(I,cSetting_dash_gap, 0.35);
+  SettingSet_f(I,cSetting_dash_gap, 0.35F);
 
-  SettingSet_f(I,cSetting_auto_zoom, 1.0);
+  SettingSet_f(I,cSetting_auto_zoom, 1.0F);
 
-  SettingSet_f(I,cSetting_overlay, 0.0);
+  SettingSet_f(I,cSetting_overlay, 0.0F);
 
-  SettingSet_f(I,cSetting_text, 0.0);
+  SettingSet_f(I,cSetting_text, 0.0F);
 
-  SettingSet_f(I,cSetting_button_mode, 0.0);
+  SettingSet_f(I,cSetting_button_mode, 0.0F);
 
-  SettingSet_f(I,cSetting_valence, 0.0);
+  SettingSet_f(I,cSetting_valence, 0.0F);
 
-  SettingSet_f(I,cSetting_nonbonded_size, 0.25);
+  SettingSet_f(I,cSetting_nonbonded_size, 0.25F);
 
-  SettingSet_f(I,cSetting_label_color, -1.0);
+  SettingSet_f(I,cSetting_label_color, -1.0F);
 
-  SettingSet_f(I,cSetting_ray_trace_fog, 1.0);
+  SettingSet_f(I,cSetting_ray_trace_fog, 1.0F);
 
-  SettingSet_f(I,cSetting_spheroid_scale, 1.0);
+  SettingSet_f(I,cSetting_spheroid_scale, 1.0F);
 
-  SettingSet_f(I,cSetting_ray_trace_fog_start, 0.30);
+  SettingSet_f(I,cSetting_ray_trace_fog_start, 0.30F);
 
-  SettingSet_f(I,cSetting_spheroid_smooth, 1.1);
+  SettingSet_f(I,cSetting_spheroid_smooth, 1.1F);
 
-  SettingSet_f(I,cSetting_spheroid_fill, 1.30);
+  SettingSet_f(I,cSetting_spheroid_fill, 1.30F);
 
-  SettingSet_f(I,cSetting_auto_show_nonbonded, 1.0);
+  SettingSet_f(I,cSetting_auto_show_nonbonded, 1.0F);
 
-  SettingSet_f(I,cSetting_mesh_radius, 0.025);
+  SettingSet_f(I,cSetting_mesh_radius, 0.025F);
  
 #ifdef WIN32
-  SettingSet_f(I,cSetting_cache_display, 0.0);
+  SettingSet_f(I,cSetting_cache_display, 0.0F);
 #else
-  SettingSet_f(I,cSetting_cache_display, 1.0);
+  SettingSet_f(I,cSetting_cache_display, 1.0F);
 #endif
 
-  SettingSet_f(I,cSetting_normal_workaround, 0);
+  SettingSet_f(I,cSetting_normal_workaround, 0.0F);
 
-  SettingSet_f(I,cSetting_backface_cull, 1);
+  SettingSet_f(I,cSetting_backface_cull, 1.0F);
 
-  SettingSet_f(I,cSetting_gamma, 1.2);
+  SettingSet_f(I,cSetting_gamma, 1.2F);
 
-  SettingSet_f(I,cSetting_dot_width, 1.0);
+  SettingSet_f(I,cSetting_dot_width, 1.0F);
 
-  SettingSet_f(I,cSetting_auto_show_selections, 1.0);
+  SettingSet_f(I,cSetting_auto_show_selections, 1.0F);
 
-  SettingSet_f(I,cSetting_auto_hide_selections, 1.0);
+  SettingSet_f(I,cSetting_auto_hide_selections, 1.0F);
 
-  SettingSet_f(I,cSetting_selection_width, 4.0);
+  SettingSet_f(I,cSetting_selection_width, 4.0F);
 
-  SettingSet_f(I,cSetting_selection_overlay, 1.0);
+  SettingSet_f(I,cSetting_selection_overlay, 1.0F);
 
-  SettingSet_f(I,cSetting_static_singletons, 1.0);
+  SettingSet_f(I,cSetting_static_singletons, 1.0F);
 
-  SettingSet_f(I,cSetting_max_triangles, 1000000.0);
+  SettingSet_f(I,cSetting_max_triangles, 1000000.0F);
 
-  SettingSet_f(I,cSetting_depth_cue, 1.0);
+  SettingSet_f(I,cSetting_depth_cue, 1.0F);
 
-  SettingSet_f(I,cSetting_specular, 0.8);
+  SettingSet_f(I,cSetting_specular, 0.8F);
 
-  SettingSet_f(I,cSetting_shininess, 40.0);
+  SettingSet_f(I,cSetting_shininess, 40.0F);
 
-  SettingSet_f(I,cSetting_sphere_quality, 1.0);
+  SettingSet_f(I,cSetting_sphere_quality, 1.0F);
 
-  SettingSet_f(I,cSetting_fog, 0.75);
+  SettingSet_f(I,cSetting_fog, 0.75F);
 
-  SettingSet_f(I,cSetting_isomesh_auto_state, 1.0);
+  SettingSet_f(I,cSetting_isomesh_auto_state, 1.0F);
 
-  SettingSet_f(I,cSetting_mesh_width, 1.0);
+  SettingSet_f(I,cSetting_mesh_width, 1.0F);
 
-  SettingSet_f(I,cSetting_cartoon_sampling, 7);
+  SettingSet_f(I,cSetting_cartoon_sampling, 7.0F);
 
-  SettingSet_f(I,cSetting_cartoon_loop_radius, 0.2);
+  SettingSet_f(I,cSetting_cartoon_loop_radius, 0.2F);
 
-  SettingSet_f(I,cSetting_cartoon_loop_quality, 6);
+  SettingSet_f(I,cSetting_cartoon_loop_quality, 6.0F);
 
-  SettingSet_f(I,cSetting_cartoon_power, 2.0);
+  SettingSet_f(I,cSetting_cartoon_power, 2.0F);
 
-  SettingSet_f(I,cSetting_cartoon_power_b, 0.52);
+  SettingSet_f(I,cSetting_cartoon_power_b, 0.52F);
 
-  SettingSet_f(I,cSetting_cartoon_rect_length, 1.40);
+  SettingSet_f(I,cSetting_cartoon_rect_length, 1.40F);
 
-  SettingSet_f(I,cSetting_cartoon_rect_width, 0.4);
+  SettingSet_f(I,cSetting_cartoon_rect_width, 0.4F);
 
   SettingSet_f(I,cSetting_internal_gui_width, cOrthoRightSceneMargin);
 
-  SettingSet_f(I,cSetting_internal_gui, 1.0);
+  SettingSet_f(I,cSetting_internal_gui, 1.0F);
 
-  SettingSet_f(I,cSetting_cartoon_oval_length, 1.35);
+  SettingSet_f(I,cSetting_cartoon_oval_length, 1.35F);
 
-  SettingSet_f(I,cSetting_cartoon_oval_width, 0.25);
+  SettingSet_f(I,cSetting_cartoon_oval_width, 0.25F);
 
-  SettingSet_f(I,cSetting_cartoon_oval_quality, 10);
+  SettingSet_f(I,cSetting_cartoon_oval_quality, 10.0F);
 
-  SettingSet_f(I,cSetting_cartoon_tube_radius, 0.9);
+  SettingSet_f(I,cSetting_cartoon_tube_radius, 0.9F);
 
-  SettingSet_f(I,cSetting_cartoon_tube_quality, 9);
+  SettingSet_f(I,cSetting_cartoon_tube_quality, 9.0F);
 
-  SettingSet_f(I,cSetting_cartoon_debug, 0);
+  SettingSet_f(I,cSetting_cartoon_debug, 0.0F);
 
-  SettingSet_f(I,cSetting_ribbon_width, 1.0);
+  SettingSet_f(I,cSetting_ribbon_width, 1.0F);
 
-  SettingSet_f(I,cSetting_dash_width, 1.0);
+  SettingSet_f(I,cSetting_dash_width, 1.0F);
 
-  SettingSet_f(I,cSetting_dash_radius, 0.14);
+  SettingSet_f(I,cSetting_dash_radius, 0.14F);
 
-  SettingSet_f(I,cSetting_cgo_ray_width_scale, 0.15);
+  SettingSet_f(I,cSetting_cgo_ray_width_scale, 0.15F);
 
-  SettingSet_f(I,cSetting_line_radius, 0.15);
+  SettingSet_f(I,cSetting_line_radius, 0.15F);
 
-  SettingSet_f(I,cSetting_cartoon_round_helices, 1.0);
+  SettingSet_f(I,cSetting_cartoon_round_helices, 1.0F);
 
-  SettingSet_f(I,cSetting_cartoon_refine_normals, 1.0);
+  SettingSet_f(I,cSetting_cartoon_refine_normals, 1.0F);
   
-  SettingSet_f(I,cSetting_cartoon_flat_sheets, 1.0);
+  SettingSet_f(I,cSetting_cartoon_flat_sheets, 1.0F);
 
-  SettingSet_f(I,cSetting_cartoon_smooth_loops, 1.0);
+  SettingSet_f(I,cSetting_cartoon_smooth_loops, 1.0F);
 
-  SettingSet_f(I,cSetting_cartoon_dumbbell_length, 1.60);
+  SettingSet_f(I,cSetting_cartoon_dumbbell_length, 1.60F);
 
-  SettingSet_f(I,cSetting_cartoon_dumbbell_width, 0.17);
+  SettingSet_f(I,cSetting_cartoon_dumbbell_width, 0.17F);
 
-  SettingSet_f(I,cSetting_cartoon_dumbbell_radius, 0.16);
+  SettingSet_f(I,cSetting_cartoon_dumbbell_radius, 0.16F);
 
-  SettingSet_f(I,cSetting_cartoon_fancy_helices, 0.0);  
+  SettingSet_f(I,cSetting_cartoon_fancy_helices, 0.0F);  
 
-  SettingSet_f(I,cSetting_cartoon_fancy_sheets, 1.0);  
+  SettingSet_f(I,cSetting_cartoon_fancy_sheets, 1.0F);  
 
-  SettingSet_f(I,cSetting_ignore_pdb_segi, 0.0);  
+  SettingSet_f(I,cSetting_ignore_pdb_segi, 0.0F);  
 
-  SettingSet_f(I,cSetting_ribbon_throw, 1.35);  
+  SettingSet_f(I,cSetting_ribbon_throw, 1.35F);  
 
-  SettingSet_f(I,cSetting_cartoon_throw, 1.35);  
+  SettingSet_f(I,cSetting_cartoon_throw, 1.35F);  
 
-  SettingSet_f(I,cSetting_cartoon_refine, 5);  
+  SettingSet_f(I,cSetting_cartoon_refine, 5.0F);  
 
-  SettingSet_f(I,cSetting_cartoon_refine_tips, 10);  
+  SettingSet_f(I,cSetting_cartoon_refine_tips, 10.0F);  
 
-  SettingSet_f(I,cSetting_cartoon_discrete_colors, 0.0);  
+  SettingSet_f(I,cSetting_cartoon_discrete_colors, 0.0F);  
 
-  SettingSet_f(I,cSetting_normalize_ccp4_maps, 1.0);  
+  SettingSet_f(I,cSetting_normalize_ccp4_maps, 1.0F);  
 
-  SettingSet_f(I,cSetting_surface_poor, 0.89);  
+  SettingSet_f(I,cSetting_surface_poor, 0.89F);  
 
-  SettingSet_f(I,cSetting_internal_feedback, 1.00);  /* this has no effect - set by invocation.py */
+  SettingSet_f(I,cSetting_internal_feedback, 1.00F);  /* this has no effect - set by invocation.py */
 
-  SettingSet_f(I,cSetting_cgo_line_width, 1.00);
+  SettingSet_f(I,cSetting_cgo_line_width, 1.00F);
 
-  SettingSet_f(I,cSetting_cgo_line_radius, 0.15);
+  SettingSet_f(I,cSetting_cgo_line_radius, 0.15F);
 
-  SettingSet_f(I,cSetting_logging, 0.0);
+  SettingSet_f(I,cSetting_logging, 0.0F);
 
-  SettingSet_f(I,cSetting_robust_logs, 0.0);
+  SettingSet_f(I,cSetting_robust_logs, 0.0F);
 
-  SettingSet_f(I,cSetting_log_box_selections, 1.0);
+  SettingSet_f(I,cSetting_log_box_selections, 1.0F);
 
-  SettingSet_f(I,cSetting_log_conformations, 1.0);
+  SettingSet_f(I,cSetting_log_conformations, 1.0F);
 
-  SettingSet_f(I,cSetting_valence_default, 0.05);
+  SettingSet_f(I,cSetting_valence_default, 0.05F);
 
 }
 

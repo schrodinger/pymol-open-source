@@ -614,8 +614,8 @@ void SceneDraw(Block *block)
             height = I->ImageBufferHeight;
             
             if((width<I->Width)||(height<I->Height)) {
-              glRasterPos3i((I->Block->rect.right-width)/2.0,
-                            (I->Block->rect.top-height)/2.0,0);
+              glRasterPos3i((int)((I->Block->rect.right-width)/2),
+                            (int)((I->Block->rect.top-height)/2),0);
             } else {
               glRasterPos3i(I->Block->rect.left,I->Block->rect.bottom,0);
             }
@@ -676,22 +676,27 @@ unsigned int SceneFindTriplet(int x,int y)
 unsigned int *SceneReadTriplets(int x,int y,int w,int h)
 {
   unsigned int *result=NULL;
-  pix buffer[w][h];
+  pix *buffer=NULL;
   int a,b,e;
   unsigned char *c;
   int cc = 0;
+  int dim[3];
+
+  dim[0]=w;
+  dim[1]=h;
 
   if(PMGUI) { /*just in case*/
+	buffer=Alloc(pix,w*h);
     result = VLAlloc(unsigned int,w*h);
     glReadBuffer(GL_BACK);
-    glReadPixels(x,y,w,h,GL_RGBA,GL_UNSIGNED_BYTE,&buffer[0][0][0]);
+    glReadPixels(x,y,w,h,GL_RGBA,GL_UNSIGNED_BYTE,&buffer[0][0]);
     
     for(a=0;a<w;a++)
       for(b=0;b<h;b++)
         {
           for(e=0;e<3;e++)
-            if(buffer[a][b][e]) {
-              c=&buffer[a][b][0];
+            if(buffer[a*w+b][e]) {
+              c=&buffer[a*w+b][0];
               VLACheck(result,unsigned int,cc);
               result[cc] =  ((c[0]>>4)&0xF)+(c[1]&0xF0)+((c[2]<<4)&0xF00);
               /*printf("%2x %2x %2x %d\n",c[0],c[1],c[2],result[cc]);*/
@@ -700,6 +705,7 @@ unsigned int *SceneReadTriplets(int x,int y,int w,int h)
               break;
             }
         }
+  FreeP(buffer);
   VLASize(result,unsigned int,cc);
   }
   return(result);

@@ -94,13 +94,13 @@ void RepRibbonRender(RepRibbon *I,CRay *ray,Pickable **pick)
             if(!(*pick)[0].ptr) {
               /* pass 1 - low order bits */
               
-              glColor3ub((i&0xF)<<4,(i&0xF0)|0x8,(i&0xF00)>>4); /* we're encoding the index into the color */
+              glColor3ub((uchar)((i&0xF)<<4),(uchar)((i&0xF0)|0x8),(uchar)((i&0xF00)>>4)); /* we're encoding the index into the color */
               VLACheck((*pick),Pickable,i);
               (*pick)[i] = p[ip]; /* copy object and atom info */
             } else { 
               /* pass 2 - high order bits */
               j=i>>12;
-              glColor3ub((j&0xF)<<4,(j&0xF0)|0x8,(j&0xF00)>>4); 
+              glColor3ub((uchar)((j&0xF)<<4),(uchar)((j&0xF0)|0x8),(uchar)((j&0xF00)>>4)); 
             }
           }	 
           v+=3;
