@@ -474,7 +474,7 @@ CSetting *SettingNewFromPyList(PyObject *list);
 #define cSetting_button_mode_name           330
 #define cSetting_surface_type               331
 #define cSetting_dot_normals                332
-#define cSetting_migrate_sessions           333
+#define cSetting_session_migration          333
 
 /* cSetting_ss_INIT must always be last setting_index +1 */
 
