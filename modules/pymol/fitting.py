@@ -20,7 +20,39 @@ import os
 from cmd import _cmd,lock,unlock,Shortcut,QuietException
 
 def align(source,target,cutoff=2.0,cycles=2,gap=-10.0,extend=-0.5,
-          skip=0,object=None,matrix="BLOSUM62",quiet=1): # EXPERIMENTAL, BUGGY
+          skip=0,object=None,matrix="BLOSUM62",quiet=1): 
+   '''
+DESCRIPTION
+  
+   "align" performs a sequence alignment followed by a structural
+   alignment, and then carrys out zero or more cycles of refinement
+   in order to reject structural outliers found during the fit.
+
+USAGE 
+ 
+   align (source), (target) [,cutoff [,cycles [,gap [,extend \\
+         [,skip [,object [,matrix [, quiet ]]]]]]]]
+ 
+PYMOL API
+  
+   cmd.align( string source, string target, float cutoff=2.0,
+              int cycles=2, float gap=-10.0, float extend=-0.5,
+              float extend=-0.5,int skip=0, string object=None,
+              string matrix="BLOSUM62",int quiet=1 )
+
+NOTE
+
+   If object is not None, then align will create an object which
+   indicates which atoms were paired between the two structures
+
+EXAMPLES
+ 
+   align  prot1////CA, prot2, object=alignment
+   
+SEE ALSO
+
+   fit, rms, rms_cur, intra_rms, intra_rms_cur, pair_fit
+   '''
    r = None
    source = selector.process(source)
    target = selector.process(target)
