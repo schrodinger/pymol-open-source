@@ -558,13 +558,15 @@ void EditorRender(int state)
 {
   CEditor *I = &Editor;
   int i0,i1;
-  float v[3],v0[3],v1[3],v2[3];
+  float v[3],v0[3],v1[3],v2[3],v3[3];
   float d0[3],n0[3],n1[3],n2[3];
   float x[50],y[50];
   int sele0,sele1;
   int nEdge;
-  int c;
-  float tube_size=0.5;
+  int c,a;
+  float tube_size1=0.5;
+  float tube_size2=0.07;
+  float tube_size3=0.45;
 
   if(state!=I->ActiveState)
     {
@@ -574,7 +576,7 @@ void EditorRender(int state)
   if(I->Obj) {
     if(PMGUI) {
 
-      nEdge = SettingGet(cSetting_stick_quality);
+      nEdge = SettingGet(cSetting_stick_quality)*2;
       if(nEdge>50)
         nEdge=50;
 
@@ -593,20 +595,65 @@ void EditorRender(int state)
 
             subtract3f(v1,v0,d0);
             average3f(v1,v0,v2);
+            average3f(v0,v2,v3);
+            average3f(v2,v3,v2);
             copy3f(d0,n0);
             get_system1f3f(n0,n1,n2);
 
-            glDisable(GL_LIGHTING);
+            /*            glDisable(GL_LIGHTING);*/
             glColor3fv(ColorGet(0));
-            glBegin(GL_LINE_LOOP);
-            for(c=0;c<nEdge;c++) {
-              v[0] = v2[0] + n1[0]*tube_size*x[c] + n2[0]*tube_size*y[c];
-              v[1] = v2[1] + n1[1]*tube_size*x[c] + n2[1]*tube_size*y[c];
-              v[2] = v2[2] + n1[2]*tube_size*x[c] + n2[2]*tube_size*y[c];
+            glBegin(GL_TRIANGLE_STRIP);
+            for(a=0;a<=nEdge;a++) {
+              c=a % nEdge;
+              v[0] =  n1[0]*x[c] + n2[0]*y[c];
+              v[1] =  n1[1]*x[c] + n2[1]*y[c];
+              v[2] =  n1[2]*x[c] + n2[2]*y[c];
+              normalize3f(v);
+              glNormal3fv(v);
+              v[0] = v2[0] + n1[0]*tube_size1*x[c] + n2[0]*tube_size1*y[c];
+              v[1] = v2[1] + n1[1]*tube_size1*x[c] + n2[1]*tube_size1*y[c];
+              v[2] = v2[2] + n1[2]*tube_size1*x[c] + n2[2]*tube_size1*y[c];
+              glVertex3fv(v);
+
+              v[0] = v3[0] + n1[0]*tube_size1*x[c] + n2[0]*tube_size1*y[c];
+              v[1] = v3[1] + n1[1]*tube_size1*x[c] + n2[1]*tube_size1*y[c];
+              v[2] = v3[2] + n1[2]*tube_size1*x[c] + n2[2]*tube_size1*y[c];
               glVertex3fv(v);
             }
             glEnd();
-            glEnable(GL_LIGHTING);
+
+            glBegin(GL_TRIANGLE_STRIP);
+            glNormal3fv(n0);
+            for(a=0;a<=nEdge;a++) {
+              c=a % nEdge;
+              v[0] = v2[0] + n1[0]*tube_size1*x[c] + n2[0]*tube_size1*y[c];
+              v[1] = v2[1] + n1[1]*tube_size1*x[c] + n2[1]*tube_size1*y[c];
+              v[2] = v2[2] + n1[2]*tube_size1*x[c] + n2[2]*tube_size1*y[c];
+              glVertex3fv(v);
+              v[0] = v2[0] + n1[0]*tube_size3*x[c] + n2[0]*tube_size3*y[c];
+              v[1] = v2[1] + n1[1]*tube_size3*x[c] + n2[1]*tube_size3*y[c];
+              v[2] = v2[2] + n1[2]*tube_size3*x[c] + n2[2]*tube_size3*y[c];
+              glVertex3fv(v);
+            }
+            glEnd();
+
+            glBegin(GL_TRIANGLE_STRIP);
+            scale3f(n0,-1.0,v);
+            glNormal3fv(v);
+            for(a=0;a<=nEdge;a++) {
+              c=a % nEdge;
+              v[0] = v3[0] + n1[0]*tube_size1*x[c] + n2[0]*tube_size1*y[c];
+              v[1] = v3[1] + n1[1]*tube_size1*x[c] + n2[1]*tube_size1*y[c];
+              v[2] = v3[2] + n1[2]*tube_size1*x[c] + n2[2]*tube_size1*y[c];
+              glVertex3fv(v);
+              v[0] = v3[0] + n1[0]*tube_size3*x[c] + n2[0]*tube_size3*y[c];
+              v[1] = v3[1] + n1[1]*tube_size3*x[c] + n2[1]*tube_size3*y[c];
+              v[2] = v3[2] + n1[2]*tube_size3*x[c] + n2[2]*tube_size3*y[c];
+              glVertex3fv(v);
+            }
+            glEnd();
+
+            /*            glEnable(GL_LIGHTING);*/
           }
         } else {
           /* atom mode */
@@ -617,34 +664,86 @@ void EditorRender(int state)
             n0[1]=0.0;
             n0[2]=0.0;
             get_system1f3f(n0,n1,n2);
-            
-            glDisable(GL_LIGHTING);
+
+
+            /*            glColor3fv(ColorGet(0));            
+            for(a=0;a<sp->NMesh,a++) {
+              glBegin(GL_TRIANGLE_STRIP);
+              v3=
+              v[0] =  n1[0]*x[c] + n2[0]*y[c];
+              v[1] =  n1[1]*x[c] + n2[1]*y[c];
+              v[2] =  n1[2]*x[c] + n2[2]*y[c];
+              normalize3f(v);
+              v[0] = v2[0] + n1[0]*tube_size1*x[c] + n2[0]*tube_size1*y[c]+n0[0]*tube_size2;
+              v[1] = v2[1] + n1[1]*tube_size1*x[c] + n2[1]*tube_size1*y[c]+n0[1]*tube_size2;
+              v[2] = v2[2] + n1[2]*tube_size1*x[c] + n2[2]*tube_size1*y[c]+n0[2]*tube_size2;
+              glVertex3fv(v);
+              v[0] = v2[0] + n1[0]*tube_size1*x[c] + n2[0]*tube_size1*y[c]-n0[0]*tube_size2;
+              v[1] = v2[1] + n1[1]*tube_size1*x[c] + n2[1]*tube_size1*y[c]-n0[1]*tube_size2;
+              v[2] = v2[2] + n1[2]*tube_size1*x[c] + n2[2]*tube_size1*y[c]-n0[2]*tube_size2;
+              glVertex3fv(v);
+              
+            }
+            */
+
             glColor3fv(ColorGet(0));
-            glBegin(GL_LINE_LOOP);
-            for(c=0;c<nEdge;c++) {
-              v[0] = v2[0] + n1[0]*tube_size*x[c] + n2[0]*tube_size*y[c];
-              v[1] = v2[1] + n1[1]*tube_size*x[c] + n2[1]*tube_size*y[c];
-              v[2] = v2[2] + n1[2]*tube_size*x[c] + n2[2]*tube_size*y[c];
+            glBegin(GL_TRIANGLE_STRIP);
+            for(a=0;a<=nEdge;a++) {
+              c=a % nEdge;
+              v[0] =  n1[0]*x[c] + n2[0]*y[c];
+              v[1] =  n1[1]*x[c] + n2[1]*y[c];
+              v[2] =  n1[2]*x[c] + n2[2]*y[c];
+              normalize3f(v);
+              glNormal3fv(v);
+              v[0] = v2[0] + n1[0]*tube_size1*x[c] + n2[0]*tube_size1*y[c]+n0[0]*tube_size2;
+              v[1] = v2[1] + n1[1]*tube_size1*x[c] + n2[1]*tube_size1*y[c]+n0[1]*tube_size2;
+              v[2] = v2[2] + n1[2]*tube_size1*x[c] + n2[2]*tube_size1*y[c]+n0[2]*tube_size2;
+              glVertex3fv(v);
+              v[0] = v2[0] + n1[0]*tube_size1*x[c] + n2[0]*tube_size1*y[c]-n0[0]*tube_size2;
+              v[1] = v2[1] + n1[1]*tube_size1*x[c] + n2[1]*tube_size1*y[c]-n0[1]*tube_size2;
+              v[2] = v2[2] + n1[2]*tube_size1*x[c] + n2[2]*tube_size1*y[c]-n0[2]*tube_size2;
               glVertex3fv(v);
             }
             glEnd();
-            glBegin(GL_LINE_LOOP);
-            for(c=0;c<nEdge;c++) {
-              v[0] = v2[0] + n0[0]*tube_size*x[c] + n2[0]*tube_size*y[c];
-              v[1] = v2[1] + n0[1]*tube_size*x[c] + n2[1]*tube_size*y[c];
-              v[2] = v2[2] + n0[2]*tube_size*x[c] + n2[2]*tube_size*y[c];
+
+            glBegin(GL_TRIANGLE_STRIP);
+            for(a=0;a<=nEdge;a++) {
+              c=a % nEdge;
+              v[0] =  n0[0]*x[c] + n2[0]*y[c];
+              v[1] =  n0[1]*x[c] + n2[1]*y[c];
+              v[2] =  n0[2]*x[c] + n2[2]*y[c];
+              normalize3f(v);
+              glNormal3fv(v);
+              v[0] = v2[0] + n0[0]*tube_size1*x[c] + n2[0]*tube_size1*y[c]+n1[0]*tube_size2;
+              v[1] = v2[1] + n0[1]*tube_size1*x[c] + n2[1]*tube_size1*y[c]+n1[1]*tube_size2;
+              v[2] = v2[2] + n0[2]*tube_size1*x[c] + n2[2]*tube_size1*y[c]+n1[2]*tube_size2;
+              glVertex3fv(v);
+              v[0] = v2[0] + n0[0]*tube_size1*x[c] + n2[0]*tube_size1*y[c]-n1[0]*tube_size2;
+              v[1] = v2[1] + n0[1]*tube_size1*x[c] + n2[1]*tube_size1*y[c]-n1[1]*tube_size2;
+              v[2] = v2[2] + n0[2]*tube_size1*x[c] + n2[2]*tube_size1*y[c]-n1[2]*tube_size2;
               glVertex3fv(v);
             }
             glEnd();
-            glBegin(GL_LINE_LOOP);
-            for(c=0;c<nEdge;c++) {
-              v[0] = v2[0] + n0[0]*tube_size*x[c] + n1[0]*tube_size*y[c];
-              v[1] = v2[1] + n0[1]*tube_size*x[c] + n1[1]*tube_size*y[c];
-              v[2] = v2[2] + n0[2]*tube_size*x[c] + n1[2]*tube_size*y[c];
+
+            glBegin(GL_TRIANGLE_STRIP);
+            for(a=0;a<=nEdge;a++) {
+              c=a % nEdge;
+              v[0] =  n0[0]*x[c] + n1[0]*y[c];
+              v[1] =  n0[1]*x[c] + n1[1]*y[c];
+              v[2] =  n0[2]*x[c] + n1[2]*y[c];
+              normalize3f(v);
+              glNormal3fv(v);
+              v[0] = v2[0] + n0[0]*tube_size1*x[c] + n1[0]*tube_size1*y[c]+n2[0]*tube_size2;
+              v[1] = v2[1] + n0[1]*tube_size1*x[c] + n1[1]*tube_size1*y[c]+n2[1]*tube_size2;
+              v[2] = v2[2] + n0[2]*tube_size1*x[c] + n1[2]*tube_size1*y[c]+n2[2]*tube_size2;
+              glVertex3fv(v);
+              v[0] = v2[0] + n0[0]*tube_size1*x[c] + n1[0]*tube_size1*y[c]-n2[0]*tube_size2;
+              v[1] = v2[1] + n0[1]*tube_size1*x[c] + n1[1]*tube_size1*y[c]-n2[1]*tube_size2;
+              v[2] = v2[2] + n0[2]*tube_size1*x[c] + n1[2]*tube_size1*y[c]-n2[2]*tube_size2;
               glVertex3fv(v);
             }
             glEnd();
-            glEnable(GL_LIGHTING);
+            
           }
         }
       }

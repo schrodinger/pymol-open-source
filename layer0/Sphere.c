@@ -30,7 +30,7 @@ void MakeVertex(int d1,int d2);
 #define tau 0.8506508084      /* t=(1+sqrt(5))/2, tau=t/sqrt(1+t^2)  */
 #define one 0.5257311121      /* one=1/sqrt(1+t^2) , unit sphere     */
 
-float start_points[13][3] = {
+static float start_points[13][3] = {
 {  tau,  one,    0 },
 { -tau,  one,    0 },
 { -tau, -one,    0 },
@@ -44,7 +44,7 @@ float start_points[13][3] = {
 {   0 , -tau, -one },
 {   0 ,  tau, -one }};
 
-int icosahedron[21][3] = {
+static int icosahedron[21][3] = {
     { 4, 8, 7 },
     { 4, 7, 9 },
     { 5, 6, 11  },
@@ -65,6 +65,39 @@ int icosahedron[21][3] = {
     { 6, 1, 11 },
     { 7, 2, 9 },
     { 6, 10, 2 }
+};
+
+int mesh[30][2] = {
+{ 0 , 3 },
+{ 0 , 4 },
+{ 0 , 5 },
+{ 0 , 8 },
+{ 0 , 11 },
+{ 1 , 2 },
+{ 1 , 6 },
+{ 1 , 7 },
+{ 1 , 8 },
+{ 1 , 11 },
+{ 2 , 6 },
+{ 2 , 7 },
+{ 2 , 9 },
+{ 2 , 10 },
+{ 3 , 4 },
+{ 3 , 5 },
+{ 3 , 9 },
+{ 3 , 10 },
+{ 4 , 7 },
+{ 4 , 8 },
+{ 4 , 9 },
+{ 5 , 6 },
+{ 5 , 10 },
+{ 5 , 11 },
+{ 6 , 10 },
+{ 6 , 11 },
+{ 7 , 8 },
+{ 7 , 9 },
+{ 8 , 11 },
+{ 9 , 10 }                                                                        
 };
 
 #define MAXDOT 650
@@ -147,7 +180,7 @@ SphereRec *MakeDotSphere(int level)
   ErrChkPtr(Tri);
   TriFlag=Alloc(int,MAXTRI);
   ErrChkPtr(TriFlag);
-
+  
   NDot = 12;
   for(a=0;a<NDot;a++)
 	 {
@@ -385,7 +418,12 @@ SphereRec *MakeDotSphere(int level)
   result->nDot = NDot;
   result->NStrip = nStrip;
   result->NVertTot = nVertTot;
-
+  result->Mesh = NULL;
+  result->NMesh = 0;
+  if (!level) { /* provide mesh for Sphere0 only...rest, to do.*/
+    result->Mesh=(int*)mesh;
+    result->NMesh=30;
+  }
   /*
   q=result->Sequence;
   for(a=0;a<result->NStrip;a++)
@@ -404,6 +442,7 @@ SphereRec *MakeDotSphere(int level)
 
 void SphereFree(SphereRec *I)
 {
+  /* NOTE: I->Mesh is not currently a pointer*/
   mfree(I->dot);
   mfree(I->StripLen);
   mfree(I->Sequence);
