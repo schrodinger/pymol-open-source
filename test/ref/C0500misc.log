@@ -15,7 +15,6 @@ PyMOL>print 'it be done'
 it be done
 PyMOL>viewport 200,150
 PyMOL>stereo on
-Error: stereo not available
 PyMOL>turn x,90
 PyMOL>origin
 PyMOL>origin (i;11)

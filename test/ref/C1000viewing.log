@@ -214,20 +214,20 @@ PyMOL>ray
 PyMOL>disable
 PyMOL>enable 3al1
 PyMOL>ray
- RayRenderTest: obtained 1262 graphics primitives.
+ RayRenderTest: obtained 1266 graphics primitives.
 PyMOL>disable
 PyMOL>enable
 PyMOL>ray
- RayRenderTest: obtained 1428 graphics primitives.
+ RayRenderTest: obtained 1432 graphics primitives.
 PyMOL>disable
 PyMOL>enable all
 PyMOL>ray
- RayRenderTest: obtained 1428 graphics primitives.
+ RayRenderTest: obtained 1432 graphics primitives.
 PyMOL>disable
 PyMOL>enable 3al1
 PyMOL>enable pept
 PyMOL>ray
- RayRenderTest: obtained 1428 graphics primitives.
+ RayRenderTest: obtained 1432 graphics primitives.
 PyMOL>del all
 PyMOL>reset
 PyMOL>cmd._dump_floats(cmd.get_view(0))
