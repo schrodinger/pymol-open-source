@@ -170,7 +170,7 @@ void CoordSetUpdate(CoordSet *I)
 		  I->Rep[cRepSurface]=RepSurfaceNew(I);
 		  SceneDirty();
 		} else {
-		  I->Rep[a]->fUpdate(I->Rep[cRepSurface],I);
+		  I->Rep[cRepSurface]->fUpdate(I->Rep[cRepSurface],I);
 		  SceneDirty();
 		}
 	 }

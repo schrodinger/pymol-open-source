@@ -129,10 +129,31 @@ Rep *RepWireBondNew(CoordSet *cs)
   int a,a1,a2,*b,c1,c2,s1,s2,b1,b2;
   int half_bonds;
   float *v,*v0,*v1,*v2,h[3];
+  int visFlag;
   OOAlloc(RepWireBond);
+  
+  obj = cs->Obj;
+
+  visFlag=false;
+  b=obj->Bond;
+  for(a=0;a<obj->NBond;a++)
+    {
+      b1 = *(b++);
+      b2 = *(b++);
+      b++;
+      if(obj->AtomInfo[b1].visRep[cRepLine]||
+         obj->AtomInfo[b2].visRep[cRepLine]) {
+        visFlag=true;
+        break;
+      }
+    }
+  if(!visFlag) {
+    OOFreeP(I);
+    return(NULL); /* skip if no dots are visible */
+  }
 
   RepInit(&I->R);
-  obj = cs->Obj;
+
   I->R.fRender=(void (*)(struct Rep *, CRay *, Pickable **))RepWireBondRender;
   I->R.fFree=(void (*)(struct Rep *))RepWireBondFree;
 

@@ -218,7 +218,22 @@ Rep *RepMeshNew(CoordSet *cs)
   int escFlag;
   float probe_radius,probe_radius2;
   float min_spacing;
+  int visFlag;
   OOAlloc(RepMesh);
+
+  obj = cs->Obj;
+  visFlag=false;
+  for(a=0;a<cs->NIndex;a++) {
+	 if(obj->AtomInfo[cs->IdxToAtm[a]].visRep[cRepMesh])
+		{
+		  visFlag=true;
+		  break;
+		}
+  }
+  if(!visFlag) {
+    OOFreeP(I);
+    return(NULL); /* skip if no dots are visible */
+  }
 
   RepInit(&I->R);
 
@@ -234,8 +249,6 @@ Rep *RepMeshNew(CoordSet *cs)
   I->R.fFree=(void (*)(struct Rep *))RepMeshFree;
   I->Obj = (Object*)(cs->Obj);
   I->R.fRecolor=(void (*)(struct Rep*, struct CoordSet*))RepMeshColor;
-
-  obj = cs->Obj;
 
   /* don't waist time computing a mesh unless we need it!! */
   for(a=0;a<cs->NIndex;a++) {

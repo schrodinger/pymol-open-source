@@ -62,13 +62,20 @@ typedef struct {
   int NMember;
   ObjectMolecule **Obj;
   TableRec *Table;
+  float *Vertex;
+  int *Flag1,*Flag2;
   int NAtom;
   int NModel;
+  int NCSet;
   int IgnoreCase;
 } SelectorType;
 
 SelectorType Selector;
 
+int SelectorGetInterstateVLA(int sele1,int state1,int sele2,int state2,
+									  float cutoff,int **vla);
+int SelectorGetSeleNCSet(int sele);
+int SelectorGetArrayNCSet(int *array);
 
 int SelectorModulate1(EvalElem *base);
 int SelectorSelect0(EvalElem *base);
@@ -153,35 +160,113 @@ static int BondCompare(int *a,int *b)
   return(result);
 }
 /*========================================================================*/
-int *SelectorGetInteractions(int sele1,int state1,int sele2,int state2,
-									  float cutoff,int *count)
+int SelectorGetSeleNCSet(int sele)
+{
+  SelectorType *I=&Selector;
+  int a,s,at;
+  ObjectMolecule *obj;
+  int result=0;
+  for(a=0;a<I->NAtom;a++) {
+    obj=I->Obj[I->Table[a].model];
+    at=I->Table[a].atom;
+    s=obj->AtomInfo[at].selEntry;
+    while(s) 
+      {
+        if(I->Member[s].selection==sele)
+			 if(result<obj->NCSet) result=obj->NCSet;
+        s=SelectorNext(s);
+		}
+  }
+  return(result);
+}
+/*========================================================================*/
+int SelectorGetArrayNCSet(int *array)
+{
+  SelectorType *I=&Selector;
+  int a;
+  ObjectMolecule *obj;
+  int result=0;
+
+  for(a=0;a<I->NAtom;a++) 
+	 if(*(array++)) {
+		obj=I->Obj[I->Table[a].model];
+		if(result<obj->NCSet) result=obj->NCSet;
+	 }
+  return(result);
+}
+/*========================================================================*/
+float SelectorSumVDWOverlap(int sele1,int state1,int sele2,int state2)
+{
+  SelectorType *I=&Selector;
+  int *vla=NULL;
+  int c;
+  float result=0.0;
+  float sumVDW,dist;
+  int a1,a2;
+  AtomInfoType *ai1,*ai2;
+  int at1,at2;
+  CoordSet *cs1,*cs2;
+  ObjectMolecule *obj1,*obj2;
+  int idx1,idx2;
+  int a;
+
+  SelectorUpdateTable();
+  c=SelectorGetInterstateVLA(sele1,state1,sele2,state2,2*MAX_VDW,&vla);
+  for(a=0;a<c;a++) {
+    a1=vla[a*2];
+    a2=vla[a*2+1];
+
+    at1=I->Table[a1].atom;
+    at2=I->Table[a2].atom;
+    
+    obj1=I->Obj[I->Table[a1].model];
+    obj2=I->Obj[I->Table[a2].model];
+
+    if(state1<obj1->NCSet&&state2<obj2->NCSet) {
+      cs1=obj1->CSet[state1];
+      cs2=obj2->CSet[state2];
+      if(cs1&&cs2) { /* should always be true */
+        
+        ai1=obj1->AtomInfo+at1;
+        ai2=obj2->AtomInfo+at2;
+        
+        idx1=cs1->AtmToIdx[at1];
+        idx2=cs2->AtmToIdx[at2];
+        
+        sumVDW=ai1->vdw+ai2->vdw;
+        dist=diff3f(cs1->Coord+3*idx1,cs2->Coord+3*idx2);
+
+        if(dist<sumVDW) {
+          result+=((sumVDW-dist)/2.0);
+        }
+      }
+    }
+  }
+  VLAFreeP(vla);
+  return(result);
+}
+/*========================================================================*/
+int SelectorGetInterstateVLA(int sele1,int state1,int sele2,int state2,
+										float cutoff,int **vla) /* Assumes valid tables */
 {
   SelectorType *I=&Selector;
   MapType *map;
-  float *v1,*v2,*v;
-  int *i1,*i2,*i,*res;
-  int n1,n2,n;
-  int c;
+  float *v2;
+  int n1,n2;
+  int c,i,j,h,k,l;
   int at;
-  int a,s,ind;
+  int a,s,idx;
   ObjectMolecule *obj;
+  CoordSet *cs;
+
+  if(!(*vla))
+	 (*vla)=VLAlloc(int,1000);
 
   c=0;
-  res=VLAlloc(int,1000);
-  
-  v1=VLAlloc(float,10000);
-  v2=VLAlloc(float,10000);
-  i1=VLAlloc(int,10000);
-  i2=VLAlloc(int,10000);
-
   n1=0;
-  n2=0;
-
-  SelectorUpdateTable();
-
-  /* first, get vertex lists */
 
   for(a=0;a<I->NAtom;a++) {
+	 I->Flag1[a]=false;
     at=I->Table[a].atom;
     obj=I->Obj[I->Table[a].model];
     s=obj->AtomInfo[at].selEntry;
@@ -189,58 +274,77 @@ int *SelectorGetInteractions(int sele1,int state1,int sele2,int state2,
       {
         if(I->Member[s].selection==sele1)
           {
-            ind=obj->CSet[state1]->AtmToIdx[at];
-            if(ind>=0) {
-				  VLACheck(v1,float,n1*3+2);
-				  VLACheck(i1,int,n1);
-				  copy3f(v1+3*n1,obj->CSet[state1]->Coord+(3*ind));
-				  *(i1+n1)=a;
-				  n1++;
+            if(state1<obj->NCSet) 
+              cs=obj->CSet[state1];
+            else
+              cs=NULL;
+				if(cs) {
+				  idx=cs->AtmToIdx[at];
+				  if(idx>=0) {
+					 copy3f(cs->Coord+(3*idx),I->Vertex+3*a);
+					 I->Flag1[a]=true;
+					 n1++;
+				  }
 				}
 			 }
-        if(I->Member[s].selection==sele1)
-          {
-            ind=obj->CSet[state2]->AtmToIdx[at];
-            if(ind>=0) {
-				  VLACheck(v2,float,n2*3+2);
-				  VLACheck(i2,int,n2);
-				  copy3f(v2+3*n2,obj->CSet[state2]->Coord+(3*ind));
-				  *(i2+n2)=a;
-				  n2++;
-				}
-          }
         s=SelectorNext(s);
 		}
   }
-  if(n1&&n2) {
-	 /* make n1 the smaller of the two */
-	 if(n1>n2) {
-		n=n1;
-		n1=n2;
-		n2=n ;
-		v=v1;
-		v1=v2;
-		v2=v;
-		i=i1;
-		i1=i2;
-		i2=i;
+  /* now create and apply voxel map */
+  c=0;
+  if(n1) {
+	 n2=0;
+	 map=MapNewFlagged(-cutoff,I->Vertex,I->NAtom,NULL,I->Flag1);
+	 if(map) {
+		MapSetupExpress(map);
+		for(a=0;a<I->NAtom;a++) {
+		  at=I->Table[a].atom;
+		  obj=I->Obj[I->Table[a].model];
+		  s=obj->AtomInfo[at].selEntry;
+		  while(s) 
+			 {
+				if(I->Member[s].selection==sele2)
+				  {
+                if(state2<obj->NCSet) 
+                  cs=obj->CSet[state2];
+                else
+                  cs=NULL;
+					 if(cs) {
+						idx=cs->AtmToIdx[at];
+						if(idx>=0) {
+						  v2 = cs->Coord+(3*idx);
+						  MapLocus(map,v2,&h,&k,&l);
+						  i=*(MapEStart(map,h,k,l));
+						  if(i) {
+							 j=map->EList[i++];
+							 while(j>=0) {
+								if(within3f(I->Vertex+3*j,v2,cutoff)) {
+								  VLACheck((*vla),int,c*2+1);
+								  *((*vla)+c*2)=j;
+								  *((*vla)+c*2+1)=a;
+								  c++;
+								}
+								j=map->EList[i++];
+							 }
+						  }
+						  n2++;
+						}
+					 }
+				  }
+				s=SelectorNext(s);
+			 }
+		}
+		MapFree(map);
 	 }
   }
-  VLAFreeP(v1);
-  VLAFreeP(v2);
-  VLAFreeP(i1);
-  VLAFreeP(i2);
-
-  (*count)=c;
-  return(res);
+  return(c);
 }
 /*========================================================================*/
 int SelectorGetPDB(char **charVLA,int sele,int state,int conectFlag)
 {
   SelectorType *I=&Selector;
 
-
-  int a,b,b1,b2,c,d,*ii1,s,ind,at;
+  int a,b,b1,b2,c,d,*ii1,s,idx,at;
   int *bond=NULL;
   int nBond=0;
   int cLen =0;
@@ -260,14 +364,20 @@ int SelectorGetPDB(char **charVLA,int sele,int state,int conectFlag)
       {
         if(I->Member[s].selection==sele)
           {
-            ind=obj->CSet[state]->AtmToIdx[at];
-            if(ind>=0) {
-              I->Table[a].index=c+1;
-              CoordSetAtomToPDBStrVLA(charVLA,&cLen,obj->AtomInfo+at,
-                                      obj->CSet[state]->Coord+(3*ind),c);
-              c++;
+            if(state<obj->NCSet) 
+              cs=obj->CSet[state];
+            else
+              cs=NULL;
+            if(cs) {
+              idx=cs->AtmToIdx[at];
+              if(idx>=0) {
+                I->Table[a].index=c+1;
+                CoordSetAtomToPDBStrVLA(charVLA,&cLen,obj->AtomInfo+at,
+                                        obj->CSet[state]->Coord+(3*idx),c);
+                c++;
+              }
+              break;
             }
-            break;
           }
         s=SelectorNext(s);
       }
@@ -278,45 +388,52 @@ int SelectorGetPDB(char **charVLA,int sele,int state,int conectFlag)
     for(a=0;a<I->NModel;a++) {
       obj=I->Obj[a];
       ii1=obj->Bond;
-      cs=obj->CSet[state];
-      atInfo=obj->AtomInfo;
-      for(b=0;b<obj->NBond;b++) {
-        b1=ii1[0];
-        b2=ii1[1];        
-        if((cs->AtmToIdx[b1]>=0)&&(cs->AtmToIdx[b2]>=0)&&
-           (atInfo[b1].hetatm||atInfo[b2].hetatm)) {
-          b1+=obj->SeleBase;
-          b2+=obj->SeleBase;
-          if(I->Table[b1].index&&I->Table[b2].index) {
-            VLACheck(bond,int,nBond*2+12);
-            b1=I->Table[b1].index;
-            b2=I->Table[b2].index;
-            for(d=0;d<ii1[2];d++) {
-              bond[nBond*2] = b1;
-              bond[nBond*2+1] = b2;
-              nBond++;
-              bond[nBond*2] = b2;
-              bond[nBond*2+1] = b1;
-              nBond++;
+      if(state<obj->NCSet) 
+        cs=obj->CSet[state];
+      else
+        cs=NULL;
+      if(cs) {
+        atInfo=obj->AtomInfo;
+        for(b=0;b<obj->NBond;b++) {
+          b1=ii1[0];
+          b2=ii1[1];        
+          if((cs->AtmToIdx[b1]>=0)&&(cs->AtmToIdx[b2]>=0)&&
+             (atInfo[b1].hetatm||atInfo[b2].hetatm)) {
+            b1+=obj->SeleBase;
+            b2+=obj->SeleBase;
+            if(I->Table[b1].index&&I->Table[b2].index) {
+              VLACheck(bond,int,nBond*2+12);
+              b1=I->Table[b1].index;
+              b2=I->Table[b2].index;
+              for(d=0;d<ii1[2];d++) {
+                bond[nBond*2] = b1;
+                bond[nBond*2+1] = b2;
+                nBond++;
+                bond[nBond*2] = b2;
+                bond[nBond*2+1] = b1;
+                nBond++;
+              }
             }
           }
-        }
         ii1+=3;
+        }
       }
     }
     UtilSortInPlace(bond,nBond,sizeof(int)*2,(UtilOrderFn*)BondInOrder);
     ii1=bond;
     b1=-1;
+	 b2=-1;
     newline = false;
     for(a=0;a<nBond;a++) {
       if(a<(nBond-1)) 
         if((ii1[0]==ii1[2])&&(ii1[1]==ii1[3])) newline=true;
       if(b1!=ii1[0]||((b1==ii1[0])&&(b2==ii1[1]))||newline) {
-        newline=false;
         if(a) cLen+=sprintf((*charVLA)+cLen,"\n");
         cLen+=sprintf((*charVLA)+cLen,"CONECT%5d%5d",
                       ii1[0],ii1[1]);
         b1=ii1[0];
+		  b2=ii1[1];
+        newline=false;
       } else cLen+=sprintf((*charVLA)+cLen,"%5d",
                            ii1[1]);
       b2=ii1[1];
@@ -518,6 +635,10 @@ int SelectorUpdateTable(void)
   SelectorType *I=&Selector;
   FreeP(I->Table);
   FreeP(I->Obj);
+  FreeP(I->Vertex);
+  FreeP(I->Flag1);
+  FreeP(I->Flag2);
+  I->NCSet = 0;
   modelCnt=0;
   while(ExecutiveIterateObject(&o,&hidden))
 	 {
@@ -525,6 +646,7 @@ int SelectorUpdateTable(void)
 		  {
 			 obj=(ObjectMolecule*)o;
 			 c+=obj->NAtom;
+			 if(I->NCSet<obj->NCSet) I->NCSet=obj->NCSet;
 		  }
 		modelCnt++;
 	 }
@@ -553,6 +675,12 @@ int SelectorUpdateTable(void)
 	 }
   I->NModel=modelCnt;
   I->NAtom=c;
+  I->Flag1=Alloc(int,c);
+  ErrChkPtr(I->Flag1);
+  I->Flag2=Alloc(int,c);
+  ErrChkPtr(I->Flag2);
+  I->Vertex=Alloc(float,c*3);
+  ErrChkPtr(I->Vertex);
   return(true);
 }
 /*========================================================================*/
@@ -572,56 +700,106 @@ int *SelectorSelect(char *sele)
 /*========================================================================*/
 int SelectorModulate1(EvalElem *base)
 {
-  int a,b,d,e;
+  SelectorType *I=&Selector;
+  int a,d,e;
   int c=0;
   float dist;
-  float *v;
-  CoordSet *cs1,*cs2;
+  float *v2;
+  CoordSet *cs;
   int ok=true;
-  SelectorType *I=&Selector;
+  int nCSet;
+  MapType *map;
+  int i,j,h,k,l;
+  int n1,at,idx;
+  ObjectMolecule *obj;
+
   base[1].sele=base[0].sele;
   base->sele=Alloc(int,I->NAtom);
-  for(a=0;a<I->NAtom;a++)
-	 base[0].sele[a]=false;
+  for(a=0;a<I->NAtom;a++) base[0].sele[a]=false;
   ErrChkPtr(base->sele);
   switch(base[1].code)
 	 {
-	 case 'ARD_': /* Currently an c*N^2 operations - TODO fix */
+	 case 'ARD_':
 	 case 'EXP_':
 		if(!sscanf(base[2].text,"%f",&dist))
 		  ok=ErrMessage("Selector","Invalid distance.");
 		if(ok)
-		  for(a=0;a<I->NAtom;a++)
-			 {
-				if(base[1].sele[a])
-				  for(e=0;e<I->Obj[I->Table[a].model]->NCSet;e++)
-                if(I->Obj[I->Table[a].model]->CSet[e])
-                  {
-						  cs1 = I->Obj[I->Table[a].model]->CSet[e];
-                    v=cs1->Coord+(3*cs1->AtmToIdx[I->Table[a].atom]);
-                    for(b=0;b<I->NAtom;b++)
-                      if((!base[0].sele[b])&&((base[1].code=='EXP_')||(!base[1].sele[b]))) /*exclude current selection */
-                        {
-                          for(d=0;d<I->Obj[I->Table[b].model]->NCSet;d++)
-                            {
-										cs2 = I->Obj[I->Table[b].model]->CSet[e];
-                              if(diff3f(cs2->Coord+(3*cs2->AtmToIdx[I->Table[b].atom]),v)<dist)
-                                {
-                                  base[0].sele[b]=true;
-                                  c++;
-                                  break;
-                                }
-                            }
-                        }
-                  }
-			 }
+		  {
+			 for(d=0;d<I->NCSet;d++)
+				{
+				  n1=0;
+				  for(a=0;a<I->NAtom;a++) {
+					 I->Flag1[a]=false;
+					 at=I->Table[a].atom;
+					 obj=I->Obj[I->Table[a].model];
+                if(d<obj->NCSet) 
+                  cs=obj->CSet[d];
+                else
+                  cs=NULL;
+					 if(cs) {
+						idx=cs->AtmToIdx[at];
+						if(idx>=0) {
+						  copy3f(cs->Coord+(3*idx),I->Vertex+3*a);
+						  I->Flag1[a]=true;
+						  n1++;
+						}
+					 }
+				  }
+				  if(n1) {
+					 map=MapNewFlagged(-dist,I->Vertex,I->NAtom,NULL,I->Flag1);
+					 if(map) {
+						MapSetupExpress(map);
+						nCSet=SelectorGetArrayNCSet(base[1].sele);
+						for(e=0;e<nCSet;e++) {
+						  for(a=0;a<I->NAtom;a++) {
+							 if(base[1].sele[a])
+								{
+								  at=I->Table[a].atom;
+								  obj=I->Obj[I->Table[a].model];
+                          if(e<obj->NCSet) 
+                            cs=obj->CSet[e];
+                          else
+                            cs=NULL;
+								  if(cs) {
+									 idx=cs->AtmToIdx[at];
+
+									 if(idx>=0) {
+										v2 = cs->Coord+(3*idx);
+										MapLocus(map,v2,&h,&k,&l);
+										i=*(MapEStart(map,h,k,l));
+										if(i) {
+										  j=map->EList[i++];
+										  while(j>=0) {
+											 if((!base[0].sele[j])&&
+												 ((base[1].code=='EXP_')
+												  ||(!base[1].sele[j]))) /*exclude current selection */
+												{
+												  if(within3f(I->Vertex+3*j,v2,dist)) base[0].sele[j]=true;
+												}
+											 j=map->EList[i++];
+										  }
+										}
+									 }
+								  }
+								}
+						  }
+						}
+						MapFree(map);
+					 }
+				  }
+				}
+		  }
 		break;
 	 }
   FreeP(base[1].sele);
-  if(DebugSelector&DebugState)
+  if(DebugSelector&DebugState) {
+	 c=0;
+	 for(a=0;a<I->NAtom;a++)
+		if(base[0].sele[a]) c++;
 	 printf("SelectorModulate0: %c%c%c%c : %d atoms selected.\n",
 			  base[1].code>>24,base[1].code>>16,
 			  base[1].code>>8,base[1].code&0xFF,c);
+  }
   return(ok);
   
 }
@@ -1356,6 +1534,10 @@ void SelectorFree(void)
   FreeP(I->Obj);
   VLAFreeP(I->Member);
   VLAFreeP(I->Name);
+  FreeP(I->Flag1);
+  FreeP(I->Flag2);
+  FreeP(I->Vertex);
+
 }
 /*========================================================================*/
 void SelectorInit(void)
@@ -1366,9 +1548,13 @@ void SelectorInit(void)
   I->Name = VLAlloc(WordType,10);
   I->Member = (MemberType*)VLAMalloc(1000,sizeof(MemberType),5,true);
   I->NMember=0;
+  I->NCSet=0;
   I->Table=NULL;
   I->Obj=NULL;
   I->IgnoreCase=true;
+  I->Flag1=NULL;
+  I->Flag2=NULL;
+  I->Vertex=NULL;
 }
 /*========================================================================*/
 

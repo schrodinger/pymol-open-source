@@ -31,7 +31,6 @@ void ColorDef(char *name,float *v)
   CColor *I=&Color;
   int color=-1;
   int a;
-  int idx;
   for(a=0;a<I->NColor;a++)
 	 {
 		if(strcmp(name,I->Color[a].Name)==0) 

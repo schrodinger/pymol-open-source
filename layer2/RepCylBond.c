@@ -124,15 +124,33 @@ Rep *RepCylBondNew(CoordSet *cs)
   float radius;
   int nEdge;
   int half_bonds;
+  int visFlag;
   OOAlloc(RepCylBond);
 
+  obj = cs->Obj;
+  visFlag=false;
+  b=obj->Bond;
+  for(a=0;a<obj->NBond;a++)
+    {
+      b1 = *(b++);
+      b2 = *(b++);
+      b++;
+      if(obj->AtomInfo[b1].visRep[cRepCyl]||
+         obj->AtomInfo[b2].visRep[cRepCyl]) {
+        visFlag=true;
+        break;
+      }
+    }
+  if(!visFlag) {
+    OOFreeP(I);
+    return(NULL); /* skip if no dots are visible */
+  }
 
   nEdge = SettingGet(cSetting_stick_quality);
   radius = SettingGet(cSetting_stick_radius);
   half_bonds = SettingGet(cSetting_half_bonds);  
 
   RepInit(&I->R);
-  obj = cs->Obj;
   I->R.fRender=(void (*)(struct Rep *, CRay *, Pickable **))RepCylBondRender;
   I->R.fFree=(void (*)(struct Rep *))RepCylBondFree;
 

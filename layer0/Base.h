@@ -37,6 +37,10 @@ Z* -------------------------------------------------------------------
 #define MAXFLOAT FLT_MAX
 #endif
 
+#ifndef R_SMALL4
+#define R_SMALL4 0.0001
+#endif
+
 typedef struct { 
   void *ptr;
   int index; /* NOTE: that first record contains the list count...not pick info */

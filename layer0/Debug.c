@@ -19,6 +19,6 @@ Z* -------------------------------------------------------------------
 unsigned int DebugState=0;
 
 /* 
-DebugSelector | DebugParser | DebugMolecule;
+DebugSelector | DebugParser | DebugMolecule | DebugMap
  */
 

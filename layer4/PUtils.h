@@ -36,5 +36,6 @@ void PUnlock(int lock,PyThreadState **save);
 void PFlush(PyThreadState **save);
 void PStereoOff(void);
 void PDefineFloat(char *name,float value);
+PyObject *PFloatVLAToPyList(float *f);
 
 #endif

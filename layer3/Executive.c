@@ -114,6 +114,16 @@ void ExecutiveSort(char *name)
   }
 }
 /*========================================================================*/
+float ExecutiveOverlap(char *s1,int state1,char *s2,int state2)
+{
+  int sele1,sele2;
+  
+  sele1=SelectorIndexByName(s1);
+  sele2=SelectorIndexByName(s2);
+  
+  return(SelectorSumVDWOverlap(sele1,state1,sele2,state2));
+}
+/*========================================================================*/
 void ExecutiveStereo(int flag)
 {
 
@@ -124,11 +134,11 @@ void ExecutiveStereo(int flag)
   }
 }
 /*========================================================================*/
-void ExecutiveDistance(char *s1,char *s2)
+float ExecutiveDistance(char *s1,char *s2)
 {
   int sele1,sele2;
    char buffer[255];
-   float dist;
+   float dist = -1.0;
 
    ObjectMoleculeOpRec op1;
    ObjectMoleculeOpRec op2;
@@ -165,11 +175,11 @@ void ExecutiveDistance(char *s1,char *s2)
      sprintf(buffer," Distance: %8.3f [%i atom(s) to %i atom(s)]\n",
              dist,
             op1.i1,op2.i1);
-     PDefineFloat("dist",dist);
     OrthoAddOutput(buffer);
   } else {
-    ErrMessage("ExecutiveFit","No atoms selected.");
+    ErrMessage("ExecutiveRMS","No atoms selected.");
 	}
+   return(dist);
 }
 /*========================================================================*/
 char *ExecutiveSeleToPDBStr(char *s1,int state,int conectFlag)
@@ -314,10 +324,10 @@ void ExecutiveAlter(char *s1,char *expr)
   }
 }
 /*========================================================================*/
-void ExecutiveFit(char *s1,char *s2)
+float ExecutiveRMS(char *s1,char *s2,int mode)
 {
   int sele1,sele2;
-  float rms;
+  float rms = -1.0;
   int a;
   float inv,*f;
   ObjectMoleculeOpRec op1;
@@ -373,30 +383,35 @@ void ExecutiveFit(char *s1,char *s2)
     if(op1.nvv1!=op2.nvv1) {
       sprintf(buffer,"Atom counts between selections don't match (%d vs %d)\n",
               op1.nvv1,op2.nvv1);
-      ErrMessage("ExecutiveFit",buffer);
+      ErrMessage("ExecutiveRMS",buffer);
     } else if(op1.nvv1) {
-      rms = MatrixFitRMS(op1.nvv1,op1.vv1,op2.vv1,NULL,op2.ttt);
-      printf(" ExecutiveFit: RMS = %8.3f (%d to %d atoms)\n",
+      if(mode!=0) 
+        rms = MatrixFitRMS(op1.nvv1,op1.vv1,op2.vv1,NULL,op2.ttt);
+      else
+        rms = MatrixGetRMS(op1.nvv1,op1.vv1,op2.vv1,NULL);
+      printf(" Executive: RMS = %8.3f (%d to %d atoms)\n",
              rms,op1.nvv1,op2.nvv1);
-      PDefineFloat("rms",rms);
-      op2.code = 'TTTF';
-      ExecutiveObjMolSeleOp(sele1,&op2);
+      if(mode==2) {
+        op2.code = 'TTTF';
+        ExecutiveObjMolSeleOp(sele1,&op2);
+      }
     } else {
-      ErrMessage("ExecutiveFit","No atoms selected.");
+      ErrMessage("ExecutiveRMS","No atoms selected.");
     }
   }
   VLAFreeP(op1.vv1);
   VLAFreeP(op2.vv1);
   VLAFreeP(op1.vc1);
   VLAFreeP(op2.vc1);
+  return(rms);
 }
 /*========================================================================*/
-void ExecutiveFitStates(char *s1,int target)
+float *ExecutiveRMSStates(char *s1,int target,int mode)
 {
   int sele1;
   ObjectMoleculeOpRec op1;
   ObjectMoleculeOpRec op2;
-  
+  float *result = NULL;
   sele1=SelectorIndexByName(s1);
   if(sele1>=0) {
     op1.code = 'SVRT';
@@ -408,16 +423,21 @@ void ExecutiveFitStates(char *s1,int target)
     op2.vv2=op1.vv1;
     op2.nvv2=op1.nvv1;
     op2.i2=target;
+    op2.i1=mode;
+    op2.f1VLA=VLAlloc(float,10);
+    VLASetSize(op2.f1VLA,0); /* failsafe */
     op2.vv1=(float*)VLAMalloc(1000,sizeof(float),5,0);
     op2.code = 'SFIT';
     op2.nvv1=0;
     ExecutiveObjMolSeleOp(sele1,&op2);
+    result=op2.f1VLA;
   } 
   VLAFreeP(op1.vv1);
   VLAFreeP(op2.vv1);
+  return(result);
 }
 /*========================================================================*/
-void ExecutiveFitPairs(WordType *sele,int pairs)
+float ExecutiveRMSPairs(WordType *sele,int pairs,int mode)
 {
   int sele1,sele2;
   int a,c;
@@ -479,25 +499,28 @@ void ExecutiveFitPairs(WordType *sele,int pairs)
     if(op1.nvv1!=op2.nvv1) {
       sprintf(buffer,"Atom counts between selection sets don't match (%d != %d).",
               op1.nvv1,op2.nvv1);
-      ErrMessage("ExecutiveFit",buffer);
+      ErrMessage("ExecutiveRMS",buffer);
     } else if(op1.nvv1) {
-      rms = MatrixFitRMS(op1.nvv1,op1.vv1,op2.vv1,NULL,op2.ttt);
-      printf(" ExecutiveFit: RMS = %8.3f (%d to %d atoms)\n",
+      if(mode!=0)
+        rms = MatrixFitRMS(op1.nvv1,op1.vv1,op2.vv1,NULL,op2.ttt);
+      else
+        rms = MatrixGetRMS(op1.nvv1,op1.vv1,op2.vv1,NULL);
+      printf(" ExecutiveRMS: RMS = %8.3f (%d to %d atoms)\n",
              rms,op1.nvv1,op2.nvv1);
-      PDefineFloat("rms",rms);
       op2.code = 'TTTF';
       SelectorGetTmp(combi,s1);
       sele1=SelectorIndexByName(s1);
       ExecutiveObjMolSeleOp(sele1,&op2);
       SelectorFreeTmp(s1);
     } else {
-      ErrMessage("ExecutiveFit","No atoms selected.");
+      ErrMessage("ExecutiveRMS","No atoms selected.");
     }
   }
   VLAFreeP(op1.vv1);
   VLAFreeP(op2.vv1);
   VLAFreeP(op1.vc1);
   VLAFreeP(op2.vc1);
+  return(rms);
 }
 /*========================================================================*/
 void ExecutiveUpdateObjectSelection(struct Object *obj)
@@ -526,6 +549,20 @@ void ExecutiveDrawNow(void)
   MainSwapBuffers();
 
 }
+/*========================================================================*/
+int ExecutiveCountStates(char *s1)
+{
+  int sele1;
+  int result=0;
+  sele1=SelectorIndexByName(s1);
+  if(sele1>=0) {
+    SelectorUpdateTable();
+    result = SelectorGetSeleNCSet(sele1);
+  }
+  return(result);
+}
+
+
 /*========================================================================*/
 void ExecutiveRay(void)
 {

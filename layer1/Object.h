@@ -32,8 +32,8 @@ typedef struct Object {
   void (*fFree)(struct Object *I);
   int  (*fGetNFrame)(struct Object *I);
   void (*fDescribeElement)(struct Object *I,int index);
-  float extent[6];
-  float center[3];
+  /*  float extent[6];
+      float center[3];*/
   int type;
   char Name[ObjNameMax];
   int Color;

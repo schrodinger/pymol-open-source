@@ -47,9 +47,9 @@ CCOPT1 = -m486 -D__i686__ -ffast-math -Wall -ansi -Wmissing-prototypes
 #--- GCC Profiling
 #CCOPT2 = -pg -O3 -funroll-loops
 #--- Irix CC Optimized
-CCOPT2 = -O2
+#CCOPT2 = -O2
 #--- Debugging
-#CCOPT2 = -g
+CCOPT2 = -g
 #---------------------------------------------------------------------
 #
 #- Choose One Pair ---------------------------------------------------

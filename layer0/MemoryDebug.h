@@ -78,6 +78,7 @@ void *_VLAMalloc(const char *file,int line,unsigned int initSize,unsigned int re
 
 void VLAFree(void *ptr);
 void *VLASetSize(void *ptr,unsigned int newSize);
+unsigned int VLAGetSize(void *ptr);
 
 #ifndef _MemoryDebug_ON
 /* _MemoryDebug_ON not defined */

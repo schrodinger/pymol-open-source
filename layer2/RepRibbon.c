@@ -97,7 +97,23 @@ Rep *RepRibbonNew(CoordSet *cs)
   float  power_a = 5;
   float power_b = 5;
   float radius;
+  int visFlag;
   OOAlloc(RepRibbon);
+
+  obj = cs->Obj;
+  visFlag=false;
+  for(a=0;a<cs->NIndex;a++) {
+	 if(obj->AtomInfo[cs->IdxToAtm[a]].visRep[cRepRibbon])
+		{
+		  visFlag=true;
+		  break;
+		}
+  }
+  if(!visFlag) {
+    OOFreeP(I);
+    return(NULL); /* skip if no dots are visible */
+  }
+
   RepInit(&I->R);
   power_a=SettingGet(cSetting_ribbon_power);
   power_b=SettingGet(cSetting_ribbon_power_b);
@@ -105,7 +121,6 @@ Rep *RepRibbonNew(CoordSet *cs)
   sampling=SettingGet(cSetting_ribbon_sampling);
   radius=SettingGet(cSetting_ribbon_radius);
 
-  obj = cs->Obj;
   I->R.fRender=(void (*)(struct Rep *, CRay *, Pickable **))RepRibbonRender;
   I->R.fFree=(void (*)(struct Rep *))RepRibbonFree;
   I->R.fRecolor=NULL;

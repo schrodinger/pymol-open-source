@@ -37,6 +37,7 @@ Z* -------------------------------------------------------------------
 #include"Scene.h"
 #include"PUtils.h"
 #include"Executive.h"
+#include"Setting.h"
 
 void ObjectMoleculeRender(ObjectMolecule *I,int frame,CRay *ray,Pickable **pick);
 void ObjectMoleculeCylinders(ObjectMolecule *I);
@@ -216,7 +217,9 @@ CoordSet *ObjectMoleculeMOLStr2CoordSet(char *buffer,AtomInfoType **atInfoPtr)
   int NColor,CColor,HColor,OColor,SColor,MColor;
   int color=0;
   int ok=true;
+  int autoshow_lines;
 
+  autoshow_lines = SettingGet(cSetting_autoshow_lines);
   NColor=ColorGetIndex("nitrogen");
   CColor=ColorGetIndex("carbon");
   HColor=ColorGetIndex("hydrogen");
@@ -282,7 +285,7 @@ CoordSet *ObjectMoleculeMOLStr2CoordSet(char *buffer,AtomInfoType **atInfoPtr)
 			 p=ncopy(atInfo[a].name,p,3);
 			 UtilCleanStr(atInfo[a].name);
 			 
-			 atInfo[a].visRep[0] = true; /* show lines by default */
+			 atInfo[a].visRep[0] = autoshow_lines; /* show lines by default */
 			 for(c=1;c<cRepCnt;c++) {
 				atInfo[a].visRep[c] = false;
 			 }
@@ -689,13 +692,10 @@ void ObjectMoleculeMerge(ObjectMolecule *I,AtomInfoType *ai,CoordSet *cs)
 /*========================================================================*/
 ObjectMolecule *ObjectMoleculeReadPDBStr(ObjectMolecule *I,char *PDBStr,int frame)
 {
-  float *cord,*coord;
-  float *extent;
   CoordSet *cset = NULL;
   AtomInfoType *atInfo;
   int ok=true;
   int isNew = true;
-  int a;
   unsigned int nAtom = 0;
 
   if(!I) 
@@ -714,30 +714,7 @@ ObjectMolecule *ObjectMoleculeReadPDBStr(ObjectMolecule *I,char *PDBStr,int fram
 		isNew = false;
 	 }
 	 cset=ObjectMoleculePDBStr2CoordSet(PDBStr,&atInfo);	 
-	 coord=cset->Coord;
 	 nAtom=cset->NIndex;
-
-	 if(isNew) {	 
-		I->Obj.extent[0]=coord[0];
-		I->Obj.extent[1]=coord[0];
-		I->Obj.extent[2]=coord[1];
-		I->Obj.extent[3]=coord[1];
-		I->Obj.extent[4]=coord[2];
-		I->Obj.extent[5]=coord[2];
-	 }
-	 
-	 cord = coord-1;
-	 for(a=0;a<nAtom;a++)
-		{
-		  extent = I->Obj.extent; /* a monument to obfuscation and pseudo-optimization! */
-		  if(*(++cord)<*(  extent))   *extent=*cord;
-		  if(*(  cord)>*(++extent))	*extent=*cord;
-		  if(*(++cord)<*(++extent))	*extent=*cord;
-		  if(*(  cord)>*(++extent))	*extent=*cord;
-		  if(*(++cord)<*(++extent))	*extent=*cord;
-		  if(*(  cord)>*(++extent))	*extent=*cord;
-		}
-
   }
 
   /* include coordinate set */
@@ -745,8 +722,6 @@ ObjectMolecule *ObjectMoleculeReadPDBStr(ObjectMolecule *I,char *PDBStr,int fram
     cset->fEnumIndices(cset);
     cset->fInvalidateRep(cset,-1,0);
     if(isNew) {		
-      for(a=0;a<3;a++)
-        I->Obj.center[a] = (I->Obj.extent[2*a]+I->Obj.extent[2*a+1])/2.0;
       I->AtomInfo=atInfo; /* IMPORTANT to reassign: this VLA may have moved! */
     } else {
       ObjectMoleculeMerge(I,atInfo,cset); /* NOTE: will release atInfo */
@@ -940,7 +915,8 @@ void ObjectMoleculeSeleOp(ObjectMolecule *I,int sele,ObjectMoleculeOpRec *op)
      op->nvv1=maxCnt;
      break;
 	case 'SFIT': /* state fitting within a single object */
-	  for(b=0;b<I->NCSet;b++)
+	  for(b=0;b<I->NCSet;b++) {
+       rms = -1.0;
        if(I->CSet[b]&&(b!=op->i1))
          {
            op->nvv1=0;
@@ -971,15 +947,22 @@ void ObjectMoleculeSeleOp(ObjectMolecule *I,int sele,ObjectMoleculeOpRec *op)
              ErrMessage("ExecutiveFit",buffer);
              
            } else if(op->nvv1) {
-             rms = MatrixFitRMS(op->nvv1,op->vv1,op->vv2,NULL,op->ttt);
-             printf(" ExecutiveFit: RMS = %8.3f (%d atoms)\n",
+             if(op->i1!=0)
+               rms = MatrixFitRMS(op->nvv1,op->vv1,op->vv2,NULL,op->ttt);
+             else 
+               rms = MatrixGetRMS(op->nvv1,op->vv1,op->vv2,NULL);
+             printf(" Executive: RMS = %8.3f (%d atoms)\n",
                     rms,op->nvv1);
-             ObjectMoleculeTransformTTTf(I,op->ttt,b);
+             if(op->i1==2) 
+               ObjectMoleculeTransformTTTf(I,op->ttt,b);
            } else {
              ErrMessage("ExecutiveFit","No atoms selected.");
            }
          }
-     
+       VLACheck(op->f1VLA,float,b);
+       op->f1VLA[b]=rms;
+     }
+     VLASetSize(op->f1VLA,I->NCSet); 
      break;
 
 	default:
@@ -1342,6 +1325,13 @@ ObjectMolecule *ObjectMoleculeReadMMDStr(ObjectMolecule *I,char *MMDStr,int fram
   int ok = true;
   CoordSet *cset=NULL;
   AtomInfoType *atInfo;
+  int isNew;
+  int nAtom;
+
+  if(!I) 
+	 isNew=true;
+  else 
+	 isNew=false;
 
   atInfo=VLAMalloc(10,sizeof(AtomInfoType),2,true); /* autozero here is important */
   cset=ObjectMoleculeMMDStr2CoordSet(MMDStr,&atInfo);  
@@ -1361,14 +1351,25 @@ ObjectMolecule *ObjectMoleculeReadMMDStr(ObjectMolecule *I,char *MMDStr,int fram
 		if(I->NCSet<=frame)
 		  I->NCSet=frame+1;
 		VLACheck(I->CSet,CoordSet*,frame);
-		
-		cset->fAppendIndices(cset,I->NAtom);
-		cset->Obj=I;
-		ObjectMoleculeAppendAtoms(I,atInfo,cset);
-		I->CSet[frame] = cset;
-		I->CSet[frame]->fInvalidateRep(I->CSet[frame],-1,0);
-		SceneCountFrames();
-		ObjectMoleculeExtendIndices(I);
+      nAtom=cset->NIndex;
+
+      cset->fEnumIndices(cset);
+      cset->fInvalidateRep(cset,-1,0);
+      if(isNew) {		
+        I->AtomInfo=atInfo; /* IMPORTANT to reassign: this VLA may have moved! */
+        I->NAtom=nAtom;
+      } else {
+        ObjectMoleculeMerge(I,atInfo,cset); /* NOTE: will release atInfo */
+      }
+      cset->Obj = I;
+      if(frame<0) frame=I->NCSet;
+      VLACheck(I->CSet,CoordSet*,frame);
+      if(I->NCSet<=frame) I->NCSet=frame+1;
+      I->CSet[frame] = cset;
+      if(isNew) I->NBond = ObjectMoleculeConnect(&I->Bond,I->AtomInfo,cset,0.2);
+      SceneCountFrames();
+      ObjectMoleculeExtendIndices(I);
+      ObjectMoleculeSort(I);
 	 }
   return(I);
 }
@@ -1408,7 +1409,7 @@ ObjectMolecule *ObjectMoleculeLoadMMDFile(ObjectMolecule *obj,char *fname,
       while(ok) {
         ncopy(cc,p,6);
         if(sscanf(cc,"%d",&nLines)!=1)
-          ok=ErrMessage("LoadMMDFile","error reading file");
+          break;
         if(ok) {
           if(sepPrefix) {
             I=ObjectMoleculeReadMMDStr(NULL,p,frame);
@@ -1449,6 +1450,9 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(char *buffer,AtomInfoType **atInfoPtr)
   int *bond=NULL,*ii1,*ii2,*idx;
   int nBond=0;
   int b1,b2,nReal,maxAt;
+  int autoshow_lines;
+
+  autoshow_lines = SettingGet(cSetting_autoshow_lines);
 
   NColor=ColorGetIndex("nitrogen");
   CColor=ColorGetIndex("carbon");
@@ -1560,11 +1564,11 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(char *buffer,AtomInfoType **atInfoPtr)
             ai->chain[1] = 0;
           }
 
-          p=ncopy(cc,p,4);
+          p=ncopy(cc,p,5);
           if(!sscanf(cc,"%s",ai->resi)) ai->resi[0]=0;
           if(!sscanf(cc,"%d",&ai->resv)) ai->resv=0;
           
-          p=nskip(p,4);
+          p=nskip(p,3);
           p=ncopy(cc,p,8);
           sscanf(cc,"%f",coord+a);
           p=ncopy(cc,p,8);
@@ -1582,7 +1586,7 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(char *buffer,AtomInfoType **atInfoPtr)
           p=ncopy(cc,p,4);
           if(!sscanf(cc,"%s",ai->segi)) ai->segi[0]=0;
           
-          ai->visRep[0] = true;
+          ai->visRep[0] = autoshow_lines;
           for(c=1;c<cRepCnt;c++) {
             ai->visRep[c] = false;
           }
@@ -1708,7 +1712,9 @@ CoordSet *ObjectMoleculeMMDStr2CoordSet(char *buffer,AtomInfoType **atInfoPtr)
   int NColor,CColor,HColor,OColor,SColor,MColor;
   int color=0;
   int ok=true;
+  int autoshow_lines;
 
+  autoshow_lines = SettingGet(cSetting_autoshow_lines);
   NColor=ColorGetIndex("nitrogen");
   CColor=ColorGetIndex("carbon");
   HColor=ColorGetIndex("hydrogen");
@@ -1825,7 +1831,7 @@ CoordSet *ObjectMoleculeMMDStr2CoordSet(char *buffer,AtomInfoType **atInfoPtr)
             else
               strcat(ai->name,cc);
           }
-          ai->visRep[0] = true; /* show lines by default */
+          ai->visRep[0] = autoshow_lines; /* show lines by default */
           for(c=1;c<cRepCnt;c++) {
             ai->visRep[c] = false;
           }

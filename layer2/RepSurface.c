@@ -246,6 +246,8 @@ void RepSurfaceColor(RepSurface *I,CoordSet *cs)
   int inclH;
   int cullByFlag;
 
+
+
   cullByFlag = SettingGet(cSetting_trim_dots);
   inclH = SettingGet(cSetting_dot_hydrogens);
   probe_radius = SettingGet(cSetting_solvent_radius);
@@ -362,9 +364,23 @@ Rep *RepSurfaceNew(CoordSet *cs)
   int a1,a2;
   int cnt;
   float minimum_sep;
-
+  int visFlag;
   SphereRec *sp = Sphere0;
   OOAlloc(RepSurface);
+
+  obj = cs->Obj;
+  visFlag=false;
+  for(a=0;a<cs->NIndex;a++) {
+	 if(obj->AtomInfo[cs->IdxToAtm[a]].visRep[cRepSurface])
+		{
+		  visFlag=true;
+		  break;
+		}
+  }
+  if(!visFlag) {
+    OOFreeP(I);
+    return(NULL); /* skip if no dots are visible */
+  }
 
   RepInit(&I->R);
 

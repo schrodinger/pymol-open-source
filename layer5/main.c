@@ -223,8 +223,10 @@ static void MainKey(unsigned char k, int x, int y)
   switch (k) 
 	 {
 	 case 27: 
-		Py_BLOCK_THREADS;
-		PExit(EXIT_SUCCESS);
+      PLock(cLockAPI,&_save);
+      PParse("_quit");
+      PFlush(&_save);
+      PUnlock(cLockAPI,&_save);
 		break;
 	 default:
 		OrthoKey(k,x,y);
@@ -238,17 +240,12 @@ static void MainKey(unsigned char k, int x, int y)
 /*========================================================================*/
 static void MainSpecial(int k, int x, int y)
 {
-  /*  CMain *I = &Main;*/
+  char buffer[255];
   PLock(cLockAPI,&_save);
-
-  switch (k)
-	 {
-	 default:
-		break;
-	 }
-
+  sprintf(buffer,"_special %d,%d,%d ",k,x,y);
+  PParse(buffer);
+  PFlush(&_save);
   PUnlock(cLockAPI,&_save);
-
 }
 
 /* new window size or exposure */

@@ -20,7 +20,7 @@ Z* -------------------------------------------------------------------
 #include"Ortho.h"
 #include"Word.h"
 
-void ExecutiveDistance(char *sele1,char *sele2);
+float ExecutiveDistance(char *sele1,char *sele2);
 void ExecutiveAlter(char *s1,char *expr);
 void ExecutiveColor(char *name,char *color,int flags);
 void ExecutiveInit(void);
@@ -36,9 +36,9 @@ void ExecutiveSetControlsOff(char *name);
 void ExecutiveSort(char *name);
 void ExecutiveSetSetting(char *sname,char *value);
 void ExecutiveRay(void);
-void ExecutiveFit(char *sele1,char *sele2);
-void ExecutiveFitPairs(WordType *sele,int pairs);
-void ExecutiveFitStates(char *s1,int target);
+float ExecutiveRMS(char *sele1,char *sele2,int mode);
+float ExecutiveRMSPairs(WordType *sele,int pairs,int mode);
+float *ExecutiveRMSStates(char *s1,int target,int mode);
 void ExecutiveReset(int cmd);
 void ExecutiveDrawNow(void);
 void ExecutiveSetAllVisib(int state);
@@ -51,6 +51,8 @@ void ExecutiveOrient(char *sele,Matrix33d mi);
 char *ExecutiveSeleToPDBStr(char *s1,int state,int conectFlag);
 void ExecutiveStereo(int flag);
 void ExecutiveCopy(char *src,char *dst);
+float ExecutiveOverlap(char *s1,int state1,char *s2,int state2);
+int ExecutiveCountStates(char *s1);
 
 #endif
 

@@ -135,6 +135,13 @@ void VLAFree(void *ptr)
   mfree(vla);
 }
 
+unsigned int VLAGetSize(void *ptr)
+{
+  VLARec *vla;
+  vla = &((VLARec*)ptr)[-1];
+  return(vla->nAlloc);
+}
+
 void *VLASetSize(void *ptr,unsigned int newSize)
 {
   VLARec *vla;
