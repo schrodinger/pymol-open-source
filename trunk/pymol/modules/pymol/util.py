@@ -134,6 +134,7 @@ def performance(mode):
       cmd.set('cartoon_sampling',14)
       cmd.set('ribbon_sampling',10)
       cmd.set('transparency_mode',1)
+      cmd.set('stick_ball',1)
       cmd.do("rebuild")
    elif mode==33:
       cmd.set('line_smooth',1)         
@@ -144,6 +145,7 @@ def performance(mode):
       cmd.set('sphere_quality',1)
       cmd.set('cartoon_sampling',7)
       cmd.set('transparency_mode',1)
+      cmd.set('stick_ball',0)
       cmd.do("rebuild")
    elif mode==66: # good perfomance
       cmd.set('line_smooth',0)
@@ -154,6 +156,7 @@ def performance(mode):
       cmd.set('sphere_quality',1)
       cmd.set('cartoon_sampling',6)
       cmd.set('transparency_mode',2)
+      cmd.set('stick_balls',0.0)
       cmd.do("rebuild")         
    else: # maximum performance
       cmd.set('line_smooth',0)
@@ -164,6 +167,7 @@ def performance(mode):
       cmd.set('sphere_quality',0)
       cmd.set('cartoon_sampling',3)
       cmd.set('transparency_mode',0)
+      cmd.set('stick_balls',0.0)
       cmd.do("rebuild")         
 
 

@@ -412,9 +412,13 @@ CSetting *SettingNewFromPyList(PyObject *list);
 #define cSetting_sculpt_nb_interval          273
 #define cSetting_sculpt_tors_weight          274
 #define cSetting_sculpt_tors_tolerance       275
+#define cSetting_stick_ball                  276
+#define cSetting_stick_ball_ratio            277
+#define cSetting_stick_fixed_radius          278
+
 /* cSetting_INIT must always be last setting_index +1 */
 
-#define cSetting_INIT                        276
+#define cSetting_INIT                        279
 
 #endif
 

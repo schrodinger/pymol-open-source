@@ -27,6 +27,7 @@ Z* -------------------------------------------------------------------
 #include"Setting.h"
 #include"main.h"
 #include"Feedback.h"
+#include"Sphere.h"
 
 typedef struct RepCylBond {
   Rep R;
@@ -35,12 +36,16 @@ typedef struct RepCylBond {
   int NEdge;
   float *VP;
   int NP;
+  float *VSP,*VSPC;
+  SphereRec *SP;
+  int NSP,NSPC;
 } RepCylBond;
 
 void RepCylBondRender(RepCylBond *I,CRay *ray,Pickable **pick);
 static void subdivide( int n, float *x, float *y);
-float *RepCylinder(float *v,float *v1,float *v2,int nEdge,int endCap,CoordSet *cs,
-                   ObjectMolecule *obj);
+float *RepCylinder(float *v,float *v1,float *v2,int nEdge,
+                   int frontCap, int endCap,
+                   float tube_size,float overlap,float nub);
 
 void RepCylBondFree(RepCylBond *I);
 
@@ -49,20 +54,26 @@ void RepCylBondFree(RepCylBond *I)
   FreeP(I->VR);
   FreeP(I->VP);
   FreeP(I->V);
+  FreeP(I->VSP);
+  FreeP(I->VSPC);
   RepFree(&I->R);
   OOFreeP(I);
 }
 
-float *RepCylinderBox(float *v,float *v1,float *v2,CoordSet *cs,ObjectMolecule *obj);
+float *RepCylinderBox(float *v,float *v1,float *v2,float tube_size,
+                      float overlap,float nub);
+
 
 void RepCylBondRender(RepCylBond *I,CRay *ray,Pickable **pick)
 {
   int a;
   float *v;
-  int c;
+  int c,cc;
   int i,j;
   Pickable *p;
   float alpha;
+  SphereRec *sp;
+
   alpha = SettingGet_f(I->R.cs->Setting,I->R.obj->Setting,cSetting_stick_transparency);
   alpha=1.0F-alpha;
   if(fabs(alpha-1.0)<R_SMALL4)
@@ -79,6 +90,17 @@ void RepCylBondRender(RepCylBond *I,CRay *ray,Pickable **pick)
 		ray->fSausage3fv(ray,v+4,v+7,*(v+3),v,v);
 		v+=10;
 	 }
+    if(I->VSPC) {
+      v=I->VSPC;
+      c=I->NSPC;
+      while(c--) {
+        ray->fColor3fv(ray,v);
+        v+=3;
+        ray->fSphere3fv(ray,v,*(v+3));
+        v+=4;
+      }
+    }
+
     ray->fTransparentf(ray,0.0);
   } else if(pick&&PMGUI) {
 
@@ -182,6 +204,8 @@ void RepCylBondRender(RepCylBond *I,CRay *ray,Pickable **pick)
       
       while(c--)
         {
+          /* cylinder entry consists of a color, a fan,
+             a cylinder, and another fan (if flagged) */
           
           if(alpha==1.0) {
             glColor3fv(v);
@@ -189,7 +213,7 @@ void RepCylBondRender(RepCylBond *I,CRay *ray,Pickable **pick)
             glColor4f(v[0],v[1],v[2],alpha);
           }
           v+=3;
-          
+
           glBegin(GL_TRIANGLE_STRIP);
           a=I->NEdge+1;
           while(a--) {
@@ -201,20 +225,22 @@ void RepCylBondRender(RepCylBond *I,CRay *ray,Pickable **pick)
             v+=3;
           }
           glEnd();
-          
-          glBegin(GL_TRIANGLE_FAN);
-          glNormal3fv(v);
-          v+=3;
-          glVertex3fv(v);
-          v+=3;
-          a=I->NEdge+1;
-          while(a--) {
+
+          if(*(v++)) {          
+            glBegin(GL_TRIANGLE_FAN);
             glNormal3fv(v);
             v+=3;
             glVertex3fv(v);
             v+=3;
+            a=I->NEdge+1;
+            while(a--) {
+              glNormal3fv(v);
+              v+=3;
+              glVertex3fv(v);
+              v+=3;
+            }
+            glEnd();
           }
-          glEnd();
           
           if(*(v++)) {
             
@@ -233,6 +259,53 @@ void RepCylBondRender(RepCylBond *I,CRay *ray,Pickable **pick)
             glEnd();
           }
         }
+
+      if(I->VSP) { /* stick spheres, if present */
+        
+        v = I->VSP;
+        c = I->NSP;
+        if(alpha==1.0) {
+          
+          sp=I->SP;
+          while(c--)
+            {
+              glColor3fv(v);
+              v+=3;
+              for(a=0;a<sp->NStrip;a++) {
+                glBegin(GL_TRIANGLE_STRIP);
+                cc=sp->StripLen[a];
+                while(cc--) {
+                  glNormal3fv(v);
+                  v+=3;
+                  glVertex3fv(v);
+                  v+=3;
+                }
+                glEnd();
+              }
+            }
+        } else {
+          sp=I->SP;
+          while(c--)
+            {
+              glColor4f(v[0],v[1],v[2],alpha);
+              v+=3;
+              for(a=0;a<sp->NStrip;a++) {
+                glBegin(GL_TRIANGLE_STRIP);
+                cc=sp->StripLen[a];
+                while(cc--) {
+                  glNormal3fv(v);
+                  v+=3;
+                  glVertex3fv(v);
+                  v+=3;
+                }
+                glEnd();
+              }
+            }
+        }
+        
+      }
+      
+
       PRINTFD(FB_RepCylBond)
         " RepCylBondRender: done.\n"
         ENDFD;
@@ -244,21 +317,514 @@ void RepCylBondRender(RepCylBond *I,CRay *ray,Pickable **pick)
   }
 }
 
+static void RepValence(float **v_ptr,int *n_ptr, /* opengl */
+                       float **vr_ptr,int *nr_ptr, /* ray */
+                       float *v1,float *v2,int *other,
+                       int a1,int a2,float *coord,
+                       float *color1,float *color2,int ord,
+                       int n_edge,
+                       float tube_size,
+                       float overlap,
+                       float nub,
+                       int half_bonds,
+                       int fixed_r)
+{
+
+  float d[3],t[3],p0[3],p1[3],p2[3],*vv;
+  float v1t[3],v2t[3],vh[3];
+  float *v = *v_ptr,*vr = *vr_ptr;
+  int n = *n_ptr,nr = *nr_ptr;
+  int a3,ck;
+
+  /* First, we need to construct a coordinate system */
+
+  /* get direction vector */
+
+  p0[0] = (v2[0] - v1[0]);
+  p0[1] = (v2[1] - v1[1]);
+  p0[2] = (v2[2] - v1[2]);
+  
+  copy3f(p0,d);
+  normalize3f(p0);
+  
+  /* need a third atom to get planarity*/
+
+  a3 = -1;
+  ck = other[a1*2];
+  if((ck>=0)&&(ck!=a2))
+    a3=ck;
+  else {
+    ck = other[a1*2+1];
+    if((ck>=0)&&(ck!=a2))
+      a3=ck;
+    else {
+      ck = other[a2*2];
+      if((ck>=0)&&(ck!=a1))
+        a3=ck;
+      else {
+        ck = other[a2*2+1];
+        if((ck>=0)&&(ck!=a1))
+          a3=ck;
+        }
+      }
+  }
+
+  if(a3<0) {    
+    t[0] = p0[0];
+    t[1] = p0[1];
+    t[2] = -p0[2];
+  } else {
+    vv= coord+3*a3;
+    t[0] = *(vv++)-v1[0];
+    t[1] = *(vv++)-v1[1];
+    t[2] = *(vv++)-v1[2];
+    normalize3f(t);
+  }
+  
+  cross_product3f(d,t,p1);
+  
+  normalize3f(p1);
+
+  if(length3f(p1)==0.0) {
+    p1[0]=p0[1];
+    p1[1]=p0[2];
+    p1[2]=p0[0];
+    cross_product3f(p0,p1,p2);
+    normalize3f(p2);
+  } else {
+    cross_product3f(d,p1,p2);
+    
+    normalize3f(p2);
+  }
+
+  /* we have a coordinate system*/
+
+  /* Next, we need to determine how many cylinders */
+  
+  switch(ord) {
+  case 2:
+    {
+      float radius = tube_size;
+      float overlap_r;
+      float nub_r;
+      if(!fixed_r) {
+        radius/=2.5;
+      }
+      overlap_r = radius*overlap;
+      nub_r = radius*nub;
+
+      t[0] = p2[0]*1.5*radius;
+      t[1] = p2[1]*1.5*radius;
+      t[2] = p2[2]*1.5*radius;
+      
+      if(!half_bonds) {
+
+        /* opengl */
+
+        copy3f(color1,v);
+        v+=3;
+        
+        add3f(v1,t,v1t);
+        add3f(v2,t,v2t);
+        
+        v=RepCylinder(v,v1t,v2t,n_edge,1,1,radius,
+                      overlap_r,nub_r);
+        n++;
+
+        /* ray */
+
+        copy3f(color1,vr);
+        vr+=3;        
+        *(vr++)=radius;						          
+        copy3f(v1t,vr);
+        vr+=3;        
+        copy3f(v2t,vr);
+        vr+=3;
+        nr++;
+
+        /* opengl */
+
+        copy3f(color1,v);
+        
+        v+=3;
+        
+        subtract3f(v1,t,v1t);
+        subtract3f(v2,t,v2t);
+        
+        v=RepCylinder(v,v1t,v2t,n_edge,1,1,radius,
+                      overlap_r,nub_r);
+
+        /* ray */
+
+        copy3f(color1,vr);
+        vr+=3;        
+        *(vr++)=radius;						          
+        copy3f(v1t,vr);
+        vr+=3;        
+        copy3f(v2t,vr);
+        vr+=3;
+        nr++;
+
+        n++;
+      } else {
+        vh[0] = (v1[0]+v2[0])*0.5F;
+        vh[1] = (v1[1]+v2[1])*0.5F;
+        vh[2] = (v1[2]+v2[2])*0.5F;
+
+        if(color1) {
+
+        /* opengl */
+          copy3f(color1,v);
+          v+=3;
+
+          add3f(v1,t,v1t);
+          add3f(vh,t,v2t);
+
+          v=RepCylinder(v,v1t,v2t,n_edge,1,0,radius,
+                        overlap_r,nub_r);
+          n++;
+
+          /* ray */
+          
+          copy3f(color1,vr);
+          vr+=3;        
+          *(vr++)=radius;						          
+          copy3f(v1t,vr);
+          vr+=3;        
+          copy3f(v2t,vr);
+          vr+=3;
+          nr++;
+
+        /* opengl */
+          copy3f(color1,v);
+          v+=3;
+
+          subtract3f(v1,t,v1t);
+          subtract3f(vh,t,v2t);
+
+          v=RepCylinder(v,v1t,v2t,n_edge,1,0,radius,
+                        overlap_r,nub_r);
+          n++;
+
+          /* ray */
+          
+          copy3f(color1,vr);
+          vr+=3;        
+          *(vr++)=radius;						          
+          copy3f(v1t,vr);
+          vr+=3;        
+          copy3f(v2t,vr);
+          vr+=3;
+          nr++;
+          
+        }
+        if(color2) {
+
+          copy3f(color2,v);
+          v+=3;
+
+          add3f(v2,t,v1t);
+          add3f(vh,t,v2t);
+
+          v=RepCylinder(v,v1t,v2t,n_edge,1,0,radius,
+                        overlap_r,nub_r);
+          n++;
+
+          /* ray */
+          
+          copy3f(color2,vr);
+          vr+=3;        
+          *(vr++)=radius;						          
+          copy3f(v1t,vr);
+          vr+=3;        
+          copy3f(v2t,vr);
+          vr+=3;
+          nr++;
+
+          copy3f(color2,v);
+          v+=3;
+
+          subtract3f(v2,t,v1t);
+          subtract3f(vh,t,v2t);
+
+          v=RepCylinder(v,v1t,v2t,n_edge,1,0,radius,
+                        overlap_r,nub_r);
+          n++;
+          /* ray */
+          
+          copy3f(color2,vr);
+          vr+=3;        
+          *(vr++)=radius;						          
+          copy3f(v1t,vr);
+          vr+=3;        
+          copy3f(v2t,vr);
+          vr+=3;
+          nr++;
+
+
+        }
+      }
+    }
+    break;
+  case 3:
+    {
+      float radius = tube_size;
+      float overlap_r;
+      float nub_r;
+      if(!fixed_r) {
+        radius/=3.5;
+      }
+      overlap_r = radius*overlap;
+      nub_r = radius*nub;
+
+      t[0] = p2[0]*2.5*radius;
+      t[1] = p2[1]*2.5*radius;
+      t[2] = p2[2]*2.5*radius;
+
+      if(!half_bonds) {
+        /* opengl */
+        copy3f(color1,v);
+        
+        v+=3;
+        
+        v=RepCylinder(v,v1,v2,n_edge,1,1,radius,
+                      overlap_r,nub_r);
+        n++;
+
+        /* ray */
+        
+        copy3f(color1,vr);
+        vr+=3;        
+        *(vr++)=radius;						          
+        copy3f(v1,vr);
+        vr+=3;        
+        copy3f(v2,vr);
+        vr+=3;
+        nr++;
+
+        /* opengl */
+        copy3f(color1,v);
+        
+        v+=3;
+        
+        add3f(v1,t,v1t);
+        add3f(v2,t,v2t);
+        
+        v=RepCylinder(v,v1t,v2t,n_edge,1,1,radius,
+                      overlap_r,nub_r);
+        n++;
+        
+        /* ray */
+        
+        copy3f(color1,vr);
+        vr+=3;        
+        *(vr++)=radius;						          
+        copy3f(v1t,vr);
+        vr+=3;        
+        copy3f(v2t,vr);
+        vr+=3;
+        nr++;
+
+        /* opengl */
+        copy3f(color1,v);
+        
+        v+=3;
+        
+        subtract3f(v1,t,v1t);
+        subtract3f(v2,t,v2t);
+        
+        v=RepCylinder(v,v1t,v2t,n_edge,1,1,radius,
+                      overlap_r,nub_r);
+        n++;
+
+        /* ray */
+        
+        copy3f(color1,vr);
+        vr+=3;        
+        *(vr++)=radius;						          
+        copy3f(v1t,vr);
+        vr+=3;        
+        copy3f(v2t,vr);
+        vr+=3;
+        nr++;
+
+      } else {
+        vh[0] = (v1[0]+v2[0])*0.5F;
+        vh[1] = (v1[1]+v2[1])*0.5F;
+        vh[2] = (v1[2]+v2[2])*0.5F;
+
+        if(color1) {
+          /* opengl */
+          copy3f(color1,v);
+          v+=3;
+          
+          v=RepCylinder(v,v1,vh,n_edge,1,0,radius,
+                        overlap_r,nub_r);
+          n++;
+          
+          /* ray */
+          
+          copy3f(color1,vr);
+          vr+=3;        
+          *(vr++)=radius;						          
+          copy3f(v1,vr);
+          vr+=3;        
+          copy3f(vh,vr);
+          vr+=3;
+          nr++;
+
+          /* opengl */
+          copy3f(color1,v);
+          v+=3;
+
+          add3f(v1,t,v1t);
+          add3f(vh,t,v2t);
+
+          v=RepCylinder(v,v1t,v2t,n_edge,1,0,radius,
+                        overlap_r,nub_r);
+          n++;
+
+          /* ray */
+          
+          copy3f(color1,vr);
+          vr+=3;        
+          *(vr++)=radius;						          
+          copy3f(v1t,vr);
+          vr+=3;        
+          copy3f(v2t,vr);
+          vr+=3;
+          nr++;
+
+          /* opengl */
+          copy3f(color1,v);
+          v+=3;
+
+          subtract3f(v1,t,v1t);
+          subtract3f(vh,t,v2t);
+
+          v=RepCylinder(v,v1t,v2t,n_edge,1,0,radius,
+                        overlap_r,nub_r);
+          n++;
+
+          /* ray */
+          
+          copy3f(color1,vr);
+          vr+=3;        
+          *(vr++)=radius;						          
+          copy3f(v1t,vr);
+          vr+=3;        
+          copy3f(v2t,vr);
+          vr+=3;
+          nr++;
+
+          
+        }
+        if(color2) {
+          
+          /* opengl */
+          copy3f(color2,v);
+          v+=3;
+          
+          v=RepCylinder(v,v2,vh,n_edge,1,0,radius,
+                        overlap_r,nub_r);
+          n++;
+
+          /* ray */
+          
+          copy3f(color2,vr);
+          vr+=3;        
+          *(vr++)=radius;						          
+          copy3f(v2,vr);
+          vr+=3;        
+          copy3f(vh,vr);
+          vr+=3;
+          nr++;
+
+          /* opengl */
+          copy3f(color2,v);
+          v+=3;
+
+          add3f(v2,t,v1t);
+          add3f(vh,t,v2t);
+
+          v=RepCylinder(v,v1t,v2t,n_edge,1,0,radius,
+                        overlap_r,nub_r);
+          n++;
+
+          /* ray */
+          
+          copy3f(color2,vr);
+          vr+=3;        
+          *(vr++)=radius;						          
+          copy3f(v1t,vr);
+          vr+=3;        
+          copy3f(v2t,vr);
+          vr+=3;
+          nr++;
+
+          /* opengl */
+          copy3f(color2,v);
+          v+=3;
+
+          subtract3f(v2,t,v1t);
+          subtract3f(vh,t,v2t);
+
+          v=RepCylinder(v,v1t,v2t,n_edge,1,0,radius,
+                        overlap_r,nub_r);
+          n++;
+
+          /* ray */
+          
+          copy3f(color2,vr);
+          vr+=3;        
+          *(vr++)=radius;						          
+          copy3f(v1t,vr);
+          vr+=3;        
+          copy3f(v2t,vr);
+          vr+=3;
+          nr++;
+
+        }
+      }      
+    }
+
+    break;
+  case 4: 
+    
+    break;
+  }
+  *v_ptr = v;
+  *n_ptr = n;
+  *vr_ptr = vr;
+  *nr_ptr = nr;
+
+}
+
+
 Rep *RepCylBondNew(CoordSet *cs)
 {
   ObjectMolecule *obj;
-  int a,a1,a2,c1,c2,s1,s2,b1,b2;
+  int a,a1,a2,c1,c2,s1,s2,b1,b2,*o;
   BondType *b;
-  float *v,*vv1,*vv2,*v0,*vr;
+  float *v,*vv1,*vv2,*v0,*vr,*vsp,*vspc;
   float v1[3],v2[3],h[3];
   float radius;
   int nEdge;
-  int half_bonds;
+  float valence;
+  float overlap,nub,overlap_r,nub_r;
+  int half_bonds,*other=NULL;
   int visFlag;
-  int maxBond;
+  int maxCyl;
+  int ord;
+  int stick_ball;
+  float stick_ball_ratio;
   unsigned int v_size,vr_size,rp_size,vp_size;
   Pickable *rp;
   AtomInfoType *ai1,*ai2;
+  SphereRec *sp = NULL;
+  float *rgb1,*rgb2,rgb1_buf[3],rgb2_buf[3];
+  int fixed_radius = false;
+  int caps_req = true;
 
   OOAlloc(RepCylBond);
 
@@ -286,13 +852,16 @@ Rep *RepCylBondNew(CoordSet *cs)
     return(NULL); /* skip if no dots are visible */
   }
 
-  maxBond = 0;
+  valence = SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_valence);
+
+  maxCyl = 0;
 
   b=obj->Bond;
   for(a=0;a<obj->NBond;a++)
     {
       b1 = b->index[0];
       b2 = b->index[1];
+      ord = b->order;
       b++;
       
       if(obj->DiscreteFlag) {
@@ -309,7 +878,26 @@ Rep *RepCylBondNew(CoordSet *cs)
       }
       if((a1>=0)&&(a2>=0))
         {
-          maxBond++;
+          obj->AtomInfo[a1].temp1 = false; /* use the kludge field for sphere marker */
+          obj->AtomInfo[a2].temp1 = false;
+          
+          if(valence!=0.0F) {
+            switch(ord) {
+            case 1:
+              maxCyl+=2;
+              break;
+            case 2:
+              maxCyl+=4;
+              break;
+            case 3:
+              maxCyl+=6;
+              break;
+            case 4:
+              maxCyl+=8;
+              break;
+            }
+          } else
+            maxCyl+=2;
         }
     }
 
@@ -317,6 +905,7 @@ Rep *RepCylBondNew(CoordSet *cs)
   nEdge = (int)SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_stick_quality);
   radius = SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_stick_radius);
   half_bonds = (int)SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_half_bonds);  
+
 
   RepInit(&I->R);
   I->R.fRender=(void (*)(struct Rep *, CRay *, Pickable **))RepCylBondRender;
@@ -330,26 +919,108 @@ Rep *RepCylBondNew(CoordSet *cs)
   I->NR = 0;
   I->NP = 0;
   I->VP = NULL;
-
+  I->SP = NULL;
+  I->VSP = NULL;
+  I->NSP = 0;
+  I->VSPC = NULL;
+  I->NSPC = 0;
   if(obj->NBond) {
 
-    v_size = ((maxBond)*((nEdge+2)*42)+32);
+    stick_ball = SettingGet_b(cs->Setting,obj->Obj.Setting,cSetting_stick_ball);
+    overlap = SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_stick_overlap);
+    nub = SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_stick_nub);
+
+    overlap_r = overlap * radius;
+    nub_r = nub * radius;
+
+    if(valence!=0.0) /* build list of up to 2 connected atoms for each atom */
+      {
+        other=Alloc(int,2*obj->NAtom);
+        o=other;
+        for(a=0;a<obj->NAtom;a++) {
+          *(o++)=-1;
+          *(o++)=-1;
+        }
+        b=obj->Bond;
+        for(a=0;a<obj->NBond;a++)
+          {
+            b1 = b->index[0];
+            b2 = b->index[1];
+            b++;
+            if(obj->DiscreteFlag) {
+              if((cs==obj->DiscreteCSet[b1])&&(cs==obj->DiscreteCSet[b2])) {
+                a1=obj->DiscreteAtmToIdx[b1];
+                a2=obj->DiscreteAtmToIdx[b2];
+              } else {
+                a1=-1;
+                a2=-1;
+              }
+            } else {
+              a1=cs->AtmToIdx[b1];
+              a2=cs->AtmToIdx[b2];
+            }
+            if((a1>=0)&&(a2>=0))
+              {
+                o=other+2*a1;
+                if(*o!=a2) {
+                  if(*o>=0) o++;
+                  *o=a2;
+                }
+                o=other+2*a2;              
+                if(*o!=a1) {
+                  if(*o>=0) o++;
+                  *o=a1;
+                }
+              }
+          }
+        
+        fixed_radius = SettingGet_b(cs->Setting,obj->Obj.Setting,cSetting_stick_fixed_radius);
+      }
+    
+    /* OpenGL */
+
+    v_size = ((maxCyl)*((nEdge+1)*21)+22);
 	 I->V = Alloc(float,v_size);
 	 ErrChkPtr(I->V);
 
-    vr_size = maxBond*10*3;
+    /* RayTrace */
+
+    vr_size = maxCyl*10*3;
     I->VR=Alloc(float,vr_size);
 	 ErrChkPtr(I->VR);
+
+    /* spheres for stick & balls */
 	 
+    if(stick_ball) {
+      int ds;
+      stick_ball_ratio = SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_stick_ball_ratio);
+
+      ds = SettingGet_i(cs->Setting,obj->Obj.Setting,cSetting_sphere_quality);
+      if(ds<0) ds=0;
+      switch(ds) {
+      case 0: sp=Sphere0; break;
+      case 1: sp=Sphere1; break;
+      case 2: sp=Sphere2; break;
+      case 3: sp=Sphere3; break;
+      default: sp=Sphere4; break;
+      }
+      I->SP = sp;
+      I->VSP=Alloc(float,maxCyl*2*(3+sp->NVertTot*6));
+      I->VSPC=Alloc(float,maxCyl*2*7);
+      ErrChkPtr(I->VSP);
+    }
 	 I->NEdge = nEdge;
 	 
 	 v=I->V;
 	 vr=I->VR;
+    vsp = I->VSP;
+    vspc = I->VSPC;
 	 b=obj->Bond;
 	 for(a=0;a<obj->NBond;a++)
 		{
         b1 = b->index[0];
         b2 = b->index[1];
+        ord = b->order;
         b++;
 
         if(obj->DiscreteFlag) {
@@ -381,130 +1052,256 @@ Rep *RepCylBondNew(CoordSet *cs)
                 s2 = 0;
               }
 				
+            if(stick_ball) {
+              float vdw = stick_ball_ratio * radius;
+              int d,e;
+              if(stick_ball_ratio>=1.0F) /* don't use caps if spheres are big enough */
+                caps_req = false;
+              if(s1&&(!obj->AtomInfo[b1].temp1)) { /* just once for each atom... */
+                obj->AtomInfo[b1].temp1=1;
+                int *q=sp->Sequence;
+                int *s=sp->StripLen;
+                {
+                  if(ColorCheckRamped(c1)) {
+                    ColorGetRamped(c1,vv1,rgb2_buf);
+                    rgb1 = rgb1_buf;
+                  } else {
+                    rgb1 = ColorGet(c2);
+                  }
+                }
+                copy3f(rgb1,vsp);
+                vsp+=3;
+                for(d=0;d<sp->NStrip;d++)
+                  {
+                    for(e=0;e<(*s);e++)
+                      {
+                        *(vsp++)=sp->dot[*q][0]; /* normal */
+                        *(vsp++)=sp->dot[*q][1];
+                        *(vsp++)=sp->dot[*q][2];
+                        *(vsp++)=vv1[0]+vdw*sp->dot[*q][0]; /* point */
+                        *(vsp++)=vv1[1]+vdw*sp->dot[*q][1];
+                        *(vsp++)=vv1[2]+vdw*sp->dot[*q][2];
+                        q++;
+                      }
+                    s++;
+                  }
+                I->NSP++;
+                copy3f(rgb1,vspc);
+                vspc+=3;
+                copy3f(vv1,vspc);
+                vspc+=3;
+                *(vspc++)=vdw;
+                I->NSPC++;
+              }
+              if(s2&&!(obj->AtomInfo[b2].temp1)) { /* just once for each atom... */
+                obj->AtomInfo[b2].temp1=1;
+                int *q=sp->Sequence;
+                int *s=sp->StripLen;
+                
+                if(ColorCheckRamped(c2)) {
+                  ColorGetRamped(c2,vv2,rgb2_buf);
+                  rgb2 = rgb2_buf;
+                } else {
+                  rgb2 = ColorGet(c2);
+                }
+              
+                copy3f(rgb2,vsp);
+                vsp+=3;
+
+                for(d=0;d<sp->NStrip;d++)
+                  {
+                    for(e=0;e<(*s);e++)
+                      {
+                        *(vsp++)=sp->dot[*q][0]; /* normal */
+                        *(vsp++)=sp->dot[*q][1];
+                        *(vsp++)=sp->dot[*q][2];
+                        *(vsp++)=vv2[0]+vdw*sp->dot[*q][0]; /* point */
+                        *(vsp++)=vv2[1]+vdw*sp->dot[*q][1];
+                        *(vsp++)=vv2[2]+vdw*sp->dot[*q][2];
+                        q++;
+                      }
+                    s++;
+                  }
+                I->NSP++;
+
+                copy3f(rgb2,vspc);
+                vspc+=3;
+                copy3f(vv2,vspc);
+                vspc+=3;
+                *(vspc++)=vdw;
+                I->NSPC++;
+              }
+            }
+
 				if(s1||s2)
 				  {
 					 
-					 if((c1==c2)&&s1&&s2&&(!ColorCheckRamped(c1)))
-						{
-						  
-						  v1[0]=vv1[0];
-						  v1[1]=vv1[1];
-						  v1[2]=vv1[2];
-						  
-						  v2[0]=vv2[0];
-						  v2[1]=vv2[1];
-						  v2[2]=vv2[2];
-						  
-						  v0 = ColorGet(c1);
+                if((valence!=0.0)&&(ord>1)&&(ord<4)) {
+                  
+                  if((c1==c2)&&s1&&s2&&(!ColorCheckRamped(c1))) {
 
-						  *(vr++)=*(v0);
-						  *(vr++)=*(v0+1);
-						  *(vr++)=*(v0+2);
-						  *(vr++)=radius;						  
+                    
+                    v0 = ColorGet(c1);
 
-						  *(vr++)=*(v1);
-						  *(vr++)=*(v1+1);
-						  *(vr++)=*(v1+2);
+                    RepValence(&v,&I->N,
+                               &vr,&I->NR,
+                               vv1,vv2,other,
+                               a1,a2,cs->Coord,
+                               v0,NULL,ord,nEdge,
+                               radius,
+                               overlap,
+                               nub,
+                               false,
+                               fixed_radius);
+                  } else {
 
-						  *(vr++)=*(v2);
-						  *(vr++)=*(v2+1);
-						  *(vr++)=*(v2+2);
+                    rgb1 = NULL;
+                    if(s1) {
+                      if(ColorCheckRamped(c1)) {
+                        ColorGetRamped(c1,vv1,rgb1_buf);
+                        rgb1 = rgb1_buf;
+                      } else {
+                        rgb1 = ColorGet(c1);
+                      }
+                    }
 
-
-
-
-						  I->NR++;
-
- 						  *(v++)=*(v0++);
-						  *(v++)=*(v0++);
-						  *(v++)=*(v0++);
-						  
-						  I->N++;
-						  
-
-						  v=RepCylinder(v,v1,v2,nEdge,1,cs,obj);
-						  
-						}
-					 else
-						{
-						  
-						  v1[0]=vv1[0];
-						  v1[1]=vv1[1];
-						  v1[2]=vv1[2];
-						  
-						  v2[0]=(vv1[0]+vv2[0])/2;
-						  v2[1]=(vv1[1]+vv2[1])/2;
-						  v2[2]=(vv1[2]+vv2[2])/2;
-						  
-						  if(s1) 
-							 {
-                        if(ColorCheckRamped(c1)) {
-                          ColorGetRamped(c1,v1,vr);
-                          v0=vr;
-                          vr+=3;
-                        } else {
-                          v0 = ColorGet(c1);
-                          *(vr++)=*(v0);
-                          *(vr++)=*(v0+1);
-                          *(vr++)=*(v0+2);
-                        }
-								*(vr++)=radius;
-								
-								*(vr++)=*(v1);
-								*(vr++)=*(v1+1);
-								*(vr++)=*(v1+2);
-								
-								*(vr++)=*(v2);
-								*(vr++)=*(v2+1);
-								*(vr++)=*(v2+2);
-								
-								I->NR++;
-								
-								*(v++)=*(v0++);
-								*(v++)=*(v0++);
-								*(v++)=*(v0++);
-
-								I->N++;
-								v=RepCylinder(v,v1,v2,nEdge,0,cs,obj);
-							 }
-						  
-						  v1[0]=vv2[0];
-						  v1[1]=vv2[1];
-						  v1[2]=vv2[2];
-						  
-						  if(s2) 
-							 {
+                    rgb2 = NULL;
+                    if(s2) 
+                      {
                         if(ColorCheckRamped(c2)) {
-                          ColorGetRamped(c2,v1,vr);
-                          v0=vr;
-                          vr+=3;
+                          ColorGetRamped(c2,vv2,rgb2_buf);
+                          rgb2 = rgb2_buf;
                         } else {
-                          v0 = ColorGet(c2);
-
-                          *(vr++)=*(v0);
-                          *(vr++)=*(v0+1);
-                          *(vr++)=*(v0+2);
+                          rgb2 = ColorGet(c2);
                         }
-								*(vr++)=radius;
-								
-								*(vr++)=*(v1);
-								*(vr++)=*(v1+1);
-								*(vr++)=*(v1+2);
-								
-								*(vr++)=*(v2);
-								*(vr++)=*(v2+1);
-								*(vr++)=*(v2+2);
-								
-								I->NR++;
-
-								*(v++)=*(v0++);
-								*(v++)=*(v0++);
-								*(v++)=*(v0++);
-								
-								I->N++;
-								v=RepCylinder(v,v1,v2,nEdge,0,cs,obj);
-							 }
-						}
+                      }
+                    
+                     RepValence(&v,&I->N,
+                               &vr,&I->NR,
+                               vv1,vv2,other,
+                               a1,a2,cs->Coord,
+                               rgb1,rgb2,ord,nEdge,
+                               radius,
+                               overlap,
+                               nub,
+                               true,
+                                fixed_radius);
+                  }
+                  
+                } else {
+                  
+                  if((c1==c2)&&s1&&s2&&(!ColorCheckRamped(c1)))
+                    {
+                      
+                      copy3f(vv1,v1);
+                      copy3f(vv2,v2);
+                      
+                      v0 = ColorGet(c1);
+                      
+                      /* ray-tracing */
+                    
+                      copy3f(v0,vr);
+                      vr+=3;
+                    
+                      *(vr++)=radius;						  
+                    
+                      copy3f(v1,vr);
+                      vr+=3;
+                    
+                      copy3f(v2,vr);
+                      vr+=3;
+                    
+                      I->NR++;
+                    
+                      /* store color */
+                    
+                      copy3f(v0,v);
+                      v+=3;
+                    
+                      I->N++;
+                    
+                      /* generate a cylinder */
+                    
+                      v=RepCylinder(v,v1,v2,nEdge,caps_req,caps_req,radius,overlap_r,nub_r);
+                    } else {                    
+                      v1[0]=vv1[0];
+                      v1[1]=vv1[1];
+                      v1[2]=vv1[2];
+                      
+                      v2[0]=(vv1[0]+vv2[0])*0.5F;
+                      v2[1]=(vv1[1]+vv2[1])*0.5F;
+                      v2[2]=(vv1[2]+vv2[2])*0.5F;
+                      
+                      if(s1) 
+                        {
+                          if(ColorCheckRamped(c1)) {
+                            ColorGetRamped(c1,v1,vr);
+                            v0=vr;
+                            vr+=3;
+                          } else {
+                            v0 = ColorGet(c1);
+                            *(vr++)=*(v0);
+                            *(vr++)=*(v0+1);
+                            *(vr++)=*(v0+2);
+                          }
+                          *(vr++)=radius;
+                          
+                          *(vr++)=*(v1);
+                          *(vr++)=*(v1+1);
+                          *(vr++)=*(v1+2);
+                          
+                          *(vr++)=*(v2);
+                          *(vr++)=*(v2+1);
+                          *(vr++)=*(v2+2);
+                          
+                          I->NR++;
+                          
+                          *(v++)=*(v0++);
+                          *(v++)=*(v0++);
+                          *(v++)=*(v0++);
+                          
+                          I->N++;
+                          v=RepCylinder(v,v1,v2,nEdge,caps_req,0,radius,overlap_r,nub_r);
+                        }
+                      
+                      v1[0]=vv2[0];
+                      v1[1]=vv2[1];
+                      v1[2]=vv2[2];
+                      
+                      if(s2) 
+                        {
+                          if(ColorCheckRamped(c2)) {
+                            ColorGetRamped(c2,v1,vr);
+                            v0=vr;
+                            vr+=3;
+                          } else {
+                            v0 = ColorGet(c2);
+                            
+                            *(vr++)=*(v0);
+                            *(vr++)=*(v0+1);
+                            *(vr++)=*(v0+2);
+                          }
+                          *(vr++)=radius;
+                          
+                          *(vr++)=*(v1);
+                          *(vr++)=*(v1+1);
+                          *(vr++)=*(v1+2);
+                          
+                          *(vr++)=*(v2);
+                          *(vr++)=*(v2+1);
+                          *(vr++)=*(v2+2);
+                          
+                          I->NR++;
+                          
+                          *(v++)=*(v0++);
+                          *(v++)=*(v0++);
+                          *(v++)=*(v0++);
+                          
+                          I->N++;
+                          v=RepCylinder(v,v1,v2,nEdge,caps_req,0,radius,overlap_r,nub_r);
+                        }
+                    }
+                }
 				  }
 			 }
 		}
@@ -519,7 +1316,10 @@ Rep *RepCylBondNew(CoordSet *cs)
     
 	 I->V = Realloc(I->V,float,(v-I->V));
 	 I->VR = Realloc(I->VR,float,(vr-I->VR));
-
+    if(I->VSP) 
+      I->VSP = Realloc(I->VSP,float,(vsp-I->VSP));
+    if(I->VSPC) 
+      I->VSPC = Realloc(I->VSPC,float,(vspc-I->VSPC));
 	 if(SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_pickable)) { 
 
       PRINTFD(FB_RepCylBond)
@@ -529,11 +1329,11 @@ Rep *RepCylBondNew(CoordSet *cs)
          vertices: 8 points * 3 = 32  * 2 = 48 floats per bond
       */
 
-      vp_size = maxBond*48;
+      vp_size = maxCyl*24;
       I->VP=Alloc(float,vp_size);
 		ErrChkPtr(I->VP);
 		
-      rp_size = 2*maxBond+1;
+      rp_size = maxCyl+1;
 		I->R.P=Alloc(Pickable,rp_size);
 		ErrChkPtr(I->R.P);
 		rp = I->R.P + 1; /* skip first record! */
@@ -588,7 +1388,7 @@ Rep *RepCylBondNew(CoordSet *cs)
                       rp->bond = a;
                       rp++;
 
-                      v = RepCylinderBox(v,v1,h,cs,obj);
+                      v = RepCylinderBox(v,v1,h,radius,overlap_r,nub_r);
 						  }
 						if(s2&(!ai2->masked))
 						  {
@@ -598,7 +1398,7 @@ Rep *RepCylBondNew(CoordSet *cs)
                       rp->bond = a;
                       rp++;
 
-                      v = RepCylinderBox(v,h,v2,cs,obj);
+                      v = RepCylinderBox(v,h,v2,radius,overlap_r,nub_r);
 						  }
 					 }
 				}
@@ -634,38 +1434,31 @@ static void subdivide( int n, float *x, float *y)
 }
 
 
-float *RepCylinderBox(float *v,float *v1,float *v2,CoordSet *cs,ObjectMolecule *obj)
+float *RepCylinderBox(float *v,float *vv1,float *vv2,
+                      float tube_size,float overlap,float nub)
 {
-
+  
   float d[3],t[3],p0[3],p1[3],p2[3],n[3];
-  float tube_size;
-  float overlap;
-  float nub;
+  float v1[3],v2[3];
 
-  tube_size = SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_stick_radius)
-    *0.7F;
-
-  overlap = tube_size*SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_stick_overlap);
-  nub = tube_size*SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_stick_nub);
+  tube_size *= 0.7F;
 
   overlap+=(nub/2);
 
   /* direction vector */
-  
-  p0[0] = (v2[0] - v1[0]);
-  p0[1] = (v2[1] - v1[1]);
-  p0[2] = (v2[2] - v1[2]);
-  
+
+  subtract3f(vv2,vv1,p0);
+
   normalize3f(p0);
+
+  v1[0]=vv1[0]-p0[0]*overlap;
+  v1[1]=vv1[1]-p0[1]*overlap;
+  v1[2]=vv1[2]-p0[2]*overlap;
   
-  v1[0]-=p0[0]*overlap;
-  v1[1]-=p0[1]*overlap;
-  v1[2]-=p0[2]*overlap;
-  
-  v2[0]+=p0[0]*overlap;
-  v2[1]+=p0[1]*overlap;
-  v2[2]+=p0[2]*overlap;
-  
+  v2[0]=vv2[0]+p0[0]*overlap;
+  v2[1]=vv2[1]+p0[1]*overlap;
+  v2[2]=vv2[2]+p0[2]*overlap;
+    
   d[0] = (v2[0] - v1[0]);
   d[1] = (v2[1] - v1[1]);
   d[2] = (v2[2] - v1[2]);
@@ -744,20 +1537,15 @@ float *RepCylinderBox(float *v,float *v1,float *v2,CoordSet *cs,ObjectMolecule *
 }
 
 
-float *RepCylinder(float *v,float *v1,float *v2,int nEdge,int endCap,
-                   CoordSet *cs,ObjectMolecule *obj)
+float *RepCylinder(float *v,float *v1,float *v2,int nEdge,
+                   int frontCap, int endCap,
+                   float tube_size,float overlap,float nub)
 {
 
   float d[3],t[3],p0[3],p1[3],p2[3];
   float x[50],y[50];
-  float tube_size;
-  float overlap;
-  float nub;
   int c;
 
-  tube_size = SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_stick_radius);
-  overlap = tube_size*SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_stick_overlap);
-  nub = tube_size*SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_stick_nub);
 
   if(nEdge>50)
     nEdge=50;
@@ -817,28 +1605,36 @@ float *RepCylinder(float *v,float *v1,float *v2,int nEdge,int endCap,
 		v+=9;			 
 	 }
   
-  v[0] = -p0[0];
-  v[1] = -p0[1];
-  v[2] = -p0[2];
-  
-  v[3] = v1[0] - p0[0]*nub;
-  v[4] = v1[1] - p0[1]*nub;
-  v[5] = v1[2] - p0[2]*nub;
-  
-  v+=6;
-  
-  for(c=nEdge;c>=0;c--)
+  if(frontCap) {
+
+    *(v++)=1.0;
+    v[0] = -p0[0];
+    v[1] = -p0[1];
+    v[2] = -p0[2];
+    
+    v[3] = v1[0] - p0[0]*nub;
+    v[4] = v1[1] - p0[1]*nub;
+    v[5] = v1[2] - p0[2]*nub;
+    
+    v+=6;
+    
+    for(c=nEdge;c>=0;c--)
+      {
+        
+        v[0] = p1[0]*tube_size*x[c] + p2[0]*tube_size*y[c];
+        v[1] = p1[1]*tube_size*x[c] + p2[1]*tube_size*y[c];
+        v[2] = p1[2]*tube_size*x[c] + p2[2]*tube_size*y[c];
+        
+        v[3] = v1[0] + v[0];
+        v[4] = v1[1] + v[1];
+        v[5] = v1[2] + v[2];
+        
+        v+=6;
+      }
+  }
+  else 
 	 {
-		
-		v[0] = p1[0]*tube_size*x[c] + p2[0]*tube_size*y[c];
-		v[1] = p1[1]*tube_size*x[c] + p2[1]*tube_size*y[c];
-		v[2] = p1[2]*tube_size*x[c] + p2[2]*tube_size*y[c];
-		
-		v[3] = v1[0] + v[0];
-		v[4] = v1[1] + v[1];
-		v[5] = v1[2] + v[2];
-		
-		v+=6;
+		*(v++)=0.0F;
 	 }
 
   if(endCap) 
@@ -870,7 +1666,7 @@ float *RepCylinder(float *v,float *v1,float *v2,int nEdge,int endCap,
 	 }
   else 
 	 {
-		*(v++)=0.0;
+		*(v++)=0.0F;
 	 }
   
   return(v);
