@@ -28,7 +28,23 @@ static int NColor,CarbColor,HColor,OColor,SColor,MColor,IColor;
 
 int AtomInfoInOrder(AtomInfoType *atom,int atom1,int atom2);
 
+/*========================================================================*/
+void AtomInfoCombine(AtomInfoType *dst,AtomInfoType *src)
+{
+  strcpy(dst->textType,src->textType); /* use the new types */
+  dst->customType = src->customType;
+  dst->partialCharge = src->partialCharge;
+  dst->formalCharge = src->formalCharge;
+  dst->flags = src->flags;
+  dst->b = src->b;
+  dst->q = src->q;
+  dst->id = src->id;
 
+  /* keep all existing names, identifiers, etc. */
+  /* also keep all existing selections,
+     colors, masks, and visible representations*/
+
+}
 /*========================================================================*/
 void AtomInfoUniquefyNames(AtomInfoType *atInfo0,int n0,AtomInfoType *atInfo1,int n1)
 {

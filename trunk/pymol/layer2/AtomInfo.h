@@ -107,5 +107,5 @@ float AtomInfoGetBondLength(AtomInfoType *ai1,AtomInfoType *ai2);
 int AtomInfoSameResidue(AtomInfoType *at1,AtomInfoType *at2);
 void AtomInfoBracketResidue(AtomInfoType *ai0,int n0,AtomInfoType *ai,int *st,int *nd);
 void AtomInfoUniquefyNames(AtomInfoType *atInfo0,int n0,AtomInfoType *atInfo1,int n1);
-
+void AtomInfoCombine(AtomInfoType *dst,AtomInfoType *src);
 #endif
