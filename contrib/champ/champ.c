@@ -43,10 +43,11 @@ void ChampAtomFlagDump(CChamp *I,int index);
 int ChampAddBondToAtom(CChamp *I,int atom_index,int bond_index);
 
 int ChampMatch(CChamp *I,int template,int target,
-                int unique_start,int n_wanted,int *match_start);
+                int unique_start,int n_wanted,int *match_start,int tag_flag);
+
 int ChampMatch2(CChamp *I,int template,int target,
                         int start_tmpl,int start_targ,
-                        int n_wanted,int *match_start);
+                        int n_wanted,int *match_start,int tag_flag);
 
 int ChampFindUniqueStart(CChamp *I,int template,int target,int *multiplicity);
 int ChampUniqueListNew(CChamp *I,int atom, int unique_list);
@@ -61,6 +62,7 @@ void ChampPreparePattern(CChamp *I,int index);
 char *ChampParseBlockAtom(CChamp *I,char *c,int atom,int mask,int len,int not_flag);
 void ChampCountBondsEtc(CChamp *I,int index);
 void ChampCheckCharge(CChamp *I,int index);
+char *ChampParseTag(CChamp *I,char *c,unsigned int *map,unsigned int *not_map,int *ok);
 
 
 static int num_to_ring[12] = { 
@@ -365,6 +367,53 @@ int main(int argc, char *argv[])
 }
 
 #endif
+
+char *ChampParseTag(CChamp *I,char *c,unsigned int *map,unsigned int *not_map,int *ok)
+{
+  /* parse bit masks like <1> <1,2,3> <12,3,1> etc... */
+
+  int map_mask;
+  int map_index;
+  int not_flag = false;
+
+  while(*ok) {
+    if((*c)=='>') {
+      c++;
+      break;
+    }
+    if(!c) {
+      *ok=false;
+      break;
+    }
+    if(*c==';') { 
+      not_flag=false;
+      c++;
+    } else if(*c=='!') {
+      not_flag=true;
+      c++;
+    } else if((*c>='0')&&(*c<='9')) {
+      if((*(c+1)>='0')&&(*(c+1)<='9')) {
+        map_index = (*c-'0')*10+(*(c+1)-'0');
+        c+=2;
+      } else {
+        map_index = (*c-'0');
+        c++;
+      }
+      map_mask = 0x1;
+      while(map_index) {
+        map_mask = (map_mask<<1);
+        map_index--;
+      }
+      if(not_flag) {
+        *not_map|=map_mask;
+      } else {
+        *map|=map_mask;
+      }
+    } else 
+      c++;
+  }
+  return(c);
+}
 
 static void merge_lineages(CChamp *I,int *src,int *src_mask,int *dst,int *dst_mask)
 {
@@ -1772,7 +1821,16 @@ int ChampMatch_1V1_B(CChamp *I,int pattern,int target)
   ChampPrepareTarget(I,target);
   return(ChampMatch(I,pattern,target,
                     ChampFindUniqueStart(I,pattern,target,NULL),
-                    1,NULL));
+                    1,NULL,false));
+}
+
+int ChampMatch_1V1_N(CChamp *I,int pattern,int target,int limit,int tag_flag)
+{
+  ChampPreparePattern(I,pattern);
+  ChampPrepareTarget(I,target);
+  return(ChampMatch(I,pattern,target,
+                    ChampFindUniqueStart(I,pattern,target,NULL),
+                    limit,NULL,tag_flag));
 }
 
 int ChampMatch_1V1_Map(CChamp *I,int pattern,int target,int limit)
@@ -1783,7 +1841,7 @@ int ChampMatch_1V1_Map(CChamp *I,int pattern,int target,int limit)
   ChampPrepareTarget(I,target);
   return(ChampMatch(I,pattern,target,
                     ChampFindUniqueStart(I,pattern,target,NULL),
-                    limit,&match_start));
+                    limit,&match_start,false));
 }
 
 int ChampMatch_1VN_N(CChamp *I,int pattern,int list)
@@ -1796,7 +1854,7 @@ int ChampMatch_1VN_N(CChamp *I,int pattern,int list)
     ChampPrepareTarget(I,target);    
     if(ChampMatch(I,pattern,target,
                   ChampFindUniqueStart(I,pattern,target,NULL),
-                  1,NULL))
+                  1,NULL,false))
       
       c++;
     list = I->Int[list].link;
@@ -1804,6 +1862,22 @@ int ChampMatch_1VN_N(CChamp *I,int pattern,int list)
   return(c);
 }
 
+int ChampMatch_NV1_N(CChamp *I,int list,int target,int limit,int tag_flag)
+{
+  int pattern;
+  int c = 0;
+  ChampPrepareTarget(I,target);    
+  while(list) {
+    pattern = I->Int[list].value;
+    ChampPreparePattern(I,pattern);
+    if(ChampMatch(I,pattern,target,
+                  ChampFindUniqueStart(I,pattern,target,NULL),
+                  limit,NULL,tag_flag))
+      c++;
+    list = I->Int[list].link;
+  }
+  return(c);
+}
 
 int ChampFindUniqueStart(CChamp *I,int template, int target,int *multiplicity)
 { /* returns zero for no match */
@@ -1888,7 +1962,8 @@ void ChampMatchDump(CChamp *I,int match_idx)
 
 }
 
-int ChampMatch(CChamp *I,int template,int target,int unique_start,int n_wanted,int *match_start) 
+int ChampMatch(CChamp *I,int template,int target,int unique_start,
+               int n_wanted,int *match_start,int tag_flag) 
 { /* returns whether or not substructure exists, but doesn't do alignment */
   int n_match = 0;
   int start_targ;
@@ -1912,7 +1987,8 @@ int ChampMatch(CChamp *I,int template,int target,int unique_start,int n_wanted,i
             /* we now have starting atoms for each structure */
             n_match += ChampMatch2(I,template,target,
                                     tmpl_atom,targ_atom,
-                                    (n_wanted-n_match),match_start);
+                                    (n_wanted-n_match),
+                                   match_start,tag_flag);
             start_targ = I->Int[start_targ].link;            
             if(n_match>=n_wanted) break;
           }
@@ -1926,7 +2002,7 @@ int ChampMatch(CChamp *I,int template,int target,int unique_start,int n_wanted,i
 
 int ChampMatch2(CChamp *I,int template,int target,
                  int start_tmpl,int start_targ,int n_wanted,
-                 int *match_start)
+                 int *match_start,int tag_flag)
 
 { /* does the template covalent tree match the target? */
   
@@ -2205,6 +2281,35 @@ int ChampMatch2(CChamp *I,int template,int target,
                           ChampPatDump(I,target);*/
             ChampMatchDump(I,*match_start);
 #endif
+          }
+
+          if(tag_flag) { /* are we using tags to mark atoms and bonds? */
+            
+            tmpl_idx = tmpl_stack; /* prepare to read... */
+            while(tmpl_idx) {
+              tmpl_ent = I->Tmpl + tmpl_idx;
+              I->Atom[tmpl_ent->atom].mark_read = false;
+              tmpl_idx = tmpl_ent->link;
+            }
+            tmpl_idx = tmpl_stack;
+            targ_idx = targ_stack;
+            while(tmpl_idx&&targ_idx) {
+              tmpl_ent = I->Tmpl + tmpl_idx;
+              targ_ent = I->Targ + targ_idx;
+              if(!I->Atom[tmpl_ent->atom].mark_read) { /* save non-virtual atom match */
+                I->Atom[tmpl_ent->atom].mark_read = true;
+                I->Atom[targ_ent->atom].tag |= I->Atom[tmpl_ent->atom].tag;
+                I->Atom[targ_ent->atom].tag &= (0xFFFFFFFF^I->Atom[tmpl_ent->atom].not_tag);
+              }
+              
+              if(tmpl_ent->bond) { /* record bond match */
+                I->Bond[targ_ent->bond].tag |= I->Bond[tmpl_ent->bond].tag;
+                I->Atom[targ_ent->bond].tag &= (0xFFFFFFFF^I->Atom[tmpl_ent->bond].not_tag);
+              }
+              
+              tmpl_idx = tmpl_ent->link;
+              targ_idx = targ_ent->link;
+            }
           }
 
           /* back-out the last target match... */
@@ -3125,9 +3230,12 @@ int ChampSmiToPat(CChamp *I,char *c)
   int result = 0;
   int sym;
   int ok = true;
+  int bond_tags = 0;
+  int bond_not_tags = 0;
   int a;
   int not_bond = false;
-  
+  char *orig_c=c;
+
 #define save_bond() { if(last_bond) {I->Bond[last_bond].link=cur_bond;}\
           else {bond_list=cur_bond;}\
           last_bond = cur_bond;\
@@ -3175,6 +3283,17 @@ int ChampSmiToPat(CChamp *I,char *c)
             ENDFD;
           break;
         }
+        break;
+      case '<': /* tag index/list */
+        if(bond_flag) {
+          c = ChampParseTag(I,c,&bond_tags,&bond_not_tags,&ok);
+        } else {
+          if(base_atom) {
+            c = ChampParseTag(I,c,&I->Atom[base_atom].tag,
+                              &I->Atom[base_atom].not_tag,&ok);
+          } else ok=false;
+        }
+        sym = cSym_Qualifier;
         break;
       case '*': /* nonstandard? */
         c = ChampParseAliphaticAtom(I,c,cur_atom,cH_Any,1,false);
@@ -3342,7 +3461,8 @@ int ChampSmiToPat(CChamp *I,char *c)
     }
     if(sym==cSym_Null) {
       PRINTFB(FB_smiles_parsing,FB_errors)
-        " champ: error parsing smiles string at '%c'\n",*c
+        " champ: error parsing smiles string at '%c' (char %d) in\n champ: '%s'\n",*c,c-orig_c,orig_c
+        
         ENDFB;
       ok=false;
     }
@@ -3366,7 +3486,11 @@ int ChampSmiToPat(CChamp *I,char *c)
               I->Bond[cur_bond].order = (cH_Single|cH_Aromatic); /* is this right? */
             else
               I->Bond[cur_bond].order = cH_Single;
-          }
+          } 
+          I->Bond[cur_bond].tag = bond_tags; /* save bond tags */
+          I->Bond[cur_bond].not_tag = bond_not_tags; /* save bond tags */
+          bond_tags=0;
+          bond_not_tags=0;
           ok = ChampAddBondToAtom(I,cur_atom,cur_bond);
           if(ok) {
             ok = ChampAddBondToAtom(I,base_atom,cur_bond);
