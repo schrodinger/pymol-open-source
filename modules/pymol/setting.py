@@ -352,6 +352,12 @@ if __name__=='pymol.setting':
       ray_transparency_spec_cut = 312
       internal_prompt       = 313
       normalize_grd_maps    = 314
+      ray_blend_colors      = 315
+      ray_blend_red         = 316
+      ray_blend_green       = 317
+      ray_blend_blue        = 318
+      png_screen_gamma      = 319
+      png_file_gamma        = 320
       
    setting_sc = Shortcut(SettingIndex.__dict__.keys())
 

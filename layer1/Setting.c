@@ -2162,5 +2162,12 @@ void SettingInitGlobal(int alloc,int reset_gui)
   SettingSet_b(I,cSetting_internal_prompt,1);
   SettingSet_b(I,cSetting_normalize_grd_maps,0);
 
+  SettingSet_b(I,cSetting_ray_blend_colors,0);
+  SettingSet_f(I,cSetting_ray_blend_red,0.17F);
+  SettingSet_f(I,cSetting_ray_blend_green,0.25F);
+  SettingSet_f(I,cSetting_ray_blend_blue,0.14F);
+  SettingSet_f(I,cSetting_png_screen_gamma,2.4F);
+  SettingSet_f(I,cSetting_png_file_gamma,1.0F);
+
 }
 
