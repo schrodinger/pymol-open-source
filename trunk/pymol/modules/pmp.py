@@ -87,7 +87,7 @@ if len(pmp_cmd1[pmp_nest]) > 0:\n\
                elif pmp_args[pmp_nest][1]=='global':\n\
                   execfile(pmp_args[pmp_nest][0],globals(),locals())\n\
             else:\n\
-               print 'invalid arguments'\n\
+               print ' Parser: invalid argument error.'\n\
          elif len(pmp_input[pmp_nest][0]):\n\
             if pmp_input[pmp_nest][0][0]=='@':\n\
                pmp_script[pmp_nest] = open(pmp_input[pmp_nest][0][1:],'r')\n\

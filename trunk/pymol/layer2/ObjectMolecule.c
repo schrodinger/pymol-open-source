@@ -1067,7 +1067,7 @@ void ObjectMoleculeUpdate(ObjectMolecule *I)
   for(a=0;a<I->NCSet;a++)
 	 if(I->CSet[a]) {	
 	   OrthoBusySlow(a,I->NCSet);
-	   PRINTF " ObjectMolecule: updating state %d of \"%s\".\n" , a+1, I->Obj.Name ENDF
+	   printf(" ObjectMolecule: updating state %d of \"%s\".\n" , a+1, I->Obj.Name);
 	   I->CSet[a]->fUpdate(I->CSet[a]);
 	 }
 }

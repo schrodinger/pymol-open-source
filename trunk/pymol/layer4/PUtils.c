@@ -14,15 +14,14 @@ I* Additional authors of this source file include:
 -*
 Z* -------------------------------------------------------------------
 */
-/* Example of embedding Python in another program */
 
 #include<stdlib.h>
 #include<Python.h>
 #include<signal.h>
 #include<string.h>
-#include <sys/types.h>
-#include <sys/time.h>
-#include <unistd.h>
+#include<sys/types.h>
+#include<sys/time.h>
+#include<unistd.h>
 
 #include"MemoryDebug.h"
 #include"Base.h"
@@ -172,6 +171,7 @@ void PInit(void)
   
   PyRun_SimpleString("import pm\n"); 
   PyRun_SimpleString("import pmu\n");  
+  PyRun_SimpleString("import pmm\n");  
   PyRun_SimpleString("import string\n"); 
 
 #ifndef _PYMOL_MODULE
@@ -236,6 +236,27 @@ void PFlush(PyThreadState **save) {
 	PLock(cLockAPI,&_save);
 
   }
+}
+
+void PBlock(PyThreadState **save)
+{
+  /* NOTE: ASSUMES we current have unblocked Python threads and a locked API */
+
+  PyThreadState *_save;
+  _save = (*save);
+  Py_BLOCK_THREADS;
+  PyRun_SimpleString("pm.unlock()");
+  (*save)=_save;
+}
+
+void PUnblock(PyThreadState **save)
+{
+  /* NOTE: ASSUMES we current have blocked Python threads and an unlocked API */
+  PyThreadState *_save;
+  _save = (*save);
+  PyRun_SimpleString("pm.lock()");
+  Py_UNBLOCK_THREADS;
+  (*save)=_save;
 }
 
 void PDefineFloat(char *name,float value) {

@@ -82,9 +82,10 @@ typedef struct {
   int MovieFrameFlag;
   unsigned ImageBufferSize;
   double LastRender,RenderTime,LastFrameTime;
-  float LastRock;
+  float LastRock,LastRockTime;
   Pickable LastPicked;
   int StereoMode;
+  
 } CScene;
 
 CScene Scene;
@@ -317,24 +318,40 @@ void SceneIdle(void)
   CScene *I=&Scene;
   float renderTime;
   float minTime;
-  if(Control.Rocking) {
+  int frameFlag = false;
+  int rockFlag = false;
+  if(MoviePlaying())
+    {
+		renderTime = -I->LastFrameTime + UtilGetSeconds();
+		minTime=SettingGet(cSetting_movie_delay)/1000.0;
+		if(renderTime>=minTime) {
+        frameFlag=true;
+        rockFlag=true;
+      }
+    }
+  if(Control.Rocking&&(!rockFlag))
+    {
+		renderTime = -I->LastRockTime + UtilGetSeconds();
+		minTime=SettingGet(cSetting_rock_delay)/1000.0;
+		if(renderTime>=minTime) {
+        rockFlag=true;
+        I->LastRockTime=UtilGetSeconds();
+      }
+    }
+  if(Control.Rocking&&rockFlag) {
 	 SceneRotate(-I->LastRock,0.0,1.0,0.0);
 	 I->RockTime+=I->RenderTime;
 	 I->LastRock=sin(I->RockTime*SettingGet(cSetting_sweep_speed))*SettingGet(cSetting_sweep_angle);
 	 SceneRotate(I->LastRock,0.0,1.0,0.0);
   }
-  if(MoviePlaying())
+  if(MoviePlaying()&&frameFlag)
 	 {
-		renderTime = -I->LastFrameTime + UtilGetSeconds();
-		minTime=SettingGet(cSetting_min_delay)/1000.0;
-		if(renderTime>=minTime) 
-		  {
-			 I->LastFrameTime = UtilGetSeconds();
-			 if(I->Frame==I->NFrame-1)
-			   SceneSetFrame(4,0);
-			 else
-			   SceneSetFrame(5,1);
-		  }
+      I->LastFrameTime = UtilGetSeconds();
+
+      if(I->Frame==I->NFrame-1)
+        SceneSetFrame(4,0);
+      else
+        SceneSetFrame(5,1);
 	 }
 }
 /*========================================================================*/
@@ -721,6 +738,7 @@ void SceneInit(void)
   I->RenderTime = 0;
   I->LastRender = UtilGetSeconds();
   I->LastFrameTime = UtilGetSeconds();
+  I->LastRockTime = UtilGetSeconds();
   I->LastPicked.ptr = NULL;
 
   I->CopyNextFlag=true;
@@ -1206,7 +1224,7 @@ void SceneRender(Pickable *pick,int x,int y)
     I->RenderTime += I->LastRender;
     ButModeSetRate(I->RenderTime);
     if(I->CopyNextFlag) {
-      if(!MoviePlaying())
+      if(!(ControlIdling()))
         SceneCopy(0);
     } else {
       I->CopyNextFlag=true;

@@ -35,6 +35,7 @@ Z* -------------------------------------------------------------------
 #include"Control.h"
 #include"Setting.h"
 #include"Queue.h"
+#include"Pop.h"
 
 #ifndef true
 #define true 1
@@ -577,7 +578,7 @@ void OrthoReshape(int width, int height)
   BlockSetMargin(block,height-ExecutiveMargin,width-cOrthoRightSceneMargin,ButModeMargin,0);
   block=ControlGetBlock();
   BlockSetMargin(block,height-ButModeMargin,width-cOrthoRightSceneMargin,ControlMargin,0);
-
+  
   glGetIntegerv(GL_VIEWPORT,I->ViewPort);
 
   OrthoPushMatrix();
@@ -600,7 +601,7 @@ int OrthoButton(int button,int state,int x,int y,int mod)
   OrthoObject *I=&Ortho;
 
   Block *block;
-  int handled = 0;
+  int handled = 0; 
 
   I->X=x;
   I->Y=y;
@@ -628,13 +629,18 @@ int OrthoButton(int button,int state,int x,int y,int mod)
 	 }
   else if(state==GLUT_UP)
 	 {
+      if(I->GrabbedBy)
+        {
+			 block=I->GrabbedBy;
+			 if(block->fRelease)
+            handled = block->fRelease(block,x,y,mod);
+			 I->ClickedIn = NULL;
+        }
 		if(I->ClickedIn)
 		  {
 			 block=I->ClickedIn;
 			 if(block->fRelease)
-				{
-				  handled = block->fRelease(block,x,y,mod);
-				}
+            handled = block->fRelease(block,x,y,mod);
 			 I->ClickedIn = NULL;
 		  }
 	 }
@@ -650,13 +656,17 @@ int OrthoDrag(int x, int y,int mod)
 
   I->X=x;
   I->Y=y;
-  if(I->ClickedIn)
+  if(I->GrabbedBy) 
+    {
+		block = I->GrabbedBy;
+		if(block->fDrag)
+        handled = block->fDrag(block,x,y,mod);
+    }
+  else if(I->ClickedIn)
 	 {
 		block = I->ClickedIn;
 		if(block->fDrag)
-		  {
-			 handled = block->fDrag(block,x,y,mod);
-		  }
+        handled = block->fDrag(block,x,y,mod);
 	 }
   return(handled);
 }
@@ -697,11 +707,13 @@ void OrthoInit(void)
 
   ButModeInit();
   ControlInit();
+  PopInit();
 }
 /*========================================================================*/
 void OrthoFree(void)
 {
   OrthoObject *I=&Ortho;
+  PopFree();
   ButModeFree();
   ControlFree();
   QueueFree(I->cmds);

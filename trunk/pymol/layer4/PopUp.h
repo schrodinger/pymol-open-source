@@ -13,35 +13,13 @@ I* Additional authors of this source file include:
 -*
 Z* -------------------------------------------------------------------
 */
-#ifndef _H_PUtils
-#define _H_PUtils
+#ifndef _H_PopUp
+#define _H_PopUp
 
 #include<Python.h>
 
-#include"AtomInfo.h"
+#include"Block.h"
 
-void PInit(void);
-void PFree(void);
-void PExit(int code);
-void PParse(char *str);
-
-#define cLockAPI 1
-#define cLockInbox 2
-#define cLockOutbox 3
-
-int PAlterAtom(AtomInfoType *at,char *expr);
-void PSleep(int usec);
-
-void PLock(int lock,PyThreadState **save);
-void PUnlock(int lock,PyThreadState **save);
-
-void PBlock(PyThreadState **save);
-void PUnblock(PyThreadState **save);
-
-void PFlush(PyThreadState **save);
-
-void PStereoOff(void);
-void PDefineFloat(char *name,float value);
-PyObject *PFloatVLAToPyList(float *f);
+void PopUpNew(int x,int y,PyObject *list);
 
 #endif

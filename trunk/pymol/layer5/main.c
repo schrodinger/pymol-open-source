@@ -71,8 +71,9 @@ int TheWindow;
 
 typedef struct {
   int DirtyFlag;
-  int IdleFlag;
+  int IdleMode;
   int SwapFlag;
+  float IdleTime;
 } CMain;
 
 static CMain Main;
@@ -85,6 +86,7 @@ void MainDirty(void)
 {
   CMain *I = &Main;
   I->DirtyFlag=true;
+  I->IdleMode = 0;
 }
 /*========================================================================*/
 void MainSwapBuffers(void)
@@ -279,7 +281,8 @@ static void MainInit(void)
   CMain *I = &Main;
 
   I->DirtyFlag=true;
-  I->IdleFlag=false;
+  I->IdleMode=2;
+  I->IdleTime=UtilGetSeconds();
 
   if(PMGUI) {
     glMatrixMode(GL_MODELVIEW);
@@ -358,9 +361,12 @@ void MainBusyIdle(void)
 
   if(ControlIdling()) {
 	 SceneIdle(); 
-	 I->IdleFlag=false;
+	 I->IdleMode=0;
   } else {
-	 I->IdleFlag=true;
+    if(!I->IdleMode) {
+      I->IdleTime=UtilGetSeconds();
+      I->IdleMode=1;
+    }
   }
 
   PFlush(&_save);
@@ -377,18 +383,27 @@ void MainBusyIdle(void)
     I->DirtyFlag=false;
   }
   
-  if(I->IdleFlag) { /* select to avoid racing the CPU */
-    
+  if(I->IdleMode) { /* avoid racing the CPU */
+    if(I->IdleMode==1) {
+      if(UtilGetSeconds()-I->IdleTime>SettingGet(cSetting_idle_delay)) { 
+        I->IdleMode=2;
+        if(PMGUI) 
+          glutPostRedisplay(); /* trigger caching of the current scene */
+      }
+    }
     PUnlock(cLockAPI,&_save);
-    PSleep(20000);
+    if(I->IdleMode==1)
+      PSleep(SettingGet(cSetting_fast_idle)); /* fast idle - more responsive */
+    else
+      PSleep(SettingGet(cSetting_slow_idle)); /* slow idle - save CPU cycles */
     PLock(cLockAPI,&_save);
-    
+  } else {
+    PUnlock(cLockAPI,&_save);
+    PSleep(SettingGet(cSetting_no_idle)); /* give Tcl/Tk a chance to run */
+    PLock(cLockAPI,&_save);
   }
-  
   PUnlock(cLockAPI,&_save);
 }
-
-  CMain *I = &Main;
 
 /*========================================================================*/
 
@@ -482,7 +497,6 @@ void was_main(int flags)
     MainDraw(); /* for command line processing */
     while(1) {
       MainBusyIdle();
-      
     }
   }
 

@@ -450,7 +450,6 @@ static PyObject *PMIntraFit(PyObject *dummy, PyObject *args)
   return result;
 }
 
-
 static PyObject *PMFit(PyObject *dummy, PyObject *args)
 {
   char *str1,*str2;

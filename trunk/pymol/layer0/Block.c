@@ -40,6 +40,18 @@ void BlockFill(Block *I)
   }
 }
 /*========================================================================*/
+void BlockOutline(Block *I) 
+{
+  if(PMGUI) {
+    glBegin(GL_LINE_LOOP);
+    glVertex2i(I->rect.right,I->rect.top);
+    glVertex2i(I->rect.right,I->rect.bottom);
+    glVertex2i(I->rect.left,I->rect.bottom);
+    glVertex2i(I->rect.left,I->rect.top);
+    glEnd();
+  }
+}
+/*========================================================================*/
 void BlockSetMargin(Block *block,int t,int l,int b,int r)
 {
   block->margin.top=t;
@@ -47,7 +59,6 @@ void BlockSetMargin(Block *block,int t,int l,int b,int r)
   block->margin.bottom=b;
   block->margin.right=r;
 }
-
 /*========================================================================*/
 void BlockReshape(Block *I,int width, int height)
 {
@@ -55,7 +66,6 @@ void BlockReshape(Block *I,int width, int height)
   I->rect.left = I->margin.left;
   I->rect.bottom = I->margin.bottom;
   I->rect.right = (width-I->margin.right)-1;
-
 }
 /*========================================================================*/
 void BlockRecursiveDraw(Block *block)
@@ -73,12 +83,9 @@ void BlockRecursiveDraw(Block *block)
 		  }
 	 }
 }
-
-
 /*========================================================================*/
 Block *BlockRecursiveFind(Block *block,int x,int y)
 {
-
   Block *check;
   if(block){
 	 if(!block->active)
