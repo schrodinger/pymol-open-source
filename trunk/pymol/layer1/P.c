@@ -43,6 +43,7 @@ PyObject *P_cmd = NULL;
 PyObject *P_menu = NULL;
 PyObject *P_xray = NULL;
 PyObject *P_parser = NULL;
+PyObject *P_setting = NULL;
 
 PyObject *P_chempy = NULL;
 PyObject *P_models = NULL;
@@ -545,6 +546,10 @@ void PInit(void)
   P_menu = PyDict_GetItemString(P_globals,"menu");
   if(!P_menu) ErrFatal("PyMOL","can't find module 'menu'");
 
+  PRunString("import setting\n");  
+  P_setting = PyDict_GetItemString(P_globals,"setting");
+  if(!P_setting) ErrFatal("PyMOL","can't find module 'setting'");
+
 #ifdef _PYMOL_XRAY
   PRunString("import xray\n");  
   P_xray = PyDict_GetItemString(P_globals,"xray");
@@ -661,7 +666,36 @@ void PBlock(void)
       return;
     }
   }
-  ErrFatal("P","can't restore an unknown python thread");
+  ErrFatal("PBlock","oops, no saved thread -- your threads must be tangled!");
+}
+
+int PAutoBlock(void)
+{
+  int a,id;
+  /* synchronize python */
+
+  id = PyThread_get_thread_ident();
+  a = NSavedThread;
+  while(a) {
+    a--;
+    if(SavedThread[a].id==id) {
+      PyEval_RestoreThread(SavedThread[a].state);
+      NSavedThread--;
+      if(NSavedThread) {
+        SavedThread[a] = SavedThread[NSavedThread];
+      }
+      PRINTFD(FB_Threads)
+        " PAutoBlock-DEBUG: saved thread 0x%x\n",PyThread_get_thread_ident()
+        ENDFD;
+      return 1;
+    }
+  }
+  return 0;
+}
+
+void PAutoUnblock(int flag)
+{
+  if(flag) PUnblock();
 }
 
 void PBlockAndUnlockAPI(void)

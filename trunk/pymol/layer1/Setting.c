@@ -15,6 +15,7 @@ Z* -------------------------------------------------------------------
 */
 
 #include"os_std.h"
+#include<Python.h>
 
 #include"Base.h"
 #include"OOMac.h"
@@ -25,23 +26,28 @@ Z* -------------------------------------------------------------------
 #include"ButMode.h"
 #include"Executive.h"
 #include"Editor.h"
+#include"P.h"
 
 CSetting Setting;
 
 /*========================================================================*/
-int SettingGetIndex(char *name)
+int SettingGetIndex(char *name) /* can be called from any thread state */
 {
-  CSetting *I=&Setting;
+  PyObject *tmp;
+  int unblock;
   int index=-1; 
-  int a;
-  for(a=0;a<I->NSetting;a++)
-	 {
-		if(strcmp(name,I->Setting[a].Name)==0) 
-		  {
-			 index=a;
-			 break;
-		  }
-	 }
+  
+  unblock = PAutoBlock();
+  if(P_setting) {
+    tmp = PyObject_CallMethod(P_setting,"_get_index","s",name);
+    if(tmp) {
+      if(PyInt_Check(tmp))
+        index = PyInt_AsLong(tmp);
+      Py_DECREF(tmp);
+    }
+  }
+  PAutoUnblock(unblock);
+
   return(index);
 }
 /*========================================================================*/

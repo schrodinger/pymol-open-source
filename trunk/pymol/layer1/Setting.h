@@ -18,6 +18,19 @@ Z* -------------------------------------------------------------------
 
 typedef char SettingName[255];
 
+/*
+typedef struct {
+  int defined;
+  int type;
+  void *ptr;
+} SettingRec;
+
+#define cSetting_boolean
+#define cSetting_int
+#define cSetting_float
+#define cSetting_float3
+*/
+
 typedef struct {
   SettingName Name;
   float Value[3];
