@@ -6710,6 +6710,9 @@ static int ExecutiveClick(Block *block,int button,int x,int y,int mod)
                     case cObjectSlice:
                       MenuActivate(G,mx,my,x,y,"slice_action",rec->obj->Name);
                       break;
+                    case cObjectGadget:
+                      MenuActivate(G,mx,my,x,y,"ramp_action",rec->obj->Name);
+                      break;
                     }
                     break;
                   }
