@@ -76,6 +76,8 @@ Z* -------------------------------------------------------------------
 #define cLoadTypeChemPyMap 11
 #define cLoadTypeCallback 12
 #define cLoadTypeCGO 13
+#define cLoadTypeR3D 14
+#define cLoadTypeXYZ 15
 
 #define tmpSele "_tmp"
 #define tmpSele1 "_tmp1"
@@ -1827,6 +1829,27 @@ static PyObject *CmdLoad(PyObject *self, PyObject *args)
 		}
 	 } else {
 		ObjectMoleculeLoadPDBFile((ObjectMolecule*)origObj,fname,frame,discrete);
+      if(finish)
+        ExecutiveUpdateObjectSelection(origObj);
+      if(frame<0)
+        frame = ((ObjectMolecule*)origObj)->NCSet-1;
+		sprintf(buf," CmdLoad: \"%s\" appended into object \"%s\", state %d.\n",
+              fname,oname,frame+1);
+	 }
+	 break;
+  case cLoadTypeXYZ:
+	 if(!origObj) {
+		obj=(Object*)ObjectMoleculeLoadXYZFile(NULL,fname,frame,discrete);
+		if(obj) {
+		  ObjectSetName(obj,oname);
+		  ExecutiveManageObject(obj);
+        if(frame<0)
+          frame = ((ObjectMolecule*)obj)->NCSet-1;
+		  sprintf(buf," CmdLoad: \"%s\" loaded into object \"%s\", state %d.\n",
+                fname,oname,frame+1);
+		}
+	 } else {
+		ObjectMoleculeLoadXYZFile((ObjectMolecule*)origObj,fname,frame,discrete);
       if(finish)
         ExecutiveUpdateObjectSelection(origObj);
       if(frame<0)

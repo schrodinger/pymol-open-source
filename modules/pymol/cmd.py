@@ -3325,6 +3325,10 @@ PYMOL API
          ftype = loadable.model
       elif re.search("\.r3d$",arg[0]):
          ftype = loadable.r3d
+      elif re.search("\.xyz$",arg[0]):
+         ftype = loadable.xyz
+      elif re.search("\.xyz_[0-9]*$",arg[0]):
+         ftype = loadable.xyz
       elif re.search("\.sdf$",arg[0]):
          oname = re.sub("[^/]*\/","",arg[0])
          oname = re.sub("\.sdf$","",oname)
@@ -3344,7 +3348,8 @@ PYMOL API
             ok = 0
          if len(arg)==1:
             oname = re.sub("[^/]*\/","",arg[0])
-            oname = re.sub("\.pdb$|\.mol$|\.mmod$|\.mmd$|\.xplor$|\.pkl$|\.r3d$",
+            oname = re.sub(
+"\.pdb$|\.mol$|\.mmod$|\.mmd$|\.xplor$|\.pkl$|\.r3d$|\.xyz$|\.xyz_[0-9]*$",
                            "",oname)
          else:
             oname = string.strip(arg[1])
@@ -4406,6 +4411,7 @@ class loadable:
    callback = 12 # pymol callback obejct
    cgo = 13      # compiled graphic object
    r3d = 14      # r3d, only used within cmd.py
+   xyz = 15      # xyz, tinker format
    
 # build shortcuts list
 

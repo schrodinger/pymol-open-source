@@ -32,8 +32,6 @@ Z* -------------------------------------------------------------------
 #include"AtomInfo.h"
 #include"CoordSet.h"
 
-
-
 PyObject *P_globals = NULL;
 
 PyObject *P_cmd = NULL;
