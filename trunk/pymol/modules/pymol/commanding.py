@@ -13,7 +13,7 @@
 #Z* -------------------------------------------------------------------
 
 if __name__=='pymol.commanding':
-   
+
    import thread
    import string
    import re
@@ -191,20 +191,34 @@ USAGE (PYTHON)
    from pymol import cmd
    cmd.do("load file.pdb")
       '''
+      r = None
       if is_list(commands):
          cmmd_list = commands
       else:
          cmmd_list = [ commands ]
       for cmmd in cmmd_list:
-         lst = string.split(cmmd,"\n")   
-         for a in lst:
-            if(len(a)):
-               try:
-                  lock()
-                  r = None
-                  r = _cmd.do(a)
-               finally:
-                  unlock()
+         lst = string.split(cmmd,"\n")
+         if len(lst)<2:
+            for a in lst:
+               if(len(a)):
+                  try:
+                     lock()
+                     r = None
+                     r = _cmd.do(a)
+                  finally:
+                     unlock()
+         else:
+            defer = cmd.get_setting_legacy("defer_updates")
+            cmd.set('defer_updates',1)
+            for a in lst:
+               if(len(a)):
+                  try:
+                     lock()
+                     r = None
+                     r = _cmd.do(a)
+                  finally:
+                     unlock()
+            cmd.set('defer_updates',defer)
       return r
 
 

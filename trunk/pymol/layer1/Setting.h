@@ -445,10 +445,11 @@ CSetting *SettingNewFromPyList(PyObject *list);
 #define cSetting_pdb_no_end_record          301
 #define cSetting_cgo_dot_width              302
 #define cSetting_cgo_dot_radius             303
+#define cSetting_defer_updates              304
 
 /* cSetting_ss_INIT must always be last setting_index +1 */
 
-#define cSetting_INIT                        304
+#define cSetting_INIT                        305
 
 #endif
 

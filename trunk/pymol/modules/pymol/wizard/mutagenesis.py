@@ -219,6 +219,7 @@ class Mutagenesis(Wizard):
          cmd.alter("(%s)"%tmp_name,"segi=stored.segi")
          cmd.iterate("(%s and n;ca)"%sele_name,"stored.ss=ss")
          cmd.alter("(%s)"%tmp_name,"ss=stored.ss")
+         cartoon = (cmd.count_atoms("(%s and n;ca and rep cartoon)"%sele_name)>0)
          # move the fragment
          if ((cmd.count_atoms("(%s and n;cb)"%tmp_name)>0) and
              (cmd.count_atoms("(%s and n;cb)"%sele_name)>0)):
@@ -266,6 +267,8 @@ class Mutagenesis(Wizard):
       cmd.hide("("+obj_name+")")
       cmd.show(self.rep,obj_name)
       cmd.show('lines',obj_name) # always show lines
+      if cartoon:
+         cmd.show("cartoon",obj_name)
       cmd.set('auto_zoom',auto_zoom,quiet=1)
       cmd.delete(tmp_name)
       cmd.frame(0)

@@ -349,7 +349,7 @@ static void MainButton(int button,int state,int x,int y)
 /*========================================================================*/
 static void MainDrag(int x,int y)
 {
-  /*  CMain *I = &Main;*/
+  CMain *I = &Main;
   
   PLockAPIAsGlut();
   
@@ -357,6 +357,12 @@ static void MainDrag(int x,int y)
   if(!OrthoDrag(x,y,Modifiers))
     {
 	 }
+  
+  if(I->DirtyFlag)
+    if(PMGUI) {
+      p_glutPostRedisplay();
+      I->DirtyFlag=false;
+    }
   
   PUnlockAPIAsGlut();
 
@@ -678,7 +684,10 @@ void MainBusyIdle(void)
     }
     I->SwapFlag=false;
   }
-  if(I->DirtyFlag) {
+  if(I->DirtyFlag&&
+     ((!SettingGet_b(NULL,NULL,cSetting_defer_updates)||
+       ControlIdling()))
+     ) {
     if(PMGUI) 
       p_glutPostRedisplay();
     else

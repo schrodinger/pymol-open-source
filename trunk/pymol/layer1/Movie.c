@@ -241,6 +241,8 @@ int MoviePNG(char *prefix,int save,int start,int stop)
   int nFrame;
 
   save = (int)SettingGet(cSetting_cache_frames); 
+  if(!save)
+    MovieClearImages();
   SettingSet(cSetting_cache_frames,1.0);
   OrthoBusyPrime();
   nFrame = I->NFrame;
@@ -265,7 +267,7 @@ int MoviePNG(char *prefix,int save,int start,int stop)
       PRINTFB(FB_Movie,FB_Debugging)
         " MoviePNG-DEBUG: Cycle %d...\n",a
         ENDFB;
-		sprintf(fname,"%s_%04d.png",prefix,a+1);
+		sprintf(fname,"%s%04d.png",prefix,a+1);
 		SceneSetFrame(0,a);
 		MovieDoFrameCommand(a);
 		PFlush();
@@ -302,6 +304,8 @@ int MoviePNG(char *prefix,int save,int start,int stop)
     ENDFB;
   SettingSet(cSetting_cache_frames,(float)save);
   MoviePlay(cMovieStop);
+  MovieClearImages();
+  SceneSuppressMovieFrame();
   return(true);
 }
 /*========================================================================*/
@@ -387,6 +391,11 @@ int MovieFrameToIndex(int frame)
 void MovieSetImage(int index,ImageType image)
 {
   CMovie *I=&Movie;
+
+  PRINTFB(FB_Movie,FB_Blather)
+    " MovieSetImage: setting movie image %d\n",index+1
+    ENDFB;
+
   VLACheck(I->Image,ImageType,index);
   if(I->Image[index]) FreeP(I->Image[index]);
   I->Image[index]=image;
@@ -476,6 +485,10 @@ void MovieClearImages(void)
 {
   CMovie *I=&Movie;
   int a;
+
+  PRINTFB(FB_Movie,FB_Blather)
+    " MovieClearImages: clearing...\n"
+    ENDFB;
   for(a=0;a<I->NImage;a++)
 	 {
 		if(I->Image[a]) {

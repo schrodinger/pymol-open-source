@@ -109,6 +109,7 @@ void SceneRovingPostpone(void);
 void SceneCleanupStereo(void);
 int SceneReinitialize(void);
 void SceneUpdateStereoMode(void);
+void SceneSuppressMovieFrame(void);
 
 #endif
 

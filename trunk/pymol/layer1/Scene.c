@@ -205,7 +205,11 @@ void SceneGetCardInfo(char **vendor,char **renderer,char **version)
   (*renderer)=I->renderer;
   (*version)=I->version;
 }
-
+void SceneSuppressMovieFrame(void)
+{
+  CScene *I=&Scene;  
+  I->MovieFrameFlag = false;
+}
 void SceneGetPos(float *pos)
 {
   CScene *I=&Scene;  
@@ -469,11 +473,11 @@ void ScenePNG(char *png)
          ENDFB;
      }
   } else {
-    PRINTFB(FB_Scene,FB_Blather)
-      " ScenePNG: writing cached image.\n"
-      ENDFB;
     image=I->ImageBuffer;
     reset_alpha = I->CopiedFromOpenGL;
+    PRINTFB(FB_Scene,FB_Blather)
+      " ScenePNG: writing cached image (reset_alpha=%d).\n",reset_alpha
+      ENDFB;
   }
   if(reset_alpha&&image) {
     char *p = image;
@@ -683,6 +687,10 @@ Block *SceneGetBlock(void)
 void SceneMakeMovieImage(void) {
   CScene *I=&Scene;
   float *v;
+
+  PRINTFB(FB_Scene,FB_Blather)
+    " Scene: Making movie image.\n"
+    ENDFB;
 
   I->DirtyFlag=false;
   if(SettingGet(cSetting_ray_trace_frames)) {
@@ -2721,8 +2729,8 @@ int SceneRenderCached(void)
 		}
 	  else
 		{
-		  SceneMakeMovieImage();
-		  renderedFlag=true;
+        SceneMakeMovieImage();
+        renderedFlag=true;
 		}
 	} else if(MoviePlaying()&&SettingGet(cSetting_ray_trace_frames)) {
 	  SceneRay(0,0,(int)SettingGet(cSetting_ray_default_renderer),NULL,NULL,0.0F,0.0F,false); 

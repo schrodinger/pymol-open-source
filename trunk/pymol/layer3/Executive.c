@@ -3763,12 +3763,13 @@ void ExecutiveDrawNow(void)
     " ExecutiveDrawNow: entered.\n"
     ENDFD;
 
-  if(PMGUI) {
-    glMatrixMode(GL_MODELVIEW);
-    /*  glClear( GL_DEPTH_BUFFER_BIT);*/
-  }
-
   if(!SettingGet(cSetting_suspend_updates)) {
+
+    if(PMGUI) {
+      glMatrixMode(GL_MODELVIEW);
+      /*  glClear( GL_DEPTH_BUFFER_BIT);*/
+    }
+
     SceneUpdate();
     
     OrthoDoDraw();
