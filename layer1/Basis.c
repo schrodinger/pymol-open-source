@@ -879,7 +879,7 @@ void BasisMakeMap(CBasis *I,int *vert2prim,CPrimitive *prim,float *volume)
           dd[1]=d[1]*sep;
           dd[2]=d[2]*sep;
           l=prm->l1;
-          
+
           q = (int)floor(prm->r1/sep)+1;
           while(1) {
 
@@ -898,10 +898,12 @@ void BasisMakeMap(CBasis *I,int *vert2prim,CPrimitive *prim,float *volume)
                     tempRef[n]=a;
                     n++;
                   }
-            if(l<0.0)
+            if(l<=0.0)
               break;
             l-=sep;
           }
+
+            
 			 break;
 		  case cPrimSphere:
           q = (int)floor(prm->r1/sep);
