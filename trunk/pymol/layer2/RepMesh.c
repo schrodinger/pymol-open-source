@@ -109,43 +109,64 @@ void RepMeshRender(RepMesh *I,CRay *ray,Pickable **pick)
 	 }
   } else if(pick&&PMGUI) {
   } else if(PMGUI) {
-    glLineWidth(I->Width);
-    if(n) {
-	   glDisable(GL_LIGHTING);
-		if(I->oneColorFlag) {
-		  while(*n)
-			 {
-            glColor3fv(ColorGet(I->oneColor));
-				c=*(n++);
-				glBegin(GL_LINE_STRIP);
-				SceneResetNormal(false);
-				while(c--) {
-				  glVertex3fv(v);
-				  v+=3;
-				}
-				glEnd();
-			 }
-		} else {
-		  while(*n)
-			 {
-				c=*(n++);
-				glBegin(GL_LINE_STRIP);
-				SceneResetNormal(false);
-				while(c--) {
-				  glColor3fv(vc);
-				  vc+=3;
-				  glVertex3fv(v);
-				  v+=3;
-				}
-				glEnd();
-			 }
+    
+    int use_dlst;
+    use_dlst = (int)SettingGet(cSetting_use_display_lists);
+    if(use_dlst&&I->R.displayList) {
+      glCallList(I->R.displayList);
+    } else { 
 
-		
-		}
-	   glEnable(GL_LIGHTING);
-	 }
-     }
+      if(use_dlst) {
+        if(!I->R.displayList) {
+          I->R.displayList = glGenLists(1);
+          if(I->R.displayList) {
+            glNewList(I->R.displayList,GL_COMPILE_AND_EXECUTE);
+          }
+        }
+      }
+      
+      glLineWidth(I->Width);
+      if(n) {
+        glDisable(GL_LIGHTING);
+        if(I->oneColorFlag) {
+          while(*n)
+            {
+              glColor3fv(ColorGet(I->oneColor));
+              c=*(n++);
+              glBegin(GL_LINE_STRIP);
+              SceneResetNormal(false);
+              while(c--) {
+                glVertex3fv(v);
+                v+=3;
+              }
+              glEnd();
+            }
+        } else {
+          while(*n)
+            {
+              c=*(n++);
+              glBegin(GL_LINE_STRIP);
+              SceneResetNormal(false);
+              while(c--) {
+                glColor3fv(vc);
+                vc+=3;
+                glVertex3fv(v);
+                v+=3;
+              }
+              glEnd();
+            }
+          
+          
+        }
+        glEnable(GL_LIGHTING);
+      }
+      glEnable(GL_LIGHTING);
+      if(use_dlst&&I->R.displayList) {
+        glEndList();
+      }
+    }
   }
+}
 
 int RepMeshSameVis(RepMesh *I,CoordSet *cs)
 {

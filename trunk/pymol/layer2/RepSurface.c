@@ -140,6 +140,8 @@ void RepSurfaceRender(RepSurface *I,CRay *ray,Pickable **pick)
   } else if(pick&&PMGUI) {
   } else if(PMGUI) {
 
+
+
     if(I->debug)
       CGORenderGL(I->debug,NULL,NULL,NULL);
 	 if(I->S) {
@@ -384,102 +386,123 @@ void RepSurfaceRender(RepSurface *I,CRay *ray,Pickable **pick)
                       glDepthMask(GL_TRUE);*/
         }
       } else { /* opaque */
-        if(I->allVisibleFlag) {
-          if(I->oneColorFlag) {
-            glColor3fv(ColorGet(I->oneColor));
-            c=*(s++);
-            while(c) {
-              glBegin(GL_TRIANGLE_STRIP);
-              glNormal3fv(vn+(*s)*3);
-              glVertex3fv(v+(*s)*3);
-              s++;
-              glNormal3fv(vn+(*s)*3);
-              glVertex3fv(v+(*s)*3);
-              s++;
-              while(c--)
-                {
-                  glNormal3fv(vn+(*s)*3);
-                  glVertex3fv(v+(*s)*3);
-                  s++;
-                }
-              glEnd();
-              c=*(s++);
-            }
-          } else {
-            c=*(s++);
-            while(c) {
-              glBegin(GL_TRIANGLE_STRIP);
-              glColor3fv(vc+(*s)*3);
-              glNormal3fv(vn+(*s)*3);
-              glVertex3fv(v+(*s)*3);
-              s++;
-              glColor3fv(vc+(*s)*3);
-              glNormal3fv(vn+(*s)*3);
-              glVertex3fv(v+(*s)*3);
-              s++;
-              while(c--)
-                {
-                  glColor3fv(vc+(*s)*3);
-                  glNormal3fv(vn+(*s)*3);
-                  glVertex3fv(v+(*s)*3);
-                  s++;
-                }
-              glEnd();
-              c=*(s++);
+
+        int use_dlst;
+        use_dlst = (int)SettingGet(cSetting_use_display_lists);
+        if(use_dlst&&I->R.displayList) {
+          glCallList(I->R.displayList);
+        } else { 
+          
+          if(use_dlst) {
+            if(!I->R.displayList) {
+              I->R.displayList = glGenLists(1);
+              if(I->R.displayList) {
+                glNewList(I->R.displayList,GL_COMPILE_AND_EXECUTE);
+              }
             }
           }
-        } else { /* subsets */
-          c=I->NT;
-          if(c) {
-            glBegin(GL_TRIANGLES);
+
+          
+          if(I->allVisibleFlag) {
             if(I->oneColorFlag) {
               glColor3fv(ColorGet(I->oneColor));
-              while(c--) {
-                if((I->proximity&&((*(vi+(*t)))||(*(vi+(*(t+1))))||(*(vi+(*(t+2))))))||
-                   ((*(vi+(*t)))&&(*(vi+(*(t+1))))&&(*(vi+(*(t+2)))))) {
-
-                  glNormal3fv(vn+(*t)*3);
-                  glVertex3fv(v+(*t)*3);
-                  t++;
-                  glNormal3fv(vn+(*t)*3);
-                  glVertex3fv(v+(*t)*3);
-                  t++;
-                  glNormal3fv(vn+(*t)*3);
-                  glVertex3fv(v+(*t)*3);
-                  t++;
-                } else
-                  t+=3;
+              c=*(s++);
+              while(c) {
+                glBegin(GL_TRIANGLE_STRIP);
+                glNormal3fv(vn+(*s)*3);
+                glVertex3fv(v+(*s)*3);
+                s++;
+                glNormal3fv(vn+(*s)*3);
+                glVertex3fv(v+(*s)*3);
+                s++;
+                while(c--)
+                  {
+                    glNormal3fv(vn+(*s)*3);
+                    glVertex3fv(v+(*s)*3);
+                    s++;
+                  }
+                glEnd();
+                c=*(s++);
               }
             } else {
-              while(c--) {
-                if((I->proximity&&((*(vi+(*t)))||(*(vi+(*(t+1))))||(*(vi+(*(t+2))))))||
-                   ((*(vi+(*t)))&&(*(vi+(*(t+1))))&&(*(vi+(*(t+2)))))) {
-
-                  glColor3fv(vc+(*t)*3);
-                  glNormal3fv(vn+(*t)*3);
-                  glVertex3fv(v+(*t)*3);
-                  t++;
-                  glColor3fv(vc+(*t)*3);
-                  glNormal3fv(vn+(*t)*3);
-                  glVertex3fv(v+(*t)*3);
-                  t++;
-                  glColor3fv(vc+(*t)*3);
-                  glNormal3fv(vn+(*t)*3);
-                  glVertex3fv(v+(*t)*3);
-                  t++;
-                } else
-                  t+=3;
+              c=*(s++);
+              while(c) {
+                glBegin(GL_TRIANGLE_STRIP);
+                glColor3fv(vc+(*s)*3);
+                glNormal3fv(vn+(*s)*3);
+                glVertex3fv(v+(*s)*3);
+                s++;
+                glColor3fv(vc+(*s)*3);
+                glNormal3fv(vn+(*s)*3);
+                glVertex3fv(v+(*s)*3);
+                s++;
+                while(c--)
+                  {
+                    glColor3fv(vc+(*s)*3);
+                    glNormal3fv(vn+(*s)*3);
+                    glVertex3fv(v+(*s)*3);
+                    s++;
+                  }
+                glEnd();
+                c=*(s++);
               }
             }
-            glEnd();
+          } else { /* subsets */
+            c=I->NT;
+            if(c) {
+              glBegin(GL_TRIANGLES);
+              if(I->oneColorFlag) {
+                glColor3fv(ColorGet(I->oneColor));
+                while(c--) {
+                  if((I->proximity&&((*(vi+(*t)))||(*(vi+(*(t+1))))||(*(vi+(*(t+2))))))||
+                     ((*(vi+(*t)))&&(*(vi+(*(t+1))))&&(*(vi+(*(t+2)))))) {
+                    
+                    glNormal3fv(vn+(*t)*3);
+                    glVertex3fv(v+(*t)*3);
+                    t++;
+                    glNormal3fv(vn+(*t)*3);
+                    glVertex3fv(v+(*t)*3);
+                    t++;
+                    glNormal3fv(vn+(*t)*3);
+                    glVertex3fv(v+(*t)*3);
+                    t++;
+                  } else
+                    t+=3;
+                }
+              } else {
+                while(c--) {
+                  if((I->proximity&&((*(vi+(*t)))||(*(vi+(*(t+1))))||(*(vi+(*(t+2))))))||
+                     ((*(vi+(*t)))&&(*(vi+(*(t+1))))&&(*(vi+(*(t+2)))))) {
+                    
+                    glColor3fv(vc+(*t)*3);
+                    glNormal3fv(vn+(*t)*3);
+                    glVertex3fv(v+(*t)*3);
+                    t++;
+                    glColor3fv(vc+(*t)*3);
+                    glNormal3fv(vn+(*t)*3);
+                    glVertex3fv(v+(*t)*3);
+                    t++;
+                    glColor3fv(vc+(*t)*3);
+                    glNormal3fv(vn+(*t)*3);
+                    glVertex3fv(v+(*t)*3);
+                    t++;
+                  } else
+                    t+=3;
+                }
+              }
+              glEnd();
+            }
+          }
+          if(use_dlst&&I->R.displayList) {
+            glEndList();
           }
         }
       }
-	 }
+    }
     if(SettingGet(cSetting_surface_debug)) {
       
       c=I->NT;
- 		if(c) {
+      if(c) {
         glBegin(GL_TRIANGLES);
         while(c--) {
           glNormal3fv(vn+(*t)*3);
@@ -493,7 +516,7 @@ void RepSurfaceRender(RepSurface *I,CRay *ray,Pickable **pick)
           t++;
         }
         glEnd();
- 		}
+      }
       
       t=I->T;
       c=I->NT;
@@ -542,7 +565,6 @@ void RepSurfaceRender(RepSurface *I,CRay *ray,Pickable **pick)
       }
       glEnd();
     }
-
   }
 }
 
