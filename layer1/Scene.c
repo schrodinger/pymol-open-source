@@ -1383,8 +1383,7 @@ int SceneDrag(Block *block,int x,int y,int mod)
 	 
 	 if(r1<scale) {
 		v1[2] = sqrt1f(scale*scale - r1*r1);
-	 }
-	 else {
+	 } else {
 		v1[2] = 0.0;
 	 }
 

@@ -1381,11 +1381,34 @@ PyObject *ExecutiveGetSettingText(int index,char *object,int state)
 /*========================================================================*/
 PyObject *ExecutiveGetSettingTuple(int index,char *object,int state)
 {
-  PyObject *result;
+  PyObject *result = NULL;
+  CSetting **handle = NULL;
+  CObject *obj=NULL;
+  int ok = true;
+  PRINTFD(FB_Executive)
+    " ExecutiveGetSettingTuple: object %s object state %d\n",object,state
+    ENDFD;
+
   if(object[0]==0) /* global */
     result = SettingGetTuple(NULL,NULL,index);
   else {
-    /* TODO */
+
+    if(strlen(object)) {
+      obj=ExecutiveFindObjectByName(object);
+      if(!obj) 
+        ok=false;
+    } else ok=false;
+    if(!ok) {
+      PRINTFB(FB_Executive,FB_Errors)
+        " Executive: object not found.\n"
+        ENDFB;
+    } else {
+      handle = obj->fGetSettingHandle(obj,state);
+      if(handle) 
+        result = SettingGetDefinedTuple(*handle,index);      
+    }
+  }
+  if(!ok) {
     Py_INCREF(Py_None);
     result = Py_None;
   }

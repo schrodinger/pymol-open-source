@@ -85,6 +85,12 @@ int   SettingSetGlobal_f(int index,float value);
 /* more to come */
 
 int SettingGetIfDefined_i(CSetting *set1,int index,int *value);
+int SettingGetIfDefined_b(CSetting *set1,int index,int *value);
+int SettingGetIfDefined_f(CSetting *set1,int index,float *value);
+int SettingGetIfDefined_s(CSetting *set1,int index,char **value);
+int SettingGetIfDefined_3fv(CSetting *set1,int index,float **value);
+int SettingGetIfDefined_color(CSetting *set1,int index,int *value);
+
 /* more to come */
 
 int SettingSet_color(CSetting *I,int index, char *value);
@@ -99,6 +105,7 @@ float *SettingGet_3fv (CSetting *set1,CSetting *set2,int index);
 int   SettingGet_color(CSetting *set1,CSetting *set2,int index);
 
 PyObject *SettingGetTuple(CSetting *set1,CSetting *set2,int index); /* (type,(value,)) */
+PyObject *SettingGetDefinedTuple(CSetting *set1,int index);
 
 void SettingGenerateSideEffects(int index,char *sele,int state);
 PyObject *SettingGetUpdateList(CSetting *I);
