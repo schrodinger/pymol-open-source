@@ -554,7 +554,9 @@ void SettingGenerateSideEffects(int index,char *sele,int state)
   case cSetting_bg_rgb:
   case cSetting_depth_cue:
   case cSetting_specular:
-	 SceneDirty();
+  case cSetting_cgo_line_width:
+    SceneDirty();
+    break;
   case cSetting_overlay:
   case cSetting_text:
     OrthoDirty();
@@ -1009,5 +1011,8 @@ void SettingInitGlobal(void)
 
   SettingSet_f(I,cSetting_internal_feedback, 1.00);  /* this has no effect - set by invocation.py */
 
+  SettingSet_f(I,cSetting_cgo_line_width, 1.00);
+
+  SettingSet_f(I,cSetting_cgo_line_radius, 0.15);
 }
 

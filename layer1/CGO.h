@@ -17,6 +17,7 @@ Z* -------------------------------------------------------------------
 #define _H_CGO
 
 #include"Ray.h"
+#include"Setting.h"
 
 /* Compiled Graphics Library for simple graphics objects
    in floating point three-space, with the goal of achieving
@@ -112,8 +113,9 @@ void CGODisable(CGO *I,int mode);
 
 void CGOStop(CGO *I);
 
-void CGORenderGL(CGO *I);
-void CGORenderRay(CGO *I,CRay *ray);
+
+void CGORenderGL(CGO *I,float *color,CSetting *set1,CSetting *set2);
+void CGORenderRay(CGO *I,CRay *ray,float *color,CSetting *set1,CSetting *set2);
 void CGOReset(CGO *I);
 
 #endif

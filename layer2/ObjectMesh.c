@@ -238,8 +238,8 @@ static void ObjectMeshRender(ObjectMesh *I,int state,CRay *ray,Pickable **pick)
         if(ray) {
           
           if(ms->UnitCellCGO&&(I->Obj.RepVis[cRepCell]))
-            CGORenderRay(ms->UnitCellCGO,ray);
-          
+            CGORenderRay(ms->UnitCellCGO,ray,ColorGet(I->Obj.Color),
+                         I->Obj.Setting,NULL);
           ms->Radius=SettingGet_f(I->Obj.Setting,NULL,cSetting_mesh_radius);
           if(n&&v) {
             vc = ColorGet(I->Obj.Color);
@@ -277,7 +277,8 @@ static void ObjectMeshRender(ObjectMesh *I,int state,CRay *ray,Pickable **pick)
         } else if(pick&&PMGUI) {
         } else if(PMGUI) {
           if(ms->UnitCellCGO&&(I->Obj.RepVis[cRepCell]))
-            CGORenderGL(ms->UnitCellCGO);
+            CGORenderGL(ms->UnitCellCGO,ColorGet(I->Obj.Color),
+                        I->Obj.Setting,NULL);
           if(n&&v) {
             ObjectUseColor(&I->Obj);
             glLineWidth(SettingGet_f(I->Obj.Setting,NULL,cSetting_mesh_width));

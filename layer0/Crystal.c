@@ -151,8 +151,8 @@ CGO *CrystalGetUnitCellCGO(CCrystal *I)
   CGO *cgo=NULL;
   if(I) {
     cgo=CGONew();
+    CGODisable(cgo,GL_LIGHTING);
     CGOBegin(cgo,GL_LINE_STRIP);
-
     set3f(v,0,0,0);
     transform33f3f(I->FracToReal,v,v);
     CGOVertexv(cgo,v);
@@ -221,6 +221,7 @@ CGO *CrystalGetUnitCellCGO(CCrystal *I)
     CGOVertexv(cgo,v);
     CGOEnd(cgo);
 
+    CGOEnable(cgo,GL_LIGHTING);
     CGOStop(cgo);
   }
   return(cgo);

@@ -95,13 +95,13 @@ static void ObjectCGORender(ObjectCGO *I,int state,CRay *ray,Pickable **pick)
         sobj = I->State+a;
         if(ray) {    
           if(sobj->ray)
-            CGORenderRay(sobj->ray,ray);
+            CGORenderRay(sobj->ray,ray,NULL,I->Obj.Setting,NULL);
           else
-            CGORenderRay(sobj->std,ray);
+            CGORenderRay(sobj->std,ray,NULL,I->Obj.Setting,NULL);
         } else if(pick&&PMGUI) {
         } else if(PMGUI) {
           if(sobj->std)
-            CGORenderGL(sobj->std);
+            CGORenderGL(sobj->std,NULL,I->Obj.Setting,NULL);
         }
       }
     }
@@ -114,15 +114,15 @@ static void ObjectCGORender(ObjectCGO *I,int state,CRay *ray,Pickable **pick)
       if(sobj)
         {
           if(sobj->ray)
-            CGORenderRay(sobj->ray,ray);
+            CGORenderRay(sobj->ray,ray,NULL,I->Obj.Setting,NULL);
           else
-            CGORenderRay(sobj->std,ray);
+            CGORenderRay(sobj->std,ray,NULL,I->Obj.Setting,NULL);
         }
     } else if(pick&&PMGUI) {
     } else if(PMGUI) {
       if(sobj)
         if(sobj->std)
-          CGORenderGL(sobj->std);
+          CGORenderGL(sobj->std,NULL,I->Obj.Setting,NULL);
     }
   }
 }

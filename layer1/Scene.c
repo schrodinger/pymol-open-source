@@ -1663,7 +1663,7 @@ void SceneRender(Pickable *pick,int x,int y)
           }
         glPushMatrix();
         glNormal3fv(normal);
-        CGORenderGL(DebugCGO);
+        CGORenderGL(DebugCGO,NULL,NULL,NULL);
         glPopMatrix();
 
         glPushMatrix();
@@ -1690,7 +1690,7 @@ void SceneRender(Pickable *pick,int x,int y)
 
         glPushMatrix();
         glNormal3fv(normal);
-        CGORenderGL(DebugCGO);
+        CGORenderGL(DebugCGO,NULL,NULL,NULL);
         glPopMatrix();
 
         glPushMatrix();
@@ -1717,7 +1717,7 @@ void SceneRender(Pickable *pick,int x,int y)
 
         glPushMatrix();
         glNormal3fv(normal);
-        CGORenderGL(DebugCGO);
+        CGORenderGL(DebugCGO,NULL,NULL,NULL);
         glPopMatrix();
 
         glPushMatrix();

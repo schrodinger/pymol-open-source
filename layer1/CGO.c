@@ -414,7 +414,7 @@ int CGOGetExtent(CGO *I,float *mn,float *mx)
 
 /* ======== Raytrace Renderer ======== */
 
-void CGORenderRay(CGO *I,CRay *ray) 
+void CGORenderRay(CGO *I,CRay *ray,float *color,CSetting *set1,CSetting *set2) 
 {
   register float *pc = I->op;
   register int op;
@@ -428,12 +428,14 @@ void CGORenderRay(CGO *I,CRay *ray)
   float *n0=NULL,*n1=NULL,*n2=NULL,*v0=NULL,*v1=NULL,*v2=NULL,*c0=NULL,*c1=NULL,*c2=NULL;
   int mode = -1;
 
-  widthscale = SettingGet(cSetting_cgo_ray_width_scale);
-  linewidth = SettingGet(cSetting_line_width);
+  widthscale = SettingGet_f(set1,set2,cSetting_cgo_ray_width_scale);
+  linewidth = SettingGet_f(set1,set2,cSetting_line_width);
+  primwidth = SettingGet_f(set1,set2,cSetting_cgo_line_radius);
 
-  primwidth = linewidth*widthscale;
-
-  c0=white;
+  if(color)
+    c0=color;
+  else
+    c0=white;
 
   while((op=(CGO_MASK&CGO_read_int(pc)))) {
     switch(op) {
@@ -620,15 +622,19 @@ CGO_op_fn CGO_gl[] = {
   CGO_gl_null,             /* 0X10 */
 };
 
-void CGORenderGL(CGO *I) /* this should be as fast as you can make it...
-                          * the ASM loop is about 2X long as raw looped GL calls,
-                          * but hopefully superscaler processors won't care */
+void CGORenderGL(CGO *I,float *color,CSetting *set1,CSetting *set2)
+     /* this should be as fast as you can make it...
+      * the ASM loop is about 2X long as raw looped GL calls,
+      * but hopefully superscaler processors won't care */
 {
   register float *pc = I->op;
   register int op;
 
-  glColor3f(1.0,1.0,1.0);
-  glLineWidth(SettingGet(cSetting_line_width));
+  if(color) 
+    glColor3fv(color);
+  else
+    glColor3f(1.0,1.0,1.0);
+  glLineWidth(SettingGet_f(set1,set2,cSetting_cgo_line_width));
 
   while((op=(CGO_MASK&CGO_read_int(pc)))) {
     CGO_gl[op](pc);

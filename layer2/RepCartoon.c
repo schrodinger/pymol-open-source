@@ -30,6 +30,8 @@ Z* -------------------------------------------------------------------
 #include"Extrude.h"
 
 typedef struct RepCartoon {
+  ObjectMolecule *obj;
+  CoordSet *cs;
   Rep R;
   CGO *ray,*std;
 } RepCartoon;
@@ -57,9 +59,12 @@ void RepCartoonRender(RepCartoon *I,CRay *ray,Pickable **pick)
       ENDFD;
     
     if(I->ray)  
-      CGORenderRay(I->ray,ray);
+      CGORenderRay(I->ray,ray,NULL,I->cs->Setting,
+                   I->obj->Obj.Setting
+                   );
     else if(I->std)
-      CGORenderRay(I->std,ray);    
+      CGORenderRay(I->std,ray,NULL,I->cs->Setting,
+                   I->obj->Obj.Setting);    
   } else if(pick&&PMGUI) {
   } else if(PMGUI) {
     
@@ -68,7 +73,8 @@ void RepCartoonRender(RepCartoon *I,CRay *ray,Pickable **pick)
       ENDFD;
 
     if(I->std) 
-      CGORenderGL(I->std);
+      CGORenderGL(I->std,NULL,I->cs->Setting,
+                   I->obj->Obj.Setting);
   }
 }
 
@@ -169,7 +175,6 @@ ENDFD;
   loop_quality = SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_cartoon_loop_quality);
   if(loop_quality<3) loop_quality=3;
 
-
   tube_radius = SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_cartoon_tube_radius);
   if(tube_radius<0.01) tube_radius=0.01;
   tube_quality = SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_cartoon_tube_quality);
@@ -195,7 +200,8 @@ ENDFD;
   I->R.fRender=(void (*)(struct Rep *, CRay *, Pickable **))RepCartoonRender;
   I->R.fFree=(void (*)(struct Rep *))RepCartoonFree;
   I->R.fRecolor=NULL;
-
+  I->obj=obj;
+  I->cs=cs;
   I->ray=NULL;
   I->std=NULL;
 
