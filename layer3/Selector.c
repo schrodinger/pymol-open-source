@@ -48,6 +48,9 @@ Z* -------------------------------------------------------------------
 #define cDummyOrigin 0
 #define cDummyCenter 1
 
+/* special selections, unknown to executive */
+#define cColorectionFormat "_!c_%s_%d" 
+
 static WordKeyValue rep_names[] = { 
   { "spheres", cRepSphere },
   { "sticks", cRepCyl },
@@ -188,6 +191,7 @@ int SelectorCheckNeighbors(int maxDepth,ObjectMolecule *obj,int at1,int at2,
 #define SELE_CENz ( 0x2800 | STYP_SEL0 | 0x80 )
 #define SELE_ENAz ( 0x2900 | STYP_SEL0 | 0x80 )
 #define SELE_REPs ( 0x3000 | STYP_SEL1 | 0x70 )
+#define SELE_COLs ( 0x3100 | STYP_SEL1 | 0x70 )
 
 #define SEL_PREMAX 0x8
 
@@ -247,6 +251,7 @@ static WordKeyValue Keyword[] =
   {  "resid",    SELE_RSIs },
   {  "residue",  SELE_RSIs },
   {  "rep",      SELE_REPs },
+  {  "color",    SELE_COLs },
   {  "i;",       SELE_RSIs },/* deprecated */
   {  "i.",       SELE_RSIs },
   {  "alt",      SELE_ALTs },
@@ -318,9 +323,251 @@ static WordKeyValue AtOper[] =
 int SelectorWalkTree(int *atom,int *comp,int *toDo,int **stk,
                      int stkDepth,ObjectMolecule *obj,int sele1,int sele2);
 
+typedef struct {
+  int color;
+  int sele;
+} ColorectionRec;
+
+static void SelectorDeleteOffset(int n)
+{
+  SelectorType *I=&Selector;
+  int index;
+  index = I->ID[n];
+  SelectorPurgeMembers(index);
+  I->NActive--;
+  strcpy(I->Name[n],I->Name[I->NActive]);
+  I->ID[n]=I->ID[I->NActive];
+  I->Name[I->NActive][0]=0;
+}
+static void SelectorDeleteIndex(int index)
+{
+  SelectorType *I=&Selector;
+  int n=0;
+  int a;
+  for(a=1;a<I->NActive;a++) {
+    if(I->ID[a]==index) {
+      n=a;
+      break;
+    }
+  }
+  if(n) 
+    SelectorDeleteOffset(n);
+}
+
+
+PyObject *SelectorColorectionGet(char *prefix)
+{
+  SelectorType *I=&Selector;
+  PyObject *result = NULL;
+  int n_used=0;
+  ColorectionRec *used = NULL,tmp;
+  int a,b,n,sele;
+  int found;
+  int m;
+  int color;
+  AtomInfoType *ai;
+  used=VLAlloc(ColorectionRec,1000);
+  
+  SelectorUpdateTable();
+  for(a=cNDummyAtoms;a<I->NAtom;a++) {
+    ai = I->Obj[I->Table[a].model]->AtomInfo+I->Table[a].atom;
+    color = ai->color;
+    found = false;
+    for(b=0;b<n_used;b++) {
+      if(used[b].color==color) {
+        tmp=used[0]; /* optimize */
+        used[0]=used[b];
+        used[b]=tmp;
+        found=true;
+        break;
+      }
+    }
+    if(!found) {
+      VLACheck(used,ColorectionRec,n_used);
+      used[n_used]=used[0];
+      used[0].color=color;
+      n_used++;
+    }
+  }
+  for(a=0;a<n_used;a++) {
+    /* create selections */
+
+    n=I->NActive;
+    VLACheck(I->Name,WordType,n+1);
+    VLACheck(I->ID,int,n+1);
+    sele = I->NSelection++;
+    used[a].sele = sele;
+    sprintf(I->Name[n],cColorectionFormat,prefix,used[a].color);
+    I->Name[n+1][0]=0;
+    I->ID[n] = sele;
+    I->NActive++;
+  }
+
+  for(a=cNDummyAtoms;a<I->NAtom;a++) {
+    ai = I->Obj[I->Table[a].model]->AtomInfo+I->Table[a].atom;
+    color = ai->color;
+    for(b=0;b<n_used;b++) {
+      if(used[b].color==color) {
+        tmp=used[0]; /* optimize */
+        used[0]=used[b];
+        used[b]=tmp;
+
+        /* add selection onto atom */
+        if(I->FreeMember>=0) {
+          m=I->FreeMember;
+          I->FreeMember=I->Member[m].next;
+        } else {
+          I->NMember++;
+          m=I->NMember;
+          VLACheck(I->Member,MemberType,m);
+        }
+        I->Member[m].selection = used[0].sele;
+        I->Member[m].next = ai->selEntry;
+        ai->selEntry = m;
+        break;
+      }
+    }
+  }
+
+  VLASize(used,ColorectionRec,n_used*2);
+  result = PConvIntVLAToPyList((int*)used);
+  VLAFreeP(used);
+  return(result);
+}
+
+int SelectorColorectionApply(PyObject *list,char *prefix)
+{
+  SelectorType *I=&Selector;
+  int ok=true;
+  ColorectionRec *used;
+  int n_used;
+  int a,b;
+  AtomInfoType *ai;
+  ObjectMolecule *obj,*last=NULL;
+  WordType name;
+
+  if(ok) ok=(list!=NULL);
+  if(ok) ok=PyList_Check(list);
+  if(ok) n_used = PyList_Size(list)/2;
+  if(ok) ok=((used=VLAlloc(ColorectionRec,n_used))!=NULL);
+  if(ok) ok=PConvPyListToIntArrayInPlace(list,(int*)used,n_used*2);
+  if(ok) {
+
+    SelectorUpdateTable();
+
+    for(b=0;b<n_used;b++) { /* update selection indices */
+      sprintf(name,cColorectionFormat,prefix,used[b].color);      
+      used[b].sele = SelectorIndexByName(name);
+    }
+    
+    for(a=cNDummyAtoms;a<I->NAtom;a++) {
+      obj = I->Obj[I->Table[a].model]; 
+      ai = obj->AtomInfo+I->Table[a].atom;
+      
+      for(b=0;b<n_used;b++) {        
+        if(SelectorIsMember(ai->selEntry,used[b].sele)) {
+          ai->color = used[b].color;
+          
+          if(obj!=last) {
+            ObjectMoleculeInvalidate(obj,cRepAll,cRepInvColor);
+            last = obj;
+          }
+          break;
+        }
+      }
+    }
+  }
+  VLAFreeP(used);
+  return(ok);
+}
+
+int SelectorColorectionFree(PyObject *list,char *prefix)
+{
+  int ok=true;
+  ColorectionRec *used;
+  int n_used;
+  int b;
+  WordType name;
+
+  if(ok) ok=(list!=NULL);
+  if(ok) ok=PyList_Check(list);
+  if(ok) n_used = PyList_Size(list)/2;
+  if(ok) ok=((used=VLAlloc(ColorectionRec,n_used))!=NULL);
+  if(ok) ok=PConvPyListToIntArrayInPlace(list,(int*)used,n_used*2);
+  if(ok) {
+
+    for(b=0;b<n_used;b++) { /* update selection indices */
+      sprintf(name,cColorectionFormat,prefix,used[b].color);      
+      used[b].sele = SelectorIndexByName(name);
+    }
+
+    for(b=0;b<n_used;b++) {
+      SelectorDeleteIndex(used[b].sele);
+    }
+  }
+  VLAFreeP(used);
+  return(ok);
+}
+
+PyObject *SelectorSecretsAsPyList(void)
+{
+  SelectorType *I=&Selector;
+  int n_secret;
+  int a;
+  PyObject *result,*list;
+  
+  n_secret=0;
+  for(a=0;a<I->NActive;a++) {
+    if((I->Name[a][0]=='_')&&
+       (I->Name[a][1]=='!'))
+      n_secret++;
+  }    
+  result = PyList_New(n_secret);
+  n_secret=0;
+  SelectorUpdateTable();
+  for(a=0;a<I->NActive;a++) {
+    if((I->Name[a][0]=='_')&&
+       (I->Name[a][1]=='!')) {
+      list = PyList_New(2);
+      PyList_SetItem(list,0,PyString_FromString(I->Name[a]));
+      PyList_SetItem(list,1,SelectorAsPyList(I->ID[a]));
+      PyList_SetItem(result,n_secret,list);
+      n_secret++;
+    }
+  }    
+  return(result);
+}
+
+int SelectorSecretsFromPyList(PyObject *list)
+{
+  int ok=true;
+  int n_secret;
+  int a;
+  PyObject *entry;
+  WordType name;
+  int ll;
+  if(ok) ok = (list!=NULL);
+  if(ok) ok = PyList_Check(list);
+  if(ok) n_secret = PyList_Size(list);
+  if(ok) {
+    for(a=0;a<n_secret;a++) {
+      if(ok) entry = PyList_GetItem(list,a);
+      if(ok) ok = (entry!=NULL);
+      if(ok) ok = PyList_Check(entry);
+      if(ok) ll = PyList_Size(entry);
+      if(ok&(ll>1)) {
+        if(ok) ok = PConvPyStrToStr(PyList_GetItem(entry,0),name,sizeof(WordType));
+        if(ok) ok = SelectorFromPyList(name,PyList_GetItem(entry,1));
+      }
+      if(!ok) break;
+    }
+  }
+  return(ok);
+}
+
 
 PyObject *SelectorAsPyList(int sele1)
-{
+{ /* assumes SelectorUpdateTable has been called */
   SelectorType *I=&Selector;
   int a,b;
   int at;
@@ -338,7 +585,6 @@ PyObject *SelectorAsPyList(int sele1)
   vla_list = VLAMalloc(10,sizeof(int*),5,true);
   obj_list = VLAlloc(ObjectMolecule*,10);
 
-  SelectorUpdateTable();
   n_idx = 0;
   for(a=cNDummyAtoms;a<I->NAtom;a++) {
     at=I->Table[a].atom;
@@ -388,7 +634,6 @@ PyObject *SelectorAsPyList(int sele1)
   }
   VLAFreeP(vla_list);
   VLAFreeP(obj_list);
-
   return(result);
 }
 
@@ -2960,6 +3205,7 @@ void SelectorPurgeMembers(int sele)
 			 }
 		}
 }
+
 /*========================================================================*/
 void SelectorDelete(char *sele) 
      /* should (only) be called by Executive or by Selector, unless the
@@ -2968,16 +3214,10 @@ void SelectorDelete(char *sele)
 {
   SelectorType *I=&Selector;
   int n;
-  int index;
   n=WordIndex(I->Name,sele,999,I->IgnoreCase); /* already exist? */
-  if(n>0) /* get rid of existing selection -- but not selection 0 (all) */
+  if(n>0) /* get rid of existing selection -- but never selection 0 (all) */
 	 {
-      index = I->ID[n];
-		SelectorPurgeMembers(index);
-      I->NActive--;
-      strcpy(I->Name[n],I->Name[I->NActive]);
-      I->ID[n]=I->ID[I->NActive];
-      I->Name[I->NActive][0]=0;
+      SelectorDeleteOffset(n);
 	 }
 }
 /*========================================================================*/
@@ -3040,6 +3280,7 @@ int  SelectorEmbedSelection(int *atom, char *name, ObjectMolecule *obj,int no_du
     SelectorDelete(I->Name[n]);
     newFlag = false;
   }
+
   n=I->NActive;
   VLACheck(I->Name,WordType,n+1);
   VLACheck(I->ID,int,n+1);
@@ -3048,6 +3289,7 @@ int  SelectorEmbedSelection(int *atom, char *name, ObjectMolecule *obj,int no_du
   sele = I->NSelection++;
   I->ID[n] = sele;
   I->NActive++;
+
   if(no_dummies) {
     start = 0;
   } else {
@@ -3723,7 +3965,7 @@ int SelectorSelect0(EvalElem *base)
 /*========================================================================*/
 int SelectorSelect1(EvalElem *base)
 {
-  int a,b,model,sele,s,at_idx;
+  int a,b,model,sele,s,at_idx,col_idx;
   int c=0;
   int ok=true;
   int rmin,rmax,rtest,index,numeric,state;
@@ -3851,6 +4093,20 @@ int SelectorSelect1(EvalElem *base)
           base[0].sele[a]=false;
           for(b=0;b<cRepCnt;b++) {
             if(rep_mask[b]&&I->Obj[I->Table[a].model]->AtomInfo[I->Table[a].atom].visRep[b]) {
+              base[0].sele[a]=true;
+              c++;
+              break;
+            }
+          }
+		  }
+		break;
+	 case SELE_COLs:
+      col_idx = ColorGetIndex(base[1].text);
+		for(a=cNDummyAtoms;a<I->NAtom;a++)
+		  {
+          base[0].sele[a]=false;
+          for(b=0;b<cRepCnt;b++) {
+            if(I->Obj[I->Table[a].model]->AtomInfo[I->Table[a].atom].color==col_idx) {
               base[0].sele[a]=true;
               c++;
               break;
@@ -5220,27 +5476,33 @@ void SelectorFree(void)
   VLAFreeP(I->Name);
   VLAFreeP(I->ID);
 }
+
+
 /*========================================================================*/
-void SelectorInit(void)
+
+void SelectorMemoryDump(void)
 {
   SelectorType *I = &Selector;
+  printf(" SelectorMemory: NSelection %d\n",I->NSelection);
+  printf(" SelectorMemory: NActive %d\n",I->NActive);
+  printf(" SelectorMemory: TmpCounter %d\n",I->TmpCounter);
+  printf(" SelectorMemory: NMember %d\n",I->NMember);  
+}
+
+/*========================================================================*/
+
+static void SelectorInit2(void)
+{
+  SelectorType *I = &Selector;
+
   I->NSelection = 0;
   I->NActive=0;
   I->TmpCounter = 0;
-  I->Name = VLAlloc(WordType,100);
-  I->ID = VLAlloc(int,100);
-  
-  I->Member = (MemberType*)VLAMalloc(10000,sizeof(MemberType),5,true);
+
   I->NMember=0;
   I->FreeMember=-1;
   I->NCSet=0;
-  I->Table=NULL;
-  I->Obj=NULL;
   I->IgnoreCase=true;
-  I->Flag1=NULL;
-  I->Flag2=NULL;
-  I->Vertex=NULL;
-  I->Origin=NULL;
 
   {  /* create placeholder "all" selection, which is selection 0 */
     int n;
@@ -5253,6 +5515,31 @@ void SelectorInit(void)
     I->ID[n] = I->NSelection++;
     I->NActive++;
   }
+
+}
+
+void SelectorReinit(void)
+{
+  SelectorClean();
+  SelectorInit2();
+}
+
+/*========================================================================*/
+void SelectorInit(void)
+{
+  SelectorType *I = &Selector;
+  I->Name = VLAlloc(WordType,100);
+  I->ID = VLAlloc(int,100);
+  
+  I->Member = (MemberType*)VLAMalloc(10000,sizeof(MemberType),5,true);
+  I->Vertex=NULL;
+  I->Origin=NULL;
+  I->Table=NULL;
+  I->Obj=NULL;
+  I->Flag1=NULL;
+  I->Flag2=NULL;
+
+  SelectorInit2();
 
 }
 /*========================================================================*/

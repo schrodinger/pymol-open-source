@@ -52,12 +52,14 @@ typedef struct CRay {
   float TTT[16];
   int Context;
   float AspRatio;
+  float PixelRadius;
 } CRay;
 
 CRay *RayNew(void);
 void RayFree(CRay *I);
 void RayPrepare(CRay *I,float v0,float v1,float v2,
-                float v3,float v4,float v5,float *mat,float aspRat);
+                float v3,float v4,float v5,float *mat,
+                float aspRat,int ray_width);
 void RayRender(CRay *I,int width,int height,unsigned int *image,
                float front,float back,double timing,float angle);
 void RayRenderPOV(CRay *I,int width,int height,char **headerVLA,

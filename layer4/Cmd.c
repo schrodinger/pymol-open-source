@@ -220,6 +220,7 @@ static PyObject *CmdCycleValence(PyObject *self, PyObject *args);
 static PyObject *CmdDebug(PyObject *self, PyObject *args);
 static PyObject *CmdDecline(PyObject *self, 	PyObject *args);
 static PyObject *CmdDelete(PyObject *self, PyObject *args);
+static PyObject *CmdDelColorection(PyObject *self,   PyObject *args);
 static PyObject *CmdDirty(PyObject *self, 	PyObject *args);
 static PyObject *CmdDist(PyObject *dummy, PyObject *args);
 static PyObject *CmdDistance(PyObject *dummy, PyObject *args);
@@ -253,6 +254,7 @@ static PyObject *CmdGetArea(PyObject *self, 	PyObject *args);
 static PyObject *CmdGetBondPrint(PyObject *self,PyObject *args);
 static PyObject *CmdGetChains(PyObject *self, 	PyObject *args);
 static PyObject *CmdGetColor(PyObject *self, 	PyObject *args);
+static PyObject *CmdGetColorection(PyObject *self,   PyObject *args);
 static PyObject *CmdGetDihe(PyObject *self, 	PyObject *args);
 static PyObject *CmdGetFeedback(PyObject *dummy, PyObject *args);
 static PyObject *CmdGetFrame(PyObject *self, 	PyObject *args);
@@ -333,6 +335,7 @@ static PyObject *CmdSculptIterate(PyObject *self, PyObject *args);
 static PyObject *CmdSelect(PyObject *self, PyObject *args);
 static PyObject *CmdSet(PyObject *self, 	PyObject *args);
 static PyObject *CmdLegacySet(PyObject *self, 	PyObject *args);
+static PyObject *CmdSetColorection(PyObject *self,   PyObject *args);
 static PyObject *CmdSetDihe(PyObject *self, 	PyObject *args);
 static PyObject *CmdSetFeedbackMask(PyObject *dummy, PyObject *args);
 static PyObject *CmdSetFrame(PyObject *self, PyObject *args);
@@ -391,6 +394,7 @@ static PyMethodDef Cmd_methods[] = {
 	{"cycle_valence",         CmdCycleValence,         METH_VARARGS },
    {"debug",                 CmdDebug,                METH_VARARGS },
    {"decline",               CmdDecline,              METH_VARARGS },
+   {"del_colorection",       CmdDelColorection,       METH_VARARGS },   
 	{"delete",                CmdDelete,               METH_VARARGS },
 	{"dirty",                 CmdDirty,                METH_VARARGS },
 	{"distance",	           CmdDistance,             METH_VARARGS },
@@ -410,6 +414,7 @@ static PyMethodDef Cmd_methods[] = {
 	{"frame",	              CmdFrame,                METH_VARARGS },
    {"flush_now",             CmdFlushNow,             METH_VARARGS },
    {"focus",                 CmdFocus,                METH_VARARGS },
+   {"delete_colorection",    CmdDelColorection,       METH_VARARGS },   
    {"full_screen",           CmdFullScreen,           METH_VARARGS },
    {"fuse",                  CmdFuse,                 METH_VARARGS },
 	{"get",	                 CmdGet,                  METH_VARARGS },
@@ -417,6 +422,7 @@ static PyMethodDef Cmd_methods[] = {
    {"get_bond_print",        CmdGetBondPrint,         METH_VARARGS },
 	{"get_chains",            CmdGetChains,            METH_VARARGS },
 	{"get_color",             CmdGetColor,             METH_VARARGS },
+   {"get_colorection",       CmdGetColorection,       METH_VARARGS },   
 	{"get_dihe",              CmdGetDihe,              METH_VARARGS },
 	{"get_frame",             CmdGetFrame,             METH_VARARGS },
 	{"get_feedback",          CmdGetFeedback,          METH_VARARGS },
@@ -509,6 +515,7 @@ static PyMethodDef Cmd_methods[] = {
 	{"sculpt_activate",       CmdSculptActivate,       METH_VARARGS },
 	{"sculpt_iterate",        CmdSculptIterate,        METH_VARARGS },
 	{"sculpt_purge",          CmdSculptPurge,          METH_VARARGS },
+   {"set_colorection",       CmdSetColorection,       METH_VARARGS },   
 	{"set_dihe",              CmdSetDihe,              METH_VARARGS },
 	{"set_dihe",              CmdSetDihe,              METH_VARARGS },
 
@@ -545,6 +552,48 @@ static PyMethodDef Cmd_methods[] = {
 	{"zoom",	                 CmdZoom,                 METH_VARARGS },
 	{NULL,		              NULL}     /* sentinel */        
 };
+
+static PyObject *CmdDelColorection(PyObject *dummy, PyObject *args)
+{
+  int ok=true;
+  PyObject *list;
+  char *prefix;
+  ok = PyArg_ParseTuple(args,"Os",&list,&prefix);
+  if (ok) {
+    APIEnterBlocked();
+    ok = SelectorColorectionFree(list,prefix);
+    APIExitBlocked();
+  }
+  return(APIStatus(ok));
+}
+
+static PyObject *CmdSetColorection(PyObject *dummy, PyObject *args)
+{
+  int ok=true;
+  char *prefix;
+  PyObject *list;
+  ok = PyArg_ParseTuple(args,"Os",&list,&prefix);
+  if (ok) {
+    APIEnterBlocked();
+    ok = SelectorColorectionApply(list,prefix);
+    APIExitBlocked();
+  }
+  return(APIStatus(ok));
+}
+
+static PyObject *CmdGetColorection(PyObject *dummy, PyObject *args)
+{
+  PyObject *result;
+  int ok=true;
+  char *prefix;
+  ok = PyArg_ParseTuple(args,"s",&prefix);
+  if (ok) {
+    APIEnterBlocked();
+    result = SelectorColorectionGet(prefix);
+    APIExitBlocked();
+  }
+  return(APIAutoNone(result));
+}
 
 static PyObject *CmdGetVis(PyObject *dummy, PyObject *args)
 {
@@ -2254,6 +2303,7 @@ static PyObject *CmdReady(PyObject *dummy, PyObject *args)
 static PyObject *CmdMem(PyObject *dummy, PyObject *args)
 {
   MemoryDebugDump();
+  SelectorMemoryDump();
   return(APISuccess());
 }
 

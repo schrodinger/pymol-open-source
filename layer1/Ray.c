@@ -1899,7 +1899,8 @@ CRay *RayNew(void)
 }
 /*========================================================================*/
 void RayPrepare(CRay *I,float v0,float v1,float v2,
-                float v3,float v4,float v5,float *mat,float aspRat)
+                float v3,float v4,float v5,
+                float *mat,float aspRat,int ray_width)
 	  /*prepare for vertex calls */
 {
   int a;
@@ -1927,6 +1928,10 @@ void RayPrepare(CRay *I,float v0,float v1,float v2,
     for(a=0;a<3;a++)
       I->ModelView[a*5]=1.0F;
   }
+  if(ray_width)
+    I->PixelRadius = ((float)I->Range[0])/ray_width;
+  else
+    I->PixelRadius = 0.15;
 }
 /*========================================================================*/
 

@@ -68,4 +68,11 @@ PyObject *SelectorAsPyList(int sele1);
 int SelectorFromPyList(char *name,PyObject *list);
 ObjectMolecule **SelectorGetObjectMoleculeVLA(int sele);
 
+PyObject *SelectorColorectionGet(char *prefix);
+int SelectorColorectionApply(PyObject *list,char *prefix);
+int SelectorColorectionFree(PyObject *list,char *prefix);
+void SelectorReinit(void);
+PyObject *SelectorSecretsAsPyList(void);
+int SelectorSecretsFromPyList(PyObject *list);
+void SelectorMemoryDump(void);
 #endif

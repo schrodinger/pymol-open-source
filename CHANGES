@@ -191,7 +191,7 @@ Changes up to 0.88
 
    * scene commands
 
-   * "rep" option in selector
+   * "rep" and "color" selectors 
 
    * $TUT environment variable points at $PYMOL_PATH/data/tut
 

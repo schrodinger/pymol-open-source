@@ -119,7 +119,7 @@ PyObject *ExecutiveGetVisAsPyDict(void)
   result = PyDict_New();
   while(ListIterate(I->Spec,rec,next)) {
     if(rec->name[0]!='_') {
-      list = PyList_New(3);
+      list = PyList_New(4);
       PyList_SetItem(list,0,PyInt_FromLong(rec->visible));
 
       /* all executive entries have repOn */
@@ -139,7 +139,10 @@ PyObject *ExecutiveGetVisAsPyDict(void)
       PyList_SetItem(list,1,repList);
       
       if(rec->type!=cExecObject) {
+        Py_INCREF(Py_None);
         PyList_SetItem(list,2,Py_None);
+        Py_INCREF(Py_None);
+        PyList_SetItem(list,3,Py_None);
       } else { 
         /* objects have their own visib list too */
         n_vis=0;
@@ -156,7 +159,9 @@ PyObject *ExecutiveGetVisAsPyDict(void)
           }
         }
         PyList_SetItem(list,2,repList);
+        PyList_SetItem(list,3,PyInt_FromLong(rec->obj->Color));
       }
+
       PyDict_SetItemString(result,rec->name,list);
       Py_DECREF(list);
     }
@@ -168,13 +173,14 @@ int ExecutiveSetVisFromPyDict(PyObject *dict)
 {
   int ok=true;
   WordType name;
-  PyObject *key,*list;
+  PyObject *key,*list,*col;
   PyObject *vis_list = NULL;
   int pos = 0;
   SpecRec *rec;
   int n_vis;
   int rep;
   int a;
+  int ll;
   if(ok) ok=(dict!=NULL);
   if(ok) ok=PyDict_Check(dict);
   if(ok) {
@@ -189,7 +195,8 @@ int ExecutiveSetVisFromPyDict(PyObject *dict)
         if(rec) {
           if(ok) ok = (list!=NULL);
           if(ok) ok = PyList_Check(list);
-          if(ok) ok = (PyList_Size(list)>=2);
+          if(ok) ll = PyList_Size(list);
+          if(ok) ok = (ll>=2);
           if(ok) ok = PConvPyObjectToInt(PyList_GetItem(list,0),&rec->visible);
           if(ok) { /* rec visibility */
             vis_list = PyList_GetItem(list,1);
@@ -208,19 +215,30 @@ int ExecutiveSetVisFromPyDict(PyObject *dict)
             }
           }
 
-          if(ok) { /* object visibility */
-            
-            vis_list = PyList_GetItem(list,2);
-            if(ok) ok = (vis_list!=NULL);
-            if(ok) if(PyList_Check(vis_list)&&(rec->type==cExecObject)) {
-              n_vis = PyList_Size(vis_list);
-              for(a=0;a<cRepCnt;a++)
-                rec->obj->RepVis[a]=false;
-              for(a=0;a<n_vis;a++) {
-                if(PConvPyObjectToInt(PyList_GetItem(vis_list,a),&rep)) {
-                  if((rep>=0)&&(rep<cRepCnt))
-                    rec->obj->RepVis[rep]=true;
+          if(ok&&(rec->type==cExecObject)) { /* object properties */
+
+            if(ll>2) { /* object visibility */
+              vis_list = PyList_GetItem(list,2);
+              if(ok) ok = (vis_list!=NULL);
+              if(ok) if(PyList_Check(vis_list)) {
+                n_vis = PyList_Size(vis_list);
+                for(a=0;a<cRepCnt;a++)
+                  rec->obj->RepVis[a]=false;
+                for(a=0;a<n_vis;a++) {
+                  if(PConvPyObjectToInt(PyList_GetItem(vis_list,a),&rep)) {
+                    if((rep>=0)&&(rep<cRepCnt))
+                      rec->obj->RepVis[rep]=true;
+                  }
                 }
+              }
+            }
+            if(ll>3) { /* object color */
+              col = PyList_GetItem(list,3);
+              if(ok) ok = (col!=NULL);
+              if(ok) if(PyInt_Check(col)) {
+                ok = PConvPyObjectToInt(col,&rec->obj->Color);
+                if(rec->obj->fInvalidate)
+                  rec->obj->fInvalidate(rec->obj,cRepAll,cRepInvColor,-1);
               }
             }
           }
@@ -610,7 +628,6 @@ static int ExecutiveSetSelections(PyObject *names)
       ListElemAlloc(rec,SpecRec); 
       rec->next=NULL;
 
-  
       if(ok) ok = PyList_Check(cur);
       if(ok) ok = PConvPyStrToStr(PyList_GetItem(cur,0),rec->name,sizeof(WordType));
       if(ok) ok = PConvPyIntToInt(PyList_GetItem(cur,1),&rec->type);
@@ -658,6 +675,8 @@ static PyObject *ExecutiveGetNamedEntries(void)
   count = ExecutiveCountNames();
   result = PyList_New(count);
 
+  SelectorUpdateTable();
+
   count=0;
   while(ListIterate(I->Spec,rec,next))
 	 {
@@ -683,16 +702,48 @@ int ExecutiveGetSession(PyObject *dict)
 {
   int ok=true;
   SceneViewType sv;
-  PyDict_SetItemString(dict,"names",ExecutiveGetNamedEntries());
-  PyDict_SetItemString(dict,"settings",SettingGetGlobalsPyList());
-  PyDict_SetItemString(dict,"colors",ColorAsPyList());
-  PyDict_SetItemString(dict,"color_ext",ColorExtAsPyList());
-  PyDict_SetItemString(dict,"version",PyInt_FromLong(_PyMOL_VERSION_int));
+  PyObject *tmp;
+
+  tmp = ExecutiveGetNamedEntries();
+  PyDict_SetItemString(dict,"names",tmp);
+  Py_XDECREF(tmp);
+
+  tmp = SelectorSecretsAsPyList();
+  PyDict_SetItemString(dict,"selector_secrets",tmp);
+  Py_XDECREF(tmp);
+  
+  tmp = SettingGetGlobalsPyList();
+  PyDict_SetItemString(dict,"settings",tmp);
+  Py_XDECREF(tmp);
+
+  tmp = ColorAsPyList();
+  PyDict_SetItemString(dict,"colors",tmp);
+  Py_XDECREF(tmp);
+
+  tmp = ColorExtAsPyList();
+  PyDict_SetItemString(dict,"color_ext",tmp);
+  Py_XDECREF(tmp);
+
+  tmp = PyInt_FromLong(_PyMOL_VERSION_int);
+  PyDict_SetItemString(dict,"version",tmp);
+  Py_XDECREF(tmp);
+
   SceneGetView(sv);
-  PyDict_SetItemString(dict,"view",PConvFloatArrayToPyList(sv,cSceneViewSize));
-  PyDict_SetItemString(dict,"movie",MovieAsPyList());
-  PyDict_SetItemString(dict,"editor",EditorAsPyList());
-  PyDict_SetItemString(dict,"main",MainAsPyList());
+  tmp = PConvFloatArrayToPyList(sv,cSceneViewSize);
+  PyDict_SetItemString(dict,"view",tmp);
+  Py_XDECREF(tmp);
+
+  tmp = MovieAsPyList();
+  PyDict_SetItemString(dict,"movie",tmp);
+  Py_XDECREF(tmp);
+
+  tmp = EditorAsPyList();
+  PyDict_SetItemString(dict,"editor",tmp);
+  Py_XDECREF(tmp);
+
+  tmp = MainAsPyList();
+  PyDict_SetItemString(dict,"main",tmp);
+  Py_XDECREF(tmp);
   return(ok);
 }
 
@@ -720,6 +771,11 @@ int ExecutiveSetSession(PyObject *session)
             "Error: Please obtain a more recent version from http://www.pymol.org\n"
             ENDFB;
           ok=false;
+        } else {
+          PRINTFB(FB_Executive,FB_Details)          
+            " Executive: Loading version %1.2f session...\n",
+            version/100.0
+            ENDFB;
         }
       }
     }
@@ -730,99 +786,136 @@ int ExecutiveSetSession(PyObject *session)
     if(tmp) {
       ok = ColorFromPyList(tmp);
     }
-  }
-  if(PyErr_Occurred()) {
-    PRINTFB(FB_Executive,FB_Errors)
-      "ExectiveSetSession-ERROR: after colors.\n"
-      ENDFB;
-    PyErr_Print();  
+    
+    if(PyErr_Occurred()) {
+      PyErr_Print();  
+      ok=false;
+    }
+    if(!ok) {
+      PRINTFB(FB_Executive,FB_Errors)
+        "ExectiveSetSession-Error: after colors.\n"
+        ENDFB;
+    }
   }
   if(ok) {
     tmp = PyDict_GetItemString(session,"color_ext");
     if(tmp) {
       ok = ColorExtFromPyList(tmp);
     }
+    
+    if(PyErr_Occurred()) {
+      PyErr_Print();  
+      ok=false;
+    }
+    if(!ok) {
+      PRINTFB(FB_Executive,FB_Errors)
+        "ExectiveSetSession-Error: after color_ext.\n"
+        ENDFB;
+    }
   }
-  if(PyErr_Occurred()) {
-    PRINTFB(FB_Executive,FB_Errors)
-      "ExectiveSetSession-ERROR: after color_ext.\n"
-      ENDFB;
-    PyErr_Print();  
-  }
-
   if(ok) {
     tmp = PyDict_GetItemString(session,"settings");
     if(tmp) {
       ok = SettingSetGlobalsFromPyList(tmp);
     }
+    
+    if(PyErr_Occurred()) {
+      PyErr_Print();  
+      ok=false;
+    }
+    if(!ok) {
+      PRINTFB(FB_Executive,FB_Errors)
+        "ExectiveSetSession-Error: after settings.\n"
+        ENDFB;
+    }
   }
-
-  if(PyErr_Occurred()) {
-    PRINTFB(FB_Executive,FB_Errors)
-      "ExectiveSetSession-ERROR: after settings.\n"
-      ENDFB;
-    PyErr_Print();  
-  }
-
   if(ok) {
     tmp = PyDict_GetItemString(session,"names");
     if(tmp) {
       if(ok) ok=ExecutiveSetNamedEntries(tmp);
       if(ok) ok=ExecutiveSetSelections(tmp);
     }
+    if(PyErr_Occurred()) {
+      PyErr_Print();  
+      ok=false;
+    }
+    if(!ok) {
+      PRINTFB(FB_Executive,FB_Errors)
+        "ExectiveSetSession-Error: after names.\n"
+        ENDFB;
+    }
   }
-  if(PyErr_Occurred()) {
-    PRINTFB(FB_Executive,FB_Errors)
-      "ExectiveSetSession-ERROR: after names.\n"
-      ENDFB;
-    PyErr_Print();  
-  }
-
+  if(ok) {
+    tmp = PyDict_GetItemString(session,"selector_secrets");
+    if(tmp) {
+      if(ok) ok=SelectorSecretsFromPyList(tmp);
+    }
+    
+    if(PyErr_Occurred()) {
+      PyErr_Print();  
+      ok=false;
+    }
+    if(!ok) {
+      PRINTFB(FB_Executive,FB_Errors)
+        "ExectiveSetSession-Error: after selector secrets.\n"
+        ENDFB;
+    }
+  }  
   if(ok) {
     tmp = PyDict_GetItemString(session,"view");
     if(tmp) {
       ok = PConvPyListToFloatArrayInPlace(tmp,sv,cSceneViewSize);
     }
     if(ok) SceneSetView(sv,true);
-        
+    
+    
+    
+    if(PyErr_Occurred()) {
+      PyErr_Print();  
+      ok=false;
+    }
+    if(!ok) {
+      PRINTFB(FB_Executive,FB_Errors)
+        "ExectiveSetSession-Error: after view.\n"
+        ENDFB;
+    }
   }
-
-  if(PyErr_Occurred()) {
-    PRINTFB(FB_Executive,FB_Errors)
-      "ExectiveSetSession-ERROR: after view.\n"
-      ENDFB;
-    PyErr_Print();  
-  }
-
+  
   if(ok) {
     int warning;
     tmp = PyDict_GetItemString(session,"movie");
     if(tmp) {
       ok = MovieFromPyList(tmp,&warning);
     }
+    
+    
+    if(PyErr_Occurred()) {
+      PyErr_Print();  
+      ok=false;
+    }
+    if(!ok) {
+      PRINTFB(FB_Executive,FB_Errors)
+        "ExectiveSetSession-Error: after movie.\n"
+        ENDFB;
+    }
   }
-
-  if(PyErr_Occurred()) {
-    PRINTFB(FB_Executive,FB_Errors)
-      "ExectiveSetSession-ERROR: after movie.\n"
-      ENDFB;
-    PyErr_Print();  
-  }
-
+  
   if(ok) {
     tmp = PyDict_GetItemString(session,"editor");
     if(tmp) {
       ok = EditorFromPyList(tmp);
     }
+    
+    if(PyErr_Occurred()) {
+      PyErr_Print();  
+      ok=false;
+    }
+    if(!ok) {
+      PRINTFB(FB_Executive,FB_Errors)
+        "ExectiveSetSession-Error: after editor.\n"
+        ENDFB;
+    }
   }
-
-  if(PyErr_Occurred()) {
-    PRINTFB(FB_Executive,FB_Errors)
-      "ExectiveSetSession-ERROR: after editor.\n"
-      ENDFB;
-    PyErr_Print();  
-  }
-
   if(ok) { /* update mouse in GUI */
     PParse("cmd.mouse(quiet=1)");
     PParse("viewport"); /* refresh window/internal_gui status */
@@ -832,15 +925,22 @@ int ExecutiveSetSession(PyObject *session)
     if(tmp) {
       ok = MainFromPyList(tmp);
     }
+    if(PyErr_Occurred()) {
+      PyErr_Print();  
+      ok=false;
+    }
+    if(!ok) {
+      PRINTFB(FB_Executive,FB_Errors)
+        "ExectiveSetSession-Error: after main.\n"
+        ENDFB;
+    }
   }
-
-  if(PyErr_Occurred()) {
-    PRINTFB(FB_Executive,FB_Errors)
-      "ExectiveSetSession-ERROR: after main.\n"
+  
+  if(!ok) {
+    PRINTFB(FB_Executive,FB_Warnings)
+      "ExectiveSetSession-Warning: restore may be incomplete.\n"
       ENDFB;
-    PyErr_Print();  
   }
-
   return(ok);
 }
 
@@ -5745,16 +5845,19 @@ int ExecutiveReinitialize(void)
   int ok=true;
   int blocked = false;
   /* reinitialize PyMOL */
-  ExecutiveDelete("all");
+  ExecutiveDelete(cKeywordAll);
   ColorReset();
   SettingInitGlobal(false);
   MovieReset();
   EditorInactive();
   blocked = PAutoBlock();
-  PRunString("cmd.view('*','delete')"); /* this function doesn't re-enter the PyMOL API */
+  PRunString("cmd.view('*','clear')");
+  PRunString("cmd.scene('*','clear')");
   PAutoUnblock(blocked);
+  
   SculptCachePurge();
   SceneReinitialize();
+  SelectorReinit();
   return(ok);
 }
 /*========================================================================*/

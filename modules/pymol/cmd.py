@@ -1124,10 +1124,12 @@ if __name__=='pymol.cmd':
         cartoon,            \
         clip,               \
         color,              \
+        del_colorection,    \
         dirty,              \
         disable,            \
         enable,             \
         full_screen,        \
+        get_colorection,    \
         get_view,           \
         get_vis,            \
         get_scene_dict,     \
@@ -1147,6 +1149,7 @@ if __name__=='pymol.cmd':
         rock,               \
         scene,              \
         set_color,          \
+        set_colorection,    \
         set_vis,            \
         set_view,           \
         show,               \
