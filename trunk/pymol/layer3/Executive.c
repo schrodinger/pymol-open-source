@@ -81,6 +81,7 @@ void ExecutiveReshape(Block *block,int width,int height);
 void ExecutiveObjMolSeleOp(int sele,ObjectMoleculeOpRec *op);
 SpecRec *ExecutiveFindSpec(char *name);
 
+/*========================================================================*/
 void ExecutiveSort(char *name)
 {
   CExecutive *I = &Executive;
@@ -115,6 +116,43 @@ void ExecutiveSort(char *name)
           }
     }
     SceneChanged();
+  }
+}
+/*========================================================================*/
+void ExecutiveRemoveAtoms(char *s1)
+{
+  int sele;
+  CExecutive *I=&Executive;
+  SpecRec *rec = NULL;
+  ObjectMolecule *obj = NULL;
+  ObjectMoleculeOpRec op;
+  int flag = false;
+
+  sele=SelectorIndexByName(s1);
+  if(sele>=0)
+	 {
+		while(ListIterate(I->Spec,rec,next,SpecList))
+		  {
+			 if(rec->type==cExecObject)
+				{
+				  if(rec->obj->type==cObjectMolecule)
+					 {
+                  op.code = OMOP_Remove;
+                  op.i1 = 0;
+						obj=(ObjectMolecule*)rec->obj;
+						ObjectMoleculeSeleOp(obj,sele,&op);
+                  if(op.i1) {
+                    ObjectMoleculePurge(obj);
+                    PRINTF " Remove: eliminated %d atoms in model '%s'.\n",
+                      op.i1,obj->Obj.Name ENDF;
+                    flag=true;
+                  }
+					 }
+				}
+		  }
+	 }
+  if(!flag) {
+    ErrMessage("Remove","no atoms removed.");
   }
 }
 /*========================================================================*/

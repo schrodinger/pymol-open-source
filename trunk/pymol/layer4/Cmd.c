@@ -144,6 +144,7 @@ static PyObject *CmdPNG(PyObject *self, 	PyObject *args);
 static PyObject *CmdQuit(PyObject *self, 	PyObject *args);
 static PyObject *CmdReset(PyObject *self, PyObject *args);
 static PyObject *CmdRay(PyObject *self, 	PyObject *args);
+static PyObject *CmdRemove(PyObject *self, PyObject *args);
 static PyObject *CmdResetRate(PyObject *dummy, PyObject *args);
 static PyObject *CmdRefresh(PyObject *self, 	PyObject *args);
 static PyObject *CmdRefreshNow(PyObject *self, 	PyObject *args);
@@ -225,6 +226,7 @@ static PyMethodDef Cmd_methods[] = {
 	{"ready",        CmdReady,        METH_VARARGS },
 	{"refresh",      CmdRefresh,      METH_VARARGS },
 	{"refresh_now",  CmdRefreshNow,   METH_VARARGS },
+	{"remove",	     CmdRemove,       METH_VARARGS },
 	{"render",	     CmdRay,          METH_VARARGS },
 	{"reset",        CmdReset,        METH_VARARGS },
 	{"reset_rate",	  CmdResetRate,    METH_VARARGS },
@@ -1675,6 +1677,21 @@ static PyObject *CmdZoom(PyObject *self, PyObject *args)
   APIEntry();
   SelectorGetTmp(str1,s1);
   ExecutiveWindowZoom(s1);
+  SelectorFreeTmp(s1);
+  APIExit();
+  Py_INCREF(Py_None);
+  return Py_None;
+}
+
+static PyObject *CmdRemove(PyObject *self, PyObject *args)
+{
+  char *str1;
+  OrthoLineType s1;
+
+  PyArg_ParseTuple(args,"s",&str1);
+  APIEntry();
+  SelectorGetTmp(str1,s1);
+  ExecutiveRemoveAtoms(s1);
   SelectorFreeTmp(s1);
   APIExit();
   Py_INCREF(Py_None);

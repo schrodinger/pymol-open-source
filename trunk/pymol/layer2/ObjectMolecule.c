@@ -65,9 +65,73 @@ static int BondCompare(int *a,int *b);
 CoordSet *ObjectMoleculeChemPyModel2CoordSet(PyObject *model,AtomInfoType **atInfoPtr);
 
 int ObjectMoleculeGetAtomGeometry(ObjectMolecule *I,int state,int at);
-
 /*========================================================================*/
+void ObjectMoleculePurge(ObjectMolecule *I)
+{
+  int a,a0,a1;
+  int *oldToNew = NULL;
+  int offset=0;
+  int *b0,*b1;
+  AtomInfoType *ai0,*ai1;
 
+  for(a=0;a<I->NCSet;a++)
+	 if(I->CSet[a]) 
+      CoordSetPurge(I->CSet[a]);
+
+  oldToNew = Alloc(int,I->NAtom);
+  ai0=I->AtomInfo;
+  ai1=I->AtomInfo;
+  for(a=0;a<I->NAtom;a++) {
+    if(ai0->deleteFlag) {
+      offset--;
+      ai0++;
+      oldToNew[a]=-1;
+    } else if(offset) {
+      *(ai1++)=*(ai0++);
+      oldToNew[a]=a+offset;
+    } else {
+      oldToNew[a]=a;
+      ai0++;
+      ai1++;
+    }
+  }
+  if(offset) {
+    I->NAtom += offset;
+    VLASize(I->AtomInfo,AtomInfoType,I->NAtom);
+    for(a=0;a<I->NCSet;a++)
+      if(I->CSet[a])
+        CoordSetAdjustAtmIdx(I->CSet[a],oldToNew,I->NAtom);
+  }
+  
+  offset=0;
+  b0=I->Bond;
+  b1=I->Bond;
+  for(a=0;a<I->NBond;a++) {
+    a0=b0[0];
+    a1=b0[1];
+    if((oldToNew[a0]<0)||(oldToNew[a1]<0)) {
+      offset--;
+      b0+=3;
+    } else if(offset) {
+      *(b1++)=oldToNew[*(b0++)]; /* copy bond info */
+      *(b1++)=oldToNew[*(b0++)];
+      *(b1++)=*(b0++);
+    } else {
+      *(b1++)=oldToNew[*(b0++)]; /* copy bond info */
+      *(b1++)=oldToNew[*(b0++)];
+      *(b1++)=*(b0++);
+    }
+  }
+  if(offset) {
+    I->NBond += offset;
+    VLASize(I->Bond,int,3*I->NBond);
+  }
+  FreeP(oldToNew);
+    
+  ObjectMoleculeInvalidate(I,cRepAll,cRepInvAtoms);
+  
+}
+/*========================================================================*/
 int ObjectMoleculeGetAtomGeometry(ObjectMolecule *I,int state,int at)
 {
   /* this determines hybridization from coordinates in those few cases
@@ -123,13 +187,11 @@ int ObjectMoleculeGetAtomGeometry(ObjectMolecule *I,int state,int at)
 /*========================================================================*/
 void ObjectMoleculeInferChemForProtein(ObjectMolecule *I,int state)
 {
-
-  /* infers chemical relations from assumptions about
-   * proteins.  
-
-   NOTE: this routine needs an all-atom model (with hydrogens!)
-   and it will make mistakes on non-proteins 
-
+  /* Infers chemical relations for a molecules under protein assumptions.
+   * 
+   * NOTE: this routine needs an all-atom model (with hydrogens!)
+   * and it will make mistakes on non-protein atoms (if they haven't
+   * already been assigned)
   */
 
   int a,n,a0,a1,nn;
@@ -209,7 +271,7 @@ void ObjectMoleculeInferChemForProtein(ObjectMolecule *I,int state)
       }
     }
   }
-  /* then handle aldehydes and amines (both missing a valence) */
+  /* then handle aldehydes and amines (partial amides - both missing a valence) */
   
   changedFlag=true;
   while(changedFlag) {
@@ -217,31 +279,38 @@ void ObjectMoleculeInferChemForProtein(ObjectMolecule *I,int state)
     for(a=0;a<I->NAtom;a++) {
       ai=I->AtomInfo+a;
       if(!ai->chemFlag) {
-        if(ai->geom==cAtomInfoPlaner)
-          if(ai->elem[0]=='C')
-            if(!ai->elem[1]) /* found planer carbon */
-              {
-                n = I->Neighbor[a];
-                nn = I->Neighbor[n++];
-                if(nn>1) {
-                  a1 = -1;
-                  while(1) {
-                    a0 = I->Neighbor[n++];
-                    if(a0<0) break;
-                    ai0 = I->AtomInfo+a0;
-                    if((ai0->elem[0]=='O')&&(!ai0->elem[1])&&(!ai0->chemFlag)) {
-                      ai->chemFlag=true; 
-                      ai->geom=cAtomInfoPlaner;
-                      ai->valence=3;
-                      ai0->chemFlag=true;
-                      ai0->geom=cAtomInfoPlaner;
-                      ai0->valence=1;
-                      changedFlag=true;
-                      break;
-                    }
+        if(ai->elem[0]=='C') {
+          if(!ai->elem[1]) /* candidate carbon */
+            {
+              n = I->Neighbor[a];
+              nn = I->Neighbor[n++];
+              if(nn>1) {
+                a1 = -1;
+                while(1) {
+                  a0 = I->Neighbor[n++];
+                  if(a0<0) break;
+                  ai0 = I->AtomInfo+a0;
+                  if((ai0->elem[0]=='O')&&(!ai0->elem[1])&&(!ai0->chemFlag)) { /* =O */
+                    ai->chemFlag=true; 
+                    ai->geom=cAtomInfoPlaner;
+                    ai->valence=1;
+                    ai0->chemFlag=true;
+                    ai0->geom=cAtomInfoPlaner;
+                    ai0->valence=3;
+                    changedFlag=true;
+                    break;
                   }
                 }
               }
+            }
+        }
+        else if(ai->elem[0]=='N')
+          if(!ai->elem[1]) /* unassigned nitrogen */
+            {
+              ai->chemFlag=true; 
+              ai->geom=cAtomInfoPlaner;
+              ai->valence=3;
+            }
       }
     }
   }
@@ -287,13 +356,14 @@ void ObjectMoleculeInferChemFromNeighGeom(ObjectMolecule *I,int state)
               ai->valence=1;
               break;
             case 'O':
-              nn = I->Neighbor[I->Neighbor[a]];
+              n = I->Neighbor[a];
+              nn = I->Neighbor[n++];
               if(nn!=1) { /* water, hydroxy, ether */
                 ai->chemFlag=1;
                 ai->geom=cAtomInfoTetrahedral;
                 ai->valence=2;
               } else { /* hydroxy or carbonyl? check carbon geometry */
-                a0 = I->Neighbor[nn+1];
+                a0 = I->Neighbor[n+1];
                 ai2=I->AtomInfo+a0;
                 if(ai2->chemFlag) {
                   if((ai2->geom==cAtomInfoTetrahedral)||
@@ -1722,6 +1792,7 @@ void ObjectMoleculeSeleOp(ObjectMolecule *I,int sele,ObjectMoleculeOpRec *op)
   OrthoLineType buffer;
   int cnt,maxCnt;
   CoordSet *cs;
+  AtomInfoType *ai;
 
   if(sele>=0) {
 	SelectorUpdateTable();
@@ -1869,6 +1940,28 @@ void ObjectMoleculeSeleOp(ObjectMolecule *I,int sele,ObjectMoleculeOpRec *op)
              s=SelectorNext(s);
            }
        }
+     break;
+	case OMOP_Remove: /* flag atoms for deletion */
+     ai=I->AtomInfo;
+     if(I->DiscreteFlag) /* for now, can't remove atoms from discrete objects */
+       ErrMessage("Remove","Can't remove atoms from discrete objects.");
+     else
+       for(a=0;a<I->NAtom;a++)
+         {         
+           ai->deleteFlag=false;
+           s=ai->selEntry;
+           while(s) 
+             {
+               if(SelectorMatch(s,sele))
+                 {
+                   ai->deleteFlag=true;
+                   op->i1++;
+                   break;
+                 }
+               s=SelectorNext(s);
+             }
+           ai++;
+         }
      break;
 	default:
 	   for(a=0;a<I->NAtom;a++)
@@ -2140,13 +2233,13 @@ void ObjectMoleculeSeleOp(ObjectMolecule *I,int sele,ObjectMoleculeOpRec *op)
 	if(hit_flag) {
 	  switch(op->code) {
 	  case OMOP_TTTF:
-		ObjectMoleculeTransformTTTf(I,op->ttt,-1);
-		break;
+       ObjectMoleculeTransformTTTf(I,op->ttt,-1);
+       break;
 	  case OMOP_LABL:
-       ObjectMoleculeInvalidateRep(I,cRepLabel);
-		break;
+       ObjectMoleculeInvalidate(I,cRepLabel,cRepInvText);
+       break;
      case OMOP_AlterState: /* overly coarse - doing all states, could do just 1 */
-       ObjectMoleculeInvalidateRep(I,-1);
+       ObjectMoleculeInvalidate(I,-1,cRepInvAll);
        SceneChanged();
        break;
 	  }
@@ -2188,13 +2281,13 @@ void ObjectMoleculeUpdate(ObjectMolecule *I)
 	 }
 }
 /*========================================================================*/
-void ObjectMoleculeInvalidateRep(ObjectMolecule *I,int rep)
+void ObjectMoleculeInvalidate(ObjectMolecule *I,int rep,int level)
 {
   int a;
   for(a=0;a<I->NCSet;a++) 
 	 if(I->CSet[a]) {	 
       if(I->CSet[a]->fInvalidateRep)
-        I->CSet[a]->fInvalidateRep(I->CSet[a],rep,0);
+        I->CSet[a]->fInvalidateRep(I->CSet[a],rep,level);
 	 }
 }
 /*========================================================================*/
