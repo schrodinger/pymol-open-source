@@ -106,6 +106,9 @@ void ExecutiveRebuildAllObjectDist(void);
 int ExecutivePhiPsi(char *s1,ObjectMolecule ***objVLA,int **iVLA,float **phiVLA,float **psiVLA,int state) ;
 float *ExecutiveGetVertexVLA(char *s1,int state);
 int ExecutiveValidName(char *name);
+
+int ExecutiveTransformObjectSelection(char *name,int state,char *s1,int log,float *ttt);
+int ExecutiveTranslateAtom(char *sele,float *v,int state,int mode,int log);
 #endif
 
 

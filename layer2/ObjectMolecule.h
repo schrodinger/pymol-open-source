@@ -135,10 +135,11 @@ void ObjectMoleculeBlindSymMovie(ObjectMolecule *I);
 void ObjectMoleculeMerge(ObjectMolecule *I,AtomInfoType *ai,CoordSet *cs,int bondSearchFlag);
 void ObjectMoleculeUpdateNonbonded(ObjectMolecule *I);
 void ObjectMoleculeUpdateNeighbors(ObjectMolecule *I);
-int ObjectMoleculeMoveAtom(ObjectMolecule *I,int state,int index,float *v,int mode);
+int ObjectMoleculeMoveAtom(ObjectMolecule *I,int state,int index,float *v,int mode,int log);
 int ObjectMoleculeGetAtomVertex(ObjectMolecule *I,int state,int index,float *v);
 int ObjectMoleculeGetAtomIndex(ObjectMolecule *I,int sele);
-void ObjectMoleculeTransformSelection(ObjectMolecule *I,int state,int sele,float *TTT);
+void ObjectMoleculeTransformSelection(ObjectMolecule *I,int state,
+                                      int sele,float *TTT,int log,char *sname);
 
 void ObjectMoleculeInferChemFromNeighGeom(ObjectMolecule *I,int state);
 void ObjectMoleculeInferChemForProtein(ObjectMolecule *I,int state);
@@ -148,7 +149,7 @@ void ObjectMoleculePurge(ObjectMolecule *I);
 int ObjectMoleculeAddBond(ObjectMolecule *I,int sele0,int sele1,int order);
 int ObjectMoleculeRemoveBonds(ObjectMolecule *I,int sele1,int sele2);
 
-void ObjectMoleculeSaveUndo(ObjectMolecule *I,int state);
+void ObjectMoleculeSaveUndo(ObjectMolecule *I,int state,int log);
 void ObjectMoleculeUndo(ObjectMolecule *I,int dir);
 void ObjectMoleculePrepareAtom(ObjectMolecule *I,int index,AtomInfoType *ai);
 void ObjectMoleculeReplaceAtom(ObjectMolecule *I,int index,AtomInfoType *ai);

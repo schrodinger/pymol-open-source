@@ -92,6 +92,64 @@ void ExecutiveReshape(Block *block,int width,int height);
 
 void ExecutiveObjMolSeleOp(int sele,ObjectMoleculeOpRec *op);
 
+int ExecutiveTranslateAtom(char *sele,float *v,int state,int mode,int log)
+{
+  int ok=true;
+  ObjectMolecule *obj0;
+  int sele0 = SelectorIndexByName(sele);
+  int i0;
+  if(sele0<0) {
+    PRINTFB(FB_Executive,FB_Errors)
+      "Error: bad selection %s.\n",sele
+      ENDFB;
+    ok=false;
+  } else{ 
+    obj0 = SelectorGetSingleObjectMolecule(sele0);
+    if(!obj0) {
+      PRINTFB(FB_Executive,FB_Errors)
+        "Error: selection isn't a single atom.\n"
+        ENDFB;
+      ok=false;
+    } else {
+      i0 = ObjectMoleculeGetAtomIndex(obj0,sele0);
+      if(i0<0) {
+        PRINTFB(FB_Executive,FB_Errors)
+          "Error: selection isn't a single atom.\n"
+          ENDFB;
+        ok=false;
+      } else {
+        ObjectMoleculeMoveAtom(obj0,state,i0,v,mode,log);
+      }
+    }
+  }
+  return(ok);
+}
+
+int ExecutiveTransformObjectSelection(char *name,int state,char *s1,int log,float *ttt)
+{
+  int sele=-1;
+  ObjectMolecule *obj = ExecutiveFindObjectMoleculeByName(name);
+  int ok=true;
+
+  if(s1[0]) {
+     sele = SelectorIndexByName(s1);
+     if(sele<0)
+       ok=false;
+  }
+  if(!obj) {
+    PRINTFB(FB_ObjectMolecule,FB_Errors)
+      "Error: object %s not found.\n",name 
+      ENDFB;
+  } else if(!ok) {
+    PRINTFB(FB_ObjectMolecule,FB_Errors)
+      "Error: selection object %s not found.\n",s1
+      ENDFB;
+  } else {
+    ObjectMoleculeTransformSelection(obj,state,sele,ttt,log,s1);
+  }
+  return(ok);
+}
+
 int ExecutiveValidName(char *name)
 {
   int result=true;
@@ -2117,8 +2175,9 @@ void ExecutiveSetObjVisib(char *name,int state)
         if(tRec->type==cExecObject) {
           if(tRec->visible)
             SceneObjectDel(tRec->obj);				
-          else 
+          else {
             SceneObjectAdd(tRec->obj);
+          }
         }
         if((tRec->type!=cExecSelection)||(!state)) /* hide all selections, but show all */
           tRec->visible=!tRec->visible;
@@ -2132,8 +2191,9 @@ void ExecutiveSetObjVisib(char *name,int state)
           {
             if(tRec->visible)
               SceneObjectDel(tRec->obj);				
-            else 
+            else {
               SceneObjectAdd(tRec->obj);
+            }
             tRec->visible=!tRec->visible;
           }
       }
@@ -2174,7 +2234,8 @@ void ExecutiveSetAllVisib(int state)
 			 {
 				obj=(ObjectMolecule*)rec->obj;
 				sele = SelectorIndexByName(obj->Obj.Name);
-            rec->repOn[rep]=state;
+            for(rep=0;rep<cRepCnt;rep++) 
+              rec->repOn[rep]=state;
             op.code=OMOP_VISI;
             op.i1=-1;
             op.i2=state;

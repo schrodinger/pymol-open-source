@@ -38,6 +38,7 @@ Z* -------------------------------------------------------------------
 #define cButModeTorFrag  16
 #define cButModeMovFrag  17
 #define cButModeOrigAt   18
+#define cButLoop         19
 
 typedef char CodeType[25];
 
