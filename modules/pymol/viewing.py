@@ -17,12 +17,12 @@ if __name__=='pymol.viewing':
    import thread
    import string
    import types
-
+   import traceback
    import pymol
    import selector
    import copy
    import parsing
-
+   import re
    import cmd
    
    from cmd import _cmd,lock,unlock,Shortcut,QuietException,_raising, \
@@ -577,6 +577,7 @@ PYMOL API
       0 = output matrix to screen
       1 = don't output matrix to screen
       2 = force output to screen even if log file is open
+      3 = return formatted string instead of a list
       
 API USAGE
 
@@ -605,7 +606,7 @@ SEE ALSO
       finally:
          unlock()
       if len(r):
-         if cmd.get_setting_legacy("logging")!=0.0:
+         if (cmd.get_setting_legacy("logging")!=0.0) and (output!=3):
             if not quiet:
                print " get_view: matrix written to log file."
             cmd.log("_ set_view (\\\n","cmd.set_view((\\\n")
@@ -617,7 +618,7 @@ SEE ALSO
             cmd.log("_  %14.9f, %14.9f, %14.9f )\n"%r[22:25] , "  %14.9f, %14.9f, %14.9f ))\n"%r[22:25])
             if output<2: # suppress if we have a log file open
                output=0
-         if output and not quiet:
+         if output and not quiet and (output!=3):
             print "### cut below here and paste into script ###"
             print "set_view (\\"
             print "  %14.9f, %14.9f, %14.9f,\\"%r[0:3]
@@ -627,7 +628,14 @@ SEE ALSO
             print "  %14.9f, %14.9f, %14.9f,\\"%r[19:22]
             print "  %14.9f, %14.9f, %14.9f )"%r[22:25]
             print "### cut above here and paste into script ###"
-
+      if output==3:
+         return ("set_view (\\\n"+
+           "  %14.9f, %14.9f, %14.9f,\\\n"%r[0:3] +
+           "  %14.9f, %14.9f, %14.9f,\\\n"%r[4:7] +
+           "  %14.9f, %14.9f, %14.9f,\\\n"%r[8:11] +
+           "  %14.9f, %14.9f, %14.9f,\\\n"%r[16:19] +
+           "  %14.9f, %14.9f, %14.9f,\\\n"%r[19:22] +
+           "  %14.9f, %14.9f, %14.9f )\n"%r[22:25])
       r = r[0:3]+r[4:7]+r[8:11]+r[16:25]
       return r
 
@@ -655,7 +663,7 @@ SEE ALSO
       r = None
       if cmd.is_string(view):
          try:
-            view = eval(view)
+            view = eval(re.sub(r"[^0-9,\-\)\(\.]","",view))
          except:
             print "Error: bad view argument; should be a sequence of 18 floats."
             raise QuietException

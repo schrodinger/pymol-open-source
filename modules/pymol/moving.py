@@ -106,11 +106,11 @@ SEE ALSO
 
    mview_action_sc = Shortcut(mview_action_dict.keys())
 
-   def mview(action='store',first=0,last=0):
+   def mview(action='store',first=0,last=0,power=1.4):
       action = mview_action_dict[mview_action_sc.auto_err(action,'action')]
       try:
          lock()   
-         r = _cmd.mview(int(action),int(first)-1,int(last)-1)
+         r = _cmd.mview(int(action),int(first)-1,int(last)-1,float(power))
       finally:
          unlock()
       return r

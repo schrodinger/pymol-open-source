@@ -1792,7 +1792,7 @@ SEE ALSO
       'A' : [ redo                   , () , {}],
       'B' : [ replace                , ('Br',1,1), {} ],
       'C' : [ replace                , ('C',4,4), {} ],
-      'D' : [ remove_picked          , () , {} ],
+      'D' : [ remove_picked          , () , {'quiet':0} ],
       'E' : [ invert                 , () , {'quiet':0} ],      
       'F' : [ replace                , ('F',1,1), {} ],   
       'G' : [ replace                , ('H',1,1), {} ],

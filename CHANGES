@@ -4,6 +4,10 @@ CHANGE LOG
 
 Changes up to 0.96
  
+ 
+   * fixed "Get View" button in MacPyMOL, now also copying matrix direct
+     to the clipboard
+
    * API load actions now run quietly by default, like other functions.
 
    * pdb_reformat_names_mode = 3 gives IUPAC internally with PDB I/O

@@ -3050,10 +3050,11 @@ static PyObject *CmdMView(PyObject *self, 	PyObject *args)
 {
   int ok=false;
   int action,first,last;
-  ok = PyArg_ParseTuple(args,"iii",&action,&first,&last);
+  float power;
+  ok = PyArg_ParseTuple(args,"iiif",&action,&first,&last,&power);
   if (ok) {
     APIEntry();
-    ok = MovieView(action,first,last);
+    ok = MovieView(action,first,last,power);
     APIExit();
   }
   return(APIStatus(ok));
