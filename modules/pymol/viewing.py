@@ -44,8 +44,14 @@ USAGE
  
 PYMOL API
 
-   cmd.zoom( string object-or-selection [,float buffer [, state ]] )
+   cmd.zoom( string object-or-selection [,float buffer=0.0 [, int state=0 ]] )
 
+NOTES
+
+   state = 0 (default) use all coordinate states
+   state = -1 use only coordinates for the current state
+   state > 0  use coordinates for a specific state
+   
 SEE ALSO
 
    origin, orient
@@ -114,6 +120,12 @@ PYMOL API
  
    cmd.origin( string object-or-selection )
 
+NOTES
+
+   state = 0 (default) use all coordinate states
+   state = -1 use only coordinates for the current state
+   state > 0  use coordinates for a specific state
+
 SEE ALSO
 
    zoom, orient, reset
@@ -154,7 +166,13 @@ USAGE
  
 PYMOL API
  
-   cmd.orient( string object-or-selection )
+   cmd.orient( string object-or-selection [, state = 0] )
+
+NOTES
+
+   state = 0 (default) use all coordinate states
+   state = -1 use only coordinates for the current state
+   state > 0  use coordinates for a specific state
 
 SEE ALSO
 
