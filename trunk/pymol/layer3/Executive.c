@@ -78,8 +78,6 @@ typedef struct Executive {
   SpecRec *Spec;
   int Width,Height;
   int ScrollBarActive;
-  int ScrollBarRange;
-  int ScrollBarValue;
   int NSkip;
   struct CScrollBar *ScrollBar;
   CObject *LastEdited;
@@ -108,6 +106,112 @@ void ExecutiveObjMolSeleOp(int sele,ObjectMoleculeOpRec *op);
 #define ExecOpCnt 5
 #define ExecGreyVisible 0.45F
 #define ExecGreyHidden 0.3F
+
+void ExecutiveProcessPDBFile(CObject *origObj,char *fname, char *oname, 
+                             int frame, int discrete,int finish,OrthoLineType buf)
+{
+  int ok=true;
+  FILE *f;
+  long size;
+  char *buffer=NULL,*p;
+  CObject *obj;
+  char pdb_name[ObjNameMax] = "";
+  char *next_pdb = NULL;
+  int repeat_flag = true;
+
+  f=fopen(fname,"rb");
+  if(!f) {
+    PRINTFB(FB_ObjectMolecule,FB_Errors)
+      "ObjectMolecule-ERROR: Unable to open file '%s'\n",fname
+      ENDFB;
+    ok=false;
+  } else
+	 {
+      PRINTFB(FB_ObjectMolecule,FB_Blather)
+        " ObjectMoleculeLoadPDBFile: Loading from %s.\n",fname
+        ENDFB;
+		
+		fseek(f,0,SEEK_END);
+      size=ftell(f);
+		fseek(f,0,SEEK_SET);
+
+		buffer=(char*)mmalloc(size+255);
+		ErrChkPtr(buffer);
+		p=buffer;
+		fseek(f,0,SEEK_SET);
+		fread(p,size,1,f);
+		p[size]=0;
+		fclose(f);
+    }
+
+  while(repeat_flag&&ok) {
+    char *start_at = buffer;
+    int is_repeat_pass = false;
+    M4XAnnoType m4x;
+    M4XAnnoInit(&m4x);
+    PRINTFD(FB_CCmd) " ExecutiveProcessPDBFile-DEBUG: loading PDB\n" ENDFD;
+
+    if(next_pdb) {
+      start_at = next_pdb;
+      is_repeat_pass = true;
+    }
+
+    repeat_flag=false;
+    next_pdb = NULL;
+    if(!origObj) {
+
+      obj=(CObject*)ObjectMoleculeReadPDBStr((ObjectMolecule*)origObj,
+                                             start_at,frame,discrete,&m4x,pdb_name,&next_pdb);
+      if(obj) {
+        if(next_pdb) { /* NOTE: if set, assume that multiple PDBs are present in the file */
+          repeat_flag=true;
+        }
+        if(m4x.xname_flag) { /* USER XNAME trumps the PDB Header name */                 
+          ObjectSetName(obj,m4x.xname); /* from PDB */
+          ExecutiveDelete(m4x.xname); /* just in case */
+        } else if(next_pdb) {
+          ObjectSetName(obj,pdb_name); /* from PDB */
+          ExecutiveDelete(pdb_name); /* just in case */
+        } else if(is_repeat_pass) {
+          ObjectSetName(obj,pdb_name); /* from PDB */
+          ExecutiveDelete(pdb_name); /* just in case */
+        } else 
+          ObjectSetName(obj,oname); /* from filename/parameter */
+
+        ExecutiveManageObject(obj,true,false);
+        if(frame<0)
+          frame = ((ObjectMolecule*)obj)->NCSet-1;
+        sprintf(buf," CmdLoad: \"%s\" loaded into object \"%s\", state %d.\n",
+                fname,oname,frame+1);
+      }
+    } else {
+      ObjectMoleculeReadPDBStr((ObjectMolecule*)origObj,
+                               start_at,frame,discrete,&m4x,pdb_name,&next_pdb);
+      if(finish)
+        ExecutiveUpdateObjectSelection(origObj);
+      if(frame<0)
+        frame = ((ObjectMolecule*)origObj)->NCSet-1;
+      sprintf(buf," CmdLoad: \"%s\" appended into object \"%s\", state %d.\n",
+              fname,oname,frame+1);
+      obj = origObj;
+    }
+    if(m4x.annotated_flag) {
+      char script[] = "@$PYMOL_SCRIPTS/metaphorics/annotate.pml";
+      char *script_file = NULL;
+
+      if(!repeat_flag) /* for multi-PDB files, don't execute script until after the last file */
+        script_file = script;
+ 
+      ObjectMoleculeM4XAnnotate((ObjectMolecule*)obj,&m4x,script_file);
+    }
+    M4XAnnoPurge(&m4x);
+  }
+  if(buffer) {
+    mfree(buffer);
+  }
+      
+}
+
 
 int  ExecutiveAssignSS(char *target,int state,char *context,int preserve,int quiet)
 {
@@ -5938,6 +6042,28 @@ int ExecutiveIterateObject(CObject **obj,void **hidden)
 	 }
   if(*rec)
 	 (*obj)=(*rec)->obj;
+  else
+	 (*obj)=NULL;
+  return(result);
+}
+/*========================================================================*/
+int ExecutiveIterateObjectMolecule(ObjectMolecule **obj,void **hidden)
+{
+  int result;
+  CExecutive *I = &Executive;
+  int flag=false;
+  SpecRec **rec=(SpecRec**)hidden;
+  while(!flag)
+	 {
+		result = (int)ListIterate(I->Spec,(*rec),next);
+		if(!(*rec))
+		  flag=true;
+		else if((*rec)->type==cExecObject)
+        if((*rec)->obj->type==cObjectMolecule)
+          flag=true;
+	 }
+  if(*rec)
+	 (*obj)=(ObjectMolecule*)(*rec)->obj;
   else
 	 (*obj)=NULL;
   return(result);

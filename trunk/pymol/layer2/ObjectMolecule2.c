@@ -34,7 +34,7 @@ Z* -------------------------------------------------------------------
 #include"P.h"
 
 
-void ObjectMoleculeM4XAnnotate(ObjectMolecule *I,M4XAnnoType *m4x)
+void ObjectMoleculeM4XAnnotate(ObjectMolecule *I,M4XAnnoType *m4x,char *script_file)
 {
   int a;
   WordType name;
@@ -72,7 +72,7 @@ void ObjectMoleculeM4XAnnotate(ObjectMolecule *I,M4XAnnoType *m4x)
         UtilNConcat(name,cont->name,sizeof(WordType));
         UtilNConcat(name,"_hbond",sizeof(WordType));
         ExecutiveDelete(name);
-        distObj = ObjectDistNewFromM4XHBond(NULL,
+        distObj = ObjectDistNewFromM4XBond(NULL,
                                             I,
                                             cont->hbond,
                                             cont->n_hbond);
@@ -80,8 +80,27 @@ void ObjectMoleculeM4XAnnotate(ObjectMolecule *I,M4XAnnoType *m4x)
         if(distObj)
           ExecutiveManageObject((CObject*)distObj,false,true);
       }
+
+      if(cont->nbond) {
+        ObjectDist *distObj;
+        UtilNCopy(name,I->Obj.Name,sizeof(WordType));
+        UtilNConcat(name,"_",sizeof(WordType));
+        UtilNConcat(name,cont->name,sizeof(WordType));
+        UtilNConcat(name,"_nbond",sizeof(WordType));
+        ExecutiveDelete(name);
+        distObj = ObjectDistNewFromM4XBond(NULL,
+                                            I,
+                                            cont->nbond,
+                                            cont->n_nbond);
+        ObjectSetName((CObject*)distObj,name);
+        if(distObj)
+          ExecutiveManageObject((CObject*)distObj,false,true);
+      }
+
+      
     }
-    PParse("@$PYMOL_SCRIPTS/metaphorics/annotate.pml");
+    if(script_file) 
+      PParse(script_file);
   }
 }
 

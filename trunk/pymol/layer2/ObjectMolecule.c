@@ -60,9 +60,7 @@ void ObjectMoleculeRender(ObjectMolecule *I,int frame,CRay *ray,Pickable **pick,
 void ObjectMoleculeCylinders(ObjectMolecule *I);
 CoordSet *ObjectMoleculeMMDStr2CoordSet(char *buffer,AtomInfoType **atInfoPtr);
 
-CoordSet *ObjectMoleculePDBStr2CoordSet(char *buffer,AtomInfoType **atInfoPtr,
-                                        char **restart,char *segi_override,
-                                        M4XAnnoType *m4x);
+
 
 CoordSet *ObjectMoleculePMO2CoordSet(CRaw *pmo,AtomInfoType **atInfoPtr,int *restart);
 
@@ -147,6 +145,7 @@ void M4XAnnoPurge(M4XAnnoType *m4x)
   if(m4x) {
     for(c=0;c<m4x->n_context;c++) {
       VLAFreeP(m4x->context[c].hbond);
+      VLAFreeP(m4x->context[c].nbond);
       VLAFreeP(m4x->context[c].site);
       VLAFreeP(m4x->context[c].ligand);
       VLAFreeP(m4x->context[c].water);
@@ -5886,94 +5885,9 @@ void ObjectMoleculeMerge(ObjectMolecule *I,AtomInfoType *ai,
 
 }
 /*========================================================================*/
-ObjectMolecule *ObjectMoleculeReadPDBStr(ObjectMolecule *I,char *PDBStr,int frame,int discrete,M4XAnnoType *m4x)
-{
-  CoordSet *cset = NULL;
-  AtomInfoType *atInfo;
-  int ok=true;
-  int isNew = true;
-  unsigned int nAtom = 0;
-  char *start,*restart=NULL;
-  int repeatFlag = true;
-  int successCnt = 0;
-
-  SegIdent segi_override=""; /* saved segi for corrupted NMR pdb files */
-
-  start=PDBStr;
-  while(repeatFlag) {
-    repeatFlag = false;
-  
-    if(!I) 
-      isNew=true;
-    else 
-      isNew=false;
-    
-    if(ok) {
-      
-      if(isNew) {
-        I=(ObjectMolecule*)ObjectMoleculeNew(discrete);
-        atInfo = I->AtomInfo;
-        isNew = true;
-      } else {
-        atInfo=VLAMalloc(10,sizeof(AtomInfoType),2,true); /* autozero here is important */
-        isNew = false;
-      }
-      if(isNew) AtomInfoPrimeColors();
-
-      cset=ObjectMoleculePDBStr2CoordSet(start,&atInfo,&restart,segi_override,m4x);	 
-      nAtom=cset->NIndex;
-    }
-    
-    /* include coordinate set */
-    if(ok) {
-
-      cset->Obj = I;
-      cset->fEnumIndices(cset);
-      if(cset->fInvalidateRep)
-        cset->fInvalidateRep(cset,cRepAll,cRepInvRep);
-      if(isNew) {		
-        I->AtomInfo=atInfo; /* IMPORTANT to reassign: this VLA may have moved! */
-      } else {
-        ObjectMoleculeMerge(I,atInfo,cset,true,cAIC_PDBMask); /* NOTE: will release atInfo */
-      }
-      if(isNew) I->NAtom=nAtom;
-      if(frame<0) frame=I->NCSet;
-      VLACheck(I->CSet,CoordSet*,frame);
-      if(I->NCSet<=frame) I->NCSet=frame+1;
-      if(I->CSet[frame]) I->CSet[frame]->fFree(I->CSet[frame]);
-      I->CSet[frame] = cset;
-      if(isNew) I->NBond = ObjectMoleculeConnect(I,&I->Bond,I->AtomInfo,cset,true);
-      if(cset->Symmetry&&(!I->Symmetry)) {
-        I->Symmetry=SymmetryCopy(cset->Symmetry);
-        SymmetryAttemptGeneration(I->Symmetry,false,false);
-      }
-      SceneCountFrames();
-      ObjectMoleculeExtendIndices(I);
-      ObjectMoleculeSort(I);
-      ObjectMoleculeUpdateIDNumbers(I);
-      ObjectMoleculeUpdateNonbonded(I);
-      successCnt++;
-      if(successCnt>1) {
-        if(successCnt==2){
-          PRINTFB(FB_ObjectMolecule,FB_Actions)
-            " ObjectMolReadPDBStr: read MODEL %d\n",1
-            ENDFB;
-            }
-        PRINTFB(FB_ObjectMolecule,FB_Actions)
-          " ObjectMolReadPDBStr: read MODEL %d\n",successCnt
-          ENDFB;
-      }
-    }
-    if(restart) {
-      repeatFlag=true;
-      start=restart;
-      frame=frame+1;
-    }
-  }
-  return(I);
-}
-/*========================================================================*/
-ObjectMolecule *ObjectMoleculeLoadPDBFile(ObjectMolecule *obj,char *fname,int frame,int discrete,M4XAnnoType *m4x)
+#if 0
+ObjectMolecule *ObjectMoleculeLoadPDBFile(ObjectMolecule *obj,char *fname,
+                                          int frame,int discrete,M4XAnnoType *m4x)
 {
   ObjectMolecule *I=NULL;
   int ok=true;
@@ -6012,7 +5926,7 @@ ObjectMolecule *ObjectMoleculeLoadPDBFile(ObjectMolecule *obj,char *fname,int fr
 
   return(I);
 }
-
+#endif
 /*========================================================================*/
 void ObjectMoleculeAppendAtoms(ObjectMolecule *I,AtomInfoType *atInfo,CoordSet *cs)
 {
@@ -7961,11 +7875,13 @@ ObjectMolecule *ObjectMoleculeLoadMMDFile(ObjectMolecule *obj,char *fname,
 }
 
 /*========================================================================*/
-CoordSet *ObjectMoleculePDBStr2CoordSet(char *buffer,
+static CoordSet *ObjectMoleculePDBStr2CoordSet(char *buffer,
                                         AtomInfoType **atInfoPtr,
-                                        char **restart,
+                                        char **restart_model,
                                         char *segi_override,
-                                        M4XAnnoType *m4x)
+                                        M4XAnnoType *m4x,
+                                        char *pdb_name,
+                                        char **next_pdb)
 {
 
   char *p;
@@ -8017,92 +7933,130 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(char *buffer,
   if(!atInfo)
     ErrFatal("PDBStr2CoordSet","need atom information record!"); /* failsafe for old version..*/
 
-  if(buffer == *restart)
+  if(buffer == *restart_model)
     only_read_one_model = true;
 
   /* PASS 1 */
 
-  *restart = NULL;
+  *restart_model = NULL;
   while(*p)
 	 {
 		if((*p == 'A')&&(*(p+1)=='T')&&(*(p+2)=='O')&&(*(p+3)=='M')
-         &&(!*restart))
+         &&(!*restart_model))
 		  nAtom++;
 		else if((*p == 'H')&&(*(p+1)=='E')&&(*(p+2)=='L')&&(*(p+3)=='I')&&(*(p+4)=='X'))
         ssFlag=true;
 		else if((*p == 'S')&&(*(p+1)=='H')&&(*(p+2)=='E')&&(*(p+3)=='E')&&(*(p+4)=='T'))
         ssFlag=true;
 		else if((*p == 'A')&&(*(p+1)=='T')&&(*(p+2)=='O')&&(*(p+3)=='M')
-         &&(!*restart))
+         &&(!*restart_model))
 		  nAtom++;
 		else if((*p == 'H')&&(*(p+1)=='E')&&(*(p+2)=='T')&&
-         (*(p+3)=='A')&&(*(p+4)=='T')&&(*(p+5)=='M')&&(!*restart))
+         (*(p+3)=='A')&&(*(p+4)=='T')&&(*(p+5)=='M')&&(!*restart_model))
         nAtom++;
 		else if((*p == 'E')&&(*(p+1)=='N')&&(*(p+2)=='D')&&
-              (*(p+3)=='M')&&(*(p+4)=='D')&&(*(p+5)=='L')&&(!*restart)) {
-        *restart=nextline(p);
+              (*(p+3)=='M')&&(*(p+4)=='D')&&(*(p+5)=='L')&&(!*restart_model)) {
+        *restart_model=nextline(p);
         if(only_read_one_model) 
           break;
-      }
-		else if((*p == 'C')&&(*(p+1)=='O')&&(*(p+2)=='N')&&
+      } else if((*p == 'E')&&(*(p+1)=='N')&&(*(p+2)=='D')) { /* stop parsing after END */
+        ntrim(cc,p,6);
+        if(strcmp("END",cc)==0) {
+          if(next_pdb) {
+            p = nextline(p);
+            ncopy(cc,p,6);
+            if(strcmp("HEADER",cc)==0) {
+              (*next_pdb) = p; /* found another PDB file after this one... */
+            }
+          }
+          break;
+        }
+      } else if((*p == 'C')&&(*(p+1)=='O')&&(*(p+2)=='N')&&
          (*(p+3)=='E')&&(*(p+4)=='C')&&(*(p+5)=='T'))
         bondFlag=true;
 		else if((*p == 'U')&&(*(p+1)=='S')&&(*(p+2)=='E')&&
-              (*(p+3)=='R')&&(!*restart)) {
+              (*(p+3)=='R')&&(!*restart_model)) {
+
         /* Metaphorics key 'USER     '*/
         if((*(p+4)==' ')&&(*(p+5)==' ')&&(*(p+6)==' ')&&
            (*(p+7)==' ')&&(*(p+8)==' ')&&m4x) {
           p = nskip(p,10);
           p = ntrim(cc,p,6);
           m4x->annotated_flag = true;
-          if(WordMatchExact("HINT",cc,true)) {
-            p = nskip(p,1);
-            p = ntrim(cc,p,6);
-            if(!m4x->context) {
-              m4x->context = VLACalloc(M4XContextType,10);
-            } 
-            if(m4x->context) {
-              int cn;
-              int found=false;
-              
-              /* does context already exist ? */
-              for(cn=0;cn<m4x->n_context;cn++) {
-                if(WordMatchExact(m4x->context[cn].name,cc,true)) {
-                  found=true;
-                  break;
+          switch(cc[0]) {
+          case 'H':
+            if(WordMatchExact("HINT",cc,true)) {
+              p = nskip(p,1);
+              p = ntrim(cc,p,6);
+              if(!m4x->context) {
+                m4x->context = VLACalloc(M4XContextType,10);
+              } 
+              if(m4x->context) {
+                int cn;
+                int found=false;
+                
+                /* does context already exist ? */
+                for(cn=0;cn<m4x->n_context;cn++) {
+                  if(WordMatchExact(m4x->context[cn].name,cc,true)) {
+                    found=true;
+                    break;
+                  }
                 }
-              }
-              
-              /* if not, then create it */
-              if(!found) {
-                cn = m4x->n_context++;
-                VLACheck(m4x->context,M4XContextType,cn);
-                UtilNCopy(m4x->context[cn].name,cc,sizeof(WordType));
-              }
-              
-              while(*cc) {
-                p = nskip(p,1);
-                p = ntrim(cc,p,6);
-                if(WordMatchExact("BORDER",cc,true)) {
-                  /* ignore PDB CONECT if BORDER present */
-                  ignore_conect = true;
-                  have_bond_order = true;
-                  bondFlag = true;
-                } else if(WordMatchExact("SITE",cc,true)) {
-                  if(!m4x->context[cn].site) {
-                    m4x->context[cn].site=VLAlloc(int,50);
-                  }
-                } else if(WordMatchExact("LIGAND",cc,true)) {
-                  if(!m4x->context[cn].ligand) {
-                    m4x->context[cn].ligand=VLAlloc(int,50);
-                  }
-                } else if(WordMatchExact("WATER",cc,true)) {
-                  if(!m4x->context[cn].water) {
-                    m4x->context[cn].water=VLAlloc(int,50);
-                  }
-                } else if(WordMatchExact("HBOND",cc,true)) {
-                  if(!m4x->context[cn].hbond) {
-                    m4x->context[cn].hbond=VLAlloc(M4XHBondType,50);
+                
+                /* if not, then create it */
+                if(!found) {
+                  cn = m4x->n_context++;
+                  VLACheck(m4x->context,M4XContextType,cn);
+                  UtilNCopy(m4x->context[cn].name,cc,sizeof(WordType));
+                }
+                
+                while(*cc) {
+                  p = nskip(p,1);
+                  p = ntrim(cc,p,6);
+                  switch(cc[0]) {
+                  case 'B':
+                    if(WordMatchExact("BORDER",cc,true)) {
+                      /* ignore PDB CONECT if BORDER present */
+                      ignore_conect = true;
+                      have_bond_order = true;
+                      bondFlag = true;
+                    }
+                    break;
+                  case 'S':
+                    if(WordMatchExact("SITE",cc,true)) {
+                      if(!m4x->context[cn].site) {
+                        m4x->context[cn].site=VLAlloc(int,50);
+                      }
+                    } 
+                    break;
+                  case 'L':
+                    if(WordMatchExact("LIGAND",cc,true)) {
+                      if(!m4x->context[cn].ligand) {
+                        m4x->context[cn].ligand=VLAlloc(int,50);
+                      }
+                    }
+                    break;
+                  case 'W':
+                    if(WordMatchExact("WATER",cc,true)) {
+                      if(!m4x->context[cn].water) {
+                        m4x->context[cn].water=VLAlloc(int,50);
+                      }
+                    } 
+                    break;
+                  case 'H':
+                    if(WordMatchExact("HBOND",cc,true)) {
+                      if(!m4x->context[cn].hbond) {
+                        m4x->context[cn].hbond=VLAlloc(M4XBondType,50);
+                      }
+                    }
+                    break;
+                  case 'N':
+                    if(WordMatchExact("NBOND",cc,true)) {
+                      if(!m4x->context[cn].nbond) {
+                        m4x->context[cn].nbond=VLAlloc(M4XBondType,50);
+                      }
+                    }
+                    break;
                   }
                 }
               }
@@ -8113,7 +8067,7 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(char *buffer,
       p=nextline(p);
 	 }
 
-  *restart=NULL;
+  *restart_model=NULL;
   coord=VLAlloc(float,3*nAtom);
 
   if(atInfo)
@@ -8154,6 +8108,14 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(char *buffer,
          (*(p+6)==' ')&&(*(p+7)=='2')&&(*(p+8)=='9')&&
          (*(p+9)=='0'))
         {
+        }
+		else if((*p == 'H')&&(*(p+1)=='E')&&(*(p+2)=='A')&&
+              (*(p+3)=='D')&&(*(p+4)=='E')&&(*(p+5)=='R'))
+        {
+          if(pdb_name) {
+            p=nskip(p,62);
+            p=ntrim(pdb_name,p,4);
+          }
         }
 		else if((*p == 'H')&&(*(p+1)=='E')&&(*(p+2)=='L')&&(*(p+3)=='I')&&(*(p+4)=='X'))
         {
@@ -8215,12 +8177,16 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(char *buffer,
 
         }
 		else if((*p == 'E')&&(*(p+1)=='N')&&(*(p+2)=='D')&&
-              (*(p+3)=='M')&&(*(p+4)=='D')&&(*(p+5)=='L')&&(!*restart)) {
-        *restart=nextline(p);
+              (*(p+3)=='M')&&(*(p+4)=='D')&&(*(p+5)=='L')&&(!*restart_model)) {
+        *restart_model=nextline(p);
         if(only_read_one_model) 
           break;
+      } else if((*p == 'E')&&(*(p+1)=='N')&&(*(p+2)=='D')) { /* stop parsing after END */
+        ntrim(cc,p,6);
+        if(strcmp("END",cc)==0)
+          break;
 		} else if((*p == 'C')&&(*(p+1)=='R')&&(*(p+2)=='Y')&&
-              (*(p+3)=='S')&&(*(p+4)=='T')&&(*(p+5)=='1')&&(!*restart))
+              (*(p+3)=='S')&&(*(p+4)=='T')&&(*(p+5)=='1')&&(!*restart_model))
         {
           if(!symmetry) symmetry=SymmetryNew();          
           if(symmetry) {
@@ -8284,15 +8250,32 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(char *buffer,
             }
         }
 		else if((*p == 'U')&&(*(p+1)=='S')&&(*(p+2)=='E')
-              &&(*(p+3)=='R')&&(!*restart)) {
+              &&(*(p+3)=='R')&&(!*restart_model)) {
         /* Metaphorics key 'USER     ' */
         if((*(p+4)==' ')&&(*(p+5)==' ')&&(*(p+6)==' ')&&
            (*(p+7)==' ')&&(*(p+8)==' ')&&m4x) {
           
+          int parsed_flag = false;
+
           p = nskip(p,10);
           p = ntrim(cc,p,6);
+
+          /* is this a context name or a USER record? */
           
-          if(m4x->context) {
+          switch(cc[0]) {
+          case 'X':
+            if(WordMatchExact("XNAME",cc,true)) {
+              p=nskip(p,1);
+              p=ntrim(m4x->xname,p,10);
+              if(m4x->xname[0]) {
+                m4x->xname_flag = true;
+                parsed_flag = true;
+              }
+            }
+            break;
+          }
+          
+          if((!parsed_flag)&&m4x->context) {
             int cn;
             int found=false;
             
@@ -8310,95 +8293,136 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(char *buffer,
               
               p = nskip(p,1);
               p = ntrim(cc,p,6);
-              if(WordMatchExact("BORDER",cc,true)&&bondFlag) {
-                int order;
-                
-                p=nskip(p,1);
-                p=ncopy(cc,p,6);
-                if(sscanf(cc,"%d",&b1)==1) {
+              switch(cc[0]) {
+              case 'B':
+                if(WordMatchExact("BORDER",cc,true)&&bondFlag) {
+                  int order;
+                  
                   p=nskip(p,1);
                   p=ncopy(cc,p,6);
-                  if(sscanf(cc,"%d",&b2)==1) {
-                    p = nskip(p,1);
-                    p = ncopy(cc,p,6);
-                    if(sscanf(cc,"%d",&order)==1) {      
-                      if((b1>=0)&&(b2>=0)) { /* IDs must be positive */
-                        VLACheck(bond,BondType,nBond);
-                        if(b1<=b2) {
-                          bond[nBond].index[0]=b1; /* temporarily store the atom indexes */
-                          bond[nBond].index[1]=b2;
-                          bond[nBond].order=order;
-                          bond[nBond].stereo=0;
-                          
-                        } else {
-                          bond[nBond].index[0]=b2;
-                          bond[nBond].index[1]=b1;
-                          bond[nBond].order=order;
-                          bond[nBond].stereo=0;
-                        }
-                        nBond++;
-                      }
-                    }
-                  }
-                }
-              } else if(WordMatchExact("SITE",cc,true)) {
-                if(cont->site) {
-                  int id;
-                  while(*cc) {
-                    p = nskip(p,1);
-                    p = ncopy(cc,p,6);
-                    if(sscanf(cc,"%d",&id)==1) {
-                      VLACheck(cont->site,int,cont->n_site);
-                      cont->site[cont->n_site++] = id;
-                    }
-                  }
-                }
-              } else if(WordMatchExact("LIGAND",cc,true)) {
-                if(cont->ligand) {
-                  int id;
-                  while(*cc) {
-                    p = nskip(p,1);
-                    p = ncopy(cc,p,6);
-                    if(sscanf(cc,"%d",&id)==1) {
-                      VLACheck(cont->ligand,int,cont->n_ligand);
-                      cont->ligand[cont->n_ligand++] = id;
-                    }
-                  }
-                }
-              } else if(WordMatchExact("WATER",cc,true)) {
-                if(cont->water) {
-                  int id;
-                  while(*cc) {
-                    p = nskip(p,1);
-                    p = ncopy(cc,p,6);
-                    if(sscanf(cc,"%d",&id)==1) {
-                      VLACheck(cont->water,int,cont->n_water);
-                      cont->water[cont->n_water++] = id;
-                    }
-                  }
-                }
-              } else if(WordMatchExact("HBOND",cc,true)) {
-                if(cont->hbond) {
-                  int id1,id2;
-                  float strength;
-                  p = nskip(p,1);
-                  p = ncopy(cc,p,6);
-                  if(sscanf(cc,"%d",&id1)==1) {
-                    p = nskip(p,1);
-                    p = ncopy(cc,p,6);
-                    if(sscanf(cc,"%d",&id2)==1) {
+                  if(sscanf(cc,"%d",&b1)==1) {
+                    p=nskip(p,1);
+                    p=ncopy(cc,p,6);
+                    if(sscanf(cc,"%d",&b2)==1) {
                       p = nskip(p,1);
                       p = ncopy(cc,p,6);
-                      if(sscanf(cc,"%f",&strength)==1) {                  
-                        VLACheck(cont->hbond,M4XHBondType,cont->n_hbond);
-                        cont->hbond[cont->n_hbond].atom1 = id1;
-                        cont->hbond[cont->n_hbond].atom2 = id2;
-                        cont->hbond[cont->n_hbond].strength = strength;
-                        cont->n_hbond++;
+                      if(sscanf(cc,"%d",&order)==1) {      
+                        if((b1>=0)&&(b2>=0)) { /* IDs must be positive */
+                          VLACheck(bond,BondType,nBond);
+                          if(b1<=b2) {
+                            bond[nBond].index[0]=b1; /* temporarily store the atom indexes */
+                            bond[nBond].index[1]=b2;
+                            bond[nBond].order=order;
+                            bond[nBond].stereo=0;
+                            
+                          } else {
+                            bond[nBond].index[0]=b2;
+                            bond[nBond].index[1]=b1;
+                            bond[nBond].order=order;
+                            bond[nBond].stereo=0;
+                          }
+                          nBond++;
+                        }
                       }
                     }
                   }
                 }
+                break;
+              case 'S':
+                if(WordMatchExact("SITE",cc,true)) {
+                  if(cont->site) {
+                    int id;
+                    while(*cc) {
+                      p = nskip(p,1);
+                      p = ncopy(cc,p,6);
+                      if(sscanf(cc,"%d",&id)==1) {
+                        VLACheck(cont->site,int,cont->n_site);
+                        cont->site[cont->n_site++] = id;
+                      }
+                    }
+                  }
+                } 
+                break;
+              case 'L':
+                if(WordMatchExact("LIGAND",cc,true)) {
+                  if(cont->ligand) {
+                    int id;
+                    while(*cc) {
+                      p = nskip(p,1);
+                      p = ncopy(cc,p,6);
+                      if(sscanf(cc,"%d",&id)==1) {
+                        VLACheck(cont->ligand,int,cont->n_ligand);
+                        cont->ligand[cont->n_ligand++] = id;
+                      }
+                    }
+                  }
+                }
+                break;
+              case 'W':
+                if(WordMatchExact("WATER",cc,true)) {
+                  if(cont->water) {
+                    int id;
+                    while(*cc) {
+                      p = nskip(p,1);
+                      p = ncopy(cc,p,6);
+                      if(sscanf(cc,"%d",&id)==1) {
+                        VLACheck(cont->water,int,cont->n_water);
+                        cont->water[cont->n_water++] = id;
+                      }
+                    }
+                  }
+                } 
+                break;
+              case 'H':
+                if(WordMatchExact("HBOND",cc,true)) {
+                  if(cont->hbond) {
+                    int id1,id2;
+                    float strength;
+                    p = nskip(p,1);
+                    p = ncopy(cc,p,6);
+                    if(sscanf(cc,"%d",&id1)==1) {
+                      p = nskip(p,1);
+                      p = ncopy(cc,p,6);
+                      if(sscanf(cc,"%d",&id2)==1) {
+                        p = nskip(p,1);
+                        p = ncopy(cc,p,6);
+                        if(sscanf(cc,"%f",&strength)==1) {                  
+                          VLACheck(cont->hbond,M4XBondType,cont->n_hbond);
+                          cont->hbond[cont->n_hbond].atom1 = id1;
+                          cont->hbond[cont->n_hbond].atom2 = id2;
+                          cont->hbond[cont->n_hbond].strength = strength;
+                          cont->n_hbond++;
+                        }
+                      }
+                    }
+                  }
+                }
+                break;
+              case 'N':
+                if(WordMatchExact("NBOND",cc,true)) {
+                  if(cont->nbond) {
+                    int id1,id2;
+                    float strength;
+                    p = nskip(p,1);
+                    p = ncopy(cc,p,6);
+                    if(sscanf(cc,"%d",&id1)==1) {
+                      p = nskip(p,1);
+                      p = ncopy(cc,p,6);
+                      if(sscanf(cc,"%d",&id2)==1) {
+                        p = nskip(p,1);
+                        p = ncopy(cc,p,6);
+                        if(sscanf(cc,"%f",&strength)==1) {                  
+                          VLACheck(cont->nbond,M4XBondType,cont->n_nbond);
+                          cont->nbond[cont->n_nbond].atom1 = id1;
+                          cont->nbond[cont->n_nbond].atom2 = id2;
+                          cont->nbond[cont->n_nbond].strength = strength;
+                          cont->n_nbond++;
+                        }
+                      }
+                    }
+                  }
+                }
+                break;
               }
             }
           }
@@ -8470,7 +8494,7 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(char *buffer,
       }
       /* Atom records */
 
-      if(AFlag&&(!*restart))
+      if(AFlag&&(!*restart_model))
         {
           ai=atInfo+atomCount;
           
@@ -8737,9 +8761,9 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(char *buffer,
   if(atInfoPtr)
 	 *atInfoPtr = atInfo;
 
-  if(*restart) { /* if plan on need to reading another object, 
+  if(*restart_model) { /* if plan on need to reading another object, 
                     make sure there is another model to read...*/
-    p=*restart;
+    p=*restart_model;
     newModelFlag=false;
     while(*p) {
         
@@ -8756,7 +8780,7 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(char *buffer,
         p=nextline(p);
     }
     if(!newModelFlag) {
-      *restart=NULL;
+      *restart_model=NULL;
     }
   }
 
@@ -8769,6 +8793,99 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(char *buffer,
   return(cset);
 }
 
+/*========================================================================*/
+ObjectMolecule *ObjectMoleculeReadPDBStr(ObjectMolecule *I,char *PDBStr,int frame,
+                                         int discrete,M4XAnnoType *m4x,char *pdb_name,
+                                         char **next_pdb)
+{
+  CoordSet *cset = NULL;
+  AtomInfoType *atInfo;
+  int ok=true;
+  int isNew = true;
+  unsigned int nAtom = 0;
+  char *start,*restart=NULL;
+  int repeatFlag = true;
+  int successCnt = 0;
+
+  SegIdent segi_override=""; /* saved segi for corrupted NMR pdb files */
+
+  start=PDBStr;
+  while(repeatFlag) {
+    repeatFlag = false;
+  
+    if(!I) 
+      isNew=true;
+    else 
+      isNew=false;
+    
+    if(ok) {
+      
+      if(isNew) {
+        I=(ObjectMolecule*)ObjectMoleculeNew(discrete);
+        atInfo = I->AtomInfo;
+        isNew = true;
+      } else {
+        atInfo=VLAMalloc(10,sizeof(AtomInfoType),2,true); /* autozero here is important */
+        isNew = false;
+      }
+      if(isNew) AtomInfoPrimeColors();
+
+      cset=ObjectMoleculePDBStr2CoordSet(start,&atInfo,&restart,
+                                         segi_override,m4x,pdb_name,next_pdb);	 
+      nAtom=cset->NIndex;
+    }
+    if(pdb_name&&(*next_pdb)) {
+      /* problematic scenario */
+    }
+
+    /* include coordinate set */
+    if(ok) {
+
+      cset->Obj = I;
+      cset->fEnumIndices(cset);
+      if(cset->fInvalidateRep)
+        cset->fInvalidateRep(cset,cRepAll,cRepInvRep);
+      if(isNew) {		
+        I->AtomInfo=atInfo; /* IMPORTANT to reassign: this VLA may have moved! */
+      } else {
+        ObjectMoleculeMerge(I,atInfo,cset,true,cAIC_PDBMask); /* NOTE: will release atInfo */
+      }
+      if(isNew) I->NAtom=nAtom;
+      if(frame<0) frame=I->NCSet;
+      VLACheck(I->CSet,CoordSet*,frame);
+      if(I->NCSet<=frame) I->NCSet=frame+1;
+      if(I->CSet[frame]) I->CSet[frame]->fFree(I->CSet[frame]);
+      I->CSet[frame] = cset;
+      if(isNew) I->NBond = ObjectMoleculeConnect(I,&I->Bond,I->AtomInfo,cset,true);
+      if(cset->Symmetry&&(!I->Symmetry)) {
+        I->Symmetry=SymmetryCopy(cset->Symmetry);
+        SymmetryAttemptGeneration(I->Symmetry,false,false);
+      }
+      SceneCountFrames();
+      ObjectMoleculeExtendIndices(I);
+      ObjectMoleculeSort(I);
+      ObjectMoleculeUpdateIDNumbers(I);
+      ObjectMoleculeUpdateNonbonded(I);
+      successCnt++;
+      if(successCnt>1) {
+        if(successCnt==2){
+          PRINTFB(FB_ObjectMolecule,FB_Actions)
+            " ObjectMolReadPDBStr: read MODEL %d\n",1
+            ENDFB;
+            }
+        PRINTFB(FB_ObjectMolecule,FB_Actions)
+          " ObjectMolReadPDBStr: read MODEL %d\n",successCnt
+          ENDFB;
+      }
+    }
+    if(restart) {
+      repeatFlag=true;
+      start=restart;
+      frame=frame+1;
+    }
+  }
+  return(I);
+}
 /*========================================================================*/
 CoordSet *ObjectMoleculeMMDStr2CoordSet(char *buffer,AtomInfoType **atInfoPtr)
 {

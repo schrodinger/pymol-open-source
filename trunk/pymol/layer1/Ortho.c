@@ -30,11 +30,13 @@ Z* -------------------------------------------------------------------
 #include"Scene.h"
 #include"Executive.h"
 #include"ButMode.h"
+#include "Seq.h"
 #include"Control.h"
 #include"Setting.h"
 #include"Wizard.h"
 #include"Queue.h"
 #include"Pop.h"
+#include"Seq.h"
 
 #ifndef true
 #define true 1
@@ -890,6 +892,8 @@ void OrthoDoDraw()
   float *bg_color;
   
   int render = false;
+
+  /*  SeqUpdate(); */
   double_pump=SettingGet_i(NULL,NULL,cSetting_stereo_double_pump_mono);
   bg_color=SettingGet_3fv(NULL,NULL,cSetting_bg_rgb);
 
@@ -972,8 +976,18 @@ void OrthoDoDraw()
       PRINTFD(FB_Ortho)
         " OrthoDoDraw: drawing blocks...\n"
         ENDFD;
-      
-      BlockRecursiveDraw(I->Blocks);
+
+      if((int)SettingGet(cSetting_text)||I->SplashFlag) {
+        Block *block;
+        int active_tmp;
+        block=SeqGetBlock();
+        active_tmp = block->active;
+        block->active = false; 
+        BlockRecursiveDraw(I->Blocks);
+        block->active = active_tmp;
+      } else {
+        BlockRecursiveDraw(I->Blocks);
+      }
       
       PRINTFD(FB_Ortho)
         " OrthoDoDraw: blocks drawn.\n"
@@ -1159,11 +1173,21 @@ void OrthoReshape(int width, int height)
     sceneRight = 0;
     internal_gui_width=0;
   }
-  block=SceneGetBlock();
-  BlockSetMargin(block,0,0,sceneBottom,sceneRight);
-  BlockSetMargin(&I->LoopBlock,0,0,sceneBottom,sceneRight);
 
   if(SettingGet(cSetting_internal_gui)) {
+    
+    {
+      int seqHeight;
+      block=SeqGetBlock();
+      block->active=true;
+      BlockSetMargin(block,height-sceneBottom-10,0,sceneBottom,sceneRight);
+      if(block->fReshape)
+        block->fReshape(block,width,height);			
+      seqHeight = SeqGetHeight();
+      BlockSetMargin(block,height-sceneBottom-seqHeight,0,sceneBottom,sceneRight);
+      sceneBottom +=seqHeight;
+    }
+
     block=ExecutiveGetBlock();
     block->active=true;
     BlockSetMargin(block,0,width-internal_gui_width,WizardMargin,0);
@@ -1190,6 +1214,10 @@ void OrthoReshape(int width, int height)
     BlockSetMargin(block,height-ButModeMargin,width-internal_gui_width,ControlMargin,0);
     block->active=false;
   }
+
+  block=SceneGetBlock();
+  BlockSetMargin(block,0,0,sceneBottom,sceneRight);
+  BlockSetMargin(&I->LoopBlock,0,0,sceneBottom,sceneRight);
 
   if(PMGUI) 
     glGetIntegerv(GL_VIEWPORT,I->ViewPort);
@@ -1443,6 +1471,7 @@ void OrthoInit(int showSplash)
   
   ButModeInit();
   ControlInit();
+  SeqInit();
   PopInit();
   for(a=0;a<=OrthoHistoryLines;a++)
     I->History[a][0]=0;
@@ -1454,6 +1483,7 @@ void OrthoFree(void)
 
   VLAFreeP(I->WizardPromptVLA);
   PopFree();
+  SeqFree();
   ButModeFree();
   ControlFree();
   QueueFree(I->cmds);

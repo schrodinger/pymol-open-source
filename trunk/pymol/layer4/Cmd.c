@@ -3610,36 +3610,8 @@ static PyObject *CmdLoad(PyObject *self, PyObject *args)
     
     switch(type) {
     case cLoadTypePDB:
-      {
-        M4XAnnoType m4x;
-        M4XAnnoInit(&m4x);
-        PRINTFD(FB_CCmd) " CmdLoad-DEBUG: loading PDB\n" ENDFD;
-        if(!origObj) {
-          
-          obj=(CObject*)ObjectMoleculeLoadPDBFile(NULL,fname,frame,discrete,&m4x);
-          if(obj) {
-            ObjectSetName(obj,oname);
-            ExecutiveManageObject(obj,true,false);
-            if(frame<0)
-              frame = ((ObjectMolecule*)obj)->NCSet-1;
-            sprintf(buf," CmdLoad: \"%s\" loaded into object \"%s\", state %d.\n",
-                    fname,oname,frame+1);
-          }
-        } else {
-          ObjectMoleculeLoadPDBFile((ObjectMolecule*)origObj,fname,frame,discrete,&m4x);
-          if(finish)
-            ExecutiveUpdateObjectSelection(origObj);
-          if(frame<0)
-            frame = ((ObjectMolecule*)origObj)->NCSet-1;
-          sprintf(buf," CmdLoad: \"%s\" appended into object \"%s\", state %d.\n",
-                  fname,oname,frame+1);
-          obj = origObj;
-        }
-        if(m4x.annotated_flag) {
-          ObjectMoleculeM4XAnnotate((ObjectMolecule*)obj,&m4x);
-        }
-        M4XAnnoPurge(&m4x);
-      }
+      ExecutiveProcessPDBFile(origObj,fname,oname,frame,discrete,finish,buf);
+      /* special handler for concatenated and annotated files */
       break;
     case cLoadTypeTOP:
       PRINTFD(FB_CCmd) " CmdLoad-DEBUG: loading TOP\n" ENDFD;
@@ -3748,7 +3720,7 @@ static PyObject *CmdLoad(PyObject *self, PyObject *args)
       break;
     case cLoadTypePDBStr:
       PRINTFD(FB_CCmd) " CmdLoad-DEBUG: loading PDBStr\n" ENDFD;
-      obj=(CObject*)ObjectMoleculeReadPDBStr((ObjectMolecule*)origObj,fname,frame,discrete,NULL);
+      obj=(CObject*)ObjectMoleculeReadPDBStr((ObjectMolecule*)origObj,fname,frame,discrete,NULL,NULL,NULL);
       if(!origObj) {
         if(obj) {
           ObjectSetName(obj,oname);

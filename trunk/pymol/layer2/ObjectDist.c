@@ -35,7 +35,7 @@ void ObjectDistUpdate(ObjectDist *I);
 int ObjectDistGetNFrames(ObjectDist *I);
 void ObjectDistUpdateExtents(ObjectDist *I);
 
-static DistSet *ObjectDistGetDistSetFromM4xHBond(ObjectMolecule *obj, M4XHBondType *hb, int n_hb,
+static DistSet *ObjectDistGetDistSetFromM4XBond(ObjectMolecule *obj, M4XBondType *hb, int n_hb,
                                                  int state)
 {
   int min_id,max_id,range,*lookup = NULL;
@@ -154,9 +154,9 @@ static DistSet *ObjectDistGetDistSetFromM4xHBond(ObjectMolecule *obj, M4XHBondTy
   
 }
 
-ObjectDist *ObjectDistNewFromM4XHBond(ObjectDist *oldObj,
+ObjectDist *ObjectDistNewFromM4XBond(ObjectDist *oldObj,
                                       struct ObjectMolecule *objMol,
-                                      struct M4XHBondType *hbond,int n_hbond)
+                                      struct M4XBondType *hbond,int n_hbond)
 {
   int a;
   ObjectDist *I;
@@ -178,7 +178,7 @@ ObjectDist *ObjectDistNewFromM4XHBond(ObjectDist *oldObj,
     {
       VLACheck(I->DSet,DistSet*,a);
       
-      I->DSet[a] = ObjectDistGetDistSetFromM4xHBond(objMol,hbond,n_hbond,a);
+      I->DSet[a] = ObjectDistGetDistSetFromM4XBond(objMol,hbond,n_hbond,a);
       
       if(I->DSet[a]) {
         I->DSet[a]->Obj = I;

@@ -25,6 +25,9 @@ Z* -------------------------------------------------------------------
 #include"Ortho.h"
 #include"Word.h"
 
+void ExecutiveProcessPDBFile(CObject *origObj,char *fname, char *oname,
+                             int frame, int discrete,int finish,OrthoLineType buf);
+
 int ExecutiveDebug(char *name);
 float ExecutiveAlign(char *s1,char *s2,char *mat_file,float gap,float extend,int skip,
                      float cutoff,int cycles,int quiet,char *oname,int state1,int state2);
@@ -169,6 +172,7 @@ int ExecutiveSetVisFromPyDict(PyObject *dict);
      PyObject *ExecutiveGetVisAsPyDict(void);
 int ExecutiveGetCrystal(char *sele,float *a,float *b,float *c,
                         float *alpha,float *beta,float *gamma,char *sgroup,int *defined);
+int ExecutiveIterateObjectMolecule(ObjectMolecule **obj,void **hidden);
 
 #endif
 
