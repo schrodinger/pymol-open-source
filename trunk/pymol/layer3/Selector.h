@@ -21,7 +21,7 @@ Z* -------------------------------------------------------------------
 
 void SelectorInit(void);
 int *SelectorSelect(char *sele);
-void SelectorCreate(char *name,char *sele,ObjectMolecule *obj);
+void SelectorCreate(char *name,char *sele,ObjectMolecule *obj,int quiet);
 void SelectorToggle(int rep,char *name);
 void SelectorCylinder(char *sele,char *onoff);
 int SelectorUpdateTable(void);

@@ -546,7 +546,7 @@ void SelectorGetTmp(char *input,char *store)
   WordType name;
   if(input[0]=='(') {
     sprintf(name,"_%d",I->TmpCounter++);
-	 SelectorCreate(name,input,NULL);
+	 SelectorCreate(name,input,NULL,false);
 	 strcpy(store,name);
   } else {
     strcpy(store,input);
@@ -558,7 +558,7 @@ void SelectorFreeTmp(char *name)
   if(name[0]=='_') ExecutiveDelete(name);
 }
 /*========================================================================*/
-void SelectorCreate(char *sname,char *sele,ObjectMolecule *obj) 
+void SelectorCreate(char *sname,char *sele,ObjectMolecule *obj,int quiet) 
 {
   SelectorType *I=&Selector;
   int a,m,n;
@@ -637,12 +637,16 @@ void SelectorCreate(char *sname,char *sele,ObjectMolecule *obj)
   FreeP(I->Table);
   FreeP(I->Obj);
   I->NAtom=0;
-  if(c&&name[0]!='_') {
-    sprintf(buffer," Selector: selection \"%s\" defined with %d atoms.\n",name,c);
-    OrthoAddOutput(buffer);
-  } else if(!c) {
-    sprintf(buffer," Selector: no atoms selected.\n");
-    OrthoAddOutput(buffer);
+  if(!quiet) {
+    if(c) {
+      if(name[0]!='_') {
+        sprintf(buffer," Selector: selection \"%s\" defined with %d atoms.\n",name,c);
+        OrthoAddOutput(buffer);
+      }
+    } else {
+      sprintf(buffer," Selector: no atoms selected.\n");
+      OrthoAddOutput(buffer);
+    }
   }
 }
 /*========================================================================*/

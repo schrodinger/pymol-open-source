@@ -269,7 +269,7 @@ static PyObject *PMIsomesh(PyObject *self, 	PyObject *args) {
       break;
     case 1:
       SelectorGetTmp(str3,s1);
-      ExecutiveGetBBox(s1,mn,mx);
+      ExecutiveGetExtent(s1,mn,mx);
       SelectorFreeTmp(s1);
       if(sscanf(str4,"%f",&fbuf)==1) {
         for(c=0;c<3;c++) {
@@ -278,6 +278,11 @@ static PyObject *PMIsomesh(PyObject *self, 	PyObject *args) {
         }
       }
       break;
+    }
+    obj=ExecutiveFindObjectByName(str1);  
+    if(obj) {
+      ExecutiveDelete(obj->Name);
+      obj=NULL;
     }
     obj=(Object*)ObjectMeshFromBox(mapObj,mn,mx,lvl,dotFlag);
     if(obj) {
@@ -1090,7 +1095,7 @@ static PyObject *PMSelect(PyObject *self, PyObject *args)
 
   PyArg_ParseTuple(args,"ss",&sname,&sele);
   APIEntry();
-  SelectorCreate(sname,sele,NULL);
+  SelectorCreate(sname,sele,NULL,false);
   OrthoDirty();
   APIExit();
   Py_INCREF(Py_None);

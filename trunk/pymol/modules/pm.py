@@ -1369,6 +1369,8 @@ def _png(a):
       fname = a
       if not re.search("\.png$",fname):
          fname = fname +".png"
+      fname = os.path.expanduser(fname)
+      fname = os.path.expandvars(fname)         
       r = _pm.png(fname)
    finally:
       unlock()
@@ -1755,6 +1757,8 @@ PYMOL API
          elif re.search("\.sdf$",fname):
             formet = 'sdf'
       if format=='pdb':
+         fname = os.path.expanduser(fname)
+         fname = os.path.expandvars(fname)
          f=open(fname,"w")
          if f:
             f.write(_pm.get_pdb(sele,int(state)-1))
@@ -1803,6 +1807,9 @@ PYMOL API
       lock()   
       ftype = 0
       state = -1
+      fname = arg[0];
+      fname = os.path.expanduser(fname)
+      fname = os.path.expandvars(fname)
       if re.search("\.pdb$",arg[0]):
          ftype = 0
       elif re.search("\.mol$",arg[0]):
@@ -1814,14 +1821,14 @@ PYMOL API
       if len(arg)==1:
          oname = re.sub("[^/]*\/","",arg[0])
          oname = re.sub("\.pdb|\.mol|\.mmod|\.xplor","",oname)
-         r = _pm.load(oname,arg[0],state,ftype)
+         r = _pm.load(oname,fname,state,ftype)
       elif len(arg)==2:
          oname = string.strip(arg[1])
-         r = _pm.load(oname,arg[0],state,ftype)
+         r = _pm.load(oname,fname,state,ftype)
       elif len(arg)==3:
          oname = string.strip(arg[1])
          state = int(arg[2])-1
-         r = _pm.load(oname,arg[0],state,ftype)
+         r = _pm.load(oname,fname,state,ftype)
       elif len(arg)==4:
          if loadable.has_key(arg[3]):
             ftype = loadable[arg[3]]
@@ -1829,7 +1836,7 @@ PYMOL API
             ftype = int(arg[3])
          state = int(arg[2])-1
          oname = string.strip(arg[1])
-         r = _pm.load(oname,arg[0],state,ftype)
+         r = _pm.load(oname,fname,state,ftype)
       else:
          print "argument error."
    finally:
@@ -2004,6 +2011,8 @@ def _mpng(*arg):
       fname = arg[0]
       if re.search("\.png$",fname):
          fname = re.sub("\.png$","",fname)
+      fname = os.path.expanduser(fname)
+      fname = os.path.expandvars(fname)
       r = _pm.mpng_(fname)
    finally:
       unlock()

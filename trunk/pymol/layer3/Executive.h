@@ -55,8 +55,8 @@ void ExecutiveStereo(int flag);
 void ExecutiveCopy(char *src,char *dst);
 float ExecutiveOverlap(char *s1,int state1,char *s2,int state2);
 int ExecutiveCountStates(char *s1);
-void ExecutiveGetBBox(char *name,float *mn,float *mx);
 void ExecutiveSymExp(char *name,char *obj,char *sele,float cutoff);
+int ExecutiveGetExtent(char *name,float *mn,float *mx);
 #endif
 
 

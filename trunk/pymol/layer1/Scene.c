@@ -540,12 +540,12 @@ int SceneClick(Block *block,int button,int x,int y,int mod)
       if(mod&cOrthoSHIFT) {
         if(SelectorIndexByName(selName)>=0) {
           sprintf(buf2,"( %s or (%s))",selName,buffer);
-          SelectorCreate(selName,buf2,NULL);
+          SelectorCreate(selName,buf2,NULL,false);
         }
         else 
-          SelectorCreate(selName,buffer,NULL);
+          SelectorCreate(selName,buffer,NULL,false);
       } else {
-        SelectorCreate(selName,buffer,NULL);
+        SelectorCreate(selName,buffer,NULL,false);
       }
 	 } else {
 		OrthoAddOutput(" SceneClick: no atom found nearby.\n");
