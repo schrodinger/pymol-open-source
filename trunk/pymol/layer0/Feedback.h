@@ -95,6 +95,7 @@ function name.
 #define FB_MyPNG                     4
 #define FB_Triangle                  5
 #define FB_Match                     6
+#define FB_Raw                       7
 
 /* layer 1 */
 

@@ -85,6 +85,7 @@ Z* -------------------------------------------------------------------
 #define cLoadTypeR3D 14
 #define cLoadTypeXYZ 15
 #define cLoadTypeCCP4Map 18
+#define cLoadTypePMO  19
 
 #define tmpSele "_tmp"
 #define tmpSele1 "_tmp1"
@@ -236,6 +237,7 @@ static PyObject *CmdMove(PyObject *self, 	PyObject *args);
 static PyObject *CmdMPlay(PyObject *self, 	PyObject *args);
 static PyObject *CmdMPNG(PyObject *self, 	PyObject *args);
 static PyObject *CmdMSet(PyObject *self, 	PyObject *args);
+static PyObject *CmdMultiSave(PyObject *self, 	PyObject *args);
 static PyObject *CmdExportCoords(PyObject *self, 	PyObject *args);
 static PyObject *CmdImportCoords(PyObject *self, 	PyObject *args);
 static PyObject *CmdOrigin(PyObject *self, PyObject *args);
@@ -374,6 +376,7 @@ static PyMethodDef Cmd_methods[] = {
 	{"mplay",	              CmdMPlay,                METH_VARARGS },
 	{"mpng_",	              CmdMPNG,                 METH_VARARGS },
 	{"mmatrix",	              CmdMMatrix,              METH_VARARGS },
+	{"multisave",             CmdMultiSave,            METH_VARARGS },
 	{"origin",	              CmdOrigin,               METH_VARARGS },
 	{"orient",	              CmdOrient,               METH_VARARGS },
 	{"onoff",                 CmdOnOff,                METH_VARARGS },
@@ -426,6 +429,19 @@ static PyMethodDef Cmd_methods[] = {
 	{NULL,		              NULL}     /* sentinel */        
 };
 
+static PyObject *CmdMultiSave(PyObject *self, PyObject *args)
+{
+  char *name,*object;
+  int append,state;
+  int ok = false;
+  ok = PyArg_ParseTuple(args,"ssii",&name,&object,&state,&append);
+  if(ok) {
+    APIEntry();
+    ok = ExecutiveMultiSave(name,object,state,append);
+    APIExit();
+  }
+  return(APIStatus(ok));
+}
 
 static PyObject *CmdMapSetBorder(PyObject *self, PyObject *args)
 {
@@ -2695,6 +2711,7 @@ static PyObject *CmdLoad(PyObject *self, PyObject *args)
       case cLoadTypeMMD:
       case cLoadTypeMMDSeparate:
       case cLoadTypeMMDStr:
+      case cLoadTypePMO:
         new_type = cObjectMolecule;
         break;
       case cLoadTypeChemPyBrick:
@@ -2732,6 +2749,28 @@ static PyObject *CmdLoad(PyObject *self, PyObject *args)
         }
       } else {
         ObjectMoleculeLoadPDBFile((ObjectMolecule*)origObj,fname,frame,discrete);
+        if(finish)
+          ExecutiveUpdateObjectSelection(origObj);
+        if(frame<0)
+          frame = ((ObjectMolecule*)origObj)->NCSet-1;
+        sprintf(buf," CmdLoad: \"%s\" appended into object \"%s\", state %d.\n",
+                fname,oname,frame+1);
+      }
+      break;
+    case cLoadTypePMO:
+      PRINTFD(FB_CCmd) " CmdLoad-DEBUG: loading PMO\n" ENDFD;
+      if(!origObj) {
+        obj=(Object*)ObjectMoleculeLoadPMOFile(NULL,fname,frame,discrete);
+        if(obj) {
+          ObjectSetName(obj,oname);
+          ExecutiveManageObject(obj);
+          if(frame<0)
+            frame = ((ObjectMolecule*)obj)->NCSet-1;
+          sprintf(buf," CmdLoad: \"%s\" loaded into object \"%s\", state %d.\n",
+                  fname,oname,frame+1);
+        }
+      } else {
+        ObjectMoleculeLoadPMOFile((ObjectMolecule*)origObj,fname,frame,discrete);
         if(finish)
           ExecutiveUpdateObjectSelection(origObj);
         if(frame<0)
