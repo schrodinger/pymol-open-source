@@ -1315,7 +1315,7 @@ y2 = m2*(x0+m3) + m6*(x1+m7) + m10*(x2+m11) + m14
          unlock()
       return r
 
-   def update(target,source,target_state=0,source_state=0,method=0):
+   def update(target,source,target_state=0,source_state=0,method=0,quiet=1):
       '''
 DESCRIPTION
 
@@ -1337,7 +1337,6 @@ SEE ALSO
 
    load
    '''
-
       a=target
       b=source
       # preprocess selections
@@ -1348,7 +1347,8 @@ SEE ALSO
       if b[0]!='(': b="("+str(b)+")"   
       try:
          lock()   
-         r = _cmd.update(str(a),str(b),int(target_state)-1,int(source_state)-1)
+         r = _cmd.update(str(a),str(b),int(target_state)-1,
+                         int(source_state)-1,int(method),int(quiet))
       finally:
          unlock()
       return r
@@ -1363,7 +1363,8 @@ SEE ALSO
       #   
       try:
          lock()
-         r = _cmd.set_dihe(str(atom1),str(atom2),str(atom3),str(atom4),float(angle),int(state)-1,int(quiet))
+         r = _cmd.set_dihe(str(atom1),str(atom2),str(atom3),str(atom4),
+                           float(angle),int(state)-1,int(quiet))
       finally:
          unlock()
       return r

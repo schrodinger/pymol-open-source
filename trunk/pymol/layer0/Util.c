@@ -236,6 +236,16 @@ void *UtilArrayMalloc(unsigned int *dim,int ndim,unsigned int atom_size)
   return(result);
 }
 
+void UtilApplySortedIndices(int n,int *x, int rec_size, void *src, void *dst)
+{
+  register int idx,a;
+  for(a=0;a<n;a++) {
+    memcpy(((char*)dst)+(a*rec_size),
+           ((char*)src)+(x[a]*rec_size),
+           rec_size);
+  }
+}
+
 void UtilSortIndex(int n,void *array,int *x,UtilOrderFn* fOrdered)
 {
   int l,a,r,t,i;

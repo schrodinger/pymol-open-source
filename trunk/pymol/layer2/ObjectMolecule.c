@@ -6959,6 +6959,10 @@ void ObjectMoleculeSeleOp(ObjectMolecule *I,int sele,ObjectMoleculeOpRec *op)
                  VLACheck(op->vp1,int,op->nvv1);
                  op->vp1[op->nvv1] = priority;
                }
+               if(op->ai) {
+                 VLACheck(op->ai1VLA,AtomInfoType*,op->nvv1);
+                 op->ai1VLA[op->nvv1] = I->AtomInfo+a;
+               }
                op->nvv1++;
              }
            }
@@ -7000,6 +7004,10 @@ void ObjectMoleculeSeleOp(ObjectMolecule *I,int sele,ObjectMoleculeOpRec *op)
                if(op->vp1) {
                  VLACheck(op->vp1,int,op->nvv1);
                  op->vp1[op->nvv1] = priority;
+               }
+               if(op->ai) {
+                 VLACheck(op->ai1VLA,AtomInfoType*,op->nvv1);
+                 op->ai1VLA[op->nvv1] = I->AtomInfo+a;
                }
                op->nvv1++;
              }

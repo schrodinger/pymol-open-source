@@ -111,8 +111,8 @@ int ExecutiveGetDihe(PyMOLGlobals *G,char *s0,char *s1,char *s2,char *s3,float *
 int ExecutiveSetDihe(PyMOLGlobals *G,char *s0,char *s1,char *s2,char *s3,float value,int state,int quiet);
 float ExecutiveRMS(PyMOLGlobals *G,char *sele1,char *sele2,int mode,float refine,int max_cyc,
                    int quiet,char *oname,int state1,int state2,
-                   int ordered_selections);
-void ExecutiveUpdateCmd(PyMOLGlobals *G,char *sele1,char *sele2,int sta1,int sta2);
+                   int ordered_selections, int matchmaker);
+void ExecutiveUpdateCmd(PyMOLGlobals *G,char *sele1,char *sele2,int sta1,int sta2,int method,int quiet);
 float ExecutiveRMSPairs(PyMOLGlobals *G,WordType *sele,int pairs,int mode);
 float *ExecutiveRMSStates(PyMOLGlobals *G,char *s1,int target,int mode,int quiet, int mix);
 int *ExecutiveIdentify(PyMOLGlobals *G,char *s1,int mode);
