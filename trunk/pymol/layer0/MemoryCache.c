@@ -45,7 +45,8 @@ void *MemoryCacheMalloc(unsigned int size,int group_id,int block_id)
     rec->ptr = mmalloc(size);
   } else if(rec->size<size) {
     rec->size = size;
-    rec->ptr = mrealloc(rec->ptr,size);
+    mfree(rec->ptr);
+    rec->ptr = mmalloc(size);
   }
   return(rec->ptr);
 }
@@ -62,11 +63,12 @@ void *MemoryCacheCalloc(unsigned int number, unsigned int size,int group_id,int 
     rec->ptr = mcalloc(number,size);
   } else if(rec->size<true_size) {
     rec->size = true_size;
-    rec->ptr = mrealloc(rec->ptr,true_size);
+    mfree(rec->ptr);
+    rec->ptr = mcalloc(number,size);
     memset(rec->ptr,0,true_size);
   } else {
     memset(rec->ptr,0,true_size);
-    }
+  }
   return(rec->ptr);
 }
 
