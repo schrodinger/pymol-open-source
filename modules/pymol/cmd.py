@@ -3706,7 +3706,7 @@ PYMOL API
       elif re.search("\.xyz_[0-9]*$",arg[0],re.I):
          ftype = loadable.xyz
       elif re.search("\.sdf$",arg[0],re.I):
-         oname = re.sub("[^/]*\/","",arg[0])
+         oname = re.sub(r".*\/|.*\\","",arg[0])
          oname = re.sub("\.[sS][dD][fF]$","",oname)
          ftype = loadable.molstr
          sdf = SDF(arg[0])
@@ -3723,7 +3723,7 @@ PYMOL API
          if len(arg)<1:
             ok = 0
          if len(arg)==1:
-            oname = re.sub("[^/]*\/","",arg[0])
+            oname = re.sub(r".*\/|.*\\","",arg[0])
             oname = file_ext_re.sub("",oname)
          else:
             oname = string.strip(arg[1])
