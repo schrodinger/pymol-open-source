@@ -306,7 +306,7 @@ static void TriangleAdjustNormals(TriangleSurfaceRec *II,float *v,float *vn,int 
 	 subtract3f(v1,v0,vt1);
 	 subtract3f(v2,v0,vt2);
 	 cross_product3f(vt1,vt2,tn);
-    *(tw++) = length3f(tn); /* store weight */
+    *(tw++) = (float)length3f(tn); /* store weight */
 	 normalize3f(tn);
 	 tn+=3;
   }

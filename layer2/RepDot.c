@@ -88,8 +88,8 @@ void RepDotRender(RepDot *I,CRay *ray,Pickable **pick)
   } else if(G->HaveGUI && G->ValidContext) {
     if(pick) {
     } else {
-      int normals = SettingGet_f(G,I->R.cs->Setting,I->R.obj->Setting,cSetting_dot_normals);
-      int lighting = SettingGet_f(G,I->R.cs->Setting,I->R.obj->Setting,cSetting_dot_lighting);
+      int normals = SettingGet_i(G,I->R.cs->Setting,I->R.obj->Setting,cSetting_dot_normals);
+      int lighting = SettingGet_i(G,I->R.cs->Setting,I->R.obj->Setting,cSetting_dot_lighting);
       int use_dlst;
 
       if(!normals)

@@ -398,9 +398,9 @@ static void RepValence(float **v_ptr,int *n_ptr, /* opengl */
       overlap_r = radius*overlap;
       nub_r = radius*nub;
 
-      t[0] = p2[0]*1.5*radius;
-      t[1] = p2[1]*1.5*radius;
-      t[2] = p2[2]*1.5*radius;
+      t[0] = p2[0]*1.5F*radius;
+      t[1] = p2[1]*1.5F*radius;
+      t[2] = p2[2]*1.5F*radius;
       
       if(!half_bonds) {
 
@@ -562,9 +562,9 @@ static void RepValence(float **v_ptr,int *n_ptr, /* opengl */
       overlap_r = radius*overlap;
       nub_r = radius*nub;
 
-      t[0] = p2[0]*2.5*radius;
-      t[1] = p2[1]*2.5*radius;
-      t[2] = p2[2]*2.5*radius;
+      t[0] = p2[0]*2.5F*radius;
+      t[1] = p2[1]*2.5F*radius;
+      t[2] = p2[2]*2.5F*radius;
 
       if(!half_bonds) {
         /* opengl */
@@ -784,19 +784,19 @@ static void RepValence(float **v_ptr,int *n_ptr, /* opengl */
       float overlap_r,overlap_r2;
       float nub_r,nub_r2;
       float along[3],adj[3],v1tt[3],v2tt[3];
-      float inner1a = 0.24;
-      float inner1b = 0.44;
-      float inner2a = 0.5+(0.5-inner1b);
-      float inner2b = 1.0-inner1a;
+      float inner1a = 0.24F;
+      float inner1b = 0.44F;
+      float inner2a = 0.5F+(0.5F-inner1b);
+      float inner2b = 1.0F-inner1a;
 
       if(!fixed_r) {
-        radius2=radius/2.5;
-        t[0] = p2[0]*1.5*radius;
-        t[1] = p2[1]*1.5*radius;
-        t[2] = p2[2]*1.5*radius;
+        radius2=radius/2.5F;
+        t[0] = p2[0]*1.5F*radius;
+        t[1] = p2[1]*1.5F*radius;
+        t[2] = p2[2]*1.5F*radius;
       } else {
-        inner1a -= 0.04;
-        inner2b = 1.0-inner1a;
+        inner1a -= 0.04F;
+        inner2b = 1.0F-inner1a;
         t[0] = p2[0]*3*radius;
         t[1] = p2[1]*3*radius;
         t[2] = p2[2]*3*radius;

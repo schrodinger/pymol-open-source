@@ -829,14 +829,14 @@ void ExtrudeCGOSurfaceVariableTube(CExtrude *I,CGO *cgo,int cap)
         if((a>0) && (a<(I->N-1))) {
           /* compute rises */
 
-          r0 = diff3f(v,tv);
-          r1 = diff3f(v-3,tv-3) - r0;
-          r2 = diff3f(v+3,tv+3) - r0;
+          r0 = (float)diff3f(v,tv);
+          r1 = (float)(diff3f(v-3,tv-3) - r0);
+          r2 = (float)(diff3f(v+3,tv+3) - r0);
           
           /* compute runs */
           
-          d1 = diff3f(v-3,v);
-          d2 = diff3f(v+3,v);
+          d1 = (float)diff3f(v-3,v);
+          d2 = (float)diff3f(v+3,v);
           
           /* compute x-to-yz weights */
           
@@ -930,7 +930,7 @@ void ExtrudeCGOSurfaceVariableTube(CExtrude *I,CGO *cgo,int cap)
         for(a=0;a<I->N;a++) {
           CGOColorv(cgo,c);
           copy3f(tn,vv);
-          scale3f(vv,0.3,vv)
+          scale3f(vv,0.3F,vv)
           add3f(vv,tv,vv);
           CGONormalv(cgo,tn);
           CGOVertexv(cgo,tv);
@@ -938,7 +938,7 @@ void ExtrudeCGOSurfaceVariableTube(CExtrude *I,CGO *cgo,int cap)
           tn+=3;
           tv+=3;
           copy3f(tn1,vv);
-          scale3f(vv,0.3,vv)
+          scale3f(vv,0.3F,vv)
           add3f(vv,tv1,vv);
           CGONormalv(cgo,tn1);
           CGOVertexv(cgo,tv1);
@@ -1606,7 +1606,7 @@ void ExtrudeComputeScaleFactors(CExtrude *I,ObjectMolecule *obj,int source_field
           scale = (range+(at->b - mean)/stdev)/range;
           if(scale<0.0F)
             scale = 0.0F;
-          scale=pow(scale,power);
+          scale=(float)pow(scale,power);
           if(scale<min_scale)
             scale=min_scale;
           if(scale>max_scale)

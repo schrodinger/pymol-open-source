@@ -89,7 +89,9 @@ int MovieCopyFrame(PyMOLGlobals *G,int frame,int width,int height,int rowbytes,v
     nFrame=SceneGetNFrame(G);
   }
   
-  if((width==I->Width)&&(height==I->Height)&&(frame<nFrame)&&(ptr)) {
+  if((width==(signed int)I->Width)&&
+     (height==(signed int)I->Height)&&
+     (frame<nFrame)&&(ptr)) {
     int a = frame;
     int i;
     SceneSetFrame(G,0,a);

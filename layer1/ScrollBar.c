@@ -63,7 +63,7 @@ void ScrollBarUpdate(struct CScrollBar *I)
   } else {
     range = (I->Block->rect.top-I->Block->rect.bottom);
   }
-  I->ExactBarSize = (range*I->DisplaySize)/I->ListSize;
+  I->ExactBarSize = (range*I->DisplaySize)/(float)I->ListSize;
   I->BarSize = (int)I->ExactBarSize;
   if(I->BarSize<4)
     I->BarSize=4;
@@ -234,7 +234,7 @@ static int ScrollBarClick(Block *block,int button,int x,int y,int mod)
       switch(button) {
       case P_GLUT_MIDDLE_BUTTON:
         {
-          I->Value= (I->ListSize*(x-block->rect.left))/(block->rect.right - block->rect.left) - I->DisplaySize*0.5;
+          I->Value= (I->ListSize*(x-block->rect.left))/(block->rect.right - block->rect.left) - I->DisplaySize*0.5F;
           if(I->Value > I->ValueMax)
             I->Value = I->ValueMax;
           OrthoGrab(G,I->Block);
@@ -253,7 +253,7 @@ static int ScrollBarClick(Block *block,int button,int x,int y,int mod)
       switch(button) {
       case P_GLUT_MIDDLE_BUTTON:
         {
-          I->Value= (I->ListSize*(x-block->rect.left))/(block->rect.right - block->rect.left) - I->DisplaySize*0.5;
+          I->Value= (I->ListSize*(x-block->rect.left))/(block->rect.right - block->rect.left) - I->DisplaySize*0.5F;
           if(I->Value<0.0)
             I->Value=0.0F;
           OrthoGrab(G,I->Block);
@@ -278,7 +278,7 @@ static int ScrollBarClick(Block *block,int button,int x,int y,int mod)
       switch(button) {
       case P_GLUT_MIDDLE_BUTTON:
         {
-          I->Value= (I->ListSize*(y-block->rect.top))/(block->rect.bottom - block->rect.top) - I->DisplaySize*0.5;
+          I->Value= (I->ListSize*(y-block->rect.top))/(block->rect.bottom - block->rect.top) - I->DisplaySize*0.5F;
           if(I->Value<0.0)
             I->Value=0.0F;
           OrthoGrab(G,I->Block);
@@ -296,7 +296,7 @@ static int ScrollBarClick(Block *block,int button,int x,int y,int mod)
       switch(button) {
       case P_GLUT_MIDDLE_BUTTON:
         {
-          I->Value= (I->ListSize*(y-block->rect.top))/(block->rect.bottom - block->rect.top) - I->DisplaySize*0.5;
+          I->Value= (I->ListSize*(y-block->rect.top))/(block->rect.bottom - block->rect.top) - I->DisplaySize*0.5F;
           if(I->Value > I->ValueMax)
             I->Value = I->ValueMax;
           OrthoGrab(G,I->Block);

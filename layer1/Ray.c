@@ -764,7 +764,7 @@ void RayRenderPOV(CRay *I,int width,int height,char **headerVLA_ptr,
 
     if(ambient>0.5) ambient=0.5;
 
-    reflect = 1.2 - 1.5*ambient;
+    reflect = 1.2F - 1.5F*ambient;
 
     sprintf(buffer,"#default { finish{phong %8.3f ambient %8.3f diffuse %8.3f phong_size %8.6f}}\n",
             SettingGet(I->G,cSetting_spec_reflect),
@@ -1699,7 +1699,7 @@ int RayTraceThread(CRayThreadInfo *T)
                       
                       pixel_flag	= true;
                       if(trans_cont_flag)
-                        persist = pow(persist,trans_cont);
+                        persist = (float)pow(persist,trans_cont);
                       
                     }
 
@@ -1750,7 +1750,7 @@ int RayTraceThread(CRayThreadInfo *T)
                       if(i>=0) {
                         if(fogFlag) {
                           if(trans_cont_flag&&(ffact>_p5)) {
-                            mix_in = 2*(persist*(_1-ffact)+(pow(persist,trans_cont)*(ffact-_p5)))
+                            mix_in = 2*(persist*(_1-ffact)+((float)pow(persist,trans_cont)*(ffact-_p5)))
                               * (_1 - r1.trans*ffact);                            
                           } else {
                             mix_in = persist * (_1 - r1.trans*ffact);

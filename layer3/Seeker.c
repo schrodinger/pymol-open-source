@@ -74,7 +74,7 @@ static void SeekerSelectionToggleRange(PyMOLGlobals *G,CSeqRow* rowVLA,int row_n
     CSeqRow *row;
     CSeqCol *col;
     char prefix[3]="";
-    int logging = SettingGet(G,cSetting_logging);
+    int logging = SettingGetGlobal_i(G,cSetting_logging);
     int col_num;
     register int *atom_vla = NULL;
     register int n_at = 0;
@@ -171,7 +171,7 @@ static void SeekerSelectionToggle(PyMOLGlobals *G,CSeqRow* rowVLA,int row_num,
     CSeqCol *col;
     int *atom_list;
     char prefix[3]="";
-    int logging = SettingGet(G,cSetting_logging);
+    int logging = SettingGetGlobal_i(G,cSetting_logging);
 
     if(logging==cPLog_pml)
       strcpy(prefix,"_ ");
@@ -250,7 +250,7 @@ static void SeekerSelectionUpdateCenter(PyMOLGlobals *G,CSeqRow* rowVLA,int row_
 
     int *atom_list;
     char prefix[3]="";
-    int logging = SettingGet(G,cSetting_logging);
+    int logging = SettingGetGlobal_i(G,cSetting_logging);
 
 
     if(logging==cPLog_pml)
@@ -279,7 +279,7 @@ static void SeekerSelectionCenter(PyMOLGlobals *G,int action)
 {
   OrthoLineType buf2;
   char prefix[3]="";
-  int logging = SettingGet(G,cSetting_logging);
+  int logging = SettingGetGlobal_i(G,cSetting_logging);
   if(logging==cPLog_pml)
     strcpy(prefix,"_ ");
   
@@ -373,7 +373,7 @@ static CSeqRow* SeekerClick(PyMOLGlobals *G,CSeqRow* rowVLA,int button,int row_n
           {
             int *atom_list;
             char prefix[3]="";
-            int logging = SettingGet(G,cSetting_logging);
+            int logging = SettingGetGlobal_i(G,cSetting_logging);
             
             if(logging==cPLog_pml)
               strcpy(prefix,"_ ");

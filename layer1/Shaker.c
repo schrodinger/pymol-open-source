@@ -100,7 +100,7 @@ float ShakerDoDistLimit(float target,float *v0,float *v1,float *d0to1,float *d1t
     }
   } else
     dev = 0.0F;
-  return fabs(dev);
+  return (float)fabs(dev);
 }
 
 void ShakerAddDistCon(CShaker *I,int atom0,int atom1,float target,int type)
@@ -145,7 +145,7 @@ float ShakerDoPyra(float target,float *v0,float *v1,float *v2,float *v3,
   cur = dot_product3f(d0,cp);
 
   dev = cur-target;
-  if((result = fabs(dev))>R_SMALL8) {
+  if((result = (float)fabs(dev))>R_SMALL8) {
     sc = wt*dev;
     scale3f(cp,sc,push);
     add3f(push,p0,p0);
@@ -187,7 +187,7 @@ float ShakerDoLine(float *v0,float *v1,float *v2,
 
     dev = dot_product3f(d1,d4); /* current deviation */
 
-    if((result = fabs(dev))>R_SMALL8) {
+    if((result = (float)fabs(dev))>R_SMALL8) {
       sc = wt*dev;
       scale3f(d4,sc,push);
       add3f(push,p1,p1);
@@ -227,7 +227,7 @@ float ShakerDoPlan(float *v0,float *v1,float *v2,float *v3,
   cur = dot_product3f(d0,cp);
 
   dev = (float)fabs(cur);
-  if((result = fabs(dev))>R_SMALL8) {
+  if((result = (float)fabs(dev))>R_SMALL8) {
 
     sc = -wt*dev/2.0F;
 

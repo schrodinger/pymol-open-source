@@ -251,7 +251,7 @@ int ViewElemInterpolate(CViewElem *first,CViewElem *last,float power,float bias)
   float pLen;
   float v1[3],v2[3],sProj[3];
   float tAngle=0.0F;
-  float tLinear = true; /* always do linear for now... */
+  int tLinear = true; /* always do linear for now... */
   float pivot[3];
   const float _1 = 1.0F, _p5 = 0.5F;
   int parabolic = true;
@@ -270,18 +270,38 @@ int ViewElemInterpolate(CViewElem *first,CViewElem *last,float power,float bias)
   copy44d33f(last->matrix,last3x3);
   transpose33f33f(first3x3,inverse3x3);
 
+  rot[3][0] = (float)first->pre[0];
+  rot[3][1] = (float)first->pre[1];
+  rot[3][2] = (float)first->pre[2];
+  rot[4][0] = (float)last->pre[0];
+  rot[4][1] = (float)last->pre[1];
+  rot[4][2] = (float)last->pre[2];
+/*
   copy3f(first->pre,&rot[3][0]);
   copy3f(last->pre,&rot[4][0]);
+*/
   multiply33f33f(inverse3x3,last3x3,&rot[0][0]);
 
   matrix_to_rotation(rot,rot_axis,&angle);
 
   if(!tLinear) {
+    tVector[0] = (float)(last->pre[0] - first->pre[0]);
+    tVector[1] = (float)(last->pre[1] - first->pre[1]);
+    tVector[2] = (float)(last->pre[2] - first->pre[2]);
+/*
     subtract3f(last->pre,first->pre,tVector);
+*/
     normalize23f(tVector,tDir);
-    tLen = length3f(tVector); 
+    tLen = (float)length3f(tVector); 
     
-    average3f(last->pre,first->pre,tCenter); /* center of translation */
+    /* center of translation */
+
+    tCenter[0] = (float)(last->pre[0] + first->pre[0])/2.0F;
+    tCenter[1] = (float)(last->pre[1] + first->pre[1])/2.0F;
+    tCenter[2] = (float)(last->pre[2] + first->pre[2])/2.0F;
+/*
+    average3f(last->pre,first->pre,tCenter); 
+*/
     
     pLen = dot_product3f(tDir,rot_axis); /* project translation vector onto rotation axis */
     
@@ -302,17 +322,17 @@ int ViewElemInterpolate(CViewElem *first,CViewElem *last,float power,float bias)
     subtract3f(v2,sProj,v2); 
     normalize3f(v2);
   
-    tAngle = acos(dot_product3f(v1,v2));
+    tAngle = (float)acos(dot_product3f(v1,v2));
     
     if(fabs(tAngle)>fabs(angle))
-      tAngle = fabs(angle)*(tAngle/fabs(angle));
+      tAngle = (float)(fabs(angle)*(tAngle/fabs(angle)));
     
     /* if translation angle > rotation angle then sets translation angle 
      * to same as rotation angle, with proper sign of course */
     
-    if (tAngle>0.0001) 
+    if (tAngle>0.0001F) 
       {
-        pLen = tan(tAngle/2); 
+        pLen = (float)tan(tAngle/2); 
         if(fabs(pLen)>0.0000001)
           pLen = (tLen/2)/pLen;
         else
@@ -346,7 +366,7 @@ int ViewElemInterpolate(CViewElem *first,CViewElem *last,float power,float bias)
 
     /*    printf("Fxn: %8.3f ",fxn);*/
     if(bias!=1.0F) {
-      fxn = 1-pow(1-pow(fxn,bias),_1/bias);
+      fxn = 1-(float)pow(1-pow(fxn,bias),_1/bias);
     }
     /*    printf("%8.3f bias %8.3f\n",fxn,bias);*/
 
@@ -355,13 +375,13 @@ int ViewElemInterpolate(CViewElem *first,CViewElem *last,float power,float bias)
         if(parabolic) 
           fxn = (float)pow(fxn*2.0F,power)*_p5; /* parabolic */
         else
-          fxn = (_1-pow(_1-pow((fxn*2.0F),power),_1/power))*_p5; /* circular */
+          fxn = (_1-(float)pow(_1-pow((fxn*2.0F),power),_1/power))*_p5; /* circular */
       } else if(fxn>0.5F) {
         fxn = _1 - fxn;
         if(parabolic) 
           fxn = (float)pow(fxn*2.0F,power)*_p5; /* parabolic */
         else
-          fxn = (_1-pow(_1-pow((fxn*2.0F),power),_1/power))*_p5; /* circular */
+          fxn = (_1-(float)pow(_1-pow((fxn*2.0F),power),_1/power))*_p5; /* circular */
         fxn = _1 - fxn;
       }
     }

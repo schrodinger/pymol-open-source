@@ -156,18 +156,18 @@ static void ObjectGadgetRampCalculate(ObjectGadgetRamp *I, float v,float *result
 
   switch(I->CalcMode){
   case cRAMP_TRADITIONAL:
-    result[0] = sqrt(v);
+    result[0] = (float)sqrt(v);
     result[1] = v*v*v;
-    result[2] = sin(v*2*cPI);
+    result[2] = (float)sin(v*2*cPI);
     break;
   case cRAMP_SLUDGE:
     result[0] = v;
-    result[1] = fabs(v-0.5);
+    result[1] = (float)fabs(v-0.5F);
     result[2] = v*v*v*v;
     break;
   case cRAMP_OCEAN:
     result[0] = 3*v-2;
-    result[1] = fabs((3*v-1)/2);
+    result[1] = (float)fabs((3*v-1)/2);
     result[2] = v;
     break;
   case cRAMP_HOT:
@@ -176,19 +176,19 @@ static void ObjectGadgetRampCalculate(ObjectGadgetRamp *I, float v,float *result
     result[2] = 3*v-2;
     break;
   case cRAMP_GRAYABLE:
-    result[0] = v/0.32-0.78125; 
-    result[1] = 2*v-0.84;
-    result[2] = v/0.08-11.5; /* I'm not so sure about this one */
+    result[0] = v/0.32F-0.78125F; 
+    result[1] = 2*v-0.84F;
+    result[2] = v/0.08F-11.5F; /* I'm not so sure about this one */
     break;
   case cRAMP_RAINBOW:
-    result[0] = fabs(2*v - 0.5);
-    result[1] = sin(v*cPI);
-    result[2] = cos(v*cPI/2.0);
+    result[0] = (float)fabs(2*v - 0.5F);
+    result[1] = (float)sin(v*cPI);
+    result[2] = (float)cos(v*cPI/2.0F);
     break;
   case cRAMP_AFMHOT:
     result[0] = 2*v;
-    result[1] = 2*v-0.5;
-    result[2] = 2*v-1.0;
+    result[1] = 2*v-0.5F;
+    result[2] = 2*v-1.0F;
     break;
   case cRAMP_GRAYSCALE:
     result[0] = v;

@@ -473,11 +473,11 @@ static void SeqDraw(Block *block)
         {
           int real_count = n_real;
           int mode = 0;
-          float width = I->Block->rect.right - I->Block->rect.left;
+          float width = (float)(I->Block->rect.right - I->Block->rect.left);
           float start=0,stop;
           int right=0;
           float bot,top,cent;
-          float height = (I->ScrollBarWidth - I->ScrollBarMargin);
+          float height = (float)(I->ScrollBarWidth - I->ScrollBarMargin);
           int last_color = -1;
           cur_color = blue;
           for(a=0;a<I->NRow;a++) {

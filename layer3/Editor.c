@@ -1016,14 +1016,14 @@ static void draw_globe(PyMOLGlobals *G,float *v2,int number)
     case 3:
       switch(cycle_counter) {
       case 3:
-        width = width_base/2.8;
-        offset = 1.33*width_base;
+        width = width_base/2.8F;
+        offset = 1.33F*width_base;
         break;
       case 2:
         offset = 0.0F;
         break;
       case 1:
-        offset = -1.33*width_base;
+        offset = -1.33F*width_base;
         break;
       }
       break;
@@ -1031,7 +1031,7 @@ static void draw_globe(PyMOLGlobals *G,float *v2,int number)
     case 4:
       switch(cycle_counter) {
       case 4:
-        width = width_base/3.2;
+        width = width_base/3.2F;
         offset = 2*width_base;
         break;
       case 3:

@@ -20,7 +20,7 @@ struct _OVLexicon {
   lex_entry *entry; /* maintained as a 1-based index */
   ov_uword n_entry, n_active;
   ov_char8 *data;
-  ov_word data_size;
+  ov_uword data_size;
   ov_uword data_unused;
   ov_word free_index; /* NOTE: 1-based, 0 is the sentinel */
 };
@@ -69,7 +69,7 @@ static OVstatus OVLexicon_CheckStorage(OVLexicon *uk, ov_word entry_size, ov_siz
 
   } else {
     uk->entry++; /* allow for 1-based indexing */
-    if(!OVHeapArray_CHECK(uk->entry, lex_entry, entry_size-1)) {
+    if(!OVHeapArray_CHECK(uk->entry, lex_entry, (ov_size)(entry_size-1))) {
       return_OVstatus_OUT_OF_MEMORY;
     }
     uk->entry--; /* allow for 1-based indexing */
@@ -124,7 +124,7 @@ OVstatus OVLexicon_Pack(OVLexicon *uk)
     ov_size new_size = 0;
 
     { /* compute storage requirements */
-      ov_word a;
+      ov_size a;
       ov_size n_entry = uk->n_entry;
       lex_entry *cur_entry = uk->entry + 1; /* NOTE: 1-based array */
       for(a=0;a<n_entry;a++) {
@@ -164,7 +164,7 @@ OVstatus OVLexicon_Pack(OVLexicon *uk)
         register ov_word free_index = 0;
         register ov_size entry_size;
         
-        for(a=1;a<=n_entry;a++) {
+        for(a=1;a<=(ov_word)n_entry;a++) {
           if(cur_entry->ref_cnt>0) {
             entry_size = cur_entry->size;
             memcpy(new_data, data+cur_entry->offset, entry_size);
@@ -193,7 +193,7 @@ OVstatus OVLexicon_Pack(OVLexicon *uk)
 
 OVstatus OVLexicon_DecRef(OVLexicon *uk, ov_word id)
 {
-  if((!uk->entry)||(id<1)||(id>uk->n_entry)) { /* range checking */
+  if((!uk->entry)||(id<1)||(id>(ov_word)uk->n_entry)) { /* range checking */
     return_OVstatus_NOT_FOUND;
   } else {
     register lex_entry *cur_entry = uk->entry + id;
@@ -231,7 +231,7 @@ OVstatus OVLexicon_DecRef(OVLexicon *uk, ov_word id)
 
 OVstatus OVLexicon_IncRef(OVLexicon *uk, ov_word id)
 {
-  if((!uk->entry)||(id<1)||(id>uk->n_entry)) { /* range checking */
+  if((!uk->entry)||(id<1)||(id>(ov_word)uk->n_entry)) { /* range checking */
     return_OVstatus_NOT_FOUND;
   } else {
     register lex_entry *entry = uk->entry + id;
@@ -380,7 +380,7 @@ OVreturn_word OVLexicon_BorrowFromCString(OVLexicon *uk,ov_char8 *str)
 
 ov_char8 *OVLexicon_FetchCString(OVLexicon *uk,ov_word id)
 {
-  if(id<=uk->n_entry)
+  if(id<=(ov_word)uk->n_entry)
     return uk->data + uk->entry[id].offset;
   return NULL;
 }

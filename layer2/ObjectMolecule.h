@@ -186,7 +186,7 @@ void ObjMolPairwisePurge(ObjMolPairwise *pairwise);
 typedef struct M4XBondType { /* now used for non-bonds as well as h-bonds */
   int atom1;
   int atom2;
-  int strength;
+  float strength;
 } M4XBondType;
 
 typedef struct {
