@@ -726,8 +726,8 @@ void ObjectMoleculeMerge(ObjectMolecule *I,AtomInfoType *ai,CoordSet *cs)
   for(b=0;b<cs->NIndex;b++)
 	 cs->AtmToIdx[cs->IdxToAtm[b]]=b;
   ai2=(AtomInfoType*)VLAMalloc(cs->NIndex,sizeof(AtomInfoType),5,true); /* autozero here is important */
-  for(a=0;a<cs->NIndex;a++)
-	 ai2[a]=ai[index[a]];
+  for(a=0;a<cs->NIndex;a++) 
+	 ai2[a]=ai[index[a]]; /* creates a sorted list of atom info records */
   VLAFreeP(ai);
   ai=ai2;
 
@@ -748,20 +748,22 @@ void ObjectMoleculeMerge(ObjectMolecule *I,AtomInfoType *ai,CoordSet *cs)
 	   if(!ac) {
 		 found=true;
 		 break;
-	   } else if(ac<0) {
-		 break;
 	   }
+      else if(ac<0) {
+        break;
+      }
 	   b++;
 	 }
 	 if(found) {
-		index[a]=b;
+		index[a]=b; /* store real atom index b for a in index[a] */
 		b++;
 	 } else {
-	   index[a]=I->NAtom+c;
+	   index[a]=I->NAtom+c; /* otherwise, this is a new atom */
 	   c++;
 	   b=lb;
 	 }
   }
+
   /* first, reassign atom info for matched atoms */
 
   /* allocate additional space */
@@ -769,98 +771,98 @@ void ObjectMoleculeMerge(ObjectMolecule *I,AtomInfoType *ai,CoordSet *cs)
 	{
 	  expansionFlag=true;
 	  nAt=I->NAtom+c;
-	}
+	} else {
+     nAt=I->NAtom;
+   }
   
   if(expansionFlag) {
 	VLACheck(I->AtomInfo,AtomInfoType,nAt);
-	
-	/* allocate our new x-ref tables */
-	if(nAt<I->NAtom) nAt=I->NAtom;
-	a2i = Alloc(int,nAt);
-	i2a = Alloc(int,cs->NIndex);
-	ErrChkPtr(a2i);
-	ErrChkPtr(i2a);
-	
-	for(a=0;a<cs->NIndex;a++) /* a is in original file space */
-	  {
+  }
+
+  /* allocate our new x-ref tables */
+  if(nAt<I->NAtom) nAt=I->NAtom;
+  a2i = Alloc(int,nAt);
+  i2a = Alloc(int,cs->NIndex);
+  ErrChkPtr(a2i);
+  ErrChkPtr(i2a);
+  
+  for(a=0;a<cs->NIndex;a++) /* a is in original file space */
+    {
 		a1=cs->IdxToAtm[a]; /* a1 is in sorted atom info space */
 		a2=index[a1];
 		i2a[a]=a2; /* a2 is in object space */
 		if(a2 >= I->NAtom) { 
 		  I->AtomInfo[a2]=ai[a1]; /* copy atom info */
 		}
-	  }
-
-	cs->NAtIndex = nAt;
-	I->NAtom = nAt;
-
-	FreeP(cs->AtmToIdx);
-	FreeP(cs->IdxToAtm);
-	cs->AtmToIdx = a2i;
-	cs->IdxToAtm = i2a;
-
-	for(a=0;a<cs->NAtIndex;a++)
-	  cs->AtmToIdx[a]=-1;
-	for(a=a;a<cs->NAtIndex;a++)
-	  cs->AtmToIdx[cs->IdxToAtm[a]]=a;
-	
-  }
+    }
   
+  cs->NAtIndex = nAt;
+  I->NAtom = nAt;
+  
+  FreeP(cs->AtmToIdx);
+  FreeP(cs->IdxToAtm);
+  cs->AtmToIdx = a2i;
+  cs->IdxToAtm = i2a;
+  
+  for(a=0;a<cs->NAtIndex;a++)
+    cs->AtmToIdx[a]=-1;
+  for(a=0;a<cs->NIndex;a++)
+    cs->AtmToIdx[cs->IdxToAtm[a]]=a;
   
   VLAFreeP(ai);
   AtomInfoFreeSortedIndexes(index,outdex);
 
   /* now find and integrate and any new bonds */
-  if(expansionFlag) {
-	nBond = ObjectMoleculeConnect(&bond,I->AtomInfo,cs,0.2);
-	
-	if(nBond) {
-	  index=Alloc(int,nBond);
-	  
-	  c=0;
-	  b=0;  
-	  for(a=0;a<nBond;a++) {
-		found=false;
-		lb=b;
-		while(b<I->NBond) {
-		  ac=BondCompare(bond+a,I->Bond+b);
-		  if(!ac) {
-			found=true;
-			break;
-		  } else if(ac<0) {
-			break;
-		  }
-		  b++;
-		}
-		if(found) {
-		  index[a]=b;
-		  b++;
+  if(expansionFlag) { /* expansion flag means we have introduced at least 1 new atom */
+    nBond = ObjectMoleculeConnect(&bond,I->AtomInfo,cs,0.2);
+    
+    if(nBond) {
+      index=Alloc(int,nBond);
+      
+      c=0;
+      b=0;  
+      for(a=0;a<nBond;a++) {
+        found=false;
+        lb=b;
+        while(b<I->NBond) {
+          ac=BondCompare(bond+a,I->Bond+b);
+          if(!ac) {
+            found=true;
+            break;
+          } else if(ac<0) {
+            break;
+          }
+          b++;
+        }
+        if(found) {
+          index[a]=b;
+          b++;
 		} else {
 		  index[a]=I->NBond+c;
 		  c++;
 		  b=lb;
 		}
 	  }
-	  /* first, reassign atom info for matched atoms */
-	  if(c) {
-		/* allocate additional space */
-		nBd=I->NBond+c;
-		
-		VLACheck(I->Bond,int,nBd*2);
-		
-		for(a=0;a<nBond;a++)
-		  {
-			a2=index[a];
-			if(a2 >= I->NBond) { 
-			  I->Bond[2*a2]=bond[2*a]; /* copy bond info */
-			  I->Bond[2*a2+1]=bond[2*a+1]; /* copy bond info */
-			}
-		  }
-		I->NBond=nBd;
-	  }
-	  VLAFreeP(bond);
-	  FreeP(index);
-	}
+      /* first, reassign atom info for matched atoms */
+      if(c) {
+        /* allocate additional space */
+        nBd=I->NBond+c;
+        
+        VLACheck(I->Bond,int,nBd*2);
+        
+        for(a=0;a<nBond;a++)
+          {
+            a2=index[a];
+            if(a2 >= I->NBond) { 
+              I->Bond[2*a2]=bond[2*a]; /* copy bond info */
+              I->Bond[2*a2+1]=bond[2*a+1]; /* copy bond info */
+            }
+          }
+        I->NBond=nBd;
+      }
+      VLAFreeP(bond);
+      FreeP(index);
+    }
   }
 }
 /*========================================================================*/

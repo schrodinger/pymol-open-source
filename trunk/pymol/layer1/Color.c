@@ -245,8 +245,8 @@ void ColorInit(void)
 
   strcpy(I->Color[I->NColor].Name,"tv_orange");
   I->Color[I->NColor].Color[0]=1.0;
-  I->Color[I->NColor].Color[1]=0.5;
-  I->Color[I->NColor].Color[2]=0.05;
+  I->Color[I->NColor].Color[1]=0.55;
+  I->Color[I->NColor].Color[2]=0.15;
   I->NColor++;
 
 }

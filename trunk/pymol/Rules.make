@@ -27,7 +27,7 @@ CCOPT1 = -m486 -D__i686__ -ffast-math -Wall -ansi -Wmissing-prototypes
 #
 #- Choose One --------------------------------------------------------
 #--- Linux Optimized
-CCOPT2 = -O3 -funroll-loops -fomit-frame-pointer
+#CCOPT2 = -O3 -funroll-loops -fomit-frame-pointer
 #CCOPT2 = -pg -O3 -funroll-loops
 #--- Irix Optimized
 #CCOPT2 = -O2
