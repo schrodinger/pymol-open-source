@@ -2110,7 +2110,7 @@ void BasisMakeMap(CBasis *I,int *vert2prim,CPrimitive *prim,float *volume)
             {
               start = MapEStart(I->Map,a,b,c);
               h=*start;
-              if(h>=0)
+              if(h>0)
                 {
                   ip=I->Map->EList+h; 
                   sp=ip;
@@ -2163,7 +2163,7 @@ void BasisMakeMap(CBasis *I,int *vert2prim,CPrimitive *prim,float *volume)
               {
                 start = MapEStart(I->Map,a,b,c);
                 h=*start;
-                if(h>=0)
+                if(h>0)
                   {
                     int ii;
                     ip=I->Map->EList+h; 
