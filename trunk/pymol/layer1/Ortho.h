@@ -29,7 +29,7 @@ Z* -------------------------------------------------------------------
 #define cOrthoTool 2
 #define cOrthoHidden 3
 
-void OrthoInit(void);
+void OrthoInit(int showSplash);
 void OrthoFree(void);
 
 void OrthoAttach(Block *block,int type);
