@@ -73,7 +73,6 @@ static int BondInOrder(int *a,int b1,int b2)
 {
   return(BondCompare(a+(b1*3),a+(b2*3))<=0);
 }
-
 /*========================================================================*/
 static int BondCompare(int *a,int *b)
 {
@@ -99,7 +98,8 @@ void ObjectMoleculeExtendIndices(ObjectMolecule *I)
   int a;
   for(a=0;a<I->NCSet;a++)
 	 if(I->CSet[a])
-		I->CSet[a]->fExtendIndices(I->CSet[a],I->NAtom);
+      if(I->CSet[a]->fExtendIndices)
+        I->CSet[a]->fExtendIndices(I->CSet[a],I->NAtom);
 }
 /*========================================================================*/
 void ObjectMoleculeSort(ObjectMolecule *I)
@@ -390,12 +390,14 @@ ObjectMolecule *ObjectMoleculeReadMOLStr(ObjectMolecule *I,char *MOLStr,int fram
 		if(I->NCSet<=frame)
 		  I->NCSet=frame+1;
 		VLACheck(I->CSet,CoordSet*,frame);
-		cset->fAppendIndices(cset,I->NAtom);
+      if(cset->fAppendIndices)
+        cset->fAppendIndices(cset,I->NAtom);
 		cset->Obj=I;
 		ObjectMoleculeAppendAtoms(I,atInfo,cset);
       if(I->CSet[frame]) I->CSet[frame]->fFree(I->CSet[frame]);
 		I->CSet[frame] = cset;
-		I->CSet[frame]->fInvalidateRep(I->CSet[frame],-1,0);
+      if(I->CSet[frame]->fInvalidateRep)
+        I->CSet[frame]->fInvalidateRep(I->CSet[frame],-1,0);
 		SceneCountFrames();
 		ObjectMoleculeExtendIndices(I);
 	 }
@@ -630,7 +632,8 @@ ObjectMolecule *ObjectMoleculeReadPDBStr(ObjectMolecule *I,char *PDBStr,int fram
   /* include coordinate set */
   if(ok) {
     cset->fEnumIndices(cset);
-    cset->fInvalidateRep(cset,-1,0);
+    if(cset->fInvalidateRep)
+      cset->fInvalidateRep(cset,-1,0);
     if(isNew) {		
       I->AtomInfo=atInfo; /* IMPORTANT to reassign: this VLA may have moved! */
     } else {
@@ -744,7 +747,8 @@ void ObjectMoleculeTransformTTTf(ObjectMolecule *I,float *ttt,int frame)
      if((frame<0)||(frame==b)) {
        cs=I->CSet[b];
        if(cs) {
-         cs->fInvalidateRep(I->CSet[b],cRepAll,0);
+         if(cs->fInvalidateRep)
+           cs->fInvalidateRep(I->CSet[b],cRepAll,0);
          MatrixApplyTTTfn3f(cs->NIndex,cs->Coord,ttt,cs->Coord);
        }
      }
@@ -879,8 +883,8 @@ void ObjectMoleculeSeleOp(ObjectMolecule *I,int sele,ObjectMoleculeOpRec *op)
 	default:
 	   for(a=0;a<I->NAtom;a++)
 		 {
-		   switch(op->code) { /* atom based loops */
-		   case 'COLR':
+		   switch(op->code) { 
+		   case 'COLR': /* atom based loops */
 		   case 'VISI':
 		   case 'TTTF':
          case 'ALTR':
@@ -917,7 +921,28 @@ void ObjectMoleculeSeleOp(ObjectMolecule *I,int sele,ObjectMoleculeOpRec *op)
 				 s=SelectorNext(s);
 			   }
 			 break;
-		   default: /* coord-set based properties, iterating as coordsets within atoms */
+#ifdef PYMOL_FUTURE_CODE
+         case 'CSOC': /* specific coordinate set based operations */
+           if(I->NCSet<op->cs1) 
+             if(I->CSet[op->cs1]) {
+               
+               s=I->AtomInfo[a].selEntry;
+               while(s)
+                 {
+                   if(SelectorMatch(s,sele))
+                     {
+                       switch(op->code) {
+                       case 'CSOC': /* object and coordinate index */
+                         break;
+                       }
+                       break;
+                     }
+                   s=SelectorNext(s);
+                 }
+             }
+			 break;
+#endif
+		   default: /* coord-set based properties, iterating as all coordsets within atoms */
 			 for(b=0;b<I->NCSet;b++)
 			   if(I->CSet[b])
 				 {
@@ -1020,9 +1045,11 @@ void ObjectMoleculeSeleOp(ObjectMolecule *I,int sele,ObjectMoleculeOpRec *op)
 				   case 'INVA':
                  if(inv_flag) {
                   if(op->i1<0)
-                      for(d=0;d<cRepCnt;d++) 
+                    for(d=0;d<cRepCnt;d++) {
+                      if(I->CSet[b]->fInvalidateRep)
                         I->CSet[b]->fInvalidateRep(I->CSet[b],d,op->i2);
-                  else
+                    }
+                  else if(I->CSet[b]->fInvalidateRep)
                     I->CSet[b]->fInvalidateRep(I->CSet[b],op->i1,op->i2);
                  }
 					 break;
@@ -1068,7 +1095,8 @@ void ObjectMoleculeUpdate(ObjectMolecule *I)
 	 if(I->CSet[a]) {	
 	   OrthoBusySlow(a,I->NCSet);
 	   printf(" ObjectMolecule: updating state %d of \"%s\".\n" , a+1, I->Obj.Name);
-	   I->CSet[a]->fUpdate(I->CSet[a]);
+      if(I->CSet[a]->fUpdate)
+        I->CSet[a]->fUpdate(I->CSet[a]);
 	 }
 }
 /*========================================================================*/
@@ -1077,7 +1105,8 @@ void ObjectMoleculeInvalidateRep(ObjectMolecule *I,int rep)
   int a;
   for(a=0;a<I->NCSet;a++) 
 	 if(I->CSet[a]) {	 
-		I->CSet[a]->fInvalidateRep(I->CSet[a],rep,0);
+      if(I->CSet[a]->fInvalidateRep)
+        I->CSet[a]->fInvalidateRep(I->CSet[a],rep,0);
 	 }
 }
 /*========================================================================*/
@@ -1087,14 +1116,17 @@ void ObjectMoleculeRender(ObjectMolecule *I,int frame,CRay *ray,Pickable **pick)
   if(frame<0) {
     for(a=0;a<I->NCSet;a++)
       if(I->CSet[a])
-        I->CSet[a]->fRender(I->CSet[a],ray,pick);        
+        if(I->CSet[a]->fRender)
+          I->CSet[a]->fRender(I->CSet[a],ray,pick);        
   } else if(frame<I->NCSet) {
 	 I->CurCSet=frame % I->NCSet;
 	 if(I->CSet[I->CurCSet]) {
-		I->CSet[I->CurCSet]->fRender(I->CSet[I->CurCSet],ray,pick);
+      if(I->CSet[I->CurCSet]->fRender)
+        I->CSet[I->CurCSet]->fRender(I->CSet[I->CurCSet],ray,pick);
 	 }
   } else if(I->NCSet==1) { /* if only one coordinate set, assume static */
-    I->CSet[0]->fRender(I->CSet[0],ray,pick);    
+    if(I->CSet[0]->fRender)
+      I->CSet[0]->fRender(I->CSet[0],ray,pick);    
   }
 }
 /*========================================================================*/
@@ -1162,7 +1194,8 @@ void ObjectMoleculeFree(ObjectMolecule *I)
   SceneObjectDel((Object*)I);
   for(a=0;a<I->NCSet;a++)
 	 if(I->CSet[a]) {
-		I->CSet[a]->fFree(I->CSet[a]);
+      if(I->CSet[a]->fFree)
+        I->CSet[a]->fFree(I->CSet[a]);
 		I->CSet[a]=NULL;
 	 }
   VLAFreeP(I->CSet);
@@ -1292,8 +1325,10 @@ ObjectMolecule *ObjectMoleculeReadMMDStr(ObjectMolecule *I,char *MMDStr,int fram
 		VLACheck(I->CSet,CoordSet*,frame);
       nAtom=cset->NIndex;
 
-      cset->fEnumIndices(cset);
-      cset->fInvalidateRep(cset,-1,0);
+      if(cset->fEnumIndices)
+        cset->fEnumIndices(cset);
+      if(cset->fInvalidateRep)
+        cset->fInvalidateRep(cset,-1,0);
       if(isNew) {		
         I->AtomInfo=atInfo; /* IMPORTANT to reassign: this VLA may have moved! */
         I->NAtom=nAtom;

@@ -56,12 +56,17 @@ typedef struct VLARec {
   int autoZero;
 } VLARec;
 
+
+/* NOTE: in VLACheck, rec is a zero based array index, not a record count */
 #define VLACheck(ptr,type,rec) (ptr=(type*)((((rec)>=((VLARec*)(ptr))[-1].nAlloc) ? VLAExpand(ptr,(rec)) : (ptr))))
 
- /* NOTE: rec is index (total-1) */
+
+
 
 #define VLAlloc(type,initSize) (type*)VLAMalloc(initSize,sizeof(type),5,0)
 #define VLAFreeP(ptr) {if(ptr) {VLAFree(ptr);ptr=NULL;}}
+#define VLASize(ptr,type,size) {ptr=(type*)VLASetSize(ptr,sizeof(type)*(size));}
+
 #define Alloc(type,size) (type*)mmalloc(sizeof(type)*(size))
 #define Realloc(ptr,type,size) (type*)mrealloc(ptr,sizeof(type)*(size))
 

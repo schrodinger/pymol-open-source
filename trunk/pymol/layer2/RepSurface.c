@@ -662,7 +662,7 @@ Rep *RepSurfaceNew(CoordSet *cs)
 void RepSurfaceGetSolventDots(RepSurface *I,CoordSet *cs,float probe_radius,SphereRec *sp,float *extent)
 {
   ObjectMolecule *obj;
-  int a,b,c,a1,flag,i,h,k,l,j;
+  int a,b,c,flag,i,h,k,l,j;
   float *v,*v0,vdw;
   MapType *map;
   int *p,*dot_flag;

@@ -73,6 +73,32 @@ def mem():
    unlock()
    return r
 
+def dist(*arg):
+   if len(arg)==1:
+      lock()
+      cnt = _pm.get("dist_counter") + 1.0
+      _pm.set("dist_counter","%1.0f" % cnt)
+      nam = "dist%02.0f" % cnt
+      argst = arg[0]
+      unlock()
+   else:
+      nam = arg[0]
+      argst = arg[1]
+   arg = split(argst,',')
+   la = len(arg)
+   if la<2:
+      print " error: invalid dist arguments"
+      raise RunError
+   else:
+      sel1 = arg[0]
+      sel2 = arg[1]
+      optarg1=-1.0
+      optarg2=0
+      lock()
+      r = _pm.dist(nam,sel1,sel2,optarg2,optarg1)
+      unlock()
+   return r
+
 def isomesh(nam,argst):
    arg = split(argst,',')
    la = len(arg)
@@ -836,7 +862,8 @@ keyword = {
    'count_states'  : [count_states , 0 , 1 , ',' , 0 ],   
    'delete'        : [delete       , 1 , 1 , ',' , 0 ],
    'disable'       : [disable      , 1 , 1 , ',' , 0 ],
-   'dist'          : [distance     , 0 , 2 , ',' , 0 ],\
+   'dist'          : [dist         , 1 , 2 , '=' , 0 ],
+   'distance'      : [distance     , 0 , 2 , '=' , 0 ],
    'dump'          : [dump         , 2 , 2 , ',' , 0 ],
    'enable'        : [enable       , 1 , 1 , ',' , 0 ],
    'export_dots'   : [export_dots  , 2 , 2 , ',' , 0 ],

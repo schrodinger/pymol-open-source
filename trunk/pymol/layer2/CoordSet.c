@@ -136,44 +136,47 @@ void CoordSetUpdate(CoordSet *I)
 			 }
 		}
 	 }
-  for(a=0;a<I->NRep;a++)
-	 {
-		OrthoBusyFast(a,I->NRep);
-	 	if(!I->Rep[cRepLine]) {
-		  I->Rep[cRepLine]=RepWireBondNew(I);
-		  SceneDirty();
-		}
-		if(!I->Rep[cRepCyl]) {
-		  I->Rep[cRepCyl]=RepCylBondNew(I);
-		  SceneDirty();
-		  }
-		if(!I->Rep[cRepDot]) {
-		  I->Rep[cRepDot]=RepDotNew(I,0);
-		  SceneDirty();
-		}
-		if(!I->Rep[cRepMesh]) {
-		  I->Rep[cRepMesh]=RepMeshNew(I);
-		  SceneDirty();
-		} else {
-		  I->Rep[cRepMesh]->fUpdate(I->Rep[cRepMesh],I);
-		  SceneDirty();
-		}
-	 	if(!I->Rep[cRepSphere]) {
-		  I->Rep[cRepSphere]=RepSphereNew(I);
-		  SceneDirty();
-		  }
-	 	if(!I->Rep[cRepRibbon]) {
-		  I->Rep[cRepRibbon]=RepRibbonNew(I);
-		  SceneDirty();
-		  }
-	 	if(!I->Rep[cRepSurface]) {
-		  I->Rep[cRepSurface]=RepSurfaceNew(I);
-		  SceneDirty();
-		} else {
-		  I->Rep[cRepSurface]->fUpdate(I->Rep[cRepSurface],I);
-		  SceneDirty();
-		}
-	 }
+  OrthoBusyFast(0,I->NRep);
+  if(!I->Rep[cRepLine]) {
+    I->Rep[cRepLine]=RepWireBondNew(I);
+    SceneDirty();
+  }
+  OrthoBusyFast(1,I->NRep);
+  if(!I->Rep[cRepCyl]) {
+    I->Rep[cRepCyl]=RepCylBondNew(I);
+    SceneDirty();
+  }
+  OrthoBusyFast(2,I->NRep);
+  if(!I->Rep[cRepDot]) {
+    I->Rep[cRepDot]=RepDotNew(I,0);
+    SceneDirty();
+  }
+  OrthoBusyFast(3,I->NRep);
+  if(!I->Rep[cRepMesh]) {
+    I->Rep[cRepMesh]=RepMeshNew(I);
+    SceneDirty();
+  } else {
+    I->Rep[cRepMesh]->fUpdate(I->Rep[cRepMesh],I);
+    SceneDirty();
+  }
+  OrthoBusyFast(4,I->NRep);
+  if(!I->Rep[cRepSphere]) {
+    I->Rep[cRepSphere]=RepSphereNew(I);
+    SceneDirty();
+  }
+  OrthoBusyFast(5,I->NRep);
+  if(!I->Rep[cRepRibbon]) {
+    I->Rep[cRepRibbon]=RepRibbonNew(I);
+    SceneDirty();
+  }
+  OrthoBusyFast(6,I->NRep);
+  if(!I->Rep[cRepSurface]) {
+    I->Rep[cRepSurface]=RepSurfaceNew(I);
+    SceneDirty();
+  } else {
+    I->Rep[cRepSurface]->fUpdate(I->Rep[cRepSurface],I);
+    SceneDirty();
+  }
   OrthoBusyFast(1,1);
 }
 /*========================================================================*/

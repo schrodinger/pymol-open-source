@@ -23,6 +23,7 @@ Z* -------------------------------------------------------------------
 #include"Executive.h"
 #include"ObjectMolecule.h"
 #include"ObjectMesh.h"
+#include"ObjectDist.h"
 #include"ListMacros.h"
 #include"Ortho.h"
 #include"Scene.h"
@@ -137,6 +138,32 @@ void ExecutiveStereo(int flag)
   }
 }
 /*========================================================================*/
+void ExecutiveDist(char *nam,char *s1,char *s2,int mode,float cutoff)
+{
+  int sele1,sele2;
+  ObjectDist *obj;
+
+  sele1=SelectorIndexByName(s1);
+  sele2=SelectorIndexByName(s2);
+  
+  if((sele1>=0)&&(sele2>=0)) {
+    obj = ObjectDistNew(sele1,sele2,mode,cutoff);
+    if(!obj) {
+      ErrMessage("ExecutiveDistance","No such distances found.");
+    } else {
+      if(ExecutiveFindObjectByName(nam))
+        ExecutiveDelete(nam);
+      ObjectSetName((Object*)obj,nam);
+      ExecutiveManageObject((Object*)obj);
+      ExecutiveSetRepVisib(nam,0,1);
+    }
+  } else if(sele1<0) {
+    ErrMessage("ExecutiveDistance","The first selection contains no atoms.");
+  } else if(sele2<0) {
+    ErrMessage("ExecutiveDistance","The second selection contains no atoms.");
+  }
+}
+/*========================================================================*/
 float ExecutiveDistance(char *s1,char *s2)
 {
   int sele1,sele2;
@@ -176,8 +203,7 @@ float ExecutiveDistance(char *s1,char *s2)
      scale3f(op2.v1,1.0/op2.i1,op2.v1);
      dist = diff3f(op1.v1,op2.v1);
      sprintf(buffer," Distance: %8.3f [%i atom(s) to %i atom(s)]\n",
-             dist,
-            op1.i1,op2.i1);
+             dist,op1.i1,op2.i1);
     OrthoAddOutput(buffer);
   } else {
     ErrMessage("ExecutiveRMS","No atoms selected.");

@@ -31,7 +31,7 @@ Z* -------------------------------------------------------------------
 #include"Executive.h"
 #include"ObjectMolecule.h"
 #include"CoordSet.h"
-
+#include"DistSet.h"
 
 #define SelectorMaxDepth 100
 
@@ -1580,6 +1580,84 @@ void SelectorInit(void)
   I->Vertex=NULL;
 }
 /*========================================================================*/
+
+
+DistSet *SelectorGetDistSet(int sele1,int state1,int sele2,int state2,int mode,float cutoff)
+{
+  SelectorType *I=&Selector;
+  int *vla=NULL;
+  int c;
+  float result=0.0;
+  float sumVDW,dist;
+  int a1,a2;
+  AtomInfoType *ai1,*ai2;
+  int at1,at2;
+  CoordSet *cs1,*cs2;
+  DistSet *ds;
+  ObjectMolecule *obj1,*obj2;
+  int idx1,idx2;
+  int a;
+  int nv = 0;
+  float *vv,*vv0,*vv1;
+
+  ds = DistSetNew();
+  vv = VLAlloc(float,10000);
+  SelectorUpdateTable();
+  if(cutoff<0) cutoff = 1000.0;
+  c=SelectorGetInterstateVLA(sele1,state1,sele2,state2,cutoff,&vla);
+  for(a=0;a<c;a++) {
+    a1=vla[a*2];
+    a2=vla[a*2+1];
+
+    if(a1!=a2) {
+      at1=I->Table[a1].atom;
+      at2=I->Table[a2].atom;
+      
+      obj1=I->Obj[I->Table[a1].model];
+      obj2=I->Obj[I->Table[a2].model];
+      
+      if(state1<obj1->NCSet&&state2<obj2->NCSet) {
+        cs1=obj1->CSet[state1];
+        cs2=obj2->CSet[state2];
+        if(cs1&&cs2) { 
+          
+          ai1=obj1->AtomInfo+at1;
+          ai2=obj2->AtomInfo+at2;
+          
+          idx1=cs1->AtmToIdx[at1];
+          idx2=cs2->AtmToIdx[at2];
+          
+          /*          sumVDW=ai1->vdw+ai2->vdw;*/
+
+          dist=diff3f(cs1->Coord+3*idx1,cs2->Coord+3*idx2);
+          
+          if(dist<cutoff) {
+            VLACheck(vv,float,(nv*3)+5);
+            vv0 = vv+ (nv*3);
+            vv1 = cs1->Coord+3*idx1;
+            *(vv0++) = *(vv1++);
+            *(vv0++) = *(vv1++);
+            *(vv0++) = *(vv1++);
+            vv1 = cs1->Coord+3*idx2;
+            *(vv0++) = *(vv1++);
+            *(vv0++) = *(vv1++);
+            *(vv0++) = *(vv1++);
+
+            result+=((sumVDW-dist)/2.0);
+            nv+=2;
+          }
+        }
+      }
+    }
+  }
+  VLAFreeP(vla);
+  ds->NIndex = nv;
+  ds->Coord = vv;
+  return(ds);
+}
+
+/*========================================================================*/
+
 
 /*
 

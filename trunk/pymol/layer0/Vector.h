@@ -16,6 +16,7 @@ Z* -------------------------------------------------------------------
 #ifndef _H_Vector
 #define _H_Vector
 
+#include<math.h>
 /* NOTE THIS VERSION USES RADIANS BY DEFAULT! */
 
 #define cPI            3.14159265358979323846  /* pi */

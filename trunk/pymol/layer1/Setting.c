@@ -442,7 +442,7 @@ void SettingInit(void)
 			"no_idle");
 
   I->NSetting++;
-  I->Setting[cSetting_slow_idle].Value[0] = 100000;
+  I->Setting[cSetting_slow_idle].Value[0] = 200000;
   strcpy(I->Setting[cSetting_slow_idle].Name,
 			"slow_idle");
 
@@ -455,6 +455,21 @@ void SettingInit(void)
   I->Setting[cSetting_rock_delay].Value[0] = 30;
   strcpy(I->Setting[cSetting_rock_delay].Name,
 			"rock_delay");
+
+  I->NSetting++;
+  I->Setting[cSetting_dist_counter].Value[0] = 0.0;
+  strcpy(I->Setting[cSetting_dist_counter].Name,
+			"dist_counter");
+
+  I->NSetting++;
+  I->Setting[cSetting_dash_length].Value[0] = 0.2;
+  strcpy(I->Setting[cSetting_dash_length].Name,
+			"dash_length");
+
+  I->NSetting++;
+  I->Setting[cSetting_dash_gap].Value[0] = 0.4;
+  strcpy(I->Setting[cSetting_dash_gap].Name,
+			"dash_gap");
 
   I->NSetting++;
 #ifdef _PYMOL_WINDOWS
