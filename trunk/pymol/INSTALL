@@ -5,7 +5,7 @@ http://www.pymol.org       EMAIL: warren@delanoscientific.com
 INSTALLATION AND COMPILATION GUIDE
 
 NOTE: The PyMOL compilation process has changed as of October 2002,
-and may have some bugs.  Please help us quash them!
+and has some bugs.  Please help us quash them by providing feedback.
 ----------------------------------------------------------------------
 There are now approaches for building PyMOL from source:
 
