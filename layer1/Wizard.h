@@ -20,7 +20,7 @@ Z* -------------------------------------------------------------------
 
 void WizardInit(void);
 int WizardActive(void);
-void WizardSet(PyObject *wiz);
+void WizardSet(PyObject *wiz,int replace);
 PyObject *WizardGet(void);
 void WizardUpdate(void);
 void WizardFree(void);
@@ -28,5 +28,7 @@ Block *WizardGetBlock(void);
 void WizardRefresh(void);
 void WizardDoPick(int bondFlag);
 void WizardDoSelect(char *name);
-
+void WizardPurgeStack(void);
+PyObject *WizardGetStack(void);
+int WizardSetStack(PyObject *wiz);
 #endif

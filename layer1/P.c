@@ -1190,16 +1190,19 @@ void PParse(char *str)
   OrthoCommandIn(str);
 }
 
-void PLog(char *str,int format) /* general log routine can write PML or PYM commands to appropriate log file */
+void PLog(char *str,int format) 
+     /* general log routine can write PML 
+        or PYM commands to appropriate log file */
 {  
   int mode;
   int a;
+  int blocked;
   PyObject *log;
   OrthoLineType buffer="";
   mode = (int)SettingGet(cSetting_logging);
   if(mode)
     {
-      PBlock();
+      blocked = PAutoBlock();
       log = PyDict_GetItemString(P_globals,P_log_file_str);
       if(log&&(log!=Py_None)) {
         if(format==cPLog_no_flush) {
@@ -1242,7 +1245,7 @@ void PLog(char *str,int format) /* general log routine can write PML or PYM comm
           PyObject_CallMethod(log,"flush","");
         }
       }
-      PUnblock();
+      PAutoUnblock(blocked);
     }
 }
 
@@ -1250,16 +1253,16 @@ void PLogFlush(void)
 {
   int mode;
   PyObject *log;
-  
+  int blocked;
   mode = (int)SettingGet(cSetting_logging);
   if(mode)
     {
-      PBlock();
+      blocked = PAutoBlock();
       log = PyDict_GetItemString(P_globals,P_log_file_str);
       if(log&&(log!=Py_None)) {
         PyObject_CallMethod(log,"flush","");
       }
-      PUnblock();
+      PAutoUnblock(blocked);
     }
 }
 
