@@ -26,9 +26,11 @@ typedef struct ObjectMesh {
   int Range[6];
   float Level;
   int ResurfaceFlag;
+  int DotFlag;
 } ObjectMesh;
 
-ObjectMesh *ObjectMeshFromBox(ObjectMap *map,float *mn,float *mx,float level);
+ObjectMesh *ObjectMeshFromBox(ObjectMap *map,float *mn,float *mx,float level,int dotFlag);
+void ObjectMeshDump(ObjectMesh *I,char *fname);
 
 #endif
 

@@ -16,6 +16,7 @@ Z* -------------------------------------------------------------------
 
 #include<string.h>
 #include<GL/gl.h>
+#include<stdio.h>
 
 #include"OOMac.h"
 #include"ObjectMesh.h"
@@ -40,10 +41,37 @@ static void ObjectMeshFree(ObjectMesh *I) {
   OOFreeP(I);
 }
 
+void ObjectMeshDump(ObjectMesh *I,char *fname)
+{
+  float *v=I->V;
+  int *n=I->N;
+  int c;
+  FILE *f;
+  OrthoLineType buf;
+
+  f=fopen(fname,"w");
+  if(!f) 
+    ErrMessage("ObjectMeshDump","can't open file for writing");
+  else {
+    if(n)
+      while(*n)
+        {
+          c=*(n++);
+          while(c--) {
+            fprintf(f,"%10.4f%10.4f%10.4f\n",v[0],v[1],v[2]);
+            v+=3;
+          }
+        }
+    fclose(f);
+    sprintf(buf,"%s written to %s\n",I->Obj.Name,fname);
+    ErrOk("ObjectMeshDump",buf);
+  }
+}
+
 static void ObjectMeshUpdate(ObjectMesh *I) {
   if(I->ResurfaceFlag) {
     I->ResurfaceFlag=false;
-    if(I->Map->Field) IsosurfVolume(I->Map->Field,1.0,&I->N,&I->V,I->Range); 
+    if(I->Map->Field) IsosurfVolume(I->Map->Field,1.0,&I->N,&I->V,I->Range,I->DotFlag); 
   }
   SceneDirty();
 }
@@ -58,7 +86,9 @@ static void ObjectMeshRender(ObjectMesh *I,int frame,CRay *ray,Pickable **pick)
   if(ray) {
 	 if(n) {
       vc = ColorGet(I->Obj.Color);
-		while(*n)
+      if(I->DotFlag) {
+        ray->fColor3fv(ray,vc);
+        while(*n)
 		  {
 			 c=*(n++);
 			 if(c--)
@@ -66,11 +96,26 @@ static void ObjectMeshRender(ObjectMesh *I,int frame,CRay *ray,Pickable **pick)
 				  v+=3;
 				  while(c--)
 					 {
-						ray->fCylinder3fv(ray,v-3,v,0.05,vc,vc);
+						ray->fSphere3fv(ray,v,0.05);
 						v+=3;
 					 }
 				}
 		  }
+      } else {
+        while(*n)
+          {
+            c=*(n++);
+            if(c--)
+              {
+                v+=3;
+                while(c--)
+                  {
+                    ray->fCylinder3fv(ray,v-3,v,0.05,vc,vc);
+                    v+=3;
+                  }
+              }
+          }
+      }
 	 }
   } else if(pick&&PMGUI) {
   } else if(PMGUI) {
@@ -79,7 +124,10 @@ static void ObjectMeshRender(ObjectMesh *I,int frame,CRay *ray,Pickable **pick)
       while(*n)
         {
           c=*(n++);
-          glBegin(GL_LINE_STRIP);
+          if(I->DotFlag) 
+            glBegin(GL_POINTS);
+          else 
+            glBegin(GL_LINE_STRIP);
           SceneResetNormal(false);
           while(c--) {
             glVertex3fv(v);
@@ -101,6 +149,7 @@ ObjectMesh *ObjectMeshNew(void)
   I->V = VLAlloc(float,10000);
   I->N = VLAlloc(int,10000);
   I->N[0]=0;
+  I->Obj.type = cObjectMesh;
 
   I->ResurfaceFlag=true;
 
@@ -117,17 +166,18 @@ ObjectMesh *ObjectMeshNew(void)
 
 
 /*========================================================================*/
-ObjectMesh *ObjectMeshFromBox(ObjectMap *map,float *mn,float *mx,float level)
+ObjectMesh *ObjectMeshFromBox(ObjectMap *map,float *mn,float *mx,float level,int dotFlag)
 {
   ObjectMesh *I;
-  int range[6];
   I=ObjectMeshNew();
   I->Map = map;
   I->Level = level;
-
+  I->DotFlag = dotFlag;
   IsosurfGetRange(I->Map->Field,I->Map->Crystal,mn,mx,I->Range);
 
   /*  printf("Brick %d %d %d %d %d %d\n",I->Range[0],I->Range[1],I->Range[2],I->Range[3],I->Range[4],I->Range[5]);*/
   SceneChanged();
   return(I);
 }
+
+

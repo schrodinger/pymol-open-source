@@ -24,6 +24,7 @@ Z* -------------------------------------------------------------------
 #define ObjNameMax 255
 #define cObjectMolecule 1
 #define cObjectMap 2
+#define cObjectMesh 3
 
 typedef struct Object {
   void (*fUpdate)(struct Object *I); /* update representations */

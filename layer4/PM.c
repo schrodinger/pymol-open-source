@@ -52,10 +52,12 @@ static PyObject *PMDelete(PyObject *self, PyObject *args);
 static PyObject *PMDirty(PyObject *self, 	PyObject *args);
 static PyObject *PMDistance(PyObject *dummy, PyObject *args);
 static PyObject *PMDo(PyObject *self, 	PyObject *args);
+static PyObject *PMDump(PyObject *self, 	PyObject *args);
 static PyObject *PMExportDots(PyObject *self, PyObject *args);
 static PyObject *PMFit(PyObject *dummy, PyObject *args);
 static PyObject *PMFitPairs(PyObject *dummy, PyObject *args);
 static PyObject *PMIntraFit(PyObject *dummy, PyObject *args);
+static PyObject *PMIsomesh(PyObject *self, 	PyObject *args);
 static PyObject *PMFrame(PyObject *self, PyObject *args);
 static PyObject *PMGet(PyObject *self, 	PyObject *args);
 static PyObject *PMGetPDB(PyObject *dummy, PyObject *args);
@@ -64,7 +66,6 @@ static PyObject *PMGetGlobals(PyObject *dummy, PyObject *args);
 static PyObject *PMGetMatrix(PyObject *self, 	PyObject *args);
 static PyObject *PMGetMoment(PyObject *self, 	PyObject *args);
 static PyObject *PMMem(PyObject *self, 	PyObject *args);
-static PyObject *PMIsomesh(PyObject *self, 	PyObject *args);
 static PyObject *PMLoad(PyObject *self, 	PyObject *args);
 static PyObject *PMMClear(PyObject *self, 	PyObject *args);
 static PyObject *PMMDo(PyObject *self, 	PyObject *args);
@@ -111,6 +112,7 @@ static PyMethodDef PM_methods[] = {
 	{"dirty",        PMDirty,        METH_VARARGS },
 	{"distance",	  PMDistance,     METH_VARARGS },
 	{"do",	        PMDo,           METH_VARARGS },
+	{"dump",	        PMDump,         METH_VARARGS },
 	{"export_dots",  PMExportDots,   METH_VARARGS },
 	{"fit",          PMFit,          METH_VARARGS },
 	{"fit_pairs",    PMFitPairs,     METH_VARARGS },
@@ -161,9 +163,19 @@ static PyMethodDef PM_methods[] = {
 	{NULL,		     NULL}		/* sentinel */
 };
 
+static PyObject *PMDump(PyObject *dummy, PyObject *args)
+{
+  char *str1,*str2;
+  PyArg_ParseTuple(args,"ss",&str1,&str2);
+  ExecutiveDump(str1,str2);
+  Py_INCREF(Py_None);
+  return Py_None;  
+}
+
 static PyObject *PMIsomesh(PyObject *self, 	PyObject *args) {
   char *str1,*str2,*str3,*str4;
   float lvl,fbuf;
+  int dotFlag;
   int c;
   OrthoLineType s1;
   int oper,frame;
@@ -175,7 +187,7 @@ static PyObject *PMIsomesh(PyObject *self, 	PyObject *args) {
 
   /* oper 0 = all, 1 = sele + buffer, 2 = vector */
 
-  PyArg_ParseTuple(args,"sisissf",&str1,&frame,&str2,&oper,&str3,&str4,&lvl);
+  PyArg_ParseTuple(args,"sisissfi",&str1,&frame,&str2,&oper,&str3,&str4,&lvl,&dotFlag);
   
   mObj=ExecutiveFindObjectByName(str2);  
   if(mObj) {
@@ -199,18 +211,18 @@ static PyObject *PMIsomesh(PyObject *self, 	PyObject *args) {
       }
       break;
     }
-    obj=(Object*)ObjectMeshFromBox(mapObj,mn,mx,lvl);
+    obj=(Object*)ObjectMeshFromBox(mapObj,mn,mx,lvl,dotFlag);
     if(obj) {
       ObjectSetName(obj,str1);
       ExecutiveManageObject((Object*)obj);
       sprintf(buf," Mesh: created \"%s\".\n",str1);
       OrthoAddOutput(buf);
-      Py_INCREF(Py_None);
     }
   } else {
     sprintf(buf,"Map object '%s' not found.",str2);
     ErrMessage("Mesh",buf);
   }
+  Py_INCREF(Py_None);
   return Py_None;  
 }
 

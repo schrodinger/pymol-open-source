@@ -41,7 +41,7 @@ typedef struct {
 Isofield *IsosurfFieldAlloc(int *dims);
 void IsosurfFieldFree(Isofield *field);
 
-int	IsosurfVolume(Isofield *field,float level,int **num,float **vert,int *range);
+int	IsosurfVolume(Isofield *field,float level,int **num,float **vert,int *range,int mode);
 void IsosurfGetRange(Isofield *field,CCrystal *cryst,float *mn,float *mx,int *range);
 
 int	IsosurfInit(void);

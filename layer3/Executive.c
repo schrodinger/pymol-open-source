@@ -22,6 +22,7 @@ Z* -------------------------------------------------------------------
 #include"OOMac.h"
 #include"Executive.h"
 #include"ObjectMolecule.h"
+#include"ObjectMesh.h"
 #include"ListMacros.h"
 #include"Ortho.h"
 #include"Scene.h"
@@ -547,6 +548,8 @@ void ExecutiveDrawNow(void)
 
   /*  glClear( GL_DEPTH_BUFFER_BIT);*/
 
+  SceneUpdate();
+
   OrthoDoDraw();
 
   MainSwapBuffers();
@@ -925,6 +928,35 @@ void ExecutiveDelete(char *name)
 	 }
 }
 /*========================================================================*/
+void ExecutiveDump(char *fname,char *obj)
+{
+  SpecRec *rec = NULL;
+  CExecutive *I = &Executive;
+
+  SceneUpdate();
+
+  while(ListIterate(I->Spec,rec,next,SpecList))
+	 {
+		if(rec->type==cExecObject)
+		  {
+			 if(strcmp(rec->obj->Name,obj)==0) 
+				break;
+		  }
+	 }
+  if(rec)
+	 { 
+      if(rec->obj->type==cObjectMesh) {
+        ObjectMeshDump((ObjectMesh*)rec->obj,fname);
+      } else {
+        ErrMessage("ExecutiveDump","Invalid object type for this operation.");
+      }
+	 }
+  else {
+    ErrMessage("ExecutiveDump","Object not found.");
+  }
+  
+}
+/*========================================================================*/
 void ExecutiveManageObject(Object *obj)
 {
   int a;
@@ -952,15 +984,20 @@ void ExecutiveManageObject(Object *obj)
     }
   if(!rec)
 	 ListElemAlloc(rec,SpecRec);
-  SceneObjectAdd(obj);
   strcpy(rec->name,obj->Name);
   rec->type=cExecObject;
   rec->next=NULL;
   rec->obj=obj;
-  rec->visible=1;
+  if(rec->obj->type==cObjectMap) {
+    rec->visible=0;
+  } else {
+    rec->visible=1;
+    SceneObjectAdd(obj);
+  }
   for(a=0;a<cRepCnt;a++)
 	 rec->repOn[a]=false;
-  rec->repOn[cRepLine]=true;
+  if(rec->obj->type==cObjectMolecule)
+    rec->repOn[cRepLine]=true;
   ListAppend(I->Spec,rec,next,SpecList);
   if(rec->obj->type==cObjectMolecule)
 	 ExecutiveUpdateObjectSelection(obj);
