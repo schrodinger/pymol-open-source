@@ -92,6 +92,12 @@ void ColorInit(void)
   I->Color[I->NColor].Color[2]=1.0;
   I->NColor++;
 
+  strcpy(I->Color[I->NColor].Name,"black");
+  I->Color[I->NColor].Color[0]=0.0;
+  I->Color[I->NColor].Color[1]=0.0;
+  I->Color[I->NColor].Color[2]=0.0;
+  I->NColor++;
+
   strcpy(I->Color[I->NColor].Name,"blue");
   I->Color[I->NColor].Color[0]=0.0;
   I->Color[I->NColor].Color[1]=0.0;
@@ -118,6 +124,12 @@ void ColorInit(void)
   I->NColor++;
 
   strcpy(I->Color[I->NColor].Name,"yellow");
+  I->Color[I->NColor].Color[0]=1.0;
+  I->Color[I->NColor].Color[1]=1.0;
+  I->Color[I->NColor].Color[2]=0.0;
+  I->NColor++;
+
+  strcpy(I->Color[I->NColor].Name,"dash");
   I->Color[I->NColor].Color[0]=1.0;
   I->Color[I->NColor].Color[1]=1.0;
   I->Color[I->NColor].Color[2]=0.0;

@@ -124,7 +124,7 @@ int ObjectMapXPLORStrToMap(ObjectMap *I,char *XPLORStr,int frame) {
   char *p;
   int a,b,c,d,e;
   float v[3],vr[3],dens,maxd,mind;
-  char cc[MAXLINELEN],buf[255];
+  char cc[MAXLINELEN];
   int n;
   int ok = true;
 
@@ -283,7 +283,6 @@ ObjectMap *ObjectMapLoadXPLORFile(ObjectMap *obj,char *fname,int frame)
   fpos_t size;
   char *buffer,*p;
   float mat[9];
-  int a;
 
   f=fopen(fname,"r");
   if(!f)

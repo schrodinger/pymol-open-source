@@ -38,6 +38,7 @@ typedef struct ObjectMolecule {
 typedef struct ObjectMoleculeOpRec {
   unsigned long code;
   Vector3f v1,v2;
+  int cs1;
   int i1,i2,i3,*vc1;
   float f1,*f1VLA;
   double d[3][3];

@@ -96,6 +96,9 @@ float SettingGetNamed(char *name);
 #define cSetting_fast_idle            54
 #define cSetting_slow_idle            55
 #define cSetting_rock_delay           56
+#define cSetting_dist_counter         57
+#define cSetting_dash_length          58
+#define cSetting_dash_gap             59
 
 #endif
 

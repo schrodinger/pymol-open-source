@@ -50,6 +50,7 @@ static PyObject *PMCopy(PyObject *self, PyObject *args);
 static PyObject *PMCountStates(PyObject *self, PyObject *args);
 static PyObject *PMDelete(PyObject *self, PyObject *args);
 static PyObject *PMDirty(PyObject *self, 	PyObject *args);
+static PyObject *PMDist(PyObject *dummy, PyObject *args);
 static PyObject *PMDistance(PyObject *dummy, PyObject *args);
 static PyObject *PMDo(PyObject *self, 	PyObject *args);
 static PyObject *PMDump(PyObject *self, 	PyObject *args);
@@ -111,6 +112,7 @@ static PyMethodDef PM_methods[] = {
 	{"delete",       PMDelete,       METH_VARARGS },
 	{"dirty",        PMDirty,        METH_VARARGS },
 	{"distance",	  PMDistance,     METH_VARARGS },
+	{"dist",    	  PMDist,         METH_VARARGS },
 	{"do",	        PMDo,           METH_VARARGS },
 	{"dump",	        PMDump,         METH_VARARGS },
 	{"export_dots",  PMExportDots,   METH_VARARGS },
@@ -244,6 +246,23 @@ static PyObject *PMOverlap(PyObject *dummy, PyObject *args)
   SelectorFreeTmp(s1);
   SelectorFreeTmp(s2);
   return result;
+}
+
+static PyObject *PMDist(PyObject *dummy, PyObject *args)
+{
+  char *name,*str1,*str2;
+  float cutoff;
+  int mode;
+  OrthoLineType s1,s2;
+  PyObject *result;
+  PyArg_ParseTuple(args,"sssif",&name,&str1,&str2,&mode,&cutoff);
+  SelectorGetTmp(str1,s1);
+  SelectorGetTmp(str2,s2);
+  ExecutiveDist(name,s1,s2,mode,cutoff);
+  SelectorFreeTmp(s1);
+  SelectorFreeTmp(s2);
+  Py_INCREF(Py_None);
+  return Py_None;  
 }
 
 static PyObject *PMDistance(PyObject *dummy, PyObject *args)

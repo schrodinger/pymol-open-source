@@ -21,6 +21,7 @@ Z* -------------------------------------------------------------------
 #include"Word.h"
 
 float ExecutiveDistance(char *sele1,char *sele2);
+void ExecutiveDist(char *nam,char *s1,char *s2,int mode,float cutoff);
 void ExecutiveAlter(char *s1,char *expr);
 void ExecutiveColor(char *name,char *color,int flags);
 void ExecutiveInit(void);

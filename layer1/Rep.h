@@ -30,6 +30,10 @@ Z* -------------------------------------------------------------------
 
 #define cRepCnt  7
 
+#define cRepDistCnt 2
+#define cRepDistDash 0
+#define cRepDistLabel 1
+
 #define cRepInvVisib 10
 #define cRepInvColor 20
 #define cRepInvCoord 30
