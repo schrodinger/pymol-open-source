@@ -630,15 +630,17 @@ void CGORenderGL(CGO *I,float *color,CSetting *set1,CSetting *set2)
   register float *pc = I->op;
   register int op;
 
-  if(color) 
-    glColor3fv(color);
-  else
-    glColor3f(1.0,1.0,1.0);
-  glLineWidth(SettingGet_f(set1,set2,cSetting_cgo_line_width));
-
-  while((op=(CGO_MASK&CGO_read_int(pc)))) {
-    CGO_gl[op](pc);
-    pc+=CGO_sz[op];
+  if(I->c) {
+    if(color) 
+      glColor3fv(color);
+    else
+      glColor3f(1.0,1.0,1.0);
+    glLineWidth(SettingGet_f(set1,set2,cSetting_cgo_line_width));
+    
+    while((op=(CGO_MASK&CGO_read_int(pc)))) {
+      CGO_gl[op](pc);
+      pc+=CGO_sz[op];
+    }
   }
 }
 

@@ -92,6 +92,40 @@ float *ColorGetNamed(char *name)
   return(ColorGet(ColorGetIndex(name)));
 }
 /*========================================================================*/
+char *ColorGetName(int index)
+{
+  CColor *I=&Color;
+  if((index>=0)&&(index<I->NColor))
+    return(I->Color[index].Name);
+  else
+    return(NULL);
+}
+/*========================================================================*/
+int ColorGetStatus(int index)
+{
+  CColor *I=&Color; /* return 0 if color is invalid, hidden; 1 otherwise */
+  char *c;
+  int result=0;
+  if((index>=0)&&(index<I->NColor)) {
+    c=I->Color[index].Name;
+    result=1;
+    while(*c) {
+      if(((*c)>='0')&&((*c)<='9')) {
+        result=0;
+        break;
+      }
+      c++;
+    }
+  }
+  return(result);
+}
+/*========================================================================*/
+int ColorGetNColor(void)
+{
+  CColor *I=&Color;
+  return(I->NColor);
+}
+/*========================================================================*/
 void ColorFree(void)
 {
   CColor *I=&Color;
