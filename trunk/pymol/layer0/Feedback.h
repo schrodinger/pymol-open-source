@@ -99,8 +99,8 @@ function name.
 #define FB_Selector          3
 #define FB_Executive         4
 #define FB_Feedback          5
-#define FB_Total             6 /* total number of systems */
-
+#define FB_Threads           6
+#define FB_Total             7 /* total number of systems */
 extern char *FeedbackMask;
 
 void FeedbackInit(void);

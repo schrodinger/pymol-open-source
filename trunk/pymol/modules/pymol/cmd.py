@@ -2889,9 +2889,10 @@ PYMOL API
       if f:
          try:
             lock()
-            f.write(_cmd.get_pdb(str(sele),int(state)-1))
+            st = _cmd.get_pdb(str(sele),int(state)-1)
          finally:
             unlock()
+            f.write(st)
             f.close()
          r = None
          print " Save: wrote \""+fname+"\"."
@@ -4318,6 +4319,7 @@ class fb_sysmod:
    selector =          3
    executive =         4
    feedback =          5
+   threads =           6
 
 #define FB_Main              1   
 #define FB_Parser            2

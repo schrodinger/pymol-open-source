@@ -30,13 +30,18 @@ Impending Changes
 
 Changes up to 0.50
    
+   * New thread management solution -- simple and stable -- plus 
+     it even works!
+
+   * Fixed memory-trashing bug in the selector
+
    * Found a workaround for KDE/Gnome/Tkinter/Tcl/Tk problems under linux
 
    * Created Save option on the Tkinter menu, and added additional file types.
 
    * TAB-activated filename and command completion (CTRL-D too)
 
-   * former TAB functionality moved to ESC (text/graphics toggle)
+   * Former TAB functionality moved to ESC (text/graphics toggle)
 
    * Auto-detection of stereo capability
 
