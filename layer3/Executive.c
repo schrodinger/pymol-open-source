@@ -607,16 +607,16 @@ void ExecutiveBond(char *s1,char *s2,int order,int add)
   }
 }
 /*========================================================================*/
-void ExecutiveDist(char *nam,char *s1,char *s2,int mode,float cutoff)
+float ExecutiveDist(char *nam,char *s1,char *s2,int mode,float cutoff)
 {
   int sele1,sele2;
   ObjectDist *obj;
-
+  float result;
   sele1=SelectorIndexByName(s1);
   sele2=SelectorIndexByName(s2);
   
   if((sele1>=0)&&(sele2>=0)) {
-    obj = ObjectDistNew(sele1,sele2,mode,cutoff);
+    obj = ObjectDistNew(sele1,sele2,mode,cutoff,&result);
     if(!obj) {
       ErrMessage("ExecutiveDistance","No such distances found.");
     } else {
@@ -631,6 +631,7 @@ void ExecutiveDist(char *nam,char *s1,char *s2,int mode,float cutoff)
   } else if(sele2<0) {
     ErrMessage("ExecutiveDistance","The second selection contains no atoms.");
   }
+  return(result);
 }
 /*========================================================================*/
 float ExecutiveDistance(char *s1,char *s2)

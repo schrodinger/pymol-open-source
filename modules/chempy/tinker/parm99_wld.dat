@@ -553,6 +553,8 @@ OS-CC-OS    70.0      120.00    WLD from NA-CR-NA
 CC-NB-CC    70.0      117.00    WLD from CC-NB-CR
 CC-OS-NB    60.0      117.00    WLD from C -OS-CT
 CA-OS-CC    60.0      117.00    WLD from C -OS-CT
+N -CT-S     50.0      114.70    WLD from CT-CT-S
+OH-CT-N     80.0      109.70    WLD from CT-CT-N
 
 X -C -C -X    4   14.50        180.0             2.         Junmei et al, 1999
 X -C -CA-X    4   14.50        180.0             2.         intrpol.bsd.on C6H6

@@ -3011,7 +3011,8 @@ void SelectorInit(void)
 /*========================================================================*/
 
 
-DistSet *SelectorGetDistSet(int sele1,int state1,int sele2,int state2,int mode,float cutoff)
+DistSet *SelectorGetDistSet(int sele1,int state1,int sele2,int state2,
+                            int mode,float cutoff,float *result)
 {
   SelectorType *I=&Selector;
   int *vla=NULL;
@@ -3027,7 +3028,10 @@ DistSet *SelectorGetDistSet(int sele1,int state1,int sele2,int state2,int mode,f
   int a;
   int nv = 0;
   float *vv,*vv0,*vv1;
+  float dist_sum=0.0;
+  int dist_cnt = 0;
   
+  *result = 0.0;
   ds = DistSetNew();
   vv = VLAlloc(float,10000);
   SelectorUpdateTable();
@@ -3044,37 +3048,66 @@ DistSet *SelectorGetDistSet(int sele1,int state1,int sele2,int state2,int mode,f
       obj1=I->Obj[I->Table[a1].model];
       obj2=I->Obj[I->Table[a2].model];
       
+
+
       if(state1<obj1->NCSet&&state2<obj2->NCSet) {
         cs1=obj1->CSet[state1];
         cs2=obj2->CSet[state2];
         if(cs1&&cs2) { 
-          
+      
+
+    
           ai1=obj1->AtomInfo+at1;
           ai2=obj2->AtomInfo+at2;
-          
-          idx1=cs1->AtmToIdx[at1];
-          idx2=cs2->AtmToIdx[at2];
 
-          dist=diff3f(cs1->Coord+3*idx1,cs2->Coord+3*idx2);
-          
-          if(dist<cutoff) {
-            VLACheck(vv,float,(nv*3)+5);
-            vv0 = vv+ (nv*3);
-            vv1 = cs1->Coord+3*idx1;
-            *(vv0++) = *(vv1++);
-            *(vv0++) = *(vv1++);
-            *(vv0++) = *(vv1++);
-            vv1 = cs2->Coord+3*idx2;
-            *(vv0++) = *(vv1++);
-            *(vv0++) = *(vv1++);
-            *(vv0++) = *(vv1++);
 
-             nv+=2;
+          if(obj1->DiscreteFlag) {
+            if(cs1==obj1->DiscreteCSet[at1]) {
+              idx1=obj1->DiscreteAtmToIdx[at1];
+            } else {
+              idx1=-1;
+            }
+          } else {
+            idx1=cs1->AtmToIdx[at1];
+          }
+          
+          if(obj2->DiscreteFlag) {
+            if(cs2==obj2->DiscreteCSet[at2]) {
+              idx2=obj2->DiscreteAtmToIdx[at2];
+            } else {
+              idx2=-1;
+            }
+            
+          } else {
+            idx2=cs2->AtmToIdx[at2];
+          }
+            
+          if((idx1>=0)&&(idx2>=0)) {
+            dist=diff3f(cs1->Coord+3*idx1,cs2->Coord+3*idx2);
+            
+            if(dist<cutoff) {
+              dist_cnt++;
+              dist_sum+=dist;
+              VLACheck(vv,float,(nv*3)+5);
+              vv0 = vv+ (nv*3);
+              vv1 = cs1->Coord+3*idx1;
+              *(vv0++) = *(vv1++);
+              *(vv0++) = *(vv1++);
+              *(vv0++) = *(vv1++);
+              vv1 = cs2->Coord+3*idx2;
+              *(vv0++) = *(vv1++);
+              *(vv0++) = *(vv1++);
+              *(vv0++) = *(vv1++);
+              
+              nv+=2;
+            }
           }
         }
       }
     }
   }
+  if(dist_cnt)
+    (*result)=dist_sum/dist_cnt;
   VLAFreeP(vla);
   ds->NIndex = nv;
   ds->Coord = vv;

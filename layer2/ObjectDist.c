@@ -92,11 +92,15 @@ void ObjectDistRender(ObjectDist *I,int frame,CRay *ray,Pickable **pick)
   }
 }
 /*========================================================================*/
-ObjectDist *ObjectDistNew(int sele1,int sele2,int mode,float cutoff)
+ObjectDist *ObjectDistNew(int sele1,int sele2,int mode,float cutoff,float *result)
 {
   int a,mn,n;
+  float dist_sum=0.0,dist;
+  int dist_cnt = 0;
+  int n_state1,n_state2,state1,state2;
   OOAlloc(ObjectDist);
   ObjectInit((Object*)I);
+  *result = 0.0;
   I->Obj.type=cObjectDist;
   I->NAtom=0;
   I->DSet=VLAMalloc(10,sizeof(DistSet*),5,true); /* auto-zero */
@@ -110,15 +114,26 @@ ObjectDist *ObjectDistNew(int sele1,int sele2,int mode,float cutoff)
   I->Obj.Color=ColorGetIndex("dash");
   mn = 0;
   SelectorUpdateTable();
-  mn = SelectorGetSeleNCSet(sele1);
-  n = SelectorGetSeleNCSet(sele2);
-  if(mn>n) mn = n;
+  n_state1 = SelectorGetSeleNCSet(sele1);
+  n_state2 = SelectorGetSeleNCSet(sele2);
+  mn = n_state1;
+  if(n_state2>mn) mn = n_state2;
   if(mn) {
     for(a=0;a<mn;a++)
       {
         VLACheck(I->DSet,DistSet*,a);
-        I->DSet[a] = SelectorGetDistSet(sele1,a,sele2,a,mode,cutoff);
+        if(n_state1>1)
+          state1=a;
+        else
+          state1=0;
+        if(n_state2>1)
+          state2=a;
+        else
+          state2=0;
+        I->DSet[a] = SelectorGetDistSet(sele1,state1,sele2,state2,mode,cutoff,&dist);
         if(I->DSet[a]) {
+          dist_sum+=dist;
+          dist_cnt++;
           I->DSet[a]->Obj = I;
           I->NDSet=a+1;
         }
@@ -126,9 +141,9 @@ ObjectDist *ObjectDistNew(int sele1,int sele2,int mode,float cutoff)
   } else {
     VLAFreeP(I->DSet);
     OOFreeP(I);
-
   }
-
+  if(dist_cnt)
+    (*result) = dist_sum/dist_cnt;
   SceneChanged();
   return(I);
 }
