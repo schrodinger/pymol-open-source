@@ -29,7 +29,6 @@ def do(run_prefix):
    cmd = bmin_path+" "+pth+"/"+run_prefix
    print cmd
    os.system(cmd)
-   os.system("ls")
    while 1:
       if os.path.exists(run_prefix+".out"): break
       time.sleep(0.1)

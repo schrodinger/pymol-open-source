@@ -63,6 +63,7 @@ class State:
       f.write(
 ''' CONV       2      0      0      0     0.0500     0.0000     0.0000     0.0000
  MINI       1      0 %6d      0     0.0000     0.0000     0.0000     0.0000
+ DEBG 6
  '''%(max_iter))
       f.close()
       
