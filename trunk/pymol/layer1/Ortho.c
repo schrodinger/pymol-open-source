@@ -1128,9 +1128,13 @@ void OrthoSplash(void)
   PRINTF "    This software is open source and freely available.\n" ENDF;
   PRINTF "    Updates can be found at \"http://www.pymol.org\".\n \n" ENDF;
 
-  PRINTF "    Please cite PYMOL in publications and presentations:\n\n" ENDF;
+  PRINTF "    Is PyMOL a free and open-source project worthy of your support?\n\n" ENDF;
+  PRINTF "    Then visit the home page to learn what you can do to contribute!\n\n" ENDF;
+
+  PRINTF "    Also, please cite PYMOL in publications and presentations:\n\n" ENDF;
   PRINTF "       Warren L. DeLano \"The PyMOL Molecular Graphics System.\"\n" ENDF;
   PRINTF "       DeLano Scientific, San Carlos, CA, USA. http://www.pymol.org\n\n" ENDF;
+
 
   PRINTF "    Enter \"help release\" for release notes (PLEASE READ!).\n" ENDF;
   PRINTF "    Enter \"help commands\" for a list of commands.\n" ENDF;
