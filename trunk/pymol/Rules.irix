@@ -47,9 +47,9 @@ CCOPT1 = -ansi -n32 -woff 1429,1204
 #--- GCC Profiling
 #CCOPT2 = -pg -O3 -funroll-loops
 #--- Irix CC Optimized
-# CCOPT2 = -O2
+CCOPT2 = -O2
 #--- Debugging
-CCOPT2 = -g
+#CCOPT2 = -g
 #---------------------------------------------------------------------
 #
 #- Choose One Pair ---------------------------------------------------
