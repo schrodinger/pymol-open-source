@@ -18,20 +18,41 @@ Changes Under Consideration
 
    * Save dialog for objects/selections
 
-Impending Changes
+Goals for 0.50 release:
 
-   * Reimplementation of the Settings subsystem to support object-
-   specific settings, direct access to setting from Python, and
-   complete browsing and access to internal settings from a GUI.
+   * Edit Menu in Tk
 
-   * Tuning-up of the Tk-based GUI
+   * object/coord set specific settings
+   
+   * settings browser
+
+   * clean-up return conventions
+
+   * complete first-round test-cases
+
+   * provide accurate documentation
+
+   * better windows NT compatibility
+
+   * pym file extension for PyMOL-specific .py files
+
+   * feedback conditionals placed around all output
+
+Changes up to 0.50
+
+   * view, view_get, view_set commands
+
+   * Parser now contains a general shortcut handling module to
+     further help in reducing typing
+
+   * Slight tweak of the virtual trackball
 
    * Saving and restoring matrix, center, origin, zoom, clip
 
-Changes up to 0.50
+   * Internal program output no longer includes python's stderr
    
    * New thread management solution -- simple and stable -- plus 
-     it even works!
+     it even works (I've even got test cases to prove it)!
 
    * Fixed memory-trashing bug in the selector
 

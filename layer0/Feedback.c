@@ -117,7 +117,7 @@ void FeedbackEnable(unsigned int sysmod,unsigned char mask)
     FeedbackMask[sysmod] = FeedbackMask[sysmod] | mask;
   } else if(!sysmod) {
     for(a=0;a<FB_Total;a++) {
-      FeedbackMask[a] = FeedbackMask[a-FB_Total];
+      FeedbackMask[a] = FeedbackMask[a] | mask;
     }
   }
   PRINTFD(FB_Feedback)

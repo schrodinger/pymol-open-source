@@ -25,6 +25,7 @@ import re
 import parsing
 import types
 import glob
+import sys
 
 QuietException = parsing.QuietException
       
@@ -62,13 +63,15 @@ cont[nest]=""
 def parse(s):
    global com0,com1,com2,cont,script,kw,input
    global next,nest,args,kw_args,cmd,cont,result
+# report any uncaught errors...
+   if sys.exc_info()!=(None,None,None):
+      traceback.print_exc()
+#
    local_names = {}
    com0[nest] = s
    try:
       com1[nest] = string.rstrip(com0[nest]) # strips trailing whitespace
       if len(com1[nest]) > 0:
-#         print com1
-#         print com1[nest]
          if str(com1[nest][-1]) == "\\":
             cont[nest] = cont[nest] + com1[nest][:-1]
          else:
@@ -239,6 +242,16 @@ def complete(st):
          lst = parsing.list_to_str_list(flist)
          for a in lst:
             print a
+         # now append up to point of ambiguity
+         css = map(None,flist[0]) # common sub-string (css)
+         for a in flist:
+            ac = map(None,a)
+            css = map(_same_,css,ac)
+         css = filter(None,css)
+         css = string.join(css,'')
+         if len(css)>len(st):
+            result = css
+            
    else: # filename completion
       lst = map(None,st)
       lst.reverse()
@@ -261,11 +274,12 @@ def complete(st):
          result = st[0:loc]+flist[0]
       else:
          flist.sort()
-         print " parser: possibilities:"
+         print " parser: matching files:"
          lst = parsing.list_to_str_list(flist)
-         css = map(None,flist[0])
          for a in lst:
             print a
+         # now append as much up to point of ambiguity
+         css = map(None,flist[0]) # common sub-string (css)
          for a in flist:
             ac = map(None,a)
             css = map(_same_,css,ac)

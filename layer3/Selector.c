@@ -160,7 +160,8 @@ static WordKeyValue Keyword[] =
   {  "byobj",    SELE_BYO1 },
   {  "byobject", SELE_BYO1 },
   {  "bo;",      SELE_BYO1 },
-  {  "b;",       SELE_BYR1 },
+  {  "br;",      SELE_BYR1 },
+  {  "b;",       SELE_BYR1 }, /* deprecated */
   {  "and",      SELE_AND2 },
   {  "&",        SELE_AND2 },
   {  "or",       SELE_OR_2 },

@@ -18,12 +18,15 @@
 # **This is the only module which should be/need be imported by 
 # ** PyMol API Based Programs
 
-#
-# Return conventions:
-#   In general, functions should return "None" for error conditions
-#   or something else if they succeed.  As of 2/07/2001, return codes
-#   are a bit of a mess...
-#
+# NOTE: this cmd module has grown absurdly huge, therefore expect this
+# file to be broken down sometime after the 0.51 release into more
+# manageable pieces.  Note that cmd.<whatever> will still work -- the
+# symbols will be mapped into this namespace even after the code modules
+# are separated.
+
+# Return conventions: In general, functions should return "None" for
+# error conditions or something else if they succeed.  As of
+# 2/07/2001, return codes are a bit of a mess...  #
 
 import re
 import _cmd
@@ -36,6 +39,8 @@ import pymol
 import os
 import imp
 import parsing
+import sys
+
 from shortcut import Shortcut
 
 from glob import glob
@@ -95,8 +100,9 @@ COMMANDS
    INPUT/OUTPUT  load      save      delete    quit
    VIEW          turn      move      clip      rock
                  show      hide      enable    disable
-                 reset     refresh   rebuil
-                 zoom      origin    orient
+                 reset     refresh   rebuild   
+                 zoom      origin    orient   
+                 view      get_view  set_view
    MOVIES        mplay     mstop     mset      mdo
                  mpng      mmatrix   frame
                  rewind    middle    ending
@@ -507,29 +513,31 @@ DESCRIPTION
  
    Properties  
       name <atom names>           n;<atom names>          
-      resn <residue names>        r; 
+      resn <residue names>        r;<residue names>
       resi <residue identifiers>  i;<residue identifiers>
       chain <chain ID>            c;<chain identifiers>
       segi <segment identifiers>  s;<segment identifiers>
       elem <element symbol>       e;<element symbols>
-      flag <number>               f;
+      flag <number>               f;<number>
       alt <code>                  -
-      numeric_type <numeric type> nt; <numeric type>
-      text_type <text type>       tt; <text type>
+      numeric_type <numeric type> nt;<numeric type>
+      text_type <text type>       tt;<text type>
       b <operator> <value>        -
-      formal_charge <op> <value>  fc; <operator> <value>
-      partial_charge <op> <value> pc; <operator> <value>
+      q <operator> <value>        -
+      formal_charge <op> <value>  fc;<operator> <value>
+      partial_charge <op> <value> pc;<operator> <value>
       id <original-index>         -
    Generic 
-      hydro                       h;
+      hydrogen                    h;
       all                         *
       visible                     v;
+      hetatm                      -
    Logical
       and                         &
       or                          |
       not                         !
    Modifiers                        
-      byres <selection>           b;<selection>
+      byres <selection>           br;<selection>
       byobj <selection>           bo;<selection>
       around <distance>           a;<distance>
       expand <distance>           e;<distance>
@@ -543,7 +551,6 @@ DESCRIPTION
    "help examples" for some example selections
    '''
    help('selections')
-
 
 def sort(object=""):
    '''
@@ -640,6 +647,7 @@ NOT FINISHED YET
    finally:
       unlock()
    return r
+
 
 def mem():
    '''
@@ -792,6 +800,89 @@ NOTES
       r = _cmd.dist(str(nam),str(selection1),str(selection2),int(mode),float(cutoff))
    finally:
       unlock()
+   return r
+
+def get_view(output=1):
+   '''
+DESCRIPTION
+ 
+   "get_view" returns and optionally prints out the current view
+   information in a format which can be embedded into a command
+   script and used in subsequent calls to "set_view"
+ 
+USAGE
+
+   get_view
+   
+PYMOL API
+
+   cmd.get_view(output=1)  
+ 
+API USAGE
+
+   cmd.get_view(0) # zero option suppresses output
+'''
+   
+   r = None
+   try:
+      lock()
+      r = _cmd.get_view()
+   finally:
+      unlock()
+   if output and len(r):
+      print "### cut below here and paste into script ###"
+      print "set_view (\\"
+      print "  %14.9f, %14.9f, %14.9f,\\"%r[0:3]
+      print "  %14.9f, %14.9f, %14.9f,\\"%r[4:7]
+      print "  %14.9f, %14.9f, %14.9f,\\"%r[8:11]
+      print "  %14.9f, %14.9f, %14.9f,\\"%r[16:19]
+      print "  %14.9f, %14.9f, %14.9f,\\"%r[19:22]
+      print "  %14.9f, %14.9f, %14.9f )"%r[22:25]
+      print "### cut above here and paste into script ###"
+   r = r[0:3]+r[4:7]+r[8:11]+r[16:25]
+   return r
+
+def set_view(view):
+   '''
+DESCRIPTION
+ 
+   "set_view" sets viewing information for the current scene,
+   including the rotation matrix, position, origin of rotation,
+   clipping planes, and the orthoscopic flag.
+ 
+USAGE
+
+   set_view (...)  where ... is 18 floating point numbers
+   
+PYMOL API
+
+   cmd.set_view(string-or-sequence view)  
+ 
+'''
+   
+   r = None
+   if is_string(view):
+      try:
+         view = eval(view)
+      except:
+         print "Error: bad view argument; should be a sequence of 18 floats."
+         raise QuietException
+   if len(view)!=18:
+      print "Error: bad view argument; should be a sequence of 18 floats."
+      raise QuietException
+   else:
+      try:
+         lock()
+         r = _cmd.set_view((
+            float(view[ 0]),float(view[ 1]),float(view[ 2]),0.0,
+            float(view[ 3]),float(view[ 4]),float(view[ 5]),0.0,
+            float(view[ 6]),float(view[ 7]),float(view[ 8]),0.0,
+            0.0,0.0,0.0,1.0,
+            float(view[ 9]),float(view[10]),float(view[11]),
+            float(view[12]),float(view[13]),float(view[14]),
+            float(view[15]),float(view[16]),float(view[17])))
+      finally:
+         unlock()
    return r
 
 def bond(atom1="(lb)",atom2="(rb)",order=1):
@@ -1214,6 +1305,50 @@ EXAMPLES
    return r
 
 
+view_dict = {}
+view_sc = Shortcut(['store','recall'])
+view_dict_sc = Shortcut([])
+
+def view(key,action='recall'):
+   '''
+DESCRIPTION
+ 
+"view" makes it possible to save and restore viewpoints on a given
+scene within a single session.
+ 
+USAGE
+ 
+   view key[,action]
+   view ?
+
+   key can be any string
+   action should be 'store' or 'recall' (default: 'recall')
+   
+PYMOL API
+
+   cmd.view(string key,string action)
+   
+EXAMPLES
+
+   view 0,store
+   view 0
+  
+   '''
+   if key=='?':
+      print " view: stored views:"
+      parsing.dump_str_list(view_dict.keys())
+   else:
+      action = view_sc.auto_err(action,'action')
+      if action=='recall':
+         key = view_dict_sc.auto_err(key,'view')
+         set_view(view_dict[key])
+         if _feedback(fb_module.scene,fb_mask.blather): # redundant
+            print " view: recalled."
+      elif action=='store':
+         view_dict_sc.append(key)
+         view_dict[key]=get_view(0)
+         if _feedback(fb_module.scene,fb_mask.actions):
+            print " view: view stored as '%s'."%key
 
 def iterate_state(state,sele,expr):
    '''
@@ -1380,7 +1515,7 @@ UNDOCUMENTED
       unlock()
    return r
 
-def do(a):
+def do(commands):
    '''
 DESCRIPTION
  
@@ -1389,16 +1524,19 @@ DESCRIPTION
     
 PYMOL API
  
-   cmd.do( command )
+   cmd.do( commands )
  
 USAGE (PYTHON)
  
    from pymol import cmd
    cmd.do("load file.pdb")
    '''
+   lst = string.split(commands,"\n")
    try:
       lock()
-      r = _cmd.do(str(a));
+      for a in lst:
+         if(len(a)):
+            r = _cmd.do(a)
    finally:
       unlock()
    return r
@@ -1582,8 +1720,6 @@ NOTES
    finally:
       unlock()
    return r
-   
-
    
 def fit(selection,target):
    '''
@@ -3558,6 +3694,10 @@ EXAMPLES
  
    select near = (ll expand 8)
    select bb = (name ca,n,c,o )
+
+NOTES
+
+   'help selections' for more information about selections.
    '''
    try:
       quiet=0
@@ -4320,24 +4460,65 @@ class fb_action:
 
 fb_action_sc = Shortcut(fb_action.__dict__.keys())
 
-class fb_sysmod:
-   all =               0
-   main =              1
-   parser =            2
-   selector =          3
-   executive =         4
-   feedback =          5
-   threads =           6
+class fb_module:
 
-#define FB_Main              1   
-#define FB_Parser            2
-#define FB_Selector          3
-#define FB_Executive         4
-#define FB_Feedback          5
+# This first set represents internal C systems
+
+   all                       =0
+   isosurf                   =1
+   map                       =2
+   matrix                    =3
+   mypng                     =4
+
+   feedback                  =12
+   scene                     =13
+   threads                   =14  
+   symmetry                  =15
+   ray                       =16
+   settings                  =17
+   object                    =18
+   ortho                     =19
+
+   coordset                  =25
+   distset                   =26
+
+   objectmolecule            =30
+   objectmap                 =31
+   objectmesh                =32
+   objectdist                =33 
+   objectcgo                 =34
+   objectcallback            =35
+
+   repwirebond               =45
+   repcylbond                =46
+   replabel                  =47
+   repsphere                 =49
+   repsurface                =50
+   repmesh                   =51
+   repdot                    =52
+   repnonbonded              =53
+   repnonbondedsphere        =54
+   repdistdash               =55
+   repdistlabel              =56
+   repribbon                 =57
+
+   executive                 =70
+   selector                  =71
+   editor                    =72
+
+   export                    =75
+   cmd                       =76
+   api                       =77   
    
-#define FB_Total             6 /* total number of systems */
+   main                      =80  
 
-fb_sysmod_sc = Shortcut(fb_sysmod.__dict__.keys())
+# This second set, with negative indices
+# represent python level systems
+
+   parser                    =-1
+   cmd                       =-2
+   
+fb_module_sc = Shortcut(fb_module.__dict__.keys())
 
 class fb_mask:
    results =             0x01
@@ -4351,6 +4532,30 @@ class fb_mask:
    
 fb_mask_sc = Shortcut(fb_mask.__dict__.keys())
 
+fb_dict ={}
+
+for a in fb_module.__dict__.keys():
+   vl = getattr(fb_module,a)
+   if vl<0:
+      fb_dict[vl] = 0x1F # default mask
+
+fb_debug = sys.stderr # can redirect python debugging output elsewhere if desred...
+
+def _feedback(module,mask): # feedback test routine
+   r = 0
+   module = int(module)
+   mask = int(mask)
+   if module>0:
+      try:
+         lock()
+         r = _cmd.feedback(module,mask)
+      finally:
+         unlock()
+   else:
+      if fb_dict.has_key(module):
+         r = fb_dict[module]&mask
+   return r
+   
 def feedback(action="?",module="?",mask="?"):
    '''
 DESCRIPTION
@@ -4386,7 +4591,7 @@ EXAMPLES
          print " feedback: available actions: set, enable, disable"
       if module=="?":
          print " feedback: available modules:"
-         for a in fb_sysmod.__dict__.keys():
+         for a in fb_module.__dict__.keys():
             if a[0]!='_':
                print "   ",a
       if mask=="?":
@@ -4396,39 +4601,69 @@ EXAMPLES
                print "   ",a
    else:
 
+      # validate action
+      
       act_kee = fb_action_sc.interpret(action)
-      mod_kee = fb_sysmod_sc.interpret(module)
-      mask_kee = fb_mask_sc.interpret(mask)
-
       if act_kee == None:
          print "Error: invalid feedback action '%s'."%action
          raise QuietException
-      elif mod_kee == None:
-         print "Error: invalid feedback module '%s'."%module
-         raise QuietException         
-      elif mask_kee == None:
-         print "Error: invalid feedback mask '%s'."%mask
-         raise QuietException
-
-      if not is_string(act_kee):
+      elif not is_string(act_kee):
          print "Error: ambiguous feedback action '%s'."%action
          print action_amb
          raise QuietException
-      elif not is_string(mod_kee):
-         print "Error: ambiguous feedback module '%s'."%module
-         raise QuietException         
-      elif not is_string(mask_kee):
-         print "Error: ambiguous feedback mask '%s'."%mask
-         raise QuietException
 
-      try:
-         lock()
-         r = _cmd.set_feedback(int(getattr(fb_action,act_kee)),
-                               int(getattr(fb_sysmod,mod_kee)),
-                               int(getattr(fb_mask,mask_kee)))
-      finally:
-         unlock()
+      # validate and combine masks
+      
+      mask_int = 0
+      mask_lst = string.split(mask)
+      for mask in mask_lst:
+         mask_kee = fb_mask_sc.interpret(mask)
+         if mask_kee == None:
+            print "Error: invalid feedback mask '%s'."%mask
+            raise QuietException
+         elif not is_string(mask_kee):
+            print "Error: ambiguous feedback mask '%s'."%mask
+            raise QuietException
+         mask_int = int(getattr(fb_mask,mask_kee))
 
+      # validate and iterate modules
+      
+      mod_lst = string.split(module)
+      for module in mod_lst:
+         mod_kee = fb_module_sc.interpret(module)
+         if mod_kee == None:
+            print "Error: invalid feedback module '%s'."%module
+            raise QuietException         
+         elif not is_string(mod_kee):
+            print "Error: ambiguous feedback module '%s'."%module
+            raise QuietException         
+         act_int = int(getattr(fb_action,act_kee))
+         mod_int = int(getattr(fb_module,mod_kee))
+         if mod_int>=0:
+            try:
+               lock()
+               r = _cmd.set_feedback(act_int,mod_int,mask_int)
+            finally:
+               unlock()
+         if mod_int<=0:
+            if mod_int:
+               if act_int==0:
+                  fb_dict[mod_int] = mask_int
+               elif act_int==1:
+                  fb_dict[mod_int] = fb_dict[mod_int] | mask_int
+               elif act_int==2:
+                  fb_dict[mod_int] = fb_dict[mod_int] & ( 0xFF - mask_int )
+            else:
+               for mod_int in fb_dict.keys():
+                  if act_int==0:
+                     fb_dict[mod_int] = mask_int
+                  elif act_int==1:
+                     fb_dict[mod_int] = fb_dict[mod_int] | mask_int
+                  elif act_int==2:
+                     fb_dict[mod_int] = fb_dict[mod_int] & ( 0xFF - mask_int )
+            if _feedback(fb_module.feedback,fb_mask.debugging):
+                sys.stderr.write(" feedback: mode %d on %d mask %d\n"%(
+                   act_int,mod_int,mask_int))
    return r
 
 def alias(name,command):
@@ -4504,6 +4739,7 @@ keyword = {
    'full_screen'   : [full_screen  , 0 , 2 , ',' , parsing.STRICT ],
    'fuse'          : [fuse         , 0 , 2 , ',' , parsing.SIMPLE  ],
    'frame'         : [frame        , 1 , 1 , ',' , parsing.STRICT ],
+   'get_view'      : [get_view     , 2 , 2 , '=' , parsing.STRICT ],
    'h_add'         : [h_add        , 0 , 1 , ',' , parsing.SIMPLE  ],
    'h_fill'        : [h_fill       , 0 , 0 , ',' , parsing.SIMPLE  ],
    'help'          : [help         , 0 , 1 , ',' , parsing.SIMPLE  ],
@@ -4559,6 +4795,7 @@ keyword = {
    'set_color'     : [set_color    , 2 , 2 , '=' , parsing.SIMPLE  ],
    'set_title'     : [set_title    , 0 , 0 , ',' , parsing.STRICT ],   
    'set_key'       : [set_key      , 2 , 1 , ',' , parsing.SIMPLE  ], # API only
+   'set_view'      : [set_view     , 2 , 2 , '=' , parsing.STRICT ],   
    'show'          : [show         , 0 , 2 , ',' , parsing.SIMPLE  ],
    'sort'          : [sort         , 0 , 1 , ',' , parsing.STRICT ],
    'spawn'         : [spawn        , 1 , 2 , ',' , parsing.SPAWN  ],
@@ -4580,6 +4817,7 @@ keyword = {
    'unmask'        : [unmask       , 0 , 1 , ',' , parsing.STRICT ],
    'unprotect'     : [deprotect    , 0 , 1 , ',' , parsing.STRICT ],
    'update'        : [update       , 2 , 2 , ',' , parsing.STRICT ],
+   'view'          : [view         , 2 , 2 , ',' , parsing.STRICT ],   
    'viewport'      : [viewport     , 2 , 2 , ',' , parsing.STRICT ],
    'wizard'        : [wizard       , 1 , 1 , ',' , parsing.STRICT ],
    'zoom'          : [zoom         , 0 , 2 , ',' , parsing.STRICT ],

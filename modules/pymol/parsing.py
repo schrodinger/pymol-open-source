@@ -177,7 +177,14 @@ returns list of tuples of strings: [(None,value),(name,value)...]
                print "Error: "+st
                print "Error: "+" "*cc+"^ syntax error."
                raise QuietException
+   if cmd._feedback(cmd.fb_module.parser,cmd.fb_mask.debugging):
+      cmd.fb_debug.write(" parsing-DEBUG: tup: "+str(result)+"\n")
    return result
+
+def dump_str_list(list):
+   lst = list_to_str_list(list)
+   for a in lst:
+      print a
 
 def list_to_str_list(list,width=77,margin=2): # format strings into a list
    result = []
@@ -278,12 +285,14 @@ def prepare_call(fn,lst,mode=STRICT,name=None): # returns tuple of arg,kw or exc
       # make sure we don't have too many arguments
       if len(lst)>narg:
          if not narg:
-            print "Error: too many arguments for %s. None expected."%(name)
+            print "Error: too many arguments for %s; None expected."%(name)
          elif narg==nreq:
-            print "Error: too many arguments for %s. %d expected."%(name,nreq)
+            print "Error: too many arguments for %s; %d expected, %d found."%(
+               name,nreq,len(lst))
             dump_arg(name,arg_nam,nreq)
          else:
-            print "Error: too many arguments for %s. %d to %d expected."%(name,nreq,narg)
+            print "Error: too many arguments for %s; %d to %d expected, %d found."%(
+               name,nreq,narg,len(lst))
             dump_arg(name,arg_nam,nreq)            
          raise QuietException
       # match names to unnamed arguments to create argument dictionary
@@ -307,7 +316,8 @@ def prepare_call(fn,lst,mode=STRICT,name=None): # returns tuple of arg,kw or exc
                raise QuietException
       # return all arguments as keyword arguments
       kw = val_dct
-# time for a little testing
+   if cmd._feedback(cmd.fb_module.parser,cmd.fb_mask.debugging):
+      cmd.fb_debug.write(" parsing-DEBUG: kw: "+str(kw)+"\n")      
    return (arg,kw)
 
 
@@ -557,3 +567,4 @@ if __name__=='__main__':
 #   tv = list_to_str_list(['hello','world','this-long-string','hi','dude'])
 #   print tv
    
+import cmd
