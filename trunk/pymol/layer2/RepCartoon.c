@@ -76,7 +76,7 @@ Rep *RepCartoonNew(CoordSet *cs)
 {
   ObjectMolecule *obj;
   int a,b,a1,a2,c1,c2,*i,*s,*at,*seg,nAt,*atp,a3,a4;
-  float *v,*v0,*v1,*v2,*v3,*vo,*vn,*va;
+  float *v,*v0,*v1,*v2,*v3,*v4,*vo,*vn,*va;
   float *pv=NULL;
   float *pvo=NULL,*pva=NULL;
   float *dv=NULL;
@@ -99,6 +99,7 @@ Rep *RepCartoonNew(CoordSet *cs)
   float *v_c,*v_n,*v_o,*v_ca;
   float t0[3],t1[3],o0[12],o1[12];
   float max_dot;
+  float width,thick;
 
   OOAlloc(RepCartoon);
 
@@ -117,8 +118,11 @@ Rep *RepCartoonNew(CoordSet *cs)
   }
 
   RepInit(&I->R);
-  power_a=SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_ribbon_power);
-  power_b=SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_ribbon_power_b);
+  power_a=SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_cartoon_power);
+  power_b=SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_cartoon_power_b);
+
+  width=SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_cartoon_rect_width);
+  thick=SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_cartoon_rect_thickness);
 
   sampling = SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_cartoon_sampling);
   if(sampling<1) sampling=1;
@@ -324,7 +328,6 @@ Rep *RepCartoonNew(CoordSet *cs)
         vo+=3;
       }
 
-      if(SettingGet(cSetting_test1)<0.5) {
       /* now generate alternative orientation vectors */
 
       v1 = tv;
@@ -382,7 +385,6 @@ Rep *RepCartoonNew(CoordSet *cs)
         va+=6; /* candidate orientation vectors */
         v+=3; /* normal */
       }
-      }
     }
 
    
@@ -394,12 +396,13 @@ Rep *RepCartoonNew(CoordSet *cs)
   if(nAt) {
     ex = ExtrudeNew();
     /*ExtrudeCircle(ex,loop_quality,loop_radius);*/
-    ExtrudeRectangle(ex,0.2,1.0);
+    ExtrudeRectangle(ex,thick,width);
     
     ExtrudeAllocPointsNormalsColors(ex,cs->NIndex*(3*sampling+3));
 	 v1=pv; /* points */
 	 v2=tv; /* tangents */
 	 v3=dv; /* direction vector */
+    v4=nv; /* normal vector */
     vo=pvo;
     d = dl;
 	 s=seg;
@@ -488,7 +491,7 @@ Rep *RepCartoonNew(CoordSet *cs)
                     f0*(vo[5]*f3);     
                   vn+=3;
                   
-                  copy3f(vo,vn-6); /* starter... */
+                  copy3f(v0,vn-6); /* starter... */
                   n_p++;
 
                 }
@@ -518,6 +521,7 @@ Rep *RepCartoonNew(CoordSet *cs)
                 f2=pow(f0,power_b);
                 f3=pow(f1,power_b);
 
+
                 *(v++)=f1*(v1[0]+v2[0]*len_seg*f2)+
                   f0*(v1[3]-v2[3]*len_seg*f3);
                 *(v++)=f1*(v1[1]+v2[1]*len_seg*f2)+
@@ -525,6 +529,9 @@ Rep *RepCartoonNew(CoordSet *cs)
                 *(v++)=f1*(v1[2]+v2[2]*len_seg*f2)+
                   f0*(v1[5]-v2[5]*len_seg*f3);
 
+                remove_component3f(vo,v2,o0);
+                remove_component3f(vo+3,v2,o0+3);
+                
                 vn+=3;
                 *(vn++)=f1*(vo[0]*f2)+
                   f0*(vo[3]*f3);
@@ -533,7 +540,7 @@ Rep *RepCartoonNew(CoordSet *cs)
                 *(vn++)=f1*(vo[2]*f2)+
                   f0*(vo[5]*f3);                 
                 vn+=3;
-                 
+
                 if(b==sampling-1)
                   copy3f(vo+3,vn-6); /* starter... */                  
 					 n_p++;
@@ -543,6 +550,7 @@ Rep *RepCartoonNew(CoordSet *cs)
 		  v1+=3;
 		  v2+=3;
 		  v3+=3;
+        v4+=3;
         vo+=3;
         d++;
 		  atp+=1;
@@ -565,24 +573,24 @@ Rep *RepCartoonNew(CoordSet *cs)
 	 FreeP(nv);
 
     /*
-    CGOColor(I->std,1.0,1.0,1.0);
-    CGOEnable(I->std,GL_LIGHTING);
-    CGOBegin(I->std,GL_LINES);
-    v1=pv;
-    v2=pvo;
-    for(a=0;a<nAt;a++) 
+      CGOColor(I->std,1.0,1.0,1.0);
+      CGOEnable(I->std,GL_LIGHTING);
+      CGOBegin(I->std,GL_LINES);
+      v1=pv;
+      v2=pvo;
+      for(a=0;a<nAt;a++) 
       {
-        CGOVertexv(I->std,v1);
-        add3f(v1,v2,t0);
-        add3f(v2,t0,t0);
-        CGOVertexv(I->std,t0);
-        v1+=3;
-        v2+=3;
+      CGOVertexv(I->std,v1);
+      add3f(v1,v2,t0);
+      add3f(v2,t0,t0);
+      CGOVertexv(I->std,t0);
+      v1+=3;
+      v2+=3;
       }
-    CGOEnd(I->std);
-    CGODisable(I->std,GL_LIGHTING);
-    CGOStop(I->std);
-    */
+      CGOEnd(I->std);
+      CGODisable(I->std,GL_LIGHTING);
+      CGOStop(I->std);
+    */    
   }
 
   FreeP(at);

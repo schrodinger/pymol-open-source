@@ -102,6 +102,10 @@ class SettingIndex:
    cartoon_sampling     =91
    cartoon_loop_radius  =92
    cartoon_loop_quality =93
+   cartoon_power        =94
+   cartoon_power_b      =95
+   cartoon_rect_width   =96
+   cartoon_rect_thickness =97
    
 setting_sc = Shortcut(SettingIndex.__dict__.keys())
 

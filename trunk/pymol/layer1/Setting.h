@@ -190,6 +190,10 @@ int SettingGetName(int index,SettingName name);
 #define cSetting_cartoon_sampling     91
 #define cSetting_cartoon_loop_radius  92
 #define cSetting_cartoon_loop_quality 93
+#define cSetting_cartoon_power        94
+#define cSetting_cartoon_power_b      95
+#define cSetting_cartoon_rect_width   96
+#define cSetting_cartoon_rect_thickness 97
 
 #define cSetting_INIT                 99
 
