@@ -24,12 +24,12 @@ Z* -------------------------------------------------------------------
 
 static void FontGLUTSave(CFontGLUT *I)
 {
-  glGetIntegerv(GL_UNPACK_SWAP_BYTES, &I->swapbytes);
-  glGetIntegerv(GL_UNPACK_LSB_FIRST, &I->lsbfirst);
-  glGetIntegerv(GL_UNPACK_ROW_LENGTH, &I->rowlength);
-  glGetIntegerv(GL_UNPACK_SKIP_ROWS, &I->skiprows);
-  glGetIntegerv(GL_UNPACK_SKIP_PIXELS, &I->skippixels);
-  glGetIntegerv(GL_UNPACK_ALIGNMENT, &I->alignment);
+  glGetIntegerv(GL_UNPACK_SWAP_BYTES,(GLint*)&I->swapbytes);
+  glGetIntegerv(GL_UNPACK_LSB_FIRST, (GLint*)&I->lsbfirst);
+  glGetIntegerv(GL_UNPACK_ROW_LENGTH, (GLint*)&I->rowlength);
+  glGetIntegerv(GL_UNPACK_SKIP_ROWS, (GLint*)&I->skiprows);
+  glGetIntegerv(GL_UNPACK_SKIP_PIXELS, (GLint*)&I->skippixels);
+  glGetIntegerv(GL_UNPACK_ALIGNMENT, (GLint*)&I->alignment);
   
   glPixelStorei(GL_UNPACK_SWAP_BYTES, GL_FALSE);
   glPixelStorei(GL_UNPACK_LSB_FIRST, GL_FALSE);
