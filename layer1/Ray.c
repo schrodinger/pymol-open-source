@@ -1771,7 +1771,7 @@ void RayRender(CRay *I,int width,int height,unsigned int *image,
             z[3]	>>= 16;
 
             edge_combine(part,z,m00FF);
-q            acc=(part<<16);
+            acc=(part<<16);
             edge_combine(part,z,mFF00);
             acc+=(part<<16);
             edge_combine(part,zm,m00FF);
