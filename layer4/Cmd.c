@@ -2154,11 +2154,15 @@ static PyObject *CmdViewport(PyObject *self, 	PyObject *args)
     if((w>0)&&(h>0)) {
       if(w<10) w=10;
       if(h<10) h=10;
-      if(SettingGet(cSetting_internal_gui)) 
-        w+=(int)SettingGet(cSetting_internal_gui_width);
-      if(SettingGet(cSetting_internal_feedback))
-        h+=(int)(SettingGet(cSetting_internal_feedback)-1)*cOrthoLineHeight +
-          cOrthoBottomSceneMargin;
+      if(SettingGet(cSetting_internal_gui)) {
+        if(!SettingGet(cSetting_full_screen))
+           w+=(int)SettingGet(cSetting_internal_gui_width);
+      }
+      if(SettingGet(cSetting_internal_feedback)) {
+        if(!SettingGet(cSetting_full_screen))
+          h+=(int)(SettingGet(cSetting_internal_feedback)-1)*cOrthoLineHeight +
+            cOrthoBottomSceneMargin;
+      }
     } else {
       w=-1;
       h=-1;
