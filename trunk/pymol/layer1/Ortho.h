@@ -20,7 +20,7 @@ Z* -------------------------------------------------------------------
 #define cOrthoCTRL 2
 #define cOrthoALT 4
 
-#define cOrthoRightSceneMargin 160
+#define cOrthoRightSceneMargin 220
 #define cOrthoBottomSceneMargin 20
 #define cOrthoLineHeight 12
 

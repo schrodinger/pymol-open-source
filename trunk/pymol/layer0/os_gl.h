@@ -31,6 +31,9 @@ Z* -------------------------------------------------------------------
 #include<GL/glu.h>
 #endif
 
+#define P_GLUT_BUTTON_SCROLL_FORWARD  3
+#define P_GLUT_BUTTON_SCROLL_BACKWARD 4
+
 /* determine whether or not we have a real GLUT */
 
 #ifdef _PYMOL_NO_GLUT

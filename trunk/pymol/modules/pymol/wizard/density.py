@@ -223,5 +223,5 @@ class Density(Wizard):
             cmd.hide("labels", "(pk1)") 
             cmd.select('pk1', '_pk1')
             cmd.select('pkresi', 'byres _pk1')
-            cmd.label('(pk1)', '" %s%s %s" % (chain,resi,resn)')
+            cmd.label('(pk1)', '"  %s %s/%s/" % (resn,chain,resi)')
             self.update_maps()

@@ -75,9 +75,17 @@ void ButModeSetRate(float interval)
 {
   CButMode *I=&ButMode;
 
-  I->Samples*=0.99F;
-  I->Rate*=0.99F;
-
+  if(interval<0.001)
+    interval = 0.001F;
+  
+  if(interval>0.1F) {
+    I->Samples*=0.5F/(5.0F*interval);
+    I->Rate*=0.5F/(5.0F*interval);
+  } else {
+    I->Samples*=0.99F-interval;
+    I->Rate*=0.99F-interval;
+  }
+  
   I->Samples++;
 
   if(interval>=0.001)
@@ -112,11 +120,12 @@ void ButModeInit(void)
   I->Caption[0] = 0;
 
   I->NCode = cButModeCount;
-  I->NBut = 12;
+  I->NBut = 16;
 
   for(a=0;a<I->NBut;a++) {
     I->Mode[a]=-1;
   }
+
 
   strcpy(I->Code[cButModeRotXYZ],  "Rota ");
   strcpy(I->Code[cButModeRotZ],    "RotZ ");  
@@ -143,6 +152,8 @@ void ButModeInit(void)
   strcpy(I->Code[cButModeNone],    "  -  ");
   strcpy(I->Code[cButModeCent],    "Cent ");
   strcpy(I->Code[cButModePkTorBnd], "PkTB");
+  strcpy(I->Code[cButModeScaleSlab], "ScSb");
+  strcpy(I->Code[cButModeMoveSlab], "MvSb");
 
   I->Block = OrthoNewBlock(NULL);
   I->Block->fClick = ButModeClick;
@@ -169,6 +180,8 @@ void ButModeInit(void)
   OrthoAttach(I->Block,cOrthoTool);
 
 }
+
+
 /*========================================================================*/
 int ButModeTranslate(int button, int mod)
 {
@@ -183,6 +196,39 @@ int ButModeTranslate(int button, int mod)
     break;
   case P_GLUT_RIGHT_BUTTON:
     mode = 2;
+    break;
+  case P_GLUT_BUTTON_SCROLL_FORWARD:
+  case P_GLUT_BUTTON_SCROLL_BACKWARD:
+    switch(mod) {
+    case 0:
+      mode = 12;
+      break;
+    case cOrthoSHIFT:
+      mode = 13;
+      break;
+    case cOrthoCTRL:
+      mode = 14;
+      break;
+    case (cOrthoCTRL+cOrthoSHIFT):
+      mode = 15;
+    }
+    switch(I->Mode[mode]) {
+    case cButModeScaleSlab:
+      if(button==P_GLUT_BUTTON_SCROLL_FORWARD) {
+        return cButModeScaleSlabExpand;
+      } else {
+        return cButModeScaleSlabShrink;
+      }
+      break;
+    case cButModeMoveSlab:
+      if(button==P_GLUT_BUTTON_SCROLL_FORWARD) {
+        return cButModeMoveSlabForward;
+      } else {
+        return cButModeMoveSlabBackward;
+      }
+      break;
+    }
+    return -1;
     break;
   }
   switch(mod) {
@@ -232,14 +278,17 @@ void ButModeDraw(Block *block)
     x = I->Block->rect.left+cButModeLeftMargin;
     y = (I->Block->rect.top-cButModeLineHeight)-cButModeTopMargin;
 
-    GrapDrawStr("Mouse:",x+1,y);
+    GrapDrawStr("Buttons ",x+1,y);
     glColor3fv(I->TextColor1);
-    GrapDrawStr("  L    M    R",x+40,y);
+    GrapDrawStr("  Left Mddl Rght Scrl",x+48,y);
 
     y-=cButModeLineHeight;
-    GrapDrawStr("None ",x,y);
+    glColor3fv(I->Block->TextColor);
+    GrapDrawStr("K",x,y-4);
+    glColor3fv(I->TextColor1);
+    GrapDrawStr("None ",x+24,y);
     glColor3fv(I->TextColor2);
-    glRasterPos4d(x+40,y,0,1);
+    glRasterPos4d(x+64,y,0,1);
     for(a=0;a<3;a++) {
       mode = I->Mode[a];
       if(mode<0)
@@ -247,12 +296,21 @@ void ButModeDraw(Block *block)
       else
         GrapContStr(I->Code[mode]);
     }
+    mode = I->Mode[12];
+    if(mode<0)
+      GrapContStr("    ");
+    else 
+      GrapContStr(I->Code[mode]);
 
     y-=cButModeLineHeight;
+    glColor3fv(I->Block->TextColor);
+    GrapDrawStr("e",x+5,y-1);
     glColor3fv(I->TextColor1);
-    GrapDrawStr("Shft ",x,y);
+
+    glColor3fv(I->TextColor1);
+    GrapDrawStr("Shft ",x+24,y);
     glColor3fv(I->TextColor2);
-    glRasterPos4d(x+40,y,0,1);
+    glRasterPos4d(x+64,y,0,1);
     for(a=3;a<6;a++) {
       mode = I->Mode[a];
       if(mode<0)
@@ -260,12 +318,19 @@ void ButModeDraw(Block *block)
       else 
         GrapContStr(I->Code[mode]);
     }
+    mode = I->Mode[13];
+    if(mode<0)
+      GrapContStr("    ");
+    else 
+      GrapContStr(I->Code[mode]);
 
     y-=cButModeLineHeight;
+    glColor3fv(I->Block->TextColor);
+    GrapDrawStr("y",x+10,y+2);
     glColor3fv(I->TextColor1);
-    GrapDrawStr("Ctrl ",x,y);
+    GrapDrawStr("Ctrl ",x+24,y);
     glColor3fv(I->TextColor2);
-    glRasterPos4d(x+40,y,0,1);
+    glRasterPos4d(x+64,y,0,1);
     for(a=6;a<9;a++) {
       mode = I->Mode[a];
       if(mode<0)
@@ -273,12 +338,20 @@ void ButModeDraw(Block *block)
       else
         GrapContStr(I->Code[mode]);
     }
+    mode = I->Mode[14];
+    if(mode<0)
+      GrapContStr("    ");
+    else 
+      GrapContStr(I->Code[mode]);
 
     y-=cButModeLineHeight;
+    glColor3fv(I->Block->TextColor);
+    GrapDrawStr("s",x+15,y+3);
     glColor3fv(I->TextColor1);
-    GrapDrawStr("CtSh ",x,y);
+    glColor3fv(I->TextColor1);
+    GrapDrawStr("CtSh ",x+24,y);
     glColor3fv(I->TextColor2);
-    glRasterPos4d(x+40,y,0,1);
+    glRasterPos4d(x+64,y,0,1);
     for(a=9;a<12;a++) {
       mode = I->Mode[a];
       if(mode<0)
@@ -286,8 +359,15 @@ void ButModeDraw(Block *block)
       else
         GrapContStr(I->Code[mode]);
     }
+    mode = I->Mode[14];
+    if(mode<0)
+      GrapContStr("    ");
+    else 
+      GrapContStr(I->Code[mode]);
+
     glColor3fv(I->Block->TextColor);
     y-=cButModeLineHeight;
+
 
     glColor3fv(I->TextColor3);
     if(I->Caption[0]) GrapDrawStr(I->Caption,x,y);
@@ -301,8 +381,8 @@ void ButModeDraw(Block *block)
     nf = SceneGetNFrame();
     if(nf==0)
       nf=1;
-    sprintf(rateStr,"Frame[%3d/%3d] %d/s",SceneGetFrame()+1,
-            nf,(int)rate);
+    sprintf(rateStr,"Frame [%3d/%3d] %d/sec",SceneGetFrame()+1,
+            nf,(int)(rate+0.5F));
     GrapDrawStr(rateStr,x,y);
 
   }

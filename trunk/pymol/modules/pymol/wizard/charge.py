@@ -68,7 +68,7 @@ class Charge(Wizard):
       if 'wcharge' in cmd.get_names('selections'):
          if self.mode!='sumchg':
             cmd.edit("wcharge")
-            cmd.label("pkchain",'') # fastest clear command
+            cmd.label("pkmol",'') # fastest clear command
          else:
             cmd.label("wcharge",'') # fastest clear command            
          cmd.delete("wcharge")
@@ -286,10 +286,10 @@ class Charge(Wizard):
                
       if self.mode == 'sumchg':
          pymol.stored.charge = 0.0
-         if cmd.iterate("(pkchain)","stored.charge = stored.charge + partial_charge"):
+         if cmd.iterate("(pkmol)","stored.charge = stored.charge + partial_charge"):
             self.partial_charge = pymol.stored.charge
             self.status = 1
-            cmd.select("wcharge","(pkchain)")
+            cmd.select("wcharge","(pkmol)")
             cmd.unpick()
             cmd.enable("wcharge")
          

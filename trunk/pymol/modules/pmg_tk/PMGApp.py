@@ -647,29 +647,29 @@ class PMGApp(AbstractApp):
                         label=self.pad+'Reinitialize',
                         command=cmd.reinitialize)
 
-      self.menuBar.addmenuitem('File', 'separator', '')
+#      self.menuBar.addmenuitem('File', 'separator', '')
       
-      self.menuBar.addmenuitem('File', 'checkbutton',
-                         'Log Conformations.',
-                         label=self.pad+'Log Conformations',
-                        variable = self.setting.log_conformations,
-                        command = lambda s=self: s.setting.update('log_conformations'))
+#      self.menuBar.addmenuitem('File', 'checkbutton',
+#                         'Log Conformations.',
+#                         label=self.pad+'Log Conformations',
+#                        variable = self.setting.log_conformations,
+#                        command = lambda s=self: s.setting.update('log_conformations'))
 
-      self.menuBar.addmenuitem('File', 'checkbutton',
-                         'Log Box Selections.',
-                         label=self.pad+'Log Box Selections',
-                        variable = self.setting.log_box_selections,
-                        command = lambda s=self: s.setting.update('log_box_selections'))
+#      self.menuBar.addmenuitem('File', 'checkbutton',
+#                         'Log Box Selections.',
+#                         label=self.pad+'Log Box Selections',
+#                        variable = self.setting.log_box_selections,
+#                        command = lambda s=self: s.setting.update('log_box_selections'))
 
       self.menuBar.addmenuitem('Edit', 'command',
-                         'To Copy: Use Ctrl-C',
-                         label='To copy text use Ctrl-C',
+                         'To Copy: Use Ctrl-C in TclTk GUI',
+                         label='To copy text use Ctrl-C in the TclTk GUI',
                                state='disabled',
                         command =  None)
 
       self.menuBar.addmenuitem('Edit', 'command',
-                         'To Paste, Use Ctrl-V',
-                         label='To paste text use Ctrl-V',
+                         'To Paste, Use Ctrl-V in TclTk GUI',
+                         label='To paste text use Ctrl-V in the TckTk GUI',
                                state='disabled',                               
                         command =  None)
 
@@ -682,54 +682,6 @@ class PMGApp(AbstractApp):
       self.menuBar.addmenuitem('Edit', 'command', 'Redo Conformation',
                                label='Redo Conformation [Ctrl-A]',
                                command = lambda: cmd.do("_ redo"))
-
-      self.menuBar.addmenuitem('Edit', 'separator', '')
-      
-      self.menuBar.addmenuitem('Edit', 'command', 'Cycle Bond Valence',
-                               label='Cycle Bond Valence [Ctrl-W]',
-                               command = lambda: cmd.do("_ cycle_valence"))
-
-      self.menuBar.addmenuitem('Edit', 'command', 'Fill Hydrogens',
-                               label='Fill Hydrogens on (pk1) [Ctrl-R]',
-                               command = lambda: cmd.do("_ h_fill"))
-
-      self.menuBar.addmenuitem('Edit', 'command', 'Invert',
-                               label='Invert (lb)-(pk1)-(rb) [Ctrl-E]',
-                               command = lambda: cmd.do("_ invert"))
-
-      self.menuBar.addmenuitem('Edit', 'command', 'Form Bond',
-                               label='Create Bond (lb)-(rb) [Ctrl-T]',
-                               command = lambda: cmd.do("_ bond"))
-
-
-      self.menuBar.addmenuitem('Edit', 'separator', '')
-
-      
-      self.menuBar.addmenuitem('Edit', 'command', 'Remove (pk1)',
-                               label='Remove (pk1) [Ctrl-D]',
-                               command = lambda: cmd.do("_ remove pk1"))
-
-      self.menuBar.addmenuitem('Edit', 'command', 'Remove (pkfrag1)',
-                               label='Remove (pkfrag1) [Ctrl-X]',
-                               command = lambda: cmd.do("_ remove pkfrag1"))
-
-      self.menuBar.addmenuitem('Edit', 'command', 'Remove (pkchain)',
-                               label='Remove (pkchain)',
-                               command = lambda: cmd.do("_ remove pkchain"))
-
-      self.menuBar.addmenuitem('Edit', 'separator', '')
-      
-      self.menuBar.addmenuitem('Edit', 'command', 'Make Positive',
-                               label='Make (pk1) Positive [Ctrl-K]',
-                               command = lambda: cmd.do("_ alter pk1,formal_charge=1.0"))
-
-      self.menuBar.addmenuitem('Edit', 'command', 'Make Negative',
-                               label='Make (pk1) Negative [Ctrl-J]',
-                               command = lambda: cmd.do("_ alter pk1,formal_charge=-1.0"))
-
-      self.menuBar.addmenuitem('Edit', 'command', 'Make Neutral',
-                               label='Make (pk1) Neutral',
-                               command = lambda: cmd.do("_ alter pk1,formal_charge=-0.0"))
 
       self.menuBar.addmenu('Build', 'Build',tearoff=TRUE)
 
@@ -963,6 +915,56 @@ class PMGApp(AbstractApp):
       self.menuBar.addmenuitem('Residue', 'command', 'Parallel Beta Sheet',
                                label='Parallel Beta Sheet',
                                command = lambda: cmd.do("_ set secondary_structure,3"))
+
+
+      self.menuBar.addmenuitem('Build', 'separator', '')
+      
+      self.menuBar.addmenuitem('Build', 'command', 'Cycle Bond Valence',
+                               label='Cycle Bond Valence [Ctrl-W]',
+                               command = lambda: cmd.do("_ cycle_valence"))
+
+      self.menuBar.addmenuitem('Build', 'command', 'Fill Hydrogens',
+                               label='Fill Hydrogens on (pk1) [Ctrl-R]',
+                               command = lambda: cmd.do("_ h_fill"))
+
+      self.menuBar.addmenuitem('Build', 'command', 'Invert',
+                               label='Invert (lb)-(pk1)-(rb) [Ctrl-E]',
+                               command = lambda: cmd.do("_ invert"))
+
+      self.menuBar.addmenuitem('Build', 'command', 'Form Bond',
+                               label='Create Bond (lb)-(rb) [Ctrl-T]',
+                               command = lambda: cmd.do("_ bond"))
+
+
+      self.menuBar.addmenuitem('Build', 'separator', '')
+
+      
+      self.menuBar.addmenuitem('Build', 'command', 'Remove (pk1)',
+                               label='Remove (pk1) [Ctrl-D]',
+                               command = lambda: cmd.do("_ remove pk1"))
+
+      self.menuBar.addmenuitem('Build', 'command', 'Remove (pkfrag1)',
+                               label='Remove (pkfrag1) [Ctrl-X]',
+                               command = lambda: cmd.do("_ remove pkfrag1"))
+
+      self.menuBar.addmenuitem('Build', 'command', 'Remove (pkchain)',
+                               label='Remove (pkchain)',
+                               command = lambda: cmd.do("_ remove pkchain"))
+
+      self.menuBar.addmenuitem('Build', 'separator', '')
+      
+      self.menuBar.addmenuitem('Build', 'command', 'Make Positive',
+                               label='Make (pk1) Positive [Ctrl-K]',
+                               command = lambda: cmd.do("_ alter pk1,formal_charge=1.0"))
+
+      self.menuBar.addmenuitem('Build', 'command', 'Make Negative',
+                               label='Make (pk1) Negative [Ctrl-J]',
+                               command = lambda: cmd.do("_ alter pk1,formal_charge=-1.0"))
+
+      self.menuBar.addmenuitem('Build', 'command', 'Make Neutral',
+                               label='Make (pk1) Neutral',
+                               command = lambda: cmd.do("_ alter pk1,formal_charge=-0.0"))
+
 
       self.menuBar.addmenu('Movie', 'Movie Control',tearoff=TRUE)
 

@@ -54,7 +54,7 @@ typedef struct {
 
 CWizard Wizard;
 
-#define cWizardLineHeight 14
+#define cWizardLineHeight 18
 #define cWizardLeftMargin 2
 #define cWizardTopMargin (-1)
 #define cWizardClickOffset 4
@@ -328,6 +328,48 @@ static int WizardRelease(Block *block,int button,int x,int y,int mod)
   }
   return(1);
 }
+
+static void draw_button(int x2,int y2, int w, int h, float *light, float *dark, float *inside)
+{
+  glColor3fv(light);
+  glBegin(GL_POLYGON);
+  glVertex2i(x2,y2);
+  glVertex2i(x2,y2+h);
+  glVertex2i(x2+w,y2+h);
+  glVertex2i(x2+w,y2);
+  glEnd();
+  
+  glColor3fv(dark);
+  glBegin(GL_POLYGON);
+  glVertex2i(x2+1,y2);
+  glVertex2i(x2+1,y2+h-1);
+  glVertex2i(x2+w,y2+h-1);
+  glVertex2i(x2+w,y2);
+  glEnd();
+  
+  if(inside) {
+    glColor3fv(inside);
+    glBegin(GL_POLYGON);
+    glVertex2i(x2+1,y2+1);
+    glVertex2i(x2+1,y2+h-1);
+    glVertex2i(x2+w-1,y2+h-1);
+    glVertex2i(x2+w-1,y2+1);
+    glEnd();
+  } else { /* rainbow */
+    glBegin(GL_POLYGON);
+    glColor3f(1.0F,0.1F,0.1F);
+    glVertex2i(x2+1,y2+1);
+    glColor3f(0.1F,1.0F,0.1F);
+    glVertex2i(x2+1,y2+h-1);
+    glColor3f(1.0F,1.0F,0.1F);
+    glVertex2i(x2+w-1,y2+h-1);
+    glColor3f(0.1F,0.1F,1.0F);
+    glVertex2i(x2+w-1,y2+1);
+    glEnd();
+  }
+
+}
+
 /*========================================================================*/
 static void WizardDraw(Block *block)
 {
@@ -338,8 +380,16 @@ static void WizardDraw(Block *block)
   float buttonTextColor[3] = { 1.0,1.0,1.0 };
   float buttonActiveColor[3] = { 0.8F,0.8F,0.8F };
   
-  float dimColor[3] = {0.3F, 0.3F,0.3F};
+  float dimColor[3] = {0.45F, 0.45F,0.45F};
+
+  float dimLightEdge[3] = {0.6F, 0.6F,0.6F};
+  float dimDarkEdge[3] = {0.25F, 0.25F,0.25F};
+
   float menuBGColor[3] = {0.5F, 0.5F,1.0};
+  float menuLightEdge[3] = {0.7,0.7,0.9F};
+  float menuDarkEdge[3] = {0.3,0.3,0.5F};
+
+  
   float menuColor[3] = { 0.0,0.0,0.0};
 
   if(PMGUI) {
@@ -353,13 +403,12 @@ static void WizardDraw(Block *block)
 
     for(a=0;a<I->NLine;a++) {
       if(I->Pressed==a) {
-        glColor3fv(buttonActiveColor);
-        glBegin(GL_POLYGON);
-        glVertex2i(I->Block->rect.left,y+cWizardLineHeight-3);
-        glVertex2i(I->Block->rect.right,y+cWizardLineHeight-3);
-        glVertex2i(I->Block->rect.right,y-2);
-        glVertex2i(I->Block->rect.left,y-2);
-        glEnd();
+          draw_button(I->Block->rect.left+1,y-2,
+                      (I->Block->rect.right-I->Block->rect.left)-1,
+                      cWizardLineHeight-1,
+                      dimLightEdge,
+                      dimDarkEdge,
+                      buttonActiveColor);
         glColor3f(0.0,0.0,0.0);
       } else {
         switch(I->Line[a].type) {
@@ -368,31 +417,30 @@ static void WizardDraw(Block *block)
           glColor3fv(I->Block->TextColor);
           break;
         case cWizTypeButton:
-          glColor3fv(dimColor);
-          glBegin(GL_POLYGON);
-          glVertex2i(I->Block->rect.left,y+cWizardLineHeight-3);
-          glVertex2i(I->Block->rect.right,y+cWizardLineHeight-3);
-          glVertex2i(I->Block->rect.right,y-2);
-          glVertex2i(I->Block->rect.left,y-2);
-          glEnd();
+          draw_button(I->Block->rect.left+1,y-2,
+                      (I->Block->rect.right-I->Block->rect.left)-1,
+                      cWizardLineHeight-1,
+                      dimLightEdge,
+                      dimDarkEdge,
+                      dimColor);
+
           glColor3fv(buttonTextColor);
 
          break;
         case cWizTypePopUp:
-          glColor3fv(menuBGColor);
-          glBegin(GL_POLYGON);
-          glVertex2i(I->Block->rect.left,y+cWizardLineHeight-3);
-          glVertex2i(I->Block->rect.right,y+cWizardLineHeight-3);
-          glVertex2i(I->Block->rect.right,y-2);
-          glVertex2i(I->Block->rect.left,y-2);
-          glEnd();
+          draw_button(I->Block->rect.left+1,y-2,
+                      (I->Block->rect.right-I->Block->rect.left)-1,
+                      cWizardLineHeight-1,
+                      menuLightEdge,
+                      menuDarkEdge,
+                      menuBGColor);
           glColor3fv(menuColor);
           break;
         default:
           break;
         }
       }
-      GrapDrawStr(I->Line[a].text,x,y);
+      GrapDrawStr(I->Line[a].text,x+1,y+2);
       y-=cWizardLineHeight;
     }
   }

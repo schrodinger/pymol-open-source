@@ -44,8 +44,16 @@ Z* -------------------------------------------------------------------
 #define cButModeNone     22
 #define cButModeCent     23
 #define cButModePkTorBnd 24
+#define cButModeScaleSlab 25
+#define cButModeMoveSlab  26
+#define cButModeSlabMove  27
+#define cButModeCount    28
 
-#define cButModeCount    25
+#define cButModeScaleSlabShrink 101
+#define cButModeScaleSlabExpand 102
+#define cButModeMoveSlabForward 103
+#define cButModeMoveSlabBackward 104
+
 
 typedef char CodeType[25];
 
@@ -53,7 +61,7 @@ typedef struct {
   Block *Block;
   CodeType Code[cButModeCount+1];
   int NCode;
-  int Mode[12];
+  int Mode[16];
   int NBut;
   float Rate;
   float Samples;

@@ -26,12 +26,12 @@ def attach_fragment(selection,fragment,hydrogen,anchor):
       if cmd.count_atoms("((%s) and elem h)"%selection,quiet=1):
          cmd.fuse("(%s and id %d)"%(tmp_editor,hydrogen),"(pk1)",1)
          if cmd.get_setting_legacy("auto_remove_hydrogens"):
-            cmd.remove("(hydro and pkchain)")            
+            cmd.remove("(hydro and pkmol)")            
       else:
          cmd.remove("(%s and id %d)"%(tmp_editor,hydrogen))
          cmd.fuse("(%s and id %d)"%(tmp_editor,anchor),"(pk1)",1)
          if cmd.get_setting_legacy("auto_remove_hydrogens"):
-            cmd.remove("(hydro and pkchain)")            
+            cmd.remove("(hydro and pkmol)")            
       cmd.delete(tmp_editor)
       
 def attach_amino_acid(selection,amino_acid):
@@ -68,7 +68,7 @@ def attach_amino_acid(selection,amino_acid):
          cmd.alter(tmp_editor,"resi=stored.resi")
          cmd.fuse("(%s and name C)"%(tmp_editor),"(pk1)",2)
          if cmd.get_setting_legacy("auto_remove_hydrogens"):
-            cmd.remove("(pkchain and hydro)")
+            cmd.remove("(pkmol and hydro)")
          cmd.set_dihedral("(name ca and neighbor pk2)","(pk2)","(pk1)","(name ca,ch3 and neighbor pk1)",180.0)
          cmd.set_geometry("pk2",3,3) # make nitrogen planer
          if ss:
@@ -102,7 +102,7 @@ def attach_amino_acid(selection,amino_acid):
          cmd.alter(tmp_editor,"resi=stored.resi")
          cmd.fuse("(%s and name N)"%(tmp_editor),"(pk1)",2)
          if cmd.get_setting_legacy("auto_remove_hydrogens"):
-            cmd.remove("(pkchain and hydro)")
+            cmd.remove("(pkmol and hydro)")
          cmd.set_dihedral("(name ca and neighbor pk2)","(pk2)","(pk1)","(name ca,ch3 and neighbor pk1)",180.0)
          cmd.set_geometry("pk1",3,3) # make nitrogen planer
          if ss:

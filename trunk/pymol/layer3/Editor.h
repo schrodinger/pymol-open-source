@@ -25,7 +25,9 @@ Z* -------------------------------------------------------------------
 #define cEditorFragPref "pkfrag"
 #define cEditorBasePref "_pkbase"
 #define cEditorRes    "pkresi"
-#define cEditorComp   "pkchain"
+#define cEditorChain  "pkchain"
+#define cEditorObject "pkobject"
+#define cEditorComp   "pkmol"
 
 void EditorInit(void);
 int EditorActive(void); 

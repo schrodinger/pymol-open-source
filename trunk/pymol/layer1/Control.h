@@ -26,6 +26,7 @@ typedef struct {
   int ExtraSpace;
   float ButtonColor[3];
   float ActiveColor[3];
+  int Pressed,Active;
 }  CControl;
 
 extern CControl Control;

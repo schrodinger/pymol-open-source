@@ -429,6 +429,23 @@ void SceneClip(int plane,float movement,char *sele,int state) /* 0=front, 1=back
       }
     }
     break;
+  case 5: /* scaling */
+    {
+      float width = I->Front-I->Back;
+      float new_width = movement * width;
+      float avg = (I->Front+I->Back)/2;
+      float new_front = avg+new_width/2.0F;
+      float new_back = avg-new_width/2.0F;
+      
+      SceneClipSet(new_front,new_back);
+    }
+    break;
+  case 6: /* proportional movement */
+    {
+      float shift = (I->Front-I->Back)*movement;
+      SceneClipSet(I->Front+shift,I->Back+shift);    
+    }
+    break;
   }
 }
 /*========================================================================*/
@@ -1263,6 +1280,96 @@ int SceneRelease(Block *block,int button,int x,int y,int mod)
   return(1);
 }
 /*========================================================================*/
+static void do_roving(float old_front,float old_back,float old_origin,int adjust_flag)
+{
+  if((int)SettingGet(cSetting_roving_origin)) {
+
+    CScene *I=&Scene;
+    float delta_front,delta_back;
+    float front_weight,back_weight,slab_width;
+    float z_buffer = 3.0;
+    float old_pos2 = 0.0F;
+    float v2[3];
+
+    z_buffer = SettingGet(cSetting_roving_origin_z_cushion);
+    
+    delta_front = I->Front - old_front;
+    delta_back = I->Back - old_back;
+    
+    zero3f(v2);
+    
+    slab_width = I->Back - I->Front;
+    
+    /* first, check to make sure that the origin isn't too close to either plane */
+    if((z_buffer*2)>slab_width)
+      z_buffer = slab_width*0.5F;      
+    
+    if(old_origin<(I->Front+z_buffer)) { /* old origin behind front plane */
+      front_weight = 1.0F;
+      delta_front = (I->Front+z_buffer)-old_origin; /* move origin into allowed regioin */
+    } else if(old_origin>(I->Back-z_buffer)) { /* old origin was behind back plane */
+      front_weight = 0.0F;
+      delta_back = (I->Back-z_buffer)-old_origin;
+      
+    } else if(slab_width>=R_SMALL4) { /* otherwise, if slab exists */
+      front_weight = (old_back-old_origin)/slab_width; /* weight based on relative proximity */
+    } else {
+      front_weight = 0.5F;
+    }
+    
+    back_weight = 1.0F - front_weight;
+    
+    if((front_weight>0.2)&&(back_weight>0.2)) { /* origin not near edge */
+      if(delta_front*delta_back>0.0F) { /* planes moving in same direction */
+        if(fabs(delta_front)>fabs(delta_back)) { /* so stick with whichever moves less */
+          v2[2] = delta_back;
+        } else {
+          v2[2] = delta_front;
+        }
+      } else {
+        /* planes moving in opposite directions (increasing slab size) */
+        /* don't move origin */
+      }
+    } else { /* origin is near edge -- move origin with plane having highest weight */
+      if(front_weight<back_weight) {
+        v2[2] = delta_back;
+      } else {
+        v2[2] = delta_front;
+      }
+    }
+    if(SettingGet(cSetting_ortho)) { 
+      old_pos2 = I->Pos[2];
+      /* we're orthoscopic, so we don't want the effective field of view 
+         to change.  Thus, we have to hold Pos[2] constant, and instead
+         move the planes.
+      */
+    }
+    MatrixInvTransform3f(I->RotMatrix,v2,v2); /* transform offset into realspace */
+    subtract3f(I->Origin,v2,v2); /* calculate new origin location */
+    SceneOriginSet(v2,true); /* move origin, preserving camera location */
+    
+    if(SettingGet(cSetting_ortho)) { 
+      float delta = old_pos2-I->Pos[2];
+      I->Pos[2] += delta;
+      SceneClipSet( I->Front - delta, I->Back - delta );
+    }
+    
+    slab_width = I->Back - I->Front;
+    
+    /* first, check to make sure that the origin isn't too close to either plane */
+    if((z_buffer*2)>slab_width)
+      z_buffer = slab_width*0.5F;      
+    
+  }
+  if((adjust_flag)&&(int)SettingGet(cSetting_roving_detail)) {    
+    SceneRovingPostpone();
+  }
+  if(SettingGet(cSetting_roving_detail)) {    
+    SceneRovingDirty();
+  }
+}
+
+/*========================================================================*/
 int SceneClick(Block *block,int button,int x,int y,int mod)
 {
   CScene *I=&Scene;
@@ -1277,6 +1384,31 @@ int SceneClick(Block *block,int button,int x,int y,int mod)
   I->SculptingSave = 0;
 
   switch(mode) {
+  case cButModeScaleSlabExpand:
+    SceneClip(5,1.2F,NULL,0);
+    break;
+  case cButModeScaleSlabShrink:
+    SceneClip(5,0.8F,NULL,0);
+    break;
+  case cButModeMoveSlabForward:
+
+    {
+      float old_front = I->Front;
+      float old_back = I->Back;
+      float old_origin = -I->Pos[2];
+      SceneClip(6,0.1F,NULL,0);
+      do_roving(old_front,old_back,old_origin,true);
+    }
+    break;
+  case cButModeMoveSlabBackward:
+    {
+      float old_front = I->Front;
+      float old_back = I->Back;
+      float old_origin = -I->Pos[2];
+      SceneClip(6,-0.1F,NULL,0);
+      do_roving(old_front,old_back,old_origin,true);
+    }
+    break;
   case cButModeRectAdd:
   case cButModeRectSub:
   case cButModeRect:
@@ -1339,6 +1471,8 @@ int SceneClick(Block *block,int button,int x,int y,int mod)
                               SettingGetGlobal_i(cSetting_state)-1);
         if(EditorActive()) {
           SelectorCreate(cEditorRes,"(byres pk1)",NULL,true,NULL);
+          SelectorCreate(cEditorChain,"(bychain pk1)",NULL,true,NULL);
+          SelectorCreate(cEditorObject,"(byobject pk1)",NULL,true,NULL);
           if(SettingGet(cSetting_auto_hide_selections))
             ExecutiveHideSelections();
         }
@@ -2009,6 +2143,8 @@ void SceneRovingUpdate(void)
     I->RovingDirtyFlag=false;
   } 
 }
+
+
 /*========================================================================*/
 int SceneDrag(Block *block,int x,int y,int mod)
 {
@@ -2213,7 +2349,7 @@ int SceneDrag(Block *block,int x,int y,int mod)
 	 cross_product3f(n1,n2,cp);
     omega = (float)(2*180*asin(sqrt1f(cp[0]*cp[0]+cp[1]*cp[1]+cp[2]*cp[2]))/cPI);
 	 normalize23f(cp,axis2);	 
-    /*    old_z = (I->Back + I->FrontSafe )/ 2.0F;*/
+
     old_front = I->Front;
     old_back = I->Back;
     old_origin = -I->Pos[2];
@@ -2330,90 +2466,8 @@ int SceneDrag(Block *block,int x,int y,int mod)
 		  }
 		break;
     }
-    if(moved_flag&&(int)SettingGet(cSetting_roving_origin)) {
-
-      float delta_front,delta_back;
-      float front_weight,back_weight,slab_width;
-      float z_buffer = 3.0;
-      float old_pos2 = 0.0F;
-
-      z_buffer = SettingGet(cSetting_roving_origin_z_cushion);
-
-      delta_front = I->Front - old_front;
-      delta_back = I->Back - old_back;
-
-      zero3f(v2);
-
-      slab_width = I->Back - I->Front;
-      
-      /* first, check to make sure that the origin isn't too close to either plane */
-      if((z_buffer*2)>slab_width)
-        z_buffer = slab_width*0.5F;      
-
-      if(old_origin<(I->Front+z_buffer)) { /* old origin behind front plane */
-        front_weight = 1.0F;
-        delta_front = (I->Front+z_buffer)-old_origin; /* move origin into allowed regioin */
-      } else if(old_origin>(I->Back-z_buffer)) { /* old origin was behind back plane */
-        front_weight = 0.0F;
-        delta_back = (I->Back-z_buffer)-old_origin;
-
-      } else if(slab_width>=R_SMALL4) { /* otherwise, if slab exists */
-        front_weight = (old_back-old_origin)/slab_width; /* weight based on relative proximity */
-      } else {
-        front_weight = 0.5F;
-      }
-
-      back_weight = 1.0F - front_weight;
-
-      if((front_weight>0.2)&&(back_weight>0.2)) { /* origin not near edge */
-        if(delta_front*delta_back>0.0F) { /* planes moving in same direction */
-          if(fabs(delta_front)>fabs(delta_back)) { /* so stick with whichever moves less */
-            v2[2] = delta_back;
-          } else {
-            v2[2] = delta_front;
-          }
-        } else {
-          /* planes moving in opposite directions (increasing slab size) */
-          /* don't move origin */
-        }
-      } else { /* origin is near edge -- move origin with plane having highest weight */
-        if(front_weight<back_weight) {
-          v2[2] = delta_back;
-        } else {
-          v2[2] = delta_front;
-        }
-      }
-      if(SettingGet(cSetting_ortho)) { 
-        old_pos2 = I->Pos[2];
-        /* we're orthoscopic, so we don't want the effective field of view 
-           to change.  Thus, we have to hold Pos[2] constant, and instead
-           move the planes.
-        */
-      }
-      MatrixInvTransform3f(I->RotMatrix,v2,v2); /* transform offset into realspace */
-      subtract3f(I->Origin,v2,v2); /* calculate new origin location */
-      SceneOriginSet(v2,true); /* move origin, preserving camera location */
-      
-      if(SettingGet(cSetting_ortho)) { 
-        float delta = old_pos2-I->Pos[2];
-        I->Pos[2] += delta;
-        SceneClipSet( I->Front - delta, I->Back - delta );
-      }
-
-      slab_width = I->Back - I->Front;
-      
-      /* first, check to make sure that the origin isn't too close to either plane */
-      if((z_buffer*2)>slab_width)
-        z_buffer = slab_width*0.5F;      
-
-    }
-    if((adjust_flag)&&(int)SettingGet(cSetting_roving_detail)) {    
-      SceneRovingPostpone();
-    }
-    if((moved_flag)&&(int)SettingGet(cSetting_roving_detail)) {    
-      SceneRovingDirty();
-    }
-
+    if(moved_flag)
+      do_roving(old_front,old_back,old_origin,adjust_flag);
   }
   return(1);
 }
