@@ -81,6 +81,7 @@ int PyMOLReady = false;
 int PMGUI = true;
 int StereoCapable=false;
 int InternalGUI=true;
+int ShowSplash=true;
 
 void launch(void);
 
@@ -297,7 +298,7 @@ static void MainInit(void)
   SettingInit();  
   SphereInit();
   ColorInit();
-  OrthoInit();
+  OrthoInit(ShowSplash);
   SelectorInit();
   MovieInit();
   SceneInit();
@@ -513,7 +514,7 @@ int was_main(void)
 
 #endif  
 
-  PGetOptions(&PMGUI,&InternalGUI,&StereoCapable);
+  PGetOptions(&PMGUI,&InternalGUI,&StereoCapable,&ShowSplash);
 
   launch();
 

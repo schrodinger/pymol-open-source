@@ -398,7 +398,7 @@ void PInitEmbedded(int argc,char **argv)
 
 }
 
-void PGetOptions(int *pmgui,int *internal_gui,int *stereo_capable)
+void PGetOptions(int *pmgui,int *internal_gui,int *stereo_capable,int *show_splash)
 {
   PyObject *pymol,*invocation,*options;
 
@@ -414,6 +414,7 @@ void PGetOptions(int *pmgui,int *internal_gui,int *stereo_capable)
   (*pmgui) = ! PyInt_AsLong(PyObject_GetAttrString(options,"no_gui"));
   (*internal_gui) = PyInt_AsLong(PyObject_GetAttrString(options,"internal_gui"));
   (*stereo_capable) = PyInt_AsLong(PyObject_GetAttrString(options,"stereo_capable"));
+  (*show_splash) = PyInt_AsLong(PyObject_GetAttrString(options,"show_splash"));
   
 }
 
