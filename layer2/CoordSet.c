@@ -429,7 +429,8 @@ void CoordSetInvalidateRep(CoordSet *I,int type,int level)
       if(I->Rep[rep]) \
          I->Rep[rep]->fNew=(struct Rep *(*)(struct CoordSet *))new_fn;\
     } else {\
-      I->Rep[rep] = I->Rep[rep]->fUpdate(I->Rep[rep],I,rep);\
+      if(I->Rep[rep]->fUpdate)\
+         I->Rep[rep] = I->Rep[rep]->fUpdate(I->Rep[rep],I,rep);\
     }\
   }\
 OrthoBusyFast(rep,I->NRep);\

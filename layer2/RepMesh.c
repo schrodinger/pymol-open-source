@@ -274,6 +274,9 @@ Rep *RepMeshNew(CoordSet *cs)
   int visFlag;
   OOAlloc(RepMesh);
 
+  PRINTFD(FB_RepMesh)
+	 " RepMeshNew-DEBUG: entered with coord-set %p\n",cs
+	 ENDFD;
   obj = cs->Obj;
   visFlag=false;
   for(a=0;a<cs->NIndex;a++) {
@@ -333,14 +336,16 @@ Rep *RepMeshNew(CoordSet *cs)
 
 	  for(b=0;b<obj->NCSet;b++) {	 
 		 ccs=obj->CSet[b];
-		 for(c=0;c<ccs->NIndex;c++) {
-			if(obj->AtomInfo[ccs->IdxToAtm[c]].visRep[cRepMesh])
-			  for(d=0;d<3;d++) {
-				 if(minE[d]>ccs->Coord[(3*c)+d])
-					minE[d]=ccs->Coord[(3*c)+d];
-				 if(maxE[d]<ccs->Coord[(3*c)+d])
-					maxE[d]=ccs->Coord[(3*c)+d];
-			  }
+		 if(ccs) {
+			for(c=0;c<ccs->NIndex;c++) {
+			  if(obj->AtomInfo[ccs->IdxToAtm[c]].visRep[cRepMesh])
+				 for(d=0;d<3;d++) {
+					if(minE[d]>ccs->Coord[(3*c)+d])
+					  minE[d]=ccs->Coord[(3*c)+d];
+					if(maxE[d]<ccs->Coord[(3*c)+d])
+					  maxE[d]=ccs->Coord[(3*c)+d];
+				 }
+			}
 		 }
 	  }
 

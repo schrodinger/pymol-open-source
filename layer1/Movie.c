@@ -95,17 +95,24 @@ void MoviePNG(char *prefix,int save)
   int i;
   char fname[255];
   char buffer[255];
+  int nFrame;
 
-  save = SettingGet(cSetting_cache_frames);
+  save = SettingGet(cSetting_cache_frames); 
   SettingSet(cSetting_cache_frames,1.0);
   OrthoBusyPrime();
   sprintf(buffer,"Creating movie (%d frames)...",I->NFrame);
   OrthoBusyMessage(buffer);
   SceneSetFrame(0,0);
   MoviePlay(cMoviePlay);
-  for(a=0;a<I->NFrame;a++)
+  nFrame = I->NFrame;
+  if(!nFrame) {
+	 nFrame=SceneGetNFrame();
+  }
+  VLACheck(I->Image,ImageType,nFrame);
+
+  OrthoBusySlow(a,I->NFrame);
+  for(a=0;a<nFrame;a++)
 	 {
-		OrthoBusySlow(a,I->NFrame);
 		sprintf(fname,"%s_%04d.png",prefix,a+1);
 		SceneSetFrame(0,a);
 		MovieDoFrameCommand(a);
@@ -118,15 +125,14 @@ void MoviePNG(char *prefix,int save)
 		  ErrFatal("MoviePNG","Missing rendering movie image!");
 		MyPNGWrite(fname,I->Image[i],I->Width,I->Height);		
 		ExecutiveDrawNow();
+		OrthoBusySlow(a,I->NFrame);
 		if(PMGUI) glutSwapBuffers();
       if(Feedback(FB_Movie,FB_Actions)) {
         printf(" MoviePNG: wrote %s\n",fname);
       }
-		if(!save) {
-		  SceneDirty();
-		  mfree(I->Image[i]);
-		  I->Image[i]=NULL;
-		}
+		/*		SceneDirty();*/
+		mfree(I->Image[i]);
+		I->Image[i]=NULL;
 	 }
   SettingSet(cSetting_cache_frames,save);
   MoviePlay(cMovieStop);
