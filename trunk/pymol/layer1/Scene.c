@@ -1786,7 +1786,7 @@ static int SceneClick(Block *block,int button,int x,int y,
               MenuActivate2Arg(G,I->LastWinX,I->LastWinY+20, /* selection menu */
                                I->LastWinX,I->LastWinY,
                                is_single_click,
-                               "pick_option",name,name);
+                               "pick_sele",name,name);
             } else {
               ObjectMoleculeGetAtomSele((ObjectMolecule*)obj,I->LastPicked.index,buffer);
               ObjectMoleculeGetAtomSeleLog((ObjectMolecule*)obj,I->LastPicked.index,buf1,false);
@@ -2615,9 +2615,10 @@ static int SceneDrag(Block *block,int x,int y,int mod,double when)
   CObject *obj;
 
   if(I->PossibleSingleClick) {
-    double slowest_single_click_drag = 0.05;
+    double slowest_single_click_drag = 0.15;
     if((when-I->LastClickTime)>slowest_single_click_drag) {
       I->PossibleSingleClick = 0;
+      printf("too slow\n");
     }
   }
 
@@ -2997,7 +2998,7 @@ static int SceneDrag(Block *block,int x,int y,int mod,double when)
       SceneDoRoving(G,old_front,old_back,old_origin,adjust_flag);
   }
   if(I->PossibleSingleClick) {
-    int max_single_click_drag = 6;
+    int max_single_click_drag = 4;
     int dx = abs(I->StartX-I->LastX);
     int dy = abs(I->StartY-I->LastY);
     if((dx>max_single_click_drag)||
