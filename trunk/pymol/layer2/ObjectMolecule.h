@@ -106,6 +106,7 @@ typedef struct {
 typedef struct {
   int is_pqr_file;
   PDBScale scale;
+  int ignore_header_names;
 } PDBInfoRec;
 
 
