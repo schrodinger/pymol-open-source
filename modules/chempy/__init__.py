@@ -1,3 +1,8 @@
+
+import string
+import os
+
+
 #
 # Basic chempy types
 #
@@ -62,12 +67,16 @@ class Atom:
       if self.has('hetatm'):      newat.hetatm      = self.hetatm
       return newat
 
+   def get_signature(self):
+      return string.join([self.segi,self.chain,self.resn,
+                          self.resi,self.symbol,self.name],':')
+   
    def __cmp__(self,other):
-      if self.segi == other.segi:
-         if self.chain == other.chain:
-            if self.resi_number == other.resi_number:
-               if self.resn == other.resn:
-                  if self.resi_number == other.resi_number:
+      if type(self)==type(other):
+         if self.segi == other.segi:
+            if self.chain == other.chain:
+               if self.resi_number == other.resi_number:
+                  if self.resn == other.resn:
                      if self.resi == other.resi:
                         if self.symbol == other.symbol:
                            if self.name == other.name:
@@ -81,13 +90,13 @@ class Atom:
                   else:
                      return cmp(self.resn,other.resn)
                else:
-                  return cmp(self.resi_number,other.resi_number)
+                  return cmp(self.resi_number,other.resi_number)               
             else:
-               return cmp(self.resi_number,other.resi_number)               
+               return cmp(self.chain,other.chain)
          else:
-            return cmp(self.chain,other.chain)
+            return cmp(self.segi,other.segi)
       else:
-         return cmp(self.segi,other.segi)
+         return cmp(type(self),type(other))
       
 class Bond:
 
@@ -164,8 +173,6 @@ feedback = { 'warnings': 1,
              'bonds'   : 0,                          
              'verbose' : 0,
              }
-
-import os
 
 if os.environ.has_key('CHEMPY_PATH'):
    path = os.environ['CHEMPY_PATH'] + '/'
