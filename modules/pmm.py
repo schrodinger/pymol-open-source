@@ -83,12 +83,26 @@ def dist_color(s):
            [ 1, 'magenta'     ,'pm.color("magenta","'+s+'")' ]
            ]
 
+def sele_action(s):
+   return [[ 2, 'Actions:'     ,''                      ],     
+           [ 1, 'Set Origin'   ,'pm.origin("'+s+'")'    ],
+           [ 1, 'Zoom'         ,'pm.zoom("'+s+'")'      ],
+           [ 0, ''          ,''                         ],
+           [ 1, 'Delete'       ,'pm.delete("'+s+'")'    ],
+           [ 0, ''          ,''                         ],
+           [ 1, 'Expand by residue' ,'pm.select("'+s+'","(byres '+s+')")' ],
+           [ 0, ''          ,''                         ],
+           [ 1, 'Expand by 6'  ,'pm.select("'+s+'","('+s+' expand 6)")' ],
+           [ 1, 'Expand by 8'  ,'pm.select("'+s+'","('+s+' expand 8)")' ],
+           ]
+
 def mol_action(s):
    return [[ 2, 'Actions:'     ,''                      ],     
            [ 1, 'Set Origin'   ,'pm.origin("'+s+'")'    ],
            [ 1, 'Zoom'         ,'pm.zoom("'+s+'")'      ],
            [ 0, ''          ,''                         ],
-           [ 1, 'Delete'       ,'pm.delete("'+s+'")'    ]
+           [ 1, 'Delete'       ,'pm.delete("'+s+'")'    ],
+           [ 0, ''          ,''                         ]
            ]
 
 def all_action(s):

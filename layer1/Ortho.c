@@ -71,9 +71,9 @@ typedef struct {
   FILE *Pipe;
   char Prompt[255];
   int ShowLines;
-  char Saved[OrthoSaveLines];
+  char Saved[OrthoLineLength];
   int SavedPC,SavedCC;
-  float TextColor[3];
+  float TextColor[3],OverlayColor[3];
   int DirtyFlag;
   float BusyLast;
   int BusyStatus[4];
@@ -103,6 +103,17 @@ int  OrthoCommandOut(char *buffer)
 	return(QueueStrOut(I->cmds,buffer));
   else
 	return(0);
+}
+/*========================================================================*/
+void OrthoClear(void)
+{
+  int a;
+  OrthoObject *I=&Ortho;
+  for(a=0;a<=OrthoSaveLines;a++)
+    I->Line[a][0]=0;
+  OrthoNewLine(NULL);
+  OrthoRestorePrompt();
+  OrthoDirty();
 }
 /*========================================================================*/
 void OrthoFeedbackIn(char *buffer)
@@ -337,7 +348,7 @@ void OrthoKey(unsigned char k,int x,int y)
 		exit(0);
 		break;
 	 case 9:
-		ScenePerspective(true);
+      SettingSet(cSetting_text,(float)(!((int)SettingGet(cSetting_text))));
 		break;
 	 case 13:
 		I->Line[I->CurLine&OrthoSaveLines][I->CurChar]=0;
@@ -496,19 +507,24 @@ void OrthoDoDraw()
   int l,lcount;
   char *str;
   float *v;
+  int showLines;
+  int overlay,text;
 
   
   if(PMGUI) {
 
     v=SettingGetfv(cSetting_bg_rgb);
+    overlay = SettingGet(cSetting_overlay);
+    text = SettingGet(cSetting_text);
 
     glDrawBuffer(GL_BACK);
     glClearColor(v[0],v[1],v[2],1.0);
     glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
     glClearColor(0.0,0.0,0.0,1.0);
     
-    if(!SceneRenderCached())
-      SceneRender(NULL,0,0);
+    if(overlay||(!text)) 
+      if(!SceneRenderCached())
+        SceneRender(NULL,0,0);
     
     OrthoPushMatrix();
     
@@ -535,14 +551,23 @@ void OrthoDoDraw()
       glVertex2i(0,cOrthoBottomSceneMargin-1);
       glEnd();
 
+      if((int)SettingGet(cSetting_text))
+        showLines=I->ShowLines;
+      else
+        showLines=1;
+        
       glColor3fv(I->TextColor);
       while(l>=0)
         {
           lcount++;
-          if(lcount>I->ShowLines)
+          if(lcount>showLines)
             break;
-          glRasterPos4d((double)x,(double)y,0.0,1.0);
           str = I->Line[l&OrthoSaveLines];
+          if(strncmp(str,I->Prompt,6)==0)
+            glColor3fv(I->TextColor);            
+          else
+            glColor3fv(I->OverlayColor);
+          glRasterPos4d((double)x,(double)y,0.0,1.0);
           if(str)
             {
               while(*str)
@@ -569,6 +594,7 @@ void OrthoReshape(int width, int height)
 
   I->Height=height;
   I->Width=width;
+  I->ShowLines = height/cOrthoLineHeight;
 
   block=SceneGetBlock();
   BlockSetMargin(block,0,0,cOrthoBottomSceneMargin,cOrthoRightSceneMargin);
@@ -685,6 +711,9 @@ void OrthoInit(void)
   I->TextColor[0]=0.7;
   I->TextColor[1]=0.7;
   I->TextColor[2]=1.0;
+  I->OverlayColor[0]=1.0;
+  I->OverlayColor[1]=1.0;
+  I->OverlayColor[2]=1.0;
   I->CurLine=1000;
   I->PromptChar=0;
   I->CurChar=0;
@@ -701,7 +730,8 @@ void OrthoInit(void)
   OrthoNewLine(NULL);
   OrthoAddOutput("Copyright (C) 1998-2000 by Warren L. DeLano, Ph.D.\n");
   OrthoAddOutput("This software is open source and freely available.\n");
-  OrthoAddOutput("Updates at \"http://www.pymol.org\".\n");
+  OrthoAddOutput("Updates at \"http://www.pymol.org\".\n \n");
+  OrthoAddOutput("Hit TAB to toggle text overlay; type cls to clear.\n");
   strcpy(I->Prompt,"PyMOL>");
   OrthoNewLine(I->Prompt);
 

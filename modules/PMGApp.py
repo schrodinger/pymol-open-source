@@ -58,7 +58,7 @@ class PMGApp(AbstractApp):
 		row1 = self.createcomponent('row1', (), None,
 			Frame,self.get_commandFrame(),bd=0)
 		row1.pack(side=TOP,fill=BOTH,expand=YES)
-		btn_rewind = self.buttonAdd(row1,'|<',pm.beginning)
+		btn_rewind = self.buttonAdd(row1,'|<',pm.rewind)
 		btn_back = self.buttonAdd(row1,'<',pm.backward)
 		btn_play = self.buttonAdd(row1,'Play',pm.mplay)
 		btn_stop = self.buttonAdd(row1,'Stop',pm.mstop)

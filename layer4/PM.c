@@ -78,6 +78,7 @@ static void APIExit(void)
 
 static PyObject *PMAlter(PyObject *self,   PyObject *args);
 static PyObject *PMClip(PyObject *self, 	PyObject *args);
+static PyObject *PMCls(PyObject *self, 	PyObject *args);
 static PyObject *PMColor(PyObject *self, PyObject *args);
 static PyObject *PMColorDef(PyObject *self, 	PyObject *args);
 static PyObject *PMCopy(PyObject *self, PyObject *args);
@@ -141,6 +142,7 @@ static PyObject *PMZoom(PyObject *self, PyObject *args);
 static PyMethodDef PM_methods[] = {
 	{"alter",	     PMAlter,        METH_VARARGS },
 	{"clip",	        PMClip,         METH_VARARGS },
+	{"cls",	        PMCls,          METH_VARARGS },
 	{"color",	     PMColor,        METH_VARARGS },
 	{"colordef",	  PMColorDef,     METH_VARARGS },
 	{"copy",         PMCopy,         METH_VARARGS },
@@ -202,6 +204,15 @@ static PyMethodDef PM_methods[] = {
 	{"zoom",	        PMZoom,         METH_VARARGS },
 	{NULL,		     NULL}		/* sentinel */
 };
+
+static PyObject *PMCls(PyObject *dummy, PyObject *args)
+{
+  APIEntry();
+  OrthoClear();
+  APIExit();
+  Py_INCREF(Py_None);
+  return Py_None;  
+}
 
 static PyObject *PMDump(PyObject *dummy, PyObject *args)
 {
