@@ -4,7 +4,7 @@ echo '============================================'
 echo 'Creating "./pymol.com" startup script with '
 echo "PYMOL_PATH=`pwd`"
 echo '============================================'
-echo 'If you must move FedoraPyMOL in the future,'
+echo 'If you must move HelperPyMOL in the future,'
 echo 'then re-run "./setup.sh" again afterwards.'
 echo '============================================'
 echo 'Enjoy!'
