@@ -71,7 +71,12 @@ if __name__=='pymol.parser':
    sc_path[nest]="default"
    embed_sentinel[nest]=None
 
-   def get_embedded(key):
+   def get_default_key():
+      return os.path.splitext(os.path.basename(sc_path[nest]))[0]
+
+   def get_embedded(key=None):
+      if key==None:
+         key = get_default_key()
       dict = embed_dict.get(nest,{})
       return dict.get(key,None)
       
