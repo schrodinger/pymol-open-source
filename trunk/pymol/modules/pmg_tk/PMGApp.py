@@ -46,9 +46,9 @@ def complete(event,str,widget,self):
 
 class PMGApp(AbstractApp):
 
-   appversion     = '0.88'
+   appversion     = '0.90'
    appname       = 'PyMOL Tcl/Tk GUI'
-   copyright      = 'Copyright (C) 1998-2002 by Warren DeLano of\nDeLano Scientific LLC. All rights reserved.'
+   copyright      = 'Copyright (C) 1998-2003 by Warren DeLano of\nDeLano Scientific LLC. All rights reserved.'
    contactweb     = 'http://www.pymol.org'
    contactemail   = 'warren@delanoscientific.com'
 
@@ -1289,7 +1289,15 @@ class PMGApp(AbstractApp):
 
       self.menuBar.addmenuitem('Memory', 'command', 'Use More (faster)',
                                label='Use More (faster)',
-                               command = lambda : cmd.do("_ cmd.set('hash_max',160,quiet=0)"))
+                               command = lambda : cmd.do("_ cmd.set('hash_max',170,quiet=0)"))
+
+      self.menuBar.addmenuitem('Memory', 'command', 'Use Even More',
+                               label='Use Even More',
+                               command = lambda : cmd.do("_ cmd.set('hash_max',230,quiet=0)"))
+
+      self.menuBar.addmenuitem('Memory', 'command', 'Use Most',
+                               label='Use Most',
+                               command = lambda : cmd.do("_ cmd.set('hash_max',300,quiet=0)"))
 
       self.menuBar.addmenuitem('Rendering', 'separator', '')
 

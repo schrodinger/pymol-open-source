@@ -31,9 +31,8 @@ Z* -------------------------------------------------------------------
 typedef struct RepRibbon {
   Rep R;
   float *V;
-  float *VC;
   float linewidth;
-  int N,NC;
+  int N;
   int NS;
   int NP;
 } RepRibbon;
@@ -49,7 +48,6 @@ void RepRibbonInit(void)
 
 void RepRibbonFree(RepRibbon *I)
 {
-  FreeP(I->VC);
   FreeP(I->V);
   RepFree(&I->R);
   OOFreeP(I);
@@ -63,18 +61,29 @@ void RepRibbonRender(RepRibbon *I,CRay *ray,Pickable **pick)
   int i,j,ip;
   int last;
 
+  /* 
+
+  v[0] = index1
+  v[1-3] = color1
+  v[4-6] = vertex1
+  v[7] = index2
+  v[8-10] = color2
+  v[11-13] = vertex2
+  v[14] = radius
+
+  */
+
   if(ray) {
     PRINTFD(FB_RepRibbon)
       " RepRibbonRender: rendering raytracable...\n"
       ENDFD;
 
-	 v=I->VC;
-	 c=I->NC-1;
-	 if(c>0)
-		while(c--) {
-		  ray->fSausage3fv(ray,v+4,v+7,*(v+3),v,v);
-		  v+=10;
-		}
+    if(c>0) {
+      while(c--) {
+		  ray->fSausage3fv(ray,v+4,v+11,*(v+14),v+1,v+8);
+        v+=18;
+      }
+    }
   } else if(pick&&PMGUI) {
 
     PRINTFD(FB_RepRibbon)
@@ -88,7 +97,7 @@ void RepRibbonRender(RepRibbon *I,CRay *ray,Pickable **pick)
       glBegin(GL_LINES);
       while(c--)
         {
-          ip=*(v++);
+          ip=*(v);
           if(ip!=last) {
             i++;
             last=ip;
@@ -104,17 +113,27 @@ void RepRibbonRender(RepRibbon *I,CRay *ray,Pickable **pick)
               glColor3ub((uchar)((j&0xF)<<4),(uchar)((j&0xF0)|0x8),(uchar)((j&0xF00)>>4)); 
             }
           }	 
-          if(p[ip].index>=0) {
-            v+=3;
-            glVertex3fv(v);
-            v+=3;
-            glVertex3fv(v);
-          } else {
-            glEnd();
-            v+=6;
-            glBegin(GL_LINES);
-          }
-          v+=3;
+          glVertex3fv(v+4);
+          ip=*(v+7);
+          if(ip!=last) {
+            glVertex3fv(v+15); /* switch colors at midpoint */
+            glVertex3fv(v+15);
+            i++;
+            last=ip;
+            if(!(*pick)[0].ptr) {
+              /* pass 1 - low order bits */
+              
+              glColor3ub((uchar)((i&0xF)<<4),(uchar)((i&0xF0)|0x8),(uchar)((i&0xF00)>>4)); /* we're encoding the index into the color */
+              VLACheck((*pick),Pickable,i);
+              (*pick)[i] = p[ip]; /* copy object and atom info */
+            } else { 
+              /* pass 2 - high order bits */
+              j=i>>12;
+              glColor3ub((uchar)((j&0xF)<<4),(uchar)((j&0xF0)|0x8),(uchar)((j&0xF00)>>4)); 
+            }
+          }	 
+          glVertex3fv(v+11);
+          v+=18;
         }
       glEnd();
       (*pick)[0].index = i; /* pass the count */
@@ -153,25 +172,24 @@ void RepRibbonRender(RepRibbon *I,CRay *ray,Pickable **pick)
           glDisable(GL_LINE_SMOOTH);
         glDisable(GL_LIGHTING);
         glBegin(GL_LINE_STRIP);
-         while(c--)
+        while(c--)
           {
-            v++;
-            glColor3fv(v);
-            v+=3;
             if(first) {
-              glVertex3fv(v);
+              glColor3fv(v+1);
+              glVertex3fv(v+4);
               first=false;
             } else if(
-                      (v[0]!=v[-7])||
-                      (v[1]!=v[-6])||
-                      (v[2]!=v[-5])) {
+                      (v[4]!=v[-11])||
+                      (v[5]!=v[-10])||
+                      (v[6]!=v[-9 ])) {
               glEnd();
               glBegin(GL_LINE_STRIP);
-              glVertex3fv(v);
+              glColor3fv(v+1);
+              glVertex3fv(v+4);
             }
-            v+=3;
-            glVertex3fv(v);
-            v+=3;
+            glColor3fv(v+8);
+            glVertex3fv(v+11);
+            v+=18;
           }
         glEnd();
         glEnable(GL_LIGHTING);
@@ -206,7 +224,6 @@ Rep *RepRibbonNew(CoordSet *cs)
   float *dv=NULL;
   float *nv=NULL;
   float *tv=NULL;
-  float *vc=NULL;
 
   float f0,f1,f2,f3,f4;
   float *d;
@@ -403,17 +420,12 @@ Rep *RepRibbonNew(CoordSet *cs)
     rp = I->R.P + 1; /* skip first record! */
   }
 
-  I->VC=(float*)mmalloc(sizeof(float)*2*cs->NIndex*10*sampling);
-  ErrChkPtr(I->VC);
-  I->NC=0;
-
-  I->V=(float*)mmalloc(sizeof(float)*2*cs->NIndex*9*sampling);
+  I->V=(float*)mmalloc(sizeof(float)*2*cs->NIndex*18*sampling);
   ErrChkPtr(I->V);
 
   I->N=0;
   I->NP=0;
   v=I->V;
-  vc=I->VC;
   if(nAt) {
 	 v1=pv; /* points */
 	 v2=tv; /* tangents */
@@ -473,12 +485,9 @@ Rep *RepRibbonNew(CoordSet *cs)
                 
                 /* store colors */
 
+					 *(v++)=*(v0++);
+					 *(v++)=*(v0++);
 					 *(v++)=*(v0);
-					 *(vc++)=*(v0++);
-					 *(v++)=*(v0);
-					 *(vc++)=*(v0++);
-					 *(v++)=*(v0);
-					 *(vc++)=*(v0);
 
                 /* start of line/cylinder */
 
@@ -496,13 +505,26 @@ Rep *RepRibbonNew(CoordSet *cs)
                 *(v++)=f1*v1[2]+f0*v1[5]+
                   f4*( f3*v2[2]-f2*v2[5] );
                 
-					 *(vc++)=radius;
-					 *(vc++)=*(v-3);
-					 *(vc++)=*(v-2);
-					 *(vc++)=*(v-1);
-
 					 f0=((float)b+1)/sampling;
                 f0 = smooth(f0,power_a);
+
+					 if(f0<0.5) {
+						v0 = ColorGet(c1);
+					 } else {
+						v0 = ColorGet(c2);
+					 }
+
+                /* store index */
+                if(f0<0.5)
+                  *(v++)=I->NP-1;
+                else
+                  *(v++)=I->NP;
+                
+                /* store colors */
+
+					 *(v++)=*(v0++);
+					 *(v++)=*(v0++);
+					 *(v++)=*(v0);
 
                 /* end of line/cylinder */
 
@@ -520,10 +542,12 @@ Rep *RepRibbonNew(CoordSet *cs)
                 *(v++)=f1*v1[2]+f0*v1[5]+
                   f4*( f3*v2[2]-f2*v2[5] );
 
-					 *(vc++)=*(v-3);
-					 *(vc++)=*(v-2);
-					 *(vc++)=*(v-1);
-					 I->NC++;
+					 *(v++)=radius;
+
+                average3f(v-4,v-11,v);
+
+                v+=3;
+
 					 I->N++;
 				  }
             
@@ -552,11 +576,6 @@ Rep *RepRibbonNew(CoordSet *cs)
   else
 	 I->V=(float*)mrealloc(I->V,1);
 
-  if(I->NC) 
-	 I->VC=(float*)mrealloc(I->VC,sizeof(float)*(vc-I->VC));
-  else
-	 I->VC=(float*)mrealloc(I->VC,1);
-  
   return((void*)(struct Rep*)I);
 }
 
