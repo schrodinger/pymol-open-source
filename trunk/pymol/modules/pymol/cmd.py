@@ -779,9 +779,8 @@ from controlling import \
      mouse,              \
      mask,               \
      set_key,            \
-     unmask
-
-edit_mode = null_function # legacy compat.
+     unmask,             \
+     edit_mode
 
 #--------------------------------------------------------------------
 from querying import \
