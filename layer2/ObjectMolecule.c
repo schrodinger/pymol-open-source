@@ -5386,6 +5386,7 @@ ObjectMolecule *ObjectMoleculeCopy(ObjectMolecule *obj)
   I->Symmetry=SymmetryCopy(I->Symmetry); /* null-safe */
   I->UnitCellCGO=NULL;
   I->Neighbor=NULL;
+  I->Sculpt=NULL;
   for(a=0;a<=cUndoMask;a++)
     I->UndoCoord[a]=NULL;
   I->CSet=VLAMalloc(I->NCSet,sizeof(CoordSet*),5,true); /* auto-zero */
