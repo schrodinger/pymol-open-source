@@ -450,9 +450,9 @@ void MapSetupExpressPerp(MapType *I, float *vert, float front)
   I->EList=VLACacheMalloc(G,1000,sizeof(int),5,0,
                      I->group_id,I->block_base + cCache_map_elist_offset);
 
-  I->EMask    = CacheCalloc(G,int,I->Dim[0]*I->Dim[1],
+    I->EMask    = CacheCalloc(G,int,I->Dim[0]*I->Dim[1],
                             I->group_id,I->block_base + cCache_map_emask_offset);
-
+  
   emask = I->EMask;
   dim1 = I->Dim[1];
   link = I->Link;
@@ -464,7 +464,7 @@ void MapSetupExpressPerp(MapType *I, float *vert, float front)
 		for(c=(I->iMin[2]-1);c<=(I->iMax[2]+1);c++)
 		  {
           /* compute a "shadow" mask for all vertices */
-          
+
           i=*MapFirst(I,a,b,c);
           if(i>=0) {
             v0 = vert + 3*i;
@@ -500,6 +500,7 @@ void MapSetupExpressPerp(MapType *I, float *vert, float front)
             *(ptr2++) = true;
             *(ptr2++) = true;
           }
+
             
           st=n;
           flag=false;
@@ -519,7 +520,7 @@ void MapSetupExpressPerp(MapType *I, float *vert, float front)
 						  }
 						}
 					 }
-          
+
 			 if(flag) {
 				*(MapEStart(I,a,b,c))=st;
 				VLACacheCheck(G,I->EList,int,n,I->group_id,
