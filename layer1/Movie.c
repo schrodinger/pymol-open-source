@@ -151,10 +151,14 @@ void MoviePNG(char *prefix,int save)
 void MovieSequence(char *str)
 {
   CMovie *I=&Movie;
-  int c;
+  int c=0;
   int i;
   char *s;
   c=0;
+
+  PRINTFB(FB_Movie,FB_Debugging)
+    " MovieSequence: entered. str:%s\n",str
+    ENDFB;
 
   s=str;
   while(*s) {
@@ -167,29 +171,35 @@ void MovieSequence(char *str)
 		s++;
 	 }
   }
-  if(I->Sequence) FreeP(I->Sequence);
-  if(I->Cmd) FreeP(I->Cmd);
-  I->Sequence=Alloc(int,c+1);
-  I->Cmd=Alloc(MovieCmdType,c+1);
-
-  for(i=0;i<c;i++)
-	 I->Cmd[i][0]=0;
-  c=0;
-  s=str;
-  while(*s) {
-	 if(sscanf(s,"%i",&I->Sequence[c])) {
-		c++;
-	 }
-	 s++;
-	 while(*s) {
-		if(*s==' ') break;
-		s++;
-	 }
+  FreeP(I->Sequence);
+  FreeP(I->Cmd);
+  I->NFrame=0;
+  if(str[0]) { /* not just a reset */
+    I->Sequence=Alloc(int,c+1);
+    I->Cmd=Alloc(MovieCmdType,c+1);
+    
+    for(i=0;i<c;i++)
+      I->Cmd[i][0]=0;
+    c=0;
+    s=str;
+    while(*s) {
+      if(sscanf(s,"%i",&I->Sequence[c])) {
+        c++;
+      }
+      s++;
+      while(*s) {
+        if(*s==' ') break;
+        s++;
+      }
+    }
+    I->Sequence[c]=-1;
+    I->NFrame=c;
   }
-
-  I->Sequence[c]=-1;
-  I->NFrame=c;
   VLACheck(I->Image,ImageType,I->NFrame);
+  PRINTFB(FB_Movie,FB_Debugging)
+    " MovieSequence: leaving... I->NFrame%d\n",I->NFrame
+    ENDFB;
+
 }
 /*========================================================================*/
 int MovieFrameToImage(int frame)
@@ -254,6 +264,22 @@ void MovieSetCommand(int frame,char *command)
 	 }
 }
 /*========================================================================*/
+void MovieAppendCommand(int frame,char *command)
+{
+  CMovie *I=&Movie;
+  int a,len,cur_len;
+  if((frame>=0)&&(frame<I->NFrame))
+	 {
+		len=strlen(command);
+      cur_len=strlen(I->Cmd[frame]);
+		if(len>(sizeof(MovieCmdType)+cur_len-1))
+        len=sizeof(MovieCmdType)+cur_len-1;
+      for(a=0;a<len;a++)
+        I->Cmd[frame][cur_len+a]=command[a];
+		I->Cmd[frame][cur_len+len]=0;
+	 }
+}
+/*========================================================================*/
 ImageType MovieGetImage(int index)
 {
   CMovie *I=&Movie;
@@ -266,10 +292,15 @@ ImageType MovieGetImage(int index)
 int MovieGetLength(void)
 {
   CMovie *I=&Movie;
+  int len;
   if(!I->NFrame)
-	 return(I->NImage);
+	 len = -I->NImage;
   else
-	 return(I->NFrame);
+	 len = I->NFrame;
+  PRINTFD(FB_Movie)
+    " MovieGetLength: leaving...result %d\n",len
+    ENDFD;
+  return(len);
 }
 /*========================================================================*/
 void MovieClearImages(void)

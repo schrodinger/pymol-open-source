@@ -574,11 +574,11 @@ void EditorRender(int state)
   float tube_size2=0.07;
   float tube_size3=0.45;
 
-  if(state!=I->ActiveState)
+  if(I->Obj&&(state!=I->ActiveState))
     {
       EditorSetActiveObject(NULL,0);
     }
-
+  
   if(I->Obj) {
     if(PMGUI) {
 
@@ -777,8 +777,6 @@ void EditorSetActiveObject(ObjectMolecule *obj,int state)
 
   CEditor *I = &Editor;
   if(obj) {
-    
-
     I->Obj=obj;
     sele1 = SelectorIndexByName(cEditorSele1);
     if(sele1>=0) {
@@ -798,15 +796,12 @@ void EditorSetActiveObject(ObjectMolecule *obj,int state)
       EditorInactive();
     }
   } else {
-      I->NFrag = SelectorSubdivideObject(cEditorFragPref,NULL,
-                                          -1,-1,
-                                         cEditorBasePref,
-                                         cEditorComp);
+    I->NFrag = SelectorSubdivideObject(cEditorFragPref,NULL,
+                                       -1,-1,
+                                       cEditorBasePref,
+                                       cEditorComp);
     EditorInactive();
-
   }
-
-
 }
 /*========================================================================*/
 void EditorPrepareDrag(ObjectMolecule *obj,int index,int state)

@@ -2244,6 +2244,11 @@ void ExecutiveSetObjVisib(char *name,int state)
 {
   CExecutive *I = &Executive;
   SpecRec *tRec;
+
+  PRINTFD(FB_Executive)
+     " ExecutiveSetObjVisib: entered.\n"
+    ENDFD;
+
   if(strcmp(name,cKeywordAll)==0) {
     tRec=NULL;
     while(ListIterate(I->Spec,tRec,next)) {
@@ -2281,6 +2286,10 @@ void ExecutiveSetObjVisib(char *name,int state)
       }
     }
   }
+  PRINTFD(FB_Executive)
+     " ExecutiveSetObjVisib: leaving...\n"
+    ENDFD;
+
 }
 /*========================================================================*/
 void ExecutiveFullScreen(int flag)
@@ -2303,6 +2312,12 @@ void ExecutiveSetAllVisib(int state)
   int sele;
   CExecutive *I = &Executive;
   SpecRec *rec = NULL;
+
+  PRINTFD(FB_Executive)
+     " ExecutiveSetAllVisib: entered.\n"
+    ENDFD;
+
+
   while(ListIterate(I->Spec,rec,next)) {
 	 if(rec->type==cExecObject)
 		{
@@ -2321,8 +2336,7 @@ void ExecutiveSetAllVisib(int state)
           op.i2=cRepInvVisib;
           ObjectMoleculeSeleOp(obj,sele,&op);				
           break;
-        case cObjectDist:
-        case cObjectMesh:
+        default:
           for(rep=0;rep<cRepCnt;rep++) {
             ObjectSetRepVis(rec->obj,rep,state);
             if(rec->obj->fInvalidate)
@@ -2333,6 +2347,10 @@ void ExecutiveSetAllVisib(int state)
         }
 		}
   }
+  PRINTFD(FB_Executive)
+     " ExecutiveSetAllVisib: leaving...\n"
+    ENDFD;
+
 }
 /*========================================================================*/
 void ExecutiveSetRepVisib(char *name,int rep,int state)
@@ -2342,6 +2360,10 @@ void ExecutiveSetRepVisib(char *name,int rep,int state)
   int handled = false;
   SpecRec *tRec;
   ObjectMoleculeOpRec op;
+
+  PRINTFD(FB_Executive)
+     " ExecutiveSetRepVisib: entered.\n"
+    ENDFD;
 
   tRec = ExecutiveFindSpec(name);
   if((!tRec)&&(!strcmp(name,cKeywordAll))) {
@@ -2359,12 +2381,19 @@ void ExecutiveSetRepVisib(char *name,int rep,int state)
 	 }
     if(tRec->type==cExecObject) 
       switch(tRec->obj->type) {
-      case cObjectDist:
-      case cObjectMesh:
-        ObjectSetRepVis(tRec->obj,rep,state);
+      default:
+        if(rep>=0) {
+          ObjectSetRepVis(tRec->obj,rep,state);
+          if(tRec->obj->fInvalidate)
+            tRec->obj->fInvalidate(tRec->obj,rep,cRepInvVisib,state);
+        } else {
+        for(a=0;a<cRepCnt;a++)
+          tRec->repOn[a]=state; 
+        ObjectSetRepVis(tRec->obj,a,state);
         if(tRec->obj->fInvalidate)
           tRec->obj->fInvalidate(tRec->obj,rep,cRepInvVisib,state);
-        SceneChanged();
+        }
+          SceneChanged();
         break;
       }
     if(!handled)
@@ -2384,6 +2413,10 @@ void ExecutiveSetRepVisib(char *name,int rep,int state)
         break;
       }
   }
+  PRINTFD(FB_Executive)
+     " ExecutiveSetRepVisib: leaving...\n"
+    ENDFD;
+
 }
 /*========================================================================*/
 void ExecutiveSetAllRepVisib(char *name,int rep,int state)
@@ -2394,7 +2427,9 @@ void ExecutiveSetAllRepVisib(char *name,int rep,int state)
   int a;
   CExecutive *I = &Executive;
   SpecRec *rec = NULL;
-
+  PRINTFD(FB_Executive)
+     " ExecutiveSetAllRepVisib: entered.\n"
+    ENDFD;
   while(ListIterate(I->Spec,rec,next)) {
 	 if(rec->type==cExecObject)
 		{
@@ -2410,9 +2445,14 @@ void ExecutiveSetAllRepVisib(char *name,int rep,int state)
         if(rec->type==cExecObject) {
           switch(rec->obj->type) {
           case cObjectMolecule:
+            if(rep>=0) {
+              rec->repOn[rep]=state;
+            } else {
+              for(a=0;a<cRepCnt;a++)
+                rec->repOn[a]=state;
+            }
             obj=(ObjectMolecule*)rec->obj;
             sele = SelectorIndexByName(obj->Obj.Name);
-            rec->repOn[rep]=state;
             op.code=OMOP_VISI;
             op.i1=rep;
             op.i2=state;
@@ -2421,8 +2461,7 @@ void ExecutiveSetAllRepVisib(char *name,int rep,int state)
             op.i2=cRepInvVisib;
             ObjectMoleculeSeleOp(obj,sele,&op);				
             break;
-          case cObjectDist:
-          case cObjectMesh:
+          default:
             if(rep>=0) {
               ObjectSetRepVis(rec->obj,rep,state);
               if(rec->obj->fInvalidate)
@@ -2440,6 +2479,10 @@ void ExecutiveSetAllRepVisib(char *name,int rep,int state)
         }
 		}
   }
+  PRINTFD(FB_Executive)
+     " ExecutiveSetAllRepVisib: leaving...\n"
+    ENDFD;
+
 }
 /*========================================================================*/
 void ExecutiveInvalidateRep(char *name,int rep,int level)

@@ -3660,7 +3660,7 @@ EXAMPLE
    
    load test.pdb
    mset 1
-   mdo 1: turn x,5; turn y,5;
+   mdo 1, turn x,5; turn y,5;
    mplay
    
 NOTES
@@ -3675,7 +3675,32 @@ SEE ALSO
    '''
    try:
       lock()   
-      r = _cmd.mdo(int(frame)-1,str(command))
+      r = _cmd.mdo(int(frame)-1,str(command),0)
+   finally:
+      unlock()
+   return r
+
+def mappend(frame,command):
+   '''
+DESCRIPTION
+  
+USAGE
+ 
+   mappend frame : command
+ 
+PYMOL API
+  
+EXAMPLE
+   
+NOTES
+ 
+SEE ALSO
+
+   mset, mplay, mstop
+   '''
+   try:
+      lock()   
+      r = _cmd.mdo(int(frame)-1,str(";"+command),1)
    finally:
       unlock()
    return r
@@ -5773,6 +5798,7 @@ keyword = {
    'log_open'      : [log_open     , 0 , 0 , ''  , parsing.STRICT ],
    'ls'            : [ls           , 0 , 0 , ''  , parsing.STRICT ],  
    'mask'          : [mask         , 0 , 0 , ''  , parsing.STRICT ],
+   'mappend'       : [mappend      , 2 , 2 , ':' , parsing.SINGLE ], 
    'mem'           : [mem          , 0 , 0 , ''  , parsing.STRICT ],
    'meter_reset'   : [meter_reset  , 0 , 0 , ''  , parsing.STRICT ],
    'move'          : [move         , 0 , 0 , ''  , parsing.STRICT ],
@@ -5884,6 +5910,7 @@ help_only = {  # for API-only features
 }
 
 repres = {
+   'everything'    : -1,
    'sticks'        : 0,
    'spheres'       : 1,
    'surface'       : 2,
@@ -5897,6 +5924,9 @@ repres = {
    'dashes'        :10,
    'nonbonded'     :11,
    'cell'          :12,
+   'cgo'           :13,
+   'callback'      :14,
+   'extent'        :15,   
 }
 
 rephash = Shortcut(repres.keys())

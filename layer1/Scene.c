@@ -365,7 +365,7 @@ void SceneCountFrames()
   CScene *I=&Scene;
   ObjRec *rec = NULL;
   int n;
-
+  int mov_len;
   I->NFrame=0;
   while(ListIterate(I->Obj,rec,next))
 	 {
@@ -376,18 +376,25 @@ void SceneCountFrames()
 		if(n>I->NFrame)
 		  I->NFrame=n;
 	 }
-  if(I->NFrame<MovieGetLength())
-	 I->NFrame=MovieGetLength();
-  /*  if(I->Frame>=I->NFrame) {
-      frame=I->NFrame-1;
-      if(frame<0) frame=0;
-      SceneSetFrame(0,frame);
-      } */
+  mov_len = MovieGetLength();
+  if(mov_len>0) {
+    I->NFrame=mov_len;
+  } else if(mov_len<0) {
+    mov_len=-mov_len;
+    if(I->NFrame<mov_len) /* allows you to see cached movie even w/o object */
+      I->NFrame=mov_len;
+  }
+  PRINTFD(FB_Scene)
+    " SceneCountFrames: leaving... I->NFrame %d\n",I->NFrame
+    ENDFD
 }
 /*========================================================================*/
 void SceneSetFrame(int mode,int frame)
 {
   CScene *I=&Scene;
+  PRINTFD(FB_Scene)
+    " SceneSetFrame: entered.\n"
+    ENDFD;
   switch(mode) {
   case 0:
 	 I->Frame=frame;
@@ -424,6 +431,9 @@ void SceneSetFrame(int mode,int frame)
       I->MovieFrameFlag=true;
   }
   SceneDirty();
+  PRINTFD(FB_Scene)
+    " SceneSetFrame: leaving...\n"
+    ENDFD;
 
 }
 /*========================================================================*/
@@ -443,6 +453,11 @@ void SceneDirty(void)
 		 needs to be updated */
 {
   CScene *I=&Scene;
+
+  PRINTFD(FB_Scene)
+    " SceneDirty: called.\n"
+    ENDFD;
+
   I->DirtyFlag=true;
   ScenePurgeCopy();
   OrthoDirty();
@@ -1530,6 +1545,9 @@ void SceneUpdate(void)
   CScene *I=&Scene;
   ObjRec *rec=NULL;
 
+  PRINTFD(FB_Scene)
+    " SceneUpdate: entered.\n"
+    ENDFD;
   if(I->ChangedFlag) {
     SceneCountFrames();
 	 while(ListIterate(I->Obj,rec,next))
@@ -1537,6 +1555,9 @@ void SceneUpdate(void)
         rec->obj->fUpdate(rec->obj);
 	 I->ChangedFlag=false;
   }
+  PRINTFD(FB_Scene)
+    " SceneUpdate: leaving...\n"
+    ENDFD;
 }
 /*========================================================================*/
 int SceneRenderCached(void)
@@ -1546,6 +1567,10 @@ int SceneRenderCached(void)
   CScene *I=&Scene;
   ImageType image;
   int renderedFlag=false;
+
+  PRINTFD(FB_Scene)
+    " SceneRenderCached: entered.\n"
+    ENDFD;
 
   if(I->DirtyFlag) {
 	if(I->MovieFrameFlag||
@@ -1587,6 +1612,11 @@ int SceneRenderCached(void)
 	I->RenderTime += I->LastRender;
 	ButModeSetRate(I->RenderTime);
    }*/
+
+  PRINTFD(FB_Scene)
+    " SceneRenderCached: leaving...renderedFlag %d\n",renderedFlag
+    ENDFD;
+
   return(renderedFlag);
 }
 /*========================================================================*/
@@ -1615,6 +1645,12 @@ void SceneRender(Pickable *pick,int x,int y,Multipick *smp)
   int curState;
   int nPick,nBits;
   int a;
+
+  PRINTFD(FB_Scene)
+    " SceneRender: entered. pick %p x %d y %d smp %p\n",
+    pick,x,y,smp
+    ENDFD;
+
 
   if(PMGUI) {
     glDrawBuffer(GL_BACK);
@@ -1778,6 +1814,10 @@ void SceneRender(Pickable *pick,int x,int y,Multipick *smp)
       glDisable(GL_DITHER);
     }
 
+    PRINTFD(FB_Scene)
+    " SceneRender: matrices loaded. rendering objects...\n"
+    ENDFD;
+
     /* 1. render all objects */
     if(pick) {
       /* atom picking HACK - obfuscative coding */
@@ -1881,12 +1921,15 @@ void SceneRender(Pickable *pick,int x,int y,Multipick *smp)
       VLAFreeP(lowBitVLA);
       VLAFreeP(highBitVLA);
     } else {
+      
+
       ButModeCaptionReset(); /* reset the frame caption if any */
       /* rendering for visualization */
 
       start_time = UtilGetSeconds();
       if(I->StereoMode) {
         /*stereo*/
+
 
         glDrawBuffer(GL_BACK_LEFT);
         glPushMatrix();
@@ -1904,6 +1947,7 @@ void SceneRender(Pickable *pick,int x,int y,Multipick *smp)
         glNormal3fv(normal);
         CGORenderGL(DebugCGO,NULL,NULL,NULL);
         glPopMatrix();
+
 
         glPushMatrix();
         glNormal3fv(normal);
@@ -1959,15 +2003,24 @@ void SceneRender(Pickable *pick,int x,int y,Multipick *smp)
         CGORenderGL(DebugCGO,NULL,NULL,NULL);
         glPopMatrix();
 
+        PRINTFD(FB_Scene)
+          " SceneRender: rendering selections...\n"
+          ENDFD;
+
         glPushMatrix();
         glNormal3fv(normal);
         ExecutiveRenderSelections(curState);
+
+        PRINTFD(FB_Scene)
+          " SceneRender: rendering editing...\n"
+          ENDFD;
+
         EditorRender(curState);
         glPopMatrix();
 
       }
     }
-  
+    
     if(!(pick||smp)) {
       glDisable(GL_FOG);
       glDisable(GL_LIGHTING);
@@ -1981,7 +2034,12 @@ void SceneRender(Pickable *pick,int x,int y,Multipick *smp)
     glDisable(GL_NORMALIZE);
     glDisable(GL_DEPTH_TEST);
     glViewport(view_save[0],view_save[1],view_save[2],view_save[3]);
-}
+  }
+
+  PRINTFD(FB_Scene)
+    " SceneRender: rendering complete.\n"
+    ENDFD;
+  
   if(!(pick||smp)) {
     I->RenderTime = -I->LastRender;
     I->LastRender = UtilGetSeconds();
@@ -1997,6 +2055,10 @@ void SceneRender(Pickable *pick,int x,int y,Multipick *smp)
       I->CopyNextFlag=true;
     }
   }
+  PRINTFD(FB_Scene)
+    " SceneRender: leaving...\n"
+    ENDFD;
+
 }
 /*========================================================================*/
 void SceneRestartTimers(void)

@@ -4270,20 +4270,21 @@ void ObjectMoleculeSeleOp(ObjectMolecule *I,int sele,ObjectMoleculeOpRec *op)
 				   switch(op->code) { /* full coord-set based */
 				   case OMOP_INVA:
                  if(inv_flag) {
-                   if(op->i1<0) /* invalidate all representations */
-                    for(d=0;d<cRepCnt;d++) {
-                      if(I->CSet[b]->fInvalidateRep)
-                        I->CSet[b]->fInvalidateRep(I->CSet[b],d,op->i2);
-                    }
-                  else if(I->CSet[b]->fInvalidateRep) 
-                    /* invalidate only that particular representation */
-                    I->CSet[b]->fInvalidateRep(I->CSet[b],op->i1,op->i2);
+                   if(op->i1<0) {
+                     /* invalidate all representations */
+                     for(d=0;d<cRepCnt;d++) {
+                       if(I->CSet[b]->fInvalidateRep)
+                         I->CSet[b]->fInvalidateRep(I->CSet[b],d,op->i2);
+                     }
+                   } else if(I->CSet[b]->fInvalidateRep) 
+                     /* invalidate only that particular representation */
+                     I->CSet[b]->fInvalidateRep(I->CSet[b],op->i1,op->i2);
                  }
-					 break;
-				   }
-				 }
-			 break;
-		   }
+               break;
+             }
+         }
+         break;
+       }
 		 }
 	   break;
 	}

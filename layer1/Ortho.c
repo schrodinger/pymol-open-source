@@ -276,9 +276,13 @@ int OrthoFeedbackOut(char *buffer)
 /*========================================================================*/
 void OrthoDirty(void) {
   OrthoObject *I=&Ortho;
+  PRINTFD(FB_Ortho)
+    " OrthoDirty: called.\n"
+    ENDFD;
   if(!I->DirtyFlag) {
 	 I->DirtyFlag = true;
   }
+
   MainDirty();
 }
 /*========================================================================*/
@@ -332,6 +336,9 @@ void OrthoBusyDraw(int force)
   float now;
   float busyTime;
 
+  PRINTFD(FB_Ortho)
+    " OrthoBusyDraw: entered.\n"
+    ENDFD;
   now = UtilGetSeconds();
   busyTime = (-I->BusyLast) + now;
   if(force||(busyTime>cBusyUpdate)) {
@@ -406,9 +413,13 @@ void OrthoBusyDraw(int force)
       glDrawBuffer(GL_BACK);
     }
 	 OrthoPopMatrix();
-	 SceneDirty();
+	 SceneDirty();/* shouldn't this just be OrthoDirty? */
 	 I->BusyLast=now;
   }
+  PRINTFD(FB_Ortho)
+    " OrthoBusyDraw: leaving...\n"
+    ENDFD;
+
 }
 /*========================================================================*/
 void OrthoRestorePrompt(void) 
@@ -817,7 +828,10 @@ void OrthoDoDraw()
   int overlay,text;
   int rightSceneMargin;
   int internal_feedback;
-
+  
+  PRINTFD(FB_Ortho)
+    " OrthoDoDraw: entered.\n"
+    ENDFD;
   if(PMGUI) {
 
     rightSceneMargin=SettingGet(cSetting_internal_gui_width);
@@ -856,7 +870,15 @@ void OrthoDoDraw()
       glEnd();
     }
     
+  PRINTFD(FB_Ortho)
+    " OrthoDoDraw: drawing blocks...\n"
+    ENDFD;
+
     BlockRecursiveDraw(I->Blocks);
+
+  PRINTFD(FB_Ortho)
+    " OrthoDoDraw: blocks drawn.\n"
+    ENDFD;
 
     if(I->LoopFlag) {
       glColor3f(1.0,1.0,1.0);
@@ -918,6 +940,10 @@ void OrthoDoDraw()
   }
 
   I->DirtyFlag =false;
+  PRINTFD(FB_Ortho)
+    " OrthoDoDraw: leaving...\n"
+    ENDFD;
+
 }
 /*========================================================================*/
 static void OrthoDrawWizardPrompt(void)

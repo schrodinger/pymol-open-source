@@ -280,12 +280,14 @@ def complete(st):
             try:
                pre = re.sub(r"^[^ ]* ",' ',st,count=1) # trim command
                if re.search(r",",pre)!=None:
+                  pre = re.sub(r"[^\, ]*$","",pre,count=1) 
                   pre = re.sub(r",\s*[^\, ]*$",", ",pre,count=1) # trim 1 arg
                else:
                   pre = re.sub("[^ ]*$","",pre,count=1) # trim 1 arg               
                pre = re.sub(r"^ *",'',pre)
                pre = full+' '+pre
                pat = re.sub(r".*[\, ]",'',st)
+#               print ":"+pre+":"+pat+":"
                result = apply(complete_sc,tuple([pat]+cmd.auto_arg[count][full]),{})
             except:
                traceback.print_exc()
