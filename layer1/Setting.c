@@ -1693,7 +1693,7 @@ void SettingInitGlobal(int alloc,int reset_gui)
 
   SettingSet_b(I,cSetting_static_singletons, 1);
 
-  SettingSet_i(I,cSetting_max_triangles, 1000000);
+  SettingSet_i(I,cSetting_max_triangles, 1000000); /* no longer used */
 
   SettingSet_f(I,cSetting_depth_cue, 1.0F);
 
@@ -1783,7 +1783,7 @@ void SettingInitGlobal(int alloc,int reset_gui)
 
   SettingSet_b(I,cSetting_normalize_ccp4_maps, 1);  
 
-  SettingSet_f(I,cSetting_surface_poor, 0.89F);  
+  SettingSet_f(I,cSetting_surface_poor, 0.85F);  
 
   SettingSet_i(I,cSetting_internal_feedback, PyMOLOption->internal_feedback);
 
@@ -1801,7 +1801,7 @@ void SettingInitGlobal(int alloc,int reset_gui)
 
   SettingSet_f(I,cSetting_valence_size, 0.050F);
 
-  SettingSet_f(I,cSetting_surface_miserable, 0.8F);
+  SettingSet_f(I,cSetting_surface_miserable, 2.0F);
 
   SettingSet_b(I,cSetting_ray_opaque_background, 1);
 

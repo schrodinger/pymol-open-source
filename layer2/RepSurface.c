@@ -97,6 +97,41 @@ static int ZRevOrderFn(float *array,int l,int r)
   return (array[l]>=array[r]);
 }
 
+
+static int check_and_add(int *cache, int spacing, int t0,int t1) {
+  int *rec;
+  int result = false;
+  int cnt;
+  t0++;
+  t1++;
+  
+  rec = cache + spacing*t0;
+  cnt=spacing;
+  while(cnt>0) {
+    if(*rec==t1) 
+      return 1;
+    if(!*rec) {
+      *rec = t1;
+      break;
+    }
+    rec++;
+    cnt--;
+  }
+  rec = cache + spacing*t1;
+  cnt=spacing;
+  while(cnt>0) {
+    if(*rec==t0)
+      return 1;
+    if(!*rec) {
+      *rec = t0;
+      break;
+    }
+    rec++;
+    cnt--;
+  }
+  return 0;
+}
+
 void RepSurfaceRender(RepSurface *I,CRay *ray,Pickable **pick)
 {
   float *v=I->V;
@@ -153,7 +188,7 @@ void RepSurfaceRender(RepSurface *I,CRay *ray,Pickable **pick)
         while(c--)
           {
             if((I->proximity&&((*(vi+(*t)))||(*(vi+(*(t+1))))||(*(vi+(*(t+2))))))||
-               ((*(vi+(*t)))&&(*(vi+(*(t+1))))&&(*(vi+(*(t+2))))))
+               ((*(vi+(*t)))&&(*(vi+(*(t+1))))&&(*(vi+(*(t+2)))))) 
               ray->fTriangle3fv(ray,v+(*t)*3,v+(*(t+1))*3,v+(*(t+2))*3,
                                 vn+(*t)*3,vn+(*(t+1))*3,vn+(*(t+2))*3,
                                 col,col,col);
@@ -174,6 +209,9 @@ void RepSurfaceRender(RepSurface *I,CRay *ray,Pickable **pick)
     } else if(I->Type==2) { /* triangle mesh surface */
 
       float radius;
+      int t0,t1,t2;
+      int spacing = 10;
+      int *cache = Calloc(int,spacing*(I->N+1));
       
       radius = SettingGet_f(I->R.cs->Setting,I->R.obj->Setting,cSetting_mesh_radius);
 
@@ -188,27 +226,41 @@ void RepSurfaceRender(RepSurface *I,CRay *ray,Pickable **pick)
         col=ColorGet(I->oneColor);
         while(c--)
           {
-            if((I->proximity&&((*(vi+(*t)))||(*(vi+(*(t+1))))||(*(vi+(*(t+2))))))||
-               ((*(vi+(*t)))&&(*(vi+(*(t+1))))&&(*(vi+(*(t+2)))))) {
-              ray->fSausage3fv(ray,v+(*t)*3,v+(*(t+1))*3,radius,col,col);
-              ray->fSausage3fv(ray,v+(*(t+1))*3,v+(*(t+2))*3,radius,col,col);
-              ray->fSausage3fv(ray,v+(*(t+2))*3,v+(*(t))*3,radius,col,col);
+            t0 = (*t);
+            t1 = (*(t+1));
+            t2 = (*(t+2));
+            if((I->proximity&&((*(vi+t0))||(*(vi+t1))||(*(vi+t2))))||
+               ((*(vi+t0))&&(*(vi+t1))&&(*(vi+t2)))) {
+              if(!check_and_add(cache,spacing,t0,t1))
+                ray->fSausage3fv(ray,v+t0*3,v+t1*3,radius,col,col);
+              if(!check_and_add(cache,spacing,t1,t2))
+                ray->fSausage3fv(ray,v+t1*3,v+t2*3,radius,col,col);
+              if(!check_and_add(cache,spacing,t2,t0))
+              ray->fSausage3fv(ray,v+t2*3,v+t0*3,radius,col,col);
             }
             t+=3;
           }
       } else {
         while(c--)
           {
-            if((I->proximity&&((*(vi+(*t)))||(*(vi+(*(t+1))))||(*(vi+(*(t+2))))))||
-               ((*(vi+(*t)))&&(*(vi+(*(t+1))))&&(*(vi+(*(t+2)))))) 
-              if((*(vi+(*t)))||(*(vi+(*(t+1))))||(*(vi+(*(t+2))))) {
-                ray->fSausage3fv(ray,v+(*t)*3,v+(*(t+1))*3,radius,vc+(*t)*3,vc+(*(t+1))*3);
-                ray->fSausage3fv(ray,v+(*(t+1))*3,v+(*(t+2))*3,radius,vc+(*(t+1))*3,vc+(*(t+2))*3);
-                ray->fSausage3fv(ray,v+(*(t+2))*3,v+(*(t))*3,radius,vc+(*(t+2))*3,vc+(*t)*3);
+            t0 = (*t);
+            t1 = (*(t+1));
+            t2 = (*(t+2));
+
+            if((I->proximity&&((*(vi+t0))||(*(vi+t1))||(*(vi+t2))))||
+               ((*(vi+t0))&&(*(vi+t1))&&(*(vi+t2)))) 
+              if((*(vi+t0))||(*(vi+t1))||(*(vi+t2))) {
+                if(!check_and_add(cache,spacing,t0,t1))
+                  ray->fSausage3fv(ray,v+t0*3,v+t1*3,radius,vc+t0*3,vc+t1*3);
+                if(!check_and_add(cache,spacing,t1,t2))
+                  ray->fSausage3fv(ray,v+t1*3,v+t2*3,radius,vc+t1*3,vc+t2*3);
+                if(!check_and_add(cache,spacing,t2,t0))
+                  ray->fSausage3fv(ray,v+t2*3,v+t0*3,radius,vc+t2*3,vc+t0*3);
               }
             t+=3;
           }
       }
+      FreeP(cache);
     }
     ray->fTransparentf(ray,0.0);
   } else if(pick&&PMGUI) {
@@ -276,19 +328,20 @@ void RepSurfaceRender(RepSurface *I,CRay *ray,Pickable **pick)
 
       }
     } else if(I->Type==2) { /* rendering triangle mesh */
-
+      
+      int normals = SettingGet_b(I->R.cs->Setting,I->R.obj->Setting,cSetting_mesh_normals); 
+      int lighting = SettingGet_f(I->R.cs->Setting,I->R.obj->Setting,cSetting_mesh_lighting);
       int use_dlst;
+      if(!normals)
+        SceneResetNormal(true);
+      if(!lighting)
+        glDisable(GL_LIGHTING);
+      
       use_dlst = (int)SettingGet(cSetting_use_display_lists);
       if(use_dlst&&I->R.displayList) {
         glCallList(I->R.displayList);
       } else { 
-
-        int normals = SettingGet_b(I->R.cs->Setting,I->R.obj->Setting,cSetting_mesh_normals); 
-        int lighting = SettingGet_f(I->R.cs->Setting,I->R.obj->Setting,cSetting_mesh_lighting);
-        if(!normals)
-          SceneResetNormal(true);
-        if(!lighting)
-          glDisable(GL_LIGHTING);
+        
         
         glLineWidth(SettingGet_f(I->R.cs->Setting,I->R.obj->Setting,cSetting_mesh_width));
         
@@ -310,7 +363,7 @@ void RepSurfaceRender(RepSurface *I,CRay *ray,Pickable **pick)
               if((I->proximity&&((*(vi+(*t)))||(*(vi+(*(t+1))))||(*(vi+(*(t+2))))))||
                  ((*(vi+(*t)))&&(*(vi+(*(t+1))))&&(*(vi+(*(t+2)))))) {
                 if(normals) {
-
+                  
                   glBegin(GL_LINE_STRIP);
                   
                   glNormal3fv(vn+(*(t+2))*3);
@@ -871,7 +924,6 @@ void RepSurfaceRender(RepSurface *I,CRay *ray,Pickable **pick)
   }
 }
 
-#define solv_tole 0.02F
 
 int RepSurfaceSameVis(RepSurface *I,CoordSet *cs)
 {
@@ -1120,6 +1172,7 @@ Rep *RepSurfaceNew(CoordSet *cs)
   SphereRec *ssp = Sphere0;
   AtomInfoType *ai1,*ai2;
   int n_present = 0;
+  float solv_tole;
   #if 0
   int c1;
   float v1[3];
@@ -1159,10 +1212,14 @@ Rep *RepSurfaceNew(CoordSet *cs)
   RepInit(&I->R);
 
   surface_quality = SettingGet_i(cs->Setting,obj->Obj.Setting,cSetting_surface_quality);
-  if(surface_quality>=3) { /* perfect but totally impractical */
+  if(surface_quality>=4) { /* totally impractical */
     minimum_sep = SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_surface_best)/4;
     sp=Sphere4;
     ssp=Sphere4;
+  } else if(surface_quality>=3) { /* nearly impractical */
+    minimum_sep = SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_surface_best)/3;
+    sp=Sphere4;
+    ssp=Sphere3;
   } else if(surface_quality>=2) { /* nearly perfect */
     minimum_sep = SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_surface_best)/2;
     sp=Sphere3;
@@ -1180,21 +1237,29 @@ Rep *RepSurfaceNew(CoordSet *cs)
     sp=Sphere1;
     ssp=Sphere2;
   } else if(surface_quality==-2) { /* -2 god awful*/
-    minimum_sep = SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_surface_poor);
+    minimum_sep = SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_surface_poor)*1.5F;
     sp=Sphere1;
     ssp=Sphere1;
-  } else { /* -3 miserable */
+  } else if(surface_quality==-3) { /* -3 miserable */
     minimum_sep = SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_surface_miserable);
+    sp=Sphere1;
+    ssp=Sphere1;
+  } else {
+    minimum_sep = SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_surface_miserable)*1.18F;
     sp=Sphere0;
     ssp=Sphere1;
   }
 
   probe_radius = SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_solvent_radius);
   if(!surface_solvent) {
-    if(probe_radius<(2*minimum_sep))
-      probe_radius = 2*minimum_sep;
+    if(probe_radius<(2.5F*minimum_sep)) {
+      probe_radius = 2.5F*minimum_sep;
+    }
+
   }    
-    
+
+  solv_tole = minimum_sep * 0.04;
+
   probe_radius2 = probe_radius*probe_radius;
   probe_rad_more = probe_radius*(1.0F+solv_tole);
   probe_rad_more2 = probe_rad_more * probe_rad_more;
@@ -1304,10 +1369,10 @@ Rep *RepSurfaceNew(CoordSet *cs)
     
     if(n_present<1) n_present=1; /* safety */
 
-    MaxN = n_present*3*sp->nDot*9;
-	 I->V=Alloc(float,MaxN);
+    MaxN = n_present*sp->nDot*10;
+	 I->V=Alloc(float,(MaxN+1)*3);
     ErrChkPtr(I->V);
-	 I->VN=Alloc(float,MaxN);
+	 I->VN=Alloc(float,(MaxN+1)*3);
     ErrChkPtr(I->VN);
 	 I->N=0;
     v=I->V;
@@ -1316,7 +1381,7 @@ Rep *RepSurfaceNew(CoordSet *cs)
     RepSurfaceGetSolventDots(I,cs,probe_radius,ssp,extent,present);
 
     if(!surface_solvent) {
-      map=MapNewFlagged(I->max_vdw+probe_radius,cs->Coord,cs->NIndex,extent,present);
+      map=MapNewFlagged(I->max_vdw+probe_rad_more,cs->Coord,cs->NIndex,extent,present);
       
       solv_map=MapNew(probe_rad_less,I->Dot,I->NDot,extent);
       
@@ -1381,7 +1446,11 @@ Rep *RepSurfaceNew(CoordSet *cs)
                                   dx = dx + dy;
                                   dz = dz * dz;
                                   if(!(dx>dist2)) 
-                                    if((dx + dz)<=dist2) { flag = false; break; }
+                                    if((dx + dz)<=dist2) 
+                                      {
+                                        flag = false; 
+                                        break; 
+                                      }
                                 }
                               }
                             }
@@ -1390,6 +1459,7 @@ Rep *RepSurfaceNew(CoordSet *cs)
                         v1 = i_dot + 3*jj;                          
                       }
                     }
+                    
                     if(flag)
                       {
                         i=*(MapLocusEStart(map,v));
@@ -1404,12 +1474,11 @@ Rep *RepSurfaceNew(CoordSet *cs)
                                          ((!cullByFlag)||
                                           (!(ai2->flags&cAtomFlag_ignore))));
                             if(pres_flag)
-                              if(j!=a)
-                                if(within3f(cs->Coord+3*j,v,ai2->vdw+probe_rad_more))
-                                  {
-                                    flag=false;
-                                    break;
-                                  }
+                              if(within3f(cs->Coord+3*j,v,ai2->vdw+probe_rad_more))
+                                {
+                                  flag=false;
+                                  break;
+                                }
                             j=map->EList[i++];
                           }
                         }
@@ -1503,7 +1572,7 @@ Rep *RepSurfaceNew(CoordSet *cs)
             vn+=3;
           }
           MapFree(map);
-        
+          
           v0=I->V;
           v=I->V;
           vn0=I->VN;
@@ -1529,13 +1598,13 @@ Rep *RepSurfaceNew(CoordSet *cs)
             }
         }
         FreeP(dot_flag);
+        
+        if(I->N) {	
+          I->V = ReallocForSure(I->V,float,(v0-I->V));
+          I->VN = ReallocForSure(I->VN,float,(vn0-I->VN));
+        }
       }
     
-    if(I->N) {	
-      I->V = ReallocForSure(I->V,float,(v0-I->V));
-      I->VN = ReallocForSure(I->VN,float,(vn0-I->VN));
-    }
-
     PRINTFD(FB_RepSurface)
       " RepSurfaceNew-DEBUG: %i surface points after trimming.\n",I->N
       ENDFD;
@@ -1586,6 +1655,7 @@ void RepSurfaceGetSolventDots(RepSurface *I,CoordSet *cs,
   int dotCnt,maxCnt,maxDot=0;
   int cnt;
   int surface_mode;
+  int surface_solvent;
   int cullByFlag;
   int inclH;
   int pres_flag;
@@ -1596,6 +1666,7 @@ void RepSurfaceGetSolventDots(RepSurface *I,CoordSet *cs,
   surface_mode = SettingGet_i(cs->Setting,obj->Obj.Setting,cSetting_surface_mode);
   cullByFlag = (surface_mode==cRepSurface_by_flags);
   inclH = !(surface_mode==cRepSurface_heavy_atoms);
+  surface_solvent = SettingGet_b(cs->Setting,obj->Obj.Setting,cSetting_surface_solvent);
 
   cavity_cull = SettingGet_i(cs->Setting,obj->Obj.Setting,cSetting_cavity_cull);
 
@@ -1710,7 +1781,7 @@ void RepSurfaceGetSolventDots(RepSurface *I,CoordSet *cs,
       MapFree(map);
 	 }
 
-  if((cavity_cull>0)&&(probe_radius>0.75F)) {
+  if((cavity_cull>0)&&(probe_radius>0.75F)&&(!surface_solvent)) {
 	 dot_flag=Alloc(int,I->NDot);
 	 ErrChkPtr(dot_flag);
 	 for(a=0;a<I->NDot;a++) {

@@ -4,9 +4,13 @@ CHANGE LOG
 
 Changes up to 0.96
 
+   * now uses 3X less memory when rendering surface_type=2 (meshes)
+
+   * fixed bug in surface generation code, & treaked surface modes
+
    * various changes to surfacing algorithm greatly increase robustness
      when surfacing crevaces -- can now handle small(er) solvent probes.
-     
+
    * surface_solvent, triangle_max_passes settings
 
    * mesh_type, mesh_lighting, dot_lighting settings
