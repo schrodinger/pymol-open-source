@@ -251,7 +251,7 @@ void ShakerAddPlanCon(CShaker *I,int atom0,int atom1,int atom2,int atom3)
 
 void ShakerAddLineCon(CShaker *I,int atom0,int atom1,int atom2)
 {
-  ShakerPlanCon *slc;
+  ShakerLineCon *slc;
   
   VLACheck(I->LineCon,ShakerLineCon,I->NLineCon);
   slc = I->LineCon+I->NLineCon;
