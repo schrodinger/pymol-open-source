@@ -1561,7 +1561,7 @@ class PMGApp(AbstractApp):
 
       self.menuBar.addmenuitem('Cartoon', 'checkbutton',
                          'Highlight Color',
-                         label=self.pad+'Highlight Colors',
+                         label=self.pad+'Highlight Color',
                         variable = self.setting.cartoon_highlight_color,
                         command = lambda s=self: s.setting.update('cartoon_highlight_color'))
 
