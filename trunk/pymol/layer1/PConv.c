@@ -29,6 +29,7 @@ Z* -------------------------------------------------------------------
 #include"Base.h"
 #include"PConv.h"
 #include"P.h"
+#include"Util.h"
 
 int PConvPyObjectToFloat(PyObject *object,float *value)
 {
@@ -113,18 +114,18 @@ int PConvPyObjectToStrMaxClean(PyObject *object,char *value,int ln)
 
 void PConvFloatToPyDictItem(PyObject *dict,char *key,float f)
 {
-  PyObject *fo;
-  fo = PyFloat_FromDouble((double)f);
-  PyDict_SetItemString(dict,key,fo);
-  Py_DECREF(fo); 
+  PyObject *tmp;
+  tmp = PyFloat_FromDouble((double)f);
+  PyDict_SetItemString(dict,key,tmp);
+  Py_XDECREF(tmp); 
 }
 
 void PConvIntToPyDictItem(PyObject *dict,char *key,int i)
 {
-  PyObject *fo;
-  fo = PyInt_FromLong(i);
-  PyDict_SetItemString(dict,key,fo);
-  Py_DECREF(fo); 
+  PyObject *tmp;
+  tmp = PyInt_FromLong(i);
+  PyDict_SetItemString(dict,key,tmp);
+  Py_XDECREF(tmp); 
 }
 
 void PConvStringToPyDictItem(PyObject *dict,char *key,char *f)
@@ -132,8 +133,66 @@ void PConvStringToPyDictItem(PyObject *dict,char *key,char *f)
   PyObject *tmp;
   tmp = PyString_FromString(f);
   PyDict_SetItemString(dict,key,tmp);
+  Py_XDECREF(tmp); 
+}
+
+void PConvFloat3ToPyObjAttr(PyObject *obj,char *attr,float *v)
+{
+  PyObject *t1,*t2,*t3,*tmp;
+
+  t1 = PyFloat_FromDouble((double)v[0]);
+  t2 = PyFloat_FromDouble((double)v[1]);
+  t3 = PyFloat_FromDouble((double)v[2]);
+  tmp = PyList_New(3);
+  if(t1&&t2&&t3&&tmp) {
+    PyList_SetItem(tmp,0,t1); /* steals reference */
+    PyList_SetItem(tmp,1,t2); /* steals reference */
+    PyList_SetItem(tmp,2,t3); /* steals reference */
+    PyObject_SetAttrString(obj,attr,tmp);
+  }
+  Py_XDECREF(tmp); 
+}
+
+void PConvInt2ToPyObjAttr(PyObject *obj,char *attr,int *v)
+{
+  PyObject *t1,*t2,*tmp;
+
+  t1 = PyInt_FromLong((long)v[0]);
+  t2 = PyInt_FromLong((long)v[1]);
+  tmp = PyList_New(2);
+  if(t1&&t2&&tmp) {
+    PyList_SetItem(tmp,0,t1); /* steals reference */
+    PyList_SetItem(tmp,1,t2); /* steals reference */
+    PyObject_SetAttrString(obj,attr,tmp);
+  }
+  Py_XDECREF(tmp); 
+}
+
+
+void PConvFloatToPyObjAttr(PyObject *obj,char *attr,float f)
+{
+  PyObject *tmp;
+  tmp = PyFloat_FromDouble((double)f);
+  PyObject_SetAttrString(obj,attr,tmp);
   Py_DECREF(tmp); 
 }
+
+void PConvIntToPyObjAttr(PyObject *obj,char *attr,int i)
+{
+  PyObject *tmp;
+  tmp = PyInt_FromLong(i);
+  PyObject_SetAttrString(obj,attr,tmp);
+  Py_DECREF(tmp); 
+}
+
+void PConvStringToPyObjAttr(PyObject *obj,char *attr,char *f)
+{
+  PyObject *tmp;
+  tmp = PyString_FromString(f);
+  PyObject_SetAttrString(obj,attr,tmp);
+  Py_DECREF(tmp); 
+}
+
 
 PyObject *PConvFloatVLAToPyList(float *f)
 {

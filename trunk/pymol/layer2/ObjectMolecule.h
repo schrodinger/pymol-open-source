@@ -73,6 +73,7 @@ typedef struct ObjectMoleculeOpRec {
 #define OMOP_MDST 14
 #define OMOP_MNMX 15
 #define OMOP_AlterState 16
+#define OMOP_Flag 17
 
 #include"CoordSet.h"
 

@@ -26,6 +26,9 @@ Z* -------------------------------------------------------------------
 #include"Err.h"
 #include"Word.h"
 #include"Util.h"
+#include"PConv.h"
+#include"P.h"
+
 #include"MemoryDebug.h"
 #include"Selector.h"
 #include"Executive.h"
@@ -123,6 +126,7 @@ void SelectorPurgeMembers(int sele);
 #define SELE_SELs ( 0x1500 | STYP_SEL1 )
 #define SELE_BVLx ( 0x1606 | STYP_SEL2 )
 #define SELE_ALTs ( 0x1700 | STYP_SEL1 )
+#define SELE_FLGs ( 0x1800 | STYP_SEL1 )
 
 static WordKeyValue Keyword[] = 
 {
@@ -155,7 +159,8 @@ static WordKeyValue Keyword[] =
   {  "resi",     SELE_RSIs },
   {  "i;",       SELE_RSIs },
   {  "alt",      SELE_ALTs },
-  {  "l;",       SELE_ALTs },
+  {  "flag",     SELE_FLGs },
+  {  "f;",       SELE_FLGs },
   {  "chain",    SELE_CHNs },
   {  "c;",       SELE_CHNs },
   {  "segi",     SELE_SEGs },
@@ -500,10 +505,125 @@ int SelectorGetPDB(char **charVLA,int sele,int state,int conectFlag)
       b2=ii1[1];
       ii1+=2;
     }
-    cLen+=sprintf((*charVLA)+cLen,"\n");
+    if(cLen) 
+      if(*((*charVLA)+cLen-1)!='\n')
+        cLen+=sprintf((*charVLA)+cLen,"\n");
     VLAFree(bond);
   }
   return(cLen);
+}
+/*========================================================================*/
+PyObject *SelectorGetChempyModel(int sele,int state)
+{
+  SelectorType *I=&Selector;
+  PyObject *model=NULL,*bnd=NULL;
+  PyObject *atom_list=NULL,*bond_list=NULL;
+  int a,b,b1,b2,b3,c,*ii1,s,idx,at;
+  int *bond=NULL;
+  int nBond=0;
+  int ok =true;
+  CoordSet *cs;
+  ObjectMolecule *obj;
+  AtomInfoType *atInfo,*ai;
+  SelectorUpdateTable();
+
+  model = PyObject_CallMethod(P_models,"Indexed","");
+  if (!model) 
+    ok = ErrMessage("CoordSetAtomToChempyAtom","can't create model");  
+  if(ok) {    
+    c=0;
+    for(a=0;a<I->NAtom;a++) {
+      at=I->Table[a].atom;
+      I->Table[a].index=0;
+      obj=I->Obj[I->Table[a].model];
+      s=obj->AtomInfo[at].selEntry;
+      while(s) 
+        {
+          if(I->Member[s].selection==sele)
+            {
+              if(state<obj->NCSet) 
+                cs=obj->CSet[state];
+              else
+                cs=NULL;
+              if(cs) {
+                idx=cs->AtmToIdx[at];
+                if(idx>=0) {
+                  I->Table[a].index=c+1; /* NOTE marking with "1" based indexes here */
+                  c++;
+                }
+                break;
+              }
+            }
+          s=SelectorNext(s);
+        }
+    }
+    if(c) {
+      atom_list = PyList_New(c);
+      PyObject_SetAttrString(model,"atom",atom_list);
+      c=0;
+      for(a=0;a<I->NAtom;a++) {
+        if(I->Table[a].index) {
+          at=I->Table[a].atom;
+          obj=I->Obj[I->Table[a].model];
+          idx=cs->AtmToIdx[at];
+          if(idx>=0) {
+            ai = obj->AtomInfo+at;
+            PyList_SetItem(atom_list,c,CoordSetAtomToChempyAtom(ai,obj->CSet[state]->Coord+(3*idx)));
+            c = c + 1;
+          }
+        }
+      }
+      Py_XDECREF(atom_list);
+
+      nBond = 0;
+      bond = VLAlloc(int,1000);
+      for(a=0;a<I->NModel;a++) {
+        obj=I->Obj[a];
+        ii1=obj->Bond;
+        if(state<obj->NCSet) 
+          cs=obj->CSet[state];
+        else
+          cs=NULL;
+        if(cs) {
+          atInfo=obj->AtomInfo;
+          for(b=0;b<obj->NBond;b++) {
+            b1=ii1[0];
+            b2=ii1[1];        
+            b3=ii1[2];
+            if((cs->AtmToIdx[b1]>=0)&&(cs->AtmToIdx[b2]>=0)) {
+              b1+=obj->SeleBase;
+              b2+=obj->SeleBase;
+              if(I->Table[b1].index&&I->Table[b2].index) {
+                VLACheck(bond,int,nBond*3+2);
+                b1=I->Table[b1].index;
+                b2=I->Table[b2].index;
+                bond[nBond*3] = b1;
+                bond[nBond*3+1] = b2;
+                bond[nBond*3+2] = b3;
+                nBond++;
+              }
+            }
+            ii1+=3;
+          }
+        }
+        ii1=bond;
+        bond_list = PyList_New(nBond);
+        PyObject_SetAttrString(model,"bond",bond_list);
+        for(a=0;a<nBond;a++) {
+          bnd = PyObject_CallMethod(P_chempy,"Bond","");
+          if(bnd) {
+            PConvInt2ToPyObjAttr(bnd,"index",ii1);
+            PConvIntToPyObjAttr(bnd,"order",ii1[2]);
+            PyList_SetItem(bond_list,a,bnd);
+          }
+          ii1+=3;
+        }
+        Py_XDECREF(bond_list);
+      }
+      VLAFree(bond);
+    }
+  }
+  return(model);
 }
 /*========================================================================*/
 void SelectorCreateObjectMolecule(int sele,char *name,int target,int source)
@@ -1130,6 +1250,7 @@ int SelectorSelect1(EvalElem *base)
   int c=0;
   int ok=true;
   int rmin,rmax,rtest,index;
+  int flag;
   char *p;
   
   SelectorType *I=&Selector;
@@ -1214,6 +1335,20 @@ int SelectorSelect1(EvalElem *base)
 			 if(WordMatchComma(base[1].text,
                             I->Obj[I->Table[a].model]->AtomInfo[I->Table[a].atom].alt,
                             I->IgnoreCase)<0)
+				{
+				  base[0].sele[a]=true;
+				  c++;
+				}
+			 else
+				base[0].sele[a]=false;
+        }
+		break;
+	 case SELE_FLGs:
+      sscanf(base[1].text,"%d",&flag);
+      flag = (1<<flag);
+		for(a=0;a<I->NAtom;a++)
+		  {
+			 if(I->Obj[I->Table[a].model]->AtomInfo[I->Table[a].atom].flags&flag)
 				{
 				  base[0].sele[a]=true;
 				  c++;

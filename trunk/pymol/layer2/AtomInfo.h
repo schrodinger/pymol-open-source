@@ -19,11 +19,11 @@ Z* -------------------------------------------------------------------
 
 #include"Rep.h"
 
-#define cResnLen 20
+#define cResnLen 5
 #define cResiLen 5
 #define cAtomNameLen 4
 #define cSegiLen 4
-
+#define cTextTypeLen 10
 
 typedef char Chain[2];
 
@@ -31,6 +31,9 @@ typedef char SegIdent[cSegiLen+1];
 typedef char ResIdent[cResiLen+1];
 typedef char ResName[cResnLen+1];
 typedef char AtomName[cAtomNameLen+1];
+typedef char TextType[cTextTypeLen+1];
+
+#define cAtomInfoNoType -9999
 
 typedef struct AtomInfoType {
   int resv;
@@ -41,10 +44,11 @@ typedef struct AtomInfoType {
   ResName resn;
   AtomName name;
   AtomName elem;
+  TextType textType;
   int hydrogen;
-  int ludiType;
+  int ludiType; /* this will go away soon */
   int customType;
-  int customFlag;
+  int customFlag; /* still needed?? */
   int priority;
   float b,q,vdw;
   signed char hetatm;
@@ -54,6 +58,7 @@ typedef struct AtomInfoType {
   short int visRep[cRepCnt];
   int color;
   int tmpID; /* used for reading conect records */
+  unsigned int flags;
 } AtomInfoType;
 
 int *AtomInfoGetSortedIndex(AtomInfoType *rec,int n,int **outdex);

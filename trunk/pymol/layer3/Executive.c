@@ -120,6 +120,25 @@ void ExecutiveSort(char *name)
   }
 }
 /*========================================================================*/
+void ExecutiveFlag(int flag,char *s1)
+{
+  int sele1;
+  ObjectMoleculeOpRec op;
+  
+  sele1 = SelectorIndexByName(s1);
+  if(sele1>=0) {
+    op.code = OMOP_Flag;
+    op.i1 = (((unsigned int)1)<<flag);
+    op.i2 = ((unsigned int)0xFFFFFFFF - (((unsigned int)1)<<flag));
+    op.i3 = 0;
+    ExecutiveObjMolSeleOp(sele1,&op);    
+    if(op.i3) 
+      PRINTF " Flag: flag %d set on %d atoms.\n", flag, op.i3 ENDF
+    else
+      PRINTF " Flag: flag %d cleared on all atoms.\n", flag ENDF
+  }
+}
+/*========================================================================*/
 float ExecutiveOverlap(char *s1,int state1,char *s2,int state2)
 {
   int sele1,sele2;
@@ -242,6 +261,19 @@ char *ExecutiveSeleToPDBStr(char *s1,int state,int conectFlag)
   result=Alloc(char,op1.i2);
   memcpy(result,op1.charVLA,op1.i2);
   VLAFreeP(op1.charVLA);
+  return(result);
+}
+/*========================================================================*/
+PyObject *ExecutiveSeleToChempyModel(char *s1,int state)
+{
+  PyObject *result;
+  int sele1;
+  sele1=SelectorIndexByName(s1);
+  if(state<0) state=0;
+  PBlockAndUnlockAPI();
+  result=SelectorGetChempyModel(sele1,state);
+  if(PyErr_Occurred()) PyErr_Print();
+  PLockAPIAndUnblock();
   return(result);
 }
 /*========================================================================*/

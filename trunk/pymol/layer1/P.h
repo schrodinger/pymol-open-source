@@ -55,11 +55,15 @@ void PDefineFloat(char *name,float value);
 void PRunString(char *str);
 void PDumpTraceback(PyObject *err);
 
+int PTruthCallStr(PyObject *object,char *method,char *argument);
+
 extern PyObject *P_globals;
 
 extern PyObject *P_cmd;
 extern PyObject *P_menu;
 extern PyObject *P_xray;
+extern PyObject *P_chempy;
+extern PyObject *P_models;
 
 extern PyThreadState *P_glut_thread_state; /* this is the state for the main GUI thread */
 extern PyThreadState *P_api_thread_state; /* this is the thread state for a non-glut API thread */
