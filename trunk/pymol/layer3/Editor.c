@@ -73,6 +73,12 @@ static void subdivide( int n, float *x, float *y)
 }
 
 /*========================================================================*/
+
+ObjectMolecule *EditorGetActiveObject(void) {
+  CEditor *I = &Editor;
+  return(I->Obj);
+}
+/*========================================================================*/
 void EditorCycleValence(void)
 {
   CEditor *I = &Editor;
@@ -229,6 +235,7 @@ void EditorReplace(char *elem,int geom,int valence)
         ObjectMoleculePreposReplAtom(I->Obj,i0,&ai);
         ObjectMoleculeReplaceAtom(I->Obj,i0,&ai); /* invalidates */
         ObjectMoleculeFillOpenValences(I->Obj,i0);
+        ObjectMoleculeSort(I->Obj);
         EditorSetActiveObject(NULL,0);
       }
     }
@@ -343,7 +350,6 @@ void EditorInactive(void)
   ExecutiveDelete(cEditorSele1);      
   ExecutiveDelete(cEditorSele2);    
   ExecutiveDelete(cEditorComp);
-
 }
 /*========================================================================*/
 void EditorSetActiveObject(ObjectMolecule *obj,int state)

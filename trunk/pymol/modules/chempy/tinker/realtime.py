@@ -19,7 +19,7 @@ import os
 state = None
 model = None
 
-def setup(sele):
+def setup(sele,preserve=0):
    
    global state
    global model
@@ -44,8 +44,7 @@ def setup(sele):
    c = 0
    for a in typed.getNamedTypes():
       at = model.atom[c]
-      if at.text_type == '??':
-         print c,a
+      if (at.text_type == '??') or (not preserve):
          if a=='':
             print " warning: unable to assign atom type to atom %d"%c
          else:
@@ -113,7 +112,6 @@ def dyna(steps,iter=1):
          cmd.ending()
          cmd.refresh()
       io.pkl.toFile("realtime.pkl")
-
       print " realtime.dyna: terminated after %d steps." % state.counter
 
 def check(obj='check'):
@@ -167,7 +165,6 @@ def mini(total_step=100,gradient=0.001,interval=100,obj='rt'):
          if state.summary[-1][7]=='SmallGrad':
             break;         
       io.pkl.toFile(model,"realtime.pkl")
-
       print " realtime.mini: terminated after %d steps." % state.counter
 
 

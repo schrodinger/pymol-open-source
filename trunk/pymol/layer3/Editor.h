@@ -42,4 +42,6 @@ void EditorRemove(void);
 void EditorRefill(void);
 void EditorCycleValence(void);
 void EditorInactive(void);
+ObjectMolecule *EditorGetActiveObject(void);
+
 #endif

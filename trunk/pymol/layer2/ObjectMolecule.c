@@ -499,7 +499,6 @@ int ObjectMoleculeFillOpenValences(ObjectMolecule *I,int index)
       flag=true;
     }
   }
-  
   return(result);
 }
 /*========================================================================*/
@@ -2764,9 +2763,9 @@ void ObjectMoleculeMerge(ObjectMolecule *I,AtomInfoType *ai,CoordSet *cs,int bon
 		a1=cs->IdxToAtm[a]; /* a1 is in sorted atom info space */
 		a2=index[a1];
 		i2a[a]=a2; /* a2 is in object space */
-		if(a2 >= I->NAtom) { 
+      /*		if(a2 >= I->NAtom) { */
 		  I->AtomInfo[a2]=ai[a1]; /* copy atom info */
-		}
+        /*		}*/
     }
   
   if(I->DiscreteFlag) {
@@ -3555,8 +3554,9 @@ void ObjectMoleculeInvalidate(ObjectMolecule *I,int rep,int level)
   if(level>=cRepInvBonds) {
     VLAFreeP(I->Neighbor);
     ObjectMoleculeUpdateNonbonded(I);
-    if(level>=cRepInvAtoms) 
+    if(level>=cRepInvAtoms) {
       SelectorUpdateObjectSele(I);
+    }
   }
   for(a=0;a<I->NCSet;a++) 
 	 if(I->CSet[a]) {	 
