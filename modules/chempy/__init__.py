@@ -186,6 +186,20 @@ class Storage:
       result = fp.writelines(apply(self.toList,(indexed,),params))
       fp.close()
 
+class PseudoFile:
+
+   def __init__(self,list):
+      self.list = copy.deepcopy(list)
+
+   def readline(self):
+      try:
+         return self.list.pop(0)
+      except:
+         return None
+
+   def close(self):
+      self.list = None
+      
 feedback = { 'warnings': 1,
              'terse'   : 1,
              'io'      : 1,

@@ -135,7 +135,7 @@ class SDF:
          mode = args[2]
       self.mode = mode
       self.at_eof = 0
-      if mode not in ('w','r','wa','pseudofile'):
+      if mode not in ('w','r','wa','pf'):
          print " SDF: bad mode"
          return None
       if mode=='pf': # pseudofile
@@ -163,6 +163,4 @@ class SDF:
    def close(self):
       self.file.close()
       
-
-
-
+   
