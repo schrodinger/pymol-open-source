@@ -100,7 +100,9 @@ extern CGO *DebugCGO; /* for programming... initialized in Scene.c */
 #define CGO_CHAR                 0x17
 #define CGO_CHAR_SZ              1
 #define CGO_INDENT               0x18
-#define CGO_INDENT_SZ            2
+#define CGO_INDENT_SZ            1
+#define CGO_ALPHA                0x19 
+#define CGO_ALPHA_SZ             1
 #define CGO_PICK_COLOR           0x1F
 #define CGO_PICK_COLOR_SZ        2
 #define CGO_MASK                 0x1F
@@ -128,6 +130,7 @@ void CGOEnd(CGO *I);
 
 void CGOVertex(CGO *I,float v1,float v2,float v3);
 void CGOVertexv(CGO *I,float *v);
+void CGOAlpha(CGO *I,float alpha);
 void CGOColor(CGO *I,float v1,float v2,float v3);
 void CGOColorv(CGO *I,float *v);
 void CGONormal(CGO *I,float v1,float v2,float v3);

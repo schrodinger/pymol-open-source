@@ -164,7 +164,8 @@ if __name__=='pymol.setting':
       robust_logs           =132
       log_box_selections    =133
       log_conformations     =134
-      valence_default       =135
+      valence_size          =135
+      valence_default       =135 # legacy
       surface_miserable     =136
       ray_opaque_background =137
       transparency          =138
@@ -310,6 +311,7 @@ if __name__=='pymol.setting':
       stick_ball            = 276
       stick_ball_ratio      = 277
       stick_fixed_radius    = 278
+      cartoon_transparency  = 279
       
    setting_sc = Shortcut(SettingIndex.__dict__.keys())
 

@@ -33,6 +33,7 @@ Z* -------------------------------------------------------------------
 #define CGO_get_int(p) (*((int*)(p)))
 #define CGO_write_int(p,i) ((*((int*)(p++)))=(i))
 
+static float global_alpha = 1.0F;
 
 CGO *DebugCGO = NULL; /* initialized in Scene.c */
 
@@ -68,7 +69,7 @@ int CGO_sz[] = {
   CGO_CHAR_SZ,
 
   CGO_INDENT_SZ,
-  CGO_NULL_SZ,
+  CGO_ALPHA_SZ,
   CGO_NULL_SZ,
   CGO_NULL_SZ,
 
@@ -471,6 +472,13 @@ void CGOPickColor(CGO *I,int index,int bond)
   CGO_write_int(pc,CGO_PICK_COLOR);
   *(pc++)=(float)index;
   *(pc++)=(float)bond;
+}
+
+void CGOAlpha(CGO *I,float alpha)
+{
+  float *pc = CGO_add(I,2);
+  CGO_write_int(pc,CGO_ALPHA);
+  *(pc++)=alpha;
 }
 
 void CGOVertex(CGO *I,float v1,float v2,float v3)
@@ -892,6 +900,8 @@ void CGORenderRay(CGO *I,CRay *ray,float *color,CSetting *set1,CSetting *set2)
   float *n0=NULL,*n1=NULL,*n2=NULL,*v0=NULL,*v1=NULL,*v2=NULL,*c0=NULL,*c1=NULL,*c2=NULL;
   int mode = -1;
 
+  global_alpha = 1.0F;
+
   widthscale = SettingGet_f(set1,set2,cSetting_cgo_ray_width_scale);
 
   /*  printf("debug %8.9f\n",SceneGetScreenVertexScale(zee));*/
@@ -937,6 +947,10 @@ void CGORenderRay(CGO *I,CRay *ray,float *color,CSetting *set1,CSetting *set2)
     case CGO_COLOR:
       c0=pc;
       ray->fColor3fv(ray,c0);
+      break;
+    case CGO_ALPHA:
+      global_alpha = *pc;
+      ray->fTransparentf(ray,1.0F - global_alpha);
       break;
     case CGO_VERTEX:
       v0=pc;
@@ -1055,6 +1069,11 @@ static void CGO_gl_disable(float *pc)
   glDisable(CGO_read_int(pc));
 }
 
+static void CGO_gl_alpha(float *pc)
+{
+  global_alpha = *pc;
+}
+
 static void CGO_gl_null(float *pc) {
 }
 #ifdef CYGWIN
@@ -1073,10 +1092,15 @@ static void CGO_gl_vertex(float *v) {
 static void CGO_gl_normal(float *v) {
   glNormal3fv(v);
 }
-static void CGO_gl_color(float *v) {
-  glColor3fv(v);
-}
 #endif
+
+static void CGO_gl_color(float *v) {
+  if(global_alpha==1.0F) 
+    glColor3fv(v);
+  else {
+    glColor4f(v[0],v[1],v[2],global_alpha);
+  }
+}
 
 /* dispatch table for OpenGL */
 
@@ -1088,12 +1112,11 @@ CGO_op_fn CGO_gl[] = {
 #ifdef WIN32
   CGO_gl_vertex,           /* 0x04 */
   CGO_gl_normal,           /* 0x05 */
-  CGO_gl_color,            /* 0x06 */
 #else
   (CGO_op_fn)glVertex3fv,  /* 0x04 */
   (CGO_op_fn)glNormal3fv,  /* 0x05 */
-  (CGO_op_fn)glColor3fv,   /* 0x06 */
 #endif
+  CGO_gl_color,            /* 0x06 */
   CGO_gl_null,             /* 0x07 */
   CGO_gl_null,             /* 0x08 */
   CGO_gl_null,             /* 0x09 */
@@ -1116,7 +1139,7 @@ CGO_op_fn CGO_gl[] = {
   CGO_gl_null,             /* 0X17 */
 
   CGO_gl_null,             /* 0X18 */
-  CGO_gl_null,             /* 0x19 */
+  CGO_gl_alpha,            /* 0x19 */
   CGO_gl_null,             /* 0x1A */
   CGO_gl_null,             /* 0X1B */
 
@@ -1180,6 +1203,8 @@ void CGORenderGL(CGO *I,float *color,CSetting *set1,CSetting *set2)
 {
   register float *pc = I->op;
   register int op;
+
+  global_alpha = 1.0F;
 
   if(I->c) {
     if(color) 

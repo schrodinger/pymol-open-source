@@ -169,6 +169,7 @@ Rep *RepCartoonNew(CoordSet *cs)
   int trace;
   int skip_to;
   AtomInfoType *ai,*last_ai=NULL;
+  float alpha;
 
   /* THIS HAS GOT TO BE A CANDIDATE FOR THE WORST ROUTINE IN PYMOL
    * DEVELOP ON IT ONLY AT EXTREME RISK TO YOUR MENTAL HEALTH */
@@ -203,6 +204,7 @@ ENDFD;
   width=SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_cartoon_rect_width);
   trace=SettingGet_i(cs->Setting,obj->Obj.Setting,cSetting_cartoon_trace);
 
+  alpha=1.0F - SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_cartoon_transparency);
   throw=SettingGet_f(cs->Setting,obj->Obj.Setting,cSetting_cartoon_throw);
 
   sampling = SettingGet_i(cs->Setting,obj->Obj.Setting,cSetting_cartoon_sampling);
@@ -994,6 +996,9 @@ ENDFD;
 
 
   I->ray = CGONew();
+  
+  if(alpha!=1.0F)
+    CGOAlpha(I->ray,alpha);
 
   /* debugging output */
   if(round_helices) {
