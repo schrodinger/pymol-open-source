@@ -65,7 +65,8 @@ void SceneWindowSphere(float *location,float radius);
 Block *SceneGetBlock(void);
 void SceneApplyMatrix(float *m);
 void SceneSetStereo(int flag);
-
+void ScenePurgeCopy(void);
+void SceneDontCopyNext(void);
 #endif
 
 

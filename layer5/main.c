@@ -71,7 +71,6 @@ int TheWindow;
 
 typedef struct {
   int DirtyFlag;
-  int WasDirty;
   int IdleFlag;
   int SwapFlag;
 } CMain;
@@ -149,7 +148,6 @@ static void MainDraw(void)
   PLock(cLockAPI,&_save);
 
   if(I->DirtyFlag) {
-    I->WasDirty = true;
     I->DirtyFlag=false;
   }
   
@@ -206,10 +204,8 @@ static void MainDraw(void)
 	 }
   else if(I->SwapFlag)
     {
-      if(PMGUI&&(!I->WasDirty)&&I->IdleFlag) SceneCopy(0);
       if(PMGUI) glutSwapBuffers();
       I->SwapFlag=false;
-      I->WasDirty=false;
     }
   PUnlock(cLockAPI,&_save);
 }
@@ -342,7 +338,6 @@ void MainRefreshNow(void)
       else
         MainDraw();
       I->DirtyFlag=false;
-      I->WasDirty=true;
     }
 }
 /*========================================================================*/
@@ -375,7 +370,6 @@ void MainBusyIdle(void)
     I->SwapFlag=false;
   }
   if(I->DirtyFlag) {
-    I->WasDirty=true;
     if(PMGUI) 
       glutPostRedisplay();
     else
@@ -383,14 +377,12 @@ void MainBusyIdle(void)
     I->DirtyFlag=false;
   }
   
-  if(!I->WasDirty) {
-    if(I->IdleFlag) { /* select to avoid racing the CPU */
-      
-      PUnlock(cLockAPI,&_save);
-      PSleep(20000);
-      PLock(cLockAPI,&_save);
-
-    }
+  if(I->IdleFlag) { /* select to avoid racing the CPU */
+    
+    PUnlock(cLockAPI,&_save);
+    PSleep(20000);
+    PLock(cLockAPI,&_save);
+    
   }
   
   PUnlock(cLockAPI,&_save);

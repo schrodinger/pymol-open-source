@@ -497,8 +497,6 @@ void OrthoDoDraw()
   float *v;
 
   
-  /*  SceneCopy(1);*/ /* Copy if necessary before clear */
-  
   if(PMGUI) {
 
     v=SettingGetfv(cSetting_bg_rgb);
