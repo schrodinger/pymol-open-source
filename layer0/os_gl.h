@@ -109,15 +109,19 @@ Z* -------------------------------------------------------------------
 #define P_GLUT_IDLE_EVENT            0
 #define P_GLUT_DISPLAY_EVENT         1
 #define P_GLUT_RESHAPE_EVENT         2
+#define P_GLUT_MOUSE_EVENT           3
+#define P_GLUT_MOTION_EVENT          4
 
 typedef struct {
   int event_code;
   int x,y;
+  int input,state,mod;
 } p_glut_event;
 
 /* here is the pretend GLUT event handler */
 
 void p_glutHandleEvent(p_glut_event *ev); 
+int p_glutGetRedisplay(void);
 
 /* here is the interface and constants for a pretend GLUT */
 
@@ -128,17 +132,17 @@ void p_glutHandleEvent(p_glut_event *ev);
 #define P_GLUT_DEPTH                    5
 #define P_GLUT_DISPLAY_MODE_POSSIBLE    6
 #define P_GLUT_DOUBLE                   7
-#define P_GLUT_DOWN                     8
-#define P_GLUT_KEY_DOWN                 9
-#define P_GLUT_KEY_LEFT                 10
-#define P_GLUT_KEY_RIGHT                11
-#define P_GLUT_KEY_UP                   12
-#define P_GLUT_LEFT_BUTTON              13
-#define P_GLUT_MIDDLE_BUTTON            14
-#define P_GLUT_RGBA                     15
-#define P_GLUT_RIGHT_BUTTON             16
-#define P_GLUT_STEREO                   17
-#define P_GLUT_UP                       18
+#define P_GLUT_RGBA                     8
+#define P_GLUT_DOWN                     9
+#define P_GLUT_UP                       10
+#define P_GLUT_KEY_DOWN                 11
+#define P_GLUT_KEY_LEFT                 12
+#define P_GLUT_KEY_RIGHT                13
+#define P_GLUT_KEY_UP                   14
+#define P_GLUT_LEFT_BUTTON              15
+#define P_GLUT_MIDDLE_BUTTON            16
+#define P_GLUT_RIGHT_BUTTON             17
+#define P_GLUT_STEREO                   18
 
 void     p_glutBitmapCharacter(void *font, int character);
 void     p_glutSwapBuffers(void);

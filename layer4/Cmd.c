@@ -255,6 +255,7 @@ static PyObject *CmdOrient(PyObject *dummy, PyObject *args);
 static PyObject *CmdOverlap(PyObject *self, 	PyObject *args);
 static PyObject *CmdPaste(PyObject *self, 	PyObject *args);
 static PyObject *CmdPGlutEvent(PyObject *self,   PyObject *args);
+static PyObject *CmdPGlutGetRedisplay(PyObject *self, PyObject *args);
 static PyObject *CmdPNG(PyObject *self, 	PyObject *args);
 static PyObject *CmdProtect(PyObject *self, PyObject *args);
 static PyObject *CmdQuit(PyObject *self, 	PyObject *args);
@@ -404,6 +405,7 @@ static PyMethodDef Cmd_methods[] = {
 	{"onoff",                 CmdOnOff,                METH_VARARGS },
 	{"overlap",               CmdOverlap,              METH_VARARGS },
 	{"p_glut_event",          CmdPGlutEvent,           METH_VARARGS },
+   {"p_glut_get_redisplay",  CmdPGlutGetRedisplay,    METH_VARARGS },
 	{"paste",	              CmdPaste,                METH_VARARGS },
 	{"png",	                 CmdPNG,                  METH_VARARGS },
 	{"protect",	              CmdProtect,              METH_VARARGS },
@@ -463,13 +465,20 @@ static PyMethodDef Cmd_methods[] = {
 	{NULL,		              NULL}     /* sentinel */        
 };
 
+
+static PyObject *CmdPGlutGetRedisplay(PyObject *self, PyObject *args)
+{
+  return(APIStatus(p_glutGetRedisplay()));  
+}
+
 static PyObject *CmdPGlutEvent(PyObject *self, PyObject *args)
 {
   int ok=true;
 
 #ifdef _PYMOL_PRETEND_GLUT
   p_glut_event ev;
-  ok = PyArg_ParseTuple(args,"i",&ev.event_code);
+  ok = PyArg_ParseTuple(args,"iiiiii",&ev.event_code,
+                        &ev.x,&ev.y,&ev.input,&ev.state,&ev.mod);
   if(ok) {
     PUnblock();
     p_glutHandleEvent(&ev);

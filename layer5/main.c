@@ -183,7 +183,6 @@ static void MainDrawLocked(void)
   
   OrthoBusyPrime();
   ExecutiveDrawNow();
-
   if(I->SwapFlag)
     {
       if(!SettingGet(cSetting_suspend_updates))
