@@ -58,7 +58,7 @@ def process(sele): # expand slash notation into a standard atom selection
       if chain!='': lst.append("c;"+string.replace(chain,'+',','))
       if residue!='':
          if num_re.search(residue)==None:
-            lst.append("r;"+residue)            
+            lst.append("r;"+string.replace(residue,'+',','))
          else:
             residue = string.replace(residue,'+',',')
             residue = string.replace(residue,'-',':')
