@@ -267,8 +267,9 @@ void MainDoReshape(int width, int height) /* called internally */
   int internal_feedback;
   if(width<0) {
     BlockGetSize(SceneGetBlock(),&width,&h);
-    if(SettingGet(cSetting_internal_gui))
-      width+=SettingGet(cSetting_internal_gui_width);
+    if(!SettingGet(cSetting_full_screen))
+      if(SettingGet(cSetting_internal_gui))
+        width+=SettingGet(cSetting_internal_gui_width);
   }
   if(height<0) { 
     BlockGetSize(SceneGetBlock(),&w,&height);
