@@ -320,7 +320,7 @@ ObjectMolecule *ObjectMoleculeReadXYZStr(ObjectMolecule *I,char *PDBStr,int fram
     if(isNew) {		
       I->AtomInfo=atInfo; /* IMPORTANT to reassign: this VLA may have moved! */
     } else {
-      ObjectMoleculeMerge(I,atInfo,cset,true); /* NOTE: will release atInfo */
+      ObjectMoleculeMerge(I,atInfo,cset,false); /* NOTE: will release atInfo */
     }
     if(isNew) I->NAtom=nAtom;
     if(frame<0) frame=I->NCSet;
@@ -328,7 +328,7 @@ ObjectMolecule *ObjectMoleculeReadXYZStr(ObjectMolecule *I,char *PDBStr,int fram
     if(I->NCSet<=frame) I->NCSet=frame+1;
     if(I->CSet[frame]) I->CSet[frame]->fFree(I->CSet[frame]);
     I->CSet[frame] = cset;
-    if(isNew) I->NBond = ObjectMoleculeConnect(I,&I->Bond,I->AtomInfo,cset,0.2,true);
+    if(isNew) I->NBond = ObjectMoleculeConnect(I,&I->Bond,I->AtomInfo,cset,0.2,false);
     if(cset->TmpSymmetry&&(!I->Symmetry)) {
       I->Symmetry=cset->TmpSymmetry;
       cset->TmpSymmetry=NULL;
@@ -2600,7 +2600,7 @@ ObjectMolecule *ObjectMoleculeLoadChemPyModel(ObjectMolecule *I,PyObject *model,
     if(isNew) {	
       I->AtomInfo=atInfo; /* IMPORTANT to reassign: this VLA may have moved! */
     } else {
-      ObjectMoleculeMerge(I,atInfo,cset,true); /* NOTE: will release atInfo */
+      ObjectMoleculeMerge(I,atInfo,cset,false); /* NOTE: will release atInfo */
     }
     if(isNew) I->NAtom=nAtom;
     if(frame<0) frame=I->NCSet;
@@ -3032,7 +3032,7 @@ ObjectMolecule *ObjectMoleculeReadMOLStr(ObjectMolecule *I,char *MOLStr,int fram
       if(isNew) {		
         I->AtomInfo=atInfo; /* IMPORTANT to reassign: this VLA may have moved! */
       } else {
-        ObjectMoleculeMerge(I,atInfo,cset,true); /* NOTE: will release atInfo */
+        ObjectMoleculeMerge(I,atInfo,cset,false); /* NOTE: will release atInfo */
       }
 
       if(isNew) I->NAtom=nAtom;
@@ -4229,7 +4229,7 @@ int ObjectMoleculeConnect(ObjectMolecule *I,int **bond,AtomInfoType *ai,
   nBond = 0;
   maxBond = cs->NIndex * 8;
   (*bond) = VLAlloc(int,maxBond*3);
-  if(cs->NIndex&&bondSearchFlag&&(!I->DiscreteFlag))
+  if(cs->NIndex&&bondSearchFlag) /* &&(!I->DiscreteFlag) WLD 010527 */
 	 {
       map=MapNew(cutoff+MAX_VDW,cs->Coord,cs->NIndex,NULL);
       if(map)
@@ -4400,13 +4400,13 @@ ObjectMolecule *ObjectMoleculeReadMMDStr(ObjectMolecule *I,char *MMDStr,int fram
         I->AtomInfo=atInfo; /* IMPORTANT to reassign: this VLA may have moved! */
         I->NAtom=nAtom;
       } else {
-        ObjectMoleculeMerge(I,atInfo,cset,true); /* NOTE: will release atInfo */
+        ObjectMoleculeMerge(I,atInfo,cset,false); /* NOTE: will release atInfo */
       }
       if(frame<0) frame=I->NCSet;
       VLACheck(I->CSet,CoordSet*,frame);
       if(I->NCSet<=frame) I->NCSet=frame+1;
       I->CSet[frame] = cset;
-      if(isNew) I->NBond = ObjectMoleculeConnect(I,&I->Bond,I->AtomInfo,cset,0.2,true);
+      if(isNew) I->NBond = ObjectMoleculeConnect(I,&I->Bond,I->AtomInfo,cset,0.2,false);
       SceneCountFrames();
       ObjectMoleculeExtendIndices(I);
       ObjectMoleculeSort(I);

@@ -18,7 +18,8 @@ import string
 import glob
 import pymol
 
-def cbag(s):
+def cbag(selection):
+   s = str(selection)
    cmd.color("magenta","("+s+")")
    cmd.color("oxygen","(elem O and "+s+")")
    cmd.color("nitrogen","(elem N and "+s+")")
@@ -26,7 +27,8 @@ def cbag(s):
    cmd.color("hydrogen","(elem H and "+s+")")
    cmd.color("carbon","(elem C and "+s+")")
 
-def cbac(s):
+def cbac(selection):
+   s = str(selection)
    cmd.color("magenta","("+s+")")
    cmd.color("oxygen","(elem O and "+s+")")
    cmd.color("nitrogen","(elem N and "+s+")")
@@ -34,7 +36,8 @@ def cbac(s):
    cmd.color("hydrogen","(elem H and "+s+")")
    cmd.color("cyan","(elem C and "+s+")")
 
-def cbay(s):
+def cbay(selection):
+   s = str(selection)   
    cmd.color("magenta","("+s+")")
    cmd.color("oxygen","(elem O and "+s+")")
    cmd.color("nitrogen","(elem N and "+s+")")
@@ -42,7 +45,8 @@ def cbay(s):
    cmd.color("hydrogen","(elem H and "+s+")")
    cmd.color("yellow","(elem C and "+s+")")
 
-def cbas(s):
+def cbas(selection):
+   s = str(selection)   
    cmd.color("magenta","("+s+")")
    cmd.color("oxygen","(elem O and "+s+")")
    cmd.color("nitrogen","(elem N and "+s+")")
@@ -50,7 +54,8 @@ def cbas(s):
    cmd.color("hydrogen","(elem H and "+s+")")
    cmd.color("salmon","(elem C and "+s+")")
 
-def cbap(s):
+def cbap(selection):
+   s = str(selection)   
    cmd.color("magenta","("+s+")")
    cmd.color("oxygen","(elem O and "+s+")")
    cmd.color("nitrogen","(elem N and "+s+")")
@@ -58,7 +63,8 @@ def cbap(s):
    cmd.color("hydrogen","(elem H and "+s+")")
    cmd.color("purple","(elem C and "+s+")")
 
-def cbaw(s):
+def cbaw(selection):
+   s = str(selection)   
    cmd.color("magenta","("+s+")")
    cmd.color("oxygen","(elem O and "+s+")")
    cmd.color("nitrogen","(elem N and "+s+")")
@@ -66,7 +72,8 @@ def cbaw(s):
    cmd.color("hydrogen","(elem H and "+s+")")
    cmd.color("hydrogen","(elem C and "+s+")")
 
-def cbab(s):
+def cbab(selection):
+   s = str(selection)   
    cmd.color("magenta","("+s+")")
    cmd.color("oxygen","(elem O and "+s+")")
    cmd.color("nitrogen","(elem N and "+s+")")
@@ -74,8 +81,12 @@ def cbab(s):
    cmd.color("hydrogen","(elem H and "+s+")")
    cmd.color("slate","(elem C and "+s+")")
 
-
-def mrock(fir,las,dsp,pha,loop):
+def mrock(first,last,angle,phase,loop):
+   fir=int(first)
+   las=int(last)
+   dsp=float(angle)
+   pha=float(phase)
+   loop=int(loop)
    n = las - fir
    ang = pha * math.pi
    if loop:
@@ -95,6 +106,9 @@ def mrock(fir,las,dsp,pha,loop):
       a = a + 1
 
 def mroll(fir,las,loop):
+   fir=int(first)
+   las=int(last)
+   loop=int(loop)
    n = las - fir
    if loop:
       step = 2*math.pi/(n+1)
@@ -124,21 +138,20 @@ def mload(*args):
       for a in fils:
          cmd.load(a,nam)
    
-def color_chains(*arg):
+def cbc(selection='(all)'):
    '''
    Color all chains a different color
    '''
-   if not len(arg):
-      sele = 'all'
-   else:
-      sele = arg[0]
    pymol.stored.chain = {}
-   cmd.iterate("(%s)"%sele,"stored.chain[chain]=1")
+   cmd.iterate("(%s)"%selection,"stored.chain[chain]=1")
    c = 7
    for a in pymol.stored.chain.keys():
-      print ("%d,(chain %s)"%(c,a))
-      cmd.color("%d"%c,"(chain %s)"%a)
-      c = c + 1
+      if len(a):
+         print ("%d,(chain %s)"%(c,a))
+         cmd.color("%d"%c,"(chain %s)"%a)
+         c = c + 1
+
+color_chains = cbc
 
 def sum_charge(*arg):
    result = None

@@ -386,14 +386,9 @@ class PMGApp(AbstractApp):
                                label='Keyboard',
                                command = lambda: cmd.show_help("keyboard"))      
 
-      self.menuBar.addmenuitem('Help', 'command', 'Help on the Keyboard',
-                               label='Keyboard',
-                               command = lambda: cmd.show_help("keyboard"))      
-
       self.menuBar.addmenuitem('Help', 'command', 'Help on Molecular Editing',
                                label='Molecular Editing',
                                command = lambda: cmd.show_help("editing"))      
-
 
       self.menuBar.addmenuitem('Help', 'command', 'Help on Molecular Editing',
                                label='Molecular Editing Keys',

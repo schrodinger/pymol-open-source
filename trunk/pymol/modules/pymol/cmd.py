@@ -85,7 +85,7 @@ def write_html_ref(file):
       if hasattr(lst[a],'__doc__'):
          if a[0:1]!='_' and (a not in ['string','thread',
                                        'setup_global_locks',
-                                       'real_system',
+                                       'real_system','sys','imp','glob'
                                        ]):
             doc = lst[a].__doc__
             if is_string(doc):
@@ -143,11 +143,10 @@ def editing():
 SUMMARY
 
 PyMOL has a rudimentary, but quite functional molecular structure
-editing capability.  However, you will need to set up Tinker if you
-want to to "clean-up" your structures after editing.  Furthermore, if
-you are going to modify molecules other than proteins, then you will
-also need a way of assigning atom types (Amber) on the fly.
-Unfortunately, my solution to that problem has not been published yet.
+editing capability.  However, you will need to use an external mimizer
+to "clean-up" your structures after editing.  Furthermore, if you are
+going to modify molecules other than proteins, then you will also need
+a way of assigning atom types on the fly.
 
 To edit a conformation or structure, you first need to enter editing
 mode (see Mouse Menu).  Then you can pick an atom (CTRL-Middle click)
@@ -158,15 +157,16 @@ will move fragments about the selected torsion.
 
 Editing structures is done through a series of CTRL key actions
 applied to the currently selected atom or bonds. See "help edit_keys"
-for the exact combinations.  To build structure, you usually just
-replace hydrogens with methyl groups, etc., and then repeat.  They
-are no short-cuts currently available for building common groups --
-that will happend in a later version.
+for the exact combinations.  To build structures, you usually just
+replace hydrogens with methyl groups, etc., and then repeat.  They are
+no short-cuts currently available for building common groups, but that
+is planned for later versions.
 
 NOTE
   
-Only "lines" representations can be picked using the mouse, however
-other representations will not interfere with picking.
+Only "lines" and "sticks" representations can be picked using the
+mouse, however other representations will not interfere with picking
+so long as one of these representation is present underneath.
    
 '''
 
@@ -203,7 +203,8 @@ myself any time soon using either toolkit.
 Note that only Tkinter is supported under Windows with the default
 PyMOL and Python distributions, so for maximum ease of installation
 under Windows, stick with Tkinter (Tcl/Tk).  For this reason, the
-Tkinter-based GUI is going to be the default GUI for standard PyMOL.
+Tkinter-based GUI is going to be the default GUI for standard PyMOL
+despite its drawbacks.
 
 Warren L. DeLano (5/1/2001), warren@delanoscientific.com
 '''
@@ -215,7 +216,7 @@ EDITING KEYS
    These are defaults, which can be redefined.  Note that while
 entering text on the command line, some of these control keys take on
 text editing functions instead (CTRL - A, E, and K, and DELETE), so
-you shouold clear the command line before trying to edit atoms.
+you should clear the command line before trying to edit atoms.
 
 ATOM REPLACEMENT
  
@@ -335,27 +336,24 @@ def api():
 DESCRIPTION
  
    The PyMOL Python Application Programming Interface (API) should be
-   accessed exclusively through the "cmd" module (never _cmd!).  Nearly
+   accessed exclusively through the "cmd" module (never "_cmd"!).  Nearly
    all command-line functions have a corresponding API method.
  
 USAGE
  
    from pymol import cmd
-   result = cmd.{command-name}( { argument , ... } ) 
+   result = cmd.<command-name>( argument , ... ) 
     
-API-ONLY METHODS
- 
-   KEY BINDING set_key
-   (more documentation to come)
- 
 NOTES
  
    Although the PyMOL core is not multi-threaded, the API is
    thread-safe and can be called asynchronously by external python
    programs.  PyMOL handles the necessary locking to insure that
-   internal states do not get corrupted.
+   internal states do not get corrupted.  This makes it very easy to
+   build complicated systems which involve direct realtime visualization.
 
-'''
+   '''
+   
    help('api')
 
 def keyboard():
@@ -431,34 +429,6 @@ MOUSE CONTROLS
       TorF     = Torsion fragment
 '''
    help('mouse')
-
-def mouse2():
-   '''
-STANDARD MAPPINGS (These only work on the "lines" representation!)
- 
-   PkAt: CTRL/middle click        Pick an atom (will display globe).
-   PkBd: CTRL/right mouse click   Pick a bond (will display ring).
-
-   (normal mode - visualization onle)
- 
-   +lb : CTRL-left mouse click          Adds an atom to (lb).
-   lb  : CTRL-SHIFT/left mouse click    Sets the (lb) selection.
-   Orig: CTRL-SHIFT/middle click        
-   CTRL-right mouse click   Pick atom and add to selection (rb).
-
-   (editing mode 
-ATOM SELECTIONS (Only work on "lines and nonbonded" representations!)
-
-
-
-   CTRL-SHIFT/middle mouse click  Set the origin of rotation.
-   CTRL-SHIFT/right mouse click   Pick atom and add to selection (rb).
-
-   VISUALIZATION MODE
-   
-   CTRL/left mouse click    Add an atom to selection (lb).
-'''
-   pass
 
 def examples():
    '''
@@ -617,7 +587,7 @@ PYMOL API
       unlock()
    return r
 
-def get_setting_updates():
+def get_setting_updates(): # INTERNAL
    r = None
    try:
       lock()
@@ -626,7 +596,7 @@ def get_setting_updates():
       unlock()
    return r
 
-def align(source,target):
+def align(source,target): # EXPERIMENTAL, BUGGY
    r = None
    try:
       lock()
@@ -635,7 +605,7 @@ def align(source,target):
       unlock()
    return r
 
-def get_setting_tuple(name,object='',state=0):
+def get_setting_tuple(name,object='',state=0): # INTERNAL
    r = None
    if is_string(name):
       i = setting._get_index(name)
@@ -651,7 +621,7 @@ def get_setting_tuple(name,object='',state=0):
       unlock()
    return r
 
-def get_setting_text(name,object='',state=0):
+def get_setting_text(name,object='',state=0):  # INTERNAL
    r = None
    if is_string(name):
       i = setting._get_index(name)
@@ -684,7 +654,7 @@ def spheroid(object=""):  # EXPERIMENTAL
       unlock()
    return r
 
-def cls():
+def cls(): 
    '''
 DESCRIPTION
  
@@ -1041,7 +1011,10 @@ NOTES
    
    The default behavior is to create a bond between the (lb) and (rb)
    selections.
-   
+
+SEE ALSO
+
+   unbond, fuse, attach, replace, remove_picked
 '''
    try:
       lock()
@@ -1052,6 +1025,29 @@ NOTES
 
 def invert(selection1="(lb)",selection2="(rb)"):
    '''
+DESCRIPTION
+
+   "invert" inverts the stereo-chemistry of the atom currently picked
+   for editing (pk1).  Two additional atom selections must be provided
+   in order to indicate which atoms remain stationary during the
+   inversion process.
+
+USAGE
+
+   invert (selection1),(selection2)
+
+PYMOL API
+
+   cmd.api( string selection1="(lb)", string selection2="(lb)" )
+   
+NOTE
+
+   The invert function is usually bound to CTRL-E in editing mode.
+
+   The default selections are (lb) and (rb), meaning that you can pick
+   the atom to invert with CTRL-middle click and then pick the
+   stationary atoms with CTRL-SHIFT/left-click and CTRL-SHIFT/right-
+   click, then hit CTRL-E to invert the atom.
 
 '''
    try:
@@ -1075,7 +1071,9 @@ PYMOL API
 
    cmd.unbond(selection atom1="(lb)",selection atom2="(rb)")
    
-NOTES
+SEE ALSO
+
+   bond, fuse, remove_picked, attach, detach, replace
  
 '''
    try:
@@ -1133,6 +1131,10 @@ DESCRIPTION
 USAGE
  
    undo
+
+SEE ALSO
+
+   redo, push_undo
 '''
    r = None
    try:
@@ -1152,6 +1154,10 @@ DESCRIPTION
 USAGE
  
    push_undo (all)
+
+SEE ALSO
+
+   undo, redo
 '''
    r = None
    try:
@@ -1171,6 +1177,10 @@ DESCRIPTION
 USAGE
  
    redo
+
+SEE ALSO
+
+   undo, push_undo
 '''
    try:
       lock()
@@ -1180,9 +1190,13 @@ USAGE
 
 def help(command = "commands"):
    '''
+DESCRIPTION
+
+   "help" prints out the online help for a given command.
+   
 USAGE
  
-   help <command>
+   help command
    '''
    set("text","1",quiet=1)
    cmd = command
@@ -1222,6 +1236,9 @@ PYMOL API
  
    cmd.symexp( string prefix, string object, string selection, float cutoff) 
 
+SEE ALSO
+
+   load
    '''
    try:
       lock()
@@ -1251,7 +1268,10 @@ NOTES
 
    If the mesh object already exists, then the new mesh will be
    appended onto the object as a new state.
-   
+
+SEE ALSO
+
+   isodot, load
    '''
    if selection!='':
       mopt = 1 # about a selection
@@ -1288,6 +1308,9 @@ NOTES
    If the dot isosurface object already exists, then the new dots will
    be appended onto the object as a new state.
 
+SEE ALSO
+
+   load, isomesh
    '''
    if selection!='':
       mopt = 1 # about a selection
@@ -1302,7 +1325,7 @@ NOTES
       unlock()
    return r
 
-def ready():
+def ready(): # INTERNAL
    return _cmd.ready()
 
 def splash():
@@ -1310,6 +1333,10 @@ def splash():
 DESCRIPTION
  
    "splash" shows the splash screen information.
+
+USAGE
+
+   splash
    '''
    set("text","1",quiet=1)
    print
@@ -1336,6 +1363,10 @@ USAGE
 PYMOL API
  
    cmd.copy(string target,string source)
+
+SEE ALSO
+
+   create
    '''
    try:
       lock()
@@ -1358,7 +1389,9 @@ DESCRIPTION
    All strings in the expression must be explicitly quoted.  This
    operation typically takes several seconds per thousand atoms
    altered.
- 
+
+   To clear labels, simply omit the expression or set it to ''.
+   
 USAGE
 
    label (selection),expression
@@ -1405,6 +1438,10 @@ EXAMPLES
  
    alter (chain A),chain='B'
    alter (all),resi=str(int(resi)+100)
+
+SEE ALSO
+
+   alter_state, iterate, iterate_state
    '''
    try:
       lock()
@@ -1448,7 +1485,10 @@ EXAMPLES
 
    stored.names = []
    iterate (all),stored.names.append(name)
-   
+
+SEE ALSO
+
+   iterate_state, atler, alter_state
    '''
    try:
       lock()
@@ -1474,6 +1514,10 @@ USAGE
 EXAMPLES
  
    alter 1,(all),x=x+5
+
+SEE ALSO
+
+   iterate_state, alter, iterate
    '''
    try:
       lock()
@@ -1510,7 +1554,10 @@ EXAMPLES
 
    view 0,store
    view 0
-  
+
+SEE ALSO
+
+   get_view
    '''
    if key=='?':
       print " view: stored views:"
@@ -1542,6 +1589,10 @@ EXAMPLES
 
    stored.sum_x = 0.0
    iterate 1,(all),stored.sum_x = stored.sum_x + x
+
+SEE ALSO
+
+   iterate, alter, alter_state
    '''
    try:
       lock()
@@ -1550,7 +1601,7 @@ EXAMPLES
       unlock()   
    return r
 
-def _stereo(flag):
+def _stereo(flag): # SGI-SPECIFIC - bad bad bad
    if flag:
       os.system("/usr/gfx/setmon -n 1024x768_96s")
    else:
@@ -1593,10 +1644,10 @@ PYMOL API
    return r
    
 def overlap(selection1,selection2,state1=1,state2=1,adjust=0.0):
-   '''
-   UNSUPPORTED FEATURE - LIKELY TO CHANGE
-   (for maximum efficiency, use smaller molecule as selection 1)
-   '''
+#
+#   UNSUPPORTED FEATURE - LIKELY TO CHANGE
+#   (for maximum efficiency, use smaller molecule as selection 1)
+#
    r = 1
    try:
       lock()
@@ -1644,6 +1695,7 @@ def unlock(): # INTERNAL
             break # avoid permanent deadlock
 
 def export_dots(object,state):  
+# UNSUPPORTED
    try:
       lock()
       r = _cmd.export_dots(object,int(state)-1)
@@ -1652,6 +1704,20 @@ def export_dots(object,state):
    return r
 
 def count_states(selection="(all)"):
+   '''
+DESCRIPTION
+
+   "count_states" is an API-only function which returns the number of
+   states in the selection.
+
+PYMOL API
+
+   cmd.count_states(string selection="(all)")
+
+SEE ALSO
+
+   frame
+'''
    try:
       lock()
       r = _cmd.count_states(selection)
@@ -1704,6 +1770,10 @@ EXAMPLES
 PYMOL API
  
    cmd.turn( string axis, float angle )
+
+SEE ALSO
+
+   move
    '''
    try:
       lock()
@@ -1737,7 +1807,21 @@ PYMOL API
 
 def system(command):
    '''
-TO DOCUMENT
+DESCRIPTION
+
+   "system" executes a command in a subshell under Unix or Windows.
+
+USAGE
+
+   system command
+
+PYMOL API
+
+   cmd.system(string command)
+
+SEE ALSO
+
+   ls, cd, pwd
    '''
    r = _cmd.system(str(command))
    return r
@@ -1766,6 +1850,10 @@ PYTHON EXAMPLE
  
    from pymol import cmd
    rms = cmd.intra_fit("(name ca)",1)
+
+SEE ALSO
+
+   fit, rms, rms_cur, intra_rms, intra_rms_cur, pair_fit
    '''
    r = -1.0
    try:
@@ -1792,6 +1880,10 @@ PYTHON EXAMPLE
  
    from pymol import cmd
    rms = cmd.intra_rms("(name ca)",1)
+
+SEE ALSO
+
+   fit, rms, rms_cur, intra_fit, intra_rms_cur, pair_fit
    '''
    r = -1.0
    try:
@@ -1818,6 +1910,10 @@ PYTHON EXAMPLE
  
    from pymol import cmd
    rms = cmd.intra_rms_cur("(name ca)",1)
+
+SEE ALSO
+
+   fit, rms, rms_cur, intra_fit, intra_rms, pair_fit
    '''
    r = -1.0
    try:
@@ -1844,7 +1940,10 @@ NOTES
 
    Currently, this applies across all pairs of states.  Fine
    control will be added later.
-   
+
+SEE ALSO
+
+   load
 '''
    a=target
    b=source
@@ -1872,6 +1971,10 @@ USAGE
 EXAMPLES
  
    fit ( mutant and name ca ), ( wildtype and name ca )
+
+SEE ALSO
+
+   rms, rms_cur, intra_fit, intra_rms, intra_rms_cur
    '''
    a=str(selection)
    b=str(target)
@@ -1899,6 +2002,10 @@ USAGE
 EXAMPLES
  
    fit ( mutant and name ca ), ( wildtype and name ca )
+
+SEE ALSO
+
+   fit, rms_cur, intra_fit, intra_rms, intra_rms_cur, pair_fit   
    '''
    a=str(selection)
    b=str(target)
@@ -1922,6 +2029,10 @@ DESCRIPTION
 USAGE
  
    rms_cur (selection), (selection)
+
+SEE ALSO
+
+   fit, rms, intra_fit, intra_rms, intra_rms_cur, pair_fit   
    '''
    a=str(selection)
    b=str(target)
@@ -1947,6 +2058,10 @@ DESCRIPTION
 USAGE
  
    pair_fit (selection), (selection), [ (selection), (selection) [ ...] ]
+
+SEE ALSO
+
+   fit, rms, rms_cur, intra_fit, intra_rms, intra_rms_cur
    '''
    try:
       lock()   
@@ -1981,7 +2096,10 @@ PYMOL API
 EXAMPLES
  
    remove ( resi 124 )
-   
+
+SEE ALSO
+
+   delete
 '''
    r = 1
    try:
@@ -2013,6 +2131,10 @@ NOTES
    
    By default, attached hydrogens will also be deleted unless
    hydrogen-flag is zero.
+
+SEE ALSO
+
+   attach, replace
 '''
    r = 1
    try:
@@ -2047,7 +2169,10 @@ NOTES
    satisfy valence requirements.
    
    This function is usually connected to the DELETE key and "CTRL-W".
-    
+
+SEE ALSO
+
+   remove_picked, attach, replace, fuse, h_fill
 '''
    r = 1
    try:
@@ -2076,7 +2201,7 @@ PYMOL API
 
 NOTES
 
-   see code for details
+   Immature functionality.  See code for details.
 
 '''
    r = 1
@@ -2111,6 +2236,9 @@ NOTES
    eliminated, or they can both be non-hydrogens, in which
    case a bond is formed between the two atoms.
 
+SEE ALSO
+
+   bond, unbond, attach, replace, fuse, remove_picked
 '''
    try:
       lock()
@@ -2133,6 +2261,10 @@ USAGE
 PYMOL API
 
    cmd.unpick()
+
+SEE ALSO
+
+   edit
    '''
    try:
       lock()   
@@ -2161,6 +2293,9 @@ NOTES
    If two selections are provided, the bond between them
    is picked (if one exists).
 
+SEE ALSO
+
+   unpick, remove_picked, cycle_valence, torsion
 '''
    r = 1
    try:
@@ -2188,6 +2323,9 @@ PYMOL API
   
    cmd.torsion( float angle )
 
+SEE ALSO
+
+   edit, unpick, remove_picked, cycle_valence
 '''
    try:
       lock()   
@@ -2216,6 +2354,10 @@ NOTES
    
    This is useful for fixing hydrogens after changing
    bond valences.
+
+SEE ALSO
+
+   edit, cycle_valences, h_add
 '''
    r = 1
    try:
@@ -2240,6 +2382,9 @@ PYMOL API
   
    cmd.h_add( string selection="(all)" )
 
+SEE ALSO
+
+   h_fill
 '''
    r = 1
    try:
@@ -2251,7 +2396,24 @@ PYMOL API
    
 def protect(selection="(all)"):
    '''
-TO DOCUMENT
+DESCRIPTION
+
+   "protect" protects a set of atoms from tranformations performed
+   using the editing features.  This is most useful when you are
+   modifying an internal portion of a chain or cycle and don't wish to
+   affect the rest of the molecule.
+   
+USAGE
+
+   protect (selection)
+
+PYMOL API
+
+   cmd.protect(string selection)
+   
+SEE ALSO
+
+   deprotect, mask, unmask, mouse, editing
 '''
    try:
       lock()   
@@ -2262,7 +2424,21 @@ TO DOCUMENT
 
 def deprotect(selection="(all)"):
    '''
-TO DOCUMENT
+DESCRIPTION
+
+   "deprotect" reveres the effect of the "protect" command.
+
+USAGE
+
+   deprotect (selection)
+   
+PYMOL API
+
+   cmd.deprotect(string selection="(all)")
+
+SEE ALSO
+
+   protect, mask, unmask, mouse, editing
 '''
    try:
       lock()   
@@ -2283,6 +2459,14 @@ DESCRIPTION
 USAGE
 
    mask (selection)
+
+PYMOL API
+
+   cmd.mask( string selection="(all)" )
+   
+SEE ALSO
+
+   unmask, protect, deprotect, mouse
 '''
    try:
       lock()   
@@ -2296,10 +2480,18 @@ def unmask(selection="(all)"):
 DESCRIPTION
 
    "unmask" reverses the effect of "mask" on the indicated atoms.
+
+PYMOL API
+
+   cmd.unmask( string selection="(all)" )
    
 USAGE
 
    unmask (selection)
+
+SEE ALSO
+
+   mask, protect, deprotect, mouse
 '''
    try:
       lock()   
@@ -2310,7 +2502,25 @@ USAGE
 
 def replace(name,geometry,valence):
    '''
-TO DOCUMENT
+DESCRIPTION
+  
+   "replace" replaces the picked atom with a new atom.
+      
+USAGE
+ 
+   replace name, geometry, valence
+ 
+PYMOL API
+  
+   cmd.replace(string name, int geometry,int valence )
+
+NOTES
+
+   Immature functionality. See code for details.
+
+SEE ALSO
+
+   remove, attach, fuse, bond, unbond
 '''
    r = 1
    try:
@@ -2335,6 +2545,10 @@ USAGE
 PYMOL API
 
    cmd.zoom( string object-or-selection [,float buffer] )
+
+SEE ALSO
+
+   origin, orient
    '''
    try:
       lock()   
@@ -2372,6 +2586,9 @@ NOTES
    To regerate only some atom names in a molecule, first clear them
    with an "alter (sele),name=''" commmand, then use "rename"
 
+SEE ALSO
+
+   alter
 '''
    try:
       lock()   
@@ -2396,7 +2613,11 @@ PYMOL API
  
 NOTES
  
-   Frame numbers are 1-based 
+   Frame numbers are 1-based
+
+SEE ALSO
+
+   count_states
    '''
    try:
       lock()   
@@ -2423,6 +2644,10 @@ EXAMPLES
 PYMOL API
  
    cmd.move( string axis, float distance )
+
+SEE ALSO
+
+   turn
    '''
    try:
       lock()   
@@ -2437,7 +2662,7 @@ def clip(mode,offset):
    '''
 DESCRIPTION
   
-   "clip" translates the near and far clipping planes
+   "clip" alterss the near and far clipping planes according to 
       
 USAGE
   
@@ -2445,12 +2670,18 @@ USAGE
  
 EXAMPLES
  
-   clip near, -5
-   clip far, 10
-    
+   clip near, -5  # moves near plane away from you by 5 A
+   clip far, 10   # moves far plane towards you by 10 A
+   clip slab, 20  # sets slab thickness to 20 A
+   clip move, -5  # moves the slab away from you by 5 A
+   
 PYMOL API
 
    cmd.clip( string mode, float distance )
+
+SEE ALSO
+
+   zoom, reset
    '''
    mode = clip_action_sc.auto_err(str(mode),'mode')
    try:
@@ -2474,6 +2705,10 @@ USAGE
 PYMOL API
  
    cmd.origin( string object-or-selection )
+
+SEE ALSO
+
+   zoom, orient, reset
    '''
    try:
       lock()   
@@ -2498,6 +2733,10 @@ USAGE
 PYMOL API
  
    cmd.orient( string object-or-selection )
+
+SEE ALSO
+
+   zoom, origin, reset
    '''
    try:
       lock()
@@ -2506,7 +2745,7 @@ PYMOL API
       unlock()
    return r
 
-def is_glut_thread():
+def is_glut_thread(): # internal
    if thread.get_ident() == pymol.glutThread:
       return 1
    else:
@@ -2526,6 +2765,10 @@ USAGE
 PYMOL API
  
    cmd.refresh()
+
+SEE ALSO
+
+   rebuild
    '''
    if thread.get_ident() == pymol.glutThread:
       r = _cmd.refresh_now()
@@ -2551,14 +2794,13 @@ def _refresh(swap_buffers=1):  # Only call with GLUT thread!
       unlock()
    return r
 
-def dirty(): # forces refresh of 2D layer
+def dirty(): # OBSOLETE?
    try:
       lock()
       r = _cmd.dirty()
    finally:
       unlock()
    return r
-
 
 def set(name,value,selection='',state=0,quiet=0,updates=1):
    '''
@@ -2696,10 +2938,9 @@ PYMOL API
  
    cmd.delete (string name = object-or-selection-name )
 
-NOTES
+SEE ALSO
 
-   
-
+   remove
    '''
    try:
       lock()   
@@ -2752,6 +2993,7 @@ DESCRIPTION
    is only functions well on PC's.
 
 USAGE
+
    full_screen on
    full_screen off
    
@@ -2807,10 +3049,7 @@ def _png(a): # INTERNAL - can only be safely called by GLUT thread
       unlock()
    return r
 
-def export_coords(obj,state):
-   '''
-   EXPERIMENTAL
-   '''
+def export_coords(obj,state): # experimental
    r = None
    try:
       lock()   
@@ -2819,10 +3058,7 @@ def export_coords(obj,state):
       unlock()
    return r
 
-def import_coords(obj,state,mechio):
-   '''
-   EXPERIMENTAL
-   '''
+def import_coords(obj,state,mechio): # experimental
    r = None
    try:
       lock()   
@@ -2888,6 +3124,10 @@ PYTHON EXAMPLE
  
    // would turn object1 blue when the F1 key is pressed and
    // would turn object2 blue when the F2 key is pressed.
+
+SEE ALSO
+
+   button
    '''
    r = 0
    for a in special.keys():
@@ -2913,6 +3153,10 @@ USAGE
 PYMOL API
  
    cmd.mstop()
+
+SEE ALSO
+
+   mplay, mset, mdo, mclear, mmatrix
    '''
    try:
       lock()   
@@ -2934,6 +3178,10 @@ USAGE
 PYMOL API
  
    cmd.mplay()
+
+SEE ALSO
+
+   mstop, mset, mdo, mclear, mmatrix
    '''
    try:
       lock()   
@@ -3007,6 +3255,10 @@ NOTES
    The "mset" command must first be used to define the movie before
    "mdo" statements will have any effect.  Redefinition of the movie
    clears any existing mdo statements.
+
+SEE ALSO
+
+   mset, mplay, mstop
    '''
    try:
       lock()   
@@ -3016,8 +3268,6 @@ NOTES
    return r
 
 def dummy(*arg):
-   '''
-   '''
    return None
 
 def rock():
@@ -3054,6 +3304,10 @@ USAGE
 PYMOL API
   
    cmd.forward()
+
+SEE ALSO
+
+   mset, backward, rewind
    '''
    try:
       lock()   
@@ -3075,6 +3329,10 @@ USAGE
 PYMOL API
   
    cmd.backward()
+
+SEE ALSO
+
+   mset, forward, rewind
    '''
    try:
       lock()   
@@ -3177,6 +3435,10 @@ USAGE
 PYMOL API
   
    cmd.save(file, selection, state, type)
+
+SEE ALSO
+
+   load, get_model
    '''
    r = 1
    if format=='':
@@ -3284,7 +3546,10 @@ PYMOL API
 NOTES
  
    The default behavior is to return only object names.
-   
+
+SEE ALSO
+
+   get_type, count_atoms, count_states
    '''
    mode = 1
    if type=='objects':
@@ -3320,7 +3585,10 @@ NOTES
    "object:mesh"
    "object:distance"
    "selection"
-   
+
+SEE ALSO
+
+   get_names
    '''
    try:
       lock()
@@ -3346,7 +3614,10 @@ NOTES
    relationship.  States can be visited in an arbitrary order to
    create frames.  The "mset" command allows you to build a
    relationship between states and frames.
-   
+
+SEE ALSO
+
+   get_frame
    '''
    # NOTE: NO LOCKS...this is/can be called from cmd.refresh()
    r = _cmd.get_state()
@@ -3364,6 +3635,10 @@ PYMOL API
    may contain identical molecular states, they may have one-to-one
    correspondance to molecular states (default), or they may have an
    arbitrary relationship, specific using the "mset" command.
+
+SEE ALSO
+
+   get_state
  
    '''
    # NOTE: NO LOCKS...this is/can be be called from cmd.refresh()
@@ -3371,49 +3646,48 @@ PYMOL API
    return r
 
 
-def id_atom(*arg):
+def id_atom(selection):
    '''
-TO DOCUMENT
+DESCRIPTION
+  
+   "id_atom" returns the original source id of a single atom, or
+   raises and exception if the atom does not exist or if the selection
+   corresponds to multiple atoms.
+ 
+PYMOL API
+ 
+   list = cmd.id_atom(string selection)
    '''
    r = -1
-   la = len(arg)
-   l = apply(identify,arg)
+   selection = string(selection)
+   l = apply(identify,(selection,))
    ll = len(l)
    if not ll:
-      if la:
-         print "Error: atom %s not found by id_atom." % arg[0]
-      else:
-         print "Error: atom not found by id_atom."
+      print "Error: atom %s not found by id_atom." % selection
       raise QuietException
    elif ll>1:
-      if la:
-         print "Error: multiple atoms %s found by id_atom." % arg[0]
-      else:
-         print "Error: multiple atoms found by id_atom."
+      print "Error: multiple atoms %s found by id_atom." % selection
       raise QuietException
    else:
       r = l[0]
    return r
 
-def identify(*arg):
+def identify(selection="(all)"):
    '''
 DESCRIPTION
   
    "identify" returns a list of atom IDs corresponding to the ID code
-   of atoms in the selection
+   of atoms in the selection.
  
 PYMOL API
  
-   list = cmd.identify( [selection] )
+   list = cmd.identify(string selection="(all)")
  
    '''
    r = []
    try:
       lock()
-      sele = "(all)"
-      if len(arg)==1:
-         sele = arg[0]
-      r = _cmd.identify(str(sele),0) # 0 = default mode
+      r = _cmd.identify(str(selection),0) # 0 = default mode
    finally:
       unlock()
    return r
@@ -3422,11 +3696,13 @@ def get_extent(selection="(all)",state=0):
    '''
 DESCRIPTION
   
-   "get_model" returns a Chempy "Indexed" format model from a selection.
+   "get_extent" returns the minimum and maximum XYZ coordinates of a
+   selection as an array:
+    [ [ min-X , min-Y , min-Z ],[ max-X, max-Y , max-Z ]]
  
 PYMOL API
  
-   cmd.get_model( selection [,state] )
+   cmd.get_extent(string selection="(all)", state=0 )
  
    '''
    r = 1
@@ -3467,6 +3743,9 @@ NOTES
    If the source and target states are zero (default), all states will
    be copied.  Otherwise, only the indicated states will be copied.
 
+SEE ALSO
+
+   load, copy
    '''
    try:
       lock()
@@ -3511,60 +3790,63 @@ def load_coords(*arg): # UNSUPPORTED
       unlock()
    return r
 
-def finish_object(obj):
+def finish_object(name):
    '''
-TO DOCUMENT
+DESCRIPTION
+
+   "finish_object" is used in cases where many individual states are
+   being loaded and it is advantageos to avoid processing them until
+   all states have been loaded into RAM.  This function should always
+   be called after loading an object with the finish flag set to zero.
+
+PYMOL API
+
+   cmd.finish(string name)
+
+   "name" should be the name of the object
    '''
    r = 1
    try:
       lock()   
-      r = _cmd.finish_object(obj)
+      r = _cmd.finish_object(name)
    finally:
       unlock()
    return r
 
-def load_object(*arg): # assume first argument is the object type
+def load_object(type,object,name,state=0,finish=1,discrete=0):
+      # assume first argument is the object type (numeric)
    '''
-TO DOCUMENT
+DESCRIPTION
+
+   "load_object" is a general developer function for loading Python objects
+   into PyMOL.
+
+PYMOL API
+
+   cmd.load_object(type,object,name,state=0,finish=1,discrete=0)
+
+   NOTE type is one one of the numberic cmd.loadable types
    '''
    r = 1
    try:
       lock()   
-      ftype = arg[0]
-      state = -1
-      finish = 1
-      discrete = 0
-      object = arg[1];
-      la = len(arg)
-      if la>2:
-         oname = string.strip(arg[2])
-      if la>3:
-         state = int(arg[3])-1
-      if la>4:
-         finish = int(arg[4])
-      if la>5:
-         discrete = int(arg[5])
-      if la>1:
-         r = _cmd.load_object(str(oname),object,int(state)-1,
-                              int(ftype),int(finish),int(discrete))
-      else:
-         print "Error: invalid arguments."
+      r = _cmd.load_object(str(name),object,int(state)-1,
+                              int(type),int(finish),int(discrete))
    finally:
       unlock()
    return r
    
 def load_brick(*arg):
    '''
-TO DOCUMENT
+Temporary routine for GAMESS-UK project.
 '''
-   
    lst = [loadable.brick]
    lst.extend(list(arg))
    return apply(load_object,lst)
 
 def load_map(*arg):
    '''
-Temporary routine for the Phenix project
+Temporary routine for the Phenix project.
 '''
    
    lst = [loadable.map]
@@ -3573,7 +3855,16 @@ Temporary routine for the Phenix project
 
 def load_callback(*arg):
    '''
-TO DOCUMENT
+DESCRIPTION
+
+   "load_callback" is used to load a generic Python callback object.
+   These objects are called every time the screen is updated and can be used
+   to trigger OpenGL rendering calls (such as with PyOpenGL).
+
+PYMOL API
+
+   cmd.load_callback(object,name,state,finish,discrete)
+   
 '''
    
    lst = [loadable.callback]
@@ -3582,7 +3873,16 @@ TO DOCUMENT
 
 def load_cgo(*arg):
    '''
-TO DOCUMENT
+DESCRIPTION
+
+   "load_cgo" is used to load a compiled graphics object, which is
+   actually a list of floating point numbers built using the constants
+   in the $PYMOL_PATH/modules/pymol/cgo.py file.
+
+PYMOL API
+
+   cmd.load_cgo(object,name,state,finish,discrete)
+   
 '''
    
    lst = [loadable.cgo]
@@ -3595,7 +3895,6 @@ DESCRIPTION
   
    "load_model" reads a ChemPy model into an object
 
- 
 PYMOL API
   
    cmd.load_model(model, object [,state [,finish [,discrete ]]])
@@ -3660,7 +3959,11 @@ USAGE
  
 PYMOL API
   
-   cmd.load( filename [,object [,state [,format [,finish [,discrete ]]]]] 
+   cmd.load( filename [,object [,state [,format [,finish [,discrete ]]]]]
+
+SEE ALSO
+
+   save
    '''
    r = 1
    try:
@@ -3771,7 +4074,11 @@ NOTES
 
 def read_mmodstr(*arg):
    '''
-TO DOCUMENT
+DESCRIPTION
+
+   "read_mmodstr" reads a macromodel format structure from a Python
+   string.
+
 '''
    r = 1
    try:
@@ -3789,16 +4096,18 @@ TO DOCUMENT
       unlock()
    return r
 
-def read_pdbstr(*arg):
+def read_pdbstr(pdb,name,state=0,finish=1,discrete=0):
    '''
 DESCRIPTION
   
-   "read_pdbstr" reads a pdb file as a string
+   "read_pdbstr" in an API-only function which reads a pdb file from a
+   Python string.  This feature can be used to load or update
+   structures into PyMOL without involving any temporary files.
    
 PYMOL API ONLY
  
    cmd.read_pdbstr( string pdb-content, string object name 
-   [ ,int state [ ,int finish [ ,int discrete ] ] ] )
+      [ ,int state [ ,int finish [ ,int discrete ] ] ] )
 
 NOTES
 
@@ -3813,25 +4122,12 @@ NOTES
    objects save memory but can not be edited.
 '''
    r = 1
-   finish = 1
-   discrete = 0
-   if len(arg)>3:
-      finish=int(arg[3])
-   if len(arg)>4:
-      discrete=int(arg[4])
    try:
       lock()   
       ftype = loadable.pdbstr
-      if len(arg)==2:
-         oname = string.strip(arg[1])
-         r = _cmd.load(str(oname),arg[0],-1,int(ftype),
+      oname = string.strip(str(name))
+      r = _cmd.load(str(oname),pdb,int(state)-1,int(ftype),
                        int(finish),int(discrete))
-      elif len(arg)>=3:
-         oname = string.strip(arg[1])
-         r = _cmd.load(str(oname),arg[0],int(arg[2])-1,int(ftype),
-             int(finish),int(discrete))
-      else:
-         print "argument error."
    finally:
       unlock()
    return r
@@ -4016,6 +4312,9 @@ PYMOL API
 
    cmd.rebuild()
 
+SEE ALSO
+
+   refresh
 '''
    r = 1
    try:
@@ -4075,7 +4374,7 @@ PYMOL API
       r = _cmd.do("cmd._mpng('"+prefix+"')")
    return r
 
-def _mpng(*arg):
+def _mpng(*arg): # INTERNAL
    try:
       lock()   
       fname = arg[0]
@@ -4120,6 +4419,10 @@ NOTES
 
    "selection" can be an object name
    "show" alone will turn on lines for all bonds.
+
+SEE ALSO
+
+   hide, enable, disable
    '''
    r=1
    try:
@@ -4178,6 +4481,10 @@ EXAMPLES
  
    hide lines,all
    hide ribbon
+
+SEE ALSO
+
+   show, enable, disable
    '''
    r = 1
    try:
@@ -4210,7 +4517,7 @@ EXAMPLES
       unlock()
    return r
 
-def paste():
+def paste(): # INTERNAL
    r=1
    lst = []
    if hasattr(pymol,"machine_get_clipboard"):
@@ -4326,6 +4633,10 @@ PYMOL API
 EXAMPLE
  
    enable my_object
+
+SEE ALSO
+
+   show, hide, disable
    '''
    try:
       lock()   
@@ -4346,15 +4657,19 @@ USAGE
    disable name
    disable all 
 
-   name = object or selection name
+   "name" is the name of an object or a named selection
    
 PYMOL API
  
-   cmd.disable( string object-or-selection-name )
+   cmd.disable( string name ) 
  
 EXAMPLE
  
    disable my_object
+
+SEE ALSO
+
+   show, hide, enable   
    '''
    try:
       lock()   
@@ -4364,11 +4679,8 @@ EXAMPLE
    return r
 
 def check(selection=None,preserve=0):
-   '''
-UNSUPPORTED
-
-This function relies on code that is not currently part of PyMOL/ChemPy
-   '''
+# UNSUPPORTED
+# This function relies on code that is not currently part of PyMOL/ChemPy
    # NOTE: the realtime module relies on code that is not yet part of PyMOL/ChemPy
    from chempy.tinker import realtime
    if selection==None:
@@ -4437,16 +4749,20 @@ def cd(dir):
    '''
 DESCRIPTION
 
-   Changing the current working directory.
+   "cd" changes the current working directory.
 
 USAGE
    
    cd <path>
 
+SEE ALSO
+
+   pwd, ls, system
    '''
    dir = os.path.expanduser(dir)
    dir = os.path.expandvars(dir)
    os.chdir(dir)
+
 
 def pwd():
    '''
@@ -4458,6 +4774,9 @@ USAGE
    
    pwd
 
+SEE ALSO
+
+   cd, ls, system
    '''
    print os.getcwd()
    
@@ -4477,6 +4796,10 @@ EXAMPLES
 
    ls
    ls *.pml
+
+SEE ALSO
+
+   cd, pwd, system   
    '''
    if pattern==None:
       pattern = "*"
@@ -4519,6 +4842,10 @@ EXAMPLES
      // the next 15 frames pass through states 1-15
      // the next 30 frames are of state 15
      // the next 15 frames iterate back to state 1
+
+SEE ALSO
+
+   mdo, mplay, mclear
    '''
    try:
       lock()
@@ -4574,7 +4901,10 @@ PYTHON EXAMPLE
    foo
    foo 3
    foo moo=5
-   
+
+SEE ALSO
+
+   alias, api
    '''
    keyword[name] = [function, 0,0,',',parsing.STRICT]
    kwhash.append(name)
@@ -4814,9 +5144,16 @@ EXAMPLES
 
    alias go,load "test.pdb"; zoom (i;500); show sticks,(i;500 a;4)
    go
+
+SEE ALSO
+
+   extend
    '''
    keyword[name] = [eval("lambda :do('''%s ''')"%command), 0,0,',',parsing.STRICT]
    kwhash.append(name)
+   
+#####################################################################
+import util
 
 keyword = {
 
@@ -4946,6 +5283,18 @@ keyword = {
    'undo'          : [undo         , 0 , 0 , ''  , parsing.STRICT ],
    'unmask'        : [unmask       , 0 , 0 , ''  , parsing.STRICT ],
    'unprotect'     : [deprotect    , 0 , 0 , ''  , parsing.STRICT ],
+# utility programs 
+   'util.cbag'     : [util.cbag    , 0 , 0 , ''  , parsing.STRICT ],
+   'util.cbac'     : [util.cbac    , 0 , 0 , ''  , parsing.STRICT ],
+   'util.cbay'     : [util.cbay    , 0 , 0 , ''  , parsing.STRICT ],
+   'util.cbas'     : [util.cbas    , 0 , 0 , ''  , parsing.STRICT ],
+   'util.cbap'     : [util.cbap    , 0 , 0 , ''  , parsing.STRICT ],
+   'util.cbaw'     : [util.cbaw    , 0 , 0 , ''  , parsing.STRICT ],
+   'util.cbab'     : [util.cbab    , 0 , 0 , ''  , parsing.STRICT ],
+   'util.cbc'      : [util.cbc     , 0 , 0 , ''  , parsing.STRICT ],
+   'util.mrock'    : [util.mrock   , 0 , 0 , ''  , parsing.STRICT ],
+   'util.mroll'    : [util.mroll   , 0 , 0 , ''  , parsing.STRICT ],   
+#   
    'update'        : [update       , 0 , 0 , ''  , parsing.STRICT ],
    'view'          : [view         , 0 , 0 , ''  , parsing.STRICT ],   
    'viewport'      : [viewport     , 0 , 0 , ''  , parsing.STRICT ],
