@@ -56,7 +56,7 @@ def parse_args(argv):
             options.show_splash = 0
          if "i" in a:
             options.internal_gui = 0
-         if "j" in a:
+         if "f" in a:
             options.internal_feedback = int(av.pop())
          if "x" in a:
             options.external_gui = 0

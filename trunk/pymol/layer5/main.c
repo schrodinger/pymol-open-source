@@ -487,7 +487,7 @@ void launch(void)
     if(InternalGUI)
       WinX+=cOrthoRightSceneMargin;
     if(InternalFeedback)
-      WinY+=cOrthoBottomSceneMargin;
+      WinY+= (InternalFeedback-1)*cOrthoLineHeight + cOrthoBottomSceneMargin;
 
     p_glutInitWindowPosition(0, 175);
     p_glutInitWindowSize(WinX, WinY);
