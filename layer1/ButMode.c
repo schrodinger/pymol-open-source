@@ -21,6 +21,8 @@ Z* -------------------------------------------------------------------
 #include "ButMode.h"
 #include "Scene.h"
 #include "Util.h"
+#include "Grap.h"
+#include "Ortho.h"
 
 #define cButModeLineHeight 12
 #define cButModeLeftMargin 2
@@ -67,7 +69,7 @@ void ButModeChange(int mode)
     I->Mode[2]=cButModeTransZ;
     I->Mode[3]=cButModeRotZ;
     I->Mode[4]=cButModeTransXY;
-    I->Mode[5]=cButModeClipZZ;
+    I->Mode[5]=cButModeClipNF;
     break;
   case 1: 
     I->Mode[0]=cButModeRotXYZ;
@@ -75,7 +77,7 @@ void ButModeChange(int mode)
     I->Mode[2]=cButModeTransZ;
     I->Mode[3]=cButModeTransXY;
     I->Mode[4]=cButModeRotZ;
-    I->Mode[5]=cButModeClipZZ;
+    I->Mode[5]=cButModeClipNF;
     break;
   case 2: 
     I->Mode[0]=cButModeRotXYZ;
@@ -91,7 +93,7 @@ void ButModeChange(int mode)
     I->Mode[0]=cButModeTransZ;
     I->Mode[5]=cButModeRotZ;
     I->Mode[4]=cButModeTransXY;
-    I->Mode[3]=cButModeClipZZ;
+    I->Mode[3]=cButModeClipNF;
     break;
   case 4: 
     I->Mode[2]=cButModeRotXYZ;
@@ -99,7 +101,7 @@ void ButModeChange(int mode)
     I->Mode[0]=cButModeTransZ;
     I->Mode[5]=cButModeTransXY;
     I->Mode[4]=cButModeRotZ;
-    I->Mode[3]=cButModeClipZZ;
+    I->Mode[3]=cButModeClipNF;
     break;
   case 5: 
     I->Mode[2]=cButModeRotXYZ;
@@ -155,19 +157,36 @@ void ButModeInit(void)
   I->Mode[2]=cButModeTransZ;
   I->Mode[3]=cButModeRotZ;
   I->Mode[4]=cButModeTransXY;
-  I->Mode[5]=cButModeClipZZ;
+  I->Mode[5]=cButModeClipNF;
+  I->Mode[6]=cButModePk1;
+  I->Mode[7]=cButModePk2;
+  I->Mode[8]=cButModePk3;
+  I->Mode[9]=cButModeAddToPk1;
+  I->Mode[10]=cButModeAddToPk2;
+  I->Mode[11]=cButModeAddToPk3;
 
   I->Caption[0] = 0;
 
-  I->NCode = 7;
+  I->NCode = 18;
 
-  strcpy(I->Code[cButModeRotXYZ],"R-XYZ");
-  strcpy(I->Code[cButModeRotZ],"R-Z");  
-  strcpy(I->Code[cButModeTransXY],"T-XY");
-  strcpy(I->Code[cButModeTransZ],"T-Z");
-  strcpy(I->Code[cButModeClipZZ],"C-NF");
-  strcpy(I->Code[cButModeClipN],"C-N");  
-  strcpy(I->Code[cButModeClipF],"C-F");
+  strcpy(I->Code[cButModeRotXYZ],  "RXYZ ");
+  strcpy(I->Code[cButModeRotZ],    "RotZ ");  
+  strcpy(I->Code[cButModeTransXY], "TrXY ");
+  strcpy(I->Code[cButModeTransZ],  "TraZ ");
+  strcpy(I->Code[cButModeClipNF],  "Clip ");
+  strcpy(I->Code[cButModeClipN],   "ClpN ");  
+  strcpy(I->Code[cButModeClipF],   "ClpF ");
+  strcpy(I->Code[cButModePickAtom],"PkAt ");
+  strcpy(I->Code[cButModePickBond],"PkBd ");
+  strcpy(I->Code[cButModeTorFrag], "Tors ");
+  strcpy(I->Code[cButModeRotFrag], "Rota ");
+  strcpy(I->Code[cButModeMovFrag], "Move ");
+  strcpy(I->Code[cButModePk1],     " Pk1 ");
+  strcpy(I->Code[cButModePk2],     " Pk2 ");
+  strcpy(I->Code[cButModePk3],     " Pk3 ");
+  strcpy(I->Code[cButModeAddToPk1],"+Pk1 ");
+  strcpy(I->Code[cButModeAddToPk2],"+Pk2 ");
+  strcpy(I->Code[cButModeAddToPk3],"+Pk3 ");
 
   I->Block = OrthoNewBlock(NULL);
   I->Block->fClick = ButModeClick;
@@ -182,8 +201,37 @@ void ButModeInit(void)
   OrthoAttach(I->Block,cOrthoTool);
 
 }
-
-
+/*========================================================================*/
+int ButModeTranslate(int button, int mod)
+{
+  int mode = 0;
+  CButMode *I=&ButMode;
+  switch(button) {
+  case GLUT_LEFT_BUTTON:
+    mode = 0;
+    break;
+  case GLUT_MIDDLE_BUTTON:
+    mode = 1;
+    break;
+  case GLUT_RIGHT_BUTTON:
+    mode = 2;
+    break;
+  }
+  switch(mod) {
+  case 0:
+    break;
+  case cOrthoSHIFT:
+    mode+=3;
+    break;
+  case cOrthoCTRL:
+    mode+=6;
+    break;
+  case (cOrthoCTRL+cOrthoSHIFT):
+    mode+=9;
+    break;
+  }
+  return(I->Mode[mode]);
+}
 /*========================================================================*/
 int ButModeClick(Block *block,int button,int x,int y,int mod)
 {
@@ -197,15 +245,12 @@ int ButModeClick(Block *block,int button,int x,int y,int mod)
   }
   return(1);
 }
-
+/*========================================================================*/
 void ButModeDraw(Block *block)
 {
   CButMode *I=&ButMode;
   int x,y,a;
-  char *c;
   float rate;
-  char but[3] = { 'L', 'M', 'R' };
-
   char rateStr[255];
 
   if(PMGUI) {
@@ -215,50 +260,35 @@ void ButModeDraw(Block *block)
 
     x = I->Block->rect.left+cButModeLeftMargin;
     y = (I->Block->rect.top-cButModeLineHeight)-cButModeTopMargin;
-  
-    for(a=0;a<3;a++)
-      {
-        glRasterPos4d((double)(x),(double)(y),0.0,1.0);
-        glutBitmapCharacter(GLUT_BITMAP_8_BY_13,but[a]);
-        glutBitmapCharacter(GLUT_BITMAP_8_BY_13,':');
-        c=I->Code[I->Mode[a]];
-        while(*c) 
-          glutBitmapCharacter(GLUT_BITMAP_8_BY_13,*(c++));
-        y-=cButModeLineHeight;
-      }
+
+    GrapDrawStr("Mouse   L    M    R",x,y);
+
+    y-=cButModeLineHeight;
+    GrapDrawStr("None ",x,y);
+    for(a=0;a<3;a++) GrapContStr(I->Code[I->Mode[a]]);
+
+    y-=cButModeLineHeight;
+    GrapDrawStr("Shft ",x,y);
+    for(a=3;a<6;a++) GrapContStr(I->Code[I->Mode[a]]);
+
+    y-=cButModeLineHeight;
+    GrapDrawStr("Ctrl ",x,y);
+    for(a=6;a<9;a++) GrapContStr(I->Code[I->Mode[a]]);
+
+    y-=cButModeLineHeight;
+    GrapDrawStr("CtSh ",x,y);
+    for(a=9;a<12;a++) GrapContStr(I->Code[I->Mode[a]]);
+
+    y-=cButModeLineHeight;
+
+    if(I->Caption[0]) GrapDrawStr(I->Caption,x,y);
 
     if(I->Samples) 
       rate = I->Rate/I->Samples;
     else 
       rate = 0;
     sprintf(rateStr,"Frame:%3d %4.1f FPS",SceneGetFrame()+1,rate);
-  
-    glRasterPos4d((double)(x),(double)y,0.0,1.0);
-    c=rateStr;
-    while(*c)
-      glutBitmapCharacter(GLUT_BITMAP_8_BY_13,*(c++));
-
-    y-=cButModeLineHeight;
-    if(I->Caption[0]) {
-      glRasterPos4d((double)(x),(double)(y),0.0,1.0);
-      c=I->Caption;
-      while(*c)
-        glutBitmapCharacter(GLUT_BITMAP_8_BY_13,*(c++));
-    }
-
-    x = (I->Block->rect.left+80+cButModeLeftMargin);
-    y = (I->Block->rect.top-cButModeLineHeight)-cButModeTopMargin;
-    for(a=3;a<6;a++)
-      {
-        glRasterPos4d((double)(x),(double)(y),0.0,1.0);
-        glutBitmapCharacter(GLUT_BITMAP_8_BY_13,'S');
-        glutBitmapCharacter(GLUT_BITMAP_8_BY_13,but[a-3]);
-        glutBitmapCharacter(GLUT_BITMAP_8_BY_13,':');
-        c=I->Code[I->Mode[a]];
-        while(*c) 
-          glutBitmapCharacter(GLUT_BITMAP_8_BY_13,*(c++));
-        y-=cButModeLineHeight;
-      }
+    GrapDrawStr(rateStr,x,y);
 
   }
 }
