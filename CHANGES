@@ -179,6 +179,8 @@ CHANGE LOG
 
 Changes up to 0.95
 
+   * fixed hydrogen adding for amides/ureas
+
    * changed PyMOL file output to comply with PDB standards with respect
      to placement of the atomic symbol in the atom name field
 
