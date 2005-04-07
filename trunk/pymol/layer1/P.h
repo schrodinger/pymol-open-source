@@ -41,6 +41,9 @@ Z* -------------------------------------------------------------------
 #define PLockAPIAsGlut(block_if_busy)
 #define PUnlockAPIAsGlut()
 
+#define PLockStatus()
+#define PUnlockStatus()
+
 #define PBlockAndUnlockAPI()
 #define PLockAPIAndUnblock()
 
