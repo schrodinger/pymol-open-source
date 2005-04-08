@@ -1622,8 +1622,9 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(PyMOLGlobals *G,
 
           p=nskip(p,1);/* to 12 */
           p=ncopy(cc,p,4); 
-          if(!sscanf(cc,"%s",ai->name)) 
-            ai->name[0]=0;
+          ParseNTrim(ai->name,cc,4); 
+          /*if(!sscanf(cc,"%s",ai->name)) 
+            ai->name[0]=0;*/
           
           p=ncopy(cc,p,1);
           if(*cc==32)
