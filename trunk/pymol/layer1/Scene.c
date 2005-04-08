@@ -2016,7 +2016,7 @@ static int SceneClick(Block *block,int button,int x,int y,
           break;
         case cButModePickAtom1:
           if(obj&&obj->type==cObjectMolecule) {
-            if(Feedback(G,FB_ObjectMolecule,FB_Results)) {
+            if(Feedback(G,FB_Scene,FB_Results)) {
               if(obj->fDescribeElement)
                 obj->fDescribeElement(obj,I->LastPicked.index,buffer);
               PRINTF " You clicked %s -> (%s)\n",buffer,cEditorSele1 ENDF(G);
@@ -2064,7 +2064,7 @@ static int SceneClick(Block *block,int button,int x,int y,
               }
               EditorGetNextMultiatom(G,name);
 
-              PRINTF " You clicked %s -> (%s)\n",buffer,name ENDF(G);
+              PRINTFB(G,FB_Scene,FB_Results) " You clicked %s -> (%s)\n",buffer,name ENDFB(G);
               /* TODO: logging */
               
               sprintf(buffer,"%s`%d",obj->Name,I->LastPicked.index+1);    
@@ -2123,7 +2123,7 @@ static int SceneClick(Block *block,int button,int x,int y,
       case cObjectMolecule:
 
         EditorInactivate(G);
-        if(Feedback(G,FB_ObjectMolecule,FB_Results)) {
+        if(Feedback(G,FB_Scene,FB_Results)) {
           if(obj->fDescribeElement)
             obj->fDescribeElement(obj,I->LastPicked.index,buffer);
           PRINTF " You clicked %s -> (%s)",buffer,cEditorSele1 ENDF(G);
@@ -2137,7 +2137,7 @@ static int SceneClick(Block *block,int button,int x,int y,
           atIndex = objMol->Bond[I->LastPicked.bond].index[0];
           if(atIndex == I->LastPicked.index)
             atIndex = objMol->Bond[I->LastPicked.bond].index[1];              
-          if(Feedback(G,FB_ObjectMolecule,FB_Results)) {
+          if(Feedback(G,FB_Scene,FB_Results)) {
             if(obj->fDescribeElement)
               obj->fDescribeElement(obj,atIndex,buffer);
             PRINTF " You clicked %s -> (%s)",buffer,cEditorSele2 ENDF(G);
@@ -2204,7 +2204,7 @@ static int SceneClick(Block *block,int button,int x,int y,
       switch(obj->type) {
       case cObjectMolecule:
         
-        if(Feedback(G,FB_ObjectMolecule,FB_Results)) {
+        if(Feedback(G,FB_Scene,FB_Results)) {
           if(obj->fDescribeElement) 
             obj->fDescribeElement(obj,I->LastPicked.index,buffer);
           PRINTF " You clicked %s",buffer ENDF(G);        
@@ -2247,7 +2247,7 @@ static int SceneClick(Block *block,int button,int x,int y,
   case cButModeAddToLB:
   case cButModeAddToMB:
   case cButModeAddToRB:
-
+  case cButModeSimpleClick:
   case cButModeOrigAt:
   case cButModeCent:
     if(I->StereoMode>1)
@@ -2258,7 +2258,7 @@ static int SceneClick(Block *block,int button,int x,int y,
 
       switch(obj->type) {
       case cObjectMolecule:
-        if(Feedback(G,FB_ObjectMolecule,FB_Results)) {
+        if(Feedback(G,FB_Scene,FB_Results)) {
           if(obj->fDescribeElement) 
             obj->fDescribeElement(obj,I->LastPicked.index,buffer);
           PRINTF " You clicked %s",buffer ENDF(G);        
@@ -2308,7 +2308,7 @@ static int SceneClick(Block *block,int button,int x,int y,
               PLog(buffer,cPLog_pym);
 
             }
-            if(Feedback(G,FB_ObjectMolecule,FB_Results)) {
+            if(Feedback(G,FB_Scene,FB_Results)) {
               if(obj->fDescribeElement) 
                 obj->fDescribeElement(obj,I->LastPicked.index,buffer);
               PRINTF " You clicked %s",buffer ENDF(G);        
@@ -2345,6 +2345,9 @@ static int SceneClick(Block *block,int button,int x,int y,
           break;
         }
         switch(mode) {
+        case cButModeSimpleClick:
+          PyMOL_SetClickReady(G->PyMOL,obj->Name,I->LastPicked.index);
+          break;
         case cButModeLB:
         case cButModeMB:
         case cButModeRB:

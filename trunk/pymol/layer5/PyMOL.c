@@ -75,6 +75,10 @@ typedef struct _CPyMOL {
   int BusyFlag;
   int InterruptFlag;
 
+  int ClickReadyFlag;
+  char ClickedObject[ObjNameMax];  
+  int ClickedIndex;
+  
   int Progress[PYMOL_PROGRESS_SIZE];
   int ProgressChanged;
 
@@ -1208,6 +1212,18 @@ int PyMOL_Hide(CPyMOL *I,char *representation, char *selection, int quiet)
   return status_ok(ok);
 }
 
+int PyMOL_Enable(CPyMOL *I,char *name,int quiet)
+{
+  int ok = ExecutiveSetObjVisib(I->G,name,true);
+  return status_ok(ok);
+}
+
+int PyMOL_Disable(CPyMOL *I,char *name,int quiet)
+{
+  int ok = ExecutiveSetObjVisib(I->G,name,false);
+  return status_ok(ok);
+}
+
 int PyMOL_Set(CPyMOL *I,char *setting, char *value, char *selection, int state, int quiet, int side_effects)
 {
   int ok=true;
@@ -1447,7 +1463,7 @@ static CPyMOL *_PyMOL_New(void)
 
   /* allocate global container */
 
-  if( (result = Calloc(CPyMOL,1)) ) {
+  if( (result = Calloc(CPyMOL,1)) ) { /* all values initialized to zero */
 
     if( (result->G = Calloc(PyMOLGlobals,1)) ) {
       
@@ -1737,6 +1753,65 @@ void PyMOL_SetPassive(CPyMOL *I,int onOff)
   I->PassiveFlag = onOff;
 }
 
+void PyMOL_SetClickReady(CPyMOL *I, char *name, int index)
+{
+
+  printf("click ready %s %d\n",name,index);
+
+  if(name && name[0]) {
+    I->ClickReadyFlag = true;
+    strcpy(I->ClickedObject,name);
+    I->ClickedIndex = index;
+  } else {
+    I->ClickReadyFlag = false;
+  }
+}
+
+int PyMOL_GetClickReady(CPyMOL *I, int reset)
+{
+  int result = I->ClickReadyFlag;
+  if(reset) {
+    I->ClickReadyFlag = false;
+  }
+  return result;
+}
+
+char *PyMOL_GetClickString(CPyMOL *I,int reset)
+{
+  char *result = NULL;
+  int ready = I->ClickReadyFlag;
+  if(reset)
+    I->ClickReadyFlag = false;
+  if(ready) {
+    ObjectMolecule *obj = ExecutiveFindObjectMoleculeByName(I->G,I->ClickedObject);
+    if(obj && (I->ClickedIndex < obj->NAtom)) {
+      AtomInfoType *ai = obj->AtomInfo + I->ClickedIndex;
+      result = Alloc(char, OrthoLineLength+1);
+      if(result) {
+        sprintf(result,
+                "type=object:molecule\nname=%s\nindex=%d\nrank=%d\nid=%d\nsegi=%s\nchain=%s\nresn=%s\nresi=%s\nname=%s\nalt=%s\n",
+                I->ClickedObject,
+                I->ClickedIndex+1,
+                ai->rank,
+                ai->id,
+                ai->segi,
+                ai->chain,
+                ai->resn,
+                ai->resi,
+                ai->name,
+                ai->alt);
+      }
+    }
+  }
+  return(result);
+}
+
+int PyMOL_FreeResultString(CPyMOL *I,char *st)
+{
+  FreeP(st);
+  return status_ok((st!=NULL));
+}
+
 int PyMOL_GetRedisplay(CPyMOL *I, int reset)
 {
   PyMOLGlobals *G = I->G;
@@ -1858,5 +1933,8 @@ void PyMOL_SetDefaultMouse(CPyMOL *I)
   ButModeSet(G,15,cButModeTransZ);
   ButModeSet(G,20,cButModeCent);
   ButModeSet(G,10,cButModeOrigAt);
+  ButModeSet(G,19,cButModeSimpleClick);
+
+  G->Feedback->Mask[FB_Scene] &= ~(FB_Results); /* suppress click messages */
 }
 

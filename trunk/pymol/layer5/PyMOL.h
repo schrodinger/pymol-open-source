@@ -112,6 +112,7 @@ void PyMOL_Stop(CPyMOL *I);
 void PyMOL_NeedFakeDrag(CPyMOL *I);
 void PyMOL_NeedRedisplay(CPyMOL *I);
 void PyMOL_NeedSwap(CPyMOL *I);
+void PyMOL_SetClickReady(CPyMOL *I, char *name, int index);
 void PyMOL_SetPassive(CPyMOL *I, int onOff);
 
 /* valid context management */
@@ -144,6 +145,12 @@ void PyMOL_SetDefaultMouse(CPyMOL *I);
 int PyMOL_GetRedisplay(CPyMOL *I, int reset);
 int PyMOL_GetPassive(CPyMOL *I, int reset);
 int PyMOL_GetSwap(CPyMOL *I, int reset);
+int PyMOL_GetClickReady(CPyMOL *I, int reset);
+
+/* string results */
+
+char *PyMOL_GetClickString(CPyMOL *I,int reset);
+int PyMOL_FreeResultString(CPyMOL *I,char *st);
 
 /* asynchronous processing (only useful for Python-based multithreaded builds right now) */
 
@@ -197,6 +204,10 @@ int PyMOL_Show(CPyMOL *I,char *representation, char *selection,int quiet);
 
 int PyMOL_Hide(CPyMOL *I,char *representation, char *selection,int quiet);
 
+int PyMOL_Enable(CPyMOL *I,char *name,int quiet);
+
+int PyMOL_Disable(CPyMOL *I,char *name,int quiet);
+
 int PyMOL_Delete(CPyMOL *I,char *name, int quiet);
 
 int PyMOL_Set(CPyMOL *I,char *setting, char *value, char *selection, int state, int quiet, int side_effects);
@@ -204,5 +215,6 @@ int PyMOL_Set(CPyMOL *I,char *setting, char *value, char *selection, int state, 
 int PyMOL_Color(CPyMOL *I,char *color, char *selection, int flags, int quiet);
 
 int PyMOL_Select(CPyMOL *I,char *name, char *selection, int quiet);
+
 
 #endif

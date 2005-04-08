@@ -417,7 +417,7 @@ int ButModeInit(PyMOLGlobals *G)
     strcpy(I->Code[cButModeSeleAdd], "+Box ");
     strcpy(I->Code[cButModeSeleSub], "-Box ");  
     strcpy(I->Code[cButModeMoveSlabAndZoom], "MvSZ ");  
-
+    strcpy(I->Code[cButModeSimpleClick], "Clik ");  
 
     I->Block = OrthoNewBlock(G,NULL);
     I->Block->fClick = ButModeClick;

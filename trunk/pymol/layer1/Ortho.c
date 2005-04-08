@@ -323,11 +323,15 @@ void OrthoBusySlow(PyMOLGlobals *G,int progress,int total)
   I->BusyStatus[0]=progress;
   I->BusyStatus[1]=total;
   if(PyMOL_GetBusy(G->PyMOL,false)) { /* harmless race condition */
+#ifndef _PYMOL_NOPY
     int blocked = PAutoBlock();
     PLockStatus();
+#endif
     PyMOL_SetProgress(G->PyMOL,PYMOL_PROGRESS_SLOW,progress,total);
+#ifndef _PYMOL_NOPY
     PUnlockStatus();
     PAutoUnblock(blocked);
+#endif
   }
   OrthoBusyDraw(G,false);
 }
@@ -341,11 +345,15 @@ void OrthoBusyFast(PyMOLGlobals *G,int progress,int total)
   I->BusyStatus[2]=progress;
   I->BusyStatus[3]=total;
   if(PyMOL_GetBusy(G->PyMOL,false)) { /* harmless race condition */
+#ifndef _PYMOL_NOPY
     int blocked = PAutoBlock();
     PLockStatus();
+#endif
     PyMOL_SetProgress(G->PyMOL,PYMOL_PROGRESS_FAST,progress,total);
+#ifndef _PYMOL_NOPY
     PUnlockStatus();
     PAutoUnblock(blocked);
+#endif
   }
 
   OrthoBusyDraw(G,false);

@@ -7111,7 +7111,7 @@ int ExecutiveGetMoment(PyMOLGlobals *G,char *name,Matrix33d mi,int state)
   return(c);
 }
 /*========================================================================*/
-void ExecutiveSetObjVisib(PyMOLGlobals *G,char *name,int state)
+int ExecutiveSetObjVisib(PyMOLGlobals *G,char *name,int state)
 {
   register CExecutive *I = G->Executive;
   SpecRec *tRec;
@@ -7166,10 +7166,8 @@ void ExecutiveSetObjVisib(PyMOLGlobals *G,char *name,int state)
   PRINTFD(G,FB_Executive)
     " ExecutiveSetObjVisib: leaving...\n"
     ENDFD;
-
+  return 1;
 }
-
-
 
 /*========================================================================*/
 void ExecutiveFullScreen(PyMOLGlobals *G,int flag)
