@@ -56,7 +56,10 @@ Z* -------------------------------------------------------------------
 #define cButModeSeleSub  33
 #define cButModeMoveSlabAndZoom 34
 
-#define cButModeCount    35
+/* simple click action for JyMOL -- no selections involved */
+#define cButModeSimpleClick 35
+
+#define cButModeCount    36
 
 /* remainder only used in scene... */
 

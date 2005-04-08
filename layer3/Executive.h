@@ -149,7 +149,7 @@ void ExecutiveSetRepVisib(PyMOLGlobals *G,char *name,int rep,int state);
 int ExecutiveToggleRepVisib(PyMOLGlobals *G,char *name,int rep);
 
 void ExecutiveSetAllRepVisib(PyMOLGlobals *G,char *name,int rep,int state);
-void ExecutiveSetObjVisib(PyMOLGlobals *G,char *name,int state);
+int ExecutiveSetObjVisib(PyMOLGlobals *G,char *name,int state);
 
 int ExecutiveOrigin(PyMOLGlobals *G,char *name,int preserve,char *oname,float *pos,int state);
 int ExecutiveCenter(PyMOLGlobals *G,char *name,int state,int inclusive, float animate, float *pos);
