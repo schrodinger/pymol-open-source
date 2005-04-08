@@ -8910,6 +8910,8 @@ SelectorWordType *SelectorParse(PyMOLGlobals *G,char *s) {
   SelectorWordType *r = NULL;
   int c=0;
   int w_flag=false;
+  int quote_flag=false;
+  char quote_char = '"';
   char *p = s;
   char *q = NULL, *q_base = NULL;
   r=VLAlloc(SelectorWordType,100);
@@ -8917,7 +8919,14 @@ SelectorWordType *SelectorParse(PyMOLGlobals *G,char *s) {
 	 {
 		if(w_flag) /* currently in a word, thus q is a valid pointer */
 		  {
-			 switch(*p)
+          if(quote_flag) {
+            if(*p!=quote_char) {
+              *q++=*p;
+            } else {
+              quote_flag=false;
+              *q++=*p;
+            }
+          } else switch(*p)
 				{
 				case ' ':
 				  *q=0;
@@ -8945,6 +8954,10 @@ SelectorWordType *SelectorParse(PyMOLGlobals *G,char *s) {
 				  *q=0;  /* terminate current word */
 				  w_flag=false;
 				  break;
+            case '"':
+              quote_flag = true;
+              *q++=*p;
+              break;
 				default:
 				  *q++=*p;
 				  break;
@@ -8989,6 +9002,16 @@ SelectorWordType *SelectorParse(PyMOLGlobals *G,char *s) {
 				  *q=0;
 				  break;
             case ' ':
+              break;
+            case '"':
+              quote_flag = true;
+              quote_char = *p;
+              w_flag=true;
+				  c++;
+              VLACheck(r,SelectorWordType,c);
+				  q=r[c-1];
+              q_base = q;
+				  *q++=*p;
               break;
 				default:
 				  w_flag=true;
