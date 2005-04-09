@@ -8185,7 +8185,7 @@ static int ExecutiveClick(Block *block,int button,int x,int y,int mod)
                       ExecutiveSpecSetVisibility(G,rec,!I->OldVisibility,mod);
                     }
                     if(rec!=I->LastZoomed) 
-                      ExecutiveWindowZoom(G,rec->name,0.0F,-1,false,SettingGetGlobal_b(G,cSetting_animation));
+                      ExecutiveWindowZoom(G,rec->name,0.0F,-1,false,-1.0F);
                     I->LastZoomed=rec;
                     I->LastChanged=rec;
                   } else if(mod&cOrthoSHIFT) {
@@ -8209,8 +8209,7 @@ static int ExecutiveClick(Block *block,int button,int x,int y,int mod)
                   I->LastZoomed=NULL;
                   if(mod&cOrthoCTRL) {
                     I->ToggleMode = 5;
-                    ExecutiveWindowZoom(G,rec->name,0.0F,-1,false,
-                                        SettingGetGlobal_b(G,cSetting_animation));
+                    ExecutiveWindowZoom(G,rec->name,0.0F,-1,false,-1.0F);
                     I->LastZoomed = rec;
                     if(mod&cOrthoSHIFT) { /* exclusive */
                       I->ToggleMode = 6;
@@ -8221,8 +8220,7 @@ static int ExecutiveClick(Block *block,int button,int x,int y,int mod)
                     }
                   } else {
                     I->ToggleMode = 4;
-                    ExecutiveCenter(G,rec->name,-1,true,
-                                    SettingGetGlobal_b(G,cSetting_animation),NULL);
+                    ExecutiveCenter(G,rec->name,-1,true,-1.0F,NULL);
                   }
                   if(!rec->visible) {
                     ExecutiveSpecSetVisibility(G,rec,!rec->visible,mod);
@@ -8467,8 +8465,7 @@ static int ExecutiveDrag(Block *block,int x,int y,int mod)
                         }
                         if((mod==(cOrthoSHIFT|cOrthoCTRL))) {
                           if(rec!=I->LastZoomed) 
-                            ExecutiveWindowZoom(G,rec->name,0.0F,-1,false,
-                                                SettingGetGlobal_b(G,cSetting_animation));
+                            ExecutiveWindowZoom(G,rec->name,0.0F,-1,false,-1.0F);
                           I->LastZoomed=rec;
                         }
                       }
@@ -8555,8 +8552,7 @@ static int ExecutiveDrag(Block *block,int x,int y,int mod)
                       if((row==I->Over)&&row) {
                         if(I->LastChanged!=rec) {
                           ExecutiveSpecSetVisibility(G,I->LastChanged,false,mod);
-                          ExecutiveCenter(G,rec->name,-1,true,
-                                          SettingGetGlobal_b(G,cSetting_animation),NULL);
+                          ExecutiveCenter(G,rec->name,-1,true,-1.0F,NULL);
                           if(!rec->visible) 
                             ExecutiveSpecSetVisibility(G,rec,true,mod);
                           I->LastChanged = rec;
@@ -8568,8 +8564,7 @@ static int ExecutiveDrag(Block *block,int x,int y,int mod)
                       if((row==I->Over)&&row) {
                         if(I->LastChanged!=rec) {
                           ExecutiveSpecSetVisibility(G,I->LastChanged,false,mod);
-                          ExecutiveWindowZoom(G,rec->name,0.0F,-1,false,
-                                              SettingGetGlobal_b(G,cSetting_animation));
+                          ExecutiveWindowZoom(G,rec->name,0.0F,-1,false,-1.0F);
                           if(!rec->visible) 
                             ExecutiveSpecSetVisibility(G,rec,true,mod);
                           I->LastChanged = rec;
@@ -8581,8 +8576,7 @@ static int ExecutiveDrag(Block *block,int x,int y,int mod)
                       if((row==I->Over)&&row) {
                         if(rec!=I->LastZoomed) { 
                           ExecutiveSpecSetVisibility(G,I->LastZoomed,false,mod);
-                          ExecutiveWindowZoom(G,rec->name,0.0F,-1,false,
-                                              SettingGetGlobal_b(G,cSetting_animation));
+                          ExecutiveWindowZoom(G,rec->name,0.0F,-1,false,-1.0F);
                           I->LastZoomed=rec;
                           ExecutiveSpecSetVisibility(G,rec,true,0);
                         }
