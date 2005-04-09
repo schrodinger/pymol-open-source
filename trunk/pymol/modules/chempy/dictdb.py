@@ -756,7 +756,7 @@ if __name__=='__main__':
    print info.used,info.wasted,info.used-info.wasted
    print ddb['green']
 
-   import whrandom
+   import random
    
    ddc=DictDBLocal('test_dictdb')
 
@@ -765,7 +765,7 @@ if __name__=='__main__':
    lst = []
    for a in xrange(1,250):
       ddc[a]=str(a)
-      lst.append([whrandom.random(),a])
+      lst.append([random.random(),a])
       ddc[str(a)] = a
 
    info = ddc.get_info()

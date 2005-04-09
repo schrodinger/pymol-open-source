@@ -2,7 +2,7 @@
 
 from chempy import Bond
 import copy
-import whrandom
+import random
 
 # cap gaps in chain as aldehydes and neutral amines...
 # (for instance, when
@@ -21,9 +21,9 @@ def cap(object):
    for a in n_list:
       newat = copy.deepcopy(model.atom[a])
       newat.coord = [
-         newat.coord[0] + whrandom.random(),
-         newat.coord[1] + whrandom.random(),
-         newat.coord[2] + whrandom.random(),
+         newat.coord[0] + random.random(),
+         newat.coord[1] + random.random(),
+         newat.coord[2] + random.random(),
          ]
       newat.symbol = 'H'
       newat.name = 'HN'
@@ -38,9 +38,9 @@ def cap(object):
    for a in c_list:
       newat = copy.deepcopy(model.atom[a])
       newat.coord = [
-         newat.coord[0] + whrandom.random(),
-         newat.coord[1] + whrandom.random(),
-         newat.coord[2] + whrandom.random(),
+         newat.coord[0] + random.random(),
+         newat.coord[1] + random.random(),
+         newat.coord[2] + random.random(),
          ]
       newat.symbol = 'H'
       newat.name = 'HC'

@@ -6,7 +6,6 @@ from glob import glob
 
 import threading
 import time
-import whrandom
 import math
 from pymol import cmd
 import sys, os, os.path
@@ -40,7 +39,7 @@ cmd.set("cartoon_discrete_colors",1)
 def load():
    global last1,last2
    list = glob("pdb/*/*") 
-   list = map(lambda x:(whrandom.random(),x),list)
+   list = map(lambda x:(random.random(),x),list)
    list.sort() 
    list = map(lambda x:x[1],list)
    l = len(list)

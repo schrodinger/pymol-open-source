@@ -6,7 +6,6 @@ from glob import glob
 
 import threading
 import time
-import whrandom
 from pymol import cmd
 import sys, os, os.path
 from chempy.champ import Champ
