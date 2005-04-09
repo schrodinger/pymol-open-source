@@ -1756,8 +1756,6 @@ void PyMOL_SetPassive(CPyMOL *I,int onOff)
 void PyMOL_SetClickReady(CPyMOL *I, char *name, int index)
 {
 
-  printf("click ready %s %d\n",name,index);
-
   if(name && name[0]) {
     I->ClickReadyFlag = true;
     strcpy(I->ClickedObject,name);
@@ -1789,7 +1787,7 @@ char *PyMOL_GetClickString(CPyMOL *I,int reset)
       result = Alloc(char, OrthoLineLength+1);
       if(result) {
         sprintf(result,
-                "type=object:molecule\nname=%s\nindex=%d\nrank=%d\nid=%d\nsegi=%s\nchain=%s\nresn=%s\nresi=%s\nname=%s\nalt=%s\n",
+                "type=object:molecule\nobject=%s\nindex=%d\nrank=%d\nid=%d\nsegi=%s\nchain=%s\nresn=%s\nresi=%s\nname=%s\nalt=%s\n",
                 I->ClickedObject,
                 I->ClickedIndex+1,
                 ai->rank,
