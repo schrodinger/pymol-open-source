@@ -1,5 +1,5 @@
 from pymol import cmd
-from whrandom import random
+from random import random
 import time
 
 # this shows how you can efficiently update the coordinates
