@@ -192,7 +192,7 @@ Rep *RepDistLabelNew(DistSet *ds)
         scale3f(avg,radius,avg);
         add3f(v2,avg,avg);
 
-        di = 180.0F * get_angle3f(d1,d2)/PI;
+        di = (float)(180.0F * get_angle3f(d1,d2)/PI);
         sprintf(buffer,"%1.2f",di);
         buffer[7]=0;
         
@@ -261,7 +261,7 @@ Rep *RepDistLabelNew(DistSet *ds)
         scale3f(avg,radius,avg);
         add3f(a32,avg,avg);
 
-        di = 180.0F * get_dihedral3f(v1,v2,v3,v4)/PI;
+        di = (float)(180.0F * get_dihedral3f(v1,v2,v3,v4)/PI);
         sprintf(buffer,"%1.2f",di);
         buffer[7]=0;
         

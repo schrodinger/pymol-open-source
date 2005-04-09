@@ -1169,11 +1169,11 @@ void SceneIdle(PyMOLGlobals *G)
     }
   if(ControlRocking(G)&&rockFlag) {
     float ang_cur,disp,diff;
-    float sweep_angle = SettingGet(G,cSetting_sweep_angle);
-    float sweep_speed = SettingGet(G,cSetting_sweep_speed);
-    float sweep_phase = SettingGet(G,cSetting_sweep_phase);
-    int sweep_mode = SettingGet(G,cSetting_sweep_mode);
-    float shift = PI/2.0F;
+    float sweep_angle = SettingGetGlobal_f(G,cSetting_sweep_angle);
+    float sweep_speed = SettingGetGlobal_f(G,cSetting_sweep_speed);
+    float sweep_phase = SettingGetGlobal_f(G,cSetting_sweep_phase);
+    int sweep_mode = SettingGetGlobal_i(G,cSetting_sweep_mode);
+    float shift = (float)(PI/2.0F);
 
     I->RockTime+=I->RenderTime;
 
@@ -1206,11 +1206,11 @@ void SceneIdle(PyMOLGlobals *G)
       SceneRotate(G,(float)(-I->LastRockX),1.0F,0.0F,0.0F);
       ang_cur = (float)(I->RockTime*sweep_speed) + sweep_phase;
       
-      I->LastRockX = (sweep_angle*sin(ang_cur)/2);
-      I->LastRockY = (sweep_angle*sin(ang_cur+shift)/2);
+      I->LastRockX = (float)(sweep_angle*sin(ang_cur)/2);
+      I->LastRockY = (float)(sweep_angle*sin(ang_cur+shift)/2);
       
       if(I->RockTime*sweep_speed<PI) {
-        float factor = (I->RockTime*sweep_speed)/PI;
+        float factor = (float)((I->RockTime*sweep_speed)/PI);
         I->LastRockX *= factor;
         I->LastRockY *= factor;
       }
