@@ -1,7 +1,6 @@
 from pymol.cgo import *
 from pymol import cmd
 import math
-import whrandom
 
 # a more comple example of using cgo's to create a fancy animation.
 

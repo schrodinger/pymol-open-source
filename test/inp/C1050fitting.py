@@ -3,7 +3,7 @@
 import pymol
 from pymol import cmd
 
-from whrandom import random,seed
+from random import random,seed
 
 print "BEGIN-LOG"
 

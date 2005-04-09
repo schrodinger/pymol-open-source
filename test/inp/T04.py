@@ -5,7 +5,7 @@
       
 import threading
 import time
-import whrandom
+import random
 from pymol import cmd,util
 #cmd.feedback("ena","thread","debug")
 
@@ -15,12 +15,12 @@ cmd.set("cull_spheres",0)
 
 def turns():
    while 1:
-      time.sleep(whrandom.random()*0.02)
-      cmd.turn('x',whrandom.random()*10-5)
-      time.sleep(whrandom.random()*0.02)
-      cmd.turn('y',whrandom.random()*10-5)
-      time.sleep(whrandom.random()*0.02)
-      cmd.turn('z',whrandom.random()*10-5)
+      time.sleep(random.random()*0.02)
+      cmd.turn('x',random.random()*10-5)
+      time.sleep(random.random()*0.02)
+      cmd.turn('y',random.random()*10-5)
+      time.sleep(random.random()*0.02)
+      cmd.turn('z',random.random()*10-5)
 
 t = threading.Thread(target=turns)
 t.setDaemon(1)
@@ -29,9 +29,9 @@ t.start()
 def centers():
    while 1:
       try:
-         resi = int(whrandom.random()*150)
+         resi = int(random.random()*150)
          cmd.center("(resi %d)"%resi)
-         time.sleep(whrandom.random()*0.30)
+         time.sleep(random.random()*0.30)
       except: 
          print "exception"
          
@@ -42,56 +42,56 @@ t.start()
 
 def sets():
    while 1:
-      time.sleep(whrandom.random()*0.02)
-      if whrandom.random()>0.5:
+      time.sleep(random.random()*0.02)
+      if random.random()>0.5:
          value=1
       else:
          value=0
-      resi = int(whrandom.random()*150)
+      resi = int(random.random()*150)
       cmd.center("(resi %d)"%resi)
       cmd.set('cartoon_fancy_helices',str(value))
 
-      time.sleep(whrandom.random()*0.02)
-      if whrandom.random()>0.5:
+      time.sleep(random.random()*0.02)
+      if random.random()>0.5:
          value=1
       else:
          value=0
       cmd.set('cartoon_smooth_loop',str(value))
 
-      time.sleep(whrandom.random()*0.02)
-      if whrandom.random()>0.5:
+      time.sleep(random.random()*0.02)
+      if random.random()>0.5:
          value=1
       else:
          value=0
       cmd.set('cartoon_round_helices',str(value))
 
-      time.sleep(whrandom.random()*0.02)      
-      if whrandom.random()>0.5:
+      time.sleep(random.random()*0.02)      
+      if random.random()>0.5:
          value=1
       else:
          value=0
       cmd.set('cartoon_smooth_loops',str(value))
 
-      time.sleep(whrandom.random()*0.02)
-      if whrandom.random()>0.5:
+      time.sleep(random.random()*0.02)
+      if random.random()>0.5:
          value=1
       else:
          value=0
       cmd.set('cartoon_flat_sheets',str(value))
 
-      time.sleep(whrandom.random()*0.02)         
-      if whrandom.random()>0.5:
+      time.sleep(random.random()*0.02)         
+      if random.random()>0.5:
          value=1
       else:
          value=0
-      cmd.set('stick_radius',whrandom.random()*0.2+0.1)
+      cmd.set('stick_radius',random.random()*0.2+0.1)
       
-      time.sleep(whrandom.random()*0.02)      
-      if whrandom.random()>0.5:
+      time.sleep(random.random()*0.02)      
+      if random.random()>0.5:
          value=1
       else:
          value=0
-      cmd.set('sphere_scale',whrandom.random()*0.5+0.75)
+      cmd.set('sphere_scale',random.random()*0.5+0.75)
 
 
 t = threading.Thread(target=sets)
@@ -102,48 +102,48 @@ def carts():
    while 1:
       try:
 
-         resi = int(whrandom.random()*150)
+         resi = int(random.random()*150)
          cmd.hide('everything',"(resi %d)"%resi)
          cmd.show('sticks',"(resi %d)"%resi)
-         time.sleep(whrandom.random()*0.03)
+         time.sleep(random.random()*0.03)
 
-         resi = int(whrandom.random()*150)
+         resi = int(random.random()*150)
          cmd.hide('everything',"(resi %d)"%resi)
          cmd.show('spheres',"(resi %d)"%resi)
-         time.sleep(whrandom.random()*0.03)
+         time.sleep(random.random()*0.03)
 
-         resi = int(whrandom.random()*150)
+         resi = int(random.random()*150)
          cmd.hide('everything',"(resi %d)"%resi)
          cmd.show('cartoon',"(resi %d)"%resi)
-         time.sleep(whrandom.random()*0.03)
+         time.sleep(random.random()*0.03)
 
-         resi = int(whrandom.random()*150)
+         resi = int(random.random()*150)
          cmd.hide('everything',"(resi %d)"%resi)
          cmd.show('lines',"(resi %d)"%resi)
-         time.sleep(whrandom.random()*0.03)
+         time.sleep(random.random()*0.03)
 
-   #      resi = int(whrandom.random()*150)
+   #      resi = int(random.random()*150)
    #      cmd.show('dots',"(resi %d)"%resi)
-   #      time.sleep(whrandom.random()*0.03)
+   #      time.sleep(random.random()*0.03)
 
-   #      resi = int(whrandom.random()*150)
+   #      resi = int(random.random()*150)
    #      cmd.hide('dots',"(resi %d)"%resi)
-   #      time.sleep(whrandom.random()*0.03)
+   #      time.sleep(random.random()*0.03)
 
-         resi = int(whrandom.random()*150)
+         resi = int(random.random()*150)
          cmd.hide('everything',"(resi %d)"%resi)
          cmd.show('ribbon',"(resi %d)"%resi)
-         time.sleep(whrandom.random()*0.03)
+         time.sleep(random.random()*0.03)
 
-         resi = int(whrandom.random()*150)
+         resi = int(random.random()*150)
          cmd.hide('everything',"(resi %d)"%resi)
          cmd.show('nonbonded',"(resi %d)"%resi)
-         time.sleep(whrandom.random()*0.03)
+         time.sleep(random.random()*0.03)
 
-         resi = int(whrandom.random()*150)
+         resi = int(random.random()*150)
          cmd.hide('everything',"(resi %d)"%resi)
          cmd.show('nb_spheres',"(resi %d)"%resi)
-         time.sleep(whrandom.random()*0.03)
+         time.sleep(random.random()*0.03)
 
       except:
          print "exception"
