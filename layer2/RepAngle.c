@@ -159,7 +159,7 @@ Rep *RepAngleNew(DistSet *ds)
   dash_len = SettingGet_f(G,ds->Setting,ds->Obj->Obj.Setting,cSetting_dash_length);
   dash_gap = SettingGet_f(G,ds->Setting,ds->Obj->Obj.Setting,cSetting_dash_gap);
   dash_sum = dash_len+dash_gap;
-  if(dash_sum<R_SMALL4) dash_sum=0.1;
+  if(dash_sum<R_SMALL4) dash_sum=0.1F;
 
   I->N=0;
   I->V=NULL;
@@ -243,7 +243,7 @@ Rep *RepAngleNew(DistSet *ds)
 
         while(pos<length) {
 
-          mod_pos = fmod(pos + phase, dash_sum);
+          mod_pos = (float)fmod(pos + phase, dash_sum);
 
           VLACheck(I->V,float,(n*3)+5);
           
@@ -256,16 +256,16 @@ Rep *RepAngleNew(DistSet *ds)
             cur_angle = angle * cons_pos1/length;
             
             v=I->V+n*3;
-            scale3f(x,cos(cur_angle),vx);
-            scale3f(y,sin(cur_angle),vy);
+            scale3f(x,(float)cos(cur_angle),vx);
+            scale3f(y,(float)sin(cur_angle),vy);
             add3f(vx,vy,v);
             add3f(v2,v,v);
             
             cur_angle = angle * cons_pos2/length;
             
             v+=3;
-            scale3f(x,cos(cur_angle),vx);
-            scale3f(y,sin(cur_angle),vy);
+            scale3f(x,(float)cos(cur_angle),vx);
+            scale3f(y,(float)sin(cur_angle),vy);
             add3f(vx,vy,v);
             add3f(v2,v,v);
             
