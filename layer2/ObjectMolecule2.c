@@ -788,6 +788,49 @@ static char *check_next_pdb_object(char *p)
   }
   return NULL;
 }
+int ObjectMoleculeAutoDisableAtomNameWildcard(ObjectMolecule *I)
+{
+  PyMOLGlobals *G = I->Obj.G;
+  char wildcard = 0;
+  int found_wildcard = false;
+
+  {
+    char *tmp = SettingGet_s(G, NULL, I->Obj.Setting,cSetting_atom_name_wildcard);
+    if(tmp && tmp[0]) {
+      wildcard = *tmp;
+    } else {
+      tmp = SettingGet_s(G, NULL, I->Obj.Setting,cSetting_wildcard);      
+      if(tmp) {
+        wildcard = *tmp;
+      }
+    }
+    if(wildcard==32)
+      wildcard = 0;
+
+  }
+
+  if(wildcard) {
+    register int a;
+    register char *p, ch;
+    register AtomInfoType *ai = I->AtomInfo;
+
+    for(a=0;a<I->NAtom;a++) {
+      p = ai->name;
+      while( (ch=*(p++)) ) {
+        if(ch == wildcard) {
+          found_wildcard = true;
+          break;
+        }
+      }
+      ai++;
+    }
+    if(found_wildcard) {
+      ExecutiveSetObjSettingFromString(G,cSetting_atom_name_wildcard," ",
+                                       &I->Obj,-1, true, true);
+    }
+  }
+  return found_wildcard;
+}
 /*========================================================================*/
 CoordSet *ObjectMoleculePDBStr2CoordSet(PyMOLGlobals *G,
                                         char *buffer,
@@ -820,6 +863,7 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(PyMOLGlobals *G,
   int auto_show_nonbonded = (int)SettingGet(G,cSetting_auto_show_nonbonded);
   int reformat_names = (int)SettingGet(G,cSetting_pdb_reformat_names_mode);
   int truncate_resn = SettingGetGlobal_b(G,cSetting_pdb_truncate_residue_name);
+
   int newModelFlag = false;
   int ssFlag = false;
   int ss_resv1=0,ss_resv2=0;
@@ -844,6 +888,7 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(PyMOLGlobals *G,
 
   if((int)SettingGet(G,cSetting_pdb_literal_names)) 
     reformat_names = 0;
+  
 
   ignore_pdb_segi = (int)SettingGet(G,cSetting_ignore_pdb_segi);
 
@@ -1623,8 +1668,6 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(PyMOLGlobals *G,
           p=nskip(p,1);/* to 12 */
           p=ncopy(cc,p,4); 
           ParseNTrim(ai->name,cc,4); 
-          /*if(!sscanf(cc,"%s",ai->name)) 
-            ai->name[0]=0;*/
           
           p=ncopy(cc,p,1);
           if(*cc==32)

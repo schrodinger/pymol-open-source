@@ -23,7 +23,8 @@ if __name__=='pymol.setting':
    from cmd import _cmd,lock,lock_attempt,unlock,QuietException, \
         _feedback,fb_module,fb_mask 
    from cmd import is_string
-
+   import re
+   
    boolean_type = 1
    int_type     = 2
    float_type   = 3
@@ -475,6 +476,7 @@ if __name__=='pymol.setting':
 
    boolean_sc = Shortcut(boolean_dict.keys())
 
+   quote_strip_re = re.compile("^\'.*\'$|^\".*\"$")
 
    def _get_index(name):
       # this may be called from C, so don't raise any exceptions...
@@ -593,8 +595,11 @@ NOTES
                elif type==5: # color
                   v = (str(value),)
                elif type==6: # string
-                  v = (str(value),)
-
+                  vl = str(value)
+                  # strip outermost quotes (cheesy approach)
+                  if quote_strip_re.search(vl)!=None:
+                     vl=vl[1:-1]
+                  v = (vl,)
                v = (type,v)
                if len(selection):
                   selection=selector.process(selection)
@@ -603,6 +608,7 @@ NOTES
                             int(state)-1,int(quiet),
                             int(updates))
             except:
+               traceback.print_exc()
                if(_feedback(fb_module.cmd,fb_mask.debugging)):
                   traceback.print_exc()
                   print "Error: unable to read setting value."
@@ -707,13 +713,16 @@ PYMOL API
       finally:
          unlock()
       if r!=None:
+         r_str = str(r)
+         if len(string.strip(r_str))==0:
+            r_str = "\'"+r_str+"\'"
          if not quiet:
             if(object==''):
-               print " get: %s = %s"%(name,r)
+               print " get: %s = %s"%(name,r_str)
             elif state<=0:
-               print " get: %s = %s in object %s"%(name,r,object)
+               print " get: %s = %s in object %s"%(name,r_str,object)
             else:
-               print " get: %s = %s in object %s state %d"%(name,r,object,state)
+               print " get: %s = %s in object %s state %d"%(name,r_str,object,state)
       return r
    
    def get_setting_tuple(name,object='',state=0): # INTERNAL

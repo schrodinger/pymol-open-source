@@ -9210,6 +9210,8 @@ ObjectMolecule *ObjectMoleculeReadPDBStr(PyMOLGlobals *G,ObjectMolecule *I,char 
       ObjectMoleculeSort(I);
       ObjectMoleculeUpdateIDNumbers(I);
       ObjectMoleculeUpdateNonbonded(I);
+      ObjectMoleculeAutoDisableAtomNameWildcard(I);
+
       successCnt++;
       if(!quiet) {
         if(successCnt>1) {

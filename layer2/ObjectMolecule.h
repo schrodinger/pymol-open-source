@@ -323,6 +323,8 @@ void ObjectMoleculePurge(ObjectMolecule *I);
 int ObjectMoleculeAddBond(ObjectMolecule *I,int sele0,int sele1,int order);
 int ObjectMoleculeRemoveBonds(ObjectMolecule *I,int sele1,int sele2);
 
+int ObjectMoleculeAutoDisableAtomNameWildcard(ObjectMolecule *I);
+
 void ObjectMoleculeSaveUndo(ObjectMolecule *I,int state,int log);
 void ObjectMoleculeUndo(ObjectMolecule *I,int dir);
 void ObjectMoleculePrepareAtom(ObjectMolecule *I,int index,AtomInfoType *ai);

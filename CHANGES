@@ -4,8 +4,15 @@ CHANGE LOG
 
 Changes up to 0.98
 
+   beta33
+
+   * wildcards for model and selection names
+
+   * auto disable atom name wildcard for files with asterisks in 
+     the atom name field
+
    beta32
-   
+
    * psw files now start from first scene by default
 
    * scene animation duration default = 2.25
