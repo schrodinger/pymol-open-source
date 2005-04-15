@@ -98,6 +98,8 @@ CWordMatcher *WordMatcherNew(PyMOLGlobals *G, char *st, CWordMatchOptions *optio
   int needed=force;
   char wildcard = option->wildcard;
 
+  if(wildcard==32) wildcard = 0; /* space as wildcard means no wildcard */
+
   if(!st) 
     return NULL;
   { /* first determine if we need to incur the overhead of the matcher */
@@ -592,6 +594,44 @@ int WordMatchExact(PyMOLGlobals *G,char *p,char *q,int ignCase)
   return 1;
 }
 
+static int WordMatchNoWild(PyMOLGlobals *G,char *p,char *q,int ignCase) 
+/* allows for p to match when shorter than q.
+
+Returns:
+0 = no match
+positive = match out to N characters
+negative = perfect match  */
+
+{
+  int i=1;
+  while((*p)&&(*q))
+	 {
+		if(*p!=*q)
+		  {
+			  if(ignCase)
+				{
+				  if(tolower(*p)!=tolower(*q))
+					 {
+						i=0;
+						break;
+					 }
+				}
+			 else
+				{
+				  i=0;
+				  break;
+				}
+		  }
+		i++;
+		p++;
+		q++;
+	 }
+  if((*p)&&(!*q))
+    i=0;
+  if(i&&((!*p)&&(!*q))) /*exact match gives negative value */
+	 i=-i;
+  return(i);
+}
 
 int WordMatch(PyMOLGlobals *G,char *p,char *q,int ignCase) 
 /* allows for terminal wildcard (*) in p
@@ -887,7 +927,7 @@ int WordKey(PyMOLGlobals *G,WordKeyValue *list,char *word,int minMatch,int ignCa
   *exact = false;
   while(list[c].word[0])
     {
-      i=WordMatch(G,word,list[c].word,ignCase);
+      i=WordMatchNoWild(G,word,list[c].word,ignCase);
 		if(i>0)
 		  {
 			 if(mi<i)

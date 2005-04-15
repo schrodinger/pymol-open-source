@@ -6106,13 +6106,11 @@ int  ExecutiveSetSettingFromString(PyMOLGlobals *G,
   CSetting **handle=NULL;
   SettingName name;
   int nObj=0;
-  int unblock;
   int ok =true;
 
   PRINTFD(G,FB_Executive)
     " ExecutiveSetSetting: entered. sele \"%s\"\n",sele
     ENDFD;
-  unblock = PAutoBlock();
   if(sele[0]==0) { 
     ok = SettingSetFromString(G,NULL,index,value);
     if(ok) {
@@ -6246,10 +6244,76 @@ int  ExecutiveSetSettingFromString(PyMOLGlobals *G,
           }
       }
   }
-  PAutoUnblock(unblock);
   return(ok);
-
 }
+
+
+int  ExecutiveSetObjSettingFromString(PyMOLGlobals *G,
+                                      int index,char *value,CObject *obj,
+                                      int state,int quiet,int updates)
+{
+  OrthoLineType value2;
+  CSetting **handle=NULL;
+  SettingName name;
+  int ok =true;
+
+  PRINTFD(G,FB_Executive)
+    " ExecutiveSetObjSettingFromString: entered \n"
+    ENDFD;
+  if(!obj) { /* global */
+    ok = SettingSetFromString(G,NULL,index,value);
+    if(ok) {
+      if(!quiet) {
+        if(Feedback(G,FB_Setting,FB_Actions)) {
+          SettingGetTextValue(G,NULL,NULL,index,value2);
+          SettingGetName(G,index,name);
+          PRINTF
+            " Setting: %s set to %s.\n",name,value2
+            ENDF(G);
+        }
+      }
+      if(updates) 
+        SettingGenerateSideEffects(G,index,obj->Name,state);
+    }
+  } 
+  else { /* based on a single object */
+    if(obj->fGetSettingHandle) {
+      handle = obj->fGetSettingHandle(obj,state);
+      if(handle) {
+        SettingCheckHandle(G,handle);
+        ok = SettingSetFromString(G,*handle,index,value);
+        if(ok) {
+          if(updates)
+            SettingGenerateSideEffects(G,index,obj->Name,state);
+          if(!quiet) {
+            if(state<0) { /* object-specific */
+              if(Feedback(G,FB_Setting,FB_Actions)) {
+                SettingGetTextValue(G,*handle,NULL,index,value2);
+                SettingGetName(G,index,name);
+                PRINTF
+                  " Setting: %s set to %s in object \"%s\".\n",
+                  name,value2,obj->Name
+                  ENDF(G);
+              }
+            } else { /* state-specific */
+              if(Feedback(G,FB_Setting,FB_Actions)) {
+                SettingGetTextValue(G,*handle,NULL,index,value2);
+                SettingGetName(G,index,name);
+                PRINTF
+                  " Setting: %s set to %s in object \"%s\", state %d.\n",
+                  name,value2,obj->Name,state+1
+                  ENDF(G);
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+  return(ok);
+}
+
+
 /*========================================================================*/
 int  ExecutiveUnsetSetting(PyMOLGlobals *G,int index,char *sele,
                          int state,int quiet,int updates)

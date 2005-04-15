@@ -862,13 +862,14 @@ MapType *SelectorGetSpacialMapFromSeleCoord(PyMOLGlobals *G,int sele,int state,f
 
 static int SelectorWordIndex(PyMOLGlobals *G,SelectorWordType *list,char *word,int minMatch,int ignCase)
 {
-  int c,i,mi,mc;
+  register int c,i,mi,mc;
   int result = -1;
   c=0;
   mc=-1;
   mi=-1;
   if(word[0]=='?')
     word++;
+
   while(list[c][0])
 	 {
 		i=WordMatch(G,word,list[c],ignCase);
@@ -5852,7 +5853,7 @@ int SelectorIndexByName(PyMOLGlobals *G,char *sname)
    if((i>=0)&&(name[0]!='_')) { /* don't do checking on internal selections */
      char *best;
      best = ExecutiveFindBestNameMatch(G,sname); /* suppress spurious matches
-                                                of selections with non-selections */
+                                                    of selections with non-selections */
      if((best!=sname)&&(strcmp(best,I->Name[i])))
        i=-1;
    }
@@ -7124,7 +7125,7 @@ int SelectorSelect1(PyMOLGlobals *G,EvalElem *base)
           if(obj!=last_obj) {
 
             /* allow objects to have their own atom_name_wildcards...this is a tricky workaround
-             for handling nucleic acid structures what use "*" in atom names */
+             for handling nucleic acid structures that use "*" in atom names */
 
             atom_name_wildcard = SettingGet_s(G,obj->Obj.Setting,NULL,cSetting_atom_name_wildcard);
             
@@ -7509,33 +7510,80 @@ int SelectorSelect1(PyMOLGlobals *G,EvalElem *base)
       }
 		break;
 	 case SELE_SELs:
-      
-		sele=SelectorWordIndex(G,I->Name,base[1].text,1,ignore_case);
-		if(sele>=0)
-		  {
-          sele=I->Info[sele].ID;
-			 for(a=cNDummyAtoms;a<I->NAtom;a++)
-				{
-				  base[0].sele[a]=false;
-				  s=i_obj[i_table[a].model]->AtomInfo[i_table[a].atom].selEntry;
-				  while(s)
-					 {
-						if(I->Member[s].selection==sele)
-						  {
-							 base[0].sele[a]=true;
-							 c++;
-						  }
-						s=I->Member[s].next;
-					 }
-				}
-		  } else if(base[1].text[0]=='?') { /* undefined ?sele allowed */
-			 for(a=cNDummyAtoms;a<I->NAtom;a++)
+      {
+        char *word = base[1].text;
+        CWordMatchOptions options;
+        
+        if(word[0]=='?') word++;
+
+        WordMatchOptionsConfigAlpha(&options,wildcard[0],ignore_case);
+        
+        if( (matcher = WordMatcherNew(G,word,&options,false))) {
+
+          SelectorWordType *list = I->Name;
+          int idx = 0;
+
+          for(a=0;a<I->NAtom;a++) /* zero out first before iterating through selections */
             base[0].sele[a]=false;
+          
+          while(list[idx][0]) {
+            if(WordMatcherMatchAlpha(matcher,list[idx])) {
+              if(idx>=0)
+                {
+                  sele=I->Info[idx].ID;
+                  for(a=cNDummyAtoms;a<I->NAtom;a++)
+                    {
+                      s=i_obj[i_table[a].model]->AtomInfo[i_table[a].atom].selEntry;
+                      while(s)
+                        {
+                          if(I->Member[s].selection==sele)
+                            {
+                              if(!base[0].sele[a]) {
+                                base[0].sele[a]=true;
+                                c++;
+                              }
+                            }
+                          s=I->Member[s].next;
+                        }
+                    }
+                }
+            }
+            idx++;
+            
+          }
         } else {
-          ok=ErrMessage(G,"Selector","Invalid Selection Name.");          
+          
+          sele=SelectorWordIndex(G,I->Name,base[1].text,1,ignore_case);
+          if(sele>=0)
+            {
+              sele=I->Info[sele].ID;
+              for(a=cNDummyAtoms;a<I->NAtom;a++)
+                {
+                  base[0].sele[a]=false;
+                  s=i_obj[i_table[a].model]->AtomInfo[i_table[a].atom].selEntry;
+                  while(s)
+                    {
+                      if(I->Member[s].selection==sele)
+                        {
+                          base[0].sele[a]=true;
+                          c++;
+                        }
+                      s=I->Member[s].next;
+                    }
+                }
+            } else if(base[1].text[0]=='?') { /* undefined ?sele allowed */
+              for(a=cNDummyAtoms;a<I->NAtom;a++)
+                base[0].sele[a]=false;
+            } else {
+              ok=ErrMessage(G,"Selector","Invalid Selection Name.");          
+            }
         }
+      }
 		break;
 	 case SELE_MODs:
+
+      /* need to change this to handle wildcarded model names */
+
       index = -1;
       if((np=strstr(base[1].text,"`"))) {
         *np=0;
@@ -7545,62 +7593,99 @@ int SelectorSelect1(PyMOLGlobals *G,EvalElem *base)
           index--;
       }
 		model=0;
-      obj=(ObjectMolecule*)ExecutiveFindObjectByName(G,base[1].text);
-      if(obj)
-        {
-          for(a=cNDummyModels;a<I->NModel;a++)
-            if(i_obj[a]==obj)
-              {
-                model=a+1;
-                break;
+
+      {
+        CWordMatchOptions options;
+        
+        WordMatchOptionsConfigAlpha(&options,wildcard[0],ignore_case);
+        
+        if( (matcher = WordMatcherNew(G,base[1].text,&options,false))) {
+          
+          int obj_matches = false;
+          
+          for(a=0;a<I->NAtom;a++) /* zero out first before iterating through selections */
+            base[0].sele[a]=false;
+          
+          table_a = i_table + cNDummyAtoms;
+          base_0_sele_a = &base[0].sele[cNDummyAtoms];
+          last_obj = NULL;
+          for(a=cNDummyAtoms;a<n_atom;a++) {
+            obj = i_obj[table_a->model];
+            if(obj!=last_obj) {
+
+              obj_matches = WordMatcherMatchAlpha(matcher,
+                                                  i_obj[table_a->model]->Obj.Name);
+              last_obj = obj;
+            }
+            if(obj_matches) {
+              if((index<0) || (table_a->atom==index)) {
+                *base_0_sele_a = true;
+                c++;
               }
-        }
-      if(!model) 
-        if(sscanf(base[1].text,"%i",&model)==1)
-          {
-            if(model<=0)
-              model=0;
-            else if(model>I->NModel)
-              model=0;
-            else if(!i_obj[model])
-              model=0;
+            }
+            table_a++;
+            base_0_sele_a++;
           }
-		if(model)
-		  {
-			 model--;
-          if(index>=0) {
-            for(a=cNDummyAtoms;a<I->NAtom;a++)
-              {
-                if(i_table[a].model==model)
-                  if(i_table[a].atom==index)
-                    {
-                      base[0].sele[a]=true;
-                      c++;
-                    }
-                  else {
-                    base[0].sele[a]=false;                    
-                  }
-                else
-                  base[0].sele[a]=false;
-              }
-          } else {
-            for(a=cNDummyAtoms;a<I->NAtom;a++)
-              {
-                if(i_table[a].model==model)
+        } else {
+          
+          obj=(ObjectMolecule*)ExecutiveFindObjectByName(G,base[1].text);
+          if(obj)
+            {
+              for(a=cNDummyModels;a<I->NModel;a++)
+                if(i_obj[a]==obj)
                   {
-                    base[0].sele[a]=true;
-                    c++;
+                    model=a+1;
+                    break;
                   }
-                else
-                  base[0].sele[a]=false;
+            }
+          if(!model) 
+            if(sscanf(base[1].text,"%i",&model)==1)
+              {
+                if(model<=0)
+                  model=0;
+                else if(model>I->NModel)
+                  model=0;
+                else if(!i_obj[model])
+                  model=0;
               }
+          if(model)
+            {
+              model--;
+              if(index>=0) {
+                for(a=cNDummyAtoms;a<I->NAtom;a++)
+                  {
+                    if(i_table[a].model==model)
+                      if(i_table[a].atom==index)
+                        {
+                          base[0].sele[a]=true;
+                          c++;
+                        }
+                      else {
+                        base[0].sele[a]=false;                    
+                      }
+                    else
+                      base[0].sele[a]=false;
+                  }
+              } else {
+                for(a=cNDummyAtoms;a<I->NAtom;a++)
+                  {
+                    if(i_table[a].model==model)
+                      {
+                        base[0].sele[a]=true;
+                        c++;
+                      }
+                    else
+                      base[0].sele[a]=false;
+                  }
+              }
+            }
+          else {
+            PRINTFB(G,FB_Selector,FB_Errors)
+              " Selector-Error: invalid model \"%s\".\n",base[1].text
+              ENDFB(G);
+            ok=false;
           }
-		  }
-		else {
-        PRINTFB(G,FB_Selector,FB_Errors)
-          " Selector-Error: invalid model \"%s\".\n",base[1].text
-          ENDFB(G);
-        ok=false;
+        }
       }
 		break;
 	 }
@@ -8523,6 +8608,7 @@ int *SelectorEvaluate(PyMOLGlobals *G,SelectorWordType *word)
   int totDepth=0;
   int exact;
   char *np;
+
   register int ignore_case = SettingGetGlobal_b(G,cSetting_ignore_case);
   OrthoLineType line;
   EvalElem *Stack=NULL,*e;
@@ -8605,9 +8691,12 @@ int *SelectorEvaluate(PyMOLGlobals *G,SelectorWordType *word)
 				  strcpy(e->text,word[c]);
 				  valueFlag++;
 				} 
-			 else
+			 else /* possible keyword... */
 				{
-              code=WordKey(G,Keyword,word[c],4,ignore_case,&exact);
+              if((word[c][0]=='*')&&(!word[c][1]))
+                code = SELE_ALLz;
+              else
+                code = WordKey(G,Keyword,word[c],4,ignore_case,&exact);
               if(!code) {
                 b=strlen(word[c])-1;
                 if((b>2)&&(word[c][b]==';')) {
@@ -8615,7 +8704,6 @@ int *SelectorEvaluate(PyMOLGlobals *G,SelectorWordType *word)
                   word[c][b]=0;
                   code=WordKey(G,Keyword,word[c],4,ignore_case,&exact);
                 }
-                  
               }
               PRINTFD(G,FB_Selector)
                 " Selector: code %x\n",code
@@ -8658,35 +8746,39 @@ int *SelectorEvaluate(PyMOLGlobals *G,SelectorWordType *word)
                   strcpy(tmpKW,word[c]); /* handle <object-name>[`index] syntax */
                   if((np=strstr(tmpKW,"`"))) { /* must be an object name */
                     *np=0;
-                    if(SelectorIndexByName(G,tmpKW)>=0) {
-                      depth++;
-                      e=Stack+depth;
-                      e->code=SELE_MODs;
-                      e->level=(level<<4)+((e->code&0xF0)>>4);
-                      e->type=STYP_SEL1;
-                      valueFlag=1;
-                      c--;
-                    } else {
+                    /*                    if(SelectorIndexByName(G,tmpKW)>=0) {*/
+
+                    depth++;
+                    e=Stack+depth;
+                    e->code=SELE_MODs;
+                    e->level=(level<<4)+((e->code&0xF0)>>4);
+                    e->type=STYP_SEL1;
+                    valueFlag=1;
+                    c--;
+                    /*                    } else {
                       ok=ErrMessage(G,"Selector","Unknown keyword or selection.");
-                    }
+                      }*/
+
                   } else { /* handle <selection-name> syntax */
-                    if(SelectorIndexByName(G,tmpKW)>=0) {
-                      depth++;
-                      e=Stack+depth;
-                      e->code=SELE_SELs;
-                      e->level=(level<<4)+((e->code&0xF0)>>4);
-                      e->type=STYP_SEL1;
-                      valueFlag=1;
-                      c--;
-                    } else if(tmpKW[0]=='?') {
+                    /*if(SelectorIndexByName(G,tmpKW)>=0) {*/
+                    depth++;
+                    e=Stack+depth;
+                    e->code=SELE_SELs;
+                    e->level=(level<<4)+((e->code&0xF0)>>4);
+                    e->type=STYP_SEL1;
+                    valueFlag=1;
+                    c--;
+                    /*
+                      } else if(tmpKW[0]=='?') {
                       depth++;
                       e=Stack+depth;
                       e->code=SELE_NONz;
                       e->level=(level<<4)+((e->code&0xF0)>>4);
                       e->type=STYP_SEL0;
-                    } else { 
+                      } else { 
                       ok=ErrMessage(G,"Selector","Unknown keyword or selection.");
-                    }
+                      }
+                    */
                   }
                 }
             }
