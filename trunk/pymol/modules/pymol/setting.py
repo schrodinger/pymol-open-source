@@ -450,6 +450,7 @@ if __name__=='pymol.setting':
       presentation_auto_quit    = (415, '')
       editor_auto_dihedral      = (416, '')
       presentation_auto_start   = (417, '')
+      validate_object_names     = (418, '')
       
    setting_sc = Shortcut(SettingIndex.__dict__.keys())
 

@@ -41,6 +41,7 @@ typedef struct {
   int range_mode; /* 0 = none, 1 = numeric, 2 = alpha */
   int lists;
   int ignore_case;
+  int allow_hyphen;
   char wildcard;
 } CWordMatchOptions;
 

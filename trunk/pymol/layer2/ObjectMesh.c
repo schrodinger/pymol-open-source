@@ -345,6 +345,7 @@ int ObjectMeshSetLevel(ObjectMesh *I,float level,int state)
 
 static void ObjectMeshUpdate(ObjectMesh *I) 
 {
+  PyMOLGlobals *G = I->Obj.G;
   int a;
   int c;
   ObjectMeshState *ms;
@@ -398,7 +399,9 @@ static void ObjectMeshUpdate(ObjectMesh *I)
       if(map&&oms&&ms->N&&ms->V&&I->Obj.RepVis[cRepMesh]) {
         if(ms->ResurfaceFlag) {
           ms->ResurfaceFlag=false;
-          PRINTF " ObjectMesh: updating \"%s\".\n" , I->Obj.Name ENDF(I->Obj.G);
+          PRINTFB(G,FB_ObjectMesh,FB_Actions)
+            " ObjectMesh: updating \"%s\".\n" , I->Obj.Name 
+          ENDFB(G);
           if(oms->Field) {
             IsosurfGetRange(I->Obj.G,oms->Field,oms->Crystal,
                             ms->ExtentMin,ms->ExtentMax,ms->Range);
@@ -425,7 +428,9 @@ static void ObjectMeshUpdate(ObjectMesh *I)
             }
               
             /* cull my friend, cull */
-            voxelmap=MapNew(I->Obj.G,-carve_buffer,ms->AtomVertex,VLAGetSize(ms->AtomVertex)/3,NULL);
+            voxelmap=MapNew(I->Obj.G,
+                            -carve_buffer,ms->AtomVertex,
+                            VLAGetSize(ms->AtomVertex)/3,NULL);
             if(voxelmap) {
               
               MapSetupExpress(voxelmap);  
