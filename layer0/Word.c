@@ -73,6 +73,7 @@ void WordMatchOptionsConfigInteger(CWordMatchOptions *I)
   I->lists = true;
   I->ignore_case = true;
   I->wildcard = 0; /* no wildcard for numbers */
+  I->allow_hyphen = true;
 }
 
 void WordMatchOptionsConfigAlpha(CWordMatchOptions *I, char wildcard, int ignore_case)
@@ -81,6 +82,7 @@ void WordMatchOptionsConfigAlpha(CWordMatchOptions *I, char wildcard, int ignore
   I->lists = true;
   I->ignore_case = ignore_case;
   I->wildcard = wildcard;
+  I->allow_hyphen = false;
 }
 
 void WordMatchOptionsConfigMixed(CWordMatchOptions *I, char wildcard, int ignore_case )
@@ -88,7 +90,8 @@ void WordMatchOptionsConfigMixed(CWordMatchOptions *I, char wildcard, int ignore
   I->range_mode = cWordMatchOptionNumericRanges;  
   I->lists = true;
   I->ignore_case = ignore_case;
-  I->wildcard = wildcard; /* no wildcard for numbers */
+  I->wildcard = wildcard; 
+  I->allow_hyphen = true;
 }
 
 CWordMatcher *WordMatcherNew(PyMOLGlobals *G, char *st, CWordMatchOptions *option,int force)
@@ -118,6 +121,9 @@ CWordMatcher *WordMatcherNew(PyMOLGlobals *G, char *st, CWordMatchOptions *optio
             needed=true;
           break;
         case '-': /* range operators */
+          if(option->allow_hyphen)
+            needed=true;
+          break;
         case ':':
           if(option->range_mode)
             needed=true;
@@ -182,6 +188,18 @@ CWordMatcher *WordMatcherNew(PyMOLGlobals *G, char *st, CWordMatchOptions *optio
             }
             break;
           case '-': /* range operators */
+            if(option->allow_hyphen && option->range_mode) {
+              if(!node_active) {
+                cur_node = n_node;
+                VLACheck(I->node, MatchNode, cur_node);
+                node_active = true;
+                n_node++;
+              }
+              I->node[cur_node].match_mode = option->range_mode;
+              token_active = false;
+              char_handled = true; 
+            }
+            break;
           case ':':
             if(option->range_mode) {
               if(!node_active) {

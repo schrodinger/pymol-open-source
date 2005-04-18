@@ -55,10 +55,12 @@ void ObjectAdjustStateRebuildRange(CObject *I,int *start, int *stop)
   }
 }
 
-void ObjectMakeValidName(char *name)
+static void ObjectMakeValidName(char *name)
 {
   char *p=name,*q;
   if(p) {
+
+    /* currently legal are A to Z, a to z, 0 to 9, -, _ */
     while(*p) {
       if((*p<45)||(*p>122)||
          ((*p>57)&&(*p<65))||
@@ -284,7 +286,8 @@ void ObjectSetRepVis(CObject *I,int rep,int state)
 void ObjectSetName(CObject *I,char *name)
 {
   UtilNCopy(I->Name,name,ObjNameMax);
-  ObjectMakeValidName(I->Name);
+  if(SettingGetGlobal_b(I->G,cSetting_validate_object_names))
+    ObjectMakeValidName(I->Name);
 }
 /*========================================================================*/
 void ObjectRenderUnitBox(struct CObject *this,int frame,CRay *ray,Pickable **pick,int pass);

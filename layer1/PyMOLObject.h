@@ -80,7 +80,6 @@ int ObjectFromPyList(PyMOLGlobals *G,PyObject *list,CObject *I);
 int ObjectGetCurrentState(CObject *I,int ignore_all_states);
 void ObjectAdjustStateRebuildRange(CObject *I,int *start, int *stop);
 
-void ObjectMakeValidName(char *name);
 #endif
 
 

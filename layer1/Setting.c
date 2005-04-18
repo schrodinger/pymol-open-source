@@ -2547,6 +2547,7 @@ void SettingInitGlobal(PyMOLGlobals *G,int alloc,int reset_gui)
   SettingSet_b(I,cSetting_presentation_auto_quit,1);
   SettingSet_b(I,cSetting_editor_auto_dihedral, 1);
   SettingSet_b(I,cSetting_presentation_auto_start,1);
+  SettingSet_b(I,cSetting_validate_object_names, 1);
 
 }
 
