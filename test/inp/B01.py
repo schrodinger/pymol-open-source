@@ -5,6 +5,7 @@
 from glob import glob
 
 import threading
+import random
 import time
 import math
 from pymol import cmd
