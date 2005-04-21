@@ -1075,6 +1075,8 @@ int PyMOL_DelG3DStream(CPyMOL *I,int *array_ptr)
 
 static OVstatus PyMOL_PurgeAPI(CPyMOL *I)
 {
+  OVOneToOne_DEL_AUTO_NULL(I->Setting);
+  OVOneToOne_DEL_AUTO_NULL(I->Clip);
   OVOneToOne_DEL_AUTO_NULL(I->Rep);
   OVLexicon_DEL_AUTO_NULL(I->Lex);
   return_OVstatus_SUCCESS;
