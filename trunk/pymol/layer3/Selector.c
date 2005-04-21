@@ -7057,7 +7057,9 @@ int SelectorSelect1(PyMOLGlobals *G,EvalElem *base)
             table_a++;
             base_0_sele_a++;
           }
+          WordMatcherFree(matcher);
         }
+
       }
       break;
     case SELE_ID_s:
@@ -7078,6 +7080,7 @@ int SelectorSelect1(PyMOLGlobals *G,EvalElem *base)
             table_a++;
             base_0_sele_a++;
           }
+          WordMatcherFree(matcher);
         }
       }
       break;
@@ -7102,6 +7105,7 @@ int SelectorSelect1(PyMOLGlobals *G,EvalElem *base)
             table_a++;
             base_0_sele_a++;
           }
+          WordMatcherFree(matcher);
         }
       }
       break;
@@ -7155,6 +7159,8 @@ int SelectorSelect1(PyMOLGlobals *G,EvalElem *base)
           table_a++;
           base_0_sele_a++;
         }
+        if(matcher) 
+          WordMatcherFree(matcher);
       }
 		break;
 	 case SELE_TTYs:
@@ -7178,6 +7184,7 @@ int SelectorSelect1(PyMOLGlobals *G,EvalElem *base)
             table_a++;
             base_0_sele_a++;
           }
+          WordMatcherFree(matcher);
         }
       }
       break;
@@ -7202,6 +7209,7 @@ int SelectorSelect1(PyMOLGlobals *G,EvalElem *base)
             table_a++;
             base_0_sele_a++;
           }
+          WordMatcherFree(matcher);
         }
       }
 		break;
@@ -7226,6 +7234,7 @@ int SelectorSelect1(PyMOLGlobals *G,EvalElem *base)
             table_a++;
             base_0_sele_a++;
           }
+          WordMatcherFree(matcher);
         }
       }
       break;
@@ -7289,6 +7298,7 @@ int SelectorSelect1(PyMOLGlobals *G,EvalElem *base)
             table_a++;
             base_0_sele_a++;
           }
+          WordMatcherFree(matcher);
         }
       }
 		break;
@@ -7313,6 +7323,7 @@ int SelectorSelect1(PyMOLGlobals *G,EvalElem *base)
             table_a++;
             base_0_sele_a++;
           }
+          WordMatcherFree(matcher);
         }
       }
 		break;
@@ -7378,6 +7389,7 @@ int SelectorSelect1(PyMOLGlobals *G,EvalElem *base)
             table_a++;
             base_0_sele_a++;
           }
+          WordMatcherFree(matcher);
         }
       }
 		break;
@@ -7413,6 +7425,7 @@ int SelectorSelect1(PyMOLGlobals *G,EvalElem *base)
             table_a++;
             base_0_sele_a++;
           }
+          WordMatcherFree(matcher);
         }
       }
       break;
@@ -7439,6 +7452,7 @@ int SelectorSelect1(PyMOLGlobals *G,EvalElem *base)
             table_a++;
             base_0_sele_a++;
           }
+          WordMatcherFree(matcher);
         }
       }
       break;
@@ -7506,6 +7520,7 @@ int SelectorSelect1(PyMOLGlobals *G,EvalElem *base)
             table_a++;
             base_0_sele_a++;
           }
+          WordMatcherFree(matcher);
         }
       }
 		break;
@@ -7551,6 +7566,7 @@ int SelectorSelect1(PyMOLGlobals *G,EvalElem *base)
             idx++;
             
           }
+          WordMatcherFree(matcher);
         } else {
           
           sele=SelectorWordIndex(G,I->Name,base[1].text,1,ignore_case);
@@ -7626,6 +7642,7 @@ int SelectorSelect1(PyMOLGlobals *G,EvalElem *base)
             table_a++;
             base_0_sele_a++;
           }
+          WordMatcherFree(matcher);
         } else {
           
           obj=(ObjectMolecule*)ExecutiveFindObjectByName(G,base[1].text);

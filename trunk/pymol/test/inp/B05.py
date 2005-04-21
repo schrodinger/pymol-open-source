@@ -21,12 +21,12 @@ def load():
          sys.__stdout__.write("\n"+dir)
          sys.__stdout__.flush()
          for file in glob(dir+"/pdb*"):
-            name = file[-4:]
+            name = os.path.split(file)[-1][:-4]
             cmd.load(file,name)
             cmd.hide("everything",name)
             cmd.disable()
-            cmd.enable(name)
             cmd.show("cartoon",name)
+            cmd.enable(name)
             cmd.refresh()
             cmd.dss(name)
             cmd.refresh()
