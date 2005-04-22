@@ -4,6 +4,12 @@ CHANGE LOG
 
 Changes up to 0.98
 
+   beta34
+
+   * fixed glitch in handling bogus CRYST records
+
+   * patched up some memory leaks
+
    beta33
 
    * wildcards for model and selection names

@@ -131,6 +131,17 @@ void CrystalUpdate(CCrystal *I)
   float sabgs1;
   int i;
 
+  if(((I->Angle[0]==0.0F)&&
+      (I->Angle[1]==0.0F)&&
+      (I->Angle[2]==0.0F))||
+     ((I->Dim[0]==0.0F)&&
+      (I->Dim[1]==0.0F)&&
+      (I->Dim[2]==0.0F)))
+    {
+      CrystalInit(I->G,I);
+      return;
+    }
+      
   for(i=0;i<9;i++) {
     I->RealToFrac[i]=0.0;
     I->FracToReal[i]=0.0;

@@ -29,9 +29,9 @@ alter 6-9/,chain='B'
 alter 10-11/,chain='G'
 
 count_atoms chain A
-count_atoms chain A-B
-count_atoms chain B-F
-count_atoms chain A-Z
+count_atoms chain A:B
+count_atoms chain B:F
+count_atoms chain A:Z
 count_atoms chain A+E
 count_atoms chain A+F
 
@@ -64,7 +64,7 @@ count_atoms a*
 
 count_atoms /p*/*RE
 count_atoms /*t/*O*
-count_atoms /*pt//A-E
+count_atoms /*pt//A:E
 
 count_atoms /p*/*RE/E/h*/c*
 

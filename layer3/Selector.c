@@ -1396,10 +1396,11 @@ int SelectorAssignSS(PyMOLGlobals *G,int target,int present,int state_value,int 
               if(idx>=0) {
                 copy3f(cs->Coord+(3*idx),I->Vertex+3*aa); /* record coordinate */
                 I->Flag1[aa]=true;
-
-                /*              printf(" storing donor for %s %d at %8.3f %8.3f %8.3f\n",
-                                res[a].obj->AtomInfo[at].resi,idx,
-                                I->Vertex[3*aa],I->Vertex[3*aa+1],I->Vertex[3*aa+2]);*/
+#if 0
+                printf(" storing donor for %s %d at %8.3f %8.3f %8.3f\n",
+                       res[a].obj->AtomInfo[at].resi,idx,
+                       I->Vertex[3*aa],I->Vertex[3*aa+1],I->Vertex[3*aa+2]);
+#endif
                 n1++;
               }
             }
@@ -1424,11 +1425,11 @@ int SelectorAssignSS(PyMOLGlobals *G,int target,int present,int state_value,int 
                 idx=cs->AtmToIdx[at];
               if(idx>=0) {
                 copy3f(cs->Coord+(3*idx),I->Vertex+3*aa); /* record coordinate */
-
-                /*              printf(" storing acceptor for %s %d at %8.3f %8.3f %8.3f\n",
+#if 0
+                printf(" storing acceptor for %s %d at %8.3f %8.3f %8.3f\n",
                                 res[a].obj->AtomInfo[at].resi,idx,
-                                I->Vertex[3*aa],I->Vertex[3*aa+1],I->Vertex[3*aa+2]);*/
-
+                       I->Vertex[3*aa],I->Vertex[3*aa+1],I->Vertex[3*aa+2]);
+#endif
               }
             }
 
