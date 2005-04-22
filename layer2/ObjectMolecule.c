@@ -9200,7 +9200,6 @@ ObjectMolecule *ObjectMoleculeReadPDBStr(PyMOLGlobals *G,ObjectMolecule *I,char 
                 " ObjectMolReadPDBStr: using SCALEn to compute orthogonal coordinates.\n"
                 ENDFB(G);
               CoordSetTransform44f(cset, pdb_info->scale.matrix);
-              dump33f(I->Symmetry->Crystal->FracToReal,"frac2real");
               CoordSetTransform33f(cset, I->Symmetry->Crystal->FracToReal);
             }
           }
