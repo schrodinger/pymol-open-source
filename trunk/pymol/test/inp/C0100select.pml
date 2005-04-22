@@ -107,7 +107,7 @@ count_atoms indicate
 
 dele all
 load dat/1tii.pdb
-indicate A-C+F/10+90+100-/ca+c+n*
+indicate A:C+F/10+90+100-/ca+c+n*
 
 count_atoms indicate
 

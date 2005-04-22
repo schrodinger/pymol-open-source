@@ -767,12 +767,12 @@ static MapType *_MapNew(PyMOLGlobals *G,float range,float *vert,int nVert,float 
 	 }
   else
 	 {
-		I->Min[0]=0;
-		I->Max[0]=0;
-		I->Min[1]=0;
-		I->Max[1]=0;
-		I->Min[2]=0;
-		I->Max[2]=0;
+		I->Min[0]=0.0F;
+		I->Max[0]=0.0F;
+		I->Min[1]=0.0F;
+		I->Max[1]=0.0F;
+		I->Min[2]=0.0F;
+		I->Max[2]=0.0F;
 		if(flag) {
 		  firstFlag=true;
 		  v=vert;
