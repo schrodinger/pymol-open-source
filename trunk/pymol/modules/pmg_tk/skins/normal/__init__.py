@@ -2118,7 +2118,7 @@ class Normal(PMGSkin):
       
       self.menuBar.addmenuitem('Demo', 'command', 'End Demonstration',
                                label='End Demonstration',
-                               command = lambda s=self:cmd.do(
+                               command = lambda s=self: s.cmd.do(
          '_ replace_wizard demo,finish'))
 
       self.menuBar.addmenu('Plugin', 'Plugin',tearoff=TRUE)      
