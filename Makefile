@@ -79,9 +79,9 @@ semistatic: .includes .depends .update
 	/bin/rm -f .update .includes
 	cd contrib;$(MAKE) static
 	$(CC) $(BUILD) $(DEST) */*.o ov/src/*.o $(CFLAGS) $(LIB_DIRS) $(LIBS)	
+	$(PYTHON_EXE) modules/compile_pymol.py
 
 unix-mindep-build: semistatic
-	$(PYTHON_EXE) modules/compile_pymol.py
 	/bin/rm -rf $(MINDEP)
 	install -d $(MDP)/ext/lib
 	cp -r modules $(MDP)

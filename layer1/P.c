@@ -1027,16 +1027,15 @@ void PInitEmbedded(int argc,char **argv)
 
   if(!getenv("PYMOL_PATH")) {
     if(getenv("PWD")) {
-	strcpy(line1,"PYMOL_PATH=");
-	strcat(line1,getenv("PWD"));
+      strcpy(line1,"PYMOL_PATH=");
+      strcat(line1,getenv("PWD"));
       putenv(line1);
-	/* setenv("PYMOL_PATH",getenv("PWD"),1); */
     }
   }
-
+  
   if(!getenv("PYTHONPATH")) { /* create PYTHONPATH */
     if(getenv("PYMOL_PATH")) {
-	strcpy(line2,"PYTHONPATH=");
+      strcpy(line2,"PYTHONPATH=");
       strcat(line2,getenv("PYMOL_PATH"));
       strcat(line2,getenv("PYMOL_PATH"));
       strcat(line2,"/ext/lib/python2.1:");
@@ -1045,46 +1044,43 @@ void PInitEmbedded(int argc,char **argv)
       strcat(line2,"/ext/lib/python2.1/lib-tk:");
       strcat(line2,getenv("PYMOL_PATH"));
       strcat(line2,"/ext/lib/python2.1/lib-dynload");
-putenv(line2);
-      /*setenv("PYTHONPATH",line2,1);*/
+      putenv(line2);
     }
   } else { /* preempt existing PYTHONPATH */
     strcat(line3,"PYTHONPATH=");
-      strcpy(line3,getenv("PYMOL_PATH"));
-      strcat(line3,"/ext/lib/python2.1:");
-      strcat(line3,getenv("PYMOL_PATH"));
-      strcat(line3,"/ext/lib/python2.1/plat-linux2:");
-      strcat(line3,getenv("PYMOL_PATH"));
-      strcat(line3,"/ext/lib/python2.1/lib-tk:");
-      strcat(line3,getenv("PYMOL_PATH"));
-      strcat(line3,"/ext/lib/python2.1/lib-dynload:");
-      strcat(line3,getenv("PYTHONPATH"));
-      /*setenv("PYTHONPATH",line3,1);*/
-putenv(line3);
+    strcpy(line3,getenv("PYMOL_PATH"));
+    strcat(line3,"/ext/lib/python2.1:");
+    strcat(line3,getenv("PYMOL_PATH"));
+    strcat(line3,"/ext/lib/python2.1/plat-linux2:");
+    strcat(line3,getenv("PYMOL_PATH"));
+    strcat(line3,"/ext/lib/python2.1/lib-tk:");
+    strcat(line3,getenv("PYMOL_PATH"));
+    strcat(line3,"/ext/lib/python2.1/lib-dynload:");
+    strcat(line3,getenv("PYTHONPATH"));
+    putenv(line3);
   }
 }
 #endif
-
+ 
 #ifdef _PYMOL_SETUP_PY22
   /* used by semistatic PyMOL */
 {
-static char line1[5000];
-static char line2[5000];
-static char line3[5000];
+  static char line1[5000];
+  static char line2[5000];
+  static char line3[5000];
   char *pymol_path;
-
+  
   if(!getenv("PYMOL_PATH")) {
     if(getenv("PWD")) {
-	strcpy(line1,"PYMOL_PATH=");
-	strcat(line1,getenv("PWD"));
+      strcpy(line1,"PYMOL_PATH=");
+      strcat(line1,getenv("PWD"));
       putenv(line1);
-	/* setenv("PYMOL_PATH",getenv("PWD"),1); */
     }
   }
-
+  
   if(!getenv("PYTHONPATH")) { /* create PYTHONPATH */
     if(getenv("PYMOL_PATH")) {
-	strcpy(line2,"PYTHONPATH=");
+      strcpy(line2,"PYTHONPATH=");
       strcat(line2,getenv("PYMOL_PATH"));
       strcat(line2,"/ext/lib/python2.2:");
       strcat(line2,getenv("PYMOL_PATH"));
@@ -1093,26 +1089,55 @@ static char line3[5000];
       strcat(line2,"/ext/lib/python2.2/lib-tk:");
       strcat(line2,getenv("PYMOL_PATH"));
       strcat(line2,"/ext/lib/python2.2/lib-dynload");
-putenv(line2);
-      /* setenv("PYTHONPATH",line2,1);*/
+      putenv(line2);
     }
   } else { /* preempt existing PYTHONPATH */
-strcpy(line3,"PYTHONPATH=");
-      strcat(line3,getenv("PYMOL_PATH"));
-      strcat(line3,"/ext/lib/python2.2:");
-      strcat(line3,getenv("PYMOL_PATH"));
-      strcat(line3,"/ext/lib/python2.2/plat-linux2:");
-      strcat(line3,getenv("PYMOL_PATH"));
-      strcat(line3,"/ext/lib/python2.2/lib-tk:");
-      strcat(line3,getenv("PYMOL_PATH"));
-      strcat(line3,"/ext/lib/python2.2/lib-dynload");
-      strcat(line3,getenv("PYTHONPATH"));
-putenv(line3);
-      /*setenv("PYTHONPATH",line3,1);*/
+    strcpy(line3,"PYTHONPATH=");
+    strcat(line3,getenv("PYMOL_PATH"));
+    strcat(line3,"/ext/lib/python2.2:");
+    strcat(line3,getenv("PYMOL_PATH"));
+    strcat(line3,"/ext/lib/python2.2/plat-linux2:");
+    strcat(line3,getenv("PYMOL_PATH"));
+    strcat(line3,"/ext/lib/python2.2/lib-tk:");
+    strcat(line3,getenv("PYMOL_PATH"));
+    strcat(line3,"/ext/lib/python2.2/lib-dynload");
+    strcat(line3,getenv("PYTHONPATH"));
+    putenv(line3);
   }
 }
 #endif
 
+#ifdef _PYMOL_SETUP_PY23
+  /* used by semistatic PyMOL */
+{
+  static char line1[5000];
+  static char line2[5000];
+  static char line3[5000];
+  char *pymol_path;
+
+  /* if PYMOL_PATH isn't defined, then try using the current working
+     directory */
+  
+  if(!getenv("PYMOL_PATH")) {
+    if(getenv("PWD")) {
+      strcpy(line1,"PYMOL_PATH=");
+      strcat(line1,getenv("PWD"));
+      putenv(line1);
+    }
+  }
+ 
+  /* now set PYTHONHOME so that we use the right binary libraries for
+     this executable */
+
+  if(getenv("PYMOL_PATH")) {
+    strcpy(line2,"PYTHONHOME=");
+    strcat(line2,getenv("PYMOL_PATH"));
+    strcat(line2,"/ext");
+    putenv(line2);
+  }
+
+}
+#endif
 
 #ifndef _PYMOL_ACTIVEX
 #ifndef _EPYMOL
@@ -1183,23 +1208,23 @@ r1=RegOpenKeyEx(HKEY_CLASSES_ROOT,"Software\\DeLano Scientific\\PyMOL\\PYMOL_PAT
   PyRun_SimpleString("if os.path.exists(os.environ['PYMOL_PATH']+'/ext/lib/tk8.4'): os.environ['TK_LIBRARY']=os.environ['PYMOL_PATH']+'/ext/lib/tk8.4'\n");
 #endif
 
-
+#if 0
+/* no longer necessary since we're setting PYTHONHOME */
 #ifdef _PYMOL_SETUP_PY21 
 /* used by semistatic pymol */
   PyRun_SimpleString("import string");
-  PyRun_SimpleString("sys.path=filter(lambda x:string.find(x,'warren/ext-static')<0,sys.path)"); /* clean bogus entries in sys.path */
+  PyRun_SimpleString("sys.path=filter(lambda x:string.find(x,'static/ext-static')<0,sys.path)"); /* clean bogus entries in sys.path */
 #endif
-
 #ifdef _PYMOL_SETUP_PY22
 /* used by semistatic pymol */
   PyRun_SimpleString("import string");
-  PyRun_SimpleString("sys.path=filter(lambda x:string.find(x,'warren/ext')<0,sys.path)"); /* clean bogus entries in sys.path */
+  PyRun_SimpleString("sys.path=filter(lambda x:string.find(x,'static/ext')<0,sys.path)"); /* clean bogus entries in sys.path */
 #endif
-
 #ifdef _PYMOL_SETUP_PY23
 /* used by semistatic pymol */
   PyRun_SimpleString("import string");
-  PyRun_SimpleString("sys.path=filter(lambda x:string.find(x,'warren/ext')<0,sys.path)"); /* clean bogus entries in sys.path */
+  PyRun_SimpleString("sys.path=filter(lambda x:string.find(x,'static/ext')<0,sys.path)"); /* clean bogus entries in sys.path */
+#endif
 #endif
 
 #ifdef WIN32
