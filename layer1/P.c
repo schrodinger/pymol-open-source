@@ -1066,8 +1066,9 @@ void PInitEmbedded(int argc,char **argv)
     }
     if(restart_flag && getenv("PYMOL_PATH") && getenv("PYTHONHOME")) { 
       /* now that we have the environment defined, restart the process
-         so that Python can use the new environment (NOTE that if we
-         don't do this, then Python won't see the new environment vars */
+         so that Python can use the new environment (If we don't do
+         this, then Python won't see the new environment vars -- though
+         it is unclear why this should be!) */
       char command[4000];
       sprintf(command,"%s\\pymol.exe",pymol_path);
       _execv(command,argv);
@@ -1099,11 +1100,10 @@ void PInitEmbedded(int argc,char **argv)
 {
   static char line1[4000];
   static char line2[4000];
-  char *pymol_path;
 
-  if(!getenv("PYMOL_PATH")) {
+  if(!getenv("PYMOL_PATH")) { /* if PYMOL_PATH isn't defined...*/
     
-    /* if PYMOL_PATH isn't defined, then was our startup path explicit? */
+    /* was our startup path absolute? */
     
     if((argc>0) && (argv[0][0]=='/')) {
       /* PYMOL was started with an absolute path, so try using that... */
@@ -1115,11 +1115,23 @@ void PInitEmbedded(int argc,char **argv)
         *p=0;
         p--;
       }
-      if(p>line1) {
-        *p=0;
-      }
+      *p=0;
       putenv(line1);
-    } else { /* otherwise, try using the current working directory */
+    } else if((argc>0) && getenv("PWD") && ((argv[0][0]=='.')||(strstr(argv[0],"/")))) { 
+      /* was the path relative? */
+      char *p;
+      strcpy(line1,"PYMOL_PATH=");
+      strcat(line1,getenv("PWD"));
+      strcat(line1,"/");
+      strcat(line1,argv[0]);
+      p=line1 + strlen(line1);
+      while(*p!='/') {
+          *p=0;
+          p--;
+      }
+      *p=0;
+      putenv(line1);
+    } else { /* otherwise, just try using the current working directory */
       if(getenv("PWD")) {
         strcpy(line1,"PYMOL_PATH=");
         strcat(line1,getenv("PWD"));
@@ -1180,9 +1192,6 @@ void PInitEmbedded(int argc,char **argv)
   PyRun_SimpleString("import os\n");
   PyRun_SimpleString("import sys\n");
 
-  PyRun_SimpleString("print os.environ['PYMOL_PATH']\n");
-  PyRun_SimpleString("print os.environ['PYTHONHOME']\n");
-  PyRun_SimpleString("print sys.path\n");
 #ifdef WIN32
 #if 0
 {
