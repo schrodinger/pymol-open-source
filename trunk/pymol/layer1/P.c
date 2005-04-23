@@ -19,6 +19,7 @@ Z* -------------------------------------------------------------------
 #include"os_predef.h"
 #ifdef WIN32
 #include<windows.h>
+#include<process.h>
 #endif
 #include"os_python.h"
 
@@ -1008,120 +1009,122 @@ void PInitEmbedded(int argc,char **argv)
   PyObject *args,*pymol;
 
 #ifdef WIN32
-  OrthoLineType path_buffer,command;
-  HKEY phkResult;
-  int lpcbData;
-  int lpType = REG_SZ;
-  int r1,r2;
-#endif
-
-
-#ifdef _PYMOL_SETUP_PY21 
-  /* used by semistatic PyMOL */
-{
-  char line[5000];
-  static char line1[5000];
-  static char line2[5000];
-  static char line3[5000];
-  char *pymol_path;
-
-  if(!getenv("PYMOL_PATH")) {
-    if(getenv("PWD")) {
-      strcpy(line1,"PYMOL_PATH=");
-      strcat(line1,getenv("PWD"));
-      putenv(line1);
+  {
+    /* if PYMOL_PATH and/or PYTHONHOME isn't in the environment coming in, then the
+       user may simply have clicked PyMOL.exe, in which case we need to consult
+       the registry regarding the location of the install */
+    
+    /* embedded version of PyMOL currently ships with Python 2.3 */
+#define EMBEDDED_PYTHONHOME "\\py23"
+    
+    OrthoLineType path_buffer;
+    static char line1[4000];
+    static char line2[4000];
+    HKEY phkResult;
+    int lpcbData;
+    int lpType = REG_SZ;
+    int r1,r2;
+    char *pymol_path;
+    char *pythonhome;
+    int pythonhome_set = false;
+    int restart_flag = false;
+    pymol_path = getenv("PYMOL_PATH");
+    pythonhome = getenv("PYTHONHOME");
+    if((!pymol_path)||(!pythonhome)) {
+      lpcbData = sizeof(OrthoLineType)-1;
+      r1=RegOpenKeyEx(HKEY_CLASSES_ROOT,"Software\\DeLano Scientific\\PyMOL\\PYMOL_PATH",0,KEY_EXECUTE,&phkResult);
+      if(r1==ERROR_SUCCESS) {
+        r2 = RegQueryValueEx(phkResult,"",NULL,&lpType,path_buffer,&lpcbData);
+        if (r2==ERROR_SUCCESS) {
+          /* use environment variable PYMOL_PATH first, registry entry second */
+          if(!pymol_path) {
+            strcpy(line1,"PYMOL_PATH=");
+            strcat(line1,path_buffer);
+            _putenv(line1);
+            restart_flag = true;
+            if(!pythonhome) { /* only set PYTHONHOME if already setting new PYMOL_PATH */
+              pythonhome_set = true;
+              strcpy(line2,"PYTHONHOME=");
+              strcat(line2,path_buffer);
+              strcat(line2,EMBEDDED_PYTHONHOME); 
+              _putenv(line2);
+            }
+          }
+        }
+        RegCloseKey(phkResult);
+      }
+      /* this allows us to just specify PYMOL_PATH with no registry entries */
+      if((!pythonhome_set)&&(pymol_path)&&(!pythonhome)) {
+        strcpy(line2,"PYTHONHOME=");
+        strcat(line2,pymol_path);
+        strcat(line2,EMBEDDED_PYTHONHOME);
+        _putenv(line2);
+        restart_flag = true;
+        printf("line2 %s\n",line2);
+        printf("getenv '%s'\n",getenv("PYTHONHOME"));
+      }
+    }
+    if(restart_flag && getenv("PYMOL_PATH") && getenv("PYTHONHOME")) { 
+      /* now that we have the environment defined, restart the process
+         so that Python can use the new environment (NOTE that if we
+         don't do this, then Python won't see the new environment vars */
+      char command[4000];
+      sprintf(command,"%s\\pymol.exe",pymol_path);
+      _execv(command,argv);
     }
   }
-  
-  if(!getenv("PYTHONPATH")) { /* create PYTHONPATH */
-    if(getenv("PYMOL_PATH")) {
-      strcpy(line2,"PYTHONPATH=");
-      strcat(line2,getenv("PYMOL_PATH"));
-      strcat(line2,getenv("PYMOL_PATH"));
-      strcat(line2,"/ext/lib/python2.1:");
-      strcat(line2,"/ext/lib/python2.1/plat-linux2:");
-      strcat(line2,getenv("PYMOL_PATH"));
-      strcat(line2,"/ext/lib/python2.1/lib-tk:");
-      strcat(line2,getenv("PYMOL_PATH"));
-      strcat(line2,"/ext/lib/python2.1/lib-dynload");
-      putenv(line2);
-    }
-  } else { /* preempt existing PYTHONPATH */
-    strcat(line3,"PYTHONPATH=");
-    strcpy(line3,getenv("PYMOL_PATH"));
-    strcat(line3,"/ext/lib/python2.1:");
-    strcat(line3,getenv("PYMOL_PATH"));
-    strcat(line3,"/ext/lib/python2.1/plat-linux2:");
-    strcat(line3,getenv("PYMOL_PATH"));
-    strcat(line3,"/ext/lib/python2.1/lib-tk:");
-    strcat(line3,getenv("PYMOL_PATH"));
-    strcat(line3,"/ext/lib/python2.1/lib-dynload:");
-    strcat(line3,getenv("PYTHONPATH"));
-    putenv(line3);
-  }
-}
 #endif
- 
+
+/* compatibility for old compile-time defines */
+
+#ifdef _PYMOL_SETUP_PY21
+#ifndef _PYMOL_SETUP_PY_EXT
+#define _PYMOL_SETUP_PY_EXT
+#endif
+#endif
 #ifdef _PYMOL_SETUP_PY22
-  /* used by semistatic PyMOL */
-{
-  static char line1[5000];
-  static char line2[5000];
-  static char line3[5000];
-  char *pymol_path;
-  
-  if(!getenv("PYMOL_PATH")) {
-    if(getenv("PWD")) {
-      strcpy(line1,"PYMOL_PATH=");
-      strcat(line1,getenv("PWD"));
-      putenv(line1);
-    }
-  }
-  
-  if(!getenv("PYTHONPATH")) { /* create PYTHONPATH */
-    if(getenv("PYMOL_PATH")) {
-      strcpy(line2,"PYTHONPATH=");
-      strcat(line2,getenv("PYMOL_PATH"));
-      strcat(line2,"/ext/lib/python2.2:");
-      strcat(line2,getenv("PYMOL_PATH"));
-      strcat(line2,"/ext/lib/python2.2/plat-linux2:");
-      strcat(line2,getenv("PYMOL_PATH"));
-      strcat(line2,"/ext/lib/python2.2/lib-tk:");
-      strcat(line2,getenv("PYMOL_PATH"));
-      strcat(line2,"/ext/lib/python2.2/lib-dynload");
-      putenv(line2);
-    }
-  } else { /* preempt existing PYTHONPATH */
-    strcpy(line3,"PYTHONPATH=");
-    strcat(line3,getenv("PYMOL_PATH"));
-    strcat(line3,"/ext/lib/python2.2:");
-    strcat(line3,getenv("PYMOL_PATH"));
-    strcat(line3,"/ext/lib/python2.2/plat-linux2:");
-    strcat(line3,getenv("PYMOL_PATH"));
-    strcat(line3,"/ext/lib/python2.2/lib-tk:");
-    strcat(line3,getenv("PYMOL_PATH"));
-    strcat(line3,"/ext/lib/python2.2/lib-dynload");
-    strcat(line3,getenv("PYTHONPATH"));
-    putenv(line3);
-  }
-}
+#ifndef _PYMOL_SETUP_PY_EXT
+#define _PYMOL_SETUP_PY_EXT
+#endif
+#endif
+#ifdef _PYMOL_SETUP_PY23
+#ifndef _PYMOL_SETUP_PY_EXT
+#define _PYMOL_SETUP_PY_EXT
+#endif
 #endif
 
-#ifdef _PYMOL_SETUP_PY23
-  /* used by semistatic PyMOL */
+/* should we set up PYTHONHOME in the ext directory? */
+
+#ifdef _PYMOL_SETUP_PY_EXT
 {
   static char line1[4000];
   static char line2[4000];
   char *pymol_path;
 
-  /* if PYMOL_PATH isn't defined, then try using the current working
-     directory */
-  
   if(!getenv("PYMOL_PATH")) {
-    if(getenv("PWD")) {
+    
+    /* if PYMOL_PATH isn't defined, then was our startup path explicit? */
+    
+    if((argc>0) && (argv[0][0]=='/')) {
+      /* PYMOL was started with an absolute path, so try using that... */
+      char *p;
       strcpy(line1,"PYMOL_PATH=");
-      strcat(line1,getenv("PWD"));
+      strcat(line1,argv[0]);
+      p=line1 + strlen(line1);
+      while(*p!='/') {
+        *p=0;
+        p--;
+      }
+      if(p>line1) {
+        *p=0;
+      }
       putenv(line1);
+    } else { /* otherwise, try using the current working directory */
+      if(getenv("PWD")) {
+        strcpy(line1,"PYMOL_PATH=");
+        strcat(line1,getenv("PWD"));
+        putenv(line1);
+      }
     }
   }
  
@@ -1177,22 +1180,33 @@ void PInitEmbedded(int argc,char **argv)
   PyRun_SimpleString("import os\n");
   PyRun_SimpleString("import sys\n");
 
+  PyRun_SimpleString("print os.environ['PYMOL_PATH']\n");
+  PyRun_SimpleString("print os.environ['PYTHONHOME']\n");
+  PyRun_SimpleString("print sys.path\n");
 #ifdef WIN32
-  PyRun_SimpleString("if not os.environ.has_key('PYTHONPATH'): os.environ['PYTHONPATH']=''\n");
-
+#if 0
+{
+  OrthoLineType path_buffer,command;
+  HKEY phkResult;
+  int lpcbData;
+  int lpType = REG_SZ;
+  int r1,r2;
+  
   lpcbData = sizeof(OrthoLineType)-1;
-r1=RegOpenKeyEx(HKEY_CLASSES_ROOT,"Software\\DeLano Scientific\\PyMOL\\PYMOL_PATH",0,KEY_EXECUTE,&phkResult);
-if(r1==ERROR_SUCCESS) {
-  r2 = RegQueryValueEx(phkResult,"",NULL,&lpType,path_buffer,&lpcbData);
-  if (r2==ERROR_SUCCESS) {
-    /* use environment variable PYMOL_PATH first, registry entry second */
-    sprintf(command,"_registry_pymol_path = r'''%s'''\n",path_buffer);
-    PyRun_SimpleString(command);
-    PyRun_SimpleString("if not os.environ.has_key('PYMOL_PATH'): os.environ['PYMOL_PATH']=_registry_pymol_path\n");
+  r1=RegOpenKeyEx(HKEY_CLASSES_ROOT,"Software\\DeLano Scientific\\PyMOL\\PYMOL_PATH",0,KEY_EXECUTE,&phkResult);
+  if(r1==ERROR_SUCCESS) {
+    r2 = RegQueryValueEx(phkResult,"",NULL,&lpType,path_buffer,&lpcbData);
+    if (r2==ERROR_SUCCESS) {
+      /* use environment variable PYMOL_PATH first, registry entry second */
+      sprintf(command,"_registry_pymol_path = r'''%s'''\n",path_buffer);
+      PyRun_SimpleString(command);
+      PyRun_SimpleString("if not os.environ.has_key('PYMOL_PATH'): os.environ['PYMOL_PATH']=_registry_pymol_path\n");
+    }
+    RegCloseKey(phkResult);
   }
-  RegCloseKey(phkResult);
 } 
-PyRun_SimpleString("if not os.environ.has_key('PYMOL_PATH'): os.environ['PYMOL_PATH']=os.getcwd()\n");
+#endif
+  PyRun_SimpleString("if not os.environ.has_key('PYMOL_PATH'): os.environ['PYMOL_PATH']=os.getcwd()\n");
 #endif
 
 #ifdef _PYMOL_SETUP_TCLTK83
