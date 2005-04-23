@@ -1110,9 +1110,8 @@ void PInitEmbedded(int argc,char **argv)
 #ifdef _PYMOL_SETUP_PY23
   /* used by semistatic PyMOL */
 {
-  static char line1[5000];
-  static char line2[5000];
-  static char line3[5000];
+  static char line1[4000];
+  static char line2[4000];
   char *pymol_path;
 
   /* if PYMOL_PATH isn't defined, then try using the current working
@@ -1135,7 +1134,6 @@ void PInitEmbedded(int argc,char **argv)
     strcat(line2,"/ext");
     putenv(line2);
   }
-
 }
 #endif
 
@@ -1178,22 +1176,23 @@ void PInitEmbedded(int argc,char **argv)
 #endif
   PyRun_SimpleString("import os\n");
   PyRun_SimpleString("import sys\n");
+
 #ifdef WIN32
   PyRun_SimpleString("if not os.environ.has_key('PYTHONPATH'): os.environ['PYTHONPATH']=''\n");
 
-lpcbData = sizeof(OrthoLineType)-1;
+  lpcbData = sizeof(OrthoLineType)-1;
 r1=RegOpenKeyEx(HKEY_CLASSES_ROOT,"Software\\DeLano Scientific\\PyMOL\\PYMOL_PATH",0,KEY_EXECUTE,&phkResult);
-  if(r1==ERROR_SUCCESS) {
-	  r2 = RegQueryValueEx(phkResult,"",NULL,&lpType,path_buffer,&lpcbData);
-	  if (r2==ERROR_SUCCESS) {
-			/* use environment variable PYMOL_PATH first, registry entry second */
-			sprintf(command,"_registry_pymol_path = r'''%s'''\n",path_buffer);
-			PyRun_SimpleString(command);
-			PyRun_SimpleString("if not os.environ.has_key('PYMOL_PATH'): os.environ['PYMOL_PATH']=_registry_pymol_path\n");
-	  }
-	RegCloseKey(phkResult);
-	} 
-  PyRun_SimpleString("if not os.environ.has_key('PYMOL_PATH'): os.environ['PYMOL_PATH']=os.getcwd()\n");
+if(r1==ERROR_SUCCESS) {
+  r2 = RegQueryValueEx(phkResult,"",NULL,&lpType,path_buffer,&lpcbData);
+  if (r2==ERROR_SUCCESS) {
+    /* use environment variable PYMOL_PATH first, registry entry second */
+    sprintf(command,"_registry_pymol_path = r'''%s'''\n",path_buffer);
+    PyRun_SimpleString(command);
+    PyRun_SimpleString("if not os.environ.has_key('PYMOL_PATH'): os.environ['PYMOL_PATH']=_registry_pymol_path\n");
+  }
+  RegCloseKey(phkResult);
+} 
+PyRun_SimpleString("if not os.environ.has_key('PYMOL_PATH'): os.environ['PYMOL_PATH']=os.getcwd()\n");
 #endif
 
 #ifdef _PYMOL_SETUP_TCLTK83
