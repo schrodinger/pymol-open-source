@@ -1007,7 +1007,6 @@ void PInitEmbedded(int argc,char **argv)
   /* This routine is called if we are running with an embedded Python interpreter */
   
   PyObject *args,*pymol;
-
 #ifdef WIN32
   {
     /* if PYMOL_PATH and/or PYTHONHOME isn't in the environment coming in, then the
@@ -1041,12 +1040,12 @@ void PInitEmbedded(int argc,char **argv)
             strcpy(line1,"PYMOL_PATH=");
             strcat(line1,path_buffer);
             _putenv(line1);
-            restart_flag = true;
             if(!pythonhome) { /* only set PYTHONHOME if already setting new PYMOL_PATH */
               pythonhome_set = true;
               strcpy(line2,"PYTHONHOME=");
               strcat(line2,path_buffer);
               strcat(line2,EMBEDDED_PYTHONHOME); 
+              restart_flag = true;
               _putenv(line2);
             }
           }
@@ -1060,18 +1059,51 @@ void PInitEmbedded(int argc,char **argv)
         strcat(line2,EMBEDDED_PYTHONHOME);
         _putenv(line2);
         restart_flag = true;
-        printf("line2 %s\n",line2);
-        printf("getenv '%s'\n",getenv("PYTHONHOME"));
       }
     }
     if(restart_flag && getenv("PYMOL_PATH") && getenv("PYTHONHOME")) { 
       /* now that we have the environment defined, restart the process
          so that Python can use the new environment (If we don't do
          this, then Python won't see the new environment vars -- though
-         it is unclear why this should be!) */
-      char command[4000];
-      sprintf(command,"%s\\pymol.exe",pymol_path);
-      _execv(command,argv);
+         it is unclear why to me why it doesnt...) */
+        char command[4000];
+        static char my_argv[4000];
+        char **pp,*p,*q;
+        int a;
+        /* copy arguments, installing quotes around them */
+
+        pp=(char**)my_argv;
+        p = my_argv + ((3+argc)*sizeof(char**));
+        for(a=0;a<=argc;a++) {
+            *(pp++)=p;
+            q = argv[a];
+            if(q) {
+                if(*q!='"') { /* add quotes if not present */
+                    *(p++)='"';
+                    while(*q) {
+                        *(p++)=*(q++);
+                    }
+                    *(p++)='"'; 
+                } else {
+                    while(*q) {
+                        *(p++)=*(q++);
+                    }
+                }
+                *(p++)=0;
+            }
+            *(pp)=NULL;
+        }
+        
+        pp = (char**)my_argv;
+        a=0;
+        while(*pp) {
+            if((a)&&(strlen(*pp))) 
+                printf("Argument %d: %s\n",a,*pp);
+            a++;
+            pp++;
+        } 
+      sprintf(command,"%s\\pymol.exe",getenv("PYMOL_PATH"));
+      _execv(command,(char**)my_argv);
     }
   }
 #endif
