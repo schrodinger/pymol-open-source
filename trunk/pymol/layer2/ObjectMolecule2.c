@@ -764,27 +764,36 @@ static char *check_next_pdb_object(char *p)
   char *start = p;
   char cc[MAXLINELEN];  
   while(*p) {
-    ncopy(cc,p,6);
-    p++;
-    if(((cc[0]=='A')&&
-        (cc[1]=='T')&&
-        (cc[2]=='O')&&
-        (cc[3]=='M')&&
-        (cc[4]==' ')&&
-        (cc[5]==' '))||
-       ((cc[0]=='H')&&
-        (cc[1]=='E')&&
-        (cc[2]=='T')&&
-        (cc[3]=='A')&&
-        (cc[4]=='T')&&
-        (cc[5]=='M'))||
-       ((cc[0]=='H')&&
-        (cc[1]=='E')&&
-        (cc[2]=='A')&&
-        (cc[3]=='D')&&
-        (cc[4]=='E')&&
-        (cc[5]=='R')))
+    p=ncopy(cc,p,6);
+    if((cc[0]=='H')&&
+       (cc[1]=='E')&&
+       (cc[2]=='A')&&
+       (cc[3]=='D')&&
+       (cc[4]=='E')&&
+       (cc[5]=='R'))
       return start;
+    else if(((cc[0]=='A')&& /* ATOM */
+             (cc[1]=='T')&&
+             (cc[2]=='O')&&
+             (cc[3]=='M')&&
+             (cc[4]==' ')&&
+             (cc[5]==' '))||
+            ((cc[0]=='H')&& /* HETATM */
+             (cc[1]=='E')&&
+             (cc[2]=='T')&&
+             (cc[3]=='A')&&
+             (cc[4]=='T')&&
+             (cc[5]=='M'))) {
+      
+      p=nskip(p,5); 
+      ParseNTrim(cc,p,14); 
+      /* this is a special workaround for the bogus HETATM entry in PDB 4ZN2:
+         HETATM20829              0       0.000   0.000   0.000  1.00  0.00      4ZN20773
+         which screws up our PDB test case */
+      if(cc[0])
+        return start;
+    }
+    p=nextline(p);
   }
   return NULL;
 }

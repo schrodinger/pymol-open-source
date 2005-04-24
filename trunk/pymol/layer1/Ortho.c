@@ -1223,6 +1223,7 @@ static void OrthoDrawWizardPrompt(PyMOLGlobals *G)
       
       /* count max line length */
       
+      TextSetColor(G,I->WizardTextColor);
       TextSetPos2i(G,x,y);
       xx = x;
       p = vla;

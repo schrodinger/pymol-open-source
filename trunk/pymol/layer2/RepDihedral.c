@@ -243,19 +243,6 @@ Rep *RepDihedralNew(DistSet *ds)
       scale3f(n1,radius,x);
       scale3f(n3,radius,y);
       
-      VLACheck(I->V,float,(n*3)+5);
-      v=I->V+n*3;
-      copy3f(v12,v);
-      v+=3;
-      copy3f(s12,v);
-      n+=2;
-
-      VLACheck(I->V,float,(n*3)+5);
-      v=I->V+n*3;
-      copy3f(v43,v);
-      v+=3;
-      copy3f(s43,v);
-      n+=2;
 
       VLACheck(I->V,float,(n*3)+5);
       v=I->V+n*3;
@@ -263,7 +250,7 @@ Rep *RepDihedralNew(DistSet *ds)
       v+=3;
       copy3f(a32,v);
       n+=2;
-
+      
       VLACheck(I->V,float,(n*3)+5);
       v=I->V+n*3;
       copy3f(v43,v);
@@ -271,7 +258,26 @@ Rep *RepDihedralNew(DistSet *ds)
       copy3f(a32,v);
       n+=2;
 
+#if 0
+        VLACheck(I->V,float,(n*3)+5);
+        v=I->V+n*3;
+        copy3f(v12,v);
+        v+=3;
+        copy3f(s12,v);
+        n+=2;
+
+        VLACheck(I->V,float,(n*3)+5);
+        v=I->V+n*3;
+        copy3f(v43,v);
+        v+=3;
+        copy3f(s43,v);
+        n+=2;
+#endif
+
+      
       if(v5[0]!=0.0F) { /* line 1 flag */
+        
+
         
         VLACheck(I->V,float,(n*3)+5);
         v=I->V+n*3;
@@ -283,6 +289,7 @@ Rep *RepDihedralNew(DistSet *ds)
 
       if(v5[1]!=0.0F) { /* line 2 flag */
 
+
         VLACheck(I->V,float,(n*3)+5);
         v=I->V+n*3;
         copy3f(v3,v);
@@ -292,6 +299,7 @@ Rep *RepDihedralNew(DistSet *ds)
       }
 
       if(v5[2]!=0.0F) { /* line 3 flag */
+
 
         VLACheck(I->V,float,(n*3)+5);
         v=I->V+n*3;
