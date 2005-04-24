@@ -40,11 +40,11 @@ PyMOL>alter 10-11/,chain='G'
  Alter: modified 21 atoms.
 PyMOL>count_atoms chain A
  count_atoms: 19 atoms
-PyMOL>count_atoms chain A-B
+PyMOL>count_atoms chain A:B
  count_atoms: 48 atoms
-PyMOL>count_atoms chain B-F
+PyMOL>count_atoms chain B:F
  count_atoms: 67 atoms
-PyMOL>count_atoms chain A-Z
+PyMOL>count_atoms chain A:Z
  count_atoms: 107 atoms
 PyMOL>count_atoms chain A+E
  count_atoms: 57 atoms
@@ -100,7 +100,7 @@ PyMOL>count_atoms /p*/*RE
  count_atoms: 101 atoms
 PyMOL>count_atoms /*t/*O*
  count_atoms: 119 atoms
-PyMOL>count_atoms /*pt//A-E
+PyMOL>count_atoms /*pt//A:E
  count_atoms: 86 atoms
 PyMOL>count_atoms /p*/*RE/E/h*/c*
  count_atoms: 12 atoms

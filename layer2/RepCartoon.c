@@ -197,15 +197,15 @@ Rep *RepCartoonNew(CoordSet *cs)
   obj = cs->Obj;
   visFlag=false;
   for(a=0;a<cs->NIndex;a++) {
-	 if(obj->AtomInfo[cs->IdxToAtm[a]].visRep[cRepCartoon])
-		{
-		  visFlag=true;
-		  break;
-		}
+    if(obj->AtomInfo[cs->IdxToAtm[a]].visRep[cRepCartoon])
+      {
+	visFlag=true;
+	break;
+      }
   }
   if(!visFlag) {
     OOFreeP(I);
-    return(NULL); /* skip if no dots are visible */
+    return(NULL); /* skip if not visible */
   }
 
   RepInit(G,&I->R);
@@ -239,7 +239,7 @@ Rep *RepCartoonNew(CoordSet *cs)
 
   cartoon_color = SettingGet_color(G,cs->Setting,obj->Obj.Setting,cSetting_cartoon_color);
   cartoon_side_chain_helper = SettingGet_b(G,cs->Setting, obj->Obj.Setting,
-                                         cSetting_cartoon_side_chain_helper);
+					   cSetting_cartoon_side_chain_helper);
 
   highlight_color = SettingGet_color(G,cs->Setting,obj->Obj.Setting,cSetting_cartoon_highlight_color);
 
@@ -305,7 +305,7 @@ Rep *RepCartoonNew(CoordSet *cs)
   parity = 1;
 
   for(a1=0;a1<cs->NAtIndex;a1++)
-	 {
+    {
       if(obj->DiscreteFlag) {
         if(cs==obj->DiscreteCSet[a1]) 
           a=obj->DiscreteAtmToIdx[a1];
@@ -313,15 +313,15 @@ Rep *RepCartoonNew(CoordSet *cs)
           a=-1;
       } else 
         a=cs->AtmToIdx[a1];
-		if(a>=0) {
+      if(a>=0) {
         ai = obj->AtomInfo+a1;
 
-		  if(ai->visRep[cRepCartoon]) {
+	if(ai->visRep[cRepCartoon]) {
           /*			 if(!obj->AtomInfo[a1].hetatm)*/
           if((!ai->alt[0])||
              (ai->alt[0]=='A')) {
             if(trace||(((ai->protons==cAN_C)&&
-               (WordMatch(G,"CA",ai->name,1)<0))&&
+			(WordMatch(G,"CA",ai->name,1)<0))&&
                        !AtomInfoSameResidueP(G,last_ai,ai)))
               {
                 PRINTFD(G,FB_RepCartoon)
@@ -329,14 +329,14 @@ Rep *RepCartoonNew(CoordSet *cs)
                   ENDFD;
                 if(!trace) 
                   if(a2>=0) {
-                  /*
-                    if((abs(obj->AtomInfo[a1].resv-obj->AtomInfo[a2].resv)>1)||
-                    (obj->AtomInfo[a1].chain[0]!=obj->AtomInfo[a2].chain[0])||
-                    (!WordMatch(G,obj->AtomInfo[a1].segi,obj->AtomInfo[a2].segi,1)))*/
-                  if(!ObjectMoleculeCheckBondSep(obj,a1,a2,3)) /* CA->N->C->CA = 3 bonds */
-                    a2=-1;
+		    /*
+		      if((abs(obj->AtomInfo[a1].resv-obj->AtomInfo[a2].resv)>1)||
+		      (obj->AtomInfo[a1].chain[0]!=obj->AtomInfo[a2].chain[0])||
+		      (!WordMatch(G,obj->AtomInfo[a1].segi,obj->AtomInfo[a2].segi,1)))*/
+		    if(!ObjectMoleculeCheckBondSep(obj,a1,a2,3)) /* CA->N->C->CA = 3 bonds */
+		      a2=-1;
                   
-                }
+		  }
                 last_ai = ai;
                 
                 PRINTFD(G,FB_RepCartoon)
@@ -538,7 +538,7 @@ Rep *RepCartoonNew(CoordSet *cs)
           }
         }
       }
-	 }
+    }
 
   if(nAt&&putty_flag) {
     double sum=0.0,sumsq=0.0;
@@ -565,33 +565,33 @@ Rep *RepCartoonNew(CoordSet *cs)
     }
   }
 
-PRINTFD(G,FB_RepCartoon)
-" RepCartoon-Debug: path outlined, interpolating...\n"
-ENDFD;
+  PRINTFD(G,FB_RepCartoon)
+    " RepCartoon-Debug: path outlined, interpolating...\n"
+    ENDFD;
 
   if(nAt)
-	 {
-		/* compute differences and normals */
+    {
+      /* compute differences and normals */
 
-		s=seg;
-		v=pv;
+      s=seg;
+      v=pv;
 		
-		dv = Alloc(float,nAt*3);
-		nv = Alloc(float,nAt*3);
-		dl = Alloc(float,nAt);
-		v1=dv;
-		v2=nv;
-		d=dl;
-		for(a=0;a<(nAt-1);a++)
-		  {
-        PRINTFD(G,FB_RepCartoon)
-          " RepCartoon: seg %d *s %d , *(s+1) %d\n",a,*s,*(s+1)
-          ENDFD;
+      dv = Alloc(float,nAt*3);
+      nv = Alloc(float,nAt*3);
+      dl = Alloc(float,nAt);
+      v1=dv;
+      v2=nv;
+      d=dl;
+      for(a=0;a<(nAt-1);a++)
+	{
+	  PRINTFD(G,FB_RepCartoon)
+	    " RepCartoon: seg %d *s %d , *(s+1) %d\n",a,*s,*(s+1)
+	    ENDFD;
 
-			 if(*s==*(s+1))
-				{
-				  subtract3f(v+3,v,v1);
-				  *d = (float)length3f(v1);
+	  if(*s==*(s+1))
+	    {
+	      subtract3f(v+3,v,v1);
+	      *d = (float)length3f(v1);
               if(*d>R_SMALL4) {
                 float d_1;
                 d_1 = 1.0F/(*d);
@@ -601,58 +601,57 @@ ENDFD;
               } else {
                 zero3f(v2);
               }
-				}
+	    }
           else {
             zero3f(v2);	
           }
           
-			 d++;
-			 v+=3;
-			 v1+=3;
-			 v2+=3;
-			 s++;
-		  }
+	  d++;
+	  v+=3;
+	  v1+=3;
+	  v2+=3;
+	  s++;
+	}
 		
-		/* compute tangents */
+      /* compute tangents */
 		
-		s=seg;
-		v=nv;
+      s=seg;
+      v=nv;
 		
-		tv = Alloc(float,nAt*3+6);
-		v1=tv;
+      tv = Alloc(float,nAt*3+6);
+      v1=tv;
 		
-		*(v1++)=*(v++); /* first segment */
-		*(v1++)=*(v++);
-		*(v1++)=*(v++);
-		s++;
+      *(v1++)=*(v++); /* first segment */
+      *(v1++)=*(v++);
+      *(v1++)=*(v++);
+      s++;
 		
-		for(a=1;a<(nAt-1);a++)
-		  {
-			 if((*s==*(s-1))&&(*s==*(s+1)))
-				{
-				  add3f(v,(v-3),v1);
-				  normalize3f(v1);			 
-				}
-			 else if(*s==*(s-1))
-				{
-				  *(v1)=*(v-3);  /* end a segment */
-				  *(v1+1)=*(v-2); 
-				  *(v1+2)=*(v-1); 
-				}
-			 else if(*s==*(s+1))
-				{
-				  *(v1)=*(v);   /* new segment */
-				  *(v1+1)=*(v+1); 
-				  *(v1+2)=*(v+2); 
-				}
-			 v+=3;
-			 v1+=3;
-			 s++;
-		  }
-		
-		*(v1++)=*(v-3); /* last segment */
-		*(v1++)=*(v-2);
-		*(v1++)=*(v-1);
+      for(a=1;a<(nAt-1);a++)
+	{
+	  if((*s==*(s-1))&&(*s==*(s+1)))
+	    {
+	      add3f(v,(v-3),v1);
+	      normalize3f(v1);			 
+	    }
+	  else if(*s==*(s-1))
+	    {
+	      *(v1)=*(v-3);  /* end a segment */
+	      *(v1+1)=*(v-2); 
+	      *(v1+2)=*(v-1); 
+	    }
+	  else if(*s==*(s+1))
+	    {
+	      *(v1)=*(v);   /* new segment */
+	      *(v1+1)=*(v+1); 
+	      *(v1+2)=*(v+2); 
+	    }
+	  v+=3;
+	  v1+=3;
+	  s++;
+	}
+      *(v1++)=*(v-3); /* last segment */
+      *(v1++)=*(v-2);
+      *(v1++)=*(v-1);
 
       PRINTFD(G,FB_RepCartoon)
         " RepCartoon-Debug: generating coordinate systems...\n"
@@ -721,11 +720,13 @@ ENDFD;
                     normalize3f(vo-12);
                   }
 
-                  /* now make sure there's no goofy flip on the end...
-                   of a short, tight helix */
+		  if(v4&&v5) {
+		    /* now make sure there's no goofy flip on the end...
+		       of a short, tight helix */
 
-                  if(dot_product3f(vo-9,vo-12)<-0.8F)
-                    invert3f(vo-12);
+		    if(dot_product3f(vo-9,vo-12)<-0.8F)
+		      invert3f(vo-12);
+		  }
                 }
               }
               v1 = NULL;
@@ -1036,7 +1037,8 @@ ENDFD;
             if((*s==*(s-1))&&(*s==*(s+1)))
               {
                 add3f(v,(v-3),v1);
-                normalize3f(v1);			 
+               
+		normalize3f(v1);			 
               }
             else if(*s==*(s-1))
               {
@@ -1078,10 +1080,12 @@ ENDFD;
                 }
               }
               
+
               v2+=3;
               s++;
               ss++;
             }
+
         }
 
       }
@@ -1131,18 +1135,18 @@ ENDFD;
     }
   }
 
-PRINTFD(G,FB_RepCartoon)
-" RepCartoon-Debug: creating 3D scaffold...\n"
-ENDFD;
+  PRINTFD(G,FB_RepCartoon)
+    " RepCartoon-Debug: creating 3D scaffold...\n"
+    ENDFD;
 
-/* okay, we now have enough info to generate smooth interpolations */
+  /* okay, we now have enough info to generate smooth interpolations */
 
   if(nAt>1) {
     ex = ExtrudeNew(G);
     ExtrudeAllocPointsNormalsColors(ex,cs->NIndex*(3*sampling+3));
   }
 
-/* process cylindrical helices first */
+  /* process cylindrical helices first */
 
   if((nAt>1)&&cylindrical_helices) {
 
@@ -1158,13 +1162,13 @@ ENDFD;
     last_color=-1;
     uniform_color=true;
 
-	 v1=pv; /* points */
-	 v2=tv; /* tangents */
+    v1=pv; /* points */
+    v2=tv; /* tangents */
     vo=pvo;
     d = dl;
-	 s=seg;
+    s=seg;
     cc=car;
-	 atp=at; /* cs index pointer */
+    atp=at; /* cs index pointer */
     a=0;
     contFlag=true;
     cur_car = cCartoon_skip;
@@ -1203,12 +1207,12 @@ ENDFD;
         }
       }
       if(!extrudeFlag) {
-		  if((a<(nAt-1))&&(*s==*(s+1))) /* working in the same segment... */
-			 {
+	if((a<(nAt-1))&&(*s==*(s+1))) /* working in the same segment... */
+	  {
             atom_index1 = cs->IdxToAtm[*atp];
             atom_index2 = cs->IdxToAtm[*(atp+1)];
-				c1=*(cs->Color+*atp);
-				c2=*(cs->Color+*(atp+1));
+	    c1=*(cs->Color+*atp);
+	    c2=*(cs->Color+*(atp+1));
             if(cartoon_color>=0) {
               c1 = (c2 = cartoon_color);
             }
@@ -1340,14 +1344,14 @@ ENDFD;
                   normalize3f(t0);
                   scale3f(t0,f0,t1);
                   add3f(t1,t3,h_start)
-                }
+		    }
 
                 subtract3f(h_end,t4,t0);
                 if(length3f(t0)>f0) {
                   normalize3f(t0);
                   scale3f(t0,f0,t1);
                   add3f(t1,t4,h_end)
-                }
+		    }
               }
             }
           }
@@ -1703,14 +1707,14 @@ ENDFD;
               ExtrudeBuildNormals1f(ex);
               ExtrudeComputeScaleFactors(ex,obj,0,
                                          putty_mean,putty_stdev,
-                   SettingGet_f(G,cs->Setting,obj->Obj.Setting,
-                                cSetting_cartoon_putty_scale_power),
-                   SettingGet_f(G,cs->Setting,obj->Obj.Setting,
-                                cSetting_cartoon_putty_range),
-                   SettingGet_f(G,cs->Setting,obj->Obj.Setting,
-                                cSetting_cartoon_putty_scale_min),
-                   SettingGet_f(G,cs->Setting,obj->Obj.Setting,
-                                cSetting_cartoon_putty_scale_max),
+					 SettingGet_f(G,cs->Setting,obj->Obj.Setting,
+						      cSetting_cartoon_putty_scale_power),
+					 SettingGet_f(G,cs->Setting,obj->Obj.Setting,
+						      cSetting_cartoon_putty_range),
+					 SettingGet_f(G,cs->Setting,obj->Obj.Setting,
+						      cSetting_cartoon_putty_scale_min),
+					 SettingGet_f(G,cs->Setting,obj->Obj.Setting,
+						      cSetting_cartoon_putty_scale_max),
                                          sampling/2);
 
               ExtrudeCGOSurfaceVariableTube(ex,I->ray,1);
@@ -1773,6 +1777,7 @@ ENDFD;
               ExtrudeComputeTangents(ex1);
               ExtrudeCircle(ex1,loop_quality,dumbbell_radius);
               ExtrudeBuildNormals1f(ex1);
+
               ExtrudeCGOSurfaceTube(ex1,I->ray,1,NULL);
               ExtrudeFree(ex1);
 
@@ -1822,6 +1827,7 @@ ENDFD;
           v3+=3;
         }
       CGOEnd(I->ray);
+
       CGOEnable(I->ray,GL_LIGHTING);
     }
   }
