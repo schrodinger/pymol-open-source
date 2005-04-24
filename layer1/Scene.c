@@ -137,7 +137,9 @@ struct _CScene {
   CViewElem ani_elem[MAX_ANI_ELEM+1];
   int cur_ani_elem, n_ani_elem;
   int LastStateBuilt;
-
+  int AnimationStartFlag;
+  double AnimationStartTime;
+  double AnimationLagTime;
 };
 
 typedef struct {
@@ -183,6 +185,9 @@ void SceneLoadAnimation(PyMOLGlobals *G, double duration)
     SceneFromViewElem(G,I->ani_elem);
     I->cur_ani_elem = 0;
     I->n_ani_elem = target;
+    I->AnimationStartTime = UtilGetSeconds(G);
+    I->AnimationStartFlag = true;
+    I->AnimationLagTime = 0.0;
   }
 }
 
@@ -3499,6 +3504,10 @@ int  SceneInit(PyMOLGlobals *G)
     I->n_ani_elem = 0;
     I->cur_ani_elem = 0;
 
+    I->AnimationLagTime = 0.0;
+    I->AnimationStartTime = 0.0;
+    I->AnimationStartFlag = false;
+
     return 1;
   } else 
     return 0;
@@ -3932,7 +3941,6 @@ void SceneUpdate(PyMOLGlobals *G)
   ObjRec *rec=NULL;
   int cur_state = SettingGetGlobal_i(G,cSetting_state) - 1;
   int defer_builds_mode = SettingGetGlobal_b(G,cSetting_defer_builds_mode);
-
   PRINTFD(G,FB_Scene)
     " SceneUpdate: entered.\n"
     ENDFD;
@@ -3961,7 +3969,6 @@ void SceneUpdate(PyMOLGlobals *G)
         SettingSetGlobal_i(G,cSetting_frame, (cur_state+1));
     }
   }
-
   PRINTFD(G,FB_Scene)
     " SceneUpdate: leaving...\n"
     ENDFD;
@@ -4141,7 +4148,15 @@ void SceneRender(PyMOLGlobals *G,Pickable *pick,int x,int y,Multipick *smp)
   if(I->cur_ani_elem < I->n_ani_elem ) { /* play motion animation */
     int cur = I->cur_ani_elem;
 
-    now = UtilGetSeconds(G);
+    if(I->AnimationStartFlag) { 
+      /* allow animation timing to lag since it may take a few seconds
+         to get here given geometry updates, etc. */
+                                   
+      I->AnimationLagTime = UtilGetSeconds(G) - I->AnimationStartTime;
+      I->AnimationStartFlag = false;
+    }
+
+    now = UtilGetSeconds(G) - I->AnimationLagTime;
 
     while(I->ani_elem[cur].timing<now) {
       cur++;

@@ -9959,6 +9959,7 @@ DistSet *SelectorGetDihedralSet(PyMOLGlobals *G, DistSet *ds,
     VLAFreeP(list1);
     VLAFreeP(list2);
     VLAFreeP(list3);
+    VLAFreeP(list4);
   }
 
   FreeP(coverage);
