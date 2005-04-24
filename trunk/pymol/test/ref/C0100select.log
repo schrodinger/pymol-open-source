@@ -145,6 +145,6 @@ PyMOL>load dat/1tii.pdb
  ObjectMolecule: Read crystal symmetry information.
  Symmetry: Found 6 symmetry operators.
  CmdLoad: "dat/1tii.pdb" loaded as "1tii".
-PyMOL>indicate A-C+F/10+90+100-/ca+c+n*
+PyMOL>indicate A:C+F/10+90+100-/ca+c+n*
 PyMOL>count_atoms indicate
  count_atoms: 435 atoms

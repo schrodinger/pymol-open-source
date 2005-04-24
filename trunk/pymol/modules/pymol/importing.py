@@ -448,7 +448,7 @@ SEE ALSO
                ftype = loadable.cc1
             elif re.search("\.xyz_[0-9]*$",filename,re.I):
                ftype = loadable.xyz
-            elif re.search("\.sdf$",filename,re.I): 
+            elif re.search("\.sdf$|\.sd$",filename,re.I): 
                ftype = loadable.sdf2 # now using the C-based SDF reader by default...
             elif re.search("\.cex$",filename,re.I):
                ftype = loadable.cex
