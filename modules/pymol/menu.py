@@ -602,21 +602,24 @@ def polar(s):
    return [[ 2, 'Polar Contacts:', ''],
            [ 1, 'within selection'  ,
              'cmd.dist("'+s+'_polar_conts","'+s+'","'+s+'",quiet=1,mode=2,labels=0);cmd.enable("'+s+'_polar_conts")'],
-           [ 1, 'excluding intra main chain'  ,
+           [ 1, 'involving side chains'  ,
              'cmd.dist("'+s+'_polar_conts","('+s+')","('+s+
-             ') and not (polymer and name n,o,h)",quiet=1,mode=2,labels=0);cmd.enable("'+s+'_polar_conts")'],
-           [ 1, 'excluding main chain'  ,
-             'cmd.dist("'+s+'_polar_conts","('+s+') and not (polymer and name n,o,h)","('+s+
-             ') and not (polymer and name n,o,h)",quiet=1,mode=2,labels=0);cmd.enable("'+s+'_polar_conts")'],
-           [ 1, 'just intra side chain'  ,
-             'cmd.dist("'+s+'_polar_conts","('+s+') and not (solvent or (polymer and name n,o,h))","('+s+
-             ') and not (solvent or (polymer and name n,o,h))",quiet=1,mode=2,labels=0);cmd.enable("'+s+'_polar_conts")'],
-           [ 1, 'excluding solvent'  ,
-             'cmd.dist("'+s+'_polar_conts","('+s+') and not (solvent)","('+s+
-             ') and not (solvent)",quiet=1,mode=2,labels=0);cmd.enable("'+s+'_polar_conts")'],
+             ') and polymer and not (name n,o,h)",quiet=1,mode=2,labels=0);cmd.enable("'+s+'_polar_conts")'],
            [ 1, 'involving solvent'  ,
              'cmd.dist("'+s+'_polar_conts","('+s+') and solvent","('+s+
              ') and not (solvent)",quiet=1,mode=2,labels=0);cmd.enable("'+s+'_polar_conts")'],
+           [ 1, 'excluding solvent'  ,
+             'cmd.dist("'+s+'_polar_conts","('+s+') and not (solvent)","('+s+
+             ') and not (solvent)",quiet=1,mode=2,labels=0);cmd.enable("'+s+'_polar_conts")'],
+           [ 1, 'excluding main chain'  ,
+             'cmd.dist("'+s+'_polar_conts","('+s+') and not (polymer and name n,o,h)","('+s+
+             ') and not (polymer and name n,o,h)",quiet=1,mode=2,labels=0);cmd.enable("'+s+'_polar_conts")'],
+           [ 1, 'excluding intra-main chain'  ,
+             'cmd.dist("'+s+'_polar_conts","('+s+')","('+s+
+             ') and not (polymer and name n,o,h)",quiet=1,mode=2,labels=0);cmd.enable("'+s+'_polar_conts")'],
+           [ 1, 'just intra-side chain'  ,
+             'cmd.dist("'+s+'_polar_conts","('+s+') and not (solvent or (polymer and name n,o,h))","('+s+
+             ') and not (solvent or (polymer and name n,o,h))",quiet=1,mode=2,labels=0);cmd.enable("'+s+'_polar_conts")'],
            [ 0, '', '' ],
            [ 1, 'to other atoms in object',
              'cmd.dist("'+s+'_polar_conts","('+s+')","(byobj ('+s+')) and (not ('+s+
