@@ -2259,16 +2259,19 @@ static PyObject *CmdDist(PyObject *dummy, PyObject *args)
   float cutoff,result=-1.0;
   int labels,quiet;
   int mode;
+  int reset;
   OrthoLineType s1,s2;
   int ok=false;
   int c1,c2;
-  ok = PyArg_ParseTuple(args,"sssifii",&name,&str1,&str2,&mode,&cutoff,&labels,&quiet);
+  ok = PyArg_ParseTuple(args,"sssifiii",&name,&str1,&str2,&mode,&cutoff,
+                        &labels,&quiet,&reset);
   if (ok) {
     APIEntry();
     c1 = SelectorGetTmp(TempPyMOLGlobals,str1,s1);
     c2 = SelectorGetTmp(TempPyMOLGlobals,str2,s2);
     if(c1&&(c2||WordMatch(TempPyMOLGlobals,cKeywordSame,s2,true)))
-        result = ExecutiveDist(TempPyMOLGlobals,name,s1,s2,mode,cutoff,labels,quiet);
+        result = ExecutiveDist(TempPyMOLGlobals,name,s1,s2,mode,cutoff,
+                               labels,quiet,reset);
     else {
       if((!quiet)&&(!c1)) {
         PRINTFB(TempPyMOLGlobals,FB_Executive,FB_Errors)

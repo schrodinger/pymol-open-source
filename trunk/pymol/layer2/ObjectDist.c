@@ -403,27 +403,34 @@ ObjectDist *ObjectDistNew(PyMOLGlobals *G)
 }
 
 /*========================================================================*/
+static void ObjectDistReset(PyMOLGlobals *G,ObjectDist *I)
+{
+  int a;
+  for(a=0;a<I->NDSet;a++)
+    if(I->DSet[a]) {
+      if(I->DSet[a]->fFree)
+          I->DSet[a]->fFree(I->DSet[a]);
+      I->DSet[a]=NULL;
+    }
+  I->NDSet=0;
+}
+
 /*========================================================================*/
-ObjectDist *ObjectDistNewFromSele(PyMOLGlobals *G,ObjectDist *oldObj,int sele1,int sele2,int mode,float cutoff,
-                                  int labels,float *result)
+ObjectDist *ObjectDistNewFromSele(PyMOLGlobals *G,ObjectDist *oldObj,
+                                  int sele1,int sele2,int mode,float cutoff,
+                                  int labels,int reset,float *result)
 {
   int a,mn;
   float dist_sum=0.0,dist;
   int dist_cnt = 0;
   int n_state1,n_state2,state1,state2;
   ObjectDist *I;
-
   if(!oldObj)
     I=ObjectDistNew(G);
   else {
     I=oldObj;
-    for(a=0;a<I->NDSet;a++)
-      if(I->DSet[a]) {
-        if(I->DSet[a]->fFree)
-          I->DSet[a]->fFree(I->DSet[a]);
-        I->DSet[a]=NULL;
-      }
-    I->NDSet=0;
+    if(reset) 
+      ObjectDistReset(G,I);
   }
   *result = 0.0;
   mn = 0;
@@ -444,7 +451,7 @@ ObjectDist *ObjectDistNewFromSele(PyMOLGlobals *G,ObjectDist *oldObj,int sele1,i
           state2=a;
         else
           state2=0;
-        I->DSet[a] = SelectorGetDistSet(G,sele1,state1,sele2,
+        I->DSet[a] = SelectorGetDistSet(G,I->DSet[a],sele1,state1,sele2,
                                         state2,mode,cutoff,&dist);
         if(I->DSet[a]) {
           dist_sum+=dist;
@@ -460,6 +467,7 @@ ObjectDist *ObjectDistNewFromSele(PyMOLGlobals *G,ObjectDist *oldObj,int sele1,i
      }
   */
   ObjectDistUpdateExtents(I);
+  ObjectDistInvalidateRep(I,cRepAll);
 
   if(dist_cnt)
     (*result) = dist_sum/dist_cnt;
@@ -482,13 +490,7 @@ ObjectDist *ObjectDistNewFromAngleSele(PyMOLGlobals *G,ObjectDist *oldObj,
   else { /* otherwise, use existing object */
     I=oldObj;
     if(reset) { /* if reseting, then clear out all existing coordinate sets */
-      for(a=0;a<I->NDSet;a++)
-        if(I->DSet[a]) {
-          if(I->DSet[a]->fFree)
-            I->DSet[a]->fFree(I->DSet[a]);
-          I->DSet[a]=NULL;
-        }
-      I->NDSet=0;
+      ObjectDistReset(G,I);
     }
   }
   *result = 0.0;
@@ -541,7 +543,7 @@ ObjectDist *ObjectDistNewFromAngleSele(PyMOLGlobals *G,ObjectDist *oldObj,
      }
   */
   ObjectDistUpdateExtents(I);
-
+  ObjectDistInvalidateRep(I,cRepAll);
   if(angle_cnt)
     (*result) = angle_sum/angle_cnt;
 
@@ -564,13 +566,7 @@ ObjectDist *ObjectDistNewFromDihedralSele(PyMOLGlobals *G,ObjectDist *oldObj,
   else { /* otherwise, use existing object */
     I=oldObj;
     if(reset) { /* if reseting, then clear out all existing coordinate sets */
-      for(a=0;a<I->NDSet;a++)
-        if(I->DSet[a]) {
-          if(I->DSet[a]->fFree)
-            I->DSet[a]->fFree(I->DSet[a]);
-          I->DSet[a]=NULL;
-        }
-      I->NDSet=0;
+      ObjectDistReset(G,I);
     }
   }
   *result = 0.0;
@@ -630,6 +626,7 @@ ObjectDist *ObjectDistNewFromDihedralSele(PyMOLGlobals *G,ObjectDist *oldObj,
      }
   */
   ObjectDistUpdateExtents(I);
+  ObjectDistInvalidateRep(I,cRepAll);
 
   if(angle_cnt)
     (*result) = angle_sum/angle_cnt;

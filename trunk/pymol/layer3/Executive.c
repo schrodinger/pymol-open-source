@@ -4535,7 +4535,7 @@ float ExecutiveDihedral(PyMOLGlobals *G,char *nam,char *s1,char *s2,char *s3,cha
 }
 
 float ExecutiveDist(PyMOLGlobals *G,char *nam,char *s1,char *s2,int mode,float cutoff,
-                    int labels,int quiet)
+                    int labels,int quiet,int reset)
 {
   int sele1,sele2;
   ObjectDist *obj;
@@ -4551,11 +4551,12 @@ float ExecutiveDist(PyMOLGlobals *G,char *nam,char *s1,char *s2,int mode,float c
   if((sele1>=0)&&(sele2>=0)) {
     anyObj = ExecutiveFindObjectByName(G,nam);
     if(anyObj)
-      if(anyObj->type!=cObjectDist) {
+      if(reset || anyObj->type!=cObjectDist) {
         ExecutiveDelete(G,nam);
         anyObj=NULL;
       }
-    obj = ObjectDistNewFromSele(G,(ObjectDist*)anyObj,sele1,sele2,mode,cutoff,labels,&result);
+    obj = ObjectDistNewFromSele(G,(ObjectDist*)anyObj,sele1,sele2,mode,
+                                cutoff,labels,reset,&result);
     if(!obj) {
       ErrMessage(G,"ExecutiveDistance","No such distances found.");
     } else {

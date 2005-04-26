@@ -97,7 +97,8 @@ float ExecutiveAlign(PyMOLGlobals *G,char *s1,char *s2,char *mat_file,float gap,
                      float cutoff,int cycles,int quiet,char *oname,int state1,int state2);
 
 float ExecutiveDistance(PyMOLGlobals *G,char *sele1,char *sele2);
-float ExecutiveDist(PyMOLGlobals *G,char *nam,char *s1,char *s2,int mode,float cutoff,int labels,int quiet);
+float ExecutiveDist(PyMOLGlobals *G,char *nam,char *s1,char *s2,int mode,
+                    float cutoff,int labels,int quiet,int reset);
 void ExecutiveBond(PyMOLGlobals *G,char *s1,char *s2,int order,int add);
 int ExecutiveIterate(PyMOLGlobals *G,char *s1,char *expr,int read_only,int quiet,PyObject *space);
 int ExecutiveIterateList(PyMOLGlobals *G,char *s1,PyObject *list,int read_only,int quiet,PyObject *space);

@@ -9253,7 +9253,8 @@ int SelectorInit(PyMOLGlobals *G)
 /*========================================================================*/
 
 
-DistSet *SelectorGetDistSet(PyMOLGlobals *G,int sele1,int state1,int sele2,int state2,
+DistSet *SelectorGetDistSet(PyMOLGlobals *G,DistSet *ds,
+                            int sele1,int state1,int sele2,int state2,
                             int mode,float cutoff,float *result)
 {
   register CSelector *I=G->Selector;
@@ -9264,12 +9265,11 @@ DistSet *SelectorGetDistSet(PyMOLGlobals *G,int sele1,int state1,int sele2,int s
   AtomInfoType *ai1,*ai2;
   int at,at1,at2;
   CoordSet *cs1,*cs2;
-  DistSet *ds;
   ObjectMolecule *obj,*obj1,*obj2,*lastObj;
   int idx1,idx2;
   int a;
   int nv = 0;
-  float *vv,*vv0,*vv1;
+  float *vv=NULL,*vv0,*vv1;
   float dist_sum=0.0;
   int dist_cnt = 0;
   int s;
@@ -9279,8 +9279,15 @@ DistSet *SelectorGetDistSet(PyMOLGlobals *G,int sele1,int state1,int sele2,int s
 
   hbc=&hbcRec;
   *result = 0.0;
-  ds = DistSetNew(G);
-  vv = VLAlloc(float,10);
+  if(!ds) {
+    ds = DistSetNew(G);
+  } else {
+    vv = ds->Coord;
+    nv = ds->NIndex;
+  }
+  if(!vv) {
+    vv = VLAlloc(float,10);
+  }
 
   SelectorUpdateTable(G); 
 
@@ -9454,11 +9461,12 @@ DistSet *SelectorGetAngleSet(PyMOLGlobals *G, DistSet *ds,
 
   if(!ds) {
     ds = DistSetNew(G);
-    vv = VLAlloc(float,10);
   } else {
     vv = ds->AngleCoord;
     nv = ds->NAngleIndex;
   }
+  if(!vv)
+    vv = VLAlloc(float,10);
 
   SelectorUpdateTable(G); 
 
@@ -9700,11 +9708,12 @@ DistSet *SelectorGetDihedralSet(PyMOLGlobals *G, DistSet *ds,
 
   if(!ds) {
     ds = DistSetNew(G);
-    vv = VLAlloc(float,10);
   } else {
     vv = ds->DihedralCoord;
     nv = ds->NDihedralIndex;
   }
+  if(!vv)
+    vv = VLAlloc(float,10);
 
   SelectorUpdateTable(G); 
 
