@@ -63,8 +63,11 @@ class Appearance(Wizard):
 
    def __init__(self):
 
+      cmd.deselect()
       cmd.unpick()
       Wizard.__init__(self)
+      self.selection_mode = cmd.get_setting_legacy("mouse_selection_mode")
+      cmd.set("mouse_selection_mode",0) # set selection mode to atomic      
       self.current_mode = saved_mode
       self.current_what = saved_what
       self.current_scope = saved_scope
@@ -220,6 +223,7 @@ class Appearance(Wizard):
       return 1
 
    def cleanup(self):
+      cmd.set("mouse_selection_mode",self.selection_mode) # restore selection mode      
       global saved_scope
       saved_scope = self.current_scope
       global saved_mode

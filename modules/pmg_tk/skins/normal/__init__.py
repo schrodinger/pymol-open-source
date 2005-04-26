@@ -2011,17 +2011,9 @@ class Normal(PMGSkin):
                                label='Appearance',
                                command = lambda s=self: s.cmd.do("_ wizard appearance"))
 
-      self.menuBar.addmenuitem('Wizard', 'command', 'Density Map Wizard',
-                               label='Density',
-                               command = lambda s=self: s.cmd.do("_ wizard density"))
-
-      self.menuBar.addmenuitem('Wizard', 'command', 'Distance',
-                               label='Distance',
-                               command = lambda s=self: s.cmd.do("_ wizard distance"))
-
-      self.menuBar.addmenuitem('Wizard', 'command', 'Filter',
-                               label='Filter',
-                               command = lambda s=self: s.cmd.do("_ wizard filter"))
+      self.menuBar.addmenuitem('Wizard', 'command', 'Measurement',
+                               label='Measurement',
+                               command = lambda s=self: s.cmd.do("_ wizard measurement"))
 
       self.menuBar.addmenuitem('Wizard', 'command', 'Mutagenesis',
                                label='Mutagenesis',
@@ -2030,6 +2022,17 @@ class Normal(PMGSkin):
       self.menuBar.addmenuitem('Wizard', 'command', 'Pair Fitting',
                                label='Pair Fitting',
                                command = lambda s=self: s.cmd.do("_ wizard pair_fit"))
+
+      self.menuBar.addmenuitem('Wizard', 'separator', '')
+         
+      self.menuBar.addmenuitem('Wizard', 'command', 'Density Map Wizard',
+                               label='Density',
+                               command = lambda s=self: s.cmd.do("_ wizard density"))
+
+      self.menuBar.addmenuitem('Wizard', 'command', 'Filter',
+                               label='Filter',
+                               command = lambda s=self: s.cmd.do("_ wizard filter"))
+
 
       self.menuBar.addmenuitem('Wizard', 'command', 'Sculpting',
                                label='Sculpting',

@@ -4,6 +4,10 @@ CHANGE LOG
 
 Changes up to 0.98
 
+   beta35
+
+   * distance wizard becomes measurement wizard
+
    beta34
 
    * fixed glitch in handling bogus CRYST records

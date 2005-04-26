@@ -36,7 +36,8 @@ int SelectorCreateEmpty(PyMOLGlobals *G,char *name);
 void SelectorToggle(PyMOLGlobals *G,int rep,char *name);
 void SelectorCylinder(PyMOLGlobals *G,char *sele,char *onoff);
 int SelectorUpdateTable(PyMOLGlobals *G);
-int *SelectorUpdateTableSingleObject(PyMOLGlobals *G,ObjectMolecule *obj,int no_dummies,int *idx,int n_idx);
+int *SelectorUpdateTableSingleObject(PyMOLGlobals *G,ObjectMolecule *obj,
+                                     int no_dummies,int *idx,int n_idx);
 
 int SelectorIndexByName(PyMOLGlobals *G,char *sele);
 void SelectorFree(PyMOLGlobals *G);
@@ -46,8 +47,11 @@ int SelectorGetTmp(PyMOLGlobals *G,char *input,char *store);
 int SelectorGetPDB(PyMOLGlobals *G,char **charVLA,int cLen,int sele,int state,
                    int conectFlag,PDBInfoRec *pdb_info,int *counter);
 PyObject *SelectorGetChemPyModel(PyMOLGlobals *G,int sele,int state);
-float SelectorSumVDWOverlap(PyMOLGlobals *G,int sele1,int state1,int sele2,int state2,float adjust);
-DistSet *SelectorGetDistSet(PyMOLGlobals *G,int sele1,int state1,int sele2,int state2,int mode,
+float SelectorSumVDWOverlap(PyMOLGlobals *G,int sele1,int state1,
+                            int sele2,int state2,float adjust);
+DistSet *SelectorGetDistSet(PyMOLGlobals *G,DistSet *ds,
+                            int sele1,int state1,int sele2,
+                            int state2,int mode,
                             float cutoff,float *result);
 DistSet *SelectorGetAngleSet(PyMOLGlobals *G, DistSet *ds,
                              int sele1,int state1,

@@ -934,7 +934,7 @@ SEE ALSO
       new_list = []
       new_dict = {}
       for a in scene_order:
-         if scene_dict.has_key(a):
+         if scene_dict.has_key(a) and not new_dict.has_key(a):
             new_list.append(a)
             new_dict[a] = 1
       lst = map(lambda x:(scene_sort_dict.get(x,x),x), scene_dict.keys())

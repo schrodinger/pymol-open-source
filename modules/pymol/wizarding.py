@@ -69,6 +69,9 @@ EXAMPLE
       if name==None:
          cmd.set_wizard()
       else:
+         name = str(name)
+         if string.lower(name)=='distance': # legacy compatibility
+            name = 'measurement'
          _wizard(name,arg,kwd,0)
 
    def replace_wizard(name=None,*arg,**kwd):
