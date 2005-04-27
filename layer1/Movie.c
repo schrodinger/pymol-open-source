@@ -46,6 +46,7 @@ struct _CMovie {
   int Locked;
   int CacheSave;
   CViewElem *ViewElem;
+  int RecursionFlag;
 };
 
 void MovieCopyPrepare(PyMOLGlobals *G,int *width,int *height,int *length)
@@ -78,6 +79,14 @@ void MovieCopyPrepare(PyMOLGlobals *G,int *width,int *height,int *length)
   *length = nFrame;
 }
 
+void MovieFlushCommands(PyMOLGlobals *G)
+{
+  register CMovie *I=G->Movie;
+  I->RecursionFlag=true;
+  PFlush();
+  I->RecursionFlag=false;
+}
+
 int MovieCopyFrame(PyMOLGlobals *G,int frame,int width,int height,int rowbytes,void *ptr)
 {
   register CMovie *I=G->Movie;
@@ -96,7 +105,7 @@ int MovieCopyFrame(PyMOLGlobals *G,int frame,int width,int height,int rowbytes,v
     int i;
     SceneSetFrame(G,0,a);
     MovieDoFrameCommand(G,a);
-    PFlush();
+    MovieFlushCommands(G);
     i=MovieFrameToImage(G,a);
     VLACheck(I->Image,ImageType,i);
     if(!I->Image[i]) {
@@ -430,7 +439,7 @@ int MoviePNG(PyMOLGlobals *G,char *prefix,int save,int start,int stop)
 		sprintf(fname,"%s%04d.png",prefix,a+1);
 		SceneSetFrame(G,0,a);
 		MovieDoFrameCommand(G,a);
-		PFlush();
+      MovieFlushCommands(G);
 		i=MovieFrameToImage(G,a);
       VLACheck(I->Image,ImageType,i);
       printf("here %d\n",a);
@@ -591,8 +600,11 @@ void MovieDoFrameCommand(PyMOLGlobals *G,int frame)
   if(!I->Locked) {
     if((frame>=0)&&(frame<I->NFrame))
       {
-        if(I->Cmd[frame][0]) 
-          PParse(I->Cmd[frame]);
+        if(I->Cmd[frame][0]) {
+          if(!I->RecursionFlag) {
+            PParse(I->Cmd[frame]);
+          }
+        }
         if(I->ViewElem) 
           SceneFromViewElem(G,I->ViewElem+frame);
       }
@@ -817,6 +829,7 @@ int MovieInit(PyMOLGlobals *G)
     I->ViewElem = NULL;
     I->NImage=0;
     I->NFrame=0;
+    I->RecursionFlag = false;
     for(a=0;a<16;a++)
       I->Matrix[a]=0.0F;
     I->MatrixFlag=false;

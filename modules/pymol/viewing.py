@@ -1018,15 +1018,16 @@ DEVELOPMENT TO DO
       global scene_dict,scene_dict_sc,scene_order
       global scene_quit_on_action
 
+      view = int(view)
+      rep = int(rep)
+      color = int(color)
+      active = int(active)
+      frame = int(frame)
+      quiet = int(quiet)
+      if animate<0:
+         if int(cmd.get_setting_legacy("scene_animation"))!=0:
+            animate = cmd.get_setting_legacy("scene_animation_duration")
       try:
-         view = int(view)
-         rep = int(rep)
-         color = int(color)
-         active = int(active)
-         frame = int(frame)
-         if animate<0:
-            if int(cmd.get_setting_legacy("scene_animation"))!=0:
-               animate = cmd.get_setting_legacy("scene_animation_duration")
          lock() # manipulating global data, so need lock
          if key=='auto':
             action = scene_action_sc.auto_err(action,'action')

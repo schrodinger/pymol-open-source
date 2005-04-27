@@ -1016,6 +1016,7 @@ void SceneSetFrame(PyMOLGlobals *G,int mode,int frame)
     }
     if(movieCommand) {
       MovieDoFrameCommand(G,newFrame);
+      MovieFlushCommands(G);
     }
     if(SettingGet(G,cSetting_cache_frames))
       I->MovieFrameFlag=true;
