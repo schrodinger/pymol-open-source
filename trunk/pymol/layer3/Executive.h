@@ -211,8 +211,9 @@ int ExecutivePhiPsi(PyMOLGlobals *G,char *s1,ObjectMolecule ***objVLA,int **iVLA
 float *ExecutiveGetVertexVLA(PyMOLGlobals *G,char *s1,int state);
 int ExecutiveValidName(PyMOLGlobals *G,char *name);
 int ExecutiveIsolevel(PyMOLGlobals *G,char *name,float level,int state);
-int ExecutiveTransformObjectSelection(PyMOLGlobals *G,char *name,int state,char *s1,int log,float *ttt);
-int ExecutiveTransformSelection(PyMOLGlobals *G,int state,char *s1,int log,float *ttt);
+int ExecutiveTransformObjectSelection(PyMOLGlobals *G,char *name,int state,
+                                      char *s1,int log,float *matrix,int homogenous);
+int ExecutiveTransformSelection(PyMOLGlobals *G,int state,char *s1,int log,float *ttt,int homogenous);
 int ExecutiveTranslateAtom(PyMOLGlobals *G,char *sele,float *v,int state,int mode,int log);
 void ExecutiveSelectRect(PyMOLGlobals *G,BlockRect *rect,int mode);
 int ExecutiveMapSetBorder(PyMOLGlobals *G,char *name,float level);
@@ -221,6 +222,9 @@ int ExecutiveMapDouble(PyMOLGlobals *G,char *name,int state);
 int ExecutiveMultiSave(PyMOLGlobals *G,char *fname,char *name,int state,int append);
 int ExecutiveIdentifyObjects(PyMOLGlobals *G,char *s1,int mode,int **indexVLA,ObjectMolecule ***objVLA);
 int ExecutiveCombineObjectTTT(PyMOLGlobals *G,char *name,float *ttt);
+int ExecutiveSetObjectTTT(PyMOLGlobals *G,char *name,float *ttt,int state,int quiet);
+int ExecutiveGetObjectTxfHistory(PyMOLGlobals *G,char *name,int state,double **history);
+
 int ExecutiveSetGeometry(PyMOLGlobals *G,char *s1,int geom,int valence);
 int ExecutiveSculptIterateAll(PyMOLGlobals *G);
 int ExecutiveSmooth(PyMOLGlobals *G,char *name,int cycles,int window,int first, int last, int ends,int quiet);

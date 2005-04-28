@@ -285,6 +285,34 @@ int CoordSetTransformAtom(CoordSet *I,int at,float *TTT)
   return(result);
 }
 /*========================================================================*/
+void CoordSetRecordTxfApplied(CoordSet *I,float *matrix,int homogenous)
+{
+  if(I->TxfHistory) { 
+    double temp[16];
+    if(!homogenous) {
+      homogenizeTTT44f44d(matrix,temp);
+    } else {
+      int a;
+      for(a=0;a<16;a++)
+        temp[a] = (double) matrix[a];
+    }
+    multiply44d44d44d(temp, I->TxfHistory, I->TxfHistory);      
+  } else {
+    I->TxfHistory=Alloc(double,16);
+    if ( I->TxfHistory ) {
+      if(!homogenous)
+        homogenizeTTT44f44d(matrix,I->TxfHistory);
+      else {
+        int a;
+        for(a=0;a<16;a++)
+          I->TxfHistory[a] = (double) matrix[a];
+        
+      }
+    }
+  }
+  /*  dump44d(I->TxfHistory,"history");*/
+}
+/*========================================================================*/
 int CoordSetMoveAtom(CoordSet *I,int at,float *v,int mode)
 {
   ObjectMolecule *obj;
@@ -964,6 +992,7 @@ CoordSet *CoordSetNew(PyMOLGlobals *G)
   for(a=0;a<I->NRep;a++)
 	 I->Rep[a] = NULL;
   I->Setting=NULL;
+  I->TxfHistory = NULL;
   return(I);
 }
 /*========================================================================*/
@@ -1144,6 +1173,7 @@ void CoordSetFree(CoordSet *I)
     if(I->PeriodicBox) CrystalFree(I->PeriodicBox);
     FreeP(I->Spheroid);
     FreeP(I->SpheroidNormal);
+    FreeP(I->TxfHistory);
     SettingFreeP(I->Setting);
     OOFreeP(I);
   }

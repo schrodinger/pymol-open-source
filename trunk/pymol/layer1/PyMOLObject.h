@@ -58,7 +58,7 @@ typedef struct CObject {
   int RepVis[cRepCnt]; 
   float ExtentMin[3],ExtentMax[3];
   int ExtentFlag,TTTFlag;
-  float TTT[16]; /* translate, transform, translate matrix */
+  float TTT[16]; /* translate, transform, translate matrix (to apply when rendering) */
   CSetting *Setting;
   int Enabled; /* read-only... maintained by Scene */
   int Context; /* 0 = Camera, 1 = Unit Window, 2 = Scaled Window */
@@ -72,6 +72,7 @@ void ObjectUseColor(CObject *I);
 void ObjectSetRepVis(CObject *I,int rep,int state);
 void ObjectToggleRepVis(CObject *I,int rep);
 void ObjectPrepareContext(CObject *I,CRay *ray);
+void ObjectSetTTT(CObject *I,float *ttt,int state);
 void ObjectCombineTTT(CObject *I,float *ttt);
 void ObjectSetTTTOrigin(CObject *I,float *origin);
 void ObjectResetTTT(CObject *I);

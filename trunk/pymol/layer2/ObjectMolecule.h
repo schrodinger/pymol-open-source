@@ -228,6 +228,7 @@ void M4XAnnoPurge(M4XAnnoType *m4x);
 void M4XAlignInit(M4XAlignType *align);
 void M4XAlignPurge(M4XAlignType *align);
 
+int ObjectMoleculeGetTxfHistory(ObjectMolecule *I,int state,double **history);
 int ObjectMoleculeGetTopNeighbor(PyMOLGlobals *G,
                                  ObjectMolecule *I, 
                                  int start, int excluded);
@@ -313,7 +314,8 @@ int ObjectMoleculeMoveAtom(ObjectMolecule *I,int state,int index,float *v,int mo
 int ObjectMoleculeGetAtomVertex(ObjectMolecule *I,int state,int index,float *v);
 int ObjectMoleculeGetAtomIndex(ObjectMolecule *I,int sele);
 int ObjectMoleculeTransformSelection(ObjectMolecule *I,int state,
-                                      int sele,float *TTT,int log,char *sname);
+                                      int sele,float *TTT,int log,
+                                     char *sname,int homogenous);
 int ObjectMoleculeDoesAtomNeighborSele(ObjectMolecule *I, int index, int sele);
 void ObjectMoleculeInferChemFromNeighGeom(ObjectMolecule *I,int state);
 void ObjectMoleculeInferChemForProtein(ObjectMolecule *I,int state);

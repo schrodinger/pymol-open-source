@@ -117,6 +117,14 @@ void dump44f( float *m, char *prefix ) /* for debugging */
   printf("%s:3 %8.3f %8.3f %8.3f %8.3f\n",prefix,m[12],m[13],m[14],m[15]);
 }
 
+void dump44d( double *m, char *prefix ) /* for debugging */
+{
+  printf("%s:0 %8.3f %8.3f %8.3f %8.3f\n",prefix,m[0],m[1],m[2],m[3]);
+  printf("%s:1 %8.3f %8.3f %8.3f %8.3f\n",prefix,m[4],m[5],m[6],m[7]);
+  printf("%s:2 %8.3f %8.3f %8.3f %8.3f\n",prefix,m[8],m[9],m[10],m[11]);
+  printf("%s:3 %8.3f %8.3f %8.3f %8.3f\n",prefix,m[12],m[13],m[14],m[15]);
+}
+
 void dump33d( double *m, char *prefix ) /* for debugging */
 {
   printf("%s:0 %8.3f %8.3f %8.3f\n",prefix,m[0],m[1],m[2]);
@@ -522,6 +530,81 @@ void combineTTT44f44f( float *m1, float *m2, float *m3)
   m3[11] = m1[11] + m2[11];
 
   /*  dump44f(m3,"m3");*/
+}
+
+void homogenizeTTT44f44d( float *in, double *out)
+{
+  /* takes the PyMOL-specific TTT matrix and 
+     makes a homogenous 4x4 txf matrix out of it */
+
+  register double in_3  = (double)in[3];
+  register double in_7  = (double)in[7];
+  register double in_11 = (double)in[11];
+  register double in_12 = (double)in[12];
+  register double in_13 = (double)in[13];
+  register double in_14 = (double)in[14];
+  out[ 0] = (double)in[ 0];
+  out[ 1] = (double)in[ 1];
+  out[ 2] = (double)in[ 2];
+  out[ 4] = (double)in[ 4];
+  out[ 5] = (double)in[ 5];
+  out[ 6] = (double)in[ 6];
+  out[ 8] = (double)in[ 8];
+  out[ 9] = (double)in[ 9];
+  out[10] = (double)in[10];
+
+  out[ 3] = in_3 * out[ 0] + in_7 * out[ 1] + in_11 * out[ 2] + in_12;
+  out[ 7] = in_3 * out[ 4] + in_7 * out[ 5] + in_11 * out[ 6] + in_13;
+  out[11] = in_3 * out[ 8] + in_7 * out[ 9] + in_11 * out[10] + in_14;
+
+  out[12] = 0.0;
+  out[13] = 0.0;
+  out[14] = 0.0;
+  out[15] = 1.0;
+}
+
+void multiply44d44d44d( double *left, double *right, double *product)
+{
+  register double rA = right[ 0];
+  register double rB = right[ 4];
+  register double rC = right[ 8];
+  register double rD = right[12];
+  
+  product[ 0] = left[ 0] * rA + left[ 1] * rB + left[ 2] * rC + left[ 3] * rD;
+  product[ 4] = left[ 4] * rA + left[ 5] * rB + left[ 6] * rC + left[ 7] * rD;
+  product[ 8] = left[ 8] * rA + left[ 9] * rB + left[10] * rC + left[11] * rD;
+  product[12] = left[12] * rA + left[13] * rB + left[14] * rC + left[15] * rD;
+
+  rA = right[ 1];
+  rB = right[ 5];
+  rC = right[ 9];
+  rD = right[13];
+  
+  product[ 1] = left[ 0] * rA + left[ 1] * rB + left[ 2] * rC + left[ 3] * rD;
+  product[ 5] = left[ 4] * rA + left[ 5] * rB + left[ 6] * rC + left[ 7] * rD;
+  product[ 9] = left[ 8] * rA + left[ 9] * rB + left[10] * rC + left[11] * rD;
+  product[13] = left[12] * rA + left[13] * rB + left[14] * rC + left[15] * rD;
+
+  rA = right[ 2];
+  rB = right[ 6];
+  rC = right[10];
+  rD = right[14];
+  
+  product[ 2] = left[ 0] * rA + left[ 1] * rB + left[ 2] * rC + left[ 3] * rD;
+  product[ 6] = left[ 4] * rA + left[ 5] * rB + left[ 6] * rC + left[ 7] * rD;
+  product[10] = left[ 8] * rA + left[ 9] * rB + left[10] * rC + left[11] * rD;
+  product[14] = left[12] * rA + left[13] * rB + left[14] * rC + left[15] * rD;
+
+  rA = right[ 3];
+  rB = right[ 7];
+  rC = right[11];
+  rD = right[15];
+  
+  product[ 3] = left[ 0] * rA + left[ 1] * rB + left[ 2] * rC + left[ 3] * rD;
+  product[ 7] = left[ 4] * rA + left[ 5] * rB + left[ 6] * rC + left[ 7] * rD;
+  product[11] = left[ 8] * rA + left[ 9] * rB + left[10] * rC + left[11] * rD;
+  product[15] = left[12] * rA + left[13] * rB + left[14] * rC + left[15] * rD;
+ 
 }
 
 void transformTTT44f3f (float *m1, float *m2, float *m3)
