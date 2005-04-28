@@ -673,6 +673,27 @@ static PyObject *CmdSculptIterate(PyObject *self, PyObject *args)
   return(APIIncRef(PyFloat_FromDouble((double)total_strain)));
 }
 
+static PyObject *CmdSetObjectTTT(PyObject *self, 	PyObject *args)
+{
+  float ttt[16];
+  int quiet;
+  char *name;
+  int state;
+  int ok=PyArg_ParseTuple(args,"s(ffffffffffffffff)ii",
+                          &name,
+                          &ttt[ 0],&ttt[ 1],&ttt[ 2],&ttt[ 3], 
+                          &ttt[ 4],&ttt[ 5],&ttt[ 6],&ttt[ 7],
+                          &ttt[ 8],&ttt[ 9],&ttt[10],&ttt[11],
+                          &ttt[12],&ttt[13],&ttt[14],&ttt[15],
+                          &state,&quiet);
+  if(ok) {
+    APIEntry();
+    ExecutiveSetObjectTTT(TempPyMOLGlobals,name,ttt,state,quiet);
+    APIExit();
+  }
+  return(APIStatus(ok));
+}
+
 static PyObject *CmdCombineObjectTTT(PyObject *self, 	PyObject *args)
 {
   char *name;
@@ -939,13 +960,16 @@ static PyObject *CmdTransformObject(PyObject *self, PyObject *args)
   char *name,*sele;
   int state,log;
   PyObject *m;
-  float ttt[16];
+  float matrix[16];
+  int homo;
   int ok = false;
-  ok = PyArg_ParseTuple(args,"siOis",&name,&state,&m,&log,&sele);
+  ok = PyArg_ParseTuple(args,"siOisi",&name,&state,&m,&log,&sele,&homo);
   if(ok) {
-    if(PConvPyListToFloatArrayInPlace(m,ttt,16)>0) {
+    if(PConvPyListToFloatArrayInPlace(m,matrix,16)>0) {
       APIEntry();
-      ok = ExecutiveTransformObjectSelection(TempPyMOLGlobals,name,state,sele,log,ttt);
+      ok = ExecutiveTransformObjectSelection(TempPyMOLGlobals,name,
+                                             state,sele,log,matrix,
+                                             homo);
       APIExit();
     } else {
       PRINTFB(TempPyMOLGlobals,FB_CCmd,FB_Errors)
@@ -970,7 +994,7 @@ static PyObject *CmdTransformSelection(PyObject *self, PyObject *args)
     if(PConvPyListToFloatArrayInPlace(m,ttt,16)>0) {
       APIEntry();
       SelectorGetTmp(TempPyMOLGlobals,sele,s1);
-      ok = ExecutiveTransformSelection(TempPyMOLGlobals,state,s1,log,ttt);
+      ok = ExecutiveTransformSelection(TempPyMOLGlobals,state,s1,log,ttt,false);
       SelectorFreeTmp(TempPyMOLGlobals,s1);
       APIExit();
     } else {
@@ -3561,6 +3585,37 @@ static PyObject *CmdGetMatrix(PyObject *self, 	PyObject *args)
   return result;
 }
 
+static PyObject *CmdGetObjectTxfHistory(PyObject *self, 	PyObject *args)
+{
+  PyObject *result = NULL;
+  char *name;
+  double *history = NULL;
+  int ok=false;
+  int found;
+  int state;
+  ok = PyArg_ParseTuple(args,"si",&name,&state);
+  
+  APIEntry();
+  found = ExecutiveGetObjectTxfHistory(TempPyMOLGlobals,name,state,&history);
+  APIExit();
+  if(found) {
+    if(history) 
+      result = Py_BuildValue("dddddddddddddddd",
+                             history[ 0],history[ 1],history[ 2],history[ 3],
+                             history[ 4],history[ 5],history[ 6],history[ 7],
+                             history[ 8],history[ 9],history[10],history[11],
+                             history[12],history[13],history[14],history[15]
+                             );
+    else 
+       result = Py_BuildValue("dddddddddddddddd",
+                              1.0, 0.0, 0.0, 0.0,
+                              0.0, 1.0, 0.0, 0.0,
+                              0.0, 0.0, 1.0, 0.0,
+                              0.0, 0.0, 0.0, 1.0);
+  }
+  return APIAutoNone(result);  
+}
+
 static PyObject *CmdMDo(PyObject *self, 	PyObject *args)
 {
   char *cmd;
@@ -5314,6 +5369,7 @@ static PyMethodDef Cmd_methods[] = {
    {"get_movie_locked",      CmdGetMovieLocked,       METH_VARARGS },
    {"get_names",             CmdGetNames,             METH_VARARGS },
    {"get_object_color_index",CmdGetObjectColorIndex,  METH_VARARGS },
+   {"get_object_txf_history",CmdGetObjectTxfHistory,  METH_VARARGS },
    {"get_movie_playing",     CmdGetMoviePlaying,      METH_VARARGS },
 	{"get_position",	        CmdGetPosition,          METH_VARARGS },
 	{"get_povray",	           CmdGetPovRay,            METH_VARARGS },
@@ -5423,6 +5479,7 @@ static PyMethodDef Cmd_methods[] = {
 	{"set_name",              CmdSetName,              METH_VARARGS },
    {"set_geometry",          CmdSetGeometry,          METH_VARARGS },
 	{"set_matrix",	           CmdSetMatrix,            METH_VARARGS },
+	{"set_object_ttt",        CmdSetObjectTTT,         METH_VARARGS },
    {"set_session",           CmdSetSession,           METH_VARARGS },
    {"set_symmetry",          CmdSetCrystal,           METH_VARARGS },
 	{"set_title",             CmdSetTitle,             METH_VARARGS },

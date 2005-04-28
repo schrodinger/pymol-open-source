@@ -88,6 +88,7 @@ void dump4f( float *v, char *prefix );
 void dump33f( float *m, char *prefix );
 void dump33d( double *m, char *prefix );
 void dump44f( float *m, char *prefix );
+void dump44d( double *m, char *prefix );
 
 void copy44f( float *src,float *dst);
 
@@ -129,6 +130,11 @@ void combineTTT44f44f( float *m1, float *m2, float *m3);
 void transformTTT44f3f ( float *m1, float *m2, float *m3 );
 void transform_normalTTT44f3f ( float *m1, float *m2, float *m3 );
 void initializeTTT44f ( float *m );
+
+void multiply44d44d44d( double *left, double *right, double *product);
+
+void homogenizeTTT44f44d( float *in, double *out);
+
 /* end revised matrix routines */
 
 /*------------------------------------------------------------------------*/

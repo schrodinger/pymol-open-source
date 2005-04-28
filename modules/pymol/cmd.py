@@ -1261,6 +1261,7 @@ SEE ALSO
            get_movie_locked,   \
            get_names,          \
            get_names_of_type,  \
+           get_object_txf_history, \
            get_phipsi,         \
            get_position,       \
            get_povray,         \
@@ -1328,6 +1329,7 @@ SEE ALSO
            set_dihedral,       \
            set_name,           \
            set_geometry,       \
+           set_object_ttt,     \
            set_symmetry,       \
            set_title,          \
            smooth,             \

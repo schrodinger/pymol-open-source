@@ -56,6 +56,7 @@ typedef struct CoordSet {
   CCrystal *PeriodicBox;
   int PeriodicBoxType;
   int tmp_index; /* for saving */
+  double *TxfHistory;  /* transformation history (previously applied to coordinates) */
 } CoordSet;
 
 #define cCSet_NoPeriodicity 0
@@ -87,6 +88,7 @@ int CoordSetTransformAtom(CoordSet *I,int at,float *TTT);
 void CoordSetPurge(CoordSet *I);
 void CoordSetAdjustAtmIdx(CoordSet *I,int *lookup,int nAtom);
 void CoordSetMerge(CoordSet *I,CoordSet *cs); /* must be non-overlapping */
+void CoordSetRecordTxfApplied(CoordSet *I,float *TTT, int homogenous);
 
 #endif
 

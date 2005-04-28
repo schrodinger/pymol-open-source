@@ -448,7 +448,7 @@ int EditorInvert(PyMOLGlobals *G,int quiet)
                (!ObjectMoleculeDoesAtomNeighborSele(obj0,ia0,sele2)) &&
                (!ObjectMoleculeDoesAtomNeighborSele(obj0,ia1,sele2))) {
               found = true;
-              ok = ObjectMoleculeTransformSelection(obj0,state,sele2,m,false,NULL);
+              ok = ObjectMoleculeTransformSelection(obj0,state,sele2,m,false,NULL,false);
             }
           }
           if(found) {
@@ -531,7 +531,7 @@ int EditorTorsion(PyMOLGlobals *G,float angle)
             m[12] =  v1[0];
             m[13] =  v1[1];
             m[14] =  v1[2];
-            ok = ObjectMoleculeTransformSelection(obj2,state,sele2,m,false,NULL);
+            ok = ObjectMoleculeTransformSelection(obj2,state,sele2,m,false,NULL,false);
             SceneDirty(G);
             
             I->DragIndex=-1;
@@ -1617,7 +1617,7 @@ void EditorDrag(PyMOLGlobals *G,ObjectMolecule *obj,int index,int mode,int state
         m[12] =  v3[0];
         m[13] =  v3[1];
         m[14] =  v3[2];
-        ObjectMoleculeTransformSelection(obj,state,I->DragSelection,m,log_trans,I->DragSeleName);
+        ObjectMoleculeTransformSelection(obj,state,I->DragSelection,m,log_trans,I->DragSeleName,false);
         SceneDirty(G);
         break;
       case cButModeTorFrag:
@@ -1627,7 +1627,7 @@ void EditorDrag(PyMOLGlobals *G,ObjectMolecule *obj,int index,int mode,int state
       case cButModeMovFrag:
         MatrixLoadIdentity44f(m);
         copy3f(mov,m+12);
-        ObjectMoleculeTransformSelection(obj,state,I->DragSelection,m,log_trans,I->DragSeleName);
+        ObjectMoleculeTransformSelection(obj,state,I->DragSelection,m,log_trans,I->DragSeleName,false);
         SceneDirty(G);
         break;
       }
@@ -1664,7 +1664,7 @@ void EditorDrag(PyMOLGlobals *G,ObjectMolecule *obj,int index,int mode,int state
         m[12] =  v3[0];
         m[13] =  v3[1];
         m[14] =  v3[2];
-        ObjectMoleculeTransformSelection(obj,state,I->DragSelection,m,log_trans,I->DragSeleName);
+        ObjectMoleculeTransformSelection(obj,state,I->DragSelection,m,log_trans,I->DragSeleName,false);
         SceneDirty(G);
         break;
       case cButModeTorFrag:
@@ -1700,7 +1700,7 @@ void EditorDrag(PyMOLGlobals *G,ObjectMolecule *obj,int index,int mode,int state
             m[12] =  v1[0];
             m[13] =  v1[1];
             m[14] =  v1[2];
-            ObjectMoleculeTransformSelection(obj,state,I->DragSelection,m,log_trans,I->DragSeleName);
+            ObjectMoleculeTransformSelection(obj,state,I->DragSelection,m,log_trans,I->DragSeleName,false);
           } else {
 
             cross_product3f(I->Axis,z_dir,d0);
@@ -1713,7 +1713,7 @@ void EditorDrag(PyMOLGlobals *G,ObjectMolecule *obj,int index,int mode,int state
             m[12] =  v1[0];
             m[13] =  v1[1];
             m[14] =  v1[2];
-            ObjectMoleculeTransformSelection(obj,state,I->DragSelection,m,log_trans,I->DragSeleName);
+            ObjectMoleculeTransformSelection(obj,state,I->DragSelection,m,log_trans,I->DragSeleName,false);
             
           }
           if(I->BondMode && SettingGetGlobal_b(G,cSetting_editor_auto_dihedral))
@@ -1725,7 +1725,7 @@ void EditorDrag(PyMOLGlobals *G,ObjectMolecule *obj,int index,int mode,int state
       case cButModeMovFrag:
         MatrixLoadIdentity44f(m);
         copy3f(mov,m+12);
-        ObjectMoleculeTransformSelection(obj,state,I->DragSelection,m,log_trans,I->DragSeleName);
+        ObjectMoleculeTransformSelection(obj,state,I->DragSelection,m,log_trans,I->DragSeleName,false);
         SceneDirty(G);
         break;
       }

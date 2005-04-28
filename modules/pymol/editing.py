@@ -21,7 +21,7 @@ if __name__=='pymol.editing':
    from cmd import _cmd,lock,unlock,Shortcut,QuietException
    from cmd import safe_list_eval
    from chempy import cpv
-   
+
    def sculpt_purge():
       '''
       undocumented
@@ -1252,6 +1252,40 @@ PYMOL API
       finally:
          unlock()
 
+   def set_object_ttt(object,ttt,state=0,quiet=1,homogenous=0):
+      r = None
+      if cmd.is_string(ttt):
+         ttt = safe_list_eval(str(ttt))
+      if homogenous: # passed a homogenous matrix, so do the best we can
+         ttt = [
+            ttt[ 0], ttt[ 1], ttt[ 2], 0.0,
+            ttt[ 4], ttt[ 5], ttt[ 6], 0.0,
+            ttt[ 8], ttt[ 9], ttt[10], 0.0,
+            ttt[ 3], ttt[ 7], ttt[11], 1.0]
+      try:
+         lock()
+         r = _cmd.set_object_ttt(str(object),
+                                 (
+            float(ttt[ 0]),
+            float(ttt[ 1]),
+            float(ttt[ 2]),
+            float(ttt[ 3]),            
+            float(ttt[ 4]),
+            float(ttt[ 5]),
+            float(ttt[ 6]),
+            float(ttt[ 7]),            
+            float(ttt[ 8]),
+            float(ttt[ 9]),
+            float(ttt[10]),
+            float(ttt[11]),            
+            float(ttt[12]),
+            float(ttt[13]),
+            float(ttt[14]),
+            float(ttt[15])),
+                                 int(state)-1,int(quiet))
+      finally:
+         unlock()
+      return r
 
    def transform_selection(selection,matrix,state=0,log=0):
       '''
@@ -1293,15 +1327,18 @@ y2 = m2*(x0+m3) + m6*(x1+m7) + m10*(x2+m11) + m14
       '''
       try:
          lock()
-         r = _cmd.transform_selection(str(selection),int(state)-1,list(matrix),int(log))
+         r = _cmd.transform_selection(str(selection),int(state)-1,
+                                      list(matrix),int(log))
       finally:
          unlock()
 
-   def transform_object(name,matrix,state=0,log=0,selection=''):
+   def transform_object(name,matrix,state=0,log=0,selection='',homogenous=0):
       r = None
       try:
          lock()
-         r = _cmd.transform_object(str(name),int(state)-1,list(matrix),int(log),str(selection))
+         r = _cmd.transform_object(str(name),int(state)-1,
+                                   list(matrix),int(log),
+                                   str(selection),int(homogenous))
       finally:
          unlock()
       return r

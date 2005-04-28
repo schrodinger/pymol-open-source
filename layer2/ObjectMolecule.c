@@ -102,6 +102,23 @@ static char *ObjectMoleculeGetCaption(ObjectMolecule *I)
   return NULL;
 }
 
+int ObjectMoleculeGetTxfHistory(ObjectMolecule *I,int state,double **history)
+{
+  int ok = true;
+  if((state<0)||(state>=I->NCSet)) {
+    /* nonsensical */
+    ok=false;
+  } else {
+    CoordSet *cs = I->CSet[state];
+    if(!cs)
+      ok=false;
+    else {
+      (*history) = cs->TxfHistory;
+    }
+  }
+  return ok;
+}
+
 #define MAX_BOND_DIST 50
 
 #if 0
@@ -4775,7 +4792,8 @@ void ObjectMoleculeInferChemFromBonds(ObjectMolecule *I,int state)
 }
 /*========================================================================*/
 int ObjectMoleculeTransformSelection(ObjectMolecule *I,int state,
-                                      int sele,float *TTT,int log,char *sname) 
+                                      int sele,float *matrix,int log,
+                                     char *sname,int homogenous) 
 {
   /* if sele == -1, then the whole object state is transformed */
 
@@ -4812,19 +4830,20 @@ int ObjectMoleculeTransformSelection(ObjectMolecule *I,int state,
             if(!(ai->protekted==1))
               if(SelectorIsMember(I->Obj.G,s,sele))
                 {
-                  CoordSetTransformAtom(cs,a,TTT);
+                  CoordSetTransformAtom(cs,a,matrix);
                   flag=true;
                 }
             ai++;
           }
-        } else {
+        } else { /* transforming whole coordinate set */
           ai=I->AtomInfo;
           for(a=0;a<I->NAtom;a++) {
             if(!(ai->protekted==1))
-              CoordSetTransformAtom(cs,a,TTT);
+              CoordSetTransformAtom(cs,a,matrix);
             ai++;
           }
           flag=true;
+          CoordSetRecordTxfApplied(cs,matrix,homogenous);
         }
         if(flag) 
           cs->fInvalidateRep(cs,cRepAll,cRepInvCoord);
@@ -4848,23 +4867,25 @@ int ObjectMoleculeTransformSelection(ObjectMolecule *I,int state,
     switch(logging) {
     case cPLog_pml:
       sprintf(line,
-              "_ cmd.transform_object('%s',[\\\n_ %15.9f,%15.9f,%15.9f,%15.9f,\\\n_ %15.9f,%15.9f,%15.9f,%15.9f,\\\n_ %15.9f,%15.9f,%15.9f,%15.9f,\\\n_ %15.9f,%15.9f,%15.9f,%15.9f\\\n_     ],%d,%d%s)\n",
+              "_ cmd.transform_object('%s',[\\\n_ %15.9f,%15.9f,%15.9f,%15.9f,\\\n_ %15.9f,%15.9f,%15.9f,%15.9f,\\\n_ %15.9f,%15.9f,%15.9f,%15.9f,\\\n_ %15.9f,%15.9f,%15.9f,%15.9f\\\n_     ],%d,%d,%s,%d)\n",
               I->Obj.Name,
-              TTT[ 0],TTT[ 1],TTT[ 2],TTT[ 3],
-              TTT[ 4],TTT[ 5],TTT[ 6],TTT[ 7],
-              TTT[ 8],TTT[ 9],TTT[10],TTT[11],
-              TTT[12],TTT[13],TTT[14],TTT[15],inp_state+1,log,sele_str);
+              matrix[ 0],matrix[ 1],matrix[ 2],matrix[ 3],
+              matrix[ 4],matrix[ 5],matrix[ 6],matrix[ 7],
+              matrix[ 8],matrix[ 9],matrix[10],matrix[11],
+              matrix[12],matrix[13],matrix[14],matrix[15],
+              inp_state+1,log,sele_str,homogenous);
       PLog(line,cPLog_no_flush);
       break;
     case cPLog_pym:
       
       sprintf(line,
-              "cmd.transform_object('%s',[\n%15.9f,%15.9f,%15.9f,%15.9f,\n%15.9f,%15.9f,%15.9f,%15.9f,\n%15.9f,%15.9f,%15.9f,%15.9f,\n%15.9f,%15.9f,%15.9f,%15.9f\n],%d,%d%s)\n",
+              "cmd.transform_object('%s',[\n%15.9f,%15.9f,%15.9f,%15.9f,\n%15.9f,%15.9f,%15.9f,%15.9f,\n%15.9f,%15.9f,%15.9f,%15.9f,\n%15.9f,%15.9f,%15.9f,%15.9f\n],%d,%d,%s,%d)\n",
               I->Obj.Name,
-              TTT[ 0],TTT[ 1],TTT[ 2],TTT[ 3],
-              TTT[ 4],TTT[ 5],TTT[ 6],TTT[ 7],
-              TTT[ 8],TTT[ 9],TTT[10],TTT[11],
-              TTT[12],TTT[13],TTT[14],TTT[15],inp_state+1,log,sele_str);
+              matrix[ 0],matrix[ 1],matrix[ 2],matrix[ 3],
+              matrix[ 4],matrix[ 5],matrix[ 6],matrix[ 7],
+              matrix[ 8],matrix[ 9],matrix[10],matrix[11],
+              matrix[12],matrix[13],matrix[14],matrix[15],
+              inp_state+1,log,sele_str,homogenous);
       PLog(line,cPLog_no_flush);
       break;
     default:
@@ -7001,6 +7022,7 @@ void ObjectMoleculeTransformTTTf(ObjectMolecule *I,float *ttt,int frame)
          if(cs->fInvalidateRep)
            cs->fInvalidateRep(I->CSet[b],cRepAll,cRepInvCoord);
          MatrixApplyTTTfn3f(cs->NIndex,cs->Coord,ttt,cs->Coord);
+         CoordSetRecordTxfApplied(cs,ttt,false);
        }
      }
 	}

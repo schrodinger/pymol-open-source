@@ -98,6 +98,20 @@ static void ExecutiveSpecSetVisibility(PyMOLGlobals *G,SpecRec *rec,
                                        int new_vis,int mod);
 void ExecutiveObjMolSeleOp(PyMOLGlobals *G,int sele,ObjectMoleculeOpRec *op);
 
+int ExecutiveGetObjectTxfHistory(PyMOLGlobals *G,char *name,int state,double **history)
+{
+  /* right now, this only makes sense for molecule objects */
+  int ok=true;
+  ObjectMolecule *objMol = ExecutiveFindObjectMoleculeByName(G,name);
+  if(objMol) {
+    ObjectMoleculeGetTxfHistory(objMol,state,history);
+  } else {
+    ok=false;
+  }
+  return ok;
+    
+}
+
 static int ExecutiveCountNames(PyMOLGlobals *G)
 {
   int count=0;
@@ -3127,7 +3141,24 @@ int ExecutiveCombineObjectTTT(PyMOLGlobals *G,char *name,float *ttt)
   return(ok);
 }
 
-int ExecutiveTransformSelection(PyMOLGlobals *G,int state,char *s1,int log,float *ttt)
+int ExecutiveSetObjectTTT(PyMOLGlobals *G,char *name,float *ttt,int state,int quiet)
+{
+  CObject *obj = ExecutiveFindObjectByName(G,name);
+  int ok=true;
+
+  if(!obj) {
+    PRINTFB(G,FB_ObjectMolecule,FB_Errors)
+      "Error: object %s not found.\n",name 
+      ENDFB(G);
+    ok=false;
+  } else {
+    ObjectSetTTT(obj,ttt,state);
+    SceneDirty(G);
+  }
+  return(ok);
+}
+
+int ExecutiveTransformSelection(PyMOLGlobals *G,int state,char *s1,int log,float *ttt,int homogenous)
 {
   int sele=-1;
   ObjectMolecule *obj = NULL;
@@ -3147,7 +3178,7 @@ int ExecutiveTransformSelection(PyMOLGlobals *G,int state,char *s1,int log,float
     nObj = VLAGetSize(vla);
     for(a=0;a<nObj;a++) {
       obj=vla[a];
-      ObjectMoleculeTransformSelection(obj,state,sele,ttt,log,s1);
+      ObjectMoleculeTransformSelection(obj,state,sele,ttt,log,s1,homogenous);
     }
   }
   SceneDirty(G);
@@ -3155,7 +3186,8 @@ int ExecutiveTransformSelection(PyMOLGlobals *G,int state,char *s1,int log,float
   return(ok);
 }
 
-int ExecutiveTransformObjectSelection(PyMOLGlobals *G,char *name,int state,char *s1,int log,float *ttt)
+int ExecutiveTransformObjectSelection(PyMOLGlobals *G,char *name,int state,
+                                      char *s1,int log,float *matrix,int homogenous)
 {
   int sele=-1;
   ObjectMolecule *obj = ExecutiveFindObjectMoleculeByName(G,name);
@@ -3175,7 +3207,7 @@ int ExecutiveTransformObjectSelection(PyMOLGlobals *G,char *name,int state,char 
       "Error: selection object %s not found.\n",s1
       ENDFB(G);
   } else {
-    ObjectMoleculeTransformSelection(obj,state,sele,ttt,log,s1);
+    ObjectMoleculeTransformSelection(obj,state,sele,matrix,log,s1,homogenous);
   }
   SceneDirty(G);
   return(ok);

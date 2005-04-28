@@ -196,6 +196,15 @@ void ObjectCombineTTT(CObject *I,float *ttt)
   combineTTT44f44f(ttt,cpy,I->TTT);
 }
 /*========================================================================*/
+void ObjectSetTTT(CObject *I,float *ttt,int state)
+{
+  if(state<0) {
+    UtilCopyMem(I->TTT,ttt,sizeof(float)*16);
+    I->TTTFlag=true;
+    /* to do */
+  }
+}
+/*========================================================================*/
 void ObjectResetTTT(CObject *I)
 {
   I->TTTFlag=false;
@@ -238,7 +247,6 @@ void ObjectPrepareContext(CObject *I,CRay *ray)
     }
   }
 }
-
 /*========================================================================*/
 void ObjectSetTTTOrigin(CObject *I,float *origin)
 {
@@ -355,6 +363,7 @@ void ObjectInit(PyMOLGlobals *G,CObject *I)
   I->RepVis[cRepCell]=false;
   I->RepVis[cRepExtent]=false;
   I->Context=0;
+  
 }
 /*========================================================================*/
 void ObjectRenderUnitBox(CObject *this,int frame,
