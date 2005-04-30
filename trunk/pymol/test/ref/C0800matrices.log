@@ -127,11 +127,11 @@ PyMOL>dump_mat(cmd.get_object_matrix("mol3"))
    0.00  0.00  1.00  4.00  
    0.00  0.00  0.00  1.00 ]
 PyMOL>dele all
-PyMOL>load $TUT/1hpv.pdb
+PyMOL>load ../data/tut/1hpv.pdb
  ObjectMolecule: Read secondary structure assignments.
  ObjectMolecule: Read crystal symmetry information.
  Symmetry: Found 6 symmetry operators.
- CmdLoad: "/users/warren/pymol/data/tut/1hpv.pdb" loaded as "1hpv".
+ CmdLoad: "../data/tut/1hpv.pdb" loaded as "1hpv".
 PyMOL>create ligand, organic
  Selector: found 35 atoms.
  Executive: object "ligand" created.

@@ -1390,7 +1390,7 @@ y2 = m8*(x0+m12) + m9*(x1+m13) + m10*(x2+m14) + m11
       r = None
       try:
          lock()
-         r = _cmd.transfer_matrix(str(source_name),
+         r = _cmd.matrix_transfer(str(source_name),
                                   str(target_name),
                                   int(source_mode),
                                   int(target_mode),

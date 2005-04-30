@@ -433,7 +433,7 @@ void ObjectStateTransformMatrix(CObjectState *I, double *matrix)
       copy44d(matrix,I->Matrix);
     }
   } else {
-    left_multiply44d44d(matrix,I->Matrix);
+    right_multiply44d44d(I->Matrix,matrix);
   }
 }
 

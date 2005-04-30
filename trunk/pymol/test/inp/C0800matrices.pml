@@ -102,7 +102,7 @@ dump_mat(cmd.get_object_matrix("mol3"))
 # okay, now confirm that history accumulation works
 
 dele all
-load $TUT/1hpv.pdb
+load ../data/tut/1hpv.pdb
 create ligand, organic
 create protein, polymer
 delete 1hpv

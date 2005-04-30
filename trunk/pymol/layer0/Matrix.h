@@ -96,8 +96,11 @@ float MatrixFitRMSTTTf(PyMOLGlobals *G,int n,float *v1,float *v2,float *wt,float
 float MatrixGetRMS(PyMOLGlobals *G,int n,float *v1,float *v2,float *wt);
 int *MatrixFilter(float cutoff,int window,int n_pass,int nv,float *v1,float *v2);
 
-
 void MatrixTransformR44fN3f( unsigned int n, float *q, float *m, float *p );
+
+int MatrixInvTransformExtentsR44d3f(double *matrix, 
+                                  float *old_min, float *old_max,
+                                  float *new_min, float *new_max);
 
 typedef long int integer;
 typedef double doublereal;

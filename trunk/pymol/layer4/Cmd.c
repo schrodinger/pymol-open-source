@@ -955,7 +955,7 @@ static PyObject *CmdTranslateAtom(PyObject *self, PyObject *args)
   return(APIStatus(ok));
 }
 
-static PyObject *CmdTransferMatrix(PyObject *self, 	PyObject *args)
+static PyObject *CmdMatrixTransfer(PyObject *self, 	PyObject *args)
 {
   char *source_name, *target_name;
   int source_mode, target_mode;
@@ -971,7 +971,7 @@ static PyObject *CmdTransferMatrix(PyObject *self, 	PyObject *args)
                         &log, &quiet);
   if (ok) {
     APIEntry();
-    ExecutiveTransferMatrix(TempPyMOLGlobals,
+    ExecutiveMatrixTransfer(TempPyMOLGlobals,
                             source_name, target_name, 
                             source_mode, target_mode, 
                             source_state, target_state,
@@ -2232,6 +2232,16 @@ static PyObject *CmdIsosurface(PyObject *self, 	PyObject *args) {
             for(c=0;c<3;c++) {
               mn[c] = ms->Corner[c];
               mx[c] = ms->Corner[3*7+c];
+            }
+            if(ms->State.Matrix) {
+              transform44d3f(ms->State.Matrix,mn,mn);
+              transform44d3f(ms->State.Matrix,mx,mx);
+              {
+                float tmp;
+                int a;
+                for(a=0;a<3;a++)
+                  if(mn[a]>mx[a]) { tmp=mn[a];mn[a]=mx[a];mx[a]=tmp; }
+              }
             }
             carve = 0.0F;
             break;
@@ -5566,7 +5576,7 @@ static PyMethodDef Cmd_methods[] = {
 	{"symexp",	              CmdSymExp,               METH_VARARGS },
 	{"test",	                 CmdTest,                 METH_VARARGS },
 	{"toggle",                CmdToggle,               METH_VARARGS },
-	{"transfer_matrix",       CmdTransferMatrix,       METH_VARARGS },
+	{"matrix_transfer",       CmdMatrixTransfer,       METH_VARARGS },
 	{"transform_object",      CmdTransformObject,      METH_VARARGS },
 	{"transform_selection",   CmdTransformSelection,   METH_VARARGS },
 	{"translate_atom",        CmdTranslateAtom,        METH_VARARGS },

@@ -71,7 +71,6 @@ double slow_diffsq3f ( float *v1, float *v2 );
 double slow_diff3f ( float *v1, float *v2 );
 int slow_within3f(float *v1,float *v2,float dist);
 int slow_within3fsq(float *v1,float *v2,float dist,float dist2);
-void slow_copy3f( float *src, float *dst);
 
 int equal3f(float *v1,float *v2);
 
@@ -102,6 +101,8 @@ void copy44f44f ( float *src, float *dst );
 
 void copy44d33f ( double *src, float *dst );
 void copy33f44d ( float *src, double *dst );
+void copy3d3f ( double *v1,float *v2);
+void copy3f3d ( float *v1,double *v2);
 
 /* in the following matrix multiplies and transformations:
    the last two matrices can be the same matrix! */
@@ -115,6 +116,8 @@ void transform44f4f ( float  *m1, float  *m2,  float  *m3 );
 
 void transform44d3f ( double  *m1, float  *m2,  float  *m3 );
 void inverse_transform44d3f (double *m1, float *m2, float *m3);
+void inverse_transform44d3d (double *m1, double *m2, double *m3);
+void transform44d3fas33d3f (double *m1, float *m2, float *m3);
 
 void multiply33f33f ( float  *m1, float  *m2,  float  *m3 );
 void multiply33d33d ( double *m1, double *m2, double  *m3 );
@@ -193,6 +196,7 @@ float dot_product3f ( float *v1, float *v2 );
 void  invert3f ( float *v );
 void  scale3f ( float *v1, float v0, float *v2);
 void  copy3f( float *src , float *dst);
+void  copy3d( double *src , double *dst);
 void  copy4f( float *src , float *dst);
 void  add3f ( float *v1, float *v2, float *sum );
 void  subtract3f ( float *v1, float *v2, float *v3 );
@@ -212,6 +216,7 @@ void  swap1f (float *f, float *g);
 #define invert3f(v) {(v)[0]=-(v)[0]; (v)[1]=-(v)[1]; (v)[2]=-(v)[2];}
 #define scale3f(v1,v0,v2) {(v2)[0]=(v1)[0]*(v0); (v2)[1]=(v1)[1]*(v0); (v2)[2]=(v1)[2]*(v0);}
 #define copy3f(v1,v2) {(v2)[0]=(v1)[0]; (v2)[1]=(v1)[1]; (v2)[2]=(v1)[2];}
+#define copy3d(v1,v2) {(v2)[0]=(v1)[0]; (v2)[1]=(v1)[1]; (v2)[2]=(v1)[2];}
 #define copy4f(v1,v2) {(v2)[0]=(v1)[0]; (v2)[1]=(v1)[1]; (v2)[2]=(v1)[2]; (v2)[3]=(v1)[3];}
 #define add3f(v1,v2,v3) {(v3)[0]=(v1)[0]+(v2)[0]; (v3)[1]=(v1)[1]+(v2)[1]; (v3)[2]=(v1)[2]+(v2)[2];}
 #define subtract3f(v1,v2,v3) {(v3)[0]=(v1)[0]-(v2)[0]; (v3)[1]=(v1)[1]-(v2)[1]; (v3)[2]=(v1)[2]-(v2)[2];}

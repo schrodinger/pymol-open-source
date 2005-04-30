@@ -1,5 +1,5 @@
-PyMOL>load $PYMOL_PATH/test/dat/pept.pdb
- CmdLoad: "/users/warren/pymol/test/dat/pept.pdb" loaded as "pept".
+PyMOL>load dat/pept.pdb
+ CmdLoad: "dat/pept.pdb" loaded as "pept".
 PyMOL>select cas,name ca
  Selector: selection "cas" defined with 13 atoms.
 PyMOL>set line_width,5
