@@ -28,9 +28,9 @@ dump_lst((cmd.get_distance("mol1///5/ca","mol2///5/ca"), \
  cmd.get_distance("mol1///5/ca","mol3///5/ca"), \
  cmd.get_distance("mol2///5/ca","mol3///5/ca")))
 
-dump_mat(cmd.get_object_txf_history("mol1"))
-dump_mat(cmd.get_object_txf_history("mol2"))
-dump_mat(cmd.get_object_txf_history("mol3"))
+dump_mat(cmd.get_object_matrix("mol1"))
+dump_mat(cmd.get_object_matrix("mol2"))
+dump_mat(cmd.get_object_matrix("mol3"))
 
 # move mol1
 
@@ -40,13 +40,13 @@ dump_lst((cmd.get_distance("mol1///5/ca","mol2///5/ca"), \
  cmd.get_distance("mol1///5/ca","mol3///5/ca"), \
  cmd.get_distance("mol2///5/ca","mol3///5/ca")))
 
-dump_mat(cmd.get_object_txf_history("mol1"))
-dump_mat(cmd.get_object_txf_history("mol2"))
-dump_mat(cmd.get_object_txf_history("mol3"))
+dump_mat(cmd.get_object_matrix("mol1"))
+dump_mat(cmd.get_object_matrix("mol2"))
+dump_mat(cmd.get_object_matrix("mol3"))
 
 # apply mol2's history matrix to mol3's coordinates
 
-matrix = cmd.get_object_txf_history("mol2")
+matrix = cmd.get_object_matrix("mol2")
 
 cmd.transform_object("mol3",matrix, homogenous=1)
 
@@ -54,12 +54,12 @@ dump_lst((cmd.get_distance("mol1///5/ca","mol2///5/ca"), \
  cmd.get_distance("mol1///5/ca","mol3///5/ca"), \
  cmd.get_distance("mol2///5/ca","mol3///5/ca")))
 
-dump_mat(cmd.get_object_txf_history("mol1"))
-dump_mat(cmd.get_object_txf_history("mol2"))
-dump_mat(cmd.get_object_txf_history("mol3"))
+dump_mat(cmd.get_object_matrix("mol1"))
+dump_mat(cmd.get_object_matrix("mol2"))
+dump_mat(cmd.get_object_matrix("mol3"))
 
 
-# now try again using the transfer_matrix command
+# now try again using the matrix_transfer command
 
 dele mol3
 load dat/pept.pdb,mol3
@@ -68,18 +68,18 @@ dump_lst((cmd.get_distance("mol1///5/ca","mol2///5/ca"), \
  cmd.get_distance("mol1///5/ca","mol3///5/ca"), \
  cmd.get_distance("mol2///5/ca","mol3///5/ca")))
 
-dump_mat(cmd.get_object_txf_history("mol1"))
-dump_mat(cmd.get_object_txf_history("mol2"))
-dump_mat(cmd.get_object_txf_history("mol3"))
+dump_mat(cmd.get_object_matrix("mol1"))
+dump_mat(cmd.get_object_matrix("mol2"))
+dump_mat(cmd.get_object_matrix("mol3"))
 
 # but first, try the null case: mol1 hasn't been moved, so the following
 # should have no effect
 
-transfer_matrix mol1, mol3
+matrix_transfer mol1, mol3
 
-dump_mat(cmd.get_object_txf_history("mol1"))
-dump_mat(cmd.get_object_txf_history("mol2"))
-dump_mat(cmd.get_object_txf_history("mol3"))
+dump_mat(cmd.get_object_matrix("mol1"))
+dump_mat(cmd.get_object_matrix("mol2"))
+dump_mat(cmd.get_object_matrix("mol3"))
 
 dump_lst((cmd.get_distance("mol1///5/ca","mol2///5/ca"), \
  cmd.get_distance("mol1///5/ca","mol3///5/ca"), \
@@ -88,15 +88,15 @@ dump_lst((cmd.get_distance("mol1///5/ca","mol2///5/ca"), \
 
 # whereas, this should move mol3 onto mol2
 
-transfer_matrix mol2, mol3
+matrix_transfer mol2, mol3
 
 dump_lst((cmd.get_distance("mol1///5/ca","mol2///5/ca"), \
  cmd.get_distance("mol1///5/ca","mol3///5/ca"), \
  cmd.get_distance("mol2///5/ca","mol3///5/ca")))
 
-dump_mat(cmd.get_object_txf_history("mol1"))
-dump_mat(cmd.get_object_txf_history("mol2"))
-dump_mat(cmd.get_object_txf_history("mol3"))
+dump_mat(cmd.get_object_matrix("mol1"))
+dump_mat(cmd.get_object_matrix("mol2"))
+dump_mat(cmd.get_object_matrix("mol3"))
 
 
 # okay, now confirm that history accumulation works
@@ -121,10 +121,10 @@ dump_lst((cmd.get_distance("ligand////s1","/protein/1HPV/B/ILE`84/CB"), \
  cmd.get_distance("/ligand/1HPV//478`200/C4","/protein/1HPV/B/ILE`50/CB"), \
  cmd.get_distance("/ligand/1HPV//478`200/O3"," /protein/1HPV/B/VAL`82/CB")))
 
-transfer_matrix protein, ligand
+matrix_transfer protein, ligand
 
-dump_mat(cmd.get_object_txf_history("protein"))
-dump_mat(cmd.get_object_txf_history("ligand"))
+dump_mat(cmd.get_object_matrix("protein"))
+dump_mat(cmd.get_object_matrix("ligand"))
 
 dump_lst((cmd.get_distance("ligand////s1","/protein/1HPV/B/ILE`84/CB"), \
  cmd.get_distance("/ligand/1HPV//478`200/C4","/protein/1HPV/B/ILE`50/CB"), \
@@ -138,12 +138,12 @@ create copy_protein, copy and polymer
 create copy_protein2, copy and polymer
 delete copy
 
-transfer_matrix protein, copy_protein2
+matrix_transfer protein, copy_protein2
 fit copy_protein, protein
 
-dump_mat(cmd.get_object_txf_history("protein"))
-dump_mat(cmd.get_object_txf_history("copy_protein"))
-dump_mat(cmd.get_object_txf_history("copy_protein2"))
+dump_mat(cmd.get_object_matrix("protein"))
+dump_mat(cmd.get_object_matrix("copy_protein"))
+dump_mat(cmd.get_object_matrix("copy_protein2"))
 
 # now see if we can fit back to the original
 
@@ -155,9 +155,9 @@ dump_lst((cmd.get_distance("ligand////s1","/target/1HPV/B/ILE`84/CB"), \
 
 # first try undoing the ligand transformation
 
-dump_mat(cmd.get_object_txf_history("ligand"))
-transfer_matrix target, ligand
-dump_mat(cmd.get_object_txf_history("ligand"))
+dump_mat(cmd.get_object_matrix("ligand"))
+matrix_transfer target, ligand
+dump_mat(cmd.get_object_matrix("ligand"))
 
 dump_lst((cmd.get_distance("ligand////s1","/target/1HPV/B/ILE`84/CB"), \
  cmd.get_distance("/ligand/1HPV//478`200/C4","/target/1HPV/B/ILE`50/CB"), \
@@ -165,11 +165,11 @@ dump_lst((cmd.get_distance("ligand////s1","/target/1HPV/B/ILE`84/CB"), \
 
 # now see if we can fit the protein back onto the original coordinates for a similar result
 
-dump_mat(cmd.get_object_txf_history("protein"))
+dump_mat(cmd.get_object_matrix("protein"))
 fit protein, target
 
-dump_mat(cmd.get_object_txf_history("protein"))
-dump_mat(cmd.get_object_txf_history("ligand"))
+dump_mat(cmd.get_object_matrix("protein"))
+dump_mat(cmd.get_object_matrix("ligand"))
 
 dump_lst((cmd.get_distance("ligand////s1","/protein/1HPV/B/ILE`84/CB"), \
  cmd.get_distance("/ligand/1HPV//478`200/C4","/protein/1HPV/B/ILE`50/CB"), \
@@ -178,7 +178,7 @@ dump_lst((cmd.get_distance("ligand////s1","/protein/1HPV/B/ILE`84/CB"), \
 # since we're back to the original coordinates, then something like
 # this should have NO effect
 
-transfer_matrix protein, ligand
+matrix_transfer protein, ligand
 
 dump_lst((cmd.get_distance("ligand////s1","/protein/1HPV/B/ILE`84/CB"), \
  cmd.get_distance("/ligand/1HPV//478`200/C4","/protein/1HPV/B/ILE`50/CB"), \
@@ -187,10 +187,10 @@ dump_lst((cmd.get_distance("ligand////s1","/protein/1HPV/B/ILE`84/CB"), \
 # try reset_matrix
 
 dump_lst((cmd.get_distance("/target/1HPV/B/ILE`84/CB","/copy_protein2/1HPV/B/ILE`84/CB"),))
-dump_mat(cmd.get_object_txf_history("copy_protein2"))
+dump_mat(cmd.get_object_matrix("copy_protein2"))
 
 reset_matrix copy_protein2
-dump_mat(cmd.get_object_txf_history("copy_protein2"))
+dump_mat(cmd.get_object_matrix("copy_protein2"))
 
 dump_lst((cmd.get_distance("/target/1HPV/B/ILE`84/CB","/copy_protein2/1HPV/B/ILE`84/CB"),))
 

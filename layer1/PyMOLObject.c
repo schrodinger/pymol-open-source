@@ -26,6 +26,7 @@ Z* -------------------------------------------------------------------
 #include"Util.h"
 #include"Ray.h"
 #include"PConv.h"
+#include"MemoryDebug.h"
 
 int ObjectGetNFrames(CObject *I);
 
@@ -399,6 +400,93 @@ void ObjectRenderUnitBox(CObject *this,int frame,
   }
 }
 
+void ObjectStateInit(PyMOLGlobals *G,CObjectState *I)
+{
+  I->G = G;
+  I->Matrix = NULL;
+}
 
+void ObjectStatePurge(CObjectState *I)
+{
+  FreeP(I->Matrix);
+}
 
+void ObjectStateSetMatrix(CObjectState *I, double *matrix)
+{
+  if(!I->Matrix)
+    I->Matrix = Alloc(double,16);
+  if(I->Matrix) {
+    copy44d(matrix,I->Matrix);
+  }
+}
+
+double *ObjectStateGetMatrix(CObjectState *I)
+{
+  return I->Matrix;
+}
+
+void ObjectStateTransformMatrix(CObjectState *I, double *matrix)
+{
+  if(!I->Matrix) {
+    I->Matrix = Alloc(double,16);
+    if(I->Matrix) {
+      copy44d(matrix,I->Matrix);
+    }
+  } else {
+    left_multiply44d44d(matrix,I->Matrix);
+  }
+}
+
+void ObjectStateResetMatrix(CObjectState *I)
+{
+  FreeP(I->Matrix);
+}
+
+PyObject *ObjectStateAsPyList(CObjectState *I)
+{
+#ifdef _PYMOL_NOPY
+  return NULL;
+#else
+
+  PyObject *result = NULL;
+
+  if(I) {
+    result = PyList_New(1);
+    
+    if(I->Matrix) {
+      PyList_SetItem(result,0,PConvDoubleArrayToPyList(I->Matrix,16));
+    } else {
+      PyList_SetItem(result,0,Py_None);
+    }
+  }
+  return(PConvAutoNone(result));
+#endif  
+}
+
+int ObjectStateFromPyList(PyMOLGlobals *G,PyObject *list,CObjectState *I)
+{
+#ifdef _PYMOL_NOPY
+  return 0;
+#else
+  PyObject *tmp;
+  int ok = true;
+  int ll = 0;
+
+  ObjectStateInit(G,I);
+
+  if(list&&(list!=Py_None)) { /* allow None */
+    if(ok) ok = (list!=NULL);
+    if(ok) ok = PyList_Check(list);
+    if(ok) ll = PyList_Size(list);
+    /* TO SUPPORT BACKWARDS COMPATIBILITY...
+       Always check ll when adding new PyList_GetItem's */
+    if(ok) {
+      tmp = PyList_GetItem(list,0);
+      if(tmp!=Py_None) 
+        ok = PConvPyListToDoubleArray(tmp,&I->Matrix);
+    }
+  }
+  return(ok);
+#endif
+}
 

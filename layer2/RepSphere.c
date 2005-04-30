@@ -372,7 +372,7 @@ int RepSphereSameVis(RepSphere *I,CoordSet *cs)
 
 Rep *RepSphereNew(CoordSet *cs)
 {
-  PyMOLGlobals *G=cs->G;
+  PyMOLGlobals *G=cs->State.G;
   ObjectMolecule *obj;
   int a,b,c,a1,c1,a2,i,j,k,h,l;
   float *v,*v0,*vc,vdw,v1[3];

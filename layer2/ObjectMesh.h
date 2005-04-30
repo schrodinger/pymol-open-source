@@ -19,6 +19,7 @@ Z* -------------------------------------------------------------------
 #include"ObjectMap.h"
 
 typedef struct {
+  CObjectState State;
   PyMOLGlobals *G;
   char MapName[ObjNameMax];
   int MapState;

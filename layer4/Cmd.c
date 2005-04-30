@@ -1037,16 +1037,17 @@ static PyObject *CmdTransformSelection(PyObject *self, PyObject *args)
 {
   char *sele;
   int state,log;
+  int homo;
   PyObject *m;
   float ttt[16];
   OrthoLineType s1;
   int ok = false;
-  ok = PyArg_ParseTuple(args,"siOi",&sele,&state,&m,&log);
+  ok = PyArg_ParseTuple(args,"siOii",&sele,&state,&m,&log,&homo);
   if(ok) {
     if(PConvPyListToFloatArrayInPlace(m,ttt,16)>0) {
       APIEntry();
       SelectorGetTmp(TempPyMOLGlobals,sele,s1);
-      ok = ExecutiveTransformSelection(TempPyMOLGlobals,state,s1,log,ttt,false);
+      ok = ExecutiveTransformSelection(TempPyMOLGlobals,state,s1,log,ttt,homo);
       SelectorFreeTmp(TempPyMOLGlobals,s1);
       APIExit();
     } else {
@@ -1814,8 +1815,18 @@ static PyObject *CmdIsomesh(PyObject *self, 	PyObject *args) {
           switch(oper) {
           case 0:
             for(c=0;c<3;c++) {
-              mn[c] = ms->Corner[0][c];
-              mx[c] = ms->Corner[7][c];
+              mn[c] = ms->Corner[c];
+              mx[c] = ms->Corner[3*7+c];
+            }
+            if(ms->State.Matrix) {
+              transform44d3f(ms->State.Matrix,mn,mn);
+              transform44d3f(ms->State.Matrix,mx,mx);
+              {
+                float tmp;
+                int a;
+                for(a=0;a<3;a++)
+                  if(mn[a]>mx[a]) { tmp=mn[a];mn[a]=mx[a];mx[a]=tmp; }
+              }
             }
             carve = -0.0; /* impossible */
             break;
@@ -1837,7 +1848,8 @@ static PyObject *CmdIsomesh(PyObject *self, 	PyObject *args) {
           PRINTFB(TempPyMOLGlobals,FB_CCmd,FB_Blather)
             " Isomesh: buffer %8.3f carve %8.3f \n",fbuf,carve
             ENDFB(TempPyMOLGlobals);
-          obj=(CObject*)ObjectMeshFromBox(TempPyMOLGlobals,(ObjectMesh*)origObj,mapObj,map_state,state,mn,mx,lvl,dotFlag,
+          obj=(CObject*)ObjectMeshFromBox(TempPyMOLGlobals,(ObjectMesh*)origObj,mapObj,
+                                          map_state,state,mn,mx,lvl,dotFlag,
                                           carve,vert_vla);
           if(!origObj) {
             ObjectSetName(obj,str1);
@@ -2218,8 +2230,8 @@ static PyObject *CmdIsosurface(PyObject *self, 	PyObject *args) {
           switch(oper) {
           case 0:
             for(c=0;c<3;c++) {
-              mn[c] = ms->Corner[0][c];
-              mx[c] = ms->Corner[7][c];
+              mn[c] = ms->Corner[c];
+              mx[c] = ms->Corner[3*7+c];
             }
             carve = 0.0F;
             break;
@@ -3638,7 +3650,7 @@ static PyObject *CmdGetMatrix(PyObject *self, 	PyObject *args)
   return result;
 }
 
-static PyObject *CmdGetObjectTxfHistory(PyObject *self, 	PyObject *args)
+static PyObject *CmdGetObjectMatrix(PyObject *self, 	PyObject *args)
 {
   PyObject *result = NULL;
   char *name;
@@ -3649,7 +3661,7 @@ static PyObject *CmdGetObjectTxfHistory(PyObject *self, 	PyObject *args)
   ok = PyArg_ParseTuple(args,"si",&name,&state);
   
   APIEntry();
-  found = ExecutiveGetObjectTxfHistory(TempPyMOLGlobals,name,state,&history);
+  found = ExecutiveGetObjectMatrix(TempPyMOLGlobals,name,state,&history);
   APIExit();
   if(found) {
     if(history) 
@@ -5422,7 +5434,7 @@ static PyMethodDef Cmd_methods[] = {
    {"get_movie_locked",      CmdGetMovieLocked,       METH_VARARGS },
    {"get_names",             CmdGetNames,             METH_VARARGS },
    {"get_object_color_index",CmdGetObjectColorIndex,  METH_VARARGS },
-   {"get_object_txf_history",CmdGetObjectTxfHistory,  METH_VARARGS },
+   {"get_object_matrix"     ,CmdGetObjectMatrix,      METH_VARARGS },
    {"get_movie_playing",     CmdGetMoviePlaying,      METH_VARARGS },
 	{"get_position",	        CmdGetPosition,          METH_VARARGS },
 	{"get_povray",	           CmdGetPovRay,            METH_VARARGS },

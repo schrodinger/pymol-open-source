@@ -99,7 +99,7 @@ void RepLabelRender(RepLabel *I,CRay *ray,Pickable **pick)
 
 Rep *RepLabelNew(CoordSet *cs)
 {
-  PyMOLGlobals *G=cs->G;
+  PyMOLGlobals *G=cs->State.G;
   ObjectMolecule *obj;
   int a,a1,vFlag,c1;
   float *v,*v0,*vc;

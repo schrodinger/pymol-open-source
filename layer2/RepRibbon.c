@@ -230,7 +230,7 @@ static float smooth(float x,float power)
 
 Rep *RepRibbonNew(CoordSet *cs)
 {
-  PyMOLGlobals *G=cs->G;
+  PyMOLGlobals *G=cs->State.G;
   ObjectMolecule *obj;
   int a,b,a1,a2,c1,c2,*i,*s,*at,*seg,nAt,*atp;
   float *v,*v0,*v1,*v2,*v3;

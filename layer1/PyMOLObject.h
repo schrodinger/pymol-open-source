@@ -81,6 +81,20 @@ int ObjectFromPyList(PyMOLGlobals *G,PyObject *list,CObject *I);
 int ObjectGetCurrentState(CObject *I,int ignore_all_states);
 void ObjectAdjustStateRebuildRange(CObject *I,int *start, int *stop);
 
+typedef struct CObjectState {
+  PyMOLGlobals *G;
+  double *Matrix;
+} CObjectState;
+
+void ObjectStateInit(PyMOLGlobals *G,CObjectState *I);
+void ObjectStatePurge(CObjectState *I);
+void ObjectStateSetMatrix(CObjectState *I, double *matrix);
+double *ObjectStateGetMatrix(CObjectState *I);
+void ObjectStateTransformMatrix(CObjectState *I, double *matrix);
+void ObjectStateResetMatrix(CObjectState *I);
+PyObject *ObjectStateAsPyList(CObjectState *I);
+int ObjectStateFromPyList(PyMOLGlobals *G,PyObject *list,CObjectState *I);
+
 #endif
 
 

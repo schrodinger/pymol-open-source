@@ -102,7 +102,7 @@ static char *ObjectMoleculeGetCaption(ObjectMolecule *I)
   return NULL;
 }
 
-int ObjectMoleculeGetTxfHistory(ObjectMolecule *I,int state,double **history)
+int ObjectMoleculeGetMatrix(ObjectMolecule *I,int state,double **history)
 {
   int ok = true;
   if((state<0)||(state>=I->NCSet)) {
@@ -113,7 +113,7 @@ int ObjectMoleculeGetTxfHistory(ObjectMolecule *I,int state,double **history)
     if(!cs)
       ok=false;
     else {
-      (*history) = cs->TxfHistory;
+      (*history) = cs->State.Matrix;
     }
   }
   return ok;

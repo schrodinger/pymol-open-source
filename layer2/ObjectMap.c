@@ -57,6 +57,36 @@ typedef struct {
 #endif
 #endif
 
+static int ObjectMapIsStateValidActive(ObjectMap *I, int state)
+{
+  if((state>=0)&&(state<I->NState))
+    if(I->State[state].Active)
+      return 1;
+  return 0;
+}
+
+void ObjectMapTransformMatrix(ObjectMap *I, int state, double *matrix)
+{
+  if(ObjectMapIsStateValidActive(I,state))
+    ObjectStateTransformMatrix(&I->State[state].State,matrix);
+  ObjectMapUpdateExtents(I);
+}
+
+void ObjectMapResetMatrix(ObjectMap *I, int state)
+{
+  if(ObjectMapIsStateValidActive(I,state))
+    ObjectStateResetMatrix(&I->State[state].State);
+  ObjectMapUpdateExtents(I);
+}
+int ObjectMapGetMatrix(ObjectMap *I,int state,double **matrix)
+{
+  if(ObjectMapIsStateValidActive(I,state)) {
+    *matrix = ObjectStateGetMatrix(&I->State[state].State);
+    return true;
+  }
+  return false;
+}
+
 int ObjectMapStateGetExcludedStats(PyMOLGlobals *G,ObjectMapState *ms,float *vert_vla, float beyond,float within, float *level)
 {
   double sum=0.0,sumsq=0.0;
@@ -538,7 +568,7 @@ static PyObject *ObjectMapStateAsPyList(ObjectMapState *I)
 {
   PyObject *result = NULL;
 
-  result = PyList_New(15);
+  result = PyList_New(16);
   PyList_SetItem(result,0,PyInt_FromLong(I->Active));
   if(I->Crystal) {
     PyList_SetItem(result,1,CrystalAsPyList(I->Crystal));
@@ -565,7 +595,7 @@ static PyObject *ObjectMapStateAsPyList(ObjectMapState *I)
   } else {
     PyList_SetItem(result,5,PConvAutoNone(Py_None));
   }
-  PyList_SetItem(result,6,PConvFloatArrayToPyList(&I->Corner[0][0],24));
+  PyList_SetItem(result,6,PConvFloatArrayToPyList(I->Corner,24));
   PyList_SetItem(result,7,PConvFloatArrayToPyList(I->ExtentMin,3));
   PyList_SetItem(result,8,PConvFloatArrayToPyList(I->ExtentMax,3));
   PyList_SetItem(result,9,PyInt_FromLong(I->MapSource));
@@ -576,12 +606,13 @@ static PyObject *ObjectMapStateAsPyList(ObjectMapState *I)
   PyList_SetItem(result,13,PConvIntArrayToPyList(I->FDim,4));
   
   PyList_SetItem(result,14,IsosurfAsPyList(I->Field));
+  PyList_SetItem(result,15,ObjectStateAsPyList(&I->State));
 #if 0
   int Active;
   CCrystal *Crystal;
   int Div[3],Min[3],Max[3],FDim[4];
   Isofield *Field;
-  float Corner[8][3];
+  float Corner[24];
   int *Dim;
   float *Origin;
   float *Range;
@@ -661,7 +692,7 @@ static int ObjectMapStateFromPyList(PyMOLGlobals *G,ObjectMapState *I,PyObject *
         else 
           ok = PConvPyListToFloatArray(tmp,&I->Grid);
       }
-      if(ok) ok = PConvPyListToFloatArrayInPlace(PyList_GetItem(list,6),&I->Corner[0][0],24);
+      if(ok) ok = PConvPyListToFloatArrayInPlace(PyList_GetItem(list,6),I->Corner,24);
       if(ok) ok = PConvPyListToFloatArrayInPlace(PyList_GetItem(list,7),I->ExtentMin,3);
       if(ok) ok = PConvPyListToFloatArrayInPlace(PyList_GetItem(list,8),I->ExtentMax,3);
       if(ok) ok = PConvPyIntToInt(PyList_GetItem(list,9),&I->MapSource);
@@ -670,6 +701,7 @@ static int ObjectMapStateFromPyList(PyMOLGlobals *G,ObjectMapState *I,PyObject *
       if(ok) ok = PConvPyListToIntArrayInPlace(PyList_GetItem(list,12),I->Max,3);
       if(ok) ok = PConvPyListToIntArrayInPlace(PyList_GetItem(list,13),I->FDim,4);
       if(ok) ok = ((I->Field=IsosurfNewFromPyList(G,PyList_GetItem(list,14)))!=NULL);
+      if(ok&&(ll>15)) ok = ObjectStateFromPyList(G,PyList_GetItem(list,15),&I->State);
       if(ok) ObjectMapStateRegeneratePoints(I);
     }
   }
@@ -780,21 +812,40 @@ ObjectMapState *ObjectMapStateGetActive(ObjectMap *I,int state)
   return(ms);
 }
 
-
 void ObjectMapUpdateExtents(ObjectMap *I)
 {
   int a;
   I->Obj.ExtentFlag=false;
+  float *min_ext,*max_ext;
+  float tr_min[3],tr_max[3];
+
   for(a=0;a<I->NState;a++) {
-    if(I->State[a].Active)
+    ObjectMapState *ms = I->State+a;
+    if(ms->Active)
       {
+        if(I->State[a].State.Matrix) { 
+          transform44d3f(ms->State.Matrix,ms->ExtentMin,tr_min);
+          transform44d3f(ms->State.Matrix,ms->ExtentMax,tr_max);
+          {
+            float tmp;
+            int a;
+            for(a=0;a<3;a++) 
+              if(tr_min[a]>tr_max[a]) { tmp=tr_min[a]; tr_min[a]=tr_max[a]; tr_max[a]=tmp;}
+          }
+          min_ext = tr_min;
+          max_ext = tr_max;
+        } else {
+          min_ext = ms->ExtentMin;
+          max_ext = ms->ExtentMax;
+        }
+
         if(!I->Obj.ExtentFlag) {
-          copy3f(I->State[a].ExtentMin,I->Obj.ExtentMin);
-          copy3f(I->State[a].ExtentMax,I->Obj.ExtentMax);
+          copy3f(min_ext,I->Obj.ExtentMin);
+          copy3f(max_ext,I->Obj.ExtentMax);
           I->Obj.ExtentFlag=true;
         } else {
-          min3f(I->State[a].ExtentMin,I->Obj.ExtentMin,I->Obj.ExtentMin);
-          max3f(I->State[a].ExtentMax,I->Obj.ExtentMax,I->Obj.ExtentMax);
+          min3f(min_ext,I->Obj.ExtentMin,I->Obj.ExtentMin);
+          max3f(max_ext,I->Obj.ExtentMax,I->Obj.ExtentMax);
         }
       }
   }
@@ -836,6 +887,7 @@ int ObjectMapStateSetBorder(ObjectMapState *I,float level)
 
 void ObjectMapStatePurge(PyMOLGlobals *G,ObjectMapState *I)
 {
+  ObjectStatePurge(&I->State);
   if(I->Field) {
     IsosurfFieldFree(G,I->Field);
     I->Field=NULL;
@@ -875,65 +927,75 @@ static void ObjectMapRender(ObjectMap *I,int state,CRay *ray,Pickable **pick,int
     
     if(ms) {
       ObjectPrepareContext(&I->Obj,ray);
-
+      float *corner = ms->Corner;
+      float tr_corner[24];
+      
+      if(ms->State.Matrix) { /* transform the corners before drawing */
+        int a;
+        for(a=0;a<8;a++) {
+          transform44d3f(ms->State.Matrix,corner+3*a,tr_corner+3*a);
+        }
+        corner = tr_corner;
+      }
+      
       if(I->Obj.RepVis[cRepExtent]) {
         if(ray) {
           float *vc;
           vc = ColorGet(I->Obj.G,I->Obj.Color);
           ray->fColor3fv(ray,vc);
-          ray->fSausage3fv(ray,ms->Corner[0],ms->Corner[1],0.20F,vc,vc);
-          ray->fSausage3fv(ray,ms->Corner[0],ms->Corner[2],0.20F,vc,vc);
-          ray->fSausage3fv(ray,ms->Corner[2],ms->Corner[3],0.20F,vc,vc);
-          ray->fSausage3fv(ray,ms->Corner[1],ms->Corner[3],0.20F,vc,vc);
-          ray->fSausage3fv(ray,ms->Corner[0],ms->Corner[4],0.20F,vc,vc);
-          ray->fSausage3fv(ray,ms->Corner[1],ms->Corner[5],0.20F,vc,vc);
-          ray->fSausage3fv(ray,ms->Corner[2],ms->Corner[6],0.20F,vc,vc);
-          ray->fSausage3fv(ray,ms->Corner[3],ms->Corner[7],0.20F,vc,vc);
-          ray->fSausage3fv(ray,ms->Corner[4],ms->Corner[5],0.20F,vc,vc);
-          ray->fSausage3fv(ray,ms->Corner[4],ms->Corner[6],0.20F,vc,vc);
-          ray->fSausage3fv(ray,ms->Corner[6],ms->Corner[7],0.20F,vc,vc);
-          ray->fSausage3fv(ray,ms->Corner[5],ms->Corner[7],0.20F,vc,vc);
+          ray->fSausage3fv(ray,corner+3*0,corner+3*1,0.20F,vc,vc);
+          ray->fSausage3fv(ray,corner+3*0,corner+3*2,0.20F,vc,vc);
+          ray->fSausage3fv(ray,corner+3*2,corner+3*3,0.20F,vc,vc);
+          ray->fSausage3fv(ray,corner+3*1,corner+3*3,0.20F,vc,vc);
+          ray->fSausage3fv(ray,corner+3*0,corner+3*4,0.20F,vc,vc);
+          ray->fSausage3fv(ray,corner+3*1,corner+3*5,0.20F,vc,vc);
+          ray->fSausage3fv(ray,corner+3*2,corner+3*6,0.20F,vc,vc);
+          ray->fSausage3fv(ray,corner+3*3,corner+3*7,0.20F,vc,vc);
+          ray->fSausage3fv(ray,corner+3*4,corner+3*5,0.20F,vc,vc);
+          ray->fSausage3fv(ray,corner+3*4,corner+3*6,0.20F,vc,vc);
+          ray->fSausage3fv(ray,corner+3*6,corner+3*7,0.20F,vc,vc);
+          ray->fSausage3fv(ray,corner+3*5,corner+3*7,0.20F,vc,vc);
         } else if(G->HaveGUI && G->ValidContext) {
           if(pick) {
           } else {
             ObjectUseColor(&I->Obj);
             glDisable(GL_LIGHTING); 
             glBegin(GL_LINES);
-            glVertex3fv(ms->Corner[0]);
-            glVertex3fv(ms->Corner[1]);
+            glVertex3fv(corner+3*0);
+            glVertex3fv(corner+3*1);
             
-            glVertex3fv(ms->Corner[0]);
-            glVertex3fv(ms->Corner[2]);
+            glVertex3fv(corner+3*0);
+            glVertex3fv(corner+3*2);
           
-            glVertex3fv(ms->Corner[2]);
-            glVertex3fv(ms->Corner[3]);
+            glVertex3fv(corner+3*2);
+            glVertex3fv(corner+3*3);
           
-            glVertex3fv(ms->Corner[1]);
-            glVertex3fv(ms->Corner[3]);
+            glVertex3fv(corner+3*1);
+            glVertex3fv(corner+3*3);
           
-            glVertex3fv(ms->Corner[0]);
-            glVertex3fv(ms->Corner[4]);
+            glVertex3fv(corner+3*0);
+            glVertex3fv(corner+3*4);
           
-            glVertex3fv(ms->Corner[1]);
-            glVertex3fv(ms->Corner[5]);
+            glVertex3fv(corner+3*1);
+            glVertex3fv(corner+3*5);
           
-            glVertex3fv(ms->Corner[2]);
-            glVertex3fv(ms->Corner[6]);
+            glVertex3fv(corner+3*2);
+            glVertex3fv(corner+3*6);
           
-            glVertex3fv(ms->Corner[3]);
-            glVertex3fv(ms->Corner[7]);
+            glVertex3fv(corner+3*3);
+            glVertex3fv(corner+3*7);
           
-            glVertex3fv(ms->Corner[4]);
-            glVertex3fv(ms->Corner[5]);
+            glVertex3fv(corner+3*4);
+            glVertex3fv(corner+3*5);
           
-            glVertex3fv(ms->Corner[4]);
-            glVertex3fv(ms->Corner[6]);
+            glVertex3fv(corner+3*4);
+            glVertex3fv(corner+3*6);
           
-            glVertex3fv(ms->Corner[6]);
-            glVertex3fv(ms->Corner[7]);
+            glVertex3fv(corner+3*6);
+            glVertex3fv(corner+3*7);
           
-            glVertex3fv(ms->Corner[5]);
-            glVertex3fv(ms->Corner[7]);
+            glVertex3fv(corner+3*5);
+            glVertex3fv(corner+3*7);
           
             glEnd();
             glEnable(GL_LIGHTING);
@@ -947,6 +1009,7 @@ static void ObjectMapRender(ObjectMap *I,int state,CRay *ray,Pickable **pick,int
 void ObjectMapStateInit(PyMOLGlobals *G,ObjectMapState *I) 
 {
   ObjectMapStatePurge(G,I);
+  ObjectStateInit(G,&I->State);
   I->Crystal = CrystalNew(G);
   I->Field = NULL;
   I->Origin = NULL;
@@ -1036,7 +1099,7 @@ ObjectMapState *ObjectMapNewStateFromDesc(PyMOLGlobals *G,ObjectMap *I,ObjectMap
     
     /* define corners */
 
-    for(a=0;a<8;a++) copy3f(ms->Origin,ms->Corner[a]);
+    for(a=0;a<8;a++) copy3f(ms->Origin,ms->Corner+3*a);
 
     d = 0;
     for(c=0;c<2;c++) {
@@ -1046,7 +1109,7 @@ ObjectMapState *ObjectMapNewStateFromDesc(PyMOLGlobals *G,ObjectMap *I,ObjectMap
           v[1]= (b ? ms->Range[1] : 0.0F);
           for(a=0;a<2;a++) {
             v[0]= (a ? ms->Range[0] : 0.0F);
-            add3f(v,ms->Corner[d],ms->Corner[d]);
+            add3f(v,ms->Corner+3*d,ms->Corner+3*d);
             d++;
           }
         }
@@ -1424,7 +1487,7 @@ int ObjectMapCCP4StrToMap(ObjectMap *I,char *CCP4Str,int bytes,int state) {
           for(a=0;a<ms->FDim[0];a+=(ms->FDim[0]-1)) {
             v[0]=(a+ms->Min[0])/((float)ms->Div[0]);
             transform33f3f(ms->Crystal->FracToReal,v,vr);
-            copy3f(vr,ms->Corner[d]);
+            copy3f(vr,ms->Corner+3*d);
             d++;
           }
         }
@@ -1704,7 +1767,7 @@ static int ObjectMapPHIStrToMap(ObjectMap *I,char *PHIStr,int bytes,int state) {
 
       for(a=0;a<ms->FDim[0];a+=ms->FDim[0]-1) {
         v[0]=ms->Origin[0]+ms->Grid[0]*(a+ms->Min[0]);
-        copy3f(v,ms->Corner[d]);
+        copy3f(v,ms->Corner+3*d);
         d++;
       }
     }
@@ -1865,7 +1928,7 @@ int ObjectMapXPLORStrToMap(ObjectMap *I,char *XPLORStr,int state) {
               for(a=0;a<ms->FDim[0];a+=(ms->FDim[0]-1)) {
                 v[0]=(a+ms->Min[0])/((float)ms->Div[0]);
                 transform33f3f(ms->Crystal->FracToReal,v,vr);
-                copy3f(vr,ms->Corner[d]);
+                copy3f(vr,ms->Corner+3*d);
                 d++;
               }
             }
@@ -2221,7 +2284,7 @@ static int ObjectMapFLDStrToMap(ObjectMap *I,char *PHIStr,int bytes,int state)
       else 
         v[0]=ms->ExtentMax[0];
 
-          copy3f(v,ms->Corner[d]);
+          copy3f(v,ms->Corner+3*d);
           d++;
         }
       }
@@ -2597,7 +2660,7 @@ static int ObjectMapBRIXStrToMap(ObjectMap *I,char *BRIXStr,int bytes,int state)
               for(a=0;a<ms->FDim[0];a+=(ms->FDim[0]-1)) {
                 v[0]=(a+ms->Min[0])/((float)ms->Div[0]);
                 transform33f3f(ms->Crystal->FracToReal,v,vr);
-                copy3f(vr,ms->Corner[d]);
+                copy3f(vr,ms->Corner+3*d);
                 d++;
               }
             }
@@ -2884,7 +2947,7 @@ static int ObjectMapGRDStrToMap(ObjectMap *I,char *GRDStr,int bytes,int state)
           for(a=0;a<ms->FDim[0];a+=(ms->FDim[0]-1)) {
             v[0]=(a+ms->Min[0])/((float)ms->Div[0]);
             transform33f3f(ms->Crystal->FracToReal,v,vr);
-            copy3f(vr,ms->Corner[d]);
+            copy3f(vr,ms->Corner+3*d);
             d++;
           }
         }
@@ -3366,7 +3429,7 @@ static int ObjectMapDXStrToMap(ObjectMap *I,char *DXStr,int bytes,int state) {
         
         for(a=0;a<ms->FDim[0];a+=ms->FDim[0]-1) {
           v[0]=ms->Origin[0]+ms->Grid[0]*(a+ms->Min[0]);
-          copy3f(v,ms->Corner[d]);
+          copy3f(v,ms->Corner+3*d);
           d++;
         }
       }
@@ -3740,7 +3803,7 @@ int ObjectMapNumPyArrayToMapState(PyMOLGlobals *G,ObjectMapState *ms,PyObject *a
             v[1]=ms->Origin[1]+ms->Grid[1]*b;
             for(a=0;a<ms->FDim[0];a+=(ms->FDim[0]-1)) {
               v[0]=ms->Origin[0]+ms->Grid[0]*a;
-              copy3f(v,ms->Corner[d]);
+              copy3f(v,ms->Corner+3*d);
               d++;
             }
           }
@@ -3970,7 +4033,7 @@ ObjectMap *ObjectMapLoadChemPyMap(PyMOLGlobals *G,ObjectMap *I,PyObject *Map,
                   for(a=0;a<ms->FDim[0];a+=(ms->FDim[0]-1)) {
                     v[0]=(a+ms->Min[0])/((float)ms->Div[0]);
                     transform33f3f(ms->Crystal->FracToReal,v,vr);
-                    copy3f(vr,ms->Corner[d]);
+                    copy3f(vr,ms->Corner+3*d);
                     d++;
                   }
                 }

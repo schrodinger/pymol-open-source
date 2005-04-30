@@ -23,13 +23,15 @@ Z* -------------------------------------------------------------------
 #include"Isosurf.h"
 #include"CGO.h"
 
+
 typedef struct ObjectMapState {
+  CObjectState State;
   int Active;
   CCrystal *Crystal;
   int Div[3],Min[3],Max[3],FDim[4];
   int MapSource;
   Isofield *Field;
-  float Corner[8][3];
+  float Corner[24];
   int *Dim;
   float *Origin;
   float *Range;
@@ -97,6 +99,10 @@ PyObject *ObjectMapAsPyList(ObjectMap *I);
 int ObjectMapNewFromPyList(PyMOLGlobals *G,PyObject *list,ObjectMap **result);
 
 int ObjectMapInterpolate(ObjectMap *I,int state,float *array,float *result,int *flag,int n);
+
+void ObjectMapTransformMatrix(ObjectMap *I, int state, double *matrix);
+void ObjectMapResetMatrix(ObjectMap *I, int state);
+int ObjectMapGetMatrix(ObjectMap *I,int state,double **matrix);
 
 #endif
 

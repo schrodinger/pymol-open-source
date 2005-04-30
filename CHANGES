@@ -6,6 +6,15 @@ Changes up to 0.98
 
    beta35
 
+   * matrix_transfer, matrix_reset commands
+
+   * added support for row-major 4x4 homogenous transformation
+     matrices, and in resolving internal conflicts with TTT matrices,
+     made them more compatible with homogenous matrices
+
+   * internal matrix code cleaned up somewhat -- conventions used
+     are now explicit in most cases.
+
    * distance wizard becomes measurement wizard
 
    beta34

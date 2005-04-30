@@ -1319,7 +1319,7 @@ PYMOL API
          unlock()
       return r
 
-   def transform_selection(selection,matrix,state=0,log=0,transpose=0):
+   def transform_selection(selection,matrix,state=0,log=0,homogenous=0,transpose=0):
       '''
 
 "transform_selection" is UNSUPPORTED.
@@ -1362,7 +1362,7 @@ y2 = m8*(x0+m12) + m9*(x1+m13) + m10*(x2+m14) + m11
       try:
          lock()
          r = _cmd.transform_selection(str(selection),int(state)-1,
-                                      list(matrix),int(log))
+                                      list(matrix),int(log),int(homogenous))
       finally:
          unlock()
 
@@ -1383,7 +1383,7 @@ y2 = m8*(x0+m12) + m9*(x1+m13) + m10*(x2+m14) + m11
          unlock()
       return r
 
-   def transfer_matrix(source_name,    target_name,
+   def matrix_transfer(source_name,    target_name,
                        source_mode=0,  target_mode=0,
                        source_state=1, target_state=1,
                        target_undo=1, log=0, quiet=1):
@@ -1392,10 +1392,10 @@ y2 = m8*(x0+m12) + m9*(x1+m13) + m10*(x2+m14) + m11
          lock()
          r = _cmd.transfer_matrix(str(source_name),
                                   str(target_name),
-                                  int(source_state)-1,
-                                  int(target_state)-1,
                                   int(source_mode),
                                   int(target_mode),
+                                  int(source_state)-1,
+                                  int(target_state)-1,
                                   int(target_undo),
                                   int(log),
                                   int(quiet))
@@ -1403,7 +1403,7 @@ y2 = m8*(x0+m12) + m9*(x1+m13) + m10*(x2+m14) + m11
          unlock()
       return r
 
-   def reset_matrix(name, state=1, mode=0, log=0, quiet=1):
+   def matrix_reset(name, state=1, mode=0, log=0, quiet=1):
       r = None
       try:
          lock()
