@@ -113,6 +113,9 @@ void transform33Tf3f ( float  *m1, float  *m2,  float  *m3 ); /* uses transpose 
 void transform44f3f ( float  *m1, float  *m2,  float  *m3 );
 void transform44f4f ( float  *m1, float  *m2,  float  *m3 );
 
+void transform44d3f ( double  *m1, float  *m2,  float  *m3 );
+void inverse_transform44d3f (double *m1, float *m2, float *m3);
+
 void multiply33f33f ( float  *m1, float  *m2,  float  *m3 );
 void multiply33d33d ( double *m1, double *m2, double  *m3 );
 

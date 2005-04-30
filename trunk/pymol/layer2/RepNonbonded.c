@@ -184,7 +184,7 @@ void RepNonbondedRender(RepNonbonded *I,CRay *ray,Pickable **pick)
 
 Rep *RepNonbondedNew(CoordSet *cs)
 {
-  PyMOLGlobals *G=cs->G;
+  PyMOLGlobals *G=cs->State.G;
   ObjectMolecule *obj;
   int a,a1,c1;
   float nonbonded_size;

@@ -229,7 +229,7 @@ void M4XAnnoPurge(M4XAnnoType *m4x);
 void M4XAlignInit(M4XAlignType *align);
 void M4XAlignPurge(M4XAlignType *align);
 
-int ObjectMoleculeGetTxfHistory(ObjectMolecule *I,int state,double **history);
+int ObjectMoleculeGetMatrix(ObjectMolecule *I,int state,double **history);
 int ObjectMoleculeGetTopNeighbor(PyMOLGlobals *G,
                                  ObjectMolecule *I, 
                                  int start, int excluded);

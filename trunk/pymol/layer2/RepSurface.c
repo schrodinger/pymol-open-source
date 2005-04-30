@@ -960,7 +960,7 @@ int RepSurfaceSameVis(RepSurface *I,CoordSet *cs)
 
 void RepSurfaceColor(RepSurface *I,CoordSet *cs)
 {
-  PyMOLGlobals *G=cs->G;
+  PyMOLGlobals *G=cs->State.G;
   MapType *map;
   int a,i0,i,j,c1;
   float *v0,*vc,*c0;
@@ -1261,7 +1261,7 @@ void RepSurfaceColor(RepSurface *I,CoordSet *cs)
 
 Rep *RepSurfaceNew(CoordSet *cs)
 {
-  PyMOLGlobals *G=cs->G;
+  PyMOLGlobals *G=cs->State.G;
   ObjectMolecule *obj;
   int a,b,i,j,c;
   MapType *map,*solv_map;
@@ -1942,7 +1942,7 @@ void RepSurfaceGetSolventDots(RepSurface *I,CoordSet *cs,
                               float *extent,int *present,
                               int circumscribe)
 {
-  PyMOLGlobals *G=cs->G;
+  PyMOLGlobals *G=cs->State.G;
   ObjectMolecule *obj;
   int a,b,c=0,flag,i,j,ii,jj;
   float *v,*v0,vdw,*v1,*v2;

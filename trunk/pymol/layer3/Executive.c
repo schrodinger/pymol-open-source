@@ -109,7 +109,7 @@ void ExecutiveTransferMatrix(PyMOLGlobals *G,
   case 0: 
     { /* from previous coordinate transformation */
       double *history = NULL;
-      int found = ExecutiveGetObjectTxfHistory(G,source_name,source_state,&history);
+      int found = ExecutiveGetObjectMatrix(G,source_name,source_state,&history);
       if(found) {
         switch(target_mode) {
         case 0: /* to coordinates */
@@ -117,7 +117,7 @@ void ExecutiveTransferMatrix(PyMOLGlobals *G,
             double temp_inverse[16];
             if(target_undo) {
               double *target_history = NULL;
-              int target_found =  ExecutiveGetObjectTxfHistory(G,target_name,
+              int target_found =  ExecutiveGetObjectMatrix(G,target_name,
                                                            target_state,
                                                            &target_history);
               if(target_found && target_history) {
@@ -146,7 +146,12 @@ void ExecutiveTransferMatrix(PyMOLGlobals *G,
         case 1: /* set the display matrix (only) */
           {
             float tttf[16];
-            convertR44dTTTf(history,tttf);
+            if(history) {
+              convertR44dTTTf(history,tttf);
+            } else {
+              identity44f(tttf);
+            }
+            dump44f(tttf,"tttf");
             ExecutiveSetObjectTTT(G,target_name,tttf,target_state,quiet);
             /* to do: logging, return values, etc. */
           }      
@@ -173,39 +178,53 @@ void ExecutiveResetMatrix(PyMOLGlobals *G,
                           int   log,  
                           int quiet)
 {
-  switch(mode) {
-  case 0: /* transformations already applied to the coordinates */
-    { 
-      double *history = NULL;
-      int found = ExecutiveGetObjectTxfHistory(G,name,state,&history);
-      if(found && history) {
-        double temp_inverse[16];
-        float historyf[16];
-        invert_special44d44d(history, temp_inverse);
-        convert44d44f(temp_inverse,historyf);
-        ExecutiveTransformObjectSelection(G, name, state, "",
-                                          log,historyf,true);
+  CObject *obj = ExecutiveFindObjectByName(G,name);
+  if(obj) {
+    switch(obj->type) {
+    case cObjectMolecule:
+      switch(mode) {
+      case 0: /* transformations already applied to the coordinates */
+        { 
+          double *history = NULL;
+          int found = ExecutiveGetObjectMatrix(G,name,state,&history);
+          if(found && history) {
+            double temp_inverse[16];
+            float historyf[16];
+            invert_special44d44d(history, temp_inverse);
+            convert44d44f(temp_inverse,historyf);
+            ExecutiveTransformObjectSelection(G, name, state, "",
+                                              log,historyf,true);
+          }
+        }
+        break;
+      case 1: /* operation on the display matrix */
+        /* TO DO */
+        break;
       }
+      break;
+    case cObjectMap:
+      ObjectMapResetMatrix((ObjectMap*)obj,state);
+      break;
     }
-    break;
-  case 1: /* operation on the display matrix */
-    /* TO DO */
-    break;
   }
 }
 
-int ExecutiveGetObjectTxfHistory(PyMOLGlobals *G,char *name,int state,double **history)
+int ExecutiveGetObjectMatrix(PyMOLGlobals *G,char *name,int state,double **matrix)
 {
   /* right now, this only makes sense for molecule objects */
-  int ok=true;
-  ObjectMolecule *objMol = ExecutiveFindObjectMoleculeByName(G,name);
-  if(objMol) {
-    ObjectMoleculeGetTxfHistory(objMol,state,history);
-  } else {
-    ok=false;
+  int ok=false;
+  CObject *obj = ExecutiveFindObjectByName(G,name);
+  if(obj) {
+    switch(obj->type) {
+    case cObjectMolecule:
+      ok = ObjectMoleculeGetMatrix((ObjectMolecule*)obj,state,matrix);
+      break;
+    case cObjectMap:
+      ok = ObjectMapGetMatrix((ObjectMap*)obj,state,matrix);
+      break;
+    }
   }
   return ok;
-    
 }
 
 static int ExecutiveCountNames(PyMOLGlobals *G)
@@ -3285,27 +3304,48 @@ int ExecutiveTransformSelection(PyMOLGlobals *G,int state,char *s1,int log,float
 int ExecutiveTransformObjectSelection(PyMOLGlobals *G,char *name,int state,
                                       char *s1,int log,float *matrix,int homogenous)
 {
-  int sele=-1;
-  ObjectMolecule *obj = ExecutiveFindObjectMoleculeByName(G,name);
   int ok=true;
 
-  if(s1&&s1[0]) {
-    sele = SelectorIndexByName(G,s1);
-    if(sele<0)
-      ok=false;
+  CObject *obj = ExecutiveFindObjectByName(G,name);
+  if(obj) {
+    switch(obj->type) {
+    case cObjectMolecule: 
+      {
+        int sele=-1;
+        ObjectMolecule *objMol = (ObjectMolecule*)obj;
+        
+        if(s1&&s1[0]) {
+          sele = SelectorIndexByName(G,s1);
+          if(sele<0)
+            ok=false;
+        }
+        if(!obj) {
+          PRINTFB(G,FB_ObjectMolecule,FB_Errors)
+            "Error: object %s not found.\n",name 
+            ENDFB(G);
+        } else if(!ok) {
+          PRINTFB(G,FB_ObjectMolecule,FB_Errors)
+            "Error: selection object %s not found.\n",s1
+            ENDFB(G);
+        } else {
+          ObjectMoleculeTransformSelection(objMol,state,sele,matrix,log,s1,homogenous);
+        }
+        SceneDirty(G);
+      }
+      break;
+    case cObjectMap:
+      {
+        double matrixd[116];
+        if(homogenous) {
+          convert44f44d(matrix,matrixd);
+        } else {
+          convertTTTfR44d(matrix,matrixd);
+        }
+        ObjectMapTransformMatrix((ObjectMap*)obj,state,matrixd);
+      }
+      break;   
+    }
   }
-  if(!obj) {
-    PRINTFB(G,FB_ObjectMolecule,FB_Errors)
-      "Error: object %s not found.\n",name 
-      ENDFB(G);
-  } else if(!ok) {
-    PRINTFB(G,FB_ObjectMolecule,FB_Errors)
-      "Error: selection object %s not found.\n",s1
-      ENDFB(G);
-  } else {
-    ObjectMoleculeTransformSelection(obj,state,sele,matrix,log,s1,homogenous);
-  }
-  SceneDirty(G);
   return(ok);
 }
 

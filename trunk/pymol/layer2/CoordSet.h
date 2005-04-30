@@ -31,7 +31,7 @@ typedef struct CoordSet {
   void (*fAppendIndices)(struct CoordSet *I,int existingAtoms);
   void (*fExtendIndices)(struct CoordSet *I,int nAtom);
   void (*fInvalidateRep)(struct CoordSet *I,int type,int level);
-  PyMOLGlobals *G;
+  CObjectState State;
   ObjectMolecule *Obj;
   float *Coord;
   int *Color; 
@@ -56,7 +56,6 @@ typedef struct CoordSet {
   CCrystal *PeriodicBox;
   int PeriodicBoxType;
   int tmp_index; /* for saving */
-  double *TxfHistory;  /* transformation history (previously applied to coordinates) */
 } CoordSet;
 
 #define cCSet_NoPeriodicity 0

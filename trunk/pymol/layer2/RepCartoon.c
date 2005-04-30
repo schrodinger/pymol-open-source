@@ -118,7 +118,7 @@ static float smooth(float x,float power)
 
 Rep *RepCartoonNew(CoordSet *cs)
 {
-  PyMOLGlobals *G=cs->G;
+  PyMOLGlobals *G=cs->State.G;
   ObjectMolecule *obj;
   int a,b,c,f,e,a1,a2,c1,c2,i0,*i,*s,*at,*seg,nAt,*atp,a3,a4=0,*car,*cc,*sstype;
   float *v,*v0,*v1,*v2,*v3,*v4,*v5,*vo,*vn,*va;

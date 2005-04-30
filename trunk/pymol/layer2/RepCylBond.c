@@ -1139,7 +1139,7 @@ static void RepValence(float **v_ptr,int *n_ptr, /* opengl */
 
 Rep *RepCylBondNew(CoordSet *cs)
 {
-  PyMOLGlobals *G=cs->G;
+  PyMOLGlobals *G=cs->State.G;
   ObjectMolecule *obj;
   int a,a1,a2,c1,c2,s1,s2;
   register int b1,b2;

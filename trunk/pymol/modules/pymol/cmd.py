@@ -1261,7 +1261,7 @@ SEE ALSO
            get_movie_locked,   \
            get_names,          \
            get_names_of_type,  \
-           get_object_txf_history, \
+           get_object_matrix, \
            get_phipsi,         \
            get_position,       \
            get_povray,         \
@@ -1314,6 +1314,8 @@ SEE ALSO
            iterate_state,      \
            map_set_border,     \
            map_double,         \
+           matrix_transfer,    \
+           matrix_reset,       \
            protect,            \
            push_undo,          \
            redo,               \
@@ -1321,7 +1323,6 @@ SEE ALSO
            remove_picked,      \
            rename,             \
            replace,            \
-           reset_matrix,       \
            rotate,             \
            sculpt_purge,       \
            sculpt_deactivate,  \
@@ -1337,7 +1338,6 @@ SEE ALSO
            sort,               \
            split_states,       \
            torsion,            \
-           transfer_matrix,    \
            transform_object,   \
            transform_selection,\
            translate,          \
@@ -1638,7 +1638,9 @@ SEE ALSO
          'map_set_border': [ map_set_border    , 0 , 0 , ''  , parsing.STRICT ],
          'map_double'    : [ map_double        , 0 , 0 , ''  , parsing.STRICT ],      
          'map_new'       : [ map_new           , 0 , 0 , ''  , parsing.STRICT ],    
-         'mappend'       : [ mappend           , 2 , 2 , ':' , parsing.MOVIE  ], 
+         'mappend'       : [ mappend           , 2 , 2 , ':' , parsing.MOVIE  ],
+         'matrix_reset'  : [ matrix_reset      , 0 , 0 , ''  , parsing.STRICT ],         
+         'matrix_transfer': [ matrix_transfer  , 0 , 0 , ''  , parsing.STRICT ],
          'mem'           : [ mem               , 0 , 0 , ''  , parsing.STRICT ],
          'meter_reset'   : [ meter_reset       , 0 , 0 , ''  , parsing.STRICT ],
          'move'          : [ move              , 0 , 0 , ''  , parsing.STRICT ],
@@ -1683,7 +1685,6 @@ SEE ALSO
          'replace'       : [ replace           , 0 , 0 , ''  , parsing.STRICT ],
          'replace_wizard': [ replace_wizard    , 0 , 0 , ''  , parsing.STRICT ],
          'reset'         : [ reset             , 0 , 0 , ''  , parsing.STRICT ],
-         'reset_matrix'  : [ reset_matrix      , 0 , 0 , ''  , parsing.STRICT ],         
          'resume'        : [ resume            , 0 , 0 , ''  , parsing.STRICT ],
          'return'        : [ python_help       , 0 , 0 , ''  , parsing.PYTHON ],   
          'rewind'        : [ rewind            , 0 , 0 , ''  , parsing.STRICT ],
@@ -1727,7 +1728,6 @@ SEE ALSO
          'test'          : [ test              , 0 , 0 , ''  , parsing.STRICT ],
          'toggle'        : [ toggle            , 0 , 0 , ''  , parsing.STRICT ],      
          'torsion'       : [ torsion           , 0 , 0 , ''  , parsing.STRICT ], # vs toggle_object
-         'transfer_matrix': [ transfer_matrix  , 0 , 0 , ''  , parsing.STRICT ],
          'translate'     : [ translate         , 0 , 0 , ''  , parsing.STRICT ],
          'try'           : [ python_help       , 0 , 0 , ''  , parsing.PYTHON ],
          'turn'          : [ turn              , 0 , 0 , ''  , parsing.STRICT ],

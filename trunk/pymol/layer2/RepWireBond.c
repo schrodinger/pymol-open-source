@@ -459,7 +459,7 @@ void RepWireBondRender(RepWireBond *I,CRay *ray,Pickable **pick)
 
 Rep *RepWireBondNew(CoordSet *cs)
 {
-  PyMOLGlobals *G=cs->G;
+  PyMOLGlobals *G=cs->State.G;
   ObjectMolecule *obj;
   register int a1, a2, b1, b2;
   int a,c1,c2,s1,s2,ord;

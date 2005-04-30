@@ -228,10 +228,11 @@ PyObject *ObjectMeshAsPyList(ObjectMesh *I)
 
 static void ObjectMeshStateFree(ObjectMeshState *ms)
 {
-  if(ms->G->HaveGUI) {
+  ObjectStatePurge(&ms->State);
+  if(ms->State.G->HaveGUI) {
     if(ms->displayList) {
       if(PIsGlutThread()) {
-        if(ms->G->ValidContext) {
+        if(ms->State.G->ValidContext) {
           glDeleteLists(ms->displayList,1);
           ms->displayList = 0;
         }
@@ -392,6 +393,11 @@ static void ObjectMeshUpdate(ObjectMesh *I)
               CGOFree(ms->UnitCellCGO);
             ms->UnitCellCGO = CrystalGetUnitCellCGO(&ms->Crystal);
           } 
+          if(oms->State.Matrix) {
+            ObjectStateSetMatrix(&ms->State,oms->State.Matrix);
+          } else if(ms->State.Matrix) {
+            ObjectStateResetMatrix(&ms->State);
+          }
           ms->RefreshFlag=false;
         }
       }
@@ -403,8 +409,31 @@ static void ObjectMeshUpdate(ObjectMesh *I)
             " ObjectMesh: updating \"%s\".\n" , I->Obj.Name 
           ENDFB(G);
           if(oms->Field) {
-            IsosurfGetRange(I->Obj.G,oms->Field,oms->Crystal,
-                            ms->ExtentMin,ms->ExtentMax,ms->Range);
+
+            {
+              float *min_ext,*max_ext;
+              float tr_min[3],tr_max[3];
+              
+              if(ms->State.Matrix) {  /* convert back into original map coordinates 
+                                         for range calculation */
+                inverse_transform44d3f(ms->State.Matrix,ms->ExtentMin,tr_min);
+                inverse_transform44d3f(ms->State.Matrix,ms->ExtentMax,tr_max);
+                {
+                  float tmp;
+                  int a;
+                  for(a=0;a<3;a++) 
+                    if(tr_min[0]>tr_max[0]) { tmp=tr_min[0]; tr_min[0]=tr_max[0]; tr_max[0]=tmp;}
+                }
+                min_ext = tr_min;
+                max_ext = tr_max;
+              } else {
+                min_ext = ms->ExtentMin;
+                max_ext = ms->ExtentMax;
+              }
+              
+              IsosurfGetRange(I->Obj.G,oms->Field,oms->Crystal,
+                              min_ext,max_ext,ms->Range);
+            }
             /*          printf("%d %d %d %d %d %d\n",
                    ms->Range[0],
                    ms->Range[1],
@@ -418,6 +447,18 @@ static void ObjectMeshUpdate(ObjectMesh *I)
                           &ms->N,&ms->V,
                           ms->Range,
                           ms->DotFlag); 
+
+            if(ms->State.Matrix && VLAGetSize(ms->N)&&VLAGetSize(ms->V)) { 
+              int count;
+              /* take map coordinates back to view coordinates if necessary */
+              v = ms->V;
+              count = VLAGetSize(ms->V)/3;
+              while(count--) {
+                transform44d3f(ms->State.Matrix,v,v);
+                v+=3;
+              }
+            }
+
           }
           if(ms->CarveFlag&&ms->AtomVertex&&
              VLAGetSize(ms->N)&&VLAGetSize(ms->V)) {
@@ -681,7 +722,9 @@ ObjectMesh *ObjectMeshNew(PyMOLGlobals *G)
 /*========================================================================*/
 void ObjectMeshStateInit(PyMOLGlobals *G,ObjectMeshState *ms)
 {
-  ms->G = G;
+  if(ms->Active) 
+    ObjectStatePurge(&ms->State);
+  ObjectStateInit(G,&ms->State);
   if(!ms->V) {
     ms->V = VLAlloc(float,10000);
   }
@@ -737,7 +780,36 @@ ObjectMesh *ObjectMeshFromBox(PyMOLGlobals *G,ObjectMesh *obj,ObjectMap *map,
   if(oms) {
     copy3f(mn,ms->ExtentMin); /* this is not exactly correct...should actually take vertex points from range */
     copy3f(mx,ms->ExtentMax);
-    IsosurfGetRange(G,oms->Field,oms->Crystal,mn,mx,ms->Range);
+
+    if(oms->State.Matrix) {
+      ObjectStateSetMatrix(&ms->State,oms->State.Matrix);
+    } else if(ms->State.Matrix) {
+      ObjectStateResetMatrix(&ms->State);
+    }
+    
+    {
+      float *min_ext,*max_ext;
+      float tr_min[3],tr_max[3];
+      
+      if(ms->State.Matrix) {  /* convert back into original map coordinates 
+                                 for range calculation */
+        inverse_transform44d3f(ms->State.Matrix,ms->ExtentMin,tr_min);
+        inverse_transform44d3f(ms->State.Matrix,ms->ExtentMax,tr_max);
+        {
+          float tmp;
+          int a;
+          for(a=0;a<3;a++) 
+            if(tr_min[0]>tr_max[0]) { tmp=tr_min[0]; tr_min[0]=tr_max[0]; tr_max[0]=tmp;}
+        }
+        min_ext = tr_min;
+        max_ext = tr_max;
+      } else {
+        min_ext = ms->ExtentMin;
+        max_ext = ms->ExtentMax;
+      }
+
+      IsosurfGetRange(G,oms->Field,oms->Crystal,min_ext,max_ext,ms->Range);
+    }
     ms->ExtentFlag = true;
   }
   if(carve!=0.0) {

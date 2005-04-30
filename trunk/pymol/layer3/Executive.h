@@ -229,7 +229,7 @@ int ExecutiveMultiSave(PyMOLGlobals *G,char *fname,char *name,int state,int appe
 int ExecutiveIdentifyObjects(PyMOLGlobals *G,char *s1,int mode,int **indexVLA,ObjectMolecule ***objVLA);
 int ExecutiveCombineObjectTTT(PyMOLGlobals *G,char *name,float *ttt);
 int ExecutiveSetObjectTTT(PyMOLGlobals *G,char *name,float *ttt,int state,int quiet);
-int ExecutiveGetObjectTxfHistory(PyMOLGlobals *G,char *name,int state,double **history);
+int ExecutiveGetObjectMatrix(PyMOLGlobals *G,char *name,int state,double **matrix);
 
 int ExecutiveSetGeometry(PyMOLGlobals *G,char *s1,int geom,int valence);
 int ExecutiveSculptIterateAll(PyMOLGlobals *G);

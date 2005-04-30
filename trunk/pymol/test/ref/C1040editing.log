@@ -324,7 +324,7 @@ PyMOL>get_extent
  cmd.extent: min: [  -5.188, -20.331,  13.157]
  cmd.extent: max: [   8.919,   0.863,  27.058]
 PyMOL>origin pept,object=pept
-PyMOL>rotate x,45,object=pept
+PyMOL>rotate x,-45,object=pept
 PyMOL>get_extent
  cmd.extent: min: [  -5.188, -18.391,  12.126]
  cmd.extent: max: [   8.919,  -1.236,  29.153]
