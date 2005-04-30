@@ -87,10 +87,10 @@ typedef struct {
 struct _CScene {
   Block *Block;
   ObjRec *Obj;
-  float RotMatrix[16];
-  float InvMatrix[16];
-  float ModMatrix[16];
-  float ProMatrix[16];
+  float RotMatrix[16]; /* WARNING: column major, as per OpenGL spec */
+  float InvMatrix[16]; /* WARNING: column major, as per OpenGL spec */
+  float ModMatrix[16]; /* WARNING: column major, as per OpenGL spec */
+  float ProMatrix[16]; /* WARNING: column major, as per OpenGL spec */
   float Scale;
   int Width,Height;
   int Button;
@@ -541,7 +541,7 @@ void SceneGetPos(PyMOLGlobals *G,float *pos)
     ENDFD3f(I->Origin);
   /* take origin into camera coords */
 
-  MatrixTransform3f(I->RotMatrix,I->Origin,pos); 
+  MatrixTransformC44fAs33f3f(I->RotMatrix,I->Origin,pos); 
 
   PRINTFD(G,FB_Scene)
     " SceneGetPos: origin in camera  "
@@ -558,7 +558,7 @@ void SceneGetPos(PyMOLGlobals *G,float *pos)
 
   /* convert back to real coordinates */
 
-  MatrixInvTransform3f(I->RotMatrix,pos,pos);
+  MatrixInvTransformC44fAs33f3f(I->RotMatrix,pos,pos);
 
   PRINTFD(G,FB_Scene)
     " SceneGetPos: center            "
@@ -569,7 +569,7 @@ void SceneGetPos(PyMOLGlobals *G,float *pos)
 void SceneApplyRotMatrix(PyMOLGlobals *G,float *src,float *dst)
 {
   register CScene *I=G->Scene;
-  MatrixTransform3f(I->RotMatrix,src,dst);
+  MatrixTransformC44fAs33f3f(I->RotMatrix,src,dst);
 }
 /*========================================================================*/
 int SceneMultipick(PyMOLGlobals *G,Multipick *smp)
@@ -731,7 +731,7 @@ void SceneClip(PyMOLGlobals *G,int plane,float movement,char *sele,int state) /*
       else {
         average3f(mn,mx,cent); /* get center of selection */
         subtract3f(cent,I->Origin,v0); /* how far from origin? */
-        MatrixTransform3f(I->RotMatrix,v0,offset); /* convert to view-space */
+        MatrixTransformC44fAs33f3f(I->RotMatrix,v0,offset); /* convert to view-space */
       }
     } else {
       sele = NULL;
@@ -754,7 +754,7 @@ void SceneClip(PyMOLGlobals *G,int plane,float movement,char *sele,int state) /*
     if(sele) {
       if(sele[0]) {
         average3f(mn,mx,cent); /* get center of selection */
-        MatrixTransform3f(I->RotMatrix,I->Origin,origin); /* convert to view-space */
+        MatrixTransformC44fAs33f3f(I->RotMatrix,I->Origin,origin); /* convert to view-space */
         subtract3f(mx,origin,mx); /* how far from origin? */
         subtract3f(mn,origin,mn); /* how far from origin? */
         SceneClipSet(G,-I->Pos[2]-mx[2]-movement,-I->Pos[2]-mn[2]+movement);
@@ -1257,7 +1257,7 @@ void SceneWindowSphere(PyMOLGlobals *G,float *location,float radius)
 
   dist = I->Pos[2];
 
-  MatrixTransform3f(I->RotMatrix,v0,I->Pos); /* convert to view-space */
+  MatrixTransformC44fAs33f3f(I->RotMatrix,v0,I->Pos); /* convert to view-space */
   fov = SettingGet(G,cSetting_field_of_view);
   if(aspRat<1.0)
     fov *= aspRat;
@@ -1289,7 +1289,7 @@ void SceneRelocate(PyMOLGlobals *G,float *location)
 
   /*  printf("%8.3f %8.3f %8.3f\n",I->Front,I->Pos[2],I->Back);*/
 
-  MatrixTransform3f(I->RotMatrix,v0,I->Pos); /* convert to view-space */
+  MatrixTransformC44fAs33f3f(I->RotMatrix,v0,I->Pos); /* convert to view-space */
 
   I->Pos[2]=dist;
   I->Front=(-I->Pos[2]-(slab_width*0.50F));
@@ -1314,7 +1314,7 @@ void SceneOriginSet(PyMOLGlobals *G,float *origin,int preserve)
   if(preserve) /* preserve current viewing location */
 	 {
 		subtract3f(origin,I->Origin,v0); /* model-space translation */
-		MatrixTransform3f(I->RotMatrix,v0,v1); /* convert to view-space */
+		MatrixTransformC44fAs33f3f(I->RotMatrix,v0,v1); /* convert to view-space */
 		add3f(I->Pos,v1,I->Pos); /* offset view to compensate */
 	 }
   I->Origin[0]=origin[0]; /* move origin */
@@ -1770,7 +1770,7 @@ static void SceneDoRoving(PyMOLGlobals *G,float old_front,
 
     old_pos2 = I->Pos[2];
 
-    MatrixInvTransform3f(I->RotMatrix,v2,v2); /* transform offset into realspace */
+    MatrixInvTransformC44fAs33f3f(I->RotMatrix,v2,v2); /* transform offset into realspace */
     subtract3f(I->Origin,v2,v2); /* calculate new origin location */
     SceneOriginSet(G,v2,true); /* move origin, preserving camera location */
     
@@ -2493,12 +2493,12 @@ float SceneGetScreenVertexScale(PyMOLGlobals *G,float *v1)
   /* now, scale properly given the current projection matrix */
   copy3f(v1,p1);
   p1[3] = 1.0;
-  MatrixTransform44f4f(I->ModMatrix,p1,p2); /* modelview transformation */
+  MatrixTransformC44f4f(I->ModMatrix,p1,p2); /* modelview transformation */
   copy4f(p2,p1);
   p2[0]+=1.0;
   /* projection transformation */
-  MatrixTransform44f4f(I->ProMatrix,p1,p1); 
-  MatrixTransform44f4f(I->ProMatrix,p2,p2);
+  MatrixTransformC44f4f(I->ProMatrix,p1,p1); 
+  MatrixTransformC44f4f(I->ProMatrix,p2,p2);
   /*  dump44f(I->ProMatrix,"pro");*/
   /* perspective division */
   p1[0]=p1[0]/p1[3];
@@ -2800,8 +2800,6 @@ void SceneRovingUpdate(PyMOLGlobals *G)
               PFlush();
               refresh_flag=true;
             }
-
-
       SettingSet(G,cSetting_auto_zoom,(float)auto_save);            
     }
 
@@ -2930,7 +2928,7 @@ static int SceneDrag(Block *block,int x,int y,int mod,double when)
           v2[0] = (x-I->LastX)*vScale;
           v2[1] = (y-I->LastY)*vScale;
           v2[2] = 0;
-          MatrixInvTransform44fAs33f3f(I->RotMatrix,v2,v2); 
+          MatrixInvTransformC44fAs33f3f(I->RotMatrix,v2,v2); 
           break;
         case 1:
           {
@@ -2991,8 +2989,8 @@ static int SceneDrag(Block *block,int x,int y,int mod,double when)
             v3[2] = 1.0F;
             
             /* transform into model coodinate space */
-            MatrixInvTransform44fAs33f3f(I->RotMatrix,v2,v2); 
-            MatrixInvTransform44fAs33f3f(I->RotMatrix,v3,v3); 
+            MatrixInvTransformC44fAs33f3f(I->RotMatrix,v2,v2); 
+            MatrixInvTransformC44fAs33f3f(I->RotMatrix,v3,v3); 
 
             if(mode!=cButModeMoveAtom) {
               EditorDrag(G,(ObjectMolecule*)obj,I->LastPicked.index,mode,
@@ -3029,8 +3027,8 @@ static int SceneDrag(Block *block,int x,int y,int mod,double when)
               v3[2] = 1.0F;
               
               /* transform into model coodinate space */
-              MatrixInvTransform44fAs33f3f(I->RotMatrix,v2,v2); 
-              MatrixInvTransform44fAs33f3f(I->RotMatrix,v3,v3); 
+              MatrixInvTransformC44fAs33f3f(I->RotMatrix,v2,v2); 
+              MatrixInvTransformC44fAs33f3f(I->RotMatrix,v3,v3); 
 
               ObjectSliceDrag(slice,SceneGetState(G),mode,v1,v2,v3);
             }
@@ -3396,16 +3394,16 @@ void SceneFree(PyMOLGlobals *G)
 void SceneResetMatrix(PyMOLGlobals *G)
 {
   register CScene *I=G->Scene;
-  MatrixLoadIdentity44f(I->RotMatrix);
+  identity44f(I->RotMatrix);
   SceneUpdateInvMatrix(G);
 }
 /*========================================================================*/
 void SceneSetDefaultView(PyMOLGlobals *G) {
   register CScene *I=G->Scene;
 
-  MatrixLoadIdentity44f(I->RotMatrix);
-  MatrixLoadIdentity44f(I->ModMatrix);
-  MatrixLoadIdentity44f(I->ProMatrix);
+  identity44f(I->RotMatrix);
+  identity44f(I->ModMatrix);
+  identity44f(I->ProMatrix);
   SceneUpdateInvMatrix(G);
   
   I->ViewNormal[0]=0.0F;
@@ -3683,13 +3681,13 @@ void SceneRay(PyMOLGlobals *G,int ray_width,int ray_height,int mode,
   timing = UtilGetSeconds(G); /* start timing the process */
   
   /* start afresh, looking in the negative Z direction (0,0,-1) from (0,0,0) */
-  MatrixLoadIdentity44f(rayView);
+  identity44f(rayView);
 
   /* move the camera to the location we are looking at */
-  MatrixTranslate44f3f(rayView,I->Pos[0],I->Pos[1],I->Pos[2]);
+  MatrixTranslateC44f(rayView,I->Pos[0],I->Pos[1],I->Pos[2]);
 
   if(shift) {
-    MatrixTranslate44f3f(rayView,shift,0.0F,0.0F);
+    MatrixTranslateC44f(rayView,shift,0.0F,0.0F);
   }
   /* move the camera so that we can see the origin 
 	* NOTE, vector is given in the coordinates of the world's motion
@@ -3700,18 +3698,17 @@ void SceneRay(PyMOLGlobals *G,int ray_width,int ray_height,int mode,
 
   if(angle) {
     float temp[16];
-    MatrixLoadIdentity44f(temp);
-    MatrixRotate44f3f(temp,(float)(-PI*angle/180),0.0F,1.0F,0.0F);
-    MatrixMultiply44f(I->RotMatrix,temp);
-    MatrixMultiply44f(temp,rayView);
+    identity44f(temp);
+    MatrixRotateC44f(temp,(float)(-PI*angle/180),0.0F,1.0F,0.0F);
+    MatrixMultiplyC44f(I->RotMatrix,temp);
+    MatrixMultiplyC44f(temp,rayView);
   } else {
-    MatrixMultiply44f(I->RotMatrix,rayView);
+    MatrixMultiplyC44f(I->RotMatrix,rayView);
   }
 
 
   /* 5. move the origin to the center of rotation */
-  MatrixTranslate44f3f(rayView,-I->Origin[0],-I->Origin[1],-I->Origin[2]);
-
+  MatrixTranslateC44f(rayView,-I->Origin[0],-I->Origin[1],-I->Origin[2]);
 
   if(Feedback(G,FB_Scene,FB_Debugging)) {
     fprintf(stderr,"SceneRay: %8.3f %8.3f %8.3f\n",
@@ -4301,7 +4298,7 @@ void SceneRender(PyMOLGlobals *G,Pickable *pick,int x,int y,Multipick *smp)
 
     /* 2. set the normals to reflect light back at the camera */
 
-    MatrixInvTransform3f(I->RotMatrix,zAxis,normal); 
+    MatrixInvTransformC44fAs33f3f(I->RotMatrix,zAxis,normal); 
     copy3f(normal,I->ViewNormal);
   
     if(SettingGet(G,cSetting_normal_workaround)) {
@@ -4999,9 +4996,9 @@ void SceneRotate(PyMOLGlobals *G,float angle,float x,float y,float z)
   float temp[16];
   int a;
   angle = (float)(-PI*angle/180.0);
-  MatrixLoadIdentity44f(temp);
-  MatrixRotate44f3f(temp,angle,x,y,z);
-  MatrixMultiply44f(I->RotMatrix,temp);
+  identity44f(temp);
+  MatrixRotateC44f(temp,angle,x,y,z);
+  MatrixMultiplyC44f(I->RotMatrix,temp);
   for(a=0;a<16;a++) 
     I->RotMatrix[a]=temp[a];
   SceneUpdateInvMatrix(G);
@@ -5019,7 +5016,7 @@ void SceneRotate(PyMOLGlobals *G,float angle,float x,float y,float z)
 void SceneApplyMatrix(PyMOLGlobals *G,float *m)
 {
   register CScene *I=G->Scene;
-  MatrixMultiply44f(m,I->RotMatrix);
+  MatrixMultiplyC44f(m,I->RotMatrix);
   SceneDirty(G);
   
   /*  glPushMatrix();

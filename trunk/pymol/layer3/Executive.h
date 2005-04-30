@@ -146,6 +146,12 @@ float *ExecutiveRMSStates(PyMOLGlobals *G,char *s1,int target,int mode,int quiet
 int *ExecutiveIdentify(PyMOLGlobals *G,char *s1,int mode);
 int ExecutiveIndex(PyMOLGlobals *G,char *s1,int mode,int **indexVLA,ObjectMolecule ***objVLA);
 int ExecutiveReset(PyMOLGlobals *G,int cmd,char *name);
+void ExecutiveResetMatrix(PyMOLGlobals *G,
+                          char *name,
+                          int   mode,
+                          int   state,
+                          int   log,  
+                          int quiet);
 void ExecutiveDrawNow(PyMOLGlobals *G);
 int ExecutiveCartoon(PyMOLGlobals *G,int type,char *sele);
 void ExecutiveSetAllVisib(PyMOLGlobals *G,int state);
@@ -159,12 +165,12 @@ int ExecutiveOrigin(PyMOLGlobals *G,char *name,int preserve,char *oname,float *p
 int ExecutiveCenter(PyMOLGlobals *G,char *name,int state,int inclusive, float animate, float *pos);
 int ExecutiveWindowZoom(PyMOLGlobals *G,char *name,float buffer,
                         int state,int inclusive,float animate);
-int ExecutiveGetMoment(PyMOLGlobals *G,char *name,Matrix33d mi,int state);
+int ExecutiveGetMoment(PyMOLGlobals *G,char *name,double *mi,int state);
 
 char *ExecutiveGetChains(PyMOLGlobals *G,char *sele,int state,int *null_chain);
 
-void ExecutiveOrient(PyMOLGlobals *G,char *sele,Matrix33d mi,
-                     int state, float animate,int complete, float buffer);
+void ExecutiveOrient(PyMOLGlobals *G,char *sele,double *mi,
+                     int state,float animate,int complete,float buffer);
 char *ExecutiveSeleToPDBStr(PyMOLGlobals *G,char *s1,int state,int conectFlag,int mode);
 int ExecutiveStereo(PyMOLGlobals *G,int flag);
 void ExecutiveCopy(PyMOLGlobals *G,char *src,char *dst);
@@ -278,6 +284,12 @@ float ExecutiveAngle(PyMOLGlobals *G,char *nam,char *s1,char *s2,char *s3,int mo
 float ExecutiveDihedral(PyMOLGlobals *G,char *nam,char *s1,char *s2,char *s3,char *s4,int mode,
                      int labels,int reset,int zoom,int quiet);
 
+void ExecutiveTransferMatrix(PyMOLGlobals *G,
+                             char *source_name, char *target_name,
+                             int source_mode, int target_mode, 
+                             int source_state, int target_state,
+                             int target_undo,
+                             int log, int quiet);
 
 #endif
 

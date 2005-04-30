@@ -22,13 +22,13 @@ Z* -------------------------------------------------------------------
 
 typedef struct CViewElem {
 
-  int matrix_flag; /* homogenous transformation (rotation, translation, etc.) */
+  int matrix_flag; /* homogenous transformation, column-major for OpenGL compatibility */
   double matrix[16];
 
-  int pre_flag; /* pre-translation (position) */
+  int pre_flag; /* pre-tranformation translation */
   double pre[3];
 
-  int post_flag; /* post-translation (origin) */
+  int post_flag; /* post-transformation translation */
   double post[3];
 
   int clip_flag; /* clip planes (only useful for top-level views...only applied through Scene) */

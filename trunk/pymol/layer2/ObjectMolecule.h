@@ -171,6 +171,7 @@ typedef struct {
 #define OMOP_CheckVis 52
 #define OMOP_OnOff 53
 #define OMOP_Pop 54
+#define OMOP_TransformR44f 55
 
 #include"CoordSet.h"
 

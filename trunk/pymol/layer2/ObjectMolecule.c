@@ -4830,7 +4830,10 @@ int ObjectMoleculeTransformSelection(ObjectMolecule *I,int state,
             if(!(ai->protekted==1))
               if(SelectorIsMember(I->Obj.G,s,sele))
                 {
-                  CoordSetTransformAtom(cs,a,matrix);
+                  if(homogenous) 
+                    CoordSetTransformAtomR44f(cs,a,matrix);
+                  else
+                    CoordSetTransformAtomTTTf(cs,a,matrix);                    
                   flag=true;
                 }
             ai++;
@@ -4838,8 +4841,12 @@ int ObjectMoleculeTransformSelection(ObjectMolecule *I,int state,
         } else { /* transforming whole coordinate set */
           ai=I->AtomInfo;
           for(a=0;a<I->NAtom;a++) {
-            if(!(ai->protekted==1))
-              CoordSetTransformAtom(cs,a,matrix);
+            if(!(ai->protekted==1)) {
+              if(homogenous) 
+                CoordSetTransformAtomR44f(cs,a,matrix);
+              else
+                CoordSetTransformAtomTTTf(cs,a,matrix);                
+            }
             ai++;
           }
           flag=true;
@@ -4867,7 +4874,7 @@ int ObjectMoleculeTransformSelection(ObjectMolecule *I,int state,
     switch(logging) {
     case cPLog_pml:
       sprintf(line,
-              "_ cmd.transform_object('%s',[\\\n_ %15.9f,%15.9f,%15.9f,%15.9f,\\\n_ %15.9f,%15.9f,%15.9f,%15.9f,\\\n_ %15.9f,%15.9f,%15.9f,%15.9f,\\\n_ %15.9f,%15.9f,%15.9f,%15.9f\\\n_     ],%d,%d,%s,%d)\n",
+              "_ cmd.transform_object('%s',[\\\n_ %15.9f,%15.9f,%15.9f,%15.9f,\\\n_ %15.9f,%15.9f,%15.9f,%15.9f,\\\n_ %15.9f,%15.9f,%15.9f,%15.9f,\\\n_ %15.9f,%15.9f,%15.9f,%15.9f\\\n_     ],%d,%d%s,%d)\n",
               I->Obj.Name,
               matrix[ 0],matrix[ 1],matrix[ 2],matrix[ 3],
               matrix[ 4],matrix[ 5],matrix[ 6],matrix[ 7],
@@ -4879,7 +4886,7 @@ int ObjectMoleculeTransformSelection(ObjectMolecule *I,int state,
     case cPLog_pym:
       
       sprintf(line,
-              "cmd.transform_object('%s',[\n%15.9f,%15.9f,%15.9f,%15.9f,\n%15.9f,%15.9f,%15.9f,%15.9f,\n%15.9f,%15.9f,%15.9f,%15.9f,\n%15.9f,%15.9f,%15.9f,%15.9f\n],%d,%d,%s,%d)\n",
+              "cmd.transform_object('%s',[\n%15.9f,%15.9f,%15.9f,%15.9f,\n%15.9f,%15.9f,%15.9f,%15.9f,\n%15.9f,%15.9f,%15.9f,%15.9f,\n%15.9f,%15.9f,%15.9f,%15.9f\n],%d,%d%s,%d)\n",
               I->Obj.Name,
               matrix[ 0],matrix[ 1],matrix[ 2],matrix[ 3],
               matrix[ 4],matrix[ 5],matrix[ 6],matrix[ 7],
@@ -7021,7 +7028,7 @@ void ObjectMoleculeTransformTTTf(ObjectMolecule *I,float *ttt,int frame)
        if(cs) {
          if(cs->fInvalidateRep)
            cs->fInvalidateRep(I->CSet[b],cRepAll,cRepInvCoord);
-         MatrixApplyTTTfn3f(cs->NIndex,cs->Coord,ttt,cs->Coord);
+         MatrixTransformTTTfN3f(cs->NIndex,cs->Coord,ttt,cs->Coord);
          CoordSetRecordTxfApplied(cs,ttt,false);
        }
      }
@@ -7333,7 +7340,7 @@ void ObjectMoleculeSeleOp(ObjectMolecule *I,int sele,ObjectMoleculeOpRec *op)
              }
              if(op->nvv1) {
                if(op->i1!=0) /* fitting flag */
-                 rms = MatrixFitRMS(G,op->nvv1,op->vv1,vt,NULL,op->ttt);
+                 rms = MatrixFitRMSTTTf(G,op->nvv1,op->vv1,vt,NULL,op->ttt);
                else 
                  rms = MatrixGetRMS(G,op->nvv1,op->vv1,vt,NULL);
                if((op->i1==2)) { 
@@ -7994,7 +8001,7 @@ void ObjectMoleculeSeleOp(ObjectMolecule *I,int sele,ObjectMoleculeOpRec *op)
                            transformTTT44f3f(I->Obj.TTT,coord,v1);
                            coord=v1;
                          }
-                       MatrixTransform3f(op->mat1,coord,v1); /* convert to view-space */
+                       MatrixTransformC44fAs33f3f(op->mat1,coord,v1); /* convert to view-space */
                        coord=v1;
                        if(op->i1) {
                          for(c=0;c<3;c++) {
@@ -8140,7 +8147,7 @@ void ObjectMoleculeSeleOp(ObjectMolecule *I,int sele,ObjectMoleculeOpRec *op)
                                transformTTT44f3f(I->Obj.TTT,coord,v1);
                                coord=v1;
                              }
-                           MatrixTransform3f(op->mat1,coord,v1); /* convert to view-space */
+                           MatrixTransformC44fAs33f3f(op->mat1,coord,v1); /* convert to view-space */
                            coord=v1;
                            if(op->i1) {
                              for(c=0;c<3;c++) {

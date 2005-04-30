@@ -1074,7 +1074,8 @@ SEE ALSO
          unlock()   
       return r
 
-   def translate(vector=[0.0,0.0,0.0],selection="all",state=0,camera=1,object=None):
+   def translate(vector=[0.0,0.0,0.0],selection="all",
+                 state=0,camera=1,object=None,object_mode=0):
       '''
 DESCRIPTION
 
@@ -1115,6 +1116,7 @@ NOTES
 
       '''
       r = 1
+      object_mode = int(object_mode)
       if cmd.is_string(vector):
          vector = safe_list_eval(vector)
       if not cmd.is_list(vector):
@@ -1131,24 +1133,38 @@ NOTES
          else:
             shift = vector
          if object==None:
-            ttt = [1.0,0.0,0.0,0.0,
-                   0.0,1.0,0.0,0.0,
-                   0.0,0.0,1.0,0.0,
-                   shift[0],shift[1],shift[2],1.0]
+            ttt = [1.0,0.0,0.0,shift[0],
+                   0.0,1.0,0.0,shift[1],
+                   0.0,0.0,1.0,shift[2],
+                   0.0,0.0,0.0,1.0]
             r=cmd.transform_selection(selection,ttt,state=state)
+         elif object_mode==0: # update the TTT display matrix
+            try:
+               lock()
+               ttt = [1.0, 0.0, 0.0, shift[0],
+                      0.0, 1.0, 0.0, shift[1],
+                      0.0, 0.0, 1.0, shift[2],
+                      0.0, 0.0, 0.0, 1.0]
+               r=_cmd.combine_object_ttt(str(object),ttt)
+            finally:
+               unlock()
+         elif object_mode==1: # transform object coordinates & history matrix
+            matrix = [1.0, 0.0, 0.0, shift[0],
+                      0.0, 1.0, 0.0, shift[1],
+                      0.0, 0.0, 1.0, shift[2],
+                      0.0, 0.0, 0.0, 1.0]
+            try:
+               lock()
+               r = _cmd.transform_object(str(object),int(state)-1,
+                                         list(matrix),0,'',1)
+            finally:
+               unlock()
          else:
-            lock()
-            ttt = [1.0, 0.0, 0.0, shift[0],
-                   0.0, 1.0, 0.0, shift[1],
-                   0.0, 0.0, 1.0, shift[2],
-                   0.0, 0.0, 0.0, 1.0]
-            r=_cmd.combine_object_ttt(str(object),ttt)
-            unlock()
-
+            print " Error: translate: unrecognized object_mode"
       return r
 
    def rotate(axis='x',angle=0.0,selection="all",
-              state=0,camera=1,object=None,origin=None):
+              state=0,camera=1,object=None,origin=None,object_mode=0):
       '''
 DESCRIPTION
 
@@ -1186,6 +1202,7 @@ NOTES
 
       '''
       r = 1
+      object_mode = int(object_mode)
       if axis in ['x','X']:
          axis = [1.0,0.0,0.0]
       elif axis in ['y','Y']:
@@ -1213,20 +1230,35 @@ NOTES
             axis = cpv.transform(vmat,axis)
          mat = cpv.rotation_matrix(angle,axis)
          if object==None:
-            ttt = [mat[0][0],mat[1][0],mat[2][0],-origin[0],                   
-                   mat[0][1],mat[1][1],mat[2][1],-origin[1],
-                   mat[0][2],mat[1][2],mat[2][2],-origin[2],
-                   origin[0],origin[1],origin[2], view[15]]
+            ttt = [mat[0][0],mat[0][1],mat[0][2],origin[0],                   
+                   mat[1][0],mat[1][1],mat[1][2],origin[1],
+                   mat[2][0],mat[2][1],mat[2][2],origin[2],
+                   -origin[0],-origin[1],-origin[2], 1.0]
             r=cmd.transform_selection(selection,ttt,state=state)
-         else:
+         elif object_mode==0:
             lock()
-            ttt = [mat[0][0],mat[1][0],mat[2][0], 0.0,
-                   mat[0][1],mat[1][1],mat[2][1], 0.0,
-                   mat[0][2],mat[1][2],mat[2][2], 0.0,
+            ttt = [mat[0][0],mat[0][1],mat[0][2], 0.0,
+                   mat[1][0],mat[1][1],mat[1][2], 0.0,
+                   mat[2][0],mat[2][1],mat[2][2], 0.0,
                    0.0      ,0.0      ,0.0      , 1.0]
             r=_cmd.combine_object_ttt(str(object),ttt)
             unlock()
+         elif object_mode==1:
+            matrix = [mat[0][0],mat[0][1],mat[0][2], origin[0],     
+                      mat[1][0],mat[1][1],mat[1][2], origin[1],
+                      mat[2][0],mat[2][1],mat[2][2], origin[2],
+                      -origin[0],-origin[1],-origin[2], 1.0]
+            try:
+               lock()
+               r = _cmd.transform_object(str(object),int(state)-1,
+                                         list(matrix),0,'',0)
+            finally:
+               unlock()
+            
+         else:
+            print " Error: rotate: unrecognized object_mode"
       return r
+
 
    def set_title(object,state,text):
       '''
@@ -1258,9 +1290,9 @@ PYMOL API
          ttt = safe_list_eval(str(ttt))
       if homogenous: # passed a homogenous matrix, so do the best we can
          ttt = [
-            ttt[ 0], ttt[ 1], ttt[ 2], 0.0,
-            ttt[ 4], ttt[ 5], ttt[ 6], 0.0,
-            ttt[ 8], ttt[ 9], ttt[10], 0.0,
+            ttt[ 0], ttt[ 4], ttt[ 8], 0.0,
+            ttt[ 1], ttt[ 5], ttt[ 9], 0.0,
+            ttt[ 2], ttt[ 6], ttt[10], 0.0,
             ttt[ 3], ttt[ 7], ttt[11], 1.0]
       try:
          lock()
@@ -1287,13 +1319,10 @@ PYMOL API
          unlock()
       return r
 
-   def transform_selection(selection,matrix,state=0,log=0):
+   def transform_selection(selection,matrix,state=0,log=0,transpose=0):
       '''
 
-"transform_selection" is currently UNSUPPORTED, but some information has
-been provided via the mailing list:
-
-RE: transform_selection
+"transform_selection" is UNSUPPORTED.
 
 cmd.transform_selection(string selection, list-of-16-floats matrix, int state-number):
 
@@ -1303,11 +1332,11 @@ following:
 
 1) a 3x3 matrix containing the rotation in the upper-left quadrant
 
-2) a 3x1 translation to be applied before rotation in the right-hand
-   column (matrix[3],matrix[7],matrix[11])
-
-3) a 1x3 translation to be applied after rotation in the bottom row
+2) a 1x3 translation to be applied *before* rotation in the bottom row
    (matrix[12],matrix[13],matrix[14]).
+
+3) a 3x1 translation to be applied *after* rotation in the right-hand
+   column (matrix[3],matrix[7],matrix[11])
 
 In other words, if the matrix is:
 
@@ -1320,11 +1349,16 @@ Atoms will be transformed as follows
 
 Y = M X
 
-y0 = m0*(x0+m3) + m4*(x1+m7) +  m8*(x2+m11) + m12
-y1 = m1*(x0+m3) + m5*(x1+m7) +  m9*(x2+m11) + m13
-y2 = m2*(x0+m3) + m6*(x1+m7) + m10*(x2+m11) + m14
+y0 = m0*(x0+m12) + m1*(x1+m13) +  m8*(x2+m14) + m3
+y1 = m4*(x0+m12) + m5*(x1+m13) +  m9*(x2+m14) + m7
+y2 = m8*(x0+m12) + m9*(x1+m13) + m10*(x2+m14) + m11
 
       '''
+      if int(transpose):
+         matrix = [ matrix[0], matrix[4], matrix[8 ], matrix[12],
+                    matrix[1], matrix[5], matrix[9 ], matrix[13],
+                    matrix[2], matrix[6], matrix[10], matrix[14],
+                    matrix[3], matrix[7], matrix[11], matrix[15]]
       try:
          lock()
          r = _cmd.transform_selection(str(selection),int(state)-1,
@@ -1332,23 +1366,64 @@ y2 = m2*(x0+m3) + m6*(x1+m7) + m10*(x2+m11) + m14
       finally:
          unlock()
 
-   def transform_object(name,matrix,state=0,log=0,selection='',homogenous=0):
+   def transform_object(name,matrix,state=0,log=0,selection='',homogenous=0,transpose=0):
       r = None
+      if int(transpose):
+         matrix = [ matrix[0], matrix[4], matrix[8 ], matrix[12],
+                    matrix[1], matrix[5], matrix[9 ], matrix[13],
+                    matrix[2], matrix[6], matrix[10], matrix[14],
+                    matrix[3], matrix[7], matrix[11], matrix[15]]
       try:
          lock()
          r = _cmd.transform_object(str(name),int(state)-1,
                                    list(matrix),int(log),
-                                   str(selection),int(homogenous))
+                                   str(selection),
+                                   int(homogenous))
       finally:
          unlock()
       return r
 
+   def transfer_matrix(source_name,    target_name,
+                       source_mode=0,  target_mode=0,
+                       source_state=1, target_state=1,
+                       target_undo=1, log=0, quiet=1):
+      r = None
+      try:
+         lock()
+         r = _cmd.transfer_matrix(str(source_name),
+                                  str(target_name),
+                                  int(source_state)-1,
+                                  int(target_state)-1,
+                                  int(source_mode),
+                                  int(target_mode),
+                                  int(target_undo),
+                                  int(log),
+                                  int(quiet))
+      finally:
+         unlock()
+      return r
+
+   def reset_matrix(name, state=1, mode=0, log=0, quiet=1):
+      r = None
+      try:
+         lock()
+         r = _cmd.reset_matrix(str(name),
+                               int(mode),
+                               int(state)-1,
+                               int(log),
+                               int(quiet))
+      finally:
+         unlock()
+      return r
+
+      
    def translate_atom(sele1,v0,v1,v2,state=0,mode=0,log=0):
       r = None
       sele1 = selector.process(sele1)
       try:
          lock()
-         r = _cmd.translate_atom(str(sele1),float(v0),float(v1),float(v2),int(state)-1,int(mode),int(log))
+         r = _cmd.translate_atom(str(sele1),float(v0),float(v1),
+                                 float(v2),int(state)-1,int(mode),int(log))
       finally:
          unlock()
       return r

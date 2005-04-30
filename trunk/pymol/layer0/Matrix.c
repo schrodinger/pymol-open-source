@@ -25,31 +25,10 @@ Z* -------------------------------------------------------------------
 #include"Feedback.h"
 #include"Setting.h"
 
-/* WARNING - MAJOR GOTCHA!  
+#if 0
+/* currently unused */
 
-   A state of confusion has arisen because of mixed row-major and
-   column-major ordering in this module.  THIS NEEDS TO BE
-   STRAIGHTENED OUT before any further use is made of the following
-   routines.
-
-   The problem is that OpenGL uses one matrix storage format, while C
-   and Python follow the other convention.  The situation
-   arose because some of the routines below are used to emulate OpenGL
-   transformations...(and are in fact based on Mesa code).
-   
-   Proposed Solution: 
-
-   (1) Assume the C-PYTHON convention of fast-column (row-major?)
-   ordering - and specifically rename routines which don't conform as
-   fast row (column-major?) "CM44f" matrices.  Clean up and resolve
-   problems with existing code that call these routines.
-   
-   (2) Move all of the 4x4 transformation code into Vector.h and rename this
-   module Algebra.h/.c (for linear algebra and fitting).
-
-*/
-
-int MatrixInvert44f( const float *m, float *out )
+int MatrixInvertC44f( const float *m, float *out )
 {
 
   /* This routine included in PyMOL under the terms of the 
@@ -175,6 +154,7 @@ int MatrixInvert44f( const float *m, float *out )
 #undef MAT
 #undef SWAP_ROWS
 }
+#endif
 
 /*========================================================================*/
 int *MatrixFilter(float cutoff,int window,int n_pass,int nv,float *v1,float *v2)
@@ -340,65 +320,42 @@ int *MatrixFilter(float cutoff,int window,int n_pass,int nv,float *v1,float *v2)
 }
 
 /*========================================================================*/
-void MatrixDump44f(PyMOLGlobals *G,float *m,char *prefix)
+void MatrixTransformTTTfN3f( unsigned int n, float *q, float *m, float *p )
 {
-  if(prefix) {
-    PRINTF "%s %12.5f %12.5f %12.5f %12.5f\n",prefix,m[ 0],m[ 1],m[ 2],m[ 3] ENDF(G);
-    PRINTF "%s %12.5f %12.5f %12.5f %12.5f\n",prefix,m[ 4],m[ 5],m[ 6],m[ 7] ENDF(G);
-    PRINTF "%s %12.5f %12.5f %12.5f %12.5f\n",prefix,m[ 8],m[ 9],m[10],m[11] ENDF(G);
-    PRINTF "%s %12.5f %12.5f %12.5f %12.5f\n",prefix,m[12],m[13],m[14],m[15] ENDF(G);
-  } else {
-    PRINTF "%12.5f %12.5f %12.5f %12.5f\n",m[ 0],m[ 1],m[ 2],m[ 3] ENDF(G);
-    PRINTF "%12.5f %12.5f %12.5f %12.5f\n",m[ 4],m[ 5],m[ 6],m[ 7] ENDF(G);
-    PRINTF "%12.5f %12.5f %12.5f %12.5f\n",m[ 8],m[ 9],m[10],m[11] ENDF(G);
-    PRINTF "%12.5f %12.5f %12.5f %12.5f\n",m[12],m[13],m[14],m[15] ENDF(G);
-  }
-}
-/*========================================================================*/
-void MatrixApplyTTTfn3f( unsigned int n, float *q, const float m[16], float *p )
-/* NOTE: THIS DOESN'T EXPECT A NORMAL 4x4 TRANFORMATION MATRIX...
- * instead, it expects a 4x4 matrix with a pre-translation stored in column 3(0-3) (rows 0-2)
- * and a post-translation stored in row 3(0-3) (cols 0-2), as well as the normal 3x3 */
-{
-  float m0 = m[0],  m4 = m[4],  m8 = m[8],  m12 = m[12];
-  float m1 = m[1],  m5 = m[5],  m9 = m[9],  m13 = m[13];
-  float m2 = m[2],  m6 = m[6],  m10 = m[10],  m14 = m[14];
-  float m3 = m[3],  m7 = m[7],  m11 = m[11];
-  float p0,p1,p2;
+  const register float m0 = m[0],  m4 = m[4],  m8 = m[8],  m12 = m[12];
+  const register float m1 = m[1],  m5 = m[5],  m9 = m[9],  m13 = m[13];
+  const register float m2 = m[2],  m6 = m[6],  m10 = m[10],  m14 = m[14];
+  const register float m3 = m[3],  m7 = m[7],  m11 = m[11];
+  register float p0,p1,p2;
   while(n--) {
-	p0=*(p++) + m3;
-	p1=*(p++) + m7;
-	p2=*(p++) + m11;
-	*(q++) = m0 * p0 + m4  * p1 + m8 * p2 + m12;
-	*(q++) = m1 * p0 + m5  * p1 + m9 * p2 + m13;
-	*(q++) = m2 * p0 + m6 * p1 + m10 * p2 + m14;
+	p0=*(p++) + m12;
+	p1=*(p++) + m13;
+	p2=*(p++) + m14;
+	*(q++) = m0 * p0 + m1 * p1 + m2  * p2 + m3;
+	*(q++) = m4 * p0 + m5 * p1 + m6  * p2 + m7;
+	*(q++) = m8 * p0 + m9 * p1 + m10 * p2 + m11;
   }
 }
 /*========================================================================*/
-void MatrixLoadIdentity44f(float *m)
+void MatrixTransformR44fN3f( unsigned int n, float *q, float *m, float *p )
 {
-   m[0]=1.0F;
-   m[1]=0.0F;
-   m[2]=0.0F;
-   m[3]=0.0F;
-   
-   m[4]=0.0F;   
-   m[5]=1.0F;
-   m[6]=0.0F;
-   m[7]=0.0F;
-   
-   m[8]=0.0F;
-   m[9]=0.0F;
-   m[10]=1.0F;
-   m[11]=0.0F;
-   
-   m[12]=0.0F;
-   m[13]=0.0F;
-   m[14]=0.0F;
-   m[15]=1.0F;
+  const register float m0 = m[0],  m4 = m[4],  m8 = m[8];
+  const register float m1 = m[1],  m5 = m[5],  m9 = m[9];
+  const register float m2 = m[2],  m6 = m[6],  m10 = m[10];
+  const register float m3 = m[3],  m7 = m[7],  m11 = m[11];
+  register float p0,p1,p2;
+  while(n--) {
+    p0=*(p++);
+    p1=*(p++);
+    p2=*(p++);
+    *(q++) = m0 * p0 + m1 * p1 + m2  * p2 + m3;
+    *(q++) = m4 * p0 + m5 * p1 + m6  * p2 + m7;
+    *(q++) = m8 * p0 + m9 * p1 + m10 * p2 + m11;
+  }
 }
 /*========================================================================*/
-void MatrixRotation44f( float *m44, const float angle, const float x,const float y,const float z)
+void MatrixGetRotationC44f( float *m44, const float angle, 
+                             const float x,const float y,const float z)
 {
   float m33[9];
   rotation_matrix3f(angle,x,y,z,m33);
@@ -420,7 +377,7 @@ void MatrixRotation44f( float *m44, const float angle, const float x,const float
   m44[15]=1.0F;
 }
 /*========================================================================*/
-void MatrixRotate44f3f( float *m, const float angle, const float x,const float y,const float z)
+void MatrixRotateC44f( float *m, const float angle, const float x,const float y,const float z)
 {
   float m33[9];
   float m44[16];
@@ -441,20 +398,20 @@ void MatrixRotate44f3f( float *m, const float angle, const float x,const float y
   m44[13]=0.0F;
   m44[14]=0.0F;
   m44[15]=1.0F;
-  MatrixMultiply44f(m44,m);
+  MatrixMultiplyC44f(m44,m);
 }
 
 /*========================================================================*/
-void MatrixTranslate44f3f( float *m, const float x,const float y,const float z)
+void MatrixTranslateC44f( float *m, const float x,const float y,const float z)
 {
    m[12] = m[0] * x + m[4] * y + m[8]  * z + m[12];
    m[13] = m[1] * x + m[5] * y + m[9]  * z + m[13];
    m[14] = m[2] * x + m[6] * y + m[10] * z + m[14];
-   m[15] = m[3] * x + m[7] * y + m[11] * z + m[15];                                                                    
+   m[15] = m[3] * x + m[7] * y + m[11] * z + m[15];
 }
 
 /*========================================================================*/
-void MatrixMultiply44f( const float *b, float *m )
+void MatrixMultiplyC44f( const float *b, float *m )
 {
   /* This routine included in PyMOL under the terms of the 
    * MIT consortium license for Brian Paul's Mesa, from which it was derived. */
@@ -481,7 +438,7 @@ void MatrixMultiply44f( const float *b, float *m )
 }
                                                                                                                              
 /*========================================================================*/
-void MatrixTransform44f3f(float *m, float *q,float *p)
+void MatrixTransformC44f3f(float *m, float *q,float *p)
 {
   register float q0  = *q    , q1  = *(q+1), q2  = *(q+2);
   *(p++) = m[ 0]*q0+m[ 4]*q1+m[ 8]*q2+m[12];
@@ -489,7 +446,7 @@ void MatrixTransform44f3f(float *m, float *q,float *p)
   *(p++) = m[ 2]*q0+m[ 6]*q1+m[10]*q2+m[14];
 }
 /*========================================================================*/
-void MatrixTransform44f4f(float *m, float *q,float *p)
+void MatrixTransformC44f4f(float *m, float *q,float *p)
 {
   register float q0  = *q    , q1  = *(q+1), q2  = *(q+2);
   *(p++) = m[ 0]*q0+m[ 4]*q1+m[ 8]*q2+m[12];
@@ -498,7 +455,7 @@ void MatrixTransform44f4f(float *m, float *q,float *p)
   *(p++) = m[ 3]*q0+m[ 7]*q1+m[11]*q2+m[15];
 }
 /*========================================================================*/
-void MatrixInvTransform44fAs33f3f(float *m, float *q,float *p)
+void MatrixInvTransformC44fAs33f3f(float *m, float *q,float *p)
 {
   /* multiplying a column major rotation matrix as row-major will
    * give the inverse rotation */
@@ -508,7 +465,7 @@ void MatrixInvTransform44fAs33f3f(float *m, float *q,float *p)
   *(p++) = m[ 8]*q0+m[ 9]*q1+m[10]*q2;
 }
 /*========================================================================*/
-void MatrixTransform44fAs33f3f(float *m, float *q, float *p) 
+void MatrixTransformC44fAs33f3f(float *m, float *q, float *p) 
 {
   register float q0  = *q    , q1  = *(q+1), q2  = *(q+2);
   *(p++) = m[ 0]*q0+m[ 4]*q1+m[ 8]*q2;
@@ -560,13 +517,13 @@ float MatrixGetRMS(PyMOLGlobals *G,int n,float *v1,float *v2,float *wt)
 }
 
 /*========================================================================*/
-float MatrixFitRMS(PyMOLGlobals *G,int n,float *v1,float *v2,float *wt,float *ttt)
+float MatrixFitRMSTTTf(PyMOLGlobals *G,int n,float *v1,float *v2,float *wt,float *ttt)
 {
   /*
 	Subroutine to do the actual RMS fitting of two sets of vector coordinates
 	This routine does not rotate the actual coordinates, but instead returns 
 	the RMS fitting value, along with the center-of-mass translation vectors 
-	T1 and T2 and the rotation vector M, which rotates the translated 
+	T1 and T2 and the rotation matrix M, which rotates the translated 
 	coordinates of molecule 2 onto the translated coordinates of molecule 1.
   */
 
@@ -738,7 +695,7 @@ float MatrixFitRMS(PyMOLGlobals *G,int n,float *v1,float *v2,float *wt,float *tt
 
   err=err/sumwt;
   err=sqrt1d(err);
-
+  /*
   ttt[0]=(float)m[0][0];
   ttt[1]=(float)m[0][1];
   ttt[2]=(float)m[0][2];
@@ -754,7 +711,28 @@ float MatrixFitRMS(PyMOLGlobals *G,int n,float *v1,float *v2,float *wt,float *tt
   ttt[12]=(float)t2[0];
   ttt[13]=(float)t2[1];
   ttt[14]=(float)t2[2];
-  ttt[15]=1.0F; /* for compatibility with normal 4x4 matrices */
+  ttt[15]=1.0F; 
+  */
+
+  /* NOTE: TTT's are now row-major (to be more like homogenous matrices) */
+
+  ttt[ 0]=(float)m[0][0];
+  ttt[ 1]=(float)m[1][0];
+  ttt[ 2]=(float)m[2][0];
+  ttt[ 3]=(float)t2[0];
+  ttt[ 4]=(float)m[0][1];
+  ttt[ 5]=(float)m[1][1];
+  ttt[ 6]=(float)m[2][1];
+  ttt[ 7]=(float)t2[1];
+  ttt[ 8]=(float)m[0][2];
+  ttt[ 9]=(float)m[1][2];
+  ttt[10]=(float)m[2][2];
+  ttt[11]=(float)t2[2];
+  ttt[12]=(float)-t1[0];
+  ttt[13]=(float)-t1[1];
+  ttt[14]=(float)-t1[2];
+
+/* for compatibility with normal 4x4 matrices */
 
   if(fabs(err)<R_SMALL4)
     err=0.0F;
@@ -821,7 +799,7 @@ typedef long int ftnint;
 
 /*========================================================================*/
 
-int MatrixEigensolve33d(PyMOLGlobals *G,double *a, double *wr, double *wi, double *v)
+int MatrixEigensolveC33d(PyMOLGlobals *G,double *a, double *wr, double *wi, double *v)
 {
   integer n,nm;
   integer iv1[3];
@@ -835,7 +813,7 @@ int MatrixEigensolve33d(PyMOLGlobals *G,double *a, double *wr, double *wi, doubl
   n = 3;
   matz = 1;
 
-  for(x=0;x<9;x++) /* make a copy cause eispack trashes the matrix */
+  for(x=0;x<9;x++) /* make a copy -- eispack trashes the matrix */
 	 at[x]=a[x];
 
   pymol_rg_(&nm,&n,at,wr,wi,&matz,v,iv1,fv1,&ierr);
@@ -856,17 +834,6 @@ int MatrixEigensolve33d(PyMOLGlobals *G,double *a, double *wr, double *wi, doubl
   }
   return(ierr);
 }
-
-
-
-/*========================================================================*/
-/* DON'T GO BELOW HERE - JUST DON'T DO IT - */
-/*========================================================================*/
-/*========================================================================*/
-/*========================================================================*/
-/*========================================================================*/
-/* A MIND IS A TERRIBLE THING TO WASTE (on linear algebra) */
-/*========================================================================*/
 
 static double d_sign(doublereal *a, doublereal *b);
 
@@ -903,10 +870,6 @@ static  int hqr_(
 integer *nm, integer *n, integer *low, integer *igh,
 doublereal *h__, doublereal *wr, doublereal *wi,
 integer *ierr);
-
-
-
-
 
 
 double d_sign(doublereal *a, doublereal *b)

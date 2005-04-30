@@ -140,7 +140,7 @@ class DemoInfo:
             for a in range(1,9):
                cmd.origin("rep%d"%a,object="rep%d"%a)
             cmd.mset("1")
-            st = string.join(map(lambda x,y:"rotate angle=3,object=rep%d,axis=%s;"%(x,y),range(1,9),
+            st = string.join(map(lambda x,y:"rotate angle=-3,object=rep%d,axis=%s;"%(x,y),range(1,9),
                                  ['x','y','x','y','x','y','x','y']))
             cmd.mdo(1,st)
             cmd.set("suspend_updates",0,quiet=1)

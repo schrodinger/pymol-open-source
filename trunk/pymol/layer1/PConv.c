@@ -525,6 +525,31 @@ int PConvPyListToIntArray(PyObject *obj,int **f)
   return(ok);
 }
 
+int PConvPyListToDoubleArray(PyObject *obj,double **f)
+{
+  int a,l;
+  double *ff;
+  int ok=true;
+  if(!obj) {
+    *f=NULL;
+    l=0;
+  } else if(!PyList_Check(obj)) {
+    *f=NULL;
+    ok=false;
+  } else {
+    l=PyList_Size(obj);
+    if(!l)
+      ok=-1;
+    else
+      ok=l;
+    (*f) = Alloc(double,l);
+    ff = (*f);
+    for(a=0;a<l;a++)
+      *(ff++) = PyFloat_AsDouble(PyList_GetItem(obj,a));
+  }
+  return(ok);
+}
+
 int PConvPyListToIntVLA(PyObject *obj,int **f)
 {
   int a,l;
