@@ -46,7 +46,7 @@ dump_mat(cmd.get_object_matrix("mol3"))
 
 # apply mol2's history matrix to mol3's coordinates
 
-matrix = cmd.get_object_matrix("mol2")
+matrix= cmd.get_object_matrix("mol2")
 
 cmd.transform_object("mol3",matrix, homogenous=1)
 
@@ -189,7 +189,7 @@ dump_lst((cmd.get_distance("ligand////s1","/protein/1HPV/B/ILE`84/CB"), \
 dump_lst((cmd.get_distance("/target/1HPV/B/ILE`84/CB","/copy_protein2/1HPV/B/ILE`84/CB"),))
 dump_mat(cmd.get_object_matrix("copy_protein2"))
 
-reset_matrix copy_protein2
+matrix_reset copy_protein2
 dump_mat(cmd.get_object_matrix("copy_protein2"))
 
 dump_lst((cmd.get_distance("/target/1HPV/B/ILE`84/CB","/copy_protein2/1HPV/B/ILE`84/CB"),))
