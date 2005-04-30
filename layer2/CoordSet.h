@@ -84,7 +84,10 @@ PyObject *CoordSetAtomToChemPyAtom(PyMOLGlobals *G,AtomInfoType *ai,float *v,int
 int CoordSetGetAtomVertex(CoordSet *I,int at,float *v);
 int CoordSetSetAtomVertex(CoordSet *I,int at,float *v);
 int CoordSetMoveAtom(CoordSet *I,int at,float *v,int mode);
-int CoordSetTransformAtom(CoordSet *I,int at,float *TTT);
+
+int CoordSetTransformAtomTTTf(CoordSet *I,int at,float *TTT);
+int CoordSetTransformAtomR44f(CoordSet *I,int at,float *matrix);
+
 void CoordSetPurge(CoordSet *I);
 void CoordSetAdjustAtmIdx(CoordSet *I,int *lookup,int nAtom);
 void CoordSetMerge(CoordSet *I,CoordSet *cs); /* must be non-overlapping */

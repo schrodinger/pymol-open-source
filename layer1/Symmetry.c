@@ -88,6 +88,21 @@ CSymmetry *SymmetryNewFromPyList(PyMOLGlobals *G,PyObject *list)
   return(I);
 }
 
+static void SymmetryDump44f(PyMOLGlobals *G,float *m,char *prefix)
+{
+  if(prefix) {
+    PRINTF "%s %12.5f %12.5f %12.5f %12.5f\n",prefix,m[ 0],m[ 1],m[ 2],m[ 3] ENDF(G);
+    PRINTF "%s %12.5f %12.5f %12.5f %12.5f\n",prefix,m[ 4],m[ 5],m[ 6],m[ 7] ENDF(G);
+    PRINTF "%s %12.5f %12.5f %12.5f %12.5f\n",prefix,m[ 8],m[ 9],m[10],m[11] ENDF(G);
+    PRINTF "%s %12.5f %12.5f %12.5f %12.5f\n",prefix,m[12],m[13],m[14],m[15] ENDF(G);
+  } else {
+    PRINTF "%12.5f %12.5f %12.5f %12.5f\n",m[ 0],m[ 1],m[ 2],m[ 3] ENDF(G);
+    PRINTF "%12.5f %12.5f %12.5f %12.5f\n",m[ 4],m[ 5],m[ 6],m[ 7] ENDF(G);
+    PRINTF "%12.5f %12.5f %12.5f %12.5f\n",m[ 8],m[ 9],m[10],m[11] ENDF(G);
+    PRINTF "%12.5f %12.5f %12.5f %12.5f\n",m[12],m[13],m[14],m[15] ENDF(G);
+  }
+}
+
 int SymmetryAttemptGeneration(CSymmetry *I,int blocked,int quiet)
 {
   int ok = false;
@@ -119,7 +134,7 @@ int SymmetryAttemptGeneration(CSymmetry *I,int blocked,int quiet)
         PConv44PyListTo44f(PyList_GetItem(mats,a),I->SymMatVLA+(a*16));
         if(!quiet) {
           if(Feedback(I->G,FB_Symmetry,FB_Blather)) {
-            MatrixDump44f(I->G,I->SymMatVLA+(a*16)," Symmetry:");
+            SymmetryDump44f(I->G,I->SymMatVLA+(a*16)," Symmetry:");
           }
         }
       }

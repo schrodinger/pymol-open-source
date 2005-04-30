@@ -98,6 +98,102 @@ static void ExecutiveSpecSetVisibility(PyMOLGlobals *G,SpecRec *rec,
                                        int new_vis,int mod);
 void ExecutiveObjMolSeleOp(PyMOLGlobals *G,int sele,ObjectMoleculeOpRec *op);
 
+void ExecutiveTransferMatrix(PyMOLGlobals *G,
+                             char *source_name, char *target_name,
+                             int   source_mode,  int target_mode, 
+                             int   source_state, int target_state,
+                             int   target_undo,
+                             int   log,          int quiet)
+{
+  switch(source_mode) {
+  case 0: 
+    { /* from previous coordinate transformation */
+      double *history = NULL;
+      int found = ExecutiveGetObjectTxfHistory(G,source_name,source_state,&history);
+      if(found) {
+        switch(target_mode) {
+        case 0: /* to coordinates */
+          {
+            double temp_inverse[16];
+            if(target_undo) {
+              double *target_history = NULL;
+              int target_found =  ExecutiveGetObjectTxfHistory(G,target_name,
+                                                           target_state,
+                                                           &target_history);
+              if(target_found && target_history) {
+                invert_special44d44d(target_history, temp_inverse);
+                if(history) {
+                  right_multiply44d44d(temp_inverse,history);
+                  history = temp_inverse;
+                } else {
+                  history = temp_inverse;
+                }
+              }
+              {
+                float historyf[16];
+                if(history) {
+                  convert44d44f(history,historyf);
+                } else {
+                  identity44f(historyf);
+                }
+                ExecutiveTransformObjectSelection(G,
+                                                  target_name, target_state, 
+                                                  "",log,historyf,true);
+              }
+            }
+          }
+          break;
+        case 1: /* set the display matrix (only) */
+          {
+            float tttf[16];
+            convertR44dTTTf(history,tttf);
+            ExecutiveSetObjectTTT(G,target_name,tttf,target_state,quiet);
+            /* to do: logging, return values, etc. */
+          }      
+          break;
+        }
+      }
+    }
+    break;
+  case 1: /* from display matrix - TO DO */
+    switch(target_mode) {
+    case 0:
+      break;
+    case 1:
+      break;
+    }
+    break;
+  }
+}
+
+void ExecutiveResetMatrix(PyMOLGlobals *G,
+                          char *name,
+                          int   mode,
+                          int   state,
+                          int   log,  
+                          int quiet)
+{
+  switch(mode) {
+  case 0: /* transformations already applied to the coordinates */
+    { 
+      double *history = NULL;
+      int found = ExecutiveGetObjectTxfHistory(G,name,state,&history);
+      if(found && history) {
+        double temp_inverse[16];
+        float historyf[16];
+        invert_special44d44d(history, temp_inverse);
+        convert44d44f(temp_inverse,historyf);
+        ExecutiveTransformObjectSelection(G, name, state, "",
+                                          log,historyf,true);
+      }
+    }
+    break;
+  case 1: /* operation on the display matrix */
+    /* TO DO */
+    break;
+  }
+}
+
 int ExecutiveGetObjectTxfHistory(PyMOLGlobals *G,char *name,int state,double **history)
 {
   /* right now, this only makes sense for molecule objects */
@@ -3193,7 +3289,7 @@ int ExecutiveTransformObjectSelection(PyMOLGlobals *G,char *name,int state,
   ObjectMolecule *obj = ExecutiveFindObjectMoleculeByName(G,name);
   int ok=true;
 
-  if(s1[0]) {
+  if(s1&&s1[0]) {
     sele = SelectorIndexByName(G,s1);
     if(sele<0)
       ok=false;
@@ -4803,7 +4899,7 @@ void ExecutiveCopy(PyMOLGlobals *G,char *src,char *dst)
 }
 
 /*========================================================================*/
-void ExecutiveOrient(PyMOLGlobals *G,char *sele,Matrix33d mi,
+void ExecutiveOrient(PyMOLGlobals *G,char *sele,double *mi,
                      int state,float animate,int complete,float buffer)
 {
   double egval[3],egvali[3];
@@ -4813,7 +4909,7 @@ void ExecutiveOrient(PyMOLGlobals *G,char *sele,Matrix33d mi,
   const float _0 = 0.0F;
   int a,b;
 
-  if(!MatrixEigensolve33d(G,(double*)mi,egval,egvali,(double*)evect)) {
+  if(!MatrixEigensolveC33d(G,mi,egval,egvali,(double*)evect)) {
 
 	 normalize3d(evect[0]);
 	 normalize3d(evect[1]);
@@ -5551,7 +5647,7 @@ float ExecutiveRMS(PyMOLGlobals *G,char *s1,char *s2,int mode,float refine,int m
           }
         }
         if(mode!=0) {
-          rms = MatrixFitRMS(G,n_pair,op1.vv1,op2.vv1,NULL,op2.ttt);
+          rms = MatrixFitRMSTTTf(G,n_pair,op1.vv1,op2.vv1,NULL,op2.ttt);
           repeat=true;
           b=0;
           while(repeat) {
@@ -5565,7 +5661,7 @@ float ExecutiveRMS(PyMOLGlobals *G,char *s1,char *s2,int mode,float refine,int m
               
               if(flag) {          
                 for(a=0;a<n_pair;a++) {
-                  MatrixApplyTTTfn3f(1,v1,op2.ttt,op1.vv1+(a*3));
+                  MatrixTransformTTTfN3f(1,v1,op2.ttt,op1.vv1+(a*3));
                   v2=op2.vv1+(a*3);
                   if((diff3f(v1,v2)/rms)>refine) {
                     flag[a] = false;
@@ -5594,7 +5690,7 @@ float ExecutiveRMS(PyMOLGlobals *G,char *s1,char *s2,int mode,float refine,int m
                 n_pair = n_next;
                 FreeP(flag);
                 if(n_pair) 
-                  rms = MatrixFitRMS(G,n_pair,op1.vv1,op2.vv1,NULL,op2.ttt);            
+                  rms = MatrixFitRMSTTTf(G,n_pair,op1.vv1,op2.vv1,NULL,op2.ttt);            
                 else
                   break;
               }
@@ -5629,7 +5725,7 @@ float ExecutiveRMS(PyMOLGlobals *G,char *s1,char *s2,int mode,float refine,int m
             CGOBegin(cgo,GL_LINES);
             for(a=0;a<n_pair;a++) {
               CGOVertexv(cgo,op2.vv1+(a*3));
-              MatrixApplyTTTfn3f(1,v1,op2.ttt,op1.vv1+(a*3));
+              MatrixTransformTTTfN3f(1,v1,op2.ttt,op1.vv1+(a*3));
               CGOVertexv(cgo,v1);
             }
             CGOEnd(cgo);
@@ -5846,14 +5942,14 @@ float ExecutiveRMSPairs(PyMOLGlobals *G,WordType *sele,int pairs,int mode)
       ErrMessage(G,"ExecutiveRMS",buffer);
     } else if(op1.nvv1) {
       if(mode!=0)
-        rms = MatrixFitRMS(G,op1.nvv1,op1.vv1,op2.vv1,NULL,op2.ttt);
+        rms = MatrixFitRMSTTTf(G,op1.nvv1,op1.vv1,op2.vv1,NULL,op2.ttt);
       else
         rms = MatrixGetRMS(G,op1.nvv1,op1.vv1,op2.vv1,NULL);
       PRINTFB(G,FB_Executive,FB_Results) 
         " ExecutiveRMS: RMS = %8.3f (%d to %d atoms)\n",
         rms,op1.nvv1,op2.nvv1
         ENDFB(G);
-    
+
       op2.code = OMOP_TTTF;
       SelectorGetTmp(G,combi,s1);
       sele1=SelectorIndexByName(G,s1);
@@ -7153,7 +7249,7 @@ int ExecutiveOrigin(PyMOLGlobals *G,char *name,int preserve,char *oname,float *p
   return(ok);
 }
 /*========================================================================*/
-int ExecutiveGetMoment(PyMOLGlobals *G,char *name,Matrix33d mi,int state)
+int ExecutiveGetMoment(PyMOLGlobals *G,char *name,double *mi,int state)
 {
   int sele;
   ObjectMoleculeOpRec op;
@@ -7162,13 +7258,6 @@ int ExecutiveGetMoment(PyMOLGlobals *G,char *name,Matrix33d mi,int state)
 
   if(state==-2) state=SceneGetState(G);
 
-  for(a=0;a<3;a++)
-	 {
-		for(b=0;b<3;b++)
-		  mi[a][b]=0.0;
-		mi[a][a]=1.0;
-	 }
-  
   sele=SelectorIndexByName(G,name);
   if(sele>=0) {
     ObjectMoleculeOpRecInit(&op);
@@ -7200,11 +7289,17 @@ int ExecutiveGetMoment(PyMOLGlobals *G,char *name,Matrix33d mi,int state)
 		  for(b=0;b<3;b++)
 			 op.d[a][b]=0.0;
 		ExecutiveObjMolSeleOp(G,sele,&op);			 
-		for(a=0;a<3;a++)
-		  for(b=0;b<3;b++)
-			 mi[a][b]=op.d[a][b];
+      {
+        double *p = mi;
+        for(a=0;a<3;a++)
+          for(b=0;b<3;b++)
+            *(p++)=op.d[a][b];
+      }
 	 }
-  } 
+  } else {
+    identity33d(mi);
+  }
+
   return(c);
 }
 /*========================================================================*/

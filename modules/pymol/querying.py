@@ -20,7 +20,7 @@ if __name__=='pymol.querying':
    from cmd import _cmd,lock,unlock,Shortcut,QuietException
    from cmd import _feedback,fb_module,fb_mask,is_list
 
-   def get_object_txf_history(object,state):
+   def get_object_txf_history(object,state=1):
       r = None
       object = str(object)
       try:

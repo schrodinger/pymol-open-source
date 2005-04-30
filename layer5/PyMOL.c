@@ -1099,7 +1099,7 @@ int PyMOL_Zoom(CPyMOL *I,char *selection, float buffer,
 int PyMOL_Orient(CPyMOL *I,char *selection, float buffer, 
                  int state, int complete, float  animate, int quiet)
 {
-  Matrix33d m;
+  double m[16];
   OrthoLineType s1;
   int ok=true;
   SelectorGetTmp(I->G,selection,s1);

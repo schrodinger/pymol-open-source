@@ -49,7 +49,7 @@ struct _CWordMatcher {
 #define cMatchNumericRange  cWordMatchOptionNumericRanges
 #define cMatchAlphaRange  cWordMatchOptionAlphaRanges
 #define cMatchWildcard 3
-
+#if 0
 static void WordMatcherDump(CWordMatcher *I)
 {
   MatchNode *cur_node = I->node;
@@ -65,6 +65,7 @@ static void WordMatcherDump(CWordMatcher *I)
     cur_node++;
   }
 }
+#endif
 
 
 void WordMatchOptionsConfigInteger(CWordMatchOptions *I)

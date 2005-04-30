@@ -213,14 +213,15 @@ void ObjectResetTTT(CObject *I)
 /*========================================================================*/
 void ObjectPrepareContext(CObject *I,CRay *ray)
 {
-  float gl[16],*ttt;
   if(ray) {
     RaySetTTT(ray,I->TTTFlag,I->TTT);
   } else {
     PyMOLGlobals *G = I->G;
     if(G->HaveGUI && G->ValidContext ) {
       if(I->TTTFlag) {
-        /* form standard 4x4 GL matrix with TTT rotation and 2nd translation */
+        /* convert the row-major TTT matrix to a column-major OpenGL matrix */
+        float gl[16],*ttt;
+  
         ttt=I->TTT;
         gl[ 0] = ttt[ 0];
         gl[ 4] = ttt[ 1];
@@ -238,10 +239,10 @@ void ObjectPrepareContext(CObject *I,CRay *ray)
         gl[ 7] = 0.0;
         gl[11] = 0.0;
         gl[15] = 1.0;
-        /*        dump44f(gl,"ttt");
-                  dump44f(gl,"gl");*/
+
         glMultMatrixf(gl);
-        /* now add in the first translation */
+
+        /* include the pre-translation */
         glTranslatef(ttt[12],ttt[13],ttt[14]);
       }
     }

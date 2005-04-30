@@ -121,7 +121,11 @@ int CoordSetFromPyList(PyMOLGlobals *G,PyObject *list,CoordSet **cs)
         ok = PConvPyListToIntArray(tmp,&I->AtmToIdx);
     }
     if(ok&&(ll>5)) ok = PConvPyStrToStr(PyList_GetItem(list,5),I->Name,sizeof(WordType));
-    
+    if(ok&&(ll>6)) {
+      tmp = PyList_GetItem(list,6);
+      if(tmp!=Py_None) 
+        ok = PConvPyListToDoubleArray(tmp,&I->TxfHistory);
+    }
     if(!ok) {
       if(I)
         CoordSetFree(I);
@@ -142,7 +146,7 @@ PyObject *CoordSetAsPyList(CoordSet *I)
   PyObject *result = NULL;
 
   if(I) {
-    result = PyList_New(6);
+    result = PyList_New(7);
     
     PyList_SetItem(result,0,PyInt_FromLong(I->NIndex));
     PyList_SetItem(result,1,PyInt_FromLong(I->NAtIndex));
@@ -153,6 +157,11 @@ PyObject *CoordSetAsPyList(CoordSet *I)
     else 
       PyList_SetItem(result,4,PConvAutoNone(NULL));
     PyList_SetItem(result,5,PyString_FromString(I->Name));
+    if(I->TxfHistory) {
+      PyList_SetItem(result,6,PConvDoubleArrayToPyList(I->TxfHistory,16));
+    } else {
+      PyList_SetItem(result,6,Py_None);
+    }
     /* TODO symmetry, spheroid, setting, periodic box ... */
 
   }
@@ -262,7 +271,7 @@ void CoordSetPurge(CoordSet *I)
 
 }
 /*========================================================================*/
-int CoordSetTransformAtom(CoordSet *I,int at,float *TTT)
+int CoordSetTransformAtomTTTf(CoordSet *I,int at,float *TTT)
 {
   ObjectMolecule *obj;
   int a1 = 01;
@@ -279,7 +288,31 @@ int CoordSetTransformAtom(CoordSet *I,int at,float *TTT)
   if(a1>=0) {
     result = 1;
     v1 = I->Coord+3*a1;
-    MatrixApplyTTTfn3f(1,v1,TTT,v1);
+    MatrixTransformTTTfN3f(1,v1,TTT,v1);
+  }
+
+  return(result);
+}
+
+/*========================================================================*/
+int CoordSetTransformAtomR44f(CoordSet *I,int at,float *matrix)
+{
+  ObjectMolecule *obj;
+  int a1 = 01;
+  int result = 0;
+  float *v1;
+
+  obj = I->Obj;
+  if(obj->DiscreteFlag) {
+    if(I==obj->DiscreteCSet[at])
+      a1=obj->DiscreteAtmToIdx[at];
+  } else 
+    a1=I->AtmToIdx[at];
+  
+  if(a1>=0) {
+    result = 1;
+    v1 = I->Coord+3*a1;
+    MatrixTransformR44fN3f(1,v1,matrix,v1);
   }
 
   return(result);
@@ -290,23 +323,18 @@ void CoordSetRecordTxfApplied(CoordSet *I,float *matrix,int homogenous)
   if(I->TxfHistory) { 
     double temp[16];
     if(!homogenous) {
-      homogenizeTTT44f44d(matrix,temp);
+      convertTTTfR44d(matrix,temp);
     } else {
-      int a;
-      for(a=0;a<16;a++)
-        temp[a] = (double) matrix[a];
+      convert44f44d(matrix,temp);
     }
-    multiply44d44d44d(temp, I->TxfHistory, I->TxfHistory);      
+    left_multiply44d44d(temp,I->TxfHistory);
   } else {
     I->TxfHistory=Alloc(double,16);
     if ( I->TxfHistory ) {
       if(!homogenous)
-        homogenizeTTT44f44d(matrix,I->TxfHistory);
+        convertTTTfR44d(matrix,I->TxfHistory);
       else {
-        int a;
-        for(a=0;a<16;a++)
-          I->TxfHistory[a] = (double) matrix[a];
-        
+        convert44f44d(matrix,I->TxfHistory);
       }
     }
   }

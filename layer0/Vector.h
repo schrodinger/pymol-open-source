@@ -19,7 +19,8 @@ Z* -------------------------------------------------------------------
 #include"os_predef.h"
 /* NOTE THIS VERSION USES RADIANS BY DEFAULT! */
 
-/* NOTE: All matrices are assumed to be column-major in this module */
+/* NOTE: All matrices are assumed to be row-major (NOTE that means
+ * C-like, not OpenGL-like) in this module */
 
 #define cPI            3.14159265358979323846  /* pi */
 
@@ -91,9 +92,10 @@ void dump44f( float *m, char *prefix );
 void dump44d( double *m, char *prefix );
 
 void copy44f( float *src,float *dst);
+void copy44d ( double *src, double *dst );
 
-/* REVISED Matrix Routines using  float pointers */
-
+void identity33f ( float *m1 );
+void identity33d( double *m);
 void identity44f ( float *m1 );
 
 void copy44f44f ( float *src, float *dst );
@@ -132,8 +134,19 @@ void transform_normalTTT44f3f ( float *m1, float *m2, float *m3 );
 void initializeTTT44f ( float *m );
 
 void multiply44d44d44d( double *left, double *right, double *product);
+void left_multiply44d44d( double *left, double *right);
+void right_multiply44d44d( double *left, double *right);
 
-void homogenizeTTT44f44d( float *in, double *out);
+/* invert a 4x4 homogenous that contains just rotation & tranlation
+  (e.g. no scaling & fourth row is 0,0,0,1) */
+void invert_special44d44d( double *original, double *inv);
+
+void convertTTTfR44d( float *ttt, double *homo);
+void convertR44dTTTf( double *homo, float *ttt);
+void convert44d44f(double *dbl, float *flt);
+void convert44f44d(float *flt, double *dbl);
+
+void get_rotation_about3f3fTTTf(float angle, float *dir, float *origin, float *ttt);
 
 /* end revised matrix routines */
 

@@ -18,7 +18,40 @@ Z* -------------------------------------------------------------------
 
 #include"PyMOLGlobals.h"
 
-/* WARNING - MAJOR GOTCHA!  
+
+/* WARNING: PYMOL's internal matrix handling is an partially-mitigated
+   disaster.  There are many different kinds of matrices in use in
+   PyMOL, and until recently, it wasn't clear which conventions were
+   being used where.  We're trying to change that...
+
+   Note the coding used on routines:
+
+   (1) C44f: A column-major homogenous float 4x4 (OpenGL compatible)
+
+   (2) C33f: A column-major float 3x3 (OpenGL-like)
+
+   (3) TTTf: A row-major float 4x4 TTT matrix (translate, transform,
+   translate) which create nothing but trouble and confusion...
+
+   (4) 33f, R33f: A row-major 3x3 compatible with programmer brains as well
+   as with the code in vector.c
+
+   (5) R44d: row-major homogenous 4x4 double precision, compatible
+       with programmer brains and with PyMOL's long-term future.   
+
+   (6) R44f: as above, but floating point -- for performance or just
+       coding convenience
+
+   Other informative codes in function calls:
+
+   N3f = array of floats, grouped in sets of 3
+   
+   33Tf = uses the transpose of a 3x3 float matrix provided
+*/
+
+/* (old notice)
+
+WARNING - MAJOR GOTCHA!  
 
    A state of confusion has arisen because of mixed row-major and
    column-major ordering in this module.  THIS NEEDS TO BE
@@ -38,40 +71,33 @@ Z* -------------------------------------------------------------------
    problems with existing code that call these routines.
    
    (2) Move all of the 4x4 transformation code into Vector.h and rename this
-   module to Algebra.h/.c (for linear algebra and fitting).
+   module Algebra.h/.c (for linear algebra and fitting).
 
 */
 
-void MatrixRotation44f( float *m44, const float angle, const float x,const float y,const float z);
+void MatrixGetRotationC44f( float *m44, const float angle, 
+                             const float x,const float y,const float z);
 
-void MatrixDump44f(PyMOLGlobals *G,float *m,char *prefix);
+void MatrixTransformC44f3f(float *m, float *q,float *p);
+void MatrixTransformC44f4f(float *m, float *q,float *p);
+void MatrixInvTransformC44fAs33f3f(float *m, float *q,float *p);
 
-void MatrixTransform44f3f(float *m, float *q,float *p);
-void MatrixTransform44f4f(float *m, float *q,float *p);
-void MatrixInvTransform44fAs33f3f(float *m, float *q,float *p);
+void MatrixTransformC44fAs33f3f(float *p, float *m, float *q);
+void MatrixTransformC44fn( unsigned int n, float *q, float *m, float *p);
+int MatrixEigensolveC33d(PyMOLGlobals *G,double *a, double *wr, double *wi, double *v);
 
-void MatrixTransform44fAs33f3f(float *p, float *m, float *q);
-void MatrixTransform44fn( unsigned int n, float *q, const float m[16], float *p);
-int MatrixEigensolve33d(PyMOLGlobals *G,double *a, double *wr, double *wi, double *v);
+void MatrixTranslateC44f( float *m, const float x,const float y,const float z);
+void MatrixRotateC44f( float *m, const float angle, const float x,const float y,const float z);
+void MatrixMultiplyC44f( const float *mat, float *product );
 
-void MatrixLoadIdentity44f(float *m);
-void MatrixTranslate44f3f( float *m, const float x,const float y,const float z);
-void MatrixRotate44f3f( float *m, const float angle, const float x,const float y,const float z);
-void MatrixMultiply44f( const float *mat, float *product );
-int  MatrixInvert44f( const float *m, float *out );
+void MatrixTransformTTTfN3f(unsigned int n, float *q, float *m, float *p );
+float MatrixFitRMSTTTf(PyMOLGlobals *G,int n,float *v1,float *v2,float *wt,float *ttt);
 
-#define MatrixInvTransform3f MatrixInvTransform44fAs33f3f
-#define MatrixTransform3f MatrixTransform44fAs33f3f
-
-/* WARNING - routines below use a "non-conventional" 4x4 
-  pre-translation - tranformation - and post-translation (TTT) matrix */
-
-void MatrixApplyTTTfn3f(unsigned int n, float *q, const float m[16], float *p );
-float MatrixFitRMS(PyMOLGlobals *G,int n,float *v1,float *v2,float *wt,float *ttt);
 float MatrixGetRMS(PyMOLGlobals *G,int n,float *v1,float *v2,float *wt);
 int *MatrixFilter(float cutoff,int window,int n_pass,int nv,float *v1,float *v2);
 
 
+void MatrixTransformR44fN3f( unsigned int n, float *q, float *m, float *p );
 
 typedef long int integer;
 typedef double doublereal;

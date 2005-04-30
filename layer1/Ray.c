@@ -932,9 +932,9 @@ void RayRenderPOV(CRay *I,int width,int height,char **headerVLA_ptr,
   copy3f(lightv,light);
   if(angle) {
     float temp[16];
-    MatrixLoadIdentity44f(temp);
-    MatrixRotate44f3f(temp,(float)-PI*angle/180,0.0F,1.0F,0.0F);
-    MatrixTransform44fAs33f3f(temp,light,light);
+    identity44f(temp);
+    MatrixRotateC44f(temp,(float)-PI*angle/180,0.0F,1.0F,0.0F);
+    MatrixTransformC44fAs33f3f(temp,light,light);
   }
   sprintf(buffer,"light_source{<%6.4f,%6.4f,%6.4f>  rgb<1.0,1.0,1.0>}\n",
           -light[0]*10000.0F,
@@ -2706,9 +2706,9 @@ int opaque_back=0;
       
       if(angle) {
         float temp[16];
-        MatrixLoadIdentity44f(temp);
-        MatrixRotate44f3f(temp,(float)-PI*angle/180,0.0F,1.0F,0.0F);
-        MatrixTransform44fAs33f3f(temp,light,light);
+        identity44f(temp);
+        MatrixRotateC44f(temp,(float)-PI*angle/180,0.0F,1.0F,0.0F);
+        MatrixTransformC44fAs33f3f(temp,light,light);
       }
       
       I->Basis[2].LightNormal[0]=light[0];

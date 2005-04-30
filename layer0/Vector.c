@@ -42,6 +42,7 @@ Z* -------------------------------------------------------------------
 static const float _0		= 0.0F;
 static const float _1		= 1.0F;
 static const double _d0		= 0.0;
+static const double _d1    = 1.0;
 
 void mix3f(float *v1,float *v2,float fxn,float *v3)
 {
@@ -111,10 +112,13 @@ void dump33f( float *m, char *prefix ) /* for debugging */
 
 void dump44f( float *m, char *prefix ) /* for debugging */
 {
-  printf("%s:0 %8.3f %8.3f %8.3f %8.3f\n",prefix,m[0],m[1],m[2],m[3]);
-  printf("%s:1 %8.3f %8.3f %8.3f %8.3f\n",prefix,m[4],m[5],m[6],m[7]);
-  printf("%s:2 %8.3f %8.3f %8.3f %8.3f\n",prefix,m[8],m[9],m[10],m[11]);
-  printf("%s:3 %8.3f %8.3f %8.3f %8.3f\n",prefix,m[12],m[13],m[14],m[15]);
+  if(prefix) {
+    printf("%s:0 %8.3f %8.3f %8.3f %8.3f\n",prefix,m[0],m[1],m[2],m[3]);
+    printf("%s:1 %8.3f %8.3f %8.3f %8.3f\n",prefix,m[4],m[5],m[6],m[7]);
+    printf("%s:2 %8.3f %8.3f %8.3f %8.3f\n",prefix,m[8],m[9],m[10],m[11]);
+    printf("%s:3 %8.3f %8.3f %8.3f %8.3f\n",prefix,m[12],m[13],m[14],m[15]);
+  } else {
+  }
 }
 
 void dump44d( double *m, char *prefix ) /* for debugging */
@@ -355,14 +359,63 @@ double dot_product3d ( double *v1, double *v2 )
   return( v1[0]*v2[0] + v1[1]*v2[1] + v1[2]*v2[2]);
 }
 
+void identity33f( float *m)
+{
+  m[0]=_1;
+  m[1]=_0;
+  m[2]=_0;
+  m[3]=_0;
+  m[4]=_1;
+  m[5]=_0;
+  m[6]=_0;
+  m[7]=_0;
+  m[8]=_1;
+}
+
+void identity33d( double *m)
+{
+  m[0]=_d1;
+  m[1]=_d0;
+  m[2]=_d0;
+  m[3]=_d0;
+  m[4]=_d1;
+  m[5]=_d0;
+  m[6]=_d0;
+  m[7]=_d0;
+  m[8]=_d1;
+}
+
 void identity44f ( float *m1 )
 {
   int a;
-  for(a=0;a<16;a++) m1[a]=0;
+  for(a=0;a<16;a++) m1[a]=_0;
   for(a=0;a<16;a=a+5) m1[a]=_1;
 }
 
 void copy44f ( float *src, float *dst )
+{
+  *(dst++)=*(src++);
+  *(dst++)=*(src++);
+  *(dst++)=*(src++);
+  *(dst++)=*(src++);
+
+  *(dst++)=*(src++);
+  *(dst++)=*(src++);
+  *(dst++)=*(src++);
+  *(dst++)=*(src++);
+
+  *(dst++)=*(src++);
+  *(dst++)=*(src++);
+  *(dst++)=*(src++);
+  *(dst++)=*(src++);
+
+  *(dst++)=*(src++);
+  *(dst++)=*(src++);
+  *(dst++)=*(src++);
+  *(dst++)=*(src++);
+}
+
+void copy44d ( double *src, double *dst )
 {
   *(dst++)=*(src++);
   *(dst++)=*(src++);
@@ -402,6 +455,7 @@ void copy44d33f ( double *src, float *dst )
   *(dst++)=(float)*(src++);
   src++;
 }
+
 
 void copy33f44d ( float *src, double *dst )
 {
@@ -493,10 +547,13 @@ void initializeTTT44f ( float *m )
     m[4*a+a]=_1;
 }
 
+
 void combineTTT44f44f( float *m1, float *m2, float *m3) 
-   /* NOTE: this is NOT equivalent to 4x4 matrix multiplication.
-      TTTs are designed for easily creating movies of rotating 
-      bodies! */
+/* WARNING: this routine is ill-conceived and essentially broken */
+
+/* NOTE: this is NOT equivalent to 4x4 matrix multiplication.
+   TTTs are designed for easily creating movies of rotating 
+   bodies! */
 {
 
   /*  dump44f(m1,"m1");
@@ -529,38 +586,90 @@ void combineTTT44f44f( float *m1, float *m2, float *m3)
   m3[ 7] = m1[ 7] + m2[ 7];
   m3[11] = m1[11] + m2[11];
 
-  /*  dump44f(m3,"m3");*/
 }
 
-void homogenizeTTT44f44d( float *in, double *out)
+void convertTTTfR44d( float *ttt, double *homo)
 {
   /* takes the PyMOL-specific TTT matrix and 
-     makes a homogenous 4x4 txf matrix out of it */
+     makes a homogenous 4x4 txf matrix homo of it */
 
-  register double in_3  = (double)in[3];
-  register double in_7  = (double)in[7];
-  register double in_11 = (double)in[11];
-  register double in_12 = (double)in[12];
-  register double in_13 = (double)in[13];
-  register double in_14 = (double)in[14];
-  out[ 0] = (double)in[ 0];
-  out[ 1] = (double)in[ 1];
-  out[ 2] = (double)in[ 2];
-  out[ 4] = (double)in[ 4];
-  out[ 5] = (double)in[ 5];
-  out[ 6] = (double)in[ 6];
-  out[ 8] = (double)in[ 8];
-  out[ 9] = (double)in[ 9];
-  out[10] = (double)in[10];
+  register double ttt_3  = (double)ttt[3];
+  register double ttt_7  = (double)ttt[7];
+  register double ttt_11 = (double)ttt[11];
+  register double ttt_12 = (double)ttt[12];
+  register double ttt_13 = (double)ttt[13];
+  register double ttt_14 = (double)ttt[14];
 
-  out[ 3] = in_3 * out[ 0] + in_7 * out[ 1] + in_11 * out[ 2] + in_12;
-  out[ 7] = in_3 * out[ 4] + in_7 * out[ 5] + in_11 * out[ 6] + in_13;
-  out[11] = in_3 * out[ 8] + in_7 * out[ 9] + in_11 * out[10] + in_14;
+  /*  dump44f(ttt,"ttt");*/
 
-  out[12] = 0.0;
-  out[13] = 0.0;
-  out[14] = 0.0;
-  out[15] = 1.0;
+  homo[ 0] = (double)ttt[ 0];
+  homo[ 1] = (double)ttt[ 1];
+  homo[ 2] = (double)ttt[ 2];
+  homo[ 4] = (double)ttt[ 4];
+  homo[ 5] = (double)ttt[ 5];
+  homo[ 6] = (double)ttt[ 6];
+  homo[ 8] = (double)ttt[ 8];
+  homo[ 9] = (double)ttt[ 9];
+  homo[10] = (double)ttt[10];
+
+  homo[ 3] = (homo[ 0] * ttt_12) + (homo[ 1] * ttt_13) + (homo[ 2] * ttt_14) + ttt_3;
+  homo[ 7] = (homo[ 4] * ttt_12) + (homo[ 5] * ttt_13) + (homo[ 6] * ttt_14) + ttt_7;
+  homo[11] = (homo[ 8] * ttt_12) + (homo[ 9] * ttt_13) + (homo[10] * ttt_14) + ttt_11;
+
+  homo[12] = 0.0;
+  homo[13] = 0.0;
+  homo[14] = 0.0;
+  homo[15] = 1.0;
+
+  /*  dump44d(homo, "homo");*/
+
+}
+
+void convert44d44f(double *dbl, float *flt)
+{
+  flt[ 0] = (float)dbl[ 0];
+  flt[ 1] = (float)dbl[ 1];
+  flt[ 2] = (float)dbl[ 2];
+  flt[ 3] = (float)dbl[ 3];
+  flt[ 4] = (float)dbl[ 4];
+  flt[ 5] = (float)dbl[ 5];
+  flt[ 6] = (float)dbl[ 6];
+  flt[ 7] = (float)dbl[ 7];
+  flt[ 8] = (float)dbl[ 8];
+  flt[ 9] = (float)dbl[ 9];
+  flt[10] = (float)dbl[10];
+  flt[11] = (float)dbl[11];
+  flt[12] = (float)dbl[12];
+  flt[13] = (float)dbl[13];
+  flt[14] = (float)dbl[14];
+  flt[15] = (float)dbl[15];
+}
+
+void convert44f44d(float *flt, double *dbl)
+{
+  dbl[ 0] = (double)flt[ 0];
+  dbl[ 1] = (double)flt[ 1];
+  dbl[ 2] = (double)flt[ 2];
+  dbl[ 3] = (double)flt[ 3];
+  dbl[ 4] = (double)flt[ 4];
+  dbl[ 5] = (double)flt[ 5];
+  dbl[ 6] = (double)flt[ 6];
+  dbl[ 7] = (double)flt[ 7];
+  dbl[ 8] = (double)flt[ 8];
+  dbl[ 9] = (double)flt[ 9];
+  dbl[10] = (double)flt[10];
+  dbl[11] = (double)flt[11];
+  dbl[12] = (double)flt[12];
+  dbl[13] = (double)flt[13];
+  dbl[14] = (double)flt[14];
+  dbl[15] = (double)flt[15];
+}
+
+void convertR44dTTTf( double *homo, float *ttt )
+{
+  /* nowadays, homogeneous matrices with (0,0,0,1) in 4th row are TTT
+     compatible */
+  convert44d44f(homo,ttt);
 }
 
 void multiply44d44d44d( double *left, double *right, double *product)
@@ -604,8 +713,122 @@ void multiply44d44d44d( double *left, double *right, double *product)
   product[ 7] = left[ 4] * rA + left[ 5] * rB + left[ 6] * rC + left[ 7] * rD;
   product[11] = left[ 8] * rA + left[ 9] * rB + left[10] * rC + left[11] * rD;
   product[15] = left[12] * rA + left[13] * rB + left[14] * rC + left[15] * rD;
- 
 }
+
+void left_multiply44d44d( double *left, double *right)
+{
+  register double rA = right[ 0];
+  register double rB = right[ 4];
+  register double rC = right[ 8];
+  register double rD = right[12];
+  
+  right[ 0] = left[ 0] * rA + left[ 1] * rB + left[ 2] * rC + left[ 3] * rD;
+  right[ 4] = left[ 4] * rA + left[ 5] * rB + left[ 6] * rC + left[ 7] * rD;
+  right[ 8] = left[ 8] * rA + left[ 9] * rB + left[10] * rC + left[11] * rD;
+  right[12] = left[12] * rA + left[13] * rB + left[14] * rC + left[15] * rD;
+
+  rA = right[ 1];
+  rB = right[ 5];
+  rC = right[ 9];
+  rD = right[13];
+  
+  right[ 1] = left[ 0] * rA + left[ 1] * rB + left[ 2] * rC + left[ 3] * rD;
+  right[ 5] = left[ 4] * rA + left[ 5] * rB + left[ 6] * rC + left[ 7] * rD;
+  right[ 9] = left[ 8] * rA + left[ 9] * rB + left[10] * rC + left[11] * rD;
+  right[13] = left[12] * rA + left[13] * rB + left[14] * rC + left[15] * rD;
+
+  rA = right[ 2];
+  rB = right[ 6];
+  rC = right[10];
+  rD = right[14];
+  
+  right[ 2] = left[ 0] * rA + left[ 1] * rB + left[ 2] * rC + left[ 3] * rD;
+  right[ 6] = left[ 4] * rA + left[ 5] * rB + left[ 6] * rC + left[ 7] * rD;
+  right[10] = left[ 8] * rA + left[ 9] * rB + left[10] * rC + left[11] * rD;
+  right[14] = left[12] * rA + left[13] * rB + left[14] * rC + left[15] * rD;
+
+  rA = right[ 3];
+  rB = right[ 7];
+  rC = right[11];
+  rD = right[15];
+  
+  right[ 3] = left[ 0] * rA + left[ 1] * rB + left[ 2] * rC + left[ 3] * rD;
+  right[ 7] = left[ 4] * rA + left[ 5] * rB + left[ 6] * rC + left[ 7] * rD;
+  right[11] = left[ 8] * rA + left[ 9] * rB + left[10] * rC + left[11] * rD;
+  right[15] = left[12] * rA + left[13] * rB + left[14] * rC + left[15] * rD;
+}
+
+void right_multiply44d44d( double *left, double *right)
+{
+  register double cA = left[ 0];
+  register double cB = left[ 1];
+  register double cC = left[ 2];
+  register double cD = left[ 3];
+  
+  left[ 0] = cA * right[ 0] + cB * right[ 4] + cC * right[ 8] + cD * right[12];
+  left[ 1] = cA * right[ 1] + cB * right[ 5] + cC * right[ 9] + cD * right[13];
+  left[ 2] = cA * right[ 2] + cB * right[ 6] + cC * right[10] + cD * right[14];
+  left[ 3] = cA * right[ 3] + cB * right[ 7] + cC * right[11] + cD * right[15];
+
+  cA = left[ 4];
+  cB = left[ 5];
+  cC = left[ 6];
+  cD = left[ 7];
+  
+  left[ 4] = cA * right[ 0] + cB * right[ 4] + cC * right[ 8] + cD * right[12];
+  left[ 5] = cA * right[ 1] + cB * right[ 5] + cC * right[ 9] + cD * right[13];
+  left[ 6] = cA * right[ 2] + cB * right[ 6] + cC * right[10] + cD * right[14];
+  left[ 7] = cA * right[ 3] + cB * right[ 7] + cC * right[11] + cD * right[15];
+
+  cA = left[ 8];
+  cB = left[ 9];
+  cC = left[10];
+  cD = left[11];
+  
+  left[ 8] = cA * right[ 0] + cB * right[ 4] + cC * right[ 8] + cD * right[12];
+  left[ 9] = cA * right[ 1] + cB * right[ 5] + cC * right[ 9] + cD * right[13];
+  left[10] = cA * right[ 2] + cB * right[ 6] + cC * right[10] + cD * right[14];
+  left[11] = cA * right[ 3] + cB * right[ 7] + cC * right[11] + cD * right[15];
+
+  cA = left[12];
+  cB = left[13];
+  cC = left[14];
+  cD = left[15];
+  
+  left[12] = cA * right[ 0] + cB * right[ 4] + cC * right[ 8] + cD * right[12];
+  left[13] = cA * right[ 1] + cB * right[ 5] + cC * right[ 9] + cD * right[13];
+  left[14] = cA * right[ 2] + cB * right[ 6] + cC * right[10] + cD * right[14];
+  left[15] = cA * right[ 3] + cB * right[ 7] + cC * right[11] + cD * right[15];
+
+}
+
+void invert_special44d44d(double *orig, double *inv)
+{
+  /* inverse of the rotation matrix */
+
+  inv[ 0] = orig[ 0];
+  inv[ 1] = orig[ 4];
+  inv[ 2] = orig[ 8];
+  inv[ 4] = orig[ 1];
+  inv[ 5] = orig[ 5];
+  inv[ 6] = orig[ 9];
+  inv[ 8] = orig[ 2];
+  inv[ 9] = orig[ 6];
+  inv[10] = orig[10];
+
+  /* invert the translation portion */
+
+  inv[ 3] = -(orig[ 3] * orig[ 0] + orig[ 7] * orig[ 4] + orig[11] * orig[ 8]);
+  inv[ 7] = -(orig[ 3] * orig[ 1] + orig[ 7] * orig[ 5] + orig[11] * orig[ 9]);
+  inv[11] = -(orig[ 3] * orig[ 2] + orig[ 7] * orig[ 6] + orig[11] * orig[10]);
+
+  inv[12] = 0.0;
+  inv[13] = 0.0;
+  inv[14] = 0.0;
+  inv[15] = 1.0;
+
+}
+
 
 void transformTTT44f3f (float *m1, float *m2, float *m3)
 {
@@ -674,6 +897,27 @@ float rad_to_deg(float angle)
   return((float)(180.0 * (angle/ cPI)));
 }
 
+void get_rotation_about3f3fTTTf(float angle, float *dir, float *origin, float *ttt)
+{
+  float rot[9];
+  rotation_matrix3f(angle,dir[0],dir[1],dir[2],rot);
+  ttt[ 0] = rot[0];
+  ttt[ 1] = rot[1];
+  ttt[ 2] = rot[2];
+  ttt[ 4] = rot[3];
+  ttt[ 5] = rot[4];
+  ttt[ 6] = rot[5];
+  ttt[ 8] = rot[6];
+  ttt[ 9] = rot[7];
+  ttt[10] = rot[8];
+  ttt[12] = -origin[0];
+  ttt[13] = -origin[1];
+  ttt[14] = -origin[2];
+  ttt[ 3] = origin[0];
+  ttt[ 7] = origin[1];
+  ttt[11] = origin[2];
+}
+
 void rotation_to_matrix33f(float *axis, float angle, Matrix33f mat)
 {
   rotation_matrix3f(angle,axis[0],axis[1],axis[2],&mat[0][0]);
@@ -681,6 +925,8 @@ void rotation_to_matrix33f(float *axis, float angle, Matrix33f mat)
 
 void rotation_matrix3f( float angle, float x, float y, float z,float *m )
 {
+  /* returns a row-major rotation matrix */
+
   int a,b;
 
    /* This function contributed by Erich Boleyn (erich@uruk.org) */

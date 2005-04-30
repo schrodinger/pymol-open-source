@@ -1321,6 +1321,7 @@ SEE ALSO
            remove_picked,      \
            rename,             \
            replace,            \
+           reset_matrix,       \
            rotate,             \
            sculpt_purge,       \
            sculpt_deactivate,  \
@@ -1336,6 +1337,7 @@ SEE ALSO
            sort,               \
            split_states,       \
            torsion,            \
+           transfer_matrix,    \
            transform_object,   \
            transform_selection,\
            translate,          \
@@ -1681,12 +1683,13 @@ SEE ALSO
          'replace'       : [ replace           , 0 , 0 , ''  , parsing.STRICT ],
          'replace_wizard': [ replace_wizard    , 0 , 0 , ''  , parsing.STRICT ],
          'reset'         : [ reset             , 0 , 0 , ''  , parsing.STRICT ],
+         'reset_matrix'  : [ reset_matrix      , 0 , 0 , ''  , parsing.STRICT ],         
          'resume'        : [ resume            , 0 , 0 , ''  , parsing.STRICT ],
          'return'        : [ python_help       , 0 , 0 , ''  , parsing.PYTHON ],   
          'rewind'        : [ rewind            , 0 , 0 , ''  , parsing.STRICT ],
    #      'rgbfunction'   : [ rgbfunction       , 0 , 0 , ''  , parsing.LEGACY ],         
          'rock'          : [ rock              , 0 , 0 , ''  , parsing.STRICT ],
-         'rotate'        : [ rotate            , 0 , 0 , ''  , parsing.STRICT ],   
+         'rotate'        : [ rotate            , 0 , 0 , ''  , parsing.STRICT ],
          'run'           : [ helping.run       , 1 , 2 , ',' , parsing.RUN    ], # insecure
          'rms'           : [ rms               , 0 , 0 , ''  , parsing.STRICT ],
          'rms_cur'       : [ rms_cur           , 0 , 0 , ''  , parsing.STRICT ],
@@ -1724,6 +1727,7 @@ SEE ALSO
          'test'          : [ test              , 0 , 0 , ''  , parsing.STRICT ],
          'toggle'        : [ toggle            , 0 , 0 , ''  , parsing.STRICT ],      
          'torsion'       : [ torsion           , 0 , 0 , ''  , parsing.STRICT ], # vs toggle_object
+         'transfer_matrix': [ transfer_matrix  , 0 , 0 , ''  , parsing.STRICT ],
          'translate'     : [ translate         , 0 , 0 , ''  , parsing.STRICT ],
          'try'           : [ python_help       , 0 , 0 , ''  , parsing.PYTHON ],
          'turn'          : [ turn              , 0 , 0 , ''  , parsing.STRICT ],

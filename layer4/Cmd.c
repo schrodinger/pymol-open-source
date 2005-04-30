@@ -955,6 +955,58 @@ static PyObject *CmdTranslateAtom(PyObject *self, PyObject *args)
   return(APIStatus(ok));
 }
 
+static PyObject *CmdTransferMatrix(PyObject *self, 	PyObject *args)
+{
+  char *source_name, *target_name;
+  int source_mode, target_mode;
+  int source_state, target_state, target_undo;
+  int log;
+  int quiet;
+  int ok=false;
+  ok = PyArg_ParseTuple(args,"ssiiiiiii",
+                        &source_name, &target_name,
+                        &source_mode, &target_mode,
+                        &source_state, &target_state,
+                        &target_undo,
+                        &log, &quiet);
+  if (ok) {
+    APIEntry();
+    ExecutiveTransferMatrix(TempPyMOLGlobals,
+                            source_name, target_name, 
+                            source_mode, target_mode, 
+                            source_state, target_state,
+                            target_undo,
+                            log, quiet);
+    APIExit();
+  }
+  return(APIStatus(ok));  
+}
+
+static PyObject *CmdResetMatrix(PyObject *self, 	PyObject *args)
+{
+  char *name;
+  int mode;
+  int state;
+  int log;
+  int quiet;
+  int ok=false;
+  ok = PyArg_ParseTuple(args,"siiii",
+                        &name,
+                        &mode,
+                        &state,
+                        &log, &quiet);
+  if (ok) {
+    APIEntry();
+    ExecutiveResetMatrix(TempPyMOLGlobals,
+                         name,
+                         mode,
+                         state,
+                         log, quiet);
+    APIExit();
+  }
+  return(APIStatus(ok));  
+}
+
 static PyObject *CmdTransformObject(PyObject *self, PyObject *args)
 {
   char *name,*sele;
@@ -2960,7 +3012,7 @@ static PyObject *CmdCreate(PyObject *dummy, PyObject *args)
 
 static PyObject *CmdOrient(PyObject *dummy, PyObject *args)
 {
-  Matrix33d m;
+  double m[16];
   char *str1;
   OrthoLineType s1;
   int state;
@@ -3374,7 +3426,7 @@ static PyObject *CmdGetProgress(PyObject *self, PyObject *args)
 
 static PyObject *CmdGetMoment(PyObject *self, 	PyObject *args) /* missing? */
 {
-  Matrix33d m;
+  double moment[16];
   PyObject *result;
   char *str1;
   int ok=false;
@@ -3383,13 +3435,14 @@ static PyObject *CmdGetMoment(PyObject *self, 	PyObject *args) /* missing? */
   ok = PyArg_ParseTuple(args,"si",&str1,&state);
   if (ok) {
     APIEntry();
-    ExecutiveGetMoment(TempPyMOLGlobals,str1,m,state);
+    ExecutiveGetMoment(TempPyMOLGlobals,str1,moment,state);
     APIExit();
   }
   result = Py_BuildValue("(ddd)(ddd)(ddd)", 
-								 m[0][0],m[0][1],m[0][2],
-								 m[1][0],m[1][1],m[1][2],
-								 m[2][0],m[2][1],m[2][2]);
+								 moment[0],moment[1],moment[2],
+								 moment[3],moment[4],moment[5],
+								 moment[6],moment[7],moment[8]);
+
   return result;
 }
 
@@ -5428,6 +5481,7 @@ static PyMethodDef Cmd_methods[] = {
 	{"orient",	              CmdOrient,               METH_VARARGS },
 	{"onoff",                 CmdOnOff,                METH_VARARGS },
    {"onoff_by_sele",         CmdOnOffBySele,          METH_VARARGS },
+   {"order",                 CmdOrder,                METH_VARARGS },
 	{"overlap",               CmdOverlap,              METH_VARARGS },
 	{"p_glut_event",          CmdPGlutEvent,           METH_VARARGS },
    {"p_glut_get_redisplay",  CmdPGlutGetRedisplay,    METH_VARARGS },
@@ -5451,11 +5505,11 @@ static PyMethodDef Cmd_methods[] = {
 	{"remove_picked",         CmdRemovePicked,         METH_VARARGS },
 	{"render",	              CmdRay,                  METH_VARARGS },
    {"rename",                CmdRename,               METH_VARARGS },
-   {"order",                 CmdOrder,                METH_VARARGS },
    {"replace",               CmdReplace,              METH_VARARGS },
    {"reinitialize",          CmdReinitialize,         METH_VARARGS },
 	{"reset",                 CmdReset,                METH_VARARGS },
 	{"reset_rate",	           CmdResetRate,            METH_VARARGS },
+	{"reset_matrix",	        CmdResetMatrix,          METH_VARARGS },
    /*	{"rgbfunction",       CmdRGBFunction,              METH_VARARGS },*/
 	{"rock",	                 CmdRock,                 METH_VARARGS },
 	{"runpymol",	           CmdRunPyMOL,             METH_VARARGS },
@@ -5500,6 +5554,7 @@ static PyMethodDef Cmd_methods[] = {
 	{"symexp",	              CmdSymExp,               METH_VARARGS },
 	{"test",	                 CmdTest,                 METH_VARARGS },
 	{"toggle",                CmdToggle,               METH_VARARGS },
+	{"transfer_matrix",       CmdTransferMatrix,       METH_VARARGS },
 	{"transform_object",      CmdTransformObject,      METH_VARARGS },
 	{"transform_selection",   CmdTransformSelection,   METH_VARARGS },
 	{"translate_atom",        CmdTranslateAtom,        METH_VARARGS },
