@@ -284,7 +284,7 @@ float ExecutiveAngle(PyMOLGlobals *G,char *nam,char *s1,char *s2,char *s3,int mo
 float ExecutiveDihedral(PyMOLGlobals *G,char *nam,char *s1,char *s2,char *s3,char *s4,int mode,
                      int labels,int reset,int zoom,int quiet);
 
-void ExecutiveTransferMatrix(PyMOLGlobals *G,
+void ExecutiveMatrixTransfer(PyMOLGlobals *G,
                              char *source_name, char *target_name,
                              int source_mode, int target_mode, 
                              int source_state, int target_state,

@@ -98,7 +98,7 @@ static void ExecutiveSpecSetVisibility(PyMOLGlobals *G,SpecRec *rec,
                                        int new_vis,int mod);
 void ExecutiveObjMolSeleOp(PyMOLGlobals *G,int sele,ObjectMoleculeOpRec *op);
 
-void ExecutiveTransferMatrix(PyMOLGlobals *G,
+void ExecutiveMatrixTransfer(PyMOLGlobals *G,
                              char *source_name, char *target_name,
                              int   source_mode,  int target_mode, 
                              int   source_state, int target_state,
@@ -1538,9 +1538,11 @@ int ExecutiveIsolevel(PyMOLGlobals *G,char *name,float level,int state)
     switch(obj->type) {
     case cObjectMesh:
       ObjectMeshSetLevel((ObjectMesh*)obj,level,state);
-        SceneChanged(G);
+      SceneChanged(G);
       break;
     case cObjectSurface:
+      ObjectSurfaceSetLevel((ObjectSurface*)obj,level,state);
+      SceneChanged(G);
       break;
     default:
       ok=false;

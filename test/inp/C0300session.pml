@@ -2,7 +2,7 @@
 
 /print "BEGIN-LOG"
 
-load $PYMOL_PATH/test/dat/pept.pdb
+load dat/pept.pdb
 select cas,name ca
 set line_width,5
 show spheres,name n

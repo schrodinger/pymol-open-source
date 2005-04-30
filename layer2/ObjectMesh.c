@@ -34,6 +34,7 @@ Z* -------------------------------------------------------------------
 #include"Executive.h"
 #include"PConv.h"
 #include"P.h"
+#include"Matrix.h"
 
 ObjectMesh *ObjectMeshNew(PyMOLGlobals *G);
 
@@ -412,25 +413,17 @@ static void ObjectMeshUpdate(ObjectMesh *I)
 
             {
               float *min_ext,*max_ext;
-              float tr_min[3],tr_max[3];
-              
-              if(ms->State.Matrix) {  /* convert back into original map coordinates 
-                                         for range calculation */
-                inverse_transform44d3f(ms->State.Matrix,ms->ExtentMin,tr_min);
-                inverse_transform44d3f(ms->State.Matrix,ms->ExtentMax,tr_max);
-                {
-                  float tmp;
-                  int a;
-                  for(a=0;a<3;a++) 
-                    if(tr_min[0]>tr_max[0]) { tmp=tr_min[0]; tr_min[0]=tr_max[0]; tr_max[0]=tmp;}
-                }
-                min_ext = tr_min;
-                max_ext = tr_max;
+              float tmp_min[3],tmp_max[3];
+              if(MatrixInvTransformExtentsR44d3f(ms->State.Matrix,
+                                                 ms->ExtentMin,ms->ExtentMax,
+                                                 tmp_min,tmp_max)) {
+                min_ext = tmp_min;
+                max_ext = tmp_max;
               } else {
                 min_ext = ms->ExtentMin;
                 max_ext = ms->ExtentMax;
               }
-              
+
               IsosurfGetRange(I->Obj.G,oms->Field,oms->Crystal,
                               min_ext,max_ext,ms->Range);
             }
@@ -789,20 +782,12 @@ ObjectMesh *ObjectMeshFromBox(PyMOLGlobals *G,ObjectMesh *obj,ObjectMap *map,
     
     {
       float *min_ext,*max_ext;
-      float tr_min[3],tr_max[3];
-      
-      if(ms->State.Matrix) {  /* convert back into original map coordinates 
-                                 for range calculation */
-        inverse_transform44d3f(ms->State.Matrix,ms->ExtentMin,tr_min);
-        inverse_transform44d3f(ms->State.Matrix,ms->ExtentMax,tr_max);
-        {
-          float tmp;
-          int a;
-          for(a=0;a<3;a++) 
-            if(tr_min[0]>tr_max[0]) { tmp=tr_min[0]; tr_min[0]=tr_max[0]; tr_max[0]=tmp;}
-        }
-        min_ext = tr_min;
-        max_ext = tr_max;
+      float tmp_min[3],tmp_max[3];
+      if(MatrixInvTransformExtentsR44d3f(ms->State.Matrix,
+                                         ms->ExtentMin,ms->ExtentMax,
+                                         tmp_min,tmp_max)) {
+        min_ext = tmp_min;
+        max_ext = tmp_max;
       } else {
         min_ext = ms->ExtentMin;
         max_ext = ms->ExtentMax;

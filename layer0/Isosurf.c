@@ -466,7 +466,7 @@ void IsosurfGetRange(PyMOLGlobals *G,Isofield *field,CCrystal *cryst,float *mn,f
   for(a=0;a<3;a++) {
     if(imx[a]!=imn[a]) {
       int b;
-      float mini=0,maxi=0,cur;
+      float mini=0.0F,maxi=0.0F,cur;
 
       for(b=0;b<8;b++) {
         cur = ((field->dimensions[a]*(imix[a+3*b]-imn[a])/(imx[a]-imn[a])));
@@ -482,9 +482,9 @@ void IsosurfGetRange(PyMOLGlobals *G,Isofield *field,CCrystal *cryst,float *mn,f
         }
       }
 
-      range[a] = (int)(mini-0.5F);
+      range[a] = (int)(mini);
       if(range[a]<0) range[a]=0;
-      range[a+3] = (int)(maxi+1.5F);
+      range[a+3] = (int)(maxi+0.999F);
       if(range[a+3]<0) range[a+3]=0;
     } else {
       range[a]=1;

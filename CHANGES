@@ -6,7 +6,9 @@ Changes up to 0.98
 
    beta35
 
-   * matrix_transfer, matrix_reset commands
+   * isosurface and isomesh now use the same ranging criteria
+
+   * matrix_transfer, matrix_reset commands (WHAT A PAIN)
 
    * added support for row-major 4x4 homogenous transformation
      matrices, and in resolving internal conflicts with TTT matrices,

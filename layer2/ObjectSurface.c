@@ -36,6 +36,7 @@ Z* -------------------------------------------------------------------
 #include"P.h"
 #include"Util.h"
 #include"PyMOLGlobals.h"
+#include"Matrix.h"
 
 ObjectSurface *ObjectSurfaceNew(PyMOLGlobals *G);
 
@@ -202,6 +203,7 @@ int ObjectSurfaceNewFromPyList(PyMOLGlobals *G,PyObject *list,ObjectSurface **re
 #endif
 }
 
+
 PyObject *ObjectSurfaceAsPyList(ObjectSurface *I)
 {
 #ifdef _PYMOL_NOPY
@@ -221,10 +223,11 @@ PyObject *ObjectSurfaceAsPyList(ObjectSurface *I)
 
 static void ObjectSurfaceStateFree(ObjectSurfaceState *ms)
 {
-  if(ms->G->HaveGUI) {
+  ObjectStatePurge(&ms->State);
+  if(ms->State.G->HaveGUI) {
     if(ms->displayList) {
       if(PIsGlutThread()) {
-        if(ms->G->ValidContext) {
+        if(ms->State.G->ValidContext) {
           glDeleteLists(ms->displayList,1);
           ms->displayList = 0;
         }
@@ -347,6 +350,13 @@ static void ObjectSurfaceUpdate(ObjectSurface *I)
               CGOFree(ms->UnitCellCGO);
             ms->UnitCellCGO = CrystalGetUnitCellCGO(&ms->Crystal);
           } 
+          
+          if(oms->State.Matrix) {
+            ObjectStateSetMatrix(&ms->State,oms->State.Matrix);
+          } else if(ms->State.Matrix) {
+            ObjectStateResetMatrix(&ms->State);
+          }
+          
           ms->RefreshFlag=false;
         }
       }
@@ -355,10 +365,27 @@ static void ObjectSurfaceUpdate(ObjectSurface *I)
 
 
           ms->ResurfaceFlag=false;
-          PRINTF " ObjectSurface: updating \"%s\".\n" , I->Obj.Name ENDF(I->Obj.G);
+          PRINTFB(I->Obj.G,FB_ObjectSurface,FB_Actions)
+           " ObjectSurface: updating \"%s\".\n" , I->Obj.Name 
+            ENDFB(I->Obj.G);
           if(oms->Field) {
-            TetsurfGetRange(oms->Field,oms->Crystal,
-                            ms->ExtentMin,ms->ExtentMax,ms->Range);
+
+            {
+              float *min_ext,*max_ext;
+              float tmp_min[3],tmp_max[3];
+              if(MatrixInvTransformExtentsR44d3f(ms->State.Matrix,
+                                                 ms->ExtentMin,ms->ExtentMax,
+                                                 tmp_min,tmp_max)) {
+                min_ext = tmp_min;
+                max_ext = tmp_max;
+              } else {
+                min_ext = ms->ExtentMin;
+                max_ext = ms->ExtentMax;
+              }
+              
+              TetsurfGetRange(oms->Field,oms->Crystal,
+                              min_ext,max_ext,ms->Range);
+            }
 
             if(ms->CarveFlag&&ms->AtomVertex) {
               carve_buffer = ms->CarveBuffer;
@@ -373,16 +400,68 @@ static void ObjectSurfaceUpdate(ObjectSurface *I)
             }
 
             ms->nT=TetsurfVolume(I->Obj.G,oms->Field,
-                          ms->Level,
-                          &ms->N,&ms->V,
-                          ms->Range,
-                          ms->Mode,
-                          voxelmap,
-                          ms->AtomVertex,
-                          ms->CarveBuffer,
-                          ms->Side);
+                                 ms->Level,
+                                 &ms->N,&ms->V,
+                                 ms->Range,
+                                 ms->Mode,
+                                 voxelmap,
+                                 ms->AtomVertex,
+                                 ms->CarveBuffer,
+                                 ms->Side);
+            
             if(voxelmap)
               MapFree(voxelmap);
+
+            if(ms->State.Matrix) { /* in we're in a different reference frame...*/
+              double *matrix = ms->State.Matrix;
+              float *v;
+              int *n,c;
+              
+              v=ms->V;
+              n=ms->N;
+
+              if(n&&v) {
+
+                while(*n) {
+                  c=*(n++);
+                  switch(ms->Mode) {
+                  case 3:
+                  case 2:
+                    transform44d3fas33d3f(matrix,v,v);
+                    transform44d3f(matrix,v+3,v+3);
+                    transform44d3fas33d3f(matrix,v+6,v+6);
+                    transform44d3f(matrix,v+9,v+9);
+                    v+=12;
+                    c-=4;
+                    while(c>0) {
+                      transform44d3fas33d3f(matrix,v,v);
+                      transform44d3f(matrix,v+3,v+3);
+                      v+=6;
+                      c-=2;
+                    }
+                    break;
+                  case 1:
+                    transform44d3f(matrix,v,v);
+                    c--;
+                    v+=3;
+                    while(c>0) {
+                      transform44d3f(matrix,v,v);
+                      v+=3;
+                      c--;
+                    }
+                    break;
+                  case 0:
+                  default:
+                    while(c>0) {
+                      transform44d3f(matrix,v,v);
+                      v+=3;
+                      c--;
+                    }
+                    break;
+                  }
+                }
+              }
+            }
           }
         }
       }
@@ -720,7 +799,9 @@ ObjectSurface *ObjectSurfaceNew(PyMOLGlobals *G)
 /*========================================================================*/
 void ObjectSurfaceStateInit(PyMOLGlobals *G,ObjectSurfaceState *ms)
 {
-  ms->G = G;
+  if(ms->Active)
+    ObjectStatePurge(&ms->State);
+  ObjectStateInit(G,&ms->State);
   if(!ms->V) {
     ms->V = VLAlloc(float,10000);
   }
@@ -776,15 +857,50 @@ float carve,float *vert_vla,int side)
   ms->Mode = mode;
   ms->Side = side;
   if(oms) {
-    TetsurfGetRange(oms->Field,oms->Crystal,mn,mx,ms->Range);
+
+    if(oms->State.Matrix) {
+      ObjectStateSetMatrix(&ms->State,oms->State.Matrix);
+    } else if(ms->State.Matrix) {
+      ObjectStateResetMatrix(&ms->State);
+    }
+
     copy3f(mn,ms->ExtentMin); /* this is not exactly correct...should actually take vertex points from range */
     copy3f(mx,ms->ExtentMax);
+    
+    {
+      float *min_ext,*max_ext;
+      float tmp_min[3],tmp_max[3];
+      if(MatrixInvTransformExtentsR44d3f(ms->State.Matrix,
+                                         ms->ExtentMin,ms->ExtentMax,
+                                         tmp_min,tmp_max)) {
+        min_ext = tmp_min;
+        max_ext = tmp_max;
+      } else {
+        min_ext = ms->ExtentMin;
+        max_ext = ms->ExtentMax;
+      }
+      
+      TetsurfGetRange(oms->Field,oms->Crystal,min_ext,max_ext,ms->Range);
+    }
     ms->ExtentFlag = true;
   }
   if(carve!=0.0) {
     ms->CarveFlag=true;
     ms->CarveBuffer = carve;
     ms->AtomVertex = vert_vla;
+
+    if(ms->State.Matrix) {
+      int n=VLAGetSize(ms->AtomVertex)/3;
+      float *v = ms->AtomVertex;
+      double *matrix = ms->State.Matrix;
+      while(n--) {
+        /* convert back into original map coordinates 
+           for surface carving operation */
+        inverse_transform44d3f(matrix, v,v);
+        v+=3;
+      }
+    }
+
   }
   if(I) {
     ObjectSurfaceRecomputeExtent(I);

@@ -229,6 +229,20 @@ void wiggle3f(float *v,float *p,float *s)
   normalize3f(v);
 
 }
+void copy3d3f ( double *v1,float *v2)
+{
+  v2[0]=(float)v1[0];
+  v2[1]=(float)v1[1];
+  v2[2]=(float)v1[2];
+}
+void copy3f3d ( float *v1,double *v2)
+{
+  v2[0]=(double)v1[0];
+  v2[1]=(double)v1[1];
+  v2[2]=(double)v1[2];
+}
+
+
 #ifndef USE_VECTOR_MACROS
 
 void  set3f ( float *v1,float x,float y,float z )
@@ -281,6 +295,14 @@ void copy3f ( float *v1,float *v2)
   v2[1]=v1[1];
   v2[2]=v1[2];
 }
+
+void copy3d ( double *v1,double *v2)
+{
+  v2[0]=v1[0];
+  v2[1]=v1[1];
+  v2[2]=v1[2];
+}
+
 
 void add3f ( float *v1, float *v2, float *v3 )
 {
@@ -534,7 +556,26 @@ void transform44d3f (double *m1, float *m2, float *m3)
   m3[2] = (float) (m1[ 8] * m2r0 + m1[ 9] * m2r1 + m1[10] * m2r2 + m1[11]);
 }
 
+void transform44d3fas33d3f (double *m1, float *m2, float *m3)
+{
+  register double m2r0 = m2[0];
+  register double m2r1 = m2[1];
+  register double m2r2 = m2[2];
+  m3[0] = (float) (m1[ 0] * m2r0 + m1[ 1] * m2r1 + m1[ 2] * m2r2);
+  m3[1] = (float) (m1[ 4] * m2r0 + m1[ 5] * m2r1 + m1[ 6] * m2r2);
+  m3[2] = (float) (m1[ 8] * m2r0 + m1[ 9] * m2r1 + m1[10] * m2r2);
+}
+
 void inverse_transform44d3f (double *m1, float *m2, float *m3)
+{
+  register double m2r0 = m2[0] - m1[3];
+  register double m2r1 = m2[1] - m1[7];
+  register double m2r2 = m2[2] - m1[11];
+  m3[0] = (float) (m1[ 0] * m2r0 + m1[ 4] * m2r1 + m1[ 8] * m2r2);
+  m3[1] = (float) (m1[ 1] * m2r0 + m1[ 5] * m2r1 + m1[ 9] * m2r2);
+  m3[2] = (float) (m1[ 2] * m2r0 + m1[ 6] * m2r1 + m1[10] * m2r2);
+}
+void inverse_transform44d3d (double *m1, double *m2, double *m3)
 {
   register double m2r0 = m2[0] - m1[3];
   register double m2r1 = m2[1] - m1[7];
