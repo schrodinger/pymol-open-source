@@ -34,12 +34,13 @@ int MatrixInvTransformExtentsR44d3f(double *matrix,
   int a;
   int c;
 
-  if(!matrix) 
-    return 0;
     
   double inp_min[3],inp_max[3];
   double out_min[3],out_max[3];
   double inp_tst[3],out_tst[3];
+
+  if(!matrix) 
+    return 0;
 
   copy3f3d(old_min,inp_min);
   copy3f3d(old_max,inp_max);
