@@ -815,10 +815,10 @@ ObjectMapState *ObjectMapStateGetActive(ObjectMap *I,int state)
 void ObjectMapUpdateExtents(ObjectMap *I)
 {
   int a;
-  I->Obj.ExtentFlag=false;
   float *min_ext,*max_ext;
   float tr_min[3],tr_max[3];
-
+  I->Obj.ExtentFlag=false;
+  
   for(a=0;a<I->NState;a++) {
     ObjectMapState *ms = I->State+a;
     if(ms->Active)
@@ -926,9 +926,9 @@ static void ObjectMapRender(ObjectMap *I,int state,CRay *ray,Pickable **pick,int
         ms=&I->State[state];
     
     if(ms) {
-      ObjectPrepareContext(&I->Obj,ray);
       float *corner = ms->Corner;
       float tr_corner[24];
+      ObjectPrepareContext(&I->Obj,ray);
       
       if(ms->State.Matrix) { /* transform the corners before drawing */
         int a;
