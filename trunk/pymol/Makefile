@@ -81,7 +81,9 @@ semistatic: .includes .depends .update
 	$(CC) $(BUILD) $(DEST) */*.o ov/src/*.o $(CFLAGS) $(LIB_DIRS) $(LIBS)	
 	$(PYTHON_EXE) modules/compile_pymol.py
 
-unix-mindep-build: semistatic
+# need to be root to do this...
+
+unix-mindep: semistatic
 	/bin/rm -rf $(MINDEP)
 	install -d $(MDP)/ext/lib
 	cp -r modules $(MDP)
@@ -99,16 +101,19 @@ unix-mindep-build: semistatic
 	cp README $(MDP)
 	cp setup/INSTALL.unix-mindep $(MDP)/INSTALL
 	cp setup/setup.sh.unix-mindep $(MDP)/setup.sh
+
+unix-beta: unix-mindep
+	cp epymol/data/pymol/beta/splash.png $(MDP)/data/pymol/splash.png
 	cd $(MINDEP);chown -R nobody pymol
 	cd $(MINDEP);chgrp -R nobody pymol
-
-unix-mindep: unix-mindep-build
 	cd $(MINDEP);tar -cvf - pymol | gzip > ../pymol-0_xx-bin-xxxxx-mindep.tgz
 
-unix-mindep-beta: unix-mindep-build
-	cp epymol/data/pymol/beta/splash.png $(MDP)/data/pymol/splash.png
+unix-product: unix-mindep
+	cp epymol/data/pymol/splash.png $(MDP)/data/pymol/splash.png
+	cd $(MINDEP);chown -R nobody pymol
+	cd $(MINDEP);chgrp -R nobody pymol
 	cd $(MINDEP);tar -cvf - pymol | gzip > ../pymol-0_xx-bin-xxxxx-mindep.tgz
-
+	
 unix-helper: unix-mindep-build
 	cp setup/setup.sh.unix-helper $(MDP)/setup.sh
 	cd $(MINDEP);tar -cvf - pymol | gzip > ../helperpymol-0_xx-bin-xxxxx-mindep.tgz
