@@ -347,11 +347,15 @@ mac-hybrid: mac
 	/bin/cp -R $(OSXPROD) $(OSXHYBRID)
 	sed 's/MacPyMOL/PyMOLX11Hybrid/' $(OSXHYBRID)/Contents/Info.plist > $(OSXHYBRID)/Contents/Info.plist.tmp
 	mv $(OSXHYBRID)/Contents/Info.plist.tmp $(OSXHYBRID)/Contents/Info.plist
-	/bin/cp data/pymol/splash.png $(OSXHYBRID)/pymol/data/pymol/
+	/bin/cp epymol/data/pymol/splash.png $(OSXHYBRID)/pymol/data/pymol/
 	/bin/rm -r $(OSXHYBRID)/Contents/Resources/English.lproj/MainMenu.nib
 	/bin/rm -r $(OSXHYBRID)/Contents/Resources/English.lproj/MainMenu~.nib
 	/bin/cp -r ext/lib/tcl8.4 $(OSXHYBRID)
 	/bin/cp -r ext/lib/tk8.4 $(OSXHYBRID)
+
+
+mac-hybrid-beta: mac-hybrid
+	/bin/cp epymol/data/pymol/beta/splash.png $(OSXHYBRID)/pymol/data/pymol/
 
 mac-beta:
 	make distclean
