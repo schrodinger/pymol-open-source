@@ -95,7 +95,7 @@ int ObjectGadgetRampNewFromPyList(PyMOLGlobals *G,PyObject *list,ObjectGadgetRam
 
   ObjectGadgetRamp *I = NULL;
   int ok = true;
-  int ll;
+  int ll = 0;
 
   if(ok) I=ObjectGadgetRampNew(G);
   if(ok) ok = (I!=NULL);
