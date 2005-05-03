@@ -60,9 +60,12 @@ if __name__=='pymol.invocation':
    options.window_visible = 1
    options.presentation = 0
    options.defer_builds_mode = 0
+
    
    if sys.platform[0:4] == 'irix':
       options.win_py = 240
+   elif sys.platform == 'darwin':
+      options.win_py = 236
    elif sys.platform != 'win32':
       options.win_py = 200
    else:
@@ -218,6 +221,7 @@ if __name__=='pymol.invocation':
                options.external_gui = 0
             if "m" in a: # mac external GUI
                options.external_gui = 2
+               options.win_py = 200                
             if "n" in a:
                options.incentive_product = 1
             if "t" in a:
