@@ -141,10 +141,10 @@ class Normal(PMGSkin):
       row4.pack(side=TOP,fill=BOTH,expand=YES)
       self.cmdB = self.buttonAdd(row4,'Command',
                                  lambda s=self:
-                                 s.toggleFrame(self.cmdFrame))
+                                 s.toggleFrame(s.cmdFrame))
       self.buildB = self.buttonAdd(row4,'Builder',
                                    lambda s=self:
-                                   s.toggleFrame(self.buildFrame))
+                                   s.toggleFrame(s.buildFrame))
       
       
    def my_show(self,win,center=1):
@@ -602,7 +602,7 @@ class Normal(PMGSkin):
       for lab, val in [ ('Off', 0.0), ('20%', 0.2), ('40%', 0.4), 
                         ('50%', 0.5), ('60%', 0.6), ('80%', 0.8) ]:
          self.menuBar.addmenuitem(name,  'command', lab, label=lab,
-                                  command = lambda v=val,s=self: s.cmd.set(setting_name, v))
+                                  command = lambda v=val,s=self,sn=setting_name: s.cmd.set(sn, v))
 
    def createMenuBar(self):
       self.menuBar = Pmw.MenuBar(self.root, balloon=self.balloon,
