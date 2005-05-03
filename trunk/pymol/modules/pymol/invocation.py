@@ -61,7 +61,9 @@ if __name__=='pymol.invocation':
    options.presentation = 0
    options.defer_builds_mode = 0
    
-   if sys.platform != 'win32':
+   if sys.platform[0:4] == 'irix':
+      options.win_py = 240
+   elif sys.platform != 'win32':
       options.win_py = 200
    else:
       options.win_py = 230
