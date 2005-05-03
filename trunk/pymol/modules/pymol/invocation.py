@@ -60,7 +60,6 @@ if __name__=='pymol.invocation':
    options.window_visible = 1
    options.presentation = 0
    options.defer_builds_mode = 0
-
    
    if sys.platform[0:4] == 'irix':
       options.win_py = 240
@@ -71,9 +70,6 @@ if __name__=='pymol.invocation':
    else:
       options.win_py = 230
    options.ext_y = 168 # external gui height (eg. for Tcl/Tk top bar)
-
-#   if sys.platform[:5] == 'linux':
-#      options.ext_y = options.ext_y + 48
 
    options.blue_line = 0
 

@@ -37,15 +37,17 @@ class PMGApp(Pmw.MegaWidget):
        else:
           self.initializeTk_unix()
 
-       osFrame = { 'win32' : 60, 'irix'  : 41,
-                   'darwin': 51, 'cygwin': 60, 
-                   'linux' : 31 }
+       # try to get the windows properly aligned...
        
+       osFrame = { 'win32' : 60, 'irix'   : 41,
+                   'darwin': 51, 'cygwin' : 60,
+                   'linux' : 31, 'linux2' : 31 }
+
        if sys.platform in osFrame.keys():
           self.frameAdjust = osFrame[sys.platform]
        else:
           self.frameAdjust = 51
-
+       
    def initializeTk_win32(self):
       self.root.option_add('*Font', 'Tahoma 8')
       self.pad = ' '
