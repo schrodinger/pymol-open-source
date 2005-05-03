@@ -1403,7 +1403,11 @@ void PGetOptions(CPyMOLOptions *rec)
   rec->auto_reinitialize = PyInt_AsLong(PyObject_GetAttrString(options,"auto_reinitialize"));
   rec->keep_thread_alive = PyInt_AsLong(PyObject_GetAttrString(options,"keep_thread_alive"));
   rec->quiet = PyInt_AsLong(PyObject_GetAttrString(options,"quiet"));
+#ifdef _PYMOL_INCENTIVE
+  rec->incentive_product = true;
+#else
   rec->incentive_product = PyInt_AsLong(PyObject_GetAttrString(options,"incentive_product"));
+#endif
   rec->multisample = PyInt_AsLong(PyObject_GetAttrString(options,"multisample"));
   rec->window_visible = PyInt_AsLong(PyObject_GetAttrString(options,"window_visible"));
   rec->read_stdin = PyInt_AsLong(PyObject_GetAttrString(options,"read_stdin"));

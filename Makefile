@@ -113,7 +113,7 @@ unix-product: unix-mindep
 	cd $(MINDEP);chown -R nobody pymol
 	cd $(MINDEP);chgrp -R nobody pymol
 	cd $(MINDEP);tar -cvf - pymol | gzip > ../pymol-0_xx-bin-xxxxx-mindep.tgz
-	
+
 unix-helper: unix-mindep-build
 	cp setup/setup.sh.unix-helper $(MDP)/setup.sh
 	cd $(MINDEP);tar -cvf - pymol | gzip > ../helperpymol-0_xx-bin-xxxxx-mindep.tgz
@@ -322,7 +322,7 @@ mac-framework: osx-unwrap osx-python-framework osx-product
 	/bin/rm -r $(OSXFRWK)/Contents/Resources/English.lproj/MainMenu~.nib
 
 mac: osx-standalone
-	/bin/cp layerOSX/bundle/splash.png $(OSXPYMOL)/data/pymol/
+	/bin/cp epymol/data/pymol/splash.png $(OSXPYMOL)/data/pymol/
 
 mac-helper: mac
 	/bin/rm -rf $(OSXHELPER)
