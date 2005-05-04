@@ -644,7 +644,7 @@ static PyObject *ObjectMapAllStatesAsPyList(ObjectMap *I)
 static int ObjectMapStateFromPyList(PyMOLGlobals *G,ObjectMapState *I,PyObject *list)
 {
   int ok=true;
-  int ll;
+  int ll=0;
   PyObject *tmp;
   if(ok) ok=(list!=NULL);
   if(ok) {
