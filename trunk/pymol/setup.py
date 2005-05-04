@@ -38,18 +38,21 @@ else:
    inc_dirs=["ov/src",
              "layer0","layer1","layer2",
              "layer3","layer4","layer5",
-#             "/users/warren/ext/include"
+#             "/home/warren/ext/include"
              ]
-   libs=["GL","GLU","glut","png"]
+   libs=["GL","GLU","glut","png",
+	"z"
+	]	
    pyogl_libs = ["GL","GLU","glut"]
    lib_dirs=[
       "/usr/X11R6/lib",
-#      "/users/warren/ext/lib"
+#      "/home/warren/ext/lib"
       ]
    def_macros=[("_PYMOL_MODULE",None),
+               ("_PYMOL_INLINE",None),
 #                  ("_PYMOL_NUMPY",None),
                   ("_HAVE_LIBPNG",None)]
-   ext_comp_args=[]
+   ext_comp_args=["-ffast-math","-funroll-loops","-O3"]
    ext_link_args=[]
    
 setup ( # Distribution meta-data
