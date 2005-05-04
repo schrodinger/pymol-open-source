@@ -97,8 +97,11 @@ if pymol_launch != 3: # if this isn't a dry run
          try_again = 1
 
       if try_again:
-         sys.exc_clear()
-         sys.path.append(os.path.dirname(os.path.dirname(__file__)))
+         try:
+            sys.exc_clear()
+            sys.path.append(os.path.dirname(os.path.dirname(__file__)))
+         except:
+            pass
          import pymol
       
       pymol_launch = 1
