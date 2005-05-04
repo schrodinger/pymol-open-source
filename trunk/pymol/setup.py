@@ -3,13 +3,16 @@
 # This script only applies if you are performing a Python Distutils-based
 # installation of PyMOL.
 #
-# tested with Python 2.1 on Linux, 2.2 on Win32
+# It assumes that all of PyMOL's external dependencies are pre-installed.
 
 from distutils.core import setup, Extension
 import sys
 
 if sys.platform=='win32':
-   inc_dirs=["layer0","layer1","layer2","layer3","layer4","layer5","win32/include"]
+   inc_dirs=["ov/src",
+             "layer0","layer1","layer2",
+             "layer3","layer4","layer5",
+             "win32/include"]
    libs=["opengl32","glu32","glut32","libpng","zlib"]
    pyogl_libs = ["opengl32","glu32","glut32"]
    lib_dirs=["win32/lib"]
@@ -19,7 +22,9 @@ if sys.platform=='win32':
    ext_comp_args=[]
    ext_link_args=['/NODEFAULTLIB:"LIBC"']
 elif sys.platform=='cygwin':
-   inc_dirs=["layer0","layer1","layer2","layer3","layer4","layer5"]
+   inc_dirs=["ov/src",
+             "layer0","layer1","layer2",
+             "layer3","layer4","layer5"]
    libs=["glut32","opengl32","glu32","png"]
    pyogl_libs = ["glut32","opengl32","glu32"]
    lib_dirs=["/usr/lib/w32api"]
@@ -30,10 +35,17 @@ elif sys.platform=='cygwin':
    ext_comp_args=[]
    ext_link_args=[]
 else:
-   inc_dirs=["layer0","layer1","layer2","layer3","layer4","layer5","ov/src"]
+   inc_dirs=["ov/src",
+             "layer0","layer1","layer2",
+             "layer3","layer4","layer5",
+#             "/users/warren/ext/include"
+             ]
    libs=["GL","GLU","glut","png"]
    pyogl_libs = ["GL","GLU","glut"]
-   lib_dirs=["/usr/X11R6/lib"]
+   lib_dirs=[
+      "/usr/X11R6/lib",
+#      "/users/warren/ext/lib"
+      ]
    def_macros=[("_PYMOL_MODULE",None),
 #                  ("_PYMOL_NUMPY",None),
                   ("_HAVE_LIBPNG",None)]
@@ -42,7 +54,7 @@ else:
    
 setup ( # Distribution meta-data
    name = "pymol",
-	version = "0.87",
+	version = "0.98",
 	package_dir = {'' : 'modules'},
 	packages = ['chempy',
                'chempy/bmin',
