@@ -44,10 +44,13 @@ struct _CPyMOLOptions {
   
   int multisample,
     window_visible, 
-    read_stdin, presentation, defer_builds_mode;
- 
+    read_stdin, 
+    presentation, 
+    defer_builds_mode,
+    full_screen;
+
   /* WARNING: for the sake of forward compability, never delete or
-     move any fields in the above */
+     move any fields in the above ...initialization struct in PyMOL.c */
 
   /* WARNING: don't add, delete, or change item order unless you also update
      PyMOL.c where this global structure is initialized */

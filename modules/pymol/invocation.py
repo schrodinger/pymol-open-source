@@ -60,6 +60,7 @@ if __name__=='pymol.invocation':
    options.window_visible = 1
    options.presentation = 0
    options.defer_builds_mode = 0
+   options.full_screen = 0
    
    if sys.platform[0:4] == 'irix':
       options.win_py = 240
@@ -232,6 +233,7 @@ if __name__=='pymol.invocation':
                options.deferred.append(
                   "_do_%s"%string.replace(av.pop(),'%',' '))
             if "e" in a:
+               options.full_screen = 1
                options.deferred.append("_do__ full_screen on")
             if "G" in a: # Game mode (reqd for Mac stereo)
                options.game_mode = 1

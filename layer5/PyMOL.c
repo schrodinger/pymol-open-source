@@ -1403,6 +1403,7 @@ const static CPyMOLOptions Defaults = {
   0, /* read_stdin */
   0, /* presentation */
   0, /* defer builds mode */
+  0, /* full screen mode */
 };
 
 CPyMOLOptions *PyMOLOptions_New(void)
