@@ -1291,7 +1291,14 @@ SetConsoleCtrlHandler(
         #endif
       }
       p_glutInitWindowSize(G->Option->winX, G->Option->winY);
- 
+
+      if(G->Option->full_screen) {
+        int height = p_glutGet(P_GLUT_SCREEN_HEIGHT);
+        int width = p_glutGet(P_GLUT_SCREEN_WIDTH);
+        p_glutInitWindowPosition(0,0);
+        p_glutInitWindowSize(width,height);
+      }
+
 #ifdef _PYMOL_SHARP3D
       theWindow = p_glutCreateWindow("PyMOL Molecular Graphics for Sharp 3D Displays - www.pymol.org - DeLano Scientific LLC");
 #else

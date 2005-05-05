@@ -1025,8 +1025,13 @@ DEVELOPMENT TO DO
       frame = int(frame)
       quiet = int(quiet)
       if animate<0:
-         if int(cmd.get_setting_legacy("scene_animation"))!=0:
+         scene_animation = int(cmd.get_setting_legacy("scene_animation"))
+         if scene_animation<0:
+            scene_animation = int(cmd.get_setting_legacy("animation"))
+         if scene_animation!=0:
             animate = cmd.get_setting_legacy("scene_animation_duration")
+         else:
+            animate = 0
       try:
          lock() # manipulating global data, so need lock
          if key=='auto':
