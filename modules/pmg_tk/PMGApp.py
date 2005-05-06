@@ -13,6 +13,7 @@
 #Z* -------------------------------------------------------------------
 
 import sys
+import os
 from glob import glob
 import re
 import string
@@ -22,6 +23,8 @@ import Queue
 import __builtin__
 
 from Tkinter import *
+from tkFileDialog import *
+import tkMessageBox
 import Pmw
 
 class PMGApp(Pmw.MegaWidget):
@@ -93,6 +96,37 @@ class PMGApp(Pmw.MegaWidget):
 
    def execute(self,cmmd): 
       self.fifo.put(cmmd)
+
+   def install_plugin(self):
+      plugdir = os.path.split(__file__)[0]
+      path = os.path.join(plugdir, "startup", "check_writable")
+      ok = 1
+      try:
+         f=open(path,'wb')
+         f.close()
+         os.unlink(path)
+      except:
+         ok = 0
+         tkMessageBox.showinfo("Error", "Unable to write to the plugin directory.\nPerhaps you have insufficient privileges?")
+      if ok:
+         ofile = askopenfilename(title="Install Plugin",
+            initialdir = os.getcwd(),
+            filetypes=[ ("All Readable","*.py") ])
+         if len(ofile):
+            initialdir, plugname = os.path.split(ofile)
+            try:
+               f=open(ofile,'rb')
+               plugin = f.read()
+               f.close()
+               path = os.path.join(plugdir, "startup", plugname)
+               f=open(path,'wb')
+               f.write(plugin)
+               f.close()
+               tkMessageBox.showinfo("Success", 
+                  "Plugin '%s' has been installed.\nPlease restart PyMOL to begin use." % plugname)
+            except:
+               traceback.print_exc()
+               tkMessageBox.showinfo("Error", "unable to install plugin '%s'" % plugname)
 
    def initialize_plugins(self):
       startup_pattern = re.sub(r"[\/\\][^\/\\]*$","/startup/*.py*",__file__)

@@ -403,36 +403,6 @@ class Normal(PMGSkin):
             self.save_file = '' # remove ambiguous default 
          self.cmd.load(ofile)
 
-   def install_plugins(self):
-      plugdir = os.path.split(__file__)[:-2]
-      path = apply(os.path.join,tuple(list(plugdir)+["startup","check_writable"]))
-      ok = 1
-      try:
-         f=open(path,'wb')
-         f.close()
-         os.unlink(path)
-      except:
-         ok = 0
-         print "Error: Unable to write to plugin directory (insufficient privileges?)."
-      if ok:
-         ofile = askopenfilename(initialdir = self.initialdir,
-                                 filetypes=[("All Readable","*.py"),
-                                            ])
-         if len(ofile):
-            self.initialdir = re.sub(r"[^\/\\]*$","",ofile)
-            plugname = os.path.split(ofile)[-1]
-            try:
-               f=open(ofile,'rb')
-               plugin = f.read()
-               f.close()
-               path = apply(os.path.join,tuple(list(plugdir)+["startup",plugname]))
-               f=open(path,'wb')
-               f.write(plugin)
-               f.close()
-               print " Plugin: '%s' installed.  Please restart PyMOL to begin use."%plugname
-            except:
-               traceback.print_exc()
-               print "Error: Sorry, unable to install plugin '%s'."%plugname
 
    def log_open(self):
       sfile = asksaveasfilename(initialfile = self.log_file,
@@ -2132,9 +2102,11 @@ class Normal(PMGSkin):
 
       self.menuBar.addmenuitem('Plugin', 'command', 'Install Plugin',
                                label='Install Plugin...',
-                               command = lambda s=self: s.install_plugin())
+                               command = lambda s=self: s.app.install_plugin())
       
       self.menuBar.addmenuitem('Plugin', 'separator', '')
+
+
 
    def createInterface(self):
 
