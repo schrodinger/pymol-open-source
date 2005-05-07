@@ -70,5 +70,6 @@ int EditorIsBondMode(PyMOLGlobals *G);
 int EditorDeselectIfSelected(PyMOLGlobals *G,ObjectMolecule *obj,int index,int update);
 void EditorDefineExtraPks(PyMOLGlobals *G);
 int EditorGetNFrag(PyMOLGlobals *G);
+void EditorUpdate(PyMOLGlobals *G);
 
 #endif

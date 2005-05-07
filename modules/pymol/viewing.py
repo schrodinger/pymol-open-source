@@ -1962,11 +1962,17 @@ EXAMPLES
       elif len(rgb)!=3:
          print "Error: color specification must be a list such as [ 1.0, 0.0, 0.0 ]"
       else:
+         rgb = [float(rgb[0]),float(rgb[1]),float(rgb[2])]
+         if (rgb[0]>1.0) or (rgb[1]>1.0) or (rgb[2]>1.0):
+            # these days, we'll accept 0-1 or 0-255, so long as [1,1,1] is white
+            rgb[0] = rgb[0]/255.0
+            rgb[1] = rgb[1]/255.0
+            rgb[2] = rgb[2]/255.0            
          try:
             lock()
 
             if len(rgb)==3:
-               r = _cmd.colordef(str(name),float(rgb[0]),float(rgb[1]),float(rgb[2]))
+               r = _cmd.colordef(str(name),rgb[0],rgb[1],rgb[2])
                cmd._invalidate_color_sc()
             else:
                print "Error: invalid color."

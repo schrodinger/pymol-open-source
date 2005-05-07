@@ -4015,15 +4015,46 @@ int SelectorSubdivide(PyMOLGlobals *G,char *pref,int sele1,int sele2,
 int SelectorGetSeleNCSet(PyMOLGlobals *G,int sele)
 {
   register CSelector *I=G->Selector;
+
+
   int a,s,at;
-  ObjectMolecule *obj;
+  ObjectMolecule *obj,*last_obj = NULL;
   int result=0;
-  for(a=cNDummyAtoms;a<I->NAtom;a++) {
-    obj=I->Obj[I->Table[a].model];
-    at=I->Table[a].atom;
-    s=obj->AtomInfo[at].selEntry;
-    if(SelectorIsMember(G,s,sele))
-      if(result<obj->NCSet) result=obj->NCSet;
+
+  if( (obj = SelectorGetFastSingleAtomObjectIndex(G,sele,&at)) ) {
+    int a = obj->NCSet;
+    CoordSet *cs;
+    int idx;
+
+    while(a--) {
+      cs = obj->CSet[a];
+      
+      if(obj->DiscreteFlag) {
+        if(cs==obj->DiscreteCSet[at])
+          idx=obj->DiscreteAtmToIdx[at];
+        else
+          idx=-1;
+      } else 
+        idx=cs->AtmToIdx[at];
+      if(idx>=0) {
+        result = a+1;
+        break;
+      }
+    }
+  } else {
+    for(a=cNDummyAtoms;a<I->NAtom;a++) {
+      obj=I->Obj[I->Table[a].model];
+      if(obj!=last_obj) {
+        at=I->Table[a].atom;
+        s=obj->AtomInfo[at].selEntry;
+        if(SelectorIsMember(G,s,sele))
+          if(result<obj->NCSet) {
+            result=obj->NCSet;
+            last_obj = obj;
+            break;
+          }
+      }
+    }
   }
   return(result);
 }
@@ -9705,6 +9736,8 @@ DistSet *SelectorGetDihedralSet(PyMOLGlobals *G, DistSet *ds,
   float *vv = NULL;
   int nv = 0;
   int *coverage=NULL;
+  ObjectMolecule *just_one_object = NULL;
+  int just_one_atom[4] = {-1, -1, -1, -1};
 
   if(!ds) {
     ds = DistSetNew(G);
@@ -9727,19 +9760,50 @@ DistSet *SelectorGetDihedralSet(PyMOLGlobals *G, DistSet *ds,
     for(a=cNDummyAtoms;a<I->NAtom;a++) {
       at=I->Table[a].atom;
       obj=I->Obj[I->Table[a].model];
+      if(!a) just_one_object = obj;
       s=obj->AtomInfo[at].selEntry;
-      if(SelectorIsMember(G,s,sele1))
+      if(SelectorIsMember(G,s,sele1)) {
+        if(obj!=just_one_object)
+          just_one_object = NULL;
+        else if(just_one_atom[0]==-1)
+          just_one_atom[0] = a;
+        else
+          just_one_atom[0] = -2;
         coverage[a]++;
-      if(SelectorIsMember(G,s,sele2))
+      }
+      if(SelectorIsMember(G,s,sele2)) {
+        if(obj!=just_one_object)
+          just_one_object = NULL;
+        else if(just_one_atom[1]==-1)
+          just_one_atom[1] = a;
+        else
+          just_one_atom[1] = -2;
         coverage[a]++;
-      if(SelectorIsMember(G,s,sele3))
+      }
+      if(SelectorIsMember(G,s,sele3)) {
+        if(obj!=just_one_object)
+          just_one_object = NULL;
+        else if(just_one_atom[2]==-1)
+          just_one_atom[2] = a;
+        else
+          just_one_atom[2] = -2;
         coverage[a]++;
-      if(SelectorIsMember(G,s,sele4))
+      }
+      if(SelectorIsMember(G,s,sele4)) {
+        if(obj!=just_one_object)
+          just_one_object = NULL;
+        else if(just_one_atom[3]==-1)
+          just_one_atom[3] = a;
+        else
+          just_one_atom[3] = -2;
         coverage[a]++;
+      }
     }
   }
 
-  { /* fill in neighbor tables */
+  if(just_one_object) {
+    ObjectMoleculeUpdateNeighbors(just_one_object);
+  } else { /* fill in neighbor tables */
     int a, s, at;
     ObjectMolecule *obj,*lastObj = NULL;
     for(a=cNDummyAtoms;a<I->NAtom;a++) {
@@ -9759,6 +9823,7 @@ DistSet *SelectorGetDihedralSet(PyMOLGlobals *G, DistSet *ds,
     }
   }
 
+
   {
     int a, s, at;
     ObjectMolecule *obj;
@@ -9775,25 +9840,42 @@ DistSet *SelectorGetDihedralSet(PyMOLGlobals *G, DistSet *ds,
     /* now generate three lists of atoms, one for each selection set */
 
     if(list1&&list2&&list3&&list4) {
-      for(a=cNDummyAtoms;a<I->NAtom;a++) {
-        at=I->Table[a].atom;
-        obj=I->Obj[I->Table[a].model];
-        s=obj->AtomInfo[at].selEntry;
-        if(SelectorIsMember(G,s,sele1)) {
-          VLACheck(list1,int,n1);
-          list1[n1++] = a;
-        }
-        if(SelectorIsMember(G,s,sele2)) {
-          VLACheck(list2,int,n2);
-          list2[n2++] = a;
-        }
-        if(SelectorIsMember(G,s,sele3)) {
-          VLACheck(list3,int,n3);
-          list3[n3++] = a;
-        }
-        if(SelectorIsMember(G,s,sele4)) {
-          VLACheck(list4,int,n4);
-          list4[n4++] = a;
+
+      if(just_one_object && 
+         (just_one_atom[0]>=0) &&
+         (just_one_atom[1]>=0) &&
+         (just_one_atom[2]>=0) &&
+         (just_one_atom[3]>=0)) { /* optimal case */
+
+        list1[0] = just_one_atom[0];
+        list2[0] = just_one_atom[1];
+        list3[0] = just_one_atom[2];
+        list4[0] = just_one_atom[3];
+
+        n1 = n2 = n3 = n4 = 1;
+
+      } else {
+        
+        for(a=cNDummyAtoms;a<I->NAtom;a++) {
+          at=I->Table[a].atom;
+          obj=I->Obj[I->Table[a].model];
+          s=obj->AtomInfo[at].selEntry;
+          if(SelectorIsMember(G,s,sele1)) {
+            VLACheck(list1,int,n1);
+            list1[n1++] = a;
+          }
+          if(SelectorIsMember(G,s,sele2)) {
+            VLACheck(list2,int,n2);
+            list2[n2++] = a;
+          }
+          if(SelectorIsMember(G,s,sele3)) {
+            VLACheck(list3,int,n3);
+            list3[n3++] = a;
+          }
+          if(SelectorIsMember(G,s,sele4)) {
+            VLACheck(list4,int,n4);
+            list4[n4++] = a;
+          }
         }
       }
       
