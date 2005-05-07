@@ -51,13 +51,13 @@ struct _CEditor {
   float V0[3],V1[3],Axis[3],Center[3],DragBase[3];
   float *PosVLA;
   int ShowFrags;
+  int DihedralInvalid;
 } ;
 
 
 static void EditorDrawDihedral(PyMOLGlobals *G)
 {
-
-  if(EditorActive(G)&&EditorIsBondMode(G)) {
+  if(EditorActive(G)&&EditorIsBondMode(G)&&SettingGetGlobal_b(G,cSetting_editor_auto_dihedral)) {
     ObjectMolecule *obj1, *obj2;
     int at1, at2, at0, at3;
     int sele1 = SelectorIndexByName(G,cEditorSele1);
@@ -87,6 +87,21 @@ static void EditorDrawDihedral(PyMOLGlobals *G)
         }
       }
     }
+  }
+}
+
+static void EditorDihedralInvalid(PyMOLGlobals *G)
+{
+  register CEditor *I = G->Editor;
+  I->DihedralInvalid = true;
+}
+
+void EditorUpdate(PyMOLGlobals *G) 
+{
+  register CEditor *I =G->Editor;
+  if(I->DihedralInvalid) {
+    EditorDrawDihedral(G);
+    I->DihedralInvalid = false;
   }
 }
 
@@ -525,9 +540,10 @@ int EditorTorsion(PyMOLGlobals *G,float angle)
             I->DragSelection=-1;
             I->DragObject=NULL;
 
+            
             if(I->BondMode && 
                SettingGetGlobal_b(G,cSetting_editor_auto_dihedral)) 
-              EditorDrawDihedral(G);
+              EditorDihedralInvalid(G);
           }
         }
       }
@@ -1334,7 +1350,7 @@ void EditorActivate(PyMOLGlobals *G,int state,int enable_bond)
       ExecutiveHideSelections(G);
 
     if(I->BondMode && SettingGetGlobal_b(G,cSetting_editor_auto_dihedral)) 
-      EditorDrawDihedral(G);
+      EditorDihedralInvalid(G);
   } else {
     EditorInactivate(G);
   }
@@ -1680,7 +1696,7 @@ void EditorDrag(PyMOLGlobals *G,ObjectMolecule *obj,int index,int mode,int state
             
           }
           if(I->BondMode && SettingGetGlobal_b(G,cSetting_editor_auto_dihedral))
-            EditorDrawDihedral(G);
+            EditorDihedralInvalid(G);
         }
 
         SceneDirty(G);
@@ -1715,6 +1731,7 @@ int EditorInit(PyMOLGlobals *G)
     I->NextPickSele = 0;
     I->BondMode = false;
     I->PosVLA = VLAlloc(float,30);
+    I->DihedralInvalid = false;
     return 1;
   } else 
     return 0;

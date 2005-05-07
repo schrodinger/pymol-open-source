@@ -1526,6 +1526,21 @@ void SettingGenerateSideEffects(PyMOLGlobals *G,int index,char *sele,int state)
     ExecutiveInvalidateRep(G,inv_sele,cRepDot,cRepInvRep);
     SceneChanged(G);
     break;
+  case cSetting_bg_rgb:
+    { 
+      /* clamp this value */
+
+      float vv[3], *v = SettingGetfv(G,cSetting_bg_rgb);
+      if((v[0]>1.0F) || (v[1]>1.0F) || (v[2]>1.0F)) {
+        vv[0] = v[0]/255.0F;
+        vv[1] = v[1]/255.0F;
+        vv[2] = v[2]/255.0F;
+        SettingSet_3fv(G->Setting,cSetting_bg_rgb,vv);
+      }
+
+    }
+    SceneDirty(G);
+    break;
   case cSetting_line_smooth:
   case cSetting_transparency:
   case cSetting_sphere_transparency:
@@ -1534,7 +1549,6 @@ void SettingGenerateSideEffects(PyMOLGlobals *G,int index,char *sele,int state)
   case cSetting_direct:
   case cSetting_ambient:
   case cSetting_gl_ambient: /* deprecated */
-  case cSetting_bg_rgb:
   case cSetting_specular:
   case cSetting_specular_intensity:
   case cSetting_cgo_line_width:
@@ -1590,13 +1604,22 @@ int SettingSetfv(PyMOLGlobals *G,int index,float *v)
     /*I->Setting[index].Value[0]=v[0];*/
 	 break;
   case cSetting_bg_rgb:
+    { 
+      float vv[3];
+
+      if((v[0]>1.0F) || (v[1]>1.0F) || (v[2]>1.0F)) {
+        vv[0] = v[0]/255.0F;
+        vv[1] = v[1]/255.0F;
+        vv[2] = v[2]/255.0F;
+        SettingSet_3fv(I,index,vv); 
+      } else {
+        SettingSet_3fv(I,index,v); 
+      }
+    }
+	 SceneDirty(G);
+    break;
   case cSetting_light:
-    SettingSet_3fv(I,index,v); 
-    /*
-      I->Setting[index].Value[0]=v[0];
-      I->Setting[index].Value[1]=v[1];
-      I->Setting[index].Value[2]=v[2];
-    */
+    SettingSet_3fv(I,index,v);     
 	 SceneDirty(G);
 	 break;
   case cSetting_valence:

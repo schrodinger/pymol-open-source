@@ -3939,9 +3939,13 @@ void SceneUpdate(PyMOLGlobals *G)
   ObjRec *rec=NULL;
   int cur_state = SettingGetGlobal_i(G,cSetting_state) - 1;
   int defer_builds_mode = SettingGetGlobal_b(G,cSetting_defer_builds_mode);
+
+
   PRINTFD(G,FB_Scene)
     " SceneUpdate: entered.\n"
     ENDFD;
+
+  EditorUpdate(G);
   if(I->ChangedFlag || ((cur_state != I->LastStateBuilt) && 
                         (defer_builds_mode>0))) {
     SceneCountFrames(G);

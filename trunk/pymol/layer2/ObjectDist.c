@@ -574,6 +574,7 @@ ObjectDist *ObjectDistNewFromDihedralSele(PyMOLGlobals *G,ObjectDist *oldObj,
   /* count number of states in each selection */
 
   SelectorUpdateTable(G);
+
   n_state1 = SelectorGetSeleNCSet(G,sele1);
   n_state2 = SelectorGetSeleNCSet(G,sele2);  
   n_state3 = SelectorGetSeleNCSet(G,sele3);
