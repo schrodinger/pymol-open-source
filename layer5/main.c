@@ -1070,6 +1070,10 @@ static void MainBusyIdle(void)
     /* the following code enables PyMOL to avoid busy-idling 
      * even though we're using GLUT! */
     
+    #ifndef _PYMOL_WX_GLUT
+    /* however, don't spend any extra time sleeping in PYMOL if we're
+       running under wxPython though... */
+
     if(I->IdleMode) { /* avoid racing the CPU */
       if(I->IdleMode==1) {
         if(UtilGetSeconds(G)-I->IdleTime>SettingGet(G,cSetting_idle_delay)) { 
@@ -1080,6 +1084,7 @@ static void MainBusyIdle(void)
         }
       }
     }
+    #endif
 
     PRINTFD(G,FB_Main)
       " MainBusyIdle: unlocking.\n"

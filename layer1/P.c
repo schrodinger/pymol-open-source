@@ -14,6 +14,12 @@ I* Additional authors of this source file include:
 Z* -------------------------------------------------------------------
 */
 
+/* meaning of defines 
+
+_PYMOL_MONOLITHIC:  means that we're building PyMOL and its Python C dependencies as one C library.  That means we need to explicitly call the initialization functions for these libraries on startup.
+
+*/
+
 #ifndef _PYMOL_NOPY
 
 #include"os_predef.h"
@@ -1449,6 +1455,13 @@ void PInit(PyMOLGlobals *G)
 #ifdef _PYMOL_MONOLITHIC
 #ifndef _PYMOL_ACTIVEX
 #ifndef _EPYMOL
+#define _PYMOL_INIT_MODULES
+#endif
+#endif
+#endif
+#endif
+
+#ifdef _PYMOL_INIT_MODULES
 	/* Win32 module build: includes pyopengl, numpy, and sglite */
 	/* sglite */
 	initExtensionClass();
@@ -1469,9 +1482,6 @@ void PInit(PyMOLGlobals *G)
     init_glut();
     initopenglutil();
 	initopenglutil_num();
-#endif
-#endif
-#endif
 #endif
 
 

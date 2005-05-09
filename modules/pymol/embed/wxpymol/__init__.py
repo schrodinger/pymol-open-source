@@ -1,8 +1,6 @@
 
 from wxPython.wx       import *
 from wxPython.glcanvas import *
-from OpenGL.GL import *
-from OpenGL.GLUT import *
 import _cmd
 import threading
 
@@ -43,14 +41,16 @@ def pst(st):
 
 class MyCanvasBase(wxGLCanvas,EmbeddedPyMOL):
    def __init__(self, parent):
-      wxGLCanvas.__init__(self, parent, -1)
+
+      # wxWANTS_CHARS so we get TAB, etc.
+      wxGLCanvas.__init__(self, parent, -1, style=wxWANTS_CHARS)
       self.init = false
       # initial mouse position
       self.lastx = self.x = 30
       self.lasty = self.y = 30
-      EVT_KILL_FOCUS(self, lambda s:pst("kill focus"))
-      EVT_SET_FOCUS(self, lambda s:pst("idle"))
-      EVT_SET_FOCUS(self, lambda s:pst("set focus"))
+      self.have_focus = 0
+      EVT_KILL_FOCUS(self, self.OnKillFocus)
+      EVT_SET_FOCUS(self, self.OnSetFocus)
       EVT_CHAR(self, lambda s:pst("char"))
       EVT_ERASE_BACKGROUND(self, self.OnEraseBackground)
       EVT_SIZE(self, self.OnSize)
@@ -59,12 +59,21 @@ class MyCanvasBase(wxGLCanvas,EmbeddedPyMOL):
       EVT_LEFT_UP(self, self.OnMouseUp)
       EVT_MIDDLE_DOWN(self, self.OnMouseDown)
       EVT_MIDDLE_UP(self, self.OnMouseUp)
+      EVT_MOUSEWHEEL(self, self.OnMouseWheel)
       EVT_RIGHT_DOWN(self, self.OnMouseDown) 
       EVT_RIGHT_UP(self, self.OnMouseUp)
       EVT_MOTION(self, self.OnMouseMotion)
       EVT_IDLE(self,self.OnIdle)
       EVT_CHAR(self,self.OnChar)
 
+   def OnSetFocus(self,event):
+      self.have_focus = 1
+#      wxGLCanvas.OnSetFocus(event)
+      
+   def OnKillFocus(self,event):
+      self.have_focus = 0
+#      wxGLCanvas.OnKillFocus(event)      
+      
    def ProcessEvent(self,event):
       pass
       #print "event"
@@ -77,11 +86,9 @@ class MyCanvasBase(wxGLCanvas,EmbeddedPyMOL):
       size = self.GetClientSize()
       if self.GetContext():
          self.SetCurrent()
-         #glViewport(0, 0, int(size.width), int(size.height))
          self.ep_reshape(int(size.width),int(size.height))
 
    def OnChar(self, evt):
-      #print "char"
       code = evt.GetKeyCode()
       if code<256:
          self.ep_char(evt.GetX(),evt.GetY(),code,
@@ -103,6 +110,8 @@ class MyCanvasBase(wxGLCanvas,EmbeddedPyMOL):
       self.OnDraw()
 
    def OnMouseDown(self, evt):
+      if not self.have_focus: # restore keyboard focus
+         self.SetFocus()
       self.CaptureMouse()
       x,y = evt.GetPosition()
       self.ep_mouse_down(x,y,
@@ -125,12 +134,23 @@ class MyCanvasBase(wxGLCanvas,EmbeddedPyMOL):
                      evt.LeftIsDown(),evt.MiddleIsDown(),evt.RightIsDown(),
                      evt.ShiftDown(),evt.ControlDown(),evt.MetaDown())
          self.CheckPyMOL()
+      else:
+         x,y = evt.GetPosition()
+         self.ep_passive_motion(x,y,
+                     evt.ShiftDown(),evt.ControlDown(),evt.MetaDown())
+         self.CheckPyMOL()
+         
          #            print "mouse motion"
 
+   def OnMouseWheel(self, evt):
+      x,y = evt.GetPosition()
+      self.ep_wheel(x,y,
+                      evt.GetWheelRotation(),
+                      evt.ShiftDown(),evt.ControlDown(),evt.MetaDown())
+        
    def OnIdle(self,evt):
       self.ep_idle()
-      #         self.AddPendingEvent(wxIdleEvent())
-      #         evt.RequestMore(true)
+      evt.RequestMore(true)
       self.CheckPyMOL()
 
    def Repaint(self):
@@ -145,7 +165,6 @@ class PyMOLCanvas(MyCanvasBase):
    def swap(self):
       if self.GetContext():
          self.SetCurrent()
-         #            print "swapping"
          self.SwapBuffers()
 
    def OnDraw(self):
@@ -170,9 +189,8 @@ ID_EXIT=200
 class MainWindow(wxFrame):
    def __init__(self,parent,id,title):  
       self.dirname='' 
-      wxFrame.__init__(self,parent,-4, title, size=(1000,800),style=wxDEFAULT_FRAME_STYLE|  
+      wxFrame.__init__(self,parent,-4, title, size=(900,700),style=wxDEFAULT_FRAME_STYLE|  
                               wxNO_FULL_REPAINT_ON_RESIZE)
-      
 
       self.CreateStatusBar() # A Statusbar in the bottom of the window
 
@@ -192,7 +210,6 @@ class MainWindow(wxFrame):
       EVT_MENU(self, ID_ABOUT, self.OnAbout) 
       EVT_MENU(self, ID_EXIT, self.OnExit) 
       EVT_MENU(self, ID_OPEN, self.OnOpen)
-
       #
       
       self.splitterH = wxSplitterWindow(self, -1, style=wxNO_3D|wxSP_3D)
@@ -211,15 +228,21 @@ class MainWindow(wxFrame):
       self.nb = wxNotebook(self.splitterH, -1, style=wxCLIP_CHILDREN)
 
       self.splitterH.SplitVertically(self.splitterV,self.nb)
-      self.splitterH.SetSashPosition(810, true)
+
+      self.right_box_size = 200
+      self.splitterH.SetSashPosition(-self.right_box_size, true)
       self.splitterH.SetMinimumPaneSize(1)
 
       self.pymol_canvas = PyMOLCanvas(self.splitterV)
+      self.pymol = self.pymol_canvas.ep_get_pymol()
+
+      EVT_MOVE(self, self.OnMove)
+      EVT_SIZE(self, self.OnSize)
       
-      self.control = wxTextCtrl(self.splitterV, -1, style=wxTE_MULTILINE)
+      self.control = wxTextCtrl(self.splitterV, -1, style=wxTE_MULTILINE|wxTE_PROCESS_TAB)
       
       self.splitterV.SplitHorizontally(self.control,self.pymol_canvas)
-      self.splitterV.SetSashPosition(300, true)
+      self.splitterV.SetSashPosition(120, true)
       self.splitterV.SetMinimumPaneSize(20)
       
       # Use some sizers to see layout options 
@@ -235,6 +258,16 @@ class MainWindow(wxFrame):
 
       self.Show(1)  
 
+   def OnSize(self,e):
+      size = e.GetSize()
+      self.SetSize(e.GetSize())
+      self.splitterH.SetSashPosition(size.width-self.right_box_size)
+      self.pymol_canvas.Repaint()
+      e.Skip()
+      
+   def OnMove(self,e):
+      self.pymol_canvas.Repaint()
+      
    def OnAbout(self,e):  
       d= wxMessageDialog( self, " A sample editor \n"  
                      " in wxPython","About Sample Editor", wxOK)  
@@ -250,10 +283,8 @@ class MainWindow(wxFrame):
       dlg = wxFileDialog(self, "Choose a file", self.dirname, "", "*.*", wxOPEN)  
       if dlg.ShowModal() == wxID_OK:  
          self.filename=dlg.GetFilename()  
-         self.dirname=dlg.GetDirectory()  
-         f=open(self.dirname+'\\'+self.filename,'r')  
-         self.control.SetValue(f.read())  
-         f.close()  
+         self.dirname=dlg.GetDirectory()
+         self.pymol.cmd.load(self.dirname+'\\'+self.filename)
       dlg.Destroy()  
        
    
