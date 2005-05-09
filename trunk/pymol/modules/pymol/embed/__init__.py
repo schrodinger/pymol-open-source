@@ -9,7 +9,7 @@ P_GLUT_MOUSE_EVENT         =  3
 P_GLUT_MOTION_EVENT        =  4
 P_GLUT_CHAR_EVENT          =  5
 P_GLUT_SPECIAL_EVENT       =  6
-
+P_GLUT_PASSIVE_MOTION_EVENT=  7
 P_GLUT_ACTIVE_ALT          =  4
 P_GLUT_ACTIVE_CTRL         =  2
 P_GLUT_ACTIVE_SHIFT        =  1
@@ -17,6 +17,8 @@ P_GLUT_ACTIVE_SHIFT        =  1
 P_GLUT_LEFT_BUTTON         =  0
 P_GLUT_MIDDLE_BUTTON       =  1
 P_GLUT_RIGHT_BUTTON        =  2
+P_GLUT_BUTTON_SCROLL_FORWARD= 3
+P_GLUT_BUTTON_SCROLL_BACKWARD=4
 
 P_GLUT_DOWN                =  0
 P_GLUT_UP                  =  1
@@ -83,6 +85,9 @@ def get_mod_value(shift,control,meta):
 
 class EmbeddedPyMOL:
 
+   def ep_get_pymol(self):
+      return pymol
+   
    def ep_swap_dummy(self):
       pass
     
@@ -145,6 +150,20 @@ class EmbeddedPyMOL:
       _cmd.runwxpymol() 
       _cmd.p_glut_event(P_GLUT_MOTION_EVENT,x,y,self.ep_button,0,self.ep_mod)
 
+   def ep_passive_motion(self, x, y, shift, control, meta):
+      self.ep_mod = mod_dict.get((shift,control,meta))
+      if self.ep_mod == None:
+         self.ep_mod = get_mod_value(shift,control,meta)
+      _cmd.runwxpymol() 
+      _cmd.p_glut_event(P_GLUT_PASSIVE_MOTION_EVENT,x,y,0,0,self.ep_mod)
+
+   def ep_wheel(self, x, y, direction, shift, control, meta):
+      _cmd.runwxpymol()
+      if direction>0:
+         _cmd.p_glut_event(P_GLUT_MOUSE_EVENT, x,y,P_GLUT_BUTTON_SCROLL_FORWARD,0,self.ep_mod)
+      else:
+         _cmd.p_glut_event(P_GLUT_MOUSE_EVENT, x,y,P_GLUT_BUTTON_SCROLL_BACKWARD,0,self.ep_mod)
+      
    def ep_draw(self):
       _cmd.runwxpymol() 
       _cmd.p_glut_event(P_GLUT_DISPLAY_EVENT,0,0,0,0,0) # draw event

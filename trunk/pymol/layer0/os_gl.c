@@ -182,6 +182,7 @@ void     p_glutMotionFunc(void (*func)(int x, int y)) {}
 void     p_glutPassiveMotionFunc(void (*func)(int x, int y)) {}
 void     p_glutSpecialFunc(void (*func)(int key, int x, int y)) {}
 void     p_glutIdleFunc(void (*func)(void)) { idleFunc = func; }
+void     p_glutPositionWindow(int x,int y) {};
 
 #endif
 
@@ -275,7 +276,7 @@ void     p_glutBitmapCharacter(void *font, int character)
   plutBitmapCharacter(character);
 #endif
 }
-void     p_glutSwapBuffers(void){PBlock();PyRun_SimpleString("pymol._swap_buffers()");PUnblock();}
+void     p_glutSwapBuffers(void){PBlock();PyRun_SimpleString("if hasattr(pymol,'_swap_buffers'): pymol._swap_buffers()");PUnblock();}
 
 
 void     p_glutPopWindow(void){}
@@ -305,6 +306,7 @@ void     p_glutMotionFunc(void (*func)(int x, int y)) { motionFunc=func;}
 void     p_glutPassiveMotionFunc(void (*func)(int x, int y)) { passiveMotionFunc=func;}
 void     p_glutSpecialFunc(void (*func)(int key, int x, int y)) { specialFunc=func;}
 void     p_glutIdleFunc(void (*func)(void)) { idleFunc = func; }
+void     p_glutPositionWindow(int x,int y) {};
 
 #endif
 

@@ -7411,10 +7411,10 @@ void ExecutiveFullScreen(PyMOLGlobals *G,int flag)
   if(G->HaveGUI && G->ValidContext) {
     if(!SettingGet(G,cSetting_full_screen))
       {
-        I->oldPX = p_glutGet(GLUT_WINDOW_X);
-        I->oldPY = p_glutGet(GLUT_WINDOW_Y);
-        I->oldWidth = p_glutGet(GLUT_WINDOW_WIDTH);
-        I->oldHeight = p_glutGet(GLUT_WINDOW_HEIGHT);
+        I->oldPX = p_glutGet(P_GLUT_WINDOW_X);
+        I->oldPY = p_glutGet(P_GLUT_WINDOW_Y);
+        I->oldWidth = p_glutGet(P_GLUT_WINDOW_WIDTH);
+        I->oldHeight = p_glutGet(P_GLUT_WINDOW_HEIGHT);
         I->sizeFlag = true;
       }
       

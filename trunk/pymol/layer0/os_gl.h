@@ -119,8 +119,13 @@ void PyMOLCheckOpenGLErr(char *pos);
 #define P_GLUT_UP                       GLUT_UP                           
 #define P_GLUT_MULTISAMPLE              GLUT_MULTISAMPLE
 #define P_GLUT_STENCIL                  GLUT_STENCIL
-#define P_GLUT_SCREEN_WIDTH             GLUT_SCREEN_WIDTH
+
+#define P_GLUT_WINDOW_X                 GLUT_WINDOW_X
+#define P_GLUT_WINDOW_Y                 GLUT_WINDOW_Y
+#define P_GLUT_WINDOW_WIDTH             GLUT_WINDOW_WIDTH
+#define P_GLUT_WINDOW_HEIGHT            GLUT_WINDOW_HEIGHT
 #define P_GLUT_SCREEN_HEIGHT            GLUT_SCREEN_HEIGHT
+#define P_GLUT_SCREEN_WIDTH             GLUT_SCREEN_WIDTH
 
 #define p_glutGameModeString       glutGameModeString
 #define p_glutEnterGameMode        glutEnterGameMode
@@ -231,6 +236,14 @@ int p_glutGetRedisplay(void);
 #define P_GLUT_MIDDLE_BUTTON  1
 #define P_GLUT_RIGHT_BUTTON   2
 
+#define P_GLUT_WINDOW_X                 5
+#define P_GLUT_WINDOW_Y                 6
+#define P_GLUT_WINDOW_WIDTH             7
+#define P_GLUT_WINDOW_HEIGHT            8
+#define P_GLUT_SCREEN_WIDTH             9
+#define P_GLUT_SCREEN_HEIGHT            10
+
+
 #ifndef _PYMOL_NO_GLUT
 void     p_glutGameModeString(char *str);
 void     p_glutEnterGameMode(void);
@@ -266,6 +279,7 @@ void     p_glutMotionFunc(void (*func)(int x, int y));
 void     p_glutSpecialFunc(void (*func)(int key, int x, int y));
 void     p_glutIdleFunc(void (*func)(void));
 
+void     p_glutPositionWindow(int x,int y);
 void     p_glutMainLoop(void);
 
 #endif
