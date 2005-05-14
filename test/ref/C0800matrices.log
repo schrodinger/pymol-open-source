@@ -167,11 +167,11 @@ PyMOL>dump_lst((cmd.get_distance("ligand////s1","/protein/1HPV/B/ILE`84/CB"), \
 PyMOL>cmd.get_distance("/ligand/1HPV//478`200/C4","/protein/1HPV/B/ILE`50/CB"), \
 PyMOL>cmd.get_distance("/ligand/1HPV//478`200/O3"," /protein/1HPV/B/VAL`82/CB")))
 [  6.86  5.47  8.86 ]
-PyMOL>load $TUT/1hpv.pdb, copy
+PyMOL>load ../data/tut/1hpv.pdb, copy
  ObjectMolecule: Read secondary structure assignments.
  ObjectMolecule: Read crystal symmetry information.
  Symmetry: Found 6 symmetry operators.
- CmdLoad: "/users/warren/pymol/data/tut/1hpv.pdb" loaded as "copy".
+ CmdLoad: "../data/tut/1hpv.pdb" loaded as "copy".
 PyMOL>create copy_ligand, copy and organic
  Selector: found 35 atoms.
  Executive: object "copy_ligand" created.
@@ -200,11 +200,11 @@ PyMOL>dump_mat(cmd.get_object_matrix("copy_protein2"))
    0.77  0.22  0.60 11.28  
   -0.64  0.26  0.72 13.10  
    0.00  0.00  0.00  1.00 ]
-PyMOL>load $TUT/1hpv.pdb, target
+PyMOL>load ../data/tut/1hpv.pdb, target
  ObjectMolecule: Read secondary structure assignments.
  ObjectMolecule: Read crystal symmetry information.
  Symmetry: Found 6 symmetry operators.
- CmdLoad: "/users/warren/pymol/data/tut/1hpv.pdb" loaded as "target".
+ CmdLoad: "../data/tut/1hpv.pdb" loaded as "target".
 PyMOL>dump_lst((cmd.get_distance("ligand////s1","/target/1HPV/B/ILE`84/CB"), \
 PyMOL>cmd.get_distance("/ligand/1HPV//478`200/C4","/target/1HPV/B/ILE`50/CB"), \
 PyMOL>cmd.get_distance("/ligand/1HPV//478`200/O3"," /target/1HPV/B/VAL`82/CB")))
