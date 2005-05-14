@@ -405,7 +405,9 @@ void RepWireBondRender(RepWireBond *I,CRay *ray,Pickable **pick)
           glColor3ub((uchar)((j&0xF)<<4),(uchar)((j&0xF0)|0x8),(uchar)((j&0xF00)>>4)); 
 
         }			 
-
+#ifdef _PYMOL_NVIDIA_WORKAROUND
+	  glFlush();
+#endif
         glVertex3fv(v);
         v+=3;
         glVertex3fv(v);
@@ -442,6 +444,9 @@ void RepWireBondRender(RepWireBond *I,CRay *ray,Pickable **pick)
         while(c--) {
           glColor3fv(v);
           v+=3;
+#ifdef _PYMOL_NVIDIA_WORKAROUND
+	  glFlush();
+#endif
           glVertex3fv(v);
           v+=3;
           glVertex3fv(v);
