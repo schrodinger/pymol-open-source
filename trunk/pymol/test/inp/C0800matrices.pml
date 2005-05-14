@@ -132,7 +132,7 @@ dump_lst((cmd.get_distance("ligand////s1","/protein/1HPV/B/ILE`84/CB"), \
 
 # see if we can use "fit" to get the same matrix
 
-load $TUT/1hpv.pdb, copy
+load ../data/tut/1hpv.pdb, copy
 create copy_ligand, copy and organic
 create copy_protein, copy and polymer
 create copy_protein2, copy and polymer
@@ -147,7 +147,7 @@ dump_mat(cmd.get_object_matrix("copy_protein2"))
 
 # now see if we can fit back to the original
 
-load $TUT/1hpv.pdb, target
+load ../data/tut/1hpv.pdb, target
 
 dump_lst((cmd.get_distance("ligand////s1","/target/1HPV/B/ILE`84/CB"), \
  cmd.get_distance("/ligand/1HPV//478`200/C4","/target/1HPV/B/ILE`50/CB"), \

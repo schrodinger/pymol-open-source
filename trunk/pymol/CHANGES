@@ -2,6 +2,16 @@
 CHANGE LOG
 =========================================================================
 
+Changes up to 0.99
+
+   beta01
+
+   * fixed broken reading of multistate objects from strings
+   
+   * identified cause and temporary workaround for bad nVidia drivers on linux
+
+   * fixed performace issue with torsion update mechanism when rotating torsions
+
 Changes up to 0.98
 
    beta35
