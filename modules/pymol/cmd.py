@@ -18,17 +18,11 @@
 # **This is the only module which should be/need be imported by 
 # ** PyMol API Based Programs
 
-# NOTE: this cmd module has grown absurdly huge, therefore expect this
-# file to be broken down sometime after the 0.51 release into more
-# manageable pieces.  Note that cmd.<whatever> will still work -- the
-# symbols will be mapped into this namespace even after the code modules
-# are separated.
-
 # NEW CALL RETURN CONVENTIONS for _cmd.so C-layer
 #
 # (1) Calls into C (_cmd) should return results/status and print errors
 #     and feedback (according to mask) BUT NEVER RAISE EXCEPTIONS.
-## (2) In the absence of an expected return value, truth applies:
+# (2) In the absence of an expected return value, truth applies:
 #        Success is 1, true 
 #        Failure is 0, false. None, NULL
 #
