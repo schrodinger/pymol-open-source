@@ -33,6 +33,7 @@ int MatchResidueToCode(CMatch *I,int *vla,int n);
 int MatchMatrixFromFile(CMatch *I,char *fname,int quiet);
 int MatchPreScore(CMatch *I,int *vla1,int n1,int *vla2,int n2,int quiet);
 void MatchFree(CMatch *I);
-float MatchAlign(CMatch *I,float gap_penalty,float ext_penalty,int max_gap,int quiet);
+float MatchAlign(CMatch *I,float gap_penalty,float ext_penalty,
+                 int max_gap,int max_skip,int quiet);
 
 #endif

@@ -93,7 +93,8 @@ int ExecutiveLoad(PyMOLGlobals *G,CObject *origObj,
                   int multiplex, int quiet);
 
 int ExecutiveDebug(PyMOLGlobals *G,char *name);
-float ExecutiveAlign(PyMOLGlobals *G,char *s1,char *s2,char *mat_file,float gap,float extend,int skip,
+float ExecutiveAlign(PyMOLGlobals *G,char *s1,char *s2,char *mat_file,float gap,float extend,
+                     int max_gap, int max_skip,
                      float cutoff,int cycles,int quiet,char *oname,int state1,int state2);
 
 float ExecutiveDistance(PyMOLGlobals *G,char *sele1,char *sele2);

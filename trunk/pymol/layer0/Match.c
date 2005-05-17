@@ -205,7 +205,6 @@ int MatchMatrixFromFile(CMatch *I,char *fname,int quiet)
   int a;
   int n_entry;
   unsigned int size;
-  int have_content = false;
 
   if(fname) {
     f=fopen(fname,"rb");
@@ -314,7 +313,8 @@ int MatchMatrixFromFile(CMatch *I,char *fname,int quiet)
   return(ok);
 }
 
-float MatchAlign(CMatch *I,float gap_penalty,float ext_penalty,int max_skip,int quiet)
+float MatchAlign(CMatch *I,float gap_penalty,float ext_penalty,
+                 int max_gap,int max_skip,int quiet)
 {
   PyMOLGlobals *G=I->G;
   unsigned int dim[2];
@@ -329,7 +329,6 @@ float MatchAlign(CMatch *I,float gap_penalty,float ext_penalty,int max_skip,int 
   int gap=0;
   int *p;
   int cnt;
-
   nf = I->na+2;
   ng = I->nb+2;
 
@@ -352,76 +351,93 @@ float MatchAlign(CMatch *I,float gap_penalty,float ext_penalty,int max_skip,int 
   }
   /* now start walking backwards up the alignment */
 
-  for(b=I->nb-1;b>=0;b--) {
-    for(a=I->na-1;a>=0;a--) {
+  {
+     int second_pass = false;
 
-      /* find the maximum scoring cell accessible from this position, 
-       * while taking gap penalties into account */
+     for(b=I->nb-1;b>=0;b--) {
+       for(a=I->na-1;a>=0;a--) {
+         
+         /* find the maximum scoring cell accessible from this position, 
+          * while taking gap penalties into account */
+         
+         mxv = FLT_MIN;
+         mxa=-1;
+         mxb=-1;
+         
+         /* search for asymmetric insertions and deletions */
+         f = a+1;
+         if((max_gap>=0)&&(second_pass)) {
+           sf = a+2+max_gap;
+           sg = b+2+max_gap;
+           if(sg>ng) sg = ng;
+           if(sf>nf) sf = nf;
+         } else {
+           sg = ng;
+           sf = nf;
+         }
+         for(g=b+1;g<sg;g++) {
+           tst = score[f][g];
+           if(!((f==I->na)||(g==I->nb))) {
+             gap = g-(b+1);
+             if(gap) tst+=gap_penalty+ext_penalty*gap;
+           }
+           if(tst>mxv) {
+             mxv = tst;
+             mxa = f;
+             mxb = g;
+           }
+         }
+         g = b+1;
 
-      mxv = FLT_MIN;
-      mxa=-1;
-      mxb=-1;
-
-      /* search for asymmetric insertions and deletions */
-      f = a+1;
-      for(g=b+1;g<ng;g++) {
-        tst = score[f][g];
-        if(!((f==I->na)||(g==I->nb))) {
-          gap = g-(b+1);
-          if(gap) tst+=gap_penalty+ext_penalty*gap;
-        }
-        if(tst>mxv) {
-          mxv = tst;
-          mxa = f;
-          mxb = g;
-        }
-      }
-      g = b+1;
-      for(f=a+1;f<nf;f++) {
-        tst = score[f][g];
-        if(!((f==I->na)||(g==I->nb))) {
-          gap=(f-(a+1));
-          if(gap) tst+=gap_penalty+ext_penalty*gap;
-        }
-        if(tst>mxv) {
-          mxv = tst;
-          mxa = f;
-          mxb = g;
-        }
-      }
-
-      /* search for high scoring mismatched stretches */
-
-      sf = a+1+max_skip;
-      sg = b+1+max_skip;
-      if(sf>nf) sf = nf;
-      if(sg>ng) sg = ng;
-
-      for(f=a+1;f<sf;f++) {
-        for(g=b+1;g<sg;g++) {
-          tst = score[f][g];
-          /* only penalize if we are not at the end */
-          if(!((f==I->na)||(g==I->nb)))
-            gap = ((f-(a+1))+(g-(b+1)));
-            tst+=2*gap_penalty+ext_penalty*gap;
-          }
-          if(tst>mxv) {
-            mxv = tst;
-            mxa = f;
-            mxb = g;
-          }
-      }
-      
-      /* store what the best next step is */
-    
-      point[a][b][0] = mxa;
-      point[a][b][1] = mxb;
-      
-      /* and store the cumulative score for this cell */
-      score[a][b] = mxv+I->mat[a][b];
-      
+         for(f=a+1;f<sf;f++) {
+           tst = score[f][g];
+           if(!((f==I->na)||(g==I->nb))) {
+             gap=(f-(a+1));
+             if(gap) tst+=gap_penalty+ext_penalty*gap;
+           }
+           if(tst>mxv) {
+             mxv = tst;
+             mxa = f;
+             mxb = g;
+           }
+         }
+         
+         if(max_skip) {
+           /* search for high scoring mismatched stretches */
+           
+           sf = a+1+max_skip;
+           sg = b+1+max_skip;
+           if(sf>nf) sf = nf;
+           if(sg>ng) sg = ng;
+           
+           for(f=a+1;f<sf;f++) {
+             for(g=b+1;g<sg;g++) {
+               tst = score[f][g];
+               /* only penalize if we are not at the end */
+               if(!((f==I->na)||(g==I->nb)))
+                 gap = ((f-(a+1))+(g-(b+1)));
+               tst+=2*gap_penalty+ext_penalty*gap;
+             }
+             if(tst>mxv) {
+               mxv = tst;
+               mxa = f;
+               mxb = g;
+             }
+           }
+         }
+         
+         /* store what the best next step is */
+         
+         point[a][b][0] = mxa;
+         point[a][b][1] = mxb;
+         
+         /* and store the cumulative score for this cell */
+         score[a][b] = mxv+I->mat[a][b];
+        
+         second_pass = true;
+       }
+     }
   }
-}
 
   if(Feedback(G,FB_Match,FB_Debugging)) {
     for(b=0;b<I->nb;b++) {
