@@ -1183,12 +1183,13 @@ static PyObject *CmdAlign(PyObject *self, 	PyObject *args) {
   OrthoLineType s2="",s3="";
   float result = -1.0;
   int ok = false;
-  int quiet,cycles,skip;
+  int quiet,cycles,max_skip;
   float cutoff,gap,extend;
   int state1,state2;
-  ok = PyArg_ParseTuple(args,"ssfiffissiii",&str2,&str3,
-                        &cutoff,&cycles,&gap,&extend,&skip,&oname,
-                        &mfile,&state1,&state2,&quiet);
+  int max_gap;
+  ok = PyArg_ParseTuple(args,"ssfiffissiiii",&str2,&str3,
+                        &cutoff,&cycles,&gap,&extend,&max_gap,&oname,
+                        &mfile,&state1,&state2,&quiet,&max_skip);
 
   if(ok) {
     PRINTFD(TempPyMOLGlobals,FB_CCmd)
@@ -1199,7 +1200,8 @@ static PyObject *CmdAlign(PyObject *self, 	PyObject *args) {
     APIEntry();
     SelectorGetTmp(TempPyMOLGlobals,str2,s2);
     SelectorGetTmp(TempPyMOLGlobals,str3,s3);
-    result = ExecutiveAlign(TempPyMOLGlobals,s2,s3,mfile,gap,extend,skip,cutoff,
+    result = ExecutiveAlign(TempPyMOLGlobals,s2,s3,mfile,gap,extend,max_gap,
+                            max_skip,cutoff,
                             cycles,quiet,oname,state1,state2);
     SelectorFreeTmp(TempPyMOLGlobals,s2);
     SelectorFreeTmp(TempPyMOLGlobals,s3);

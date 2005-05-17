@@ -882,14 +882,22 @@ void RayRenderPOV(CRay *I,int width,int height,char **headerVLA_ptr,
   if(fog<0.0F)
     fog = SettingGet(I->G,cSetting_depth_cue);
   if(fog!=0.0F) {
+    if(fog>1.0F) fog=1.0F;
     fogFlag=true;
     fog_start = SettingGet(I->G,cSetting_ray_trace_fog_start);
+    if(fog_start<0.0F)
+      fog_start = SettingGet(I->G,cSetting_fog_start) + 0.05F;
+    if(fog_start>1.0F)
+      fog_start=1.0F;
+    if(fog_start<0.0F)
+      fog_start=0.0F;
     if(fog_start>R_SMALL4) {
       fogRangeFlag=true;
       if(fabs(fog_start-1.0F)<R_SMALL4) /* prevent div/0 */
         fogFlag=false;
     }
   }
+
   /* SETUP */
   
   antialias = (int)SettingGet(I->G,cSetting_antialias);
@@ -1447,17 +1455,29 @@ int RayTraceThread(CRayThreadInfo *T)
    
 	if(fog != _0) 
 	{
-		fogFlag	= true;
-		fog_start = SettingGet(I->G,cSetting_ray_trace_fog_start);
-		if(fog_start>R_SMALL4) 
-		{
+     if(fog>1.0F) fog=1.0F;
+     fogFlag	= true;
+     fog_start = SettingGet(I->G,cSetting_ray_trace_fog_start);
+     if(fog_start<0.0F)
+       fog_start = SettingGet(I->G,cSetting_fog_start);
+     if(fog_start>1.0F)
+       fog_start=1.0F;
+     if(fog_start<0.0F)
+       fog_start=0.0F;
+     if(fog_start>R_SMALL4) {
+       fogRangeFlag=true;
+       if(fabs(fog_start-1.0F)<R_SMALL4) /* prevent div/0 */
+         fogFlag=false;
+     }
+     if(fog_start>R_SMALL4) 
+       {
 			fogRangeFlag=true;
 			if(fabs(fog_start - _1) < R_SMALL4) /* prevent div/0 */
-				fogFlag = false;
-		}
-		inv1minusFogStart	= _1 / (_1 - fog_start);
+           fogFlag = false;
+       }
+     inv1minusFogStart	= _1 / (_1 - fog_start);
 	}
-
+   
 
 	/* ray-trace */
 	

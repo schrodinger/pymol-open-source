@@ -551,14 +551,14 @@ int ExecutiveSetName(PyMOLGlobals *G,char *old_name, char *new_name)
   int found = false;
   if(!new_name[0]) 
     ok=false;
-  else
-    
+  else if(!WordMatchExact(G,new_name,old_name,true)) {
     while(ListIterate(I->Spec,rec,next)) {
       if(found)
         break;
       switch(rec->type) {
       case cExecObject:
         if(WordMatchExact(G,rec->obj->Name,old_name,true)) {
+          ExecutiveDelete(G,new_name);
           ObjectSetName(rec->obj,new_name);
           UtilNCopy(rec->name,rec->obj->Name,ObjNameMax);
           if(rec->obj->type == cObjectMolecule) {
@@ -576,6 +576,7 @@ int ExecutiveSetName(PyMOLGlobals *G,char *old_name, char *new_name)
       case cExecSelection:
         if(WordMatchExact(G,rec->name,old_name,true)) {
           if(SelectorSetName(G,new_name, old_name)) {
+            ExecutiveDelete(G,new_name);
             UtilNCopy(rec->name,new_name,ObjNameMax);
             found = true;
             OrthoDirty(G);
@@ -584,8 +585,9 @@ int ExecutiveSetName(PyMOLGlobals *G,char *old_name, char *new_name)
         break;
       }
     }
-  if(!found)
-    ok=false;
+    if(!found)
+      ok=false;
+  }
   return ok; 
 }
 #if 0
@@ -3412,8 +3414,8 @@ int ExecutivePhiPsi(PyMOLGlobals *G,char *s1,ObjectMolecule ***objVLA,int **iVLA
 }
 
 
-float ExecutiveAlign(PyMOLGlobals *G,char *s1,char *s2,char *mat_file,float gap,float extend,int skip,
-                     float cutoff,int cycles,int quiet,char *oname,
+float ExecutiveAlign(PyMOLGlobals *G,char *s1,char *s2,char *mat_file,float gap,float extend,
+                     int max_gap, int max_skip, float cutoff,int cycles,int quiet,char *oname,
                      int state1,int state2)
 {
   int sele1=SelectorIndexByName(G,s1);
@@ -3438,7 +3440,7 @@ float ExecutiveAlign(PyMOLGlobals *G,char *s1,char *s2,char *mat_file,float gap,
         if (ok) ok = MatchResidueToCode(match,vla2,nb);
         if (ok) ok = MatchMatrixFromFile(match,mat_file,quiet);
         if (ok) ok = MatchPreScore(match,vla1,na,vla2,nb,quiet);
-        result = MatchAlign(match,gap,extend,skip,quiet);
+        result = MatchAlign(match,gap,extend,max_gap,max_skip,quiet);
         if(match->pair) { 
           c = SelectorCreateAlignments(G,match->pair,
                                        sele1,vla1,sele2,vla2,

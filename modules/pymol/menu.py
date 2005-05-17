@@ -642,7 +642,35 @@ def find(s):
    return [[ 2, 'Find:', ''],
            [ 1, 'polar contacts', polar(s) ],
            ]
-           
+
+def align_to_object(s):
+   list = cmd.get_names("public_objects")
+   list = list[0:30] # keep this practical
+   result = [[ 2, 'Object:', '']]
+   for a in list:
+      if a!=s:
+         result.append([1,a,
+                        'cmd.align("polymer and name ca and ('+s+')",'+
+                        '"polymer and name ca and ('+a+')",max_gap=50,quiet=0);cmd.center("'+s+'",animate=-1)'])
+   return result
+
+def align_to_sele(s):
+   list = cmd.get_names("public_selections")
+   list = list[0:30] # keep this practical
+   result = [[ 2, 'Selection:', '']]
+   for a in list:
+      if a!=s:
+         result.append([1,a,
+                        'cmd.align("polymer and name ca and ('+s+')",'+
+                        '"polymer and name ca and ('+a+')",max_gap=50,quiet=0);cmd.center("'+s+'",animate=-1)'])
+   return result
+
+def align(s):
+   return [[ 2, 'Align:', ''],
+           [ 1, 'to object', align_to_object(s) ],
+           [ 1, 'to object', align_to_sele(s) ],           
+           ]
+
 def sele_action(s):
    return [[ 2, 'Actions:'       ,''                        ],     
            [ 1, 'delete selection', 'cmd.delete("'+s+'")'          ],
@@ -655,6 +683,7 @@ def sele_action(s):
            [ 0, ''               ,''                             ],
            [ 1, 'preset'         ,presets(s)         ],
            [ 1, 'find', find(s) ],
+           [ 1, 'align', align(s) ],           
            [ 0, ''               ,''                             ],
            [ 1, 'remove atoms'   ,'cmd.remove("'+s+'");cmd.delete("'+s+'")'          ],
            [ 0, ''               ,''                             ],
@@ -697,7 +726,7 @@ def sele_action2(s):
            [ 1, 'compute'        , compute(s)         ],           
            ]
 
-
+   
 def mol_action(s):
    return [[ 2, 'Actions:'     , ''                       ],     
            [ 1, 'zoom'         , 'cmd.zoom("'+s+'",animate=-1)'      ],
@@ -706,7 +735,8 @@ def mol_action(s):
            [ 1, 'orient'       , 'cmd.orient("'+s+'",animate=-1)'    ],
            [ 0, ''          ,''                                              ],
            [ 1, 'preset'  ,   presets(s)       ],
-           [ 1, 'find',     find(s) ],           
+           [ 1, 'find',     find(s) ],
+           [ 1, 'align',     align(s) ],                      
            [ 1, 'generate'  ,   mol_generate(s)       ],           
            [ 0, ''               ,''                             ],
            [ 1, 'assign sec. struc.'  ,'cmd.dss("'+s+'")'        ],

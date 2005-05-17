@@ -22,8 +22,8 @@ if __name__=='pymol.fitting':
    from cmd import _cmd,lock,unlock,Shortcut,QuietException
 
    def align(source,target,cutoff=2.0,cycles=2,gap=-10.0,extend=-0.5,
-             skip=0,object=None,matrix="BLOSUM62",
-             source_state=0,target_state=0,quiet=1): 
+             max_gap=-1,object=None,matrix="BLOSUM62",
+             source_state=0,target_state=0,quiet=1,max_skip=0): 
       '''
 DESCRIPTION
 
@@ -64,9 +64,9 @@ SEE ALSO
       try:
          lock()
          r = _cmd.align(source,target,float(cutoff),int(cycles),float(gap),
-                        float(extend),int(skip),str(object),str(mfile),
+                        float(extend),int(max_gap),str(object),str(mfile),
                         int(source_state)-1,int(target_state)-1,
-                        int(quiet))
+                        int(quiet),int(max_skip))
       finally:
          unlock()
       return r
