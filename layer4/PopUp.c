@@ -97,7 +97,7 @@ Block *PopUpNew(PyMOLGlobals *G,int x,int y,int last_x,int last_y,
   int dim[2];
   PyObject *elem;
   char *str,*c;
-
+  int blocked = PAutoBlock();
   OOAlloc(G,CPopUp);
 
   I->Block = OrthoNewBlock(G,NULL);
@@ -202,6 +202,9 @@ Block *PopUpNew(PyMOLGlobals *G,int x,int y,int last_x,int last_y,
 
   if(passive) 
     PyMOL_SetPassive(G->PyMOL,true);
+
+  PAutoUnblock(blocked);
+
   return I->Block;
 #endif
 
@@ -313,10 +316,12 @@ static void PopUpFree(Block *block)
 #ifndef _PYMOL_NOPY
   { /* purge code */
     int a;
+    int blocked = PAutoBlock();
     for(a=0;a<I->NLine;a++)
       if(I->Sub[a]) {
         Py_DECREF(I->Sub[a]);
       }
+    PAutoUnblock(blocked);
   }
 #endif
 
