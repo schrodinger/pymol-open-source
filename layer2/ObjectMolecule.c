@@ -2432,42 +2432,46 @@ char *ObjectMoleculeGetStateTitle(ObjectMolecule *I,int state)
 /*========================================================================*/
 void ObjectMoleculeRenderSele(ObjectMolecule *I,int curState,int sele)
 {
-  PyMOLGlobals *G = I->Obj.G;
-  CoordSet *cs;
-  int a,at;
-
+  register PyMOLGlobals *G = I->Obj.G;
+  register CoordSet *cs;
+  register int a,*idx2atm,nIndex;
+  register float *coord;
   if(G->HaveGUI && G->ValidContext) {
-
+    register AtomInfoType *atInfo = I->AtomInfo;
+    
     if(curState>=0) {
       if(curState<I->NCSet) {
-        if(I->CSet[curState]) {
-          cs=I->CSet[curState];
-          for(a=0;a<cs->NIndex;a++) {
-            at=cs->IdxToAtm[a]; /* should work for both discrete and non-discrete objects */
-            if(SelectorIsMember(I->Obj.G,I->AtomInfo[at].selEntry,sele)) 
-              glVertex3fv(cs->Coord+3*a);
+        if( (cs=I->CSet[curState]) ) {
+          idx2atm = cs->IdxToAtm;
+          nIndex = cs->NIndex;
+          coord = cs->Coord;
+          for(a=0;a<nIndex;a++) {
+            if(SelectorIsMember(G,atInfo[*(idx2atm++)].selEntry,sele)) 
+              glVertex3fv(coord+a+a+a);
           }
         }
       } else if(SettingGet(I->Obj.G,cSetting_static_singletons)) {
         if(I->NCSet==1) {
-          cs=I->CSet[0];
-          if(cs) {
-            for(a=0;a<cs->NIndex;a++) {
-              at=cs->IdxToAtm[a]; /* should work for both discrete and non-discrete objects */
-              if(SelectorIsMember(I->Obj.G,I->AtomInfo[at].selEntry,sele))
-                glVertex3fv(cs->Coord+3*a);
+          if( (cs=I->CSet[0])) {
+            idx2atm = cs->IdxToAtm;
+            nIndex = cs->NIndex;
+            coord = cs->Coord;
+            for(a=0;a<nIndex;a++) {
+              if(SelectorIsMember(G,atInfo[*(idx2atm++)].selEntry,sele))
+                glVertex3fv(coord+a+a+a);
             }
           }
         }
       }
     } else { /* all states */
       for(curState=0;curState<I->NCSet;curState++) {
-        if(I->CSet[curState]) {
-          cs=I->CSet[curState];
-          for(a=0;a<cs->NIndex;a++) {
-            at=cs->IdxToAtm[a]; /* should work for both discrete and non-discrete objects */
-            if(SelectorIsMember(I->Obj.G,I->AtomInfo[at].selEntry,sele))
-              glVertex3fv(cs->Coord+3*a);
+        if( (cs=I->CSet[curState]) ) {
+          idx2atm = cs->IdxToAtm;
+          nIndex = cs->NIndex;
+          coord = cs->Coord;
+          for(a=0;a<nIndex;a++) {
+            if(SelectorIsMember(G,atInfo[*(idx2atm++)].selEntry,sele))
+              glVertex3fv(coord+a+a+a);
           }
         }
       }

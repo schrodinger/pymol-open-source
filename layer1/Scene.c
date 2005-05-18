@@ -140,6 +140,7 @@ struct _CScene {
   int AnimationStartFlag;
   double AnimationStartTime;
   double AnimationLagTime;
+  double ApproxRenderTime;
 };
 
 typedef struct {
@@ -1053,9 +1054,11 @@ void SceneDirty(PyMOLGlobals *G)
     ENDFD;
 
   if(I) {
-    I->DirtyFlag=true;
-    ScenePurgeCopy(G);
-    OrthoDirty(G);
+    if(!I->DirtyFlag) {
+      I->DirtyFlag=true;
+      ScenePurgeCopy(G);
+      OrthoDirty(G);
+    }
   }
 
 }
@@ -1667,8 +1670,11 @@ static int SceneRelease(Block *block,int button,int x,int y,int mod, double when
   I->LastReleaseTime = when;
  
   if(I->PossibleSingleClick==1) {
-    double slowest_single_click = 0.25;
+    double slowest_single_click = 0.25F;
     double diff = when-I->LastClickTime;
+
+    slowest_single_click += I->ApproxRenderTime;
+
     if((diff<0.0)||(diff>slowest_single_click))
       I->PossibleSingleClick = 0;
     else {
@@ -2882,7 +2888,6 @@ static int SceneDrag(Block *block,int x,int y,int mod,double when)
   int adjust_flag;
   CObject *obj;
 
-
   if(I->PossibleSingleClick) {
     double slowest_single_click_drag = 0.15;
     if((when-I->LastClickTime)>slowest_single_click_drag) {
@@ -3506,6 +3511,7 @@ int  SceneInit(PyMOLGlobals *G)
     I->AnimationLagTime = 0.0;
     I->AnimationStartTime = 0.0;
     I->AnimationStartFlag = false;
+    I->ApproxRenderTime = 0.0;
 
     return 1;
   } else 
@@ -3984,6 +3990,7 @@ int SceneRenderCached(PyMOLGlobals *G)
   ImageType image;
   int renderedFlag=false;
 
+
   PRINTFD(G,FB_Scene)
     " SceneRenderCached: entered.\n"
     ENDFD;
@@ -4147,6 +4154,7 @@ void SceneRender(PyMOLGlobals *G,Pickable *pick,int x,int y,Multipick *smp)
     (void*)pick,x,y,(void*)smp
     ENDFD;
 
+  
   if(I->cur_ani_elem < I->n_ani_elem ) { /* play motion animation */
     int cur = I->cur_ani_elem;
 
@@ -4912,6 +4920,8 @@ void SceneRender(PyMOLGlobals *G,Pickable *pick,int x,int y,Multipick *smp)
     I->LastRender = UtilGetSeconds(G);
     I->RenderTime += I->LastRender;
     ButModeSetRate(G,(float)I->RenderTime);
+    I->ApproxRenderTime = I->LastRender - start_time;
+
     if(I->CopyNextFlag) {
       start_time = I->LastRender - start_time;
       if((start_time>0.10)||(MainSavingUnderWhileIdle()))
