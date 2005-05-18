@@ -547,6 +547,33 @@ def complete(s):
            [ 1, 'C-alphas'  ,'cmd.select("'+s+'","(bycalpha '+s+')",show=1)'      ],           
            ]
 
+def restrict_to_object(s):
+   list = cmd.get_names("public_objects",1)[0:25] # keep this practical
+   list = filter(lambda x:cmd.get_type(x)=="object:molecule",list)
+   result = [[ 2, 'Object:', '']]
+   for a in list:
+      if a!=s:
+         result.append([1,a,
+                        'cmd.select("'+s+'","('+s+') and ('+a+')",show=1)'])
+   return result
+
+def restrict_to_sele(s):
+   list = cmd.get_names("public_selections",0)[0:25] # keep this practical
+   result = [[ 2, 'Selection:', '']]
+   for a in list:
+      if a!=s:
+         result.append([1,a,
+                        'cmd.select("'+s+'","('+s+') and ('+a+')",show=1)'])
+   return result
+
+def restrict(s):
+   return [[ 2, 'Restrict:'       ,''                        ],     
+           [ 1, 'to object'   , restrict_to_object(s) ],
+           [ 1, 'to selection' , restrict_to_sele(s) ],
+           [ 0, ''               ,''                             ],           
+           [ 1, 'to visible'   , 'cmd.select("'+s+'","('+s+') and vis",show=1)'],
+           ]
+
 def expand(s):
    return [[ 2, 'Expand:'       ,''                        ],     
            [ 1, 'by 4 A'  ,'cmd.select("'+s+'","('+s+' expand 4)",show=1)' ],
@@ -641,6 +668,11 @@ def polar_inter(s):
 def find(s):
    return [[ 2, 'Find:', ''],
            [ 1, 'polar contacts', polar(s) ],
+           [ 0, ''               ,''                             ],
+           [ 1, 'atom count'   ,'cmd.count_atoms("'+s+'",quiet=0)'          ],
+           [ 0, ''               ,''                             ],           
+           [ 1, 'formal charge sum'   ,'util.sum_formal_charges("'+s+'",quiet=0)'          ],
+           [ 1, 'partial charges sum'   ,'util.sum_partial_charges("'+s+'",quiet=0)'          ],
            ]
 
 def align_to_object(s):
@@ -722,13 +754,13 @@ def sele_action(s):
            [ 1, 'extend'         , extend(s)         ],
            [ 1, 'invert'         , invert(s)         ],
            [ 1, 'complete'       , complete(s)         ],
+           [ 1, 'restrict'       , restrict(s)       ],
            [ 0, ''          ,''                                              ],
-           [ 1, 'duplicate selection'      ,'cmd.select("'+s+'")'          ],
-           [ 1, 'create object'  ,'cmd.create(None,"'+s+'")'     ],           
+           [ 1, 'duplicate'      ,'cmd.select("'+s+'")'          ],
+           [ 1, 'create object'  ,'cmd.create(None,"'+s+'")'     ],
            [ 0, ''          ,''                                  ],
            [ 1, 'masking'        , masking(s)         ],
            [ 1, 'movement'       , movement(s)         ],
-           [ 1, 'compute'        , compute(s)         ],           
            ]
 
 

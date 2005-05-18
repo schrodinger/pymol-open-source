@@ -6,6 +6,8 @@ Changes up to 0.99
 
    beta03
 
+   * addressed single-click atom picking and popup menu bug
+
    * fixed serious race condition / threading bug in popup menus -- this
    explains & eliminate the sporadic crashes observed on smp machines
 
