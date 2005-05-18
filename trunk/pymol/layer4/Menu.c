@@ -33,7 +33,7 @@ void MenuActivate(PyMOLGlobals *G,int x,int y,int last_x,int last_y,int passive,
   PyObject *list;
 
   PBlock(); 
-
+ 
   list = PyObject_CallMethod(P_menu,name,"s",sele); 
   if(PyErr_Occurred()) PyErr_Print();
   if(list) {

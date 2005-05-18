@@ -101,4 +101,5 @@ count_atoms
 
 reinit
 
-/print "END-LOG"yy\
+/print "END-LOG"
+
