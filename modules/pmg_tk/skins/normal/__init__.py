@@ -263,7 +263,7 @@ class Normal(PMGSkin):
          self.font = 'fixed' # should be available on any X11-based platform
          self.my_fw_font=(self.font,10)
       elif sys.platform[:3]=='win': 
-         self.font = 'lucida console' # only avialable on windows
+         self.font = 'lucida console' # only available on windows
          self.my_fw_font=(self.font,8) 
       else:
          text.tk.call('tk','scaling',1)
