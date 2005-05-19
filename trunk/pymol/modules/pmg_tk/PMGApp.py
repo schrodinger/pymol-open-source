@@ -43,14 +43,15 @@ class PMGApp(Pmw.MegaWidget):
 
        # try to get the windows properly aligned...
        
-       osFrame = { 'win32' : 60, 'irix'   : 41,
-                   'darwin': 51, 'cygwin' : 60,
-                   'linux' : 31, 'linux2' : 31 }
+       osFrame = { 'win32' : (5,60), 'irix'   : (0,41),
+                   'darwin': (0,51), 'cygwin' : (0,60),
+                   'linux' : (0,31), 'linux2' : (0,31) }
 
        if sys.platform in osFrame.keys():
-          self.frameAdjust = osFrame[sys.platform]
+          (self.frameXAdjust,self.frameYAdjust) = osFrame[sys.platform]
        else:
-          self.frameAdjust = 51
+          self.frameYAdjust = 51
+          self.frameXAdjust = 0
        
    def initializeTk_win32(self):
       self.root.option_add('*Font', 'Tahoma 8')
@@ -201,10 +202,10 @@ class PMGApp(Pmw.MegaWidget):
          inv = sys.modules.get("pymol.invocation",None)
          if inv!=None:
             self.frameWidth = inv.options.win_x + 220
-            self.frameXPos = inv.options.win_px
+            self.frameXPos = inv.options.win_px - self.frameXAdjust
             self.frameHeight = inv.options.ext_y
             self.frameYPos = inv.options.win_py - (
-                   self.frameHeight + self.frameAdjust)
+                   self.frameHeight + self.frameYAdjust)
             module_path = inv.options.gui +".skins."+ inv.options.skin
             __import__(inv.options.gui +".skins."+ inv.options.skin)
             sys.modules[module_path].__init__(self)
