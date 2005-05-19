@@ -4724,7 +4724,7 @@ float ExecutiveDist(PyMOLGlobals *G,char *nam,char *s1,char *s2,int mode,float c
   int sele1,sele2;
   ObjectDist *obj;
   CObject *anyObj = NULL;
-  float result;
+  float result=0.0F;
   sele1=SelectorIndexByName(G,s1);
   if(!WordMatch(G,s2,"same",true))
     sele2=SelectorIndexByName(G,s2);
@@ -4752,8 +4752,12 @@ float ExecutiveDist(PyMOLGlobals *G,char *nam,char *s1,char *s2,int mode,float c
     }
   } else if(sele1<0) {
     ErrMessage(G,"ExecutiveDistance","The first selection contains no atoms.");
+    if(reset)
+      ExecutiveDelete(G,nam);
   } else if(sele2<0) {
     ErrMessage(G,"ExecutiveDistance","The second selection contains no atoms.");
+    if(reset)
+      ExecutiveDelete(G,nam);
   }
   return(result);
 }
