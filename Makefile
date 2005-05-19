@@ -283,7 +283,7 @@ osx-pdev:
 	cp -R modules/pymol $(OSXPYMOL)/modules/pymol
 	cp -R layerOSX/plugin/pmg_aqua $(OSXPYMOL)/modules/
 
-osx-product: osx 
+osx-bundle: osx 
 	$(PYTHON_EXE) modules/compile_pymol.py
 	/bin/rm -rf $(OSXPYMOL)
 	install -d $(OSXPYMOL)
@@ -297,7 +297,7 @@ osx-product: osx
 	cp README $(OSXPYMOL)/
 
 
-osx-standalone: osx-unwrap osx-python-standalone osx-product
+osx-standalone: osx-unwrap osx-python-standalone osx-bundle
 	/bin/rm -rf $(OSXPY)
 	install -d $(OSXPY)/lib
 	cp -R ext/lib/python2.3 $(OSXPY)/lib/
@@ -314,7 +314,7 @@ mac-demo-data:
 
 mac-demo: osx-standalone mac-demo-data mac-unwrap-demos 
 
-mac-framework: osx-unwrap osx-python-framework osx-product
+mac-framework: osx-unwrap osx-python-framework osx-bundle
 	/bin/rm -rf $(OSXFRWK)
 	/bin/cp -R $(OSXPROD) $(OSXFRWK)
 	sed 's/MacPyMOL/FrameworkPyMOL/' $(OSXFRWK)/Contents/Info.plist > $(OSXFRWK)/Contents/Info.plist.tmp
@@ -322,7 +322,7 @@ mac-framework: osx-unwrap osx-python-framework osx-product
 	/bin/rm -r $(OSXFRWK)/Contents/Resources/English.lproj/MainMenu.nib
 	/bin/rm -r $(OSXFRWK)/Contents/Resources/English.lproj/MainMenu~.nib
 
-mac: osx-standalone
+mac-product: osx-standalone
 	/bin/cp epymol/data/pymol/splash.png $(OSXPYMOL)/data/pymol/
 
 mac-helper: mac
