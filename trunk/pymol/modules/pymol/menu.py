@@ -49,22 +49,29 @@ def mol_toggle(s):
       +rep_action('toggle',s)
       )
 
+def show_misc(s):
+   return [[ 2, 'Show:', '' ],
+           [ 1, 'lines', 'cmd.show("lines","'+s+'")'],
+           [ 1, 'sticks', 'cmd.show("sticks","'+s+'")'],
+           [ 1, 'spheres', 'cmd.show("spheres","'+s+'")'],
+           ]
+
 def mol_show(s):
    return (
       [[ 2, 'Show:'      , ''                               ],
        [ 1, 'as'    , mol_as(s) ],
-#       [ 1, 'toggle'    , mol_toggle(s) ],
        [ 0, '', '']]
       + rep_action('show',s) +
       [[ 0, '', ''],
-       [ 1, 'organic' , 'cmd.show("lines","(organic and ('+s+'))")' ],       
-       [ 1, 'main chain' , 'cmd.show("lines","((byres ('+s+'))&n;ca,c,n,o,h)")' ],
-       [ 1, 'side chain' , 'cmd.show("lines","((byres ('+s+'))&(!(n;c,o,h|(n. n&!r. pro))))")' ],
-       [ 1, 'disulfides' , 'cmd.show("lines","(byres ((('+s+
-         ') & r. CYS+CYX & n. SG) & bound_to (('+s+') & r. CYS+CYX & n. SG))) & n. CA+CB+SG")' ]
+       [ 1, 'organic' , show_misc('(organic and ('+s+'))') ],
+       [ 1, 'main chain' , show_misc("((byres ("+s+"))&n;ca,c,n,o,h)") ],
+       [ 1, 'side chain' , show_misc("((byres ("+s+"))&(!(n;c,o,h|(n. n&!r. pro))))") ],
+       [ 1, 'disulfides' , show_misc("(byres ((("+s+
+         ") & r. CYS+CYX & n. SG) & bound_to (("+s+") & r. CYS+CYX & n. SG))) & n. CA+CB+SG") ]
        ])
 
    cmd.show("lines","(byres (("+s+" & r. CYS+CYX & n. SG) & bound_to ("+s+" & r. CYS+CYX & n. SG))) & n. CA+CB+SG")
+   
 def mol_hide(s):
    return (
       [[ 2, 'Hide:'     , ''                                ],
@@ -547,31 +554,39 @@ def complete(s):
            [ 1, 'C-alphas'  ,'cmd.select("'+s+'","(bycalpha '+s+')",show=1)'      ],           
            ]
 
-def restrict_to_object(s):
+def modify_by_object(s,op):
    list = cmd.get_names("public_objects",1)[0:25] # keep this practical
    list = filter(lambda x:cmd.get_type(x)=="object:molecule",list)
    result = [[ 2, 'Object:', '']]
    for a in list:
       if a!=s:
          result.append([1,a,
-                        'cmd.select("'+s+'","('+s+') and ('+a+')",show=1)'])
+                        'cmd.select("'+s+'","('+s+') '+op+' ('+a+')",show=1)'])
    return result
 
-def restrict_to_sele(s):
+def modify_by_sele(s,op):
    list = cmd.get_names("public_selections",0)[0:25] # keep this practical
    result = [[ 2, 'Selection:', '']]
    for a in list:
       if a!=s:
          result.append([1,a,
-                        'cmd.select("'+s+'","('+s+') and ('+a+')",show=1)'])
+                        'cmd.select("'+s+'","('+s+') '+op+' ('+a+')",show=1)'])
    return result
 
 def restrict(s):
    return [[ 2, 'Restrict:'       ,''                        ],     
-           [ 1, 'to object'   , restrict_to_object(s) ],
-           [ 1, 'to selection' , restrict_to_sele(s) ],
+           [ 1, 'to object'   , modify_by_object(s,'and') ],
+           [ 1, 'to selection' , modify_by_sele(s,'and') ],
            [ 0, ''               ,''                             ],           
            [ 1, 'to visible'   , 'cmd.select("'+s+'","('+s+') and vis",show=1)'],
+           ]
+
+def include(s):
+   return [[ 2, 'Include:'       ,''                        ],     
+           [ 1, 'object'   , modify_by_object(s,'or') ],
+           [ 1, 'selection' , modify_by_sele(s,'or') ],
+           [ 0, ''               ,''                             ],           
+           [ 1, 'visible'   , 'cmd.select("'+s+'","('+s+') or vis",show=1)'],
            ]
 
 def expand(s):
@@ -628,37 +643,43 @@ def extend(s):
 def polar(s):
    return [[ 2, 'Polar Contacts:', ''],
            [ 1, 'within selection'  ,
-             'cmd.dist("'+s+'_polar_conts","'+s+'","'+s+'",quiet=1,mode=2,labels=0);cmd.enable("'+s+'_polar_conts")'],
+             'cmd.dist("'+s+'_polar_conts","'+s+'","'+s+'",quiet=1,mode=2,labels=0,reset=1);cmd.enable("'+s+'_polar_conts")'],
            [ 1, 'involving side chains'  ,
              'cmd.dist("'+s+'_polar_conts","('+s+')","('+s+
-             ') and polymer and not (name n,o,h)",quiet=1,mode=2,labels=0);cmd.enable("'+s+'_polar_conts")'],
+             ') and polymer and not (name n,o,h)",quiet=1,mode=2,labels=0,reset=1);cmd.enable("'+s+'_polar_conts")'],
            [ 1, 'involving solvent'  ,
              'cmd.dist("'+s+'_polar_conts","('+s+') and solvent","('+s+
-             ') and not (solvent)",quiet=1,mode=2,labels=0);cmd.enable("'+s+'_polar_conts")'],
+             ') and not (solvent)",quiet=1,mode=2,labels=0,reset=1);cmd.enable("'+s+'_polar_conts")'],
            [ 1, 'excluding solvent'  ,
              'cmd.dist("'+s+'_polar_conts","('+s+') and not (solvent)","('+s+
-             ') and not (solvent)",quiet=1,mode=2,labels=0);cmd.enable("'+s+'_polar_conts")'],
+             ') and not (solvent)",quiet=1,mode=2,labels=0,reset=1);cmd.enable("'+s+'_polar_conts")'],
            [ 1, 'excluding main chain'  ,
              'cmd.dist("'+s+'_polar_conts","('+s+') and not (polymer and name n,o,h)","('+s+
-             ') and not (polymer and name n,o,h)",quiet=1,mode=2,labels=0);cmd.enable("'+s+'_polar_conts")'],
+             ') and not (polymer and name n,o,h)",quiet=1,mode=2,labels=0,reset=1);cmd.enable("'+s+'_polar_conts")'],
            [ 1, 'excluding intra-main chain'  ,
              'cmd.dist("'+s+'_polar_conts","('+s+')","('+s+
-             ') and not (polymer and name n,o,h)",quiet=1,mode=2,labels=0);cmd.enable("'+s+'_polar_conts")'],
+             ') and not (polymer and name n,o,h)",quiet=1,mode=2,labels=0,reset=1);cmd.enable("'+s+'_polar_conts")'],
            [ 1, 'just intra-side chain'  ,
              'cmd.dist("'+s+'_polar_conts","('+s+') and not (solvent or (polymer and name n,o,h))","('+s+
-             ') and not (solvent or (polymer and name n,o,h))",quiet=1,mode=2,labels=0);cmd.enable("'+s+'_polar_conts")'],
+             ') and not (solvent or (polymer and name n,o,h))",quiet=1,mode=2,labels=0,reset=1);cmd.enable("'+s+
+             '_polar_conts")'],
+           [ 1, 'just intra-main chain'  ,
+             'cmd.dist("'+s+'_polar_conts","('+s+') and not (solvent or (polymer and not name n,o,h))","('+s+
+             ') and not (solvent or (polymer and not name n,o,h))",quiet=1,mode=2,labels=0,reset=1);cmd.enable("'+s+
+             '_polar_conts")'],
            [ 0, '', '' ],
            [ 1, 'to other atoms in object',
              'cmd.dist("'+s+'_polar_conts","('+s+')","(byobj ('+s+')) and (not ('+s+
-             '))",quiet=1,mode=2,labels=0);cmd.enable("'+s+'_polar_conts")'],
+             '))",quiet=1,mode=2,labels=0,reset=1);cmd.enable("'+s+'_polar_conts")'],
            [ 1, 'to others excluding solvent',
              'cmd.dist("'+s+'_polar_conts","('+s+') and not solvent","(byobj ('+s+')) and (not ('+s+
-             ')) and (not solvent)",quiet=1,mode=2,labels=0);cmd.enable("'+s+'_polar_conts")'],
+             ')) and (not solvent)",quiet=1,mode=2,labels=0,reset=1);cmd.enable("'+s+'_polar_conts")'],
            [ 1, 'to any atoms',
-             'cmd.dist("'+s+'_polar_conts","('+s+')","(not '+s+')",quiet=1,mode=2,labels=0);cmd.enable("'+s+'_polar_conts")'],
+             'cmd.dist("'+s+'_polar_conts","('+s+')","(not '+s+
+             ')",quiet=1,mode=2,labels=0,reset=1);cmd.enable("'+s+'_polar_conts")'],
            [ 1, 'to any excluding solvent',
              'cmd.dist("'+s+'_polar_conts","('+s+') and not solvent","(not ('+s+
-             ')) and not solvent",quiet=1,mode=2,labels=0);cmd.enable("'+s+'_polar_conts")'],
+             ')) and not solvent",quiet=1,mode=2,labels=0,reset=1);cmd.enable("'+s+'_polar_conts")'],
            ]
 
 def polar_inter(s):
@@ -668,11 +689,6 @@ def polar_inter(s):
 def find(s):
    return [[ 2, 'Find:', ''],
            [ 1, 'polar contacts', polar(s) ],
-           [ 0, ''               ,''                             ],
-           [ 1, 'atom count'   ,'cmd.count_atoms("'+s+'",quiet=0)'          ],
-           [ 0, ''               ,''                             ],           
-           [ 1, 'formal charge sum'   ,'util.sum_formal_charges("'+s+'",quiet=0)'          ],
-           [ 1, 'partial charges sum'   ,'util.sum_partial_charges("'+s+'",quiet=0)'          ],
            ]
 
 def align_to_object(s):
@@ -733,6 +749,16 @@ def mol_align(s):
            [ 1, 'matrix reset', 'cmd.matrix_reset("'+s+'")'],
            ]
 
+def modify_sele(s):
+   return [[ 2, 'Modify:', ''],
+           [ 1, 'around'         , around(s)         ],           
+           [ 1, 'expand'         , expand(s)         ],
+           [ 1, 'extend'         , extend(s)         ],
+           [ 1, 'invert'         , invert(s)         ],
+           [ 1, 'complete'       , complete(s)         ],
+           [ 1, 'restrict'       , restrict(s)       ],
+           [ 1, 'include'        , include(s)       ]]
+           
 def sele_action(s):
    return [[ 2, 'Actions:'       ,''                        ],     
            [ 1, 'delete selection', 'cmd.delete("'+s+'")'          ],
@@ -743,24 +769,19 @@ def sele_action(s):
            [ 1, 'origin'         ,'cmd.origin("'+s+'")'          ],
            [ 1, 'orient'         ,'cmd.orient("'+s+'",animate=-1)'          ],
            [ 0, ''               ,''                             ],
+           [ 1, 'modify', modify_sele(s) ],
            [ 1, 'preset'         ,presets(s)         ],
            [ 1, 'find', find(s) ],
-           [ 1, 'align', sele_align(s) ],           
+           [ 1, 'align', sele_align(s) ],
            [ 0, ''               ,''                             ],
            [ 1, 'remove atoms'   ,'cmd.remove("'+s+'");cmd.delete("'+s+'")'          ],
-           [ 0, ''               ,''                             ],
-           [ 1, 'around'         , around(s)         ],           
-           [ 1, 'expand'         , expand(s)         ],
-           [ 1, 'extend'         , extend(s)         ],
-           [ 1, 'invert'         , invert(s)         ],
-           [ 1, 'complete'       , complete(s)         ],
-           [ 1, 'restrict'       , restrict(s)       ],
            [ 0, ''          ,''                                              ],
            [ 1, 'duplicate'      ,'cmd.select("'+s+'")'          ],
            [ 1, 'create object'  ,'cmd.create(None,"'+s+'")'     ],
            [ 0, ''          ,''                                  ],
            [ 1, 'masking'        , masking(s)         ],
            [ 1, 'movement'       , movement(s)         ],
+           [ 1, 'compute'        , compute(s) ],
            ]
 
 
@@ -954,7 +975,7 @@ def all_option(s):
       [ 1, 'show'      , mol_show(s) ],
       [ 1, 'hide'      , mol_hide(s) ],
       [ 1, 'color'      , mol_color(s) ],
-      [ 1, 'view'      , mol_view(s) ],
+#      [ 1, 'view'      , mol_view(s) ],
       [ 1, 'preset'      , presets(s) ],
       [ 0, ''             , ''                      ],
       [ 1, 'zoom'           ,'cmd.zoom("'+s+'",animate=-1)'            ],

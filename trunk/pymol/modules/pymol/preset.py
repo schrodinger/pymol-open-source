@@ -121,11 +121,13 @@ def ligands(selection="(all)"):
       cmd.show("lines","("+s+" and (rep lines extend 1) and "+lig+")")
 
       if cmd.count_atoms(lig):
-         cmd.dist(polar_contacts,host+"|"+near_solvent,lig+"|"+near_solvent,mode=2,quiet=1,labels=0) # hbonds
+         cmd.dist(polar_contacts,host+"|"+near_solvent,lig+"|"+near_solvent,mode=2,quiet=1,labels=0,reset=1) # hbonds
          if polar_contacts in cmd.get_names():
             cmd.enable(polar_contacts)
             cmd.hide("labels",polar_contacts)
-            cmd.show("dashes",polar_contacts)            
+            cmd.show("dashes",polar_contacts)
+      else:
+         cmd.delete(polar_contacts)
       cmd.show("nonbonded",lig+"|"+host+"|"+near_solvent)
       if cmd.count_atoms(lig):
          cmd.zoom(lig,3)
@@ -199,11 +201,14 @@ def ligand_sites(selection="(all)"):
       cmd.show("lines","("+s+" and (rep lines extend 1) and "+lig+")")
 
       if cmd.count_atoms(lig):
-         cmd.dist(polar_contacts,host+"|"+near_solvent,lig+"|"+near_solvent,mode=2,quiet=1,labels=0) # hbonds
+         cmd.dist(polar_contacts,host+"|"+near_solvent,lig+"|"+near_solvent,mode=2,quiet=1,labels=0,reset=1) # hbonds
          if polar_contacts in cmd.get_names():
             cmd.enable(polar_contacts)
             cmd.hide("labels",polar_contacts)
-            cmd.show("dashes",polar_contacts)            
+            cmd.show("dashes",polar_contacts)
+      else:
+         cmd.delete(polar_contacts)
+            
       cmd.show("nb_spheres",lig+"|"+host+"|"+near_solvent)
       if cmd.count_atoms(lig):
          cmd.zoom(lig,3)
@@ -273,7 +278,7 @@ def technical(selection="(all)"):
    cmd.show("lines","((("+s+") and not "+lig_sele+") extend 1)")
    cmd.show("sticks","("+lig_sele+" and ("+s+"))")
    cmd.show("ribbon",s)
-   cmd.dist(polar_contacts,s,s,mode=2,labels=0) # hbonds
+   cmd.dist(polar_contacts,s,s,mode=2,labels=0,reset=1) # hbonds
    if polar_contacts in cmd.get_names():
       cmd.enable(polar_contacts)
       cmd.set("dash_width",1.5,polar_contacts)

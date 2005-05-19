@@ -2486,7 +2486,7 @@ void SettingInitGlobal(PyMOLGlobals *G,int alloc,int reset_gui)
   SettingSet_b(I,cSetting_dot_normals,1);
   SettingSet_b(I,cSetting_session_migration,1);
   SettingSet_b(I,cSetting_mesh_normals,1);
-  SettingSet_b(I,cSetting_mesh_type,0);
+  SettingSet_i(I,cSetting_mesh_type,0);
 
   SettingSet_b(I,cSetting_dot_lighting,1);
   SettingSet_b(I,cSetting_mesh_lighting,0);
