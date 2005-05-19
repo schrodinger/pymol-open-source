@@ -232,12 +232,12 @@ if pymol_launch != 3: # if this isn't a dry run
             cmd.set('ribbon_smooth',0,quiet=1)
             if renderer[0:7]=='GeForce':
                if invocation.options.show_splash:
-                  print " Adapting to GeForce hardware..."
+                  print " Adapting to GeForce hardware."
                cmd.set('line_width','2',quiet=1)
             elif renderer=='NVIDIA GPU OpenGL Engine':
                if sys.platform=='darwin':
                   if invocation.options.show_splash:
-                     print " Adapting to NVIDIA hardware on Mac..."
+                     print " Adapting to NVIDIA hardware on Mac."
                      cmd.set('line_smooth',0,quiet=1)
                      cmd.set('fog',0.9,quiet=1)
             elif renderer=='NVIDIA GeForce4 GPU OpenGL Engine':
@@ -247,7 +247,7 @@ if pymol_launch != 3: # if this isn't a dry run
 
             elif renderer[0:6]=='Quadro':
                if invocation.options.show_splash:
-                  print " Adapting to Quadro hardware..."
+                  print " Adapting to Quadro hardware."
                cmd.set("stereo_double_pump_mono","1",quiet=1)
                cmd.set("line_width",1.4,quiet=1)
 
@@ -259,7 +259,7 @@ if pymol_launch != 3: # if this isn't a dry run
             cmd.set('ribbon_smooth',0,quiet=1)
             if renderer[0:17]=='FireGL2 / FireGL3':
                if invocation.options.show_splash:
-                  print " Adapting to FireGL hardware..."
+                  print " Adapting to FireGL hardware."
                cmd.set('line_width','2',quiet=1)            
 
          # find out how many processors we have, and adjust hash

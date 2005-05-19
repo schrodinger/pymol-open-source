@@ -39,6 +39,7 @@ class PMGApp(Pmw.MegaWidget):
           self.initializeTk_unix()
        else:
           self.initializeTk_unix()
+#       self.root.tk.call('tk','scaling',1)
 
        # try to get the windows properly aligned...
        
@@ -70,7 +71,7 @@ class PMGApp(Pmw.MegaWidget):
       self.root.option_add('*Listbox*background', 'white')
       self.root.option_add('*Listbox*selectBackground', 'dark slate blue')
       self.root.option_add('*Listbox*selectForeground', 'white')
-
+      
    def quit_app(self):
       self.pymol.cmd.log_close()
       self.pymol.cmd.quit()  # avoid logging this - it's inconvenient...

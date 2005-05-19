@@ -1538,13 +1538,13 @@ void OrthoSplash(PyMOLGlobals *G)
 {
   OrthoNewLine(G,NULL,true);
   if(G->Option->incentive_product) {
-    PRINTF " This PyMOL(TM) Incentive Product is Copyright (C) 2005 DeLano Scientific LLC.\n \n" ENDF(G);
-    PRINTF " A current PyMOL Maintenance and/or Support Subscription may be required for\n" ENDF(G);
-    PRINTF " legal usage of this Build beyond a finite honor-system evaluation period.\n" ENDF(G);
+    PRINTF " PyMOL(TM) Incentive Product - Copyright (C) 2005 DeLano Scientific LLC.\n \n" ENDF(G);
+    PRINTF " A current PyMOL Maintenance and/or Support Subscription may be required\n" ENDF(G);
+    PRINTF " for legal use of this Build beyond a finite honor-system evaluation period.\n" ENDF(G);
     PRINTF " Please visit http://www.pymol.org/funding.html for more information.\n \n"ENDF(G);
-    PRINTF " This PyMOL Executable Build is based on Open-Source PyMOL version " ENDF(G);
+    PRINTF " This PyMOL Executable Build is derived from Open-Source PyMOL " ENDF(G);
     PRINTF _PyMOL_VERSION ENDF(G);
-    PRINTF ".\n " ENDF(G);
+    PRINTF ".\n" ENDF(G);
   } else {
     PRINTF " PyMOL(TM) Molecular Graphics System, Version " ENDF(G);
     PRINTF _PyMOL_VERSION ENDF(G);
@@ -1624,7 +1624,7 @@ int OrthoInit(PyMOLGlobals *G,int showSplash)
 	 OrthoSplash(G);
     I->SplashFlag=true;
   }
-  OrthoFeedbackIn(G," ");
+  /*  OrthoFeedbackIn(G," ");*/
   I->CurLine++;
   strcpy(I->Prompt,"PyMOL>");
   strcpy(I->Line[I->CurLine],I->Prompt);

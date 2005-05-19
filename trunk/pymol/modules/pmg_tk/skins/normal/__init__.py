@@ -258,12 +258,16 @@ class Normal(PMGSkin):
 
       text = self.output.component('text')
       self.text = text      
-      self.font = 'lucida console'
       if sys.platform[:5]=='linux':
-         self.my_fw_font=(self.font,11)
+         text.tk.call('tk','scaling',1)
+         self.font = 'fixed'
+         self.my_fw_font=(self.font,10)
       elif sys.platform[:3]=='win':
-         self.my_fw_font=(self.font,8) # Courier 9
+         self.font = 'lucida console'
+         self.my_fw_font=(self.font,8) 
       else:
+         text.tk.call('tk','scaling',1)
+         self.font = 'courier'
          self.my_fw_font=(self.font,10)
                                                                                
       text.configure(font = self.my_fw_font)
