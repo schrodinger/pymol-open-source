@@ -701,9 +701,9 @@ static void MainKey(unsigned char k, int x, int y)
 
   glMod = p_glutGetModifiers();
 
-  PRINTFD(G,FB_Main)
+  PRINTFB(G,FB_Main,FB_Blather)
     " MainKey: %d %d %d\n",k,x,y
-    ENDFD;
+    ENDFB(G);
   if(PLockAPIAsGlut(false)) {
     
     I->IdleMode = 0; /* restore responsiveness */
@@ -733,6 +733,9 @@ static void MainSpecial(int k, int x, int y)
   CMain *I = G->Main;
   int glMod;  
 
+  PRINTFB(G,FB_Main,FB_Blather)
+    " MainSpecial: %d %d %d\n",k,x,y
+    ENDFB(G);
   glMod = p_glutGetModifiers();
   if(PLockAPIAsGlut(false)) {
     
