@@ -7803,7 +7803,7 @@ void ObjectMoleculeSeleOp(ObjectMolecule *I,int sele,ObjectMoleculeOpRec *op)
          ai++;
        }
      break;
-   case OMOP_SUMC: /* performance optimized to speed load & zoom actions */
+   case OMOP_SUMC: /* performance optimized to speed center & zoom actions */
      {
        register float *op_v1 = op->v1;
        register int op_i1 = op->i1;
@@ -7842,7 +7842,7 @@ void ObjectMoleculeSeleOp(ObjectMolecule *I,int sele,ObjectMoleculeOpRec *op)
        op->i1 = op_i1;
      }
      break;
-   case OMOP_MNMX: /* performance optimized to speed load & zoom actions */
+   case OMOP_MNMX: /* performance optimized to speed center & zoom actions */
      {
        register float *op_v1 = op->v1;
        register float *op_v2 = op->v2;
