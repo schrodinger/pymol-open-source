@@ -7041,10 +7041,12 @@ void ObjectMoleculeTransformTTTf(ObjectMolecule *I,float *ttt,int frame)
 /*========================================================================*/
 void ObjectMoleculeSeleOp(ObjectMolecule *I,int sele,ObjectMoleculeOpRec *op)
 {
-  int a,b,c,s,d,t_i;
+  register float *coord;
+  register int a,b,s;
+  int c,d,t_i;
   int a1,ind;
   float r,rms;
-  float v1[3],v2,*vv1,*vv2,*coord,*vt,*vt1,*vt2;
+  float v1[3],v2,*vv1,*vv2,*vt,*vt1,*vt2;
   int inv_flag;
   int hit_flag = false;
   int ok = true;
@@ -7060,7 +7062,6 @@ void ObjectMoleculeSeleOp(ObjectMolecule *I,int sele,ObjectMoleculeOpRec *op)
   PRINTFD(G,FB_ObjectMolecule)
     " ObjectMoleculeSeleOp-DEBUG: sele %d op->code %d\n",sele,op->code
     ENDFD;
-
   if(sele>=0) {
     SelectorUpdateTableSingleObject(G,I,false,NULL,0);
    /* always run on entry */
@@ -7802,6 +7803,101 @@ void ObjectMoleculeSeleOp(ObjectMolecule *I,int sele,ObjectMoleculeOpRec *op)
          ai++;
        }
      break;
+   case OMOP_SUMC: /* performance optimized to speed load & zoom actions */
+     {
+       register float *op_v1 = op->v1;
+       register int op_i1 = op->i1;
+       register int op_i2 = op->i2;
+       register int obj_TTTFlag = I->Obj.TTTFlag;
+       register int i_NCSet = I->NCSet;
+       register int i_NAtom = I->NAtom;
+       register int i_DiscreteFlag = I->DiscreteFlag;
+       register CoordSet **i_CSet = I->CSet;
+       ai = I->AtomInfo;
+       for(a=0;a<i_NAtom;a++) {
+         s=ai->selEntry;
+         if(SelectorIsMember(G,s,sele)) {
+           for(b=0;b<i_NCSet;b++) {
+             if(i_DiscreteFlag) {
+               if( (cs=I->DiscreteCSet[a]) )
+                 a1=I->DiscreteAtmToIdx[a];
+             } else {
+               if( (cs=i_CSet[b]) )
+                 a1=cs->AtmToIdx[a];
+             }
+             if(cs && (a1>=0) ) {
+               coord = cs->Coord+3*a1;
+               if(op_i2) /* do we want object-transformed coordinates? */
+                 if(obj_TTTFlag) {
+                   transformTTT44f3f(I->Obj.TTT,coord,v1);
+                   coord=v1;
+                 }
+               add3f(op_v1,coord,op_v1);
+               op_i1++;
+             }
+           }
+         }
+         ai++;
+       }
+       op->i1 = op_i1;
+     }
+     break;
+   case OMOP_MNMX: /* performance optimized to speed load & zoom actions */
+     {
+       register float *op_v1 = op->v1;
+       register float *op_v2 = op->v2;
+       register int op_i1 = op->i1;
+       register int op_i2 = op->i2;
+       register int obj_TTTFlag = I->Obj.TTTFlag;
+       register int i_NCSet = I->NCSet;
+       register int i_NAtom = I->NAtom;
+       register int i_DiscreteFlag = I->DiscreteFlag;
+       register CoordSet **i_CSet = I->CSet;
+
+       ai = I->AtomInfo;
+       for(a=0;a<i_NAtom;a++) {
+         s=ai->selEntry;
+         if(SelectorIsMember(G,s,sele)) {
+           for(b=0;b<i_NCSet;b++) {
+             if(i_DiscreteFlag) {
+               if( (cs=I->DiscreteCSet[a]) )
+                 a1=I->DiscreteAtmToIdx[a];
+             } else {
+               if( (cs=i_CSet[b]) )
+                 a1=cs->AtmToIdx[a];
+             }
+             if(cs && (a1>=0) ) {
+               coord = cs->Coord+3*a1;
+               if(op_i2) /* do we want object-transformed coordinates? */
+                 if(obj_TTTFlag) {
+                   transformTTT44f3f(I->Obj.TTT,coord,v1);
+                   coord=v1;
+                 }
+               
+               if(op_i1) {
+                 if(op_v1[0]>coord[0]) op_v1[0]=coord[0];
+                 if(op_v1[1]>coord[1]) op_v1[1]=coord[1];
+                 if(op_v1[2]>coord[2]) op_v1[2]=coord[2];
+                 if(op_v2[0]<coord[0]) op_v2[0]=coord[0];
+                 if(op_v2[1]<coord[1]) op_v2[1]=coord[1];
+                 if(op_v2[2]<coord[2]) op_v2[2]=coord[2];
+               } else {
+                 op_v1[0] = coord[0];
+                 op_v1[1] = coord[1];
+                 op_v1[2] = coord[2];
+                 op_v2[0] = coord[0];
+                 op_v2[1] = coord[1];
+                 op_v2[2] = coord[2];
+               }
+               op_i1++;
+             }
+           }
+         }
+         ai++;
+       }
+       op->i1 = op_i1;
+     }
+     break;
    default:
      ai = I->AtomInfo;
      for(a=0;a<I->NAtom;a++)
@@ -8080,11 +8176,13 @@ void ObjectMoleculeSeleOp(ObjectMolecule *I,int sele,ObjectMoleculeOpRec *op)
              }
              if(cs)
                {
-                 inv_flag=false;
                  s=ai->selEntry;
+                 inv_flag=false;
                  if(SelectorIsMember(G,s,sele))
                    {
                      switch(op->code) {
+#if 0
+                /* pulled out for performance reasons */
                      case OMOP_SUMC:
                        if(I->DiscreteFlag) {
                          if(cs==I->DiscreteCSet[a])
@@ -8135,6 +8233,8 @@ void ObjectMoleculeSeleOp(ObjectMolecule *I,int sele,ObjectMoleculeOpRec *op)
                            op->i1++;
                          }
                        break;
+#endif
+
                      case OMOP_CameraMinMax:
                        if(I->DiscreteFlag) {
                          if(cs==I->DiscreteCSet[a])
