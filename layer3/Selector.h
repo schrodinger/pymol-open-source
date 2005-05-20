@@ -128,6 +128,11 @@ ObjectMolecule *SelectorGetFastSingleObjectMolecule(PyMOLGlobals *G,int sele);
 MapType *SelectorGetSpacialMapFromSeleCoord(PyMOLGlobals *G,int sele,int state,float cutoff,float **coord_vla);
 
 
+typedef struct {
+  int selection;
+  int priority; /* must not be zero since it is also used as a boolean test for membership */
+  int next;
+} MemberType;
 
 #ifndef _PYMOL_INLINE
 
@@ -140,12 +145,26 @@ int SelectorIsMemberSlow(PyMOLGlobals *G,int start,int sele);
 #define __inline__ __inline
 #endif
 
-int _SelectorIsMemberInlinePartial(PyMOLGlobals *G,int s,int sele);
-
 __inline__ static int SelectorIsMember(PyMOLGlobals *G,int s, int sele) 
 {
-  if(sele>1)   
-    return _SelectorIsMemberInlinePartial(G,s,sele);
+  /* this is the most heavily called routine in interactive PyMOL */
+  register MemberType **prefetch = (MemberType**)(G->Selector);
+  if(sele>1) {
+    register MemberType *member = *prefetch;
+    register int s_reg = s;
+    register int sele_reg = sele;
+    register MemberType *mem = member + s_reg;
+    register int test_sele;
+    while(s_reg) {
+      test_sele = mem->selection;
+      s_reg = mem->next;
+      if(test_sele==sele_reg) {
+        return mem->priority;
+      }
+      mem = member + s_reg;
+    }
+    return false;
+  }
   else if(!sele) 
     return true; /* "all" is selection number 0, unordered */
   else 
