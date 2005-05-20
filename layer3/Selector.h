@@ -148,24 +148,23 @@ int SelectorIsMemberSlow(PyMOLGlobals *G,int start,int sele);
 __inline__ static int SelectorIsMember(PyMOLGlobals *G,int s, int sele) 
 {
   /* this is the most heavily called routine in interactive PyMOL */
+  register int s_reg;
   register MemberType **prefetch = (MemberType**)(G->Selector);
-  if(sele>1) {
+  if( (s_reg=s) && (sele>1)) {
     register MemberType *member = *prefetch;
-    register int s_reg = s;
     register int sele_reg = sele;
     register MemberType *mem = member + s_reg;
     register int test_sele;
-    while(s_reg) {
+    do {
       test_sele = mem->selection;
       s_reg = mem->next;
       if(test_sele==sele_reg) {
         return mem->priority;
       }
       mem = member + s_reg;
-    }
+    } while(s_reg);
     return false;
-  }
-  else if(!sele) 
+  } else if(!sele) 
     return true; /* "all" is selection number 0, unordered */
   else 
     return false; /* no atom is a member of none (1), and negative selections don't exist */
