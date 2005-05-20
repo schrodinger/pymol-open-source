@@ -149,9 +149,8 @@ __inline__ static int SelectorIsMember(PyMOLGlobals *G,int s, int sele)
 {
   /* this is the most heavily called routine in interactive PyMOL */
   register int s_reg;
-  register MemberType **prefetch = (MemberType**)(G->Selector);
   if( (s_reg=s) && (sele>1)) {
-    register MemberType *member = *prefetch;
+    register MemberType *member = *((MemberType**)(G->Selector));
     register int sele_reg = sele;
     register MemberType *mem = member + s_reg;
     register int test_sele;

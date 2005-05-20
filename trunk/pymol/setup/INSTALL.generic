@@ -1,8 +1,6 @@
 ----------------------------------------------------------------------
-PyMOL (C) 1998-2003 by Warren L. DeLano of DeLano Scientific.
-http://www.pymol.org       EMAIL: warren@delanoscientific.com
+INSTALLATION VIA COMPILATION (Generic)
 ----------------------------------------------------------------------
-INSTALLATION AND COMPILATION GUIDE
 
 NOTE: 
 
@@ -17,7 +15,7 @@ the setup directory.
 WARNING: You will need some basic knowledge of Makefiles, compilation
 flags, libraries, python, environment variables, and paths in order to
 compile PyMOL.  If you don't feel comfortable with this, then try out
-the MS-Window's version, which you can download from the WEB site.
+the MS-Windows version, which you can download from the WEB site.
 
 The following instructions assume you are installing PyMOL in your
 home directory.  You can of course put it anywhere, but you will need

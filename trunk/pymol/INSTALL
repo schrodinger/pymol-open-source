@@ -1,12 +1,7 @@
 ----------------------------------------------------------------------
-PyMOL (C) 1998-2002 by Warren L. DeLano of DeLano Scientific.
-http://www.pymol.org       EMAIL: warren@delanoscientific.com
+INSTALLATION VIA COMPILATION 
 ----------------------------------------------------------------------
-INSTALLATION AND COMPILATION GUIDE
 
-NOTE: The PyMOL compilation process has changed as of October 2002,
-and has some bugs.  Please help us quash them by providing feedback.
-----------------------------------------------------------------------
 There are now approaches for building PyMOL from source:
 
    1. Using Python Distutils, so that PyMOL gets installed in the 

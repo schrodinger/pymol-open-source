@@ -1,6 +1,7 @@
 ----------------------------------------------------------------------
-PyMOL (C) 1998-2003 by Warren L. DeLano of DeLano Scientific.
-http://www.pymol.org  EMAIL: warren@delanoscientific.com
+PyMOL is Copyright (C) 1998-2003 by Warren L. DeLano and Copyright (C)
+2003-2005 DeLano Scientific LLC, South San Francisco, CA, USA.
+http://www.pymol.org EMAIL: warren@delanoscientific.com
 ----------------------------------------------------------------------
 PyMOL is an OPEN SOURCE program distributed under the "Python" license.
 Please see the LICENSE file for additional information.
@@ -18,12 +19,22 @@ PyMOL has the following external dependencies:
 ----------------------------------------------------------------------
 The PyMOL Team:
 
-   NOTE: this list is only current as of Fall 2003.  More recent
-   contributors have not yet have been formally recognized.
+NOTE: this list has not been updated since Fall 2003.  Since then, the
+PyMOL effort has grown to such an extent that it is no longer
+practical to recognize everyone individually.  Fortunately, a public
+record of participation exists and can be appreciated on the internet,
+and especially via the PyMOL mailing list archives. Suffice it to say
+that the PyMOL user community now numbers well into the thousands and
+includes scientists, students, and educators worldwide, spread
+throughout academia and the biotechnology and pharmaceutical
+industries.  Though DeLano Scientific LLC specifically supports and
+maintains the PyMOL code base, the project can only continue to
+succeed through the sponsorship and participation of the broader
+community.  
 
    Founder and Principal Author:
 
-      Warren L. DeLano
+      Warren L. DeLano 
 
    Major Authors (5000+ lines of code):
 
