@@ -72,11 +72,6 @@ static WordKeyValue rep_names[] = {
 };
 
 
-typedef struct {
-  int selection;
-  int priority; /* must not be zero since it is also used as a boolean test for membership */
-  int next;
-} MemberType;
 
 typedef struct {
   int level;
@@ -102,11 +97,11 @@ typedef struct {
 } SelectionInfoRec;
 
 struct _CSelector {
+  MemberType *Member; /* Must be first in structure, so that we can get this w/o knowing the struct */
   SelectorWordType *Name; /* this seems rather excessive, since name len < ObjNameMax ... */
   SelectionInfoRec *Info;
   int NSelection,NActive;
   int TmpCounter;
-  MemberType *Member;
   int NMember;
   int FreeMember;
   ObjectMolecule **Obj;
@@ -3057,23 +3052,6 @@ int SelectorIsMemberSlow(PyMOLGlobals *G,int s,int sele)
   if(sele<0) return false; /* negative selections don't exist */
   if(!sele) return true; /* "all" is selection number 0, unordered */
   if(sele==1) return false; /* no atom is a member of none */
-  member=I->Member;
-  while(s) 
-    {
-      mem = member+s;
-      if(mem->selection==sele) {
-        return mem->priority;
-        break;
-      }
-      s = mem->next;
-    }
-  return false;
-}
-#else
-int _SelectorIsMemberInlinePartial(PyMOLGlobals *G,int s,int sele)
-{
-  register CSelector *I=G->Selector;
-  register MemberType *member,*mem;
   member=I->Member;
   while(s) 
     {

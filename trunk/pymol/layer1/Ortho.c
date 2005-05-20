@@ -1542,7 +1542,7 @@ void OrthoSplash(PyMOLGlobals *G)
     PRINTF " A current PyMOL Maintenance and/or Support Subscription may be required\n" ENDF(G);
     PRINTF " for legal use of this Build beyond a finite honor-system evaluation period.\n" ENDF(G);
     PRINTF " Please visit http://www.pymol.org/funding.html for more information.\n \n"ENDF(G);
-    PRINTF " This PyMOL Executable Build is derived from Open-Source PyMOL " ENDF(G);
+    PRINTF " This PyMOL Executable Build incorporates Open-Source PyMOL " ENDF(G);
     PRINTF _PyMOL_VERSION ENDF(G);
     PRINTF ".\n" ENDF(G);
   } else {
