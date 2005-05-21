@@ -56,3 +56,44 @@ PyMOL>save cmp/C0080create.1.pdb,(cpy and resi 4:6)
  Save: wrote "cmp/C0080create.1.pdb".
 PyMOL>save cmp/C0080create.2.pdb,(chk and resi 4:6)
  Save: wrote "cmp/C0080create.2.pdb".
+PyMOL>dele all
+PyMOL>load dat/ligs3d.sdf
+ ObjectMoleculeReadStr: read through molecule 1.
+ ObjectMoleculeReadStr: read through molecule 2.
+ ObjectMoleculeReadStr: read through molecule 3.
+ ObjectMoleculeReadStr: read through molecule 4.
+ ObjectMoleculeReadStr: read through molecule 5.
+ ObjectMoleculeReadStr: read through molecule 6.
+ ObjectMoleculeReadStr: read through molecule 7.
+ ObjectMoleculeReadStr: read through molecule 8.
+ ObjectMoleculeReadStr: read through molecule 9.
+ ObjectMoleculeReadStr: read through molecule 10.
+ ExecutiveLoad: "dat/ligs3d.sdf" loaded as "ligs3d", through state 10.
+PyMOL>load dat/il2.pdb
+ CmdLoad: "dat/il2.pdb" loaded as "il2".
+PyMOL>create cpy,il2
+ Selector: found 2084 atoms.
+ Executive: object "cpy" created.
+PyMOL>print cmd.count_states("il2")
+1
+PyMOL>print cmd.count_states("ligs3d")
+10
+PyMOL>print cmd.count_states("cpy")
+1
+PyMOL>create tst2,ligs3d, 5, 3
+ Selector: found 337 atoms.
+ Executive: object "tst2" created.
+PyMOL>print cmd.count_states("tst2")
+3
+PyMOL>print cmd.count_atoms("tst2 and state 1")
+0
+PyMOL>print cmd.count_atoms("tst2 and state 2")
+0
+PyMOL>print cmd.count_atoms("tst2 and state 3")
+32
+PyMOL>print cmd.count_atoms("ligs3d and state 3")
+33
+PyMOL>print cmd.count_atoms("ligs3d and state 5")
+32
+PyMOL>print cmd.count_atoms("tst2 and state 5")
+0
