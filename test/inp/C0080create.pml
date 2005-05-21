@@ -32,4 +32,23 @@ print cmd.get_names()
 save cmp/C0080create.1.pdb,(cpy and resi 4:6)
 save cmp/C0080create.2.pdb,(chk and resi 4:6)
 
+dele all
+
+load dat/ligs3d.sdf
+load dat/il2.pdb
+
+create cpy,il2
+print cmd.count_states("il2")
+print cmd.count_states("ligs3d")
+print cmd.count_states("cpy")
+
+create tst2,ligs3d, 5, 3
+
+print cmd.count_states("tst2")
+print cmd.count_atoms("tst2 and state 1")
+print cmd.count_atoms("tst2 and state 2")
+print cmd.count_atoms("tst2 and state 3")
+print cmd.count_atoms("ligs3d and state 3")
+print cmd.count_atoms("ligs3d and state 5")
+print cmd.count_atoms("tst2 and state 5")
 /print "END-LOG"

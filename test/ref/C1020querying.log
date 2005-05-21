@@ -53,7 +53,7 @@ PyMOL>distance resi 6 and name n,resi 9
 PyMOL>distance resi 7 and name ca,all,3.0,zoom=1
  Executive: object "dist03" created.
 PyMOL>print "%6.3f"%cmd.distance("resi 1 and name ca","resi 13 and name ca")
- 3.841
+ 5.762
 PyMOL>print "%6.3f"%cmd.distance("resi 1 and name ca","resi 14 and name ca")
  Distance-ERR: selection 2 contains no atoms.
 -1.000

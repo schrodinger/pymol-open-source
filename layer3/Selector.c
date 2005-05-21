@@ -5607,7 +5607,7 @@ void SelectorCreateObjectMolecule(PyMOLGlobals *G,int sele,char *name,
   int nBond=0;
   int nCSet,nAtom,ts;
   AtomInfoType *atInfo = NULL;
-  int isNew,csFlag;
+  int isNew;
   CoordSet *cs = NULL;
   CoordSet *cs1,*cs2;
   ObjectMolecule *obj;
@@ -5696,7 +5696,16 @@ void SelectorCreateObjectMolecule(PyMOLGlobals *G,int sele,char *name,
   
   if(!isNew) { /* recreate selection table */
     SelectorUpdateTable(G); 
-    
+  }
+
+  /* get maximum state index for the selection...note that
+     we'll be creating states from 1 up to the maximum required to
+     capture atoms in the selection 
+  */
+  
+  nCSet = 0;
+
+  {
     c=0;
     for(a=cNDummyAtoms;a<I->NAtom;a++) {
       at=I->Table[a].atom;
@@ -5706,98 +5715,67 @@ void SelectorCreateObjectMolecule(PyMOLGlobals *G,int sele,char *name,
       if(SelectorIsMember(G,s,sele))
         {
           I->Table[a].index=c; /* Mark records  */
+          if(nCSet<obj->NCSet)
+            nCSet=obj->NCSet;
           c++;
         }
     }
   }
+
   if(c!=nAtom) ErrFatal(G,"SelectorCreate","inconsistent selection.");
   /* cs->IdxToAtm now has the relevant indexes for the coordinate transfer */
-  
-  /* get maximum state index */
-  nCSet = 0;
-  for(a=cNDummyModels;a<I->NModel;a++) { 
-    if(nCSet<I->Obj[a]->NCSet)
-      nCSet=I->Obj[a]->NCSet;
-  }
+
   for(d=0;d<nCSet;d++) { /* iterate through states */
     if((source<0)||(source==d)) {
-      csFlag = true;
-
-      /* any selected atoms in this state? */
-      /*
-        for(a=0;a<I->NAtom;a++)  
+      cs2 = CoordSetNew(G);
+      c = 0;
+      cs2->Coord = VLAlloc(float,3*nAtom);
+      cs2->AtmToIdx = Alloc(int,targ->NAtom+1);
+      for(a=0;a<targ->NAtom;a++) 
+        cs2->AtmToIdx[a]=-1;
+      cs2->NAtIndex = targ->NAtom;
+      cs2->IdxToAtm = Alloc(int,nAtom);
+      for(a=cNDummyAtoms;a<I->NAtom;a++)  /* any selected atoms in this state? */
         if(I->Table[a].index>=0) {
-        at=I->Table[a].atom;
-        obj=I->Obj[I->Table[a].model];
-        if(d<obj->NCSet) {
-        cs1 = obj->CSet[d];
-        if(cs1) {
-        if(obj->DiscreteFlag) {
-        if(cs1==obj->DiscreteCSet[at])
-        a1=obj->DiscreteAtmToIdx[at];
-        else
-        a1=-1;
-        } else 
-        a1 = cs1->AtmToIdx[at];
-        if(a1>=0) {
-        csFlag=true;
-        break;
-        }
-        }
-        }
-        }*/
-
-      if(csFlag) { /* copy this coordinate set */
-        cs2 = CoordSetNew(G);
-        c = 0;
-        cs2->Coord = VLAlloc(float,3*nAtom);
-        cs2->AtmToIdx = Alloc(int,targ->NAtom+1);
-        for(a=0;a<targ->NAtom;a++) 
-          cs2->AtmToIdx[a]=-1;
-        cs2->NAtIndex = targ->NAtom;
-        cs2->IdxToAtm = Alloc(int,nAtom);
-        for(a=cNDummyAtoms;a<I->NAtom;a++)  /* any selected atoms in this state? */
-          if(I->Table[a].index>=0) {
-            at=I->Table[a].atom;
-            obj=I->Obj[I->Table[a].model];
-            if(d<obj->NCSet) {
-              cs1 = obj->CSet[d];
-              if(cs1) {
-                if((!cs2->Name[0])&&(cs1->Name[0])) /* copy the molecule name (if any) */
-                  strcpy(cs2->Name,cs1->Name);
-                  
-                if(obj->DiscreteFlag) {
-                  if(cs1==obj->DiscreteCSet[at])
-                    a1=obj->DiscreteAtmToIdx[at];
-                  else
-                    a1=-1;
-                } else 
-                  a1 = cs1->AtmToIdx[at]; /* coord index in existing object */
-                if(a1>=0) {
-                  copy3f(cs1->Coord+a1*3,cs2->Coord+c*3);
-                  a2 = cs->IdxToAtm[I->Table[a].index]; /* actual merged atom index */
-                  cs2->IdxToAtm[c] = a2;
-                  cs2->AtmToIdx[a2] = c;
-                  c++;
-                }
+          at=I->Table[a].atom;
+          obj=I->Obj[I->Table[a].model];
+          if(d<obj->NCSet) {
+            cs1 = obj->CSet[d];
+            if(cs1) {
+              if((!cs2->Name[0])&&(cs1->Name[0])) /* copy the molecule name (if any) */
+                strcpy(cs2->Name,cs1->Name);
+              
+              if(obj->DiscreteFlag) {
+                if(cs1==obj->DiscreteCSet[at])
+                  a1=obj->DiscreteAtmToIdx[at];
+                else
+                  a1=-1;
+              } else 
+                a1 = cs1->AtmToIdx[at]; /* coord index in existing object */
+              if(a1>=0) {
+                copy3f(cs1->Coord+a1*3,cs2->Coord+c*3);
+                a2 = cs->IdxToAtm[I->Table[a].index]; /* actual merged atom index */
+                cs2->IdxToAtm[c] = a2;
+                cs2->AtmToIdx[a2] = c;
+                c++;
               }
             }
           }
-        cs2->IdxToAtm=Realloc(cs2->IdxToAtm,int,c);
-        VLASize(cs2->Coord,float,c*3);
-        cs2->NIndex = c;
-        if(target>=0)
-          ts = target;
-        else
-          ts = d;
-        VLACheck(targ->CSet,CoordSet*,ts);
-        if(targ->NCSet<=ts) 
-          targ->NCSet=ts+1;
-        if(targ->CSet[ts])
-          targ->CSet[ts]->fFree(targ->CSet[ts]);
-        targ->CSet[ts]=cs2;
-        cs2->Obj=targ;
-      }
+        }
+      cs2->IdxToAtm=Realloc(cs2->IdxToAtm,int,c);
+      VLASize(cs2->Coord,float,c*3);
+      cs2->NIndex = c;
+      if(target>=0)
+        ts = target;
+      else
+        ts = d;
+      VLACheck(targ->CSet,CoordSet*,ts);
+      if(targ->NCSet<=ts) 
+        targ->NCSet=ts+1;
+      if(targ->CSet[ts])
+        targ->CSet[ts]->fFree(targ->CSet[ts]);
+      targ->CSet[ts]=cs2;
+      cs2->Obj=targ;
     }
   }               
   VLAFreeP(bond); /* null-safe */
