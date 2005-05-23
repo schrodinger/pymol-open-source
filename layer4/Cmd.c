@@ -1560,15 +1560,17 @@ static PyObject *CmdPop(PyObject *self,  PyObject *args)
 
 static PyObject *CmdFlushNow(PyObject *self, 	PyObject *args)
 {
-  /* only called by the GLUT thread with unlocked API, blocked interpreter */
-  if(flush_count<8) { /* prevent super-deep recursion */
-    flush_count++;
-    PFlushFast();
-    flush_count--;
-  } else {
-    PRINTFB(TempPyMOLGlobals,FB_CCmd,FB_Warnings)
-      " Cmd: PyMOL lagging behind API requests...\n"
-      ENDFB(TempPyMOLGlobals);
+  if(TempPyMOLGlobals && TempPyMOLGlobals->Ready ) {
+    /* only called by the GLUT thread with unlocked API, blocked interpreter */
+    if(flush_count<8) { /* prevent super-deep recursion */
+      flush_count++;
+      PFlushFast();
+      flush_count--;
+    } else {
+      PRINTFB(TempPyMOLGlobals,FB_CCmd,FB_Warnings)
+        " Cmd: PyMOL lagging behind API requests...\n"
+        ENDFB(TempPyMOLGlobals);
+    }
   }
   return(APISuccess());  
 }
