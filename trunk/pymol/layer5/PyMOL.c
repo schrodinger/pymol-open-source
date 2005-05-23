@@ -63,7 +63,7 @@ Z* -------------------------------------------------------------------
 
 
 #ifndef _PYMOL_NOPY
-PyMOLGlobals *TempPyMOLGlobals;
+PyMOLGlobals *TempPyMOLGlobals = NULL;
 #endif
 
 typedef struct _CPyMOL {

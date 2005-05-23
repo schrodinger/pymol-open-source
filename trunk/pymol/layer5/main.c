@@ -64,7 +64,7 @@ void MainReshape(int width, int height);
 static void MainDrawLocked(void);
 static void MainDrag(int x,int y);
 
-static CPyMOL *PyMOLInstance; /* eliminate */
+static CPyMOL *PyMOLInstance = NULL; /* eliminate */
 
 static char **myArgv,*myArgvv[2],myArgvvv[1024];
 static int myArgc;
@@ -702,7 +702,7 @@ static void MainKey(unsigned char k, int x, int y)
   glMod = p_glutGetModifiers();
 
   PRINTFB(G,FB_Main,FB_Blather)
-    " MainKey: %d %d %d\n",k,x,y
+    " MainKey: code:%d modifiers:0x%02x x:%d y:%d\n",k,glMod,x,y
     ENDFB(G);
   if(PLockAPIAsGlut(false)) {
     
@@ -755,19 +755,23 @@ void MainReshape(int width, int height) /* called by Glut */
 {
   PyMOLGlobals *G = TempPyMOLGlobals;
 
-  if(PLockAPIAsGlut(true)) {
-    if(G->HaveGUI) {
-      glViewport(0, 0, (GLint) width, (GLint) height);
-      /* wipe the screen ASAP to prevent display of garbage... */
-      glDrawBuffer(GL_FRONT);
-      glClearColor(0.0,0.0,0.0,1.0);
-      glClear(GL_COLOR_BUFFER_BIT);
-      glDrawBuffer(GL_BACK);
-      glClearColor(0.0,0.0,0.0,1.0);
-      glClear(GL_COLOR_BUFFER_BIT);
-      PyMOL_SwapBuffers(PyMOLInstance);
+  if(G) {
+    if(PLockAPIAsGlut(true)) {
+      if(G->HaveGUI) {
+        glViewport(0, 0, (GLint) width, (GLint) height);
+        /* wipe the screen ASAP to prevent display of garbage... */
+        glDrawBuffer(GL_FRONT);
+        glClearColor(0.0,0.0,0.0,1.0);
+        glClear(GL_COLOR_BUFFER_BIT);
+        glDrawBuffer(GL_BACK);
+        glClearColor(0.0,0.0,0.0,1.0);
+        glClear(GL_COLOR_BUFFER_BIT);
+        PyMOL_SwapBuffers(PyMOLInstance);
+      }
     }
-    PyMOL_Reshape(PyMOLInstance, width, height, false);
+    
+    if(PyMOLInstance) 
+      PyMOL_Reshape(PyMOLInstance, width, height, false);
     PUnlockAPIAsGlut();
   }
 }
