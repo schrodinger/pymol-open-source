@@ -2,8 +2,6 @@
 
 print "BEGIN-LOG"
 
-# disable raising of exceptions...
-
 import pymol
 import cmd
 
