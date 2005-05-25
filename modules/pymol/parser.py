@@ -35,7 +35,8 @@ if __name__=='pymol.parser':
    from cmd import _feedback,fb_module,fb_mask
 
    QuietException = parsing.QuietException
-
+   CmdException = pymol.CmdException
+   
    pymol_names = pymol.__dict__
 
    # parsing state implemented with dictionaries to enable safe recursion
@@ -242,23 +243,23 @@ if __name__=='pymol.parser':
                                  if not secure:
                                     # spawn command
                                     if len(args[nest])==1: # default: module
-                                       parsing.run_as_module(exp_path(args[nest][0]),spawn=1)
+                                       parsing.run_file_as_module(exp_path(args[nest][0]),spawn=1)
                                     elif args[nest][1]=='main':
-                                       parsing.run_as_thread(exp_path(args[nest][0]),
+                                       parsing.spawn_file(exp_path(args[nest][0]),
                                                              __main__.__dict__,
                                                              __main__.__dict__)
                                     elif args[nest][1]=='private':
-                                       parsing.run_as_thread(exp_path(args[nest][0]),
+                                       parsing.spawn_file(exp_path(args[nest][0]),
                                                              __main__.__dict__,
                                                              {})
                                     elif args[nest][1]=='local':
-                                       parsing.run_as_thread(exp_path(args[nest][0]),
+                                       parsing.spawn_file(exp_path(args[nest][0]),
                                                              pymol_names,{})
                                     elif args[nest][1]=='global':
-                                       parsing.run_as_thread(exp_path(args[nest][0]),
+                                       parsing.spawn_file(exp_path(args[nest][0]),
                                                              pymol_names,pymol_names)
                                     elif args[nest][1]=='module':
-                                       parsing.run_as_module(exp_path(args[nest][0]),spawn=1)
+                                       parsing.run_file_as_module(exp_path(args[nest][0]),spawn=1)
                                  else:
                                     next[nest] = ()                                    
                                     print 'Error: spawn disallowed in this file.'
@@ -267,17 +268,17 @@ if __name__=='pymol.parser':
                                  if not secure:
                                     # run command
                                     if len(args[nest])==1: # default: global
-                                       execfile(exp_path(args[nest][0]),pymol_names,pymol_names)
+                                       parsing.run_file(exp_path(args[nest][0]),pymol_names,pymol_names)
                                     elif args[nest][1]=='main':
-                                       execfile(exp_path(args[nest][0]),__main__.__dict__,__main__.__dict__)
+                                       parsing.run_file(exp_path(args[nest][0]),__main__.__dict__,__main__.__dict__)
                                     elif args[nest][1]=='private':
-                                       execfile(exp_path(args[nest][0]),__main__.__dict__,{})
+                                       parsing.run_file(exp_path(args[nest][0]),__main__.__dict__,{})
                                     elif args[nest][1]=='local':
-                                       execfile(exp_path(args[nest][0]),pymol_names,{})
+                                       parsing.run_file(exp_path(args[nest][0]),pymol_names,{})
                                     elif args[nest][1]=='global':
-                                       execfile(exp_path(args[nest][0]),pymol_names,pymol_names)
+                                       parsing.run_file(exp_path(args[nest][0]),pymol_names,pymol_names)
                                     elif args[nest][1]=='module':
-                                       parsing.run_as_module(exp_path(args[nest][0]),spawn=0)
+                                       parsing.run_file_as_module(exp_path(args[nest][0]),spawn=0)
                                  else:
                                     next[nest] = ()                                    
                                     print 'Error: run disallowed in this file.'
@@ -367,14 +368,18 @@ if __name__=='pymol.parser':
                   nest=nest-1
       except QuietException:
          if cmd._feedback(fb_module.parser,fb_mask.blather):
-            print "PyMOL: Caught a quiet exception."
+            print "Parser: QuietException caught"
          p_result = 0 # notify caller that an error was encountered
+      except CmdException:
+         if cmd._feedback(fb_module.parser,fb_mask.blather):         
+            print "Parser: CmdException caught."
+         p_result = 0
       except:
          traceback.print_exc()
          if cmd._feedback(fb_module.parser,fb_mask.blather):
             print "PyMOL: Caught an unknown exception."
          p_result = 0 # notify caller that an error was encountered
-      return p_result  # 0 = QuietException, None = abort, 1 = ok
+      return p_result  # 0 = Exception, None = abort, 1 = ok
 
    # command and filename completion
 

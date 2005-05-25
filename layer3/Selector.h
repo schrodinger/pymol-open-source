@@ -67,7 +67,7 @@ DistSet *SelectorGetDihedralSet(PyMOLGlobals *G, DistSet *ds,
                                 int mode, float *angle_sum,
                                 int *angle_cnt);
 int SelectorGetSeleNCSet(PyMOLGlobals *G,int sele);
-void SelectorCreateObjectMolecule(PyMOLGlobals *G,int sele,char *name,
+int SelectorCreateObjectMolecule(PyMOLGlobals *G,int sele,char *name,
                                   int target_state,int state,int discrete,
                                   int zoom);
 int SelectorSubdivide(PyMOLGlobals *G,char *pref,int sele1,int sele2,

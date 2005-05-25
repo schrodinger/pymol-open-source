@@ -73,7 +73,7 @@ int *ExecutiveGetG3d(PyMOLGlobals *G);
 int ExecutiveOrder(PyMOLGlobals *G, char *s1, int sort, int location);
 int ExecutiveFixChemistry(PyMOLGlobals *G,char *s1,char *s2,int invalidate, int quiet);
 int ExecutiveGetAtomVertex(PyMOLGlobals *G,char *s1,int state,int index,float *v);
-void ExecutiveProcessPDBFile(PyMOLGlobals *G,CObject *origObj,char *fname, char *oname,
+int ExecutiveProcessPDBFile(PyMOLGlobals *G,CObject *origObj,char *fname, char *oname,
                              int frame, int discrete,int finish,OrthoLineType buf,
                              PDBInfoRec *pdb_info,int quiet,int is_string,int multiplex,int zoom);
 
@@ -165,13 +165,13 @@ int ExecutiveSetObjVisib(PyMOLGlobals *G,char *name,int state);
 int ExecutiveOrigin(PyMOLGlobals *G,char *name,int preserve,char *oname,float *pos,int state);
 int ExecutiveCenter(PyMOLGlobals *G,char *name,int state,int inclusive, float animate, float *pos);
 int ExecutiveWindowZoom(PyMOLGlobals *G,char *name,float buffer,
-                        int state,int inclusive,float animate);
+                        int state,int inclusive,float animate,int quiet);
 int ExecutiveGetMoment(PyMOLGlobals *G,char *name,double *mi,int state);
 
 char *ExecutiveGetChains(PyMOLGlobals *G,char *sele,int state,int *null_chain);
 
 void ExecutiveOrient(PyMOLGlobals *G,char *sele,double *mi,
-                     int state,float animate,int complete,float buffer);
+                     int state,float animate,int complete,float buffer,int quiet);
 char *ExecutiveSeleToPDBStr(PyMOLGlobals *G,char *s1,int state,int conectFlag,int mode);
 int ExecutiveStereo(PyMOLGlobals *G,int flag);
 void ExecutiveCopy(PyMOLGlobals *G,char *src,char *dst);
@@ -180,7 +180,7 @@ int ExecutiveCountStates(PyMOLGlobals *G,char *s1);
 void ExecutiveSymExp(PyMOLGlobals *G,char *name,char *obj,char *sele,float cutoff);
 int ExecutiveGetExtent(PyMOLGlobals *G,char *name,float *mn,float *mx,int transformed,int state,int weighted);
 int ExecutiveGetCameraExtent(PyMOLGlobals *G,char *name,float *mn,float *mx,int transformed,int state);
-void ExecutiveSeleToObject(PyMOLGlobals *G,char *name,char *s1,
+int ExecutiveSeleToObject(PyMOLGlobals *G,char *name,char *s1,
                            int source,int target,int discrete,int zoom);
 PyObject *ExecutiveSeleToChemPyModel(PyMOLGlobals *G,char *s1,int state);
 void ExecutiveInvalidateRep(PyMOLGlobals *G,char *name,int rep,int level);

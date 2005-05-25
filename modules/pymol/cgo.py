@@ -17,6 +17,7 @@ from chempy import cpv
 #import popen2
 import os
 from pymol import cmd
+from cmd import DEFAULT_ERROR, DEFAULT_SUCCESS, _raising
 
 POINTS             = 0.0
 LINES              = 1.0
@@ -163,12 +164,13 @@ def cyl_text(cgo,font,pos,text,radius=0.1,color=[1.0,1.0,1.0],
 
 
 def from_r3d(fname):
-   result = None
+   result = DEFAULT_ERROR
+   input = None
    if string.find(fname,':')>1:
       import urllib
       input = urllib.urlopen(fname)
-   else:
-      input = open(fname,mode)
+   elif os.path.exists(fname):
+      input = open(fname)
    if input:
       rr = RenderReader(input)
       result = rr.obj

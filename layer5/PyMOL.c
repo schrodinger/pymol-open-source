@@ -1092,7 +1092,7 @@ int PyMOL_Zoom(CPyMOL *I,char *selection, float buffer,
                int state, int complete, float animate, int quiet)
 {
   int ok = ExecutiveWindowZoom(I->G, selection, buffer, state-1, 
-                               complete, animate);
+                               complete, animate, quiet);
   return status_ok(ok);
 }
 
@@ -1104,7 +1104,7 @@ int PyMOL_Orient(CPyMOL *I,char *selection, float buffer,
   int ok=true;
   SelectorGetTmp(I->G,selection,s1);
   if(ExecutiveGetMoment(I->G,s1,m,state))
-    ExecutiveOrient(I->G,s1,m,state-1,animate,complete,buffer); /* TODO STATUS */
+    ExecutiveOrient(I->G,s1,m,state-1,animate,complete,buffer,quiet); /* TODO STATUS */
   else
     ok=false;
   SelectorFreeTmp(I->G,s1);

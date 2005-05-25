@@ -131,6 +131,12 @@ if pymol_launch != 3: # if this isn't a dry run
    # PyMOL __init__.py
 
    if __name__=='pymol':
+
+      # Python exception type for PyMOL commands
+      
+      class CmdException:
+         def __init__(self,args=None):
+            self.args = args
       
       # Create a temporary object "stored" in the PyMOL global namespace
       # for usage with evaluate based-commands such as alter

@@ -24,18 +24,23 @@ if __name__=='pymol.commanding':
 
    import cmd
    import pymol
-   from cmd import _cmd,lock,unlock,Shortcut,QuietException
-   from cmd import _feedback,fb_module,fb_mask,is_list
+   from cmd import _cmd,lock,unlock,Shortcut,QuietException, \
+        _feedback,fb_module,fb_mask,is_list, \
+        DEFAULT_ERROR, DEFAULT_SUCCESS, _raising, is_ok, is_error
 
    def resume(fname):
+      r = DEFAULT_ERROR
       if os.path.exists(fname):
          if(re.search(r"\.py$|\.PY$|\.pym$|.PYM$",fname)):
-            cmd.do("run %s"%fname)
+            r = cmd.do("run %s"%fname)
          else:
-            cmd.do("@%s"%fname)
-      cmd.do("log_open %s,a"%fname)
+            r = cmd.do("@%s"%fname)
+      if is_ok(r):
+         r = cmd.do("log_open %s,a"%fname)
+      if _raising(r): raise pymol.CmdException
+      return r
 
-   def log_open(fname='log.pml',mode='w'):
+   def log_open(fname='log.pml',mode='w'): 
       try:
          try:
             if pymol._log_file!=None:
@@ -60,6 +65,7 @@ if __name__=='pymol.commanding':
          pymol._log_file = None
          cmd.set("logging",0,quiet=1)
          traceback.print_exc()
+         raise QuietException
 
    def log(text,alt_text=None):
       if pymol._log_file!=None:
@@ -92,12 +98,13 @@ USAGE
 
    cls
    '''
-      r = None
+      r = DEFAULT_ERROR
       try:
          lock()
          r = _cmd.cls()
       finally:
-         unlock()
+         unlock(r)
+      if _raising(r): raise pymol.CmdException
       return r
 
    def splash(mode=0):
@@ -110,13 +117,13 @@ USAGE
 
    splash
       '''
-      r = None
+      r = DEFAULT_ERROR
       mode = int(mode)
       if mode == 1: # just show PNG
          png_path = os.path.expandvars("$PYMOL_PATH/data/pymol/splash.png")
          if os.path.exists(png_path):
             cmd.do("_ cmd.load_png('%s',0,quiet=1)"%png_path)
-            r = 1
+            r = DEFAULT_SUCCESS
       else:
          if cmd.get_setting_legacy("internal_feedback")>0.1:
             cmd.set("text","1",quiet=1)
@@ -125,7 +132,8 @@ USAGE
             lock()
             r = _cmd.splash()
          finally:
-            unlock()
+            unlock(r)
+      if _raising(r): raise pymol.CmdException
       return r
 
    def reinitialize():
@@ -138,13 +146,14 @@ USAGE
 
    reinitialize
       '''
+      r = DEFAULT_ERROR      
       try:
          lock()
          r = _cmd.reinitialize()
       finally:
-         unlock()
+         unlock(r)
+      if _raising(r): raise pymol.CmdException
       return r
-
 
    def sync(timeout=1.0,poll=0.05):
       '''
@@ -175,7 +184,6 @@ SEE ALSO
             if (time.time()-now)>timeout:
                break
 
-
    def do(commands,log=1,echo=1):
       # WARNING: don't call this routine if you already have the API lock
       # use cmd._do instead
@@ -194,7 +202,7 @@ USAGE (PYTHON)
    from pymol import cmd
    cmd.do("load file.pdb")
       '''
-      r = None
+      r = DEFAULT_ERROR
       log = int(log)
       if is_list(commands):
          cmmd_list = commands
@@ -209,7 +217,7 @@ USAGE (PYTHON)
                      lock()
                      r = _cmd.do(a,log,echo)
                   finally:
-                     unlock()
+                     unlock(r)
          else:
             defer = cmd.get_setting_legacy("defer_updates")
             cmd.set('defer_updates',1)
@@ -219,10 +227,10 @@ USAGE (PYTHON)
                      lock()
                      r = _cmd.do(a,log,echo)
                   finally:
-                     unlock()
+                     unlock(r)
             cmd.set('defer_updates',defer)
+      if _raising(r): raise pymol.CmdException            
       return r
-
 
    def quit():
       '''
@@ -271,9 +279,11 @@ SEE ALSO
 
    remove
       '''
+      r = DEFAULT_ERROR
       try:
          lock()   
          r = _cmd.delete(str(name))
       finally:
-         unlock()
+         unlock(r)
+      if _raising(r): raise pymol.CmdException      
       return r

@@ -24,7 +24,8 @@ if __name__=='pymol.exporting':
    import cmd
    from cmd import _cmd,lock,unlock,Shortcut,QuietException
    from chempy import io
-   from cmd import _feedback,fb_module,fb_mask
+   from cmd import _feedback,fb_module,fb_mask, \
+                DEFAULT_ERROR, DEFAULT_SUCCESS, _raising, is_ok, is_error
    import traceback
 
    def get_pdbstr(selection="all", state=0):
@@ -46,36 +47,43 @@ NOTES
    if state is zero, then current state is used.
    
    '''
-      r = None
+      r = DEFAULT_ERROR
       try:
          lock()   
          r = _cmd.get_pdb(str(selection),int(state)-1,0)
       finally:
-         unlock()
+         unlock(r)
+      if _raising(r): raise QuietException         
       return r
    
    def get_session():
       session = {}
-      r = 1
+      r = DEFAULT_SUCCESS
       for a in pymol._session_save_tasks:
          if a==None:
             try:
                lock()
                r = _cmd.get_session(session)
             finally:
-               unlock()
+               unlock(r)
             try:
                session['session'] = copy.deepcopy(pymol.session)
             except:
                traceback.print_exc()
          else:
             try:
-               r = apply(a,(session,))
+               if is_error(apply(a,(session,))):
+                  r = DEFAULT_ERROR
             except:
                traceback.print_exc()
                print "Error: An error occurred when trying to generate session."
                print "Error: The resulting session file may be incomplete."
-      return session
+      if is_ok(r):
+         return session
+      elif _raising(r):
+         raise QuietException                  
+      return r
+      
 
    def png(filename,quiet=1):
       '''
@@ -91,28 +99,32 @@ PYMOL API
 
    cmd.png( string file )
       '''
+      r = DEFAULT_ERROR
       if thread.get_ident() ==pymol.glutThread:
          r = cmd._png(str(filename),int(quiet))
       else:
          r = cmd._do("cmd._png('"+str(filename)+"')")
+      if _raising(r): raise QuietException
       return r
 
    def export_coords(obj,state): # experimental
-      r = None
+      r = DEFAULT_ERROR
       try:
          lock()   
          r = _cmd.export_coords(str(obj),int(state)-1)
       finally:
-         unlock()
+         unlock(r)
+      if _raising(r): raise QuietException
       return r
 
-   def multisave(filename,object,state=0):
-      r = 1
+   def multisave(filename,object,state=0): # experimental -- deprecated
+      r = DEFAULT_ERROR
       try:
          lock()
-         _cmd.multisave(str(filename),str(object),int(state)-1,0)
+         r = _cmd.multisave(str(filename),str(object),int(state)-1,0)
       finally:
-         unlock()
+         unlock(r)
+      if _raising(r): raise QuietException
       return r
 
    def save(filename,selection='(all)',state=0,format='',quiet=1):
@@ -148,7 +160,7 @@ SEE ALSO
       # preprocess selection
       selection = selector.process(selection)
       #   
-      r = 1
+      r = DEFAULT_ERROR
       if format=='':
          format = 'pdb'
          lc_filename=string.lower(filename)
@@ -188,7 +200,7 @@ SEE ALSO
                unlock()
                f.write(st)
                f.close()
-            r = None
+            r = DEFAULT_SUCCESS
             if not quiet:
                print " Save: wrote \""+filename+"\"."
       elif format=='pqr': # PQR (modified PDB file)
@@ -201,31 +213,36 @@ SEE ALSO
                unlock()
                f.write(st)
                f.close()
-            r = None
+            r = DEFAULT_SUCCESS
             if not quiet:
                print " Save: wrote \""+filename+"\"."
       elif format=='pkl': # python binary
          io.pkl.toFile(cmd.get_model(selection,state),filename)
+         r = DEFAULT_SUCCESS
          if not quiet:
             print " Save: wrote \""+filename+"\"."
       elif format=='pkla': # ascii override
          io.pkl.toFile(cmd.get_model(selection),filename,bin=0)
+         r = DEFAULT_SUCCESS
          if not quiet:
             print " Save: wrote \""+filename+"\"."
       elif format=='pse': # PyMOL session
          io.pkl.toFile(cmd.get_session(),filename)
+         r = DEFAULT_SUCCESS
          if not quiet:
             print " Save: wrote \""+filename+"\"."
       elif format=='mmod': # macromodel
          io.mmd.toFile(cmd.get_model(selection),filename)
+         r = DEFAULT_SUCCESS
          if not quiet:
             print " Save: wrote \""+filename+"\"."
       elif format=='mol': 
          io.mol.toFile(cmd.get_model(selection),filename)
+         r = DEFAULT_SUCCESS
          if not quiet:
             print " Save: wrote \""+filename+"\"."
       elif format=='png':
-         cmd.png(filename,quiet=quiet)
+         r = cmd.png(filename,quiet=quiet)
       elif format=='pov':
          tup = cmd.get_povray()
          f=open(filename,"w")
@@ -233,5 +250,7 @@ SEE ALSO
          f.write(tup[1])
          f.flush()
          f.close()
+         r = DEFAULT_SUCCESS
+      if _raising(r): raise QuietException
       return r
 

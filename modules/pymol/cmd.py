@@ -20,23 +20,33 @@
 
 # NEW CALL RETURN CONVENTIONS for _cmd.so C-layer
 #
-# (1) Calls into C (_cmd) should return results/status and print errors
-#     and feedback (according to mask) BUT NEVER RAISE EXCEPTIONS.
-# (2) In the absence of an expected return value, truth applies:
-#        Success is 1, true 
-#        Failure is 0, false. None, NULL
-#
-#     NOTE: if you need more informative failure, then code and
-#           document an exception to this rule for your functions!
-#
+
+# (1) Calls into C (_cmd) should return results/status and print
+#     errors and feedback (according to mask) BUT NEVER RAISE EXCEPTIONS
+#     from within the C code itself.
+
+# (2) Effective with version 0.99, standard Python return conventions
+# apply, but haven't yet been fully implemented.  In summary:
+
+#     Unless explicitly specified in the function:
+
+#     ==> Success with no information should return None
+
+#     ==> Failure should return a negative number as follows:
+#        -1 = a general, unspecified failure
+        
+#     Upon an error, exceptions will be raised by the Python wrapper
+#     layer if the "raise_exceptions" setting is on.
+
+#     ==> Boolean queries should return 1 for true/yes and 0 for false/no.
+
+#     ==> Count queries should return 0 or a positive number
+
 # (3) If _cmd produces a specific return result, be sure to include an
 #     error result as one of the possibilities outside the range of the
-#     expected return value.  For example, a negative distance or count
+#     expected return value.  For example, a negative distance
 #
-# (4) cmd.py API wrappers can then raise exceptions based on truth
-#     and should return truth for success or None for failure
-#     (if no exception was raised)
-#
+# (4) cmd.py API wrappers can then raise exceptions and return values.
 #
 # NOTE: Output tweaking via the "quiet" parameter of API functions.
 #
@@ -120,7 +130,10 @@ if __name__=='pymol.cmd':
          return eval(sanitize_alpha_list_re.sub('',st))
 
       QuietException = parsing.QuietException
-
+      
+      DEFAULT_ERROR = -1
+      DEFAULT_SUCCESS = None
+      
       #--------------------------------------------------------------------
       # shortcuts...
 
@@ -334,7 +347,7 @@ if __name__=='pymol.cmd':
          result = lock_api.acquire(blocking=0)
          return result
 
-      def unlock(): # INTERNAL
+      def unlock(result=None): # INTERNAL
          if (thread.get_ident() == pymol.glutThread):
             global reaper
             if reaper:
@@ -348,7 +361,10 @@ if __name__=='pymol.cmd':
                   pass
             lock_api.release()
    #         print "lock: released by 0x%x (glut)"%thread.get_ident()
-            _cmd.flush_now()
+            if result==None: # don't flush if we have an incipient error...
+               _cmd.flush_now()
+            elif is_ok(result):
+               _cmd.flush_now()
          else:
    #         print "lock: released by 0x%x (not glut), waiting queue"%thread.get_ident()
             lock_api.release()
@@ -741,30 +757,35 @@ DEVELOPMENT TO DO
          # WARNING: internal routine, subject to change
          # caller must already hold API lock
          # NOTE: state index assumes 1-based state
-         r = 1
+         r = DEFAULT_ERROR
          size = 0
          if ftype not in (loadable.model,loadable.brick):
             if ftype == loadable.r3d:
                import cgo
                obj = cgo.from_r3d(finfo)
-               if obj:
-                  _cmd.load_object(str(oname),obj,int(state)-1,loadable.cgo,
+               if is_ok(obj):
+                  r = _cmd.load_object(str(oname),obj,int(state)-1,loadable.cgo,
                                    int(finish),int(discrete),int(quiet),
                                    int(zoom))
                else:
-                  print " load: couldn't load raster3d file."
+                  print "Load-Error: Unable to open file '%s'."%finfo
             elif ftype == loadable.cc1: # ChemDraw 3D
                obj = io.cc1.fromFile(finfo)
                if obj:
-                  _cmd.load_object(str(oname),obj,int(state)-1,loadable.model,
+                  r = _cmd.load_object(str(oname),obj,int(state)-1,loadable.model,
                                    int(finish),int(discrete),
                                    int(quiet),int(zoom))            
             else:
                if ftype in _load2str.keys() and (string.find(finfo,":")>1):
-                  tmp_file = urllib.urlopen(finfo)
+                  try:
+                     tmp_file = urllib.urlopen(finfo)
+                  except:
+                     print "Error: unable to open URL '%s'"%finfo
+                     traceback.print_exc()
+                     return 0
                   finfo = tmp_file.read(tmp_file) # WARNING: will block and hang -- thread instead?
-                  tmp_file.close()
                   ftype = _load2str[ftype]
+                  tmp_file.close()
                r = _cmd.load(str(oname),finfo,int(state)-1,int(ftype),
                              int(finish),int(discrete),int(quiet),
                              int(multiplex),int(zoom))
@@ -785,7 +806,7 @@ DEVELOPMENT TO DO
                                        int(finish),int(discrete),
                                        int(quiet),int(zoom))
             except:
-               print 'Error: can not load file "%s"' % finfo
+               print "Load-Error: Unable to load file '%s'." % finfo
          return r
 
       # function keys and other specials
@@ -991,9 +1012,24 @@ DEVELOPMENT TO DO
          a.coord[i]=a.coord[i]+x
          return None
 
-      def _raising():
+      _intType = types.IntType
+      
+      def is_error(result): # errors are always negative numbers
+         if isinstance(result,_intType):
+            return (result<0)
+         return 0
+
+      def is_ok(result): # something other than a negative number
+         if isinstance(result,_intType):
+            return (result>=0)
+         return 1
+
+      def _raising(code=-1):
          # WARNING: internal routine, subject to change
-         return get_setting_legacy("raise_exceptions")
+         if isinstance(code, _intType):
+            if code<0:
+               return get_setting_legacy("raise_exceptions")
+         return 0
 
       #######################################################################
       # now import modules which depend on the above
@@ -1671,7 +1707,7 @@ SEE ALSO
          'redo'          : [ redo              , 0 , 0 , ''  , parsing.STRICT ],
          'reinitialize'  : [ reinitialize      , 0 , 0 , ''  , parsing.STRICT ],      
          'refresh'       : [ refresh           , 0 , 0 , ''  , parsing.STRICT ],
-         'refresh_wizard' : [ refresh_wizard   , 0 , 0 , ''  , parsing.STRICT ],
+         'refresh_wizard': [ refresh_wizard    , 0 , 0 , ''  , parsing.STRICT ],
          'remove'        : [ remove            , 0 , 0 , ''  , parsing.STRICT ],
          'remove_picked' : [ remove_picked     , 0 , 0 , ''  , parsing.STRICT ],
          'rename'        : [ rename            , 0 , 0 , ''  , parsing.STRICT ],

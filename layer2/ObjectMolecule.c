@@ -234,7 +234,7 @@ int ObjectMoleculeGetTopNeighbor(PyMOLGlobals *G,
 ObjectMolecule *ObjectMoleculeLoadTRJFile(PyMOLGlobals *G,ObjectMolecule *I,char *fname,int frame,
                                           int interval,int average,int start,
                                           int stop,int max,char *sele,int image,
-                                          float *shift)
+                                          float *shift,int quiet)
 {
   int ok=true;
   FILE *f;
@@ -613,12 +613,13 @@ ObjectMolecule *ObjectMoleculeLoadTRJFile(PyMOLGlobals *G,ObjectMolecule *I,char
   SceneCountFrames(G);
   if(zoom_flag) 
     if(SettingGet(G,cSetting_auto_zoom)) {
-      ExecutiveWindowZoom(G,I->Obj.Name,0.0,-1,0,0); /* auto zoom (all states) */
+      ExecutiveWindowZoom(G,I->Obj.Name,0.0,-1,0,0,quiet); /* auto zoom (all states) */
     }
   
   return(I);
 }
-ObjectMolecule *ObjectMoleculeLoadRSTFile(PyMOLGlobals *G,ObjectMolecule *I,char *fname,int frame)
+ObjectMolecule *ObjectMoleculeLoadRSTFile(PyMOLGlobals *G,ObjectMolecule *I,
+                                          char *fname,int frame,int quiet)
 
 {
   int ok=true;
@@ -729,7 +730,7 @@ ObjectMolecule *ObjectMoleculeLoadRSTFile(PyMOLGlobals *G,ObjectMolecule *I,char
   SceneCountFrames(G);
   if(zoom_flag) 
     if(SettingGet(G,cSetting_auto_zoom)) {
-      ExecutiveWindowZoom(G,I->Obj.Name,0.0,-1,0,0); /* auto zoom (all states) */
+      ExecutiveWindowZoom(G,I->Obj.Name,0.0,-1,0,0,quiet); /* auto zoom (all states) */
     }
   
   return(I);
@@ -6941,7 +6942,7 @@ ObjectMolecule *ObjectMoleculeLoadPDBFile(PyMOLGlobals *G,ObjectMolecule *obj,ch
   f=fopen(fname,"rb");
   if(!f) {
     PRINTFB(G,FB_ObjectMolecule,FB_Errors)
-      "ObjectMolecule-ERROR: Unable to open file '%s'\n",fname
+      "ObjectMolecule-Error: Unable to open file '%s'\n",fname
       ENDFB(G);
     ok=false;
   } else

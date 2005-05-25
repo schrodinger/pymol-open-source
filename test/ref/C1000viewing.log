@@ -384,7 +384,7 @@ PyMOL>cmd._dump_floats(cmd.get_view(0))
   1.000   0.000   0.000   0.000   0.985   0.174   0.000  -0.174   0.985
   0.000   0.000 -63.191   1.224 -10.279  20.545  49.820  76.561   0.000
 PyMOL>zoom m1,state=4
-ExecutiveWindowZoom-Error: selection doesn't specify any coordinates.
+ExecutiveWindowZoom-Warning: selection doesn't specify any coordinates.
 PyMOL>cmd._dump_floats(cmd.get_view(0))
   1.000   0.000   0.000   0.000   0.985   0.174   0.000  -0.174   0.985
   0.000   0.000 -63.191   1.224 -10.279  20.545  49.820  76.561   0.000
@@ -438,7 +438,7 @@ PyMOL>cmd._dump_ufloats(cmd.get_view(0))
   0.000   0.000  63.191   1.224  10.279  20.545  49.820  76.561   0.000
 PyMOL>zoom m1,state=-5000
 PyMOL>zoom (none),state=5
-ExecutiveWindowZoom-Error: selection doesn't specify any coordinates.
+ExecutiveWindowZoom-Warning: selection doesn't specify any coordinates.
 PyMOL>zoom (all),state=-1
 PyMOL>zoom (all),state=0
 PyMOL>cmd._dump_ufloats(cmd.get_view(0))

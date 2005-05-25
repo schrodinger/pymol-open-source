@@ -18,9 +18,11 @@ if __name__=='pymol.selecting':
 
    import cmd
 
-   from cmd import _cmd,lock,unlock,Shortcut,QuietException
-   from cmd import _feedback,fb_module,fb_mask
-
+   from cmd import _cmd,lock,unlock,Shortcut, \
+        _feedback,fb_module,fb_mask, \
+        DEFAULT_ERROR, DEFAULT_SUCCESS, _raising, is_ok, is_error
+   
+   import pymol
 
    def deselect():
       '''
@@ -36,9 +38,13 @@ PYMOL API
 
    cmd.deselect()
       '''
-      arg = cmd.get_names("selections")
+      r = DEFAULT_SUCCESS
+      arg = cmd.get_names("selections",enabled_only=1)
       for a in arg:
          cmd.disable(a)
+      if _raising(r): raise pymol.CmdException                  
+      return r
+   
 
    def select(name,selection="",show=-1,quiet=1):
       '''
@@ -65,7 +71,8 @@ EXAMPLES
 NOTES
 
    'help selections' for more information about selections.
-      '''   
+      '''
+      r = DEFAULT_ERROR
       try:
          lock()
          if selection=="":
@@ -80,28 +87,31 @@ NOTES
          #
          r = _cmd.select(str(name),str(selection),int(quiet))
          show = int(show)
-         if r and show>0:
-            _cmd.onoff(str(name),1);
+         if is_ok(r) and show>0:
+            r = _cmd.onoff(str(name),1);
          elif show == 0:
-            _cmd.onoff(str(name),0)
+            r = _cmd.onoff(str(name),0)
       finally:
-         unlock()
+         unlock(r)
+      if _raising(r): raise pymol.CmdException                  
       return r
 
+
    def pop(name,source,show=-1,quiet=1):
+      r = DEFAULT_ERROR
       try:
          lock()
          r = _cmd.pop(str(name),str(source),int(quiet))
-         if r<0:
-            raise QuietException
-         show = int(show)
-         if r and show>0:
-            _cmd.onoff(str(name),1);
-         elif show == 0:
-            _cmd.onoff(str(name),0)
+         if is_ok(r):
+            show = int(show)
+            if show>0:
+               r = _cmd.onoff(str(name),1);
+            elif show == 0:
+               r = _cmd.onoff(str(name),0)
       finally:
-         unlock()
-      return r      
+         unlock(r)
+      if _raising(r): raise pymol.CmdException                  
+      return r
 
    id_type_dict = {
       'index' : 0,
@@ -118,17 +128,19 @@ DESCRIPTION
    
       '''
       #
+      r = DEFAULT_ERROR
       id_type = id_type_dict[id_type_sc.auto_err(id_type,'identifier type')]
       try:
          lock()
          r = _cmd.select_list(str(name),str(object),list(id_list),int(quiet),int(id_type))
          show = int(show)
-         if r and show>0:
+         if is_ok(r) and show>0:
             r = _cmd.onoff(str(name),1);
          elif show == 0:
             r = _cmd.onoff(str(name),0)
       finally:
-         unlock()   
+         unlock(r)   
+      if _raising(r): raise pymol.CmdException                  
       return r
 
    def indicate(selection="(all)"):
@@ -146,6 +158,7 @@ PYMOL API
    cmd.count(string selection)
 
       '''
+      r = DEFAULT_ERROR
       # preprocess selection
       selection = selector.process(selection)
       #      
@@ -154,8 +167,10 @@ PYMOL API
          r = _cmd.select("indicate","("+str(selection)+")",1)
          cmd.enable("indicate")
       finally:
-         unlock()
+         unlock(r)
+      if _raising(r): raise pymol.CmdException                  
       return r
+
 
 
 

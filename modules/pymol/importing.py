@@ -18,9 +18,10 @@ if __name__=='pymol.importing':
    import string
    import os
    import cmd
-   from cmd import _cmd,lock,unlock,Shortcut,QuietException, \
+   from cmd import _cmd,lock,unlock,Shortcut, \
         _feedback,fb_module,fb_mask, \
         file_ext_re,safe_oname_re, \
+        DEFAULT_ERROR, DEFAULT_SUCCESS, _raising, is_ok, is_error, \
         _load, is_list, space_sc, safe_list_eval
    
    import selector
@@ -79,15 +80,14 @@ if __name__=='pymol.importing':
    loadable_sc = Shortcut(loadable.__dict__.keys()) 
 
    def set_session(session):
-      r = 1
+      r = DEFAULT_SUCCESS
       for a in pymol._session_restore_tasks:
          if a==None:
             try:
                lock()
-               r = 0
                r = _cmd.set_session(session)
             finally:
-               unlock()
+               unlock(r)
             try:
                if session.has_key('session'):
                   pymol.session = copy.deepcopy(session['session'])
@@ -96,10 +96,11 @@ if __name__=='pymol.importing':
             except:
                traceback.print_exc()
          else:
-            r = apply(a,(session,))
-         if not r: break
-      if cmd.get_movie_locked():
+            if not apply(a,(session,)): # don't stop on errors...try to complete anyway
+               r = DEFAULT_ERROR
+      if cmd.get_movie_locked()>0: # if the movie contains commands...activate security
          cmd.wizard("security")
+      if _raising(r): raise pymol.CmdException
       return r
 
    def load_object(type,object,name,state=0,finish=1,discrete=0,
@@ -121,14 +122,15 @@ PYMOL API
    discrete = treat each state as an independent, unrelated set of atoms
    quiet = suppress chatter (default is yes)
       '''
-      r = 1
+      r = DEFAULT_ERROR
       try:
          lock()   
          r = _cmd.load_object(str(name),object,int(state)-1,
                               int(type),int(finish),int(discrete),
                               int(quiet),int(zoom))
       finally:
-         unlock()
+         unlock(r)
+      if _raising(r): raise pymol.CmdException
       return r
 
    def load_brick(*arg):
@@ -168,7 +170,8 @@ EXAMPLES
    space pymol
    
    '''
-      r=None
+      r = DEFAULT_ERROR
+      
       
       tables = { 'cmyk' : "$PYMOL_PATH/data/pymol/cmyk.png",
                  'pymol' : 'pymol',
@@ -177,22 +180,24 @@ EXAMPLES
       space_auto = space_sc.interpret(space)
       if (space_auto != None) and not is_list(space_auto):
          space = space_auto
-         
+
       if space=="": 
          filename = ""
       else:         
          filename = tables.get(string.lower(space),"")
          if filename == "":
-            print "Error: unknown color space '%s'\n"%space
-            raise QuietException
-      try:
-         filename = os.path.expanduser(filename)
-         filename = os.path.expandvars(filename)
+            print "Error: unknown color space '%s'."%space
+            filename = None
+      if filename!=None:
+         try:
+            filename = os.path.expanduser(filename)
+            filename = os.path.expandvars(filename)
 
-         lock()
-         r = _cmd.load_color_table(str(filename),int(quiet))
-      finally:
-         unlock()
+            lock()
+            r = _cmd.load_color_table(str(filename),int(quiet))
+         finally:
+            unlock(r)
+      if _raising(r): raise pymol.CmdException
       return r
 
    def load_callback(*arg):
@@ -283,7 +288,7 @@ SEE ALSO
 
    load
       '''
-      r = 1
+      r = DEFAULT_ERROR
       try:
          lock()
          type = format
@@ -314,7 +319,7 @@ SEE ALSO
             if re.search("\.trj$",filename,re.I):
                ftype = loadable.trj
             else:
-               raise QuietException
+               raise pymol.CmdException
          elif cmd.is_string(type):
             try:
                ftype = int(type)
@@ -324,7 +329,7 @@ SEE ALSO
                   ftype = getattr(loadable,type)
                else:
                   print "Error: unknown type '%s'",type
-                  raise QuietException
+                  raise pymol.CmdException
          else:
             ftype = int(type)
 
@@ -346,7 +351,8 @@ SEE ALSO
                                float(shift[0]),float(shift[1]),
                                float(shift[2]))
       finally:
-         unlock()
+         unlock(r)
+      if _raising(r): raise pymol.CmdException
       return r
 
    def _processSDF(sdf,oname,state,quiet):
@@ -405,7 +411,7 @@ SEE ALSO
 
    save
       '''
-      r = 1
+      r = DEFAULT_ERROR
       try:
          lock()
          type = format
@@ -493,7 +499,7 @@ SEE ALSO
                   ftype = getattr(loadable,type)
                else:
                   print "Error: unknown type '%s'",type
-                  raise QuietException
+                  raise pymol.CmdException
          else:
             ftype = int(type)
 
@@ -527,19 +533,20 @@ SEE ALSO
          if ftype == loadable.cex:
             ftype = -1
             if m4x!=None:
-               m4x.readcex(fname,str(oname)) # state, format, discrete?
+               r = m4x.readcex(fname,str(oname)) # state, format, discrete?
             else:
                print " Error: CEX format not currently supported"
-               raise QuietException
+               raise pymol.CmdException
 
    # special handling of pse files
 
          if ftype == loadable.pse:
             ftype = -1
-            cmd.set_session(io.pkl.fromFile(fname))
+            r = cmd.set_session(io.pkl.fromFile(fname))
+            
    # special handling for multi-model files (mol2, sdf)
 
-         if ftype in ( loadable.mol2, loadable.sdf1, loadable.sdf2):
+         if ftype in ( loadable.mol2, loadable.sdf1, loadable.sdf2 ):
             if discrete_default==1: # make such files discrete by default
                discrete = -1
 
@@ -548,18 +555,18 @@ SEE ALSO
             r = _load(oname,fname,state,ftype,finish,
                       discrete,quiet,multiplex,zoom)
       finally:
-         unlock()
+         unlock(r)
       if go_to_first_scene:
          if int(cmd.get_setting_legacy("presentation_auto_start"))!=0:
             cmd.scene("auto","start",animate=0)
+      if _raising(r): raise pymol.CmdException
       return r
 
    def load_embedded(key=None,name=None,state=0,finish=1,discrete=1,quiet=1):
-      r = 1
+      r = DEFAULT_ERROR
       list = parser.get_embedded(key)
       if list == None:
          print "Error: embedded data '%s' not found."%key
-         r = None
       else:
          if name == None:
             if key != None:
@@ -576,20 +583,21 @@ SEE ALSO
                ftype = getattr(loadable,type)
             else:
                print "Error: unknown type '%s'",type
-               raise QuietException
+               raise pymol.CmdException
          if ftype==loadable.pdb:
-            read_pdbstr(string.join(data,''),name,state,finish,discrete,quiet)
+            r = read_pdbstr(string.join(data,''),name,state,finish,discrete,quiet)
          elif ftype==loadable.mol:
-            read_molstr(string.join(data,''),name,state,finish,discrete,quiet)
+            r = read_molstr(string.join(data,''),name,state,finish,discrete,quiet)
          elif ftype==loadable.mol2:
-            read_mol2str(string.join(data,''),name,state,finish,discrete,quiet)
+            r = read_mol2str(string.join(data,''),name,state,finish,discrete,quiet)
          elif ftype==loadable.xplor:
-            read_xplorstr(string.join(data,''),name,state,finish,discrete,quiet)
+            r = read_xplorstr(string.join(data,''),name,state,finish,discrete,quiet)
          elif ftype==loadable.sdf1: # Python-based SDF reader
             sdf = SDF(PseudoFile(data),'pf')
-            _processSDF(sdf,name,state,quiet)
+            r = _processSDF(sdf,name,state,quiet)
          elif ftype==loadable.sdf2: # C-based SDF reader (much faster)
-            read_sdfstr(string.join(data,''),name,state,finish,discrete,quiet)
+            r = read_sdfstr(string.join(data,''),name,state,finish,discrete,quiet)
+      if _raising(r): raise pymol.CmdException
       return r
    
    def read_sdfstr(sdfstr,name,state=0,finish=1,discrete=1,quiet=1,
@@ -616,14 +624,15 @@ NOTES
    no overlapping atoms in the file being loaded.  "discrete"
    objects save memory but can not be edited.
       '''
-      r = 1
+      r = DEFAULT_ERROR
       try:
          lock()
          r = _cmd.load(str(name),str(sdfstr),int(state)-1,
                        loadable.sdf2str,int(finish),int(discrete),
                        int(quiet),0,int(zoom))
       finally:
-         unlock()
+         unlock(r)
+      if _raising(r): raise pymol.CmdException
       return r
 
    def read_molstr(molstr,name,state=0,finish=1,discrete=1,quiet=1,
@@ -650,14 +659,15 @@ NOTES
    no overlapping atoms in the file being loaded.  "discrete"
    objects save memory but can not be edited.
       '''
-      r = 1
+      r = DEFAULT_ERROR
       try:
          lock()
          r = _cmd.load(str(name),str(molstr),int(state)-1,
                        loadable.molstr,int(finish),int(discrete),
                        int(quiet),0,int(zoom))
       finally:
-         unlock()
+         unlock(r)
+      if _raising(r): raise pymol.CmdException
       return r
 
    def read_mmodstr(*arg,**kw):
@@ -668,7 +678,7 @@ DESCRIPTION
    string.
 
    '''
-      r = 1
+      r = DEFAULT_ERROR
       try:
          lock()   
          ftype = loadable.mmodstr
@@ -690,7 +700,8 @@ DESCRIPTION
          else:
             print "argument error."
       finally:
-         unlock()
+         unlock(r)
+      if _raising(r): raise pymol.CmdException
       return r
 
    def read_pdbstr(pdb,name,state=0,finish=1,discrete=0,quiet=1,
@@ -719,7 +730,7 @@ NOTES
    no overlapping atoms in the PDB files being loaded.  "discrete"
    objects save memory but can not be edited.
    '''
-      r = 1
+      r = DEFAULT_ERROR
       try:
          lock()   
          ftype = loadable.pdbstr
@@ -728,7 +739,8 @@ NOTES
                        int(finish),int(discrete),int(quiet),
                        0,int(zoom))
       finally:
-         unlock()
+         unlock(r)
+      if _raising(r): raise pymol.CmdException
       return r
 
    def read_mol2str(mol2,name,state=0,finish=1,discrete=0,
@@ -757,7 +769,7 @@ NOTES
    no overlapping atoms in the MOL2 files being loaded.  "discrete"
    objects save memory but can not be edited.
    '''
-      r = 1
+      r = DEFAULT_ERROR
       try:
          lock()   
          ftype = loadable.mol2str
@@ -766,7 +778,8 @@ NOTES
                        int(finish),int(discrete),int(quiet),
                        0,int(zoom))
       finally:
-         unlock()
+         unlock(r)
+      if _raising(r): raise pymol.CmdException
       return r
 
    def read_xplorstr(xplor,name,state=0,finish=1,discrete=0,
@@ -788,7 +801,7 @@ NOTES
    "state" is a 1-based state index for the object.
 
    '''
-      r = 1
+      r = DEFAULT_ERROR
       try:
          lock()   
          ftype = loadable.xplorstr
@@ -797,7 +810,8 @@ NOTES
                        int(finish),int(discrete),int(quiet),
                        0,int(zoom))
       finally:
-         unlock()
+         unlock(r)
+      if _raising(r): raise pymol.CmdException
       return r
 
    def finish_object(name):
@@ -815,12 +829,13 @@ PYMOL API
 
    "name" should be the name of the object
       '''
-      r = 1
+      r = DEFAULT_ERROR
       try:
          lock()   
          r = _cmd.finish_object(name)
       finally:
-         unlock()
+         unlock(r)
+      if _raising(r): raise pymol.CmdException
       return r
 
 

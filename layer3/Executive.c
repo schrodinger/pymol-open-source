@@ -613,7 +613,7 @@ void ExecutiveLoadMOL2(PyMOLGlobals *G,CObject *origObj,char *fname,
     
     if(!f) {
       PRINTFB(G,FB_Executive,FB_Errors)
-        " ExecutiveLoadMOL2-ERROR: Unable to open file '%s'\n",fname
+        "ExecutiveLoadMOL2-Error: Unable to open file '%s'\n",fname
         ENDFB(G);
       ok=false;
     } else
@@ -798,9 +798,9 @@ int ExecutiveLoad(PyMOLGlobals *G,CObject *origObj,
     case cLoadTypePDBStr:
       {
 
-        ExecutiveProcessPDBFile(G,origObj,content,object_name,
-                                state,discrete,finish,buf,NULL,
-                                quiet,is_string,multiplex,zoom);
+        ok = ExecutiveProcessPDBFile(G,origObj,content,object_name,
+                                     state,discrete,finish,buf,NULL,
+                                     quiet,is_string,multiplex,zoom);
         /* missing return status */
       }
       already_handled = true;
@@ -826,13 +826,13 @@ int ExecutiveLoad(PyMOLGlobals *G,CObject *origObj,
         
         if(!f) {
           PRINTFB(G,FB_Executive,FB_Errors)
-            " ExecutiveLoadMOL2-ERROR: Unable to open file '%s'\n",content
+            "ExecutiveLoad-Error: Unable to open file '%s'.\n",content
             ENDFB(G);
           ok=false;
         } else {
           
           PRINTFB(G,FB_Executive,FB_Blather)
-            " ExecutiveLoadMOL2: Loading from %s.\n",content
+            " ExecutiveLoad: Loading from %s.\n",content
             ENDFB(G);
           
           fseek(f,0,SEEK_END);
@@ -1001,7 +1001,7 @@ CObject *ExecutiveGetExistingCompatible(PyMOLGlobals *G,char *oname,int type)
   return origObj;
 }
 
-void ExecutiveProcessPDBFile(PyMOLGlobals *G,CObject *origObj,char *fname,
+int ExecutiveProcessPDBFile(PyMOLGlobals *G,CObject *origObj,char *fname,
                              char *oname, int frame, int discrete,int finish,
                              OrthoLineType buf,PDBInfoRec *pdb_info,int quiet,
                              int is_string,int multiplex,int zoom)
@@ -1035,13 +1035,13 @@ void ExecutiveProcessPDBFile(PyMOLGlobals *G,CObject *origObj,char *fname,
     
     if(!f) {
       PRINTFB(G,FB_ObjectMolecule,FB_Errors)
-        "ObjectMolecule-ERROR: Unable to open file '%s'\n",fname
+        "ExecutiveProcessPDBFile-Error: Unable to open file '%s'.\n",fname
         ENDFB(G);
       ok=false;
     } else
       {
         PRINTFB(G,FB_ObjectMolecule,FB_Blather)
-          " ObjectMoleculeLoadPDBFile: Loading from %s.\n",fname
+          " ExecutiveProcessPDBFile: Loading from %s.\n",fname
           ENDFB(G);
         
         fseek(f,0,SEEK_END);
@@ -1369,7 +1369,8 @@ void ExecutiveProcessPDBFile(PyMOLGlobals *G,CObject *origObj,char *fname,
   if((!is_string)&&buffer) {
     mfree(buffer);
   }
-  
+ 
+  return ok;
 }
 
 
@@ -1717,7 +1718,6 @@ char *ExecutiveGetChains(PyMOLGlobals *G,char *sele,int state,int *null_chain)
         }
       }
     }
-
   } else {
     ErrMessage(G,"ExecutiveGetChains","Bad selection.");
   }
@@ -1896,7 +1896,7 @@ static int ExecutiveSetNamedEntries(PyMOLGlobals *G,PyObject *names,int version)
 
       if(PyErr_Occurred()) {
         PRINTFB(G,FB_Executive,FB_Errors)
-          "ExectiveSetNamedEntries-ERROR: after object \"%s\".\n",rec->name
+          "ExectiveSetNamedEntries-Error: after object \"%s\".\n",rec->name
           ENDFB(G);
         PyErr_Print();  
       }
@@ -3944,7 +3944,7 @@ float ExecutiveGetArea(PyMOLGlobals *G,char *s0,int sta0,int load_b)
   ObjectMolecule *obj0;
   RepDot *rep;
   CoordSet *cs;
-  float result=-1.0;
+  float result=-1.0F;
   int a,sele0;
   int known_member=-1;
   int is_member;
@@ -3957,8 +3957,12 @@ float ExecutiveGetArea(PyMOLGlobals *G,char *s0,int sta0,int load_b)
     ErrMessage(G,"Area","Invalid selection.");
   } else {
     obj0 = SelectorGetSingleObjectMolecule(G,sele0);
-    if(!(obj0))
-      ErrMessage(G,"Area","Selection must be within a single object.");
+    if(!(obj0)) {
+      if(SelectorCountAtoms(G,sele0)>0)
+        ErrMessage(G,"Area","Selection must be within a single object.");
+      else
+        result = 0.0F;
+    }
     else {
       cs = ObjectMoleculeGetCoordSet(obj0,sta0);
       if(!cs)
@@ -4902,26 +4906,30 @@ PyObject *ExecutiveSeleToChemPyModel(PyMOLGlobals *G,char *s1,int state)
 #ifdef _PYMOL_NOPY
   return NULL;
 #else
-  PyObject *result;
+  PyObject *result = NULL;
   int sele1;
   sele1=SelectorIndexByName(G,s1);
   if(state<0) state=0;
   PBlock(); /*   PBlockAndUnlockAPI();*/
-  result=SelectorGetChemPyModel(G,sele1,state);
+  if(sele1>=0) {
+    result=SelectorGetChemPyModel(G,sele1,state);
+  }
   if(PyErr_Occurred()) PyErr_Print();
   PUnblock(); /* PLockAPIAndUnblock();*/
   return(result);
 #endif
 }
 /*========================================================================*/
-void ExecutiveSeleToObject(PyMOLGlobals *G,char *name,char *s1,
+int ExecutiveSeleToObject(PyMOLGlobals *G,char *name,char *s1,
                            int source,int target,int discrete,int zoom)
 {
   int sele1;
+  int ok=false;
 
   sele1=SelectorIndexByName(G,s1);
-
-  SelectorCreateObjectMolecule(G,sele1,name,target,source,discrete,zoom);
+  if(sele1>=0)
+    ok = SelectorCreateObjectMolecule(G,sele1,name,target,source,discrete,zoom);
+  return ok;
 }
 /*========================================================================*/
 void ExecutiveCopy(PyMOLGlobals *G,char *src,char *dst)
@@ -4960,7 +4968,8 @@ void ExecutiveCopy(PyMOLGlobals *G,char *src,char *dst)
 
 /*========================================================================*/
 void ExecutiveOrient(PyMOLGlobals *G,char *sele,double *mi,
-                     int state,float animate,int complete,float buffer)
+                     int state,float animate,int complete,
+                     float buffer,int quiet)
 {
   double egval[3],egvali[3];
   double evect[3][3];
@@ -5063,7 +5072,7 @@ void ExecutiveOrient(PyMOLGlobals *G,char *sele,double *mi,
     
     /* X < Y < Z  - do nothing - that's what we want */
     
-    ExecutiveWindowZoom(G,sele,buffer,state,complete,false);
+    ExecutiveWindowZoom(G,sele,buffer,state,complete,false,quiet);
     if(animate!=0.0F)
       SceneLoadAnimation(G,animate);
     
@@ -6039,7 +6048,7 @@ int ExecutiveReset(PyMOLGlobals *G,int cmd,char *name)
   CObject *obj;
   if(!name[0]) {
     SceneResetMatrix(G);
-    ExecutiveWindowZoom(G,cKeywordAll,0.0,-1,0,0); /* reset does all states */
+    ExecutiveWindowZoom(G,cKeywordAll,0.0,-1,0,0,true); /* reset does all states */
   } else {
     obj = ExecutiveFindObjectByName(G,name);
     if(!obj)
@@ -7135,7 +7144,8 @@ static int ExecutiveGetMaxDistance(PyMOLGlobals *G,char *name,float *pos,float *
 }
 /*========================================================================*/
 int ExecutiveWindowZoom(PyMOLGlobals *G,char *name,float buffer,
-                        int state,int inclusive,float animate)
+                        int state,int inclusive,float animate,
+                        int quiet)
 {
   float center[3],radius;
   float mn[3],mx[3],df[3];
@@ -7192,8 +7202,12 @@ int ExecutiveWindowZoom(PyMOLGlobals *G,char *name,float buffer,
 
     sele0 = SelectorIndexByName(G,name);
     if(sele0>0) { /* any valid selection except "all" */
-      ErrMessage(G,"ExecutiveWindowZoom","selection doesn't specify any coordinates.");
-      ok=false;
+      /* it is no longer an error to "zoom" on an empty selection */
+      if(!quiet) {
+        PRINTFB(G,FB_Executive, FB_Warnings)
+          "ExecutiveWindowZoom-Warning: selection doesn't specify any coordinates.\n"
+          ENDFB(G);
+      }
     } else if(ExecutiveValidName(G,name)) {
       PRINTFD(G,FB_Executive)
         " ExecutiveWindowZoom-DEBUG: name valid, but no extents -- using default view\n"
@@ -7205,7 +7219,6 @@ int ExecutiveWindowZoom(PyMOLGlobals *G,char *name,float buffer,
       ok=false;
     }
   }
-
   return(ok);
 }
 /*========================================================================*/
@@ -8173,13 +8186,13 @@ void ExecutiveManageObject(PyMOLGlobals *G,CObject *obj,int zoom,int quiet)
   if(zoom) /* -1 = use setting, 0 = never, 1 = force zoom */
     if(!exists) {
       if(zoom==1) { /* force zoom */
-        ExecutiveWindowZoom(G,obj->Name,0.0,-1,0,0); /* (all states) */
+        ExecutiveWindowZoom(G,obj->Name,0.0,-1,0,0,true); /* (all states) */
       } else switch(SettingGetGlobal_i(G,cSetting_auto_zoom)) {
       case 1: /* zoom new one */
-        ExecutiveWindowZoom(G,obj->Name,0.0,-1,0,0); /* auto zoom (all states) */
+        ExecutiveWindowZoom(G,obj->Name,0.0,-1,0,0,true); /* auto zoom (all states) */
         break;
       case 2: /* zoom all */
-        ExecutiveWindowZoom(G,cKeywordAll,0.0,-1,0,0);
+        ExecutiveWindowZoom(G,cKeywordAll,0.0,-1,0,0,true);
         break;
       }
     }
@@ -8437,7 +8450,7 @@ static int ExecutiveClick(Block *block,int button,int x,int y,int mod)
                       ExecutiveSpecSetVisibility(G,rec,!I->OldVisibility,mod);
                     }
                     if(rec!=I->LastZoomed) 
-                      ExecutiveWindowZoom(G,rec->name,0.0F,-1,false,-1.0F);
+                      ExecutiveWindowZoom(G,rec->name,0.0F,-1,false,-1.0F,true);
                     I->LastZoomed=rec;
                     I->LastChanged=rec;
                   } else if(mod&cOrthoSHIFT) {
@@ -8461,7 +8474,7 @@ static int ExecutiveClick(Block *block,int button,int x,int y,int mod)
                   I->LastZoomed=NULL;
                   if(mod&cOrthoCTRL) {
                     I->ToggleMode = 5;
-                    ExecutiveWindowZoom(G,rec->name,0.0F,-1,false,-1.0F);
+                    ExecutiveWindowZoom(G,rec->name,0.0F,-1,false,-1.0F,true);
                     I->LastZoomed = rec;
                     if(mod&cOrthoSHIFT) { /* exclusive */
                       I->ToggleMode = 6;
@@ -8717,7 +8730,7 @@ static int ExecutiveDrag(Block *block,int x,int y,int mod)
                         }
                         if((mod==(cOrthoSHIFT|cOrthoCTRL))) {
                           if(rec!=I->LastZoomed) 
-                            ExecutiveWindowZoom(G,rec->name,0.0F,-1,false,-1.0F);
+                            ExecutiveWindowZoom(G,rec->name,0.0F,-1,false,-1.0F,true);
                           I->LastZoomed=rec;
                         }
                       }
@@ -8816,7 +8829,7 @@ static int ExecutiveDrag(Block *block,int x,int y,int mod)
                       if((row==I->Over)&&row) {
                         if(I->LastChanged!=rec) {
                           ExecutiveSpecSetVisibility(G,I->LastChanged,false,mod);
-                          ExecutiveWindowZoom(G,rec->name,0.0F,-1,false,-1.0F);
+                          ExecutiveWindowZoom(G,rec->name,0.0F,-1,false,-1.0F,true);
                           if(!rec->visible) 
                             ExecutiveSpecSetVisibility(G,rec,true,mod);
                           I->LastChanged = rec;
@@ -8828,7 +8841,7 @@ static int ExecutiveDrag(Block *block,int x,int y,int mod)
                       if((row==I->Over)&&row) {
                         if(rec!=I->LastZoomed) { 
                           ExecutiveSpecSetVisibility(G,I->LastZoomed,false,mod);
-                          ExecutiveWindowZoom(G,rec->name,0.0F,-1,false,-1.0F);
+                          ExecutiveWindowZoom(G,rec->name,0.0F,-1,false,-1.0F,true);
                           I->LastZoomed=rec;
                           ExecutiveSpecSetVisibility(G,rec,true,0);
                         }

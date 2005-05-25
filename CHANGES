@@ -4,6 +4,13 @@ CHANGE LOG
 
 Changes up to 0.99
 
+   beta05
+
+   * Better return conventions for the PyMOL API:  errors return negatives,
+   success returns None, and boolean queries return 0 or 1.  Exceptions
+   are raised by default on error conditions unless the 
+   raise_exceptions setting is disabled
+
    beta03
 
    * fixes to presets and polar contact finding code

@@ -156,9 +156,15 @@ class Measurement(Wizard):
 
    def do_select(self,name): # map selects into picks
       cmd.unpick()
-      cmd.edit(name + " and not " + sele_prefix + "*") # note, using new object name wildcards
-      cmd.delete(name)
-      self.do_pick(0)
+      try:
+         cmd.edit(name + " and not " + sele_prefix + "*") # note, using new object name wildcards
+         cmd.delete(name)
+         self.do_pick(0)
+      except pymol.CmdException:
+         if self.status:
+            sele_name = sele_prefix + str(self.status-1)         
+            cmd.select(indi_sele, sele_name)
+            cmd.enable(indi_sele)
 
    def do_pick(self,bondFlag):
       global meas_count

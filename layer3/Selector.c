@@ -5406,6 +5406,12 @@ PyObject *SelectorGetChemPyModel(PyMOLGlobals *G,int sele,int state)
       VLAFree(bond);
     }
   }
+  if(!ok) {
+    if(model) {
+      Py_DECREF(model);
+    }
+    model=NULL;
+  }
   return(model);
 #endif
 }
@@ -5596,12 +5602,12 @@ void SelectorUpdateCmd(PyMOLGlobals *G,int sele0,int sele1,int sta0, int sta1,
 }
 /*========================================================================*/
 
-void SelectorCreateObjectMolecule(PyMOLGlobals *G,int sele,char *name,
-                                  int target,int source,int discrete,
-                                  int zoom)
+int SelectorCreateObjectMolecule(PyMOLGlobals *G,int sele,char *name,
+                                 int target,int source,int discrete,
+                                 int zoom)
 {
   register CSelector *I=G->Selector;
-
+  int ok=true;
   int a,b,a1,a2,b1,b2,c,d,s,at;
   BondType *ii1,*bond=NULL;
   int nBond=0;
@@ -5807,6 +5813,7 @@ void SelectorCreateObjectMolecule(PyMOLGlobals *G,int sele,char *name,
     ExecutiveUpdateObjectSelection(G,(CObject*)targ);
   }
   SceneChanged(G);
+  return ok;
 }
 
 /*========================================================================*/
@@ -5947,12 +5954,16 @@ int SelectorGetTmp(PyMOLGlobals *G,char *input,char *store)
     ENDFD;
   if((input[0]=='\'')&&(input[1]=='\'')&&(!input[2])) {
     store[0]=0;
-    return count;
+    return 0; /* empty selection? or blank? */
   }
   if(input[0]=='(') {
     sprintf(name,"%s%d",cSelectorTmpPrefix,I->TmpCounter++);
 	 count = SelectorCreate(G,name,input,NULL,false,NULL);
-	 strcpy(store,name);
+    if(count>=0) {
+      strcpy(store,name);
+    } else {
+      store[0]=0;
+    }
   } else {
     if(ExecutiveValidName(G,input))
       strcpy(store,input);
@@ -5962,7 +5973,11 @@ int SelectorGetTmp(PyMOLGlobals *G,char *input,char *store)
       strcat(buffer,")");
       sprintf(name,"%s%d",cSelectorTmpPrefix,I->TmpCounter++);      
       count = SelectorCreate(G,name,buffer,NULL,false,NULL);
-      strcpy(store,name);
+      if(count>=0) {
+        strcpy(store,name);
+      } else {
+        store[0]=0;
+      }
     } else {
       store[0]=0;
     }
@@ -5975,9 +5990,10 @@ int SelectorGetTmp(PyMOLGlobals *G,char *input,char *store)
 /*========================================================================*/
 void SelectorFreeTmp(PyMOLGlobals *G,char *name)
 {
-  if(strncmp(name,cSelectorTmpPrefix,strlen(cSelectorTmpPrefix))==0) {
-    ExecutiveDelete(G,name);
-  }
+  if(name&&name[0])
+    if(strncmp(name,cSelectorTmpPrefix,strlen(cSelectorTmpPrefix))==0) {
+      ExecutiveDelete(G,name);
+    }
 }
 /*========================================================================*/
 int  SelectorEmbedSelection(PyMOLGlobals *G,int *atom, char *name, ObjectMolecule *obj,int no_dummies)
@@ -6160,7 +6176,6 @@ static int _SelectorCreate(PyMOLGlobals *G,char *sname,char *sele,ObjectMolecule
                            int quiet,Multipick *mp,CSeqRow *rowVLA,
                            int nRow,int *obj_idx,int n_idx)
 {
-  register CSelector *I=G->Selector;
   int *atom=NULL;
   OrthoLineType name;
   int ok=true;
@@ -6202,17 +6217,26 @@ static int _SelectorCreate(PyMOLGlobals *G,char *sname,char *sele,ObjectMolecule
   if(ok)	c=SelectorEmbedSelection(G,atom,name,obj,false);
   FreeP(atom);
   SelectorClean(G);
-  I->NAtom=0;
   if(!quiet) {
     if(name[0]!='_') {
-      PRINTFB(G,FB_Selector,FB_Actions)
-        " Selector: selection \"%s\" defined with %d atoms.\n",name,c
-        ENDFB(G);
-    } 
+      if(ok) {
+        PRINTFB(G,FB_Selector,FB_Actions)
+          " Selector: selection \"%s\" defined with %d atoms.\n",name,c
+          ENDFB(G);
+      }
+    }
   }
-  PRINTFD(G,FB_Selector)
-    " SelectorCreate: \"%s\" created with %d atoms.\n",name,c    
-    ENDFD;
+  if(ok) {
+    PRINTFD(G,FB_Selector)
+      " SelectorCreate: \"%s\" created with %d atoms.\n",name,c    
+      ENDFD;
+  } else {
+    PRINTFD(G,FB_Selector)
+      " SelectorCreate: \"%s\" not created due to error\n",name
+      ENDFD;
+  }
+  if(!ok)
+    c=-1;
   return(c);
 }
 int SelectorCreateEmpty(PyMOLGlobals *G,char *name)
@@ -6247,6 +6271,7 @@ void SelectorClean(PyMOLGlobals *G)
   FreeP(I->Vertex);
   FreeP(I->Flag1);
   FreeP(I->Flag2);
+  I->NAtom = 0;
 }
 /*========================================================================*/
 int *SelectorUpdateTableSingleObject(PyMOLGlobals *G,ObjectMolecule *obj,int no_dummies,int *idx,int n_idx)
@@ -8995,6 +9020,10 @@ int *SelectorEvaluate(PyMOLGlobals *G,SelectorWordType *word)
 		OrthoRestorePrompt(G);
 	 }
   FreeP(Stack);
+  if(!ok) {
+    FreeP(result);
+    result = NULL;
+  }
   return(result);
 }
 

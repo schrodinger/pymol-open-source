@@ -66,7 +66,8 @@ if __name__=='pymol.parsing':
    import sys
    import threading
    import new
-
+   import traceback
+   
    class QuietException:
       def __init__(self,args=None):
          self.args = args
@@ -400,7 +401,17 @@ if __name__=='pymol.parsing':
 
    # launching routines
 
-   def run_as_module(file,spawn=0):
+   def run_file(file,global_ns,local_ns):
+      try:
+         execfile(file,global_ns,local_ns)
+      except pymol.CmdException:
+         # so the idea here is to print the traceback here and then
+         # cascade all the way back up to the interactive level
+         # without any further output
+         traceback.print_exc()
+         raise QuietException
+   
+   def run_file_as_module(file,spawn=0):
       name = re.sub('[^A-Za-z0-9]','_',file)
       mod = new.module(name)
       mod.__file__ = file
@@ -411,11 +422,15 @@ if __name__=='pymol.parsing':
          t.setDaemon(1)
          t.start()
       else:
-         execfile(file,mod.__dict__,mod.__dict__)
+         try:
+            execfile(file,mod.__dict__,mod.__dict__)
+         except pymol.CmdException:
+            traceback.print_exc()
+            raise QuietException
          del sys.modules[name]
          del mod
 
-   def run_as_thread(args,global_ns,local_ns):
+   def spawn_file(args,global_ns,local_ns):
       t = threading.Thread(target=execfile,args=(args,global_ns,local_ns))
       t.setDaemon(1)
       t.start()
@@ -472,7 +487,8 @@ if __name__=='pymol.parsing':
          lst.append(string.strip(wd))
       return lst
 
-
+   import pymol
+   
    if __name__=='__main__':
 
    # regular expressions
@@ -660,3 +676,5 @@ if __name__=='pymol.parsing':
    #   print tv
    else:
       import cmd
+
+      

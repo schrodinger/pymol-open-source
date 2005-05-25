@@ -18,6 +18,7 @@ if __name__=='pymol.helping':
    import thread
    import cmd
 
+   from cmd import DEFAULT_ERROR, DEFAULT_SUCCESS, _raising, is_ok, is_error
    def show_help(cmmd): # INTERNAL
       print "PyMOL>help %s" % cmmd
       help(cmmd)
@@ -34,6 +35,7 @@ USAGE
 
    help command
       '''
+      r = DEFAULT_SUCCESS
       if cmd.get_setting_legacy("internal_feedback")>0.1:
          cmd.set("text","1",quiet=1)
       cmmd = cmd.help_sc.auto_err(command,'topic')   
@@ -51,7 +53,7 @@ USAGE
             print "Error: sorry no help available on that command."      
       else:
          print "Error: unrecognized command"
-
+      return r
 
    def commands():
       '''

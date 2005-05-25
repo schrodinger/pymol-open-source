@@ -21,39 +21,44 @@ if __name__=='pymol.moving':
    import pymol
 
    import cmd
-   from cmd import _cmd,lock,unlock,Shortcut,QuietException
-   from cmd import toggle_dict,toggle_sc
-
+   from cmd import _cmd,lock,unlock,Shortcut, \
+        toggle_dict,toggle_sc, \
+        DEFAULT_ERROR, DEFAULT_SUCCESS, _raising, is_ok, is_error        
 
    def accept():
       '''
       SECURITY FEATURE
       '''
+      r = DEFAULT_ERROR      
       try:
          lock()
          r = _cmd.accept()
          cmd.set_wizard()
       finally:
-         unlock()
+         unlock(r)
+      if _raising(r): raise pymol.CmdException
+      return r
 
    def decline():
       '''
       SECURITY FEATURE
       '''
+      r = DEFAULT_ERROR      
       try:
          lock()
          r = _cmd.decline()
          cmd.set_wizard()
       finally:
-         unlock()
+         unlock(r)
 
    def get_movie_playing():
-      r = 0
+      r = DEFAULT_ERROR      
       try:
          lock()
          r = _cmd.get_movie_playing()
       finally:
-         unlock()
+         unlock(r)
+      if _raising(r): raise pymol.CmdException
       return r
    
    def mdump():
@@ -74,19 +79,23 @@ SEE ALSO
 
    mplay, mset, mdo, mclear, mmatrix
       '''
+      r = DEFAULT_ERROR
       try:
          lock()   
          r = _cmd.mdump(0)
       finally:
-         unlock()
+         unlock(r)
+      if _raising(r): raise pymol.CmdException
       return r
 
    def mtoggle():
+      r = DEFAULT_ERROR      
       try:
          lock()   
          r = _cmd.mplay(-1)
       finally:
-         unlock()
+         unlock(r)
+      if _raising(r): raise pymol.CmdException
       return r
    
    def mstop():
@@ -107,11 +116,13 @@ SEE ALSO
 
    mplay, mset, mdo, mclear, mmatrix
       '''
+      r = DEFAULT_ERROR
       try:
          lock()   
          r = _cmd.mplay(0)
       finally:
-         unlock()
+         unlock(r)
+      if _raising(r): raise pymol.CmdException
       return r
 
 
@@ -125,6 +136,7 @@ SEE ALSO
    mview_action_sc = Shortcut(mview_action_dict.keys())
 
    def mview(action='store',first=0,last=0,power=1.4,bias=1.0):
+      r = DEFAULT_ERROR
       first = int(first)
       last = int(last)
       if first<0:
@@ -138,7 +150,8 @@ SEE ALSO
          lock()   
          r = _cmd.mview(int(action),int(first)-1,int(last)-1,float(power),float(bias))
       finally:
-         unlock()
+         unlock(r)
+      if _raising(r): raise pymol.CmdException
       return r
    
    def mplay():
@@ -159,19 +172,23 @@ SEE ALSO
 
    mstop, mset, mdo, mclear, mmatrix
       '''
+      r = DEFAULT_ERROR
       try:
          lock()   
          r = _cmd.mplay(1)
       finally:
-         unlock()
+         unlock(r)
+      if _raising(r): raise pymol.CmdException
       return r
 
    def mray(): # deprecated
+      r = DEFAULT_ERROR
       try:
          lock()   
          r = _cmd.mplay(2)
       finally:
-         unlock()
+         unlock(r)
+      if _raising(r): raise pymol.CmdException
       return r
 
    def mdo(frame,command):
@@ -210,11 +227,13 @@ SEE ALSO
 
    mset, mplay, mstop
       '''
+      r = DEFAULT_ERROR
       try:
          lock()   
          r = _cmd.mdo(int(frame)-1,str(command),0)
       finally:
-         unlock()
+         unlock(r)
+      if _raising(r): raise pymol.CmdException
       return r
 
    def mappend(frame,command):
@@ -235,11 +254,13 @@ SEE ALSO
 
    mset, mplay, mstop
       '''
+      r = DEFAULT_ERROR
       try:
          lock()   
          r = _cmd.mdo(int(frame)-1,str(";"+command),1)
       finally:
-         unlock()
+         unlock(r)
+      if _raising(r): raise pymol.CmdException
       return r
 
    def mpng(prefix,first=0,last=0):
@@ -268,11 +289,13 @@ PYMOL API
 
    cmd.mpng( string prefix, int first=0, int last=0 )
       '''
+      r = DEFAULT_ERROR
       if thread.get_ident() ==pymol.glutThread:
          r = cmd._mpng(prefix,int(first)-1,int(last)-1)
       else:
          r = cmd.do('cmd._mpng("'+prefix+'","'+
                      str(int(first)-1)+'","'+str(int(last)-1)+'")',0)
+      if _raising(r): raise pymol.CmdException
       return r
 
    def mclear():
@@ -289,11 +312,13 @@ PYMOL API
 
    cmd.mclear()
       '''
+      r = DEFAULT_ERROR
       try:
          lock()   
          r = _cmd.mclear()
       finally:
-         unlock()
+         unlock(r)
+      if _raising(r): raise pymol.CmdException
       return r
 
 
@@ -319,11 +344,13 @@ SEE ALSO
 
    count_states
       '''
+      r = DEFAULT_ERROR
       try:
          lock()   
          r = _cmd.frame(int(frame))
       finally:
-         unlock()
+         unlock(r)
+      if _raising(r): raise pymol.CmdException
       return r
 
    def madd(specification=""):
@@ -360,6 +387,7 @@ SEE ALSO
 
    mdo, mplay, mclear
       '''
+      r = DEFAULT_ERROR
       cur_state = cmd.get_state()-1 # use the current state 
       try:
          lock()
@@ -392,7 +420,8 @@ SEE ALSO
                last=val
          r = _cmd.mset(string.join(output," "),int(frame)-1)
       finally:
-         unlock()
+         unlock(r)
+      if _raising(r): raise pymol.CmdException
       return r
 
 
@@ -414,7 +443,7 @@ EXAMPLES
 
    mmatrix store
       '''
-      r = 1
+      r = DEFAULT_ERROR
       try:
          lock()   
          if action=="clear":
@@ -426,7 +455,8 @@ EXAMPLES
          elif action=="check":
             r = _cmd.mmatrix(3)
       finally:
-         unlock()
+         unlock(r)
+      if _raising(r): raise pymol.CmdException
       return r
 
 
@@ -448,11 +478,13 @@ SEE ALSO
 
    mset, backward, rewind
       '''
+      r = DEFAULT_ERROR
       try:
          lock()   
          r = _cmd.setframe(5,1)
       finally:
-         unlock()
+         unlock(r)
+      if _raising(r): raise pymol.CmdException
       return r
 
    def backward():
@@ -473,11 +505,13 @@ SEE ALSO
 
    mset, forward, rewind
       '''
+      r = DEFAULT_ERROR
       try:
          lock()   
          r = _cmd.setframe(5,-1)
       finally:
-         unlock()
+         unlock(r)
+      if _raising(r): raise pymol.CmdException
       return r
 
 
@@ -495,11 +529,13 @@ PYMOL API
 
    cmd.rewind()
       '''
+      r = DEFAULT_ERROR
       try:
          lock()   
          r = _cmd.setframe(4,0)
       finally:
-         unlock()
+         unlock(r)
+      if _raising(r): raise pymol.CmdException
       return r
 
    def ending():
@@ -516,11 +552,13 @@ PYMOL API
 
    cmd.ending()
       '''
+      r = DEFAULT_ERROR      
       try:
          lock()   
          r=_cmd.setframe(6,0)
       finally:
-         unlock()
+         unlock(r)
+      if _raising(r): raise pymol.CmdException
       return r
 
    def middle():
@@ -537,11 +575,13 @@ PYMOL API
 
    cmd.middle()
       '''
+      r = DEFAULT_ERROR
       try:
          lock()   
          r = _cmd.setframe(3,0)
       finally:
-         unlock()
+         unlock(r)
+      if _raising(r): raise pymol.CmdException
       return r
 
 

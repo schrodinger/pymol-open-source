@@ -13,14 +13,17 @@
 #Z* -------------------------------------------------------------------
 
 if __name__=='pymol.creating':
-   
+
+   import pymol
    import selector
    import traceback
    import operator
    import cmd
    import string
-   from cmd import _cmd,lock,unlock,Shortcut,QuietException,is_list,is_string
-   from cmd import file_ext_re, safe_list_eval, safe_alpha_list_eval
+   from cmd import _cmd,lock,unlock,Shortcut,is_list,is_string, \
+        file_ext_re, safe_list_eval, safe_alpha_list_eval, \
+        DEFAULT_ERROR, DEFAULT_SUCCESS, _raising, is_ok, is_error
+
    from chempy import fragments
 
    map_type_dict = {
@@ -55,7 +58,7 @@ if __name__=='pymol.creating':
       state = -3: all states in one map
       '''
       # preprocess selection
-      r = None
+      r = DEFAULT_ERROR
       selection = selector.process(selection)
       if box!=None: # box should be [[x1,y1,z1],[x2,y2,z2]]
          if cmd.is_string(box):
@@ -81,13 +84,16 @@ if __name__=='pymol.creating':
          r = _cmd.map_new(str(name),int(type),grid,str(selection),
                           float(buffer),box,int(state)-1,box_flag,quiet)
       finally:
-         unlock()
+         unlock(r)
+      if _raising(r): raise pymol.CmdException         
+      return r
 
    def ramp_new(name,map_name,range=[-1.0,0.0,1.0],
                 color=['red',[1.0,1.0,1.0],'blue'],
                 map_state=1,selection='',
                 beyond=2.0,within=6.0,
                 sigma=2.0,zero=1):
+      r = DEFAULT_ERROR
       safe_color = string.strip(str(color))
       if(safe_color[0:1]=="["): # looks like a list
          color = safe_alpha_list_eval(str(safe_color))
@@ -113,7 +119,9 @@ if __name__=='pymol.creating':
                            int(map_state)-1,str(selection),float(beyond),float(within),
                            float(sigma),int(zero))
       finally:
-         unlock()
+         unlock(r)
+      if _raising(r): raise pymol.CmdException         
+      return r
 
    def isomesh(name,map,level=1.0,selection='',buffer=0.0,state=1,carve=None,source_state=0):
       '''
@@ -159,7 +167,7 @@ SEE ALSO
 
    isodot, load
 '''
-
+      r = DEFAULT_ERROR
       if selection!='':
          mopt = 1 # about a selection
       else:
@@ -178,7 +186,8 @@ SEE ALSO
                           float(level),0,int(state)-1,float(carve),
                           int(source_state)-1)
       finally:
-         unlock()
+         unlock(r)
+      if _raising(r): raise pymol.CmdException         
       return r
 
    def slice_new(name,map,state=1,source_state=0):
@@ -208,12 +217,13 @@ SEE ALSO
 
    isomesh, isodot, load
 '''
-
+      r = DEFAULT_ERROR
       try:
          lock()
          r = _cmd.slice_new(str(name),str(map),int(state)-1,int(source_state)-1)
       finally:
-         unlock()
+         unlock(r)
+      if _raising(r): raise pymol.CmdException         
       return r
 
 
@@ -253,6 +263,7 @@ SEE ALSO
 
    isodot, isomesh, load
       '''
+      r = DEFAULT_ERROR
       if selection!='':
          mopt = 1 # about a selection
       else:
@@ -271,7 +282,8 @@ SEE ALSO
                              float(level),int(mode),int(state)-1,float(carve),
                              int(source_state)-1,int(side))
       finally:
-         unlock()
+         unlock(r)
+      if _raising(r): raise pymol.CmdException         
       return r
 
    def isodot(name,map,level=1.0,selection='',buffer=0.0,state=0,
@@ -301,6 +313,7 @@ SEE ALSO
 
    load, isomesh
       '''
+      r = DEFAULT_ERROR
       if selection!='':
          mopt = 1 # about a selection
       else:
@@ -319,7 +332,8 @@ SEE ALSO
                           float(level),1,int(state)-1,
                           float(carve),int(source)-1)
       finally:
-         unlock()
+         unlock(r)
+      if _raising(r): raise pymol.CmdException                  
       return r
 
    def isolevel(name,level=1.0,state=0):
@@ -333,11 +347,13 @@ USAGE
    isolevel name, level, state
 
       '''
+      r = DEFAULT_ERROR
       try:
          lock()
          r = _cmd.isolevel(str(name),float(level),int(state)-1)
       finally:
-         unlock()
+         unlock(r)
+      if _raising(r): raise pymol.CmdException                  
       return r
 
    def copy(target,source):
@@ -361,11 +377,13 @@ SEE ALSO
 
    create
       '''
+      r = DEFAULT_ERROR      
       try:
          lock()
          r = _cmd.copy(str(source),str(target))
       finally:
-         unlock()
+         unlock(r)
+      if _raising(r): raise pymol.CmdException                  
       return r
 
    def symexp(prefix,object,selection,cutoff):
@@ -389,6 +407,7 @@ SEE ALSO
 
    load
       '''
+      r = DEFAULT_ERROR
       # preprocess selection
       selection=selector.process(selection)
       #
@@ -396,7 +415,8 @@ SEE ALSO
          lock()
          r = _cmd.symexp(str(prefix),str(object),"("+str(selection)+")",float(cutoff))
       finally:
-         unlock()
+         unlock(r)
+      if _raising(r): raise pymol.CmdException                           
       return r
 
    def fragment(name,object=None,origin=1,zoom=0,quiet=1):
@@ -411,38 +431,34 @@ USAGE
    fragment name
 
    '''
-      r = 1
+      r = DEFAULT_ERROR
       try:
          save=cmd.get_setting_legacy('auto_zoom')
-         cmd.set('auto_zoom',zoom,quiet=1)
-         try:
-            if object==None:
-               object=name
-            model = fragments.get(str(name))
-            la = len(model.atom)
-            if la:
-               mean = map(lambda x,la=la:x/la,[
-                  reduce(operator.__add__,map(lambda a:a.coord[0],model.atom)),
+         if object==None:
+            object=name
+         model = fragments.get(str(name))
+         la = len(model.atom)
+         if la:
+            mean = map(lambda x,la=la:x/la,[
+               reduce(operator.__add__,map(lambda a:a.coord[0],model.atom)),
 
-                  reduce(operator.__add__,map(lambda a:a.coord[1],model.atom)),
-                  reduce(operator.__add__,map(lambda a:a.coord[2],model.atom))])
-               position = cmd.get_position()
-               for c in range(0,3):
-                  mean[c]=position[c]-mean[c]
-                  map(lambda a,x=mean[c],c=c:cmd._adjust_coord(a,c,x),model.atom)
-               mean = map(lambda x,la=la:x/la,[
-                  reduce(operator.__add__,map(lambda a:a.coord[0],model.atom)),
-                  reduce(operator.__add__,map(lambda a:a.coord[1],model.atom)),
-                  reduce(operator.__add__,map(lambda a:a.coord[2],model.atom))])
-            cmd.load_model(model,str(object),quiet=quiet)
-         finally:
-            cmd.set('auto_zoom',save,quiet=1)
+               reduce(operator.__add__,map(lambda a:a.coord[1],model.atom)),
+               reduce(operator.__add__,map(lambda a:a.coord[2],model.atom))])
+            position = cmd.get_position()
+            for c in range(0,3):
+               mean[c]=position[c]-mean[c]
+               map(lambda a,x=mean[c],c=c:cmd._adjust_coord(a,c,x),model.atom)
+            mean = map(lambda x,la=la:x/la,[
+               reduce(operator.__add__,map(lambda a:a.coord[0],model.atom)),
+               reduce(operator.__add__,map(lambda a:a.coord[1],model.atom)),
+               reduce(operator.__add__,map(lambda a:a.coord[2],model.atom))])
+         r = cmd.load_model(model,str(object),quiet=quiet,zoom=zoom)
+      except IOError:
+         print "Error: unable to load fragment '%s'." % name
       except:
          traceback.print_exc()
-         print "Error: unable to load fragment %s" % name
-         r = 0
-      if not r:
-         if cmd._raising(): raise QuietException
+         print "Error: unable to load fragment '%s'." % name         
+      if _raising(r): raise pymol.CmdException                                    
       return r
 
    def create(name,selection,source_state=0,target_state=0,discrete=0,zoom=-1):
@@ -479,6 +495,7 @@ SEE ALSO
 
    load, copy
       '''
+      r = DEFAULT_ERROR      
       # preprocess selection
       selection = selector.process(selection)
       #      
@@ -488,11 +505,12 @@ SEE ALSO
             sel_cnt = _cmd.get("sel_counter") + 1.0
             _cmd.legacy_set("sel_counter","%1.0f" % sel_cnt)
             name = "obj%02.0f" % sel_cnt
-         _cmd.create(str(name),"("+str(selection)+")",
-                     int(source_state)-1,int(target_state)-1,int(discrete),int(zoom))
+         r = _cmd.create(str(name),"("+str(selection)+")",
+                         int(source_state)-1,int(target_state)-1,int(discrete),int(zoom))
       finally:
-         unlock()
-      return None
+         unlock(r)
+      if _raising(r): raise pymol.CmdException                                    
+      return r
 
 
 
