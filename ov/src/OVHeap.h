@@ -4,8 +4,6 @@
 #include "ov_port.h"
 #include "ov_types.h"
 
-#define ov_port_size_t size_t
-
 #ifdef OVHeap_TRACKING
 
 struct _OVHeap;  typedef struct _OVHeap OVHeap;

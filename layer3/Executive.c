@@ -7202,7 +7202,7 @@ int ExecutiveWindowZoom(PyMOLGlobals *G,char *name,float buffer,
 
     sele0 = SelectorIndexByName(G,name);
     if(sele0>0) { /* any valid selection except "all" */
-      /* it is no longer an error to "zoom" on an empty selection */
+      /* no longer an error to zoom on an empty selection -- just has no effect */
       if(!quiet) {
         PRINTFB(G,FB_Executive, FB_Warnings)
           "ExecutiveWindowZoom-Warning: selection doesn't specify any coordinates.\n"
@@ -7223,7 +7223,7 @@ int ExecutiveWindowZoom(PyMOLGlobals *G,char *name,float buffer,
 }
 /*========================================================================*/
 int ExecutiveCenter(PyMOLGlobals *G,char *name,int state,
-                    int origin,float animate, float *pos)
+                    int origin,float animate, float *pos,int quiet)
 {
   float center[3];
   float mn[3],mx[3],df[3];
@@ -7265,8 +7265,12 @@ int ExecutiveCenter(PyMOLGlobals *G,char *name,int state,
   } else {
     sele0 = SelectorIndexByName(G,name);
     if(sele0>=0) { /* any valid selection except "all" */
-      ErrMessage(G,"ExecutiveCenter","selection doesn't specify any coordinates.");
-      ok=false;
+      if(!quiet) {
+      /* no longer an error to center on an empty selection -- just have no effect */
+        PRINTFB(G,FB_Executive, FB_Warnings)
+          "ExecutiveCenter-Warning: selection doesn't specify any coordinates.\n"
+          ENDFB(G);
+      }
     } else if(ExecutiveValidName(G,name)) {
       SceneSetDefaultView(G);
       SceneDirty(G);
@@ -8485,7 +8489,7 @@ static int ExecutiveClick(Block *block,int button,int x,int y,int mod)
                     }
                   } else {
                     I->ToggleMode = 4;
-                    ExecutiveCenter(G,rec->name,-1,true,-1.0F,NULL);
+                    ExecutiveCenter(G,rec->name,-1,true,-1.0F,NULL,true);
                   }
                   if(!rec->visible) {
                     ExecutiveSpecSetVisibility(G,rec,!rec->visible,mod);
@@ -8817,7 +8821,7 @@ static int ExecutiveDrag(Block *block,int x,int y,int mod)
                       if((row==I->Over)&&row) {
                         if(I->LastChanged!=rec) {
                           ExecutiveSpecSetVisibility(G,I->LastChanged,false,mod);
-                          ExecutiveCenter(G,rec->name,-1,true,-1.0F,NULL);
+                          ExecutiveCenter(G,rec->name,-1,true,-1.0F,NULL,true);
                           if(!rec->visible) 
                             ExecutiveSpecSetVisibility(G,rec,true,mod);
                           I->LastChanged = rec;

@@ -1113,7 +1113,7 @@ int PyMOL_Orient(CPyMOL *I,char *selection, float buffer,
 
 int PyMOL_Center(CPyMOL *I,char *selection, int state, int origin, float animate, int quiet)
 {
-  int ok = ExecutiveCenter(I->G,selection,state,origin,animate,NULL);
+  int ok = ExecutiveCenter(I->G,selection,state,origin,animate,NULL,quiet);
   if(ok) 
     return OVstatus_SUCCESS;
   else
