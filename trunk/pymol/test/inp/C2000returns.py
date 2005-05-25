@@ -106,6 +106,14 @@ map( x, [
 'cmd.get_chains("resi 1")',
 'cmd.get_chains("none")',
 'cmd.get_chains("invalid")',
+'cmd.zoom()',
+'cmd.zoom("pept")',
+'cmd.zoom("none")',
+'cmd.zoom("invalid")',
+'cmd.center()',
+'cmd.center("pept")',
+'cmd.center("none")',
+'cmd.center("invalid")',
 
 ])
 

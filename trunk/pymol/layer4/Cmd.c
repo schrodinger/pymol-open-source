@@ -5106,11 +5106,12 @@ static PyObject *CmdCenter(PyObject *self, PyObject *args)
   int origin;
   int ok=false;
   float animate;
+  int quiet=false; /* TODO */
   ok = PyArg_ParseTuple(args,"siif",&str1,&state,&origin,&animate);
   if (ok) {
     APIEntry();
     ok = (SelectorGetTmp(TempPyMOLGlobals,str1,s1)>=0);
-    ok = ExecutiveCenter(TempPyMOLGlobals,s1,state,origin,animate,NULL);
+    if (ok) ok = ExecutiveCenter(TempPyMOLGlobals,s1,state,origin,animate,NULL,quiet);
     SelectorFreeTmp(TempPyMOLGlobals,s1);
     APIExit();
   }
@@ -5131,8 +5132,8 @@ static PyObject *CmdZoom(PyObject *self, PyObject *args)
   if (ok) {
     APIEntry();
     ok = (SelectorGetTmp(TempPyMOLGlobals,str1,s1)>=0);
-    ok = ExecutiveWindowZoom(TempPyMOLGlobals,s1,buffer,state,
-                             inclusive,animate,quiet); 
+    if(ok) ok = ExecutiveWindowZoom(TempPyMOLGlobals,s1,buffer,state,
+                                    inclusive,animate,quiet); 
     SelectorFreeTmp(TempPyMOLGlobals,s1);
     APIExit();
   }

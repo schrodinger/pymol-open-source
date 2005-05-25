@@ -1,9 +1,5 @@
-#ifndef _H_os_port
-#define _H_os_port
-
-/* configuration */
-
-#define OVHeap_TRACKING_OFF
+#ifndef _H_ov_port
+#define _H_ov_port
 
 /* headers */
 

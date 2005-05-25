@@ -2340,7 +2340,7 @@ static int SceneClick(Block *block,int button,int x,int y,
             if(ObjectMoleculeGetAtomVertex((ObjectMolecule*)obj,
                                            SettingGetGlobal_i(G,cSetting_state)-1,
                                            I->LastPicked.index,v1)) {
-              ExecutiveCenter(G,NULL,0,true,-1,v1);
+              ExecutiveCenter(G,NULL,0,true,-1,v1,true);
             }
           }
           

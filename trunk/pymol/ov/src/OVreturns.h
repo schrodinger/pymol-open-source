@@ -22,15 +22,15 @@ typedef struct {
 #define OVstatus_INVALID_REF_CNT  -7
 
 #define return_OVstatus_NO_EFFECT { OVstatus _result = { OVstatus_FAILURE }; return _result; }
-#define return_OVstatus_YES { OVstatus _result = { OVstatus_FAILURE }; return _result; }
-#define return_OVstatus_NO  { OVstatus _result = { OVstatus_FAILURE }; return _result; }
+#define return_OVstatus_YES { OVstatus _result = { OVstatus_YES }; return _result; }
+#define return_OVstatus_NO  { OVstatus _result = { OVstatus_NO }; return _result; }
 #define return_OVstatus_SUCCESS { OVstatus _result = { OVstatus_SUCCESS  }; return _result; }
 
 #define return_OVstatus_FAILURE { OVstatus _result = { OVstatus_FAILURE }; return _result; }
 #define return_OVstatus_NULL_PTR { OVstatus _result = { OVstatus_NULL_PTR  }; return _result; }
 #define return_OVstatus_OUT_OF_MEMORY { OVstatus _result = { OVstatus_OUT_OF_MEMORY  }; return _result; }
 #define return_OVstatus_NOT_FOUND { OVstatus _result = { OVstatus_NOT_FOUND  }; return _result; }
-#define return_OVstatus_DUPLICATE { OVstatus _result = { OVstatus_NOT_FOUND  }; return _result; }
+#define return_OVstatus_DUPLICATE { OVstatus _result = { OVstatus_DUPLICATE  }; return _result; }
 #define return_OVstatus_MISMATCH { OVstatus _result = { OVstatus_MISMATCH  }; return _result; }
 #define return_OVstatus_INVALID_REF_CNT { OVstatus _result = { OVstatus_MISMATCH  }; return _result; }
 

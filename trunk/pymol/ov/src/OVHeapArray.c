@@ -66,9 +66,9 @@ void *_OVHeapArray_Alloc(OVHeap *heap,ov_port_size_t rec_size,
 {
   _OVHeapArray *vla;
   if(zero) {
-    vla = ov_array_calloc(heap,sizeof(_OVHeapArray)+rec_size,size);
+    vla = ov_array_calloc(heap,1,sizeof(_OVHeapArray)+(rec_size*size));
   } else {
-    vla = ov_array_malloc(heap,sizeof(_OVHeapArray)+rec_size*size);
+    vla = ov_array_malloc(heap,sizeof(_OVHeapArray)+(rec_size*size));
   }
   if(!vla) {
 #ifdef OVHeapArray_COMPLAIN
