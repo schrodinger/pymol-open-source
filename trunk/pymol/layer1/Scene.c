@@ -2427,38 +2427,38 @@ static int SceneClick(Block *block,int button,int x,int y,
     } else {
       switch(mode) {
       case cButModeSeleSet:
-	{
-	  OrthoLineType buf2;
-	  char name[ObjNameMax];
-	  if(ExecutiveGetActiveSeleName(G,name, false)) {
-	    SelectorCreate(G,name,"none",NULL,true,NULL);
-	    if(SettingGet(G,cSetting_logging)) {
-	      sprintf(buf2,"cmd.select('%s','none')\n",name);
-	      PLog(buf2,cPLog_no_flush);
-	    }
-	    SeqDirty(G);
-	  }
-	}
+        {
+          OrthoLineType buf2;
+          char name[ObjNameMax];
+          if(ExecutiveGetActiveSeleName(G,name, false)) {
+            SelectorCreate(G,name,"none",NULL,true,NULL);
+            if(SettingGet(G,cSetting_logging)) {
+              sprintf(buf2,"cmd.select('%s','none')\n",name);
+              PLog(buf2,cPLog_no_flush);
+            }
+            SeqDirty(G);
+          }
+        }
       case cButModeSeleToggle:
-	{
-	  OrthoLineType buf2;
-	  char name[ObjNameMax];
-	  
-	  if(ExecutiveGetActiveSeleName(G,name, false)) {
-	    ExecutiveSetObjVisib(G,name,0);
-	    if(SettingGet(G,cSetting_logging)) {
-	      sprintf(buf2,"cmd.disable('%s')\n",name);
-	      PLog(buf2,cPLog_no_flush);
-	    }
-	  }
-	}
-	break;
+        {
+          OrthoLineType buf2;
+          char name[ObjNameMax];
+          
+          if(ExecutiveGetActiveSeleName(G,name, false)) {
+            ExecutiveSetObjVisib(G,name,0);
+            if(SettingGet(G,cSetting_logging)) {
+              sprintf(buf2,"cmd.disable('%s')\n",name);
+              PLog(buf2,cPLog_no_flush);
+            }
+          }
+        }
+        break;
       }
-      PRINTFB(G,FB_Scene,FB_Warnings) 
-	" SceneClick: no atom found nearby.\n"
-	ENDFB(G);
+      PRINTFB(G,FB_Scene,FB_Blather) 
+        " SceneClick: no atom found nearby.\n"
+        ENDFB(G);
       SceneDirty(G); /* this here to prevent display weirdness after
-			an unsuccessful picking pass... not sure it helps though*/
+                        an unsuccessful picking pass... not sure it helps though*/
       OrthoRestorePrompt(G);
     }
   }

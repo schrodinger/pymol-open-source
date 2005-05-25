@@ -21,8 +21,9 @@ if __name__=='pymol.externing':
    import threading
 
    from glob import glob
-   from cmd import _cmd,lock,unlock,Shortcut,QuietException
-   from cmd import _feedback,fb_module,fb_mask
+   from cmd import _cmd,lock,unlock,Shortcut,QuietException, \
+        _feedback,fb_module,fb_mask, \
+        DEFAULT_ERROR, DEFAULT_SUCCESS, _raising, is_ok, is_error        
 
    def cd(dir):
       '''
@@ -41,7 +42,7 @@ SEE ALSO
       dir = os.path.expanduser(dir)
       dir = os.path.expandvars(dir)
       os.chdir(dir)  # raises on error
-      return 1
+      return DEFAULT_SUCCESS
 
    def pwd():
       '''
@@ -58,7 +59,7 @@ SEE ALSO
    cd, ls, system
       '''
       print os.getcwd()
-      return 1
+      return DEFAULT_SUCCESS
 
    def ls(pattern=None):
       '''
@@ -98,7 +99,7 @@ SEE ALSO
             print a
       else:
          print " ls: Nothing found.  Is that a valid path?"
-      return 1
+      return DEFAULT_SUCCESS
 
    def system(command,async=0):
       '''
@@ -127,6 +128,7 @@ SEE ALSO
 
    ls, cd, pwd
       '''
+      r = None
       if async:
          r = threading.Thread(target=_cmd.system,args=(str(command),1))
          r.start()
@@ -135,7 +137,7 @@ SEE ALSO
       return r # special meaning
 
    def paste(): # INTERNAL
-      r=1
+      r=DEFAULT_SUCCESS
       lst = []
       if hasattr(pymol,"machine_get_clipboard"):
          lst = pymol.machine_get_clipboard()
@@ -149,6 +151,7 @@ SEE ALSO
                   a=a[:-1]
             if len(a):
                new_lst.append(a)
-         _cmd.paste(new_lst)
+         r = _cmd.paste(new_lst)
+      if _raising(r): raise pymol.CmdException
       return r 
 

@@ -293,7 +293,7 @@ static void SeekerSelectionCenter(PyMOLGlobals *G,int action)
     }
     break;
   case 1: /* zoom */
-    ExecutiveWindowZoom(G,cTempCenterSele,0.0,-1,false,-1);
+    ExecutiveWindowZoom(G,cTempCenterSele,0.0,-1,false,-1,true);
     if(logging) {
       sprintf(buf2,"%scmd.zoom(\"%s\")\n",prefix,cTempCenterSele);
       PLog(buf2,cPLog_no_flush);

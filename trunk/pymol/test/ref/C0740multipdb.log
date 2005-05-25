@@ -87,4 +87,3 @@ PyMOL>print cmd.get_names()
 PyMOL>count_atoms
  count_atoms: 23 atoms
 PyMOL>reinit
- PyMOL: normal program termination.

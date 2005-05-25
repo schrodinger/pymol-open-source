@@ -55,7 +55,6 @@ PyMOL>distance resi 7 and name ca,all,3.0,zoom=1
 PyMOL>print "%6.3f"%cmd.distance("resi 1 and name ca","resi 13 and name ca")
  5.762
 PyMOL>print "%6.3f"%cmd.distance("resi 1 and name ca","resi 14 and name ca")
- Distance-ERR: selection 2 contains no atoms.
 -1.000
 PyMOL>print cmd.find_pairs("name o","name n",mode=1,cutoff=3.4)
 [(('cpy', 103), ('pept', 1)), (('pept', 103), ('pept', 1)), (('cpy', 83), ('pept', 15)), (('pept', 83), ('pept', 15)), (('cpy', 59), ('pept', 34)), (('pept', 59), ('pept', 34)), (('cpy', 47), ('pept', 56)), (('cpy', 37), ('pept', 56)), (('pept', 47), ('pept', 56)), (('pept', 37), ('pept', 56)), (('cpy', 18), ('pept', 73)), (('pept', 18), ('pept', 73)), (('cpy', 4), ('pept', 100)), (('pept', 4), ('pept', 100)), (('cpy', 103), ('cpy', 1)), (('pept', 103), ('cpy', 1)), (('cpy', 83), ('cpy', 15)), (('pept', 83), ('cpy', 15)), (('cpy', 59), ('cpy', 34)), (('pept', 59), ('cpy', 34)), (('cpy', 47), ('cpy', 56)), (('cpy', 37), ('cpy', 56)), (('pept', 47), ('cpy', 56)), (('pept', 37), ('cpy', 56)), (('cpy', 18), ('cpy', 73)), (('pept', 18), ('cpy', 73)), (('cpy', 4), ('cpy', 100)), (('pept', 4), ('cpy', 100))]

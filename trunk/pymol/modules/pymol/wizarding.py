@@ -20,11 +20,14 @@ if __name__=='pymol.wizarding':
    import string
    import cmd
    from cmd import _cmd,lock,unlock,Shortcut,QuietException,_raising, \
-        _feedback,fb_module,fb_mask
+        _feedback,fb_module,fb_mask, \
+        DEFAULT_ERROR, DEFAULT_SUCCESS, _raising, is_ok, is_error
+   
    import cPickle
    import traceback
    
    def _wizard(name,arg,kwd,replace):
+      r = DEFAULT_ERROR
       import wizard
       try:
          full_name = 'pymol.wizard.'+name
@@ -36,6 +39,7 @@ if __name__=='pymol.wizarding':
             mod_obj = sys.modules[full_name]
          if mod_obj:
             oname = string.capitalize(name)
+            r = DEFAULT_SUCCESS
             if hasattr(mod_obj,oname):
                wiz = apply(getattr(mod_obj,oname),arg,kwd)
                if wiz:
@@ -44,8 +48,9 @@ if __name__=='pymol.wizarding':
          else:
             print "Error: Sorry, couldn't import the '"+name+"' wizard."         
       except ImportError:
-         print "Error: Sorry, couldn't import the '"+name+"' wizard."
-
+         print "Error: Sorry, couldn't import the '"+name+"' wizard."         
+      return r
+   
    def wizard(name=None,*arg,**kwd):
       '''
 DESCRIPTION
@@ -66,40 +71,50 @@ EXAMPLE
 
    wizard distance  # launches the distance measurement wizard
    '''
+      r = DEFAULT_ERROR
       if name==None:
          cmd.set_wizard()
+         r = DEFAULT_SUCCESS
       else:
          name = str(name)
          if string.lower(name)=='distance': # legacy compatibility
             name = 'measurement'
-         _wizard(name,arg,kwd,0)
-
+         r = _wizard(name,arg,kwd,0)
+      if _raising(r): raise pymol.CmdException
+      return r
+      
    def replace_wizard(name=None,*arg,**kwd):
+      r = DEFAULT_ERROR
       if name==None:
          cmd.set_wizard()
+         r = DEFAULT_SUCCESS
       else:
-         _wizard(name,arg,kwd,1)
+         r = _wizard(name,arg,kwd,1)
+      if _raising(r): raise pymol.CmdException
+      return r
 
    def set_wizard(wizard=None,replace=0): # INTERNAL
-      r = None
+      r = DEFAULT_ERROR
       try:
          lock()
          r = _cmd.set_wizard(wizard,replace)
       finally:
-         unlock()
+         unlock(r)
+      if _raising(r): raise pymol.CmdException
       return r
 
    def set_wizard_stack(stack=[]): # INTERNAL
-      r = None
+      r = DEFAULT_ERROR
       try:
          lock()
          r = _cmd.set_wizard_stack(stack)
       finally:
-         unlock()
+         unlock(r)
+      if _raising(r): raise pymol.CmdException
       return r
 
    def refresh_wizard(*arg): # INTERNAL
-      r = None
+      r = DEFAULT_ERROR      
       wiz = None
       if len(arg):
          wiz=arg[0]
@@ -107,11 +122,12 @@ EXAMPLE
          lock()
          r = _cmd.refresh_wizard()
       finally:
-         unlock()
+         unlock(r)
+      if _raising(r): raise pymol.CmdException
       return r
 
    def dirty_wizard(*arg): # INTERNAL
-      r = None
+      r = DEFAULT_ERROR
       wiz = None
       if len(arg):
          wiz=arg[0]
@@ -119,25 +135,28 @@ EXAMPLE
          lock()
          r = _cmd.dirty_wizard()
       finally:
-         unlock()
+         unlock(r)
+      if _raising(r): raise pymol.CmdException
       return r
 
    def get_wizard(*arg): # INTERNAL
-      r = None
+      r = DEFAULT_ERROR
       try:
          lock()
          r = _cmd.get_wizard()
       finally:
-         unlock()
+         unlock(r)
+      if _raising(r): raise pymol.CmdException
       return r
 
    def get_wizard_stack(*arg): # INTERNAL
-      r = None
+      r = DEFAULT_ERROR
       try:
          lock()
          r = _cmd.get_wizard_stack()
       finally:
-         unlock()
+         unlock(r)
+      if _raising(r): raise pymol.CmdException
       return r
 
    def session_save_wizard(session):

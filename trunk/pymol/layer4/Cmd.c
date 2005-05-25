@@ -113,6 +113,7 @@ static void APIEntry(void) /* assumes API is locked */
 
 static void APIEnterBlocked(void) /* assumes API is locked */
 {
+
   PRINTFD(TempPyMOLGlobals,FB_API)
     " APIEnterBlocked-DEBUG: as thread 0x%x.\n",PyThread_get_thread_ident()
     ENDFD;
@@ -138,34 +139,46 @@ static void APIExit(void) /* assumes API is locked */
 
 static void APIExitBlocked(void) /* assumes API is locked */
 {
+
   P_glut_thread_keep_out--;
   PRINTFD(TempPyMOLGlobals,FB_API)
     " APIExitBlocked-DEBUG: as thread 0x%x.\n",PyThread_get_thread_ident()
     ENDFD;
 }
 
-static PyObject *APISuccess(void)
-{
-  return(Py_BuildValue("i",1));
-}
-
-static PyObject *APIFailure(void)
+static PyObject *APISuccess(void)/* success returns None */
 {
   Py_INCREF(Py_None);
   return(Py_None);
 }
 
-static PyObject *APIStatus(int status) /* status/integer return */
+static PyObject *APIFailure(void) /* returns -1: a general unspecified
+                                   * error */
 {
-  return(Py_BuildValue("i",status));
+  return(Py_BuildValue("i",-1));
 }
 
-static PyObject *APIIncRef(PyObject *result) /* automatically own Py_None */
+static PyObject *APIResultCode(int code) /* innteger result code
+                                          * (could be a value, a
+                                          * count, or a boolean) */
+{
+  return(Py_BuildValue("i",code));
+}
+
+static PyObject *APIResultOk(int ok) 
+{
+  if(ok)
+    return APISuccess();
+  else
+    return APIFailure();
+}
+
+static PyObject *APIIncRef(PyObject *result) 
 {
   Py_INCREF(result);
   return(result);
 }
-static PyObject *APIAutoNone(PyObject *result) /* automatically own Py_None */
+static PyObject *APIAutoNone(PyObject *result) /* automatically owned Py_None */
 {
   if(result==Py_None)
     Py_INCREF(result);
@@ -185,14 +198,14 @@ static PyObject *CmdFixChemistry(PyObject *self, PyObject *args)
   ok = PyArg_ParseTuple(args,"ssii",&str2,&str3,&invalidate,&quiet);
   if(ok) {
     APIEntry();
-    SelectorGetTmp(TempPyMOLGlobals,str2,s2);
-    SelectorGetTmp(TempPyMOLGlobals,str3,s3);
-    ok = ExecutiveFixChemistry(TempPyMOLGlobals,s2,s3,invalidate, quiet);
-    SelectorFreeTmp(TempPyMOLGlobals,s2);
+    ok = ((SelectorGetTmp(TempPyMOLGlobals,str2,s2)>=0) &&
+          (SelectorGetTmp(TempPyMOLGlobals,str3,s3)>=0));
+    if(ok) ok = ExecutiveFixChemistry(TempPyMOLGlobals,s2,s3,invalidate, quiet);
     SelectorFreeTmp(TempPyMOLGlobals,s3);
+    SelectorFreeTmp(TempPyMOLGlobals,s2);
     APIExit();
   }
-  return APIStatus(ok);
+  return APIResultOk(ok);
 }
 
 static PyObject *CmdGLDeleteLists(PyObject *self, PyObject *args)
@@ -207,7 +220,7 @@ static PyObject *CmdGLDeleteLists(PyObject *self, PyObject *args)
       }
     }
   }
-  return(APIStatus(1));
+  return APISuccess();
 }
 static PyObject *CmdRayAntiThread(PyObject *self, 	PyObject *args)
 {
@@ -224,7 +237,7 @@ static PyObject *CmdRayAntiThread(PyObject *self, 	PyObject *args)
     RayAntiThread(thread_info);
     PBlock();
   }
-  return(APIStatus(ok));
+  return APIResultOk(ok);
 }
 
 static PyObject *CmdRayHashThread(PyObject *self, 	PyObject *args)
@@ -242,7 +255,7 @@ static PyObject *CmdRayHashThread(PyObject *self, 	PyObject *args)
     RayHashThread(thread_info);
     PBlock();
   }
-  return(APIStatus(ok));
+  return APIResultOk(ok);
 }
 
 static PyObject *CmdRayTraceThread(PyObject *self, 	PyObject *args)
@@ -260,18 +273,18 @@ static PyObject *CmdRayTraceThread(PyObject *self, 	PyObject *args)
     RayTraceThread(thread_info);
     PBlock();
   }
-  return(APIStatus(ok));
+  return APIResultOk(ok);
 }
 
 static PyObject *CmdGetMovieLocked(PyObject *self, 	PyObject *args)
 {
-  return(APIStatus(MovieLocked(TempPyMOLGlobals)));
+  return APIResultCode(MovieLocked(TempPyMOLGlobals));
 }
 
 static PyObject *CmdFakeDrag(PyObject *self, 	PyObject *args)
 {
   PyMOL_NeedFakeDrag(TempPyMOLGlobals->PyMOL);
-  return(APIStatus(true));
+  return APISuccess();
 }
 
 static PyObject *CmdDelColorection(PyObject *dummy, PyObject *args)
@@ -285,7 +298,7 @@ static PyObject *CmdDelColorection(PyObject *dummy, PyObject *args)
     ok = SelectorColorectionFree(TempPyMOLGlobals,list,prefix);
     APIExitBlocked();
   }
-  return(APIStatus(ok));
+  return APIResultOk(ok);
 }
 
 static PyObject *CmdSetColorectionName(PyObject *dummy, PyObject *args)
@@ -299,7 +312,7 @@ static PyObject *CmdSetColorectionName(PyObject *dummy, PyObject *args)
     ok = SelectorColorectionSetName(TempPyMOLGlobals,list,prefix,new_prefix);
     APIExitBlocked();
   }
-  return(APIStatus(ok));
+  return APIResultOk(ok);
 }
 
 static PyObject *CmdSetColorection(PyObject *dummy, PyObject *args)
@@ -313,7 +326,7 @@ static PyObject *CmdSetColorection(PyObject *dummy, PyObject *args)
     ok = SelectorColorectionApply(TempPyMOLGlobals,list,prefix);
     APIExitBlocked();
   }
-  return(APIStatus(ok));
+  return APIResultOk(ok);
 }
 
 static PyObject *CmdGetColorection(PyObject *dummy, PyObject *args)
@@ -352,7 +365,7 @@ static PyObject *CmdSetVis(PyObject *dummy, PyObject *args)
     ok = ExecutiveSetVisFromPyDict(TempPyMOLGlobals,visDict);
     APIExitBlocked();
   }
-  return(APIStatus(ok));
+  return APIResultOk(ok);
 }
 
 static PyObject *CmdReinitialize(PyObject *dummy, PyObject *args)
@@ -363,7 +376,7 @@ static PyObject *CmdReinitialize(PyObject *dummy, PyObject *args)
     ok = ExecutiveReinitialize(TempPyMOLGlobals);
     APIExit();
   }
-  return(APIStatus(ok));
+  return APIResultOk(ok);
 
 }
 static PyObject *CmdSpectrum(PyObject *self, PyObject *args)
@@ -382,11 +395,13 @@ static PyObject *CmdSpectrum(PyObject *self, PyObject *args)
   if (ok) {
     APIEntry();
     if(str1[0])
-      SelectorGetTmp(TempPyMOLGlobals,str1,s1);
+      ok = (SelectorGetTmp(TempPyMOLGlobals,str1,s1)>=0);
     else
       s1[0]=0; /* no selection */
-    ok = ExecutiveSpectrum(TempPyMOLGlobals,s1,expr,min,max,start,stop,prefix,digits,byres,quiet,
-                           &min_ret,&max_ret);
+    if(ok) {
+      ok = ExecutiveSpectrum(TempPyMOLGlobals,s1,expr,min,max,start,stop,prefix,digits,byres,quiet,
+                             &min_ret,&max_ret);
+    }
     if(str1[0])
       SelectorFreeTmp(TempPyMOLGlobals,s1);
     APIExit();
@@ -405,7 +420,7 @@ static PyObject *CmdMDump(PyObject *self, PyObject *args)
     MovieDump(TempPyMOLGlobals);
     APIExit();
   }
-  return(APIStatus(ok));
+  return APIResultOk(ok);
 }
 
 static PyObject *CmdAccept(PyObject *self,PyObject *args)
@@ -419,7 +434,7 @@ static PyObject *CmdAccept(PyObject *self,PyObject *args)
       ENDFB(TempPyMOLGlobals);
     APIExit();
   }
-  return(APIStatus(ok));
+  return APIResultOk(ok);
   
 }
 
@@ -434,7 +449,7 @@ static PyObject *CmdDecline(PyObject *self,PyObject *args)
       ENDFB(TempPyMOLGlobals);
     APIExit();
   }
-  return(APIStatus(ok));
+  return APIResultOk(ok);
   
 }
 
@@ -448,13 +463,13 @@ static PyObject *CmdSetCrystal(PyObject *self,PyObject *args)
   ok = PyArg_ParseTuple(args,"sffffffs",&str1,&a,&b,&c,
                         &alpha,&beta,&gamma,&str2);
   if(ok) {
-    SelectorGetTmp(TempPyMOLGlobals,str1,s1);
     APIEntry();
-    ok = ExecutiveSetCrystal(TempPyMOLGlobals,s1,a,b,c,alpha,beta,gamma,str2);
-    APIExit();
+    ok = (SelectorGetTmp(TempPyMOLGlobals,str1,s1)>=0);
+    if(ok) ok = ExecutiveSetCrystal(TempPyMOLGlobals,s1,a,b,c,alpha,beta,gamma,str2);
     SelectorFreeTmp(TempPyMOLGlobals,s1);
+    APIExit();
   }
-  return(APIStatus(ok));
+  return APIResultOk(ok);
 }
 
 static PyObject *CmdGetCrystal(PyObject *self,PyObject *args)
@@ -468,9 +483,9 @@ static PyObject *CmdGetCrystal(PyObject *self,PyObject *args)
   int defined;
   ok = PyArg_ParseTuple(args,"s",&str1);
   if(ok) {
-    SelectorGetTmp(TempPyMOLGlobals,str1,s1);
     APIEntry();
-    ok = ExecutiveGetCrystal(TempPyMOLGlobals,s1,&a,&b,&c,&alpha,&beta,&gamma,sg,&defined);
+    ok = (SelectorGetTmp(TempPyMOLGlobals,str1,s1)>=0);
+    if(ok) ok = ExecutiveGetCrystal(TempPyMOLGlobals,s1,&a,&b,&c,&alpha,&beta,&gamma,sg,&defined);
     APIExit();
     if(ok) {
       if(defined) {
@@ -501,13 +516,13 @@ static PyObject *CmdSmooth(PyObject *self,PyObject *args)
   int int1,int2,int3,int4,int5,int6;
   ok = PyArg_ParseTuple(args,"siiiiii",&str1,&int1,&int2,&int3,&int4,&int5,&int6);
   if(ok) {
-    SelectorGetTmp(TempPyMOLGlobals,str1,s1);
     APIEntry();
-    ok = ExecutiveSmooth(TempPyMOLGlobals,s1,int1,int2,int3,int4,int5,int6);
-    APIExit();
+    ok = (SelectorGetTmp(TempPyMOLGlobals,str1,s1)>=0);
+    if(ok) ok = ExecutiveSmooth(TempPyMOLGlobals,s1,int1,int2,int3,int4,int5,int6);
     SelectorFreeTmp(TempPyMOLGlobals,s1);
+    APIExit();
   }
-  return(APIStatus(ok));
+  return APIResultOk(ok);
 }
 
 static PyObject *CmdGetSession(PyObject *self, PyObject *args)
@@ -523,7 +538,7 @@ static PyObject *CmdGetSession(PyObject *self, PyObject *args)
     PUnblock();
     APIExit();
   }
-  return(APIStatus(ok));
+  return APIResultOk(ok);
 }
 
 static PyObject *CmdSetSession(PyObject *self, PyObject *args)
@@ -539,7 +554,7 @@ static PyObject *CmdSetSession(PyObject *self, PyObject *args)
     PUnblock();
     APIExit();
   }
-  return(APIStatus(ok));
+  return APIResultOk(ok);
 }
 
 static PyObject *CmdSetName(PyObject *self, PyObject *args)
@@ -552,7 +567,7 @@ static PyObject *CmdSetName(PyObject *self, PyObject *args)
     ok = ExecutiveSetName(TempPyMOLGlobals,str1,str2);
     APIExit();
   }
-  return(APIStatus(ok));
+  return APIResultOk(ok);
 }
 
 static PyObject *CmdGetBondPrint(PyObject *self,PyObject *args)
@@ -586,19 +601,19 @@ static PyObject *CmdDebug(PyObject *self,PyObject *args)
     ok = ExecutiveDebug(TempPyMOLGlobals,str1);
     APIExit();
   }
-  return(APIStatus(ok));
+  return APIResultOk(ok);
 }
 
 static PyObject *CmdPGlutGetRedisplay(PyObject *self, PyObject *args)
 {
 #ifdef _PYMOL_PRETEND_GLUT
 #ifndef _PYMOL_NO_GLUT
-  return(APIStatus(p_glutGetRedisplay()));  
+  return(APIResultCode(p_glutGetRedisplay()));  
 #else
-  return(APIStatus(0));
+  return(APIResultCode(0));
 #endif
 #else
-  return(APIStatus(0));  
+  return(APIResultCode(0));  
 #endif
 }
 
@@ -617,7 +632,7 @@ static PyObject *CmdPGlutEvent(PyObject *self, PyObject *args)
   }
 #endif
 #endif
-  return(APIStatus(ok));
+  return APIResultOk(ok);
 }
 
 static PyObject *CmdSculptPurge(PyObject *self, PyObject *args)
@@ -628,7 +643,7 @@ static PyObject *CmdSculptPurge(PyObject *self, PyObject *args)
     SculptCachePurge(TempPyMOLGlobals);
     APIExit();
   }
-  return(APIStatus(ok));
+  return APIResultOk(ok);
 }
 
 static PyObject *CmdSculptDeactivate(PyObject *self, PyObject *args)
@@ -641,7 +656,7 @@ static PyObject *CmdSculptDeactivate(PyObject *self, PyObject *args)
     ok = ExecutiveSculptDeactivate(TempPyMOLGlobals,str1);
     APIExit();
   }
-  return(APIStatus(ok));
+  return APIResultOk(ok);
 }
 
 static PyObject *CmdSculptActivate(PyObject *self, PyObject *args)
@@ -655,7 +670,7 @@ static PyObject *CmdSculptActivate(PyObject *self, PyObject *args)
     ok = ExecutiveSculptActivate(TempPyMOLGlobals,str1,int1);
     APIExit();
   }
-  return(APIStatus(ok));
+  return APIResultOk(ok);
 }
 
 static PyObject *CmdSculptIterate(PyObject *self, PyObject *args)
@@ -691,7 +706,7 @@ static PyObject *CmdSetObjectTTT(PyObject *self, 	PyObject *args)
     ExecutiveSetObjectTTT(TempPyMOLGlobals,name,ttt,state,quiet);
     APIExit();
   }
-  return(APIStatus(ok));
+  return APIResultOk(ok);
 }
 
 static PyObject *CmdCombineObjectTTT(PyObject *self, 	PyObject *args)
@@ -713,7 +728,7 @@ static PyObject *CmdCombineObjectTTT(PyObject *self, 	PyObject *args)
       ok=false;
     }
   }
-  return(APIStatus(ok));
+  return APIResultOk(ok);
 }
 
 static PyObject *CmdGetColor(PyObject *self, PyObject *args)
@@ -808,9 +823,9 @@ static PyObject *CmdGetChains(PyObject *self, PyObject *args)
   if(ok) {
     APIEntry();
     if(str1[0]) c1 = SelectorGetTmp(TempPyMOLGlobals,str1,s1);
-    if(c1)
+    if(c1>=0)
       chain_str = ExecutiveGetChains(TempPyMOLGlobals,s1,int1,&null_chain);
-    
+    APIExit();
     if(chain_str) {
       l=strlen(chain_str);
       if(null_chain) l++; 
@@ -825,10 +840,12 @@ static PyObject *CmdGetChains(PyObject *self, PyObject *args)
     }
     FreeP(chain_str);
     if(s1[0]) SelectorFreeTmp(TempPyMOLGlobals,s1);
-    APIExit();
   }
-  return(APIAutoNone(result));
-
+  if(result) {
+    return(APIAutoNone(result));
+  } else {
+    return APIFailure();
+  }
 }
 
 static PyObject *CmdMultiSave(PyObject *self, PyObject *args)
@@ -842,7 +859,7 @@ static PyObject *CmdMultiSave(PyObject *self, PyObject *args)
     ok = ExecutiveMultiSave(TempPyMOLGlobals,name,object,state,append);
     APIExit();
   }
-  return(APIStatus(ok));
+  return APIResultOk(ok);
 }
 
 static PyObject *CmdRampMapNew(PyObject *self, 	PyObject *args)
@@ -862,12 +879,12 @@ static PyObject *CmdRampMapNew(PyObject *self, 	PyObject *args)
                         &sigma,&zero);
   if(ok) {
     APIEntry();
-    SelectorGetTmp(TempPyMOLGlobals,sele,s1);
-    ok = ExecutiveRampMapNew(TempPyMOLGlobals,name,map,range,color,map_state,s1,beyond,within,sigma,zero);
+    ok = (SelectorGetTmp(TempPyMOLGlobals,sele,s1)>=0);
+    if(ok) ok = ExecutiveRampMapNew(TempPyMOLGlobals,name,map,range,color,map_state,s1,beyond,within,sigma,zero);
     SelectorFreeTmp(TempPyMOLGlobals,s1);
     APIExit();
   }
-  return(APIStatus(ok));
+  return APIResultOk(ok);
 }
 
 static PyObject *CmdMapNew(PyObject *self, PyObject *args)
@@ -888,16 +905,17 @@ static PyObject *CmdMapNew(PyObject *self, PyObject *args)
                         &maxCorner[0],&maxCorner[1],&maxCorner[2],
                         &state,&have_corners,&quiet);
   if(ok) {
+    APIEntry();
     grid[1]=grid[0];
     grid[2]=grid[0];
-    APIEntry();
-    SelectorGetTmp(TempPyMOLGlobals,selection,s1);
-    ok = ExecutiveMapNew(TempPyMOLGlobals,name,type,grid,s1,buffer,
+    ok = (SelectorGetTmp(TempPyMOLGlobals,selection,s1)>=0);
+    if(ok) ok = ExecutiveMapNew(TempPyMOLGlobals,name,type,grid,s1,buffer,
                          minCorner,maxCorner,state,have_corners,quiet);
     SelectorFreeTmp(TempPyMOLGlobals,s1);
     APIExit();
+
   }
-  return(APIStatus(ok));
+  return APIResultOk(ok);
 }
 
 static PyObject *CmdMapSetBorder(PyObject *self, PyObject *args)
@@ -911,7 +929,7 @@ static PyObject *CmdMapSetBorder(PyObject *self, PyObject *args)
     ok = ExecutiveMapSetBorder(TempPyMOLGlobals,name,level);
     APIExit();
   }
-  return(APIStatus(ok));
+  return APIResultOk(ok);
 }
 
 static PyObject *CmdMapDouble(PyObject *self, PyObject *args)
@@ -925,7 +943,7 @@ static PyObject *CmdMapDouble(PyObject *self, PyObject *args)
     ok = ExecutiveMapDouble(TempPyMOLGlobals,name,state);
     APIExit();
   }
-  return(APIStatus(ok));
+  return APIResultOk(ok);
 }
 
 static PyObject *CmdGetRenderer(PyObject *self, PyObject *args)
@@ -946,13 +964,13 @@ static PyObject *CmdTranslateAtom(PyObject *self, PyObject *args)
   int ok = false;
   ok = PyArg_ParseTuple(args,"sfffiii",&str1,v,v+1,v+2,&state,&mode,&log);
   if(ok) {
-    SelectorGetTmp(TempPyMOLGlobals,str1,s1);
     APIEntry();
-    ok = ExecutiveTranslateAtom(TempPyMOLGlobals,s1,v,state,mode,log);
-    APIExit();
+    ok = (SelectorGetTmp(TempPyMOLGlobals,str1,s1)>=0);
+    if(ok) ok = ExecutiveTranslateAtom(TempPyMOLGlobals,s1,v,state,mode,log);
     SelectorFreeTmp(TempPyMOLGlobals,s1);
+    APIExit();
   }
-  return(APIStatus(ok));
+  return APIResultOk(ok);
 }
 
 static PyObject *CmdMatrixTransfer(PyObject *self, 	PyObject *args)
@@ -979,7 +997,7 @@ static PyObject *CmdMatrixTransfer(PyObject *self, 	PyObject *args)
                             log, quiet);
     APIExit();
   }
-  return(APIStatus(ok));  
+  return APIResultOk(ok);  
 }
 
 static PyObject *CmdResetMatrix(PyObject *self, 	PyObject *args)
@@ -1004,7 +1022,7 @@ static PyObject *CmdResetMatrix(PyObject *self, 	PyObject *args)
                          log, quiet);
     APIExit();
   }
-  return(APIStatus(ok));  
+  return APIResultOk(ok);  
 }
 
 static PyObject *CmdTransformObject(PyObject *self, PyObject *args)
@@ -1030,7 +1048,7 @@ static PyObject *CmdTransformObject(PyObject *self, PyObject *args)
       ok=false;
     }
   }
-  return(APIStatus(ok));
+  return APIResultOk(ok);
 }
 
 static PyObject *CmdTransformSelection(PyObject *self, PyObject *args)
@@ -1044,20 +1062,20 @@ static PyObject *CmdTransformSelection(PyObject *self, PyObject *args)
   int ok = false;
   ok = PyArg_ParseTuple(args,"siOii",&sele,&state,&m,&log,&homo);
   if(ok) {
+    APIEntry();
     if(PConvPyListToFloatArrayInPlace(m,ttt,16)>0) {
-      APIEntry();
-      SelectorGetTmp(TempPyMOLGlobals,sele,s1);
-      ok = ExecutiveTransformSelection(TempPyMOLGlobals,state,s1,log,ttt,homo);
+      ok = (SelectorGetTmp(TempPyMOLGlobals,sele,s1)>=0);
+      if(ok) ok = ExecutiveTransformSelection(TempPyMOLGlobals,state,s1,log,ttt,homo);
       SelectorFreeTmp(TempPyMOLGlobals,s1);
-      APIExit();
     } else {
       PRINTFB(TempPyMOLGlobals,FB_CCmd,FB_Errors)
         "CmdTransformSelection-DEBUG: bad matrix\n"
         ENDFB(TempPyMOLGlobals);
       ok=false;
     }
+    APIExit();
   }
-  return(APIStatus(ok));
+  return APIResultOk(ok);
 }
 
 static PyObject *CmdLoadColorTable(PyObject *self, PyObject *args)
@@ -1071,7 +1089,7 @@ static PyObject *CmdLoadColorTable(PyObject *self, PyObject *args)
     ok = ColorTableLoad(TempPyMOLGlobals,str1,quiet);
     APIExit();
   }
-  return(APIStatus(ok));
+  return APIResultOk(ok);
 }
 
 static PyObject *CmdLoadPNG(PyObject *self, PyObject *args)
@@ -1086,7 +1104,7 @@ static PyObject *CmdLoadPNG(PyObject *self, PyObject *args)
     ok = SceneLoadPNG(TempPyMOLGlobals,str1,movie,quiet);
     APIExit();
   }
-  return(APIStatus(ok));
+  return APIResultOk(ok);
 }
 
 static PyObject *CmdBackgroundColor(PyObject *self, PyObject *args)
@@ -1106,7 +1124,7 @@ static PyObject *CmdBackgroundColor(PyObject *self, PyObject *args)
     }
     APIExit();
   }
-  return(APIStatus(ok));
+  return APIResultOk(ok);
 }
 
 static PyObject *CmdGetPosition(PyObject *self, 	PyObject *args)
@@ -1137,8 +1155,8 @@ static PyObject *CmdGetPhiPsi(PyObject *self, 	PyObject *args)
   PyObject *key = Py_None;
   PyObject *value = Py_None;
   int *iVLA=NULL;
-  float *pVLA,*sVLA;
-  int l;
+  float *pVLA=NULL,*sVLA=NULL;
+  int l = 0;
   int *i;
   ObjectMolecule **o,**oVLA=NULL;
   int a;
@@ -1146,10 +1164,10 @@ static PyObject *CmdGetPhiPsi(PyObject *self, 	PyObject *args)
   int ok =  PyArg_ParseTuple(args,"si",&str1,&state);
   if(ok) {
     APIEntry();
-    SelectorGetTmp(TempPyMOLGlobals,str1,s1);
-    l = ExecutivePhiPsi(TempPyMOLGlobals,s1,&oVLA,&iVLA,&pVLA,&sVLA,state);
+    ok=(SelectorGetTmp(TempPyMOLGlobals,str1,s1)>=0);
+    if(ok) 
+      l = ExecutivePhiPsi(TempPyMOLGlobals,s1,&oVLA,&iVLA,&pVLA,&sVLA,state);
     SelectorFreeTmp(TempPyMOLGlobals,s1);
-    APIExit();
     if(iVLA) {
       result=PyDict_New();
       i = iVLA;
@@ -1174,6 +1192,7 @@ static PyObject *CmdGetPhiPsi(PyObject *self, 	PyObject *args)
     VLAFreeP(oVLA);
     VLAFreeP(sVLA);
     VLAFreeP(pVLA);
+    APIExit();
   }
   return(APIAutoNone(result));
 }
@@ -1196,16 +1215,20 @@ static PyObject *CmdAlign(PyObject *self, 	PyObject *args) {
       "CmdAlign-DEBUG %s %s\n",
       str2,str3
       ENDFD;
-    
     APIEntry();
-    SelectorGetTmp(TempPyMOLGlobals,str2,s2);
-    SelectorGetTmp(TempPyMOLGlobals,str3,s3);
-    result = ExecutiveAlign(TempPyMOLGlobals,s2,s3,mfile,gap,extend,max_gap,
-                            max_skip,cutoff,
-                            cycles,quiet,oname,state1,state2);
+    
+    ok = ((SelectorGetTmp(TempPyMOLGlobals,str2,s2)>=0) &&
+          (SelectorGetTmp(TempPyMOLGlobals,str3,s3)>=0));
+    if(ok) {
+      result = ExecutiveAlign(TempPyMOLGlobals,s2,s3,mfile,gap,extend,max_gap,
+                              max_skip,cutoff,
+                              cycles,quiet,oname,state1,state2);
+    } else 
+      result = -1.0F;
     SelectorFreeTmp(TempPyMOLGlobals,s2);
     SelectorFreeTmp(TempPyMOLGlobals,s3);
     APIExit();
+
   }
   return Py_BuildValue("f",result);
 }
@@ -1256,16 +1279,16 @@ static PyObject *CmdSetView(PyObject *self, 	PyObject *args)
     SceneSetView(TempPyMOLGlobals,view,quiet,animate); /* TODO STATUS */
     APIExit();
   }
-  return(APIStatus(ok));
+  return APIResultOk(ok);
 }
 static PyObject *CmdGetState(PyObject *self, 	PyObject *args)
 {
-  return(APIStatus(SceneGetState(TempPyMOLGlobals)));
+  return(APIResultCode(SceneGetState(TempPyMOLGlobals)));
 }
 
 static PyObject *CmdGetFrame(PyObject *self, 	PyObject *args)
 {
-  return(APIStatus(SceneGetFrame(TempPyMOLGlobals)+1));
+  return(APIResultCode(SceneGetFrame(TempPyMOLGlobals)+1));
 }
 
 static PyObject *CmdSetTitle(PyObject *self, PyObject *args)
@@ -1279,7 +1302,7 @@ static PyObject *CmdSetTitle(PyObject *self, PyObject *args)
     ok = ExecutiveSetTitle(TempPyMOLGlobals,str1,int1,str2);
     APIExit();
   }
-  return(APIStatus(ok));
+  return APIResultOk(ok);
 }
 
 static PyObject *CmdGetTitle(PyObject *self, PyObject *args)
@@ -1292,8 +1315,8 @@ static PyObject *CmdGetTitle(PyObject *self, PyObject *args)
   if(ok) {
     APIEntry();
     str2 = ExecutiveGetTitle(TempPyMOLGlobals,str1,int1);
-    if(str2) result = PyString_FromString(str2);
     APIExit();
+    if(str2) result = PyString_FromString(str2);
   }
   return(APIAutoNone(result));
 }
@@ -1333,7 +1356,7 @@ static PyObject *CmdImportCoords(PyObject *self, 	PyObject *args)
       ok = ExportCoordsImport(TempPyMOLGlobals,str1,int1,mmdat,0);
     APIExit();
   }
-  return(APIStatus(ok));
+  return APIResultOk(ok);
 }
 
 static PyObject *CmdGetArea(PyObject *self, 	PyObject *args)
@@ -1348,12 +1371,13 @@ static PyObject *CmdGetArea(PyObject *self, 	PyObject *args)
   if(ok) {
     APIEntry();
     if(str1[0]) c1 = SelectorGetTmp(TempPyMOLGlobals,str1,s1);
-    if(c1)
+    if(c1>=0)
       result = ExecutiveGetArea(TempPyMOLGlobals,s1,int1,int2);
     else
-      result = 0.0; /* empty selection */
+      result = -1.0F;
     if(s1[0]) SelectorFreeTmp(TempPyMOLGlobals,s1);
     APIExit();
+
   }
   return(Py_BuildValue("f",result));
 
@@ -1364,16 +1388,16 @@ static PyObject *CmdPushUndo(PyObject *self, 	PyObject *args)
   char *str0;
   int state;
   OrthoLineType s0="";
-  int ok=false;
+  int ok=true;
   ok = PyArg_ParseTuple(args,"si",&str0,&state);
   if(ok) {
     APIEntry();
-    if(str0[0]) SelectorGetTmp(TempPyMOLGlobals,str0,s0);
-    ok = ExecutiveSaveUndo(TempPyMOLGlobals,s0,state);
+    if(str0[0]) ok = (SelectorGetTmp(TempPyMOLGlobals,str0,s0)>=0);
+    if(ok) ok = ExecutiveSaveUndo(TempPyMOLGlobals,s0,state);
     if(s0[0]) SelectorFreeTmp(TempPyMOLGlobals,s0);
     APIExit();
   }
-  return(APIStatus(ok));
+  return APIResultOk(ok);
 }
 
 static PyObject *CmdGetType(PyObject *self, 	PyObject *args)
@@ -1390,7 +1414,7 @@ static PyObject *CmdGetType(PyObject *self, 	PyObject *args)
   if(ok) 
     return(Py_BuildValue("s",type));
   else
-    return(APIStatus(ok));
+    return APIResultOk(ok);
 }
 static PyObject *CmdGetNames(PyObject *self, 	PyObject *args)
 {
@@ -1419,7 +1443,7 @@ static PyObject *CmdInvert(PyObject *self, PyObject *args)
     ok = ExecutiveInvert(TempPyMOLGlobals,int1);
     APIExit();
   }
-  return(APIStatus(ok));
+  return APIResultOk(ok);
 }
 
 static PyObject *CmdTorsion(PyObject *self, PyObject *args)
@@ -1432,7 +1456,7 @@ static PyObject *CmdTorsion(PyObject *self, PyObject *args)
     ok = EditorTorsion(TempPyMOLGlobals,float1);
     APIExit();
   }
-  return(APIStatus(ok));
+  return APIResultOk(ok);
 }
 
 static PyObject *CmdUndo(PyObject *self, PyObject *args)
@@ -1445,7 +1469,7 @@ static PyObject *CmdUndo(PyObject *self, PyObject *args)
     ExecutiveUndo(TempPyMOLGlobals,int1); /* TODO STATUS */
     APIExit();
   }
-  return(APIStatus(ok));
+  return APIResultOk(ok);
 }
 
 static PyObject *CmdMask(PyObject *self, PyObject *args)
@@ -1458,12 +1482,12 @@ static PyObject *CmdMask(PyObject *self, PyObject *args)
   ok = PyArg_ParseTuple(args,"si",&str1,&int1);
   if (ok) {
     APIEntry();
-    SelectorGetTmp(TempPyMOLGlobals,str1,s1);
+    ok = (SelectorGetTmp(TempPyMOLGlobals,str1,s1)>=0);
     ExecutiveMask(TempPyMOLGlobals,s1,int1); /* TODO STATUS */
     SelectorFreeTmp(TempPyMOLGlobals,s1);
     APIExit();
   }
-  return(APIStatus(ok));
+  return APIResultOk(ok);
 }
 
 static PyObject *CmdProtect(PyObject *self, PyObject *args)
@@ -1476,12 +1500,13 @@ static PyObject *CmdProtect(PyObject *self, PyObject *args)
   ok = PyArg_ParseTuple(args,"sii",&str1,&int1,&int2);
   if (ok) {
     APIEntry();
-    SelectorGetTmp(TempPyMOLGlobals,str1,s1);
+    ok = (SelectorGetTmp(TempPyMOLGlobals,str1,s1)>=0);
     ExecutiveProtect(TempPyMOLGlobals,s1,int1,int2); /* TODO STATUS */
     SelectorFreeTmp(TempPyMOLGlobals,s1);
     APIExit();
+
   }
-  return(APIStatus(ok));
+  return APIResultOk(ok);
 }
 
 
@@ -1495,7 +1520,7 @@ static PyObject *CmdButton(PyObject *self, 	PyObject *args)
     ButModeSet(TempPyMOLGlobals,i1,i2); /* TODO STATUS */
     APIExit();
   }
-  return(APIStatus(ok));  
+  return APIResultOk(ok);  
 }
 
 static PyObject *CmdFeedback(PyObject *self, 	PyObject *args)
@@ -1537,7 +1562,7 @@ static PyObject *CmdSetFeedbackMask(PyObject *self, 	PyObject *args)
     }
     APIExit();
   }
-  return(APIStatus(ok));  
+  return APIResultOk(ok);  
 }
 
 static PyObject *CmdPop(PyObject *self,  PyObject *args)
@@ -1553,7 +1578,7 @@ static PyObject *CmdPop(PyObject *self,  PyObject *args)
     APIExit();
   } else
     result = -1;
-  return(APIStatus(result));
+  return(APIResultCode(result));
 
 }
 
@@ -1572,7 +1597,7 @@ static PyObject *CmdFlushNow(PyObject *self, 	PyObject *args)
         ENDFB(TempPyMOLGlobals);
     }
   }
-  return(APISuccess());  
+  return APISuccess();  
 }
 
 static PyObject *CmdWaitQueue(PyObject *self, 	PyObject *args)
@@ -1622,7 +1647,7 @@ static PyObject *CmdPaste(PyObject *dummy, PyObject *args)
         }
       }
   }
-  return(APIStatus(ok));  
+  return APIResultOk(ok);  
 }
 
 static PyObject *CmdGetPovRay(PyObject *dummy, PyObject *args)
@@ -1631,12 +1656,12 @@ static PyObject *CmdGetPovRay(PyObject *dummy, PyObject *args)
   char *header=NULL,*geom=NULL;
   APIEntry();
   SceneRay(TempPyMOLGlobals,0,0,1,&header,&geom,0.0F,0.0F,false,NULL);
+  APIExit();
   if(header&&geom) {
     result = Py_BuildValue("(ss)",header,geom);
   }
   VLAFreeP(header);
   VLAFreeP(geom);
-  APIExit();
   return(APIAutoNone(result));
 }
 
@@ -1679,7 +1704,7 @@ static PyObject *CmdSetWizard(PyObject *dummy, PyObject *args)
         APIExit();
       }
   }
-  return(APIStatus(ok));  
+  return APIResultOk(ok);  
 }
 
 static PyObject *CmdSetWizardStack(PyObject *dummy, PyObject *args)
@@ -1698,7 +1723,7 @@ static PyObject *CmdSetWizardStack(PyObject *dummy, PyObject *args)
         APIExit();
       }
   }
-  return(APIStatus(ok));  
+  return APIResultOk(ok);  
 }
 
 static PyObject *CmdRefreshWizard(PyObject *dummy, PyObject *args)
@@ -1707,7 +1732,7 @@ static PyObject *CmdRefreshWizard(PyObject *dummy, PyObject *args)
   WizardRefresh(TempPyMOLGlobals);
   OrthoDirty(TempPyMOLGlobals);
   APIExit();
-  return(APISuccess());  
+  return APISuccess();  
 }
 
 static PyObject *CmdDirtyWizard(PyObject *dummy, PyObject *args)
@@ -1716,7 +1741,7 @@ static PyObject *CmdDirtyWizard(PyObject *dummy, PyObject *args)
   APIEntry();
   WizardDirty(TempPyMOLGlobals);
   APIExit();
-  return(APISuccess());  
+  return APISuccess();  
 }
 
 static PyObject *CmdSplash(PyObject *dummy, PyObject *args)
@@ -1724,7 +1749,7 @@ static PyObject *CmdSplash(PyObject *dummy, PyObject *args)
   APIEntry();
   OrthoSplash(TempPyMOLGlobals);
   APIExit();
-  return(APISuccess());  
+  return APISuccess();  
 }
 
 static PyObject *CmdCls(PyObject *dummy, PyObject *args)
@@ -1732,7 +1757,7 @@ static PyObject *CmdCls(PyObject *dummy, PyObject *args)
   APIEntry();
   OrthoClear(TempPyMOLGlobals);
   APIExit();
-  return(APISuccess());  
+  return APISuccess();  
 }
 
 static PyObject *CmdDump(PyObject *dummy, PyObject *args)
@@ -1745,7 +1770,7 @@ static PyObject *CmdDump(PyObject *dummy, PyObject *args)
     ExecutiveDump(TempPyMOLGlobals,str1,str2); /* TODO STATUS */
     APIExit();
   }
-  return(APIStatus(ok));  
+  return APIResultOk(ok);  
 }
 
 static PyObject *CmdIsomesh(PyObject *self, 	PyObject *args) {
@@ -1835,7 +1860,7 @@ static PyObject *CmdIsomesh(PyObject *self, 	PyObject *args) {
             carve = -0.0; /* impossible */
             break;
           case 1:
-            SelectorGetTmp(TempPyMOLGlobals,str3,s1);
+            ok = (SelectorGetTmp(TempPyMOLGlobals,str3,s1)>=0);
             ExecutiveGetExtent(TempPyMOLGlobals,s1,mn,mx,false,-1,false); /* TODO state */
             if(carve!=0.0) {
               vert_vla = ExecutiveGetVertexVLA(TempPyMOLGlobals,s1,state);
@@ -1889,7 +1914,7 @@ static PyObject *CmdIsomesh(PyObject *self, 	PyObject *args) {
     }
     APIExit();
   }
-  return(APIStatus(ok));  
+  return APIResultOk(ok);  
 }
 
 static PyObject *CmdSliceNew(PyObject *self, 	PyObject *args) 
@@ -1989,7 +2014,7 @@ static PyObject *CmdSliceNew(PyObject *self, 	PyObject *args)
     ok=false;
   }
   APIExit();
-  return(APIStatus(ok));  
+  return APIResultOk(ok);  
 }
 #if 0
 
@@ -2046,7 +2071,7 @@ static PyObject *CmdRGBFunction(PyObject *self, 	PyObject *args) {
     }
     APIExit();
   }
-  return(APIStatus(ok));  
+  return APIResultOk(ok);  
 }
 
 
@@ -2101,7 +2126,7 @@ static PyObject *CmdSliceHeightmap(PyObject *self, 	PyObject *args) {
     }
     APIExit();
   }
-  return(APIStatus(ok));  
+  return APIResultOk(ok);  
 }
 
 
@@ -2158,7 +2183,7 @@ static PyObject *CmdSliceSetLock(PyObject *self, 	PyObject *args) {
     }
     APIExit();
   }
-  return(APIStatus(ok));  
+  return APIResultOk(ok);  
 }
 #endif
 
@@ -2250,7 +2275,7 @@ static PyObject *CmdIsosurface(PyObject *self, 	PyObject *args) {
             carve = 0.0F;
             break;
           case 1:
-            SelectorGetTmp(TempPyMOLGlobals,str3,s1);
+            ok = (SelectorGetTmp(TempPyMOLGlobals,str3,s1)>=0);
             ExecutiveGetExtent(TempPyMOLGlobals,s1,mn,mx,false,-1,false); /* TODO state */
             if(carve!=0.0F) {
               vert_vla = ExecutiveGetVertexVLA(TempPyMOLGlobals,s1,state);
@@ -2303,7 +2328,7 @@ static PyObject *CmdIsosurface(PyObject *self, 	PyObject *args) {
     }
     APIExit();
   }
-  return(APIStatus(ok));  
+  return APIResultOk(ok);  
 }
 
 static PyObject *CmdSymExp(PyObject *self, 	PyObject *args) {
@@ -2325,13 +2350,14 @@ static PyObject *CmdSymExp(PyObject *self, 	PyObject *args) {
       }
     }
     if(mObj) {
-      SelectorGetTmp(TempPyMOLGlobals,str3,s1);
-      ExecutiveSymExp(TempPyMOLGlobals,str1,str2,s1,cutoff); /* TODO STATUS */
+      ok = (SelectorGetTmp(TempPyMOLGlobals,str3,s1)>=0);
+      if(ok) 
+        ExecutiveSymExp(TempPyMOLGlobals,str1,str2,s1,cutoff); /* TODO STATUS */
       SelectorFreeTmp(TempPyMOLGlobals,s1);
     }
     APIExit();
   }
-  return(APIStatus(ok));  
+  return APIResultOk(ok);  
 }
 
 static PyObject *CmdOverlap(PyObject *dummy, PyObject *args)
@@ -2345,9 +2371,11 @@ static PyObject *CmdOverlap(PyObject *dummy, PyObject *args)
   ok = PyArg_ParseTuple(args,"ssiif",&str1,&str2,&state1,&state2,&adjust);
   if (ok) {
     APIEntry();
-    SelectorGetTmp(TempPyMOLGlobals,str1,s1);
-    SelectorGetTmp(TempPyMOLGlobals,str2,s2);
-    overlap = ExecutiveOverlap(TempPyMOLGlobals,s1,state1,s2,state2,adjust);
+    ok = ((SelectorGetTmp(TempPyMOLGlobals,str1,s1)>=0) &&
+          (SelectorGetTmp(TempPyMOLGlobals,str2,s2)>=0));
+    if(ok) {
+      overlap = ExecutiveOverlap(TempPyMOLGlobals,s1,state1,s2,state2,adjust);
+    }
     SelectorFreeTmp(TempPyMOLGlobals,s1);
     SelectorFreeTmp(TempPyMOLGlobals,s2);
     APIExit();
@@ -2371,33 +2399,38 @@ static PyObject *CmdDist(PyObject *dummy, PyObject *args)
     APIEntry();
     c1 = SelectorGetTmp(TempPyMOLGlobals,str1,s1);
     c2 = SelectorGetTmp(TempPyMOLGlobals,str2,s2);
-    if(c1&&(c2||WordMatch(TempPyMOLGlobals,cKeywordSame,s2,true)))
+    if((c1<0)||(c2<0))
+      ok = false;
+    else {
+      if(c1&&(c2||WordMatch(TempPyMOLGlobals,cKeywordSame,s2,true)))
         result = ExecutiveDist(TempPyMOLGlobals,name,s1,s2,mode,cutoff,
                                labels,quiet,reset);
-    else {
-      if((!quiet)&&(!c1)) {
-        PRINTFB(TempPyMOLGlobals,FB_Executive,FB_Errors)
-          " Distance-ERR: selection 1 contains no atoms.\n"
-          ENDFB(TempPyMOLGlobals);
-        if(reset)
-          ExecutiveDelete(TempPyMOLGlobals,name);
-      } 
-      if((quiet!=2)&&(!c2)) {
-        PRINTFB(TempPyMOLGlobals,FB_Executive,FB_Errors)
-          " Distance-ERR: selection 2 contains no atoms.\n"
-          ENDFB(TempPyMOLGlobals);
-        if(reset)
-          ExecutiveDelete(TempPyMOLGlobals,name);
+      else {
+        if((!quiet)&&(!c1)) {
+          PRINTFB(TempPyMOLGlobals,FB_Executive,FB_Errors)
+            "Distance-Error: selection 1 contains no atoms.\n"
+            ENDFB(TempPyMOLGlobals);
+          if(reset)
+            ExecutiveDelete(TempPyMOLGlobals,name);
+        } 
+        if((!quiet)&&(!c2)) {
+          PRINTFB(TempPyMOLGlobals,FB_Executive,FB_Errors)
+            "Distance-Error: selection 2 contains no atoms.\n"
+            ENDFB(TempPyMOLGlobals);
+          if(reset)
+            ExecutiveDelete(TempPyMOLGlobals,name);
+        }
+        result = -1.0;
       }
-      result = -1.0;
     }
     SelectorFreeTmp(TempPyMOLGlobals,s1);
     SelectorFreeTmp(TempPyMOLGlobals,s2);
     APIExit();
-  } else {
-    result = -1.0;
   }
-  return(Py_BuildValue("f",result));
+  if(!ok) 
+    return APIFailure();
+  else
+    return(Py_BuildValue("f",result));
 }
 
 static PyObject *CmdAngle(PyObject *dummy, PyObject *args)
@@ -2514,36 +2547,16 @@ static PyObject *CmdBond(PyObject *dummy, PyObject *args)
   ok = PyArg_ParseTuple(args,"ssii",&str1,&str2,&order,&mode);
   if (ok) {
     APIEntry();
-    SelectorGetTmp(TempPyMOLGlobals,str1,s1);
-    SelectorGetTmp(TempPyMOLGlobals,str2,s2);
-    ExecutiveBond(TempPyMOLGlobals,s1,s2,order,mode); /* TODO STATUS */
+    ok = ((SelectorGetTmp(TempPyMOLGlobals,str1,s1)>=0) &&
+          (SelectorGetTmp(TempPyMOLGlobals,str2,s2)>=0));
+    if(ok) 
+      ExecutiveBond(TempPyMOLGlobals,s1,s2,order,mode); /* TODO STATUS */
     SelectorFreeTmp(TempPyMOLGlobals,s1);
     SelectorFreeTmp(TempPyMOLGlobals,s2);
     APIExit();
   }
-  return(APIStatus(ok));  
+  return APIResultOk(ok);  
 }
-
-/* 
-static PyObject *CmdDistance(PyObject *dummy, PyObject *args)
-{
-  char *str1,*str2;
-  OrthoLineType s1,s2;
-  float dist=-1.0;
-  int ok=false;
-  ok = PyArg_ParseTuple(args,"ss",&str1,&str2);
-  if (ok) {
-    APIEntry();
-    SelectorGetTmp(TempPyMOLGlobals,str1,s1);
-    SelectorGetTmp(TempPyMOLGlobals,str2,s2);
-    dist = ExecutiveDistance(TempPyMOLGlobals,s1,s2);
-    SelectorFreeTmp(TempPyMOLGlobals,s1);
-    SelectorFreeTmp(TempPyMOLGlobals,s2);
-    APIExit();
-  }
-  return(Py_BuildValue("f",dist));
-}
-*/
 
 static PyObject *CmdLabel(PyObject *self,   PyObject *args)
 {
@@ -2554,12 +2567,12 @@ static PyObject *CmdLabel(PyObject *self,   PyObject *args)
   ok = PyArg_ParseTuple(args,"ssi",&str1,&str2,&quiet);
   if (ok) {
     APIEntry();
-    SelectorGetTmp(TempPyMOLGlobals,str1,s1);
-    ExecutiveLabel(TempPyMOLGlobals,s1,str2,quiet); /* TODO STATUS */
+    ok = (SelectorGetTmp(TempPyMOLGlobals,str1,s1)>=0);
+    if(ok) ExecutiveLabel(TempPyMOLGlobals,s1,str2,quiet); /* TODO STATUS */
     SelectorFreeTmp(TempPyMOLGlobals,s1);
     APIExit();
   }
-  return(APIStatus(ok));
+  return APIResultOk(ok);
 
 }
 
@@ -2574,7 +2587,7 @@ static PyObject *CmdAlter(PyObject *self,   PyObject *args)
   ok = PyArg_ParseTuple(args,"ssiiO",&str1,&str2,&i1,&quiet,&space);
   if (ok) {
     APIEntry();
-    SelectorGetTmp(TempPyMOLGlobals,str1,s1);
+    ok = (SelectorGetTmp(TempPyMOLGlobals,str1,s1)>=0);
     result=ExecutiveIterate(TempPyMOLGlobals,s1,str2,i1,quiet,space); /* TODO STATUS */
     SelectorFreeTmp(TempPyMOLGlobals,s1);
     APIExit();
@@ -2594,7 +2607,7 @@ static PyObject *CmdAlterList(PyObject *self,   PyObject *args)
   ok = PyArg_ParseTuple(args,"sOiO",&str1,&list,&quiet,&space);
   if (ok) {
     APIEnterBlocked();
-    SelectorGetTmp(TempPyMOLGlobals,str1,s1);
+    ok = (SelectorGetTmp(TempPyMOLGlobals,str1,s1)>=0);
     result=ExecutiveIterateList(TempPyMOLGlobals,s1,list,false,quiet,space); /* TODO STATUS */
     SelectorFreeTmp(TempPyMOLGlobals,s1);
     APIExitBlocked();
@@ -2614,7 +2627,7 @@ static PyObject *CmdSelectList(PyObject *self,   PyObject *args)
   ok = PyArg_ParseTuple(args,"ssOii",&sele_name,&str1,&list,&quiet,&id_type);
   if (ok) { 
     APIEnterBlocked(); 
-    SelectorGetTmp(TempPyMOLGlobals,str1,s1);
+    ok = (SelectorGetTmp(TempPyMOLGlobals,str1,s1)>=0);
     result=ExecutiveSelectList(TempPyMOLGlobals,sele_name,s1,list,quiet,id_type); 
     SceneDirty(TempPyMOLGlobals);
     SeqDirty(TempPyMOLGlobals);
@@ -2634,12 +2647,12 @@ static PyObject *CmdAlterState(PyObject *self,   PyObject *args)
   ok = PyArg_ParseTuple(args,"issiiiO",&i1,&str1,&str2,&i2,&i3,&quiet,&obj);
   if (ok) {
     APIEntry();
-    SelectorGetTmp(TempPyMOLGlobals,str1,s1);
+    ok = (SelectorGetTmp(TempPyMOLGlobals,str1,s1)>=0);
     ExecutiveIterateState(TempPyMOLGlobals,i1,s1,str2,i2,i3,quiet,obj); /* TODO STATUS */
     SelectorFreeTmp(TempPyMOLGlobals,s1);
     APIExit();
   }
-  return(APIStatus(ok));
+  return APIResultOk(ok);
 
 }
 
@@ -2653,7 +2666,7 @@ static PyObject *CmdCopy(PyObject *self,   PyObject *args)
     ExecutiveCopy(TempPyMOLGlobals,str1,str2); /* TODO STATUS */
     APIExit();
   }
-  return(APIStatus(ok));
+  return APIResultOk(ok);
 }
 
 static PyObject *CmdRecolor(PyObject *self,   PyObject *args)
@@ -2672,7 +2685,7 @@ static PyObject *CmdRecolor(PyObject *self,   PyObject *args)
     if(WordMatch(TempPyMOLGlobals,str1,"all",true)<0)
       ExecutiveInvalidateRep(TempPyMOLGlobals,str1,rep,cRepInvColor);
     else {
-      SelectorGetTmp(TempPyMOLGlobals,str1,s1);
+      ok = (SelectorGetTmp(TempPyMOLGlobals,str1,s1)>=0);
       ExecutiveInvalidateRep(TempPyMOLGlobals,s1,rep,cRepInvColor);
       SelectorFreeTmp(TempPyMOLGlobals,s1); 
     }
@@ -2680,7 +2693,7 @@ static PyObject *CmdRecolor(PyObject *self,   PyObject *args)
   } else {
     ok = -1; /* special error convention */
   }
-  return(APIStatus(ok));
+  return APIResultOk(ok);
 }
 
 static PyObject *CmdRebuild(PyObject *self,   PyObject *args)
@@ -2699,7 +2712,7 @@ static PyObject *CmdRebuild(PyObject *self,   PyObject *args)
     if(WordMatch(TempPyMOLGlobals,str1,"all",true)<0)
       ExecutiveRebuildAll(TempPyMOLGlobals);
     else {
-      SelectorGetTmp(TempPyMOLGlobals,str1,s1);
+      ok = (SelectorGetTmp(TempPyMOLGlobals,str1,s1)>=0);
       ExecutiveInvalidateRep(TempPyMOLGlobals,s1,rep,cRepInvAll);
       SelectorFreeTmp(TempPyMOLGlobals,s1); 
     }
@@ -2707,7 +2720,7 @@ static PyObject *CmdRebuild(PyObject *self,   PyObject *args)
   } else {
     ok = -1; /* special error convention */
   }
-  return(APIStatus(ok));
+  return APIResultOk(ok);
 }
 
 static PyObject *CmdResetRate(PyObject *dummy, PyObject *args)
@@ -2715,12 +2728,12 @@ static PyObject *CmdResetRate(PyObject *dummy, PyObject *args)
   APIEntry();
   ButModeResetRate(TempPyMOLGlobals);
   APIExit();
-  return(APISuccess());
+  return APISuccess();
 }
 
 static PyObject *CmdReady(PyObject *dummy, PyObject *args)
 {
-  return(APIStatus(TempPyMOLGlobals->Ready));
+  return(APIResultCode(TempPyMOLGlobals->Ready));
 }
 
 #if 0
@@ -2734,7 +2747,7 @@ static PyObject *CmdMem(PyObject *dummy, PyObject *args)
 #if 0
   printf(" Py_Debug: %d total references.\n",_Py_CountReferences());
 #endif
-  return(APISuccess());
+  return APISuccess();
 }
 
 static PyObject *CmdRunPyMOL(PyObject *dummy, PyObject *args)
@@ -2753,7 +2766,7 @@ static PyObject *CmdRunPyMOL(PyObject *dummy, PyObject *args)
 #endif
 #endif
 
-  return(APISuccess());
+  return APISuccess();
 }
 
 static PyObject *CmdRunWXPyMOL(PyObject *dummy, PyObject *args)
@@ -2769,7 +2782,7 @@ static PyObject *CmdRunWXPyMOL(PyObject *dummy, PyObject *args)
 #endif
 #endif
 
-  return(APISuccess());
+  return APISuccess();
 }
 
 static PyObject *CmdCountStates(PyObject *dummy, PyObject *args)
@@ -2777,17 +2790,18 @@ static PyObject *CmdCountStates(PyObject *dummy, PyObject *args)
   char *str1;
   OrthoLineType s1;
   int ok=false;
+  int count = 0;
   ok = PyArg_ParseTuple(args,"s",&str1);
   if (ok) {
     APIEntry();
-    SelectorGetTmp(TempPyMOLGlobals,str1,s1);
-    ok = ExecutiveCountStates(TempPyMOLGlobals,s1);
+    ok = (SelectorGetTmp(TempPyMOLGlobals,str1,s1)>=0);
+    count = ExecutiveCountStates(TempPyMOLGlobals,s1);
+    if(count<0)
+      ok=false;
     SelectorFreeTmp(TempPyMOLGlobals,s1); 
     APIExit();
-  } else {
-    ok = -1; /* special error convention */
   }
-  return(APIStatus(ok));
+  return ok ? APIResultCode(count) : APIFailure();
 }
 
 static PyObject *CmdCountFrames(PyObject *dummy, PyObject *args)
@@ -2797,7 +2811,7 @@ static PyObject *CmdCountFrames(PyObject *dummy, PyObject *args)
   SceneCountFrames(TempPyMOLGlobals);
   result=SceneGetNFrame(TempPyMOLGlobals);
   APIExit();
-  return(APIStatus(result));
+  return(APIResultCode(result));
 }
 
 static PyObject *CmdIdentify(PyObject *dummy, PyObject *args)
@@ -2814,11 +2828,13 @@ static PyObject *CmdIdentify(PyObject *dummy, PyObject *args)
   ok = PyArg_ParseTuple(args,"si",&str1,&mode);
   if (ok) {
     APIEntry();
-    SelectorGetTmp(TempPyMOLGlobals,str1,s1);
-    if(!mode) {
-      iVLA=ExecutiveIdentify(TempPyMOLGlobals,s1,mode);
-    } else {
-      l = ExecutiveIdentifyObjects(TempPyMOLGlobals,s1,mode,&iVLA,&oVLA);
+    ok = (SelectorGetTmp(TempPyMOLGlobals,str1,s1)>=0);
+    if(ok) {
+      if(!mode) {
+        iVLA=ExecutiveIdentify(TempPyMOLGlobals,s1,mode);
+      } else {
+        l = ExecutiveIdentifyObjects(TempPyMOLGlobals,s1,mode,&iVLA,&oVLA);
+      }
     }
     SelectorFreeTmp(TempPyMOLGlobals,s1);
     APIExit();
@@ -2842,7 +2858,14 @@ static PyObject *CmdIdentify(PyObject *dummy, PyObject *args)
   }
   VLAFreeP(iVLA);
   VLAFreeP(oVLA);
-  return(APIAutoNone(result));
+  if(!ok) {
+    if(result && (result!=Py_None)) {
+      Py_DECREF(result);
+    }
+    return APIFailure();
+  } else {
+    return(APIAutoNone(result));
+  }
 }
 
 static PyObject *CmdIndex(PyObject *dummy, PyObject *args)
@@ -2862,8 +2885,8 @@ static PyObject *CmdIndex(PyObject *dummy, PyObject *args)
   ok = PyArg_ParseTuple(args,"si",&str1,&mode);
   if (ok) {
     APIEntry();
-    SelectorGetTmp(TempPyMOLGlobals,str1,s1);
-    l = ExecutiveIndex(TempPyMOLGlobals,s1,mode,&iVLA,&oVLA);
+    ok = (SelectorGetTmp(TempPyMOLGlobals,str1,s1)>=0);
+    if(ok) l = ExecutiveIndex(TempPyMOLGlobals,s1,mode,&iVLA,&oVLA);
     SelectorFreeTmp(TempPyMOLGlobals,s1);
     APIExit();
     if(iVLA) {
@@ -2882,7 +2905,14 @@ static PyObject *CmdIndex(PyObject *dummy, PyObject *args)
     VLAFreeP(iVLA);
     VLAFreeP(oVLA);
   }
-  return(APIAutoNone(result));
+  if(!ok) {
+    if(result && (result!=Py_None)) {
+      Py_DECREF(result);
+    }
+    return APIFailure();
+  } else {
+    return(APIAutoNone(result));
+  }
 }
 
 
@@ -2908,8 +2938,8 @@ static PyObject *CmdFindPairs(PyObject *dummy, PyObject *args)
   ok = PyArg_ParseTuple(args,"ssiiiff",&str1,&str2,&state1,&state2,&mode,&cutoff,&angle);
   if (ok) {
     APIEntry();
-    SelectorGetTmp(TempPyMOLGlobals,str1,s1);
-    SelectorGetTmp(TempPyMOLGlobals,str2,s2);
+    ok = ((SelectorGetTmp(TempPyMOLGlobals,str1,s1)>=0)&&
+          (SelectorGetTmp(TempPyMOLGlobals,str2,s2)>=0));
     l = ExecutivePairIndices(TempPyMOLGlobals,s1,s2,state1,state2,mode,cutoff,angle,&iVLA,&oVLA);
     SelectorFreeTmp(TempPyMOLGlobals,s1);
     SelectorFreeTmp(TempPyMOLGlobals,s2);
@@ -2959,7 +2989,7 @@ static PyObject *CmdSystem(PyObject *dummy, PyObject *args)
       APIExit();
     }
   }
-  return(APIStatus(ok));
+  return APIResultOk(ok);
 }
 
 static PyObject *CmdGetFeedback(PyObject *dummy, PyObject *args)
@@ -2993,7 +3023,7 @@ static PyObject *CmdGetPDB(PyObject *dummy, PyObject *args)
   ok = PyArg_ParseTuple(args,"sii",&str1,&state,&mode);
   if (ok) {
     APIEntry();
-    SelectorGetTmp(TempPyMOLGlobals,str1,s1);
+    ok = (SelectorGetTmp(TempPyMOLGlobals,str1,s1)>=0);
     pdb=ExecutiveSeleToPDBStr(TempPyMOLGlobals,s1,state,true,mode);
     SelectorFreeTmp(TempPyMOLGlobals,s1);
     APIExit();
@@ -3013,8 +3043,8 @@ static PyObject *CmdGetModel(PyObject *dummy, PyObject *args)
   ok = PyArg_ParseTuple(args,"si",&str1,&state);
   if (ok) {
     APIEntry();
-    SelectorGetTmp(TempPyMOLGlobals,str1,s1);
-    result=ExecutiveSeleToChemPyModel(TempPyMOLGlobals,s1,state);
+    ok = (SelectorGetTmp(TempPyMOLGlobals,str1,s1)>=0);
+    if(ok) result=ExecutiveSeleToChemPyModel(TempPyMOLGlobals,s1,state);
     SelectorFreeTmp(TempPyMOLGlobals,s1);
     APIExit();
   }
@@ -3031,12 +3061,12 @@ static PyObject *CmdCreate(PyObject *dummy, PyObject *args)
   ok = PyArg_ParseTuple(args,"ssiiii",&str1,&str2,&source,&target,&discrete,&zoom);
   if (ok) {
     APIEntry();
-    SelectorGetTmp(TempPyMOLGlobals,str2,s1);
-    ExecutiveSeleToObject(TempPyMOLGlobals,str1,s1,source,target,discrete,zoom); /* TODO STATUS */
+    ok=(SelectorGetTmp(TempPyMOLGlobals,str2,s1)>=0);
+    if(ok) ok = ExecutiveSeleToObject(TempPyMOLGlobals,str1,s1,source,target,discrete,zoom); 
     SelectorFreeTmp(TempPyMOLGlobals,s1);
     APIExit();
   }
-  return(APIStatus(ok));
+  return APIResultOk(ok);
 }
 
 
@@ -3048,18 +3078,19 @@ static PyObject *CmdOrient(PyObject *dummy, PyObject *args)
   int state;
   int ok=false;
   float animate;
+  int quiet=false; /* TODO */
   ok = PyArg_ParseTuple(args,"sif",&str1,&state,&animate);
   if (ok) {
     APIEntry();
-    SelectorGetTmp(TempPyMOLGlobals,str1,s1);
+    ok = (SelectorGetTmp(TempPyMOLGlobals,str1,s1)>=0);
     if(ExecutiveGetMoment(TempPyMOLGlobals,s1,m,state))
-      ExecutiveOrient(TempPyMOLGlobals,s1,m,state,animate,false,0.0F); /* TODO STATUS */
+      ExecutiveOrient(TempPyMOLGlobals,s1,m,state,animate,false,0.0F,quiet); /* TODO STATUS */
     else
       ok=false;
     SelectorFreeTmp(TempPyMOLGlobals,s1); 
     APIExit();
   }
-  return(APIStatus(ok));
+  return APIResultOk(ok);
 }
 
 static PyObject *CmdFitPairs(PyObject *dummy, PyObject *args)
@@ -3073,6 +3104,7 @@ static PyObject *CmdFitPairs(PyObject *dummy, PyObject *args)
   int ok=false;
   ok = PyArg_ParseTuple(args,"O",&list);
   if(ok) {
+    APIEnterBlocked();
     ln = PyObject_Length(list);
     if(ln) {
       if(ln&0x1)
@@ -3095,6 +3127,7 @@ static PyObject *CmdFitPairs(PyObject *dummy, PyObject *args)
         SelectorFreeTmp(TempPyMOLGlobals,word[a]);
       FreeP(word);
     }
+    APIExitBlocked();
   }
   return APIAutoNone(result);
 }
@@ -3114,7 +3147,7 @@ static PyObject *CmdIntraFit(PyObject *dummy, PyObject *args)
   if(state<0) state=0;
   if (ok) {
     APIEntry();
-    SelectorGetTmp(TempPyMOLGlobals,str1,s1);
+    ok=(SelectorGetTmp(TempPyMOLGlobals,str1,s1)>=0);
     fVLA=ExecutiveRMSStates(TempPyMOLGlobals,s1,state,mode,quiet,mix);
     SelectorFreeTmp(TempPyMOLGlobals,s1);
     APIExit();
@@ -3138,8 +3171,8 @@ static PyObject *CmdGetAtomCoords(PyObject *dummy, PyObject *args)
   ok = PyArg_ParseTuple(args,"sii",&str1,&state,&quiet);
   if (ok) {
     APIEntry();
-    SelectorGetTmp(TempPyMOLGlobals,str1,s1);
-    ok=ExecutiveGetAtomVertex(TempPyMOLGlobals,s1,state,quiet,vertex);
+    ok = (SelectorGetTmp(TempPyMOLGlobals,str1,s1)>=0);
+    if(ok) ok=ExecutiveGetAtomVertex(TempPyMOLGlobals,s1,state,quiet,vertex);
     SelectorFreeTmp(TempPyMOLGlobals,s1);
     APIExit();
     if(ok) {
@@ -3166,8 +3199,8 @@ static PyObject *CmdFit(PyObject *dummy, PyObject *args)
                         &state1,&state2,&quiet,&matchmaker,&cutoff,&cycles,&object);
   if (ok) {
     APIEntry();
-    SelectorGetTmp(TempPyMOLGlobals,str1,s1);
-    SelectorGetTmp(TempPyMOLGlobals,str2,s2);
+    ok = ((SelectorGetTmp(TempPyMOLGlobals,str1,s1)>=0) &&
+          (SelectorGetTmp(TempPyMOLGlobals,str2,s2)>=0));
     tmp_result=ExecutiveRMS(TempPyMOLGlobals,s1,s2,mode,
                             cutoff,cycles,quiet,object,state1,state2,
                             false,
@@ -3190,14 +3223,14 @@ static PyObject *CmdUpdate(PyObject *dummy, PyObject *args)
   ok = PyArg_ParseTuple(args,"ssiiii",&str1,&str2,&int1,&int2,&matchmaker,&quiet);
   if (ok) {
     APIEntry();
-    SelectorGetTmp(TempPyMOLGlobals,str1,s1);
-    SelectorGetTmp(TempPyMOLGlobals,str2,s2);
+    ok = ((SelectorGetTmp(TempPyMOLGlobals,str1,s1)>=0) &&
+          (SelectorGetTmp(TempPyMOLGlobals,str2,s2)>=0));
     ExecutiveUpdateCmd(TempPyMOLGlobals,s1,s2,int1,int2,matchmaker,quiet); /* TODO STATUS */
     SelectorFreeTmp(TempPyMOLGlobals,s1);
     SelectorFreeTmp(TempPyMOLGlobals,s2);
     APIExit();
   }
-  return(APIStatus(ok));
+  return APIResultOk(ok);
 }
 
 static PyObject *CmdDirty(PyObject *self, 	PyObject *args)
@@ -3208,7 +3241,7 @@ static PyObject *CmdDirty(PyObject *self, 	PyObject *args)
   APIEntry();
   OrthoDirty(TempPyMOLGlobals);
   APIExit();
-  return(APISuccess());
+  return APISuccess();
 }
 
 static PyObject *CmdGetObjectList(PyObject *self, 	PyObject *args)
@@ -3223,7 +3256,7 @@ static PyObject *CmdGetObjectList(PyObject *self, 	PyObject *args)
   
   if (ok) {
     APIEntry();
-    SelectorGetTmp(TempPyMOLGlobals,str1,s1);
+    ok = (SelectorGetTmp(TempPyMOLGlobals,str1,s1)>=0);
     list = ExecutiveGetObjectMoleculeVLA(TempPyMOLGlobals, s1);
     if(list) {
       unsigned int size = VLAGetSize(list);
@@ -3253,9 +3286,9 @@ static PyObject *CmdGetDistance(PyObject *self, 	PyObject *args)
   
   if (ok) {
     APIEntry();
-    SelectorGetTmp(TempPyMOLGlobals,str1,s1);
-    SelectorGetTmp(TempPyMOLGlobals,str2,s2);
-    ok = ExecutiveGetDistance(TempPyMOLGlobals,s1,s2,&result,int1);
+    ok = ((SelectorGetTmp(TempPyMOLGlobals,str1,s1)>=0) &&
+          (SelectorGetTmp(TempPyMOLGlobals,str2,s2)>=0));
+    if(ok) ok = ExecutiveGetDistance(TempPyMOLGlobals,s1,s2,&result,int1);
     SelectorFreeTmp(TempPyMOLGlobals,s1);
     SelectorFreeTmp(TempPyMOLGlobals,s2);
     APIExit();
@@ -3280,10 +3313,10 @@ static PyObject *CmdGetAngle(PyObject *self, 	PyObject *args)
   
   if (ok) {
     APIEntry();
-    SelectorGetTmp(TempPyMOLGlobals,str1,s1);
-    SelectorGetTmp(TempPyMOLGlobals,str2,s2);
-    SelectorGetTmp(TempPyMOLGlobals,str3,s3);
-    ok = ExecutiveGetAngle(TempPyMOLGlobals,s1,s2,s3,&result,int1);
+    ok = ((SelectorGetTmp(TempPyMOLGlobals,str1,s1)>=0) &&
+          (SelectorGetTmp(TempPyMOLGlobals,str2,s2)>=0) &&
+          (SelectorGetTmp(TempPyMOLGlobals,str3,s3)>=0));
+    if(ok) ok = ExecutiveGetAngle(TempPyMOLGlobals,s1,s2,s3,&result,int1);
     SelectorFreeTmp(TempPyMOLGlobals,s1);
     SelectorFreeTmp(TempPyMOLGlobals,s2);
     SelectorFreeTmp(TempPyMOLGlobals,s3);
@@ -3308,10 +3341,10 @@ static PyObject *CmdGetDihe(PyObject *self, 	PyObject *args)
   
   if (ok) {
     APIEntry();
-    SelectorGetTmp(TempPyMOLGlobals,str1,s1);
-    SelectorGetTmp(TempPyMOLGlobals,str2,s2);
-    SelectorGetTmp(TempPyMOLGlobals,str3,s3);
-    SelectorGetTmp(TempPyMOLGlobals,str4,s4);
+    ok = ((SelectorGetTmp(TempPyMOLGlobals,str1,s1)>=0) &&
+          (SelectorGetTmp(TempPyMOLGlobals,str2,s2)>=0) &&
+          (SelectorGetTmp(TempPyMOLGlobals,str3,s3)>=0) &&
+          (SelectorGetTmp(TempPyMOLGlobals,str4,s4)>=0));
     ok = ExecutiveGetDihe(TempPyMOLGlobals,s1,s2,s3,s4,&result,int1);
     SelectorFreeTmp(TempPyMOLGlobals,s1);
     SelectorFreeTmp(TempPyMOLGlobals,s2);
@@ -3338,10 +3371,10 @@ static PyObject *CmdSetDihe(PyObject *self, 	PyObject *args)
   ok = PyArg_ParseTuple(args,"ssssfii",&str1,&str2,&str3,&str4,&float1,&int1,&quiet);
   if (ok) {
     APIEntry();
-    SelectorGetTmp(TempPyMOLGlobals,str1,s1);
-    SelectorGetTmp(TempPyMOLGlobals,str2,s2);
-    SelectorGetTmp(TempPyMOLGlobals,str3,s3);
-    SelectorGetTmp(TempPyMOLGlobals,str4,s4);
+    ok = ((SelectorGetTmp(TempPyMOLGlobals,str1,s1)>=0) &&
+          (SelectorGetTmp(TempPyMOLGlobals,str2,s2)>=0) &&
+          (SelectorGetTmp(TempPyMOLGlobals,str3,s3)>=0) &&
+          (SelectorGetTmp(TempPyMOLGlobals,str4,s4)>=0));
     ok = ExecutiveSetDihe(TempPyMOLGlobals,s1,s2,s3,s4,float1,int1,quiet);
     SelectorFreeTmp(TempPyMOLGlobals,s1);
     SelectorFreeTmp(TempPyMOLGlobals,s2);
@@ -3349,7 +3382,7 @@ static PyObject *CmdSetDihe(PyObject *self, 	PyObject *args)
     SelectorFreeTmp(TempPyMOLGlobals,s4);
     APIExit();
   }
-  return(APIStatus(ok));
+  return APIResultOk(ok);
 }
 
 static PyObject *CmdDo(PyObject *self, 	PyObject *args)
@@ -3384,7 +3417,7 @@ static PyObject *CmdDo(PyObject *self, 	PyObject *args)
     }
     APIExit();
   }
-  return(APIStatus(ok));
+  return APIResultOk(ok);
 }
 
 static PyObject *CmdRock(PyObject *self, PyObject *args)
@@ -3395,7 +3428,7 @@ static PyObject *CmdRock(PyObject *self, PyObject *args)
   APIEntry();
   ControlRock(TempPyMOLGlobals,int1);
   APIExit();
-  return(APIStatus(ok));
+  return APIResultOk(ok);
 }
 
 static PyObject *CmdSetBusy(PyObject *self, PyObject *args)
@@ -3406,7 +3439,7 @@ static PyObject *CmdSetBusy(PyObject *self, PyObject *args)
   PLockStatus();
   PyMOL_SetBusy(TempPyMOLGlobals->PyMOL,int1);
   PUnlockStatus();
-  return(APIStatus(ok));
+  return APIResultOk(ok);
 }
 
 static PyObject *CmdGetBusy(PyObject *self, PyObject *args)
@@ -3418,7 +3451,7 @@ static PyObject *CmdGetBusy(PyObject *self, PyObject *args)
   PLockStatus();
   result = PyMOL_GetBusy(TempPyMOLGlobals->PyMOL,int1);
   PUnlockStatus();
-  return(APIStatus(result));
+  return(APIResultCode(result));
 }
 
 static PyObject *CmdGetProgress(PyObject *self, PyObject *args)
@@ -3558,7 +3591,7 @@ static PyObject *CmdSetFrame(PyObject *self, PyObject *args)
     SceneSetFrame(TempPyMOLGlobals,mode,frm);
     APIExit();
   }
-  return(APIStatus(ok));
+  return APIResultOk(ok);
 }
 
 static PyObject *CmdFrame(PyObject *self, PyObject *args)
@@ -3573,7 +3606,7 @@ static PyObject *CmdFrame(PyObject *self, PyObject *args)
     SceneSetFrame(TempPyMOLGlobals,4,frm);
     APIExit();
   }
-  return(APIStatus(ok));
+  return APIResultOk(ok);
 }
 
 static PyObject *CmdStereo(PyObject *self, PyObject *args)
@@ -3587,7 +3620,7 @@ static PyObject *CmdStereo(PyObject *self, PyObject *args)
     ok = ExecutiveStereo(TempPyMOLGlobals,i1); 
     APIExit();
   }
-  return APIStatus(ok);
+  return APIResultOk(ok);
 }
 
 static PyObject *CmdReset(PyObject *self, PyObject *args)
@@ -3601,7 +3634,7 @@ static PyObject *CmdReset(PyObject *self, PyObject *args)
     ok = ExecutiveReset(TempPyMOLGlobals,cmd,obj); 
     APIExit();
   }
-  return(APIStatus(ok));
+  return APIResultOk(ok);
 }
 
 static PyObject *CmdSetMatrix(PyObject *self, 	PyObject *args)
@@ -3618,7 +3651,7 @@ static PyObject *CmdSetMatrix(PyObject *self, 	PyObject *args)
     SceneSetMatrix(TempPyMOLGlobals,m); /* TODO STATUS */
     APIExit();
   }
-  return(APIStatus(ok));
+  return APIResultOk(ok);
 }
 
 static PyObject *CmdGetMinMax(PyObject *self, 	PyObject *args)
@@ -3634,9 +3667,10 @@ static PyObject *CmdGetMinMax(PyObject *self, 	PyObject *args)
   ok = PyArg_ParseTuple(args,"si",&str1,&state); 
   if (ok) {
     APIEntry();
-    SelectorGetTmp(TempPyMOLGlobals,str1,s1);
+    ok = (SelectorGetTmp(TempPyMOLGlobals,str1,s1)>=0);
     flag = ExecutiveGetExtent(TempPyMOLGlobals,s1,mn,mx,true,state,false);
     SelectorFreeTmp(TempPyMOLGlobals,s1);
+    APIExit();
     if(flag) 
       result = Py_BuildValue("[[fff],[fff]]", 
                              mn[0],mn[1],mn[2],
@@ -3646,7 +3680,6 @@ static PyObject *CmdGetMinMax(PyObject *self, 	PyObject *args)
                              -0.5,-0.5,-0.5,
                              0.5,0.5,0.5);
     
-    APIExit();
   }
   return APIAutoNone(result);
 }
@@ -3715,7 +3748,7 @@ static PyObject *CmdMDo(PyObject *self, 	PyObject *args)
     }
     APIExit();
   }
-  return(APIStatus(ok));
+  return APIResultOk(ok);
 }
 
 static PyObject *CmdMPlay(PyObject *self, 	PyObject *args)
@@ -3728,7 +3761,7 @@ static PyObject *CmdMPlay(PyObject *self, 	PyObject *args)
     MoviePlay(TempPyMOLGlobals,cmd);
     APIExit();
   }
-  return(APIStatus(ok));
+  return APIResultOk(ok);
 }
 
 static PyObject *CmdMMatrix(PyObject *self, 	PyObject *args)
@@ -3741,7 +3774,7 @@ static PyObject *CmdMMatrix(PyObject *self, 	PyObject *args)
     ok = MovieMatrix(TempPyMOLGlobals,cmd);
     APIExit();
   }
-  return(APIStatus(ok));
+  return APIResultOk(ok);
 }
 
 static PyObject *CmdMClear(PyObject *self, 	PyObject *args)
@@ -3749,7 +3782,7 @@ static PyObject *CmdMClear(PyObject *self, 	PyObject *args)
   APIEntry();
   MovieClearImages(TempPyMOLGlobals);
   APIExit();
-  return(APISuccess());
+  return APISuccess();
 }
 
 static PyObject *CmdRefresh(PyObject *self, 	PyObject *args)
@@ -3757,7 +3790,7 @@ static PyObject *CmdRefresh(PyObject *self, 	PyObject *args)
   APIEntry();
   ExecutiveDrawNow(TempPyMOLGlobals); /* TODO STATUS */
   APIExit();
-  return(APISuccess());
+  return APISuccess();
 }
 
 static PyObject *CmdRefreshNow(PyObject *self, 	PyObject *args)
@@ -3771,7 +3804,7 @@ static PyObject *CmdRefreshNow(PyObject *self, 	PyObject *args)
 #endif
   PyMOL_PopValidContext(TempPyMOLGlobals->PyMOL);
   APIExit();
-  return(APISuccess());
+  return APISuccess();
 }
 
 static PyObject *CmdPNG(PyObject *self, 	PyObject *args)
@@ -3786,7 +3819,7 @@ static PyObject *CmdPNG(PyObject *self, 	PyObject *args)
     ScenePNG(TempPyMOLGlobals,str1,quiet);
     APIExit();
   }
-  return(APIStatus(ok));
+  return APIResultOk(ok);
 }
 
 static PyObject *CmdMPNG(PyObject *self, 	PyObject *args)
@@ -3801,7 +3834,7 @@ static PyObject *CmdMPNG(PyObject *self, 	PyObject *args)
     /* TODO STATUS */
     APIExit();
   }
-  return(APIStatus(ok));
+  return APIResultOk(ok);
 }
 
 static PyObject *CmdMSet(PyObject *self, 	PyObject *args)
@@ -3816,7 +3849,7 @@ static PyObject *CmdMSet(PyObject *self, 	PyObject *args)
     SceneCountFrames(TempPyMOLGlobals);
     APIExit();
   }
-  return(APIStatus(ok));
+  return APIResultOk(ok);
 }
 
 static PyObject *CmdMView(PyObject *self, 	PyObject *args)
@@ -3830,7 +3863,7 @@ static PyObject *CmdMView(PyObject *self, 	PyObject *args)
     ok = MovieView(TempPyMOLGlobals,action,first,last,power,bias);
     APIExit();
   }
-  return(APIStatus(ok));
+  return APIResultOk(ok);
 }
 
 static PyObject *CmdViewport(PyObject *self, 	PyObject *args)
@@ -3861,7 +3894,7 @@ static PyObject *CmdViewport(PyObject *self, 	PyObject *args)
 #endif
     APIExit();
   }
-  return(APIStatus(ok));
+  return APIResultOk(ok);
 }
 
 static PyObject *CmdFlag(PyObject *self, 	PyObject *args)
@@ -3875,12 +3908,12 @@ static PyObject *CmdFlag(PyObject *self, 	PyObject *args)
   ok = PyArg_ParseTuple(args,"isii",&flag,&str1,&action,&quiet);
   if (ok) {
     APIEntry();
-    SelectorGetTmp(TempPyMOLGlobals,str1,s1);
+    ok = (SelectorGetTmp(TempPyMOLGlobals,str1,s1)>=0);
     ExecutiveFlag(TempPyMOLGlobals,flag,s1,action,quiet);
     SelectorFreeTmp(TempPyMOLGlobals,s1);
     APIExit();
   }
-  return(APIStatus(ok));
+  return APIResultOk(ok);
 }
 
 static PyObject *CmdColor(PyObject *self, 	PyObject *args)
@@ -3893,12 +3926,12 @@ static PyObject *CmdColor(PyObject *self, 	PyObject *args)
   ok = PyArg_ParseTuple(args,"ssii",&color,&str1,&flags,&quiet);
   if (ok) {
     APIEntry();
-    SelectorGetTmp(TempPyMOLGlobals,str1,s1);
+    ok = (SelectorGetTmp(TempPyMOLGlobals,str1,s1)>=0);
     ok = ExecutiveColor(TempPyMOLGlobals,s1,color,flags,quiet);
     SelectorFreeTmp(TempPyMOLGlobals,s1);
     APIExit();
   }
-  return(APIStatus(ok));
+  return APIResultOk(ok);
 }
 
 static PyObject *CmdColorDef(PyObject *self, 	PyObject *args)
@@ -3912,7 +3945,7 @@ static PyObject *CmdColorDef(PyObject *self, 	PyObject *args)
     ColorDef(TempPyMOLGlobals,color,v);
     APIExit();
   }
-  return(APIStatus(ok));
+  return APIResultOk(ok);
 }
 
 static PyObject *CmdRay(PyObject *self, 	PyObject *args)
@@ -3929,7 +3962,7 @@ static PyObject *CmdRay(PyObject *self, 	PyObject *args)
     ExecutiveRay(TempPyMOLGlobals,w,h,mode,angle,shift,quiet); /* TODO STATUS */
     APIExit();
   }
-  return(APIStatus(ok));
+  return APIResultOk(ok);
 }
 
 static PyObject *CmdClip(PyObject *self, 	PyObject *args)
@@ -3943,7 +3976,7 @@ static PyObject *CmdClip(PyObject *self, 	PyObject *args)
   ok = PyArg_ParseTuple(args,"sfsi",&sname,&dist,&str1,&state);
   if (ok) {
     APIEntry();
-    SelectorGetTmp(TempPyMOLGlobals,str1,s1);
+    ok = (SelectorGetTmp(TempPyMOLGlobals,str1,s1)>=0);
     switch(sname[0]) { /* TODO STATUS */
     case 'N':
     case 'n':
@@ -3969,7 +4002,7 @@ static PyObject *CmdClip(PyObject *self, 	PyObject *args)
     SelectorFreeTmp(TempPyMOLGlobals,s1);
     APIExit();
   }
-  return(APIStatus(ok));
+  return APIResultOk(ok);
 
 }
 
@@ -3994,7 +4027,7 @@ static PyObject *CmdMove(PyObject *self, 	PyObject *args)
     }
     APIExit();
   }
-  return(APIStatus(ok));
+  return APIResultOk(ok);
 }
 
 static PyObject *CmdTurn(PyObject *self, 	PyObject *args)
@@ -4018,7 +4051,7 @@ static PyObject *CmdTurn(PyObject *self, 	PyObject *args)
     }
     APIExit();
   }
-  return(APIStatus(ok));
+  return APIResultOk(ok);
 }
 
 static PyObject *CmdLegacySet(PyObject *self, 	PyObject *args)
@@ -4031,7 +4064,7 @@ static PyObject *CmdLegacySet(PyObject *self, 	PyObject *args)
     ok = SettingSetNamed(TempPyMOLGlobals,sname,value); 
     APIExit();
   }
-  return(APIStatus(ok));
+  return APIResultOk(ok);
 }
 
 static PyObject *CmdUnset(PyObject *self, 	PyObject *args)
@@ -4052,14 +4085,14 @@ static PyObject *CmdUnset(PyObject *self, 	PyObject *args)
       strcpy(s1,str3);
     } else if(str3[0]!=0) {
       tmpFlag=true;
-      SelectorGetTmp(TempPyMOLGlobals,str3,s1);
+      ok = (SelectorGetTmp(TempPyMOLGlobals,str3,s1)>=0);
     }
-    ok = ExecutiveUnsetSetting(TempPyMOLGlobals,index,s1,state,quiet,updates);
+    if(ok) ok = ExecutiveUnsetSetting(TempPyMOLGlobals,index,s1,state,quiet,updates);
     if(tmpFlag) 
       SelectorFreeTmp(TempPyMOLGlobals,s1);
     APIExit();
   }
-  return(APIStatus(ok));
+  return APIResultOk(ok);
 }
 
 static PyObject *CmdSet(PyObject *self, 	PyObject *args)
@@ -4081,14 +4114,14 @@ static PyObject *CmdSet(PyObject *self, 	PyObject *args)
       strcpy(s1,str3);
     } else if(str3[0]!=0) {
       tmpFlag=true;
-      SelectorGetTmp(TempPyMOLGlobals,str3,s1);
+      ok = (SelectorGetTmp(TempPyMOLGlobals,str3,s1)>=0);
     }
-    ok = ExecutiveSetSetting(TempPyMOLGlobals,index,value,s1,state,quiet,updates);
+    if(ok) ok = ExecutiveSetSetting(TempPyMOLGlobals,index,value,s1,state,quiet,updates);
     if(tmpFlag) 
       SelectorFreeTmp(TempPyMOLGlobals,s1);
     APIExit();
   }
-  return(APIStatus(ok));
+  return APIResultOk(ok);
 }
 
 static PyObject *CmdGet(PyObject *self, 	PyObject *args)
@@ -4119,7 +4152,7 @@ static PyObject *CmdDelete(PyObject *self, 	PyObject *args)
     ExecutiveDelete(TempPyMOLGlobals,sname); /* TODO STATUS */
     APIExit();
   }
-  return(APIStatus(ok));
+  return APIResultOk(ok);
 }
 
 static PyObject *CmdCartoon(PyObject *self, 	PyObject *args)
@@ -4131,12 +4164,12 @@ static PyObject *CmdCartoon(PyObject *self, 	PyObject *args)
   ok = PyArg_ParseTuple(args,"si",&sname,&type);
   if (ok) {
     APIEntry();
-    SelectorGetTmp(TempPyMOLGlobals,sname,s1);
-    ExecutiveCartoon(TempPyMOLGlobals,type,s1); /* TODO STATUS */
+    ok = (SelectorGetTmp(TempPyMOLGlobals,sname,s1)>=0);
+    if(ok) ExecutiveCartoon(TempPyMOLGlobals,type,s1); /* TODO STATUS */
     SelectorFreeTmp(TempPyMOLGlobals,s1);
     APIExit();
   }
-  return(APIStatus(ok));
+  return APIResultOk(ok);
 }
 
 static PyObject *CmdShowHide(PyObject *self, 	PyObject *args)
@@ -4152,13 +4185,13 @@ static PyObject *CmdShowHide(PyObject *self, 	PyObject *args)
     if(sname[0]=='@') {
       ExecutiveSetAllVisib(TempPyMOLGlobals,state);
     } else {
-      SelectorGetTmp(TempPyMOLGlobals,sname,s1);
+      ok = (SelectorGetTmp(TempPyMOLGlobals,sname,s1)>=0);
       ExecutiveSetRepVisib(TempPyMOLGlobals,s1,rep,state);
       SelectorFreeTmp(TempPyMOLGlobals,s1);
     }
     APIExit();
   }
-  return(APIStatus(ok));
+  return APIResultOk(ok);
 }
 
 static PyObject *CmdOnOffBySele(PyObject *self, 	PyObject *args)
@@ -4170,12 +4203,12 @@ static PyObject *CmdOnOffBySele(PyObject *self, 	PyObject *args)
   ok = PyArg_ParseTuple(args,"si",&sname,&onoff);
   if (ok) { /* TODO STATUS */
     APIEntry();
-    SelectorGetTmp(TempPyMOLGlobals,sname,s1);
-    ok = ExecutiveSetOnOffBySele(TempPyMOLGlobals,s1,onoff);
+    ok = (SelectorGetTmp(TempPyMOLGlobals,sname,s1)>=0);
+    if(ok) ok = ExecutiveSetOnOffBySele(TempPyMOLGlobals,s1,onoff);
     SelectorFreeTmp(TempPyMOLGlobals,s1);
     APIExit();
   }
-  return(APIStatus(ok));
+  return APIResultOk(ok);
 }
 
 static PyObject *CmdOnOff(PyObject *self, 	PyObject *args)
@@ -4189,7 +4222,7 @@ static PyObject *CmdOnOff(PyObject *self, 	PyObject *args)
     ExecutiveSetObjVisib(TempPyMOLGlobals,name,state);
     APIExit();
   }
-  return(APIStatus(ok));
+  return APIResultOk(ok);
 }
 
 static PyObject *CmdToggle(PyObject *self, 	PyObject *args)
@@ -4204,13 +4237,13 @@ static PyObject *CmdToggle(PyObject *self, 	PyObject *args)
     if(sname[0]=='@') {
       /* TODO */
     } else {
-      SelectorGetTmp(TempPyMOLGlobals,sname,s1);
-      ok = ExecutiveToggleRepVisib(TempPyMOLGlobals,s1,rep);
+      ok = (SelectorGetTmp(TempPyMOLGlobals,sname,s1)>=0);
+      if(ok) ok = ExecutiveToggleRepVisib(TempPyMOLGlobals,s1,rep);
       SelectorFreeTmp(TempPyMOLGlobals,s1);
     }
     APIExit();
   }
-  return(APIStatus(ok));
+  return APIResultOk(ok);
 }
 
 static PyObject *CmdQuit(PyObject *self, 	PyObject *args)
@@ -4219,7 +4252,7 @@ static PyObject *CmdQuit(PyObject *self, 	PyObject *args)
   TempPyMOLGlobals->Terminating=true;
   PExit(EXIT_SUCCESS);
   APIExit();
-  return(APISuccess());
+  return APISuccess();
 }
 static PyObject *CmdFullScreen(PyObject *self,PyObject *args)
 {
@@ -4231,24 +4264,26 @@ static PyObject *CmdFullScreen(PyObject *self,PyObject *args)
     ExecutiveFullScreen(TempPyMOLGlobals,flag); /* TODO STATUS */
     APIExit();
   }
-  return(APIStatus(ok));
+  return APIResultOk(ok);
 }
+
 static PyObject *CmdSelect(PyObject *self, PyObject *args)
 {
   char *sname,*sele;
   int quiet;
   int ok=false;
+  int count = 0;
   ok = PyArg_ParseTuple(args,"ssi",&sname,&sele,&quiet);
-  if (ok) {
+  if(ok) {
     APIEntry();
-    ok = SelectorCreate(TempPyMOLGlobals,sname,sele,NULL,quiet,NULL);
+    count = SelectorCreate(TempPyMOLGlobals,sname,sele,NULL,quiet,NULL);
+    if(count<0)
+      ok = false;
     SceneDirty(TempPyMOLGlobals);
     SeqDirty(TempPyMOLGlobals);
     APIExit();
-  } else {
-    ok=-1;
   }
-  return APIStatus(ok);
+  return ok ? APIResultCode(count) : APIFailure();
 }
 
 static PyObject *CmdFinishObject(PyObject *self, PyObject *args)
@@ -4274,7 +4309,7 @@ static PyObject *CmdFinishObject(PyObject *self, PyObject *args)
       ok=false;
     APIExit();
   }
-  return(APIStatus(ok));
+  return APIResultOk(ok);
 }
 
 static PyObject *CmdLoadObject(PyObject *self, PyObject *args)
@@ -4420,7 +4455,7 @@ static PyObject *CmdLoadObject(PyObject *self, PyObject *args)
     }
     APIExit();
   }
-  return(APIStatus(ok));
+  return APIResultOk(ok);
 }
 
 static PyObject *CmdLoadCoords(PyObject *self, PyObject *args)
@@ -4466,7 +4501,7 @@ static PyObject *CmdLoadCoords(PyObject *self, PyObject *args)
     }
     APIExit();
   }
-  return(APIStatus(ok));
+  return APIResultOk(ok);
 }
 
 static PyObject *CmdLoad(PyObject *self, PyObject *args)
@@ -4511,7 +4546,7 @@ static PyObject *CmdLoad(PyObject *self, PyObject *args)
     
     switch(type) {
     case cLoadTypePDB:
-      ExecutiveProcessPDBFile(TempPyMOLGlobals,origObj,fname,oname,
+      ok = ExecutiveProcessPDBFile(TempPyMOLGlobals,origObj,fname,oname,
                               frame,discrete,finish,buf,NULL,quiet,
                               false,multiplex,zoom);
       break;
@@ -4521,7 +4556,7 @@ static PyObject *CmdLoad(PyObject *self, PyObject *args)
         UtilZeroMem(&pdb_info,sizeof(PDBInfoRec));
 
         pdb_info.is_pqr_file = true;        
-        ExecutiveProcessPDBFile(TempPyMOLGlobals,origObj,fname,oname,
+        ok = ExecutiveProcessPDBFile(TempPyMOLGlobals,origObj,fname,oname,
                                 frame,discrete,finish,buf,&pdb_info,
                                 quiet,false,multiplex,zoom);
       }
@@ -4548,7 +4583,7 @@ static PyObject *CmdLoad(PyObject *self, PyObject *args)
       PRINTFD(TempPyMOLGlobals,FB_CCmd) " CmdLoad-DEBUG: loading TRJ\n" ENDFD;
       if(origObj) { /* always reinitialize topology objects from scratch */
         ObjectMoleculeLoadTRJFile(TempPyMOLGlobals,(ObjectMolecule*)origObj,fname,frame,
-                                  1,1,1,-1,-1,NULL,1,NULL);
+                                  1,1,1,-1,-1,NULL,1,NULL,quiet);
         /* if(finish)
            ExecutiveUpdateObjectSelection(TempPyMOLGlobals,origObj); unnecc */
         sprintf(buf," CmdLoad: \"%s\" appended into object \"%s\".\n CmdLoad: %d total states in the object.\n",
@@ -4562,7 +4597,7 @@ static PyObject *CmdLoad(PyObject *self, PyObject *args)
     case cLoadTypeCRD:
       PRINTFD(TempPyMOLGlobals,FB_CCmd) " CmdLoad-DEBUG: loading CRD\n" ENDFD;
       if(origObj) { /* always reinitialize topology objects from scratch */
-        ObjectMoleculeLoadRSTFile(TempPyMOLGlobals,(ObjectMolecule*)origObj,fname,frame);
+        ObjectMoleculeLoadRSTFile(TempPyMOLGlobals,(ObjectMolecule*)origObj,fname,frame,quiet);
         /* if(finish)
            ExecutiveUpdateObjectSelection(TempPyMOLGlobals,origObj); unnecc */
         sprintf(buf," CmdLoad: \"%s\" appended into object \"%s\".\n CmdLoad: %d total states in the object.\n",
@@ -4576,7 +4611,7 @@ static PyObject *CmdLoad(PyObject *self, PyObject *args)
     case cLoadTypeRST:
       PRINTFD(TempPyMOLGlobals,FB_CCmd) " CmdLoad-DEBUG: loading RST\n" ENDFD;
       if(origObj) { /* always reinitialize topology objects from scratch */
-        ObjectMoleculeLoadRSTFile(TempPyMOLGlobals,(ObjectMolecule*)origObj,fname,frame);
+        ObjectMoleculeLoadRSTFile(TempPyMOLGlobals,(ObjectMolecule*)origObj,fname,frame,quiet);
         /* if(finish)
            ExecutiveUpdateObjectSelection(TempPyMOLGlobals,origObj); unnecc */
         sprintf(buf," CmdLoad: \"%s\" appended into object \"%s\".\n CmdLoad: %d total states in the object.\n",
@@ -4632,9 +4667,9 @@ static PyObject *CmdLoad(PyObject *self, PyObject *args)
       }
       break;
     case cLoadTypePDBStr:
-      ExecutiveProcessPDBFile(TempPyMOLGlobals,origObj,fname,oname,
-                              frame,discrete,finish,buf,NULL,
-                              quiet,true,multiplex,zoom);
+      ok = ExecutiveProcessPDBFile(TempPyMOLGlobals,origObj,fname,oname,
+                                   frame,discrete,finish,buf,NULL,
+                                   quiet,true,multiplex,zoom);
       break;
 #if 0
 
@@ -4697,11 +4732,11 @@ static PyObject *CmdLoad(PyObject *self, PyObject *args)
       /*      ExecutiveLoadMOL2(TempPyMOLGlobals,origObj,fname,oname,frame,
               discrete,finish,buf,multiplex,quiet,false,zoom); */
 
-      ExecutiveLoad(TempPyMOLGlobals,origObj, 
-                    fname, 0, type,
-                    oname, frame, zoom, 
-                    discrete, finish, 
-                    multiplex, quiet);
+      ok = ExecutiveLoad(TempPyMOLGlobals,origObj, 
+                         fname, 0, type,
+                         oname, frame, zoom, 
+                         discrete, finish, 
+                         multiplex, quiet);
       break;
       /*
     case cLoadTypeMOL2Str:
@@ -4898,7 +4933,7 @@ static PyObject *CmdLoad(PyObject *self, PyObject *args)
     OrthoRestorePrompt(TempPyMOLGlobals);
     APIExit();
   }
-  return(APIStatus(ok));
+  return APIResultOk(ok);
 }
 
 
@@ -4914,6 +4949,7 @@ static PyObject *CmdLoadTraj(PyObject *self, PyObject *args)
   char *str1;
   int ok=false;
   float shift[3];
+  int quiet=0; /* TODO */
 
   ok = PyArg_ParseTuple(args,"ssiiiiiiisifff",&oname,&fname,&frame,&type,
                         &interval,&average,&start,&stop,&max,&str1,
@@ -4923,7 +4959,7 @@ static PyObject *CmdLoadTraj(PyObject *self, PyObject *args)
   if (ok) {
     APIEntry();
     if(str1[0])
-      SelectorGetTmp(TempPyMOLGlobals,str1,s1);
+      ok = (SelectorGetTmp(TempPyMOLGlobals,str1,s1)>=0);
     else
       s1[0]=0; /* no selection */
     origObj=ExecutiveFindObjectByName(TempPyMOLGlobals,oname);
@@ -4946,7 +4982,7 @@ static PyObject *CmdLoadTraj(PyObject *self, PyObject *args)
       PRINTFD(TempPyMOLGlobals,FB_CCmd) " CmdLoadTraj-DEBUG: loading TRJ\n" ENDFD;
       if(origObj) { /* always reinitialize topology objects from scratch */
         ObjectMoleculeLoadTRJFile(TempPyMOLGlobals,(ObjectMolecule*)origObj,fname,frame,
-                                  interval,average,start,stop,max,s1,image,shift);
+                                  interval,average,start,stop,max,s1,image,shift,quiet);
         /* if(finish)
            ExecutiveUpdateObjectSelection(TempPyMOLGlobals,origObj); unnecc */
         sprintf(buf," CmdLoadTraj: \"%s\" appended into object \"%s\".\n CmdLoadTraj: %d total states in the object.\n",
@@ -4967,7 +5003,7 @@ static PyObject *CmdLoadTraj(PyObject *self, PyObject *args)
     SelectorFreeTmp(TempPyMOLGlobals,s1);
     APIExit();
   }
-  return(APIStatus(ok));
+  return APIResultOk(ok);
 }
 
 static PyObject *CmdOrigin(PyObject *self, PyObject *args)
@@ -4981,7 +5017,7 @@ static PyObject *CmdOrigin(PyObject *self, PyObject *args)
   if (ok) {
     APIEntry();
     if(str1[0])
-      SelectorGetTmp(TempPyMOLGlobals,str1,s1);
+      ok = (SelectorGetTmp(TempPyMOLGlobals,str1,s1)>=0);
     else
       s1[0]=0; /* no selection */
     ok = ExecutiveOrigin(TempPyMOLGlobals,s1,1,obj,v,state); /* TODO STATUS */
@@ -4989,7 +5025,7 @@ static PyObject *CmdOrigin(PyObject *self, PyObject *args)
       SelectorFreeTmp(TempPyMOLGlobals,s1);
     APIExit();
   }
-  return(APIStatus(ok));
+  return APIResultOk(ok);
 }
 
 static PyObject *CmdSort(PyObject *self, PyObject *args)
@@ -5002,7 +5038,7 @@ static PyObject *CmdSort(PyObject *self, PyObject *args)
     ExecutiveSort(TempPyMOLGlobals,name); /* TODO STATUS */
     APIExit();
   }
-  return(APIStatus(ok));
+  return APIResultOk(ok);
 }
 
 static PyObject *CmdAssignSS(PyObject *self, PyObject *args)
@@ -5016,12 +5052,12 @@ static PyObject *CmdAssignSS(PyObject *self, PyObject *args)
   ok = PyArg_ParseTuple(args,"sisii",&str1,&state,&str2,&preserve,&quiet);
   if (ok) {
     APIEntry();
-    SelectorGetTmp(TempPyMOLGlobals,str1,s1);
-    SelectorGetTmp(TempPyMOLGlobals,str2,s2);
-    ok = ExecutiveAssignSS(TempPyMOLGlobals,s1,state,s2,preserve,quiet);
+    ok = ((SelectorGetTmp(TempPyMOLGlobals,str1,s1)>=0) &&
+          (SelectorGetTmp(TempPyMOLGlobals,str2,s2)>=0));
+    if(ok) ok = ExecutiveAssignSS(TempPyMOLGlobals,s1,state,s2,preserve,quiet);
     APIExit();
   }
-  return(APIStatus(ok));
+  return APIResultOk(ok);
 }
 
 static PyObject *CmdSpheroid(PyObject *self, PyObject *args)
@@ -5036,7 +5072,7 @@ static PyObject *CmdSpheroid(PyObject *self, PyObject *args)
     ExecutiveSpheroid(TempPyMOLGlobals,name,average); /* TODO STATUS */
     APIExit();
   }
-  return(APIStatus(ok));
+  return APIResultOk(ok);
 }
 
 static PyObject *CmdTest(PyObject *self, PyObject *args)
@@ -5059,7 +5095,7 @@ static PyObject *CmdTest(PyObject *self, PyObject *args)
       ENDFB(TempPyMOLGlobals);
     APIExit();
   }
-  return(APIStatus(ok));
+  return APIResultOk(ok);
 }
 
 static PyObject *CmdCenter(PyObject *self, PyObject *args)
@@ -5073,12 +5109,12 @@ static PyObject *CmdCenter(PyObject *self, PyObject *args)
   ok = PyArg_ParseTuple(args,"siif",&str1,&state,&origin,&animate);
   if (ok) {
     APIEntry();
-    SelectorGetTmp(TempPyMOLGlobals,str1,s1);
+    ok = (SelectorGetTmp(TempPyMOLGlobals,str1,s1)>=0);
     ok = ExecutiveCenter(TempPyMOLGlobals,s1,state,origin,animate,NULL);
     SelectorFreeTmp(TempPyMOLGlobals,s1);
     APIExit();
   }
-  return(APIStatus(ok));
+  return APIResultOk(ok);
 }
 
 static PyObject *CmdZoom(PyObject *self, PyObject *args)
@@ -5090,16 +5126,17 @@ static PyObject *CmdZoom(PyObject *self, PyObject *args)
   int inclusive;
   int ok=false;
   float animate;
+  int quiet=false; /* TODO */
   ok = PyArg_ParseTuple(args,"sfiif",&str1,&buffer,&state,&inclusive,&animate);
   if (ok) {
     APIEntry();
-    SelectorGetTmp(TempPyMOLGlobals,str1,s1);
+    ok = (SelectorGetTmp(TempPyMOLGlobals,str1,s1)>=0);
     ok = ExecutiveWindowZoom(TempPyMOLGlobals,s1,buffer,state,
-                             inclusive,animate); 
+                             inclusive,animate,quiet); 
     SelectorFreeTmp(TempPyMOLGlobals,s1);
     APIExit();
   }
-  return(APIStatus(ok));
+  return APIResultOk(ok);
 }
 
 static PyObject *CmdIsolevel(PyObject *self, PyObject *args)
@@ -5114,7 +5151,7 @@ static PyObject *CmdIsolevel(PyObject *self, PyObject *args)
     ok = ExecutiveIsolevel(TempPyMOLGlobals,name,level,state);
     APIExit();
   }
-  return(APIStatus(ok));
+  return APIResultOk(ok);
 }
 
 static PyObject *CmdHAdd(PyObject *self, PyObject *args)
@@ -5126,21 +5163,21 @@ static PyObject *CmdHAdd(PyObject *self, PyObject *args)
   ok = PyArg_ParseTuple(args,"si",&str1,&quiet);
   if (ok) {
     APIEntry();
-    SelectorGetTmp(TempPyMOLGlobals,str1,s1);
+    ok = (SelectorGetTmp(TempPyMOLGlobals,str1,s1)>=0);
     ExecutiveAddHydrogens(TempPyMOLGlobals,s1,quiet); /* TODO STATUS */
     SelectorFreeTmp(TempPyMOLGlobals,s1);
-    SelectorGetTmp(TempPyMOLGlobals,str1,s1);
+    ok = (SelectorGetTmp(TempPyMOLGlobals,str1,s1)>=0);
     ExecutiveAddHydrogens(TempPyMOLGlobals,s1,quiet); /* TODO STATUS */
     SelectorFreeTmp(TempPyMOLGlobals,s1);
-    SelectorGetTmp(TempPyMOLGlobals,str1,s1);
+    ok = (SelectorGetTmp(TempPyMOLGlobals,str1,s1)>=0);
     ExecutiveAddHydrogens(TempPyMOLGlobals,s1,quiet); /* TODO STATUS */
     SelectorFreeTmp(TempPyMOLGlobals,s1);
-    SelectorGetTmp(TempPyMOLGlobals,str1,s1);
+    ok = (SelectorGetTmp(TempPyMOLGlobals,str1,s1)>=0);
     ExecutiveAddHydrogens(TempPyMOLGlobals,s1,quiet); /* TODO STATUS */
     SelectorFreeTmp(TempPyMOLGlobals,s1);
     APIExit();
   }
-  return(APIStatus(ok));
+  return APIResultOk(ok);
 }
 
 static PyObject *CmdGetObjectColorIndex(PyObject *self, PyObject *args)
@@ -5154,7 +5191,7 @@ static PyObject *CmdGetObjectColorIndex(PyObject *self, PyObject *args)
     result = ExecutiveGetObjectColorIndex(TempPyMOLGlobals,str1);
     APIExit();
   }
-  return(APIStatus(result));
+  return(APIResultCode(result));
 }
 
 static PyObject *CmdRemove(PyObject *self, PyObject *args)
@@ -5166,12 +5203,12 @@ static PyObject *CmdRemove(PyObject *self, PyObject *args)
   ok = PyArg_ParseTuple(args,"si",&str1,&quiet);
   if (ok) {
     APIEntry();
-    SelectorGetTmp(TempPyMOLGlobals,str1,s1);
+    ok = (SelectorGetTmp(TempPyMOLGlobals,str1,s1)>=0);
     ExecutiveRemoveAtoms(TempPyMOLGlobals,s1,quiet); /* TODO STATUS */
     SelectorFreeTmp(TempPyMOLGlobals,s1);
     APIExit();
   }
-  return(APIStatus(ok));
+  return APIResultOk(ok);
 }
 
 static PyObject *CmdRemovePicked(PyObject *self, PyObject *args)
@@ -5185,7 +5222,7 @@ static PyObject *CmdRemovePicked(PyObject *self, PyObject *args)
     EditorRemove(TempPyMOLGlobals,i1,quiet); /* TODO STATUS */
     APIExit();
   }
-  return(APIStatus(ok));
+  return APIResultOk(ok);
 }
 
 static PyObject *CmdHFill(PyObject *self, PyObject *args)
@@ -5198,7 +5235,7 @@ static PyObject *CmdHFill(PyObject *self, PyObject *args)
     EditorHFill(TempPyMOLGlobals,quiet); /* TODO STATUS */
     APIExit();
   }
-  return(APIStatus(ok));
+  return APIResultOk(ok);
 }
 
 static PyObject *CmdCycleValence(PyObject *self, PyObject *args)
@@ -5211,7 +5248,7 @@ static PyObject *CmdCycleValence(PyObject *self, PyObject *args)
     EditorCycleValence(TempPyMOLGlobals,quiet);  /* TODO STATUS */
     APIExit();
   }
-  return(APIStatus(ok));
+  return APIResultOk(ok);
 }
 
 static PyObject *CmdReplace(PyObject *self, 	PyObject *args)
@@ -5226,7 +5263,7 @@ static PyObject *CmdReplace(PyObject *self, 	PyObject *args)
     EditorReplace(TempPyMOLGlobals,str1,i1,i2,str2,quiet);  /* TODO STATUS */
     APIExit();
   }
-  return(APIStatus(ok));  
+  return APIResultOk(ok);  
 }
 
 static PyObject *CmdSetGeometry(PyObject *self, 	PyObject *args)
@@ -5238,12 +5275,12 @@ static PyObject *CmdSetGeometry(PyObject *self, 	PyObject *args)
   ok = PyArg_ParseTuple(args,"sii",&str1,&i1,&i2);
   if (ok) {
     APIEntry();
-    SelectorGetTmp(TempPyMOLGlobals,str1,s1);
+    ok = (SelectorGetTmp(TempPyMOLGlobals,str1,s1)>=0);
     ok = ExecutiveSetGeometry(TempPyMOLGlobals,s1,i1,i2);  /* TODO STATUS */
     SelectorFreeTmp(TempPyMOLGlobals,s1);
     APIExit();
   }
-  return(APIStatus(ok));  
+  return APIResultOk(ok);  
 }
 
 static PyObject *CmdAttach(PyObject *self, 	PyObject *args)
@@ -5259,7 +5296,7 @@ static PyObject *CmdAttach(PyObject *self, 	PyObject *args)
     EditorAttach(TempPyMOLGlobals,str1,i1,i2,name,quiet);  /* TODO STATUS */
     APIExit();
   }
-  return(APIStatus(ok));  
+  return APIResultOk(ok);  
 }
 
 static PyObject *CmdFuse(PyObject *self, 	PyObject *args)
@@ -5273,14 +5310,14 @@ static PyObject *CmdFuse(PyObject *self, 	PyObject *args)
   ok = PyArg_ParseTuple(args,"ssiii",&str1,&str2,&mode,&recolor,&move_flag);
   if (ok) {
     APIEntry();
-    SelectorGetTmp(TempPyMOLGlobals,str1,s1);
-    SelectorGetTmp(TempPyMOLGlobals,str2,s2);
+    ok = ((SelectorGetTmp(TempPyMOLGlobals,str1,s1)>=0) &&
+          (SelectorGetTmp(TempPyMOLGlobals,str2,s2)>=0));
     ExecutiveFuse(TempPyMOLGlobals,s1,s2,mode,recolor,move_flag);  /* TODO STATUS */
     SelectorFreeTmp(TempPyMOLGlobals,s1);
     SelectorFreeTmp(TempPyMOLGlobals,s2);
     APIExit();
   }
-  return(APIStatus(ok));  
+  return APIResultOk(ok);  
 }
 
 static PyObject *CmdUnpick(PyObject *self, 	PyObject *args)
@@ -5288,7 +5325,7 @@ static PyObject *CmdUnpick(PyObject *self, 	PyObject *args)
   APIEntry();
   EditorInactivate(TempPyMOLGlobals);  /* TODO STATUS */
   APIExit();
-  return(APISuccess());  
+  return APISuccess();  
 }
 
 static PyObject *CmdEdit(PyObject *self, 	PyObject *args)
@@ -5304,10 +5341,10 @@ static PyObject *CmdEdit(PyObject *self, 	PyObject *args)
   ok = PyArg_ParseTuple(args,"ssssiii",&str0,&str1,&str2,&str3,&pkresi,&pkbond,&quiet);
   if (ok) {
     APIEntry();
-    if(str0[0]) SelectorGetTmp(TempPyMOLGlobals,str0,s0);
-    if(str1[0]) SelectorGetTmp(TempPyMOLGlobals,str1,s1);
-    if(str2[0]) SelectorGetTmp(TempPyMOLGlobals,str2,s2);
-    if(str3[0]) SelectorGetTmp(TempPyMOLGlobals,str3,s3);
+    if(str0[0]) ok = (SelectorGetTmp(TempPyMOLGlobals,str0,s0)>=0);
+    if(str1[0]) ok = (SelectorGetTmp(TempPyMOLGlobals,str1,s1)>=0);
+    if(str2[0]) ok = (SelectorGetTmp(TempPyMOLGlobals,str2,s2)>=0);
+    if(str3[0]) ok = (SelectorGetTmp(TempPyMOLGlobals,str3,s3)>=0);
     ok = EditorSelect(TempPyMOLGlobals,s0,s1,s2,s3,pkresi,pkbond,quiet);
     if(s0[0]) SelectorFreeTmp(TempPyMOLGlobals,s0);
     if(s1[0]) SelectorFreeTmp(TempPyMOLGlobals,s1);
@@ -5316,7 +5353,7 @@ static PyObject *CmdEdit(PyObject *self, 	PyObject *args)
     
     APIExit();
   }
-  return APIStatus(ok);
+  return APIResultOk(ok);
 }
 
 static PyObject *CmdRename(PyObject *self, 	PyObject *args)
@@ -5329,12 +5366,12 @@ static PyObject *CmdRename(PyObject *self, 	PyObject *args)
   ok = PyArg_ParseTuple(args,"si",&str1,&int1);
   if (ok) {
     APIEntry();
-    SelectorGetTmp(TempPyMOLGlobals,str1,s1);
+    ok = (SelectorGetTmp(TempPyMOLGlobals,str1,s1)>=0);
     ExecutiveRenameObjectAtoms(TempPyMOLGlobals,s1,int1); /* TODO STATUS */
     SelectorFreeTmp(TempPyMOLGlobals,s1);
     APIExit();
   }
-  return(APIStatus(ok));  
+  return APIResultOk(ok);  
 }
 
 static PyObject *CmdOrder(PyObject *self, 	PyObject *args)
@@ -5349,7 +5386,7 @@ static PyObject *CmdOrder(PyObject *self, 	PyObject *args)
     ok = ExecutiveOrder(TempPyMOLGlobals,str1,int1,int2);
     APIExit();
   }
-  return(APIStatus(ok));
+  return APIResultOk(ok);
 }
 
 static PyObject *CmdWindow(PyObject *self, 	PyObject *args)
@@ -5365,7 +5402,7 @@ static PyObject *CmdWindow(PyObject *self, 	PyObject *args)
 #endif 
     APIExit();
   }
-  return(APIStatus(ok));  
+  return APIResultOk(ok);  
 }
 
 

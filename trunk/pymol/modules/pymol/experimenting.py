@@ -15,24 +15,30 @@
 if __name__=='pymol.experimenting':
    
    import selector
-   from cmd import _cmd,lock,unlock,Shortcut,QuietException
+   from cmd import _cmd,lock,unlock,Shortcut,QuietException, \
+        DEFAULT_ERROR, DEFAULT_SUCCESS, _raising, is_ok, is_error        
    import cmd
    import threading
-
+   import pymol
+   
    def get_bond_print(obj,max_bond,max_type):
+      r = DEFAULT_ERROR
       try:
          lock()
          r = _cmd.get_bond_print(str(obj),int(max_bond),int(max_type))
       finally:
          unlock()
+      if _raising(r): raise pymol.CmdException                  
       return r
 
    def expfit(a,b): # Huh?
+      r = DEFAULT_ERROR
       try:
          lock()   
          r = _cmd.fit(a,b,2)
       finally:
          unlock()
+      if _raising(r): raise pymol.CmdException                  
       return r
 
    def spheroid(object="",average=0):  # EXPERIMENTAL
@@ -50,12 +56,14 @@ USAGE
    average = number of states to average for each resulting spheroid state
 
    '''
+      r = DEFAULT_ERROR
       try:
          print "Warning: 'spheroid' is experimental, incomplete, and unstable."
          lock()
          r = _cmd.spheroid(str(object),int(average))
       finally:
          unlock()
+      if _raising(r): raise pymol.CmdException                  
       return r
 
    def mem():
@@ -66,11 +74,13 @@ DESCRIPTION
    debugging feature, not an official part of the API.
 
    '''
+      r = DEFAULT_ERROR
       try:
          lock()
          r = _cmd.mem()
       finally:
          unlock()
+      if _raising(r): raise pymol.CmdException                  
       return r
 
 
@@ -142,11 +152,13 @@ DESCRIPTION
 
 
    def dump(fnam,obj):
+      r = DEFAULT_ERROR
       try:
          lock()
          r = _cmd.dump(str(fnam),obj)
       finally:
          unlock()
+      if _raising(r): raise pymol.CmdException                  
       return r
 
 
@@ -154,24 +166,27 @@ DESCRIPTION
       return None
 
    def test(group=0,index=0): # generic test routine for development
+      r = DEFAULT_ERROR
       try:
          lock()   
          r=_cmd.test(int(group),int(index))
       finally:
          unlock()
+      if _raising(r): raise pymol.CmdException                  
       return r
 
    def import_coords(obj,state,mechio): # experimental
-      r = None
+      r = DEFAULT_ERROR      
       try:
          lock()   
          r = _cmd.import_coords(str(obj),int(state)-1,mechio)
       finally:
          unlock()
+      if _raising(r): raise pymol.CmdException                  
       return r
 
    def load_coords(*arg): # UNSUPPORTED
-      r = 1
+      r = DEFAULT_ERROR
       try:
          lock()
          ok = 1
@@ -191,4 +206,5 @@ DESCRIPTION
             print "Error: invalid arguments."
       finally:
          unlock()
+      if _raising(r): raise pymol.CmdException                  
       return r

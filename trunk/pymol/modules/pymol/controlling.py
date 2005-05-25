@@ -17,8 +17,11 @@ if __name__=='pymol.controlling':
    import string
    import selector
    import cmd
-   from cmd import _cmd,lock,unlock,Shortcut,QuietException,is_string
-   from cmd import boolean_dict, boolean_sc
+   import pymol
+   
+   from cmd import _cmd,lock,unlock,Shortcut,QuietException,is_string, \
+        boolean_dict, boolean_sc, \
+        DEFAULT_ERROR, DEFAULT_SUCCESS, _raising, is_ok, is_error
 
    location_code = {
       'top' : -1,
@@ -278,15 +281,16 @@ SEE ALSO
    set_name
       '''
 
-      r = 1
+      r = DEFAULT_ERROR
       location=location_code[location_sc.auto_err(location,'location')]
       if is_string(sort):
          sort=boolean_dict[boolean_sc.auto_err(sort,'sort option')]
       try:
          lock()
-         _cmd.order(str(names),int(sort),int(location))
+         r = _cmd.order(str(names),int(sort),int(location))
       finally:
-         unlock()
+         unlock(r)
+      if _raising(r): raise pymol.CmdException         
       return r
 
    def mouse(action=None,quiet=1):# INTERNAL
@@ -338,6 +342,8 @@ SEE ALSO
             if mode[-7:]=='editing': cmd.deselect()
       finally:
          unlock()
+      return DEFAULT_SUCCESS
+         
 
    def edit_mode(active=1,quiet=1):
       # legacy function
@@ -358,26 +364,8 @@ SEE ALSO
             elif mouse_mode[0:12] == 'three_button':
                if mouse_mode!='three_button_viewing':
                   mouse(action='three_button_viewing',quiet=quiet)
-
-   #   try:
-   #      lock()
-   #      r = _cmd.get_setting("button_mode")
-   #      r = int(r)
-   #      if mode==None:
-   #         if r:
-   #            _cmd.legacy_set("button_mode","0")
-   #         else:
-   #            _cmd.legacy_set("button_mode","1")            
-   #      else:
-   #         if mode=='on':
-   #            _cmd.legacy_set("button_mode","1")
-   #         if mode=='off':
-   #            _cmd.legacy_set("button_mode","0")
-   #      config_mouse()
-   #   finally:
-   #      unlock()
-   #   pass
-
+      return DEFAULT_SUCCESS
+   
    def set_key(key,fn,arg=(),kw={}):  
       '''
 DESCRIPTION
@@ -414,7 +402,7 @@ SEE ALSO
 
    button
       '''
-      r = 0
+      r = DEFAULT_ERROR
       if key[0:5]=='CTRL-':
          pat=key[5:]
          if len(pat)>1: # ctrl-special key
@@ -425,14 +413,14 @@ SEE ALSO
                   cmd.ctrl_special[a][1]=fn
                   cmd.ctrl_special[a][2]=arg
                   cmd.ctrl_special[a][3]=kw
-                  r = 1
+                  r = DEFAULT_SUCCESS
          else: # std. ctrl key
             for a in cmd.ctrl.keys():
                if a==pat:
                   cmd.ctrl[a][0]=fn
                   cmd.ctrl[a][1]=arg
                   cmd.ctrl[a][2]=kw
-                  r = 1
+                  r = DEFAULT_SUCCESS
       elif key[0:4]=='ALT-':
          pat=key[4:]
          if len(pat)>1: # alt-special key
@@ -443,7 +431,7 @@ SEE ALSO
                   cmd.alt_special[a][1]=fn
                   cmd.alt_special[a][2]=arg
                   cmd.alt_special[a][3]=kw
-                  r = 1
+                  r = DEFAULT_SUCCESS
          else: # std. alt key
             pat=string.lower(pat)
             for a in cmd.alt.keys():
@@ -451,7 +439,7 @@ SEE ALSO
                   cmd.alt[a][0]=fn
                   cmd.alt[a][1]=arg
                   cmd.alt[a][2]=kw
-                  r = 1
+                  r = DEFAULT_SUCCESS
       elif key[0:5]=='SHFT-':
          pat=key[5:]
          if len(pat)>1: # shft-special key
@@ -462,7 +450,7 @@ SEE ALSO
                   cmd.shft_special[a][1]=fn
                   cmd.shft_special[a][2]=arg
                   cmd.shft_special[a][3]=kw
-                  r = 1
+                  r = DEFAULT_SUCCESS
       else:
          if key[0]!='F':
             pat=string.lower(key)
@@ -473,11 +461,10 @@ SEE ALSO
                cmd.special[a][1]=fn
                cmd.special[a][2]=arg
                cmd.special[a][3]=kw
-               r = 1
-
-      if not r:
+               r = DEFAULT_SUCCESS
+      if is_error(r):
          print "Error: special '%s' key not found."%key
-         if cmd._raising(): raise QuietException
+      if _raising(r): raise pymol.CmdException         
       return r
 
    def button(button,modifier,action):
@@ -503,7 +490,7 @@ NOTES
                 PkAt, PkBd, RotF, TorF, MovF, Orig, Cent
 
    '''
-      r=1
+      r = DEFAULT_ERROR
       try:
          lock()
          button = string.lower(button)
@@ -522,7 +509,8 @@ NOTES
          act_code = but_act_code[action]
          r = _cmd.button(but_code,act_code)
       finally:
-         unlock()
+         unlock(r)
+      if _raising(r): raise pymol.CmdException         
       return r
 
 
@@ -547,6 +535,7 @@ SEE ALSO
 
    unmask, protect, deprotect, mouse
    '''
+      r = DEFAULT_ERROR
       # preprocess selection
       selection = selector.process(selection)
       #
@@ -554,7 +543,8 @@ SEE ALSO
          lock()   
          r = _cmd.mask("("+str(selection)+")",1)
       finally:
-         unlock()
+         unlock(r)
+      if _raising(r): raise pymol.CmdException         
       return r
 
    def unmask(selection="(all)"):
@@ -575,6 +565,7 @@ SEE ALSO
 
    mask, protect, deprotect, mouse
    '''
+      r = DEFAULT_ERROR
       # preprocess selection
       selection = selector.process(selection)
       #   
@@ -582,6 +573,7 @@ SEE ALSO
          lock()   
          r = _cmd.mask("("+str(selection)+")",0)
       finally:
-         unlock()
+         unlock(r)
+      if _raising(r): raise pymol.CmdException         
       return r
 

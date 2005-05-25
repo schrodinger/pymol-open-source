@@ -21,7 +21,8 @@ if __name__=='pymol.setting':
    from shortcut import Shortcut
    import cmd
    from cmd import _cmd,lock,lock_attempt,unlock,QuietException, \
-        _feedback,fb_module,fb_mask 
+        _feedback,fb_module,fb_mask, \
+        DEFAULT_ERROR, DEFAULT_SUCCESS, _raising, is_ok, is_error        
    from cmd import is_string
    import re
    
@@ -535,7 +536,7 @@ NOTES
    be affected. 
 
       '''
-      r = None
+      r = DEFAULT_ERROR
       selection = str(selection)
       if log:
          if len(selection):
@@ -616,6 +617,7 @@ NOTES
                raise QuietException
          finally:
             unlock()
+      if _raising(r): raise QuietException            
       return r
 
    def unset(name,selection='',state=0,updates=1,log=0,quiet=1):
@@ -641,7 +643,7 @@ PYMOL API
             int state=0, int updates=1, int log=0 )
 
       '''
-      r = None
+      r = DEFAULT_ERROR
       selection = str(selection)
       if log:
          if(len(selection)):
@@ -670,11 +672,11 @@ PYMOL API
                   print "Error: unable to unset setting value."
             finally:
                unlock()
+      if _raising(r): raise QuietException            
       return r
 
-
    def get_setting(name,object='',state=0): # INTERNAL
-      r = None
+      r = DEFAULT_ERROR
       if is_string(name):
          i = _get_index(name)
       else:
@@ -687,19 +689,23 @@ PYMOL API
          r = _cmd.get_setting_tuple(i,str(object),int(state)-1)
          typ = r[0]
          if typ<3: # boolean, int
-            r = int(r[1][0])
+            value = int(r[1][0])
          elif typ<4: # float
-            r = r[1][0]
+            value = r[1][0]
          elif typ<5: # vector
-            r = r[1]
+            value = r[1]
          else:
-            r = r[1] # color or string
+            value = r[1] # color or string
       finally:
          unlock()
+      if is_ok(r):
+         return value
+      elif _raising(r):
+         raise QuietException                     
       return r
 
    def get(name,object='',state=0,quiet=1):
-      r = None
+      r = DEFAULT_ERROR
       state = int(state)
       if is_string(name):
          i = _get_index(name)
@@ -713,7 +719,7 @@ PYMOL API
          r = _cmd.get_setting_text(i,str(object),state-1)
       finally:
          unlock()
-      if r!=None:
+      if is_ok(r) and (r!=None):
          r_str = str(r)
          if len(string.strip(r_str))==0:
             r_str = "\'"+r_str+"\'"
@@ -724,10 +730,11 @@ PYMOL API
                print " get: %s = %s in object %s"%(name,r_str,object)
             else:
                print " get: %s = %s in object %s state %d"%(name,r_str,object,state)
+      if _raising(r): raise QuietException
       return r
    
    def get_setting_tuple(name,object='',state=0): # INTERNAL
-      r = None
+      r = DEFAULT_ERROR
       if is_string(name):      i = _get_index(name)
       else:
          i = int(name)
@@ -739,10 +746,11 @@ PYMOL API
          r = _cmd.get_setting_tuple(i,str(object),int(state)-1)
       finally:
          unlock()
+      if _raising(r): raise QuietException
       return r
 
    def get_setting_text(name,object='',state=0):  # INTERNAL
-      r = None
+      r = DEFAULT_ERROR
       if is_string(name):
          i = _get_index(name)
       else:
@@ -755,6 +763,7 @@ PYMOL API
          r = _cmd.get_setting_text(i,str(object),int(state)-1)
       finally:
          unlock()
+      if _raising(r): raise QuietException
       return r
 
    def get_setting_updates(): # INTERNAL
@@ -766,13 +775,13 @@ PYMOL API
             unlock()
       return r
 
-
    def get_setting_legacy(name): # INTERNAL, DEPRECATED
-      r = None
+      r = DEFAULT_ERROR
       try:
          lock()
          r = _cmd.get_setting(name)
       finally:
          unlock()
+      if _raising(r): raise QuietException
       return r
 
