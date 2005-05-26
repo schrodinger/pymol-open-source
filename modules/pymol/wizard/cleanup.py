@@ -23,7 +23,7 @@ def auto_configure():
          result = 1
       else:
          SZYBKI_EXE = SZYBKI_EXE + ".exe"
-         print SZYBKI_EXE
+#         print SZYBKI_EXE
          if os.path.exists(SZYBKI_EXE):
             result=1
       if result<0:

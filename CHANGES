@@ -6,6 +6,9 @@ Changes up to 0.99
 
    beta05
 
+   * support for windows hidden folders with terminal dollar sign:
+    //share/folder$/path/file
+
    * ray now stops and movie and turns off sculpting
 
    * Better return conventions for the PyMOL API:  errors return negatives,
