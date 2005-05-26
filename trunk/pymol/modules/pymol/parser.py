@@ -32,7 +32,7 @@ if __name__=='pymol.parser':
    import setting
    import __main__
 
-   from cmd import _feedback,fb_module,fb_mask
+   from cmd import _feedback,fb_module,fb_mask,exp_path
 
    QuietException = parsing.QuietException
    CmdException = pymol.CmdException
@@ -101,9 +101,6 @@ if __name__=='pymol.parser':
       dict = embed_dict.get(nest,{})
       return dict.get(key,None)
       
-   def exp_path(filename):
-      return os.path.expandvars(os.path.expanduser(filename))
-
    # main parser routine
 
    def parse(s,secure=0):
@@ -317,8 +314,7 @@ if __name__=='pymol.parser':
    #
                      elif len(input[nest][0]):
                         if input[nest][0][0]=='@':
-                           path = os.path.expanduser(
-                              os.path.expandvars(string.strip(com2[nest][1:])))
+                           path = exp_path(string.strip(com2[nest][1:]))
                            if string.lower(path[-3:])=='p1m':
                               nest_secure = 1
                            else:
@@ -465,7 +461,7 @@ if __name__=='pymol.parser':
                               string.rfind(st,']'),
                               string.rfind(st,')')])+1
             st3 = st[loc:]
-            flist = glob.glob(os.path.expanduser(os.path.expandvars(st3))+"*")
+            flist = glob.glob(exp_path(st3)+"*")
             lst = map(None,st3)
             lst.reverse()
             st3 = string.join(lst,'')

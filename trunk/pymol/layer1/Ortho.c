@@ -521,10 +521,16 @@ void OrthoKeyAlt(PyMOLGlobals *G,unsigned char k) {
 
   /* safer...*/
 
-  sprintf(buffer,"cmd._alt(chr(%d))",k);
-  PLog(buffer,cPLog_pym);
-  PParse(buffer);
-  PFlush();
+  if(k=='@') { 
+    /* option G produces '@' on some non-US keyboards, so simply
+       ignore the modifier */
+    OrthoKey(G,k,0,0,0);
+  } else {
+    sprintf(buffer,"cmd._alt(chr(%d))",k);
+    PLog(buffer,cPLog_pym);
+    PParse(buffer);
+    PFlush();
+  }
 
   /*  PBlockAndUnlockAPI();
       sprintf(buffer,"cmd._ctrl('%c')",k+64);

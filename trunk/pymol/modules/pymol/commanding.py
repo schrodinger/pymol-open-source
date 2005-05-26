@@ -120,7 +120,7 @@ USAGE
       r = DEFAULT_ERROR
       mode = int(mode)
       if mode == 1: # just show PNG
-         png_path = os.path.expandvars("$PYMOL_PATH/data/pymol/splash.png")
+         png_path = cmd.exp_path("$PYMOL_PATH/data/pymol/splash.png")
          if os.path.exists(png_path):
             cmd.do("_ cmd.load_png('%s',0,quiet=1)"%png_path)
             r = DEFAULT_SUCCESS

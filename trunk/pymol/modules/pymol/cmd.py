@@ -122,7 +122,8 @@ if __name__=='pymol.cmd':
       safe_oname_re = re.compile(r"\ |\+|\(|\)|\||\&|\!|\,")  # quash reserved characters
       sanitize_list_re = re.compile(r"[^0-9\.\-\[\]\,]+")
       sanitize_alpha_list_re = re.compile(r"[^a-zA-Z0-9\'\"\.\-\[\]\,]+")
-
+      nt_hidden_path_re = re.compile(r"\$[\/\\]")
+      
       def safe_list_eval(st):
          return eval(sanitize_list_re.sub('',st))
 
@@ -146,7 +147,8 @@ if __name__=='pymol.cmd':
 
       space_sc = Shortcut(['cmyk','rgb','pymol'])
 
-      window_dict = { 'show' : 1, 'hide' : 0 }
+      window_dict = { 'show' : 1, 'hide' : 0, 'position' : 2, 'size' : 3,
+                      'box' : 4, 'maximize' : 5, 'fit' : 6 }
       window_sc = Shortcut(window_dict.keys())
 
       repres = {
@@ -291,6 +293,21 @@ if __name__=='pymol.cmd':
       def is_tuple(obj):
          return isinstance(obj,types.TupleType)
 
+      #-------------------------------------------------------------------
+      # path expansion, including our fixes for Win32
+
+      def _nt_expandvars(path): # allow for ??sdf?SFfolder$/file
+         path = nt_hidden_path_re.sub("$$")
+         return os.expandvars(path)
+      
+      if "nt" in sys.builtin_module_names:
+         _expandvars = _nt_expandvars
+      else:
+         _expandvars = os.path.expandvars
+      
+      def exp_path(path):
+         return _expandvars(os.path.expanduser(path))
+      
       #--------------------------------------------------------------------
       # locks and threading
 
@@ -742,8 +759,7 @@ DEVELOPMENT TO DO
             fname = arg[0]
             if re.search("\.png$",fname):
                fname = re.sub("\.png$","",fname)
-            fname = os.path.expanduser(fname)
-            fname = os.path.expandvars(fname)
+            fname = exp_path(fname)
             r = _cmd.mpng_(str(fname),int(arg[1]),int(arg[2]))
          finally:
             unlock()
@@ -860,8 +876,7 @@ DEVELOPMENT TO DO
             fname = a
             if not re.search("\.png$",fname):
                fname = fname +".png"
-            fname = os.path.expanduser(fname)
-            fname = os.path.expandvars(fname)         
+            fname = exp_path(fname)
             r = _cmd.png(str(fname),int(quiet))
          finally:
             unlock()
@@ -2047,7 +2062,7 @@ SEE ALSO
          'v' : [ editor.attach_amino_acid, ("pk1","val"), {}],
          'w' : [ editor.attach_amino_acid, ("pk1","trp"), {}],
          'y' : [ editor.attach_amino_acid, ("pk1","tyr"), {}],
-         'z' : [ editor.attach_amino_acid, ("pk1","nme"), {}],         
+         'z' : [ editor.attach_amino_acid, ("pk1","nme"), {}],
          }
 
 
@@ -2098,7 +2113,7 @@ SEE ALSO
          'view'           : [ viewing.view_dict_sc   , 'view'            , ''   ],                              
          'unmask'         : [ selection_sc           , 'selection'       , ''   ],
          'unset'          : [ setting.setting_sc     , 'setting'         , ','  ],
-         'window'         : [ window_sc              , 'action'          , ''   ],      
+         'window'         : [ window_sc              , 'action'          , ','  ],      
          'zoom'           : [ selection_sc           , 'selection'       , ''   ],
          },
    # 2nd

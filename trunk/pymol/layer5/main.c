@@ -74,9 +74,12 @@ struct _CMain {
   double IdleTime;
   int IdleCount;
   int Modifiers;
-  int FinalInitCounter, FinalInitTrigger;
+  int FinalInitCounter, FinalInitTrigger, FinalInitDone;
   int TheWindow;
   int WindowIsVisible;
+  double ReshapeTime;
+  int DrawnFlag, DeferReshapeDeferral;
+  int MaximizeCheck;
   CPyMOLOptions *OwnedOptions;
   /* if Main owns a reference to a copy of the startup options that
      needs to be freed upon shutdown to fully scrub the heap */
@@ -368,6 +371,7 @@ void MainSetWindowVisibility(int mode)
 {
   PyMOLGlobals *G = TempPyMOLGlobals;
   G->Option->window_visible = mode;
+  
 }
 /*========================================================================*/
 static void MainDrag(int x,int y)
@@ -533,6 +537,7 @@ static void MainDrawLocked(void)
     PUnblock();
     
 #endif
+    I->FinalInitDone = true;
   }
 
   PyMOL_Draw(PyMOLInstance);
@@ -682,8 +687,50 @@ static void MainDraw(void)
     " MainDraw: called.\n"
     ENDFD;
   if(PLockAPIAsGlut(false)) {
-    
-    MainDrawLocked();
+    CMain *I = G->Main;    
+    int skip = false;
+    if(I->MaximizeCheck) {
+      {
+        /* is the window manager screwing us over??? */
+
+        I->MaximizeCheck = false;
+        
+        int height = p_glutGet(P_GLUT_SCREEN_HEIGHT);
+        int width = p_glutGet(P_GLUT_SCREEN_WIDTH);
+        int actual_x = p_glutGet(P_GLUT_WINDOW_X);
+        int actual_y = p_glutGet(P_GLUT_WINDOW_Y);
+        
+        printf("%d %d\n",width,height);
+        if(actual_x!=0) {
+          width -= 2*actual_x;
+          height -= actual_x;
+        }
+        if(actual_y!=0) {
+          height -= actual_y;
+        }
+        printf("%d %d\n",width,height);
+        p_glutPositionWindow(0,0);
+        p_glutReshapeWindow(width,height);
+        skip = true;
+      }
+    }
+    if( (!skip) && (!I->DrawnFlag) && I->FinalInitDone) {
+      if(I->DeferReshapeDeferral>0) 
+        I->DeferReshapeDeferral--;
+      else {
+        double time_since_reshape = UtilGetSeconds(G) - I->ReshapeTime;
+        if(time_since_reshape<0.05) { 
+          /* defer screen updates while it's being actively resized */
+          skip = true;
+        }
+      }
+    }
+    if(!skip) {
+      MainDrawLocked();
+      I->DrawnFlag = true;
+    } else {
+      PyMOL_NeedRedisplay(PyMOLInstance);
+    }
     PUnlockAPIAsGlut();
   } else { /* we're busy -- so try to display a progress indicator */
     MainDrawProgress(G);
@@ -756,6 +803,11 @@ void MainReshape(int width, int height) /* called by Glut */
   PyMOLGlobals *G = TempPyMOLGlobals;
 
   if(G) {
+    CMain *I = G->Main;
+    
+    I->ReshapeTime = (double)UtilGetSeconds(G);
+    I->DrawnFlag = false;
+
     if(PLockAPIAsGlut(true)) {
       if(G->HaveGUI) {
         glViewport(0, 0, (GLint) width, (GLint) height);
@@ -835,40 +887,46 @@ void MainDoReshape(int width, int height) /* called internally */
   int force =false;
   PyMOLGlobals *G = TempPyMOLGlobals;
 
-  /* if width is negative, force a reshape based on the current width */
-
-  if(width<0) {
-    BlockGetSize(SceneGetBlock(G),&width,&h);
-    if(SettingGetGlobal_b(G,cSetting_internal_gui))
-      width+=SettingGetGlobal_i(G,cSetting_internal_gui_width);
-    force = true;
+  if(G) {
+    /* if width is negative, force a reshape based on the current width */
+    
+    if(width<0) {
+      BlockGetSize(SceneGetBlock(G),&width,&h);
+      if(SettingGetGlobal_b(G,cSetting_internal_gui))
+        width+=SettingGetGlobal_i(G,cSetting_internal_gui_width);
+      force = true;
+    }
+    
+    /* if height is negative, force a reshape based on the current height */
+    
+    if(height<0) { 
+      BlockGetSize(SceneGetBlock(G),&w,&height);
+      internal_feedback = (int)SettingGet(G,cSetting_internal_feedback);
+      if(internal_feedback)
+        height+=(internal_feedback-1)*cOrthoLineHeight+cOrthoBottomSceneMargin;
+      if(SettingGetGlobal_b(G,cSetting_seq_view)&&!SettingGetGlobal_b(G,cSetting_seq_view_overlay))
+        height+=SeqGetHeight(G);
+      force = true;
+    }
+    
+    /* if we have a GUI, for a reshape event */
+    
+    if(G->HaveGUI) {
+      p_glutReshapeWindow(width,height);
+      glViewport(0, 0, (GLint) width, (GLint) height);
+    }
+    
+    
+    PyMOL_Reshape(PyMOLInstance, width, height, force);
+    
+    if(G->Main) {
+      G->Main->DeferReshapeDeferral = 1;
+    }
+    /* do we need to become full-screen? */
+    
+    if(SettingGet(G,cSetting_full_screen))
+      p_glutFullScreen();
   }
-
-  /* if height is negative, force a reshape based on the current height */
-
-  if(height<0) { 
-    BlockGetSize(SceneGetBlock(G),&w,&height);
-    internal_feedback = (int)SettingGet(G,cSetting_internal_feedback);
-    if(internal_feedback)
-      height+=(internal_feedback-1)*cOrthoLineHeight+cOrthoBottomSceneMargin;
-    if(SettingGetGlobal_b(G,cSetting_seq_view)&&!SettingGetGlobal_b(G,cSetting_seq_view_overlay))
-      height+=SeqGetHeight(G);
-    force = true;
-  }
-
-  /* if we have a GUI, for a reshape event */
-
-  if(G->HaveGUI) {
-    p_glutReshapeWindow(width,height);
-    glViewport(0, 0, (GLint) width, (GLint) height);
-  }
-
-  PyMOL_Reshape(PyMOLInstance, width, height, force);
-
-  /* do we need to become full-screen? */
-
-  if(SettingGet(G,cSetting_full_screen))
-    p_glutFullScreen();
 
 }
 /*========================================================================*/
@@ -876,16 +934,14 @@ static void MainInit(PyMOLGlobals *G)
 {
 
   CMain *I = (G->Main = Calloc(CMain,1)); 
-  /* Data structure is zeroed on start...*/
-  
-  I->IdleMode = 0;
-  I->IdleCount = 0;
+  /* Data structure is zeroed on start...no need for explicit zero inits */
+
+  I->DeferReshapeDeferral = 1;
 
   PyMOL_Start(PyMOLInstance);
 
   PyMOL_SetSwapBuffersFn(PyMOLInstance,(PyMOLSwapBuffersFn*)p_glutSwapBuffers);
-  I->IdleTime=(float)UtilGetSeconds(G);
-
+  I->ReshapeTime= ( I->IdleTime = UtilGetSeconds(G) );
 }
 
 /*========================================================================*/
@@ -993,11 +1049,11 @@ static void MainBusyIdle(void)
   /* keep the window on even coordinates to preserve L/R stereo... */
   {
     int x,y;
-    x = glutGet(GLUT_WINDOW_X);
+    x = glutGet(P_GLUT_WINDOW_X);
     if(x!=Sharp3DLastWindowX) {
       Sharp3DLastWindowX=x;
       if(x&0x1) {
-        y = glutGet(GLUT_WINDOW_Y);
+        y = glutGet(P_GLUT_WINDOW_Y);
         glutPositionWindow(x-1,y);
       }
     }
@@ -1168,6 +1224,53 @@ void MainRepositionWindowDefault(PyMOLGlobals *G)
 {
   p_glutPositionWindow(G->Option->winPX,G->Option->winPY);
   p_glutReshapeWindow(G->Option->winX,G->Option->winY);
+}
+void MainSetWindowPosition(PyMOLGlobals *G,int x,int y)
+{
+  p_glutPositionWindow(x,y);
+}
+void MainSetWindowSize(PyMOLGlobals *G,int w,int h)
+{
+  G->Main->DeferReshapeDeferral = 1;
+  p_glutReshapeWindow(w,h);
+}
+void MainMaximizeWindow(PyMOLGlobals *G)
+{
+  G->Main->DeferReshapeDeferral = 1;
+  G->Main->MaximizeCheck = true;
+  int height = p_glutGet(P_GLUT_SCREEN_HEIGHT);
+  int width = p_glutGet(P_GLUT_SCREEN_WIDTH);
+  p_glutPositionWindow(0,0);
+  p_glutReshapeWindow(width,height);
+ 
+}
+void MainCheckWindowFit(PyMOLGlobals *G) 
+{
+  CMain *I = G->Main;
+  if(G && G->Main) {
+    int height = p_glutGet(P_GLUT_SCREEN_HEIGHT);
+    int width = p_glutGet(P_GLUT_SCREEN_WIDTH);
+    int actual_x = p_glutGet(P_GLUT_WINDOW_X);
+    int actual_y = p_glutGet(P_GLUT_WINDOW_Y);
+    int actual_width = p_glutGet(P_GLUT_WINDOW_WIDTH);
+    int actual_height = p_glutGet(P_GLUT_WINDOW_HEIGHT);
+    int new_width=-1;
+    int new_height=-1;
+
+    I->DeferReshapeDeferral = 1;
+           
+    if((actual_x+actual_width)>width)
+      new_width = (width - actual_x) - 5; /* allow room for decoration */
+    if((actual_y+actual_height)>height)
+      new_height = (height - actual_y) - 5; /* allow room for decoration */
+    if((new_width>0)||(new_height>0)) {
+      if(new_width<0) new_width = actual_width;
+      if(new_height<0) new_height = actual_height;
+      MainSetWindowSize(G,new_width,new_height);
+    }
+  }
+
+
 }
 /*========================================================================*/
 

@@ -22,7 +22,7 @@ if __name__=='pymol.externing':
 
    from glob import glob
    from cmd import _cmd,lock,unlock,Shortcut,QuietException, \
-        _feedback,fb_module,fb_mask, \
+        _feedback,fb_module,fb_mask, exp_path, \
         DEFAULT_ERROR, DEFAULT_SUCCESS, _raising, is_ok, is_error        
 
    def cd(dir):
@@ -39,8 +39,7 @@ SEE ALSO
 
    pwd, ls, system
       '''
-      dir = os.path.expanduser(dir)
-      dir = os.path.expandvars(dir)
+      dir = exp_path(dir)
       os.chdir(dir)  # raises on error
       return DEFAULT_SUCCESS
 
@@ -84,8 +83,7 @@ SEE ALSO
       if pattern==None:
          pattern = "*"
       else:
-         pattern = os.path.expanduser(pattern)
-         pattern = os.path.expandvars(pattern)
+         pattern = exp_path(pattern)
       if string.find("*",pattern)<0:
          lst = glob(pattern+"/*")
       else:

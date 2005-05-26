@@ -190,9 +190,7 @@ EXAMPLES
             filename = None
       if filename!=None:
          try:
-            filename = os.path.expanduser(filename)
-            filename = os.path.expandvars(filename)
-
+            filename = cmd.exp_path(filename)
             lock()
             r = _cmd.load_color_table(str(filename),int(quiet))
          finally:
@@ -310,9 +308,7 @@ SEE ALSO
          selection = selector.process(selection)
          #   
 
-         fname = filename
-         fname = os.path.expanduser(fname)
-         fname = os.path.expandvars(fname)
+         fname = cmd.exp_path(filename)
 
          if not len(str(type)):
             # determine file type if possible
@@ -427,9 +423,7 @@ SEE ALSO
             discrete = int(discrete)
          if multiplex==None:
             multiplex=-2
-         fname = filename
-         fname = os.path.expanduser(fname)
-         fname = os.path.expandvars(fname)
+         fname = cmd.exp_path(filename)
          go_to_first_scene = 0
          
          if not len(str(type)):
