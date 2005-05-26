@@ -113,7 +113,9 @@ class PMGApp(Pmw.MegaWidget):
       if ok:
          ofile = askopenfilename(title="Install Plugin",
             initialdir = os.getcwd(),
-            filetypes=[ ("All Readable","*.py") ])
+            filetypes=[ ("All Readable","*.py"),
+                        ("All Readable","*.pyc"),                        
+                        ])
          if len(ofile):
             initialdir, plugname = os.path.split(ofile)
             try:
