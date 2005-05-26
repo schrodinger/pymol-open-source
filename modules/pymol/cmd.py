@@ -298,7 +298,7 @@ if __name__=='pymol.cmd':
 
       def _nt_expandvars(path): # allow for ??sdf?SFfolder$/file
          path = nt_hidden_path_re.sub("$$",path)
-         return os.expandvars(path)
+         return os.path.expandvars(path)
       
       if "nt" in sys.builtin_module_names:
          _expandvars = _nt_expandvars
