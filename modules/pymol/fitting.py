@@ -61,7 +61,7 @@ SEE ALSO
       r = DEFAULT_ERROR
       source = selector.process(source)
       target = selector.process(target)
-      mfile = os.path.expandvars("$PYMOL_PATH/data/pymol/matrices/"+matrix)
+      mfile = cmd.exp_path("$PYMOL_PATH/data/pymol/matrices/"+matrix)
       if object==None: object=''
       try:
          lock()

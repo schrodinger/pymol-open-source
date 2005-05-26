@@ -213,3 +213,31 @@ Selector-Error: Invalid Selection Name.
 Selector-Error: Invalid Selection Name.
 ( invalid )<--
 CmdException raised.
+cmd.zoom()
+None
+cmd.zoom("pept")
+None
+cmd.zoom("none")
+ExecutiveWindowZoom-Warning: selection doesn't specify any coordinates.
+None
+cmd.zoom("invalid")
+Selector-Error: Invalid Selection Name.
+( invalid )<--
+-1
+Selector-Error: Invalid Selection Name.
+( invalid )<--
+QuietException raised.
+cmd.center()
+None
+cmd.center("pept")
+None
+cmd.center("none")
+ExecutiveCenter-Warning: selection doesn't specify any coordinates.
+None
+cmd.center("invalid")
+Selector-Error: Invalid Selection Name.
+( invalid )<--
+-1
+Selector-Error: Invalid Selection Name.
+( invalid )<--
+QuietException raised.

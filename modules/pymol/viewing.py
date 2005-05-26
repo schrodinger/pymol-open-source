@@ -1558,7 +1558,7 @@ EXAMPLES
       if _raising(r): raise QuietException
       return r
 
-   def window(action='show'):
+   def window(action='show',x=0,y=0,width=0,height=0):
       '''
 DESCRIPTION
 
@@ -1581,7 +1581,7 @@ PYMOL API
       r = DEFAULT_ERROR      
       try:
          lock()
-         r = _cmd.window(action)
+         r = _cmd.window(action,int(x),int(y),int(width),int(height))
       finally:
          unlock(r)
       if _raising(r): raise QuietException
@@ -1751,6 +1751,12 @@ SEE ALSO
       arg_tup = (int(width),int(height),
                  int(renderer),float(angle),
                  float(shift),int(quiet))
+      # stop movies and sculpting if they're on...
+      if cmd.get_movie_playing():
+         cmd.mstop()
+      if int(cmd.get_setting_legacy("sculpting"))!=0:
+         cmd.set("sculpting","off",quiet=1)
+      #
       r = DEFAULT_ERROR
       if not async:
          r = apply(_ray, arg_tup)

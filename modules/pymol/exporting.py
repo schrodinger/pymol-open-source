@@ -188,8 +188,7 @@ SEE ALSO
             format = 'pse'
       else:
          format = str(format)
-      filename = os.path.expanduser(filename)
-      filename = os.path.expandvars(filename)
+      filename = cmd.exp_path(filename)
       if format=='pdb': # standard PDB file 
          f=open(filename,"w")
          if f:
@@ -222,7 +221,7 @@ SEE ALSO
          if not quiet:
             print " Save: wrote \""+filename+"\"."
       elif format=='pkla': # ascii override
-         io.pkl.toFile(cmd.get_model(selection),filename,bin=0)
+         io.pkl.toFile(cmd.get_model(selection,state),filename,bin=0)
          r = DEFAULT_SUCCESS
          if not quiet:
             print " Save: wrote \""+filename+"\"."
@@ -232,12 +231,12 @@ SEE ALSO
          if not quiet:
             print " Save: wrote \""+filename+"\"."
       elif format=='mmod': # macromodel
-         io.mmd.toFile(cmd.get_model(selection),filename)
+         io.mmd.toFile(cmd.get_model(selection,state),filename)
          r = DEFAULT_SUCCESS
          if not quiet:
             print " Save: wrote \""+filename+"\"."
       elif format=='mol': 
-         io.mol.toFile(cmd.get_model(selection),filename)
+         io.mol.toFile(cmd.get_model(selection,state),filename)
          r = DEFAULT_SUCCESS
          if not quiet:
             print " Save: wrote \""+filename+"\"."

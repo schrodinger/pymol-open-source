@@ -5392,14 +5392,41 @@ static PyObject *CmdOrder(PyObject *self, 	PyObject *args)
 
 static PyObject *CmdWindow(PyObject *self, 	PyObject *args)
 {
-  int int1;
-
+  int int1,x,y,width,height;
   int ok=true;
-  ok = PyArg_ParseTuple(args,"i",&int1);
+  ok = PyArg_ParseTuple(args,"iiiii",&int1,&x,&y,&width,&height);
   if (ok) {
     APIEntry();
 #ifndef _PYMOL_NO_MAIN
-    MainSetWindowVisibility(int1);
+    switch(int1) {
+    case 0:
+    case 1:
+      MainSetWindowVisibility(int1);
+      break;
+    case 2: /* position */
+      MainSetWindowPosition(TempPyMOLGlobals,x,y);
+      break;
+    case 3: /* size */
+      if((width==0)&&(height==0)&&(x!=0)&&(y!=0)) {
+        width=x;
+        height=y;
+      }
+      MainSetWindowSize(TempPyMOLGlobals,width,height);
+      break;
+    case 4: /* position and size */
+      MainSetWindowPosition(TempPyMOLGlobals,x,y);
+      MainSetWindowSize(TempPyMOLGlobals,width,height);
+      break;
+    case 5: /* maximize -- 
+               should use the window manager, 
+               but GLUT doesn't provide for that */
+      MainMaximizeWindow(TempPyMOLGlobals);
+      break;
+    case 6:
+      MainCheckWindowFit(TempPyMOLGlobals);
+      break;
+      
+    }
 #endif 
     APIExit();
   }

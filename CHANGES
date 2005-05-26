@@ -6,6 +6,8 @@ Changes up to 0.99
 
    beta05
 
+   * ray now stops and movie and turns off sculpting
+
    * Better return conventions for the PyMOL API:  errors return negatives,
    success returns None, and boolean queries return 0 or 1.  Exceptions
    are raised by default on error conditions unless the 
