@@ -1235,10 +1235,10 @@ void MainSetWindowSize(PyMOLGlobals *G,int w,int h)
 }
 void MainMaximizeWindow(PyMOLGlobals *G)
 {
-  G->Main->DeferReshapeDeferral = 1;
-  G->Main->MaximizeCheck = true;
   int height = p_glutGet(P_GLUT_SCREEN_HEIGHT);
   int width = p_glutGet(P_GLUT_SCREEN_WIDTH);
+  G->Main->DeferReshapeDeferral = 1;
+  G->Main->MaximizeCheck = true;
   p_glutPositionWindow(0,0);
   p_glutReshapeWindow(width,height);
  
