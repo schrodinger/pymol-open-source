@@ -693,14 +693,13 @@ static void MainDraw(void)
       {
         /* is the window manager screwing us over??? */
 
-        I->MaximizeCheck = false;
-        
         int height = p_glutGet(P_GLUT_SCREEN_HEIGHT);
         int width = p_glutGet(P_GLUT_SCREEN_WIDTH);
         int actual_x = p_glutGet(P_GLUT_WINDOW_X);
         int actual_y = p_glutGet(P_GLUT_WINDOW_Y);
         
-        printf("%d %d\n",width,height);
+        I->MaximizeCheck = false;
+        
         if(actual_x!=0) {
           width -= 2*actual_x;
           height -= actual_x;
