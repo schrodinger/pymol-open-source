@@ -3277,12 +3277,12 @@ static PyObject *CmdGetObjectList(PyObject *self, 	PyObject *args)
 
 static PyObject *CmdGetDistance(PyObject *self, 	PyObject *args)
 {
-  char *str1,*str2,*str3;
+  char *str1,*str2;
   float result;
   int int1;
   OrthoLineType s1,s2;
   int ok=false;
-  ok = PyArg_ParseTuple(args,"ssi",&str1,&str2,&str3,&int1);
+  ok = PyArg_ParseTuple(args,"ssi",&str1,&str2,&int1);
   
   if (ok) {
     APIEntry();
