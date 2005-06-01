@@ -4,6 +4,8 @@ CHANGE LOG
 
 Changes up to 0.99
 
+   * fixed state argument for cmd.get_distance
+
    beta05
 
    * support for windows hidden folders with terminal dollar sign:
