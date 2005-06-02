@@ -40,7 +40,6 @@ typedef struct RepRibbon {
 
 #include"ObjectMolecule.h"
 
-void RepRibbonRender(RepRibbon *I,CRay *ray,Pickable **pick);
 void RepRibbonFree(RepRibbon *I);
 
 void RepRibbonInit(void)
@@ -54,8 +53,10 @@ void RepRibbonFree(RepRibbon *I)
   OOFreeP(I);
 }
 
-void RepRibbonRender(RepRibbon *I,CRay *ray,Pickable **pick)
+static void RepRibbonRender(RepRibbon *I,RenderInfo *info)
 {
+  CRay *ray = info->ray;
+  Pickable **pick = info->pick;
   PyMOLGlobals *G=I->R.G;
   float *v=I->V;
   int c=I->N;
@@ -157,6 +158,12 @@ void RepRibbonRender(RepRibbon *I,CRay *ray,Pickable **pick)
       ribbon_smooth=SettingGet_i(G,NULL,I->R.obj->Setting,cSetting_ribbon_smooth);
       if(!ribbon_smooth)
         glDisable(GL_LINE_SMOOTH);
+
+      if(info->width_scale_flag) 
+        glLineWidth(I->linewidth*info->width_scale);
+      else
+        glLineWidth(I->linewidth);
+
       use_dlst = (int)SettingGet(G,cSetting_use_display_lists);
       if(use_dlst&&I->R.displayList) {
         glCallList(I->R.displayList);
@@ -176,7 +183,6 @@ void RepRibbonRender(RepRibbon *I,CRay *ray,Pickable **pick)
           " RepRibbonRender: rendering GL...\n"
           ENDFD;
       
-        glLineWidth(I->linewidth);
       
         if(c) {
         
@@ -283,7 +289,7 @@ Rep *RepRibbonNew(CoordSet *cs)
   if(sampling<1) sampling=1;
   I->radius=SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_ribbon_radius);
 
-  I->R.fRender=(void (*)(struct Rep *, CRay *, Pickable **))RepRibbonRender;
+  I->R.fRender=(void (*)(struct Rep *, RenderInfo *))RepRibbonRender;
   I->R.fFree=(void (*)(struct Rep *))RepRibbonFree;
   I->R.fRecolor=NULL;
   I->R.obj = (CObject*)obj;

@@ -139,11 +139,6 @@ struct _PyMOLGlobals {
 extern PyMOLGlobals *TempPyMOLGlobals;
 #endif
 
-/* not a global, but CRay widely used and Ray.h definitely isn't a
- * lightweight include... */
-
-typedef struct _CRay               CRay;
-
 
 #endif
 

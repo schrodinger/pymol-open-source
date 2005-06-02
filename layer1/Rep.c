@@ -26,7 +26,6 @@ Z* -------------------------------------------------------------------
 #include"P.h"
 /*========================================================================*/
 
-void RepRenderBox(struct Rep *this,CRay *ray,Pickable **pick);
 void RepInvalidate(struct Rep *I,struct CoordSet *cs,int level);
 struct Rep *RepUpdate(struct Rep *I,struct CoordSet *cs,int rep);
 struct Rep *RepRebuild(struct Rep *I,struct CoordSet *cs,int rep);
@@ -108,6 +107,37 @@ void RepInvalidate(struct Rep *I,struct CoordSet *cs,int level)
   if(level>I->MaxInvalid) I->MaxInvalid=level;
 }
 /*========================================================================*/
+static void RepRenderBox(struct Rep *this,RenderInfo *info)
+{
+  register PyMOLGlobals *G = this->G;
+  if(G->HaveGUI && G->ValidContext) {
+    glBegin(GL_LINE_LOOP);
+    glVertex3f(-0.5F,-0.5F,-0.5F);
+    glVertex3f(-0.5F,-0.5F, 0.5F);
+    glVertex3f(-0.5F, 0.5F, 0.5F);
+    glVertex3f(-0.5F, 0.5F,-0.5F);
+    
+    glVertex3f( 0.5F, 0.5F,-0.5F);
+    glVertex3f( 0.5F, 0.5F, 0.5F);
+    glVertex3f( 0.5F,-0.5F, 0.5F);
+    glVertex3f( 0.5F,-0.5F,-0.5F);
+    glEnd();
+    
+    glBegin(GL_LINES);
+    glVertex3i(0,0,0);
+    glVertex3i(1,0,0);
+    
+    glVertex3i(0,0,0);
+    glVertex3i(0,2,0);
+    
+    glVertex3i(0,0,0);
+    glVertex3i(0,0,3);
+    
+    glEnd();
+  }
+
+}
+/*========================================================================*/
 void RepInit(PyMOLGlobals *G,Rep *I)
 {
   I->G = G;
@@ -143,37 +173,6 @@ void RepPurge(Rep *I)
     }
   }
   FreeP(I->P);
-}
-/*========================================================================*/
-void RepRenderBox(struct Rep *this,CRay *ray,Pickable **pick)
-{
-  register PyMOLGlobals *G = this->G;
-  if(G->HaveGUI && G->ValidContext) {
-    glBegin(GL_LINE_LOOP);
-    glVertex3f(-0.5F,-0.5F,-0.5F);
-    glVertex3f(-0.5F,-0.5F, 0.5F);
-    glVertex3f(-0.5F, 0.5F, 0.5F);
-    glVertex3f(-0.5F, 0.5F,-0.5F);
-    
-    glVertex3f( 0.5F, 0.5F,-0.5F);
-    glVertex3f( 0.5F, 0.5F, 0.5F);
-    glVertex3f( 0.5F,-0.5F, 0.5F);
-    glVertex3f( 0.5F,-0.5F,-0.5F);
-    glEnd();
-    
-    glBegin(GL_LINES);
-    glVertex3i(0,0,0);
-    glVertex3i(1,0,0);
-    
-    glVertex3i(0,0,0);
-    glVertex3i(0,2,0);
-    
-    glVertex3i(0,0,0);
-    glVertex3i(0,0,3);
-    
-    glEnd();
-  }
-
 }
 
 

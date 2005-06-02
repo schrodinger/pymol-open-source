@@ -41,7 +41,6 @@ typedef struct RepCylBond {
   int NSP,NSPC;
 } RepCylBond;
 
-void RepCylBondRender(RepCylBond *I,CRay *ray,Pickable **pick);
 static void subdivide( int n, float *x, float *y);
 float *RepCylinder(float *v,float *v1,float *v2,int nEdge,
                    int frontCap, int endCap,
@@ -64,8 +63,10 @@ float *RepCylinderBox(float *v,float *v1,float *v2,float tube_size,
                       float overlap,float nub);
 
 
-void RepCylBondRender(RepCylBond *I,CRay *ray,Pickable **pick)
+static void RepCylBondRender(RepCylBond *I,RenderInfo *info)
 {
+  CRay *ray = info->ray;
+  Pickable **pick = info->pick;
   int a;
   float *v;
   int c,cc;
@@ -1257,7 +1258,7 @@ Rep *RepCylBondNew(CoordSet *cs)
   half_bonds = (int)SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_half_bonds);  
 
   RepInit(G,&I->R);
-  I->R.fRender=(void (*)(struct Rep *, CRay *, Pickable **))RepCylBondRender;
+  I->R.fRender=(void (*)(struct Rep *, RenderInfo *))RepCylBondRender;
   I->R.fFree=(void (*)(struct Rep *))RepCylBondFree;
   I->R.obj=(CObject*)obj;
   I->R.cs = cs;

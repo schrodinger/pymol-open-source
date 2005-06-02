@@ -476,7 +476,7 @@ CSetting *SettingNewFromPyList(PyMOLGlobals *G,PyObject *list);
 #define cSetting_transparency_picking_mode  324
 #define cSetting_virtual_trackball          325
 #define cSetting_pdb_reformat_names_mode    326
-#define cSetting_ray_pixel_scale_to_window  327
+#define cSetting_ray_pixel_scale            327
 #define cSetting_label_font_id              328
 #define cSetting_pdb_conect_all             329
 #define cSetting_button_mode_name           330
@@ -568,7 +568,7 @@ CSetting *SettingNewFromPyList(PyMOLGlobals *G,PyObject *list);
 #define cSetting_editor_auto_dihedral       416
 #define cSetting_presentation_auto_start    417
 #define cSetting_validate_object_names      418
-
+#define cSetting_pixel_scale                419
 /* when you add a new settingg also remember:
    layer1/Setting.c
    modules/pymol/setting.py
@@ -577,7 +577,7 @@ CSetting *SettingNewFromPyList(PyMOLGlobals *G,PyObject *list);
 
 /* cSetting_ss_INIT must always be last setting_index +1 */
 
-#define cSetting_INIT                       419
+#define cSetting_INIT                       420
 
 #endif
 

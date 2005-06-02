@@ -45,7 +45,6 @@ typedef struct RepSphere {
 
 #include"ObjectMolecule.h"
 
-void RepSphereRender(RepSphere *I,CRay *ray,Pickable **pick);
 void RepSphereFree(RepSphere *I);
 int RepSphereSameVis(RepSphere *I,CoordSet *cs);
 
@@ -61,8 +60,10 @@ void RepSphereFree(RepSphere *I)
   OOFreeP(I);
 }
 
-void RepSphereRender(RepSphere *I,CRay *ray,Pickable **pick)
+static void RepSphereRender(RepSphere *I,RenderInfo *info)
 {
+  CRay *ray = info->ray;
+  Pickable **pick = info->pick;
   PyMOLGlobals *G=I->R.G;
   float *v=I->V,*vc;
   int c=I->N;
@@ -453,7 +454,7 @@ Rep *RepSphereNew(CoordSet *cs)
 
   sphere_scale=SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_sphere_scale);
 
-  I->R.fRender=(void (*)(struct Rep *, CRay *, Pickable **))RepSphereRender;
+  I->R.fRender=(void (*)(struct Rep *, RenderInfo *))RepSphereRender;
   I->R.fFree=(void (*)(struct Rep *))RepSphereFree;
   I->R.fSameVis=(int (*)(struct Rep*, struct CoordSet*))RepSphereSameVis;
   I->R.fRecolor=NULL;

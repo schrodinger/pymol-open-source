@@ -29,7 +29,6 @@ Z* -------------------------------------------------------------------
 
 void GadgetSetUpdate(GadgetSet *I);
 void GadgetSetFree(GadgetSet *I);
-void GadgetSetRender(GadgetSet *I,CRay *ray,Pickable **pick,int pass);
 void GadgetSetStrip(GadgetSet *I);
 void GadgetSetInvalidateRep(GadgetSet *I,int type,int level);
 
@@ -372,8 +371,11 @@ void GadgetSetUpdate(GadgetSet *I)
   }
 }
 /*========================================================================*/
-void GadgetSetRender(GadgetSet *I,CRay *ray,Pickable **pick,int pass)
+void GadgetSetRender(GadgetSet *I,RenderInfo *info)
 {
+  int pass = info->pass;
+  CRay *ray = info->ray;
+  Pickable **pick = info->pick;
   float *color;
 
   color = ColorGet(I->G,I->Obj->Obj.Color);
@@ -395,7 +397,7 @@ void GadgetSetRender(GadgetSet *I,CRay *ray,Pickable **pick,int pass)
       } else {
         if(I->StdCGO) {
           /*CGORenderGL(I->PickCGO,color,I->Obj->Obj.Setting,NULL);*/
-          CGORenderGL(I->StdCGO,color,I->Obj->Obj.Setting,NULL);
+          CGORenderGL(I->StdCGO,color,I->Obj->Obj.Setting,NULL,info);
         }
       }
     }

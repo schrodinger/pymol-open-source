@@ -836,8 +836,32 @@ static int SceneMakeSizedImage(PyMOLGlobals *G,int width, int height)
 {
   register CScene *I=G->Scene;
   int ok=true;
+  int save_flag = false;
+  int save_width, save_height;
   /* check assumptions */
 
+  if( (width && height && I->Width && I->Height ) &&
+      fabs(((float)(height - (width * I->Height) / (I->Width)))/height) > 0.01F)
+    {
+      save_width = I->Width;
+      save_height = I->Height;
+      save_flag = true;
+
+      /* squish the dimensions as needed to maintain 
+         aspect ratio within the current rectangle */
+
+      if(I->Width > ( (width * I->Height) / height))
+        I->Width = (width * I->Height) / height;
+      else if(I->Height > ( (height * I->Width) / width))
+        I->Height = ( height * I->Width) / width;
+    }
+  
+  if(width && !height) {
+    height = (I->Height * width) / I->Width;
+  }
+  if(height && !width) {
+    width = (I->Width * height) / I->Height;
+  }
   if(!((width>0)&&
        (height>0)&&
        (I->Width>0)&&
@@ -942,61 +966,11 @@ static int SceneMakeSizedImage(PyMOLGlobals *G,int width, int height)
     ok=false;
   }
 
+  if(save_flag) {
+    I->Width = save_width;
+    I->Height = save_height;
+  }
   return ok;
-
-  #if 0
-  
-  {
-  if(I->ImageBuffer&&(I->ImageBufferHeight==I->Height)&&(I->ImageBufferWidth==I->Width)) {
-	 MovieSetImage(G,MovieFrameToImage(G,SettingGetGlobal_i(G,cSetting_frame)-1)
-                                    ,I->ImageBuffer);
-    I->MovieOwnsImageFlag=true;
-  } else {
-    I->MovieOwnsImageFlag=false;
-  }
-  I->CopyFlag=true;
-
-  register CScene *I=G->Scene;
-  unsigned int buffer_size;
-  GLvoid *image;
-  int reset_alpha = false;
-
-  buffer_size = 4*I->Width*I->Height;
-  if(!I->CopyFlag) {
-	 image = (GLvoid*)Alloc(char,buffer_size);
-	 ErrChkPtr(G,image);
-    if(G->HaveGUI && G->ValidContext) {
-      glReadBuffer(GL_BACK);
-      PyMOLReadPixels(I->Block->rect.left,I->Block->rect.bottom,I->Width,I->Height,
-                   GL_RGBA,GL_UNSIGNED_BYTE,image);
-      
-      reset_alpha = true;
-      I->ImageBufferHeight=I->Height;
-      I->ImageBufferWidth=I->Width;
-    } else {
-       PRINTFB(G,FB_Scene,FB_Errors)
-         " ScenePNG-WARNING: writing a blank image buffer.\n"
-         ENDFB(G);
-     }
-  } else {
-    image=I->ImageBuffer;
-    reset_alpha = I->CopiedFromOpenGL;
-    PRINTFB(G,FB_Scene,FB_Blather)
-      " ScenePNG: writing cached image (reset_alpha=%d).\n",reset_alpha
-      ENDFB(G);
-  }
-  if(reset_alpha&&image) {
-    unsigned char *p = (unsigned char*)image;
-    int x,y;
-    for(y=0;y<I->Height;y++) {
-      for(x=0;x<I->Width;x++) {
-        p[3]=0xFF;
-        p+=4;
-      }
-    }
-  }
-  return (unsigned char*)image;
-#endif
 
 }
 
@@ -1599,7 +1573,6 @@ void SceneDraw(Block *block)
   PyMOLGlobals *G=block->G;
   register CScene *I=G->Scene;
   int overlay,text;
-  int width,height;
   int double_pump;
 
   if(G->HaveGUI && G->ValidContext) {
@@ -1611,25 +1584,171 @@ void SceneDraw(Block *block)
 
       if(I->CopyFlag)
         {
+
           glReadBuffer(GL_BACK); 
 
-          if(I->ImageBufferHeight>I->Height||I->ImageBufferWidth>I->Width) {
-            TextSetColor3f(G,1.0F,0.2F,0.2F);
-            TextDrawStrAt(G,"Sorry, I can't display an oversize image.",30,60);
-            TextDrawStrAt(G,"To save image, use File Menu or enter \"png <filename>\".",30,40);
+          if((I->ImageBufferHeight>I->Height)||
+             (I->ImageBufferWidth>I->Width)) { /* image is oversize */
+            {
+              int factor = 1;
+              int shift = 0;
+              register int tmp_height = I->ImageBufferHeight;
+              register int tmp_width = I->ImageBufferWidth;
+              int src_row_bytes = I->ImageBufferWidth * 4;
+              unsigned int color_word;
+              float rgba[4] = { 0.0F, 0.0F, 0.0F, 1.0F };
+
+              ColorGetBkrdContColor(G,rgba,false);
+              color_word = ColorGet32BitWord(G,rgba);
+
+              while(tmp_height&&tmp_width&&
+                    ((tmp_height>(I->Height-3))||(tmp_width>(I->Width-3)))) {
+                tmp_height = (tmp_height>>1);
+                tmp_width = (tmp_width>>1);
+                factor = (factor<<1);
+                shift++;
+              }
+              tmp_width+=2;
+              tmp_height+=2;
+              
+              if(tmp_height&&tmp_width) {
+                unsigned int buffer_size = tmp_height * tmp_width * 4;
+                unsigned char *buffer = Alloc(unsigned char, buffer_size);
+               
+                
+                if(buffer && I->ImageBuffer) {
+                  unsigned char *p = I->ImageBuffer;
+                  unsigned char *q = buffer;
+                  register unsigned char *pp, *ppp, *pppp;
+                  register int a,b,c,d;
+                  register unsigned int c1,c2,c3,c4;
+                  unsigned int factor_col_bytes = factor * 4;
+                  unsigned int factor_row_bytes = factor * src_row_bytes;
+                  
+                  shift = shift + shift;
+                  for(b=0;b<tmp_height;b++) { /* rows */
+                    pp = p;
+                    if((!b)||(b==(tmp_height-1))) {
+                      for(a=0;a<tmp_width;a++) { /* border */
+                        *((unsigned int*)(q)) = color_word;
+                        q+=4;
+                      }
+                    } else {
+                      for(a=0;a<tmp_width;a++) { /* cols */
+                        c1 = c2 = c3 = c4 = 0;
+                        ppp = pp;
+                        if((!a)||(a==(tmp_width-1))) { /* border */
+                          *((unsigned int*)(q)) = color_word;
+                          q+=4;
+                        } else {
+                          for(d=0;d<factor;d++) { /* box rows */
+                            pppp = ppp;
+                            for(c=0;c<factor;c++) { /* box cols */
+                              c1 += *(pppp++);
+                              c2 += *(pppp++);
+                              c3 += *(pppp++);
+                              c4 += *(pppp++);
+                            }
+                            ppp += src_row_bytes;
+                          }
+                          *(q++)= (c1>>shift);
+                          *(q++)= (c2>>shift);
+                          *(q++)= (c3>>shift);
+                          *(q++)= (c4>>shift);
+                          pp += factor_col_bytes;
+                        }
+                      }
+                      p+= factor_row_bytes;
+                    }
+                  }
+
+                  glRasterPos3i((int)((I->Width-tmp_width)/2+I->Block->rect.left),
+                                (int)((I->Height-tmp_height)/2+I->Block->rect.bottom),-10);
+                  PyMOLDrawPixels(tmp_width,tmp_height,GL_RGBA,GL_UNSIGNED_BYTE,buffer);
+                }
+                FreeP(buffer);
+              }
+              {
+                char buffer[255];
+                int text_pos = (I->Height - tmp_height) / 2 - 15;
+                int x_pos, y_pos;
+                if(text_pos<0) {
+                  text_pos = (I->Height - tmp_height) / 2 + 3;
+                  x_pos = (I->Width - tmp_width) / 2 + 3;
+                  y_pos = text_pos;
+                } else {
+                  x_pos = (I->Width - tmp_width) / 2;
+                  y_pos = text_pos;
+                }
+                
+                sprintf(buffer,"Image size = %d x %d",
+                        I->ImageBufferWidth,
+                        I->ImageBufferHeight);
+                
+                TextSetColor3f(G,rgba[0],rgba[1],rgba[2]);
+                TextDrawStrAt(G,buffer,
+                              x_pos + I->Block->rect.left,
+                              y_pos + I->Block->rect.bottom);
+              }
+            }
           } else {
+            int width,height;
+
             width = I->ImageBufferWidth;
             height = I->ImageBufferHeight;
             
             if((width<I->Width)||(height<I->Height)) {
-              glRasterPos3i((int)((I->Width-width)/2+I->Block->rect.left),
-                            (int)((I->Height-height)/2+I->Block->rect.bottom),-10);
+              
+              if(((I->Width-width)>2) && ((I->Height-height)>2)) { /* but a border around image */
+                unsigned int color_word;
+                float rgba[4] = { 0.0F, 0.0F, 0.0F, 1.0F };
+                register unsigned int tmp_height = height+2;
+                register unsigned int tmp_width = width+2;
+                unsigned int n_word = tmp_height * tmp_width;
+                unsigned int *tmp_buffer = Alloc(unsigned int,n_word);
+                ColorGetBkrdContColor(G,rgba,false);
+                color_word = ColorGet32BitWord(G,rgba);
+
+                if(tmp_buffer) {
+                  register int a,b;
+                  unsigned int *p=I->ImageBuffer;
+                  unsigned int *q=tmp_buffer;
+                  for(a=0;a<tmp_height;a++) {
+                    if((!a)||(a==(tmp_height-1))) {
+                      for(b=0;b<tmp_width;b++) 
+                        *(q++) = color_word;
+                    } else {
+                      for(b=0;b<tmp_width;b++) {
+                        if((!b)||(b==(tmp_width-1))) {        
+                          *(q++) = color_word;
+                        } else {
+                          *(q++) = *(p++);
+                        }
+                      }
+                    }
+                  }
+                  
+                  glRasterPos3i((int)((I->Width-tmp_width)/2+I->Block->rect.left),
+                                (int)((I->Height-tmp_height)/2+I->Block->rect.bottom),-11);
+                  
+                  PyMOLDrawPixels(tmp_width,tmp_height,GL_RGBA,GL_UNSIGNED_BYTE,tmp_buffer);
+                  
+                }
+                FreeP(tmp_buffer);
+              } else {
+
+                glRasterPos3i((int)((I->Width-width)/2+I->Block->rect.left),
+                              (int)((I->Height-height)/2+I->Block->rect.bottom),-10);
+                
+                PyMOLDrawPixels(width,height,GL_RGBA,GL_UNSIGNED_BYTE,I->ImageBuffer); 
+              }
             } else {
               glRasterPos3i(I->Block->rect.left,I->Block->rect.bottom,-10);
+              PyMOLDrawPixels(width,height,GL_RGBA,GL_UNSIGNED_BYTE,I->ImageBuffer);            
+
             }
             if(I->ImageBuffer) {
 #if 1
-              PyMOLDrawPixels(width,height,GL_RGBA,GL_UNSIGNED_BYTE,I->ImageBuffer);            
 #else
               if(!(double_pump||(I->StereoMode==1))) {
                 glDrawBuffer(GL_BACK);
@@ -3485,8 +3604,10 @@ static int SceneDeferredPNG(DeferredImage *di)
 {
   PyMOLGlobals *G=di->G;
   SceneMakeSizedImage(G,di->width, di->height);
-  ScenePNG(G,di->filename,di->quiet);
-  FreeP(di->filename);
+  if(di->filename) {
+    ScenePNG(G,di->filename,di->quiet);
+    FreeP(di->filename);
+  }
   return 1;
 }
 int SceneDeferPNG(PyMOLGlobals *G,int width, int height, char *filename, int quiet)
@@ -3846,14 +3967,15 @@ static void SceneApplyImageGamma(PyMOLGlobals *G,unsigned int *buffer, int width
 
 static double accumTiming = 0.0; 
 
-void SceneRay(PyMOLGlobals *G,int ray_width,int ray_height,int mode,
+void SceneRay(PyMOLGlobals *G,
+              int ray_width,int ray_height,int mode,
               char **headerVLA_ptr,
               char **charVLA_ptr,float angle,float shift,int quiet,
               G3dPrimitive **g3d)
 {
   register CScene *I=G->Scene;
   ObjRec *rec=NULL;
-  CRay *ray;
+  CRay *ray =NULL;
   unsigned int buffer_size;
   float height,width;
   float aspRat;
@@ -3892,210 +4014,221 @@ void SceneRay(PyMOLGlobals *G,int ray_width,int ray_height,int mode,
 
   ray = RayNew(G);
 
-  SceneUpdate(G);
-
-  timing = UtilGetSeconds(G); /* start timing the process */
-  
-  /* start afresh, looking in the negative Z direction (0,0,-1) from (0,0,0) */
-  identity44f(rayView);
-
-  /* move the camera to the location we are looking at */
-  MatrixTranslateC44f(rayView,I->Pos[0],I->Pos[1],I->Pos[2]);
-
-  if(shift) {
-    MatrixTranslateC44f(rayView,shift,0.0F,0.0F);
-  }
-  /* move the camera so that we can see the origin 
-	* NOTE, vector is given in the coordinates of the world's motion
-	* relative to the camera */
-
-  
-  /* 4. rotate about the origin (the the center of rotation) */
-
-  if(angle) {
-    float temp[16];
-    identity44f(temp);
-    MatrixRotateC44f(temp,(float)(-PI*angle/180),0.0F,1.0F,0.0F);
-    MatrixMultiplyC44f(I->RotMatrix,temp);
-    MatrixMultiplyC44f(temp,rayView);
-  } else {
-    MatrixMultiplyC44f(I->RotMatrix,rayView);
-  }
-
-
-  /* 5. move the origin to the center of rotation */
-  MatrixTranslateC44f(rayView,-I->Origin[0],-I->Origin[1],-I->Origin[2]);
-
-  if(Feedback(G,FB_Scene,FB_Debugging)) {
-    fprintf(stderr,"SceneRay: %8.3f %8.3f %8.3f\n",
-           I->Pos[0],I->Pos[1],I->Pos[2]);
-    fprintf(stderr,"SceneRay: %8.3f %8.3f %8.3f\n",
-           I->Origin[0],I->Origin[1],I->Origin[2]);
-    fprintf(stderr,"SceneRay: %8.3f %8.3f %8.3f\n",
-           I->RotMatrix[0],I->RotMatrix[1],I->RotMatrix[2]);
-  }
-  /* define the viewing volume */
-
-  height  = (float)(fabs(I->Pos[2])*tan((fov/2.0)*cPI/180.0));	 
-  width = height*aspRat;
-
-  OrthoBusyFast(G,0,20);
-
-  {
-    int ortho = SettingGetGlobal_i(G,cSetting_ray_orthoscopic);
-    int ray_pixel_width;
-
-    if(ortho<0) ortho = SettingGetGlobal_b(G,cSetting_ortho);
+  if(ray) {
+    SceneUpdate(G);
     
-    if(SettingGetGlobal_b(G,cSetting_ray_pixel_scale_to_window)) {
-      ray_pixel_width = I->Width;
-    }  else {
-      ray_pixel_width = ray_width;
+    timing = UtilGetSeconds(G); /* start timing the process */
+    
+    /* start afresh, looking in the negative Z direction (0,0,-1) from (0,0,0) */
+    identity44f(rayView);
+    
+    /* move the camera to the location we are looking at */
+    MatrixTranslateC44f(rayView,I->Pos[0],I->Pos[1],I->Pos[2]);
+    
+    if(shift) {
+      MatrixTranslateC44f(rayView,shift,0.0F,0.0F);
     }
-    if(ortho) {
-      RayPrepare(ray,-width,width,-height,height,
-                 I->FrontSafe,I->BackSafe,rayView,I->RotMatrix,aspRat,
-                 ray_pixel_width,true,1.0F);
+    /* move the camera so that we can see the origin 
+     * NOTE, vector is given in the coordinates of the world's motion
+     * relative to the camera */
+    
+    
+    /* 4. rotate about the origin (the the center of rotation) */
+    
+    if(angle) {
+      float temp[16];
+      identity44f(temp);
+      MatrixRotateC44f(temp,(float)(-PI*angle/180),0.0F,1.0F,0.0F);
+      MatrixMultiplyC44f(I->RotMatrix,temp);
+      MatrixMultiplyC44f(temp,rayView);
     } else {
-      float back_ratio;
-      float back_height;
-      float back_width;
-      float pos;
-      pos = I->Pos[2];
-      if((-pos)<I->FrontSafe)
-        pos = -I->FrontSafe;
-      back_ratio = -I->Back/pos;
-      back_height = back_ratio*height;
-      back_width = aspRat * back_height;
-      RayPrepare(ray,-back_width, back_width, -back_height, back_height,
-                 I->FrontSafe,I->BackSafe,rayView,I->RotMatrix,aspRat,
-                 ray_pixel_width,false,back_width/width);
-    }
-  }
-
-  while(ListIterate(I->Obj,rec,next))
-	 {
-		if(rec->obj->fRender) {
-        RaySetContext(ray,rec->obj->Context);
-		  ray->fColor3fv(ray,white);
-		  rec->obj->fRender(rec->obj,
-                          ObjectGetCurrentState(rec->obj,false),ray,NULL,0);
-		}
-	 }
-  OrthoBusyFast(G,1,20);
-
-  if(mode!=2) { /* don't show pixel count for tests */
-    if(!quiet) {
-    PRINTFB(G,FB_Ray,FB_Blather)
-      " Ray: tracing %dx%d = %d rays against %d primitives.\n",ray_width,ray_height,
-      ray_width*ray_height,RayGetNPrimitives(ray)
-      ENDFB(G);
-    }
-  }
-  switch(mode) {
-  case 0: /* mode 0 is built-in */
-    buffer_size = 4*ray_width*ray_height;
-    buffer=(GLvoid*)Alloc(char,buffer_size);
-    ErrChkPtr(G,buffer);
-    
-    RayRender(ray,ray_width,ray_height,buffer,I->FrontSafe,I->BackSafe,timing,angle,
-              fov,I->Pos);
-    SceneApplyImageGamma(G,buffer,ray_width,ray_height);
-
-    /*    RayRenderColorTable(ray,ray_width,ray_height,buffer);*/
-    
-    if(I->ImageBuffer) {
-      if(I->MovieOwnsImageFlag) {
-        I->MovieOwnsImageFlag=false;
-        I->ImageBuffer=NULL;
-      } else {
-        FreeP(I->ImageBuffer);
-      }
+      MatrixMultiplyC44f(I->RotMatrix,rayView);
     }
     
-    I->ImageBuffer = buffer;
-    I->ImageBufferSize = buffer_size;
-    I->ImageBufferWidth=ray_width;
-    I->ImageBufferHeight=ray_height;
-    I->DirtyFlag=false;
-    I->CopyFlag = true;
-    I->CopiedFromOpenGL = false;
-    I->MovieOwnsImageFlag = false;
-    break;
-
-  case 1: /* mode 1 is povray */
-    charVLA=VLAlloc(char,100000); 
-    headerVLA=VLAlloc(char,2000);
-    RayRenderPOV(ray,ray_width,ray_height,&headerVLA,&charVLA,
-                 I->FrontSafe,I->BackSafe,fov,angle);
-    if(!(charVLA_ptr&&headerVLA_ptr)) { /* immediate mode */
-      strcpy(prefix,SettingGet_s(G,NULL,NULL,cSetting_batch_prefix));
-      if(PPovrayRender(headerVLA,charVLA,prefix,ray_width,
-                       ray_height,(int)SettingGet(G,cSetting_antialias))) {
-        strcat(prefix,".png");
-        SceneLoadPNG(G,prefix,false,false);
-        I->DirtyFlag=false;
-      }
-      VLAFreeP(charVLA);
-      VLAFreeP(headerVLA);
-    } else { /* get_povray mode */
-      *charVLA_ptr=charVLA;
-      *headerVLA_ptr=headerVLA;
+    
+    /* 5. move the origin to the center of rotation */
+    MatrixTranslateC44f(rayView,-I->Origin[0],-I->Origin[1],-I->Origin[2]);
+    
+    if(Feedback(G,FB_Scene,FB_Debugging)) {
+      fprintf(stderr,"SceneRay: %8.3f %8.3f %8.3f\n",
+              I->Pos[0],I->Pos[1],I->Pos[2]);
+      fprintf(stderr,"SceneRay: %8.3f %8.3f %8.3f\n",
+              I->Origin[0],I->Origin[1],I->Origin[2]);
+      fprintf(stderr,"SceneRay: %8.3f %8.3f %8.3f\n",
+              I->RotMatrix[0],I->RotMatrix[1],I->RotMatrix[2]);
     }
-    break;
-  case 2: /* mode 2 is for testing of geometries */
-    RayRenderTest(ray,ray_width,ray_height,I->FrontSafe,I->BackSafe,fov);
-    break;
-  case 3: /* mode 3 is for Jmol */
+    /* define the viewing volume */
+    
+    height  = (float)(fabs(I->Pos[2])*tan((fov/2.0)*cPI/180.0));	 
+    width = height*aspRat;
+    
+    OrthoBusyFast(G,0,20);
+    
     {
-      G3dPrimitive *jp = RayRenderG3d(ray,ray_width,ray_height,I->FrontSafe,I->BackSafe,fov,quiet);
-      if(0) {
-        int cnt = VLAGetSize(jp);
-        int a;
-        for(a=0;a<cnt;a++) {
-          switch(jp[a].op) {
-          case 1:
-            printf("g3d.fillSphereCentered(gray,%d,%d,%d,%d);\n",jp[a].r,jp[a].x1,jp[a].y1,jp[a].z1);
-            break;
-          case 2:
-            printf("triangle(%d,%d,%d,%d,%d,%d,%d,%d,%d);\n",
-                   jp[a].x1,jp[a].y1,jp[a].z1,
-                   jp[a].x2,jp[a].y2,jp[a].z2,
-                   jp[a].x3,jp[a].y3,jp[a].z3
-                   );
-            break;
-          case 3:
-            printf("g3d.fillCylinder(gray,gray,(byte)3,%d,%d,%d,%d,%d,%d,%d);\n",
-                   jp[a].r,
-                   jp[a].x1,jp[a].y1,jp[a].z1,
-                   jp[a].x2,jp[a].y2,jp[a].z2
-                   );          
-            break;
+      int ortho = SettingGetGlobal_i(G,cSetting_ray_orthoscopic);
+      int pixel_scale = SettingGetGlobal_i(G,cSetting_ray_pixel_scale);
+      if(pixel_scale<0)
+        pixel_scale = SettingGetGlobal_i(G,cSetting_pixel_scale);        
+      float pixel_scale_value = 1.0F;
+
+      if(ortho<0) ortho = SettingGetGlobal_b(G,cSetting_ortho);
+      
+      if(SettingGetGlobal_i(G,cSetting_ray_pixel_scale)) {
+        pixel_scale_value = ((float)ray_height)/I->Height;
+      }
+
+      if(ortho) {
+        RayPrepare(ray,-width,width,-height,height,
+                   I->FrontSafe,I->BackSafe,rayView,I->RotMatrix,aspRat,
+                   ray_width, pixel_scale_value,true,1.0F);
+      } else {        
+        float back_ratio;
+        float back_height;
+        float back_width;
+        float pos;
+        pos = I->Pos[2];
+        if((-pos)<I->FrontSafe)
+          pos = -I->FrontSafe;
+        back_ratio = -I->Back/pos;
+        back_height = back_ratio*height;
+        back_width = aspRat * back_height;
+        RayPrepare(ray,-back_width, back_width, -back_height, back_height,
+                   I->FrontSafe,I->BackSafe,rayView,I->RotMatrix,aspRat,
+                   ray_width, pixel_scale_value,false,back_width/width);
+      }
+    }
+    
+    {
+      RenderInfo info;
+      UtilZeroMem(&info,sizeof(RenderInfo));
+      info.ray = ray;
+      
+      while(ListIterate(I->Obj,rec,next))
+        {
+          if(rec->obj->fRender) {
+            RaySetContext(ray,rec->obj->Context);
+            ray->fColor3fv(ray,white);
+            info.state = ObjectGetCurrentState(rec->obj,false);
+            rec->obj->fRender(rec->obj,&info);
           }
         }
+    }
+
+    OrthoBusyFast(G,1,20);
+    
+    if(mode!=2) { /* don't show pixel count for tests */
+      if(!quiet) {
+        PRINTFB(G,FB_Ray,FB_Blather)
+          " Ray: tracing %dx%d = %d rays against %d primitives.\n",ray_width,ray_height,
+          ray_width*ray_height,RayGetNPrimitives(ray)
+          ENDFB(G);
       }
+    }
+    switch(mode) {
+    case 0: /* mode 0 is built-in */
+      buffer_size = 4*ray_width*ray_height;
+      buffer=(GLvoid*)Alloc(char,buffer_size);
+      ErrChkPtr(G,buffer);
+      
+      RayRender(ray,ray_width,ray_height,buffer,I->FrontSafe,I->BackSafe,timing,angle,
+                fov,I->Pos);
+      SceneApplyImageGamma(G,buffer,ray_width,ray_height);
+      
+      /*    RayRenderColorTable(ray,ray_width,ray_height,buffer);*/
+      
+      if(I->ImageBuffer) {
+        if(I->MovieOwnsImageFlag) {
+          I->MovieOwnsImageFlag=false;
+          I->ImageBuffer=NULL;
+        } else {
+          FreeP(I->ImageBuffer);
+        }
+      }
+      
+      I->ImageBuffer = buffer;
+      I->ImageBufferSize = buffer_size;
+      I->ImageBufferWidth=ray_width;
+      I->ImageBufferHeight=ray_height;
+      I->DirtyFlag=false;
+      I->CopyFlag = true;
+      I->CopiedFromOpenGL = false;
+      I->MovieOwnsImageFlag = false;
+      break;
+      
+    case 1: /* mode 1 is povray */
+      charVLA=VLAlloc(char,100000); 
+      headerVLA=VLAlloc(char,2000);
+      RayRenderPOV(ray,ray_width,ray_height,&headerVLA,&charVLA,
+                   I->FrontSafe,I->BackSafe,fov,angle);
+      if(!(charVLA_ptr&&headerVLA_ptr)) { /* immediate mode */
+        strcpy(prefix,SettingGet_s(G,NULL,NULL,cSetting_batch_prefix));
+        if(PPovrayRender(headerVLA,charVLA,prefix,ray_width,
+                         ray_height,(int)SettingGet(G,cSetting_antialias))) {
+          strcat(prefix,".png");
+          SceneLoadPNG(G,prefix,false,false);
+          I->DirtyFlag=false;
+        }
+        VLAFreeP(charVLA);
+        VLAFreeP(headerVLA);
+      } else { /* get_povray mode */
+        *charVLA_ptr=charVLA;
+        *headerVLA_ptr=headerVLA;
+      }
+      break;
+    case 2: /* mode 2 is for testing of geometries */
+      RayRenderTest(ray,ray_width,ray_height,I->FrontSafe,I->BackSafe,fov);
+      break;
+    case 3: /* mode 3 is for Jmol */
+      {
+        G3dPrimitive *jp = RayRenderG3d(ray,ray_width,ray_height,I->FrontSafe,I->BackSafe,fov,quiet);
+        if(0) {
+          int cnt = VLAGetSize(jp);
+          int a;
+          for(a=0;a<cnt;a++) {
+            switch(jp[a].op) {
+            case 1:
+              printf("g3d.fillSphereCentered(gray,%d,%d,%d,%d);\n",jp[a].r,jp[a].x1,jp[a].y1,jp[a].z1);
+              break;
+            case 2:
+              printf("triangle(%d,%d,%d,%d,%d,%d,%d,%d,%d);\n",
+                     jp[a].x1,jp[a].y1,jp[a].z1,
+                     jp[a].x2,jp[a].y2,jp[a].z2,
+                     jp[a].x3,jp[a].y3,jp[a].z3
+                     );
+              break;
+            case 3:
+              printf("g3d.fillCylinder(gray,gray,(byte)3,%d,%d,%d,%d,%d,%d,%d);\n",
+                     jp[a].r,
+                     jp[a].x1,jp[a].y1,jp[a].z1,
+                     jp[a].x2,jp[a].y2,jp[a].z2
+                     );          
+              break;
+            }
+          }
+        }
         if(g3d) {
           *g3d = jp;
         } else {
           VLAFreeP(jp);
         }
+      }
+      break;
     }
-    break;
+    timing = UtilGetSeconds(G)-timing;
+    if(mode!=2) { /* don't show timings for tests */
+      accumTiming += timing; 
+      
+      if(!quiet) {
+        PRINTFB(G,FB_Ray,FB_Details)
+          " Ray: total time: %4.2f sec. = %3.1f frames/hour. (%4.2f sec. accum.)\n", 
+          timing,3600/timing, 
+          accumTiming 
+          ENDFB(G);
+      }
+    }
+    if(mode!=3)
+      OrthoDirty(G);
   }
-  timing = UtilGetSeconds(G)-timing;
-  if(mode!=2) { /* don't show timings for tests */
-	accumTiming += timing; 
-
-	if(!quiet) {
-     PRINTFB(G,FB_Ray,FB_Details)
-       " Ray: total time: %4.2f sec. = %3.1f frames/hour. (%4.2f sec. accum.)\n", 
-       timing,3600/timing, 
-       accumTiming 
-      ENDFB(G);
-   }
-  }
-  if(mode!=3)
-    OrthoDirty(G);
   RayFree(ray);
 }
 /*========================================================================*/
@@ -4257,11 +4390,22 @@ int SceneRenderCached(PyMOLGlobals *G)
 
 
 /*========================================================================*/
-static void SceneRenderAll(PyMOLGlobals *G,SceneUnitContext *context,float *normal,Pickable **pickVLA,int pass,int fat)
+static void SceneRenderAll(PyMOLGlobals *G,SceneUnitContext *context,
+                           float *normal,Pickable **pickVLA,
+                           int pass,int fat, float width_scale)
 {
   register CScene *I=G->Scene;
   ObjRec *rec=NULL;
   float vv[4];
+  RenderInfo info;
+  UtilZeroMem(&info,sizeof(RenderInfo));
+  info.pick = pickVLA;
+  info.pass = pass;
+  
+  if(width_scale!=0.0F) {
+    info.width_scale_flag = true;
+    info.width_scale = width_scale;
+  }
 
   while(ListIterate(I->Obj,rec,next))
     {
@@ -4270,11 +4414,11 @@ static void SceneRenderAll(PyMOLGlobals *G,SceneUnitContext *context,float *norm
         glLineWidth(3.0);
       if(rec->obj->fRender)
         switch(rec->obj->Context) {
-        case 0:
+        case 0: 
           if(normal) 
             glNormal3fv(normal);
-          rec->obj->fRender(rec->obj,
-                            ObjectGetCurrentState(rec->obj,false),NULL,pickVLA,pass);
+          info.state = ObjectGetCurrentState(rec->obj,false);
+          rec->obj->fRender(rec->obj,&info);
           break;
         case 1:
           glMatrixMode(GL_PROJECTION);
@@ -4298,8 +4442,8 @@ static void SceneRenderAll(PyMOLGlobals *G,SceneUnitContext *context,float *norm
                   context->unit_back);
           
           glNormal3f(0.0F,0.0F,1.0F);
-          rec->obj->fRender(rec->obj,
-                            ObjectGetCurrentState(rec->obj,false),NULL,pickVLA,pass);
+          info.state = ObjectGetCurrentState(rec->obj,false);
+          rec->obj->fRender(rec->obj,&info);
 
           glMatrixMode(GL_MODELVIEW);
           glLoadIdentity();
@@ -4359,6 +4503,7 @@ void SceneRender(PyMOLGlobals *G,Pickable *pick,int x,int y,
   GLenum render_buffer = GL_BACK;
   SceneUnitContext context;
   float vv[4];
+  float width_scale = 0.0F;
 
   PRINTFD(G,FB_Scene)
     " SceneRender: entered. pick %p x %d y %d smp %p\n",
@@ -4422,9 +4567,13 @@ void SceneRender(PyMOLGlobals *G,Pickable *pick,int x,int y,
     glGetIntegerv(GL_VIEWPORT,(GLint*)view_save);
 
     if(oversize_width && oversize_height) {
-      glViewport(I->Block->rect.left+x,I->Block->rect.bottom+y,oversize_width, oversize_height);
-    } else 
+      glViewport(I->Block->rect.left+x,
+                 I->Block->rect.bottom+y,
+                 oversize_width, oversize_height);
+      width_scale = ((float)(oversize_width))/I->Width;
+    } else {
       glViewport(I->Block->rect.left,I->Block->rect.bottom,I->Width,I->Height);
+    }
 
     debug_pick = (int)SettingGet(G,cSetting_debug_pick);
 
@@ -4777,7 +4926,7 @@ void SceneRender(PyMOLGlobals *G,Pickable *pick,int x,int y,
       pickVLA[0].index=0;
       pickVLA[0].ptr=NULL;
 
-      SceneRenderAll(G,&context,NULL,&pickVLA,0,true);
+      SceneRenderAll(G,&context,NULL,&pickVLA,0,true,0.0F);
 	  
 
       if(debug_pick) {
@@ -4792,7 +4941,7 @@ void SceneRender(PyMOLGlobals *G,Pickable *pick,int x,int y,
       pickVLA[0].index=0;
       pickVLA[0].ptr=(void*)pick; /* this is just a flag */
 	
-      SceneRenderAll(G,&context,NULL,&pickVLA,0,true);
+      SceneRenderAll(G,&context,NULL,&pickVLA,0,true,0.0F);
 
       if(debug_pick) {
         PyMOL_SwapBuffers(G->PyMOL);
@@ -4840,7 +4989,7 @@ void SceneRender(PyMOLGlobals *G,Pickable *pick,int x,int y,
       pickVLA[0].index=0;
       pickVLA[0].ptr=NULL;
       
-      SceneRenderAll(G,&context,NULL,&pickVLA,0,true);
+      SceneRenderAll(G,&context,NULL,&pickVLA,0,true,0.0F);
       
       lowBitVLA = SceneReadTriplets(G,smp->x,smp->y,smp->w,smp->h,render_buffer);
 
@@ -4849,7 +4998,7 @@ void SceneRender(PyMOLGlobals *G,Pickable *pick,int x,int y,
       pickVLA[0].index=0;
       pickVLA[0].ptr=(void*)smp; /* this is just a flag */
 	
-      SceneRenderAll(G,&context,NULL,&pickVLA,0,true);
+      SceneRenderAll(G,&context,NULL,&pickVLA,0,true,0.0F);
 
       highBitVLA = SceneReadTriplets(G,smp->x,smp->y,smp->w,smp->h,render_buffer);
       
@@ -4928,10 +5077,23 @@ void SceneRender(PyMOLGlobals *G,Pickable *pick,int x,int y,
 #endif
           break;
         case 2: /* side by side */
-          glViewport(I->Block->rect.left+I->Width/2,I->Block->rect.bottom,I->Width/2,I->Height);
+
+          if(oversize_width && oversize_height) {
+            glViewport(I->Block->rect.left+oversize_width/2+x,
+                       I->Block->rect.bottom+y,
+                       oversize_width/2, oversize_height);
+          } else {
+            glViewport(I->Block->rect.left+I->Width/2,I->Block->rect.bottom,I->Width/2,I->Height);
+          }
           break;
         case 3:
-          glViewport(I->Block->rect.left,I->Block->rect.bottom,I->Width/2,I->Height);
+          if(oversize_width && oversize_height) {
+            glViewport(I->Block->rect.left+x,
+                       I->Block->rect.bottom+y,
+                       oversize_width/2, oversize_height);
+          } else {
+            glViewport(I->Block->rect.left,I->Block->rect.bottom,I->Width/2,I->Height);
+          }
           break;
         }
 
@@ -4950,7 +5112,7 @@ void SceneRender(PyMOLGlobals *G,Pickable *pick,int x,int y,
 
         glPushMatrix();  /* 2 */
         glNormal3fv(normal);
-        CGORenderGL(G->DebugCGO,NULL,NULL,NULL);
+        CGORenderGL(G->DebugCGO,NULL,NULL,NULL,NULL);
         glPopMatrix();  /* 1 */
 
         /* render all objects */
@@ -4958,7 +5120,7 @@ void SceneRender(PyMOLGlobals *G,Pickable *pick,int x,int y,
         glPushMatrix(); /* 2 */
 
         for(pass=1;pass>-2;pass--) { /* render opaque, then antialiased, then transparent...*/
-          SceneRenderAll(G,&context,normal,NULL,pass,false);
+          SceneRenderAll(G,&context,normal,NULL,pass,false,width_scale);
         }
         glPopMatrix(); /* 1 */
 
@@ -4990,10 +5152,22 @@ void SceneRender(PyMOLGlobals *G,Pickable *pick,int x,int y,
 #endif
           break;
         case 2: /* side by side */
-          glViewport(I->Block->rect.left,I->Block->rect.bottom,I->Width/2,I->Height);
+          if(oversize_width && oversize_height) {
+            glViewport(I->Block->rect.left+x,
+                       I->Block->rect.bottom+y,
+                       oversize_width/2, oversize_height);
+          } else {
+            glViewport(I->Block->rect.left,I->Block->rect.bottom,I->Width/2,I->Height);
+          }
           break;
         case 3:
-          glViewport(I->Block->rect.left+I->Width/2,I->Block->rect.bottom,I->Width/2,I->Height);
+          if(oversize_width && oversize_height) {
+            glViewport(I->Block->rect.left+oversize_width/2+x,
+                       I->Block->rect.bottom+y,
+                       oversize_width/2, oversize_height);
+          } else {
+            glViewport(I->Block->rect.left+I->Width/2,I->Block->rect.bottom,I->Width/2,I->Height);
+          }
           break;
         }
 
@@ -5013,14 +5187,14 @@ void SceneRender(PyMOLGlobals *G,Pickable *pick,int x,int y,
 
         glPushMatrix();  /* 2 */
         glNormal3fv(normal);
-        CGORenderGL(G->DebugCGO,NULL,NULL,NULL);
+        CGORenderGL(G->DebugCGO,NULL,NULL,NULL,NULL);
         glPopMatrix();  /* 1 */
 
         /* render all objects */
 
         glPushMatrix(); /* 2 */
         for(pass=1;pass>-2;pass--) { /* render opaque, then antialiased, then transparent...*/
-          SceneRenderAll(G,&context,normal,NULL,pass,false);
+          SceneRenderAll(G,&context,normal,NULL,pass,false, width_scale);
         }        
         glPopMatrix(); /* 1 */
 
@@ -5063,7 +5237,7 @@ void SceneRender(PyMOLGlobals *G,Pickable *pick,int x,int y,
         
         glPushMatrix();
         glNormal3fv(normal);
-        CGORenderGL(G->DebugCGO,NULL,NULL,NULL);
+        CGORenderGL(G->DebugCGO,NULL,NULL,NULL,NULL);
         glPopMatrix();
 
         glPushMatrix();
@@ -5078,7 +5252,7 @@ void SceneRender(PyMOLGlobals *G,Pickable *pick,int x,int y,
           ENDFD;
         
         for(pass=1;pass>-2;pass--) { /* render opaque then antialiased...*/
-          SceneRenderAll(G,&context,normal,NULL,pass,false);
+          SceneRenderAll(G,&context,normal,NULL,pass,false, width_scale);
         }
 
         glPushMatrix();
@@ -5094,7 +5268,7 @@ void SceneRender(PyMOLGlobals *G,Pickable *pick,int x,int y,
           ENDFD;
 
         /* render transparent */
-        SceneRenderAll(G,&context,normal,NULL,-1,false);
+        SceneRenderAll(G,&context,normal,NULL,-1,false, width_scale);
         glPopMatrix();
 
         if(Feedback(G,FB_OpenGL,FB_Debugging))
@@ -5190,12 +5364,11 @@ void ScenePrepareMatrix(PyMOLGlobals *G,int mode)
     stAng = SettingGet(G,cSetting_stereo_angle);
     stShift = SettingGet(G,cSetting_stereo_shift);
 
+    /* right hand */
 
     stShift = (float)(stShift*fabs(I->Pos[2])/100.0);
-
     stAng = (float)(stAng*atan(stShift/fabs(I->Pos[2]))*90.0/cPI);
-
-
+    
     if(mode==2) { /* left hand */
       stAng=-stAng;
       stShift=-stShift;

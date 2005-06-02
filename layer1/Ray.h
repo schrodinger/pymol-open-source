@@ -30,7 +30,8 @@ CRay *RayNew(PyMOLGlobals *G);
 void RayFree(CRay *I);
 void RayPrepare(CRay *I,float v0,float v1,float v2,
                 float v3,float v4,float v5,float *mat,float *rotMat,
-                float aspRat,int ray_width,int ortho,float pixel_ratio);
+                float aspRat,int width, 
+                float pixel_scale,int ortho,float pixel_ratio);
 void RayRender(CRay *I,int width,int height,unsigned int *image,
                float front,float back,double timing,float angle,
                float fov,float *pos);

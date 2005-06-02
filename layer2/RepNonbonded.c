@@ -36,7 +36,6 @@ typedef struct RepNonbonded {
 
 #include"ObjectMolecule.h"
 
-void RepNonbondedRender(RepNonbonded *I,CRay *ray,Pickable **pick);
 void RepNonbondedFree(RepNonbonded *I);
 
 void RepNonbondedFree(RepNonbonded *I)
@@ -47,8 +46,10 @@ void RepNonbondedFree(RepNonbonded *I)
   OOFreeP(I);
 }
 
-void RepNonbondedRender(RepNonbonded *I,CRay *ray,Pickable **pick)
+static void RepNonbondedRender(RepNonbonded *I,RenderInfo *info)
 {
+  CRay *ray = info->ray;
+  Pickable **pick = info->pick;
   PyMOLGlobals *G=I->R.G;
   float *v=I->V;
   int c=I->N;
@@ -127,8 +128,11 @@ void RepNonbondedRender(RepNonbonded *I,CRay *ray,Pickable **pick)
     } else {
 
       int use_dlst;
-
-      glLineWidth(I->Width);
+      
+      if(info->width_scale_flag) 
+        glLineWidth(I->Width*info->width_scale);
+      else
+        glLineWidth(I->Width);
 
       use_dlst = (int)SettingGet(G,cSetting_use_display_lists);
       if(use_dlst&&I->R.displayList) {
@@ -218,7 +222,7 @@ Rep *RepNonbondedNew(CoordSet *cs)
   nonbonded_size = SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_nonbonded_size);
   RepInit(G,&I->R);
 
-  I->R.fRender=(void (*)(struct Rep *, CRay *, Pickable **))RepNonbondedRender;
+  I->R.fRender=(void (*)(struct Rep *, RenderInfo *))RepNonbondedRender;
   I->R.fFree=(void (*)(struct Rep *))RepNonbondedFree;
 
   I->N=0;

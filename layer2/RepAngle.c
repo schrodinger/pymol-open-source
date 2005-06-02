@@ -39,7 +39,6 @@ typedef struct RepAngle {
 
 #include"ObjectDist.h"
 
-void RepAngleRender(RepAngle *I,CRay *ray,Pickable **pick);
 void RepAngleFree(RepAngle *I);
 
 void RepAngleFree(RepAngle *I)
@@ -49,8 +48,10 @@ void RepAngleFree(RepAngle *I)
   OOFreeP(I);
 }
 
-void RepAngleRender(RepAngle *I,CRay *ray,Pickable **pick)
+static void RepAngleRender(RepAngle *I,RenderInfo *info)
 {
+  CRay *ray = info->ray;
+  Pickable **pick = info->pick;
   PyMOLGlobals *G=I->R.G;
   float *v=I->V;
   int c=I->N;
@@ -89,6 +90,13 @@ void RepAngleRender(RepAngle *I,CRay *ray,Pickable **pick)
     if(pick) {
     } else {
       int use_dlst;
+
+      if(info->width_scale_flag) {
+        glLineWidth(I->linewidth * info->width_scale);
+      } else {
+        glLineWidth(I->linewidth);
+      }
+
       use_dlst = (int)SettingGet(G,cSetting_use_display_lists);
       if(use_dlst&&I->R.displayList) {
         glCallList(I->R.displayList);
@@ -109,7 +117,6 @@ void RepAngleRender(RepAngle *I,CRay *ray,Pickable **pick)
         c=I->N;
       
         glDisable(GL_LIGHTING);
-        glLineWidth(I->linewidth);
         glBegin(GL_LINES);	 
         while(c>0) {
           glVertex3fv(v);
@@ -152,7 +159,7 @@ Rep *RepAngleNew(DistSet *ds)
   RepInit(G,&I->R);
   
   
-  I->R.fRender=(void (*)(struct Rep *, CRay *, Pickable **))RepAngleRender;
+  I->R.fRender=(void (*)(struct Rep *, RenderInfo *info))RepAngleRender;
   I->R.fFree=(void (*)(struct Rep *))RepAngleFree;
   I->R.fRecolor=NULL;
 

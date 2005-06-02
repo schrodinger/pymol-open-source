@@ -40,7 +40,6 @@ typedef struct RepDistLabel {
 
 #include"ObjectDist.h"
 
-void RepDistLabelRender(RepDistLabel *I,CRay *ray,Pickable **pick);
 void RepDistLabelFree(RepDistLabel *I);
 
 void RepDistLabelFree(RepDistLabel *I)
@@ -51,8 +50,10 @@ void RepDistLabelFree(RepDistLabel *I)
   OOFreeP(I);
 }
 
-void RepDistLabelRender(RepDistLabel *I,CRay *ray,Pickable **pick)
+static void RepDistLabelRender(RepDistLabel *I,RenderInfo *info)
 {
+  CRay *ray = info->ray;
+  Pickable **pick = info->pick;
   PyMOLGlobals *G=I->R.G;
   float *v=I->V;
   int c=I->N;
@@ -123,7 +124,7 @@ Rep *RepDistLabelNew(DistSet *ds)
 
   RepInit(G,&I->R);
 
-  I->R.fRender=(void (*)(struct Rep *, CRay *, Pickable **))RepDistLabelRender;
+  I->R.fRender=(void (*)(struct Rep *, RenderInfo *))RepDistLabelRender;
   I->R.fFree=(void (*)(struct Rep *))RepDistLabelFree;
   I->R.fRecolor=NULL;
 

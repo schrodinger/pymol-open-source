@@ -53,7 +53,6 @@ Z* -------------------------------------------------------------------
 #define ncopy ParseNCopy
 #define nskip ParseNSkip
 
-void ObjectMoleculeRender(ObjectMolecule *I,int frame,CRay *ray,Pickable **pick,int pass);
 void ObjectMoleculeCylinders(ObjectMolecule *I);
 CoordSet *ObjectMoleculeMMDStr2CoordSet(PyMOLGlobals *G,char *buffer,AtomInfoType **atInfoPtr);
 
@@ -8850,9 +8849,13 @@ int ObjectMoleculeSetAtomVertex(ObjectMolecule *I,int state,int index,float *v)
   return(result);
 }
 /*========================================================================*/
-void ObjectMoleculeRender(ObjectMolecule *I,int state,CRay *ray,Pickable **pick,int pass)
+static void ObjectMoleculeRender(ObjectMolecule *I,RenderInfo *info)
 {
   PyMOLGlobals *G = I->Obj.G;
+  int state = info->state;
+  CRay *ray = info->ray;
+  Pickable **pick = info->pick;
+  int pass = info->pass;
   int a;
 
   PRINTFD(I->Obj.G,FB_ObjectMolecule)
@@ -8871,7 +8874,7 @@ void ObjectMoleculeRender(ObjectMolecule *I,int state,CRay *ray,Pickable **pick,
       } else {
         ObjectUseColor(&I->Obj);
         CGORenderGL(I->UnitCellCGO,ColorGet(I->Obj.G,I->Obj.Color),
-                    I->Obj.Setting,NULL);
+                    I->Obj.Setting,NULL,info);
       }
     }
   }
@@ -8883,17 +8886,17 @@ void ObjectMoleculeRender(ObjectMolecule *I,int state,CRay *ray,Pickable **pick,
     for(a=0;a<I->NCSet;a++)
       if(I->CSet[a])
         if(I->CSet[a]->fRender)
-          I->CSet[a]->fRender(I->CSet[a],ray,pick,pass);        
+          I->CSet[a]->fRender(I->CSet[a],info);
   } else if(state<I->NCSet) {
 	 I->CurCSet=state % I->NCSet;
 	 if(I->CSet[I->CurCSet]) {
       if(I->CSet[I->CurCSet]->fRender)
-        I->CSet[I->CurCSet]->fRender(I->CSet[I->CurCSet],ray,pick,pass);
+        I->CSet[I->CurCSet]->fRender(I->CSet[I->CurCSet],info);
 	 }
   } else if(I->NCSet==1) { /* if only one coordinate set, assume static */
     if(SettingGet_b(I->Obj.G,I->Obj.Setting,NULL,cSetting_static_singletons))
       if(I->CSet[0]->fRender)
-        I->CSet[0]->fRender(I->CSet[0],ray,pick,pass);    
+        I->CSet[0]->fRender(I->CSet[0],info);
   }
   PRINTFD(I->Obj.G,FB_ObjectMolecule)
     " ObjectMolecule: rendering complete for object %s.\n",I->Obj.Name
@@ -8987,7 +8990,7 @@ ObjectMolecule *ObjectMoleculeNew(PyMOLGlobals *G,int discreteFlag)
     I->DiscreteAtmToIdx = NULL;
     I->DiscreteCSet = NULL;
   }    
-  I->Obj.fRender=(void (*)(struct CObject *, int, CRay *, Pickable **,int))ObjectMoleculeRender;
+  I->Obj.fRender=(void (*)(struct CObject *, RenderInfo *info))ObjectMoleculeRender;
   I->Obj.fFree= (void (*)(struct CObject *))ObjectMoleculeFree;
   I->Obj.fUpdate=  (void (*)(struct CObject *)) ObjectMoleculeUpdate;
   I->Obj.fGetNFrame = (int (*)(struct CObject *)) ObjectMoleculeGetNFrames;

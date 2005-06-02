@@ -2478,7 +2478,7 @@ void SettingInitGlobal(PyMOLGlobals *G,int alloc,int reset_gui)
                                                         2 = amber compliant,
                                                         3 = pdb I/O, but iupac inside
                                                       */
-  SettingSet_b(I,cSetting_ray_pixel_scale_to_window,1);
+  SettingSet_i(I,cSetting_ray_pixel_scale,-1);
   SettingSet_i(I,cSetting_label_font_id,0);
   SettingSet_b(I,cSetting_pdb_conect_all,0);
   SettingSet_s(I,cSetting_button_mode_name,"");
@@ -2571,7 +2571,7 @@ void SettingInitGlobal(PyMOLGlobals *G,int alloc,int reset_gui)
   SettingSet_b(I,cSetting_editor_auto_dihedral, 1);
   SettingSet_b(I,cSetting_presentation_auto_start,1);
   SettingSet_b(I,cSetting_validate_object_names, 1);
-
+  SettingSet_b(I,cSetting_pixel_scale, 1);
 }
 
 

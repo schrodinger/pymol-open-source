@@ -29,7 +29,6 @@ Z* -------------------------------------------------------------------
 #include"ObjectMolecule.h"
 #include"Scene.h"
 
-void RepDotRender(RepDot *I,CRay *ray,Pickable **pick);
 void RepDotFree(RepDot *I);
 
 void RepDotInit(void)
@@ -48,8 +47,10 @@ void RepDotFree(RepDot *I)
   OOFreeP(I);
 }
 
-void RepDotRender(RepDot *I,CRay *ray,Pickable **pick)
+static void RepDotRender(RepDot *I,RenderInfo *info)
 {
+  CRay *ray = info->ray;
+  Pickable **pick = info->pick;
   PyMOLGlobals *G=I->R.G;
   float *v=I->V;
   int c=I->N;
@@ -99,6 +100,12 @@ void RepDotRender(RepDot *I,CRay *ray,Pickable **pick)
       
       
       use_dlst = (int)SettingGet(G,cSetting_use_display_lists);
+
+      if(info->width_scale_flag) 
+        glPointSize(I->Width*info->width_scale);
+      else
+        glPointSize(I->Width);
+
       if(use_dlst&&I->R.displayList) {
         glCallList(I->R.displayList);
       } else { 
@@ -111,7 +118,8 @@ void RepDotRender(RepDot *I,CRay *ray,Pickable **pick)
             }
           }
         }
-        glPointSize(I->Width);
+
+
         glBegin(GL_POINTS);
         while(c--)
           {
@@ -227,7 +235,7 @@ Rep *RepDotDoNew(CoordSet *cs,int mode)
   if(ds>4) ds=4;
   sp = G->Sphere->Sphere[ds];
 
-  I->R.fRender=(void (*)(struct Rep *, CRay *, Pickable **))RepDotRender;
+  I->R.fRender=(void (*)(struct Rep *, RenderInfo *info))RepDotRender;
   I->R.fFree=(void (*)(struct Rep *))RepDotFree;
   I->R.obj=(CObject*)obj;
   I->R.cs = cs;

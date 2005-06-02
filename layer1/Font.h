@@ -18,6 +18,7 @@ Z* -------------------------------------------------------------------
 #define _H_Font
 
 #include"PyMOLGlobals.h"
+#include"Base.h"
 
 #define cFontNULL        0
 #define cFontGLUT        1

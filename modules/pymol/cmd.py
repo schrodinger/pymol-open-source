@@ -1472,6 +1472,7 @@ SEE ALSO
            del_colorection,    \
            dirty,              \
            disable,            \
+           draw,               \
            enable,             \
            full_screen,        \
            get_colorection,    \
@@ -1607,7 +1608,8 @@ SEE ALSO
          'dihedral'      : [ dihedral          , 0 , 0 , ''  , parsing.STRICT ],
          'dir'           : [ ls                , 0 , 0 , ''  , parsing.STRICT ],
          'disable'       : [ disable           , 0 , 0 , ''  , parsing.STRICT ],
-         'distance'      : [ distance          , 0 , 0 , ''  , parsing.LEGACY ],   
+         'distance'      : [ distance          , 0 , 0 , ''  , parsing.LEGACY ],
+         'draw'          : [ draw              , 0 , 0 , ''  , parsing.STRICT ],
          'dss'           : [ dss               , 0 , 0 , ''  , parsing.STRICT ],
          'dump'          : [ dump              , 0 , 0 , ''  , parsing.STRICT ],
          'dummy'         : [ dummy             , 0 , 0 , ''  , parsing.STRICT ],   

@@ -3953,6 +3953,19 @@ static PyObject *CmdColorDef(PyObject *self, 	PyObject *args)
   return APIResultOk(ok);
 }
 
+static PyObject *CmdDraw(PyObject *self, 	PyObject *args)
+{
+  int int1,int2;
+  int quiet;
+  int ok = PyArg_ParseTuple(args,"iii",&int1,&int2,&quiet);
+  if(ok) {
+    APIEntry();
+    ok = ExecutiveDrawCmd(TempPyMOLGlobals,int1,int2,quiet);
+    APIExit();
+  }
+  return APIResultOk(ok);
+}
+
 static PyObject *CmdRay(PyObject *self, 	PyObject *args)
 {
   int w,h,mode;
@@ -5484,6 +5497,7 @@ static PyMethodDef Cmd_methods[] = {
 
 	{"dist",    	           CmdDist,                 METH_VARARGS },
 	{"do",	                 CmdDo,                   METH_VARARGS },
+   {"draw",                  CmdDraw,                 METH_VARARGS },
 	{"dump",	                 CmdDump,                 METH_VARARGS },
    {"edit",                  CmdEdit,                 METH_VARARGS },
    {"torsion",               CmdTorsion,              METH_VARARGS },

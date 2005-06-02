@@ -42,10 +42,11 @@ Z* -------------------------------------------------------------------
    for simplified implementation of future multi-state objects.
  */
 
+
 typedef struct CObject {
   PyMOLGlobals *G;
   void (*fUpdate)(struct CObject *I); /* update representations */
-  void (*fRender)(struct CObject *I,int frame,CRay *ray,Pickable **pick,int pass);
+  void (*fRender)(struct CObject *I,RenderInfo *info);
   void (*fFree)(struct CObject *I);
   int  (*fGetNFrame)(struct CObject *I);
   void (*fDescribeElement)(struct CObject *I,int index,char *buffer);

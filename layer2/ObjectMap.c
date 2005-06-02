@@ -916,9 +916,13 @@ static void ObjectMapUpdate(ObjectMap *I) {
   SceneDirty(I->Obj.G);
 }
 
-static void ObjectMapRender(ObjectMap *I,int state,CRay *ray,Pickable **pick,int pass)
+static void ObjectMapRender(ObjectMap *I,RenderInfo *info)
 {
   PyMOLGlobals *G = I->Obj.G;
+  int state = info->state;
+  CRay *ray = info->ray;
+  Pickable **pick = info->pick;
+  int pass = info->pass;
   ObjectMapState *ms = NULL;
   if(!pass) {
     if(state<I->NState)
@@ -1036,7 +1040,7 @@ ObjectMap *ObjectMapNew(PyMOLGlobals *G)
   I->Obj.RepVis[cRepExtent]=true; 
   I->Obj.fFree = (void (*)(struct CObject *))ObjectMapFree;
   I->Obj.fUpdate =  (void (*)(struct CObject *)) ObjectMapUpdate;
-  I->Obj.fRender =(void (*)(struct CObject *, int, CRay *, Pickable **,int))ObjectMapRender;
+  I->Obj.fRender =(void (*)(struct CObject *, RenderInfo *))ObjectMapRender;
 
   I->Obj.fGetNFrame = (int (*)(struct CObject *)) ObjectMapGetNStates;
 

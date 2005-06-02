@@ -22,7 +22,7 @@ Z* -------------------------------------------------------------------
 
 typedef struct GadgetSet {
   void (*fUpdate)(struct GadgetSet *I);
-  void (*fRender)(struct GadgetSet *I,CRay *ray,Pickable **pick,int pass);
+  void (*fRender)(struct GadgetSet *I,RenderInfo *info);
   void (*fFree)(struct GadgetSet *I);
   void (*fInvalidateRep)(struct GadgetSet *I,int type,int level);
   PyMOLGlobals *G;

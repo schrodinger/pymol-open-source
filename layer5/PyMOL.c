@@ -438,7 +438,7 @@ typedef struct _CPyMOL {
   ov_word lex_transparency_picking_mode;
   ov_word lex_virtual_trackball;
   ov_word lex_pdb_reformat_names_mode;
-  ov_word lex_ray_pixel_scale_to_window;
+  ov_word lex_ray_pixel_scale;
   ov_word lex_label_font_id;
   ov_word lex_pdb_conect_all;
   ov_word lex_button_mode_name;
@@ -530,7 +530,7 @@ typedef struct _CPyMOL {
   ov_word lex_editor_auto_dihedral;
   ov_word lex_presentation_auto_start;
   ov_word lex_validate_object_names;
-
+  ov_word lex_pixel_scale;
 } _CPyMOL;
 
 static int status_ok(int ok) {
@@ -959,7 +959,7 @@ static OVstatus PyMOL_InitAPI(CPyMOL *I)
   LEX_SETTING(transparency_picking_mode, 324);
   LEX_SETTING(virtual_trackball, 325);
   LEX_SETTING(pdb_reformat_names_mode, 326);
-  LEX_SETTING(ray_pixel_scale_to_window, 327);
+  LEX_SETTING(ray_pixel_scale, 327);
   LEX_SETTING(label_font_id, 328);
   LEX_SETTING(pdb_conect_all, 329);
   LEX_SETTING(button_mode_name, 330);
@@ -1051,6 +1051,8 @@ static OVstatus PyMOL_InitAPI(CPyMOL *I)
   LEX_SETTING(editor_auto_dihedral,416);
   LEX_SETTING(presentation_auto_start,417);
   LEX_SETTING(validate_object_names,418);
+  LEX_SETTING(pixel_scale, 419);
+
   return_OVstatus_SUCCESS;
 }
 

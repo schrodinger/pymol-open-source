@@ -98,6 +98,15 @@ static void ExecutiveSpecSetVisibility(PyMOLGlobals *G,SpecRec *rec,
                                        int new_vis,int mod);
 void ExecutiveObjMolSeleOp(PyMOLGlobals *G,int sele,ObjectMoleculeOpRec *op);
 
+int ExecutiveDrawCmd(PyMOLGlobals *G, int width, int height,int quiet)
+{
+  if((width<=0)&&(height<=0)) {
+    SceneGetWidthHeight(G,&width,&height);
+  }
+  SceneDeferPNG(G,width,height,NULL,quiet);
+  return 1;
+}
+
 void ExecutiveMatrixTransfer(PyMOLGlobals *G,
                              char *source_name, char *target_name,
                              int   source_mode,  int target_mode, 

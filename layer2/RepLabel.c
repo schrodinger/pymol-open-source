@@ -38,7 +38,6 @@ typedef struct RepLabel {
 
 #include"ObjectMolecule.h"
 
-void RepLabelRender(RepLabel *I,CRay *ray,Pickable **pick);
 void RepLabelFree(RepLabel *I);
 
 void RepLabelInit(void)
@@ -52,8 +51,10 @@ void RepLabelFree(RepLabel *I)
   OOFreeP(I);
 }
 
-void RepLabelRender(RepLabel *I,CRay *ray,Pickable **pick)
+static void RepLabelRender(RepLabel *I,RenderInfo *info)
 {
+  CRay *ray = info->ray;
+  Pickable **pick = info->pick;
   PyMOLGlobals *G=I->R.G;
   float *v=I->V;
   int c=I->N;
@@ -125,11 +126,10 @@ Rep *RepLabelNew(CoordSet *cs)
 
   label_color = SettingGet_i(G,cs->Setting,obj->Obj.Setting,cSetting_label_color);
 
-  
   RepInit(G,&I->R);
   
   obj = cs->Obj;
-  I->R.fRender=(void (*)(struct Rep *, CRay *, Pickable **))RepLabelRender;
+  I->R.fRender=(void (*)(struct Rep *,RenderInfo *))RepLabelRender;
   I->R.fFree=(void (*)(struct Rep *))RepLabelFree;
   I->R.fRecolor=NULL;
   I->R.obj=(CObject*)obj;

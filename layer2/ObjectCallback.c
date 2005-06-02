@@ -57,9 +57,13 @@ static void ObjectCallbackUpdate(ObjectCallback *I) {
 
 /*========================================================================*/
 
-static void ObjectCallbackRender(ObjectCallback *I,int state,CRay *ray,Pickable **pick,int pass)
+static void ObjectCallbackRender(ObjectCallback *I,RenderInfo *info)
 {
 #ifndef _PYMOL_NOPY
+  int state = info->state;
+  CRay *ray = info->ray;
+  Pickable **pick = info->pick;
+  int pass = info->pass;
   PyMOLGlobals *G = I->Obj.G;
   ObjectCallbackState *sobj = NULL;
   int a;
@@ -138,7 +142,7 @@ ObjectCallback *ObjectCallbackNew(PyMOLGlobals *G)
   I->Obj.type = cObjectCallback;
   I->Obj.fFree = (void (*)(struct CObject *))ObjectCallbackFree;
   I->Obj.fUpdate =  (void (*)(struct CObject *)) ObjectCallbackUpdate;
-  I->Obj.fRender =(void (*)(struct CObject *, int, CRay *, Pickable **,int pass))
+  I->Obj.fRender =(void (*)(struct CObject *, RenderInfo *))
     ObjectCallbackRender;
   I->Obj.fGetNFrame = (int (*)(struct CObject *)) ObjectCallbackGetNStates;
 

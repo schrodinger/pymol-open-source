@@ -480,9 +480,13 @@ static int ZRevOrderFn(float *array,int l,int r)
   return (array[l]>=array[r]);
 }
 
-static void ObjectSurfaceRender(ObjectSurface *I,int state,CRay *ray,Pickable **pick,int pass)
+static void ObjectSurfaceRender(ObjectSurface *I,RenderInfo *info)
 {
   PyMOLGlobals *G = I->Obj.G;
+  int state = info->state;
+  CRay *ray = info->ray;
+  Pickable **pick = info->pick;
+  int pass = info->pass;
   float *v = NULL;
   float *vc;
   float *col;
@@ -581,7 +585,7 @@ static void ObjectSurfaceRender(ObjectSurface *I,int state,CRay *ray,Pickable **
               
               if(ms->UnitCellCGO&&(I->Obj.RepVis[cRepCell]))
                 CGORenderGL(ms->UnitCellCGO,ColorGet(G,I->Obj.Color),
-                            I->Obj.Setting,NULL);
+                            I->Obj.Setting,NULL,info);
               
               SceneResetNormal(G,false);
               col = ColorGet(G,I->Obj.Color);
@@ -790,7 +794,7 @@ ObjectSurface *ObjectSurfaceNew(PyMOLGlobals *G)
   
   I->Obj.fFree = (void (*)(struct CObject *))ObjectSurfaceFree;
   I->Obj.fUpdate =  (void (*)(struct CObject *)) ObjectSurfaceUpdate;
-  I->Obj.fRender =(void (*)(struct CObject *, int, CRay *, Pickable **,int ))ObjectSurfaceRender;
+  I->Obj.fRender =(void (*)(struct CObject *, RenderInfo *info))ObjectSurfaceRender;
   I->Obj.fInvalidate =(void (*)(struct CObject *,int,int,int))ObjectSurfaceInvalidate;
   I->Obj.fGetNFrame = (int (*)(struct CObject *)) ObjectSurfaceGetNStates;
   return(I);

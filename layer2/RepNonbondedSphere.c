@@ -40,7 +40,6 @@ typedef struct RepNonbondedSphere {
 
 #include"ObjectMolecule.h"
 
-void RepNonbondedSphereRender(RepNonbondedSphere *I,CRay *ray,Pickable **pick);
 void RepNonbondedSphereFree(RepNonbondedSphere *I);
 
 void RepNonbondedSphereInit(void)
@@ -56,8 +55,10 @@ void RepNonbondedSphereFree(RepNonbondedSphere *I)
   OOFreeP(I);
 }
 
-void RepNonbondedSphereRender(RepNonbondedSphere *I,CRay *ray,Pickable **pick)
+static void RepNonbondedSphereRender(RepNonbondedSphere *I,RenderInfo *info)
 {
+  CRay *ray = info->ray;
+  Pickable **pick = info->pick;
   register PyMOLGlobals *G=I->R.G;
   float *v=I->V;
   int c=I->N;
@@ -197,7 +198,7 @@ Rep *RepNonbondedSphereNew(CoordSet *cs)
   sp = G->Sphere->Sphere[ds];
 
   RepInit(G,&I->R);
-  I->R.fRender=(void (*)(struct Rep *, CRay *, Pickable **))RepNonbondedSphereRender;
+  I->R.fRender=(void (*)(struct Rep *, RenderInfo *))RepNonbondedSphereRender;
   I->R.fFree=(void (*)(struct Rep *))RepNonbondedSphereFree;
   I->R.fRecolor=NULL;
   I->N=0;

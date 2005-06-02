@@ -46,7 +46,7 @@ Z* -------------------------------------------------------------------
 void CoordSetUpdate(CoordSet *I);
 
 void CoordSetFree(CoordSet *I);
-void CoordSetRender(CoordSet *I,CRay *ray,Pickable **pick,int pass);
+void CoordSetRender(CoordSet *I,RenderInfo *info);
 void CoordSetEnumIndices(CoordSet *I);
 void CoordSetStrip(CoordSet *I);
 void CoordSetInvalidateRep(CoordSet *I,int type,int level);
@@ -863,8 +863,11 @@ void CoordSetUpdate(CoordSet *I)
   OrthoBusyFast(I->State.G,1,1);
 }
 /*========================================================================*/
-void CoordSetRender(CoordSet *I,CRay *ray,Pickable **pick,int pass)
+void CoordSetRender(CoordSet *I,RenderInfo *info)
 {
+  int pass = info->pass;
+  CRay *ray = info->ray;
+  Pickable **pick = info->pick;
   int a,aa;
   Rep *r;
 
@@ -892,29 +895,35 @@ void CoordSetRender(CoordSet *I,CRay *ray,Pickable **pick,int pass)
           } else {
             if(I->Obj) 
               ray->fWobble(ray,
-                           SettingGet_i(I->State.G,I->Setting,I->Obj->Obj.Setting,cSetting_ray_texture),
-                           SettingGet_3fv(I->State.G,I->Setting,I->Obj->Obj.Setting,cSetting_ray_texture_settings));
+                           SettingGet_i(I->State.G,I->Setting,
+                                        I->Obj->Obj.Setting,
+                                        cSetting_ray_texture),
+                           SettingGet_3fv(I->State.G,I->Setting,
+                                          I->Obj->Obj.Setting,
+                                          cSetting_ray_texture_settings));
             else
               ray->fWobble(ray,
-                           SettingGet_i(I->State.G,I->Setting,NULL,cSetting_ray_texture),
-                           SettingGet_3fv(I->State.G,I->Setting,NULL,cSetting_ray_texture_settings));
+                           SettingGet_i(I->State.G,I->Setting,
+                                        NULL,cSetting_ray_texture),
+                           SettingGet_3fv(I->State.G,I->Setting, NULL, 
+                                          cSetting_ray_texture_settings));
             ray->fColor3fv(ray,ColorGet(I->State.G,I->Obj->Obj.Color));
           }
         
           if(r->fRender) { /* do OpenGL rendering in three passes */
             if(ray||pick) {
-              r->fRender(r,ray,pick);                
+              r->fRender(r,info);
             } else 
               switch(a) {
               case cRepLabel:
-                if(pass==1) r->fRender(r,ray,pick);
+                if(pass==1) r->fRender(r,info);
                 break;
               case cRepNonbondedSphere:
               case cRepRibbon:
               case cRepDot:
               case cRepCGO:
               case cRepCallback:
-                if(pass==1) r->fRender(r,ray,pick);
+                if(pass==1) r->fRender(r,info);
                 break;
               case cRepLine:
               case cRepMesh:
@@ -922,16 +931,16 @@ void CoordSetRender(CoordSet *I,CRay *ray,Pickable **pick,int pass)
               case cRepNonbonded:
               case cRepCell:
               case cRepExtent:
-                if(!pass) r->fRender(r,ray,pick);                
+                if(!pass) r->fRender(r,info);                
                 break;
               case cRepCyl: /* render sticks differently depending on transparency */
                 if(SettingGet_f(I->State.G,r->cs->Setting,
                                 r->obj->Setting,
                                 cSetting_stick_transparency)>0.0001) {
                   if(pass==-1)
-                    r->fRender(r,ray,pick);                                
+                    r->fRender(r,info);                                
                 } else if(pass==1)
-                  r->fRender(r,ray,pick);
+                  r->fRender(r,info);
                 break;
 
               case cRepSurface:
@@ -940,27 +949,27 @@ void CoordSetRender(CoordSet *I,CRay *ray,Pickable **pick,int pass)
                                 r->obj->Setting,
                                 cSetting_transparency)>0.0001) {
                   if(pass==-1)
-                    r->fRender(r,ray,pick);                                
+                    r->fRender(r,info);                                
                 } else if(pass==1)
-                  r->fRender(r,ray,pick);
+                  r->fRender(r,info);
                 break;
               case cRepSphere: /* render spheres differently depending on transparency */
                 if(SettingGet_f(I->State.G,r->cs->Setting,
                                 r->obj->Setting,
                                 cSetting_sphere_transparency)>0.0001) {
                   if(pass==-1)
-                    r->fRender(r,ray,pick);                                
+                    r->fRender(r,info);                                
                 } else if(pass==1)
-                  r->fRender(r,ray,pick);
+                  r->fRender(r,info);
                 break;
               case cRepCartoon:
                 if(SettingGet_f(I->State.G,r->cs->Setting,
                                 r->obj->Setting,
                                 cSetting_cartoon_transparency)>0.0001) {
                   if(pass==-1)
-                    r->fRender(r,ray,pick);                                
+                    r->fRender(r,info);                                
                 } else if(pass==1)
-                  r->fRender(r,ray,pick);
+                  r->fRender(r,info);
                 break;
               }
 

@@ -63,7 +63,6 @@ typedef struct RepSurface {
 } RepSurface;
 
 
-void RepSurfaceRender(RepSurface *I,CRay *ray,Pickable **pick);
 void RepSurfaceFree(RepSurface *I);
 int RepSurfaceSameVis(RepSurface *I,CoordSet *cs);
 
@@ -133,8 +132,10 @@ static int check_and_add(int *cache, int spacing, int t0,int t1) {
   return 0;
 }
 
-void RepSurfaceRender(RepSurface *I,CRay *ray,Pickable **pick)
+static void RepSurfaceRender(RepSurface *I,RenderInfo *info)
 {
+  CRay *ray = info->ray;
+  Pickable **pick = info->pick;
   PyMOLGlobals *G=I->R.G;
   float *v=I->V;
   float *vn=I->VN;
@@ -270,7 +271,7 @@ void RepSurfaceRender(RepSurface *I,CRay *ray,Pickable **pick)
     } else {
     
       if(I->debug)
-        CGORenderGL(I->debug,NULL,NULL,NULL);
+        CGORenderGL(I->debug,NULL,NULL,NULL,info);
       if(I->Type==1) {
         /* no triangle information, so we're rendering dots only */
 
@@ -1425,7 +1426,7 @@ Rep *RepSurfaceNew(CoordSet *cs)
   I->NDot=0;
   I->LastVisib=NULL;
   I->LastColor=NULL;
-  I->R.fRender=(void (*)(struct Rep *, CRay *, Pickable **))RepSurfaceRender;
+  I->R.fRender=(void (*)(struct Rep *, RenderInfo *info))RepSurfaceRender;
   I->R.fFree=(void (*)(struct Rep *))RepSurfaceFree;
   I->R.fRecolor=(void (*)(struct Rep*, struct CoordSet*))RepSurfaceColor;
   I->R.fSameVis=(int (*)(struct Rep*, struct CoordSet*))RepSurfaceSameVis;

@@ -4,6 +4,8 @@ CHANGE LOG
 
 Changes up to 0.99
 
+   * draw command -- enables OpenGL rendering of large images
+
    * fixed state argument for cmd.get_distance
 
    beta05

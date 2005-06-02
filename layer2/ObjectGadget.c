@@ -34,7 +34,7 @@ Z* -------------------------------------------------------------------
 
 CGO *ObjectGadgetPyListFloatToCGO(PyObject *list);
 
-void ObjectGadgetRender(ObjectGadget *I,int state,CRay *ray,Pickable **pick,int pass);
+
 
 int ObjectGadgetGetVertex(ObjectGadget *I,int index,int base,float *v)
 {
@@ -450,8 +450,11 @@ static int ObjectGadgetGetNState(ObjectGadget *I) {
 }
 
 /*========================================================================*/
-void ObjectGadgetRender(ObjectGadget *I,int state,CRay *ray,Pickable **pick,int pass)
+static void ObjectGadgetRender(ObjectGadget *I,RenderInfo *info)
 {
+  int state = info->state;
+  CRay *ray = info->ray;
+  int pass = info->pass;
   int a;
   if(!pass) {
 
@@ -460,16 +463,16 @@ void ObjectGadgetRender(ObjectGadget *I,int state,CRay *ray,Pickable **pick,int 
       for(a=0;a<I->NGSet;a++)
         if(I->GSet[a])
           if(I->GSet[a]->fRender)
-            I->GSet[a]->fRender(I->GSet[a],ray,pick,pass);        
+            I->GSet[a]->fRender(I->GSet[a],info);
     } else if(state<I->NGSet) {
       I->CurGSet=state;
       if(I->GSet[I->CurGSet]) {
         if(I->GSet[I->CurGSet]->fRender)
-          I->GSet[I->CurGSet]->fRender(I->GSet[I->CurGSet],ray,pick,pass);
+          I->GSet[I->CurGSet]->fRender(I->GSet[I->CurGSet],info);
       }
     } else if(I->NGSet==1) { /* if only one coordinate set, assume static */
       if(I->GSet[0]->fRender)
-        I->GSet[0]->fRender(I->GSet[0],ray,pick,pass);    
+        I->GSet[0]->fRender(I->GSet[0],info);
       I->CurGSet=0;
     }
   }
@@ -487,7 +490,7 @@ void ObjectGadgetInit(PyMOLGlobals *G,ObjectGadget *I)
 
   I->Obj.fFree = (void (*)(struct CObject *))ObjectGadgetFree;
   I->Obj.fUpdate =(void (*)(struct CObject *)) ObjectGadgetUpdate;
-  I->Obj.fRender =(void (*)(struct CObject *, int, CRay *, Pickable **,int))ObjectGadgetRender;
+  I->Obj.fRender =(void (*)(struct CObject *, RenderInfo *info))ObjectGadgetRender;
   I->Obj.fGetNFrame = (int (*)(struct CObject *)) ObjectGadgetGetNState;
   I->Obj.fDescribeElement = NULL;
   I->CurGSet=0;
