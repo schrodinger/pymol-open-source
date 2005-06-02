@@ -85,7 +85,7 @@ NOTES
       return r
       
 
-   def png(filename,quiet=1):
+   def png(filename,width=0,height=0,quiet=1):
       '''
 DESCRIPTION
 
@@ -101,9 +101,9 @@ PYMOL API
       '''
       r = DEFAULT_ERROR
       if thread.get_ident() ==pymol.glutThread:
-         r = cmd._png(str(filename),int(quiet))
+         r = cmd._png(str(filename),int(width),int(height),int(quiet))
       else:
-         r = cmd._do("cmd._png('"+str(filename)+"')")
+         r = cmd._do("cmd._png('%s',%d,%d,%d)"%(filename,width,height,quiet))
       if _raising(r): raise QuietException
       return r
 

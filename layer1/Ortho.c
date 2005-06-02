@@ -1009,7 +1009,7 @@ void OrthoDoDraw(PyMOLGlobals *G)
     }    
 
     if(render)
-      SceneRender(G,NULL,0,0,NULL);
+      SceneRender(G,NULL,0,0,NULL,0,0);
     
     while(times--) {
       switch(times) {

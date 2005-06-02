@@ -552,7 +552,7 @@ class Normal(PMGSkin):
       if len(sfile):
          self.initialdir = re.sub(r"[^\/\\]*$","",sfile)
          self.cmd.log("png %s\n"%sfile,"cmd.png('%s')\n"%sfile)
-         self.cmd.png(sfile)
+         self.cmd.png(sfile,quiet=0)
          
       
    def file_savemovie(self):
