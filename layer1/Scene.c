@@ -954,7 +954,7 @@ static int SceneMakeSizedImage(PyMOLGlobals *G,int width, int height)
       I->ImageBufferWidth=width;
       I->ImageBufferHeight=height;
 
-      I->DirtyFlag=false;
+      I->DirtyFlag = false;
       I->CopyFlag = true;
 
       I->CopiedFromOpenGL = false;
@@ -986,7 +986,6 @@ static unsigned char *SceneImagePrepare(PyMOLGlobals *G)
   if(!I->CopyFlag) {
 	 image = (GLvoid*)Alloc(char,buffer_size);
 	 ErrChkPtr(G,image);
-    return I->ImageBuffer;
     if(G->HaveGUI && G->ValidContext) {
       glReadBuffer(GL_BACK);
       PyMOLReadPixels(I->Block->rect.left,I->Block->rect.bottom,I->Width,I->Height,
@@ -1024,7 +1023,7 @@ static void SceneImageFinish(PyMOLGlobals *G,char *image)
 {
   register CScene *I=G->Scene;
 
-  if(!I->CopyFlag)
+  if(!(I->CopyFlag&&I->ImageBuffer==image))
 	 FreeP(image);
 }
 
@@ -1729,7 +1728,7 @@ void SceneDraw(Block *block)
                   }
                   
                   glRasterPos3i((int)((I->Width-tmp_width)/2+I->Block->rect.left),
-                                (int)((I->Height-tmp_height)/2+I->Block->rect.bottom),-11);
+                                (int)((I->Height-tmp_height)/2+I->Block->rect.bottom),-10);
                   
                   PyMOLDrawPixels(tmp_width,tmp_height,GL_RGBA,GL_UNSIGNED_BYTE,tmp_buffer);
                   
@@ -1745,23 +1744,7 @@ void SceneDraw(Block *block)
             } else {
               glRasterPos3i(I->Block->rect.left,I->Block->rect.bottom,-10);
               PyMOLDrawPixels(width,height,GL_RGBA,GL_UNSIGNED_BYTE,I->ImageBuffer);            
-
             }
-            if(I->ImageBuffer) {
-#if 1
-#else
-              if(!(double_pump||(I->StereoMode==1))) {
-                glDrawBuffer(GL_BACK);
-                PyMOLDrawPixels(width,height,GL_RGBA,GL_UNSIGNED_BYTE,I->ImageBuffer);            
-              } else {
-                glDrawBuffer(GL_BACK_LEFT);
-                PyMOLDrawPixels(width,height,GL_RGBA,GL_UNSIGNED_BYTE,I->ImageBuffer);            
-                glDrawBuffer(GL_BACK_RIGHT);
-                PyMOLDrawPixels(width,height,GL_RGBA,GL_UNSIGNED_BYTE,I->ImageBuffer);            
-              }
-#endif
-            }
-
           }
           I->RenderTime = -I->LastRender;
           I->LastRender = UtilGetSeconds(G);
@@ -4136,19 +4119,12 @@ void SceneRay(PyMOLGlobals *G,
       
       /*    RayRenderColorTable(ray,ray_width,ray_height,buffer);*/
       
-      if(I->ImageBuffer) {
-        if(I->MovieOwnsImageFlag) {
-          I->MovieOwnsImageFlag=false;
-          I->ImageBuffer=NULL;
-        } else {
-          FreeP(I->ImageBuffer);
-        }
-      }
+      ScenePurgeCopy(G,true);
       
       I->ImageBuffer = buffer;
       I->ImageBufferSize = buffer_size;
-      I->ImageBufferWidth=ray_width;
-      I->ImageBufferHeight=ray_height;
+      I->ImageBufferWidth = ray_width;
+      I->ImageBufferHeight = ray_height;
       I->DirtyFlag=false;
       I->CopyFlag = true;
       I->CopiedFromOpenGL = false;
