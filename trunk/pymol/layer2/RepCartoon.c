@@ -38,7 +38,6 @@ typedef struct RepCartoon {
 
 #include"ObjectMolecule.h"
 
-void RepCartoonRender(RepCartoon *I,CRay *ray,Pickable **pick);
 void RepCartoonFree(RepCartoon *I);
 
 void RepCartoonFree(RepCartoon *I)
@@ -51,8 +50,10 @@ void RepCartoonFree(RepCartoon *I)
   OOFreeP(I);
 }
 
-void RepCartoonRender(RepCartoon *I,CRay *ray,Pickable **pick)
+static void RepCartoonRender(RepCartoon *I,RenderInfo *info)
 {
+  CRay *ray = info->ray;
+  Pickable **pick = info->pick;
   register PyMOLGlobals *G=I->R.G;
   if(ray) {
     PRINTFD(G,FB_RepCartoon)
@@ -94,7 +95,7 @@ void RepCartoonRender(RepCartoon *I,CRay *ray,Pickable **pick)
         
         if(I->std) 
           CGORenderGL(I->std,NULL,I->R.cs->Setting,
-                      I->R.obj->Setting);
+                      I->R.obj->Setting,info);
         
         if(use_dlst&&I->R.displayList) {
           glEndList();
@@ -271,7 +272,7 @@ Rep *RepCartoonNew(CoordSet *cs)
 
   na_mode = SettingGet_i(G,cs->Setting,obj->Obj.Setting,cSetting_cartoon_nucleic_acid_mode);
 
-  I->R.fRender=(void (*)(struct Rep *, CRay *, Pickable **))RepCartoonRender;
+  I->R.fRender=(void (*)(struct Rep *, RenderInfo *))RepCartoonRender;
   I->R.fFree=(void (*)(struct Rep *))RepCartoonFree;
   I->R.fRecolor=NULL;
   I->R.obj=&obj->Obj;

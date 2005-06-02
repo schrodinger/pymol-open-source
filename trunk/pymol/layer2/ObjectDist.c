@@ -30,7 +30,6 @@ Z* -------------------------------------------------------------------
 #include"ObjectMolecule.h"
 #include"Feedback.h"
 
-void ObjectDistRender(ObjectDist *I,int frame,CRay *ray,Pickable **pick,int pass);
 void ObjectDistFree(ObjectDist *I);
 void ObjectDistUpdate(ObjectDist *I);
 int ObjectDistGetNFrames(ObjectDist *I);
@@ -360,26 +359,30 @@ void ObjectDistInvalidateRep(ObjectDist *I,int rep)
 	 }
 }
 /*========================================================================*/
-void ObjectDistRender(ObjectDist *I,int frame,CRay *ray,Pickable **pick,int pass)
+static void ObjectDistRender(ObjectDist *I,RenderInfo *info)
 {
   int a;
+  int state = info->state;
+  CRay *ray = info->ray;
+  int pass = info->pass;
+
   if(!pass) {
 
     ObjectPrepareContext(&I->Obj,ray);
-    if(frame<0) {
+    if(state<0) {
       for(a=0;a<I->NDSet;a++)
         if(I->DSet[a])
           if(I->DSet[a]->fRender)
-            I->DSet[a]->fRender(I->DSet[a],ray,pick,pass);        
-    } else if(frame<I->NDSet) {
-      I->CurDSet=frame % I->NDSet;
+            I->DSet[a]->fRender(I->DSet[a],info);
+    } else if(state<I->NDSet) {
+      I->CurDSet=state % I->NDSet;
       if(I->DSet[I->CurDSet]) {
         if(I->DSet[I->CurDSet]->fRender)
-          I->DSet[I->CurDSet]->fRender(I->DSet[I->CurDSet],ray,pick,pass);
+          I->DSet[I->CurDSet]->fRender(I->DSet[I->CurDSet],info);
       }
     } else if(I->NDSet==1) { /* if only one coordinate set, assume static */
       if(I->DSet[0]->fRender)
-        I->DSet[0]->fRender(I->DSet[0],ray,pick,pass);    
+        I->DSet[0]->fRender(I->DSet[0],info);
     }
   }
 }
@@ -392,7 +395,7 @@ ObjectDist *ObjectDistNew(PyMOLGlobals *G)
   I->Obj.type=cObjectDist;
   I->DSet=VLAMalloc(10,sizeof(DistSet*),5,true); /* auto-zero */
   I->NDSet=0;
-  I->Obj.fRender=(void (*)(struct CObject *, int, CRay *, Pickable **,int))ObjectDistRender;
+  I->Obj.fRender=(void (*)(struct CObject *, RenderInfo *info))ObjectDistRender;
   I->Obj.fFree= (void (*)(struct CObject *))ObjectDistFree;
   I->Obj.fUpdate= (void (*)(struct CObject *)) ObjectDistUpdate;
   I->Obj.fGetNFrame = (int (*)(struct CObject *)) ObjectDistGetNFrames;

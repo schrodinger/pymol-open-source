@@ -360,7 +360,7 @@ if __name__=='pymol.setting':
       transparency_picking_mode =( 324,'','')
       virtual_trackball     =( 325,'','')
       pdb_reformat_names_mode =( 326,'','')
-      ray_pixel_scale_to_window =( 327,'','')
+      ray_pixel_scale       =( 327,'','')
       label_font_id             =( 328,'','')
       pdb_conect_all            =( 329,'','')
       button_mode_name      =( 330,'','')
@@ -452,6 +452,7 @@ if __name__=='pymol.setting':
       editor_auto_dihedral      = (416, '')
       presentation_auto_start   = (417, '')
       validate_object_names     = (418, '')
+      pixel_scale               = (419, '')
       
    setting_sc = Shortcut(SettingIndex.__dict__.keys())
 

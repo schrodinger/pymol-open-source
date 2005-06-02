@@ -1708,7 +1708,23 @@ NOTES
          unlock(r)
       if _raising(r): raise QuietException
       return r
-   
+
+   def draw(width=0,height=0,quiet=1):
+      # stop movies and sculpting if they're on...
+      if cmd.get_movie_playing():
+         cmd.mstop()
+      if int(cmd.get_setting_legacy("sculpting"))!=0:
+         cmd.set("sculpting","off",quiet=1)
+      #
+      r = DEFAULT_ERROR
+      try:
+         lock()
+         r = _cmd.draw(int(width),int(height),int(quiet))
+      finally:
+         unlock(r)      
+      if _raising(r): raise QuietException
+      return r
+
    def ray(width=0,height=0,renderer=-1,angle=0.0,shift=0.0,quiet=1,async=0):
       '''
 DESCRIPTION

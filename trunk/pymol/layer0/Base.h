@@ -72,6 +72,20 @@ typedef struct {
   Pickable *picked;
 } Multipick;
 
+/* not a global, but CRay widely used and Ray.h definitely isn't a
+ * lightweight include... */
+
+typedef struct _CRay               CRay;
+
+typedef struct {
+  int state;
+  CRay *ray;
+  Pickable **pick;
+  int pass;
+  int width_scale_flag;
+  float width_scale;
+} RenderInfo;
+
 #define MAXLINELEN 1024
 
 #ifndef _PYMOL_NO_XRAY

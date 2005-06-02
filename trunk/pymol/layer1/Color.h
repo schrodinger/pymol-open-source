@@ -87,6 +87,8 @@ int ColorExtFromPyList(PyMOLGlobals *G,PyObject *list);
 PyObject *ColorExtAsPyList(PyMOLGlobals *G);
 int ColorTableLoad(PyMOLGlobals *G,char *fname,int quiet);
 void ColorUpdateClamp(PyMOLGlobals *G,int index);
+void ColorGetBkrdContColor(PyMOLGlobals *G,float *rgb, int invert_flag);
+unsigned int ColorGet32BitWord(PyMOLGlobals *G,float *rgba);
 
 #endif
 

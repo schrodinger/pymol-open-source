@@ -300,7 +300,6 @@ void ObjectSetName(CObject *I,char *name)
     ObjectMakeValidName(I->Name);
 }
 /*========================================================================*/
-void ObjectRenderUnitBox(struct CObject *this,int frame,CRay *ray,Pickable **pick,int pass);
 void ObjectUpdate(struct CObject *I);
 
 /*========================================================================*/
@@ -339,37 +338,7 @@ static void ObjectInvalidate(CObject *this,int rep,int level,int state)
   
 }
 /*========================================================================*/
-void ObjectInit(PyMOLGlobals *G,CObject *I)
-{
-  int a;
-  I->G = G;
-  I->fFree = ObjectFree;
-  I->fRender = ObjectRenderUnitBox;
-  I->fUpdate = ObjectUpdate;
-  I->fGetNFrame = ObjectGetNFrames;
-  I->fDescribeElement = ObjectDescribeElement;
-  I->fGetSettingHandle = ObjectGetSettingHandle;
-  I->fInvalidate = ObjectInvalidate;
-  I->fGetCaption = NULL;
-  I->Name[0]=0;
-  I->Color=0; /* white */
-  I->ExtentFlag=false;
-  I->Setting=NULL;
-  I->TTTFlag=false;
-  I->Enabled=false;
-  zero3f(I->ExtentMin);
-  zero3f(I->ExtentMax);
-  OrthoRemoveSplash(G);
-  for(a=0;a<cRepCnt;a++) I->RepVis[a]=true;
-  for(a=0;a<16;a++) I->TTT[a]=0.0F;
-  I->RepVis[cRepCell]=false;
-  I->RepVis[cRepExtent]=false;
-  I->Context=0;
-  
-}
-/*========================================================================*/
-void ObjectRenderUnitBox(CObject *this,int frame,
-                         CRay *ray,Pickable **pick,int pass)
+static void ObjectRenderUnitBox(CObject *this,RenderInfo *info)
 {
   register PyMOLGlobals *G = this->G;    
   if(G->HaveGUI && G->ValidContext) {
@@ -398,6 +367,35 @@ void ObjectRenderUnitBox(CObject *this,int frame,
 
     glEnd();
   }
+}
+/*========================================================================*/
+void ObjectInit(PyMOLGlobals *G,CObject *I)
+{
+  int a;
+  I->G = G;
+  I->fFree = ObjectFree;
+  I->fRender = ObjectRenderUnitBox;
+  I->fUpdate = ObjectUpdate;
+  I->fGetNFrame = ObjectGetNFrames;
+  I->fDescribeElement = ObjectDescribeElement;
+  I->fGetSettingHandle = ObjectGetSettingHandle;
+  I->fInvalidate = ObjectInvalidate;
+  I->fGetCaption = NULL;
+  I->Name[0]=0;
+  I->Color=0; /* white */
+  I->ExtentFlag=false;
+  I->Setting=NULL;
+  I->TTTFlag=false;
+  I->Enabled=false;
+  zero3f(I->ExtentMin);
+  zero3f(I->ExtentMax);
+  OrthoRemoveSplash(G);
+  for(a=0;a<cRepCnt;a++) I->RepVis[a]=true;
+  for(a=0;a<16;a++) I->TTT[a]=0.0F;
+  I->RepVis[cRepCell]=false;
+  I->RepVis[cRepExtent]=false;
+  I->Context=0;
+  
 }
 
 void ObjectStateInit(PyMOLGlobals *G,CObjectState *I)

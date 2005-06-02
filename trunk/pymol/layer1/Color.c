@@ -81,6 +81,61 @@ static int nAutoColor = 40;
 #define cColorExtCutoff (-10)
 
 
+void ColorGetBkrdContColor(PyMOLGlobals *G,float *rgb, int invert_flag) 
+{
+  float *bkrd=SettingGetfv(G,cSetting_bg_rgb);
+  
+  if(!invert_flag) {
+    if((bkrd[0]+bkrd[1]+bkrd[2])>0.5F) {
+      rgb[0] = 1.0F;
+      rgb[1] = 1.0F;
+      rgb[2] = 1.0F;
+    } else {
+      rgb[0] = 0.0F;
+      rgb[1] = 0.0F;
+      rgb[2] = 0.0F;
+    }
+  }
+
+  { 
+    int a;
+    for(a=0;a<3;a++) 
+      if(fabs(bkrd[a]-rgb[a])<0.5F) {
+        rgb[a] = 1.0F - rgb[a];
+        if(fabs(bkrd[a]-rgb[a])<0.5F) {
+          if(bkrd[a]>0.5F)
+            rgb[a] = 0.0F;
+      else
+        rgb[a] = 1.0F;
+        }
+      }
+  }
+}
+
+unsigned int ColorGet32BitWord(PyMOLGlobals *G,float *rgba)
+{
+  CColor *I=G->Color;
+  unsigned int rc, gc, bc, ac;
+  unsigned int result;
+
+  rc = (int)(255*rgba[0]+0.49999F);
+  gc = (int)(255*rgba[1]+0.49999F);
+  bc = (int)(255*rgba[2]+0.49999F);
+  ac = (int)(255*rgba[3]+0.49999F);
+
+  if(rc>255) rc=255;
+  if(bc>255) bc=255;
+  if(gc>255) gc=255;
+  if(ac>255) ac=255;
+
+  if(I->BigEndian) {
+    result = (rc<<24)|(gc<<16)|(bc<<8)|ac;
+  } else {
+    result = (ac<<24)|(bc<<16)|(gc<<8)|rc;
+  }
+  return result;
+}
+
 int ColorGetNext(PyMOLGlobals *G) 
 {
   int result;

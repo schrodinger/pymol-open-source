@@ -540,13 +540,16 @@ static void ObjectMeshUpdate(ObjectMesh *I)
   }
 }
 
-static void ObjectMeshRender(ObjectMesh *I,int state,CRay *ray,Pickable **pick,int pass)
+static void ObjectMeshRender(ObjectMesh *I,RenderInfo *info)
 {
   PyMOLGlobals *G = I->Obj.G;
   float *v = NULL;
   float *vc;
   float radius;
-  int *n = NULL;
+  int state = info->state;
+  CRay *ray = info->ray;
+  Pickable **pick = info->pick;
+  int pass = info->pass;  int *n = NULL;
   int c;
   int a=0;
   ObjectMeshState *ms = NULL;
@@ -633,7 +636,7 @@ static void ObjectMeshRender(ObjectMesh *I,int state,CRay *ray,Pickable **pick,i
             int use_dlst;
             if(ms->UnitCellCGO&&(I->Obj.RepVis[cRepCell]))
               CGORenderGL(ms->UnitCellCGO,ColorGet(I->Obj.G,I->Obj.Color),
-                          I->Obj.Setting,NULL);
+                          I->Obj.Setting,NULL,info);
 
             SceneResetNormal(I->Obj.G,false);
             ObjectUseColor(&I->Obj);
@@ -706,7 +709,7 @@ ObjectMesh *ObjectMeshNew(PyMOLGlobals *G)
   
   I->Obj.fFree = (void (*)(struct CObject *))ObjectMeshFree;
   I->Obj.fUpdate =  (void (*)(struct CObject *)) ObjectMeshUpdate;
-  I->Obj.fRender =(void (*)(struct CObject *, int, CRay *, Pickable **,int ))ObjectMeshRender;
+  I->Obj.fRender =(void (*)(struct CObject *, RenderInfo *))ObjectMeshRender;
   I->Obj.fInvalidate =(void (*)(struct CObject *,int,int,int))ObjectMeshInvalidate;
   I->Obj.fGetNFrame = (int (*)(struct CObject *)) ObjectMeshGetNStates;
   return(I);

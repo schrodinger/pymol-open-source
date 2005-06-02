@@ -49,7 +49,6 @@ typedef struct RepMesh {
 
 #include"ObjectMolecule.h"
 
-void RepMeshRender(RepMesh *I,CRay *ray,Pickable **pick);
 void RepMeshFree(RepMesh *I);
 void RepMeshColor(RepMesh *I,CoordSet *cs);
 int RepMeshSameVis(RepMesh *I,CoordSet *cs);
@@ -70,8 +69,10 @@ void RepMeshFree(RepMesh *I)
 
 void RepMeshGetSolventDots(RepMesh *I,CoordSet *cs,float *min,float *max,float probe_radius);
 
-void RepMeshRender(RepMesh *I,CRay *ray,Pickable **pick)
+static void RepMeshRender(RepMesh *I,RenderInfo *info)
 {
+  CRay *ray = info->ray;
+  Pickable **pick = info->pick;
   PyMOLGlobals *G=I->R.G;
   float *v=I->V;
   float *vc=I->VC;
@@ -126,6 +127,21 @@ void RepMeshRender(RepMesh *I,CRay *ray,Pickable **pick)
       if(!lighting)
         glDisable(GL_LIGHTING);
     
+      switch(I->mesh_type) {
+      case 0:
+        if(info->width_scale_flag) 
+          glLineWidth(I->Width*info->width_scale);
+        else
+          glLineWidth(I->Width);
+        break;
+      case 1: 
+        if(info->width_scale_flag) 
+          glPointSize(SettingGet_f(G,I->R.cs->Setting,I->R.obj->Setting,cSetting_dot_width) *
+                      info->width_scale);
+        else
+          glPointSize(SettingGet_f(G,I->R.cs->Setting,I->R.obj->Setting,cSetting_dot_width));
+        break;
+      }
       use_dlst = (int)SettingGet(G,cSetting_use_display_lists);
       if(use_dlst&&I->R.displayList) {
         glCallList(I->R.displayList);
@@ -143,7 +159,6 @@ void RepMeshRender(RepMesh *I,CRay *ray,Pickable **pick)
       
         switch(I->mesh_type) {
         case 0:
-          glLineWidth(I->Width);
           if(n) {
             if(I->oneColorFlag) {
               while(*n)
@@ -439,7 +454,7 @@ Rep *RepMeshNew(CoordSet *cs)
   I->VC=NULL;
   I->NDot=0;
   I->Dot=NULL;
-  I->R.fRender=(void (*)(struct Rep *, CRay *, Pickable **))RepMeshRender;
+  I->R.fRender=(void (*)(struct Rep *, RenderInfo *))RepMeshRender;
   I->R.fFree=(void (*)(struct Rep *))RepMeshFree;
   I->R.obj = (CObject*)cs->Obj;
   I->R.cs = cs;

@@ -208,9 +208,13 @@ static int ObjectCGOGetNState(ObjectCGO *I) {
 
 /*========================================================================*/
 
-static void ObjectCGORender(ObjectCGO *I,int state,CRay *ray,Pickable **pick,int pass)
+static void ObjectCGORender(ObjectCGO *I,RenderInfo *info)
 {
   register PyMOLGlobals *G = I->Obj.G;
+  int state = info->state;
+  CRay *ray = info->ray;
+  Pickable **pick = info->pick;
+  int pass = info->pass;
   ObjectCGOState *sobj = NULL;
   int a;
   float *color;
@@ -238,7 +242,7 @@ static void ObjectCGORender(ObjectCGO *I,int state,CRay *ray,Pickable **pick,int
               if(pick) {
               } else {
                 if(sobj->std)
-                  CGORenderGL(sobj->std,color,I->Obj.Setting,NULL);
+                  CGORenderGL(sobj->std,color,I->Obj.Setting,NULL,info);
               }
             }
           }
@@ -261,7 +265,7 @@ static void ObjectCGORender(ObjectCGO *I,int state,CRay *ray,Pickable **pick,int
           } else {
             if(sobj)
               if(sobj->std)
-                CGORenderGL(sobj->std,color,I->Obj.Setting,NULL);
+                CGORenderGL(sobj->std,color,I->Obj.Setting,NULL,info);
           }
         }
       }
@@ -282,7 +286,7 @@ ObjectCGO *ObjectCGONew(PyMOLGlobals *G)
   I->Obj.type = cObjectCGO;
   I->Obj.fFree = (void (*)(struct CObject *))ObjectCGOFree;
   I->Obj.fUpdate =(void (*)(struct CObject *)) ObjectCGOUpdate;
-  I->Obj.fRender =(void (*)(struct CObject *, int, CRay *, Pickable **,int))ObjectCGORender;
+  I->Obj.fRender =(void (*)(struct CObject *, RenderInfo *))ObjectCGORender;
   I->Obj.fGetNFrame = (int (*)(struct CObject *)) ObjectCGOGetNState;
 
   return(I);

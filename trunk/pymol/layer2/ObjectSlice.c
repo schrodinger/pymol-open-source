@@ -848,10 +848,14 @@ int ObjectSliceGetOrigin(ObjectSlice *I,int state,float *origin)
   return ok;
 }
 
-static void ObjectSliceRender(ObjectSlice *I,int state,CRay *ray,Pickable **pick,int pass)
+static void ObjectSliceRender(ObjectSlice *I,RenderInfo *info)
 {
 
   PyMOLGlobals *G = I->Obj.G;
+  int state = info->state;
+  CRay *ray = info->ray;
+  Pickable **pick = info->pick;
+  int pass = info->pass;
   int cur_state = 0;
   float alpha;
   int track_camera = SettingGet_b(G,NULL,I->Obj.Setting,cSetting_slice_track_camera);
@@ -1208,7 +1212,7 @@ ObjectSlice *ObjectSliceNew(PyMOLGlobals *G)
   
   I->Obj.fFree = (void (*)(struct CObject *))ObjectSliceFree;
   I->Obj.fUpdate =  (void (*)(struct CObject *)) ObjectSliceUpdate;
-  I->Obj.fRender =(void (*)(struct CObject *, int, CRay *, Pickable **,int ))ObjectSliceRender;
+  I->Obj.fRender =(void (*)(struct CObject *, RenderInfo *))ObjectSliceRender;
   I->Obj.fInvalidate =(void (*)(struct CObject *,int,int,int))ObjectSliceInvalidate;
   I->Obj.fGetNFrame = (int (*)(struct CObject *)) ObjectSliceGetNStates;
   return(I);

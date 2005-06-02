@@ -90,9 +90,11 @@ Z* -------------------------------------------------------------------
 struct CoordSet;
 struct Object;
 
+
+
 typedef struct Rep {
   PyMOLGlobals *G;
-  void            (*fRender)(struct Rep *I,CRay *ray,Pickable **pick);  
+  void            (*fRender)(struct Rep *I,RenderInfo *info);
   struct Rep     *(*fUpdate)(struct Rep *I,struct CoordSet *cs,int rep);
   void        (*fInvalidate)(struct Rep *I,struct CoordSet *cs,int level);
   void              (*fFree)(struct Rep* I);

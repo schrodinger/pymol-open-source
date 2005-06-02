@@ -35,7 +35,6 @@ typedef struct RepWireBond {
 
 #include"ObjectMolecule.h"
 
-void RepWireBondRender(RepWireBond *I,CRay *ray,Pickable **pick);
 void RepWireBondFree(RepWireBond *I);
 static void RepValence(float *v,float *v1,float *v2,int *other,int a1,
                 int a2,float *coord,float *color,int ord,float tube_size);
@@ -348,9 +347,11 @@ void RepWireBondFree(RepWireBond *I)
   OOFreeP(I);
 }
 
-void RepWireBondRender(RepWireBond *I,CRay *ray,Pickable **pick)
+static void RepWireBondRender(RepWireBond *I,RenderInfo *info)
 {
   PyMOLGlobals *G=I->R.G;
+  CRay *ray = info->ray;
+  Pickable **pick = info->pick;
   float *v=I->V;
   int c=I->N;
   unsigned int i,j;
@@ -363,7 +364,7 @@ void RepWireBondRender(RepWireBond *I,CRay *ray,Pickable **pick)
     if(I->Radius==0.0F) {
       radius = ray->PixelRadius*I->Width/2.0F;
     } else {
-        radius = I->Radius;
+      radius = I->Radius;
     }
     
 	 v=I->V;
@@ -419,7 +420,12 @@ void RepWireBondRender(RepWireBond *I,CRay *ray,Pickable **pick)
     } else {
       int use_dlst;
       use_dlst = (int)SettingGet(G,cSetting_use_display_lists);
-            
+
+      if(info->width_scale_flag) 
+        glLineWidth(I->Width*info->width_scale);
+      else
+        glLineWidth(I->Width);
+
       if(use_dlst&&I->R.displayList) {
         glCallList(I->R.displayList);
       } else { 
@@ -432,9 +438,6 @@ void RepWireBondRender(RepWireBond *I,CRay *ray,Pickable **pick)
             }
           }
         }
-      
-        glLineWidth(I->Width);
-      
         v=I->V;
         c=I->N;
       
@@ -564,7 +567,7 @@ Rep *RepWireBondNew(CoordSet *cs)
   
   RepInit(G,&I->R);
 
-  I->R.fRender=(void (*)(struct Rep *, CRay *, Pickable **))RepWireBondRender;
+  I->R.fRender=(void (*)(struct Rep *, RenderInfo *info))RepWireBondRender;
   I->R.fFree=(void (*)(struct Rep *))RepWireBondFree;
   I->Width = SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_line_width);
   I->Radius = SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_line_radius);

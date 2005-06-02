@@ -32,7 +32,6 @@ Z* -------------------------------------------------------------------
 
 void DistSetUpdate(DistSet *I);
 void DistSetFree(DistSet *I);
-void DistSetRender(DistSet *I,CRay *ray,Pickable **pick,int pass);
 void DistSetStrip(DistSet *I);
 void DistSetInvalidateRep(DistSet *I,int type,int level);
 
@@ -192,8 +191,11 @@ void DistSetUpdate(DistSet *I)
   OrthoBusyFast(I->G,1,1);
 }
 /*========================================================================*/
-void DistSetRender(DistSet *I,CRay *ray,Pickable **pick,int pass)
+static void DistSetRender(DistSet *I,RenderInfo *info)
 {
+  CRay *ray = info->ray;
+  int pass = info->pass;
+
   int a;
   if(!pass) { /* only render on zero/default pass */
     for(a=0;a<I->NRep;a++)
@@ -205,7 +207,7 @@ void DistSetRender(DistSet *I,CRay *ray,Pickable **pick,int pass)
             } else {
               ray->fColor3fv(ray,ColorGet(I->G,I->Obj->Obj.Color));
             }			 
-            I->Rep[a]->fRender(I->Rep[a],ray,pick);
+            I->Rep[a]->fRender(I->Rep[a],info);
         }
   }
 }

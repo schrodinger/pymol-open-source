@@ -1238,7 +1238,7 @@ void CGORenderGLPickable(CGO *I,Pickable **pick,void *ptr,CSetting *set1,CSettin
 }
 
 
-void CGORenderGL(CGO *I,float *color,CSetting *set1,CSetting *set2)
+void CGORenderGL(CGO *I,float *color,CSetting *set1,CSetting *set2,RenderInfo *info)
      /* this should be as fast as you can make it...
       * the ASM loop is about 2X long as raw looped GL calls,
       * but hopefully superscaler processors won't care */
@@ -1255,8 +1255,14 @@ void CGORenderGL(CGO *I,float *color,CSetting *set1,CSetting *set2)
         glColor3fv(color);
       else
         glColor3f(1.0,1.0,1.0);
-      glLineWidth(SettingGet_f(I->G,set1,set2,cSetting_cgo_line_width));
-      glPointSize(SettingGet_f(I->G,set1,set2,cSetting_cgo_dot_width));
+      if(info && info->width_scale_flag) {
+        glLineWidth(SettingGet_f(I->G,set1,set2,cSetting_cgo_line_width)*info->width_scale);
+        glPointSize(SettingGet_f(I->G,set1,set2,cSetting_cgo_dot_width)*info->width_scale);
+
+      } else {
+        glLineWidth(SettingGet_f(I->G,set1,set2,cSetting_cgo_line_width));
+        glPointSize(SettingGet_f(I->G,set1,set2,cSetting_cgo_dot_width));
+      }
       
       while((op=(CGO_MASK&CGO_read_int(pc)))) {
         CGO_gl[op](R,pc);

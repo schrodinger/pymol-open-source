@@ -17,6 +17,7 @@ Z* -------------------------------------------------------------------
 #define _H_Text
 
 #include"PyMOLGlobals.h"
+#include"Base.h"
 
 /* Here are the issues:
 
