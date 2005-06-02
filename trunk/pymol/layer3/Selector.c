@@ -3274,7 +3274,6 @@ int SelectorGetSingleAtomVertex(PyMOLGlobals *G,int sele,int state,float *v)
   ObjectMolecule *obj;
   int index;
   int found_it = false;
-  printf("state: %d\n",state);
   if(SelectorGetSingleAtomObjectIndex(G,sele,&obj,&index))
     found_it = ObjectMoleculeGetAtomVertex(obj,state,index,v);
   return(found_it);

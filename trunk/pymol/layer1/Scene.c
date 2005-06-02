@@ -80,6 +80,15 @@ typedef struct {
   int mode_override;
 } DeferredMouse;
 
+typedef struct {
+  CDeferred deferred;
+  PyMOLGlobals *G;
+  int width;
+  int height;
+  char *filename; /* NOTE: on heap! must free when done */
+  int quiet;
+} DeferredImage;
+
 /* allow up to 10 seconds at 30 FPS */
 
 #define MAX_ANI_ELEM 300
@@ -161,6 +170,19 @@ void ScenePrimeAnimation(PyMOLGlobals *G)
     SceneToViewElem(G,I->ani_elem);
     I->ani_elem[0].specification_level = 2;
     I->n_ani_elem = 0;
+  }
+}
+static void ScenePurgeCopy(PyMOLGlobals *G,int free_buffer)
+{
+  register CScene *I=G->Scene;
+  I->CopyFlag=false;
+  if(I->MovieOwnsImageFlag) 
+	 {
+		I->MovieOwnsImageFlag=false;
+		I->ImageBuffer=NULL;
+	 }
+  else if(free_buffer) {
+    FreeP(I->ImageBuffer);
   }
 }
 
@@ -577,12 +599,12 @@ int SceneMultipick(PyMOLGlobals *G,Multipick *smp)
 {
   register CScene *I=G->Scene;
   if(((int)SettingGet(G,cSetting_overlay))&&((int)SettingGet(G,cSetting_text)))
-    SceneRender(G,NULL,0,0,NULL); /* remove overlay if present */
+    SceneRender(G,NULL,0,0,NULL,0,0); /* remove overlay if present */
   SceneDontCopyNext(G);
   if(I->StereoMode>1) {
     smp->x = smp->x % (I->Width/2);
   }
-  SceneRender(G,NULL,0,0,smp);
+  SceneRender(G,NULL,0,0,smp,0,0);
   SceneDirty(G);
   return(1);
 }
@@ -810,6 +832,175 @@ float *SceneGetMatrix(PyMOLGlobals *G)
   return(I->RotMatrix);
 }
 /*========================================================================*/
+static int SceneMakeSizedImage(PyMOLGlobals *G,int width, int height)
+{
+  register CScene *I=G->Scene;
+  int ok=true;
+  /* check assumptions */
+
+  if(!((width>0)&&
+       (height>0)&&
+       (I->Width>0)&&
+       (I->Height>0))) {
+    PRINTFB(G,FB_Scene,FB_Errors)
+      "SceneMakeSizedImage-Error: invalid image dimensions\n"
+      ENDFB(G);
+    ok=false;
+  }
+  
+
+  if(ok && G->HaveGUI && G->ValidContext) {
+
+    unsigned int final_buffer_size = width*height;
+    unsigned int *final_image = NULL;
+    int nXStep = (width/(I->Width+1)) + 1;
+    int nYStep = (height/(I->Height+1)) + 1;
+    int x,y;
+
+    /* note here we're treating the buffer as 32-bit unsigned ints, not chars */
+
+    final_image = Alloc(unsigned int,final_buffer_size);
+    
+    if(!final_image) { 
+      ok=false;
+    }
+
+    SceneCopy(G,GL_BACK,true);
+    if(!I->ImageBuffer)
+      ok=false;
+
+    if(ok) {
+      /* so the trick here is that we need to move the camera around
+         so that we get pixel-perfect mosaic */
+      for(y=0;y<nYStep;y++) {
+        int y_offset = -(I->Height*y);
+        
+        for(x=0;x<nXStep;x++) {
+          int x_offset = -(I->Width*x);
+          int a,b;
+          float *v;  
+          unsigned int *p, *q, *qq, *pp;
+          v=SettingGetfv(G,cSetting_bg_rgb);
+            
+          glDrawBuffer(GL_BACK);
+          glClearColor(v[0],v[1],v[2],1.0);
+          glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
+          glClearColor(0.0,0.0,0.0,1.0);
+          ScenePurgeCopy(G,false);
+          SceneRender(G,NULL,x_offset,y_offset,NULL,width,height);
+          SceneCopy(G,GL_BACK,true);
+          /*          p_glutSwapBuffers();
+          PSleepUnlocked(100000);
+          p_glutSwapBuffers();*/
+          
+          if(I->ImageBuffer) { /* the image into place */
+            p = (unsigned int*)I->ImageBuffer;
+            q = final_image + (x*I->Width) + (y*I->Height)*width;
+            {
+              int y_limit;
+              int x_limit;
+              
+              if(((y+1)*I->Height)>height)
+                y_limit = height - (y*I->Height);
+              else
+                y_limit = I->Height;
+              if(((x+1)*I->Width)>width)
+                x_limit = width - (x*I->Width);
+              else
+                x_limit = I->Width;
+              for(a=0;a<y_limit;a++) {
+                qq = q;
+                pp = p;
+                for(b=0;b<x_limit;b++) {
+                  *(qq++) = *(pp++);
+                }
+                q += width;
+                p += I->Width;
+              }
+            }
+          }
+        }
+      }
+      
+      ScenePurgeCopy(G,true);
+
+      I->ImageBuffer = final_image;
+      final_image = NULL;
+      I->ImageBufferSize = final_buffer_size*4; /* in bytes, not 32-bit words */
+      I->ImageBufferWidth=width;
+      I->ImageBufferHeight=height;
+
+      I->DirtyFlag=false;
+      I->CopyFlag = true;
+
+      I->CopiedFromOpenGL = false;
+      I->MovieOwnsImageFlag = false;
+      
+      FreeP(final_image);
+    }
+  } else {
+    ok=false;
+  }
+
+  return ok;
+
+  #if 0
+  
+  {
+  if(I->ImageBuffer&&(I->ImageBufferHeight==I->Height)&&(I->ImageBufferWidth==I->Width)) {
+	 MovieSetImage(G,MovieFrameToImage(G,SettingGetGlobal_i(G,cSetting_frame)-1)
+                                    ,I->ImageBuffer);
+    I->MovieOwnsImageFlag=true;
+  } else {
+    I->MovieOwnsImageFlag=false;
+  }
+  I->CopyFlag=true;
+
+  register CScene *I=G->Scene;
+  unsigned int buffer_size;
+  GLvoid *image;
+  int reset_alpha = false;
+
+  buffer_size = 4*I->Width*I->Height;
+  if(!I->CopyFlag) {
+	 image = (GLvoid*)Alloc(char,buffer_size);
+	 ErrChkPtr(G,image);
+    if(G->HaveGUI && G->ValidContext) {
+      glReadBuffer(GL_BACK);
+      PyMOLReadPixels(I->Block->rect.left,I->Block->rect.bottom,I->Width,I->Height,
+                   GL_RGBA,GL_UNSIGNED_BYTE,image);
+      
+      reset_alpha = true;
+      I->ImageBufferHeight=I->Height;
+      I->ImageBufferWidth=I->Width;
+    } else {
+       PRINTFB(G,FB_Scene,FB_Errors)
+         " ScenePNG-WARNING: writing a blank image buffer.\n"
+         ENDFB(G);
+     }
+  } else {
+    image=I->ImageBuffer;
+    reset_alpha = I->CopiedFromOpenGL;
+    PRINTFB(G,FB_Scene,FB_Blather)
+      " ScenePNG: writing cached image (reset_alpha=%d).\n",reset_alpha
+      ENDFB(G);
+  }
+  if(reset_alpha&&image) {
+    unsigned char *p = (unsigned char*)image;
+    int x,y;
+    for(y=0;y<I->Height;y++) {
+      for(x=0;x<I->Width;x++) {
+        p[3]=0xFF;
+        p+=4;
+      }
+    }
+  }
+  return (unsigned char*)image;
+#endif
+
+}
+
+/*========================================================================*/
 static unsigned char *SceneImagePrepare(PyMOLGlobals *G)
 {
   register CScene *I=G->Scene;
@@ -821,6 +1012,7 @@ static unsigned char *SceneImagePrepare(PyMOLGlobals *G)
   if(!I->CopyFlag) {
 	 image = (GLvoid*)Alloc(char,buffer_size);
 	 ErrChkPtr(G,image);
+    return I->ImageBuffer;
     if(G->HaveGUI && G->ValidContext) {
       glReadBuffer(GL_BACK);
       PyMOLReadPixels(I->Block->rect.left,I->Block->rect.bottom,I->Width,I->Height,
@@ -888,9 +1080,11 @@ int  SceneCopyExternal(PyMOLGlobals *G,int width, int height,int rowbytes,unsign
   return(result);
 }
 
+
 void ScenePNG(PyMOLGlobals *G,char *png,int quiet)
 {
   register CScene *I=G->Scene;
+
   GLvoid *image = SceneImagePrepare(G);
   if(image) {
     if(MyPNGWrite(G,png,image,I->ImageBufferWidth,I->ImageBufferHeight)) {
@@ -1032,17 +1226,6 @@ void SceneSetFrame(PyMOLGlobals *G,int mode,int frame)
 
 }
 /*========================================================================*/
-void ScenePurgeCopy(PyMOLGlobals *G)
-{
-  register CScene *I=G->Scene;
-  I->CopyFlag=false;
-  if(I->MovieOwnsImageFlag) 
-	 {
-		I->MovieOwnsImageFlag=false;
-		I->ImageBuffer=NULL;
-	 }
-}
-/*========================================================================*/
 void SceneDirty(PyMOLGlobals *G) 
 	  /* This means that the current image on the screen (and/or in the buffer)
 		 needs to be updated */
@@ -1056,7 +1239,7 @@ void SceneDirty(PyMOLGlobals *G)
   if(I) {
     if(!I->DirtyFlag) {
       I->DirtyFlag=true;
-      ScenePurgeCopy(G);
+      ScenePurgeCopy(G,false);
       OrthoDirty(G);
     }
   }
@@ -1120,7 +1303,7 @@ void SceneMakeMovieImage(PyMOLGlobals *G) {
       glClearColor(v[0],v[1],v[2],1.0);
       glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
       glClearColor(0.0,0.0,0.0,1.0);
-      SceneRender(G,NULL,0,0,NULL);
+      SceneRender(G,NULL,0,0,NULL,0,0);
       SceneCopy(G,GL_BACK,true);
     }
   }
@@ -1810,11 +1993,11 @@ static int SceneDoXYPick(PyMOLGlobals *G, int x, int y)
 {
   CScene *I=G->Scene;
   if(((int)SettingGet(G,cSetting_overlay))&&((int)SettingGet(G,cSetting_text)))
-    SceneRender(G,NULL,0,0,NULL); /* remove overlay if present */
+    SceneRender(G,NULL,0,0,NULL,0,0); /* remove overlay if present */
   SceneDontCopyNext(G);
   
   I->LastPicked.ptr = NULL;
-  SceneRender(G,&I->LastPicked,x,y,NULL);
+  SceneRender(G,&I->LastPicked,x,y,NULL,0,0);
   return (I->LastPicked.ptr!=NULL);
   /* did we pick something? */
 }
@@ -3298,6 +3481,33 @@ static int SceneDeferredClick(DeferredMouse *dm)
     }
   return 1;
 }
+static int SceneDeferredPNG(DeferredImage *di)
+{
+  PyMOLGlobals *G=di->G;
+  SceneMakeSizedImage(G,di->width, di->height);
+  ScenePNG(G,di->filename,di->quiet);
+  FreeP(di->filename);
+  return 1;
+}
+int SceneDeferPNG(PyMOLGlobals *G,int width, int height, char *filename, int quiet)
+{
+  DeferredImage *di = Calloc(DeferredImage,1);
+  if(di) {
+    DeferredInit(G,&di->deferred);
+    di->G = G;
+    di->width = width;
+    di->height = height;
+    di->deferred.fn = (DeferredFn*)SceneDeferredPNG;
+    di->quiet = quiet;
+    if(filename) {
+      int stlen = strlen(filename);
+      di->filename = Alloc(char,stlen+1);
+      strcpy(di->filename, filename);
+    }
+  }
+  OrthoDefer(G,&di->deferred);
+  return 1;
+}
 
 int SceneDeferClick(Block *block, int button, int x, int y, int mod)
 {
@@ -4116,7 +4326,8 @@ void sharp3d_switch_to_right_stereo(void);
 void sharp3d_end_stereo(void);
 #endif
 /*========================================================================*/
-void SceneRender(PyMOLGlobals *G,Pickable *pick,int x,int y,Multipick *smp)
+void SceneRender(PyMOLGlobals *G,Pickable *pick,int x,int y,
+                 Multipick *smp,int oversize_width, int oversize_height)
 {
   /* think in terms of the camera's world */
   register CScene *I=G->Scene;
@@ -4208,9 +4419,12 @@ void SceneRender(PyMOLGlobals *G,Pickable *pick,int x,int y,Multipick *smp)
     if(Feedback(G,FB_OpenGL,FB_Debugging))
       PyMOLCheckOpenGLErr("SceneRender checkpoint 1");
 
-  
     glGetIntegerv(GL_VIEWPORT,(GLint*)view_save);
-    glViewport(I->Block->rect.left,I->Block->rect.bottom,I->Width,I->Height);
+
+    if(oversize_width && oversize_height) {
+      glViewport(I->Block->rect.left+x,I->Block->rect.bottom+y,oversize_width, oversize_height);
+    } else 
+      glViewport(I->Block->rect.left,I->Block->rect.bottom,I->Width,I->Height);
 
     debug_pick = (int)SettingGet(G,cSetting_debug_pick);
 

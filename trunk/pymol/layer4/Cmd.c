@@ -3812,11 +3812,16 @@ static PyObject *CmdPNG(PyObject *self, 	PyObject *args)
   char *str1;
   int ok=false;
   int quiet;
-  ok = PyArg_ParseTuple(args,"si",&str1,&quiet);
+  int width,height;
+  ok = PyArg_ParseTuple(args,"siii",&str1,&width,&height,&quiet);
   if (ok) {
     APIEntry();
     ExecutiveDrawNow(TempPyMOLGlobals);		 /* TODO STATUS */
-    ScenePNG(TempPyMOLGlobals,str1,quiet);
+    if(width||height) {
+      SceneDeferPNG(TempPyMOLGlobals,width,height,str1,quiet);
+    } else {
+      ScenePNG(TempPyMOLGlobals,str1,quiet);
+    }
     APIExit();
   }
   return APIResultOk(ok);
