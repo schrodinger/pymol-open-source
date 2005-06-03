@@ -1606,7 +1606,22 @@ static PyObject *CmdWaitQueue(PyObject *self, 	PyObject *args)
   PyObject *result = NULL;
   if(!TempPyMOLGlobals->Terminating) {
     APIEnterBlocked();
-    if(OrthoCommandWaiting(TempPyMOLGlobals)||(flush_count>1)) 
+    if(OrthoCommandWaiting(TempPyMOLGlobals)
+       ||(flush_count>1))
+      result = PyInt_FromLong(1);
+    else
+      result = PyInt_FromLong(0);
+    APIExitBlocked();
+  }
+  return APIAutoNone(result);
+}
+
+static PyObject *CmdWaitDeferred(PyObject *self, 	PyObject *args)
+{
+  PyObject *result = NULL;
+  if(!TempPyMOLGlobals->Terminating) {
+    APIEnterBlocked();
+    if(OrthoDeferredWaiting(TempPyMOLGlobals))
       result = PyInt_FromLong(1);
     else
       result = PyInt_FromLong(0);
@@ -5579,6 +5594,7 @@ static PyMethodDef Cmd_methods[] = {
 	{"isolevel",              CmdIsolevel,             METH_VARARGS },
 	{"isomesh",	              CmdIsomesh,              METH_VARARGS },
 	{"isosurface",	           CmdIsosurface,           METH_VARARGS },
+   {"wait_deferred",         CmdWaitDeferred,         METH_VARARGS },
    {"wait_queue",            CmdWaitQueue,            METH_VARARGS },
    {"label",                 CmdLabel,                METH_VARARGS },
 	{"load",	                 CmdLoad,                 METH_VARARGS },

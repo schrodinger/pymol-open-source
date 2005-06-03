@@ -92,6 +92,8 @@ int OrthoTextVisible(PyMOLGlobals *G);
 void OrthoReshapeWizard(PyMOLGlobals *G,int height);
 void OrthoDefer(PyMOLGlobals *G,CDeferred *D);
 void OrthoExecDeferred(PyMOLGlobals *G);
+int OrthoDeferredWaiting(PyMOLGlobals *G);
+
 void OrthoSetLoop(PyMOLGlobals *G,int flag, int l, int r, int t, int b);
 #define OrthoLineLength 1024
 typedef char OrthoLineType[OrthoLineLength];

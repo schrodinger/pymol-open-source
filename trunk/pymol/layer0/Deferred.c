@@ -16,8 +16,7 @@ void DeferredFree(CDeferred *I)
 
 CDeferred *DeferredExec(CDeferred *I)
 {
-  if(I)
-  while(I) {
+  while(I) { /* executes all deferred actions */
     CDeferred *next = I->next;
     if(I->fn) {
       if(!I->fn(I)) {

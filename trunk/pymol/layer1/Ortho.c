@@ -124,6 +124,12 @@ void OrthoSetLoopRect(PyMOLGlobals *G,int flag, BlockRect *rect)
   OrthoDirty(G);
 }
 
+int OrthoDeferredWaiting(PyMOLGlobals *G)
+{
+  register COrtho *I=G->Ortho;
+  return (I->deferred!=NULL);
+}
+
 void OrthoExecDeferred(PyMOLGlobals *G)
 {
   register COrtho *I=G->Ortho;
