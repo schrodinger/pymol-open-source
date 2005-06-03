@@ -3818,7 +3818,7 @@ static PyObject *CmdPNG(PyObject *self, 	PyObject *args)
     APIEntry();
     ExecutiveDrawNow(TempPyMOLGlobals);		 /* TODO STATUS */
     if(width||height) {
-      SceneDeferPNG(TempPyMOLGlobals,width,height,str1,quiet);
+      SceneDeferPNG(TempPyMOLGlobals,width,height,str1,-1,quiet);
     } else {
       ScenePNG(TempPyMOLGlobals,str1,quiet);
     }
@@ -3956,11 +3956,11 @@ static PyObject *CmdColorDef(PyObject *self, 	PyObject *args)
 static PyObject *CmdDraw(PyObject *self, 	PyObject *args)
 {
   int int1,int2;
-  int quiet;
-  int ok = PyArg_ParseTuple(args,"iii",&int1,&int2,&quiet);
+  int quiet,antialias;
+  int ok = PyArg_ParseTuple(args,"iiii",&int1,&int2,&antialias,&quiet);
   if(ok) {
     APIEntry();
-    ok = ExecutiveDrawCmd(TempPyMOLGlobals,int1,int2,quiet);
+    ok = ExecutiveDrawCmd(TempPyMOLGlobals,int1,int2,antialias,quiet);
     APIExit();
   }
   return APIResultOk(ok);

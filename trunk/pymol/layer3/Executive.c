@@ -98,12 +98,14 @@ static void ExecutiveSpecSetVisibility(PyMOLGlobals *G,SpecRec *rec,
                                        int new_vis,int mod);
 void ExecutiveObjMolSeleOp(PyMOLGlobals *G,int sele,ObjectMoleculeOpRec *op);
 
-int ExecutiveDrawCmd(PyMOLGlobals *G, int width, int height,int quiet)
+int ExecutiveDrawCmd(PyMOLGlobals *G, int width, int height,int antialias, int quiet)
 {
   if((width<=0)&&(height<=0)) {
     SceneGetWidthHeight(G,&width,&height);
   }
-  SceneDeferPNG(G,width,height,NULL,quiet);
+  if(antialias<0)
+    antialias = SettingGetGlobal_i(G,cSetting_antialias);
+  SceneDeferPNG(G,width,height,NULL,antialias, quiet);
   return 1;
 }
 

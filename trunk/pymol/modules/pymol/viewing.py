@@ -1709,7 +1709,7 @@ NOTES
       if _raising(r): raise QuietException
       return r
 
-   def draw(width=0,height=0,quiet=1):
+   def draw(width=0,height=0,antialias=-1,quiet=1):
       # stop movies and sculpting if they're on...
       if cmd.get_movie_playing():
          cmd.mstop()
@@ -1719,7 +1719,7 @@ NOTES
       r = DEFAULT_ERROR
       try:
          lock()
-         r = _cmd.draw(int(width),int(height),int(quiet))
+         r = _cmd.draw(int(width),int(height),int(antialias),int(quiet))
       finally:
          unlock(r)      
       if _raising(r): raise QuietException

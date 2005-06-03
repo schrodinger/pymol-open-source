@@ -120,7 +120,7 @@ void SceneSuppressMovieFrame(PyMOLGlobals *G);
 int SceneDeferClick(Block *block,int button,int x,int y,int mod);
 int SceneDeferRelease(Block *block,int button,int x,int y,int mod);
 int SceneDeferDrag(Block *block,int x,int y,int mod);
-int SceneDeferPNG(PyMOLGlobals *G,int width, int height, char *filename,int quiet);
+int SceneDeferPNG(PyMOLGlobals *G,int width, int height, char *filename,int antialias, int quiet);
 char *SceneGetSeleModeKeyword(PyMOLGlobals *G);
 void SceneUpdateStereo(PyMOLGlobals *G);
 void ScenePushRasterMatrix(PyMOLGlobals *G,float *v);
