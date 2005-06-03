@@ -1715,6 +1715,8 @@ NOTES
          cmd.mstop()
       if int(cmd.get_setting_legacy("sculpting"))!=0:
          cmd.set("sculpting","off",quiet=1)
+      # make sure that there aren't any pending display events
+      cmd.refresh()
       #
       r = DEFAULT_ERROR
       try:

@@ -8,6 +8,8 @@ Changes up to 0.99
 
    * viewport can now take a single argument (height or width)
 
+   * oversize images are now downsampled and displayed
+
    * draw command -- enables OpenGL rendering of large images
 
    * fixed state argument for cmd.get_distance

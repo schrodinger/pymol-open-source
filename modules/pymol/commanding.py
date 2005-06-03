@@ -183,6 +183,19 @@ SEE ALSO
                break
             if (time.time()-now)>timeout:
                break
+      if _cmd.wait_deferred(): # deferred tasks waiting for a display event?
+         if thread.get_ident() == pymol.glutThread:
+            cmd.refresh()
+         else:
+            while 1:
+               e = threading.Event() # using this for portable delay
+               e.wait(poll)
+               del e
+               if not _cmd.wait_queue():
+                  break
+               if (time.time()-now)>timeout:
+                  break
+         
 
    def do(commands,log=1,echo=1):
       # WARNING: don't call this routine if you already have the API lock
