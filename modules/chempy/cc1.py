@@ -19,49 +19,49 @@ import string
 
 class CC1(Storage): # ChemDraw3D 5.0 std., cartesian coordinates
 
-   def fromList(self,molList):
+    def fromList(self,molList):
 
-      model = Indexed()
+        model = Indexed()
 
-      # read header information
-      nAtom = int(molList[0][0:3])
+        # read header information
+        nAtom = int(molList[0][0:3])
 
-      # read atoms and bonds
-      id_dict = {}
-      irec = 1
-      cnt = 0
-      for a in range(nAtom):
-         at = Atom()
-         at.index = cnt
-         id_dict[string.strip(molList[irec][3:8])] = at.index
-         at.coord = [float(molList[irec][8:20]), 
-            float(molList[irec][20:32]),float(molList[irec][32:44])]
-         at.symbol = string.strip(molList[irec][0:3])
-         at.numeric_type = int(molList[irec][44:49])
-         lst = string.split(string.strip(molList[irec][49:]))
-         at.bonds = lst
-         irec = irec + 1
-         cnt = cnt + 1
-         model.atom.append(at)
-         
-      # interpret bonds
-      cnt = 0
-      for a in model.atom:
-         lst = a.bonds
-         del a.bonds
-         for b in lst:
-            if a.index<id_dict[b]:
-               bnd = Bond()
-               bnd.index = [ a.index,id_dict[b]]
-               model.bond.append(bnd)
+        # read atoms and bonds
+        id_dict = {}
+        irec = 1
+        cnt = 0
+        for a in range(nAtom):
+            at = Atom()
+            at.index = cnt
+            id_dict[string.strip(molList[irec][3:8])] = at.index
+            at.coord = [float(molList[irec][8:20]), 
+                float(molList[irec][20:32]),float(molList[irec][32:44])]
+            at.symbol = string.strip(molList[irec][0:3])
+            at.numeric_type = int(molList[irec][44:49])
+            lst = string.split(string.strip(molList[irec][49:]))
+            at.bonds = lst
+            irec = irec + 1
+            cnt = cnt + 1
+            model.atom.append(at)
+            
+        # interpret bonds
+        cnt = 0
+        for a in model.atom:
+            lst = a.bonds
+            del a.bonds
+            for b in lst:
+                if a.index<id_dict[b]:
+                    bnd = Bond()
+                    bnd.index = [ a.index,id_dict[b]]
+                    model.bond.append(bnd)
 
-      # obtain formal charges from M  CHG record
-      return model
+        # obtain formal charges from M  CHG record
+        return model
 
 #------------------------------------------------------------------------------
-   def toList(self,model):
+    def toList(self,model):
 
-      return []
+        return []
 
-      # not implemented yet
+        # not implemented yet
 

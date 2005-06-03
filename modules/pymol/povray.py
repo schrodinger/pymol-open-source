@@ -13,32 +13,32 @@
 #Z* -------------------------------------------------------------------
 
 if __name__=='pymol.povray':
-   
-   import os
-   import traceback
+    
+    import os
+    import traceback
 
-   povray_exe = "povray"
+    povray_exe = "povray"
 
-   def render_from_string(header,pov_inp,prefix,width,height,antialias):
-      r = None
-      try:
-         pov = prefix +".pov"
-         png = prefix +".png"
-         f=open(pov,'w')
-         f.write(header)
-         f.write(pov_inp)
-         f.close()
-         if os.path.exists(png):
-            os.unlink(png)
-         if antialias:
-            ant="+A"
-         else:
-            ant=""
-         os.system("%s -D +I%s +O%s +W%d +H%d %s"%(
-                   povray_exe,pov,png,width,height,ant))
-         if os.path.exists(png):
-            r = 1
-      except:
-         traceback.print_exc()
-      return r
+    def render_from_string(header,pov_inp,prefix,width,height,antialias):
+        r = None
+        try:
+            pov = prefix +".pov"
+            png = prefix +".png"
+            f=open(pov,'w')
+            f.write(header)
+            f.write(pov_inp)
+            f.close()
+            if os.path.exists(png):
+                os.unlink(png)
+            if antialias:
+                ant="+A"
+            else:
+                ant=""
+            os.system("%s -D +I%s +O%s +W%d +H%d %s"%(
+                         povray_exe,pov,png,width,height,ant))
+            if os.path.exists(png):
+                r = 1
+        except:
+            traceback.print_exc()
+        return r
 

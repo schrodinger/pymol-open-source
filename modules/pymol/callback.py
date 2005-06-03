@@ -11,9 +11,9 @@
 #    cmd.get_state() 
 
 class Callback:
-   def __call__(self):
-      pass
+    def __call__(self):
+        pass
 
-   def get_extent(self):
-      # should return [ [min_x, min_y, min_z], [ max_x, max_y, max_z ] ] 
-      return None
+    def get_extent(self):
+        # should return [ [min_x, min_y, min_z], [ max_x, max_y, max_z ] ] 
+        return None
