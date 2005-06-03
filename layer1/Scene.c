@@ -87,6 +87,7 @@ typedef struct {
   int height;
   char *filename; /* NOTE: on heap! must free when done */
   int quiet;
+  int antialias;
 } DeferredImage;
 
 /* allow up to 10 seconds at 30 FPS */
@@ -832,12 +833,14 @@ float *SceneGetMatrix(PyMOLGlobals *G)
   return(I->RotMatrix);
 }
 /*========================================================================*/
-static int SceneMakeSizedImage(PyMOLGlobals *G,int width, int height)
+static int SceneMakeSizedImage(PyMOLGlobals *G,int width,
+                               int height, int antialias)
 {
   register CScene *I=G->Scene;
   int ok=true;
   int save_flag = false;
   int save_width, save_height;
+
   /* check assumptions */
 
   if( (width && height && I->Width && I->Height ) &&
@@ -875,6 +878,57 @@ static int SceneMakeSizedImage(PyMOLGlobals *G,int width, int height)
 
   if(ok && G->HaveGUI && G->ValidContext) {
 
+    int factor = 0;
+    int shift = 0;
+    int max_dim[2];
+
+    glGetIntegerv(GL_MAX_VIEWPORT_DIMS,max_dim);
+
+    /* clamp to what this OpenGL implementation can do */
+    if(width>max_dim[0]) {
+      height = (max_dim[0] * height) / width;
+      width = max_dim[0];
+      PRINTFB(G,FB_Scene,FB_Warnings)
+        "Scene-Warning: Maximum OpenGL viewport dimension exceeded."
+        ENDFB(G)
+    }
+    if(height>max_dim[0]) {
+      width = (max_dim[1] * width ) / height;
+      height = max_dim[1];
+      PRINTFB(G,FB_Scene,FB_Warnings)
+        "Scene-Warning: Maximum OpenGL viewport dimension exceeded."
+        ENDFB(G)
+      
+    }
+
+    if(antialias==1) {
+      factor = 2;
+      shift = 2; 
+    } if(antialias>=2) {
+      factor = 4;
+      shift = 4;
+    }
+
+    while(factor>1) {
+      if(((width*factor)<max_dim[0])&&
+         ((height*factor)<max_dim[1])) {
+        width = width * factor;
+        height = height * factor;
+        break;
+      } else {
+        factor = (factor>>1);
+        shift = shift - 2;
+        if(factor<2) {
+          PRINTFB(G,FB_Scene,FB_Blather)
+            "Scene-Warning: Maximum OpenGL viewport exceeded. Antialiasing disabled."
+            ENDFB(G);
+          break;
+        }
+      }
+    }
+    if(factor<2)
+      factor = 0;
+
     unsigned int final_buffer_size = width*height;
     unsigned int *final_image = NULL;
     int nXStep = (width/(I->Width+1)) + 1;
@@ -894,12 +948,17 @@ static int SceneMakeSizedImage(PyMOLGlobals *G,int width, int height)
       ok=false;
 
     if(ok) {
+      int total_steps = nXStep * nYStep;
+
+      OrthoBusyPrime(G);
+
       /* so the trick here is that we need to move the camera around
-         so that we get pixel-perfect mosaic */
+         so that we get a pixel-perfect mosaic */
       for(y=0;y<nYStep;y++) {
         int y_offset = -(I->Height*y);
         
         for(x=0;x<nXStep;x++) {
+          OrthoBusyFast(G,y*nYStep+x,total_steps);
           int x_offset = -(I->Width*x);
           int a,b;
           float *v;  
@@ -947,6 +1006,51 @@ static int SceneMakeSizedImage(PyMOLGlobals *G,int width, int height)
       }
       
       ScenePurgeCopy(G,true);
+
+      if(factor) { /* are we oversampling? */
+        unsigned int src_row_bytes = width * 4;
+
+        width = width / factor;
+        height = height / factor;
+        
+        {
+          unsigned char *p = (unsigned char*)final_image;
+          unsigned char *buffer = Alloc(unsigned char, 4 * width * height);
+          unsigned char *q = buffer;
+          register unsigned char *pp, *ppp, *pppp;
+          register int a,b,c,d;
+          register unsigned int c1,c2,c3,c4;
+          unsigned int factor_col_bytes = factor * 4;
+          unsigned int factor_row_bytes = factor * src_row_bytes;
+          
+          for(b=0;b<height;b++) { /* rows */
+            pp = p;
+            for(a=0;a<width;a++) { /* cols */
+              c1 = c2 = c3 = c4 = 0;
+              ppp = pp;
+              for(d=0;d<factor;d++) { /* box rows */
+                pppp = ppp;
+                for(c=0;c<factor;c++) { /* box cols */
+                  c1 += *(pppp++);
+                  c2 += *(pppp++);
+                  c3 += *(pppp++);
+                  c4 += *(pppp++);
+                }
+                ppp += src_row_bytes;
+              }
+              *(q++)= (c1>>shift);
+              *(q++)= (c2>>shift);
+              *(q++)= (c3>>shift);
+              *(q++)= (c4>>shift);
+              pp += factor_col_bytes;
+            }
+            p+= factor_row_bytes;
+          }
+          
+          FreeP(final_image);
+          final_image = (unsigned int*)buffer;
+        }
+      }
 
       I->ImageBuffer = final_image;
       final_image = NULL;
@@ -3586,14 +3690,15 @@ static int SceneDeferredClick(DeferredMouse *dm)
 static int SceneDeferredPNG(DeferredImage *di)
 {
   PyMOLGlobals *G=di->G;
-  SceneMakeSizedImage(G,di->width, di->height);
+  SceneMakeSizedImage(G,di->width, di->height,di->antialias);
   if(di->filename) {
     ScenePNG(G,di->filename,di->quiet);
     FreeP(di->filename);
   }
   return 1;
 }
-int SceneDeferPNG(PyMOLGlobals *G,int width, int height, char *filename, int quiet)
+int SceneDeferPNG(PyMOLGlobals *G,int width, int height, 
+                  char *filename, int antialias, int quiet)
 {
   DeferredImage *di = Calloc(DeferredImage,1);
   if(di) {
@@ -3601,6 +3706,7 @@ int SceneDeferPNG(PyMOLGlobals *G,int width, int height, char *filename, int qui
     di->G = G;
     di->width = width;
     di->height = height;
+    di->antialias = antialias;
     di->deferred.fn = (DeferredFn*)SceneDeferredPNG;
     di->quiet = quiet;
     if(filename) {
@@ -4543,9 +4649,22 @@ void SceneRender(PyMOLGlobals *G,Pickable *pick,int x,int y,
     glGetIntegerv(GL_VIEWPORT,(GLint*)view_save);
 
     if(oversize_width && oversize_height) {
-      glViewport(I->Block->rect.left+x,
-                 I->Block->rect.bottom+y,
-                 oversize_width, oversize_height);
+      int want_view[4];
+      int got_view[4];
+      want_view[0] = I->Block->rect.left+x;
+      want_view[1] = I->Block->rect.bottom+y;
+      want_view[2] = oversize_width;
+      want_view[3] = oversize_height;
+      glViewport(want_view[0],want_view[1],want_view[2],want_view[3]);
+      glGetIntegerv(GL_VIEWPORT,(GLint*)got_view);
+      if((got_view[0]!=want_view[0])||
+         (got_view[1]!=want_view[1])||
+         (got_view[2]!=want_view[2])||
+         (got_view[3]!=want_view[3])) {
+        PRINTFB(G,FB_Scene,FB_Warnings)
+          "Scene-Warning: glViewport failure.\n"
+          ENDFB(G);
+      }
       width_scale = ((float)(oversize_width))/I->Width;
     } else {
       glViewport(I->Block->rect.left,I->Block->rect.bottom,I->Width,I->Height);
