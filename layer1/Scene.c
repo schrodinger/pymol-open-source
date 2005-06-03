@@ -929,7 +929,8 @@ static int SceneMakeSizedImage(PyMOLGlobals *G,int width,
     if(factor<2)
       factor = 0;
 
-    unsigned int final_buffer_size = width*height;
+    {
+        unsigned int final_buffer_size = width*height;
     unsigned int *final_image = NULL;
     int nXStep = (width/(I->Width+1)) + 1;
     int nYStep = (height/(I->Height+1)) + 1;
@@ -958,7 +959,6 @@ static int SceneMakeSizedImage(PyMOLGlobals *G,int width,
         int y_offset = -(I->Height*y);
         
         for(x=0;x<nXStep;x++) {
-          OrthoBusyFast(G,y*nYStep+x,total_steps);
           int x_offset = -(I->Width*x);
           int a,b;
           float *v;  
@@ -1063,7 +1063,7 @@ static int SceneMakeSizedImage(PyMOLGlobals *G,int width,
 
       I->CopiedFromOpenGL = false;
       I->MovieOwnsImageFlag = false;
-      
+      }
       FreeP(final_image);
     }
   } else {
@@ -1813,7 +1813,7 @@ void SceneDraw(Block *block)
                 color_word = ColorGet32BitWord(G,rgba);
 
                 if(tmp_buffer) {
-                  register int a,b;
+                  register unsigned int a,b;
                   unsigned int *p=I->ImageBuffer;
                   unsigned int *q=tmp_buffer;
                   for(a=0;a<tmp_height;a++) {
@@ -4156,10 +4156,10 @@ void SceneRay(PyMOLGlobals *G,
     {
       int ortho = SettingGetGlobal_i(G,cSetting_ray_orthoscopic);
       int pixel_scale = SettingGetGlobal_i(G,cSetting_ray_pixel_scale);
+      float pixel_scale_value = 1.0F;
       if(pixel_scale<0)
         pixel_scale = SettingGetGlobal_i(G,cSetting_pixel_scale);        
-      float pixel_scale_value = 1.0F;
-
+      
       if(ortho<0) ortho = SettingGetGlobal_b(G,cSetting_ortho);
       
       if(SettingGetGlobal_i(G,cSetting_ray_pixel_scale)) {
