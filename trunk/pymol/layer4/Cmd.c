@@ -3877,6 +3877,17 @@ static PyObject *CmdViewport(PyObject *self, 	PyObject *args)
   int ok=false;
   ok = PyArg_ParseTuple(args,"ii",&w,&h);
   if(ok) {
+    if(((w>0)&&(h<=0))||
+       ((h>0)&&(w<=0))) {
+      int cw,ch;
+      SceneGetWidthHeight(TempPyMOLGlobals, &cw, &ch);
+      if(h<=0) {
+        h = (w * ch) / cw;
+      }
+      if(w<=0) {
+        w = (h * cw) / ch;
+      }
+    }
     if((w>0)&&(h>0)) {
       if(w<10) w=10;
       if(h<10) h=10;

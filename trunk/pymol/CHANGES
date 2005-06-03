@@ -4,11 +4,13 @@ CHANGE LOG
 
 Changes up to 0.99
 
+   beta05
+
+   * viewport can now take a single argument (height or width)
+
    * draw command -- enables OpenGL rendering of large images
 
    * fixed state argument for cmd.get_distance
-
-   beta05
 
    * support for windows hidden folders with terminal dollar sign:
     //share/folder$/path/file
