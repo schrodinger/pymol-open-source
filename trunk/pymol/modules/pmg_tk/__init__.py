@@ -23,19 +23,19 @@ from PMGApp import *
 import sys
 
 if sys.platform=='win32':
-   if sys.version[0:4]=='2.1 ':
-      if not os.environ.has_key('TCL_LIBRARY'):
-         os.environ['TCL_LIBRARY']='c:\\python21\\tcl\\tcl8.3'
-            
+    if sys.version[0:4]=='2.1 ':
+        if not os.environ.has_key('TCL_LIBRARY'):
+            os.environ['TCL_LIBRARY']='c:\\python21\\tcl\\tcl8.3'
+                
 def run(pymol_instance):
-   if not hasattr(sys,"argv"):
-      sys.argv=["pymol"]
-   PMGApp(pymol_instance).run()
+    if not hasattr(sys,"argv"):
+        sys.argv=["pymol"]
+    PMGApp(pymol_instance).run()
 
 def __init__(pymol_instance):
-   t = threading.Thread(target=run,args=(pymol_instance,))
-   t.setDaemon(1)
-   t.start()
+    t = threading.Thread(target=run,args=(pymol_instance,))
+    t.setDaemon(1)
+    t.start()
 
 
 

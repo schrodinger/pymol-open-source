@@ -20,14 +20,14 @@ import __main__
 __main__.pymol_launch = 0 
 
 if hasattr(__main__,"pymol_argv"):
-   pymol_argv = __main__.pymol_argv
+    pymol_argv = __main__.pymol_argv
 else:
-   pymol_argv = sys.argv
+    pymol_argv = sys.argv
 
 modules_path = os.environ['PYMOL_PATH']+'/modules'
 
 if modules_path not in sys.path:
-   sys.path.append(modules_path)
+    sys.path.append(modules_path)
 
 import pymol
 

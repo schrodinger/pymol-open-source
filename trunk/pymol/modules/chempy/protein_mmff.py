@@ -1149,95 +1149,95 @@ c_terminal = {
 }
 
 numeric_map = {
-   1  : 'C1',
-   2  : 'C2',
-   3  : 'C3',
-   4  : 'CA',
-   5  : 'CB',
-   6  : 'CC',
-   7  : 'CD',
-   8  : 'CE',
-   9  : 'CF',
-   10 : 'CM',
-   11 : 'CP',
-   12 : 'CR',
-   14 : 'C0',
-   15 : 'O2',
-   16 : 'O3',
-   17 : 'OA',
-   18 : 'OM',
-   19 : 'OW',
-   20 : 'OP',
-   21 : 'OQ',
-   23 : 'O0',
-   24 : 'N1',
-   25 : 'N2',
-   26 : 'N3',
-   27 : 'NA',
-   28 : 'NB',
-   29 : 'NC',
-   30 : 'ND',
-   31 : 'N4',
-   32 : 'N5',
-   33 : 'NE',
-   34 : 'NF',
-   35 : 'NG',
-   36 : 'NH',
-   37 : 'NI',
-   40 : 'N0',
-   41 : 'H1',
-   42 : 'H2',
-   43 : 'H3',
-   44 : 'H4',
-   45 : 'H5',
-   48 : 'H0',
-   49 : 'S1',
-   50 : 'SA',
-   51 : 'SM',
-   52 : 'S0',
-   53 : 'P0',
-   54 : 'B2',
-   55 : 'B3',
-   56 : 'F0',
-   57 : 'Cl',
-   58 : 'Br',
-   59 : 'I0',
-   60 : 'Si',
-   61 : 'Du',
-   62 : 'Z0',
-   63 : 'Lp',
-   64 : '00',
-   }
+    1  : 'C1',
+    2  : 'C2',
+    3  : 'C3',
+    4  : 'CA',
+    5  : 'CB',
+    6  : 'CC',
+    7  : 'CD',
+    8  : 'CE',
+    9  : 'CF',
+    10 : 'CM',
+    11 : 'CP',
+    12 : 'CR',
+    14 : 'C0',
+    15 : 'O2',
+    16 : 'O3',
+    17 : 'OA',
+    18 : 'OM',
+    19 : 'OW',
+    20 : 'OP',
+    21 : 'OQ',
+    23 : 'O0',
+    24 : 'N1',
+    25 : 'N2',
+    26 : 'N3',
+    27 : 'NA',
+    28 : 'NB',
+    29 : 'NC',
+    30 : 'ND',
+    31 : 'N4',
+    32 : 'N5',
+    33 : 'NE',
+    34 : 'NF',
+    35 : 'NG',
+    36 : 'NH',
+    37 : 'NI',
+    40 : 'N0',
+    41 : 'H1',
+    42 : 'H2',
+    43 : 'H3',
+    44 : 'H4',
+    45 : 'H5',
+    48 : 'H0',
+    49 : 'S1',
+    50 : 'SA',
+    51 : 'SM',
+    52 : 'S0',
+    53 : 'P0',
+    54 : 'B2',
+    55 : 'B3',
+    56 : 'F0',
+    57 : 'Cl',
+    58 : 'Br',
+    59 : 'I0',
+    60 : 'Si',
+    61 : 'Du',
+    62 : 'Z0',
+    63 : 'Lp',
+    64 : '00',
+    }
 
 alpha_map = {}
 
 for a in numeric_map.keys():
-   alpha_map[numeric_map[a]] = a
+    alpha_map[numeric_map[a]] = a
 
 # convert numeric entries in type definitions above
 # alpha-numeric
 
 for a in normal.keys():
-   na = normal[a]
-   na['type'] = numeric_map[int(na['type'])]
+    na = normal[a]
+    na['type'] = numeric_map[int(na['type'])]
 
 for a in n_terminal.keys():   
-   na = n_terminal[a]
-   na['type'] = numeric_map[int(na['type'])]
+    na = n_terminal[a]
+    na['type'] = numeric_map[int(na['type'])]
 
 for a in c_terminal.keys():
-   na = c_terminal[a]
-   na['type'] = numeric_map[int(na['type'])]
+    na = c_terminal[a]
+    na['type'] = numeric_map[int(na['type'])]
 
 
 def check_sum(dct):
-   sm = {}
-   for a in dct.keys():
-      if not sm.has_key(a[0]):
-         sm[a[0]] = dct[a]['charge']
-      else:
-         sm[a[0]] = sm[a[0]]+ dct[a]['charge']         
+    sm = {}
+    for a in dct.keys():
+        if not sm.has_key(a[0]):
+            sm[a[0]] = dct[a]['charge']
+        else:
+            sm[a[0]] = sm[a[0]]+ dct[a]['charge']         
 
-   for a in sm.keys():
-      print a,'%7.4f'%sm[a]
-      
+    for a in sm.keys():
+        print a,'%7.4f'%sm[a]
+        

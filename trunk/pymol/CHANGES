@@ -6,6 +6,8 @@ Changes up to 0.99
 
    beta05
 
+   * converted all the Python code to 4-space indentation (more standard)
+
    * viewport can now take a single argument (height or width)
 
    * oversize images are now downsampled and displayed

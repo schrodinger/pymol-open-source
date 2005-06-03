@@ -26,312 +26,312 @@ token_re = re.compile(r'"([^"]*)"|([^ ]+)')
 array_re = re.compile(r'(.*)\[([0-9]+)\]')
 
 coerce = {
-   's' : str,
-   'i' : int,
-   'r' : float }
+    's' : str,
+    'i' : int,
+    'r' : float }
 
 class MAEParser:
 
-   def __init__(self,lst=None):
-      self.i = 0 # index in list
-      self.t = [] # token list 
-      self.d = [] # hiearchy of data read 
-      self.lst = lst
-      self.lst_len = len(lst)
+    def __init__(self,lst=None):
+        self.i = 0 # index in list
+        self.t = [] # token list 
+        self.d = [] # hiearchy of data read 
+        self.lst = lst
+        self.lst_len = len(lst)
 
-   def nxt_lin(self):
-      if self.lst:
-         if self.i<self.lst_len:
-            self.i = self.i + 1
-            return self.lst[self.i-1]
-      return None
+    def nxt_lin(self):
+        if self.lst:
+            if self.i<self.lst_len:
+                self.i = self.i + 1
+                return self.lst[self.i-1]
+        return None
 
-   def nxt_tok(self):
-      while 1:
-         if len(self.t):
-            return self.t.pop(0)
-         else:
-            l = self.nxt_lin()
-            if not l:
-               return None
-            l = string.strip(strip_re.sub('',l))
-            self.t = token_re.findall(l)
-            self.t = map(lambda x:string.join(x,''),self.t)
-      return None
+    def nxt_tok(self):
+        while 1:
+            if len(self.t):
+                return self.t.pop(0)
+            else:
+                l = self.nxt_lin()
+                if not l:
+                    return None
+                l = string.strip(strip_re.sub('',l))
+                self.t = token_re.findall(l)
+                self.t = map(lambda x:string.join(x,''),self.t)
+        return None
 
-   def push_tok(self,tok):
-      self.t.insert(0,tok)
-      
-   def parse_top(self):
-      dct = {}
-      stk = [] # keyword stack
-      mode = 0 # 0 = definition, 1 = data
-      while 1:
-         tok = self.nxt_tok()
-         if tok==None:
-            break
-         if tok==':::':
-            mode = 1
-         if not len(stk):
-            mode = 0
-         if mode:
-            lab = stk.pop(0)
-            dct[lab] = apply(coerce[lab[0]],(tok,))
-         else:
-            stk.append(tok)
-         if tok=='}':
-            break
-      return dct
-
-   def parse_array(self,n_rec): # creates a list of homogenous lists
-                                # each containing data for one field
-      dct = {}
-      data = [] # actual array data
-      stk = [] # keyword stack
-      coer = [] # coersion functions
-      n_fld = 0
-      mode = 0 # 0 = definition, 1 = data
-      cc = 0
-      while 1:
-         tok = self.nxt_tok()
-         if tok==None:
-            break
-         if tok=='}':
-            break
-         if tok==':::':
-            if not mode:
-               mode = 1
-               n_fld = len(stk)
-               c = 0
-               for a in stk: # create row index for the array
-                  dct[a] = c
-                  data.append([]) # add row for each field
-                  coer.append(coerce[a[0]])
-                  c = c + 1
-         elif not mode:
-            stk.append(tok)
-         else: # here we actually read the array
-            self.push_tok(tok)
-            for cc in range(n_rec):
-               tok = self.nxt_tok() # chuck index
-               if tok==':::': # truncated/incomplete array
-                  break
-               c = 0
-               for c in range(n_fld):
-                  tok = self.nxt_tok()
-                  if tok==None:
-                     break
-                  data[c].append(apply(coer[c],(tok,)))
-                  if tok=='}':
-                     break
-      return (n_rec,dct,data) # return a tuple
-      
-   def parse_m_ct(self):
-      dct = {}
-      stk = [] # keyword stack
-      mode = 0 # 0 = definition, 1 = data
-      while 1:
-         tok = self.nxt_tok()
-         if tok==None:
-            break
-         if tok==':::':
-            mode = 1
-         elif mode:
+    def push_tok(self,tok):
+        self.t.insert(0,tok)
+        
+    def parse_top(self):
+        dct = {}
+        stk = [] # keyword stack
+        mode = 0 # 0 = definition, 1 = data
+        while 1:
+            tok = self.nxt_tok()
+            if tok==None:
+                break
+            if tok==':::':
+                mode = 1
             if not len(stk):
-               mode = 0
-               self.push_tok(tok) # go around
+                mode = 0
+            if mode:
+                lab = stk.pop(0)
+                dct[lab] = apply(coerce[lab[0]],(tok,))
             else:
-               dct[stk.pop(0)] = tok
-         else:
-            arm = array_re.findall(tok)
-            if len(arm):
-               arm = arm[0]
-               n_rec=int(arm[1])
-               if arm[0] in ['m_atom','m_bond']:
-                  self.nxt_tok() # skip '{'
-                  dct[arm[0]]=self.parse_array(n_rec)
+                stk.append(tok)
+            if tok=='}':
+                break
+        return dct
+
+    def parse_array(self,n_rec): # creates a list of homogenous lists
+                                          # each containing data for one field
+        dct = {}
+        data = [] # actual array data
+        stk = [] # keyword stack
+        coer = [] # coersion functions
+        n_fld = 0
+        mode = 0 # 0 = definition, 1 = data
+        cc = 0
+        while 1:
+            tok = self.nxt_tok()
+            if tok==None:
+                break
+            if tok=='}':
+                break
+            if tok==':::':
+                if not mode:
+                    mode = 1
+                    n_fld = len(stk)
+                    c = 0
+                    for a in stk: # create row index for the array
+                        dct[a] = c
+                        data.append([]) # add row for each field
+                        coer.append(coerce[a[0]])
+                        c = c + 1
+            elif not mode:
+                stk.append(tok)
+            else: # here we actually read the array
+                self.push_tok(tok)
+                for cc in range(n_rec):
+                    tok = self.nxt_tok() # chuck index
+                    if tok==':::': # truncated/incomplete array
+                        break
+                    c = 0
+                    for c in range(n_fld):
+                        tok = self.nxt_tok()
+                        if tok==None:
+                            break
+                        data[c].append(apply(coer[c],(tok,)))
+                        if tok=='}':
+                            break
+        return (n_rec,dct,data) # return a tuple
+        
+    def parse_m_ct(self):
+        dct = {}
+        stk = [] # keyword stack
+        mode = 0 # 0 = definition, 1 = data
+        while 1:
+            tok = self.nxt_tok()
+            if tok==None:
+                break
+            if tok==':::':
+                mode = 1
+            elif mode:
+                if not len(stk):
+                    mode = 0
+                    self.push_tok(tok) # go around
+                else:
+                    dct[stk.pop(0)] = tok
             else:
-               stk.append(tok)
-         if tok=='}':
-            break
-      return dct
-      
-   def parse(self):
-      while 1:
-         tok = self.nxt_tok()
-         if tok==None:
-            break
-         if tok=='{':
-            self.d.append('top',self.parse_top())
-         elif tok in ['f_m_ct','p_m_ct']:
-            self.nxt_tok() # skip '{'
-            self.d.append(tok,self.parse_m_ct())
-      return self.d
-   
+                arm = array_re.findall(tok)
+                if len(arm):
+                    arm = arm[0]
+                    n_rec=int(arm[1])
+                    if arm[0] in ['m_atom','m_bond']:
+                        self.nxt_tok() # skip '{'
+                        dct[arm[0]]=self.parse_array(n_rec)
+                else:
+                    stk.append(tok)
+            if tok=='}':
+                break
+        return dct
+        
+    def parse(self):
+        while 1:
+            tok = self.nxt_tok()
+            if tok==None:
+                break
+            if tok=='{':
+                self.d.append('top',self.parse_top())
+            elif tok in ['f_m_ct','p_m_ct']:
+                self.nxt_tok() # skip '{'
+                self.d.append(tok,self.parse_m_ct())
+        return self.d
+    
 class MAE(Storage):
 
-   def _read_m_atom(self,m_atom,model):
-      ma = model.atom
-      at_ent = m_atom[1]
-      at_dat = m_atom[2]
-      
-      nAtom = m_atom[0]      
-      if at_ent.has_key('i_m_mmod_type'):
-         a1 = at_dat[at_ent['i_m_mmod_type']]
-         
-         for b in range(nAtom):
-            nt = a1[b]
-            ma[b].numeric_type = nt 
-            ma[b].symbol = MMOD_atom_data[nt][1]
-            ma[b].text_type = MMOD_atom_data[nt][0]
+    def _read_m_atom(self,m_atom,model):
+        ma = model.atom
+        at_ent = m_atom[1]
+        at_dat = m_atom[2]
+        
+        nAtom = m_atom[0]      
+        if at_ent.has_key('i_m_mmod_type'):
+            a1 = at_dat[at_ent['i_m_mmod_type']]
             
-      if at_ent.has_key('r_m_x_coord') and \
-         at_ent.has_key('r_m_y_coord') and \
-         at_ent.has_key('r_m_z_coord'):
-         a1 = at_dat[at_ent['r_m_x_coord']]
-         a2 = at_dat[at_ent['r_m_y_coord']]
-         a3 = at_dat[at_ent['r_m_z_coord']]
-         for b in range(nAtom):
-            ma[b].coord = [a1[b],a2[b],a3[b] ]
-            
-      if at_ent.has_key('i_m_residue_number'):
-         a1 = at_dat[at_ent['i_m_residue_number']]
-         for b in range(nAtom):
-            resi = a1[b]
-            ma[b].resi = str(resi)
-            ma[b].resi_number = resi
-            
-      if at_ent.has_key('s_m_mmod_res'):
-         a1 = at_dat[at_ent['s_m_mmod_res']]
-         for b in range(nAtom):         
-            ma[b].resi_code = a1[b]
-            
-      if at_ent.has_key('s_m_chain_name'):
-         a1 = at_dat[at_ent['s_m_chain_name']]
-         for b in range(nAtom):
-            ma[b].chain = a1[b]
-            
-      if at_ent.has_key('i_m_color'):
-         a1 = at_dat[at_ent['i_m_color']]
-         for b in range(nAtom):
-            ma[b].color_code = a1[b]
-            
-      if at_ent.has_key('r_m_charge1'):
-         a1 = at_dat[at_ent['r_m_charge1']]
-         for b in range(nAtom):
-            ma[b].partial_charge = a1[b]
-            
-      if at_ent.has_key('s_m_pdb_residue_name'):
-         a1 = at_dat[at_ent['s_m_pdb_residue_name']]
-         for b in range(nAtom):
-            resn = string.strip(a1[b])
-            if len(resn):
-               ma[b].resn = resn
-               
-      if at_ent.has_key('i_m_formal_charge'):
-         a1 = at_dat[at_ent['i_m_formal_charge']]
-         for b in range(nAtom):
-            ma[b].formal_charge = a1[b]
-            
-      if at_ent.has_key('s_m_atom_name'):
-         a1 = at_dat[at_ent['s_m_atom_name']]
-         for b in range(nAtom):
-            nam = string.strip(a1[b])
-            if len(nam):
-               ma[b].name = nam
-            
-      if at_ent.has_key('s_m_pdb_atom_name'):
-         a1 = at_dat[at_ent['s_m_pdb_atom_name']]
-         for b in range(nAtom):
-            nam = string.strip(a1[b])
-            if len(nam):
-               ma[b].name = nam
+            for b in range(nAtom):
+                nt = a1[b]
+                ma[b].numeric_type = nt 
+                ma[b].symbol = MMOD_atom_data[nt][1]
+                ma[b].text_type = MMOD_atom_data[nt][0]
+                
+        if at_ent.has_key('r_m_x_coord') and \
+            at_ent.has_key('r_m_y_coord') and \
+            at_ent.has_key('r_m_z_coord'):
+            a1 = at_dat[at_ent['r_m_x_coord']]
+            a2 = at_dat[at_ent['r_m_y_coord']]
+            a3 = at_dat[at_ent['r_m_z_coord']]
+            for b in range(nAtom):
+                ma[b].coord = [a1[b],a2[b],a3[b] ]
+                
+        if at_ent.has_key('i_m_residue_number'):
+            a1 = at_dat[at_ent['i_m_residue_number']]
+            for b in range(nAtom):
+                resi = a1[b]
+                ma[b].resi = str(resi)
+                ma[b].resi_number = resi
+                
+        if at_ent.has_key('s_m_mmod_res'):
+            a1 = at_dat[at_ent['s_m_mmod_res']]
+            for b in range(nAtom):         
+                ma[b].resi_code = a1[b]
+                
+        if at_ent.has_key('s_m_chain_name'):
+            a1 = at_dat[at_ent['s_m_chain_name']]
+            for b in range(nAtom):
+                ma[b].chain = a1[b]
+                
+        if at_ent.has_key('i_m_color'):
+            a1 = at_dat[at_ent['i_m_color']]
+            for b in range(nAtom):
+                ma[b].color_code = a1[b]
+                
+        if at_ent.has_key('r_m_charge1'):
+            a1 = at_dat[at_ent['r_m_charge1']]
+            for b in range(nAtom):
+                ma[b].partial_charge = a1[b]
+                
+        if at_ent.has_key('s_m_pdb_residue_name'):
+            a1 = at_dat[at_ent['s_m_pdb_residue_name']]
+            for b in range(nAtom):
+                resn = string.strip(a1[b])
+                if len(resn):
+                    ma[b].resn = resn
+                    
+        if at_ent.has_key('i_m_formal_charge'):
+            a1 = at_dat[at_ent['i_m_formal_charge']]
+            for b in range(nAtom):
+                ma[b].formal_charge = a1[b]
+                
+        if at_ent.has_key('s_m_atom_name'):
+            a1 = at_dat[at_ent['s_m_atom_name']]
+            for b in range(nAtom):
+                nam = string.strip(a1[b])
+                if len(nam):
+                    ma[b].name = nam
+                
+        if at_ent.has_key('s_m_pdb_atom_name'):
+            a1 = at_dat[at_ent['s_m_pdb_atom_name']]
+            for b in range(nAtom):
+                nam = string.strip(a1[b])
+                if len(nam):
+                    ma[b].name = nam
 
-   def _read_m_bond(self,m_bond,model):
-      bd_ent = m_bond[1]
-      bd_dat = m_bond[2]
-      
-      nBond = m_bond[0]      
+    def _read_m_bond(self,m_bond,model):
+        bd_ent = m_bond[1]
+        bd_dat = m_bond[2]
+        
+        nBond = m_bond[0]      
 
-      if len(bd_dat[0]): # not empty right?
-         if bd_ent.has_key('i_m_from') and \
-            bd_ent.has_key('i_m_to') and \
-            bd_ent.has_key('i_m_order'):
-            a1 = bd_dat[bd_ent['i_m_from']]
-            a2 = bd_dat[bd_ent['i_m_to']]
-            a3 = bd_dat[bd_ent['i_m_order']]
-            for b in range(nBond):
-               bd1 = a1[b] - 1
-               bd2 = a2[b] - 1
-               bd3 = a3[b]
+        if len(bd_dat[0]): # not empty right?
+            if bd_ent.has_key('i_m_from') and \
+                bd_ent.has_key('i_m_to') and \
+                bd_ent.has_key('i_m_order'):
+                a1 = bd_dat[bd_ent['i_m_from']]
+                a2 = bd_dat[bd_ent['i_m_to']]
+                a3 = bd_dat[bd_ent['i_m_order']]
+                for b in range(nBond):
+                    bd1 = a1[b] - 1
+                    bd2 = a2[b] - 1
+                    bd3 = a3[b]
 
-               if bd1<bd2:
-                  bnd = Bond()
-                  bnd.index = [ bd1,bd2 ]
-                  bnd.order = bd3
-                  model.bond.append(bnd)
-                  
+                    if bd1<bd2:
+                        bnd = Bond()
+                        bnd.index = [ bd1,bd2 ]
+                        bnd.order = bd3
+                        model.bond.append(bnd)
+                        
 #---------------------------------------------------------------------------------
-   def fromList(self,MMODList): # returns a list of indexed models
+    def fromList(self,MMODList): # returns a list of indexed models
 
-      mp = MAEParser(lst=MMODList)
-      mp_rec = mp.parse()
+        mp = MAEParser(lst=MMODList)
+        mp_rec = mp.parse()
 
-      full_model = None
-      result = []
-      
-      for mp_ent in mp_rec:
-         if mp_ent[0] == 'f_m_ct':
-            f_m_ct = mp_ent[1]
-            model = Indexed()
-            if f_m_ct.has_key('s_m_title'):
-               model.molecule.title = string.strip(f_m_ct['s_m_title'])
+        full_model = None
+        result = []
+        
+        for mp_ent in mp_rec:
+            if mp_ent[0] == 'f_m_ct':
+                f_m_ct = mp_ent[1]
+                model = Indexed()
+                if f_m_ct.has_key('s_m_title'):
+                    model.molecule.title = string.strip(f_m_ct['s_m_title'])
 
-            if f_m_ct.has_key('m_atom'):
-               m_atom = f_m_ct['m_atom']
-               nAtom = m_atom[0]
-               for a in range(nAtom):
-                  model.atom.append(Atom())
-               self._read_m_atom(m_atom,model)
+                if f_m_ct.has_key('m_atom'):
+                    m_atom = f_m_ct['m_atom']
+                    nAtom = m_atom[0]
+                    for a in range(nAtom):
+                        model.atom.append(Atom())
+                    self._read_m_atom(m_atom,model)
 
-            if f_m_ct.has_key('m_bond'):
-               m_bond = f_m_ct['m_bond']
-               self._read_m_bond(m_bond,model)
-            full_model = model
-            result.append(model)
-            
-         elif mp_ent[0]=='p_m_ct' and full_model!=None:
-            model = copy.deepcopy(full_model)
+                if f_m_ct.has_key('m_bond'):
+                    m_bond = f_m_ct['m_bond']
+                    self._read_m_bond(m_bond,model)
+                full_model = model
+                result.append(model)
+                
+            elif mp_ent[0]=='p_m_ct' and full_model!=None:
+                model = copy.deepcopy(full_model)
 
-            f_m_ct = mp_ent[1]
-            if f_m_ct.has_key('s_m_title'):
-               model.molecule.title = string.strip(f_m_ct['s_m_title'])
+                f_m_ct = mp_ent[1]
+                if f_m_ct.has_key('s_m_title'):
+                    model.molecule.title = string.strip(f_m_ct['s_m_title'])
 
-            if f_m_ct.has_key('m_atom'):
-               m_atom = f_m_ct['m_atom']
-               nAtom = m_atom[0]
-               self._read_m_atom(m_atom,model)
+                if f_m_ct.has_key('m_atom'):
+                    m_atom = f_m_ct['m_atom']
+                    nAtom = m_atom[0]
+                    self._read_m_atom(m_atom,model)
 
-            if f_m_ct.has_key('m_bond'):
-               m_bond = f_m_ct['m_bond']
-               self._read_m_bond(m_bond,model)
-            full_model = model
-            result.append(model)
+                if f_m_ct.has_key('m_bond'):
+                    m_bond = f_m_ct['m_bond']
+                    self._read_m_bond(m_bond,model)
+                full_model = model
+                result.append(model)
 
-      return result
+        return result
 
 #---------------------------------------------------------------------------------
 '#Ntype Atype Elem Hybr Att Chg\n',
 MMOD_atom_data = {
-   1: ['C1','C' ,'sp' , 2, 0],
-   2: ['C2','C' ,'sp2', 3, 0],
-   3: ['C3','C' ,'sp3', 4, 0],
-   4: ['CA','C' ,'sp3', 3, 0],
-   5: ['CB','C' ,'sp3', 2, 0],
-   6: ['CC','C' ,'sp3', 1, 0],
-   7: ['CD','C' ,'sp2', 2, 0],
-   8: ['CE','C' ,'sp2', 1, 0],
-   9: ['CF','C' ,'sp' , 1, 0],
+    1: ['C1','C' ,'sp' , 2, 0],
+    2: ['C2','C' ,'sp2', 3, 0],
+    3: ['C3','C' ,'sp3', 4, 0],
+    4: ['CA','C' ,'sp3', 3, 0],
+    5: ['CB','C' ,'sp3', 2, 0],
+    6: ['CC','C' ,'sp3', 1, 0],
+    7: ['CD','C' ,'sp2', 2, 0],
+    8: ['CE','C' ,'sp2', 1, 0],
+    9: ['CF','C' ,'sp' , 1, 0],
   10: ['CM','C' ,'unk',-1,-1],
   11: ['CP','C' ,'unk',-1, 1],
   12: ['CR','C' ,'unk',-1, 0],

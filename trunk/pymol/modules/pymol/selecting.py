@@ -13,163 +13,163 @@
 #Z* -------------------------------------------------------------------
 
 if __name__=='pymol.selecting':
-   
-   import selector
+    
+    import selector
 
-   import cmd
+    import cmd
 
-   from cmd import _cmd,lock,unlock,Shortcut, \
-        _feedback,fb_module,fb_mask, \
-        DEFAULT_ERROR, DEFAULT_SUCCESS, _raising, is_ok, is_error
-   
-   import pymol
+    from cmd import _cmd,lock,unlock,Shortcut, \
+          _feedback,fb_module,fb_mask, \
+          DEFAULT_ERROR, DEFAULT_SUCCESS, _raising, is_ok, is_error
+    
+    import pymol
 
-   def deselect():
-      '''
+    def deselect():
+        '''
 DESCRIPTION
 
-   "deselect" disables any and all visible selections
+    "deselect" disables any and all visible selections
 
 USAGE
 
-   deselect
+    deselect
 
 PYMOL API
 
-   cmd.deselect()
-      '''
-      r = DEFAULT_SUCCESS
-      arg = cmd.get_names("selections",enabled_only=1)
-      for a in arg:
-         cmd.disable(a)
-      if _raising(r): raise pymol.CmdException                  
-      return r
-   
+    cmd.deselect()
+        '''
+        r = DEFAULT_SUCCESS
+        arg = cmd.get_names("selections",enabled_only=1)
+        for a in arg:
+            cmd.disable(a)
+        if _raising(r): raise pymol.CmdException                  
+        return r
+    
 
-   def select(name,selection="",show=-1,quiet=1):
-      '''
+    def select(name,selection="",show=-1,quiet=1):
+        '''
 DESCRIPTION
 
-   "select" creates a named selection from an atom selection.
+    "select" creates a named selection from an atom selection.
 
 USAGE
 
-   select (selection)
-   select name, (selection)
-   select name = (selection)            # (DEPRECATED)
+    select (selection)
+    select name, (selection)
+    select name = (selection)            # (DEPRECATED)
 
 PYMOL API
 
-   cmd.select(string name, string selection)
+    cmd.select(string name, string selection)
 
 EXAMPLES 
 
-   select near , (ll expand 8)
-   select near , (ll expand 8)
-   select bb, (name ca,n,c,o )
+    select near , (ll expand 8)
+    select near , (ll expand 8)
+    select bb, (name ca,n,c,o )
 
 NOTES
 
-   'help selections' for more information about selections.
-      '''
-      r = DEFAULT_ERROR
-      try:
-         lock()
-         if selection=="":
-            sel_cnt = _cmd.get("sel_counter") + 1.0
-            _cmd.legacy_set("sel_counter","%1.0f" % sel_cnt)
-            selection = name
-            name = "sel%02.0f" % sel_cnt
-         else:
-            name = name
-         # preprocess selection (note: inside TRY)
-         selection = selector.process(selection)
-         #
-         r = _cmd.select(str(name),str(selection),int(quiet))
-         show = int(show)
-         if is_ok(r) and show>0:
-            r = _cmd.onoff(str(name),1);
-         elif show == 0:
-            r = _cmd.onoff(str(name),0)
-      finally:
-         unlock(r)
-      if _raising(r): raise pymol.CmdException                  
-      return r
-
-
-   def pop(name,source,show=-1,quiet=1):
-      r = DEFAULT_ERROR
-      try:
-         lock()
-         r = _cmd.pop(str(name),str(source),int(quiet))
-         if is_ok(r):
+    'help selections' for more information about selections.
+        '''
+        r = DEFAULT_ERROR
+        try:
+            lock()
+            if selection=="":
+                sel_cnt = _cmd.get("sel_counter") + 1.0
+                _cmd.legacy_set("sel_counter","%1.0f" % sel_cnt)
+                selection = name
+                name = "sel%02.0f" % sel_cnt
+            else:
+                name = name
+            # preprocess selection (note: inside TRY)
+            selection = selector.process(selection)
+            #
+            r = _cmd.select(str(name),str(selection),int(quiet))
             show = int(show)
-            if show>0:
-               r = _cmd.onoff(str(name),1);
+            if is_ok(r) and show>0:
+                r = _cmd.onoff(str(name),1);
             elif show == 0:
-               r = _cmd.onoff(str(name),0)
-      finally:
-         unlock(r)
-      if _raising(r): raise pymol.CmdException                  
-      return r
+                r = _cmd.onoff(str(name),0)
+        finally:
+            unlock(r)
+        if _raising(r): raise pymol.CmdException                  
+        return r
 
-   id_type_dict = {
-      'index' : 0,
-      'id'    : 1,
-      'rank'  : 2,
-      }
-   
-   id_type_sc = Shortcut(id_type_dict.keys())
-   
-   def select_list(name,object,id_list,id_type='index',show=-1,quiet=1):
-      '''
+
+    def pop(name,source,show=-1,quiet=1):
+        r = DEFAULT_ERROR
+        try:
+            lock()
+            r = _cmd.pop(str(name),str(source),int(quiet))
+            if is_ok(r):
+                show = int(show)
+                if show>0:
+                    r = _cmd.onoff(str(name),1);
+                elif show == 0:
+                    r = _cmd.onoff(str(name),0)
+        finally:
+            unlock(r)
+        if _raising(r): raise pymol.CmdException                  
+        return r
+
+    id_type_dict = {
+        'index' : 0,
+        'id'    : 1,
+        'rank'  : 2,
+        }
+    
+    id_type_sc = Shortcut(id_type_dict.keys())
+    
+    def select_list(name,object,id_list,id_type='index',show=-1,quiet=1):
+        '''
 DESCRIPTION
-   "select_list" is currently in development
-   
-      '''
-      #
-      r = DEFAULT_ERROR
-      id_type = id_type_dict[id_type_sc.auto_err(id_type,'identifier type')]
-      try:
-         lock()
-         r = _cmd.select_list(str(name),str(object),list(id_list),int(quiet),int(id_type))
-         show = int(show)
-         if is_ok(r) and show>0:
-            r = _cmd.onoff(str(name),1);
-         elif show == 0:
-            r = _cmd.onoff(str(name),0)
-      finally:
-         unlock(r)   
-      if _raising(r): raise pymol.CmdException                  
-      return r
+    "select_list" is currently in development
+    
+        '''
+        #
+        r = DEFAULT_ERROR
+        id_type = id_type_dict[id_type_sc.auto_err(id_type,'identifier type')]
+        try:
+            lock()
+            r = _cmd.select_list(str(name),str(object),list(id_list),int(quiet),int(id_type))
+            show = int(show)
+            if is_ok(r) and show>0:
+                r = _cmd.onoff(str(name),1);
+            elif show == 0:
+                r = _cmd.onoff(str(name),0)
+        finally:
+            unlock(r)   
+        if _raising(r): raise pymol.CmdException                  
+        return r
 
-   def indicate(selection="(all)"):
-      '''
+    def indicate(selection="(all)"):
+        '''
 DESCRIPTION
 
-   "indicate" shows a visual representation of an atom selection.
+    "indicate" shows a visual representation of an atom selection.
 
 USAGE
 
-   indicate (selection)
+    indicate (selection)
 
 PYMOL API
 
-   cmd.count(string selection)
+    cmd.count(string selection)
 
-      '''
-      r = DEFAULT_ERROR
-      # preprocess selection
-      selection = selector.process(selection)
-      #      
-      try:
-         lock()   
-         r = _cmd.select("indicate","("+str(selection)+")",1)
-         cmd.enable("indicate")
-      finally:
-         unlock(r)
-      if _raising(r): raise pymol.CmdException                  
-      return r
+        '''
+        r = DEFAULT_ERROR
+        # preprocess selection
+        selection = selector.process(selection)
+        #      
+        try:
+            lock()   
+            r = _cmd.select("indicate","("+str(selection)+")",1)
+            cmd.enable("indicate")
+        finally:
+            unlock(r)
+        if _raising(r): raise pymol.CmdException                  
+        return r
 
 
 
