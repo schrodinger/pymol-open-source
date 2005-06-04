@@ -454,7 +454,7 @@ if __name__=='pymol.setting':
         validate_object_names     = (418, '')
         pixel_scale               = (419, '')
         auto_show_spheres         = (420, '')
-        sphere_point_mode         = (421, '')
+        sphere_mode               = (421, '')
         sphere_point_max_size     = (422, '')
         sphere_point_size         = (423, '')
      

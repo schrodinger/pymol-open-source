@@ -6,8 +6,8 @@ Changes up to 0.99
        
    beta07
 
-   * sphere_point_mode setting for intermediate performance including
-     GL_POINT based sphere impostor
+   * sphere_mode setting for increased performance including use of
+     GL_POINT based sphere impostors
 
    * -O option for when you've just got to squeeze a few million atoms
      into PyMOL for CPK/sphere rendering...

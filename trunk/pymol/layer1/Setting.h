@@ -570,7 +570,7 @@ CSetting *SettingNewFromPyList(PyMOLGlobals *G,PyObject *list);
 #define cSetting_validate_object_names      418
 #define cSetting_pixel_scale                419
 #define cSetting_auto_show_spheres          420
-#define cSetting_sphere_point_mode          421
+#define cSetting_sphere_mode                421
 #define cSetting_sphere_point_max_size      422
 #define cSetting_sphere_point_size          423
 

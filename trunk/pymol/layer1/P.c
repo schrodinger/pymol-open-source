@@ -1426,7 +1426,7 @@ void PGetOptions(CPyMOLOptions *rec)
   rec->defer_builds_mode = PyInt_AsLong(PyObject_GetAttrString(options,"defer_builds_mode"));
   rec->full_screen = PyInt_AsLong(PyObject_GetAttrString(options,"full_screen"));
   load_str = PyString_AsString(PyObject_GetAttrString(options,"after_load_script"));
-  rec->operate_lean = PyInt_AsLong(PyObject_GetAttrString(options,"operate_lean"));
+  rec->sphere_mode = PyInt_AsLong(PyObject_GetAttrString(options,"sphere_mode"));
   if(load_str) {
     if(load_str[0]) {
       UtilNCopy(rec->after_load_script,load_str,PYMOL_MAX_OPT_STR);
