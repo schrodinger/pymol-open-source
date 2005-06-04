@@ -6,6 +6,12 @@ Changes up to 0.99
        
    beta07
 
+   * sphere_point_mode setting for intermediate performance including
+     GL_POINT based sphere impostor
+
+   * -O option for when you've just got to squeeze a few million atoms
+     into PyMOL for CPK/sphere rendering...
+
    * slightly reduced RAM usage when rendering complex scenes
 
    * converted all the Python code to 4-space indentation (more standard)
