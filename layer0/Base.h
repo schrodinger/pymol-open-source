@@ -83,6 +83,7 @@ typedef struct {
   Pickable **pick;
   int pass;
   int width_scale_flag;
+  float view_normal[3];
   float width_scale;
   float vertex_scale; /* how large is a screen pixel in model space at the origin */
 } RenderInfo;

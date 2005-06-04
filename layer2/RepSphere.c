@@ -163,6 +163,7 @@ static void RepSphereRender(RepSphere *I,RenderInfo *info)
           
           if(!sp) {
             switch(sphere_point_mode) {
+            case 4:
             case 3:
               glEnable(GL_POINT_SMOOTH);
               glAlphaFunc(GL_GREATER, 0.5F);
@@ -249,9 +250,12 @@ static void RepSphereRender(RepSphere *I,RenderInfo *info)
             }
           }
           if(!sp) {
-            if(sphere_point_mode==3) {
+            switch(sphere_point_mode) {
+            case 3:
+            case 4:
               glDisable(GL_POINT_SMOOTH);
               glAlphaFunc(GL_GREATER, 0.05F);
+              break;
             }
             glEnd();
           }
@@ -280,7 +284,11 @@ static void RepSphereRender(RepSphere *I,RenderInfo *info)
         I->LastVertexScale = info->vertex_scale;
           
         use_dlst = (int)SettingGet(G,cSetting_use_display_lists);
-          
+        switch(sphere_point_mode) {
+        case 4:
+          use_dlst = 0;
+          break;
+        }
         if(use_dlst&&I->R.displayList) {
           glCallList(I->R.displayList);
         } else { /* display list */
@@ -299,8 +307,11 @@ static void RepSphereRender(RepSphere *I,RenderInfo *info)
           switch(sphere_point_mode) {
           case 2:
           case 3:
+          case 4:
             {
-              register float last_radius = -1.0F;
+              register float _1 = 1.0F;
+              register float _2 = 2.0F;
+              register float last_radius = -_1;
               register float cur_radius;
               register float pixel_scale = 1.0F/info->vertex_scale;
               register float max_size = SettingGet_f(G,I->R.cs->Setting,I->R.obj->Setting,
@@ -308,37 +319,133 @@ static void RepSphereRender(RepSphere *I,RenderInfo *info)
               register int clamp_size_flag = (max_size>=0.0F);
               register float size;
                 
-              if(sphere_point_mode==3) {
-                pixel_scale *= 2.0F;
-                glEnable(GL_POINT_SMOOTH);
-                glAlphaFunc(GL_GREATER, 0.5F);
-                glEnable(GL_ALPHA_TEST);
-                glHint(GL_POINT_SMOOTH_HINT,GL_NICEST);
-                glPointSize(1.0F);
-              } else {
-                pixel_scale *= 1.4F;
-              }
-              glBegin(GL_POINTS);
-              while(c--) {
-                if(last_radius!=(cur_radius=v[6])) {
-                  size = cur_radius*pixel_scale;
-                  glEnd();
-                  if(clamp_size_flag) 
-                    if(size>max_size)
-                      size=max_size;
-                  glPointSize(size);
-                  glBegin(GL_POINTS);
-                  last_radius = cur_radius;
+              switch(sphere_point_mode) {
+              case 2:
+              case 3:
+                if(sphere_point_mode==3) {
+                  pixel_scale *= 2.0F;
+                  glEnable(GL_POINT_SMOOTH);
+                  glAlphaFunc(GL_GREATER, 0.5F);
+                  glEnable(GL_ALPHA_TEST);
+                  glHint(GL_POINT_SMOOTH_HINT,GL_NICEST);
+                  glPointSize(1.0F);
+                } else {
+                  pixel_scale *= 1.4F;
                 }
-                glColor3fv(v);
-                v+=3;
-                glVertex3fv(v);
-                v+=4;
-              }
-              glEnd();
-              if(sphere_point_mode==3) {
-                glDisable(GL_POINT_SMOOTH);
-                glAlphaFunc(GL_GREATER, 0.05F);
+                glBegin(GL_POINTS);
+                while(c--) {
+                  if(last_radius!=(cur_radius=v[6])) {
+                    size = cur_radius*pixel_scale;
+                    glEnd();
+                    if(clamp_size_flag) 
+                      if(size>max_size)
+                        size=max_size;
+                    glPointSize(size);
+                    glBegin(GL_POINTS);
+                    last_radius = cur_radius;
+                  }
+                  glColor3fv(v);
+                  v+=3;
+                  glVertex3fv(v);
+                  v+=4;
+                }
+                glEnd();
+                if(sphere_point_mode==3) {
+                  glDisable(GL_POINT_SMOOTH);
+                  glAlphaFunc(GL_GREATER, 0.05F);
+                }
+                break;
+              case 4: /* draw multiple points of different radii and Z position */
+                {
+                  int repeat = true;
+                  register float x_add, y_add, z_add;
+                  register float z_factor=0.0F, r_factor = 1.0F;
+                  register float largest;
+                  register float r, g, b;
+                  register float s_factor=0.0F;
+                  register float zz_factor;
+                  register float clamp_radius;
+                  int first_pass = true;
+                  glEnable(GL_POINT_SMOOTH);
+                  glEnable(GL_ALPHA_TEST);
+                  glHint(GL_POINT_SMOOTH_HINT,GL_NICEST);
+                  glPointSize(1.0F);
+                  
+                  pixel_scale *= 2.0F;
+                  
+                  while(repeat) {
+                    v=I->VC;
+                    c=I->NC;
+                    largest = 0.0F;
+                    zz_factor = _1 - pow(_1-z_factor,2);
+                    if(zz_factor<0.45F)
+                      zz_factor=0.45F;
+                    
+                    last_radius = -1.0F;
+                    repeat = false;
+
+                    glBegin(GL_POINTS);
+                    while(c--) {
+                      if(last_radius!=(cur_radius=v[6])) {
+                        size = r_factor*cur_radius*pixel_scale;
+                        clamp_radius = cur_radius;                        
+                        glEnd();
+                        if(clamp_size_flag) 
+                          if(size>max_size) {
+                            size=max_size;
+                            clamp_radius = size / (r_factor*pixel_scale);
+                          }
+
+                        if(size>largest)
+                          largest = size;
+                        if(size<_2) {
+                          if(first_pass) {
+                            zz_factor=1.0F;
+                            s_factor = 0.0F;
+                          }
+                        }
+                        if(size<_1) {
+                          size=_1;
+                          glDisable(GL_POINT_SMOOTH);
+                          glDisable(GL_ALPHA_TEST);
+                        } else {
+                          glEnable(GL_POINT_SMOOTH);
+                          glEnable(GL_ALPHA_TEST);
+                        }
+                        x_add = z_factor*clamp_radius*info->view_normal[0];
+                        y_add = z_factor*clamp_radius*info->view_normal[1];
+                        z_add = z_factor*clamp_radius*info->view_normal[2];
+
+                        glPointSize(size);
+                        glBegin(GL_POINTS);
+                        last_radius = cur_radius;
+                      }
+                      r = zz_factor*v[0] + s_factor;
+                      g = zz_factor*v[1] + s_factor;
+                      b = zz_factor*v[2] + s_factor;
+                      
+                      glColor3f(r > _1 ? _1 : r,
+                                g > _1 ? _1 : g,
+                                b > _1 ? _1 : b);
+                                
+                      v+=3;
+                      glVertex3f(v[0]+x_add, v[1]+y_add, v[2]+z_add);
+                      v+=4;
+                    }
+                    glEnd();
+
+                    if(largest>2.0F) {
+                      float reduce = (largest-2.0)/largest;
+                      r_factor *= reduce;
+                      z_factor = (float)sqrt1f(1.0F-(r_factor*r_factor));
+                      s_factor = (float)pow(z_factor,20.0F)*0.5F;
+                      repeat = true;
+                      first_pass=false;
+                    }
+                  }
+                  glDisable(GL_POINT_SMOOTH);
+                }
+                break;
               }
             }
             break;

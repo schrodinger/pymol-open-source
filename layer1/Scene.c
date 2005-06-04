@@ -4487,6 +4487,7 @@ static void SceneRenderAll(PyMOLGlobals *G,SceneUnitContext *context,
   info.pick = pickVLA;
   info.pass = pass;
   info.vertex_scale = I->VertexScale;
+  SceneGetViewNormal(G,info.view_normal);
 
   if(width_scale!=0.0F) {
     info.width_scale_flag = true;
