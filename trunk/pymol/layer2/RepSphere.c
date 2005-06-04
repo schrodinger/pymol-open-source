@@ -478,7 +478,7 @@ static void RepSphereRender(RepSphere *I,RenderInfo *info)
             glEndList();
           }
         }
-      } else { /* real spheres -- not points or impostors */
+      } else { /* real spheres, drawn with triangles -- not points or impostors */
 
         int use_dlst;
         
