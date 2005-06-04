@@ -2512,6 +2512,9 @@ void BasisMakeMap(CBasis *I,int *vert2prim,CPrimitive *prim,float *volume,
         printf("BasisMakeMap: %d>%d\n",n,extra_vert);
         ErrFatal(I->G,"BasisMakeMap","used too many extra vertices (this indicates a bug)...\n");
       }
+      PRINTFB(I->G,FB_Ray,FB_Blather)
+        " BasisMakeMap: %d total vertices\n",n
+        ENDFB(I->G);
       
       if(volume) {
         v   = tempVertex;
@@ -2563,7 +2566,7 @@ void BasisMakeMap(CBasis *I,int *vert2prim,CPrimitive *prim,float *volume,
         extent[4]   = min[2];
         extent[5]   = max[2];
         PRINTFB(I->G,FB_Ray,FB_Blather)
-          " BasisMakeMap: Extent %8.3f %8.3f %8.3f %8.3f %8.3f %8.3f\n",
+          " BasisMakeMap: Extent [%8.2f %8.2f] [%8.2f %8.2f] [%8.2f %8.2f]\n",
           extent[0],extent[1],extent[2],extent[3],extent[4],extent[5]
           ENDFB(I->G);
         I->Map   = MapNewCached(I->G,-sep,tempVertex,n,extent,group_id,block_base);
@@ -2590,7 +2593,6 @@ void BasisMakeMap(CBasis *I,int *vert2prim,CPrimitive *prim,float *volume,
       if(n_voxel < (3*n))
         {
           int   *start;
-         
           for(a = I->Map->iMin[0]; a <= I->Map->iMax[0]; a++)
             {
               for(b = I->Map->iMin[1]; b <= I->Map->iMax[1]; b++)
@@ -2606,13 +2608,13 @@ void BasisMakeMap(CBasis *I,int *vert2prim,CPrimitive *prim,float *volume,
                           i   = *(sp++);
                           while(i>=0)
                             {
-                              if(i >= I->NVertex)
+                              if(i >= I->NVertex) /* reference -- remap */
                                 i   = tempRef[i];
                            
                               if(!tempRef[i]) { /*eliminate duplicates */
                                 *(ip++)      = i;
                                 tempRef[i]   = 1;
-                              }
+                              } 
                               i   = *(sp++);
                             }
                      

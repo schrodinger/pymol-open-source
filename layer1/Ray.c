@@ -499,9 +499,9 @@ void RayExpandPrimitives(CRay *I)
   if(nVert>basis->NVertex) {
     fprintf(stderr,"Error: basis->NVertex exceeded\n");
   }
-  /*
-    printf("minvoxel  %8.3f\n",basis->MinVoxel);
-		printf("NPrimit  %d nvert %d\n",I->NPrimitive,nVert);*/
+  PRINTFB(I->G,FB_Ray,FB_Blather)
+    " Ray: minvoxel  %8.3f\n Ray: NPrimit  %d nvert %d\n",basis->MinVoxel,I->NPrimitive,nVert
+    ENDFB(I->G);
 }
 /*========================================================================*/
 static void RayComputeBox(CRay *I)
@@ -2797,6 +2797,9 @@ int opaque_back=0;
     now = UtilGetSeconds(I->G)-timing;
 
 #ifdef _MemoryDebug_ON
+    if(Feedback(I->G,FB_Ray,FB_Debugging)) {
+      MemoryDebugDump();
+    }
     if(shadows) {
       PRINTFB(I->G,FB_Ray,FB_Blather)
         " Ray: voxels: [%4.2f:%dx%dx%d], [%4.2f:%dx%dx%d], %d MB, %4.2f sec.\n",

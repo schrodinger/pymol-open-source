@@ -964,6 +964,7 @@ static int SceneMakeSizedImage(PyMOLGlobals *G,int width,
           float *v;  
           unsigned int *p, *q, *qq, *pp;
           v=SettingGetfv(G,cSetting_bg_rgb);
+          OrthoBusyFast(G,y*nXStep+x,total_steps);
             
           glDrawBuffer(GL_BACK);
           glClearColor(v[0],v[1],v[2],1.0);

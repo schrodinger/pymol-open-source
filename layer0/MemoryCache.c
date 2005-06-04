@@ -38,7 +38,7 @@ void MemoryCacheInit(PyMOLGlobals *G)
   G->MemoryCache=Calloc(CMemoryCache,1);
 }
 
-void *MemoryCacheMalloc(PyMOLGlobals *G,unsigned int size,int group_id,int block_id)
+void *_MemoryCacheMalloc(PyMOLGlobals *G,unsigned int size,int group_id,int block_id MD_FILE_LINE_Decl)
 {
   if((group_id<0)||(!SettingGetGlobal_b(G,cSetting_cache_memory)))
     return(mmalloc(size));
@@ -59,7 +59,7 @@ void *MemoryCacheMalloc(PyMOLGlobals *G,unsigned int size,int group_id,int block
   }
 }
 
-void *MemoryCacheCalloc(PyMOLGlobals *G,unsigned int number, unsigned int size,int group_id,int block_id)
+void *_MemoryCacheCalloc(PyMOLGlobals *G,unsigned int number, unsigned int size,int group_id,int block_id MD_FILE_LINE_Decl)
 {
   if((group_id<0)||(!SettingGetGlobal_b(G,cSetting_cache_memory)))
     return(mcalloc(number,size));
@@ -87,7 +87,7 @@ void *MemoryCacheCalloc(PyMOLGlobals *G,unsigned int number, unsigned int size,i
   }
 }
 
-void *MemoryCacheRealloc(PyMOLGlobals *G,void *ptr, unsigned int size,int group_id, int block_id)
+void *_MemoryCacheRealloc(PyMOLGlobals *G,void *ptr, unsigned int size,int group_id, int block_id MD_FILE_LINE_Decl)
 {
   /* no checking done */
 
@@ -110,7 +110,7 @@ void *MemoryCacheRealloc(PyMOLGlobals *G,void *ptr, unsigned int size,int group_
   }
 }
 
-void MemoryCacheFree(PyMOLGlobals *G,void *ptr,int group_id, int block_id,int force)
+void _MemoryCacheFree(PyMOLGlobals *G,void *ptr,int group_id, int block_id,int force MD_FILE_LINE_Decl)
 {
   if((group_id<0)||(!SettingGetGlobal_b(G,cSetting_cache_memory))) {
     mfree(ptr);
