@@ -1071,9 +1071,7 @@ int BasisHitPerspective(BasisCallRec *BC)
   RayInfo *r = BC->rr;
 
   MapCache *cache = &BC->cache;   
-
   CPrimitive *r_prim = NULL;  
-
   base0 = r->base[0] * iDiv;
   base1 = r->base[1] * iDiv;
   base2 = r->base[2] * iDiv;
@@ -1099,7 +1097,7 @@ int BasisHitPerspective(BasisCallRec *BC)
 
     register float step0, step1, step2;
     register float back_dist = BC->back_dist;
-
+    
     const float   _0   = 0.0F, _1 = 1.0F;
     float r_tri1=_0, r_tri2=_0, r_dist, dist; /* zero inits to suppress compiler warnings */
     float r_sphere0=_0,r_sphere1=_0,r_sphere2=_0;
@@ -1117,6 +1115,13 @@ int BasisHitPerspective(BasisCallRec *BC)
     int except = BC->except;
     int check_interior_flag   = BC->check_interior;
     float   sph[3],vt[3],tri1,tri2; 
+    register CPrimitive *BC_prim = BC->prim;
+    register int *BI_Vert2Normal = BI->Vert2Normal;
+    register float *BI_Vertex = BI->Vertex;
+    register float *BI_Precomp = BI->Precomp;
+    float *BI_Normal = BI->Normal;
+    float *BI_Radius = BI->Radius;
+    float *BI_Radius2 = BI->Radius2;
 
     copy3f(r->base, vt);
 
@@ -1227,21 +1232,21 @@ int BasisHitPerspective(BasisCallRec *BC)
             ii = *(ip++);
             if((v2p != except) && (!MapCached(cache,v2p))) 
               {
-                CPrimitive *prm = BC->prim + v2p;
+                register CPrimitive *prm = BC_prim + v2p;
                 MapCache(cache,v2p);
               
                 switch(prm->type)  {
                 case cPrimTriangle:
                 case cPrimCharacter:
                   {
-                    float *d10 = BI->Precomp + BI->Vert2Normal[i] * 3;
-                    float *d20 = d10+3;
                     float *dir = r->dir;
+                    float *d10 = BI_Precomp + BI_Vert2Normal[i] * 3;
+                    float *d20 = d10+3;
                     register float det, inv_det;
                     register float pvec0,pvec1, pvec2;
-                    register float d10_0 = d10[0], d10_1 = d10[1], d10_2 = d10[2];
-                    register float d20_0 = d20[0], d20_1 = d20[1], d20_2 = d20[2];
                     register float dir0 = dir[0], dir1 = dir[1], dir2 = dir[2];
+                    register float d20_0 = d20[0], d20_1 = d20[1], d20_2 = d20[2];
+                    register float d10_0 = d10[0], d10_1 = d10[1], d10_2 = d10[2];
 
                     /* cross_product3f(dir, d20, pvec); */
 
@@ -1254,7 +1259,7 @@ int BasisHitPerspective(BasisCallRec *BC)
                     det = pvec0 * d10_0 + pvec1 * d10_1 + pvec2 * d10_2;
                   
                     if(fabs(det) >= EPSILON) {
-                      float *v0 = BI->Vertex + prm->vert*3;
+                      float *v0 = BI_Vertex + prm->vert*3;
                       register float tvec0, tvec1, tvec2;
                       register float qvec0, qvec1, qvec2;
 
@@ -1301,7 +1306,7 @@ int BasisHitPerspective(BasisCallRec *BC)
                 case cPrimSphere:
                   {
 
-                    if(LineClipPoint( r->base, r->dir, BI->Vertex + i*3, &dist, BI->Radius[i] , BI->Radius2[i]))
+                    if(LineClipPoint( r->base, r->dir, BI_Vertex + i*3, &dist, BI_Radius[i] , BI_Radius2[i]))
                       {
                         if((dist < r_dist) && (prm->trans != _1))
                           {
@@ -1309,7 +1314,7 @@ int BasisHitPerspective(BasisCallRec *BC)
                               new_min_index = prm->vert;
                               r_dist      = dist;
                             } else if(check_interior_flag && (dist<=back_dist))  {
-                              if(diffsq3f(vt,BI->Vertex+i*3) < BI->Radius2[i]) {
+                              if(diffsq3f(vt,BI_Vertex+i*3) < BI_Radius2[i]) {
                               
                                 local_iflag   = true;
                                 r_prim      = prm;
@@ -1323,12 +1328,12 @@ int BasisHitPerspective(BasisCallRec *BC)
                   break;
                 
                 case cPrimCylinder:
-                  if(LineToSphereCapped(r->base,r->dir,BI->Vertex+i*3, 
-                                        BI->Normal+BI->Vert2Normal[i]*3,
-                                        BI->Radius[i], prm->l1,sph,&tri1,
+                  if(LineToSphereCapped(r->base,r->dir,BI_Vertex+i*3, 
+                                        BI_Normal+BI_Vert2Normal[i]*3,
+                                        BI_Radius[i], prm->l1,sph,&tri1,
                                         prm->cap1,prm->cap2))
                     {
-                      if(LineClipPoint(r->base,r->dir,sph,&dist,BI->Radius[i],BI->Radius2[i]))
+                      if(LineClipPoint(r->base,r->dir,sph,&dist,BI_Radius[i],BI_Radius2[i]))
                         {
                           if((dist < r_dist) && (prm->trans != _1))
                             {
@@ -1346,10 +1351,10 @@ int BasisHitPerspective(BasisCallRec *BC)
                               else if(check_interior_flag && (dist<=back_dist))
                                 {
                                   if(FrontToInteriorSphereCapped(vt,
-                                                                 BI->Vertex+i*3,
-                                                                 BI->Normal+BI->Vert2Normal[i]*3,
-                                                                 BI->Radius[i],
-                                                                 BI->Radius2[i],
+                                                                 BI_Vertex+i*3,
+                                                                 BI_Normal+BI_Vert2Normal[i]*3,
+                                                                 BI_Radius[i],
+                                                                 BI_Radius2[i],
                                                                  prm->l1,
                                                                  prm->cap1,
                                                                  prm->cap2)) 
@@ -1367,11 +1372,11 @@ int BasisHitPerspective(BasisCallRec *BC)
                   break;
                 
                 case cPrimSausage:
-                  if(LineToSphere(r->base,r->dir, BI->Vertex+i*3,BI->Normal+BI->Vert2Normal[i]*3,
-                                  BI->Radius[i],prm->l1,sph,&tri1))
+                  if(LineToSphere(r->base,r->dir, BI_Vertex+i*3,BI_Normal+BI_Vert2Normal[i]*3,
+                                  BI_Radius[i],prm->l1,sph,&tri1))
                     {
 
-                      if(LineClipPoint(r->base,r->dir,sph,&dist,BI->Radius[i],BI->Radius2[i])) 
+                      if(LineClipPoint(r->base,r->dir,sph,&dist,BI_Radius[i],BI_Radius2[i])) 
                         {
 
 
@@ -1403,8 +1408,8 @@ int BasisHitPerspective(BasisCallRec *BC)
                                 }
                               else if(check_interior_flag &&( dist<=back_dist) ) 
                                 {
-                                  if(FrontToInteriorSphere(vt, BI->Vertex+i*3, BI->Normal+BI->Vert2Normal[i]*3,
-                                                           BI->Radius[i], BI->Radius2[i], prm->l1)) 
+                                  if(FrontToInteriorSphere(vt, BI_Vertex+i*3, BI_Normal+BI_Vert2Normal[i]*3,
+                                                           BI_Radius[i], BI_Radius2[i], prm->l1)) 
                                     {
                                       local_iflag   = true;
                                       r_prim      = prm;
@@ -1434,7 +1439,7 @@ int BasisHitPerspective(BasisCallRec *BC)
         
           minIndex = new_min_index;
         
-          r_prim = BC->prim + vert2prim[minIndex];
+          r_prim = BC_prim + vert2prim[minIndex];
         
           if(r_prim->type == cPrimSphere) 
             {
@@ -2578,7 +2583,7 @@ void BasisMakeMap(CBasis *I,int *vert2prim,CPrimitive *prim,float *volume,
       n_voxel = I->Map->Dim[0]*I->Map->Dim[1]*I->Map->Dim[2];
 
       if(perspective) {
-        MapSetupExpressPerp(I->Map,tempVertex,front);
+        MapSetupExpressPerp(I->Map,tempVertex,front,n);
       } else if(n_voxel < (3*n)) {
         MapSetupExpressXY(I->Map,n);      
       } else {
@@ -2825,7 +2830,7 @@ void BasisMakeMap(CBasis *I,int *vert2prim,CPrimitive *prim,float *volume,
       /* simple sphere mode */
       I->Map   = MapNewCached(I->G,-sep,I->Vertex,I->NVertex,NULL,group_id,block_base);
       if(perspective) {
-        MapSetupExpressPerp(I->Map,I->Vertex,front);
+        MapSetupExpressPerp(I->Map,I->Vertex,front,I->NVertex);
       } else {
         MapSetupExpressXYVert(I->Map,I->Vertex,I->NVertex);
       }

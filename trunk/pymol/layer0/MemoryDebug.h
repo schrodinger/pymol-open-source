@@ -66,11 +66,6 @@ typedef struct VLARec {
 /* NOTE: in VLACheck, rec is a zero based array index, not a record count */
 #define VLACheck(ptr,type,rec) (ptr=(type*)(((((unsigned)rec)>=((VLARec*)(ptr))[-1].nAlloc) ? VLAExpand(ptr,(rec)) : (ptr))))
 
-#define VLACacheCheck(G,ptr,type,rec,t,i) (ptr=(type*)(((((unsigned)rec)>=((VLARec*)(ptr))[-1].nAlloc) ? VLACacheExpand(G,ptr,(rec),t,i) : (ptr))))
-#define VLACacheAlloc(G,type,initSize,t,i) (type*)VLACacheMalloc(G,initSize,sizeof(type),5,0,t,i)
-#define VLACacheFreeP(G,ptr,t,i,f) {if(ptr) {VLACacheFree(G,ptr,t,i,f);ptr=NULL;}}
-#define VLACacheSize(G,ptr,type,size,t,i) {ptr=(type*)VLACacheSetSize(G,ptr,size,t,i);}
-
 #define VLAlloc(type,initSize) (type*)VLAMalloc(initSize,sizeof(type),5,0)
 #define VLACalloc(type,initSize) (type*)VLAMalloc(initSize,sizeof(type),5,1)
 #define VLAFreeP(ptr) {if(ptr) {VLAFree(ptr);ptr=NULL;}}
@@ -84,27 +79,21 @@ typedef struct VLARec {
 #define FreeP(ptr) {if(ptr) {mfree(ptr);ptr=NULL;}}
 
 void *VLAExpand(void *ptr,unsigned int rec); /* NOTE: rec is index (total-1) */
-void *VLACacheExpand(PyMOLGlobals *G,void *ptr,unsigned int rec,int thread_index,int block_id);
 void *MemoryReallocForSure(void *ptr, unsigned int newSize);
 
 #ifndef _MemoryDebug_ON
 void *VLAMalloc(unsigned int initSize,unsigned int recSize,unsigned int growFactor,int autoZero); /*growfactor 1-10*/
 
-void *VLACacheMalloc(PyMOLGlobals *G,unsigned int initSize,unsigned int recSize,
-                     unsigned int growFactor,int autoZero,int thread,int index); /*growfactor 1-10*/
 #else
 #define VLAMalloc(a,b,c,d) _VLAMalloc(__FILE__,__LINE__,a,b,c,d)
 
 void *_VLAMalloc(const char *file,int line,unsigned int initSize,unsigned int recSize,unsigned int growFactor,int autoZero); /*growfactor 1-10*/
-#define VLACacheMalloc(G,a,b,c,d,t,i) _VLACacheMalloc(G,__FILE__,__LINE__,a,b,c,d,t,i)
-void *_VLACacheMalloc(PyMOLGlobals *G,const char *file,int line,unsigned int initSize,unsigned int recSize,unsigned int growFactor,int autoZero,int thread,int index); /*growfactor 1-10*/
 #endif
 
-void VLAFree(void *ptr);
-void VLACacheFree(PyMOLGlobals *G,void *ptr,int thread,int id,int force);
 
+void VLAFree(void *ptr);
 void *VLASetSize(void *ptr,unsigned int newSize);
-void *VLACacheSetSize(PyMOLGlobals *G,void *ptr,unsigned int newSize,int group_id,int block_id);
+
 unsigned int VLAGetSize(void *ptr);
 void *VLANewCopy(void *ptr);
 void MemoryZero(char *p,char *q);
@@ -128,6 +117,7 @@ void MemoryZero(char *p,char *q);
 
 #define MD_FILE_LINE_Call
 #define MD_FILE_LINE_Decl
+#define MD_FILE_LINE_Nest
 #define MD_FILE_LINE_PTR_Call
 
 
@@ -145,7 +135,6 @@ extern "C" {
 #define MD_FILE_LINE_Call ,__FILE__,__LINE__
 #define MD_FILE_LINE_Decl ,const char *file,int line
 #define MD_FILE_LINE_Nest ,file,line
-
 #define MD_FILE_LINE_PTR_Call ,__FILE__,__LINE__,_MDPointer
 
 #define mmalloc(x) MemoryDebugMalloc(x,__FILE__,__LINE__,_MDPointer)
@@ -183,6 +172,7 @@ void *operator new(size_t size, const char *file,int line);
 #endif
 
 #endif
+
 #endif
 
 
