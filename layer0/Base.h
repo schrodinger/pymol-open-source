@@ -84,6 +84,7 @@ typedef struct {
   int pass;
   int width_scale_flag;
   float width_scale;
+  float vertex_scale; /* how large is a screen pixel in model space at the origin */
 } RenderInfo;
 
 #define MAXLINELEN 1024

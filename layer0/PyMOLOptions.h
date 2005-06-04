@@ -47,8 +47,8 @@ struct _CPyMOLOptions {
     read_stdin, 
     presentation, 
     defer_builds_mode,
-    full_screen;
-
+    full_screen,
+    operate_lean;
   /* WARNING: for the sake of forward compability, never delete or
      move any fields in the above ...initialization struct in PyMOL.c */
 

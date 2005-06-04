@@ -798,6 +798,7 @@ CoordSet *ObjectMoleculeTOPStr2CoordSet(PyMOLGlobals *G,char *buffer,
   BondType *bond=NULL,*bd;
   int nBond=0;
   int auto_show_lines = (int)SettingGet(G,cSetting_auto_show_lines);
+  int auto_show_spheres = (int)SettingGet(G,cSetting_auto_show_spheres);
   int auto_show_nonbonded = (int)SettingGet(G,cSetting_auto_show_nonbonded);
   int amber7 = false;
 
@@ -1571,6 +1572,7 @@ was at the end of the file. Maybe that's good enough.
       }
       ai->visRep[cRepLine] = auto_show_lines; /* show lines by default */
       ai->visRep[cRepNonbonded] = auto_show_nonbonded; /* show lines by default */
+      ai->visRep[cRepSphere] = auto_show_spheres; /* show lines by default */
     }
   }
   if(ok) {
@@ -1798,6 +1800,7 @@ static CoordSet *ObjectMoleculePMO2CoordSet(PyMOLGlobals *G,CRaw *pmo,AtomInfoTy
 
   int ok=true;
   int auto_show_lines;
+  int auto_show_spheres = (int)SettingGet(G,cSetting_auto_show_spheres);
   int auto_show_nonbonded;
   int type,size;
   float *spheroid=NULL;
@@ -2495,6 +2498,7 @@ CoordSet *ObjectMoleculeXYZStr2CoordSet(PyMOLGlobals *G,char *buffer,AtomInfoTyp
   int b1,b2;
   WordType tmp_name;
   int auto_show_lines = (int)SettingGet(G,cSetting_auto_show_lines);
+  int auto_show_spheres = (int)SettingGet(G,cSetting_auto_show_spheres);
   int auto_show_nonbonded = (int)SettingGet(G,cSetting_auto_show_nonbonded);
   BondType *ii;
 
@@ -2561,7 +2565,8 @@ CoordSet *ObjectMoleculeXYZStr2CoordSet(PyMOLGlobals *G,char *buffer,AtomInfoTyp
         ai->visRep[c] = false;
       }
       ai->visRep[cRepLine] = auto_show_lines; /* show lines by default */
-      ai->visRep[cRepNonbonded] = auto_show_nonbonded; /* show lines by default */
+      ai->visRep[cRepNonbonded] = auto_show_nonbonded;
+      ai->visRep[cRepSphere] = auto_show_spheres;
       
       p=ncopy(cc,p,6);
       sscanf(cc,"%d",&ai->customType);
@@ -5058,6 +5063,7 @@ static CoordSet *ObjectMoleculeChemPyModel2CoordSet(PyMOLGlobals *G,PyObject *mo
   BondType *ii,*bond=NULL;
   int ok=true;
   int auto_show_lines;
+  int auto_show_spheres = (int)SettingGet(G,cSetting_auto_show_spheres);
   int auto_show_nonbonded;
   int hetatm;
   int ignore_ids;
@@ -5352,11 +5358,12 @@ static CoordSet *ObjectMoleculeChemPyModel2CoordSet(PyMOLGlobals *G,PyObject *mo
         }
 
         
-        for(c=0;c<cRepCnt;c++) {
-          atInfo[a].visRep[c] = false;
+          for(c=0;c<cRepCnt;c++) {
+            atInfo[a].visRep[c] = false;
 		  }
-        atInfo[a].visRep[cRepLine] = auto_show_lines; /* show lines by default */
-        atInfo[a].visRep[cRepNonbonded] = auto_show_nonbonded; /* show lines by default */
+          atInfo[a].visRep[cRepLine] = auto_show_lines; /* show lines by default */
+          atInfo[a].visRep[cRepNonbonded] = auto_show_nonbonded;
+          atInfo[a].visRep[cRepSphere] = auto_show_spheres;
 
 		  if(ok&&atInfo) {
 			 AtomInfoAssignParameters(G,ai);
@@ -5699,6 +5706,7 @@ static CoordSet *ObjectMoleculeMOLStr2CoordSet(PyMOLGlobals *G,char *buffer,
   BondType *bond=NULL;
   int ok=true;
   int auto_show_lines;
+  int auto_show_spheres = (int)SettingGet(G,cSetting_auto_show_spheres);
   int auto_show_nonbonded;
   WordType nameTmp;
   auto_show_lines = (int)SettingGet(G,cSetting_auto_show_lines);
@@ -5769,6 +5777,7 @@ static CoordSet *ObjectMoleculeMOLStr2CoordSet(PyMOLGlobals *G,char *buffer,
           }
           atInfo[a].visRep[cRepLine] = auto_show_lines; /* show lines by default */
           atInfo[a].visRep[cRepNonbonded] = auto_show_nonbonded; /* show lines by default */
+          atInfo[a].visRep[cRepSphere] = auto_show_spheres; /* show lines by default */
 
 		  }
         if(ok) {
@@ -6045,6 +6054,7 @@ static CoordSet *ObjectMoleculeMOL2Str2CoordSet(PyMOLGlobals *G,char *buffer,
   BondType *bond=NULL;
   int ok=true;
   int auto_show_lines;
+  int auto_show_spheres = (int)SettingGet(G,cSetting_auto_show_spheres);
   int auto_show_nonbonded;
   int have_molecule = false;
   WordType nameTmp;
@@ -6170,7 +6180,8 @@ static CoordSet *ObjectMoleculeMOL2Str2CoordSet(PyMOLGlobals *G,char *buffer,
             ai->visRep[c] = false;
           }
           ai->visRep[cRepLine] = auto_show_lines; /* show lines by default */
-          ai->visRep[cRepNonbonded] = auto_show_nonbonded; /* show lines by default */
+          ai->visRep[cRepNonbonded] = auto_show_nonbonded; 
+          ai->visRep[cRepSphere] = auto_show_spheres;
 
 
           ai->id = a+1;
@@ -9385,6 +9396,7 @@ CoordSet *ObjectMoleculeMMDStr2CoordSet(PyMOLGlobals *G,char *buffer,AtomInfoTyp
   BondType *ii,*bond=NULL;
   int ok=true;
   int auto_show_lines = (int)SettingGet(G,cSetting_auto_show_lines);
+  int auto_show_spheres = (int)SettingGet(G,cSetting_auto_show_spheres);
   int auto_show_nonbonded = (int)SettingGet(G,cSetting_auto_show_nonbonded);
 
   p=buffer;
@@ -9522,7 +9534,7 @@ CoordSet *ObjectMoleculeMMDStr2CoordSet(PyMOLGlobals *G,char *buffer,AtomInfoTyp
           }
           ai->visRep[cRepLine] = auto_show_lines; /* show lines by default */
           ai->visRep[cRepNonbonded] = auto_show_nonbonded; /* show lines by default */
-          
+          ai->visRep[cRepSphere] = auto_show_spheres;
         }
         if(ok) {
           AtomInfoAssignParameters(G,ai);
