@@ -2581,7 +2581,7 @@ void SettingInitGlobal(PyMOLGlobals *G,int alloc,int reset_gui)
   } else {
     SettingSet_i(I,cSetting_sphere_point_mode, 0);
   }
-  SettingSet_f(I,cSetting_sphere_point_max_size, 30.0);
+  SettingSet_f(I,cSetting_sphere_point_max_size, 10.0);
   SettingSet_f(I,cSetting_sphere_point_size, 1.0);
 
 }

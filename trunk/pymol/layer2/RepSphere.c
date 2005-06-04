@@ -365,7 +365,7 @@ static void RepSphereRender(RepSphere *I,RenderInfo *info)
                   register float s_factor=0.0F;
                   register float zz_factor;
                   register float clamp_radius;
-                  int first_pass = true;
+                  int pass = 0;
                   glEnable(GL_POINT_SMOOTH);
                   glEnable(GL_ALPHA_TEST);
                   glHint(GL_POINT_SMOOTH_HINT,GL_NICEST);
@@ -387,19 +387,19 @@ static void RepSphereRender(RepSphere *I,RenderInfo *info)
                     glBegin(GL_POINTS);
                     while(c--) {
                       if(last_radius!=(cur_radius=v[6])) {
-                        size = r_factor*cur_radius*pixel_scale;
+                        size = cur_radius*pixel_scale;
                         clamp_radius = cur_radius;                        
-                        glEnd();
                         if(clamp_size_flag) 
                           if(size>max_size) {
                             size=max_size;
-                            clamp_radius = size / (r_factor*pixel_scale);
+                            clamp_radius = size / pixel_scale;
                           }
-
+                        size *= r_factor;
+                        glEnd();
                         if(size>largest)
                           largest = size;
                         if(size<_2) {
-                          if(first_pass) {
+                          if(!pass) {
                             zz_factor=1.0F;
                             s_factor = 0.0F;
                           }
@@ -440,7 +440,7 @@ static void RepSphereRender(RepSphere *I,RenderInfo *info)
                       z_factor = (float)sqrt1f(1.0F-(r_factor*r_factor));
                       s_factor = (float)pow(z_factor,20.0F)*0.5F;
                       repeat = true;
-                      first_pass=false;
+                      pass++;
                     }
                   }
                   glDisable(GL_POINT_SMOOTH);
