@@ -3100,8 +3100,6 @@ static PyObject *CmdOrient(PyObject *dummy, PyObject *args)
     ok = (SelectorGetTmp(TempPyMOLGlobals,str1,s1)>=0);
     if(ExecutiveGetMoment(TempPyMOLGlobals,s1,m,state))
       ExecutiveOrient(TempPyMOLGlobals,s1,m,state,animate,false,0.0F,quiet); /* TODO STATUS */
-    else
-      ok=false;
     SelectorFreeTmp(TempPyMOLGlobals,s1); 
     APIExit();
   }
