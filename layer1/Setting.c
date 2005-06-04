@@ -1392,7 +1392,7 @@ void SettingGenerateSideEffects(PyMOLGlobals *G,int index,char *sele,int state)
   case cSetting_cull_spheres:
   case cSetting_sphere_scale:
   case cSetting_sphere_solvent:
-  case cSetting_sphere_point_mode:
+  case cSetting_sphere_mode:
   case cSetting_sphere_point_max_size:
   case cSetting_sphere_point_size:
     ExecutiveInvalidateRep(G,inv_sele,cRepSphere,cRepInvRep);
@@ -1906,7 +1906,7 @@ void SettingInitGlobal(PyMOLGlobals *G,int alloc,int reset_gui)
 
   SettingSet_i(I,cSetting_sphere_quality, 1);
   
-  SettingSet_b(I,cSetting_auto_show_lines, !G->Option->operate_lean);
+  SettingSet_b(I,cSetting_auto_show_lines, !G->Option->sphere_mode);
 
   SettingSet_f(I,cSetting_fast_idle, 20000.0F); /* 1/50 of a sec. */
 
@@ -1952,7 +1952,7 @@ void SettingInitGlobal(PyMOLGlobals *G,int alloc,int reset_gui)
 
   SettingSet_f(I,cSetting_spheroid_fill, 1.30F);
 
-  SettingSet_b(I,cSetting_auto_show_nonbonded, !G->Option->operate_lean);
+  SettingSet_b(I,cSetting_auto_show_nonbonded, !G->Option->sphere_mode);
 
   SettingSet_f(I,cSetting_mesh_radius, 0.000F);
  
@@ -2575,12 +2575,8 @@ void SettingInitGlobal(PyMOLGlobals *G,int alloc,int reset_gui)
   SettingSet_b(I,cSetting_presentation_auto_start,1);
   SettingSet_b(I,cSetting_validate_object_names, 1);
   SettingSet_b(I,cSetting_pixel_scale, 1);
-  SettingSet_b(I,cSetting_auto_show_spheres, G->Option->operate_lean); 
-  if(G->Option->operate_lean) {
-    SettingSet_i(I,cSetting_sphere_point_mode, 1); 
-  } else {
-    SettingSet_i(I,cSetting_sphere_point_mode, 0);
-  }
+  SettingSet_b(I,cSetting_auto_show_spheres, G->Option->sphere_mode&&true);
+  SettingSet_i(I,cSetting_sphere_mode, G->Option->sphere_mode);
   SettingSet_f(I,cSetting_sphere_point_max_size, 10.0);
   SettingSet_f(I,cSetting_sphere_point_size, 1.0);
 

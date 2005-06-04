@@ -157,12 +157,12 @@ static void RepSphereRender(RepSphere *I,RenderInfo *info)
                                                  cSetting_sphere_point_max_size);
           register int clamp_size_flag = (max_size>=0.0F);
           register float size;
-          int sphere_point_mode = SettingGet_i(G,I->R.cs->Setting,
+          int sphere_mode = SettingGet_i(G,I->R.cs->Setting,
                                                I->R.obj->Setting,
-                                             cSetting_sphere_point_mode);
+                                              cSetting_sphere_mode);
           
           if(!sp) {
-            switch(sphere_point_mode) {
+            switch(sphere_mode) {
             case 4:
             case 3:
               glEnable(GL_POINT_SMOOTH);
@@ -224,7 +224,7 @@ static void RepSphereRender(RepSphere *I,RenderInfo *info)
                 }
               v+=7;
             } else {
-              switch(sphere_point_mode) {
+              switch(sphere_mode) {
               case 2:
               case 3:
                 if(last_radius!=(cur_radius=v[6])) {
@@ -250,7 +250,7 @@ static void RepSphereRender(RepSphere *I,RenderInfo *info)
             }
           }
           if(!sp) {
-            switch(sphere_point_mode) {
+            switch(sphere_mode) {
             case 3:
             case 4:
               glDisable(GL_POINT_SMOOTH);
@@ -267,13 +267,13 @@ static void RepSphereRender(RepSphere *I,RenderInfo *info)
       if(!sp) {
         /* no sp -- we're rendering as points */
         int use_dlst;
-        int sphere_point_mode = SettingGet_i(G,I->R.cs->Setting,
+        int sphere_mode = SettingGet_i(G,I->R.cs->Setting,
                                              I->R.obj->Setting,
-                                             cSetting_sphere_point_mode);
+                                             cSetting_sphere_mode);
         v=I->VC;
         c=I->NC;
           
-        if((sphere_point_mode>=2)&&(sphere_point_mode<=3)) { 
+        if((sphere_mode>=2)&&(sphere_mode<=3)) { 
           if(I->R.displayList) { 
             if(I->LastVertexScale != info->vertex_scale) {
               glDeleteLists(I->R.displayList,1);
@@ -284,7 +284,7 @@ static void RepSphereRender(RepSphere *I,RenderInfo *info)
         I->LastVertexScale = info->vertex_scale;
           
         use_dlst = (int)SettingGet(G,cSetting_use_display_lists);
-        switch(sphere_point_mode) {
+        switch(sphere_mode) {
         case 4:
           use_dlst = 0;
           break;
@@ -304,7 +304,7 @@ static void RepSphereRender(RepSphere *I,RenderInfo *info)
             
           glDisable(GL_LIGHTING);
             
-          switch(sphere_point_mode) {
+          switch(sphere_mode) {
           case 2:
           case 3:
           case 4:
@@ -319,10 +319,10 @@ static void RepSphereRender(RepSphere *I,RenderInfo *info)
               register int clamp_size_flag = (max_size>=0.0F);
               register float size;
                 
-              switch(sphere_point_mode) {
+              switch(sphere_mode) {
               case 2:
               case 3:
-                if(sphere_point_mode==3) {
+                if(sphere_mode==3) {
                   pixel_scale *= 2.0F;
                   glEnable(GL_POINT_SMOOTH);
                   glAlphaFunc(GL_GREATER, 0.5F);
@@ -350,7 +350,7 @@ static void RepSphereRender(RepSphere *I,RenderInfo *info)
                   v+=4;
                 }
                 glEnd();
-                if(sphere_point_mode==3) {
+                if(sphere_mode==3) {
                   glDisable(GL_POINT_SMOOTH);
                   glAlphaFunc(GL_GREATER, 0.05F);
                 }
@@ -679,7 +679,7 @@ Rep *RepSphereNew(CoordSet *cs)
   int ribbon_side_chain_helper = 0;
   AtomInfoType *ati1;
   int vis_flag;
-  int sphere_point_mode;
+  int sphere_mode;
 
 #ifdef _this_code_is_not_used
   float vv0[3],vv1[3],vv2[3];
@@ -706,9 +706,9 @@ Rep *RepSphereNew(CoordSet *cs)
 
   RepInit(G,&I->R);
   ds = SettingGet_i(G,cs->Setting,obj->Obj.Setting,cSetting_sphere_quality);
-  sphere_point_mode = SettingGet_i(G,cs->Setting,    obj->Obj.Setting,
-                                   cSetting_sphere_point_mode);
-  if(sphere_point_mode>0)
+  sphere_mode = SettingGet_i(G,cs->Setting,    obj->Obj.Setting,
+                                   cSetting_sphere_mode);
+  if(sphere_mode>0)
     ds = -1;
   if(ds<0) {
     sp = NULL;
@@ -839,20 +839,22 @@ Rep *RepSphereNew(CoordSet *cs)
   if(!sp) {
 
     /* sort the vertices by radius */
-    if(I->NC && I->VC && (!spheroidFlag) && (sphere_point_mode>1)) {
+    if(I->NC && I->VC && (!spheroidFlag) && (sphere_mode>1)) {
       int *ix = Alloc(int,I->NC);
       float *vc_tmp = Alloc(float, I->NC*7);
       Pickable *pk_tmp = Alloc(Pickable,I->NP+1);
       int a;
-      UtilCopyMem(vc_tmp, I->VC, sizeof(float)*7*I->NC);
-      UtilCopyMem(pk_tmp, I->R.P, sizeof(Pickable)*(I->NP+1));
-
-      UtilSortIndex(I->NC,I->VC,ix,(UtilOrderFn*)RadiusOrder);
-
-      UtilCopyMem(I->R.P, pk_tmp, sizeof(Pickable));
-      for(a=0;a<I->NC;a++) {
-        UtilCopyMem(I->VC + (a*7), vc_tmp+(7*ix[a]), sizeof(float)*7);
-        UtilCopyMem(I->R.P + (a+1), pk_tmp+ix[a]+1, sizeof(Pickable));
+      if(vc_tmp&&pk_tmp&&ix) {
+        UtilCopyMem(vc_tmp, I->VC, sizeof(float)*7*I->NC);
+        UtilCopyMem(pk_tmp, I->R.P, sizeof(Pickable)*(I->NP+1));
+        
+        UtilSortIndex(I->NC,I->VC,ix,(UtilOrderFn*)RadiusOrder);
+        
+        UtilCopyMem(I->R.P, pk_tmp, sizeof(Pickable));
+        for(a=0;a<I->NC;a++) {
+          UtilCopyMem(I->VC + (a*7), vc_tmp+(7*ix[a]), sizeof(float)*7);
+          UtilCopyMem(I->R.P + (a+1), pk_tmp+ix[a]+1, sizeof(Pickable));
+        }
       }
       FreeP(vc_tmp);
       FreeP(ix);
