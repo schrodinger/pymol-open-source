@@ -453,7 +453,11 @@ if __name__=='pymol.setting':
         presentation_auto_start   = (417, '')
         validate_object_names     = (418, '')
         pixel_scale               = (419, '')
-        
+        auto_show_spheres         = (420, '')
+        sphere_point_mode         = (421, '')
+        sphere_point_max_size     = (422, '')
+        sphere_point_size         = (423, '')
+     
     setting_sc = Shortcut(SettingIndex.__dict__.keys())
 
     index_list = []

@@ -531,6 +531,10 @@ typedef struct _CPyMOL {
   ov_word lex_presentation_auto_start;
   ov_word lex_validate_object_names;
   ov_word lex_pixel_scale;
+  ov_word lex_auto_show_spheres;
+  ov_word lex_sphere_point_mode;
+  ov_word lex_sphere_point_max_size;
+  ov_word lex_sphere_point_size;
 } _CPyMOL;
 
 static int status_ok(int ok) {
@@ -1052,6 +1056,10 @@ static OVstatus PyMOL_InitAPI(CPyMOL *I)
   LEX_SETTING(presentation_auto_start,417);
   LEX_SETTING(validate_object_names,418);
   LEX_SETTING(pixel_scale, 419);
+  LEX_SETTING(auto_show_spheres, 420);
+  LEX_SETTING(sphere_point_mode, 421);
+  LEX_SETTING(sphere_point_max_size, 422);
+  LEX_SETTING(sphere_point_size, 423);
 
   return_OVstatus_SUCCESS;
 }
@@ -1406,6 +1414,7 @@ const static CPyMOLOptions Defaults = {
   0, /* presentation */
   0, /* defer builds mode */
   0, /* full screen mode */
+  0, /* operate lean */
 };
 
 CPyMOLOptions *PyMOLOptions_New(void)

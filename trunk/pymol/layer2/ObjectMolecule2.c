@@ -870,6 +870,7 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(PyMOLGlobals *G,
   CSymmetry *symmetry = NULL;
   int auto_show_lines = (int)SettingGet(G,cSetting_auto_show_lines);
   int auto_show_nonbonded = (int)SettingGet(G,cSetting_auto_show_nonbonded);
+  int auto_show_spheres = (int)SettingGet(G,cSetting_auto_show_spheres);
   int reformat_names = (int)SettingGet(G,cSetting_pdb_reformat_names_mode);
   int truncate_resn = SettingGetGlobal_b(G,cSetting_pdb_truncate_residue_name);
 
@@ -1908,6 +1909,7 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(PyMOLGlobals *G,
 
           ai->visRep[cRepLine] = auto_show_lines; /* show lines by default */
           ai->visRep[cRepNonbonded] = auto_show_nonbonded; /* show lines by default */
+          ai->visRep[cRepSphere] = auto_show_spheres;
 
           if(AFlag==1) 
             ai->hetatm=0;

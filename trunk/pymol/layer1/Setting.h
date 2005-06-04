@@ -569,6 +569,11 @@ CSetting *SettingNewFromPyList(PyMOLGlobals *G,PyObject *list);
 #define cSetting_presentation_auto_start    417
 #define cSetting_validate_object_names      418
 #define cSetting_pixel_scale                419
+#define cSetting_auto_show_spheres          420
+#define cSetting_sphere_point_mode          421
+#define cSetting_sphere_point_max_size      422
+#define cSetting_sphere_point_size          423
+
 /* when you add a new settingg also remember:
    layer1/Setting.c
    modules/pymol/setting.py
@@ -577,7 +582,7 @@ CSetting *SettingNewFromPyList(PyMOLGlobals *G,PyObject *list);
 
 /* cSetting_ss_INIT must always be last setting_index +1 */
 
-#define cSetting_INIT                       420
+#define cSetting_INIT                       424
 
 #endif
 

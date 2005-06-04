@@ -61,6 +61,7 @@ if __name__=='pymol.invocation':
     options.presentation = 0
     options.defer_builds_mode = 0
     options.full_screen = 0
+    options.operate_lean = 0
     
     if sys.platform[0:4] == 'irix':
         options.win_py = 240
@@ -227,6 +228,8 @@ if __name__=='pymol.invocation':
                     options.skin = str(av.pop())
                 if "w" in a:
                     options.gui = 'pmg_wx'
+                if "O" in a:
+                    options.operate_lean = 1
                 if "z" in a:
                     options.window_visible = 0
                 if "d" in a:

@@ -151,6 +151,7 @@ struct _CScene {
   double AnimationStartTime;
   double AnimationLagTime;
   double ApproxRenderTime;
+  float VertexScale;
 };
 
 typedef struct {
@@ -3933,6 +3934,7 @@ int  SceneInit(PyMOLGlobals *G)
     I->AnimationStartTime = 0.0;
     I->AnimationStartFlag = false;
     I->ApproxRenderTime = 0.0;
+    I->VertexScale = 0.01F;
 
     return 1;
   } else 
@@ -4484,7 +4486,8 @@ static void SceneRenderAll(PyMOLGlobals *G,SceneUnitContext *context,
   UtilZeroMem(&info,sizeof(RenderInfo));
   info.pick = pickVLA;
   info.pass = pass;
-  
+  info.vertex_scale = I->VertexScale;
+
   if(width_scale!=0.0F) {
     info.width_scale_flag = true;
     info.width_scale = width_scale;
@@ -4764,7 +4767,11 @@ void SceneRender(PyMOLGlobals *G,Pickable *pick,int x,int y,
 
     glGetFloatv(GL_MODELVIEW_MATRIX,I->ModMatrix);
     glGetFloatv(GL_PROJECTION_MATRIX,I->ProMatrix);
-  
+
+    /* make note of how large pixels are at the origin (should this be Pos instead?) */
+
+    I->VertexScale = SceneGetScreenVertexScale(G,I->Origin);
+
     /* determine the direction in which we are looking relative*/
 
     /* 2. set the normals to reflect light back at the camera */
