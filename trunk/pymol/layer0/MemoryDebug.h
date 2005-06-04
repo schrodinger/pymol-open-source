@@ -90,7 +90,8 @@ void *MemoryReallocForSure(void *ptr, unsigned int newSize);
 #ifndef _MemoryDebug_ON
 void *VLAMalloc(unsigned int initSize,unsigned int recSize,unsigned int growFactor,int autoZero); /*growfactor 1-10*/
 
-void *VLACacheMalloc(PyMOLGlobals *G,unsigned int initSize,unsigned int recSize,unsigned int growFactor,int autoZero,int thread,int index); /*growfactor 1-10*/
+void *VLACacheMalloc(PyMOLGlobals *G,unsigned int initSize,unsigned int recSize,
+                     unsigned int growFactor,int autoZero,int thread,int index); /*growfactor 1-10*/
 #else
 #define VLAMalloc(a,b,c,d) _VLAMalloc(__FILE__,__LINE__,a,b,c,d)
 
@@ -125,6 +126,11 @@ void MemoryZero(char *p,char *q);
 #define mnew new
 #endif
 
+#define MD_FILE_LINE_Call
+#define MD_FILE_LINE_Decl
+#define MD_FILE_LINE_PTR_Call
+
+
 #else
 /* _MemoryDebug_ON is defined */
 
@@ -135,6 +141,12 @@ extern "C" {
 #define _MDPointer 1
 #define _MDObject 2
 #define _MDMarker 3
+
+#define MD_FILE_LINE_Call ,__FILE__,__LINE__
+#define MD_FILE_LINE_Decl ,const char *file,int line
+#define MD_FILE_LINE_Nest ,file,line
+
+#define MD_FILE_LINE_PTR_Call ,__FILE__,__LINE__,_MDPointer
 
 #define mmalloc(x) MemoryDebugMalloc(x,__FILE__,__LINE__,_MDPointer)
 #define mcalloc(x,y) MemoryDebugCalloc(x,y,__FILE__,__LINE__,_MDPointer)

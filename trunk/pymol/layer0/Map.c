@@ -41,17 +41,17 @@ float MapGetDiv(MapType *I)
 {
   return I->Div;
 }
+
 void MapFree(MapType *I)
 {
-  if(I)
-	 {
-      PyMOLGlobals *G=I->G;
-		CacheFreeP(G,I->Head,I->group_id,I->block_base + cCache_map_head_offset,false);
-		CacheFreeP(G,I->Link,I->group_id,I->block_base + cCache_map_link_offset,false);
-		CacheFreeP(G,I->EHead,I->group_id,I->block_base + cCache_map_ehead_offset,false);
-		CacheFreeP(G,I->EMask,I->group_id,I->block_base + cCache_map_emask_offset,false);
-		VLACacheFreeP(G,I->EList,I->group_id,I->block_base + cCache_map_elist_offset,false);
-	 }
+  if(I) {
+    PyMOLGlobals *G=I->G;
+    CacheFreeP(G,I->Head,I->group_id,I->block_base + cCache_map_head_offset,false);
+    CacheFreeP(G,I->Link,I->group_id,I->block_base + cCache_map_link_offset,false);
+    CacheFreeP(G,I->EHead,I->group_id,I->block_base + cCache_map_ehead_offset,false);
+    CacheFreeP(G,I->EMask,I->group_id,I->block_base + cCache_map_emask_offset,false);
+    VLACacheFreeP(G,I->EList,I->group_id,I->block_base + cCache_map_elist_offset,false);
+  }
   OOFreeP(I);
 }
 
@@ -103,9 +103,8 @@ void MapCacheReset(MapCache *M)
 
 void MapCacheFree(MapCache *M,int group_id,int block_base)
 {
-  PyMOLGlobals *G = M->G;
-  CacheFreeP(G,M->Cache,group_id,block_base + cCache_map_cache_offset,false);
-  CacheFreeP(G,M->CacheLink,group_id,block_base + cCache_map_cache_link_offset,false);
+  CacheFreeP(M->G,M->Cache,group_id,block_base + cCache_map_cache_offset,false);
+  CacheFreeP(M->G,M->CacheLink,group_id,block_base + cCache_map_cache_link_offset,false);
 }
 
 #define MapSafety 0.01F
@@ -310,6 +309,10 @@ void MapSetupExpressXY(MapType *I,int n_vert) /* setup a list of XY neighbors fo
 		}
 	}
 		
+  PRINTFB(G,FB_Map,FB_Blather)
+    " MapSetupExpressXY: %d rows in express table\n",n
+    ENDFB(G);
+
 	I->NEElem=n;
 	VLACacheSize(G,I->EList,int,I->NEElem,I->group_id,I->block_base + cCache_map_elist_offset);
 	PRINTFD(G,FB_Map)
@@ -412,9 +415,13 @@ void MapSetupExpressXYVert(MapType *I,float *vert,int n_vert) /* setup a list of
 		v += 3;
 	}
 
+  PRINTFB(G,FB_Map,FB_Blather)
+    " MapSetupExpressXYVert: %d rows in express table\n",n
+    ENDFB(G);
+
 	I->NEElem = n;
 	PRINTFD(G,FB_Map)
-		" MapSetupExpressXY-Debug: leaving...\n"
+		" MapSetupExpressXYVert-Debug: leaving...\n"
 	ENDFD;
 }
 
@@ -447,9 +454,9 @@ void MapSetupExpressPerp(MapType *I, float *vert, float front)
                  I->group_id,I->block_base + cCache_map_ehead_offset);
   ErrChkPtr(G,I->EHead);
   I->EList=VLACacheMalloc(G,1000,sizeof(int),5,0,
-                     I->group_id,I->block_base + cCache_map_elist_offset);
-
-    I->EMask    = CacheCalloc(G,int,I->Dim[0]*I->Dim[1],
+                          I->group_id,I->block_base + cCache_map_elist_offset);
+  
+  I->EMask = CacheCalloc(G,int,I->Dim[0]*I->Dim[1],
                             I->group_id,I->block_base + cCache_map_emask_offset);
   
   emask = I->EMask;
@@ -459,9 +466,9 @@ void MapSetupExpressPerp(MapType *I, float *vert, float front)
 
   n=1;
   for(a=(I->iMin[0]-1);a<=(I->iMax[0]+1);a++)
-	 for(b=(I->iMin[1]-1);b<=(I->iMax[1]+1);b++)
-		for(c=(I->iMin[2]-1);c<=(I->iMax[2]+1);c++)
-		  {
+    for(b=(I->iMin[1]-1);b<=(I->iMax[1]+1);b++)
+      for(c=(I->iMin[2]-1);c<=(I->iMax[2]+1);c++)
+        {
           /* compute a "shadow" mask for all vertices */
 
           i=*MapFirst(I,a,b,c);
@@ -503,35 +510,38 @@ void MapSetupExpressPerp(MapType *I, float *vert, float front)
             
           st=n;
           flag=false;
-			 for(d=a-1;d<=a+1;d++)
-				for(e=b-1;e<=b+1;e++)
-				  for(f=c-1;f<=c+1;f++)
-					 {
-						i=*MapFirst(I,d,e,f);
-						if(i>=0) {
-						  flag=true;
-						  while(i>=0) {
-							 VLACacheCheck(G,I->EList,int,n,I->group_id,
+          for(d=a-1;d<=a+1;d++)
+            for(e=b-1;e<=b+1;e++)
+              for(f=c-1;f<=c+1;f++)
+                {
+                  i=*MapFirst(I,d,e,f);
+                  if(i>=0) {
+                    flag=true;
+                    while(i>=0) {
+                      VLACacheCheck(G,I->EList,int,n,I->group_id,
                                     I->block_base + cCache_map_elist_offset);
-							 I->EList[n]=i;
+                      I->EList[n]=i;
                       i=link[i];
-							 n++;
-						  }
-						}
-					 }
+                      n++;
+                    }
+                  }
+                }
 
-			 if(flag) {
-				*(MapEStart(I,a,b,c))=st;
-				VLACacheCheck(G,I->EList,int,n,I->group_id,
+          if(flag) {
+            *(MapEStart(I,a,b,c))=st;
+            VLACacheCheck(G,I->EList,int,n,I->group_id,
                           I->block_base + cCache_map_elist_offset);
-				I->EList[n]=-1;
-				n++;
-			 } else {
-				*(MapEStart(I,a,b,c))=0;
-			 }
-		  }
-
-
+            I->EList[n]=-1;
+            n++;
+          } else {
+            *(MapEStart(I,a,b,c))=0;
+          }
+        }
+  PRINTFB(G,FB_Map,FB_Blather)
+    " MapSetupExpressPerp: %d rows in express table\n",n
+    ENDFB(G);
+  I->NEElem=n;
+  VLACacheSize(G,I->EList,int,I->NEElem,I->group_id,I->block_base + cCache_map_elist_offset);
   PRINTFD(G,FB_Map)
     " MapSetupExpress-Debug: leaving...n=%d\n",n
     ENDFD;

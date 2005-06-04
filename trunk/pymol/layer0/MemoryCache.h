@@ -72,29 +72,53 @@ Z* -------------------------------------------------------------------
 #ifdef _MemoryCache_ON
 
 #include "PyMOLGlobals.h"
+#include "MemoryDebug.h"
 
 void MemoryCacheInit(PyMOLGlobals *G);
-void *MemoryCacheMalloc(PyMOLGlobals *G,unsigned int size,int group_id,int block_id);
-void *MemoryCacheCalloc(PyMOLGlobals *G,unsigned int number, unsigned int size,int group_id,int block_id);
-void *MemoryCacheRealloc(PyMOLGlobals *G,void *ptr, unsigned int size,int group_id, int block_id);
-void MemoryCacheFree(PyMOLGlobals *G,void *ptr,int group_id, int block_id,int force);
 void MemoryCacheDone(PyMOLGlobals *G);
+
+void *_MemoryCacheMalloc(PyMOLGlobals *G,unsigned int size,int group_id,int block_id MD_FILE_LINE_Decl);
+void *_MemoryCacheCalloc(PyMOLGlobals *G,unsigned int number, unsigned int size,int group_id,int block_id MD_FILE_LINE_Decl);
+void *_MemoryCacheRealloc(PyMOLGlobals *G,void *ptr, unsigned int size,int group_id, int block_id MD_FILE_LINE_Decl);
+void _MemoryCacheFree(PyMOLGlobals *G,void *ptr,int group_id, int block_id,int force MD_FILE_LINE_Decl);
+
+#define CacheAlloc(G,type,size,thread,id) (type*)_MemoryCacheMalloc(G,sizeof(type)*(size),thread,id MD_FILE_LINE_Call)
+#define CacheCalloc(G,type,size,thread,id) (type*)_MemoryCacheCalloc(G,sizeof(type),size,thread,id MD_FILE_LINE_Call)
+#define CacheRealloc(G,ptr,type,size,thread,id) (type*)_MemoryCacheRealloc(G,ptr,sizeof(type)*(size),thread,id MD_FILE_LINE_Call)
+#define CacheFreeP(G,ptr,thread,id,force) {if(ptr) {_MemoryCacheFree(G,ptr,thread,id,force MD_FILE_LINE_Call);ptr=NULL;}}
 
 #else
 /* memory cache off */
 
 #define MemoryCacheInit(x)
-#define MemoryCacheMalloc(G,size,group_id,block_id) mmalloc(size)
-#define MemoryCacheCalloc(G,number, size,group_id,block_id) mcalloc(number,size)
-#define MemoryCacheRealloc(G,ptr,size,group_id,block_id) mrealloc(ptr,size)
-#define MemoryCacheFree(G,ptr,group_id, block_id,force) mfree(ptr)
 #define MemoryCacheDone(x)
+
+#ifdef _MemoryDebug_ON
+
+#define _MemoryCacheMalloc(G,size,group_id,block_id,file,line) MemoryDebugMalloc(size,file,line,_MDPointer)
+#define _MemoryCacheCalloc(G,number,size,group_id,block_id,file,line) MemoryDebugCalloc(number,size,file,line,_MDPointer)
+#define _MemoryCacheRealloc(G,ptr,size,group_id,block_id,file,line) MemoryDebugRealloc(ptr,size,file,line,_MDPointer)
+#define _MemoryCacheFree(G,ptr,group_id, block_id,force,file,line) MemoryDebugFree(ptr,file,line,_MDPointer)
+
+#define CacheAlloc(G,type,size,thread,id) (type*)_MemoryCacheMalloc(G,sizeof(type)*(size),thread,id,__FILE__,__LINE__)
+#define CacheCalloc(G,type,size,thread,id) (type*)_MemoryCacheCalloc(G,sizeof(type),size,thread,id,__FILE__,__LINE__)
+#define CacheRealloc(G,ptr,type,size,thread,id) (type*)_MemoryCacheRealloc(G,ptr,sizeof(type)*(size),thread,id,__FILE__,__LINE__)
+#define CacheFreeP(G,ptr,thread,id,force) {if(ptr) {_MemoryCacheFree(G,ptr,thread,id,force,__FILE__,__LINE__);ptr=NULL;}}
+
+#else
+
+#define CacheAlloc(G,type,size,thread,id) (type*)malloc(size)
+#define CacheCalloc(G,type,size,thread,id) (type*)mcalloc(sizeof(type),size)
+#define CacheRealloc(G,ptr,type,size,thread,id) (type*)mrealloc(sizeof(type)*(size))
+#define CacheFreeP(G,ptr,thread,id,force) {if(ptr) {mfree(ptr);ptr=NULL;}}
+
+#define _MemoryCacheMalloc(G,size,group_id,block_id,file,line) mmalloc(size)
+#define _MemoryCacheCalloc(G,number, size,group_id,block_id,file,line) mcalloc(number,size)
+#define _MemoryCacheRealloc(G,ptr,size,group_id,block_id,file,line) mrealloc(ptr,size)
+#define _MemoryCacheFree(G,ptr,group_id, block_id,force,file,line) mfree(ptr)
+#endif
 
 #endif
 
-#define CacheAlloc(G,type,size,thread,id) (type*)MemoryCacheMalloc(G,sizeof(type)*(size),thread,id)
-#define CacheCalloc(G,type,size,thread,id) (type*)MemoryCacheCalloc(G,sizeof(type),size,thread,id)
-#define CacheRealloc(G,ptr,type,size,thread,id) (type*)MemoryCacheRealloc(G,ptr,sizeof(type)*(size),thread,id)
-#define CacheFreeP(G,ptr,thread,id,force) {if(ptr) {MemoryCacheFree(G,ptr,thread,id,force);ptr=NULL;}}
 
 #endif
