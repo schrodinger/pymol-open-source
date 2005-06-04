@@ -393,13 +393,13 @@ void RayExpandPrimitives(CRay *I)
 
   basis = I->Basis;
   
-  VLACacheCheck(I->G,basis->Vertex,float,3*nVert,0,cCache_basis_vertex);
-  VLACacheCheck(I->G,basis->Radius,float,nVert,0,cCache_basis_radius);
-  VLACacheCheck(I->G,basis->Radius2,float,nVert,0,cCache_basis_radius2);
-  VLACacheCheck(I->G,basis->Vert2Normal,int,nVert,0,cCache_basis_vert2normal);
-  VLACacheCheck(I->G,basis->Normal,float,3*nNorm,0,cCache_basis_normal);
+  VLACacheSize(I->G,basis->Vertex,float,3*nVert,0,cCache_basis_vertex);
+  VLACacheSize(I->G,basis->Radius,float,nVert,0,cCache_basis_radius);
+  VLACacheSize(I->G,basis->Radius2,float,nVert,0,cCache_basis_radius2);
+  VLACacheSize(I->G,basis->Vert2Normal,int,nVert,0,cCache_basis_vert2normal);
+  VLACacheSize(I->G,basis->Normal,float,3*nNorm,0,cCache_basis_normal);
 
-  VLACacheCheck(I->G,I->Vert2Prim,int,nVert,0,cCache_ray_vert2prim);
+  VLACacheSize(I->G,I->Vert2Prim,int,nVert,0,cCache_ray_vert2prim);
 
   voxel_floor=I->PixelRadius/2.0F;
 
@@ -600,12 +600,12 @@ static void RayTransformFirst(CRay *I,int perspective)
   basis0 = I->Basis;
   basis1 = I->Basis+1;
   
-  VLACacheCheck(I->G,basis1->Vertex,float,3*basis0->NVertex,1,cCache_basis_vertex);
-  VLACacheCheck(I->G,basis1->Normal,float,3*basis0->NNormal,1,cCache_basis_normal);
-  VLACacheCheck(I->G,basis1->Precomp,float,3*basis0->NNormal,1,cCache_basis_precomp);
-  VLACacheCheck(I->G,basis1->Vert2Normal,int,basis0->NVertex,1,cCache_basis_vert2normal);
-  VLACacheCheck(I->G,basis1->Radius,float,basis0->NVertex,1,cCache_basis_radius);
-  VLACacheCheck(I->G,basis1->Radius2,float,basis0->NVertex,1,cCache_basis_radius2);
+  VLACacheSize(I->G,basis1->Vertex,float,3*basis0->NVertex,1,cCache_basis_vertex);
+  VLACacheSize(I->G,basis1->Normal,float,3*basis0->NNormal,1,cCache_basis_normal);
+  VLACacheSize(I->G,basis1->Precomp,float,3*basis0->NNormal,1,cCache_basis_precomp);
+  VLACacheSize(I->G,basis1->Vert2Normal,int,basis0->NVertex,1,cCache_basis_vert2normal);
+  VLACacheSize(I->G,basis1->Radius,float,basis0->NVertex,1,cCache_basis_radius);
+  VLACacheSize(I->G,basis1->Radius2,float,basis0->NVertex,1,cCache_basis_radius2);
   
   RayApplyMatrix33(basis0->NVertex,(float3*)basis1->Vertex,
 					  I->ModelView,(float3*)basis0->Vertex);
@@ -675,12 +675,12 @@ void RayTransformBasis(CRay *I,CBasis *basis1,int group_id)
 
   basis0 = I->Basis+1;
 
-  VLACacheCheck(I->G,basis1->Vertex,float,3*basis0->NVertex,group_id,cCache_basis_vertex);
-  VLACacheCheck(I->G,basis1->Normal,float,3*basis0->NNormal,group_id,cCache_basis_normal);
-  VLACacheCheck(I->G,basis1->Precomp,float,3*basis0->NNormal,group_id,cCache_basis_precomp);
-  VLACacheCheck(I->G,basis1->Vert2Normal,int,basis0->NVertex,group_id,cCache_basis_vert2normal);
-  VLACacheCheck(I->G,basis1->Radius,float,basis0->NVertex,group_id,cCache_basis_radius);
-  VLACacheCheck(I->G,basis1->Radius2,float,basis0->NVertex,group_id,cCache_basis_radius2);
+  VLACacheSize(I->G,basis1->Vertex,float,3*basis0->NVertex,group_id,cCache_basis_vertex);
+  VLACacheSize(I->G,basis1->Normal,float,3*basis0->NNormal,group_id,cCache_basis_normal);
+  VLACacheSize(I->G,basis1->Precomp,float,3*basis0->NNormal,group_id,cCache_basis_precomp);
+  VLACacheSize(I->G,basis1->Vert2Normal,int,basis0->NVertex,group_id,cCache_basis_vert2normal);
+  VLACacheSize(I->G,basis1->Radius,float,basis0->NVertex,group_id,cCache_basis_radius);
+  VLACacheSize(I->G,basis1->Radius2,float,basis0->NVertex,group_id,cCache_basis_radius2);
   v0=basis0->Vertex;
   v1=basis1->Vertex;
   for(a=0;a<basis0->NVertex;a++)
@@ -2697,7 +2697,7 @@ int opaque_back=0;
       ((0xFF& ((unsigned int)(bkrd[0]*255+_p499))) );
   }
 
-  OrthoBusyFast(I->G,3,20);
+  OrthoBusyFast(I->G,2,20);
 
   PRINTFB(I->G,FB_Ray,FB_Blather) 
     " RayNew: Background = %x %d %d %d\n",background,(int)(bkrd[0]*255),
@@ -2710,6 +2710,8 @@ int opaque_back=0;
     
     RayExpandPrimitives(I);
     RayTransformFirst(I,perspective);
+
+    OrthoBusyFast(I->G,3,20);
 
     now = UtilGetSeconds(I->G)-timing;
 
@@ -2747,6 +2749,7 @@ int opaque_back=0;
       RayTransformBasis(I,I->Basis+2,2);
     }
 
+    OrthoBusyFast(I->G,4,20);
 #ifndef _PYMOL_NOPY
     if(shadows&&(n_thread>1)) { /* parallel execution */
 

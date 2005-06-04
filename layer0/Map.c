@@ -71,7 +71,7 @@ void MapCacheInit(MapCache *M,MapType *I,int group_id,int block_base)
 
 void MapCacheReset(MapCache *M)
 {
-	int		i		= M->CacheStart;
+	register int    i		= M->CacheStart;
 	register int* 	cachep	= M->Cache;
 	register int* 	clinkp	= M->CacheLink;
 	register int    i1 = 0, i2 = 0, i3 = 0, i4 = 0;
@@ -235,6 +235,8 @@ int MapInsideXY(MapType *I,float *v,int *a,int *b,int *c) /* special version for
 	return(true);  
 }
 
+#define ELIST_GROW_FACTOR 3
+
 void MapSetupExpressXY(MapType *I,int n_vert) /* setup a list of XY neighbors for each square */
 {
    PyMOLGlobals *G=I->G;
@@ -251,7 +253,7 @@ void MapSetupExpressXY(MapType *I,int n_vert) /* setup a list of XY neighbors fo
 	mapSize		= I->Dim[0]*I->Dim[1]*I->Dim[2];
 	I->EHead	= CacheCalloc(G,int,mapSize,I->group_id,I->block_base + cCache_map_ehead_offset);
 	ErrChkPtr(G,I->EHead);
-	I->EList	= VLACacheMalloc(G,n_alloc,sizeof(int),5,0,
+	I->EList	= VLACacheMalloc(G,n_alloc,sizeof(int),ELIST_GROW_FACTOR,0,
                              I->group_id,I->block_base + cCache_map_elist_offset); 
 	I->EMask    = CacheCalloc(G,int,I->Dim[0]*I->Dim[1],
                              I->group_id,I->block_base + cCache_map_emask_offset);
@@ -342,7 +344,7 @@ void MapSetupExpressXYVert(MapType *I,float *vert,int n_vert) /* setup a list of
 	I->EMask    = CacheCalloc(G,int,I->Dim[0]*I->Dim[1],
                              I->group_id,I->block_base + cCache_map_emask_offset);
 	ErrChkPtr(G,I->EHead);
-	I->EList	= VLACacheMalloc(G,n_alloc,sizeof(int),5,0,
+	I->EList	= VLACacheMalloc(G,n_alloc,sizeof(int),ELIST_GROW_FACTOR,0,
                              I->group_id,I->block_base + cCache_map_elist_offset); /* autozero */
 	
 	n		= 1;
@@ -425,7 +427,7 @@ void MapSetupExpressXYVert(MapType *I,float *vert,int n_vert) /* setup a list of
 	ENDFD;
 }
 
-void MapSetupExpressPerp(MapType *I, float *vert, float front)
+void MapSetupExpressPerp(MapType *I, float *vert, float front,int nVertHint)
 {
   PyMOLGlobals *G=I->G;
   int n=0;
@@ -433,6 +435,7 @@ void MapSetupExpressPerp(MapType *I, float *vert, float front)
 
   unsigned int mapSize;
   int st,flag;
+  int      n_alloc = nVertHint * 15; /* emprical est. */
 
   register int iMin0 = I->iMin[0];
   register int iMin1 = I->iMin[1];
@@ -453,7 +456,7 @@ void MapSetupExpressPerp(MapType *I, float *vert, float front)
   I->EHead=CacheAlloc(G,int,mapSize,
                  I->group_id,I->block_base + cCache_map_ehead_offset);
   ErrChkPtr(G,I->EHead);
-  I->EList=VLACacheMalloc(G,1000,sizeof(int),5,0,
+  I->EList=VLACacheMalloc(G,n_alloc,sizeof(int),ELIST_GROW_FACTOR,0,
                           I->group_id,I->block_base + cCache_map_elist_offset);
   
   I->EMask = CacheCalloc(G,int,I->Dim[0]*I->Dim[1],

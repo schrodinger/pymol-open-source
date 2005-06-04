@@ -882,7 +882,7 @@ static int SceneMakeSizedImage(PyMOLGlobals *G,int width,
     int shift = 0;
     int max_dim[2];
 
-    glGetIntegerv(GL_MAX_VIEWPORT_DIMS,max_dim);
+    glGetIntegerv(GL_MAX_VIEWPORT_DIMS,(GLint*)max_dim);
 
     /* clamp to what this OpenGL implementation can do */
     if(width>max_dim[0]) {

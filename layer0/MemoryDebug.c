@@ -131,6 +131,7 @@ void *VLAExpand(void *ptr,unsigned int rec)
   return((void*)&(vla[1]));
 }
 
+#ifdef _MemoryCache_ON
 void *VLACacheExpand(PyMOLGlobals *G,void *ptr,unsigned int rec,int thread_index,int block_id)
 {
   VLARec *vla;
@@ -144,7 +145,7 @@ void *VLACacheExpand(PyMOLGlobals *G,void *ptr,unsigned int rec,int thread_index
 		vla->nAlloc = (rec*(vla->growFactor+10)/10)+1;
 		vla=(void*)_MemoryCacheRealloc(G,vla,
                                        (vla->recSize*vla->nAlloc)+sizeof(VLARec),
-                                       thread_index,block_id,__FILE__,__LINE__);
+                                       thread_index,block_id MD_FILE_LINE_Call);
 		if(!vla)
 		  {
 			 printf("VLAExpand-ERR: realloc failed.\n");
@@ -159,6 +160,7 @@ void *VLACacheExpand(PyMOLGlobals *G,void *ptr,unsigned int rec,int thread_index
 	 }
   return((void*)&(vla[1]));
 }
+#endif
 
 #ifndef _MemoryDebug_ON
 void *VLAMalloc(unsigned int initSize,unsigned int recSize,unsigned int growFactor,int autoZero)
@@ -194,7 +196,7 @@ void *_VLAMalloc(const char *file,int line,unsigned int initSize,
 }
 
 
-
+#ifdef _MemoryCache_ON
 #ifndef _MemoryDebug_ON
 void *VLACacheMalloc(PyMOLGlobals *G,unsigned int initSize,unsigned int recSize,
                      unsigned int growFactor,int autoZero,int thread,int id)
@@ -208,7 +210,8 @@ void *_VLACacheMalloc(PyMOLGlobals *G,const char *file,int line,
   char *start,*stop;
 
   vla=(void*)_MemoryCacheMalloc(G,(initSize*recSize)+sizeof(VLARec),
-                                thread,id,file,line);
+                                thread,id 
+                                MD_FILE_LINE_Nest);
 
   if(!vla)
 	 {
@@ -228,6 +231,7 @@ void *_VLACacheMalloc(PyMOLGlobals *G,const char *file,int line,
   return((void*)&(vla[1]));
 }
 
+#endif
 
 void VLAFree(void *ptr)
 {
@@ -241,6 +245,7 @@ void VLAFree(void *ptr)
   mfree(vla);
 }
 
+#ifdef _MemoryCache_ON
 void VLACacheFree(PyMOLGlobals *G,void *ptr,int thread,int id,int force)
 {
   VLARec *vla;
@@ -250,8 +255,9 @@ void VLACacheFree(PyMOLGlobals *G,void *ptr,int thread,int id,int force)
 		exit(EXIT_FAILURE);
 	 }
   vla = &(((VLARec*)ptr)[-1]);
-  _MemoryCacheFree(G,vla,thread,id,force,__FILE__,__LINE__);
+  _MemoryCacheFree(G,vla,thread,id,force MD_FILE_LINE_Call);
 }
+#endif
 
 unsigned int VLAGetSize(void *ptr)
 {
@@ -278,7 +284,7 @@ void *VLANewCopy(void *ptr)
     }
   return((void*)&(new_vla[1]));
 }
-
+#ifdef _MemoryCache_ON
 void *VLACacheSetSize(PyMOLGlobals *G,void *ptr,unsigned int newSize,int group_id,int block_id)
 {
   VLARec *vla;
@@ -291,7 +297,7 @@ void *VLACacheSetSize(PyMOLGlobals *G,void *ptr,unsigned int newSize,int group_i
   }
   vla->nAlloc = newSize;
   vla=(void*)_MemoryCacheRealloc(G,vla,(vla->recSize*vla->nAlloc)+sizeof(VLARec),
-                                 group_id,block_id,__FILE__,__LINE__);
+                                 group_id,block_id MD_FILE_LINE_Call);
   if(!vla)
 	 {
 		printf("VLASetSize-ERR: realloc failed.\n");
@@ -306,7 +312,7 @@ void *VLACacheSetSize(PyMOLGlobals *G,void *ptr,unsigned int newSize,int group_i
 	 }
   return((void*)&(vla[1]));
 }
-
+#endif
 
 
 void *VLASetSize(void *ptr,unsigned int newSize)

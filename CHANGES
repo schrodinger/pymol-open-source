@@ -3,8 +3,10 @@ CHANGE LOG
 =========================================================================
 
 Changes up to 0.99
+       
+   beta07
 
-   beta05
+   * slightly reduced RAM usage when rendering complex scenes
 
    * converted all the Python code to 4-space indentation (more standard)
 
@@ -12,12 +14,16 @@ Changes up to 0.99
 
    * oversize images are now downsampled and displayed
 
+   beta06
+
    * draw command -- enables OpenGL rendering of large images
 
    * fixed state argument for cmd.get_distance
 
    * support for windows hidden folders with terminal dollar sign:
     //share/folder$/path/file
+
+   beta05
 
    * ray now stops and movie and turns off sculpting
 
