@@ -442,20 +442,21 @@ static void RepWireBondRender(RepWireBond *I,RenderInfo *info)
         c=I->N;
       
         glDisable(GL_LIGHTING); 
-        glBegin(GL_LINES);	 
         SceneResetNormal(G,true);
         while(c--) {
+          glBegin(GL_LINES);	 
           glColor3fv(v);
           v+=3;
 #ifdef _PYMOL_NVIDIA_WORKAROUND
-	  glFlush();
+          glFlush();
 #endif
           glVertex3fv(v);
           v+=3;
           glVertex3fv(v);
           v+=3;
+          glEnd();
+          
         }
-        glEnd();
         glEnable(GL_LIGHTING);
         if(use_dlst&&I->R.displayList) {
           glEndList();
@@ -463,6 +464,7 @@ static void RepWireBondRender(RepWireBond *I,RenderInfo *info)
       } 
     }
   }
+
 }
 
 Rep *RepWireBondNew(CoordSet *cs)
