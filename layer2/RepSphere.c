@@ -27,6 +27,7 @@
 #include"Setting.h"
 #include"main.h"
 #include"Util.h"
+#include"Feedback.h"
 
 #ifdef NT
 #undef NT
@@ -133,11 +134,16 @@ ShaderCode vert_prog[] = {
  ""
 };
 
+/* So far, this shader program only works on Mac with a Radeon 9600. 
+   On a Win32 PC / Radeon9700 fragment.position doesn't appear to work(?!!!) 
+*/
+
 ShaderCode frag_prog[] = {
 "!!ARBfp1.0\n",
 "\n",
-"PARAM const  = { 0.5, 0.5, 0.25, 1.0 };\n",
+"PARAM const = { 0.5, 0.5, 0.25, 1.0 };\n",
 "PARAM dbl = {2.0, 2.0, 2.0, 1.0 };\n",
+"ATTRIB fragPos = fragment.position;\n",
 "\n",
 "TEMP pln, norm, depth, color, light, spec;\n",
 "\n",
@@ -174,7 +180,6 @@ ShaderCode frag_prog[] = {
 "DP4 light.x, state.light[1].position, norm;\n",
 "POW light.y, light.x, 10.0; \n",
 "\n",
-"#MOV color.w, 1.0;\n",
 "MOV color.xyzw, {0.1,0.1,0.1,1.0};\n",
 "ADD color.xyz, light.x, 0.1;\n",
 "MUL color.xyz, fragment.color, color;\n",
@@ -182,6 +187,7 @@ ShaderCode frag_prog[] = {
 "ADD color.xyz, color,spec;\n",
 "#MOV color.xyz, norm;\n",
 "MOV result.color, color;\n",
+"MOV result.color, {1,1,1,1};\n",
 "\n",
 "END\n",
  "\n",
@@ -195,11 +201,13 @@ int RepSphereSameVis(RepSphere *I,CoordSet *cs);
 
 void RepSphereFree(RepSphere *I)
 {
+#ifdef _PYMOL_OPENGL_SHADERS
   if(I->R.G->HaveGUI && I->R.G->ValidContext) {
     if(I->shader_flag) {
       glDeleteProgramsARB(2,I->programs);
     }
   }
+#endif
 
   FreeP(I->VC);
   FreeP(I->V);
@@ -209,6 +217,9 @@ void RepSphereFree(RepSphere *I)
   RepPurge(&I->R);
   OOFreeP(I);
 }
+
+#ifdef _PYMOL_OPENGL_SHADERS
+ 
 
 static char *read_code_str(ShaderCode *ptr)
 {
@@ -247,7 +258,7 @@ static char *read_file(char *name)
   return buffer;
 }
 #endif
-
+#endif
 static void RepSphereRender(RepSphere *I,RenderInfo *info)
 {
   CRay *ray = info->ray;
@@ -637,8 +648,17 @@ static void RepSphereRender(RepSphere *I,RenderInfo *info)
                 break;
 #ifdef _PYMOL_OPENGL_SHADERS
               case 5: /* use vertex/fragment program */
-                {
-                  //enable the programs
+                if (I->shader_flag) {
+                   if(Feedback(G,FB_OpenGL,FB_Debugging))
+                      PyMOLCheckOpenGLErr("before shader");
+
+                   //load the vertex program
+                   glBindProgramARB(GL_VERTEX_PROGRAM_ARB,I->programs[0]);
+                   
+                   //load the fragment program
+                   glBindProgramARB(GL_FRAGMENT_PROGRAM_ARB,I->programs[1]);
+
+                  // load a default radius
                   glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB,
                                                    0, 0.0F, 0.0F, 1.0F, 0.0F);
 
@@ -683,11 +703,12 @@ static void RepSphereRender(RepSphere *I,RenderInfo *info)
                   //disable
                   glDisable(GL_FRAGMENT_PROGRAM_ARB);
                   glDisable(GL_VERTEX_PROGRAM_ARB);
-                  
-                  }
+                  if(Feedback(G,FB_OpenGL,FB_Debugging))
+                     PyMOLCheckOpenGLErr("after shader");
                 }
                 break;
 #endif
+              }
             }
             break;
           default: /* simple, default point width points*/
@@ -964,52 +985,67 @@ Rep *RepSphereNew(CoordSet *cs)
   if(sphere_mode==5) {
     char *vp = read_code_str(vert_prog);
     char *fp = read_code_str(frag_prog);
-     
+
 #ifdef WIN32
           
-glGenProgramsARB = (PFNGLGENPROGRAMSARBPROC) wglGetProcAddress("glGenProgramsARB");
-glBindProgramARB = (PFNGLBINDPROGRAMARBPROC) wglGetProcAddress("glBindProgramARB");
-glDeleteProgramsARB = (PFNGLDELETEPROGRAMSARBPROC) wglGetProcAddress("glDeleteProgramsARB");
-glProgramStringARB = (PFNGLPROGRAMSTRINGARBPROC) wglGetProcAddress("glProgramStringARB");
-glProgramEnvParameter4fARB = (PFNGLPROGRAMENVPARAMETER4FARBPROC) wglGetProcAddress("glProgramEnvParameter4fARB");
-          
+    glGenProgramsARB = (PFNGLGENPROGRAMSARBPROC) wglGetProcAddress("glGenProgramsARB");
+    glBindProgramARB = (PFNGLBINDPROGRAMARBPROC) wglGetProcAddress("glBindProgramARB");
+    glDeleteProgramsARB = (PFNGLDELETEPROGRAMSARBPROC) wglGetProcAddress("glDeleteProgramsARB");
+    glProgramStringARB = (PFNGLPROGRAMSTRINGARBPROC) wglGetProcAddress("glProgramStringARB");
+    glProgramEnvParameter4fARB = (PFNGLPROGRAMENVPARAMETER4FARBPROC) wglGetProcAddress("glProgramEnvParameter4fARB");
+    
 #endif
-if(glGenProgramsARB && glBindProgramARB && glDeleteProgramsARB && glProgramStringARB && glProgramEnvParameter4fARB) {
-
-
-
-    /*                  
-                        char *vp = read_file("vert.txt");
-                        char *fp = read_file("frag.txt");
-    */
-    if(vp&&fp) {
-      
-      I->shader_flag=true;
-
-      glGenProgramsARB(2,I->programs);
-      
-      //load the vertex program
-      glBindProgramARB(GL_VERTEX_PROGRAM_ARB,I->programs[0]);
-      
-      glProgramStringARB(GL_VERTEX_PROGRAM_ARB, 
-                         GL_PROGRAM_FORMAT_ASCII_ARB, 
-                         strlen(vp),vp);
-      
-      glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB,
-                                 0, 0.1F, 0.0F, 0.0F, 0.0F);
-      
-      //load the fragment program
-      glBindProgramARB(GL_FRAGMENT_PROGRAM_ARB,I->programs[1]);
-      
-      glProgramStringARB(GL_FRAGMENT_PROGRAM_ARB, 
-                         GL_PROGRAM_FORMAT_ASCII_ARB, 
-                         strlen(fp),fp);
-
-     }
-    FreeP(vp);
-    FreeP(fp);
+    if(glGenProgramsARB && glBindProgramARB && 
+        glDeleteProgramsARB && glProgramStringARB && 
+        glProgramEnvParameter4fARB) {
+        /*                  
+        char *vp = read_file("vert.txt");
+        char *fp = read_file("frag.txt");
+        */
+        if(vp&&fp) {
+            if(Feedback(G,FB_OpenGL,FB_Debugging))
+                      PyMOLCheckOpenGLErr("before loading shader programs");
+            
+            glGenProgramsARB(2,I->programs);
+            if(Feedback(G,FB_OpenGL,FB_Debugging))
+                      PyMOLCheckOpenGLErr("1");
+            //load the vertex program
+            glBindProgramARB(GL_VERTEX_PROGRAM_ARB,I->programs[0]);
+            
+            if(Feedback(G,FB_OpenGL,FB_Debugging))
+                      PyMOLCheckOpenGLErr("2");
+            glProgramStringARB(GL_VERTEX_PROGRAM_ARB, 
+                GL_PROGRAM_FORMAT_ASCII_ARB, 
+                strlen(vp),vp);
+            if(Feedback(G,FB_OpenGL,FB_Debugging))
+               PyMOLCheckOpenGLErr("loading vertex program");
+            
+            if(Feedback(G,FB_OpenGL,FB_Debugging))
+                      PyMOLCheckOpenGLErr("4");
+            glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB,
+                0, 0.1F, 0.0F, 0.0F, 0.0F);
+            if(Feedback(G,FB_OpenGL,FB_Debugging))
+                      PyMOLCheckOpenGLErr("5");
+            
+            //load the fragment program
+            glBindProgramARB(GL_FRAGMENT_PROGRAM_ARB,I->programs[1]);
+            
+            if(Feedback(G,FB_OpenGL,FB_Debugging))
+                      PyMOLCheckOpenGLErr("6");
+            
+            glProgramStringARB(GL_FRAGMENT_PROGRAM_ARB, 
+                GL_PROGRAM_FORMAT_ASCII_ARB, 
+                strlen(fp),fp);
+            printf("%s\n",fp);
+            if(Feedback(G,FB_OpenGL,FB_Debugging))
+                      PyMOLCheckOpenGLErr("loading fragment program");
+            I->shader_flag=true;
+        }
+        FreeP(vp);
+        FreeP(fp);
+    }
   }
-  }
+
 #endif
 
   one_color=SettingGet_color(G,cs->Setting,obj->Obj.Setting,cSetting_sphere_color);
