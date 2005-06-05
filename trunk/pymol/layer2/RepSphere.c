@@ -43,9 +43,142 @@ typedef struct RepSphere {
   int *LastVisib;
   int *LastColor;
   float LastVertexScale;
+  int shader_flag;
+  GLint programs[2];
 } RepSphere;
 
 #include"ObjectMolecule.h"
+
+#ifdef _PYMOL_OPENGL_SHADERS
+typedef char ShaderCode[255];
+ShaderCode vert_prog[] = {
+"!!ARBvp1.0\n",
+"\n",
+"# input contains the sphere radius in model coordinates\n",
+"PARAM sphereRadius = program.env[0];\n",
+"PARAM half = {0.5, 0.5, 0.0, 2.0 };\n",
+"PARAM zero = {0.0, 0.0, 0.0, 1.0 };\n",
+"\n",
+"ATTRIB vertexPosition  = vertex.position;\n",
+"ATTRIB vertexNormal    = vertex.normal;\n",
+"ATTRIB textureCoord    = vertex.texcoord;\n",
+"OUTPUT outputPosition  = result.position;\n",
+"\n",
+"TEMP   pos, rad, shf, txt, r2;\n",
+"\n",
+"# Transform the vertex by the modelview matrix to get into the frame of the camera\n",
+"\n",
+"DP4    pos.x, state.matrix.modelview.row[0], vertexPosition;\n",
+"DP4    pos.y, state.matrix.modelview.row[1], vertexPosition;\n",
+"DP4    pos.z, state.matrix.modelview.row[2], vertexPosition;\n",
+"DP4    pos.w, state.matrix.modelview.row[3], vertexPosition;\n",
+"\n",
+"# copy current texture coords\n",
+"MOV    txt.xyzw, textureCoord.xyzw;\n",
+"\n",
+"# scale the radius by a factor of two\n",
+"MUL    rad.x, half.w, sphereRadius.z;\n",
+"\n",
+"# shift the texture coordinates to the origin\n",
+"SUB    shf.x, textureCoord.x, half.x;\n",
+"SUB    shf.y, textureCoord.y, half.y;\n",
+"\n",
+"# multiply them to get the vertex offset\n",
+"\n",
+"MUL    shf.x, rad.x, shf.x;\n",
+"MUL    shf.y, rad.x, shf.y;\n",
+"\n",
+"# define the new vertex for corner of sphere\n",
+"\n",
+"ADD    pos.x, pos.x, shf.x;\n",
+"ADD    pos.y, pos.y, shf.y;\n",
+"\n",
+"# now apply the projection matrix\n",
+"\n",
+"DP4    outputPosition.x, state.matrix.projection.row[0], pos;\n",
+"DP4    outputPosition.y, state.matrix.projection.row[1], pos;\n",
+"DP4    outputPosition.z, state.matrix.projection.row[2], pos;\n",
+"DP4    outputPosition.w, state.matrix.projection.row[3], pos;\n",
+"\n",
+"# now compute depth coordinate in Z for front of sphere\n",
+"ADD    pos.z, pos.z, sphereRadius;\n",
+"DP4    txt.z, state.matrix.projection.row[2], pos;\n",
+"DP4    txt.w, state.matrix.projection.row[3], pos;\n",
+"\n",
+"# perspective division\n",
+"RCP    txt.w, txt.w;\n",
+"MUL    txt.z, txt.z, txt.w;\n",
+"\n",
+"# move into range 0.0-1.0\n",
+"ADD    txt.z, 1.0, txt.z;\n",
+"MUL    txt.z, 0.5, txt.z;\n",
+"\n",
+"# Pass the color through\n",
+"MOV    result.color, vertex.color;\n",
+"\n",
+"# Pass texture through\n",
+"MOV    result.texcoord, txt;\n",
+"\n",
+"END\n",
+"\n",
+ ""
+};
+
+ShaderCode frag_prog[] = {
+"!!ARBfp1.0\n",
+"\n",
+"PARAM const  = { 0.5, 0.5, 0.25, 1.0 };\n",
+"PARAM dbl = {2.0, 2.0, 2.0, 1.0 };\n",
+"\n",
+"TEMP pln, norm, depth, color, light, spec;\n",
+"\n",
+"# first, move texture coordinates to origin\n",
+"\n",
+"SUB pln.xy, fragment.texcoord, const;\n",
+"\n",
+"# compute x^2 + y^2, if > 0.25 then kill the pixel -- not in sphere\n",
+"\n",
+"MOV norm.xy, pln;\n",
+"\n",
+"# kill pixels that aren't in the center circle\n",
+"MUL pln.xy, pln, pln;\n",
+"ADD pln.z, pln.x, pln.y;\n",
+"SUB pln.z, const.z, pln.z;\n",
+"KIL pln.z;\n",
+"\n",
+"# scale up to unity, pln.z \n",
+"MUL pln.z, 4.0, pln.z;\n",
+"RSQ pln.z, pln.z;\n",
+"RCP pln.z, pln.z;\n",
+"MOV norm.z, pln;\n",
+"\n",
+"# compute complement ( 1.0 - value )\n",
+"SUB pln.y, 1.0, pln.z;\n",
+"\n",
+"# interpolate to get true Z\n",
+"MUL depth.y, pln.y, fragment.position.z;\n",
+"MUL depth.z, pln.z, fragment.texcoord.z;\n",
+"ADD result.depth.z, depth.y, depth.z;\n",
+"\n",
+"# light0\n",
+"\n",
+"DP4 light.x, state.light[1].position, norm;\n",
+"POW light.y, light.x, 10.0; \n",
+"\n",
+"#MOV color.w, 1.0;\n",
+"MOV color.xyzw, {0.1,0.1,0.1,1.0};\n",
+"ADD color.xyz, light.x, 0.1;\n",
+"MUL color.xyz, fragment.color, color;\n",
+"MOV spec.xyz, light.y;\n",
+"ADD color.xyz, color,spec;\n",
+"#MOV color.xyz, norm;\n",
+"MOV result.color, color;\n",
+"\n",
+"END\n",
+ "\n",
+ ""
+};
+#endif
 
 void RepSphereFree(RepSphere *I);
 int RepSphereSameVis(RepSphere *I,CoordSet *cs);
@@ -53,6 +186,12 @@ int RepSphereSameVis(RepSphere *I,CoordSet *cs);
 
 void RepSphereFree(RepSphere *I)
 {
+  if(I->R.G->HaveGUI && I->R.G->ValidContext) {
+    if(I->shader_flag) {
+      glDeleteProgramsARB(2,I->programs);
+    }
+  }
+
   FreeP(I->VC);
   FreeP(I->V);
   FreeP(I->NT);
@@ -61,6 +200,44 @@ void RepSphereFree(RepSphere *I)
   RepPurge(&I->R);
   OOFreeP(I);
 }
+
+static char *read_code_str(ShaderCode *ptr)
+{
+  ShaderCode *p = ptr;
+  char *buffer,*q;
+  int size = 0;
+  while(*p[0]) {
+    size += strlen(*p);
+    p++;
+  }
+  buffer=Calloc(char,size+1);
+  p = ptr;
+  q = buffer;
+  while(*p[0]) {
+    strcat(q,*p);
+    q+=strlen(q);
+    p++;
+  }
+  return buffer;
+}
+
+#if 0
+static char *read_file(char *name)
+{
+  char *buffer = NULL;
+  FILE *f=fopen(name,"rb");
+  size_t size;
+  fseek(f,0,SEEK_END);
+  size=ftell(f);
+  fseek(f,0,SEEK_SET);
+  buffer=(char*)mmalloc(size+1);
+  fseek(f,0,SEEK_SET);
+  fread(buffer,size,1,f);
+  buffer[size]=0;
+  fclose(f);
+  return buffer;
+}
+#endif
 
 static void RepSphereRender(RepSphere *I,RenderInfo *info)
 {
@@ -308,6 +485,9 @@ static void RepSphereRender(RepSphere *I,RenderInfo *info)
           case 2:
           case 3:
           case 4:
+#ifdef _PYMOL_OPENGL_SHADERS
+          case 5:
+#endif
             {
               register float _1 = 1.0F;
               register float _2 = 2.0F;
@@ -446,7 +626,58 @@ static void RepSphereRender(RepSphere *I,RenderInfo *info)
                   glDisable(GL_POINT_SMOOTH);
                 }
                 break;
-              }
+#ifdef _PYMOL_OPENGL_SHADERS
+              case 5: /* use vertex/fragment program */
+                {
+                  //enable the programs
+                  glEnable(GL_VERTEX_PROGRAM_ARB);
+                  glEnable(GL_FRAGMENT_PROGRAM_ARB);
+                  
+                  //RENDERING
+                  
+                  {
+                    pixel_scale *= 2.0F;
+                    last_radius = -1.0F;
+                    
+                    glNormal3fv(info->view_normal);
+                    glBegin(GL_QUADS);
+                    while(c--) {
+                      
+                      if(last_radius!=(cur_radius=v[6])) {
+                        size = cur_radius*pixel_scale;
+                        glEnd();
+                        glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB,
+                                                   0, 0.0F, 0.0F, v[6], 0.0F);
+                        glBegin(GL_QUADS);
+                        last_radius = cur_radius;
+                      }
+                      
+                      glColor3fv(v);                          
+                      v+=3;
+                      glTexCoord2f(0.0F,0.0F);
+                      glVertex3f(v[0], v[1], v[2]);
+                      
+                      glTexCoord2f(1.0F,0.0F);
+                      glVertex3f(v[0], v[1], v[2]);
+                      
+                      glTexCoord2f(1.0F,1.0F);
+                      glVertex3f(v[0], v[1], v[2]);
+                      
+                      glTexCoord2f(0.0F,1.0F);
+                      glVertex3f(v[0], v[1], v[2]);
+                      v+=4;
+                    }
+                    glEnd();
+                  }
+                  
+                  //disable
+                  glDisable(GL_FRAGMENT_PROGRAM_ARB);
+                  glDisable(GL_VERTEX_PROGRAM_ARB);
+                  
+                  }
+                }
+                break;
+#endif
             }
             break;
           default: /* simple, default point width points*/
@@ -705,6 +936,8 @@ Rep *RepSphereNew(CoordSet *cs)
   }
 
   RepInit(G,&I->R);
+  I->shader_flag = false;
+
   ds = SettingGet_i(G,cs->Setting,obj->Obj.Setting,cSetting_sphere_quality);
   sphere_mode = SettingGet_i(G,cs->Setting,    obj->Obj.Setting,
                                    cSetting_sphere_mode);
@@ -716,6 +949,44 @@ Rep *RepSphereNew(CoordSet *cs)
     if(ds>4) ds=4;
     sp = G->Sphere->Sphere[ds];
   }
+
+#ifdef _PYMOL_OPENGL_SHADERS
+  if(sphere_mode==5) {
+    /*                  
+                        char *vp = read_file("vert.txt");
+                        char *fp = read_file("frag.txt");
+    */
+    char *vp = read_code_str(vert_prog);
+    char *fp = read_code_str(frag_prog);
+    if(vp&&fp) {
+      
+      I->shader_flag=true;
+
+      glGenProgramsARB(2,I->programs);
+      
+      //load the vertex program
+      glBindProgramARB(GL_VERTEX_PROGRAM_ARB,I->programs[0]);
+      
+      glProgramStringARB(GL_VERTEX_PROGRAM_ARB, 
+                         GL_PROGRAM_FORMAT_ASCII_ARB, 
+                         strlen(vp),vp);
+      
+      glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB,
+                                 0, 0.1F, 0.0F, 0.0F, 0.0F);
+      
+      //load the fragment program
+      glBindProgramARB(GL_FRAGMENT_PROGRAM_ARB,I->programs[1]);
+      
+      glProgramStringARB(GL_FRAGMENT_PROGRAM_ARB, 
+                         GL_PROGRAM_FORMAT_ASCII_ARB, 
+                         strlen(fp),fp);
+
+    }
+    FreeP(vp);
+    FreeP(fp);
+  }
+#endif
+
   one_color=SettingGet_color(G,cs->Setting,obj->Obj.Setting,cSetting_sphere_color);
   cartoon_side_chain_helper = SettingGet_b(G,cs->Setting, obj->Obj.Setting,
                                            cSetting_cartoon_side_chain_helper);
