@@ -74,7 +74,7 @@ ShaderCode vert_prog[] = {
 "ATTRIB textureCoord    = vertex.texcoord;\n",
 "OUTPUT outputPosition  = result.position;\n",
 "\n",
-"TEMP   pos, rad, shf, txt, r2;\n",
+"TEMP   pos, rad, shf, txt;\n",
 "\n",
 "# Transform the vertex by the modelview matrix to get into the frame of the camera\n",
 "\n",
@@ -107,8 +107,9 @@ ShaderCode vert_prog[] = {
 "\n",
 "DP4    outputPosition.x, state.matrix.projection.row[0], pos;\n",
 "DP4    outputPosition.y, state.matrix.projection.row[1], pos;\n",
-"DP4    outputPosition.z, state.matrix.projection.row[2], pos;\n",
-"DP4    outputPosition.w, state.matrix.projection.row[3], pos;\n",
+"DP4    shf.z, state.matrix.projection.row[2], pos;\n",
+"DP4    shf.w, state.matrix.projection.row[3], pos;\n",
+"MOV    outputPosition.zw, shf;\n",
 "\n",
 "# now compute depth coordinate in Z for front of sphere\n",
 "ADD    pos.z, pos.z, sphereRadius;\n",
@@ -118,12 +119,12 @@ ShaderCode vert_prog[] = {
 "# perspective division\n",
 "RCP    txt.w, txt.w;\n",
 "MUL    txt.z, txt.z, txt.w;\n",
+"RCP    shf.w, shf.w;\n",
+"MUL    txt.w, shf.z, shf.w;\n",
 "\n",
 "# move into range 0.0-1.0\n",
-"ADD    txt.z, 1.0, txt.z;\n",
-"MUL    txt.z, 0.5, txt.z;\n",
-"# pass fogcoord along to fragment program\n",
-"MOV    txt.w, vertex.fogcoord;\n",
+"ADD    txt.wz, {0.0,0.0,1.0,1.0}, txt;\n",
+"MUL    txt.wz, {0.0,0.0,0.5,0.5}, txt;\n",
 "\n",
 "# Pass the color through\n",
 "MOV    result.color, vertex.color;\n",
@@ -136,9 +137,6 @@ ShaderCode vert_prog[] = {
  ""
 };
 
-/* So far, this shader program only works on Mac with a Radeon 9600. 
-   On a Win32 PC / Radeon9700 fragment.position doesn't appear to work(?!!!) 
-*/
 
 ShaderCode frag_prog[] = {
 "!!ARBfp1.0\n",
@@ -173,9 +171,9 @@ ShaderCode frag_prog[] = {
 "# compute complement ( 1.0 - value )\n",
 "SUB pln.y, 1.0, pln.z;\n",
 "\n",
-"# interpolate to get true Z\n",
+"# interpolate to get sphere Z coordinate\n",
 "MUL depth.z, pln.z, fragment.texcoord.z;\n",
-"MUL depth.y, pln.y, fragment.position.z;\n",
+"MUL depth.y, pln.y, fragment.texcoord.w;\n",
 "ADD result.depth.z, depth.y, depth.z;\n",
 "\n",
 "# light0\n",
@@ -190,8 +188,8 @@ ShaderCode frag_prog[] = {
 "MUL color.xyz, fragment.color, color;\n",
 "MUL spec.xyz, light.z, 60.0;\n",
 "ADD color.xyz, color,spec;\n",
-'# apply fog\n",
-"MAX fogFactor.x, fragment.position.z, fogInfo.x;\n",
+"# apply fog\n",
+"MAX fogFactor.x, fragment.texcoord.z, fogInfo.x;\n",
 "SUB fogFactor.x, fogFactor.x, fogInfo.x;\n",
 "MUL fogFactor.x, fogFactor.x, fogInfo.y;\n",
 "LRP color.xyz, fogFactor.x, fogColor, color;\n",
