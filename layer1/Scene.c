@@ -152,6 +152,8 @@ struct _CScene {
   double AnimationLagTime;
   double ApproxRenderTime;
   float VertexScale;
+  float FogStart;
+  float FogEnd;
 };
 
 typedef struct {
@@ -4487,6 +4489,8 @@ static void SceneRenderAll(PyMOLGlobals *G,SceneUnitContext *context,
   info.pick = pickVLA;
   info.pass = pass;
   info.vertex_scale = I->VertexScale;
+  info.fog_start = I->FogStart;
+  info.fog_end = I->FogEnd;
   SceneGetViewNormal(G,info.view_normal);
 
   if(width_scale!=0.0F) {
@@ -4581,7 +4585,6 @@ void SceneRender(PyMOLGlobals *G,Pickable *pick,int x,int y,
   int nPick,nHighBits,nLowBits;
   int pass;
   float fov;
-  float fog_start;
   int double_pump = false;
   int must_render_stereo = false;
   int stereo_as_mono = false;
@@ -4954,24 +4957,27 @@ void SceneRender(PyMOLGlobals *G,Pickable *pick,int x,int y,
       }
 
       if(SettingGet(G,cSetting_depth_cue)&&SettingGet(G,cSetting_fog)) {
-        fog_start = (I->Back-I->FrontSafe)*SettingGet(G,cSetting_fog_start)+I->FrontSafe;
+        I->FogStart = (I->Back-I->FrontSafe)*SettingGet(G,cSetting_fog_start)+I->FrontSafe;
 #ifdef _PYMOL_3DFX
         if(SettingGet(G,cSetting_ortho)==0.0) {
 #endif
           glEnable(GL_FOG);
           glFogf(GL_FOG_MODE, GL_LINEAR);
           glHint(GL_FOG_HINT,GL_NICEST);
-          glFogf(GL_FOG_START, fog_start);
+          glFogf(GL_FOG_START, I->FogStart);
 #ifdef _PYMOL_3DFX
-          if(I->Back>(I->FrontSafe*4.0))
-            glFogf(GL_FOG_END, I->Back);
-          else
-            glFogf(GL_FOG_END,I->FrontSafe*4.0);
+          if(I->Back>(I->FrontSafe*4.0)) {
+            I->FogEnd = I->Back;
+          } else {
+            I->FogEnd = I->FrontSafe*4.0;
+          }
+          glFogf(GL_FOG_END, I->FogEnd);
           fog_val+=0.0000001;
           if(fog_val>1.0) fog_val=0.99999;
           glFogf(GL_FOG_DENSITY, fog_val);
 #else
-          glFogf(GL_FOG_END, I->FrontSafe+(I->Back-I->FrontSafe)/SettingGet(G,cSetting_fog));
+          I->FogEnd = I->FrontSafe+(I->Back-I->FrontSafe)/SettingGet(G,cSetting_fog);
+          glFogf(GL_FOG_END, I->FogEnd);
           glFogf(GL_FOG_DENSITY, fog_val);
 #endif
           v=SettingGetfv(G,cSetting_bg_rgb);

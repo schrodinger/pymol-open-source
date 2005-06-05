@@ -6,6 +6,8 @@ Changes up to 0.99
        
    beta07
 
+   * my first shader program -- "perfect" CPK spheres for PYMOL
+
    * sphere_mode setting for increased performance including use of
      GL_POINT based sphere impostors
 

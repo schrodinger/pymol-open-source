@@ -122,6 +122,8 @@ ShaderCode vert_prog[] = {
 "# move into range 0.0-1.0\n",
 "ADD    txt.z, 1.0, txt.z;\n",
 "MUL    txt.z, 0.5, txt.z;\n",
+"# pass fogcoord along to fragment program\n",
+"MOV    txt.w, vertex.fogcoord;\n",
 "\n",
 "# Pass the color through\n",
 "MOV    result.color, vertex.color;\n",
@@ -141,11 +143,12 @@ ShaderCode vert_prog[] = {
 ShaderCode frag_prog[] = {
 "!!ARBfp1.0\n",
 "\n",
+"PARAM fogInfo = program.env[0];\n",
 "PARAM const = { 0.5, 0.5, 0.25, 1.0 };\n",
-"PARAM dbl = {2.0, 2.0, 2.0, 1.0 };\n",
-"ATTRIB fragPos = fragment.position;\n",
+"PARAM fogColor = state.fog.color;\n",
+"ATTRIB fogCoord = fragment.fogcoord;\n",
 "\n",
-"TEMP pln, norm, depth, color, light, spec;\n",
+"TEMP pln, norm, depth, color, light, spec, fogFactor;\n",
 "\n",
 "# first, move texture coordinates to origin\n",
 "\n",
@@ -171,28 +174,40 @@ ShaderCode frag_prog[] = {
 "SUB pln.y, 1.0, pln.z;\n",
 "\n",
 "# interpolate to get true Z\n",
-"MUL depth.y, pln.y, fragment.position.z;\n",
 "MUL depth.z, pln.z, fragment.texcoord.z;\n",
+"MUL depth.y, pln.y, fragment.position.z;\n",
 "ADD result.depth.z, depth.y, depth.z;\n",
 "\n",
 "# light0\n",
 "\n",
-"DP4 light.x, state.light[1].position, norm;\n",
-"POW light.y, light.x, 10.0; \n",
+"DP3 light, state.light[1].position, norm;\n",
+"MOV light.w, 50.0;\n",
+"LIT light, light;\n",
 "\n",
+"# ambient\n",
 "MOV color.xyzw, {0.1,0.1,0.1,1.0};\n",
-"ADD color.xyz, light.x, 0.1;\n",
+"ADD color.xyz, light.y, 0.1;\n",
 "MUL color.xyz, fragment.color, color;\n",
-"MOV spec.xyz, light.y;\n",
+"MUL spec.xyz, light.z, 60.0;\n",
 "ADD color.xyz, color,spec;\n",
-"#MOV color.xyz, norm;\n",
+'# apply fog\n",
+"MAX fogFactor.x, fragment.position.z, fogInfo.x;\n",
+"SUB fogFactor.x, fogFactor.x, fogInfo.x;\n",
+"MUL fogFactor.x, fogFactor.x, fogInfo.y;\n",
+"LRP color.xyz, fogFactor.x, fogColor, color;\n",
 "MOV result.color, color;\n",
-"MOV result.color, {1,1,1,1};\n",
 "\n",
 "END\n",
  "\n",
  ""
 };
+
+/*
+normal depth routine...does not work!  why?
+"#MAD_SAT fogFactor.x, fogInfo.x, fragment.texcoord.w, fogInfo.y;\n",
+"#LRP color.xyz, fogFactor.x, color, fogColor;\n",
+ */
+
 #endif
 
 void RepSphereFree(RepSphere *I);
@@ -360,6 +375,7 @@ static void RepSphereRender(RepSphere *I,RenderInfo *info)
           
           if(!sp) {
             switch(sphere_mode) {
+            case 5: 
             case 4:
             case 3:
               glEnable(GL_POINT_SMOOTH);
@@ -424,6 +440,8 @@ static void RepSphereRender(RepSphere *I,RenderInfo *info)
               switch(sphere_mode) {
               case 2:
               case 3:
+              case 4:
+              case 5:
                 if(last_radius!=(cur_radius=v[6])) {
                   size = cur_radius*pixel_scale;
                   glEnd();
@@ -654,6 +672,14 @@ static void RepSphereRender(RepSphere *I,RenderInfo *info)
 #ifdef _PYMOL_OPENGL_SHADERS
               case 5: /* use vertex/fragment program */
                 if (I->shader_flag) {
+                  float fog_info[2];
+                  fog_info[0] = SettingGet(G,cSetting_fog_start);
+                  fog_info[1] = 1.0F/(1.0F-fog_info[0]);
+#if 0
+                  fog_info[0] = 1.0F/(info->fog_end - info->fog_start);
+                  fog_info[1] = fog_info[0]*(-info->fog_end);
+#endif
+
                    if(Feedback(G,FB_OpenGL,FB_Debugging))
                       PyMOLCheckOpenGLErr("before shader");
 
@@ -662,10 +688,6 @@ static void RepSphereRender(RepSphere *I,RenderInfo *info)
                    
                    //load the fragment program
                    glBindProgramARB(GL_FRAGMENT_PROGRAM_ARB,I->programs[1]);
-
-                  // load a default radius
-                  glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB,
-                                                   0, 0.0F, 0.0F, 1.0F, 0.0F);
 
                   glEnable(GL_VERTEX_PROGRAM_ARB);
                   glEnable(GL_FRAGMENT_PROGRAM_ARB);
@@ -683,6 +705,8 @@ static void RepSphereRender(RepSphere *I,RenderInfo *info)
                         glEnd();
                         glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB,
                                                    0, 0.0F, 0.0F, v[6], 0.0F);
+                        glProgramEnvParameter4fARB(GL_FRAGMENT_PROGRAM_ARB,
+                                                   0, fog_info[0], fog_info[1], 0.0F, 0.0F);
                         glBegin(GL_QUADS);
                         last_radius = cur_radius;
                       }
@@ -1007,41 +1031,25 @@ Rep *RepSphereNew(CoordSet *cs)
         char *vp = read_file("vert.txt");
         char *fp = read_file("frag.txt");
         */
-        if(vp&&fp) {
-            if(Feedback(G,FB_OpenGL,FB_Debugging))
-                      PyMOLCheckOpenGLErr("before loading shader programs");
-            
+        if(vp&&fp) {            
             glGenProgramsARB(2,I->programs);
-            if(Feedback(G,FB_OpenGL,FB_Debugging))
-                      PyMOLCheckOpenGLErr("1");
+
             //load the vertex program
             glBindProgramARB(GL_VERTEX_PROGRAM_ARB,I->programs[0]);
             
-            if(Feedback(G,FB_OpenGL,FB_Debugging))
-                      PyMOLCheckOpenGLErr("2");
             glProgramStringARB(GL_VERTEX_PROGRAM_ARB, 
                 GL_PROGRAM_FORMAT_ASCII_ARB, 
                 strlen(vp),vp);
             if(Feedback(G,FB_OpenGL,FB_Debugging))
                PyMOLCheckOpenGLErr("loading vertex program");
             
-            if(Feedback(G,FB_OpenGL,FB_Debugging))
-                      PyMOLCheckOpenGLErr("4");
-            glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB,
-                0, 0.1F, 0.0F, 0.0F, 0.0F);
-            if(Feedback(G,FB_OpenGL,FB_Debugging))
-                      PyMOLCheckOpenGLErr("5");
-            
             //load the fragment program
             glBindProgramARB(GL_FRAGMENT_PROGRAM_ARB,I->programs[1]);
-            
-            if(Feedback(G,FB_OpenGL,FB_Debugging))
-                      PyMOLCheckOpenGLErr("6");
             
             glProgramStringARB(GL_FRAGMENT_PROGRAM_ARB, 
                 GL_PROGRAM_FORMAT_ASCII_ARB, 
                 strlen(fp),fp);
-            printf("%s\n",fp);
+
             if(Feedback(G,FB_OpenGL,FB_Debugging))
                       PyMOLCheckOpenGLErr("loading fragment program");
             I->shader_flag=true;
