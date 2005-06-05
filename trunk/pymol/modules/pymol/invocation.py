@@ -61,7 +61,7 @@ if __name__=='pymol.invocation':
     options.presentation = 0
     options.defer_builds_mode = 0
     options.full_screen = 0
-    options.sphere_mode = 0
+    options.sphere_mode = -1
     
     if sys.platform[0:4] == 'irix':
         options.win_py = 240

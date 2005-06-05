@@ -1414,7 +1414,7 @@ const static CPyMOLOptions Defaults = {
   0, /* presentation */
   0, /* defer builds mode */
   0, /* full screen mode */
-  0, /* sphere mode */
+  -1, /* sphere mode */
 };
 
 CPyMOLOptions *PyMOLOptions_New(void)
