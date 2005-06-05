@@ -518,7 +518,10 @@ static void RepSphereRender(RepSphere *I,RenderInfo *info)
                                                      cSetting_sphere_point_max_size);
               register int clamp_size_flag = (max_size>=0.0F);
               register float size;
-                
+               
+              if((sphere_mode==5) && (!I->shader_flag))
+                 sphere_mode=4;
+
               switch(sphere_mode) {
               case 2:
               case 3:
@@ -565,6 +568,7 @@ static void RepSphereRender(RepSphere *I,RenderInfo *info)
                   register float s_factor=0.0F;
                   register float zz_factor;
                   register float clamp_radius;
+                  register float last_size;
                   int pass = 0;
                   glEnable(GL_POINT_SMOOTH);
                   glEnable(GL_ALPHA_TEST);
@@ -572,7 +576,6 @@ static void RepSphereRender(RepSphere *I,RenderInfo *info)
                   glPointSize(1.0F);
                   
                   pixel_scale *= 2.0F;
-                  
                   while(repeat) {
                     v=I->VC;
                     c=I->NC;
@@ -582,8 +585,8 @@ static void RepSphereRender(RepSphere *I,RenderInfo *info)
                       zz_factor=0.45F;
                     
                     last_radius = -1.0F;
+                    last_size = -1.0F;
                     repeat = false;
-
                     glBegin(GL_POINTS);
                     while(c--) {
                       if(last_radius!=(cur_radius=v[6])) {
@@ -595,30 +598,32 @@ static void RepSphereRender(RepSphere *I,RenderInfo *info)
                             clamp_radius = size / pixel_scale;
                           }
                         size *= r_factor;
-                        glEnd();
-                        if(size>largest)
-                          largest = size;
-                        if(size<_2) {
-                          if(!pass) {
-                            zz_factor=1.0F;
-                            s_factor = 0.0F;
-                          }
-                        }
-                        if(size<_1) {
-                          size=_1;
-                          glDisable(GL_POINT_SMOOTH);
-                          glDisable(GL_ALPHA_TEST);
-                        } else {
-                          glEnable(GL_POINT_SMOOTH);
-                          glEnable(GL_ALPHA_TEST);
+                        if( size != last_size ) {
+                            glEnd();
+                            if(size>largest)
+                                largest = size;
+                            if(size<_2) {
+                                if(!pass) {
+                                    zz_factor=1.0F;
+                                    s_factor = 0.0F;
+                                }
+                            }
+                            if(size<_1) {
+                                size=_1;
+                                glDisable(GL_POINT_SMOOTH);
+                                glDisable(GL_ALPHA_TEST);
+                            } else {
+                                glEnable(GL_POINT_SMOOTH);
+                                glEnable(GL_ALPHA_TEST);
+                            }
+                            glPointSize(size);
+                            glBegin(GL_POINTS);
                         }
                         x_add = z_factor*clamp_radius*info->view_normal[0];
                         y_add = z_factor*clamp_radius*info->view_normal[1];
                         z_add = z_factor*clamp_radius*info->view_normal[2];
-
-                        glPointSize(size);
-                        glBegin(GL_POINTS);
                         last_radius = cur_radius;
+                        last_size = size;
                       }
                       r = zz_factor*v[0] + s_factor;
                       g = zz_factor*v[1] + s_factor;
