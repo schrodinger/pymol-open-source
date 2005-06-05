@@ -31,6 +31,9 @@ Z* -------------------------------------------------------------------
 
 #ifdef WIN32
 #include<GL/glu.h>
+#ifdef _PYMOL_OPENGL_SHADERS
+#include<GL/glext.h>
+#endif
 #endif
 
 void PyMOLReadPixels(GLint x,

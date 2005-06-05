@@ -50,6 +50,15 @@ typedef struct RepSphere {
 #include"ObjectMolecule.h"
 
 #ifdef _PYMOL_OPENGL_SHADERS
+
+#ifdef WIN32
+static PFNGLGENPROGRAMSARBPROC glGenProgramsARB;
+static PFNGLBINDPROGRAMARBPROC glBindProgramARB;
+static PFNGLDELETEPROGRAMSARBPROC glDeleteProgramsARB;
+static PFNGLPROGRAMSTRINGARBPROC glProgramStringARB;
+static PFNGLPROGRAMENVPARAMETER4FARBPROC glProgramEnvParameter4fARB;
+#endif
+
 typedef char ShaderCode[255];
 ShaderCode vert_prog[] = {
 "!!ARBvp1.0\n",
@@ -630,9 +639,12 @@ static void RepSphereRender(RepSphere *I,RenderInfo *info)
               case 5: /* use vertex/fragment program */
                 {
                   //enable the programs
+                  glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB,
+                                                   0, 0.0F, 0.0F, 1.0F, 0.0F);
+
                   glEnable(GL_VERTEX_PROGRAM_ARB);
                   glEnable(GL_FRAGMENT_PROGRAM_ARB);
-                  
+                        
                   //RENDERING
                   
                   {
@@ -950,12 +962,26 @@ Rep *RepSphereNew(CoordSet *cs)
 
 #ifdef _PYMOL_OPENGL_SHADERS
   if(sphere_mode==5) {
+    char *vp = read_code_str(vert_prog);
+    char *fp = read_code_str(frag_prog);
+     
+#ifdef WIN32
+          
+glGenProgramsARB = (PFNGLGENPROGRAMSARBPROC) wglGetProcAddress("glGenProgramsARB");
+glBindProgramARB = (PFNGLBINDPROGRAMARBPROC) wglGetProcAddress("glBindProgramARB");
+glDeleteProgramsARB = (PFNGLDELETEPROGRAMSARBPROC) wglGetProcAddress("glDeleteProgramsARB");
+glProgramStringARB = (PFNGLPROGRAMSTRINGARBPROC) wglGetProcAddress("glProgramStringARB");
+glProgramEnvParameter4fARB = (PFNGLPROGRAMENVPARAMETER4FARBPROC) wglGetProcAddress("glProgramEnvParameter4fARB");
+          
+#endif
+if(glGenProgramsARB && glBindProgramARB && glDeleteProgramsARB && glProgramStringARB && glProgramEnvParameter4fARB) {
+
+
+
     /*                  
                         char *vp = read_file("vert.txt");
                         char *fp = read_file("frag.txt");
     */
-    char *vp = read_code_str(vert_prog);
-    char *fp = read_code_str(frag_prog);
     if(vp&&fp) {
       
       I->shader_flag=true;
@@ -979,9 +1005,10 @@ Rep *RepSphereNew(CoordSet *cs)
                          GL_PROGRAM_FORMAT_ASCII_ARB, 
                          strlen(fp),fp);
 
-    }
+     }
     FreeP(vp);
     FreeP(fp);
+  }
   }
 #endif
 
