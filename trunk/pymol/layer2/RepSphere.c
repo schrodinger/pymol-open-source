@@ -636,7 +636,6 @@ static void RepSphereRender(RepSphere *I,RenderInfo *info)
                   //RENDERING
                   
                   {
-                    pixel_scale *= 2.0F;
                     last_radius = -1.0F;
                     
                     glNormal3fv(info->view_normal);
@@ -644,7 +643,6 @@ static void RepSphereRender(RepSphere *I,RenderInfo *info)
                     while(c--) {
                       
                       if(last_radius!=(cur_radius=v[6])) {
-                        size = cur_radius*pixel_scale;
                         glEnd();
                         glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB,
                                                    0, 0.0F, 0.0F, v[6], 0.0F);
