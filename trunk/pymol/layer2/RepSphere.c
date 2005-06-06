@@ -52,6 +52,7 @@ typedef struct RepSphere {
 
 #ifdef _PYMOL_OPENGL_SHADERS
 
+
 #ifdef WIN32
 static PFNGLGENPROGRAMSARBPROC glGenProgramsARB;
 static PFNGLBINDPROGRAMARBPROC glBindProgramARB;
@@ -121,8 +122,8 @@ ShaderCode vert_prog[] = {
 
 "\n",
 "# move into range 0.0-1.0\n",
-"ADD    txt.wz, {0.0,0.0,1.0,1.0}, txt;\n",
-"MUL    txt.wz, {0.0,0.0,0.5,0.5}, txt;\n",
+"ADD    txt.zw, {0.0,0.0,1.0,1.0}, txt;\n",
+"MUL    txt.zw, {0.0,0.0,0.5,0.5}, txt;\n",
 "\n",
 "# Pass the color through\n",
 "MOV    result.color, vertex.color;\n",
@@ -225,7 +226,22 @@ void RepSphereFree(RepSphere *I)
 
 #ifdef _PYMOL_OPENGL_SHADERS
  
-
+static GLboolean ProgramStringIsNative(GLenum target, GLenum format,   
+                                     GLsizei len, const GLvoid *string)  
+{  
+  GLint errorPos, isNative;  
+  glProgramStringARB(target, format, len, string);  
+  glGetIntegerv(GL_PROGRAM_ERROR_POSITION_ARB, &errorPos);  
+  glGetProgramivARB(GL_FRAGMENT_PROGRAM_ARB,   
+                    GL_PROGRAM_UNDER_NATIVE_LIMITS_ARB, &isNative);  
+  if ((errorPos == -1) && (isNative == 1))  
+    return GL_TRUE;  
+  else if(errorPos >=0) {
+    printf("error at %s\n",((char*)string)+errorPos);
+  }
+  return GL_FALSE;
+}  
+  
 static char *read_code_str(ShaderCode *ptr)
 {
   ShaderCode *p = ptr;
@@ -569,7 +585,7 @@ static void RepSphereRender(RepSphere *I,RenderInfo *info)
               case 4: /* draw multiple points of different radii and Z position */
                 {
                   int repeat = true;
-                  register float x_add, y_add, z_add;
+                  register float x_add= 0.0F, y_add= 0.0F, z_add = 0.0F;
                   register float z_factor=0.0F, r_factor = 1.0F;
                   register float largest;
                   register float r, g, b;
@@ -673,56 +689,60 @@ static void RepSphereRender(RepSphere *I,RenderInfo *info)
                    if(Feedback(G,FB_OpenGL,FB_Debugging))
                       PyMOLCheckOpenGLErr("before shader");
 
-                   //load the vertex program
+                   /* load the vertex program */
                    glBindProgramARB(GL_VERTEX_PROGRAM_ARB,I->programs[0]);
                    
-                   //load the fragment program
+                   /* load the fragment program */
                    glBindProgramARB(GL_FRAGMENT_PROGRAM_ARB,I->programs[1]);
+                   
+                   /* load some safe initial values  */
 
-                  glEnable(GL_VERTEX_PROGRAM_ARB);
-                  glEnable(GL_FRAGMENT_PROGRAM_ARB);
+                   glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB,
+                                              0, 0.0F, 0.0F, 1.0, 0.0F);
+                   glProgramEnvParameter4fARB(GL_FRAGMENT_PROGRAM_ARB,
+                                              0, 0.5F, 2.0F, 0.0F, 0.0F);
                         
-                  //RENDERING
-                  
-                  {
-                    last_radius = -1.0F;
-                    
-                    glNormal3fv(info->view_normal);
-                    glBegin(GL_QUADS);
-                    while(c--) {
-                      
-                      if(last_radius!=(cur_radius=v[6])) {
-                        glEnd();
-                        glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB,
-                                                   0, 0.0F, 0.0F, v[6], 0.0F);
-                        glProgramEnvParameter4fARB(GL_FRAGMENT_PROGRAM_ARB,
-                                                   0, fog_info[0], fog_info[1], 0.0F, 0.0F);
-                        glBegin(GL_QUADS);
-                        last_radius = cur_radius;
-                      }
-                      
-                      glColor3fv(v);                          
-                      v+=3;
-                      glTexCoord2f(0.0F,0.0F);
-                      glVertex3f(v[0], v[1], v[2]);
-                      
-                      glTexCoord2f(1.0F,0.0F);
-                      glVertex3f(v[0], v[1], v[2]);
-                      
-                      glTexCoord2f(1.0F,1.0F);
-                      glVertex3f(v[0], v[1], v[2]);
-                      
-                      glTexCoord2f(0.0F,1.0F);
-                      glVertex3f(v[0], v[1], v[2]);
-                      v+=4;
-                    }
-                    glEnd();
-                  }
-                  
-                  //disable
-                  glDisable(GL_FRAGMENT_PROGRAM_ARB);
-                  glDisable(GL_VERTEX_PROGRAM_ARB);
-                  if(Feedback(G,FB_OpenGL,FB_Debugging))
+                   glEnable(GL_VERTEX_PROGRAM_ARB);
+                   glEnable(GL_FRAGMENT_PROGRAM_ARB);
+                   
+                   {
+                     last_radius = -1.0F;
+                     
+                     glNormal3fv(info->view_normal);
+                     glBegin(GL_QUADS);
+                     while(c--) {
+                       
+                       if(last_radius!=(cur_radius=v[6])) {
+                         glEnd();
+                         glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB,
+                                                    0, 0.0F, 0.0F, v[6], 0.0F);
+                         glProgramEnvParameter4fARB(GL_FRAGMENT_PROGRAM_ARB,
+                                                    0, fog_info[0], fog_info[1], 0.0F, 0.0F);
+                         glBegin(GL_QUADS);
+                         last_radius = cur_radius;
+                       }
+                       
+                       glColor3fv(v);                          
+                       v+=3;
+                       glTexCoord2f(0.0F,0.0F);
+                       glVertex3f(v[0], v[1], v[2]);
+                       
+                       glTexCoord2f(1.0F,0.0F);
+                       glVertex3f(v[0], v[1], v[2]);
+                       
+                       glTexCoord2f(1.0F,1.0F);
+                       glVertex3f(v[0], v[1], v[2]);
+                       
+                       glTexCoord2f(0.0F,1.0F);
+                       glVertex3f(v[0], v[1], v[2]);
+                       v+=4;
+                     }
+                     glEnd();
+                   }
+                   
+                   glDisable(GL_FRAGMENT_PROGRAM_ARB);
+                   glDisable(GL_VERTEX_PROGRAM_ARB);
+                   if(Feedback(G,FB_OpenGL,FB_Debugging))
                      PyMOLCheckOpenGLErr("after shader");
                 }
                 break;
@@ -1022,18 +1042,20 @@ Rep *RepSphereNew(CoordSet *cs)
         char *fp = read_file("frag.txt");
         */
         if(vp&&fp) {            
-            glGenProgramsARB(2,I->programs);
+          int ok=true;
+          glGenProgramsARB(2,I->programs);
+          
+          /* load the vertex program */
+          glBindProgramARB(GL_VERTEX_PROGRAM_ARB,I->programs[0]);
+          
+            ok = ok && (ProgramStringIsNative(GL_VERTEX_PROGRAM_ARB, 
+                                       GL_PROGRAM_FORMAT_ASCII_ARB, 
+                                              strlen(vp),vp));
 
-            //load the vertex program
-            glBindProgramARB(GL_VERTEX_PROGRAM_ARB,I->programs[0]);
-            
-            glProgramStringARB(GL_VERTEX_PROGRAM_ARB, 
-                GL_PROGRAM_FORMAT_ASCII_ARB, 
-                strlen(vp),vp);
             if(Feedback(G,FB_OpenGL,FB_Debugging))
                PyMOLCheckOpenGLErr("loading vertex program");
             
-            //load the fragment program
+            /* load the fragment program */
             glBindProgramARB(GL_FRAGMENT_PROGRAM_ARB,I->programs[1]);
             
             glProgramStringARB(GL_FRAGMENT_PROGRAM_ARB, 
