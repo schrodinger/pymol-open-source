@@ -87,6 +87,7 @@ typedef struct {
   float view_normal[3];
   float width_scale;
   float vertex_scale; /* how large is a screen pixel in model space at the origin */
+  float *pmv_matrix;
 } RenderInfo;
 
 #define MAXLINELEN 1024

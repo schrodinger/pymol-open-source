@@ -101,6 +101,7 @@ struct _CScene {
   float InvMatrix[16]; /* WARNING: column major, as per OpenGL spec */
   float ModMatrix[16]; /* WARNING: column major, as per OpenGL spec */
   float ProMatrix[16]; /* WARNING: column major, as per OpenGL spec */
+  float PmvMatrix[16];
   float Scale;
   int Width,Height;
   int Button;
@@ -4491,6 +4492,7 @@ static void SceneRenderAll(PyMOLGlobals *G,SceneUnitContext *context,
   info.vertex_scale = I->VertexScale;
   info.fog_start = I->FogStart;
   info.fog_end = I->FogEnd;
+  info.pmv_matrix = I->PmvMatrix;
   SceneGetViewNormal(G,info.view_normal);
 
   if(width_scale!=0.0F) {
@@ -4772,6 +4774,8 @@ void SceneRender(PyMOLGlobals *G,Pickable *pick,int x,int y,
     glGetFloatv(GL_MODELVIEW_MATRIX,I->ModMatrix);
     glGetFloatv(GL_PROJECTION_MATRIX,I->ProMatrix);
 
+    multiply44f44f44f(I->ModMatrix,I->ProMatrix,I->PmvMatrix);
+
     /* make note of how large pixels are at the origin (should this be Pos instead?) */
 
     I->VertexScale = SceneGetScreenVertexScale(G,I->Origin);
@@ -4832,7 +4836,6 @@ void SceneRender(PyMOLGlobals *G,Pickable *pick,int x,int y,
         } else {
           glLightModeli(GL_LIGHT_MODEL_TWO_SIDE,GL_FALSE);
         }     
-
         
         /* add half of the ambient component (perceptive kludge) */
         
