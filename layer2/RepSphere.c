@@ -147,16 +147,16 @@ ShaderCode frag_prog[] = {
 "\n",
 "TEMP pln, norm, depth, color, light, spec, fogFactor;\n",
 "\n",
-"# first, move texture coordinates to origin\n",
+"# fully clip spheres that hit the camera\n",
+"KIL fragment.texcoord.z;\n",
+"\n",
+"# move texture coordinates to origin\n",
 "\n",
 "MOV norm.z, 0;\n",
 "SUB norm.xy, fragment.texcoord, {0.5,0.5,0.0,0.0};\n",
 "\n",
 "# compute x^2 + y^2, if > 0.25 then kill the pixel -- not in sphere\n",
 "\n",
-"\n",
-"# fully-clip spheres that hit the camera\n",
-"KIL fragment.texcoord.z;\n",
 "# kill pixels that aren't in the center circle\n",
 "DP3 pln.z, norm, norm;\n",
 "SUB pln.z, 0.25, pln.z;\n",
@@ -685,6 +685,9 @@ static void RepSphereRender(RepSphere *I,RenderInfo *info)
               case 5: /* use vertex/fragment program */
                 if (I->shader_flag) {
                   float fog_info[2];
+                  float nv[4];
+                  register float cutoff = 1.2F;
+                  register float m_cutoff = -cutoff;
                   fog_info[0] = SettingGet(G,cSetting_fog_start);
                   fog_info[1] = 1.0F/(1.0F-fog_info[0]);
 #if 0
@@ -728,20 +731,32 @@ static void RepSphereRender(RepSphere *I,RenderInfo *info)
                          last_radius = cur_radius;
                        }
                        
-                       glColor3fv(v);                          
-                       v+=3;
-                       glTexCoord2f(0.0F,0.0F);
-                       glVertex3f(v[0], v[1], v[2]);
-                       
-                       glTexCoord2f(1.0F,0.0F);
-                       glVertex3f(v[0], v[1], v[2]);
-                       
-                       glTexCoord2f(1.0F,1.0F);
-                       glVertex3f(v[0], v[1], v[2]);
-                       
-                       glTexCoord2f(0.0F,1.0F);
-                       glVertex3f(v[0], v[1], v[2]);
-                       v+=4;
+                         
+                       MatrixTransformC44f4f(info->pmv_matrix, v+3, nv);
+                       nv[3] = _1/nv[3];
+                       nv[0] *= nv[3];
+                       nv[1] *= nv[3];
+
+                       if((nv[0]<cutoff)&&(nv[0]>m_cutoff)&&
+                          (nv[1]<cutoff)&&(nv[1]>m_cutoff)) {
+                         glColor3fv(v);                          
+                         v+=3;
+                         
+                         glTexCoord2f(0.0F,0.0F);
+                         glVertex3f(v[0], v[1], v[2]);
+                         
+                         glTexCoord2f(1.0F,0.0F);
+                         glVertex3f(v[0], v[1], v[2]);
+                         
+                         glTexCoord2f(1.0F,1.0F);
+                         glVertex3f(v[0], v[1], v[2]);
+                         
+                         glTexCoord2f(0.0F,1.0F);
+                         glVertex3f(v[0], v[1], v[2]);
+                         v+=4;
+                       } else {
+                         v+=7;
+                       }
                      }
                      glEnd();
                    }

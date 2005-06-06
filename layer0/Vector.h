@@ -143,6 +143,10 @@ void multiply44d44d44d( double *left, double *right, double *product);
 void left_multiply44d44d( double *left, double *right);
 void right_multiply44d44d( double *left, double *right);
 
+void multiply44f44f44f( float *left, float *right, float *product);
+void left_multiply44f44f( float *left, float *right);
+void right_multiply44f44f( float *left, float *right);
+
 /* invert a 4x4 homogenous that contains just rotation & tranlation
   (e.g. no scaling & fourth row is 0,0,0,1) */
 void invert_special44d44d( double *original, double *inv);

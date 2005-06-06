@@ -863,6 +863,139 @@ void right_multiply44d44d( double *left, double *right)
 
 }
 
+
+
+void multiply44f44f44f( float *left, float *right, float *product)
+{
+  register float rA = right[ 0];
+  register float rB = right[ 4];
+  register float rC = right[ 8];
+  register float rD = right[12];
+  
+  product[ 0] = left[ 0] * rA + left[ 1] * rB + left[ 2] * rC + left[ 3] * rD;
+  product[ 4] = left[ 4] * rA + left[ 5] * rB + left[ 6] * rC + left[ 7] * rD;
+  product[ 8] = left[ 8] * rA + left[ 9] * rB + left[10] * rC + left[11] * rD;
+  product[12] = left[12] * rA + left[13] * rB + left[14] * rC + left[15] * rD;
+
+  rA = right[ 1];
+  rB = right[ 5];
+  rC = right[ 9];
+  rD = right[13];
+  
+  product[ 1] = left[ 0] * rA + left[ 1] * rB + left[ 2] * rC + left[ 3] * rD;
+  product[ 5] = left[ 4] * rA + left[ 5] * rB + left[ 6] * rC + left[ 7] * rD;
+  product[ 9] = left[ 8] * rA + left[ 9] * rB + left[10] * rC + left[11] * rD;
+  product[13] = left[12] * rA + left[13] * rB + left[14] * rC + left[15] * rD;
+
+  rA = right[ 2];
+  rB = right[ 6];
+  rC = right[10];
+  rD = right[14];
+  
+  product[ 2] = left[ 0] * rA + left[ 1] * rB + left[ 2] * rC + left[ 3] * rD;
+  product[ 6] = left[ 4] * rA + left[ 5] * rB + left[ 6] * rC + left[ 7] * rD;
+  product[10] = left[ 8] * rA + left[ 9] * rB + left[10] * rC + left[11] * rD;
+  product[14] = left[12] * rA + left[13] * rB + left[14] * rC + left[15] * rD;
+
+  rA = right[ 3];
+  rB = right[ 7];
+  rC = right[11];
+  rD = right[15];
+  
+  product[ 3] = left[ 0] * rA + left[ 1] * rB + left[ 2] * rC + left[ 3] * rD;
+  product[ 7] = left[ 4] * rA + left[ 5] * rB + left[ 6] * rC + left[ 7] * rD;
+  product[11] = left[ 8] * rA + left[ 9] * rB + left[10] * rC + left[11] * rD;
+  product[15] = left[12] * rA + left[13] * rB + left[14] * rC + left[15] * rD;
+}
+
+void left_multiply44f44f( float *left, float *right)
+{
+  register float rA = right[ 0];
+  register float rB = right[ 4];
+  register float rC = right[ 8];
+  register float rD = right[12];
+  
+  right[ 0] = left[ 0] * rA + left[ 1] * rB + left[ 2] * rC + left[ 3] * rD;
+  right[ 4] = left[ 4] * rA + left[ 5] * rB + left[ 6] * rC + left[ 7] * rD;
+  right[ 8] = left[ 8] * rA + left[ 9] * rB + left[10] * rC + left[11] * rD;
+  right[12] = left[12] * rA + left[13] * rB + left[14] * rC + left[15] * rD;
+
+  rA = right[ 1];
+  rB = right[ 5];
+  rC = right[ 9];
+  rD = right[13];
+  
+  right[ 1] = left[ 0] * rA + left[ 1] * rB + left[ 2] * rC + left[ 3] * rD;
+  right[ 5] = left[ 4] * rA + left[ 5] * rB + left[ 6] * rC + left[ 7] * rD;
+  right[ 9] = left[ 8] * rA + left[ 9] * rB + left[10] * rC + left[11] * rD;
+  right[13] = left[12] * rA + left[13] * rB + left[14] * rC + left[15] * rD;
+
+  rA = right[ 2];
+  rB = right[ 6];
+  rC = right[10];
+  rD = right[14];
+  
+  right[ 2] = left[ 0] * rA + left[ 1] * rB + left[ 2] * rC + left[ 3] * rD;
+  right[ 6] = left[ 4] * rA + left[ 5] * rB + left[ 6] * rC + left[ 7] * rD;
+  right[10] = left[ 8] * rA + left[ 9] * rB + left[10] * rC + left[11] * rD;
+  right[14] = left[12] * rA + left[13] * rB + left[14] * rC + left[15] * rD;
+
+  rA = right[ 3];
+  rB = right[ 7];
+  rC = right[11];
+  rD = right[15];
+  
+  right[ 3] = left[ 0] * rA + left[ 1] * rB + left[ 2] * rC + left[ 3] * rD;
+  right[ 7] = left[ 4] * rA + left[ 5] * rB + left[ 6] * rC + left[ 7] * rD;
+  right[11] = left[ 8] * rA + left[ 9] * rB + left[10] * rC + left[11] * rD;
+  right[15] = left[12] * rA + left[13] * rB + left[14] * rC + left[15] * rD;
+}
+
+void right_multiply44f44f( float *left, float *right)
+{
+  register float cA = left[ 0];
+  register float cB = left[ 1];
+  register float cC = left[ 2];
+  register float cD = left[ 3];
+  
+  left[ 0] = cA * right[ 0] + cB * right[ 4] + cC * right[ 8] + cD * right[12];
+  left[ 1] = cA * right[ 1] + cB * right[ 5] + cC * right[ 9] + cD * right[13];
+  left[ 2] = cA * right[ 2] + cB * right[ 6] + cC * right[10] + cD * right[14];
+  left[ 3] = cA * right[ 3] + cB * right[ 7] + cC * right[11] + cD * right[15];
+
+  cA = left[ 4];
+  cB = left[ 5];
+  cC = left[ 6];
+  cD = left[ 7];
+  
+  left[ 4] = cA * right[ 0] + cB * right[ 4] + cC * right[ 8] + cD * right[12];
+  left[ 5] = cA * right[ 1] + cB * right[ 5] + cC * right[ 9] + cD * right[13];
+  left[ 6] = cA * right[ 2] + cB * right[ 6] + cC * right[10] + cD * right[14];
+  left[ 7] = cA * right[ 3] + cB * right[ 7] + cC * right[11] + cD * right[15];
+
+  cA = left[ 8];
+  cB = left[ 9];
+  cC = left[10];
+  cD = left[11];
+  
+  left[ 8] = cA * right[ 0] + cB * right[ 4] + cC * right[ 8] + cD * right[12];
+  left[ 9] = cA * right[ 1] + cB * right[ 5] + cC * right[ 9] + cD * right[13];
+  left[10] = cA * right[ 2] + cB * right[ 6] + cC * right[10] + cD * right[14];
+  left[11] = cA * right[ 3] + cB * right[ 7] + cC * right[11] + cD * right[15];
+
+  cA = left[12];
+  cB = left[13];
+  cC = left[14];
+  cD = left[15];
+  
+  left[12] = cA * right[ 0] + cB * right[ 4] + cC * right[ 8] + cD * right[12];
+  left[13] = cA * right[ 1] + cB * right[ 5] + cC * right[ 9] + cD * right[13];
+  left[14] = cA * right[ 2] + cB * right[ 6] + cC * right[10] + cD * right[14];
+  left[15] = cA * right[ 3] + cB * right[ 7] + cC * right[11] + cD * right[15];
+
+}
+
+
 void invert_special44d44d(double *orig, double *inv)
 {
   /* inverse of the rotation matrix */
