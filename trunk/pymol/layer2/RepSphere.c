@@ -59,6 +59,7 @@ static PFNGLBINDPROGRAMARBPROC glBindProgramARB;
 static PFNGLDELETEPROGRAMSARBPROC glDeleteProgramsARB;
 static PFNGLPROGRAMSTRINGARBPROC glProgramStringARB;
 static PFNGLPROGRAMENVPARAMETER4FARBPROC glProgramEnvParameter4fARB;
+static PFNGLGETPROGRAMIVARBPROC glGetProgramivARB;
 #endif
 
 typedef char ShaderCode[255];
@@ -1037,7 +1038,8 @@ Rep *RepSphereNew(CoordSet *cs)
     glDeleteProgramsARB = (PFNGLDELETEPROGRAMSARBPROC) wglGetProcAddress("glDeleteProgramsARB");
     glProgramStringARB = (PFNGLPROGRAMSTRINGARBPROC) wglGetProcAddress("glProgramStringARB");
     glProgramEnvParameter4fARB = (PFNGLPROGRAMENVPARAMETER4FARBPROC) wglGetProcAddress("glProgramEnvParameter4fARB");
-    
+    glGetProgramivARB = (PFNGLGETPROGRAMIVARBPROC) wglGetProcAddress("glGetProgramivARB");
+
 #endif
     if(glGenProgramsARB && glBindProgramARB && 
         glDeleteProgramsARB && glProgramStringARB && 
