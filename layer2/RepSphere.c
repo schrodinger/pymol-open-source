@@ -685,7 +685,12 @@ static void RepSphereRender(RepSphere *I,RenderInfo *info)
               case 5: /* use vertex/fragment program */
                 if (I->shader_flag) {
                   float fog_info[2];
-                  float nv[4];
+                  float _00[2] = { 0.0F, 0.0F};
+                  float _01[2] = { 0.0F, 1.0F};
+                  float _11[2] = { 1.0F, 1.0F};
+                  float _10[2] = { 1.0F, 0.0F};
+                  register float v0,v1,v2,nv0, nv1, nv3,v3;
+                  register float *m = info->pmv_matrix;                  
                   register float cutoff = 1.2F;
                   register float m_cutoff = -cutoff;
                   fog_info[0] = SettingGet(G,cSetting_fog_start);
@@ -719,44 +724,52 @@ static void RepSphereRender(RepSphere *I,RenderInfo *info)
                      
                      glNormal3fv(info->view_normal);
                      glBegin(GL_QUADS);
+                     v+=3;
+
                      while(c--) {
                        
-                       if(last_radius!=(cur_radius=v[6])) {
+                       v3 = v[3];
+
+                       v0 = v[0];
+                       v1 = v[1];
+                       v2 = v[2];
+
+                       if(last_radius!=(cur_radius=v3)) {
                          glEnd();
                          glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB,
-                                                    0, 0.0F, 0.0F, v[6], 0.0F);
+                                                    0, 0.0F, 0.0F, v3, 0.0F);
                          glProgramEnvParameter4fARB(GL_FRAGMENT_PROGRAM_ARB,
                                                     0, fog_info[0], fog_info[1], 0.0F, 0.0F);
                          glBegin(GL_QUADS);
                          last_radius = cur_radius;
                        }
                        
-                         
-                       MatrixTransformC44f4f(info->pmv_matrix, v+3, nv);
-                       nv[3] = _1/nv[3];
-                       nv[0] *= nv[3];
-                       nv[1] *= nv[3];
+                       /*  MatrixTransformC44f4f(info->pmv_matrix, v, nv);*/
 
-                       if((nv[0]<cutoff)&&(nv[0]>m_cutoff)&&
-                          (nv[1]<cutoff)&&(nv[1]>m_cutoff)) {
-                         glColor3fv(v);                          
-                         v+=3;
+                       nv3 = m[ 3]*v0+m[ 7]*v1+m[11]*v2+m[15];
+                       nv0 = m[ 0]*v0+m[ 4]*v1+m[ 8]*v2+m[12];
+                       nv3 = _1/nv3;
+                       nv1 = m[ 1]*v0+m[ 5]*v1+m[ 9]*v2+m[13];
+                       nv0 *= nv3;
+                       nv1 *= nv3;
+
+                       if((nv0<cutoff)&&(nv0>m_cutoff)&&
+                          (nv1<cutoff)&&(nv1>m_cutoff)) {
+                         glColor3fv(v-3);                          
                          
-                         glTexCoord2f(0.0F,0.0F);
-                         glVertex3f(v[0], v[1], v[2]);
+                         glTexCoord2fv(_00);
+                         glVertex3fv(v);
                          
-                         glTexCoord2f(1.0F,0.0F);
-                         glVertex3f(v[0], v[1], v[2]);
+                         glTexCoord2fv(_10);
+                         glVertex3fv(v);
                          
-                         glTexCoord2f(1.0F,1.0F);
-                         glVertex3f(v[0], v[1], v[2]);
+                         glTexCoord2fv(_11);
+                         glVertex3fv(v);
                          
-                         glTexCoord2f(0.0F,1.0F);
-                         glVertex3f(v[0], v[1], v[2]);
-                         v+=4;
-                       } else {
-                         v+=7;
+                         glTexCoord2fv(_01);
+                         glVertex3fv(v);
                        }
+                       v+=7;
                      }
                      glEnd();
                    }
