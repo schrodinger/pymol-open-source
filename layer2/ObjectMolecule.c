@@ -1799,16 +1799,11 @@ static CoordSet *ObjectMoleculePMO2CoordSet(PyMOLGlobals *G,CRaw *pmo,AtomInfoTy
   BondType *bond=NULL;
 
   int ok=true;
-  int auto_show_lines;
-  int auto_show_spheres = (int)SettingGet(G,cSetting_auto_show_spheres);
-  int auto_show_nonbonded;
   int type,size;
   float *spheroid=NULL;
   float *spheroid_normal=NULL;
   int sph_info[2];
   int version;
-  auto_show_lines = (int)SettingGet(G,cSetting_auto_show_lines);
-  auto_show_nonbonded = (int)SettingGet(G,cSetting_auto_show_nonbonded);
 
   *restart=false;
   nAtom=0;

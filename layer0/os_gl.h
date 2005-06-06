@@ -21,12 +21,19 @@ Z* -------------------------------------------------------------------
 #endif
 
 #ifndef _PYMOL_OSX
+#ifdef _PYMOL_OPENGL_SHADERS
+#define GL_GLEXT_PROTOTYPES
 #include<GL/gl.h>
 #include<GL/glu.h>
+#include<GL/glext.h>
+#else
+#include<GL/gl.h>
+#include<GL/glu.h>
+#endif
 #else
 #include<gl.h>
 #include<glu.h>
-#include <OpenGL/glext.h>
+#include <glext.h>
 #endif
 
 #ifdef WIN32
