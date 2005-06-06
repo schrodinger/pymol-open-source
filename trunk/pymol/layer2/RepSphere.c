@@ -154,6 +154,8 @@ ShaderCode frag_prog[] = {
 "# compute x^2 + y^2, if > 0.25 then kill the pixel -- not in sphere\n",
 "\n",
 "\n",
+"# fully-clip spheres that hit the camera\n",
+"KIL fragment.texcoord.z;\n",
 "# kill pixels that aren't in the center circle\n",
 "DP3 pln.z, norm, norm;\n",
 "SUB pln.z, 0.25, pln.z;\n",
@@ -226,22 +228,25 @@ void RepSphereFree(RepSphere *I)
 
 #ifdef _PYMOL_OPENGL_SHADERS
  
-static GLboolean ProgramStringIsNative(GLenum target, GLenum format,   
+static GLboolean ProgramStringIsNative(PyMOLGlobals *G,
+                                       GLenum target, GLenum format,   
                                      GLsizei len, const GLvoid *string)  
 {  
   GLint errorPos, isNative;  
   glProgramStringARB(target, format, len, string);  
   glGetIntegerv(GL_PROGRAM_ERROR_POSITION_ARB, &errorPos);  
-  glGetProgramivARB(GL_FRAGMENT_PROGRAM_ARB,   
+  glGetProgramivARB(target,
                     GL_PROGRAM_UNDER_NATIVE_LIMITS_ARB, &isNative);  
   if ((errorPos == -1) && (isNative == 1))  
     return GL_TRUE;  
   else if(errorPos >=0) {
-    printf("error at %s\n",((char*)string)+errorPos);
+    if(Feedback(G,FB_OpenGL, FB_Errors)) {
+      printf("OpenGL-Error: ARB shader error at char %d\n---->%s\n",errorPos,((char*)string)+errorPos);
+    }
   }
   return GL_FALSE;
-}  
-  
+}
+ 
 static char *read_code_str(ShaderCode *ptr)
 {
   ShaderCode *p = ptr;
@@ -1048,23 +1053,28 @@ Rep *RepSphereNew(CoordSet *cs)
           /* load the vertex program */
           glBindProgramARB(GL_VERTEX_PROGRAM_ARB,I->programs[0]);
           
-            ok = ok && (ProgramStringIsNative(GL_VERTEX_PROGRAM_ARB, 
-                                       GL_PROGRAM_FORMAT_ASCII_ARB, 
-                                              strlen(vp),vp));
-
-            if(Feedback(G,FB_OpenGL,FB_Debugging))
+          ok = ok && (ProgramStringIsNative(G,GL_VERTEX_PROGRAM_ARB, 
+                                            GL_PROGRAM_FORMAT_ASCII_ARB, 
+                                            strlen(vp),vp));
+          
+          if(Feedback(G,FB_OpenGL,FB_Debugging))
                PyMOLCheckOpenGLErr("loading vertex program");
             
-            /* load the fragment program */
-            glBindProgramARB(GL_FRAGMENT_PROGRAM_ARB,I->programs[1]);
-            
-            glProgramStringARB(GL_FRAGMENT_PROGRAM_ARB, 
-                GL_PROGRAM_FORMAT_ASCII_ARB, 
-                strlen(fp),fp);
-
-            if(Feedback(G,FB_OpenGL,FB_Debugging))
-                      PyMOLCheckOpenGLErr("loading fragment program");
+          /* load the fragment program */
+          glBindProgramARB(GL_FRAGMENT_PROGRAM_ARB,I->programs[1]);
+          
+          ok = ok && (ProgramStringIsNative(G,GL_FRAGMENT_PROGRAM_ARB, 
+                                            GL_PROGRAM_FORMAT_ASCII_ARB, 
+                                            strlen(fp),fp));
+          
+          if(Feedback(G,FB_OpenGL,FB_Debugging))
+            PyMOLCheckOpenGLErr("loading fragment program");
+          if(ok) {
             I->shader_flag=true;
+          } else {
+            I->shader_flag=false;
+            glDeleteProgramsARB(2,I->programs);
+          }
         }
         FreeP(vp);
         FreeP(fp);
