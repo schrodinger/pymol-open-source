@@ -387,6 +387,21 @@ static void ObjectDistRender(ObjectDist *I,RenderInfo *info)
   }
 }
 
+static CSetting **ObjectDistGetSettingHandle(ObjectDist *I,int state)
+{
+  if(state<0) {
+    return(&I->Obj.Setting);
+  } else if(state<I->NDSet) {
+    if(I->DSet[state]) {
+      return(&I->DSet[state]->Setting);
+    } else {
+      return(NULL);
+    }
+  } else {
+    return(NULL);
+  }
+}
+
 /*========================================================================*/
 ObjectDist *ObjectDistNew(PyMOLGlobals *G)
 {
@@ -399,6 +414,8 @@ ObjectDist *ObjectDistNew(PyMOLGlobals *G)
   I->Obj.fFree= (void (*)(struct CObject *))ObjectDistFree;
   I->Obj.fUpdate= (void (*)(struct CObject *)) ObjectDistUpdate;
   I->Obj.fGetNFrame = (int (*)(struct CObject *)) ObjectDistGetNFrames;
+  I->Obj.fGetSettingHandle = (CSetting **(*)(struct CObject *,int state))
+    ObjectDistGetSettingHandle;
   I->Obj.fDescribeElement = NULL;
   I->CurDSet=0;
   I->Obj.Color=ColorGetIndex(G,"dash");

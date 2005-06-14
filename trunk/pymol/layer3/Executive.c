@@ -4862,6 +4862,7 @@ char *ExecutiveSeleToPDBStr(PyMOLGlobals *G,char *s1,int state,int conectFlag,in
 
   if(mode==1) {
     pdb_info.is_pqr_file = true;    
+    pdb_info.pqr_workarounds = SettingGetGlobal_b(G,cSetting_pqr_workarounds);
   }
 
   for(a=0;a<n_state;a++) {
@@ -4890,7 +4891,8 @@ char *ExecutiveSeleToPDBStr(PyMOLGlobals *G,char *s1,int state,int conectFlag,in
         ExecutiveObjMolSeleOp(G,sele1,&op1);
       }
     }
-    if(!(SettingGetGlobal_i(G,cSetting_pdb_no_end_record)))
+    if((!(SettingGetGlobal_i(G,cSetting_pdb_no_end_record)))
+       && !(pdb_info.is_pqr_file))
       /* terminate with END */
       UtilConcatVLA(&op1.charVLA,&op1.i2,end_str);
     switch(state) {
@@ -6217,7 +6219,12 @@ int  ExecutiveSetSetting(PyMOLGlobals *G,int index,PyObject *tuple,char *sele,
         }
       }
   } else { /* based on a selection/object name */
-    sele1=SelectorIndexByName(G,sele);
+    CObject *execObj = ExecutiveFindObjectByName(G,sele);
+    if(execObj && 
+       (execObj->type != cObjectMolecule))
+      sele1 = -1;
+    else
+      sele1 = SelectorIndexByName(G,sele);
     while((ListIterate(I->Spec,rec,next)))
       if(rec->type==cExecObject) {
         if(rec->obj->type==cObjectMolecule)
@@ -6373,7 +6380,12 @@ int  ExecutiveSetSettingFromString(PyMOLGlobals *G,
         }
       }
   } else { /* based on a selection/object name */
-    sele1=SelectorIndexByName(G,sele);
+    CObject *execObj = ExecutiveFindObjectByName(G,sele);
+    if(execObj && 
+       (execObj->type != cObjectMolecule))
+      sele1 = -1;
+    else
+      sele1 = SelectorIndexByName(G,sele);
     while((ListIterate(I->Spec,rec,next)))
       if(rec->type==cExecObject) {
         if(rec->obj->type==cObjectMolecule)

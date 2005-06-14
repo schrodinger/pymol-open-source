@@ -2891,7 +2891,7 @@ static PyObject *CmdIndex(PyObject *dummy, PyObject *args)
   PyObject *result = Py_None;
   PyObject *tuple = Py_None;
   int *iVLA=NULL;
-  int l;
+  int l = 0;
   int *i;
   ObjectMolecule **o,**oVLA=NULL;
   int a;

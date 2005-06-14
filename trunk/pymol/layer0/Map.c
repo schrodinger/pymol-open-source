@@ -45,12 +45,11 @@ float MapGetDiv(MapType *I)
 void MapFree(MapType *I)
 {
   if(I) {
-    PyMOLGlobals *G=I->G;
-    CacheFreeP(G,I->Head,I->group_id,I->block_base + cCache_map_head_offset,false);
-    CacheFreeP(G,I->Link,I->group_id,I->block_base + cCache_map_link_offset,false);
-    CacheFreeP(G,I->EHead,I->group_id,I->block_base + cCache_map_ehead_offset,false);
-    CacheFreeP(G,I->EMask,I->group_id,I->block_base + cCache_map_emask_offset,false);
-    VLACacheFreeP(G,I->EList,I->group_id,I->block_base + cCache_map_elist_offset,false);
+    CacheFreeP(I->G,I->Head,I->group_id,I->block_base + cCache_map_head_offset,false);
+    CacheFreeP(I->G,I->Link,I->group_id,I->block_base + cCache_map_link_offset,false);
+    CacheFreeP(I->G,I->EHead,I->group_id,I->block_base + cCache_map_ehead_offset,false);
+    CacheFreeP(I->G,I->EMask,I->group_id,I->block_base + cCache_map_emask_offset,false);
+    VLACacheFreeP(I->G,I->EList,I->group_id,I->block_base + cCache_map_elist_offset,false);
   }
   OOFreeP(I);
 }
@@ -561,8 +560,10 @@ void MapSetupExpress(MapType *I) /* setup a list of neighbors for each square */
   register int st,flag;
   register int *i_ptr3,*i_ptr4,*i_ptr5;
   register int *e_list;
+#ifdef _MemoryCache_ON
   register int block_offset = I->block_base + cCache_map_elist_offset;
   register int group_id = I->group_id;
+#endif
   int mx0=I->iMax[0],mx1=I->iMax[1],a,am1,ap2,*i_ptr1,b,bm1,bp2,*i_ptr2;
   unsigned int mapSize;
 

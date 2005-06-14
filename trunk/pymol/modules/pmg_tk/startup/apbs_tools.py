@@ -39,7 +39,7 @@ import Tkinter
 from Tkinter import *
 import Pmw
 import distutils.spawn # used for find_executable
-
+import traceback
 
 #
 # Global config variables
@@ -428,7 +428,7 @@ def __init__(self):
    
 
 defaults = {
-    "interior_dielectric" : 20.0,# ###
+    "interior_dielectric" : 2.0,# ###
     "solvent_dielectric" : 80.0,# ###
     "solvent_radius" : 1.4,# ###
     "system_temp" : 310.0,# ###
@@ -441,6 +441,9 @@ defaults = {
     "ion_minus_one_rad" : 2.0,# ###
     "ion_minus_two_conc" : 0.0,# ###
     "ion_minus_two_rad" : 2.0,# ###
+    "max_grid_points" : 1200000,
+    "potential_at_sas" : 0,
+    "surface_solvent" : 0,
     #"grid_buffer" : 0,
     #"grid_buffer" : 20,
     "bcfl" : 'Single DH sphere', # Boundary condition flag for APBS ###
@@ -485,6 +488,10 @@ class VisualizationGroup(Pmw.Group):
                 #print "destroyed",thing
             except AttributeError:
                 #print "couldn't destroy",thing
+
+                # note: this attributeerror will also hit if getattr(self,thing) misses.
+                # another note: both halves of the if/else make an update_buttonbox.
+                # if you rename the one in the top half to something else, you'll cause nasty Pmw errors.
                 pass
 
         if [i for i in pymol.cmd.get_names() if pymol.cmd.get_type(i)=='object:map'] and [i for i in pymol.cmd.get_names() if pymol.cmd.get_type(i)=='object:molecule']:
@@ -503,9 +510,9 @@ class VisualizationGroup(Pmw.Group):
                                            items = [i for i in pymol.cmd.get_names() if pymol.cmd.get_type(i)=='object:molecule'],
                                            )
             self.molecule.pack(padx=4,side=LEFT)
-            self.mm_buttonbox = Pmw.ButtonBox(self.mm_group.interior(), padx=0)
-            self.mm_buttonbox.pack(side=LEFT)
-            self.mm_buttonbox.add('Update',command=self.refresh)
+            self.update_buttonbox = Pmw.ButtonBox(self.mm_group.interior(), padx=0)
+            self.update_buttonbox.pack(side=LEFT)
+            self.update_buttonbox.add('Update',command=self.refresh)
             self.mm_group.pack(fill = 'both', expand = 1, padx = 4, pady = 5, side=TOP)
 
             self.ms_group = Pmw.Group(self.interior(),tag_text='Molecular Surface')
@@ -515,6 +522,18 @@ class VisualizationGroup(Pmw.Group):
             self.ms_buttonbox.add('Hide',command=self.hideMolSurface)
             self.ms_buttonbox.add('Update',command=self.updateMolSurface)
             self.ms_buttonbox.alignbuttons()
+            self.surface_solvent = IntVar()
+            self.surface_solvent.set(defaults['surface_solvent'])
+            self.sol_checkbutton = Checkbutton(self.ms_group.interior(),
+                                               text = "Solvent accesssible surface",
+                                               variable = self.surface_solvent)
+            self.sol_checkbutton.pack()            
+            self.potential_at_sas = IntVar()
+            self.potential_at_sas.set(defaults['potential_at_sas'])
+            self.pot_checkbutton = Checkbutton(self.ms_group.interior(),
+                                               text = "Color by potential on sol. acc. surf.",
+                                               variable = self.potential_at_sas)
+            self.pot_checkbutton.pack()
             self.mol_surf_low = Pmw.Counter(self.ms_group.interior(),
                                             labelpos = 'w',
                                             label_text = 'Low',
@@ -602,6 +621,7 @@ If you have a molecule and a map loaded, please click "Update"''',
             
     def hideMolSurface(self):
         pymol.cmd.hide('surface',self.molecule.getvalue())
+
     def updateMolSurface(self):
         ramp_name = 'e_lvl'
         map_name = self.map.getvalue()
@@ -610,12 +630,19 @@ If you have a molecule and a map loaded, please click "Update"''',
         mid = float(self.mol_surf_middle.getvalue())
         high = float(self.mol_surf_high.getvalue())
         range = [low,mid,high]
-        print "range is",range
+        print " APBS Tools: range is",range
         pymol.cmd.delete(ramp_name)
         pymol.cmd.ramp_new(ramp_name,map_name,range)
         pymol.cmd.set('surface_color',ramp_name,molecule_name)
+        if self.surface_solvent.get()==1:
+            pymol.cmd.set('surface_solvent',1,molecule_name)
+            pymol.cmd.set('surface_ramp_above_mode',0,molecule_name)
+        else:
+            pymol.cmd.set('surface_solvent',0,molecule_name)
+            pymol.cmd.set('surface_ramp_above_mode',self.potential_at_sas.get(),molecule_name)
         pymol.cmd.show('surface',molecule_name)
-        pymol.cmd.sort()
+        pymol.cmd.refresh()
+        pymol.cmd.recolor()
         
     def showPosSurface(self):
         self.updatePosSurface()
@@ -639,14 +666,14 @@ If you have a molecule and a map loaded, please click "Update"''',
 class APBSTools:
 
     def setPqrFile(self,name):
-        print "set pqr file to",name
+        print " APBS Tools: set pqr file to",name
         self.pqr_to_use.setvalue(name)
     def getPqrFilename(self):
         if self.radiobuttons.getvalue() != 'Use another PQR':
-            print 'radiobutton said to generate it',self.radiobuttons.getvalue(),'so i am returning',self.pymol_generated_pqr_filename.getvalue()
+#            print 'radiobutton said to generate it',self.radiobuttons.getvalue(),'so i am returning',self.pymol_generated_pqr_filename.getvalue()
             return self.pymol_generated_pqr_filename.getvalue()
         else:
-            print 'radiobutton told me to use another',self.radiobuttons.getvalue(),'so i am returning',self.pqr_to_use.getvalue()
+#            print 'radiobutton told me to use another',self.radiobuttons.getvalue(),'so i am returning',self.pqr_to_use.getvalue()
             return self.pqr_to_use.getvalue()
     def setPsizeLocation(self,value):
         self.psize.setvalue(value)
@@ -667,7 +694,7 @@ class APBSTools:
         Pmw.setbusycursorattributes(self.dialog.component('hull'))
 
         w = Tkinter.Label(self.dialog.interior(),
-                                text = 'PyMOL APBS Tools\nMichael Lerner, 2004 - www.umich.edu/~mlerner/Pymol',
+                                text = 'PyMOL APBS Tools\nMichael Lerner, 2004 - www.umich.edu/~mlerner/Pymol\n(incorporates modifications by WLD)',
                                 background = 'black',
                                 foreground = 'white',
                                 #pady = 20,
@@ -684,7 +711,7 @@ class APBSTools:
         self.selection = Pmw.EntryField(group.interior(),
                                         labelpos='w',
                                         label_text='Selection to use: ',
-                                        value='(all)',
+                                        value='(polymer)',
                                         )
         self.map = Pmw.EntryField(group.interior(),
                                   labelpos='w',
@@ -707,7 +734,7 @@ class APBSTools:
                                          label_pyclass = FileDialogButtonClassFactory.get(self.setPqrFile,'*.pqr'),
                                          label_text='\tChoose Externally Generated PQR:',
                                          )
-
+        
 
         for entry in (self.selection,self.map,self.radiobuttons,self.pqr_to_use):
         #for entry in (self.selection,self.map,self.radiobuttons,):
@@ -741,6 +768,12 @@ class APBSTools:
         group = Pmw.Group(page,tag_text='Other')
         group.pack(fill='both',expand=1, padx=4, pady=5)
         group.grid(column=1, row=1,columnspan=4)
+        self.max_grid_points = Pmw.EntryField(group.interior(),labelpos='w',
+                                              label_text = 'Maximum Grid Points:',
+                                              value = str(defaults['max_grid_points']),
+                                              validate = {'validator' : 'real',
+                                                          'min':1,}
+                                              )
         self.apbs_mode = Pmw.OptionMenu(group.interior(),
                                         labelpos = 'w',
                                         label_text = 'APBS Mode',
@@ -780,7 +813,7 @@ class APBSTools:
                                    initialitem = 'Same, but with harmonic average smoothing',
                                    )
         #for entry in (self.apbs_mode,self.system_temp,self.solvent_radius,):
-        for entry in (self.solvent_radius,self.system_temp,self.apbs_mode,self.bcfl,self.chgm,self.srfm):
+        for entry in (self.max_grid_points,self.solvent_radius,self.system_temp,self.apbs_mode,self.bcfl,self.chgm,self.srfm):
             entry.pack(fill='x',expand=1,padx=4,pady=1) # vertical
 
 
@@ -1048,6 +1081,12 @@ Carlson Group, University of Michigan <http://www.umich.edu/~carlsonh/>
                 good = self.generatePqrFile()
                 if not good:
                     return False
+            if os.path.exists(self.pymol_generated_dx_filename.getvalue()):
+                try:
+                    os.unlink(self.pymol_generated_dx_filename.getvalue())
+                except:
+                    traceback.print_exc()
+                    pass
             command = "%s %s" % (self.binary.getvalue(),self.pymol_generated_in_filename.getvalue())
             os.system(command)
             pymol.cmd.load(self.pymol_generated_dx_filename.getvalue(),self.map.getvalue())
@@ -1090,7 +1129,10 @@ Carlson Group, University of Michigan <http://www.umich.edu/~carlsonh/>
             import imp
             f,fname,description = imp.find_module('psize',[os.path.split(self.psize.getvalue())[0]])
             psize = imp.load_module('psize',f,fname,description)
-            pymol.cmd.save(pdb_filename,self.selection.getvalue())
+            # WLD
+            sel = "((%s) or (neighbor (%s) and hydro))"%(
+                           self.selection.getvalue(), self.selection.getvalue())
+            pymol.cmd.save(pdb_filename,sel)
             f.close()
             size = psize.Psize()
             size.runPsize(pdb_filename)
@@ -1099,12 +1141,15 @@ Carlson Group, University of Michigan <http://www.umich.edu/~carlsonh/>
             # could use procgrid for multiprocessors
             finegridpoints = size.getFineGridPoints() # dime
             center = size.getCenter() # cgcent and fgcent
-
+            
         except (NoPsize,ImportError):
             #
             # First, we need to get the dimensions of the molecule
             #
-            model = pymol.cmd.get_model(self.selection.getvalue())
+            # WLD
+            sel = "((%s) or (neighbor (%s) and hydro))"%(
+                           self.selection.getvalue(), self.selection.getvalue())
+            model = pymol.cmd.get_model(sel)
             mins = [None,None,None]
             maxs = [None,None,None]
             for a in model.atom:
@@ -1152,7 +1197,6 @@ Carlson Group, University of Michigan <http://www.umich.edu/~carlsonh/>
             mult_fac = 2**(nlev + 1) # this will typically be 2^5==32
             # and c must be a non-zero integer
 
-
             # If we didn't have to be c*mult_fac + 1, this is what our grid points
             # would look like (we use the ceiling to be on the safe side .. it never
             # hurts to do too much.
@@ -1166,7 +1210,7 @@ Carlson Group, University of Michigan <http://www.umich.edu/~carlsonh/>
             cs = [int(math.ceil(dp/mult_fac)) for dp in desired_points]
 
             finegridpoints = [mult_fac * c + 1 for c in cs]
-            
+
         except NoPDB:
             error_dialog = Pmw.MessageDialog(self.parent,
                                              title = 'Error',
@@ -1175,26 +1219,30 @@ Carlson Group, University of Michigan <http://www.umich.edu/~carlsonh/>
             junk = error_dialog.activate()
             return False
 
-
-        print "coarsedim is",coarsedim
+        if (finegridpoints[0]>0) and (finegridpoints[1]>0) and (finegridpoints[2]>0):
+            max_grid_points = float(self.max_grid_points.getvalue())
+            product = float(finegridpoints[0] * finegridpoints[1] * finegridpoints[2])
+            if product>max_grid_points:
+                factor = pow(max_grid_points/product,0.333333333)
+                finegridpoints[0] = (int(factor*finegridpoints[0]/2))*2+1
+                finegridpoints[1] = (int(factor*finegridpoints[1]/2))*2+1
+                finegridpoints[2] = (int(factor*finegridpoints[2]/2))*2+1
+        print " APBS Tools: coarse grid: (%5.3f,%5.3f,%5.3f)"%tuple(coarsedim)
         self.grid_coarse_x.setvalue(coarsedim[0])
         self.grid_coarse_y.setvalue(coarsedim[1])
         self.grid_coarse_z.setvalue(coarsedim[2])
-        print "finedim is",finedim
+        print " APBS Tools: fine grid: (%5.3f,%5.3f,%5.3f)"%tuple(finedim)
         self.grid_fine_x.setvalue(finedim[0])
         self.grid_fine_y.setvalue(finedim[1])
         self.grid_fine_z.setvalue(finedim[2])
-        print "center is",center
+        print " APBS Tools: center: (%5.3f,%5.3f,%5.3f)"%tuple(center)
         self.grid_center_x.setvalue(center[0])
         self.grid_center_y.setvalue(center[1])
         self.grid_center_z.setvalue(center[2])
-        print "finegridpoints is",finegridpoints
+        print " APBS Tools: fine grid points (%d,%d,%d)"%tuple(finegridpoints)
         self.grid_points_x.setvalue(finegridpoints[0])
         self.grid_points_y.setvalue(finegridpoints[1])
         self.grid_points_z.setvalue(finegridpoints[2])
-            
-        
-        
             
     def generateApbsInputFile(self):
         if self.checkInput(silent=True):
@@ -1358,8 +1406,14 @@ Carlson Group, University of Michigan <http://www.umich.edu/~carlsonh/>
         This will also call through to champ to set the Hydrogens and charges
         if it needs to.  If it does that, it may change the value self.selection
         to take the new Hydrogens into account.
+
+        To make it worse, APBS seems to freak out when there are chain ids.  So,
+        this gets rid of the chain ids.
         """
-        sel = self.selection.getvalue()
+        # WLD
+        sel = "((%s) or (neighbor (%s) and hydro))"%(
+            self.selection.getvalue(), self.selection.getvalue())
+        
         pqr_filename = self.getPqrFilename()
         try:
             f = file(pqr_filename,'w')
@@ -1380,12 +1434,28 @@ Carlson Group, University of Michigan <http://www.umich.edu/~carlsonh/>
                 assign.missing_c_termini(sel)
                 assign.formal_charges(sel)
                 pymol.cmd.h_add(sel)
-                new_hydros = '(hydro and neighbor %s)'%sel
-                sel = '%s or %s' % (sel,new_hydros)
+# WLD (code now unnecessary)
+#                new_hydros = '(hydro and neighbor %s)'%sel
+#                sel = '%s or %s' % (sel,new_hydros)
             assign.amber99(sel)
-            if not self.selection.getvalue() in '(all) all'.split():
-                self.selection.setvalue(sel)
+# WLD (code now unnecessary)
+#            if not self.selection.getvalue() in '(all) all'.split():
+#                self.selection.setvalue(sel)
+                
+        #
+        # Get rid of chain information
+        #
+        pymol.cmd.alter(sel,'chain = ""')
         pymol.cmd.save(pqr_filename,sel)
+        missed_count = pymol.cmd.count_atoms("("+sel+") and flag 23")
+        if missed_count > 0:
+            pymol.cmd.select("unassigned","("+sel+") and flag 23")
+            error_dialog = Pmw.MessageDialog(self.parent,
+                                             title = 'Error',
+                                             message_text = "Unable to assign parameters for the %s atoms in selection 'unassigned'.\nPlease either remove these unassigned atoms and re-start the calculation\nor fix their parameters in the generated PQR file and run the calculation\nusing the modified PQR file (select 'Use another PQR' in 'Main')"%missed_count,
+                                             )
+            junk = error_dialog.activate()
+            return False
         return True
 
 

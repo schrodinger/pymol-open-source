@@ -843,7 +843,7 @@ static int SceneMakeSizedImage(PyMOLGlobals *G,int width,
   register CScene *I=G->Scene;
   int ok=true;
   int save_flag = false;
-  int save_width, save_height;
+  int save_width=0, save_height=0;
 
   /* check assumptions */
 
@@ -4514,43 +4514,48 @@ static void SceneRenderAll(PyMOLGlobals *G,SceneUnitContext *context,
           rec->obj->fRender(rec->obj,&info);
           break;
         case 1:
-          glMatrixMode(GL_PROJECTION);
-          glPushMatrix();
-          glLoadIdentity();
-          glMatrixMode(GL_MODELVIEW);
-          glPushMatrix();
-          glLoadIdentity();
-          vv[0]=0.0;
-          vv[1]=0.0;
-          vv[2]=-1.0;
-          vv[3]=0.0;
-          glLightfv(GL_LIGHT0,GL_POSITION,vv);
-          glLightfv(GL_LIGHT1,GL_POSITION,vv);
+          {
+            glPushAttrib(GL_LIGHTING_BIT);
+            glMatrixMode(GL_PROJECTION);
+            glPushMatrix();
+            glLoadIdentity();
+            glMatrixMode(GL_MODELVIEW);
+            glPushMatrix();
+            glLoadIdentity();
+            vv[0]=0.0;
+            vv[1]=0.0;
+            vv[2]=-1.0;
+            vv[3]=0.0;
+            glLightfv(GL_LIGHT0,GL_POSITION,vv);
+            glLightfv(GL_LIGHT1,GL_POSITION,vv);
+            
+            glOrtho(context->unit_left,
+                    context->unit_right,
+                    context->unit_top,
+                    context->unit_bottom,
+                    context->unit_front,
+                    context->unit_back);
+            
+            glNormal3f(0.0F,0.0F,1.0F);
+            info.state = ObjectGetCurrentState(rec->obj,false);
+            rec->obj->fRender(rec->obj,&info);
+            
+            glMatrixMode(GL_MODELVIEW);
+            glLoadIdentity();
+            vv[0]=0.0;
+            vv[1]=0.0;
+            vv[2]=1.0;
+            vv[3]=0.0;
+            glLightfv(GL_LIGHT0,GL_POSITION,vv);
+            glLightfv(GL_LIGHT1,GL_POSITION,vv);
+            
+            glPopMatrix();
+            glMatrixMode(GL_PROJECTION);
+            glPopMatrix();
+            glMatrixMode(GL_MODELVIEW);
+            glPopAttrib();
 
-          glOrtho(context->unit_left,
-                  context->unit_right,
-                  context->unit_top,
-                  context->unit_bottom,
-                  context->unit_front,
-                  context->unit_back);
-          
-          glNormal3f(0.0F,0.0F,1.0F);
-          info.state = ObjectGetCurrentState(rec->obj,false);
-          rec->obj->fRender(rec->obj,&info);
-
-          glMatrixMode(GL_MODELVIEW);
-          glLoadIdentity();
-          vv[0]=0.0;
-          vv[1]=0.0;
-          vv[2]=1.0;
-          vv[3]=0.0;
-          glLightfv(GL_LIGHT0,GL_POSITION,vv);
-          glLightfv(GL_LIGHT1,GL_POSITION,vv);
-
-          glPopMatrix();
-          glMatrixMode(GL_PROJECTION);
-          glPopMatrix();
-          glMatrixMode(GL_MODELVIEW);
+          }
           break;
         }
       glPopMatrix();
