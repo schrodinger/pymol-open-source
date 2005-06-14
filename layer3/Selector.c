@@ -876,7 +876,7 @@ static int SelectorWordIndex(PyMOLGlobals *G,SelectorWordType *list,char *word,i
 				  mc=c;
 				}
 		  }
-		else if(i<0)
+		else if(i<0) 
 		  {
 			 if((-i)<minMatch)
 				mi=minMatch+1; /*exact match always matches */
@@ -5047,6 +5047,8 @@ int SelectorGetPDB(PyMOLGlobals *G,char **charVLA,int cLen,int sele,int state,
   AtomInfoType *atInfo,*ai,*last = NULL;
   SelectorUpdateTable(G);
 
+  if(pdb_info->is_pqr_file)
+    use_ter = false;
   if(counter)
     c=*counter;
   else
@@ -5143,7 +5145,7 @@ int SelectorGetPDB(PyMOLGlobals *G,char **charVLA,int cLen,int sele,int state,
         }
       }
   }
-  if(conectFlag) {
+  if(conectFlag&&!(pdb_info->is_pqr_file)) {
     nBond = 0;
     bond = VLAlloc(BondType,1000);
     for(a=cNDummyModels;a<I->NModel;a++) {

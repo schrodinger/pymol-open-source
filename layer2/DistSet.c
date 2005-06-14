@@ -69,6 +69,8 @@ int DistSetFromPyList(PyMOLGlobals *G,PyObject *list,DistSet **cs)
       if(ok) ok = PConvPyIntToInt(PyList_GetItem(list,5),&I->NDihedralIndex);
       if(ok) ok = PConvPyListToFloatVLANoneOkay(PyList_GetItem(list,6),&I->DihedralCoord);
     }
+    if(ok&&(ll>7)) I->Setting = SettingNewFromPyList(G,PyList_GetItem(list,7)); /* state settings */
+
     if(!ok) {
       if(I)
         DistSetFree(I);
@@ -88,7 +90,7 @@ PyObject *DistSetAsPyList(DistSet *I)
   PyObject *result = NULL;
 
   if(I) {
-    result = PyList_New(7);
+    result = PyList_New(8);
     
     PyList_SetItem(result,0,PyInt_FromLong(I->NIndex));
     PyList_SetItem(result,1,PConvFloatArrayToPyListNullOkay(I->Coord,I->NIndex*3));
@@ -97,6 +99,7 @@ PyObject *DistSetAsPyList(DistSet *I)
     PyList_SetItem(result,4,PConvFloatArrayToPyListNullOkay(I->AngleCoord,I->NAngleIndex*3));
     PyList_SetItem(result,5,PyInt_FromLong(I->NDihedralIndex));
     PyList_SetItem(result,6,PConvFloatArrayToPyListNullOkay(I->DihedralCoord,I->NDihedralIndex*3));
+    PyList_SetItem(result,7,SettingAsPyList(I->Setting));
     /* TODO setting ... */
   }
   return(PConvAutoNone(result));

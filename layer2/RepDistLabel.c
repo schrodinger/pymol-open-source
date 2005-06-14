@@ -36,6 +36,7 @@ typedef struct RepDistLabel {
   int N;
   DistLabel *L;
   CObject *Obj;
+  DistSet *ds;
 } RepDistLabel;
 
 #include"ObjectDist.h"
@@ -60,11 +61,11 @@ static void RepDistLabelRender(RepDistLabel *I,RenderInfo *info)
   DistLabel *l = I->L;
   int n = 0;
   int color;
-  int font_id = SettingGet_i(G,NULL,I->Obj->Setting,cSetting_label_font_id);
+  int font_id = SettingGet_i(G,I->ds->Setting,I->Obj->Setting,cSetting_label_font_id);
 
   if(ray) {
 
-    color = SettingGet_color(G,NULL,I->Obj->Setting,cSetting_label_color);
+    color = SettingGet_color(G,I->ds->Setting,I->Obj->Setting,cSetting_label_color);
     
     if(color>=0)
       TextSetColor(G,ColorGet(G,color));
@@ -87,7 +88,7 @@ static void RepDistLabelRender(RepDistLabel *I,RenderInfo *info)
         glDisable(GL_DEPTH_TEST);	 
       glDisable(GL_LIGHTING);
     
-      color = SettingGet_color(G,NULL,I->Obj->Setting,cSetting_label_color);
+      color = SettingGet_color(G,I->ds->Setting,I->Obj->Setting,cSetting_label_color);
     
       if(color>=0)
         TextSetColor(G,ColorGet(G,color));
@@ -132,6 +133,7 @@ Rep *RepDistLabelNew(DistSet *ds)
   I->V=NULL;
   I->R.P=NULL;
   I->Obj = (CObject*)ds->Obj;
+  I->ds = ds;
 
   if(ds->NIndex || ds->NAngleIndex || ds->NDihedralIndex) {
 	 I->V=VLAlloc(float,3*(ds->NIndex/2+ds->NAngleIndex/5)+1);

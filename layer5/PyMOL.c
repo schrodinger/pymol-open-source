@@ -498,7 +498,7 @@ typedef struct _CPyMOL {
   ov_word lex_surface_optimize_subsets;
   ov_word lex_multiplex;
   ov_word lex_texture_fonts;
-  ov_word lex_pqr_no_chain_id;
+  ov_word lex_pqr_workarounds;
   ov_word lex_animation;
   ov_word lex_animation_duration;
   ov_word lex_scene_animation;
@@ -1023,7 +1023,7 @@ static OVstatus PyMOL_InitAPI(CPyMOL *I)
   LEX_SETTING(surface_optimize_subsets, 384);
   LEX_SETTING(multiplex, 385);
   LEX_SETTING(texture_fonts, 386);
-  LEX_SETTING(pqr_no_chain_id, 387);
+  LEX_SETTING(pqr_workarounds, 387);
   LEX_SETTING(animation, 388);
   LEX_SETTING(animation_duration, 389);
   LEX_SETTING(scene_animation, 390);

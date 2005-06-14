@@ -121,7 +121,9 @@ int CoordSetFromPyList(PyMOLGlobals *G,PyObject *list,CoordSet **cs)
         ok = PConvPyListToIntArray(tmp,&I->AtmToIdx);
     }
     if(ok&&(ll>5)) ok = PConvPyStrToStr(PyList_GetItem(list,5),I->Name,sizeof(WordType));
-    if(ok&&(ll>6))  ok = ObjectStateFromPyList(G,PyList_GetItem(list,6),&I->State);
+    if(ok&&(ll>6)) ok = ObjectStateFromPyList(G,PyList_GetItem(list,6),&I->State);
+    if(ok&&(ll>7)) I->Setting = SettingNewFromPyList(G,PyList_GetItem(list,7));
+
     if(!ok) {
       if(I)
         CoordSetFree(I);
@@ -142,7 +144,7 @@ PyObject *CoordSetAsPyList(CoordSet *I)
   PyObject *result = NULL;
 
   if(I) {
-    result = PyList_New(7);
+    result = PyList_New(8);
     
     PyList_SetItem(result,0,PyInt_FromLong(I->NIndex));
     PyList_SetItem(result,1,PyInt_FromLong(I->NAtIndex));
@@ -154,7 +156,8 @@ PyObject *CoordSetAsPyList(CoordSet *I)
       PyList_SetItem(result,4,PConvAutoNone(NULL));
     PyList_SetItem(result,5,PyString_FromString(I->Name));
     PyList_SetItem(result,6,ObjectStateAsPyList(&I->State));
-    /* TODO symmetry, spheroid, setting, periodic box ... */
+    PyList_SetItem(result,7,SettingAsPyList(I->Setting));
+    /* TODO symmetry, spheroid, periodic box ... */
   }
   return(PConvAutoNone(result));
 #endif
@@ -631,7 +634,26 @@ void CoordSetAtomToPDBStrVLA(PyMOLGlobals *G,char **charVLA,int *c,AtomInfoType 
                   aType,cnt+1,name,ai->alt,resn,
                   ai->chain,resi,*v,*(v+1),*(v+2),ai->q,ai->b,ai->segi,ai->elem);
   } else {
-    if(pdb_info->pqr_no_chain_id) {
+    if(pdb_info->is_pqr_file && pdb_info->pqr_workarounds) {
+      int non_num = false;
+      char *p = resi;
+      while(*p) {
+        if( (((*p)<='0')||((*p)>='9'))
+            &&(*p!=' ')) {
+          non_num=true;
+          break;
+        }
+        p++;
+      }
+      if(non_num) {
+        sprintf(resi,"%d",ai->resv);
+        rl = strlen(resi)-1;
+        if(rl>=0)
+          if((resi[rl]>='0')&&(resi[rl]<='9')) {
+            resi[rl+1]=' ';
+            resi[rl+2]=0;
+            }
+      }
       chain[0]=0;
     } else {
       chain[0] = ai->chain[0];

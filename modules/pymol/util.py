@@ -50,25 +50,12 @@ def sum_partial_charges(selection="(all)",quiet=1):
         print " util.sum_partial_charges: sum = %0.3f"%result
     return result
 
-def protein_vacuum_esp(selection, mode=2,border=10.0,quiet = 1):
-
-    if ((string.split(selection)!=[selection]) or
-         selection not in cmd.get_names('objects')):
-        print " Error: must provide an object name"
-        raise cmd.QuietException
-    obj_name = selection + "_e_chg"
-    map_name = selection + "_e_map"
-    pot_name = selection + "_e_pot"
-    cmd.disable(selection)
-    cmd.delete(obj_name)
-    cmd.delete(map_name)
-    cmd.delete(pot_name)
-    cmd.create(obj_name,"polymer and ("+selection+") and (not resn A+C+T+G+U) and (not hydro)") # try to just get protein...
+def protein_assign_charges_and_radii(obj_name):
 
     from chempy.champ import assign
 
     # apply a few kludges
-
+    
     # convent Seleno-methionine to methionine
 
     cmd.alter(obj_name+"///MSE/SE","elem='S';name='SD'",quiet=1)
@@ -109,8 +96,25 @@ def protein_vacuum_esp(selection, mode=2,border=10.0,quiet = 1):
         
     formal = sum_formal_charges(obj_name,quiet=0)
     partial = sum_partial_charges(obj_name,quiet=0)
-    if abs(formal-partial)>0.0001:
+    if round(formal)!=round(partial):
         print " WARNING: formal and partial charge sums don't match -- there is a problem!"
+    
+def protein_vacuum_esp(selection, mode=2,border=10.0,quiet = 1):
+
+    if ((string.split(selection)!=[selection]) or
+         selection not in cmd.get_names('objects')):
+        print " Error: must provide an object name"
+        raise cmd.QuietException
+    obj_name = selection + "_e_chg"
+    map_name = selection + "_e_map"
+    pot_name = selection + "_e_pot"
+    cmd.disable(selection)
+    cmd.delete(obj_name)
+    cmd.delete(map_name)
+    cmd.delete(pot_name)
+    cmd.create(obj_name,"polymer and ("+selection+") and (not resn A+C+T+G+U) and (not hydro)") # try to just get protein...
+
+    protein_assign_charges_and_radii(obj_name)
         
     ext = cmd.get_extent(obj_name)
     max_length = max(abs(ext[0][0] - ext[1][0]),abs(ext[0][1] - ext[1][1]),abs(ext[0][2]-ext[1][2])) + 2*border

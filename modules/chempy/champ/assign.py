@@ -61,7 +61,6 @@ def formal_charges(selection="(all)",quiet=0):
         from chempy.champ.formal_charges import formal_charge_dict
         champ.formal_charge_dict = formal_charge_dict
 
-
     # iterate through the residue dictionary matching each residue based on chemistry
     # and generating the expressions for reassigning formal charges
     
@@ -114,8 +113,7 @@ def formal_charges(selection="(all)",quiet=0):
                             # the following expression both changes the formal charge and resets flag 23
                             alter_list.append([atom_tag[0],
                                                      "formal_charge=1;flags=flags&-8388609"])
-        
-                            
+                                    
     if 1: # c-terminal acid
         ch=Champ()
         model = cmd.get_model(selection)

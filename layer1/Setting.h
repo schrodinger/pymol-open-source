@@ -536,7 +536,7 @@ CSetting *SettingNewFromPyList(PyMOLGlobals *G,PyObject *list);
 #define cSetting_surface_optimize_subsets   384
 #define cSetting_multiplex                  385
 #define cSetting_texture_fonts              386
-#define cSetting_pqr_no_chain_id            387
+#define cSetting_pqr_workarounds            387
 #define cSetting_animation                  388
 #define cSetting_animation_duration         389
 #define cSetting_scene_animation            390
