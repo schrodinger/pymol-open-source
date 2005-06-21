@@ -382,10 +382,10 @@ PYTHON EXAMPLE
 
     def color_blue(object): cmd.color("blue",object)
 
-    cmd.set_key( 'F1' , make_it_blue, ( "object1" ) )
+    cmd.set_key( 'F1' , color_blue, ( "object1" ) )
     // would turn object1 blue when the F1 key is pressed and
 
-    cmd.set_key( 'F2' , make_it_blue, ( "object2" ) )
+    cmd.set_key( 'F2' , color_blue, ( "object2" ) )
     // would turn object2 blue when the F2 key is pressed.
 
     cmd.set_key( 'CTRL-C' , cmd.zoom )   
