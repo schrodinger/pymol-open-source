@@ -1445,14 +1445,15 @@ Carlson Group, University of Michigan <http://www.umich.edu/~carlsonh/>
         #
         # Get rid of chain information
         #
-        pymol.cmd.alter(sel,'chain = ""')
+# WLD -- PyMOL now does this automatically with PQR files        
+#        pymol.cmd.alter(sel,'chain = ""')
         pymol.cmd.save(pqr_filename,sel)
         missed_count = pymol.cmd.count_atoms("("+sel+") and flag 23")
         if missed_count > 0:
             pymol.cmd.select("unassigned","("+sel+") and flag 23")
             error_dialog = Pmw.MessageDialog(self.parent,
                                              title = 'Error',
-                                             message_text = "Unable to assign parameters for the %s atoms in selection 'unassigned'.\nPlease either remove these unassigned atoms and re-start the calculation\nor fix their parameters in the generated PQR file and run the calculation\nusing the modified PQR file (select 'Use another PQR' in 'Main')"%missed_count,
+                                             message_text = "Unable to assign parameters for the %s atoms in selection 'unassigned'.\nPlease either remove these unassigned atoms and re-start the calculation\nor fix their parameters in the generated PQR file and run the calculation\nusing the modified PQR file (select 'Use another PQR' in 'Main')."%missed_count,
                                              )
             junk = error_dialog.activate()
             return False
