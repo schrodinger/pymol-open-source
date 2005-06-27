@@ -66,7 +66,7 @@ DESCRIPTION
 
 USAGE
 
-    zoom [ selection [,buffer [, state [, complete ]]]]
+    zoom selection=all, buffer=0.0, state=0, complete=0, animate=0
 
 EXAMPLES
 
@@ -123,7 +123,7 @@ DESCRIPTION
 
 USAGE
 
-    center [ selection [,state [, origin]]]
+    center selection=all, state=0, origin=1, animate=0
 
 EXAMPLES
 
@@ -131,7 +131,7 @@ EXAMPLES
 
 PYMOL API
 
-    cmd.center( string selection, int state = 0, int origin = 1 )
+    cmd.center(string selection, int state = 0, int origin = 1 )
 
 NOTES
 
@@ -160,7 +160,7 @@ SEE ALSO
 
     clip_action_sc = Shortcut([ 'near','far','move','slab','atoms' ])
 
-    def clip(mode,offset,selection=None,state=0):
+    def clip(mode,distance,selection=None,state=0):
         '''
 DESCRIPTION
 
@@ -168,7 +168,9 @@ DESCRIPTION
 
 USAGE
 
-    clip {near|far|move|slab|atoms}, distance [,selection [,state ]]
+    clip mode, distance, selection='', state=0
+
+    mode is one of near, far, move, slab, or atoms
 
 EXAMPLES
 
@@ -179,7 +181,7 @@ EXAMPLES
     clip slab, 10, resi 11  # clip 10 A slab about residue 11
 
     clip atoms, 5, pept     # clip atoms in "pept" with a 5 A buffer
-                                    # about their current camera positions
+                            # about their current camera positions
 
 PYMOL API
 
@@ -197,7 +199,8 @@ SEE ALSO
             selection = ''
         try:
             lock()   
-            r = _cmd.clip(str(mode),float(offset),str(selection),int(state)-1)
+            r = _cmd.clip(str(mode),float(distance),
+		str(selection),int(state)-1)
         finally:
             unlock(r)
         if _raising(r): raise QuietException         
