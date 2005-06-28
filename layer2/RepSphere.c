@@ -610,7 +610,7 @@ static void RepSphereRender(RepSphere *I,RenderInfo *info)
                     v=I->VC;
                     c=I->NC;
                     largest = 0.0F;
-                    zz_factor = _1 - pow(_1-z_factor,2);
+                    zz_factor = _1 - (float)pow(_1-z_factor,2);
                     if(zz_factor<0.45F)
                       zz_factor=0.45F;
                     
@@ -670,7 +670,7 @@ static void RepSphereRender(RepSphere *I,RenderInfo *info)
                     glEnd();
 
                     if(largest>2.0F) {
-                      float reduce = (largest-2.0)/largest;
+                      float reduce = (largest-2.0F)/largest;
                       r_factor *= reduce;
                       z_factor = (float)sqrt1f(1.0F-(r_factor*r_factor));
                       s_factor = (float)pow(z_factor,20.0F)*0.5F;
