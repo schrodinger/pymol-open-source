@@ -457,7 +457,8 @@ if __name__=='pymol.setting':
         sphere_mode               = (421, '')
         sphere_point_max_size     = (422, '')
         sphere_point_size         = (423, '')
-     
+        pdb_honor_model_number    = (424, '')
+
     setting_sc = Shortcut(SettingIndex.__dict__.keys())
 
     index_list = []

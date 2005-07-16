@@ -2579,7 +2579,7 @@ void SettingInitGlobal(PyMOLGlobals *G,int alloc,int reset_gui)
   SettingSet_i(I,cSetting_sphere_mode, G->Option->sphere_mode);
   SettingSet_f(I,cSetting_sphere_point_max_size, 18.0);
   SettingSet_f(I,cSetting_sphere_point_size, 1.0);
-
+  SettingSet_b(I,cSetting_pdb_honor_model_number, false);
 }
 
 
