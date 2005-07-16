@@ -4,6 +4,12 @@ CHANGE LOG
 
 Changes up to 0.99
 
+    beta09
+
+    * exceptions not caught for startup/command-line actions
+
+    * improved behavior of "multiplex" option for PDB file loads
+
     beta08                                                                                  
                                                                                                 
     * made some changed to apbs_tools.py                                                    

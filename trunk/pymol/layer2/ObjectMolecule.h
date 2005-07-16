@@ -109,6 +109,7 @@ typedef struct {
   int is_pqr_file, pqr_workarounds;
   PDBScale scale;
   int ignore_header_names;
+  int multi_object_status; /* 0 = unknown, 1 = is multi_object, -1 is not multi_object */
   int multiplex;
 } PDBInfoRec;
 
@@ -292,7 +293,7 @@ ObjectMolecule *ObjectMoleculeReadStr(PyMOLGlobals *G,ObjectMolecule *I,
 ObjectMolecule *ObjectMoleculeReadPDBStr(PyMOLGlobals *G,ObjectMolecule *obj,char *molstr,
                                          int frame,int discrete,
                                          M4XAnnoType *m4x,char *pdb_name,
-                                         char **next_pdb,PDBInfoRec *pdb_info,int quiet);
+                                         char **next_pdb,PDBInfoRec *pdb_info,int quiet, int *model_number);
 
 ObjectMolecule *ObjectMoleculeReadMMDStr(PyMOLGlobals *G,ObjectMolecule *I,char *MMDStr,int frame,int discrete);
 ObjectMolecule *ObjectMoleculeReadXYZStr(PyMOLGlobals *G,ObjectMolecule *I,char *PDBStr,int frame,int discrete);
@@ -394,7 +395,7 @@ struct CoordSet *ObjectMoleculePDBStr2CoordSet(PyMOLGlobals *G,
                                                char *pdb_name,
                                                char **next_pdb,
                                                PDBInfoRec *pdb_info,
-                                               int quiet);
+                                               int quiet, int *model_number);
 
 #if 0
 /* legacy binary file suppoort */

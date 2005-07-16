@@ -759,9 +759,64 @@ int ObjectMoleculeConvertIDsToIndices(ObjectMolecule *I,int *id,int n_id)
   return unique;
     
 }
-static char *check_next_pdb_object(char *p)
+static char *check_next_pdb_object(char *p, int skip_to_next)
 {
   char *start = p;
+  char *line_start;
+  char cc[MAXLINELEN];  
+  while(*p) {
+    line_start = p;
+    p=ncopy(cc,p,6);
+    if((cc[0]=='H')&&
+       (cc[1]=='E')&&
+       (cc[2]=='A')&&
+       (cc[3]=='D')&&
+       (cc[4]=='E')&&
+       (cc[5]=='R')) {
+      if(skip_to_next) 
+        return line_start;
+      else
+        return start;
+    } else if(((cc[0]=='A')&& /* ATOM */
+               (cc[1]=='T')&&
+               (cc[2]=='O')&&
+               (cc[3]=='M')&&
+               (cc[4]==' ')&&
+               (cc[5]==' '))||
+              ((cc[0]=='H')&& /* HETATM */
+               (cc[1]=='E')&&
+               (cc[2]=='T')&&
+               (cc[3]=='A')&&
+               (cc[4]=='T')&&
+               (cc[5]=='M'))) {
+      p=nskip(p,5); 
+      ParseNTrim(cc,p,14); 
+      /* this is a special workaround for the bogus HETATM entry in PDB 4ZN2:
+         HETATM20829              0       0.000   0.000   0.000  1.00  0.00      4ZN20773
+         which screws up our PDB test case */
+      if(cc[0]) {
+        return start;
+      }
+    } else if(((cc[0]=='E')&& /* if we pass over the END of the current PDB file, then reset start */
+               (cc[1]=='N')&&
+               (cc[2]=='D'))) {
+      if(strcmp("END",cc)==0) { /* END */
+        if(skip_to_next) {
+          start = line_start;
+        }
+      }
+    }
+    p=nextline(p);
+  }
+  return NULL;
+}
+
+static int get_multi_object_status(char *p) /* expensive -- only call
+                                               this if there is no
+                                               other way to determine
+                                               this information */
+{
+  int seen_header = 0;
   char cc[MAXLINELEN];  
   while(*p) {
     p=ncopy(cc,p,6);
@@ -771,32 +826,16 @@ static char *check_next_pdb_object(char *p)
        (cc[3]=='D')&&
        (cc[4]=='E')&&
        (cc[5]=='R'))
-      return start;
-    else if(((cc[0]=='A')&& /* ATOM */
-             (cc[1]=='T')&&
-             (cc[2]=='O')&&
-             (cc[3]=='M')&&
-             (cc[4]==' ')&&
-             (cc[5]==' '))||
-            ((cc[0]=='H')&& /* HETATM */
-             (cc[1]=='E')&&
-             (cc[2]=='T')&&
-             (cc[3]=='A')&&
-             (cc[4]=='T')&&
-             (cc[5]=='M'))) {
-      
-      p=nskip(p,5); 
-      ParseNTrim(cc,p,14); 
-      /* this is a special workaround for the bogus HETATM entry in PDB 4ZN2:
-         HETATM20829              0       0.000   0.000   0.000  1.00  0.00      4ZN20773
-         which screws up our PDB test case */
-      if(cc[0])
-        return start;
-    }
+      if(seen_header) {
+        return 1;
+      } else {
+        seen_header = true;
+      }
     p=nextline(p);
   }
-  return NULL;
+  return -1;
 }
+
 int ObjectMoleculeAutoDisableAtomNameWildcard(ObjectMolecule *I)
 {
   PyMOLGlobals *G = I->Obj.G;
@@ -850,7 +889,7 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(PyMOLGlobals *G,
                                         char *pdb_name,
                                         char **next_pdb,
                                         PDBInfoRec *info,
-                                        int quiet)
+                                        int quiet, int *model_number)
 {
 
   char *p;
@@ -912,8 +951,12 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(PyMOLGlobals *G,
 
   if(buffer == *restart_model)
     only_read_one_model = true;
-  else if(info && info->multiplex)
+  else if(info && info->multiplex) {
     only_read_one_model = true;    
+    if(!info->multi_object_status) { /* figure out if this is a multi-object (multi-HEADER) pdb file */
+      info->multi_object_status = get_multi_object_status(p);
+    }
+  }
   /* PASS 1 */
 
   *restart_model = NULL;
@@ -1101,350 +1144,348 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(PyMOLGlobals *G,
   /* PASS 2 */
   seen_model = false;
 
-  while(*p)
-	 {
-      /*      printf("%c%c%c%c%c%c\n",p[0],p[1],p[2],p[3],p[4],p[5]);*/
-		AFlag=false;
-      SSCode=0;
-		if((p[0]=='A')&& /* ATOM */
-         (p[1]=='T')&&
-         (p[2]=='O')&&
-         (p[3]=='M'))
-		  AFlag = 1;
-		else if((p[0]=='H')&& /* HETATM */
-              (p[1]=='E')&&
-              (p[2]=='T')&&
-              (p[3]=='A')&&
-              (p[4]=='T')&&
-              (p[5]=='M'))
-        AFlag = 2;
-		else if((p[0]=='H')&& /* HEADER */
-              (p[1]=='E')&&
-              (p[2]=='A')&&
-              (p[3]=='D')&&
-              (p[4]=='E')&&
-              (p[5]=='R'))
-        {
-          if(pdb_name) {
-            if(atomCount>0) {
-              /* have we already read atoms?  then this is probably a new PDB file */
-              (*next_pdb) = p; /* found another PDB file after this one... */
-              break;
-            } else if((!info)||(!info->ignore_header_names)) { 
-              /* if this isn't an MD trajectory... */
-              char *pp;
-              pp=nskip(p,62); /* is there a four-letter PDB code? */
-              pp=ntrim(pdb_name,pp,4);
-              if(pdb_name[0]==0) { /* if not, is there a plain name (for MERCK!)*/
-                p=nskip(p,6);
-                p=ntrim(cc,p,44);
-                UtilNCopy(pdb_name,cc,ObjNameMax-1);
-              } else {
-                p=pp;
-              }
-            }
+  while(*p) {
+    /*      printf("%c%c%c%c%c%c\n",p[0],p[1],p[2],p[3],p[4],p[5]);*/
+    AFlag=false;
+    SSCode=0;
+    if((p[0]=='A')&& /* ATOM */
+       (p[1]=='T')&&
+       (p[2]=='O')&&
+       (p[3]=='M'))
+      AFlag = 1;
+    else if((p[0]=='H')&& /* HETATM */
+            (p[1]=='E')&&
+            (p[2]=='T')&&
+            (p[3]=='A')&&
+            (p[4]=='T')&&
+            (p[5]=='M'))
+      AFlag = 2;
+    else if((p[0]=='H')&& /* HEADER */
+            (p[1]=='E')&&
+            (p[2]=='A')&&
+            (p[3]=='D')&&
+            (p[4]=='E')&&
+            (p[5]=='R')) {
+      
+      if(pdb_name) {
+        if(atomCount>0) {
+          /* have we already read atoms?  then this is probably a new PDB file */
+          (*next_pdb) = p; /* found another PDB file after this one... */
+          break;
+        } else if((!info)||(!info->ignore_header_names)) { 
+          /* if this isn't an MD trajectory... */
+          char *pp;
+          pp=nskip(p,62); /* is there a four-letter PDB code? */
+          pp=ntrim(pdb_name,pp,4);
+          if(pdb_name[0]==0) { /* if not, is there a plain name (for MERCK!)*/
+            p=nskip(p,6);
+            p=ntrim(cc,p,44);
+            UtilNCopy(pdb_name,cc,ObjNameMax-1);
+          } else {
+            p=pp;
           }
         }
-		else if((p[0]=='M')&& /* MODEL */
+      }
+    } else if((p[0]=='M')&& /* MODEL */
               (p[1]=='O')&&
               (p[2]=='D')&&
               (p[3]=='E')&&
-              (p[4]=='L'))
-        {
-          seen_model = true;
-        }
-		else if((p[0]=='H')&& /* HELIX */
+              (p[4]=='L')) {
+      if(model_number) {
+        int tmp;
+        p = nskip(p,10);
+        p = ncopy(cc,p,5);
+        if(sscanf(cc,"%d",&tmp)==1)
+          *model_number = tmp;
+      }
+      seen_model = true;
+    } else if((p[0]=='H')&& /* HELIX */
               (p[1]=='E')&&
               (p[2]=='L')&&
               (p[3]=='I')&&
-              (p[4]=='X'))
-        {
-          ss_valid=true;
-          
-          p=nskip(p,19);
-          ss_chain1 = (*p);
-          p=nskip(p,2);
-          p=ncopy(cc,p,4);
-          if(!sscanf(cc,"%s",ss_resi1)) ss_valid=false;
-          if(!sscanf(cc,"%d",&ss_resv1)) ss_valid=false;
-
-          p=nskip(p,6);
-          ss_chain2 = (*p);
-          p=nskip(p,2);
-          p=ncopy(cc,p,4);
-
-          if(!sscanf(cc,"%s",ss_resi2)) ss_valid=false;
-          if(!sscanf(cc,"%d",&ss_resv2)) ss_valid=false;
-    
-          if(ss_valid) {
-            PRINTFB(G,FB_ObjectMolecule,FB_Blather)
-              " ObjectMolecule: read HELIX %c %s %c %s\n",
-              ss_chain1,ss_resi1,ss_chain2,ss_resi2
-              ENDFB(G);
-            SSCode='H';
-          }
-
-          if(ss_chain1==' ') ss_chain1=0;
-          if(ss_chain2==' ') ss_chain2=0;          
-
-        }
-		else if((p[0]=='S')&& /* SHEET */
+              (p[4]=='X')) {
+      ss_valid=true;
+      
+      p=nskip(p,19);
+      ss_chain1 = (*p);
+      p=nskip(p,2);
+      p=ncopy(cc,p,4);
+      if(!sscanf(cc,"%s",ss_resi1)) ss_valid=false;
+      if(!sscanf(cc,"%d",&ss_resv1)) ss_valid=false;
+      
+      p=nskip(p,6);
+      ss_chain2 = (*p);
+      p=nskip(p,2);
+      p=ncopy(cc,p,4);
+      
+      if(!sscanf(cc,"%s",ss_resi2)) ss_valid=false;
+      if(!sscanf(cc,"%d",&ss_resv2)) ss_valid=false;
+      
+      if(ss_valid) {
+        PRINTFB(G,FB_ObjectMolecule,FB_Blather)
+          " ObjectMolecule: read HELIX %c %s %c %s\n",
+          ss_chain1,ss_resi1,ss_chain2,ss_resi2
+          ENDFB(G);
+        SSCode='H';
+      }
+      
+      if(ss_chain1==' ') ss_chain1=0;
+      if(ss_chain2==' ') ss_chain2=0;          
+      
+    } else if((p[0]=='S')&& /* SHEET */
               (p[1]=='H')&&
               (p[2]=='E')&&
               (p[3]=='E')&&
-              (p[4]=='T'))
-        {
-          ss_valid=true;
-          p=nskip(p,21);
-          ss_chain1 = (*p);
-          p=nskip(p,1);
-          p=ncopy(cc,p,4);
-          if(!sscanf(cc,"%s",ss_resi1)) ss_valid=false;
-          if(!sscanf(cc,"%d",&ss_resv1)) ss_valid=false;
-          p=nskip(p,6);
-          ss_chain2 = (*p);
-          p=nskip(p,1);
-          p=ncopy(cc,p,4);
-          if(!sscanf(cc,"%s",ss_resi2)) ss_valid=false;
-          if(!sscanf(cc,"%d",&ss_resv2)) ss_valid=false;
-       
-          if(ss_valid) {
-            PRINTFB(G,FB_ObjectMolecule,FB_Blather)
-              " ObjectMolecule: read SHEET %c %s %c %s\n",
-              ss_chain1,ss_resi1,ss_chain2,ss_resi2
-              ENDFB(G);
-            SSCode = 'S';
-          }
-
-          if(ss_chain1==' ') ss_chain1=0;
-          if(ss_chain2==' ') ss_chain2=0;   
-
-        }
-		else if((p[0]=='E')&& /* ENDMDL */
+              (p[4]=='T')) {
+      ss_valid=true;
+      p=nskip(p,21);
+      ss_chain1 = (*p);
+      p=nskip(p,1);
+      p=ncopy(cc,p,4);
+      if(!sscanf(cc,"%s",ss_resi1)) ss_valid=false;
+      if(!sscanf(cc,"%d",&ss_resv1)) ss_valid=false;
+      p=nskip(p,6);
+      ss_chain2 = (*p);
+      p=nskip(p,1);
+      p=ncopy(cc,p,4);
+      if(!sscanf(cc,"%s",ss_resi2)) ss_valid=false;
+      if(!sscanf(cc,"%d",&ss_resv2)) ss_valid=false;
+      
+      if(ss_valid) {
+        PRINTFB(G,FB_ObjectMolecule,FB_Blather)
+          " ObjectMolecule: read SHEET %c %s %c %s\n",
+          ss_chain1,ss_resi1,ss_chain2,ss_resi2
+          ENDFB(G);
+        SSCode = 'S';
+      }
+      
+      if(ss_chain1==' ') ss_chain1=0;
+      if(ss_chain2==' ') ss_chain2=0;   
+      
+    } else if((p[0]=='E')&& /* ENDMDL */
               (p[1]=='N')&&
               (p[2]=='D')&&
               (p[3]=='M')&&
               (p[4]=='D')&&
               (p[5]=='L')&&
               (!*restart_model)) {
-        *restart_model=nextline(p);
-
-        if(only_read_one_model) {
-          char *pp;
-          pp = nextline(p); 
-          if((pp[0]=='E')&& /* END we're going to be starting a new object...*/
-             (pp[1]=='N')&&
-             (pp[2]=='D')) {
-            (*next_pdb) = check_next_pdb_object(nextline(pp));
-            is_end_of_object = true;
-          } else if((pp[0]=='M')&& /* not a new object...just a new state (model) */
-                    (pp[1]=='O')&&
-                    (pp[2]=='D')&&
-                    (pp[3]=='E')&&
-                    (pp[4]=='L')) {
-            if(info && info->multiplex) { /* end object if we're multiplexing */
-              (*next_pdb) = check_next_pdb_object(pp);
-              (*restart_model) = NULL;
-            } else 
-              is_end_of_object = false;
-          } else {
-            if(pp[0]>32) /* more content follows... */
-              (*next_pdb) = check_next_pdb_object(pp);
-            else
-              (*next_pdb) = NULL; /* at end of file */
-          }
-          break;
+      *restart_model=nextline(p);
+      
+      if(only_read_one_model) {
+        char *pp;
+        pp = nextline(p); 
+        if((pp[0]=='E')&& /* END we're going to be starting a new object...*/
+           (pp[1]=='N')&&
+           (pp[2]=='D')) {
+          (*next_pdb) = check_next_pdb_object(nextline(pp),true);
+          is_end_of_object = true;
+        } else if((pp[0]=='M')&& /* not a new object...just a new state (model) */
+                  (pp[1]=='O')&&
+                  (pp[2]=='D')&&
+                  (pp[3]=='E')&&
+                  (pp[4]=='L')) {
+          if(info && info->multiplex) { /* end object if we're multiplexing */
+            (*next_pdb) = check_next_pdb_object(pp, true);
+            (*restart_model) = NULL;
+          } else 
+            is_end_of_object = false;
+        } else {
+          if(pp[0]>32) /* more content follows... */
+            (*next_pdb) = check_next_pdb_object(pp, true);
+          else
+            (*next_pdb) = NULL; /* at end of file */
         }
-      } else if((p[0]=='E')&& /* END */
-                (p[1]=='N')&&
-                (p[2]=='D')) { 
-        ntrim(cc,p,6);
-        if(strcmp("END",cc)==0) { /* stop parsing here...*/
-          char *pp;
-          pp=nextline(p); /* ...unless we're in MODEL or next line is itself ENDMDL */
-          p=ncopy(cc,p,6);
-          if(!((cc[0] =='E')&&
-               (cc[1] =='N')&&
-               (cc[2] =='D')&&
-               (cc[3] =='M')&&
-               (cc[4] =='D')&&
-               (cc[5] =='L')))
-            {
-              if(!*next_pdb) {
-                (*next_pdb) = check_next_pdb_object(pp);
-              }
-              if(*next_pdb) {
-                is_end_of_object = true;
-                break;
-              } else if(!seen_model)
-                break;
+        break;
+      }
+    } else if((p[0]=='E')&& /* END */
+              (p[1]=='N')&&
+              (p[2]=='D')) {
+      ntrim(cc,p,6);
+      if(strcmp("END",cc)==0) { /* stop parsing here...*/
+        char *pp;
+        pp=nextline(p); /* ...unless we're in MODEL or next line is itself ENDMDL */
+        p=ncopy(cc,p,6);
+        if(!((cc[0] =='E')&&
+             (cc[1] =='N')&&
+             (cc[2] =='D')&&
+             (cc[3] =='M')&&
+             (cc[4] =='D')&&
+             (cc[5] =='L')))
+          { 
+            if(!*next_pdb) {
+              (*next_pdb) = check_next_pdb_object(pp, false);
             }
-        }
-      } else if((p[0]=='C')&& /* CRYST1 */
-                (p[1]=='R')&&
-                (p[2]=='Y')&&
-                (p[3]=='S')&&
-                (p[4]=='T')&&
-                (p[5]=='1')&& (!*restart_model))      {
-        if(!symmetry) symmetry=SymmetryNew(G);          
-        if(symmetry) {
-          int symFlag=true;
-          PRINTFB(G,FB_ObjectMolecule,FB_Blather)
-            " PDBStrToCoordSet: Attempting to read symmetry information\n"
-            ENDFB(G);
-          p=nskip(p,6);
-          symFlag=true;
-          p=ncopy(cc,p,9);
-          if(sscanf(cc,"%f",&symmetry->Crystal->Dim[0])!=1) symFlag=false;
-          p=ncopy(cc,p,9);
-          if(sscanf(cc,"%f",&symmetry->Crystal->Dim[1])!=1) symFlag=false;
-          p=ncopy(cc,p,9);
-          if(sscanf(cc,"%f",&symmetry->Crystal->Dim[2])!=1) symFlag=false;
-          p=ncopy(cc,p,7);
-          if(sscanf(cc,"%f",&symmetry->Crystal->Angle[0])!=1) symFlag=false;
-          p=ncopy(cc,p,7);
-          if(sscanf(cc,"%f",&symmetry->Crystal->Angle[1])!=1) symFlag=false;
-          p=ncopy(cc,p,7);
-          if(sscanf(cc,"%f",&symmetry->Crystal->Angle[2])!=1) symFlag=false;
-          p=nskip(p,1);
-          p=ncopy(symmetry->SpaceGroup,p,10);
-          UtilCleanStr(symmetry->SpaceGroup);
-          p=ncopy(cc,p,4);
-          if(sscanf(cc,"%d",&symmetry->PDBZValue)!=1) symmetry->PDBZValue=1;
-          if(!symFlag) {
-            ErrMessage(G,"PDBStrToCoordSet","Error reading CRYST1 record\n");
-            SymmetryFree(symmetry);
-            symmetry=NULL;
+            if(*next_pdb) { /* we've found another object... */
+              if(*restart_model) 
+                is_end_of_object = false; /* however, if we're parsing multi-models, then we're not yet at the end */
+              else
+                is_end_of_object = true;
+              break;
+            } else if(!seen_model)
+              break;
           }
+      }
+    } else if((p[0]=='C')&& /* CRYST1 */
+              (p[1]=='R')&&
+              (p[2]=='Y')&&
+              (p[3]=='S')&&
+              (p[4]=='T')&&
+              (p[5]=='1')&& (!*restart_model))      {
+      if(!symmetry) symmetry=SymmetryNew(G);          
+      if(symmetry) {
+        int symFlag=true;
+        PRINTFB(G,FB_ObjectMolecule,FB_Blather)
+          " PDBStrToCoordSet: Attempting to read symmetry information\n"
+          ENDFB(G);
+        p=nskip(p,6);
+        symFlag=true;
+        p=ncopy(cc,p,9);
+        if(sscanf(cc,"%f",&symmetry->Crystal->Dim[0])!=1) symFlag=false;
+        p=ncopy(cc,p,9);
+        if(sscanf(cc,"%f",&symmetry->Crystal->Dim[1])!=1) symFlag=false;
+        p=ncopy(cc,p,9);
+        if(sscanf(cc,"%f",&symmetry->Crystal->Dim[2])!=1) symFlag=false;
+        p=ncopy(cc,p,7);
+        if(sscanf(cc,"%f",&symmetry->Crystal->Angle[0])!=1) symFlag=false;
+        p=ncopy(cc,p,7);
+        if(sscanf(cc,"%f",&symmetry->Crystal->Angle[1])!=1) symFlag=false;
+        p=ncopy(cc,p,7);
+        if(sscanf(cc,"%f",&symmetry->Crystal->Angle[2])!=1) symFlag=false;
+        p=nskip(p,1);
+        p=ncopy(symmetry->SpaceGroup,p,10);
+        UtilCleanStr(symmetry->SpaceGroup);
+        p=ncopy(cc,p,4);
+        if(sscanf(cc,"%d",&symmetry->PDBZValue)!=1) symmetry->PDBZValue=1;
+        if(!symFlag) {
+          ErrMessage(G,"PDBStrToCoordSet","Error reading CRYST1 record\n");
+          SymmetryFree(symmetry);
+          symmetry=NULL;
         }
-      } else if((p[0]=='S')&& /* SCALEn */
+      }
+    } else if((p[0]=='S')&& /* SCALEn */
                 (p[1]=='C')&&
                 (p[2]=='A')&&
                 (p[3]=='L')&&
                 (p[4]=='E')&&
-                (!*restart_model)&&info)
+              (!*restart_model)&&info) {
+      switch(p[5]) {
+      case '1':
+      case '2':
+      case '3':
         {
-          switch(p[5]) {
-          case '1':
-          case '2':
-          case '3':
-            {
-              int flag=(p[5]-'1');
-              int offset=flag*4;
-              int scale_flag=true;
-              p=nskip(p,10);
-              p=ncopy(cc,p,10);
-              if(sscanf(cc,"%f",&info->scale.matrix[offset])!=1) scale_flag=false;
-              p=ncopy(cc,p,10);
-              if(sscanf(cc,"%f",&info->scale.matrix[offset+1])!=1) scale_flag=false;
-              p=ncopy(cc,p,10);
-              if(sscanf(cc,"%f",&info->scale.matrix[offset+2])!=1) scale_flag=false;
-              p=nskip(p,5);
-              p=ncopy(cc,p,10);
-              if(sscanf(cc,"%f",&info->scale.matrix[offset+3])!=1) scale_flag=false;                
-              if(scale_flag)
-                info->scale.flag[flag]=true;
-              PRINTFB(G,FB_ObjectMolecule,FB_Blather)
-                " PDBStrToCoordSet: SCALE%d %8.4f %8.4f %8.4f %8.4f\n",flag+1,
-                info->scale.matrix[offset],
-                info->scale.matrix[offset+1],
-                info->scale.matrix[offset+2],
-                info->scale.matrix[offset+3]
-                ENDFB(G);
-            }
-            break;
-          }
+          int flag=(p[5]-'1');
+          int offset=flag*4;
+          int scale_flag=true;
+          p=nskip(p,10);
+          p=ncopy(cc,p,10);
+          if(sscanf(cc,"%f",&info->scale.matrix[offset])!=1) scale_flag=false;
+          p=ncopy(cc,p,10);
+          if(sscanf(cc,"%f",&info->scale.matrix[offset+1])!=1) scale_flag=false;
+          p=ncopy(cc,p,10);
+          if(sscanf(cc,"%f",&info->scale.matrix[offset+2])!=1) scale_flag=false;
+          p=nskip(p,5);
+          p=ncopy(cc,p,10);
+          if(sscanf(cc,"%f",&info->scale.matrix[offset+3])!=1) scale_flag=false;                
+          if(scale_flag)
+            info->scale.flag[flag]=true;
+          PRINTFB(G,FB_ObjectMolecule,FB_Blather)
+            " PDBStrToCoordSet: SCALE%d %8.4f %8.4f %8.4f %8.4f\n",flag+1,
+            info->scale.matrix[offset],
+            info->scale.matrix[offset+1],
+            info->scale.matrix[offset+2],
+            info->scale.matrix[offset+3]
+            ENDFB(G);
         }
-		else if((p[0]=='C')&& /* CONECT */
+        break;
+      }
+    } else if((p[0]=='C')&& /* CONECT */
               (p[1]=='O')&&
               (p[2]=='N')&&
               (p[3]=='E')&&
               (p[4]=='C')&&
               (p[5]=='T')&&
-              bondFlag&&(!ignore_conect))
-        {
-          p=nskip(p,6);
+              bondFlag&&(!ignore_conect)) {
+      p=nskip(p,6);
+      p=ncopy(cc,p,5);
+      if(sscanf(cc,"%d",&b1)==1)
+        while (1) {
           p=ncopy(cc,p,5);
-          if(sscanf(cc,"%d",&b1)==1)
-            while (1) {
-              p=ncopy(cc,p,5);
-              if(sscanf(cc,"%d",&b2)!=1)
-                break;
-              else {
-                if((b1>=0)&&(b2>=0)&&(b1!=b2)) { /* IDs must be positive and distinct*/
-                  VLACheck(bond,BondType,nBond);
-                  if(b1<=b2) {
-                    bond[nBond].index[0]=b1; /* temporarily store the atom indexes */
-                    bond[nBond].index[1]=b2;
-                    bond[nBond].order=1;
-                    bond[nBond].stereo=0;
-                    
-                  } else {
-                    bond[nBond].index[0]=b2;
-                    bond[nBond].index[1]=b1;
-                    bond[nBond].order=1;
-                    bond[nBond].stereo=0;
-                  }
-                  nBond++;
-                }
+          if(sscanf(cc,"%d",&b2)!=1)
+            break;
+          else {
+            if((b1>=0)&&(b2>=0)&&(b1!=b2)) { /* IDs must be positive and distinct*/
+              VLACheck(bond,BondType,nBond);
+              if(b1<=b2) {
+                bond[nBond].index[0]=b1; /* temporarily store the atom indexes */
+                bond[nBond].index[1]=b2;
+                bond[nBond].order=1;
+                bond[nBond].stereo=0;
+                
+              } else {
+                bond[nBond].index[0]=b2;
+                bond[nBond].index[1]=b1;
+                bond[nBond].order=1;
+                bond[nBond].stereo=0;
               }
+              nBond++;
             }
+          }
         }
-		else if((p[0]=='U')&& /* USER */
+    } else if((p[0]=='U')&& /* USER */
               (p[1]=='S')&&
               (p[2]=='E')&&
               (p[3]=='R')&&
               (!*restart_model)) {
-        /* Metaphorics key 'USER     ' */
-        if((p[4]==' ')&&
-              (p[5]==' ')&&
-              (p[6]==' ')&&
-              
-           (p[7]==' ')&&
-              (p[8]==' ')&&
-              m4x) {
-          
-          int parsed_flag = false;
-
-          p = nskip(p,10);
-          p = ntrim(cc,p,6);
-
-          /* is this a context name or a USER record? */
-          switch(cc[0]) {
-          case 'X':
-            if(WordMatchExact(G,"XNAME",cc,true)) {  /* object name */
-              p=nskip(p,1);
-              p=ntrim(m4x->xname,p,10);
-              if(m4x->xname[0]) {
-                m4x->xname_flag = true;
-                parsed_flag = true;
-              }
+      /* Metaphorics key 'USER     ' */
+      if((p[4]==' ')&&
+         (p[5]==' ')&&
+         (p[6]==' ')&&
+         
+         (p[7]==' ')&&
+         (p[8]==' ')&&
+         m4x) {
+        
+        int parsed_flag = false;
+        
+        p = nskip(p,10);
+        p = ntrim(cc,p,6);
+        
+        /* is this a context name or a USER record? */
+        switch(cc[0]) {
+        case 'X':
+          if(WordMatchExact(G,"XNAME",cc,true)) {  /* object name */
+            p=nskip(p,1);
+            p=ntrim(m4x->xname,p,10);
+            if(m4x->xname[0]) {
+              m4x->xname_flag = true;
+              parsed_flag = true;
             }
-            break;
-          case 'A': /* alignment information */
-            if(WordMatchExact(G,"ALIGN",cc,true)) {
-              if(m4x->align && m4x->align->id_at_point) {
-                M4XAlignType *align = m4x->align;
-                char target[11];
-                int atom_id,point_id;
-                float fitness;
+          }
+          break;
+        case 'A': /* alignment information */
+          if(WordMatchExact(G,"ALIGN",cc,true)) {
+            if(m4x->align && m4x->align->id_at_point) {
+              M4XAlignType *align = m4x->align;
+              char target[11];
+              int atom_id,point_id;
+              float fitness;
+              p=nskip(p,1);
+              p=ncopy(cc,p,6);
+              if(sscanf(cc,"%d",&atom_id)==1) {
                 p=nskip(p,1);
-                p=ncopy(cc,p,6);
-                if(sscanf(cc,"%d",&atom_id)==1) {
-                  p=nskip(p,1);
-                  p=ntrim(target,p,10);
-                  if(target[0]) {
-                    if(!align->target[0]) 
-                      UtilNCopy(align->target,target,ObjNameMax);
-                    if(WordMatchExact(G,align->target,target,true)) { /* must match the one target allowed */
+                p=ntrim(target,p,10);
+                if(target[0]) {
+                  if(!align->target[0]) 
+                    UtilNCopy(align->target,target,ObjNameMax);
+                  if(WordMatchExact(G,align->target,target,true)) { /* must match the one target allowed */
+                    p=nskip(p,1);
+                    p=ncopy(cc,p,6);
+                    if(sscanf(cc,"%d",&point_id)==1) {                      
                       p=nskip(p,1);
                       p=ncopy(cc,p,6);
-                      if(sscanf(cc,"%d",&point_id)==1) {                      
-                        p=nskip(p,1);
-                        p=ncopy(cc,p,6);
-                        if(sscanf(cc,"%f",&fitness)==1) {
-                          VLACheck(align->id_at_point,int,point_id);
-                          VLACheck(align->fitness,float,point_id);
+                      if(sscanf(cc,"%f",&fitness)==1) {
+                        VLACheck(align->id_at_point,int,point_id);
+                        VLACheck(align->fitness,float,point_id);
                           if(point_id >= align->n_point) 
                             align->n_point = point_id + 1;
                           align->id_at_point[point_id] = atom_id;
@@ -1460,183 +1501,209 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(PyMOLGlobals *G,
               parsed_flag = true;
             }
             break;
-          }
+        }
           
-          if((!parsed_flag)&&m4x->context) { /* named context of some sort... */
-            int cn;
-            int found=false;
+        if((!parsed_flag)&&m4x->context) { /* named context of some sort... */
+          int cn;
+          int found=false;
             
-            /* does context already exist ? */
-            for(cn=0;cn<m4x->n_context;cn++) {
-              if(WordMatchExact(G,m4x->context[cn].name,cc,true)) {
-                found=true;
-                break;
-              }
+          /* does context already exist ? */
+          for(cn=0;cn<m4x->n_context;cn++) {
+            if(WordMatchExact(G,m4x->context[cn].name,cc,true)) {
+              found=true;
+              break;
             }
+          }
             
-            if(found) {
+          if(found) {
               
-              M4XContextType *cont = m4x->context+cn;
+            M4XContextType *cont = m4x->context+cn;
               
-              p = nskip(p,1);
-              p = ntrim(cc,p,6);
-              switch(cc[0]) {
-              case 'B':
-                if(WordMatchExact(G,"BORDER",cc,true)&&bondFlag) {
-                  int order;
+            p = nskip(p,1);
+            p = ntrim(cc,p,6);
+            switch(cc[0]) {
+            case 'B':
+              if(WordMatchExact(G,"BORDER",cc,true)&&bondFlag) {
+                int order;
                   
+                p=nskip(p,1);
+                p=ncopy(cc,p,6);
+                if(sscanf(cc,"%d",&b1)==1) {
                   p=nskip(p,1);
                   p=ncopy(cc,p,6);
-                  if(sscanf(cc,"%d",&b1)==1) {
-                    p=nskip(p,1);
-                    p=ncopy(cc,p,6);
-                    if(sscanf(cc,"%d",&b2)==1) {
-                      p = nskip(p,1);
-                      p = ncopy(cc,p,6);
-                      if(sscanf(cc,"%d",&order)==1) {      
-                        if((b1>=0)&&(b2>=0)) { /* IDs must be positive */
-                          VLACheck(bond,BondType,nBond);
-                          if(b1<=b2) {
-                            bond[nBond].index[0]=b1; /* temporarily store the atom indexes */
-                            bond[nBond].index[1]=b2;
-                            bond[nBond].order=order;
-                            bond[nBond].stereo=0;
+                  if(sscanf(cc,"%d",&b2)==1) {
+                    p = nskip(p,1);
+                    p = ncopy(cc,p,6);
+                    if(sscanf(cc,"%d",&order)==1) {      
+                      if((b1>=0)&&(b2>=0)) { /* IDs must be positive */
+                        VLACheck(bond,BondType,nBond);
+                        if(b1<=b2) {
+                          bond[nBond].index[0]=b1; /* temporarily store the atom indexes */
+                          bond[nBond].index[1]=b2;
+                          bond[nBond].order=order;
+                          bond[nBond].stereo=0;
                             
-                          } else {
-                            bond[nBond].index[0]=b2;
-                            bond[nBond].index[1]=b1;
-                            bond[nBond].order=order;
-                            bond[nBond].stereo=0;
-                          }
-                          nBond++;
+                        } else {
+                          bond[nBond].index[0]=b2;
+                          bond[nBond].index[1]=b1;
+                          bond[nBond].order=order;
+                          bond[nBond].stereo=0;
                         }
+                        nBond++;
                       }
                     }
                   }
                 }
-                break;
-              case 'S':
-                if(WordMatchExact(G,"SITE",cc,true)) {
-                  if(cont->site) {
-                    int id;
-                    while(*cc) {
-                      p = nskip(p,1);
-                      p = ncopy(cc,p,6);
-                      if(sscanf(cc,"%d",&id)==1) {
-                        VLACheck(cont->site,int,cont->n_site);
-                        cont->site[cont->n_site++] = id;
-                      }
-                    }
-                  }
-                } 
-                break;
-              case 'L':
-                if(WordMatchExact(G,"LIGAND",cc,true)) {
-                  if(cont->ligand) {
-                    int id;
-                    while(*cc) {
-                      p = nskip(p,1);
-                      p = ncopy(cc,p,6);
-                      if(sscanf(cc,"%d",&id)==1) {
-                        VLACheck(cont->ligand,int,cont->n_ligand);
-                        cont->ligand[cont->n_ligand++] = id;
-                      }
-                    }
-                  }
-                }
-                break;
-              case 'W':
-                if(WordMatchExact(G,"WATER",cc,true)) {
-                  if(cont->water) {
-                    int id;
-                    while(*cc) {
-                      p = nskip(p,1);
-                      p = ncopy(cc,p,6);
-                      if(sscanf(cc,"%d",&id)==1) {
-                        VLACheck(cont->water,int,cont->n_water);
-                        cont->water[cont->n_water++] = id;
-                      }
-                    }
-                  }
-                } 
-                break;
-              case 'H':
-                if(WordMatchExact(G,"HBOND",cc,true)) {
-                  if(cont->hbond) {
-                    int id1,id2;
-                    float strength;
-                    p = nskip(p,1);
-                    p = ncopy(cc,p,6);
-                    if(sscanf(cc,"%d",&id1)==1) {
-                      p = nskip(p,1);
-                      p = ncopy(cc,p,6);
-                      if(sscanf(cc,"%d",&id2)==1) {
-                        p = nskip(p,1);
-                        p = ncopy(cc,p,6);
-                        if(sscanf(cc,"%f",&strength)==1) {                  
-                          VLACheck(cont->hbond,M4XBondType,cont->n_hbond);
-                          cont->hbond[cont->n_hbond].atom1 = id1;
-                          cont->hbond[cont->n_hbond].atom2 = id2;
-                          cont->hbond[cont->n_hbond].strength = strength;
-                          cont->n_hbond++;
-                        }
-                      }
-                    }
-                  }
-                }
-                break;
-              case 'N':
-                if(WordMatchExact(G,"NBOND",cc,true)) {
-                  if(cont->nbond) {
-                    int id1,id2;
-                    float strength;
-                    p = nskip(p,1);
-                    p = ncopy(cc,p,6);
-                    if(sscanf(cc,"%d",&id1)==1) {
-                      p = nskip(p,1);
-                      p = ncopy(cc,p,6);
-                      if(sscanf(cc,"%d",&id2)==1) {
-                        p = nskip(p,1);
-                        p = ncopy(cc,p,6);
-                        if(sscanf(cc,"%f",&strength)==1) {                  
-                          VLACheck(cont->nbond,M4XBondType,cont->n_nbond);
-                          cont->nbond[cont->n_nbond].atom1 = id1;
-                          cont->nbond[cont->n_nbond].atom2 = id2;
-                          cont->nbond[cont->n_nbond].strength = strength;
-                          cont->n_nbond++;
-                        }
-                      }
-                    }
-                  }
-                }
-                break;
               }
+              break;
+            case 'S':
+              if(WordMatchExact(G,"SITE",cc,true)) {
+                if(cont->site) {
+                  int id;
+                  while(*cc) {
+                    p = nskip(p,1);
+                    p = ncopy(cc,p,6);
+                    if(sscanf(cc,"%d",&id)==1) {
+                      VLACheck(cont->site,int,cont->n_site);
+                      cont->site[cont->n_site++] = id;
+                    }
+                  }
+                }
+              } 
+              break;
+            case 'L':
+              if(WordMatchExact(G,"LIGAND",cc,true)) {
+                if(cont->ligand) {
+                  int id;
+                  while(*cc) {
+                    p = nskip(p,1);
+                    p = ncopy(cc,p,6);
+                    if(sscanf(cc,"%d",&id)==1) {
+                      VLACheck(cont->ligand,int,cont->n_ligand);
+                      cont->ligand[cont->n_ligand++] = id;
+                    }
+                  }
+                }
+              }
+              break;
+            case 'W':
+              if(WordMatchExact(G,"WATER",cc,true)) {
+                if(cont->water) {
+                  int id;
+                  while(*cc) {
+                    p = nskip(p,1);
+                    p = ncopy(cc,p,6);
+                    if(sscanf(cc,"%d",&id)==1) {
+                      VLACheck(cont->water,int,cont->n_water);
+                      cont->water[cont->n_water++] = id;
+                    }
+                  }
+                }
+              } 
+              break;
+            case 'H':
+              if(WordMatchExact(G,"HBOND",cc,true)) {
+                if(cont->hbond) {
+                  int id1,id2;
+                  float strength;
+                  p = nskip(p,1);
+                  p = ncopy(cc,p,6);
+                  if(sscanf(cc,"%d",&id1)==1) {
+                    p = nskip(p,1);
+                    p = ncopy(cc,p,6);
+                    if(sscanf(cc,"%d",&id2)==1) {
+                      p = nskip(p,1);
+                      p = ncopy(cc,p,6);
+                      if(sscanf(cc,"%f",&strength)==1) {                  
+                        VLACheck(cont->hbond,M4XBondType,cont->n_hbond);
+                        cont->hbond[cont->n_hbond].atom1 = id1;
+                        cont->hbond[cont->n_hbond].atom2 = id2;
+                        cont->hbond[cont->n_hbond].strength = strength;
+                        cont->n_hbond++;
+                      }
+                    }
+                  }
+                }
+              }
+              break;
+            case 'N':
+              if(WordMatchExact(G,"NBOND",cc,true)) {
+                if(cont->nbond) {
+                  int id1,id2;
+                  float strength;
+                  p = nskip(p,1);
+                  p = ncopy(cc,p,6);
+                  if(sscanf(cc,"%d",&id1)==1) {
+                    p = nskip(p,1);
+                    p = ncopy(cc,p,6);
+                    if(sscanf(cc,"%d",&id2)==1) {
+                      p = nskip(p,1);
+                      p = ncopy(cc,p,6);
+                      if(sscanf(cc,"%f",&strength)==1) {                  
+                        VLACheck(cont->nbond,M4XBondType,cont->n_nbond);
+                        cont->nbond[cont->n_nbond].atom1 = id1;
+                        cont->nbond[cont->n_nbond].atom2 = id2;
+                        cont->nbond[cont->n_nbond].strength = strength;
+                        cont->n_nbond++;
+                      }
+                    }
+                  }
+                }
+              }
+              break;
             }
           }
         }
       }
-
-      /* END KEYWORDS */
-
-      /* Secondary structure records */
-
+    }
+    
+    /* END KEYWORDS */
+    
+    /* Secondary structure records */
+    
+    
+    if(SSCode) {
       
-      if(SSCode) {
-
         
-        /* pretty confusing how this works... the following efficient (i.e. array-based)
-           secondary structure lookup even when there are multiple insertion codes
-           and where there may be multiple SS records for the residue using different 
-           insertion codes */
+      /* pretty confusing how this works... the following efficient (i.e. array-based)
+         secondary structure lookup even when there are multiple insertion codes
+         and where there may be multiple SS records for the residue using different 
+         insertion codes */
 
-        if(!ss[ss_chain1]) { /* allocate new array for chain if necc. */
-          ss[ss_chain1]=Calloc(int,cResvMask+1);
+      if(!ss[ss_chain1]) { /* allocate new array for chain if necc. */
+        ss[ss_chain1]=Calloc(int,cResvMask+1);
+      }
+
+      sst = NULL; 
+      for(b=ss_resv1;b<=ss_resv2;b++) { /* iterate over all residues indicated */
+        index = b & cResvMask;
+        if(ss[ss_chain1][index]) sst = NULL; /* make a unique copy in the event of multiple entries for one resv */
+        if(!sst) {
+          VLACheck(ss_list,SSEntry,n_ss);
+          ssi = n_ss++;
+          sst = ss_list + ssi;
+          sst->resv1 = ss_resv1;
+          sst->resv2 = ss_resv2;
+          sst->chain1 = ss_chain1;
+          sst->chain2 = ss_chain2;
+          sst->type=SSCode;
+          strcpy(sst->resi1,ss_resi1);
+          strcpy(sst->resi2,ss_resi2);
+          ss_found=true;
         }
-
+        sst->next = ss[ss_chain1][index];
+        ss[ss_chain1][index]=ssi;
+        if(sst->next) sst = NULL; /* force another unique copy */
+      }
+        
+      if(ss_chain2!=ss_chain1) { /* handle case where chains are not the same (undefined in PDB spec?) */
+        if(!ss[ss_chain2]) {
+          ss[ss_chain2]=Calloc(int,cResvMask+1);
+        }
         sst = NULL; 
         for(b=ss_resv1;b<=ss_resv2;b++) { /* iterate over all residues indicated */
           index = b & cResvMask;
-          if(ss[ss_chain1][index]) sst = NULL; /* make a unique copy in the event of multiple entries for one resv */
+          if(ss[ss_chain2][index]) sst = NULL; /* make a unique copy in the event of multiple entries for one resv */
           if(!sst) {
             VLACheck(ss_list,SSEntry,n_ss);
             ssi = n_ss++;
@@ -1648,291 +1715,265 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(PyMOLGlobals *G,
             sst->type=SSCode;
             strcpy(sst->resi1,ss_resi1);
             strcpy(sst->resi2,ss_resi2);
-            ss_found=true;
           }
-          sst->next = ss[ss_chain1][index];
-          ss[ss_chain1][index]=ssi;
+          sst->next = ss[ss_chain2][index];
+          ss[ss_chain2][index]=ssi;
           if(sst->next) sst = NULL; /* force another unique copy */
         }
-        
-        if(ss_chain2!=ss_chain1) { /* handle case where chains are not the same (undefined in PDB spec?) */
-          if(!ss[ss_chain2]) {
-            ss[ss_chain2]=Calloc(int,cResvMask+1);
-          }
-          sst = NULL; 
-          for(b=ss_resv1;b<=ss_resv2;b++) { /* iterate over all residues indicated */
-            index = b & cResvMask;
-            if(ss[ss_chain2][index]) sst = NULL; /* make a unique copy in the event of multiple entries for one resv */
-            if(!sst) {
-              VLACheck(ss_list,SSEntry,n_ss);
-              ssi = n_ss++;
-              sst = ss_list + ssi;
-              sst->resv1 = ss_resv1;
-              sst->resv2 = ss_resv2;
-              sst->chain1 = ss_chain1;
-              sst->chain2 = ss_chain2;
-              sst->type=SSCode;
-              strcpy(sst->resi1,ss_resi1);
-              strcpy(sst->resi2,ss_resi2);
+      }
+    }
+    /* Atom records */
+
+    if(AFlag&&(!*restart_model))
+      {
+        ai=atInfo+atomCount;
+        p=nskip(p,6);
+        p=ncopy(cc,p,5);
+        if(!sscanf(cc,"%d",&ai->id)) ai->id=0;
+        ai->rank = atomCount;
+
+        p=nskip(p,1);/* to 12 */
+        p=ncopy(cc,p,4); 
+        ParseNTrim(ai->name,cc,4); 
+          
+        p=ncopy(cc,p,1);
+        if(*cc==32)
+          ai->alt[0]=0;
+        else {
+          ai->alt[0]=*cc;
+          ai->alt[1]=0;
+        }
+          
+        p=ncopy(cc,p,4);  /* now allowing for 4-letter residues */
+        if(!sscanf(cc,"%s",ai->resn)) 
+          ai->resn[0]=0;
+        else if(truncate_resn) /* unless specifically disabled */
+          ai->resn[3]=0;
+
+        if(ai->name[0]) {
+          int name_len = strlen(ai->name);
+          char name[4];
+          switch(reformat_names) {
+          case 1: /* pdb compliant: HH12 becomes 2HH1, etc. */
+            if(name_len>3) {
+              if((ai->name[0]>='A')&&((ai->name[0]<='Z'))&&
+                 (ai->name[3]>='0')&&(ai->name[3]<='9')) {
+                if(!(((ai->name[1]>='a')&&(ai->name[1]<='z'))||
+                     ((ai->name[0]=='C')&&(ai->name[1]=='L'))|| /* try to be smart about */
+                     ((ai->name[0]=='B')&&(ai->name[1]=='R'))|| /* distinguishing common atoms */
+                     ((ai->name[0]=='C')&&(ai->name[1]=='A'))|| /* in all-caps from typical */
+                     ((ai->name[0]=='F')&&(ai->name[1]=='E'))|| /* nonatomic abbreviations */
+                     ((ai->name[0]=='C')&&(ai->name[1]=='U'))||
+                     ((ai->name[0]=='N')&&(ai->name[1]=='A'))||
+                     ((ai->name[0]=='N')&&(ai->name[1]=='I'))||
+                     ((ai->name[0]=='M')&&(ai->name[1]=='G'))||
+                     ((ai->name[0]=='M')&&(ai->name[1]=='N'))||
+                     ((ai->name[0]=='H')&&(ai->name[1]=='G'))||
+                     ((ai->name[0]=='S')&&(ai->name[1]=='E'))||
+                     ((ai->name[0]=='S')&&(ai->name[1]=='I'))||
+                     ((ai->name[0]=='Z')&&(ai->name[1]=='N'))
+                     )) {
+                  ctmp = ai->name[3];
+                  ai->name[3]= ai->name[2];
+                  ai->name[2]= ai->name[1];
+                  ai->name[1]= ai->name[0];
+                  ai->name[0]= ctmp;
+                }
+              }
+            } else if(name_len==3) {
+              if((ai->name[0]=='H')&&
+                 (ai->name[1]>='A')&&((ai->name[1]<='Z'))&&
+                 (ai->name[2]>='0')&&(ai->name[2]<='9')) {
+                AtomInfoGetPDB3LetHydroName(G,ai->resn,ai->name,name);
+                if(name[0]==' ')
+                  strcpy(ai->name,name+1);
+                else
+                  strcpy(ai->name,name);
+              }
             }
-            sst->next = ss[ss_chain2][index];
-            ss[ss_chain2][index]=ssi;
-            if(sst->next) sst = NULL; /* force another unique copy */
+            break;
+          case 2: /* amber compliant: 2HH1 becomes HH12 */
+          case 3: /* pdb compliant, but use IUPAC within PyMOL */
+            if(ai->name[0]) {
+              if((ai->name[0]>='0')&&(ai->name[0]<='9')&&
+                 (!((ai->name[1]>='0')&&(ai->name[1]<='9')))&&
+                 (ai->name[1]!=0)) {
+                switch(strlen(ai->name)) {
+                default:
+                  break;
+                case 2:
+                  ctmp = ai->name[0];
+                  ai->name[0]= ai->name[1];
+                  ai->name[1]= ctmp;
+                  break;
+                case 3:
+                  ctmp = ai->name[0];
+                  ai->name[0]= ai->name[1];
+                  ai->name[1]= ai->name[2];
+                  ai->name[2]= ctmp;
+                  break;
+                case 4:
+                  ctmp = ai->name[0];
+                  ai->name[0]= ai->name[1];
+                  ai->name[1]= ai->name[2];
+                  ai->name[2]= ai->name[3];
+                  ai->name[3]= ctmp;
+                  break;
+                }
+                break;
+              default: /* AS IS */
+                break;
+              }
+            }
+            break;
           }
         }
-      }
-      /* Atom records */
 
-      if(AFlag&&(!*restart_model))
-        {
-          ai=atInfo+atomCount;
+        p=ncopy(cc,p,1);
+        if(*cc==' ')
+          ai->chain[0]=0;
+        else {
+          ai->chain[0] = *cc;
+          ai->chain[1] = 0;
+        }
+
+        p=ncopy(cc,p,5); /* we treat insertion records as part of the residue identifier */
+        if(!sscanf(cc,"%s",ai->resi)) ai->resi[0]=0;
+        ai->resv = AtomResvFromResi(ai->resi);
+          
+        if(ssFlag) { /* get secondary structure information (if avail) */
+
+          ss_chain1=ai->chain[0];
+          index = ai->resv & cResvMask;
+          if(ss[ss_chain1]) {
+            ssi = ss[ss_chain1][index];
+            while(ssi) {
+              sst = ss_list + ssi; /* contains shared entry, or unique linked list for each residue */
+              /*                printf("%d<=%d<=%d, %s<=%s<=%s ", 
+                                sst->resv1,ai->resv,sst->resv2,
+                                sst->resi1,ai->resi,sst->resi2);*/
+              if(ai->resv>=sst->resv1)
+                if(ai->resv<=sst->resv2)
+                  if((ai->resv!=sst->resv1)||(WordCompare(G,ai->resi,sst->resi1,true)>=0))
+                    if((ai->resv!=sst->resv2)||(WordCompare(G,ai->resi,sst->resi2,true)<=0))
+                      {
+                        ai->ssType[0]=sst->type;
+                        /*                          printf(" Y\n");*/
+                        break;
+                      }
+              /*                printf(" N\n");*/
+              ssi = sst->next;
+            }
+          }
+            
+        } else {
+          ai->cartoon = cCartoon_tube;
+        }
+        if((!info)||(!info->is_pqr_file)) { /* standard PDB file */
+
+          p=nskip(p,3);
+          p=ncopy(cc,p,8);
+          sscanf(cc,"%f",coord+a);
+          p=ncopy(cc,p,8);
+          sscanf(cc,"%f",coord+(a+1));
+          p=ncopy(cc,p,8);
+          sscanf(cc,"%f",coord+(a+2));
+            
+          p=ncopy(cc,p,6);
+          if(!sscanf(cc,"%f",&ai->q))
+            ai->q=1.0;
+            
+          p=ncopy(cc,p,6);
+          if(!sscanf(cc,"%f",&ai->b))
+            ai->b=0.0;
+            
           p=nskip(p,6);
-          p=ncopy(cc,p,5);
-          if(!sscanf(cc,"%d",&ai->id)) ai->id=0;
-          ai->rank = atomCount;
-
-          p=nskip(p,1);/* to 12 */
-          p=ncopy(cc,p,4); 
-          ParseNTrim(ai->name,cc,4); 
-          
-          p=ncopy(cc,p,1);
-          if(*cc==32)
-            ai->alt[0]=0;
-          else {
-            ai->alt[0]=*cc;
-            ai->alt[1]=0;
-          }
-          
-          p=ncopy(cc,p,4);  /* now allowing for 4-letter residues */
-          if(!sscanf(cc,"%s",ai->resn)) 
-            ai->resn[0]=0;
-          else if(truncate_resn) /* unless specifically disabled */
-            ai->resn[3]=0;
-
-          if(ai->name[0]) {
-            int name_len = strlen(ai->name);
-            char name[4];
-            switch(reformat_names) {
-            case 1: /* pdb compliant: HH12 becomes 2HH1, etc. */
-              if(name_len>3) {
-                if((ai->name[0]>='A')&&((ai->name[0]<='Z'))&&
-                   (ai->name[3]>='0')&&(ai->name[3]<='9')) {
-                  if(!(((ai->name[1]>='a')&&(ai->name[1]<='z'))||
-                       ((ai->name[0]=='C')&&(ai->name[1]=='L'))|| /* try to be smart about */
-                       ((ai->name[0]=='B')&&(ai->name[1]=='R'))|| /* distinguishing common atoms */
-                       ((ai->name[0]=='C')&&(ai->name[1]=='A'))|| /* in all-caps from typical */
-                       ((ai->name[0]=='F')&&(ai->name[1]=='E'))|| /* nonatomic abbreviations */
-                       ((ai->name[0]=='C')&&(ai->name[1]=='U'))||
-                       ((ai->name[0]=='N')&&(ai->name[1]=='A'))||
-                       ((ai->name[0]=='N')&&(ai->name[1]=='I'))||
-                       ((ai->name[0]=='M')&&(ai->name[1]=='G'))||
-                       ((ai->name[0]=='M')&&(ai->name[1]=='N'))||
-                       ((ai->name[0]=='H')&&(ai->name[1]=='G'))||
-                       ((ai->name[0]=='S')&&(ai->name[1]=='E'))||
-                       ((ai->name[0]=='S')&&(ai->name[1]=='I'))||
-                       ((ai->name[0]=='Z')&&(ai->name[1]=='N'))
-                       )) {
-                    ctmp = ai->name[3];
-                    ai->name[3]= ai->name[2];
-                    ai->name[2]= ai->name[1];
-                    ai->name[1]= ai->name[0];
-                    ai->name[0]= ctmp;
+          p=ncopy(cc,p,4);
+          if(!ignore_pdb_segi) {
+            if(!segi_override[0])
+              {
+                if(!sscanf(cc,"%s",ai->segi)) 
+                  ai->segi[0]=0;
+                else {
+                  cc_saved=cc[3];
+                  ncopy(cc,p,4); 
+                  if((cc_saved=='1')&& /* atom ID overflow? (nonstandard use...)...*/
+                     (cc[0]=='0')&& 
+                     (cc[1]=='0')&&
+                     (cc[2]=='0')&&
+                     (cc[3]=='0')&&
+                     atomCount) {
+                    strcpy(segi_override,(ai-1)->segi);
+                    strcpy(ai->segi,(ai-1)->segi);
                   }
                 }
-              } else if(name_len==3) {
-                if((ai->name[0]=='H')&&
-                   (ai->name[1]>='A')&&((ai->name[1]<='Z'))&&
-                   (ai->name[2]>='0')&&(ai->name[2]<='9')) {
-                  AtomInfoGetPDB3LetHydroName(G,ai->resn,ai->name,name);
-                  if(name[0]==' ')
-                    strcpy(ai->name,name+1);
-                  else
-                    strcpy(ai->name,name);
-                }
-              }
-              break;
-            case 2: /* amber compliant: 2HH1 becomes HH12 */
-            case 3: /* pdb compliant, but use IUPAC within PyMOL */
-              if(ai->name[0]) {
-                if((ai->name[0]>='0')&&(ai->name[0]<='9')&&
-                   (!((ai->name[1]>='0')&&(ai->name[1]<='9')))&&
-                   (ai->name[1]!=0)) {
-                  switch(strlen(ai->name)) {
-                  default:
-                    break;
-                  case 2:
-                    ctmp = ai->name[0];
-                    ai->name[0]= ai->name[1];
-                    ai->name[1]= ctmp;
-                    break;
-                  case 3:
-                    ctmp = ai->name[0];
-                    ai->name[0]= ai->name[1];
-                    ai->name[1]= ai->name[2];
-                    ai->name[2]= ctmp;
-                    break;
-                  case 4:
-                    ctmp = ai->name[0];
-                    ai->name[0]= ai->name[1];
-                    ai->name[1]= ai->name[2];
-                    ai->name[2]= ai->name[3];
-                    ai->name[3]= ctmp;
-                    break;
-                  }
-                  break;
-                default: /* AS IS */
-                  break;
-                }
-              }
-              break;
+              } else {
+              strcpy(ai->segi,segi_override);
             }
+          } else {              ai->segi[0]=0;
           }
-
-          p=ncopy(cc,p,1);
-          if(*cc==' ')
-            ai->chain[0]=0;
-          else {
-            ai->chain[0] = *cc;
-            ai->chain[1] = 0;
-          }
-
-          p=ncopy(cc,p,5); /* we treat insertion records as part of the residue identifier */
-          if(!sscanf(cc,"%s",ai->resi)) ai->resi[0]=0;
-          ai->resv = AtomResvFromResi(ai->resi);
           
-          if(ssFlag) { /* get secondary structure information (if avail) */
-
-            ss_chain1=ai->chain[0];
-            index = ai->resv & cResvMask;
-            if(ss[ss_chain1]) {
-              ssi = ss[ss_chain1][index];
-              while(ssi) {
-                sst = ss_list + ssi; /* contains shared entry, or unique linked list for each residue */
-                /*                printf("%d<=%d<=%d, %s<=%s<=%s ", 
-                                  sst->resv1,ai->resv,sst->resv2,
-                                  sst->resi1,ai->resi,sst->resi2);*/
-                if(ai->resv>=sst->resv1)
-                  if(ai->resv<=sst->resv2)
-                    if((ai->resv!=sst->resv1)||(WordCompare(G,ai->resi,sst->resi1,true)>=0))
-                      if((ai->resv!=sst->resv2)||(WordCompare(G,ai->resi,sst->resi2,true)<=0))
-                        {
-                          ai->ssType[0]=sst->type;
-                          /*                          printf(" Y\n");*/
-                          break;
-                        }
-                /*                printf(" N\n");*/
-                ssi = sst->next;
-              }
-            }
+          p=ncopy(cc,p,2);
+          if(!sscanf(cc,"%s",ai->elem)) 
+            ai->elem[0]=0;          
+          else if(!(((ai->elem[0]>='a')&&(ai->elem[0]<='z'))|| /* don't get confused by PDB misuse */
+                    ((ai->elem[0]>='A')&&(ai->elem[0]<='Z'))))
+            ai->elem[0]=0;                      
             
-          } else {
-            ai->cartoon = cCartoon_tube;
+          for(c=0;c<cRepCnt;c++) {
+            ai->visRep[c] = false;
           }
-          if((!info)||(!info->is_pqr_file)) { /* standard PDB file */
-
-            p=nskip(p,3);
-            p=ncopy(cc,p,8);
-            sscanf(cc,"%f",coord+a);
-            p=ncopy(cc,p,8);
-            sscanf(cc,"%f",coord+(a+1));
-            p=ncopy(cc,p,8);
-            sscanf(cc,"%f",coord+(a+2));
-            
-            p=ncopy(cc,p,6);
-            if(!sscanf(cc,"%f",&ai->q))
-              ai->q=1.0;
-            
-            p=ncopy(cc,p,6);
-            if(!sscanf(cc,"%f",&ai->b))
-              ai->b=0.0;
-            
-            p=nskip(p,6);
-            p=ncopy(cc,p,4);
-            if(!ignore_pdb_segi) {
-              if(!segi_override[0])
-                {
-                  if(!sscanf(cc,"%s",ai->segi)) 
-                    ai->segi[0]=0;
-                  else {
-                    cc_saved=cc[3];
-                    ncopy(cc,p,4); 
-                    if((cc_saved=='1')&& /* atom ID overflow? (nonstandard use...)...*/
-                       (cc[0]=='0')&& 
-                       (cc[1]=='0')&&
-                       (cc[2]=='0')&&
-                       (cc[3]=='0')&&
-                       atomCount) {
-                      strcpy(segi_override,(ai-1)->segi);
-                      strcpy(ai->segi,(ai-1)->segi);
-                    }
-                  }
-                } else {
-                  strcpy(ai->segi,segi_override);
-                }
-            } else {              ai->segi[0]=0;
-            }
-          
-            p=ncopy(cc,p,2);
-            if(!sscanf(cc,"%s",ai->elem)) 
-              ai->elem[0]=0;          
-            else if(!(((ai->elem[0]>='a')&&(ai->elem[0]<='z'))|| /* don't get confused by PDB misuse */
-                      ((ai->elem[0]>='A')&&(ai->elem[0]<='Z'))))
-              ai->elem[0]=0;                      
-            
-            for(c=0;c<cRepCnt;c++) {
-              ai->visRep[c] = false;
-            }
            
-            /* end normal PDB */
-          } else if(info&&info->is_pqr_file) {
-            /* PQR file format...not well defined, but basically PDB
-               with charge and radius instead of B and Q.  Right now,
-               we insist on PDB column format through the chain ID,
-               and then switch over to whitespace delimited parsing 
-               for the coordinates, charge, and radius */
+          /* end normal PDB */
+        } else if(info&&info->is_pqr_file) {
+          /* PQR file format...not well defined, but basically PDB
+             with charge and radius instead of B and Q.  Right now,
+             we insist on PDB column format through the chain ID,
+             and then switch over to whitespace delimited parsing 
+             for the coordinates, charge, and radius */
 
-            p=ParseWordCopy(cc,p,MAXLINELEN-1);
-            sscanf(cc,"%f",coord+a);
-            p=ParseWordCopy(cc,p,MAXLINELEN-1);
-            sscanf(cc,"%f",coord+(a+1));
-            p=ParseWordCopy(cc,p,MAXLINELEN-1);
-            sscanf(cc,"%f",coord+(a+2));
+          p=ParseWordCopy(cc,p,MAXLINELEN-1);
+          sscanf(cc,"%f",coord+a);
+          p=ParseWordCopy(cc,p,MAXLINELEN-1);
+          sscanf(cc,"%f",coord+(a+1));
+          p=ParseWordCopy(cc,p,MAXLINELEN-1);
+          sscanf(cc,"%f",coord+(a+2));
 
-            p=ParseWordCopy(cc,p,MAXLINELEN-1);
-            if(!sscanf(cc,"%f",&ai->partialCharge))
-              ai->partialCharge=0.0F;
+          p=ParseWordCopy(cc,p,MAXLINELEN-1);
+          if(!sscanf(cc,"%f",&ai->partialCharge))
+            ai->partialCharge=0.0F;
 
-            p=ParseWordCopy(cc,p,MAXLINELEN-1);            
-            if(sscanf(cc,"%f",&ai->bohr_radius)!=1)
-              ai->bohr_radius = 0.0F;
-          }
+          p=ParseWordCopy(cc,p,MAXLINELEN-1);            
+          if(sscanf(cc,"%f",&ai->bohr_radius)!=1)
+            ai->bohr_radius = 0.0F;
+        }
 
-          ai->visRep[cRepLine] = auto_show_lines; /* show lines by default */
-          ai->visRep[cRepNonbonded] = auto_show_nonbonded; /* show lines by default */
-          ai->visRep[cRepSphere] = auto_show_spheres;
+        ai->visRep[cRepLine] = auto_show_lines; /* show lines by default */
+        ai->visRep[cRepNonbonded] = auto_show_nonbonded; /* show lines by default */
+        ai->visRep[cRepSphere] = auto_show_spheres;
 
-          if(AFlag==1) 
-            ai->hetatm=0;
-          else {
-            ai->hetatm=1;
-            ai->flags=cAtomFlag_ignore;
-          }
+        if(AFlag==1) 
+          ai->hetatm=0;
+        else {
+          ai->hetatm=1;
+          ai->flags=cAtomFlag_ignore;
+        }
           
-          AtomInfoAssignParameters(G,ai);
-          AtomInfoAssignColors(G,ai);
+        AtomInfoAssignParameters(G,ai);
+        AtomInfoAssignColors(G,ai);
 
-          PRINTFD(G,FB_ObjectMolecule)
-            "%s %s %s %s %8.3f %8.3f %8.3f %6.2f %6.2f %s\n",
-                    ai->name,ai->resn,ai->resi,ai->chain,
-                    *(coord+a),*(coord+a+1),*(coord+a+2),ai->b,ai->q,
-                    ai->segi
-            ENDFD;
+        PRINTFD(G,FB_ObjectMolecule)
+          "%s %s %s %s %8.3f %8.3f %8.3f %6.2f %6.2f %s\n",
+          ai->name,ai->resn,ai->resi,ai->chain,
+          *(coord+a),*(coord+a+1),*(coord+a+2),ai->b,ai->q,
+          ai->segi
+          ENDFD;
 
-			 a+=3;
-			 atomCount++;
-		  }
-      p=nextline(p);
-	 }
+        a+=3;
+        atomCount++;
+      }
+    p=nextline(p);
+  }
   
   /* END PASS 2 */
   
@@ -2066,6 +2107,10 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(PyMOLGlobals *G,
     }
     VLAFreeP(ss_list);
   }
+
+  if(!seen_model)
+    *model_number = 1;
+
   if((*restart_model) && (*next_pdb)) { /* if we're mixing multistate objects and
                                            trajectories, then enforce sanity by 
                                            reading the models first... */

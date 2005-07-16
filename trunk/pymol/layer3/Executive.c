@@ -1033,6 +1033,7 @@ int ExecutiveProcessPDBFile(PyMOLGlobals *G,CObject *origObj,char *fname,
   char nbrhood_sele[] = "m4x_nearby";
   ProcPDBRec *current = NULL;
   PDBInfoRec pdb_info_rec;
+  int model_number;
 
   if(!pdb_info) {
     UtilZeroMem(&pdb_info_rec,sizeof(PDBInfoRec));
@@ -1095,10 +1096,12 @@ int ExecutiveProcessPDBFile(PyMOLGlobals *G,CObject *origObj,char *fname,
     if(!origObj) {
 
       pdb_name[0]=0;
+      model_number = 0;
       obj=(CObject*)ObjectMoleculeReadPDBStr(G,(ObjectMolecule*)origObj,
                                              start_at,eff_frame,discrete,
                                              &current->m4x,pdb_name,
-                                             &next_pdb,pdb_info,quiet);
+                                             &next_pdb,pdb_info,quiet, 
+                                             &model_number);
 
       if(obj) {
         if(next_pdb) { /* NOTE: if set, assume that multiple PDBs are present in the file */
@@ -1135,8 +1138,16 @@ int ExecutiveProcessPDBFile(PyMOLGlobals *G,CObject *origObj,char *fname,
               sprintf(pdb_name,"%s_%04d",oname,n_processed+1);
             }
           } else if(multiplex) {
-            strcpy(cur_name,pdb_name);
-            sprintf(pdb_name,"%s_%04d",cur_name,n_processed+1);            
+            if(pdb_info->multi_object_status == 1 ) { /* this is a multi-object PDB file */
+              strcpy(cur_name,pdb_name);
+            } else if(cur_name[0]==0) {
+              strcpy(cur_name, oname);
+            }
+            if(model_number>0) {
+              sprintf(pdb_name,"%s_%04d",cur_name,model_number);
+            } else {
+              sprintf(pdb_name,"%s_%04d",cur_name,n_processed+1);
+            }
           }
           ObjectSetName(obj,pdb_name); 
           ExecutiveDelete(G,pdb_name); /* just in case */
@@ -1149,8 +1160,16 @@ int ExecutiveProcessPDBFile(PyMOLGlobals *G,CObject *origObj,char *fname,
                 sprintf(pdb_name,"%s_%04d",oname,n_processed+1);
               }
             } else if(multiplex) { 
-              strcpy(cur_name,pdb_name);
-              sprintf(pdb_name,"%s_%04d",cur_name,n_processed+1);
+              if(pdb_info->multi_object_status == 1 ) { /* this is a multi-object PDB file */
+                strcpy(cur_name,pdb_name);
+              } else if(cur_name[0]==0) {
+                strcpy(cur_name, oname);
+              }
+              if(model_number>0) {
+                sprintf(pdb_name,"%s_%04d",cur_name,model_number);
+              } else {
+                sprintf(pdb_name,"%s_%04d",cur_name,n_processed+1);
+              }
             }
             ObjectSetName(obj,pdb_name); /* from PDB */
             ExecutiveDelete(G,pdb_name); /* just in case */
@@ -1183,9 +1202,10 @@ int ExecutiveProcessPDBFile(PyMOLGlobals *G,CObject *origObj,char *fname,
         }
       }
     } else {
+      model_number = 0;
       ObjectMoleculeReadPDBStr(G,(ObjectMolecule*)origObj,
                                start_at,eff_frame,discrete,&current->m4x,
-                               pdb_name,&next_pdb,pdb_info,quiet);
+                               pdb_name,&next_pdb,pdb_info,quiet, &model_number);
       if(finish)
         ExecutiveUpdateObjectSelection(G,origObj);
       if(eff_frame<0)

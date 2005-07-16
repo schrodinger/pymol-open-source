@@ -9233,7 +9233,7 @@ ObjectMolecule *ObjectMoleculeLoadMMDFile(PyMOLGlobals *G,ObjectMolecule *obj,ch
 /*========================================================================*/
 ObjectMolecule *ObjectMoleculeReadPDBStr(PyMOLGlobals *G,ObjectMolecule *I,char *PDBStr,int frame,
                                          int discrete,M4XAnnoType *m4x,char *pdb_name,
-                                         char **next_pdb,PDBInfoRec *pdb_info,int quiet)
+                                         char **next_pdb,PDBInfoRec *pdb_info,int quiet,int *model_number)
 {
   CoordSet *cset = NULL;
   AtomInfoType *atInfo;
@@ -9272,14 +9272,14 @@ ObjectMolecule *ObjectMoleculeReadPDBStr(PyMOLGlobals *G,ObjectMolecule *I,char 
 
       cset=ObjectMoleculePDBStr2CoordSet(G,start,&atInfo,&restart,
                                          segi_override,m4x,pdb_name,
-                                         next_pdb,pdb_info,quiet);	
+                                         next_pdb,pdb_info,quiet,model_number);	
       if(m4x) /* preserve original atom IDs for annotated Metaphorics files */
         if(m4x->annotated_flag)
           aic_mask = (cAIC_b|cAIC_q);
       nAtom=cset->NIndex;
     }
     if(pdb_name&&(*next_pdb)) {
-      /* problematic scenario */
+      /* problematic scenario? */
     }
 
     /* include coordinate set */
@@ -9305,6 +9305,10 @@ ObjectMolecule *ObjectMoleculeReadPDBStr(PyMOLGlobals *G,ObjectMolecule *I,char 
       }
       if(isNew) I->NAtom=nAtom;
       if(frame<0) frame=I->NCSet;
+      if(*model_number > 0) {
+        if(SettingGetGlobal_b(G,cSetting_pdb_honor_model_number))
+          frame = *model_number - 1;
+      }
       VLACheck(I->CSet,CoordSet*,frame);
       if(I->NCSet<=frame) I->NCSet=frame+1;
       if(I->CSet[frame]) I->CSet[frame]->fFree(I->CSet[frame]);

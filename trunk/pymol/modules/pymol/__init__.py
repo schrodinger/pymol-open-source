@@ -229,6 +229,8 @@ if pymol_launch != 3: # if this isn't a dry run
                         cmd.do("_ @%s" % a)
                     else:
                         cmd.load(a,quiet=0)
+            except CmdException:
+                print "Error: Argument processing aborted due to exception."
             except:
                 traceback.print_exc()
 
