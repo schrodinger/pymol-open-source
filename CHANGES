@@ -6,6 +6,8 @@ Changes up to 0.99
 
     beta09
 
+    * fixed crasher bug in phi_psi command
+
     * exceptions not caught for startup/command-line actions
 
     * improved behavior of "multiplex" option for PDB file loads

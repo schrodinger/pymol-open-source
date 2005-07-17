@@ -1168,6 +1168,7 @@ static PyObject *CmdGetPhiPsi(PyObject *self, 	PyObject *args)
     if(ok) 
       l = ExecutivePhiPsi(TempPyMOLGlobals,s1,&oVLA,&iVLA,&pVLA,&sVLA,state);
     SelectorFreeTmp(TempPyMOLGlobals,s1);
+    APIExit();
     if(iVLA) {
       result=PyDict_New();
       i = iVLA;
@@ -1192,7 +1193,6 @@ static PyObject *CmdGetPhiPsi(PyObject *self, 	PyObject *args)
     VLAFreeP(oVLA);
     VLAFreeP(sVLA);
     VLAFreeP(pVLA);
-    APIExit();
   }
   return(APIAutoNone(result));
 }
