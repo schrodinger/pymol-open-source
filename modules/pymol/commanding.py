@@ -231,6 +231,8 @@ USAGE (PYTHON)
                             r = _cmd.do(a,log,echo)
                         finally:
                             unlock(r)
+                    else:
+                        r = DEFAULT_SUCCESS
             else:
                 defer = cmd.get_setting_legacy("defer_updates")
                 cmd.set('defer_updates',1)
