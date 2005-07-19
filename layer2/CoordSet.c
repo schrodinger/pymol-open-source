@@ -532,6 +532,7 @@ void CoordSetAtomToPDBStrVLA(PyMOLGlobals *G,char **charVLA,int *c,AtomInfoType 
                 strcpy(name+1,ai->name);
               }
               break;
+            case 4:
             default: /* otherwise, start in column 1 */
               name[0]=' ';	
               strcpy(name+1,ai->name);
@@ -583,6 +584,7 @@ void CoordSetAtomToPDBStrVLA(PyMOLGlobals *G,char **charVLA,int *c,AtomInfoType 
               strcpy(name,ai->name);
             }
             break;
+          case 4:
           default: /* no changes */
             strcpy(name,ai->name);
             break;
@@ -615,11 +617,25 @@ void CoordSetAtomToPDBStrVLA(PyMOLGlobals *G,char **charVLA,int *c,AtomInfoType 
     }
   } else { /* LITERAL mode: preserve what was in the original PDB as best PyMOL can 
             this should enable people to open and save amber pdb files without issues */
-    if(strlen(ai->name)<4) { /* under length 4? */
-      name[0] = ' ';
-      strcpy(name+1,ai->name); /* stick in the second column */
-    } else {
-      strcpy(name,ai->name); /* otherwise, stick in the first */
+    if(strlen(ai->name)==4) {
+      strcpy(name,ai->name); /* save literal contents of field */
+    } else { /* under length 4? check match with atomic symbol */
+      if((toupper(ai->elem[0])==toupper(ai->name[0]))&&
+         ((!ai->elem[1]) || /* symbol len = 1 */
+          (toupper(ai->elem[1])==toupper(ai->name[1])))) { /* matched len 2 */
+        /* starts with corrent atomic symbol, so */
+        if(strlen(ai->elem)>1) { /* if atom symbol is length 2 */
+          strcpy(name,ai->name); /* then start in column 0 */
+        } else { 
+          /* otherwise, start in column 1 */
+          name[0]=' ';	
+          strcpy(name+1,ai->name);
+        } 
+      } else {
+        /* otherwise, start in column 1 */
+        name[0]=' ';	
+        strcpy(name+1,ai->name);
+      }
     }
   }
   if((int)SettingGet(G,cSetting_pdb_retain_ids)) {

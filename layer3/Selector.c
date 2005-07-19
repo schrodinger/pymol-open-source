@@ -3284,9 +3284,10 @@ void SelectorDeletePrefixSet(PyMOLGlobals *G,char *pref)
   int a;
   register CSelector *I=G->Selector;
   SelectorWordType name_copy; 
+  int ignore_case = SettingGetGlobal_b(G,cSetting_ignore_case);
 
   while(1) {
-    a = SelectorWordIndex(G,I->Name,pref,strlen(pref),false);
+    a = SelectorWordIndex(G,I->Name,pref,strlen(pref),ignore_case);
     if(a>0) {
       strcpy(name_copy,I->Name[a]);
       ExecutiveDelete(G,name_copy); /* import to use a copy, otherwise 

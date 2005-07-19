@@ -9244,6 +9244,7 @@ ObjectMolecule *ObjectMoleculeReadPDBStr(PyMOLGlobals *G,ObjectMolecule *I,char 
   int repeatFlag = true;
   int successCnt = 0;
   unsigned int aic_mask = cAIC_PDBMask;
+  const float _1 = 1.0F;
 
   SegIdent segi_override=""; /* saved segi for corrupted NMR pdb files */
 
@@ -9324,30 +9325,54 @@ ObjectMolecule *ObjectMoleculeReadPDBStr(PyMOLGlobals *G,ObjectMolecule *I,char 
              pdb_info->scale.flag[1] &&
              pdb_info->scale.flag[2] ) {
 
-            int matched=true;
+            int skipit=true;
             float threshold = 0.001F;
             float *r2f = I->Symmetry->Crystal->RealToFrac, *sca = pdb_info->scale.matrix;
 
             /* are the matrices sufficiently close to be the same? */
-            if(     fabs(r2f[0]-sca[0])>threshold) matched=false;
-            else if(fabs(r2f[1]-sca[1])>threshold) matched=false;
-            else if(fabs(r2f[2]-sca[2])>threshold) matched=false;
-            else if(fabs(r2f[3]-sca[4])>threshold) matched=false;
-            else if(fabs(r2f[4]-sca[5])>threshold) matched=false;
-            else if(fabs(r2f[5]-sca[6])>threshold) matched=false;
-            else if(fabs(r2f[6]-sca[8])>threshold) matched=false;
-            else if(fabs(r2f[7]-sca[9])>threshold) matched=false;
-            else if(fabs(r2f[8]-sca[10])>threshold) matched=false;
-            else if(fabs(sca[3])>threshold) matched=false;
-            else if(fabs(sca[7])>threshold) matched=false;
-            else if(fabs(sca[11])>threshold) matched=false;
-              
-            if(!matched) {
+            if(     fabs(r2f[0]-sca[0])>threshold) skipit=false;
+            else if(fabs(r2f[1]-sca[1])>threshold) skipit=false;
+            else if(fabs(r2f[2]-sca[2])>threshold) skipit=false;
+            else if(fabs(r2f[3]-sca[4])>threshold) skipit=false;
+            else if(fabs(r2f[4]-sca[5])>threshold) skipit=false;
+            else if(fabs(r2f[5]-sca[6])>threshold) skipit=false;
+            else if(fabs(r2f[6]-sca[8])>threshold) skipit=false;
+            else if(fabs(r2f[7]-sca[9])>threshold) skipit=false;
+            else if(fabs(r2f[8]-sca[10])>threshold) skipit=false;
+            else if(fabs(sca[3])>threshold) skipit=false;
+            else if(fabs(sca[7])>threshold) skipit=false;
+            else if(fabs(sca[11])>threshold) skipit=false;
+
+            /* is SCALEn the identity matrix?  If so, then it
+               should probably be ignored... */
+            {
+              int is_identity = true;
+              if(     fabs(sca[0]-_1)>threshold) is_identity=false;
+              else if(fabs(sca[1])>threshold) is_identity=false;
+              else if(fabs(sca[2])>threshold) is_identity=false;
+              else if(fabs(sca[4])>threshold) is_identity=false;
+              else if(fabs(sca[5]-_1)>threshold) is_identity=false;
+              else if(fabs(sca[6])>threshold) is_identity=false;
+              else if(fabs(sca[8])>threshold) is_identity=false;
+              else if(fabs(sca[9])>threshold) is_identity=false;
+              else if(fabs(sca[10]-_1)>threshold) is_identity=false;
+              else if(fabs(sca[3])>threshold) is_identity=false;
+              else if(fabs(sca[7])>threshold) is_identity=false;
+              else if(fabs(sca[11])>threshold) is_identity=false;
+              if(is_identity) {
+                skipit=true;
+                PRINTFB(G,FB_ObjectMolecule,FB_Blather)
+                " ObjectMolReadPDBStr: ignoring SCALEn (identity matrix).\n"
+                ENDFB(G);
+              }
+            }
+
+            if(!skipit) {
               PRINTFB(G,FB_ObjectMolecule,FB_Actions)
                 " ObjectMolReadPDBStr: using SCALEn to compute orthogonal coordinates.\n"
                 ENDFB(G);
               CoordSetTransform44f(cset, pdb_info->scale.matrix);
-              CoordSetTransform33f(cset, I->Symmetry->Crystal->FracToReal);
+              CoordSetTransform33f(cset, I->Symmetry->Crystal->FracToReal); 
             }
           }
         }

@@ -825,12 +825,13 @@ static int get_multi_object_status(char *p) /* expensive -- only call
        (cc[2]=='A')&&
        (cc[3]=='D')&&
        (cc[4]=='E')&&
-       (cc[5]=='R'))
+       (cc[5]=='R')) {
       if(seen_header) {
         return 1;
       } else {
         seen_header = true;
       }
+    }
     p=nextline(p);
   }
   return -1;
@@ -934,11 +935,12 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(PyMOLGlobals *G,
   int have_bond_order = false;
   int seen_model;
   int is_end_of_object = false;
+  int literal_names = SettingGetGlobal_b(G,cSetting_pdb_literal_names);
+  AtomName literal_name = "";
 
-  if((int)SettingGet(G,cSetting_pdb_literal_names)) 
+  if(literal_names)
     reformat_names = 0;
   
-
   ignore_pdb_segi = (int)SettingGet(G,cSetting_ignore_pdb_segi);
 
   p=buffer;
@@ -1732,10 +1734,14 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(PyMOLGlobals *G,
         if(!sscanf(cc,"%d",&ai->id)) ai->id=0;
         ai->rank = atomCount;
 
-        p=nskip(p,1);/* to 12 */
-        p=ncopy(cc,p,4); 
-        ParseNTrim(ai->name,cc,4); 
-          
+        p=nskip(p,1); /* to 12 */
+        p=ncopy(literal_name,p,4); 
+        if(literal_names) {
+          strcpy(ai->name,literal_name);
+        } else {
+          ParseNTrim(ai->name,literal_name,4); 
+        }
+
         p=ncopy(cc,p,1);
         if(*cc==32)
           ai->alt[0]=0;
@@ -1743,7 +1749,7 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(PyMOLGlobals *G,
           ai->alt[0]=*cc;
           ai->alt[1]=0;
         }
-          
+
         p=ncopy(cc,p,4);  /* now allowing for 4-letter residues */
         if(!sscanf(cc,"%s",ai->resn)) 
           ai->resn[0]=0;
@@ -1825,6 +1831,11 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(PyMOLGlobals *G,
                 break;
               }
             }
+            break;
+          case 4: /* simply read trim and write back out with 3-letter names starting from the
+                     second column, and four-letter names starting in the first */
+            ncopy(cc,ai->name,44);
+            ParseNTrim(ai->name,cc,4);             
             break;
           }
         }
@@ -1910,7 +1921,8 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(PyMOLGlobals *G,
               } else {
               strcpy(ai->segi,segi_override);
             }
-          } else {              ai->segi[0]=0;
+          } else {              
+            ai->segi[0]=0;
           }
           
           p=ncopy(cc,p,2);
@@ -1920,6 +1932,20 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(PyMOLGlobals *G,
                     ((ai->elem[0]>='A')&&(ai->elem[0]<='Z'))))
             ai->elem[0]=0;                      
             
+          if(!ai->elem[0]) {
+            if(((literal_name[0]==' ')||((literal_name[0]>='0')&&(literal_name[0]<='9')))&&
+               (literal_name[1]>='A')&&(literal_name[1]<='Z')) { /* infer element from name column */
+              ai->elem[0]=literal_name[1];
+              ai->elem[1]=0;
+            } else if(((literal_name[0]>='A')&&(literal_name[0]<='Z'))&&
+                      (((literal_name[1]>='A')&&(literal_name[1]<='Z'))||
+                       ((literal_name[1]>='a')&&(literal_name[1]<='z')))) { /* infer element from name column */
+              ai->elem[0]=literal_name[0];
+              ai->elem[1]=tolower(literal_name[1]);
+              ai->elem[2]=0;
+            }
+          }
+          
           for(c=0;c<cRepCnt;c++) {
             ai->visRep[c] = false;
           }

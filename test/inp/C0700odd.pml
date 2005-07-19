@@ -115,4 +115,17 @@ load dat/small02.pdb
 iterate all, print name
 save cmp/C0700odd.E.pdb
 
+reinit
+
+# test literal names preservation capability
+
+set pdb_literal_names
+set retain_order
+set pdb_retain_ids
+set pdb_no_end_record
+unset pdb_use_ter_records
+
+load dat/odd01.pdb
+save cmp/C0700odd.F.pdb
+
 /print "END-LOG"

@@ -6,6 +6,16 @@ Changes up to 0.99
 
     beta09
 
+    * now ignoring SCALEn if it is the identity matrix
+
+    * pdb parser now pays attention to column information in the
+      atom name field for inferring ambiguous element symbols
+
+    * pdb_literal_names now works for real, taking the literal contents
+      of the 4-character atom field including spaces
+
+    beta08                                                                                  
+
     * eliminated annoying exception on blank command input
 
     * fixed crasher bug in phi_psi command
@@ -14,8 +24,6 @@ Changes up to 0.99
 
     * improved behavior of "multiplex" option for PDB file loads
 
-    beta08                                                                                  
-                                                                                                
     * made some changed to apbs_tools.py                                                    
                                                                                             
     * updated apbs_tools.py also fixed or added NME, NHE, ACE, TIP resns.                   
