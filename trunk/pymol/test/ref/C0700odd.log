@@ -9,12 +9,17 @@ HH11
 HH12
 HH21
 HH22
+CA
+CA
 OA22
 OA23
 ABCD
 LMN
 XYZ
- Iterate: iterated over 13 atoms.
+O1B
+AC5
+PE
+ Iterate: iterated over 18 atoms.
 PyMOL>save cmp/C0700odd.1.pdb
  Save: wrote "cmp/C0700odd.1.pdb".
 PyMOL>set retain_order
@@ -28,12 +33,17 @@ HH12
 NH2
 HH21
 HH22
+CA
+CA
 OA22
 OA23
 ABCD
 XYZ
 LMN
- Iterate: iterated over 13 atoms.
+PE
+O1B
+AC5
+ Iterate: iterated over 18 atoms.
 PyMOL>save cmp/C0700odd.2.pdb
  Save: wrote "cmp/C0700odd.2.pdb".
 PyMOL>set pdb_no_end_record
@@ -58,12 +68,17 @@ HH12
 NH2
 HH21
 HH22
+CA
+CA
 OA22
 OA23
 ABCD
 XYZ
 LMN
- Iterate: iterated over 13 atoms.
+PE
+O1B
+AC5
+ Iterate: iterated over 18 atoms.
 PyMOL>set pdb_reformat_names_mode, 1
  Setting: pdb_reformat_names_mode set to 1.
 PyMOL>save cmp/C0700odd.5.pdb
@@ -84,12 +99,17 @@ NH1
 NH2
 1HH2
 2HH2
+CA
+CA
 2OA2
 3OA2
 ABCD
 XYZ
 LMN
- Iterate: iterated over 13 atoms.
+PE
+O1B
+AC5
+ Iterate: iterated over 18 atoms.
 PyMOL>reinit
 PyMOL>set pdb_reformat_names_mode, 1
  Setting: pdb_reformat_names_mode set to 1.
@@ -104,12 +124,17 @@ HE
 2HH1
 1HH2
 2HH2
+CA
+CA
 2OA2
 3OA2
 ABCD
 LMN
 XYZ
- Iterate: iterated over 13 atoms.
+O1B
+AC5
+PE
+ Iterate: iterated over 18 atoms.
 PyMOL>save cmp/C0700odd.7.pdb
  Save: wrote "cmp/C0700odd.7.pdb".
 PyMOL>set pdb_reformat_names_mode,2
@@ -128,12 +153,17 @@ HH11
 HH12
 HH21
 HH22
+CA
+CA
 OA22
 OA23
 ABCD
 LMN
 XYZ
- Iterate: iterated over 13 atoms.
+O1B
+AC5
+PE
+ Iterate: iterated over 18 atoms.
 PyMOL>set pdb_reformat_names_mode,0
  Setting: pdb_reformat_names_mode set to 0.
 PyMOL>save cmp/C0700odd.9.pdb
@@ -150,38 +180,48 @@ PyMOL>dele all
 PyMOL>load cmp/C0700odd.3.pdb
  CmdLoad: "cmp/C0700odd.3.pdb" loaded as "C0700odd.3".
 PyMOL>iterate all,print name
-CZ
-NH1
-NH2
-HE
+ CZ 
+ HE 
+ NH1
+ NH2
 HH11
 HH12
 HH21
 HH22
+CA  
+ CA 
 OA22
 OA23
+ LMN
+ XYZ
 ABCD
-LMN
-XYZ
- Iterate: iterated over 13 atoms.
+ O1B
+ PE 
+AC5 
+ Iterate: iterated over 18 atoms.
 PyMOL>dele all
 PyMOL>load cmp/C0700odd.5.pdb
  CmdLoad: "cmp/C0700odd.5.pdb" loaded as "C0700odd.5".
 PyMOL>iterate all,print name
-CZ
-NH1
-NH2
-HE
+ CZ 
+ HE 
+ NH1
+ NH2
 1HH1
 2HH1
 1HH2
 2HH2
+CA  
+ CA 
 2OA2
 3OA2
+ LMN
+ XYZ
 ABCD
-LMN
-XYZ
- Iterate: iterated over 13 atoms.
+ O1B
+ PE 
+AC5 
+ Iterate: iterated over 18 atoms.
 PyMOL>reinit
 PyMOL>load dat/small02.pdb
  CmdLoad: "dat/small02.pdb" loaded as "small02".
@@ -276,3 +316,18 @@ BR38
  Iterate: iterated over 36 atoms.
 PyMOL>save cmp/C0700odd.E.pdb
  Save: wrote "cmp/C0700odd.E.pdb".
+PyMOL>reinit
+PyMOL>set pdb_literal_names
+ Setting: pdb_literal_names set to on.
+PyMOL>set retain_order
+ Setting: retain_order set to 1.
+PyMOL>set pdb_retain_ids
+ Setting: pdb_retain_ids set to on.
+PyMOL>set pdb_no_end_record
+ Setting: pdb_no_end_record set to on.
+PyMOL>unset pdb_use_ter_records
+ Setting: pdb_use_ter_records set to 0.
+PyMOL>load dat/odd01.pdb
+ CmdLoad: "dat/odd01.pdb" loaded as "odd01".
+PyMOL>save cmp/C0700odd.F.pdb
+ Save: wrote "cmp/C0700odd.F.pdb".
