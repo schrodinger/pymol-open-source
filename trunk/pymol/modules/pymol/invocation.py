@@ -48,7 +48,7 @@ if __name__=='pymol.invocation':
     options.read_stdin = 0
     options.win_x = 640
     options.win_y = 480
-    options.win_px = 0 # signal to use platform-dependent default
+    options.win_px = 4 
     options.sigint_handler = 1 # terminate on Ctrl-C?
     options.reuse_helper = 0
     options.auto_reinitialize = 0

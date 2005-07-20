@@ -527,7 +527,7 @@ static void MainDrawLocked(void)
     PRunString("exec_deferred()");
 #ifdef _PYMOL_SHARP3D
     /*PParse("load $TUT/1hpv.pdb;hide;show sticks;show surface;set surface_color,white;set transparency,0.5;stereo on");*/
-    PParse("stereo on");
+    /*PParse("stereo on");
     /*PParse("wizard demo,cartoon");*/
 #endif
     
@@ -1450,9 +1450,9 @@ SetConsoleCtrlHandler(
      PInit(G);
      
 #ifdef _PYMOL_SHARP3D
-     SettingSetGlobal_b(G,cSetting_overlay,1);
+  /* SettingSetGlobal_b(G,cSetting_overlay,1);
+     SettingSetGlobal_b(G,cSetting_overlay_lines,1); */
      SettingSetGlobal_f(G,cSetting_stereo_shift,2.5); /* increase strength */
-     SettingSetGlobal_b(G,cSetting_overlay_lines,1);
 #endif
      
      if(G->HaveGUI) {
@@ -1545,8 +1545,8 @@ int was_main(void)
      
 #ifdef _PYMOL_SHARP3D
      /*  InternalGUI = 0; */
-     options->internal_feedback = 0;
-     options->show_splash = 0;
+     /*     options->internal_feedback = 0;
+     options->show_splash = 0; */
 #endif
 
 
