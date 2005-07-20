@@ -451,7 +451,7 @@ def presets(s):
 def state(s):
     return [[ 2, 'State:'       ,''                        ],
               [ 1, 'freeze'  ,'cmd.set("state",cmd.get_state(),"'+s+'")'        ],
-              [ 1, 'thaw'  ,'cmd.set("state",0,"'+s+'")'        ],           
+              [ 1, 'thaw'  ,'cmd.set("state",cmd.get("state","'+s+'"));cmd.unset("state","'+s+'")'        ],           
               ]
     
 def movement(s):
