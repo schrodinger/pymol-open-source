@@ -43,7 +43,6 @@ void MainMaximizeWindow(PyMOLGlobals *G);
 void MainSetWindowSize(PyMOLGlobals *G,int w,int h);
 void MainSetWindowPosition(PyMOLGlobals *G,int x,int y);
 void MainCheckWindowFit(PyMOLGlobals *G);
-
 #ifdef _PYMOL_OSX
 
 int MainCheckRedundantOpen(char *file);

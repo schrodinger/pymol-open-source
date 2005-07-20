@@ -43,7 +43,7 @@ class PMGApp(Pmw.MegaWidget):
 
          # try to get the windows properly aligned...
          
-         osFrame = { 'win32' : (5,60), 'irix'   : (0,41),
+         osFrame = { 'win32' : (4,60), 'irix'   : (0,41),
                          'darwin': (0,51), 'cygwin' : (0,60),
                          'linux' : (0,31), 'linux2' : (0,31) }
 

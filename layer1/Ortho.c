@@ -1090,7 +1090,9 @@ void OrthoDoDraw(PyMOLGlobals *G)
         y = cOrthoBottomMargin;
         
 #ifdef _PYMOL_SHARP3D
-        y+=(7*cOrthoLineHeight)/10;
+        if(SceneGetStereo(G)&&SettingGetGlobal_b(G,cSetting_overlay)) {
+          y+=(7*cOrthoLineHeight)/10;
+        }
 #endif
         if((int)SettingGet(G,cSetting_text)||I->SplashFlag)
           showLines=I->ShowLines;
