@@ -686,7 +686,7 @@ void ExecutiveLoadMOL2(PyMOLGlobals *G,CObject *origObj,char *fname,
         }
 
         if(obj) {
-          ExecutiveManageObject(G,obj,-1,zoom);
+          ExecutiveManageObject(G,obj,zoom,quiet);
           if(eff_frame<0)
             eff_frame = ((ObjectMolecule*)obj)->NCSet-1;
           if(n_processed>0) {
@@ -918,8 +918,10 @@ int ExecutiveLoad(PyMOLGlobals *G,CObject *origObj,
           }
           
           if(obj) {
-            if(is_new) 
-              ExecutiveManageObject(G,obj,-1,zoom);
+
+            if(is_new) {
+              ExecutiveManageObject(G,obj,zoom,quiet);
+            }
             if(finish)
               ExecutiveUpdateObjectSelection(G,obj);
 
@@ -2946,7 +2948,7 @@ int ExecutiveMapNew(PyMOLGlobals *G,char *name,int type,float *grid,
         ObjectSetName((CObject*)objMap,name);
         ObjectMapUpdateExtents(objMap);
         if(isNew)
-          ExecutiveManageObject(G,(CObject*)objMap,-1,false);
+          ExecutiveManageObject(G,(CObject*)objMap,-1,quiet);
         isNew=false;
         origObj = (CObject*)objMap;
       }
@@ -8230,7 +8232,7 @@ void ExecutiveManageObject(PyMOLGlobals *G,CObject *obj,int zoom,int quiet)
     }
   }
 
-  if(zoom) /* -1 = use setting, 0 = never, 1 = force zoom */
+  if(zoom) {/* -1 = use setting, 0 = never, 1 = force zoom */
     if(!exists) {
       if(zoom==1) { /* force zoom */
         ExecutiveWindowZoom(G,obj->Name,0.0,-1,0,0,true); /* (all states) */
@@ -8243,6 +8245,7 @@ void ExecutiveManageObject(PyMOLGlobals *G,CObject *obj,int zoom,int quiet)
         break;
       }
     }
+  }
   SeqChanged(G);
 }
 /*========================================================================*/

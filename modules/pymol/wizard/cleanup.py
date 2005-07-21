@@ -39,7 +39,7 @@ class Cleanup(Wizard):
         ligand = [ [2, 'Ligand', '']]
         target = [ [2, 'Target', ''], [1, '(none)',' cmd.get_wizard().set_target("(none)")' ]]
         
-        for a in cmd.get_names("objects"):
+        for a in cmd.get_names("public_objects"):
             ligand.append([1, a, 'cmd.get_wizard().set_ligand("'+a+'")'])
             if a!=self.ligand:
                 target.append([1, a, 'cmd.get_wizard().set_target("'+a+'")'])
@@ -50,7 +50,7 @@ class Cleanup(Wizard):
         Wizard.__init__(self)
         
         self.ligand = ""
-        for a in cmd.get_names("all"):
+        for a in cmd.get_names("public_objects",1):
             if cmd.count_atoms(a) < 1000:
                 self.ligand = a
                 break
@@ -62,7 +62,7 @@ class Cleanup(Wizard):
 
     def save_undo(self):
         cmd.delete(undo_object)
-        cmd.create(undo_object,self.ligand)
+        cmd.create(undo_object,self.ligand,zoom=0)
         cmd.disable(undo_object)
 
     def undo(self):
