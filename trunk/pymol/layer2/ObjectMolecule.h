@@ -173,6 +173,7 @@ typedef struct {
 #define OMOP_OnOff 53
 #define OMOP_Pop 54
 #define OMOP_TransformR44f 55
+#define OMOP_FixHydrogens 56
 
 #include"CoordSet.h"
 
@@ -338,6 +339,9 @@ void ObjectMoleculePreposReplAtom(ObjectMolecule *I,int index,AtomInfoType *ai);
 void ObjectMoleculeCreateSpheroid(ObjectMolecule *I,int average);
 int ObjectMoleculeSetAtomVertex(ObjectMolecule *I,int state,int index,float *v);
 int ObjectMoleculeVerifyChemistry(ObjectMolecule *I);
+int ObjectMoleculeFindOpenValenceVector(ObjectMolecule *I,int state,
+                                        int index,float *v,float *seek,
+                                        int ignore_index);
 int ObjectMoleculeFillOpenValences(ObjectMolecule *I,int index);
 int ObjectMoleculeGetTotalAtomValence(ObjectMolecule *I,int atom);
 int ObjectMoleculeAdjustBonds(ObjectMolecule *I,int sele0,int sele1,int mode,int order);
@@ -366,8 +370,6 @@ int ***ObjectMoleculeGetBondPrint(ObjectMolecule *I,int max_bond,int max_type,in
 
 int ObjectMoleculeConnect(ObjectMolecule *I,BondType **bond,AtomInfoType *ai,struct CoordSet *cs,int searchFlag);
 float ObjectMoleculeGetMaxVDW(ObjectMolecule *I);
-int ObjectMoleculeFindOpenValenceVector(ObjectMolecule *I,int state,
-                                        int index,float *v,float *seek);
 int ObjectMoleculeGetCheckHBond(ObjectMolecule *don_obj,
                                 int don_atom,
                                 int don_state,

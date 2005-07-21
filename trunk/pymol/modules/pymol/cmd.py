@@ -1354,6 +1354,7 @@ SEE ALSO
               fuse,               \
               h_add,              \
               h_fill,             \
+              h_fix,              \
               invert,             \
               iterate,            \
               iterate_state,      \
@@ -1652,6 +1653,7 @@ SEE ALSO
             'global'        : [ python_help       , 0 , 0 , ''  , parsing.PYTHON ],   
             'h_add'         : [ h_add             , 0 , 0 , ''  , parsing.STRICT ],
             'h_fill'        : [ h_fill            , 0 , 0 , ''  , parsing.STRICT ],
+            'h_fix'         : [ h_fix             , 0 , 0 , ''  , parsing.STRICT ],            
             'help'          : [ help              , 0 , 0 , ''  , parsing.STRICT ],
             'hide'          : [ hide              , 0 , 0 , ''  , parsing.STRICT ],
             'id_atom'       : [ id_atom           , 0 , 0 , ''  , parsing.STRICT ],

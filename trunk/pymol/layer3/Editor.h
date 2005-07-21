@@ -52,6 +52,7 @@ void EditorReplace(PyMOLGlobals *G,char *elem,int geom,int valence,char *name,in
 void EditorAttach(PyMOLGlobals *G,char *elem,int geom,int valence,char *name,int quiet);
 void EditorRemove(PyMOLGlobals *G,int hydrogen,int quiet);
 void EditorHFill(PyMOLGlobals *G,int quiet);
+void EditorHFix(PyMOLGlobals *G,char *sele,int quiet);
 void EditorCycleValence(PyMOLGlobals *G,int quiet);
 void EditorInactivate(PyMOLGlobals *G);
 void EditorUpdateState(PyMOLGlobals *G);

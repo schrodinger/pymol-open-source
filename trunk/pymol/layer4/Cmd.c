@@ -5281,6 +5281,23 @@ static PyObject *CmdHFill(PyObject *self, PyObject *args)
   return APIResultOk(ok);
 }
 
+static PyObject *CmdHFix(PyObject *self, PyObject *args)
+{
+  int ok = true;
+  int quiet;
+  OrthoLineType s1;
+  char *str1;
+  ok = PyArg_ParseTuple(args,"si",&str1,&quiet);
+  if(ok) {
+    APIEntry();
+    ok = (SelectorGetTmp(TempPyMOLGlobals,str1,s1)>=0);
+    EditorHFix(TempPyMOLGlobals,s1,quiet); /* TODO STATUS */
+    SelectorFreeTmp(TempPyMOLGlobals,s1);
+    APIExit();
+  }
+  return APIResultOk(ok);
+}
+
 static PyObject *CmdCycleValence(PyObject *self, PyObject *args)
 {
   int ok = true;
@@ -5584,6 +5601,7 @@ static PyMethodDef Cmd_methods[] = {
    {"get_wizard_stack",      CmdGetWizardStack,       METH_VARARGS },
 	{"h_add",                 CmdHAdd,                 METH_VARARGS },
 	{"h_fill",                CmdHFill,                METH_VARARGS },
+	{"h_fix",                CmdHFix,                METH_VARARGS },
    {"identify",              CmdIdentify,             METH_VARARGS },
 	{"import_coords",         CmdImportCoords,         METH_VARARGS },
    {"index",                 CmdIndex,                METH_VARARGS },

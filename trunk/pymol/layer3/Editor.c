@@ -828,8 +828,34 @@ void EditorHFill(PyMOLGlobals *G,int quiet)
       }
     }
   }
-  
 }
+
+/*========================================================================*/
+void EditorHFix(PyMOLGlobals *G,char *sele,int quiet)
+{
+  int sele0,sele1;
+  ObjectMolecule *obj0,*obj1;
+
+  if((!sele)||(!sele[0])) { /* if selection is empty, then apply to picked atoms */
+    if(EditorActive(G)) {
+      sele0 = SelectorIndexByName(G,cEditorSele1);
+      if(sele0>=0) {
+        obj0 = SelectorGetFastSingleObjectMolecule(G,sele0);    
+        ObjectMoleculeVerifyChemistry(obj0); 
+        ExecutiveFixHydrogens(G,cEditorSele1,quiet);
+      }
+      sele1 = SelectorIndexByName(G,cEditorSele2);
+      if(sele1>=0) {
+        obj1 = SelectorGetFastSingleObjectMolecule(G,sele1);    
+        ObjectMoleculeVerifyChemistry(obj1); 
+        ExecutiveFixHydrogens(G,cEditorSele2,quiet);
+      }
+    }
+  } else {
+    ExecutiveFixHydrogens(G,sele,quiet);
+  }
+}
+
 /*========================================================================*/
 void EditorReplace(PyMOLGlobals *G,char *elem,int geom,int valence,char *name,int quiet)
 {

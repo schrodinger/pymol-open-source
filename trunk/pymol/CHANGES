@@ -4,6 +4,12 @@ CHANGE LOG
 
 Changes up to 0.99
 
+    beta10
+
+    * fixed a few bugs in the molecular editor 
+
+    * preliminary work on "h_fix" command
+
     beta09
 
     * now ignoring SCALEn if it is the identity matrix

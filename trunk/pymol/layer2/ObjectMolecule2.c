@@ -2372,7 +2372,7 @@ static int ObjectMoleculeFindBestDonorH(ObjectMolecule *I,
       nn = I->Neighbor[n++];
 
       if(nn<I->AtomInfo[atom].valence) {       /* is there an implicit hydrogen? */
-        if(ObjectMoleculeFindOpenValenceVector(I,state,atom,best,dir)) {
+        if(ObjectMoleculeFindOpenValenceVector(I,state,atom,best,dir,-1)) {
           result = true;
           best_dot = dot_product3f(best,dir);
           add3f(orig,best,best);

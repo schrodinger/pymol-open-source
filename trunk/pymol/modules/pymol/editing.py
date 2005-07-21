@@ -735,6 +735,23 @@ SEE ALSO
         if _raising(r): raise pymol.CmdException            
         return r
 
+    def h_fix(selection="",quiet=1):
+        '''
+under development...
+    '''
+        # preprocess selection
+        selection = selector.process(selection)
+
+        r = DEFAULT_ERROR
+        try:
+            lock()   
+            r = _cmd.h_fix(str(selection),int(quiet))
+        finally:
+            unlock(r)
+        if _raising(r): raise pymol.CmdException            
+        return r
+
+
     def h_add(selection="(all)",quiet=1):
         '''
 DESCRIPTION
