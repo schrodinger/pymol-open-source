@@ -88,6 +88,7 @@ ObjectMolecule *ObjectMoleculeReadTOPStr(PyMOLGlobals *G,ObjectMolecule *I,char 
 
 void ObjectMoleculeInferHBondFromChem(ObjectMolecule *I);
 
+
 static char *ObjectMoleculeGetCaption(ObjectMolecule *I)
 {
   int state = ObjectGetCurrentState((CObject*)I,false);
@@ -141,6 +142,69 @@ static void dump_jxn(char *lab,char *q)
 
 }
 #endif
+
+/*========================================================================*/
+static void ObjectMoleculeFixSeleHydrogens(ObjectMolecule *I,int sele)
+{
+  int a,b;
+  int n;
+  CoordSet *cs;
+  int seleFlag=false;
+  int h_idx;
+  float fixed[3],v0[3],v1[3],sought[3];
+  AtomInfoType *ai0,*ai1;
+
+  ai0=I->AtomInfo;
+  for(a=0;a<I->NAtom;a++) {
+    if(SelectorIsMember(I->Obj.G,ai0->selEntry,sele)) {
+      seleFlag=true;
+      break;
+    }
+    ai0++;
+  }
+  if(seleFlag) {
+    seleFlag=false;
+    if(!ObjectMoleculeVerifyChemistry(I)) {
+      ErrMessage(I->Obj.G," AddHydrogens","missing chemical geometry information.");
+    } else {
+      ObjectMoleculeUpdateNeighbors(I);
+      ai0=I->AtomInfo;
+      for(a=0;a<I->NAtom;a++) {
+        if(!ai0->hydrogen) { /* only do heavies */
+          if(SelectorIsMember(I->Obj.G,ai0->selEntry,sele)) {
+            n = I->Neighbor[a]+1;
+            while( (h_idx=I->Neighbor[n]) >=0) {
+              ai1=I->AtomInfo + h_idx;
+              if(ai1->hydrogen) {
+                for(b=0;b<I->NCSet;b++) { /* iterate through each coordinate set */
+                  if(ObjectMoleculeGetAtomVertex(I,b,a,v0) &&
+                     ObjectMoleculeGetAtomVertex(I,b,h_idx,v1)) {
+                    float l;
+                    subtract3f(v1,v0,sought);
+                    l = length3f(sought); /* use the current length */
+                    
+                    if(ObjectMoleculeFindOpenValenceVector(I,b,a,fixed,
+                                                           sought,h_idx)) {
+                      scale3f(fixed,l,fixed);
+                      add3f(fixed,v0,fixed);
+                      ObjectMoleculeSetAtomVertex(I,b,h_idx,fixed);
+                      seleFlag=true;
+                    }
+                  }
+                  cs = I->CSet[b];
+                }
+              }
+              n+=2;
+            }
+          }
+        }
+        ai0++;
+      }
+    }
+    if(seleFlag)
+      ObjectMoleculeInvalidate(I,cRepAll,cRepInvAll,-1);
+  }
+}
 
 static char *skip_fortran(int num,int per_line,char *p)
 {
@@ -2858,7 +2922,7 @@ void ObjectMoleculeAddSeleHydrogens(ObjectMolecule *I,int sele)
             if(tcs) {
               for(a=0;a<nH;a++) {
                 ObjectMoleculeGetAtomVertex(I,b,index[a],v0);
-                ObjectMoleculeFindOpenValenceVector(I,b,index[a],v,NULL);
+                ObjectMoleculeFindOpenValenceVector(I,b,index[a],v,NULL,-1);
                 d = AtomInfoGetBondLength(I->Obj.G,I->AtomInfo+index[a],&fakeH);
                 scale3f(v,d,v);
                 add3f(v0,v,cs->Coord+3*a);
@@ -2997,7 +3061,7 @@ void ObjectMoleculeFuse(ObjectMolecule *I,int index0,ObjectMolecule *src,int ind
       break;
     case 1:
       copy3f(backup+3*anch1,va1);
-      ObjectMoleculeFindOpenValenceVector(src,state1,at1,x1,NULL);
+      ObjectMoleculeFindOpenValenceVector(src,state1,at1,x1,NULL,-1);
       scale3f(x1,-1.0F,x1);
       get_system1f3f(x1,y1,z1);      
       break;
@@ -3052,7 +3116,7 @@ void ObjectMoleculeFuse(ObjectMolecule *I,int index0,ObjectMolecule *src,int ind
           ca0 = tcs->AtmToIdx[at0]; /* anchor */
 
           if(ca0>=0) {
-            ObjectMoleculeFindOpenValenceVector(I,a,at0,x0,NULL);
+            ObjectMoleculeFindOpenValenceVector(I,a,at0,x0,NULL,-1);
             copy3f(tcs->Coord+3*ca0,va0);
             get_system1f3f(x0,y0,z0);
             
@@ -3184,7 +3248,7 @@ void ObjectMoleculeAttach(ObjectMolecule *I,int index,AtomInfoType *nai)
   for(a=0;a<I->NCSet;a++) { /* add atom to each coordinate set */
     if(I->CSet[a]) {
       ObjectMoleculeGetAtomVertex(I,a,index,v0);
-      ObjectMoleculeFindOpenValenceVector(I,a,index,v,NULL);
+      ObjectMoleculeFindOpenValenceVector(I,a,index,v,NULL,-1);
       scale3f(v,d,v);
       add3f(v0,v,cs->Coord);
       CoordSetMerge(I->CSet[a],cs); 
@@ -3242,7 +3306,7 @@ int ObjectMoleculeFillOpenValences(ObjectMolecule *I,int index)
       for(a=0;a<I->NCSet;a++) { /* add atom to each coordinate set */
         if(I->CSet[a]) {
           ObjectMoleculeGetAtomVertex(I,a,index,v0);
-          ObjectMoleculeFindOpenValenceVector(I,a,index,v,NULL);
+          ObjectMoleculeFindOpenValenceVector(I,a,index,v,NULL,-1);
           scale3f(v,d,v);
           add3f(v0,v,cs->Coord);
           CoordSetMerge(I->CSet[a],cs); 
@@ -3315,7 +3379,8 @@ static int get_planer_normal(ObjectMolecule *I,int state,int index,float *normal
 
 /*========================================================================*/
 int ObjectMoleculeFindOpenValenceVector(ObjectMolecule *I,int state,
-                                        int index,float *v,float *seek)
+                                        int index,float *v,float *seek,
+                                        int ignore_index)
 {
   CoordSet *cs;
   int nOcc = 0;
@@ -3348,15 +3413,17 @@ int ObjectMoleculeFindOpenValenceVector(ObjectMolecule *I,int state,
           a1 = I->Neighbor[n];
           n+=2; 
           if(a1<0) break;
-          ai1=I->AtomInfo+a1;
-          if(ObjectMoleculeGetAtomVertex(I,state,a1,v1)) {        
-            last_occ = a1;
-            subtract3f(v1,v0,n0);
-            normalize3f(n0); /* n0's point away from center atom */
-            copy3f(n0,occ+3*nOcc);
-            nOcc++; 
-            if(nOcc==MaxOcc) /* safety valve */
-              break;
+          if(a1!=ignore_index) {
+            ai1=I->AtomInfo+a1;
+            if(ObjectMoleculeGetAtomVertex(I,state,a1,v1)) {        
+              last_occ = a1;
+              subtract3f(v1,v0,n0);
+              normalize3f(n0); /* n0's point away from center atom */
+              copy3f(n0,occ+3*nOcc);
+              nOcc++; 
+              if(nOcc==MaxOcc) /* safety valve */
+                break;
+            }
           }
         }
         if((!nOcc)||(nOcc>4)||(ai->geom==cAtomInfoNone)) {
@@ -7082,35 +7149,11 @@ void ObjectMoleculeSeleOp(ObjectMolecule *I,int sele,ObjectMoleculeOpRec *op)
    /* */
 	switch(op->code) {
 	case OMOP_AddHydrogens:
-     ObjectMoleculeAddSeleHydrogens(I,sele);
-     break;
-#ifdef _OLD_CODE
-     if(!ObjectMoleculeVerifyChemistry(I)) {
-       ErrMessage(G," AddHydrogens","missing chemical geometry information.");
-     } else {
-       doneFlag=false;
-       while(!doneFlag) {
-         doneFlag=true;
-         a=0;
-         while(a<I->NAtom) {
-           ai=I->AtomInfo + a;
-           s=I->AtomInfo[a].selEntry;
-           if(SelectorIsMember(G,s,sele))
-             if(ObjectMoleculeFillOpenValences(I,a)) {
-               hit_flag=true;
-               doneFlag=false;
-             }
-           a++; /* realize that the atom list may have been resorted */
-         }
-       }
-       if(hit_flag) {
-         ObjectMoleculeSort(I);
-         ObjectMoleculeUpdateIDNumbers(I);
-       } 
-     }
-     break;
-#endif
-
+      ObjectMoleculeAddSeleHydrogens(I,sele);
+      break;
+	case OMOP_FixHydrogens:
+      ObjectMoleculeFixSeleHydrogens(I,sele);
+      break;
 	case OMOP_PrepareFromTemplate:
      ai0=op->ai; /* template atom */
      for(a=0;a<I->NAtom;a++)

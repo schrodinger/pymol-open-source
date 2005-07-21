@@ -193,6 +193,7 @@ void ExecutiveUndo(PyMOLGlobals *G,int dir);
 void ExecutiveRebuildAll(PyMOLGlobals *G);
 void ExecutiveSpheroid(PyMOLGlobals *G,char *name,int average);
 void ExecutiveAddHydrogens(PyMOLGlobals *G,char *s1,int quiet);
+void ExecutiveFixHydrogens(PyMOLGlobals *G,char *s1,int quiet);
 void ExecutiveFuse(PyMOLGlobals *G,char *s0,char *s1,int mode,int recolor,int move_flag);
 void ExecutiveRenameObjectAtoms(PyMOLGlobals *G,char *name,int force);
 int ExecutiveInvert(PyMOLGlobals *G,int quiet);

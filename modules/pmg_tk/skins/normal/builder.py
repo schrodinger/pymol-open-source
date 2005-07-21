@@ -2,6 +2,7 @@
 import sys
 import os
 from glob import glob
+import traceback
 
 from Tkinter import *
 import tkMessageBox
@@ -230,6 +231,12 @@ class EditFrame(GuiFrame):
 ############################################################
 
 class AminoAcidFrame(GuiFrame):
+    def attach(self, aa):
+        try:
+            editor.attach_amino_acid("pk1", aa)
+        except:
+            traceback.print_exc()
+        
     def __init__(self, parent):
         self.builder = parent.builder        
         GuiFrame.__init__(self, parent)
@@ -240,7 +247,7 @@ class AminoAcidFrame(GuiFrame):
                   "Thr", "Trp", "Tyr", "Val", "Ace", "NMe"]
         for aa in aaList:
             r = aa.lower()
-            GuiButton(self, aa, lambda r=r: editor.attach_amino_acid("pk1", r), "Build %s residue" % aa)
+            GuiButton(self, aa, lambda s=self,r=r: s.attach(r), "Build %s residue" % aa)
 
 
 class SecStructFrame(GuiFrame):

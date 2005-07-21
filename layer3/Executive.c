@@ -920,7 +920,7 @@ int ExecutiveLoad(PyMOLGlobals *G,CObject *origObj,
           if(obj) {
 
             if(is_new) {
-              ExecutiveManageObject(G,obj,zoom,quiet);
+              ExecutiveManageObject(G,obj,zoom,true); /* quiet=true -- suppressing output... */
             }
             if(finish)
               ExecutiveUpdateObjectSelection(G,obj);
@@ -4419,6 +4419,19 @@ void ExecutiveAddHydrogens(PyMOLGlobals *G,char *s1,int quiet)
   if(sele1>=0) {
     ObjectMoleculeOpRecInit(&op);
     op.code = OMOP_AddHydrogens; /* 4 passes completes the job */
+    ExecutiveObjMolSeleOp(G,sele1,&op);    
+  }
+}
+/*========================================================================*/
+void ExecutiveFixHydrogens(PyMOLGlobals *G,char *s1,int quiet)
+{
+  int sele1;
+  ObjectMoleculeOpRec op;
+  
+  sele1 = SelectorIndexByName(G,s1);
+  if(sele1>=0) {
+    ObjectMoleculeOpRecInit(&op);
+    op.code = OMOP_FixHydrogens; 
     ExecutiveObjMolSeleOp(G,sele1,&op);    
   }
 }
