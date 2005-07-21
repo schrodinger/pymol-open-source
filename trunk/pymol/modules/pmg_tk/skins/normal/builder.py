@@ -12,11 +12,13 @@ import Pmw
 
 from pymol import cmd
 from pymol import editor
+import pymol
 
 WID = 5
 MAX_COL = 12
 imgDict = {}
-
+active_sele = "_builder_active"
+newest_sele = "_builder_added"
 
 ##############################################################
 # base widgets
@@ -97,8 +99,9 @@ class AtomFrame(GuiFrame):
     def replace(self, atom, geometry, valence):
         if getAtoms(1):
             if "pk1" in cmd.get_names("selections"):
+                cmd.select(active_sele,"byobj pk1")
                 cmd.replace(atom, geometry, valence)
-                self.builder.doAutoPick()                            
+                self.builder.doAutoPick()
             else:
                 warn("Please select (pk1) first...")
 
@@ -127,11 +130,13 @@ class FragmentFrame(GuiFrame):
 
     def grow(self, name, fill, geom):
         if "pk1" in cmd.get_names("selections"):
+            cmd.select(active_sele,"byobj pk1")            
             editor.attach_fragment("pk1", name, fill, geom)
             self.builder.doAutoPick()
         else:
             editor.attach_fragment("", name, fill, geom)
             cmd.unpick()
+            cmd.select(active_sele,name)
             self.builder.doAutoPick()            
         
 ##############################################################
@@ -333,15 +338,22 @@ class Builder(Frame):
         # unsafe approach disabled
         # self.bind_all("<ButtonRelease-1>", self.doSelect)
 
-    def doAutoPick(self, *ignore):
+    def doAutoPick(self, old_atoms=None):
         if self.autoPik.get():
             cmd.unpick()
-            vis = cmd.identify("(visible)")
-            if vis:
-                lastAt = max(vis)
-                cmd.edit("id %d" % lastAt)
-                if cmd.get_wizard()!=None:
-                    cmd.do("_ cmd.get_wizard().do_pick(0)")
+            if cmd.select(newest_sele,"(byobj "+active_sele+") and not "+active_sele)==0:
+                cmd.select(newest_sele, active_sele)
+            new_list = cmd.index(newest_sele+" and hydro")
+            if len(new_list)==0:
+                new_list = cmd.index(newest_sele)                
+            if new_list:
+                index = new_list.pop()
+                try:
+                    cmd.edit("%s`%d" % index)
+                    if cmd.get_wizard()!=None:
+                        cmd.do("_ cmd.get_wizard().do_pick(0)")
+                except pymol.CmdException:
+                    print " doAutoPick-Error: exception"
             self.doZoom()
 
     def doZoom(self, *ignore):
