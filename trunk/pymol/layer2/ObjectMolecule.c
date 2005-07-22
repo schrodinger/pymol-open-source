@@ -3021,10 +3021,12 @@ void ObjectMoleculeFuse(ObjectMolecule *I,int index0,ObjectMolecule *src,int ind
       a1 = scs->IdxToAtm[a];
       *(nai+a) = *(ai1+a1);
       (nai+a)->selEntry=0; /* avoid duplicating selection references -> leads to hangs ! */
-      (nai+a)->temp1=0; /* clear marks */
+      if(a1 == at1) {
+        (nai+a)->temp1=2; /* clear marks */        
+      } else {
+        (nai+a)->temp1=0; /* clear marks */
+      }
     }
-
-    nai[at1].temp1=2; /* mark the connection point */
     
     /* copy internal bond information*/
 
