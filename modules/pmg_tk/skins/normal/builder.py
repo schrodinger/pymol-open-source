@@ -236,6 +236,7 @@ class AminoAcidFrame(GuiFrame):
             editor.attach_amino_acid("pk1", aa)
         except:
             traceback.print_exc()
+        self.builder.doZoom()
         
     def __init__(self, parent):
         self.builder = parent.builder        
@@ -364,6 +365,7 @@ class Builder(Frame):
             self.doZoom()
 
     def doZoom(self, *ignore):
+        print "zoom",self.autoZoom.get()
         if self.autoZoom.get():
             if "pk1" in cmd.get_names("selections"):
                 cmd.zoom("((neighbor pk1) expand 5)", 5.0)

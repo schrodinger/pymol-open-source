@@ -6,6 +6,8 @@ Changes up to 0.99
 
     beta10
 
+    * fixed attachment of amino acids at the N-terminus
+
     * fixed a few bugs in the molecular editor 
 
     * preliminary work on "h_fix" command
