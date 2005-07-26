@@ -348,60 +348,68 @@ class Normal(PMGSkin):
         self.setting.refresh()
         self.output.after(500,self.update_menus) # twice a second
 
-    def file_open(self):
-        ofile = askopenfilename(initialdir = self.initialdir,
-                                        filetypes=[("All Readable","*.pdb"),
-                                                      ("All Readable","*.ccp4"),
-                                                      ("All Readable","*.xplor"),
-                                                      ("All Readable","*.mol"),
-                                                      ("All Readable","*.mol2"),
-                                                      ("All Readable","*.sdf"),
-                                                      ("All Readable","*.xyz"),                                         
-                                                      ("All Readable","*.r3d"),
-                                                      ("All Readable","*.cc1"),
-                                                      ("All Readable","*.cc2"),                                         
-                                                      ("All Readable","*.ent"),
-                                                      ("All Readable","*.dat"),
-                                                      ("All Readable","*.out"),
-                                                      ("All Readable","*.mmd"),
-                                                      ("All Readable","*.mmod"),
-                                                      ("All Readable","*.pse"),
-                                                      ("All Readable","*.phi"),
-                                                      ("All Readable","*.fld"),
-                                                      ("All Readable","*.o"),
-                                                      ("All Readable","*.omap"),                                         
-                                                      ("All Readable","*.brix"),
-                                                      ("All Readable","*.dx"),
-                                                      ("All Readable","*.pqr"),
-                                                      ("All Readable","*.p5m"),
-                                                      ("All Readable","*.p1m"),
-                                                      ("PDB File","*.pdb"),
-                                                      ("All Files","*.*"),
-                                                      ("All Files","*"),                                         
-                                                      ("PDB File","*.ent"),
-                                                      ("PyMOL Session","*.pse"),
-                                                      ("CCP4 Map","*.ccp4"),                                         
-                                                      ("XPLOR Map","*.xplor"),
-                                                      ("MOL2/Multi-MOL2","*.mol2"),
-                                                      ("Macromodel File","*.dat"),
-                                                      ("Macromodel File","*.out"),
-                                                      ("Macromodel File","*.mmd"),
-                                                      ("Macromodel File","*.mmod"),
-                                                      ("BRIX/O Map","*.o"),
-                                                      ("BRIX/O Map","*.omap"),
-                                                      ("BRIX/O Map","*.brix"),
-                                                      ("DX Map","*.dx"),                                         
-                                                      ("AVS (MEAD) Field","*.fld"),                                         
-                                                      ("MOL File","*.mol"),
-                                                      ("ChemPy Model","*.pkl"),
-                                                      ("Raster3D Scene","*.r3d"),
-                                                      ("SDF File","*.sdf"),
-                                                      ("ChemDraw3D File","*.cc1"),
-                                                      ("ChemDraw3D File","*.cc2"),
-                                                      ("Tinker XYZ File","*.xyz")
-                                                      ])
+    def file_open(self,tutorial=0):
+        if not tutorial:
+            initdir = self.initialdir
+            ftypes =  [("All Readable","*.pdb"),
+                       ("All Readable","*.ccp4"),
+                       ("All Readable","*.xplor"),
+                       ("All Readable","*.mol"),
+                       ("All Readable","*.mol2"),
+                       ("All Readable","*.sdf"),
+                       ("All Readable","*.xyz"),                                         
+                       ("All Readable","*.r3d"),
+                       ("All Readable","*.cc1"),
+                       ("All Readable","*.cc2"),                                         
+                       ("All Readable","*.ent"),
+                       ("All Readable","*.dat"),
+                       ("All Readable","*.out"),
+                       ("All Readable","*.mmd"),
+                       ("All Readable","*.mmod"),
+                       ("All Readable","*.pse"),
+                       ("All Readable","*.phi"),
+                       ("All Readable","*.fld"),
+                       ("All Readable","*.o"),
+                       ("All Readable","*.omap"),                                         
+                       ("All Readable","*.brix"),
+                       ("All Readable","*.dx"),
+                       ("All Readable","*.pqr"),
+                       ("All Readable","*.p5m"),
+                       ("All Readable","*.p1m"),
+                       ("PDB File","*.pdb"),
+                       ("All Files","*.*"),
+                       ("All Files","*"),                                         
+                       ("PDB File","*.ent"),
+                       ("PyMOL Session","*.pse"),
+                       ("CCP4 Map","*.ccp4"),                                         
+                       ("XPLOR Map","*.xplor"),
+                       ("MOL2/Multi-MOL2","*.mol2"),
+                       ("Macromodel File","*.dat"),
+                       ("Macromodel File","*.out"),
+                       ("Macromodel File","*.mmd"),
+                       ("Macromodel File","*.mmod"),
+                       ("BRIX/O Map","*.o"),
+                       ("BRIX/O Map","*.omap"),
+                       ("BRIX/O Map","*.brix"),
+                       ("DX Map","*.dx"),                                         
+                       ("AVS (MEAD) Field","*.fld"),                                         
+                       ("MOL File","*.mol"),
+                       ("ChemPy Model","*.pkl"),
+                       ("Raster3D Scene","*.r3d"),
+                       ("SDF File","*.sdf"),
+                       ("ChemDraw3D File","*.cc1"),
+                       ("ChemDraw3D File","*.cc2"),
+                       ("Tinker XYZ File","*.xyz")
+                       ]
+        else:
+            initdir = os.environ['TUT']
+            # only list file extensions that are used for tutorial data
+            ftypes = [("Tutorial Data","*.pdb"),]
+        ofile = askopenfilename(initialdir = initdir,
+                                        filetypes=ftypes)
         if len(ofile):
-            self.initialdir = re.sub(r"[^\/\\]*$","",ofile)         
+            if not tutorial:
+                self.initialdir = re.sub(r"[^\/\\]*$","",ofile)
             self.cmd.log("load %s\n"%ofile,"cmd.load('%s')\n"%ofile)
             if (string.lower(ofile[-4:])=='.pse') and (ofile!=self.save_file):
                 self.save_file = '' # remove ambiguous default 
@@ -583,6 +591,18 @@ class Normal(PMGSkin):
                                             hull_relief=RAISED, hull_borderwidth=1) 
         self.menuBar.pack(fill=X)
 
+        self.menuBar.addmenu('Tutorial', 'Tutorial', side='right')      
+
+        self.menuBar.addmenuitem('Tutorial', 'command', 'Open tutorial data file.',
+                                label='Open File...',
+                                command=lambda s=self: s.file_open(tutorial=1))
+
+# to come
+#        self.menuBar.addmenuitem('Tutorial', 'separator', '')
+#
+#        self.menuBar.addmenuitem('Tutorial', 'command', 'Beginners',
+#                                         label='Beginners',
+#                                         command = lambda s=self: None)
 
         self.menuBar.addmenu('Help', 'About %s' % self.appname, side='right')      
         self.menuBar.addmenuitem('Help', 'command',
@@ -590,11 +610,12 @@ class Normal(PMGSkin):
                                          label='About', command = lambda s=self: s.cmd.do("_ splash"))
 
         self.menuBar.addmenuitem('Help', 'separator', '')
-
+        
         self.menuBar.addmenuitem('Help', 'command', 'Demo',
                                          label='Demo',
                                          command = lambda s=self: s.cmd.do(
             "_ replace_wizard demo,cartoon"))
+
 
 #      self.menuBar.addmenuitem('Help', 'command', 'Release Notes',
 #                               label='Release Notes',
@@ -671,7 +692,6 @@ class Normal(PMGSkin):
         self.menuBar.addmenuitem('File', 'command', 'Open structure file.',
                                 label=self.pad+'Open...',
                                 command=self.file_open)
-
 
         self.menuBar.addmenuitem('File', 'command', 'Save session.',
                                 label=self.pad+'Save Session',
