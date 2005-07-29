@@ -574,6 +574,8 @@ CSetting *SettingNewFromPyList(PyMOLGlobals *G,PyObject *list);
 #define cSetting_sphere_point_max_size      422
 #define cSetting_sphere_point_size          423
 #define cSetting_pdb_honor_model_number     424
+#define cSetting_rank_assisted_sorts        425
+#define cSetting_ribbon_nucleic_acid_mode   426
 
 /* when you add a new settingg also remember:
    layer1/Setting.c
@@ -583,7 +585,7 @@ CSetting *SettingNewFromPyList(PyMOLGlobals *G,PyObject *list);
 
 /* cSetting_ss_INIT must always be last setting_index +1 */
 
-#define cSetting_INIT                       425
+#define cSetting_INIT                       427
 
 #endif
 

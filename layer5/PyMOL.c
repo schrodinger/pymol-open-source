@@ -536,6 +536,8 @@ typedef struct _CPyMOL {
   ov_word lex_sphere_point_max_size;
   ov_word lex_sphere_point_size;
   ov_word lex_pdb_honor_model_number;
+  ov_word lex_rank_assisted_sorts;
+  ov_word lex_ribbon_nucleic_acid_mode;
 } _CPyMOL;
 
 static int status_ok(int ok) {
@@ -1062,7 +1064,8 @@ static OVstatus PyMOL_InitAPI(CPyMOL *I)
   LEX_SETTING(sphere_point_max_size, 422);
   LEX_SETTING(sphere_point_size, 423);
   LEX_SETTING(pdb_honor_model_number, 424);
-
+  LEX_SETTING(rank_assisted_sorts, 425);
+  LEX_SETTING(ribbon_nucleic_acid_mode, 426);
   return_OVstatus_SUCCESS;
 }
 

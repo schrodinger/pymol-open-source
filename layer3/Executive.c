@@ -75,6 +75,11 @@ typedef struct SpecRec {
   int previous;
 } SpecRec; /* specification record (a line in the executive window) */
 
+typedef struct {
+  int list_id;
+  int next;
+} ListMember;
+
 struct _CExecutive {
   Block *Block;
   SpecRec *Spec;

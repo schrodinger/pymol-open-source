@@ -6,6 +6,15 @@ Changes up to 0.99
 
     beta10
 
+    * better cartoons for nucleic acids. loose 3' and 5' ends can now be capped with 
+      cartoon_nucleic_acid_modes 2, 3, and 4 (same for ribbon_nucleic_acid_mode)
+
+    * normals now generated in a more sensible fashion for nucleic acid cartoons */
+
+    * rank_assisted_sorts enables us to handle those insane PDB
+      structures where residue 118 preceeds 118A and 123A preceeds 123,
+      without introducing breaks in the ribbon or cartoon structure
+
     * fixed attachment of amino acids at the N-terminus
 
     * fixed a few bugs in the molecular editor 

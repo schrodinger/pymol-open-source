@@ -257,7 +257,10 @@ Rep *RepRibbonNew(CoordSet *cs)
   float dev;
   int trace;
   int ribbon_color;
+  int na_mode;
   AtomInfoType *ai,*last_ai=NULL;
+  AtomInfoType *trailing_O3p_ai=NULL, *leading_O5p_ai=NULL;
+  int trailing_O3p_a = 0, leading_O5p_a = 0, leading_O5p_a1 =0;
 
   Pickable *rp=NULL;
   OOAlloc(G,RepRibbon);
@@ -282,6 +285,7 @@ Rep *RepRibbonNew(CoordSet *cs)
   power_b=SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_ribbon_power_b);
   throw=SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_ribbon_throw);
   trace=SettingGet_i(G,cs->Setting,obj->Obj.Setting,cSetting_ribbon_trace_atoms);
+  na_mode = SettingGet_i(G,cs->Setting,obj->Obj.Setting,cSetting_ribbon_nucleic_acid_mode);
 
   ribbon_color=SettingGet_color(G,cs->Setting,obj->Obj.Setting,cSetting_ribbon_color);
 
@@ -310,7 +314,7 @@ Rep *RepRibbonNew(CoordSet *cs)
   nSeg = 0;
   a2=-1;
   for(a1=0;a1<cs->NAtIndex;a1++)
-	 {
+    {
       if(obj->DiscreteFlag) {
         if(cs==obj->DiscreteCSet[a1]) 
           a=obj->DiscreteAtmToIdx[a1];
@@ -318,20 +322,20 @@ Rep *RepRibbonNew(CoordSet *cs)
           a=-1;
       } else 
         a=cs->AtmToIdx[a1];
-		if(a>=0) {
+      if(a>=0) {
         ai = obj->AtomInfo+a1;
-		  if(obj->AtomInfo[a1].visRep[cRepRibbon]) {
+        if(obj->AtomInfo[a1].visRep[cRepRibbon]) {
           if(trace||((obj->AtomInfo[a1].protons==cAN_C)&&
                      (WordMatch(G,"CA",obj->AtomInfo[a1].name,1)<0)&&
                      !AtomInfoSameResidueP(G,last_ai,ai))) {
             PRINTFD(G,FB_RepRibbon)
               " RepRibbon: found atom in %s; a1 %d a2 %d\n",obj->AtomInfo[a1].resi,a1,a2
               ENDFD;
-            
+              
             if(a2>=0) {
               /*						if((abs(obj->AtomInfo[a1].resv-obj->AtomInfo[a2].resv)>1)||
-                (obj->AtomInfo[a1].chain[0]!=obj->AtomInfo[a2].chain[0])||
-                (!WordMatch(G,obj->AtomInfo[a1].segi,obj->AtomInfo[a2].segi,1)))*/
+                                        (obj->AtomInfo[a1].chain[0]!=obj->AtomInfo[a2].chain[0])||
+                                        (!WordMatch(G,obj->AtomInfo[a1].segi,obj->AtomInfo[a2].segi,1)))*/
               if(trace) {
                 if(!AtomInfoSequential(G,obj->AtomInfo+a2,obj->AtomInfo+a1))
                   a2=-1;
@@ -354,14 +358,47 @@ Rep *RepRibbonNew(CoordSet *cs)
             *(v++)=*(v1++);
             
             a2=a1;
-          } else if(trace||(((ai->protons==cAN_P)&&
-                             (WordMatch(G,"P",ai->name,1)<0))&&
-                            !AtomInfoSameResidueP(G,last_ai,ai))) {
-            if(!trace) 
-              if(a2>=0) {
-                if(!ObjectMoleculeCheckBondSep(obj,a1,a2,6)) /* six bonds between phosphates */
-                  a2=-1;
+          } else if(
+                    (((na_mode!=1)&&(ai->protons==cAN_P) &&
+                      (WordMatch(G,"P",ai->name,1)<0) ) ||
+                     ((na_mode==1)&&(ai->protons==cAN_C) &&
+                      (WordMatchExact(G,"C4*",ai->name,1) ||
+                       WordMatchExact(G,"C4'",ai->name,1))))&&
+                    !AtomInfoSameResidueP(G,last_ai,ai)) {
+            if(a2>=0) {
+              if(!ObjectMoleculeCheckBondSep(obj,a1,a2,6)) { /* six bonds between phosphates */
+                if(trailing_O3p_ai&&((na_mode==2)||(na_mode==4))) {
+                  /* 3' end of nucleic acid */
+                  *(s++) = nSeg;
+                  nAt++;
+                  *(i++)=trailing_O3p_a;
+                  v1 = cs->Coord+3*trailing_O3p_a;		
+                  *(v++)=*(v1++);
+                  *(v++)=*(v1++);
+                  *(v++)=*(v1++);
+                }
+                a2=-1;
               }
+            }
+
+            trailing_O3p_ai = NULL;
+
+            if(leading_O5p_ai&&(a2<0)&&
+               ((na_mode==3)||(na_mode==4))) {
+              if((!AtomInfoSameResidueP(G,ai,leading_O5p_ai))&&
+                 ObjectMoleculeCheckBondSep(obj,a1,leading_O5p_a1,5)) {
+                nSeg++;
+                *(s++) = nSeg;
+                nAt++;
+                *(i++)= leading_O5p_a;
+                v1 = cs->Coord+3*leading_O5p_a;		
+                *(v++)=*(v1++);
+                *(v++)=*(v1++);
+                *(v++)=*(v1++);
+                a2 = leading_O5p_a1;
+              }
+            }
+            leading_O5p_ai = NULL;
             last_ai = ai;
             if(a2<0) nSeg++;
             *(s++) = nSeg;
@@ -373,14 +410,43 @@ Rep *RepRibbonNew(CoordSet *cs)
             *(v++)=*(v1++);
             
             a2=a1;
+          } else if((a2>=0)&&
+                    last_ai&&
+                    (ai->protons==cAN_O)&&
+                    (last_ai->protons==cAN_P)&&
+                    ((na_mode==2)||(na_mode==4))&&
+                    (WordMatchExact(G,"O3'",ai->name,1)||
+                     WordMatchExact(G,"O3*",ai->name,1))&&
+                    AtomInfoSameResidueP(G,last_ai,ai)&&
+                    ObjectMoleculeCheckBondSep(obj,a1,a2,5)) {
+              trailing_O3p_ai = ai;
+              trailing_O3p_a = a;
+          } else if((ai->protons==cAN_O)&&
+                    ((na_mode==3)||(na_mode==4))&&
+                    (WordMatchExact(G,"O5'",ai->name,1)||
+                     WordMatchExact(G,"O5*",ai->name,1))) {
+            leading_O5p_ai = ai;
+            leading_O5p_a = a;
+            leading_O5p_a1 = a1;
           }
         }
       }
+      
     }
+  if(trailing_O3p_ai&&((na_mode==2)||(na_mode==4))) {
+    /* 3' end of nucleic acid */
+    *(s++) = nSeg;
+    nAt++;
+    *(i++)=trailing_O3p_a;
+    v1 = cs->Coord+3*trailing_O3p_a;		
+    *(v++)=*(v1++);
+    *(v++)=*(v1++);
+    *(v++)=*(v1++);
+  }
   PRINTFD(G,FB_RepRibbon)
     " RepRibbon: nAt %d\n",nAt
     ENDFD;
-
+  
   if(nAt)
 	 {
 		/* compute differences and normals */
