@@ -20,6 +20,7 @@ Z* -------------------------------------------------------------------
 #define __inline__ __inline
 #endif
 
+#ifndef _PYMOL_MINGW
 #ifdef _WIN32
 #ifndef _AFXDLL
 	#ifndef _UNICODE
@@ -99,6 +100,7 @@ Z* -------------------------------------------------------------------
 #pragma comment(linker, "/include:__afxForceSTDAFX")
 #endif
 
+#endif
 #endif
 
 #endif

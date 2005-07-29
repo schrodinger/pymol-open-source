@@ -117,6 +117,123 @@ static float smooth(float x,float power)
   }
 }
 
+#define MAX_BASE_ATOM 10
+
+static void do_base(int n_atom, int *atix, ObjectMolecule *obj, 
+                    CoordSet *cs, float width, CGO *cgo)
+{
+  float *v_i[MAX_BASE_ATOM];
+
+  AtomInfoType *ai_i[MAX_BASE_ATOM];
+  int have_all = true;
+  AtomInfoType *ai;
+
+  width *= 0.5F;
+
+  /* first, make sure all atoms have known coordinates */
+  {
+    int a,i;
+    for(i=0;i<n_atom;i++) {
+      int a1 = atix[i];
+      int have_atom = false;
+      if(obj->DiscreteFlag) {
+        if(cs==obj->DiscreteCSet[a1]) 
+          a=obj->DiscreteAtmToIdx[a1];
+        else 
+          a=-1;
+      } else 
+        a=cs->AtmToIdx[a1];
+      if(a>=0) {
+        ai = obj->AtomInfo+a1;
+        if(ai->visRep[cRepCartoon]) {
+          ai_i[i] = ai;
+          v_i[i]=cs->Coord+3*a;
+          have_atom = true;
+        }
+      }
+      if(!have_atom) {
+        have_all=false;
+        break;
+      }
+    }
+  }
+  
+  if(n_atom && have_all) {
+    float avg[3];
+    int i;
+
+    /* compute average coordinate */
+    zero3f(avg);
+    for(i=0;i<n_atom;i++) {
+      add3f(avg,v_i[i],avg);
+    }
+    scale3f(avg,1.0F/n_atom,avg);
+
+    CGOBegin(cgo,GL_POINTS);
+    CGOVertexv(cgo,avg);
+    CGOEnd(cgo);
+
+    {
+      int ii;
+      float mid[3];
+      float vc0[3],vc1[3],up[3],up_add[3];
+      float ct[3],cb[3];
+      float v0t[3],v0b[3];
+      float v1t[3],v1b[3];
+      float out[3];
+      
+      CGOBegin(cgo,GL_TRIANGLES);
+        
+      for(i=0;i<n_atom;i++) {
+        ii=i-1;
+        if(ii<0)
+          ii=n_atom-1;
+        average3f(v_i[ii],v_i[i],mid);
+
+        subtract3f(v_i[i],avg,vc0);
+        subtract3f(v_i[ii],avg,vc1);
+        cross_product3f(vc0,vc1,up);
+        normalize3f(up);
+        
+        subtract3f(mid,avg,out);
+        normalize3f(out);
+        scale3f(up,width,up_add);
+
+        add3f(avg, up_add, ct);
+        subtract3f(avg, up_add, cb);
+
+        add3f(v_i[i], up_add, v0t);
+        subtract3f(v_i[i], up_add, v0b);
+
+        add3f(v_i[ii], up_add, v1t);
+        subtract3f(v_i[ii], up_add, v1b);
+        
+        CGONormalv(cgo,up);
+        CGOVertexv(cgo,ct);
+        CGOVertexv(cgo,v0t);
+        CGOVertexv(cgo,v1t);
+        
+        CGONormalv(cgo,out);
+        CGOVertexv(cgo,v0t);
+        CGOVertexv(cgo,v1t);
+        CGOVertexv(cgo,v0b);
+
+        CGOVertexv(cgo,v0t);
+        CGOVertexv(cgo,v0b);
+        CGOVertexv(cgo,v1b);
+        
+        invert3f(up);
+        CGONormalv(cgo,up);
+        CGOVertexv(cgo,cb);
+        CGOVertexv(cgo,v0b);
+        CGOVertexv(cgo,v1b);
+        
+      }
+      CGOEnd(cgo);
+    }
+  }
+}
+
 Rep *RepCartoonNew(CoordSet *cs)
 {
   PyMOLGlobals *G=cs->State.G;
@@ -189,6 +306,9 @@ Rep *RepCartoonNew(CoordSet *cs)
   int trailing_O3p_a = 0, trailing_O3p_a1=0;
   AtomInfoType *leading_O5p_ai=NULL;
   int leading_O5p_a = 0, leading_O5p_a1=0;
+  int *base_anchor = NULL;
+  int fancy_base_mode = 0;
+  int n_base = 0;
 
   /* THIS IS BY FAR THE WORST ROUTINE IN PYMOL!
    * DEVELOP ON IT ONLY AT EXTREME RISK TO YOUR MENTAL HEALTH */
@@ -298,6 +418,10 @@ Rep *RepCartoonNew(CoordSet *cs)
   stmp = Alloc(float,sampling*3);
   ftmp = Alloc(int,cs->NAtIndex);
 
+  if(fancy_base_mode) {
+    base_anchor = VLAlloc(int,cs->NAtIndex/10+1);
+    
+  }
   i=at;
   v=pv;
   vo=pvo;
@@ -325,6 +449,14 @@ Rep *RepCartoonNew(CoordSet *cs)
         /*			 if(!obj->AtomInfo[a1].hetatm)*/
         if((!ai->alt[0])||
            (ai->alt[0]=='A')) {
+
+          if(base_anchor &&
+             (ai->protons==cAN_C) &&
+             (WordMatchExact(G,"C4",ai->name,1))) {
+            VLACheck(base_anchor,int,n_base);
+            base_anchor[n_base] = a1;
+            n_base++;
+          }
           if(trace||(((ai->protons==cAN_C)&&
                       (WordMatch(G,"CA",ai->name,1)<0))&&
                      !AtomInfoSameResidueP(G,last_ai,ai))) { 
@@ -2037,7 +2169,79 @@ Rep *RepCartoonNew(CoordSet *cs)
   if(ex) {
     ExtrudeFree(ex); 
   }
+  /* draw the nucleic acid bases */
 
+  if(base_anchor && n_base) {
+    int base_i;
+    int mem[7];
+    int nbr[6];
+    for(base_i=0;base_i<n_base;base_i++) {
+    int got_five = false;
+    int got_six = false;
+
+      mem[0] = base_anchor[base_i];
+      nbr[0]= obj->Neighbor[mem[0]]+1;
+      while((mem[1] = obj->Neighbor[nbr[0]])>=0) {
+        nbr[1] = obj->Neighbor[mem[1]]+1;
+        while((mem[2] = obj->Neighbor[nbr[1]])>=0) {
+          if(mem[2]!=mem[0]) {
+            nbr[2] = obj->Neighbor[mem[2]]+1;
+            while((mem[3] = obj->Neighbor[nbr[2]])>=0) {
+              if(mem[3]!=mem[1]) {
+                nbr[3] = obj->Neighbor[mem[3]]+1;
+                while((mem[4] = obj->Neighbor[nbr[3]])>=0) {
+                  if(mem[4]!=mem[2]) {            
+                    
+                    nbr[4] = obj->Neighbor[mem[4]]+1;              
+                    while((mem[5] = obj->Neighbor[nbr[4]])>=0) {
+                      if(mem[5]!=mem[3]) { 
+                        if((mem[5]==mem[0])&&!got_five) {
+                          /* five-cycle */
+                          printf(" 5: %s(%d) %s(%d) %s(%d) %s(%d) %s(%d)\n",
+                                 obj->AtomInfo[mem[0]].name,mem[0],
+                                 obj->AtomInfo[mem[1]].name,mem[1],
+                                 obj->AtomInfo[mem[2]].name,mem[2],
+                                 obj->AtomInfo[mem[3]].name,mem[3],
+                                 obj->AtomInfo[mem[4]].name,mem[4]);
+                          do_base(5,mem,obj, cs, 0.25, I->ray);
+                          got_five = true;
+                        }
+                        
+                        nbr[5] = obj->Neighbor[mem[5]]+1;              
+                        while((mem[6] = obj->Neighbor[nbr[5]])>=0) {
+                          if((mem[6]==mem[0])&&!got_six) {
+                            
+                            /* six-cycle */
+                            printf(" 6: %s %s %s %s %s %s\n",
+                                   obj->AtomInfo[mem[0]].name,
+                                   obj->AtomInfo[mem[1]].name,
+                                   obj->AtomInfo[mem[2]].name,
+                                   obj->AtomInfo[mem[3]].name,
+                                   obj->AtomInfo[mem[4]].name,
+                                   obj->AtomInfo[mem[5]].name
+                                   );
+                            do_base(6,mem,obj, cs, 0.25, I->ray);
+                            got_six = true;
+                            /* six-cycle */
+                          }
+                          nbr[5]+=2;
+                        }
+                      }
+                      nbr[4]+=2;
+                    }
+                  }
+                  nbr[3]+=2;
+                }
+              }
+              nbr[2]+=2;
+            }
+          }
+          nbr[1]+=2;
+        }
+        nbr[0]+=2;
+      }
+    }
+  }
   CGOStop(I->ray);
   I->std = CGOSimplify(I->ray,0);
   FreeP(dv);
@@ -2054,6 +2258,7 @@ Rep *RepCartoonNew(CoordSet *cs)
   FreeP(sstype);
   FreeP(stmp);
   FreeP(ftmp);
+  VLAFreeP(base_anchor);
   return((void*)(struct Rep*)I);
 }
 
