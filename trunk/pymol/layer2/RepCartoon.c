@@ -153,7 +153,7 @@ Rep *RepCartoonNew(CoordSet *cs)
   float dumbbell_radius,dumbbell_width,dumbbell_length;
   float throw;
   int st,nd;
-  float *v_c,*v_n,*v_o,*v_ca;
+  float *v_c,*v_n,*v_o,*v_ca,*v_o_last = NULL;
   float t0[3],t1[3],t2[3],t3[3],t4[3],o0[12],o1[12];
   float max_dot;
   float length,width;
@@ -185,7 +185,12 @@ Rep *RepCartoonNew(CoordSet *cs)
   float alpha;
   int putty_flag = false;
   float putty_mean=10.0F,putty_stdev=0.0F;
-  /* THIS HAS GOT TO BE A CANDIDATE FOR THE WORST ROUTINE IN PYMOL!
+  AtomInfoType *trailing_O3p_ai=NULL;
+  int trailing_O3p_a = 0, trailing_O3p_a1=0;
+  AtomInfoType *leading_O5p_ai=NULL;
+  int leading_O5p_a = 0, leading_O5p_a1=0;
+
+  /* THIS IS BY FAR THE WORST ROUTINE IN PYMOL!
    * DEVELOP ON IT ONLY AT EXTREME RISK TO YOUR MENTAL HEALTH */
   
   OOAlloc(G,RepCartoon);
@@ -305,204 +310,265 @@ Rep *RepCartoonNew(CoordSet *cs)
   a2=-1;
   parity = 1;
 
-  for(a1=0;a1<cs->NAtIndex;a1++)
-    {
-      if(obj->DiscreteFlag) {
-        if(cs==obj->DiscreteCSet[a1]) 
-          a=obj->DiscreteAtmToIdx[a1];
-        else 
-          a=-1;
-      } else 
-        a=cs->AtmToIdx[a1];
-      if(a>=0) {
-        ai = obj->AtomInfo+a1;
+  for(a1=0;a1<cs->NAtIndex;a1++)  {
+    if(obj->DiscreteFlag) {
+      if(cs==obj->DiscreteCSet[a1]) 
+        a=obj->DiscreteAtmToIdx[a1];
+      else 
+        a=-1;
+    } else 
+      a=cs->AtmToIdx[a1];
+    if(a>=0) {
+      ai = obj->AtomInfo+a1;
 
-	if(ai->visRep[cRepCartoon]) {
-          /*			 if(!obj->AtomInfo[a1].hetatm)*/
-          if((!ai->alt[0])||
-             (ai->alt[0]=='A')) {
-            if(trace||(((ai->protons==cAN_C)&&
-			(WordMatch(G,"CA",ai->name,1)<0))&&
-                       !AtomInfoSameResidueP(G,last_ai,ai)))
-              {
-                PRINTFD(G,FB_RepCartoon)
-                  " RepCartoon: found CA in %s; a2 %d\n",ai->resi,a2
-                  ENDFD;
-                if(!trace) 
-                  if(a2>=0) {
-		    /*
-		      if((abs(obj->AtomInfo[a1].resv-obj->AtomInfo[a2].resv)>1)||
-		      (obj->AtomInfo[a1].chain[0]!=obj->AtomInfo[a2].chain[0])||
-		      (!WordMatch(G,obj->AtomInfo[a1].segi,obj->AtomInfo[a2].segi,1)))*/
-		    if(!ObjectMoleculeCheckBondSep(obj,a1,a2,3)) /* CA->N->C->CA = 3 bonds */
-		      a2=-1;
+      if(ai->visRep[cRepCartoon]) {
+        /*			 if(!obj->AtomInfo[a1].hetatm)*/
+        if((!ai->alt[0])||
+           (ai->alt[0]=='A')) {
+          if(trace||(((ai->protons==cAN_C)&&
+                      (WordMatch(G,"CA",ai->name,1)<0))&&
+                     !AtomInfoSameResidueP(G,last_ai,ai))) { 
+            PRINTFD(G,FB_RepCartoon)
+              " RepCartoon: found CA in %s; a2 %d\n",ai->resi,a2
+              ENDFD;
+            if(!trace) 
+              if(a2>=0) {
+                /*
+                  if((abs(obj->AtomInfo[a1].resv-obj->AtomInfo[a2].resv)>1)||
+                  (obj->AtomInfo[a1].chain[0]!=obj->AtomInfo[a2].chain[0])||
+                  (!WordMatch(G,obj->AtomInfo[a1].segi,obj->AtomInfo[a2].segi,1)))*/
+                if(!ObjectMoleculeCheckBondSep(obj,a1,a2,3)) /* CA->N->C->CA = 3 bonds */
+                  a2=-1;
                   
-		  }
-                last_ai = ai;
+              }
+            last_ai = ai;
                 
-                PRINTFD(G,FB_RepCartoon)
-                  " RepCartoon: found CA in %s; a2 %d\n",ai->resi,a2
-                  ENDFD;
+            PRINTFD(G,FB_RepCartoon)
+              " RepCartoon: found CA in %s; a2 %d\n",ai->resi,a2
+              ENDFD;
                 
                 
-                if(a2<0)
-                  nSeg++;
-                *(s++) = nSeg;
-                nAt++;
-                *(i++)=a;
-                cur_car = ai->cartoon;
+            if(a2<0)
+              nSeg++;
+            *(s++) = nSeg;
+            nAt++;
+            *(i++)=a;
+            cur_car = ai->cartoon;
 
-                *fp = ai->flags; /* store atom flags */
+            *fp = ai->flags; /* store atom flags */
 
-                if(cartoon_side_chain_helper) {
-                  if(ai->visRep[cRepLine]||ai->visRep[cRepCyl]||ai->visRep[cRepSphere])
-                    *fp |= cAtomFlag_no_smooth;
+            if(cartoon_side_chain_helper) {
+              if(ai->visRep[cRepLine]||ai->visRep[cRepCyl]||ai->visRep[cRepSphere])
+                *fp |= cAtomFlag_no_smooth;
+            }
+                
+            switch (ai->ssType[0]) {
+            case 'H':
+            case 'h':
+              if (cur_car==cCartoon_auto) {
+                if(cylindrical_helices) 
+                  cur_car = cCartoon_skip_helix;
+                else if(fancy_helices)
+                  cur_car = cCartoon_dumbbell;
+                else
+                  cur_car = cCartoon_oval;
+              }
+              *ss=1; /* helix */
+              break;
+            case 'S':
+            case 's':
+              if (cur_car==cCartoon_auto) {
+                if(fancy_sheets)
+                  cur_car = cCartoon_arrow;
+                else
+                  cur_car = cCartoon_rect;
+              }
+              *ss=2;
+              parity = !parity;
+              break;
+            default: /* 'L', 'T', 0, etc. */
+              if (cur_car==cCartoon_auto) {
+                cur_car = cCartoon_loop;
+              }
+              *ss=0;
+              break;
+            }
+                
+            *(cc++)=cur_car;
+                
+            if(cur_car==cCartoon_putty)
+              putty_flag=true;
+                
+            v1 = cs->Coord+3*a;
+            v_ca = v1;
+            *(v++)=*(v1++);
+            *(v++)=*(v1++);
+            *(v++)=*(v1++);
+            a2=a1;
+                  
+            ss++;
+
+            fp++;
+
+            v_c = NULL;
+            v_n = NULL;
+            v_o = NULL;
+                  
+            AtomInfoBracketResidueFast(G,obj->AtomInfo,obj->NAtom,a1,&st,&nd);
+
+            if(obj->DiscreteFlag) {
+              if(cs==obj->DiscreteCSet[nd]) 
+                skip_to=obj->DiscreteAtmToIdx[nd];
+            } else 
+              skip_to=cs->AtmToIdx[nd];
+                  
+            for(a3=st;a3<=nd;a3++) {
+                  
+              if(obj->DiscreteFlag) {
+                if(cs==obj->DiscreteCSet[a3]) 
+                  a4=obj->DiscreteAtmToIdx[a3];
+                else 
+                  a4=-1;
+              } else 
+                a4=cs->AtmToIdx[a3];
+              if(a4>=0) {
+                if(WordMatch(G,"C",obj->AtomInfo[a3].name,1)<0) {
+                  v_c = cs->Coord+3*a4;		
+                } else if(WordMatch(G,"N",obj->AtomInfo[a3].name,1)<0) {
+                  v_n = cs->Coord+3*a4;
+                } else if(WordMatch(G,"O",obj->AtomInfo[a3].name,1)<0) {
+                  v_o = cs->Coord+3*a4;
                 }
-                
-                switch (ai->ssType[0]) {
-                case 'H':
-                case 'h':
-                  if (cur_car==cCartoon_auto) {
-                    if(cylindrical_helices) 
-                      cur_car = cCartoon_skip_helix;
-                    else if(fancy_helices)
-                      cur_car = cCartoon_dumbbell;
-                    else
-                      cur_car = cCartoon_oval;
-                  }
-                  *ss=1; /* helix */
-                  break;
-                case 'S':
-                case 's':
-                  if (cur_car==cCartoon_auto) {
-                    if(fancy_sheets)
-                      cur_car = cCartoon_arrow;
-                    else
-                      cur_car = cCartoon_rect;
-                  }
-                  *ss=2;
-                  parity = !parity;
-                  break;
-                default: /* 'L', 'T', 0, etc. */
-                  if (cur_car==cCartoon_auto) {
-                    cur_car = cCartoon_loop;
-                  }
-                  *ss=0;
-                  break;
-                }
-                
-                *(cc++)=cur_car;
-                
-                if(cur_car==cCartoon_putty)
-                  putty_flag=true;
-                
-                v1 = cs->Coord+3*a;
-                v_ca = v1;
-                *(v++)=*(v1++);
-                *(v++)=*(v1++);
-                *(v++)=*(v1++);
-                a2=a1;
-                  
-                ss++;
+              }
+            }
+            if(!(v_c&&v_n&&v_o)) {
+              vo[0]=0.0;
+              vo[1]=0.0;
+              vo[2]=0.0;
+              vo+=3;
+            } else {
+              /* generate orientation vectors...*/
 
-                fp++;
-
-                v_c = NULL;
-                v_n = NULL;
-                v_o = NULL;
+              subtract3f(v_n,v_c,t0);
+              normalize3f(t0);
+              subtract3f(v_n,v_o,t1);
+              normalize3f(t1);
+              cross_product3f(t0,t1,vo);
+              normalize3f(vo);
+              if(parity) {
+                invert3f(vo);
+              }
+              vo+=3;
+            }
+          } else if((((na_mode!=1)&&(ai->protons==cAN_P) &&
+                      (WordMatch(G,"P",ai->name,1)<0) ) ||
+                     ((na_mode==1)&&(ai->protons==cAN_C) &&
+                      (WordMatchExact(G,"C4*",ai->name,1) ||
+                       WordMatchExact(G,"C4'",ai->name,1))))
+                    && !AtomInfoSameResidueP(G,last_ai,ai)) {
+            if(a2>=0) {
+              if(!ObjectMoleculeCheckBondSep(obj,a1,a2,6)) { /* six bonds between phosphates */
                   
-                AtomInfoBracketResidueFast(G,obj->AtomInfo,obj->NAtom,a1,&st,&nd);
-
-                if(obj->DiscreteFlag) {
-                  if(cs==obj->DiscreteCSet[nd]) 
-                    skip_to=obj->DiscreteAtmToIdx[nd];
-                } else 
-                  skip_to=cs->AtmToIdx[nd];
-                  
-                for(a3=st;a3<=nd;a3++) {
-                  
-                  if(obj->DiscreteFlag) {
-                    if(cs==obj->DiscreteCSet[a3]) 
-                      a4=obj->DiscreteAtmToIdx[a3];
-                    else 
-                      a4=-1;
-                  } else 
-                    a4=cs->AtmToIdx[a3];
-                  if(a4>=0) {
-                    if(WordMatch(G,"C",obj->AtomInfo[a3].name,1)<0) {
-                      v_c = cs->Coord+3*a4;		
-                    } else if(WordMatch(G,"N",obj->AtomInfo[a3].name,1)<0) {
-                      v_n = cs->Coord+3*a4;
-                    } else if(WordMatch(G,"O",obj->AtomInfo[a3].name,1)<0) {
-                      v_o = cs->Coord+3*a4;
+                /* BEGIN 3' cap */
+                if(trailing_O3p_ai&&((na_mode==2)||(na_mode==4))) {
+                  *(s++) = nSeg;
+                  nAt++;
+                  *(i++)= trailing_O3p_a;
+                  cur_car = trailing_O3p_ai->cartoon;
+                  if(cur_car == cCartoon_auto)
+                    cur_car = cCartoon_tube;
+                  *ss=3; /* DNA/RNA */
+                    
+                  if(cur_car==cCartoon_putty)
+                    putty_flag=true;
+                    
+                  *(cc++)=cur_car;
+                  v1 = cs->Coord+3*trailing_O3p_a;
+                  v_ca = v1;
+                  *(v++)=*(v1++);
+                  *(v++)=*(v1++);
+                  *(v++)=*(v1++);
+                    
+                  ss++;
+                    
+                  v_c = NULL;
+                  v_n = NULL;
+                  v_o = NULL;
+                    
+                  AtomInfoBracketResidueFast(G,obj->AtomInfo,obj->NAtom,trailing_O3p_a1,&st,&nd);
+                    
+                  for(a3=st;a3<=nd;a3++) {
+                      
+                    if(obj->DiscreteFlag) {
+                      if(cs==obj->DiscreteCSet[a3]) 
+                        a4=obj->DiscreteAtmToIdx[a3];
+                      else 
+                        a4=-1;
+                    } else 
+                      a4=cs->AtmToIdx[a3];
+                    if(a4>=0) {
+                      if(a3==trailing_O3p_a1) {
+                        v_c = cs->Coord+3*a4;		
+                      } else if(WordMatchExact(G,"C2",obj->AtomInfo[a3].name,1)) {
+                        v_o = cs->Coord+3*a4;
+                      }
                     }
                   }
-                }
-                if(!(v_c&&v_n&&v_o)) {
-                  vo[0]=0.0;
-                  vo[1]=0.0;
-                  vo[2]=0.0;
+                  if(!(v_c&&v_o)) {
+                    zero3f(vo);
+                  } else {
+                    subtract3f(v_c,v_o,vo);
+                    normalize3f(vo);
+                  }
                   vo+=3;
-                } else {
-                  /* generate orientation vectors...*/
+                }
+                /* END 3' cap */
 
-                  subtract3f(v_n,v_c,t0);
-                  normalize3f(t0);
-                  subtract3f(v_n,v_o,t1);
-                  normalize3f(t1);
-                  cross_product3f(t0,t1,vo);
-                  normalize3f(vo);
-                  if(parity) {
-                    invert3f(vo);
-                  }
-                  vo+=3;
-                }
-              } else if(trace|| 
-                        ((
-                          ((na_mode==0)&&(ai->protons==cAN_P) &&
-                           (WordMatch(G,"P",ai->name,1)<0) ) ||
-                          ((na_mode==1)&&(ai->protons==cAN_C) &&
-                           (WordMatchExact(G,"C4*",ai->name,1) ||
-                            WordMatchExact(G,"C4'",ai->name,1)))
-                          )
-                         && !AtomInfoSameResidueP(G,last_ai,ai))) {
-                if(!trace) 
-                  if(a2>=0) {
-                    if(!ObjectMoleculeCheckBondSep(obj,a1,a2,6)) /* six bonds between phosphates */
-                      a2=-1;
-                  }
-                last_ai = ai;
-                if(a2<0)
-                  nSeg++;
+                a2=-1;
+              }
+            }
+            last_ai = ai;
+            trailing_O3p_ai = NULL;
+
+            /* BEGIN 5' cap */
+
+            if(leading_O5p_ai&&(a2<0)&&
+               ((na_mode==3)||(na_mode==4))) {
+              if((!AtomInfoSameResidueP(G,ai,leading_O5p_ai))&&
+                 ObjectMoleculeCheckBondSep(obj,a1,leading_O5p_a1,5)) {
+                
+                nSeg++;
+                v_o_last = NULL;
+                
                 *(s++) = nSeg;
                 nAt++;
-                *(i++)=a;
-                cur_car = ai->cartoon;
+                *(i++)=leading_O5p_a;
+                cur_car =leading_O5p_ai->cartoon;
                 if(cur_car == cCartoon_auto)
                   cur_car = cCartoon_tube;
                 *ss=3; /* DNA/RNA */
-
+                
                 if(cur_car==cCartoon_putty)
                   putty_flag=true;
-
+                
                 *(cc++)=cur_car;
-                v1 = cs->Coord+3*a;
+                v1 = cs->Coord+3*leading_O5p_a;
                 v_ca = v1;
                 *(v++)=*(v1++);
                 *(v++)=*(v1++);
                 *(v++)=*(v1++);
-                a2=a1;
-                  
+                a2=leading_O5p_a1;
+                
                 ss++;
-
+                
                 v_c = NULL;
                 v_n = NULL;
                 v_o = NULL;
-                  
-                AtomInfoBracketResidueFast(G,obj->AtomInfo,obj->NAtom,a1,&st,&nd);
-                  
+                
+                AtomInfoBracketResidueFast(G,obj->AtomInfo,obj->NAtom,leading_O5p_a1,&st,&nd);
+                
                 for(a3=st;a3<=nd;a3++) {
-                    
+                  
                   if(obj->DiscreteFlag) {
                     if(cs==obj->DiscreteCSet[a3]) 
                       a4=obj->DiscreteAtmToIdx[a3];
@@ -511,35 +577,171 @@ Rep *RepCartoonNew(CoordSet *cs)
                   } else 
                     a4=cs->AtmToIdx[a3];
                   if(a4>=0) {
-                      
-                    /* need to figure out how to generate a how to do right for DNA...
-                       then we can use oval or rectangle */
-                      
-                    if(WordMatch(G,"P",obj->AtomInfo[a3].name,1)<0) {
+                    if(a3==leading_O5p_a1) {
                       v_c = cs->Coord+3*a4;		
-                    } else if(WordMatch(G,"C2",obj->AtomInfo[a3].name,1)<0) {
+                    } else if(WordMatchExact(G,"C2",obj->AtomInfo[a3].name,1)) {
                       v_o = cs->Coord+3*a4;
                     }
                   }
                 }
                 if(!(v_c&&v_o)) {
-                  vo[0]=0.0;
-                  vo[1]=0.0;
-                  vo[2]=0.0;
-                  vo+=3;
+                  zero3f(vo);
+                  v_o_last = NULL;
                 } else {
-                  /* generate orientation vectors...*/
-                  
-                  cross_product3f(v_c,v_o,vo);
+                  subtract3f(v_c,v_o,vo);
+                  v_o_last = v_c;
                   normalize3f(vo);
+                }
+                vo+=3;
+              }
+            }
+            /* END 5' CAP */
+
+            leading_O5p_ai = NULL;
+
+
+            if(a2<0) {
+              nSeg++;
+              v_o_last = NULL;
+            }
+            *(s++) = nSeg;
+            nAt++;
+            *(i++)=a;
+            cur_car = ai->cartoon;
+            if(cur_car == cCartoon_auto)
+              cur_car = cCartoon_tube;
+            *ss=3; /* DNA/RNA */
+
+            if(cur_car==cCartoon_putty)
+              putty_flag=true;
+
+            *(cc++)=cur_car;
+            v1 = cs->Coord+3*a;
+            v_ca = v1;
+            *(v++)=*(v1++);
+            *(v++)=*(v1++);
+            *(v++)=*(v1++);
+            a2=a1;
                   
-                  vo+=3;
+            ss++;
+
+            v_c = NULL;
+            v_n = NULL;
+            v_o = NULL;
+                  
+            AtomInfoBracketResidueFast(G,obj->AtomInfo,obj->NAtom,a1,&st,&nd);
+                  
+            for(a3=st;a3<=nd;a3++) {
+                    
+              if(obj->DiscreteFlag) {
+                if(cs==obj->DiscreteCSet[a3]) 
+                  a4=obj->DiscreteAtmToIdx[a3];
+                else 
+                  a4=-1;
+              } else 
+                a4=cs->AtmToIdx[a3];
+              if(a4>=0) {
+                if(a3==a1) {
+                  v_c = cs->Coord+3*a4;		
+                } else if(WordMatchExact(G,"C2",obj->AtomInfo[a3].name,1)) {
+                  v_o = cs->Coord+3*a4;
                 }
               }
+            }
+            if(!(v_c&&v_o)) {
+              zero3f(vo);
+              v_o_last = NULL;
+            } else {
+              subtract3f(v_c,v_o,vo);
+              if(v_o_last) {
+                subtract3f(v_c, v_o_last,t0);
+                add3f(t0, vo, vo);
+              }
+              v_o_last = v_c;
+              normalize3f(vo);
+            }
+            vo+=3;
+
+          }  else if((a2>=0)&&
+                     last_ai&&
+                     (ai->protons==cAN_O)&&
+                     (last_ai->protons==cAN_P)&&
+                     ((na_mode==2)||(na_mode==4))&&
+                     (WordMatchExact(G,"O3'",ai->name,1)||
+                      WordMatchExact(G,"O3*",ai->name,1))&&
+                     AtomInfoSameResidueP(G,last_ai,ai)&&
+                     ObjectMoleculeCheckBondSep(obj,a1,a2,5)) {
+            trailing_O3p_ai = ai;
+            trailing_O3p_a = a;
+            trailing_O3p_a1 = a1;
+          }  else if((ai->protons==cAN_O)&&
+                     ((na_mode==3)||(na_mode==4))&&
+                     (WordMatchExact(G,"O5'",ai->name,1)||
+                      WordMatchExact(G,"O5*",ai->name,1))) {
+            leading_O5p_ai = ai;
+            leading_O5p_a = a;
+            leading_O5p_a1 = a1;
           }
+          
         }
       }
     }
+  }
+
+  /* BEGIN 3' cap */
+  if(trailing_O3p_ai&&((na_mode==2)||(na_mode==4))) {
+    *(s++) = nSeg;
+    nAt++;
+    *(i++)= trailing_O3p_a;
+    cur_car = trailing_O3p_ai->cartoon;
+    if(cur_car == cCartoon_auto)
+      cur_car = cCartoon_tube;
+    *ss=3; /* DNA/RNA */
+    
+    if(cur_car==cCartoon_putty)
+      putty_flag=true;
+    
+    *(cc++)=cur_car;
+    v1 = cs->Coord+3*trailing_O3p_a;
+    v_ca = v1;
+    *(v++)=*(v1++);
+    *(v++)=*(v1++);
+    *(v++)=*(v1++);
+    
+    ss++;
+    
+    v_c = NULL;
+    v_n = NULL;
+    v_o = NULL;
+    
+    AtomInfoBracketResidueFast(G,obj->AtomInfo,obj->NAtom,trailing_O3p_a1,&st,&nd);
+    
+    for(a3=st;a3<=nd;a3++) {
+      
+      if(obj->DiscreteFlag) {
+        if(cs==obj->DiscreteCSet[a3]) 
+          a4=obj->DiscreteAtmToIdx[a3];
+        else 
+          a4=-1;
+      } else 
+        a4=cs->AtmToIdx[a3];
+      if(a4>=0) {
+        if(a3==trailing_O3p_a1) {
+          v_c = cs->Coord+3*a4;		
+        } else if(WordMatchExact(G,"C2",obj->AtomInfo[a3].name,1)) {
+          v_o = cs->Coord+3*a4;
+        }
+      }
+    }
+    if(!(v_c&&v_o)) {
+      zero3f(vo);
+    } else {
+      subtract3f(v_c,v_o,vo);
+      normalize3f(vo);
+    }
+    vo+=3;
+  }
+  /* END 3' Cap */
 
   if(nAt&&putty_flag) {
     double sum=0.0,sumsq=0.0;

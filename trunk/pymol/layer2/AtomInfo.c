@@ -1423,7 +1423,7 @@ int AtomInfoCompare(PyMOLGlobals *G,AtomInfoType *at1,AtomInfoType *at2)
             }
           } else {
             /* NOTE: don't forget to synchronize with below */
-            if(SettingGet(G,cSetting_pdb_insertions_go_first)) {
+            if(SettingGetGlobal_b(G,cSetting_pdb_insertions_go_first)) {
               int sl1,sl2;
               sl1 = strlen(at1->resi);
               sl2 = strlen(at2->resi);
@@ -1432,6 +1432,13 @@ int AtomInfoCompare(PyMOLGlobals *G,AtomInfoType *at1,AtomInfoType *at2)
               else if(sl1<sl2) /* sort residue 188A before 188, etc. */
                 result = 1;
               else 
+                result = -1;
+            } else if((at1->rank!=at2->rank)&&
+                      SettingGetGlobal_b(G,cSetting_rank_assisted_sorts)) { 
+              /* use rank to resolve insertion code ambiguities */
+              if(at1->rank>at2->rank)
+                result = 1;
+              else
                 result = -1;
             } else {
               result=wc;
@@ -1511,7 +1518,7 @@ int AtomInfoCompareIgnoreHet(PyMOLGlobals *G,AtomInfoType *at1,AtomInfoType *at2
         } else {
           /* NOTE: don't forget to synchronize with above */
 
-            if(SettingGet(G,cSetting_pdb_insertions_go_first)) {
+            if(SettingGetGlobal_b(G,cSetting_pdb_insertions_go_first)) {
               int sl1,sl2;
               sl1 = strlen(at1->resi);
               sl2 = strlen(at2->resi);
@@ -1520,6 +1527,13 @@ int AtomInfoCompareIgnoreHet(PyMOLGlobals *G,AtomInfoType *at1,AtomInfoType *at2
               else if(sl1<sl2) /* sort residue 188A before 188, etc. */
                 result = 1;
               else 
+                result = -1;
+            } else if((at1->rank!=at2->rank)&&
+                      SettingGetGlobal_b(G,cSetting_rank_assisted_sorts)) { 
+              /* use rank to resolve insertion code ambiguities */
+              if(at1->rank>at2->rank)
+                result = 1;
+              else
                 result = -1;
             } else {
               result=wc;
@@ -1952,14 +1966,25 @@ void AtomInfoAssignParameters(PyMOLGlobals *G,AtomInfoType *I)
             pri=0;
             n++;
             while(*n) {
+              if(*n=='P') {
+                pri-=200;
+                break;
+              } else if((*n=='*')||(*n=='\'')) {
+                pri=(-100)-pri;
+                break;
+              } else if((*n<'0')||(*n>'9'))
+                break;
               pri*=10;
               pri+=(*n-'0');
               n++;
             }
-            pri+=25;
+            pri+=300;
             break;
           default: pri = 500; break;
           }
+        break;
+      case 'P': /* this will place the phosphate before CNO numbered atoms */
+        pri = 20;
         break;
       case 'D' :
       case 'H' :

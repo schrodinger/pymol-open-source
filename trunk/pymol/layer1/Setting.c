@@ -1363,6 +1363,7 @@ void SettingGenerateSideEffects(PyMOLGlobals *G,int index,char *sele,int state)
     SceneChanged(G);
     break;
   case cSetting_ribbon_color:
+  case cSetting_ribbon_nucleic_acid_mode:
     ExecutiveInvalidateRep(G,inv_sele,cRepRibbon,cRepInvRep);
     SceneChanged(G);
     break;
@@ -2580,6 +2581,8 @@ void SettingInitGlobal(PyMOLGlobals *G,int alloc,int reset_gui)
   SettingSet_f(I,cSetting_sphere_point_max_size, 18.0);
   SettingSet_f(I,cSetting_sphere_point_size, 1.0);
   SettingSet_b(I,cSetting_pdb_honor_model_number, false);
+  SettingSet_b(I,cSetting_rank_assisted_sorts, true);
+  SettingSet_i(I,cSetting_ribbon_nucleic_acid_mode, 0);
 }
 
 
