@@ -67,7 +67,7 @@ int UtilCountStringVLA(char *vla)
 
 double UtilGetSeconds(PyMOLGlobals *G)
 {
-#ifndef WIN32
+#ifndef _WIN32
   struct timeval tv;
   gettimeofday(&tv,NULL);
   return((tv.tv_sec+(tv.tv_usec/((double)1000000.0)))-G->Util->StartSec);
