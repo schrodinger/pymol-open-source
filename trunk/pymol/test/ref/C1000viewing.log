@@ -14,7 +14,7 @@ PyMOL>reset
 PyMOL>clip
 Parsing-Error: missing required argument: mode
 PyMOL>clip near
-Parsing-Error: missing required argument: offset
+Parsing-Error: missing required argument: distance
 PyMOL>clip near,-5
 PyMOL>clip far,10
 PyMOL>clip near,2
