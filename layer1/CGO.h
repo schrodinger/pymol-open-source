@@ -129,6 +129,7 @@ int CGOFromFloatArray(CGO *I,float *src,int len);
 void CGOBegin(CGO *I,int mode);
 void CGOEnd(CGO *I);
 
+void CGOSausage(CGO *I,float *v1,float *v2,float r,float *c1,float *c2);
 void CGOVertex(CGO *I,float v1,float v2,float v3);
 void CGOVertexv(CGO *I,float *v);
 void CGOAlpha(CGO *I,float alpha);

@@ -487,6 +487,7 @@ Rep *RepWireBondNew(CoordSet *cs)
   int cartoon_side_chain_helper = 0;
   int ribbon_side_chain_helper = 0;
   int line_stick_helper = 0;
+  int na_mode;
 
   OOAlloc(G,RepWireBond);
   obj = cs->Obj;
@@ -530,6 +531,7 @@ Rep *RepWireBondNew(CoordSet *cs)
                                         cSetting_stick_transparency)>R_SMALL4))
     line_stick_helper = false;
   half_bonds = SettingGet_i(G,cs->Setting,obj->Obj.Setting,cSetting_half_bonds);
+  na_mode = SettingGet_i(G,cs->Setting,obj->Obj.Setting,cSetting_cartoon_nucleic_acid_mode);
 
   b=obj->Bond;
   for(a=0;a<obj->NBond;a++)
@@ -736,6 +738,16 @@ Rep *RepWireBondNew(CoordSet *cs)
                             s1 = s2 = 0; /* suppress CA-C */
                         } else if(prot2 == cAN_H) 
                           s1 = s2 = 0; /* suppress all CA-hydrogens */
+                      } else if((na_mode==1)&&(prot2 == cAN_C)) {
+                        if((((name2[3]==0)&&
+                             ((name2[2]=='*')||(name2[2]=='\''))&&
+                             (name2[1]=='5')&&
+                             (name2[0]=='C')))&&
+                           (((name1[3]==0)&&
+                             ((name1[2]=='*')||(name1[2]=='\''))&&
+                             (name1[1]=='4')&&
+                             (name1[0]=='C'))))
+                          s1 = s2 = 0;
                       }
                     } else if(prot1 == cAN_N) { 
                       if((!name1[1])&&(name1[0]=='N')) { /* N */
@@ -755,6 +767,31 @@ Rep *RepWireBondNew(CoordSet *cs)
                           ((name1[3]==0)&&(name1[2]=='T')&&(name1[1]=='X')&&(name1[0]=='O')))
                          &&(!ati2->temp1))
                         s1 = s2 = 0; /* suppress C-O,OXT */
+                      else if(na_mode==1) {
+                        if((((name2[3]==0)&&
+                             ((name2[2]=='*')||(name2[2]=='\''))&&
+                             ((name2[1]=='3')||(name2[1]=='5'))&&
+                             (name2[0]=='C')))&&
+                           (((name1[3]==0)&&
+                             ((name1[2]=='*')||(name1[2]=='\''))&&
+                             ((name1[1]=='3')||(name1[1]=='5'))&&
+                             (name1[0]=='O'))))
+                          s1 = s2 = 0;
+                      }
+                    } else if((prot1 == cAN_P)&&(prot2 == cAN_O)) {
+                      if((!name1[1])&&(name1[0]=='P')&&
+                         (((name2[3]==0)&&(name2[2]=='P')&&
+                           ((name2[1]=='1')||(name2[1]=='2')||(name2[1]=='3'))
+                            &&(name2[0]=='O'))))
+                        s1 = s2 = 0; /* suppress P-O1P,O2P,O3P */
+                      else if(na_mode==1) {
+                        if((!name1[1])&&(name1[0]=='P')&&
+                           (((name2[3]==0)&&
+                             ((name2[2]=='*')||(name2[2]=='\''))&&
+                             ((name2[1]=='3')||(name2[1]=='5'))&&
+                             (name2[0]=='O'))))
+                          s1 = s2 = 0;
+                      }
                     }
                     
                     if(prot2 == cAN_C) {
@@ -766,6 +803,16 @@ Rep *RepWireBondNew(CoordSet *cs)
                             s1 = s2 = 0; /* suppress CA-C */
                         } else if(prot1 == cAN_H) 
                           s1 = s2 = 0; /* suppress all CA-hydrogens */
+                      } else if((na_mode==1)&&(prot2 == cAN_C)) {
+                        if((((name1[3]==0)&&
+                             ((name1[2]=='*')||(name1[2]=='\''))&&
+                             (name1[1]=='5')&&
+                             (name1[0]=='C')))&&
+                           (((name2[3]==0)&&
+                             ((name2[2]=='*')||(name2[2]=='\''))&&
+                             (name2[1]=='4')&&
+                             (name2[0]=='C'))))
+                          s1 = s2 = 0;
                       }
                     } else if(prot2 == cAN_N) {
                       if((!name2[1])&&(name2[0]=='N')) { /* N */
@@ -785,6 +832,31 @@ Rep *RepWireBondNew(CoordSet *cs)
                           ((name2[3]==0)&&(name2[2]=='T')&&(name2[1]=='X')&&(name2[0]=='O')))
                          &&(!ati1->temp1))
                         s1 = s2 = 0; /* suppress C-O,OXT */
+                      else if (na_mode==1) {
+                        if((((name1[3]==0)&&
+                             ((name1[2]=='*')||(name1[2]=='\''))&&
+                             ((name1[1]=='3')||(name1[1]=='5'))&&
+                             (name1[0]=='C')))&&
+                           (((name2[3]==0)&&
+                             ((name2[2]=='*')||(name2[2]=='\''))&&
+                             ((name2[1]=='3')||(name2[1]=='5'))&&
+                             (name2[0]=='O'))))
+                          s1 = s2 = 0;
+                      }
+                    } else if((prot2 == cAN_P)&&(prot1 == cAN_O)) {
+                      if((!name2[1])&&(name2[0]=='P')&&
+                         (((name1[3]==0)&&(name1[2]=='P')&&
+                           ((name1[1]=='1')||(name1[1]=='2')||(name1[1]=='3'))&&
+                           (name1[0]=='O'))))
+                        s1 = s2 = 0; /* suppress P-O1P,O2P,O3P */
+                      else if(na_mode==1) {
+                        if((!name2[1])&&(name2[0]=='P')&&
+                           (((name1[3]==0)&&
+                             ((name1[2]=='*')||(name1[2]=='\''))&&
+                             ((name1[1]=='3')||(name1[1]=='5'))&&
+                             (name1[0]=='O'))))
+                          s1 = s2 = 0;
+                      }
                     }
                 }
                 

@@ -117,23 +117,27 @@ static float smooth(float x,float power)
   }
 }
 
-#define MAX_BASE_ATOM 10
+#define MAX_RING_ATOM 10
 
-static void do_base(int n_atom, int *atix, ObjectMolecule *obj, 
-                    CoordSet *cs, float width, CGO *cgo)
+/* atix must contain n_atom + 1 elements, with the first atom repeated at the end */
+
+static void do_ring(PyMOLGlobals *G,int n_atom, int *atix, ObjectMolecule *obj, 
+                    CoordSet *cs, float width, CGO *cgo, int ring_color, int ring_mode)
 {
-  float *v_i[MAX_BASE_ATOM];
-
-  AtomInfoType *ai_i[MAX_BASE_ATOM];
+  float *v_i[MAX_RING_ATOM];
+  float *col[MAX_RING_ATOM];
+  float n_up[MAX_RING_ATOM][3];
+  float n_dn[MAX_RING_ATOM][3];
+  AtomInfoType *ai_i[MAX_RING_ATOM];
   int have_all = true;
+  int all_marked = true;
   AtomInfoType *ai;
-
   width *= 0.5F;
 
   /* first, make sure all atoms have known coordinates */
   {
     int a,i;
-    for(i=0;i<n_atom;i++) {
+    for(i=0;i<=n_atom;i++) {
       int a1 = atix[i];
       int have_atom = false;
       if(obj->DiscreteFlag) {
@@ -147,9 +151,12 @@ static void do_base(int n_atom, int *atix, ObjectMolecule *obj,
         ai = obj->AtomInfo+a1;
         if(ai->visRep[cRepCartoon]) {
           ai_i[i] = ai;
+          col[i] = ColorGet(G,ai->color);
           v_i[i]=cs->Coord+3*a;
           have_atom = true;
         }
+        if(!ai->temp1)
+          all_marked=false;
       }
       if(!have_atom) {
         have_all=false;
@@ -158,45 +165,87 @@ static void do_base(int n_atom, int *atix, ObjectMolecule *obj,
     }
   }
   
-  if(n_atom && have_all) {
+  if(n_atom && have_all && (!all_marked)) {
     float avg[3];
+    float avg_col[3];
     int i;
+    float up[3],upi[3];
+    float vc0[3],vc1[3];
 
-    /* compute average coordinate */
+
+    /* compute average coordinate and mark atoms so that ring is only drawn once */
     zero3f(avg);
     for(i=0;i<n_atom;i++) {
       add3f(avg,v_i[i],avg);
+      add3f(avg_col,col[i],avg_col);
+      ai_i[i]->temp1 = true;
     }
     scale3f(avg,1.0F/n_atom,avg);
+    scale3f(avg_col,1.0F/n_atom,avg_col);
 
-    CGOBegin(cgo,GL_POINTS);
-    CGOVertexv(cgo,avg);
-    CGOEnd(cgo);
+    /* clear the normals */
+
+    for(i=0;i<=n_atom;i++) {
+      zero3f(n_up[i]);
+      zero3f(n_dn[i]);
+    }
+
+    /* compute average normals */
+
+    {
+      float acc[3];
+      int ii;
+
+      zero3f(acc);
+      for(i=0;i<n_atom;i++) {
+        ii=i+1;
+        subtract3f(v_i[i],avg,vc0);
+        subtract3f(v_i[ii],avg,vc1);
+        cross_product3f(vc0,vc1,up);
+        add3f(up,n_up[i],n_up[i]);
+        add3f(up,n_up[ii],n_dn[ii]);
+        if(!i) {
+          add3f(up,n_up[n_atom],n_up[n_atom]);
+        } else if(ii==n_atom) {
+          add3f(up,n_up[0],n_up[0]);
+        }
+        add3f(up,acc,acc);
+      }
+      normalize3f(up);
+      scale3f(up,-1.0F,upi);
+    }
+
+    for(i=0;i<=n_atom;i++) {
+      normalize3f(n_up[i]);
+      scale3f(n_up[i],-1.0F,n_dn[i]);
+    }
 
     {
       int ii;
       float mid[3];
-      float vc0[3],vc1[3],up[3],up_add[3];
+      float up_add[3];
       float ct[3],cb[3];
       float v0t[3],v0b[3];
       float v1t[3],v1b[3];
       float out[3];
-      
+      float *color = NULL;
+
+      if(ring_color>=0) {
+        color=ColorGet(G,ring_color);
+      } else {
+        color=avg_col;
+      }
+      CGOColorv(cgo,color);
+
       CGOBegin(cgo,GL_TRIANGLES);
         
       for(i=0;i<n_atom;i++) {
-        ii=i-1;
-        if(ii<0)
-          ii=n_atom-1;
+        ii=i+1;
         average3f(v_i[ii],v_i[i],mid);
 
-        subtract3f(v_i[i],avg,vc0);
-        subtract3f(v_i[ii],avg,vc1);
-        cross_product3f(vc0,vc1,up);
-        normalize3f(up);
-        
-        subtract3f(mid,avg,out);
+        subtract3f(mid,avg,out); /* compute outward-facing normal */
         normalize3f(out);
+
         scale3f(up,width,up_add);
 
         add3f(avg, up_add, ct);
@@ -209,27 +258,64 @@ static void do_base(int n_atom, int *atix, ObjectMolecule *obj,
         subtract3f(v_i[ii], up_add, v1b);
         
         CGONormalv(cgo,up);
+        if(ring_color<0) CGOColorv(cgo,color);
+        CGOPickColor(cgo,atix[i],-1);
         CGOVertexv(cgo,ct);
+        CGONormalv(cgo,n_up[i]);
+        if(ring_color<0) CGOColorv(cgo,col[i]);
+        CGOPickColor(cgo,atix[i],-1);
         CGOVertexv(cgo,v0t);
+        CGONormalv(cgo,n_up[ii]);
+        if(ring_color<0) CGOColorv(cgo,col[ii]);
+        CGOPickColor(cgo,atix[ii],-1);
         CGOVertexv(cgo,v1t);
         
-        CGONormalv(cgo,out);
-        CGOVertexv(cgo,v0t);
-        CGOVertexv(cgo,v1t);
-        CGOVertexv(cgo,v0b);
+        if(ring_mode>1) {
+          CGONormalv(cgo,out);
 
-        CGOVertexv(cgo,v0t);
-        CGOVertexv(cgo,v0b);
-        CGOVertexv(cgo,v1b);
+          if(ring_color<0) CGOColorv(cgo,col[i]);
+          CGOPickColor(cgo,atix[i],-1);
+          CGOVertexv(cgo,v0t);
+          CGOVertexv(cgo,v0b);
+          CGOPickColor(cgo,atix[ii],-1);
+          if(ring_color<0) CGOColorv(cgo,col[ii]);
+          CGOVertexv(cgo,v1t);
+          CGOVertexv(cgo,v1t);
+          if(ring_color<0) CGOColorv(cgo,col[i]);
+          CGOPickColor(cgo,atix[i],-1);  
+          CGOVertexv(cgo,v0b);
+          CGOPickColor(cgo,atix[ii],-1);
+          if(ring_color<0) CGOColorv(cgo,col[ii]);
+          CGOVertexv(cgo,v1b);
+        }
         
-        invert3f(up);
-        CGONormalv(cgo,up);
+        CGONormalv(cgo,upi);
+        if(ring_color<0) CGOColorv(cgo,color);
+        CGOPickColor(cgo,atix[i],-1);
         CGOVertexv(cgo,cb);
-        CGOVertexv(cgo,v0b);
+        CGONormalv(cgo,n_dn[ii]);
+        if(ring_color<0) CGOColorv(cgo,col[ii]);
+        CGOPickColor(cgo,atix[ii],-1);
         CGOVertexv(cgo,v1b);
+        CGONormalv(cgo,n_dn[i]);
+        if(ring_color<0) CGOColorv(cgo,col[i]);
+        CGOPickColor(cgo,atix[i],-1);
+        CGOVertexv(cgo,v0b);
         
       }
       CGOEnd(cgo);
+
+      if(ring_mode==1) {
+        for(i=0;i<n_atom;i++) {
+          ii=i+1;
+          CGOPickColor(cgo,atix[i],-1);
+          if(ring_color<0) {
+            CGOSausage(cgo,v_i[i], v_i[ii], width, col[i],col[ii]);
+          } else {
+            CGOSausage(cgo,v_i[i], v_i[ii], width, color,color);
+          }
+        }
+      }
     }
   }
 }
@@ -306,9 +392,11 @@ Rep *RepCartoonNew(CoordSet *cs)
   int trailing_O3p_a = 0, trailing_O3p_a1=0;
   AtomInfoType *leading_O5p_ai=NULL;
   int leading_O5p_a = 0, leading_O5p_a1=0;
-  int *base_anchor = NULL;
-  int fancy_base_mode = 0;
-  int n_base = 0;
+  int *ring_anchor = NULL;
+  int ring_mode, ring_finder;
+  int n_ring = 0;
+  float ring_width;
+  int ring_color;
 
   /* THIS IS BY FAR THE WORST ROUTINE IN PYMOL!
    * DEVELOP ON IT ONLY AT EXTREME RISK TO YOUR MENTAL HEALTH */
@@ -390,12 +478,24 @@ Rep *RepCartoonNew(CoordSet *cs)
   smooth_loops = SettingGet_i(G,cs->Setting,obj->Obj.Setting,cSetting_cartoon_smooth_loops);
   helix_radius = SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_cartoon_helix_radius);
 
+  ring_width = SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_cartoon_ring_width);
+  if(ring_width<0.0F) {
+    ring_width = SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_stick_radius)*2; /* match stick radius */
+  }
+
+  ring_color = SettingGet_color(G,cs->Setting,obj->Obj.Setting,cSetting_cartoon_ring_color);
+
+  if(ring_color<0)
+    ring_color = cartoon_color;
+
   smooth_first = SettingGet_i(G,cs->Setting,obj->Obj.Setting,cSetting_cartoon_smooth_first);
   smooth_last = SettingGet_i(G,cs->Setting,obj->Obj.Setting,cSetting_cartoon_smooth_last);
   smooth_cycles = SettingGet_i(G,cs->Setting,obj->Obj.Setting,cSetting_cartoon_smooth_cycles);
   flat_cycles = SettingGet_i(G,cs->Setting,obj->Obj.Setting,cSetting_cartoon_flat_cycles);
 
   na_mode = SettingGet_i(G,cs->Setting,obj->Obj.Setting,cSetting_cartoon_nucleic_acid_mode);
+  ring_mode = SettingGet_i(G,cs->Setting,obj->Obj.Setting,cSetting_cartoon_ring_mode);
+  ring_finder = SettingGet_i(G,cs->Setting,obj->Obj.Setting,cSetting_cartoon_ring_finder);
 
   I->R.fRender=(void (*)(struct Rep *, RenderInfo *))RepCartoonRender;
   I->R.fFree=(void (*)(struct Rep *))RepCartoonFree;
@@ -418,9 +518,8 @@ Rep *RepCartoonNew(CoordSet *cs)
   stmp = Alloc(float,sampling*3);
   ftmp = Alloc(int,cs->NAtIndex);
 
-  if(fancy_base_mode) {
-    base_anchor = VLAlloc(int,cs->NAtIndex/10+1);
-    
+  if(ring_mode) {
+    ring_anchor = VLAlloc(int,cs->NAtIndex/10+1);
   }
   i=at;
   v=pv;
@@ -446,17 +545,21 @@ Rep *RepCartoonNew(CoordSet *cs)
       ai = obj->AtomInfo+a1;
 
       if(ai->visRep[cRepCartoon]) {
+        if(ring_anchor &&
+           (ai->protons!=cAN_H) &&
+           ((ring_finder==3)|| /* all 5-7 atom rings */
+            ((ring_finder<=2) && /*  C4-containing rings */
+             (WordMatchExact(G,"C4",ai->name,1))) ||
+            ((ring_finder==1) && 
+             ((WordMatchExact(G,"C4*",ai->name,1)||
+               WordMatchExact(G,"C4'",ai->name,1)))))) {
+          VLACheck(ring_anchor,int,n_ring);
+          ring_anchor[n_ring] = a1;
+          n_ring++;
+        }
         /*			 if(!obj->AtomInfo[a1].hetatm)*/
         if((!ai->alt[0])||
            (ai->alt[0]=='A')) {
-
-          if(base_anchor &&
-             (ai->protons==cAN_C) &&
-             (WordMatchExact(G,"C4",ai->name,1))) {
-            VLACheck(base_anchor,int,n_base);
-            base_anchor[n_base] = a1;
-            n_base++;
-          }
           if(trace||(((ai->protons==cAN_C)&&
                       (WordMatch(G,"CA",ai->name,1)<0))&&
                      !AtomInfoSameResidueP(G,last_ai,ai))) { 
@@ -2169,17 +2272,24 @@ Rep *RepCartoonNew(CoordSet *cs)
   if(ex) {
     ExtrudeFree(ex); 
   }
-  /* draw the nucleic acid bases */
+  /* draw the rings */
 
-  if(base_anchor && n_base) {
-    int base_i;
-    int mem[7];
-    int nbr[6];
-    for(base_i=0;base_i<n_base;base_i++) {
-    int got_five = false;
-    int got_six = false;
+  if(ring_anchor && n_ring) {
+    int ring_i;
+    int mem[8];
+    int nbr[7];
+    
+    ObjectMoleculeUpdateNeighbors(obj);
 
-      mem[0] = base_anchor[base_i];
+    { /* clear the flags */
+      ai=obj->AtomInfo;
+      for(a=0;a<obj->NAtom;a++) {
+        ai->temp1 = false;
+        ai++;
+      }
+    }
+    for(ring_i=0;ring_i<n_ring;ring_i++) {
+      mem[0] = ring_anchor[ring_i];
       nbr[0]= obj->Neighbor[mem[0]]+1;
       while((mem[1] = obj->Neighbor[nbr[0]])>=0) {
         nbr[1] = obj->Neighbor[mem[1]]+1;
@@ -2190,41 +2300,46 @@ Rep *RepCartoonNew(CoordSet *cs)
               if(mem[3]!=mem[1]) {
                 nbr[3] = obj->Neighbor[mem[3]]+1;
                 while((mem[4] = obj->Neighbor[nbr[3]])>=0) {
-                  if(mem[4]!=mem[2]) {            
-                    
+                  if((mem[4]!=mem[2])&&(mem[4]!=mem[1])&&(mem[4]!=mem[0])) {            
                     nbr[4] = obj->Neighbor[mem[4]]+1;              
                     while((mem[5] = obj->Neighbor[nbr[4]])>=0) {
-                      if(mem[5]!=mem[3]) { 
-                        if((mem[5]==mem[0])&&!got_five) {
-                          /* five-cycle */
-                          printf(" 5: %s(%d) %s(%d) %s(%d) %s(%d) %s(%d)\n",
-                                 obj->AtomInfo[mem[0]].name,mem[0],
-                                 obj->AtomInfo[mem[1]].name,mem[1],
-                                 obj->AtomInfo[mem[2]].name,mem[2],
-                                 obj->AtomInfo[mem[3]].name,mem[3],
-                                 obj->AtomInfo[mem[4]].name,mem[4]);
-                          do_base(5,mem,obj, cs, 0.25, I->ray);
-                          got_five = true;
+                      if((mem[5]!=mem[3])&&(mem[5]!=mem[2])&&(mem[5]!=mem[1])) { 
+                        if(mem[5]==mem[0]) { /* five-cycle */
+                          /*    printf(" 5: %s(%d) %s(%d) %s(%d) %s(%d) %s(%d)\n",
+                                obj->AtomInfo[mem[0]].name,mem[0],
+                                obj->AtomInfo[mem[1]].name,mem[1],
+                                obj->AtomInfo[mem[2]].name,mem[2],
+                                obj->AtomInfo[mem[3]].name,mem[3],
+                                obj->AtomInfo[mem[4]].name,mem[4]); */
+                          do_ring(G,5,mem,obj, cs, ring_width, I->ray, ring_color, ring_mode);
                         }
                         
                         nbr[5] = obj->Neighbor[mem[5]]+1;              
                         while((mem[6] = obj->Neighbor[nbr[5]])>=0) {
-                          if((mem[6]==mem[0])&&!got_six) {
-                            
-                            /* six-cycle */
-                            printf(" 6: %s %s %s %s %s %s\n",
-                                   obj->AtomInfo[mem[0]].name,
-                                   obj->AtomInfo[mem[1]].name,
-                                   obj->AtomInfo[mem[2]].name,
-                                   obj->AtomInfo[mem[3]].name,
-                                   obj->AtomInfo[mem[4]].name,
-                                   obj->AtomInfo[mem[5]].name
-                                   );
-                            do_base(6,mem,obj, cs, 0.25, I->ray);
-                            got_six = true;
-                            /* six-cycle */
+                          if((mem[6]!=mem[4])&&(mem[6]!=mem[3])&&(mem[6]!=mem[2])&&(mem[6]!=mem[1])) {
+                            if(mem[6]==mem[0]) {  /* six-cycle */
+                              /* printf(" 6: %s %s %s %s %s %s\n",
+                                 obj->AtomInfo[mem[0]].name,
+                                 obj->AtomInfo[mem[1]].name,
+                                 obj->AtomInfo[mem[2]].name,
+                                 obj->AtomInfo[mem[3]].name,
+                                 obj->AtomInfo[mem[4]].name,
+                                 obj->AtomInfo[mem[5]].name
+                                 ); */
+                              do_ring(G,6,mem,obj, cs, ring_width, I->ray, ring_color, ring_mode);
+                            }
+                            nbr[6] = obj->Neighbor[mem[6]]+1;              
+                            while((mem[7] = obj->Neighbor[nbr[6]])>=0) {
+                              if((mem[7]!=mem[5])&&(mem[7]!=mem[4])&&(mem[7]!=mem[3])&&
+                                 (mem[7]!=mem[2])&&(mem[7]!=mem[1])) { 
+                                if(mem[7]==mem[0]) {
+                                  do_ring(G,7,mem,obj, cs, ring_width, I->ray, ring_color, ring_mode);                                  
+                                }
+                              }
+                              nbr[6]+=2;
+                            }
                           }
-                          nbr[5]+=2;
+                          nbr[5]+=2;                          
                         }
                       }
                       nbr[4]+=2;
@@ -2258,7 +2373,7 @@ Rep *RepCartoonNew(CoordSet *cs)
   FreeP(sstype);
   FreeP(stmp);
   FreeP(ftmp);
-  VLAFreeP(base_anchor);
+  VLAFreeP(ring_anchor);
   return((void*)(struct Rep*)I);
 }
 

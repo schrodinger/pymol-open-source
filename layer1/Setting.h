@@ -576,6 +576,10 @@ CSetting *SettingNewFromPyList(PyMOLGlobals *G,PyObject *list);
 #define cSetting_pdb_honor_model_number     424
 #define cSetting_rank_assisted_sorts        425
 #define cSetting_ribbon_nucleic_acid_mode   426
+#define cSetting_cartoon_ring_mode          427
+#define cSetting_cartoon_ring_width         428
+#define cSetting_cartoon_ring_color         429
+#define cSetting_cartoon_ring_finder        430
 
 /* when you add a new settingg also remember:
    layer1/Setting.c
@@ -585,7 +589,7 @@ CSetting *SettingNewFromPyList(PyMOLGlobals *G,PyObject *list);
 
 /* cSetting_ss_INIT must always be last setting_index +1 */
 
-#define cSetting_INIT                       427
+#define cSetting_INIT                       431
 
 #endif
 

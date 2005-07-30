@@ -538,6 +538,10 @@ typedef struct _CPyMOL {
   ov_word lex_pdb_honor_model_number;
   ov_word lex_rank_assisted_sorts;
   ov_word lex_ribbon_nucleic_acid_mode;
+  ov_word lex_cartoon_ring_mode;
+  ov_word lex_cartoon_ring_width;
+  ov_word lex_cartoon_ring_color;
+  ov_word lex_cartoon_ring_finder;
 } _CPyMOL;
 
 static int status_ok(int ok) {
@@ -1066,6 +1070,10 @@ static OVstatus PyMOL_InitAPI(CPyMOL *I)
   LEX_SETTING(pdb_honor_model_number, 424);
   LEX_SETTING(rank_assisted_sorts, 425);
   LEX_SETTING(ribbon_nucleic_acid_mode, 426);
+  LEX_SETTING(cartoon_ring_mode, 427);
+  LEX_SETTING(cartoon_ring_width, 428);
+  LEX_SETTING(cartoon_ring_color, 429);
+  LEX_SETTING(cartoon_ring_finder, 430);
   return_OVstatus_SUCCESS;
 }
 

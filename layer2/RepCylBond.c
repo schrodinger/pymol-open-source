@@ -1168,6 +1168,7 @@ Rep *RepCylBondNew(CoordSet *cs)
   int stick_color = 0;
   int cartoon_side_chain_helper = 0;
   int ribbon_side_chain_helper = 1;
+  int na_mode;
 
   OOAlloc(G,RepCylBond);
 
@@ -1256,6 +1257,7 @@ Rep *RepCylBondNew(CoordSet *cs)
   nEdge = (int)SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_stick_quality);
   radius = SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_stick_radius);
   half_bonds = (int)SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_half_bonds);  
+  na_mode = SettingGet_i(G,cs->Setting,obj->Obj.Setting,cSetting_cartoon_nucleic_acid_mode);
 
   RepInit(G,&I->R);
   I->R.fRender=(void (*)(struct Rep *, RenderInfo *))RepCylBondRender;
@@ -1462,6 +1464,16 @@ Rep *RepCylBondNew(CoordSet *cs)
                     s1 = s2 = 0; /* suppress CA-C */
                 } else if(prot2 == cAN_H) 
                   s1 = s2 = 0; /* suppress all CA-hydrogens */
+              } else if((na_mode==1)&&(prot2 == cAN_C)) {
+                if((((name2[3]==0)&&
+                     ((name2[2]=='*')||(name2[2]=='\''))&&
+                     (name2[1]=='5')&&
+                     (name2[0]=='C')))&&
+                   (((name1[3]==0)&&
+                     ((name1[2]=='*')||(name1[2]=='\''))&&
+                     (name1[1]=='4')&&
+                     (name1[0]=='C'))))
+                  s1 = s2 = 0;
               }
             } else if(prot1 == cAN_N) { 
               if((!name1[1])&&(name1[0]=='N')) { /* N */
@@ -1487,7 +1499,33 @@ Rep *RepCylBondNew(CoordSet *cs)
                   ((name1[3]==0)&&(name1[2]=='T')&&(name1[1]=='X')&&(name1[0]=='O')))
                  &&(!ati2->temp1))
                 s1 = s2 = 0; /* suppress C-O,OXT */
-            }
+              else if(na_mode==1) {
+                if((((name2[3]==0)&&
+                     ((name2[2]=='*')||(name2[2]=='\''))&&
+                     ((name2[1]=='3')||(name2[1]=='5'))&&
+                     (name2[0]=='C')))&&
+                   (((name1[3]==0)&&
+                     ((name1[2]=='*')||(name1[2]=='\''))&&
+                     ((name1[1]=='3')||(name1[1]=='5'))&&
+                     (name1[0]=='O'))))
+                  s1 = s2 = 0; 
+              } 
+            } else if((prot1 == cAN_P)&&(prot2 == cAN_O)) {
+              if((!name1[1])&&(name1[0]=='P')&&
+                 (((name2[3]==0)&&(name2[2]=='P')&&
+                   ((name2[1]=='1')||(name2[1]=='2')||(name2[1]=='3'))
+                   &&(name2[0]=='O'))))
+                s1 = s2 = 0; /* suppress P-O1P,O2P,O3P */
+              else if(na_mode==1) {
+                if((!name1[1])&&(name1[0]=='P')&&
+                   (((name2[3]==0)&&
+                     ((name2[2]=='*')||(name2[2]=='\''))&&
+                     ((name2[1]=='3')||(name2[1]=='5'))&&
+                     (name2[0]=='O'))))
+                  s1 = s2 = 0;
+              }
+            } 
+                    
                     
             if(prot2 == cAN_C) {
               if((name2[1]=='A')&&(name2[0]=='C')&&(!name2[2])) { /* CA */
@@ -1498,6 +1536,16 @@ Rep *RepCylBondNew(CoordSet *cs)
                     s1 = s2 = 0; /* suppress CA-C */
                 } else if(prot1 == cAN_H) 
                   s1 = s2 = 0; /* suppress all CA-hydrogens */
+              } else if((na_mode==1)&&(prot2 == cAN_C)) {
+                if((((name1[3]==0)&&
+                     ((name1[2]=='*')||(name1[2]=='\''))&&
+                     (name1[1]=='5')&&
+                     (name1[0]=='C')))&&
+                   (((name2[3]==0)&&
+                     ((name2[2]=='*')||(name2[2]=='\''))&&
+                     (name2[1]=='4')&&
+                     (name2[0]=='C'))))
+                  s1 = s2 = 0;
               }
             } else if(prot2 == cAN_N) {
               if((!name2[1])&&(name2[0]=='N')) { /* N */
@@ -1523,6 +1571,31 @@ Rep *RepCylBondNew(CoordSet *cs)
                   ((name2[3]==0)&&(name2[2]=='T')&&(name2[1]=='X')&&(name2[0]=='O')))
                  &&(!ati1->temp1))
                 s1 = s2 = 0; /* suppress C-O,OXT */
+              else if (na_mode==1) {
+                if((((name1[3]==0)&&
+                     ((name1[2]=='*')||(name1[2]=='\''))&&
+                     ((name1[1]=='3')||(name1[1]=='5'))&&
+                     (name1[0]=='C')))&&
+                   (((name2[3]==0)&&
+                     ((name2[2]=='*')||(name2[2]=='\''))&&
+                     ((name2[1]=='3')||(name2[1]=='5'))&&
+                     (name2[0]=='O'))))
+                  s1 = s2 = 0;
+              }
+            } else if((prot2 == cAN_P)&&(prot1 == cAN_O)) {
+              if((!name2[1])&&(name2[0]=='P')&&
+                 (((name1[3]==0)&&(name1[2]=='P')&&
+                   ((name1[1]=='1')||(name1[1]=='2')||(name1[1]=='3'))
+                   &&(name1[0]=='O'))))
+                s1 = s2 = 0; /* suppress P-O1P,O2P,O3P */
+              else if(na_mode==1) {
+                if((!name2[1])&&(name2[0]=='P')&&
+                   (((name1[3]==0)&&
+                     ((name1[2]=='*')||(name1[2]=='\''))&&
+                     ((name1[1]=='3')||(name1[1]=='5'))&&
+                     (name1[0]=='O'))))
+                  s1 = s2 = 0;
+              }
             }
           }
 

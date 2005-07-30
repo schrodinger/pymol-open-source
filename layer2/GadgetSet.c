@@ -371,7 +371,7 @@ void GadgetSetUpdate(GadgetSet *I)
   }
 }
 /*========================================================================*/
-void GadgetSetRender(GadgetSet *I,RenderInfo *info)
+static void GadgetSetRender(GadgetSet *I,RenderInfo *info)
 {
   int pass = info->pass;
   CRay *ray = info->ray;
