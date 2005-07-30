@@ -1340,6 +1340,10 @@ void SettingGenerateSideEffects(PyMOLGlobals *G,int index,char *sele,int state)
     SceneDirty(G);
     break;
   case cSetting_stick_radius:
+    ExecutiveInvalidateRep(G,inv_sele,cRepCyl,cRepInvRep);
+    ExecutiveInvalidateRep(G,inv_sele,cRepCartoon,cRepInvRep); /* base width */
+    SceneChanged(G);
+    break;
   case cSetting_stick_ball:
   case cSetting_stick_nub:
   case cSetting_stick_ball_ratio:
@@ -1479,6 +1483,10 @@ void SettingGenerateSideEffects(PyMOLGlobals *G,int index,char *sele,int state)
   case cSetting_cartoon_trace_atoms:
   case cSetting_cartoon_refine:
   case cSetting_cartoon_nucleic_acid_mode:
+  case cSetting_cartoon_ring_mode:
+  case cSetting_cartoon_ring_finder:
+  case cSetting_cartoon_ring_width:
+  case cSetting_cartoon_ring_color:
   case cSetting_cartoon_sampling:
   case cSetting_cartoon_loop_quality:
   case cSetting_cartoon_loop_radius:
@@ -2583,6 +2591,11 @@ void SettingInitGlobal(PyMOLGlobals *G,int alloc,int reset_gui)
   SettingSet_b(I,cSetting_pdb_honor_model_number, false);
   SettingSet_b(I,cSetting_rank_assisted_sorts, true);
   SettingSet_i(I,cSetting_ribbon_nucleic_acid_mode, 0);
+  SettingSet_i(I,cSetting_cartoon_ring_mode, 0);
+  SettingSet_f(I,cSetting_cartoon_ring_width, 0.125F);
+  SettingSet_color(I,cSetting_cartoon_ring_color, "-1");
+  SettingSet_i(I,cSetting_cartoon_ring_finder, 1);
+
 }
 
 

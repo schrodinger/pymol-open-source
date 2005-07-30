@@ -2127,6 +2127,9 @@ int ExecutiveGetSession(PyMOLGlobals *G,PyObject *dict)
 #ifndef _PYMOL_NOPY
 static void ExecutiveMigrateSession(PyMOLGlobals *G,int session_version)
 {
+  if(session_version<99) {
+    SettingSetGlobal_f(G,cSetting_cartoon_ring_mode,0);
+  }
   if(session_version<96) {
     SettingSetGlobal_f(G,cSetting_ray_transparency_contrast, 1.0F);
   }

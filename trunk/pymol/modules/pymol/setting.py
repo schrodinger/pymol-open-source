@@ -460,6 +460,10 @@ if __name__=='pymol.setting':
         pdb_honor_model_number    = (424, '')
         rank_assisted_sorts       = (425, '')
         ribbon_nucleic_acid_mode  = (426, '')
+        cartoon_ring_mode         = (427, '')
+        cartoon_ring_width        = (428, '')
+        cartoon_ring_color        = (429, '')
+        cartoon_ring_finder       = (430, '')
         
     setting_sc = Shortcut(SettingIndex.__dict__.keys())
 

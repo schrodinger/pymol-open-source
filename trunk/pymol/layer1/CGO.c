@@ -524,6 +524,25 @@ void CGOAlpha(CGO *I,float alpha)
   *(pc++)=alpha;
 }
 
+void CGOSausage(CGO *I,float *v1,float *v2,float r,float *c1,float *c2)
+{
+  float *pc = CGO_add(I,14);
+  CGO_write_int(pc,CGO_SAUSAGE);
+  *(pc++) = *(v1++);
+  *(pc++) = *(v1++);
+  *(pc++) = *(v1++);
+  *(pc++) = *(v2++);
+  *(pc++) = *(v2++);
+  *(pc++) = *(v2++);
+  *(pc++) = r;
+  *(pc++) = *(c1++);
+  *(pc++) = *(c1++);
+  *(pc++) = *(c1++);
+  *(pc++) = *(c2++);
+  *(pc++) = *(c2++);
+  *(pc++) = *(c2++);
+}
+
 void CGOVertex(CGO *I,float v1,float v2,float v3)
 {
   float *pc = CGO_add(I,4);
