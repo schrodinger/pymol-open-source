@@ -6,9 +6,12 @@ Changes up to 0.99
 
     beta10
 
-    * better cartoons for nucleic acids. loose 3' and 5' ends can now be capped with 
-      cartoon_nucleic_acid_modes 2, 3, and 4 (same for ribbon_nucleic_acid_mode)
-
+    * better cartoons for nucleic acids
+        ribbon/cartoon_nucleic_acid_modes: 0, 1, 2, 3, and 4 
+        cartoon_ring_mode:  0, 1, 2
+        cartoon_ring_finder: 1, 2, 3
+        cartoon_ring_color, cartoon_ring_width
+        
     * normals now generated in a more sensible fashion for nucleic acid cartoons */
 
     * rank_assisted_sorts enables us to handle those insane PDB

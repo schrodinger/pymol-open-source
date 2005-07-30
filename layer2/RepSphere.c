@@ -1146,7 +1146,8 @@ Rep *RepSphereNew(CoordSet *cs)
   map_flag = Calloc(int,cs->NIndex);
 
   I->NT=NULL;
-  
+  nt = NULL;
+
   v=I->VC; 
   mf=map_flag;
 
