@@ -175,6 +175,7 @@ static void do_ring(PyMOLGlobals *G,int n_atom, int *atix, ObjectMolecule *obj,
 
     /* compute average coordinate and mark atoms so that ring is only drawn once */
     zero3f(avg);
+    zero3f(avg_col);
     for(i=0;i<n_atom;i++) {
       add3f(avg,v_i[i],avg);
       add3f(avg_col,col[i],avg_col);
@@ -277,15 +278,15 @@ static void do_ring(PyMOLGlobals *G,int n_atom, int *atix, ObjectMolecule *obj,
           CGOPickColor(cgo,atix[i],-1);
           CGOVertexv(cgo,v0t);
           CGOVertexv(cgo,v0b);
-          CGOPickColor(cgo,atix[ii],-1);
           if(ring_color<0) CGOColorv(cgo,col[ii]);
+          CGOPickColor(cgo,atix[ii],-1);
           CGOVertexv(cgo,v1t);
           CGOVertexv(cgo,v1t);
           if(ring_color<0) CGOColorv(cgo,col[i]);
           CGOPickColor(cgo,atix[i],-1);  
           CGOVertexv(cgo,v0b);
-          CGOPickColor(cgo,atix[ii],-1);
           if(ring_color<0) CGOColorv(cgo,col[ii]);
+          CGOPickColor(cgo,atix[ii],-1);
           CGOVertexv(cgo,v1b);
         }
         
@@ -480,12 +481,12 @@ Rep *RepCartoonNew(CoordSet *cs)
 
   ring_width = SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_cartoon_ring_width);
   if(ring_width<0.0F) {
-    ring_width = SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_stick_radius)*2; /* match stick radius */
+    ring_width = SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_stick_radius)*0.5;
   }
 
   ring_color = SettingGet_color(G,cs->Setting,obj->Obj.Setting,cSetting_cartoon_ring_color);
 
-  if(ring_color<0)
+  if(ring_color==-1)
     ring_color = cartoon_color;
 
   smooth_first = SettingGet_i(G,cs->Setting,obj->Obj.Setting,cSetting_cartoon_smooth_first);

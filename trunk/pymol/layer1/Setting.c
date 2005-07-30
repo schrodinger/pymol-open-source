@@ -328,9 +328,12 @@ int SettingGetTextValue(PyMOLGlobals *G,CSetting *set1,CSetting *set2,int index,
     break;
   case cSetting_color:
     tmp1 = SettingGet_color(G,set1,set2,index);
-    if(tmp1<0) 
-      strcpy(buffer,"default");
-    else
+    if(tmp1<0) {
+      if(tmp1==cColorAtomic)
+        strcpy(buffer,"atomic");        
+      else
+        strcpy(buffer,"default");
+    } else
       strcpy(buffer,ColorGetName(G,tmp1));
     break;
   case cSetting_string:
@@ -790,7 +793,11 @@ int SettingSet_color(CSetting *I,int index, char *value)
   if(I) {
     PyMOLGlobals *G=I->G;
     color_index=ColorGetIndex(G,value);
-    if((color_index==-1)&&(strcmp(value,"-1")&&strcmp(value,"default"))) {
+    if((color_index==-1)&&(strcmp(value,"-1")&&
+                           strcmp(value,"-2")&&
+                           strcmp(value,"-3")&&
+                           strcmp(value,"-4")&&
+                           strcmp(value,"default"))) {
       PRINTFB(G,FB_Setting,FB_Errors)
         "Setting-Error: unknown color '%s'\n",value
         ENDFB(G);

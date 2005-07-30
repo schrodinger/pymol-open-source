@@ -54,7 +54,7 @@ Selector-Error: Invalid Selection Name.
 ( nonexistent )<--
 CmdException raised.
 cmd.space("cmyk")
- Color: loaded table '/users/warren/pymol/data/pymol/cmyk.png'.
+ Color: loaded table '/home/local/warren/pymol/data/pymol/cmyk.png'.
 None
 cmd.space("unknown")
 Error: unknown color space 'unknown'.

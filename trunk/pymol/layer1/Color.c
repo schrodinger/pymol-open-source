@@ -488,6 +488,8 @@ int ColorGetIndex(PyMOLGlobals *G,char *name)
         return(ColorGetNext(G));
       else if(i==cColorCurAuto)
         return(ColorGetCurrent(G));
+      else if(i==cColorAtomic)
+        return cColorAtomic;
       else if(i==-1)
         return -1;
     }
