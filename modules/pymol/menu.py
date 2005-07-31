@@ -575,11 +575,16 @@ def modify_by_sele(s,op):
 
 def restrict(s):
     return [[ 2, 'Restrict:'       ,''                        ],     
-              [ 1, 'to object'   , modify_by_object(s,'and') ],
-              [ 1, 'to selection' , modify_by_sele(s,'and') ],
-              [ 0, ''               ,''                             ],           
-              [ 1, 'to visible'   , 'cmd.select("'+s+'","('+s+') and vis",show=1)'],
-              ]
+            [ 1, 'to object'   , modify_by_object(s,'and') ],
+            [ 1, 'to selection' , modify_by_sele(s,'and') ],
+            [ 0, ''               ,''                             ],           
+            [ 1, 'to visible'   , 'cmd.select("'+s+'","('+s+') and vis",show=1)'],
+            [ 0, ''               ,''                             ],
+            [ 1, 'to polymer'   , 'cmd.select("'+s+'","('+s+') and polymer",show=1)'],
+            [ 1, 'to solvent'   , 'cmd.select("'+s+'","('+s+') and solvent",show=1)'],
+            [ 1, 'to organic'   , 'cmd.select("'+s+'","('+s+') and organic",show=1)'],
+            [ 1, 'to inorganic'   , 'cmd.select("'+s+'","('+s+') and inorganic",show=1)'],
+            ]
 
 def include(s):
     return [[ 2, 'Include:'       ,''                        ],     
