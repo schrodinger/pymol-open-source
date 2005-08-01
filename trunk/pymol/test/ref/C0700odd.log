@@ -331,3 +331,28 @@ PyMOL>load dat/odd01.pdb
  CmdLoad: "dat/odd01.pdb" loaded as "odd01".
 PyMOL>save cmp/C0700odd.F.pdb
  Save: wrote "cmp/C0700odd.F.pdb".
+PyMOL>reinit
+PyMOL>load dat/helix_amber.pdb
+ CmdLoad: "dat/helix_amber.pdb" loaded as "helix_amber".
+PyMOL>iterate resi 2, print name, elem
+N N
+CA C
+C C
+O O
+CB C
+SG S
+H H
+HA H
+HB2 H
+HB3 H
+N N
+CA C
+C C
+O O
+CB C
+H H
+HA H
+HB1 H
+HB2 H
+HB3 H
+ Iterate: iterated over 20 atoms.

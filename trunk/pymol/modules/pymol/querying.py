@@ -1079,16 +1079,19 @@ PYMOL API
         if _raising(r): raise pymol.CmdException
         return r
 
-    def phi_psi(selection="(byres pk1)"):
+    def phi_psi(selection="(byres pk1)",quiet=1):
         r = cmd.get_phipsi(selection)
         if r!=None:
             kees = r.keys()
             kees.sort()
-            cmd.feedback('push')
-            cmd.feedback('disable','executive','actions')
-            for a in kees:
-                cmd.iterate("(%s`%d)"%a,"print ' %-9s "+("( %6.1f, %6.1f )"%r[a])+"'%(resn+'-'+resi+':')")
-            cmd.feedback('pop')
+            if not quiet:
+                cmd.feedback('push')
+                cmd.feedback('disable','executive','actions')
+                for a in kees:
+                    cmd.iterate("(%s`%d)"%a,"print ' %-9s "+
+                                ("( %6.1f, %6.1f )"%r[a])+
+                                "'%(resn+'-'+resi+':')")
+                cmd.feedback('pop')
         elif _feedback(fb_module.cmd,fb_mask.errors):      
             print "cmd-Error: can't compute phi_psi"
         if _raising(r): raise pymol.CmdException

@@ -1,5 +1,7 @@
 # pymol -c generate1.py
 
+# NOTE: obsolete -- PyMOL now uses Dunbrack rotamers by default
+
 from chempy import io
 from glob import glob
 

@@ -6,6 +6,7 @@ from chempy import io
 import pymol
 import os
 import string
+import traceback
 
 sele_name = "_mutate_sel"
 
@@ -18,6 +19,8 @@ tmp_obj3 = "_tmp_obj3"
 default_mode = "current"
 default_rep = "lines"
 
+default_dep = 'dep'
+
 class Mutagenesis(Wizard):
 
     count = 0
@@ -29,9 +32,11 @@ class Mutagenesis(Wizard):
         
         Wizard.__init__(self)
 
-        self.library = io.pkl.fromFile(os.environ['PYMOL_PATH']+
-                                                 "/data/chempy/sidechains/sc_library.pkl")
-        
+        self.dep = default_dep
+
+        self.ind_library = io.pkl.fromFile(os.environ['PYMOL_PATH']+
+                                           "/data/chempy/sidechains/sc_bb_ind.pkl")
+        self.load_library()
         self.status = 0 # 0 no selection, 1 mutagenizing
         self.error = None
         self.object_name = None
@@ -40,7 +45,7 @@ class Mutagenesis(Wizard):
             ]
         self.mode = default_mode
         self.rep = default_rep
-        residues = self.library.keys()
+        residues = self.ind_library.keys()
         residues.extend(['GLY','PRO','ALA'])
         residues.sort()
         self.modes.extend(residues)
@@ -54,6 +59,7 @@ class Mutagenesis(Wizard):
         for a in self.modes:
             smm.append([ 1, self.mode_name[a], 'cmd.get_wizard().set_mode("'+a+'")'])
         self.menu['mode']=smm
+
 
         self.reps = [
             'lines',
@@ -69,11 +75,23 @@ class Mutagenesis(Wizard):
             'dots' : "Show Dots",
             }
 
+        self.dep_name = {
+            'dep' : "Backbone-Dependent",
+            'ind' : "Backbone-Independent"
+            }
+
         smm = []
         smm.append([ 2, 'Representation', '' ])
         for a in self.reps:
             smm.append([ 1, self.rep_name[a], 'cmd.get_wizard().set_rep("'+a+'")'])
         self.menu['rep']=smm
+
+        self.deps = [ 'dep', 'ind' ]
+        smm = []
+        smm.append([ 2, 'Rotamers', '' ])
+        for a in self.deps:
+            smm.append([ 1, self.dep_name[a], 'cmd.get_wizard().set_dep("'+a+'")'])
+        self.menu['dep']=smm
 
         if 'pk1' in cmd.get_names('selections'):
             cmd.select(sele_name,"(byres pk1)")
@@ -84,6 +102,12 @@ class Mutagenesis(Wizard):
             self.do_library()
             cmd.refresh_wizard()
 
+    def load_library(self):
+        if self.dep == 'dep':
+            if not hasattr(self,'dep_library'):
+                self.dep_library = io.pkl.fromFile(os.environ['PYMOL_PATH']+
+                                           "/data/chempy/sidechains/sc_bb_dep.pkl")
+            
     def set_mode(self,mode):
         if mode in self.modes:
             self.mode = mode
@@ -98,22 +122,33 @@ class Mutagenesis(Wizard):
         cmd.show('lines',obj_name) # always show lines      
         cmd.show(self.rep,obj_name)
         cmd.refresh_wizard()
+
+    def set_dep(self,value):
+        if value!=self.dep:
+            self.dep = value
+            self.load_library()
+            if sele_name in cmd.get_names("all"):
+                self.do_library()
+            cmd.refresh_wizard()
         
     def get_panel(self):
         return [
             [ 1, 'Mutagenesis',''],
             [ 3, self.mode_name[self.mode],'mode'],
-            [ 3, self.rep_name[self.rep],'rep'],                  
+            [ 3, self.rep_name[self.rep],'rep'],
+            [ 3, self.dep_name[self.dep],'dep'],                              
             [ 2, 'Apply' , 'cmd.get_wizard().apply()'],         
             [ 2, 'Clear' , 'cmd.get_wizard().clear()'],
             [ 2, 'Done','cmd.set_wizard()'],
             ]
 
     def cleanup(self):
-        global default_mode,default_rep
+        global default_mode,default_rep,default_dep
         default_mode = self.mode
         default_rep = self.rep
+        default_dep = self.dep
         self.clear()
+
         
     def clear(self):
         self.status=0
@@ -149,6 +184,7 @@ class Mutagenesis(Wizard):
                     cmd.select(sele_name,"(%s in %s)"%(tmp_obj3,sele_name))
                     # create copy with mutant in correct frame
                     cmd.create(tmp_obj2,obj_name,src_frame,1)
+                    cmd.set_title(tmp_obj2,1,'')
                     cmd.delete(new_name)
                     # create the merged molecule
                     cmd.create(new_name,"(%s or %s)"%(tmp_obj1,tmp_obj2),1) # only one state in merged object...
@@ -246,28 +282,53 @@ class Mutagenesis(Wizard):
         sticks = (cmd.count_atoms("(%s and n;ca and rep sticks)"%sele_name)>0)
             
         cmd.delete(obj_name)
-        if self.library.has_key(res_type):
-            lib = self.library[res_type]
+        key = res_type
+        lib = None
+        if self.dep == 'dep':
+            try:
+                result = cmd.phi_psi("%s"%sele_name)
+                if len(result)==1:
+                    (phi,psi) = result[result.keys()[0]]
+                    (phi,psi) = (int(10*round(phi/10)),int(10*(round(psi/10))))
+                    key = (res_type,phi,psi)
+                    if not self.dep_library.has_key(key):
+                        (phi,psi) = (int(20*round(phi/20)),int(20*(round(psi/20))))
+                        key = (res_type,phi,psi)                    
+                        if not self.dep_library.has_key(key):
+                            (phi,psi) = (int(60*round(phi/60)),int(60*(round(psi/60))))
+                            key = (res_type,phi,psi)
+                    lib = self.dep_library.get(key,None)
+            except:
+                pass
+        if lib == None:
+            key = res_type
+            lib = self.ind_library.get(key,None)
+            if (lib!= None) and self.dep == 'dep':
+                print ' Mutagenesis: no phi/psi, using backbone-independent rotamers.'
+        if lib != None:
             state = 1
             for a in lib:
                 cmd.create(obj_name,tmp_name,1,state)
+                if res_type=='PRO':
+                    cmd.unbond("(%s & name N)"%obj_name,"(%s & name CD)"%obj_name)
                 for b in a.keys():
                     if b!='FREQ':
                         cmd.set_dihedral("(%s & n;%s)"%(obj_name,b[0]),
-                                              "(%s & n;%s)"%(obj_name,b[1]),
-                                              "(%s & n;%s)"%(obj_name,b[2]),
-                                              "(%s & n;%s)"%(obj_name,b[3]),
-                                              a[b],state=state)
+                                         "(%s & n;%s)"%(obj_name,b[1]),
+                                         "(%s & n;%s)"%(obj_name,b[2]),
+                                         "(%s & n;%s)"%(obj_name,b[3]),
+                                         a[b],state=state)
                     else:
                         cmd.set_title(obj_name,state,"%1.1f%%"%(a[b]*100))
+                if res_type=='PRO':
+                    cmd.bond("(%s & name N)"%obj_name,"(%s & name CD)"%obj_name)                
                 state = state + 1
             cmd.delete(tmp_name)
-            cmd.set("seq_view",0,obj_name,quiet=1)
-
-            print " Mutagenesis: %d conformations loaded."%len(self.library[res_type])
+            print " Mutagenesis: %d rotamers loaded."%len(lib)
         else:
             cmd.create(obj_name,tmp_name,1,1)
-            print " Mutagenesis: no additional conformations in library."
+            print " Mutagenesis: no rotamers found in library."
+        cmd.set("seq_view",0,obj_name,quiet=1)
         pymol.util.cbaw(obj_name)
         cmd.hide("("+obj_name+")")
         cmd.show(self.rep,obj_name)
@@ -291,6 +352,7 @@ class Mutagenesis(Wizard):
         self.status = 1
         self.error = None
         self.do_library()
+        cmd.delete(selection)
         cmd.refresh_wizard()
         
     def do_pick(self,bondFlag):

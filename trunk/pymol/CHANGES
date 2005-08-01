@@ -4,6 +4,15 @@ CHANGE LOG
 
 Changes up to 0.99
 
+    beta11
+
+    * new workaround for amber-like PDB files.
+
+    * incorporated a sampled subset of the Dunbrack backbone-dependent
+      rotamers at 10, 20, and 60 degrees based on > 1% occurence
+
+    * incorporated the Dunbrack backbone independent rotamers
+    
     beta10
 
     * better cartoons for nucleic acids

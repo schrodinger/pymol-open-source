@@ -936,6 +936,7 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(PyMOLGlobals *G,
   int seen_model;
   int is_end_of_object = false;
   int literal_names = SettingGetGlobal_b(G,cSetting_pdb_literal_names);
+  int bogus_name_alignment = true;
   AtomName literal_name = "";
 
   if(literal_names)
@@ -964,20 +965,24 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(PyMOLGlobals *G,
   *restart_model = NULL;
   while(*p)
 	 {
-		if((p[0]== 'A')&&(p[1]=='T')&&(p[2]=='O')&&(p[3]=='M') /* ATOM */
-         &&(!*restart_model))
-		  nAtom++;
-		else if((p[0]== 'H')&&(p[1]=='E')&&(p[2]=='L')&&(p[3]=='I')&&(p[4]=='X')) /* HELIX */
-        ssFlag=true;
-		else if((p[0]== 'S')&&(p[1]=='H')&&(p[2]=='E')&&(p[3]=='E')&&(p[4]=='T')) /* SHEET */
-        ssFlag=true;
-		else if((p[0]== 'A')&&(p[1]=='T')&&(p[2]=='O')&&(p[3]=='M') /* ATOM */
-         &&(!*restart_model))
-		  nAtom++;
-		else if((p[0]== 'H')&&(p[1]=='E')&&(p[2]=='T')&& /* HETATM */
-         (p[3]=='A')&&(p[4]=='T')&&(p[5]=='M')&&(!*restart_model))
-        nAtom++;
-		else if((p[0]=='H')&& /* HEADER */
+       if(((p[0]== 'A')&&(p[1]=='T')&&(p[2]=='O')&&(p[3]=='M'))|| /* ATOM */
+          ((p[0]== 'H')&&(p[1]=='E')&&(p[2]=='T')&& /* HETATM */
+           (p[3]=='A')&&(p[4]=='T')&&(p[5]=='M')&&(!*restart_model))) {
+         nAtom++;
+         if(bogus_name_alignment) {
+           ncopy(cc,nskip(p,12),4);
+           if((cc[0]==32)&&(cc[1]!=32)) {
+             bogus_name_alignment = false;
+           }
+         }
+       } else if((p[0]== 'H')&&(p[1]=='E')&&(p[2]=='L')&&(p[3]=='I')&&(p[4]=='X')) /* HELIX */
+         ssFlag=true;
+       else if((p[0]== 'S')&&(p[1]=='H')&&(p[2]=='E')&&(p[3]=='E')&&(p[4]=='T')) /* SHEET */
+         ssFlag=true;
+       else if((p[0]== 'A')&&(p[1]=='T')&&(p[2]=='O')&&(p[3]=='M') /* ATOM */
+               &&(!*restart_model))
+         nAtom++;
+       else if((p[0]=='H')&& /* HEADER */
               (p[1]=='E')&&
               (p[2]=='A')&&
               (p[3]=='D')&&
@@ -1940,9 +1945,17 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(PyMOLGlobals *G,
             } else if(((literal_name[0]>='A')&&(literal_name[0]<='Z'))&&
                       (((literal_name[1]>='A')&&(literal_name[1]<='Z'))||
                        ((literal_name[1]>='a')&&(literal_name[1]<='z')))) { /* infer element from name column */
-              ai->elem[0]=literal_name[0];
-              ai->elem[1]=tolower(literal_name[1]);
-              ai->elem[2]=0;
+                ai->elem[0]=literal_name[0];
+                ai->elem[2]=0;
+                if((literal_name[1]>='A')&&(literal_name[1]<='Z')) {
+                  
+                  if(bogus_name_alignment) { /* if atom names aren't properly aligned */
+                    ai->elem[1]=0;
+                  } else {
+                    ai->elem[1]=tolower(literal_name[1]);
+                  }
+                } else
+                  ai->elem[1]=literal_name[1];
             }
           }
           
