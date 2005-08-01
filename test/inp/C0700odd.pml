@@ -128,4 +128,9 @@ unset pdb_use_ter_records
 load dat/odd01.pdb
 save cmp/C0700odd.F.pdb
 
+reinit
+
+load dat/helix_amber.pdb
+iterate resi 2, print name, elem
+
 /print "END-LOG"
