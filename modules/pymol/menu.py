@@ -524,7 +524,7 @@ def selection(s):
 def mol_generate(s):
     return [[ 2, 'Generate:'       ,''                        ],
               [ 1, 'selection', selection(s) ],
-              [ 1, 'symmetry mates', symmetry(s) ],           
+              [ 1, 'symmetry mates', symmetry(s) ],
               [ 1, 'vacuum electrostatics', vacuum(s) ],
 #           [ 1, 'assign', mol_assign(s) ],
               ]
