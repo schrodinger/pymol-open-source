@@ -2597,8 +2597,11 @@ static int ObjectMoleculeCSetFromPyList(ObjectMolecule *I,PyObject *list)
   if(ok) {
     VLACheck(I->CSet,CoordSet*,I->NCSet);
     for(a=0;a<I->NCSet;a++) {
-      
       if(ok) ok = CoordSetFromPyList(I->Obj.G,PyList_GetItem(list,a),&I->CSet[a]);
+      PRINTFB(I->Obj.G,FB_ObjectMolecule,FB_Debugging)
+	     " ObjectMoleculeCSetFromPyList: ok %d after CoordSet %d\n",ok,a
+	  ENDFB(I->Obj.G);
+
       if(ok) 
         if(I->CSet[a]) /* WLD 030205 */
           I->CSet[a]->Obj = I;
@@ -2653,6 +2656,10 @@ static int ObjectMoleculeBondFromPyList(ObjectMolecule *I,PyObject *list)
     if(ok) ok = PConvPyIntToInt(PyList_GetItem(bond_list,4),&bond->stereo);
     bond++;
   }
+      PRINTFB(I->Obj.G,FB_ObjectMolecule,FB_Debugging)
+	     " ObjectMoleculeBondFromPyList: ok %d after restore\n",ok
+	  ENDFB(I->Obj.G);
+
   return(ok);
 }
 #endif
@@ -2687,6 +2694,9 @@ static int ObjectMoleculeAtomFromPyList(ObjectMolecule *I,PyObject *list)
     if(ok) ok = AtomInfoFromPyList(I->Obj.G,ai,PyList_GetItem(list,a));
     ai++;
   }
+      PRINTFB(I->Obj.G,FB_ObjectMolecule,FB_Debugging)
+	     " ObjectMoleculeAtomFromPyList: ok %d \n",ok
+	  ENDFB(I->Obj.G);
   return(ok);
 }
 #endif

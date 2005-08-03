@@ -21,6 +21,7 @@ Z* -------------------------------------------------------------------
 #include"Word.h"
 #include"MemoryDebug.h"
 #include"Err.h"
+#include"Feedback.h"
 #include"Util.h"
 #include"Color.h"
 #include"PConv.h"
@@ -654,7 +655,7 @@ PyObject *AtomInfoAsPyList(PyMOLGlobals *G,AtomInfoType *I)
   return(PConvAutoNone(result));
 #endif
 }
-
+ 
 int AtomInfoFromPyList(PyMOLGlobals *G,AtomInfoType *I,PyObject *list)
 {
 #ifdef _PYMOL_NOPY
@@ -663,54 +664,55 @@ int AtomInfoFromPyList(PyMOLGlobals *G,AtomInfoType *I,PyObject *list)
   int ok=true;
   int hetatm;
   int ll = 0;
-  if(ok) ok = PyList_Check(list);
-  if(ok) ll = PyList_Size(list);
-  if(ok) ok = PConvPyIntToInt(PyList_GetItem(list, 0),&I->resv);
-  if(ok) ok = PConvPyStrToStr(PyList_GetItem(list, 1),I->chain,sizeof(Chain));
-  if(ok) ok = PConvPyStrToStr(PyList_GetItem(list, 2),I->alt,sizeof(Chain));
-  if(ok) ok = PConvPyStrToStr(PyList_GetItem(list, 3),I->resi,sizeof(ResIdent));
-  if(ok) ok = PConvPyStrToStr(PyList_GetItem(list, 4),I->segi,sizeof(SegIdent));
-  if(ok) ok = PConvPyStrToStr(PyList_GetItem(list, 5),I->resn,sizeof(ResName));
-  if(ok) ok = PConvPyStrToStr(PyList_GetItem(list, 6),I->name,sizeof(AtomName));
-  if(ok) ok = PConvPyStrToStr(PyList_GetItem(list, 7),I->elem,sizeof(AtomName));
-  if(ok) ok = PConvPyStrToStr(PyList_GetItem(list, 8),I->textType,sizeof(TextType));
-  if(ok) ok = PConvPyStrToStr(PyList_GetItem(list, 9),I->label,sizeof(LabelType));
-  if(ok) ok = PConvPyStrToStr(PyList_GetItem(list,10),I->ssType,sizeof(SSType));
-  if(ok) ok = PConvPyIntToInt(PyList_GetItem(list,11),&I->hydrogen);
-  if(ok) ok = PConvPyIntToInt(PyList_GetItem(list,12),&I->customType);
-  if(ok) ok = PConvPyIntToInt(PyList_GetItem(list,13),&I->priority);
-  if(ok) ok = PConvPyFloatToFloat(PyList_GetItem(list,14),&I->b);
-  if(ok) ok = PConvPyFloatToFloat(PyList_GetItem(list,15),&I->q);
-  if(ok) ok = PConvPyFloatToFloat(PyList_GetItem(list,16),&I->vdw);
-  if(ok) ok = PConvPyFloatToFloat(PyList_GetItem(list,17),&I->partialCharge);
-  if(ok) ok = PConvPyIntToInt(PyList_GetItem(list,18),&I->formalCharge);
-  if(ok) ok = PConvPyIntToInt(PyList_GetItem(list,19),&hetatm);
+  if(ok) ok = PyList_Check(list);  
+  if(ok) ll = PyList_Size(list);  
+  if(ok) ok = PConvPyIntToInt(PyList_GetItem(list, 0),&I->resv);   
+  if(ok) ok = PConvPyStrToStr(PyList_GetItem(list, 1),I->chain,sizeof(Chain));  
+  if(ok) ok = PConvPyStrToStr(PyList_GetItem(list, 2),I->alt,sizeof(Chain));  
+  if(ok) ok = PConvPyStrToStr(PyList_GetItem(list, 3),I->resi,sizeof(ResIdent));  
+  if(ok) ok = PConvPyStrToStr(PyList_GetItem(list, 4),I->segi,sizeof(SegIdent));  
+  if(ok) ok = PConvPyStrToStr(PyList_GetItem(list, 5),I->resn,sizeof(ResName));  
+  if(ok) ok = PConvPyStrToStr(PyList_GetItem(list, 6),I->name,sizeof(AtomName));  
+  if(ok) ok = PConvPyStrToStr(PyList_GetItem(list, 7),I->elem,sizeof(AtomName));  
+  if(ok) ok = PConvPyStrToStr(PyList_GetItem(list, 8),I->textType,sizeof(TextType));  
+  if(ok) ok = PConvPyStrToStr(PyList_GetItem(list, 9),I->label,sizeof(LabelType));   
+  if(ok) ok = PConvPyStrToStr(PyList_GetItem(list,10),I->ssType,sizeof(SSType));   
+  if(ok) ok = PConvPyIntToInt(PyList_GetItem(list,11),&I->hydrogen);   
+  if(ok) ok = PConvPyIntToInt(PyList_GetItem(list,12),&I->customType);   
+  if(ok) ok = PConvPyIntToInt(PyList_GetItem(list,13),&I->priority);  
+  if(ok) ok = PConvPyFloatToFloat(PyList_GetItem(list,14),&I->b);  
+  if(ok) ok = PConvPyFloatToFloat(PyList_GetItem(list,15),&I->q);   
+  if(ok) ok = PConvPyFloatToFloat(PyList_GetItem(list,16),&I->vdw); 
+  if(ok) ok = PConvPyFloatToFloat(PyList_GetItem(list,17),&I->partialCharge); 
+  if(ok) ok = PConvPyIntToInt(PyList_GetItem(list,18),&I->formalCharge);  
+  if(ok) ok = PConvPyIntToInt(PyList_GetItem(list,19),&hetatm); 
   if(ok) I->hetatm = hetatm;
-  if(ok) ok = PConvPyListToSIntArrayInPlaceAutoZero(PyList_GetItem(list,20),I->visRep,cRepCnt);
-  if(ok) ok = PConvPyIntToInt(PyList_GetItem(list,21),&I->color);
-  if(ok) ok = PConvPyIntToInt(PyList_GetItem(list,22),&I->id);
-  if(ok) ok = PConvPyIntToInt(PyList_GetItem(list,23),&I->cartoon);
-  if(ok) ok = PConvPyIntToInt(PyList_GetItem(list,24),(int*)&I->flags);
-  if(ok) ok = PConvPyIntToChar(PyList_GetItem(list,25),(char*)&I->bonded);
-  if(ok) ok = PConvPyIntToChar(PyList_GetItem(list,26),(char*)&I->chemFlag);
-  if(ok) ok = PConvPyIntToChar(PyList_GetItem(list,27),(char*)&I->geom);
-  if(ok) ok = PConvPyIntToChar(PyList_GetItem(list,28),(char*)&I->valence);
-  if(ok) ok = PConvPyIntToChar(PyList_GetItem(list,29),(char*)&I->masked);
-  if(ok) ok = PConvPyIntToChar(PyList_GetItem(list,30),(char*)&I->protekted);
-  if(ok) ok = PConvPyIntToChar(PyList_GetItem(list,31),(char*)&I->protons);
-  if(ok) ok = PConvPyIntToInt(PyList_GetItem(list,32),&I->sculpt_id);
-  if(ok) ok = PConvPyIntToInt(PyList_GetItem(list,33),&I->stereo);
-  if(ok&&(ll>34)) ok = PConvPyIntToInt(PyList_GetItem(list,34),&I->discrete_state);
-  if(ok&&(ll>35)) ok = PConvPyFloatToFloat(PyList_GetItem(list,35),&I->bohr_radius);
-  if(ok&&(ll>36)) ok = PConvPyIntToInt(PyList_GetItem(list,36),&I->rank);
-  if(ok&&(ll>37)) ok = PConvPyIntToChar(PyList_GetItem(list,37),(char*)&I->hb_donor);
-  if(ok&&(ll>38)) ok = PConvPyIntToChar(PyList_GetItem(list,38),(char*)&I->hb_acceptor);
-  if(ok&&(ll>39)) 
+  if(ok) ok = PConvPyListToSIntArrayInPlaceAutoZero(PyList_GetItem(list,20),I->visRep,cRepCnt); 
+  if(ok) ok = PConvPyIntToInt(PyList_GetItem(list,21),&I->color); 
+  if(ok) ok = PConvPyIntToInt(PyList_GetItem(list,22),&I->id); 
+  if(ok) ok = PConvPyIntToInt(PyList_GetItem(list,23),&I->cartoon); 
+  if(ok) ok = PConvPyIntToInt(PyList_GetItem(list,24),(int*)&I->flags); 
+  if(ok) ok = PConvPyIntToChar(PyList_GetItem(list,25),(char*)&I->bonded); 
+  if(ok) ok = PConvPyIntToChar(PyList_GetItem(list,26),(char*)&I->chemFlag); 
+  if(ok) ok = PConvPyIntToChar(PyList_GetItem(list,27),(char*)&I->geom); 
+  if(ok) ok = PConvPyIntToChar(PyList_GetItem(list,28),(char*)&I->valence); 
+  if(ok) ok = PConvPyIntToChar(PyList_GetItem(list,29),(char*)&I->masked); 
+  if(ok) ok = PConvPyIntToChar(PyList_GetItem(list,30),(char*)&I->protekted); 
+  if(ok) ok = PConvPyIntToChar(PyList_GetItem(list,31),(char*)&I->protons); 
+  if(ok) ok = PConvPyIntToInt(PyList_GetItem(list,32),&I->sculpt_id); 
+  if(ok) ok = PConvPyIntToInt(PyList_GetItem(list,33),&I->stereo); 
+  if(ok&&(ll>34)) ok = PConvPyIntToInt(PyList_GetItem(list,34),&I->discrete_state);  
+  if(ok&&(ll>35)) ok = PConvPyFloatToFloat(PyList_GetItem(list,35),&I->bohr_radius); 
+  if(ok&&(ll>36)) ok = PConvPyIntToInt(PyList_GetItem(list,36),&I->rank); 
+  if(ok&&(ll>37)) ok = PConvPyIntToChar(PyList_GetItem(list,37),(char*)&I->hb_donor); 
+  if(ok&&(ll>38)) ok = PConvPyIntToChar(PyList_GetItem(list,38),(char*)&I->hb_acceptor); 
+  if(ok&&(ll>39)) {
     ok = PConvPyIntToInt(PyList_GetItem(list,39),&I->atomic_color);
-  else {
+  } else {
     I->atomic_color = AtomInfoGetColor(G,I);
   }
-  return(ok);
+		
+return(ok);
 #endif
 }
 
