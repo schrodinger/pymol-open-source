@@ -6,6 +6,8 @@ Changes up to 0.99
 
     beta11
 
+    * fixed a couple bugs in p1m parsing
+
     * new workaround for amber-like PDB files.
 
     * incorporated a sampled subset of the Dunbrack backbone-dependent

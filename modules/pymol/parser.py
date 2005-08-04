@@ -351,7 +351,7 @@ if __name__=='pymol.parser':
                                     if len(com2[nest])>0:
                                         if not secure:
                                             exec(com2[nest]+"\n",pymol_names,pymol_names)
-                                        else:
+                                        elif input[nest][0][0:1]!='#':
                                             print 'Error: unrecognized keyword: '+input[nest][0]
                     if (len(next[nest])>1) and p_result:
                               # continue parsing if no error or break has occurred

@@ -518,6 +518,7 @@ SEE ALSO
             if ftype == loadable.p1m:
                 cmd._do("_ @"+fname)
                 ftype = -1
+                r = DEFAULT_SUCCESS
                 
     # special handling for AMBER trj failes
     #      if ftype == loadable.trj:

@@ -88,7 +88,7 @@ typedef struct _CPyMOL {
 
   OVLexicon *Lex;
   ov_word lex_pdb, lex_mol2, lex_mol, lex_sdf;
-  ov_word lex_c_string, lex_c_filename;
+  ov_word lex_string, lex_filename;
 
   OVOneToOne *Rep;
   ov_word lex_everything, lex_sticks, lex_spheres, lex_surface;
@@ -573,8 +573,8 @@ static OVstatus PyMOL_InitAPI(CPyMOL *I)
   LEX(mol);
   LEX(mol2);
 
-  LEX(c_string);
-  LEX(c_filename);
+  LEX(string);
+  LEX(filename);
 
   /* string constants that are accepted on input */
 
@@ -1288,8 +1288,8 @@ int PyMOL_Load(CPyMOL *I,char *content,  char *content_type,
   OVreturn_word result;
   int type_code;
   int format_code;
-
-
+  WordType obj_name;
+  
   if(!OVreturn_IS_OK( (result= OVLexicon_BorrowFromCString(I->Lex,content_type))))
     return OVstatus_FAILURE;
   else
@@ -1300,8 +1300,8 @@ int PyMOL_Load(CPyMOL *I,char *content,  char *content_type,
   else
     format_code = result.word;
 
-  if((type_code != I->lex_c_filename) &&
-     (type_code != I->lex_c_string)) {
+  if((type_code != I->lex_filename) &&
+     (type_code != I->lex_string)) {
     return OVstatus_FAILURE;
   } 
   
@@ -1323,6 +1323,39 @@ int PyMOL_Load(CPyMOL *I,char *content,  char *content_type,
       discrete=1; /* otherwise, allow discrete to be the default */
   }
 
+  { /* if object_name is blank and content is a filename, then 
+       compute the object_name from the file prefix */
+    if((!object_name[0])&&(type_code == I->lex_filename)) {
+      char *start, *stop;
+      stop = start = content + strlen(content)-1;
+      while(start>content) { /* known path separators */
+        if((start[-1]==':')||
+           (start[-1]=='\'')||
+           (start[-1]=='/'))
+          break;
+        start--;
+      }
+      while(stop>start) {
+        if(stop=='.')
+          break;
+        stop--;
+      }
+      if(stop==start)
+        stop = content + strlen(content);
+      if((stop-start) >=sizeof(WordType))
+        stop = start+sizeof(WordType)-1;
+      { 
+        char *p,*q;
+        p=start;
+        q=obj_name;
+        while(p<stop) {
+          *(q++)=*(p++);
+        }
+        *q=0;
+        object_name = obj_name;
+      }
+    }
+  }
   {
     int pymol_content_type = cLoadTypeUnknown;
     CObject *existing_object = NULL;
@@ -1330,24 +1363,24 @@ int PyMOL_Load(CPyMOL *I,char *content,  char *content_type,
     /* convert text format strings into integral load types */
 
     if(format_code == I->lex_pdb) {
-      if(type_code == I->lex_c_string)
+      if(type_code == I->lex_string)
         pymol_content_type = cLoadTypePDBStr;
-      else if( type_code == I->lex_c_filename)
+      else if( type_code == I->lex_filename)
         pymol_content_type = cLoadTypePDB;
     } else if(format_code == I->lex_mol2) {
-      if(type_code == I->lex_c_string)
+      if(type_code == I->lex_string)
         pymol_content_type = cLoadTypeMOL2Str;
-      else if( type_code == I->lex_c_filename)
+      else if( type_code == I->lex_filename)
         pymol_content_type = cLoadTypeMOL2;
     } else if(format_code == I->lex_mol) {
-      if(type_code == I->lex_c_string)
+      if(type_code == I->lex_string)
         pymol_content_type = cLoadTypeMOLStr;
-      else if( type_code == I->lex_c_filename)
+      else if( type_code == I->lex_filename)
         pymol_content_type = cLoadTypeMOL;
     } else if(format_code == I->lex_sdf) {
-      if(type_code == I->lex_c_string)
+      if(type_code == I->lex_string)
         pymol_content_type = cLoadTypeSDF2Str;
-      else if( type_code == I->lex_c_filename)
+      else if( type_code == I->lex_filename)
         pymol_content_type = cLoadTypeSDF2;
     }
 
@@ -1355,6 +1388,13 @@ int PyMOL_Load(CPyMOL *I,char *content,  char *content_type,
       existing_object = ExecutiveGetExistingCompatible(I->G,
                                                        object_name,
                                                        pymol_content_type);
+    }
+
+    /* measure the length if it wasn't provided */
+
+    if(content_length<0) {
+      if(type_code == I->lex_string)
+        content_length = strlen(content);
     }
 
     switch(pymol_content_type) {
@@ -1368,7 +1408,7 @@ int PyMOL_Load(CPyMOL *I,char *content,  char *content_type,
     case cLoadTypeSDF2Str:
       {
         int ok = ExecutiveLoad(I->G, existing_object, 
-                               content, 0, 
+                               content, content_length, 
                                pymol_content_type,
                                object_name, 
                                state-1,  zoom,
