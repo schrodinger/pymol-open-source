@@ -1336,7 +1336,7 @@ int PyMOL_Load(CPyMOL *I,char *content,  char *content_type,
         start--;
       }
       while(stop>start) {
-        if(stop=='.')
+        if(*stop=='.')
           break;
         stop--;
       }
@@ -1626,6 +1626,10 @@ void PyMOL_Start(CPyMOL *I)
   IsosurfInit(G);
   TetsurfInit(G);
   EditorInit(G);
+
+#ifdef TRACKER_UNIT_TEST
+  TrackerUnitTest(G);
+#endif
 
   I->RedisplayFlag = true;
   G->Ready = true; 
