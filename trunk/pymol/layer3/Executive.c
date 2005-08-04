@@ -2130,6 +2130,9 @@ static void ExecutiveMigrateSession(PyMOLGlobals *G,int session_version)
   if(session_version<99) {
     SettingSetGlobal_f(G,cSetting_cartoon_ring_mode,0);
   }
+  if(session_version<98) { /* produce expected rendering quality & performance with old sessions */
+    SettingSetGlobal_b(G,cSetting_ray_orthoscopic,1);
+  }
   if(session_version<96) {
     SettingSetGlobal_f(G,cSetting_ray_transparency_contrast, 1.0F);
   }
