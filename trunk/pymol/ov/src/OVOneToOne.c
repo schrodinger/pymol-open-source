@@ -91,7 +91,7 @@ void OVOneToOne_Dump(OVOneToOne *up)
       }
   }
   if(empty) {
-    fprintf(stderr," OVOneToOne_Dump: Empty.\n");
+    fprintf(stderr," OVOneToOne_Dump: Empty. \n");
   }
 }
 
