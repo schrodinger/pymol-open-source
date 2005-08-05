@@ -8181,15 +8181,15 @@ void ExecutiveManageObject(PyMOLGlobals *G,CObject *obj,int zoom,int quiet)
   SpecRec *rec = NULL;
   register CExecutive *I = G->Executive;
   int exists=false;
-
+  
   if(SettingGet(G,cSetting_auto_hide_selections))
     ExecutiveHideSelections(G);
   while(ListIterate(I->Spec,rec,next))
-	 {
-		if(rec->obj==obj) {
+    {
+      if(rec->obj==obj) {
         exists = true;
       }
-	 }
+    }
   if(!exists) {
     while(ListIterate(I->Spec,rec,next))
       {
