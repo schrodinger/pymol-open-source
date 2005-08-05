@@ -54,6 +54,7 @@ Z* -------------------------------------------------------------------
 #include"Text.h"
 #include"PyMOL.h"
 #include"PyMOLOptions.h"
+#include"Tracker.h"
 
 #define cExecObject 0
 #define cExecSelection 1
@@ -73,6 +74,7 @@ typedef struct SpecRec {
   int sele_color;
   int hilight;
   int previous;
+  int cand_id;
 } SpecRec; /* specification record (a line in the executive window) */
 
 typedef struct {
@@ -83,6 +85,7 @@ typedef struct {
 struct _CExecutive {
   Block *Block;
   SpecRec *Spec;
+  CTracker *Tracker;
   int Width,Height,HowFarDown;
   int ScrollBarActive;
   int NSkip;
@@ -93,8 +96,8 @@ struct _CExecutive {
   SpecRec *LastChanged,*LastZoomed;
   int ReorderFlag;
   OrthoLineType ReorderLog;
-
   int oldPX,oldPY,oldWidth,oldHeight,sizeFlag;
+  int all_obj_list_id, all_sel_list_id;
 };
 
 static SpecRec *ExecutiveFindSpec(PyMOLGlobals *G,char *name);
@@ -102,6 +105,13 @@ static int ExecutiveDrag(Block *block,int x,int y,int mod);
 static void ExecutiveSpecSetVisibility(PyMOLGlobals *G,SpecRec *rec,
                                        int new_vis,int mod);
 void ExecutiveObjMolSeleOp(PyMOLGlobals *G,int sele,ObjectMoleculeOpRec *op);
+
+static int ExecutiveGetObjectListFromPattern(char *name)
+{
+  int result = 0;
+  
+  return result;
+}
 
 int ExecutiveDrawCmd(PyMOLGlobals *G, int width, int height,int antialias, int quiet)
 {
@@ -1946,6 +1956,16 @@ static int ExecutiveSetNamedEntries(PyMOLGlobals *G,PyObject *names,int version)
             SceneObjectAdd(G,rec->obj);
           }
           ExecutiveUpdateObjectSelection(G,rec->obj);
+          break;
+        }
+
+        rec->cand_id = TrackerNewCand(I->Tracker,(TrackerRef*)rec);
+        switch(rec->type) {
+        case cExecObject:
+          TrackerLink(I->Tracker, rec->cand_id, I->all_obj_list_id,1);
+          break;
+        case cExecSelection:
+          TrackerLink(I->Tracker, rec->cand_id, I->all_sel_list_id,1);
           break;
         }
         ListAppend(I->Spec,rec,next,SpecRec);
@@ -8105,41 +8125,40 @@ void ExecutiveDelete(PyMOLGlobals *G,char *name)
 
   if(WordMatch(G,name,cKeywordAll,true)<0) all_flag=true;
   strcpy(name_copy,name);
-  while(ListIterate(I->Spec,rec,next))
-	 {
-		if(rec->type==cExecObject)
-		  {
-          if(I->LastEdited==cExecObject) 
-            I->LastEdited=NULL;
-			 if(all_flag||(WordMatch(G,name_copy,rec->obj->Name,true)<0))
-				{
-              if(rec->obj->type == cObjectMolecule)
-                if(EditorIsAnActiveObject(G,(ObjectMolecule*)rec->obj))
-                  EditorInactivate(G);
-              SeqChanged(G);
-              if(rec->visible) 
-                SceneObjectDel(G,rec->obj);
-				  SelectorDelete(G,rec->name);
-				  rec->obj->fFree(rec->obj);
-				  rec->obj=NULL;
-				  ListDelete(I->Spec,rec,next,SpecRec);
-				  rec=NULL;
-				}
-		  }
-		else if(rec->type==cExecSelection)
-		  {
-
-			 if(all_flag||(WordMatch(G,name_copy,rec->name,true)<0))
-				{
-              if(all_flag||rec->visible)
-                SceneDirty(G);
-              SeqDirty(G);
-				  SelectorDelete(G,rec->name);
-				  ListDelete(I->Spec,rec,next,SpecRec);
-				  rec=NULL;
-				}
-		  }
-	 }
+  while(ListIterate(I->Spec,rec,next)) {
+    switch(rec->type) {
+    case cExecObject:
+      if(I->LastEdited==cExecObject) 
+        I->LastEdited=NULL;
+      if(all_flag||(WordMatch(G,name_copy,rec->obj->Name,true)<0)) {
+        if(rec->obj->type == cObjectMolecule)
+          if(EditorIsAnActiveObject(G,(ObjectMolecule*)rec->obj))
+            EditorInactivate(G);
+        SeqChanged(G);
+        if(rec->visible) 
+          SceneObjectDel(G,rec->obj);
+        SelectorDelete(G,rec->name);
+        rec->obj->fFree(rec->obj);
+        rec->obj=NULL;
+        TrackerDelCand(I->Tracker,rec->cand_id);
+        ListDelete(I->Spec,rec,next,SpecRec);
+        rec=NULL;
+      }
+      break;
+    case cExecSelection:
+      if(all_flag||(WordMatch(G,name_copy,rec->name,true)<0)) {
+        
+        if(all_flag||rec->visible)
+          SceneDirty(G);
+        SeqDirty(G);
+        SelectorDelete(G,rec->name);
+        TrackerDelCand(I->Tracker,rec->cand_id);
+        ListDelete(I->Spec,rec,next,SpecRec);
+        rec=NULL;
+      }
+      break;
+    }
+  }
   if(all_flag)
     SelectorDefragment(G);
 }
@@ -8237,6 +8256,9 @@ void ExecutiveManageObject(PyMOLGlobals *G,CObject *obj,int zoom,int quiet)
       rec->repOn[a]=false;
     if(rec->obj->type==cObjectMolecule)
       rec->repOn[cRepLine]=true;
+    
+    rec->cand_id = TrackerNewCand(I->Tracker,(TrackerRef*)rec);
+    TrackerLink(I->Tracker, rec->cand_id, I->all_obj_list_id,1);
     ListAppend(I->Spec,rec,next,SpecRec);
 
     if(rec->visible)
@@ -8303,6 +8325,9 @@ void ExecutiveManageSelection(PyMOLGlobals *G,char *name)
     rec->next=NULL;
     rec->sele_color=-1;
     rec->visible=false;
+
+    rec->cand_id = TrackerNewCand(I->Tracker,(TrackerRef*)rec);
+    TrackerLink(I->Tracker, rec->cand_id, I->all_sel_list_id,1);
     ListAppend(I->Spec,rec,next,SpecRec);
   }
   if(rec) {
@@ -9325,6 +9350,10 @@ int ExecutiveInit(PyMOLGlobals *G)
   int a;
 
   ListInit(I->Spec);
+  I->Tracker = TrackerNew(G);
+  I->all_obj_list_id = TrackerNewList(I->Tracker,NULL);
+  I->all_sel_list_id = TrackerNewList(I->Tracker,NULL);
+
   I->Block = OrthoNewBlock(G,NULL);  
   I->Block->fRelease = ExecutiveRelease;
   I->Block->fClick   = ExecutiveClick;
@@ -9352,7 +9381,7 @@ int ExecutiveInit(PyMOLGlobals *G)
   rec->visible=true;
   rec->next=NULL;
   for(a=0;a<cRepCnt;a++)
-	 rec->repOn[a]=false;
+    rec->repOn[a]=false;
   ListAppend(I->Spec,rec,next,SpecRec);
   return 1;
   }
@@ -9364,12 +9393,13 @@ void ExecutiveFree(PyMOLGlobals *G)
 {
   register CExecutive *I = G->Executive;
   SpecRec *rec=NULL;
-  while(ListIterate(I->Spec,rec,next))
-	 {
-		if(rec->type==cExecObject)
-		  rec->obj->fFree(rec->obj);
-	 }
+  while(ListIterate(I->Spec,rec,next)) {
+    if(rec->type==cExecObject)
+      rec->obj->fFree(rec->obj);
+  }
   ListFree(I->Spec,next,SpecRec);
+  if(I->Tracker)
+    TrackerFree(I->Tracker);
   if(I->ScrollBar)
     ScrollBarFree(I->ScrollBar);
   OrthoFreeBlock(G,I->Block);
