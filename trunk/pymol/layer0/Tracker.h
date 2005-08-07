@@ -37,17 +37,36 @@ typedef void *TrackerRef;
 CTracker *TrackerNew(PyMOLGlobals *G);
 void TrackerFree(CTracker *I);
 
+/* creating and deleting candidates, lists, and iterators */
+
 int TrackerNewCand(CTracker *I, TrackerRef *ref);
 int TrackerDelCand(CTracker *I, int cand_id);
+
 int TrackerNewList(CTracker *I, TrackerRef *ref);
 int TrackerDelList(CTracker *I, int list_id);
+
+int TrackerNewIter(CTracker *I, int cand_id, int list_id);
+int TrackerDelIter(CTracker *I, int iter_id);
+
+/* creating and destroying links */
+
 int TrackerLink(CTracker *I, int cand_id, int list_id, int priority);
 int TrackerUnlink(CTracker *I, int cand_id, int list_id);
+
+/* querying */
+
 int TrackerGetNList(CTracker *I);
 int TrackerGetNCand(CTracker *I);
 int TrackerGetNLink(CTracker *I);
+int TrackerGetNIter(CTracker *I);
 int TrackerGetNListForCand(CTracker *I,int cand_id);
 int TrackerGetNCandForList(CTracker *I,int list_id);
+
+/* iterating */
+
+int TrackerIterNextCandInList(CTracker *I, int iter_id, TrackerRef **ref_ret);
+int TrackerIterNextListInCand(CTracker *I, int iter_id, TrackerRef **ref_ret);
+
 #ifdef TRACKER_UNIT_TEST
 int TrackerUnitTest(PyMOLGlobals *G);
 #endif
