@@ -55,6 +55,7 @@ Z* -------------------------------------------------------------------
 #include"PyMOL.h"
 #include"PyMOLOptions.h"
 #include"Tracker.h"
+#include"Word.h"
 
 #define cExecObject 0
 #define cExecSelection 1
@@ -106,10 +107,32 @@ static void ExecutiveSpecSetVisibility(PyMOLGlobals *G,SpecRec *rec,
                                        int new_vis,int mod);
 void ExecutiveObjMolSeleOp(PyMOLGlobals *G,int sele,ObjectMoleculeOpRec *op);
 
-static int ExecutiveGetObjectListFromPattern(char *name)
+static int ExecutiveGetObjectListFromPattern(PyMOLGlobals *G,char *name)
 {
+  register CExecutive *I = G->Executive;
   int result = 0;
+  CWordMatcher *matcher;
+  CWordMatchOptions options;
+  CTracker *I_Tracker= I->Tracker;
+  char *wildcard = SettingGetGlobal_s(G,cSetting_wildcard);
+  int iter_id = TrackerNewIter(I_Tracker, 0, I->all_obj_list_id);
   
+  WordMatchOptionsConfigAlpha(&options, 
+                              *wildcard,
+                              SettingGetGlobal_b(G,cSetting_ignore_case));
+  matcher = WordMatcherNew(G, name, &options, true);
+  if(iter_id) {
+    SpecRec *rec;
+    while(TrackerIterNextCandInList(I_Tracker, iter_id, (TrackerRef**)&rec)) {
+      if(rec->type == cExecObject) {
+        printf("%s\n",rec->obj->Name);
+      }
+    }
+  }
+  if(matcher) 
+    WordMatcherFree(matcher);
+  if(iter_id)
+    TrackerDelIter(I->Tracker, iter_id);
   return result;
 }
 
@@ -6758,6 +6781,7 @@ int ExecutiveColor(PyMOLGlobals *G,char *name,char *color,int flags,int quiet)
   char atms[]="s";
   char objs[]="s";
   char *best_match;
+
   col_ind = ColorGetIndex(G,color);
   if(col_ind==-1) {
     ErrMessage(G,"Color","Unknown color.");

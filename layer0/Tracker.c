@@ -27,11 +27,15 @@ Z* -------------------------------------------------------------------
 #include"OVContext.h"
 #include"OVOneToOne.h"
 
+#define CAND_INFO 1
+#define LIST_INFO 2
+#define ITER_INFO 3
+
 /* double-linked throughout */
 
 typedef struct {
   int id;
-  int cand_true_list_false;
+  int type; 
   int first,last;
   TrackerRef *ref;
   int length;
@@ -47,6 +51,11 @@ typedef struct {
   int priority; 
 } TrackerMember;
 
+typedef struct {
+  int id;
+  int member;
+} TrackerIter;
+
 struct _CTracker {
   int next_id;
   int next_free_info;
@@ -55,8 +64,10 @@ struct _CTracker {
   int n_info;
   int n_member;
   int n_link;
+  int n_iter;
   int cand_start;
   int list_start;
+  int iter_start;
   TrackerInfo *info;
   OVOneToOne *id2info;
   OVOneToOne *hash2member;
@@ -82,7 +93,6 @@ CTracker *TrackerNew(PyMOLGlobals *G)
   I->member = VLACalloc(TrackerMember,1);
   I->id2info = OVOneToOne_New(G->Context->heap);
   I->hash2member = OVOneToOne_New(G->Context->heap);
-  
   return(I);
 }
 
@@ -139,6 +149,22 @@ static int GetUniqueValidID(CTracker *I)
   return result;
 }
 
+static void ProtectIterators(CTracker *I, int member_index)
+{
+  TrackerInfo *I_info = I->info;
+  int iter_index;
+  if( (iter_index = I->iter_start) && member_index ) {
+    while(iter_index) {
+      TrackerInfo *info = I_info + iter_index;
+      if( info->first == member_index ) {
+        info->first = 0;
+      } else if( info->last == member_index ) {
+        info->last = 0;
+      }
+      iter_index = info->next;
+    }
+  }
+}
 
 int TrackerNewCand(CTracker *I, TrackerRef *ref)
 {
@@ -158,7 +184,7 @@ int TrackerNewCand(CTracker *I, TrackerRef *ref)
     id = GetUniqueValidID(I);
     if(OVreturn_IS_OK(OVOneToOne_Set(I->id2info,id,index))) {
       info->id = (result = id);
-      info->cand_true_list_false = true;
+      info->type = CAND_INFO;
       I->n_cand++;
     } else {
       ReleaseInfo(I,index);
@@ -176,16 +202,68 @@ int TrackerNewList(CTracker *I, TrackerRef *ref)
   if(index) {
     TrackerInfo *info = I_info + index;
     info->ref = ref;
-    
     info->next = I->list_start;
     if(info->next)
       I_info[info->next].prev = index;
-    
     I->list_start = index;
     id = GetUniqueValidID(I);
     if(OVreturn_IS_OK(OVOneToOne_Set(I->id2info,id,index))) {
       info->id = (result = id);
+      info->type = LIST_INFO; 
       I->n_list++;
+    } else {
+      ReleaseInfo(I,index);
+    }
+  }
+  return result;
+}
+
+int TrackerNewIter(CTracker *I,int cand_id, int list_id)
+{
+  int result = 0;
+  int index = GetNewInfo(I);
+  int id;
+  TrackerInfo *I_info = I->info;
+  if(index) {
+    TrackerInfo *info = I_info + index;
+    info->next = I->iter_start;
+    if(info->next)
+      I_info[info->next].prev = index;
+    I->iter_start = index;
+    id = GetUniqueValidID(I);
+    if(OVreturn_IS_OK(OVOneToOne_Set(I->id2info,id,index))) {
+      info->id = (result = id);
+      info->type = ITER_INFO; 
+      I->n_iter++;
+      if(cand_id && list_id) { /* seeking a specific member */
+        int hash_key = TRACKER_HASH_KEY(cand_id,list_id);                  
+        OVreturn_word hash_start = OVOneToOne_GetForward(I->hash2member, hash_key);
+        if(OVreturn_IS_OK(hash_start)) {
+          int member_index = hash_start.word;
+          TrackerMember *I_member = I->member;
+          TrackerMember *member;
+          while(member_index) {
+            member = I_member + member_index;
+            if((member->cand_id == cand_id) && (member->list_id == list_id)) {
+              info->first = member_index;
+              break;
+            }
+            member_index = member->hash_next;
+          }
+        }
+      } else if(list_id) { /* for iterating over cands in a list */
+        OVreturn_word list_index = OVOneToOne_GetForward(I->id2info,list_id);
+        if(OVreturn_IS_OK(list_index)) {
+          TrackerInfo *list_info = I_info + list_index.word;
+          info->first = list_info->first;
+        }
+      } else if(cand_id) { /* for iterating over lists in a cand */
+        OVreturn_word cand_index = OVOneToOne_GetForward(I->id2info,cand_id);
+        if(OVreturn_IS_OK(cand_index)) {
+          TrackerInfo *cand_info = I_info + cand_index.word;
+          info->first = cand_info->first;
+        }
+      }
     } else {
       ReleaseInfo(I,index);
     }
@@ -202,7 +280,7 @@ int TrackerDelCand(CTracker *I, int cand_id)
   if(OVreturn_IS_OK(cand_index)) {
     TrackerInfo *cand_info = I_info + cand_index.word;
     
-    if(cand_info->cand_true_list_false) {
+    if(cand_info->type == CAND_INFO) {
       result=true;
       
       { /* first release all the members */
@@ -257,6 +335,12 @@ int TrackerDelCand(CTracker *I, int cand_id)
             list_info->length--;
           }
           
+          /* if any iterators exist, then make sure they don't point at
+             this member */
+          if(I->iter_start) {
+            ProtectIterators(I,member_index);
+          }
+
           { /* continue along the chain */
             register int member_index_copy = member_index;
             member_index = member->cand_next;
@@ -268,8 +352,27 @@ int TrackerDelCand(CTracker *I, int cand_id)
       /* delete the cand id */
       OVOneToOne_DelForward(I->id2info, cand_id);
       
-      /* and release the cand */
-      I->n_cand--;
+      /* remove the cand from the cand chain */
+      {
+        int prev = cand_info->prev;
+        int next = cand_info->next;
+        
+        if(prev) {
+          I->info[prev].next = next;
+        } else {
+          I->cand_start = next;
+        }
+        
+        if(next) {
+          I->info[next].prev = prev;
+        }
+        
+        /* shorten length of the list */
+        I->n_cand--;
+      }
+
+      /* and release the info record */
+
       ReleaseInfo(I,cand_index.word);
     }
   }
@@ -278,6 +381,111 @@ int TrackerDelCand(CTracker *I, int cand_id)
   
 }
 
+int TrackerIterNextCandInList(CTracker *I, int iter_id, TrackerRef **ref_ret)
+{
+  /* returns the next cand_id in the list */
+  int result = 0;
+  OVreturn_word iter_index = OVOneToOne_GetForward(I->id2info,iter_id);
+  TrackerInfo *I_info = I->info;
+  if(OVreturn_IS_OK(iter_index)) {
+    TrackerInfo *iter_info = I_info + iter_index.word;
+    int member_index;
+    if( (member_index=iter_info->first) ) {
+      TrackerMember *member = I->member + member_index;
+      result = member->cand_id;
+      if(ref_ret) {
+        TrackerInfo *cand_info = I_info + member->cand_index;
+        *ref_ret = cand_info->ref;
+      }
+      iter_info->last = iter_info->first;
+      iter_info->first = member->list_next;
+    } else if( (member_index=iter_info->last) ) { /* first is zero, so try last */
+      TrackerMember *member = I->member + member_index;
+      if(member->list_next) {
+        member = I->member + member->list_next;
+        result = member->cand_id;
+        if(ref_ret) {
+          TrackerInfo *cand_info = I_info + member->cand_index;
+          *ref_ret = cand_info->ref;
+        }
+        iter_info->last = iter_info->first;
+        iter_info->first = member->list_next;
+      }
+    }
+  }
+  return result;
+}
+
+
+int TrackerIterNextListInCand(CTracker *I, int iter_id, TrackerRef **ref_ret)
+{
+  /* returns the next cand_id in the list */
+  int result = 0;
+  OVreturn_word iter_index = OVOneToOne_GetForward(I->id2info,iter_id);
+  TrackerInfo *I_info = I->info;
+  if(OVreturn_IS_OK(iter_index)) {
+    TrackerInfo *iter_info = I_info + iter_index.word;
+    int member_index;
+    if( (member_index=iter_info->first) ) {
+      TrackerMember *member = I->member + member_index;
+      result = member->list_id;
+      if(ref_ret) {
+        TrackerInfo *list_info = I_info + member->list_index;
+        *ref_ret = list_info->ref;
+      }
+      iter_info->last = member_index;
+      iter_info->first = member->cand_next;
+    } else if( (member_index=iter_info->last) ) { /* first is zero, so try last */
+      TrackerMember *member = I->member + member_index;
+      if(member->cand_next) {
+        member = I->member + member->cand_next;
+        result = member->list_id;
+        if(ref_ret) {
+          TrackerInfo *list_info = I_info + member->list_index;
+          *ref_ret = list_info->ref;
+        }
+        iter_info->last = member_index;
+        iter_info->first = member->cand_next;
+      }
+    }
+  }
+  return result;
+}
+
+int TrackerDelIter(CTracker *I, int iter_id) 
+{
+  int result = false;
+  OVreturn_word iter_index = OVOneToOne_GetForward(I->id2info,iter_id);
+  TrackerInfo *I_info = I->info;
+  if(OVreturn_IS_OK(iter_index)) {
+    /* remove the iter from the iter chain */
+    TrackerInfo *iter_info = I_info + iter_index.word;
+
+    int prev = iter_info->prev;
+    int next = iter_info->next;
+    
+    if(prev) {
+      I->info[prev].next = next;
+    } else {
+      I->iter_start = next;
+    }
+    
+    if(next) {
+      I->info[next].prev = prev;
+    }
+
+    /* delete the iter id */
+    OVOneToOne_DelForward(I->id2info, iter_id);
+    
+    /* shorten length of the list */
+    I->n_iter--;
+
+    result = true;
+    
+    ReleaseInfo(I,iter_index.word);
+  }
+  return result;
+}
 
 int TrackerGetNList(CTracker *I)
 {
@@ -294,6 +502,11 @@ int TrackerGetNLink(CTracker *I)
   return I->n_link;
 }
 
+int TrackerGetNIter(CTracker *I)
+{
+  return I->n_iter;
+}
+
 int TrackerGetNListForCand(CTracker *I,int cand_id)
 {
   OVreturn_word cand_index = OVOneToOne_GetForward(I->id2info,cand_id);
@@ -301,7 +514,7 @@ int TrackerGetNListForCand(CTracker *I,int cand_id)
 
   if(OVreturn_IS_OK(cand_index)) {
     TrackerInfo *info = I_info + cand_index.word;
-    if(info->cand_true_list_false)
+    if(info->type == CAND_INFO)
       return info->length;
   }
   return -1;
@@ -314,7 +527,7 @@ int TrackerGetNCandForList(CTracker *I, int list_id)
 
   if(OVreturn_IS_OK(list_index)) {
     TrackerInfo *info = I_info + list_index.word;
-    if(!info->cand_true_list_false)
+    if(info->type == LIST_INFO)
       return info->length;
   }
   return -1;
@@ -330,7 +543,7 @@ int TrackerDelList(CTracker *I, int list_id)
   if(OVreturn_IS_OK(list_index)) {
     TrackerInfo *list_info = I_info + list_index.word;
 
-    if(!list_info->cand_true_list_false) {
+    if(list_info->type == LIST_INFO) {
       
       result=true;
       
@@ -383,6 +596,12 @@ int TrackerDelList(CTracker *I, int list_id)
             /* shorten length of the list */
             cand_info->length--;
           }
+          
+          /* if any iterators exist, then make sure they don't point at
+             this member */
+          if(I->iter_start) {
+            ProtectIterators(I,member_index);
+          }
         
           { /* continue along the chain */
             register int member_index_copy = member_index;
@@ -395,8 +614,27 @@ int TrackerDelList(CTracker *I, int list_id)
       /* delete the list id */
       OVOneToOne_DelForward(I->id2info, list_id);
 
-      /* and release the list */
-      I->n_list--;
+      /* remove the list from the list chain */
+      {
+        int prev = list_info->prev;
+        int next = list_info->next;
+        
+        if(prev) {
+          I->info[prev].next = next;
+        } else {
+          I->list_start = next;
+        }
+        
+        if(next) {
+          I->info[next].prev = prev;
+        }
+        
+        /* shorten length of the list */
+        I->n_list--;
+      }
+
+      /* and release the info record */
+
       ReleaseInfo(I,list_index.word);
 
     }
@@ -597,7 +835,14 @@ int TrackerUnlink(CTracker *I, int cand_id, int list_id)
       list_info->length--;
     }
     /* release the member for reuse */
-    
+
+    {
+      /* if any iterators exist, then make sure they don't point at
+         this member */
+      if(I->iter_start) {
+        ProtectIterators(I,member_index);
+      }
+    }
     ReleaseMember(I,member_index);
   }
   return result;
@@ -623,13 +868,16 @@ void TrackerFree(CTracker *I)
 int TrackerUnitTest(PyMOLGlobals *G)
 {
   int result = true;
-  int cand_id[N_ID], list_id[N_ID];
+  int cand_id[N_ID], list_id[N_ID], iter_id[N_ID];
   int a;
   int tmp_int;
 
   OVRandom *ov_rand = OVRandom_NewBySeed(G->Context->heap,12345678);
   CTracker *I = TrackerNew(G);
-  
+
+  for(a=0;a<N_ID;a++) {
+    iter_id[a]=0;
+  }
   /* first test simple new/del */
 
   for(a=0;a<N_ID;a++) {
@@ -886,6 +1134,194 @@ int TrackerUnitTest(PyMOLGlobals *G)
     if(list_id[a]) fprintf(stderr,"TRACKER_UNIT_TEST FAILED AT LINE %d;  %d!=0\n",__LINE__,list_id[a]);
   }  
 
+  /* okay, now let's mix in some iterators...*/
+
+  for(a=0;a<N_ID;a++) {
+    cand_id[a] = TrackerNewCand(I,NULL);
+    list_id[a] = TrackerNewList(I,NULL);
+  }
+
+  if(TrackerGetNCand(I)!=N_ID) {
+    fprintf(stderr,"TRACKER_UNIT_TEST FAILED AT LINE %d; %d!=%d\n",__LINE__,N_ID,TrackerGetNCand(I));
+  }
+
+  if(TrackerGetNList(I)!=N_ID) {
+    fprintf(stderr,"TRACKER_UNIT_TEST FAILED AT LINE %d; %d!=%d\n",__LINE__,N_ID,TrackerGetNList(I));
+  }
+
+
+  {
+    int n_link = 0;
+    int list_idx, cand_idx;
+
+    for(a=0;a<(N_ID*N_ID);a++) {  
+      cand_idx = (int)(N_ID*OVRandom_Get_float64_exc1(ov_rand));
+      list_idx = (int)(N_ID*OVRandom_Get_float64_exc1(ov_rand));
+      
+      if(TrackerLink(I,cand_id[cand_idx],list_id[list_idx], 0))
+        n_link++;
+    }
+    
+    if(n_link!=TrackerGetNLink(I)) {
+      fprintf(stderr,"TRACKER_UNIT_TEST FAILED AT LINE %d; %d!=%d\n",__LINE__,n_link,TrackerGetNLink(I));
+    }
+  }
+
+  /* do iters iterate over the expected number of members? */
+
+  {
+    int len;
+    int list_idx, cand_idx;
+    
+    for(a=0;a<N_ID;a++) {
+      cand_idx = (int)(N_ID*OVRandom_Get_float64_exc1(ov_rand));
+      if(! (iter_id[a] = TrackerNewIter(I,cand_id[cand_idx],0)) ) {
+        fprintf(stderr,"TRACKER_UNIT_TEST FAILED AT LINE %d; 0==%d\n",
+                __LINE__,iter_id[a]);
+      }
+      
+      len = 0;
+      while(TrackerIterNextListInCand(I,iter_id[a],NULL))
+        len++;
+      
+      if(len != TrackerGetNListForCand(I,cand_id[cand_idx]))
+        fprintf(stderr,"TRACKER_UNIT_TEST FAILED AT LINE %d; %d!=%d\n",
+                __LINE__,len,TrackerGetNListForCand(I,cand_id[cand_idx]));
+      
+      if(TrackerDelIter(I,iter_id[a])) {
+        iter_id[a]=0;
+      } else {
+        fprintf(stderr,"TRACKER_UNIT_TEST FAILED AT LINE %d; \n",__LINE__);
+      }
+
+      for(a=0;a<N_ID;a++) {
+        list_idx = (int)(N_ID*OVRandom_Get_float64_exc1(ov_rand));
+        if(! (iter_id[a] = TrackerNewIter(I,list_id[list_idx],0)) ) {
+          fprintf(stderr,"TRACKER_UNIT_TEST FAILED AT LINE %d; 0==%d\n",
+                  __LINE__,iter_id[a]);
+        }
+      
+        len = 0;
+        while(TrackerIterNextCandInList(I,iter_id[a],NULL))
+          len++;
+      
+        if(len != TrackerGetNCandForList(I,list_id[list_idx]))
+          fprintf(stderr,"TRACKER_UNIT_TEST FAILED AT LINE %d; %d!=%d\n",
+                  __LINE__,len,TrackerGetNCandForList(I,list_id[list_idx]));
+      
+        if(TrackerDelIter(I,iter_id[a])) {
+          iter_id[a]=0;
+        } else {
+          fprintf(stderr,"TRACKER_UNIT_TEST FAILED AT LINE %d; \n",__LINE__);
+        }
+
+      }
+    }
+  }
+  /* are iterators robust to member deletion? */
+
+    
+  {
+    int list_idx, cand_idx;
+    int b;
+
+    for(a=0;a<N_ID;a++) {
+      cand_idx = (int)(N_ID*OVRandom_Get_float64_exc1(ov_rand));
+      if(! (iter_id[a] = TrackerNewIter(I,cand_id[cand_idx],0)) ) {
+        fprintf(stderr,"TRACKER_UNIT_TEST FAILED AT LINE %d; 0==%d\n",
+                __LINE__,iter_id[a]);
+      }
+    }
+    
+    {
+      int cnt=0;
+      const int expected_cnt = 3564; /* THIS TEST IS FRAGILE -- result depends on 
+                                        N_ID, random seem, tests that have been run above and
+                                        of course, the iterator recovery behavior */
+    
+      for(a=0;a<N_ID;a++) {
+        cand_idx = (int)(N_ID*OVRandom_Get_float64_exc1(ov_rand));
+        list_idx = (int)(N_ID*OVRandom_Get_float64_exc1(ov_rand));      
+        
+        if(cand_id[cand_idx]) {
+          if(TrackerDelCand(I,cand_id[cand_idx]))
+            cand_id[cand_idx] = 0;
+          else
+            fprintf(stderr,"TRACKER_UNIT_TEST FAILED AT LINE %d\n\n",__LINE__);        
+        }
+        
+        if(list_id[list_idx]) {
+          if(TrackerDelList(I,list_id[list_idx]))
+            list_id[list_idx] = 0;
+          else
+            fprintf(stderr,"TRACKER_UNIT_TEST FAILED AT LINE %d\n\n",__LINE__);        
+        }
+        
+        for(b=0;b<N_ID;b++) {
+          if(TrackerIterNextListInCand(I,iter_id[b],NULL))
+            cnt++;
+        }
+      }
+      
+      if(cnt!=expected_cnt) {
+        
+        fprintf(stderr,"TRACKER_UNIT_TEST FAILED AT LINE %d; %d!=%d\n",
+                __LINE__,expected_cnt,cnt);
+      }
+    }
+    
+  }
+
+  if(TrackerGetNIter(I)!=N_ID) {
+    fprintf(stderr,"TRACKER_UNIT_TEST FAILED AT LINE %d; %d!=%d\n",__LINE__,N_ID,TrackerGetNIter(I));
+  }
+  
+  /* delete everyone */
+
+  for(a=0;a<N_ID;a++) {
+    if(cand_id[a]) {
+      if(TrackerDelCand(I,cand_id[a]))
+        cand_id[a] = 0;
+      else
+        fprintf(stderr,"TRACKER_UNIT_TEST FAILED AT LINE %d\n\n",__LINE__);        
+    }
+    if(list_id[a]) {
+      if(TrackerDelList(I,list_id[a]))
+        list_id[a] = 0;
+      else
+        fprintf(stderr,"TRACKER_UNIT_TEST FAILED AT LINE %d\n\n",__LINE__);        
+    }
+    if(iter_id[a]) {
+      if(TrackerDelIter(I,iter_id[a])) {
+        iter_id[a]=0;
+      } else {
+        fprintf(stderr,"TRACKER_UNIT_TEST FAILED AT LINE %d; \n",__LINE__);
+      }
+    }
+  }
+ 
+  if(TrackerGetNLink(I)) {
+    fprintf(stderr,"TRACKER_UNIT_TEST FAILED AT LINE %d; 0!=%d\n",__LINE__,TrackerGetNLink(I));
+  }
+
+  if(TrackerGetNCand(I)) {
+    fprintf(stderr,"TRACKER_UNIT_TEST FAILED AT LINE %d; 0!=%d\n",__LINE__,TrackerGetNLink(I));
+  }
+
+  if(TrackerGetNList(I)) {
+    fprintf(stderr,"TRACKER_UNIT_TEST FAILED AT LINE %d; 0!=%d\n",__LINE__,TrackerGetNList(I));
+  }
+
+  if(TrackerGetNIter(I)) {
+    fprintf(stderr,"TRACKER_UNIT_TEST FAILED AT LINE %d; 0!=%d\n",__LINE__,TrackerGetNIter(I));
+  }
+
+  /* make sure everyone was deleted */
+
+  for(a=0;a<N_ID;a++) {
+    if(cand_id[a]) fprintf(stderr,"TRACKER_UNIT_TEST FAILED AT LINE %d;  %d!=0\n",__LINE__,cand_id[a]);
+    if(list_id[a]) fprintf(stderr,"TRACKER_UNIT_TEST FAILED AT LINE %d;  %d!=0\n",__LINE__,list_id[a]);
+  }  
 
   OVRandom_Del(ov_rand);
   TrackerFree(I);
