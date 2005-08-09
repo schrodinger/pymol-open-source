@@ -54,7 +54,7 @@ Selector-Error: Invalid Selection Name.
 ( nonexistent )<--
 CmdException raised.
 cmd.space("cmyk")
- Color: loaded table '/home/local/warren/pymol/data/pymol/cmyk.png'.
+ Color: loaded table '/users/warren/pymol/data/pymol/cmyk.png'.
 None
 cmd.space("unknown")
 Error: unknown color space 'unknown'.
@@ -183,10 +183,10 @@ cmd.count_states("none")
 0
 cmd.count_states("invalid")
 Selector-Error: Invalid Selection Name.
-( invalid )<--
+invalid<--
 -1
 Selector-Error: Invalid Selection Name.
-( invalid )<--
+invalid<--
 CmdException raised.
 cmd.get_area()
 1381.18615723
@@ -222,10 +222,10 @@ ExecutiveWindowZoom-Warning: selection doesn't specify any coordinates.
 None
 cmd.zoom("invalid")
 Selector-Error: Invalid Selection Name.
-( invalid )<--
+invalid<--
 -1
 Selector-Error: Invalid Selection Name.
-( invalid )<--
+invalid<--
 QuietException raised.
 cmd.center()
 None
@@ -236,8 +236,8 @@ ExecutiveCenter-Warning: selection doesn't specify any coordinates.
 None
 cmd.center("invalid")
 Selector-Error: Invalid Selection Name.
-( invalid )<--
+invalid<--
 -1
 Selector-Error: Invalid Selection Name.
-( invalid )<--
+invalid<--
 QuietException raised.

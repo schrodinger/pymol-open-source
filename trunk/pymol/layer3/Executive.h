@@ -219,6 +219,7 @@ int ExecutivePhiPsi(PyMOLGlobals *G,char *s1,ObjectMolecule ***objVLA,int **iVLA
                     float **phiVLA,float **psiVLA,int state) ;
 float *ExecutiveGetVertexVLA(PyMOLGlobals *G,char *s1,int state);
 int ExecutiveValidName(PyMOLGlobals *G,char *name);
+int ExecutiveValidNamePattern(PyMOLGlobals *G,char *name);
 int ExecutiveIsolevel(PyMOLGlobals *G,char *name,float level,int state);
 int ExecutiveTransformObjectSelection(PyMOLGlobals *G,char *name,int state,
                                       char *s1,int log,float *matrix,int homogenous);
@@ -293,6 +294,8 @@ void ExecutiveMatrixTransfer(PyMOLGlobals *G,
                              int source_state, int target_state,
                              int target_undo,
                              int log, int quiet);
+
+void ExecutiveMemoryDump(PyMOLGlobals *G);
 
 #endif
 

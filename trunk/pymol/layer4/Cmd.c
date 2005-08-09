@@ -2757,8 +2757,9 @@ extern int _Py_CountReferences(void);
 static PyObject *CmdMem(PyObject *dummy, PyObject *args)
 {
   MemoryDebugDump();
-  SelectorMemoryDump(TempPyMOLGlobals);
   OVHeap_Dump(TempPyMOLGlobals->Context->heap,0);
+  SelectorMemoryDump(TempPyMOLGlobals);
+  ExecutiveMemoryDump(TempPyMOLGlobals);
 #if 0
   printf(" Py_Debug: %d total references.\n",_Py_CountReferences());
 #endif

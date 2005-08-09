@@ -83,6 +83,7 @@ setup ( # Distribution meta-data
    "ov/src/OVHeap.c",
    "ov/src/OVLexicon.c",
    "ov/src/OVOneToOne.c",
+   "ov/src/OVOneToAny.c",
    "ov/src/OVRandom.c",
    "ov/src/ov_utility.c",
    "layer0/Block.c",

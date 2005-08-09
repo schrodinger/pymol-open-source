@@ -40,6 +40,11 @@ Z* -------------------------------------------------------------------
 #include"Editor.h"
 #include"Seeker.h"
 
+#include"OVContext.h"
+#include"OVLexicon.h"
+#include"OVOneToAny.h"
+#include"Parse.h"
+
 #define SelectorWordLength 1024
 typedef char SelectorWordType[SelectorWordLength];
 
@@ -112,7 +117,10 @@ struct _CSelector {
   int NModel;
   int NCSet;
   ObjectMolecule *Origin,*Center;
-  
+  OVLexicon *Lex;
+  OVOneToAny *Key;
+  OVOneToOne *NameOffset;
+
 };
 
 typedef struct {
@@ -128,25 +136,25 @@ typedef struct {
 static int SelectorGetInterstateVLA(PyMOLGlobals *G,int sele1,int state1,int sele2,int state2,
 									  float cutoff,int **vla);
 
+static int SelectorImplicitOr(PyMOLGlobals *G,EvalElem *base); 
 
-int SelectorGetArrayNCSet(PyMOLGlobals *G,int *array);
+static int SelectorGetArrayNCSet(PyMOLGlobals *G,int *array);
 
-int SelectorModulate1(PyMOLGlobals *G,EvalElem *base);
-int SelectorSelect0(PyMOLGlobals *G,EvalElem *base);
-int SelectorSelect1(PyMOLGlobals *G,EvalElem *base);
-int SelectorSelect2(PyMOLGlobals *G,EvalElem *base);
-int SelectorLogic1(PyMOLGlobals *G,EvalElem *base);
-int SelectorLogic2(PyMOLGlobals *G,EvalElem *base);
-int SelectorOperator22(PyMOLGlobals *G,EvalElem *base);
-int *SelectorEvaluate(PyMOLGlobals *G,SelectorWordType *word);
-SelectorWordType *SelectorParse(PyMOLGlobals *G,char *s);
-void SelectorPurgeMembers(PyMOLGlobals *G,int sele);
-int  SelectorEmbedSelection(PyMOLGlobals *G,int *atom, char *name, ObjectMolecule *obj,int no_dummies);
-void SelectorClean(PyMOLGlobals *G);
-void SelectorDeletePrefixSet(PyMOLGlobals *G,char *s);
-int *SelectorGetIndexVLA(PyMOLGlobals *G,int sele);
-int *SelectorApplyMultipick(PyMOLGlobals *G,Multipick *mp);
-int SelectorCheckNeighbors(PyMOLGlobals *G,int maxDepth,ObjectMolecule *obj,int at1,int at2,
+static int SelectorModulate1(PyMOLGlobals *G,EvalElem *base);
+static int SelectorSelect0(PyMOLGlobals *G,EvalElem *base);
+static int SelectorSelect1(PyMOLGlobals *G,EvalElem *base);
+static int SelectorSelect2(PyMOLGlobals *G,EvalElem *base);
+static int SelectorLogic1(PyMOLGlobals *G,EvalElem *base);
+static int SelectorLogic2(PyMOLGlobals *G,EvalElem *base);
+static int SelectorOperator22(PyMOLGlobals *G,EvalElem *base);
+static int *SelectorEvaluate(PyMOLGlobals *G,SelectorWordType *word);
+static SelectorWordType *SelectorParse(PyMOLGlobals *G,char *s);
+static void SelectorPurgeMembers(PyMOLGlobals *G,int sele);
+static int  SelectorEmbedSelection(PyMOLGlobals *G,int *atom, char *name, ObjectMolecule *obj,int no_dummies);
+static void SelectorClean(PyMOLGlobals *G);
+static int *SelectorGetIndexVLA(PyMOLGlobals *G,int sele);
+static int *SelectorApplyMultipick(PyMOLGlobals *G,Multipick *mp);
+static int SelectorCheckNeighbors(PyMOLGlobals *G,int maxDepth,ObjectMolecule *obj,int at1,int at2,
                            int *zero,int *scratch);
 
 
@@ -164,68 +172,68 @@ int SelectorCheckNeighbors(PyMOLGlobals *G,int maxDepth,ObjectMolecule *obj,int 
 
 /*                  code   |   type    | priority */
 
-#define SELE_NOT1 ( 0x0100 | STYP_OPR1 | 0x60 )
-#define SELE_BYR1 ( 0x0200 | STYP_OPR1 | 0x10 )
-#define SELE_AND2 ( 0x0300 | STYP_OPR2 | 0x50 )
-#define SELE_OR_2 ( 0x0400 | STYP_OPR2 | 0x30 )
-#define SELE_IN_2 ( 0x0500 | STYP_OPR2 | 0x30 )
-#define SELE_ALLz ( 0x0600 | STYP_SEL0 | 0x80 )
-#define SELE_NONz ( 0x0700 | STYP_SEL0 | 0x80 )
-#define SELE_HETz ( 0x0800 | STYP_SEL0 | 0x70 )
-#define SELE_HYDz ( 0x0900 | STYP_SEL0 | 0x80 )
-#define SELE_VISz ( 0x0A00 | STYP_SEL0 | 0x80 )
-#define SELE_ARD_ ( 0x0B00 | STYP_PRP1 | 0x20 )
-#define SELE_EXP_ ( 0x0C00 | STYP_PRP1 | 0x20 )
-#define SELE_NAMs ( 0x0D00 | STYP_SEL1 | 0x70 )
-#define SELE_ELEs ( 0x0E00 | STYP_SEL1 | 0x70 )
-#define SELE_RSIs ( 0x0F00 | STYP_SEL1 | 0x70 )
-#define SELE_CHNs ( 0x1000 | STYP_SEL1 | 0x70 )
-#define SELE_SEGs ( 0x1100 | STYP_SEL1 | 0x70 )
-#define SELE_MODs ( 0x1200 | STYP_SEL1 | 0x70 ) 
-#define SELE_IDXs ( 0x1300 | STYP_SEL1 | 0x70 )
-#define SELE_RSNs ( 0x1400 | STYP_SEL1 | 0x70 )
-#define SELE_SELs ( 0x1500 | STYP_SEL1 | 0x70 )
-#define SELE_BVLx ( 0x1600 | STYP_SEL2 | 0x70 )
-#define SELE_ALTs ( 0x1700 | STYP_SEL1 | 0x70 )
-#define SELE_FLGs ( 0x1800 | STYP_SEL1 | 0x70 )
-#define SELE_GAP_ ( 0x1900 | STYP_PRP1 | 0x70 )
-#define SELE_TTYs ( 0x1A00 | STYP_SEL1 | 0x70 )  
-#define SELE_NTYs ( 0x1B00 | STYP_SEL1 | 0x70 )
-#define SELE_PCHx ( 0x1C00 | STYP_SEL2 | 0x70 )  
-#define SELE_FCHx ( 0x1D00 | STYP_SEL2 | 0x70 )
-#define SELE_ID_s ( 0x1E00 | STYP_SEL1 | 0x70 )
-#define SELE_BNDz ( 0x1F00 | STYP_SEL0 | 0x70 )
-#define SELE_LIK2 ( 0x2000 | STYP_OPR2 | 0x30 )
-#define SELE_NGH1 ( 0x2100 | STYP_OPR1 | 0x10 )
-#define SELE_QVLx ( 0x2200 | STYP_SEL2 | 0x70 )
-#define SELE_BYO1 ( 0x2300 | STYP_OPR1 | 0x10 )
-#define SELE_SSTs ( 0x2400 | STYP_SEL1 | 0x70 )
-#define SELE_STAs ( 0x2500 | STYP_SEL1 | 0x70 )
-#define SELE_PREz ( 0x2500 | STYP_SEL0 | 0x70 )
-#define SELE_WIT_ ( 0x2600 | STYP_OP22 | 0x20 ) 
-#define SELE_ORIz ( 0x2700 | STYP_SEL0 | 0x80 )
-#define SELE_CENz ( 0x2800 | STYP_SEL0 | 0x80 )
-#define SELE_ENAz ( 0x2900 | STYP_SEL0 | 0x80 )
-#define SELE_REPs ( 0x3000 | STYP_SEL1 | 0x70 )
-#define SELE_COLs ( 0x3100 | STYP_SEL1 | 0x70 )
-#define SELE_HBDs ( 0x3200 | STYP_SEL0 | 0x70 )
-#define SELE_HBAs ( 0x3300 | STYP_SEL0 | 0x70 )
-#define SELE_BYC1 ( 0x3400 | STYP_OPR1 | 0x10 )
-#define SELE_BYS1 ( 0x3500 | STYP_OPR1 | 0x10 )
-#define SELE_BYM1 ( 0x3600 | STYP_OPR1 | 0x10 )
-#define SELE_BYF1 ( 0x3700 | STYP_OPR1 | 0x10 )
-#define SELE_EXT_ ( 0x3800 | STYP_PRP1 | 0x20 )
-#define SELE_BON1 ( 0x3900 | STYP_OPR1 | 0x40 )
-#define SELE_FST1 ( 0x4000 | STYP_OPR1 | 0x20 )
-#define SELE_CAS1 ( 0x4100 | STYP_OPR1 | 0x20 )
-#define SELE_BEY_ ( 0x4200 | STYP_OP22 | 0x20 ) 
-#define SELE_POLz ( 0x4300 | STYP_SEL0 | 0x80 )
-#define SELE_SOLz ( 0x4400 | STYP_SEL0 | 0x80 )
-#define SELE_ORGz ( 0x4500 | STYP_SEL0 | 0x80 )
-#define SELE_INOz ( 0x4600 | STYP_SEL0 | 0x80 )
-#define SELE_GIDz ( 0x4700 | STYP_SEL0 | 0x80 )
-#define SELE_RNKs ( 0x4800 | STYP_SEL1 | 0x70 )
-#define SELE_PEPs ( 0x4900 | STYP_SEL1 | 0x70 )
+#define SELE_NOT1 ( 0x0100 | STYP_OPR1 | 0x70 )
+#define SELE_BYR1 ( 0x0200 | STYP_OPR1 | 0x20 )
+#define SELE_AND2 ( 0x0300 | STYP_OPR2 | 0x60 )
+#define SELE_OR_2 ( 0x0400 | STYP_OPR2 | 0x40 )
+#define SELE_IN_2 ( 0x0500 | STYP_OPR2 | 0x40 )
+#define SELE_ALLz ( 0x0600 | STYP_SEL0 | 0x90 )
+#define SELE_NONz ( 0x0700 | STYP_SEL0 | 0x90 )
+#define SELE_HETz ( 0x0800 | STYP_SEL0 | 0x80 )
+#define SELE_HYDz ( 0x0900 | STYP_SEL0 | 0x90 )
+#define SELE_VISz ( 0x0A00 | STYP_SEL0 | 0x90 )
+#define SELE_ARD_ ( 0x0B00 | STYP_PRP1 | 0x30 )
+#define SELE_EXP_ ( 0x0C00 | STYP_PRP1 | 0x30 )
+#define SELE_NAMs ( 0x0D00 | STYP_SEL1 | 0x80 )
+#define SELE_ELEs ( 0x0E00 | STYP_SEL1 | 0x80 )
+#define SELE_RSIs ( 0x0F00 | STYP_SEL1 | 0x80 )
+#define SELE_CHNs ( 0x1000 | STYP_SEL1 | 0x80 )
+#define SELE_SEGs ( 0x1100 | STYP_SEL1 | 0x80 )
+#define SELE_MODs ( 0x1200 | STYP_SEL1 | 0x80 ) 
+#define SELE_IDXs ( 0x1300 | STYP_SEL1 | 0x80 )
+#define SELE_RSNs ( 0x1400 | STYP_SEL1 | 0x80 )
+#define SELE_SELs ( 0x1500 | STYP_SEL1 | 0x80 )
+#define SELE_BVLx ( 0x1600 | STYP_SEL2 | 0x80 )
+#define SELE_ALTs ( 0x1700 | STYP_SEL1 | 0x80 )
+#define SELE_FLGs ( 0x1800 | STYP_SEL1 | 0x80 )
+#define SELE_GAP_ ( 0x1900 | STYP_PRP1 | 0x80 )
+#define SELE_TTYs ( 0x1A00 | STYP_SEL1 | 0x80 )  
+#define SELE_NTYs ( 0x1B00 | STYP_SEL1 | 0x80 )
+#define SELE_PCHx ( 0x1C00 | STYP_SEL2 | 0x80 )  
+#define SELE_FCHx ( 0x1D00 | STYP_SEL2 | 0x80 )
+#define SELE_ID_s ( 0x1E00 | STYP_SEL1 | 0x80 )
+#define SELE_BNDz ( 0x1F00 | STYP_SEL0 | 0x80 )
+#define SELE_LIK2 ( 0x2000 | STYP_OPR2 | 0x40 )
+#define SELE_NGH1 ( 0x2100 | STYP_OPR1 | 0x20 )
+#define SELE_QVLx ( 0x2200 | STYP_SEL2 | 0x80 )
+#define SELE_BYO1 ( 0x2300 | STYP_OPR1 | 0x20 )
+#define SELE_SSTs ( 0x2400 | STYP_SEL1 | 0x80 )
+#define SELE_STAs ( 0x2500 | STYP_SEL1 | 0x80 )
+#define SELE_PREz ( 0x2500 | STYP_SEL0 | 0x80 )
+#define SELE_WIT_ ( 0x2600 | STYP_OP22 | 0x30 ) 
+#define SELE_ORIz ( 0x2700 | STYP_SEL0 | 0x90 )
+#define SELE_CENz ( 0x2800 | STYP_SEL0 | 0x90 )
+#define SELE_ENAz ( 0x2900 | STYP_SEL0 | 0x90 )
+#define SELE_REPs ( 0x3000 | STYP_SEL1 | 0x80 )
+#define SELE_COLs ( 0x3100 | STYP_SEL1 | 0x80 )
+#define SELE_HBDs ( 0x3200 | STYP_SEL0 | 0x80 )
+#define SELE_HBAs ( 0x3300 | STYP_SEL0 | 0x80 )
+#define SELE_BYC1 ( 0x3400 | STYP_OPR1 | 0x20 )
+#define SELE_BYS1 ( 0x3500 | STYP_OPR1 | 0x20 )
+#define SELE_BYM1 ( 0x3600 | STYP_OPR1 | 0x20 )
+#define SELE_BYF1 ( 0x3700 | STYP_OPR1 | 0x20 )
+#define SELE_EXT_ ( 0x3800 | STYP_PRP1 | 0x30 )
+#define SELE_BON1 ( 0x3900 | STYP_OPR1 | 0x50 )
+#define SELE_FST1 ( 0x4000 | STYP_OPR1 | 0x30 )
+#define SELE_CAS1 ( 0x4100 | STYP_OPR1 | 0x30 )
+#define SELE_BEY_ ( 0x4200 | STYP_OP22 | 0x30 ) 
+#define SELE_POLz ( 0x4300 | STYP_SEL0 | 0x90 )
+#define SELE_SOLz ( 0x4400 | STYP_SEL0 | 0x90 )
+#define SELE_ORGz ( 0x4500 | STYP_SEL0 | 0x90 )
+#define SELE_INOz ( 0x4600 | STYP_SEL0 | 0x90 )
+#define SELE_GIDz ( 0x4700 | STYP_SEL0 | 0x90 )
+#define SELE_RNKs ( 0x4800 | STYP_SEL1 | 0x80 )
+#define SELE_PEPs ( 0x4900 | STYP_SEL1 | 0x80 )
 
 #define SEL_PREMAX 0x8
 
@@ -449,6 +457,34 @@ static WordKeyValue AtOper[] =
 static int IntInOrder(int *list,int a,int b)
 {
   return(list[a]<=list[b]);
+}
+
+static int SelectorAddName(PyMOLGlobals *G, int index)
+{
+  register CSelector *I = G->Selector;
+  int ok=false;
+  OVreturn_word result;
+  OVstatus status;
+  if(OVreturn_IS_OK( (result = OVLexicon_GetFromCString(I->Lex,I->Name[index])))) {
+    if(OVreturn_IS_OK( (status = OVOneToOne_Set(I->NameOffset, result.word, index)))) {
+      ok=true;
+    }
+  }
+  return ok;
+}
+
+static int SelectorDelName(PyMOLGlobals *G, int index)
+{
+  register CSelector *I = G->Selector;
+  int ok=false;
+  OVreturn_word result;
+  if(OVreturn_IS_OK( (result = OVLexicon_BorrowFromCString(I->Lex,I->Name[index])))) {
+    if(OVreturn_IS_OK(OVLexicon_DecRef(I->Lex, result.word)) &&
+       OVreturn_IS_OK(OVOneToOne_DelForward(I->NameOffset, result.word))) {
+      ok=true;
+    }
+  }
+  return ok;
 }
 
 int SelectorClassifyAtoms(PyMOLGlobals *G,int sele, int preserve,ObjectMolecule *only_object)
@@ -855,41 +891,50 @@ MapType *SelectorGetSpacialMapFromSeleCoord(PyMOLGlobals *G,int sele,int state,f
   return(result);
 }
 
-static int SelectorWordIndex(PyMOLGlobals *G,SelectorWordType *list,char *word,int minMatch,int ignCase)
+static int SelectGetNameOffset(PyMOLGlobals *G,char *name,int minMatch,int ignCase)
 {
-  register int c,i,mi,mc;
+
+  register CSelector *I=G->Selector;
   int result = -1;
-  c=0;
-  mc=-1;
-  mi=-1;
-  if(word[0]=='?')
-    word++;
 
-  while(list[c][0])
-	 {
-		i=WordMatch(G,word,list[c],ignCase);
-		if(i>0)
-		  {
-			 if(mi<i)
-				{
-				  mi=i;
-				  mc=c;
-				}
-		  }
-		else if(i<0) 
-		  {
-			 if((-i)<minMatch)
-				mi=minMatch+1; /*exact match always matches */
-			 else
-				mi=(-i);
-			 mc=c;
-		  }
-		c++;
-	 }
-  if((mi>minMatch))
-	 result=mc;
+  { /* first try for perfect match using the dictionary */
+    OVreturn_word res;
+    if( OVreturn_IS_OK( (res = OVLexicon_BorrowFromCString(I->Lex,name)))) {
+      if( OVreturn_IS_OK( (res = OVOneToOne_GetForward(I->NameOffset, res.word)))) { 
+        result = res.word;
+      }
+    }
+  }
+  if(result<0) { /* not found, so try partial/ignored-case match */
+    
+    register int offset,wm,best_match,best_offset;
+    SelectorWordType *I_Name = I->Name;
+    offset=0;
+    best_offset=-1;
+    best_match=-1;
+    if(name[0]=='?')
+      name++;
+    
+    while(I_Name[offset][0]) {
+      wm=WordMatch(G,name,I_Name[offset],ignCase);
+      if(wm<0) { /* exact match is always good */
+        best_offset=offset;
+        break;
+      }
+      if(wm>0) {
+        if(best_match<wm) {
+          best_match=wm;
+          best_offset=offset;
+        } else if(best_match==wm) { /* uh oh -- ambiguous */
+          best_offset = -1;
+        }
+      }
+      offset++;
+    }
+    if((best_match>minMatch))
+      result=best_offset;
+  }
   return(result);  
-
 }
 
 void SelectorSelectByID(PyMOLGlobals *G,char *name,ObjectMolecule *obj,int *id,int n_id)
@@ -1011,16 +1056,26 @@ typedef struct {
   int sele;
 } ColorectionRec;
 
-static void SelectorDeleteOffset(PyMOLGlobals *G,int n)
+static void SelectorDeleteSeleAtOffset(PyMOLGlobals *G,int n)
 {
   register CSelector *I=G->Selector;
-  int index;
-  index = I->Info[n].ID;
-  SelectorPurgeMembers(G,index);
+  int id;
+  id = I->Info[n].ID;
+  SelectorDelName(G,n);
+  SelectorPurgeMembers(G,id);
+  
   I->NActive--;
-  strcpy(I->Name[n],I->Name[I->NActive]);
-  I->Info[n] = I->Info[I->NActive];
-  I->Name[I->NActive][0]=0;
+  {
+    OVreturn_word result;
+    /* repoint the name index at the relocated entry */
+    if(OVreturn_IS_OK( result = OVOneToOne_GetReverse(I->NameOffset, I->NActive))) {
+      OVOneToOne_DelForward(I->NameOffset, result.word);
+      OVOneToOne_Set(I->NameOffset, result.word, n);
+    }
+    strcpy(I->Name[n],I->Name[I->NActive]);
+    I->Info[n] = I->Info[I->NActive];
+    I->Name[I->NActive][0]=0;
+  }
 }
 
 #ifndef _PYMOL_NOPY
@@ -1036,7 +1091,7 @@ static void SelectorDeleteIndex(PyMOLGlobals *G,int index)
     }
   }
   if(n) 
-    SelectorDeleteOffset(G,n);
+    SelectorDeleteSeleAtOffset(G,n);
 }
 #endif
 
@@ -2170,6 +2225,7 @@ PyObject *SelectorColorectionGet(PyMOLGlobals *G,char *prefix)
     used[a].sele = sele;
     sprintf(I->Name[n],cColorectionFormat,prefix,used[a].color);
     I->Name[n+1][0]=0;
+    SelectorAddName(G,n);
     SelectionInfoInit(I->Info + n);
     I->Info[n].ID = sele;
     I->NActive++;
@@ -2490,7 +2546,7 @@ int SelectorFromPyList(PyMOLGlobals *G,char *name,PyObject *list)
   if(ok) ok=PyList_Check(list);
   if(ok) n_obj = PyList_Size(list);
     
-  n=SelectorWordIndex(G,I->Name,name,999,ignore_case); /* already exist? */
+  n=SelectGetNameOffset(G,name,999,ignore_case); /* already exist? */
   if(n>=0) /* get rid of existing selection*/ {
     SelectorDelete(G,I->Name[n]);
   }
@@ -2500,6 +2556,7 @@ int SelectorFromPyList(PyMOLGlobals *G,char *name,PyObject *list)
   VLACheck(I->Info,SelectionInfoRec,n+1);
   strcpy(I->Name[n],name);
   I->Name[n+1][0]=0;
+  SelectorAddName(G,n);
   sele = I->NSelection++;
   SelectionInfoInit(I->Info + n);
   I->Info[n].ID = sele;
@@ -2936,7 +2993,7 @@ int *SelectorGetResidueVLA(PyMOLGlobals *G,int sele)
   return(result);
 }
 /*========================================================================*/
-int *SelectorGetIndexVLA(PyMOLGlobals *G,int sele) /* assumes updated tables */
+static int *SelectorGetIndexVLA(PyMOLGlobals *G,int sele) /* assumes updated tables */
 {
   register CSelector *I=G->Selector;
   int a,c=0;
@@ -3068,7 +3125,7 @@ int SelectorIsMemberSlow(PyMOLGlobals *G,int s,int sele)
 
 /*========================================================================*/
 #if 0
-int SelectorPurgeMember(PyMOLGlobals *G,AtomInfoType *ai,int sele)
+static int SelectorPurgeMember(PyMOLGlobals *G,AtomInfoType *ai,int sele)
 {/* never tested...*/
   register CSelector *I=G->Selector;
   int s=ai->selEntry;
@@ -3287,7 +3344,7 @@ void SelectorDeletePrefixSet(PyMOLGlobals *G,char *pref)
   int ignore_case = SettingGetGlobal_b(G,cSetting_ignore_case);
 
   while(1) {
-    a = SelectorWordIndex(G,I->Name,pref,strlen(pref),ignore_case);
+    a = SelectGetNameOffset(G,pref,strlen(pref),ignore_case);
     if(a>0) {
       strcpy(name_copy,I->Name[a]);
       ExecutiveDelete(G,name_copy); /* import to use a copy, otherwise 
@@ -3300,7 +3357,7 @@ void SelectorDeletePrefixSet(PyMOLGlobals *G,char *pref)
 /*========================================================================*/
 #define MAX_DEPTH 1000
 
-int SelectorCheckNeighbors(PyMOLGlobals *G,int maxDist,ObjectMolecule *obj,int at1,int at2,
+static int SelectorCheckNeighbors(PyMOLGlobals *G,int maxDist,ObjectMolecule *obj,int at1,int at2,
                            int *zero,int *scratch)
 {
   int s;
@@ -5826,9 +5883,11 @@ int SelectorSetName(PyMOLGlobals *G,char *new_name, char *old_name)
  int i;
  int ignore_case = SettingGetGlobal_b(G,cSetting_ignore_case);
   
- i = SelectorWordIndex(G,I->Name,old_name,1,ignore_case);
+ i = SelectGetNameOffset(G,old_name,1,ignore_case);
  if(i>=0) {
+   SelectorDelName(G,i);
    UtilNCopy(I->Name[i], new_name, ObjNameMax);
+   SelectorAddName(G,i);
    return true;
  } else {
    return false;
@@ -5847,7 +5906,7 @@ int SelectorIndexByName(PyMOLGlobals *G,char *sname)
      strcpy(name,&sname[1]);
    else
      strcpy(name,sname);		  
-   i = SelectorWordIndex(G,I->Name,name,1,ignore_case);
+   i = SelectGetNameOffset(G,name,1,ignore_case);
    if((i>=0)&&(name[0]!='_')) { /* don't do checking on internal selections */
      char *best;
      best = ExecutiveFindBestNameMatch(G,sname); /* suppress spurious matches
@@ -5860,7 +5919,7 @@ int SelectorIndexByName(PyMOLGlobals *G,char *sname)
  return(i);
 }
 /*========================================================================*/
-void SelectorPurgeMembers(PyMOLGlobals *G,int sele) 
+static void SelectorPurgeMembers(PyMOLGlobals *G,int sele) 
 {
   int a=0;
   int s=0;
@@ -5931,13 +5990,11 @@ void SelectorDelete(PyMOLGlobals *G,char *sele)
         named selection has never been registered with the executive 
         (i.e., temporary on-the-fly selection) */
 {
-  register CSelector *I=G->Selector;
   int n;
-  n=SelectorWordIndex(G,I->Name,sele,999,SettingGetGlobal_b(G,cSetting_ignore_case)); /* already exist? */
-  if(n>0) /* get rid of existing selection -- but never selection 0 (all) */
-	 {
-      SelectorDeleteOffset(G,n);
-	 }
+  n=SelectGetNameOffset(G,sele,999,SettingGetGlobal_b(G,cSetting_ignore_case)); /* already exist? */
+  if(n>=0) { /* get rid of existing selection -- but never selection 0 (all) */
+    SelectorDeleteSeleAtOffset(G,n);
+  }
 }
 /*========================================================================*/
 void SelectorGetUniqueTmpName(PyMOLGlobals *G,char *name_buffer)
@@ -5948,50 +6005,93 @@ void SelectorGetUniqueTmpName(PyMOLGlobals *G,char *name_buffer)
 /*========================================================================*/
 int SelectorGetTmp(PyMOLGlobals *G,char *input,char *store)
 {
-  register CSelector *I=G->Selector;
-  SelectorWordType name;
-  OrthoLineType buffer;
   int count = 0;
+  /* ASSUMES that store is at least as big as an OrthoLineType */
+  register CSelector *I=G->Selector;
   PRINTFD(G,FB_Selector)
     " SelectorGetTmp-Debug: entered with \"%s\".\n",input
     ENDFD;
-  if((input[0]=='\'')&&(input[1]=='\'')&&(!input[2])) {
-    store[0]=0;
-    return 0; /* empty selection? or blank? */
-  }
-  if(input[0]=='(') {
-    sprintf(name,"%s%d",cSelectorTmpPrefix,I->TmpCounter++);
-	 count = SelectorCreate(G,name,input,NULL,false,NULL);
-    if(count>=0) {
-      strcpy(store,name);
-    } else {
-      store[0]=0;
+  
+  store[0] = 0;
+  
+  /* skip trivial cases */
+
+  if( input[0] && !((input[0]=='\'')&&(input[1]=='\'')&&(!input[2]))) {
+    
+  /* OKAY, this routine is in flux.  Eventually this routine will...
+
+  (1) fully parse the input recognizing selection keywords, nested
+      parens, quotes, escaped strings, etc.
+  
+  (2) replace selection blocks with temporary selection names
+
+  (3) return a space-separated list of names for processing
+
+  However, right now, this routine simply handles two cases.
+
+  A. where the input is a selection, in which case store is set to a
+  temporary selection name
+
+  B. where the input is simply a list of space-separated name patterns,
+  in which case store is simply passed along as a copy of the input
+  
+  */
+    
+    int is_selection = false;
+    char *p = input;
+    OrthoLineType word;
+    OVreturn_word result;
+
+    while(*p) {
+      p=ParseWord(word,p,sizeof(OrthoLineType));
+      /* see a paren? then this must be a selection */
+
+      if(word[0]=='(') {
+        is_selection=true;
+        break;
+      }
+
+      /* encounterd a selection keyword? then this must be a selection */
+
+      if(OVreturn_IS_OK( (result = OVLexicon_BorrowFromCString(I->Lex,word)))) {
+        if(OVreturn_IS_OK( (result = OVOneToAny_GetKey(I->Key, result.word)))) {
+          if(result.word != SELE_ALLz) {
+            is_selection=true;
+            break;
+          }
+        }
+      }
+      
+      if(!ExecutiveValidName(G,word)) { /* don't recognize the name? */
+        if(!ExecutiveValidNamePattern(G,word)) { /* don't recognize this as a pattern? */
+          is_selection=true; /* must be a selection */
+          break;
+        }
+      }
     }
-  } else {
-    if(ExecutiveValidName(G,input))
-      strcpy(store,input);
-    else if(input[0]) {
-      strcpy(buffer,"(");
-      strcat(buffer,input);
-      strcat(buffer,")");
-      sprintf(name,"%s%d",cSelectorTmpPrefix,I->TmpCounter++);      
-      count = SelectorCreate(G,name,buffer,NULL,false,NULL);
+    if(is_selection) { /* incur the computational expense of 
+                          parsing the input as an atom selection */
+      WordType name;
+      sprintf(name,"%s%d",cSelectorTmpPrefix,I->TmpCounter++);
+      count = SelectorCreate(G,name,input,NULL,false,NULL);
       if(count>=0) {
         strcpy(store,name);
       } else {
         store[0]=0;
       }
-    } else {
-      store[0]=0;
+    } else { /* otherwise, just parse the input as a space-separated list of names */
+      /* not a selection */
+      strcpy(store,input);
     }
   }
   PRINTFD(G,FB_Selector)
     " SelectorGetTmp-Debug: leaving with \"%s\".\n",store
     ENDFD;
   return count;
+
 }
 /*========================================================================*/
-void SelectorFreeTmp(PyMOLGlobals *G,char *name)
+void SelectorFreeTmp(PyMOLGlobals *G,char *name) /* remove temporary selections */
 {
   if(name&&name[0])
     if(strncmp(name,cSelectorTmpPrefix,strlen(cSelectorTmpPrefix))==0) {
@@ -5999,7 +6099,7 @@ void SelectorFreeTmp(PyMOLGlobals *G,char *name)
     }
 }
 /*========================================================================*/
-int  SelectorEmbedSelection(PyMOLGlobals *G,int *atom, char *name, ObjectMolecule *obj,int no_dummies)
+static int  SelectorEmbedSelection(PyMOLGlobals *G,int *atom, char *name, ObjectMolecule *obj,int no_dummies)
 {
   /* either atom or obj should be NULL, not both and not neither */
 
@@ -6016,7 +6116,7 @@ int  SelectorEmbedSelection(PyMOLGlobals *G,int *atom, char *name, ObjectMolecul
   int index;
 
   AtomInfoType *ai;
-  n=SelectorWordIndex(G,I->Name,name,999,SettingGetGlobal_b(G,cSetting_ignore_case)); /* already exist? */
+  n=SelectGetNameOffset(G,name,999,SettingGetGlobal_b(G,cSetting_ignore_case)); /* already exist? */
   if(n==0) /* don't allow redefinition of "all" */
     return 0;
   if(n>0) /* get rid of existing selection*/ {
@@ -6031,6 +6131,7 @@ int  SelectorEmbedSelection(PyMOLGlobals *G,int *atom, char *name, ObjectMolecul
   VLACheck(I->Info,SelectionInfoRec,n+1);
   strcpy(I->Name[n],name);
   I->Name[n+1][0]=0;
+  SelectorAddName(G,n);
   sele = I->NSelection++;
   SelectionInfoInit(I->Info + n);
   I->Info[n].ID = sele;
@@ -6153,7 +6254,7 @@ static int *SelectorApplySeqRowVLA(PyMOLGlobals *G,CSeqRow *rowVLA,int nRow)
 #endif
 }
 /*========================================================================*/
-int *SelectorApplyMultipick(PyMOLGlobals *G,Multipick *mp)
+static int *SelectorApplyMultipick(PyMOLGlobals *G,Multipick *mp)
 {
   register CSelector *I=G->Selector;
   int *result;
@@ -6266,7 +6367,7 @@ int SelectorCreate(PyMOLGlobals *G,char *sname,char *sele,ObjectMolecule *obj,in
 }
 
 /*========================================================================*/
-void SelectorClean(PyMOLGlobals *G)
+static void SelectorClean(PyMOLGlobals *G)
 {
   register CSelector *I=G->Selector;
   FreeP(I->Table);
@@ -6286,7 +6387,7 @@ int *SelectorUpdateTableSingleObject(PyMOLGlobals *G,ObjectMolecule *obj,int no_
   register CSelector *I=G->Selector;
 
   PRINTFD(G,FB_Selector)
-    "SelectorUpdateTableSingleObject-Debug: entered..\n"
+    "SelectorUpdateTableSingleObject-Debug: entered for %s...\n",obj->Obj.Name
     ENDFD;
  
   SelectorClean(G);
@@ -6485,7 +6586,7 @@ int *SelectorSelect(PyMOLGlobals *G,char *sele)
   return(result);
 }
 /*========================================================================*/
-int SelectorModulate1(PyMOLGlobals *G,EvalElem *base)
+static int SelectorModulate1(PyMOLGlobals *G,EvalElem *base)
 {
   register CSelector *I=G->Selector;
   int a,d,e;
@@ -6735,7 +6836,7 @@ int SelectorModulate1(PyMOLGlobals *G,EvalElem *base)
   
 }
 /*========================================================================*/
-int SelectorSelect0(PyMOLGlobals *G,EvalElem *passed_base)
+static int SelectorSelect0(PyMOLGlobals *G,EvalElem *passed_base)
 {
   register CSelector *I=G->Selector;
   register TableRec *i_table = I->Table;
@@ -6963,7 +7064,7 @@ int SelectorSelect0(PyMOLGlobals *G,EvalElem *passed_base)
   return(1);
 }
 /*========================================================================*/
-int SelectorSelect1(PyMOLGlobals *G,EvalElem *base)
+static int SelectorSelect1(PyMOLGlobals *G,EvalElem *base)
 {
   register CSelector *I=G->Selector;
   register CWordMatcher *matcher = NULL;
@@ -7585,7 +7686,7 @@ int SelectorSelect1(PyMOLGlobals *G,EvalElem *base)
           WordMatcherFree(matcher);
         } else {
           
-          sele=SelectorWordIndex(G,I->Name,base[1].text,1,ignore_case);
+          sele=SelectGetNameOffset(G,base[1].text,1,ignore_case);
           if(sele>=0)
             {
               sele=I->Info[sele].ID;
@@ -7614,113 +7715,115 @@ int SelectorSelect1(PyMOLGlobals *G,EvalElem *base)
 		break;
 	 case SELE_MODs:
 
-      /* need to change this to handle wildcarded model names */
-
-      index = -1;
-      if((np=strstr(base[1].text,"`"))) {
-        *np=0;
-        if(sscanf(np+1,"%d",&index)!=1)
-          index = -1;
-        else
-          index--;
-      }
-		model=0;
-
-      {
-        CWordMatchOptions options;
-        
-        WordMatchOptionsConfigAlpha(&options,wildcard[0],ignore_case);
-        
-        if( (matcher = WordMatcherNew(G,base[1].text,&options,false))) {
-          
-          int obj_matches = false;
-          
-          for(a=0;a<I->NAtom;a++) /* zero out first before iterating through selections */
-            base[0].sele[a]=false;
-          
-          table_a = i_table + cNDummyAtoms;
-          base_0_sele_a = &base[0].sele[cNDummyAtoms];
-          last_obj = NULL;
-          for(a=cNDummyAtoms;a<n_atom;a++) {
-            obj = i_obj[table_a->model];
-            if(obj!=last_obj) {
-
-              obj_matches = WordMatcherMatchAlpha(matcher,
-                                                  i_obj[table_a->model]->Obj.Name);
-              last_obj = obj;
-            }
-            if(obj_matches) {
-              if((index<0) || (table_a->atom==index)) {
-                *base_0_sele_a = true;
-                c++;
-              }
-            }
-            table_a++;
-            base_0_sele_a++;
-          }
-          WordMatcherFree(matcher);
-        } else {
-          
-          obj=(ObjectMolecule*)ExecutiveFindObjectByName(G,base[1].text);
-          if(obj)
-            {
-              for(a=cNDummyModels;a<I->NModel;a++)
-                if(i_obj[a]==obj)
-                  {
-                    model=a+1;
-                    break;
-                  }
-            }
-          if(!model) 
-            if(sscanf(base[1].text,"%i",&model)==1)
-              {
-                if(model<=0)
-                  model=0;
-                else if(model>I->NModel)
-                  model=0;
-                else if(!i_obj[model])
-                  model=0;
-              }
-          if(model)
-            {
-              model--;
-              if(index>=0) {
-                for(a=cNDummyAtoms;a<I->NAtom;a++)
-                  {
-                    if(i_table[a].model==model)
-                      if(i_table[a].atom==index)
-                        {
-                          base[0].sele[a]=true;
-                          c++;
-                        }
-                      else {
-                        base[0].sele[a]=false;                    
-                      }
-                    else
-                      base[0].sele[a]=false;
-                  }
-              } else {
-                for(a=cNDummyAtoms;a<I->NAtom;a++)
-                  {
-                    if(i_table[a].model==model)
-                      {
-                        base[0].sele[a]=true;
-                        c++;
-                      }
-                    else
-                      base[0].sele[a]=false;
-                  }
-              }
-            }
-          else {
-            PRINTFB(G,FB_Selector,FB_Errors)
-              " Selector-Error: invalid model \"%s\".\n",base[1].text
-              ENDFB(G);
-            ok=false;
-          }
-        }
-      }
-		break;
+       /* need to change this to handle wildcarded model names */
+       
+       /* first, trim off and record the atom index if one exists */
+       
+       index = -1;
+       if((np=strstr(base[1].text,"`"))) {
+         *np=0;
+         if(sscanf(np+1,"%d",&index)!=1)
+           index = -1;
+         else
+           index--;
+       }
+       model=0;
+       
+       {
+         CWordMatchOptions options;
+         
+         WordMatchOptionsConfigAlpha(&options,wildcard[0],ignore_case);
+         
+         if( (matcher = WordMatcherNew(G,base[1].text,&options,false))) {
+           
+           int obj_matches = false;
+           
+           for(a=0;a<I->NAtom;a++) /* zero out first before iterating through selections */
+             base[0].sele[a]=false;
+           
+           table_a = i_table + cNDummyAtoms;
+           base_0_sele_a = &base[0].sele[cNDummyAtoms];
+           last_obj = NULL;
+           for(a=cNDummyAtoms;a<n_atom;a++) {
+             obj = i_obj[table_a->model];
+             if(obj!=last_obj) {
+               
+               obj_matches = WordMatcherMatchAlpha(matcher,
+                                                   i_obj[table_a->model]->Obj.Name);
+               last_obj = obj;
+             }
+             if(obj_matches) {
+               if((index<0) || (table_a->atom==index)) {
+                 *base_0_sele_a = true;
+                 c++;
+               }
+             }
+             table_a++;
+             base_0_sele_a++;
+           }
+           WordMatcherFree(matcher);
+         } else {
+           
+           obj=(ObjectMolecule*)ExecutiveFindObjectByName(G,base[1].text);
+           if(obj)
+             {
+               for(a=cNDummyModels;a<I->NModel;a++)
+                 if(i_obj[a]==obj)
+                   {
+                     model=a+1;
+                     break;
+                   }
+             }
+           if(!model) 
+             if(sscanf(base[1].text,"%i",&model)==1)
+               {
+                 if(model<=0)
+                   model=0;
+                 else if(model>I->NModel)
+                   model=0;
+                 else if(!i_obj[model])
+                   model=0;
+               }
+           if(model)
+             {
+               model--;
+               if(index>=0) {
+                 for(a=cNDummyAtoms;a<I->NAtom;a++)
+                   {
+                     if(i_table[a].model==model)
+                       if(i_table[a].atom==index)
+                         {
+                           base[0].sele[a]=true;
+                           c++;
+                         }
+                       else {
+                         base[0].sele[a]=false;                    
+                       }
+                     else
+                       base[0].sele[a]=false;
+                   }
+               } else {
+                 for(a=cNDummyAtoms;a<I->NAtom;a++)
+                   {
+                     if(i_table[a].model==model)
+                       {
+                         base[0].sele[a]=true;
+                         c++;
+                       }
+                     else
+                       base[0].sele[a]=false;
+                   }
+               }
+             }
+           else {
+             PRINTFB(G,FB_Selector,FB_Errors)
+               " Selector-Error: invalid model \"%s\".\n",base[1].text
+               ENDFB(G);
+             ok=false;
+           }
+         }
+       }
+       break;
 	 }
   PRINTFD(G,FB_Selector)
 	 " SelectorSelect1:  %d atoms selected.\n",c
@@ -7728,7 +7831,7 @@ int SelectorSelect1(PyMOLGlobals *G,EvalElem *base)
   return(ok);
 }
 /*========================================================================*/
-int SelectorSelect2(PyMOLGlobals *G,EvalElem *base)
+static int SelectorSelect2(PyMOLGlobals *G,EvalElem *base)
 {
   int a;
   int c=0;
@@ -7919,7 +8022,33 @@ int SelectorSelect2(PyMOLGlobals *G,EvalElem *base)
   return(ok);
 }
 /*========================================================================*/
-int SelectorLogic1(PyMOLGlobals *G,EvalElem *inp_base)
+static int SelectorImplicitOr(PyMOLGlobals *G,EvalElem *base)
+{
+  register CSelector *I=G->Selector;
+  register int a;
+  register int c=0;
+  register int *base_0_sele_a,*base_1_sele_a;
+  register int n_atom = I->NAtom;
+  
+  base_0_sele_a = base[0].sele;
+  base_1_sele_a = base[1].sele;
+  
+  for(a=0;a<n_atom;a++)
+    {
+      if( (*base_0_sele_a = (*base_0_sele_a) || (*base_1_sele_a)))
+        c++;
+      base_0_sele_a++;
+      base_1_sele_a++;
+    }
+
+  FreeP(base[1].sele);
+  PRINTFD(G,FB_Selector)
+	 " SelectorImplicitOr: %d atoms selected.\n",c
+    ENDFD;
+  return(1);
+}
+/*========================================================================*/
+static int SelectorLogic1(PyMOLGlobals *G,EvalElem *inp_base)
 {
   register CSelector *I=G->Selector;
   register int a,b;
@@ -8332,7 +8461,7 @@ int SelectorLogic1(PyMOLGlobals *G,EvalElem *inp_base)
   return(1);
 }
 /*========================================================================*/
-int SelectorLogic2(PyMOLGlobals *G,EvalElem *base)
+static int SelectorLogic2(PyMOLGlobals *G,EvalElem *base)
 {
   register CSelector *I=G->Selector;
   register int a,b;
@@ -8654,7 +8783,7 @@ int *SelectorEvaluate(PyMOLGlobals *G,SelectorWordType *word)
 
   /* converts all keywords into code, adds them into a operation list */
   while(ok&&word[c][0])
-	 {
+    {
 
       if(word[c][0]=='#') {
         if((!valueFlag)&&(!level)) {
@@ -8663,69 +8792,48 @@ int *SelectorEvaluate(PyMOLGlobals *G,SelectorWordType *word)
           break;
         }
       }
-		switch(word[c][0])
-		  {
+      switch(word[c][0])
+        {
         case 0:
           break;
-		  case '(':
-			 if(valueFlag)	ok=ErrMessage(G,"Selector","Misplaced (.");
-			 if(ok) level++;
-			 break;
-		  case ')':
-			 if(valueFlag)	ok=ErrMessage(G,"Selector","Misplaced ).");
-			 if(ok)
-				{
-				level--;
-				if(level<0)
-				  ok=ErrMessage(G,"Selector","Syntax error.");
-				}
-			 if(ok&&depth) Stack[depth].level--;
-			 break;
-		  default:
-			 if(valueFlag>0) /* standard operand */
-				{
-				  depth++;
-				  e=Stack+depth;
-				  e->level=level<<4;
-				  e->type=STYP_VALU;
+        case '(':
+          if(valueFlag)	ok=ErrMessage(G,"Selector","Misplaced (.");
+          if(ok) level++;
+          break;
+        case ')':
+          if(valueFlag)	ok=ErrMessage(G,"Selector","Misplaced ).");
+          if(ok)
+            {
+              level--;
+              if(level<0)
+                ok=ErrMessage(G,"Selector","Syntax error.");
+            }
+          if(ok&&depth) Stack[depth].level--;
+          break;
+        default:
+          if(valueFlag>0) /* standard operand */
+            {
+              depth++;
+              e=Stack+depth;
+              e->level=(level<<4)+1; /* each nested paren is 16 levels of priority */
+              e->type=STYP_VALU;
               cc1 = word[c];
               cc2 = e->text;
               strcpy(e->text,cc1);
-              
-#if 0
-              while(*cc1) { /* remove embedded quotes if any */
-                if((*cc1!=34)&&(*cc1!=39)) {
-                  *(cc2++)=*(cc1++);
-                } else {
-                  if(cc2!=e->text) 
-                    if(*(cc2-1)=='+') { 
-                      /* workaround for things like (alt A+''), 
-                         which would fall back to atom name "A+" instead
-                         of "A,", which is what this kludge fixes
-                         -- this behavior necessary to accom. Na+, etc. */
-
-                      *(cc2-1)=',';
-                    }
-                  cc1++;
-                }
-              }
-              *cc2=0;
-#endif
-
               remove_quotes(e->text);
-				  valueFlag--;
-				}
-			 else if(valueFlag<0) /* operation parameter i.e. around X<-- */
-				{
-				  depth++;
-				  e=Stack+depth;
-				  e->level=level<<4;
-				  e->type=STYP_PVAL;
-				  strcpy(e->text,word[c]);
-				  valueFlag++;
-				} 
-			 else /* possible keyword... */
-				{
+              valueFlag--;
+            }
+          else if(valueFlag<0) /* operation parameter i.e. around X<-- */
+            {
+              depth++;
+              e=Stack+depth;
+              e->level=(level<<4)+1;
+              e->type=STYP_PVAL;
+              strcpy(e->text,word[c]);
+              valueFlag++;
+            } 
+          else /* possible keyword... */
+            {
               if((word[c][0]=='*')&&(!word[c][1]))
                 code = SELE_ALLz;
               else
@@ -8744,43 +8852,42 @@ int *SelectorEvaluate(PyMOLGlobals *G,SelectorWordType *word)
               if((code>0)&&(!exact))  
                 if(SelectorIndexByName(G,word[c])>=0)
                   code=0; /* favor selections over partial keyword matches */
-				  if(code) 
-					 { /* this is a known operation */
-						depth++;
-						e=Stack+depth;
-						e->code=code;
-						e->level=(level<<4)+((e->code&0xF0)>>4);
+              if(code) 
+                { /* this is a known operation */
+                  depth++;
+                  e=Stack+depth;
+                  e->code=code;
+                  e->level=(level<<4)+((e->code&0xF0)>>4);
                   e->type=(e->code&0xF);
-						switch(e->type)
-						  {
-						  case STYP_SEL0:
-							 valueFlag=0;
-							 break;
-						  case STYP_SEL1:
-							 valueFlag=1;
-							 break;
-						  case STYP_SEL2:
-							 valueFlag=2;
-							 break;
-						  case STYP_OPR1:
-							 valueFlag=0;
-							 break;
-						  case STYP_OPR2:
-							 valueFlag=0;
-							 break;
+                  switch(e->type)
+                    {
+                    case STYP_SEL0:
+                      valueFlag=0;
+                      break;
+                    case STYP_SEL1:
+                      valueFlag=1;
+                      break;
+                    case STYP_SEL2:
+                      valueFlag=2;
+                      break;
+                    case STYP_OPR1:
+                      valueFlag=0;
+                      break;
+                    case STYP_OPR2:
+                      valueFlag=0;
+                      break;
                     case STYP_PRP1: 
-							 valueFlag=-1;
-							 break;
+                      valueFlag=-1;
+                      break;
                     case STYP_OP22: 
-							 valueFlag=-2;
-							 break;
+                      valueFlag=-2;
+                      break;
                     }
-					 } else {
+                } else {
                   strcpy(tmpKW,word[c]); /* handle <object-name>[`index] syntax */
                   if((np=strstr(tmpKW,"`"))) { /* must be an object name */
                     *np=0;
-                    /*                    if(SelectorIndexByName(G,tmpKW)>=0) {*/
-
+                    
                     depth++;
                     e=Stack+depth;
                     e->code=SELE_MODs;
@@ -8788,12 +8895,9 @@ int *SelectorEvaluate(PyMOLGlobals *G,SelectorWordType *word)
                     e->type=STYP_SEL1;
                     valueFlag=1;
                     c--;
-                    /*                    } else {
-                      ok=ErrMessage(G,"Selector","Unknown keyword or selection.");
-                      }*/
 
                   } else { /* handle <selection-name> syntax */
-                    /*if(SelectorIndexByName(G,tmpKW)>=0) {*/
+
                     depth++;
                     e=Stack+depth;
                     e->code=SELE_SELs;
@@ -8801,23 +8905,13 @@ int *SelectorEvaluate(PyMOLGlobals *G,SelectorWordType *word)
                     e->type=STYP_SEL1;
                     valueFlag=1;
                     c--;
-                    /*
-                      } else if(tmpKW[0]=='?') {
-                      depth++;
-                      e=Stack+depth;
-                      e->code=SELE_NONz;
-                      e->level=(level<<4)+((e->code&0xF0)>>4);
-                      e->type=STYP_SEL0;
-                      } else { 
-                      ok=ErrMessage(G,"Selector","Unknown keyword or selection.");
-                      }
-                    */
+
                   }
                 }
             }
           break;
-		  }
-		if(ok) c++; /* go onto next word */
+        }
+      if(ok) c++; /* go onto next word */
     }
   if(level>0)
     ok=ErrMessage(G,"Selector","Malformed selection.");		
@@ -8881,7 +8975,7 @@ int *SelectorEvaluate(PyMOLGlobals *G,SelectorWordType *word)
                         totDepth--;
                       }
                     else if(ok&&(!opFlag)&&(Stack[depth-1].type==STYP_OPR1)
-                       &&(Stack[depth].type==STYP_LIST))
+                            &&(Stack[depth].type==STYP_LIST))
                       { /* 1 argument logical operator */
                         opFlag=true;
                         ok=SelectorLogic1(G,&Stack[depth-1]);
@@ -8889,6 +8983,19 @@ int *SelectorEvaluate(PyMOLGlobals *G,SelectorWordType *word)
                           Stack[a-1]=Stack[a];
                         totDepth--;
                       }
+                    else if((Stack[depth-1].type==STYP_LIST)&&
+                            (Stack[depth].type==STYP_LIST)&&
+                            (!((Stack[depth-1].level & 0xF) ||
+                               (Stack[depth].level & 0xF)))) {
+                      /* two adjacent lists at zeroth priority level
+                         for the scope (lowest nibble of level is
+                         zero) is an implicit OR action */
+                      opFlag=true;
+                      ok=SelectorImplicitOr(G,&Stack[depth-1]);
+                      for(a=depth+1;a<=totDepth;a++) 
+                        Stack[a-1]=Stack[a];
+                      totDepth--;
+                    }
                   }
             if(ok)
               if(depth>2)
@@ -8906,8 +9013,8 @@ int *SelectorEvaluate(PyMOLGlobals *G,SelectorWordType *word)
                         totDepth-=2;
                       }
                     else if(ok&&(!opFlag)&&(Stack[depth-1].type==STYP_PRP1)
-                       &&(Stack[depth].type==STYP_PVAL)
-                       &&(Stack[depth-2].type==STYP_LIST))
+                            &&(Stack[depth].type==STYP_PVAL)
+                            &&(Stack[depth-2].type==STYP_LIST))
                       { /* 2 argument logical operator */
                         ok=SelectorModulate1(G,&Stack[depth-2]);
                         opFlag=true;
@@ -8987,41 +9094,38 @@ int *SelectorEvaluate(PyMOLGlobals *G,SelectorWordType *word)
             break;
         }
       depth=totDepth;
-	 }
-  if(ok)
-	 {
-      if(depth!=1){
-        ok=ErrMessage(G,"Selector","Malformed selection.");
+    }
+  if(ok) {
+    if(depth!=1) {
+      ok=ErrMessage(G,"Selector","Malformed selection.");
+    } else if(Stack[depth].type!=STYP_LIST)
+      ok=ErrMessage(G,"Selector","Invalid selection.");
+    else
+      result=Stack[totDepth].sele; /* return the selection list */
+  }
+  if(!ok) {
+    for(a=1;a<=depth;a++) {
+      PRINTFD(G,FB_Selector)
+        " Selector: releasing %d %x %p\n",a,Stack[a].type,(void*)Stack[a].sele
+        ENDFD;
+      if(Stack[a].type==STYP_LIST)
+        FreeP(Stack[a].sele);
+    }
+    depth=0;
+    q=line;
+    *q=0;
+    for(a=0;a<=c;a++)
+      {
+        if(a&&word[a][0])
+          q=UtilConcat(q," ");
+        q=UtilConcat(q,word[a]);
       }
-      else if(Stack[depth].type!=STYP_LIST)
-        ok=ErrMessage(G,"Selector","Invalid selection.");
-      else
-        result=Stack[totDepth].sele; /* return the selection list */
-	 }
-  if(!ok)
-	 {
-		for(a=1;a<=depth;a++) {
-        PRINTFD(G,FB_Selector)
-          " Selector: releasing %d %x %p\n",a,Stack[a].type,(void*)Stack[a].sele
-          ENDFD;
-		  if(Stack[a].type==STYP_LIST)
-			 FreeP(Stack[a].sele);
-      }
-		depth=0;
-		q=line;
-		*q=0;
-		for(a=0;a<=c;a++)
-		  {
-			 if(a&&word[a][0])
-				q=UtilConcat(q," ");
-			 q=UtilConcat(q,word[a]);
-		  }
-		q=UtilConcat(q,"<--");
-      PRINTFB(G,FB_Selector,FB_Errors) 
-        "%s\n",line
-        ENDFB(G);
-		OrthoRestorePrompt(G);
-	 }
+    q=UtilConcat(q,"<--");
+    PRINTFB(G,FB_Selector,FB_Errors) 
+      "%s\n",line
+      ENDFB(G);
+      OrthoRestorePrompt(G);
+  }
   FreeP(Stack);
   if(!ok) {
     FreeP(result);
@@ -9186,8 +9290,11 @@ void SelectorFree(PyMOLGlobals *G)
   VLAFreeP(I->Member);
   VLAFreeP(I->Name);
   VLAFreeP(I->Info);
-  FreeP(G->Selector);
+  OVLexicon_DEL_AUTO_NULL(I->Lex);
+  OVOneToAny_DEL_AUTO_NULL(I->Key);
+  OVOneToOne_DEL_AUTO_NULL(I->NameOffset);
 
+  FreeP(G->Selector);
 }
 
 
@@ -9202,7 +9309,6 @@ void SelectorMemoryDump(PyMOLGlobals *G)
   printf(" SelectorMemory: NMember %d\n",I->NMember);  
 }
 
-/*========================================================================*/
 
 static void SelectorInit2(PyMOLGlobals *G)
 {
@@ -9215,6 +9321,11 @@ static void SelectorInit2(PyMOLGlobals *G)
   I->NMember=0;
   I->FreeMember=0;
   I->NCSet=0;
+  
+  I->Lex = OVLexicon_New(G->Context->heap);
+  I->Key = OVOneToAny_New(G->Context->heap);
+  I->NameOffset = OVOneToOne_New(G->Context->heap);
+
 
   {  /* create placeholder "all" selection, which is selection 0
       and "none" selection, which is selection 1 */
@@ -9225,6 +9336,7 @@ static void SelectorInit2(PyMOLGlobals *G)
     VLACheck(I->Info,SelectionInfoRec,n+1);
     strcpy(I->Name[n],cKeywordAll); /* "all" selection = 0*/
     I->Name[n+1][0]=0;
+    SelectorAddName(G,n);
     SelectionInfoInit(I->Info + n);
     I->Info[n].ID = I->NSelection++;
     I->NActive++;
@@ -9234,16 +9346,36 @@ static void SelectorInit2(PyMOLGlobals *G)
     VLACheck(I->Info,SelectionInfoRec,n+1);
     strcpy(I->Name[n],cKeywordNone); /* "none" selection = 1*/
     I->Name[n+1][0]=0;
+    SelectorAddName(G,n);
     SelectionInfoInit(I->Info + n);
     I->Info[n].ID = I->NSelection++;
     I->NActive++;
   }
 
+
+  if(I->Lex && I->Key) {
+    int a=0;
+    OVreturn_word result;
+    while(1) {
+      if(!Keyword[a].word[0]) break;
+      if(OVreturn_IS_OK( (result = OVLexicon_GetFromCString(I->Lex,Keyword[a].word)))) {
+        OVOneToAny_SetKey(I->Key, result.word, Keyword[a].value);
+      }
+      a++;
+    }
+
+  }
 }
 
 void SelectorReinit(PyMOLGlobals *G)
 {
+  register CSelector *I=G->Selector;
   SelectorClean(G);
+
+  OVLexicon_DEL_AUTO_NULL(I->Lex);
+  OVOneToAny_DEL_AUTO_NULL(I->Key);
+  OVOneToOne_DEL_AUTO_NULL(I->NameOffset);
+
   SelectorInit2(G);
 }
 
@@ -9256,6 +9388,7 @@ int SelectorInit(PyMOLGlobals *G)
     I->Name = VLAlloc(SelectorWordType,10);
     I->Info = VLAlloc(SelectionInfoRec,10);
     
+
     I->Member = (MemberType*)VLAMalloc(100,sizeof(MemberType),5,true);
     I->Vertex=NULL;
     I->Origin=NULL;
