@@ -20,7 +20,7 @@ def load():
     list = map(lambda x:(random.random(),x),list)
     list.sort() 
     list = map(lambda x:x[1],list)
-    list = [ "pdb/rb/pdb0rbs.noc" ] + list
+#    list = [ "pdb/rb/pdb0rbs.noc" ] + list
 #    while list[0]!="pdb/f8/pdb1f8u":
 #        list.pop(0)
     for file in list:
