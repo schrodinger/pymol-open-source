@@ -57,6 +57,10 @@ Z* -------------------------------------------------------------------
 #include"Tracker.h"
 #include"Word.h"
 
+#include"OVContext.h"
+#include"OVLexicon.h"
+#include"OVOneToOne.h"
+
 #define cExecObject 0
 #define cExecSelection 1
 #define cExecAll 2
@@ -98,16 +102,106 @@ struct _CExecutive {
   int ReorderFlag;
   OrthoLineType ReorderLog;
   int oldPX,oldPY,oldWidth,oldHeight,sizeFlag;
-  int all_obj_list_id, all_sel_list_id;
+  int all_names_list_id, all_obj_list_id, all_sel_list_id;
+  OVLexicon *Lex;
+  OVOneToOne *Key;
 };
 
-static SpecRec *ExecutiveFindSpec(PyMOLGlobals *G,char *name);
+static SpecRec *ExecutiveFindSpec(PyMOLGlobals *G,char *name); 
 static int ExecutiveDrag(Block *block,int x,int y,int mod);
 static void ExecutiveSpecSetVisibility(PyMOLGlobals *G,SpecRec *rec,
                                        int new_vis,int mod);
 void ExecutiveObjMolSeleOp(PyMOLGlobals *G,int sele,ObjectMoleculeOpRec *op);
 
-static int ExecutiveGetObjectListFromPattern(PyMOLGlobals *G,char *name)
+static int ExecutiveAddKey(CExecutive *I, SpecRec *rec)
+{
+  int ok=false;
+  OVreturn_word result;
+  if(OVreturn_IS_OK( (result = OVLexicon_GetFromCString(I->Lex,rec->name)))) {
+    if(OVreturn_IS_OK(OVOneToOne_Set(I->Key, result.word, rec->cand_id))) {
+      ok=true;
+    }
+  }
+  return ok;
+}
+static int ExecutiveDelKey(CExecutive *I, SpecRec *rec)
+{
+  int ok=false;
+  OVreturn_word result;
+  if(OVreturn_IS_OK( (result = OVLexicon_BorrowFromCString(I->Lex,rec->name)))) {
+    if(OVreturn_IS_OK(OVLexicon_DecRef(I->Lex, result.word)) &&
+       OVreturn_IS_OK(OVOneToOne_DelForward(I->Key, result.word))) {
+      ok=true;
+    }
+  }
+  return ok;
+}
+
+static SpecRec *ExecutiveUnambiguousNameMatch(PyMOLGlobals *G,char *name)
+{
+  register CExecutive *I = G->Executive;
+  SpecRec *result = NULL;
+  SpecRec *rec=NULL;
+  int best = 0;
+  int wm;
+  int ignore_case = SettingGetGlobal_b(G,cSetting_ignore_case);
+
+  while(ListIterate(I->Spec,rec,next)) {
+    wm = WordMatch(G,name,rec->name,ignore_case);
+    if(wm<0) { /* exact match, so this is valid */
+      result = rec;
+      best = wm;
+      break;
+    } else if ((wm>0)&&(best<wm)) {
+      result = rec;
+      best = wm;
+    } else if ((wm>0)&&(best==wm)) { /* ambiguous match... no good */
+      result = NULL;
+    }
+  }
+  return(result);
+}
+
+static SpecRec *ExecutiveAnyCaseNameMatch(PyMOLGlobals *G,char *name)
+{
+  register CExecutive *I = G->Executive;
+  SpecRec *result = NULL;
+  SpecRec *rec=NULL;
+
+  int ignore_case = SettingGetGlobal_b(G,cSetting_ignore_case);
+  while(ListIterate(I->Spec,rec,next)) {
+    if(WordMatchExact(G,name,rec->name,ignore_case)) {
+      result = rec;
+      break;
+    }
+  }
+  return(result);
+}
+
+int ExecutiveValidNamePattern(PyMOLGlobals *G,char *name)
+{
+  int result = false;
+  CWordMatcher *matcher;
+  CWordMatchOptions options;
+  char *wildcard = SettingGetGlobal_s(G,cSetting_wildcard);
+      
+  WordMatchOptionsConfigNameList(&options, 
+                              *wildcard,
+                              SettingGetGlobal_b(G,cSetting_ignore_case));
+  matcher = WordMatcherNew(G, name, &options, false);
+  if(matcher) { /* this appears to be a pattern */
+    result = true;
+    WordMatcherFree(matcher);
+  } else if(ExecutiveUnambiguousNameMatch(G,name)) {
+    /* this does not appear to be a pattern, so it is an unambiguous partial name? */
+    result = true;
+  }
+  return result;
+
+}
+
+/* DON'T FORGET TO RELEASE LIST WHEN DONE!!! */
+static int ExecutiveGetNamesListFromPattern(PyMOLGlobals *G,char *name)
 {
   register CExecutive *I = G->Executive;
   int result = 0;
@@ -115,24 +209,37 @@ static int ExecutiveGetObjectListFromPattern(PyMOLGlobals *G,char *name)
   CWordMatchOptions options;
   CTracker *I_Tracker= I->Tracker;
   char *wildcard = SettingGetGlobal_s(G,cSetting_wildcard);
-  int iter_id = TrackerNewIter(I_Tracker, 0, I->all_obj_list_id);
-  
-  WordMatchOptionsConfigAlpha(&options, 
+  int iter_id = TrackerNewIter(I_Tracker, 0, I->all_names_list_id);
+  int cand_id;
+  SpecRec *rec;
+      
+  WordMatchOptionsConfigNameList(&options, 
                               *wildcard,
                               SettingGetGlobal_b(G,cSetting_ignore_case));
-  matcher = WordMatcherNew(G, name, &options, true);
-  if(iter_id) {
-    SpecRec *rec;
-    while(TrackerIterNextCandInList(I_Tracker, iter_id, (TrackerRef**)&rec)) {
-      if(rec->type == cExecObject) {
-        printf("%s\n",rec->obj->Name);
+  matcher = WordMatcherNew(G, name, &options, false);
+  if(matcher) {
+    if(iter_id) {
+      while( (cand_id = TrackerIterNextCandInList(I_Tracker, iter_id, (TrackerRef**)&rec)) ) {
+        if(rec) {
+          if(WordMatcherMatchAlpha(matcher,rec->name)) {
+            if(!result)  
+              result = TrackerNewList(I_Tracker, NULL);
+            if(result) {
+              TrackerLink(I_Tracker, cand_id, result, 1);
+            }
+          }
+        }
       }
     }
+  } else if( (rec = ExecutiveFindSpec(G,name) ) ) { /* only one name in list */
+    result = TrackerNewList(I_Tracker, NULL);
+    TrackerLink(I_Tracker, rec->cand_id, result, 1);
+  } else if( (rec = ExecutiveUnambiguousNameMatch(G,name))) {
+    result = TrackerNewList(I_Tracker, NULL);
+    TrackerLink(I_Tracker, rec->cand_id, result, 1);
   }
-  if(matcher) 
-    WordMatcherFree(matcher);
-  if(iter_id)
-    TrackerDelIter(I->Tracker, iter_id);
+  if(matcher) WordMatcherFree(matcher);
+  if(iter_id) TrackerDelIter(I->Tracker, iter_id);
   return result;
 }
 
@@ -607,9 +714,11 @@ int ExecutiveSetName(PyMOLGlobals *G,char *old_name, char *new_name)
       switch(rec->type) {
       case cExecObject:
         if(WordMatchExact(G,rec->obj->Name,old_name,true)) {
+          ExecutiveDelKey(I,rec);
           ExecutiveDelete(G,new_name);
           ObjectSetName(rec->obj,new_name);
           UtilNCopy(rec->name,rec->obj->Name,ObjNameMax);
+          ExecutiveAddKey(I,rec);          
           if(rec->obj->type == cObjectMolecule) {
             /*
               SelectorDelete(G,old_name);
@@ -625,8 +734,10 @@ int ExecutiveSetName(PyMOLGlobals *G,char *old_name, char *new_name)
       case cExecSelection:
         if(WordMatchExact(G,rec->name,old_name,true)) {
           if(SelectorSetName(G,new_name, old_name)) {
-            ExecutiveDelete(G,new_name);
+            ExecutiveDelete(G,new_name); /* just in case */
+            ExecutiveDelKey(I,rec);
             UtilNCopy(rec->name,new_name,ObjNameMax);
+            ExecutiveAddKey(I,rec);
             found = true;
             OrthoDirty(G);
           }
@@ -1983,6 +2094,8 @@ static int ExecutiveSetNamedEntries(PyMOLGlobals *G,PyObject *names,int version)
         }
 
         rec->cand_id = TrackerNewCand(I->Tracker,(TrackerRef*)rec);
+        TrackerLink(I->Tracker, rec->cand_id, I->all_names_list_id,1);
+        
         switch(rec->type) {
         case cExecObject:
           TrackerLink(I->Tracker, rec->cand_id, I->all_obj_list_id,1);
@@ -1992,6 +2105,7 @@ static int ExecutiveSetNamedEntries(PyMOLGlobals *G,PyObject *names,int version)
           break;
         }
         ListAppend(I->Spec,rec,next,SpecRec);
+        ExecutiveAddKey(I,rec);
       } else {
         ListElemFree(rec);
       }
@@ -3452,17 +3566,18 @@ int ExecutiveTransformObjectSelection(PyMOLGlobals *G,char *name,int state,
   return(ok);
 }
 
+
+
 int ExecutiveValidName(PyMOLGlobals *G,char *name)
 {
   int result=true;
-
-  if(!ExecutiveFindSpec(G,name)) {
-    if(!WordMatch(G,name,cKeywordAll,true))
-      if(!WordMatch(G,name,cKeywordSame,true))
-        if(!WordMatch(G,name,cKeywordCenter,true))
-          if(!WordMatch(G,name,cKeywordOrigin,true))
+  if(!ExecutiveFindSpec(G,name))
+    if(!WordMatchExact(G,name,cKeywordAll,true))
+      if(!WordMatchExact(G,name,cKeywordSame,true))
+        if(!WordMatchExact(G,name,cKeywordCenter,true))
+          if(!WordMatchExact(G,name,cKeywordOrigin,true))
             result=false;
-  }
+ 
   return result;
 }
 
@@ -6770,27 +6885,94 @@ int  ExecutiveUnsetSetting(PyMOLGlobals *G,int index,char *sele,
 /*========================================================================*/
 int ExecutiveColor(PyMOLGlobals *G,char *name,char *color,int flags,int quiet)
 {
+  /* flags: 
+     0x1 -- ignore or suppress selection name matches
+  */
+
   register CExecutive *I = G->Executive;
-  SpecRec *rec = NULL;
-  int sele;
-  ObjectMoleculeOpRec op;
   int col_ind;
   int ok=false;
-  int n_atm=0;
-  int n_obj=0;
-  char atms[]="s";
-  char objs[]="s";
-  char *best_match;
-
   col_ind = ColorGetIndex(G,color);
   if(col_ind==-1) {
     ErrMessage(G,"Color","Unknown color.");
   } else {
+    CTracker *I_Tracker= I->Tracker;
+    SpecRec *rec = NULL;
+    int n_atm=0;
+    int n_obj=0;
+
+#if 1
+    int list_id = ExecutiveGetNamesListFromPattern(G,name);
+    int iter_id = TrackerNewIter(I_Tracker, 0, list_id);
+    while( TrackerIterNextCandInList(I_Tracker, iter_id, (TrackerRef**)&rec) ) {
+      if(rec) {
+        switch(rec->type) {
+        case cExecSelection: 
+        case cExecObject: 
+        case cExecAll:
+          if((rec->type==cExecSelection) || /* coloring a selection */
+             (rec->type==cExecAll) || /* coloring all */
+             ((rec->type==cExecObject) && /* coloring object and its backing selection */
+              (rec->obj->type == cObjectMolecule))) {
+            if(!(flags&0x1)) {
+              int sele = SelectorIndexByName(G,rec->name);
+              ObjectMoleculeOpRec op;
+              if(sele>=0) {
+                ok=true; 
+                ObjectMoleculeOpRecInit(&op);
+                op.code = OMOP_COLR;
+                op.i1= col_ind;
+                op.i2= n_atm;
+                ExecutiveObjMolSeleOp(G,sele,&op);
+                n_atm = op.i2;
+                op.code=OMOP_INVA;
+                op.i1=cRepAll; 
+                op.i2=cRepInvColor;
+                ExecutiveObjMolSeleOp(G,sele,&op);
+              }
+            }
+          }
+          break;
+        }
+        
+        switch(rec->type) {
+        case cExecObject:
+          rec->obj->Color=col_ind;
+          if(rec->obj->fInvalidate)
+            rec->obj->fInvalidate(rec->obj,cRepAll,cRepInvColor,-1);
+          n_obj++;
+          ok=true;
+          SceneDirty(G);
+          break;
+        case cExecAll:
+          rec=NULL;
+          while(ListIterate(I->Spec,rec,next)) {
+            if(rec->type==cExecObject) {
+              rec->obj->Color=col_ind;
+              if(rec->obj->fInvalidate)
+                rec->obj->fInvalidate(rec->obj,cRepAll,cRepInvColor,-1);
+              n_obj++;
+              ok=true;
+              SceneDirty(G);
+            }
+          }
+          break;
+        }
+      }
+    }
+    TrackerDelList(I_Tracker, list_id);
+    TrackerDelIter(I_Tracker, iter_id);
+
+#else
+    char *best_match;
+
+    
     best_match = ExecutiveFindBestNameMatch(G,name);
     /* per atom */
     if(!(flags&0x1)) {
-      sele=SelectorIndexByName(G,name);
+      int sele = SelectorIndexByName(G,name);
       if(sele>=0) {
+        ObjectMoleculeOpRec op;
         ok=true; 
         ObjectMoleculeOpRecInit(&op);
         op.code = OMOP_COLR;
@@ -6830,10 +7012,15 @@ int ExecutiveColor(PyMOLGlobals *G,char *name,char *color,int flags,int quiet)
         }
       }
     }
+
+#endif
     if(n_obj||n_atm) {
+      char atms[]="s";
+      char objs[]="s";
       if(n_obj<2) objs[0]=0;
       if(n_atm<2) atms[0]=0;
       if(!quiet) {
+
         if(n_obj&&n_atm) {
           PRINTFB(G,FB_Executive,FB_Actions)
             " Executive: Colored %d atom%s and %d object%s.\n",n_atm,atms,n_obj,objs
@@ -6884,12 +7071,29 @@ static SpecRec *ExecutiveFindSpec(PyMOLGlobals *G,char *name)
 {
   register CExecutive *I = G->Executive;
   SpecRec *rec = NULL;
+#if 1
+  { /* first, try for perfect, case-specific match */
+    OVreturn_word result;
+    if( OVreturn_IS_OK( (result = OVLexicon_BorrowFromCString(I->Lex,name)))) {
+      if( OVreturn_IS_OK( (result = OVOneToOne_GetForward(I->Key, result.word)))) { 
+        if(!TrackerGetCandRef(I->Tracker, result.word, (TrackerRef**)&rec)) {
+          rec = NULL;
+        }
+      }
+    }
+    if(!rec) { /* otherwise try partial/case-nonspecific match */
+      rec = ExecutiveAnyCaseNameMatch(G,name);
+    }
+  }
+#else
   while(ListIterate(I->Spec,rec,next)) {
 	 if(strcmp(rec->name,name)==0) 
 		break;
   }
+#endif
   return(rec);
 }
+
 /*========================================================================*/
 void ExecutiveObjMolSeleOp(PyMOLGlobals *G,int sele,ObjectMoleculeOpRec *op) 
 {
@@ -7702,30 +7906,103 @@ int ExecutiveToggleRepVisib(PyMOLGlobals *G,char *name,int rep)
 /*========================================================================*/
 void ExecutiveSetRepVisib(PyMOLGlobals *G,char *name,int rep,int state)
 {
+  PRINTFD(G,FB_Executive)
+    " ExecutiveSetRepVisib: entered.\n"
+    ENDFD;
+
+#if 1
+  register CExecutive *I = G->Executive;
+  CTracker *I_Tracker= I->Tracker;
+  SpecRec *rec = NULL;
+  int list_id = ExecutiveGetNamesListFromPattern(G,name);
+  int iter_id = TrackerNewIter(I_Tracker, 0, list_id);
+  while( TrackerIterNextCandInList(I_Tracker, iter_id, (TrackerRef**)&rec) ) {
+    if(rec) {
+      /* per-atom */
+
+      switch(rec->type) {
+      case cExecSelection:
+      case cExecObject: 
+        {
+          int sele=SelectorIndexByName(G,rec->name);
+          if(sele>=0) {
+            ObjectMoleculeOpRec op;
+            ObjectMoleculeOpRecInit(&op);
+            op.code=OMOP_VISI;
+            op.i1=rep;
+            op.i2=state;
+            ExecutiveObjMolSeleOp(G,sele,&op);
+            op.code=OMOP_INVA;
+            op.i2=cRepInvVisib;
+            ExecutiveObjMolSeleOp(G,sele,&op);
+          }
+        }
+        break;
+      }
+
+      /* per-object/name */
+        
+      switch(rec->type) {
+      case cExecSelection: 
+        if(rec->name[0]!='_') {
+          int a;
+          /* remember visibility information for real selections */
+          if(rep>=0) {
+            rec->repOn[rep]=state;
+          } else {
+            for(a=0;a<cRepCnt;a++)
+              rec->repOn[a]=state; 
+          }
+        }
+        break;
+      case cExecObject:
+        if(rep>=0) {
+          ObjectSetRepVis(rec->obj,rep,state);
+          if(rec->obj->fInvalidate)
+            rec->obj->fInvalidate(rec->obj,rep,cRepInvVisib,0);
+        } else {
+          int a;
+          for(a=0;a<cRepCnt;a++) {
+            rec->repOn[a]=state; 
+            ObjectSetRepVis(rec->obj,a,state);
+            if(rec->obj->fInvalidate)
+              rec->obj->fInvalidate(rec->obj,a,cRepInvVisib,0);
+          }
+        }
+        SceneChanged(G);
+        break;
+      case cExecAll:
+        ExecutiveSetAllRepVisib(G,rec->name,rep,state);
+        break;
+      }
+    }
+  }
+  TrackerDelList(I_Tracker, list_id);
+  TrackerDelIter(I_Tracker, iter_id);
+    
+#else
+
   int sele;
   int a;
   int handled = false;
   SpecRec *tRec;
   ObjectMoleculeOpRec op;
 
-  PRINTFD(G,FB_Executive)
-    " ExecutiveSetRepVisib: entered.\n"
-    ENDFD;
 
   tRec = ExecutiveFindSpec(G,name);
   if((!tRec)&&(!strcmp(name,cKeywordAll))) {
     ExecutiveSetAllRepVisib(G,name,rep,state);
   }
   if(tRec) {
-	 if(name[0]!='_') {
+    if(name[0]!='_') {
       /* remember visibility information for real selections */
-	   if(rep>=0) {
+      if(rep>=0) {
         tRec->repOn[rep]=state;
       } else {
         for(a=0;a<cRepCnt;a++)
           tRec->repOn[a]=state; 
       }
-	 }
+    }
     if(tRec->type==cExecObject) 
       switch(tRec->obj->type) {
       default:
@@ -7763,6 +8040,8 @@ void ExecutiveSetRepVisib(PyMOLGlobals *G,char *name,int rep,int state)
         break;
       }
   }
+#endif
+
   PRINTFD(G,FB_Executive)
     " ExecutiveSetRepVisib: leaving...\n"
     ENDFD;
@@ -7928,23 +8207,25 @@ void ExecutiveInvalidateRep(PyMOLGlobals *G,char *name,int rep,int level)
 /*========================================================================*/
 CObject *ExecutiveFindObjectByName(PyMOLGlobals *G,char *name)
 {
-  /* TODO: switch over to using a Python Dictionary to store objects 
-     instead of this stupid list */
-
+  CObject *obj = NULL;
+#if 1
+  SpecRec *rec = ExecutiveFindSpec(G,name);
+  if(rec && (rec->type == cExecObject)) {
+    obj = rec->obj;
+  }
+#else
   register CExecutive *I = G->Executive;
   SpecRec *rec = NULL;
   CObject *obj=NULL;
-  while(ListIterate(I->Spec,rec,next))
-	 {
-		if(rec->type==cExecObject)
-		  {
-			 if(strcmp(rec->obj->Name,name)==0) 
-				{
-				  obj=rec->obj;
-				  break;
-				}
-		  }
-	 }
+  while(ListIterate(I->Spec,rec,next)) {
+    if(rec->type==cExecObject) {
+      if(strcmp(rec->obj->Name,name)==0) {
+        obj=rec->obj;
+        break;
+      }
+    }
+  }
+#endif
   return(obj);
 }
 /*========================================================================*/
@@ -8161,6 +8442,7 @@ void ExecutiveDelete(PyMOLGlobals *G,char *name)
         SeqChanged(G);
         if(rec->visible) 
           SceneObjectDel(G,rec->obj);
+        ExecutiveDelKey(I,rec);
         SelectorDelete(G,rec->name);
         rec->obj->fFree(rec->obj);
         rec->obj=NULL;
@@ -8175,6 +8457,7 @@ void ExecutiveDelete(PyMOLGlobals *G,char *name)
         if(all_flag||rec->visible)
           SceneDirty(G);
         SeqDirty(G);
+        ExecutiveDelKey(I,rec);
         SelectorDelete(G,rec->name);
         TrackerDelCand(I->Tracker,rec->cand_id);
         ListDelete(I->Spec,rec,next,SpecRec);
@@ -8216,6 +8499,15 @@ void ExecutiveDump(PyMOLGlobals *G,char *fname,char *obj)
     ErrMessage(G,"ExecutiveDump","Object not found.");
   }
   
+}
+/*========================================================================*/
+void ExecutiveMemoryDump(PyMOLGlobals *G)
+{
+  register CExecutive *I = G->Executive;
+  fprintf(stderr," Executive: %d candidate(s) %d list(s) %d link(s).\n",
+          TrackerGetNCand(I->Tracker),
+          TrackerGetNList(I->Tracker),
+          TrackerGetNLink(I->Tracker));
 }
 /*========================================================================*/
 void ExecutiveManageObject(PyMOLGlobals *G,CObject *obj,int zoom,int quiet)
@@ -8282,11 +8574,14 @@ void ExecutiveManageObject(PyMOLGlobals *G,CObject *obj,int zoom,int quiet)
       rec->repOn[cRepLine]=true;
     
     rec->cand_id = TrackerNewCand(I->Tracker,(TrackerRef*)rec);
+    TrackerLink(I->Tracker, rec->cand_id, I->all_names_list_id,1);
     TrackerLink(I->Tracker, rec->cand_id, I->all_obj_list_id,1);
     ListAppend(I->Spec,rec,next,SpecRec);
+    ExecutiveAddKey(I,rec);
 
     if(rec->visible)
       SceneObjectAdd(G,obj);
+    
   }
 
   if(obj->type==cObjectMolecule) {
@@ -8351,8 +8646,10 @@ void ExecutiveManageSelection(PyMOLGlobals *G,char *name)
     rec->visible=false;
 
     rec->cand_id = TrackerNewCand(I->Tracker,(TrackerRef*)rec);
+    TrackerLink(I->Tracker, rec->cand_id, I->all_names_list_id,1);
     TrackerLink(I->Tracker, rec->cand_id, I->all_sel_list_id,1);
     ListAppend(I->Spec,rec,next,SpecRec);
+    ExecutiveAddKey(I,rec);
   }
   if(rec) {
     for(a=0;a<cRepCnt;a++)
@@ -9227,11 +9524,14 @@ static void ExecutiveDraw(Block *block)
 
                 TextSetColor(G,I->Block->TextColor);
 
-                if(rec->type!=cExecObject)
+                switch(rec->type) {
+                case cExecObject:
+                  c = rec->obj->Name;
+                  break;
+                default:
                   c=rec->name;
-                else 
-                  c=rec->obj->Name;
-
+                  break;
+                }
                 if(rec->type==cExecSelection)
                   if((nChar--)>0) {
                     TextDrawChar(G,'(');
@@ -9370,44 +9670,53 @@ int ExecutiveInit(PyMOLGlobals *G)
   register CExecutive *I=NULL;
   if( (I=(G->Executive=Calloc(CExecutive,1)))) {
     
-  SpecRec *rec = NULL;
-  int a;
+    SpecRec *rec = NULL;
+    int a;
 
-  ListInit(I->Spec);
-  I->Tracker = TrackerNew(G);
-  I->all_obj_list_id = TrackerNewList(I->Tracker,NULL);
-  I->all_sel_list_id = TrackerNewList(I->Tracker,NULL);
+    ListInit(I->Spec);
+    I->Tracker = TrackerNew(G);
+    I->all_names_list_id = TrackerNewList(I->Tracker, NULL);
+    I->all_obj_list_id = TrackerNewList(I->Tracker,NULL);
+    I->all_sel_list_id = TrackerNewList(I->Tracker,NULL);
+    I->Block = OrthoNewBlock(G,NULL);  
+    I->Block->fRelease = ExecutiveRelease;
+    I->Block->fClick   = ExecutiveClick;
+    I->Block->fDrag    = ExecutiveDrag;
+    I->Block->fDraw    = ExecutiveDraw;
+    I->Block->fReshape = ExecutiveReshape;
+    I->Block->active = true;
+    I->ScrollBarActive = 0;
+    I->ScrollBar=ScrollBarNew(G,false);
+    OrthoAttach(G,I->Block,cOrthoTool);
+    I->Pressed = -1;
+    I->Over = -1;
+    I->LastEdited=NULL;
+    I->ReorderFlag=false;
+    I->NSkip=0;
+    I->HowFarDown=0;
+    I->DragMode = 0;
+    I->sizeFlag=false;
+    I->LastZoomed = NULL;
+    I->LastChanged = NULL;
 
-  I->Block = OrthoNewBlock(G,NULL);  
-  I->Block->fRelease = ExecutiveRelease;
-  I->Block->fClick   = ExecutiveClick;
-  I->Block->fDrag    = ExecutiveDrag;
-  I->Block->fDraw    = ExecutiveDraw;
-  I->Block->fReshape = ExecutiveReshape;
-  I->Block->active = true;
-  I->ScrollBarActive = 0;
-  I->ScrollBar=ScrollBarNew(G,false);
-  OrthoAttach(G,I->Block,cOrthoTool);
-  I->Pressed = -1;
-  I->Over = -1;
-  I->LastEdited=NULL;
-  I->ReorderFlag=false;
-  I->NSkip=0;
-  I->HowFarDown=0;
-  I->DragMode = 0;
-  I->sizeFlag=false;
-  I->LastZoomed = NULL;
-  I->LastChanged = NULL;
+    I->Lex = OVLexicon_New(G->Context->heap);
+    I->Key = OVOneToOne_New(G->Context->heap);
 
-  ListElemCalloc(G,rec,SpecRec);
-  strcpy(rec->name,"(all)");
-  rec->type=cExecAll;
-  rec->visible=true;
-  rec->next=NULL;
-  for(a=0;a<cRepCnt;a++)
-    rec->repOn[a]=false;
-  ListAppend(I->Spec,rec,next,SpecRec);
-  return 1;
+    /* create "all" entry */
+
+    ListElemCalloc(G,rec,SpecRec);
+  
+    strcpy(rec->name,cKeywordAll);
+    rec->type=cExecAll;
+    rec->visible=true;
+    rec->next=NULL;
+    for(a=0;a<cRepCnt;a++)
+      rec->repOn[a]=false;
+    rec->cand_id = TrackerNewCand(I->Tracker,(TrackerRef*)rec);
+    TrackerLink(I->Tracker, rec->cand_id, I->all_names_list_id,1);
+    ListAppend(I->Spec,rec,next,SpecRec);
+    ExecutiveAddKey(I,rec);    
+    return 1;
   }
   else return 0;
 
@@ -9428,6 +9737,9 @@ void ExecutiveFree(PyMOLGlobals *G)
     ScrollBarFree(I->ScrollBar);
   OrthoFreeBlock(G,I->Block);
   I->Block=NULL;
+  OVLexicon_DEL_AUTO_NULL(I->Lex);
+  OVOneToOne_DEL_AUTO_NULL(I->Key);
+
   FreeP(G->Executive);
 }
 

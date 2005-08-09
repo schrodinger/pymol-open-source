@@ -42,6 +42,7 @@ typedef struct {
   int lists;
   int ignore_case;
   int allow_hyphen;
+  int space_lists;
   char wildcard;
 } CWordMatchOptions;
 
@@ -50,6 +51,7 @@ typedef struct _CWordMatcher CWordMatcher;
 void WordMatchOptionsConfigInteger(CWordMatchOptions *I);
 void WordMatchOptionsConfigAlpha(CWordMatchOptions *I, char wildcard, int ignore_case);
 void WordMatchOptionsConfigMixed(CWordMatchOptions *I, char wildcard, int ignore_case);
+void WordMatchOptionsConfigNameList(CWordMatchOptions *I, char wildcard, int ignore_case);
 
 CWordMatcher *WordMatcherNew(PyMOLGlobals *G, char *st, CWordMatchOptions *option, int force);
 int WordMatcherMatchAlpha(CWordMatcher *I, char *text);

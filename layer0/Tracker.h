@@ -62,6 +62,8 @@ int TrackerGetNIter(CTracker *I);
 int TrackerGetNListForCand(CTracker *I,int cand_id);
 int TrackerGetNCandForList(CTracker *I,int list_id);
 
+int TrackerGetCandRef(CTracker *I,int cand_id, TrackerRef **ref_ret);
+
 /* iterating */
 
 int TrackerIterNextCandInList(CTracker *I, int iter_id, TrackerRef **ref_ret);

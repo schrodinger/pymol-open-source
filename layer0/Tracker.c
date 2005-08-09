@@ -243,51 +243,53 @@ int TrackerNewList(CTracker *I, TrackerRef *ref)
 int TrackerNewIter(CTracker *I,int cand_id, int list_id)
 {
   int result = 0;
-  int index = GetNewInfo(I);
-  int id;
-  TrackerInfo *I_info = I->info;
-  if(index) {
-    TrackerInfo *info = I_info + index;
-    info->next = I->iter_start;
-    if(info->next)
-      I_info[info->next].prev = index;
-    I->iter_start = index;
-    id = GetUniqueValidID(I);
-    if(OVreturn_IS_OK(OVOneToOne_Set(I->id2info,id,index))) {
-      info->id = (result = id);
-      info->type = ITER_INFO; 
-      I->n_iter++;
-      if(cand_id && list_id) { /* seeking a specific member */
-        int hash_key = TRACKER_HASH_KEY(cand_id,list_id);                  
-        OVreturn_word hash_start = OVOneToOne_GetForward(I->hash2member, hash_key);
-        if(OVreturn_IS_OK(hash_start)) {
-          int member_index = hash_start.word;
-          TrackerMember *I_member = I->member;
-          TrackerMember *member;
-          while(member_index) {
-            member = I_member + member_index;
-            if((member->cand_id == cand_id) && (member->list_id == list_id)) {
-              info->first = member_index;
-              break;
+  if((cand_id>=0)||(list_id>=0)) {
+    int index = GetNewInfo(I);
+    int id;
+    TrackerInfo *I_info = I->info;
+    if(index) {
+      TrackerInfo *info = I_info + index;
+      info->next = I->iter_start;
+      if(info->next)
+        I_info[info->next].prev = index;
+      I->iter_start = index;
+      id = GetUniqueValidID(I);
+      if(OVreturn_IS_OK(OVOneToOne_Set(I->id2info,id,index))) {
+        info->id = (result = id);
+        info->type = ITER_INFO; 
+        I->n_iter++;
+        if(cand_id && list_id) { /* seeking a specific member */
+          int hash_key = TRACKER_HASH_KEY(cand_id,list_id);                  
+          OVreturn_word hash_start = OVOneToOne_GetForward(I->hash2member, hash_key);
+          if(OVreturn_IS_OK(hash_start)) {
+            int member_index = hash_start.word;
+            TrackerMember *I_member = I->member;
+            TrackerMember *member;
+            while(member_index) {
+              member = I_member + member_index;
+              if((member->cand_id == cand_id) && (member->list_id == list_id)) {
+                info->first = member_index;
+                break;
+              }
+              member_index = member->hash_next;
             }
-            member_index = member->hash_next;
+          }
+        } else if(list_id) { /* for iterating over cands in a list */
+          OVreturn_word list_index = OVOneToOne_GetForward(I->id2info,list_id);
+          if(OVreturn_IS_OK(list_index)) {
+            TrackerInfo *list_info = I_info + list_index.word;
+            info->first = list_info->first;
+          }
+        } else if(cand_id) { /* for iterating over lists in a cand */
+          OVreturn_word cand_index = OVOneToOne_GetForward(I->id2info,cand_id);
+          if(OVreturn_IS_OK(cand_index)) {
+            TrackerInfo *cand_info = I_info + cand_index.word;
+            info->first = cand_info->first;
           }
         }
-      } else if(list_id) { /* for iterating over cands in a list */
-        OVreturn_word list_index = OVOneToOne_GetForward(I->id2info,list_id);
-        if(OVreturn_IS_OK(list_index)) {
-          TrackerInfo *list_info = I_info + list_index.word;
-          info->first = list_info->first;
-        }
-      } else if(cand_id) { /* for iterating over lists in a cand */
-        OVreturn_word cand_index = OVOneToOne_GetForward(I->id2info,cand_id);
-        if(OVreturn_IS_OK(cand_index)) {
-          TrackerInfo *cand_info = I_info + cand_index.word;
-          info->first = cand_info->first;
-        }
+      } else {
+        ReleaseInfo(I,index);
       }
-    } else {
-      ReleaseInfo(I,index);
     }
   }
   return result;
@@ -296,108 +298,109 @@ int TrackerNewIter(CTracker *I,int cand_id, int list_id)
 int TrackerDelCand(CTracker *I, int cand_id) 
 {
   int result = false;
-  OVreturn_word cand_index = OVOneToOne_GetForward(I->id2info,cand_id);
-  TrackerInfo *I_info = I->info;
+  if(cand_id>=0) {
+    OVreturn_word cand_index = OVOneToOne_GetForward(I->id2info,cand_id);
+    TrackerInfo *I_info = I->info;
 
-  if(OVreturn_IS_OK(cand_index)) {
-    TrackerInfo *cand_info = I_info + cand_index.word;
+    if(OVreturn_IS_OK(cand_index)) {
+      TrackerInfo *cand_info = I_info + cand_index.word;
     
-    if(cand_info->type == CAND_INFO) {
-      result=true;
+      if(cand_info->type == CAND_INFO) {
+        result=true;
       
-      { /* first release all the members */
-        int iter_start = I->iter_start;
-        TrackerMember *I_member = I->member;
-        int member_index = cand_info->first;
+        { /* first release all the members */
+          int iter_start = I->iter_start;
+          TrackerMember *I_member = I->member;
+          int member_index = cand_info->first;
 
-        while(member_index) {
-          TrackerMember *member = I_member + member_index;
-          TrackerInfo *list_info = I_info + member->list_index;
-          int cand_id = member->cand_id, list_id = member->list_id;
+          while(member_index) {
+            TrackerMember *member = I_member + member_index;
+            TrackerInfo *list_info = I_info + member->list_index;
+            int cand_id = member->cand_id, list_id = member->list_id;
 
-          /* if any iterators exist, then make sure they don't point at
-             this member */
-          if(iter_start) {
-            ProtectIterators(I,member_index);
-          }
+            /* if any iterators exist, then make sure they don't point at
+               this member */
+            if(iter_start) {
+              ProtectIterators(I,member_index);
+            }
           
-          {
-            /* extract from hash chain */
-            int prev = member->hash_prev;
-            int next = member->hash_next;
-            int hash_key = TRACKER_HASH_KEY(cand_id,list_id);                  
+            {
+              /* extract from hash chain */
+              int prev = member->hash_prev;
+              int next = member->hash_next;
+              int hash_key = TRACKER_HASH_KEY(cand_id,list_id);                  
             
-            if(prev) {
-              I_member[prev].hash_next = next;
-            } else {
-              OVOneToOne_DelForward(I->hash2member, hash_key);
-              if(member->hash_next) { 
-                OVOneToOne_Set(I->hash2member, hash_key, member->hash_next); 
-                /* ASSUMING SUCCESS -- NOT TESTING FOR ERROR */        
+              if(prev) {
+                I_member[prev].hash_next = next;
+              } else {
+                OVOneToOne_DelForward(I->hash2member, hash_key);
+                if(member->hash_next) { 
+                  OVOneToOne_Set(I->hash2member, hash_key, member->hash_next); 
+                  /* ASSUMING SUCCESS -- NOT TESTING FOR ERROR */        
+                }
+              }
+              if(next) {
+                I_member[next].hash_prev = prev;
               }
             }
-            if(next) {
-              I_member[next].hash_prev = prev;
-            }
-          }
           
-          {
-            /* extract from list chain */
-            int prev = member->list_prev;
-            int next = member->list_next;
+            {
+              /* extract from list chain */
+              int prev = member->list_prev;
+              int next = member->list_next;
             
-            if(prev) {
-              I_member[prev].list_next = next;
-            } else {
-              list_info->first = next;
+              if(prev) {
+                I_member[prev].list_next = next;
+              } else {
+                list_info->first = next;
+              }
+            
+              if(next) {
+                I_member[next].list_prev = prev;
+              } else {
+                list_info->last = prev;
+              }
+            
+              /* shorten length of the list */
+              list_info->length--;
             }
-            
-            if(next) {
-              I_member[next].list_prev = prev;
-            } else {
-              list_info->last = prev;
-            }
-            
-            /* shorten length of the list */
-            list_info->length--;
-          }
           
-          { /* continue along the chain */
-            register int member_index_copy = member_index;
-            member_index = member->cand_next;
-            ReleaseMember(I,member_index_copy);
+            { /* continue along the chain */
+              register int member_index_copy = member_index;
+              member_index = member->cand_next;
+              ReleaseMember(I,member_index_copy);
+            }
           }
         }
-      }
 
-      /* delete the cand id */
-      OVOneToOne_DelForward(I->id2info, cand_id);
+        /* delete the cand id */
+        OVOneToOne_DelForward(I->id2info, cand_id);
       
-      /* remove the cand from the cand chain */
-      {
-        int prev = cand_info->prev;
-        int next = cand_info->next;
+        /* remove the cand from the cand chain */
+        {
+          int prev = cand_info->prev;
+          int next = cand_info->next;
         
-        if(prev) {
-          I->info[prev].next = next;
-        } else {
-          I->cand_start = next;
+          if(prev) {
+            I->info[prev].next = next;
+          } else {
+            I->cand_start = next;
+          }
+        
+          if(next) {
+            I->info[next].prev = prev;
+          }
+        
+          /* shorten length of the list */
+          I->n_cand--;
         }
-        
-        if(next) {
-          I->info[next].prev = prev;
-        }
-        
-        /* shorten length of the list */
-        I->n_cand--;
+
+        /* and release the info record */
+
+        ReleaseInfo(I,cand_index.word);
       }
-
-      /* and release the info record */
-
-      ReleaseInfo(I,cand_index.word);
     }
   }
-  
   return result;
   
 }
@@ -406,24 +409,14 @@ int TrackerIterNextCandInList(CTracker *I, int iter_id, TrackerRef **ref_ret)
 {
   /* returns the next cand_id in the list */
   int result = 0;
-  OVreturn_word iter_index = OVOneToOne_GetForward(I->id2info,iter_id);
-  TrackerInfo *I_info = I->info;
-  if(OVreturn_IS_OK(iter_index)) {
-    TrackerInfo *iter_info = I_info + iter_index.word;
-    int member_index;
-    if( (member_index=iter_info->first) ) {
-      TrackerMember *member = I->member + member_index;
-      result = member->cand_id;
-      if(ref_ret) {
-        TrackerInfo *cand_info = I_info + member->cand_index;
-        *ref_ret = cand_info->ref;
-      }
-      iter_info->last = iter_info->first;
-      iter_info->first = member->list_next;
-    } else if( (member_index=iter_info->last) ) { /* first is zero, so try last */
-      TrackerMember *member = I->member + member_index;
-      if(member->list_next) {
-        member = I->member + member->list_next;
+  if(iter_id>=0) {
+    OVreturn_word iter_index = OVOneToOne_GetForward(I->id2info,iter_id);
+    TrackerInfo *I_info = I->info;
+    if(OVreturn_IS_OK(iter_index)) {
+      TrackerInfo *iter_info = I_info + iter_index.word;
+      int member_index;
+      if( (member_index=iter_info->first) ) {
+        TrackerMember *member = I->member + member_index;
         result = member->cand_id;
         if(ref_ret) {
           TrackerInfo *cand_info = I_info + member->cand_index;
@@ -431,9 +424,21 @@ int TrackerIterNextCandInList(CTracker *I, int iter_id, TrackerRef **ref_ret)
         }
         iter_info->last = iter_info->first;
         iter_info->first = member->list_next;
+      } else if( (member_index=iter_info->last) ) { /* first is zero, so try last */
+        TrackerMember *member = I->member + member_index;
+        if(member->list_next) {
+          member = I->member + member->list_next;
+          result = member->cand_id;
+          if(ref_ret) {
+            TrackerInfo *cand_info = I_info + member->cand_index;
+            *ref_ret = cand_info->ref;
+          }
+          iter_info->last = iter_info->first;
+          iter_info->first = member->list_next;
+        }
       }
+      iter_info->length = LIST_INFO;
     }
-    iter_info->length = LIST_INFO;
   }
   return result;
 }
@@ -443,24 +448,14 @@ int TrackerIterNextListInCand(CTracker *I, int iter_id, TrackerRef **ref_ret)
 {
   /* returns the next cand_id in the list */
   int result = 0;
-  OVreturn_word iter_index = OVOneToOne_GetForward(I->id2info,iter_id);
-  TrackerInfo *I_info = I->info;
-  if(OVreturn_IS_OK(iter_index)) {
-    TrackerInfo *iter_info = I_info + iter_index.word;
-    int member_index;
-    if( (member_index=iter_info->first) ) {
-      TrackerMember *member = I->member + member_index;
-      result = member->list_id;
-      if(ref_ret) {
-        TrackerInfo *list_info = I_info + member->list_index;
-        *ref_ret = list_info->ref;
-      }
-      iter_info->last = member_index;
-      iter_info->first = member->cand_next;
-    } else if( (member_index=iter_info->last) ) { /* first is zero, so try last */
-      TrackerMember *member = I->member + member_index;
-      if(member->cand_next) {
-        member = I->member + member->cand_next;
+  if(iter_id>=0) {
+    OVreturn_word iter_index = OVOneToOne_GetForward(I->id2info,iter_id);
+    TrackerInfo *I_info = I->info;
+    if(OVreturn_IS_OK(iter_index)) {
+      TrackerInfo *iter_info = I_info + iter_index.word;
+      int member_index;
+      if( (member_index=iter_info->first) ) {
+        TrackerMember *member = I->member + member_index;
         result = member->list_id;
         if(ref_ret) {
           TrackerInfo *list_info = I_info + member->list_index;
@@ -468,9 +463,21 @@ int TrackerIterNextListInCand(CTracker *I, int iter_id, TrackerRef **ref_ret)
         }
         iter_info->last = member_index;
         iter_info->first = member->cand_next;
+      } else if( (member_index=iter_info->last) ) { /* first is zero, so try last */
+        TrackerMember *member = I->member + member_index;
+        if(member->cand_next) {
+          member = I->member + member->cand_next;
+          result = member->list_id;
+          if(ref_ret) {
+            TrackerInfo *list_info = I_info + member->list_index;
+            *ref_ret = list_info->ref;
+          }
+          iter_info->last = member_index;
+          iter_info->first = member->cand_next;
+        }
       }
+      iter_info->length = CAND_INFO;
     }
-    iter_info->length = CAND_INFO;
   }
   return result;
 }
@@ -478,34 +485,36 @@ int TrackerIterNextListInCand(CTracker *I, int iter_id, TrackerRef **ref_ret)
 int TrackerDelIter(CTracker *I, int iter_id) 
 {
   int result = false;
-  OVreturn_word iter_index = OVOneToOne_GetForward(I->id2info,iter_id);
-  TrackerInfo *I_info = I->info;
-  if(OVreturn_IS_OK(iter_index)) {
-    /* remove the iter from the iter chain */
-    TrackerInfo *iter_info = I_info + iter_index.word;
-
-    int prev = iter_info->prev;
-    int next = iter_info->next;
-    
-    if(prev) {
-      I->info[prev].next = next;
-    } else {
-      I->iter_start = next;
+  if(iter_id>=0) {
+    OVreturn_word iter_index = OVOneToOne_GetForward(I->id2info,iter_id);
+    TrackerInfo *I_info = I->info;
+    if(OVreturn_IS_OK(iter_index)) {
+      /* remove the iter from the iter chain */
+      TrackerInfo *iter_info = I_info + iter_index.word;
+      
+      int prev = iter_info->prev;
+      int next = iter_info->next;
+      
+      if(prev) {
+        I->info[prev].next = next;
+      } else {
+        I->iter_start = next;
+      }
+      
+      if(next) {
+        I->info[next].prev = prev;
+      }
+      
+      /* delete the iter id */
+      OVOneToOne_DelForward(I->id2info, iter_id);
+      
+      /* shorten length of the list */
+      I->n_iter--;
+      
+      result = true;
+      
+      ReleaseInfo(I,iter_index.word);
     }
-    
-    if(next) {
-      I->info[next].prev = prev;
-    }
-
-    /* delete the iter id */
-    OVOneToOne_DelForward(I->id2info, iter_id);
-    
-    /* shorten length of the list */
-    I->n_iter--;
-
-    result = true;
-    
-    ReleaseInfo(I,iter_index.word);
   }
   return result;
 }
@@ -528,6 +537,21 @@ int TrackerGetNLink(CTracker *I)
 int TrackerGetNIter(CTracker *I)
 {
   return I->n_iter;
+}
+
+int TrackerGetCandRef(CTracker *I,int cand_id, TrackerRef **ref_ret)
+{
+  OVreturn_word cand_index = OVOneToOne_GetForward(I->id2info,cand_id);
+  TrackerInfo *I_info = I->info;
+
+  if(OVreturn_IS_OK(cand_index)) {
+    TrackerInfo *info = I_info + cand_index.word;
+    if(info->type == CAND_INFO) {
+      *ref_ret = info->ref;
+      return true;
+    }
+  }
+  return false;
 }
 
 int TrackerGetNListForCand(CTracker *I,int cand_id)
@@ -560,111 +584,113 @@ int TrackerGetNCandForList(CTracker *I, int list_id)
 int TrackerDelList(CTracker *I, int list_id)
 {
   int result = false;
-  OVreturn_word list_index = OVOneToOne_GetForward(I->id2info,list_id);
-  TrackerInfo *I_info = I->info;
+  if(list_id>=0) {
+    OVreturn_word list_index = OVOneToOne_GetForward(I->id2info,list_id);
+    TrackerInfo *I_info = I->info;
 
-  if(OVreturn_IS_OK(list_index)) {
-    TrackerInfo *list_info = I_info + list_index.word;
+    if(OVreturn_IS_OK(list_index)) {
+      TrackerInfo *list_info = I_info + list_index.word;
 
-    if(list_info->type == LIST_INFO) {
+      if(list_info->type == LIST_INFO) {
       
-      result=true;
+        result=true;
       
-      { /* first release all the members */
-        int iter_start = I->iter_start;
-        TrackerMember *I_member = I->member;
-        int member_index = list_info->first;
+        { /* first release all the members */
+          int iter_start = I->iter_start;
+          TrackerMember *I_member = I->member;
+          int member_index = list_info->first;
 
-        while(member_index) {
-          TrackerMember *member = I_member + member_index;
-          TrackerInfo *cand_info = I_info + member->cand_index;
-          int cand_id = member->cand_id, list_id = member->list_id;
+          while(member_index) {
+            TrackerMember *member = I_member + member_index;
+            TrackerInfo *cand_info = I_info + member->cand_index;
+            int cand_id = member->cand_id, list_id = member->list_id;
 
-          if(iter_start) {
-            ProtectIterators(I,member_index);
-          }
+            if(iter_start) {
+              ProtectIterators(I,member_index);
+            }
                 
-          {
-            /* extract from hash chain */
-            int prev = member->hash_prev;
-            int next = member->hash_next;
-            int hash_key = TRACKER_HASH_KEY(cand_id,list_id);
+            {
+              /* extract from hash chain */
+              int prev = member->hash_prev;
+              int next = member->hash_next;
+              int hash_key = TRACKER_HASH_KEY(cand_id,list_id);
           
-            if(prev) {
-              I_member[prev].hash_next = next;
-            } else {
-              OVOneToOne_DelForward(I->hash2member, hash_key);
-              if(member->hash_next) { 
-                OVOneToOne_Set(I->hash2member, hash_key, member->hash_next); 
-                /* ASSUMING SUCCESS -- NOT TESTING FOR ERROR */        
+              if(prev) {
+                I_member[prev].hash_next = next;
+              } else {
+                OVOneToOne_DelForward(I->hash2member, hash_key);
+                if(member->hash_next) { 
+                  OVOneToOne_Set(I->hash2member, hash_key, member->hash_next); 
+                  /* ASSUMING SUCCESS -- NOT TESTING FOR ERROR */        
+                }
+              }
+              if(next) {
+                I_member[next].hash_prev = prev;
               }
             }
-            if(next) {
-              I_member[next].hash_prev = prev;
-            }
-          }
         
-          {
-            /* extract from cand chain */
-            int prev = member->cand_prev;
-            int next = member->cand_next;
+            {
+              /* extract from cand chain */
+              int prev = member->cand_prev;
+              int next = member->cand_next;
           
-            if(prev) {
-              I_member[prev].cand_next = next;
-            } else {
-              cand_info->first = next;
+              if(prev) {
+                I_member[prev].cand_next = next;
+              } else {
+                cand_info->first = next;
+              }
+          
+              if(next) {
+                I_member[next].cand_prev = prev;
+              } else {
+                cand_info->last = prev;
+              }
+              /* shorten length of the list */
+              cand_info->length--;
             }
           
-            if(next) {
-              I_member[next].cand_prev = prev;
-            } else {
-              cand_info->last = prev;
-            }
-            /* shorten length of the list */
-            cand_info->length--;
-          }
-          
-          /* if any iterators exist, then make sure they don't point at
-             this member */
+            /* if any iterators exist, then make sure they don't point at
+               this member */
         
-          { /* continue along the chain */
-            register int member_index_copy = member_index;
-            member_index = member->list_next;
-            ReleaseMember(I,member_index_copy);
+            { /* continue along the chain */
+              register int member_index_copy = member_index;
+              member_index = member->list_next;
+              ReleaseMember(I,member_index_copy);
+            }
           }
         }
+
+        /* delete the list id */
+        OVOneToOne_DelForward(I->id2info, list_id);
+
+        /* remove the list from the list chain */
+        {
+          int prev = list_info->prev;
+          int next = list_info->next;
+        
+          if(prev) {
+            I->info[prev].next = next;
+          } else {
+            I->list_start = next;
+          }
+        
+          if(next) {
+            I->info[next].prev = prev;
+          }
+        
+          /* shorten length of the list */
+          I->n_list--;
+        }
+
+        /* and release the info record */
+
+        ReleaseInfo(I,list_index.word);
+
       }
-
-      /* delete the list id */
-      OVOneToOne_DelForward(I->id2info, list_id);
-
-      /* remove the list from the list chain */
-      {
-        int prev = list_info->prev;
-        int next = list_info->next;
-        
-        if(prev) {
-          I->info[prev].next = next;
-        } else {
-          I->list_start = next;
-        }
-        
-        if(next) {
-          I->info[next].prev = prev;
-        }
-        
-        /* shorten length of the list */
-        I->n_list--;
-      }
-
-      /* and release the info record */
-
-      ReleaseInfo(I,list_index.word);
-
     }
   }
   return result;
-  }
+}
 
 int TrackerLink(CTracker *I, int cand_id, int list_id, int priority)
 {

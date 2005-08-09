@@ -75,6 +75,7 @@ void WordMatchOptionsConfigInteger(CWordMatchOptions *I)
   I->ignore_case = true;
   I->wildcard = 0; /* no wildcard for numbers */
   I->allow_hyphen = true;
+  I->space_lists = false;
 }
 
 void WordMatchOptionsConfigAlpha(CWordMatchOptions *I, char wildcard, int ignore_case)
@@ -84,6 +85,7 @@ void WordMatchOptionsConfigAlpha(CWordMatchOptions *I, char wildcard, int ignore
   I->ignore_case = ignore_case;
   I->wildcard = wildcard;
   I->allow_hyphen = false;
+  I->space_lists = false;
 }
 
 void WordMatchOptionsConfigMixed(CWordMatchOptions *I, char wildcard, int ignore_case )
@@ -93,6 +95,17 @@ void WordMatchOptionsConfigMixed(CWordMatchOptions *I, char wildcard, int ignore
   I->ignore_case = ignore_case;
   I->wildcard = wildcard; 
   I->allow_hyphen = true;
+  I->space_lists = false;
+}
+
+void WordMatchOptionsConfigNameList(CWordMatchOptions *I, char wildcard, int ignore_case)
+{
+  I->range_mode = cWordMatchOptionAlphaRanges;
+  I->lists = true;
+  I->ignore_case = ignore_case;
+  I->wildcard = wildcard;
+  I->allow_hyphen = false;
+  I->space_lists = true;
 }
 
 CWordMatcher *WordMatcherNew(PyMOLGlobals *G, char *st, CWordMatchOptions *option,int force)
@@ -127,6 +140,10 @@ CWordMatcher *WordMatcherNew(PyMOLGlobals *G, char *st, CWordMatchOptions *optio
           break;
         case ':':
           if(option->range_mode)
+            needed=true;
+          break;
+        case ' ':
+          if(option->space_lists)
             needed=true;
           break;
         default:
@@ -177,6 +194,19 @@ CWordMatcher *WordMatcherNew(PyMOLGlobals *G, char *st, CWordMatchOptions *optio
           case '+':
           case ',': /* list operators */
             if(option->lists) {
+              if(n_node<expectation) { /* create empty node */
+                VLACheck(I->node, MatchNode, n_node);  
+                n_node++;
+              } else {
+                expectation = n_node+1;
+              }
+              char_handled = true;
+              node_active = false;
+              token_active = false;
+            }
+            break;
+          case ' ': /* space list */
+            if(option->space_lists) {
               if(n_node<expectation) { /* create empty node */
                 VLACheck(I->node, MatchNode, n_node);  
                 n_node++;
