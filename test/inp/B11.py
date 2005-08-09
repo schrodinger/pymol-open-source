@@ -5,7 +5,6 @@ from glob import glob
 
 import threading
 import time
-import whrandom
 from pymol import cmd
 import sys, os, os.path
 from chempy.champ import Champ
@@ -30,7 +29,7 @@ def load():
       atoms = cmd.count_atoms()
       passed = time.time()-start
       print "%3d structures/%5.1f sec = %8.1f atom/sec over %6d atoms"%(count,passed,atoms/passed,atoms)
-      if count>100: break
+      if count>500: break
 
 #cmd.feedback('disable','symmetry objectmolecule executive','everything')
 load()
