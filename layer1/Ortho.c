@@ -1669,6 +1669,10 @@ void OrthoFree(PyMOLGlobals *G)
   I->cmds=NULL;
   QueueFree(I->feedback);
   I->feedback=NULL;
+  if(I->deferred) {
+    DeferredFree(I->deferred);
+    I->deferred = NULL;
+  }
   FreeP(G->Ortho);
 }
 /*========================================================================*/

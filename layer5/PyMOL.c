@@ -542,6 +542,8 @@ typedef struct _CPyMOL {
   ov_word lex_cartoon_ring_width;
   ov_word lex_cartoon_ring_color;
   ov_word lex_cartoon_ring_finder;
+  ov_word lex_cartoon_tube_cap;
+  ov_word lex_cartoon_loop_cap;
 } _CPyMOL;
 
 static int status_ok(int ok) {
@@ -1074,6 +1076,8 @@ static OVstatus PyMOL_InitAPI(CPyMOL *I)
   LEX_SETTING(cartoon_ring_width, 428);
   LEX_SETTING(cartoon_ring_color, 429);
   LEX_SETTING(cartoon_ring_finder, 430);
+  LEX_SETTING(cartoon_tube_cap, 431);
+  LEX_SETTING(cartoon_loop_cap, 432);
   return_OVstatus_SUCCESS;
 }
 

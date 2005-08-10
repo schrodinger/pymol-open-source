@@ -1305,7 +1305,7 @@ void SettingGenerateSideEffects(PyMOLGlobals *G,int index,char *sele,int state)
   case cSetting_retain_order:
   case cSetting_pdb_hetatm_sort:
   case cSetting_pdb_insertions_go_first:
-    ExecutiveSort(G,cKeywordAll);
+    ExecutiveSort(G,inv_sele);
     break;
   case cSetting_roving_lines:
   case cSetting_roving_sticks:
@@ -1497,8 +1497,10 @@ void SettingGenerateSideEffects(PyMOLGlobals *G,int index,char *sele,int state)
   case cSetting_cartoon_sampling:
   case cSetting_cartoon_loop_quality:
   case cSetting_cartoon_loop_radius:
+  case cSetting_cartoon_loop_cap:
   case cSetting_cartoon_tube_quality:
   case cSetting_cartoon_tube_radius:
+  case cSetting_cartoon_tube_cap:
   case cSetting_cartoon_putty_quality:
   case cSetting_cartoon_putty_radius:
   case cSetting_cartoon_putty_scale_min:
@@ -2602,7 +2604,8 @@ void SettingInitGlobal(PyMOLGlobals *G,int alloc,int reset_gui)
   SettingSet_f(I,cSetting_cartoon_ring_width, 0.125F);
   SettingSet_color(I,cSetting_cartoon_ring_color, "-1");
   SettingSet_i(I,cSetting_cartoon_ring_finder, 1);
-
+  SettingSet_i(I,cSetting_cartoon_tube_cap,1);
+  SettingSet_i(I,cSetting_cartoon_loop_cap,1);
 }
 
 

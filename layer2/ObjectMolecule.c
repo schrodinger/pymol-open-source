@@ -7159,40 +7159,46 @@ void ObjectMoleculeSeleOp(ObjectMolecule *I,int sele,ObjectMoleculeOpRec *op)
       ObjectMoleculeFixSeleHydrogens(I,sele);
       break;
 	case OMOP_PrepareFromTemplate:
-     ai0=op->ai; /* template atom */
-     for(a=0;a<I->NAtom;a++)
-       {
+      ai0=op->ai; /* template atom */
+      for(a=0;a<I->NAtom;a++) {
          s=I->AtomInfo[a].selEntry;
-         if(SelectorIsMember(G,s,sele))
-           {
-             ai = I->AtomInfo + a;
-             ai->hetatm=ai0->hetatm;
-             ai->flags=ai0->flags;
-             strcpy(ai->chain,ai0->chain);
-             strcpy(ai->alt,ai0->alt);
-             strcpy(ai->segi,ai0->segi);
-             if(op->i1==1) { /* mode 1, merge residue information */
-               strcpy(ai->resi,ai0->resi);
-               ai->resv=ai0->resv;
-               strcpy(ai->resn,ai0->resn);    
-             }
-             AtomInfoAssignColors(G,ai);
-             if(op->i3) { 
-               if((ai->elem[0]==ai0->elem[0])&&(ai->elem[1]==ai0->elem[1]))
-                 ai->color=ai0->color;
-               else if(ai->protons == cAN_C) {
-                 ai->color=op->i4;
-               }
-             }
-             
-             for(b=0;b<cRepCnt;b++)
-               ai->visRep[b]=ai0->visRep[b];
-             ai->id=-1;
-             ai->rank=-1;
-             op->i2++;
+         if(SelectorIsMember(G,s,sele)) {
+           ai = I->AtomInfo + a;
+           ai->hetatm=ai0->hetatm;
+           ai->flags=ai0->flags;
+           strcpy(ai->chain,ai0->chain);
+           strcpy(ai->alt,ai0->alt);
+           strcpy(ai->segi,ai0->segi);
+           if(op->i1==1) { /* mode 1, merge residue information */
+             strcpy(ai->resi,ai0->resi);
+             ai->resv=ai0->resv;
+             strcpy(ai->resn,ai0->resn);    
            }
-       }
-     break;
+           AtomInfoAssignColors(G,ai);
+           if(op->i3) { 
+             if((ai->elem[0]==ai0->elem[0])&&(ai->elem[1]==ai0->elem[1]))
+               ai->color=ai0->color;
+             else if(ai->protons == cAN_C) {
+               ai->color=op->i4;
+             }
+           }
+           for(b=0;b<cRepCnt;b++)
+             ai->visRep[b]=ai0->visRep[b];
+           ai->id=-1;
+           ai->rank=-1;
+           op->i2++;
+         }
+      }
+      break;
+    case OMOP_Sort:
+      for(a=0;a<I->NAtom;a++) {
+        s=I->AtomInfo[a].selEntry;
+        if(SelectorIsMember(G,s,sele)) {
+          ObjectMoleculeSort(I);
+          break;
+        }
+      }
+      break;
    case OMOP_Pop:
      for(a=0;a<I->NAtom;a++)
        {

@@ -107,6 +107,20 @@ struct _CExecutive {
   OVOneToOne *Key;
 };
 
+/* routines that still need to be updated for Tracker list iteration
+
+Low priority:
+
+ExecutiveSculptIterate
+ExecutiveSculptActivate
+ExecutiveSculptDeactivate
+ExecutiveRenameObjectAtoms
+ExecutiveSpheroid
+
+*/
+
+static void ExecutiveToggleAllRepVisib(PyMOLGlobals *G,int rep);
+static void ExecutiveSetAllRepVisib(PyMOLGlobals *G,int rep,int state);
 static SpecRec *ExecutiveFindSpec(PyMOLGlobals *G,char *name); 
 static int ExecutiveDrag(Block *block,int x,int y,int mod);
 static void ExecutiveSpecSetVisibility(PyMOLGlobals *G,SpecRec *rec,
@@ -220,7 +234,7 @@ static int ExecutiveGetNamesListFromPattern(PyMOLGlobals *G,char *name)
   if(matcher) {
     if(iter_id) {
       while( (cand_id = TrackerIterNextCandInList(I_Tracker, iter_id, (TrackerRef**)&rec)) ) {
-        if(rec) {
+        if(rec && !(rec->type==cExecAll)) {
           if(WordMatcherMatchAlpha(matcher,rec->name)) {
             if(!result)  
               result = TrackerNewList(I_Tracker, NULL);
@@ -4489,34 +4503,59 @@ void ExecutiveUndo(PyMOLGlobals *G,int dir)
 void ExecutiveSort(PyMOLGlobals *G,char *name)
 {
   register CExecutive *I = G->Executive;
-  CObject *os=NULL;
   ObjectMolecule *obj;
   SpecRec *rec = NULL;
   ObjectMoleculeOpRec op;
-  int all_obj = false;
   int sele;
-
-  if(strlen(name)) {
-    os=ExecutiveFindObjectByName(G,name);
-    if(!os) {
-      if(!WordMatchExact(G,cKeywordAll,name,true))
-        ErrMessage(G," Executive","object not found.");
-      else
-        all_obj=true;
-    } else if(os->type!=cObjectMolecule)
-      ErrMessage(G," Executive","bad object type.");
-  } else {
-    all_obj = true;
-  }
-  
-  if(os||all_obj) { /* sort one or all */
-    while(ListIterate(I->Spec,rec,next)) {
-      if(rec->type==cExecObject)
-        if(rec->obj->type==cObjectMolecule)
-          if((rec->obj==os)||all_obj) {
+#if 1
+  if((!name)||(!name[0])) 
+    name = cKeywordAll;
+                            
+  {
+    CTracker *I_Tracker= I->Tracker;
+    int list_id = ExecutiveGetNamesListFromPattern(G,name);
+    int iter_id = TrackerNewIter(I_Tracker, 0, list_id);
+    int changed = false;
+    while( TrackerIterNextCandInList(I_Tracker, iter_id, (TrackerRef**)&rec) ) {
+      if(rec) {
+        switch(rec->type) {
+        case cExecAll:
+          rec = NULL;
+          while(ListIterate(I->Spec,rec,next)) {
+            if((rec->type==cExecObject) && (rec->obj->type==cObjectMolecule)) {
+              obj =(ObjectMolecule*)rec->obj;
+              ObjectMoleculeSort(obj);
+              changed = true;
+              sele=SelectorIndexByName(G,rec->name);
+              if(sele>=0) {
+                ObjectMoleculeOpRecInit(&op);
+                op.code=OMOP_INVA;
+                op.i1=cRepAll; 
+                op.i2=cRepInvRep;
+                ExecutiveObjMolSeleOp(G,sele,&op);
+              }
+            }
+          }
+          break;
+        case cExecSelection:
+          sele=SelectorIndexByName(G,rec->name);
+          if(sele>=0) {
+            op.code=OMOP_Sort;
+            ExecutiveObjMolSeleOp(G,sele,&op);
+            ObjectMoleculeOpRecInit(&op);
+            op.code=OMOP_INVA;
+            op.i1=cRepAll; 
+            op.i2=cRepInvRep;
+            ExecutiveObjMolSeleOp(G,sele,&op);
+            ObjectMoleculeOpRecInit(&op);
+          }
+          break;
+        case cExecObject:
+          if(rec->obj->type==cObjectMolecule) {
             obj =(ObjectMolecule*)rec->obj;
             ObjectMoleculeSort(obj);
-            sele=SelectorIndexByName(G,rec->obj->Name);
+            changed = true;
+            sele=SelectorIndexByName(G,rec->name);
             if(sele>=0) {
               ObjectMoleculeOpRecInit(&op);
               op.code=OMOP_INVA;
@@ -4525,9 +4564,55 @@ void ExecutiveSort(PyMOLGlobals *G,char *name)
               ExecutiveObjMolSeleOp(G,sele,&op);
             }
           }
+          break;
+        }
+      }
     }
-    SceneChanged(G);
+    TrackerDelList(I_Tracker, list_id);
+    TrackerDelIter(I_Tracker, iter_id);
+    if(changed)
+      SceneChanged(G);
   }
+#else
+ {
+   CObject *os=NULL;
+   int all_obj = false;
+
+   if(strlen(name)) {
+     os=ExecutiveFindObjectByName(G,name);
+     if(!os) {
+       if(!WordMatchExact(G,cKeywordAll,name,true))
+         ErrMessage(G," Executive","object not found.");
+       else
+         all_obj=true;
+     } else if(os->type!=cObjectMolecule)
+       ErrMessage(G," Executive","bad object type.");
+   } else {
+     all_obj = true;
+   }
+  
+   if(os||all_obj) { /* sort one or all */
+     while(ListIterate(I->Spec,rec,next)) {
+       if(rec->type==cExecObject)
+         if(rec->obj->type==cObjectMolecule)
+           if((rec->obj==os)||all_obj) {
+             obj =(ObjectMolecule*)rec->obj;
+             ObjectMoleculeSort(obj);
+             sele=SelectorIndexByName(G,rec->obj->Name);
+             if(sele>=0) {
+               ObjectMoleculeOpRecInit(&op);
+               op.code=OMOP_INVA;
+               op.i1=cRepAll; 
+               op.i2=cRepInvRep;
+               ExecutiveObjMolSeleOp(G,sele,&op);
+             }
+           }
+     }
+     SceneChanged(G);
+   }
+ }
+#endif
+
 }
 /*========================================================================*/
 void ExecutiveRemoveAtoms(PyMOLGlobals *G,char *s1,int quiet)
@@ -6308,10 +6393,52 @@ int ExecutiveCountStates(PyMOLGlobals *G,char *s1)
 {
   register CExecutive *I = G->Executive;
   int sele1;
-  int result=0;
-  int n_frame;
+  int result = 0;
+  int n_state;
   SpecRec *rec = NULL;
-  
+#if 1
+  if((!s1)||(!s1[0])) s1 = cKeywordAll;
+  {
+    CTracker *I_Tracker= I->Tracker;
+    int list_id = ExecutiveGetNamesListFromPattern(G,s1);
+    int iter_id = TrackerNewIter(I_Tracker, 0, list_id);
+    while( TrackerIterNextCandInList(I_Tracker, iter_id, (TrackerRef**)&rec) ) {
+      if(rec) {
+        switch(rec->type) {
+        case cExecAll:
+          rec = NULL;
+          while(ListIterate(I->Spec,rec,next)) {
+            if(rec->type==cExecObject) {
+              n_state = rec->obj->fGetNFrame(rec->obj);
+              if(result<n_state)
+                result=n_state;
+            }
+          }
+          break;
+        case cExecSelection:
+          sele1=SelectorIndexByName(G,rec->name);
+          if(sele1>=0) {
+            SelectorUpdateTable(G);
+            n_state = SelectorGetSeleNCSet(G,sele1);
+            if(result<n_state)
+              result = n_state;
+          }
+          break;
+        case cExecObject:
+          if(rec->obj->fGetNFrame) {
+              n_state = rec->obj->fGetNFrame(rec->obj);
+              if(result<n_state)
+                result=n_state;
+          }
+          break;
+        }
+      }
+    }
+    TrackerDelList(I_Tracker, list_id);
+    TrackerDelIter(I_Tracker, iter_id);
+  }
+#else
+
   if(s1)
     if(WordMatch(G,cKeywordAll,s1,true))
       s1 = NULL;
@@ -6319,20 +6446,22 @@ int ExecutiveCountStates(PyMOLGlobals *G,char *s1)
     while(ListIterate(I->Spec,rec,next)) {
       if(rec->type==cExecObject) {
         if(rec->obj->fGetNFrame) {
-          n_frame = rec->obj->fGetNFrame(rec->obj);
-          if(result<n_frame)
-            result=n_frame;
+          n_state = rec->obj->fGetNFrame(rec->obj);
+          if(result<n_state)
+            result=n_state;
         }
       }
     } 
   } else {
-  sele1=SelectorIndexByName(G,s1);
+    sele1=SelectorIndexByName(G,s1);
     if(sele1>=0) {
       SelectorUpdateTable(G);
       result = SelectorGetSeleNCSet(G,sele1);
     }
   }
+#endif
   return(result);
+
 }
 /*========================================================================*/
 void ExecutiveRay(PyMOLGlobals *G,int width,int height,int mode,float angle,float shift,int quiet)
@@ -6365,12 +6494,11 @@ int  ExecutiveSetSetting(PyMOLGlobals *G,int index,PyObject *tuple,char *sele,
   int nObj=0;
   int unblock;
   int ok =true;
-
   PRINTFD(G,FB_Executive)
     " ExecutiveSetSetting: entered. sele \"%s\"\n",sele
     ENDFD;
   unblock = PAutoBlock();
-  if(sele[0]==0) { 
+  if((!sele) || (sele[0]==0)) { /* global setting */
     ok = SettingSetFromTuple(G,NULL,index,tuple);
     if(ok) {
       if(!quiet) {
@@ -6382,10 +6510,149 @@ int  ExecutiveSetSetting(PyMOLGlobals *G,int index,PyObject *tuple,char *sele,
             ENDF(G);
         }
       }
-      if(updates) 
-        SettingGenerateSideEffects(G,index,sele,state);
+      if(updates) {
+        SettingGenerateSideEffects(G,index,cKeywordAll,state);
+      }
     }
   } 
+#if 1
+  else {
+    int side_effects = false;
+
+    CTracker *I_Tracker= I->Tracker;
+    int list_id = ExecutiveGetNamesListFromPattern(G,sele);
+    int iter_id = TrackerNewIter(I_Tracker, 0, list_id);
+    while( TrackerIterNextCandInList(I_Tracker, iter_id, (TrackerRef**)&rec) ) {
+      if(rec) {
+        switch(rec->type) {
+        case cExecAll:
+          rec = NULL;
+          while(ListIterate(I->Spec,rec,next)) {
+            if(rec->type==cExecObject) {
+              if(rec->obj->fGetSettingHandle) {
+                handle = rec->obj->fGetSettingHandle(rec->obj,state);
+                if(handle) {
+                  SettingCheckHandle(G,handle);
+                  ok = SettingSetFromTuple(G,*handle,index,tuple);
+                  if(updates) 
+                    side_effects = true;
+                  nObj++;
+                }
+              }
+            }
+          }
+          if(Feedback(G,FB_Setting,FB_Actions)) {
+            if(nObj&&handle) {
+              SettingGetTextValue(G,*handle,NULL,index,value);
+              SettingGetName(G,index,name);
+              if(!quiet) {
+                if(state<0) {
+                  PRINTF
+                    " Setting: %s set to %s in %d objects.\n",name,value,nObj
+                    ENDF(G);
+                } else {
+                  PRINTF
+                    " Setting: %s set to %s in %d objects, state %d.\n",
+                    name,value,nObj,state+1
+                    ENDF(G);
+                }
+              }
+            }
+          }
+          break;
+        case cExecSelection:    
+          sele1 = SelectorIndexByName(G,rec->name);
+          if(sele1>=0) {
+            rec = NULL;
+            while((ListIterate(I->Spec,rec,next))) {
+              if((rec->type==cExecObject) && (rec->obj->type==cObjectMolecule)) {
+                obj=(ObjectMolecule*)rec->obj;
+                ObjectMoleculeOpRecInit(&op);
+                op.code=OMOP_CountAtoms;
+                op.i1=0;
+                ObjectMoleculeSeleOp(obj,sele1,&op);
+                if(op.i1&&rec->obj->fGetSettingHandle) {
+                  handle = rec->obj->fGetSettingHandle(rec->obj,state);
+                  if(handle) {
+                    SettingCheckHandle(G,handle);
+                    ok = SettingSetFromTuple(G,*handle,index,tuple);
+                    if(ok) {
+                      if(updates) 
+                        side_effects = true;
+                      if(!quiet) {
+                        if(state<0) { /* object-specific */
+                          if(Feedback(G,FB_Setting,FB_Actions)) {
+                            SettingGetTextValue(G,*handle,NULL,index,value);
+                            SettingGetName(G,index,name);
+                            PRINTF
+                              " Setting: %s set to %s in object \"%s\".\n",
+                              name,value,rec->obj->Name
+                              ENDF(G);
+                          }
+                        } else { /* state-specific */
+                          if(Feedback(G,FB_Setting,FB_Actions)) {
+                            SettingGetTextValue(G,*handle,NULL,index,value);
+                            SettingGetName(G,index,name);
+                            PRINTF
+                              " Setting: %s set to %s in object \"%s\", state %d.\n",
+                              name,value,rec->obj->Name,state+1
+                              ENDF(G);
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+          break;
+        case cExecObject:
+          if(rec->obj->fGetSettingHandle) {
+            handle = rec->obj->fGetSettingHandle(rec->obj,state);
+            if(handle) {
+              SettingCheckHandle(G,handle);
+              ok = SettingSetFromTuple(G,*handle,index,tuple);
+              if(ok) {
+                if(updates) 
+                  side_effects = true;
+                if(!quiet) {
+                  if(state<0) { /* object-specific */
+                    if(Feedback(G,FB_Setting,FB_Actions)) {
+                      SettingGetTextValue(G,*handle,NULL,index,value);
+                      SettingGetName(G,index,name);
+                      PRINTF
+                        " Setting: %s set to %s in object \"%s\".\n",
+                        name,value,rec->obj->Name
+                        ENDF(G);
+                    }
+                  } else { /* state-specific */
+                    if(Feedback(G,FB_Setting,FB_Actions)) {
+                      SettingGetTextValue(G,*handle,NULL,index,value);
+                      SettingGetName(G,index,name);
+                      PRINTF
+                        " Setting: %s set to %s in object \"%s\", state %d.\n",
+                        name,value,rec->obj->Name,state+1
+                        ENDF(G);
+                    }
+                  }
+                }
+              }
+            }
+          }
+          break;
+        }
+      }
+    }
+    TrackerDelList(I_Tracker, list_id);
+    TrackerDelIter(I_Tracker, iter_id);
+
+    if(side_effects)
+      SettingGenerateSideEffects(G,index,sele,state);
+
+  }
+        
+#else
   else if(!strcmp(cKeywordAll,sele)) { /* all objects setting */
     while(ListIterate(I->Spec,rec,next))
       {
@@ -6508,6 +6775,8 @@ int  ExecutiveSetSetting(PyMOLGlobals *G,int index,PyObject *tuple,char *sele,
           }
       }
   }
+#endif
+
   PAutoUnblock(unblock);
   return(ok);
 #endif
@@ -6531,7 +6800,7 @@ int  ExecutiveSetSettingFromString(PyMOLGlobals *G,
   PRINTFD(G,FB_Executive)
     " ExecutiveSetSetting: entered. sele \"%s\"\n",sele
     ENDFD;
-  if(sele[0]==0) { 
+  if(sele[0]==0) { /* global setting */
     ok = SettingSetFromString(G,NULL,index,value);
     if(ok) {
       if(!quiet) {
@@ -6546,7 +6815,138 @@ int  ExecutiveSetSettingFromString(PyMOLGlobals *G,
       if(updates) 
         SettingGenerateSideEffects(G,index,sele,state);
     }
-  } 
+  }
+#if 1
+  else {
+    CTracker *I_Tracker= I->Tracker;
+    int list_id = ExecutiveGetNamesListFromPattern(G,sele);
+    int iter_id = TrackerNewIter(I_Tracker, 0, list_id);
+    while( TrackerIterNextCandInList(I_Tracker, iter_id, (TrackerRef**)&rec) ) {
+      if(rec) {
+        switch(rec->type) {
+        case cExecAll:
+          rec = NULL;
+          while(ListIterate(I->Spec,rec,next)) {
+            if(rec->type==cExecObject) {
+              if(rec->obj->fGetSettingHandle) {
+                handle = rec->obj->fGetSettingHandle(rec->obj,state);
+                if(handle) {
+                  SettingCheckHandle(G,handle);
+                  ok = SettingSetFromString(G,*handle,index,value);
+                  if(updates) 
+                    SettingGenerateSideEffects(G,index,rec->name,state);
+                  nObj++;
+                }
+              }
+            }
+          }
+          if(Feedback(G,FB_Setting,FB_Actions)) {
+            if(nObj&&handle) {
+              SettingGetTextValue(G,*handle,NULL,index,value2);
+              SettingGetName(G,index,name);
+              if(!quiet) {
+                if(state<0) {
+                  PRINTF
+                    " Setting: %s set to %s in %d objects.\n",name,value2,nObj
+                    ENDF(G);
+                } else {
+                  PRINTF
+                    " Setting: %s set to %s in %d objects, state %d.\n",
+                    name,value2,nObj,state+1
+                    ENDF(G);
+                }
+              }
+            }
+          }
+          break;
+        case cExecSelection: 
+          sele1 = SelectorIndexByName(G,rec->name);
+          if(sele1>=0) {
+            rec = NULL;
+            while((ListIterate(I->Spec,rec,next))) {
+              if( (rec->type==cExecObject) && (rec->obj->type==cObjectMolecule)) {
+                obj=(ObjectMolecule*)rec->obj;
+                ObjectMoleculeOpRecInit(&op);
+                op.code=OMOP_CountAtoms;
+                op.i1=0;
+                ObjectMoleculeSeleOp(obj,sele1,&op);
+                if(op.i1&&rec->obj->fGetSettingHandle) {
+                  handle = rec->obj->fGetSettingHandle(rec->obj,state);
+                  if(handle) {
+                    SettingCheckHandle(G,handle);
+                    ok = SettingSetFromString(G,*handle,index,value);
+                    if(ok) {
+                      if(updates) 
+                        SettingGenerateSideEffects(G,index,sele,state);
+                      if(!quiet) {
+                        if(state<0) { /* object-specific */
+                          if(Feedback(G,FB_Setting,FB_Actions)) {
+                            SettingGetTextValue(G,*handle,NULL,index,value2);
+                            SettingGetName(G,index,name);
+                            PRINTF
+                              " Setting: %s set to %s in object \"%s\".\n",
+                              name,value2,rec->obj->Name
+                              ENDF(G);
+                          }
+                        } else { /* state-specific */
+                          if(Feedback(G,FB_Setting,FB_Actions)) {
+                            SettingGetTextValue(G,*handle,NULL,index,value2);
+                            SettingGetName(G,index,name);
+                            PRINTF
+                              " Setting: %s set to %s in object \"%s\", state %d.\n",
+                              name,value2,rec->obj->Name,state+1
+                              ENDF(G);
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+          break;
+        case cExecObject: 
+          if(rec->obj->fGetSettingHandle) {
+            handle = rec->obj->fGetSettingHandle(rec->obj,state);
+            if(handle) {
+              SettingCheckHandle(G,handle);
+              ok = SettingSetFromString(G,*handle,index,value);
+              if(ok) {
+                if(updates)
+                  SettingGenerateSideEffects(G,index,sele,state);
+                if(!quiet) {
+                  if(state<0) { /* object-specific */
+                    if(Feedback(G,FB_Setting,FB_Actions)) {
+                      SettingGetTextValue(G,*handle,NULL,index,value2);
+                      SettingGetName(G,index,name);
+                      PRINTF
+                        " Setting: %s set to %s in object \"%s\".\n",
+                        name,value2,rec->obj->Name
+                        ENDF(G);
+                    }
+                  } else { /* state-specific */
+                    if(Feedback(G,FB_Setting,FB_Actions)) {
+                      SettingGetTextValue(G,*handle,NULL,index,value2);
+                      SettingGetName(G,index,name);
+                      PRINTF
+                        " Setting: %s set to %s in object \"%s\", state %d.\n",
+                        name,value2,rec->obj->Name,state+1
+                        ENDF(G);
+                    }
+                  }
+                }
+              }
+            }
+          }
+          break;
+        }
+      }
+    }
+    TrackerDelList(I_Tracker, list_id);
+    TrackerDelIter(I_Tracker, iter_id);
+  }
+#else
   else if(!strcmp(cKeywordAll,sele)) { /* all objects setting */
     while(ListIterate(I->Spec,rec,next))
       {
@@ -6669,6 +7069,7 @@ int  ExecutiveSetSettingFromString(PyMOLGlobals *G,
           }
       }
   }
+#endif
   return(ok);
 }
 
@@ -6753,16 +7154,146 @@ int  ExecutiveUnsetSetting(PyMOLGlobals *G,int index,char *sele,
   int nObj=0;
   int unblock;
   int ok =true;
+  int side_effects = false;
+
 
   PRINTFD(G,FB_Executive)
     " ExecutiveSetSetting: entered. sele \"%s\"\n",sele
     ENDFD;
   unblock = PAutoBlock();
   if(sele[0]==0) { 
-    /* do nothing */
-  } else {
-    int side_effects = false;
-
+    /* do nothing -- in future, restore the default */
+  } 
+#if 1
+  else {
+    CTracker *I_Tracker= I->Tracker;
+    int list_id = ExecutiveGetNamesListFromPattern(G,sele);
+    int iter_id = TrackerNewIter(I_Tracker, 0, list_id);
+    while( TrackerIterNextCandInList(I_Tracker, iter_id, (TrackerRef**)&rec) ) {
+      if(rec) {
+        switch(rec->type) {
+        case cExecAll:
+          rec = NULL;
+          while(ListIterate(I->Spec,rec,next))
+            {
+              if(rec->type==cExecObject) {
+                if(rec->obj->fGetSettingHandle) {
+                  handle = rec->obj->fGetSettingHandle(rec->obj,state);
+                  if(handle) {
+                    SettingCheckHandle(G,handle);
+                    ok = SettingUnset(*handle,index);
+                    nObj++;
+                  }
+                }
+              }
+              if(nObj) {
+                if(updates) 
+                  side_effects = true;
+              }
+            }
+          if(Feedback(G,FB_Setting,FB_Actions)) {
+            if(nObj&&handle) {
+              SettingGetName(G,index,name);
+              if(!quiet) {
+                if(state<0) {
+                  PRINTF
+                    " Setting: %s unset in %d objects.\n",name,nObj
+                    ENDF(G);
+                } else {
+                  PRINTF
+                    " Setting: %s unset in %d objects, state %d.\n",
+                    name,nObj,state+1
+                    ENDF(G);
+                }
+              }
+            }
+          }
+          break;
+        case cExecSelection:
+          sele1=SelectorIndexByName(G,rec->name);
+          if(sele1>=0) {
+            rec = NULL;
+            while((ListIterate(I->Spec,rec,next))) {
+              if((rec->type==cExecObject) && (rec->obj->type==cObjectMolecule)) {
+                obj=(ObjectMolecule*)rec->obj;
+                ObjectMoleculeOpRecInit(&op);
+                op.code=OMOP_CountAtoms;
+                op.i1=0;
+                ObjectMoleculeSeleOp(obj,sele1,&op);
+                if(op.i1&&rec->obj->fGetSettingHandle) {
+                  handle = rec->obj->fGetSettingHandle(rec->obj,state);
+                  if(handle) {
+                    SettingCheckHandle(G,handle);
+                    ok = SettingUnset(*handle,index);
+                    if(ok) {
+                      if(updates) 
+                        side_effects = true;
+                      if(!quiet) {
+                        if(state<0) { /* object-specific */
+                          if(Feedback(G,FB_Setting,FB_Actions)) {
+                            SettingGetName(G,index,name);
+                            PRINTF
+                              " Setting: %s unset in object \"%s\".\n",
+                              name,rec->obj->Name
+                              ENDF(G);
+                          }
+                        } else { /* state-specific */
+                          if(Feedback(G,FB_Setting,FB_Actions)) {
+                            SettingGetName(G,index,name);
+                            PRINTF
+                              " Setting: %s unset in object \"%s\", state %d.\n",
+                              name,rec->obj->Name,state+1
+                              ENDF(G);
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+          break;
+        case cExecObject:
+          if(rec->obj->fGetSettingHandle) {
+            handle = rec->obj->fGetSettingHandle(rec->obj,state);
+            if(handle) {
+              SettingCheckHandle(G,handle);
+              ok = SettingUnset(*handle,index);
+              if(ok) {
+                if(updates)
+                  side_effects=true;
+                if(!quiet) {
+                  if(state<0) { /* object-specific */
+                    if(Feedback(G,FB_Setting,FB_Actions)) {
+                      SettingGetName(G,index,name);
+                      PRINTF
+                        " Setting: %s unset in object \"%s\".\n",
+                        name,rec->obj->Name
+                        ENDF(G);
+                    }
+                  } else { /* state-specific */
+                    if(Feedback(G,FB_Setting,FB_Actions)) {
+                      SettingGetName(G,index,name);
+                      PRINTF
+                        " Setting: %s unset in object \"%s\", state %d.\n",
+                        name,rec->obj->Name,state+1
+                        ENDF(G);
+                    }
+                  }
+                }
+              }
+            }
+          }
+          break;
+        }
+      }
+    }
+    TrackerDelList(I_Tracker, list_id);
+    TrackerDelIter(I_Tracker, iter_id);
+  }
+#else
+  else {
     if(!strcmp(cKeywordAll,sele)) { /* all objects setting */
       
       while(ListIterate(I->Spec,rec,next))
@@ -6781,24 +7312,24 @@ int  ExecutiveUnsetSetting(PyMOLGlobals *G,int index,char *sele,
             if(updates) 
               side_effects = true;
           }
-          if(Feedback(G,FB_Setting,FB_Actions)) {
-            if(nObj&&handle) {
-              SettingGetName(G,index,name);
-              if(!quiet) {
-                if(state<0) {
-                  PRINTF
-                    " Setting: %s unset in %d objects.\n",name,nObj
-                    ENDF(G);
-                } else {
-                  PRINTF
-                    " Setting: %s unset in %d objects, state %d.\n",
-                    name,nObj,state+1
-                    ENDF(G);
-                }
-              }
+        }
+      if(Feedback(G,FB_Setting,FB_Actions)) {
+        if(nObj&&handle) {
+          SettingGetName(G,index,name);
+          if(!quiet) {
+            if(state<0) {
+              PRINTF
+                " Setting: %s unset in %d objects.\n",name,nObj
+                ENDF(G);
+            } else {
+              PRINTF
+                " Setting: %s unset in %d objects, state %d.\n",
+                name,nObj,state+1
+                ENDF(G);
             }
           }
         }
+      }
     } else { /* based on a selection/object name */
       sele1=SelectorIndexByName(G,sele);
       while((ListIterate(I->Spec,rec,next)))
@@ -6876,9 +7407,10 @@ int  ExecutiveUnsetSetting(PyMOLGlobals *G,int index,char *sele,
             }
         }
     }
-    if(side_effects)
-      SettingGenerateSideEffects(G,index,sele,state);
   }
+#endif
+  if(side_effects)
+    SettingGenerateSideEffects(G,index,sele,state);
   PAutoUnblock(unblock);
   return(ok);
 }
@@ -6893,6 +7425,8 @@ int ExecutiveColor(PyMOLGlobals *G,char *name,char *color,int flags,int quiet)
   int col_ind;
   int ok=false;
   col_ind = ColorGetIndex(G,color);
+  if((!name) || (!name[0]))
+    name = cKeywordAll;
   if(col_ind==-1) {
     ErrMessage(G,"Color","Unknown color.");
   } else {
@@ -6964,10 +7498,6 @@ int ExecutiveColor(PyMOLGlobals *G,char *name,char *color,int flags,int quiet)
     TrackerDelIter(I_Tracker, iter_id);
 
 #else
-    char *best_match;
-
-    
-    best_match = ExecutiveFindBestNameMatch(G,name);
     /* per atom */
     if(!(flags&0x1)) {
       int sele = SelectorIndexByName(G,name);
@@ -7143,9 +7673,9 @@ int ExecutiveGetCameraExtent(PyMOLGlobals *G,char *name,float *mn,float *mx,int 
 	 op.v1[0]=FLT_MAX;
 	 op.v1[1]=FLT_MAX;
 	 op.v1[2]=FLT_MAX;
-    op.v2[0]=FLT_MIN;
-    op.v2[1]=FLT_MIN;
-    op.v2[2]=FLT_MIN;
+    op.v2[0]=-FLT_MAX;
+    op.v2[1]=-FLT_MAX;
+    op.v2[2]=-FLT_MAX;
     op.i1 = 0;
     op.i2 = transformed;
     op.mat1=SceneGetMatrix(G);
@@ -7176,9 +7706,8 @@ int ExecutiveGetExtent(PyMOLGlobals *G,char *name,float *mn,float *mx,
   ObjectMoleculeOpRec op,op2;
   register CExecutive *I=G->Executive;
   CObject *obj;
-  int flag = false;
+  int result = false;
   SpecRec *rec = NULL;
-  int all_flag = false;
   float f1,f2,fmx;
   int a;
 
@@ -7213,140 +7742,301 @@ int ExecutiveGetExtent(PyMOLGlobals *G,char *name,float *mn,float *mx,
   op2.v2[0]=1.0;
   op2.v2[1]=1.0;
   op2.v2[2]=1.0;
-  
-  if(WordMatch(G,cKeywordAll,name,true)<0) {
-    all_flag=true;
-  }
-  sele=SelectorIndexByName(G,name);
 
-  if(sele>=0) { 
-    if(state<0) {
-      op.code = OMOP_MNMX;
-    } else {
-      op.code = OMOP_CSetMinMax;
-      op.cs1 = state;
+#if 1
+  {
+    CTracker *I_Tracker= I->Tracker;
+    int list_id = ExecutiveGetNamesListFromPattern(G,name);
+    int have_atoms_flag = false;
+    int have_extent_flag = false;
+
+    /* first, compute atomic extents */
+
+    if(weighted) {
+      op2.i1 = 0;
+
+      op2.v1[0]=0.0F;
+      op2.v1[1]=0.0F;
+      op2.v1[2]=0.0F;
+
+      op.i1 = 0;
+
+      op.v1[0]=FLT_MAX;
+      op.v1[1]=FLT_MAX;
+      op.v1[2]=FLT_MAX;
+
+      op.v2[0]=-FLT_MAX;
+      op.v2[1]=-FLT_MAX;
+      op.v2[2]=-FLT_MAX;
     }
-	 op.v1[0]=FLT_MAX;
-	 op.v1[1]=FLT_MAX;
-	 op.v1[2]=FLT_MAX;
-    op.v2[0]=FLT_MIN;
-    op.v2[1]=FLT_MIN;
-    op.v2[2]=FLT_MIN;
-    op.i1 = 0;
-    op.i2 = transformed;
-    ExecutiveObjMolSeleOp(G,sele,&op);
 
-    PRINTFD(G,FB_Executive)
-      " ExecutiveGetExtent: minmax over %d vertices\n",op.i1
-      ENDFD;
+    /* first, handle molecular objects */
 
-    if(op.i1)
-      flag = true;
-    if(all_flag) {
-      while(ListIterate(I->Spec,rec,next)) {
-        if(rec->type==cExecObject) {
-          obj=rec->obj;
-          if(obj->ExtentFlag) 
-            switch(obj->type) {
-            case cObjectMolecule:
-              break;
-            default:
-              min3f(obj->ExtentMin,op.v1,op.v1);
-              max3f(obj->ExtentMax,op.v2,op.v2);
-              flag = true;
-              break;
+    {
+      int iter_id = TrackerNewIter(I_Tracker, 0, list_id);
+      
+      while( TrackerIterNextCandInList(I_Tracker, iter_id, (TrackerRef**)&rec) ) {
+        if(rec) {
+          switch(rec->type) {
+          case cExecObject:
+          case cExecSelection:
+          case cExecAll:
+            if(rec->type==cExecAll)
+              sele=SelectorIndexByName(G,cKeywordAll);
+            else
+              sele=SelectorIndexByName(G,rec->name);            
+            if(sele>=0) { 
+              if(state<0) {
+                op.code = OMOP_MNMX;
+              } else {
+                op.code = OMOP_CSetMinMax;
+                op.cs1 = state;
+              }
+              op.i2 = transformed;
+              ExecutiveObjMolSeleOp(G,sele,&op);
+              if(op.i1) {
+                have_atoms_flag = true;
+              }
+              PRINTFD(G,FB_Executive)
+                " ExecutiveGetExtent: minmax over %d vertices\n",op.i1
+                ENDFD;
             }
+            
+            if(weighted) {
+              if(state<0) 
+                op2.code = OMOP_SUMC;
+              else {
+                op2.code = OMOP_CSetSumVertices;
+                op2.cs1 = state;
+              }
+              ExecutiveObjMolSeleOp(G,sele,&op2);           
+            }
+            break;
+          }
         }
       }
+      TrackerDelIter(I_Tracker, iter_id);
     }
-    if(weighted) {
-      op2.i1=0;
-      op2.i2=transformed;
-      if(state<0) 
-        op2.code = OMOP_SUMC;
-      else {
-        op2.code = OMOP_CSetSumVertices;
-        op2.cs1 = state;
+    if(have_atoms_flag)  have_extent_flag=true;
+
+    /* now handle nonmolecular objects */
+
+    {
+      int iter_id = TrackerNewIter(I_Tracker, 0, list_id);
+
+      while( TrackerIterNextCandInList(I_Tracker, iter_id, (TrackerRef**)&rec) ) {
+        if(rec) {
+          switch(rec->type) {
+          case cExecAll:
+            rec = NULL;
+            while(ListIterate(I->Spec,rec,next)) {
+              if(rec->type==cExecObject) {
+                obj=rec->obj;
+                if(obj->ExtentFlag) 
+                  switch(obj->type) {
+                  case cObjectMolecule:
+                    break;
+                  default:
+                    min3f(obj->ExtentMin,op.v1,op.v1);
+                    max3f(obj->ExtentMax,op.v2,op.v2);
+                    have_extent_flag=true;
+                    break;
+                  }
+              }
+            }
+            break;
+          case cExecObject:
+            obj=rec->obj;
+            if(obj->ExtentFlag) 
+              switch(obj->type) {
+              case cObjectMolecule: /* will have been handled above... */
+                break;
+              default:
+                min3f(obj->ExtentMin,op.v1,op.v1);
+                max3f(obj->ExtentMax,op.v2,op.v2);
+                have_extent_flag=true;
+                break;
+              }
+            break;
+          }
+        }
       }
-      
-      op2.v1[0]=0.0;
-      op2.v1[1]=0.0;
-      op2.v1[2]=0.0;
-      ExecutiveObjMolSeleOp(G,sele,&op2);
-      if(op2.i1) {
-        op2.v1[0]/=op2.i1;
+      TrackerDelIter(I_Tracker, iter_id);
+    }
+   
+    if(have_atoms_flag&&weighted) { 
+      if(op2.i1) { 
+        op2.v1[0]/=op2.i1; /* compute average */
         op2.v1[1]/=op2.i1;
         op2.v1[2]/=op2.i1;
-      }
-    }
-  } else {
-    obj = ExecutiveFindObjectByName(G,name);
-    if(obj) {
-      switch(obj->type) {
-      case cObjectMolecule:
-        break;
-      default:
-        if(obj->ExtentFlag) {
-          copy3f(obj->ExtentMin,op.v1);
-          copy3f(obj->ExtentMax,op.v2);
-          flag = true;
-        } else {
-
-          PRINTFD(G,FB_Executive)
-            " ExecutiveGetExtent: no extent for object %s\n",obj->Name
-            ENDFD;
-          
+        
+        for (a=0;a<3;a++) { /* this puts origin at the weighted center */
+          f1 = op2.v1[a] - op.v1[a];
+          f2 = op.v2[a] - op2.v1[a];
+          if(f1>f2) 
+            fmx = f1;
+          else
+            fmx = f2;
+          op.v1[a] = op2.v1[a] - fmx;
+          op.v2[a] = op2.v1[a] + fmx;
         }
-        break;
       }
     }
-  }
-  if(flag&&weighted) { 
-    if(op2.i1) { 
-      for (a=0;a<3;a++) { /* this puts origin at the weighted center */
-        f1 = op2.v1[a] - op.v1[a];
-        f2 = op.v2[a] - op2.v1[a];
-        if(f1>f2) 
-          fmx = f1;
-        else
-          fmx = f2;
-        op.v1[a] = op2.v1[a] - fmx;
-        op.v2[a] = op2.v1[a] + fmx;
-      }
+
+    if(have_extent_flag) {
+      copy3f(op.v1,mn);
+      copy3f(op.v2,mx);
+    } else {
+      zero3f(mn);
+      zero3f(mx);
     }
+    TrackerDelList(I_Tracker, list_id);
+   
+    result = have_extent_flag;
+
   }
-  copy3f(op.v1,mn);
-  copy3f(op.v2,mx);
-  
-  if(all_flag) {
-    rec=NULL;
-    while(ListIterate(I->Spec,rec,next)) {
-      if(rec->type==cExecObject) {
-        obj=rec->obj;
-        switch(rec->obj->type) {
+#else
+  {
+    int flag = false;
+    int all_flag = false;
+    
+    if(WordMatch(G,cKeywordAll,name,true)<0) {
+      all_flag=true;
+    }
+    sele=SelectorIndexByName(G,name);
+    
+    if(sele>=0) { 
+      if(state<0) {
+        op.code = OMOP_MNMX;
+      } else {
+        op.code = OMOP_CSetMinMax;
+        op.cs1 = state;
+      }
+      op.v1[0]=FLT_MAX;
+      op.v1[1]=FLT_MAX;
+      op.v1[2]=FLT_MAX;
+      op.v2[0]=-FLT_MAX;
+      op.v2[1]=-FLT_MAX;
+      op.v2[2]=-FLT_MAX;
+      op.i1 = 0;
+      op.i2 = transformed;
+      ExecutiveObjMolSeleOp(G,sele,&op);
+
+      PRINTFD(G,FB_Executive)
+        " ExecutiveGetExtent: minmax over %d vertices\n",op.i1
+        ENDFD;
+
+      if(op.i1)
+        flag = true;
+      if(all_flag) {
+        while(ListIterate(I->Spec,rec,next)) {
+          if(rec->type==cExecObject) {
+            obj=rec->obj;
+            if(obj->ExtentFlag) 
+              switch(obj->type) {
+              case cObjectMolecule:
+                break;
+              default:
+                min3f(obj->ExtentMin,op.v1,op.v1);
+                max3f(obj->ExtentMax,op.v2,op.v2);
+                flag = true;
+                break;
+              }
+          }
+        }
+      }
+      if(weighted) {
+        op2.i1=0;
+        op2.i2=transformed;
+        if(state<0) 
+          op2.code = OMOP_SUMC;
+        else {
+          op2.code = OMOP_CSetSumVertices;
+          op2.cs1 = state;
+        }
+      
+        op2.v1[0]=0.0;
+        op2.v1[1]=0.0;
+        op2.v1[2]=0.0;
+        ExecutiveObjMolSeleOp(G,sele,&op2);
+        if(op2.i1) {
+          op2.v1[0]/=op2.i1;
+          op2.v1[1]/=op2.i1;
+          op2.v1[2]/=op2.i1;
+        }
+      }
+    } else {
+      obj = ExecutiveFindObjectByName(G,name);
+      if(obj) {
+        switch(obj->type) {
         case cObjectMolecule:
           break;
         default:
           if(obj->ExtentFlag) {
-            if(!flag) {
-              copy3f(obj->ExtentMax,mx);
-              copy3f(obj->ExtentMin,mn);
-              flag=true;
-            } else {
-              max3f(obj->ExtentMax,mx,mx);
-              min3f(obj->ExtentMin,mn,mn);
-            }
+            copy3f(obj->ExtentMin,op.v1);
+            copy3f(obj->ExtentMax,op.v2);
+            flag = true;
+          } else {
+
+            PRINTFD(G,FB_Executive)
+              " ExecutiveGetExtent: no extent for object %s\n",obj->Name
+              ENDFD;
+          
           }
           break;
         }
       }
     }
+    if(flag&&weighted) { 
+      if(op2.i1) { 
+        for (a=0;a<3;a++) { /* this puts origin at the weighted center */
+          f1 = op2.v1[a] - op.v1[a];
+          f2 = op.v2[a] - op2.v1[a];
+          if(f1>f2) 
+            fmx = f1;
+          else
+            fmx = f2;
+          op.v1[a] = op2.v1[a] - fmx;
+          op.v2[a] = op2.v1[a] + fmx;
+        }
+      }
+    }
+    copy3f(op.v1,mn);
+    copy3f(op.v2,mx);
+  
+    if(all_flag) {
+      rec=NULL;
+      while(ListIterate(I->Spec,rec,next)) {
+        if(rec->type==cExecObject) {
+          obj=rec->obj;
+          switch(rec->obj->type) {
+          case cObjectMolecule:
+            break;
+          default:
+            if(obj->ExtentFlag) {
+              if(!flag) {
+                copy3f(obj->ExtentMax,mx);
+                copy3f(obj->ExtentMin,mn);
+                flag=true;
+              } else {
+                max3f(obj->ExtentMax,mx,mx);
+                min3f(obj->ExtentMin,mn,mn);
+              }
+            }
+            break;
+          }
+        }
+      }
+      result = false;
+    }
   }
+#endif
+
   PRINTFD(G,FB_Executive)
-    " ExecutiveGetExtent: returning %d\n",flag
+    " ExecutiveGetExtent: returning %d\n",result
     ENDFD;
 
-  return(flag);  
+  return result;
 }
 /*========================================================================*/
 static int ExecutiveGetMaxDistance(PyMOLGlobals *G,char *name,float *pos,float *dev,int transformed,int state)
@@ -7357,7 +8047,6 @@ static int ExecutiveGetMaxDistance(PyMOLGlobals *G,char *name,float *pos,float *
   CObject *obj;
   int flag = false;
   SpecRec *rec = NULL;
-  int all_flag = false;
   float f1,fmx=0.0F;
 
   if(state==-2) state=SceneGetState(G);
@@ -7369,93 +8058,206 @@ static int ExecutiveGetMaxDistance(PyMOLGlobals *G,char *name,float *pos,float *
   ObjectMoleculeOpRecInit(&op);
   ObjectMoleculeOpRecInit(&op2);
 
-  op2.i1 = 0;
-  op2.v1[0]=-1.0;
-  op2.v1[1]=-1.0;
-  op2.v1[2]=-1.0;
-  op2.v2[0]=1.0;
-  op2.v2[1]=1.0;
-  op2.v2[2]=1.0;
-  
-  if(WordMatch(G,cKeywordAll,name,true)<0) {
-      all_flag=true;
-  }
-  sele=SelectorIndexByName(G,name);
+#if 1
+  {
+    CTracker *I_Tracker= I->Tracker;
+    int list_id = ExecutiveGetNamesListFromPattern(G,name);
 
-  if(sele>=0) {
-    if(state<0) {
-      op.code = OMOP_MaxDistToPt;
-    } else {
-      op.code = OMOP_CSetMaxDistToPt;
-      op.cs1 = state;
-    }
-	 op.v1[0]=pos[0];
-	 op.v1[1]=pos[1];
-	 op.v1[2]=pos[2];
-    op.i1 = 0;
-    op.f1 = 0.0F;
-    op.i2 = transformed;
-    ExecutiveObjMolSeleOp(G,sele,&op);
-    fmx = op.f1;
+    op2.i1 = 0;
+    op2.v1[0]=-1.0;
+    op2.v1[1]=-1.0;
+    op2.v1[2]=-1.0;
+    op2.v2[0]=1.0;
+    op2.v2[1]=1.0;
+    op2.v2[2]=1.0;
 
-    if(op.i1)
-      flag = true;
-    if(all_flag) {
-      while(ListIterate(I->Spec,rec,next)) {
-        if(rec->type==cExecObject) {
-          obj=rec->obj;
-          if(obj->ExtentFlag) 
-            switch(obj->type) {
-            case cObjectMolecule:
-              break;
-            default:
-              f1 = (float)diff3f(obj->ExtentMin,pos);
-              if(fmx<f1) fmx = f1;
-              f1 = (float)diff3f(obj->ExtentMax,pos);
-              if(fmx<f1) fmx = f1;
-              flag = true;
-              break;
-            }
-        }
-      }
-    }
-  } else {
-    obj = ExecutiveFindObjectByName(G,name);
-    if(obj) {
-      switch(obj->type) {
-      case cObjectMolecule:
-        break;
-      default:
-        if(obj->ExtentFlag) {
-          f1 = (float)diff3f(obj->ExtentMin,pos);
-          if(fmx<f1) fmx = f1;
-          f1 = (float)diff3f(obj->ExtentMax,pos);
-          if(fmx<f1) fmx = f1;
-          flag = true;
-          break;
-        }
-      }
-    } else if(all_flag) {
-      rec=NULL;
-      while(ListIterate(I->Spec,rec,next)) {
-        if(rec->type==cExecObject) {
-          obj=rec->obj;
-          switch(rec->obj->type) {
-          case cObjectMolecule:
-            break;
-          default:
-            if(obj->ExtentFlag) {
-              f1 = (float)diff3f(obj->ExtentMin,pos);
-              if(fmx<f1) fmx = f1;
-              f1 = (float)diff3f(obj->ExtentMax,pos);
-              if(fmx<f1) fmx = f1;
+    {
+      /* first handle molecular objects */
+
+      int iter_id = TrackerNewIter(I_Tracker, 0, list_id);
+      
+      while( TrackerIterNextCandInList(I_Tracker, iter_id, (TrackerRef**)&rec) ) {
+        if(rec) {
+          switch(rec->type) {
+          case cExecObject:
+          case cExecSelection:
+          case cExecAll:
+            if(rec->type==cExecAll)
+              sele=SelectorIndexByName(G,cKeywordAll);
+            else
+              sele=SelectorIndexByName(G,rec->name);            
+            if(sele>=0) { 
+              if(state<0) {
+                op.code = OMOP_MaxDistToPt;
+              } else {
+                op.code = OMOP_CSetMaxDistToPt;
+                op.cs1 = state;
+              }
+              op.v1[0]=pos[0];
+              op.v1[1]=pos[1];
+              op.v1[2]=pos[2];
+              op.i1 = 0;
+              op.f1 = 0.0F;
+              op.i2 = transformed;
+              ExecutiveObjMolSeleOp(G,sele,&op);
+              fmx = op.f1;
+              
+              if(op.i1)
+                flag = true;
             }
             break;
           }
         }
       }
+      TrackerDelIter(I_Tracker, iter_id);
+    }
+
+    {
+      /* now handle nonmolecular objects */
+      int iter_id = TrackerNewIter(I_Tracker, 0, list_id);
+
+      while( TrackerIterNextCandInList(I_Tracker, iter_id, (TrackerRef**)&rec) ) {
+        if(rec) {
+          switch(rec->type) {
+          case cExecAll:
+            rec = NULL;
+            while(ListIterate(I->Spec,rec,next)) {
+              if(rec->type==cExecObject) {
+                obj=rec->obj;
+                if(obj->ExtentFlag) {
+                  switch(obj->type) {
+                  case cObjectMolecule:
+                    break;
+                  default:
+                    if(obj->ExtentFlag) {
+                      f1 = (float)diff3f(obj->ExtentMin,pos);
+                      if(fmx<f1) fmx = f1;
+                      f1 = (float)diff3f(obj->ExtentMax,pos);
+                      if(fmx<f1) fmx = f1;
+                      flag = true;
+                      break;
+                    }
+                  }
+                }
+              }
+            }
+            break;
+          case cExecObject:
+            obj=rec->obj;
+            switch(rec->obj->type) {
+            case cObjectMolecule:
+              break;
+            default:
+              if(obj->ExtentFlag) {
+                f1 = (float)diff3f(obj->ExtentMin,pos);
+                if(fmx<f1) fmx = f1;
+                f1 = (float)diff3f(obj->ExtentMax,pos);
+                if(fmx<f1) fmx = f1;
+                flag = true;
+              }
+              break;
+            }
+          }
+        }
+      }
+      TrackerDelIter(I_Tracker, iter_id);     
+    }
+    
+    TrackerDelList(I_Tracker, list_id);
+  }
+#else
+  {
+  int all_flag = false;
+  
+    op2.i1 = 0;
+    op2.v1[0]=-1.0;
+    op2.v1[1]=-1.0;
+    op2.v1[2]=-1.0;
+    op2.v2[0]=1.0;
+    op2.v2[1]=1.0;
+    op2.v2[2]=1.0;
+  
+    if(WordMatch(G,cKeywordAll,name,true)<0) {
+      all_flag=true;
+    }
+    sele=SelectorIndexByName(G,name);
+
+    if(sele>=0) {
+      if(state<0) {
+        op.code = OMOP_MaxDistToPt;
+      } else {
+        op.code = OMOP_CSetMaxDistToPt;
+        op.cs1 = state;
+      }
+      op.v1[0]=pos[0];
+      op.v1[1]=pos[1];
+      op.v1[2]=pos[2];
+      op.i1 = 0;
+      op.f1 = 0.0F;
+      op.i2 = transformed;
+      ExecutiveObjMolSeleOp(G,sele,&op);
+      fmx = op.f1;
+
+      if(op.i1)
+        flag = true;
+      if(all_flag) {
+        while(ListIterate(I->Spec,rec,next)) {
+          if(rec->type==cExecObject) {
+            obj=rec->obj;
+            if(obj->ExtentFlag) 
+              switch(obj->type) {
+              case cObjectMolecule:
+                break;
+              default:
+                f1 = (float)diff3f(obj->ExtentMin,pos);
+                if(fmx<f1) fmx = f1;
+                f1 = (float)diff3f(obj->ExtentMax,pos);
+                if(fmx<f1) fmx = f1;
+                flag = true;
+                break;
+              }
+          }
+        }
+      }
+    } else {
+      obj = ExecutiveFindObjectByName(G,name);
+      if(obj) {
+        switch(obj->type) {
+        case cObjectMolecule:
+          break;
+        default:
+          if(obj->ExtentFlag) {
+            f1 = (float)diff3f(obj->ExtentMin,pos);
+            if(fmx<f1) fmx = f1;
+            f1 = (float)diff3f(obj->ExtentMax,pos);
+            if(fmx<f1) fmx = f1;
+            flag = true;
+            break;
+          }
+        }
+      } else if(all_flag) {
+        rec=NULL;
+        while(ListIterate(I->Spec,rec,next)) {
+          if(rec->type==cExecObject) {
+            obj=rec->obj;
+            switch(rec->obj->type) {
+            case cObjectMolecule:
+              break;
+            default:
+              if(obj->ExtentFlag) {
+                f1 = (float)diff3f(obj->ExtentMin,pos);
+                if(fmx<f1) fmx = f1;
+                f1 = (float)diff3f(obj->ExtentMax,pos);
+                if(fmx<f1) fmx = f1;
+              }
+              break;
+            }
+          }
+        }
+      }
     }
   }
+#endif
   *dev = fmx;
   return(flag);  
 }
@@ -7697,19 +8499,72 @@ int ExecutiveGetMoment(PyMOLGlobals *G,char *name,double *mi,int state)
   return(c);
 }
 /*========================================================================*/
-int ExecutiveSetObjVisib(PyMOLGlobals *G,char *name,int state)
+int ExecutiveSetObjVisib(PyMOLGlobals *G,char *name,int onoff)
 {
   register CExecutive *I = G->Executive;
-  SpecRec *tRec;
-
   PRINTFD(G,FB_Executive)
     " ExecutiveSetObjVisib: entered.\n"
     ENDFD;
+#if 1
+  CTracker *I_Tracker= I->Tracker;
+  SpecRec *rec;
+  int list_id = ExecutiveGetNamesListFromPattern(G,name);
+  int iter_id = TrackerNewIter(I_Tracker, 0, list_id);
+  while( TrackerIterNextCandInList(I_Tracker, iter_id, (TrackerRef**)&rec) ) {
+    if(rec) {
+      switch(rec->type) {
+      case cExecAll:
+        {
+          SpecRec *tRec=NULL;
+          while(ListIterate(I->Spec,tRec,next)) {
+            if(onoff!=tRec->visible) {
+              if(tRec->type==cExecObject) {
+                if(tRec->visible)
+                  SceneObjectDel(G,tRec->obj);				
+                else {
+                  SceneObjectAdd(G,tRec->obj);
+                }
+              }
+              if((tRec->type!=cExecSelection)||(!onoff)) /* hide all selections, but show all */
+                tRec->visible=!tRec->visible;
+            }
+          }
+        }
+        break;
+      case cExecObject:
+        if(rec->visible!=onoff) {
+          if(rec->visible)
+            SceneObjectDel(G,rec->obj);				
+          else {
+            SceneObjectAdd(G,rec->obj);
+          }
+          rec->visible=!rec->visible;
+        }
+        break;
+      case cExecSelection:
+        if(rec->visible!=onoff) {
+          rec->visible=!rec->visible;
+          if(rec->visible)
+            if(SettingGetGlobal_b(G,cSetting_active_selections)) {
+              ExecutiveHideSelections(G);
+              rec->visible=true;
+            }
+          SceneDirty(G);
+          SeqDirty(G);
+        }
+        break;
+      }
+    }
+  }
+  TrackerDelList(I_Tracker, list_id);
+  TrackerDelIter(I_Tracker, iter_id);
+#else
+  SpecRec *tRec;
 
   if(strcmp(name,cKeywordAll)==0) {
     tRec=NULL;
     while(ListIterate(I->Spec,tRec,next)) {
-      if(state!=tRec->visible) {
+      if(onoff!=tRec->visible) {
         if(tRec->type==cExecObject) {
           if(tRec->visible)
             SceneObjectDel(G,tRec->obj);				
@@ -7717,7 +8572,7 @@ int ExecutiveSetObjVisib(PyMOLGlobals *G,char *name,int state)
             SceneObjectAdd(G,tRec->obj);
           }
         }
-        if((tRec->type!=cExecSelection)||(!state)) /* hide all selections, but show all */
+        if((tRec->type!=cExecSelection)||(!onoff)) /* hide all selections, but show all */
           tRec->visible=!tRec->visible;
       }
     }
@@ -7725,7 +8580,7 @@ int ExecutiveSetObjVisib(PyMOLGlobals *G,char *name,int state)
     tRec = ExecutiveFindSpec(G,name);
     if(tRec) {
       if(tRec->type==cExecObject) {
-        if(tRec->visible!=state)
+        if(tRec->visible!=onoff)
           {
             if(tRec->visible)
               SceneObjectDel(G,tRec->obj);				
@@ -7736,7 +8591,7 @@ int ExecutiveSetObjVisib(PyMOLGlobals *G,char *name,int state)
           }
       }
       else if(tRec->type==cExecSelection) {
-        if(tRec->visible!=state) {
+        if(tRec->visible!=onoff) {
           tRec->visible=!tRec->visible;
           if(tRec->visible)
             if(SettingGetGlobal_b(G,cSetting_active_selections)) {
@@ -7749,6 +8604,7 @@ int ExecutiveSetObjVisib(PyMOLGlobals *G,char *name,int state)
       }
     }
   }
+#endif
   PRINTFD(G,FB_Executive)
     " ExecutiveSetObjVisib: leaving...\n"
     ENDFD;
@@ -7853,7 +8709,7 @@ int ExecutiveToggleRepVisib(PyMOLGlobals *G,char *name,int rep)
 
   tRec = ExecutiveFindSpec(G,name);
   if((!tRec)&&(!strcmp(name,cKeywordAll))) {
-    ExecutiveToggleAllRepVisib(G,name,rep);
+    ExecutiveToggleAllRepVisib(G,rep);
   }
   if(tRec) {
     if(tRec->type==cExecObject) 
@@ -7972,7 +8828,7 @@ void ExecutiveSetRepVisib(PyMOLGlobals *G,char *name,int rep,int state)
         SceneChanged(G);
         break;
       case cExecAll:
-        ExecutiveSetAllRepVisib(G,rec->name,rep,state);
+        ExecutiveSetAllRepVisib(G,rep,state);
         break;
       }
     }
@@ -7991,7 +8847,7 @@ void ExecutiveSetRepVisib(PyMOLGlobals *G,char *name,int rep,int state)
 
   tRec = ExecutiveFindSpec(G,name);
   if((!tRec)&&(!strcmp(name,cKeywordAll))) {
-    ExecutiveSetAllRepVisib(G,name,rep,state);
+    ExecutiveSetAllRepVisib(G,rep,state);
   }
   if(tRec) {
     if(name[0]!='_') {
@@ -8074,7 +8930,7 @@ int ExecutiveSetOnOffBySele(PyMOLGlobals *G,char *name,int onoff)
 
 
 /*========================================================================*/
-void ExecutiveSetAllRepVisib(PyMOLGlobals *G,char *name,int rep,int state)
+static void ExecutiveSetAllRepVisib(PyMOLGlobals *G,int rep,int state)
 {
   ObjectMoleculeOpRec op;
   ObjectMolecule *obj;
@@ -8143,7 +8999,7 @@ void ExecutiveSetAllRepVisib(PyMOLGlobals *G,char *name,int rep,int state)
 
 }
 /*========================================================================*/
-void ExecutiveToggleAllRepVisib(PyMOLGlobals *G,char *name,int rep)
+static void ExecutiveToggleAllRepVisib(PyMOLGlobals *G,int rep)
 {
   ObjectMoleculeOpRec op;
   int toggle_state;
@@ -8168,16 +9024,54 @@ void ExecutiveToggleAllRepVisib(PyMOLGlobals *G,char *name,int rep)
     }
   }
 
-  ExecutiveSetAllRepVisib(G,name,rep,!toggle_state);
+  ExecutiveSetAllRepVisib(G,rep,!toggle_state);
 }
 /*========================================================================*/
 void ExecutiveInvalidateRep(PyMOLGlobals *G,char *name,int rep,int level)
 {
   register CExecutive *I = G->Executive;
-  int sele = -1;
   ObjectMoleculeOpRec op;
-  int all_flag=false;
   SpecRec *rec = NULL;
+
+#if 1
+  CTracker *I_Tracker= I->Tracker;
+  int list_id = ExecutiveGetNamesListFromPattern(G,name);
+  int iter_id = TrackerNewIter(I_Tracker, 0, list_id);
+  while( TrackerIterNextCandInList(I_Tracker, iter_id, (TrackerRef**)&rec) ) {
+    if(rec) {
+      switch(rec->type) {
+      case cExecSelection: 
+      case cExecObject: 
+        {
+          int sele=SelectorIndexByName(G,rec->name);
+          if(sele>=0) {
+            ObjectMoleculeOpRecInit(&op);
+            op.code = OMOP_INVA;
+            op.i1=rep;
+            op.i2=level;
+            ExecutiveObjMolSeleOp(G,sele,&op);
+          }
+        }
+        break;
+      case cExecAll:
+        rec = NULL;
+        while(ListIterate(I->Spec,rec,next)) {
+          if(rec->type==cExecObject) {
+            if(rec->obj->fInvalidate) {
+              rec->obj->fInvalidate(rec->obj,rep,cRepInvColor,cRepAll);
+              SceneDirty(G);
+            }
+          }
+        }
+        break;
+      }
+    }
+  }
+  TrackerDelList(I_Tracker, list_id);
+  TrackerDelIter(I_Tracker, iter_id);
+#else
+  int sele = -1;
+  int all_flag=false;
   PRINTFD(G,FB_Executive)
     "ExecInvRep-Debug: %s %d %d\n",name,rep,level
     ENDFD;
@@ -8201,6 +9095,7 @@ void ExecutiveInvalidateRep(PyMOLGlobals *G,char *name,int rep,int level)
     op.i2=level;
     ExecutiveObjMolSeleOp(G,sele,&op);
   }
+#endif
 }
 
 
@@ -8420,12 +9315,79 @@ void ExecutiveSymExp(PyMOLGlobals *G,char *name,char *oname,char *s1,float cutof
     ENDFD;
   SettingSet(G,cSetting_auto_zoom,auto_save);
 }
+static void ExecutivePurgeSpec(PyMOLGlobals *G,SpecRec *rec)
+{
+  register CExecutive *I = G->Executive;
+  switch(rec->type) {
+case cExecObject:
+    if(I->LastEdited==rec->obj)
+      I->LastEdited=NULL;
+    if(rec->obj->type == cObjectMolecule)
+      if(EditorIsAnActiveObject(G,(ObjectMolecule*)rec->obj))
+        EditorInactivate(G);
+      SeqChanged(G);
+      if(rec->visible) 
+        SceneObjectDel(G,rec->obj);
+      ExecutiveDelKey(I,rec);
+      SelectorDelete(G,rec->name);
+      rec->obj->fFree(rec->obj);
+      rec->obj=NULL;
+      TrackerDelCand(I->Tracker,rec->cand_id);
+    break;
+case cExecSelection:
+    if(rec->visible) {
+      SceneDirty(G);
+      SeqDirty(G);
+    }
+    ExecutiveDelKey(I,rec);
+    SelectorDelete(G,rec->name);
+    TrackerDelCand(I->Tracker,rec->cand_id);
+    break;
+  }
+}
+
 /*========================================================================*/
 void ExecutiveDelete(PyMOLGlobals *G,char *name)
 {
   register CExecutive *I = G->Executive;
   SpecRec *rec = NULL;
-  int all_flag=false;
+#if 1
+  CTracker *I_Tracker= I->Tracker;
+  int list_id = ExecutiveGetNamesListFromPattern(G,name);
+  int iter_id = TrackerNewIter(I_Tracker, 0, list_id);
+  while( TrackerIterNextCandInList(I_Tracker, iter_id, (TrackerRef**)&rec) ) {
+    if(rec) {
+      switch(rec->type) {
+      case cExecSelection: 
+        ExecutivePurgeSpec(G,rec);
+        ListDelete(I->Spec,rec,next,SpecRec); /* NOTE: order N in list length! TO FIX */
+        break;
+      case cExecObject: 
+        ExecutivePurgeSpec(G,rec);
+        ListDelete(I->Spec,rec,next,SpecRec); /* NOTE: order N in list length! TO FIX */
+        break;
+      case cExecAll:
+        rec = NULL;
+        while(ListIterate(I->Spec, rec, next)) {
+          switch(rec->type) {
+          case cExecAll:
+            break;
+          default:
+            ExecutivePurgeSpec(G,rec);
+            ListDelete(I->Spec,rec,next,SpecRec);
+            rec = NULL;
+            break;
+          }
+        }
+        SelectorDefragment(G);
+        break;
+      }
+    }
+  }
+  TrackerDelList(I_Tracker, list_id);
+  TrackerDelIter(I_Tracker, iter_id);
+#else
+  int all_flag = false;
   WordType name_copy; /* needed in case the passed string changes */
 
   if(WordMatch(G,name,cKeywordAll,true)<0) all_flag=true;
@@ -8433,7 +9395,7 @@ void ExecutiveDelete(PyMOLGlobals *G,char *name)
   while(ListIterate(I->Spec,rec,next)) {
     switch(rec->type) {
     case cExecObject:
-      if(I->LastEdited==cExecObject) 
+      if(I->LastEdited==rec->obj)
         I->LastEdited=NULL;
       if(all_flag||(WordMatch(G,name_copy,rec->obj->Name,true)<0)) {
         if(rec->obj->type == cObjectMolecule)
@@ -8468,6 +9430,8 @@ void ExecutiveDelete(PyMOLGlobals *G,char *name)
   }
   if(all_flag)
     SelectorDefragment(G);
+#endif
+
 }
 /*========================================================================*/
 void ExecutiveDump(PyMOLGlobals *G,char *fname,char *obj)
@@ -9588,14 +10552,13 @@ int ExecutiveIterateObject(PyMOLGlobals *G,CObject **obj,void **hidden)
   register CExecutive *I = G->Executive;
   int flag=false;
   SpecRec **rec=(SpecRec**)hidden;
-  while(!flag)
-	 {
-		result = (ListIterate(I->Spec,(*rec),next))!=NULL;
-		if(!(*rec))
-		  flag=true;
-		else if((*rec)->type==cExecObject)
-		  flag=true;
-	 }
+  while(!flag) {
+    result = (ListIterate(I->Spec,(*rec),next))!=NULL;
+    if(!(*rec))
+      flag=true;
+    else if((*rec)->type==cExecObject)
+      flag=true;
+  }
   if(*rec)
 	 (*obj)=(*rec)->obj;
   else

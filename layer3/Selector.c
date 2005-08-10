@@ -896,7 +896,8 @@ static int SelectGetNameOffset(PyMOLGlobals *G,char *name,int minMatch,int ignCa
 
   register CSelector *I=G->Selector;
   int result = -1;
-
+  if(name[0]=='?')
+    name++;
   { /* first try for perfect match using the dictionary */
     OVreturn_word res;
     if( OVreturn_IS_OK( (res = OVLexicon_BorrowFromCString(I->Lex,name)))) {
@@ -4087,7 +4088,6 @@ int SelectorGetSeleNCSet(PyMOLGlobals *G,int sele)
           if(result<obj->NCSet) {
             result=obj->NCSet;
             last_obj = obj;
-            break;
           }
       }
     }
@@ -9334,7 +9334,7 @@ static void SelectorInit2(PyMOLGlobals *G)
     n=I->NActive;
     VLACheck(I->Name,SelectorWordType,n+1);
     VLACheck(I->Info,SelectionInfoRec,n+1);
-    strcpy(I->Name[n],cKeywordAll); /* "all" selection = 0*/
+    strcpy(I->Name[n],cKeywordAll); /* "all" selection = 0 */
     I->Name[n+1][0]=0;
     SelectorAddName(G,n);
     SelectionInfoInit(I->Info + n);

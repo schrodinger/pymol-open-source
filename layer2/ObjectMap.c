@@ -1230,7 +1230,7 @@ int ObjectMapCCP4StrToMap(ObjectMap *I,char *CCP4Str,int bytes,int state) {
   ObjectMapStateInit(I->Obj.G,ms);
 
   normalize=(int)SettingGet(I->Obj.G,cSetting_normalize_ccp4_maps);
-  maxd = FLT_MIN;
+  maxd = -FLT_MAX;
   mind = FLT_MAX;
   p=CCP4Str;
   little_endian = *((char*)&little_endian);
@@ -1569,7 +1569,7 @@ static int ObjectMapPHIStrToMap(ObjectMap *I,char *PHIStr,int bytes,int state) {
   ms=&I->State[state];
   ObjectMapStateInit(I->Obj.G,ms);
 
-  maxd = FLT_MIN;
+  maxd = -FLT_MAX;
   mind = FLT_MAX;
   p=PHIStr;
 
@@ -1834,7 +1834,7 @@ int ObjectMapXPLORStrToMap(ObjectMap *I,char *XPLORStr,int state) {
   ms=&I->State[state];
   ObjectMapStateInit(I->Obj.G,ms);
 
-  maxd = FLT_MIN;
+  maxd = -FLT_MAX;
   mind = FLT_MAX;
   p=XPLORStr;
 
@@ -2019,7 +2019,7 @@ static int ObjectMapFLDStrToMap(ObjectMap *I,char *PHIStr,int bytes,int state)
   ms=&I->State[state];
   ObjectMapStateInit(I->Obj.G,ms);
 
-  maxd = FLT_MIN;
+  maxd = -FLT_MAX;
   mind = FLT_MAX;
 
   p = PHIStr;
@@ -2194,7 +2194,7 @@ static int ObjectMapFLDStrToMap(ObjectMap *I,char *PHIStr,int bytes,int state)
 
     
     while(1) {
-      maxd = FLT_MIN;
+      maxd = -FLT_MAX;
       mind = FLT_MAX;
       p=PHIStr;
       
@@ -2355,7 +2355,7 @@ static int ObjectMapBRIXStrToMap(ObjectMap *I,char *BRIXStr,int bytes,int state)
   ms=&I->State[state];
   ObjectMapStateInit(I->Obj.G,ms);
 
-  maxd = FLT_MIN;
+  maxd = -FLT_MAX;
   mind = FLT_MAX;
   
   p = BRIXStr;
@@ -2762,7 +2762,7 @@ static int ObjectMapGRDStrToMap(ObjectMap *I,char *GRDStr,int bytes,int state)
   ms=&I->State[state];
   ObjectMapStateInit(I->Obj.G,ms);
   normalize=(int)SettingGet(I->Obj.G,cSetting_normalize_grd_maps);
-  maxd = FLT_MIN;
+  maxd = -FLT_MAX;
   mind = FLT_MAX;
   
   p = GRDStr;
@@ -3260,7 +3260,7 @@ static int ObjectMapDXStrToMap(ObjectMap *I,char *DXStr,int bytes,int state) {
   ms->Origin=Alloc(float,3);
   ms->Grid = Alloc(float,3);
 
-  maxd = FLT_MIN;
+  maxd = -FLT_MAX;
   mind = FLT_MAX;
   p=DXStr;
 
@@ -3763,7 +3763,7 @@ int ObjectMapNumPyArrayToMapState(PyMOLGlobals *G,ObjectMapState *ms,PyObject *a
 #ifdef _PYMOL_NUMPY
   pao = (MyArrayObject*)ary;
 #endif
-  maxd = FLT_MIN;
+  maxd = -FLT_MAX;
   mind = FLT_MAX;
   if(ok) {
     ms->FDim[0]=ms->Dim[0];
@@ -3933,17 +3933,7 @@ ObjectMap *ObjectMapLoadChemPyMap(PyMOLGlobals *G,ObjectMap *I,PyObject *Map,
   int a,b,c,d,e;
   ObjectMapState *ms;
 
-
-
-  /*  
-  double test[1000];
-  for(a=0;a<1000;a++) {
-      test[a]=rand()/(1.0+INT_MAX);
-      }
-      PyObject_SetAttrString(Map,"c_object",
-      PyCObject_FromVoidPtr(test,NULL));
-  */
-  maxd = FLT_MIN;
+  maxd = -FLT_MAX;
   mind = FLT_MAX;
 
   if(!I) 

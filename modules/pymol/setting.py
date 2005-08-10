@@ -464,6 +464,8 @@ if __name__=='pymol.setting':
         cartoon_ring_width        = (428, '')
         cartoon_ring_color        = (429, '')
         cartoon_ring_finder       = (430, '')
+        cartoon_tube_cap          = (431, '')
+        cartoon_loop_cap          = (432, '')
         
     setting_sc = Shortcut(SettingIndex.__dict__.keys())
 
