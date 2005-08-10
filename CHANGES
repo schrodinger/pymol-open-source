@@ -5,7 +5,7 @@ CHANGE LOG
 Changes up to 0.99
 
 
-    beta11
+    beta10
 
     * cartoon_loop_cap and cartoon_tube_cap settings
 
@@ -26,8 +26,6 @@ Changes up to 0.99
 
     * incorporated the Dunbrack backbone independent rotamers
     
-    beta10
-
     * better cartoons for nucleic acids
         ribbon/cartoon_nucleic_acid_modes: 0, 1, 2, 3, and 4 
         cartoon_ring_mode:  0, 1, 2
