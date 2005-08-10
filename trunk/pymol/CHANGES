@@ -4,9 +4,20 @@ CHANGE LOG
 
 Changes up to 0.99
 
+
     beta11
 
+    * cartoon_loop_cap and cartoon_tube_cap settings
+
+    * fixed latent memory-crash bug in align
+    
+    * fixed min/max issues with maps, alignment, and extents (blush)
+    
     * fixed a couple bugs in p1m parsing
+
+    * now supporting wildcards and name lists for most commands
+      which previously took either a name or selection updates...massive
+      changes to "executive" source code, so there may be new bugs...
 
     * new workaround for amber-like PDB files.
 

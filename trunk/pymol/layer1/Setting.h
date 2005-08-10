@@ -580,6 +580,8 @@ CSetting *SettingNewFromPyList(PyMOLGlobals *G,PyObject *list);
 #define cSetting_cartoon_ring_width         428
 #define cSetting_cartoon_ring_color         429
 #define cSetting_cartoon_ring_finder        430
+#define cSetting_cartoon_tube_cap           431
+#define cSetting_cartoon_loop_cap           432
 
 /* when you add a new settingg also remember:
    layer1/Setting.c
@@ -589,7 +591,7 @@ CSetting *SettingNewFromPyList(PyMOLGlobals *G,PyObject *list);
 
 /* cSetting_ss_INIT must always be last setting_index +1 */
 
-#define cSetting_INIT                       431
+#define cSetting_INIT                       433
 
 #endif
 

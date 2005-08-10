@@ -11,7 +11,11 @@ void DeferredInit(PyMOLGlobals *G, CDeferred *I)
 
 void DeferredFree(CDeferred *I)
 {
-  FreeP(I);
+  while(I) {
+    CDeferred *next = I->next;
+    FreeP(I);
+    I=next;
+  }
 }
 
 CDeferred *DeferredExec(CDeferred *I)

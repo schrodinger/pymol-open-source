@@ -346,21 +346,20 @@ float MatchAlign(CMatch *I,float gap_penalty,float ext_penalty,
   /* initialize the scoring matrix */
   for(f=0;f<nf;f++) {
     for(g=0;g<ng;g++) {
-      score[f][g] = 0.0;
+      score[f][g] = 0.0F;
     }
   }
   /* now start walking backwards up the alignment */
 
   {
      int second_pass = false;
-
      for(b=I->nb-1;b>=0;b--) {
        for(a=I->na-1;a>=0;a--) {
          
          /* find the maximum scoring cell accessible from this position, 
           * while taking gap penalties into account */
          
-         mxv = FLT_MIN;
+         mxv = -FLT_MAX;
          mxa=-1;
          mxb=-1;
          
@@ -430,7 +429,7 @@ float MatchAlign(CMatch *I,float gap_penalty,float ext_penalty,
          
          point[a][b][0] = mxa;
          point[a][b][1] = mxb;
-         
+
          /* and store the cumulative score for this cell */
          score[a][b] = mxv+I->mat[a][b];
         
@@ -450,7 +449,7 @@ float MatchAlign(CMatch *I,float gap_penalty,float ext_penalty,
 
   /* find the best entry point */
 
-  mxv = FLT_MIN;
+  mxv = -FLT_MAX;
   mxa=0;
   mxb=0;
   for(b=0;b<I->nb;b++) {
@@ -468,7 +467,7 @@ float MatchAlign(CMatch *I,float gap_penalty,float ext_penalty,
   a = mxa;
   b = mxb;
   cnt=0;
-  while((a>=0)&&(b>=0)) {
+  while((a>=0)&&(b>=0)&&(a<I->na)&&(b<I->nb)) {
     *(p++)=a;
     *(p++)=b;
     f = point[a][b][0];

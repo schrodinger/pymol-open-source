@@ -16,6 +16,8 @@ Z* -------------------------------------------------------------------
 #ifndef _H_ListMacros
 #define _H_ListMacros
 
+/* simplest possible single-linked list */
+
 #include"MemoryDebug.h"
 #include"Err.h"
 

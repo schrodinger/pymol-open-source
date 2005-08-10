@@ -30,6 +30,7 @@ typedef struct {
   float *c; /* colors */
   int   *i; /* atom indices */
 
+  float r;
   float *sf; /* scale factors for variable-width extrusions (single point)*/
 
   float *sv,*tv;

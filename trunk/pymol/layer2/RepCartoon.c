@@ -398,6 +398,7 @@ Rep *RepCartoonNew(CoordSet *cs)
   int n_ring = 0;
   float ring_width;
   int ring_color;
+  int loop_cap, tube_cap;
 
   /* THIS IS BY FAR THE WORST ROUTINE IN PYMOL!
    * DEVELOP ON IT ONLY AT EXTREME RISK TO YOUR MENTAL HEALTH */
@@ -497,6 +498,9 @@ Rep *RepCartoonNew(CoordSet *cs)
   na_mode = SettingGet_i(G,cs->Setting,obj->Obj.Setting,cSetting_cartoon_nucleic_acid_mode);
   ring_mode = SettingGet_i(G,cs->Setting,obj->Obj.Setting,cSetting_cartoon_ring_mode);
   ring_finder = SettingGet_i(G,cs->Setting,obj->Obj.Setting,cSetting_cartoon_ring_finder);
+
+  tube_cap = SettingGet_i(G,cs->Setting,obj->Obj.Setting,cSetting_cartoon_tube_cap);
+  loop_cap = SettingGet_i(G,cs->Setting,obj->Obj.Setting,cSetting_cartoon_loop_cap);
 
   I->R.fRender=(void (*)(struct Rep *, RenderInfo *))RepCartoonRender;
   I->R.fFree=(void (*)(struct Rep *))RepCartoonFree;
@@ -2139,7 +2143,7 @@ Rep *RepCartoonNew(CoordSet *cs)
             case cCartoon_tube:
               ExtrudeCircle(ex,tube_quality,tube_radius);
               ExtrudeBuildNormals1f(ex);
-              ExtrudeCGOSurfaceTube(ex,I->ray,1,NULL);
+              ExtrudeCGOSurfaceTube(ex,I->ray,tube_cap,NULL);
               break;
             case cCartoon_putty:
               ExtrudeCircle(ex,putty_quality,putty_radius);
@@ -2161,7 +2165,7 @@ Rep *RepCartoonNew(CoordSet *cs)
             case cCartoon_loop:
               ExtrudeCircle(ex,loop_quality,loop_radius);
               ExtrudeBuildNormals1f(ex);
-              ExtrudeCGOSurfaceTube(ex,I->ray,1,NULL);
+              ExtrudeCGOSurfaceTube(ex,I->ray,loop_cap,NULL);
               break;
             case cCartoon_rect:
               if(highlight_color<0) {

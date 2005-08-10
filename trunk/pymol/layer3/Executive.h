@@ -160,8 +160,7 @@ void ExecutiveSetAllVisib(PyMOLGlobals *G,int state);
 void ExecutiveSetRepVisib(PyMOLGlobals *G,char *name,int rep,int state);
 int ExecutiveToggleRepVisib(PyMOLGlobals *G,char *name,int rep);
 
-void ExecutiveSetAllRepVisib(PyMOLGlobals *G,char *name,int rep,int state);
-int ExecutiveSetObjVisib(PyMOLGlobals *G,char *name,int state);
+int ExecutiveSetObjVisib(PyMOLGlobals *G,char *name,int onoff);
 
 int ExecutiveOrigin(PyMOLGlobals *G,char *name,int preserve,char *oname,float *pos,int state);
 int ExecutiveCenter(PyMOLGlobals *G,char *name,int state,int inclusive, float animate, float *pos,int quiet);
@@ -276,7 +275,6 @@ int ExecutiveGetCrystal(PyMOLGlobals *G,char *sele,float *a,float *b,float *c,
                         float *alpha,float *beta,float *gamma,char *sgroup,int *defined);
 int ExecutiveIterateObjectMolecule(PyMOLGlobals *G,ObjectMolecule **obj,void **hidden);
 int ExecutiveGetObjectColorIndex(PyMOLGlobals *G,char *name);
-void ExecutiveToggleAllRepVisib(PyMOLGlobals *G,char *name,int rep);
 int ExecutiveSetOnOffBySele(PyMOLGlobals *G,char *name,int onoff);
 int ExecutiveSetName(PyMOLGlobals *G,char *old_name, char *new_name);
 int ExecutiveGetActiveSeleName(PyMOLGlobals *G,char *name, int create_new);

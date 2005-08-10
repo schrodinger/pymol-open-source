@@ -94,7 +94,8 @@ void ExtrudeCircle(CExtrude *I, int n,float size)
   I->tv = Alloc(float,3*(n+1));
   I->tn = Alloc(float,3*(n+1));
   I->Ns = n;
-  
+  I->r = size;
+
   v = I->sv;
   vn = I->sn;
 
@@ -687,8 +688,9 @@ void ExtrudeCGOSurfaceTube(CExtrude *I,CGO *cgo,int cap,float *color_override)
       CGOEnable(cgo,GL_LIGHTING);
     }
     
-    if(cap) {
-
+    switch(cap) {
+    case 1:
+      
       n = I->n;
       v = I->p;
 
@@ -744,7 +746,26 @@ void ExtrudeCGOSurfaceTube(CExtrude *I,CGO *cgo,int cap,float *color_override)
       }
       CGOVertexv(cgo,I->tv);
       CGOEnd(cgo);
-      
+      break;
+    case 2:
+      {
+        float factor = (float) cos(0.75*PI/I->Ns);
+        if(color_override)
+          CGOColorv(cgo,color_override);
+        else
+          CGOColorv(cgo,I->c);
+        CGOPickColor(cgo,I->i[0],-1);
+        v = I->p;
+        CGOSphere(cgo,v,I->r*factor);
+        v = I->p+3*(I->N-1);
+        if(color_override)
+          CGOColorv(cgo,color_override);
+        else
+          CGOColorv(cgo,I->c+3*(I->N-1));
+        CGOPickColor(cgo,I->i[I->N-1],-1);
+        CGOSphere(cgo,v,I->r*factor); 
+      }
+      break;
     }
     FreeP(TV);
     FreeP(TN);
