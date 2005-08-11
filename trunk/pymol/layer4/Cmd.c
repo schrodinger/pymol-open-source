@@ -1228,8 +1228,8 @@ static PyObject *CmdAlign(PyObject *self, 	PyObject *args) {
     SelectorFreeTmp(TempPyMOLGlobals,s2);
     SelectorFreeTmp(TempPyMOLGlobals,s3);
     APIExit();
-
   }
+
   return Py_BuildValue("f",result);
 }
 

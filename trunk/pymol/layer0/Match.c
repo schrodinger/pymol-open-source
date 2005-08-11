@@ -378,7 +378,7 @@ float MatchAlign(CMatch *I,float gap_penalty,float ext_penalty,
            tst = score[f][g];
            if(!((f==I->na)||(g==I->nb))) {
              gap = g-(b+1);
-             if(gap) tst+=gap_penalty+ext_penalty*gap;
+             if(gap) tst+=gap_penalty+ext_penalty*(gap-1);
            }
            if(tst>mxv) {
              mxv = tst;
@@ -392,7 +392,7 @@ float MatchAlign(CMatch *I,float gap_penalty,float ext_penalty,
            tst = score[f][g];
            if(!((f==I->na)||(g==I->nb))) {
              gap=(f-(a+1));
-             if(gap) tst+=gap_penalty+ext_penalty*gap;
+             if(gap) tst+=gap_penalty+ext_penalty*(gap-1);
            }
            if(tst>mxv) {
              mxv = tst;
@@ -415,7 +415,7 @@ float MatchAlign(CMatch *I,float gap_penalty,float ext_penalty,
                /* only penalize if we are not at the end */
                if(!((f==I->na)||(g==I->nb)))
                  gap = ((f-(a+1))+(g-(b+1)));
-               tst+=2*gap_penalty+ext_penalty*gap;
+               tst+=2*gap_penalty+ext_penalty*(gap-2);
              }
              if(tst>mxv) {
                mxv = tst;

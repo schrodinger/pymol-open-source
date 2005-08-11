@@ -1,17 +1,17 @@
 /* 
-A* -------------------------------------------------------------------
-B* This file contains source code for the PyMOL computer program
-C* copyright 1998-2000 by Warrn Lyford Delano of DeLano Scientific. 
-D* -------------------------------------------------------------------
-E* It is unlawful to modify or remove this copyright notice.
-F* -------------------------------------------------------------------
-G* Please see the accompanying LICENSE file for further information. 
-H* -------------------------------------------------------------------
-I* Additional authors of this source file include:
--* 
--* 
--*
-Z* -------------------------------------------------------------------
+   A* -------------------------------------------------------------------
+   B* This file contains source code for the PyMOL computer program
+   C* copyright 1998-2000 by Warrn Lyford Delano of DeLano Scientific. 
+   D* -------------------------------------------------------------------
+   E* It is unlawful to modify or remove this copyright notice.
+   F* -------------------------------------------------------------------
+   G* Please see the accompanying LICENSE file for further information. 
+   H* -------------------------------------------------------------------
+   I* Additional authors of this source file include:
+   -* 
+   -* 
+   -*
+   Z* -------------------------------------------------------------------
 */
 
 #include "os_std.h"
@@ -546,11 +546,34 @@ typedef struct _CPyMOL {
   ov_word lex_cartoon_loop_cap;
 } _CPyMOL;
 
-static int status_ok(int ok) {
+/* convenience functions -- inline */
+
+#ifdef _PYMOL_INLINE
+#define CC_INLINE __inline__
+#else
+#define CC_INLINE
+#endif
+
+CC_INLINE static PyMOLstatus get_status_ok(int ok) 
+{
   if(ok) 
-    return OVstatus_SUCCESS;
+    return PyMOLstatus_SUCCESS;
   else
-    return OVstatus_FAILURE;
+    return PyMOLstatus_FAILURE;
+}
+
+CC_INLINE static PyMOLreturn_status return_status_ok(int ok)
+{
+  PyMOLreturn_status result;
+  result.status = get_status_ok(ok);
+  return result;
+}
+
+CC_INLINE static PyMOLreturn_status return_status(int status)
+{
+  PyMOLreturn_status result;
+  result.status = status;
+  return result;
 }
 
 static OVstatus PyMOL_InitAPI(CPyMOL *I)
@@ -1109,22 +1132,47 @@ static OVstatus PyMOL_PurgeAPI(CPyMOL *I)
   return_OVstatus_SUCCESS;
 }
 
-int PyMOL_Delete(CPyMOL *I,char *name,int quiet)
+PyMOLreturn_float PyMOL_CmdAlign(CPyMOL *I, char *source, char *target, float cutoff, 
+                                 int cycles, float gap, float extend, int max_gap, 
+                                 char *object, char *matrix, int source_state, int target_state, 
+                                 int quiet, int max_skip) 
 {
-  ExecutiveDelete(I->G, name);
-  return OVstatus_SUCCESS; /* to do: return a real result */
+
+  OrthoLineType s2="",s3="";
+  PyMOLreturn_float result;
+  int ok = false;
+  result.result = -1.0;
+  ok = ((SelectorGetTmp(TempPyMOLGlobals,source,s2)>=0) &&
+        (SelectorGetTmp(TempPyMOLGlobals,target,s3)>=0));
+  if(ok) {
+    result.result = ExecutiveAlign(TempPyMOLGlobals,s2,s3,matrix,gap,extend,max_gap,
+                                   max_skip,cutoff,cycles,quiet,object,
+                                   source_state, target_state);
+  } else {
+    result.result = -1.0F;
+  }
+  result.status = get_status_ok(ok);
+  SelectorFreeTmp(TempPyMOLGlobals,s2);
+  SelectorFreeTmp(TempPyMOLGlobals,s3);
+  return result;
 }
 
-int PyMOL_Zoom(CPyMOL *I,char *selection, float buffer,
-               int state, int complete, float animate, int quiet)
+PyMOLreturn_status PyMOL_CmdDelete(CPyMOL *I,char *name,int quiet)
+{
+  ExecutiveDelete(I->G, name);
+  return return_status_ok(true); /* TO DO: return a real result */
+}
+
+PyMOLreturn_status PyMOL_CmdZoom(CPyMOL *I,char *selection, float buffer,
+                              int state, int complete, float animate, int quiet)
 {
   int ok = ExecutiveWindowZoom(I->G, selection, buffer, state-1, 
                                complete, animate, quiet);
-  return status_ok(ok);
+  return return_status_ok(ok);
 }
 
-int PyMOL_Orient(CPyMOL *I,char *selection, float buffer, 
-                 int state, int complete, float  animate, int quiet)
+PyMOLreturn_status PyMOL_CmdOrient(CPyMOL *I,char *selection, float buffer, 
+                                int state, int complete, float  animate, int quiet)
 {
   double m[16];
   OrthoLineType s1;
@@ -1135,20 +1183,17 @@ int PyMOL_Orient(CPyMOL *I,char *selection, float buffer,
   else
     ok=false;
   SelectorFreeTmp(I->G,s1);
-  return status_ok(ok);
+  return return_status_ok(ok);
 }
 
-int PyMOL_Center(CPyMOL *I,char *selection, int state, int origin, float animate, int quiet)
+PyMOLreturn_status PyMOL_CmdCenter(CPyMOL *I,char *selection, int state, int origin, float animate, int quiet)
 {
   int ok = ExecutiveCenter(I->G,selection,state,origin,animate,NULL,quiet);
-  if(ok) 
-    return OVstatus_SUCCESS;
-  else
-    return OVstatus_FAILURE;
+  return return_status_ok(ok);
 }
 
 
-int PyMOL_Origin(CPyMOL *I,char *selection, int state, int quiet)
+PyMOLreturn_status PyMOL_CmdOrigin(CPyMOL *I,char *selection, int state, int quiet)
 {
   int ok=true;
   OrthoLineType s1;
@@ -1156,16 +1201,16 @@ int PyMOL_Origin(CPyMOL *I,char *selection, int state, int quiet)
   SelectorGetTmp(I->G,selection,s1);
   ok = ExecutiveOrigin(I->G,s1,true,"",v,state-1); /* TODO STATUS */
   SelectorFreeTmp(I->G,s1);
-  return status_ok(ok);
+  return return_status_ok(ok);
 }
 
-int PyMOL_OriginAt(CPyMOL *I,float x, float y, float z, int quiet)
+PyMOLreturn_status PyMOL_CmdOriginAt(CPyMOL *I,float x, float y, float z, int quiet)
 {
   int ok=true;
   float v[3];
   v[0]=x;v[1]=y;v[2]=z;
   ok = ExecutiveOrigin(I->G,"",true,"",v,0); /* TODO STATUS */
-  return status_ok(ok);
+  return return_status_ok(ok);
 }
 
 static OVreturn_word get_rep_id(CPyMOL *I,char *representation)
@@ -1195,7 +1240,7 @@ static OVreturn_word get_clip_id(CPyMOL *I,char *clip)
   return OVOneToOne_GetForward(I->Clip,result.word);
 }
 
-int PyMOL_Clip(CPyMOL *I,char *mode, float amount, char *selection, int state, int quiet)
+PyMOLreturn_status PyMOL_CmdClip(CPyMOL *I,char *mode, float amount, char *selection, int state, int quiet)
 {
   OrthoLineType s1;
   int ok=true;
@@ -1205,16 +1250,16 @@ int PyMOL_Clip(CPyMOL *I,char *mode, float amount, char *selection, int state, i
     SceneClip(I->G,clip_id.word,amount,s1,state);
     SelectorFreeTmp(I->G,s1);
   }
-  return status_ok(ok);
+  return return_status_ok(ok);
 }
 
-int PyMOL_Select(CPyMOL *I,char *name, char *selection, int quiet)
+PyMOLreturn_status PyMOL_CmdSelect(CPyMOL *I,char *name, char *selection, int quiet)
 {
   int ok = SelectorCreate(I->G,name,selection,NULL,quiet,NULL);
-  return status_ok(ok);
+  return return_status_ok(ok);
 }
 
-int PyMOL_Show(CPyMOL *I,char *representation, char *selection, int quiet)
+PyMOLreturn_status PyMOL_CmdShow(CPyMOL *I,char *representation, char *selection, int quiet)
 {
   OrthoLineType s1;
   int ok=true;
@@ -1226,10 +1271,10 @@ int PyMOL_Show(CPyMOL *I,char *representation, char *selection, int quiet)
   } else {
     ok=false;
   }
-  return status_ok(ok);
+  return return_status_ok(ok);
 }
 
-int PyMOL_Hide(CPyMOL *I,char *representation, char *selection, int quiet)
+PyMOLreturn_status PyMOL_CmdHide(CPyMOL *I,char *representation, char *selection, int quiet)
 {
   OrthoLineType s1;
   int ok=true;
@@ -1241,33 +1286,33 @@ int PyMOL_Hide(CPyMOL *I,char *representation, char *selection, int quiet)
   } else {
     ok=false;
   }
-  return status_ok(ok);
+  return return_status_ok(ok);
 }
 
-int PyMOL_Enable(CPyMOL *I,char *name,int quiet)
+PyMOLreturn_status PyMOL_CmdEnable(CPyMOL *I,char *name,int quiet)
 {
   int ok = ExecutiveSetObjVisib(I->G,name,true);
-  return status_ok(ok);
+  return return_status_ok(ok);
 }
 
-int PyMOL_Disable(CPyMOL *I,char *name,int quiet)
+PyMOLreturn_status PyMOL_CmdDisable(CPyMOL *I,char *name,int quiet)
 {
   int ok = ExecutiveSetObjVisib(I->G,name,false);
-  return status_ok(ok);
+  return return_status_ok(ok);
 }
 
-int PyMOL_Set(CPyMOL *I,char *setting, char *value, char *selection, int state, int quiet, int side_effects)
+PyMOLreturn_status PyMOL_CmdSet(CPyMOL *I,char *setting, char *value, char *selection, int state, int quiet, int side_effects)
 {
   int ok=true;
   OVreturn_word setting_id;
   if(OVreturn_IS_OK( (setting_id = get_setting_id(I,setting)))) {
     ExecutiveSetSettingFromString(I->G, setting_id.word, value, selection,
-                         state-1, quiet, side_effects);
+                                  state-1, quiet, side_effects);
   }
-  return status_ok(ok);
+  return return_status_ok(ok);
 }
 
-int PyMOL_Color(CPyMOL *I,char *color, char *selection, int flags, int quiet)
+PyMOLreturn_status PyMOL_CmdColor(CPyMOL *I,char *color, char *selection, int flags, int quiet)
 {
   OrthoLineType s1;
   int ok=true;
@@ -1275,160 +1320,162 @@ int PyMOL_Color(CPyMOL *I,char *color, char *selection, int flags, int quiet)
   SelectorGetTmp(I->G,selection,s1);
   ok = ExecutiveColor(I->G,s1,color,flags,quiet);
   SelectorFreeTmp(I->G,s1);
-  return status_ok(ok);
+  return return_status_ok(ok);
 }
 
-int PyMOL_Reinitialize(CPyMOL *I)
+PyMOLreturn_status PyMOL_CmdReinitialize(CPyMOL *I)
 {
-  return ExecutiveReinitialize(I->G);
+  return return_status_ok(ExecutiveReinitialize(I->G));
 }
 
-int PyMOL_Load(CPyMOL *I,char *content,  char *content_type, 
-               int content_length, char *content_format, 
-               char *object_name, int state, 
-               int discrete, int finish, 
-               int quiet, int multiplex, int zoom)
+PyMOLreturn_status PyMOL_CmdLoad(CPyMOL *I,char *content,  char *content_type, 
+                              int content_length, char *content_format, 
+                              char *object_name, int state, 
+                              int discrete, int finish, 
+                              int quiet, int multiplex, int zoom)
 {
   OVreturn_word result;
   int type_code;
   int format_code;
+  int ok = true;
   WordType obj_name;
   
   if(!OVreturn_IS_OK( (result= OVLexicon_BorrowFromCString(I->Lex,content_type))))
-    return OVstatus_FAILURE;
+    ok = false;
   else
     type_code = result.word;
 
-  if(!OVreturn_IS_OK( (result= OVLexicon_BorrowFromCString(I->Lex,content_format))))
-    return OVstatus_FAILURE;
-  else
-    format_code = result.word;
-
-  if((type_code != I->lex_filename) &&
-     (type_code != I->lex_string)) {
-    return OVstatus_FAILURE;
-  } 
-  
-  /* handling of multiplex option */
-
-  if(multiplex==-2) /* use setting default value */
-    multiplex = SettingGetGlobal_i(I->G,cSetting_multiplex);
-  if(multiplex<0) /* default behavior is not to multiplex */
-    multiplex = 0;
-
-  /* handing of discete option */
-
-  if(discrete<0) {/* use default discrete behavior for the file format 
-                   * this will be the case for MOL2 and SDF */ 
-    if(multiplex==1) /* if also multiplexing, then default discrete
-                      * behavior is not load as discrete objects */
-      discrete=0;
+  if(ok) {
+    if(!OVreturn_IS_OK( (result= OVLexicon_BorrowFromCString(I->Lex,content_format))))
+      ok = false;
     else
-      discrete=1; /* otherwise, allow discrete to be the default */
+      format_code = result.word;
   }
 
-  { /* if object_name is blank and content is a filename, then 
-       compute the object_name from the file prefix */
-    if((!object_name[0])&&(type_code == I->lex_filename)) {
-      char *start, *stop;
-      stop = start = content + strlen(content)-1;
-      while(start>content) { /* known path separators */
-        if((start[-1]==':')||
-           (start[-1]=='\'')||
-           (start[-1]=='/'))
-          break;
-        start--;
-      }
-      while(stop>start) {
-        if(*stop=='.')
-          break;
-        stop--;
-      }
-      if(stop==start)
-        stop = content + strlen(content);
-      if((stop-start) >=sizeof(WordType))
-        stop = start+sizeof(WordType)-1;
-      { 
-        char *p,*q;
-        p=start;
-        q=obj_name;
-        while(p<stop) {
-          *(q++)=*(p++);
+  if(ok) {
+    if((type_code != I->lex_filename) &&
+       (type_code != I->lex_string)) {
+      ok = false;
+    }
+  }
+  if(ok) {
+    
+    /* handling of multiplex option */
+    
+    if(multiplex==-2) /* use setting default value */
+      multiplex = SettingGetGlobal_i(I->G,cSetting_multiplex);
+    if(multiplex<0) /* default behavior is not to multiplex */
+      multiplex = 0;
+    
+    /* handing of discete option */
+    
+    if(discrete<0) {/* use default discrete behavior for the file format 
+                     * this will be the case for MOL2 and SDF */ 
+      if(multiplex==1) /* if also multiplexing, then default discrete
+                        * behavior is not load as discrete objects */
+        discrete=0;
+      else
+        discrete=1; /* otherwise, allow discrete to be the default */
+    }
+    
+    { /* if object_name is blank and content is a filename, then 
+         compute the object_name from the file prefix */
+      if((!object_name[0])&&(type_code == I->lex_filename)) {
+        char *start, *stop;
+        stop = start = content + strlen(content)-1;
+        while(start>content) { /* known path separators */
+          if((start[-1]==':')||
+             (start[-1]=='\'')||
+             (start[-1]=='/'))
+            break;
+          start--;
         }
-        *q=0;
-        object_name = obj_name;
+        while(stop>start) {
+          if(*stop=='.')
+            break;
+          stop--;
+        }
+        if(stop==start)
+          stop = content + strlen(content);
+        if((stop-start) >=sizeof(WordType))
+          stop = start+sizeof(WordType)-1;
+        { 
+          char *p,*q;
+          p=start;
+          q=obj_name;
+          while(p<stop) {
+            *(q++)=*(p++);
+          }
+          *q=0;
+          object_name = obj_name;
+        }
+      }
+    }
+    {
+      int pymol_content_type = cLoadTypeUnknown;
+      CObject *existing_object = NULL;
+
+      /* convert text format strings into integral load types */
+
+      if(format_code == I->lex_pdb) {
+        if(type_code == I->lex_string)
+          pymol_content_type = cLoadTypePDBStr;
+        else if( type_code == I->lex_filename)
+          pymol_content_type = cLoadTypePDB;
+      } else if(format_code == I->lex_mol2) {
+        if(type_code == I->lex_string)
+          pymol_content_type = cLoadTypeMOL2Str;
+        else if( type_code == I->lex_filename)
+          pymol_content_type = cLoadTypeMOL2;
+      } else if(format_code == I->lex_mol) {
+        if(type_code == I->lex_string)
+          pymol_content_type = cLoadTypeMOLStr;
+        else if( type_code == I->lex_filename)
+          pymol_content_type = cLoadTypeMOL;
+      } else if(format_code == I->lex_sdf) {
+        if(type_code == I->lex_string)
+          pymol_content_type = cLoadTypeSDF2Str;
+        else if( type_code == I->lex_filename)
+          pymol_content_type = cLoadTypeSDF2;
+      }
+
+      if(pymol_content_type != cLoadTypeUnknown) {
+        existing_object = ExecutiveGetExistingCompatible(I->G,
+                                                         object_name,
+                                                         pymol_content_type);
+      }
+
+      /* measure the length if it wasn't provided */
+
+      if(content_length<0) {
+        if(type_code == I->lex_string)
+          content_length = strlen(content);
+      }
+
+      switch(pymol_content_type) {
+      case cLoadTypePDB:
+      case cLoadTypePDBStr:
+      case cLoadTypeMOL:
+      case cLoadTypeMOLStr:
+      case cLoadTypeMOL2:
+      case cLoadTypeMOL2Str:
+      case cLoadTypeSDF2:
+      case cLoadTypeSDF2Str:
+        ok = ExecutiveLoad(I->G, existing_object, 
+                           content, content_length, 
+                           pymol_content_type,
+                           object_name, 
+                           state-1,  zoom,
+                           discrete, finish,
+                           multiplex, quiet);
+        break;
+      default:
+        ok=false;
+        break;
       }
     }
   }
-  {
-    int pymol_content_type = cLoadTypeUnknown;
-    CObject *existing_object = NULL;
-
-    /* convert text format strings into integral load types */
-
-    if(format_code == I->lex_pdb) {
-      if(type_code == I->lex_string)
-        pymol_content_type = cLoadTypePDBStr;
-      else if( type_code == I->lex_filename)
-        pymol_content_type = cLoadTypePDB;
-    } else if(format_code == I->lex_mol2) {
-      if(type_code == I->lex_string)
-        pymol_content_type = cLoadTypeMOL2Str;
-      else if( type_code == I->lex_filename)
-        pymol_content_type = cLoadTypeMOL2;
-    } else if(format_code == I->lex_mol) {
-      if(type_code == I->lex_string)
-        pymol_content_type = cLoadTypeMOLStr;
-      else if( type_code == I->lex_filename)
-        pymol_content_type = cLoadTypeMOL;
-    } else if(format_code == I->lex_sdf) {
-      if(type_code == I->lex_string)
-        pymol_content_type = cLoadTypeSDF2Str;
-      else if( type_code == I->lex_filename)
-        pymol_content_type = cLoadTypeSDF2;
-    }
-
-    if(pymol_content_type != cLoadTypeUnknown) {
-      existing_object = ExecutiveGetExistingCompatible(I->G,
-                                                       object_name,
-                                                       pymol_content_type);
-    }
-
-    /* measure the length if it wasn't provided */
-
-    if(content_length<0) {
-      if(type_code == I->lex_string)
-        content_length = strlen(content);
-    }
-
-    switch(pymol_content_type) {
-    case cLoadTypePDB:
-    case cLoadTypePDBStr:
-    case cLoadTypeMOL:
-    case cLoadTypeMOLStr:
-    case cLoadTypeMOL2:
-    case cLoadTypeMOL2Str:
-    case cLoadTypeSDF2:
-    case cLoadTypeSDF2Str:
-      {
-        int ok = ExecutiveLoad(I->G, existing_object, 
-                               content, content_length, 
-                               pymol_content_type,
-                               object_name, 
-                               state-1,  zoom,
-                               discrete, finish,
-                               multiplex, quiet);
-        if(ok)
-          return OVstatus_SUCCESS;
-        else
-          return OVstatus_FAILURE;
-      }
-      break;
-    default:
-      return OVstatus_FAILURE;
-    }
-  }
-  return OVstatus_SUCCESS;
+  return return_status_ok(ok);
 }
 
 
@@ -1514,7 +1561,7 @@ void PyMOL_SetProgress(CPyMOL *I,int offset, int current, int range)
 int PyMOL_GetProgress(CPyMOL *I,int *progress,int reset)
 {
   int a;
-  int result=I->ProgressChanged;
+  int result = I->ProgressChanged;
   for(a=0;a<PYMOL_PROGRESS_SIZE;a++) {
     progress[a] = I->Progress[a];
   }
@@ -1885,7 +1932,7 @@ char *PyMOL_GetClickString(CPyMOL *I,int reset)
 int PyMOL_FreeResultString(CPyMOL *I,char *st)
 {
   FreeP(st);
-  return status_ok((st!=NULL));
+  return get_status_ok((st!=NULL));
 }
 
 int PyMOL_GetRedisplay(CPyMOL *I, int reset)

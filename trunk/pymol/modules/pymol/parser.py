@@ -178,7 +178,12 @@ if __name__=='pymol.parser':
                                         else:
                                             print 'Error: Python expressions disallowed in this file.  '
                                             return 0
-                                    (args[nest],kw_args[nest]) = \
+                                    if secure and (kw[nest][4]==parsing.SECURE):
+                                        next[nest] = ()
+                                        print 'Error: Command disallowed in this file.'
+                                        return None
+                                    else:
+                                       (args[nest],kw_args[nest]) = \
                                                                         parsing.prepare_call(
                                         kw[nest][0],
                                         parsing.parse_arg(com2[nest],mode=kw[nest][4]),

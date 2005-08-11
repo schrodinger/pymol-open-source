@@ -83,11 +83,12 @@ if __name__=='pymol.parsing':
     EMBED       = 6  # embedded data
     NO_CHECK    = 10 # no error checking 
     STRICT      = 11 # strict name->argument checking
-    LEGACY      = 12 # support legacy construct str1=val1,... -> str1,val1,...
+    SECURE      = 12 # command not available in "secure" mode
+    LEGACY      = 13 # support legacy construct str1=val1,... -> str1,val1,...
     LITERAL     = 20 # argument is to be treated as a literal string 
     LITERAL1    = 21 # one regular argument, followed by literal string
     LITERAL2    = 22 # two regular argument, followed by literal string
-
+    
     # key regular expressions
 
     command_re = re.compile(r"[^\s]+")
