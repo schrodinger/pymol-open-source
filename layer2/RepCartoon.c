@@ -415,8 +415,8 @@ Rep *RepCartoonNew(CoordSet *cs)
   for(a=0;a<cs->NIndex;a++) {
     if(obj->AtomInfo[cs->IdxToAtm[a]].visRep[cRepCartoon])
       {
-	visFlag=true;
-	break;
+        visFlag=true;
+        break;
       }
   }
   if(!visFlag) {
@@ -455,7 +455,7 @@ Rep *RepCartoonNew(CoordSet *cs)
 
   cartoon_color = SettingGet_color(G,cs->Setting,obj->Obj.Setting,cSetting_cartoon_color);
   cartoon_side_chain_helper = SettingGet_b(G,cs->Setting, obj->Obj.Setting,
-					   cSetting_cartoon_side_chain_helper);
+                                           cSetting_cartoon_side_chain_helper);
 
   highlight_color = SettingGet_color(G,cs->Setting,obj->Obj.Setting,cSetting_cartoon_highlight_color);
 
@@ -614,6 +614,7 @@ Rep *RepCartoonNew(CoordSet *cs)
                   cur_car = cCartoon_oval;
               }
               *ss=1; /* helix */
+              parity = 0;
               break;
             case 'S':
             case 's':
@@ -630,6 +631,7 @@ Rep *RepCartoonNew(CoordSet *cs)
               if (cur_car==cCartoon_auto) {
                 cur_car = cCartoon_loop;
               }
+              parity = 0;
               *ss=0;
               break;
             }
@@ -1026,15 +1028,15 @@ Rep *RepCartoonNew(CoordSet *cs)
       v2=nv;
       d=dl;
       for(a=0;a<(nAt-1);a++)
-	{
-	  PRINTFD(G,FB_RepCartoon)
-	    " RepCartoon: seg %d *s %d , *(s+1) %d\n",a,*s,*(s+1)
-	    ENDFD;
+        {
+          PRINTFD(G,FB_RepCartoon)
+            " RepCartoon: seg %d *s %d , *(s+1) %d\n",a,*s,*(s+1)
+            ENDFD;
 
-	  if(*s==*(s+1))
-	    {
-	      subtract3f(v+3,v,v1);
-	      *d = (float)length3f(v1);
+          if(*s==*(s+1))
+            {
+              subtract3f(v+3,v,v1);
+              *d = (float)length3f(v1);
               if(*d>R_SMALL4) {
                 float d_1;
                 d_1 = 1.0F/(*d);
@@ -1044,17 +1046,17 @@ Rep *RepCartoonNew(CoordSet *cs)
               } else {
                 zero3f(v2);
               }
-	    }
+            }
           else {
             zero3f(v2);	
           }
           
-	  d++;
-	  v+=3;
-	  v1+=3;
-	  v2+=3;
-	  s++;
-	}
+          d++;
+          v+=3;
+          v1+=3;
+          v2+=3;
+          s++;
+        }
 		
       /* compute tangents */
 		
@@ -1070,28 +1072,28 @@ Rep *RepCartoonNew(CoordSet *cs)
       s++;
 		
       for(a=1;a<(nAt-1);a++)
-	{
-	  if((*s==*(s-1))&&(*s==*(s+1)))
-	    {
-	      add3f(v,(v-3),v1);
-	      normalize3f(v1);			 
-	    }
-	  else if(*s==*(s-1))
-	    {
-	      *(v1)=*(v-3);  /* end a segment */
-	      *(v1+1)=*(v-2); 
-	      *(v1+2)=*(v-1); 
-	    }
-	  else if(*s==*(s+1))
-	    {
-	      *(v1)=*(v);   /* new segment */
-	      *(v1+1)=*(v+1); 
-	      *(v1+2)=*(v+2); 
-	    }
-	  v+=3;
-	  v1+=3;
-	  s++;
-	}
+        {
+          if((*s==*(s-1))&&(*s==*(s+1)))
+            {
+              add3f(v,(v-3),v1);
+              normalize3f(v1);			 
+            }
+          else if(*s==*(s-1))
+            {
+              *(v1)=*(v-3);  /* end a segment */
+              *(v1+1)=*(v-2); 
+              *(v1+2)=*(v-1); 
+            }
+          else if(*s==*(s+1))
+            {
+              *(v1)=*(v);   /* new segment */
+              *(v1+1)=*(v+1); 
+              *(v1+2)=*(v+2); 
+            }
+          v+=3;
+          v1+=3;
+          s++;
+        }
       *(v1++)=*(v-3); /* last segment */
       *(v1++)=*(v-2);
       *(v1++)=*(v-1);
@@ -1163,13 +1165,12 @@ Rep *RepCartoonNew(CoordSet *cs)
                     normalize3f(vo-12);
                   }
 
-		  if(v4&&v5) {
-		    /* now make sure there's no goofy flip on the end...
-		       of a short, tight helix */
-
-		    if(dot_product3f(vo-9,vo-12)<-0.8F)
-		      invert3f(vo-12);
-		  }
+                  if(v4&&v5) {
+                    /* now make sure there's no goofy flip on the end...
+                       of a short, tight helix */
+                    if(dot_product3f(vo-9,vo-12)<-0.8F)
+                      invert3f(vo-12);
+                  }
                 }
               }
               v1 = NULL;
@@ -1481,7 +1482,7 @@ Rep *RepCartoonNew(CoordSet *cs)
               {
                 add3f(v,(v-3),v1);
                
-		normalize3f(v1);			 
+                normalize3f(v1);			 
               }
             else if(*s==*(s-1))
               {
@@ -1650,12 +1651,12 @@ Rep *RepCartoonNew(CoordSet *cs)
         }
       }
       if(!extrudeFlag) {
-	if((a<(nAt-1))&&(*s==*(s+1))) /* working in the same segment... */
-	  {
+        if((a<(nAt-1))&&(*s==*(s+1))) /* working in the same segment... */
+          {
             atom_index1 = cs->IdxToAtm[*atp];
             atom_index2 = cs->IdxToAtm[*(atp+1)];
-	    c1=*(cs->Color+*atp);
-	    c2=*(cs->Color+*(atp+1));
+            c1=*(cs->Color+*atp);
+            c2=*(cs->Color+*(atp+1));
             if(cartoon_color>=0) {
               c1 = (c2 = cartoon_color);
             }
@@ -1787,14 +1788,14 @@ Rep *RepCartoonNew(CoordSet *cs)
                   normalize3f(t0);
                   scale3f(t0,f0,t1);
                   add3f(t1,t3,h_start)
-		    }
+                    }
 
                 subtract3f(h_end,t4,t0);
                 if(length3f(t0)>f0) {
                   normalize3f(t0);
                   scale3f(t0,f0,t1);
                   add3f(t1,t4,h_end)
-		    }
+                    }
               }
             }
           }
@@ -2150,14 +2151,14 @@ Rep *RepCartoonNew(CoordSet *cs)
               ExtrudeBuildNormals1f(ex);
               ExtrudeComputeScaleFactors(ex,obj,0,
                                          putty_mean,putty_stdev,
-					 SettingGet_f(G,cs->Setting,obj->Obj.Setting,
-						      cSetting_cartoon_putty_scale_power),
-					 SettingGet_f(G,cs->Setting,obj->Obj.Setting,
-						      cSetting_cartoon_putty_range),
-					 SettingGet_f(G,cs->Setting,obj->Obj.Setting,
-						      cSetting_cartoon_putty_scale_min),
-					 SettingGet_f(G,cs->Setting,obj->Obj.Setting,
-						      cSetting_cartoon_putty_scale_max),
+                                         SettingGet_f(G,cs->Setting,obj->Obj.Setting,
+                                                      cSetting_cartoon_putty_scale_power),
+                                         SettingGet_f(G,cs->Setting,obj->Obj.Setting,
+                                                      cSetting_cartoon_putty_range),
+                                         SettingGet_f(G,cs->Setting,obj->Obj.Setting,
+                                                      cSetting_cartoon_putty_scale_min),
+                                         SettingGet_f(G,cs->Setting,obj->Obj.Setting,
+                                                      cSetting_cartoon_putty_scale_max),
                                          sampling/2);
 
               ExtrudeCGOSurfaceVariableTube(ex,I->ray,1);
