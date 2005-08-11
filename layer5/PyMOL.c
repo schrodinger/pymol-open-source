@@ -1142,18 +1142,18 @@ PyMOLreturn_float PyMOL_CmdAlign(CPyMOL *I, char *source, char *target, float cu
   PyMOLreturn_float result;
   int ok = false;
   result.result = -1.0;
-  ok = ((SelectorGetTmp(TempPyMOLGlobals,source,s2)>=0) &&
-        (SelectorGetTmp(TempPyMOLGlobals,target,s3)>=0));
+  ok = ((SelectorGetTmp(I->G,source,s2)>=0) &&
+        (SelectorGetTmp(I->G,target,s3)>=0));
   if(ok) {
-    result.result = ExecutiveAlign(TempPyMOLGlobals,s2,s3,matrix,gap,extend,max_gap,
+    result.result = ExecutiveAlign(I->G,s2,s3,matrix,gap,extend,max_gap,
                                    max_skip,cutoff,cycles,quiet,object,
                                    source_state, target_state);
   } else {
     result.result = -1.0F;
   }
   result.status = get_status_ok(ok);
-  SelectorFreeTmp(TempPyMOLGlobals,s2);
-  SelectorFreeTmp(TempPyMOLGlobals,s3);
+  SelectorFreeTmp(I->G,s2);
+  SelectorFreeTmp(I->G,s3);
   return result;
 }
 
