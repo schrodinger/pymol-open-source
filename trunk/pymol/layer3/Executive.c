@@ -3667,7 +3667,8 @@ float ExecutiveAlign(PyMOLGlobals *G,char *s1,char *s2,char *mat_file,float gap,
                 " ExecutiveAlign: %d atoms aligned.\n",c
                 ENDFB(G);
             }
-            result =ExecutiveRMS(G,"_align1","_align2",2,cutoff,cycles,quiet,oname,
+            result =ExecutiveRMS(G,"_align1","_align2",2,cutoff,cycles,
+                                 quiet,oname,
                                  state1,state2,false,0);
             
           }
@@ -6053,7 +6054,7 @@ float ExecutiveRMS(PyMOLGlobals *G,char *s1,char *s2,int mode,float refine,int m
                     f2+=3;
                   }
                 }
-                if(n_next!=n_pair) {
+                if(!quiet&&(n_next!=n_pair)) {
                   PRINTFB(G,FB_Executive,FB_Actions)
                     " ExecutiveRMS: %d atoms rejected during cycle %d (RMS=%0.2f).\n",n_pair-n_next,b,rms
                     ENDFB(G);
