@@ -119,6 +119,12 @@ typedef struct {
   float result;
 } PyMOLreturn_float;
 
+typedef struct {
+  PyMOLstatus status;
+  int size;
+  float *array;
+} PyMOLreturn_float_array;
+
 /* creation and destruction */
 
 CPyMOL *PyMOL_New(void);
@@ -200,6 +206,7 @@ void PyMOL_RunTest(CPyMOL *I, int group, int test);
 int PyMOL_NewG3DStream(CPyMOL *I,int **array_ptr);
 int PyMOL_DelG3DStream(CPyMOL *I,int *array_ptr);
 
+
 /* Command API */
 
 PyMOLreturn_status PyMOL_CmdReinitialize(CPyMOL *I);
@@ -239,9 +246,14 @@ PyMOLreturn_status PyMOL_CmdColor(CPyMOL *I,char *color, char *selection, int fl
 
 PyMOLreturn_status PyMOL_CmdSelect(CPyMOL *I,char *name, char *selection, int quiet);
 
-PyMOLreturn_float PyMOL_CmdAlign(CPyMOL *I, char *source, char *target, float cutoff, 
-                                 int cycles, float gap, float extend, int max_gap, 
-                                 char *object, char *matrix, int source_state, int target_state, 
-                                 int quiet, int max_skip);
+PyMOLreturn_float_array PyMOL_CmdAlign(CPyMOL *I, char *source, char *target, float cutoff, 
+                                       int cycles, float gap, float extend, int max_gap, 
+                                       char *object, char *matrix, int source_state,
+                                       int target_state, 
+                                       int quiet, int max_skip);
+
+/* releasing returned values */
+
+int PyMOL_FreeResultArray(CPyMOL *I,void *array);
 
 #endif

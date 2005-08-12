@@ -1132,28 +1132,46 @@ static OVstatus PyMOL_PurgeAPI(CPyMOL *I)
   return_OVstatus_SUCCESS;
 }
 
-PyMOLreturn_float PyMOL_CmdAlign(CPyMOL *I, char *source, char *target, float cutoff, 
+int PyMOL_FreeResultArray(CPyMOL *I,void *array)
+{
+  if(array) {
+    VLAFreeP(array);
+    return PyMOLstatus_SUCCESS;
+  } else {
+    return PyMOLstatus_FAILURE; 
+  }
+}
+
+PyMOLreturn_float_array PyMOL_CmdAlign(CPyMOL *I, char *source, char *target, float cutoff, 
                                  int cycles, float gap, float extend, int max_gap, 
                                  char *object, char *matrix, int source_state, int target_state, 
                                  int quiet, int max_skip) 
 {
 
   OrthoLineType s2="",s3="";
-  PyMOLreturn_float result;
+  PyMOLreturn_float_array result;
   int ok = false;
-  result.result = -1.0;
-  ok = ((SelectorGetTmp(I->G,source,s2)>=0) &&
-        (SelectorGetTmp(I->G,target,s3)>=0));
-  if(ok) {
-    result.result = ExecutiveAlign(I->G,s2,s3,matrix,gap,extend,max_gap,
-                                   max_skip,cutoff,cycles,quiet,object,
-                                   source_state-1, target_state-1);
+  ExecutiveRMSInfo rms_info;
+  result.array = VLAlloc(float,4);
+  result.size = 4;
+  if(!result.array) {
+    ok=false;
   } else {
-    result.result = -1.0F;
+    ok = ((SelectorGetTmp(I->G,source,s2)>=0) &&
+          (SelectorGetTmp(I->G,target,s3)>=0));
+    if(ok) {
+      ok = ExecutiveAlign(I->G,s2,s3,matrix,gap,extend,max_gap,
+                                       max_skip,cutoff,cycles,quiet,object,
+                                       source_state-1, target_state-1,
+                                       &rms_info);
+    }
   }
-  result.status = get_status_ok(ok);
   SelectorFreeTmp(I->G,s2);
   SelectorFreeTmp(I->G,s3);
+  result.status = get_status_ok(ok);
+  if(!ok) {
+    VLAFreeP(result.array);
+  }
   return result;
 }
 
