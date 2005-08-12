@@ -420,7 +420,7 @@ float MatchAlign(CMatch *I,float gap_penalty,float ext_penalty,
                /* only penalize if we are not at the end */
                if(!((f==I->na)||(g==I->nb)))
                  gap = ((f-(a+1))+(g-(b+1)));
-               tst+=2*gap_penalty+ext_penalty*(gap-2);
+               if(gap>1) tst+=2*gap_penalty+ext_penalty*(gap-2);
              }
              if(tst>mxv) {
                mxv = tst;
