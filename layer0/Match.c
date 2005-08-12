@@ -233,22 +233,26 @@ int MatchMatrixFromFile(CMatch *I,char *fname,int quiet)
     }
   } else {
     buffer = Alloc(char, BLOSUM62_ROWS * BLOSUM62_COLS);
-    p=buffer;
-    a=0;
-    while(blosum62[a][0]) {
-      strcat(p,blosum62[a]);
-      p+=strlen(blosum62[a]);
-      a++;
+    if(buffer) {
+      p = buffer;
+      a=0;
+      while(blosum62[a][0]) {
+        strcpy(p,&blosum62[a][0]);
+        p+=strlen(p);
+        a++;
+      }
+    } else {
+      ok=false;
     }
   }
 
   if(ok&&buffer) {
-    
+
     /* count codes */
 
     p=buffer;
     n_entry = 0;
-    while(*p) {
+    while(*p && ok) {
       switch(*p) {
       case '#':
         break;
@@ -262,13 +266,13 @@ int MatchMatrixFromFile(CMatch *I,char *fname,int quiet)
     if(!n_entry) 
       ok=false;
     else {
-      code=(char*)Alloc(int,n_entry);
+      code=(char*)Calloc(int,n_entry);
       
       /* read codes */
       
       p=buffer;
       n_entry = 0;
-      while(*p) {
+      while(*p && ok) {
         switch(*p) {
         case '#':
           break;
@@ -276,8 +280,8 @@ int MatchMatrixFromFile(CMatch *I,char *fname,int quiet)
           if((*p)>32) {
             code[n_entry]=*p;
             n_entry++;
-            break;
           }
+          break;
         }
         p=ParseNextLine(p);
       }
@@ -285,7 +289,7 @@ int MatchMatrixFromFile(CMatch *I,char *fname,int quiet)
       /* read values */
 
       p=buffer;
-      while(*p) {
+      while((*p) && ok) {
         switch(*p) {
         case '#':
           break;
@@ -296,7 +300,6 @@ int MatchMatrixFromFile(CMatch *I,char *fname,int quiet)
               p = ParseWordCopy(cc,p,255);
               y=(unsigned int)code[a];
               ok=sscanf(cc,"%f",&I->smat[x][y]);
-              if(!ok) break;
             }
           }
           break;

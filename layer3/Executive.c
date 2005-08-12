@@ -3640,7 +3640,7 @@ float ExecutiveAlign(PyMOLGlobals *G,char *s1,char *s2,char *mat_file,float gap,
   int *vla2=NULL;
   int na,nb;
   int c;
-  float result = 0.0;
+  float result = 1.0F;
   int ok=true;
   CMatch *match = NULL;
 
@@ -3656,21 +3656,23 @@ float ExecutiveAlign(PyMOLGlobals *G,char *s1,char *s2,char *mat_file,float gap,
         if (ok) ok = MatchResidueToCode(match,vla2,nb);
         if (ok) ok = MatchMatrixFromFile(match,mat_file,quiet);
         if (ok) ok = MatchPreScore(match,vla1,na,vla2,nb,quiet);
-        result = MatchAlign(match,gap,extend,max_gap,max_skip,quiet);
-        if(match->pair) { 
-          c = SelectorCreateAlignments(G,match->pair,
-                                       sele1,vla1,sele2,vla2,
-                                       "_align1","_align2",false);
-          if(c) {
-            if(!quiet) {
-              PRINTFB(G,FB_Executive,FB_Actions)
-                " ExecutiveAlign: %d atoms aligned.\n",c
-                ENDFB(G);
+        if (ok) {
+          result = MatchAlign(match,gap,extend,max_gap,max_skip,quiet);
+          if(match->pair) { 
+            c = SelectorCreateAlignments(G,match->pair,
+                                         sele1,vla1,sele2,vla2,
+                                         "_align1","_align2",false);
+            if(c) {
+              if(!quiet) {
+                PRINTFB(G,FB_Executive,FB_Actions)
+                  " ExecutiveAlign: %d atoms aligned.\n",c
+                  ENDFB(G);
+              }
+              result =ExecutiveRMS(G,"_align1","_align2",2,cutoff,cycles,
+                                   quiet,oname,
+                                   state1,state2,false,0);
+              
             }
-            result =ExecutiveRMS(G,"_align1","_align2",2,cutoff,cycles,
-                                 quiet,oname,
-                                 state1,state2,false,0);
-            
           }
         }
         if(match) 
