@@ -1147,7 +1147,7 @@ PyMOLreturn_float PyMOL_CmdAlign(CPyMOL *I, char *source, char *target, float cu
   if(ok) {
     result.result = ExecutiveAlign(I->G,s2,s3,matrix,gap,extend,max_gap,
                                    max_skip,cutoff,cycles,quiet,object,
-                                   source_state, target_state);
+                                   source_state-1, target_state-1);
   } else {
     result.result = -1.0F;
   }
