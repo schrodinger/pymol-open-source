@@ -334,7 +334,7 @@ float MatchAlign(CMatch *I,float gap_penalty,float ext_penalty,
   int gap=0;
   int *p;
   int cnt;
-  const float MIN_SCORE = -1000000.00F; /* avoid overflow issues with -FLT_MAX */
+  const float MIN_SCORE = 0.0F;
   nf = I->na+2;
   ng = I->nb+2;
 
@@ -352,7 +352,7 @@ float MatchAlign(CMatch *I,float gap_penalty,float ext_penalty,
   /* initialize the scoring matrix */
   for(f=0;f<nf;f++) {
     for(g=0;g<ng;g++) {
-      score[f][g] = 0.0F;
+      score[f][g] = MIN_SCORE;
       point[f][g][0] = -1;
       point[f][g][1] = -1;
     }
