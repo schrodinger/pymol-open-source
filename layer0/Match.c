@@ -206,7 +206,12 @@ int MatchMatrixFromFile(CMatch *I,char *fname,int quiet)
   int n_entry;
   unsigned int size;
 
-  if(fname) {
+  if(fname && fname[0] 
+#ifdef _PYMOL_NOPY
+     /* if Python is absent, then use the hardcoded copy of BLOSUM62 */
+     && !(strcmp(fname,"BLOSUM62")==0)
+#endif
+     ) {
     f=fopen(fname,"rb");
     if(!f) {
       PRINTFB(G,FB_Match,FB_Errors) 
@@ -230,7 +235,7 @@ int MatchMatrixFromFile(CMatch *I,char *fname,int quiet)
     buffer = Alloc(char, BLOSUM62_ROWS * BLOSUM62_COLS);
     p=buffer;
     a=0;
-    while(blosum62[a]) {
+    while(blosum62[a][0]) {
       strcat(p,blosum62[a]);
       p+=strlen(blosum62[a]);
       a++;
@@ -299,8 +304,8 @@ int MatchMatrixFromFile(CMatch *I,char *fname,int quiet)
         if(!ok) break;
         p=ParseNextLine(p);
       }
-      mfree(buffer);
     }
+    mfree(buffer);
   }
   if(ok) {
     if(!quiet) {
