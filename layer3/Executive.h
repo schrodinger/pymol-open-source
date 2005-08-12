@@ -93,9 +93,22 @@ int ExecutiveLoad(PyMOLGlobals *G,CObject *origObj,
                   int multiplex, int quiet);
 
 int ExecutiveDebug(PyMOLGlobals *G,char *name);
-float ExecutiveAlign(PyMOLGlobals *G,char *s1,char *s2,char *mat_file,float gap,float extend,
+
+typedef struct {
+  int n_residues_aligned;
+  int initial_n_atom;
+  float initial_rms;
+  int n_refine_cycles;
+  int final_n_atom;
+  float final_rms;
+} ExecutiveRMSInfo;
+
+int ExecutiveAlign(PyMOLGlobals *G,char *s1,char *s2,char *mat_file,
+                     float gap,float extend,
                      int max_gap, int max_skip,
-                     float cutoff,int cycles,int quiet,char *oname,int state1,int state2);
+                     float cutoff,int cycles,int quiet,
+                     char *oname,int state1,int state2,
+                     ExecutiveRMSInfo *rms_info);
 
 float ExecutiveDistance(PyMOLGlobals *G,char *sele1,char *sele2);
 float ExecutiveDist(PyMOLGlobals *G,char *nam,char *s1,char *s2,int mode,
@@ -138,9 +151,11 @@ int ExecutiveGetDistance(PyMOLGlobals *G,char *s0,char *s1,float *value,int stat
 int ExecutiveGetAngle(PyMOLGlobals *G,char *s0,char *s1,char *s2,float *value,int state);
 int ExecutiveGetDihe(PyMOLGlobals *G,char *s0,char *s1,char *s2,char *s3,float *value,int state);
 int ExecutiveSetDihe(PyMOLGlobals *G,char *s0,char *s1,char *s2,char *s3,float value,int state,int quiet);
-float ExecutiveRMS(PyMOLGlobals *G,char *sele1,char *sele2,int mode,float refine,int max_cyc,
+int ExecutiveRMS(PyMOLGlobals *G,char *sele1,char *sele2,int mode,float refine,int max_cyc,
                    int quiet,char *oname,int state1,int state2,
-                   int ordered_selections, int matchmaker);
+                   int ordered_selections, int matchmaker, 
+                   ExecutiveRMSInfo *rms_info);
+
 void ExecutiveUpdateCmd(PyMOLGlobals *G,char *sele1,char *sele2,int sta1,int sta2,int method,int quiet);
 float ExecutiveRMSPairs(PyMOLGlobals *G,WordType *sele,int pairs,int mode);
 float *ExecutiveRMSStates(PyMOLGlobals *G,char *s1,int target,int mode,int quiet, int mix);

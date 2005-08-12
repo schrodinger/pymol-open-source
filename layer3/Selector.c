@@ -2750,7 +2750,8 @@ int SelectorGetPairIndices(PyMOLGlobals *G,int sele1,int state1,int sele2,int st
 }
 
 /*========================================================================*/
-int  SelectorCreateAlignments(PyMOLGlobals *G,int *pair,int sele1,int *vla1,int sele2,
+int  SelectorCreateAlignments(PyMOLGlobals *G,
+                              int *pair,int sele1,int *vla1,int sele2,
                               int *vla2,char *name1,char *name2,int identical)
 {
   register CSelector *I=G->Selector;

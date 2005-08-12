@@ -1206,6 +1206,8 @@ static PyObject *CmdAlign(PyObject *self, 	PyObject *args) {
   float cutoff,gap,extend;
   int state1,state2;
   int max_gap;
+  ExecutiveRMSInfo rms_info;
+
   ok = PyArg_ParseTuple(args,"ssfiffissiiii",&str2,&str3,
                         &cutoff,&cycles,&gap,&extend,&max_gap,&oname,
                         &mfile,&state1,&state2,&quiet,&max_skip);
@@ -1220,17 +1222,22 @@ static PyObject *CmdAlign(PyObject *self, 	PyObject *args) {
     ok = ((SelectorGetTmp(TempPyMOLGlobals,str2,s2)>=0) &&
           (SelectorGetTmp(TempPyMOLGlobals,str3,s3)>=0));
     if(ok) {
-      result = ExecutiveAlign(TempPyMOLGlobals,s2,s3,mfile,gap,extend,max_gap,
-                              max_skip,cutoff,
-                              cycles,quiet,oname,state1,state2);
+      ExecutiveAlign(TempPyMOLGlobals,s2,s3,
+                     mfile,gap,extend,max_gap,
+                     max_skip,cutoff,
+                     cycles,quiet,oname,state1,state2,
+                     &rms_info);
     } else 
       result = -1.0F;
     SelectorFreeTmp(TempPyMOLGlobals,s2);
     SelectorFreeTmp(TempPyMOLGlobals,s3);
     APIExit();
   }
-
-  return Py_BuildValue("f",result);
+  if(ok) {
+    return Py_BuildValue("f",rms_info.final_rms);
+  } else {
+    return Py_BuildValue("f",-1.0F);
+  }
 }
 
 static PyObject *CmdGetSettingUpdates(PyObject *self, 	PyObject *args)
@@ -3209,21 +3216,25 @@ static PyObject *CmdFit(PyObject *dummy, PyObject *args)
   int ok=false;
   int matchmaker,cycles;
   char *object;
+  ExecutiveRMSInfo rms_info;
   ok = PyArg_ParseTuple(args,"ssiiiiifis",&str1,&str2,&mode,
                         &state1,&state2,&quiet,&matchmaker,&cutoff,&cycles,&object);
   if (ok) {
     APIEntry();
     ok = ((SelectorGetTmp(TempPyMOLGlobals,str1,s1)>=0) &&
           (SelectorGetTmp(TempPyMOLGlobals,str2,s2)>=0));
-    tmp_result=ExecutiveRMS(TempPyMOLGlobals,s1,s2,mode,
-                            cutoff,cycles,quiet,object,state1,state2,
-                            false,
-                            matchmaker);
+    if(ok) ok = ExecutiveRMS(TempPyMOLGlobals,s1,s2,mode,
+                             cutoff,cycles,quiet,object,state1,state2,
+                             false, matchmaker, &rms_info);
     SelectorFreeTmp(TempPyMOLGlobals,s1);
     SelectorFreeTmp(TempPyMOLGlobals,s2);
     APIExit();
   }
-  result=Py_BuildValue("f",tmp_result);
+  if(ok) {
+    result=Py_BuildValue("f",rms_info.final_rms);
+  } else {
+    result=Py_BuildValue("f",-1.0F);
+  }
   return result;
 }
 

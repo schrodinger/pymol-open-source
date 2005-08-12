@@ -1506,7 +1506,8 @@ int ExecutiveProcessPDBFile(PyMOLGlobals *G,CObject *origObj,char *fname,
                           pairwise.trg_obj->Obj.Name,
                           pairwise.mbl_obj->Obj.Name);
 
-                  ExecutiveRMS(G,mbl_sele, trg_sele, 2, 0.0F, 0, 0, align_name, 0, 0, true, 0);
+                  ExecutiveRMS(G,mbl_sele, trg_sele, 2, 0.0F, 0, 0,
+                               align_name, 0, 0, true, 0, NULL);
                   ExecutiveColor(G,align_name,"white",0,true);
                   if(target_rec->m4x.invisible) 
                     sprintf(tmp_sele, "(%s) | (%s)",aligned_name,mbl_sele);
@@ -3630,9 +3631,9 @@ int ExecutivePhiPsi(PyMOLGlobals *G,char *s1,ObjectMolecule ***objVLA,int **iVLA
 }
 
 
-float ExecutiveAlign(PyMOLGlobals *G,char *s1,char *s2,char *mat_file,float gap,float extend,
+int ExecutiveAlign(PyMOLGlobals *G,char *s1,char *s2,char *mat_file,float gap,float extend,
                      int max_gap, int max_skip, float cutoff,int cycles,int quiet,char *oname,
-                     int state1,int state2)
+                     int state1,int state2, ExecutiveRMSInfo *rms_info)
 {
   int sele1=SelectorIndexByName(G,s1);
   int sele2=SelectorIndexByName(G,s2);
@@ -3644,7 +3645,7 @@ float ExecutiveAlign(PyMOLGlobals *G,char *s1,char *s2,char *mat_file,float gap,
   int ok=true;
   CMatch *match = NULL;
 
-  if((sele1>=0)&&(sele2>=0)) {
+  if((sele1>=0)&&(sele2>=0)&&rms_info) {
     vla1=SelectorGetResidueVLA(G,sele1);
     vla2=SelectorGetResidueVLA(G,sele2);
     if(vla1&&vla2) {
@@ -3668,9 +3669,9 @@ float ExecutiveAlign(PyMOLGlobals *G,char *s1,char *s2,char *mat_file,float gap,
                   " ExecutiveAlign: %d atoms aligned.\n",c
                   ENDFB(G);
               }
-              result =ExecutiveRMS(G,"_align1","_align2",2,cutoff,cycles,
-                                   quiet,oname,
-                                   state1,state2,false,0);
+              ok = ExecutiveRMS(G,"_align1","_align2",2,cutoff,cycles,
+                                quiet,oname,
+                                state1,state2,false,0, rms_info);
               
             }
           }
@@ -3682,7 +3683,7 @@ float ExecutiveAlign(PyMOLGlobals *G,char *s1,char *s2,char *mat_file,float gap,
   }
   VLAFreeP(vla1);
   VLAFreeP(vla2);
-  return result;
+  return ok;
 }
 
 int ExecutivePairIndices(PyMOLGlobals *G,char *s1,char *s2,int state1,int state2,
@@ -5667,9 +5668,9 @@ static void PackSortedIndices(int n,int *x, int rec_size, void *data)
 }
   
 /*========================================================================*/
-float ExecutiveRMS(PyMOLGlobals *G,char *s1,char *s2,int mode,float refine,int max_cyc,
+int ExecutiveRMS(PyMOLGlobals *G,char *s1,char *s2,int mode,float refine,int max_cyc,
                    int quiet,char *oname,int state1,int state2,
-                   int ordered_selections, int matchmaker)
+                   int ordered_selections, int matchmaker, ExecutiveRMSInfo *rms_info)
 {
   int sele1,sele2;
   float rms = -1.0;
@@ -5946,11 +5947,14 @@ float ExecutiveRMS(PyMOLGlobals *G,char *s1,char *s2,int mode,float refine,int m
                 op1.nvv1,op2.nvv1);
         ErrMessage(G,"ExecutiveRMS",buffer);
         n_pair = 0;
+        ok=false;
       } else 
         n_pair = op1.nvv1;
-
+      
       if(n_pair) {
-        
+        /* okay -- we're on track to do an alignment */
+
+
         if(ordered_selections&&op1.vp1&&op2.vp1) {
           /* if we expected ordered selections and have priorities, 
              then we may need to sort vertices */
@@ -6020,8 +6024,18 @@ float ExecutiveRMS(PyMOLGlobals *G,char *s1,char *s2,int mode,float refine,int m
             }
           }
         }
+
+        if(rms_info) {
+          rms_info->initial_n_atom = n_pair;
+          rms_info->n_refine_cycles = 0;
+          rms_info->final_n_atom = n_pair; /* in case there is no refinement */
+        }
         if(mode!=0) {
           rms = MatrixFitRMSTTTf(G,n_pair,op1.vv1,op2.vv1,NULL,op2.ttt);
+          if(rms_info) {
+            rms_info->initial_rms = rms;
+            rms_info->final_rms = rms;
+          }
           repeat=true;
           b=0;
           while(repeat) {
@@ -6063,22 +6077,31 @@ float ExecutiveRMS(PyMOLGlobals *G,char *s1,char *s2,int mode,float refine,int m
                 }
                 n_pair = n_next;
                 FreeP(flag);
-                if(n_pair) 
+                if(n_pair) {
                   rms = MatrixFitRMSTTTf(G,n_pair,op1.vv1,op2.vv1,NULL,op2.ttt);            
-                else
+                  if(rms_info) {
+                    rms_info->n_refine_cycles = b;
+                    rms_info->final_n_atom = n_pair;
+                    rms_info->final_rms = rms;
+                  }
+                } else
                   break;
               }
             }
           }
-        }
-        else
+        } else { /* mode == 0 -- simple RMS, with no coordinate movement */
           rms = MatrixGetRMS(G,n_pair,op1.vv1,op2.vv1,NULL);
+          if(rms_info) {
+            rms_info->initial_rms = rms;
+            rms_info->final_rms = rms;
+          }
+        }
       }
       if(!n_pair) {
         PRINTFB(G,FB_Executive,FB_Results) 
           " Executive: Error -- no atoms left after refinement!\n"
           ENDFB(G);
-        ok=false;
+        ok = false;
       }
 
       if(ok) {
@@ -6133,7 +6156,7 @@ float ExecutiveRMS(PyMOLGlobals *G,char *s1,char *s2,int mode,float refine,int m
   VLAFreeP(op2.vp1);
   VLAFreeP(op1.ai);
   VLAFreeP(op2.ai);
-  return(rms);
+  return(ok);
 }
 /*========================================================================*/
 int *ExecutiveIdentify(PyMOLGlobals *G,char *s1,int mode)
@@ -8509,100 +8532,104 @@ int ExecutiveSetObjVisib(PyMOLGlobals *G,char *name,int onoff)
     " ExecutiveSetObjVisib: entered.\n"
     ENDFD;
 #if 1
-  CTracker *I_Tracker= I->Tracker;
-  SpecRec *rec;
-  int list_id = ExecutiveGetNamesListFromPattern(G,name);
-  int iter_id = TrackerNewIter(I_Tracker, 0, list_id);
-  while( TrackerIterNextCandInList(I_Tracker, iter_id, (TrackerRef**)&rec) ) {
-    if(rec) {
-      switch(rec->type) {
-      case cExecAll:
-        {
-          SpecRec *tRec=NULL;
-          while(ListIterate(I->Spec,tRec,next)) {
-            if(onoff!=tRec->visible) {
-              if(tRec->type==cExecObject) {
-                if(tRec->visible)
-                  SceneObjectDel(G,tRec->obj);				
-                else {
-                  SceneObjectAdd(G,tRec->obj);
-                }
-              }
-              if((tRec->type!=cExecSelection)||(!onoff)) /* hide all selections, but show all */
-                tRec->visible=!tRec->visible;
-            }
-          }
-        }
-        break;
-      case cExecObject:
-        if(rec->visible!=onoff) {
-          if(rec->visible)
-            SceneObjectDel(G,rec->obj);				
-          else {
-            SceneObjectAdd(G,rec->obj);
-          }
-          rec->visible=!rec->visible;
-        }
-        break;
-      case cExecSelection:
-        if(rec->visible!=onoff) {
-          rec->visible=!rec->visible;
-          if(rec->visible)
-            if(SettingGetGlobal_b(G,cSetting_active_selections)) {
-              ExecutiveHideSelections(G);
-              rec->visible=true;
-            }
-          SceneDirty(G);
-          SeqDirty(G);
-        }
-        break;
-      }
-    }
-  }
-  TrackerDelList(I_Tracker, list_id);
-  TrackerDelIter(I_Tracker, iter_id);
-#else
-  SpecRec *tRec;
-
-  if(strcmp(name,cKeywordAll)==0) {
-    tRec=NULL;
-    while(ListIterate(I->Spec,tRec,next)) {
-      if(onoff!=tRec->visible) {
-        if(tRec->type==cExecObject) {
-          if(tRec->visible)
-            SceneObjectDel(G,tRec->obj);				
-          else {
-            SceneObjectAdd(G,tRec->obj);
-          }
-        }
-        if((tRec->type!=cExecSelection)||(!onoff)) /* hide all selections, but show all */
-          tRec->visible=!tRec->visible;
-      }
-    }
-  } else {
-    tRec = ExecutiveFindSpec(G,name);
-    if(tRec) {
-      if(tRec->type==cExecObject) {
-        if(tRec->visible!=onoff)
+  {
+    CTracker *I_Tracker= I->Tracker;
+    SpecRec *rec;
+    int list_id = ExecutiveGetNamesListFromPattern(G,name);
+    int iter_id = TrackerNewIter(I_Tracker, 0, list_id);
+    while( TrackerIterNextCandInList(I_Tracker, iter_id, (TrackerRef**)&rec) ) {
+      if(rec) {
+        switch(rec->type) {
+        case cExecAll:
           {
+            SpecRec *tRec=NULL;
+            while(ListIterate(I->Spec,tRec,next)) {
+              if(onoff!=tRec->visible) {
+                if(tRec->type==cExecObject) {
+                  if(tRec->visible)
+                    SceneObjectDel(G,tRec->obj);				
+                  else {
+                    SceneObjectAdd(G,tRec->obj);
+                  }
+                }
+                if((tRec->type!=cExecSelection)||(!onoff)) /* hide all selections, but show all */
+                  tRec->visible=!tRec->visible;
+              }
+            }
+          }
+          break;
+        case cExecObject:
+          if(rec->visible!=onoff) {
+            if(rec->visible)
+              SceneObjectDel(G,rec->obj);				
+            else {
+              SceneObjectAdd(G,rec->obj);
+            }
+            rec->visible=!rec->visible;
+          }
+          break;
+        case cExecSelection:
+          if(rec->visible!=onoff) {
+            rec->visible=!rec->visible;
+            if(rec->visible)
+              if(SettingGetGlobal_b(G,cSetting_active_selections)) {
+                ExecutiveHideSelections(G);
+                rec->visible=true;
+              }
+            SceneDirty(G);
+            SeqDirty(G);
+          }
+          break;
+        }
+      }
+    }
+    TrackerDelList(I_Tracker, list_id);
+    TrackerDelIter(I_Tracker, iter_id);
+  }
+#else
+  {
+    SpecRec *tRec;
+
+    if(strcmp(name,cKeywordAll)==0) {
+      tRec=NULL;
+      while(ListIterate(I->Spec,tRec,next)) {
+        if(onoff!=tRec->visible) {
+          if(tRec->type==cExecObject) {
             if(tRec->visible)
               SceneObjectDel(G,tRec->obj);				
             else {
               SceneObjectAdd(G,tRec->obj);
             }
-            tRec->visible=!tRec->visible;
           }
+          if((tRec->type!=cExecSelection)||(!onoff)) /* hide all selections, but show all */
+            tRec->visible=!tRec->visible;
+        }
       }
-      else if(tRec->type==cExecSelection) {
-        if(tRec->visible!=onoff) {
-          tRec->visible=!tRec->visible;
-          if(tRec->visible)
-            if(SettingGetGlobal_b(G,cSetting_active_selections)) {
-              ExecutiveHideSelections(G);
-              tRec->visible=true;
+    } else {
+      tRec = ExecutiveFindSpec(G,name);
+      if(tRec) {
+        if(tRec->type==cExecObject) {
+          if(tRec->visible!=onoff)
+            {
+              if(tRec->visible)
+                SceneObjectDel(G,tRec->obj);				
+              else {
+                SceneObjectAdd(G,tRec->obj);
+              }
+              tRec->visible=!tRec->visible;
             }
-          SceneDirty(G);
-          SeqDirty(G);
+        }
+        else if(tRec->type==cExecSelection) {
+          if(tRec->visible!=onoff) {
+            tRec->visible=!tRec->visible;
+            if(tRec->visible)
+              if(SettingGetGlobal_b(G,cSetting_active_selections)) {
+                ExecutiveHideSelections(G);
+                tRec->visible=true;
+              }
+            SceneDirty(G);
+            SeqDirty(G);
+          }
         }
       }
     }
@@ -8662,8 +8689,8 @@ void ExecutiveSetAllVisib(PyMOLGlobals *G,int state)
 
 
   while(ListIterate(I->Spec,rec,next)) {
-	 if(rec->type==cExecObject)
-		{
+    if(rec->type==cExecObject)
+      {
         switch(rec->obj->type) {
         case cObjectMolecule:
           obj=(ObjectMolecule*)rec->obj;
@@ -8690,7 +8717,7 @@ void ExecutiveSetAllVisib(PyMOLGlobals *G,int state)
           SceneDirty(G);
           break;
         }
-		}
+      }
   }
   PRINTFD(G,FB_Executive)
     " ExecutiveSetAllVisib: leaving...\n"
@@ -8770,77 +8797,78 @@ void ExecutiveSetRepVisib(PyMOLGlobals *G,char *name,int rep,int state)
     ENDFD;
 
 #if 1
-  register CExecutive *I = G->Executive;
-  CTracker *I_Tracker= I->Tracker;
-  SpecRec *rec = NULL;
-  int list_id = ExecutiveGetNamesListFromPattern(G,name);
-  int iter_id = TrackerNewIter(I_Tracker, 0, list_id);
-  while( TrackerIterNextCandInList(I_Tracker, iter_id, (TrackerRef**)&rec) ) {
-    if(rec) {
-      /* per-atom */
+  {
+    register CExecutive *I = G->Executive;
+    CTracker *I_Tracker= I->Tracker;
+    SpecRec *rec = NULL;
+    int list_id = ExecutiveGetNamesListFromPattern(G,name);
+    int iter_id = TrackerNewIter(I_Tracker, 0, list_id);
+    while( TrackerIterNextCandInList(I_Tracker, iter_id, (TrackerRef**)&rec) ) {
+      if(rec) {
+        /* per-atom */
 
-      switch(rec->type) {
-      case cExecSelection:
-      case cExecObject: 
-        {
-          int sele=SelectorIndexByName(G,rec->name);
-          if(sele>=0) {
-            ObjectMoleculeOpRec op;
-            ObjectMoleculeOpRecInit(&op);
-            op.code=OMOP_VISI;
-            op.i1=rep;
-            op.i2=state;
-            ExecutiveObjMolSeleOp(G,sele,&op);
-            op.code=OMOP_INVA;
-            op.i2=cRepInvVisib;
-            ExecutiveObjMolSeleOp(G,sele,&op);
+        switch(rec->type) {
+        case cExecSelection:
+        case cExecObject: 
+          {
+            int sele=SelectorIndexByName(G,rec->name);
+            if(sele>=0) {
+              ObjectMoleculeOpRec op;
+              ObjectMoleculeOpRecInit(&op);
+              op.code=OMOP_VISI;
+              op.i1=rep;
+              op.i2=state;
+              ExecutiveObjMolSeleOp(G,sele,&op);
+              op.code=OMOP_INVA;
+              op.i2=cRepInvVisib;
+              ExecutiveObjMolSeleOp(G,sele,&op);
+            }
           }
+          break;
         }
-        break;
-      }
 
-      /* per-object/name */
+        /* per-object/name */
         
-      switch(rec->type) {
-      case cExecSelection: 
-        if(rec->name[0]!='_') {
-          int a;
-          /* remember visibility information for real selections */
+        switch(rec->type) {
+        case cExecSelection: 
+          if(rec->name[0]!='_') {
+            int a;
+            /* remember visibility information for real selections */
+            if(rep>=0) {
+              rec->repOn[rep]=state;
+            } else {
+              for(a=0;a<cRepCnt;a++)
+                rec->repOn[a]=state; 
+            }
+          }
+          break;
+        case cExecObject:
           if(rep>=0) {
-            rec->repOn[rep]=state;
-          } else {
-            for(a=0;a<cRepCnt;a++)
-              rec->repOn[a]=state; 
-          }
-        }
-        break;
-      case cExecObject:
-        if(rep>=0) {
-          ObjectSetRepVis(rec->obj,rep,state);
-          if(rec->obj->fInvalidate)
-            rec->obj->fInvalidate(rec->obj,rep,cRepInvVisib,0);
-        } else {
-          int a;
-          for(a=0;a<cRepCnt;a++) {
-            rec->repOn[a]=state; 
-            ObjectSetRepVis(rec->obj,a,state);
+            ObjectSetRepVis(rec->obj,rep,state);
             if(rec->obj->fInvalidate)
-              rec->obj->fInvalidate(rec->obj,a,cRepInvVisib,0);
+              rec->obj->fInvalidate(rec->obj,rep,cRepInvVisib,0);
+          } else {
+            int a;
+            for(a=0;a<cRepCnt;a++) {
+              rec->repOn[a]=state; 
+              ObjectSetRepVis(rec->obj,a,state);
+              if(rec->obj->fInvalidate)
+                rec->obj->fInvalidate(rec->obj,a,cRepInvVisib,0);
+            }
           }
+          SceneChanged(G);
+          break;
+        case cExecAll:
+          ExecutiveSetAllRepVisib(G,rep,state);
+          break;
         }
-        SceneChanged(G);
-        break;
-      case cExecAll:
-        ExecutiveSetAllRepVisib(G,rep,state);
-        break;
       }
     }
+    TrackerDelList(I_Tracker, list_id);
+    TrackerDelIter(I_Tracker, iter_id);
   }
-  TrackerDelList(I_Tracker, list_id);
-  TrackerDelIter(I_Tracker, iter_id);
-    
 #else
-
+ {
   int sele;
   int a;
   int handled = false;
@@ -8899,6 +8927,7 @@ void ExecutiveSetRepVisib(PyMOLGlobals *G,char *name,int rep,int state)
         break;
       }
   }
+ }
 #endif
 
   PRINTFD(G,FB_Executive)
