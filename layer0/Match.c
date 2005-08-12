@@ -334,6 +334,7 @@ float MatchAlign(CMatch *I,float gap_penalty,float ext_penalty,
   int gap=0;
   int *p;
   int cnt;
+  const float MIN_SCORE = -1000000.00F; /* avoid overflow issues with -FLT_MAX */
   nf = I->na+2;
   ng = I->nb+2;
 
@@ -352,6 +353,8 @@ float MatchAlign(CMatch *I,float gap_penalty,float ext_penalty,
   for(f=0;f<nf;f++) {
     for(g=0;g<ng;g++) {
       score[f][g] = 0.0F;
+      point[f][g][0] = -1;
+      point[f][g][1] = -1;
     }
   }
   /* now start walking backwards up the alignment */
@@ -364,7 +367,7 @@ float MatchAlign(CMatch *I,float gap_penalty,float ext_penalty,
          /* find the maximum scoring cell accessible from this position, 
           * while taking gap penalties into account */
          
-         mxv = -FLT_MAX;
+         mxv = MIN_SCORE;
          mxa=-1;
          mxb=-1;
          
@@ -454,7 +457,7 @@ float MatchAlign(CMatch *I,float gap_penalty,float ext_penalty,
 
   /* find the best entry point */
 
-  mxv = -FLT_MAX;
+  mxv = MIN_SCORE;
   mxa=0;
   mxb=0;
   for(b=0;b<I->nb;b++) {
