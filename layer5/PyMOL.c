@@ -1147,13 +1147,12 @@ PyMOLreturn_float_array PyMOL_CmdAlign(CPyMOL *I, char *source, char *target, fl
                                  char *object, char *matrix, int source_state, int target_state, 
                                  int quiet, int max_skip) 
 {
-
   OrthoLineType s2="",s3="";
   PyMOLreturn_float_array result;
   int ok = false;
   ExecutiveRMSInfo rms_info;
-  result.array = VLAlloc(float,4);
-  result.size = 4;
+  result.size = 7;
+  result.array = VLAlloc(float,result.size);
   if(!result.array) {
     ok=false;
   } else {
@@ -1164,12 +1163,21 @@ PyMOLreturn_float_array PyMOL_CmdAlign(CPyMOL *I, char *source, char *target, fl
                                        max_skip,cutoff,cycles,quiet,object,
                                        source_state-1, target_state-1,
                                        &rms_info);
+      if(ok) {
+        result.array[0] = rms_info.final_rms;
+        result.array[1] = rms_info.final_n_atom;
+        result.array[2] = rms_info.n_cycles_run;
+        result.array[3] = rms_info.initial_rms;
+        result.array[4] = rms_info.initial_n_atom;
+        result.array[5] = rms_info.raw_alignment_score;
+        result.array[6] = rms_info.n_residues_aligned;
+      }
     }
   }
   SelectorFreeTmp(I->G,s2);
   SelectorFreeTmp(I->G,s3);
   result.status = get_status_ok(ok);
-  if(!ok) {
+  if(!ok) { 
     VLAFreeP(result.array);
   }
   return result;
