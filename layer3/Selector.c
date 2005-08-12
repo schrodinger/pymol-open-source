@@ -2944,12 +2944,12 @@ int *SelectorGetResidueVLA(PyMOLGlobals *G,int sele)
       {
         obj=I->Obj[I->Table[a].model];
         at2=I->Table[a].atom;
-        if(!ai1) {
-          mod1 = I->Table[a].model;
-          at1 = at2;
-          ai1=obj->AtomInfo+at1;
-        }
         if(SelectorIsMember(G,obj->AtomInfo[at2].selEntry,sele)) {
+          if(!ai1) {
+            mod1 = I->Table[a].model;
+            at1 = at2;
+            ai1 = obj->AtomInfo+at1;
+          }
           ai2=obj->AtomInfo+at2;
           if(!AtomInfoSameResidue(G,ai1,ai2)) {
             if(ai1) {
@@ -2963,6 +2963,7 @@ int *SelectorGetResidueVLA(PyMOLGlobals *G,int sele)
                 rcode = (rcode<<8) | rn[c];
               }
               *(r++) = rcode;
+
               at1 = at2;
               ai1 = ai2;
               mod1 = I->Table[a].model;
