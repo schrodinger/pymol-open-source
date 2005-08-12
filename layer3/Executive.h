@@ -96,9 +96,10 @@ int ExecutiveDebug(PyMOLGlobals *G,char *name);
 
 typedef struct {
   int n_residues_aligned;
+  float raw_alignment_score;
   int initial_n_atom;
   float initial_rms;
-  int n_refine_cycles;
+  int n_cycles_run;
   int final_n_atom;
   float final_rms;
 } ExecutiveRMSInfo;
