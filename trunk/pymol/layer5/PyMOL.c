@@ -1354,7 +1354,7 @@ PyMOLreturn_status PyMOL_CmdLoad(CPyMOL *I,char *content,  char *content_type,
 {
   OVreturn_word result;
   int type_code;
-  int format_code;
+  int format_code = 0;
   int ok = true;
   WordType obj_name;
   

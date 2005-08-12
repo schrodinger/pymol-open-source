@@ -1234,9 +1234,16 @@ static PyObject *CmdAlign(PyObject *self, 	PyObject *args) {
     APIExit();
   }
   if(ok) {
-    return Py_BuildValue("f",rms_info.final_rms);
+    return Py_BuildValue("(fiififi)",
+                         rms_info.final_rms,
+                         rms_info.final_n_atom,
+                         rms_info.n_cycles_run,
+                         rms_info.initial_rms,
+                         rms_info.initial_n_atom,
+                         rms_info.raw_alignment_score,
+                         rms_info.n_residues_aligned);
   } else {
-    return Py_BuildValue("f",-1.0F);
+    return APIFailure();
   }
 }
 
@@ -2451,7 +2458,7 @@ static PyObject *CmdDist(PyObject *dummy, PyObject *args)
   }
   if(!ok) 
     return APIFailure();
-  else
+  else 
     return(Py_BuildValue("f",result));
 }
 
@@ -3210,7 +3217,6 @@ static PyObject *CmdFit(PyObject *dummy, PyObject *args)
   int quiet;
   OrthoLineType s1,s2;
   PyObject *result;
-  float tmp_result = -1.0;
   float cutoff;
   int state1,state2;
   int ok=false;

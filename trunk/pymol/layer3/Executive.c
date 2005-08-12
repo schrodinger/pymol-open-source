@@ -3641,7 +3641,6 @@ int ExecutiveAlign(PyMOLGlobals *G,char *s1,char *s2,char *mat_file,float gap,fl
   int *vla2=NULL;
   int na,nb;
   int c;
-  float result = 1.0F;
   int ok=true;
   CMatch *match = NULL;
 
@@ -3657,8 +3656,10 @@ int ExecutiveAlign(PyMOLGlobals *G,char *s1,char *s2,char *mat_file,float gap,fl
         if (ok) ok = MatchResidueToCode(match,vla2,nb);
         if (ok) ok = MatchMatrixFromFile(match,mat_file,quiet);
         if (ok) ok = MatchPreScore(match,vla1,na,vla2,nb,quiet);
-        if (ok) {
-          result = MatchAlign(match,gap,extend,max_gap,max_skip,quiet);
+        if (ok) ok = MatchAlign(match,gap,extend,max_gap,max_skip,quiet);
+        if(ok) {
+          rms_info->raw_alignment_score = match->score;
+          rms_info->n_residues_aligned = match->n_pair;
           if(match->pair) { 
             c = SelectorCreateAlignments(G,match->pair,
                                          sele1,vla1,sele2,vla2,
@@ -6027,7 +6028,7 @@ int ExecutiveRMS(PyMOLGlobals *G,char *s1,char *s2,int mode,float refine,int max
 
         if(rms_info) {
           rms_info->initial_n_atom = n_pair;
-          rms_info->n_refine_cycles = 0;
+          rms_info->n_cycles_run = 0;
           rms_info->final_n_atom = n_pair; /* in case there is no refinement */
         }
         if(mode!=0) {
@@ -6080,7 +6081,7 @@ int ExecutiveRMS(PyMOLGlobals *G,char *s1,char *s2,int mode,float refine,int max
                 if(n_pair) {
                   rms = MatrixFitRMSTTTf(G,n_pair,op1.vv1,op2.vv1,NULL,op2.ttt);            
                   if(rms_info) {
-                    rms_info->n_refine_cycles = b;
+                    rms_info->n_cycles_run = b;
                     rms_info->final_n_atom = n_pair;
                     rms_info->final_rms = rms;
                   }
