@@ -184,7 +184,8 @@ int ObjectMapInterpolate(ObjectMap *I,int state,float *array,float *result,int *
   return(ok);
 }
 
-static int ObjectMapStateTruncate(PyMOLGlobals *G, ObjectMapState *ms, float *mn, float *mx)
+static int ObjectMapStateTrim(PyMOLGlobals *G, ObjectMapState *ms, 
+                                  float *mn, float *mx,int quiet)
 {
   int div[3];
   int min[3];
@@ -194,10 +195,11 @@ static int ObjectMapStateTruncate(PyMOLGlobals *G, ObjectMapState *ms, float *mn
   int a,b,c,d,e,f;
   float *vt,*vr;
   float v[3];
-  float x,y,z;
   float grid[3];
   Isofield *field;
-
+  int result = true;
+  float orig_size = 1.0F;
+  float new_size = 1.0F;
   switch(ms->MapSource) {
   case cMapSourceXPLOR:
   case cMapSourceCCP4:
@@ -207,6 +209,8 @@ static int ObjectMapStateTruncate(PyMOLGlobals *G, ObjectMapState *ms, float *mn
       float tst[3],frac_tst[3];
       float frac_mn[3];
       float frac_mx[3];
+      int hit_flag = false;
+
       /* compute the limiting box extents in fractional space */
 
       for(a=0;a<8;a++) {
@@ -232,106 +236,211 @@ static int ObjectMapStateTruncate(PyMOLGlobals *G, ObjectMapState *ms, float *mn
       }
       fdim[3]=3;
 
-      for(d=0;d<3;d++) {
-        int first_hit_flag = true;
-        int cur[3];
+      {
+        int first_flag[3] = {false,false,false};
+        for(d=0;d<3;d++) {
+          int tst_min,tst_max;
+          float v_min, v_max;
+          for(c=0;c<(fdim[d]-1);c++) {
+            tst_min = c+min[d];
+            tst_max = tst_min+1;
+            v_min=tst_min/((float)div[d]);
+            v_max=tst_max/((float)div[d]);
+            if(((v_min>=frac_mn[d]) && (v_min<=frac_mx[d]))||
+               ((v_max>=frac_mn[d]) && (v_max<=frac_mx[d]))) {
+              if(!first_flag[d]) {
+                first_flag[d]=true;
+                new_min[d] = tst_min;
+                new_max[d] = tst_max;
+              } else {
+                new_min[d] = (new_min[d] > tst_min) ? tst_min : new_min[d];
+                new_max[d] = (new_max[d] < tst_max) ? tst_max : new_max[d];
+              }
+            }
+          }
+          new_fdim[d] = (new_max[d] - new_min[d]) + 1;
+        }
+        hit_flag = first_flag[0] && first_flag[1] & first_flag[2];
+      }
 
-        for(c=0;c<fdim[d];c++) {
-          cur[d] = c+min[d];
-          v[d]=cur[d]/((float)div[d]);
-          if((v[d]>=frac_mn[d]) && (v[d]<=frac_mx[d])) {
-            if(first_hit_flag) {
-              first_hit_flag=false;
-              new_min[d] = cur[d];
-              new_max[d] = cur[d];
-            } else {
-              new_min[d] = (new_min[d] > cur[d]) ? cur[d] : new_min[d];
-              new_max[d] = (new_max[d] < cur[d]) ? cur[d] : new_max[d];
+      if(hit_flag) 
+        hit_flag = (new_fdim[0]!=fdim[0])||(new_fdim[1]!=fdim[1])||
+          (new_fdim[2]!=fdim[2]);
+
+      if(hit_flag) {
+        orig_size = fdim[0]*fdim[1]*fdim[2];
+        new_size = new_fdim[0]*new_fdim[1]*new_fdim[2];
+        
+        field=IsosurfFieldAlloc(G,new_fdim);
+        field->save_points = ms->Field->save_points;
+
+
+        for(c=0;c<new_fdim[2];c++) {
+          f = c+(new_min[2] - min[2]);
+          for(b=0;b<new_fdim[1];b++) {
+            e = b+(new_min[1] - min[1]);
+            for(a=0;a<new_fdim[0];a++) {
+              d = a+(new_min[0] - min[0]);
+              vt = F4Ptr(field->points,a,b,c,0);
+              vr = F4Ptr(ms->Field->points,d,e,f,0);
+              copy3f(vr,vt);
+              F3(field->data,a,b,c) = F3(ms->Field->data,d,e,f);
             }
           }
         }
-        new_fdim[d] = (new_max[d] - new_min[d]) + 1;
-      }
-      
-      field=IsosurfFieldAlloc(G,new_fdim);
-
-    for(c=0;c<new_fdim[2];c++) {
-      f = c+(new_min[2] - min[2]);
-      for(b=0;b<new_fdim[1];b++) {
-        e = b+(new_min[1] - min[1]);
-        for(a=0;a<new_fdim[0];a++) {
-          d = a+(new_min[0] - min[0]);
-          vt = F4Ptr(field->points,a,b,c,0);
-          vr = F4Ptr(ms->Field->points,d,e,f,0);
-          copy3f(vr,vt);
-          F3(field->data,a,b,c) = F3(ms->Field->data,d,e,f);
+        IsosurfFieldFree(G,ms->Field);
+        for(a=0;a<3;a++) {
+          ms->Min[a]=new_min[a];
+          ms->Max[a]=new_max[a];
+          ms->FDim[a]=new_fdim[a];
         }
+        ms->Field = field;
+        
+        /* compute new extents */
+        v[2]=(ms->Min[2])/((float)ms->Div[2]);
+        v[1]=(ms->Min[1])/((float)ms->Div[1]);
+        v[0]=(ms->Min[0])/((float)ms->Div[0]);
+        
+        transform33f3f(ms->Crystal->FracToReal,v,ms->ExtentMin);
+        
+        v[2]=((ms->FDim[2]-1)+ms->Min[2])/((float)ms->Div[2]);
+        v[1]=((ms->FDim[1]-1)+ms->Min[1])/((float)ms->Div[1]);
+        v[0]=((ms->FDim[0]-1)+ms->Min[0])/((float)ms->Div[0]);
+        
+        transform33f3f(ms->Crystal->FracToReal,v,ms->ExtentMax);
+        
+        /* new corner */
+        {
+          float vv[3];
+          d = 0;
+          for(c=0;c<ms->FDim[2];c+=(ms->FDim[2]-1)) {
+            v[2]=(c+ms->Min[2])/((float)ms->Div[2]);
+            for(b=0;b<ms->FDim[1];b+=(ms->FDim[1]-1)) {
+              v[1]=(b+ms->Min[1])/((float)ms->Div[1]);
+              for(a=0;a<ms->FDim[0];a+=(ms->FDim[0]-1)) {
+                v[0]=(a+ms->Min[0])/((float)ms->Div[0]);
+                transform33f3f(ms->Crystal->FracToReal,v,vv);
+                copy3f(vv,ms->Corner+3*d);
+                d++;
+              }
+            }
+          }
+        }
+        result=true;
       }
-    }
-    IsosurfFieldFree(G,ms->Field);
-    for(a=0;a<3;a++) {
-      ms->Min[a]=new_min[a];
-      ms->Max[a]=new_max[a];
-      ms->FDim[a]=new_fdim[a];
-      ms->Div[a]=div[a];
-    }
-    ms->Field = field;
     }
     break;
   case cMapSourcePHI:
   case cMapSourceFLD:
   case cMapSourceDesc:
+    {
+      int hit_flag = false;
+      float *origin = ms->Origin;
 
-    for(a=0;a<3;a++) {
-      div[a]=ms->Div[a]*2;
-      grid[a]=ms->Grid[a]/2.0F;
-      min[a]=ms->Min[a]*2;
-      max[a]=ms->Max[a]*2;
-      fdim[a]=ms->FDim[a]*2-1;
-    }
-    fdim[3]=3;
+      for(a=0;a<3;a++) {
+        min[a]=ms->Min[a];
+        grid[a]=ms->Grid[a];
+        max[a]=ms->Max[a];
+        fdim[a]=ms->FDim[a];
+      }
+      fdim[3]=3;
 
-    field=IsosurfFieldAlloc(G,fdim);
+      {
+        int first_flag[3] = {false,false,false};
+        for(d=0;d<3;d++) {
+          int tst_min,tst_max;
+          float v_min, v_max;
+          for(c=0;c<(fdim[d]-1);c++) {
+            tst_min = c+min[d];
+            tst_max = tst_min+1;
+            v_min=origin[d]+grid[d]*(tst_min);
+            v_max=origin[d]+grid[d]*(tst_max);
+            if(((v_min>=mn[d]) && (v_min<=mx[d]))||
+               ((v_max>=mn[d]) && (v_max<=mx[d]))) {
+              if(!first_flag[d]) {
+                first_flag[d]=true;
+                hit_flag=true;
+                new_min[d] = tst_min;
+                new_max[d] = tst_max;
+              } else {
+                new_min[d] = (new_min[d] > tst_min) ? tst_min : new_min[d];
+                new_max[d] = (new_max[d] < tst_max) ? tst_max : new_max[d];
+              }
+            }
+          }
+          new_fdim[d] = (new_max[d] - new_min[d]) + 1;
+        }
+        hit_flag = first_flag[0] && first_flag[1] & first_flag[2];
+      }
 
-    for(c=0;c<fdim[2];c++) {
-      v[2]=ms->Origin[2]+grid[2]*(c+min[2]);
-      z = (c&0x1) ? 0.5F : 0.0F;
-      for(b=0;b<fdim[1];b++) {
-        v[1]=ms->Origin[1]+grid[1]*(b+min[1]);
-        y = (b&0x1) ? 0.5F : 0.0F;
-        for(a=0;a<fdim[0];a++) {
-          v[0]=ms->Origin[0]+grid[0]*(a+min[0]);
-          x = (a&0x1) ? 0.5F : 0.0F;
-          vt = F4Ptr(field->points,a,b,c,0);
-          copy3f(v,vt);
-          if((a&0x1)||(b&0x1)||(c&0x1)) {
-            F3(field->data,a,b,c) = FieldInterpolatef(ms->Field->data,
-                                    a/2,
-                                    b/2,
-                                    c/2,x,y,z);
-          } else {
-            F3(field->data,a,b,c) = F3(ms->Field->data,a/2,b/2,c/2);
+      if(hit_flag) 
+        hit_flag = (new_fdim[0]!=fdim[0])||(new_fdim[1]!=fdim[1])||
+          (new_fdim[2]!=fdim[2]);
+
+      if(hit_flag) {
+
+        orig_size = fdim[0]*fdim[1]*fdim[2];
+        new_size = new_fdim[0]*new_fdim[1]*new_fdim[2];
+
+        field=IsosurfFieldAlloc(G,new_fdim);
+        field->save_points = ms->Field->save_points;
+
+
+        for(c=0;c<new_fdim[2];c++) {
+          f = c+(new_min[2] - min[2]);
+          for(b=0;b<new_fdim[1];b++) {
+            e = b+(new_min[1] - min[1]);
+            for(a=0;a<new_fdim[0];a++) {
+              d = a+(new_min[0] - min[0]);
+              vt = F4Ptr(field->points,a,b,c,0);
+              vr = F4Ptr(ms->Field->points,d,e,f,0);
+              copy3f(vr,vt);
+              F3(field->data,a,b,c) = F3(ms->Field->data,d,e,f);
+            }
           }
         }
+        IsosurfFieldFree(G,ms->Field);
+        for(a=0;a<3;a++) {
+          ms->Min[a]=new_min[a];
+          ms->Max[a]=new_max[a];
+          ms->FDim[a]=new_fdim[a];
+          if(ms->Dim) 
+            ms->Dim[a]=new_fdim[a];
+        }
+
+        ms->Field = field;
+
+        for(e=0;e<3;e++) {
+          ms->ExtentMin[e] = ms->Origin[e]+ms->Grid[e]*ms->Min[e];
+          ms->ExtentMax[e] = ms->Origin[e]+ms->Grid[e]*ms->Max[e];
+        }
+        
+        d=0;
+        for(c=0;c<ms->FDim[2];c+=ms->FDim[2]-1) {
+          v[2]=ms->Origin[2]+ms->Grid[2]*(c+ms->Min[2]);
+          
+          for(b=0;b<ms->FDim[1];b+=ms->FDim[1]-1) {
+            v[1]=ms->Origin[1]+ms->Grid[1]*(b+ms->Min[1]);
+            
+            for(a=0;a<ms->FDim[0];a+=ms->FDim[0]-1) {
+              v[0]=ms->Origin[0]+ms->Grid[0]*(a+ms->Min[0]);
+              copy3f(v,ms->Corner+3*d);
+              d++;
+            }
+          }
+        }
+        result=true;
       }
     }
-    IsosurfFieldFree(G,ms->Field);
-    for(a=0;a<3;a++) {
-      ms->Min[a]=min[a];
-      ms->Max[a]=max[a];
-      ms->FDim[a]=fdim[a];
-      if(ms->Dim) 
-        ms->Dim[a]=fdim[a];
-      ms->Div[a]=div[a];
-      if(ms->Grid)
-        ms->Grid[a]=grid[a];
-    }
-    ms->Field = field;
-
     break;
   }
-  return 1;
-
+  if(result&&(!quiet)) {
+    PRINTFB(G,FB_ObjectMap,FB_Actions)
+      " ObjectMap: Map volume reduced by %2.0f%%.\n",
+       (100*(orig_size-new_size))/orig_size
+      ENDFB(G);
+  }
+  return result;
 }
 
 static int ObjectMapStateDouble(PyMOLGlobals *G,ObjectMapState *ms)
@@ -362,7 +471,7 @@ static int ObjectMapStateDouble(PyMOLGlobals *G,ObjectMapState *ms)
     fdim[3]=3;
 
     field=IsosurfFieldAlloc(G,fdim);
-
+    field->save_points = ms->Field->save_points;
     for(c=0;c<fdim[2];c++) {
       v[2]=(c+min[2])/((float)div[2]);
       z = (c&0x1) ? 0.5F : 0.0F;
@@ -393,6 +502,7 @@ static int ObjectMapStateDouble(PyMOLGlobals *G,ObjectMapState *ms)
       ms->FDim[a]=fdim[a];
       ms->Div[a]=div[a];
     }
+
     ms->Field = field;
     break;
   case cMapSourcePHI:
@@ -409,6 +519,7 @@ static int ObjectMapStateDouble(PyMOLGlobals *G,ObjectMapState *ms)
     fdim[3]=3;
 
     field=IsosurfFieldAlloc(G,fdim);
+    field->save_points = ms->Field->save_points;
 
     for(c=0;c<fdim[2];c++) {
       v[2]=ms->Origin[2]+grid[2]*(c+min[2]);
@@ -450,23 +561,30 @@ static int ObjectMapStateDouble(PyMOLGlobals *G,ObjectMapState *ms)
   return 1;
 }
 
-int ObjectMapTruncate(ObjectMap *I,int state,float *mn, float *mx)
+int ObjectMapTrim(ObjectMap *I,int state,float *mn, float *mx, int quiet)
 {
   int a;
   int result=true;
+  int update=false;
   if(state<0) {
     for(a=0;a<I->NState;a++) {
-      if(I->State[a].Active)
-        result = result && ObjectMapStateTruncate(I->Obj.G,&I->State[a],mn,mx);
+      if(I->State[a].Active) {
+        if(ObjectMapStateTrim(I->Obj.G,&I->State[a],mn,mx,quiet))
+          update=true;
+        else
+          result=false;
+      }
     }
   } else if((state>=0)&&(state<I->NState)&&(I->State[state].Active)) {
-    ObjectMapStateTruncate(I->Obj.G,&I->State[state],mn,mx);
+    update = result = ObjectMapStateTrim(I->Obj.G,&I->State[state],mn,mx,quiet);
   } else {
     PRINTFB(I->Obj.G,FB_ObjectMap,FB_Errors)
       " ObjectMap-Error: invalidate state.\n"
       ENDFB(I->Obj.G);
     result=false;
   }
+  if(update)
+    ObjectMapUpdateExtents(I);
   return(result);
 }
 

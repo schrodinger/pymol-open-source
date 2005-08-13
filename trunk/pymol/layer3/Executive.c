@@ -3333,36 +3333,75 @@ int ExecutiveMapSetBorder(PyMOLGlobals *G,char *name,float level)
 
 int ExecutiveMapDouble(PyMOLGlobals *G,char *name,int state)
 {
-  int result=false;
-  SpecRec *tRec;
-  ObjectMap *mobj;
+  register CExecutive *I = G->Executive;
+  int result=true;
+  CTracker *I_Tracker= I->Tracker;
+  int list_id = ExecutiveGetNamesListFromPattern(G,name);
+  int iter_id = TrackerNewIter(I_Tracker, 0, list_id);
+  SpecRec *rec;
 
-  tRec = ExecutiveFindSpec(G,name);
-  if(tRec) {
-    if(tRec->type==cExecObject)
-      if(tRec->obj->type==cObjectMap) {
-        mobj =(ObjectMap*)tRec->obj;
-        result = ObjectMapDouble(mobj,state);
+  while( TrackerIterNextCandInList(I_Tracker, iter_id, (TrackerRef**)&rec) ) {
+    if(rec) {
+      switch(rec->type) {
+      case cExecObject:
+        if(rec->obj->type==cObjectMap) {
+          ObjectMap *obj =(ObjectMap*)rec->obj;
+          result = ObjectMapDouble(obj,state);
+          if(result && rec->visible)
+            SceneChanged(G);
+        }
+        break;
       }
+    }
   }
-  return(result);
+  TrackerDelList(I_Tracker, list_id);
+  TrackerDelIter(I_Tracker, iter_id);
+  return result;
 }
 
-int ExecutiveMapTruncate(PyMOLGlobals *G,char *name,char *sele,int map_state,int sele_state)
+int ExecutiveTrim(PyMOLGlobals *G,char *name,
+                  char *sele,float buffer,
+                  int map_state,int sele_state,
+                  int quiet)
 {
-  int result=false;
-  SpecRec *tRec;
-  ObjectMap *mobj;
+  register CExecutive *I = G->Executive;
+  int result=true;
   float mn[3],mx[3];
-  tRec = ExecutiveFindSpec(G,name);
-  if(tRec) {
-    if(tRec->type==cExecObject)
-      if(tRec->obj->type==cObjectMap) {
-        mobj =(ObjectMap*)tRec->obj;
-        result = ObjectMapTruncate(mobj,map_state,mn,mx);
+  
+  if(ExecutiveGetExtent(G,sele,mn,mx,true,sele_state,false)) {
+    CTracker *I_Tracker= I->Tracker;
+    int list_id = ExecutiveGetNamesListFromPattern(G,name);
+    int iter_id = TrackerNewIter(I_Tracker, 0, list_id);
+    SpecRec *rec;
+    {
+      int a;
+      float t;
+      for(a=0;a<3;a++) {
+        mn[a]-=buffer;
+        mx[a]+=buffer;
+        if(mn[a]>mx[a]) {
+          t=mn[a]; mn[a]=mx[a]; mx[a]=t;
+        }
       }
+    }
+    while( TrackerIterNextCandInList(I_Tracker, iter_id, (TrackerRef**)&rec) ) {
+      if(rec) {
+        switch(rec->type) {
+        case cExecObject:
+          if(rec->obj->type==cObjectMap) {
+            ObjectMap *obj =(ObjectMap*)rec->obj;
+            result = result && ObjectMapTrim(obj,map_state,mn,mx,quiet);
+            if(result && rec->visible)
+              SceneChanged(G);
+          }
+          break;
+        }
+      }
+    }
+    TrackerDelList(I_Tracker, list_id);
+    TrackerDelIter(I_Tracker, iter_id);
   }
-  return(result);
+  return result;
 }
 
 void ExecutiveSelectRect(PyMOLGlobals *G,BlockRect *rect,int mode)

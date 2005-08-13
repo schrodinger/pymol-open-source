@@ -83,7 +83,7 @@ ObjectMap *ObjectMapLoadCObject(PyMOLGlobals *G,ObjectMap *obj,int state);
 ObjectMap *ObjectMapLoadChemPyMap(PyMOLGlobals *G,ObjectMap *I,PyObject *Map,
                                   int state,int discrete);
 int ObjectMapDouble(ObjectMap *I,int state);
-int ObjectMapTruncate(ObjectMap *I,int state,float *mn, float *mx);
+int ObjectMapTrim(ObjectMap *I,int state, float *mn, float *mx,int quiet);
 int ObjectMapSetBorder(ObjectMap *I,float level);
 int ObjectMapStateSetBorder(ObjectMapState *I,float level);
 void ObjectMapStateInit(PyMOLGlobals *G,ObjectMapState *I);
