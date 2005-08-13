@@ -932,6 +932,23 @@ static PyObject *CmdMapSetBorder(PyObject *self, PyObject *args)
   return APIResultOk(ok);
 }
 
+static PyObject *CmdMapTruncate(PyObject *self, PyObject *args)
+{
+  char *name,*sele;
+  int map_state,sele_state;
+  int ok = false;
+  OrthoLineType s1;
+  ok = PyArg_ParseTuple(args,"ssii",&name,&sele,&map_state,&sele_state);
+  if(ok) {
+    APIEntry();
+    ok = (SelectorGetTmp(TempPyMOLGlobals,sele,s1)>=0);
+    ok = ExecutiveMapTruncate(TempPyMOLGlobals,name,s1,map_state,sele_state);
+    SelectorFreeTmp(TempPyMOLGlobals,s1);
+    APIExit();
+  }
+  return APIResultOk(ok);
+}
+
 static PyObject *CmdMapDouble(PyObject *self, PyObject *args)
 {
   char *name;
@@ -5640,6 +5657,7 @@ static PyMethodDef Cmd_methods[] = {
    {"map_new",               CmdMapNew,               METH_VARARGS },
    {"map_double",            CmdMapDouble,            METH_VARARGS },
    {"map_set_border",        CmdMapSetBorder,         METH_VARARGS },
+   {"map_truncate",          CmdMapTruncate,         METH_VARARGS },
 	{"mask",	                 CmdMask,                 METH_VARARGS },
 	{"mclear",	              CmdMClear,               METH_VARARGS },
 	{"mdo",	                 CmdMDo,                  METH_VARARGS },

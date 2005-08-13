@@ -1360,6 +1360,7 @@ SEE ALSO
               iterate_state,      \
               map_set_border,     \
               map_double,         \
+              map_truncate,       \
               matrix_transfer,    \
               matrix_reset,       \
               protect,            \
@@ -1685,8 +1686,9 @@ SEE ALSO
             'madd'          : [ madd              , 0 , 0 , ''  , parsing.STRICT ],
             'mask'          : [ mask              , 0 , 0 , ''  , parsing.STRICT ],
             'map_set_border': [ map_set_border    , 0 , 0 , ''  , parsing.STRICT ],
-            'map_double'    : [ map_double        , 0 , 0 , ''  , parsing.STRICT ],      
+            'map_double'    : [ map_double        , 0 , 0 , ''  , parsing.STRICT ],
             'map_new'       : [ map_new           , 0 , 0 , ''  , parsing.STRICT ],    
+            'map_truncate'  : [ map_truncate      , 0 , 0 , ''  , parsing.STRICT ],                  
             'mappend'       : [ mappend           , 2 , 2 , ':' , parsing.MOVIE  ],
             'matrix_reset'  : [ matrix_reset      , 0 , 0 , ''  , parsing.STRICT ],         
             'matrix_transfer': [ matrix_transfer  , 0 , 0 , ''  , parsing.STRICT ],
@@ -2103,6 +2105,7 @@ SEE ALSO
             'mask'           : [ selection_sc           , 'selection'       , ''   ],
             'mview'          : [ moving.mview_action_sc , 'action'          , ''   ],
             'map_double'     : [ map_sc                 , 'map object'      , ', ' ],
+            'map_truncate'   : [ map_truncate           , 'map object'      , ', ' ],            
             'order'          : [ selection_sc           , 'name'            , ''   ],
             'origin'         : [ selection_sc           , 'selection'       , ''   ],
             'protect'        : [ selection_sc           , 'selection'       , ''   ],
@@ -2136,6 +2139,7 @@ SEE ALSO
             'load_traj'      : [ selection_sc           , 'selection'       , ', ' ],
             'create'         : [ selection_sc           , 'selection'       , ', ' ],
             'map_new'        : [ creating.map_type_sc   , 'map type'        , ', ' ],
+            'map_truncate'   : [ selection_sc           , 'selection'       , ', ' ],
             'spectrum'       : [ palette_sc             , 'palette'         , ''   ],      
             'order'          : [ boolean_sc             , 'sort'            , ','  ],
             'symexp'         : [ object_sc              , 'object'          , ', ' ],   

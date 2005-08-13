@@ -1609,7 +1609,20 @@ USAGE
             unlock(r)
         if _raising(r): raise pymol.CmdException            
         return r
-        
+
+    def map_truncate(name,selection,map_state=0,sele_state=0):
+        r = DEFAULT_ERROR
+        # preprocess selection
+        selection = selector.process(selection)
+        #   
+        try:
+            lock()
+            r = _cmd.map_truncate(str(name),str(selection),int(state)-1,int(sele_state)-1)
+        finally:
+            unlock(r)
+        if _raising(r): raise pymol.CmdException            
+        return r
+
     
     def protect(selection="(all)",quiet=1):
         '''
