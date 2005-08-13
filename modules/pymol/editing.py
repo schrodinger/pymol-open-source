@@ -1610,14 +1610,16 @@ USAGE
         if _raising(r): raise pymol.CmdException            
         return r
 
-    def map_truncate(name,selection,map_state=0,sele_state=0):
+    def trim(name,selection,buffer=0.0,map_state=0,sele_state=0,quiet=1):
         r = DEFAULT_ERROR
         # preprocess selection
         selection = selector.process(selection)
         #   
         try:
             lock()
-            r = _cmd.map_truncate(str(name),str(selection),int(state)-1,int(sele_state)-1)
+            r = _cmd.trim(str(name),str(selection),
+                                  float(buffer),int(map_state)-1,
+                                  int(sele_state)-1,int(quiet))
         finally:
             unlock(r)
         if _raising(r): raise pymol.CmdException            
