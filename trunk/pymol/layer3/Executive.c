@@ -3348,6 +3348,23 @@ int ExecutiveMapDouble(PyMOLGlobals *G,char *name,int state)
   return(result);
 }
 
+int ExecutiveMapTruncate(PyMOLGlobals *G,char *name,char *sele,int map_state,int sele_state)
+{
+  int result=false;
+  SpecRec *tRec;
+  ObjectMap *mobj;
+  float mn[3],mx[3];
+  tRec = ExecutiveFindSpec(G,name);
+  if(tRec) {
+    if(tRec->type==cExecObject)
+      if(tRec->obj->type==cObjectMap) {
+        mobj =(ObjectMap*)tRec->obj;
+        result = ObjectMapTruncate(mobj,map_state,mn,mx);
+      }
+  }
+  return(result);
+}
+
 void ExecutiveSelectRect(PyMOLGlobals *G,BlockRect *rect,int mode)
 {
   Multipick smp;
