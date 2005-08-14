@@ -875,6 +875,107 @@ def simple_action(s):
               [ 1, 'delete'       , 'cmd.delete("'+s+'")'    ],
               ]
 
+def map_mesh(s):
+    return [[ 2, 'Mesh:',  '' ],
+            [ 1, '@ level 1.0'         , 'cmd.isomesh("'+s+'_mesh","'+s+'",1.0)'      ],
+            [ 0, ''             , ''                       ],            
+            [ 1, '@ level 2.0'         , 'cmd.isomesh("'+s+'_mesh","'+s+'",2.0)'      ],
+            [ 1, '@ level 3.0'         , 'cmd.isomesh("'+s+'_mesh","'+s+'",3.0)'      ],            
+            [ 0, ''             , ''                       ],            
+            [ 1, '@ level 0.0'         , 'cmd.isomesh("'+s+'_mesh","'+s+'",0.0)'      ],
+            [ 1, '@ level -1.0'         , 'cmd.isomesh("'+s+'_mesh","'+s+'",1.0)'      ],
+            [ 1, '@ level -2.0'         , 'cmd.isomesh("'+s+'_mesh","'+s+'",2.0)'      ],
+            [ 1, '@ level -3.0'         , 'cmd.isomesh("'+s+'_mesh","'+s+'",-3.0)'      ],
+            ]
+
+def map_surface(s):
+    return [[ 2, 'Surface:',  '' ],
+            [ 1, '@ level 1.0'         , 'cmd.isosurface("'+s+'_surf","'+s+'",1.0)'      ],
+            [ 0, ''             , ''                       ],            
+            [ 1, '@ level 2.0'         , 'cmd.isosurface("'+s+'_surf","'+s+'",2.0)'      ],
+            [ 1, '@ level 3.0'         , 'cmd.isosurface("'+s+'_surf","'+s+'",3.0)'      ],            
+            [ 0, ''             , ''                       ],
+            [ 1, '@ level 0.0'         , 'cmd.isosurface("'+s+'_surf","'+s+'",0.0)'      ],            
+            [ 1, '@ level -1.0'         , 'cmd.isosurface("'+s+'_surf","'+s+'",-1.0)'      ],
+            [ 1, '@ level -2.0'         , 'cmd.isosurface("'+s+'_surf","'+s+'",-2.0)'      ],
+            [ 1, '@ level -3.0'         , 'cmd.isosurface("'+s+'_surf","'+s+'",-3.0)'      ],
+            ]
+
+def map_slice(s):
+    return [[ 2, 'Slice:',  '' ],
+            [ 1, 'default'         , 'cmd.slice_new("'+s+'_slice","'+s+'");cmd.ramp_new("'+s+
+              '_slice_ramp","'+s+'");cmd.color("'+s+'_slice_ramp","'+s+'_slice");cmd.set("slice_track_camera",1,"'+s+'_slice")' ],
+            ]
+
+def map_action(s):
+    return [[ 2, 'Actions:'     , ''                       ],
+              [ 1, 'mesh'         , map_mesh(s)  ],
+              [ 1, 'surface'      , map_surface(s)  ],
+              [ 1, 'slice'        , map_slice(s)  ],                        
+              [ 0, ''             , ''                       ],
+              [ 1, 'center'       , 'cmd.center("'+s+'",animate=-1)'    ],           
+              [ 1, 'origin'       , 'cmd.origin("'+s+'")'    ],
+              [ 0, ''             , ''                       ],
+              [ 1, 'zoom'         , 'cmd.zoom("'+s+'",animate=-1)'      ],
+              [ 1, 'center'       , 'cmd.center("'+s+'",animate=-1)'    ],           
+              [ 1, 'origin'       , 'cmd.origin("'+s+'")'    ],
+              [ 0, ''             , ''                       ],
+              [ 1, 'rename'       , 'cmd.wizard("renaming","'+s+'")'          ],           
+              [ 0, ''             , ''                       ],
+              [ 1, 'delete'       , 'cmd.delete("'+s+'")'    ],
+              ]
+
+def level(s):
+    return [[ 2, 'Level',  '' ],
+            [ 1, 'level 5.0'         , 'cmd.isolevel("'+s+'",5.0)'      ],            
+            [ 1, 'level 4.0'         , 'cmd.isolevel("'+s+'",4.0)'      ],                        
+            [ 1, 'level 3.0'         , 'cmd.isolevel("'+s+'",3.0)'      ],
+            [ 1, 'level 2.0'         , 'cmd.isolevel("'+s+'",2.0)'      ],
+            [ 1, 'level 1.5'         , 'cmd.isolevel("'+s+'",1.5)'      ],            
+            [ 1, 'level 1.0'         , 'cmd.isolevel("'+s+'",1.0)'      ],
+            [ 1, 'level 0.5'         , 'cmd.isolevel("'+s+'",0.5)'      ],
+            [ 1, 'level 0.0'         , 'cmd.isolevel("'+s+'",0.0)'      ],
+            [ 1, 'level -0.5'         , 'cmd.isolevel("'+s+'",-0.5)'      ],
+            [ 1, 'level -1.0'         , 'cmd.isolevel("'+s+'",-1.0)'      ],
+            [ 1, 'level -1.0'         , 'cmd.isolevel("'+s+'",-1.5)'      ],            
+            [ 1, 'level -2.0'         , 'cmd.isolevel("'+s+'",-2.0)'      ],
+            [ 1, 'level -3.0'         , 'cmd.isolevel("'+s+'",-3.0)'      ],
+            [ 1, 'level -4.0'         , 'cmd.isolevel("'+s+'",-4.0)'      ],
+            [ 1, 'level -5.0'         , 'cmd.isolevel("'+s+'",-5.0)'      ],            
+            ]
+
+def surface_action(s):
+    return [[ 2, 'Actions:'     , ''                       ],
+              [ 1, 'level'         , level(s)  ],
+              [ 0, ''             , ''                       ],
+              [ 1, 'center'       , 'cmd.center("'+s+'",animate=-1)'    ],           
+              [ 1, 'origin'       , 'cmd.origin("'+s+'")'    ],
+              [ 0, ''             , ''                       ],
+              [ 1, 'zoom'         , 'cmd.zoom("'+s+'",animate=-1)'      ],
+              [ 1, 'center'       , 'cmd.center("'+s+'",animate=-1)'    ],           
+              [ 1, 'origin'       , 'cmd.origin("'+s+'")'    ],
+              [ 0, ''             , ''                       ],
+              [ 1, 'rename'       , 'cmd.wizard("renaming","'+s+'")'          ],           
+              [ 0, ''             , ''                       ],
+              [ 1, 'delete'       , 'cmd.delete("'+s+'")'    ],
+              ]
+
+def mesh_action(s):
+    return [[ 2, 'Actions:'     , ''                       ],
+              [ 1, 'level'         , level(s)  ],
+              [ 0, ''             , ''                       ],
+              [ 1, 'center'       , 'cmd.center("'+s+'",animate=-1)'    ],           
+              [ 1, 'origin'       , 'cmd.origin("'+s+'")'    ],
+              [ 0, ''             , ''                       ],
+              [ 1, 'zoom'         , 'cmd.zoom("'+s+'",animate=-1)'      ],
+              [ 1, 'center'       , 'cmd.center("'+s+'",animate=-1)'    ],           
+              [ 1, 'origin'       , 'cmd.origin("'+s+'")'    ],
+              [ 0, ''             , ''                       ],
+              [ 1, 'rename'       , 'cmd.wizard("renaming","'+s+'")'          ],           
+              [ 0, ''             , ''                       ],
+              [ 1, 'delete'       , 'cmd.delete("'+s+'")'    ],
+              ]
+
 def ramp_action(s):
     return [[ 2, 'Actions:'     , ''                       ],
               [ 1, 'delete'       , 'cmd.delete("'+s+'")'    ],

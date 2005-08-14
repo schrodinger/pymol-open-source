@@ -17,6 +17,7 @@ Z* -------------------------------------------------------------------
 #define _H_ObjectMesh
 
 #include"ObjectMap.h"
+#include"Word.h"
 
 typedef struct {
   CObjectState State;
@@ -38,6 +39,7 @@ typedef struct {
   int DotFlag;
   CGO *UnitCellCGO;
   int displayList;
+  WordType caption;
 } ObjectMeshState;
 
 typedef struct ObjectMesh {
@@ -56,6 +58,7 @@ void ObjectMeshDump(ObjectMesh *I,char *fname,int state);
 PyObject *ObjectMeshAsPyList(ObjectMesh *I);
 int ObjectMeshNewFromPyList(PyMOLGlobals *G,PyObject *list,ObjectMesh **result);
 int ObjectMeshSetLevel(ObjectMesh *I,float level,int state);
+int ObjectMeshInvalidateMapName(ObjectMesh *I,char *name);
 
 #endif
 

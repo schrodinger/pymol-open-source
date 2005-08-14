@@ -54,10 +54,11 @@ int MatrixInvTransformExtentsR44d3f(double *matrix,
     if(!c) {
       copy3d(out_tst,out_max);
       copy3d(out_tst,out_min);
-    }
-    for(a=0;a<3;a++) {
-      if(out_min[a]>out_tst[a]) out_min[a] = out_tst[a];
-      if(out_max[a]<out_tst[a]) out_max[a] = out_tst[a];
+    } else {
+      for(a=0;a<3;a++) {
+        if(out_min[a]>out_tst[a]) out_min[a] = out_tst[a];
+        if(out_max[a]<out_tst[a]) out_max[a] = out_tst[a];
+      }
     }
   }
   copy3d3f(out_min,new_min);

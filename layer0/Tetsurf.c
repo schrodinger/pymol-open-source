@@ -418,8 +418,108 @@ void  TetsurfFree(PyMOLGlobals *G)
 }
 
 /*===========================================================================*/
-void TetsurfGetRange(Isofield *field,CCrystal *cryst,float *mn,float *mx,int *range)
+void TetsurfGetRange(PyMOLGlobals *G,
+                     Isofield *field,CCrystal *cryst,
+                     float *mn,float *mx,int *range)
 {
+  float rmn[3],rmx[3];
+  float imn[3],imx[3];
+  float mix[24],imix[24];
+  int a,b;
+  PRINTFD(G,FB_Isosurface)
+    " IsosurfGetRange: entered mn: %4.2f %4.2f %4.2f mx: %4.2f %4.2f %4.2f\n",
+    mn[0],mn[1],mn[2],mx[0],mx[1],mx[2]
+    ENDFD;
+
+  for(a=0;a<3;a++) {
+    rmn[a] = F4(field->points,0,0,0,a);
+    rmx[a] = F4(field->points,
+                field->dimensions[0]-1,
+                field->dimensions[1]-1,
+                field->dimensions[2]-1,a);
+  }
+
+  /* get min/max extents of map in fractional space */
+
+  transform33f3f(cryst->RealToFrac,rmn,imn);
+  transform33f3f(cryst->RealToFrac,rmx,imx);
+
+  mix[ 0]=mn[0];
+  mix[ 1]=mn[1];
+  mix[ 2]=mn[2];
+
+  mix[ 3]=mx[0];
+  mix[ 4]=mn[1];
+  mix[ 5]=mn[2];
+
+  mix[ 6]=mn[0];
+  mix[ 7]=mx[1];
+  mix[ 8]=mn[2];
+
+  mix[ 9]=mn[0];
+  mix[10]=mn[1];
+  mix[11]=mx[2];
+
+  mix[12]=mx[0];
+  mix[13]=mx[1];
+  mix[14]=mn[2];
+
+  mix[15]=mx[0];
+  mix[16]=mn[1];
+  mix[17]=mx[2];
+
+  mix[18]=mn[0];
+  mix[19]=mx[1];
+  mix[20]=mx[2];
+
+  mix[21]=mx[0];
+  mix[22]=mx[1];
+  mix[23]=mx[2];
+
+  /* compute min/max of query in fractional space */
+
+  for(b=0;b<8;b++) {
+    transform33f3f(cryst->RealToFrac,mix+3*b,imix+3*b);
+  }
+
+  for(a=0;a<3;a++) {
+    if(imx[a]!=imn[a]) { /* protect against div by zero */
+      int b;
+      int mini, maxi, tst_min, tst_max;
+      float cur;
+      for(b=0;b<8;b++) {
+        cur = ((field->dimensions[a]-1)*(imix[a+3*b]-imn[a])/(imx[a]-imn[a]));
+        tst_min = floor(cur);
+        tst_max = ceil(cur)+1;
+        
+        if(!b) {
+          mini=tst_min;
+          maxi=tst_max;
+        } else {
+          if(mini>tst_min)
+            mini=tst_min;
+          if(maxi<=tst_max)
+            maxi=tst_max;
+        }
+      }
+
+      range[a] = mini;
+
+      range[a+3] = maxi;
+    } else {
+      range[a] = 0;
+      range[a+3] = 1;
+    }
+    if(range[a]<0) range[a]=0;
+    if(range[a]>field->dimensions[a]) range[a]=field->dimensions[a];
+    if(range[a+3]<0) range[a+3]=0;
+    if(range[a+3]>field->dimensions[a]) range[a+3]=field->dimensions[a];
+  }
+  PRINTFD(G,FB_Isosurface)
+    " IsosurfGetRange: returning range: %d %d %d %d %d %d\n",
+    range[0],range[1],range[2],range[3],range[4],range[5]
+    ENDFD;
+#if 0
   float fmn[3],fmx[3];
   float rmn[3],rmx[3];
   float imn[3],imx[3];
@@ -428,7 +528,9 @@ void TetsurfGetRange(Isofield *field,CCrystal *cryst,float *mn,float *mx,int *ra
   transform33f3f(cryst->RealToFrac,mx,fmx);
   for(a=0;a<3;a++) {
     rmn[a] = F4(field->points,0,0,0,a);
-    rmx[a] = F4(field->points,field->dimensions[0]-1,field->dimensions[1]-1,
+    rmx[a] = F4(field->points,
+                field->dimensions[0]-1,
+                field->dimensions[1]-1,
                 field->dimensions[2]-1,a);
   }
   
@@ -436,14 +538,15 @@ void TetsurfGetRange(Isofield *field,CCrystal *cryst,float *mn,float *mx,int *ra
   transform33f3f(cryst->RealToFrac,rmx,imx);
 
   for(a=0;a<3;a++) {
-    range[a] = (int)((field->dimensions[a]*(fmn[a]-imn[a])/(imx[a]-imn[a])));
+    range[a] = floor(((field->dimensions[a]-1)*(fmn[a]-imn[a])/(imx[a]-imn[a])));
+    range[a+3] = (int)(((field->dimensions[a]-1)*(fmx[a]-imn[a])/(imx[a]-imn[a])))+1;
     if(range[a]<0) range[a]=0;
-    range[a+3] = (int)((field->dimensions[a]*(fmx[a]-imn[a])/(imx[a]-imn[a]))+0.999F);
-    if(range[a]>field->dimensions[a])
-      range[a]=field->dimensions[a];
-    if(range[a+3]>field->dimensions[a])
-      range[a+3]=field->dimensions[a];
+    if(range[a]>field->dimensions[a]) range[a]=field->dimensions[a];
+    if(range[a+3]<0) range[a+3]=0;
+    if(range[a+3]>field->dimensions[a])  range[a+3]=field->dimensions[a];
   }
+#endif
+
 }
   /*===========================================================================*/
 int	TetsurfVolume(PyMOLGlobals *G,Isofield *field,float level,int **num,float **vert,

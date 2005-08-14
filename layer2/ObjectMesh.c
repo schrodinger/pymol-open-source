@@ -39,6 +39,7 @@ Z* -------------------------------------------------------------------
 ObjectMesh *ObjectMeshNew(PyMOLGlobals *G);
 
 static void ObjectMeshFree(ObjectMesh *I);
+static void ObjectMeshInvalidate(ObjectMesh *I,int rep,int level,int state);
 void ObjectMeshStateInit(PyMOLGlobals *G,ObjectMeshState *ms);
 void ObjectMeshRecomputeExtent(ObjectMesh *I);
 
@@ -263,6 +264,23 @@ static void ObjectMeshFree(ObjectMesh *I) {
   OOFreeP(I);
 }
 
+int ObjectMeshInvalidateMapName(ObjectMesh *I,char *name)
+{
+  int a;
+  ObjectMeshState *ms;
+  int result=false;
+  for(a=0;a<I->NState;a++) {
+    ms=I->State+a;
+    if(ms->Active) {
+      if(strcmp(ms->MapName,name)==0) {
+        ObjectMeshInvalidate(I,cRepAll,cRepInvAll,a);
+        result=true;
+      }
+    }
+  }
+  return result;
+}
+
 void ObjectMeshDump(ObjectMesh *I,char *fname,int state)
 {
   float *v;
@@ -296,6 +314,28 @@ void ObjectMeshDump(ObjectMesh *I,char *fname,int state)
   }
 }
 
+#if 0
+static char *ObjectMeshGetCaption(ObjectMesh *I)
+{
+  int state = ObjectGetCurrentState((CObject*)I,false);
+  if(state>=0) {
+    if(state<I->NState) {
+      char *p;
+      ObjectMeshState *ms = I->State + state;
+      sprintf(ms->caption,"@ %1.4f\n",ms->Level);
+      p=ms->caption+strlen(ms->caption);
+      while(p>ms->caption) {
+        p--;
+        if(*p!='0')
+          break;
+      }
+      return ms->caption;
+    }
+  }
+  return NULL;
+}
+#endif
+
 static void ObjectMeshInvalidate(ObjectMesh *I,int rep,int level,int state)
 {
   int a;
@@ -310,7 +350,6 @@ static void ObjectMeshInvalidate(ObjectMesh *I,int rep,int level,int state)
     } else {
       SceneDirty(I->Obj.G);
     }
-
     if(once_flag) break;
   }
 }
@@ -405,6 +444,7 @@ static void ObjectMeshUpdate(ObjectMesh *I)
       
       if(map&&oms&&ms->N&&ms->V&&I->Obj.RepVis[cRepMesh]) {
         if(ms->ResurfaceFlag) {
+          
           ms->ResurfaceFlag=false;
           PRINTFB(G,FB_ObjectMesh,FB_Actions)
             " ObjectMesh: updating \"%s\".\n" , I->Obj.Name 
@@ -427,7 +467,7 @@ static void ObjectMeshUpdate(ObjectMesh *I)
               IsosurfGetRange(I->Obj.G,oms->Field,oms->Crystal,
                               min_ext,max_ext,ms->Range);
             }
-            /*          printf("%d %d %d %d %d %d\n",
+            /*                      printf("DEBUG: %d %d %d %d %d %d\n",
                    ms->Range[0],
                    ms->Range[1],
                    ms->Range[2],
@@ -712,6 +752,7 @@ ObjectMesh *ObjectMeshNew(PyMOLGlobals *G)
   I->Obj.fRender =(void (*)(struct CObject *, RenderInfo *))ObjectMeshRender;
   I->Obj.fInvalidate =(void (*)(struct CObject *,int,int,int))ObjectMeshInvalidate;
   I->Obj.fGetNFrame = (int (*)(struct CObject *)) ObjectMeshGetNStates;
+  /*  I->Obj.fGetCaption = (char *(*)(struct CObject *))ObjectMeshGetCaption;*/
   return(I);
 }
 
@@ -739,6 +780,7 @@ void ObjectMeshStateInit(PyMOLGlobals *G,ObjectMeshState *ms)
   ms->AtomVertex=NULL;
   ms->UnitCellCGO=NULL;
   ms->displayList=0;
+  ms->caption[0]=0;
 }
 
 /*========================================================================*/
