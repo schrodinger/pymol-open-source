@@ -32,7 +32,7 @@ int	TetsurfVolume(PyMOLGlobals *G,Isofield *field,float level,int **num,
                     float **vert,int *range,int mode,
                     MapType *voxelmap, float *a_vert,
                     float carvebuffer,int side);
-void TetsurfGetRange(Isofield *field,CCrystal *cryst,float *mn,float *mx,int *range);
+void TetsurfGetRange(PyMOLGlobals *G,Isofield *field,CCrystal *cryst,float *mn,float *mx,int *range);
 
 int	TetsurfInit(PyMOLGlobals *G);
 void  TetsurfFree(PyMOLGlobals *G);

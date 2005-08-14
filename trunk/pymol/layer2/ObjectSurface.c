@@ -300,6 +300,7 @@ void ObjectSurfaceDump(ObjectSurface *I,char *fname,int state)
   }
 }
 
+
 static void ObjectSurfaceInvalidate(ObjectSurface *I,int rep,int level,int state)
 {
   int a;
@@ -316,6 +317,23 @@ static void ObjectSurfaceInvalidate(ObjectSurface *I,int rep,int level,int state
     }
     if(once_flag) break;
   }
+}
+
+int ObjectSurfaceInvalidateMapName(ObjectSurface *I,char *name)
+{
+  int a;
+  ObjectSurfaceState *ms;
+  int result=false;
+  for(a=0;a<I->NState;a++) {
+    ms=I->State+a;
+    if(ms->Active) {
+      if(strcmp(ms->MapName,name)==0) {
+        ObjectSurfaceInvalidate(I,cRepAll,cRepInvAll,a);
+        result=true;
+      }
+    }
+  }
+  return result;
 }
 
 static void ObjectSurfaceUpdate(ObjectSurface *I) 
@@ -383,7 +401,7 @@ static void ObjectSurfaceUpdate(ObjectSurface *I)
                 max_ext = ms->ExtentMax;
               }
               
-              TetsurfGetRange(oms->Field,oms->Crystal,
+              TetsurfGetRange(I->Obj.G,oms->Field,oms->Crystal,
                               min_ext,max_ext,ms->Range);
             }
 
@@ -884,7 +902,7 @@ float carve,float *vert_vla,int side)
         max_ext = ms->ExtentMax;
       }
       
-      TetsurfGetRange(oms->Field,oms->Crystal,min_ext,max_ext,ms->Range);
+      TetsurfGetRange(G,oms->Field,oms->Crystal,min_ext,max_ext,ms->Range);
     }
     ms->ExtentFlag = true;
   }

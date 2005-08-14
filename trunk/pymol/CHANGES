@@ -7,6 +7,11 @@ Changes up to 0.99
 
     beta11
 
+    * fixed some longstanding but minor ranging errors in isomesh and
+      isosurf 
+
+    * map_trim command
+
     beta10
 
     * cartoon_loop_cap and cartoon_tube_cap settings

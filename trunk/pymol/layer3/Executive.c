@@ -341,6 +341,25 @@ void ExecutiveMatrixTransfer(PyMOLGlobals *G,
   }
 }
 
+static void ExecutiveInvalidateMapDependents(PyMOLGlobals *G,char *map_name)
+{
+  register CExecutive *I = G->Executive;
+  SpecRec *rec = NULL;
+  while(ListIterate(I->Spec,rec,next)) {
+    if(rec->type==cExecObject) {
+      switch(rec->obj->type) {
+      case cObjectMesh:
+        ObjectMeshInvalidateMapName((ObjectMesh*)rec->obj,map_name);
+        break;
+      case cObjectSurface:
+        ObjectSurfaceInvalidateMapName((ObjectSurface*)rec->obj,map_name);
+        break;
+      }
+    }
+  }
+  SceneDirty(G);
+}
+
 void ExecutiveResetMatrix(PyMOLGlobals *G,
                           char *name,
                           int   mode,
@@ -3347,6 +3366,9 @@ int ExecutiveMapDouble(PyMOLGlobals *G,char *name,int state)
         if(rec->obj->type==cObjectMap) {
           ObjectMap *obj =(ObjectMap*)rec->obj;
           result = ObjectMapDouble(obj,state);
+          if(result) { 
+            ExecutiveInvalidateMapDependents(G,obj->Obj.Name);
+          }
           if(result && rec->visible)
             SceneChanged(G);
         }
@@ -3354,12 +3376,13 @@ int ExecutiveMapDouble(PyMOLGlobals *G,char *name,int state)
       }
     }
   }
+
   TrackerDelList(I_Tracker, list_id);
   TrackerDelIter(I_Tracker, iter_id);
   return result;
 }
 
-int ExecutiveTrim(PyMOLGlobals *G,char *name,
+int ExecutiveMapTrim(PyMOLGlobals *G,char *name,
                   char *sele,float buffer,
                   int map_state,int sele_state,
                   int quiet)
@@ -3367,12 +3390,12 @@ int ExecutiveTrim(PyMOLGlobals *G,char *name,
   register CExecutive *I = G->Executive;
   int result=true;
   float mn[3],mx[3];
-  
   if(ExecutiveGetExtent(G,sele,mn,mx,true,sele_state,false)) {
     CTracker *I_Tracker= I->Tracker;
     int list_id = ExecutiveGetNamesListFromPattern(G,name);
     int iter_id = TrackerNewIter(I_Tracker, 0, list_id);
     SpecRec *rec;
+
     {
       int a;
       float t;
@@ -3391,6 +3414,8 @@ int ExecutiveTrim(PyMOLGlobals *G,char *name,
           if(rec->obj->type==cObjectMap) {
             ObjectMap *obj =(ObjectMap*)rec->obj;
             result = result && ObjectMapTrim(obj,map_state,mn,mx,quiet);
+            if(result) 
+              ExecutiveInvalidateMapDependents(G,obj->Obj.Name);
             if(result && rec->visible)
               SceneChanged(G);
           }
@@ -7920,9 +7945,14 @@ int ExecutiveGetExtent(PyMOLGlobals *G,char *name,float *mn,float *mx,
                   case cObjectMolecule:
                     break;
                   default:
-                    min3f(obj->ExtentMin,op.v1,op.v1);
-                    max3f(obj->ExtentMax,op.v2,op.v2);
-                    have_extent_flag=true;
+                    if(!have_extent_flag) {
+                      copy3f(obj->ExtentMin,op.v1);
+                      copy3f(obj->ExtentMax,op.v2);
+                      have_extent_flag=true;
+                    } else {
+                      min3f(obj->ExtentMin,op.v1,op.v1);
+                      max3f(obj->ExtentMax,op.v2,op.v2);
+                    }
                     break;
                   }
               }
@@ -7935,9 +7965,14 @@ int ExecutiveGetExtent(PyMOLGlobals *G,char *name,float *mn,float *mx,
               case cObjectMolecule: /* will have been handled above... */
                 break;
               default:
-                min3f(obj->ExtentMin,op.v1,op.v1);
-                max3f(obj->ExtentMax,op.v2,op.v2);
-                have_extent_flag=true;
+                if(!have_extent_flag) {
+                  copy3f(obj->ExtentMin,op.v1);
+                  copy3f(obj->ExtentMax,op.v2);
+                  have_extent_flag=true;
+                } else {
+                  min3f(obj->ExtentMin,op.v1,op.v1);
+                  max3f(obj->ExtentMax,op.v2,op.v2);
+                }
                 break;
               }
             break;
@@ -9770,10 +9805,16 @@ static int ExecutiveClick(Block *block,int button,int x,int y,int mod)
                     case cObjectMolecule:
                       MenuActivate(G,mx,my,x,y,false,"mol_action",rec->obj->Name);
                       break;
-                    case cObjectSurface:
-                    case cObjectMesh:
-                    case cObjectDist:
                     case cObjectMap:
+                      MenuActivate(G,mx,my,x,y,false,"map_action",rec->obj->Name);
+                      break;
+                    case cObjectSurface:
+                      MenuActivate(G,mx,my,x,y,false,"surface_action",rec->obj->Name);
+                      break;
+                    case cObjectMesh:
+                      MenuActivate(G,mx,my,x,y,false,"mesh_action",rec->obj->Name);
+                      break;
+                    case cObjectDist:
                     case cObjectCGO:
                     case cObjectCallback:
                       MenuActivate(G,mx,my,x,y,false,"simple_action",rec->obj->Name);

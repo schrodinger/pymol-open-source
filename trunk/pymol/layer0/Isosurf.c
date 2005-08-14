@@ -193,6 +193,8 @@ void IsofieldComputeGradients(PyMOLGlobals *G,Isofield *field)
     gradients =  field->gradients;
     dim[3] = 3;
 
+    /* bulk internal */
+
     for(a=1;a<(dim[0]-1);a++) {
       for(b=1;b<(dim[1]-1);b++) {
         for(c=1;c<(dim[2]-1);c++) {
@@ -203,25 +205,111 @@ void IsofieldComputeGradients(PyMOLGlobals *G,Isofield *field)
       }
     }
 
-    for(a=0;a<dim[0];a+=dim[0]-1) {
-      for(b=0;b<dim[1];b+=dim[1]-1) {
-        for(c=0;c<dim[2];c+=dim[2]-1) {
-          F4(gradients,a,b,c,0) = 0.0F;
-          F4(gradients,a,b,c,1) = 0.0F;
-          F4(gradients,a,b,c,2) = 0.0F;
+    for(a=0;a<dim[0];a+=(dim[0]-1)) {
 
+      /* 'a' faces */
+      for(b=1;b<(dim[1]-1);b++) {
+        for(c=1;c<(dim[2]-1);c++) {
           if(!a) {
             F4(gradients,a,b,c,0) = (F3(data,a+1,b,c) - F3(data,a,b,c));
           } else {
             F4(gradients,a,b,c,0) = (F3(data,a,b,c) - F3(data,a-1,b,c));
           }
+          F4(gradients,a,b,c,1) = (F3(data,a,b+1,c) - F3(data,a,b-1,c))/2.0F;
+          F4(gradients,a,b,c,2) = (F3(data,a,b,c+1) - F3(data,a,b,c-1))/2.0F;
+        }
+      }
 
+      /* 'c' edges and all eight corners */
+      for(b=0;b<dim[1];b+=(dim[1]-1)) {
+        for(c=0;c<dim[2];c++) {
+          
+          if(!a) {
+            F4(gradients,a,b,c,0) = (F3(data,a+1,b,c) - F3(data,a,b,c));
+          } else {
+            F4(gradients,a,b,c,0) = (F3(data,a,b,c) - F3(data,a-1,b,c));
+          }
+          
           if(!b) {
             F4(gradients,a,b,c,1) = (F3(data,a,b+1,c) - F3(data,a,b,c));
           } else {
             F4(gradients,a,b,c,1) = (F3(data,a,b,c) - F3(data,a,b-1,c));
           }
+          
+          if(!c) {
+            F4(gradients,a,b,c,2) = (F3(data,a,b,c+1) - F3(data,a,b,c));
+          } else if(c<(dim[2]-1)) {
+            F4(gradients,a,b,c,2) = (F3(data,a,b,c+1) - F3(data,a,b,c-1))/2.0F;
+          } else {
+            F4(gradients,a,b,c,2) = (F3(data,a,b,c) - F3(data,a,b,c-1));            
+          }
+        }
+      }
 
+      /* 'b' edges  */
+      for(c=0;c<dim[2];c+=(dim[2]-1)) {
+        for(b=1;b<(dim[1]-1);b++) {
+          if(!a) {
+            F4(gradients,a,b,c,0) = (F3(data,a+1,b,c) - F3(data,a,b,c));
+          } else {
+            F4(gradients,a,b,c,0) = (F3(data,a,b,c) - F3(data,a-1,b,c));
+          }
+        
+          F4(gradients,a,b,c,1) = (F3(data,a,b+1,c) - F3(data,a,b-1,c))/2.0F;          
+        
+          if(!c) {
+            F4(gradients,a,b,c,2) = (F3(data,a,b,c+1) - F3(data,a,b,c));
+          } else if(c<(dim[2]-1)) {
+            F4(gradients,a,b,c,2) = (F3(data,a,b,c+1) - F3(data,a,b,c-1))/2.0F;
+          } else {
+            F4(gradients,a,b,c,2) = (F3(data,a,b,c) - F3(data,a,b,c-1));            
+          }
+        }
+      }
+    }
+      
+    for(b=0;b<dim[1];b+=(dim[1]-1)) {
+      
+      for(a=1;a<(dim[0]-1);a++) {
+        
+        /* 'b' faces */
+        
+        for(c=1;c<(dim[2]-1);c++) {
+          F4(gradients,a,b,c,0) = (F3(data,a+1,b,c) - F3(data,a-1,b,c))/2.0F;
+          if(!b) {
+            F4(gradients,a,b,c,1) = (F3(data,a,b+1,c) - F3(data,a,b,c));
+          } else {
+            F4(gradients,a,b,c,1) = (F3(data,a,b,c) - F3(data,a,b-1,c));
+          }
+          F4(gradients,a,b,c,2) = (F3(data,a,b,c+1) - F3(data,a,b,c-1))/2.0F;
+        }
+        
+        /* 'a' edges */
+        
+        for(c=0;c<dim[2];c+=(dim[2]-1)) {
+          F4(gradients,a,b,c,0) = (F3(data,a+1,b,c) - F3(data,a-1,b,c))/2.0F;
+          if(!b) {
+            F4(gradients,a,b,c,1) = (F3(data,a,b+1,c) - F3(data,a,b,c));
+          } else {
+            F4(gradients,a,b,c,1) = (F3(data,a,b,c) - F3(data,a,b-1,c));
+          }
+          if(!c) {
+            F4(gradients,a,b,c,2) = (F3(data,a,b,c+1) - F3(data,a,b,c));
+          } else {
+            F4(gradients,a,b,c,2) = (F3(data,a,b,c) - F3(data,a,b,c-1));
+          }
+        }
+      }
+    }
+      
+      
+      /* 'c' faces */
+      
+      for(c=0;c<dim[2];c+=(dim[2]-1)) {
+        for(a=1;a<(dim[0]-1);a++) {
+        for(b=1;b<(dim[1]-1);b++) {
+          F4(gradients,a,b,c,0) = (F3(data,a+1,b,c) - F3(data,a-1,b,c))/2.0F;
+          F4(gradients,a,b,c,1) = (F3(data,a,b+1,c) - F3(data,a,b-1,c))/2.0F;
           if(!c) {
             F4(gradients,a,b,c,2) = (F3(data,a,b,c+1) - F3(data,a,b,c));
           } else {
@@ -231,7 +319,6 @@ void IsofieldComputeGradients(PyMOLGlobals *G,Isofield *field)
       }
     }
   }
-
 }
 
 /*===========================================================================*/
@@ -407,7 +494,9 @@ int	IsosurfInit(PyMOLGlobals *G)
 }
 
 /*===========================================================================*/
-void IsosurfGetRange(PyMOLGlobals *G,Isofield *field,CCrystal *cryst,float *mn,float *mx,int *range)
+void IsosurfGetRange(PyMOLGlobals *G,Isofield *field,
+                     CCrystal *cryst,
+                     float *mn,float *mx,int *range)
 {
   float rmn[3],rmx[3];
   float imn[3],imx[3];
@@ -420,10 +509,14 @@ void IsosurfGetRange(PyMOLGlobals *G,Isofield *field,CCrystal *cryst,float *mn,f
 
   for(a=0;a<3;a++) {
     rmn[a] = F4(field->points,0,0,0,a);
-    rmx[a] = F4(field->points,field->dimensions[0]-1,field->dimensions[1]-1,
+    rmx[a] = F4(field->points,
+                field->dimensions[0]-1,
+                field->dimensions[1]-1,
                 field->dimensions[2]-1,a);
   }
-  
+
+  /* get min/max extents of map in fractional space */
+
   transform33f3f(cryst->RealToFrac,rmn,imn);
   transform33f3f(cryst->RealToFrac,rmx,imx);
 
@@ -459,41 +552,44 @@ void IsosurfGetRange(PyMOLGlobals *G,Isofield *field,CCrystal *cryst,float *mn,f
   mix[22]=mx[1];
   mix[23]=mx[2];
 
+  /* compute min/max of query in fractional space */
+
   for(b=0;b<8;b++) {
     transform33f3f(cryst->RealToFrac,mix+3*b,imix+3*b);
   }
 
   for(a=0;a<3;a++) {
-    if(imx[a]!=imn[a]) {
+    if(imx[a]!=imn[a]) { /* protect against div by zero */
       int b;
-      float mini=0.0F,maxi=0.0F,cur;
-
+      int mini, maxi, tst_min, tst_max;
+      float cur;
       for(b=0;b<8;b++) {
-        cur = ((field->dimensions[a]*(imix[a+3*b]-imn[a])/(imx[a]-imn[a])));
+        cur = ((field->dimensions[a]-1)*(imix[a+3*b]-imn[a])/(imx[a]-imn[a]));
+        tst_min = floor(cur);
+        tst_max = ceil(cur)+1;
         
         if(!b) {
-          mini=cur;
-          maxi=cur;
+          mini=tst_min;
+          maxi=tst_max;
         } else {
-          if(mini>cur)
-            mini=cur;
-          if(maxi<cur)
-            maxi=cur;
+          if(mini>tst_min)
+            mini=tst_min;
+          if(maxi<=tst_max)
+            maxi=tst_max;
         }
       }
 
-      range[a] = (int)(mini);
-      if(range[a]<0) range[a]=0;
-      range[a+3] = (int)(maxi+0.999F);
-      if(range[a+3]<0) range[a+3]=0;
+      range[a] = mini;
+
+      range[a+3] = maxi;
     } else {
-      range[a]=1;
-      range[a+3]=1;
+      range[a] = 0;
+      range[a+3] = 1;
     }
-    if(range[a]>field->dimensions[a])
-      range[a]=field->dimensions[a];
-    if(range[a+3]>field->dimensions[a])
-      range[a+3]=field->dimensions[a];
+    if(range[a]<0) range[a]=0;
+    if(range[a]>field->dimensions[a]) range[a]=field->dimensions[a];
+    if(range[a+3]<0) range[a+3]=0;
+    if(range[a+3]>field->dimensions[a]) range[a+3]=field->dimensions[a];
   }
   PRINTFD(G,FB_Isosurface)
     " IsosurfGetRange: returning range: %d %d %d %d %d %d\n",

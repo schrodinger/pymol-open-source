@@ -932,7 +932,7 @@ static PyObject *CmdMapSetBorder(PyObject *self, PyObject *args)
   return APIResultOk(ok);
 }
 
-static PyObject *CmdTrim(PyObject *self, PyObject *args)
+static PyObject *CmdMapTrim(PyObject *self, PyObject *args)
 {
   char *name,*sele;
   int map_state,sele_state;
@@ -945,7 +945,7 @@ static PyObject *CmdTrim(PyObject *self, PyObject *args)
   if(ok) {
     APIEntry();
     ok = (SelectorGetTmp(TempPyMOLGlobals,sele,s1)>=0);
-    ok = ExecutiveTrim(TempPyMOLGlobals,name,s1,buffer,map_state,sele_state,quiet);
+    ok = ExecutiveMapTrim(TempPyMOLGlobals,name,s1,buffer,map_state,sele_state,quiet);
     SelectorFreeTmp(TempPyMOLGlobals,s1);
     APIExit();
   }
@@ -5660,7 +5660,7 @@ static PyMethodDef Cmd_methods[] = {
    {"map_new",               CmdMapNew,               METH_VARARGS },
    {"map_double",            CmdMapDouble,            METH_VARARGS },
    {"map_set_border",        CmdMapSetBorder,         METH_VARARGS },
-   {"trim",                  CmdTrim,         METH_VARARGS },
+   {"map_trim",                  CmdMapTrim,         METH_VARARGS },
 	{"mask",	                 CmdMask,                 METH_VARARGS },
 	{"mclear",	              CmdMClear,               METH_VARARGS },
 	{"mdo",	                 CmdMDo,                  METH_VARARGS },
