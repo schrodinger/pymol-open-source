@@ -9190,7 +9190,6 @@ void ExecutiveInvalidateRep(PyMOLGlobals *G,char *name,int rep,int level)
   SpecRec *rec = NULL;
   if((!name)||(!name[0])) 
     name = cKeywordAll;
-
 #if 1
   CTracker *I_Tracker= I->Tracker;
   int list_id = ExecutiveGetNamesListFromPattern(G,name);
@@ -9216,7 +9215,7 @@ void ExecutiveInvalidateRep(PyMOLGlobals *G,char *name,int rep,int level)
         while(ListIterate(I->Spec,rec,next)) {
           if(rec->type==cExecObject) {
             if(rec->obj->fInvalidate) {
-              rec->obj->fInvalidate(rec->obj,rep,cRepInvColor,cRepAll);
+              rec->obj->fInvalidate(rec->obj,rep,level,-1);
               SceneDirty(G);
             }
           }
