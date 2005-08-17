@@ -510,7 +510,6 @@ static int ObjectMapStateDouble(PyMOLGlobals *G,ObjectMapState *ms)
   case cMapSourceDesc:
 
     for(a=0;a<3;a++) {
-      div[a]=ms->Div[a]*2;
       grid[a]=ms->Grid[a]/2.0F;
       min[a]=ms->Min[a]*2;
       max[a]=ms->Max[a]*2;
@@ -550,7 +549,165 @@ static int ObjectMapStateDouble(PyMOLGlobals *G,ObjectMapState *ms)
       ms->FDim[a]=fdim[a];
       if(ms->Dim) 
         ms->Dim[a]=fdim[a];
-      ms->Div[a]=div[a];
+      if(ms->Grid)
+        ms->Grid[a]=grid[a];
+    }
+    ms->Field = field;
+
+    break;
+  }
+  return 1;
+}
+
+static int ObjectMapStateHalve(PyMOLGlobals *G,ObjectMapState *ms)
+{
+  int div[3];
+  int min[3];
+  int max[3];
+  int fdim[4];
+  int a,b,c;
+  float v[3],vr[3];
+  float *vt;
+  float x,y,z;
+  float grid[3];
+
+  Isofield *field;
+
+  switch(ms->MapSource) {
+  case cMapSourceXPLOR:
+  case cMapSourceCCP4:
+  case cMapSourceBRIX:
+  case cMapSourceGRD:
+    {
+      int *old_div,*old_min;
+      int a_2, b_2, c_2;
+
+      for(a=0;a<3;a++) {
+        div[a]=ms->Div[a]/2;
+
+        min[a]=ms->Min[a]/2;
+        max[a]=ms->Max[a]/2;
+        while((min[a]*2)<ms->Min[a])
+          min[a]++;
+        while((max[a]*2)>ms->Max[a])
+          max[a]--;
+        fdim[a]=(max[a]-min[a])+1;
+      }
+      fdim[3]=3;
+      old_div = ms->Div;
+      old_min = ms->Min;
+      
+      FieldSmooth3f(ms->Field->data);
+
+      field=IsosurfFieldAlloc(G,fdim);
+      field->save_points = ms->Field->save_points;
+      
+      /*
+        printf("old_div %d %d %d\n",old_div[0],old_div[1],old_div[2]);
+        printf("old_min %d %d %d\n",old_min[0],old_min[1],old_min[2]);
+        printf("min %d %d %d\n",min[0],min[1],min[2]);
+        printf("%d %d %d\n",ms->FDim[0],ms->FDim[1],ms->FDim[2]);
+      */
+
+      for(c=0;c<fdim[2];c++) {
+        v[2]=(c+min[2])/((float)div[2]);
+        c_2 = (c+min[2])*2 - old_min[2];
+        z = (v[2] - ((c_2 + old_min[2])/(float)old_div[2]))*old_div[2];
+        for(b=0;b<fdim[1];b++) {
+          v[1]=(b+min[1])/((float)div[1]);        
+          b_2 = (b+min[1])*2 - old_min[1];
+          y = (v[1] - ((b_2 + old_min[1])/(float)old_div[1]))*old_div[1];
+          for(a=0;a<fdim[0];a++) {
+            v[0]=(a+min[0])/((float)div[0]);
+            a_2 = (a+min[0])*2 - old_min[0];
+            x = (v[0] - ((a_2 + old_min[0])/(float)old_div[0]))*old_div[0];
+            transform33f3f(ms->Crystal->FracToReal,v,vr);
+            vt = F4Ptr(field->points,a,b,c,0);
+            copy3f(vr,vt);
+            F3(field->data,a,b,c) = FieldInterpolatef(ms->Field->data,
+                                                      a_2,
+                                                      b_2,
+                                                      c_2,x,y,z);
+          }
+        }
+      }
+      IsosurfFieldFree(G,ms->Field);
+      for(a=0;a<3;a++) {
+        ms->Min[a]=min[a];
+        ms->Max[a]=max[a];
+        ms->FDim[a]=fdim[a];
+        ms->Div[a]=div[a];
+      }
+      
+      ms->Field = field;
+      
+      /* compute new extents */
+      v[2]=(ms->Min[2])/((float)ms->Div[2]);
+      v[1]=(ms->Min[1])/((float)ms->Div[1]);
+      v[0]=(ms->Min[0])/((float)ms->Div[0]);
+      
+      transform33f3f(ms->Crystal->FracToReal,v,ms->ExtentMin);
+      
+      v[2]=((ms->FDim[2]-1)+ms->Min[2])/((float)ms->Div[2]);
+      v[1]=((ms->FDim[1]-1)+ms->Min[1])/((float)ms->Div[1]);
+      v[0]=((ms->FDim[0]-1)+ms->Min[0])/((float)ms->Div[0]);
+      
+      transform33f3f(ms->Crystal->FracToReal,v,ms->ExtentMax);
+      
+      /* new corner */
+      {
+        float vv[3];
+        int d=0;
+                  
+        for(c=0;c<ms->FDim[2];c+=(ms->FDim[2]-1)) {
+          v[2]=(c+ms->Min[2])/((float)ms->Div[2]);
+          for(b=0;b<ms->FDim[1];b+=(ms->FDim[1]-1)) {
+            v[1]=(b+ms->Min[1])/((float)ms->Div[1]);
+            for(a=0;a<ms->FDim[0];a+=(ms->FDim[0]-1)) {
+              v[0]=(a+ms->Min[0])/((float)ms->Div[0]);
+              transform33f3f(ms->Crystal->FracToReal,v,vv);
+              copy3f(vv,ms->Corner+3*d);
+              d++;
+            }
+          }
+        }
+      }
+    }
+    break;
+  case cMapSourcePHI:
+  case cMapSourceFLD:
+  case cMapSourceDesc:
+
+    for(a=0;a<3;a++) {
+      grid[a]=ms->Grid[a]*2.0F;
+      min[a]=ms->Min[a]/2;
+      max[a]=ms->Max[a]/2;
+      fdim[a]=(ms->FDim[a]+1)/2;
+    }
+    fdim[3]=3;
+
+    field=IsosurfFieldAlloc(G,fdim);
+    field->save_points = ms->Field->save_points;
+
+    for(c=0;c<fdim[2];c++) {
+      v[2]=ms->Origin[2]+grid[2]*(c+min[2]);
+      for(b=0;b<fdim[1];b++) {
+        v[1]=ms->Origin[1]+grid[1]*(b+min[1]);
+        for(a=0;a<fdim[0];a++) {
+          v[0]=ms->Origin[0]+grid[0]*(a+min[0]);
+          vt = F4Ptr(field->points,a,b,c,0);
+          copy3f(v,vt);
+          F3(field->data,a,b,c) = F3(ms->Field->data,a/2,b/2,c/2);
+        }
+      }
+    }
+    IsosurfFieldFree(G,ms->Field);
+    for(a=0;a<3;a++) {
+      ms->Min[a]=min[a];
+      ms->Max[a]=max[a];
+      ms->FDim[a]=fdim[a];
+      if(ms->Dim) 
+        ms->Dim[a]=fdim[a];
       if(ms->Grid)
         ms->Grid[a]=grid[a];
     }
@@ -605,6 +762,29 @@ int ObjectMapDouble(ObjectMap *I,int state)
       ENDFB(I->Obj.G);
     result=false;
   }
+  return(result);
+}
+
+int ObjectMapHalve(ObjectMap *I,int state)
+{
+  int a;
+  int result=true;
+  if(state<0) {
+    for(a=0;a<I->NState;a++) {
+      if(I->State[a].Active)
+        result = result && ObjectMapStateHalve(I->Obj.G,&I->State[a]);
+    }
+    
+  } else if((state>=0)&&(state<I->NState)&&(I->State[state].Active)) {
+    ObjectMapStateHalve(I->Obj.G,&I->State[state]);
+  } else {
+    PRINTFB(I->Obj.G,FB_ObjectMap,FB_Errors)
+      " ObjectMap-Error: invalidate state.\n"
+      ENDFB(I->Obj.G);
+    result=false;
+  }
+  ObjectMapUpdateExtents(I);
+
   return(result);
 }
 
@@ -1387,6 +1567,7 @@ ObjectMapState *ObjectMapNewStateFromDesc(PyMOLGlobals *G,ObjectMap *I,ObjectMap
     for(a=0;a<3;a++) {
       ms->Min[a]=0; 
       ms->Max[a]=md->Dim[a]-1;
+      ms->Div[a]=ms->Dim[a]-1;
     }
     
     /* define corners */
@@ -1630,6 +1811,15 @@ int ObjectMapCCP4StrToMap(ObjectMap *I,char *CCP4Str,int bytes,int state) {
   }
 
   n_pts = nc*ns*nr;
+
+  /* at least one EM map encountered lacks NZ, so we'll try to guess it */
+  
+  if((nx==ny)&&(!nz)) {
+    nz = nx;
+    PRINTFB(I->Obj.G,FB_ObjectMap,FB_Warnings)
+      " ObjectMapCCP4: NZ value is zero, but NX = NY, so we'll guess NZ = NX = NY.\n"
+      ENDFB(I->Obj.G);
+  }
 
   expectation = sym_skip + sizeof(int)*(256+n_pts);
 
@@ -2468,7 +2658,7 @@ static int ObjectMapFLDStrToMap(ObjectMap *I,char *PHIStr,int bytes,int state)
     for(a=0;a<3;a++) {
       ms->Min[a] = 0;
       ms->Max[a] = ms->FDim[a]-1;
-      ms->Div[a] = ms->FDim[a];
+      ms->Div[a] = ms->FDim[a]-1;
         
       if(ms->FDim[a]) 
         ms->Grid[a]=ms->Range[a]/(ms->Max[a]);

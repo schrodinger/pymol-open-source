@@ -258,9 +258,10 @@ void UtilApplySortedIndices(int n,int *x, int rec_size, void *src, void *dst)
   }
 }
 
+
 void UtilSortIndex(int n,void *array,int *x,UtilOrderFn* fOrdered)
 {
-  int l,a,r,t,i;
+  register int l,a,r,t,i;
 
   if(n<1) return;
   else if(n==1) { x[0]=0; return; }
@@ -332,6 +333,149 @@ void UtilSortIndexGlobals(PyMOLGlobals *G,int n,void *array,int *x,UtilOrderFnGl
   for(a=0;a<n;a++) x[a]--;
 }
 
+#define MAX_BIN = 100
+
+static int ZOrderFn(float *array,int l,int r)
+{
+  return (array[l]<=array[r]);
+}
+
+static int ZRevOrderFn(float *array,int l,int r)
+{
+  return (array[l]>=array[r]);
+}
+
+#ifndef R_SMALL8
+#define R_SMALL8 0.00000001F
+#endif
+
+void UtilSemiSortFloatIndex(int n,float *array,int *x, int forward)
+{
+  if(n>0) {
+    register float min,max,*f,v;
+    register float range, scale;
+    register int a;
+    int *start1 = Calloc(int,n);
+    int *next1 = Calloc(int,n);
+    int *start2 = Alloc(int,n);
+    int *next2 = Alloc(int,n);
+    register int idx1;
+    register int n_minus_one;
+
+    max = (min = array[0]);
+    f = array + 1;
+    for(a=1;a<n;a++) {
+      v = *(f++);
+      if(max<v) max=v;
+      if(min>v) min=v;
+    }
+    range = (max-min)*1.0001F;
+    if(range<R_SMALL8) { 
+      for(a=0;a<n;a++)
+        x[a] = a;
+    } else {
+      scale = n/range;
+      f = array;
+      /* hash by value */
+      if(forward) {
+        for(a=0;a<n;a++) {
+          idx1 = (int)((*(f++)-min)*scale);
+          next1[a] = start1[idx1];
+          start1[idx1] = a+1;
+        }
+      } else {
+        n_minus_one = n-1;
+        for(a=0;a<n;a++) {
+          idx1 = n_minus_one-(int)((*(f++)-min)*scale);
+          next1[a] = start1[idx1];
+          start1[idx1] = a+1;
+        }
+      }
+      /* now read out, and do nested sorts */
+      {
+        int a=0;
+        int c=0;
+        register int cur1;        
+        while(a<n) {
+          if( (cur1 = start1[a]) ) {
+            register int idx2;
+            register int nest_cnt = 0;
+            idx1 = cur1 - 1;
+            if( !next1[idx1] ) { /* single triangle entry */
+              x[c] = idx1;
+              c++;
+            } else {
+              idx1 = cur1 - 1;
+              while(idx1>=0) {
+                x[c] = idx1;
+                c++;
+                idx1 = next1[idx1] - 1;
+              }
+              if(0) {
+                min = array[idx1];
+                max = array[idx1];
+                start2[nest_cnt] = 0;
+                nest_cnt++;
+                while(1) {
+                  idx1 = next1[idx1] - 1;
+                  if(idx1<0) break;
+                  v = array[idx1];
+                  start2[nest_cnt] = 0;
+                  if(min>v) min=v;
+                  if(max<v) max=v;
+                  nest_cnt++;
+                }
+                range = (max-min)*1.0001F;
+                if(range<R_SMALL8) {
+                  idx1 = cur1 - 1;
+                  while(idx1>0) {
+                    x[c] = idx1;
+                    c++;
+                    idx1 = next1[idx1] - 1;
+                  }
+                } else {
+                  scale = nest_cnt/range;
+                  idx1 = cur1 - 1;
+                  /* hash by value */
+                  if(forward) {
+                    while(idx1>=0) {
+                      idx2 = (int)((array[idx1]-min)*scale);
+                      next2[idx1] = start2[idx2];
+                      start2[idx2] = idx1 + 1;
+                      idx1 = next1[idx1] - 1;
+                    }
+                  } else {
+                    n_minus_one = nest_cnt-1;
+                    while(idx1>=0) {
+                      idx2 = n_minus_one - (int)((array[idx1]-min)*scale);
+                      next2[idx1] = start2[idx2];
+                      start2[idx2] = idx1 + 1;
+                      idx1 = next1[idx1] - 1;
+                    }
+                  }
+                  /* read out in value order */
+                  { 
+                    register int b;
+                    for(b=0;b<nest_cnt;b++) {
+                      idx2 = start2[b] - 1;
+                      while(idx2>=0) {
+                        x[c] = idx2;
+                        c++;
+                        idx2 = next2[idx2] - 1;
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+          a++;
+        }
+        /*        printf("%d == %d?\n",n,c);*/
+      }
+    }
+  }
+}
 
 void UtilSortInPlace(PyMOLGlobals *G,void *array,int nItem,
 					 unsigned int itemSize,

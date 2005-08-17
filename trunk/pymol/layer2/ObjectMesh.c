@@ -439,6 +439,7 @@ static void ObjectMeshUpdate(ObjectMesh *I)
             ObjectStateResetMatrix(&ms->State);
           }
           ms->RefreshFlag=false;
+          ms->displayListInvalid = true;
         }
       }
       
@@ -681,6 +682,13 @@ static void ObjectMeshRender(ObjectMesh *I,RenderInfo *info)
             SceneResetNormal(I->Obj.G,false);
             ObjectUseColor(&I->Obj);
             use_dlst = (int)SettingGet(I->Obj.G,cSetting_use_display_lists);
+
+            if(use_dlst && ms->displayList && ms->displayListInvalid) {
+              glDeleteLists(ms->displayList,1);
+              ms->displayList = 0;
+              ms->displayListInvalid = false;
+            }
+
             if(use_dlst&&ms->displayList) {
               glCallList(ms->displayList);
             } else { 
@@ -780,6 +788,7 @@ void ObjectMeshStateInit(PyMOLGlobals *G,ObjectMeshState *ms)
   ms->AtomVertex=NULL;
   ms->UnitCellCGO=NULL;
   ms->displayList=0;
+  ms->displayListInvalid = true;
   ms->caption[0]=0;
 }
 

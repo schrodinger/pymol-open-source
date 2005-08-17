@@ -1360,7 +1360,8 @@ SEE ALSO
               iterate_state,      \
               map_set_border,     \
               map_double,         \
-              map_trim,       \
+              map_halve,          \
+              map_trim,           \
               matrix_transfer,    \
               matrix_reset,       \
               protect,            \
@@ -1687,6 +1688,7 @@ SEE ALSO
             'mask'          : [ mask              , 0 , 0 , ''  , parsing.STRICT ],
             'map_set_border': [ map_set_border    , 0 , 0 , ''  , parsing.STRICT ],
             'map_double'    : [ map_double        , 0 , 0 , ''  , parsing.STRICT ],
+            'map_halve'     : [ map_halve         , 0 , 0 , ''  , parsing.STRICT ],            
             'map_new'       : [ map_new           , 0 , 0 , ''  , parsing.STRICT ],    
             'map_trim'      : [ map_trim          , 0 , 0 , ''  , parsing.STRICT ],                  
             'mappend'       : [ mappend           , 2 , 2 , ':' , parsing.MOVIE  ],
@@ -2105,6 +2107,7 @@ SEE ALSO
             'mask'           : [ selection_sc           , 'selection'       , ''   ],
             'mview'          : [ moving.mview_action_sc , 'action'          , ''   ],
             'map_double'     : [ map_sc                 , 'map object'      , ', ' ],
+            'map_halve'      : [ map_sc                 , 'map object'      , ', ' ],            
             'map_trim'       : [ map_trim               , 'map object'      , ', ' ],            
             'order'          : [ selection_sc           , 'name'            , ''   ],
             'origin'         : [ selection_sc           , 'selection'       , ''   ],

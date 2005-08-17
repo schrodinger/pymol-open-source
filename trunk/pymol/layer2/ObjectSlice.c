@@ -702,6 +702,7 @@ static void ObjectSliceUpdate(ObjectSlice *I)
         
         if(oss->RefreshFlag) {
           oss->RefreshFlag=false;
+          oss->displayListInvalid = true;
           PRINTFB(I->Obj.G,FB_ObjectSlice,FB_Blather)
             " ObjectSlice: updating \"%s\".\n" , I->Obj.Name 
             ENDFB(I->Obj.G);
@@ -1100,6 +1101,13 @@ static void ObjectSliceRender(ObjectSlice *I,RenderInfo *info)
             SceneResetNormal(G,false);
             ObjectUseColor(&I->Obj);
             use_dlst = (int)SettingGet(G,cSetting_use_display_lists);
+
+            if(use_dlst && oss->displayList && oss->displayListInvalid) {
+              glDeleteLists(oss->displayList,1);
+              oss->displayList = 0;
+              oss->displayListInvalid = false;
+            }
+
             if(use_dlst&&oss->displayList) {
               glCallList(oss->displayList);
             } else { 

@@ -374,7 +374,7 @@ static void ObjectSurfaceUpdate(ObjectSurface *I)
           } else if(ms->State.Matrix) {
             ObjectStateResetMatrix(&ms->State);
           }
-          
+          ms->displayListInvalid = true;          
           ms->RefreshFlag=false;
         }
       }
@@ -610,6 +610,13 @@ static void ObjectSurfaceRender(ObjectSurface *I,RenderInfo *info)
               glColor4f(col[0],col[1],col[2],alpha);
               
               use_dlst = (int)SettingGet(G,cSetting_use_display_lists);
+
+              if(use_dlst && ms->displayList && ms->displayListInvalid) {
+                glDeleteLists(ms->displayList,1);
+                ms->displayList = 0;
+                ms->displayListInvalid = false;
+              }
+
               if(use_dlst&&ms->displayList) {
                 glCallList(ms->displayList);
               } else { 
@@ -844,6 +851,7 @@ void ObjectSurfaceStateInit(PyMOLGlobals *G,ObjectSurfaceState *ms)
   ms->UnitCellCGO=NULL;
   ms->Side = 0;
   ms->displayList = 0;
+  ms->displayListInvalid = true;
 }
 
 /*========================================================================*/
