@@ -3382,6 +3382,38 @@ int ExecutiveMapDouble(PyMOLGlobals *G,char *name,int state)
   return result;
 }
 
+int ExecutiveMapHalve(PyMOLGlobals *G,char *name,int state)
+{
+  register CExecutive *I = G->Executive;
+  int result=true;
+  CTracker *I_Tracker= I->Tracker;
+  int list_id = ExecutiveGetNamesListFromPattern(G,name);
+  int iter_id = TrackerNewIter(I_Tracker, 0, list_id);
+  SpecRec *rec;
+
+  while( TrackerIterNextCandInList(I_Tracker, iter_id, (TrackerRef**)&rec) ) {
+    if(rec) {
+      switch(rec->type) {
+      case cExecObject:
+        if(rec->obj->type==cObjectMap) {
+          ObjectMap *obj =(ObjectMap*)rec->obj;
+          result = ObjectMapHalve(obj,state);
+          if(result) { 
+            ExecutiveInvalidateMapDependents(G,obj->Obj.Name);
+          }
+          if(result && rec->visible)
+            SceneChanged(G);
+        }
+        break;
+      }
+    }
+  }
+
+  TrackerDelList(I_Tracker, list_id);
+  TrackerDelIter(I_Tracker, iter_id);
+  return result;
+}
+
 int ExecutiveMapTrim(PyMOLGlobals *G,char *name,
                   char *sele,float buffer,
                   int map_state,int sele_state,
@@ -9156,6 +9188,8 @@ void ExecutiveInvalidateRep(PyMOLGlobals *G,char *name,int rep,int level)
   register CExecutive *I = G->Executive;
   ObjectMoleculeOpRec op;
   SpecRec *rec = NULL;
+  if((!name)||(!name[0])) 
+    name = cKeywordAll;
 
 #if 1
   CTracker *I_Tracker= I->Tracker;

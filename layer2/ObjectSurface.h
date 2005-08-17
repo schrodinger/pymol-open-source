@@ -40,6 +40,7 @@ typedef struct {
   CGO *UnitCellCGO;
   int Side;
   int displayList;
+  int displayListInvalid;
 } ObjectSurfaceState;
 
 typedef struct ObjectSurface {

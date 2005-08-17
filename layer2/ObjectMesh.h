@@ -39,6 +39,7 @@ typedef struct {
   int DotFlag;
   CGO *UnitCellCGO;
   int displayList;
+  int displayListInvalid;
   WordType caption;
 } ObjectMeshState;
 

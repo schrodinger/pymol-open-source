@@ -108,6 +108,7 @@ typedef struct Rep {
   struct Rep *(*fRebuild)(struct Rep *I,struct CoordSet *cs,int rep);
   struct Rep *(*fNew)(struct CoordSet *cs);
   int displayList;
+  int displayListInvalid;
 } Rep;
 
 void RepInit(PyMOLGlobals *G,Rep *I);

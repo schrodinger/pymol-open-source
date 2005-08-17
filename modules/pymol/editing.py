@@ -1610,6 +1610,27 @@ USAGE
         if _raising(r): raise pymol.CmdException            
         return r
 
+    def map_halve(name,state=0):
+        '''
+DESCRIPTION
+
+    "map_halve" resamples a map at half the current resolution.  The
+    amount of memory required to store the map will decrease
+    eight-fold.
+
+USAGE
+
+    map_halve map_name, state
+        '''
+        r = DEFAULT_ERROR
+        try:
+            lock()
+            r = _cmd.map_halve(str(name),int(state)-1)
+        finally:
+            unlock(r)
+        if _raising(r): raise pymol.CmdException            
+        return r
+
     def map_trim(name,selection,buffer=0.0,map_state=0,sele_state=0,quiet=1):
         r = DEFAULT_ERROR
         # preprocess selection

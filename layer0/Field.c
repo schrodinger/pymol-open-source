@@ -22,6 +22,7 @@ Z* -------------------------------------------------------------------
 #include"PConv.h"
 
 #include"Field.h"
+#include"Vector.h"
 
 PyObject *FieldAsPyList(CField *I)
 {
@@ -114,13 +115,14 @@ CField *FieldNewFromPyList(PyMOLGlobals *G,PyObject *list)
 #endif
 }
 
+
 float FieldInterpolatef(CField *I,int a,int b,int c,float x,float y,float z)
 {
   /* basic trilinear interpolation */
 
-  float x1,y1,z1;
-  float result1=0.0F,result2=0.0F;
-  float product1,product2;
+  register float x1,y1,z1;
+  register float result1=0.0F,result2=0.0F;
+  register float product1,product2;
   x1=1.0F-x;
   y1=1.0F-y;
   z1=1.0F-z;
@@ -147,6 +149,85 @@ float FieldInterpolatef(CField *I,int a,int b,int c,float x,float y,float z)
   
   return(result1+result2);
 
+}
+
+int FieldSmooth3f(CField *I)
+{
+  register int a,b,c;
+  register int na = I->dim[0],nb = I->dim[1],nc = I->dim[2];
+  int n_pts = na*nb*nc;
+  char *data = (char*)mmalloc(sizeof(float)*n_pts);
+  register int x,y,z;
+  register int da,db,dc;
+  register double tot;
+  register float cur;
+  register double inp_sum = 0.0;
+  register double inp_sumsq = 0.0;
+  register double out_sum = 0.0;
+  register double out_sumsq = 0.0;
+  register int mult,cnt;
+  float inp_mean,out_mean,inp_stdev,out_stdev;
+
+  if(data) {
+    for(a=0;a<na;a++)
+      for(b=0;b<nb;b++)
+        for(c=0;c<nc;c++) {
+          cur = Ffloat3(I,a,b,c);
+          inp_sum += cur;
+          inp_sumsq += cur*cur;
+          tot = 0.0;
+          cnt = 0;
+          for(x=-1;x<2;x++) 
+            for(y=-1;y<2;y++)
+              for(z=-1;z<2;z++) {
+                da = a+x;
+                db = b+y;
+                dc = c+z;
+                if( (da>=0) && (da<na) &&
+                    (db>=0) && (db<nb) &&
+                    (dc>=0) && (dc<nc)) {
+                  
+                  mult=1;
+                  if(!x) mult = (mult<<1);
+                  if(!y) mult = (mult<<1);
+                  if(!z) mult = (mult<<1);
+                  
+                  cur = Ffloat3(I,da,db,dc);
+                  tot += mult*cur;
+                  cnt += mult;
+                }
+              }
+          tot = tot/cnt;
+          *((float*)(data + 
+                     (a)*I->stride[0] + \
+                     (b)*I->stride[1] + \
+                     (c)*I->stride[2])) = (float)tot;
+          out_sum += tot;
+          out_sumsq += (tot*tot);
+        }
+    mfree(I->data);
+    I->data = data;
+  
+    inp_mean = (float)(inp_sum/n_pts);
+    inp_stdev = (float)sqrt1d((inp_sumsq - (inp_sum*inp_sum/n_pts))/(n_pts-1));
+
+    out_mean = (float)(out_sum/n_pts);
+    out_stdev = (float)sqrt1d((out_sumsq - (out_sum*out_sum/n_pts))/(n_pts-1));
+
+    if(out_stdev!=0.0F) {
+      float scale = inp_stdev / out_stdev;
+      
+      for(a=0;a<na;a++)
+        for(b=0;b<nb;b++)
+          for(c=0;c<nc;c++) {
+            cur = Ffloat3(I,a,b,c);
+            cur = (cur-out_mean)*scale + inp_mean;
+            Ffloat3(I,a,b,c) = cur;
+          }
+    }
+    return 1;
+  }
+  return 0;
 }
 
 void FieldZero(CField *I)

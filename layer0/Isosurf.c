@@ -561,7 +561,7 @@ void IsosurfGetRange(PyMOLGlobals *G,Isofield *field,
   for(a=0;a<3;a++) {
     if(imx[a]!=imn[a]) { /* protect against div by zero */
       int b;
-      int mini, maxi, tst_min, tst_max;
+      int mini=0, maxi=0, tst_min, tst_max;
       float cur;
       for(b=0;b<8;b++) {
         cur = ((field->dimensions[a]-1)*(imix[a+3*b]-imn[a])/(imx[a]-imn[a]));

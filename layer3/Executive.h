@@ -246,6 +246,7 @@ int ExecutiveMapTrim(PyMOLGlobals *G,char *name,char *sele,
                          float buffer,
                          int map_state,int sele_state,int quiet);
 int ExecutiveMapDouble(PyMOLGlobals *G,char *name,int state);
+int ExecutiveMapHalve(PyMOLGlobals *G,char *name,int state);
 
 int ExecutiveMultiSave(PyMOLGlobals *G,char *fname,char *name,int state,int append);
 int ExecutiveIdentifyObjects(PyMOLGlobals *G,char *s1,int mode,int **indexVLA,ObjectMolecule ***objVLA);

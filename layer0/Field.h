@@ -33,6 +33,7 @@ typedef struct {
   unsigned int base_size;
 } CField;
 
+
 #define Ffloat3(f,a,b,c) (*((float*)((f)->data + \
                                      (a)*(f)->stride[0] + \
                                      (b)*(f)->stride[1] + \
@@ -92,5 +93,6 @@ float FieldInterpolatef(CField *I,int a,int b,int c,float x,float y,float z);
 
 PyObject *FieldAsPyList(CField *I);
 CField *FieldNewFromPyList(PyMOLGlobals *G,PyObject *list);
+int FieldSmooth3f(CField *I);
 
 #endif

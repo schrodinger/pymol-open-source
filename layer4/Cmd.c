@@ -966,6 +966,20 @@ static PyObject *CmdMapDouble(PyObject *self, PyObject *args)
   return APIResultOk(ok);
 }
 
+static PyObject *CmdMapHalve(PyObject *self, PyObject *args)
+{
+  char *name;
+  int state;
+  int ok = false;
+  ok = PyArg_ParseTuple(args,"si",&name,&state);
+  if(ok) {
+    APIEntry();
+    ok = ExecutiveMapHalve(TempPyMOLGlobals,name,state);
+    APIExit();
+  }
+  return APIResultOk(ok);
+}
+
 static PyObject *CmdGetRenderer(PyObject *self, PyObject *args)
 {
   char *vendor,*renderer,*version;
@@ -5659,6 +5673,7 @@ static PyMethodDef Cmd_methods[] = {
 	{"load_traj",             CmdLoadTraj,             METH_VARARGS },
    {"map_new",               CmdMapNew,               METH_VARARGS },
    {"map_double",            CmdMapDouble,            METH_VARARGS },
+   {"map_halve",            CmdMapHalve,            METH_VARARGS },
    {"map_set_border",        CmdMapSetBorder,         METH_VARARGS },
    {"map_trim",                  CmdMapTrim,         METH_VARARGS },
 	{"mask",	                 CmdMask,                 METH_VARARGS },

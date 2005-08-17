@@ -28,14 +28,15 @@ typedef struct ObjectMapState {
   CObjectState State;
   int Active;
   CCrystal *Crystal;
-  int Div[3],Min[3],Max[3],FDim[4];
+  int Div[3]; /* NOTE: Div is only reliable for maps defined relative to a unit cell */
+  int Min[3],Max[3],FDim[4]; /* Required for all maps */
   int MapSource;
   Isofield *Field;
   float Corner[24];
   int *Dim;
   float *Origin;
   float *Range;
-  float *Grid;
+  float *Grid; /* For maps not defined relative to a unit cell */
   float ExtentMin[3],ExtentMax[3];
 } ObjectMapState;
 
@@ -83,6 +84,7 @@ ObjectMap *ObjectMapLoadCObject(PyMOLGlobals *G,ObjectMap *obj,int state);
 ObjectMap *ObjectMapLoadChemPyMap(PyMOLGlobals *G,ObjectMap *I,PyObject *Map,
                                   int state,int discrete);
 int ObjectMapDouble(ObjectMap *I,int state);
+int ObjectMapHalve(ObjectMap *I,int state);
 int ObjectMapTrim(ObjectMap *I,int state, float *mn, float *mx,int quiet);
 int ObjectMapSetBorder(ObjectMap *I,float level);
 int ObjectMapStateSetBorder(ObjectMapState *I,float level);
