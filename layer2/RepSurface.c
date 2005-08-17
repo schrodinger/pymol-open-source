@@ -530,11 +530,16 @@ static void RepSurfaceRender(RepSurface *I,RenderInfo *info)
             switch(t_mode) {
             case 1:
               UtilSemiSortFloatIndex(n_tri,z_value,ix,true);
-              /* UtilSortIndex(n_tri,z_value,ix,(UtilOrderFn*)ZOrderFn); */
+              /* 
+                UtilSortIndex(n_tri,z_value,ix,(UtilOrderFn*)ZOrderFn); 
+              */
               break;
             default:
-              UtilSemiSortFloatIndex(n_tri,z_value,ix,false);
-              UtilSortIndex(n_tri,z_value,ix,(UtilOrderFn*)ZRevOrderFn);
+                UtilSemiSortFloatIndex(n_tri,z_value,ix,false);
+                /*                
+                 UtilSortIndex(n_tri,z_value,ix,(UtilOrderFn*)ZRevOrderFn);
+                */
+              }
               break;
             }
 

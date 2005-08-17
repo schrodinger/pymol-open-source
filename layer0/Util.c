@@ -351,14 +351,14 @@ static int ZRevOrderFn(float *array,int l,int r)
 
 void UtilSemiSortFloatIndex(int n,float *array,int *x, int forward)
 {
+  /* approximate sort, for quick handling of transparency values */
+
   if(n>0) {
     register float min,max,*f,v;
     register float range, scale;
     register int a;
-    int *start1 = Calloc(int,n);
-    int *next1 = Calloc(int,n);
-    int *start2 = Alloc(int,n);
-    int *next2 = Alloc(int,n);
+    register int *start1 = Calloc(int,n*2);
+    register int *next1 = start1 + n;
     register int idx1;
     register int n_minus_one;
 
@@ -391,27 +391,40 @@ void UtilSemiSortFloatIndex(int n,float *array,int *x, int forward)
           start1[idx1] = a+1;
         }
       }
-      /* now read out, and do nested sorts */
+      /* now read out */
       {
-        int a=0;
-        int c=0;
+        a=0;
+        register int c=0;
         register int cur1;        
         while(a<n) {
           if( (cur1 = start1[a]) ) {
-            register int idx2;
-            register int nest_cnt = 0;
             idx1 = cur1 - 1;
-            if( !next1[idx1] ) { /* single triangle entry */
+            while(1) {
               x[c] = idx1;
               c++;
-            } else {
+              if(! (cur1 = next1[idx1]))
+                break;
               idx1 = cur1 - 1;
-              while(idx1>=0) {
-                x[c] = idx1;
-                c++;
-                idx1 = next1[idx1] - 1;
-              }
+            }
+          }
+          a++;
+        }
+      }
+    }
+    mfree(start1);
+  }
+}
+
+#if 0
+
+/* nested sort code not used */
+            register int idx2;
+            register int nest_cnt = 0;
+
               if(0) {
+                int *start2 = Alloc(int,n);
+                int *next2 = Alloc(int,n);
+
                 min = array[idx1];
                 max = array[idx1];
                 start2[nest_cnt] = 0;
@@ -465,17 +478,8 @@ void UtilSemiSortFloatIndex(int n,float *array,int *x, int forward)
                       }
                     }
                   }
-                }
-              }
-            }
-          }
-          a++;
-        }
-        /*        printf("%d == %d?\n",n,c);*/
-      }
-    }
-  }
-}
+
+#endif
 
 void UtilSortInPlace(PyMOLGlobals *G,void *array,int nItem,
 					 unsigned int itemSize,
