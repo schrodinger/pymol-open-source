@@ -400,8 +400,7 @@ void UtilSemiSortFloatIndex(int n,float *array,int *x, int forward)
           if( (cur1 = start1[a]) ) {
             idx1 = cur1 - 1;
             while(1) {
-              x[c] = idx1;
-              c++;
+              x[c++] = idx1;
               if(! (cur1 = next1[idx1]))
                 break;
               idx1 = cur1 - 1;
