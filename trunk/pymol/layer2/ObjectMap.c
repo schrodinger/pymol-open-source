@@ -385,7 +385,6 @@ static int ObjectMapStateTrim(PyMOLGlobals *G, ObjectMapState *ms,
         field=IsosurfFieldAlloc(G,new_fdim);
         field->save_points = ms->Field->save_points;
 
-
         for(c=0;c<new_fdim[2];c++) {
           f = c+(new_min[2] - min[2]);
           for(b=0;b<new_fdim[1];b++) {
@@ -723,6 +722,9 @@ int ObjectMapTrim(ObjectMap *I,int state,float *mn, float *mx, int quiet)
   int a;
   int result=true;
   int update=false;
+
+  /* TO DO: convert mn and mx into map local coordinates if map itself is transformed...  */
+
   if(state<0) {
     for(a=0;a<I->NState;a++) {
       if(I->State[a].Active) {

@@ -162,6 +162,23 @@ typedef struct {
 } SceneUnitContext;
 
 static int SceneDeferClickWhen(Block *block, int button, int x, int y, double when);
+
+static int get_stereo_x(int x, int *last_x, int width)
+{
+  int width_2 = width/2;
+  int width_3 = width/3;
+  if(!last_x) {
+    if(x>width_2)
+      x-=width_2;
+  } else {
+    if((x-(*last_x))>width_3)
+      x-=width_2;
+    else if(((*last_x)-x)>width_3)
+      x+=width_2;
+  }
+  return x;
+}
+
 int SceneLoopDrag(Block *block,int x,int y,int mod);
 int SceneLoopRelease(Block *block,int button,int x,int y,int mod);
 
@@ -2375,8 +2392,8 @@ static int SceneClick(Block *block,int button,int x,int y,
     y=y-I->Block->margin.bottom;
     x=x-I->Block->margin.left;
     
-    if(I->StereoMode>1)
-      x = x % (I->Width/2);
+    if(I->StereoMode>1) 
+      x = get_stereo_x(x,NULL,I->Width);
 
     I->LastX=x;
     I->LastY=y;	 
@@ -2387,7 +2404,7 @@ static int SceneClick(Block *block,int button,int x,int y,
   case cButModePickAtom:
   case cButModeMenu:
     if(I->StereoMode>1)
-      x = x % (I->Width/2);
+      x = get_stereo_x(x,NULL,I->Width);
 
     if(SceneDoXYPick(G,x,y)) {
       obj=(CObject*)I->LastPicked.ptr;
@@ -2510,7 +2527,7 @@ static int SceneClick(Block *block,int button,int x,int y,
   case cButModePickBond:
   case cButModePkTorBnd:
     if(I->StereoMode>1)
-      x = x % (I->Width/2);
+      x = get_stereo_x(x,NULL,I->Width);
 
     if(SceneDoXYPick(G,x,y)) {
       obj=(CObject*)I->LastPicked.ptr;
@@ -2600,7 +2617,8 @@ static int SceneClick(Block *block,int button,int x,int y,
   case cButModeRotFrag:
   case cButModeMoveAtom:
     if(I->StereoMode>1)
-      x = x % (I->Width/2);
+      x = get_stereo_x(x,NULL,I->Width);
+
     if(SceneDoXYPick(G,x,y)) {
       obj=(CObject*)I->LastPicked.ptr;
       y=y-I->Block->margin.bottom;
@@ -2657,7 +2675,7 @@ static int SceneClick(Block *block,int button,int x,int y,
   case cButModeOrigAt:
   case cButModeCent:
     if(I->StereoMode>1)
-      x = x % (I->Width/2);
+      x = get_stereo_x(x,NULL,I->Width);
 
     if(SceneDoXYPick(G,x,y)) {
       obj=(CObject*)I->LastPicked.ptr;
@@ -3317,8 +3335,8 @@ static int SceneDrag(Block *block,int x,int y,int mod,double when)
 
         vScale = SceneGetScreenVertexScale(G,v1);
         if(I->StereoMode>1) {
-          x = x % (I->Width/2);
           vScale*=2;
+          x = get_stereo_x(x,&I->LastX,I->Width);
         }
         
         /* transform into model coodinate space */
@@ -3375,8 +3393,8 @@ static int SceneDrag(Block *block,int x,int y,int mod,double when)
             /* scale properly given the current projection matrix */
             vScale = SceneGetScreenVertexScale(G,v1);
             if(I->StereoMode>1) {
-              x = x % (I->Width/2);
               vScale*=2;
+              x = get_stereo_x(x,&I->LastX,I->Width);
             }
 
             v2[0] = (x-I->LastX)*vScale;
@@ -3413,10 +3431,10 @@ static int SceneDrag(Block *block,int x,int y,int mod,double when)
               vScale = SceneGetScreenVertexScale(G,v1);
 
               if(I->StereoMode>1) {
-                x = x % (I->Width/2);
                 vScale*=2;
+                x = get_stereo_x(x,&I->LastX,I->Width);
               }
-              
+
               v2[0] = (x-I->LastX)*vScale;
               v2[1] = (y-I->LastY)*vScale;
               v2[2] = 0;
@@ -3446,8 +3464,8 @@ static int SceneDrag(Block *block,int x,int y,int mod,double when)
 
     vScale = SceneGetScreenVertexScale(G,I->Origin);
     if(I->StereoMode>1) {
-      x = x % (I->Width/2);
       vScale*=2;
+      x = get_stereo_x(x,&I->LastX,I->Width);
     }
 
     v2[0] = (x-I->LastX)*vScale;
@@ -3490,7 +3508,7 @@ static int SceneDrag(Block *block,int x,int y,int mod,double when)
     eff_width = I->Width;
     if(I->StereoMode>1) {
       eff_width = I->Width/2;
-      x = x % eff_width;
+      x = get_stereo_x(x,&I->LastX,I->Width);
     }
 
 	 
@@ -4594,14 +4612,14 @@ void SceneRender(PyMOLGlobals *G,Pickable *pick,int x,int y,
   float fov;
   int double_pump = false;
   int must_render_stereo = false;
-  int stereo_as_mono = false;
+  int mono_as_stereo = false;
   int debug_pick = 0;
   double now;
   GLenum render_buffer = GL_BACK;
   SceneUnitContext context;
   float vv[4];
   float width_scale = 0.0F;
-
+  
   PRINTFD(G,FB_Scene)
     " SceneRender: entered. pick %p x %d y %d smp %p\n",
     (void*)pick,x,y,(void*)smp
@@ -4643,16 +4661,31 @@ void SceneRender(PyMOLGlobals *G,Pickable *pick,int x,int y,
     if(Feedback(G,FB_OpenGL,FB_Debugging))
       PyMOLCheckOpenGLErr("SceneRender checkpoint 0");
 
-    must_render_stereo = (I->StereoMode!=0);
+    must_render_stereo = (I->StereoMode!=0); /* are we doing stereo? */
     if(!must_render_stereo) 
-      if(double_pump&&G->StereoCapable) {            /* force stereo rendering */
+      if(double_pump&&G->StereoCapable) { /* force stereo rendering */
         must_render_stereo=true;
-        stereo_as_mono=true; /* rendering stereo as mono */
+        if(I->StereoMode==0) {
+          mono_as_stereo=true; /* rendering stereo as mono */
+        }
       }
 
     if(must_render_stereo) {
-      glDrawBuffer(GL_BACK_LEFT);
-      render_buffer = GL_BACK_LEFT;
+      if(mono_as_stereo) {
+        glDrawBuffer(GL_BACK_LEFT);
+        render_buffer = GL_BACK_LEFT;
+      } else {
+        switch(I->StereoMode) {
+        case 1:
+          glDrawBuffer(GL_BACK_LEFT);
+          render_buffer = GL_BACK_LEFT;
+          break;
+        default:
+          glDrawBuffer(GL_BACK);
+          render_buffer = GL_BACK;
+          break;
+        }
+      }
     } else {
       glDrawBuffer(GL_BACK);
       render_buffer = GL_BACK;
@@ -5167,8 +5200,8 @@ void SceneRender(PyMOLGlobals *G,Pickable *pick,int x,int y,
 
 
       PRINTFD(G,FB_Scene)
-        " SceneRender: I->StereoMode %d must_render_stereo %d\n    stereo_as_mono %d  StereoCapable %d\n",
-        I->StereoMode, must_render_stereo, stereo_as_mono, G->StereoCapable
+        " SceneRender: I->StereoMode %d must_render_stereo %d\n    mono_as_stereo %d  StereoCapable %d\n",
+        I->StereoMode, must_render_stereo, mono_as_stereo, G->StereoCapable
         ENDFD;
 
       start_time = UtilGetSeconds(G);
@@ -5184,7 +5217,7 @@ void SceneRender(PyMOLGlobals *G,Pickable *pick,int x,int y,
         
         /* LEFT HAND STEREO */
 
-        if(stereo_as_mono) {
+        if(mono_as_stereo) {
           glDrawBuffer(GL_BACK_LEFT);
         } else switch(I->StereoMode) {
         case 1: /* hardware */
@@ -5218,7 +5251,7 @@ void SceneRender(PyMOLGlobals *G,Pickable *pick,int x,int y,
         /* prepare the stereo transformation matrix */
 
         glPushMatrix(); /* 1 */
-        ScenePrepareMatrix(G,stereo_as_mono ? 0 : 1);
+        ScenePrepareMatrix(G,mono_as_stereo ? 0 : 1);
 
         /* render picked atoms */
 
@@ -5259,7 +5292,7 @@ void SceneRender(PyMOLGlobals *G,Pickable *pick,int x,int y,
         if(Feedback(G,FB_OpenGL,FB_Debugging))
           PyMOLCheckOpenGLErr("before stereo glViewport 2");
 
-        if(stereo_as_mono) { /* double pumped mono */
+        if(mono_as_stereo) { /* double pumped mono */
           glDrawBuffer(GL_BACK_RIGHT);
         } else switch(I->StereoMode) {
         case 1: /* hardware */
@@ -5292,7 +5325,7 @@ void SceneRender(PyMOLGlobals *G,Pickable *pick,int x,int y,
         /* prepare the stereo transformation matrix */
 
         glPushMatrix(); /* 1 */
-        ScenePrepareMatrix(G,stereo_as_mono ? 0 : 2);
+        ScenePrepareMatrix(G,mono_as_stereo ? 0 : 2);
         glClear(GL_DEPTH_BUFFER_BIT) ;
 
         /* render picked atoms */
@@ -5326,7 +5359,7 @@ void SceneRender(PyMOLGlobals *G,Pickable *pick,int x,int y,
 
         /* restore draw buffer */
 
-        if(stereo_as_mono) { /* double pumped mono */
+        if(mono_as_stereo) { /* double pumped mono */
           glDrawBuffer(GL_BACK);
         } else switch(I->StereoMode) {
         case 1: /* hardware */
