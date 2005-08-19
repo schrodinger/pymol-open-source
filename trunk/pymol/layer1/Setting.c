@@ -66,7 +66,7 @@ int SettingSetGlobalsFromPyList(PyMOLGlobals *G,PyObject *list)
   int texture_fonts = SettingGetGlobal_b(G,cSetting_texture_fonts);
   int use_display_lists = SettingGetGlobal_b(G,cSetting_use_display_lists);
   int max_threads = SettingGetGlobal_i(G,cSetting_max_threads);
-
+  int nvidia_bugs = SettingGetGlobal_b(G,cSetting_nvidia_bugs);
   register CSetting *I=G->Setting;
   if(list)
     if(PyList_Check(list)) 
@@ -83,6 +83,7 @@ int SettingSetGlobalsFromPyList(PyMOLGlobals *G,PyObject *list)
   SettingSet_b(I,cSetting_texture_fonts, texture_fonts);
   SettingSet_b(I,cSetting_use_display_lists, use_display_lists);
   SettingSet_i(I,cSetting_max_threads, max_threads);
+  SettingSet_i(I,cSetting_nvidia_bugs, nvidia_bugs);
 
   if(G->Option->presentation) {
       SettingSet_b(I,cSetting_full_screen,full_screen);
@@ -2606,6 +2607,7 @@ void SettingInitGlobal(PyMOLGlobals *G,int alloc,int reset_gui)
   SettingSet_i(I,cSetting_cartoon_ring_finder, 1);
   SettingSet_i(I,cSetting_cartoon_tube_cap,1);
   SettingSet_i(I,cSetting_cartoon_loop_cap,1);
+  SettingSet_i(I,cSetting_nvidia_bugs, 0);
 }
 
 
