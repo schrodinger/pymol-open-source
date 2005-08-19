@@ -6,6 +6,8 @@ Changes up to 0.99
 
     beta12
 
+    * better mouse-handling in horizontal split-screen stereo
+
     * fixed setting side effects bug introduced in beta 11
 
     * faster transparency drawing (sorting)
