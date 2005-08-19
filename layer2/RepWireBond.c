@@ -356,7 +356,7 @@ static void RepWireBondRender(RepWireBond *I,RenderInfo *info)
   int c=I->N;
   unsigned int i,j;
   Pickable *p;
-
+  
   if(ray) {
 
     float radius;
@@ -377,8 +377,10 @@ static void RepWireBondRender(RepWireBond *I,RenderInfo *info)
 	 }
 
   } else if(G->HaveGUI && G->ValidContext) {
+    register int nvidia_bugs = (int)SettingGet(G,cSetting_nvidia_bugs);
+
     if(pick) {
-	 
+
       i=(*pick)->index;
 
       v=I->VP;
@@ -406,9 +408,9 @@ static void RepWireBondRender(RepWireBond *I,RenderInfo *info)
           glColor3ub((uchar)((j&0xF)<<4),(uchar)((j&0xF0)|0x8),(uchar)((j&0xF00)>>4)); 
 
         }			 
-#ifdef _PYMOL_NVIDIA_WORKAROUND
-	  glFlush();
-#endif
+        if(nvidia_bugs) {
+          glFlush();
+        }
         glVertex3fv(v);
         v+=3;
         glVertex3fv(v);
@@ -447,9 +449,9 @@ static void RepWireBondRender(RepWireBond *I,RenderInfo *info)
           glBegin(GL_LINES);	 
           glColor3fv(v);
           v+=3;
-#ifdef _PYMOL_NVIDIA_WORKAROUND
-          glFlush();
-#endif
+          if(nvidia_bugs) {
+            glFlush();
+          }
           glVertex3fv(v);
           v+=3;
           glVertex3fv(v);

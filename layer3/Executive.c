@@ -9191,7 +9191,8 @@ void ExecutiveInvalidateRep(PyMOLGlobals *G,char *name,int rep,int level)
   if((!name)||(!name[0])) 
     name = cKeywordAll;
 #if 1
-  CTracker *I_Tracker= I->Tracker;
+  {
+      CTracker *I_Tracker= I->Tracker;
   int list_id = ExecutiveGetNamesListFromPattern(G,name);
   int iter_id = TrackerNewIter(I_Tracker, 0, list_id);
   while( TrackerIterNextCandInList(I_Tracker, iter_id, (TrackerRef**)&rec) ) {
@@ -9226,6 +9227,7 @@ void ExecutiveInvalidateRep(PyMOLGlobals *G,char *name,int rep,int level)
   }
   TrackerDelList(I_Tracker, list_id);
   TrackerDelIter(I_Tracker, iter_id);
+  }
 #else
   int sele = -1;
   int all_flag=false;

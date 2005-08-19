@@ -489,8 +489,8 @@ void TetsurfGetRange(PyMOLGlobals *G,
       float cur;
       for(b=0;b<8;b++) {
         cur = ((field->dimensions[a]-1)*(imix[a+3*b]-imn[a])/(imx[a]-imn[a]));
-        tst_min = floor(cur);
-        tst_max = ceil(cur)+1;
+        tst_min = (int)floor(cur);
+        tst_max = ((int)ceil(cur))+1;
         
         if(!b) {
           mini=tst_min;

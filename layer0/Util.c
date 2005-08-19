@@ -393,9 +393,9 @@ void UtilSemiSortFloatIndex(int n,float *array,int *x, int forward)
       }
       /* now read out */
       {
-        a=0;
         register int c=0;
         register int cur1;        
+        a=0;
         while(a<n) {
           if( (cur1 = start1[a]) ) {
             idx1 = cur1 - 1;
