@@ -2197,6 +2197,12 @@ Rep *RepCartoonNew(CoordSet *cs)
                 ExtrudeCGOSurfaceStrand(ex,I->ray,sampling,NULL);
               else
                 ExtrudeCGOSurfaceStrand(ex,I->ray,sampling,ColorGet(G,highlight_color));                
+
+              /* for PLY files      
+                 ExtrudeCircle(ex,loop_quality,loop_radius);
+                 ExtrudeBuildNormals1f(ex);
+                 ExtrudeCGOSurfaceTube(ex,I->ray,loop_cap,NULL);
+              */
               break;
             case cCartoon_dumbbell:
               if(highlight_color<0) {
