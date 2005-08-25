@@ -64,9 +64,9 @@ print len(mdl.atom)
 
 map( x, [
 'cmd.get_model("nonexistent")',
-'cmd.create("test","none")',
+'cmd.create("test","none",quiet=0)',
 'cmd.create("test2","nonexistent")',
-'cmd.create("test3","?allowed")',
+'cmd.create("test3","?allowed",quiet=0)',
 'cmd.fragment("arg")',
 'cmd.fragment("nonexistent")',
 ])

@@ -78,7 +78,7 @@ Selector-Error: Invalid Selection Name.
 Selector-Error: Invalid Selection Name.
 ( nonexistent )<--
 CmdException raised.
-cmd.create("test","none")
+cmd.create("test","none",quiet=0)
  Selector: found 0 atoms.
  Executive: object "test" created.
 None
@@ -89,7 +89,7 @@ Selector-Error: Invalid Selection Name.
 Selector-Error: Invalid Selection Name.
 ( nonexistent )<--
 CmdException raised.
-cmd.create("test3","?allowed")
+cmd.create("test3","?allowed",quiet=0)
  Selector: found 0 atoms.
  Executive: object "test3" created.
 None
