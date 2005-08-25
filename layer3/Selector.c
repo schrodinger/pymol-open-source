@@ -920,19 +920,20 @@ static int SelectGetNameOffset(PyMOLGlobals *G,char *name,int minMatch,int ignCa
       wm=WordMatch(G,name,I_Name[offset],ignCase);
       if(wm<0) { /* exact match is always good */
         best_offset=offset;
+        best_match=wm;
         break;
       }
       if(wm>0) {
         if(best_match<wm) {
           best_match=wm;
           best_offset=offset;
-        } else if(best_match==wm) { /* uh oh -- ambiguous */
+        } else if(best_match==wm) { /* uh oh -- ambiguous match */
           best_offset = -1;
         }
       }
       offset++;
     }
-    if((best_match>minMatch))
+    if((best_match<0)||(best_match>minMatch))
       result=best_offset;
   }
   return(result);  
@@ -5666,7 +5667,7 @@ void SelectorUpdateCmd(PyMOLGlobals *G,int sele0,int sele1,int sta0, int sta1,
 
 int SelectorCreateObjectMolecule(PyMOLGlobals *G,int sele,char *name,
                                  int target,int source,int discrete,
-                                 int zoom)
+                                 int zoom,int quiet)
 {
   register CSelector *I=G->Selector;
   int ok=true;
@@ -5864,13 +5865,15 @@ int SelectorCreateObjectMolecule(PyMOLGlobals *G,int sele,char *name,
     }
   }
   SceneCountFrames(G);
-  PRINTFB(G,FB_Selector,FB_Details)
-    " Selector: found %d atoms.\n",nAtom 
-    ENDFB(G);
-    ObjectMoleculeSort(targ);
+  if(!quiet) {
+    PRINTFB(G,FB_Selector,FB_Details)
+      " Selector: found %d atoms.\n",nAtom 
+      ENDFB(G);
+  }
+  ObjectMoleculeSort(targ);
   if(isNew) {
     ObjectSetName((CObject*)targ,name);
-    ExecutiveManageObject(G,(CObject*)targ,zoom,false);
+    ExecutiveManageObject(G,(CObject*)targ,zoom,quiet);
   } else {
     ExecutiveUpdateObjectSelection(G,(CObject*)targ);
   }
@@ -6286,6 +6289,7 @@ static int _SelectorCreate(PyMOLGlobals *G,char *sname,char *sele,ObjectMolecule
   OrthoLineType name;
   int ok=true;
   int c=0;
+  int ignore_case = SettingGetGlobal_b(G,cSetting_ignore_case);
 
   PRINTFD(G,FB_Selector)
     "SelectorCreate-Debug: entered...\n"
@@ -6295,7 +6299,7 @@ static int _SelectorCreate(PyMOLGlobals *G,char *sname,char *sele,ObjectMolecule
 	 strcpy(name,&sname[1]);
   else
 	 strcpy(name,sname);		  
-  if(WordMatch(G,cKeywordAll,name,true)<0) {
+  if(WordMatch(G,cKeywordAll,name,ignore_case)<0) {
     name[0]=0; /* force error */
   }
   UtilCleanStr(name);
@@ -7687,7 +7691,6 @@ static int SelectorSelect1(PyMOLGlobals *G,EvalElem *base)
           }
           WordMatcherFree(matcher);
         } else {
-          
           sele=SelectGetNameOffset(G,base[1].text,1,ignore_case);
           if(sele>=0)
             {

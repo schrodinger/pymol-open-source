@@ -78,14 +78,14 @@ if __name__=='pymol.importing':
         sdf2str = 38  # SDF ditto
 
     loadable_sc = Shortcut(loadable.__dict__.keys()) 
-
-    def set_session(session):
+    
+    def set_session(session,quiet=1):
         r = DEFAULT_SUCCESS
         for a in pymol._session_restore_tasks:
             if a==None:
                 try:
                     lock()
-                    r = _cmd.set_session(session)
+                    r = _cmd.set_session(session,int(quiet))
                 finally:
                     unlock(r)
                 try:
@@ -537,7 +537,7 @@ SEE ALSO
 
             if ftype == loadable.pse:
                 ftype = -1
-                r = cmd.set_session(io.pkl.fromFile(fname))
+                r = cmd.set_session(io.pkl.fromFile(fname),quiet)
                 
     # special handling for multi-model files (mol2, sdf)
 

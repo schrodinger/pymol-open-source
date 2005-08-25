@@ -544,13 +544,14 @@ static PyObject *CmdGetSession(PyObject *self, PyObject *args)
 static PyObject *CmdSetSession(PyObject *self, PyObject *args)
 {
   int ok=true;
+  int quiet;
   PyObject *obj;
 
-  ok = PyArg_ParseTuple(args,"O",&obj);
+  ok = PyArg_ParseTuple(args,"Oi",&obj,&quiet);
   if(ok) {
     APIEntry();
     PBlock();
-    ok = ExecutiveSetSession(TempPyMOLGlobals,obj);
+    ok = ExecutiveSetSession(TempPyMOLGlobals,obj,quiet);
     PUnblock();
     APIExit();
   }
@@ -3118,15 +3119,17 @@ static PyObject *CmdGetModel(PyObject *dummy, PyObject *args)
 static PyObject *CmdCreate(PyObject *dummy, PyObject *args)
 {
   char *str1,*str2;
-  int target,source,discrete;
+  int target,source,discrete,quiet;
   OrthoLineType s1;
   int ok=false;
   int zoom;
-  ok = PyArg_ParseTuple(args,"ssiiii",&str1,&str2,&source,&target,&discrete,&zoom);
+  ok = PyArg_ParseTuple(args,"ssiiiii",&str1,&str2,&source,
+                        &target,&discrete,&zoom,&quiet);
   if (ok) {
     APIEntry();
     ok=(SelectorGetTmp(TempPyMOLGlobals,str2,s1)>=0);
-    if(ok) ok = ExecutiveSeleToObject(TempPyMOLGlobals,str1,s1,source,target,discrete,zoom); 
+    if(ok) ok = ExecutiveSeleToObject(TempPyMOLGlobals,str1,s1,
+                                      source,target,discrete,zoom,quiet); 
     SelectorFreeTmp(TempPyMOLGlobals,s1);
     APIExit();
   }
@@ -5453,16 +5456,19 @@ static PyObject *CmdEdit(PyObject *self, 	PyObject *args)
   ok = PyArg_ParseTuple(args,"ssssiii",&str0,&str1,&str2,&str3,&pkresi,&pkbond,&quiet);
   if (ok) {
     APIEntry();
-    if(str0[0]) ok = (SelectorGetTmp(TempPyMOLGlobals,str0,s0)>=0);
-    if(str1[0]) ok = (SelectorGetTmp(TempPyMOLGlobals,str1,s1)>=0);
-    if(str2[0]) ok = (SelectorGetTmp(TempPyMOLGlobals,str2,s2)>=0);
-    if(str3[0]) ok = (SelectorGetTmp(TempPyMOLGlobals,str3,s3)>=0);
-    ok = EditorSelect(TempPyMOLGlobals,s0,s1,s2,s3,pkresi,pkbond,quiet);
-    if(s0[0]) SelectorFreeTmp(TempPyMOLGlobals,s0);
-    if(s1[0]) SelectorFreeTmp(TempPyMOLGlobals,s1);
-    if(s2[0]) SelectorFreeTmp(TempPyMOLGlobals,s2);
-    if(s3[0]) SelectorFreeTmp(TempPyMOLGlobals,s3);
-    
+    if(!str0[0]) {
+      EditorInactivate(TempPyMOLGlobals);
+    } else {
+      ok = (SelectorGetTmp(TempPyMOLGlobals,str0,s0)>=0);
+      if(str1[0]) ok = (SelectorGetTmp(TempPyMOLGlobals,str1,s1)>=0);
+      if(str2[0]) ok = (SelectorGetTmp(TempPyMOLGlobals,str2,s2)>=0);
+      if(str3[0]) ok = (SelectorGetTmp(TempPyMOLGlobals,str3,s3)>=0);
+      ok = EditorSelect(TempPyMOLGlobals,s0,s1,s2,s3,pkresi,pkbond,quiet);
+      if(s0[0]) SelectorFreeTmp(TempPyMOLGlobals,s0);
+      if(s1[0]) SelectorFreeTmp(TempPyMOLGlobals,s1);
+      if(s2[0]) SelectorFreeTmp(TempPyMOLGlobals,s2);
+      if(s3[0]) SelectorFreeTmp(TempPyMOLGlobals,s3);
+    }
     APIExit();
   }
   return APIResultOk(ok);

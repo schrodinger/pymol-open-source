@@ -996,7 +996,7 @@ DEVELOPMENT TO DO
         # testing tools
 
         # for comparing floating point numbers calculated using
-        # different FPUs
+        # different FPUs and which may show some wobble...
 
         def _dump_floats(lst,format="%7.3f",cnt=9):
             # WARNING: internal routine, subject to change
