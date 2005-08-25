@@ -461,7 +461,8 @@ USAGE
         if _raising(r): raise pymol.CmdException                                    
         return r
 
-    def create(name,selection,source_state=0,target_state=0,discrete=0,zoom=-1):
+    def create(name,selection,source_state=0,
+               target_state=0,discrete=0,zoom=-1,quiet=1):
         '''
 DESCRIPTION
 
@@ -506,7 +507,8 @@ SEE ALSO
                 _cmd.legacy_set("sel_counter","%1.0f" % sel_cnt)
                 name = "obj%02.0f" % sel_cnt
             r = _cmd.create(str(name),"("+str(selection)+")",
-                                 int(source_state)-1,int(target_state)-1,int(discrete),int(zoom))
+                            int(source_state)-1,int(target_state)-1,
+                            int(discrete),int(zoom),int(quiet))
         finally:
             unlock(r)
         if _raising(r): raise pymol.CmdException                                    

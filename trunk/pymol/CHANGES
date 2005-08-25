@@ -4,6 +4,16 @@ CHANGE LOG
 
 Changes up to 0.99
 
+    beta14
+
+    * fixed bug in case matching for the selection engine
+
+    * Python API work
+
+    beta13
+
+    * fixed botched beta12 build for windows
+
     beta12
 
     * better mouse-handling in horizontal split-screen stereo

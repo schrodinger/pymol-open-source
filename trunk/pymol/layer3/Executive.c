@@ -2364,7 +2364,7 @@ static void ExecutiveMigrateSession(PyMOLGlobals *G,int session_version)
 }
 #endif
 
-int ExecutiveSetSession(PyMOLGlobals *G,PyObject *session)
+int ExecutiveSetSession(PyMOLGlobals *G,PyObject *session,int quiet)
 {
 #ifdef _PYMOL_NOPY
   return 0;
@@ -2388,25 +2388,29 @@ int ExecutiveSetSession(PyMOLGlobals *G,PyObject *session)
       ok = PConvPyIntToInt(tmp,&version);
       if(ok) {
         if(version>_PyMOL_VERSION_int) {
-          PRINTFB(G,FB_Executive,FB_Errors)
-            "Warning: This session was created with a newer version of PyMOL (%1.2f).\n",
-            version/100.
-            ENDFB(G);
-          if(SettingGet(G,cSetting_session_version_check)) {
+          if(!quiet) {
             PRINTFB(G,FB_Executive,FB_Errors)
-              "Error: Please update first -- see http://www.pymol.org\n"
+              "Warning: This session was created with a newer version of PyMOL (%1.2f).\n",
+              version/100.
               ENDFB(G);
-            ok=false;
-          } else {
-            PRINTFB(G,FB_Executive,FB_Errors)
-              "Warning: Some content may not load completely.\n"
-              ENDFB(G);
+            if(SettingGet(G,cSetting_session_version_check)) {
+              PRINTFB(G,FB_Executive,FB_Errors)
+                "Error: Please update first -- see http://www.pymol.org\n"
+                ENDFB(G);
+              ok=false;
+            } else {
+              PRINTFB(G,FB_Executive,FB_Errors)
+                "Warning: Some content may not load completely.\n"
+                ENDFB(G);
+            }
           }
         } else {
-          PRINTFB(G,FB_Executive,FB_Details)          
-            " Executive: Loading version %1.2f session...\n",
-            version/100.0
-            ENDFB(G);
+          if(!quiet) {
+            PRINTFB(G,FB_Executive,FB_Details)          
+              " Executive: Loading version %1.2f session...\n",
+              version/100.0
+              ENDFB(G);
+          }
         }
       }
     }
@@ -3699,13 +3703,15 @@ int ExecutiveTransformObjectSelection(PyMOLGlobals *G,char *name,int state,
 int ExecutiveValidName(PyMOLGlobals *G,char *name)
 {
   int result=true;
-  if(!ExecutiveFindSpec(G,name))
-    if(!WordMatchExact(G,name,cKeywordAll,true))
-      if(!WordMatchExact(G,name,cKeywordSame,true))
-        if(!WordMatchExact(G,name,cKeywordCenter,true))
-          if(!WordMatchExact(G,name,cKeywordOrigin,true))
+  if(!ExecutiveFindSpec(G,name)) {
+    int ignore_case = SettingGetGlobal_b(G,cSetting_ignore_case);
+
+    if(!WordMatchExact(G,name,cKeywordAll,ignore_case))
+      if(!WordMatchExact(G,name,cKeywordSame,ignore_case))
+        if(!WordMatchExact(G,name,cKeywordCenter,ignore_case))
+          if(!WordMatchExact(G,name,cKeywordOrigin,ignore_case))
             result=false;
- 
+  }
   return result;
 }
 
@@ -5341,14 +5347,15 @@ PyObject *ExecutiveSeleToChemPyModel(PyMOLGlobals *G,char *s1,int state)
 }
 /*========================================================================*/
 int ExecutiveSeleToObject(PyMOLGlobals *G,char *name,char *s1,
-                           int source,int target,int discrete,int zoom)
+                           int source,int target,
+                          int discrete,int zoom, int quiet)
 {
   int sele1;
   int ok=false;
 
   sele1=SelectorIndexByName(G,s1);
   if(sele1>=0)
-    ok = SelectorCreateObjectMolecule(G,sele1,name,target,source,discrete,zoom);
+    ok = SelectorCreateObjectMolecule(G,sele1,name,target,source,discrete,zoom,quiet);
   return ok;
 }
 /*========================================================================*/

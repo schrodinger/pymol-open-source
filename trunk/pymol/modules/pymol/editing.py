@@ -630,7 +630,7 @@ SEE ALSO
 
 
     def edit(selection1='',selection2='none',selection3='none',
-                selection4='none',pkresi=0, pkbond=1,quiet=1):
+                selection4='none',pkresi=0, pkbond=1, quiet=1):
         '''
 DESCRIPTION
 
