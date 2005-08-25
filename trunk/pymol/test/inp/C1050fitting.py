@@ -14,7 +14,7 @@ pymol.random = random
 cmd.load("dat/pept.pdb","ref")
 
 for a in xrange(1,11):
-   cmd.create("trg","ref",1,a)
+   cmd.create("trg","ref",1,a,quiet=0)
    cmd.alter_state(a,"trg","x=x+random()/2")
    cmd.alter_state(a,"trg","y=y+random()/2")
    cmd.alter_state(a,"trg","z=z+random()/2",quiet=0)

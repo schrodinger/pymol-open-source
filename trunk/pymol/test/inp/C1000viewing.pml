@@ -298,7 +298,7 @@ load dat/pept.pdb
 cmd._dump_floats(cmd.get_view(0))
 zoom
 zoom resi 10
-zoom resi 5,5
+zoom resi 4,5,6
 cmd._dump_floats(cmd.get_view(0))
 
 # coordinate set based zoom, orient, origin
@@ -357,6 +357,29 @@ zoom (all),state=-1
 zoom (all),state=0
 cmd._dump_ufloats(cmd.get_view(0))
 
+dele all
+load dat/1tii.pdb
+cmd._dump_floats(cmd.get_extent("1tii")[0])
+cmd._dump_floats(cmd.get_extent("1tii")[1])
+cmd._dump_floats(cmd.get_extent("1TII")[0])
+cmd._dump_floats(cmd.get_extent("1TII")[1])
+cmd._dump_floats(cmd.get_extent("1Tii")[0])
+cmd._dump_floats(cmd.get_extent("1Tii")[1])
+
+cmd._dump_floats(cmd.get_extent("1tii////cA")[0])
+cmd._dump_floats(cmd.get_extent("1tii////ca")[1])
+cmd._dump_floats(cmd.get_extent("1TII////cA")[0])
+cmd._dump_floats(cmd.get_extent("1TII////ca")[1])
+cmd._dump_floats(cmd.get_extent("1Tii////cA")[0])
+cmd._dump_floats(cmd.get_extent("1Tii////ca")[1])
+
+dist TSt,/1tii//A/TYR`3/CD1, /1tii//F/ARG`12/NE
+cmd._dump_floats(cmd.get_extent("tst")[0])
+cmd._dump_floats(cmd.get_extent("tst")[1])
+cmd._dump_floats(cmd.get_extent("TST")[0])
+cmd._dump_floats(cmd.get_extent("TST")[1])
+cmd._dump_floats(cmd.get_extent("tSt")[0])
+cmd._dump_floats(cmd.get_extent("tSt")[1])
 
 /print "END-LOG"
 

@@ -349,10 +349,11 @@ PyMOL>cmd._dump_floats(cmd.get_view(0))
   0.000   0.000 -63.191   1.224 -10.279  20.545  49.820  76.561   0.000
 PyMOL>zoom
 PyMOL>zoom resi 10
-PyMOL>zoom resi 5,5
+PyMOL>zoom resi 4,5,6
+ExecutiveWindowZoom-Warning: selection doesn't specify any coordinates.
 PyMOL>cmd._dump_floats(cmd.get_view(0))
   1.000   0.000   0.000   0.000   0.985   0.174   0.000  -0.174   0.985
-  0.000   0.000 -44.770   0.247  -2.740  20.030  35.297  54.243   0.000
+  0.000   0.000 -14.178   2.395  -9.290  18.016  11.178  17.178   0.000
 PyMOL>dele all
 PyMOL>load dat/1tii.pdb,m1
  ObjectMolecule: Read secondary structure assignments.
@@ -444,3 +445,47 @@ PyMOL>zoom (all),state=0
 PyMOL>cmd._dump_ufloats(cmd.get_view(0))
   0.537   0.312   0.784   0.841   0.118   0.529   0.072   0.943   0.325
   0.000   0.000 269.487  39.950   5.709  13.189 212.466 326.509   0.000
+PyMOL>dele all
+PyMOL>load dat/1tii.pdb
+ ObjectMolecule: Read secondary structure assignments.
+ ObjectMolecule: Read crystal symmetry information.
+ Symmetry: Found 6 symmetry operators.
+ CmdLoad: "dat/1tii.pdb" loaded as "1tii".
+PyMOL>cmd._dump_floats(cmd.get_extent("1tii")[0])
+ 11.590 -22.877 -28.270
+PyMOL>cmd._dump_floats(cmd.get_extent("1tii")[1])
+ 84.681  40.101  47.233
+PyMOL>cmd._dump_floats(cmd.get_extent("1TII")[0])
+ 11.590 -22.877 -28.270
+PyMOL>cmd._dump_floats(cmd.get_extent("1TII")[1])
+ 84.681  40.101  47.233
+PyMOL>cmd._dump_floats(cmd.get_extent("1Tii")[0])
+ 11.590 -22.877 -28.270
+PyMOL>cmd._dump_floats(cmd.get_extent("1Tii")[1])
+ 84.681  40.101  47.233
+PyMOL>cmd._dump_floats(cmd.get_extent("1tii////cA")[0])
+ 12.578 -21.622 -23.339
+PyMOL>cmd._dump_floats(cmd.get_extent("1tii////ca")[1])
+ 81.195  38.760  45.050
+PyMOL>cmd._dump_floats(cmd.get_extent("1TII////cA")[0])
+ 12.578 -21.622 -23.339
+PyMOL>cmd._dump_floats(cmd.get_extent("1TII////ca")[1])
+ 81.195  38.760  45.050
+PyMOL>cmd._dump_floats(cmd.get_extent("1Tii////cA")[0])
+ 12.578 -21.622 -23.339
+PyMOL>cmd._dump_floats(cmd.get_extent("1Tii////ca")[1])
+ 81.195  38.760  45.050
+PyMOL>dist TSt,/1tii//A/TYR`3/CD1, /1tii//F/ARG`12/NE
+ Executive: object "TSt" created.
+PyMOL>cmd._dump_floats(cmd.get_extent("tst")[0])
+ 35.306  24.391  -8.737
+PyMOL>cmd._dump_floats(cmd.get_extent("tst")[1])
+ 77.385  25.286   6.130
+PyMOL>cmd._dump_floats(cmd.get_extent("TST")[0])
+ 35.306  24.391  -8.737
+PyMOL>cmd._dump_floats(cmd.get_extent("TST")[1])
+ 77.385  25.286   6.130
+PyMOL>cmd._dump_floats(cmd.get_extent("tSt")[0])
+ 35.306  24.391  -8.737
+PyMOL>cmd._dump_floats(cmd.get_extent("tSt")[1])
+ 77.385  25.286   6.130

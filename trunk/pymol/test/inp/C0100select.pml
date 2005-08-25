@@ -111,5 +111,8 @@ indicate A:C+F/10+90+100-/ca+c+n*
 
 count_atoms indicate
 
+count_atoms 1TII
+count_atoms 1tii
+
 
 /print "END-LOG"

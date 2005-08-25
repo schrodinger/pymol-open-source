@@ -148,3 +148,7 @@ PyMOL>load dat/1tii.pdb
 PyMOL>indicate A:C+F/10+90+100-/ca+c+n*
 PyMOL>count_atoms indicate
  count_atoms: 435 atoms
+PyMOL>count_atoms 1TII
+ count_atoms: 5684 atoms
+PyMOL>count_atoms 1tii
+ count_atoms: 5684 atoms
