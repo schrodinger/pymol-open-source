@@ -663,7 +663,7 @@ class State:
 
 if os.environ.has_key('GAMESS'):
     base = os.environ['GAMESS']
-    rungms_path = base + '/rungms'
+    rungms_path = base + '/bin/rungms'
 else:
     base = ''
     rungms_path = ''

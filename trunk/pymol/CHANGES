@@ -6,6 +6,10 @@ Changes up to 0.99
 
     beta14
 
+    * delete command no longer allows partial names
+
+    * updates for chempy bricks
+
     * fixed bug in case matching for the selection engine
 
     * Python API work
