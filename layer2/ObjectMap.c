@@ -42,6 +42,7 @@ Z* -------------------------------------------------------------------
 #define cMapSourceFLD 5
 #define cMapSourceBRIX 6
 #define cMapSourceGRD 7
+#define cMapSourceChempyBrick 8
 
 #ifndef _PYMOL_NOPY
 #ifdef _PYMOL_NUMPY
@@ -205,6 +206,7 @@ static int ObjectMapStateTrim(PyMOLGlobals *G, ObjectMapState *ms,
   case cMapSourceCCP4:
   case cMapSourceBRIX:
   case cMapSourceGRD:
+
     {
       float tst[3],frac_tst[3];
       float frac_mn[3];
@@ -333,6 +335,7 @@ static int ObjectMapStateTrim(PyMOLGlobals *G, ObjectMapState *ms,
   case cMapSourcePHI:
   case cMapSourceFLD:
   case cMapSourceDesc:
+  case cMapSourceChempyBrick:
     {
       int hit_flag = false;
       float *origin = ms->Origin;
@@ -507,6 +510,7 @@ static int ObjectMapStateDouble(PyMOLGlobals *G,ObjectMapState *ms)
   case cMapSourcePHI:
   case cMapSourceFLD:
   case cMapSourceDesc:
+  case cMapSourceChempyBrick:
 
     for(a=0;a<3;a++) {
       grid[a]=ms->Grid[a]/2.0F;
@@ -676,7 +680,7 @@ static int ObjectMapStateHalve(PyMOLGlobals *G,ObjectMapState *ms)
   case cMapSourcePHI:
   case cMapSourceFLD:
   case cMapSourceDesc:
-
+  case cMapSourceChempyBrick:
     for(a=0;a<3;a++) {
       grid[a]=ms->Grid[a]*2.0F;
       min[a]=ms->Min[a]/2;
@@ -696,7 +700,7 @@ static int ObjectMapStateHalve(PyMOLGlobals *G,ObjectMapState *ms)
           v[0]=ms->Origin[0]+grid[0]*(a+min[0]);
           vt = F4Ptr(field->points,a,b,c,0);
           copy3f(v,vt);
-          F3(field->data,a,b,c) = F3(ms->Field->data,a/2,b/2,c/2);
+          F3(field->data,a,b,c) = F3(ms->Field->data,a*2,b*2,c*2);
         }
       }
     }
@@ -792,9 +796,11 @@ int ObjectMapHalve(ObjectMap *I,int state)
 
 int ObjectMapStateContainsPoint(ObjectMapState *ms,float *point)
 {
-  int result=false;
-  float x,y,z;
-  
+  register int result=false;
+  register float x,y,z;
+  register int x_floor, y_floor, z_floor;
+  register int x_ceil, y_ceil, z_ceil;
+
   switch(ms->MapSource) {
   case cMapSourceXPLOR:
   case cMapSourceCCP4:
@@ -808,20 +814,40 @@ int ObjectMapStateContainsPoint(ObjectMapState *ms,float *point)
       x = (ms->Div[0] * frac[0]);
       y = (ms->Div[1] * frac[1]);
       z = (ms->Div[2] * frac[2]);
+      x_floor= floor(x);
+      x_ceil = ceil(x);
+      y_floor = floor(y);
+      y_ceil = ceil(y);
+      z_floor = floor(z);
+      z_ceil = ceil(z);
 
-      if((x>=ms->Min[0])&&(x<=ms->Max[0])&&
-         (y>=ms->Min[1])&&(y<=ms->Max[1])&&
-         (z>=ms->Min[2])&&(z<=ms->Max[2]))
+      if((x_floor>=ms->Min[0])&&(x_ceil<=ms->Max[0])&&
+         (y_floor>=ms->Min[1])&&(y_ceil<=ms->Max[1])&&
+         (z_floor>=ms->Min[2])&&(z_ceil<=ms->Max[2]))
         result = true;
     }
     break;
   case cMapSourcePHI:
   case cMapSourceFLD:
   case cMapSourceDesc:
+  case cMapSourceChempyBrick:
+
     x = (point[0] - ms->Origin[0])/ms->Grid[0];
     y = (point[1] - ms->Origin[1])/ms->Grid[1];
     z = (point[2] - ms->Origin[2])/ms->Grid[2];
+
+    x_floor= floor(x);
+    x_ceil = ceil(x);
+    y_floor = floor(y);
+    y_ceil = ceil(y);
+    z_floor = floor(z);
+    z_ceil = ceil(z);
     
+    if((x_floor>=ms->Min[0])&&(x_ceil<=ms->Max[0])&&
+       (y_floor>=ms->Min[1])&&(y_ceil<=ms->Max[1])&&
+       (z_floor>=ms->Min[2])&&(z_ceil<=ms->Max[2]))
+      result = true;
+
     if((x>=ms->Min[0])&&(x<=ms->Max[0])&&
        (y>=ms->Min[1])&&(y<=ms->Max[1])&&
        (z>=ms->Min[2])&&(z<=ms->Max[2]))
@@ -922,6 +948,7 @@ int ObjectMapStateInterpolate(ObjectMapState *ms,float *array,float *result,int 
   case cMapSourcePHI:
   case cMapSourceFLD:
   case cMapSourceDesc:
+  case cMapSourceChempyBrick:
     while(n--) {
 
       x = (inp[0] - ms->Origin[0])/ms->Grid[0];
@@ -1015,6 +1042,8 @@ static void ObjectMapStateRegeneratePoints(ObjectMapState *ms)
     break;
   case cMapSourcePHI:
   case cMapSourceFLD:
+  case cMapSourceDesc:
+  case cMapSourceChempyBrick:
     for(c=0;c<ms->FDim[2];c++) {
       v[2]=ms->Origin[2]+ms->Grid[2]*(c+ms->Min[2]);
       for(b=0;b<ms->FDim[1];b++) {
@@ -4238,8 +4267,8 @@ int ObjectMapNumPyArrayToMapState(PyMOLGlobals *G,ObjectMapState *ms,PyObject *a
 #ifdef _PYMOL_NUMPY
   MyArrayObject *pao;
 #endif
-
-
+  
+  
 #ifdef _PYMOL_NUMPY
   pao = (MyArrayObject*)ary;
 #endif
@@ -4250,6 +4279,7 @@ int ObjectMapNumPyArrayToMapState(PyMOLGlobals *G,ObjectMapState *ms,PyObject *a
     ms->FDim[1]=ms->Dim[1];
     ms->FDim[2]=ms->Dim[2];
     ms->FDim[3]=3;
+
 
     if(!(ms->FDim[0]&&ms->FDim[1]&&ms->FDim[2])) 
       ok=false;
@@ -4294,7 +4324,7 @@ int ObjectMapNumPyArrayToMapState(PyMOLGlobals *G,ObjectMapState *ms,PyObject *a
         }
     }
   }
-  if(ok) {
+  if(ok) { 
     copy3f(ms->Origin,ms->ExtentMin);
     copy3f(ms->Origin,ms->ExtentMax);
     add3f(ms->Range,ms->ExtentMax,ms->ExtentMax);
@@ -4345,7 +4375,7 @@ ObjectMap *ObjectMapLoadChemPyBrick(PyMOLGlobals *G,ObjectMap *I,PyObject *Map,
     }
     ms=&I->State[state];
     ObjectMapStateInit(G,ms);
-    
+
     if(PyObject_HasAttrString(Map,"origin")&&
        PyObject_HasAttrString(Map,"dim")&&
        PyObject_HasAttrString(Map,"range")&&
@@ -4379,6 +4409,7 @@ ObjectMap *ObjectMapLoadChemPyBrick(PyMOLGlobals *G,ObjectMap *I,PyObject *Map,
         tmp = PyObject_GetAttrString(Map,"lvl");
         if(tmp) {
 
+
           ObjectMapNumPyArrayToMapState(G,ms,tmp);	 
 
           Py_DECREF(tmp);
@@ -4389,9 +4420,16 @@ ObjectMap *ObjectMapLoadChemPyBrick(PyMOLGlobals *G,ObjectMap *I,PyObject *Map,
     SceneChanged(G);
     SceneCountFrames(G);
     if(ok) {
+      int a;
+      for(a=0;a<3;a++) {
+        ms->Min[a]=0; 
+        ms->Max[a]=ms->Dim[a]-1;
+      }
+      
       ms->Active=true;
+      ms->MapSource = cMapSourceChempyBrick;
       ObjectMapUpdateExtents(I);
-          
+      
     }
   }
   return(I);

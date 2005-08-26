@@ -215,7 +215,7 @@ int ExecutiveValidNamePattern(PyMOLGlobals *G,char *name)
 }
 
 /* DON'T FORGET TO RELEASE LIST WHEN DONE!!! */
-static int ExecutiveGetNamesListFromPattern(PyMOLGlobals *G,char *name)
+static int ExecutiveGetNamesListFromPattern(PyMOLGlobals *G,char *name,int allow_partial)
 {
   register CExecutive *I = G->Executive;
   int result = 0;
@@ -248,7 +248,7 @@ static int ExecutiveGetNamesListFromPattern(PyMOLGlobals *G,char *name)
   } else if( (rec = ExecutiveFindSpec(G,name) ) ) { /* only one name in list */
     result = TrackerNewList(I_Tracker, NULL);
     TrackerLink(I_Tracker, rec->cand_id, result, 1);
-  } else if( (rec = ExecutiveUnambiguousNameMatch(G,name))) {
+  } else if( allow_partial && (rec = ExecutiveUnambiguousNameMatch(G,name))) {
     result = TrackerNewList(I_Tracker, NULL);
     TrackerLink(I_Tracker, rec->cand_id, result, 1);
   }
@@ -3359,7 +3359,7 @@ int ExecutiveMapDouble(PyMOLGlobals *G,char *name,int state)
   register CExecutive *I = G->Executive;
   int result=true;
   CTracker *I_Tracker= I->Tracker;
-  int list_id = ExecutiveGetNamesListFromPattern(G,name);
+  int list_id = ExecutiveGetNamesListFromPattern(G,name,true);
   int iter_id = TrackerNewIter(I_Tracker, 0, list_id);
   SpecRec *rec;
 
@@ -3391,7 +3391,7 @@ int ExecutiveMapHalve(PyMOLGlobals *G,char *name,int state)
   register CExecutive *I = G->Executive;
   int result=true;
   CTracker *I_Tracker= I->Tracker;
-  int list_id = ExecutiveGetNamesListFromPattern(G,name);
+  int list_id = ExecutiveGetNamesListFromPattern(G,name,true);
   int iter_id = TrackerNewIter(I_Tracker, 0, list_id);
   SpecRec *rec;
 
@@ -3428,7 +3428,7 @@ int ExecutiveMapTrim(PyMOLGlobals *G,char *name,
   float mn[3],mx[3];
   if(ExecutiveGetExtent(G,sele,mn,mx,true,sele_state,false)) {
     CTracker *I_Tracker= I->Tracker;
-    int list_id = ExecutiveGetNamesListFromPattern(G,name);
+    int list_id = ExecutiveGetNamesListFromPattern(G,name,true);
     int iter_id = TrackerNewIter(I_Tracker, 0, list_id);
     SpecRec *rec;
 
@@ -4637,7 +4637,7 @@ void ExecutiveSort(PyMOLGlobals *G,char *name)
                             
   {
     CTracker *I_Tracker= I->Tracker;
-    int list_id = ExecutiveGetNamesListFromPattern(G,name);
+    int list_id = ExecutiveGetNamesListFromPattern(G,name,true);
     int iter_id = TrackerNewIter(I_Tracker, 0, list_id);
     int changed = false;
     while( TrackerIterNextCandInList(I_Tracker, iter_id, (TrackerRef**)&rec) ) {
@@ -6547,7 +6547,7 @@ int ExecutiveCountStates(PyMOLGlobals *G,char *s1)
   if((!s1)||(!s1[0])) s1 = cKeywordAll;
   {
     CTracker *I_Tracker= I->Tracker;
-    int list_id = ExecutiveGetNamesListFromPattern(G,s1);
+    int list_id = ExecutiveGetNamesListFromPattern(G,s1,true);
     int iter_id = TrackerNewIter(I_Tracker, 0, list_id);
     while( TrackerIterNextCandInList(I_Tracker, iter_id, (TrackerRef**)&rec) ) {
       if(rec) {
@@ -6667,7 +6667,7 @@ int  ExecutiveSetSetting(PyMOLGlobals *G,int index,PyObject *tuple,char *sele,
     int side_effects = false;
 
     CTracker *I_Tracker= I->Tracker;
-    int list_id = ExecutiveGetNamesListFromPattern(G,sele);
+    int list_id = ExecutiveGetNamesListFromPattern(G,sele,true);
     int iter_id = TrackerNewIter(I_Tracker, 0, list_id);
     while( TrackerIterNextCandInList(I_Tracker, iter_id, (TrackerRef**)&rec) ) {
       if(rec) {
@@ -6966,7 +6966,7 @@ int  ExecutiveSetSettingFromString(PyMOLGlobals *G,
 #if 1
   else {
     CTracker *I_Tracker= I->Tracker;
-    int list_id = ExecutiveGetNamesListFromPattern(G,sele);
+    int list_id = ExecutiveGetNamesListFromPattern(G,sele,true);
     int iter_id = TrackerNewIter(I_Tracker, 0, list_id);
     while( TrackerIterNextCandInList(I_Tracker, iter_id, (TrackerRef**)&rec) ) {
       if(rec) {
@@ -7314,7 +7314,7 @@ int  ExecutiveUnsetSetting(PyMOLGlobals *G,int index,char *sele,
 #if 1
   else {
     CTracker *I_Tracker= I->Tracker;
-    int list_id = ExecutiveGetNamesListFromPattern(G,sele);
+    int list_id = ExecutiveGetNamesListFromPattern(G,sele,true);
     int iter_id = TrackerNewIter(I_Tracker, 0, list_id);
     while( TrackerIterNextCandInList(I_Tracker, iter_id, (TrackerRef**)&rec) ) {
       if(rec) {
@@ -7583,7 +7583,7 @@ int ExecutiveColor(PyMOLGlobals *G,char *name,char *color,int flags,int quiet)
     int n_obj=0;
 
 #if 1
-    int list_id = ExecutiveGetNamesListFromPattern(G,name);
+    int list_id = ExecutiveGetNamesListFromPattern(G,name,true);
     int iter_id = TrackerNewIter(I_Tracker, 0, list_id);
     while( TrackerIterNextCandInList(I_Tracker, iter_id, (TrackerRef**)&rec) ) {
       if(rec) {
@@ -7893,7 +7893,7 @@ int ExecutiveGetExtent(PyMOLGlobals *G,char *name,float *mn,float *mx,
 #if 1
   {
     CTracker *I_Tracker= I->Tracker;
-    int list_id = ExecutiveGetNamesListFromPattern(G,name);
+    int list_id = ExecutiveGetNamesListFromPattern(G,name,true);
     int have_atoms_flag = false;
     int have_extent_flag = false;
 
@@ -8218,7 +8218,7 @@ static int ExecutiveGetMaxDistance(PyMOLGlobals *G,char *name,float *pos,float *
 #if 1
   {
     CTracker *I_Tracker= I->Tracker;
-    int list_id = ExecutiveGetNamesListFromPattern(G,name);
+    int list_id = ExecutiveGetNamesListFromPattern(G,name,true);
 
     op2.i1 = 0;
     op2.v1[0]=-1.0;
@@ -8666,7 +8666,7 @@ int ExecutiveSetObjVisib(PyMOLGlobals *G,char *name,int onoff)
   {
     CTracker *I_Tracker= I->Tracker;
     SpecRec *rec;
-    int list_id = ExecutiveGetNamesListFromPattern(G,name);
+    int list_id = ExecutiveGetNamesListFromPattern(G,name,true);
     int iter_id = TrackerNewIter(I_Tracker, 0, list_id);
     while( TrackerIterNextCandInList(I_Tracker, iter_id, (TrackerRef**)&rec) ) {
       if(rec) {
@@ -8932,7 +8932,7 @@ void ExecutiveSetRepVisib(PyMOLGlobals *G,char *name,int rep,int state)
     register CExecutive *I = G->Executive;
     CTracker *I_Tracker= I->Tracker;
     SpecRec *rec = NULL;
-    int list_id = ExecutiveGetNamesListFromPattern(G,name);
+    int list_id = ExecutiveGetNamesListFromPattern(G,name,true);
     int iter_id = TrackerNewIter(I_Tracker, 0, list_id);
     while( TrackerIterNextCandInList(I_Tracker, iter_id, (TrackerRef**)&rec) ) {
       if(rec) {
@@ -9200,7 +9200,7 @@ void ExecutiveInvalidateRep(PyMOLGlobals *G,char *name,int rep,int level)
 #if 1
   {
       CTracker *I_Tracker= I->Tracker;
-  int list_id = ExecutiveGetNamesListFromPattern(G,name);
+  int list_id = ExecutiveGetNamesListFromPattern(G,name,true);
   int iter_id = TrackerNewIter(I_Tracker, 0, list_id);
   while( TrackerIterNextCandInList(I_Tracker, iter_id, (TrackerRef**)&rec) ) {
     if(rec) {
@@ -9519,7 +9519,7 @@ void ExecutiveDelete(PyMOLGlobals *G,char *name)
   SpecRec *rec = NULL;
 #if 1
   CTracker *I_Tracker= I->Tracker;
-  int list_id = ExecutiveGetNamesListFromPattern(G,name);
+  int list_id = ExecutiveGetNamesListFromPattern(G,name,false);
   int iter_id = TrackerNewIter(I_Tracker, 0, list_id);
   while( TrackerIterNextCandInList(I_Tracker, iter_id, (TrackerRef**)&rec) ) {
     if(rec) {
