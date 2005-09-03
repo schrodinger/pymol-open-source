@@ -594,7 +594,43 @@ SEE ALSO
                 r = read_sdfstr(string.join(data,''),name,state,finish,discrete,quiet)
         if _raising(r): raise pymol.CmdException
         return r
-    
+
+    _raw_dict = {
+        loadable.pdb  : loadable.pdbstr,
+        loadable.mol  : loadable.molstr,
+        loadable.sdf  : loadable.sdf2str,
+        loadable.ccp4 : loadable.ccp4str,
+        loadable.xplor: loadable.xplorstr
+        }
+
+    def load_raw(content,  format='', object='', state=0, finish=1,
+                 discrete=-1, quiet=1, multiplex=None, zoom=-1):
+        r = DEFAULT_ERROR
+        if multiplex==None:
+            multiplex=-2
+        ftype = None
+        type = loadable_sc.auto_err(format,'data format')
+        if hasattr(loadable,type):
+            ftype = getattr(loadable,type)
+        else:
+            print "Error: unknown format '%s'",format
+            if _raising(r): raise pymol.CmdException            
+        if ftype!=None:
+            if ftype in (loadable.pdb,
+                         loadable.mol,
+                         loadable.sdf,
+                         loadable.ccp4,
+                         loadable.xplor):
+                try:
+                    lock()
+                    r = _cmd.load(str(object),str(content),int(state)-1,
+                                  _raw_dict[ftype],int(finish),int(discrete),
+                                  int(quiet),int(multiplex),int(zoom))
+                finally:
+                    unlock(r)
+        if _raising(r): raise pymol.CmdException
+        return r
+        
     def read_sdfstr(sdfstr,name,state=0,finish=1,discrete=1,quiet=1,
                          zoom=-1):
         '''
@@ -658,8 +694,8 @@ NOTES
         try:
             lock()
             r = _cmd.load(str(name),str(molstr),int(state)-1,
-                              loadable.molstr,int(finish),int(discrete),
-                              int(quiet),0,int(zoom))
+                          loadable.molstr,int(finish),int(discrete),
+                          int(quiet),0,int(zoom))
         finally:
             unlock(r)
         if _raising(r): raise pymol.CmdException

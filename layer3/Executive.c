@@ -1003,7 +1003,7 @@ int ExecutiveLoad(PyMOLGlobals *G,CObject *origObj,
     if(!already_handled) {
 
       FILE *f;
-      long size;
+      long size = 0;
       char *buffer=NULL,*p;
       CObject *obj = NULL;
       char new_name[ObjNameMax] = "";
@@ -1012,7 +1012,7 @@ int ExecutiveLoad(PyMOLGlobals *G,CObject *origObj,
       int n_processed = 0;
       
       if(is_string) {
-        buffer=content;
+        buffer = content;
         size = (long)content_length;
       } else {
         f=fopen(content,"rb");
@@ -1041,7 +1041,7 @@ int ExecutiveLoad(PyMOLGlobals *G,CObject *origObj,
           fclose(f);
         }
       }
-      
+
       while(repeat_flag&&ok) {
         char *start_at = buffer;
         int is_repeat_pass = false;
@@ -1076,7 +1076,16 @@ int ExecutiveLoad(PyMOLGlobals *G,CObject *origObj,
                                               quiet,multiplex,new_name,
                                               &next_entry);
           break;
+        case cLoadTypeXPLORMap:
+        case cLoadTypeXPLORStr:
+          obj=(CObject*)ObjectMapLoadXPLOR(G, (ObjectMap*)origObj, start_at, eff_state, false, quiet);
+          break;
+        case cLoadTypeCCP4Map:
+        case cLoadTypeCCP4Str:
+          obj=(CObject*)ObjectMapLoadCCP4(G, (ObjectMap*)origObj, start_at, eff_state, true, size, quiet);
+          break;
         }
+
         if(obj) {
           if(next_entry) { /* if set, then we will assume multiple objects are present,
                               and thus need to give this object its own name */
@@ -1126,6 +1135,7 @@ int ExecutiveLoad(PyMOLGlobals *G,CObject *origObj,
           }
           n_processed++;
         }
+
       }
       if((!is_string)&&buffer) {
         mfree(buffer);

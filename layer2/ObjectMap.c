@@ -1693,8 +1693,8 @@ ObjectMapState *ObjectMapNewStateFromDesc(PyMOLGlobals *G,ObjectMap *I,ObjectMap
   return(ms);
 }
 /*========================================================================*/
-int ObjectMapCCP4StrToMap(ObjectMap *I,char *CCP4Str,int bytes,int state) {
-  
+static int ObjectMapCCP4StrToMap(ObjectMap *I,char *CCP4Str,int bytes,int state,int quiet)
+{
   char *p;
   int *i;
   unsigned int *u;
@@ -1743,9 +1743,11 @@ int ObjectMapCCP4StrToMap(ObjectMap *I,char *CCP4Str,int bytes,int state) {
     return(0);
   }
   if(little_endian!=map_endian) {
-    PRINTFB(I->Obj.G,FB_ObjectMap,FB_Blather)
-      " ObjectMapCCP4: Map appears to be reverse endian, swapping...\n"
-      ENDFB(I->Obj.G);
+    if(!quiet) {
+      PRINTFB(I->Obj.G,FB_ObjectMap,FB_Blather)
+        " ObjectMapCCP4: Map appears to be reverse endian, swapping...\n"
+        ENDFB(I->Obj.G);
+    }
     c = bytes;
     u = (unsigned int*)p;
     uc = (unsigned char *)u;
@@ -1767,10 +1769,12 @@ int ObjectMapCCP4StrToMap(ObjectMap *I,char *CCP4Str,int bytes,int state) {
   nc=*(i++); /* columns */
   nr=*(i++); /* rows */
   ns=*(i++); /* sections */
-  PRINTFB(I->Obj.G,FB_ObjectMap,FB_Blather)
-    " ObjectMapCCP4: NC %d   NR %d   NS %d\n",
-    nc,nr,ns
-    ENDFB(I->Obj.G);
+  if(!quiet) {
+    PRINTFB(I->Obj.G,FB_ObjectMap,FB_Blather)
+      " ObjectMapCCP4: NC %d   NR %d   NS %d\n",
+      nc,nr,ns
+      ENDFB(I->Obj.G);
+  }
   map_mode = *(i++); /* mode */
 
   
@@ -1781,64 +1785,78 @@ int ObjectMapCCP4StrToMap(ObjectMap *I,char *CCP4Str,int bytes,int state) {
     return(0);
   }
 
-  PRINTFB(I->Obj.G,FB_ObjectMap,FB_Blather)
-    " ObjectMapCCP4: Map is mode %d.\n",map_mode
-    ENDFB(I->Obj.G);
-
+  if(!quiet) {
+    PRINTFB(I->Obj.G,FB_ObjectMap,FB_Blather)
+      " ObjectMapCCP4: Map is mode %d.\n",map_mode
+      ENDFB(I->Obj.G);
+  }
   ncstart = *(i++);
   nrstart = *(i++);
   nsstart = *(i++);
 
-  PRINTFB(I->Obj.G,FB_ObjectMap,FB_Blather)
-    " ObjectMapCCP4: NCSTART %d   NRSTART %d   NSSTART  %d\n",
-    ncstart,nrstart,nsstart
-    ENDFB(I->Obj.G);
+  if(!quiet) {
+    PRINTFB(I->Obj.G,FB_ObjectMap,FB_Blather)
+      " ObjectMapCCP4: NCSTART %d   NRSTART %d   NSSTART  %d\n",
+      ncstart,nrstart,nsstart
+      ENDFB(I->Obj.G);
+  }
 
   nx = *(i++);
   ny = *(i++);
   nz = *(i++);
 
-  PRINTFB(I->Obj.G,FB_ObjectMap,FB_Blather)
-    " ObjectMapCCP4: NX %d   NY %d   NZ  %d \n",
-    nx,ny,nz
-    ENDFB(I->Obj.G);
+  if(!quiet) {
+    PRINTFB(I->Obj.G,FB_ObjectMap,FB_Blather)
+      " ObjectMapCCP4: NX %d   NY %d   NZ  %d \n",
+      nx,ny,nz
+      ENDFB(I->Obj.G);
+  }
 
   xlen = *(float*)(i++);
   ylen = *(float*)(i++);
   zlen = *(float*)(i++);
 
-  PRINTFB(I->Obj.G,FB_ObjectMap,FB_Blather)
-    " ObjectMapCCP4: X %8.3f   Y %8.3f  Z  %8.3f \n",
-    xlen,ylen,zlen
-    ENDFB(I->Obj.G);
+  if(!quiet) {
+    PRINTFB(I->Obj.G,FB_ObjectMap,FB_Blather)
+      " ObjectMapCCP4: X %8.3f   Y %8.3f  Z  %8.3f \n",
+      xlen,ylen,zlen
+      ENDFB(I->Obj.G);
+  }
 
   alpha = *(float*)(i++);
   beta = *(float*)(i++);
   gamma = *(float*)(i++);
 
-  PRINTFB(I->Obj.G,FB_ObjectMap,FB_Blather)
-    " ObjectMapCCP4: alpha %8.3f   beta %8.3f  gamma %8.3f \n",
-    alpha,beta,gamma
-    ENDFB(I->Obj.G);
+  if(!quiet) {
+    PRINTFB(I->Obj.G,FB_ObjectMap,FB_Blather)
+      " ObjectMapCCP4: alpha %8.3f   beta %8.3f  gamma %8.3f \n",
+      alpha,beta,gamma
+      ENDFB(I->Obj.G);
+  }
 
   mapc = *(i++);
   mapr = *(i++);
   maps = *(i++);
 
-  PRINTFB(I->Obj.G,FB_ObjectMap,FB_Blather)
-    " ObjectMapCCP4: MAPC %d   MAPR %d  MAPS  %d \n",
-    mapc,mapr,maps
-    ENDFB(I->Obj.G);
+  if(!quiet) {
+    PRINTFB(I->Obj.G,FB_ObjectMap,FB_Blather)
+      " ObjectMapCCP4: MAPC %d   MAPR %d  MAPS  %d \n",
+      mapc,mapr,maps
+      ENDFB(I->Obj.G);
+  }
 
   i+=4;
   sym_skip = *(i++);
 
-  
-  if(*(i++)) {
-    PRINTFB(I->Obj.G,FB_ObjectMap,FB_Errors)
-      "ObjectMapCCP4-ERR: PyMOL doesn't know how to handle skewed maps. Sorry!\n"
-      ENDFB(I->Obj.G);
-    return(0);
+  {
+    int skew = *(i++);
+
+    if(skew) {
+      PRINTFB(I->Obj.G,FB_ObjectMap,FB_Errors)
+        "ObjectMapCCP4-ERR: PyMOL doesn't know how to handle skewed maps. Sorry!\n"
+        ENDFB(I->Obj.G);
+      return(0);
+    }
   }
 
   n_pts = nc*ns*nr;
@@ -1847,24 +1865,31 @@ int ObjectMapCCP4StrToMap(ObjectMap *I,char *CCP4Str,int bytes,int state) {
   
   if((nx==ny)&&(!nz)) {
     nz = nx;
-    PRINTFB(I->Obj.G,FB_ObjectMap,FB_Warnings)
-      " ObjectMapCCP4: NZ value is zero, but NX = NY, so we'll guess NZ = NX = NY.\n"
-      ENDFB(I->Obj.G);
+
+    if(!quiet) {
+      PRINTFB(I->Obj.G,FB_ObjectMap,FB_Warnings)
+        " ObjectMapCCP4: NZ value is zero, but NX = NY, so we'll guess NZ = NX = NY.\n"
+        ENDFB(I->Obj.G);
+    }
   }
 
   expectation = sym_skip + sizeof(int)*(256+n_pts);
 
-  PRINTFB(I->Obj.G,FB_ObjectMap,FB_Blather)
-    " ObjectMapCCP4: sym_skip %d bytes %d expectation %d\n",
-    sym_skip, bytes,  expectation
-    ENDFB(I->Obj.G);
+  if(!quiet) {
+    PRINTFB(I->Obj.G,FB_ObjectMap,FB_Blather)
+      " ObjectMapCCP4: sym_skip %d bytes %d expectation %d\n",
+      sym_skip, bytes,  expectation
+      ENDFB(I->Obj.G);
+  }
 
   if(bytes<expectation) {
     if(bytes==(expectation-sym_skip)) { 
       /* accomodate bogus CCP4 map files with bad symmetry length information */
-      PRINTFB(I->Obj.G,FB_ObjectMap,FB_Blather)
-        " ObjectMapCCP4: Map has invalid symmetry length -- working around.\n"
-        ENDFB(I->Obj.G);
+      if(!quiet) {
+        PRINTFB(I->Obj.G,FB_ObjectMap,FB_Blather)
+          " ObjectMapCCP4: Map has invalid symmetry length -- working around.\n"
+          ENDFB(I->Obj.G);
+      }
 
       expectation -= sym_skip;
       sym_skip = 0;
@@ -1889,19 +1914,6 @@ int ObjectMapCCP4StrToMap(ObjectMap *I,char *CCP4Str,int bytes,int state) {
     }
     mean = (float)(sum/n_pts);
     stdev = (float)sqrt1d((sumsq - (sum*sum/n_pts))/(n_pts-1));
-
-    if(normalize) {
-      PRINTFB(I->Obj.G,FB_ObjectMap,FB_Details)
-        " ObjectMapCCP4: Normalizing with mean = %8.6f and stdev = %8.6f.\n",
-        mean,stdev
-        ENDFB(I->Obj.G);
-    } else {
-      PRINTFB(I->Obj.G,FB_ObjectMap,FB_Details)
-        " ObjectMapCCP4: Map will not be normalized.\n ObjectMapCCP4: Current mean = %8.6f and stdev = %8.6f.\n",
-        mean,stdev
-        ENDFB(I->Obj.G);
-    }
-
     if(stdev<0.000001)
       stdev = 1.0;
     
@@ -1939,11 +1951,13 @@ int ObjectMapCCP4StrToMap(ObjectMap *I,char *CCP4Str,int bytes,int state) {
   ms->Min[maps] = nsstart;
   ms->Max[maps] = ns+nsstart-1;
 
-  if(Feedback(I->Obj.G,FB_ObjectMap,FB_Blather)) {
-    dump3i(ms->Div," ObjectMapCCP4: ms->Div");
-    dump3i(ms->Min," ObjectMapCCP4: ms->Min");
-    dump3i(ms->Max," ObjectMapCCP4: ms->Max");
-    dump3i(ms->FDim," ObjectMapCCP4: ms->FDim");
+  if(!quiet) {
+    if(Feedback(I->Obj.G,FB_ObjectMap,FB_Blather)) {
+      dump3i(ms->Div," ObjectMapCCP4: ms->Div");
+      dump3i(ms->Min," ObjectMapCCP4: ms->Min");
+      dump3i(ms->Max," ObjectMapCCP4: ms->Max");
+      dump3i(ms->FDim," ObjectMapCCP4: ms->FDim");
+    }
   }
 
   ms->Crystal->Dim[0] = xlen;
@@ -1960,7 +1974,7 @@ int ObjectMapCCP4StrToMap(ObjectMap *I,char *CCP4Str,int bytes,int state) {
     ok=false;
   else {
     CrystalUpdate(ms->Crystal);
-    CrystalDump(ms->Crystal);
+    /*    CrystalDump(ms->Crystal);*/
     ms->Field=IsosurfFieldAlloc(I->Obj.G,ms->FDim);
     ms->MapSource = cMapSourceCCP4;
     ms->Field->save_points=false;
@@ -2007,10 +2021,29 @@ int ObjectMapCCP4StrToMap(ObjectMap *I,char *CCP4Str,int bytes,int state) {
       }
   }
 
-  PRINTFB(I->Obj.G,FB_Details,FB_ObjectMap) 
-    " ObjectMapCCP4: Map Size %d x %d x %d\n",ms->FDim[0],ms->FDim[1],ms->FDim[2]
-    ENDFB(I->Obj.G);
+  if(!quiet) {
+    PRINTFB(I->Obj.G,FB_ObjectMap, FB_Details) 
+      " ObjectMapCCP4: Map Size %d x %d x %d\n",ms->FDim[0],ms->FDim[1],ms->FDim[2]
+      ENDFB(I->Obj.G);
+  }
   
+  if(!quiet) {
+    if(n_pts>1) {
+      if(normalize) {
+        PRINTFB(I->Obj.G,FB_ObjectMap,FB_Details)
+          " ObjectMapCCP4: Normalizing with mean = %8.6f and stdev = %8.6f.\n",
+          mean,stdev
+          ENDFB(I->Obj.G);
+      } else {
+        
+        PRINTFB(I->Obj.G,FB_ObjectMap,FB_Details)
+          " ObjectMapCCP4: Map will not be normalized.\n ObjectMapCCP4: Current mean = %8.6f and stdev = %8.6f.\n",
+          mean,stdev
+          ENDFB(I->Obj.G);
+      }
+    }
+  }
+
   if(ok) {
     v[2]=(ms->Min[2])/((float)ms->Div[2]);
     v[1]=(ms->Min[1])/((float)ms->Div[1]);
@@ -2043,7 +2076,11 @@ int ObjectMapCCP4StrToMap(ObjectMap *I,char *CCP4Str,int bytes,int state) {
   } else {
     ms->Active=true;
     ObjectMapUpdateExtents(I);
-    printf(" ObjectMap: Map Read.  Range = %5.3f to %5.3f\n",mind,maxd);
+    if(!quiet) {
+      PRINTFB(I->Obj.G,FB_ObjectMap, FB_Results) 
+        " ObjectMap: Map Read.  Range = %5.3f to %5.3f\n",mind,maxd
+        ENDFB(I->Obj.G);
+    }
   }
 
   return(ok);
@@ -2130,7 +2167,7 @@ static int ObjectMapPHIStrToMap(ObjectMap *I,char *PHIStr,int bytes,int state) {
   if((4*map_dim*map_dim*map_dim)!=map_bytes) /* consistency check */
     map_dim = 65;
 
-  PRINTFB(I->Obj.G,FB_Details,FB_ObjectMap) 
+  PRINTFB(I->Obj.G,FB_ObjectMap,FB_Details) 
       " PHIStrToMap: Map Size %d x %d x %d\n",map_dim,map_dim,map_dim
       ENDFB(I->Obj.G);
   p+=4;
@@ -2324,7 +2361,7 @@ static int ObjectMapPHIStrToMap(ObjectMap *I,char *PHIStr,int bytes,int state) {
   return(ok);
 }
 /*========================================================================*/
-int ObjectMapXPLORStrToMap(ObjectMap *I,char *XPLORStr,int state) {
+static int ObjectMapXPLORStrToMap(ObjectMap *I,char *XPLORStr,int state,int quiet) {
   
   char *p;
   int a,b,c,d,e;
@@ -2682,7 +2719,7 @@ static int ObjectMapFLDStrToMap(ObjectMap *I,char *PHIStr,int bytes,int state)
     subtract3f(ms->ExtentMax,ms->ExtentMin,ms->Range);
     ms->FDim[3] = 3;
 
-    PRINTFB(I->Obj.G,FB_Details,FB_ObjectMap) 
+    PRINTFB(I->Obj.G,FB_ObjectMap,FB_Details) 
       " FLDStrToMap: Map Size %d x %d x %d\n",ms->FDim[0],ms->FDim[1],ms->FDim[2]
       ENDFB(I->Obj.G);
       
@@ -2808,7 +2845,7 @@ static int ObjectMapFLDStrToMap(ObjectMap *I,char *PHIStr,int bytes,int state)
     printf(" ObjectMap: Map Read.  Range = %5.6f to %5.6f\n",mind,maxd);
       
   } else {
-    PRINTFB(I->Obj.G,FB_Errors,FB_ObjectMap) 
+    PRINTFB(I->Obj.G,FB_ObjectMap,FB_Errors) 
       " Error: unable to read FLD file.\n"
       ENDFB(I->Obj.G);
             /*  printf(" got_ndim %d\n",got_ndim);
@@ -3034,7 +3071,7 @@ static int ObjectMapBRIXStrToMap(ObjectMap *I,char *BRIXStr,int bytes,int state)
     }
     
     if(!passed_endian_check) {
-      PRINTFB(I->Obj.G,FB_Errors,FB_ObjectMap) 
+      PRINTFB(I->Obj.G,FB_ObjectMap,FB_Errors) 
         " Error: This looks like a DSN6 map file, but I can't match endianness.\n"
         ENDFB(I->Obj.G);
     } else {
@@ -3089,7 +3126,7 @@ static int ObjectMapBRIXStrToMap(ObjectMap *I,char *BRIXStr,int bytes,int state)
      got_prod) {
 
     
-    PRINTFB(I->Obj.G,FB_Blather,FB_ObjectMap) 
+    PRINTFB(I->Obj.G,FB_ObjectMap,FB_Blather) 
       " BRIXStrToMap: Prod = %8.3f, Plus = %8.3f\n",prod,plus
       ENDFB(I->Obj.G);
 
@@ -3205,26 +3242,26 @@ static int ObjectMapBRIXStrToMap(ObjectMap *I,char *BRIXStr,int bytes,int state)
       
       transform33f3f(ms->Crystal->FracToReal,v,ms->ExtentMax);
       
-      PRINTFB(I->Obj.G,FB_Details,FB_ObjectMap) 
+      PRINTFB(I->Obj.G,FB_ObjectMap,FB_Details) 
         " BRIXStrToMap: Map Size %d x %d x %d\n",ms->FDim[0],ms->FDim[1],ms->FDim[2]
         ENDFB(I->Obj.G);
 
       if(got_sigma) {
-        PRINTFB(I->Obj.G,FB_Details,FB_ObjectMap) 
+      PRINTFB(I->Obj.G,FB_ObjectMap,FB_Details) 
           " BRIXStrToMap: Reported Sigma = %8.3f\n",sigma
           ENDFB(I->Obj.G);
       }
 
-      PRINTFB(I->Obj.G,FB_Details,FB_ObjectMap)
+      PRINTFB(I->Obj.G,FB_ObjectMap,FB_Details) 
         " BRIXStrToMap: Range = %5.6f to %5.6f\n",mind,maxd
         ENDFB(I->Obj.G);
 
-      PRINTFB(I->Obj.G,FB_Details,FB_ObjectMap) 
+      PRINTFB(I->Obj.G,FB_ObjectMap,FB_Details) 
         " BRIXStrToMap: Calculated Mean = %8.3f, Sigma = %8.3f\n",calc_mean,calc_sigma
         ENDFB(I->Obj.G);
 
       if(normalize) {
-        PRINTFB(I->Obj.G,FB_Details,FB_ObjectMap) 
+      PRINTFB(I->Obj.G,FB_ObjectMap,FB_Details) 
           " BRIXStrToMap: Normalizing...\n"
           ENDFB(I->Obj.G);
       }
@@ -3234,7 +3271,7 @@ static int ObjectMapBRIXStrToMap(ObjectMap *I,char *BRIXStr,int bytes,int state)
 
     }
   } else {
-    PRINTFB(I->Obj.G,FB_Errors,FB_ObjectMap) 
+    PRINTFB(I->Obj.G,FB_ObjectMap,FB_Errors) 
       " Error: unable to read BRIX/DSN6 file.\n"
       ENDFB(I->Obj.G);
   }
@@ -3478,7 +3515,7 @@ static int ObjectMapGRDStrToMap(ObjectMap *I,char *GRDStr,int bytes,int state)
     
     transform33f3f(ms->Crystal->FracToReal,v,ms->ExtentMax);
     
-    PRINTFB(I->Obj.G,FB_Details,FB_ObjectMap) 
+    PRINTFB(I->Obj.G,FB_ObjectMap,FB_Details) 
       " GRDXStrToMap: Map Size %d x %d x %d\n",ms->FDim[0],ms->FDim[1],ms->FDim[2]
       ENDFB(I->Obj.G);
     
@@ -3487,7 +3524,7 @@ static int ObjectMapGRDStrToMap(ObjectMap *I,char *GRDStr,int bytes,int state)
     printf(" ObjectMap: Map Read.  Range = %5.6f to %5.6f\n",mind,maxd);
 
   } else {
-    PRINTFB(I->Obj.G,FB_Errors,FB_ObjectMap) 
+    PRINTFB(I->Obj.G,FB_ObjectMap,FB_Errors) 
       " Error: unable to read GRD file.\n"
       ENDFB(I->Obj.G);
   }
@@ -3496,7 +3533,7 @@ static int ObjectMapGRDStrToMap(ObjectMap *I,char *GRDStr,int bytes,int state)
   
 }
 /*========================================================================*/
-ObjectMap *ObjectMapReadXPLORStr(PyMOLGlobals *G,ObjectMap *I,char *XPLORStr,int state)
+static ObjectMap *ObjectMapReadXPLORStr(PyMOLGlobals *G,ObjectMap *I,char *XPLORStr,int state,int quiet)
 {
   int ok=true;
   int isNew = true;
@@ -3512,14 +3549,16 @@ ObjectMap *ObjectMapReadXPLORStr(PyMOLGlobals *G,ObjectMap *I,char *XPLORStr,int
 	 } else {
 		isNew = false;
 	 }
-    ObjectMapXPLORStrToMap(I,XPLORStr,state);
+    ObjectMapXPLORStrToMap(I,XPLORStr,state,quiet);
+    
+    
     SceneChanged(I->Obj.G);
     SceneCountFrames(I->Obj.G);
   }
   return(I);
 }
 /*========================================================================*/
-ObjectMap *ObjectMapReadCCP4Str(PyMOLGlobals *G,ObjectMap *I,char *XPLORStr,int bytes,int state)
+static ObjectMap *ObjectMapReadCCP4Str(PyMOLGlobals *G,ObjectMap *I,char *XPLORStr,int bytes,int state,int quiet)
 {
   int ok=true;
   int isNew = true;
@@ -3535,7 +3574,7 @@ ObjectMap *ObjectMapReadCCP4Str(PyMOLGlobals *G,ObjectMap *I,char *XPLORStr,int 
 	 } else {
 		isNew = false;
 	 }
-    ObjectMapCCP4StrToMap(I,XPLORStr,bytes,state);
+    ObjectMapCCP4StrToMap(I,XPLORStr,bytes,state,quiet);
     SceneChanged(G);
     SceneCountFrames(G);
   }
@@ -3543,13 +3582,12 @@ ObjectMap *ObjectMapReadCCP4Str(PyMOLGlobals *G,ObjectMap *I,char *XPLORStr,int 
 }
 /*========================================================================*/
 ObjectMap *ObjectMapLoadCCP4(PyMOLGlobals *G,ObjectMap *obj,char *fname,int state,
-                             int is_string,int bytes)
+                             int is_string,int bytes,int quiet)
 {
   ObjectMap *I = NULL;
   int ok=true;
   FILE *f = NULL;
   char *buffer,*p;
-  float mat[9];
   long size;
 
   if(!is_string) {
@@ -3561,8 +3599,10 @@ ObjectMap *ObjectMapLoadCCP4(PyMOLGlobals *G,ObjectMap *obj,char *fname,int stat
   
   if(f || is_string) {
     
-    if(is_string && Feedback(G,FB_ObjectMap,FB_Actions)) {
-      printf(" ObjectMapLoadCCP4File: Loading from '%s'.\n",fname);
+    if(!quiet) {
+      if((!is_string) && Feedback(G,FB_ObjectMap,FB_Actions)) {
+        printf(" ObjectMapLoadCCP4File: Loading from '%s'.\n",fname);
+      }
     }
     
     if(!is_string) {
@@ -3581,18 +3621,20 @@ ObjectMap *ObjectMapLoadCCP4(PyMOLGlobals *G,ObjectMap *obj,char *fname,int stat
       size = (long)bytes;
     }
 
-    I=ObjectMapReadCCP4Str(G,obj,buffer,size,state);
+    I=ObjectMapReadCCP4Str(G,obj,buffer,size,state,quiet);
     
     if(!is_string) 
       mfree(buffer);
-    if(state<0)
-      state=I->NState-1;
-    if(state<I->NState) {
-      ObjectMapState *ms;
-      ms = &I->State[state];
-      if(ms->Active) {
-        CrystalDump(ms->Crystal);
-        multiply33f33f(ms->Crystal->FracToReal,ms->Crystal->RealToFrac,mat);
+
+    if(!quiet) {
+      if(state<0)
+        state=I->NState-1;
+      if(state<I->NState) {
+        ObjectMapState *ms;
+        ms = &I->State[state];
+        if(ms->Active) {
+          CrystalDump(ms->Crystal);
+        }
       }
     }
   }
@@ -4183,63 +4225,64 @@ ObjectMap *ObjectMapLoadGRDFile(PyMOLGlobals *G,ObjectMap *obj,char *fname,int s
 
 }
 /*========================================================================*/
-ObjectMap *ObjectMapLoadXPLORFile(PyMOLGlobals *G,ObjectMap *obj,char *fname,int state,int is_file)
+ObjectMap *ObjectMapLoadXPLOR(PyMOLGlobals *G,ObjectMap *obj,char *fname,
+                                  int state,int is_file,int quiet)
 {
   ObjectMap *I = NULL;
   int ok=true;
   FILE *f = NULL;
   long size;
   char *buffer,*p;
-  float mat[9];
 
   if(is_file) {
     f=fopen(fname,"rb");
     if(!f)
-      ok=ErrMessage(G,"ObjectMapLoadXPLORFile","Unable to open file!");
+      ok=ErrMessage(G,"ObjectMapLoadXPLOR","Unable to open file!");
   }
-  if(ok)
-	 {
-      if(Feedback(G,FB_ObjectMap,FB_Actions))
-        {
-          if(is_file) {
-            printf(" ObjectMapLoadXPLORFile: Loading from '%s'.\n",fname);
-          } else {
-            printf(" ObjectMapLoadXPLORFile: Loading...\n");
-          }
-          
-        }
-      
+  if(ok) {
+    if((!quiet) && (Feedback(G,FB_ObjectMap,FB_Actions))) {
       if(is_file) {
-        fseek(f,0,SEEK_END);
-        size=ftell(f);
-        fseek(f,0,SEEK_SET);
-        
-        buffer=(char*)mmalloc(size+255);
-        ErrChkPtr(G,buffer);
-        p=buffer;
-        fseek(f,0,SEEK_SET);
-        fread(p,size,1,f);
-        p[size]=0;
-        fclose(f);
+        printf(" ObjectMapLoadXPLOR: Loading from '%s'.\n",fname);
       } else {
-        buffer = fname;
+        printf(" ObjectMapLoadXPLOR: Loading...\n");
       }
+    }
+       
+    if(is_file) {
+      fseek(f,0,SEEK_END);
+      size=ftell(f);
+      fseek(f,0,SEEK_SET);
+        
+      buffer=(char*)mmalloc(size+255);
+      ErrChkPtr(G,buffer);
+      p=buffer;
+      fseek(f,0,SEEK_SET);
+      fread(p,size,1,f);
+      p[size]=0;
+      fclose(f);
+    } else {
+      buffer = fname;
+    }
       
-		I=ObjectMapReadXPLORStr(G,obj,buffer,state);
+    I=ObjectMapReadXPLORStr(G,obj,buffer,state,quiet);
 
-      if(is_file) 
-        mfree(buffer);
-      if(state<0)
-        state=I->NState-1;
-      if(state<I->NState) {
-        ObjectMapState *ms;
-        ms = &I->State[state];
-        if(ms->Active) {
-          CrystalDump(ms->Crystal);
-          multiply33f33f(ms->Crystal->FracToReal,ms->Crystal->RealToFrac,mat);
+    if(is_file) 
+      mfree(buffer);
+    if(!quiet) {
+      if(Feedback(G,FB_ObjectMap, FB_Details)) {
+        if(state<0) 
+          state=I->NState-1;
+          
+        if(state<I->NState) {
+          ObjectMapState *ms;
+          ms = &I->State[state];
+          if(ms->Active) {
+            CrystalDump(ms->Crystal);
+          }
         }
       }
     }
+  }
   return(I);
 
 }

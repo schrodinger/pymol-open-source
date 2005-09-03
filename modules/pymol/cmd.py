@@ -1230,6 +1230,7 @@ SEE ALSO
               load_model,         \
               load_object,        \
               load_traj,          \
+              load_raw,           \
               loadable,           \
               read_mmodstr,       \
               read_molstr,        \
