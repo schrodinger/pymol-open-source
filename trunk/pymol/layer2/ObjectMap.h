@@ -63,13 +63,11 @@ ObjectMapState *ObjectMapNewStateFromDesc(PyMOLGlobals *G,ObjectMap *I,ObjectMap
 int ObjectMapStateGetExcludedStats(PyMOLGlobals *G,ObjectMapState *ms,float *vert_vla,
                                    float beyond, float within, float *level);
 
-ObjectMap *ObjectMapLoadXPLORFile(PyMOLGlobals *G,ObjectMap *obj,char *fname,int state,int is_file);
-ObjectMap *ObjectMapReadXPLORStr(PyMOLGlobals *G,ObjectMap *I,char *XPLORStr,int state);
-int ObjectMapXPLORStrToMap(ObjectMap *I,char *XPLORStr,int state);
+ObjectMap *ObjectMapLoadXPLOR(PyMOLGlobals *G,ObjectMap *obj,char *fname,
+                                  int state,int is_file,int quiet);
 
-ObjectMap *ObjectMapLoadCCP4(PyMOLGlobals *G,ObjectMap *obj,char *fname,int state,int is_string,int bytes);
-ObjectMap *ObjectMapReadCCP4Str(PyMOLGlobals *G,ObjectMap *I,char *XPLORStr,int bytes,int state);
-int ObjectMapCCP4StrToMap(ObjectMap *I,char *XPLORStr,int bytes,int state);
+ObjectMap *ObjectMapLoadCCP4(PyMOLGlobals *G,ObjectMap *obj,char *fname,
+                             int state,int is_string,int bytes,int quiet);
 
 ObjectMap *ObjectMapLoadDXFile(PyMOLGlobals *G,ObjectMap *obj,char *fname,int state);
 ObjectMap *ObjectMapLoadPHIFile(PyMOLGlobals *G,ObjectMap *obj,char *fname,int state);

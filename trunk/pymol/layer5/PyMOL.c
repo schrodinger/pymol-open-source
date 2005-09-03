@@ -87,8 +87,8 @@ typedef struct _CPyMOL {
   /* dynamically mapped string constants */
 
   OVLexicon *Lex;
-  ov_word lex_pdb, lex_mol2, lex_mol, lex_sdf;
-  ov_word lex_string, lex_filename;
+  ov_word lex_pdb, lex_mol2, lex_mol, lex_sdf, lex_xplor, lex_ccp4;
+  ov_word lex_string, lex_filename, lex_raw;
 
   OVOneToOne *Rep;
   ov_word lex_everything, lex_sticks, lex_spheres, lex_surface;
@@ -598,9 +598,12 @@ static OVstatus PyMOL_InitAPI(CPyMOL *I)
   LEX(sdf);
   LEX(mol);
   LEX(mol2);
+  LEX(xplor);
+  LEX(ccp4);
 
   LEX(string);
   LEX(filename);
+  LEX(raw);
 
   /* string constants that are accepted on input */
 
@@ -1382,7 +1385,9 @@ PyMOLreturn_status PyMOL_CmdLoad(CPyMOL *I,char *content,  char *content_type,
 
   if(ok) {
     if((type_code != I->lex_filename) &&
-       (type_code != I->lex_string)) {
+       (type_code != I->lex_string) &&
+       (type_code != I->lex_raw)) {
+      
       ok = false;
     }
   }
@@ -1465,6 +1470,13 @@ PyMOLreturn_status PyMOL_CmdLoad(CPyMOL *I,char *content,  char *content_type,
           pymol_content_type = cLoadTypeSDF2Str;
         else if( type_code == I->lex_filename)
           pymol_content_type = cLoadTypeSDF2;
+      } else if(format_code == I->lex_ccp4) {
+        if(type_code == I->lex_raw)
+          pymol_content_type = cLoadTypeCCP4Str;
+      } else if(format_code == I->lex_xplor) {
+        if((type_code == I->lex_raw) ||
+           (type_code == I->lex_string))
+          pymol_content_type = cLoadTypeXPLORStr;
       }
 
       if(pymol_content_type != cLoadTypeUnknown) {
@@ -1489,6 +1501,10 @@ PyMOLreturn_status PyMOL_CmdLoad(CPyMOL *I,char *content,  char *content_type,
       case cLoadTypeMOL2Str:
       case cLoadTypeSDF2:
       case cLoadTypeSDF2Str:
+      case cLoadTypeXPLORMap:
+      case cLoadTypeXPLORStr:
+      case cLoadTypeCCP4Map:
+      case cLoadTypeCCP4Str:
         ok = ExecutiveLoad(I->G, existing_object, 
                            content, content_length, 
                            pymol_content_type,
