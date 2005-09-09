@@ -1359,11 +1359,11 @@ PyMOLreturn_status PyMOL_CmdReinitialize(CPyMOL *I)
   return return_status_ok(ExecutiveReinitialize(I->G));
 }
 
-PyMOLreturn_status PyMOL_CmdLoad(CPyMOL *I,char *content,  char *content_type, 
-                              int content_length, char *content_format, 
-                              char *object_name, int state, 
-                              int discrete, int finish, 
-                              int quiet, int multiplex, int zoom)
+static PyMOLreturn_status Loader(CPyMOL *I,char *content,  char *content_type, 
+                                 int content_length, char *content_format, 
+                                 char *object_name, int state, 
+                                 int discrete, int finish, 
+                                 int quiet, int multiplex, int zoom)
 {
   OVreturn_word result;
   int type_code = 0;
@@ -1451,31 +1451,30 @@ PyMOLreturn_status PyMOL_CmdLoad(CPyMOL *I,char *content,  char *content_type,
       /* convert text format strings into integral load types */
 
       if(format_code == I->lex_pdb) {
-        if(type_code == I->lex_string)
+        if((type_code == I->lex_raw) ||(type_code == I->lex_string))
           pymol_content_type = cLoadTypePDBStr;
         else if( type_code == I->lex_filename)
           pymol_content_type = cLoadTypePDB;
       } else if(format_code == I->lex_mol2) {
-        if(type_code == I->lex_string)
+        if((type_code == I->lex_raw) || (type_code == I->lex_string))
           pymol_content_type = cLoadTypeMOL2Str;
         else if( type_code == I->lex_filename)
           pymol_content_type = cLoadTypeMOL2;
       } else if(format_code == I->lex_mol) {
-        if(type_code == I->lex_string)
+        if((type_code == I->lex_raw) || (type_code == I->lex_string))
           pymol_content_type = cLoadTypeMOLStr;
         else if( type_code == I->lex_filename)
           pymol_content_type = cLoadTypeMOL;
       } else if(format_code == I->lex_sdf) {
-        if(type_code == I->lex_string)
+        if((type_code == I->lex_raw) || (type_code == I->lex_string))
           pymol_content_type = cLoadTypeSDF2Str;
         else if( type_code == I->lex_filename)
           pymol_content_type = cLoadTypeSDF2;
       } else if(format_code == I->lex_ccp4) {
-        if(type_code == I->lex_raw)
+        if((type_code == I->lex_raw) || (type_code == I->lex_string))
           pymol_content_type = cLoadTypeCCP4Str;
       } else if(format_code == I->lex_xplor) {
-        if((type_code == I->lex_raw) ||
-           (type_code == I->lex_string))
+        if((type_code == I->lex_raw) || (type_code == I->lex_string))
           pymol_content_type = cLoadTypeXPLORStr;
       }
 
@@ -1522,6 +1521,27 @@ PyMOLreturn_status PyMOL_CmdLoad(CPyMOL *I,char *content,  char *content_type,
   return return_status_ok(ok);
 }
 
+PyMOLreturn_status PyMOL_CmdLoad(CPyMOL *I,char *content,  
+                                        char *content_type,
+                                        char *content_format, 
+                                        char *object_name, int state, 
+                                        int discrete, int finish, 
+                                        int quiet, int multiplex, int zoom)
+{
+  return Loader(I,content, content_type, -1, content_format, object_name, 
+                state, discrete, finish, quiet, multiplex, zoom);
+}
+     
+PyMOLreturn_status PyMOL_CmdLoadRaw(CPyMOL *I,char *content, 
+                                    int content_length,
+                                    char *content_format, 
+                                    char *object_name, int state, 
+                                    int discrete, int finish, 
+                                    int quiet, int multiplex, int zoom)
+{
+  return Loader(I,content, "raw", content_length, content_format,
+                object_name, state, discrete, finish, quiet, multiplex, zoom);
+}
 
 const static CPyMOLOptions Defaults = {
   true, /* pmgui */

@@ -211,11 +211,19 @@ int PyMOL_DelG3DStream(CPyMOL *I,int *array_ptr);
 
 PyMOLreturn_status PyMOL_CmdReinitialize(CPyMOL *I);
 
-PyMOLreturn_status PyMOL_CmdLoad(CPyMOL *I,char *content, char *content_type, 
-               int content_length, char *content_format, 
-               char *object_name, 
-               int state, int discrete, int finish, 
-               int quiet, int multiplex, int zoom);
+PyMOLreturn_status PyMOL_CmdLoad(CPyMOL *I,char *content, 
+                                 char *content_type, 
+                                 char *content_format, 
+                                 char *object_name, 
+                                 int state, int discrete, int finish, 
+                                 int quiet, int multiplex, int zoom);
+
+PyMOLreturn_status PyMOL_CmdLoadRaw(CPyMOL *I,char *content, 
+                                    int content_length,
+                                    char *content_format, 
+                                    char *object_name, int state, 
+                                    int discrete, int finish, 
+                                    int quiet, int multiplex, int zoom);
 
 PyMOLreturn_status PyMOL_CmdZoom(CPyMOL *I,char *selection, float buffer,
                int state, int complete, float animate, int quiet);
