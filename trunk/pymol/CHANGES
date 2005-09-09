@@ -4,6 +4,10 @@ CHANGE LOG
 
 Changes up to 0.99
 
+    beta15
+
+    * possible bug fix for settings storage related to corrupted sessions?
+
     beta14
 
     * delete command no longer allows partial names

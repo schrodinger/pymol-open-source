@@ -71,6 +71,7 @@ typedef struct ObjectMolecule {
   int AtomCounter;
   struct CSculpt *Sculpt;
   short int RepVisCache[cRepCnt]; /* for transient storage during updates */
+
 } ObjectMolecule;
 
 typedef struct ObjectMoleculeOpRec {
@@ -236,6 +237,8 @@ int ObjectMoleculeGetMatrix(ObjectMolecule *I,int state,double **history);
 int ObjectMoleculeGetTopNeighbor(PyMOLGlobals *G,
                                  ObjectMolecule *I, 
                                  int start, int excluded);
+
+int ObjectMoleculeGetNearestAtomIndex(ObjectMolecule *I, float *point, float cutoff, int state);
 
 int *ObjectMoleculeGetPrioritizedOtherIndexList(ObjectMolecule *I,struct CoordSet *cs);
 int ObjectMoleculeGetPrioritizedOther(int *other, int a1, int a2, int *double_sided);

@@ -863,7 +863,7 @@ static PyObject *CmdMultiSave(PyObject *self, PyObject *args)
   return APIResultOk(ok);
 }
 
-static PyObject *CmdRampMapNew(PyObject *self, 	PyObject *args)
+static PyObject *CmdRampNew(PyObject *self, 	PyObject *args)
 {
   char *name;
   int ok = false;
@@ -881,7 +881,7 @@ static PyObject *CmdRampMapNew(PyObject *self, 	PyObject *args)
   if(ok) {
     APIEntry();
     ok = (SelectorGetTmp(TempPyMOLGlobals,sele,s1)>=0);
-    if(ok) ok = ExecutiveRampMapNew(TempPyMOLGlobals,name,map,range,color,map_state,s1,beyond,within,sigma,zero);
+    if(ok) ok = ExecutiveRampNew(TempPyMOLGlobals,name,map,range,color,map_state,s1,beyond,within,sigma,zero);
     SelectorFreeTmp(TempPyMOLGlobals,s1);
     APIExit();
   }
@@ -5725,7 +5725,7 @@ static PyMethodDef Cmd_methods[] = {
    {"ray_trace_thread",      CmdRayTraceThread,       METH_VARARGS },
    {"ray_hash_thread",       CmdRayHashThread,        METH_VARARGS },
    {"ray_anti_thread",       CmdRayAntiThread,        METH_VARARGS },
-   {"ramp_new",              CmdRampMapNew,           METH_VARARGS },
+   {"ramp_new",              CmdRampNew,           METH_VARARGS },
 	{"ready",                 CmdReady,                METH_VARARGS },
    {"rebuild",               CmdRebuild,              METH_VARARGS },
    {"recolor",               CmdRecolor,              METH_VARARGS },

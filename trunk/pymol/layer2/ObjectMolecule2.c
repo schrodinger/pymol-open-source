@@ -216,6 +216,45 @@ int *ObjectMoleculeGetPrioritizedOtherIndexList(ObjectMolecule *I,CoordSet *cs)
   return result;
 }
 
+int ObjectMoleculeGetNearestAtomIndex(ObjectMolecule *I, float *point, float cutoff, int state)
+{
+  int result = -1;
+  if(state<0)
+    state = ObjectGetCurrentState(&I->Obj,true);
+  if((state>0)&&(state<I->NCSet)) {
+    CoordSet *cs = I->CSet[state];
+    if(cs) {
+      MapType *map;
+      CoordSetUpdateCoord2IdxMap(cs, cutoff);
+      if( (map = cs->Coord2Idx)) {
+        int a,b,c,d,e,f,j;
+        register float nearest = cutoff * cutoff, test;
+        register float *v;
+        MapLocus(map,point,&a,&b,&c);
+        for(d=a-1;d<=a+1;d++)
+          for(e=b-1;e<=b+1;e++)
+            for(f=c-1;f<=c+1;f++)
+              {
+                j = *(MapFirst(map,d,e,f));
+                while(j>=0)
+                  {
+                    v = cs->Coord + (3*j);                    
+                    test = diffsq3f(v,point);
+                    if(test<nearest) {
+                      result = j;
+                      nearest = test;
+                    }
+                    j=MapNext(map,j);
+                  }
+              }
+        if(result>=0)
+          result = cs->IdxToAtm[result];
+      }
+    }
+  }
+  return result;
+}
+
 int ObjectMoleculeGetPrioritizedOther(int *other, int a1, int a2, int *double_sided)
      
 {

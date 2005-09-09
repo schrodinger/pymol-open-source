@@ -2,12 +2,14 @@
 from pymol.wizard import Wizard
 from pymol import cmd
 import pymol
+import traceback
 
 sele_prefix = "_pf_s_"
 sele_prefix_len = len(sele_prefix)
 
 dist_prefix = "_pf_d_"
 
+indi_sele = "_indicate_pf"
 
 class Pair_fit(Wizard):
 
@@ -19,6 +21,10 @@ class Pair_fit(Wizard):
         self.n_pair = 0
         self.status = 0 # 0 no atoms selections, 1 atom selected
         self.message = None
+
+        self.selection_mode = cmd.get_setting_legacy("mouse_selection_mode")
+        cmd.set("mouse_selection_mode",0) # set selection mode to atomic
+        cmd.deselect() # disable the active selection (if any)
         
     def get_panel(self):
         return [
@@ -32,10 +38,12 @@ class Pair_fit(Wizard):
 
     def cleanup(self):
         self.clear()
+        cmd.set("mouse_selection_mode",self.selection_mode) # restore selection mode        
         
     def clear(self):
         cmd.delete(sele_prefix+"*")
         cmd.delete(dist_prefix+"*")
+        cmd.delete(indi_sele)        
         lst = cmd.get_names('selections')
         self.n_pair = 0
         self.status = 0
@@ -132,6 +140,17 @@ class Pair_fit(Wizard):
                 return 1
         return 0
 
+    def do_select(self,name): # map selects into picks
+        cmd.unpick()
+        try:
+            print (name + " and not " + sele_prefix + "*")
+            cmd.edit(name + " and not " + sele_prefix + "*") # note, using new object name wildcards
+            cmd.delete(name)
+            self.do_pick(0)
+        except pymol.CmdException:
+            traceback.print_exc()
+            pass
+
     def do_pick(self,bondFlag):
         if bondFlag:
             self.message = "Error: please select an atom, not a bond."
@@ -146,7 +165,8 @@ class Pair_fit(Wizard):
                     name = sele_prefix + "%02db"%self.n_pair # mobile end in 'b'
                     cmd.select(name,"(pk1)")
                     cmd.unpick()
-                    cmd.enable(name)
+                    cmd.select(indi_sele,name)
+                    cmd.enable(indi_sele)
                     self.status = 1
                     self.message = None
             elif self.status==1:
@@ -163,7 +183,8 @@ class Pair_fit(Wizard):
                         name = sele_prefix + "%02da"%self.n_pair # target end in 'a'
                         cmd.select(name,"(pk1)")
                         cmd.unpick()
-                        cmd.enable(name)
+                        cmd.select(indi_sele,name)
+                        cmd.enable(indi_sele)
                         self.n_pair = self.n_pair + 1
                         self.status = 0
                         self.update_dashes()

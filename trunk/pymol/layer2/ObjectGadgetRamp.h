@@ -23,10 +23,12 @@ Z* -------------------------------------------------------------------
 
 #include"GadgetSet.h"
 #include"ObjectMap.h"
+#include"ObjectMolecule.h"
 
 #define dRampNone 0
 #define cRampMap 1
-#define cRampProp 2
+#define cRampMol 2
+
 
 typedef struct ObjectGadgetRamp {
   ObjectGadget Gadget;
@@ -47,6 +49,7 @@ typedef struct ObjectGadgetRamp {
 
   /* fields below are not saved in session */
   ObjectMap *Map;
+  ObjectMolecule *Mol;
 
   float border;
   float width;
@@ -77,6 +80,11 @@ ObjectGadgetRamp *ObjectGadgetRampNew(PyMOLGlobals *G);
 ObjectGadgetRamp *ObjectGadgetRampMapNewAsDefined(PyMOLGlobals *G,ObjectMap *map,PyObject *level,
                                                   PyObject *color,int map_state,float *vert_vla,
                                                   float beyond,float within,float sigma,int zero);
+
+ObjectGadgetRamp *ObjectGadgetRampMolNewAsDefined(PyMOLGlobals *G,ObjectMolecule *mol,
+                                                  PyObject *level,
+                                                  PyObject *color,
+                                                  int mol_state);
 
 int ObjectGadgetRampInterpolate(ObjectGadgetRamp *I,float level,float *color);
 int ObjectGadgetRampInterVertex(ObjectGadgetRamp *I,float *pos,float *color);

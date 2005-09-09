@@ -1951,7 +1951,9 @@ char *ExecutiveGetChains(PyMOLGlobals *G,char *sele,int state,int *null_chain)
 }
 
 int ExecutiveValidateObjectPtr(PyMOLGlobals *G,CObject *ptr,int object_type)
-{
+{ 
+  /* this routine needs to be sped up significantly... */
+
   register CExecutive *I = G->Executive;
   int ok=false;
   SpecRec *rec = NULL;
@@ -1969,35 +1971,46 @@ int ExecutiveValidateObjectPtr(PyMOLGlobals *G,CObject *ptr,int object_type)
   return(ok);
 }
 
-int ExecutiveRampMapNew(PyMOLGlobals *G,char *name,char *map_name,PyObject *range,
-                        PyObject *color,int map_state,char *sele,
+int ExecutiveRampNew(PyMOLGlobals *G,char *name,char *src_name,PyObject *range,
+                        PyObject *color,int src_state,char *sele,
                         float beyond,float within,float sigma,int zero)
 {
   ObjectGadgetRamp *obj = NULL;
   int ok =true;
-  CObject *map_obj;
+  CObject *src_obj = NULL;
   float *vert_vla = NULL;
-  map_obj = ExecutiveFindObjectByName(G,map_name);
-  if(map_obj) {
-    if(map_obj->type!=cObjectMap) {
+  src_obj = ExecutiveFindObjectByName(G,src_name);
+  if(src_obj) {
+    if((src_obj->type!=cObjectMap)&&
+       (src_obj->type!=cObjectMolecule)) {
       PRINTFB(G,FB_Executive,FB_Errors)
-        "ExecutiveRampMapNew: Error: object '%s' is not a map.\n",map_name
+        "ExecutiveRampMapNew: Error: object '%s' is not a map or molecule.\n",src_name
         ENDFB(G);
       ok=false;
     }
   } else {
     PRINTFB(G,FB_Executive,FB_Errors)
-      "ExecutiveRampMapNew: Error: map '%s' not found.\n",map_name
+      "ExecutiveRampMapNew: Error: object '%s' not found.\n",src_name
       ENDFB(G);
     ok = false;
   }
-  if(sele&&sele[0]) {
-    vert_vla = ExecutiveGetVertexVLA(G,sele,map_state);
+  if(ok && src_obj) {
+    switch(src_obj->type) {
+    case cObjectMap:
+      if(sele&&sele[0]) {
+        vert_vla = ExecutiveGetVertexVLA(G,sele,src_state);
+      }
+      ok = ok && (obj=ObjectGadgetRampMapNewAsDefined(G,(ObjectMap*)src_obj,
+                                                      range,color,src_state,
+                                                      vert_vla,beyond,within,
+                                                      sigma,zero));
+      break;
+    case cObjectMolecule:
+      ok = ok && (obj=ObjectGadgetRampMolNewAsDefined(G,(ObjectMolecule*)src_obj,
+                                                      range,color,src_state));
+      break;
+    }
   }
-  ok = ok && (obj=ObjectGadgetRampMapNewAsDefined(G,(ObjectMap*)map_obj,
-                                                  range,color,map_state,
-                                                  vert_vla,beyond,within,
-                                                  sigma,zero));
   if(ok) ExecutiveDelete(G,name); 
   if(ok) ObjectSetName((CObject*)obj,name);
   if(ok) ColorRegisterExt(G,name,(void*)obj,cColorGadgetRamp);

@@ -833,6 +833,10 @@ void CoordSetInvalidateRep(CoordSet *I,int type,int level)
 		}
 	 }
   }
+  if(level>cRepInvCoord) { /* if coordinates change, then this map becomes invalid */
+    MapFree(I->Coord2Idx);
+    I->Coord2Idx = NULL;
+  }
   SceneChanged(I->State.G);
 }
 /*========================================================================*/
@@ -899,6 +903,20 @@ void CoordSetUpdate(CoordSet *I)
 
   SceneDirty(I->State.G);
   OrthoBusyFast(I->State.G,1,1);
+}
+/*========================================================================*/
+void CoordSetUpdateCoord2IdxMap(CoordSet *I, float cutoff)
+{
+  if(I->Coord2Idx) {
+    MapType *map = I->Coord2Idx;
+    if(map->Div<cutoff) {
+      MapFree(map);
+      I->Coord2Idx = NULL;
+    }
+  }
+  if(I->NIndex && (!I->Coord2Idx)) { /* NOTE: map based on stored coords */
+    I->Coord2Idx = MapNew(I->State.G, cutoff, I->Coord, I->NIndex, NULL);
+  }
 }
 /*========================================================================*/
 void CoordSetRender(CoordSet *I,RenderInfo *info)
@@ -1058,7 +1076,8 @@ CoordSet *CoordSetNew(PyMOLGlobals *G)
   I->SpheroidSphereSize = I->State.G->Sphere->Sphere[1]->nDot; /* does this make any sense? */
   for(a=0;a<I->NRep;a++)
 	 I->Rep[a] = NULL;
-  I->Setting=NULL;
+  I->Setting = NULL;
+  I->Coord2Idx = NULL;
   return(I);
 }
 /*========================================================================*/
@@ -1109,6 +1128,7 @@ CoordSet *CoordSetCopy(CoordSet *cs)
   I->Color=NULL;
   I->Spheroid=NULL;
   I->SpheroidNormal=NULL;
+  I->Coord2Idx = NULL;
   return(I);
 }
 /*========================================================================*/

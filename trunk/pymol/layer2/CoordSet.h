@@ -56,6 +56,10 @@ typedef struct CoordSet {
   CCrystal *PeriodicBox;
   int PeriodicBoxType;
   int tmp_index; /* for saving */
+
+  /* not saved in state */
+  
+  MapType *Coord2Idx;
 } CoordSet;
 
 #define cCSet_NoPeriodicity 0
@@ -91,6 +95,7 @@ void CoordSetPurge(CoordSet *I);
 void CoordSetAdjustAtmIdx(CoordSet *I,int *lookup,int nAtom);
 void CoordSetMerge(CoordSet *I,CoordSet *cs); /* must be non-overlapping */
 void CoordSetRecordTxfApplied(CoordSet *I,float *TTT, int homogenous);
+void CoordSetUpdateCoord2IdxMap(CoordSet *I, float cutoff);
 
 #endif
 
