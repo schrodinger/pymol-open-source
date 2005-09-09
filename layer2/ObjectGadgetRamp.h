@@ -25,7 +25,7 @@ Z* -------------------------------------------------------------------
 #include"ObjectMap.h"
 #include"ObjectMolecule.h"
 
-#define dRampNone 0
+#define cRampNone 0
 #define cRampMap 1
 #define cRampMol 2
 

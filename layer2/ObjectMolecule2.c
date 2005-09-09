@@ -221,7 +221,7 @@ int ObjectMoleculeGetNearestAtomIndex(ObjectMolecule *I, float *point, float cut
   int result = -1;
   if(state<0)
     state = ObjectGetCurrentState(&I->Obj,true);
-  if((state>0)&&(state<I->NCSet)) {
+  if((state>=0)&&(state<I->NCSet)) {
     CoordSet *cs = I->CSet[state];
     if(cs) {
       MapType *map;

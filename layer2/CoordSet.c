@@ -833,7 +833,7 @@ void CoordSetInvalidateRep(CoordSet *I,int type,int level)
 		}
 	 }
   }
-  if(level>cRepInvCoord) { /* if coordinates change, then this map becomes invalid */
+  if(level>=cRepInvCoord) { /* if coordinates change, then this map becomes invalid */
     MapFree(I->Coord2Idx);
     I->Coord2Idx = NULL;
   }

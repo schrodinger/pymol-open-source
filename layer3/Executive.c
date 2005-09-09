@@ -191,6 +191,29 @@ static SpecRec *ExecutiveAnyCaseNameMatch(PyMOLGlobals *G,char *name)
   }
   return(result);
 }
+void ExecutiveUpdateCoordDepends(PyMOLGlobals *G,ObjectMolecule *mol)
+{ /* nasty, ugly, inefficient hack */
+
+  register CExecutive *I = G->Executive;
+  SpecRec *rec = NULL;
+
+  while(ListIterate(I->Spec,rec,next)) {
+    if(rec->type==cExecObject) {
+      if(rec->obj->type==cObjectGadget) { 
+        ObjectGadget *gadget = (ObjectGadget*)rec->obj;
+        if(gadget->GadgetType == cGadgetRamp) {
+          ObjectGadgetRamp *ramp = (ObjectGadgetRamp*)gadget;
+          if(ramp->RampType==cRampMol) {
+            if(ramp->Mol == mol) {
+              ExecutiveInvalidateRep(G,cKeywordAll,cRepAll,cRepInvColor);
+              break;
+            }
+          }
+        }
+      }
+    }
+  }
+}
 
 int ExecutiveValidNamePattern(PyMOLGlobals *G,char *name)
 {

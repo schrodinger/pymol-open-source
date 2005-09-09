@@ -134,26 +134,39 @@ int ObjectGadgetRampInterVertex(ObjectGadgetRamp *I,float *pos,float *color)
   int ok=true;
   switch(I->RampType) {
   case cRampMap:
-    
+    if(!I->Map)
+      I->Map = ExecutiveFindObjectMapByName(I->Gadget.Obj.G,I->SrcName);
     if(!ExecutiveValidateObjectPtr(I->Gadget.Obj.G,(CObject*)I->Map,cObjectMap))
       ok=false;
     else {
-      I->Map = ExecutiveFindObjectMapByName(I->Gadget.Obj.G,I->SrcName);
       if(ok) ok = (I->Map!=NULL);
       if(ok) ok = ObjectMapInterpolate(I->Map,I->SrcState,pos,&level,NULL,1);
       if(ok) ok = ObjectGadgetRampInterpolate(I,level,color);
     }
+    break;
   case cRampMol:
-    /* need to lookup coordinates here */
-    if(!ExecutiveValidateObjectPtr(I->Gadget.Obj.G,(CObject*)I->Map,cObjectMolecule))
+    if(!I->Mol)
+      I->Mol = ExecutiveFindObjectMoleculeByName(I->Gadget.Obj.G,I->SrcName);
+    
+    if(!ExecutiveValidateObjectPtr(I->Gadget.Obj.G,(CObject*)I->Mol,cObjectMolecule))
       ok=false;
     else  {
-      float gray[3] = {0.5,0.5,0.5};
-      I->Mol = ExecutiveFindObjectMoleculeByName(I->Gadget.Obj.G,I->SrcName);
+      float cutoff = 1.0F;
+      int state = SceneGetState(I->Gadget.Obj.G);
+      if(I->Level&&I->NLevel)
+        cutoff = I->Level[I->NLevel-1];
       if(ok) ok = (I->Mol!=NULL);      
-      
-      copy3f(gray,color);
-      ok=true;
+      if(ok) {
+        int index = ObjectMoleculeGetNearestAtomIndex(I->Mol, pos, cutoff, state);
+        if(index>=0) {
+          float *rgb =  ColorGet(I->Gadget.Obj.G,I->Mol->AtomInfo[index].color);
+          copy3f(rgb,color);
+        } else {
+          if(I->Color) { 
+            copy3f(I->Color,color);
+          }
+        }
+      }
     }
     break;
   default:
@@ -704,8 +717,7 @@ ObjectGadgetRamp *ObjectGadgetRampMolNewAsDefined(PyMOLGlobals *G,ObjectMolecule
   int ok = true;
 
   I = ObjectGadgetRampNew(G);
-  I->RampType = cRampMap;
-
+  I->RampType = cRampMol;
   PBlock();
   if(ok) {
     if(PyList_Check(color))
@@ -751,6 +763,8 @@ ObjectGadgetRamp *ObjectGadgetRampNew(PyMOLGlobals *G)
   I->Gadget.Obj.fFree =(void (*)(struct CObject *)) ObjectGadgetRampFree;
   I->Gadget.Obj.fInvalidate = (void (*)(struct CObject *,int,int,int)) ObjectGadgetRampInvalidate;
 
+  I->Mol = NULL;
+  I->Map = NULL;
   I->width = 0.9F;
   I->height = 0.06F;
   I->bar_height = 0.03F;
