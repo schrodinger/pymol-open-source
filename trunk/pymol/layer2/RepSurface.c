@@ -88,6 +88,7 @@ void RepSurfaceGetSolventDots(RepSurface *I,CoordSet *cs,
                               float probe_radius,SphereRec *sp,
                               float *extent,int *present,int circumscribe);
 
+#if 0
 static int ZOrderFn(float *array,int l,int r)
 {
   return (array[l]<=array[r]);
@@ -97,7 +98,7 @@ static int ZRevOrderFn(float *array,int l,int r)
 {
   return (array[l]>=array[r]);
 }
-
+#endif
 
 static int check_and_add(int *cache, int spacing, int t0,int t1) {
   int *rec;

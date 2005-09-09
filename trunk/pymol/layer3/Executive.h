@@ -111,6 +111,7 @@ int ExecutiveAlign(PyMOLGlobals *G,char *s1,char *s2,char *mat_file,
                      char *oname,int state1,int state2,
                      ExecutiveRMSInfo *rms_info);
 
+void ExecutiveUpdateCoordDepends(PyMOLGlobals *G,ObjectMolecule *mol);
 float ExecutiveDistance(PyMOLGlobals *G,char *sele1,char *sele2);
 float ExecutiveDist(PyMOLGlobals *G,char *nam,char *s1,char *s2,int mode,
                     float cutoff,int labels,int quiet,int reset);

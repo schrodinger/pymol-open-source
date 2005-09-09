@@ -242,6 +242,7 @@ static void ObjectSurfaceStateFree(ObjectSurfaceState *ms)
   
   VLAFreeP(ms->N);
   VLAFreeP(ms->V);
+  FreeP(ms->VC);
   VLAFreeP(ms->AtomVertex);
   if(ms->UnitCellCGO)
     CGOFree(ms->UnitCellCGO);
@@ -312,6 +313,9 @@ static void ObjectSurfaceInvalidate(ObjectSurface *I,int rep,int level,int state
     if(level>=cRepInvAll) {
       I->State[state].ResurfaceFlag=true;     
       SceneChanged(I->Obj.G);
+    } else if(level>=cRepInvColor) {
+      I->State[state].RecolorFlag=true;
+      SceneChanged(I->Obj.G);
     } else {
       SceneDirty(I->Obj.G);
     }
@@ -334,6 +338,58 @@ int ObjectSurfaceInvalidateMapName(ObjectSurface *I,char *name)
     }
   }
   return result;
+}
+
+static void ObjectSurfaceStateUpdateColors(ObjectSurface *I, ObjectSurfaceState *ms)
+{
+  if(ms->V) {
+    int index = I->Obj.Color;
+    float *v = ms->V;
+    float *vc;
+    int a;
+    switch(ms->Mode) {
+    case 3:
+    case 2:
+      {
+        int n_vert = VLAGetSize(ms->V)/6;
+        
+        if(!ms->VC) {
+          ms->VC = Alloc(float,n_vert*3);
+        }
+        vc = ms->VC;
+        
+        v+=3;
+        if(vc) {
+          for(a=0;a<n_vert;a++) {
+            ColorGetRamped(I->Obj.G,index,v,vc);
+            vc+=3;
+            v+=6; /* alternates with normals */
+          }
+        }
+      }
+      break;
+    case 1:
+    case 0:
+    default:
+      {
+        int n_vert = VLAGetSize(ms->V)/3;
+        
+        if(!ms->VC) {
+          ms->VC = Alloc(float,n_vert*3);
+        }
+        
+        vc = ms->VC;
+        if(vc) {
+          for(a=0;a<n_vert;a++) {
+            ColorGetRamped(I->Obj.G,index,v,vc);
+            vc+=3;
+            v+=3; 
+          }
+        }
+      }
+      break;
+    }
+  }
 }
 
 static void ObjectSurfaceUpdate(ObjectSurface *I) 
@@ -380,9 +436,8 @@ static void ObjectSurfaceUpdate(ObjectSurface *I)
       }
       if(map&&ms&&oms&&ms->N&&ms->V&&I->Obj.RepVis[cRepSurface]) {
         if(ms->ResurfaceFlag) {
-
-
           ms->ResurfaceFlag=false;
+          ms->RecolorFlag=true;
           PRINTFB(I->Obj.G,FB_ObjectSurface,FB_Actions)
            " ObjectSurface: updating \"%s\".\n" , I->Obj.Name 
             ENDFB(I->Obj.G);
@@ -482,12 +537,21 @@ static void ObjectSurfaceUpdate(ObjectSurface *I)
             }
           }
         }
+        if(ms->RecolorFlag) {
+          if(ColorCheckRamped(I->Obj.G,I->Obj.Color))
+            ObjectSurfaceStateUpdateColors(I,ms);
+          else if(ms->VC) {
+            FreeP(ms->VC);
+            ms->VC=NULL;
+          }
+          ms->RecolorFlag=false;
+        }
       }
     }
   }
   SceneDirty(I->Obj.G);
 }
-
+#if 0
 static int ZOrderFn(float *array,int l,int r)
 {
   return (array[l]<=array[r]);
@@ -497,7 +561,7 @@ static int ZRevOrderFn(float *array,int l,int r)
 {
   return (array[l]>=array[r]);
 }
-
+#endif
 static void ObjectSurfaceRender(ObjectSurface *I,RenderInfo *info)
 {
   PyMOLGlobals *G = I->Obj.G;
@@ -506,7 +570,7 @@ static void ObjectSurfaceRender(ObjectSurface *I,RenderInfo *info)
   Pickable **pick = info->pick;
   int pass = info->pass;
   float *v = NULL;
-  float *vc;
+  float *vc = NULL;
   float *col;
   int *n = NULL;
   int c;
@@ -545,11 +609,16 @@ static void ObjectSurfaceRender(ObjectSurface *I,RenderInfo *info)
             CGORenderRay(ms->UnitCellCGO,ray,ColorGet(G,I->Obj.Color),
                          I->Obj.Setting,NULL);
 
-
           ray->fTransparentf(ray,1.0F-alpha);       
           ms->Radius=SettingGet_f(G,I->Obj.Setting,NULL,cSetting_mesh_radius);
+          if(ms->Radius==0.0F) {
+            ms->Radius = ray->PixelRadius*
+              SettingGet_f(I->Obj.G,I->Obj.Setting,NULL,cSetting_mesh_width)/2.0F;
+          }
+          
           if(n&&v&&I->Obj.RepVis[cRepSurface]) {
-            vc = ColorGet(G,I->Obj.Color);
+            float *cc = ColorGet(G,I->Obj.Color);
+            vc = ms->VC;
             while(*n)
               {
                 c=*(n++);
@@ -557,12 +626,19 @@ static void ObjectSurfaceRender(ObjectSurface *I,RenderInfo *info)
                 case 3:
                 case 2:
                   v+=12;
+                  if(vc) vc+=6;
                   c-=4;
                   while(c>0) {
-                    
-                    ray->fTriangle3fv(ray,v-9,v-3,v+3,
-                                      v-12,v-6,v,
-                                      vc,vc,vc);
+                    if(vc) {
+                      ray->fTriangle3fv(ray,v-9,v-3,v+3,
+                                        v-12,v-6,v,
+                                        vc-6,vc-3,vc);
+                      vc+=3;
+                    } else {
+                      ray->fTriangle3fv(ray,v-9,v-3,v+3,
+                                        v-12,v-6,v,
+                                        cc,cc,cc);
+                    }
                     v+=6;
                     c-=2;
                   }
@@ -570,8 +646,13 @@ static void ObjectSurfaceRender(ObjectSurface *I,RenderInfo *info)
                 case 1:
                   c--;
                   v+=3;
+                  if(vc) vc+=3;
                   while(c>0) {
-                    ray->fSausage3fv(ray,v-3,v,ms->Radius,vc,vc);
+                    if(vc) {
+                      ray->fSausage3fv(ray,v-3,v,ms->Radius,vc-3,vc);
+                      vc+=3;
+                    } else 
+                      ray->fSausage3fv(ray,v-3,v,ms->Radius,cc,cc);
                     v+=3;
                     c--;
                   }
@@ -579,6 +660,10 @@ static void ObjectSurfaceRender(ObjectSurface *I,RenderInfo *info)
                 case 0:
                 default:
                   while(c>0) {
+                    if(vc) {
+                      ray->fColor3fv(ray,vc);
+                      vc+=3;
+                    }
                     ray->fSphere3fv(ray,v,ms->Radius);
                     v+=3;
                     c--;
@@ -636,12 +721,13 @@ static void ObjectSurfaceRender(ObjectSurface *I,RenderInfo *info)
                   if((ms->Mode>1)&&(alpha!=1.0)) { /* transparent */
                     
                     int t_mode;
-                    
+
                     t_mode  = SettingGet_i(G,NULL,I->Obj.Setting,cSetting_transparency_mode);
                     
                     if(t_mode) { /* high quality (sorted) transparency? */
                       
                       float **t_buf=NULL,**tb;
+                      float **c_buf=NULL,**tc;
                       float *z_value=NULL,*zv;
                       int *ix=NULL;
                       int n_tri = 0;
@@ -651,18 +737,26 @@ static void ObjectSurfaceRender(ObjectSurface *I,RenderInfo *info)
                       glGetFloatv(GL_MODELVIEW_MATRIX,matrix);
                       
                       t_buf = Alloc(float*,ms->nT*9);
-                      
+                      vc = ms->VC;
+
+                      if(vc) {
+                        c_buf = Alloc(float*,ms->nT*9);
+                      }
+
                       z_value = Alloc(float,ms->nT);
                       ix = Alloc(int,ms->nT);
                       
                       zv = z_value;
                       tb = t_buf;
-                      
+                      tc = c_buf;
+
                       while(*n)
                         {
                           parity=true;
                           c=*(n++);
                           v+=12;
+                          if(vc)
+                            vc+=6;
                           c-=4;
                           while(c>0) {
                             
@@ -673,6 +767,11 @@ static void ObjectSurfaceRender(ObjectSurface *I,RenderInfo *info)
                               *(tb++) = v-3;
                               *(tb++) = v;
                               *(tb++) = v+3;
+                              if(vc) {
+                                *(tc++) = vc-6;
+                                *(tc++) = vc-3;
+                                *(tc++) = vc;
+                              }
                             } else {
                               *(tb++) = v-12;
                               *(tb++) = v-9;
@@ -680,6 +779,11 @@ static void ObjectSurfaceRender(ObjectSurface *I,RenderInfo *info)
                               *(tb++) = v+3;
                               *(tb++) = v-6;
                               *(tb++) = v-3;
+                              if(vc) {
+                                *(tc++) = vc-6;
+                                *(tc++) = vc;
+                                *(tc++) = vc-3;
+                              }
                             }
                             
                             parity=!parity;
@@ -690,16 +794,21 @@ static void ObjectSurfaceRender(ObjectSurface *I,RenderInfo *info)
                             *(zv++) = matrix[2]*sum[0]+matrix[6]*sum[1]+matrix[10]*sum[2];
                             n_tri++;
                             
+                            if(vc) vc+=3;
                             v+=6;
                             c-=2;
                           }
                         }
+
+
                       switch(t_mode) {
                       case 1:
-                        UtilSortIndex(n_tri,z_value,ix,(UtilOrderFn*)ZOrderFn);
+                        UtilSemiSortFloatIndex(n_tri,z_value,ix,true);
+                        /* UtilSortIndex(n_tri,z_value,ix,(UtilOrderFn*)ZOrderFn);*/
                         break;
                       default:
-                        UtilSortIndex(n_tri,z_value,ix,(UtilOrderFn*)ZRevOrderFn);
+                        UtilSemiSortFloatIndex(n_tri,z_value,ix,false);
+                        /*UtilSortIndex(n_tri,z_value,ix,(UtilOrderFn*)ZRevOrderFn); */
                         break;
                       }
                       
@@ -712,11 +821,15 @@ static void ObjectSurfaceRender(ObjectSurface *I,RenderInfo *info)
                       for(c=0;c<n_tri;c++) {
                         
                         tb = t_buf+6*ix[c];
-                        
+                        if(vc) tc = c_buf+3*ix[c];
+
+                        if(vc) { glColor4f(tc[0][0],tc[0][1],tc[0][2],alpha); tc++;}
                         glNormal3fv(*(tb++));
                         glVertex3fv(*(tb++));
+                        if(vc) { glColor4f(tc[0][0],tc[0][1],tc[0][2],alpha); tc++;}
                         glNormal3fv(*(tb++));
                         glVertex3fv(*(tb++));
+                        if(vc) { glColor4f(tc[0][0],tc[0][1],tc[0][2],alpha); tc++;}
                         glNormal3fv(*(tb++));
                         glVertex3fv(*(tb++));
                       }
@@ -725,7 +838,9 @@ static void ObjectSurfaceRender(ObjectSurface *I,RenderInfo *info)
                       FreeP(ix);
                       FreeP(z_value);
                       FreeP(t_buf);
-                    } else { 
+                      FreeP(c_buf);
+                    } else {  /* fast, but unoptimized transparency */
+                      vc = ms->VC;
                       while(*n)
                         {
                           c=*(n++);
@@ -734,6 +849,10 @@ static void ObjectSurfaceRender(ObjectSurface *I,RenderInfo *info)
                           while(c>0) {
                             glNormal3fv(v);
                             v+=3;
+                            if(vc) {
+                              glColor3fv(vc);
+                              vc+=3;
+                            }
                             glVertex3fv(v);
                             v+=3;
                             c-=2;
@@ -743,6 +862,7 @@ static void ObjectSurfaceRender(ObjectSurface *I,RenderInfo *info)
                     }
                   } else {
                     glLineWidth(SettingGet_f(G,I->Obj.Setting,NULL,cSetting_mesh_width));
+                    vc = ms->VC;
                     while(*n)
                       {
                         c=*(n++);
@@ -753,6 +873,10 @@ static void ObjectSurfaceRender(ObjectSurface *I,RenderInfo *info)
                           while(c>0) {
                             glNormal3fv(v);
                             v+=3;
+                            if(vc) {
+                              glColor3fv(vc);
+                              vc+=3;
+                            }
                             glVertex3fv(v);
                             v+=3;
                             c-=2;
@@ -762,6 +886,10 @@ static void ObjectSurfaceRender(ObjectSurface *I,RenderInfo *info)
                         case 1:
                           glBegin(GL_LINES);
                           while(c>0) {
+                            if(vc) {
+                              glColor3fv(vc);
+                              vc+=3;
+                            }
                             glVertex3fv(v);
                             v+=3;
                             c--;
@@ -772,6 +900,10 @@ static void ObjectSurfaceRender(ObjectSurface *I,RenderInfo *info)
                         default:
                           glBegin(GL_POINTS);
                           while(c>0) {
+                            if(vc) {
+                              glColor3fv(vc);
+                              vc+=3;
+                            }
                             glVertex3fv(v);
                             v+=3;
                             c--;
@@ -843,8 +975,10 @@ void ObjectSurfaceStateInit(PyMOLGlobals *G,ObjectSurfaceState *ms)
 
   ms->N[0]=0;
   ms->nT=0;
+  ms->VC = NULL;
   ms->Active=true;
   ms->ResurfaceFlag=true;
+  ms->RecolorFlag=false;
   ms->ExtentFlag=false;
   ms->CarveFlag=false;
   ms->AtomVertex=NULL;

@@ -4925,8 +4925,10 @@ int ObjectMoleculeTransformSelection(ObjectMolecule *I,int state,
           flag=true;
           CoordSetRecordTxfApplied(cs,matrix,homogenous);
         }
-        if(flag) 
+        if(flag) {
           cs->fInvalidateRep(cs,cRepAll,cRepInvCoord);
+          ExecutiveUpdateCoordDepends(I->Obj.G,I);
+        }
       }
     }
     if(!all_states)
@@ -8714,6 +8716,7 @@ int ObjectMoleculeMoveAtom(ObjectMolecule *I,int state,int index,float *v,int mo
     if(cs) {
       result = CoordSetMoveAtom(I->CSet[state],index,v,mode);
       cs->fInvalidateRep(cs,cRepAll,cRepInvCoord);
+      ExecutiveUpdateCoordDepends(I->Obj.G,I);
     }
   }
   if(log) {

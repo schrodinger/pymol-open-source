@@ -334,12 +334,18 @@ int ObjectGadgetNewFromPyList(PyMOLGlobals *G,PyObject *list,ObjectGadget **resu
   int ok = true;
   ObjectGadget *I=NULL;
   int gadget_type = -1;
+  PyObject *plain;
   (*result) = NULL;
 
   if(ok) ok=(list!=NULL);
   if(ok) ok=PyList_Check(list);
 
-  if(ok) ok=PConvPyIntToInt(PyList_GetItem(list,1),&gadget_type);
+  /* NOTE there is a serious screw-up here...ramp gadgets aren't saved right, but
+     we've got to maintain backward compat...ugh */
+
+  if(ok) ok=((plain=PyList_GetItem(list,0))!=NULL); 
+  if(ok) ok=PyList_Check(plain);
+  if(ok) ok=PConvPyIntToInt(PyList_GetItem(plain,1),&gadget_type);
   if(ok) switch(gadget_type) { /* call the right routine to restore the gadget! */
   case cGadgetRamp:
     ok = ObjectGadgetRampNewFromPyList(G,list,(ObjectGadgetRamp**)result,version);
