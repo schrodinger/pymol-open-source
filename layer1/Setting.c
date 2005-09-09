@@ -141,6 +141,9 @@ static PyObject *get_list(CSetting *I,int index)
     PyList_SetItem(result,1,PyInt_FromLong(setting_type));
     PyList_SetItem(result,2,PyString_FromString(((char*)(I->data+I->info[index].offset))));
     break;
+  default:
+    result = Py_None;
+    break;
   }
   return(PConvAutoNone(result));
 }
@@ -262,7 +265,8 @@ int SettingFromPyList(CSetting *I,PyObject *list)
   if(ok) {
     size=PyList_Size(list);
     for(a=0;a<size;a++) {
-      if(ok) ok=set_list(I,PyList_GetItem(list,a));
+      if(!set_list(I,PyList_GetItem(list,a)))
+        ok=false;
     }
   }
   return(ok);
@@ -587,19 +591,25 @@ void SettingClear(CSetting *I,int index)
 /*========================================================================*/
 static void *SettingPtr(CSetting *I,int index,unsigned int size)
 {
-  SettingRec *sr = I->info+index;
-  if(size<sizeof(int)) size=sizeof(int); /* make sure we're word aligned */
-  while(size&(sizeof(int)-1)) size++;
-                         
-  if((!sr->offset)||(sr->max_size<size)) { 
-    sr->offset=I->size;
-    I->size+=size;
-    sr->max_size=size;
-    VLACheck(I->data,char,I->size);
+  /* note that this routine essentially leaks RAM in terms of not
+     recovering space used for previous settings of smaller size */
+
+  VLACheck(I->info,SettingRec,index);
+  {
+    SettingRec *sr = I->info+index;
+    if(size<sizeof(int)) size=sizeof(int); /* make sure we're word aligned */
+    while(size&(sizeof(int)-1)) size++;
+    
+    if((!sr->offset)||(sr->max_size<size)) { 
+      sr->offset=I->size;
+      I->size+=size;
+      sr->max_size=size;
+      VLACheck(I->data,char,I->size);
+    }
+    sr->defined = true;
+    sr->changed = true;
+    return(I->data+sr->offset);
   }
-  sr->defined = true;
-  sr->changed = true;
-  return(I->data+sr->offset);
 }
 /*========================================================================*/
 int SettingUnset(CSetting *I,int index)
@@ -736,8 +746,9 @@ int SettingSet_b(CSetting *I,int index, int value)
     case cSetting_boolean:
     case cSetting_int:
     case cSetting_color:
-      VLACheck(I->info,SettingRec,index);
       *((int*)SettingPtr(I,index,sizeof(int))) = value;
+      if(setting_type==cSetting_blank) 
+        I->info[index].type = cSetting_boolean;
       break;
     case cSetting_float:
       *((float*)SettingPtr(I,index,sizeof(float))) = (float)value;
@@ -748,8 +759,6 @@ int SettingSet_b(CSetting *I,int index, int value)
         ENDFB(G);
         ok=false;
     }
-    if(setting_type==cSetting_blank)
-      I->info[index].type = cSetting_boolean;
   } else {
     ok=false;
   }
@@ -767,8 +776,9 @@ int SettingSet_i(CSetting *I,int index, int value)
     case cSetting_boolean:
     case cSetting_int:
     case cSetting_color:
-      VLACheck(I->info,SettingRec,index);
       *((int*)SettingPtr(I,index,sizeof(int))) = value;
+      if(setting_type==cSetting_blank)
+        I->info[index].type = cSetting_int;
       break;
     case cSetting_float:
       *((float*)SettingPtr(I,index,sizeof(float))) = (float)value;
@@ -779,8 +789,6 @@ int SettingSet_i(CSetting *I,int index, int value)
         ENDFB(G);
         ok=false;
     }
-    if(setting_type==cSetting_blank)
-      I->info[index].type = cSetting_int;
   } else {
     ok=false;
   }
@@ -812,8 +820,9 @@ int SettingSet_color(CSetting *I,int index, char *value)
       case cSetting_boolean:
       case cSetting_int:
       case cSetting_color:
-        VLACheck(I->info,SettingRec,index);
         *((int*)SettingPtr(I,index,sizeof(int))) = color_index;
+        if(setting_type==cSetting_blank)
+          I->info[index].type = cSetting_color;
         break;
       case cSetting_float:
         *((float*)SettingPtr(I,index,sizeof(float))) = (float)color_index;
@@ -824,13 +833,6 @@ int SettingSet_color(CSetting *I,int index, char *value)
           ENDFB(G);
           ok=false;
       }
-      if(setting_type==cSetting_blank)
-        I->info[index].type = cSetting_color;
-    
-      VLACheck(I->info,SettingRec,index);
-      *((int*)SettingPtr(I,index,sizeof(int))) = color_index;
-      I->info[index].type = cSetting_color;
-
     }
   }
   return(ok);
@@ -846,12 +848,13 @@ int SettingSet_f(CSetting *I,int index, float value)
     case cSetting_boolean:
     case cSetting_int:
     case cSetting_color:
-      VLACheck(I->info,SettingRec,index);
       *((int*)SettingPtr(I,index,sizeof(int))) = (int)value;
       break;
     case cSetting_blank:
     case cSetting_float:
       *((float*)SettingPtr(I,index,sizeof(float))) = value;
+      if(setting_type==cSetting_blank)
+        I->info[index].type = cSetting_float;
       break;
     default:
       PRINTFB(G,FB_Setting,FB_Errors)
@@ -859,8 +862,6 @@ int SettingSet_f(CSetting *I,int index, float value)
         ENDFB(G);
         ok=false;
     }
-    if(setting_type==cSetting_blank)
-      I->info[index].type = cSetting_float;
   } else {
     ok=false;
   }
@@ -876,9 +877,9 @@ int SettingSet_s(CSetting *I,int index, char *value)
     switch(setting_type) {
     case cSetting_blank:
     case cSetting_string:
-      VLACheck(I->info,SettingRec,index);
       strcpy(((char*)SettingPtr(I,index,strlen(value)+1)),value);
-      I->info[index].type = cSetting_string;
+      if(setting_type==cSetting_blank)
+        I->info[index].type = cSetting_string;
       break;
     default:
       PRINTFB(G,FB_Setting,FB_Errors)
@@ -904,11 +905,12 @@ int SettingSet_3f(CSetting *I,int index, float value1,float value2,float value3)
     switch(setting_type) {
     case cSetting_blank:
     case cSetting_float3:
-      VLACheck(I->info,SettingRec,index);
       ptr = (float*)SettingPtr(I,index,sizeof(float)*3);
       ptr[0]=value1;
       ptr[1]=value2;
       ptr[2]=value3;
+      if(setting_type==cSetting_blank)
+        I->info[index].type = cSetting_float3;
       break;
     default:
       PRINTFB(G,FB_Setting,FB_Errors)
@@ -916,8 +918,6 @@ int SettingSet_3f(CSetting *I,int index, float value1,float value2,float value3)
         ENDFB(G);
         ok=false;
     }
-    if(setting_type==cSetting_blank)
-      I->info[index].type = cSetting_float3;
   } else {
     ok=false;
   }
@@ -927,7 +927,6 @@ int SettingSet_3f(CSetting *I,int index, float value1,float value2,float value3)
 int SettingSet_3fv(CSetting *I,int index, float *vector)
 {
   float *ptr;
-  VLACheck(I->info,SettingRec,index);
   ptr = (float*)SettingPtr(I,index,sizeof(float)*3);
   copy3f(vector,ptr);
   I->info[index].type = cSetting_float3;

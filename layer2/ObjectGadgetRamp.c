@@ -132,11 +132,34 @@ int ObjectGadgetRampInterVertex(ObjectGadgetRamp *I,float *pos,float *color)
 {
   float level;
   int ok=true;
-  if (!ExecutiveValidateObjectPtr(I->Gadget.Obj.G,(CObject*)I->Map,cObjectMap));
-    I->Map = ExecutiveFindObjectMapByName(I->Gadget.Obj.G,I->SrcName);
-  if(ok) ok = (I->Map!=NULL);
-  if(ok) ok = ObjectMapInterpolate(I->Map,I->SrcState,pos,&level,NULL,1);
-  if(ok) ok = ObjectGadgetRampInterpolate(I,level,color);
+  switch(I->RampType) {
+  case cRampMap:
+    
+    if(!ExecutiveValidateObjectPtr(I->Gadget.Obj.G,(CObject*)I->Map,cObjectMap))
+      ok=false;
+    else {
+      I->Map = ExecutiveFindObjectMapByName(I->Gadget.Obj.G,I->SrcName);
+      if(ok) ok = (I->Map!=NULL);
+      if(ok) ok = ObjectMapInterpolate(I->Map,I->SrcState,pos,&level,NULL,1);
+      if(ok) ok = ObjectGadgetRampInterpolate(I,level,color);
+    }
+  case cRampMol:
+    /* need to lookup coordinates here */
+    if(!ExecutiveValidateObjectPtr(I->Gadget.Obj.G,(CObject*)I->Map,cObjectMolecule))
+      ok=false;
+    else  {
+      float gray[3] = {0.5,0.5,0.5};
+      I->Mol = ExecutiveFindObjectMoleculeByName(I->Gadget.Obj.G,I->SrcName);
+      if(ok) ok = (I->Mol!=NULL);      
+      
+      copy3f(gray,color);
+      ok=true;
+    }
+    break;
+  default:
+    ok=false;
+    break;
+  }
   return(ok);
 }
 
@@ -586,7 +609,9 @@ void ObjectGadgetRampUpdate(ObjectGadgetRamp *I)
 
 
 /*========================================================================*/
-ObjectGadgetRamp *ObjectGadgetRampMapNewAsDefined(PyMOLGlobals *G,ObjectMap *map,PyObject *level,
+ObjectGadgetRamp *ObjectGadgetRampMapNewAsDefined(PyMOLGlobals *G,
+                                                  ObjectMap *map,
+                                                  PyObject *level,
                                                   PyObject *color,int map_state,
                                                   float *vert_vla,float beyond,float within,
                                                   float sigma,int zero)
@@ -664,6 +689,45 @@ ObjectGadgetRamp *ObjectGadgetRampMapNewAsDefined(PyMOLGlobals *G,ObjectMap *map
   return(I);
 #endif
 }
+
+/*========================================================================*/
+ObjectGadgetRamp *ObjectGadgetRampMolNewAsDefined(PyMOLGlobals *G,ObjectMolecule *mol,
+                                                  PyObject *level,
+                                                  PyObject *color,
+                                                  int mol_state)
+{
+#ifdef _PYMOL_NOPY
+  return NULL;
+#else
+
+  ObjectGadgetRamp *I;
+  int ok = true;
+
+  I = ObjectGadgetRampNew(G);
+  I->RampType = cRampMap;
+
+  PBlock();
+  if(ok) {
+    if(PyList_Check(color))
+      ok = PConvPyList3ToFloatVLA(color,&I->Color);
+    else if(PyInt_Check(color)) {
+      ok = PConvPyIntToInt(color,&I->CalcMode);      
+    }
+  }
+  if(ok) {     
+    ok = PConvPyListToFloatVLA(level,&I->Level);
+  }
+  if(ok) I->NLevel=VLAGetSize(I->Level);
+
+  ObjectGadgetRampBuild(I);
+  UtilNCopy(I->SrcName,mol->Obj.Name,ObjNameMax);
+  I->SrcState=mol_state;
+  
+  PUnblock();
+  return(I);
+#endif
+}
+
 
 static void ObjectGadgetRampInvalidate(ObjectGadgetRamp *I,int rep,int level,int state)
 {
