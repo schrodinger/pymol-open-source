@@ -1323,7 +1323,7 @@ PyMOLreturn_status PyMOL_CmdSelectList(CPyMOL *I,char *name, char *object, int *
   OVreturn_word mode_id;
   PyMOLreturn_status result = { PyMOLstatus_FAILURE };
   if(OVreturn_IS_OK( (mode_id= get_select_list_mode(I,mode)))) {
-    result.status = ExecutiveSelectList(I->G,name, object,  list, list_len, state, mode_id.word, quiet);
+    result.status = ExecutiveSelectList(I->G,name, object,  list, list_len, state-1, mode_id.word, quiet);
   }
   return result;
 }
