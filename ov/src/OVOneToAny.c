@@ -1,4 +1,5 @@
 
+
 #include "OVOneToAny.h"
 #include "OVHeapArray.h"
 #include "ov_utility.h"
@@ -145,6 +146,9 @@ static void Reload(OVOneToAny *up)
 
 OVreturn_word OVOneToAny_GetKey(OVOneToAny *up,ov_word forward_value)
 {
+#ifdef DEBUG_OVOneToAny
+  fprintf(stderr,"OVOneToAnyGetKey-Debug: %d\n",forward_value);
+#endif
   if(!up) {
     OVreturn_word result = { OVstatus_NULL_PTR };
     return result;
@@ -155,7 +159,15 @@ OVreturn_word OVOneToAny_GetKey(OVOneToAny *up,ov_word forward_value)
       register up_element *elem = up->elem;
       register ov_word index = up->forward[hash];
       register up_element *cur_elem = elem+(index-1);
+#ifdef DEBUG_OVOneToAny
+      fprintf(stderr,"OVOneToAnyGetKey-Debug: hash %d index %d\n",hash, index);
+#endif
+
       while(index) {
+#ifdef DEBUG_OVOneToAny
+        fprintf(stderr,"OVOneToAnyGetKey-Debug: index %d forward_value %d\n", index, cur_elem->forward_value);
+#endif
+
         if(cur_elem->forward_value==forward_value) {
           OVreturn_word result = { OVstatus_SUCCESS };
           result.word = cur_elem->reverse_value;
@@ -356,6 +368,9 @@ void OVOneToAny_Stats(OVOneToAny *up)
 
 OVstatus OVOneToAny_SetKey(OVOneToAny *up, ov_word forward_value, ov_word reverse_value)
 {
+#ifdef DEBUG_OVOneToAny
+      fprintf(stderr,"OVOneToAnySetKey-Debug: %d,%d\n",forward_value,reverse_value);
+#endif
   if(!up) {
     return_OVstatus_NULL_PTR;
   } else {
@@ -371,9 +386,8 @@ OVstatus OVOneToAny_SetKey(OVOneToAny *up, ov_word forward_value, ov_word revers
       fwd = up->forward[fwd_hash];
       
 #ifdef DEBUG_OVOneToAny
-      fprintf(stderr,"OVOneToAnySet-Debug: set %d,%d\n",forward_value,reverse_value);
-      fprintf(stderr,"OVOneToAnySet-Debug: fwd_hash %d rev_hash %d mask %d size %d\n",
-              fwd_hash,rev_hash,up->mask,up->size);
+      fprintf(stderr,"OVOneToAnySet-Debug: fwd_hash %d mask %d size %d\n",
+              fwd_hash,up->mask,up->size);
       fprintf(stderr,"OVOneToAnySet-Debug: before search fwd %d \n",fwd);
 #endif
       
@@ -391,25 +405,25 @@ OVstatus OVOneToAny_SetKey(OVOneToAny *up, ov_word forward_value, ov_word revers
         
         for(a=0;a<=up->mask;a++) {
           fprintf(stderr,
-"OVOneToAnySet-Debug: on entry %d forward hash %d:\n",
-                 a,up->forward[a]);
+"OVOneToAnySet-Debug: on entry %d forward[%d]=%d:\n",
+                 a,a,up->forward[a]);
         }
       }
 #endif
       
-      while(fwd) {
-        fwd_elem = elem+(fwd-1);
-        if(fwd_elem->forward_value==forward_value)
-          break;
-        fwd = fwd_elem->forward_next;
-      }
+        while(fwd) {
+          fwd_elem = elem+(fwd-1);
+          if(fwd_elem->forward_value==forward_value)
+            break;
+          fwd = fwd_elem->forward_next;
+        }
       }
       
-      if((fwd)||(!fwd)) {
+      if(fwd) {
         return_OVstatus_DUPLICATE;
       }
     }
-    if(!(fwd)) { 
+    if(!(fwd)) {  /* new entry */
       ov_size new_index;
       /* new pair */
 #ifdef DEBUG_OVOneToAny

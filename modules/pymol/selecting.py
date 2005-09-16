@@ -121,7 +121,7 @@ NOTES
     
     id_type_sc = Shortcut(id_type_dict.keys())
     
-    def select_list(name,object,id_list,id_type='index',show=-1,quiet=1):
+    def select_list(name,object,id_list,state=0,mode='id',quiet=1,):
         '''
 DESCRIPTION
     "select_list" is currently in development
@@ -129,18 +129,13 @@ DESCRIPTION
         '''
         #
         r = DEFAULT_ERROR
-        id_type = id_type_dict[id_type_sc.auto_err(id_type,'identifier type')]
+        mode = id_type_dict[id_type_sc.auto_err(mode,'identifier type')]
         try:
             lock()
-            r = _cmd.select_list(str(name),str(object),list(id_list),int(quiet),int(id_type))
-            show = int(show)
-            if is_ok(r) and show>0:
-                r = _cmd.onoff(str(name),1);
-            elif show == 0:
-                r = _cmd.onoff(str(name),0)
+            r = _cmd.select_list(str(name),str(object),list(id_list),int(state)-1,int(mode),int(quiet))
         finally:
-            unlock(r)   
-        if _raising(r): raise pymol.CmdException                  
+            unlock(r)
+        if _raising(r): raise pymol.CmdException
         return r
 
     def indicate(selection="(all)"):
