@@ -60,6 +60,7 @@ Z* -------------------------------------------------------------------
 #include"OVContext.h"
 #include"OVLexicon.h"
 #include"OVOneToOne.h"
+#include"OVOneToAny.h"
 
 #define cExecObject 0
 #define cExecSelection 1
@@ -5622,12 +5623,9 @@ int ExecutiveIterate(PyMOLGlobals *G,char *s1,char *expr,int read_only,int quiet
   return(op1.i1);
 }
 /*========================================================================*/
-int ExecutiveSelectList(PyMOLGlobals *G,char *sele_name,
-                        char *s1,PyObject *list,int quiet,int id_type)
+int ExecutiveSelectList(PyMOLGlobals *G,char *sele_name,char *s1,
+                        int *list,int list_len,int state, int mode, int quiet)
 {/* assumes a blocked Python interpreter */
-#ifdef _PYMOL_NOPY
-  return -1;
-#else
   int ok=true;
   int n_eval=0;
   int sele0 = SelectorIndexByName(G,s1);
@@ -5635,35 +5633,113 @@ int ExecutiveSelectList(PyMOLGlobals *G,char *sele_name,
   ObjectMolecule *obj = NULL;
   if(sele0>=0) obj = SelectorGetSingleObjectMolecule(G,sele0);
   if(obj) {
-    int n_atom = obj->NAtom;
-    int list_len = 0;
     int a;
     int index = 0;
-    int *idx_list = NULL;
-    if(ok) ok=PyList_Check(list);
-    if(ok) {
-      list_len = PyList_Size(list);
-      idx_list = Alloc(int,list_len);
-      ok = (idx_list!=NULL);
-    }
-    if(ok) {
+    int check_state = true;
+    CoordSet *cs = NULL;
+    if(state==-2)
+      state = ObjectGetCurrentState(&obj->Obj,true);
+    if(state>=0) {
+      cs = ObjectMoleculeGetCoordSet(obj,state);
+    } else
+      check_state = false;
+
+    if(ok&&list) {
       if(list_len) {
-        for(a=0;a<list_len;a++) {
+        switch(mode) {
+        case 0: /* object indices */
+          for(a=0;a<list_len;a++) {
+            list[a]--; /* convert 1-based indices to 0-based array offsets */
+          }
           if(ok) 
-            ok = PConvPyIntToInt(PyList_GetItem(list,a),&index);
-          else
-            break;
-          if((index<1)||(index>n_atom))
-            ok=false;
-          else
-            idx_list[a]=index-1;
+            n_sele = SelectorCreateOrderedFromObjectIndices(G,sele_name,obj,list,list_len);
+          break;
+        case 1: /* atom identifier */
+        case 2: /* rank */
+
+          {
+            OVOneToAny *o2a = OVOneToAny_New(G->Context->heap);
+            AtomInfoType *ai;
+            OVstatus res;
+            OVreturn_word ret;
+            ai = obj->AtomInfo;
+            int n_idx = 0;
+            int *idx_list = VLAlloc(int,list_len);
+
+            for(a=0;a<obj->NAtom;a++) {
+              ai->temp1 = -1;
+              ai++;
+            }
+
+            /* create linked list using temp1 as "next" field */
+
+            ai = obj->AtomInfo;
+            for(a=0;a<obj->NAtom;a++) {
+              if(mode==1) { /* id */
+                index = ai[a].id;
+              } else  /* rank */
+                index = ai[a].rank;
+              if((OVreturn_IS_ERROR( (res = OVOneToAny_SetKey(o2a,index, a))))) {
+                if((OVreturn_IS_ERROR( (ret = OVOneToAny_GetKey(o2a,index))))) {
+                  ok=false;
+                } else {
+                  int cur = ret.word;
+                  while(1) {
+                    if(ai[cur].temp1<0) {
+                      ai[cur].temp1 = a; 
+                      break; 
+                    } else {
+                      cur = ai[cur].temp1;
+                    }
+                  }
+                }
+              }
+            }
+            
+            {
+              int cur;
+              for(a=0;a<list_len;a++) {
+                index = list[a];
+                if((OVreturn_IS_OK( (ret = OVOneToAny_GetKey(o2a,index))))) {
+                  cur = ret.word;
+                  while(cur>=0) {
+                    if(check_state) {
+                      if(cs) {
+                        int ix;
+                        if(obj->DiscreteFlag) {
+                          if(cs==obj->DiscreteCSet[cur])
+                            ix=obj->DiscreteAtmToIdx[a];
+                          else
+                            ix=-1;
+                        } else 
+                          ix=cs->AtmToIdx[a];
+                        if(ix>=0) {
+                          VLACheck(idx_list, int, n_idx);
+                          idx_list[n_idx] = cur;
+                          n_idx++;
+                        }
+                      }
+                    } else {
+                      VLACheck(idx_list, int, n_idx);
+                      idx_list[n_idx] = cur;
+                      n_idx++;
+                    }
+                    cur = ai[cur].temp1;
+                  }
+                }
+              }
+            }
+            if(ok) 
+              n_sele = SelectorCreateOrderedFromObjectIndices(G,sele_name,obj,idx_list,n_idx);
+            OVOneToAny_DEL_AUTO_NULL(o2a);          
+            VLAFreeP(idx_list);
+          }
+          break;
+       
         }
-        if(ok) 
-          n_sele = SelectorCreateOrderedFromObjectIndices(G,sele_name,obj,idx_list,list_len);
       } else
         SelectorCreateEmpty(G,sele_name);
     }
-    FreeP(idx_list);
   } else {
     PRINTFB(G,FB_Executive,FB_Errors)
       " SelectList-Error: selection cannot span more than one object.\n"
@@ -5686,7 +5762,6 @@ int ExecutiveSelectList(PyMOLGlobals *G,char *sele_name,
     return -1;
   else
     return n_sele;
-#endif
 }
 
 

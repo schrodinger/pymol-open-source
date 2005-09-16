@@ -99,6 +99,9 @@ typedef struct _CPyMOL {
   OVOneToOne *Clip;  
   ov_word lex_near, lex_far, lex_move, lex_slab, lex_atoms;
 
+  OVOneToOne *SelectList;
+  ov_word lex_index, lex_id, lex_rank;
+
   OVOneToOne *Setting;
   ov_word lex_bonding_vdw_cutoff;
   ov_word lex_min_mesh_spacing;
@@ -653,6 +656,21 @@ static OVstatus PyMOL_InitAPI(CPyMOL *I)
   LEX_CLIP(slab,3);
   LEX_CLIP(atoms,4);
 
+#define LEX_SELLIST(NAME,CODE) {if(!OVreturn_IS_OK( (result= OVLexicon_GetFromCString(I->Lex,#NAME))))  \
+    return_OVstatus_FAILURE \
+    else \
+    I -> lex_ ## NAME = result.word;} \
+    if(!OVreturn_IS_OK( OVOneToOne_Set(I->SelectList,I->lex_ ## NAME, CODE)))  \
+      return_OVstatus_FAILURE;
+  
+  I->SelectList = OVOneToOne_New(C->heap);
+  if(!I->SelectList)
+    return_OVstatus_FAILURE;
+
+  LEX_SELLIST(index,0);
+  LEX_SELLIST(id,1);
+  LEX_SELLIST(rank,2);
+
   I->Setting = OVOneToOne_New(C->heap);
   if(!I->Setting)
     return_OVstatus_FAILURE;
@@ -1132,6 +1150,7 @@ static OVstatus PyMOL_PurgeAPI(CPyMOL *I)
 {
   OVOneToOne_DEL_AUTO_NULL(I->Setting);
   OVOneToOne_DEL_AUTO_NULL(I->Clip);
+  OVOneToOne_DEL_AUTO_NULL(I->SelectList);
   OVOneToOne_DEL_AUTO_NULL(I->Rep);
   OVLexicon_DEL_AUTO_NULL(I->Lex);
   return_OVstatus_SUCCESS;
@@ -1271,6 +1290,15 @@ static OVreturn_word get_clip_id(CPyMOL *I,char *clip)
   return OVOneToOne_GetForward(I->Clip,result.word);
 }
 
+static OVreturn_word get_select_list_mode(CPyMOL *I,char *mode)
+{
+  OVreturn_word result;
+  result = OVLexicon_BorrowFromCString(I->Lex,mode);
+  if(!OVreturn_IS_OK( (result = OVLexicon_BorrowFromCString(I->Lex,mode))))
+    return result;
+  return OVOneToOne_GetForward(I->SelectList,result.word);
+}
+
 PyMOLreturn_status PyMOL_CmdClip(CPyMOL *I,char *mode, float amount, char *selection, int state, int quiet)
 {
   OrthoLineType s1;
@@ -1288,6 +1316,16 @@ PyMOLreturn_status PyMOL_CmdSelect(CPyMOL *I,char *name, char *selection, int qu
 {
   int ok = SelectorCreate(I->G,name,selection,NULL,quiet,NULL);
   return return_status_ok(ok);
+}
+
+PyMOLreturn_status PyMOL_CmdSelectList(CPyMOL *I,char *name, char *object, int *list, int list_len, int state, char *mode, int quiet)
+{
+  OVreturn_word mode_id;
+  PyMOLreturn_status result = { PyMOLstatus_FAILURE };
+  if(OVreturn_IS_OK( (mode_id= get_select_list_mode(I,mode)))) {
+    result.status = ExecutiveSelectList(I->G,name, object,  list, list_len, state, mode_id.word, quiet);
+  }
+  return result;
 }
 
 PyMOLreturn_status PyMOL_CmdShow(CPyMOL *I,char *representation, char *selection, int quiet)

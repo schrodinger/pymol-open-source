@@ -254,6 +254,8 @@ PyMOLreturn_status PyMOL_CmdColor(CPyMOL *I,char *color, char *selection, int fl
 
 PyMOLreturn_status PyMOL_CmdSelect(CPyMOL *I,char *name, char *selection, int quiet);
 
+PyMOLreturn_status PyMOL_CmdSelectList(CPyMOL *I,char *name, char *object, int *list, int list_len, int state, char *mode, int quiet);
+
 PyMOLreturn_float_array PyMOL_CmdAlign(CPyMOL *I, char *source, char *target, float cutoff, 
                                        int cycles, float gap, float extend, int max_gap, 
                                        char *object, char *matrix, int source_state,

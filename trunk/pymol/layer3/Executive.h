@@ -119,7 +119,7 @@ void ExecutiveBond(PyMOLGlobals *G,char *s1,char *s2,int order,int add);
 int ExecutiveIterate(PyMOLGlobals *G,char *s1,char *expr,int read_only,int quiet,PyObject *space);
 int ExecutiveIterateList(PyMOLGlobals *G,char *s1,PyObject *list,int read_only,int quiet,PyObject *space);
 int ExecutiveSelectList(PyMOLGlobals *G,char *sele_name,char *s1,
-                        PyObject *list,int quiet,int id_type);
+                        int *list,int list_len,int state, int mode, int quiet);
 void ExecutiveLabel(PyMOLGlobals *G,char *s1,char *expr,int quiet);
 void ExecutiveIterateState(PyMOLGlobals *G,int i1,char *s1,char *expr,int read_only,
                            int atomic_props,int quiet,PyObject *space);

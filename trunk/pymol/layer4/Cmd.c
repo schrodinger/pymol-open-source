@@ -2686,15 +2686,23 @@ static PyObject *CmdSelectList(PyObject *self,   PyObject *args)
   int quiet;
   int result=0;
   int ok=false;
-  int id_type;
+  int mode;
+  int state;
   PyObject *list;
-  ok = PyArg_ParseTuple(args,"ssOii",&sele_name,&str1,&list,&quiet,&id_type);
+  ok = PyArg_ParseTuple(args,"ssOiii",&sele_name,&str1,&list,&state,&mode,&quiet);
   if (ok) { 
+    int *int_array = NULL;
     APIEnterBlocked(); 
     ok = (SelectorGetTmp(TempPyMOLGlobals,str1,s1)>=0);
-    result=ExecutiveSelectList(TempPyMOLGlobals,sele_name,s1,list,quiet,id_type); 
-    SceneDirty(TempPyMOLGlobals);
-    SeqDirty(TempPyMOLGlobals);
+    if(ok) ok = PyList_Check(list);
+    if(ok) ok = PConvPyListToIntArray(list,&int_array);
+    if(ok) {
+      int list_len = PyList_Size(list);
+      result=ExecutiveSelectList(TempPyMOLGlobals,sele_name,s1,int_array,list_len,state,mode,quiet); 
+      SceneDirty(TempPyMOLGlobals);
+      SeqDirty(TempPyMOLGlobals);
+    }
+    FreeP(int_array);
     APIExitBlocked();
   }
   return Py_BuildValue("i",result);
