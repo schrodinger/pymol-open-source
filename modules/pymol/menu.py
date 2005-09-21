@@ -1269,7 +1269,7 @@ def seq_option(title,s,object=0):
         [ 0, ''             , ''                      ],      
         [ 1, 'create object','cmd.create(None,"'+s+'")'            ],            
         [ 0, ''             , ''                      ],
-        [ 1, 'remove'      , 'cmd.remove("'+s+'")' ],     
+        [ 1, 'remove atoms' , 'cmd.remove("'+s+'")' ],     
                           ])
     return result
     
