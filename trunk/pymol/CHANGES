@@ -4,6 +4,10 @@ CHANGE LOG
 
 Changes up to 0.99
 
+    beta16
+
+    * patched memory leak with dihedral display
+
     beta15
 
     * possible bug fix for settings storage related to corrupted sessions?

@@ -258,9 +258,10 @@ void DistSetFree(DistSet *I)
 	 {
 	 VLAFreeP(I->AngleCoord);
 	 VLAFreeP(I->DihedralCoord);
-    VLAFreeP(I->LabelCoord);
+     VLAFreeP(I->LabelCoord);
 	 VLAFreeP(I->Coord);
 	 VLAFreeP(I->Rep);
+     SettingFreeP(I->Setting);
 	 OOFreeP(I);
 	 }
 }

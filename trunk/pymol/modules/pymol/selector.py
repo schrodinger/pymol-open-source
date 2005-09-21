@@ -7,8 +7,8 @@ pat_re = re.compile(r'[^ \(\)\!\&\|]*\/[^ \(\)\!\&\|]*')
 num_re = re.compile(r'1|2|3|4|5|6|7|8|9|0')
 
 def process(sele): # expand slash notation into a standard atom selection
-
-    sele = str(sele)
+    # convert unicode hyphens to dashes
+    sele = string.replace(str(sele),u'\u2212','-')
     if string.find(sele,'/')<0:
         return sele
     while 1:
