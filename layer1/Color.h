@@ -33,6 +33,9 @@ typedef char ColorName[24];
 #define cColorCurAuto     -3
 #define cColorAtomic      -4
 
+#define cColor_TRGB_Bits  0x40000000
+#define cColor_TRGB_Mask  0xC0000000
+
 typedef struct {
   ColorName Name;
   Vector3f Color,Clamped;
@@ -55,6 +58,8 @@ struct _CColor {
   int BigEndian;
   OVLexicon *Lex;
   OVOneToOne *Idx;
+  float RGBColor[3]; /* save global float for returning (float*) */
+  char RGBName[10];
 };
 
 int ColorInit(PyMOLGlobals *G);

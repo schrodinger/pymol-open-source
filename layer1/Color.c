@@ -80,7 +80,6 @@ static int nAutoColor = 40;
 
 #define cColorExtCutoff (-10)
 
-
 void ColorGetBkrdContColor(PyMOLGlobals *G,float *rgb, int invert_flag) 
 {
   float *bkrd=SettingGetfv(G,cSetting_bg_rgb);
@@ -494,6 +493,15 @@ int ColorGetIndex(PyMOLGlobals *G,char *name)
         return -1;
     }
   }
+  if((name[0]=='0')&&(name[1]=='x')) { /* explicit hex RGB 0x000000 */
+    int tmp_color;
+    if(sscanf(name+2,"%x",&tmp_color)==1) {
+      tmp_color = ( cColor_TRGB_Bits |
+                    (tmp_color     &0x00FFFFFF) | 
+                    ((tmp_color>>2)&0x3F000000));
+      return tmp_color;
+    }
+  }
   if(WordMatch(G,name,"default",true))
     return(-1);
   if(WordMatch(G,name,"auto",true))
@@ -502,7 +510,6 @@ int ColorGetIndex(PyMOLGlobals *G,char *name)
     return(ColorGetCurrent(G));
   if(WordMatch(G,name,"atomic",true))
     return(cColorAtomic);
-
   if(!I->Lex) { /* populate the dictionary */
 
     OVreturn_word result;
@@ -557,7 +564,16 @@ char *ColorGetName(PyMOLGlobals *G,int index)
   register CColor *I=G->Color;
   if((index>=0)&&(index<I->NColor))
     return(I->Color[index].Name);
-  else
+  else if((index&cColor_TRGB_Mask)==cColor_TRGB_Bits) {
+    index = (((index&0xFFFFFF) | 
+              ((index<<2)&0xFC000000) | /* convert 6 bits of trans into 8 */
+              ((index>>4)&0x03000000)));
+    if(index&0xFF000000) /* if transparent */
+      sprintf(I->RGBName,"%08x",index);
+    else /* else */
+      sprintf(I->RGBName,"%06x",index);
+    return I->RGBName;
+  } else
     return(NULL);
 }
 /*========================================================================*/
@@ -738,7 +754,8 @@ void ColorReset(PyMOLGlobals *G)
     { 0.0, 1.0, 1.0 }, /* cyan - 999 */
   };
 
-  float spectrumO[29][3] = { /* a rainbow with perceptive color balancing and extra blue/red at the ends */
+  float spectrumO[29][3] = { 
+    /* a rainbow with perceptive color balancing and extra blue/red at the ends */
     { 1.0, 0.0,  1.0 }, /* violet */
     { 0.8F,0.0,  1.0 }, 
 
@@ -2024,8 +2041,6 @@ void ColorReset(PyMOLGlobals *G)
 
   n_color++;
 
-  /* if any more colors need to be added, add them here at the end so that existing files won't have their colors changed */
-
   for(a=0;a<n_color;a++) { 
     /* mark all current colors non-custom so that they don't get saved in session files */
     color[a].Custom=false;
@@ -2208,19 +2223,120 @@ int ColorTableLoad(PyMOLGlobals *G,char *fname,int quiet)
   return(ok);
 }
 
+static void clamp_color(unsigned int *table, float *in, float *out, int big_endian)
+{
+  unsigned int r,g,b,rr,gr,br;
+  unsigned int ra,ga,ba;
+  unsigned int rc[2][2][2],gc[2][2][2],bc[2][2][2];
+  unsigned int *entry;
+
+  float fr,fg,fb,frm1,fgm1,fbm1,rct,gct,bct;
+  int x,y,z;  
+  const float _1 = 1.0F, _2 = 2.0F, _0 = 0.0F, _05 = 0.5F,
+    _04999 = 0.4999F;
+  const float inv255 = 1.0F/255.0F;
+
+  r = ((int)(255*in[0]+_05))&0xFF;
+  g = ((int)(255*in[1]+_05))&0xFF;
+  b = ((int)(255*in[2]+_05))&0xFF;
+
+  rr = r&0x3;
+  gr = g&0x3;
+  br = b&0x3;
+  
+  r = (r>>2);
+  g = (g>>2);
+  b = (b>>2);
+  
+  /* now for a crude little trilinear */
+  
+  for(x=0;x<2;x++) {
+    ra = r + x;
+    if(ra>63) ra=63;
+    for(y=0;y<2;y++) {
+      ga = g + y;
+      if(ga>63) ga=63;
+      for(z=0;z<2;z++) {
+        ba = b + z;
+        if(ba>63) ba=63;
+        
+        entry = table + (ra<<12) + (ga<<6) + ba;
+        
+        if(big_endian) {
+          rc[x][y][z] = 0xFF&((*entry)>>24);
+          gc[x][y][z] = 0xFF&((*entry)>>16);
+          bc[x][y][z] = 0xFF&((*entry)>>8);
+        } else {
+          rc[x][y][z] = 0xFF&((*entry)    );
+          gc[x][y][z] = 0xFF&((*entry)>> 8);
+          bc[x][y][z] = 0xFF&((*entry)>>16);
+        }
+      }
+    }
+  }
+  
+  frm1 = rr/4.0F;
+  fgm1 = gr/4.0F;
+  fbm1 = br/4.0F;
+  
+  fr = 1.0F - frm1;
+  fg = 1.0F - fgm1;
+  fb = 1.0F - fbm1;
+  
+  rct = _04999 + 
+    (fr   * fg   * fb   * rc[0][0][0]) + 
+    (frm1 * fg   * fb   * rc[1][0][0]) + 
+    (fr   * fgm1 * fb   * rc[0][1][0]) + 
+    (fr   * fg   * fbm1 * rc[0][0][1]) + 
+    (frm1 * fgm1 * fb   * rc[1][1][0]) + 
+    (fr   * fgm1 * fbm1 * rc[0][1][1]) + 
+    (frm1 * fg   * fbm1 * rc[1][0][1]) + 
+    (frm1 * fgm1 * fbm1 * rc[1][1][1]);
+  
+  gct = _04999 + 
+    (fr   * fg   * fb   * gc[0][0][0]) + 
+    (frm1 * fg   * fb   * gc[1][0][0]) + 
+    (fr   * fgm1 * fb   * gc[0][1][0]) + 
+    (fr   * fg   * fbm1 * gc[0][0][1]) + 
+    (frm1 * fgm1 * fb   * gc[1][1][0]) + 
+    (fr   * fgm1 * fbm1 * gc[0][1][1]) + 
+    (frm1 * fg   * fbm1 * gc[1][0][1]) + 
+    (frm1 * fgm1 * fbm1 * gc[1][1][1]);
+  
+  bct = _04999 + 
+    (fr   * fg   * fb   * bc[0][0][0]) + 
+    (frm1 * fg   * fb   * bc[1][0][0]) + 
+    (fr   * fgm1 * fb   * bc[0][1][0]) + 
+    (fr   * fg   * fbm1 * bc[0][0][1]) + 
+    (frm1 * fgm1 * fb   * bc[1][1][0]) + 
+    (fr   * fgm1 * fbm1 * bc[0][1][1]) + 
+    (frm1 * fg   * fbm1 * bc[1][0][1]) + 
+    (frm1 * fgm1 * fbm1 * bc[1][1][1]);
+  
+  if(r>=63) rct+=rr;
+  if(g>=63) gct+=gr;
+  if(b>=63) bct+=br;
+  
+  if(rct<=_2) rct=_0; /* make sure black is black */
+  if(gct<=_2) gct=_0;
+  if(bct<=_2) bct=_0;
+        
+  out[0] = rct*inv255;
+  out[1] = gct*inv255;
+  out[2] = bct*inv255;
+  if(out[0]>_1) out[0]=_1;
+  if(out[1]>_1) out[1]=_1;
+  if(out[2]>_1) out[2]=_1;
+
+}
+
 /*========================================================================*/
 void ColorUpdateClamp(PyMOLGlobals *G,int index)
 {
   int i;
   int once=false;
   register CColor *I=G->Color; 
-  unsigned int *entry;
   float *color,*new_color;
-  unsigned int r,g,b,rr,gr,br;
-  unsigned int ra,ga,ba;
-  unsigned int rc[2][2][2],gc[2][2][2],bc[2][2][2];
-  float fr,fg,fb,frm1,fgm1,fbm1,rct,gct,bct;
-  int x,y,z;
 
   i = index;
   if(index>=0) {
@@ -2234,99 +2350,9 @@ void ColorUpdateClamp(PyMOLGlobals *G,int index)
         I->Color[index].ClampedFlag = false;
       } else {
         color = I->Color[index].Color;
-        r = ((int)(255*color[0]+0.5F))&0xFF;
-        g = ((int)(255*color[1]+0.5F))&0xFF;
-        b = ((int)(255*color[2]+0.5F))&0xFF;
-
-        rr = r&0x3;
-        gr = g&0x3;
-        br = b&0x3;
-
-        r = (r>>2);
-        g = (g>>2);
-        b = (b>>2);
-
-        /* now for a crude little trilinear */
-
-        for(x=0;x<2;x++) {
-          ra = r + x;
-          if(ra>63) ra=63;
-          for(y=0;y<2;y++) {
-            ga = g + y;
-            if(ga>63) ga=63;
-            for(z=0;z<2;z++) {
-              ba = b + z;
-              if(ba>63) ba=63;
-              
-              entry = I->ColorTable + (ra<<12) + (ga<<6) + ba;
-              
-              if(I->BigEndian) {
-                rc[x][y][z] = 0xFF&((*entry)>>24);
-                gc[x][y][z] = 0xFF&((*entry)>>16);
-                bc[x][y][z] = 0xFF&((*entry)>>8);
-              } else {
-                rc[x][y][z] = 0xFF&((*entry)    );
-                gc[x][y][z] = 0xFF&((*entry)>> 8);
-                bc[x][y][z] = 0xFF&((*entry)>>16);
-              }
-            }
-          }
-        }
-
-        frm1 = rr/4.0F;
-        fgm1 = gr/4.0F;
-        fbm1 = br/4.0F;
-        
-        fr = 1.0F - frm1;
-        fg = 1.0F - fgm1;
-        fb = 1.0F - fbm1;
-
-        rct = 0.4999F + 
-          (fr   * fg   * fb   * rc[0][0][0]) + 
-          (frm1 * fg   * fb   * rc[1][0][0]) + 
-          (fr   * fgm1 * fb   * rc[0][1][0]) + 
-          (fr   * fg   * fbm1 * rc[0][0][1]) + 
-          (frm1 * fgm1 * fb   * rc[1][1][0]) + 
-          (fr   * fgm1 * fbm1 * rc[0][1][1]) + 
-          (frm1 * fg   * fbm1 * rc[1][0][1]) + 
-          (frm1 * fgm1 * fbm1 * rc[1][1][1]);
-
-        gct = 0.4999F + 
-          (fr   * fg   * fb   * gc[0][0][0]) + 
-          (frm1 * fg   * fb   * gc[1][0][0]) + 
-          (fr   * fgm1 * fb   * gc[0][1][0]) + 
-          (fr   * fg   * fbm1 * gc[0][0][1]) + 
-          (frm1 * fgm1 * fb   * gc[1][1][0]) + 
-          (fr   * fgm1 * fbm1 * gc[0][1][1]) + 
-          (frm1 * fg   * fbm1 * gc[1][0][1]) + 
-          (frm1 * fgm1 * fbm1 * gc[1][1][1]);
-
-        bct = 0.4999F + 
-          (fr   * fg   * fb   * bc[0][0][0]) + 
-          (frm1 * fg   * fb   * bc[1][0][0]) + 
-          (fr   * fgm1 * fb   * bc[0][1][0]) + 
-          (fr   * fg   * fbm1 * bc[0][0][1]) + 
-          (frm1 * fgm1 * fb   * bc[1][1][0]) + 
-          (fr   * fgm1 * fbm1 * bc[0][1][1]) + 
-          (frm1 * fg   * fbm1 * bc[1][0][1]) + 
-          (frm1 * fgm1 * fbm1 * bc[1][1][1]);
-
-        if(r>=63) rct+=rr;
-        if(g>=63) gct+=gr;
-        if(b>=63) bct+=br;
-
-        if(rct<=2.0F) rct=0.0F; /* make sure black is black */
-        if(gct<=2.0F) gct=0.0F;
-        if(bct<=2.0F) bct=0.0F;
-
         new_color = I->Color[index].Clamped;
-        new_color[0] = rct/255.0F;
-        if(new_color[0]>1.0F) new_color[0]=1.0F;
-        new_color[1] = gct/255.0F;
-        if(new_color[1]>1.0F) new_color[1]=1.0F; 
-        new_color[2] = bct/255.0F;
-        if(new_color[2]>1.0F) new_color[2]=1.0F;
-
+        clamp_color(I->ColorTable, color, new_color, I->BigEndian);
+        
         PRINTFD(G,FB_Color)
           "%5.3f %5.3f %5.3f -> %5.3f %5.3f %5.3f\n",
                color[0],color[1],color[2],
@@ -2376,7 +2402,16 @@ float *ColorGet(PyMOLGlobals *G,int index)
     else
       ptr = I->Color[index].Color;
     return(ptr);
-  } else /* invalid color id, then simply return white */
+  } else if((index&cColor_TRGB_Mask)==cColor_TRGB_Bits) { /* a 24-bit RGB color */
+    I->RGBColor[0] = ((index&0x00FF0000) >> 16) / 255.0F;
+    I->RGBColor[1] = ((index&0x0000FF00) >> 8 ) / 255.0F;
+    I->RGBColor[2] = ((index&0x000000FF)      ) / 255.0F;
+    if(I->ColorTable)
+      clamp_color(I->ColorTable, I->RGBColor, I->RGBColor, I->BigEndian);
+    return I->RGBColor;
+  } else {
+            /* invalid color id, then simply return white */
 	 return(I->Color[0].Color);
+  }
 }
 

@@ -6,6 +6,10 @@ Changes up to 0.99
 
     beta16
 
+    * color by explicit 24-bit hex RGB triplets: 0xffffff
+
+    * unicode hyphens in selections now converted to ASCII dashes
+
     * patched memory leak with dihedral display
 
     beta15
