@@ -495,7 +495,7 @@ int ColorGetIndex(PyMOLGlobals *G,char *name)
   }
   if((name[0]=='0')&&(name[1]=='x')) { /* explicit hex RGB 0x000000 */
     int tmp_color;
-    if(sscanf(name+2,"%x",&tmp_color)==1) {
+    if(sscanf(name+2,"%x",(unsigned int*)&tmp_color)==1) {
       tmp_color = ( cColor_TRGB_Bits |
                     (tmp_color     &0x00FFFFFF) | 
                     ((tmp_color>>2)&0x3F000000));
