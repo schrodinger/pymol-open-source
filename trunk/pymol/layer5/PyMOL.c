@@ -1360,13 +1360,28 @@ PyMOLreturn_status PyMOL_CmdHide(CPyMOL *I,char *representation, char *selection
 
 PyMOLreturn_status PyMOL_CmdEnable(CPyMOL *I,char *name,int quiet)
 {
-  int ok = ExecutiveSetObjVisib(I->G,name,true);
+  int ok = false; 
+  if(name[0]=='(') {
+    OrthoLineType s1;
+    ok = (SelectorGetTmp(I->G,name,s1)>=0);
+    if(ok) ok = ExecutiveSetOnOffBySele(I->G,s1,true);
+    SelectorFreeTmp(I->G,s1);
+  }
+  ok = ExecutiveSetObjVisib(I->G,name,true);
   return return_status_ok(ok);
 }
 
 PyMOLreturn_status PyMOL_CmdDisable(CPyMOL *I,char *name,int quiet)
 {
-  int ok = ExecutiveSetObjVisib(I->G,name,false);
+  int ok = false;
+  if(name[0]=='(') {
+    OrthoLineType s1;
+    ok = (SelectorGetTmp(I->G,name,s1)>=0);
+    if(ok) ok = ExecutiveSetOnOffBySele(I->G,s1,false);
+    SelectorFreeTmp(I->G,s1);
+  } else {
+    ok = ExecutiveSetObjVisib(I->G,name,false);
+  }
   return return_status_ok(ok);
 }
 
