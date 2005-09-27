@@ -35,7 +35,7 @@ def missing_c_termini(selection="(all)",quiet=0):
             if len(atom_tag[1])==1: # one and only one match
                 if atom_tag[1][0]==0:
                     sele_list.append(atom_tag[0])
-    cmd.select_list(tmp_sele1,selection,sele_list)
+    cmd.select_list(tmp_sele1,selection,sele_list, mode='index')
     while cmd.pop(tmp_sele2,tmp_sele1)>0: # complete the carboxy terminus
         cmd.edit(tmp_sele2)
         cmd.attach("O",1,1,"OXT",quiet=1)

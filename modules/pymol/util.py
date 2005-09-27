@@ -75,21 +75,21 @@ def protein_assign_charges_and_radii(obj_name):
     print " Util: Fixing termini and assigning formal charges..."
     
     assign.missing_c_termini(obj_name,quiet=1)
-    if not assign.formal_charges(obj_name,quiet=1):
+
+    while not assign.formal_charges(obj_name,quiet=1):
         print " WARNING: unrecognized or incomplete residues are being deleted:"
         cmd.iterate("(byres ("+obj_name+" and flag 23)) and flag 31",
                         'print "  "+model+"/"+segi+"/"+chain+"/"+resn+"`"+resi+"/"',quiet=1)
         cmd.remove("byres ("+obj_name+" and flag 23)") # get rid of residues that weren't assigned
         assign.missing_c_termini(obj_name,quiet=1)
-        assign.formal_charges(obj_name,quiet=1)
-
+        
     print " Util: Assigning Amber 99 charges and radii..."
     
     cmd.h_add(obj_name)
     if not assign.amber99(obj_name,quiet=1):
         print " WARNING: some unassigned atoms are being deleted:"
         cmd.iterate("byres ("+obj_name+" and flag 23)",
-                        'print "  "+model+"/"+segi+"/"+chain+"/"+resn+"`"+resi+"/? ["+elem+"]"',quiet=1)
+                        'print "  "+model+"/"+segi+"/"+chain+"/"+resn+"`"+resi+"/"+name+"? ["+elem+"]"',quiet=1)
         cmd.remove(obj_name+" and flag 23") # get rid of any atoms that weren't assigned
         
     # show the user what the net charges are...
@@ -112,7 +112,10 @@ def protein_vacuum_esp(selection, mode=2,border=10.0,quiet = 1):
     cmd.delete(obj_name)
     cmd.delete(map_name)
     cmd.delete(pot_name)
-    cmd.create(obj_name,"polymer and ("+selection+") and (not resn A+C+T+G+U) and (not hydro)") # try to just get protein...
+    cmd.create(obj_name,"((polymer and ("+selection+
+               ") and (not resn A+C+T+G+U)) or ((bymol (polymer and ("+
+               selection+"))) and resn NME+NHE+ACE)) and (not hydro)")
+         # try to just get protein...
 
     protein_assign_charges_and_radii(obj_name)
         

@@ -157,7 +157,7 @@ formal_charge_dict = {
 ],
 'HIS': [
    (
-      'N<0>C<1>(C<2>C<3>=1N<4>=C<5>N<6>C<7>=1)C<8>=O<9>',
+      'N<0>C<1>(C<2>C<3>1-N<4>=C<5>N<6>C<7>=1)C<8>=O<9>',
       {
          0: 0,
          1: 0,
@@ -174,7 +174,7 @@ formal_charge_dict = {
 ],
 'HIP': [
    (
-      'N<0>C<1>(C<2>C<3>=1N<4>=C<5>N<6>C<7>=1)C<8>=O<9>',
+      'N<0>C<1>(C<2>C<3>1-N<4>=C<5>N<6>C<7>=1)C<8>=O<9>',
       {
          0: 0,
          1: 0,
@@ -189,26 +189,9 @@ formal_charge_dict = {
       },
    ),
 ],
-'HIE': [
-   (
-      'N<0>C<1>(C<2>C<3>=1N<4>=C<5>N<6>C<7>=1)C<8>=O<9>',
-      {
-         0: 0,
-         1: 0,
-         2: 0,
-         3: 0,
-         4: 0,
-         5: 0,
-         6: 0,
-         7: 0,
-         8: 0,
-         9: 0,
-      },
-   ),
-],
 'HID': [
    (
-      'N<0>C<1>(C<2>C<3>=1N<4>C<5>=N<6>C<7>=1)C<8>=O<9>',
+      'N<0>C<1>(C<2>C<3>1-N<4>C<5>=N<6>C<7>=1)C<8>=O<9>',
       {
          0: 0,
          1: 0,
@@ -286,7 +269,7 @@ formal_charge_dict = {
 ],
 'PHE': [
    (
-      'N<0>C<1>(C<2>C<3>=1C<4>=C<5>C<6>=C<7>C<8>=1)C<9>=O<10>',
+      'N<0>C<1>(C<2>C<3>1C<4>=C<5>C<6>=C<7>C<8>=1)C<9>=O<10>',
       {
          0: 0,
          1: 0,
@@ -366,7 +349,7 @@ formal_charge_dict = {
 ],
 'TYR': [
    (
-      'N<0>C<1>(C<2>C<3>=1C<4>=C<5>C<6>(O<7>)=C<8>C<9>=1)C<10>=O<11>',
+      'N<0>C<1>(C<2>C<3>1C<4>=C<5>C<6>(O<7>)=C<8>C<9>=1)C<10>=O<11>',
       {
          0: 0,
          1: 0,
@@ -422,3 +405,16 @@ formal_charge_dict = {
    ),
 ],
 }
+
+for alias in (
+    ( 'HIE', 'HIS'), # default HIS is HISE
+    ( 'HISE', 'HIS'),
+    ( 'HISD', 'HID'),
+    ( 'HISP', 'HIP'),
+    ( 'GLUM', 'GLU'), # default -1
+    ( 'ASPM', 'ASP'), # default -1
+    ( 'LYSP', 'LYS'), # default +1
+    ( 'ARGP', 'ARG'), # default +1
+    ):
+    formal_charge_dict[alias[0]] = formal_charge_dict[alias[1]]
+
