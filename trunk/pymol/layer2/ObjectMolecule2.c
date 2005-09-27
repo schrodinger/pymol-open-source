@@ -3064,23 +3064,41 @@ int ObjectMoleculeConnect(ObjectMolecule *I,BondType **bond,AtomInfoType *ai,
                                           switch(ai1->resn[0]) {
                                           case 'A':
                                             switch(ai1->resn[1]) {
-                                            case 'R': /* ARG */
-                                              if(!strcmp(ai1->name,"NH1")) 
-                                                ai1->formalCharge=1;
-                                              else if(!strcmp(ai2->name,"NH1")) 
-                                                ai2->formalCharge=1;
-                                              if(((!strcmp(ai1->name,"CZ"))&&(!strcmp(ai2->name,"NH1")))||
-                                                 ((!strcmp(ai2->name,"CZ"))&&(!strcmp(ai1->name,"NH1")))) 
-                                                order=2;
+                                            case 'R': 
+                                              switch(ai1->resn[2]) {   
+                                              case 'G': /* ARG... */
+                                                switch(ai1->resn[3]) {   
+                                                case 0:
+                                                case 'P': /*  ARG, ARGP */
+                                                  if(!strcmp(ai1->name,"NH1")) 
+                                                    ai1->formalCharge=1;
+                                                  else if(!strcmp(ai2->name,"NH1")) 
+                                                    ai2->formalCharge=1;
+                                                  break;
+                                                }
+                                                if(((!strcmp(ai1->name,"CZ"))&&(!strcmp(ai2->name,"NH1")))||
+                                                   ((!strcmp(ai2->name,"CZ"))&&(!strcmp(ai1->name,"NH1")))) 
+                                                  order=2;
+                                                break;
+                                              }
                                               break;
                                             case 'S': 
                                               switch(ai1->resn[2]) {
-                                              case 'P': /* ASP */
-                                                if(!strcmp(ai1->name,"OD2")) 
-                                                  ai1->formalCharge=-1;
-                                                else if(!strcmp(ai2->name,"OD2")) 
-                                                  ai2->formalCharge=-1;
-                                              case 'N': /* ASN or ASP */
+                                              case 'P': /* ASP... */
+                                                switch(ai1->resn[3]) {
+                                                case 0:
+                                                case 'M': /* ASP, ASPM minus assumption */
+                                                  if(!strcmp(ai1->name,"OD2")) 
+                                                    ai1->formalCharge=-1;
+                                                  else if(!strcmp(ai2->name,"OD2")) 
+                                                    ai2->formalCharge=-1;
+                                                  break;
+                                                }
+                                                if(((!strcmp(ai1->name,"CG"))&&(!strcmp(ai2->name,"OD1")))||
+                                                   ((!strcmp(ai2->name,"CG"))&&(!strcmp(ai1->name,"OD1")))) 
+                                                  order=2;
+                                                break;
+                                              case 'N': /* ASN  */
                                                 if(((!strcmp(ai1->name,"CG"))&&(!strcmp(ai2->name,"OD1")))||
                                                    ((!strcmp(ai2->name,"CG"))&&(!strcmp(ai1->name,"OD1")))) 
                                                   order=2;
@@ -3139,11 +3157,20 @@ int ObjectMoleculeConnect(ObjectMolecule *I,BondType **bond,AtomInfoType *ai,
                                             switch(ai1->resn[1]) {
                                             case 'L': 
                                               switch(ai1->resn[2]) {
-                                              case 'U': /* GLU */
-                                                if(!strcmp(ai1->name,"OE2")) 
-                                                  ai1->formalCharge=-1;
-                                                else if(!strcmp(ai2->name,"OE2")) 
-                                                  ai2->formalCharge=-1;
+                                              case 'U': /* GLU missing GLUN, GLUH, GLH handling */
+                                                switch(ai1->resn[3]) {                                                
+                                                case 0:
+                                                case 'M': /* minus */
+                                                  if(!strcmp(ai1->name,"OE2")) 
+                                                    ai1->formalCharge=-1;
+                                                  else if(!strcmp(ai2->name,"OE2")) 
+                                                    ai2->formalCharge=-1;
+                                                  break;
+                                                }
+                                                if(((!strcmp(ai1->name,"CD"))&&(!strcmp(ai2->name,"OE1")))||
+                                                   ((!strcmp(ai2->name,"CD"))&&(!strcmp(ai1->name,"OE1")))) 
+                                                  order=2;
+                                                break;
                                               case 'N': /* GLN or GLU */
                                                 if(((!strcmp(ai1->name,"CD"))&&(!strcmp(ai2->name,"OE1")))||
                                                    ((!strcmp(ai2->name,"CD"))&&(!strcmp(ai1->name,"OE1")))) 
@@ -3190,7 +3217,8 @@ int ObjectMoleculeConnect(ObjectMolecule *I,BondType **bond,AtomInfoType *ai,
                                                 break;
                                               case 'S':
                                                 switch(ai1->resn[3]) {
-                                                case 'A': /* HISA  */
+                                                case 'A': /* HISA Gromacs */
+                                                case 'D': /* HISD Quanta */
                                                   if(((!strcmp(ai1->name,"CG"))&&(!strcmp(ai2->name,"CD2")))||
                                                      ((!strcmp(ai2->name,"CG"))&&(!strcmp(ai1->name,"CD2")))) 
                                                     order=2;
@@ -3200,6 +3228,7 @@ int ObjectMoleculeConnect(ObjectMolecule *I,BondType **bond,AtomInfoType *ai,
                                                   break;
                                                 case 0: /* plain HIS */
                                                 case 'B': /* HISB Gromacs */
+                                                case 'E': /* HISE Quanta */
                                                   if(((!strcmp(ai1->name,"CG"))&&(!strcmp(ai2->name,"CD2")))||
                                                      ((!strcmp(ai2->name,"CG"))&&(!strcmp(ai1->name,"CD2")))) 
                                                     order=2;
@@ -3207,7 +3236,8 @@ int ObjectMoleculeConnect(ObjectMolecule *I,BondType **bond,AtomInfoType *ai,
                                                           ((!strcmp(ai2->name,"CE1"))&&(!strcmp(ai1->name,"ND1")))) 
                                                     order=2;
                                                   break;
-                                                case 'H': /* HISH */
+                                                case 'H': /* HISH Gromacs */
+                                                case 'P': /* HISP Quanta */
                                                   if(!strcmp(ai1->name,"ND1")) 
                                                     ai1->formalCharge=1;
                                                   else if(!strcmp(ai2->name,"ND1")) 
@@ -3221,7 +3251,7 @@ int ObjectMoleculeConnect(ObjectMolecule *I,BondType **bond,AtomInfoType *ai,
                                                   break;
                                                 }
                                                 break;
-                                              case 'E':
+                                              case 'E': /* HIE */
                                                 if(((!strcmp(ai1->name,"CG"))&&(!strcmp(ai2->name,"CD2")))||
                                                    ((!strcmp(ai2->name,"CG"))&&(!strcmp(ai1->name,"CD2")))) 
                                                   order=2;
@@ -3229,7 +3259,7 @@ int ObjectMoleculeConnect(ObjectMolecule *I,BondType **bond,AtomInfoType *ai,
                                                         ((!strcmp(ai2->name,"CE1"))&&(!strcmp(ai1->name,"ND1")))) 
                                                   order=2;
                                                 break;
-                                              case 'D':
+                                              case 'D': /* HID */
                                                 if(((!strcmp(ai1->name,"CG"))&&(!strcmp(ai2->name,"CD2")))||
                                                    ((!strcmp(ai2->name,"CG"))&&(!strcmp(ai1->name,"CD2")))) 
                                                   order=2;
@@ -3283,10 +3313,23 @@ int ObjectMoleculeConnect(ObjectMolecule *I,BondType **bond,AtomInfoType *ai,
                                             }
                                             break;
                                           case 'L':
-                                            if(!strcmp(ai1->name,"NZ")) 
-                                              ai1->formalCharge=1;
-                                            else if(!strcmp(ai2->name,"NZ")) 
-                                              ai2->formalCharge=1;
+                                            switch(ai1->resn[1]) {
+                                            case 'Y':
+                                              switch(ai1->resn[2]) {
+                                              case 'S': /* LYS. */
+                                                switch(ai1->resn[3]) {                                                
+                                                case 0:
+                                                case 'P': /* LYS, LYSP */
+                                                  if(!strcmp(ai1->name,"NZ")) 
+                                                    ai1->formalCharge=1;
+                                                  else if(!strcmp(ai2->name,"NZ")) 
+                                                    ai2->formalCharge=1;
+                                                  break;
+                                                }
+                                                break;
+                                              }
+                                              break;
+                                            }
                                             break;
                                           case 'T':
                                             switch(ai1->resn[1]) {

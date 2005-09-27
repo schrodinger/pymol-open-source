@@ -484,14 +484,14 @@ def compute(s):
 
 def vacuum(s):
     return [[ 2, 'Vacuum Electrostatics:'       ,''                        ],
-              [ 2, '\\955WARNING:\\595 Unvalidated and experimental code!', '' ],
+#              [ 2, '\\955WARNING:\\595 Unvalidated and experimental code!', '' ],
               [ 1, 'protein contact potential (local)', 'util.protein_vacuum_esp("'+s+'",mode=2,quiet=0)'          ],
 #           [ 1, 'protein surface potential (absolute)', 'util.protein_vacuum_esp("'+s+'",mode=0,quiet=0)'          ],
 #           [ 1, 'protein surface potential (relative)', 'util.protein_vacuum_esp("'+s+'",mode=1,quiet=0)'          ],
-              [ 2, '\\955NOTE:\\559 Due to absence of solvent dielectric', ''],
-              [ 2, '\\559"screening", vacuum electrostatic potentials', ''],
-              [ 2, '\\559for macromolecules are only qualitatively', ''],
-              [ 2, '\\559meaningful.  Please view with skepticism!', '' ],
+              [ 2, '\\955NOTE:\\559 Due to short cutoffs, truncations, and', ''],
+              [ 2, '\\559lack of solvent "screening", these computed ', ''],
+              [ 2, '\\559potentials are only qualitatively useful.', ''],
+              [ 2, '\\559Please view with skepticism!', '' ],
               ]
 
 def symmetry(s):
