@@ -23,7 +23,11 @@ Z* -------------------------------------------------------------------
 #ifdef _PYMOL_NOPY
 typedef int PyObject;
 #else
+#ifndef _PYMOL_XCODE
 #include"Python.h"
+#else
+#include<Python/Python.h>
+#endif
 #endif
 
 #endif

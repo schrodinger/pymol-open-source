@@ -3513,7 +3513,7 @@ static PyObject *CmdSetBusy(PyObject *self, PyObject *args)
   int ok=true;
   ok = PyArg_ParseTuple(args,"i",&int1);
   PLockStatus();
-  PyMOL_SetBusy(TempPyMOLGlobals->PyMOL,int1);
+ PyMOL_SetBusy(TempPyMOLGlobals->PyMOL,int1);
   PUnlockStatus();
   return APIResultOk(ok);
 }

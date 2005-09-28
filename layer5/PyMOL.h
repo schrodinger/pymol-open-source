@@ -85,7 +85,7 @@ Z* -------------------------------------------------------------------
 
 #ifndef CPyMOLOptions_DEFINED
 typedef struct _CPyMOLOptions CPyMOLOptions;
-#define CPyMOLOptionsOption_DEFINED
+#define CPyMOLOptions_DEFINED
 #endif
 
 CPyMOLOptions *PyMOLOptions_New(void);
@@ -135,6 +135,10 @@ void PyMOL_Free(CPyMOL *I);
 
 void PyMOL_Start(CPyMOL *I);
 void PyMOL_Stop(CPyMOL *I);
+
+#ifndef PYMOL_NO_PY
+void PyMOL_StartPython(CPyMOL *I);
+#endif
 
 /* upstream invalidation and configuration events */
 
