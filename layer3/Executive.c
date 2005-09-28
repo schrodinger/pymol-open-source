@@ -5662,9 +5662,9 @@ int ExecutiveSelectList(PyMOLGlobals *G,char *sele_name,char *s1,
             AtomInfoType *ai;
             OVstatus res;
             OVreturn_word ret;
-            ai = obj->AtomInfo;
             int n_idx = 0;
             int *idx_list = VLAlloc(int,list_len);
+            ai = obj->AtomInfo;
 
             for(a=0;a<obj->NAtom;a++) {
               ai->temp1 = -1;
