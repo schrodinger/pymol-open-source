@@ -70,8 +70,8 @@ PyMOLGlobals *TempPyMOLGlobals = NULL;
 #define PYMOL_API_LOCK if((I->DeferredPythonInit)&&PLockAPIAsGlut(true)) {
 #define PYMOL_API_UNLOCK PUnlockAPIAsGlut(); }
 #else 
-#define PYMOL_API_LOCK
-#define PYMOL_API_UNLOCK
+#define PYMOL_API_LOCK {
+#define PYMOL_API_UNLOCK }
 #endif
 
 typedef struct _CPyMOL {
@@ -1185,7 +1185,7 @@ PyMOLreturn_float_array PyMOL_CmdAlign(CPyMOL *I, char *source, char *target, fl
 {
   PyMOLreturn_float_array result;
   
-  PYMOL_API_LOCK;
+  PYMOL_API_LOCK
   OrthoLineType s2="",s3="";
   int ok = false;
   ExecutiveRMSInfo rms_info;
@@ -1218,16 +1218,16 @@ PyMOLreturn_float_array PyMOL_CmdAlign(CPyMOL *I, char *source, char *target, fl
   if(!ok) { 
     VLAFreeP(result.array);
   }
-  PYMOL_API_UNLOCK;
+  PYMOL_API_UNLOCK
   
   return result;
 }
 
 PyMOLreturn_status PyMOL_CmdDelete(CPyMOL *I,char *name,int quiet)
 {
-  PYMOL_API_LOCK;
+  PYMOL_API_LOCK
   ExecutiveDelete(I->G, name);
-  PYMOL_API_UNLOCK;
+  PYMOL_API_UNLOCK
  return return_status_ok(true); /* TO DO: return a real result */
 }
 
@@ -1235,10 +1235,10 @@ PyMOLreturn_status PyMOL_CmdZoom(CPyMOL *I,char *selection, float buffer,
                               int state, int complete, float animate, int quiet)
 {
   int ok=false;
-  PYMOL_API_LOCK;
+  PYMOL_API_LOCK
   ok = ExecutiveWindowZoom(I->G, selection, buffer, state-1, 
                                complete, animate, quiet);
-  PYMOL_API_UNLOCK;
+  PYMOL_API_UNLOCK
   return return_status_ok(ok);
 }
 
@@ -1246,7 +1246,7 @@ PyMOLreturn_status PyMOL_CmdOrient(CPyMOL *I,char *selection, float buffer,
                                 int state, int complete, float  animate, int quiet)
 {
   int ok=true;
-  PYMOL_API_LOCK;
+  PYMOL_API_LOCK
   double m[16];
   OrthoLineType s1;
   SelectorGetTmp(I->G,selection,s1);
@@ -1255,16 +1255,16 @@ PyMOLreturn_status PyMOL_CmdOrient(CPyMOL *I,char *selection, float buffer,
   else
     ok=false;
   SelectorFreeTmp(I->G,s1);
-  PYMOL_API_UNLOCK;
+  PYMOL_API_UNLOCK
   return return_status_ok(ok);
 }
 
 PyMOLreturn_status PyMOL_CmdCenter(CPyMOL *I,char *selection, int state, int origin, float animate, int quiet)
 {
   int ok = false;
-  PYMOL_API_LOCK;
+  PYMOL_API_LOCK
   ok = ExecutiveCenter(I->G,selection,state,origin,animate,NULL,quiet);
-  PYMOL_API_UNLOCK;
+  PYMOL_API_UNLOCK
   return return_status_ok(ok);
 }
 
@@ -1272,24 +1272,24 @@ PyMOLreturn_status PyMOL_CmdCenter(CPyMOL *I,char *selection, int state, int ori
 PyMOLreturn_status PyMOL_CmdOrigin(CPyMOL *I,char *selection, int state, int quiet)
 {
   int ok=true;
-  PYMOL_API_LOCK;
+  PYMOL_API_LOCK
   OrthoLineType s1;
   float v[3] = { 0.0F, 0.0F, 0.0F };
   SelectorGetTmp(I->G,selection,s1);
   ok = ExecutiveOrigin(I->G,s1,true,"",v,state-1); /* TODO STATUS */
   SelectorFreeTmp(I->G,s1);
-  PYMOL_API_UNLOCK;
+  PYMOL_API_UNLOCK
   return return_status_ok(ok);
 }
 
 PyMOLreturn_status PyMOL_CmdOriginAt(CPyMOL *I,float x, float y, float z, int quiet)
 {
   int ok=true;
-  PYMOL_API_LOCK;
+  PYMOL_API_LOCK
   float v[3];
   v[0]=x;v[1]=y;v[2]=z;
   ok = ExecutiveOrigin(I->G,"",true,"",v,0); /* TODO STATUS */
-  PYMOL_API_UNLOCK;
+  PYMOL_API_UNLOCK
   return return_status_ok(ok);
 }
 
@@ -1332,7 +1332,7 @@ static OVreturn_word get_select_list_mode(CPyMOL *I,char *mode)
 PyMOLreturn_status PyMOL_CmdClip(CPyMOL *I,char *mode, float amount, char *selection, int state, int quiet)
 {
   int ok=true;
-  PYMOL_API_LOCK;
+  PYMOL_API_LOCK
   OrthoLineType s1;
   OVreturn_word clip_id;
   if(OVreturn_IS_OK( (clip_id= get_clip_id(I,mode)))) {
@@ -1340,35 +1340,35 @@ PyMOLreturn_status PyMOL_CmdClip(CPyMOL *I,char *mode, float amount, char *selec
     SceneClip(I->G,clip_id.word,amount,s1,state);
     SelectorFreeTmp(I->G,s1);
   }
-  PYMOL_API_UNLOCK;
+  PYMOL_API_UNLOCK
   return return_status_ok(ok);
 }
 
 PyMOLreturn_status PyMOL_CmdSelect(CPyMOL *I,char *name, char *selection, int quiet)
 {
   int ok;
-  PYMOL_API_LOCK;
+  PYMOL_API_LOCK
   ok = SelectorCreate(I->G,name,selection,NULL,quiet,NULL);
-  PYMOL_API_UNLOCK;
+  PYMOL_API_UNLOCK
   return return_status_ok(ok);
 }
 
 PyMOLreturn_status PyMOL_CmdSelectList(CPyMOL *I,char *name, char *object, int *list, int list_len, int state, char *mode, int quiet)
 {
   PyMOLreturn_status result = { PyMOLstatus_FAILURE };
-  PYMOL_API_LOCK;
+  PYMOL_API_LOCK
   OVreturn_word mode_id;
   if(OVreturn_IS_OK( (mode_id= get_select_list_mode(I,mode)))) {
     result.status = ExecutiveSelectList(I->G,name, object,  list, list_len, state-1, mode_id.word, quiet);
   }
-  PYMOL_API_UNLOCK;
+  PYMOL_API_UNLOCK
   return result;
 }
 
 PyMOLreturn_status PyMOL_CmdShow(CPyMOL *I,char *representation, char *selection, int quiet)
 {
   int ok=true;
-  PYMOL_API_LOCK;
+  PYMOL_API_LOCK
   OrthoLineType s1;
   OVreturn_word rep_id;
   if(OVreturn_IS_OK( (rep_id= get_rep_id(I,representation)))) {
@@ -1378,14 +1378,14 @@ PyMOLreturn_status PyMOL_CmdShow(CPyMOL *I,char *representation, char *selection
   } else {
     ok=false;
   }
-  PYMOL_API_UNLOCK;
+  PYMOL_API_UNLOCK
   return return_status_ok(ok);
 }
 
 PyMOLreturn_status PyMOL_CmdHide(CPyMOL *I,char *representation, char *selection, int quiet)
 {
   int ok=true;
-  PYMOL_API_LOCK;
+  PYMOL_API_LOCK
   OrthoLineType s1;
   OVreturn_word rep_id;
   if(OVreturn_IS_OK( (rep_id = get_rep_id(I,representation)))) {
@@ -1395,14 +1395,14 @@ PyMOLreturn_status PyMOL_CmdHide(CPyMOL *I,char *representation, char *selection
   } else {
     ok=false;
   }
-  PYMOL_API_UNLOCK;
+  PYMOL_API_UNLOCK
   return return_status_ok(ok);
 }
 
 PyMOLreturn_status PyMOL_CmdEnable(CPyMOL *I,char *name,int quiet)
 {
   int ok = false; 
-  PYMOL_API_LOCK;
+  PYMOL_API_LOCK
   if(name[0]=='(') {
     OrthoLineType s1;
     ok = (SelectorGetTmp(I->G,name,s1)>=0);
@@ -1410,14 +1410,14 @@ PyMOLreturn_status PyMOL_CmdEnable(CPyMOL *I,char *name,int quiet)
     SelectorFreeTmp(I->G,s1);
   }
   ok = ExecutiveSetObjVisib(I->G,name,true);
-  PYMOL_API_UNLOCK;
+  PYMOL_API_UNLOCK
   return return_status_ok(ok);
 }
 
 PyMOLreturn_status PyMOL_CmdDisable(CPyMOL *I,char *name,int quiet)
 {
   int ok = false;
-  PYMOL_API_LOCK;
+  PYMOL_API_LOCK
   if(name[0]=='(') {
     OrthoLineType s1;
     ok = (SelectorGetTmp(I->G,name,s1)>=0);
@@ -1426,42 +1426,42 @@ PyMOLreturn_status PyMOL_CmdDisable(CPyMOL *I,char *name,int quiet)
   } else {
     ok = ExecutiveSetObjVisib(I->G,name,false);
   }
-  PYMOL_API_UNLOCK;
+  PYMOL_API_UNLOCK
   return return_status_ok(ok);
 }
 
 PyMOLreturn_status PyMOL_CmdSet(CPyMOL *I,char *setting, char *value, char *selection, int state, int quiet, int side_effects)
 {
   int ok=true;
-  PYMOL_API_LOCK;
+  PYMOL_API_LOCK
   OVreturn_word setting_id;
   if(OVreturn_IS_OK( (setting_id = get_setting_id(I,setting)))) {
     ExecutiveSetSettingFromString(I->G, setting_id.word, value, selection,
                                   state-1, quiet, side_effects);
   }
-  PYMOL_API_UNLOCK;
+  PYMOL_API_UNLOCK
   return return_status_ok(ok);
 }
 
 PyMOLreturn_status PyMOL_CmdColor(CPyMOL *I,char *color, char *selection, int flags, int quiet)
 {
   int ok=true;
-  PYMOL_API_LOCK;
+  PYMOL_API_LOCK
   OrthoLineType s1;
   
   SelectorGetTmp(I->G,selection,s1);
   ok = ExecutiveColor(I->G,s1,color,flags,quiet);
   SelectorFreeTmp(I->G,s1);
-  PYMOL_API_UNLOCK;
+  PYMOL_API_UNLOCK
   return return_status_ok(ok);
 }
 
 PyMOLreturn_status PyMOL_CmdReinitialize(CPyMOL *I)
 {
   int ok;
-  PYMOL_API_LOCK;
+  PYMOL_API_LOCK
   ok = ExecutiveReinitialize(I->G);
-  PYMOL_API_UNLOCK;
+  PYMOL_API_UNLOCK
   return return_status_ok(ok);
 }
 
@@ -1635,10 +1635,10 @@ PyMOLreturn_status PyMOL_CmdLoad(CPyMOL *I,char *content,
                                         int quiet, int multiplex, int zoom)
 {
   PyMOLreturn_status status;
-  PYMOL_API_LOCK;
+  PYMOL_API_LOCK
   status = Loader(I,content, content_type, -1, content_format, object_name, 
                 state, discrete, finish, quiet, multiplex, zoom);
-  PYMOL_API_UNLOCK;
+  PYMOL_API_UNLOCK
   return status;
 }
      
@@ -1650,10 +1650,10 @@ PyMOLreturn_status PyMOL_CmdLoadRaw(CPyMOL *I,char *content,
                                     int quiet, int multiplex, int zoom)
 {
   PyMOLreturn_status status;
-  PYMOL_API_LOCK;
+  PYMOL_API_LOCK
   status = Loader(I,content, "raw", content_length, content_format,
                 object_name, state, discrete, finish, quiet, multiplex, zoom);
-  PYMOL_API_UNLOCK;
+  PYMOL_API_UNLOCK
   return status;
 }
 
@@ -1948,7 +1948,7 @@ void PyMOL_InitPythonDeps(CPyMOL *I)
 
 void PyMOL_Free(CPyMOL *I)
 {
-  PYMOL_API_LOCK;
+  PYMOL_API_LOCK
   /* take PyMOL down gracefully */
   PyMOLOptions_Free(I->G->Option);
   FreeP(I->G);
@@ -1974,7 +1974,7 @@ struct _PyMOLGlobals *PyMOL_GetGlobals(CPyMOL *I)
 
 void PyMOL_Draw(CPyMOL *I)
 {
-  PYMOL_API_LOCK;
+  PYMOL_API_LOCK
   
   PyMOLGlobals *G = I->G;
   if(G->HaveGUI) {
@@ -2013,25 +2013,25 @@ void PyMOL_Draw(CPyMOL *I)
 
   if(G->HaveGUI) PyMOL_PopValidContext(I);
   
-  PYMOL_API_UNLOCK;
+  PYMOL_API_UNLOCK
   
 }
 
 void PyMOL_Key(CPyMOL *I,unsigned char k, int x, int y, int modifiers)
 {
-  PYMOL_API_LOCK;
+  PYMOL_API_LOCK
   
   PyMOLGlobals *G = I->G;
 
   if(!WizardDoKey(G,k,x,y,modifiers))
     OrthoKey(G,k,x,y,modifiers);
-  PYMOL_API_UNLOCK;
+  PYMOL_API_UNLOCK
 }
 
 
 void PyMOL_Special(CPyMOL *I,int k, int x, int y, int modifiers)
 {
-  PYMOL_API_LOCK;
+  PYMOL_API_LOCK
   
   PyMOLGlobals *G = I->G;
 
@@ -2062,25 +2062,25 @@ void PyMOL_Special(CPyMOL *I,int k, int x, int y, int modifiers)
     PParse(buffer);
     PFlush();
   }
-  PYMOL_API_UNLOCK;
+  PYMOL_API_UNLOCK
 }
 
 void PyMOL_Reshape(CPyMOL *I,int width, int height, int force)
 {
-  PYMOL_API_LOCK;
+  PYMOL_API_LOCK
   PyMOLGlobals *G = I->G;
 
   G->Option->winX = width;
   G->Option->winY = height;
 
   OrthoReshape(G,width,height,force);
-  PYMOL_API_UNLOCK;
+  PYMOL_API_UNLOCK
 }
 
 int PyMOL_Idle(CPyMOL *I)
 {
   int did_work = false;
-  PYMOL_API_LOCK;
+  PYMOL_API_LOCK
 
   PyMOLGlobals *G = I->G;
   
@@ -2118,7 +2118,7 @@ int PyMOL_Idle(CPyMOL *I)
   }
 #endif
 
-  PYMOL_API_UNLOCK;
+  PYMOL_API_UNLOCK
 
   return did_work;
 }
@@ -2167,7 +2167,7 @@ int PyMOL_GetClickReady(CPyMOL *I, int reset)
 char *PyMOL_GetClickString(CPyMOL *I,int reset)
 {
   char *result = NULL;
-  PYMOL_API_LOCK;
+  PYMOL_API_LOCK
   int ready = I->ClickReadyFlag;
   if(reset)
     I->ClickReadyFlag = false;
@@ -2192,15 +2192,15 @@ char *PyMOL_GetClickString(CPyMOL *I,int reset)
       }
     }
   }
-  PYMOL_API_UNLOCK;
+  PYMOL_API_UNLOCK
   return(result);
 }
 
 int PyMOL_FreeResultString(CPyMOL *I,char *st)
 {
-  PYMOL_API_LOCK;
+  PYMOL_API_LOCK
   FreeP(st);
-  PYMOL_API_UNLOCK;
+  PYMOL_API_UNLOCK
   return get_status_ok((st!=NULL));
 }
 
@@ -2208,7 +2208,7 @@ int PyMOL_GetRedisplay(CPyMOL *I, int reset)
 {
   int result = I->RedisplayFlag;
   
-  PYMOL_API_LOCK;
+  PYMOL_API_LOCK
   PyMOLGlobals *G = I->G;
   
   if(result) {
@@ -2219,7 +2219,7 @@ int PyMOL_GetRedisplay(CPyMOL *I, int reset)
         I->RedisplayFlag = false;
     }
   }
-  PYMOL_API_UNLOCK;
+  PYMOL_API_UNLOCK
   
   return result;
 }
@@ -2279,16 +2279,16 @@ void PyMOL_SetInterrupt(CPyMOL *I, int value)
 
 void PyMOL_Drag(CPyMOL *I,int x, int y, int modifiers)
 {
-  PYMOL_API_LOCK;
+  PYMOL_API_LOCK
   OrthoDrag(I->G,x,y,modifiers);
-  PYMOL_API_UNLOCK;
+  PYMOL_API_UNLOCK
 }
 
 void PyMOL_Button(CPyMOL *I,int button, int state,int x, int y, int modifiers)
 {
-  PYMOL_API_LOCK;
+  PYMOL_API_LOCK
   OrthoButton(I->G,button,state,x,y,modifiers);
-  PYMOL_API_UNLOCK;
+  PYMOL_API_UNLOCK
 }
 
 void PyMOL_SetSwapBuffersFn(CPyMOL *I, PyMOLSwapBuffersFn *fn)
@@ -2308,9 +2308,9 @@ void PyMOL_SwapBuffers(CPyMOL *I)
 
 void PyMOL_RunTest(CPyMOL *I, int group, int test)
 {
-  PYMOL_API_LOCK;
+  PYMOL_API_LOCK
   TestPyMOLRun(I->G, group, test);
-  PYMOL_API_UNLOCK;
+  PYMOL_API_UNLOCK
 }
 
 void PyMOL_PushValidContext(CPyMOL *I)
@@ -2326,7 +2326,7 @@ void PyMOL_PopValidContext(CPyMOL *I)
 
 void PyMOL_SetDefaultMouse(CPyMOL *I)
 {
-  PYMOL_API_LOCK;
+  PYMOL_API_LOCK
   PyMOLGlobals *G = I->G;
 
   ButModeSet(G,0,cButModeRotXYZ);
@@ -2342,6 +2342,6 @@ void PyMOL_SetDefaultMouse(CPyMOL *I)
   ButModeSet(G,19,cButModeSimpleClick);
 
   G->Feedback->Mask[FB_Scene] &= ~(FB_Results); /* suppress click messages */
-  PYMOL_API_UNLOCK;
+  PYMOL_API_UNLOCK
 }
 

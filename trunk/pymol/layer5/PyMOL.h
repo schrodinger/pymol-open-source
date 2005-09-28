@@ -137,7 +137,7 @@ void PyMOL_Start(CPyMOL *I);
 void PyMOL_Stop(CPyMOL *I);
 
 #ifndef PYMOL_NO_PY
-void PyMOL_StartPython(CPyMOL *I);
+void PyMOL_InitPythonDeps(CPyMOL *I);
 #endif
 
 /* upstream invalidation and configuration events */
