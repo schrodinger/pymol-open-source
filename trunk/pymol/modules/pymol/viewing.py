@@ -1704,7 +1704,7 @@ NOTES
             try:
                 _cmd.set_busy(1)
                 r = _cmd.render(int(width),int(height),
-                                     int(renderer),float(angle),float(shift),int(quiet))
+                      int(renderer),float(angle),float(shift),int(quiet))
             finally:
                 _cmd.set_busy(0)
         finally:

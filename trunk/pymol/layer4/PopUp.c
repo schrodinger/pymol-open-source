@@ -322,7 +322,7 @@ static void PopUpFree(Block *block)
         Py_DECREF(I->Sub[a]);
       }
     PAutoUnblock(blocked);
-  }
+}
 #endif
 
   OrthoDetach(G,I->Block);
