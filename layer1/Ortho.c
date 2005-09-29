@@ -397,75 +397,102 @@ static void OrthoBusyDraw(PyMOLGlobals *G,int force)
         float white[3] = {1,1,1};
 
         OrthoPushMatrix(G);
+
+        {
+          int pass = 0;
+          
+          int draw_both = G->StereoCapable &&
+            ((SceneGetStereo(G)==1) ||
+             SettingGetGlobal_b(G,cSetting_stereo_double_pump_mono));
+          
+          glClear(GL_DEPTH_BUFFER_BIT);
+          while(1) {
+            if(draw_both) {
+              if(!pass) 
+                glDrawBuffer(GL_FRONT_LEFT); 
+              else
+                glDrawBuffer(GL_FRONT_RIGHT);
+            } else {
+              glDrawBuffer(GL_FRONT); /* draw into the front buffer */
+            }
         
-        glDrawBuffer(GL_FRONT);
-        glClear(GL_DEPTH_BUFFER_BIT);
         
-        glColor3fv(black);
-        glBegin(GL_POLYGON);
-        glVertex2i(0,I->Height);
-        glVertex2i(cBusyWidth,I->Height);
-        glVertex2i(cBusyWidth,I->Height-cBusyHeight);
-        glVertex2i(0,I->Height-cBusyHeight);
-        glVertex2i(0,I->Height); /* needed on old buggy Mesa */
-        glEnd();
+            glColor3fv(black);
+            glBegin(GL_POLYGON);
+            glVertex2i(0,I->Height);
+            glVertex2i(cBusyWidth,I->Height);
+            glVertex2i(cBusyWidth,I->Height-cBusyHeight);
+            glVertex2i(0,I->Height-cBusyHeight);
+            glVertex2i(0,I->Height); /* needed on old buggy Mesa */
+            glEnd();
+            
+            glColor3fv(white);	 
+            
+            y=I->Height-cBusyMargin;
+            c=I->BusyMessage;
+            if(*c) {
+              TextSetColor(G,white);
+              TextSetPos2i(G,cBusyMargin,y-(cBusySpacing/2));
+              TextDrawStr(G,c);
+              y-=cBusySpacing;
+            }
+            
+            if(I->BusyStatus[1]) {
+              glBegin(GL_LINE_LOOP);
+              glVertex2i(cBusyMargin,y);
+              glVertex2i(cBusyWidth-cBusyMargin,y);
+              glVertex2i(cBusyWidth-cBusyMargin,y-cBusyBar);
+              glVertex2i(cBusyMargin,y-cBusyBar);
+              glVertex2i(cBusyMargin,y); /* needed on old buggy Mesa */
+              glEnd();
+              glColor3fv(white);	 
+              glBegin(GL_POLYGON);
+              glVertex2i(cBusyMargin,y);
+              x=(I->BusyStatus[0]*(cBusyWidth-2*cBusyMargin)/I->BusyStatus[1])+cBusyMargin;
+              glVertex2i(x,y);
+              glVertex2i(x,y-cBusyBar);
+              glVertex2i(cBusyMargin,y-cBusyBar);
+              glVertex2i(cBusyMargin,y); /* needed on old buggy Mesa */
+              glEnd();
+              y-=cBusySpacing;
+            }
+            
+            if(I->BusyStatus[3]) {
+              glColor3fv(white);	 
+              glBegin(GL_LINE_LOOP);
+              glVertex2i(cBusyMargin,y);
+              glVertex2i(cBusyWidth-cBusyMargin,y);
+              glVertex2i(cBusyWidth-cBusyMargin,y-cBusyBar);
+              glVertex2i(cBusyMargin,y-cBusyBar);
+              glVertex2i(cBusyMargin,y); /* needed on old buggy Mesa */
+              glEnd();
+              x=(I->BusyStatus[2]*(cBusyWidth-2*cBusyMargin)/I->BusyStatus[3])+cBusyMargin;
+              glColor3fv(white);	 
+              glBegin(GL_POLYGON);
+              glVertex2i(cBusyMargin,y);
+              glVertex2i(x,y);
+              glVertex2i(x,y-cBusyBar);
+              glVertex2i(cBusyMargin,y-cBusyBar);
+              glVertex2i(cBusyMargin,y); /* needed on old buggy Mesa */
+              glEnd();
+              y-=cBusySpacing;
+            }
+            
+            if(!draw_both)
+              break;
+            if(pass>1)
+              break;
+            pass++;
+          }
         
-        glColor3fv(white);	 
-        
-        y=I->Height-cBusyMargin;
-        c=I->BusyMessage;
-        if(*c) {
-          TextSetColor(G,white);
-          TextSetPos2i(G,cBusyMargin,y-(cBusySpacing/2));
-          TextDrawStr(G,c);
-          y-=cBusySpacing;
+          glFlush();
+          glFinish();
+          if(draw_both)
+            glDrawBuffer(GL_BACK_LEFT);
+          else
+            glDrawBuffer(GL_BACK);      
         }
-        
-        if(I->BusyStatus[1]) {
-          glBegin(GL_LINE_LOOP);
-          glVertex2i(cBusyMargin,y);
-          glVertex2i(cBusyWidth-cBusyMargin,y);
-          glVertex2i(cBusyWidth-cBusyMargin,y-cBusyBar);
-          glVertex2i(cBusyMargin,y-cBusyBar);
-          glVertex2i(cBusyMargin,y); /* needed on old buggy Mesa */
-          glEnd();
-          glColor3fv(white);	 
-          glBegin(GL_POLYGON);
-          glVertex2i(cBusyMargin,y);
-          x=(I->BusyStatus[0]*(cBusyWidth-2*cBusyMargin)/I->BusyStatus[1])+cBusyMargin;
-          glVertex2i(x,y);
-          glVertex2i(x,y-cBusyBar);
-          glVertex2i(cBusyMargin,y-cBusyBar);
-          glVertex2i(cBusyMargin,y); /* needed on old buggy Mesa */
-          glEnd();
-          y-=cBusySpacing;
-        }
-        
-        if(I->BusyStatus[3]) {
-          glColor3fv(white);	 
-          glBegin(GL_LINE_LOOP);
-          glVertex2i(cBusyMargin,y);
-          glVertex2i(cBusyWidth-cBusyMargin,y);
-          glVertex2i(cBusyWidth-cBusyMargin,y-cBusyBar);
-          glVertex2i(cBusyMargin,y-cBusyBar);
-          glVertex2i(cBusyMargin,y); /* needed on old buggy Mesa */
-          glEnd();
-          x=(I->BusyStatus[2]*(cBusyWidth-2*cBusyMargin)/I->BusyStatus[3])+cBusyMargin;
-          glColor3fv(white);	 
-          glBegin(GL_POLYGON);
-          glVertex2i(cBusyMargin,y);
-          glVertex2i(x,y);
-          glVertex2i(x,y-cBusyBar);
-          glVertex2i(cBusyMargin,y-cBusyBar);
-          glVertex2i(cBusyMargin,y); /* needed on old buggy Mesa */
-          glEnd();
-          y-=cBusySpacing;
-        }
-        
-        glFlush();
-        glFinish();
-        glDrawBuffer(GL_BACK);
-        
+               
         OrthoPopMatrix(G);
         OrthoDirty(G);/* switched from SceneDirty */
       }
@@ -1020,11 +1047,11 @@ void OrthoDoDraw(PyMOLGlobals *G)
     while(times--) {
       switch(times) {
       case 1:
-        glDrawBuffer(GL_BACK_RIGHT);
+        glDrawBuffer(GL_BACK_LEFT);
         break;
       case 0:
         if(double_pump) {
-          glDrawBuffer(GL_BACK_LEFT);
+          glDrawBuffer(GL_BACK_RIGHT);
         } else
           glDrawBuffer(GL_BACK);
         break;
