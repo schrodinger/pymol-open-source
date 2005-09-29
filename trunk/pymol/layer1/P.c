@@ -1491,7 +1491,7 @@ void PInit(PyMOLGlobals *G)
 
   PCatchInit();   /* setup standard-output catch routine */
 
-/* assumes that pymol module has been loaded */
+/* assumes that pymol module has been loaded via Python or PyRun_SimpleString */
 
   pymol = PyImport_AddModule("pymol"); /* get it */
   if(!pymol) ErrFatal(TempPyMOLGlobals,"PyMOL","can't find module 'pymol'");
@@ -1595,9 +1595,6 @@ void PInit(PyMOLGlobals *G)
   PRunString("import util\n");  
   PRunString("import preset\n");  
   PRunString("import contrib\n");
-  /*#ifdef _PYMOL_XRAY
-  PRunString("import sglite\n"); 
-  #endif*/
 
   PRunString("import string\n"); 
 

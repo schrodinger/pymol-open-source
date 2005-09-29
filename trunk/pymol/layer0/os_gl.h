@@ -34,7 +34,7 @@ Z* -------------------------------------------------------------------
 #endif
 #else
 /* _PYMOL_OSX */
-#ifdef _PYMOL_XCODE
+#ifdef _MACPYMOL_XCODE
 #include <OpenGL/gl.h>
 #include <OpenGL/glu.h>
 #include <OpenGL/glext.h>

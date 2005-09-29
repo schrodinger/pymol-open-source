@@ -66,7 +66,14 @@
 PyMOLGlobals *TempPyMOLGlobals = NULL;
 #endif
 
-#ifdef _PYMOL_XCODE
+#ifndef _PYMOL_NOPY
+#ifdef _MACPYMOL_XCODE
+extern int *MacPyMOLReady;
+extern CPyMOLOptions *MacPyMOLOption;
+#endif
+#endif
+
+#ifdef _MACPYMOL_XCODE
 #define PYMOL_API_LOCK if((I->DeferredPythonInit)&&PLockAPIAsGlut(true)) {
 #define PYMOL_API_UNLOCK PUnlockAPIAsGlut(); }
 #else 
@@ -1860,6 +1867,10 @@ void PyMOL_Start(CPyMOL *I)
   TrackerUnitTest(G);
 #endif
 
+#ifdef _MACPYMOL_XCODE
+G->StereoCapable = G->Option->force_stereo;
+#endif
+
   I->RedisplayFlag = true;
   G->Ready = true; 
 }
@@ -1904,27 +1915,29 @@ void PyMOL_Stop(CPyMOL *I)
   OVContext_Del(G->Context);   
 }
 
+
 void PyMOL_InitPythonDeps(CPyMOL *I)
 {
 #ifndef _PYMOL_NOPY
     Py_Initialize();
     PyEval_InitThreads();
-	if(1) {
+	
+	#if 0
+	{ /* NOTE this doesn't work 'cause we can't unpack code in restricted environments! */
+	
 	   /* get us a brand new interpreter, independent of any other */
 	   
 	   PyThreadState *tstate = Py_NewInterpreter();
 	   
-	   /* now free up the first interpreter and use the second */
-	   
-	   PyThreadState* PyThreadState_Swap(tstate);
+	   /* now free up the first interpreter and use the secon*/
+	   	   PyThreadState_Swap(tstate);
 	}
-	   
+#endif
+
     PyUnicode_SetDefaultEncoding("utf-8"); /* is this safe & legal? */
 	PyRun_SimpleString("import sys");
 	PyRun_SimpleString("import os");
 	PyRun_SimpleString("sys.path.append(os.environ['PYMOL_PATH']+'/modules')");
-	
-	init_cmd();
 	
 	PyRun_SimpleString("import __main__");
     {
@@ -1934,14 +1947,28 @@ void PyMOL_InitPythonDeps(CPyMOL *I)
 		/* inform PyMOL's other half that we're launching embedded-style */
 		PyObject_SetAttrString(P_main,"pymol_launch",PyInt_FromLong(4));
 		
-}
+    }
  
-    PyRun_SimpleString("import pymol");
-
+	/* here is where we launch PyMOL's Python portion */
+	
+    init_cmd();
+	initExtensionClass();
+    initsglite();
+	init_champ();
+	
+	PyRun_SimpleString("import pymol");
+	
+	/* now define all the C->Python hooks we use */
+	
 	PInit(I->G);
 	
 	I->DeferredPythonInit = 1;
 	
+#ifdef _MACPYMOL_XCODE
+  MacPyMOLOption = I->G->Option;
+  MacPyMOLReady = &I->G->Ready;
+#endif
+
 #endif
 
 }

@@ -119,9 +119,8 @@ int SymmetryAttemptGeneration(CSymmetry *I,int blocked,int quiet)
   if(!I->SpaceGroup[0]) {
     ErrMessage(I->G,"Symmetry","Missing space group symbol");
   } else {
-    if(!blocked) 
-      PBlock();
-    mats = PyObject_CallMethod(P_xray,"sg_sym_to_mat_list","s",I->SpaceGroup);
+    blocked = PAutoBlock();
+	mats = PyObject_CallMethod(P_xray,"sg_sym_to_mat_list","s",I->SpaceGroup);
     if(mats&&(mats!=Py_None)) {
       l = PyList_Size(mats);
       VLACheck(I->SymMatVLA,float,16*l);
@@ -144,8 +143,7 @@ int SymmetryAttemptGeneration(CSymmetry *I,int blocked,int quiet)
     } else {
       ErrMessage(I->G,"Symmetry","Unable to get matrices from sglite.");
     }
-    if(!blocked) 
-      PUnblock();
+    PAutoUnblock(blocked);
   }
 #endif
 #endif
