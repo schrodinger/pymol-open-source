@@ -21,6 +21,113 @@ int MainSavingUnderWhileIdle(void)
   return 0;
 }
 
+#ifdef _MACPYMOL_XCODE
+
+#include "os_predef.h"
+#include "os_python.h"
+
+#ifdef WIN32
+#include <signal.h>
+#endif
+
+#include "os_std.h"
+#include "os_gl.h"
+
+#ifdef _PYMOL_MODULE
+#ifdef _DRI_WORKAROUND
+#include <dlfcn.h>
+#endif
+#endif
+
+#include "PyMOLGlobals.h"
+#include "PyMOL.h"
+#include "PyMOLOptions.h"
+
+#include "MemoryDebug.h"
+#include "Base.h"
+#include "main.h"
+
+#include "P.h"
+#include "PConv.h"
+#include "Ortho.h"
+#include "Scene.h"
+#include "Seq.h"
+#include "Util.h"
+
+void MainRunCommand(char *str1)
+{
+  PyMOLGlobals *G = TempPyMOLGlobals;
+
+  if(PLockAPIAsGlut(true)) {
+    
+    if(str1[0]!='_') { /* suppress internal call-backs */
+      if(strncmp(str1,"cmd._",5)) {
+        OrthoAddOutput(G,"PyMOL>");
+        OrthoAddOutput(G,str1);
+        OrthoNewLine(G,NULL,true);
+        if(WordMatch(G,str1,"quit",true)==0) /* don't log quit */
+          PLog(str1,cPLog_pml);
+      }
+      PParse(str1);
+    } else if(str1[1]==' ') { /* "_ command" suppresses echoing of command, but it is still logged */
+      if(WordMatch(G,str1+2,"quit",true)>=0) /* don't log quit */
+        PLog(str1+2,cPLog_pml);
+      PParse(str1+2);    
+    } else { 
+      PParse(str1);
+    }
+    PUnlockAPIAsGlut();
+  }
+}
+PyObject *MainGetStringResult(char *str)
+{
+  PyObject *result;
+  result = PyRun_String(str,Py_eval_input,P_globals,P_globals);
+  return(result);
+}
+void MainRunString(char *str)
+{
+  PBlock();
+  PLockStatus();
+  PRunString(str);
+  PUnblock();
+}
+void MainMovieCopyPrepare(int *width,int *height,int *length)
+{
+  PyMOLGlobals *G = TempPyMOLGlobals;
+  if(PLockAPIAsGlut(true)) {
+    MovieCopyPrepare(G,width,height,length);
+    PUnlockAPIAsGlut();
+  }
+}
+int MainMovieCopyFrame(int frame,int width,int height,int rowbytes,void *ptr)
+{
+  PyMOLGlobals *G = TempPyMOLGlobals;
+  int result = false;
+  if(PLockAPIAsGlut(true)) {
+    result = MovieCopyFrame(G,frame,width,height,rowbytes,ptr);
+    PUnlockAPIAsGlut();
+  }
+  return result;
+}
+void MainMovieCopyFinish(void)
+{
+  PyMOLGlobals *G = TempPyMOLGlobals;
+  if(PLockAPIAsGlut(true)) {
+    MovieCopyFinish(G);
+    PUnlockAPIAsGlut();
+  }
+}
+void MainFlushAsync(void)
+{
+  if(PLockAPIAsGlut(true)) {
+    PFlush();
+    PUnlockAPIAsGlut();
+  }
+}
+
+#endif
+
 #else
 
 #include "os_predef.h"

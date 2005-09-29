@@ -3978,11 +3978,12 @@ void SceneReshape(Block *block,int width,int height)
     height -= I->Block->margin.top;
     y = height;
   }
-
 #ifdef _PYMOL_OSX
+#ifndef _PYMOL_XCODE
   /* workaround for broken pixel handling under OSX 
      (Who's fault: Me? Apple? NVidia?) */
   width = 8*(width/8);
+#endif
 #endif
 
   I->Width = width;

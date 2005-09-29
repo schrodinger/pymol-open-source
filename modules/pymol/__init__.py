@@ -27,7 +27,6 @@
 import __main__
 if __name__!='__main__':
     import invocation
-    
 # Global variable "__main__.pymol_launch" tracks how we're launching PyMOL:
 #
 # 0: old way, now obsolete (e.g. "python launch_pymol.py")
