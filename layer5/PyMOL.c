@@ -1868,7 +1868,9 @@ void PyMOL_Start(CPyMOL *I)
 #endif
 
 #ifdef _MACPYMOL_XCODE
-G->StereoCapable = G->Option->force_stereo;
+   G->StereoCapable = G->Option->force_stereo;
+   SettingSetGlobal_b(G,cSetting_stereo_double_pump_mono, true);
+   SettingSetGlobal_i(G,cSetting_stereo_mode, 1); 
 #endif
 
   I->RedisplayFlag = true;

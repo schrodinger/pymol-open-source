@@ -1480,7 +1480,7 @@ SetConsoleCtrlHandler(
   HandlerRoutine,  // address of handler function
   true                          // handler to add or remove
 );
- 
+ ster
 #endif
 
 #ifdef _PYMOL_SHARP3D
