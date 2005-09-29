@@ -1025,7 +1025,7 @@ void OrthoDoDraw(PyMOLGlobals *G)
       if(!SceneRenderCached(G))
         render=true;
     
-    if((SceneGetStereo(G)==1)||double_pump) {
+    if(G->StereoCapable&&((SceneGetStereo(G)==1)||double_pump)) {
       glDrawBuffer(GL_BACK_LEFT);
       glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
       glDrawBuffer(GL_BACK_RIGHT);
