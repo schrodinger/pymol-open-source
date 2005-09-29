@@ -718,60 +718,85 @@ static void MainDrawProgress(PyMOLGlobals *G)
     glDisable(GL_DITHER);
     glDisable(GL_BLEND);
     
-    glDrawBuffer(GL_FRONT); /* draw into the front buffer */
-
-    glClear(GL_DEPTH_BUFFER_BIT);
-        
-    glColor3fv(black);
-    glBegin(GL_POLYGON);
-    glVertex2i(0,ViewPort[3]);
-    glVertex2i(cBusyWidth,ViewPort[3]);
-    glVertex2i(cBusyWidth,ViewPort[3]-cBusyHeight);
-    glVertex2i(0,ViewPort[3]-cBusyHeight);
-    glVertex2i(0,ViewPort[3]); /* needed on old buggy Mesa */
-    glEnd();
-
-    y=ViewPort[3]-cBusyMargin;
-
-    glColor3fv(white);	 
     
-    /* 
-       c=I->BusyMessage;
-       if(*c) {
-       TextSetColor(G,white);
-       TextSetPos2i(G,cBusyMargin,y-(cBusySpacing/2));
-       TextDrawStr(G,c);
-       y-=cBusySpacing;
-       }
-    */
+    {
+      int pass = 0;
 
-    for(offset=0;offset<PYMOL_PROGRESS_SIZE;offset+=2) {
-      
-      if(progress[offset+1]) {
+      int draw_both = G->StereoCapable &&
+        ((SceneGetStereo(G)==1) ||
+         SettingGetGlobal_b(G,cSetting_stereo_double_pump_mono));
+
+      glClear(GL_DEPTH_BUFFER_BIT);
+      while(1) {
+        if(draw_both) {
+          if(!pass) 
+            glDrawBuffer(GL_FRONT_LEFT); 
+          else
+            glDrawBuffer(GL_FRONT_RIGHT);
+        } else {
+          glDrawBuffer(GL_FRONT); /* draw into the front buffer */
+        }
         
-        glBegin(GL_LINE_LOOP);
-        glVertex2i(cBusyMargin,y);
-        glVertex2i(cBusyWidth-cBusyMargin,y);
-        glVertex2i(cBusyWidth-cBusyMargin,y-cBusyBar);
-        glVertex2i(cBusyMargin,y-cBusyBar);
-        glVertex2i(cBusyMargin,y); /* needed on old buggy Mesa */
-        glEnd();
-        glColor3fv(white);	 
+        glColor3fv(black);
         glBegin(GL_POLYGON);
-        glVertex2i(cBusyMargin,y);
-        x=(progress[offset]*(cBusyWidth-2*cBusyMargin)/progress[offset+1])+cBusyMargin;
-        glVertex2i(x,y);
-        glVertex2i(x,y-cBusyBar);
-        glVertex2i(cBusyMargin,y-cBusyBar);
-        glVertex2i(cBusyMargin,y); /* needed on old buggy Mesa */
+        glVertex2i(0,ViewPort[3]);
+        glVertex2i(cBusyWidth,ViewPort[3]);
+        glVertex2i(cBusyWidth,ViewPort[3]-cBusyHeight);
+        glVertex2i(0,ViewPort[3]-cBusyHeight);
+        glVertex2i(0,ViewPort[3]); /* needed on old buggy Mesa */
         glEnd();
-        y-=cBusySpacing;
+        
+        y=ViewPort[3]-cBusyMargin;
+        
+        glColor3fv(white);	 
+        
+        /* 
+           c=I->BusyMessage;
+           if(*c) {
+           TextSetColor(G,white);
+           TextSetPos2i(G,cBusyMargin,y-(cBusySpacing/2));
+           TextDrawStr(G,c);
+           y-=cBusySpacing;
+           }
+        */
+        
+        for(offset=0;offset<PYMOL_PROGRESS_SIZE;offset+=2) {
+          
+          if(progress[offset+1]) {
+            
+            glBegin(GL_LINE_LOOP);
+            glVertex2i(cBusyMargin,y);
+            glVertex2i(cBusyWidth-cBusyMargin,y);
+            glVertex2i(cBusyWidth-cBusyMargin,y-cBusyBar);
+            glVertex2i(cBusyMargin,y-cBusyBar);
+            glVertex2i(cBusyMargin,y); /* needed on old buggy Mesa */
+            glEnd();
+            glColor3fv(white);	 
+            glBegin(GL_POLYGON);
+            glVertex2i(cBusyMargin,y);
+            x=(progress[offset]*(cBusyWidth-2*cBusyMargin)/progress[offset+1])+cBusyMargin;
+            glVertex2i(x,y);
+            glVertex2i(x,y-cBusyBar);
+            glVertex2i(cBusyMargin,y-cBusyBar);
+            glVertex2i(cBusyMargin,y); /* needed on old buggy Mesa */
+            glEnd();
+            y-=cBusySpacing;
+          }
+        }
+        if(!draw_both)
+          break;
+        if(pass>1)
+          break;
+        pass++;
       }
-    }
-    
+
     glFlush();
     glFinish();
-    glDrawBuffer(GL_BACK);
+    if(draw_both)
+      glDrawBuffer(GL_BACK_LEFT);
+    else
+      glDrawBuffer(GL_BACK);      
+    }
     
     glPopMatrix();
     glMatrixMode(GL_PROJECTION);
@@ -918,16 +943,32 @@ void MainReshape(int width, int height) /* called by Glut */
       if(G->HaveGUI) {
         glViewport(0, 0, (GLint) width, (GLint) height);
         /* wipe the screen ASAP to prevent display of garbage... */
-        glDrawBuffer(GL_FRONT);
-        glClearColor(0.0,0.0,0.0,1.0);
-        glClear(GL_COLOR_BUFFER_BIT);
-        glDrawBuffer(GL_BACK);
-        glClearColor(0.0,0.0,0.0,1.0);
-        glClear(GL_COLOR_BUFFER_BIT);
+
+        {
+          int draw_both = G->StereoCapable &&
+            ((SceneGetStereo(G)==1) ||
+             SettingGetGlobal_b(G,cSetting_stereo_double_pump_mono));
+          
+          glClearColor(0.0,0.0,0.0,1.0);
+          if(draw_both) {
+            glDrawBuffer(GL_FRONT_LEFT);
+            glClear(GL_COLOR_BUFFER_BIT);
+            glDrawBuffer(GL_FRONT_LEFT);
+            glClear(GL_COLOR_BUFFER_BIT);
+            glDrawBuffer(GL_BACK_LEFT);
+            glClear(GL_COLOR_BUFFER_BIT);
+            glDrawBuffer(GL_BACK_RIGHT);
+            glClear(GL_COLOR_BUFFER_BIT);
+          } else {
+            glDrawBuffer(GL_FRONT);
+            glClear(GL_COLOR_BUFFER_BIT);
+            glDrawBuffer(GL_BACK);
+            glClear(GL_COLOR_BUFFER_BIT);
+          }
+        }
         PyMOL_SwapBuffers(PyMOLInstance);
       }
     }
-    
     if(PyMOLInstance) 
       PyMOL_Reshape(PyMOLInstance, width, height, false);
     PUnlockAPIAsGlut();

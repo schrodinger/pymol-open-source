@@ -4672,22 +4672,22 @@ void SceneRender(PyMOLGlobals *G,Pickable *pick,int x,int y,
       }
 
     if(must_render_stereo) {
-      if(mono_as_stereo) {
+      if(mono_as_stereo) { /* double-pumped mono */
         glDrawBuffer(GL_BACK_LEFT);
         render_buffer = GL_BACK_LEFT;
       } else {
         switch(I->StereoMode) {
-        case 1:
+        case 1: /* hardware stereo */
           glDrawBuffer(GL_BACK_LEFT);
           render_buffer = GL_BACK_LEFT;
           break;
         default:
-          glDrawBuffer(GL_BACK);
+          glDrawBuffer(GL_BACK); /* some kind of software stereo */
           render_buffer = GL_BACK;
           break;
         }
       }
-    } else {
+    } else { /* normal mono rendering */
       glDrawBuffer(GL_BACK);
       render_buffer = GL_BACK;
     }
@@ -5360,8 +5360,8 @@ void SceneRender(PyMOLGlobals *G,Pickable *pick,int x,int y,
 
         /* restore draw buffer */
 
-        if(mono_as_stereo) { /* double pumped mono */
-          glDrawBuffer(GL_BACK);
+        if(mono_as_stereo) { /* double pumped mono...can't draw to GL_BACK so stick with LEFT */
+          glDrawBuffer(GL_BACK_LEFT);
         } else switch(I->StereoMode) {
         case 1: /* hardware */
 #ifdef _PYMOL_SHARP3D

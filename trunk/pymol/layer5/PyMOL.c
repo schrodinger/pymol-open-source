@@ -1918,19 +1918,20 @@ void PyMOL_Stop(CPyMOL *I)
 
 void PyMOL_InitPythonDeps(CPyMOL *I)
 {
+#ifdef _MACPYMOL_XCODE
 #ifndef _PYMOL_NOPY
     Py_Initialize();
     PyEval_InitThreads();
 	
-	#if 0
+#ifdef _PYMOL_OWN_INTERP
 	{ /* NOTE this doesn't work 'cause we can't unpack code in restricted environments! */
 	
 	   /* get us a brand new interpreter, independent of any other */
 	   
 	   PyThreadState *tstate = Py_NewInterpreter();
 	   
-	   /* now free up the first interpreter and use the secon*/
-	   	   PyThreadState_Swap(tstate);
+	   /* now release the first interpreter and use the second */
+       PyThreadState_Swap(tstate);
 	}
 #endif
 
@@ -1968,30 +1969,33 @@ void PyMOL_InitPythonDeps(CPyMOL *I)
   MacPyMOLOption = I->G->Option;
   MacPyMOLReady = &I->G->Ready;
 #endif
-
 #endif
-
+#endif
+  
 }
 
 void PyMOL_Free(CPyMOL *I)
 {
   PYMOL_API_LOCK
-  /* take PyMOL down gracefully */
-  PyMOLOptions_Free(I->G->Option);
+    /* take PyMOL down gracefully */
+    PyMOLOptions_Free(I->G->Option);
   FreeP(I->G);
-  FreeP(I);
 #ifndef _PYMOL_NOPY
+#ifdef _PYMOL_OWN_INTERP
   if(I->DeferredPythonInit) { /* shut down this interpreter gracefully, then free the GIL for others to use */
-  PBlock();
-  { /* should this be moved into a PDestroy?() to clear out the thread record too? */
-	PyThreadState *tstate = PyEval_SaveThread();
-	PyEval_AcquireThread(tstate);
-    Py_EndInterpreter(tstate);
-	PyEval_ReleaseLock();
+    PBlock();
+    { /* should this be moved into a PDestroy?() to clear out the thread record too? */
+      PyThreadState *tstate = PyEval_SaveThread();
+      PyEval_AcquireThread(tstate);
+      Py_EndInterpreter(tstate);
+      PyEval_ReleaseLock();
 	}
-	}
-#endif
   }
+#endif
+#endif
+  FreeP(I);
+  return;
+  PYMOL_API_UNLOCK;
 }
 
 struct _PyMOLGlobals *PyMOL_GetGlobals(CPyMOL *I)
