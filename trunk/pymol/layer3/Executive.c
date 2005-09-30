@@ -3385,20 +3385,33 @@ int ExecutiveMultiSave(PyMOLGlobals *G,char *fname,char *name,int state,int appe
 }
 int ExecutiveMapSetBorder(PyMOLGlobals *G,char *name,float level,int state)
 {
-  int result=false;
-  SpecRec *tRec;
-  ObjectMap *mobj;
+  register CExecutive *I = G->Executive;
+  int result=true;
+  CTracker *I_Tracker= I->Tracker;
+  int list_id = ExecutiveGetNamesListFromPattern(G,name,true);
+  int iter_id = TrackerNewIter(I_Tracker, 0, list_id);
+  SpecRec *rec;
 
-  tRec = ExecutiveFindSpec(G,name);
-  if(tRec) {
-    if(tRec->type==cExecObject)
-      if(tRec->obj->type==cObjectMap) {
-        mobj =(ObjectMap*)tRec->obj;
-        ObjectMapSetBorder(mobj,level,state);
-        result=true;
+  while( TrackerIterNextCandInList(I_Tracker, iter_id, (TrackerRef**)&rec) ) {
+    if(rec) {
+      switch(rec->type) {
+      case cExecObject:
+        if(rec->obj->type==cObjectMap) {
+          ObjectMap *obj =(ObjectMap*)rec->obj;
+          result = ObjectMapSetBorder(obj,level,state);
+          
+          if(result) { 
+            ExecutiveInvalidateMapDependents(G,obj->Obj.Name);
+          }
+        }
+        break;
       }
+    }
   }
-  return(result);
+  
+  TrackerDelList(I_Tracker, list_id);
+  TrackerDelIter(I_Tracker, iter_id);
+  return result;
 }
 
 int ExecutiveMapDouble(PyMOLGlobals *G,char *name,int state)
