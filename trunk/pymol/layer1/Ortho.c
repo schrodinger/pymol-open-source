@@ -401,9 +401,7 @@ static void OrthoBusyDraw(PyMOLGlobals *G,int force)
         {
           int pass = 0;
           
-          int draw_both = G->StereoCapable &&
-            ((SceneGetStereo(G)==1) ||
-             SettingGetGlobal_b(G,cSetting_stereo_double_pump_mono));
+          int draw_both = SceneMustDrawBoth(G);
           
           glClear(GL_DEPTH_BUFFER_BIT);
           while(1) {
@@ -1025,7 +1023,7 @@ void OrthoDoDraw(PyMOLGlobals *G)
       if(!SceneRenderCached(G))
         render=true;
     
-    if(G->StereoCapable&&((SceneGetStereo(G)==1)||double_pump)) {
+    if(SceneMustDrawBoth(G)) {
       glDrawBuffer(GL_BACK_LEFT);
       glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
       glDrawBuffer(GL_BACK_RIGHT);
@@ -1045,9 +1043,11 @@ void OrthoDoDraw(PyMOLGlobals *G)
       SceneRender(G,NULL,0,0,NULL,0,0);
     
     while(times--) {
+
       switch(times) {
       case 1:
         glDrawBuffer(GL_BACK_LEFT);
+
         break;
       case 0:
         if(double_pump) {
@@ -1056,7 +1056,6 @@ void OrthoDoDraw(PyMOLGlobals *G)
           glDrawBuffer(GL_BACK);
         break;
       }
-
 
       OrthoPushMatrix(G);
       
@@ -1115,7 +1114,7 @@ void OrthoDoDraw(PyMOLGlobals *G)
         lcount = 0;
         x = cOrthoLeftMargin;
         y = cOrthoBottomMargin;
-        
+
 #ifdef _PYMOL_SHARP3D
         if(SceneGetStereo(G)&&SettingGetGlobal_b(G,cSetting_overlay)) {
           y+=(7*cOrthoLineHeight)/10;

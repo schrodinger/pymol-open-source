@@ -22,7 +22,6 @@ Z* -------------------------------------------------------------------
 #include"Scene.h"
 #include"View.h"
 
-typedef unsigned char *ImageType;
 typedef char MovieCmdType[OrthoLineLength];
 
 int MovieFromPyList(PyMOLGlobals *G,PyObject *list,int *warning);
@@ -52,8 +51,8 @@ int MoviePlaying(PyMOLGlobals *G);
 void MovieSetSize(PyMOLGlobals *G,unsigned int width,unsigned int height);
 
 void MovieClearImages(PyMOLGlobals *G);
-ImageType MovieGetImage(PyMOLGlobals *G,int image);
-void MovieSetImage(PyMOLGlobals *G,int index,ImageType image);
+ImageType *MovieGetImage(PyMOLGlobals *G,int image);
+void MovieSetImage(PyMOLGlobals *G,int index,ImageType *image);
 
 int MovieGetLength(PyMOLGlobals *G);
 int MovieFrameToImage(PyMOLGlobals *G,int frame);

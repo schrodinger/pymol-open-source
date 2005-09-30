@@ -6,6 +6,10 @@ Changes up to 0.99
 
     beta16
 
+    * reading and saving of stereo images
+
+    * now renders stereo pairs in both side-by-side and QB stereo modes
+
     * fixed valence assignment for HIS and other polymeric residues
       with various names
 

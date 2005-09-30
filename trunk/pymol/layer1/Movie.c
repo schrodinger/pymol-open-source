@@ -35,7 +35,7 @@ Z* -------------------------------------------------------------------
 #include"PyMOL.h"
 
 struct _CMovie {
-  ImageType *Image;
+  ImageType **Image;
   int *Sequence;
   MovieCmdType *Cmd;
   int NImage,NFrame;
@@ -74,7 +74,7 @@ void MovieCopyPrepare(PyMOLGlobals *G,int *width,int *height,int *length)
   if((start!=0)||(stop!=(nFrame+1)))
     SceneSetFrame(G,0,0);
   MoviePlay(G,cMoviePlay);
-  VLACheck(I->Image,ImageType,nFrame);
+  VLACheck(I->Image,ImageType*,nFrame);
   SceneGetWidthHeight(G,width,height);
   *length = nFrame;
 }
@@ -107,7 +107,7 @@ int MovieCopyFrame(PyMOLGlobals *G,int frame,int width,int height,int rowbytes,v
     MovieDoFrameCommand(G,a);
     MovieFlushCommands(G);
     i=MovieFrameToImage(G,a);
-    VLACheck(I->Image,ImageType,i);
+    VLACheck(I->Image,ImageType*,i);
     if(!I->Image[i]) {
       SceneMakeMovieImage(G);
     }
@@ -117,7 +117,7 @@ int MovieCopyFrame(PyMOLGlobals *G,int frame,int width,int height,int rowbytes,v
         ENDFB(G);
     } else {
       {
-        unsigned char *srcImage = (unsigned char*)I->Image[i];
+        unsigned char *srcImage = (unsigned char*)I->Image[i]->data;
         int i,j;
         for (i=0; i< height; i++)
           {
@@ -138,9 +138,10 @@ int MovieCopyFrame(PyMOLGlobals *G,int frame,int width,int height,int rowbytes,v
       if(G->HaveGUI) PyMOL_SwapBuffers(G->PyMOL);
     }
     if(!I->CacheSave) {
-      if(I->Image[i])
-        mfree(I->Image[i]);
-      I->Image[i]=NULL;
+      if(I->Image[i]) {
+        FreeP(I->Image[i]->data);
+        FreeP(I->Image[i]);
+      }
     }
   }
   return result;
@@ -428,45 +429,45 @@ int MoviePNG(PyMOLGlobals *G,char *prefix,int save,int start,int stop)
     
   SceneSetFrame(G,0,0);
   MoviePlay(G,cMoviePlay);
-  VLACheck(I->Image,ImageType,nFrame);
+  VLACheck(I->Image,ImageType*,nFrame);
 
   OrthoBusySlow(G,0,nFrame);
-  for(a=0;a<nFrame;a++)
-	 {
-      PRINTFB(G,FB_Movie,FB_Debugging)
-        " MoviePNG-DEBUG: Cycle %d...\n",a
-        ENDFB(G);
-		sprintf(fname,"%s%04d.png",prefix,a+1);
-		SceneSetFrame(G,0,a);
-		MovieDoFrameCommand(G,a);
-      MovieFlushCommands(G);
-		i=MovieFrameToImage(G,a);
-      VLACheck(I->Image,ImageType,i);
-      if((a>=start)&&(a<=stop)) { /* only render frames in the specified interval */
-        if(!I->Image[i]) {
-          SceneMakeMovieImage(G);
-        }
-        if(!I->Image[i]) {
-          PRINTFB(G,FB_Movie,FB_Errors) 
-            "MoviePNG-Error: Missing rendered image.\n"
-            ENDFB(G);
-        } else {
-          MyPNGWrite(G,fname,I->Image[i],I->Width,I->Height);		
-          ExecutiveDrawNow(G);
-          OrthoBusySlow(G,a,nFrame);
-          if(G->HaveGUI) PyMOL_SwapBuffers(G->PyMOL);
-          PRINTFB(G,FB_Movie,FB_Debugging)
-            " MoviePNG-DEBUG: i = %d, I->Image[i] = %p\n",i,I->Image[i]
-            ENDFB(G);
-          if(Feedback(G,FB_Movie,FB_Actions)) {
-            printf(" MoviePNG: wrote %s\n",fname);
-          }
+  for(a=0;a<nFrame;a++) {
+    PRINTFB(G,FB_Movie,FB_Debugging)
+      " MoviePNG-DEBUG: Cycle %d...\n",a
+      ENDFB(G);
+    sprintf(fname,"%s%04d.png",prefix,a+1);
+    SceneSetFrame(G,0,a);
+    MovieDoFrameCommand(G,a);
+    MovieFlushCommands(G);
+    i=MovieFrameToImage(G,a);
+    VLACheck(I->Image,ImageType*,i);
+    if((a>=start)&&(a<=stop)) { /* only render frames in the specified interval */
+      if(!I->Image[i]) {
+        SceneMakeMovieImage(G);
+      }
+      if(!I->Image[i]) {
+        PRINTFB(G,FB_Movie,FB_Errors) 
+          "MoviePNG-Error: Missing rendered image.\n"
+          ENDFB(G);
+      } else {
+        MyPNGWrite(G,fname,I->Image[i]->data,I->Image[i]->width,I->Image[i]->height);		
+        ExecutiveDrawNow(G);
+        OrthoBusySlow(G,a,nFrame);
+        if(G->HaveGUI) PyMOL_SwapBuffers(G->PyMOL);
+        PRINTFB(G,FB_Movie,FB_Debugging)
+          " MoviePNG-DEBUG: i = %d, I->Image[i] = %p\n",i,I->Image[i]
+          ENDFB(G);
+        if(Feedback(G,FB_Movie,FB_Actions)) {
+          printf(" MoviePNG: wrote %s\n",fname);
         }
       }
-      if(I->Image[i])
-        mfree(I->Image[i]);
-		I->Image[i]=NULL;
-	 }
+    }
+    if(I->Image[i]) {
+      FreeP(I->Image[i]->data);
+      FreeP(I->Image[i]);
+    }
+  }
   SceneDirty(G); /* important */
   PRINTFB(G,FB_Movie,FB_Debugging)
     " MoviePNG-DEBUG: done.\n"
@@ -544,7 +545,7 @@ void MovieAppendSequence(PyMOLGlobals *G,char *str,int start_from)
     I->NFrame=start_from;
   }
            
-  VLACheck(I->Image,ImageType,I->NFrame);
+  VLACheck(I->Image,ImageType*,I->NFrame);
   PRINTFB(G,FB_Movie,FB_Debugging)
     " MovieSequence: leaving... I->NFrame%d\n",I->NFrame
     ENDFB(G);
@@ -576,7 +577,7 @@ int MovieFrameToIndex(PyMOLGlobals *G,int frame)
   } else return(frame);
 }
 /*========================================================================*/
-void MovieSetImage(PyMOLGlobals *G,int index,ImageType image)
+void MovieSetImage(PyMOLGlobals *G,int index,ImageType *image)
 {
   register CMovie *I=G->Movie;
 
@@ -584,7 +585,7 @@ void MovieSetImage(PyMOLGlobals *G,int index,ImageType image)
     " MovieSetImage: setting movie image %d\n",index+1
     ENDFB(G);
 
-  VLACheck(I->Image,ImageType,index);
+  VLACheck(I->Image,ImageType*,index);
   if(I->Image[index]) FreeP(I->Image[index]);
   I->Image[index]=image;
   if(I->NImage<(index+1))
@@ -742,7 +743,7 @@ void MovieAppendCommand(PyMOLGlobals *G,int frame,char *command)
   }
 }
 /*========================================================================*/
-ImageType MovieGetImage(PyMOLGlobals *G,int index)
+ImageType *MovieGetImage(PyMOLGlobals *G,int index)
 {
   register CMovie *I=G->Movie;
   if((index>=0)&&(index<I->NImage))

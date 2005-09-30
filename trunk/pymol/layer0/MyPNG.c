@@ -38,7 +38,8 @@ Z* -------------------------------------------------------------------
 #include "Setting.h"
 
 
-int MyPNGWrite(PyMOLGlobals *G,char *file_name,unsigned char *p,unsigned int width,unsigned int height)
+int MyPNGWrite(PyMOLGlobals *G,char *file_name,unsigned char *p,
+               unsigned int width,unsigned int height)
 {
 #ifdef _HAVE_LIBPNG
 
@@ -51,7 +52,7 @@ int MyPNGWrite(PyMOLGlobals *G,char *file_name,unsigned char *p,unsigned int wid
    png_byte *image = (png_byte*)p;
    png_bytep *row_pointers;
 
-	row_pointers=Alloc(png_bytep,height);
+   row_pointers=Alloc(png_bytep,height);
 
    /* open the file */
    fp = fopen(file_name, "wb");
