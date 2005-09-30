@@ -213,7 +213,7 @@ static void ScenePurgeImage(PyMOLGlobals *G)
     }
     FreeP(I->Image);
   }
-  I->CopyFlag=false;
+  I->CopyFlag = false;
 }
 
 static void SceneInvalidateCopy(PyMOLGlobals *G,int free_buffer)
@@ -223,11 +223,10 @@ static void SceneInvalidateCopy(PyMOLGlobals *G,int free_buffer)
   if(I->MovieOwnsImageFlag) {
     I->MovieOwnsImageFlag=false;
     I->Image=NULL;
-    I->CopyFlag=false;
   } else if(free_buffer) {
     ScenePurgeImage(G);
   }
-  
+  I->CopyFlag=false;
 }
 
 void SceneLoadAnimation(PyMOLGlobals *G, double duration)
@@ -986,7 +985,8 @@ static int SceneMakeSizedImage(PyMOLGlobals *G,int width,
       if(!final_image) { 
         ok=false;
       }
-      
+      ScenePurgeImage(G);
+
       if(draw_both) {
         SceneCopy(G,GL_BACK_LEFT,true);
       } else {
@@ -1024,7 +1024,7 @@ static int SceneMakeSizedImage(PyMOLGlobals *G,int width,
             glClearColor(0.0,0.0,0.0,1.0);
             SceneInvalidateCopy(G,false);
             SceneRender(G,NULL,x_offset,y_offset,NULL,width,height);
-
+            
             if(draw_both) {
               SceneCopy(G,GL_BACK_LEFT,true);
             } else {
@@ -4588,7 +4588,7 @@ void SceneCopy(PyMOLGlobals *G,GLenum buffer,int force)
       ScenePurgeImage(G);
       buffer_size = 4*I->Width*I->Height;
       if(buffer_size) {
-        I->Image=Calloc(ImageType,1);
+        I->Image = Calloc(ImageType,1);
         I->Image->data=(GLvoid*)Alloc(char,buffer_size);
         I->Image->size = buffer_size;
         I->Image->width = I->Width;
@@ -5300,8 +5300,7 @@ void SceneRender(PyMOLGlobals *G,Pickable *pick,int x,int y,
       pickVLA[0].index=0;
       pickVLA[0].ptr=NULL;
 
-      SceneRenderAll(G,&context,NULL,&pickVLA,0,true,0.0F);
-	  
+      SceneRenderAll(G,&context,NULL,&pickVLA,0,true,0.0F);	  
 
       if(debug_pick) {
         PyMOL_SwapBuffers(G->PyMOL);
