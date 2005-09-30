@@ -1381,7 +1381,6 @@ int ObjectMapStateSetBorder(ObjectMapState *I,float level)
         F3(I->Field->data,a,0,c) = level;
         F3(I->Field->data,a,b,c) = level;
       }
-  printf("here\n");
   return(result);
 }
 
