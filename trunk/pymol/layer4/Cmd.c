@@ -923,11 +923,12 @@ static PyObject *CmdMapSetBorder(PyObject *self, PyObject *args)
 {
   char *name;
   float level;
+  int state;
   int ok = false;
-  ok = PyArg_ParseTuple(args,"sf",&name,&level);
+  ok = PyArg_ParseTuple(args,"sfi",&name,&level,&state);
   if(ok) {
     APIEntry();
-    ok = ExecutiveMapSetBorder(TempPyMOLGlobals,name,level);
+    ok = ExecutiveMapSetBorder(TempPyMOLGlobals,name,level,state);
     APIExit();
   }
   return APIResultOk(ok);

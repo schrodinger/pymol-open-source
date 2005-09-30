@@ -1561,7 +1561,7 @@ SEE ALSO
         if _raising(r): raise pymol.CmdException            
         return r
 
-    def map_set_border(name,level=0.0):
+    def map_set_border(name,level=0.0,state=0):
         '''
 DESCRIPTION
 
@@ -1570,7 +1570,7 @@ DESCRIPTION
 
 USAGE
 
-    map_set_border <name>,<level>
+    map_set_border name, level
 
 NOTES
 
@@ -1583,7 +1583,7 @@ SEE ALSO
         r = DEFAULT_ERROR
         try:
             lock()
-            r = _cmd.map_set_border(str(name),float(level))
+            r = _cmd.map_set_border(str(name),float(level),int(state))
         finally:
             unlock(r)
         if _raising(r): raise pymol.CmdException            
