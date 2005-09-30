@@ -1876,6 +1876,7 @@ USAGE
 
     def load_png(filename,movie=1,stereo=-1,quiet=0):
         r = DEFAULT_ERROR      
+	filename = cmd.exp_path(str(filename))
         try:
             lock()
             r = _cmd.load_png(str(filename),int(movie),int(stereo),int(quiet))

@@ -668,22 +668,22 @@ static void MainDrawLocked(void)
 static void MainDrawProgress(PyMOLGlobals *G)
 {
   int progress[PYMOL_PROGRESS_SIZE];
-  
+  int update = false;
   PBlock();
   PLockStatus();
-  PyMOL_GetProgress(G->PyMOL,progress,true);
+  update = PyMOL_GetProgress(G->PyMOL,progress,true);
   PUnlockStatus();
   PUnblock();
 
   /*
-
   printf("show progress %d %d %d %d %d %d\n",
          progress[0],progress[1],progress[2],
          progress[3],progress[4],progress[5]);*/
   
-  if(progress[PYMOL_PROGRESS_SLOW]||
+  if(update && 
+	(progress[PYMOL_PROGRESS_SLOW]||
      progress[PYMOL_PROGRESS_MED]||
-     progress[PYMOL_PROGRESS_FAST]) {
+     progress[PYMOL_PROGRESS_FAST])) {
     
     int offset;
     int x=0,y;
@@ -722,9 +722,7 @@ static void MainDrawProgress(PyMOLGlobals *G)
     {
       int pass = 0;
 
-      int draw_both = G->StereoCapable &&
-        ((SceneGetStereo(G)==1) ||
-         SettingGetGlobal_b(G,cSetting_stereo_double_pump_mono));
+      int draw_both = SceneMustDrawBoth(G);
 
       glClear(GL_DEPTH_BUFFER_BIT);
       while(1) {
@@ -804,10 +802,6 @@ static void MainDrawProgress(PyMOLGlobals *G)
     glMatrixMode(GL_MODELVIEW);
     
   }
-  
-  PRINTFD(G,FB_Ortho)
-    " OrthoBusyDraw: leaving...\n"
-    ENDFD;
 }
 
 /*========================================================================*/
