@@ -1502,9 +1502,10 @@ void SceneMakeMovieImage(PyMOLGlobals *G) {
 	SceneRay(G,0,0,(int)SettingGet(G,cSetting_ray_default_renderer),NULL,NULL,
             0.0F,0.0F,false,NULL); 
   } else {
+	int draw_both = SceneMustDrawBoth(G);
 	 v=SettingGetfv(G,cSetting_bg_rgb);
     if(G->HaveGUI && G->ValidContext) {
-      if(SceneMustDrawBoth(G)) {
+      if(draw_both) {
         glDrawBuffer(GL_BACK_LEFT);
       } else {
         glDrawBuffer(GL_BACK);
@@ -1513,7 +1514,7 @@ void SceneMakeMovieImage(PyMOLGlobals *G) {
       glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
       glClearColor(0.0,0.0,0.0,1.0);
       SceneRender(G,NULL,0,0,NULL,0,0);
-      if(SceneMustDrawBoth(G)) {
+      if(draw_both) {
         SceneCopy(G,GL_BACK_LEFT,true);
       } else {
         SceneCopy(G,GL_BACK,true);
@@ -1852,7 +1853,7 @@ void SceneDraw(Block *block)
       unsigned char *data = I->Image->data;
       if(I->Image->stereo) {
         int buffer;
-        glGetIntegerv(GL_DRAW_BUFFER,&buffer);
+        glGetIntegerv(GL_DRAW_BUFFER,(GLint*)&buffer);
         if(buffer==GL_BACK_RIGHT) 
           data += I->Image->size; 
         /* if drawing the right buffer, then draw the right image */
@@ -4114,7 +4115,7 @@ void SceneReshape(Block *block,int width,int height)
     y = height;
   }
 #ifdef _PYMOL_OSX
-#ifndef _PYMOL_XCODE
+#ifndef _MACPYMOL_XCODE
   /* workaround for broken pixel handling under OSX 
      (Who's fault: Me? Apple? NVidia?) */
   width = 8*(width/8);
@@ -4305,6 +4306,8 @@ void SceneRay(PyMOLGlobals *G,
         stShift=-stShift;
       }
         
+	  angle = stAng;
+	
       {
         float temp[16];
         identity44f(temp);
@@ -4536,9 +4539,17 @@ void SceneRay(PyMOLGlobals *G,
           
         unsigned char *merged_image = Alloc(unsigned char,I->Image->size*2);
         unsigned int *q=(unsigned int*)merged_image;
-        unsigned int *l=(unsigned int*)stereo_image->data;
-        unsigned int *r=(unsigned int*)I->Image->data;
+        unsigned int *l;
+        unsigned int *r;
         register int height,width;
+		
+		if(I->StereoMode==2) {
+			l=(unsigned int*)stereo_image->data;
+			r=(unsigned int*)I->Image->data;
+		} else {
+			r=(unsigned int*)stereo_image->data;
+			l=(unsigned int*)I->Image->data;
+		}
         height = I->Image->height;
         width = I->Image->width;
         register int a,b;
@@ -5588,7 +5599,7 @@ void SceneRender(PyMOLGlobals *G,Pickable *pick,int x,int y,
 #ifdef _PYMOL_SHARP3D
           sharp3d_end_stereo();
 #else
-          glDrawBuffer(GL_BACK);
+          glDrawBuffer(GL_BACK_LEFT); /* leave us in a stereo context (avoids problems with cards than can't handle use of mono contexts) */
 #endif
           break;
         case 2: /* side by side */

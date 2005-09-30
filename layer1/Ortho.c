@@ -322,46 +322,50 @@ void OrthoBusyMessage(PyMOLGlobals *G,char *message)
 /*========================================================================*/
 void OrthoBusySlow(PyMOLGlobals *G,int progress,int total)
 {
-  register COrtho *I=G->Ortho;
-  PRINTFD(G,FB_Ortho)
-    " OrthoBusySlow-DEBUG: progress %d total %d\n",progress,total
-    ENDFD;
-  I->BusyStatus[0]=progress;
-  I->BusyStatus[1]=total;
-  if(PyMOL_GetBusy(G->PyMOL,false)) { /* harmless race condition */
+	register COrtho *I=G->Ortho;
+	PRINTFD(G,FB_Ortho)
+		" OrthoBusySlow-DEBUG: progress %d total %d\n",progress,total
+		ENDFD;
+	I->BusyStatus[0]=progress;
+	I->BusyStatus[1]=total;
+	if(SettingGetGlobal_b(G,cSetting_show_progress)) {
+		if(PyMOL_GetBusy(G->PyMOL,false)) { /* harmless race condition */
 #ifndef _PYMOL_NOPY
-    int blocked = PAutoBlock();
-    PLockStatus();
+			int blocked = PAutoBlock();
+			PLockStatus();
 #endif
-    PyMOL_SetProgress(G->PyMOL,PYMOL_PROGRESS_SLOW,progress,total);
+			
+			PyMOL_SetProgress(G->PyMOL,PYMOL_PROGRESS_SLOW,progress,total);
 #ifndef _PYMOL_NOPY
-    PUnlockStatus();
-    PAutoUnblock(blocked);
+			PUnlockStatus();
+			PAutoUnblock(blocked);
 #endif
-  }
-  OrthoBusyDraw(G,false);
+		}
+	}
+	OrthoBusyDraw(G,false);
 }
 /*========================================================================*/
 void OrthoBusyFast(PyMOLGlobals *G,int progress,int total)
 {
-  register COrtho *I=G->Ortho;
-  PRINTFD(G,FB_Ortho)
-    " OrthoBusyFast-DEBUG: progress %d total %d\n",progress,total
-    ENDFD;
-  I->BusyStatus[2]=progress;
-  I->BusyStatus[3]=total;
-  if(PyMOL_GetBusy(G->PyMOL,false)) { /* harmless race condition */
+	register COrtho *I=G->Ortho;
+	PRINTFD(G,FB_Ortho)
+		" OrthoBusyFast-DEBUG: progress %d total %d\n",progress,total
+		ENDFD;
+	I->BusyStatus[2]=progress;
+	I->BusyStatus[3]=total;
+	if(SettingGetGlobal_b(G,cSetting_show_progress)) {
+		if(PyMOL_GetBusy(G->PyMOL,false)) { /* harmless race condition */
 #ifndef _PYMOL_NOPY
-    int blocked = PAutoBlock();
-    PLockStatus();
+			int blocked = PAutoBlock();
+			PLockStatus();
 #endif
-    PyMOL_SetProgress(G->PyMOL,PYMOL_PROGRESS_FAST,progress,total);
+			PyMOL_SetProgress(G->PyMOL,PYMOL_PROGRESS_FAST,progress,total);
 #ifndef _PYMOL_NOPY
-    PUnlockStatus();
-    PAutoUnblock(blocked);
+			PUnlockStatus();
+			PAutoUnblock(blocked);
 #endif
-  }
-
+		}
+	}
   OrthoBusyDraw(G,false);
 }
 /*========================================================================*/
@@ -395,14 +399,11 @@ static void OrthoBusyDraw(PyMOLGlobals *G,int force)
         int x,y;
         float black[3] = {0,0,0};
         float white[3] = {1,1,1};
-
+		int draw_both = SceneMustDrawBoth(G);
         OrthoPushMatrix(G);
 
         {
           int pass = 0;
-          
-          int draw_both = SceneMustDrawBoth(G);
-          
           glClear(GL_DEPTH_BUFFER_BIT);
           while(1) {
             if(draw_both) {
@@ -485,6 +486,7 @@ static void OrthoBusyDraw(PyMOLGlobals *G,int force)
         
           glFlush();
           glFinish();
+		  
           if(draw_both)
             glDrawBuffer(GL_BACK_LEFT);
           else

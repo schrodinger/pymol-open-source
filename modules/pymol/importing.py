@@ -76,6 +76,7 @@ if __name__=='pymol.importing':
         sdf = 37      # new default...
         sdf2 = 37     # SDF using C-based SDF parser (instead of Python)
         sdf2str = 38  # SDF ditto
+        png = 39      # png image
 
     loadable_sc = Shortcut(loadable.__dict__.keys()) 
     
@@ -482,6 +483,8 @@ SEE ALSO
                     ftype = loadable.grd
                 elif re.search("\.p1m$",filename,re.I):
                     ftype = loadable.p1m
+                elif re.search("\.png$",filename,re.I):
+                    ftype = loadable.png
                 else:
                     ftype = loadable.pdb # default is PDB
             elif cmd.is_string(type):
@@ -511,6 +514,11 @@ SEE ALSO
             if ftype == loadable.sdf1:
                 sdf = SDF(fname)
                 _processSDF(sdf,oname,state,quiet)
+                ftype = -1
+ 
+    # png images 
+            if ftype == loadable.png:
+		r = cmd.load_png(str(fname),quiet=quiet)
                 ftype = -1
 
     # p1m embedded data script files
