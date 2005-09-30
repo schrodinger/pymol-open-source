@@ -22,6 +22,13 @@ Z* -------------------------------------------------------------------
 #include"Ortho.h"
 #include"View.h"
 
+typedef struct {
+  unsigned char *data;
+  int size;
+  int width, height;
+  int stereo; /* indicates data actually contains two back to back full-screen images */
+} ImageType;
+
 #define cSceneViewSize 25
 typedef float SceneViewType[cSceneViewSize];
  
@@ -104,7 +111,7 @@ int SceneMultipick(PyMOLGlobals *G,Multipick *smp);
 
 void SceneSetCardInfo(PyMOLGlobals *G,char *vendor,char *renderer,char *version);
 void SceneGetCardInfo(PyMOLGlobals *G,char **vendor,char **renderer,char **version);
-int SceneLoadPNG(PyMOLGlobals *G,char *fname,int movie_flag,int quiet);
+int SceneLoadPNG(PyMOLGlobals *G,char *fname,int movie_flag,int stereo,int quiet);
 
 void SceneSetDefaultView(PyMOLGlobals *G);
 void SceneApplyRotMatrix(PyMOLGlobals *G,float *src,float *dst);
@@ -127,6 +134,7 @@ void ScenePushRasterMatrix(PyMOLGlobals *G,float *v);
 void ScenePopRasterMatrix(PyMOLGlobals *G);
 void ScenePrimeAnimation(PyMOLGlobals *G);
 void SceneLoadAnimation(PyMOLGlobals *G, double duration);
+int SceneMustDrawBoth(PyMOLGlobals *G);
 
 #endif
 

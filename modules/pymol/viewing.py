@@ -1874,11 +1874,11 @@ USAGE
         if _raising(r): raise QuietException
         return r
 
-    def load_png(filename,movie=1,quiet=0):
+    def load_png(filename,movie=1,stereo=-1,quiet=0):
         r = DEFAULT_ERROR      
         try:
             lock()
-            r = _cmd.load_png(str(filename),int(movie),int(quiet))
+            r = _cmd.load_png(str(filename),int(movie),int(stereo),int(quiet))
         finally:
             unlock(r)
         if _raising(r): raise QuietException

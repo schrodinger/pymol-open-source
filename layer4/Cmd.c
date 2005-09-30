@@ -1132,11 +1132,11 @@ static PyObject *CmdLoadPNG(PyObject *self, PyObject *args)
   char *str1;
   int ok = false;
   int quiet;
-  int movie;
-  ok = PyArg_ParseTuple(args,"sii",&str1,&movie,&quiet);
+  int movie,stereo;
+  ok = PyArg_ParseTuple(args,"siii",&str1,&movie,&stereo,&quiet);
   if(ok) {
     APIEntry();
-    ok = SceneLoadPNG(TempPyMOLGlobals,str1,movie,quiet);
+    ok = SceneLoadPNG(TempPyMOLGlobals,str1,movie,stereo,quiet);
     APIExit();
   }
   return APIResultOk(ok);

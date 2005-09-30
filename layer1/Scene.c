@@ -123,11 +123,9 @@ struct _CScene {
   int ChangedFlag;
   int CopyFlag,CopyNextFlag,CopiedFromOpenGL;
   int NFrame;
-  GLvoid *ImageBuffer;
-  int ImageBufferHeight,ImageBufferWidth;
+  ImageType *Image;
   int MovieOwnsImageFlag;
   int MovieFrameFlag;
-  unsigned ImageBufferSize;
   double LastRender,RenderTime,LastFrameTime;
   double LastRock,LastRockTime;
   float LastRockX,LastRockY;
@@ -160,6 +158,14 @@ struct _CScene {
 typedef struct {
   float unit_left,unit_right,unit_top,unit_bottom,unit_front,unit_back;
 } SceneUnitContext;
+
+int SceneMustDrawBoth(PyMOLGlobals *G)
+{
+  CScene *I=G->Scene;
+  return (G->StereoCapable &&
+    ((I->StereoMode==1) ||
+     SettingGetGlobal_b(G,cSetting_stereo_double_pump_mono)));
+}
 
 static int SceneDeferClickWhen(Block *block, int button, int x, int y, double when);
 
@@ -194,18 +200,34 @@ void ScenePrimeAnimation(PyMOLGlobals *G)
     I->n_ani_elem = 0;
   }
 }
-static void ScenePurgeCopy(PyMOLGlobals *G,int free_buffer)
+
+static void ScenePurgeImage(PyMOLGlobals *G)
 {
   register CScene *I=G->Scene;
-  I->CopyFlag=false;
-  if(I->MovieOwnsImageFlag) 
-	 {
-		I->MovieOwnsImageFlag=false;
-		I->ImageBuffer=NULL;
-	 }
-  else if(free_buffer) {
-    FreeP(I->ImageBuffer);
+  if(I->MovieOwnsImageFlag) {
+    I->MovieOwnsImageFlag=false;
+    I->Image=NULL;
+  } else {
+    if(I->Image) {
+      FreeP(I->Image->data);
+    }
+    FreeP(I->Image);
   }
+  I->CopyFlag=false;
+}
+
+static void SceneInvalidateCopy(PyMOLGlobals *G,int free_buffer)
+{
+  register CScene *I=G->Scene;
+
+  if(I->MovieOwnsImageFlag) {
+    I->MovieOwnsImageFlag=false;
+    I->Image=NULL;
+    I->CopyFlag=false;
+  } else if(free_buffer) {
+    ScenePurgeImage(G);
+  }
+  
 }
 
 void SceneLoadAnimation(PyMOLGlobals *G, double duration)
@@ -951,140 +973,153 @@ static int SceneMakeSizedImage(PyMOLGlobals *G,int width,
       factor = 0;
 
     {
-        unsigned int final_buffer_size = width*height;
-    unsigned int *final_image = NULL;
-    int nXStep = (width/(I->Width+1)) + 1;
-    int nYStep = (height/(I->Height+1)) + 1;
-    int x,y;
-
-    /* note here we're treating the buffer as 32-bit unsigned ints, not chars */
-
-    final_image = Alloc(unsigned int,final_buffer_size);
-    
-    if(!final_image) { 
-      ok=false;
-    }
-
-    SceneCopy(G,GL_BACK,true);
-    if(!I->ImageBuffer)
-      ok=false;
-
-    if(ok) {
-      int total_steps = nXStep * nYStep;
-
-      OrthoBusyPrime(G);
-
-      /* so the trick here is that we need to move the camera around
-         so that we get a pixel-perfect mosaic */
-      for(y=0;y<nYStep;y++) {
-        int y_offset = -(I->Height*y);
-        
-        for(x=0;x<nXStep;x++) {
-          int x_offset = -(I->Width*x);
-          int a,b;
-          float *v;  
-          unsigned int *p, *q, *qq, *pp;
-          v=SettingGetfv(G,cSetting_bg_rgb);
-          OrthoBusyFast(G,y*nXStep+x,total_steps);
-            
-          glDrawBuffer(GL_BACK);
-          glClearColor(v[0],v[1],v[2],1.0);
-          glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
-          glClearColor(0.0,0.0,0.0,1.0);
-          ScenePurgeCopy(G,false);
-          SceneRender(G,NULL,x_offset,y_offset,NULL,width,height);
-          SceneCopy(G,GL_BACK,true);
-          /*          p_glutSwapBuffers();
-          PSleepUnlocked(100000);
-          p_glutSwapBuffers();*/
-          
-          if(I->ImageBuffer) { /* the image into place */
-            p = (unsigned int*)I->ImageBuffer;
-            q = final_image + (x*I->Width) + (y*I->Height)*width;
-            {
-              int y_limit;
-              int x_limit;
-              
-              if(((y+1)*I->Height)>height)
-                y_limit = height - (y*I->Height);
-              else
-                y_limit = I->Height;
-              if(((x+1)*I->Width)>width)
-                x_limit = width - (x*I->Width);
-              else
-                x_limit = I->Width;
-              for(a=0;a<y_limit;a++) {
-                qq = q;
-                pp = p;
-                for(b=0;b<x_limit;b++) {
-                  *(qq++) = *(pp++);
-                }
-                q += width;
-                p += I->Width;
-              }
-            }
-          }
-        }
+      unsigned int final_buffer_size = width*height;
+      unsigned int *final_image = NULL;
+      int nXStep = (width/(I->Width+1)) + 1;
+      int nYStep = (height/(I->Height+1)) + 1;
+      int x,y;
+      int draw_both = SceneMustDrawBoth(G);
+      /* note here we're treating the buffer as 32-bit unsigned ints, not chars */
+      
+      final_image = Alloc(unsigned int,final_buffer_size);
+      
+      if(!final_image) { 
+        ok=false;
       }
       
-      ScenePurgeCopy(G,true);
-
-      if(factor) { /* are we oversampling? */
-        unsigned int src_row_bytes = width * 4;
-
-        width = width / factor;
-        height = height / factor;
-        
-        {
-          unsigned char *p = (unsigned char*)final_image;
-          unsigned char *buffer = Alloc(unsigned char, 4 * width * height);
-          unsigned char *q = buffer;
-          register unsigned char *pp, *ppp, *pppp;
-          register int a,b,c,d;
-          register unsigned int c1,c2,c3,c4;
-          unsigned int factor_col_bytes = factor * 4;
-          unsigned int factor_row_bytes = factor * src_row_bytes;
-          
-          for(b=0;b<height;b++) { /* rows */
-            pp = p;
-            for(a=0;a<width;a++) { /* cols */
-              c1 = c2 = c3 = c4 = 0;
-              ppp = pp;
-              for(d=0;d<factor;d++) { /* box rows */
-                pppp = ppp;
-                for(c=0;c<factor;c++) { /* box cols */
-                  c1 += *(pppp++);
-                  c2 += *(pppp++);
-                  c3 += *(pppp++);
-                  c4 += *(pppp++);
-                }
-                ppp += src_row_bytes;
-              }
-              *(q++)= (c1>>shift);
-              *(q++)= (c2>>shift);
-              *(q++)= (c3>>shift);
-              *(q++)= (c4>>shift);
-              pp += factor_col_bytes;
-            }
-            p+= factor_row_bytes;
-          }
-          
-          FreeP(final_image);
-          final_image = (unsigned int*)buffer;
-        }
+      if(draw_both) {
+        SceneCopy(G,GL_BACK_LEFT,true);
+      } else {
+        SceneCopy(G,GL_BACK,true);
       }
+      if(!I->Image)
+        ok=false;
+      
+      if(ok) {
+        int total_steps = nXStep * nYStep;
+        
+        OrthoBusyPrime(G);
+        
+        /* so the trick here is that we need to move the camera around
+           so that we get a pixel-perfect mosaic */
+        for(y=0;y<nYStep;y++) {
+          int y_offset = -(I->Height*y);
+          
+          for(x=0;x<nXStep;x++) {
+            int x_offset = -(I->Width*x);
+            int a,b;
+            float *v;  
+            unsigned int *p, *q, *qq, *pp;
+            v=SettingGetfv(G,cSetting_bg_rgb);
+            OrthoBusyFast(G,y*nXStep+x,total_steps);
 
-      I->ImageBuffer = final_image;
-      final_image = NULL;
-      I->ImageBufferSize = final_buffer_size*4; /* in bytes, not 32-bit words */
-      I->ImageBufferWidth=width;
-      I->ImageBufferHeight=height;
+            if(draw_both) {
+              glDrawBuffer(GL_BACK_LEFT);
+            } else {
+              glDrawBuffer(GL_BACK);
+            }
+            
+            glClearColor(v[0],v[1],v[2],1.0);
+            glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
+            glClearColor(0.0,0.0,0.0,1.0);
+            SceneInvalidateCopy(G,false);
+            SceneRender(G,NULL,x_offset,y_offset,NULL,width,height);
 
-      I->DirtyFlag = false;
-      I->CopyFlag = true;
-
-      I->CopiedFromOpenGL = false;
-      I->MovieOwnsImageFlag = false;
+            if(draw_both) {
+              SceneCopy(G,GL_BACK_LEFT,true);
+            } else {
+              SceneCopy(G,GL_BACK,true);
+            }
+            
+            if(I->Image) { /* the image into place */
+              p = (unsigned int*)I->Image->data;
+              q = final_image + (x*I->Width) + (y*I->Height)*width;
+              {
+                int y_limit;
+                int x_limit;
+                
+                if(((y+1)*I->Height)>height)
+                  y_limit = height - (y*I->Height);
+                else
+                  y_limit = I->Height;
+                if(((x+1)*I->Width)>width)
+                  x_limit = width - (x*I->Width);
+                else
+                  x_limit = I->Width;
+                for(a=0;a<y_limit;a++) {
+                  qq = q;
+                  pp = p;
+                  for(b=0;b<x_limit;b++) {
+                    *(qq++) = *(pp++);
+                  }
+                  q += width;
+                  p += I->Width;
+                }
+              }
+            }
+          }
+        }
+        
+        SceneInvalidateCopy(G,true);
+        
+        if(factor) { /* are we oversampling? */
+          unsigned int src_row_bytes = width * 4;
+          
+          width = width / factor;
+          height = height / factor;
+          
+          {
+            unsigned char *p = (unsigned char*)final_image;
+            unsigned char *buffer = Alloc(unsigned char, 4 * width * height);
+            unsigned char *q = buffer;
+            register unsigned char *pp, *ppp, *pppp;
+            register int a,b,c,d;
+            register unsigned int c1,c2,c3,c4;
+            unsigned int factor_col_bytes = factor * 4;
+            unsigned int factor_row_bytes = factor * src_row_bytes;
+            
+            for(b=0;b<height;b++) { /* rows */
+              pp = p;
+              for(a=0;a<width;a++) { /* cols */
+                c1 = c2 = c3 = c4 = 0;
+                ppp = pp;
+                for(d=0;d<factor;d++) { /* box rows */
+                  pppp = ppp;
+                  for(c=0;c<factor;c++) { /* box cols */
+                    c1 += *(pppp++);
+                    c2 += *(pppp++);
+                    c3 += *(pppp++);
+                    c4 += *(pppp++);
+                  }
+                  ppp += src_row_bytes;
+                }
+                *(q++)= (c1>>shift);
+                *(q++)= (c2>>shift);
+                *(q++)= (c3>>shift);
+                *(q++)= (c4>>shift);
+                pp += factor_col_bytes;
+              }
+              p+= factor_row_bytes;
+            }
+            
+            FreeP(final_image);
+            final_image = (unsigned int*)buffer;
+          }
+        }
+        ScenePurgeImage(G);
+        I->Image = Calloc(ImageType,1);
+        I->Image->data = (unsigned char*)final_image;
+        final_image = NULL;
+        I->Image->size = final_buffer_size*4; /* in bytes, not 32-bit words */
+        I->Image->width=width;
+        I->Image->height=height;
+        I->Image->stereo=false;
+        
+        I->DirtyFlag = false;
+        I->CopyFlag = true;
+        
+        I->CopiedFromOpenGL = false;
+        I->MovieOwnsImageFlag = false;
       }
       FreeP(final_image);
     }
@@ -1104,29 +1139,48 @@ static int SceneMakeSizedImage(PyMOLGlobals *G,int width,
 static unsigned char *SceneImagePrepare(PyMOLGlobals *G)
 {
   register CScene *I=G->Scene;
-  unsigned int buffer_size;
-  GLvoid *image;
+  unsigned char *image;
   int reset_alpha = false;
-
-  buffer_size = 4*I->Width*I->Height;
+  int save_stereo = (I->StereoMode==1);
+  
   if(!I->CopyFlag) {
-	 image = (GLvoid*)Alloc(char,buffer_size);
-	 ErrChkPtr(G,image);
+    unsigned int buffer_size;
+    buffer_size = 4*I->Width*I->Height;
+    if(save_stereo)
+      image = (GLvoid*)Alloc(char,buffer_size*2);
+    else
+      image = (GLvoid*)Alloc(char,buffer_size);
+    ErrChkPtr(G,image);
     if(G->HaveGUI && G->ValidContext) {
-      glReadBuffer(GL_BACK);
+      if(SceneMustDrawBoth(G)||save_stereo) {
+        glReadBuffer(GL_BACK_LEFT);
+      } else {
+        glReadBuffer(GL_BACK);
+      }
       PyMOLReadPixels(I->Block->rect.left,I->Block->rect.bottom,I->Width,I->Height,
-                   GL_RGBA,GL_UNSIGNED_BYTE,image);
-      
+                      GL_RGBA,GL_UNSIGNED_BYTE,(GLvoid*)(image));
+      if(save_stereo) {
+        glReadBuffer(GL_BACK_RIGHT);
+        PyMOLReadPixels(I->Block->rect.left,I->Block->rect.bottom,I->Width,I->Height,
+                        GL_RGBA,GL_UNSIGNED_BYTE,(GLvoid*)(image+buffer_size));
+      }
       reset_alpha = true;
-      I->ImageBufferHeight=I->Height;
-      I->ImageBufferWidth=I->Width;
+      ScenePurgeImage(G);
+      I->Image=Calloc(ImageType,1);
+      I->Image->data = image;
+      I->Image->height=I->Height;
+      I->Image->width=I->Width;
+      I->Image->size = buffer_size;
+      if(save_stereo)
+        I->Image->stereo = 1;
+
     } else {
        PRINTFB(G,FB_Scene,FB_Errors)
          " ScenePNG-WARNING: writing a blank image buffer.\n"
          ENDFB(G);
      }
   } else {
-    image=I->ImageBuffer;
+    image=I->Image->data;
     reset_alpha = I->CopiedFromOpenGL;
     PRINTFB(G,FB_Scene,FB_Blather)
       " ScenePNG: writing cached image (reset_alpha=%d).\n",reset_alpha
@@ -1141,6 +1195,14 @@ static unsigned char *SceneImagePrepare(PyMOLGlobals *G)
         p+=4;
       }
     }
+    if(save_stereo) {
+       for(y=0;y<I->Height;y++) {
+         for(x=0;x<I->Width;x++) {
+           p[3]=0xFF;
+           p+=4;
+         }
+       }
+    }
   }
   return (unsigned char*)image;
 }
@@ -1149,8 +1211,8 @@ static void SceneImageFinish(PyMOLGlobals *G,char *image)
 {
   register CScene *I=G->Scene;
 
-  if(!(I->CopyFlag&&I->ImageBuffer==image))
-	 FreeP(image);
+  if(I->Image->data!=(unsigned char*)image) /* purge the image if this isn't the active copy */
+    FreeP(image);
 }
 
 int  SceneCopyExternal(PyMOLGlobals *G,int width, int height,int rowbytes,unsigned char *dest)
@@ -1159,7 +1221,7 @@ int  SceneCopyExternal(PyMOLGlobals *G,int width, int height,int rowbytes,unsign
   register CScene *I=G->Scene;
   int result=false;
   int i,j;
-  if(image&&(I->ImageBufferWidth==width)&&(I->ImageBufferHeight==height)) {
+  if(image&&(I->Image->width==width)&&(I->Image->height==height)) {
     for (i=0; i< height; i++)
       {
         unsigned char *dst = dest + i * (rowbytes);
@@ -1179,18 +1241,61 @@ int  SceneCopyExternal(PyMOLGlobals *G,int width, int height,int rowbytes,unsign
   return(result);
 }
 
+static void interlace(unsigned int *dst,unsigned int *src,int width,int height)
+{
+  register int a,b;
+  unsigned int *p0 = src, *p1 = src+(height*width);
+  unsigned int *q = dst;
+  for(a=0;a<height;a++) {
+    for(b=0;b<width;b++) {
+      *(q++) = *(p0++);
+    }
+    for(b=0;b<width;b++) {
+      *(q++) = *(p1++);      
+    }
+  }
+}
+static void deinterlace(unsigned int *dst,unsigned int *src,
+                        int width,int height,int swap)
+{
+  register int a,b;
+  unsigned int *p = src;
+  unsigned int *q0 = dst, *q1 = dst+(height*width);
+  if(swap) {
+    q0 = dst+(height*width);
+    q1 = dst;
+  }
+    
+  for(a=0;a<height;a++) {
+    for(b=0;b<width;b++) {
+      *(q0++) = *(p++);
+    }
+    for(b=0;b<width;b++) {
+      *(q1++) = *(p++);      
+    }
+  }
+}
 
 void ScenePNG(PyMOLGlobals *G,char *png,int quiet)
 {
   register CScene *I=G->Scene;
-
   GLvoid *image = SceneImagePrepare(G);
   if(image) {
-    if(MyPNGWrite(G,png,image,I->ImageBufferWidth,I->ImageBufferHeight)) {
+    int width = I->Image->width;
+    int height = I->Image->height;
+    unsigned char *save_image = image;
+
+    if((image==I->Image->data) && I->Image->stereo) {
+      width = I->Image->width;
+      save_image = Alloc(unsigned char, I->Image->size*2);
+      interlace((unsigned int*)save_image,(unsigned int*)I->Image->data,width,height);
+      width *= 2;
+    }
+    if(MyPNGWrite(G,png,save_image,width,height)) {
       if(!quiet) {
         PRINTFB(G,FB_Scene,FB_Actions) 
           " ScenePNG: wrote %dx%d pixel image to file \"%s\".\n",
-          I->ImageBufferWidth,I->ImageBufferHeight,png
+          width,I->Image->height,png
           ENDFB(G);
       }
     } else {
@@ -1199,6 +1304,8 @@ void ScenePNG(PyMOLGlobals *G,char *png,int quiet)
         png
         ENDFB(G);
     }
+    if(save_image && (save_image!=image))
+      FreeP(save_image);
   }
   SceneImageFinish(G,image);  
 }
@@ -1338,7 +1445,7 @@ void SceneDirty(PyMOLGlobals *G)
   if(I) {
     if(!I->DirtyFlag) {
       I->DirtyFlag=true;
-      ScenePurgeCopy(G,false);
+      SceneInvalidateCopy(G,false);
       OrthoDirty(G);
     }
   }
@@ -1397,23 +1504,34 @@ void SceneMakeMovieImage(PyMOLGlobals *G) {
   } else {
 	 v=SettingGetfv(G,cSetting_bg_rgb);
     if(G->HaveGUI && G->ValidContext) {
-
-      glDrawBuffer(GL_BACK);
+      if(SceneMustDrawBoth(G)) {
+        glDrawBuffer(GL_BACK_LEFT);
+      } else {
+        glDrawBuffer(GL_BACK);
+      }
       glClearColor(v[0],v[1],v[2],1.0);
       glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
       glClearColor(0.0,0.0,0.0,1.0);
       SceneRender(G,NULL,0,0,NULL,0,0);
-      SceneCopy(G,GL_BACK,true);
+      if(SceneMustDrawBoth(G)) {
+        SceneCopy(G,GL_BACK_LEFT,true);
+      } else {
+        SceneCopy(G,GL_BACK,true);
+      }
     }
   }
-  if(I->ImageBuffer&&(I->ImageBufferHeight==I->Height)&&(I->ImageBufferWidth==I->Width)) {
-	 MovieSetImage(G,MovieFrameToImage(G,SettingGetGlobal_i(G,cSetting_frame)-1)
-                                    ,I->ImageBuffer);
-    I->MovieOwnsImageFlag=true;
+  if(I->Image&&
+     (I->Image->height==I->Height)&&
+     (I->Image->width==I->Width)) {
+	 MovieSetImage(G,
+                   MovieFrameToImage(G,SettingGetGlobal_i(G,cSetting_frame)-1),
+                   I->Image);
+     I->MovieOwnsImageFlag=true;
   } else {
     I->MovieOwnsImageFlag=false;
   }
-  I->CopyFlag=true;
+  if(I->Image)
+    I->CopyFlag=true;
 }
 
 /*========================================================================*/
@@ -1647,34 +1765,59 @@ void SceneObjectDel(PyMOLGlobals *G,CObject *obj)
   SceneDirty(G);
 }
 /*========================================================================*/
-int SceneLoadPNG(PyMOLGlobals *G,char *fname,int movie_flag,int quiet) 
+int SceneLoadPNG(PyMOLGlobals *G,char *fname,int movie_flag,int stereo,int quiet) 
 {
   register CScene *I=G->Scene;
   int ok=false;
-  if(I->ImageBuffer) {
+  if(I->Image) {
 	 if(I->MovieOwnsImageFlag) {
 		I->MovieOwnsImageFlag=false;
-		I->ImageBuffer=NULL;
+		I->Image=NULL;
 	 } else {
-		FreeP(I->ImageBuffer);
+       ScenePurgeImage(G);
 	 }
     I->CopyFlag=false;
   }
-  if(MyPNGRead(fname,(unsigned char**)&I->ImageBuffer,(unsigned int*)&I->ImageBufferWidth,(unsigned int*)&I->ImageBufferHeight)) {
+  I->Image=Calloc(ImageType,1);
+  if(MyPNGRead(fname,
+               (unsigned char**)&I->Image->data,
+               (unsigned int*)&I->Image->width,
+               (unsigned int*)&I->Image->height)) {
+    I->Image->size = I->Image->width * I->Image->height * 4;
     if(!quiet) {
       PRINTFB(G,FB_Scene,FB_Details)
         " Scene: loaded image from '%s'.\n",fname
         ENDFB(G);
     }
+    if((stereo>0) || ((stereo<0) &&
+                    (I->Image->width == 2*I->Width)&&
+                    (I->Image->height == I->Height))) {
+      unsigned char *tmp = Alloc(unsigned char,I->Image->size);
+      if(tmp) {
+        I->Image->width /=2;
+        I->Image->stereo = true;
+        I->Image->size /=2;
+        deinterlace((unsigned int*)tmp,
+                    (unsigned int*)I->Image->data,
+                    I->Image->width,I->Image->height,
+                    (stereo==2));
+        FreeP(I->Image->data);
+        I->Image->data = tmp;
+      }
+    }
+        
     I->CopyFlag=true;
     I->CopiedFromOpenGL = false;
     OrthoRemoveSplash(G);
     SettingSet(G,cSetting_text,0.0);
-    if(movie_flag&&I->ImageBuffer&&(I->ImageBufferHeight==I->Height)&&(I->ImageBufferWidth==I->Width)) {
+    if(movie_flag&&
+       I->Image&&I->Image->data&&
+       (I->Image->height==I->Height)&&
+       (I->Image->width==I->Width)) {
       MovieSetImage(G,
                     MovieFrameToImage(G,
                                       SettingGetGlobal_i(G,cSetting_frame)-1)
-                    ,I->ImageBuffer);
+                    ,I->Image);
       I->MovieOwnsImageFlag=true;
       I->MovieFrameFlag=true;
     } else {
@@ -1698,187 +1841,185 @@ void SceneDraw(Block *block)
   PyMOLGlobals *G=block->G;
   register CScene *I=G->Scene;
   int overlay,text;
-  int double_pump;
 
   if(G->HaveGUI && G->ValidContext) {
     overlay = (int)SettingGet(G,cSetting_overlay);
     text = (int)SettingGet(G,cSetting_text);
-    double_pump = (int)SettingGet(G,cSetting_stereo_double_pump_mono);
 
-    if(overlay||(!text)) 
-
-      if(I->CopyFlag)
+    if(((!text)||overlay) &&
+       I->CopyFlag && 
+       I->Image && I->Image->data) {
+      unsigned char *data = I->Image->data;
+      if(I->Image->stereo) {
+        int buffer;
+        glGetIntegerv(GL_DRAW_BUFFER,&buffer);
+        if(buffer==GL_BACK_RIGHT) 
+          data += I->Image->size; 
+        /* if drawing the right buffer, then draw the right image */
+      }
+      
+      if((I->Image->height>I->Height)||
+         (I->Image->width>I->Width)) { /* image is oversize */
         {
-
-          glReadBuffer(GL_BACK); 
-
-          if((I->ImageBufferHeight>I->Height)||
-             (I->ImageBufferWidth>I->Width)) { /* image is oversize */
-            {
-              int factor = 1;
-              int shift = 0;
-              register int tmp_height = I->ImageBufferHeight;
-              register int tmp_width = I->ImageBufferWidth;
-              int src_row_bytes = I->ImageBufferWidth * 4;
-              unsigned int color_word;
-              float rgba[4] = { 0.0F, 0.0F, 0.0F, 1.0F };
-
-              ColorGetBkrdContColor(G,rgba,false);
-              color_word = ColorGet32BitWord(G,rgba);
-
-              while(tmp_height&&tmp_width&&
-                    ((tmp_height>(I->Height-3))||(tmp_width>(I->Width-3)))) {
-                tmp_height = (tmp_height>>1);
-                tmp_width = (tmp_width>>1);
-                factor = (factor<<1);
-                shift++;
-              }
-              tmp_width+=2;
-              tmp_height+=2;
-              
-              if(tmp_height&&tmp_width) {
-                unsigned int buffer_size = tmp_height * tmp_width * 4;
-                unsigned char *buffer = Alloc(unsigned char, buffer_size);
-               
-                
-                if(buffer && I->ImageBuffer) {
-                  unsigned char *p = I->ImageBuffer;
-                  unsigned char *q = buffer;
-                  register unsigned char *pp, *ppp, *pppp;
-                  register int a,b,c,d;
-                  register unsigned int c1,c2,c3,c4;
-                  unsigned int factor_col_bytes = factor * 4;
-                  unsigned int factor_row_bytes = factor * src_row_bytes;
-                  
-                  shift = shift + shift;
-                  for(b=0;b<tmp_height;b++) { /* rows */
-                    pp = p;
-                    if((!b)||(b==(tmp_height-1))) {
-                      for(a=0;a<tmp_width;a++) { /* border */
-                        *((unsigned int*)(q)) = color_word;
-                        q+=4;
-                      }
-                    } else {
-                      for(a=0;a<tmp_width;a++) { /* cols */
-                        c1 = c2 = c3 = c4 = 0;
-                        ppp = pp;
-                        if((!a)||(a==(tmp_width-1))) { /* border */
-                          *((unsigned int*)(q)) = color_word;
-                          q+=4;
-                        } else {
-                          for(d=0;d<factor;d++) { /* box rows */
-                            pppp = ppp;
-                            for(c=0;c<factor;c++) { /* box cols */
-                              c1 += *(pppp++);
-                              c2 += *(pppp++);
-                              c3 += *(pppp++);
-                              c4 += *(pppp++);
-                            }
-                            ppp += src_row_bytes;
-                          }
-                          *(q++)= (c1>>shift);
-                          *(q++)= (c2>>shift);
-                          *(q++)= (c3>>shift);
-                          *(q++)= (c4>>shift);
-                          pp += factor_col_bytes;
-                        }
-                      }
-                      p+= factor_row_bytes;
-                    }
-                  }
-
-                  glRasterPos3i((int)((I->Width-tmp_width)/2+I->Block->rect.left),
-                                (int)((I->Height-tmp_height)/2+I->Block->rect.bottom),-10);
-                  PyMOLDrawPixels(tmp_width,tmp_height,GL_RGBA,GL_UNSIGNED_BYTE,buffer);
-                }
-                FreeP(buffer);
-              }
-              {
-                char buffer[255];
-                int text_pos = (I->Height - tmp_height) / 2 - 15;
-                int x_pos, y_pos;
-                if(text_pos<0) {
-                  text_pos = (I->Height - tmp_height) / 2 + 3;
-                  x_pos = (I->Width - tmp_width) / 2 + 3;
-                  y_pos = text_pos;
-                } else {
-                  x_pos = (I->Width - tmp_width) / 2;
-                  y_pos = text_pos;
-                }
-                
-                sprintf(buffer,"Image size = %d x %d",
-                        I->ImageBufferWidth,
-                        I->ImageBufferHeight);
-                
-                TextSetColor3f(G,rgba[0],rgba[1],rgba[2]);
-                TextDrawStrAt(G,buffer,
-                              x_pos + I->Block->rect.left,
-                              y_pos + I->Block->rect.bottom);
-              }
-            }
-          } else {
-            int width,height;
-
-            width = I->ImageBufferWidth;
-            height = I->ImageBufferHeight;
-            
-            if((width<I->Width)||(height<I->Height)) {
-              
-              if(((I->Width-width)>2) && ((I->Height-height)>2)) { /* but a border around image */
-                unsigned int color_word;
-                float rgba[4] = { 0.0F, 0.0F, 0.0F, 1.0F };
-                register unsigned int tmp_height = height+2;
-                register unsigned int tmp_width = width+2;
-                unsigned int n_word = tmp_height * tmp_width;
-                unsigned int *tmp_buffer = Alloc(unsigned int,n_word);
-                ColorGetBkrdContColor(G,rgba,false);
-                color_word = ColorGet32BitWord(G,rgba);
-
-                if(tmp_buffer) {
-                  register unsigned int a,b;
-                  unsigned int *p=I->ImageBuffer;
-                  unsigned int *q=tmp_buffer;
-                  for(a=0;a<tmp_height;a++) {
-                    if((!a)||(a==(tmp_height-1))) {
-                      for(b=0;b<tmp_width;b++) 
-                        *(q++) = color_word;
-                    } else {
-                      for(b=0;b<tmp_width;b++) {
-                        if((!b)||(b==(tmp_width-1))) {        
-                          *(q++) = color_word;
-                        } else {
-                          *(q++) = *(p++);
-                        }
-                      }
-                    }
-                  }
-                  
-                  glRasterPos3i((int)((I->Width-tmp_width)/2+I->Block->rect.left),
-                                (int)((I->Height-tmp_height)/2+I->Block->rect.bottom),-10);
-                  
-                  PyMOLDrawPixels(tmp_width,tmp_height,GL_RGBA,GL_UNSIGNED_BYTE,tmp_buffer);
-                  
-                }
-                FreeP(tmp_buffer);
-              } else {
-
-                glRasterPos3i((int)((I->Width-width)/2+I->Block->rect.left),
-                              (int)((I->Height-height)/2+I->Block->rect.bottom),-10);
-                
-                PyMOLDrawPixels(width,height,GL_RGBA,GL_UNSIGNED_BYTE,I->ImageBuffer); 
-              }
-            } else {
-              glRasterPos3i(I->Block->rect.left,I->Block->rect.bottom,-10);
-              PyMOLDrawPixels(width,height,GL_RGBA,GL_UNSIGNED_BYTE,I->ImageBuffer);            
-            }
+          int factor = 1;
+          int shift = 0;
+          register int tmp_height = I->Image->height;
+          register int tmp_width = I->Image->width;
+          int src_row_bytes = I->Image->width * 4;
+          unsigned int color_word;
+          float rgba[4] = { 0.0F, 0.0F, 0.0F, 1.0F };
+          
+          ColorGetBkrdContColor(G,rgba,false);
+          color_word = ColorGet32BitWord(G,rgba);
+          
+          while(tmp_height&&tmp_width&&
+                ((tmp_height>(I->Height-3))||(tmp_width>(I->Width-3)))) {
+            tmp_height = (tmp_height>>1);
+            tmp_width = (tmp_width>>1);
+            factor = (factor<<1);
+            shift++;
           }
-          I->RenderTime = -I->LastRender;
-          I->LastRender = UtilGetSeconds(G);
-          I->RenderTime += I->LastRender;
-          ButModeSetRate(G,(float)I->RenderTime);
+          tmp_width+=2;
+          tmp_height+=2;
+          
+          if(tmp_height&&tmp_width) {
+            unsigned int buffer_size = tmp_height * tmp_width * 4;
+            unsigned char *buffer = Alloc(unsigned char, buffer_size);
+            
+            
+            if(buffer && data) {
+              unsigned char *p = data;
+              unsigned char *q = buffer;
+              register unsigned char *pp, *ppp, *pppp;
+              register int a,b,c,d;
+              register unsigned int c1,c2,c3,c4;
+              unsigned int factor_col_bytes = factor * 4;
+              unsigned int factor_row_bytes = factor * src_row_bytes;
+                  
+              shift = shift + shift;
+              for(b=0;b<tmp_height;b++) { /* rows */
+                pp = p;
+                if((!b)||(b==(tmp_height-1))) {
+                  for(a=0;a<tmp_width;a++) { /* border */
+                    *((unsigned int*)(q)) = color_word;
+                    q+=4;
+                  }
+                } else {
+                  for(a=0;a<tmp_width;a++) { /* cols */
+                    c1 = c2 = c3 = c4 = 0;
+                    ppp = pp;
+                    if((!a)||(a==(tmp_width-1))) { /* border */
+                      *((unsigned int*)(q)) = color_word;
+                      q+=4;
+                    } else {
+                      for(d=0;d<factor;d++) { /* box rows */
+                        pppp = ppp;
+                        for(c=0;c<factor;c++) { /* box cols */
+                          c1 += *(pppp++);
+                          c2 += *(pppp++);
+                          c3 += *(pppp++);
+                          c4 += *(pppp++);
+                        }
+                        ppp += src_row_bytes;
+                      }
+                      *(q++)= (c1>>shift);
+                      *(q++)= (c2>>shift);
+                      *(q++)= (c3>>shift);
+                      *(q++)= (c4>>shift);
+                      pp += factor_col_bytes;
+                    }
+                  }
+                  p+= factor_row_bytes;
+                }
+              }
+
+              glRasterPos3i((int)((I->Width-tmp_width)/2+I->Block->rect.left),
+                            (int)((I->Height-tmp_height)/2+I->Block->rect.bottom),-10);
+              PyMOLDrawPixels(tmp_width,tmp_height,GL_RGBA,GL_UNSIGNED_BYTE,buffer);
+                  
+            }
+            FreeP(buffer);
+          }
+          {
+            char buffer[255];
+            int text_pos = (I->Height - tmp_height) / 2 - 15;
+            int x_pos, y_pos;
+            if(text_pos<0) {
+              text_pos = (I->Height - tmp_height) / 2 + 3;
+              x_pos = (I->Width - tmp_width) / 2 + 3;
+              y_pos = text_pos;
+            } else {
+              x_pos = (I->Width - tmp_width) / 2;
+              y_pos = text_pos;
+            }
+                
+            sprintf(buffer,"Image size = %d x %d",
+                    I->Image->width,
+                    I->Image->height);
+                
+            TextSetColor3f(G,rgba[0],rgba[1],rgba[2]);
+            TextDrawStrAt(G,buffer,
+                          x_pos + I->Block->rect.left,
+                          y_pos + I->Block->rect.bottom);
+          }
         }
-    
-    glColor3f(1.0,1.0,1.0);
+      } else {
+        int width,height;
+
+        width = I->Image->width;
+        height = I->Image->height;
+            
+        if((width<I->Width)||(height<I->Height)) {
+              
+          if(((I->Width-width)>2) && ((I->Height-height)>2)) { /* but a border around image */
+            unsigned int color_word;
+            float rgba[4] = { 0.0F, 0.0F, 0.0F, 1.0F };
+            register unsigned int tmp_height = height+2;
+            register unsigned int tmp_width = width+2;
+            unsigned int n_word = tmp_height * tmp_width;
+            unsigned int *tmp_buffer = Alloc(unsigned int,n_word);
+            ColorGetBkrdContColor(G,rgba,false);
+            color_word = ColorGet32BitWord(G,rgba);
+
+            if(tmp_buffer) {
+              register unsigned int a,b;
+              unsigned int *p=(unsigned int*)data;
+              unsigned int *q=tmp_buffer;
+              for(a=0;a<tmp_height;a++) {
+                if((!a)||(a==(tmp_height-1))) {
+                  for(b=0;b<tmp_width;b++) 
+                    *(q++) = color_word;
+                } else {
+                  for(b=0;b<tmp_width;b++) {
+                    if((!b)||(b==(tmp_width-1))) {        
+                      *(q++) = color_word;
+                    } else {
+                      *(q++) = *(p++);
+                    }
+                  }
+                }
+              }
+              glRasterPos3i((int)((I->Width-tmp_width)/2+I->Block->rect.left),
+                            (int)((I->Height-tmp_height)/2+I->Block->rect.bottom),-10);
+              PyMOLDrawPixels(tmp_width,tmp_height,GL_RGBA,GL_UNSIGNED_BYTE,tmp_buffer);
+                  
+            }
+            FreeP(tmp_buffer);
+          } else {
+            glRasterPos3i((int)((I->Width-width)/2+I->Block->rect.left),
+                          (int)((I->Height-height)/2+I->Block->rect.bottom),-10);
+            PyMOLDrawPixels(width,height,GL_RGBA,GL_UNSIGNED_BYTE,data); 
+          }
+        } else {
+          glRasterPos3i(I->Block->rect.left,I->Block->rect.bottom,-10);
+          PyMOLDrawPixels(width,height,GL_RGBA,GL_UNSIGNED_BYTE,data);            
+        }
+      }
+      I->RenderTime = -I->LastRender;
+      I->LastRender = UtilGetSeconds(G);
+      I->RenderTime += I->LastRender;
+      ButModeSetRate(G,(float)I->RenderTime);
+    }
   }
 }
 /*========================================================================*/
@@ -3829,11 +3970,8 @@ void SceneFree(PyMOLGlobals *G)
 {
   register CScene *I=G->Scene;
   OrthoFreeBlock(G,I->Block);
-  
   ListFree(I->Obj,next,ObjRec);
-  if(!I->MovieOwnsImageFlag)
-	 FreeP(I->ImageBuffer);
-  
+  ScenePurgeImage(G);
   CGOFree(G->DebugCGO);
   FreeP(G->Scene);
   
@@ -3924,10 +4062,7 @@ int  SceneInit(PyMOLGlobals *G)
     
     I->DirtyFlag = true;
     I->RovingDirtyFlag = false;
-    I->ImageBuffer = NULL;
-    I->ImageBufferWidth=0;
-    I->ImageBufferHeight=0;
-    I->ImageBufferSize = 0;
+    I->Image = NULL;
     I->MovieOwnsImageFlag = false;
     I->MovieFrameFlag = false;
     I->RenderTime = 0;
@@ -4101,11 +4236,12 @@ void SceneRay(PyMOLGlobals *G,
   char *charVLA = NULL;
   char *headerVLA = NULL;
   float fov;
+  int stereo_hand = 0;
+  ImageType *stereo_image = NULL;
   OrthoLineType prefix = "";
   SceneUnitContext context;
 
   if((!ray_width)||(!ray_height)) {
-
     if(ray_width&&(!ray_height)) {
       ray_height = (ray_width*I->Height)/I->Width;
     } else if(ray_height&&(!ray_width)) {
@@ -4117,52 +4253,103 @@ void SceneRay(PyMOLGlobals *G,
   }
 
   fov=SettingGet(G,cSetting_field_of_view);
-  aspRat = ((float) ray_width) / ((float) ray_height);
 
-  ScenePrepareUnitContext(G,&context,ray_width,ray_height);
   if(SettingGet(G,cSetting_all_states)) {
     curState=-1;
   } else {
     curState=SettingGetGlobal_i(G,cSetting_state)-1;
   }
 
-  ray = RayNew(G);
+  timing = UtilGetSeconds(G); /* start timing the process */
 
-  if(ray) {
-    SceneUpdate(G);
+  SceneUpdate(G);
     
-    timing = UtilGetSeconds(G); /* start timing the process */
-    
+  switch(I->StereoMode) {
+  case 1:
+    stereo_hand=2;
+    break;
+  case 2:
+  case 3:
+    ray_width = ray_width/2;
+    stereo_hand=2;
+    break;
+  default:
+    break;
+  }
+
+  aspRat = ((float) ray_width) / ((float) ray_height);
+
+  while(1) {
+
     /* start afresh, looking in the negative Z direction (0,0,-1) from (0,0,0) */
     identity44f(rayView);
-    
-    /* move the camera to the location we are looking at */
-    MatrixTranslateC44f(rayView,I->Pos[0],I->Pos[1],I->Pos[2]);
-    
-    if(shift) {
-      MatrixTranslateC44f(rayView,shift,0.0F,0.0F);
-    }
-    /* move the camera so that we can see the origin 
-     * NOTE, vector is given in the coordinates of the world's motion
-     * relative to the camera */
-    
-    
-    /* 4. rotate about the origin (the the center of rotation) */
-    
-    if(angle) {
-      float temp[16];
-      identity44f(temp);
-      MatrixRotateC44f(temp,(float)(-PI*angle/180),0.0F,1.0F,0.0F);
-      MatrixMultiplyC44f(I->RotMatrix,temp);
-      MatrixMultiplyC44f(temp,rayView);
-    } else {
+
+    ray = RayNew(G);
+    if(!ray) break;
+
+    if(stereo_hand) {
+      /* stereo */
+        
+      float stAng,stShift;
+        
+      stAng = SettingGet(G,cSetting_stereo_angle);
+      stShift = SettingGet(G,cSetting_stereo_shift);
+        
+      /* right hand */
+        
+      stShift = (float)(stShift*fabs(I->Pos[2])/100.0);
+      stAng = (float)(stAng*atan(stShift/fabs(I->Pos[2]))*90.0/cPI);
+        
+      if(stereo_hand==2) { /* left hand */
+        stAng=-stAng;
+        stShift=-stShift;
+      }
+        
+      {
+        float temp[16];
+        identity44f(temp);
+        MatrixRotateC44f(temp,(float)(-PI*stAng/180),0.0F,1.0F,0.0F); /* y-axis rotation */
+        MatrixMultiplyC44f(temp,rayView);
+      }
+        
+      /* move the camera to the location we are looking at */
+      MatrixTranslateC44f(rayView,I->Pos[0],I->Pos[1],I->Pos[2]);
+      MatrixTranslateC44f(rayView,stShift,0.0,0.0);
+        
       MatrixMultiplyC44f(I->RotMatrix,rayView);
+        
+        
+    } else { /* not stereo mode */
+        
+      /* move the camera to the location we are looking at */
+      MatrixTranslateC44f(rayView,I->Pos[0],I->Pos[1],I->Pos[2]);
+        
+      if(shift) {
+        MatrixTranslateC44f(rayView,shift,0.0F,0.0F);
+      }
+      /* move the camera so that we can see the origin 
+       * NOTE, vector is given in the coordinates of the world's motion
+       * relative to the camera */
+        
+        
+      /* 4. rotate about the origin (the the center of rotation) */
+        
+      if(angle) {
+        float temp[16];
+        identity44f(temp);
+        MatrixRotateC44f(temp,(float)(-PI*angle/180),0.0F,1.0F,0.0F);
+        MatrixMultiplyC44f(I->RotMatrix,temp);
+        MatrixMultiplyC44f(temp,rayView);
+      } else {
+        MatrixMultiplyC44f(I->RotMatrix,rayView);
+      }
     }
-    
-    
+
+    ScenePrepareUnitContext(G,&context,ray_width,ray_height);
+      
     /* 5. move the origin to the center of rotation */
     MatrixTranslateC44f(rayView,-I->Origin[0],-I->Origin[1],-I->Origin[2]);
-    
+      
     if(Feedback(G,FB_Scene,FB_Debugging)) {
       fprintf(stderr,"SceneRay: %8.3f %8.3f %8.3f\n",
               I->Pos[0],I->Pos[1],I->Pos[2]);
@@ -4250,12 +4437,13 @@ void SceneRay(PyMOLGlobals *G,
       
       /*    RayRenderColorTable(ray,ray_width,ray_height,buffer);*/
       
-      ScenePurgeCopy(G,true);
+      SceneInvalidateCopy(G,true);
       
-      I->ImageBuffer = buffer;
-      I->ImageBufferSize = buffer_size;
-      I->ImageBufferWidth = ray_width;
-      I->ImageBufferHeight = ray_height;
+      I->Image=Calloc(ImageType,1);
+      I->Image->data = (unsigned char*)buffer;
+      I->Image->size = buffer_size;
+      I->Image->width = ray_width;
+      I->Image->height = ray_height;
       I->DirtyFlag=false;
       I->CopyFlag = true;
       I->CopiedFromOpenGL = false;
@@ -4272,7 +4460,7 @@ void SceneRay(PyMOLGlobals *G,
         if(PPovrayRender(headerVLA,charVLA,prefix,ray_width,
                          ray_height,(int)SettingGet(G,cSetting_antialias))) {
           strcat(prefix,".png");
-          SceneLoadPNG(G,prefix,false,false);
+          SceneLoadPNG(G,prefix,false,0,false);
           I->DirtyFlag=false;
         }
         VLAFreeP(charVLA);
@@ -4321,10 +4509,60 @@ void SceneRay(PyMOLGlobals *G,
       }
       break;
     }
-    timing = UtilGetSeconds(G)-timing;
-    if(mode!=2) { /* don't show timings for tests */
-      accumTiming += timing; 
-      
+    RayFree(ray);
+    stereo_hand--;
+    if((I->StereoMode==0)||(!stereo_hand))
+      break;
+    else {
+      stereo_image = I->Image;
+      I->Image = NULL;
+    }
+  }
+
+  if(stereo_image) {
+    switch(I->StereoMode) {
+    case 1:
+      /* merge the two images into one pointer */
+      I->Image->data = Realloc(I->Image->data,unsigned char,I->Image->size*2);
+      UtilCopyMem(I->Image->data+I->Image->size,
+                  stereo_image->data,
+                  I->Image->size);
+      I->Image->stereo = true;
+      break;
+    case 2:
+    case 3:
+      {
+        /* merge the two images into one */
+          
+        unsigned char *merged_image = Alloc(unsigned char,I->Image->size*2);
+        unsigned int *q=(unsigned int*)merged_image;
+        unsigned int *l=(unsigned int*)stereo_image->data;
+        unsigned int *r=(unsigned int*)I->Image->data;
+        register int height,width;
+        height = I->Image->height;
+        width = I->Image->width;
+        register int a,b;
+          
+        for(a=0;a<height;a++) {
+          for(b=0;b<width;b++)
+            *(q++) = *(l++);
+          for(b=0;b<width;b++)
+            *(q++) = *(r++);
+        }
+        FreeP(I->Image->data);
+        I->Image->data = merged_image;
+        I->Image->width*=2;
+        I->Image->size*=2;
+      }
+      break;
+    }
+    FreeP(stereo_image->data);
+    FreeP(stereo_image);
+  }
+  timing = UtilGetSeconds(G)-timing;
+  if(mode!=2) { /* don't show timings for tests */
+    accumTiming += timing; 
+    
       if(!quiet) {
         PRINTFB(G,FB_Ray,FB_Details)
           " Ray: total time: %4.2f sec. = %3.1f frames/hour. (%4.2f sec. accum.)\n", 
@@ -4332,47 +4570,33 @@ void SceneRay(PyMOLGlobals *G,
           accumTiming 
           ENDFB(G);
       }
-    }
-    if(mode!=3)
-      OrthoDirty(G);
   }
-  RayFree(ray);
+
+  if(mode!=3)
+    OrthoDirty(G);
+  
 }
 /*========================================================================*/
 void SceneCopy(PyMOLGlobals *G,GLenum buffer,int force)
 {
   register CScene *I=G->Scene;
   unsigned int buffer_size;
-
-  if(force || (!(I->StereoMode||SettingGet(G,cSetting_stereo_double_pump_mono))))
-  { /* no copies while in stereo mode */
+  
+  if(force || (!(I->StereoMode||SettingGet(G,cSetting_stereo_double_pump_mono)))) {
+    /* no copies while in stereo mode */
     if((!I->DirtyFlag)&&(!I->CopyFlag)) { 
+      ScenePurgeImage(G);
       buffer_size = 4*I->Width*I->Height;
       if(buffer_size) {
-        if(I->ImageBuffer)	 {
-          if(I->MovieOwnsImageFlag) {
-            I->MovieOwnsImageFlag=false;
-            I->ImageBuffer=NULL;
-          } else if(I->ImageBufferSize!=buffer_size) {
-            FreeP(I->ImageBuffer);
-          }
-        }
-        if((I->ImageBufferWidth!=I->Width)||(I->ImageBufferHeight!=I->Height)) {
-          FreeP(I->ImageBuffer);
-        }
-        if(!I->ImageBuffer) {
-          I->ImageBuffer=(GLvoid*)Alloc(char,buffer_size);
-          ErrChkPtr(G,I->ImageBuffer);
-          I->ImageBufferSize = buffer_size;
-          I->ImageBufferWidth=I->Width;
-          I->ImageBufferHeight=I->Height;
-        }
+        I->Image=Calloc(ImageType,1);
+        I->Image->data=(GLvoid*)Alloc(char,buffer_size);
+        I->Image->size = buffer_size;
+        I->Image->width = I->Width;
+        I->Image->height = I->Height;
         if(G->HaveGUI && G->ValidContext) {
           glReadBuffer(buffer);
           PyMOLReadPixels(I->Block->rect.left,I->Block->rect.bottom,I->Width,I->Height,
-                       GL_RGBA,GL_UNSIGNED_BYTE,I->ImageBuffer);
-          I->ImageBufferWidth=I->Width;
-          I->ImageBufferHeight=I->Height;
+                       GL_RGBA,GL_UNSIGNED_BYTE,I->Image->data);
         }
       }
       I->CopyFlag = true;
@@ -4437,7 +4661,7 @@ int SceneRenderCached(PyMOLGlobals *G)
   /* sets up a cached image buffer is one is available, or if we are
    * using cached images by default */
   register CScene *I=G->Scene;
-  ImageType image;
+  ImageType *image;
   int renderedFlag=false;
 
 
@@ -4452,25 +4676,18 @@ int SceneRenderCached(PyMOLGlobals *G)
 	  image = MovieGetImage(G,
                            MovieFrameToImage(G,
                                              SettingGetGlobal_i(G,cSetting_frame)-1));
-	  if(image)
-		{
-		  if(I->ImageBuffer)
-			{
-			  if(!I->MovieOwnsImageFlag) {
-				mfree(I->ImageBuffer);
-			  }
-			}
-		  I->MovieOwnsImageFlag=true;
-		  I->CopyFlag=true;
-		  I->ImageBuffer=image;
-		  OrthoDirty(G);
-		  renderedFlag=true;
-		}
-	  else
-		{
+	  if(image) {
+        if(I->Image && (!I->MovieOwnsImageFlag))
+          ScenePurgeImage(G);
+        I->MovieOwnsImageFlag = true;
+        I->CopyFlag = true;
+        I->Image = image;
+        OrthoDirty(G);
+        renderedFlag=true;
+      } else {
         SceneMakeMovieImage(G);
         renderedFlag=true;
-		}
+      }
 	} else if(MoviePlaying(G)&&SettingGet(G,cSetting_ray_trace_frames)) {
 	  SceneRay(G,0,0,(int)SettingGet(G,cSetting_ray_default_renderer),NULL,NULL,0.0F,0.0F,false,NULL); 
 	} else {
@@ -4616,7 +4833,7 @@ void SceneRender(PyMOLGlobals *G,Pickable *pick,int x,int y,
   int mono_as_stereo = false;
   int debug_pick = 0;
   double now;
-  GLenum render_buffer = GL_BACK;
+  GLenum render_buffer;
   SceneUnitContext context;
   float vv[4];
   float width_scale = 0.0F;
@@ -4625,6 +4842,11 @@ void SceneRender(PyMOLGlobals *G,Pickable *pick,int x,int y,
     " SceneRender: entered. pick %p x %d y %d smp %p\n",
     (void*)pick,x,y,(void*)smp
     ENDFD;
+  if(SceneMustDrawBoth(G)) {
+    render_buffer = GL_BACK_LEFT;
+  } else {
+    render_buffer = GL_BACK;
+  }
 
   
   if(I->cur_ani_elem < I->n_ani_elem ) { /* play motion animation */
@@ -5228,7 +5450,7 @@ void SceneRender(PyMOLGlobals *G,Pickable *pick,int x,int y,
           glDrawBuffer(GL_BACK_LEFT);
 #endif
           break;
-        case 2: /* side by side */
+        case 2: /* side by side, crosseye */
 
           if(oversize_width && oversize_height) {
             glViewport(I->Block->rect.left+oversize_width/2+x,
@@ -5238,7 +5460,7 @@ void SceneRender(PyMOLGlobals *G,Pickable *pick,int x,int y,
             glViewport(I->Block->rect.left+I->Width/2,I->Block->rect.bottom,I->Width/2,I->Height);
           }
           break;
-        case 3:
+        case 3: /* side by side, walleye */
           if(oversize_width && oversize_height) {
             glViewport(I->Block->rect.left+x,
                        I->Block->rect.bottom+y,
@@ -5303,7 +5525,7 @@ void SceneRender(PyMOLGlobals *G,Pickable *pick,int x,int y,
           glDrawBuffer(GL_BACK_RIGHT);
 #endif
           break;
-        case 2: /* side by side */
+        case 2: /* side by side, crosseye */
           if(oversize_width && oversize_height) {
             glViewport(I->Block->rect.left+x,
                        I->Block->rect.bottom+y,
@@ -5312,7 +5534,7 @@ void SceneRender(PyMOLGlobals *G,Pickable *pick,int x,int y,
             glViewport(I->Block->rect.left,I->Block->rect.bottom,I->Width/2,I->Height);
           }
           break;
-        case 3:
+        case 3: /* side by side, walleye */
           if(oversize_width && oversize_height) {
             glViewport(I->Block->rect.left+oversize_width/2+x,
                        I->Block->rect.bottom+y,
@@ -5534,7 +5756,7 @@ void ScenePrepareMatrix(PyMOLGlobals *G,int mode)
     glTranslatef(I->Pos[0],I->Pos[1],I->Pos[2]);
     glTranslatef(stShift,0.0,0.0);
 
-    /* rotate about the origin (the the center of rotation) */
+    /* rotate about the origin (the center of rotation) */
     glMultMatrixf(I->RotMatrix);			
 
     /* move the origin to the center of rotation */
