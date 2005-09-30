@@ -456,7 +456,7 @@ int MoviePNG(PyMOLGlobals *G,char *prefix,int save,int start,int stop)
         OrthoBusySlow(G,a,nFrame);
         if(G->HaveGUI) PyMOL_SwapBuffers(G->PyMOL);
         PRINTFB(G,FB_Movie,FB_Debugging)
-          " MoviePNG-DEBUG: i = %d, I->Image[i] = %p\n",i,I->Image[i]
+          " MoviePNG-DEBUG: i = %d, I->Image[i] = %p\n",i,I->Image[i]->data
           ENDFB(G);
         if(Feedback(G,FB_Movie,FB_Actions)) {
           printf(" MoviePNG: wrote %s\n",fname);

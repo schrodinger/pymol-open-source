@@ -243,7 +243,7 @@ int ExecutiveTransformObjectSelection(PyMOLGlobals *G,char *name,int state,
 int ExecutiveTransformSelection(PyMOLGlobals *G,int state,char *s1,int log,float *ttt,int homogenous);
 int ExecutiveTranslateAtom(PyMOLGlobals *G,char *sele,float *v,int state,int mode,int log);
 void ExecutiveSelectRect(PyMOLGlobals *G,BlockRect *rect,int mode);
-int ExecutiveMapSetBorder(PyMOLGlobals *G,char *name,float level);
+int ExecutiveMapSetBorder(PyMOLGlobals *G,char *name,float level,int state);
 int ExecutiveMapTrim(PyMOLGlobals *G,char *name,char *sele,
                          float buffer,
                          int map_state,int sele_state,int quiet);

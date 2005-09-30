@@ -3383,7 +3383,7 @@ int ExecutiveMultiSave(PyMOLGlobals *G,char *fname,char *name,int state,int appe
   return(result);
   
 }
-int ExecutiveMapSetBorder(PyMOLGlobals *G,char *name,float level)
+int ExecutiveMapSetBorder(PyMOLGlobals *G,char *name,float level,int state)
 {
   int result=false;
   SpecRec *tRec;
@@ -3394,7 +3394,7 @@ int ExecutiveMapSetBorder(PyMOLGlobals *G,char *name,float level)
     if(tRec->type==cExecObject)
       if(tRec->obj->type==cObjectMap) {
         mobj =(ObjectMap*)tRec->obj;
-        ObjectMapSetBorder(mobj,level);
+        ObjectMapSetBorder(mobj,level,state);
         result=true;
       }
   }

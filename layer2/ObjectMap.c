@@ -1355,7 +1355,7 @@ void ObjectMapUpdateExtents(ObjectMap *I)
 
 int ObjectMapStateSetBorder(ObjectMapState *I,float level)
 {
-  int result = false;
+  int result = true;
   int a,b,c;
 
   c=I->FDim[2]-1;
@@ -1381,6 +1381,7 @@ int ObjectMapStateSetBorder(ObjectMapState *I,float level)
         F3(I->Field->data,a,0,c) = level;
         F3(I->Field->data,a,b,c) = level;
       }
+  printf("here\n");
   return(result);
 }
 
@@ -4287,13 +4288,17 @@ ObjectMap *ObjectMapLoadXPLOR(PyMOLGlobals *G,ObjectMap *obj,char *fname,
 
 }
 /*========================================================================*/
-int ObjectMapSetBorder(ObjectMap *I,float level)
+int ObjectMapSetBorder(ObjectMap *I,float level,int state)
 {
   int a;
-  int result=false;
+  int result=true;
+  if(state==-2)
+    state = ObjectGetCurrentState(&I->Obj,false);
   for(a=0;a<I->NState;a++) {
-    if(I->State[a].Active)
-      result = result && ObjectMapStateSetBorder(&I->State[a],level);
+    if((state<0) || (state==a)) {
+      if(I->State[a].Active)
+        result = result && ObjectMapStateSetBorder(&I->State[a],level);
+    }
   }
   return(result);
 }
