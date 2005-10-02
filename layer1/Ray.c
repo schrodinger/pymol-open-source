@@ -1887,14 +1887,16 @@ int RayTraceThread(CRayThreadInfo *T)
                       if(fogFlag) 
                         {
                           if(perspective) {
-                            ffact = fog*(T->front + r1.impact[2]) * invFrontMinusBack;
+                            ffact = (T->front + r1.impact[2]) * invFrontMinusBack;
                           } else {
-                            ffact = fog*(T->front - r1.dist) * invFrontMinusBack;
+                            ffact = (T->front - r1.dist) * invFrontMinusBack;
                           }
                           if(fogRangeFlag)
                             ffact = (ffact - fog_start) * inv1minusFogStart;
                           
-                          if(ffact<_0)	ffact = _0;
+						  ffact*=fog;
+                          
+						  if(ffact<_0)	ffact = _0;
                           if(ffact>_1)	ffact = _0;
                           
                           ffact1m	= _1-ffact;

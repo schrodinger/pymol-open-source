@@ -2220,7 +2220,7 @@ void SettingInitGlobal(PyMOLGlobals *G,int alloc,int reset_gui)
 
   SettingSet_b(I,cSetting_wrap_output, 0);
 
-  SettingSet_f(I,cSetting_fog_start, 0.475F);
+  SettingSet_f(I,cSetting_fog_start, 0.45F);
 
   SettingSet_i(I,cSetting_frame,1);
 
