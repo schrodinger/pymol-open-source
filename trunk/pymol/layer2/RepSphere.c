@@ -62,6 +62,8 @@ static PFNGLPROGRAMENVPARAMETER4FARBPROC glProgramEnvParameter4fARB;
 static PFNGLGETPROGRAMIVARBPROC glGetProgramivARB;
 #endif
 
+/* NOTE -- right now this shader program only runs in perspective mode */
+
 typedef char ShaderCode[255];
 ShaderCode vert_prog[] = {
 "!!ARBvp1.0\n",
@@ -102,27 +104,33 @@ ShaderCode vert_prog[] = {
 "\n",
 "ADD    pos.xy, pos, shf;\n",
 "\n",
-"# now apply the projection matrix\n",
+"# apply the projection matrix to get clip coordinates \n",
 "DP4    outputPosition.x, state.matrix.projection.row[0], pos;\n",
 "DP4    outputPosition.y, state.matrix.projection.row[1], pos;\n",
 "DP4    shf.z, state.matrix.projection.row[2], pos;\n",
 "DP4    shf.w, state.matrix.projection.row[3], pos;\n",
 "MOV    outputPosition.zw, shf;\n",
 "\n",
-"# now compute depth coordinate in Z for front of sphere\n",
+"# compute camera position for front tip of the sphere\n",
 "ADD    pos.z, pos.z, sphereRadius;\n",
+"\n",
+"# compute Zc and Wc for front tip of the sphere\n",
 "DP4    tip.z, state.matrix.projection.row[2], pos;\n",
 "DP4    tip.w, state.matrix.projection.row[3], pos;\n",
 "\n",
-
+"# compute 1/Wc for sphere tip \n",
 "RCP    rad.z, tip.w;\n",
-"MOV    tip.w, shf.z;\n",
-"RCP    rad.w, shf.w;\n",
-
-"MUL    txt.zw, tip, rad;\n",
-
 "\n",
-"# move into range 0.0-1.0\n",
+"# put sphere center Zc into tip.w \n",
+"MOV    tip.w, shf.z;\n",
+"\n",
+"# compute 1/Wc for sphere center \n",
+"RCP    rad.w, shf.w;\n",
+"\n",
+"# compute Z/Wc for both sphere tip (->txt.z) and center (->txt.w) \n",
+"MUL    txt.zw, tip, rad;\n",
+"\n",
+"# move into range 0.0-1.0 to get the normalized depth coordinate (0.5*(Zc/Wc)+0.5) \n",
 "ADD    txt.zw, {0.0,0.0,1.0,1.0}, txt;\n",
 "MUL    txt.zw, {0.0,0.0,0.5,0.5}, txt;\n",
 "\n",
@@ -134,9 +142,8 @@ ShaderCode vert_prog[] = {
 "\n",
 "END\n",
 "\n",
- ""
+""
 };
-
 
 ShaderCode frag_prog[] = {
 "!!ARBfp1.0\n",
@@ -168,8 +175,9 @@ ShaderCode frag_prog[] = {
 "MUL norm.xy, 2.0, norm;\n",
 "RCP norm.z, pln.z;\n",
 "\n",
-"# interpolate the Z coordinate on the sphere \n",
-"LRP result.depth.z, norm.z, fragment.texcoord.z, fragment.texcoord.w;\n",
+"# interpolate the Zndc coordinate on the sphere \n",
+"LRP depth.z, norm.z, fragment.texcoord.z, fragment.texcoord.w;\n",
+"MOV result.depth.z, depth.z;\n",
 "\n",
 "# light0\n",
 "\n",
@@ -184,8 +192,8 @@ ShaderCode frag_prog[] = {
 "MUL spec.xyz, light.z, 0.5;\n",
 "ADD color.xyz, color,spec;\n",
  "\n",
-"# apply fog\n",
-"MAX fogFactor.x, fragment.texcoord.z, fogInfo.x;\n",
+"# apply fog using linear interp over Zndc\n",
+"MAX fogFactor.x, depth.z, fogInfo.x;\n",
 "SUB fogFactor.x, fogFactor.x, fogInfo.x;\n",
 "MUL fogFactor.x, fogFactor.x, fogInfo.y;\n",
 "LRP color.xyz, fogFactor.x, fogColor, color;\n",
@@ -589,6 +597,9 @@ static void RepSphereRender(RepSphere *I,RenderInfo *info)
                 }
                 break;
               case 4: /* draw multiple points of different radii and Z position */
+#ifndef _PYMOL_OPENGL_SHADERS
+              case 5:
+#endif
                 {
                   int repeat = true;
                   register float x_add= 0.0F, y_add= 0.0F, z_add = 0.0F;
@@ -684,23 +695,30 @@ static void RepSphereRender(RepSphere *I,RenderInfo *info)
 #ifdef _PYMOL_OPENGL_SHADERS
               case 5: /* use vertex/fragment program */
                 if (I->shader_flag) {
-                  float fog_info[2];
+                  float fog_info[3];
                   float _00[2] = { 0.0F, 0.0F};
                   float _01[2] = { 0.0F, 1.0F};
                   float _11[2] = { 1.0F, 1.0F};
                   float _10[2] = { 1.0F, 0.0F};
-                  register float v0,v1,v2,nv0, nv1, nv3,v3;
+                  register float v0,v1,v2,nv0, nv1, nv2, nv3,v3;
                   register float *m = info->pmv_matrix;                  
                   register float cutoff = 1.2F;
                   register float m_cutoff = -cutoff;
-                  fog_info[0] = SettingGet(G,cSetting_fog_start);
-                  fog_info[1] = 1.0F/(1.0F-fog_info[0]);
-#if 0
-                  fog_info[0] = 1.0F/(info->fog_end - info->fog_start);
-                  fog_info[1] = fog_info[0]*(-info->fog_end);
-#endif
-
-                   if(Feedback(G,FB_OpenGL,FB_Debugging))
+			      register float z_front, z_back;
+                  /* compute -Ze = (Wc) of fog start */
+				  nv3 = (info->front + (info->back - info->front)*SettingGetGlobal_f(G,cSetting_fog_start));
+				  /* compute Zc of fog start using std. perspective transformation */
+				  nv2 = (nv3 * (info->back + info->front) - 2*(info->back * info->front))/(info->back - info->front);
+				  /* compute Zc/Wc to get normalized depth coordinate of fog start */
+				  nv0 = (nv2/nv3);
+				  fog_info[0] = (nv0*0.5)+0.5;
+				  // printf("%8.3f %8.3f %8.3f %8.3f\n", nv3, nv2, nv0, fog_info[0]);
+				  fog_info[1] = 1.0F/(1.0-fog_info[0]); /* effective range of fog */
+				  
+				   z_front = info->stereo_front;
+				   z_back = info->back+((info->back+info->front)*0.25);
+			      
+				   if(Feedback(G,FB_OpenGL,FB_Debugging))
                       PyMOLCheckOpenGLErr("before shader");
 
                    /* load the vertex program */
@@ -739,36 +757,42 @@ static void RepSphereRender(RepSphere *I,RenderInfo *info)
                          glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB,
                                                     0, 0.0F, 0.0F, v3, 0.0F);
                          glProgramEnvParameter4fARB(GL_FRAGMENT_PROGRAM_ARB,
-                                                    0, fog_info[0], fog_info[1], 0.0F, 0.0F);
+                                                    0, fog_info[0], fog_info[1], fog_info[2], 0.0F);
                          glBegin(GL_QUADS);
                          last_radius = cur_radius;
                        }
                        
                        /*  MatrixTransformC44f4f(info->pmv_matrix, v, nv);*/
-
-                       nv3 = m[ 3]*v0+m[ 7]*v1+m[11]*v2+m[15];
-                       nv0 = m[ 0]*v0+m[ 4]*v1+m[ 8]*v2+m[12];
-                       nv3 = _1/nv3;
-                       nv1 = m[ 1]*v0+m[ 5]*v1+m[ 9]*v2+m[13];
-                       nv0 *= nv3;
-                       nv1 *= nv3;
-
-                       if((nv0<cutoff)&&(nv0>m_cutoff)&&
-                          (nv1<cutoff)&&(nv1>m_cutoff)) {
-                         glColor3fv(v-3);                          
-                         
-                         glTexCoord2fv(_00);
-                         glVertex3fv(v);
-                         
-                         glTexCoord2fv(_10);
-                         glVertex3fv(v);
-                         
-                         glTexCoord2fv(_11);
-                         glVertex3fv(v);
-                         
-                         glTexCoord2fv(_01);
-                         glVertex3fv(v);
-                       }
+					   
+                       nv3 = m[ 3]*v0+m[ 7]*v1+m[11]*v2+m[15]; /* compute Wc */ 
+					   
+					   if(((nv3-cur_radius)>z_front) && (nv3<z_back)) { /* is it within the viewing volume? */
+						   nv0 = m[ 0]*v0+m[ 4]*v1+m[ 8]*v2+m[12];
+						   
+						   nv3 = _1/nv3;
+						   nv1 = m[ 1]*v0+m[ 5]*v1+m[ 9]*v2+m[13];
+						   nv0 *= nv3;
+						   nv1 *= nv3;
+						   
+						   
+						   if((nv0<cutoff)&&(nv0>m_cutoff)&&
+							  (nv1<cutoff)&&(nv1>m_cutoff)) {
+							   
+							   glColor3fv(v-3);                          
+							   
+							   glTexCoord2fv(_00);
+							   glVertex3fv(v);
+							   
+							   glTexCoord2fv(_10);
+							   glVertex3fv(v);
+							   
+							   glTexCoord2fv(_11);
+							   glVertex3fv(v);
+							   
+							   glTexCoord2fv(_01);
+							   glVertex3fv(v);
+						   }
+					   }
                        v+=7;
                      }
                      glEnd();
@@ -1068,10 +1092,11 @@ Rep *RepSphereNew(CoordSet *cs)
     glProgramEnvParameter4fARB = (PFNGLPROGRAMENVPARAMETER4FARBPROC) wglGetProcAddress("glProgramEnvParameter4fARB");
     glGetProgramivARB = (PFNGLGETPROGRAMIVARBPROC) wglGetProcAddress("glGetProgramivARB");
 
-#endif
     if(glGenProgramsARB && glBindProgramARB && 
         glDeleteProgramsARB && glProgramStringARB && 
-        glProgramEnvParameter4fARB) {
+        glProgramEnvParameter4fARB)
+#endif
+        {
         /*                  
         char *vp = read_file("vert.txt");
         char *fp = read_file("frag.txt");

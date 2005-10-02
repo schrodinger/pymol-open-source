@@ -4145,7 +4145,6 @@ void SceneReshape(Block *block,int width,int height)
 
 }
 
-float fog_val=1.0;
 /*========================================================================*/
 void SceneDone(PyMOLGlobals *G)
 {
@@ -4740,6 +4739,20 @@ static void SceneRenderAll(PyMOLGlobals *G,SceneUnitContext *context,
   info.fog_start = I->FogStart;
   info.fog_end = I->FogEnd;
   info.pmv_matrix = I->PmvMatrix;
+  info.front = I->FrontSafe;
+  if(I->StereoMode) {
+    float buffer;
+	float stAng,stShift;
+    stAng = SettingGet(G,cSetting_stereo_angle);
+	stShift = SettingGet(G,cSetting_stereo_shift);
+	stShift = (float)(stShift*fabs(I->Pos[2])/100.0);
+	stAng = (float)(stAng*atan(stShift/fabs(I->Pos[2]))*90.0/cPI);
+	buffer = fabs(I->Width*I->VertexScale*tan(cPI*stAng/180.0));
+	info.stereo_front = I->FrontSafe + buffer;
+  } else {
+     info.stereo_front = I->FrontSafe;
+  }
+  info.back = I->BackSafe;
   SceneGetViewNormal(G,info.view_normal);
 
   if(width_scale!=0.0F) {
@@ -5232,7 +5245,7 @@ void SceneRender(PyMOLGlobals *G,Pickable *pick,int x,int y,
       }
 
       if(SettingGet(G,cSetting_depth_cue)&&SettingGet(G,cSetting_fog)) {
-        I->FogStart = (I->Back-I->FrontSafe)*SettingGet(G,cSetting_fog_start)+I->FrontSafe;
+        I->FogStart = (I->BackSafe-I->FrontSafe)*SettingGet(G,cSetting_fog_start)+I->FrontSafe;
 #ifdef _PYMOL_3DFX
         if(SettingGet(G,cSetting_ortho)==0.0) {
 #endif
@@ -5240,21 +5253,11 @@ void SceneRender(PyMOLGlobals *G,Pickable *pick,int x,int y,
           glFogf(GL_FOG_MODE, GL_LINEAR);
           glHint(GL_FOG_HINT,GL_NICEST);
           glFogf(GL_FOG_START, I->FogStart);
-#ifdef _PYMOL_3DFX
-          if(I->Back>(I->FrontSafe*4.0)) {
-            I->FogEnd = I->Back;
-          } else {
-            I->FogEnd = I->FrontSafe*4.0;
-          }
+
+          I->FogEnd = I->BackSafe;
           glFogf(GL_FOG_END, I->FogEnd);
-          fog_val+=0.0000001;
-          if(fog_val>1.0) fog_val=0.99999;
-          glFogf(GL_FOG_DENSITY, fog_val);
-#else
-          I->FogEnd = I->FrontSafe+(I->Back-I->FrontSafe)/SettingGet(G,cSetting_fog);
-          glFogf(GL_FOG_END, I->FogEnd);
-          glFogf(GL_FOG_DENSITY, fog_val);
-#endif
+          glFogf(GL_FOG_DENSITY, SettingGet(G,cSetting_fog));
+
           v=SettingGetfv(G,cSetting_bg_rgb);
           fog[0]=v[0];
           fog[1]=v[1];

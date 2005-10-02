@@ -2256,7 +2256,6 @@ int PyMOL_GetRedisplay(CPyMOL *I, int reset)
     }
   }
   PYMOL_API_UNLOCK
-  
   return result;
 }
 

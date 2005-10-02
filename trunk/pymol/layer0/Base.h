@@ -83,6 +83,7 @@ typedef struct {
   Pickable **pick;
   int pass;
   int width_scale_flag;
+  float front, back, stereo_front;
   float fog_start, fog_end;
   float view_normal[3];
   float width_scale;
