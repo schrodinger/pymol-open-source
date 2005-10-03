@@ -80,6 +80,7 @@ Z* -------------------------------------------------------------------
 #define PYMOL_PROGRESS_FAST 4
 
 #define PYMOL_PROGRESS_SIZE 6
+#define PYMOL_RESHAPE_SIZE 5
 
 /* configuration */
 
@@ -90,6 +91,10 @@ typedef struct _CPyMOLOptions CPyMOLOptions;
 
 CPyMOLOptions *PyMOLOptions_New(void);
 void PyMOLOptions_Free(CPyMOLOptions *option);
+
+#ifndef PYMOL_NO_PY
+CPyMOLOptions *PyMOLOptions_NewWithPython(int argc, char *argv[]);
+#endif
 
 /* PyMOL instance type */
 
@@ -125,20 +130,28 @@ typedef struct {
   float *array;
 } PyMOLreturn_float_array;
 
-/* creation and destruction */
+typedef struct {
+  PyMOLstatus status;
+  int size;
+  int *array;
+} PyMOLreturn_int_array;
+
+/* creation */
 
 CPyMOL *PyMOL_New(void);
 CPyMOL *PyMOL_NewWithOptions(CPyMOLOptions *option);
+
+/* destruction */
+
 void PyMOL_Free(CPyMOL *I);
 
 /* starting and stopping */
 
 void PyMOL_Start(CPyMOL *I);
-void PyMOL_Stop(CPyMOL *I);
-
 #ifndef PYMOL_NO_PY
-void PyMOL_InitPythonDeps(CPyMOL *I);
+void PyMOL_StartWithPython(CPyMOL *I);
 #endif
+void PyMOL_Stop(CPyMOL *I);
 
 /* upstream invalidation and configuration events */
 
@@ -179,6 +192,12 @@ int PyMOL_GetRedisplay(CPyMOL *I, int reset);
 int PyMOL_GetPassive(CPyMOL *I, int reset);
 int PyMOL_GetSwap(CPyMOL *I, int reset);
 int PyMOL_GetClickReady(CPyMOL *I, int reset);
+int PyMOL_GetReshape(CPyMOL *I);
+
+/* int array results */
+
+PyMOLreturn_int_array PyMOL_GetReshapeInfo(CPyMOL *I,int reset);
+/*PyMOLreturn_int_array PyMOL_GetStereoInfo(CPyMOL *I,int reset);  * to come for MacPyMOL -- blue line, etc */
 
 /* string results */
 

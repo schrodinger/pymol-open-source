@@ -51,8 +51,11 @@ void SceneRender(PyMOLGlobals *G,Pickable *pick,int x,int y,
 void SceneSetFrame(PyMOLGlobals *G,int mode,int frame);
 int SceneGetFrame(PyMOLGlobals *G);
 int SceneGetState(PyMOLGlobals *G);
-void SceneDirty(PyMOLGlobals *G); /* must update transformation */
-void SceneChanged(PyMOLGlobals *G); /* must actually update 3D objects */
+
+void SceneDirty(PyMOLGlobals *G); /* scene dirty, but leave the overlay if one exists */
+void SceneInvalidate(PyMOLGlobals *G); /* scene dirty and remove the overlay */
+void SceneChanged(PyMOLGlobals *G); /* update 3D objects */
+
 void SceneCountFrames(PyMOLGlobals *G) ;
 int SceneGetNFrame(PyMOLGlobals *G);
 void SceneSetMatrix(PyMOLGlobals *G,float *);
@@ -82,6 +85,7 @@ void ScenePerspective(PyMOLGlobals *G,int flag);
 void SceneRotate(PyMOLGlobals *G,float angle,float x,float y,float z);
 void SceneTranslate(PyMOLGlobals *G,float x,float y, float z);
 void SceneClip(PyMOLGlobals *G,int plane,float movement,char *sele,int state);
+void SceneGetImageSize(PyMOLGlobals *G,int *width,int *height);
 
 void SceneScale(PyMOLGlobals *G,float scale);
 void SceneResetNormal(PyMOLGlobals *G,int lines);

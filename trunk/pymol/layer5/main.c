@@ -14,15 +14,6 @@
    Z* -------------------------------------------------------------------
 */
 
-#ifdef _PYMOL_NO_MAIN
-
-int MainSavingUnderWhileIdle(void)
-{
-  return 0;
-}
-
-#ifdef _MACPYMOL_XCODE
-
 #include "os_predef.h"
 #include "os_python.h"
 
@@ -53,6 +44,16 @@ int MainSavingUnderWhileIdle(void)
 #include "Scene.h"
 #include "Seq.h"
 #include "Util.h"
+
+
+#ifdef _PYMOL_NO_MAIN
+
+int MainSavingUnderWhileIdle(void)
+{
+  return 0;
+}
+
+#ifdef _MACPYMOL_XCODE
 
 void MainRunCommand(char *str1)
 {
@@ -125,41 +126,41 @@ void MainFlushAsync(void)
     PUnlockAPIAsGlut();
   }
 }
+int MainCheckRedundantOpen(char *file)
+{
+  int result = false;
+#ifndef _PYMOL_NOPY
+  PBlock();
+  result = PTruthCallStr(P_cmd,"check_redundant_open",file);
+  PUnblock();
+#endif
+  return result;
+}
+void MainSceneGetSize(int *width,int *height)
+{
+  PyMOLGlobals *G = TempPyMOLGlobals;
+  if(PLockAPIAsGlut(true)) {
+    SceneGetImageSize(G,width,height);
+    PUnlockAPIAsGlut();
+  }
+}
+int MainSceneCopy(int width,int height,int rowbytes,void *ptr)
+{ 
+  PyMOLGlobals *G = TempPyMOLGlobals;
+
+  int result = false;
+  if(PLockAPIAsGlut(true)) {
+    result = SceneCopyExternal(G,width, height,rowbytes,(unsigned char *)ptr);
+    PUnlockAPIAsGlut();
+  }
+  return result;
+}
 
 #endif
 
 #else
 
-#include "os_predef.h"
-#include "os_python.h"
 
-#ifdef WIN32
-#include <signal.h>
-#endif
-
-#include "os_std.h"
-#include "os_gl.h"
-
-#ifdef _PYMOL_MODULE
-#ifdef _DRI_WORKAROUND
-#include <dlfcn.h>
-#endif
-#endif
-
-#include "PyMOLGlobals.h"
-#include "PyMOL.h"
-#include "PyMOLOptions.h"
-
-#include "MemoryDebug.h"
-#include "Base.h"
-#include "main.h"
-
-#include "P.h"
-#include "PConv.h"
-#include "Ortho.h"
-#include "Scene.h"
-#include "Seq.h"
-#include "Util.h"
 
 #ifdef _PYMOL_OSX
 int *MacPyMOLReady = NULL;
@@ -969,58 +970,6 @@ void MainReshape(int width, int height) /* called by Glut */
   }
 }
 /*========================================================================*/
-
-PyObject *MainAsPyList(void) 
-{
-  PyMOLGlobals *G = TempPyMOLGlobals;
-
-#ifdef _PYMOL_NOPY
-  return NULL;
-#else
-
-  PyObject *result=NULL;
-  int width,height;
-  result = PyList_New(2);
-  BlockGetSize(SceneGetBlock(G),&width,&height);
-  if(SettingGetGlobal_b(G,cSetting_seq_view)&&!SettingGetGlobal_b(G,cSetting_seq_view_overlay))
-    height+=SeqGetHeight(G);
-  PyList_SetItem(result,0,PyInt_FromLong(width));
-  PyList_SetItem(result,1,PyInt_FromLong(height));
-  return(PConvAutoNone(result));
-#endif
-}
-
-int MainFromPyList(PyObject *list)
-{
-#ifdef _PYMOL_NOPY
-  return 0;
-#else
-
-  int ok=true;
-  int win_x,win_y;
-  int ll=0;
-  PyMOLGlobals *G = TempPyMOLGlobals;
-  OrthoLineType buffer;
-
-  if(ok) ok = (list!=NULL);
-  if(ok) ok = PyList_Check(list);
-  if(ok) ll=PyList_Size(list);
-  if(ok&&(ll>=2)) {
-    if(!G->Option->presentation) {
-      if(ok) ok = PConvPyIntToInt(PyList_GetItem(list,0),&win_x);
-      if(ok) ok = PConvPyIntToInt(PyList_GetItem(list,1),&win_y);
-      /* BlockGetSize(SceneGetBlock(G),&win_x,&win_y); * so how did this get into 0.98beta29?  */
-      if(ok) {
-        sprintf(buffer,"viewport %d, %d",win_x,win_y);
-        PParse(buffer);
-        
-      }
-    }
-  }
-  return(ok);
-#endif
-}
-/*========================================================================*/
 void MainDoReshape(int width, int height) /* called internally */
 {
   int h,w;
@@ -1539,7 +1488,7 @@ SetConsoleCtrlHandler(
     }
 
     if(!G->Option->game_mode) {
-      if((G->Option->winPX>-1000)&&(G->Option->winPY>-1000)) {
+      if((G->Option->winPX>-10000)&&(G->Option->winPY>-10000)) {
         #ifndef _PYMOL_FINK
         p_glutInitWindowPosition(G->Option->winPX,G->Option->winPY);
         #else
@@ -1700,8 +1649,60 @@ int was_main(void)
  return 0;
 }
 
-
 #endif
+
+/*========================================================================*/
+
+PyObject *MainAsPyList(void) 
+{
+  PyMOLGlobals *G = TempPyMOLGlobals;
+
+#ifdef _PYMOL_NOPY
+  return NULL;
+#else
+
+  PyObject *result=NULL;
+  int width,height;
+  result = PyList_New(2);
+  BlockGetSize(SceneGetBlock(G),&width,&height);
+  if(SettingGetGlobal_b(G,cSetting_seq_view)&&!SettingGetGlobal_b(G,cSetting_seq_view_overlay))
+    height+=SeqGetHeight(G);
+  PyList_SetItem(result,0,PyInt_FromLong(width));
+  PyList_SetItem(result,1,PyInt_FromLong(height));
+  return(PConvAutoNone(result));
+#endif
+}
+
+int MainFromPyList(PyObject *list)
+{
+#ifdef _PYMOL_NOPY
+  return 0;
+#else
+
+  int ok=true;
+  int win_x,win_y;
+  int ll=0;
+  PyMOLGlobals *G = TempPyMOLGlobals;
+  OrthoLineType buffer;
+
+  if(ok) ok = (list!=NULL);
+  if(ok) ok = PyList_Check(list);
+  if(ok) ll=PyList_Size(list);
+  if(ok&&(ll>=2)) {
+    if(!G->Option->presentation) {
+      if(ok) ok = PConvPyIntToInt(PyList_GetItem(list,0),&win_x);
+      if(ok) ok = PConvPyIntToInt(PyList_GetItem(list,1),&win_y);
+      /* BlockGetSize(SceneGetBlock(G),&win_x,&win_y); * so how did this get into 0.98beta29?  */
+      if(ok) {
+	    
+        sprintf(buffer,"viewport %d, %d",win_x,win_y);
+        PParse(buffer);
+      }
+    }
+  }
+  return(ok);
+#endif
+}
 
 
 

@@ -471,7 +471,7 @@ int EditorInvert(PyMOLGlobals *G,int quiet)
               ENDFB(G);
           }
 
-          SceneDirty(G);
+          SceneInvalidate(G);
           I->DragIndex=-1;
           I->DragSelection=-1;
           I->DragObject=NULL;
@@ -534,7 +534,7 @@ int EditorTorsion(PyMOLGlobals *G,float angle)
             theta=(float)(cPI*angle/180.0);
             get_rotation_about3f3fTTTf(theta, n0, v1, m);
             ok = ObjectMoleculeTransformSelection(obj2,state,sele2,m,false,NULL,false);
-            SceneDirty(G);
+            SceneInvalidate(G);
             
             I->DragIndex=-1;
             I->DragSelection=-1;
@@ -625,7 +625,7 @@ int EditorSelect(PyMOLGlobals *G,char *s0,char *s1,char *s2,char *s3,int pkresi,
     if(pkresi)
       EditorDefineExtraPks(G);
     
-    SceneDirty(G);
+    SceneInvalidate(G);
     result=true;
 
   } else {
@@ -1333,7 +1333,7 @@ void EditorInactivate(PyMOLGlobals *G)
       TODO: resolve this problem:
       we can't assume that Python interpreter isn't blocked
   */
-  SceneDirty(G);
+  SceneInvalidate(G);
 }
 /*========================================================================*/
 void EditorActivate(PyMOLGlobals *G,int state,int enable_bond)
@@ -1640,17 +1640,17 @@ void EditorDrag(PyMOLGlobals *G,ObjectMolecule *obj,int index,int mode,int state
         normalize23f(cp,n2);        
         get_rotation_about3f3fTTTf(theta, n2, v3, m);
         ObjectMoleculeTransformSelection(obj,state,I->DragSelection,m,log_trans,I->DragSeleName,false);
-        SceneDirty(G);
+        SceneInvalidate(G);
         break;
       case cButModeTorFrag:
         ObjectMoleculeMoveAtom(obj,state,index,mov,1,log_trans);
-        SceneDirty(G);
+        SceneInvalidate(G);
         break;
       case cButModeMovFrag:
         identity44f(m);
         copy3f(mov,m+12); /* questionable... */
         ObjectMoleculeTransformSelection(obj,state,I->DragSelection,m,log_trans,I->DragSeleName,false);
-        SceneDirty(G);
+        SceneInvalidate(G);
         break;
       }
     } else {
@@ -1681,7 +1681,7 @@ void EditorDrag(PyMOLGlobals *G,ObjectMolecule *obj,int index,int mode,int state
         
         get_rotation_about3f3fTTTf(theta, n2, v3, m);
         ObjectMoleculeTransformSelection(obj,state,I->DragSelection,m,log_trans,I->DragSeleName,false);
-        SceneDirty(G);
+        SceneInvalidate(G);
         break;
       case cButModeTorFrag:
       case cButModePkTorBnd:
@@ -1725,13 +1725,13 @@ void EditorDrag(PyMOLGlobals *G,ObjectMolecule *obj,int index,int mode,int state
             EditorDihedralInvalid(G);
         }
 
-        SceneDirty(G);
+        SceneInvalidate(G);
         break;
       case cButModeMovFrag:
         identity44f(m);
         copy3f(mov,m+12); /* questionable */
         ObjectMoleculeTransformSelection(obj,state,I->DragSelection,m,log_trans,I->DragSeleName,false);
-        SceneDirty(G);
+        SceneInvalidate(G);
         break;
       }
     }

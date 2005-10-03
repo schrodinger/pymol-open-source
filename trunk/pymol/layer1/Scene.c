@@ -8,7 +8,7 @@ F* -------------------------------------------------------------------
 G* Please see the accompanying LICENSE file for further information. 
 H* -------------------------------------------------------------------
 I* Additional authors of this source file include:
--* 
+-* sc
 -* 
 -*
 Z* -------------------------------------------------------------------
@@ -227,6 +227,12 @@ static void SceneInvalidateCopy(PyMOLGlobals *G,int free_buffer)
     ScenePurgeImage(G);
   }
   I->CopyFlag=false;
+}
+
+void SceneInvalidate(PyMOLGlobals *G)
+{
+   SceneInvalidateCopy(G,false);
+   SceneDirty(G);
 }
 
 void SceneLoadAnimation(PyMOLGlobals *G, double duration)
@@ -745,7 +751,7 @@ void SceneSetStereo(PyMOLGlobals *G,int flag)
   else
     I->StereoMode=false;
   SettingSetGlobal_b(G,cSetting_stereo,flag);
-  SceneDirty(G);
+  SceneInvalidate(G);
 }
 /*========================================================================*/
 void SceneTranslate(PyMOLGlobals *G,float x,float y, float z)
@@ -760,7 +766,7 @@ void SceneTranslate(PyMOLGlobals *G,float x,float y, float z)
 	 I->Front=I->Back+cSliceMin;
   I->FrontSafe= GetFrontSafe(I->Front,I->Back);
   I->BackSafe= GetBackSafe(I->FrontSafe,I->Back);
-  SceneDirty(G);
+  SceneInvalidate(G);
 }
 /*========================================================================*/
 void SceneClipSet(PyMOLGlobals *G,float front,float back)
@@ -772,7 +778,7 @@ void SceneClipSet(PyMOLGlobals *G,float front,float back)
 	 I->Front=I->Back+cSliceMin;
   I->FrontSafe= GetFrontSafe(I->Front,I->Back);
   I->BackSafe= GetBackSafe(I->FrontSafe,I->Back);
-  SceneDirty(G);
+  SceneInvalidate(G);
 }
 /*========================================================================*/
 void SceneClip(PyMOLGlobals *G,int plane,float movement,char *sele,int state) /* 0=front, 1=back*/
@@ -1215,6 +1221,18 @@ static void SceneImageFinish(PyMOLGlobals *G,char *image)
     FreeP(image);
 }
 
+void SceneGetImageSize(PyMOLGlobals *G,int *width,int *height)
+{
+  register CScene *I=G->Scene;
+  if(SceneImagePrepare(G) && I->Image) {
+    *width = I->Image->width;
+	*height = I->Image->height;
+	} else {
+	*width = I->Width;
+	*height = I->Height;
+	}
+}
+
 int  SceneCopyExternal(PyMOLGlobals *G,int width, int height,int rowbytes,unsigned char *dest)
 {
   GLvoid *image = SceneImagePrepare(G);
@@ -1315,7 +1333,7 @@ void ScenePerspective(PyMOLGlobals *G,int flag)
   float persp;
   persp=(float)(!flag);
   SettingSetfv(G,cSetting_ortho,&persp);
-  SceneDirty(G);
+  SceneInvalidate(G);
 }
 /*========================================================================*/
 int SceneGetFrame(PyMOLGlobals *G)
@@ -1425,7 +1443,7 @@ void SceneSetFrame(PyMOLGlobals *G,int mode,int frame)
   SettingSetGlobal_i(G,cSetting_frame,newFrame+1);
   SettingSetGlobal_i(G,cSetting_state,newState+1);
 
-  SceneDirty(G);
+  SceneInvalidate(G);
   PRINTFD(G,FB_Scene)
     " SceneSetFrame: leaving...\n"
     ENDFD;
@@ -1445,7 +1463,7 @@ void SceneDirty(PyMOLGlobals *G)
   if(I) {
     if(!I->DirtyFlag) {
       I->DirtyFlag=true;
-      SceneInvalidateCopy(G,false);
+      /* SceneInvalidateCopy(G,false); */
       OrthoDirty(G);
     }
   }
@@ -1479,6 +1497,7 @@ void SceneChanged(PyMOLGlobals *G)
 {
   register CScene *I=G->Scene;
   I->ChangedFlag=true;
+  SceneInvalidateCopy(G,false);
   SceneDirty(G);
   SeqChanged(G);
 }
@@ -1521,9 +1540,7 @@ void SceneMakeMovieImage(PyMOLGlobals *G) {
       }
     }
   }
-  if(I->Image&&
-     (I->Image->height==I->Height)&&
-     (I->Image->width==I->Width)) {
+  if(I->Image) {
 	 MovieSetImage(G,
                    MovieFrameToImage(G,SettingGetGlobal_i(G,cSetting_frame)-1),
                    I->Image);
@@ -1724,7 +1741,7 @@ void SceneOriginSet(PyMOLGlobals *G,float *origin,int preserve)
   I->Origin[0]=origin[0]; /* move origin */
   I->Origin[1]=origin[1];
   I->Origin[2]=origin[2];
-  SceneDirty(G);
+  SceneInvalidate(G);
 }
 /*========================================================================*/
 void SceneObjectAdd(PyMOLGlobals *G,CObject *obj)
@@ -1763,7 +1780,7 @@ void SceneObjectDel(PyMOLGlobals *G,CObject *obj)
     }
   }
   SceneCountFrames(G);
-  SceneDirty(G);
+  SceneInvalidate(G);
 }
 /*========================================================================*/
 int SceneLoadPNG(PyMOLGlobals *G,char *fname,int movie_flag,int stereo,int quiet) 
@@ -2539,8 +2556,6 @@ static int SceneClick(Block *block,int button,int x,int y,
 
     I->LastX=x;
     I->LastY=y;	 
-
-    /*    SceneDirty(G);*/
     break;
   case cButModePickAtom1:
   case cButModePickAtom:
@@ -2752,7 +2767,7 @@ static int SceneClick(Block *block,int button,int x,int y,
     } else {
       EditorInactivate(G);
     }
-    SceneDirty(G);
+    SceneInvalidate(G);
     break;
   case cButModeMovFrag:
   case cButModeTorFrag:
@@ -3011,7 +3026,7 @@ static int SceneClick(Block *block,int button,int x,int y,
       PRINTFB(G,FB_Scene,FB_Blather) 
         " SceneClick: no atom found nearby.\n"
         ENDFB(G);
-      SceneDirty(G); /* this here to prevent display weirdness after
+      SceneInvalidate(G); /* this here to prevent display weirdness after
                         an unsuccessful picking pass... not sure it helps though*/
       OrthoRestorePrompt(G);
     }
@@ -3461,7 +3476,7 @@ static int SceneDrag(Block *block,int x,int y,int mod,double when)
   if(scale > I->Width)
 	 scale = (float)I->Width;
   scale = 0.45F * scale;
-
+  SceneInvalidateCopy(G,false);  
   SceneDontCopyNext(G);
   switch(mode) {
   case cButModePickAtom:
@@ -3558,7 +3573,7 @@ static int SceneDrag(Block *block,int x,int y,int mod,double when)
               int log_trans = (int)SettingGet(G,cSetting_log_conformations);
               ObjectMoleculeMoveAtom((ObjectMolecule*)obj,SettingGetGlobal_i(G,cSetting_state)-1,
                                      I->LastPicked.index,v2,1,log_trans);
-              SceneDirty(G);
+              SceneInvalidate(G);
             }
           }
           break;
@@ -3619,14 +3634,14 @@ static int SceneDrag(Block *block,int x,int y,int mod,double when)
       {
         I->Pos[0]+=v2[0];
         I->LastX=x;
-        SceneDirty(G);
+        SceneInvalidate(G);
         moved_flag=true;
       }
     if(I->LastY!=y)
       {
         I->Pos[1]+=v2[1];
         I->LastY=y;
-        SceneDirty(G);
+        SceneInvalidate(G);
         moved_flag=true;
       }
     
@@ -3758,7 +3773,7 @@ static int SceneDrag(Block *block,int x,int y,int mod,double when)
             I->BackSafe= GetBackSafe(I->FrontSafe,I->Back);
           }
           I->LastY=y;
-          SceneDirty(G);
+          SceneInvalidate(G);
           adjust_flag=true;
 		  }
 		break;
@@ -3769,7 +3784,7 @@ static int SceneDrag(Block *block,int x,int y,int mod,double when)
 			 if(I->Back<I->Front)
 				I->Back=I->Front+cSliceMin;
 			 I->LastX=x;
-			 SceneDirty(G);
+			 SceneInvalidate(G);
           moved_flag=true;
 		  }
 		if(I->LastY!=y)
@@ -3780,7 +3795,7 @@ static int SceneDrag(Block *block,int x,int y,int mod,double when)
           I->FrontSafe = GetFrontSafe(I->Front,I->Back);
           I->BackSafe= GetBackSafe(I->FrontSafe,I->Back);
 			 I->LastY=y;
-			 SceneDirty(G);
+			 SceneInvalidate(G);
           moved_flag=true;
 		  }
 		break;
@@ -3793,7 +3808,7 @@ static int SceneDrag(Block *block,int x,int y,int mod,double when)
           I->FrontSafe = GetFrontSafe(I->Front,I->Back);
           I->BackSafe= GetBackSafe(I->FrontSafe,I->Back);
 			 I->LastX=x;
-			 SceneDirty(G);
+			 SceneInvalidate(G);
           moved_flag=true;
 		  }
 		if(I->LastY!=y)
@@ -3804,7 +3819,7 @@ static int SceneDrag(Block *block,int x,int y,int mod,double when)
           I->FrontSafe = GetFrontSafe(I->Front,I->Back);
           I->BackSafe= GetBackSafe(I->FrontSafe,I->Back);
 			 I->LastY=y;
-			 SceneDirty(G);
+			 SceneInvalidate(G);
           moved_flag=true;
 		  }
 		break;
@@ -3815,7 +3830,7 @@ static int SceneDrag(Block *block,int x,int y,int mod,double when)
 			 if(I->Back<I->Front)
 				I->Back=I->Front+cSliceMin;
 			 I->LastX=x;
-			 SceneDirty(G);
+			 SceneInvalidate(G);
           moved_flag=true;
 		  }
 		if(I->LastY!=y)
@@ -3824,7 +3839,7 @@ static int SceneDrag(Block *block,int x,int y,int mod,double when)
 			 if(I->Back<I->Front)
 				I->Back=I->Front+cSliceMin;
 			 I->LastY=y;
-			 SceneDirty(G);
+			 SceneInvalidate(G);
           moved_flag=true;
 		  }
 		break;
@@ -4019,7 +4034,7 @@ int SceneReinitialize(PyMOLGlobals *G)
   SceneSetDefaultView(G);
   SceneCountFrames(G);
   SceneSetFrame(G,0,0);
-  SceneDirty(G);
+  SceneInvalidate(G);
   return(ok);
 }
 /*========================================================================*/
@@ -4140,7 +4155,7 @@ void SceneReshape(Block *block,int width,int height)
   }
   SceneDirty(G);
 
-  MovieClearImages(G);
+  /*MovieClearImages(G);*/
   MovieSetSize(G,I->Width,I->Height);
 
 }
@@ -4575,7 +4590,7 @@ void SceneRay(PyMOLGlobals *G,
     
       if(!quiet) {
         PRINTFB(G,FB_Ray,FB_Details)
-          " Ray: total time: %4.2f sec. = %3.1f frames/hour. (%4.2f sec. accum.)\n", 
+          " Ray: total time: %4.2f sec. = %3.1f frames/hour (%4.2f sec. accum.).\n", 
           timing,3600/timing, 
           accumTiming 
           ENDFB(G);
@@ -4700,20 +4715,15 @@ int SceneRenderCached(PyMOLGlobals *G)
       }
 	} else if(MoviePlaying(G)&&SettingGet(G,cSetting_ray_trace_frames)) {
 	  SceneRay(G,0,0,(int)SettingGet(G,cSetting_ray_default_renderer),NULL,NULL,0.0F,0.0F,false,NULL); 
-	} else {
-	  renderedFlag=false;
-	  I->CopyFlag = false;
+	} else if(I->CopyFlag) {
+	  renderedFlag = true;
+    } else {
+	  renderedFlag = false;
 	}
 	I->DirtyFlag=false;
   } else if(I->CopyFlag) {
 	renderedFlag=true;
   }
-  /*  if(renderedFlag) {
-	I->RenderTime = -I->LastRender;
-	I->LastRender = UtilGetSeconds(G);
-	I->RenderTime += I->LastRender;
-	ButModeSetRate(G,I->RenderTime);
-   }*/
 
   PRINTFD(G,FB_Scene)
     " SceneRenderCached: leaving...renderedFlag %d\n",renderedFlag
@@ -4852,7 +4862,6 @@ void SceneRender(PyMOLGlobals *G,Pickable *pick,int x,int y,
   int nPick,nHighBits,nLowBits;
   int pass;
   float fov;
-  int double_pump = false;
   int must_render_stereo = false;
   int mono_as_stereo = false;
   int debug_pick = 0;
@@ -4866,6 +4875,7 @@ void SceneRender(PyMOLGlobals *G,Pickable *pick,int x,int y,
     " SceneRender: entered. pick %p x %d y %d smp %p\n",
     (void*)pick,x,y,(void*)smp
     ENDFD;
+	
   if(SceneMustDrawBoth(G)) {
     render_buffer = GL_BACK_LEFT;
   } else {
@@ -4896,8 +4906,6 @@ void SceneRender(PyMOLGlobals *G,Pickable *pick,int x,int y,
     I->cur_ani_elem = cur;
     SceneFromViewElem(G,I->ani_elem+cur);
   }
-
-  double_pump=SettingGet_i(G,NULL,NULL,cSetting_stereo_double_pump_mono);
   
   if(I->StereoMode>1)
     aspRat=aspRat/2;
@@ -4910,13 +4918,25 @@ void SceneRender(PyMOLGlobals *G,Pickable *pick,int x,int y,
 
     must_render_stereo = (I->StereoMode!=0); /* are we doing stereo? */
     if(!must_render_stereo) 
-      if(double_pump&&G->StereoCapable) { /* force stereo rendering */
-        must_render_stereo=true;
+      if(G->StereoCapable &&
+		SettingGet_i(G,NULL,NULL,cSetting_stereo_double_pump_mono)) {
+		/* force stereo rendering */
+			must_render_stereo=true;
         if(I->StereoMode==0) {
           mono_as_stereo=true; /* rendering stereo as mono */
         }
       }
 
+    /* if we seem to be configured for hardware stereo, 
+		but can't actually do it, then fallback on mono -- 
+		this would happen for instance if fullscreen is stereo-component
+		and windowed is not */
+	
+    if(must_render_stereo && (I->StereoMode<2) && !(G->StereoCapable)) {
+		must_render_stereo=false;
+		mono_as_stereo = false;
+		}
+		
     if(must_render_stereo) {
       if(mono_as_stereo) { /* double-pumped mono */
         glDrawBuffer(GL_BACK_LEFT);
@@ -5790,8 +5810,7 @@ void SceneRotate(PyMOLGlobals *G,float angle,float x,float y,float z)
   for(a=0;a<16;a++) 
     I->RotMatrix[a]=temp[a];
   SceneUpdateInvMatrix(G);
-
-  SceneDirty(G);
+  SceneInvalidate(G);
 
     /*  glPushMatrix();
         glLoadIdentity();
@@ -5819,7 +5838,7 @@ void SceneScale(PyMOLGlobals *G,float scale)
 {
   register CScene *I=G->Scene;
   I->Scale*=scale;
-  SceneDirty(G);
+  SceneInvalidate(G);
 }
 
 

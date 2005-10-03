@@ -2296,7 +2296,7 @@ void ObjectMoleculeM4XAnnotate(ObjectMolecule *I,M4XAnnoType *m4x,char *script_f
 
           ExecutiveManageObject(I->Obj.G,(CObject*)ocgo,false,true);
 
-          SceneDirty(I->Obj.G);
+          SceneInvalidate(I->Obj.G);
         }
 
       }

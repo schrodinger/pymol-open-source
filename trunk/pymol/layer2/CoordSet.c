@@ -901,7 +901,7 @@ void CoordSetUpdate(CoordSet *I)
     if(!I->Rep[a])
       I->Active[a]=false;
 
-  SceneDirty(I->State.G);
+  SceneInvalidate(I->State.G);
   OrthoBusyFast(I->State.G,1,1);
 }
 /*========================================================================*/

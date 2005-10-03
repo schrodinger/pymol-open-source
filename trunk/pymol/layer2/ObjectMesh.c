@@ -348,7 +348,7 @@ static void ObjectMeshInvalidate(ObjectMesh *I,int rep,int level,int state)
       I->State[state].ResurfaceFlag=true;      
       SceneChanged(I->Obj.G);
     } else {
-      SceneDirty(I->Obj.G);
+      SceneInvalidate(I->Obj.G);
     }
     if(once_flag) break;
   }
@@ -577,7 +577,7 @@ static void ObjectMeshUpdate(ObjectMesh *I)
         }
       }
     }
-    SceneDirty(I->Obj.G);
+    SceneInvalidate(I->Obj.G);
   }
 }
 

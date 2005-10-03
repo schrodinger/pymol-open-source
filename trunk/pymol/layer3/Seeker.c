@@ -153,7 +153,7 @@ static void SeekerSelectionToggleRange(PyMOLGlobals *G,CSeqRow* rowVLA,int row_n
         
         if(SettingGet(G,cSetting_auto_show_selections))
           ExecutiveSetObjVisib(G,selName,1);
-        SceneDirty(G);
+        SceneInvalidate(G);
       }
     }
   }
@@ -234,7 +234,7 @@ static void SeekerSelectionToggle(PyMOLGlobals *G,CSeqRow* rowVLA,int row_num,
         
         if(SettingGet(G,cSetting_auto_show_selections))
           ExecutiveSetObjVisib(G,selName,1);
-        SceneDirty(G);
+        SceneInvalidate(G);
       }
   }
 }

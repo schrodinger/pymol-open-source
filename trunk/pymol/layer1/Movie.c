@@ -39,7 +39,6 @@ struct _CMovie {
   int *Sequence;
   MovieCmdType *Cmd;
   int NImage,NFrame;
-  unsigned Width,Height;
   int MatrixFlag;
   SceneViewType Matrix;
   int Playing;
@@ -51,32 +50,68 @@ struct _CMovie {
 
 void MovieCopyPrepare(PyMOLGlobals *G,int *width,int *height,int *length)
 {
-  /* assumed locked api, blocked threads, and master thread on entry */
-
-  /* writes the current movie sequence to a set of PNG files 
-  * this routine can take a LOT of time -- 
-  * TODO: develop an interrupt mechanism */
-
-  int start,stop;
-  register CMovie *I=G->Movie;
-  int nFrame;
-
-  I->CacheSave = (int)SettingGet(G,cSetting_cache_frames); 
-  if(!I->CacheSave)
-    MovieClearImages(G);
-  SettingSet(G,cSetting_cache_frames,1.0);
-  nFrame = I->NFrame;
-  if(!nFrame) {
-	 nFrame=SceneGetNFrame(G);
-  }
-  start=0;
-  stop=nFrame;
-  if((start!=0)||(stop!=(nFrame+1)))
-    SceneSetFrame(G,0,0);
-  MoviePlay(G,cMoviePlay);
-  VLACheck(I->Image,ImageType*,nFrame);
-  SceneGetWidthHeight(G,width,height);
-  *length = nFrame;
+	/* assumed locked api, blocked threads, and master thread on entry */
+	
+	/* writes the current movie sequence to a set of PNG files 
+	* this routine can take a LOT of time -- 
+	* TODO: develop an interrupt mechanism */
+	
+	int start,stop;
+	register CMovie *I=G->Movie;
+	int nFrame;
+	
+	I->CacheSave = (int)SettingGet(G,cSetting_cache_frames); 
+	if(!I->CacheSave)
+		MovieClearImages(G);
+	SettingSet(G,cSetting_cache_frames,1.0);
+	nFrame = I->NFrame;
+	if(!nFrame) {
+		nFrame=SceneGetNFrame(G);
+	}
+	start=0;
+	stop=nFrame;
+	if((start!=0)||(stop!=(nFrame+1)))
+		SceneSetFrame(G,0,0);
+	MoviePlay(G,cMoviePlay);
+	VLACheck(I->Image,ImageType*,nFrame);
+	SceneGetWidthHeight(G,width,height);
+	{ 
+		int uniform_height = -1;
+		int uniform_width = -1;
+		int uniform_flag = false;
+		int scene_match = true;
+		int a;
+		ImageType *image;
+		/* make sure all the movie frames match the screen size or are pre-rendered and are already the same size */
+		for(a=0;a<nFrame;a++) {
+			image = I->Image[a];
+			if(image) {
+				if((image->height!=*height)||
+				   (image->width!=*width)) {
+					scene_match = false;
+					if(uniform_height<0) {
+						uniform_height = image->height;
+						uniform_width = image->width;
+					} else {
+						if((image->height!=uniform_height)||
+						   (image->width!=uniform_width))
+							uniform_flag = false;
+					}
+				}
+			} else 
+			   uniform_flag = false; /* missing at least one image, so not uniform */
+		}
+		if(!scene_match) {
+			if(uniform_flag) {
+				*height = uniform_height;
+				*width = uniform_width;
+			} else {
+			    MovieClearImages(G);
+			}
+		}
+		
+	}
+	*length = nFrame;
 }
 
 void MovieFlushCommands(PyMOLGlobals *G)
@@ -98,9 +133,7 @@ int MovieCopyFrame(PyMOLGlobals *G,int frame,int width,int height,int rowbytes,v
     nFrame=SceneGetNFrame(G);
   }
   
-  if((width==(signed int)I->Width)&&
-     (height==(signed int)I->Height)&&
-     (frame<nFrame)&&(ptr)) {
+  if((frame<nFrame)&&(ptr)) {
     int a = frame;
     int i;
     SceneSetFrame(G,0,a);
@@ -116,7 +149,9 @@ int MovieCopyFrame(PyMOLGlobals *G,int frame,int width,int height,int rowbytes,v
         "MoviePNG-Error: Missing rendered image.\n"
         ENDFB(G);
     } else {
-      {
+      if((I->Image[i]->height == height) &&
+	     (I->Image[i]->width == width))
+		 {
         unsigned char *srcImage = (unsigned char*)I->Image[i]->data;
         int i,j;
         for (i=0; i< height; i++)
@@ -133,7 +168,10 @@ int MovieCopyFrame(PyMOLGlobals *G,int frame,int width,int height,int rowbytes,v
               }
           }
         result = true;
-      }
+      } else { 
+	     /* mismatched dimensions, so furnish a white image */
+	     memset(ptr, 0xFF, 4*height*width);
+	  }
       ExecutiveDrawNow(G);
       if(G->HaveGUI) PyMOL_SwapBuffers(G->PyMOL);
     }
@@ -150,7 +188,7 @@ int MovieCopyFrame(PyMOLGlobals *G,int frame,int width,int height,int rowbytes,v
 void MovieCopyFinish(PyMOLGlobals *G) 
 {
   register CMovie *I=G->Movie;
-  SceneDirty(G); /* important */
+  SceneInvalidate(G); /* important */
   SettingSet(G,cSetting_cache_frames,(float)I->CacheSave);
   MoviePlay(G,cMovieStop);
   if(!I->CacheSave) {
@@ -391,8 +429,6 @@ int  MovieMatrix(PyMOLGlobals *G,int action)
 void MovieSetSize(PyMOLGlobals *G,unsigned int width,unsigned int height)
 {  
   register CMovie *I=G->Movie;
-  I->Width=width;
-  I->Height=height;
 }
 /*========================================================================*/
 int MoviePNG(PyMOLGlobals *G,char *prefix,int save,int start,int stop)
@@ -468,7 +504,7 @@ int MoviePNG(PyMOLGlobals *G,char *prefix,int save,int start,int stop)
       FreeP(I->Image[i]);
     }
   }
-  SceneDirty(G); /* important */
+  SceneInvalidate(G); /* important */
   PRINTFB(G,FB_Movie,FB_Debugging)
     " MoviePNG-DEBUG: done.\n"
     ENDFB(G);
@@ -788,7 +824,7 @@ void MovieClearImages(PyMOLGlobals *G)
 		}
 	 }
   I->NImage=0;
-  SceneDirty(G);
+  SceneInvalidate(G);
 }
 /*========================================================================*/
 void MovieReset(PyMOLGlobals *G) {

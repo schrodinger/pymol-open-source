@@ -2700,7 +2700,7 @@ static PyObject *CmdSelectList(PyObject *self,   PyObject *args)
     if(ok) {
       int list_len = PyList_Size(list);
       result=ExecutiveSelectList(TempPyMOLGlobals,sele_name,s1,int_array,list_len,state,mode,quiet); 
-      SceneDirty(TempPyMOLGlobals);
+      SceneInvalidate(TempPyMOLGlobals);
       SeqDirty(TempPyMOLGlobals);
     }
     FreeP(int_array);
@@ -3984,6 +3984,10 @@ static PyObject *CmdViewport(PyObject *self, 	PyObject *args)
     APIEntry();
 #ifndef _PYMOL_NO_MAIN
     MainDoReshape(w,h); /* should be moved into Executive */
+#else
+    if((w>0)&&(h>0)) { 
+		PyMOL_NeedReshape(TempPyMOLGlobals->PyMOL,2,0,0,w,h);
+	}
 #endif
     APIExit();
   }
@@ -4385,7 +4389,7 @@ static PyObject *CmdSelect(PyObject *self, PyObject *args)
     count = SelectorCreate(TempPyMOLGlobals,sname,sele,NULL,quiet,NULL);
     if(count<0)
       ok = false;
-    SceneDirty(TempPyMOLGlobals);
+    SceneInvalidate(TempPyMOLGlobals);
     SeqDirty(TempPyMOLGlobals);
     APIExit();
   }

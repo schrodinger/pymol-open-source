@@ -723,7 +723,7 @@ static void ObjectSliceUpdate(ObjectSlice *I)
           }
         }
       }
-      SceneDirty(I->Obj.G);
+      SceneInvalidate(I->Obj.G);
     }
   }
 }
@@ -768,7 +768,7 @@ void ObjectSliceDrag(ObjectSlice *I, int state, int mode, float *pt, float *mov,
         multiply33f33f(mat,oss->system,oss->system);
         
         ObjectSliceInvalidate(I,cRepSlice,cRepAll,state);
-        SceneDirty(I->Obj.G);
+        SceneInvalidate(I->Obj.G);
         
       }
       break;
@@ -782,7 +782,7 @@ void ObjectSliceDrag(ObjectSlice *I, int state, int mode, float *pt, float *mov,
         project3f(mov,up,v1);
         add3f(v1,oss->origin,oss->origin);
         ObjectSliceInvalidate(I,cRepSlice,cRepAll,state);        
-        SceneDirty(I->Obj.G);
+        SceneInvalidate(I->Obj.G);
       }
       break;
     case cButModeTorFrag: 

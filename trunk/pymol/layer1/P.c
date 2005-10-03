@@ -1388,13 +1388,13 @@ void PGetOptions(CPyMOLOptions *rec)
   char *load_str;
 
   pymol = PyImport_AddModule("pymol"); /* get it */
-  if(!pymol) ErrFatal(TempPyMOLGlobals,"PyMOL","can't find module 'pymol'");
+  if(!pymol) {fprintf(stderr,"PyMOL-ERROR: can't find module 'pymol'"); exit(EXIT_FAILURE);}
 
   invocation = PyObject_GetAttrString(pymol,"invocation"); /* get a handle to the invocation module */
-  if(!pymol) ErrFatal(TempPyMOLGlobals,"PyMOL","can't find module 'invocation'");
+  if(!invocation) {fprintf(stderr,"PyMOL-ERROR: can't find module 'invocation'"); exit(EXIT_FAILURE);}
 
   options = PyObject_GetAttrString(invocation,"options");
-  if(!pymol) ErrFatal(TempPyMOLGlobals,"PyMOL","can't get 'invocation.options'.");
+  if(!options) {fprintf(stderr,"PyMOL-ERROR: can't get 'invocation.options'.");exit(EXIT_FAILURE);}
 
   rec->pmgui = ! PyInt_AsLong(PyObject_GetAttrString(options,"no_gui"));
   rec->internal_gui = PyInt_AsLong(PyObject_GetAttrString(options,"internal_gui"));
