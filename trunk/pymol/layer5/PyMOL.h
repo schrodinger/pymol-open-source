@@ -160,6 +160,7 @@ void PyMOL_NeedRedisplay(CPyMOL *I);
 void PyMOL_NeedSwap(CPyMOL *I);
 void PyMOL_SetClickReady(CPyMOL *I, char *name, int index);
 void PyMOL_SetPassive(CPyMOL *I, int onOff);
+void PyMOL_NeedReshape(CPyMOL *I,int mode, int x, int y, int width, int height);
 
 /* valid context management */
 
@@ -193,6 +194,7 @@ int PyMOL_GetPassive(CPyMOL *I, int reset);
 int PyMOL_GetSwap(CPyMOL *I, int reset);
 int PyMOL_GetClickReady(CPyMOL *I, int reset);
 int PyMOL_GetReshape(CPyMOL *I);
+
 
 /* int array results */
 

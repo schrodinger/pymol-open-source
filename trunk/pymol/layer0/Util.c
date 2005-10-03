@@ -335,6 +335,7 @@ void UtilSortIndexGlobals(PyMOLGlobals *G,int n,void *array,int *x,UtilOrderFnGl
 
 #define MAX_BIN = 100
 
+#if 0
 static int ZOrderFn(float *array,int l,int r)
 {
   return (array[l]<=array[r]);
@@ -344,6 +345,7 @@ static int ZRevOrderFn(float *array,int l,int r)
 {
   return (array[l]>=array[r]);
 }
+#endif
 
 #ifndef R_SMALL8
 #define R_SMALL8 0.00000001F
