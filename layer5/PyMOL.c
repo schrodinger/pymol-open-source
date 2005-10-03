@@ -1908,8 +1908,8 @@ void PyMOL_Start(CPyMOL *I)
   SphereInit(G);
   OrthoInit(G,G->Option->show_splash);
   WizardInit(G); /* must come after ortho */
-  MovieInit(G);
   SceneInit(G);
+  MovieInit(G);
   SelectorInit(G);
   SeqInit(G);
   SeekerInit(G);
@@ -1940,6 +1940,14 @@ void PyMOL_Start(CPyMOL *I)
 }
 
 #ifndef _PYMOL_NOPY
+
+#ifdef _MACPYMOL_XCODE
+void init_cmd(void);
+void initExtensionClass(void);
+void initsglite(void);
+void init_champ(void);
+#endif
+
 void PyMOL_StartWithPython(CPyMOL *I)
 {
 	PyMOL_Start(I);
@@ -1953,11 +1961,12 @@ void PyMOL_StartWithPython(CPyMOL *I)
     }
 	
 	/* initialize our embedded C modules */
-	
+#ifdef _MACPYMOL_XCODE	
     init_cmd();
 	initExtensionClass();
     initsglite();
 	init_champ();
+#endif
 
 	/* launch pymol's Python subsystems */
 	
@@ -1996,8 +2005,8 @@ void PyMOL_Stop(CPyMOL *I)
   SeekerFree(G);
   SeqFree(G);
   SelectorFree(G);
-  SceneFree(G);
   MovieFree(G);
+  SceneFree(G);
   OrthoFree(G);
   SettingFreeGlobal(G);
   CharacterFree(G);

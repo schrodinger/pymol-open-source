@@ -428,7 +428,7 @@ int  MovieMatrix(PyMOLGlobals *G,int action)
 /*========================================================================*/
 void MovieSetSize(PyMOLGlobals *G,unsigned int width,unsigned int height)
 {  
-  register CMovie *I=G->Movie;
+  return;
 }
 /*========================================================================*/
 int MoviePNG(PyMOLGlobals *G,char *prefix,int save,int start,int stop)

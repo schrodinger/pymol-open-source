@@ -1655,11 +1655,10 @@ int was_main(void)
 
 PyObject *MainAsPyList(void) 
 {
-  PyMOLGlobals *G = TempPyMOLGlobals;
-
 #ifdef _PYMOL_NOPY
   return NULL;
 #else
+  PyMOLGlobals *G = TempPyMOLGlobals;
 
   PyObject *result=NULL;
   int width,height;

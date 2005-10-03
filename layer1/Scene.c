@@ -219,14 +219,15 @@ static void ScenePurgeImage(PyMOLGlobals *G)
 static void SceneInvalidateCopy(PyMOLGlobals *G,int free_buffer)
 {
   register CScene *I=G->Scene;
-
-  if(I->MovieOwnsImageFlag) {
-    I->MovieOwnsImageFlag=false;
-    I->Image=NULL;
-  } else if(free_buffer) {
-    ScenePurgeImage(G);
+  if(I) {
+    if(I->MovieOwnsImageFlag) {
+      I->MovieOwnsImageFlag=false;
+      I->Image=NULL;
+    } else if(free_buffer) {
+      ScenePurgeImage(G);
+    }
+    I->CopyFlag=false;
   }
-  I->CopyFlag=false;
 }
 
 void SceneInvalidate(PyMOLGlobals *G)
@@ -4556,6 +4557,7 @@ void SceneRay(PyMOLGlobals *G,
         unsigned int *l;
         unsigned int *r;
         register int height,width;
+        register int a,b;
 		
 		if(I->StereoMode==2) {
 			l=(unsigned int*)stereo_image->data;
@@ -4566,7 +4568,6 @@ void SceneRay(PyMOLGlobals *G,
 		}
         height = I->Image->height;
         width = I->Image->width;
-        register int a,b;
           
         for(a=0;a<height;a++) {
           for(b=0;b<width;b++)
