@@ -74,7 +74,7 @@ extern CPyMOLOptions *MacPyMOLOption;
 #endif
 
 #ifdef _MACPYMOL_XCODE
-#define PYMOL_API_LOCK if((I->DeferredPythonInit)&&PLockAPIAsGlut(true)) {
+#define PYMOL_API_LOCK if((I->PythonInitStage)&&PLockAPIAsGlut(true)) {
 #define PYMOL_API_UNLOCK PUnlockAPIAsGlut(); }
 #else 
 #define PYMOL_API_LOCK {
@@ -88,12 +88,13 @@ typedef struct _CPyMOL {
   int PassiveFlag;
   int SwapFlag;
   int BusyFlag;
-  int InterruptFlag;
-
+  int InterruptFlag; 
+  int ReshapeFlag;
   int ClickReadyFlag;
   char ClickedObject[ObjNameMax];  
   int ClickedIndex;
   
+  int Reshape[PYMOL_RESHAPE_SIZE];
   int Progress[PYMOL_PROGRESS_SIZE];
   int ProgressChanged;
 
@@ -101,7 +102,7 @@ typedef struct _CPyMOL {
 
 /* Python stuff */
 #ifndef _PYMOL_NOPY
-  int DeferredPythonInit;
+  int PythonInitStage;
 #endif
   /* dynamically mapped string constants */
 
@@ -1715,6 +1716,63 @@ CPyMOLOptions *PyMOLOptions_New(void)
   return result;
 }
 
+#ifndef _PYMOL_NOPY
+static void init_python(int argc, char *argv[])
+{
+    Py_Initialize();
+    if(argv) {
+	  PySys_SetArgv(argc,argv);
+    }
+	PyEval_InitThreads();
+	
+#ifdef _PYMOL_OWN_INTERP
+	{ /* NOTE this doesn't work 'cause we can't unpack code in restricted environments! */
+	
+	   /* get us a brand new interpreter, independent of any other */
+	   
+	   PyThreadState *tstate = Py_NewInterpreter();
+	   
+	   /* now release the first interpreter and use the second */
+       PyThreadState_Swap(tstate);
+	}
+#endif
+
+    PyUnicode_SetDefaultEncoding("utf-8"); /* is this safe & legal? */
+	PyRun_SimpleString("import sys");
+	PyRun_SimpleString("import os");
+	PyRun_SimpleString("sys.path.append(os.environ['PYMOL_PATH']+'/modules')");
+	PyRun_SimpleString("import __main__");
+    {
+		PyObject *P_main = PyImport_AddModule("__main__");
+		if(!P_main) printf("PyMOL can't find '__main__'\n");
+
+		/* set up a dry run through 'import pymol' */
+ 
+		PyObject_SetAttrString(P_main,"pymol_launch",PyInt_FromLong(3));
+    }
+ 
+    /* initiate PyMOL dry run to create __main__.pymol */
+	
+ 	PyRun_SimpleString("import pymol");
+	
+    /* parse arguments */
+
+	PyRun_SimpleString("pymol.invocation.parse_args(sys.argv)");
+
+}
+
+CPyMOLOptions *PyMOLOptions_NewWithPython(int argc, char *argv[])
+{
+  CPyMOLOptions *result = PyMOLOptions_New();
+  
+  /* use Python to parse options based on the command line */
+  
+  init_python(argc,argv);
+  PGetOptions(result);
+  return result;
+}
+#endif
+
 void PyMOLOptions_Free(CPyMOLOptions *options)
 {
   FreeP(options);
@@ -1820,8 +1878,10 @@ CPyMOL *PyMOL_NewWithOptions(CPyMOLOptions *option)
       *(result->G->Option) = *option;
     _PyMOL_Config(result);
   }
+  result->G->StereoCapable = option->stereo_capable;
   return result;
 }
+
 
 void PyMOL_Start(CPyMOL *I)
 {
@@ -1880,6 +1940,44 @@ void PyMOL_Start(CPyMOL *I)
   G->Ready = true; 
 }
 
+#ifndef _PYMOL_NOPY
+void PyMOL_StartWithPython(CPyMOL *I)
+{
+	PyMOL_Start(I);
+	
+	{
+		PyObject *P_main = PyImport_AddModule("__main__");
+		if(!P_main) printf("PyMOL can't find '__main__'\n");
+
+		/* set up for embedded-style launch */
+		PyObject_SetAttrString(P_main,"pymol_launch",PyInt_FromLong(5));
+    }
+	
+	/* initialize our embedded C modules */
+	
+    init_cmd();
+	initExtensionClass();
+    initsglite();
+	init_champ();
+
+	/* launch pymol's Python subsystems */
+	
+	PyRun_SimpleString("reload(pymol)");
+	
+	/* now locate all the C to Python function hooks and objects we need */
+	
+	PInit(I->G);
+	
+	/* and begin the initialization sequence */
+	
+	I->PythonInitStage = 1;
+	
+#ifdef _MACPYMOL_XCODE
+  MacPyMOLOption = I->G->Option;
+  MacPyMOLReady = &I->G->Ready;
+#endif  
+}
+#endif
 
 void PyMOL_Stop(CPyMOL *I)
 {
@@ -1921,63 +2019,6 @@ void PyMOL_Stop(CPyMOL *I)
 }
 
 
-void PyMOL_InitPythonDeps(CPyMOL *I)
-{
-#ifdef _MACPYMOL_XCODE
-#ifndef _PYMOL_NOPY
-    Py_Initialize();
-    PyEval_InitThreads();
-	
-#ifdef _PYMOL_OWN_INTERP
-	{ /* NOTE this doesn't work 'cause we can't unpack code in restricted environments! */
-	
-	   /* get us a brand new interpreter, independent of any other */
-	   
-	   PyThreadState *tstate = Py_NewInterpreter();
-	   
-	   /* now release the first interpreter and use the second */
-       PyThreadState_Swap(tstate);
-	}
-#endif
-
-    PyUnicode_SetDefaultEncoding("utf-8"); /* is this safe & legal? */
-	PyRun_SimpleString("import sys");
-	PyRun_SimpleString("import os");
-	PyRun_SimpleString("sys.path.append(os.environ['PYMOL_PATH']+'/modules')");
-	
-	PyRun_SimpleString("import __main__");
-    {
-		PyObject *P_main = PyImport_AddModule("__main__");
-		if(!P_main) printf("PyMOL can't find '__main__'\n");
-
-		/* inform PyMOL's other half that we're launching embedded-style */
-		PyObject_SetAttrString(P_main,"pymol_launch",PyInt_FromLong(4));
-		
-    }
- 
-	/* here is where we launch PyMOL's Python portion */
-	
-    init_cmd();
-	initExtensionClass();
-    initsglite();
-	init_champ();
-	
-	PyRun_SimpleString("import pymol");
-	
-	/* now define all the C->Python hooks we use */
-	
-	PInit(I->G);
-	
-	I->DeferredPythonInit = 1;
-	
-#ifdef _MACPYMOL_XCODE
-  MacPyMOLOption = I->G->Option;
-  MacPyMOLReady = &I->G->Ready;
-#endif
-#endif
-#endif
-  
-}
 
 void PyMOL_Free(CPyMOL *I)
 {
@@ -1987,7 +2028,7 @@ void PyMOL_Free(CPyMOL *I)
   FreeP(I->G);
 #ifndef _PYMOL_NOPY
 #ifdef _PYMOL_OWN_INTERP
-  if(I->DeferredPythonInit) { /* shut down this interpreter gracefully, then free the GIL for others to use */
+  if(I->PythonInitStage) { /* shut down this interpreter gracefully, then free the GIL for others to use */
     PBlock();
     { /* should this be moved into a PDestroy?() to clear out the thread record too? */
       PyThreadState *tstate = PyEval_SaveThread();
@@ -2040,6 +2081,14 @@ void PyMOL_Draw(CPyMOL *I)
     glDisable(GL_LINE_SMOOTH);
     glDisable(GL_NORMALIZE);
     glDisable(GL_POLYGON_SMOOTH);
+
+#ifdef _MACPYMOL_XCODE
+   { /* on a mac, this can change if we've switched contexts...*/
+     GLboolean state;
+		glGetBooleanv(GL_STEREO, &state);
+		G->StereoCapable = (int) state;
+    }
+#endif
 
   } 
 
@@ -2142,11 +2191,11 @@ int PyMOL_Idle(CPyMOL *I)
   PFlush();
   
 #ifndef _PYMOL_NOPY
-  if(I->DeferredPythonInit>0) {
-	if(I->DeferredPythonInit<2) {
-	   I->DeferredPythonInit++;
+  if(I->PythonInitStage>0) {
+	if(I->PythonInitStage<2) {
+	   I->PythonInitStage++;
 	} else {
-		I->DeferredPythonInit=-1;
+		I->PythonInitStage=-1;
 		PBlock();
 		PRunString("exec_deferred()");
 		PUnblock();
@@ -2172,6 +2221,38 @@ void PyMOL_NeedRedisplay(CPyMOL *I)
 void PyMOL_NeedSwap(CPyMOL *I)
 {
   I->SwapFlag = true;
+}
+
+void PyMOL_NeedReshape(CPyMOL *I,int mode, int x, int y, int width, int height)
+{
+  I->ReshapeFlag = true;
+  I->Reshape[0] = mode;
+  I->Reshape[1] = x;
+  I->Reshape[2] = y;
+  I->Reshape[3] = width;
+  I->Reshape[4] = height;
+}
+
+int PyMOL_GetReshape(CPyMOL *I)
+{
+  return I->ReshapeFlag;
+}
+
+PyMOLreturn_int_array PyMOL_GetReshapeInfo(CPyMOL *I,int reset)
+{
+	PyMOLreturn_int_array result = { PyMOLstatus_SUCCESS, PYMOL_RESHAPE_SIZE, NULL };
+	if(reset)
+		I->ReshapeFlag = false;
+	result.array = VLAlloc(int,PYMOL_RESHAPE_SIZE);
+	if(!result.array) {
+		result.status = PyMOLstatus_FAILURE;
+	} else {
+		int a;
+		for(a=0;a<PYMOL_RESHAPE_SIZE;a++)
+			result.array[a] = I->Reshape[a];
+	}
+	
+  return result;
 }
 
 void PyMOL_SetPassive(CPyMOL *I,int onOff)

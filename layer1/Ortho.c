@@ -494,7 +494,7 @@ static void OrthoBusyDraw(PyMOLGlobals *G,int force)
         }
                
         OrthoPopMatrix(G);
-        OrthoDirty(G);/* switched from SceneDirty */
+        OrthoDirty(G);
       }
     }
   }
@@ -1578,7 +1578,8 @@ int OrthoDrag(PyMOLGlobals *G,int x, int y,int mod)
 /*========================================================================*/
 void OrthoSplash(PyMOLGlobals *G) 
 {
-  OrthoNewLine(G,NULL,true);
+  printf("\n"); /* only add this newline to stdout, not the output window */
+  /* OrthoNewLine(G,NULL,true);*/
   if(G->Option->incentive_product) {
     PRINTF " PyMOL(TM) Incentive Product - Copyright (C) 2005 DeLano Scientific LLC.\n \n" ENDF(G);
     PRINTF " A current PyMOL Maintenance and/or Support Subscription may be required\n" ENDF(G);
@@ -1731,6 +1732,7 @@ void OrthoPushMatrix(PyMOLGlobals *G)
     glDisable(GL_LINE_SMOOTH);
     glDisable(GL_DITHER);
     glDisable(GL_BLEND);
+	glShadeModel(GL_SMOOTH);
     if(G->Option->multisample)    
       glDisable(0x809D); /* GL_MULTISAMPLE_ARB */
    }

@@ -1412,7 +1412,7 @@ static void ObjectMapFree(ObjectMap *I) {
 }
 
 static void ObjectMapUpdate(ObjectMap *I) {
-  SceneDirty(I->Obj.G);
+  SceneInvalidate(I->Obj.G);
 }
 
 static void ObjectMapRender(ObjectMap *I,RenderInfo *info)

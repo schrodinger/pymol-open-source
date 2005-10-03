@@ -381,7 +381,7 @@ static void ExecutiveInvalidateMapDependents(PyMOLGlobals *G,char *map_name)
       }
     }
   }
-  SceneDirty(G);
+  SceneInvalidate(G);
 }
 
 void ExecutiveResetMatrix(PyMOLGlobals *G,
@@ -782,7 +782,7 @@ int ExecutiveSetName(PyMOLGlobals *G,char *old_name, char *new_name)
               ExecutiveUpdateObjectSelection(G,rec->obj);
             */
             SelectorSetName(G,new_name, old_name);
-            SceneDirty(G);
+            SceneChanged(G);
             SeqChanged(G);
             found = true;
           }
@@ -2342,11 +2342,9 @@ int ExecutiveGetSession(PyMOLGlobals *G,PyObject *dict)
   PyDict_SetItemString(dict,"editor",tmp);
   Py_XDECREF(tmp);
 
-#ifndef _PYMOL_NO_MAIN
   tmp = MainAsPyList();
   PyDict_SetItemString(dict,"main",tmp);
   Py_XDECREF(tmp);
-#endif
 
   if(Feedback(G,FB_Executive,FB_Errors)) {
     if(PyErr_Occurred()) {
@@ -2635,11 +2633,10 @@ int ExecutiveSetSession(PyMOLGlobals *G,PyObject *session,int quiet)
     if(!G->Option->presentation)
       PParse("viewport"); /* refresh window/internal_gui status */
   }
-#ifndef _PYMOL_NO_MAIN
   if(ok) {
     tmp = PyDict_GetItemString(session,"main");
     if(tmp) {
-      ok = MainFromPyList(tmp);
+      ok = MainFromPyList(tmp);  /* main just stores the viewport size */
     }
     if(PyErr_Occurred()) {
       PyErr_Print();  
@@ -2655,7 +2652,6 @@ int ExecutiveSetSession(PyMOLGlobals *G,PyObject *session,int quiet)
       ok=true; /* keep trying...don't give up */
     }
   }
-#endif
   if(ok&&migrate_sessions) { /* migrate sessions */
     tmp = PyDict_GetItemString(session,"version");
     if(tmp) {
@@ -3205,7 +3201,7 @@ int ExecutiveMapNew(PyMOLGlobals *G,char *name,int type,float *grid,
         isNew=false;
         origObj = (CObject*)objMap;
       }
-      SceneDirty(G);
+      SceneChanged(G);
     }
     if(st_once_flag)
       break;
@@ -3660,7 +3656,7 @@ int ExecutiveCombineObjectTTT(PyMOLGlobals *G,char *name,float *ttt)
     ok=false;
   } else {
     ObjectCombineTTT(obj,ttt);
-    SceneDirty(G);
+    SceneInvalidate(G);
   }
   return(ok);
 }
@@ -3677,7 +3673,7 @@ int ExecutiveSetObjectTTT(PyMOLGlobals *G,char *name,float *ttt,int state,int qu
     ok=false;
   } else {
     ObjectSetTTT(obj,ttt,state);
-    SceneDirty(G);
+    SceneInvalidate(G);
   }
   return(ok);
 }
@@ -3705,7 +3701,7 @@ int ExecutiveTransformSelection(PyMOLGlobals *G,int state,char *s1,int log,float
       ObjectMoleculeTransformSelection(obj,state,sele,ttt,log,s1,homogenous);
     }
   }
-  SceneDirty(G);
+  SceneInvalidate(G);
   VLAFreeP(vla);
   return(ok);
 }
@@ -3739,7 +3735,7 @@ int ExecutiveTransformObjectSelection(PyMOLGlobals *G,char *name,int state,
         } else {
           ObjectMoleculeTransformSelection(objMol,state,sele,matrix,log,s1,homogenous);
         }
-        SceneDirty(G);
+        SceneInvalidate(G);
       }
       break;
     case cObjectMap:
@@ -4080,7 +4076,6 @@ char *ExecutiveGetTitle(PyMOLGlobals *G,char *name,int state)
   } else {
     result = ObjectMoleculeGetStateTitle(obj,state);
   }
-  SceneDirty(G);
   return(result);
 }
 /*========================================================================*/
@@ -4093,7 +4088,7 @@ void ExecutiveHideSelections(PyMOLGlobals *G)
     if(rec->type==cExecSelection) {
       if(rec->visible) {
         rec->visible=false;
-        SceneDirty(G);
+        SceneInvalidate(G);
         SeqDirty(G);
       }
     }
@@ -4637,7 +4632,7 @@ void ExecutiveRebuildAll(PyMOLGlobals *G)
     }
   }
   SeqChanged(G);
-  SceneDirty(G);
+  SceneInvalidate(G);
 }
 /*========================================================================*/
 void ExecutiveRebuildAllObjectDist(PyMOLGlobals *G)
@@ -4651,7 +4646,7 @@ void ExecutiveRebuildAllObjectDist(PyMOLGlobals *G)
       }
     }
   }
-  SceneDirty(G);
+  SceneInvalidate(G);
 }
 /*========================================================================*/
 void ExecutiveUndo(PyMOLGlobals *G,int dir)
@@ -4919,7 +4914,7 @@ void ExecutiveFlag(PyMOLGlobals *G,int flag,char *s1,int action,int quiet)
       sprintf(buffer,"(flag %d)",flag);
       SelectorCreate(G,cIndicateSele,buffer,NULL,true,NULL);
       ExecutiveSetObjVisib(G,cIndicateSele,true);
-      SceneDirty(G);
+      SceneInvalidate(G);
     }
   }
 
@@ -5015,21 +5010,17 @@ int ExecutiveStereo(PyMOLGlobals *G,int flag)
       
       switch(stereo_mode) {
       case 1: /* hardware stereo-in-a-window*/
-        if(G->StereoCapable||SceneGetStereo(G)) {
-          SceneSetStereo(G,flag);
-          PSGIStereo(flag);
-        } else {
-          ok=false;
-        }
+        SceneSetStereo(G,flag);
+		PSGIStereo(flag); /* does this have any effect anymore? */
         break;
       case 2: /* cross-eye stereo*/
       case 3:
         SceneSetStereo(G,flag);
         break;
-      
       }
     }
   }
+  SceneInvalidate(G);
   return(ok);
 }
 /*========================================================================*/
@@ -6390,7 +6381,7 @@ int ExecutiveRMS(PyMOLGlobals *G,char *s1,char *s2,int mode,float refine,int max
             SettingSet(G,cSetting_auto_zoom,0);
             ExecutiveManageObject(G,(CObject*)ocgo,-1,false);
             SettingSet(G,cSetting_auto_zoom,(float)auto_save);            
-            SceneDirty(G);
+            SceneInvalidate(G);
           }
         if(mode==2) {
           if(ok) {
@@ -7757,7 +7748,7 @@ int ExecutiveColor(PyMOLGlobals *G,char *name,char *color,int flags,int quiet)
             rec->obj->fInvalidate(rec->obj,cRepAll,cRepInvColor,-1);
           n_obj++;
           ok=true;
-          SceneDirty(G);
+          SceneInvalidate(G);
           break;
         case cExecAll:
           rec=NULL;
@@ -7768,7 +7759,7 @@ int ExecutiveColor(PyMOLGlobals *G,char *name,char *color,int flags,int quiet)
                 rec->obj->fInvalidate(rec->obj,cRepAll,cRepInvColor,-1);
               n_obj++;
               ok=true;
-              SceneDirty(G);
+              SceneInvalidate(G);
             }
           }
           break;
@@ -7807,7 +7798,7 @@ int ExecutiveColor(PyMOLGlobals *G,char *name,char *color,int flags,int quiet)
             rec->obj->fInvalidate(rec->obj,cRepAll,cRepInvColor,-1);
           n_obj++;
           ok=true;
-          SceneDirty(G);
+          SceneInvalidate(G);
         }
       } 
     } else {
@@ -7819,7 +7810,7 @@ int ExecutiveColor(PyMOLGlobals *G,char *name,char *color,int flags,int quiet)
             rec->obj->fInvalidate(rec->obj,cRepAll,cRepInvColor,-1);
           n_obj++;
           ok=true;
-          SceneDirty(G);
+          SceneInvalidate(G);
         }
       }
     }
@@ -8607,7 +8598,7 @@ int ExecutiveWindowZoom(PyMOLGlobals *G,char *name,float buffer,
     SceneWindowSphere(G,center,radius);
     if(animate!=0.0F)
       SceneLoadAnimation(G,animate);
-    SceneDirty(G);
+    SceneInvalidate(G);
   } else {
 
     sele0 = SelectorIndexByName(G,name);
@@ -8623,7 +8614,7 @@ int ExecutiveWindowZoom(PyMOLGlobals *G,char *name,float buffer,
         " ExecutiveWindowZoom-DEBUG: name valid, but no extents -- using default view\n"
         ENDFD;
       SceneSetDefaultView(G);
-      SceneDirty(G);
+      SceneInvalidate(G);
     } else {
       ErrMessage(G,"ExecutiveWindowZoom","selection or object unknown.");
       ok=false;
@@ -8669,7 +8660,7 @@ int ExecutiveCenter(PyMOLGlobals *G,char *name,int state,
     if(origin) 
       SceneOriginSet(G,center,false);
     SceneRelocate(G,center);
-    SceneDirty(G);
+    SceneInvalidate(G);
     if(animate!=0.0F)
       SceneLoadAnimation(G,animate);
   } else {
@@ -8683,7 +8674,7 @@ int ExecutiveCenter(PyMOLGlobals *G,char *name,int state,
       }
     } else if(ExecutiveValidName(G,name)) {
       SceneSetDefaultView(G);
-      SceneDirty(G);
+      SceneInvalidate(G);
     } else {
       ErrMessage(G,"ExecutiveCenter","selection or object unknown.");
       ok=false;
@@ -8730,7 +8721,7 @@ int ExecutiveOrigin(PyMOLGlobals *G,char *name,int preserve,char *oname,float *p
         ENDFB(G);
       SceneOriginSet(G,center,preserve);
     }
-    SceneDirty(G);
+    SceneInvalidate(G);
   } else
     ok=false;
   return(ok);
@@ -8841,7 +8832,7 @@ int ExecutiveSetObjVisib(PyMOLGlobals *G,char *name,int onoff)
                 ExecutiveHideSelections(G);
                 rec->visible=true;
               }
-            SceneDirty(G);
+            SceneInvalidate(G);
             SeqDirty(G);
           }
           break;
@@ -8892,7 +8883,7 @@ int ExecutiveSetObjVisib(PyMOLGlobals *G,char *name,int onoff)
                 ExecutiveHideSelections(G);
                 tRec->visible=true;
               }
-            SceneDirty(G);
+            SceneInvalidate(G);
             SeqDirty(G);
           }
         }
@@ -8936,7 +8927,13 @@ void ExecutiveFullScreen(PyMOLGlobals *G,int flag)
     }
   }
 #endif
-
+  SettingSet(G,cSetting_full_screen,(float)flag);
+  if(flag) {
+     PyMOL_NeedReshape(G->PyMOL,1,0,0,0,0); /* zoom full-screen */
+  } else {
+     PyMOL_NeedReshape(G->PyMOL,0,0,0,0,0); /* return to non-zoomed size */
+  }
+  SceneChanged(G);
 }
 /*========================================================================*/
 void ExecutiveSetAllVisib(PyMOLGlobals *G,int state)
@@ -8979,7 +8976,7 @@ void ExecutiveSetAllVisib(PyMOLGlobals *G,int state)
             if(rec->obj->fInvalidate)
               rec->obj->fInvalidate(rec->obj,rep,cRepInvVisib,state);
           }
-          SceneDirty(G);
+          SceneInvalidate(G);
           break;
         }
       }
@@ -9284,7 +9281,7 @@ static void ExecutiveSetAllRepVisib(PyMOLGlobals *G,int rep,int state)
                   rec->obj->fInvalidate(rec->obj,rep,cRepInvVisib,state);
               }
             }
-            SceneDirty(G);
+            SceneInvalidate(G);
             break;
           }
         }
@@ -9358,7 +9355,7 @@ void ExecutiveInvalidateRep(PyMOLGlobals *G,char *name,int rep,int level)
           if(rec->type==cExecObject) {
             if(rec->obj->fInvalidate) {
               rec->obj->fInvalidate(rec->obj,rep,level,-1);
-              SceneDirty(G);
+              SceneInvalidate(G);
             }
           }
         }
@@ -9383,7 +9380,7 @@ void ExecutiveInvalidateRep(PyMOLGlobals *G,char *name,int rep,int level)
       if(rec->type==cExecObject) {
         if(rec->obj->fInvalidate) {
           rec->obj->fInvalidate(rec->obj,rep,cRepInvColor,cRepAll);
-          SceneDirty(G);
+          SceneInvalidate(G);
         }
       }
   }
@@ -9636,7 +9633,7 @@ case cExecObject:
     break;
 case cExecSelection:
     if(rec->visible) {
-      SceneDirty(G);
+      SceneInvalidate(G);
       SeqDirty(G);
     }
     ExecutiveDelKey(I,rec);
@@ -9717,7 +9714,7 @@ void ExecutiveDelete(PyMOLGlobals *G,char *name)
       if(all_flag||(WordMatch(G,name_copy,rec->name,true)<0)) {
         
         if(all_flag||rec->visible)
-          SceneDirty(G);
+          SceneInvalidate(G);
         SeqDirty(G);
         ExecutiveDelKey(I,rec);
         SelectorDelete(G,rec->name);
@@ -9925,7 +9922,7 @@ void ExecutiveManageSelection(PyMOLGlobals *G,char *name)
         rec->visible=true;
       }
     }
-    if(rec->visible) SceneDirty(G);
+    if(rec->visible) SceneInvalidate(G);
   }
   SeqDirty(G);
 }

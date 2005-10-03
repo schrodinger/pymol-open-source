@@ -156,14 +156,14 @@ void SeqDirty(PyMOLGlobals *G)
 {
   register CSeq *I=G->Seq;
   I->Dirty = true;
-  SceneDirty(G);
+  SceneInvalidate(G);
 }
 
 void SeqChanged(PyMOLGlobals *G)
 {
   register CSeq *I=G->Seq;
   I->Changed = true;
-  SceneDirty(G);
+  SceneInvalidate(G);
 }
 
 static int SeqDrag(Block *block,int x,int y,int mod)

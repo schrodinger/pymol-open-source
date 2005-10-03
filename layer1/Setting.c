@@ -1257,15 +1257,15 @@ void SettingGenerateSideEffects(PyMOLGlobals *G,int index,char *sele,int state)
   case cSetting_transparency_mode:
   case cSetting_dot_normals:
   case cSetting_mesh_normals:
-	 SceneDirty(G);
+	 SceneInvalidate(G);
 	 break;
   case cSetting_stereo_shift:
   case cSetting_stereo_angle:
   case cSetting_texture_fonts:
-	 SceneDirty(G);
+	 SceneInvalidate(G);
 	 break;
   case cSetting_dash_round_ends:
-	 SceneDirty(G);
+	 SceneInvalidate(G);
 	 break;
   case cSetting_mouse_selection_mode:
     OrthoDirty(G);
@@ -1344,7 +1344,7 @@ void SettingGenerateSideEffects(PyMOLGlobals *G,int index,char *sele,int state)
     SceneChanged(G);
     break;
   case cSetting_button_mode:
-    SceneDirty(G);
+    OrthoDirty(G);
     break;
   case cSetting_stick_radius:
     ExecutiveInvalidateRep(G,inv_sele,cRepCyl,cRepInvRep);
@@ -1560,7 +1560,7 @@ void SettingGenerateSideEffects(PyMOLGlobals *G,int index,char *sele,int state)
       }
 
     }
-    SceneDirty(G);
+    SceneInvalidate(G);
     break;
   case cSetting_line_smooth:
   case cSetting_transparency:
@@ -1576,10 +1576,10 @@ void SettingGenerateSideEffects(PyMOLGlobals *G,int index,char *sele,int state)
   case cSetting_selection_width:
   case cSetting_selection_width_scale:
   case cSetting_selection_width_max:
-    SceneDirty(G);
+    SceneInvalidate(G);
     break;
   case cSetting_depth_cue: 
-    SceneDirty(G);
+    SceneInvalidate(G);
     break;
   case cSetting_sculpting:
     OrthoDirty(G);
@@ -1637,11 +1637,11 @@ int SettingSetfv(PyMOLGlobals *G,int index,float *v)
         SettingSet_3fv(I,index,v); 
       }
     }
-	 SceneDirty(G);
+	 SceneInvalidate(G);
     break;
   case cSetting_light:
     SettingSet_3fv(I,index,v);     
-	 SceneDirty(G);
+	 SceneInvalidate(G);
 	 break;
   case cSetting_valence:
     ExecutiveInvalidateRep(G,"all",cRepLine,cRepInvRep);
@@ -1656,7 +1656,7 @@ int SettingSetfv(PyMOLGlobals *G,int index,float *v)
     break;
   case cSetting_button_mode:
     SettingSet_f(I,index,v[0]);
-    SceneDirty(G);
+    OrthoDirty(G);
     break;
   case cSetting_stick_radius:
   case cSetting_stick_quality:
@@ -1687,7 +1687,7 @@ int SettingSetfv(PyMOLGlobals *G,int index,float *v)
 	 break;
   case cSetting_ortho:
   case cSetting_gl_ambient:
-	 SceneDirty(G);
+	 SceneInvalidate(G);
     break;
   case cSetting_overlay:
   case cSetting_text:
@@ -1769,7 +1769,7 @@ int SettingSetNamed(PyMOLGlobals *G,char *name,char *value)
       sscanf(value,"%f",&v);
 		SettingSetfv(G,index,&v);
 		sprintf(buffer," Setting: %s set to %5.3f\n",realName,v);
-      SceneDirty(G);
+      SceneInvalidate(G);
       break;
 	 default:
 		sscanf(value,"%f",&v);

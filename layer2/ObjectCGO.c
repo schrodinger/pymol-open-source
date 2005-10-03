@@ -197,7 +197,7 @@ void ObjectCGORecomputeExtent(ObjectCGO *I)
 /*========================================================================*/
 static void ObjectCGOUpdate(ObjectCGO *I)
 {
-  SceneDirty(I->Obj.G);/* needed ?*/
+  SceneInvalidate(I->Obj.G);/* needed ?*/
 }
 
 /*========================================================================*/

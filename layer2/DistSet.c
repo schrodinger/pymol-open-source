@@ -177,19 +177,19 @@ void DistSetUpdate(DistSet *I)
   OrthoBusyFast(I->G,0,I->NRep);
   if(!I->Rep[cRepDash]) {
     I->Rep[cRepDash]=RepDistDashNew(I);
-    SceneDirty(I->G);
+    SceneInvalidate(I->G);
   }
   if(!I->Rep[cRepLabel]) {
     I->Rep[cRepLabel]=RepDistLabelNew(I);
-    SceneDirty(I->G);
+    SceneInvalidate(I->G);
   }
   if(!I->Rep[cRepAngle]) {
     I->Rep[cRepAngle]=RepAngleNew(I);
-    SceneDirty(I->G);
+    SceneInvalidate(I->G);
   }
   if(!I->Rep[cRepDihedral]) {
     I->Rep[cRepDihedral]=RepDihedralNew(I);
-    SceneDirty(I->G);
+    SceneInvalidate(I->G);
   }
   OrthoBusyFast(I->G,1,1);
 }

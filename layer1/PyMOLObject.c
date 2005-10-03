@@ -209,7 +209,7 @@ void ObjectSetTTT(CObject *I,float *ttt,int state)
 void ObjectResetTTT(CObject *I)
 {
   I->TTTFlag=false;
-  SceneDirty(I->G);
+  SceneInvalidate(I->G);
 }
 /*========================================================================*/
 void ObjectPrepareContext(CObject *I,CRay *ray)
@@ -267,7 +267,7 @@ void ObjectSetTTTOrigin(CObject *I,float *origin)
   I->TTT[7]+=origin[1];
   I->TTT[11]+=origin[2];
 
-  SceneDirty(I->G);
+  SceneInvalidate(I->G);
 
 }
 /*========================================================================*/

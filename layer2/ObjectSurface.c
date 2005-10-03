@@ -317,7 +317,7 @@ static void ObjectSurfaceInvalidate(ObjectSurface *I,int rep,int level,int state
       I->State[state].RecolorFlag=true;
       SceneChanged(I->Obj.G);
     } else {
-      SceneDirty(I->Obj.G);
+      SceneInvalidate(I->Obj.G);
     }
     if(once_flag) break;
   }
@@ -549,7 +549,7 @@ static void ObjectSurfaceUpdate(ObjectSurface *I)
       }
     }
   }
-  SceneDirty(I->Obj.G);
+  SceneInvalidate(I->Obj.G);
 }
 #if 0
 static int ZOrderFn(float *array,int l,int r)

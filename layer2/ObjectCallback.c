@@ -52,7 +52,7 @@ static void ObjectCallbackFree(ObjectCallback *I) {
 /*========================================================================*/
 
 static void ObjectCallbackUpdate(ObjectCallback *I) {
-  SceneDirty(I->Obj.G);
+  SceneInvalidate(I->Obj.G);
 }
 
 /*========================================================================*/
