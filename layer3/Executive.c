@@ -5020,7 +5020,7 @@ int ExecutiveStereo(PyMOLGlobals *G,int flag)
       }
     }
   }
-  SceneInvalidate(G);
+  SceneDirty(G);
   return(ok);
 }
 /*========================================================================*/

@@ -2239,6 +2239,7 @@ void PyMOL_NeedReshape(CPyMOL *I,int mode, int x, int y, int width, int height)
   I->Reshape[2] = y;
   I->Reshape[3] = width;
   I->Reshape[4] = height;
+  PyMOL_NeedRedisplay(I);
 }
 
 int PyMOL_GetReshape(CPyMOL *I)

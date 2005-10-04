@@ -6060,7 +6060,9 @@ int SelectorGetTmp(PyMOLGlobals *G,char *input,char *store)
 
       if(OVreturn_IS_OK( (result = OVLexicon_BorrowFromCString(I->Lex,word)))) {
         if(OVreturn_IS_OK( (result = OVOneToAny_GetKey(I->Key, result.word)))) {
-          if(result.word != SELE_ALLz) {
+          if((result.word != SELE_ALLz)&&
+			(result.word != SELE_ORIz)&&
+			(result.word != SELE_CENz)) {
             is_selection=true;
             break;
           }
