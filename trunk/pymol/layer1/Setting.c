@@ -1598,8 +1598,10 @@ void SettingGenerateSideEffects(PyMOLGlobals *G,int index,char *sele,int state)
     OrthoCommandIn(G,command);
     break;
   case cSetting_suspend_updates:
-    if(!SettingGet(G,cSetting_suspend_updates))
+    if(!SettingGet(G,cSetting_suspend_updates)) {
       SceneChanged(G); /* force big update upon resumption */
+	  OrthoDirty(G);
+	  }
     break;
   case cSetting_security:
     G->Security = (int)SettingGet(G,cSetting_security);
