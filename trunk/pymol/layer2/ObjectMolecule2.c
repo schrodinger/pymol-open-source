@@ -1975,8 +1975,11 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(PyMOLGlobals *G,
           p=ncopy(cc,p,2);
           if(!sscanf(cc,"%s",ai->elem)) 
             ai->elem[0]=0;          
-          else if(!(((ai->elem[0]>='a')&&(ai->elem[0]<='z'))|| /* don't get confused by PDB misuse */
-                    ((ai->elem[0]>='A')&&(ai->elem[0]<='Z'))))
+          else if(!((((ai->elem[0]>='a')&&(ai->elem[0]<='z'))|| /* don't get confused by PDB misuse */
+                     ((ai->elem[0]>='A')&&(ai->elem[0]<='Z')))&&
+                    (((ai->elem[1]==0)||
+                      ((ai->elem[1]>='a')&&(ai->elem[1]<='z'))|| 
+                      ((ai->elem[1]>='A')&&(ai->elem[1]<='Z'))))))
             ai->elem[0]=0;                      
             
           if(!ai->elem[0]) {

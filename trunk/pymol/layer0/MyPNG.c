@@ -39,7 +39,7 @@ Z* -------------------------------------------------------------------
 
 
 int MyPNGWrite(PyMOLGlobals *G,char *file_name,unsigned char *p,
-               unsigned int width,unsigned int height)
+               unsigned int width,unsigned int height,float dpi)
 {
 #ifdef _HAVE_LIBPNG
 
@@ -106,6 +106,11 @@ int MyPNGWrite(PyMOLGlobals *G,char *file_name,unsigned char *p,
     */
    png_set_IHDR(png_ptr, info_ptr, width, height, bit_depth, PNG_COLOR_TYPE_RGB_ALPHA,
       PNG_INTERLACE_NONE, PNG_COMPRESSION_TYPE_BASE, PNG_FILTER_TYPE_BASE);
+
+   if(dpi>0.0F) { /* only set resolution if dpi is positive */
+     int dots_per_meter = (int)(dpi*39.3700787);
+     png_set_pHYs(png_ptr, info_ptr, dots_per_meter, dots_per_meter, PNG_RESOLUTION_METER);
+   }
 
    png_set_gamma(png_ptr, SettingGet(G,cSetting_png_screen_gamma), 
                  SettingGet(G,cSetting_png_file_gamma));

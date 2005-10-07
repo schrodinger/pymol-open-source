@@ -243,6 +243,8 @@ USAGE (PYTHON)
                             r = _cmd.do(a,log,echo)
                         finally:
                             unlock(r)
+                    else:
+                        r = DEFAULT_SUCCESS
                 cmd.set('defer_updates',defer)
         if _raising(r): raise pymol.CmdException            
         return r

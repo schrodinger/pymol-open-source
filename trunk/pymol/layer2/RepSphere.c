@@ -712,7 +712,7 @@ static void RepSphereRender(RepSphere *I,RenderInfo *info)
 				  /* compute Zc/Wc to get normalized depth coordinate of fog start */
 				  nv0 = (nv2/nv3);
 				  fog_info[0] = (nv0*0.5)+0.5;
-				  // printf("%8.3f %8.3f %8.3f %8.3f\n", nv3, nv2, nv0, fog_info[0]);
+				  /* printf("%8.3f %8.3f %8.3f %8.3f\n", nv3, nv2, nv0, fog_info[0]); */
 				  fog_info[1] = 1.0F/(1.0-fog_info[0]); /* effective range of fog */
 				  
 				   z_front = info->stereo_front;

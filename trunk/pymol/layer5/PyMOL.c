@@ -568,6 +568,8 @@ typedef struct _CPyMOL {
   ov_word lex_cartoon_tube_cap;
   ov_word lex_cartoon_loop_cap;
   ov_word lex_nvidia_bugs;
+  ov_word lex_image_dots_per_inch;
+
 } _CPyMOL;
 
 /* convenience functions -- inline */
@@ -1144,6 +1146,8 @@ static OVstatus PyMOL_InitAPI(CPyMOL *I)
   LEX_SETTING(cartoon_tube_cap, 431);
   LEX_SETTING(cartoon_loop_cap, 432);
   LEX_SETTING(nvidia_bugs, 433);
+  LEX_SETTING(image_dots_per_inch, 434);
+
   return_OVstatus_SUCCESS;
 }
 

@@ -6,6 +6,8 @@ Changes up to 0.99
 
     beta16
 
+    * dpi option to png command and image_dots_per_inch setting
+
     * reading and saving of stereo images
 
     * now renders stereo pairs in both side-by-side and QB stereo modes

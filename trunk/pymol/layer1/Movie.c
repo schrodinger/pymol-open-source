@@ -487,7 +487,7 @@ int MoviePNG(PyMOLGlobals *G,char *prefix,int save,int start,int stop)
           "MoviePNG-Error: Missing rendered image.\n"
           ENDFB(G);
       } else {
-        MyPNGWrite(G,fname,I->Image[i]->data,I->Image[i]->width,I->Image[i]->height);		
+        MyPNGWrite(G,fname,I->Image[i]->data,I->Image[i]->width,I->Image[i]->height,SettingGetGlobal_f(G,cSetting_image_dots_per_inch));		
         ExecutiveDrawNow(G);
         OrthoBusySlow(G,a,nFrame);
         if(G->HaveGUI) PyMOL_SwapBuffers(G->PyMOL);
