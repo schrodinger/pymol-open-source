@@ -88,6 +88,7 @@ typedef struct {
   char *filename; /* NOTE: on heap! must free when done */
   int quiet;
   int antialias;
+  float dpi;
 } DeferredImage;
 
 /* allow up to 10 seconds at 30 FPS */
@@ -1295,7 +1296,7 @@ static void deinterlace(unsigned int *dst,unsigned int *src,
   }
 }
 
-void ScenePNG(PyMOLGlobals *G,char *png,int quiet)
+void ScenePNG(PyMOLGlobals *G,char *png,float dpi,int quiet)
 {
   register CScene *I=G->Scene;
   GLvoid *image = SceneImagePrepare(G);
@@ -1310,7 +1311,8 @@ void ScenePNG(PyMOLGlobals *G,char *png,int quiet)
       interlace((unsigned int*)save_image,(unsigned int*)I->Image->data,width,height);
       width *= 2;
     }
-    if(MyPNGWrite(G,png,save_image,width,height)) {
+    if(dpi<0.0F) dpi = SettingGetGlobal_f(G,cSetting_image_dots_per_inch);
+    if(MyPNGWrite(G,png,save_image,width,height,dpi)) {
       if(!quiet) {
         PRINTFB(G,FB_Scene,FB_Actions) 
           " ScenePNG: wrote %dx%d pixel image to file \"%s\".\n",
@@ -3873,13 +3875,13 @@ static int SceneDeferredPNG(DeferredImage *di)
   PyMOLGlobals *G=di->G;
   SceneMakeSizedImage(G,di->width, di->height,di->antialias);
   if(di->filename) {
-    ScenePNG(G,di->filename,di->quiet);
+    ScenePNG(G,di->filename, di->dpi, di->quiet);
     FreeP(di->filename);
   }
   return 1;
 }
 int SceneDeferPNG(PyMOLGlobals *G,int width, int height, 
-                  char *filename, int antialias, int quiet)
+                  char *filename, int antialias, float dpi, int quiet)
 {
   DeferredImage *di = Calloc(DeferredImage,1);
   if(di) {
@@ -3889,6 +3891,7 @@ int SceneDeferPNG(PyMOLGlobals *G,int width, int height,
     di->height = height;
     di->antialias = antialias;
     di->deferred.fn = (DeferredFn*)SceneDeferredPNG;
+    di->dpi = dpi;
     di->quiet = quiet;
     if(filename) {
       int stlen = strlen(filename);

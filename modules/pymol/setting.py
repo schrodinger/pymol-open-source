@@ -467,6 +467,7 @@ if __name__=='pymol.setting':
         cartoon_tube_cap          = (431, '')
         cartoon_loop_cap          = (432, '')
         nvidia_bugs               = (433, '')
+        image_dots_per_inch       = (434, '')
         
     setting_sc = Shortcut(SettingIndex.__dict__.keys())
 

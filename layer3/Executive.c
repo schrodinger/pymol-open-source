@@ -288,7 +288,7 @@ int ExecutiveDrawCmd(PyMOLGlobals *G, int width, int height,int antialias, int q
   }
   if(antialias<0)
     antialias = SettingGetGlobal_i(G,cSetting_antialias);
-  SceneDeferPNG(G,width,height,NULL,antialias, quiet);
+  SceneDeferPNG(G,width,height,NULL,antialias, -1.0, quiet);
   return 1;
 }
 

@@ -3890,14 +3890,15 @@ static PyObject *CmdPNG(PyObject *self, 	PyObject *args)
   int ok=false;
   int quiet;
   int width,height;
-  ok = PyArg_ParseTuple(args,"siii",&str1,&width,&height,&quiet);
+  float dpi;
+  ok = PyArg_ParseTuple(args,"siifi",&str1,&width,&height,&dpi,&quiet);
   if (ok) {
     APIEntry();
     ExecutiveDrawNow(TempPyMOLGlobals);		 /* TODO STATUS */
     if(width||height) {
-      SceneDeferPNG(TempPyMOLGlobals,width,height,str1,-1,quiet);
+      SceneDeferPNG(TempPyMOLGlobals,width,height,str1,-1,dpi,quiet);
     } else {
-      ScenePNG(TempPyMOLGlobals,str1,quiet);
+      ScenePNG(TempPyMOLGlobals,str1,dpi,quiet);
     }
     APIExit();
   }
