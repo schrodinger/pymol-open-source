@@ -217,7 +217,7 @@ PYMOL API
         lst.extend(list(arg))
         return apply(load_object,lst)
 
-    def load_cgo(*arg):
+    def load_cgo(*arg,**kw):
         '''
 DESCRIPTION
 
@@ -233,7 +233,7 @@ PYMOL API
 
         lst = [loadable.cgo]
         lst.extend(list(arg))
-        return apply(load_object,lst)
+        return apply(load_object,lst,kw)
 
     def load_model(*arg,**kw):
         '''
