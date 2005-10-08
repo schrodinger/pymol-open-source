@@ -164,12 +164,26 @@ def get_angle_formed_by(p1,p2,p3): # angle formed by three positions in space
     return theta;
 
 #------------------------------------------------------------------------------
+def project(v,n):
+    dot = v[0]*n[0] + v[1]*n[1] + v[2]*n[2]
+    return [ dot * n[0], dot * n[1], dot * n[2] ]
+
+#------------------------------------------------------------------------------
+def remove_component(v, n):
+    dot = v[0]*n[0] + v[1]*n[1] + v[2]*n[2]
+    return [v[0] - dot * n[0], v[1] - dot * n[1], v[2] - dot * n[2]]
+
+#------------------------------------------------------------------------------
 def normalize(v):
     vlen = math.sqrt((v[0]*v[0]) + (v[1]*v[1]) + (v[2]*v[2]))
     if vlen>RSMALL4:
         return [v[0]/vlen,v[1]/vlen,v[2]/vlen]
     else:
         return get_null()
+
+#------------------------------------------------------------------------------
+def reverse(v):
+    return [ -v[0], -v[1], -v[2] ]
 
 #------------------------------------------------------------------------------
 def normalize_failsafe(v):
