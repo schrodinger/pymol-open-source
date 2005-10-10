@@ -973,10 +973,11 @@ static PyObject *CmdMapHalve(PyObject *self, PyObject *args)
   char *name;
   int state;
   int ok = false;
-  ok = PyArg_ParseTuple(args,"si",&name,&state);
+  int smooth;
+  ok = PyArg_ParseTuple(args,"sii",&name,&state,&smooth);
   if(ok) {
     APIEntry();
-    ok = ExecutiveMapHalve(TempPyMOLGlobals,name,state);
+    ok = ExecutiveMapHalve(TempPyMOLGlobals,name,state,smooth);
     APIExit();
   }
   return APIResultOk(ok);
