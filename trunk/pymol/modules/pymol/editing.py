@@ -1610,7 +1610,7 @@ USAGE
         if _raising(r): raise pymol.CmdException            
         return r
 
-    def map_halve(name,state=0):
+    def map_halve(name,state=0,smooth=1):
         '''
 DESCRIPTION
 
@@ -1625,7 +1625,7 @@ USAGE
         r = DEFAULT_ERROR
         try:
             lock()
-            r = _cmd.map_halve(str(name),int(state)-1)
+            r = _cmd.map_halve(str(name),int(state)-1,int(smooth))
         finally:
             unlock(r)
         if _raising(r): raise pymol.CmdException            

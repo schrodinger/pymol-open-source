@@ -471,7 +471,6 @@ static int ObjectMapStateDouble(PyMOLGlobals *G,ObjectMapState *ms)
       fdim[a]=ms->FDim[a]*2-1;
     }
     fdim[3]=3;
-
     field=IsosurfFieldAlloc(G,fdim);
     field->save_points = ms->Field->save_points;
     for(c=0;c<fdim[2];c++) {
@@ -562,7 +561,7 @@ static int ObjectMapStateDouble(PyMOLGlobals *G,ObjectMapState *ms)
   return 1;
 }
 
-static int ObjectMapStateHalve(PyMOLGlobals *G,ObjectMapState *ms)
+static int ObjectMapStateHalve(PyMOLGlobals *G,ObjectMapState *ms,int smooth)
 {
   int div[3];
   int min[3];
@@ -582,25 +581,31 @@ static int ObjectMapStateHalve(PyMOLGlobals *G,ObjectMapState *ms)
   case cMapSourceBRIX:
   case cMapSourceGRD:
     {
-      int *old_div,*old_min;
+      int *old_div,*old_min,*old_max;
       int a_2, b_2, c_2;
 
       for(a=0;a<3;a++) {
-        div[a]=ms->Div[a]/2;
+        div[a]=ms->Div[a]/2; 
+        /* note that when Div is odd, a one-cell extrapolation will
+           occur in order to preserve map size and get us onto a even
+           number of sampling intervals for the cell */
 
         min[a]=ms->Min[a]/2;
         max[a]=ms->Max[a]/2;
         while((min[a]*2)<ms->Min[a])
           min[a]++;
-        while((max[a]*2)>ms->Max[a])
+        while((max[a]*2)>ms->Max[a]) 
           max[a]--;
+ 
         fdim[a]=(max[a]-min[a])+1;
       }
       fdim[3]=3;
       old_div = ms->Div;
       old_min = ms->Min;
+      old_max = ms->Max;
       
-      FieldSmooth3f(ms->Field->data);
+      if(smooth) 
+        FieldSmooth3f(ms->Field->data);
 
       field=IsosurfFieldAlloc(G,fdim);
       field->save_points = ms->Field->save_points;
@@ -616,14 +621,26 @@ static int ObjectMapStateHalve(PyMOLGlobals *G,ObjectMapState *ms)
         v[2]=(c+min[2])/((float)div[2]);
         c_2 = (c+min[2])*2 - old_min[2];
         z = (v[2] - ((c_2 + old_min[2])/(float)old_div[2]))*old_div[2];
+        if(c_2>=old_max[2]) {
+          c_2 = old_max[2]-1;
+          z = (v[2] - ((c_2 + old_min[2])/(float)old_div[2]))*old_div[2];
+        }
         for(b=0;b<fdim[1];b++) {
           v[1]=(b+min[1])/((float)div[1]);        
           b_2 = (b+min[1])*2 - old_min[1];
           y = (v[1] - ((b_2 + old_min[1])/(float)old_div[1]))*old_div[1];
+          if(b_2>=old_max[1]) {
+            b_2 = old_max[1]-1;
+            y = (v[1] - ((b_2 + old_min[1])/(float)old_div[1]))*old_div[1];
+          }
           for(a=0;a<fdim[0];a++) {
             v[0]=(a+min[0])/((float)div[0]);
             a_2 = (a+min[0])*2 - old_min[0];
             x = (v[0] - ((a_2 + old_min[0])/(float)old_div[0]))*old_div[0];
+            if(a_2>=old_max[0]) {
+              a_2 = old_max[0]-1;
+              x = (v[0] - ((a_2 + old_min[0])/(float)old_div[0]))*old_div[0];
+            }
             transform33f3f(ms->Crystal->FracToReal,v,vr);
             vt = F4Ptr(field->points,a,b,c,0);
             copy3f(vr,vt);
@@ -771,18 +788,18 @@ int ObjectMapDouble(ObjectMap *I,int state)
   return(result);
 }
 
-int ObjectMapHalve(ObjectMap *I,int state)
+int ObjectMapHalve(ObjectMap *I,int state,int smooth)
 {
   int a;
   int result=true;
   if(state<0) {
     for(a=0;a<I->NState;a++) {
       if(I->State[a].Active)
-        result = result && ObjectMapStateHalve(I->Obj.G,&I->State[a]);
+        result = result && ObjectMapStateHalve(I->Obj.G,&I->State[a],smooth);
     }
     
   } else if((state>=0)&&(state<I->NState)&&(I->State[state].Active)) {
-    ObjectMapStateHalve(I->Obj.G,&I->State[state]);
+    ObjectMapStateHalve(I->Obj.G,&I->State[state],smooth);
   } else {
     PRINTFB(I->Obj.G,FB_ObjectMap,FB_Errors)
       " ObjectMap-Error: invalidate state.\n"

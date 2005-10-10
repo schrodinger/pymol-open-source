@@ -2610,7 +2610,6 @@ void SettingInitGlobal(PyMOLGlobals *G,int alloc,int reset_gui)
   SettingSet_i(I,cSetting_cartoon_loop_cap,1);
   SettingSet_i(I,cSetting_nvidia_bugs, 0);
   SettingSet_f(I,cSetting_image_dots_per_inch, 0.0F); /* default is to leave it unspecified in PNG file */
-
 }
 
 

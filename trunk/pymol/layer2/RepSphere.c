@@ -521,6 +521,7 @@ static void RepSphereRender(RepSphere *I,RenderInfo *info)
         use_dlst = (int)SettingGet(G,cSetting_use_display_lists);
         switch(sphere_mode) {
         case 4:
+        case 5:
           use_dlst = 0;
           break;
         }

@@ -1,3 +1,7 @@
+
+NOTE: the information in this file and directory may be invalid.  For
+current launching instructions, please see modules/pymol/__init__.py
+
 This directory contains a set of scripts which demonstrate
 how to launch PyMOL from within Python (if PyMOL has been built
 as a module).

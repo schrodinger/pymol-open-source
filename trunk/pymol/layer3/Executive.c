@@ -3442,7 +3442,7 @@ int ExecutiveMapDouble(PyMOLGlobals *G,char *name,int state)
   return result;
 }
 
-int ExecutiveMapHalve(PyMOLGlobals *G,char *name,int state)
+int ExecutiveMapHalve(PyMOLGlobals *G,char *name,int state,int smooth)
 {
   register CExecutive *I = G->Executive;
   int result=true;
@@ -3457,7 +3457,7 @@ int ExecutiveMapHalve(PyMOLGlobals *G,char *name,int state)
       case cExecObject:
         if(rec->obj->type==cObjectMap) {
           ObjectMap *obj =(ObjectMap*)rec->obj;
-          result = ObjectMapHalve(obj,state);
+          result = ObjectMapHalve(obj,state,smooth);
           if(result) { 
             ExecutiveInvalidateMapDependents(G,obj->Obj.Name);
           }
