@@ -1582,7 +1582,7 @@ SetConsoleCtrlHandler(
        } 
        if(!I->WindowIsVisible)
          MainReshape(G->Option->winX,G->Option->winY);
-       p_glutMainLoop();
+       p_glutMainLoop(); /* never returns with traditional GLUT implementation */
        PBlock(); /* if we've gotten here, then we're heading back to Python... */
      } else {
        SceneSetCardInfo(G,"none","ray trace only","none");
