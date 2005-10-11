@@ -88,7 +88,8 @@ class PMGApp(Pmw.MegaWidget):
         
     def flush_fifo(self):
         self.flush_fifo_once()
-        self.root.after(20,self.flush_fifo) # 50X a second
+        if self.allow_after:
+            self.root.after(20,self.flush_fifo) # 50X a second
         
     def run(self):
         # this call to mainloop needs to be replaced with something revocable
@@ -164,6 +165,8 @@ class PMGApp(Pmw.MegaWidget):
     
     def __init__(self, pymol_instance):
 
+        self.allow_after = 1 # easy switch for troubleshooting threads
+
         self.pymol = pymol_instance
         
         if self.pymol._ext_gui != None:
@@ -193,8 +196,9 @@ class PMGApp(Pmw.MegaWidget):
             # Python megawigit initialization
 
             Pmw.initialise(self.root)
-
+            
             # Initialize the base class
+            
             Pmw.MegaWidget.__init__(self, parent=self.root)
 
             # read the command line arguments regarding:
@@ -223,8 +227,9 @@ class PMGApp(Pmw.MegaWidget):
             self.fifo = Queue.Queue(0)
             
             # activate polling on the fifo
-            
-            self.root.after(1000,self.flush_fifo)
+
+            if self.allow_after:
+                self.root.after(1000,self.flush_fifo)
 
             # and let 'er rip
 

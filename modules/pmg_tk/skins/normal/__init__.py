@@ -277,8 +277,10 @@ class Normal(PMGSkin):
         self.balloon.bind(self.entry, 'Command Input Area')
         
         self.focus_entry=0
-        self.output.after(1000,self.update_feedback)
-        self.output.after(1000,self.update_menus)
+        if self.app.allow_after:
+            self.output.after(1000,self.update_feedback)
+            self.output.after(1000,self.update_menus)
+            
         self.output.pack(side=BOTTOM,expand=YES,fill=BOTH)
         self.app.bind(self.entry, 'Command Input Area')
 
@@ -319,8 +321,8 @@ class Normal(PMGSkin):
             self.messageBar.message("busy","Progress %d%%..."%int(progress*100))
         else:
             self.messageBar.resetmessages("busy")
-        
-        self.output.after(100,self.update_feedback) # 10X a second
+        if self.app.allow_after:
+            self.output.after(100,self.update_feedback) # 10X a second
         
 
     def toggleFrame(self, frame):
@@ -346,7 +348,8 @@ class Normal(PMGSkin):
             
     def update_menus(self):
         self.setting.refresh()
-        self.output.after(500,self.update_menus) # twice a second
+        if self.app.allow_after:
+            self.output.after(500,self.update_menus) # twice a second
 
     def file_open(self,tutorial=0):
         if not tutorial:
