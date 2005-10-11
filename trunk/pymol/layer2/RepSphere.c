@@ -758,7 +758,7 @@ static void RepSphereRender(RepSphere *I,RenderInfo *info)
                          glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB,
                                                     0, 0.0F, 0.0F, v3, 0.0F);
                          glProgramEnvParameter4fARB(GL_FRAGMENT_PROGRAM_ARB,
-                                                    0, fog_info[0], fog_info[1], fog_info[2], 0.0F);
+                                                    0, fog_info[0], fog_info[1], 0.0F, 0.0F);
                          glBegin(GL_QUADS);
                          last_radius = cur_radius;
                        }
