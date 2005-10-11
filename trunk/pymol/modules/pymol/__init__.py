@@ -371,5 +371,7 @@ if pymol_launch != 3: # if this isn't a dry run
             e.wait(0.01)
         while not _cmd.ready():
             e.wait(0.01)
-
+        while not hasattr(pymol,'xray'): # make sure symmetry module has time to start...
+            e.wait(0.01)
+            
 
