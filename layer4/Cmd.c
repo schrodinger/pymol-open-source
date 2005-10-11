@@ -2807,7 +2807,10 @@ static PyObject *CmdResetRate(PyObject *dummy, PyObject *args)
 
 static PyObject *CmdReady(PyObject *dummy, PyObject *args)
 {
-  return(APIResultCode(TempPyMOLGlobals->Ready));
+  if(TempPyMOLGlobals)
+    return(APIResultCode(TempPyMOLGlobals->Ready));
+  else
+    return(APIResultCode(0));
 }
 
 #if 0
