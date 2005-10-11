@@ -2828,6 +2828,11 @@ static PyObject *CmdMem(PyObject *dummy, PyObject *args)
   return APISuccess();
 }
 
+static int decoy_input_hook(void)
+{
+  return 0;
+}
+
 static PyObject *CmdRunPyMOL(PyObject *dummy, PyObject *args)
 {
 #ifdef _PYMOL_NO_MAIN
@@ -2838,6 +2843,14 @@ static PyObject *CmdRunPyMOL(PyObject *dummy, PyObject *args)
   if(run_only_once) {
     run_only_once=false;
 #ifdef _PYMOL_MODULE
+    PyOS_InputHook = decoy_input_hook; 
+
+    /* prevent Tcl/Tk from installing/using its hook, which will cause
+       a segmentation fault IF and ONLY IF (1) Tcl/Tk is running in a
+       sub-thread (always the case with PyMOL_) and (2) when the
+       Python interpreter itself is reading from stdin (only the case
+       when launched via "import pymol") */
+
     was_main();
 #endif
   }
@@ -3072,21 +3085,25 @@ static PyObject *CmdSystem(PyObject *dummy, PyObject *args)
 
 static PyObject *CmdGetFeedback(PyObject *dummy, PyObject *args)
 {
-  PyObject *result = NULL;
-  OrthoLineType buffer;
-  int ok;
-
-  if(TempPyMOLGlobals->Terminating) { /* try to bail */
+  if(TempPyMOLGlobals && TempPyMOLGlobals->Ready) {
+    PyObject *result = NULL;
+    OrthoLineType buffer;
+    int ok;
+    
+    if(TempPyMOLGlobals->Terminating) { /* try to bail */
 #ifdef WIN32
-	abort();
+      abort();
 #endif
-    exit(0);
+      exit(0);
+    }
+    APIEnterBlocked();
+    ok = OrthoFeedbackOut(TempPyMOLGlobals,buffer); 
+    APIExitBlocked();
+    if(ok) result = Py_BuildValue("s",buffer);
+    return(APIAutoNone(result));
+  } else {
+    return(APIAutoNone(NULL));
   }
-  APIEnterBlocked();
-  ok = OrthoFeedbackOut(TempPyMOLGlobals,buffer); 
-  APIExitBlocked();
-  if(ok) result = Py_BuildValue("s",buffer);
-  return(APIAutoNone(result));
 }
 
 static PyObject *CmdGetPDB(PyObject *dummy, PyObject *args)
@@ -3537,34 +3554,39 @@ static PyObject *CmdGetBusy(PyObject *self, PyObject *args)
 
 static PyObject *CmdGetProgress(PyObject *self, PyObject *args)
 {
-  /* assumes status is already locked */
+  if(TempPyMOLGlobals && TempPyMOLGlobals->Ready) {
 
-  float result = -1.0F;
-  float value=0.0F, range=1.0F;
-  int ok=true;
-  int int1;
-  int offset;
-  int progress[PYMOL_PROGRESS_SIZE];
-
-  ok = PyArg_ParseTuple(args,"i",&int1);
-  if(PyMOL_GetBusy(TempPyMOLGlobals->PyMOL,false)) {
-    PyMOL_GetProgress(TempPyMOLGlobals->PyMOL,progress,false);
+    /* assumes status is already locked */
     
-    for(offset=PYMOL_PROGRESS_FAST;offset>=PYMOL_PROGRESS_SLOW;offset-=2) {
-      if(progress[offset+1]) {
-        float old_value = value;
-        float old_range = range;
-        
-        range = (float)(progress[PYMOL_PROGRESS_FAST+1]);
-        value = (float)(progress[PYMOL_PROGRESS_FAST]);
-       
-        value += (1.0F/range)*(old_value/old_range);
-
-        result = value/range;
+    float result = -1.0F;
+    float value=0.0F, range=1.0F;
+    int ok=true;
+    int int1;
+    int offset;
+    int progress[PYMOL_PROGRESS_SIZE];
+    
+    ok = PyArg_ParseTuple(args,"i",&int1);
+    if(PyMOL_GetBusy(TempPyMOLGlobals->PyMOL,false)) {
+      PyMOL_GetProgress(TempPyMOLGlobals->PyMOL,progress,false);
+      
+      for(offset=PYMOL_PROGRESS_FAST;offset>=PYMOL_PROGRESS_SLOW;offset-=2) {
+        if(progress[offset+1]) {
+          float old_value = value;
+          float old_range = range;
+          
+          range = (float)(progress[PYMOL_PROGRESS_FAST+1]);
+          value = (float)(progress[PYMOL_PROGRESS_FAST]);
+          
+          value += (1.0F/range)*(old_value/old_range);
+          
+          result = value/range;
+        }
       }
     }
+    return(PyFloat_FromDouble((double)result));
   }
-  return(PyFloat_FromDouble((double)result));
+  else
+    return(PyFloat_FromDouble(-1.0));
 }
 
 

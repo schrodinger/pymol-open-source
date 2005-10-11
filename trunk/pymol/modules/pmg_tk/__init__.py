@@ -20,7 +20,7 @@
 # **PyMol Programs
 
 from PMGApp import *
-import sys
+import sys, os, threading
 
 if sys.platform=='win32':
     if sys.version[0:4]=='2.1 ':
