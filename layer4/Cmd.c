@@ -86,7 +86,7 @@ Z* -------------------------------------------------------------------
 
 static int flush_count = 0;
 
-int run_only_once = true;
+static int run_only_once = true;
 
 int PyThread_get_thread_ident(void);
 
@@ -2842,16 +2842,25 @@ static PyObject *CmdRunPyMOL(PyObject *dummy, PyObject *args)
 
   if(run_only_once) {
     run_only_once=false;
+
 #ifdef _PYMOL_MODULE
-    PyOS_InputHook = decoy_input_hook; 
+    {
+      int block_input_hook = false;
+      if(!PyArg_ParseTuple(args,"i",&block_input_hook))
+        block_input_hook = false;
 
-    /* prevent Tcl/Tk from installing/using its hook, which will cause
-       a segmentation fault IF and ONLY IF (1) Tcl/Tk is running in a
-       sub-thread (always the case with PyMOL_) and (2) when the
-       Python interpreter itself is reading from stdin (only the case
-       when launched via "import pymol") */
+      /* prevent Tcl/Tk from installing/using its hook, which will
+         cause a segmentation fault IF and ONLY IF (1) Tcl/Tk is
+         running in a sub-thread (always the case with PyMOL_) and (2)
+         when the Python interpreter itself is reading from stdin
+         (only the case when launched via "import pymol" with
+         launch_mode 2 (async threaded) */
 
-    was_main();
+      if(block_input_hook)
+        PyOS_InputHook = decoy_input_hook; 
+            
+      was_main();
+    }
 #endif
   }
 #endif

@@ -333,9 +333,9 @@ if pymol_launch != 3: # if this isn't a dry run
         glutThread = thread.get_ident()
         pymol_launch = 0 # never do this again : )
 
-    def start_pymol():
+    def start_pymol(block_input_hook=0):
         prime_pymol()
-        _cmd.runpymol() # only returns if we are running pretend GLUT
+        _cmd.runpymol(block_input_hook) # only returns if we are running pretend GLUT
 #      from pymol.embed import wxpymol # never returns
 
     import _cmd
@@ -344,14 +344,13 @@ if pymol_launch != 3: # if this isn't a dry run
     def thread_launch(pa):
         from pymol import invocation
         invocation.parse_args(pa)
-        start_pymol()
+        start_pymol(1)
 
     if pymol_launch==1: # standard launch (absorb main thread)
 
         from pymol import invocation
         invocation.parse_args(pymol_argv)
-
-        start_pymol()
+        start_pymol(0)
 
     elif pymol_launch==2: # threaded launch (create new thread)
 
