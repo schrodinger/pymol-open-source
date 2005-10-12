@@ -34,6 +34,33 @@ elif sys.platform=='cygwin':
                ("_HAVE_LIBPNG",None)]
    ext_comp_args=[]
    ext_link_args=[]
+elif sys.platform=='darwin':
+   inc_dirs=["ov/src",
+             "layer0","layer1","layer2",
+             "layer3","layer4","layer5", 
+        "/System/Library/Frameworks/OpenGL.framework/Headers",
+        "/System/Library/Frameworks/GLUT.framework/Headers",
+        "/System/Library/Frameworks/CoreFoundation.framework/Headers",
+        "/System/Library/Frameworks/AppKit.framework/Headers",
+        "/System/Library/Frameworks/ApplicationServices.framework/Headers",
+        "/System/Library/Frameworks/Cocoa.framework/Headers",
+        "/System/Library/Frameworks/IOKit.framework/Headers",]
+   libs=[]
+   pyogl_libs = []
+   lib_dirs=[]
+   def_macros=[("_PYMOL_MODULE",None),
+               ("_PYMOL_OSX",None),
+#               ("_HAVE_LIBPNG",None),
+	]
+   ext_comp_args=[]
+   ext_link_args=["-framework","OpenGL",
+                  "-framework","AppKit",
+                  "-framework","ApplicationServices",
+                  "-framework","CoreFoundation",
+                  "-framework","Cocoa",
+                  "-framework","IOKit",
+                  "-framework","GLUT",
+                  "-framework","Python"]
 else:
    inc_dirs=["ov/src",
              "layer0","layer1","layer2",

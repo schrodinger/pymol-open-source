@@ -268,7 +268,7 @@ $(PYTHON_INC_DIR) \
 osx-python-standalone:
 	cc layerOSX/bundle/python.c -o $(OSXEXE) $(DEFS)\
 $(PYTHON_INC_DIR) -Lext/lib -Lext/lib/python2.3/config -lpython2.3 \
--framework CoreFoundation -lc -Wno-long-double -D_PYMOL_OSX_PYTHONHOME
+-framework CoreFoundation -lc -Wno-long-double -D_PYMOL_OSX_PYTHONHOME -force_flat_namespace
 
 
 osx: 
