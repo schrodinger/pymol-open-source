@@ -2578,7 +2578,7 @@ CoordSet *ObjectMoleculeXYZStr2CoordSet(PyMOLGlobals *G,char *buffer,AtomInfoTyp
 	 VLACheck(atInfo,AtomInfoType,nAtom);
   
   nBond=0;
-  bond=VLAlloc(BondType,6*nAtom);  
+  bond=VLAlloc(BondType,6*nAtom);  /* is this a safe assumption? */
   ii=bond;
 
   PRINTFB(G,FB_ObjectMolecule,FB_Blather)
@@ -2651,6 +2651,7 @@ CoordSet *ObjectMoleculeXYZStr2CoordSet(PyMOLGlobals *G,char *buffer,AtomInfoTyp
           ii->order = 1; /* missing bond order information */
           ii->stereo = 0;
           ii->id = -1; /* no serial number */
+          ii++;
         }
       }
       
@@ -2728,7 +2729,8 @@ ObjectMolecule *ObjectMoleculeReadXYZStr(PyMOLGlobals *G,ObjectMolecule *I,char 
       }
 
     cset->Obj = I;
-    cset->fEnumIndices(cset);
+    if(cset->fEnumIndices)
+      cset->fEnumIndices(cset);
     if(cset->fInvalidateRep)
       cset->fInvalidateRep(cset,cRepAll,cRepInvRep);
     if(isNew) {		
@@ -2748,6 +2750,7 @@ ObjectMolecule *ObjectMoleculeReadXYZStr(PyMOLGlobals *G,ObjectMolecule *I,char 
       I->Symmetry=SymmetryCopy(cset->Symmetry);
       SymmetryAttemptGeneration(I->Symmetry,false,false);
     }
+
     SceneCountFrames(G);
     ObjectMoleculeExtendIndices(I);
     ObjectMoleculeSort(I);
