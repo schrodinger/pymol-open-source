@@ -356,7 +356,7 @@ USAGE
         if _raising(r): raise pymol.CmdException                  
         return r
 
-    def copy(target,source):
+    def copy(target,source,zoom=-1):
         '''
 DESCRIPTION
 
@@ -380,7 +380,7 @@ SEE ALSO
         r = DEFAULT_ERROR      
         try:
             lock()
-            r = _cmd.copy(str(source),str(target))
+            r = _cmd.copy(str(source),str(target),int(zoom))
         finally:
             unlock(r)
         if _raising(r): raise pymol.CmdException                  
