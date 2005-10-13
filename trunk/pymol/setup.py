@@ -309,13 +309,15 @@ setup ( # Distribution meta-data
 ])
 
 print '''
- Please run
+ After running
+
+    python setup.py install
+    
+ Please run to the the installation:
 
     python setup2.py install
 
- to complete installation of PyMOL.
-
- To remove PyMOL, run
+ To uninstall PyMOL, run
 
     python setup2.py uninstall
 '''
