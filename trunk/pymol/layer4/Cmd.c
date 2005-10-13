@@ -2734,10 +2734,11 @@ static PyObject *CmdCopy(PyObject *self,   PyObject *args)
 {
   char *str1,*str2;
   int ok=false;
-  ok = PyArg_ParseTuple(args,"ss",&str1,&str2);
+  int zoom;
+  ok = PyArg_ParseTuple(args,"ssi",&str1,&str2,&zoom);
   if (ok) {
     APIEntry();
-    ExecutiveCopy(TempPyMOLGlobals,str1,str2); /* TODO STATUS */
+    ExecutiveCopy(TempPyMOLGlobals,str1,str2,zoom); /* TODO STATUS */
     APIExit();
   }
   return APIResultOk(ok);

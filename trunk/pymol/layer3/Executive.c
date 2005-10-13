@@ -5410,7 +5410,7 @@ int ExecutiveSeleToObject(PyMOLGlobals *G,char *name,char *s1,
   return ok;
 }
 /*========================================================================*/
-void ExecutiveCopy(PyMOLGlobals *G,char *src,char *dst)
+void ExecutiveCopy(PyMOLGlobals *G,char *src,char *dst,int zoom)
 {
   CObject *os;
   ObjectMolecule *oSrc,*oDst;
@@ -5428,7 +5428,7 @@ void ExecutiveCopy(PyMOLGlobals *G,char *src,char *dst)
       oDst = ObjectMoleculeCopy(oSrc);
       if(oDst) {
         strcpy(oDst->Obj.Name,dst);
-        ExecutiveManageObject(G,(CObject*)oDst,-1,false);
+        ExecutiveManageObject(G,(CObject*)oDst,zoom,false);
         rec1=ExecutiveFindSpec(G,oSrc->Obj.Name);
         rec2=ExecutiveFindSpec(G,oDst->Obj.Name);
         if(rec1&&rec2) {
