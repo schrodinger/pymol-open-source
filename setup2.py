@@ -67,10 +67,17 @@ try:
          if os.path.exists(chempy_path):
             print " removing %s..."%chempy_path
             dir_util.remove_tree(chempy_path)
+
+         if 'pmw' in sys.argv:
+            pmw_path = os.path.join(site_packages,'Pmw')
+            if os.path.exists(pmw_path):
+               print " removing %s..."%pmw_path
+               dir_util.remove_tree(pmw_path)
+
          if os.path.exists(launch_script):
             print " removing %s..."%launch_script
             os.unlink(launch_script)
-
+               
       else:
          print "\n Installing into %s ..."%site_packages
 
@@ -101,6 +108,10 @@ try:
             f.write('"%s" "%s" %%1 %%2 %%3 %%4 %%5 %%6 %%7 %%8 %%9\n'%(python_exe,pymol_file))
          f.close()
          os.chmod(launch_script,0755)
+
+         if 'pmw' in sys.argv: # only working under unix shell
+            os.system("tar -C %s -zxvf modules/pmg_tk/pmw.tgz"%site_packages)
+            
          print '''
  Created "%s" which can be used to launch PyMOL.  You may wish to copy
  this file into a standard location such as /usr/bin or /usr/local/bin.
