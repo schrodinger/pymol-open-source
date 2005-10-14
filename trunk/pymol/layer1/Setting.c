@@ -2116,7 +2116,7 @@ void SettingInitGlobal(PyMOLGlobals *G,int alloc,int reset_gui)
 
   SettingSet_f(I,cSetting_surface_miserable, 2.0F);
 
-  SettingSet_b(I,cSetting_ray_opaque_background, -1);
+  SettingSet_i(I,cSetting_ray_opaque_background, -1);
 
   SettingSet_f(I,cSetting_transparency, 0.0F);
 
