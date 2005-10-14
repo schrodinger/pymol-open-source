@@ -25,9 +25,9 @@
 # pymol directory
 
 # NOTE: If you attempt to "import pymol" in the interactive Python
-# prompt, PYTHON WILL CRASH with a "GC object already tracked" error
-# message.  This is NOT a bug in PyMOL, as it case be produced with a
-# trivial tcl/tk program
+# prompt, PYTHON may crash with a "GC object already tracked" error
+# message.  This is not a bug in PyMOL, as it case be produced with a
+# trivial tcl/tk program.  (Tentatively WORKED AROUND in 0.99beta18!)
 
 import __main__
 if __name__!='__main__':
