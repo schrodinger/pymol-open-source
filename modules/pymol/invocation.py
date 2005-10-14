@@ -71,6 +71,7 @@ if __name__=='pymol.invocation':
         options.win_py = 200
     else:
         options.win_py = 230
+
     options.ext_y = 168 # external gui height (eg. for Tcl/Tk top bar)
 
     options.blue_line = 0
@@ -219,7 +220,7 @@ if __name__=='pymol.invocation':
                     options.external_gui = 0
                 if "m" in a: # mac external GUI
                     options.external_gui = 2
-                    options.win_py = 200                
+                    options.win_py = 184 # was 200            
                 if "n" in a:
                     options.incentive_product = 1
                 if "t" in a:

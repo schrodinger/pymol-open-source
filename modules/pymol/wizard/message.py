@@ -5,7 +5,7 @@ import types
 
 class Message(Wizard):
 
-    def __init__(self,*arg):
+    def __init__(self,*arg,**kw):
         self.message = []
         for a in arg:
             if not isinstance(a,types.ListType):
@@ -14,17 +14,22 @@ class Message(Wizard):
                 self.message.extend(a)
         for a in self.message:
             print a
-            
+        self.dismiss = int(kw.get("dismiss",1))
+
     def get_prompt(self):
         self.prompt = self.message
         return self.prompt
 
-
     def get_panel(self):
-        return [
-            [ 1, 'Message', '' ],
-            [ 2, 'Dismiss', 'cmd.set_wizard()' ]
-            ]
+	if self.dismiss==1:
+	    return [
+		[ 1, 'Message', '' ],
+		[ 2, 'Dismiss', 'cmd.set_wizard()' ]
+		]
+	else:
+	    return []
+
+
 
 
 

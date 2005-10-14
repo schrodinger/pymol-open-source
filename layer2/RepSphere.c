@@ -386,7 +386,7 @@ static void RepSphereRender(RepSphere *I,RenderInfo *info)
           register float cur_radius;
           register float pixel_scale = 1.0F/info->vertex_scale;
           register float max_size = SettingGet_f(G,I->R.cs->Setting,I->R.obj->Setting,
-                                                 cSetting_sphere_point_max_size);
+                                                 cSetting_sphere_point_max_size) * 3;
           register int clamp_size_flag = (max_size>=0.0F);
           register float size;
           int sphere_mode = SettingGet_i(G,I->R.cs->Setting,

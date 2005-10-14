@@ -5,7 +5,7 @@ import types
 
 class Toggle(Wizard):
 
-    def __init__(self,*arg):
+    def __init__(self,*arg,**kw):
         self.message = []
         for a in arg:
             if not isinstance(a,types.ListType):
@@ -28,16 +28,18 @@ class Toggle(Wizard):
         return self.prompt
 
     def get_panel(self):
-        return [
-#            [ 1, 'Toggles', '' ],
-	    [ 2, 'Toggle Message', 
-	      'cmd.get_wizard().toggle()'],
-	    [ 2, 'Toggle Stereo', 
-	      'cmd.stereo(apply(lambda x:{ "off":"on", "on":"off"}[x],(cmd.get("stereo"),)))'],
+	panel = [
 	    [ 2, 'Toggle Fullscreen', 
 	      'cmd.full_screen(apply(lambda x:{ "off":"on", "on":"off"}[x],(cmd.get("full_screen"),)))'],
+	    [ 2, 'Toggle Stereo 3D', 
+	      'cmd.stereo(apply(lambda x:{ "off":"on", "on":"off"}[x],(cmd.get("stereo"),)))'],
+	    [ 2, 'Toggle Message', 
+	      'cmd.get_wizard().toggle()'],
 	    [ 2, 'Dismiss', 'cmd.set_wizard()' ]
             ]
+	if len(self.message)==0:
+	    del panel[2]
+	return panel
 
 
 

@@ -2114,6 +2114,7 @@ SEE ALSO
             'origin'         : [ selection_sc           , 'selection'       , ''   ],
             'protect'        : [ selection_sc           , 'selection'       , ''   ],
             'ramp_new'       : [ object_sc              , 'ramp'            , ''   ],
+            'remove'         : [ selection_sc           , 'selection'       , ''   ],
             'scene'          : [ viewing.scene_dict_sc  , 'scene'           , ''   ],
             'set'            : [ setting.setting_sc     , 'setting'         , ','  ],
             'set_name'       : [ selection_sc     ,       'name'            , ','  ],

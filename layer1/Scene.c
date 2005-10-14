@@ -1017,6 +1017,7 @@ static int SceneMakeSizedImage(PyMOLGlobals *G,int width,
             int x_offset = -(I->Width*x);
             int a,b;
             float *v;  
+            float alpha = (SettingGetGlobal_b(G,cSetting_opaque_background) ? 1.0F : 0.0F);
             unsigned int *p, *q, *qq, *pp;
             v=SettingGetfv(G,cSetting_bg_rgb);
             OrthoBusyFast(G,y*nXStep+x,total_steps);
@@ -1027,11 +1028,11 @@ static int SceneMakeSizedImage(PyMOLGlobals *G,int width,
               glDrawBuffer(GL_BACK);
             }
             
-            glClearColor(v[0],v[1],v[2],1.0);
+            glClearColor(v[0],v[1],v[2],alpha);
             glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
-            glClearColor(0.0,0.0,0.0,1.0);
             SceneInvalidateCopy(G,false);
             SceneRender(G,NULL,x_offset,y_offset,NULL,width,height);
+            glClearColor(0.0,0.0,0.0,1.0);
             
             if(draw_both) {
               SceneCopy(G,GL_BACK_LEFT,true);
@@ -1194,22 +1195,26 @@ static unsigned char *SceneImagePrepare(PyMOLGlobals *G)
       " ScenePNG: writing cached image (reset_alpha=%d).\n",reset_alpha
       ENDFB(G);
   }
-  if(reset_alpha&&image) {
-    unsigned char *p = (unsigned char*)image;
-    int x,y;
-    for(y=0;y<I->Height;y++) {
-      for(x=0;x<I->Width;x++) {
-        p[3]=0xFF;
-        p+=4;
+  {
+    int opaque_back = SettingGetGlobal_b(G,cSetting_opaque_background);
+
+    if(opaque_back&&reset_alpha&&image) {
+      unsigned char *p = (unsigned char*)image;
+      int x,y;
+      for(y=0;y<I->Height;y++) {
+        for(x=0;x<I->Width;x++) {
+          p[3]=0xFF;
+          p+=4;
+        }
       }
-    }
-    if(save_stereo) {
-       for(y=0;y<I->Height;y++) {
-         for(x=0;x<I->Width;x++) {
-           p[3]=0xFF;
-           p+=4;
-         }
-       }
+      if(save_stereo) {
+        for(y=0;y<I->Height;y++) {
+          for(x=0;x<I->Width;x++) {
+            p[3]=0xFF;
+            p+=4;
+          }
+        }
+      }
     }
   }
   return (unsigned char*)image;
@@ -1532,10 +1537,10 @@ void SceneMakeMovieImage(PyMOLGlobals *G) {
       } else {
         glDrawBuffer(GL_BACK);
       }
-      glClearColor(v[0],v[1],v[2],1.0);
+      glClearColor(v[0],v[1],v[2],0.0);
       glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
-      glClearColor(0.0,0.0,0.0,1.0);
       SceneRender(G,NULL,0,0,NULL,0,0);
+      glClearColor(0.0,0.0,0.0,1.0);
       if(draw_both) {
         SceneCopy(G,GL_BACK_LEFT,true);
       } else {
