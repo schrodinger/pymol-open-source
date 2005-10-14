@@ -2619,6 +2619,7 @@ void SettingInitGlobal(PyMOLGlobals *G,int alloc,int reset_gui)
   SettingSet_i(I,cSetting_nvidia_bugs, 0);
   SettingSet_f(I,cSetting_image_dots_per_inch, 0.0F); /* default is to leave it unspecified in PNG file */
   SettingSet_b(I,cSetting_opaque_background,1);
+  SettingSet_b(I,cSetting_draw_frames,0);
 
 }
 

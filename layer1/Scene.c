@@ -892,7 +892,7 @@ static int SceneMakeSizedImage(PyMOLGlobals *G,int width,
   int save_width=0, save_height=0;
 
   /* check assumptions */
-
+    
   if( (width && height && I->Width && I->Height ) &&
       fabs(((float)(height - (width * I->Height) / (I->Width)))/height) > 0.01F)
     {
@@ -908,7 +908,10 @@ static int SceneMakeSizedImage(PyMOLGlobals *G,int width,
       else if(I->Height > ( (height * I->Width) / width))
         I->Height = ( height * I->Width) / width;
     }
-  
+  if( (!width) && (!height) ) {
+    width=I->Width;
+    height=I->Height;
+  }
   if(width && !height) {
     height = (I->Height * width) / I->Width;
   }
@@ -924,7 +927,6 @@ static int SceneMakeSizedImage(PyMOLGlobals *G,int width,
       ENDFB(G);
     ok=false;
   }
-  
 
   if(ok && G->HaveGUI && G->ValidContext) {
 
@@ -1528,10 +1530,12 @@ void SceneMakeMovieImage(PyMOLGlobals *G) {
   if(SettingGet(G,cSetting_ray_trace_frames)) {
 	SceneRay(G,0,0,(int)SettingGet(G,cSetting_ray_default_renderer),NULL,NULL,
             0.0F,0.0F,false,NULL); 
+  } else if(SettingGet(G,cSetting_draw_frames)) {
+    SceneMakeSizedImage(G,0,0,1);
   } else {
 	int draw_both = SceneMustDrawBoth(G);
     float alpha = (SettingGetGlobal_b(G,cSetting_opaque_background) ? 1.0F : 0.0F);
-	 v=SettingGetfv(G,cSetting_bg_rgb);
+    v=SettingGetfv(G,cSetting_bg_rgb);
     if(G->HaveGUI && G->ValidContext) {
       if(draw_both) {
         glDrawBuffer(GL_BACK_LEFT);
@@ -4619,7 +4623,7 @@ void SceneCopy(PyMOLGlobals *G,GLenum buffer,int force)
   
   if(force || (!(I->StereoMode||SettingGet(G,cSetting_stereo_double_pump_mono)))) {
     /* no copies while in stereo mode */
-    if((!I->DirtyFlag)&&(!I->CopyFlag)) { 
+    if(force || ((!I->DirtyFlag)&&(!I->CopyFlag))) { 
       ScenePurgeImage(G);
       buffer_size = 4*I->Width*I->Height;
       if(buffer_size) {
@@ -4699,14 +4703,15 @@ int SceneRenderCached(PyMOLGlobals *G)
   ImageType *image;
   int renderedFlag=false;
 
-
   PRINTFD(G,FB_Scene)
     " SceneRenderCached: entered.\n"
     ENDFD;
 
   if(I->DirtyFlag) {
+    int moviePlaying = MoviePlaying(G);
+    
 	if(I->MovieFrameFlag||
-	   (MoviePlaying(G)&&SettingGet(G,cSetting_cache_frames))) {
+	   (moviePlaying&&SettingGet(G,cSetting_cache_frames))) {
 	  I->MovieFrameFlag=false;
 	  image = MovieGetImage(G,
                            MovieFrameToImage(G,
@@ -4723,8 +4728,10 @@ int SceneRenderCached(PyMOLGlobals *G)
         SceneMakeMovieImage(G);
         renderedFlag=true;
       }
-	} else if(MoviePlaying(G)&&SettingGet(G,cSetting_ray_trace_frames)) {
+	} else if(moviePlaying&&SettingGetGlobal_b(G,cSetting_ray_trace_frames)) {
 	  SceneRay(G,0,0,(int)SettingGet(G,cSetting_ray_default_renderer),NULL,NULL,0.0F,0.0F,false,NULL); 
+	}  else if(moviePlaying&&SettingGetGlobal_b(G,cSetting_draw_frames)) {
+      SceneMakeSizedImage(G,0,0,1);
 	} else if(I->CopyFlag) {
 	  renderedFlag = true;
     } else {
