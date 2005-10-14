@@ -1344,7 +1344,7 @@ int RayTraceThread(CRayThreadInfo *T)
    BasisCallRec SceneCall,ShadeCall;
    float border_offset;
    int edge_sampling = false;
-   unsigned int edge_avg[4];
+   unsigned int edge_avg[4],edge_alpha_avg[4];
    int edge_cnt=0;
    float edge_base[2];
    float interior_normal[3];
@@ -1610,14 +1610,22 @@ int RayTraceThread(CRayThreadInfo *T)
                   if(x&&y&&(x<(T->width-1))&&(y<(T->height-1))) { /* not on the edge... */
                     if(find_edge(T->edging + (pixel - T->image),
                                  T->width, T->edging_cutoff)) {
-                      unsigned int value;
+                      register unsigned char *pixel_c = (unsigned char*)pixel;
+                      register unsigned int c1,c2,c3,c4; 
+
                       edge_cnt = 1;
                       edge_sampling = true;
-                      value = *pixel;
-                      edge_avg[0] = value&0xFF;
-                      edge_avg[1] = (value>>8)&0xFF;
-                      edge_avg[2] = (value>>16)&0xFF;
-                      edge_avg[3] = (value>>24)&0xFF;
+
+                      edge_avg[0] = (c1 = pixel_c[0]);
+                      edge_avg[1] = (c2 = pixel_c[1]);
+                      edge_avg[2] = (c3 = pixel_c[2]);
+                      edge_avg[3] = (c4 = pixel_c[3]);
+                      
+                      edge_alpha_avg[0] = c1*c4;
+                      edge_alpha_avg[1] = c2*c4;
+                      edge_alpha_avg[2] = c3*c4;
+                      edge_alpha_avg[3] = c4;
+
                       edge_base[0]=pixel_base[0];
                       edge_base[1]=pixel_base[1];
                     }
@@ -1625,25 +1633,35 @@ int RayTraceThread(CRayThreadInfo *T)
                 }
                 if(edge_sampling) {
                   if(edge_cnt==5) {
-                    edge_sampling=false;
                     /* done with edging, so store averaged value */
 
-                    edge_avg[0]/=edge_cnt;
-                    edge_avg[1]/=edge_cnt;
-                    edge_avg[2]/=edge_cnt;
-                    edge_avg[3]/=edge_cnt;
+                    register unsigned char *pixel_c = (unsigned char*)pixel;
+                    register unsigned int c1,c2,c3,c4; 
 
-                    *pixel = (((edge_avg[0]&0xFF)    )|
-                              ((edge_avg[1]&0xFF)<<8 )|
-                              ((edge_avg[2]&0xFF)<<16)|
-                              ((edge_avg[3]&0xFF)<<24));
+                    edge_sampling=false;
+                    /* done with edging, so store averaged value */
+                    
+                    if(edge_alpha_avg[3]) {
+                      c4 = edge_alpha_avg[3];
+                      c1 = edge_alpha_avg[0] / c4;
+                      c2 = edge_alpha_avg[1] / c4;
+                      c3 = edge_alpha_avg[2] / c4;
+                      c4 /= edge_cnt;
+                    } else {
+                      c1 = edge_avg[0]/edge_cnt;
+                      c2 = edge_avg[1]/edge_cnt;
+                      c3 = edge_avg[2]/edge_cnt;
+                      c4 = edge_avg[3]/edge_cnt;
+                    }
+                    pixel_c[0] = c1;
+                    pixel_c[1] = c2;
+                    pixel_c[2] = c3;
+                    pixel_c[3] = c4;
 
-                    /**pixel = 0xFFFFFFFF-*pixel;*/
                     /* restore X,Y coordinates */
                     r1.base[0]=pixel_base[0];
                     r1.base[1]=pixel_base[1];
 
-                    /**pixel = 0xFF00FFFF;*/
                   } else {
                     *pixel = T->background;
                     switch(edge_cnt) {
@@ -2200,13 +2218,20 @@ int RayTraceThread(CRayThreadInfo *T)
               /* if here, then we're edging...
                  so accumulate averages */
               { 
-                unsigned int value;
-                value = *pixel;
-                edge_avg[0] += value&0xFF;
-                edge_avg[1] += (value>>8)&0xFF;
-                edge_avg[2] += (value>>16)&0xFF;
-                edge_avg[3] += (value>>24)&0xFF;
                 
+                register unsigned char *pixel_c = (unsigned char*)pixel;
+                register unsigned int c1,c2,c3,c4; 
+                
+                edge_avg[0] += (c1 = pixel_c[0]);
+                edge_avg[1] += (c2 = pixel_c[1]);
+                edge_avg[2] += (c3 = pixel_c[2]);
+                edge_avg[3] += (c4 = pixel_c[3]);
+                
+                edge_alpha_avg[0] += c1*c4;
+                edge_alpha_avg[1] += c2*c4;
+                edge_alpha_avg[2] += c3*c4;
+                edge_alpha_avg[3] += c4;
+
                 edge_cnt++;
               }
               
@@ -2330,11 +2355,7 @@ int RayTraceThread(CRayThreadInfo *T)
 
 int RayAntiThread(CRayAntiThreadInfo *T)
 {
-	int a;
 	int		src_row_pixels;
-	unsigned int part;
-	unsigned int acc;
-   unsigned int z[36],zm[36];
 	
 	unsigned int *pSrc;
 	unsigned int *pDst;
@@ -2355,242 +2376,343 @@ int RayAntiThread(CRayAntiThreadInfo *T)
 	offset = (T->phase * height)/T->n_thread;
 	offset = offset - (offset % T->n_thread) + T->phase;
 
-	for(yy = 0; yy< height; yy++ )
-	{
-		y = (yy + offset) % height; /* make sure threads write to different pages */
-				
-		if((y % T->n_thread) == T->phase)	/* this is my scan line */
-        {
-          pSrc	= T->image + src_row_pixels * (y*T->mag);
-          pDst	= T->image_copy + width * y ;	
-          switch(T->mag) {
-          case 2:
-            for(x = 0; x < width; x++)
-              {
-                p	= pSrc + (x * T->mag);
-                
-                z[0 ]	= p[0];
-                z[1 ]	= p[1];
-                z[2 ]	= p[2];
-                z[3 ]	= p[3];
-                
-                p	+= src_row_pixels;
-                
-                z[4 ]	= p[0];
-                z[5 ]	= p[1];
-                z[6 ]	= p[2];
-                z[7 ]	= p[3];
-                
-                p	+= src_row_pixels;
-                
-                z[8 ]	= p[0];
-                z[9 ]	= p[1];
-                z[10]	= p[2];
-                z[11]	= p[3];
-                
-                p	+= src_row_pixels;
-                
-                z[12]	= p[0];
-                z[13]	= p[1];
-                z[14]	= p[2];
-                z[15]	= p[3];
-                
-                for( a = 0; a < 16; a += 4 ) 
-                  {
-                    zm[a+0 ] = z[a+0] & mFFFF; /* move half to zm */
-                    zm[a+1 ] = z[a+1] & mFFFF;
-                    zm[a+2 ] = z[a+2] & mFFFF;
-                    zm[a+3 ] = z[a+3] & mFFFF;
-                    
-                    z[a+0 ] = (z[a+0 ] >> 16) & mFFFF; /* keep rest in z */
-                    z[a+1 ] = (z[a+1 ] >> 16) & mFFFF;
-                    z[a+2 ] = (z[a+2 ] >> 16) & mFFFF;
-                    z[a+3 ] = (z[a+3 ] >> 16) & mFFFF;
-                  }
-                
-                combine4by4(part,z,m00FF);
-                acc	= (part<<16);
-                combine4by4(part,z,mFF00);
-                acc |= (part<<16);
-                combine4by4(part,zm,m00FF);
-                acc |= part;
-                combine4by4(part,zm,mFF00);
-                acc |= (acc | part);
+	for(yy = 0; yy< height; yy++ ) {
+      y = (yy + offset) % height; /* make sure threads write to different pages */
+      
+      if((y % T->n_thread) == T->phase)	{ /* this is my scan line */
+        register unsigned long c1,c2,c3,c4,a;
+        register unsigned char *c;
+        
+        pSrc	= T->image + src_row_pixels * (y*T->mag);
+        pDst	= T->image_copy + width * y ;	
+        switch(T->mag) {
+        case 2: 
+          {
+            for(x = 0; x < width; x++) {
+              
+              c = (unsigned char*)( p = pSrc + (x * T->mag));
+              c1 = c2 = c3 = c4 = a = 0;
 
-                #ifdef _PYMOL_OSX
-                acc = optimizer_workaround1u(acc);
-                #endif
+              c4+=(a=c[3]); c1+=c[0]*a; c2+=c[1]*a; c3+=c[2]*a; c+=4;
+              c4+=(a=c[3]); c1+=c[0]*a; c2+=c[1]*a; c3+=c[2]*a; c+=4;
+              c4+=(a=c[3]); c1+=c[0]*a; c2+=c[1]*a; c3+=c[2]*a; c+=4;
+              c4+=(a=c[3]); c1+=c[0]*a; c2+=c[1]*a; c3+=c[2]*a; c+=4;
+              
+              c = (unsigned char*)(p += src_row_pixels);
+                
+              c4+=(a=c[3]); c1+=c[0]*a; c2+=c[1]*a; c3+=c[2]*a; c+=4;
+              c4+=(a=c[3]*13); c1+=c[0]*a; c2+=c[1]*a; c3+=c[2]*a; c+=4;
+              c4+=(a=c[3]*13); c1+=c[0]*a; c2+=c[1]*a; c3+=c[2]*a; c+=4;
+              c4+=(a=c[3]); c1+=c[0]*a; c2+=c[1]*a; c3+=c[2]*a; c+=4;
+              
+              c = (unsigned char*)(p += src_row_pixels);
 
-                *(pDst++) = acc;
+              c4+=(a=c[3]); c1+=c[0]*a; c2+=c[1]*a; c3+=c[2]*a; c+=4;
+              c4+=(a=c[3]*13); c1+=c[0]*a; c2+=c[1]*a; c3+=c[2]*a; c+=4;
+              c4+=(a=c[3]*13); c1+=c[0]*a; c2+=c[1]*a; c3+=c[2]*a; c+=4;
+              c4+=(a=c[3]); c1+=c[0]*a; c2+=c[1]*a; c3+=c[2]*a; c+=4;
+
+              c = (unsigned char*)(p += src_row_pixels);
+
+              c4+=(a=c[3]); c1+=c[0]*a; c2+=c[1]*a; c3+=c[2]*a; c+=4;
+              c4+=(a=c[3]); c1+=c[0]*a; c2+=c[1]*a; c3+=c[2]*a; c+=4;
+              c4+=(a=c[3]); c1+=c[0]*a; c2+=c[1]*a; c3+=c[2]*a; c+=4;
+              c4+=(a=c[3]); c1+=c[0]*a; c2+=c[1]*a; c3+=c[2]*a; c+=4;
+
+              if(c4) {
+                c1 /= c4;
+                c2 /= c4;
+                c3 /= c4;
+              } else { /* compute straight RGB average */
+                
+                c = (unsigned char*)( p = pSrc + (x * T->mag));
+                c1 = c2 = c3 = 0;
+
+                c1+=c[0]; c2+=c[1]; c3+=c[2]; c+=4;
+                c1+=c[0]; c2+=c[1]; c3+=c[2]; c+=4;
+                c1+=c[0]; c2+=c[1]; c3+=c[2]; c+=4;
+                c1+=c[0]; c2+=c[1]; c3+=c[2]; c+=4;
+                
+                c = (unsigned char*)(p += src_row_pixels);
+                
+                c1+=c[0]; c2+=c[1]; c3+=c[2]; c+=4;
+                c1+=13*c[0]; c2+=13*c[1]; c3+=13*c[2]; c+=4;
+                c1+=13*c[0]; c2+=13*c[1]; c3+=13*c[2]; c+=4;
+                c1+=c[0]; c2+=c[1]; c3+=c[2]; c+=4;
+                
+                c = (unsigned char*)(p += src_row_pixels);
+                
+                c1+=c[0]; c2+=c[1]; c3+=c[2]; c+=4;
+                c1+=13*c[0]; c2+=13*c[1]; c3+=13*c[2]; c+=4;
+                c1+=13*c[0]; c2+=13*c[1]; c3+=13*c[2]; c+=4;
+                c1+=c[0]; c2+=c[1]; c3+=c[2]; c+=4;
+                
+                c = (unsigned char*)(p += src_row_pixels);
+                
+                c1+=c[0]; c2+=c[1]; c3+=c[2]; c+=4;
+                c1+=c[0]; c2+=c[1]; c3+=c[2]; c+=4;
+                c1+=c[0]; c2+=c[1]; c3+=c[2]; c+=4;
+                c1+=c[0]; c2+=c[1]; c3+=c[2]; c+=4;
+                
+                c1 = c1>>6;
+                c2 = c2>>6;
+                c3 = c3>>6;
               }
-            break;
-          case 3:
-            for(x = 0; x < width; x++)
-              {
-                p	= pSrc + (x * T->mag);
-                
-                z[0 ]	= (*(p  ));
-                z[1 ]	= (*(p+1));
-                z[2 ]	= (*(p+2));
-                z[3 ]	= (*(p+3));
-                z[4 ]	= (*(p+4));
-                
-                p	+= src_row_pixels;
-                
-                z[5 ]	= (*(p  ));
-                z[6 ]	= (*(p+1));
-                z[7 ]	= (*(p+2));
-                z[8 ]	= (*(p+3));
-                z[9 ]	= (*(p+4));
-                
-                p	+= src_row_pixels;
-                
-                z[10]	= (*(p  ));
-                z[11]	= (*(p+1));
-                z[12]	= (*(p+2));
-                z[13]	= (*(p+3));
-                z[14]	= (*(p+4));
-                
-                p	+= src_row_pixels;
-                
-                z[15]	= (*(p  ));
-                z[16]	= (*(p+1));
-                z[17]	= (*(p+2));
-                z[18]	= (*(p+3));
-                z[19]	= (*(p+4));      
-          
-                p	+= src_row_pixels;
-                
-                z[20]	= (*(p  ));
-                z[21]	= (*(p+1));
-                z[22]	= (*(p+2));
-                z[23]	= (*(p+3));
-                z[24]	= (*(p+4));                
-
-                for( a = 0; a < 25; a += 5 ) 
-                  {
-                    zm[a+0 ] = z[a+0] & mFFFF; /* move half to zm */
-                    zm[a+1 ] = z[a+1] & mFFFF;
-                    zm[a+2 ] = z[a+2] & mFFFF;
-                    zm[a+3 ] = z[a+3] & mFFFF;
-                    zm[a+4 ] = z[a+4] & mFFFF;
-                    
-                    z[a   ]	>>= 16; /* keep rest in z */
-                    z[a+1 ]	>>= 16;
-                    z[a+2 ]	>>= 16;
-                    z[a+3 ]	>>= 16;
-                    z[a+4 ]	>>= 16;
-                  }
-                
-                combine5by5(part,z,m00FF);
-                acc	= (part<<16);
-                combine5by5(part,z,mFF00);
-                acc	|= (part<<16);
-                combine5by5(part,zm,m00FF);
-                acc |= part;
-                combine5by5(part,zm,mFF00);
-                acc |= part;
-
-                #ifdef _PYMOL_OSX
-                acc=optimizer_workaround1u(acc);
-                #endif
-                *(pDst++) = acc;
-              }
-            break;
-          case 4:
-            for(x = 0; x < width; x++)
-              {
-                p	= pSrc + (x * T->mag);
-                
-                z[0 ]	= (*(p  ));
-                z[1 ]	= (*(p+1));
-                z[2 ]	= (*(p+2));
-                z[3 ]	= (*(p+3));
-                z[4 ]	= (*(p+4));
-                z[5 ]	= (*(p+5));
-                
-                p	+= src_row_pixels;
-                
-                z[6 ]	= (*(p  ));
-                z[7 ]	= (*(p+1));
-                z[8 ]	= (*(p+2));
-                z[9 ]	= (*(p+3));
-                z[10]	= (*(p+4));
-                z[11]	= (*(p+5));
-                
-                p	+= src_row_pixels;
-                
-                z[12]	= (*(p  ));
-                z[13]	= (*(p+1));
-                z[14]	= (*(p+2));
-                z[15]	= (*(p+3));
-                z[16]	= (*(p+4));
-                z[17]	= (*(p+5));
-                
-                p	+= src_row_pixels;
-                
-                z[18]	= (*(p  ));
-                z[19]	= (*(p+1));
-                z[20]	= (*(p+2));
-                z[21]	= (*(p+3));
-                z[22]	= (*(p+4));      
-                z[23]	= (*(p+5));      
-          
-                p	+= src_row_pixels;
-                
-                z[24]	= (*(p  ));
-                z[25]	= (*(p+1));
-                z[26]	= (*(p+2));
-                z[27]	= (*(p+3));
-                z[28]	= (*(p+4));                
-                z[29]	= (*(p+5));                
-
-                p	+= src_row_pixels;
-                
-                z[30]	= (*(p  ));
-                z[31]	= (*(p+1));
-                z[32]	= (*(p+2));
-                z[33]	= (*(p+3));
-                z[34]	= (*(p+4));                
-                z[35]	= (*(p+5));                
-
-                for( a = 0; a < 36; a += 6 ) 
-                  {
-                    zm[a+0 ] = z[a+0] & mFFFF; /* move half to zm */
-                    zm[a+1 ] = z[a+1] & mFFFF;
-                    zm[a+2 ] = z[a+2] & mFFFF;
-                    zm[a+3 ] = z[a+3] & mFFFF;
-                    zm[a+4 ] = z[a+4] & mFFFF;
-                    zm[a+5 ] = z[a+5] & mFFFF;
-                    
-                    z[a   ]	>>= 16; /* keep rest in z */
-                    z[a+1 ]	>>= 16;
-                    z[a+2 ]	>>= 16;
-                    z[a+3 ]	>>= 16;
-                    z[a+4 ]	>>= 16;
-                    z[a+5 ]	>>= 16;
-                  }
-                
-                combine6by6(part,z,m00FF);
-                acc	= (part<<16);
-                combine6by6(part,z,mFF00);
-                acc	+= (part<<16);
-                combine6by6(part,zm,m00FF);
-                acc	+= part;
-                combine6by6(part,zm,mFF00);
-                acc |= part;
-
-                #ifdef _PYMOL_OSX
-                acc = optimizer_workaround1u(acc);
-                #endif
-
-                *(pDst++) = acc;
-              }
-            break;
+              
+              c = (unsigned char*)(pDst++);
+              
+              *(c++) = c1;
+              *(c++) = c2;
+              *(c++) = c3;
+              *(c++) = c4>>6;
+            }
           }
+          break;
+        case 3:
+          {
+            for(x = 0; x < width; x++) {
+              
+              c = (unsigned char*)( p = pSrc + (x * T->mag));
+              c1 = c2 = c3 = c4 = a = 0;
+              
+              c4+=(a=c[3]); c1+=c[0]*a; c2+=c[1]*a; c3+=c[2]*a; c+=4;
+              c4+=(a=c[3]); c1+=c[0]*a; c2+=c[1]*a; c3+=c[2]*a; c+=4;
+              c4+=(a=c[3]); c1+=c[0]*a; c2+=c[1]*a; c3+=c[2]*a; c+=4;
+              c4+=(a=c[3]); c1+=c[0]*a; c2+=c[1]*a; c3+=c[2]*a; c+=4;
+              c4+=(a=c[3]); c1+=c[0]*a; c2+=c[1]*a; c3+=c[2]*a; c+=4;
+              
+              c = (unsigned char*)(p += src_row_pixels);
+                
+              c4+=(a=c[3]); c1+=c[0]*a; c2+=c[1]*a; c3+=c[2]*a; c+=4;
+              c4+=(a=c[3]*5); c1+=c[0]*a; c2+=c[1]*a; c3+=c[2]*a; c+=4;
+              c4+=(a=c[3]*5); c1+=c[0]*a; c2+=c[1]*a; c3+=c[2]*a; c+=4;
+              c4+=(a=c[3]*5); c1+=c[0]*a; c2+=c[1]*a; c3+=c[2]*a; c+=4;
+              c4+=(a=c[3]); c1+=c[0]*a; c2+=c[1]*a; c3+=c[2]*a; c+=4;
+              
+              c = (unsigned char*)(p += src_row_pixels);
+
+              c4+=(a=c[3]); c1+=c[0]*a; c2+=c[1]*a; c3+=c[2]*a; c+=4;
+              c4+=(a=c[3]*5); c1+=c[0]*a; c2+=c[1]*a; c3+=c[2]*a; c+=4;
+              c4+=(a=c[3]*8); c1+=c[0]*a; c2+=c[1]*a; c3+=c[2]*a; c+=4;
+              c4+=(a=c[3]*5); c1+=c[0]*a; c2+=c[1]*a; c3+=c[2]*a; c+=4;
+              c4+=(a=c[3]); c1+=c[0]*a; c2+=c[1]*a; c3+=c[2]*a; c+=4;
+
+              c = (unsigned char*)(p += src_row_pixels);
+
+              c4+=(a=c[3]); c1+=c[0]*a; c2+=c[1]*a; c3+=c[2]*a; c+=4;
+              c4+=(a=c[3]*5); c1+=c[0]*a; c2+=c[1]*a; c3+=c[2]*a; c+=4;
+              c4+=(a=c[3]*5); c1+=c[0]*a; c2+=c[1]*a; c3+=c[2]*a; c+=4;
+              c4+=(a=c[3]*5); c1+=c[0]*a; c2+=c[1]*a; c3+=c[2]*a; c+=4;
+              c4+=(a=c[3]); c1+=c[0]*a; c2+=c[1]*a; c3+=c[2]*a; c+=4;
+              
+              c = (unsigned char*)(p += src_row_pixels);
+
+              c4+=(a=c[3]); c1+=c[0]*a; c2+=c[1]*a; c3+=c[2]*a; c+=4;
+              c4+=(a=c[3]); c1+=c[0]*a; c2+=c[1]*a; c3+=c[2]*a; c+=4;
+              c4+=(a=c[3]); c1+=c[0]*a; c2+=c[1]*a; c3+=c[2]*a; c+=4;
+              c4+=(a=c[3]); c1+=c[0]*a; c2+=c[1]*a; c3+=c[2]*a; c+=4;
+              c4+=(a=c[3]); c1+=c[0]*a; c2+=c[1]*a; c3+=c[2]*a; c+=4;
+
+              if(c4) {
+                c1 /= c4;
+                c2 /= c4;
+                c3 /= c4;
+              } else { /* compute straight RGB average */
+                
+                c = (unsigned char*)( p = pSrc + (x * T->mag));
+                c1 = c2 = c3 = 0;
+                
+                c1+=c[0]; c2+=c[1]; c3+=c[2]; c+=4;
+                c1+=c[0]; c2+=c[1]; c3+=c[2]; c+=4;
+                c1+=c[0]; c2+=c[1]; c3+=c[2]; c+=4;
+                c1+=c[0]; c2+=c[1]; c3+=c[2]; c+=4;
+                c1+=c[0]; c2+=c[1]; c3+=c[2]; c+=4;
+                
+                c = (unsigned char*)(p += src_row_pixels);
+                
+                c1+=c[0]; c2+=c[1]; c3+=c[2]; c+=4;
+                c1+=5*c[0]; c2+=5*c[1]; c3+=5*c[2]; c+=4;
+                c1+=5*c[0]; c2+=5*c[1]; c3+=5*c[2]; c+=4;
+                c1+=5*c[0]; c2+=5*c[1]; c3+=5*c[2]; c+=4;
+                c1+=c[0]; c2+=c[1]; c3+=c[2]; c+=4;
+                
+                c = (unsigned char*)(p += src_row_pixels);
+                
+                c1+=c[0]; c2+=c[1]; c3+=c[2]; c+=4;
+                c1+=5*c[0]; c2+=5*c[1]; c3+=5*c[2]; c+=4;
+                c1+=8*c[0]; c2+=8*c[1]; c3+=8*c[2]; c+=4;
+                c1+=5*c[0]; c2+=5*c[1]; c3+=5*c[2]; c+=4;
+                c1+=c[0]; c2+=c[1]; c3+=c[2]; c+=4;
+                
+                c = (unsigned char*)(p += src_row_pixels);
+                
+                c1+=c[0]; c2+=c[1]; c3+=c[2]; c+=4;
+                c1+=5*c[0]; c2+=5*c[1]; c3+=5*c[2]; c+=4;
+                c1+=5*c[0]; c2+=5*c[1]; c3+=5*c[2]; c+=4;
+                c1+=5*c[0]; c2+=5*c[1]; c3+=5*c[2]; c+=4;
+                c1+=c[0]; c2+=c[1]; c3+=c[2]; c+=4;
+
+                c = (unsigned char*)(p += src_row_pixels);
+                
+                c1+=c[0]; c2+=c[1]; c3+=c[2]; c+=4;
+                c1+=c[0]; c2+=c[1]; c3+=c[2]; c+=4;
+                c1+=c[0]; c2+=c[1]; c3+=c[2]; c+=4;
+                c1+=c[0]; c2+=c[1]; c3+=c[2]; c+=4;
+                
+                c1 = c1>>6;
+                c2 = c2>>6;
+                c3 = c3>>6;
+              }
+              
+              c = (unsigned char*)(pDst++);
+              
+              *(c++) = c1;
+              *(c++) = c2;
+              *(c++) = c3;
+              *(c++) = c4>>6;
+            }
+          }
+          break;
+        case 4:
+          {
+            for(x = 0; x < width; x++) {
+              
+              c = (unsigned char*)( p = pSrc + (x * T->mag));
+              c1 = c2 = c3 = c4 = a = 0;
+              
+              c4+=(a=c[3]); c1+=c[0]*a; c2+=c[1]*a; c3+=c[2]*a; c+=4;
+              c4+=(a=c[3]); c1+=c[0]*a; c2+=c[1]*a; c3+=c[2]*a; c+=4;
+              c4+=(a=c[3]); c1+=c[0]*a; c2+=c[1]*a; c3+=c[2]*a; c+=4;
+              c4+=(a=c[3]); c1+=c[0]*a; c2+=c[1]*a; c3+=c[2]*a; c+=4;
+              c4+=(a=c[3]); c1+=c[0]*a; c2+=c[1]*a; c3+=c[2]*a; c+=4;
+              c4+=(a=c[3]); c1+=c[0]*a; c2+=c[1]*a; c3+=c[2]*a; c+=4;
+              
+              c = (unsigned char*)(p += src_row_pixels);
+                
+              c4+=(a=c[3]); c1+=c[0]*a; c2+=c[1]*a; c3+=c[2]*a; c+=4;
+              c4+=(a=c[3]*5); c1+=c[0]*a; c2+=c[1]*a; c3+=c[2]*a; c+=4;
+              c4+=(a=c[3]*7); c1+=c[0]*a; c2+=c[1]*a; c3+=c[2]*a; c+=4;
+              c4+=(a=c[3]*7); c1+=c[0]*a; c2+=c[1]*a; c3+=c[2]*a; c+=4;
+              c4+=(a=c[3]*5); c1+=c[0]*a; c2+=c[1]*a; c3+=c[2]*a; c+=4;
+              c4+=(a=c[3]); c1+=c[0]*a; c2+=c[1]*a; c3+=c[2]*a; c+=4;
+              
+              c = (unsigned char*)(p += src_row_pixels);
+
+              c4+=(a=c[3]); c1+=c[0]*a; c2+=c[1]*a; c3+=c[2]*a; c+=4;
+              c4+=(a=c[3]*7); c1+=c[0]*a; c2+=c[1]*a; c3+=c[2]*a; c+=4;
+              c4+=(a=c[3]*8); c1+=c[0]*a; c2+=c[1]*a; c3+=c[2]*a; c+=4;
+              c4+=(a=c[3]*8); c1+=c[0]*a; c2+=c[1]*a; c3+=c[2]*a; c+=4;
+              c4+=(a=c[3]*7); c1+=c[0]*a; c2+=c[1]*a; c3+=c[2]*a; c+=4;
+              c4+=(a=c[3]); c1+=c[0]*a; c2+=c[1]*a; c3+=c[2]*a; c+=4;
+              
+              c = (unsigned char*)(p += src_row_pixels);
+
+              c4+=(a=c[3]); c1+=c[0]*a; c2+=c[1]*a; c3+=c[2]*a; c+=4;
+              c4+=(a=c[3]*7); c1+=c[0]*a; c2+=c[1]*a; c3+=c[2]*a; c+=4;
+              c4+=(a=c[3]*8); c1+=c[0]*a; c2+=c[1]*a; c3+=c[2]*a; c+=4;
+              c4+=(a=c[3]*8); c1+=c[0]*a; c2+=c[1]*a; c3+=c[2]*a; c+=4;
+              c4+=(a=c[3]*7); c1+=c[0]*a; c2+=c[1]*a; c3+=c[2]*a; c+=4;
+              c4+=(a=c[3]); c1+=c[0]*a; c2+=c[1]*a; c3+=c[2]*a; c+=4;
+              
+              c = (unsigned char*)(p += src_row_pixels);
+
+              c4+=(a=c[3]); c1+=c[0]*a; c2+=c[1]*a; c3+=c[2]*a; c+=4;
+              c4+=(a=c[3]*5); c1+=c[0]*a; c2+=c[1]*a; c3+=c[2]*a; c+=4;
+              c4+=(a=c[3]*7); c1+=c[0]*a; c2+=c[1]*a; c3+=c[2]*a; c+=4;
+              c4+=(a=c[3]*7); c1+=c[0]*a; c2+=c[1]*a; c3+=c[2]*a; c+=4;
+              c4+=(a=c[3]*5); c1+=c[0]*a; c2+=c[1]*a; c3+=c[2]*a; c+=4;
+              c4+=(a=c[3]); c1+=c[0]*a; c2+=c[1]*a; c3+=c[2]*a; c+=4;
+              
+              c = (unsigned char*)(p += src_row_pixels);
+
+              c4+=(a=c[3]); c1+=c[0]*a; c2+=c[1]*a; c3+=c[2]*a; c+=4;
+              c4+=(a=c[3]); c1+=c[0]*a; c2+=c[1]*a; c3+=c[2]*a; c+=4;
+              c4+=(a=c[3]); c1+=c[0]*a; c2+=c[1]*a; c3+=c[2]*a; c+=4;
+              c4+=(a=c[3]); c1+=c[0]*a; c2+=c[1]*a; c3+=c[2]*a; c+=4;
+              c4+=(a=c[3]); c1+=c[0]*a; c2+=c[1]*a; c3+=c[2]*a; c+=4;
+              c4+=(a=c[3]); c1+=c[0]*a; c2+=c[1]*a; c3+=c[2]*a; c+=4;
+
+              if(c4) {
+                c1 /= c4;
+                c2 /= c4;
+                c3 /= c4;
+              } else { /* compute straight RGB average */
+                
+                c = (unsigned char*)( p = pSrc + (x * T->mag));
+                c1 = c2 = c3 = 0;
+                
+                c1+=c[0]; c2+=c[1]; c3+=c[2]; c+=4;
+                c1+=c[0]; c2+=c[1]; c3+=c[2]; c+=4;
+                c1+=c[0]; c2+=c[1]; c3+=c[2]; c+=4;
+                c1+=c[0]; c2+=c[1]; c3+=c[2]; c+=4;
+                c1+=c[0]; c2+=c[1]; c3+=c[2]; c+=4;
+                c1+=c[0]; c2+=c[1]; c3+=c[2]; c+=4;
+                
+                c = (unsigned char*)(p += src_row_pixels);
+                
+                c1+=c[0]; c2+=c[1]; c3+=c[2]; c+=4;
+                c1+=5*c[0]; c2+=5*c[1]; c3+=5*c[2]; c+=4;
+                c1+=7*c[0]; c2+=7*c[1]; c3+=7*c[2]; c+=4;
+                c1+=7*c[0]; c2+=7*c[1]; c3+=7*c[2]; c+=4;
+                c1+=5*c[0]; c2+=5*c[1]; c3+=5*c[2]; c+=4;
+                c1+=c[0]; c2+=c[1]; c3+=c[2]; c+=4;
+
+
+                c = (unsigned char*)(p += src_row_pixels);
+                
+                c1+=c[0]; c2+=c[1]; c3+=c[2]; c+=4;
+                c1+=7*c[0]; c2+=7*c[1]; c3+=7*c[2]; c+=4;
+                c1+=8*c[0]; c2+=8*c[1]; c3+=8*c[2]; c+=4;
+                c1+=8*c[0]; c2+=8*c[1]; c3+=8*c[2]; c+=4;
+                c1+=7*c[0]; c2+=7*c[1]; c3+=7*c[2]; c+=4;
+                c1+=c[0]; c2+=c[1]; c3+=c[2]; c+=4;
+
+                c = (unsigned char*)(p += src_row_pixels);
+                
+                c1+=c[0]; c2+=c[1]; c3+=c[2]; c+=4;
+                c1+=7*c[0]; c2+=7*c[1]; c3+=7*c[2]; c+=4;
+                c1+=8*c[0]; c2+=8*c[1]; c3+=8*c[2]; c+=4;
+                c1+=8*c[0]; c2+=8*c[1]; c3+=8*c[2]; c+=4;
+                c1+=7*c[0]; c2+=7*c[1]; c3+=7*c[2]; c+=4;
+                c1+=c[0]; c2+=c[1]; c3+=c[2]; c+=4;
+
+
+                c = (unsigned char*)(p += src_row_pixels);
+                
+                c1+=c[0]; c2+=c[1]; c3+=c[2]; c+=4;
+                c1+=5*c[0]; c2+=5*c[1]; c3+=5*c[2]; c+=4;
+                c1+=7*c[0]; c2+=7*c[1]; c3+=7*c[2]; c+=4;
+                c1+=7*c[0]; c2+=7*c[1]; c3+=7*c[2]; c+=4;
+                c1+=5*c[0]; c2+=5*c[1]; c3+=5*c[2]; c+=4;
+                c1+=c[0]; c2+=c[1]; c3+=c[2]; c+=4;
+
+                c = (unsigned char*)(p += src_row_pixels);
+
+                c1+=c[0]; c2+=c[1]; c3+=c[2]; c+=4;                
+                c1+=c[0]; c2+=c[1]; c3+=c[2]; c+=4;
+                c1+=c[0]; c2+=c[1]; c3+=c[2]; c+=4;
+                c1+=c[0]; c2+=c[1]; c3+=c[2]; c+=4;
+                c1+=c[0]; c2+=c[1]; c3+=c[2]; c+=4;
+                
+                c1 = c1>>7;
+                c2 = c2>>7;
+                c3 = c3>>7;
+              }
+              
+              c = (unsigned char*)(pDst++);
+              
+              *(c++) = c1;
+              *(c++) = c2;
+              *(c++) = c3;
+              *(c++) = c4>>7;
+            }
+          }
+          break;
+
         }
-   }
-   return 1;
+      }
+    }
+    return 1;
 }
 
 #ifdef PROFILE_BASIS

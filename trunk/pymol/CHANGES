@@ -6,6 +6,8 @@ Changes up to 0.99
 
     beta19
 
+    * fixed alpha channel handling for edges -- now combining correctly
+
     * opaque_background setting for OpenGL rendering
 
     beta17 & beta18

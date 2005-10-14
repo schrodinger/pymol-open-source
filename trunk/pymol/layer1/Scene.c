@@ -1085,7 +1085,7 @@ static int SceneMakeSizedImage(PyMOLGlobals *G,int width,
             unsigned char *q = buffer;
             register unsigned char *pp, *ppp, *pppp;
             register int a,b,c,d;
-            register unsigned int c1,c2,c3,c4;
+            register unsigned int c1,c2,c3,c4,alpha;
             unsigned int factor_col_bytes = factor * 4;
             unsigned int factor_row_bytes = factor * src_row_bytes;
             
@@ -1097,17 +1097,39 @@ static int SceneMakeSizedImage(PyMOLGlobals *G,int width,
                 for(d=0;d<factor;d++) { /* box rows */
                   pppp = ppp;
                   for(c=0;c<factor;c++) { /* box cols */
-                    c1 += *(pppp++);
-                    c2 += *(pppp++);
-                    c3 += *(pppp++);
-                    c4 += *(pppp++);
+                    c4 += (alpha = pppp[3]);
+                    c1 += *(pppp++) * alpha;
+                    c2 += *(pppp++) * alpha;
+                    c3 += *(pppp++) * alpha;
+                    pppp++;
                   }
                   ppp += src_row_bytes;
                 }
-                *(q++)= (c1>>shift);
-                *(q++)= (c2>>shift);
-                *(q++)= (c3>>shift);
-                *(q++)= (c4>>shift);
+                if(c4) { /* divide out alpha channel & average */
+                  c1 = c1 / c4;
+                  c2 = c2 / c4;
+                  c3 = c3 / c4;
+                } else { /* alpha zero! so compute average RGB */
+                  c1 = c2 = c3 = 0;
+                  ppp = pp;
+                  for(d=0;d<factor;d++) { /* box rows */
+                    pppp = ppp;
+                    for(c=0;c<factor;c++) { /* box cols */
+                      c1 += *(pppp++);
+                      c2 += *(pppp++);
+                      c3 += *(pppp++);
+                      pppp++;
+                    }
+                    ppp += src_row_bytes;
+                  }
+                  c1 = c1 >> shift;
+                  c2 = c2 >> shift;
+                  c3 = c3 >> shift;
+                }
+                *(q++)= c1;
+                *(q++)= c2;
+                *(q++)= c3;
+                *(q++)= c4>>shift;
                 pp += factor_col_bytes;
               }
               p+= factor_row_bytes;
@@ -1531,7 +1553,7 @@ void SceneMakeMovieImage(PyMOLGlobals *G) {
 	SceneRay(G,0,0,(int)SettingGet(G,cSetting_ray_default_renderer),NULL,NULL,
             0.0F,0.0F,false,NULL); 
   } else if(SettingGet(G,cSetting_draw_frames)) {
-    SceneMakeSizedImage(G,0,0,1);
+    SceneMakeSizedImage(G,0,0,SettingGetGlobal_i(G,cSetting_antialias));
   } else {
 	int draw_both = SceneMustDrawBoth(G);
     float alpha = (SettingGetGlobal_b(G,cSetting_opaque_background) ? 1.0F : 0.0F);
@@ -4731,7 +4753,7 @@ int SceneRenderCached(PyMOLGlobals *G)
 	} else if(moviePlaying&&SettingGetGlobal_b(G,cSetting_ray_trace_frames)) {
 	  SceneRay(G,0,0,(int)SettingGet(G,cSetting_ray_default_renderer),NULL,NULL,0.0F,0.0F,false,NULL); 
 	}  else if(moviePlaying&&SettingGetGlobal_b(G,cSetting_draw_frames)) {
-      SceneMakeSizedImage(G,0,0,1);
+      SceneMakeSizedImage(G,0,0,SettingGetGlobal_i(G,cSetting_antialias));
 	} else if(I->CopyFlag) {
 	  renderedFlag = true;
     } else {
