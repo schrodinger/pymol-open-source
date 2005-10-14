@@ -570,6 +570,7 @@ typedef struct _CPyMOL {
   ov_word lex_nvidia_bugs;
   ov_word lex_image_dots_per_inch;
   ov_word lex_opaque_background;
+  ov_word lex_draw_frames;
 } _CPyMOL;
 
 /* convenience functions -- inline */
@@ -1148,6 +1149,7 @@ static OVstatus PyMOL_InitAPI(CPyMOL *I)
   LEX_SETTING(nvidia_bugs, 433);
   LEX_SETTING(image_dots_per_inch, 434);
   LEX_SETTING(opaque_background, 435);
+  LEX_SETTING(draw_frames, 436);
 
   return_OVstatus_SUCCESS;
 }

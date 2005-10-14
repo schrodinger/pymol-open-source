@@ -585,6 +585,7 @@ CSetting *SettingNewFromPyList(PyMOLGlobals *G,PyObject *list);
 #define cSetting_nvidia_bugs                433
 #define cSetting_image_dots_per_inch        434
 #define cSetting_opaque_background          435
+#define cSetting_draw_frames                436
 
 /* when you add a new settingg also remember:
    layer1/Setting.c
@@ -594,7 +595,7 @@ CSetting *SettingNewFromPyList(PyMOLGlobals *G,PyObject *list);
 
 /* cSetting_ss_INIT must always be last setting_index +1 */
 
-#define cSetting_INIT                       436
+#define cSetting_INIT                       437
 
 #endif
 
