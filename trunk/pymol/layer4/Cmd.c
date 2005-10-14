@@ -1856,11 +1856,11 @@ static PyObject *CmdIsomesh(PyObject *self, 	PyObject *args) {
   int map_state;
   int multi=false;
   ObjectMapState *ms;
-
+  int quiet;
   /* oper 0 = all, 1 = sele + buffer, 2 = vector */
 
-  ok = PyArg_ParseTuple(args,"sisisffiifi",&str1,&frame,&str2,&oper,
-                   &str3,&fbuf,&lvl,&dotFlag,&state,&carve,&map_state);
+  ok = PyArg_ParseTuple(args,"sisisffiifii",&str1,&frame,&str2,&oper,
+			&str3,&fbuf,&lvl,&dotFlag,&state,&carve,&map_state,&quiet);
   if (ok) {
     APIEntry();
 
@@ -1953,9 +1953,11 @@ static PyObject *CmdIsomesh(PyObject *self, 	PyObject *args) {
           
           if(SettingGet(TempPyMOLGlobals,cSetting_isomesh_auto_state))
             if(obj) ObjectGotoState((ObjectMolecule*)obj,state);
-          PRINTFB(TempPyMOLGlobals,FB_ObjectMesh,FB_Actions)
-            " Isomesh: created \"%s\", setting level to %5.3f\n",str1,lvl
-            ENDFB(TempPyMOLGlobals);
+	  if(!quiet) {
+	    PRINTFB(TempPyMOLGlobals,FB_ObjectMesh,FB_Actions)
+	      " Isomesh: created \"%s\", setting level to %5.3f\n",str1,lvl
+	      ENDFB(TempPyMOLGlobals);
+	  }
         } else if(!multi) {
           PRINTFB(TempPyMOLGlobals,FB_ObjectMesh,FB_Warnings)
             " Isomesh-Warning: state %d not present in map \"%s\".\n",map_state+1,str2
@@ -2271,11 +2273,12 @@ static PyObject *CmdIsosurface(PyObject *self, 	PyObject *args) {
   int map_state=0;
   int multi=false;
   int side;
+  int quiet;
   /* oper 0 = all, 1 = sele + buffer, 2 = vector */
 
-  ok = PyArg_ParseTuple(args,"sisisffiifii",&str1,&frame,&str2,&oper,
+  ok = PyArg_ParseTuple(args,"sisisffiifiii",&str1,&frame,&str2,&oper,
                    &str3,&fbuf,&lvl,&dotFlag,&state,&carve,&map_state,
-                        &side);
+                        &side,&quiet);
   if (ok) {
     APIEntry();
 
@@ -2367,9 +2370,11 @@ static PyObject *CmdIsosurface(PyObject *self, 	PyObject *args) {
           }
           if(SettingGet(TempPyMOLGlobals,cSetting_isomesh_auto_state))
             if(obj) ObjectGotoState((ObjectMolecule*)obj,state);
-          PRINTFB(TempPyMOLGlobals,FB_ObjectSurface,FB_Actions)
-            " Isosurface: created \"%s\", setting level to %5.3f\n",str1,lvl
-            ENDFB(TempPyMOLGlobals);
+	  if(!quiet) {
+	    PRINTFB(TempPyMOLGlobals,FB_ObjectSurface,FB_Actions)
+	      " Isosurface: created \"%s\", setting level to %5.3f\n",str1,lvl
+	      ENDFB(TempPyMOLGlobals);
+	  }
         } else if(!multi) {
           PRINTFB(TempPyMOLGlobals,FB_ObjectMesh,FB_Warnings)
             " Isosurface-Warning: state %d not present in map \"%s\".\n",map_state+1,str2
@@ -5730,7 +5735,7 @@ static PyMethodDef Cmd_methods[] = {
 	{"intrafit",              CmdIntraFit,             METH_VARARGS },
    {"invert",                CmdInvert,               METH_VARARGS },
 	{"isolevel",              CmdIsolevel,             METH_VARARGS },
-	{"isomesh",	              CmdIsomesh,              METH_VARARGS },
+	{"isomesh",	              CmdIsomesh,              METH_VARARGS }, 
 	{"isosurface",	           CmdIsosurface,           METH_VARARGS },
    {"wait_deferred",         CmdWaitDeferred,         METH_VARARGS },
    {"wait_queue",            CmdWaitQueue,            METH_VARARGS },

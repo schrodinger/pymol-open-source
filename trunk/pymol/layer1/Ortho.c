@@ -1019,7 +1019,10 @@ void OrthoDoDraw(PyMOLGlobals *G)
 
     if(text) overlay=0;
     
-    glClearColor(v[0],v[1],v[2],1.0);
+    {
+      float alpha = (SettingGetGlobal_b(G,cSetting_opaque_background) ? 1.0F : 0.0F);
+      glClearColor(v[0],v[1],v[2],alpha);
+    }
 
     if(overlay||(!text)) 
       if(!SceneRenderCached(G))
@@ -1030,19 +1033,18 @@ void OrthoDoDraw(PyMOLGlobals *G)
       glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
       glDrawBuffer(GL_BACK_RIGHT);
       glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
-      glClearColor(0.0,0.0,0.0,1.0);
       times = 2;
       double_pump = true;
     } else {
       glDrawBuffer(GL_BACK);
       glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
-      glClearColor(0.0,0.0,0.0,1.0);
       times = 1;
       double_pump=false;
     }    
 
     if(render)
       SceneRender(G,NULL,0,0,NULL,0,0);
+    glClearColor(0.0,0.0,0.0,1.0);
     
     while(times--) {
 

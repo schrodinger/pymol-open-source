@@ -560,6 +560,7 @@ static int WizardRelease(Block *block,int button,int x,int y,int mod)
       break;
     }
   }
+  I->Pressed = -1;
   return(1);
 }
 

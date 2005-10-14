@@ -4,6 +4,14 @@ CHANGE LOG
 
 Changes up to 0.99
 
+    beta19
+
+    * opaque_background setting for OpenGL rendering
+
+    beta17 & beta18
+
+    * "import pymol" finally works -- worked around _tkinter gotcha!
+    
     beta16
 
     * dpi option to png command and image_dots_per_inch setting

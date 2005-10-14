@@ -951,10 +951,16 @@ void RayRenderPOV(CRay *I,int width,int height,char **headerVLA_ptr,
           );
   UtilConcatVLA(&headerVLA,&hc,buffer);
 
-  if(SettingGetGlobal_i(I->G,cSetting_ray_opaque_background)) { /* drop a plane into the background for the background color */
-    sprintf(buffer,"plane{z , %6.4f \n pigment{color rgb<%6.4f,%6.4f,%6.4f>}\n finish{phong 0 specular 0 diffuse 0 ambient 1.0}}\n",-back,bkrd[0],bkrd[1],bkrd[2]);
-    UtilConcatVLA(&headerVLA,&hc,buffer);
-  } 
+  {
+    int opaque_back = SettingGetGlobal_i(I->G,cSetting_ray_opaque_background);
+    if(opaque_back<0)
+      opaque_back			= SettingGetGlobal_i(I->G,cSetting_opaque_background);      
+    
+    if(opaque_back) { /* drop a plane into the background for the background color */
+      sprintf(buffer,"plane{z , %6.4f \n pigment{color rgb<%6.4f,%6.4f,%6.4f>}\n finish{phong 0 specular 0 diffuse 0 ambient 1.0}}\n",-back,bkrd[0],bkrd[1],bkrd[2]);
+      UtilConcatVLA(&headerVLA,&hc,buffer);
+    } 
+  }
   
   for(a=0;a<I->NPrimitive;a++) {
     prim = I->Primitive+a;
@@ -1393,6 +1399,8 @@ int RayTraceThread(CRayThreadInfo *T)
 	trans_shadows		= SettingGetGlobal_i(I->G,cSetting_ray_transparency_shadows);
 	backface_cull		= SettingGetGlobal_i(I->G,cSetting_backface_cull);
 	opaque_back			= SettingGetGlobal_i(I->G,cSetting_ray_opaque_background);
+    if(opaque_back<0)
+      opaque_back			= SettingGetGlobal_i(I->G,cSetting_opaque_background);      
 	two_sided_lighting	= SettingGetGlobal_i(I->G,cSetting_two_sided_lighting);
 	ray_trans_spec		= SettingGet(I->G,cSetting_ray_transparency_specular);
    trans_cont        = SettingGetGlobal_f(I->G,cSetting_ray_transparency_contrast);
@@ -2637,6 +2645,9 @@ int opaque_back=0;
   if(n_thread>MAX_RAY_THREADS)
     n_thread = MAX_RAY_THREADS;
   opaque_back = SettingGetGlobal_i(I->G,cSetting_ray_opaque_background);
+  if(opaque_back<0)
+    opaque_back			= SettingGetGlobal_i(I->G,cSetting_opaque_background);      
+
   shadows = SettingGetGlobal_i(I->G,cSetting_ray_shadows);
   antialias = SettingGetGlobal_i(I->G,cSetting_antialias);
   if(antialias<0) antialias=0;
