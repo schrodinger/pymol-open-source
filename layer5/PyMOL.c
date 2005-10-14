@@ -2210,6 +2210,7 @@ int PyMOL_Idle(CPyMOL *I)
 	} else {
 		I->PythonInitStage=-1;
 		PBlock();
+		PRunString("adapt_to_hardware()");
 		PRunString("exec_deferred()");
 		PUnblock();
 	}

@@ -1530,6 +1530,7 @@ void SceneMakeMovieImage(PyMOLGlobals *G) {
             0.0F,0.0F,false,NULL); 
   } else {
 	int draw_both = SceneMustDrawBoth(G);
+    float alpha = (SettingGetGlobal_b(G,cSetting_opaque_background) ? 1.0F : 0.0F);
 	 v=SettingGetfv(G,cSetting_bg_rgb);
     if(G->HaveGUI && G->ValidContext) {
       if(draw_both) {
@@ -1537,7 +1538,7 @@ void SceneMakeMovieImage(PyMOLGlobals *G) {
       } else {
         glDrawBuffer(GL_BACK);
       }
-      glClearColor(v[0],v[1],v[2],0.0);
+      glClearColor(v[0],v[1],v[2],alpha);
       glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
       SceneRender(G,NULL,0,0,NULL,0,0);
       glClearColor(0.0,0.0,0.0,1.0);

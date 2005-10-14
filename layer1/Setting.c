@@ -67,6 +67,9 @@ int SettingSetGlobalsFromPyList(PyMOLGlobals *G,PyObject *list)
   int use_display_lists = SettingGetGlobal_b(G,cSetting_use_display_lists);
   int max_threads = SettingGetGlobal_i(G,cSetting_max_threads);
   int nvidia_bugs = SettingGetGlobal_b(G,cSetting_nvidia_bugs);
+  int stereo_mode = SettingGetGlobal_i(G,cSetting_stereo_mode);
+  int stereo_double_pump_mono = SettingGetGlobal_b(G,cSetting_stereo_double_pump_mono);
+  int show_progress = SettingGetGlobal_b(G,cSetting_show_progress);
   register CSetting *I=G->Setting;
   if(list)
     if(PyList_Check(list)) 
@@ -84,7 +87,12 @@ int SettingSetGlobalsFromPyList(PyMOLGlobals *G,PyObject *list)
   SettingSet_b(I,cSetting_use_display_lists, use_display_lists);
   SettingSet_i(I,cSetting_max_threads, max_threads);
   SettingSet_i(I,cSetting_nvidia_bugs, nvidia_bugs);
-
+  
+  SettingSet_i(I,cSetting_stereo_mode, stereo_mode);
+  SettingSet_b(I,cSetting_stereo_double_pump_mono,stereo_double_pump_mono);
+  SettingSet_b(I,cSetting_full_screen,full_screen);
+  SettingSet_b(I,cSetting_show_progress,show_progress);
+     
   if(G->Option->presentation) {
       SettingSet_b(I,cSetting_full_screen,full_screen);
       SettingSet_b(I,cSetting_presentation,1);
