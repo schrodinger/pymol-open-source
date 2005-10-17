@@ -45,7 +45,7 @@ void OrthoFreeBlock(PyMOLGlobals *G,Block *block);
 
 void OrthoReshape(PyMOLGlobals *G,int width,int height,int force);
 int OrthoGetWidth(PyMOLGlobals *G);
-void OrthoDoDraw(PyMOLGlobals *G);
+void OrthoDoDraw(PyMOLGlobals *G,int render_mode);
 
 void OrthoPushMatrix(PyMOLGlobals *G);
 void OrthoPopMatrix(PyMOLGlobals *G);
@@ -95,6 +95,7 @@ void OrthoExecDeferred(PyMOLGlobals *G);
 int OrthoDeferredWaiting(PyMOLGlobals *G);
 
 void OrthoSetLoop(PyMOLGlobals *G,int flag, int l, int r, int t, int b);
+int OrthoGetRenderMode(PyMOLGlobals *G);
 #define OrthoLineLength 1024
 typedef char OrthoLineType[OrthoLineLength];
 

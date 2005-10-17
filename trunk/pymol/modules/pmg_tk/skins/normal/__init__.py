@@ -113,7 +113,8 @@ class Normal(PMGSkin):
             Frame,self.commandFrame,bd=0)
         row1.pack(side=TOP,fill=BOTH,expand=YES)
         btn_reset = self.buttonAdd(row1,'Reset',lambda s=self: s.cmd.do("_ reset"))
-        btn_reset = self.buttonAdd(row1,'Zoom',lambda s=self: s.cmd.do("_ zoom animate=1"))      
+        btn_reset = self.buttonAdd(row1,'Zoom',lambda s=self: s.cmd.do("_ zoom animate=1"))
+        btn_rtrace = self.buttonAdd(row1,'Draw',lambda s=self: s.cmd.do("_ draw"))        
         btn_rtrace = self.buttonAdd(row1,'Ray',lambda s=self: s.cmd.do("_ ray async=1"))
         btn_reset = self.buttonAdd(row1,'Rock',lambda s=self: s.cmd.do("_ rock"))
 
@@ -1385,6 +1386,20 @@ class Normal(PMGSkin):
         self.menuBar.addmenuitem('Background', 'command', 'Black Background',
                                          label='Black',
                                          command = lambda s=self: s.cmd.do("_ cmd.bg_color('black')"))
+
+        self.menuBar.addmenuitem('Background', 'separator', '')
+        
+        self.menuBar.addmenuitem('Background', 'checkbutton',
+                                 'Opaque Background Color',
+                                 label=self.pad+'Opaque',
+                                variable = self.setting.opaque_background,
+                                command = lambda s=self: s.setting.update('opaque_background'))
+
+        self.menuBar.addmenuitem('Background', 'checkbutton',
+                                 'Show Alpha Checker',
+                                 label=self.pad+'Show Alpha Checker',
+                                variable = self.setting.show_alpha_checker,
+                                command = lambda s=self: s.setting.update('show_alpha_checker'))
 
         self.menuBar.addcascademenu('Display', 'Color Space', 'Color Space',
                                              label='Color Space')

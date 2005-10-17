@@ -34,7 +34,6 @@ if __name__=='pymol.invocation':
 
     options = generic();
 
-    options.stereo_capable = 0
     options.deferred = []
     options.no_gui = 0
     options.internal_gui = 1
@@ -62,6 +61,8 @@ if __name__=='pymol.invocation':
     options.defer_builds_mode = 0
     options.full_screen = 0
     options.sphere_mode = -1
+    options.stereo_capable = 0
+    options.passive_stereo = 0
     
     if sys.platform[0:4] == 'irix':
         options.win_py = 240
@@ -251,6 +252,9 @@ if __name__=='pymol.invocation':
                           "_do__ set stereo_double_pump_mono,1,quiet=1")
                 if "M" in a: # Force mono on stereo hardware (all)
                     options.force_stereo = -1
+                if "j" in a: # Geowall: two side-by-side images
+                    options.passive_stereo = 1
+                    options.deferred.append("_do__ stereo on")
                 if "l" in a:
                     options.deferred.append("_do_spawn %s"%av.pop())
                 if "r" in a:

@@ -2220,6 +2220,8 @@ void SettingInitGlobal(PyMOLGlobals *G,int alloc,int reset_gui)
 
   if(G->StereoCapable || G->Option->blue_line) {
     SettingSet_i(I,cSetting_stereo_mode, 1); 
+  } else if(G->Option->passive_stereo) {
+    SettingSet_i(I,cSetting_stereo_mode, 4); 
   } else {
     SettingSet_i(I,cSetting_stereo_mode, 2);
   }
@@ -2620,6 +2622,7 @@ void SettingInitGlobal(PyMOLGlobals *G,int alloc,int reset_gui)
   SettingSet_f(I,cSetting_image_dots_per_inch, 0.0F); /* default is to leave it unspecified in PNG file */
   SettingSet_b(I,cSetting_opaque_background,1);
   SettingSet_b(I,cSetting_draw_frames,0);
+  SettingSet_b(I,cSetting_show_alpha_checker,0);
 
 }
 

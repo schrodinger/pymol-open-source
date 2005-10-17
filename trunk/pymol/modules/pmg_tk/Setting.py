@@ -147,6 +147,12 @@ class Setting:
         self.animation = IntVar()
         self.animation.set(int(cmd.get_setting_legacy('animation')))
 
+        self.opaque_background = IntVar()
+        self.opaque_background.set(int(cmd.get_setting_legacy('opaque_background')))
+
+        self.show_alpha_checker = IntVar()
+        self.show_alpha_checker.set(int(cmd.get_setting_legacy('show_alpha_checker')))
+
         self.F=[ None,
                     IntVar(),
                     IntVar(),
@@ -270,6 +276,12 @@ class Setting:
             'animation'        :
             (lambda s,a: (cmd.set(a,("%1.0f" % (s.animation.get())),log=1))),
 
+            'opaque_background'         :
+            (lambda s,a: (cmd.set(a,("%d" % s.opaque_background.get()),log=1))),
+
+            'show_alpha_checker'         :
+            (lambda s,a: (cmd.set(a,("%d" % s.show_alpha_checker.get()),log=1))),
+
             }
 
         self.update_code = {
@@ -353,6 +365,10 @@ class Setting:
             (lambda s,t: (s.stereo.set(t[1][0]!=0))),
             'animation':
             (lambda s,t: (s.animation.set(t[1][0]!=0))),         
+            'opaque_background':
+            (lambda s,t: (s.animation.set(t[1][0]!=0))),
+            'show_alpha_checker':
+            (lambda s,t: (s.animation.set(t[1][0]!=0))),       
           }
         self.active_list = [
             pymol.setting._get_index("ray_trace_frames"),
@@ -396,6 +412,8 @@ class Setting:
             pymol.setting._get_index("texture_fonts"),
             pymol.setting._get_index("stereo"),
             pymol.setting._get_index("animation"),
+            pymol.setting._get_index("opaque_background"),
+            pymol.setting._get_index("show_alpha_checker"),            
             ]
 
         self.active_dict = {}

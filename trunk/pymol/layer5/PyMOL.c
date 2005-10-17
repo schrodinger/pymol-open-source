@@ -571,6 +571,7 @@ typedef struct _CPyMOL {
   ov_word lex_image_dots_per_inch;
   ov_word lex_opaque_background;
   ov_word lex_draw_frames;
+  ov_word lex_show_alpha_checker;
 } _CPyMOL;
 
 /* convenience functions -- inline */
@@ -1150,6 +1151,7 @@ static OVstatus PyMOL_InitAPI(CPyMOL *I)
   LEX_SETTING(image_dots_per_inch, 434);
   LEX_SETTING(opaque_background, 435);
   LEX_SETTING(draw_frames, 436);
+  LEX_SETTING(show_alpha_checker, 437);
 
   return_OVstatus_SUCCESS;
 }
@@ -1712,6 +1714,8 @@ const static CPyMOLOptions Defaults = {
   0, /* defer builds mode */
   0, /* full screen mode */
   -1, /* sphere mode */
+  0, /* stereo capable */
+  0, /* passive stereo */
 };
 
 CPyMOLOptions *PyMOLOptions_New(void)
@@ -2096,18 +2100,19 @@ void PyMOL_Draw(CPyMOL *I)
     glDisable(GL_LINE_SMOOTH);
     glDisable(GL_NORMALIZE);
     glDisable(GL_POLYGON_SMOOTH);
-
+    
 #ifdef _MACPYMOL_XCODE
-   { /* on a mac, this can change if we've switched contexts...*/
-     GLboolean state;
-		glGetBooleanv(GL_STEREO, &state);
-		G->StereoCapable = (int) state;
+    { /* on a mac, this can change if we've switched contexts...*/
+      GLboolean state;
+      glGetBooleanv(GL_STEREO, &state);
+      G->StereoCapable = (int) state;
     }
 #endif
-
-  } 
-
+    
+  }
+  
   I->RedisplayFlag = false;
+  
   OrthoBusyPrime(G);
   ExecutiveDrawNow(G);
 

@@ -581,7 +581,7 @@ VV(    I->width+I->border,I->text_border-(I->border+I->height), I->border+I->tex
 
   og->GSet[0] = gs;
   og->NGSet = 1;
-  og->Obj.Context=1;
+  og->Obj.Context=1; /* unit window */
   gs->Obj = (ObjectGadget*)I;
 
   ObjectGadgetRampUpdateCGO(I,gs);

@@ -1427,6 +1427,8 @@ void PGetOptions(CPyMOLOptions *rec)
   rec->full_screen = PyInt_AsLong(PyObject_GetAttrString(options,"full_screen"));
   load_str = PyString_AsString(PyObject_GetAttrString(options,"after_load_script"));
   rec->sphere_mode = PyInt_AsLong(PyObject_GetAttrString(options,"sphere_mode"));
+  rec->stereo_capable = PyInt_AsLong(PyObject_GetAttrString(options,"stereo_capable"));
+  rec->passive_stereo= PyInt_AsLong(PyObject_GetAttrString(options,"passive_stereo"));
   if(load_str) {
     if(load_str[0]) {
       UtilNCopy(rec->after_load_script,load_str,PYMOL_MAX_OPT_STR);

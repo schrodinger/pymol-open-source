@@ -5014,7 +5014,8 @@ int ExecutiveStereo(PyMOLGlobals *G,int flag)
 		PSGIStereo(flag); /* does this have any effect anymore? */
         break;
       case 2: /* cross-eye stereo*/
-      case 3:
+      case 3: /* wall-eye */
+      case 4: /* geo-wall */
         SceneSetStereo(G,flag);
         break;
       }
@@ -6651,7 +6652,19 @@ void ExecutiveDrawNow(PyMOLGlobals *G)
     if(WizardUpdate(G))
       SceneUpdate(G);
 
-    OrthoDoDraw(G);
+    if(SettingGetGlobal_i(G,cSetting_stereo_mode)==4) {
+
+      int width =  G->Option->winX;
+      int height = G->Option->winY;
+      
+      glViewport(0,0,width/2,height);
+      OrthoDoDraw(G,1);
+      OrthoDoDraw(G,2);
+      glViewport(0,0,width,height);
+
+    } else {
+      OrthoDoDraw(G,0);
+    }
 
     PyMOL_NeedSwap(G->PyMOL);
   }
