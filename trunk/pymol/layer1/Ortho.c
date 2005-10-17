@@ -1788,7 +1788,7 @@ void OrthoPushMatrix(PyMOLGlobals *G)
                  I->ViewPort[2],I->ViewPort[3]);
       break;
     default:
-      glViewport(I->ViewPort[0]+1,I->ViewPort[1],I->ViewPort[2],I->ViewPort[3]);
+      glViewport(I->ViewPort[0],I->ViewPort[1],I->ViewPort[2],I->ViewPort[3]);
     }
 
     glMatrixMode(GL_PROJECTION);
