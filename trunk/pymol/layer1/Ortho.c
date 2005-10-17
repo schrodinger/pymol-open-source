@@ -1069,6 +1069,7 @@ void OrthoDoDraw(PyMOLGlobals *G,int render_mode)
       }    
     } else {
       times = 1;
+      double_pump=false;
     }
     
     if(render&&(render_mode<2))
@@ -1077,7 +1078,7 @@ void OrthoDoDraw(PyMOLGlobals *G,int render_mode)
     glClearColor(0.0,0.0,0.0,1.0);
     
     while(times--) {
-      
+
       switch(times) {
       case 1:
         glDrawBuffer(GL_BACK_LEFT);
@@ -1203,7 +1204,7 @@ void OrthoDoDraw(PyMOLGlobals *G,int render_mode)
       if(Feedback(G,FB_OpenGL,FB_Debugging))
         PyMOLCheckOpenGLErr("OrthoDoDraw final checkpoint");
 
-    }
+    } /* while */
   }
 
   I->DirtyFlag =false;
