@@ -2464,10 +2464,10 @@ int RayAntiThread(CRayAntiThreadInfo *T)
               
               c = (unsigned char*)(pDst++);
               
-              *(c++) = c1;
-              *(c++) = c2;
-              *(c++) = c3;
-              *(c++) = c4>>6;
+              *(c++) = (unsigned char)c1;
+              *(c++) = (unsigned char)c2;
+              *(c++) = (unsigned char)c3;
+              *(c++) = (unsigned char)(c4>>6);
             }
           }
           break;
@@ -2569,10 +2569,10 @@ int RayAntiThread(CRayAntiThreadInfo *T)
               
               c = (unsigned char*)(pDst++);
               
-              *(c++) = c1;
-              *(c++) = c2;
-              *(c++) = c3;
-              *(c++) = c4>>6;
+              *(c++) = (unsigned char)c1;
+              *(c++) = (unsigned char)c2;
+              *(c++) = (unsigned char)c3;
+              *(c++) = (unsigned char)(c4>>6);
             }
           }
           break;
@@ -2704,10 +2704,10 @@ int RayAntiThread(CRayAntiThreadInfo *T)
               
               c = (unsigned char*)(pDst++);
               
-              *(c++) = c1;
-              *(c++) = c2;
-              *(c++) = c3;
-              *(c++) = c4>>7;
+              *(c++) = (unsigned char)c1;
+              *(c++) = (unsigned char)c2;
+              *(c++) = (unsigned char)c3;
+              *(c++) = (unsigned char)(c4>>7);
             }
           }
           break;
