@@ -1526,14 +1526,14 @@ int OrthoButton(PyMOLGlobals *G,int button,int state,int x,int y,int mod)
   int handled = 0; 
 
 
+  switch(button) {
+  case 3:
+  case 4:
+    block = SceneGetBlock(G);
+    break;
+  }
+  
   if(I->WrapXFlag) {
-
-    switch(button) {
-    case 3:
-    case 4:
-      x = 1;
-    }
-
     if(state==P_GLUT_DOWN) {
       x = get_wrap_x(x,NULL,G->Option->winX);
     } else {
@@ -1541,8 +1541,6 @@ int OrthoButton(PyMOLGlobals *G,int button,int state,int x,int y,int mod)
     }
   }
 
-
-  
   OrthoRemoveSplash(G);
   I->X=x;
   I->Y=y;
@@ -1550,44 +1548,35 @@ int OrthoButton(PyMOLGlobals *G,int button,int state,int x,int y,int mod)
   I->LastY = y;
   I->LastModifiers = mod;
 
-  if(state==P_GLUT_DOWN)
-	 {
-		I->ActiveButton = button;
-		if(I->GrabbedBy)
-		  {
-			 if(I->GrabbedBy->inside)
-				block = BlockRecursiveFind(I->GrabbedBy->inside,x,y);
-			 else
-				block = I->GrabbedBy;
-		  }
-		else
-		  block = OrthoFindBlock(G,x,y);
-		if(block)
-		  {
-			 I->ClickedIn = block;
-			 if(block->fClick)
-				{
-				  handled = block->fClick(block,button,x,y,mod);
-				}
-		  }
-	 }
-  else if(state==P_GLUT_UP)
-	 {
-      if(I->GrabbedBy)
-        {
-			 block=I->GrabbedBy;
-			 if(block->fRelease)
-            handled = block->fRelease(block,button,x,y,mod);
-			 I->ClickedIn = NULL;
-        }
-		if(I->ClickedIn)
-		  {
-			 block=I->ClickedIn;
-			 if(block->fRelease)
-            handled = block->fRelease(block,button,x,y,mod);
-			 I->ClickedIn = NULL;
-		  }
-	 }
+  if(state==P_GLUT_DOWN) {
+    I->ActiveButton = button;
+    if(I->GrabbedBy) {
+      if(I->GrabbedBy->inside)
+        block = BlockRecursiveFind(I->GrabbedBy->inside,x,y);
+      else
+        block = I->GrabbedBy;
+    } else if(!block)
+      block = OrthoFindBlock(G,x,y);
+    if(block) {
+      I->ClickedIn = block;
+      if(block->fClick) {
+        handled = block->fClick(block,button,x,y,mod);
+      }
+    }
+  } else if(state==P_GLUT_UP) {
+    if(I->GrabbedBy) {
+      block=I->GrabbedBy;
+      if(block->fRelease)
+        handled = block->fRelease(block,button,x,y,mod);
+      I->ClickedIn = NULL;
+    }
+    if(I->ClickedIn) {
+      block=I->ClickedIn;
+      if(block->fRelease)
+        handled = block->fRelease(block,button,x,y,mod);
+      I->ClickedIn = NULL;
+    }
+  }
 #if 0
   if(block&&!handled) {
     if(SceneGetBlock(G)==block) {

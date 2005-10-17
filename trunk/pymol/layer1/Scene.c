@@ -5157,6 +5157,8 @@ void SceneRender(PyMOLGlobals *G,Pickable *pick,int x,int y,
           "Scene-Warning: glViewport failure.\n"
           ENDFB(G);
       }
+      if(stereo_mode>3) stereo_mode = 0;
+      stereo_as_mono_matrix = true;
       width_scale = ((float)(oversize_width))/I->Width;
     } else {
       glViewport(I->Block->rect.left,I->Block->rect.bottom,I->Width,I->Height);
