@@ -2142,8 +2142,8 @@ void SceneDraw(Block *block)
             register unsigned int a,b;
             unsigned int *p=(unsigned int*)data;
             unsigned int *q=tmp_buffer;
-            for(a=0;a<height;a++) {
-              for(b=0;b<width;b++) {
+            for(a=0;a<(unsigned int)height;a++) {
+              for(b=0;b<(unsigned int)width;b++) {
                 unsigned char *qq = (unsigned char*)q;
                 unsigned char *pp = (unsigned char*)p;
                 unsigned char bg;
