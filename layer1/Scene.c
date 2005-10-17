@@ -93,6 +93,7 @@ typedef struct {
 
 /* allow up to 10 seconds at 30 FPS */
 
+#define TRN_BKG 0x30
 #define MAX_ANI_ELEM 300
 
 struct _CScene {
@@ -122,7 +123,7 @@ struct _CScene {
   double RockTime;
   int DirtyFlag;
   int ChangedFlag;
-  int CopyFlag,CopyNextFlag,CopiedFromOpenGL;
+  int CopyFlag,CopyNextFlag,CopiedFromOpenGL,CopyForced;
   int NFrame;
   ImageType *Image;
   int MovieOwnsImageFlag;
@@ -164,8 +165,8 @@ int SceneMustDrawBoth(PyMOLGlobals *G)
 {
   CScene *I=G->Scene;
   return (G->StereoCapable &&
-    ((I->StereoMode==1) ||
-     SettingGetGlobal_b(G,cSetting_stereo_double_pump_mono)));
+          ((I->StereoMode==1) || 
+           SettingGetGlobal_b(G,cSetting_stereo_double_pump_mono)));
 }
 
 static int SceneDeferClickWhen(Block *block, int button, int x, int y, double when);
@@ -652,7 +653,7 @@ int SceneMultipick(PyMOLGlobals *G,Multipick *smp)
   if(((int)SettingGet(G,cSetting_overlay))&&((int)SettingGet(G,cSetting_text)))
     SceneRender(G,NULL,0,0,NULL,0,0); /* remove overlay if present */
   SceneDontCopyNext(G);
-  if(I->StereoMode>1) {
+  if((I->StereoMode>1)&&(I->StereoMode<4)) {
     smp->x = smp->x % (I->Width/2);
   }
   SceneRender(G,NULL,0,0,smp,0,0);
@@ -748,10 +749,17 @@ void SceneUpdateStereoMode(PyMOLGlobals *G)
 void SceneSetStereo(PyMOLGlobals *G,int flag)
 {
   register CScene *I=G->Scene;
-  if(flag) 
-    I->StereoMode=(int)SettingGet(G,cSetting_stereo_mode);
-  else
-    I->StereoMode=false;
+  int cur_stereo = I->StereoMode;
+
+  if(flag) {
+    I->StereoMode=(int)SettingGet(G,cSetting_stereo_mode); 
+  } else {
+    I->StereoMode=0;
+  }
+
+  if((cur_stereo!=I->StereoMode)&&((cur_stereo==4)||(I->StereoMode==4)))
+    OrthoReshape(G,G->Option->winX,G->Option->winY,true);
+
   SettingSetGlobal_b(G,cSetting_stereo,flag);
   SceneInvalidate(G);
 }
@@ -1150,7 +1158,8 @@ static int SceneMakeSizedImage(PyMOLGlobals *G,int width,
         
         I->DirtyFlag = false;
         I->CopyFlag = true;
-        
+        I->CopyForced = true;
+
         I->CopiedFromOpenGL = false;
         I->MovieOwnsImageFlag = false;
       }
@@ -1860,6 +1869,7 @@ int SceneLoadPNG(PyMOLGlobals *G,char *fname,int movie_flag,int stereo,int quiet
     }
         
     I->CopyFlag=true;
+    I->CopyForced=true;
     I->CopiedFromOpenGL = false;
     OrthoRemoveSplash(G);
     SettingSet(G,cSetting_text,0.0);
@@ -1888,31 +1898,52 @@ int SceneLoadPNG(PyMOLGlobals *G,char *fname,int movie_flag,int stereo,int quiet
   }
   return(ok);
 }
+/*static unsigned int byte_max(unsigned int value)
+{
+  return (value>0xFF) ? 0xFF : value;
+}
+*/
 /*========================================================================*/
 void SceneDraw(Block *block)
 {
   PyMOLGlobals *G=block->G;
   register CScene *I=G->Scene;
   int overlay,text;
-
+  
   if(G->HaveGUI && G->ValidContext) {
+
     overlay = (int)SettingGet(G,cSetting_overlay);
     text = (int)SettingGet(G,cSetting_text);
 
     if(((!text)||overlay) &&
        I->CopyFlag && 
        I->Image && I->Image->data) {
+      
+      int show_alpha = SettingGetGlobal_b(G,cSetting_show_alpha_checker);
+      float *bg_color=SettingGetfv(G,cSetting_bg_rgb);              
+      unsigned int bg_rr,bg_r = (unsigned int)(255*bg_color[0]);
+      unsigned int bg_gg,bg_g = (unsigned int)(255*bg_color[1]);
+      unsigned int bg_bb,bg_b = (unsigned int)(255*bg_color[2]);
+      
       unsigned char *data = I->Image->data;
+
+      int width = I->Image->width;
+      int height = I->Image->height;
+
+      
       if(I->Image->stereo) {
         int buffer;
         glGetIntegerv(GL_DRAW_BUFFER,(GLint*)&buffer);
-        if(buffer==GL_BACK_RIGHT) 
+        if(buffer==GL_BACK_RIGHT) /* hardware stereo */
           data += I->Image->size; 
+        else if(OrthoGetRenderMode(G)==2) { /* passive/geowall stereo */
+          data += I->Image->size; 
+        }
         /* if drawing the right buffer, then draw the right image */
       }
       
-      if((I->Image->height>I->Height)||
-         (I->Image->width>I->Width)) { /* image is oversize */
+      if((height>I->Height)||
+         (width>I->Width)) { /* image is oversize */
         {
           int factor = 1;
           int shift = 0;
@@ -1945,10 +1976,10 @@ void SceneDraw(Block *block)
               unsigned char *q = buffer;
               register unsigned char *pp, *ppp, *pppp;
               register int a,b,c,d;
-              register unsigned int c1,c2,c3,c4;
+              register unsigned int c1,c2,c3,c4,alpha,tot,bg;
               unsigned int factor_col_bytes = factor * 4;
               unsigned int factor_row_bytes = factor * src_row_bytes;
-                  
+              
               shift = shift + shift;
               for(b=0;b<tmp_height;b++) { /* rows */
                 pp = p;
@@ -1959,26 +1990,48 @@ void SceneDraw(Block *block)
                   }
                 } else {
                   for(a=0;a<tmp_width;a++) { /* cols */
-                    c1 = c2 = c3 = c4 = 0;
                     ppp = pp;
                     if((!a)||(a==(tmp_width-1))) { /* border */
                       *((unsigned int*)(q)) = color_word;
                       q+=4;
                     } else {
+                      c1 = c2 = c3 = c4 = tot = 0;
+
+                      if(show_alpha&&(((a>>4)+(b>>4))&0x1)) { /* introduce checkerboard */
+                        bg_rr = ((bg_r&0x80) ? bg_r - TRN_BKG : bg_r + TRN_BKG);
+                        bg_gg = ((bg_g&0x80) ? bg_g - TRN_BKG : bg_g + TRN_BKG);
+                        bg_bb = ((bg_b&0x80) ? bg_b - TRN_BKG : bg_b + TRN_BKG);
+                      } else {
+                        bg_rr = bg_r;
+                        bg_gg = bg_g;
+                        bg_bb = bg_b;
+                      }
+
                       for(d=0;d<factor;d++) { /* box rows */
                         pppp = ppp;
                         for(c=0;c<factor;c++) { /* box cols */
-                          c1 += *(pppp++);
-                          c2 += *(pppp++);
-                          c3 += *(pppp++);
-                          c4 += *(pppp++);
+                          alpha = pppp[3];
+                          c1 += *(pppp++) * alpha;
+                          c2 += *(pppp++) * alpha;
+                          c3 += *(pppp++) * alpha;
+                          pppp++;
+                          c4 += alpha;
+                          tot += 0xFF;
                         }
                         ppp += src_row_bytes;
                       }
-                      *(q++)= (c1>>shift);
-                      *(q++)= (c2>>shift);
-                      *(q++)= (c3>>shift);
-                      *(q++)= (c4>>shift);
+                      if(c4) {
+                        bg = tot-c4;
+                        *(q++)= (c1 + bg_rr*bg)/tot;
+                        *(q++)= (c2 + bg_gg*bg)/tot;
+                        *(q++)= (c3 + bg_bb*bg)/tot;
+                        *(q++)= 0xFF;
+                      } else {
+                        *(q++)= bg_rr;
+                        *(q++)= bg_gg;
+                        *(q++)= bg_bb;
+                        *(q++)= 0xFF;
+                      }
                       pp += factor_col_bytes;
                     }
                   }
@@ -2016,57 +2069,119 @@ void SceneDraw(Block *block)
                           y_pos + I->Block->rect.bottom);
           }
         }
-      } else {
-        int width,height;
-
-        width = I->Image->width;
-        height = I->Image->height;
-            
-        if((width<I->Width)||(height<I->Height)) {
-              
-          if(((I->Width-width)>2) && ((I->Height-height)>2)) { /* but a border around image */
-            unsigned int color_word;
-            float rgba[4] = { 0.0F, 0.0F, 0.0F, 1.0F };
-            register unsigned int tmp_height = height+2;
-            register unsigned int tmp_width = width+2;
-            unsigned int n_word = tmp_height * tmp_width;
-            unsigned int *tmp_buffer = Alloc(unsigned int,n_word);
-            ColorGetBkrdContColor(G,rgba,false);
-            color_word = ColorGet32BitWord(G,rgba);
-
-            if(tmp_buffer) {
-              register unsigned int a,b;
-              unsigned int *p=(unsigned int*)data;
-              unsigned int *q=tmp_buffer;
-              for(a=0;a<tmp_height;a++) {
-                if((!a)||(a==(tmp_height-1))) {
-                  for(b=0;b<tmp_width;b++) 
+      } else if(((width<I->Width)||(height<I->Height)) &&
+                ((I->Width-width)>2) && ((I->Height-height)>2)) { /* but a border around image */
+        
+        unsigned int color_word;
+        float rgba[4] = { 0.0F, 0.0F, 0.0F, 1.0F };
+        register unsigned int tmp_height = height+2;
+        register unsigned int tmp_width = width+2;
+        unsigned int n_word = tmp_height * tmp_width;
+        unsigned int *tmp_buffer = Alloc(unsigned int,n_word);
+        ColorGetBkrdContColor(G,rgba,false);
+        color_word = ColorGet32BitWord(G,rgba);
+        
+        if(tmp_buffer) {
+          register unsigned int a,b;
+          unsigned int *p=(unsigned int*)data;
+          unsigned int *q=tmp_buffer;
+            for(a=0;a<tmp_height;a++) {
+              if((!a)||(a==(tmp_height-1))) {
+                for(b=0;b<tmp_width;b++) 
+                  *(q++) = color_word;
+              } else {
+                for(b=0;b<tmp_width;b++) {
+                  if((!b)||(b==(tmp_width-1))) {        
                     *(q++) = color_word;
-                } else {
-                  for(b=0;b<tmp_width;b++) {
-                    if((!b)||(b==(tmp_width-1))) {        
-                      *(q++) = color_word;
+                  } else {
+                    unsigned char *qq = (unsigned char*)q;
+                    unsigned char *pp = (unsigned char*)p;
+                    unsigned char bg;
+                    if(show_alpha&&(((a>>4)+(b>>4))&0x1)) { /* introduce checkerboard */
+                      bg_rr = ((bg_r&0x80) ? bg_r - TRN_BKG : bg_r + TRN_BKG);
+                      bg_gg = ((bg_g&0x80) ? bg_g - TRN_BKG : bg_g + TRN_BKG);
+                      bg_bb = ((bg_b&0x80) ? bg_b - TRN_BKG : bg_b + TRN_BKG);
                     } else {
-                      *(q++) = *(p++);
+                      bg_rr = bg_r;
+                      bg_gg = bg_g;
+                      bg_bb = bg_b;
                     }
+                    if(pp[3]) {
+                      bg = 0xFF-pp[3];
+                      *(qq++)= (pp[0]*pp[3] + bg_rr*bg)/0xFF;
+                      *(qq++)= (pp[1]*pp[3] + bg_gg*bg)/0xFF;
+                      *(qq++)= (pp[2]*pp[3] + bg_bb*bg)/0xFF;
+                      *(qq++)= 0xFF;
+                    } else {
+                      *(qq++)= bg_rr;
+                      *(qq++)= bg_gg;
+                      *(qq++)= bg_bb;
+                      *(qq++)= 0xFF;
+                    }
+                    q++;
+                    p++;
                   }
                 }
               }
-              glRasterPos3i((int)((I->Width-tmp_width)/2+I->Block->rect.left),
-                            (int)((I->Height-tmp_height)/2+I->Block->rect.bottom),-10);
-              PyMOLDrawPixels(tmp_width,tmp_height,GL_RGBA,GL_UNSIGNED_BYTE,tmp_buffer);
-                  
             }
-            FreeP(tmp_buffer);
-          } else {
-            glRasterPos3i((int)((I->Width-width)/2+I->Block->rect.left),
-                          (int)((I->Height-height)/2+I->Block->rect.bottom),-10);
-            PyMOLDrawPixels(width,height,GL_RGBA,GL_UNSIGNED_BYTE,data); 
-          }
-        } else {
-          glRasterPos3i(I->Block->rect.left,I->Block->rect.bottom,-10);
-          PyMOLDrawPixels(width,height,GL_RGBA,GL_UNSIGNED_BYTE,data);            
+            glRasterPos3i((int)((I->Width-tmp_width)/2+I->Block->rect.left),
+                          (int)((I->Height-tmp_height)/2+I->Block->rect.bottom),-10);
+            PyMOLDrawPixels(tmp_width,tmp_height,GL_RGBA,GL_UNSIGNED_BYTE,tmp_buffer);
+            
         }
+        FreeP(tmp_buffer);
+      } else if(I->CopyForced) { /* near-exact fit */
+          unsigned int color_word;
+          float rgba[4] = { 0.0F, 0.0F, 0.0F, 1.0F };
+          unsigned int n_word = height * width;
+          unsigned int *tmp_buffer = Alloc(unsigned int,n_word);
+          ColorGetBkrdContColor(G,rgba,false);
+          color_word = ColorGet32BitWord(G,rgba);
+          
+          if(tmp_buffer) {
+            register unsigned int a,b;
+            unsigned int *p=(unsigned int*)data;
+            unsigned int *q=tmp_buffer;
+            for(a=0;a<height;a++) {
+              for(b=0;b<width;b++) {
+                unsigned char *qq = (unsigned char*)q;
+                unsigned char *pp = (unsigned char*)p;
+                unsigned char bg;
+                if(show_alpha&&(((a>>4)+(b>>4))&0x1)) { /* introduce checkerboard */
+                    bg_rr = ((bg_r&0x80) ? bg_r - TRN_BKG : bg_r + TRN_BKG);
+                    bg_gg = ((bg_g&0x80) ? bg_g - TRN_BKG : bg_g + TRN_BKG);
+                    bg_bb = ((bg_b&0x80) ? bg_b - TRN_BKG : bg_b + TRN_BKG);
+                  } else {
+                    bg_rr = bg_r;
+                    bg_gg = bg_g;
+                    bg_bb = bg_b;
+                  }
+                  if(pp[3]) {
+                    bg = 0xFF-pp[3];
+                    *(qq++)= (pp[0]*pp[3] + bg_rr*bg)/0xFF;
+                    *(qq++)= (pp[1]*pp[3] + bg_gg*bg)/0xFF;
+                    *(qq++)= (pp[2]*pp[3] + bg_bb*bg)/0xFF;
+                    *(qq++)= 0xFF;
+                  } else {
+                    *(qq++)= bg_rr;
+                    *(qq++)= bg_gg;
+                    *(qq++)= bg_bb;
+                    *(qq++)= 0xFF;
+                  }
+                  q++;
+                  p++;
+              }
+            }
+          }
+          glRasterPos3i((int)((I->Width-width)/2+I->Block->rect.left),
+                        (int)((I->Height-height)/2+I->Block->rect.bottom),-10);
+          PyMOLDrawPixels(width,height,GL_RGBA,GL_UNSIGNED_BYTE,tmp_buffer);
+          FreeP(tmp_buffer);
+      } else { /* not a forced copy, so don't show/blend alpha */
+        glRasterPos3i((int)((I->Width-width)/2+I->Block->rect.left),
+                      (int)((I->Height-height)/2+I->Block->rect.bottom),-10);
+        PyMOLDrawPixels(width,height,GL_RGBA,GL_UNSIGNED_BYTE,data); 
+        
       }
       I->RenderTime = -I->LastRender;
       I->LastRender = UtilGetSeconds(G);
@@ -2586,7 +2701,7 @@ static int SceneClick(Block *block,int button,int x,int y,
     y=y-I->Block->margin.bottom;
     x=x-I->Block->margin.left;
     
-    if(I->StereoMode>1) 
+    if((I->StereoMode>1)&&(I->StereoMode<4)) 
       x = get_stereo_x(x,NULL,I->Width);
 
     I->LastX=x;
@@ -2595,7 +2710,7 @@ static int SceneClick(Block *block,int button,int x,int y,
   case cButModePickAtom1:
   case cButModePickAtom:
   case cButModeMenu:
-    if(I->StereoMode>1)
+    if((I->StereoMode>1)&&(I->StereoMode<4))
       x = get_stereo_x(x,NULL,I->Width);
 
     if(SceneDoXYPick(G,x,y)) {
@@ -2718,7 +2833,7 @@ static int SceneClick(Block *block,int button,int x,int y,
     break;
   case cButModePickBond:
   case cButModePkTorBnd:
-    if(I->StereoMode>1)
+    if((I->StereoMode>1)&&(I->StereoMode<4))
       x = get_stereo_x(x,NULL,I->Width);
 
     if(SceneDoXYPick(G,x,y)) {
@@ -2808,7 +2923,7 @@ static int SceneClick(Block *block,int button,int x,int y,
   case cButModeTorFrag:
   case cButModeRotFrag:
   case cButModeMoveAtom:
-    if(I->StereoMode>1)
+    if((I->StereoMode>1)&&(I->StereoMode<4))
       x = get_stereo_x(x,NULL,I->Width);
 
     if(SceneDoXYPick(G,x,y)) {
@@ -2866,7 +2981,7 @@ static int SceneClick(Block *block,int button,int x,int y,
   case cButModeSimpleClick:
   case cButModeOrigAt:
   case cButModeCent:
-    if(I->StereoMode>1)
+    if((I->StereoMode>1)&&(I->StereoMode<4))
       x = get_stereo_x(x,NULL,I->Width);
 
     if(SceneDoXYPick(G,x,y)) {
@@ -3526,19 +3641,13 @@ static int SceneDrag(Block *block,int x,int y,int mod,double when)
         ObjectGadgetGetVertex(gad,I->LastPicked.index,I->LastPicked.bond,v1);
 
         vScale = SceneGetScreenVertexScale(G,v1);
-        if(I->StereoMode>1) {
+        if((I->StereoMode>1)&&(I->StereoMode<4)) {
           vScale*=2;
           x = get_stereo_x(x,&I->LastX,I->Width);
         }
         
         /* transform into model coodinate space */
         switch(obj->Context) {
-        case 0:
-          v2[0] = (x-I->LastX)*vScale;
-          v2[1] = (y-I->LastY)*vScale;
-          v2[2] = 0;
-          MatrixInvTransformC44fAs33f3f(I->RotMatrix,v2,v2); 
-          break;
         case 1:
           {
             float divisor;
@@ -3549,6 +3658,13 @@ static int SceneDrag(Block *block,int x,int y,int mod,double when)
             v2[1] = (y-I->LastY)/divisor;
             v2[2] = 0;
           }
+          break;
+        default:
+        case 0:
+          v2[0] = (x-I->LastX)*vScale;
+          v2[1] = (y-I->LastY)*vScale;
+          v2[2] = 0;
+          MatrixInvTransformC44fAs33f3f(I->RotMatrix,v2,v2); 
           break;
         }
         add3f(v1,v2,v2);
@@ -3584,7 +3700,7 @@ static int SceneDrag(Block *block,int x,int y,int mod,double when)
                                          I->LastPicked.index,v1)) {
             /* scale properly given the current projection matrix */
             vScale = SceneGetScreenVertexScale(G,v1);
-            if(I->StereoMode>1) {
+            if((I->StereoMode>1)&&(I->StereoMode<4)) {
               vScale*=2;
               x = get_stereo_x(x,&I->LastX,I->Width);
             }
@@ -3622,7 +3738,7 @@ static int SceneDrag(Block *block,int x,int y,int mod,double when)
 
               vScale = SceneGetScreenVertexScale(G,v1);
 
-              if(I->StereoMode>1) {
+              if((I->StereoMode>1)&&(I->StereoMode<4)) {
                 vScale*=2;
                 x = get_stereo_x(x,&I->LastX,I->Width);
               }
@@ -3655,7 +3771,7 @@ static int SceneDrag(Block *block,int x,int y,int mod,double when)
     SceneNoteMouseInteraction(G);
 
     vScale = SceneGetScreenVertexScale(G,I->Origin);
-    if(I->StereoMode>1) {
+    if((I->StereoMode>1)&&(I->StereoMode<4)) {
       vScale*=2;
       x = get_stereo_x(x,&I->LastX,I->Width);
     }
@@ -3698,7 +3814,7 @@ static int SceneDrag(Block *block,int x,int y,int mod,double when)
     SceneNoteMouseInteraction(G);
 
     eff_width = I->Width;
-    if(I->StereoMode>1) {
+    if((I->StereoMode>1)&&(I->StereoMode<4)) {
       eff_width = I->Width/2;
       x = get_stereo_x(x,&I->LastX,I->Width);
     }
@@ -4191,6 +4307,9 @@ void SceneReshape(Block *block,int width,int height)
   }
   SceneDirty(G);
 
+  if(I->CopyFlag&&(!I->CopyForced)) {
+    SceneInvalidateCopy(G,false);
+  }
   /*MovieClearImages(G);*/
   MovieSetSize(G,I->Width,I->Height);
 
@@ -4322,6 +4441,9 @@ void SceneRay(PyMOLGlobals *G,
   case 2:
   case 3:
     ray_width = ray_width/2;
+    stereo_hand=2;
+    break;
+  case 4:
     stereo_hand=2;
     break;
   default:
@@ -4499,6 +4621,7 @@ void SceneRay(PyMOLGlobals *G,
       I->Image->height = ray_height;
       I->DirtyFlag=false;
       I->CopyFlag = true;
+      I->CopyForced = true;
       I->CopiedFromOpenGL = false;
       I->MovieOwnsImageFlag = false;
       break;
@@ -4575,6 +4698,7 @@ void SceneRay(PyMOLGlobals *G,
   if(stereo_image) {
     switch(I->StereoMode) {
     case 1:
+    case 4:
       /* merge the two images into one pointer */
       I->Image->data = Realloc(I->Image->data,unsigned char,I->Image->size*2);
       UtilCopyMem(I->Image->data+I->Image->size,
@@ -4662,6 +4786,7 @@ void SceneCopy(PyMOLGlobals *G,GLenum buffer,int force)
       }
       I->CopyFlag = true;
       I->CopiedFromOpenGL = true;
+      I->CopyForced = force;
     }
   }
 }
@@ -4775,7 +4900,7 @@ int SceneRenderCached(PyMOLGlobals *G)
 /*========================================================================*/
 static void SceneRenderAll(PyMOLGlobals *G,SceneUnitContext *context,
                            float *normal,Pickable **pickVLA,
-                           int pass,int fat, float width_scale)
+                           int pass,int fat, float width_scale,int slot)
 {
   register CScene *I=G->Scene;
   ObjRec *rec=NULL;
@@ -4789,6 +4914,7 @@ static void SceneRenderAll(PyMOLGlobals *G,SceneUnitContext *context,
   info.fog_end = I->FogEnd;
   info.pmv_matrix = I->PmvMatrix;
   info.front = I->FrontSafe;
+  info.slot = slot;
   if(I->StereoMode) {
     float buffer;
 	float stAng,stShift;
@@ -4816,12 +4942,6 @@ static void SceneRenderAll(PyMOLGlobals *G,SceneUnitContext *context,
         glLineWidth(3.0);
       if(rec->obj->fRender)
         switch(rec->obj->Context) {
-        case 0: 
-          if(normal) 
-            glNormal3fv(normal);
-          info.state = ObjectGetCurrentState(rec->obj,false);
-          rec->obj->fRender(rec->obj,&info);
-          break;
         case 1:
           {
             glPushAttrib(GL_LIGHTING_BIT);
@@ -4866,6 +4986,15 @@ static void SceneRenderAll(PyMOLGlobals *G,SceneUnitContext *context,
 
           }
           break;
+        case 2:
+          break;
+        case 0: /* context/grid 0 is all slots */
+        default:
+          if(normal) 
+            glNormal3fv(normal);
+          info.state = ObjectGetCurrentState(rec->obj,false);
+          rec->obj->fRender(rec->obj,&info);
+          break;          
         }
       glPopMatrix();
     }
@@ -4902,14 +5031,17 @@ void SceneRender(PyMOLGlobals *G,Pickable *pick,int x,int y,
   int pass;
   float fov;
   int must_render_stereo = false;
-  int mono_as_stereo = false;
+  int mono_as_quad_stereo = false;
+  int stereo_as_mono_matrix = false;
   int debug_pick = 0;
   double now;
   GLenum render_buffer;
   SceneUnitContext context;
   float vv[4];
   float width_scale = 0.0F;
-  
+  int first_grid_slot=0, last_grid_slot=0;
+  int stereo_mode = I->StereoMode;
+
   PRINTFD(G,FB_Scene)
     " SceneRender: entered. pick %p x %d y %d smp %p\n",
     (void*)pick,x,y,(void*)smp
@@ -4946,7 +5078,7 @@ void SceneRender(PyMOLGlobals *G,Pickable *pick,int x,int y,
     SceneFromViewElem(G,I->ani_elem+cur);
   }
   
-  if(I->StereoMode>1)
+  if((stereo_mode>1)&&(stereo_mode<4))
     aspRat=aspRat/2;
 
   fov=SettingGet(G,cSetting_field_of_view);
@@ -4955,33 +5087,39 @@ void SceneRender(PyMOLGlobals *G,Pickable *pick,int x,int y,
     if(Feedback(G,FB_OpenGL,FB_Debugging))
       PyMOLCheckOpenGLErr("SceneRender checkpoint 0");
 
-    must_render_stereo = (I->StereoMode!=0); /* are we doing stereo? */
-    if(!must_render_stereo) 
+    must_render_stereo = (stereo_mode!=0); /* are we doing stereo? */
+    if(!must_render_stereo) {
       if(G->StereoCapable &&
 		SettingGet_i(G,NULL,NULL,cSetting_stereo_double_pump_mono)) {
 		/* force stereo rendering */
 			must_render_stereo=true;
-        if(I->StereoMode==0) {
-          mono_as_stereo=true; /* rendering stereo as mono */
+        if(stereo_mode==0) {
+          mono_as_quad_stereo = true; /* rendering stereo as mono */
+          stereo_as_mono_matrix = true;
         }
+      } else if(SettingGet_i(G,NULL,NULL,cSetting_stereo_mode)==4) {
+        stereo_mode = 4;
+        must_render_stereo = true;
+        stereo_as_mono_matrix = true;
       }
+    }
 
     /* if we seem to be configured for hardware stereo, 
 		but can't actually do it, then fallback on mono -- 
 		this would happen for instance if fullscreen is stereo-component
 		and windowed is not */
 	
-    if(must_render_stereo && (I->StereoMode<2) && !(G->StereoCapable)) {
+    if(must_render_stereo && (stereo_mode<2) && !(G->StereoCapable)) {
 		must_render_stereo=false;
-		mono_as_stereo = false;
-		}
+		mono_as_quad_stereo = false;
+    }
 		
     if(must_render_stereo) {
-      if(mono_as_stereo) { /* double-pumped mono */
+      if(mono_as_quad_stereo) { /* double-pumped mono */
         glDrawBuffer(GL_BACK_LEFT);
         render_buffer = GL_BACK_LEFT;
       } else {
-        switch(I->StereoMode) {
+        switch(stereo_mode) {
         case 1: /* hardware stereo */
           glDrawBuffer(GL_BACK_LEFT);
           render_buffer = GL_BACK_LEFT;
@@ -5321,7 +5459,10 @@ void SceneRender(PyMOLGlobals *G,Pickable *pick,int x,int y,
           fog[0]=v[0];
           fog[1]=v[1];
           fog[2]=v[2];
-          fog[3]=1.0;
+
+          /* NOTE: this doesn't seem to work :( -- only raytracing can do this */
+          fog[3]= (SettingGetGlobal_b(G,cSetting_opaque_background) ? 1.0F : 0.0F);
+          
           glFogfv(GL_FOG_COLOR, fog);
 #ifdef _PYMOL_3DFX
         } else {
@@ -5358,7 +5499,7 @@ void SceneRender(PyMOLGlobals *G,Pickable *pick,int x,int y,
     if(pick) {
       /* atom picking HACK - obfuscative coding */
 
-      switch(I->StereoMode) {
+      switch(stereo_mode) {
       case 2:
       case 3:
         glViewport(I->Block->rect.left,I->Block->rect.bottom,I->Width/2,I->Height);
@@ -5373,7 +5514,7 @@ void SceneRender(PyMOLGlobals *G,Pickable *pick,int x,int y,
       pickVLA[0].index=0;
       pickVLA[0].ptr=NULL;
 
-      SceneRenderAll(G,&context,NULL,&pickVLA,0,true,0.0F);	  
+      SceneRenderAll(G,&context,NULL,&pickVLA,0,true,0.0F,0);	  
 
       if(debug_pick) {
         PyMOL_SwapBuffers(G->PyMOL);
@@ -5387,7 +5528,7 @@ void SceneRender(PyMOLGlobals *G,Pickable *pick,int x,int y,
       pickVLA[0].index=0;
       pickVLA[0].ptr=(void*)pick; /* this is just a flag */
 	
-      SceneRenderAll(G,&context,NULL,&pickVLA,0,true,0.0F);
+      SceneRenderAll(G,&context,NULL,&pickVLA,0,true,0.0F,0);
 
       if(debug_pick) {
         PyMOL_SwapBuffers(G->PyMOL);
@@ -5419,7 +5560,7 @@ void SceneRender(PyMOLGlobals *G,Pickable *pick,int x,int y,
 		
     } else if(smp) {
 
-      switch(I->StereoMode) {
+      switch(stereo_mode) {
       case 2:
       case 3:
         glViewport(I->Block->rect.left,I->Block->rect.bottom,I->Width/2,I->Height);
@@ -5435,7 +5576,7 @@ void SceneRender(PyMOLGlobals *G,Pickable *pick,int x,int y,
       pickVLA[0].index=0;
       pickVLA[0].ptr=NULL;
       
-      SceneRenderAll(G,&context,NULL,&pickVLA,0,true,0.0F);
+      SceneRenderAll(G,&context,NULL,&pickVLA,0,true,0.0F,0);
       
       lowBitVLA = SceneReadTriplets(G,smp->x,smp->y,smp->w,smp->h,render_buffer);
 
@@ -5444,7 +5585,7 @@ void SceneRender(PyMOLGlobals *G,Pickable *pick,int x,int y,
       pickVLA[0].index=0;
       pickVLA[0].ptr=(void*)smp; /* this is just a flag */
 	
-      SceneRenderAll(G,&context,NULL,&pickVLA,0,true,0.0F);
+      SceneRenderAll(G,&context,NULL,&pickVLA,0,true,0.0F,0);
 
       highBitVLA = SceneReadTriplets(G,smp->x,smp->y,smp->w,smp->h,render_buffer);
       
@@ -5495,8 +5636,8 @@ void SceneRender(PyMOLGlobals *G,Pickable *pick,int x,int y,
 
 
       PRINTFD(G,FB_Scene)
-        " SceneRender: I->StereoMode %d must_render_stereo %d\n    mono_as_stereo %d  StereoCapable %d\n",
-        I->StereoMode, must_render_stereo, mono_as_stereo, G->StereoCapable
+        " SceneRender: I->StereoMode %d must_render_stereo %d\n    mono_as_quad_stereo %d  StereoCapable %d\n",
+        stereo_mode, must_render_stereo, mono_as_quad_stereo, G->StereoCapable
         ENDFD;
 
       start_time = UtilGetSeconds(G);
@@ -5512,9 +5653,9 @@ void SceneRender(PyMOLGlobals *G,Pickable *pick,int x,int y,
         
         /* LEFT HAND STEREO */
 
-        if(mono_as_stereo) {
+        if(mono_as_quad_stereo) {
           glDrawBuffer(GL_BACK_LEFT);
-        } else switch(I->StereoMode) {
+        } else switch(stereo_mode) {
         case 1: /* hardware */
 #ifdef _PYMOL_SHARP3D
           sharp3d_begin_left_stereo();
@@ -5541,12 +5682,16 @@ void SceneRender(PyMOLGlobals *G,Pickable *pick,int x,int y,
             glViewport(I->Block->rect.left,I->Block->rect.bottom,I->Width/2,I->Height);
           }
           break;
+        case 4: /* geowall */
+          glViewport(I->Block->rect.left,
+                     I->Block->rect.bottom,I->Width,I->Height);
+          break;
         }
 
         /* prepare the stereo transformation matrix */
 
         glPushMatrix(); /* 1 */
-        ScenePrepareMatrix(G,mono_as_stereo ? 0 : 1);
+        ScenePrepareMatrix(G,stereo_as_mono_matrix ? 0 : 1);
 
         /* render picked atoms */
 
@@ -5566,7 +5711,7 @@ void SceneRender(PyMOLGlobals *G,Pickable *pick,int x,int y,
         glPushMatrix(); /* 2 */
 
         for(pass=1;pass>-2;pass--) { /* render opaque, then antialiased, then transparent...*/
-          SceneRenderAll(G,&context,normal,NULL,pass,false,width_scale);
+          SceneRenderAll(G,&context,normal,NULL,pass,false,width_scale,0);
         }
         glPopMatrix(); /* 1 */
 
@@ -5587,9 +5732,9 @@ void SceneRender(PyMOLGlobals *G,Pickable *pick,int x,int y,
         if(Feedback(G,FB_OpenGL,FB_Debugging))
           PyMOLCheckOpenGLErr("before stereo glViewport 2");
 
-        if(mono_as_stereo) { /* double pumped mono */
+        if(mono_as_quad_stereo) { /* double pumped mono */
           glDrawBuffer(GL_BACK_RIGHT);
-        } else switch(I->StereoMode) {
+        } else switch(stereo_mode) {
         case 1: /* hardware */
 #ifdef _PYMOL_SHARP3D
           sharp3d_switch_to_right_stereo();
@@ -5615,12 +5760,16 @@ void SceneRender(PyMOLGlobals *G,Pickable *pick,int x,int y,
             glViewport(I->Block->rect.left+I->Width/2,I->Block->rect.bottom,I->Width/2,I->Height);
           }
           break;
+        case 4: /* geowall */
+          glViewport(I->Block->rect.left+G->Option->winX/2,
+                     I->Block->rect.bottom,I->Width,I->Height);
+          break;
         }
 
         /* prepare the stereo transformation matrix */
 
         glPushMatrix(); /* 1 */
-        ScenePrepareMatrix(G,mono_as_stereo ? 0 : 2);
+        ScenePrepareMatrix(G,stereo_as_mono_matrix ? 0 : 2);
         glClear(GL_DEPTH_BUFFER_BIT) ;
 
         /* render picked atoms */
@@ -5640,7 +5789,7 @@ void SceneRender(PyMOLGlobals *G,Pickable *pick,int x,int y,
 
         glPushMatrix(); /* 2 */
         for(pass=1;pass>-2;pass--) { /* render opaque, then antialiased, then transparent...*/
-          SceneRenderAll(G,&context,normal,NULL,pass,false, width_scale);
+          SceneRenderAll(G,&context,normal,NULL,pass,false, width_scale,0);
         }        
         glPopMatrix(); /* 1 */
 
@@ -5654,71 +5803,106 @@ void SceneRender(PyMOLGlobals *G,Pickable *pick,int x,int y,
 
         /* restore draw buffer */
 
-        if(mono_as_stereo) { /* double pumped mono...can't draw to GL_BACK so stick with LEFT */
+        if(mono_as_quad_stereo) { /* double pumped mono...can't draw to GL_BACK so stick with LEFT */
           glDrawBuffer(GL_BACK_LEFT);
-        } else switch(I->StereoMode) {
+        } else switch(stereo_mode) {
         case 1: /* hardware */
 #ifdef _PYMOL_SHARP3D
           sharp3d_end_stereo();
 #else
-          glDrawBuffer(GL_BACK_LEFT); /* leave us in a stereo context (avoids problems with cards than can't handle use of mono contexts) */
+          glDrawBuffer(GL_BACK_LEFT); /* leave us in a stereo context 
+                                         (avoids problems with cards than can't handle
+                                         use of mono contexts) */
 #endif
           break;
         case 2: /* side by side */
         case 3:
           glDrawBuffer(GL_BACK);
           break;
+        case 4:
+          break;
         }
 
       } else {
 
-        if(Feedback(G,FB_OpenGL,FB_Debugging))
-          PyMOLCheckOpenGLErr("Before mono rendering");
-
-        /* mono rendering */
-
-        PRINTFD(G,FB_Scene)
-          " SceneRender: rendering DebugCGO...\n"
-          ENDFD;
+        /* standard monoscopic rendering... */
+        int slot;
+        GLint cur_view[4];
         
-        glPushMatrix();
-        glNormal3fv(normal);
-        CGORenderGL(G->DebugCGO,NULL,NULL,NULL,NULL);
-        glPopMatrix();
-
-        glPushMatrix();
-        PRINTFD(G,FB_Scene)
-          " SceneRender: rendering picked atoms...\n"
-          ENDFD;
-        EditorRender(G,curState);
-        glPopMatrix();
-
-        PRINTFD(G,FB_Scene)
-          " SceneRender: rendering opaque and antialiased...\n"
-          ENDFD;
-        
-        for(pass=1;pass>-2;pass--) { /* render opaque then antialiased...*/
-          SceneRenderAll(G,&context,normal,NULL,pass,false, width_scale);
+        if(first_grid_slot<0) {
+          glGetIntegerv(GL_VIEWPORT,cur_view);
         }
 
-        glPushMatrix();
-        PRINTFD(G,FB_Scene)
-          " SceneRender: rendering selections...\n"
-          ENDFD;
-
-        glNormal3fv(normal);
-        ExecutiveRenderSelections(G,curState);
-
-        PRINTFD(G,FB_Scene)
-          " SceneRender: rendering transparent objects...\n"
-          ENDFD;
-
-        /* render transparent */
-        SceneRenderAll(G,&context,normal,NULL,-1,false, width_scale);
-        glPopMatrix();
-
         if(Feedback(G,FB_OpenGL,FB_Debugging))
-          PyMOLCheckOpenGLErr("during mono rendering");
+          PyMOLCheckOpenGLErr("Before mono rendering");
+        
+        for(slot=first_grid_slot;slot<=last_grid_slot;slot++) {
+          
+          if(slot<0) { /* slot numbers are always negative */
+            /* if we are in grid mode, then prepare the grid slot viewport */
+            
+            int abs_grid_slot = slot - first_grid_slot;
+            int n_grid_col = 4;
+            int n_grid_row = 4;
+            int grid_col = abs_grid_slot % n_grid_col;
+            int grid_row = abs_grid_slot / n_grid_row;
+            int vx = (grid_col*cur_view[2])/n_grid_col;
+            int vy = (grid_row*cur_view[3])/n_grid_row;
+            int vw = ((grid_col+1)*cur_view[2])/n_grid_col - vx;
+            int vh = ((grid_row+1)*cur_view[3])/n_grid_row - vy;
+            vx += cur_view[0];
+            vy += cur_view[1];
+            glViewport(vx,vy,vw,vh);
+          }
+            
+          /* mono rendering */
+          
+          PRINTFD(G,FB_Scene)
+            " SceneRender: rendering DebugCGO...\n"
+            ENDFD;
+          
+          glPushMatrix();
+          glNormal3fv(normal);
+          CGORenderGL(G->DebugCGO,NULL,NULL,NULL,NULL);
+          glPopMatrix();
+          
+          glPushMatrix();
+          PRINTFD(G,FB_Scene)
+            " SceneRender: rendering picked atoms...\n"
+            ENDFD;
+          EditorRender(G,curState);
+          glPopMatrix();
+          
+          PRINTFD(G,FB_Scene)
+            " SceneRender: rendering opaque and antialiased...\n"
+            ENDFD;
+          
+          for(pass=1;pass>-2;pass--) { /* render opaque then antialiased...*/
+            SceneRenderAll(G,&context,normal,NULL,pass,false, width_scale, slot);
+          }
+          
+          glPushMatrix();
+          PRINTFD(G,FB_Scene)
+            " SceneRender: rendering selections...\n"
+            ENDFD;
+          
+          glNormal3fv(normal);
+          ExecutiveRenderSelections(G,curState);
+          
+          PRINTFD(G,FB_Scene)
+            " SceneRender: rendering transparent objects...\n"
+            ENDFD;
+          
+          /* render transparent */
+          SceneRenderAll(G,&context,normal,NULL,-1,false, width_scale, slot);
+          glPopMatrix();
+          
+        }
+        if(first_grid_slot<0) {
+          glViewport(cur_view[0],cur_view[1],cur_view[2],cur_view[3]);
+        }
+      if(Feedback(G,FB_OpenGL,FB_Debugging))
+        PyMOLCheckOpenGLErr("during mono rendering");
       }
     }
     
@@ -5761,7 +5945,9 @@ void SceneRender(PyMOLGlobals *G,Pickable *pick,int x,int y,
       if((start_time>0.10)||(MainSavingUnderWhileIdle()))
         if(!(ControlIdling(G)))
           if(SettingGet(G,cSetting_cache_display)) {
-            SceneCopy(G,render_buffer,false);
+            if(!I->CopyFlag) {
+              SceneCopy(G,render_buffer,false);
+            }
           }
     } else {
       I->CopyNextFlag=true;

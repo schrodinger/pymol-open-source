@@ -1422,6 +1422,8 @@ PYMOL API
                     cmd.set("stereo_mode","1",quiet=quiet)
                 elif state==4: # wall-eye
                     cmd.set("stereo_mode","3",quiet=quiet)
+                elif state==5: # geowall
+                    cmd.set("stereo_mode","4",quiet=quiet)
                 state=1
             r = _cmd.stereo(state)
             if is_error(r):

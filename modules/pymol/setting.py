@@ -470,6 +470,7 @@ if __name__=='pymol.setting':
         image_dots_per_inch       = (434, '')
         opaque_background         = (435, '')
         draw_frames               = (436, '')
+        show_alpha_checker        = (437, '')
         
     setting_sc = Shortcut(SettingIndex.__dict__.keys())
 

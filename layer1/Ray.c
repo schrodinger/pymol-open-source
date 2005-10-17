@@ -130,7 +130,10 @@ void RayCustomCylinder3fv(CRay *I,float *v1,float *v2,float r,
                           float *c1,float *c2,int cap1,int cap2);
 void RaySetContext(CRay *I,int context)
 {
-  I->Context=context;
+  if(context>=0)
+    I->Context=context;
+  else
+    I->Context=0;
 }
 void RayApplyContextToNormal(CRay *I,float *v);
 void RayApplyContextToVertex(CRay *I,float *v);
@@ -1530,16 +1533,16 @@ int RayTraceThread(CRayThreadInfo *T)
      offset = (T->phase * render_height/T->n_thread);
      offset = offset - (offset % T->n_thread) + T->phase;
    }
-
-	if(interior_color>=0) {
-		inter = ColorGet(I->G,interior_color);
-      interior_normal[0] = interior_reflect*bp2->LightNormal[0];
-      interior_normal[1] = interior_reflect*bp2->LightNormal[1];
-      interior_normal[2] = 1.0F+interior_reflect*bp2->LightNormal[2];
-      normalize3f(interior_normal);
+   
+   if(interior_color>=0) {
+     inter = ColorGet(I->G,interior_color);
+     interior_normal[0] = interior_reflect*bp2->LightNormal[0];
+     interior_normal[1] = interior_reflect*bp2->LightNormal[1];
+     interior_normal[2] = 1.0F+interior_reflect*bp2->LightNormal[2];
+     normalize3f(interior_normal);
    }
-     
-	r1.base[2]	= _0;
+   
+   r1.base[2]	= _0;
 
    SceneCall.Basis = I->Basis + 1;
    SceneCall.rr = &r1;
@@ -1551,8 +1554,8 @@ int RayTraceThread(CRayThreadInfo *T)
    SceneCall.check_interior = (interior_color >= 0);
    SceneCall.fudge0 = BasisFudge0;
    SceneCall.fudge1 = BasisFudge1;
-
-	MapCacheInit(&SceneCall.cache,I->Basis[1].Map,T->phase,cCache_map_scene_cache);
+   
+   MapCacheInit(&SceneCall.cache,I->Basis[1].Map,T->phase,cCache_map_scene_cache);
 
    if(shadows&&(I->NBasis>1)) {
      ShadeCall.Basis = I->Basis + 2;
@@ -1569,43 +1572,43 @@ int RayTraceThread(CRayThreadInfo *T)
      ShadeCall.fudge1 = BasisFudge1;
      MapCacheInit(&ShadeCall.cache,I->Basis[2].Map,T->phase,cCache_map_shadow_cache);     
    }
-
+   
    if(T->border) {
      border_offset = -1.50F+T->border/2.0F;
    } else {
      border_offset = 0.0F;
    }
-	for(yy = T->y_start; (yy < T->y_stop); yy++)
-	{
-     if(PyMOL_GetInterrupt(I->G->PyMOL,false))
-       break;
-
-      y = T->y_start + ((yy-T->y_start) + offset) % ( render_height); /* make sure threads write to different pages */
-
-		if((!T->phase)&&!(yy & 0xF)) { /* don't slow down rendering too much */
-        if(T->edging_cutoff) {
-          if(T->edging) {
-            OrthoBusyFast(I->G,(int)(2.5F*T->height/3 + 0.5F*y),4*T->height/3); 
-          } else {
-            OrthoBusyFast(I->G,(int)(T->height/3 + 0.5F*y),4*T->height/3); 
-          }
-        } else {
-			OrthoBusyFast(I->G,T->height/3 + y,4*T->height/3); 
-        }
-      }
-		pixel = T->image + (T->width * y) + T->x_start;
-	
-		if((y % T->n_thread) == T->phase)	/* this is my scan line */
-		{	
-        pixel_base[1]	= ((y+0.5F+border_offset) * invHgtRange) + vol2;
-
-			for(x = T->x_start; (x < T->x_stop); x++)
-			{
-				
-           pixel_base[0]	= (((x+0.5F+border_offset)) * invWdthRange)  + vol0;
-
-            while(1) {
-              if(T->edging) {
+   for(yy = T->y_start; (yy < T->y_stop); yy++)
+     {
+       if(PyMOL_GetInterrupt(I->G->PyMOL,false))
+         break;
+       
+       y = T->y_start + ((yy-T->y_start) + offset) % ( render_height); /* make sure threads write to different pages */
+       
+       if((!T->phase)&&!(yy & 0xF)) { /* don't slow down rendering too much */
+         if(T->edging_cutoff) {
+           if(T->edging) {
+             OrthoBusyFast(I->G,(int)(2.5F*T->height/3 + 0.5F*y),4*T->height/3); 
+           } else {
+             OrthoBusyFast(I->G,(int)(T->height/3 + 0.5F*y),4*T->height/3); 
+           }
+         } else {
+           OrthoBusyFast(I->G,T->height/3 + y,4*T->height/3); 
+         }
+       }
+       pixel = T->image + (T->width * y) + T->x_start;
+       
+       if((y % T->n_thread) == T->phase)	/* this is my scan line */
+         {	
+           pixel_base[1]	= ((y+0.5F+border_offset) * invHgtRange) + vol2;
+           
+           for(x = T->x_start; (x < T->x_stop); x++)
+             {
+               
+               pixel_base[0]	= (((x+0.5F+border_offset)) * invWdthRange)  + vol0;
+               
+               while(1) {
+                 if(T->edging) {
                 if(!edge_sampling) {
                   if(x&&y&&(x<(T->width-1))&&(y<(T->height-1))) { /* not on the edge... */
                     if(find_edge(T->edging + (pixel - T->image),

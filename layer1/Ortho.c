@@ -60,7 +60,6 @@ Z* -------------------------------------------------------------------
 #define ButModeMargin 20
 #define ControlMargin 0
 
-
 struct _COrtho {
   Block *Blocks;
   Block *GrabbedBy,*ClickedIn;
@@ -93,6 +92,10 @@ struct _COrtho {
   CQueue *feedback;
   int Pushed;
   CDeferred *deferred;
+  int RenderMode;
+  GLint ViewPort[4];
+  int WrapXFlag;
+
 };
 
 static void OrthoBusyDraw(PyMOLGlobals *G,int force);
@@ -115,6 +118,28 @@ void OrthoKeyAlt(PyMOLGlobals *G,unsigned char k);
 #define cWizardTopMargin 15
 #define cWizardLeftMargin 15
 #define cWizardBorder 7
+
+static int get_wrap_x(int x, int *last_x, int width)
+{
+  int width_2 = width/2;
+  int width_3 = width/3;
+  if(!last_x) {
+    if(x>width_2)
+      x-=width_2;
+  } else {
+    if((x-(*last_x))>width_3)
+      x-=width_2;
+    else if(((*last_x)-x)>width_3)
+      x+=width_2;
+  }
+  return x;
+}
+
+int OrthoGetRenderMode(PyMOLGlobals *G)
+{
+  register COrtho *I=G->Ortho;
+  return I->RenderMode;
+}
 
 void OrthoSetLoopRect(PyMOLGlobals *G,int flag, BlockRect *rect)
 {
@@ -945,7 +970,7 @@ void OrthoDetach(PyMOLGlobals *G,Block *block)
   ListDetach(I->Blocks,block,next,Block);
 }
 /*========================================================================*/
-void OrthoDoDraw(PyMOLGlobals *G)
+void OrthoDoDraw(PyMOLGlobals *G,int render_mode)
 {
   register COrtho *I=G->Ortho;
 
@@ -964,7 +989,7 @@ void OrthoDoDraw(PyMOLGlobals *G)
   int skip_prompt = 0;
   int render = false;
 
-  
+  I->RenderMode = render_mode;
   if(SettingGetGlobal_b(G,cSetting_seq_view)) {
     SeqUpdate(G); 
     I->HaveSeqViewer = true;
@@ -994,7 +1019,7 @@ void OrthoDoDraw(PyMOLGlobals *G)
 
     if(Feedback(G,FB_OpenGL,FB_Debugging))
       PyMOLCheckOpenGLErr("OrthoDoDraw checkpoint 0");
-
+    
     if(SettingGetGlobal_b(G,cSetting_internal_gui)) {
       switch(SettingGetGlobal_i(G,cSetting_internal_gui_mode)) {
       case 0:
@@ -1028,26 +1053,31 @@ void OrthoDoDraw(PyMOLGlobals *G)
       if(!SceneRenderCached(G))
         render=true;
     
-    if(SceneMustDrawBoth(G)) {
-      glDrawBuffer(GL_BACK_LEFT);
-      glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
-      glDrawBuffer(GL_BACK_RIGHT);
-      glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
-      times = 2;
-      double_pump = true;
+    if(render_mode<2) {
+      if(SceneMustDrawBoth(G)) {
+        glDrawBuffer(GL_BACK_LEFT);
+        glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
+        glDrawBuffer(GL_BACK_RIGHT);
+        glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
+        times = 2;
+        double_pump = true;
+      } else {
+        glDrawBuffer(GL_BACK);
+        glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
+        times = 1;
+        double_pump=false;
+      }    
     } else {
-      glDrawBuffer(GL_BACK);
-      glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
       times = 1;
-      double_pump=false;
-    }    
-
-    if(render)
+    }
+    
+    if(render&&(render_mode<2))
       SceneRender(G,NULL,0,0,NULL,0,0);
+
     glClearColor(0.0,0.0,0.0,1.0);
     
     while(times--) {
-
+      
       switch(times) {
       case 1:
         glDrawBuffer(GL_BACK_LEFT);
@@ -1319,6 +1349,13 @@ void OrthoReshape(PyMOLGlobals *G,int width, int height,int force)
     " OrthoReshape-Debug: %d %d\n",width,height
     ENDFD;
 
+  if((width>0)&&(SettingGetGlobal_i(G,cSetting_stereo_mode)==4)) {
+    width = width / 2;
+    I->WrapXFlag = true;
+  } else {
+    I->WrapXFlag = false;
+  }
+
   if((width!=I->Width)||(height!=I->Height)||force) {
   if(width<0) width=I->Width;
   if(height<0) height=I->Height;
@@ -1478,6 +1515,7 @@ Block *OrthoFindBlock(PyMOLGlobals *G,int x,int y)
 
   return(BlockRecursiveFind(I->Blocks,x,y));
 }
+
 /*========================================================================*/
 int OrthoButton(PyMOLGlobals *G,int button,int state,int x,int y,int mod)
 {
@@ -1486,6 +1524,24 @@ int OrthoButton(PyMOLGlobals *G,int button,int state,int x,int y,int mod)
   Block *block=NULL;
   int handled = 0; 
 
+
+  if(I->WrapXFlag) {
+
+    switch(button) {
+    case 3:
+    case 4:
+      x = 1;
+    }
+
+    if(state==P_GLUT_DOWN) {
+      x = get_wrap_x(x,NULL,G->Option->winX);
+    } else {
+      x = get_wrap_x(x,&I->LastX,G->Option->winX);
+    }
+  }
+
+
+  
   OrthoRemoveSplash(G);
   I->X=x;
   I->Y=y;
@@ -1556,6 +1612,10 @@ int OrthoDrag(PyMOLGlobals *G,int x, int y,int mod)
 
   Block *block=NULL;
   int handled = 0;
+
+ if(I->WrapXFlag) {
+   x = get_wrap_x(x,&I->LastX,G->Option->winX);
+ }
 
   I->LastX = x;
   I->LastY = y;
@@ -1629,10 +1689,12 @@ int OrthoInit(PyMOLGlobals *G,int showSplash)
 
   ListInit(I->Blocks);
 
-  I->Pushed = false;
+  I->Pushed = 0;
   I->cmds = QueueNew(G,0xFFFF); /* 65K for commands */
   I->feedback = QueueNew(G,0x3FFFF); /* ~256K for output */
   I->deferred = NULL;
+  I->RenderMode = 0;
+  I->WrapXFlag = false;
 
   I->WizardBackColor[0]=0.2F;
   I->WizardBackColor[1]=0.2F;
@@ -1710,15 +1772,28 @@ void OrthoFree(PyMOLGlobals *G)
 void OrthoPushMatrix(PyMOLGlobals *G)
 {
   register COrtho *I=G->Ortho;
-  GLint ViewPort[4];
 
   if(G->HaveGUI && G->ValidContext) {
 
-    glGetIntegerv(GL_VIEWPORT,ViewPort);
+    if(!I->Pushed) {
+      glGetIntegerv(GL_VIEWPORT,I->ViewPort);
+    }
+    switch(I->RenderMode) {
+    case 1:
+      glViewport(I->ViewPort[0],I->ViewPort[1],I->ViewPort[2],I->ViewPort[3]);
+      break;
+    case 2:
+      glViewport(I->ViewPort[0]+I->ViewPort[2],I->ViewPort[1],
+                 I->ViewPort[2],I->ViewPort[3]);
+      break;
+    default:
+      glViewport(I->ViewPort[0]+1,I->ViewPort[1],I->ViewPort[2],I->ViewPort[3]);
+    }
+
     glMatrixMode(GL_PROJECTION);
     glPushMatrix();
     glLoadIdentity();
-    glOrtho(0,ViewPort[2],0,ViewPort[3],-100,100);
+    glOrtho(0,I->ViewPort[2],0,I->ViewPort[3],-100,100);
     glMatrixMode(GL_MODELVIEW);
     glPushMatrix();
     glLoadIdentity();
@@ -1737,8 +1812,9 @@ void OrthoPushMatrix(PyMOLGlobals *G)
 	glShadeModel(GL_SMOOTH);
     if(G->Option->multisample)    
       glDisable(0x809D); /* GL_MULTISAMPLE_ARB */
-   }
-  I->Pushed=true;
+    
+    I->Pushed++;
+  }
   /*  glDisable(GL_ALPHA_TEST);
   glDisable(GL_CULL_FACE);
   glDisable(GL_POINT_SMOOTH);*/
@@ -1750,12 +1826,16 @@ void OrthoPopMatrix(PyMOLGlobals *G)
   register COrtho *I=G->Ortho;
   if(G->HaveGUI && G->ValidContext) {
 
-    glPopMatrix();
-    glMatrixMode(GL_PROJECTION);
-    glPopMatrix();
-    glMatrixMode(GL_MODELVIEW);
+    if(I->Pushed>=0) {
+      glViewport(I->ViewPort[0],I->ViewPort[1],I->ViewPort[2],I->ViewPort[3]);
+      glPopMatrix();
+      glMatrixMode(GL_PROJECTION);
+      glPopMatrix();
+      glMatrixMode(GL_MODELVIEW);
+      
+      I->Pushed--;
+    }
   }
-  I->Pushed=false;
 }
 
 int OrthoGetPushed(PyMOLGlobals *G)

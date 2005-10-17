@@ -81,7 +81,7 @@ typedef struct {
   int state;
   CRay *ray;
   Pickable **pick;
-  int pass;
+  int pass,slot;
   int width_scale_flag;
   float front, back, stereo_front;
   float fog_start, fog_end;

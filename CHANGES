@@ -4,6 +4,14 @@ CHANGE LOG
 
 Changes up to 0.99
 
+    beta20
+
+    * -j startup option for use with "geowalls", geowall stereo support
+
+    * "Opaque" option in background menu
+
+    * checker background patter for alpha channel: show_alpha_checker
+
     beta19
 
     * fixed alpha channel handling for edges -- now combining correctly

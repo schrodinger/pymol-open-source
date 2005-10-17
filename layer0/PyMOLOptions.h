@@ -49,7 +49,8 @@ struct _CPyMOLOptions {
     defer_builds_mode,
     full_screen,
     sphere_mode,
-	stereo_capable; /* for informing PyMOL as to the capabilities of the context */
+	stereo_capable,
+    passive_stereo; /* for informing PyMOL as to the capabilities of the context */
   /* WARNING: for the sake of forward compability, never delete or
      move any fields in the above ...initialization struct in PyMOL.c */
 
