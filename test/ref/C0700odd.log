@@ -356,3 +356,50 @@ HB1 H
 HB2 H
 HB3 H
  Iterate: iterated over 20 atoms.
+PyMOL>reinit
+PyMOL>load dat/odd02.pdb
+ CmdLoad: "dat/odd02.pdb" loaded as "odd02".
+PyMOL>iterate all, print name, elem
+C C
+O O
+CG C
+CD C
+NE N
+CZ C
+NH1 N
+NH2 N
+HG1 H
+HG2 H
+HD1 H
+HD2 H
+HE H
+HH11 H
+HH12 H
+HH21 H
+Hh22 Hh
+N N
+CA C
+C C
+O O
+CB C
+CG1 C
+CG2 C
+HN H
+HA H
+HB H
+HG11 H
+HG12 H
+HG21 H
+HG22 H
+HG23 H
+Hg13 Hg
+N N
+CA C
+HN H
+ Iterate: iterated over 36 atoms.
+PyMOL>save cmp/C0700.odd.G.pdb
+ Save: wrote "cmp/C0700.odd.G.pdb".
+PyMOL>set pdb_reformat_names_mode,1
+ Setting: pdb_reformat_names_mode set to 1.
+PyMOL>save cmp/C0700.odd.H.pdb
+ Save: wrote "cmp/C0700.odd.H.pdb".

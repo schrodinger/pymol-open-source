@@ -559,6 +559,8 @@ NOTES
         r = DEFAULT_ERROR
         selection = str(selection)
         if log:
+            if ',' in str(value):
+                value = str(cmd.safe_list_eval(str(value)))
             if len(selection):
                 cmd.log("set %s,%s,%s\n"%(str(name),str(value),str(selection)))
             else:

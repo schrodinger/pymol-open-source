@@ -133,4 +133,11 @@ reinit
 load dat/helix_amber.pdb
 iterate resi 2, print name, elem
 
+reinit
+load dat/odd02.pdb
+iterate all, print name, elem
+save cmp/C0700.odd.G.pdb
+set pdb_reformat_names_mode,1
+save cmp/C0700.odd.H.pdb
+
 /print "END-LOG"

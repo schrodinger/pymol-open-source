@@ -1012,8 +1012,8 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(PyMOLGlobals *G,
           if(!seen_end_of_atoms) 
             nAtom++;
           if(bogus_name_alignment) {
-            ncopy(cc,nskip(p,12),4);
-            if((cc[0]==32)&&(cc[1]!=32)) {
+            ncopy(cc,nskip(p,12),4); /* copy the atom field */
+            if((cc[0]==32)&&(cc[1]!=32)) { /* check to see if indentation was followed correctly */
               bogus_name_alignment = false;
             }
           }
@@ -1992,10 +1992,14 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(PyMOLGlobals *G,
                        ((literal_name[1]>='a')&&(literal_name[1]<='z')))) { /* infer element from name column */
                 ai->elem[0]=literal_name[0];
                 ai->elem[2]=0;
-                if((literal_name[1]>='A')&&(literal_name[1]<='Z')) {
-                  
-                  if(bogus_name_alignment) { /* if atom names aren't properly aligned */
-                    ai->elem[1]=0;
+                if((literal_name[1]>='A')&&(literal_name[1]<='Z')) { /* second letter is capitalized */
+                  if(bogus_name_alignment) { 
+                    /* if other atom names aren't properly aligned */
+                    ai->elem[1]=0; /* kill 2nd letter */
+                  } else if(literal_name[0]=='H') { 
+                    /* or if this is an ultra-bogus PDB with inconsistent 
+                       indendentation, and this is likely a hydrogen */
+                    ai->elem[1]=0; /* kill 2nd letter */
                   } else {
                     ai->elem[1]=tolower(literal_name[1]);
                   }
