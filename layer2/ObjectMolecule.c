@@ -8931,12 +8931,13 @@ static void ObjectMoleculeRender(ObjectMolecule *I,RenderInfo *info)
 
   if(I->UnitCellCGO&&(I->Obj.RepVis[cRepCell])) {
     if(ray) {
-      
+      /* need to apply object state matrix here */      
       CGORenderRay(I->UnitCellCGO,ray,ColorGet(I->Obj.G,I->Obj.Color),
                          I->Obj.Setting,NULL);
     } else if(G->HaveGUI && G->ValidContext) {
       if(pick) {
       } else {
+        /* need to apply object state matrix here */
         ObjectUseColor(&I->Obj);
         CGORenderGL(I->UnitCellCGO,ColorGet(I->Obj.G,I->Obj.Color),
                     I->Obj.Setting,NULL,info);
@@ -8948,20 +8949,27 @@ static void ObjectMoleculeRender(ObjectMolecule *I,RenderInfo *info)
     " ObjectMolecule: CGO's complete...\n"
     ENDFD;
   if(state<0) {
-    for(a=0;a<I->NCSet;a++)
+    for(a=0;a<I->NCSet;a++) {
       if(I->CSet[a])
-        if(I->CSet[a]->fRender)
+        if(I->CSet[a]->fRender) {
+          /* need to apply object state matrix here */
           I->CSet[a]->fRender(I->CSet[a],info);
+        }
+    }
   } else if(state<I->NCSet) {
-	 I->CurCSet=state % I->NCSet;
-	 if(I->CSet[I->CurCSet]) {
-      if(I->CSet[I->CurCSet]->fRender)
+    I->CurCSet=state % I->NCSet;
+    if(I->CSet[I->CurCSet]) {
+      if(I->CSet[I->CurCSet]->fRender) {
+        /* need to apply object state matrix here */
         I->CSet[I->CurCSet]->fRender(I->CSet[I->CurCSet],info);
-	 }
+      }
+    }
   } else if(I->NCSet==1) { /* if only one coordinate set, assume static */
-    if(SettingGet_b(I->Obj.G,I->Obj.Setting,NULL,cSetting_static_singletons))
-      if(I->CSet[0]->fRender)
+    if(SettingGet_b(I->Obj.G,I->Obj.Setting,NULL,cSetting_static_singletons)) 
+      if(I->CSet[0]->fRender) {
+        /* need to apply object state matrix here */
         I->CSet[0]->fRender(I->CSet[0],info);
+      }
   }
   PRINTFD(I->Obj.G,FB_ObjectMolecule)
     " ObjectMolecule: rendering complete for object %s.\n",I->Obj.Name

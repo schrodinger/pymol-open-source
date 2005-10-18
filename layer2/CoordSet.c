@@ -968,8 +968,14 @@ void CoordSetRender(CoordSet *I,RenderInfo *info)
         
           if(r->fRender) { /* do OpenGL rendering in three passes */
             if(ray||pick) {
+              
+              /* here we need to iterate through and apply coordinate set matrices */
+
               r->fRender(r,info);
-            } else 
+            } else {
+
+              /* here we need to iterate through and apply coordinate set matrices */
+
               switch(a) {
               case cRepLabel:
                 if(pass==1) r->fRender(r,info);
@@ -1029,7 +1035,7 @@ void CoordSetRender(CoordSet *I,RenderInfo *info)
                 break;
               }
 
-            
+            }
           }
           /*          if(ray)
                       ray->fWobble(ray,0,NULL);*/
@@ -1078,6 +1084,8 @@ CoordSet *CoordSetNew(PyMOLGlobals *G)
 	 I->Rep[a] = NULL;
   I->Setting = NULL;
   I->Coord2Idx = NULL;
+  I->NMatrix = 0;
+  I->MatrixVLA = NULL;
   return(I);
 }
 /*========================================================================*/

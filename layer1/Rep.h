@@ -54,7 +54,7 @@ Z* -------------------------------------------------------------------
 #define cRepSlice      16
 
 #define cRepAngle      17
-#define cRepDihedral    18
+#define cRepDihedral   18
 
 #define cRepCnt        19
 

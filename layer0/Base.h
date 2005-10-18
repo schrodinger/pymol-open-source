@@ -60,11 +60,17 @@ Z* -------------------------------------------------------------------
 #endif
 
 typedef struct { 
-  void *ptr;
+  void *ptr; /* object pointer */
   int index; /* atom index.
                 NOTE: that first record contains the list count...not pick info */
   int bond; /* bond index, otherwise -1 */
 } Pickable;
+
+typedef struct {
+  Pickable src;
+  int state;
+  int matrix;
+} Picking;
 
 typedef struct {
   int mode;

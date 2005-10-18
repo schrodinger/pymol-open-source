@@ -471,6 +471,7 @@ if __name__=='pymol.setting':
         opaque_background         = (435, '')
         draw_frames               = (436, '')
         show_alpha_checker        = (437, '')
+        use_state_matrices        = (438, '')
         
     setting_sc = Shortcut(SettingIndex.__dict__.keys())
 
