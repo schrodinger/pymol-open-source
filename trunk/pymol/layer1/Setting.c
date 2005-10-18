@@ -2623,6 +2623,7 @@ void SettingInitGlobal(PyMOLGlobals *G,int alloc,int reset_gui)
   SettingSet_b(I,cSetting_opaque_background,1);
   SettingSet_b(I,cSetting_draw_frames,0);
   SettingSet_b(I,cSetting_show_alpha_checker,0);
+  SettingSet_b(I,cSetting_use_state_matrices,0); /* this will change to 1 soon */
 
 }
 
