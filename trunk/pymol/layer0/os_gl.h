@@ -76,7 +76,7 @@ void PyMOLDrawPixels(GLsizei width,
 #define P_GLUT_SINGLE_MIDDLE 9
 #define P_GLUT_SINGLE_RIGHT 10
 
-void PyMOLCheckOpenGLErr(char *pos);
+int PyMOLCheckOpenGLErr(char *pos);
 
 /* determine whether or not we have a real GLUT */
 

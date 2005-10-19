@@ -95,14 +95,17 @@ void PyMOLDrawPixels(GLsizei width,
 
 }
 
-void PyMOLCheckOpenGLErr(char *pos)
+int PyMOLCheckOpenGLErr(char *pos)
 {
+  int flag = 0;
   GLenum  glerr = glGetError( );
   while( glerr != GL_NO_ERROR ) 
     {
       printf("OpenGL-Error: Where? %s: %s\n",pos,gluErrorString(glerr));
       glerr = glGetError( );
+	  flag=1;
     }
+   return flag;
 }
 
 #ifndef _PYMOL_NO_GLUT
