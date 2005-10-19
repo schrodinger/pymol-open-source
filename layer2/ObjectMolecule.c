@@ -143,6 +143,49 @@ static void dump_jxn(char *lab,char *q)
 }
 #endif
 
+void ObjectMoleculeTransformState44f(ObjectMolecule *I,int state,float *matrix,
+                                            int log_trans,int homogenous)
+{
+  int a;
+  int use_matrices = SettingGet_b(I->Obj.G,I->Obj.Setting,NULL,cSetting_use_state_matrices);
+  CoordSet *cs;
+  if(state<0) { /* all states */
+    for(a=0;a<I->NCSet;a++) {
+      cs = I->CSet[a];
+      if(cs) {
+        if(use_matrices) {
+          if(homogenous) 
+            ObjectStateCombineMatrixR44f(&cs->State, matrix);
+          else
+            ObjectStateCombineMatrixTTT(&cs->State, matrix);
+        } else {
+        }
+      }
+    }
+  } else if(state<I->NCSet) {
+    cs = I->CSet[(I->CurCSet = state % I->NCSet )];
+    if(cs) {
+      if(use_matrices) {
+        if(homogenous) 
+          ObjectStateCombineMatrixR44f(&cs->State, matrix);
+        else
+          ObjectStateCombineMatrixTTT(&cs->State, matrix);
+      } else {
+      }
+    }
+  } else if(I->NCSet==1) { /* if only one coordinate set, assume static */
+    cs = I->CSet[0];
+    if(cs && SettingGet_b(I->Obj.G,I->Obj.Setting,NULL,cSetting_static_singletons)) {
+      if(use_matrices) {
+        if(homogenous) 
+          ObjectStateCombineMatrixR44f(&cs->State, matrix);
+        else
+          ObjectStateCombineMatrixTTT(&cs->State, matrix);
+      } else {
+      }
+    }
+  }
+}
 /*========================================================================*/
 static void ObjectMoleculeFixSeleHydrogens(ObjectMolecule *I,int sele)
 {
@@ -8922,6 +8965,9 @@ static void ObjectMoleculeRender(ObjectMolecule *I,RenderInfo *info)
   Pickable **pick = info->pick;
   int pass = info->pass;
   int a;
+  int use_matrices = SettingGet_b(I->Obj.G,I->Obj.Setting,NULL,cSetting_use_state_matrices);
+  CoordSet *cs;
+  int pop_matrix = false;
 
   PRINTFD(I->Obj.G,FB_ObjectMolecule)
     " ObjectMolecule: rendering %s pass %d...\n",I->Obj.Name,pass
@@ -8950,25 +8996,30 @@ static void ObjectMoleculeRender(ObjectMolecule *I,RenderInfo *info)
     ENDFD;
   if(state<0) {
     for(a=0;a<I->NCSet;a++) {
-      if(I->CSet[a])
-        if(I->CSet[a]->fRender) {
-          /* need to apply object state matrix here */
-          I->CSet[a]->fRender(I->CSet[a],info);
-        }
-    }
-  } else if(state<I->NCSet) {
-    I->CurCSet=state % I->NCSet;
-    if(I->CSet[I->CurCSet]) {
-      if(I->CSet[I->CurCSet]->fRender) {
+      cs = I->CSet[a];
+      if(cs && cs->fRender) {
+        if(use_matrices) pop_matrix = ObjectStatePushAndApplyMatrix(&cs->State);
+    
         /* need to apply object state matrix here */
-        I->CSet[I->CurCSet]->fRender(I->CSet[I->CurCSet],info);
+        cs->fRender(cs,info);
+        if(pop_matrix) ObjectStatePopMatrix(&cs->State);
+    
       }
     }
+  } else if(state<I->NCSet) {
+    cs = I->CSet[(I->CurCSet = state % I->NCSet )];
+    if(cs && cs->fRender) {
+      if(use_matrices) pop_matrix = ObjectStatePushAndApplyMatrix(&cs->State);      
+      cs->fRender(cs,info);
+      if(pop_matrix) ObjectStatePopMatrix(&cs->State);
+    }
   } else if(I->NCSet==1) { /* if only one coordinate set, assume static */
-    if(SettingGet_b(I->Obj.G,I->Obj.Setting,NULL,cSetting_static_singletons)) 
-      if(I->CSet[0]->fRender) {
-        /* need to apply object state matrix here */
-        I->CSet[0]->fRender(I->CSet[0],info);
+    cs = I->CSet[0];
+    if(SettingGet_b(I->Obj.G,I->Obj.Setting,NULL,cSetting_static_singletons))
+      if(cs && cs->fRender) {
+        if(use_matrices) pop_matrix = ObjectStatePushAndApplyMatrix(&cs->State);      
+        cs->fRender(cs,info);
+        if(pop_matrix) ObjectStatePopMatrix(&cs->State);
       }
   }
   PRINTFD(I->Obj.G,FB_ObjectMolecule)
