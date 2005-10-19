@@ -478,6 +478,52 @@ void copy44d33f ( double *src, float *dst )
   src++;
 }
 
+void copy44f44d ( float *src, double *dst)
+{
+  *(dst++)=(double)*(src++);
+  *(dst++)=(double)*(src++);
+  *(dst++)=(double)*(src++);
+  *(dst++)=(double)*(src++);
+
+  *(dst++)=(double)*(src++);
+  *(dst++)=(double)*(src++);
+  *(dst++)=(double)*(src++);
+  *(dst++)=(double)*(src++);
+
+  *(dst++)=(double)*(src++);
+  *(dst++)=(double)*(src++);
+  *(dst++)=(double)*(src++);
+  *(dst++)=(double)*(src++);
+
+  *(dst++)=(double)*(src++);
+  *(dst++)=(double)*(src++);
+  *(dst++)=(double)*(src++);
+  *(dst++)=(double)*(src++);
+}
+
+void copy44d44f ( double *src, float *dst)
+{
+  *(dst++)=(float)*(src++);
+  *(dst++)=(float)*(src++);
+  *(dst++)=(float)*(src++);
+  *(dst++)=(float)*(src++);
+
+  *(dst++)=(float)*(src++);
+  *(dst++)=(float)*(src++);
+  *(dst++)=(float)*(src++);
+  *(dst++)=(float)*(src++);
+
+  *(dst++)=(float)*(src++);
+  *(dst++)=(float)*(src++);
+  *(dst++)=(float)*(src++);
+  *(dst++)=(float)*(src++);
+
+  *(dst++)=(float)*(src++);
+  *(dst++)=(float)*(src++);
+  *(dst++)=(float)*(src++);
+  *(dst++)=(float)*(src++);
+}
+
 
 void copy33f44d ( float *src, double *dst )
 {

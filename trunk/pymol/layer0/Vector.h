@@ -19,8 +19,14 @@ Z* -------------------------------------------------------------------
 #include"os_predef.h"
 /* NOTE THIS VERSION USES RADIANS BY DEFAULT! */
 
-/* NOTE: All matrices are assumed to be row-major (NOTE that means
- * C-like, not OpenGL-like) in this module */
+/* NOTE: Matrices are assumed to be row-major (C-like not
+ * OpenGL-like) unless explictly labeled as per the following
+ * conventions:
+ * 
+ * row-major:    33f, 33d, 44f, 44d, R33f, R33d, R44f, R44d
+ * column-major: C33f, C33d, C44f, C44d
+ */
+
 
 #define cPI            3.14159265358979323846  /* pi */
 
@@ -98,6 +104,8 @@ void identity33d( double *m);
 void identity44f ( float *m1 );
 
 void copy44f44f ( float *src, float *dst );
+void copy44d44f ( double *src, float *dst );
+void copy44f44d ( float *src, double *dst );
 
 void copy44d33f ( double *src, float *dst );
 void copy33f44d ( float *src, double *dst );

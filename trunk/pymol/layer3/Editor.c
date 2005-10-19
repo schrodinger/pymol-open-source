@@ -1612,7 +1612,6 @@ void EditorDrag(PyMOLGlobals *G,ObjectMolecule *obj,int index,int mode,int state
   float m[16];
   int log_trans = (int)SettingGet(G,cSetting_log_conformations);
 
-
   PRINTFD(G,FB_Editor)
     " EditorDrag-Debug: entered. obj %p state %d index %d mode %d \nIndex %d Sele %d Object %p\n Axis %d Base %d BondFlag %d SlowFlag %d\n", 
     (void*)obj,state,index,mode,
@@ -1625,6 +1624,8 @@ void EditorDrag(PyMOLGlobals *G,ObjectMolecule *obj,int index,int mode,int state
 
   if((index==I->DragIndex)&&(obj==I->DragObject)) {
     if(!EditorActive(G)) {
+      int use_matrices = SettingGet_b(G,I->DragObject->Obj.Setting,NULL,cSetting_use_state_matrices);
+
       /* non-achored actions */
       switch(mode) {
       case cButModeRotFrag:
@@ -1639,7 +1640,12 @@ void EditorDrag(PyMOLGlobals *G,ObjectMolecule *obj,int index,int mode,int state
         theta = (float)asin(length3f(cp));
         normalize23f(cp,n2);        
         get_rotation_about3f3fTTTf(theta, n2, v3, m);
-        ObjectMoleculeTransformSelection(obj,state,I->DragSelection,m,log_trans,I->DragSeleName,false);
+        /*        dump44f(m,"matrix");*/
+        if(use_matrices) {
+          ObjectMoleculeTransformState44f(obj,state,m,log_trans,false);
+        } else {
+          ObjectMoleculeTransformSelection(obj,state,I->DragSelection,m,log_trans,I->DragSeleName,false);
+        }
         SceneInvalidate(G);
         break;
       case cButModeTorFrag:
@@ -1647,9 +1653,13 @@ void EditorDrag(PyMOLGlobals *G,ObjectMolecule *obj,int index,int mode,int state
         SceneInvalidate(G);
         break;
       case cButModeMovFrag:
-        identity44f(m);
-        copy3f(mov,m+12); /* questionable... */
-        ObjectMoleculeTransformSelection(obj,state,I->DragSelection,m,log_trans,I->DragSeleName,false);
+        if(use_matrices) {
+          
+        } else {
+          identity44f(m);
+          copy3f(mov,m+12); /* questionable... */
+          ObjectMoleculeTransformSelection(obj,state,I->DragSelection,m,log_trans,I->DragSeleName,false);
+        }
         SceneInvalidate(G);
         break;
       }

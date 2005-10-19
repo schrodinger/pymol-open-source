@@ -390,6 +390,9 @@ int ObjectMoleculeConvertIDsToIndices(ObjectMolecule *I,int *id,int n_id);
 ObjectMolecule *ObjectMoleculeDummyNew(PyMOLGlobals *G,int mode);
 void ObjectMoleculeDummyUpdate(ObjectMolecule *I,int mode);
 
+void ObjectMoleculeTransformState44f(ObjectMolecule *I,int state,float *matrix,
+                                     int log_trans,int homogenous);
+
 /* internal to ObjectMolecule */
 
 struct CoordSet *ObjectMoleculePDBStr2CoordSet(PyMOLGlobals *G,
