@@ -95,9 +95,10 @@ void ObjectStateTransformMatrix(CObjectState *I, double *matrix);
 void ObjectStateResetMatrix(CObjectState *I);
 PyObject *ObjectStateAsPyList(CObjectState *I);
 int ObjectStateFromPyList(PyMOLGlobals *G,PyObject *list,CObjectState *I);
-int ObjectStatePushAndApplyMatrix(CObjectState *I);
-void ObjectStatePopMatrix(CObjectState *I);
-void ObjectStateCombineMatrixR44f(CObjectState *I, float *matrix);
+int ObjectStatePushAndApplyMatrix(CObjectState *I,RenderInfo *info);
+void ObjectStatePopMatrix(CObjectState *I,RenderInfo *info);
+void ObjectStateRightCombineMatrixR44d(CObjectState *I, double *matrix);
+void ObjectStateLeftCombineMatrixR44d(CObjectState *I, double *matrix);
 void ObjectStateCombineMatrixTTT(CObjectState *I, float *matrix);
 
 #endif

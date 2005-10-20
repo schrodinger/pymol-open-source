@@ -39,6 +39,9 @@ void RayRenderPOV(CRay *I,int width,int height,char **headerVLA,
                   char **charVLA,float front,float back,float fov,float angle);
 void RayRenderTest(CRay *I,int width,int height,float front,float back,float fov);
 void RaySetTTT(CRay *I,int flag,float *ttt);
+void RayGetTTT(CRay *I,float *ttt);
+void RayPushTTT(CRay *I);
+void RayPopTTT(CRay *I);
 void RaySetContext(CRay *I,int context);
 void RayApplyContexToNormal(CRay *I,float *v);
 void RayApplyContextToVertex(CRay *I,float *v);
@@ -95,6 +98,8 @@ struct _CRay {
   float Random[256];
   int TTTFlag;
   float TTT[16];
+  float *TTTStackVLA;
+  int TTTStackDepth;
   int Context;
   float AspRatio;
   float PixelRadius;

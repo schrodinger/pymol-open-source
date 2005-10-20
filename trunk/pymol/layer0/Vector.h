@@ -155,11 +155,15 @@ void multiply44f44f44f( float *left, float *right, float *product);
 void left_multiply44f44f( float *left, float *right);
 void right_multiply44f44f( float *left, float *right);
 
+void recondition44d( double *matrix);
 /* invert a 4x4 homogenous that contains just rotation & tranlation
   (e.g. no scaling & fourth row is 0,0,0,1) */
 void invert_special44d44d( double *original, double *inv);
 
+void invert_rotation_only44d44d( double *original, double *inv);
+
 void convertTTTfR44d( float *ttt, double *homo);
+void convertTTTfR44f( float *ttt, float *homo);
 void convertR44dTTTf( double *homo, float *ttt);
 void convert44d44f(double *dbl, float *flt);
 void convert44f44d(float *flt, double *dbl);

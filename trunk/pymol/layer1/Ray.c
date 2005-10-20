@@ -3680,6 +3680,8 @@ CRay *RayNew(PyMOLGlobals *G)
   I->fCharacter=RayCharacter;
   I->fWobble=RayWobble;
   I->fTransparentf=RayTransparentf;
+  I->TTTStackVLA = NULL;
+  I->TTTStackDepth = 0;
   for(a=0;a<256;a++) {
     I->Random[a]=(float)((rand()/(1.0+RAND_MAX))-0.5);
   }
@@ -3744,6 +3746,15 @@ void RaySetTTT(CRay *I,int flag,float *ttt)
   }
 }
 
+void RayGetTTT(CRay *I,float *ttt)
+{
+  if(!I->TTTFlag) {
+    identity44f(ttt);
+  } else {
+    copy44f(I->TTT,ttt);
+  }
+}
+
 /*========================================================================*/
 void RayRelease(CRay *I)
 {
@@ -3763,9 +3774,38 @@ void RayFree(CRay *I)
   CharacterSetRetention(I->G,false);
   CacheFreeP(I->G,I->Basis,0,cCache_ray_basis,false);
   VLACacheFreeP(I->G,I->Vert2Prim,0,cCache_ray_vert2prim,false);
+  VLAFreeP(I->TTTStackVLA);
   OOFreeP(I);
 }
 /*========================================================================*/
+void RayPushTTT(CRay *I)
+{
+  if(I->TTTFlag) {
+    if(!I->TTTStackVLA) {
+      I->TTTStackVLA = VLAlloc(float,16);
+      copy44f(I->TTT,I->TTTStackVLA);
+      I->TTTStackDepth = 1;
+    } else {
+      float *p;
+      VLACheck(I->TTTStackVLA,float,I->TTTStackDepth*16+15);
+      p = I->TTTStackVLA + 16*I->TTTStackDepth;
+      copy44f(I->TTT,p);
+      I->TTTStackDepth++;
+    }
+  }
+}
+void RayPopTTT(CRay *I)
+{
+  if(I->TTTStackDepth>0) {
+    float *p;
+    I->TTTStackDepth--;
+    p = I->TTTStackVLA + 16*I->TTTStackDepth;
+    copy44f(p,I->TTT);
+    I->TTTFlag = true;
+  } else {
+    I->TTTFlag = false;
+  }
+}
 
 void RayApplyMatrix33( unsigned int n, float3 *q, const float m[16],
                           float3 *p )
