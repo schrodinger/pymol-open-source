@@ -392,7 +392,7 @@ ObjectMolecule *ObjectMoleculeDummyNew(PyMOLGlobals *G,int mode);
 void ObjectMoleculeDummyUpdate(ObjectMolecule *I,int mode);
 
 void ObjectMoleculeTransformState44f(ObjectMolecule *I,int state,float *matrix,
-                                     int log_trans,int homogenous);
+                                     int log_trans,int homogenous,int transformed);
 
 /* internal to ObjectMolecule */
 

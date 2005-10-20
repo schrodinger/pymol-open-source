@@ -1630,7 +1630,6 @@ void EditorDrag(PyMOLGlobals *G,ObjectMolecule *obj,int index,int mode,int state
       switch(mode) {
       case cButModeRotFrag:
         SceneOriginGet(G,v3);
-
         subtract3f(pt,v3,n0);
         add3f(pt,mov,n1);
         subtract3f(n1,v3,n1);
@@ -1639,9 +1638,12 @@ void EditorDrag(PyMOLGlobals *G,ObjectMolecule *obj,int index,int mode,int state
         cross_product3f(n0,n1,cp);
         theta = (float)asin(length3f(cp));
         normalize23f(cp,n2);        
-        get_rotation_about3f3fTTTf(theta, n2, v3, m);
+        get_rotation_about3f3fTTTf(theta, n2, v3, m); 
+        /* matrix m now contains a valid TTT rotation in global
+           coordinate space that could be applied directly to the
+           coordinates to effect the desired rotation */
         if(use_matrices) {
-          ObjectMoleculeTransformState44f(obj,state,m,log_trans,false);
+          ObjectMoleculeTransformState44f(obj,state,m,log_trans,false,true);
         } else {
           ObjectMoleculeTransformSelection(obj,state,I->DragSelection,m,log_trans,I->DragSeleName,false);
         }
@@ -1657,7 +1659,7 @@ void EditorDrag(PyMOLGlobals *G,ObjectMolecule *obj,int index,int mode,int state
           m[3]=mov[0];
           m[7]=mov[1];
           m[11]=mov[2];
-          ObjectMoleculeTransformState44f(obj,state,m,log_trans,true);
+          ObjectMoleculeTransformState44f(obj,state,m,log_trans,true,true);
         } else {
           identity44f(m);
           copy3f(mov,m+12); /* questionable... */

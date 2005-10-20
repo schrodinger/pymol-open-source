@@ -144,38 +144,37 @@ static void dump_jxn(char *lab,char *q)
 #endif
 
 void ObjectMoleculeTransformState44f(ObjectMolecule *I,int state,float *matrix,
-                                            int log_trans,int homogenous)
+                                            int log_trans,int homogenous,int transformed)
 {
   int a;
   int use_matrices = SettingGet_b(I->Obj.G,I->Obj.Setting,NULL,cSetting_use_state_matrices);
+  float tmp_matrix[16];
   CoordSet *cs;
   if(!use_matrices) {
     ObjectMoleculeTransformSelection(I,state,-1,matrix,log_trans,I->Obj.Name,homogenous);
-  } else if(state<0) { /* all states */
-    for(a=0;a<I->NCSet;a++) {
-      cs = I->CSet[a];
-      if(cs) {
-        if(homogenous) 
-          ObjectStateCombineMatrixR44f(&cs->State, matrix);
-        else
-          ObjectStateCombineMatrixTTT(&cs->State, matrix);
+  } else {
+    double dbl_matrix[16];
+    /* ensure homogenous matrix to preserve programmer sanity */
+    if(!homogenous) {
+      convertTTTfR44d(matrix,dbl_matrix);
+      copy44d44f(dbl_matrix,tmp_matrix);
+      matrix = tmp_matrix;
+    } else {
+      copy44f44d(matrix,dbl_matrix);
+    }
+    if(state<0) { /* all states */
+      for(a=0;a<I->NCSet;a++) {
+        cs = I->CSet[a];
+        if(cs) ObjectStateLeftCombineMatrixR44d(&cs->State, dbl_matrix);
       }
-    }
-  } else if(state<I->NCSet) { /* single state */
-    cs = I->CSet[(I->CurCSet = state % I->NCSet )];
-    if(cs) {
-      if(homogenous) 
-        ObjectStateCombineMatrixR44f(&cs->State, matrix);
-      else
-        ObjectStateCombineMatrixTTT(&cs->State, matrix);
-    }
-  } else if(I->NCSet==1) { /* static singleton state */
-    cs = I->CSet[0];
-    if(cs && SettingGet_b(I->Obj.G,I->Obj.Setting,NULL,cSetting_static_singletons)) {
-      if(homogenous) 
-        ObjectStateCombineMatrixR44f(&cs->State, matrix);
-      else
-        ObjectStateCombineMatrixTTT(&cs->State, matrix);
+    } else if(state<I->NCSet) { /* single state */
+      cs = I->CSet[(I->CurCSet = state % I->NCSet )];
+      if(cs) ObjectStateLeftCombineMatrixR44d(&cs->State,  dbl_matrix);
+    } else if(I->NCSet==1) { /* static singleton state */
+      cs = I->CSet[0];
+      if(cs && SettingGet_b(I->Obj.G,I->Obj.Setting,NULL,cSetting_static_singletons)) {
+        ObjectStateLeftCombineMatrixR44d(&cs->State, dbl_matrix);
+      }
     }
   }
 }
@@ -2530,10 +2529,14 @@ char *ObjectMoleculeGetStateTitle(ObjectMolecule *I,int state)
 /*========================================================================*/
 void ObjectMoleculeRenderSele(ObjectMolecule *I,int curState,int sele)
 {
+
   register PyMOLGlobals *G = I->Obj.G;
   register CoordSet *cs;
   register int a,*idx2atm,nIndex;
-  register float *coord;
+  register float *coord,*v;
+  register int use_matrices = SettingGet_b(I->Obj.G,I->Obj.Setting,NULL,cSetting_use_state_matrices);
+  float tmp_matrix[16],v_tmp[3],*matrix = NULL;
+
   if(G->HaveGUI && G->ValidContext) {
     register AtomInfoType *atInfo = I->AtomInfo;
     
@@ -2543,9 +2546,20 @@ void ObjectMoleculeRenderSele(ObjectMolecule *I,int curState,int sele)
           idx2atm = cs->IdxToAtm;
           nIndex = cs->NIndex;
           coord = cs->Coord;
+          if(use_matrices && cs->State.Matrix) {
+            copy44d44f(cs->State.Matrix,tmp_matrix);
+            matrix = tmp_matrix;
+          } else 
+            matrix = NULL;
           for(a=0;a<nIndex;a++) {
-            if(SelectorIsMember(G,atInfo[*(idx2atm++)].selEntry,sele)) 
-              glVertex3fv(coord+a+a+a);
+            if(SelectorIsMember(G,atInfo[*(idx2atm++)].selEntry,sele)) {
+              v = coord + a + a + a;
+              if(matrix) {
+                transform44f3f(matrix,v,v_tmp);
+                glVertex3fv(v_tmp);
+              } else 
+                glVertex3fv(v);
+            }
           }
         }
       } else if(SettingGet(I->Obj.G,cSetting_static_singletons)) {
@@ -2555,8 +2569,14 @@ void ObjectMoleculeRenderSele(ObjectMolecule *I,int curState,int sele)
             nIndex = cs->NIndex;
             coord = cs->Coord;
             for(a=0;a<nIndex;a++) {
-              if(SelectorIsMember(G,atInfo[*(idx2atm++)].selEntry,sele))
-                glVertex3fv(coord+a+a+a);
+              if(SelectorIsMember(G,atInfo[*(idx2atm++)].selEntry,sele)) {
+                v = coord + a + a + a;
+                if(matrix) {
+                  transform44f3f(matrix,v,v_tmp);
+                  glVertex3fv(v_tmp);
+                } else 
+                  glVertex3fv(v);
+              }
             }
           }
         }
@@ -2568,8 +2588,14 @@ void ObjectMoleculeRenderSele(ObjectMolecule *I,int curState,int sele)
           nIndex = cs->NIndex;
           coord = cs->Coord;
           for(a=0;a<nIndex;a++) {
-            if(SelectorIsMember(G,atInfo[*(idx2atm++)].selEntry,sele))
-              glVertex3fv(coord+a+a+a);
+            if(SelectorIsMember(G,atInfo[*(idx2atm++)].selEntry,sele)) {
+              v = coord + a + a + a;
+              if(matrix) {
+                transform44f3f(matrix,v,v_tmp);
+                glVertex3fv(v_tmp);
+              } else 
+                glVertex3fv(v);
+            }
           }
         }
       }
@@ -4966,7 +4992,7 @@ int ObjectMoleculeTransformSelection(ObjectMolecule *I,int state,
             flag=true;
             CoordSetRecordTxfApplied(cs,matrix,homogenous);
           } else {
-            ObjectMoleculeTransformState44f(I,state,matrix,false,homogenous);
+            ObjectMoleculeTransformState44f(I,state,matrix,false,homogenous,false);
           }
         }
         if(flag) {
@@ -9023,28 +9049,27 @@ static void ObjectMoleculeRender(ObjectMolecule *I,RenderInfo *info)
     for(a=0;a<I->NCSet;a++) {
       cs = I->CSet[a];
       if(cs && cs->fRender) {
-        if(use_matrices) pop_matrix = ObjectStatePushAndApplyMatrix(&cs->State);
-    
+        if(use_matrices) pop_matrix = ObjectStatePushAndApplyMatrix(&cs->State,info);
         /* need to apply object state matrix here */
         cs->fRender(cs,info);
-        if(pop_matrix) ObjectStatePopMatrix(&cs->State);
+        if(pop_matrix) ObjectStatePopMatrix(&cs->State,info);
     
       }
     }
   } else if(state<I->NCSet) {
     cs = I->CSet[(I->CurCSet = state % I->NCSet )];
     if(cs && cs->fRender) {
-      if(use_matrices) pop_matrix = ObjectStatePushAndApplyMatrix(&cs->State);      
+      if(use_matrices) pop_matrix = ObjectStatePushAndApplyMatrix(&cs->State,info);      
       cs->fRender(cs,info);
-      if(pop_matrix) ObjectStatePopMatrix(&cs->State);
+      if(pop_matrix) ObjectStatePopMatrix(&cs->State,info);
     }
   } else if(I->NCSet==1) { /* if only one coordinate set, assume static */
     cs = I->CSet[0];
     if(SettingGet_b(I->Obj.G,I->Obj.Setting,NULL,cSetting_static_singletons))
       if(cs && cs->fRender) {
-        if(use_matrices) pop_matrix = ObjectStatePushAndApplyMatrix(&cs->State);      
+        if(use_matrices) pop_matrix = ObjectStatePushAndApplyMatrix(&cs->State,info);      
         cs->fRender(cs,info);
-        if(pop_matrix) ObjectStatePopMatrix(&cs->State);
+        if(pop_matrix) ObjectStatePopMatrix(&cs->State,info);
       }
   }
   PRINTFD(I->Obj.G,FB_ObjectMolecule)

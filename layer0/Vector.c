@@ -732,6 +732,39 @@ void convertTTTfR44d( float *ttt, double *homo)
 
 }
 
+void convertTTTfR44f( float *ttt, float *homo)
+{
+  /* takes the PyMOL-specific TTT matrix and 
+     makes a homogenous 4x4 txf matrix homo of it */
+
+  register float ttt_3  = ttt[3];
+  register float ttt_7  = ttt[7];
+  register float ttt_11 = ttt[11];
+  register float ttt_12 = ttt[12];
+  register float ttt_13 = ttt[13];
+  register float ttt_14 = ttt[14];
+
+  homo[ 0] = ttt[ 0];
+  homo[ 1] = ttt[ 1];
+  homo[ 2] = ttt[ 2];
+  homo[ 4] = ttt[ 4];
+  homo[ 5] = ttt[ 5];
+  homo[ 6] = ttt[ 6];
+  homo[ 8] = ttt[ 8];
+  homo[ 9] = ttt[ 9];
+  homo[10] = ttt[10];
+
+  homo[ 3] = (homo[ 0] * ttt_12) + (homo[ 1] * ttt_13) + (homo[ 2] * ttt_14) + ttt_3;
+  homo[ 7] = (homo[ 4] * ttt_12) + (homo[ 5] * ttt_13) + (homo[ 6] * ttt_14) + ttt_7;
+  homo[11] = (homo[ 8] * ttt_12) + (homo[ 9] * ttt_13) + (homo[10] * ttt_14) + ttt_11;
+
+  homo[12] = 0.0;
+  homo[13] = 0.0;
+  homo[14] = 0.0;
+  homo[15] = 1.0;
+
+}
+
 void convert44d44f(double *dbl, float *flt)
 {
   flt[ 0] = (float)dbl[ 0];
@@ -1069,6 +1102,69 @@ void invert_special44d44d(double *orig, double *inv)
 
 }
 
+static void normalize3dp( double *v1, double *v2, double *v3 )
+{
+  double vlen = sqrt1d((v1[0]*v1[0]) + 
+                       (v2[0]*v2[0]) + 
+                       (v3[0]*v3[0]));
+  if(vlen>R_SMALL)
+	 {
+		v1[0]/=vlen;
+		v2[0]/=vlen;
+		v3[0]/=vlen;
+	 }
+  else
+	 {
+		v1[0]=_0;
+		v2[1]=_0;
+		v3[2]=_0;
+	 }
+} 
+
+void recondition44d(double *matrix)
+{
+  normalize3d(matrix);
+  normalize3d(matrix+4);
+  normalize3d(matrix+8);
+  normalize3dp(matrix + 0, matrix + 4, matrix + 8 );
+  normalize3dp(matrix + 1, matrix + 5, matrix + 9 );
+  normalize3dp(matrix + 2, matrix + 6, matrix + 10);
+  normalize3d(matrix);
+  normalize3d(matrix+4);
+  normalize3d(matrix+8);
+  normalize3dp(matrix + 0, matrix + 4, matrix + 8 );
+  normalize3dp(matrix + 1, matrix + 5, matrix + 9 );
+  normalize3dp(matrix + 2, matrix + 6, matrix + 10);
+  normalize3d(matrix);
+  normalize3d(matrix+4);
+  normalize3d(matrix+8);
+}
+
+void invert_rotation_only44d44d(double *orig, double *inv)
+{
+  /* inverse of the rotation matrix */
+
+  inv[ 0] = orig[ 0];
+  inv[ 1] = orig[ 4];
+  inv[ 2] = orig[ 8];
+  inv[ 4] = orig[ 1];
+  inv[ 5] = orig[ 5];
+  inv[ 6] = orig[ 9];
+  inv[ 8] = orig[ 2];
+  inv[ 9] = orig[ 6];
+  inv[10] = orig[10];
+
+  inv[ 3] = 0.0;
+  inv[ 7] = 0.0;
+  inv[11] = 0.0;
+
+  inv[12] = 0.0;
+  inv[13] = 0.0;
+  inv[14] = 0.0;
+  inv[15] = 1.0;
+
+}
+
 
 void transformTTT44f3f (float *m1, float *m2, float *m3)
 {
@@ -1332,6 +1428,7 @@ void normalize3d( double *v1 )
 		v1[2]=_0;
 	 }
 } 
+
 
 
 double length3d ( double *v1 )

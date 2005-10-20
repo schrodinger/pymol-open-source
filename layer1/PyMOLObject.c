@@ -418,15 +418,25 @@ void ObjectStateSetMatrix(CObjectState *I, double *matrix)
   }
 }
 
-void ObjectStateCombineMatrixR44f(CObjectState *I, float *matrix)
+void ObjectStateRightCombineMatrixR44d(CObjectState *I, double *matrix)
 {
   if(!I->Matrix) {
     I->Matrix = Alloc(double,16);
-    copy44f44d(matrix,I->Matrix);
+    copy44d(matrix,I->Matrix);
   } else {
-    double tmp[16];
-    copy44f44d(matrix,tmp);
-    right_multiply44d44d(I->Matrix,tmp);
+    right_multiply44d44d(I->Matrix,matrix);
+    recondition44d(I->Matrix);
+  }
+}
+
+void ObjectStateLeftCombineMatrixR44d(CObjectState *I, double *matrix)
+{
+  if(!I->Matrix) {
+    I->Matrix = Alloc(double,16);
+    copy44d(matrix,I->Matrix);
+  } else {
+    left_multiply44d44d(matrix,I->Matrix);
+    recondition44d(I->Matrix);
   }
 }
 
@@ -439,6 +449,7 @@ void ObjectStateCombineMatrixTTT(CObjectState *I, float *matrix)
     double tmp[16];
     convertTTTfR44d(matrix,tmp);
     right_multiply44d44d(I->Matrix,tmp);
+    recondition44d(I->Matrix);
   }
 }
 
@@ -459,42 +470,54 @@ void ObjectStateTransformMatrix(CObjectState *I, double *matrix)
   }
 }
 
-int ObjectStatePushAndApplyMatrix(CObjectState *I) 
+int ObjectStatePushAndApplyMatrix(CObjectState *I,RenderInfo *info) 
 {
   register PyMOLGlobals *G = I->G;
   float matrix[16];
   register double *i_matrix = I->Matrix;
   int result = false;
-  if(i_matrix && G->HaveGUI && G->ValidContext) {
-    printf("ObjectStatePushAndApplyMatrix\n");
-    glMatrixMode(GL_MODELVIEW);
-    glPushMatrix();
-    matrix[ 0] = i_matrix[ 0];
-    matrix[ 1] = i_matrix[ 4];
-    matrix[ 2] = i_matrix[ 8];
-    matrix[ 3] = i_matrix[12];
-    matrix[ 4] = i_matrix[ 1];
-    matrix[ 5] = i_matrix[ 5];
-    matrix[ 6] = i_matrix[ 9];
-    matrix[ 7] = i_matrix[13];
-    matrix[ 8] = i_matrix[ 2];
-    matrix[ 9] = i_matrix[ 6];
-    matrix[10] = i_matrix[10];
-    matrix[11] = i_matrix[14];
-    matrix[12] = i_matrix[ 3];
-    matrix[13] = i_matrix[ 7];
-    matrix[14] = i_matrix[11];
-    matrix[15] = i_matrix[15];
-    glMultMatrixf(matrix);
-    result = true;
+  if(i_matrix) {
+    if(info->ray) {
+      float ttt[16],matrix[16],i_matrixf[16];
+      RayPushTTT(info->ray);
+      RayGetTTT(info->ray,ttt);
+      convertTTTfR44f(ttt,matrix);
+      copy44d44f(i_matrix,i_matrixf);
+      right_multiply44f44f(matrix,i_matrixf);
+      RaySetTTT(info->ray,true,matrix);
+      result = true;
+    } else if( G->HaveGUI && G->ValidContext) {
+      glMatrixMode(GL_MODELVIEW);
+      glPushMatrix();
+      matrix[ 0] = i_matrix[ 0];
+      matrix[ 1] = i_matrix[ 4];
+      matrix[ 2] = i_matrix[ 8];
+      matrix[ 3] = i_matrix[12];
+      matrix[ 4] = i_matrix[ 1];
+      matrix[ 5] = i_matrix[ 5];
+      matrix[ 6] = i_matrix[ 9];
+      matrix[ 7] = i_matrix[13];
+      matrix[ 8] = i_matrix[ 2];
+      matrix[ 9] = i_matrix[ 6];
+      matrix[10] = i_matrix[10];
+      matrix[11] = i_matrix[14];
+      matrix[12] = i_matrix[ 3];
+      matrix[13] = i_matrix[ 7];
+      matrix[14] = i_matrix[11];
+      matrix[15] = i_matrix[15];
+      glMultMatrixf(matrix);
+      result = true;
+    }
   }
   return result;
 }
 
-void ObjectStatePopMatrix(CObjectState *I)
+void ObjectStatePopMatrix(CObjectState *I,RenderInfo *info)
 {
   register PyMOLGlobals *G = I->G;
-  if(G->HaveGUI && G->ValidContext) {
+  if(info->ray) {
+    RayPopTTT(info->ray);
+  } else if(G->HaveGUI && G->ValidContext) {
     glMatrixMode(GL_MODELVIEW);
     glPopMatrix();
   }
