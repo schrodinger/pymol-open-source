@@ -320,6 +320,7 @@ void ObjectMoleculeUpdateNonbonded(ObjectMolecule *I);
 void ObjectMoleculeUpdateNeighbors(ObjectMolecule *I);
 int ObjectMoleculeMoveAtom(ObjectMolecule *I,int state,int index,float *v,int mode,int log);
 int ObjectMoleculeGetAtomVertex(ObjectMolecule *I,int state,int index,float *v);
+int ObjectMoleculeGetAtomTxfVertex(ObjectMolecule *I,int state,int index,float *v);
 int ObjectMoleculeGetAtomIndex(ObjectMolecule *I,int sele);
 int ObjectMoleculeTransformSelection(ObjectMolecule *I,int state,
                                       int sele,float *TTT,int log,

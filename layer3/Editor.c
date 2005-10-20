@@ -1234,8 +1234,8 @@ void EditorRender(PyMOLGlobals *G,int state)
       if((sele1>=0) && (sele2>=0) && I->BondMode && obj1 && obj2) {
         /* bond mode */
 
-        ObjectMoleculeGetAtomVertex(obj1,state,index1,v0);
-        ObjectMoleculeGetAtomVertex(obj2,state,index2,v1);
+        ObjectMoleculeGetAtomTxfVertex(obj1,state,index1,v0);
+        ObjectMoleculeGetAtomTxfVertex(obj2,state,index2,v1);
         draw_bond(G,v0,v1);
         
       } else {
@@ -1244,28 +1244,28 @@ void EditorRender(PyMOLGlobals *G,int state)
         vv = vp;
 
         if(obj1) {
-          if(ObjectMoleculeGetAtomVertex(obj1,state,index1,vv)) {
+          if(ObjectMoleculeGetAtomTxfVertex(obj1,state,index1,vv)) {
             draw_globe(G,vv,1);
             vv+=3;
           }
         }
 
         if(obj2) {
-          if(ObjectMoleculeGetAtomVertex(obj2,state,index2,vv)) {
+          if(ObjectMoleculeGetAtomTxfVertex(obj2,state,index2,vv)) {
             draw_globe(G,vv,2);
             vv+=3;
           }
         }
 
         if(obj3) {
-          if(ObjectMoleculeGetAtomVertex(obj3,state,index3,vv)) {
+          if(ObjectMoleculeGetAtomTxfVertex(obj3,state,index3,vv)) {
             draw_globe(G,vv,3);
             vv+=3;
           }
         }
 
         if(obj4) {
-          if(ObjectMoleculeGetAtomVertex(obj4,state,index4,vv)) {
+          if(ObjectMoleculeGetAtomTxfVertex(obj4,state,index4,vv)) {
             draw_globe(G,vv,4);
             vv+=3;
           }
@@ -1442,7 +1442,7 @@ void EditorPrepareDrag(PyMOLGlobals *G,ObjectMolecule *obj,int index,int state)
       if(sele1>=0) {
         i1 = ObjectMoleculeGetAtomIndex(obj,sele1);
         if(i1>=0) {
-          ObjectMoleculeGetAtomVertex(obj,state,i1,I->DragBase);
+          ObjectMoleculeGetAtomTxfVertex(obj,state,i1,I->DragBase);
           I->DragHaveBase = true;
         }
       }
@@ -1488,29 +1488,29 @@ void EditorPrepareDrag(PyMOLGlobals *G,ObjectMolecule *obj,int index,int state)
           
           zero3f(I->Center);
           if(i0>=0) {
-            ObjectMoleculeGetAtomVertex(obj,state,i0,I->V0);          
+            ObjectMoleculeGetAtomTxfVertex(obj,state,i0,I->V0);          
           } else if(i1>=0) {
-            ObjectMoleculeGetAtomVertex(obj,state,i1,I->V0);          
+            ObjectMoleculeGetAtomTxfVertex(obj,state,i1,I->V0);          
           } else if(i2>=0) {
-            ObjectMoleculeGetAtomVertex(obj,state,i2,I->V0);          
+            ObjectMoleculeGetAtomTxfVertex(obj,state,i2,I->V0);          
           } else if(i3>=0) {
-            ObjectMoleculeGetAtomVertex(obj,state,i3,I->V0);          
+            ObjectMoleculeGetAtomTxfVertex(obj,state,i3,I->V0);          
           }
           
           if(i0>=0) {
-            ObjectMoleculeGetAtomVertex(obj,state,i0,I->V1);          
+            ObjectMoleculeGetAtomTxfVertex(obj,state,i0,I->V1);          
             add3f(I->V1,I->Center,I->Center);
           } 
           if(i1>=0) {
-            ObjectMoleculeGetAtomVertex(obj,state,i1,I->V1);          
+            ObjectMoleculeGetAtomTxfVertex(obj,state,i1,I->V1);          
             add3f(I->V1,I->Center,I->Center);
           }
           if(i2>=0) {
-            ObjectMoleculeGetAtomVertex(obj,state,i2,I->V1);          
+            ObjectMoleculeGetAtomTxfVertex(obj,state,i2,I->V1);          
             add3f(I->V1,I->Center,I->Center);
           }
           if(i3>=0) {
-            ObjectMoleculeGetAtomVertex(obj,state,i3,I->V1);          
+            ObjectMoleculeGetAtomTxfVertex(obj,state,i3,I->V1);          
             add3f(I->V1,I->Center,I->Center);
           }
           
@@ -1527,13 +1527,13 @@ void EditorPrepareDrag(PyMOLGlobals *G,ObjectMolecule *obj,int index,int state)
         } else { /* atom mode */
           
           if(i0>=0) {
-            ObjectMoleculeGetAtomVertex(obj,state,i0,I->V0);          
+            ObjectMoleculeGetAtomTxfVertex(obj,state,i0,I->V0);          
           } else if(i1>=0) {
-            ObjectMoleculeGetAtomVertex(obj,state,i1,I->V0);          
+            ObjectMoleculeGetAtomTxfVertex(obj,state,i1,I->V0);          
           } else if(i2>=0) {
-            ObjectMoleculeGetAtomVertex(obj,state,i2,I->V0);          
+            ObjectMoleculeGetAtomTxfVertex(obj,state,i2,I->V0);          
           } else if(i3>=0) {
-            ObjectMoleculeGetAtomVertex(obj,state,i3,I->V0);          
+            ObjectMoleculeGetAtomTxfVertex(obj,state,i3,I->V0);          
           }
           if(I->DragHaveBase) {
             copy3f(I->DragBase,I->V1);
@@ -1571,7 +1571,7 @@ void EditorPrepareDrag(PyMOLGlobals *G,ObjectMolecule *obj,int index,int state)
       if(sele0>=0) { /* just provide a base vector, no valid axis exists */
         i1 = ObjectMoleculeGetAtomIndex(obj,sele0);
         if(i1>=0) {
-          ObjectMoleculeGetAtomVertex(obj,state,i1,I->DragBase);
+          ObjectMoleculeGetAtomTxfVertex(obj,state,i1,I->DragBase);
           I->DragHaveBase=true;
           I->DragBondFlag=true;
         }
@@ -1640,7 +1640,6 @@ void EditorDrag(PyMOLGlobals *G,ObjectMolecule *obj,int index,int mode,int state
         theta = (float)asin(length3f(cp));
         normalize23f(cp,n2);        
         get_rotation_about3f3fTTTf(theta, n2, v3, m);
-        /*        dump44f(m,"matrix");*/
         if(use_matrices) {
           ObjectMoleculeTransformState44f(obj,state,m,log_trans,false);
         } else {
@@ -1654,7 +1653,11 @@ void EditorDrag(PyMOLGlobals *G,ObjectMolecule *obj,int index,int mode,int state
         break;
       case cButModeMovFrag:
         if(use_matrices) {
-          
+          identity44f(m);
+          m[3]=mov[0];
+          m[7]=mov[1];
+          m[11]=mov[2];
+          ObjectMoleculeTransformState44f(obj,state,m,log_trans,true);
         } else {
           identity44f(m);
           copy3f(mov,m+12); /* questionable... */

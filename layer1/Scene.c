@@ -3021,7 +3021,7 @@ static int SceneClick(Block *block,int button,int x,int y,
           {
             float v1[3];
 
-            if(ObjectMoleculeGetAtomVertex((ObjectMolecule*)obj,
+            if(ObjectMoleculeGetAtomTxfVertex((ObjectMolecule*)obj,
                                            SettingGetGlobal_i(G,cSetting_state)-1,
                                            I->LastPicked.index,v1)) {
               ExecutiveOrigin(G,NULL,true,NULL,v1,0);
@@ -3056,7 +3056,7 @@ static int SceneClick(Block *block,int button,int x,int y,
           {
             float v1[3];
 
-            if(ObjectMoleculeGetAtomVertex((ObjectMolecule*)obj,
+            if(ObjectMoleculeGetAtomTxfVertex((ObjectMolecule*)obj,
                                            SettingGetGlobal_i(G,cSetting_state)-1,
                                            I->LastPicked.index,v1)) {
               ExecutiveCenter(G,NULL,0,true,-1,v1,true);
@@ -3695,7 +3695,7 @@ static int SceneDrag(Block *block,int x,int y,int mod,double when)
       if(!I->Threshold)
         switch(obj->type) {
         case cObjectMolecule:
-          if(ObjectMoleculeGetAtomVertex((ObjectMolecule*)obj,
+          if(ObjectMoleculeGetAtomTxfVertex((ObjectMolecule*)obj,
                                          SettingGetGlobal_i(G,cSetting_state)-1,
                                          I->LastPicked.index,v1)) {
             /* scale properly given the current projection matrix */

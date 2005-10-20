@@ -233,7 +233,7 @@ class Normal(PMGSkin):
         self.cmdFrame = Frame(self.dataArea)
         self.buildFrame = Builder(self.dataArea)
         
-        self.toggleFrame(self.cmdFrame)
+        self.toggleFrame(self.cmdFrame,startup=1)
 
         self.entry = Entry(self.cmdFrame, justify=LEFT, width=50,
              textvariable=self.command)
@@ -326,7 +326,7 @@ class Normal(PMGSkin):
             self.output.after(100,self.update_feedback) # 10X a second
         
 
-    def toggleFrame(self, frame):
+    def toggleFrame(self, frame, startup=0):
         if frame not in self.dataArea.slaves():
             # clear all frames in dataArea
             for f in self.dataArea.slaves():
@@ -340,12 +340,13 @@ class Normal(PMGSkin):
                 # next command will cause command frame to be turned on if
                 # nothing else is visible... might not want this behavior
                 self.cmdFrame.pack(side=BOTTOM, fill=BOTH, expand=YES)
-        if frame==self.cmdFrame:
-            self.cmd.edit_mode(0)
-        elif frame==self.buildFrame:
-            frame.deferred_activate()
-            self.cmd.edit_mode(1)
-            self.cmd.set("valence","1")
+        if not startup:
+            if frame==self.cmdFrame:
+                self.cmd.edit_mode(0)
+            elif frame==self.buildFrame:
+                frame.deferred_activate()
+                self.cmd.edit_mode(1)
+                self.cmd.set("valence","1")
             
     def update_menus(self):
         self.setting.refresh()

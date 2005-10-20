@@ -426,7 +426,7 @@ void ObjectStateCombineMatrixR44f(CObjectState *I, float *matrix)
   } else {
     double tmp[16];
     copy44f44d(matrix,tmp);
-    left_multiply44d44d(tmp,I->Matrix);
+    right_multiply44d44d(I->Matrix,tmp);
   }
 }
 
@@ -438,7 +438,7 @@ void ObjectStateCombineMatrixTTT(CObjectState *I, float *matrix)
   } else {
     double tmp[16];
     convertTTTfR44d(matrix,tmp);
-    left_multiply44d44d(tmp,I->Matrix);
+    right_multiply44d44d(I->Matrix,tmp);
   }
 }
 
@@ -466,6 +466,7 @@ int ObjectStatePushAndApplyMatrix(CObjectState *I)
   register double *i_matrix = I->Matrix;
   int result = false;
   if(i_matrix && G->HaveGUI && G->ValidContext) {
+    printf("ObjectStatePushAndApplyMatrix\n");
     glMatrixMode(GL_MODELVIEW);
     glPushMatrix();
     matrix[ 0] = i_matrix[ 0];

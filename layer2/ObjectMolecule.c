@@ -149,40 +149,33 @@ void ObjectMoleculeTransformState44f(ObjectMolecule *I,int state,float *matrix,
   int a;
   int use_matrices = SettingGet_b(I->Obj.G,I->Obj.Setting,NULL,cSetting_use_state_matrices);
   CoordSet *cs;
-  if(state<0) { /* all states */
+  if(!use_matrices) {
+    ObjectMoleculeTransformSelection(I,state,-1,matrix,log_trans,I->Obj.Name,homogenous);
+  } else if(state<0) { /* all states */
     for(a=0;a<I->NCSet;a++) {
       cs = I->CSet[a];
       if(cs) {
-        if(use_matrices) {
-          if(homogenous) 
-            ObjectStateCombineMatrixR44f(&cs->State, matrix);
-          else
-            ObjectStateCombineMatrixTTT(&cs->State, matrix);
-        } else {
-        }
+        if(homogenous) 
+          ObjectStateCombineMatrixR44f(&cs->State, matrix);
+        else
+          ObjectStateCombineMatrixTTT(&cs->State, matrix);
       }
     }
-  } else if(state<I->NCSet) {
+  } else if(state<I->NCSet) { /* single state */
     cs = I->CSet[(I->CurCSet = state % I->NCSet )];
     if(cs) {
-      if(use_matrices) {
-        if(homogenous) 
-          ObjectStateCombineMatrixR44f(&cs->State, matrix);
-        else
-          ObjectStateCombineMatrixTTT(&cs->State, matrix);
-      } else {
-      }
+      if(homogenous) 
+        ObjectStateCombineMatrixR44f(&cs->State, matrix);
+      else
+        ObjectStateCombineMatrixTTT(&cs->State, matrix);
     }
-  } else if(I->NCSet==1) { /* if only one coordinate set, assume static */
+  } else if(I->NCSet==1) { /* static singleton state */
     cs = I->CSet[0];
     if(cs && SettingGet_b(I->Obj.G,I->Obj.Setting,NULL,cSetting_static_singletons)) {
-      if(use_matrices) {
-        if(homogenous) 
-          ObjectStateCombineMatrixR44f(&cs->State, matrix);
-        else
-          ObjectStateCombineMatrixTTT(&cs->State, matrix);
-      } else {
-      }
+      if(homogenous) 
+        ObjectStateCombineMatrixR44f(&cs->State, matrix);
+      else
+        ObjectStateCombineMatrixTTT(&cs->State, matrix);
     }
   }
 }
@@ -4958,18 +4951,23 @@ int ObjectMoleculeTransformSelection(ObjectMolecule *I,int state,
             ai++;
           }
         } else { /* transforming whole coordinate set */
-          ai=I->AtomInfo;
-          for(a=0;a<I->NAtom;a++) {
-            if(!(ai->protekted==1)) {
-              if(homogenous) 
-                CoordSetTransformAtomR44f(cs,a,matrix);
-              else
-                CoordSetTransformAtomTTTf(cs,a,matrix);                
+          int use_matrices = SettingGet_b(I->Obj.G,I->Obj.Setting,NULL,cSetting_use_state_matrices);
+          if(!use_matrices) {
+            ai=I->AtomInfo;
+            for(a=0;a<I->NAtom;a++) {
+              if(!(ai->protekted==1)) {
+                if(homogenous) 
+                  CoordSetTransformAtomR44f(cs,a,matrix);
+                else
+                  CoordSetTransformAtomTTTf(cs,a,matrix);                
+              }
+              ai++;
             }
-            ai++;
+            flag=true;
+            CoordSetRecordTxfApplied(cs,matrix,homogenous);
+          } else {
+            ObjectMoleculeTransformState44f(I,state,matrix,false,homogenous);
           }
-          flag=true;
-          CoordSetRecordTxfApplied(cs,matrix,homogenous);
         }
         if(flag) {
           cs->fInvalidateRep(cs,cRepAll,cRepInvCoord);
@@ -8940,6 +8938,33 @@ int ObjectMoleculeGetAtomVertex(ObjectMolecule *I,int state,int index,float *v)
     state=0;
   if(I->CSet[state]) 
     result = CoordSetGetAtomVertex(I->CSet[state],index,v);
+  return(result);
+}
+/*========================================================================*/
+int ObjectMoleculeGetAtomTxfVertex(ObjectMolecule *I,int state,int index,float *v)
+{
+  int result = 0;
+  if(state<0) state=SettingGet_i(I->Obj.G,NULL,I->Obj.Setting,cSetting_state)-1;
+  if(state<0) state=SceneGetState(I->Obj.G); 
+  if(I->NCSet==1) state=0; /* static singletons always active here it seems */
+  state = state % I->NCSet;
+  { 
+    CoordSet *cs = I->CSet[state];
+    if((!cs)&&(SettingGet_b(I->Obj.G,I->Obj.Setting,NULL,cSetting_all_states))) {
+      state=0;
+      cs = I->CSet[state];
+    }
+    if(cs) {
+      SettingGet_b(I->Obj.G,I->Obj.Setting,NULL,cSetting_use_state_matrices);
+      result = CoordSetGetAtomVertex(cs,index,v);
+      if(cs->State.Matrix) { /* state transformation */
+        transform44d3f(cs->State.Matrix,v,v);
+      }
+      if(I->Obj.TTTFlag) { /* object transformation */
+        transformTTT44f3f(I->Obj.TTT, v,v);
+      }
+    }
+  }
   return(result);
 }
 /*========================================================================*/
