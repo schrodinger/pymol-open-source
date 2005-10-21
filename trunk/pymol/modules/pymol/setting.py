@@ -472,6 +472,7 @@ if __name__=='pymol.setting':
         draw_frames               = (436, '')
         show_alpha_checker        = (437, '')
         use_state_matrices        = (438, '')
+        editor_auto_origin        = (439, '')
         
     setting_sc = Shortcut(SettingIndex.__dict__.keys())
 

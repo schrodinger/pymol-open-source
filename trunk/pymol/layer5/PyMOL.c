@@ -573,6 +573,7 @@ typedef struct _CPyMOL {
   ov_word lex_draw_frames;
   ov_word lex_show_alpha_checker;
   ov_word lex_use_state_matrices;
+  ov_word lex_editor_auto_origin;
 } _CPyMOL;
 
 /* convenience functions -- inline */
@@ -1154,6 +1155,7 @@ static OVstatus PyMOL_InitAPI(CPyMOL *I)
   LEX_SETTING(draw_frames, 436);
   LEX_SETTING(show_alpha_checker, 437);
   LEX_SETTING(use_state_matrices, 438);
+  LEX_SETTING(editor_auto_origin, 439);
   return_OVstatus_SUCCESS;
 }
 

@@ -140,7 +140,7 @@ static void RepDihedralRender(RepDihedral *I,RenderInfo *info)
 
 Rep *RepDihedralNew(DistSet *ds)
 {
-  PyMOLGlobals *G=ds->G;
+  PyMOLGlobals *G=ds->State.G;
   int a;
   int n;
   float *v;

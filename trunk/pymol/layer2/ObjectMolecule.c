@@ -151,7 +151,7 @@ void ObjectMoleculeTransformState44f(ObjectMolecule *I,int state,float *matrix,
   float tmp_matrix[16];
   CoordSet *cs;
   if(!use_matrices) {
-    ObjectMoleculeTransformSelection(I,state,-1,matrix,log_trans,I->Obj.Name,homogenous);
+    ObjectMoleculeTransformSelection(I,state,-1,matrix,log_trans,I->Obj.Name,homogenous,true);
   } else {
     double dbl_matrix[16];
     /* ensure homogenous matrix to preserve programmer sanity */
@@ -4931,7 +4931,7 @@ void ObjectMoleculeInferChemFromBonds(ObjectMolecule *I,int state)
 /*========================================================================*/
 int ObjectMoleculeTransformSelection(ObjectMolecule *I,int state,
                                       int sele,float *matrix,int log,
-                                     char *sname,int homogenous) 
+                                     char *sname,int homogenous,int global) 
 {
   /* if sele == -1, then the whole object state is transformed */
 
@@ -4942,6 +4942,8 @@ int ObjectMoleculeTransformSelection(ObjectMolecule *I,int state,
   int logging;
   int all_states=false,inp_state;
   int ok=true;
+  float homo_matrix[16],tmp_matrix[16],*input_matrix = matrix;
+
   inp_state=state;
   if(state==-1) 
     state=ObjectGetCurrentState(&I->Obj,false);
@@ -4961,7 +4963,56 @@ int ObjectMoleculeTransformSelection(ObjectMolecule *I,int state,
     if(state<I->NCSet) {
       cs = I->CSet[state];
       if(cs) {
-        if(sele>=0) {
+        int use_matrices = SettingGet_b(I->Obj.G,I->Obj.Setting,
+                                        NULL,cSetting_use_state_matrices);
+
+        if(!homogenous) { /* convert matrix to homogenous */
+          convertTTTfR44f(matrix,homo_matrix);
+          matrix = homo_matrix;
+          input_matrix = homo_matrix;
+          homogenous = true;
+        }
+
+        if(global && ((use_matrices&&cs->State.Matrix) ||
+                      I->Obj.TTTFlag)) { 
+          /* if input coordinates are in the global system,
+             they may need to be converted to local coordinates */
+          
+          matrix = input_matrix;
+          
+          /* global to object */
+
+          if(I->Obj.TTTFlag) {
+            float ttt[16];
+            if(matrix!=tmp_matrix) {
+              copy44f(matrix,tmp_matrix);
+            }
+            convertTTTfR44f(I->Obj.TTT, ttt);
+            {
+              float ttt_inv[16];
+              invert_special44f44f(ttt,ttt_inv);
+              left_multiply44f44f(ttt_inv,tmp_matrix);
+              right_multiply44f44f(tmp_matrix,ttt);
+            }
+            matrix = tmp_matrix;
+          }
+
+          /* object to state */
+
+          if(use_matrices) {
+            if(cs->State.Matrix) {
+              double tmp_double[16], tmp_inv[16];
+              copy44f44d(matrix, tmp_double);
+              invert_special44d44d(cs->State.Matrix, tmp_inv);
+              left_multiply44d44d(tmp_inv,tmp_double);
+              right_multiply44d44d(tmp_double,cs->State.Matrix);
+              copy44d44f(tmp_double,tmp_matrix);
+              matrix=tmp_matrix;
+            }
+          }
+        }
+
+        if(sele>=0) { /* transforming select atoms */
           ai=I->AtomInfo;
           for(a=0;a<I->NAtom;a++) {
             s=ai->selEntry;
@@ -4977,7 +5028,6 @@ int ObjectMoleculeTransformSelection(ObjectMolecule *I,int state,
             ai++;
           }
         } else { /* transforming whole coordinate set */
-          int use_matrices = SettingGet_b(I->Obj.G,I->Obj.Setting,NULL,cSetting_use_state_matrices);
           if(!use_matrices) {
             ai=I->AtomInfo;
             for(a=0;a<I->NAtom;a++) {
@@ -7202,6 +7252,7 @@ void ObjectMoleculeSeleOp(ObjectMolecule *I,int sele,ObjectMoleculeOpRec *op)
   int match_flag=false;
   int offset;
   int priority;
+  register int use_matrices = false;
   CoordSet *cs;
   AtomInfoType *ai,*ai0,*ai_option;
   PyMOLGlobals *G=I->Obj.G;
@@ -7944,6 +7995,8 @@ void ObjectMoleculeSeleOp(ObjectMolecule *I,int sele,ObjectMoleculeOpRec *op)
        register int i_NAtom = I->NAtom;
        register int i_DiscreteFlag = I->DiscreteFlag;
        register CoordSet **i_CSet = I->CSet;
+       if(op_i2) 
+         use_matrices = SettingGet_b(I->Obj.G,I->Obj.Setting,NULL,cSetting_use_state_matrices);
        ai = I->AtomInfo;
        for(a=0;a<i_NAtom;a++) {
          s=ai->selEntry;
@@ -7958,11 +8011,18 @@ void ObjectMoleculeSeleOp(ObjectMolecule *I,int sele,ObjectMoleculeOpRec *op)
              }
              if(cs && (a1>=0) ) {
                coord = cs->Coord+3*a1;
-               if(op_i2) /* do we want object-transformed coordinates? */
+               if(op_i2) { /* do we want transformed coordinates? */
+                 if(use_matrices) {
+                   if(cs->State.Matrix) { /* state transformation */
+                     transform44d3f(cs->State.Matrix,coord,v1);
+                     coord = v1;
+                   }
+                 }
                  if(obj_TTTFlag) {
                    transformTTT44f3f(I->Obj.TTT,coord,v1);
                    coord=v1;
                  }
+               }
                add3f(op_v1,coord,op_v1);
                op_i1++;
              }
@@ -7984,6 +8044,8 @@ void ObjectMoleculeSeleOp(ObjectMolecule *I,int sele,ObjectMoleculeOpRec *op)
        register int i_NAtom = I->NAtom;
        register int i_DiscreteFlag = I->DiscreteFlag;
        register CoordSet **i_CSet = I->CSet;
+       if(op_i2) 
+         use_matrices = SettingGet_b(I->Obj.G,I->Obj.Setting,NULL,cSetting_use_state_matrices);
 
        ai = I->AtomInfo;
        for(a=0;a<i_NAtom;a++) {
@@ -7999,12 +8061,18 @@ void ObjectMoleculeSeleOp(ObjectMolecule *I,int sele,ObjectMoleculeOpRec *op)
              }
              if(cs && (a1>=0) ) {
                coord = cs->Coord+3*a1;
-               if(op_i2) /* do we want object-transformed coordinates? */
+               if(op_i2) { /* do we want transformed coordinates? */
+                 if(use_matrices) {
+                   if(cs->State.Matrix) { /* state transformation */
+                     transform44d3f(cs->State.Matrix,coord,v1);
+                     coord = v1;
+                   }
+                 }
                  if(obj_TTTFlag) {
                    transformTTT44f3f(I->Obj.TTT,coord,v1);
                    coord=v1;
                  }
-               
+               }
                if(op_i1) {
                  if(op_v1[0]>coord[0]) op_v1[0]=coord[0];
                  if(op_v1[1]>coord[1]) op_v1[1]=coord[1];
@@ -8030,6 +8098,7 @@ void ObjectMoleculeSeleOp(ObjectMolecule *I,int sele,ObjectMoleculeOpRec *op)
      }
      break;
    default:
+     use_matrices = SettingGet_b(I->Obj.G,I->Obj.Setting,NULL,cSetting_use_state_matrices);
      ai = I->AtomInfo;
      for(a=0;a<I->NAtom;a++)
 		 {
@@ -8174,17 +8243,23 @@ void ObjectMoleculeSeleOp(ObjectMolecule *I,int sele,ObjectMoleculeOpRec *op)
                        a1=-1;
                    } else 
                      a1=cs->AtmToIdx[a];
-                   if(a1>=0)
-                     {
-                       coord = cs->Coord+3*a1;
-                       if(op->i2) /* do we want object-transformed coordinates? */
-                         if(I->Obj.TTTFlag) {
-                           transformTTT44f3f(I->Obj.TTT,coord,v1);
-                           coord=v1;
+                   if(a1>=0) {
+                     coord = cs->Coord+3*a1;
+                     if(op->i2) { /* do we want transformed coordinates? */
+                       if(use_matrices) {
+                         if(cs->State.Matrix) { /* state transformation */
+                           transform44d3f(cs->State.Matrix,coord,v1);
+                           coord = v1;
                          }
-                       add3f(op->v1,coord,op->v1);
-                       op->i1++;
+                       }
+                       if(I->Obj.TTTFlag) {
+                         transformTTT44f3f(I->Obj.TTT,coord,v1);
+                         coord=v1;
+                       }
                      }
+                     add3f(op->v1,coord,op->v1);
+                     op->i1++;
+                   }
                    break;
                  case OMOP_CSetMinMax:
                    if(I->DiscreteFlag) {
@@ -8197,11 +8272,18 @@ void ObjectMoleculeSeleOp(ObjectMolecule *I,int sele,ObjectMoleculeOpRec *op)
                    if(a1>=0)
                      {
                        coord = cs->Coord+3*a1;
-                       if(op->i2) /* do we want object-transformed coordinates? */
+                       if(op->i2) { /* do we want transformed coordinates? */
+                         if(use_matrices) {
+                           if(cs->State.Matrix) { /* state transformation */
+                             transform44d3f(cs->State.Matrix,coord,v1);
+                             coord = v1;
+                           }
+                         }
                          if(I->Obj.TTTFlag) {
                            transformTTT44f3f(I->Obj.TTT,coord,v1);
                            coord=v1;
                          }
+                       }
                        if(op->i1) {
                          for(c=0;c<3;c++) {
                            if(*(op->v1+c)>*(coord+c)) *(op->v1+c)=*(coord+c);
@@ -8227,11 +8309,18 @@ void ObjectMoleculeSeleOp(ObjectMolecule *I,int sele,ObjectMoleculeOpRec *op)
                    if(a1>=0)
                      {
                        coord = cs->Coord+3*a1;
-                       if(op->i2) /* do we want object-transformed coordinates? */
+                       if(op->i2) { /* do we want transformed coordinates? */
+                         if(use_matrices) {
+                           if(cs->State.Matrix) { /* state transformation */
+                             transform44d3f(cs->State.Matrix,coord,v1);
+                             coord = v1;
+                           }
+                         }
                          if(I->Obj.TTTFlag) {
                            transformTTT44f3f(I->Obj.TTT,coord,v1);
                            coord=v1;
                          }
+                       }
                        MatrixTransformC44fAs33f3f(op->mat1,coord,v1); /* convert to view-space */
                        coord=v1;
                        if(op->i1) {
@@ -8260,11 +8349,18 @@ void ObjectMoleculeSeleOp(ObjectMolecule *I,int sele,ObjectMoleculeOpRec *op)
                      {
                        float dist;
                        coord = cs->Coord+3*a1;
-                       if(op->i2) /* do we want object-transformed coordinates? */
+                       if(op->i2) { /* do we want transformed coordinates? */
+                         if(use_matrices) {
+                           if(cs->State.Matrix) { /* state transformation */
+                             transform44d3f(cs->State.Matrix,coord,v1);
+                             coord = v1;
+                           }
+                         }
                          if(I->Obj.TTTFlag) {
                            transformTTT44f3f(I->Obj.TTT,coord,v1);
                            coord=v1;
                          }
+                       }
                        dist = (float)diff3f(op->v1,coord);
                        if(dist>op->f1)
                          op->f1=dist;
@@ -8325,11 +8421,18 @@ void ObjectMoleculeSeleOp(ObjectMolecule *I,int sele,ObjectMoleculeOpRec *op)
                        if(a1>=0)
                          {
                            coord = cs->Coord+3*a1;
-                           if(op->i2) /* do we want object-transformed coordinates? */
+                           if(op->i2) { /* do we want transformed coordinates? */
+                             if(use_matrices) {
+                               if(cs->State.Matrix) { /* state transformation */
+                                 transform44d3f(cs->State.Matrix,coord,v1);
+                                 coord = v1;
+                               }
+                             }
                              if(I->Obj.TTTFlag) {
                                transformTTT44f3f(I->Obj.TTT,coord,v1);
                                coord=v1;
                              }
+                           }
                            add3f(op->v1,coord,op->v1);
                            op->i1++;
                          }
@@ -8345,11 +8448,18 @@ void ObjectMoleculeSeleOp(ObjectMolecule *I,int sele,ObjectMoleculeOpRec *op)
                        if(a1>=0)
                          {
                            coord = cs->Coord+3*a1;
-                           if(op->i2) /* do we want object-transformed coordinates? */
+                           if(op->i2) { /* do we want transformed coordinates? */
+                             if(use_matrices) {
+                               if(cs->State.Matrix) { /* state transformation */
+                                 transform44d3f(cs->State.Matrix,coord,v1);
+                                 coord = v1;
+                               }
+                             }
                              if(I->Obj.TTTFlag) {
                                transformTTT44f3f(I->Obj.TTT,coord,v1);
                                coord=v1;
                              }
+                           }
                            if(op->i1) {
                              for(c=0;c<3;c++) {
                                if(*(op->v1+c)>*(coord+c)) *(op->v1+c)=*(coord+c);
@@ -8377,11 +8487,18 @@ void ObjectMoleculeSeleOp(ObjectMolecule *I,int sele,ObjectMoleculeOpRec *op)
                        if(a1>=0)
                          {
                            coord = cs->Coord+3*a1;
-                           if(op->i2) /* do we want object-transformed coordinates? */
+                           if(op->i2) { /* do we want transformed coordinates? */
+                             if(use_matrices) {
+                               if(cs->State.Matrix) { /* state transformation */
+                                 transform44d3f(cs->State.Matrix,coord,v1);
+                                 coord = v1;
+                               }
+                             }
                              if(I->Obj.TTTFlag) {
                                transformTTT44f3f(I->Obj.TTT,coord,v1);
                                coord=v1;
                              }
+                           }
                            MatrixTransformC44fAs33f3f(op->mat1,coord,v1); /* convert to view-space */
                            coord=v1;
                            if(op->i1) {
@@ -8410,11 +8527,18 @@ void ObjectMoleculeSeleOp(ObjectMolecule *I,int sele,ObjectMoleculeOpRec *op)
                          {
                            float dist;
                            coord = cs->Coord+3*a1;
-                           if(op->i2) /* do we want object-transformed coordinates? */
+                           if(op->i2) { /* do we want transformed coordinates? */
+                             if(use_matrices) {
+                               if(cs->State.Matrix) { /* state transformation */
+                                 transform44d3f(cs->State.Matrix,coord,v1);
+                                 coord = v1;
+                               }
+                             }
                              if(I->Obj.TTTFlag) {
                                transformTTT44f3f(I->Obj.TTT,coord,v1);
                                coord=v1;
                              }
+                           }
                            dist = (float)diff3f(coord,op->v1);
                            if(dist>op->f1)
                              op->f1=dist;
@@ -8981,10 +9105,11 @@ int ObjectMoleculeGetAtomTxfVertex(ObjectMolecule *I,int state,int index,float *
       cs = I->CSet[state];
     }
     if(cs) {
-      SettingGet_b(I->Obj.G,I->Obj.Setting,NULL,cSetting_use_state_matrices);
       result = CoordSetGetAtomVertex(cs,index,v);
-      if(cs->State.Matrix) { /* state transformation */
-        transform44d3f(cs->State.Matrix,v,v);
+      if(SettingGet_b(I->Obj.G,I->Obj.Setting,NULL,cSetting_use_state_matrices)) {
+        if(cs->State.Matrix) { /* state transformation */
+          transform44d3f(cs->State.Matrix,v,v);
+        }
       }
       if(I->Obj.TTTFlag) { /* object transformation */
         transformTTT44f3f(I->Obj.TTT, v,v);

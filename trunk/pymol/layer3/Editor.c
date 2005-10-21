@@ -456,7 +456,7 @@ int EditorInvert(PyMOLGlobals *G,int quiet)
                (!ObjectMoleculeDoesAtomNeighborSele(obj0,ia0,sele2)) &&
                (!ObjectMoleculeDoesAtomNeighborSele(obj0,ia1,sele2))) {
               found = true;
-              ok = ObjectMoleculeTransformSelection(obj0,state,sele2,m,false,NULL,false);
+              ok = ObjectMoleculeTransformSelection(obj0,state,sele2,m,false,NULL,false,false);
             }
           }
           if(found) {
@@ -533,7 +533,7 @@ int EditorTorsion(PyMOLGlobals *G,float angle)
             
             theta=(float)(cPI*angle/180.0);
             get_rotation_about3f3fTTTf(theta, n0, v1, m);
-            ok = ObjectMoleculeTransformSelection(obj2,state,sele2,m,false,NULL,false);
+            ok = ObjectMoleculeTransformSelection(obj2,state,sele2,m,false,NULL,false,false);
             SceneInvalidate(G);
             
             I->DragIndex=-1;
@@ -1403,12 +1403,20 @@ void EditorPrepareDrag(PyMOLGlobals *G,ObjectMolecule *obj,int index,int state)
 
   if(!EditorActive(G)) { /* non-anchored */
     /* need to modify this code to move a complete covalent structure */
-
+    float mn[3],mx[3];
+    
     I->DragObject=obj;
     I->DragIndex=index;
     I->DragSelection=-1;
+    I->DragHaveBase = false;
+    if(SettingGetGlobal_b(G,cSetting_editor_auto_origin)) {
+      if(ExecutiveGetExtent(G,obj->Obj.Name,mn,mx,true,state,true)) {
+        average3f(mn,mx,I->DragBase);
+        I->DragHaveBase = true;
+      }
+    }
+    
   } else {
-
 
     /* anchored */
     for(frg=1;frg<=I->NFrag;frg++) {
@@ -1629,7 +1637,11 @@ void EditorDrag(PyMOLGlobals *G,ObjectMolecule *obj,int index,int mode,int state
       /* non-achored actions */
       switch(mode) {
       case cButModeRotFrag:
-        SceneOriginGet(G,v3);
+        if(I->DragHaveBase) {
+          copy3f(I->DragBase,v3);
+        } else {
+          SceneOriginGet(G,v3);
+        }
         subtract3f(pt,v3,n0);
         add3f(pt,mov,n1);
         subtract3f(n1,v3,n1);
@@ -1645,7 +1657,8 @@ void EditorDrag(PyMOLGlobals *G,ObjectMolecule *obj,int index,int mode,int state
         if(use_matrices) {
           ObjectMoleculeTransformState44f(obj,state,m,log_trans,false,true);
         } else {
-          ObjectMoleculeTransformSelection(obj,state,I->DragSelection,m,log_trans,I->DragSeleName,false);
+          ObjectMoleculeTransformSelection(obj,state,I->DragSelection,
+                                           m,log_trans,I->DragSeleName,false,true);
         }
         SceneInvalidate(G);
         break;
@@ -1663,7 +1676,8 @@ void EditorDrag(PyMOLGlobals *G,ObjectMolecule *obj,int index,int mode,int state
         } else {
           identity44f(m);
           copy3f(mov,m+12); /* questionable... */
-          ObjectMoleculeTransformSelection(obj,state,I->DragSelection,m,log_trans,I->DragSeleName,false);
+          ObjectMoleculeTransformSelection(obj,state,I->DragSelection,m,
+                                           log_trans,I->DragSeleName,false,true);
         }
         SceneInvalidate(G);
         break;
@@ -1695,7 +1709,8 @@ void EditorDrag(PyMOLGlobals *G,ObjectMolecule *obj,int index,int mode,int state
         normalize23f(cp,n2);        
         
         get_rotation_about3f3fTTTf(theta, n2, v3, m);
-        ObjectMoleculeTransformSelection(obj,state,I->DragSelection,m,log_trans,I->DragSeleName,false);
+        ObjectMoleculeTransformSelection(obj,state,I->DragSelection,
+                                         m,log_trans,I->DragSeleName,false,true);
         SceneInvalidate(G);
         break;
       case cButModeTorFrag:
@@ -1726,14 +1741,14 @@ void EditorDrag(PyMOLGlobals *G,ObjectMolecule *obj,int index,int mode,int state
               theta=-theta;
             get_rotation_about3f3fTTTf(theta, n0, v1, m);
             ObjectMoleculeTransformSelection(obj,state,I->DragSelection,m,
-                                             log_trans,I->DragSeleName,false);
+                                             log_trans,I->DragSeleName,false,true);
           } else {
 
             cross_product3f(I->Axis,z_dir,d0);
             theta = -dot_product3f(d0,mov);
             get_rotation_about3f3fTTTf(theta, n0, v1, m);
             ObjectMoleculeTransformSelection(obj,state,I->DragSelection,m,
-                                             log_trans,I->DragSeleName,false);
+                                             log_trans,I->DragSeleName,false,true);
             
           }
           if(I->BondMode && SettingGetGlobal_b(G,cSetting_editor_auto_dihedral))
@@ -1745,7 +1760,8 @@ void EditorDrag(PyMOLGlobals *G,ObjectMolecule *obj,int index,int mode,int state
       case cButModeMovFrag:
         identity44f(m);
         copy3f(mov,m+12); /* questionable */
-        ObjectMoleculeTransformSelection(obj,state,I->DragSelection,m,log_trans,I->DragSeleName,false);
+        ObjectMoleculeTransformSelection(obj,state,I->DragSelection,
+                                         m,log_trans,I->DragSeleName,false,true);
         SceneInvalidate(G);
         break;
       }

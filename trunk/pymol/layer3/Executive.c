@@ -3698,7 +3698,7 @@ int ExecutiveTransformSelection(PyMOLGlobals *G,int state,char *s1,int log,float
     nObj = VLAGetSize(vla);
     for(a=0;a<nObj;a++) {
       obj=vla[a];
-      ObjectMoleculeTransformSelection(obj,state,sele,ttt,log,s1,homogenous);
+      ObjectMoleculeTransformSelection(obj,state,sele,ttt,log,s1,homogenous,false);
     }
   }
   SceneInvalidate(G);
@@ -3733,7 +3733,7 @@ int ExecutiveTransformObjectSelection(PyMOLGlobals *G,char *name,int state,
             "Error: selection object %s not found.\n",s1
             ENDFB(G);
         } else {
-          ObjectMoleculeTransformSelection(objMol,state,sele,matrix,log,s1,homogenous);
+          ObjectMoleculeTransformSelection(objMol,state,sele,matrix,log,s1,homogenous,false);
         }
         SceneInvalidate(G);
       }
@@ -8028,7 +8028,6 @@ int ExecutiveGetExtent(PyMOLGlobals *G,char *name,float *mn,float *mx,
   op2.v2[1]=1.0;
   op2.v2[2]=1.0;
 
-#if 1
   {
     CTracker *I_Tracker= I->Tracker;
     int list_id = ExecutiveGetNamesListFromPattern(G,name,true);
@@ -8094,6 +8093,7 @@ int ExecutiveGetExtent(PyMOLGlobals *G,char *name,float *mn,float *mx,
                 op2.code = OMOP_CSetSumVertices;
                 op2.cs1 = state;
               }
+              op2.i2 = transformed;
               ExecutiveObjMolSeleOp(G,sele,&op2);           
             }
             break;
@@ -8190,142 +8190,6 @@ int ExecutiveGetExtent(PyMOLGlobals *G,char *name,float *mn,float *mx,
     result = have_extent_flag;
 
   }
-#else
-  {
-    int flag = false;
-    int all_flag = false;
-    
-    if(WordMatch(G,cKeywordAll,name,true)<0) {
-      all_flag=true;
-    }
-    sele=SelectorIndexByName(G,name);
-    
-    if(sele>=0) { 
-      if(state<0) {
-        op.code = OMOP_MNMX;
-      } else {
-        op.code = OMOP_CSetMinMax;
-        op.cs1 = state;
-      }
-      op.v1[0]=FLT_MAX;
-      op.v1[1]=FLT_MAX;
-      op.v1[2]=FLT_MAX;
-      op.v2[0]=-FLT_MAX;
-      op.v2[1]=-FLT_MAX;
-      op.v2[2]=-FLT_MAX;
-      op.i1 = 0;
-      op.i2 = transformed;
-      ExecutiveObjMolSeleOp(G,sele,&op);
-
-      PRINTFD(G,FB_Executive)
-        " ExecutiveGetExtent: minmax over %d vertices\n",op.i1
-        ENDFD;
-
-      if(op.i1)
-        flag = true;
-      if(all_flag) {
-        while(ListIterate(I->Spec,rec,next)) {
-          if(rec->type==cExecObject) {
-            obj=rec->obj;
-            if(obj->ExtentFlag) 
-              switch(obj->type) {
-              case cObjectMolecule:
-                break;
-              default:
-                min3f(obj->ExtentMin,op.v1,op.v1);
-                max3f(obj->ExtentMax,op.v2,op.v2);
-                flag = true;
-                break;
-              }
-          }
-        }
-      }
-      if(weighted) {
-        op2.i1=0;
-        op2.i2=transformed;
-        if(state<0) 
-          op2.code = OMOP_SUMC;
-        else {
-          op2.code = OMOP_CSetSumVertices;
-          op2.cs1 = state;
-        }
-      
-        op2.v1[0]=0.0;
-        op2.v1[1]=0.0;
-        op2.v1[2]=0.0;
-        ExecutiveObjMolSeleOp(G,sele,&op2);
-        if(op2.i1) {
-          op2.v1[0]/=op2.i1;
-          op2.v1[1]/=op2.i1;
-          op2.v1[2]/=op2.i1;
-        }
-      }
-    } else {
-      obj = ExecutiveFindObjectByName(G,name);
-      if(obj) {
-        switch(obj->type) {
-        case cObjectMolecule:
-          break;
-        default:
-          if(obj->ExtentFlag) {
-            copy3f(obj->ExtentMin,op.v1);
-            copy3f(obj->ExtentMax,op.v2);
-            flag = true;
-          } else {
-
-            PRINTFD(G,FB_Executive)
-              " ExecutiveGetExtent: no extent for object %s\n",obj->Name
-              ENDFD;
-          
-          }
-          break;
-        }
-      }
-    }
-    if(flag&&weighted) { 
-      if(op2.i1) { 
-        for (a=0;a<3;a++) { /* this puts origin at the weighted center */
-          f1 = op2.v1[a] - op.v1[a];
-          f2 = op.v2[a] - op2.v1[a];
-          if(f1>f2) 
-            fmx = f1;
-          else
-            fmx = f2;
-          op.v1[a] = op2.v1[a] - fmx;
-          op.v2[a] = op2.v1[a] + fmx;
-        }
-      }
-    }
-    copy3f(op.v1,mn);
-    copy3f(op.v2,mx);
-  
-    if(all_flag) {
-      rec=NULL;
-      while(ListIterate(I->Spec,rec,next)) {
-        if(rec->type==cExecObject) {
-          obj=rec->obj;
-          switch(rec->obj->type) {
-          case cObjectMolecule:
-            break;
-          default:
-            if(obj->ExtentFlag) {
-              if(!flag) {
-                copy3f(obj->ExtentMax,mx);
-                copy3f(obj->ExtentMin,mn);
-                flag=true;
-              } else {
-                max3f(obj->ExtentMax,mx,mx);
-                min3f(obj->ExtentMin,mn,mn);
-              }
-            }
-            break;
-          }
-        }
-      }
-      result = false;
-    }
-  }
-#endif
 
   PRINTFD(G,FB_Executive)
     " ExecutiveGetExtent: returning %d\n",result

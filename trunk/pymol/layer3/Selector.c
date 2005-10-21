@@ -10127,7 +10127,7 @@ DistSet *SelectorGetDihedralSet(PyMOLGlobals *G, DistSet *ds,
                                               v2 = cs2->Coord+3*idx2;
                                               v3 = cs3->Coord+3*idx3;
                                               v4 = cs4->Coord+3*idx4;
-                                      
+                                              
                                               angle = get_dihedral3f(v1,v2,v3,v4);
                                       
                                               (*angle_sum)+=angle;
@@ -10135,18 +10135,11 @@ DistSet *SelectorGetDihedralSet(PyMOLGlobals *G, DistSet *ds,
                                           
                                               VLACheck(vv,float,(nv*3)+17);
                                               vv0 = vv + (nv*3);
-                                              *(vv0++) = *(v1++);
-                                              *(vv0++) = *(v1++);
-                                              *(vv0++) = *(v1++);
-                                              *(vv0++) = *(v2++);
-                                              *(vv0++) = *(v2++);
-                                              *(vv0++) = *(v2++);
-                                              *(vv0++) = *(v3++);
-                                              *(vv0++) = *(v3++);
-                                              *(vv0++) = *(v3++);
-                                              *(vv0++) = *(v4++);
-                                              *(vv0++) = *(v4++);
-                                              *(vv0++) = *(v4++);
+                                              ObjectMoleculeGetAtomTxfVertex(obj1,state1,at1,vv0);
+                                              ObjectMoleculeGetAtomTxfVertex(obj2,state2,at2,vv0+3);
+                                              ObjectMoleculeGetAtomTxfVertex(obj3,state3,at3,vv0+6);
+                                              ObjectMoleculeGetAtomTxfVertex(obj4,state4,at4,vv0+9);
+                                              vv0+=12;
                                               *(vv0++) = (float)!bonded12;
                                               *(vv0++) = (float)!bonded23;
                                               *(vv0++) = (float)!bonded34;
