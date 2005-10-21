@@ -364,9 +364,9 @@ int CoordSetMoveAtom(CoordSet *I,int at,float *v,int mode)
 /*========================================================================*/
 int CoordSetGetAtomVertex(CoordSet *I,int at,float *v)
 {
-  ObjectMolecule *obj;
-  int a1 = -1;
-  int result = 0;
+  register ObjectMolecule *obj;
+  register int a1 = -1;
+  register int result = 0;
 
   obj = I->Obj;
   if(obj->DiscreteFlag) {
@@ -383,10 +383,40 @@ int CoordSetGetAtomVertex(CoordSet *I,int at,float *v)
   return(result);
 }
 /*========================================================================*/
+int CoordSetGetAtomTxfVertex(CoordSet *I,int at,float *v)
+{
+  register ObjectMolecule *obj;
+  register int a1 = -1;
+  register int result = 0;
+  
+  obj = I->Obj;
+  if(obj->DiscreteFlag) {
+    if(I==obj->DiscreteCSet[at])
+      a1=obj->DiscreteAtmToIdx[at];
+  } else 
+    a1=I->AtmToIdx[at];
+  
+  if(a1>=0) {
+    result = 1;
+    copy3f(I->Coord+3*a1,v);
+    if(I->State.Matrix && SettingGet_b(I->State.G,
+                                       obj->Obj.Setting,I->Setting,
+                                       cSetting_use_state_matrices)) {
+      /* state transformation */
+      transform44d3f(I->State.Matrix,v,v);
+    }
+    if(obj->Obj.TTTFlag) { /* object transformation */
+      transformTTT44f3f(obj->Obj.TTT, v,v);
+    }
+  }
+  return(result);
+}
+
+/*========================================================================*/
 int CoordSetSetAtomVertex(CoordSet *I,int at,float *v)
 {
   ObjectMolecule *obj;
-  int a1 = 01;
+  int a1 = -1;
   int result = 0;
 
   obj = I->Obj;
