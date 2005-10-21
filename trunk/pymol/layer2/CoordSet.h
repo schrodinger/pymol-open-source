@@ -87,6 +87,7 @@ void CoordSetFracToReal(CoordSet *I,CCrystal *cryst);
 void CoordSetGetAverage(CoordSet *I,float *v0);
 PyObject *CoordSetAtomToChemPyAtom(PyMOLGlobals *G,AtomInfoType *ai,float *v,int index);
 int CoordSetGetAtomVertex(CoordSet *I,int at,float *v);
+int CoordSetGetAtomTxfVertex(CoordSet *I,int at,float *v);
 int CoordSetSetAtomVertex(CoordSet *I,int at,float *v);
 int CoordSetMoveAtom(CoordSet *I,int at,float *v,int mode);
 

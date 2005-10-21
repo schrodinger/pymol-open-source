@@ -9105,15 +9105,7 @@ int ObjectMoleculeGetAtomTxfVertex(ObjectMolecule *I,int state,int index,float *
       cs = I->CSet[state];
     }
     if(cs) {
-      result = CoordSetGetAtomVertex(cs,index,v);
-      if(SettingGet_b(I->Obj.G,I->Obj.Setting,NULL,cSetting_use_state_matrices)) {
-        if(cs->State.Matrix) { /* state transformation */
-          transform44d3f(cs->State.Matrix,v,v);
-        }
-      }
-      if(I->Obj.TTTFlag) { /* object transformation */
-        transformTTT44f3f(I->Obj.TTT, v,v);
-      }
+      result = CoordSetGetAtomTxfVertex(cs,index,v);
     }
   }
   return(result);
