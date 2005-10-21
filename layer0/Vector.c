@@ -1102,6 +1102,33 @@ void invert_special44d44d(double *orig, double *inv)
 
 }
 
+void invert_special44f44f(float *orig, float *inv)
+{
+  /* inverse of the rotation matrix */
+
+  inv[ 0] = orig[ 0];
+  inv[ 1] = orig[ 4];
+  inv[ 2] = orig[ 8];
+  inv[ 4] = orig[ 1];
+  inv[ 5] = orig[ 5];
+  inv[ 6] = orig[ 9];
+  inv[ 8] = orig[ 2];
+  inv[ 9] = orig[ 6];
+  inv[10] = orig[10];
+
+  /* invert the translation portion */
+
+  inv[ 3] = -(orig[ 3] * orig[ 0] + orig[ 7] * orig[ 4] + orig[11] * orig[ 8]);
+  inv[ 7] = -(orig[ 3] * orig[ 1] + orig[ 7] * orig[ 5] + orig[11] * orig[ 9]);
+  inv[11] = -(orig[ 3] * orig[ 2] + orig[ 7] * orig[ 6] + orig[11] * orig[10]);
+
+  inv[12] = 0.0F;
+  inv[13] = 0.0F;
+  inv[14] = 0.0F;
+  inv[15] = 1.0F;
+
+}
+
 static void normalize3dp( double *v1, double *v2, double *v3 )
 {
   double vlen = sqrt1d((v1[0]*v1[0]) + 

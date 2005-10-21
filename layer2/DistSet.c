@@ -137,12 +137,12 @@ int DistSetGetExtent(DistSet *I,float *mn,float *mx)
 void DistSetInvalidateRep(DistSet *I,int type,int level)
 {
   int a;
-  PRINTFD(I->G,FB_DistSet)
+  PRINTFD(I->State.G,FB_DistSet)
     " DistSetInvalidateRep: entered.\n"
     ENDFD;
   if(type>=0) {
 	 if(type<I->NRep)	{
-		SceneChanged(I->G);		
+		SceneChanged(I->State.G);		
 		if(I->Rep[type]) {
 		  I->Rep[type]->fFree(I->Rep[type]);
 		  I->Rep[type] = NULL;
@@ -150,7 +150,7 @@ void DistSetInvalidateRep(DistSet *I,int type,int level)
 	 }
   } else {
 	 for(a=0;a<I->NRep;a++)	{
-		SceneChanged(I->G);
+		SceneChanged(I->State.G);
 		if(I->Rep[a]) {
 		  switch(level) {
 		  case cRepInvColor:
@@ -174,24 +174,24 @@ void DistSetInvalidateRep(DistSet *I,int type,int level)
 void DistSetUpdate(DistSet *I)
 {
 
-  OrthoBusyFast(I->G,0,I->NRep);
+  OrthoBusyFast(I->State.G,0,I->NRep);
   if(!I->Rep[cRepDash]) {
     I->Rep[cRepDash]=RepDistDashNew(I);
-    SceneInvalidate(I->G);
+    SceneInvalidate(I->State.G);
   }
   if(!I->Rep[cRepLabel]) {
     I->Rep[cRepLabel]=RepDistLabelNew(I);
-    SceneInvalidate(I->G);
+    SceneInvalidate(I->State.G);
   }
   if(!I->Rep[cRepAngle]) {
     I->Rep[cRepAngle]=RepAngleNew(I);
-    SceneInvalidate(I->G);
+    SceneInvalidate(I->State.G);
   }
   if(!I->Rep[cRepDihedral]) {
     I->Rep[cRepDihedral]=RepDihedralNew(I);
-    SceneInvalidate(I->G);
+    SceneInvalidate(I->State.G);
   }
-  OrthoBusyFast(I->G,1,1);
+  OrthoBusyFast(I->State.G,1,1);
 }
 /*========================================================================*/
 static void DistSetRender(DistSet *I,RenderInfo *info)
@@ -208,7 +208,7 @@ static void DistSetRender(DistSet *I,RenderInfo *info)
             if(!ray) {
               ObjectUseColor((CObject*)I->Obj);
             } else {
-              ray->fColor3fv(ray,ColorGet(I->G,I->Obj->Obj.Color));
+              ray->fColor3fv(ray,ColorGet(I->State.G,I->Obj->Obj.Color));
             }			 
             I->Rep[a]->fRender(I->Rep[a],info);
         }
@@ -219,7 +219,8 @@ DistSet *DistSetNew(PyMOLGlobals *G)
 {
   int a;
   OOAlloc(G,DistSet);
-  I->G=G;
+  I->State.G=G;
+  I->State.Matrix=NULL;
   I->fFree=DistSetFree;
   I->fRender=DistSetRender;
   I->fUpdate=DistSetUpdate;

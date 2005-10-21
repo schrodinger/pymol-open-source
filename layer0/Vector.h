@@ -159,6 +159,7 @@ void recondition44d( double *matrix);
 /* invert a 4x4 homogenous that contains just rotation & tranlation
   (e.g. no scaling & fourth row is 0,0,0,1) */
 void invert_special44d44d( double *original, double *inv);
+void invert_special44f44f( float *original, float *inv);
 
 void invert_rotation_only44d44d( double *original, double *inv);
 

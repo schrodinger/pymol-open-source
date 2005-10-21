@@ -324,7 +324,8 @@ int ObjectMoleculeGetAtomTxfVertex(ObjectMolecule *I,int state,int index,float *
 int ObjectMoleculeGetAtomIndex(ObjectMolecule *I,int sele);
 int ObjectMoleculeTransformSelection(ObjectMolecule *I,int state,
                                       int sele,float *TTT,int log,
-                                     char *sname,int homogenous);
+                                     char *sname,int homogenous,
+                                     int global);
 int ObjectMoleculeDoesAtomNeighborSele(ObjectMolecule *I, int index, int sele);
 void ObjectMoleculeInferChemFromNeighGeom(ObjectMolecule *I,int state);
 void ObjectMoleculeInferChemForProtein(ObjectMolecule *I,int state);

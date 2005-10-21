@@ -18,13 +18,14 @@ Z* -------------------------------------------------------------------
 
 #include"Rep.h"
 #include"Setting.h"
+#include"PyMOLObject.h"
 
 typedef struct DistSet {
   void (*fUpdate)(struct DistSet *I);
   void (*fRender)(struct DistSet *I,RenderInfo *);
   void (*fFree)(struct DistSet *I);
   void (*fInvalidateRep)(struct DistSet *I,int type,int level);
-  PyMOLGlobals *G;
+  CObjectState State;
   struct ObjectDist *Obj;
   float *Coord;
   int NIndex;

@@ -588,6 +588,7 @@ CSetting *SettingNewFromPyList(PyMOLGlobals *G,PyObject *list);
 #define cSetting_draw_frames                436
 #define cSetting_show_alpha_checker         437
 #define cSetting_use_state_matrices         438
+#define cSetting_editor_auto_origin         439
 
 /* when you add a new settingg also remember:
    layer1/Setting.c
@@ -597,7 +598,7 @@ CSetting *SettingNewFromPyList(PyMOLGlobals *G,PyObject *list);
 
 /* cSetting_ss_INIT must always be last setting_index +1 */
 
-#define cSetting_INIT                       439
+#define cSetting_INIT                       440
 
 #endif
 

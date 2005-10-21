@@ -139,7 +139,7 @@ static void RepAngleRender(RepAngle *I,RenderInfo *info)
 
 Rep *RepAngleNew(DistSet *ds)
 {
-  PyMOLGlobals *G=ds->G;
+  PyMOLGlobals *G=ds->State.G;
   int a;
   int n = 0;
   float *v,*v1,*v2,*v3,*v4,d1[3],d2[3],d3[3],n1[3],n3[3],l1,l2,x[3],y[3];

@@ -110,7 +110,7 @@ static void RepDistLabelRender(RepDistLabel *I,RenderInfo *info)
 
 Rep *RepDistLabelNew(DistSet *ds)
 {
-  PyMOLGlobals *G=ds->G;
+  PyMOLGlobals *G=ds->State.G;
   int a;
   int n = 0;
   float *v,*v1,*v2,*v3,d[3],di;
