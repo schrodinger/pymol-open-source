@@ -78,7 +78,6 @@ void ObjectMoleculeBracketResidue(ObjectMolecule *I,AtomInfoType *ai,int *st,int
 void ObjectMoleculeAddSeleHydrogens(ObjectMolecule *I,int sele);
 
 
-CoordSet *ObjectMoleculeXYZStr2CoordSet(PyMOLGlobals *G,char *buffer,AtomInfoType **atInfoPtr);
 CSetting **ObjectMoleculeGetSettingHandle(ObjectMolecule *I,int state);
 void ObjectMoleculeInferAmineGeomFromBonds(ObjectMolecule *I,int state);
 CoordSet *ObjectMoleculeTOPStr2CoordSet(PyMOLGlobals *G,char *buffer,
@@ -2604,9 +2603,10 @@ void ObjectMoleculeRenderSele(ObjectMolecule *I,int curState,int sele)
 }
 
 /*========================================================================*/
-CoordSet *ObjectMoleculeXYZStr2CoordSet(PyMOLGlobals *G,char *buffer,AtomInfoType **atInfoPtr)
+static CoordSet *ObjectMoleculeXYZStr2CoordSet(PyMOLGlobals *G,char *buffer,
+                                               AtomInfoType **atInfoPtr, int *have_bonds)
 {
-  char *p;
+  char *p,*p_store;
   int nAtom;
   int a,c;
   float *coord = NULL;
@@ -2621,6 +2621,9 @@ CoordSet *ObjectMoleculeXYZStr2CoordSet(PyMOLGlobals *G,char *buffer,AtomInfoTyp
   int auto_show_lines = (int)SettingGet(G,cSetting_auto_show_lines);
   int auto_show_spheres = (int)SettingGet(G,cSetting_auto_show_spheres);
   int auto_show_nonbonded = (int)SettingGet(G,cSetting_auto_show_nonbonded);
+  int tinker_xyz = true;
+  int valid_atom;
+  int have_n_atom = false;
   BondType *ii;
 
 
@@ -2628,77 +2631,184 @@ CoordSet *ObjectMoleculeXYZStr2CoordSet(PyMOLGlobals *G,char *buffer,AtomInfoTyp
   nAtom=0;
   atInfo = *atInfoPtr;
   
+  p_store = p;
   p=ncopy(cc,p,6);  
-  if(!sscanf(cc,"%d",&nAtom)) nAtom=0;
-  p=nskip(p,2);
-  p=ncopy(tmp_name,p,sizeof(WordType)-1);
-  p=nextline_top(p);
-      
-  coord=VLAlloc(float,3*nAtom);
+  if(sscanf(cc,"%d",&nAtom)!=1) {
+    nAtom=0;
+    tinker_xyz = false;
+    p = p_store;
+  } else {
+    have_n_atom = true;
+    p=nskip(p,2);
+    p=ncopy(tmp_name,p,sizeof(WordType)-1);
+    p=nextline_top(p);
+  }
 
-  if(atInfo)
-	 VLACheck(atInfo,AtomInfoType,nAtom);
+  if(tinker_xyz&&nAtom) { /* test Tinker XYZ formatting assumption*/
+    char *pp = p;
+    int dummy_int;
+    float dummy_float;
+    AtomName dummy_name;
+
+    pp=ncopy(cc,pp,6);
+    if(!sscanf(cc,"%d",&dummy_int)) tinker_xyz = false; /* id */
+    pp=nskip(pp,2);
+    pp=ncopy(cc,pp,3); 
+    if(sscanf(cc,"%s",dummy_name)!=1) tinker_xyz = false; /* name */
+    pp=ncopy(cc,pp,12);
+    if(sscanf(cc,"%f",&dummy_float)!=1) tinker_xyz = false; /* x */
+    pp=ncopy(cc,pp,12);
+    if(sscanf(cc,"%f",&dummy_float)!=1) tinker_xyz = false; /* y */
+    pp=ncopy(cc,pp,12);
+    if(sscanf(cc,"%f",&dummy_float)!=1) tinker_xyz = false; /* z */
+    pp=ncopy(cc,pp,6);
+    if(sscanf(cc,"%d",&dummy_int)!=1) tinker_xyz = false; /* numeric type */
+  }
+
+  if(!tinker_xyz) {
+    char *pp = p;
+    int have_atom_line = true;
+    float dummy_float;
+    AtomName dummy_name;
+
+    pp=ParseWordCopy(cc,pp,sizeof(AtomName)-1);
+    if(sscanf(cc,"%s",dummy_name)!=1) have_atom_line = false; /* name */
+    pp=ParseWordCopy(cc,pp,MAXLINELEN-1);
+    if(sscanf(cc,"%f",&dummy_float)!=1) have_atom_line = false; /* x */
+    pp=ParseWordCopy(cc,pp,MAXLINELEN-1);
+    if(sscanf(cc,"%f",&dummy_float)!=1) have_atom_line = false; /* y */
+    pp=ParseWordCopy(cc,pp,MAXLINELEN-1);
+    if(sscanf(cc,"%f",&dummy_float)!=1) have_atom_line = false; /* z */
+    if(!have_atom_line) { /* copy the comment line into the title field */
+      p=ncopy(tmp_name,p,sizeof(WordType)-1);
+      p=nextline_top(p);
+    }
+  }
+
+  if(nAtom) {
+    coord=VLAlloc(float,3*nAtom);
+    if(atInfo)
+      VLACheck(atInfo,AtomInfoType,nAtom);
+  } else {
+    coord=VLAlloc(float,3);    
+  }
   
-  nBond=0;
-  bond=VLAlloc(BondType,6*nAtom);  /* is this a safe assumption? */
-  ii=bond;
+  if(tinker_xyz) {
+    nBond=0;
+    bond=VLAlloc(BondType,6*nAtom);  /* is this a safe assumption? */
+    ii=bond;
+  }
 
   PRINTFB(G,FB_ObjectMolecule,FB_Blather)
 	 " ObjectMoleculeReadXYZ: Found %i atoms...\n",nAtom
     ENDFB(G);
 
+  if(tinker_xyz)
+    *have_bonds = true;
+  else
+    *have_bonds = false;
+
   a=0;
   atomCount=0;
-  
-  while(*p)
-	 {
-      ai=atInfo+atomCount;
-      
+  while(*p) {
+    VLACheck(atInfo,AtomInfoType,atomCount);
+    ai=atInfo+atomCount;
+    
+    if(!tinker_xyz) {
+      valid_atom = true;
+
+      p = ParseWordCopy(cc,p,sizeof(AtomName)-1);
+      if(!sscanf(cc,"%s",ai->name)) valid_atom = false;
+      if(valid_atom) {
+           
+        ai->rank = atomCount;
+        ai->id = atomCount+1;
+           
+        VLACheck(coord,float,a*3+2);
+        p = ParseWordCopy(cc,p,MAXLINELEN-1);
+        if(sscanf(cc,"%f",coord+a)!=1) valid_atom = false;
+        p = ParseWordCopy(cc,p,MAXLINELEN-1);
+        if(sscanf(cc,"%f",coord+a+1)!=1) valid_atom = false;
+        p = ParseWordCopy(cc,p,MAXLINELEN-1);
+        if(sscanf(cc,"%f",coord+a+2)!=1) valid_atom = false;
+           
+        strcpy(ai->resn,"UNK");
+        ai->alt[0]=0;
+        ai->chain[0]=0;
+        ai->resv=atomCount+1;          
+
+        ai->q=1.0;
+        ai->b=0.0;
+        
+        ai->segi[0]=0;
+        ai->elem[0]=0; /* let atom info guess/infer atom type */
+        
+        for(c=0;c<cRepCnt;c++) {
+          ai->visRep[c] = false;
+        }
+        ai->visRep[cRepLine] = auto_show_lines; /* show lines by default */
+        ai->visRep[cRepNonbonded] = auto_show_nonbonded;
+        ai->visRep[cRepSphere] = auto_show_spheres;
+        
+        /* in the absense of external tinker information, assume hetatm */
+          
+        ai->hetatm=1;
+          
+        AtomInfoAssignParameters(G,ai);
+        AtomInfoAssignColors(G,ai);
+      }
+    } else { /* tinker XYZ */
+        
+      valid_atom = true;
+
       p=ncopy(cc,p,6);
       if(!sscanf(cc,"%d",&ai->id)) break;
       ai->rank = atomCount;
-
+        
       p=nskip(p,2);/* to 12 */
       p=ncopy(cc,p,3); 
       if(!sscanf(cc,"%s",ai->name)) ai->name[0]=0;
-      
+        
       ai->alt[0]=0;
       strcpy(ai->resn,"UNK");
       ai->chain[0] = 0;
-      
+        
       ai->resv=atomCount+1;
       sprintf(ai->resi,"%d",ai->resv);
-      
+        
+      valid_atom = true;
+        
       p=ncopy(cc,p,12);
       sscanf(cc,"%f",coord+a);
       p=ncopy(cc,p,12);
       sscanf(cc,"%f",coord+(a+1));
       p=ncopy(cc,p,12);
       sscanf(cc,"%f",coord+(a+2));
-      
+        
       ai->q=1.0;
       ai->b=0.0;
-      
+        
       ai->segi[0]=0;
       ai->elem[0]=0; /* let atom info guess/infer atom type */
-      
+        
       for(c=0;c<cRepCnt;c++) {
         ai->visRep[c] = false;
       }
+        
       ai->visRep[cRepLine] = auto_show_lines; /* show lines by default */
       ai->visRep[cRepNonbonded] = auto_show_nonbonded;
       ai->visRep[cRepSphere] = auto_show_spheres;
-      
+        
       p=ncopy(cc,p,6);
       sscanf(cc,"%d",&ai->customType);
-      
+        
       /* in the absense of external tinker information, assume hetatm */
-      
+        
       ai->hetatm=1;
-      
+        
       AtomInfoAssignParameters(G,ai);
       AtomInfoAssignColors(G,ai);
-      
+        
       b1 = atomCount;
       for(c=0;c<6;c++) {
         p=ncopy(cc,p,6);
@@ -2707,6 +2817,8 @@ CoordSet *ObjectMoleculeXYZStr2CoordSet(PyMOLGlobals *G,char *buffer,AtomInfoTyp
         if(!sscanf(cc,"%d",&b2))
           break;
         if(b1<(b2-1)) {
+          VLACheck(bond,BondType,nBond);
+          ii = bond+nBond;
           nBond++;
           ii->index[0] = b1;
           ii->index[1] = b2-1;
@@ -2716,24 +2828,30 @@ CoordSet *ObjectMoleculeXYZStr2CoordSet(PyMOLGlobals *G,char *buffer,AtomInfoTyp
           ii++;
         }
       }
-      
+    }
+
+    if(valid_atom) {
       PRINTFD(G,FB_ObjectMolecule) 
         " ObjectMolecule-DEBUG: %s %s %s %s %8.3f %8.3f %8.3f %6.2f %6.2f %s\n",
         ai->name,ai->resn,ai->resi,ai->chain,
         *(coord+a),*(coord+a+1),*(coord+a+2),ai->b,ai->q,
         ai->segi
         ENDFD;
-      
+        
       a+=3;
       atomCount++;
-      if(atomCount>=nAtom)
-        break;
-      p=nextline_top(p);
-    }
 
+    }
+    if(have_n_atom && (atomCount>=nAtom))
+      break;
+    p=nextline_top(p);
+  }
+  
   PRINTFB(G,FB_ObjectMolecule,FB_Blather) 
    " XYZStr2CoordSet: Read %d bonds.\n",nBond
     ENDFB(G);
+  
+  if(!tinker_xyz) nAtom = atomCount; /* use number of atoms actually read */
 
   cset = CoordSetNew(G);
   cset->NIndex=nAtom;
@@ -2747,13 +2865,15 @@ CoordSet *ObjectMoleculeXYZStr2CoordSet(PyMOLGlobals *G,char *buffer,AtomInfoTyp
 }
 
 /*========================================================================*/
-ObjectMolecule *ObjectMoleculeReadXYZStr(PyMOLGlobals *G,ObjectMolecule *I,char *PDBStr,int frame,int discrete)
+ObjectMolecule *ObjectMoleculeReadXYZStr(PyMOLGlobals *G,ObjectMolecule *I,
+                                         char *PDBStr,int frame,int discrete)
 {
   CoordSet *cset = NULL;
   AtomInfoType *atInfo;
   int ok=true;
   int isNew = true;
   unsigned int nAtom = 0;
+  int have_bonds;
 
   if(!I) 
 	 isNew=true;
@@ -2774,7 +2894,7 @@ ObjectMolecule *ObjectMoleculeReadXYZStr(PyMOLGlobals *G,ObjectMolecule *I,char 
       I->Obj.Color = AtomInfoUpdateAutoColor(G);
     }
     
-	 cset=ObjectMoleculeXYZStr2CoordSet(G,PDBStr,&atInfo);	 
+	 cset=ObjectMoleculeXYZStr2CoordSet(G,PDBStr,&atInfo,&have_bonds);	 
 	 nAtom=cset->NIndex;
   }
 
@@ -2807,7 +2927,7 @@ ObjectMolecule *ObjectMoleculeReadXYZStr(PyMOLGlobals *G,ObjectMolecule *I,char 
     if(I->NCSet<=frame) I->NCSet=frame+1;
     if(I->CSet[frame]) I->CSet[frame]->fFree(I->CSet[frame]);
     I->CSet[frame] = cset;
-    if(isNew) I->NBond = ObjectMoleculeConnect(I,&I->Bond,I->AtomInfo,cset,false);
+    if(isNew) I->NBond = ObjectMoleculeConnect(I,&I->Bond,I->AtomInfo,cset,!have_bonds);
     if(cset->Symmetry&&(!I->Symmetry)) {
       I->Symmetry=SymmetryCopy(cset->Symmetry);
       SymmetryAttemptGeneration(I->Symmetry,false,false);

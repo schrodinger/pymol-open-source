@@ -4,6 +4,10 @@ CHANGE LOG
 
 Changes up to 0.99
 
+    beta21
+
+    * added general XYZ file support (not just Tinker XYZ)
+
     beta20
 
     * -j startup option for use with "geowalls", geowall stereo support
