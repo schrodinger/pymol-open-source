@@ -122,13 +122,16 @@ char *ParseWordCopy(char *q,char *p,int n) { /* word copy */
   while(*p) {
 	 if(*p<=32)
 		break;
-	 if(!n)
+	 if(!n) {
+       while(*p>32) /* finish scanning word, but don't copy into field */
+         p++;
 		break;
+     }
 	 if((*p==0xD)||(*p==0xA)) /* don't copy end of lines */
 		break;
 	 *(q++)=*(p++);
 	 n--;
-  }
+  } 
   *q=0;
   return p;
 }
