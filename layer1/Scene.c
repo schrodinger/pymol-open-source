@@ -5450,7 +5450,7 @@ void SceneRender(PyMOLGlobals *G,Pickable *pick,int x,int y,
 #endif
           glEnable(GL_FOG);
           glFogf(GL_FOG_MODE, GL_LINEAR);
-          glHint(GL_FOG_HINT,GL_NICEST);
+          /* glHint(GL_FOG_HINT,GL_NICEST); *** DISABLED TO WORK AROUND ATI DRIVER BUG(s) */
           glFogf(GL_FOG_START, I->FogStart);
 
           I->FogEnd = I->BackSafe;
