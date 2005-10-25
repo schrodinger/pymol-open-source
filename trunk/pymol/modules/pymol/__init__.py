@@ -371,11 +371,13 @@ if pymol_launch != 3: # if this isn't a dry run
 
     def finish_launching():
         e=threading.Event()
-        while not hasattr(__main__,'pymol'):
-            e.wait(0.01)
+        import pymol # wait for import to complete
+#        __main__.pymol = pymol
+#        while not hasattr(__main__,'pymol'):
+#            e.wait(0.01)
         while not _cmd.ready():
             e.wait(0.01)
-        while not hasattr(__main__.pymol,'xray'): # make sure symmetry module has time to start...
+        while not hasattr(pymol,'xray'): # make sure symmetry module has time to start...
             e.wait(0.01)
             
 

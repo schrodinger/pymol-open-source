@@ -43,9 +43,10 @@ if __name__=='pymol.commanding':
     def log_open(fname='log.pml',mode='w'): 
         try:
             try:
-                if pymol._log_file!=None:
-                    pymol._log_file.close()
-                    del pymol._log_file
+                if hasattr(pymol,"_log_file"):
+                    if pymol._log_file!=None:
+                        pymol._log_file.close()
+                        del pymol._log_file
             except:
                 pass
             pymol._log_file = open(fname,mode)
