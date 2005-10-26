@@ -3225,7 +3225,7 @@ int ExecutiveSculptIterateAll(PyMOLGlobals *G)
       if(rec->type==cExecObject) {
         if(rec->obj->type==cObjectMolecule) {
           objMol =(ObjectMolecule*)rec->obj;
-          ObjectMoleculeSculptIterate(objMol,state,cycles);
+          ObjectMoleculeSculptIterate(objMol,state,cycles,G->DebugCGO);
           active = true;
         }
       }
@@ -3250,7 +3250,7 @@ float ExecutiveSculptIterate(PyMOLGlobals *G,char *name,int state,int n_cycle)
       if(rec->type==cExecObject) {
         if(rec->obj->type==cObjectMolecule) {
           objMol =(ObjectMolecule*)rec->obj;
-          total_strain+=ObjectMoleculeSculptIterate(objMol,state,n_cycle);
+          total_strain+=ObjectMoleculeSculptIterate(objMol,state,n_cycle,G->DebugCGO);
         }
       }
     }
@@ -3265,7 +3265,7 @@ float ExecutiveSculptIterate(PyMOLGlobals *G,char *name,int state,int n_cycle)
       ENDFB(G);
     ok=false;
   } else {
-    total_strain=ObjectMoleculeSculptIterate((ObjectMolecule*)obj,state,n_cycle);
+    total_strain=ObjectMoleculeSculptIterate((ObjectMolecule*)obj,state,n_cycle,G->DebugCGO);
   }
   return(total_strain);
 }

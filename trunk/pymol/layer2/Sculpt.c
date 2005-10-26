@@ -919,7 +919,8 @@ static int SculptDoBump(float target,float actual,float *d,
 
 
        
-float SculptIterateObject(CSculpt *I,ObjectMolecule *obj,int state,int n_cycle)
+float SculptIterateObject(CSculpt *I,ObjectMolecule *obj,
+                          int state,int n_cycle, CGO *cgo)
 {
   PyMOLGlobals *G=I->G;
   CShaker *shk;
@@ -1333,13 +1334,14 @@ float SculptIterateObject(CSculpt *I,ObjectMolecule *obj,int state,int n_cycle)
                                   if(cSculptVDW14 & mask) {
                                     a1 = atm2idx[b1];
                                     v1 = cs->Coord+3*a1;
-                                    if(SculptCheckBump(v0,v1,diff,&len,cutoff))
+                                    if(SculptCheckBump(v0,v1,diff,&len,cutoff)) {
                                       if(SculptDoBump(cutoff,len,diff,
                                                       disp+b0*3,disp+b1*3,wt,&total_strain)) {
                                         cnt[b0]++;
                                         cnt[b1]++;
                                         total_count++;
                                       }
+                                    }
                                   }
                                 } else { /* standard interaction */
                                   if(don_b0&&I->Acc[b1]) { /* h-bond */

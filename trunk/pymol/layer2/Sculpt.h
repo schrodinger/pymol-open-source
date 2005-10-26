@@ -43,7 +43,8 @@ typedef struct CSculpt {
 
 CSculpt *SculptNew(PyMOLGlobals *G);
 void SculptMeasureObject(CSculpt *I,ObjectMolecule *obj,int state);
-float SculptIterateObject(CSculpt *I,ObjectMolecule *obj,int state,int n_cycle);
+float SculptIterateObject(CSculpt *I,ObjectMolecule *obj,
+                          int state,int n_cycle, CGO *cgo);
 
 void SculptFree(CSculpt *I);
 
