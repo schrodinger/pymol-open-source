@@ -226,6 +226,7 @@ SEE ALSO
             if not quiet:
                 print " Save: wrote \""+filename+"\"."
         elif format=='pse': # PyMOL session
+            cmd.set("session_file",filename,quiet=1)
             io.pkl.toFile(cmd.get_session(),filename)
             r = DEFAULT_SUCCESS
             if not quiet:

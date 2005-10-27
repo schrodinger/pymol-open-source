@@ -546,6 +546,7 @@ SEE ALSO
             if ftype == loadable.pse:
                 ftype = -1
                 r = cmd.set_session(io.pkl.fromFile(fname),quiet)
+                cmd.set("session_file",fname,quiet=1)
                 
     # special handling for multi-model files (mol2, sdf)
 

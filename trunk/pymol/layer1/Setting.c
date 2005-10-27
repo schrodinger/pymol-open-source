@@ -2625,6 +2625,7 @@ void SettingInitGlobal(PyMOLGlobals *G,int alloc,int reset_gui)
   SettingSet_b(I,cSetting_show_alpha_checker,0);
   SettingSet_b(I,cSetting_use_state_matrices,0); /* this will change to 1 soon */
   SettingSet_b(I,cSetting_editor_auto_origin,0); /* this will change to 1 soon */
+  SettingSet_s(I,cSetting_session_file, "");
 }
 
 

@@ -473,6 +473,7 @@ if __name__=='pymol.setting':
         show_alpha_checker        = (437, '')
         use_state_matrices        = (438, '')
         editor_auto_origin        = (439, '')
+        session_file              = (440, '')
         
     setting_sc = Shortcut(SettingIndex.__dict__.keys())
 
