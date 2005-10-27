@@ -3300,8 +3300,11 @@ static int ObjectMapBRIXStrToMap(ObjectMap *I,char *BRIXStr,int bytes,int state)
 /*========================================================================*/
 static int ObjectMapGRDStrToMap(ObjectMap *I,char *GRDStr,int bytes,int state) 
 {
+  /* NOTE: binary GRD reader not yet validated */
+
   char *p;
   float dens;
+  float *f;
   int a,b,c,d,e;
   float v[3],vr[3],maxd,mind;
   int ok = true;
@@ -3316,7 +3319,9 @@ static int ObjectMapGRDStrToMap(ObjectMap *I,char *GRDStr,int bytes,int state)
   double sum = 0.0;
   double sumsq = 0.0;
   int n_pts = 0;
-  
+  int ascii = true;
+  int little_endian = 1,map_endian;
+
   if(state<0) state=I->NState;
   if(I->NState<=state) {
     VLACheck(I->State,ObjectMapState,state);
@@ -3330,105 +3335,201 @@ static int ObjectMapGRDStrToMap(ObjectMap *I,char *GRDStr,int bytes,int state)
   
   p = GRDStr;
 
+  if(bytes>4) {
+    if((!p[0])||(!p[1])||(!p[2])||(!p[3])) {
+      ascii=false;
+      
+      little_endian = *((char*)&little_endian);
+      map_endian = (*p||*(p+1));
+           
+    }
+  }
   /* print map title */
 
-  p = ParseNCopy(cc,p,100);
+  if(ascii) {
+    p = ParseNCopy(cc,p,100);
+  } else {
+    int header_len;
+    char rev[4];
+    if(little_endian!=map_endian) {
+      rev[0]=p[3];
+      rev[1]=p[2];
+      rev[2]=p[1];
+      rev[3]=p[0];
+    } else {
+      rev[0]=p[0]; /* gotta go char by char because of memory alignment issues ... */
+      rev[1]=p[1];
+      rev[2]=p[2];
+      rev[3]=p[3];
+    }
+    header_len = *((int*)rev);
+    ParseNCopy(cc,p+4,header_len);
+    /* now flip file to correct endianess */
+    if(little_endian!=map_endian) {
+      char *c = p;
+      int cnt = bytes>>2;
+      unsigned char c0,c1,c2,c3;
+      while(cnt) {
+        c0 = c[0];
+        c1 = c[1];
+        c2 = c[2];
+        c3 = c[3];
+        c[0]=c3;
+        c[1]=c2;
+        c[2]=c1;
+        c[3]=c0;
+        c+=4;
+        cnt--;
+      }
+    }
+    p += 4 + header_len + 4;
+    f = (float*)p;
+  }
 
   PRINTFB(I->Obj.G,FB_ObjectMap,FB_Details)
     " ObjectMap: %s\n",cc
     ENDFD;
-
-  p = ParseNextLine(p);
+  
+  if(ascii) 
+    p = ParseNextLine(p);
 
   /* skip format -- we're reading float regardless... */
-
-  p = ParseNextLine(p);
-
+  if(ascii) 
+    p = ParseNextLine(p);
+  else
+    f += 4; /* what are these numbers? */
+    
   /* read unit cell */
 
   if(ok) {
-    p = ParseWordCopy(cc,p,50);
-    if(sscanf(cc,"%f",&ms->Crystal->Dim[0])==1) {
+    if(ascii) {
       p = ParseWordCopy(cc,p,50);
-      if(sscanf(cc,"%f",&ms->Crystal->Dim[1])==1) {
+      if(sscanf(cc,"%f",&ms->Crystal->Dim[0])==1) {
         p = ParseWordCopy(cc,p,50);
-        if(sscanf(cc,"%f",&ms->Crystal->Dim[2])==1) {
+        if(sscanf(cc,"%f",&ms->Crystal->Dim[1])==1) {
           p = ParseWordCopy(cc,p,50);
-          if(sscanf(cc,"%f",&ms->Crystal->Angle[0])==1) {
+          if(sscanf(cc,"%f",&ms->Crystal->Dim[2])==1) {
             p = ParseWordCopy(cc,p,50);
-            if(sscanf(cc,"%f",&ms->Crystal->Angle[1])==1) {
+            if(sscanf(cc,"%f",&ms->Crystal->Angle[0])==1) {
               p = ParseWordCopy(cc,p,50);
-              if(sscanf(cc,"%f",&ms->Crystal->Angle[2])==1) {
-                got_cell=true;
-              }
-            }
-          }
-        }
-      }
-      ok = got_cell;
-    }
-  }
-
-  p=ParseNextLine(p);
-
-  /* read brick dimensions */
-
-  if(ok) {
-    p = ParseWordCopy(cc,p,50);
-    if(sscanf(cc,"%d",&ms->FDim[0])==1) {
-      p = ParseWordCopy(cc,p,50);
-      if(sscanf(cc,"%d",&ms->FDim[1])==1) {
-        p = ParseWordCopy(cc,p,50);
-        if(sscanf(cc,"%d",&ms->FDim[2])==1) {
-          got_brick=true;
-          ms->FDim[0]++;
-          ms->FDim[1]++;
-          ms->FDim[2]++; /* stupid 0-based counters */
-        }
-      }
-    }
-    ok = got_brick;
-  }
-
-  p=ParseNextLine(p);
-
-  /* read ranges */
-
-  if(ok) {
-    p = ParseWordCopy(cc,p,50);
-    if(sscanf(cc,"%d",&fast_axis)==1) {
-      p = ParseWordCopy(cc,p,50);      
-      if(sscanf(cc,"%d",&ms->Min[0])==1) {
-        p = ParseWordCopy(cc,p,50);
-        if(sscanf(cc,"%d",&ms->Div[0])==1) {
-          p = ParseWordCopy(cc,p,50);
-          if(sscanf(cc,"%d",&ms->Min[1])==1) {
-            p = ParseWordCopy(cc,p,50);
-            if(sscanf(cc,"%d",&ms->Div[1])==1) {
-              p = ParseWordCopy(cc,p,50);
-              if(sscanf(cc,"%d",&ms->Min[2])==1) {
+              if(sscanf(cc,"%f",&ms->Crystal->Angle[1])==1) {
                 p = ParseWordCopy(cc,p,50);
-                if(sscanf(cc,"%d",&ms->Div[2])==1) {
-                  got_ranges=true;
+                if(sscanf(cc,"%f",&ms->Crystal->Angle[2])==1) {
+                  got_cell=true;
                 }
               }
             }
           }
         }
       }
+      ok = got_cell;
+    } else {
+      ms->Crystal->Dim[0] = *(f++);
+      ms->Crystal->Dim[1] = *(f++);
+      ms->Crystal->Dim[2] = *(f++);
+      ms->Crystal->Angle[0] = (*f++);
+      ms->Crystal->Angle[1] = (*f++);
+      ms->Crystal->Angle[2] = (*f++);
+      got_cell = 1;
     }
-    ok = got_ranges;
+  }
+
+  if(ascii) 
+    p=ParseNextLine(p);
+
+  if(ascii) {
+    /* read brick dimensions */
+    
+    if(ok) {
+      p = ParseWordCopy(cc,p,50);
+      if(sscanf(cc,"%d",&ms->FDim[0])==1) {
+        p = ParseWordCopy(cc,p,50);
+        if(sscanf(cc,"%d",&ms->FDim[1])==1) {
+          p = ParseWordCopy(cc,p,50);
+          if(sscanf(cc,"%d",&ms->FDim[2])==1) {
+            got_brick=true;
+            ms->FDim[0]++;
+            ms->FDim[1]++;
+            ms->FDim[2]++; /* stupid 0-based counters */
+          }
+        }
+      }
+      ok = got_brick;
+    }
+    
+    p=ParseNextLine(p);
+    
+    /* read ranges */
+    
+    if(ok) {
+      p = ParseWordCopy(cc,p,50);
+      if(sscanf(cc,"%d",&fast_axis)==1) {
+        p = ParseWordCopy(cc,p,50);      
+        if(sscanf(cc,"%d",&ms->Min[0])==1) {
+          p = ParseWordCopy(cc,p,50);
+          if(sscanf(cc,"%d",&ms->Div[0])==1) {
+            p = ParseWordCopy(cc,p,50);
+            if(sscanf(cc,"%d",&ms->Min[1])==1) {
+              p = ParseWordCopy(cc,p,50);
+              if(sscanf(cc,"%d",&ms->Div[1])==1) {
+                p = ParseWordCopy(cc,p,50);
+                if(sscanf(cc,"%d",&ms->Min[2])==1) {
+                  p = ParseWordCopy(cc,p,50);
+                  if(sscanf(cc,"%d",&ms->Div[2])==1) {
+                    got_ranges=true;
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+      ok = got_ranges;
+    }
+  } else {
+    float fmin[3];
+    float fmax[3];
+
+    fmin[0] = *(f++);
+    fmax[0] = *(f++);
+    fmin[1] = *(f++);
+    fmax[1] = *(f++);
+    fmin[2] = *(f++);
+    fmax[2] = *(f++);
+    ms->FDim[0] = *((int*)f++) + 1;
+    ms->FDim[1] = *((int*)f++) + 1;
+    ms->FDim[2] = *((int*)f++) + 1;
+
+    ms->Div[0] = pymol_roundf((ms->FDim[0]-1)/(fmax[0]-fmin[0]));
+    ms->Div[1] = pymol_roundf((ms->FDim[1]-1)/(fmax[0]-fmin[1]));
+    ms->Div[2] = pymol_roundf((ms->FDim[2]-1)/(fmax[0]-fmin[2]));
+    
+    ms->Min[0] = pymol_roundf(ms->Div[0]*fmin[0]);
+    ms->Min[1] = pymol_roundf(ms->Div[1]*fmin[1]);
+    ms->Min[2] = pymol_roundf(ms->Div[2]*fmin[2]);
+
+    ms->Max[0] = ms->Min[0]+ms->FDim[0]-1;
+    ms->Max[1] = ms->Min[1]+ms->FDim[1]-1;
+    ms->Max[2] = ms->Min[2]+ms->FDim[2]-1;
+    got_ranges = true;
+
+    /* assumes fast X */
+
+    f+=2; /* advance to data */
+
   }
   
   if(ok) {
 
-    ms->Div[0]= ms->Div[0] - ms->Min[0];
-    ms->Div[1]= ms->Div[1] - ms->Min[1];
-    ms->Div[2]= ms->Div[2] - ms->Min[2];
-
-    ms->Max[0]=ms->Min[0]+ms->FDim[0]-1;
-    ms->Max[1]=ms->Min[1]+ms->FDim[1]-1;
-    ms->Max[2]=ms->Min[2]+ms->FDim[2]-1;
+    if(ascii) {
+      ms->Div[0] = ms->Div[0] - ms->Min[0];
+      ms->Div[1] = ms->Div[1] - ms->Min[1];
+      ms->Div[2] = ms->Div[2] - ms->Min[2];
+      
+      ms->Max[0] = ms->Min[0]+ms->FDim[0]-1;
+      ms->Max[1] = ms->Min[1]+ms->FDim[1]-1;
+      ms->Max[2] = ms->Min[2]+ms->FDim[2]-1;
+    }
 
     ms->FDim[3]=3;
 
@@ -3445,35 +3546,42 @@ static int ObjectMapGRDStrToMap(ObjectMap *I,char *GRDStr,int bytes,int state)
     ms->Field->save_points=false;
 
     switch(fast_axis) {
-    case 3: /* Fast Y - UNTESTED! */
+    case 3: /* Fast Y - BROKEN! */
     default:
     case 1: /* Fast X */
-      for(c=0;c<ms->FDim[2];c++)
-        {
-          v[2]=(c+ms->Min[2])/((float)ms->Div[2]);
-          for(b=0;b<ms->FDim[1];b++) {
-            v[1]=(b+ms->Min[1])/((float)ms->Div[1]);
-            for(a=0;a<ms->FDim[0];a++) {
-              v[0]=(a+ms->Min[0])/((float)ms->Div[0]);
+      for(c=0;c<ms->FDim[2];c++) {
+        v[2]=(c+ms->Min[2])/((float)ms->Div[2]);
+        for(b=0;b<ms->FDim[1];b++) {
+          if(!ascii)
+            f++; /* skip block delimiter */
+          v[1]=(b+ms->Min[1])/((float)ms->Div[1]);
+          for(a=0;a<ms->FDim[0];a++) {
+            v[0]=(a+ms->Min[0])/((float)ms->Div[0]);
+            if(ascii) {
               p=ParseNextLine(p);
               p=ParseNCopy(cc,p,24);                
               if(sscanf(cc,"%f",&dens)!=1) {
                 ok=false;
-              } else {
-                sumsq+=dens*dens;
-                sum+=dens;
-                n_pts++;
-                F3(ms->Field->data,a,b,c) = dens;
-                if(maxd<dens) maxd = dens;
-                if(mind>dens) mind = dens;
               }
-              transform33f3f(ms->Crystal->FracToReal,v,vr);
-              for(e=0;e<3;e++) {
-                F4(ms->Field->points,a,b,c,e) = vr[e];
-              }
+            } else {
+              dens = *(f++);
+            }
+            if(ok) {
+              sumsq+=dens*dens;
+              sum+=dens;
+              n_pts++;
+              F3(ms->Field->data,a,b,c) = dens;
+              if(maxd<dens) maxd = dens;
+              if(mind>dens) mind = dens;
+            }
+            transform33f3f(ms->Crystal->FracToReal,v,vr);
+            for(e=0;e<3;e++) {
+              F4(ms->Field->points,a,b,c,e) = vr[e];
             }
           }
+          if(!ascii) f++; /* skip fortran block delimiter */
         }
+      }
       break;
     }
   }   
