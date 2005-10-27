@@ -192,6 +192,14 @@ int SceneLoopRelease(Block *block,int button,int x,int y,int mod);
 
 int SceneLoopClick(Block *block,int button, int x,int y,int mod);
 
+static void SceneAbortAnimation(PyMOLGlobals *G)
+{
+  register CScene *I=G->Scene;
+  if(I->cur_ani_elem < I->n_ani_elem ) { /* allow user to override animation */
+    I->cur_ani_elem = I->n_ani_elem;
+  }
+}
+
 void ScenePrimeAnimation(PyMOLGlobals *G)
 {
   if(G->HaveGUI) {
@@ -700,6 +708,8 @@ void SceneSetView(PyMOLGlobals *G,SceneViewType view,int quiet,float animate)
   }
   if(animate!=0.0F)
     ScenePrimeAnimation(G);
+  else
+    SceneAbortAnimation(G);
 
   p=view;
   for(a=0;a<16;a++)
@@ -2539,12 +2549,10 @@ static int SceneDoXYPick(PyMOLGlobals *G, int x, int y)
   /* did we pick something? */
 }
 
+
 static void SceneNoteMouseInteraction(PyMOLGlobals *G)
 {
-  register CScene *I=G->Scene;
-  if(I->cur_ani_elem < I->n_ani_elem ) { /* allow user to override animation */
-    I->cur_ani_elem = I->n_ani_elem;
-  }
+  SceneAbortAnimation(G);
   if(SettingGet_b(G,NULL,NULL,cSetting_mouse_restart_movie_delay)) {
     SceneRestartTimers(G);
   }

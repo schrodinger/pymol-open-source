@@ -417,7 +417,7 @@ class Normal(PMGSkin):
                 self.initialdir = re.sub(r"[^\/\\]*$","",ofile)
             self.cmd.log("load %s\n"%ofile,"cmd.load('%s')\n"%ofile)
             if (string.lower(ofile[-4:])=='.pse') and (ofile!=self.save_file):
-                self.save_file = '' # remove ambiguous default 
+                self.save_file = '' # remove ambiguous default
             self.cmd.load(ofile)
 
 

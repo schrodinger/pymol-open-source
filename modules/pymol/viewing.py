@@ -970,7 +970,7 @@ SEE ALSO
         return key
     
     def _scene_validate_list():
-        global scene_dict,scene_order      
+        global scene_dict,scene_order
         new_list = []
         new_dict = {}
         for a in scene_order:
@@ -986,6 +986,29 @@ SEE ALSO
         scene_order = new_list
         return scene_order
 
+    def chain_session():
+        import os
+        # assumes locked interpreter
+        r = 0
+        session_file = str(cmd.get("session_file"))
+        session_next = str(cmd.get("session_next"))
+        re_pat = re.compile("[0-9]+\.")
+        if len(session_file) and not len(session_next): # find next session file, if it exists
+            mo = re_pat.search(session_file)
+            if mo!=None:
+                pat = mo.group(0)
+                if len(pat):
+                    file_no = int(float(pat)) + 1
+                    new_form = r"%0"+str(len(pat)-1)+"d."
+                    for new_num in range(file_no, file_no+11):
+                        new_pat = new_form % new_num
+                        new_file = re_pat.sub(new_pat, session_file)
+                        if os.path.exists(new_file):
+                            cmd.do("_ cmd.load('''"+new_file+"''')")
+                            return 1
+                
+        return 0
+    
     def scene(key='auto',action='recall',message=None,
                  view=1,color=1,active=1,rep=1,frame=1,animate=-1,
                  new_key=None, quiet=1):
@@ -1308,10 +1331,12 @@ DEVELOPMENT TO DO
                             scene(scene_name,'recall',animate=animate)
                     else: # otherwise put up blank screen
                         cmd.set('scene_current_name','',quiet=1)
-                        if ((setting.get("presentation")=="on") and 
-                             (setting.get("presentation_auto_quit")=="on")):
-                            scene_quit_on_action = action
-                        if len(lst):
+                        chained = 0
+                        if (setting.get("presentation")=="on"):
+                            chained = chain_session()
+                            if (not chained) and (setting.get("presentation_auto_quit")=="on"):
+                                scene_quit_on_action = action
+                        if not chained and len(lst):
                             cmd.disable() # just hide everything
                             cmd.wizard()
                             
