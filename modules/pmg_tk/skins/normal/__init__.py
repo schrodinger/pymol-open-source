@@ -374,6 +374,7 @@ class Normal(PMGSkin):
                        ("All Readable","*.pse"),
                        ("All Readable","*.phi"),
                        ("All Readable","*.fld"),
+                       ("All Readable","*.grd"),
                        ("All Readable","*.o"),
                        ("All Readable","*.omap"),                                         
                        ("All Readable","*.brix"),

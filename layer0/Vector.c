@@ -70,6 +70,14 @@ float get_random0to1f()
   return(rand()/(_1+RAND_MAX));
 }
 
+int pymol_roundf(float f)
+{
+  if(f>0.0F)
+    return (int)(f+0.49999F);
+  else
+    return (int)(f-0.49999F);
+}
+
 double slow_sqrt1f(float f) { /* no good as a macro because f is used twice */
   if(f>_0)
 	 return(sqrt(f));

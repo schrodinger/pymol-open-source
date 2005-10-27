@@ -80,6 +80,9 @@ int slow_within3fsq(float *v1,float *v2,float dist,float dist2);
 
 int equal3f(float *v1,float *v2);
 
+
+int pymol_roundf(float f);
+
 float get_angle3f( float *v1, float *v2 );
 float get_dihedral3f( float *v0, float *v1, float *v2, float *v3 );
 double length3d ( double *v1 );
