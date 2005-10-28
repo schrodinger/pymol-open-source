@@ -44,12 +44,14 @@ class Box(Wizard):
             'box',
             'walls', 
             'plane',
+	    'quad',
             ]
 
         self.mode_name = {
             'box':'Box',
             'walls':'Walls',
             'plane':'Plane',
+	    'quad':'Quad',
             }
 
         smm = []
@@ -151,18 +153,22 @@ class Box(Wizard):
             d30 = sub(self.coord[3], p)
 
             x10_20 = cross_product(d10,d20)
-            if dot_product(d30,x10_20)<0.0:
-                p = model.atom[1].coord
-                d10 = sub(self.coord[0], p)
-                d20 = sub(self.coord[2], p)
-                d30 = sub(self.coord[3], p)
-
+	    if self.mode != 'quad':
+		if dot_product(d30,x10_20)<0.0:
+		    p = model.atom[1].coord
+		    d10 = sub(self.coord[0], p)
+		    d20 = sub(self.coord[2], p)
+		    d30 = sub(self.coord[3], p)
+	    
             n10_20 = normalize(x10_20)
             n10 = normalize(d10)
 
             d100 = d10
-            d010 = remove_component(d20, n10)
-            d001 = project(d30, n10_20)
+	    d010 = remove_component(d20, n10)
+	    if self.mode != 'quad':
+		d001 = project(d30, n10_20)
+	    else:
+		d001 = n10_20
 
             n100 = normalize(d100)
             n010 = normalize(d010)
@@ -172,14 +178,20 @@ class Box(Wizard):
             f010 = reverse(n010)
             f001 = reverse(n001)
 
-            p000 = p
-            p100 = add(p,d100)
-            p010 = add(p,d010)
-            p001 = add(p,d001)
-            p110 = add(p100, d010)
-            p011 = add(p010, d001)
-            p101 = add(p100, d001)
-            p111 = add(p110, d001)
+	    if self.mode == 'quad':
+		p000 = p
+		p100 = add(p, remove_component(d10,n001))
+		p010 = add(p, remove_component(d20,n001))
+		p001 = add(p, remove_component(d30,n001))
+	    else:
+		p000 = p
+		p100 = add(p,d100)
+		p010 = add(p,d010)
+		p001 = add(p,d001)
+		p110 = add(p100, d010)
+		p011 = add(p010, d001)
+		p101 = add(p100, d001)
+		p111 = add(p110, d001)
 
             obj = []
 
@@ -280,7 +292,19 @@ class Box(Wizard):
                 model.atom[1].coord = p100
                 model.atom[2].coord = p010
                 model.atom[3].coord = add(add(p001, scale(d010,0.5)),scale(d100,0.5))
-            
+            elif self.mode=='quad':
+		obj.extend([ BEGIN, TRIANGLE_STRIP ])
+                obj.append(NORMAL); obj.extend(n001)
+                obj.append(VERTEX); obj.extend(p000)
+                obj.append(VERTEX); obj.extend(p100)
+                obj.append(VERTEX); obj.extend(p010)
+                obj.append(VERTEX); obj.extend(p001)
+                obj.append(END)
+                model.atom[0].coord = p000
+                model.atom[1].coord = p100
+                model.atom[2].coord = p010
+                model.atom[3].coord = p001
+
             cmd.load_model(model, '_tmp', zoom=0)
             cmd.update(self.points_name,"_tmp")
             cmd.delete("_tmp")

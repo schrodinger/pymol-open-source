@@ -575,6 +575,7 @@ typedef struct _CPyMOL {
   ov_word lex_use_state_matrices;
   ov_word lex_editor_auto_origin;
   ov_word lex_session_file;
+  ov_word lex_cgo_transparency;
 } _CPyMOL;
 
 /* convenience functions -- inline */
@@ -1158,6 +1159,7 @@ static OVstatus PyMOL_InitAPI(CPyMOL *I)
   LEX_SETTING(use_state_matrices, 438);
   LEX_SETTING(editor_auto_origin, 439);
   LEX_SETTING(session_file, 440);
+  LEX_SETTING(cgo_transparency, 441);
   return_OVstatus_SUCCESS;
 }
 

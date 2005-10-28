@@ -972,7 +972,7 @@ void CGORenderRay(CGO *I,CRay *ray,float *color,CSetting *set1,CSetting *set2)
   float *n0=NULL,*n1=NULL,*n2=NULL,*v0=NULL,*v1=NULL,*v2=NULL,*c0=NULL,*c1=NULL,*c2=NULL;
   int mode = -1;
 
-  I->G->CGORenderer->alpha = 1.0F;
+  I->G->CGORenderer->alpha = 1.0F - SettingGet_f(I->G,set1,set2,cSetting_cgo_transparency);
 
   widthscale = SettingGet_f(I->G,set1,set2,cSetting_cgo_ray_width_scale);
 
@@ -993,6 +993,7 @@ void CGORenderRay(CGO *I,CRay *ray,float *color,CSetting *set1,CSetting *set2)
     c0=color;
   else
     c0=white;
+  ray->fTransparentf(ray,1.0F - I->G->CGORenderer->alpha);
 
   while((op=(CGO_MASK&CGO_read_int(pc)))) {
     switch(op) {
@@ -1279,11 +1280,11 @@ void CGORenderGL(CGO *I,float *color,CSetting *set1,CSetting *set2,RenderInfo *i
     register CCGORenderer *R = G->CGORenderer;
     
     if(I->c) {
-      R->alpha = 1.0F;
+      R->alpha = 1.0F - SettingGet_f(I->G,set1,set2,cSetting_cgo_transparency);
       if(color) 
-        glColor3fv(color);
+        glColor4f(color[0],color[1],color[2],R->alpha);
       else
-        glColor3f(1.0,1.0,1.0);
+        glColor4f(1.0,1.0,1.0,R->alpha);
       if(info && info->width_scale_flag) {
         glLineWidth(SettingGet_f(I->G,set1,set2,cSetting_cgo_line_width)*info->width_scale);
         glPointSize(SettingGet_f(I->G,set1,set2,cSetting_cgo_dot_width)*info->width_scale);
