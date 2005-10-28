@@ -16,10 +16,10 @@ class Renaming(Wizard):
         return Wizard.event_mask_key
 
     def do_key(self,k,x,y,m):
-        if k>32:
-            self.new_name= self.new_name + chr(k)
-        elif k==8:
+        if k in [8,127]:
             self.new_name = self.new_name[:-1]
+        elif k>32:
+            self.new_name= self.new_name + chr(k)
         elif k==10 or k==13:
             self.new_name = string.strip(self.new_name)
             cmd.do("set_name %s,%s"%(self.old_name,self.new_name),log=0)
