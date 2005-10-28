@@ -221,7 +221,7 @@ void RepSphereFree(RepSphere *I)
 #ifdef _PYMOL_OPENGL_SHADERS
   if(I->R.G->HaveGUI && I->R.G->ValidContext) {
     if(I->shader_flag) {
-      glDeleteProgramsARB(2,I->programs);
+
     }
   }
 #endif
