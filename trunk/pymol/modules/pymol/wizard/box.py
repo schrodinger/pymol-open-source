@@ -268,7 +268,19 @@ class Box(Wizard):
                 model.atom[1].coord = p100
                 model.atom[2].coord = p010
                 model.atom[3].coord = p001
-
+            elif self.mode=='plane':
+                obj.extend([ BEGIN, TRIANGLE_STRIP ])
+                obj.append(NORMAL); obj.extend(n001)
+                obj.append(VERTEX); obj.extend(p000)
+                obj.append(VERTEX); obj.extend(p100)
+                obj.append(VERTEX); obj.extend(p010)
+                obj.append(VERTEX); obj.extend(p110)
+                obj.append(END)
+                model.atom[0].coord = p000
+                model.atom[1].coord = p100
+                model.atom[2].coord = p010
+                model.atom[3].coord = add(add(p001, scale(d010,0.5)),scale(d100,0.5))
+            
             cmd.load_model(model, '_tmp', zoom=0)
             cmd.update(self.points_name,"_tmp")
             cmd.delete("_tmp")
