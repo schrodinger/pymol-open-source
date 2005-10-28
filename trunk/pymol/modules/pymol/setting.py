@@ -474,6 +474,7 @@ if __name__=='pymol.setting':
         use_state_matrices        = (438, '')
         editor_auto_origin        = (439, '')
         session_file              = (440, '')
+	cgo_transparency          = (441, '')
         
     setting_sc = Shortcut(SettingIndex.__dict__.keys())
 
