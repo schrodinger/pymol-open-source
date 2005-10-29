@@ -54,6 +54,7 @@ void MainMoviePrepareCopy(int *width,int *height,int *length);
 int MainMovieCopy(int frame,int width,int height,int rowbytes,void *ptr);
 void MainMovieCopyPrepare(int *width,int *height,int *length);
 int MainMovieCopyFrame(int frame,int width,int height,int rowbytes,void *ptr);
+int MainMoviePurgeFrame(int frame);
 void MainMovieCopyFinish(void);
 void MainSceneGetSize(int *width,int *height);
 int MainSceneCopy(int width,int height,int rowbytes,void *ptr);

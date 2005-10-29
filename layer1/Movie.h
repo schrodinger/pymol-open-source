@@ -40,6 +40,7 @@ void MovieDoFrameCommand(PyMOLGlobals *G,int frame);
 
 void MovieCopyPrepare(PyMOLGlobals *G,int *width,int *height,int *length);
 int MovieCopyFrame(PyMOLGlobals *G,int frame,int width,int height,int rowbytes,void *ptr);
+int MoviePurgeFrame(PyMOLGlobals *G,int frame);
 void MovieCopyFinish(PyMOLGlobals *G);
 
 #define cMovieStop 0

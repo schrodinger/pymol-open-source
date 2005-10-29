@@ -111,6 +111,17 @@ int MainMovieCopyFrame(int frame,int width,int height,int rowbytes,void *ptr)
   }
   return result;
 }
+int MainMoviePurgeFrame(int frame)
+{
+  PyMOLGlobals *G = TempPyMOLGlobals;
+  int result = false;
+  if(PLockAPIAsGlut(true)) {
+    result = MoviePurgeFrame(G,frame);
+    PUnlockAPIAsGlut();
+  }
+  return result;
+}
+
 void MainMovieCopyFinish(void)
 {
   PyMOLGlobals *G = TempPyMOLGlobals;
