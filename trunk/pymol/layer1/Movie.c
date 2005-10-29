@@ -127,7 +127,6 @@ int MovieCopyFrame(PyMOLGlobals *G,int frame,int width,int height,int rowbytes,v
   register CMovie *I=G->Movie;
   int result=false;
   int nFrame;
-  
   nFrame = I->NFrame;
   if(!nFrame) {
     nFrame=SceneGetNFrame(G);
@@ -142,7 +141,7 @@ int MovieCopyFrame(PyMOLGlobals *G,int frame,int width,int height,int rowbytes,v
     i=MovieFrameToImage(G,a);
     VLACheck(I->Image,ImageType*,i);
     if(!I->Image[i]) {
-      SceneMakeMovieImage(G);
+	  SceneMakeMovieImage(G);
     }
     if(!I->Image[i]) {
       PRINTFB(G,FB_Movie,FB_Errors) 
@@ -185,6 +184,32 @@ int MovieCopyFrame(PyMOLGlobals *G,int frame,int width,int height,int rowbytes,v
   return result;
 }
 
+int MoviePurgeFrame(PyMOLGlobals *G,int frame)
+{
+  register CMovie *I=G->Movie;
+  int result=false;
+  int nFrame;
+  int i;
+  nFrame = I->NFrame;
+  if(!nFrame) {
+    nFrame=SceneGetNFrame(G);
+  }
+  if(!I->CacheSave) {
+  if(frame<nFrame) {
+    int a = frame;
+    i=MovieFrameToImage(G,a);
+    VLACheck(I->Image,ImageType*,i);
+    if(I->Image[i]) {
+		FreeP(I->Image[i]->data);
+		FreeP(I->Image[i]);
+		I->Image[i]=NULL;
+		result=true;
+		}
+	}
+	}
+	return result;
+}
+
 void MovieCopyFinish(PyMOLGlobals *G) 
 {
   register CMovie *I=G->Movie;
@@ -193,8 +218,7 @@ void MovieCopyFinish(PyMOLGlobals *G)
   MoviePlay(G,cMovieStop);
   if(!I->CacheSave) {
     MovieClearImages(G); 
-    SceneSuppressMovieFrame(G);
-  }
+     }
 }
 
 int MovieLocked(PyMOLGlobals *G)
@@ -371,7 +395,9 @@ int MoviePlaying(PyMOLGlobals *G)
   register CMovie *I=G->Movie;
   if(I->Locked)
     return false;
-  return(I->Playing);
+  return(I->Playing||I->RecursionFlag); 
+  /* returns true if movie is playing OR if we're in the process of evaluating
+     movie commands */
 }
 /*========================================================================*/
 void MoviePlay(PyMOLGlobals *G,int cmd)
@@ -511,8 +537,7 @@ int MoviePNG(PyMOLGlobals *G,char *prefix,int save,int start,int stop)
   SettingSet(G,cSetting_cache_frames,(float)save);
   MoviePlay(G,cMovieStop);
   MovieClearImages(G);
-  SceneSuppressMovieFrame(G);
-  return(true);
+   return(true);
 }
 /*========================================================================*/
 void MovieAppendSequence(PyMOLGlobals *G,char *str,int start_from)
@@ -819,12 +844,14 @@ void MovieClearImages(PyMOLGlobals *G)
   for(a=0;a<I->NImage;a++)
 	 {
 		if(I->Image[a]) {
+		  FreeP(I->Image[a]->data);
 		  FreeP(I->Image[a]);
 		  I->Image[a]=NULL;
 		}
 	 }
   I->NImage=0;
   SceneInvalidate(G);
+  SceneSuppressMovieFrame(G);
 }
 /*========================================================================*/
 void MovieReset(PyMOLGlobals *G) {

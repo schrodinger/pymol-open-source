@@ -1186,7 +1186,8 @@ DEVELOPMENT TO DO
                     if (ll>2) and (frame):
                         if list[2]!=None:
                             if not cmd.get_movie_playing(): # don't set frame when movie is already playing
-                                cmd.frame(list[2])
+				if cmd.get_frame()!=list[2]: # only set the frame when it isn't already correct
+				    cmd.frame(list[2])
                     if (ll>3) and (color):
                         if list[3]!=None:
                             cmd.set_colorection(list[3],key)
