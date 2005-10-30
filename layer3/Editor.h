@@ -35,14 +35,18 @@ Z* -------------------------------------------------------------------
 #define cEditorDihedral "_pkdihe"
 #define cEditorDihe1    "_pkdihe1"
 #define cEditorDihe2    "_pkdihe2"
+#define cEditorDrag    "_drag"
 
 int EditorInit(PyMOLGlobals *G);
 int EditorActive(PyMOLGlobals *G); 
 void EditorRender(PyMOLGlobals *G,int state);
 int EditorLogState(PyMOLGlobals *G,int pkresi);
+void EditorFavorOrigin(PyMOLGlobals *G, float *v1);
 
 void EditorFree(PyMOLGlobals *G);
-void EditorPrepareDrag(PyMOLGlobals *G,ObjectMolecule *obj,int index,int state);
+void EditorSetDrag(PyMOLGlobals *G,ObjectMolecule *obj,int sele, int quiet,int state);
+void EditorReadyDrag(PyMOLGlobals *G,int state);
+void EditorPrepareDrag(PyMOLGlobals *G,ObjectMolecule *obj,int sele, int index,int state);
 void EditorDrag(PyMOLGlobals *G,ObjectMolecule *obj,int index,int mode,int state,
                 float *pt,float *mov,float *z_dir);
 
@@ -72,5 +76,6 @@ int EditorDeselectIfSelected(PyMOLGlobals *G,ObjectMolecule *obj,int index,int u
 void EditorDefineExtraPks(PyMOLGlobals *G);
 int EditorGetNFrag(PyMOLGlobals *G);
 void EditorUpdate(PyMOLGlobals *G);
+void EditorMouseInvalid(PyMOLGlobals *G);
 
 #endif

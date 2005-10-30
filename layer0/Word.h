@@ -58,6 +58,7 @@ int WordMatcherMatchAlpha(CWordMatcher *I, char *text);
 int WordMatcherMatchMixed(CWordMatcher *I, char *text,int value);
 int WordMatcherMatchInteger(CWordMatcher *I,int value);
 void WordMatcherFree(CWordMatcher *I);
+int WordMatchNoWild(PyMOLGlobals *G,char *p,char *q,int ignCase) ;
 
 CWordList *WordListNew(PyMOLGlobals *G,char *st);
 void WordListFreeP(CWordList *I);

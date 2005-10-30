@@ -53,6 +53,15 @@ Block *ButModeGetBlock(PyMOLGlobals *G)
   {return(I->Block);}
 }
 /*========================================================================*/
+int ButModeGet(PyMOLGlobals *G,int button)
+{
+  register CButMode *I=G->ButMode;
+  if((button>=0)&&(button<I->NBut)) {
+    return I->Mode[button];
+  }
+  return 0;
+}
+
 void ButModeSet(PyMOLGlobals *G,int button,int action)
 {
   register CButMode *I=G->ButMode;
@@ -386,11 +395,6 @@ int ButModeInit(PyMOLGlobals *G)
       I->Mode[a]=-1;
     }
 
-    /*    I->Mode[19] = cButModeSeleToggle;
-    I->Mode[20] = cButModeCent; 
-    I->Mode[21] = cButModeMenu;
-    */
-
     strcpy(I->Code[cButModeRotXYZ],  "Rota ");
     strcpy(I->Code[cButModeRotZ],    "RotZ ");  
     strcpy(I->Code[cButModeTransXY], "Move ");
@@ -427,6 +431,14 @@ int ButModeInit(PyMOLGlobals *G)
     strcpy(I->Code[cButModeSeleSub], "-Box ");  
     strcpy(I->Code[cButModeMoveSlabAndZoom], "MvSZ ");  
     strcpy(I->Code[cButModeSimpleClick], "Clik ");  
+    strcpy(I->Code[cButModeRotDrag], "RotD ");  
+    strcpy(I->Code[cButModeMovDrag], "MovD ");  
+    strcpy(I->Code[cButModeMovDragZ], "MvDZ ");
+    strcpy(I->Code[cButModeRotObj], "RotO ");  
+    strcpy(I->Code[cButModeMovObj], "MovO ");  
+    strcpy(I->Code[cButModeMovObjZ], "MvOZ ");
+    strcpy(I->Code[cButModeMovFragZ], "MvFZ ");
+    strcpy(I->Code[cButModeMoveAtomZ], "MvAZ ");
 
     I->Block = OrthoNewBlock(G,NULL);
     I->Block->fClick = ButModeClick;

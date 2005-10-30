@@ -51,6 +51,7 @@ typedef char SelectorWordType[SelectorWordLength];
 #define SelectorMaxDepth 1000
 
 #define cSelectorTmpPrefix "_sel_tmp_"
+#define cSelectorTmpPattern "_sel_tmp_*"
 
 #define cNDummyModels 2
 #define cNDummyAtoms 2
@@ -1078,6 +1079,17 @@ static void SelectorDeleteSeleAtOffset(PyMOLGlobals *G,int n)
     I->Info[n] = I->Info[I->NActive];
     I->Name[I->NActive][0]=0;
   }
+}
+char *SelectorGetNameFromIndex(PyMOLGlobals *G,int index)
+{
+  register CSelector *I=G->Selector;
+   int a;
+  for(a=1;a<I->NActive;a++) {
+    if(I->Info[a].ID==index) {
+      return I->Name[a];
+    }
+  }
+  return NULL;
 }
 
 #ifndef _PYMOL_NOPY
@@ -6096,6 +6108,13 @@ int SelectorGetTmp(PyMOLGlobals *G,char *input,char *store)
     ENDFD;
   return count;
 
+}
+int SelectorCheckTmp(PyMOLGlobals *G,char *name)
+{
+  if(WordMatch(G,cSelectorTmpPattern,name,false)+1==-strlen(cSelectorTmpPrefix))
+    return true;
+  else
+    return false;
 }
 /*========================================================================*/
 void SelectorFreeTmp(PyMOLGlobals *G,char *name) /* remove temporary selections */

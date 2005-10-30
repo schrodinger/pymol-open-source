@@ -637,6 +637,42 @@ typedef struct {
   ObjectMolecule *obj;
 } ProcPDBRec;
 
+int ExecutiveSetDrag(PyMOLGlobals *G,char *name, int quiet)
+{
+  char drag_name[] = cEditorDrag;
+  int set_flag = false;
+  int result = true;
+  EditorInactivate(G);
+  if(name[0]) {
+    ObjectMolecule *obj = ExecutiveFindObjectMoleculeByName(G,name);
+    if(obj) {
+      set_flag = true;
+      EditorSetDrag(G,obj,-1,quiet,SceneGetState(G));
+    } else {
+      SpecRec *rec = ExecutiveFindSpec(G,name);
+      if(rec) {
+        if(rec->type==cExecSelection) {
+          if(SelectorCheckTmp(G,name)) {
+            SelectorCreate(G,drag_name,name,NULL,quiet,NULL);
+            name = drag_name;
+          }
+          {
+            int sele = SelectorIndexByName(G,name);
+            obj = SelectorGetSingleObjectMolecule(G,sele);
+            if(obj) {
+              EditorSetDrag(G,obj,sele,quiet,SceneGetState(G));            
+            } else {
+              /* complain */
+            }
+          }
+        }
+      }
+    }
+    result = set_flag;
+  } 
+  return result;
+}
+
 int ExecutivePop(PyMOLGlobals *G,char *target,char *source,int quiet)
 {
   int ok = true;
@@ -705,11 +741,16 @@ int ExecutiveGetActiveSeleName(PyMOLGlobals *G,char *name, int create_new)
       }
   }
   if((!result)&&create_new) {
-    int sel_num = SettingGetGlobal_i(G,cSetting_sel_counter) + 1;
-
-    SettingSetGlobal_i(G,cSetting_sel_counter,sel_num);
-    sprintf(name,"sel%02d",sel_num);
-    SelectorCreateEmpty(G,name);
+    if(SettingGetGlobal_b(G,cSetting_auto_number_selections)) {
+      int sel_num = SettingGetGlobal_i(G,cSetting_sel_counter) + 1;
+      
+      SettingSetGlobal_i(G,cSetting_sel_counter,sel_num);
+      sprintf(name,"sel%02d",sel_num);
+      SelectorCreateEmpty(G,name);
+    } else {
+      sprintf(name,"sele");
+      SelectorCreateEmpty(G,name);
+    }
   }
   return result;
 }

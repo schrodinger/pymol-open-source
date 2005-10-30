@@ -52,8 +52,21 @@ struct _CEditor {
   float *PosVLA;
   int ShowFrags;
   int DihedralInvalid;
+  int MouseInvalid;
+  int FavorOrigin;
+  float FavoredOrigin[3];
 } ;
 
+void EditorFavorOrigin(PyMOLGlobals *G, float *v1)
+{
+  register CEditor *I = G->Editor;
+  if(v1) {
+    I->FavorOrigin = true;
+    copy3f(v1,I->FavoredOrigin);
+  } else {
+    I->FavorOrigin = false;
+  }
+}
 
 static void EditorDrawDihedral(PyMOLGlobals *G)
 {
@@ -96,12 +109,135 @@ static void EditorDihedralInvalid(PyMOLGlobals *G)
   I->DihedralInvalid = true;
 }
 
+void EditorMouseInvalid(PyMOLGlobals *G)
+{
+  register CEditor *I = G->Editor;
+  I->MouseInvalid = true;
+}
+
+static void EditorConfigMouse(PyMOLGlobals *G)
+{
+#define SCHEME_OBJ 1
+#define SCHEME_FRAG 2
+#define SCHEME_DRAG 3
+
+  register CEditor *I = G->Editor;
+  int scheme = SCHEME_OBJ;
+  char *mouse_mode = SettingGetGlobal_s(G,cSetting_button_mode_name);
+
+  if(EditorActive(G)) 
+    scheme = SCHEME_FRAG;
+  else if(I->DragObject) {
+    if(I->DragIndex>=0) {
+      scheme = SCHEME_OBJ;
+    } else {
+      scheme = SCHEME_DRAG;
+    }
+  }
+  if(mouse_mode && (strcmp(mouse_mode,"3-Button Editing")==0)) { /* WEAK! */
+    int button;
+
+    button = cButModeMiddleShft;
+
+    {
+      int action = ButModeGet(G,button);
+      if ((action == cButModeMovFrag)||
+          (action == cButModeMovObj)||
+          (action == cButModeMovDrag)) {
+        switch(scheme) {
+        case SCHEME_OBJ: action = cButModeMovObj; break;
+        case SCHEME_FRAG: action = cButModeMovFrag; break;
+        case SCHEME_DRAG: action = cButModeMovDrag; break;
+        }
+        ButModeSet(G,button, action);
+      }
+    }
+
+    button = cButModeLeftShft;
+    {
+      int action = ButModeGet(G,button);
+      if ((action == cButModeRotFrag)||
+          (action == cButModeRotObj)||
+          (action == cButModeRotDrag)) {
+        switch(scheme) {
+        case SCHEME_OBJ: action = cButModeRotObj; break;
+        case SCHEME_FRAG: action = cButModeRotFrag; break;
+        case SCHEME_DRAG: action = cButModeRotDrag; break;
+        }
+        ButModeSet(G,button, action);
+      }
+    }
+
+    button = cButModeRightCtSh;
+    {
+      int action = ButModeGet(G,button);
+      if ((action == cButModeMovFragZ)||
+          (action == cButModeMovObjZ)||
+          (action == cButModeMovDragZ)) {
+        switch(scheme) {
+        case SCHEME_OBJ: action = cButModeMovObjZ; break;
+        case SCHEME_FRAG: action = cButModeMovFragZ; break;
+        case SCHEME_DRAG: action = cButModeMovDragZ; break;
+        }
+        ButModeSet(G,button, action);
+      }
+    }
+
+    button = cButModeLeftCtrl;
+    {
+      int action = ButModeGet(G,button);
+      if ((action == cButModeMoveAtom)||
+          (action == cButModeTorFrag)) {
+        switch(scheme) {
+        case SCHEME_OBJ: action = cButModeMoveAtom; break;
+        case SCHEME_FRAG: action = cButModeTorFrag; break;
+        case SCHEME_DRAG: action = cButModeMoveAtom; break;
+        }
+        ButModeSet(G,button, action);
+      }
+    }
+
+    button = cButModeLeftDouble;
+    {
+      int action = ButModeGet(G,button);
+      if ((action == cButModeMoveAtom)||
+          (action == cButModeTorFrag)) {
+        switch(scheme) {
+        case SCHEME_OBJ: action = cButModeMoveAtom; break;
+        case SCHEME_FRAG: action = cButModeTorFrag; break;
+        case SCHEME_DRAG: action = cButModeMoveAtom; break;
+        }
+        ButModeSet(G,button, action);
+      }
+    }
+
+    button = cButModeLeftCtSh;
+    {
+      int action = ButModeGet(G,button);
+      if ((action == cButModeMoveAtom)||
+          (action == cButModeMoveAtomZ)) {
+        switch(scheme) {
+        case SCHEME_OBJ: action = cButModeMoveAtomZ; break;
+        case SCHEME_FRAG: action = cButModeMoveAtom; break;
+        case SCHEME_DRAG: action = cButModeMoveAtomZ; break;
+        }
+        ButModeSet(G,button, action);
+      }
+    }
+  }
+  
+}
+
 void EditorUpdate(PyMOLGlobals *G) 
 {
   register CEditor *I =G->Editor;
   if(I->DihedralInvalid) {
     EditorDrawDihedral(G);
     I->DihedralInvalid = false;
+  }
+  if(I->MouseInvalid) {
+    EditorConfigMouse(G);
+    I->MouseInvalid = false;
   }
 }
 
@@ -1310,6 +1446,7 @@ void EditorInactivate(PyMOLGlobals *G)
     " EditorInactivate-Debug: callend.\n"
     ENDFD;
 
+  I->DragObject = NULL;
   I->BondMode = false;
   I->ShowFrags = false;
   I->NFrag = 0;
@@ -1333,6 +1470,7 @@ void EditorInactivate(PyMOLGlobals *G)
       TODO: resolve this problem:
       we can't assume that Python interpreter isn't blocked
   */
+  EditorMouseInvalid(G);
   SceneInvalidate(G);
 }
 /*========================================================================*/
@@ -1380,10 +1518,22 @@ void EditorActivate(PyMOLGlobals *G,int state,int enable_bond)
   } else {
     EditorInactivate(G);
   }
-
+  EditorMouseInvalid(G);
 }
 /*========================================================================*/
-void EditorPrepareDrag(PyMOLGlobals *G,ObjectMolecule *obj,int index,int state)
+void EditorSetDrag(PyMOLGlobals *G,ObjectMolecule *obj,int sele, int quiet,int state)
+{
+  EditorPrepareDrag(G,obj,sele,-1,state);
+}
+void EditorReadyDrag(PyMOLGlobals *G,int state)
+{
+  register CEditor *I = G->Editor;
+  if(I->DragObject && (I->DragIndex==-1)) {
+    EditorPrepareDrag(G,I->DragObject,I->DragSelection,-1,state);
+  }
+}
+/*========================================================================*/
+void EditorPrepareDrag(PyMOLGlobals *G,ObjectMolecule *obj,int sele, int index,int state)
 {
   int frg;
   int sele0=-1,sele1=-1,sele2=-1,sele3=-1;
@@ -1401,24 +1551,50 @@ void EditorPrepareDrag(PyMOLGlobals *G,ObjectMolecule *obj,int index,int state)
 
   state = EditorGetEffectiveState(G,obj,state);
 
-  if(!EditorActive(G)) { /* non-anchored */
-    /* need to modify this code to move a complete covalent structure */
+  if(!EditorActive(G)) { 
+    /* non-anchored dragging of objects and now selections */
+
     float mn[3],mx[3];
     
     I->DragObject=obj;
-    I->DragIndex=index;
-    I->DragSelection=-1;
+    I->DragIndex=index; /* set to -1 when in "mouse drag" mode */
+    I->DragSelection=sele;
     I->DragHaveBase = false;
-    if(SettingGetGlobal_b(G,cSetting_editor_auto_origin)) {
-      if(ExecutiveGetExtent(G,obj->Obj.Name,mn,mx,true,state,true)) {
-        average3f(mn,mx,I->DragBase);
-        I->DragHaveBase = true;
+    if(sele>=0) {
+      char *sele_name = SelectorGetNameFromIndex(G,sele);
+      if(sele_name) {
+        strcpy(I->DragSeleName,sele_name);
+        if(SettingGetGlobal_b(G,cSetting_editor_auto_origin)) {
+          if(I->FavorOrigin) {
+            I->DragHaveBase = true;
+            copy3f(I->FavoredOrigin, I->DragBase);
+          } else {
+            if(ExecutiveGetExtent(G,sele_name,mn,mx,true,state,true)) {
+              average3f(mn,mx,I->DragBase);
+              I->DragHaveBase = true;
+            }
+          }
+        }
+      } else {
+        I->DragSeleName[0]=0;
+      }
+    } else {
+      if(SettingGetGlobal_b(G,cSetting_editor_auto_origin)) {
+        if(I->FavorOrigin) {
+          I->DragHaveBase = true;
+          copy3f(I->FavoredOrigin, I->DragBase);
+        } else {
+          if(ExecutiveGetExtent(G,obj->Obj.Name,mn,mx,true,state,true)) {
+            average3f(mn,mx,I->DragBase);
+            I->DragHaveBase = true;
+          }
+        }
       }
     }
     
   } else {
 
-    /* anchored */
+    /* anchored / fragment dragging  */
     for(frg=1;frg<=I->NFrag;frg++) {
       sprintf(name,"%s%1d",cEditorFragPref,frg);
       drag_sele = SelectorIndexByName(G,name);
@@ -1628,6 +1804,8 @@ void EditorDrag(PyMOLGlobals *G,ObjectMolecule *obj,int index,int mode,int state
     I->DragBondFlag,I->DragSlowFlag
     ENDFD;
 
+  if((index<0)&&(!obj)) obj=I->DragObject;
+
   state = EditorGetEffectiveState(G,obj,state);
 
   if((index==I->DragIndex)&&(obj==I->DragObject)) {
@@ -1636,7 +1814,23 @@ void EditorDrag(PyMOLGlobals *G,ObjectMolecule *obj,int index,int mode,int state
 
       /* non-achored actions */
       switch(mode) {
+      case cButModeRotDrag:
+        if(I->DragHaveBase) {
+          copy3f(I->DragBase,v3);
+        } else {
+          SceneOriginGet(G,v3);
+        }
+       get_rotation_about3f3fTTTf(pt[0], mov, v3, m); 
+        if(use_matrices&&(I->DragSelection<0)) {
+          ObjectMoleculeTransformState44f(obj,state,m,log_trans,false,true);
+        } else {
+          ObjectMoleculeTransformSelection(obj,state,I->DragSelection,
+                                           m,log_trans,I->DragSeleName,false,true);
+        }
+        SceneInvalidate(G);
+        break;
       case cButModeRotFrag:
+      case cButModeRotObj:
         if(I->DragHaveBase) {
           copy3f(I->DragBase,v3);
         } else {
@@ -1666,8 +1860,13 @@ void EditorDrag(PyMOLGlobals *G,ObjectMolecule *obj,int index,int mode,int state
         ObjectMoleculeMoveAtom(obj,state,index,mov,1,log_trans);
         SceneInvalidate(G);
         break;
+      case cButModeMovObj:
+      case cButModeMovObjZ:
       case cButModeMovFrag:
-        if(use_matrices) {
+      case cButModeMovFragZ:
+      case cButModeMovDrag:
+      case cButModeMovDragZ:
+        if(use_matrices && (I->DragSelection<0)) {
           identity44f(m);
           m[3]=mov[0];
           m[7]=mov[1];
@@ -1685,6 +1884,7 @@ void EditorDrag(PyMOLGlobals *G,ObjectMolecule *obj,int index,int mode,int state
     } else {
       switch(mode) {
       case cButModeRotFrag:
+      case cButModeRotObj:
         if(I->DragHaveBase&&I->DragBondFlag) {
           copy3f(I->DragBase,v3);
         } else {
@@ -1758,6 +1958,7 @@ void EditorDrag(PyMOLGlobals *G,ObjectMolecule *obj,int index,int mode,int state
         SceneInvalidate(G);
         break;
       case cButModeMovFrag:
+      case cButModeMovFragZ:
         identity44f(m);
         copy3f(mov,m+12); /* questionable */
         ObjectMoleculeTransformSelection(obj,state,I->DragSelection,
@@ -1789,6 +1990,9 @@ int EditorInit(PyMOLGlobals *G)
     I->BondMode = false;
     I->PosVLA = VLAlloc(float,30);
     I->DihedralInvalid = false;
+    I->MouseInvalid = false;
+    I->FavorOrigin = false;
+
     return 1;
   } else 
     return 0;

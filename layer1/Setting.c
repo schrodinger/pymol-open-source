@@ -1352,6 +1352,7 @@ void SettingGenerateSideEffects(PyMOLGlobals *G,int index,char *sele,int state)
     SceneChanged(G);
     break;
   case cSetting_button_mode:
+    EditorMouseInvalid(G);
     OrthoDirty(G);
     break;
   case cSetting_stick_radius:
@@ -2624,9 +2625,11 @@ void SettingInitGlobal(PyMOLGlobals *G,int alloc,int reset_gui)
   SettingSet_b(I,cSetting_draw_frames,0);
   SettingSet_b(I,cSetting_show_alpha_checker,0);
   SettingSet_b(I,cSetting_use_state_matrices,0); /* this will change to 1 soon */
-  SettingSet_b(I,cSetting_editor_auto_origin,0); /* this will change to 1 soon */
+  SettingSet_b(I,cSetting_editor_auto_origin,1); 
   SettingSet_s(I,cSetting_session_file, "");
   SettingSet_f(I,cSetting_cgo_transparency, 0.0F); 
+  SettingSet_b(I,cSetting_legacy_mouse_zoom, 0);
+  SettingSet_b(I,cSetting_auto_number_selections, 0);
 }
 
 

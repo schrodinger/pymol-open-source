@@ -1,5 +1,6 @@
 # -c
 
+set auto_number_selections
 /print "BEGIN-LOG"
 
 load dat/tiny.pdb

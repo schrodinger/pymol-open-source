@@ -6,6 +6,8 @@ Changes up to 0.99
 
     beta21
 
+    * fixed longstanding scene/movie synchronization bug 
+
     * worked around depth_cue/fog bug in recent ATI drivers.
 
     * added ability to "import pymol" and finish_launching from a method

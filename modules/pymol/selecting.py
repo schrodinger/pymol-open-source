@@ -76,10 +76,13 @@ NOTES
         try:
             lock()
             if selection=="":
-                sel_cnt = _cmd.get("sel_counter") + 1.0
-                _cmd.legacy_set("sel_counter","%1.0f" % sel_cnt)
-                selection = name
-                name = "sel%02.0f" % sel_cnt
+                selection = name                    
+                if _cmd.get("auto_number_selections")!=0.0:
+                    sel_cnt = _cmd.get("sel_counter") + 1.0
+                    _cmd.legacy_set("sel_counter","%1.0f" % sel_cnt)
+                    name = "sel%02.0f" % sel_cnt
+                else:
+                    name = "sele"
             else:
                 name = name
             # preprocess selection (note: inside TRY)

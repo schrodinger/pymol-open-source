@@ -576,6 +576,8 @@ typedef struct _CPyMOL {
   ov_word lex_editor_auto_origin;
   ov_word lex_session_file;
   ov_word lex_cgo_transparency;
+  ov_word lex_legacy_mouse_zoom;
+  ov_word lex_auto_number_selections;
 } _CPyMOL;
 
 /* convenience functions -- inline */
@@ -1160,6 +1162,8 @@ static OVstatus PyMOL_InitAPI(CPyMOL *I)
   LEX_SETTING(editor_auto_origin, 439);
   LEX_SETTING(session_file, 440);
   LEX_SETTING(cgo_transparency, 441);
+  LEX_SETTING(legacy_mouse_zoom, 442);
+  LEX_SETTING(auto_number_selections, 443);
   return_OVstatus_SUCCESS;
 }
 

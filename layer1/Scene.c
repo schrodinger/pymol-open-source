@@ -2448,6 +2448,7 @@ static void SceneDoRoving(PyMOLGlobals *G,float old_front,
                           float old_back,float old_origin,
                           int adjust_flag,int zoom_flag)
 {
+  EditorFavorOrigin(G,NULL);
   if((int)SettingGet(G,cSetting_roving_origin)) {
 
     register CScene *I=G->Scene;
@@ -2696,6 +2697,22 @@ static int SceneClick(Block *block,int button,int x,int y,
   case cButModeSeleSub:
     return SceneLoopClick(block,button,x,y,mod);
     break;
+  case cButModeRotDrag:
+  case cButModeMovDrag:
+  case cButModeMovDragZ:
+    SceneNoteMouseInteraction(G);
+    SceneDontCopyNext(G);
+
+    y=y-I->Block->margin.bottom;
+    x=x-I->Block->margin.left;
+    
+    if((I->StereoMode>1)&&(I->StereoMode<4)) 
+      x = get_stereo_x(x,NULL,I->Width);
+
+    I->LastX=x;
+    I->LastY=y;	 
+    EditorReadyDrag(G,SettingGetGlobal_i(G,cSetting_state)-1);
+    break;
   case cButModeRotXYZ:
   case cButModeTransXY:
   case cButModeTransZ:
@@ -2901,7 +2918,7 @@ static int SceneClick(Block *block,int button,int x,int y,
             switch(obj->type) {
             case cObjectMolecule:
               objMol = (ObjectMolecule*)obj;
-              EditorPrepareDrag(G,objMol,I->LastPicked.index,
+              EditorPrepareDrag(G,objMol,-1,I->LastPicked.index,
                                 SettingGetGlobal_i(G,cSetting_state)-1);
               I->SculptingFlag = 1;
               I->SculptingSave =  objMol->AtomInfo[I->LastPicked.index].protekted;
@@ -2927,10 +2944,15 @@ static int SceneClick(Block *block,int button,int x,int y,
     }
     SceneInvalidate(G);
     break;
-  case cButModeMovFrag:
-  case cButModeTorFrag:
+  case cButModeRotObj:
+  case cButModeMovObj:
+  case cButModeMovObjZ:
   case cButModeRotFrag:
+  case cButModeMovFrag:
+  case cButModeMovFragZ:
+  case cButModeTorFrag:
   case cButModeMoveAtom:
+  case cButModeMoveAtomZ:
     if((I->StereoMode>1)&&(I->StereoMode<4))
       x = get_stereo_x(x,NULL,I->Width);
 
@@ -2950,7 +2972,7 @@ static int SceneClick(Block *block,int button,int x,int y,
           OrthoRestorePrompt(G);
         }
         objMol = (ObjectMolecule*)obj;
-        EditorPrepareDrag(G,objMol,I->LastPicked.index,
+        EditorPrepareDrag(G,objMol,-1,I->LastPicked.index,
                           SettingGetGlobal_i(G,cSetting_state)-1);
         I->SculptingFlag = 1;
         I->SculptingSave =  objMol->AtomInfo[I->LastPicked.index].protekted;
@@ -3025,20 +3047,16 @@ static int SceneClick(Block *block,int button,int x,int y,
           
         case cButModeOrigAt:
           SceneNoteMouseInteraction(G);
-#if 1
           {
             float v1[3];
 
             if(ObjectMoleculeGetAtomTxfVertex((ObjectMolecule*)obj,
                                            SettingGetGlobal_i(G,cSetting_state)-1,
                                            I->LastPicked.index,v1)) {
+              EditorFavorOrigin(G,v1);
               ExecutiveOrigin(G,NULL,true,NULL,v1,0);
             }
           }
-#else
-          sprintf(buf2,"origin (%s)",buffer);        
-          OrthoCommandIn(G,buf2);
-#endif
           if(obj->type==cObjectMolecule) {
             if(SettingGet(G,cSetting_logging)) {
               objMol = (ObjectMolecule*)obj;            
@@ -3060,7 +3078,6 @@ static int SceneClick(Block *block,int button,int x,int y,
           break;
         case cButModeCent:
           SceneNoteMouseInteraction(G);
-#if 1
           {
             float v1[3];
 
@@ -3071,10 +3088,6 @@ static int SceneClick(Block *block,int button,int x,int y,
             }
           }
           
-#else
-          sprintf(buf2,"center (%s),state=-1,animate=-1",buffer);        
-          OrthoCommandIn(G,buf2);
-#endif
           if(SettingGet(G,cSetting_logging)) {
             objMol = (ObjectMolecule*)obj;            
             ObjectMoleculeGetAtomSeleLog(objMol,I->LastPicked.index,buf1,false);
@@ -3583,8 +3596,6 @@ void SceneRovingUpdate(PyMOLGlobals *G)
               PFlush();
               refresh_flag=true;
             }
-
-
       SettingSet(G,cSetting_auto_zoom,(float)auto_save);            
     }
 
@@ -3687,10 +3698,117 @@ static int SceneDrag(Block *block,int x,int y,int mod,double when)
     I->LastX=x;
     I->LastY=y;
     break;
-  case cButModeMovFrag:
-  case cButModeTorFrag:
+  case cButModeRotDrag:
+    eff_width = I->Width;
+    if((I->StereoMode>1)&&(I->StereoMode<4)) {
+      eff_width = I->Width/2;
+      x = get_stereo_x(x,&I->LastX,I->Width);
+    }
+    
+    if(SettingGet_b(G,NULL,NULL,cSetting_virtual_trackball)) {
+      v1[0] = (float)(eff_width/2) - x;
+      v1[1] = (float)(I->Height/2) - y;
+      
+      v2[0] = (float)(eff_width/2) - I->LastX;
+      v2[1] = (float)(I->Height/2) - I->LastY;
+      
+    } else {
+      v1[0] = (float)(I->LastX) - x;
+      v1[1] = (float)(I->LastY) - y;
+      
+      v2[0] = 0;
+      v2[1] = 0;
+    }
+    
+    r1 = (float)sqrt1f(v1[0]*v1[0] + v1[1]*v1[1]);
+    r2 = (float)sqrt1f(v2[0]*v2[0] + v2[1]*v2[1]);
+    
+    if(r1<scale) {
+      v1[2] = (float)sqrt1f(scale*scale - r1*r1);
+    } else {
+      v1[2] = 0.0;
+    }
+    
+    if(r2<scale) {
+      v2[2] = (float)sqrt1f(scale*scale - r2*r2);
+    } else {
+      v2[2] = 0.0;
+    }
+    normalize23f(v1,n1);
+    normalize23f(v2,n2);
+    cross_product3f(n1,n2,cp);
+    theta = (float)(SettingGet_f(G,NULL,NULL,cSetting_mouse_scale)*
+                    2*180*asin(sqrt1f(cp[0]*cp[0]+cp[1]*cp[1]+cp[2]*cp[2]))/cPI);
+    dx = (v1[0]-v2[0]);
+    dy = (v1[1]-v2[1]);
+    dt = (float)(SettingGet_f(G,NULL,NULL,cSetting_mouse_limit)*sqrt1f(dx*dx+dy*dy)/scale);
+    
+    if(theta>dt) theta = dt;
+    
+    normalize23f(cp,axis);
+    
+    axis[2] = -axis[2];
+
+    theta = theta/(1.0F+(float)fabs(axis[2]));
+    
+    /* transform into model coodinate space */
+    MatrixInvTransformC44fAs33f3f(I->RotMatrix,axis,v2); 
+    v1[0] =(float)(cPI*theta/180.0);
+    EditorDrag(G,NULL,-1,mode,
+               SettingGetGlobal_i(G,cSetting_state)-1,v1,v2,v3);
+    I->LastX=x;
+    I->LastY=y;
+    break;
+  case cButModeMovDrag:
+  case cButModeMovDragZ:
+    if(I->Threshold) {
+      if((abs(x-I->ThresholdX)>I->Threshold)||
+         (abs(y-I->ThresholdY)>I->Threshold)) {
+        I->Threshold = 0;
+      }
+    }
+    if(!I->Threshold) {
+
+      copy3f(I->Origin,v1);
+      vScale = SceneGetScreenVertexScale(G,v1);
+      if((I->StereoMode>1)&&(I->StereoMode<4)) {
+        vScale*=2;
+        x = get_stereo_x(x,&I->LastX,I->Width);
+      }
+      
+      if(mode==cButModeMovDragZ) {
+        v2[0] = 0;
+        v2[1] = 0;
+        v2[2] = -(y-I->LastY)*vScale;
+      } else {
+        v2[0] = (x-I->LastX)*vScale;
+        v2[1] = (y-I->LastY)*vScale;
+        v2[2] = 0;
+      }
+      
+      v3[0] = 0.0F;
+      v3[1] = 0.0F;
+      v3[2] = 1.0F;
+      
+      /* transform into model coodinate space */
+      MatrixInvTransformC44fAs33f3f(I->RotMatrix,v2,v2); 
+      MatrixInvTransformC44fAs33f3f(I->RotMatrix,v3,v3); 
+
+      EditorDrag(G,NULL,-1,mode,
+                 SettingGetGlobal_i(G,cSetting_state)-1,v1,v2,v3);
+    }
+    I->LastX=x;
+    I->LastY=y;
+    break;
+  case cButModeRotObj:
+  case cButModeMovObj:
+  case cButModeMovObjZ:
   case cButModeRotFrag:
+  case cButModeMovFrag:
+  case cButModeMovFragZ:
+  case cButModeTorFrag:
   case cButModeMoveAtom:
+  case cButModeMoveAtomZ:
   case cButModePkTorBnd:
     obj=(CObject*)I->LastPicked.ptr;
     if(obj) {
@@ -3713,10 +3831,16 @@ static int SceneDrag(Block *block,int x,int y,int mod,double when)
               x = get_stereo_x(x,&I->LastX,I->Width);
             }
 
-            v2[0] = (x-I->LastX)*vScale;
-            v2[1] = (y-I->LastY)*vScale;
-            v2[2] = 0;
-            
+            if((mode==cButModeMovFragZ)||(mode==cButModeMovObjZ)||(mode==cButModeMoveAtomZ)) {
+              v2[0] = 0;
+              v2[1] = 0;
+              v2[2] = -(y-I->LastY)*vScale;
+            } else {
+              v2[0] = (x-I->LastX)*vScale;
+              v2[1] = (y-I->LastY)*vScale;
+              v2[2] = 0;
+            }
+
             v3[0] = 0.0F;
             v3[1] = 0.0F;
             v3[2] = 1.0F;
@@ -3725,7 +3849,7 @@ static int SceneDrag(Block *block,int x,int y,int mod,double when)
             MatrixInvTransformC44fAs33f3f(I->RotMatrix,v2,v2); 
             MatrixInvTransformC44fAs33f3f(I->RotMatrix,v3,v3); 
 
-            if(mode!=cButModeMoveAtom) {
+            if((mode!=cButModeMoveAtom)&&(mode!=cButModeMoveAtomZ)) {
               EditorDrag(G,(ObjectMolecule*)obj,I->LastPicked.index,mode,
                          SettingGetGlobal_i(G,cSetting_state)-1,v1,v2,v3);
             } else {
@@ -3804,6 +3928,7 @@ static int SceneDrag(Block *block,int x,int y,int mod,double when)
         moved_flag=true;
       }
     
+    EditorFavorOrigin(G,NULL);
     if(moved_flag&&(int)SettingGet(G,cSetting_roving_origin)) {
       SceneGetPos(G,v2); /* gets position of center of screen */
       SceneOriginSet(G,v2,true);
@@ -3925,6 +4050,8 @@ static int SceneDrag(Block *block,int x,int y,int mod,double when)
           factor = 200/((I->FrontSafe+I->BackSafe)/2);
           if(factor>=0.0F) {
             factor = (((float)y)-I->LastY)/factor;
+            if(!SettingGetGlobal_b(G,cSetting_legacy_mouse_zoom))
+              factor = -factor;
             I->Pos[2]+=factor;
             I->Front-=factor;
             I->Back-=factor;

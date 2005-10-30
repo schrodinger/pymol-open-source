@@ -627,8 +627,20 @@ SEE ALSO
         if _raising(r): raise pymol.CmdException            
         return r
 
-
-
+    def drag(selection="", quiet=1):
+        '''
+        '''
+        selection = selector.process(selection)
+        #
+        r = DEFAULT_ERROR
+        try:
+            lock()   
+            r = _cmd.drag(str(selection),int(quiet))
+        finally:
+            unlock(r)
+        if _raising(r): raise pymol.CmdException
+        return r
+        
     def edit(selection1='',selection2='none',selection3='none',
                 selection4='none',pkresi=0, pkbond=1, quiet=1):
         '''

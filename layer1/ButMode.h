@@ -57,9 +57,22 @@ Z* -------------------------------------------------------------------
 #define cButModeMoveSlabAndZoom 34
 
 /* simple click action for JyMOL -- no selections involved */
+
 #define cButModeSimpleClick 35
 
-#define cButModeCount    36
+/* new drag actions */
+
+#define cButModeRotDrag 36
+#define cButModeMovDrag 37
+#define cButModeMovDragZ 38
+
+#define cButModeRotObj 39
+#define cButModeMovObj 40
+#define cButModeMovObjZ 41
+#define cButModeMovFragZ 42
+#define cButModeMoveAtomZ 43
+
+#define cButModeCount    44
 
 /* remainder only used in scene... */
 
@@ -72,6 +85,31 @@ Z* -------------------------------------------------------------------
 #define cButModeZoomForward 107
 #define cButModeZoomBackward 108
 
+/* conversion */
+
+#define cButModeLeftNone   0
+#define cButModeMiddleNone 1
+#define cButModeRightNone  2
+#define cButModeLeftShft   3
+#define cButModeMiddleShft 4
+#define cButModeRightShft  5
+#define cButModeLeftCtrl   6
+#define cButModeMiddleCtrl 7
+#define cButModeRightCtrl  8
+#define cButModeLeftCtSh   9
+#define cButModeMiddleCtSh 10
+#define cButModeRightCtSh  11
+#define cButModeWheelNone  12
+#define cButModeWheelShft  13
+#define cButModeWheelCtrl  14
+#define cButModeWheelCtSh  15
+#define cButModeLeftDouble 16
+#define cButModeMiddleDouble 17
+#define cButModeRightDouble  18
+#define cButModeLeftSingle   19
+#define cButModeMiddleSingle 20
+#define cButModeRightSingle  21
+
 typedef char CodeType[10];
 
 
@@ -80,6 +118,7 @@ void ButModeFree(PyMOLGlobals *G);
 Block *ButModeGetBlock(PyMOLGlobals *G);
 void ButModeSetRate(PyMOLGlobals *G,float renderTime);
 void ButModeResetRate(PyMOLGlobals *G);
+int ButModeGet(PyMOLGlobals *G,int button);
 void ButModeSet(PyMOLGlobals *G,int button,int action);
 void ButModeCaption(PyMOLGlobals *G,char *text);
 void ButModeCaptionReset(PyMOLGlobals *G);

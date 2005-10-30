@@ -141,6 +141,7 @@ int MovieCopyFrame(PyMOLGlobals *G,int frame,int width,int height,int rowbytes,v
     i=MovieFrameToImage(G,a);
     VLACheck(I->Image,ImageType*,i);
     if(!I->Image[i]) {
+      SceneUpdate(G);
 	  SceneMakeMovieImage(G);
     }
     if(!I->Image[i]) {
@@ -506,6 +507,7 @@ int MoviePNG(PyMOLGlobals *G,char *prefix,int save,int start,int stop)
     VLACheck(I->Image,ImageType*,i);
     if((a>=start)&&(a<=stop)) { /* only render frames in the specified interval */
       if(!I->Image[i]) {
+        SceneUpdate(G);
         SceneMakeMovieImage(G);
       }
       if(!I->Image[i]) {

@@ -643,7 +643,7 @@ int WordMatchExact(PyMOLGlobals *G,char *p,char *q,int ignCase)
   return 1;
 }
 
-static int WordMatchNoWild(PyMOLGlobals *G,char *p,char *q,int ignCase) 
+int WordMatchNoWild(PyMOLGlobals *G,char *p,char *q,int ignCase) 
 /* allows for p to match when shorter than q.
 
 Returns:

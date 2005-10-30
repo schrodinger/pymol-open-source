@@ -5543,6 +5543,26 @@ static PyObject *CmdEdit(PyObject *self, 	PyObject *args)
   return APIResultOk(ok);
 }
 
+static PyObject *CmdDrag(PyObject *self, 	PyObject *args)
+{
+  char *str0;
+  OrthoLineType s0 = "";
+  int ok=true;
+  int quiet;
+  ok = PyArg_ParseTuple(args,"si",&str0,&quiet);
+  if (ok) {
+    APIEntry();
+    EditorInactivate(TempPyMOLGlobals);
+    ok = (SelectorGetTmp(TempPyMOLGlobals,str0,s0)>=0);
+    if(ok) {
+      ok = ExecutiveSetDrag(TempPyMOLGlobals,s0,quiet);
+      SelectorFreeTmp(TempPyMOLGlobals,s0);
+    }
+    APIExit();
+  }
+  return APIResultOk(ok);
+}
+
 static PyObject *CmdRename(PyObject *self, 	PyObject *args)
 {
   char *str1;
@@ -5666,6 +5686,7 @@ static PyMethodDef Cmd_methods[] = {
 	{"dist",    	           CmdDist,                 METH_VARARGS },
 	{"do",	                 CmdDo,                   METH_VARARGS },
    {"draw",                  CmdDraw,                 METH_VARARGS },
+   {"drag",                  CmdDrag,                 METH_VARARGS },
 	{"dump",	                 CmdDump,                 METH_VARARGS },
    {"edit",                  CmdEdit,                 METH_VARARGS },
    {"torsion",               CmdTorsion,              METH_VARARGS },
