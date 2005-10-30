@@ -4,9 +4,15 @@ CHANGE LOG
 
 Changes up to 0.99
 
-    beta21
+    beta22
+
+    * drag command & reconfigured editing mode mouse controls
+
+    * reversed camera zoom behavior, added legacy_mouse_zoom setting
 
     * fixed longstanding scene/movie synchronization bug 
+
+    beta21
 
     * worked around depth_cue/fog bug in recent ATI drivers.
 

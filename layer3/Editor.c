@@ -168,7 +168,7 @@ static void EditorConfigMouse(PyMOLGlobals *G)
       }
     }
 
-    button = cButModeRightCtSh;
+    button = cButModeRightShft;
     {
       int action = ButModeGet(G,button);
       if ((action == cButModeMovFragZ)||
@@ -1523,6 +1523,7 @@ void EditorActivate(PyMOLGlobals *G,int state,int enable_bond)
 /*========================================================================*/
 void EditorSetDrag(PyMOLGlobals *G,ObjectMolecule *obj,int sele, int quiet,int state)
 {
+  EditorInactivate(G);
   EditorPrepareDrag(G,obj,sele,-1,state);
 }
 void EditorReadyDrag(PyMOLGlobals *G,int state)
@@ -1708,6 +1709,20 @@ void EditorPrepareDrag(PyMOLGlobals *G,ObjectMolecule *obj,int sele, int index,i
           normalize3f(I->Axis);
           I->DragHaveAxis=true;
 
+          if(SettingGetGlobal_b(G,cSetting_editor_auto_origin)) {
+            if(I->FavorOrigin) {
+              I->DragHaveBase = true;
+              copy3f(I->FavoredOrigin, I->DragBase);
+            } else {
+              float mn[3],mx[3];
+
+              if(ExecutiveGetExtent(G,I->DragSeleName,mn,mx,true,state,true)) {
+                average3f(mn,mx,I->DragBase);
+                I->DragHaveBase = true;
+              }
+            }
+          }
+
         } else { /* atom mode */
           
           if(i0>=0) {
@@ -1885,7 +1900,7 @@ void EditorDrag(PyMOLGlobals *G,ObjectMolecule *obj,int index,int mode,int state
       switch(mode) {
       case cButModeRotFrag:
       case cButModeRotObj:
-        if(I->DragHaveBase&&I->DragBondFlag) {
+        if(I->DragHaveBase) {
           copy3f(I->DragBase,v3);
         } else {
           copy3f(I->V0,v3);

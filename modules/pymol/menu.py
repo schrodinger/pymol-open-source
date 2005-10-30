@@ -442,11 +442,11 @@ def presets(s):
               [ 1, 'default'   ,'preset.default("'+s+'")'          ],           
               ]
 
-#def hydrogens(s):
-#   return [[ 2, 'Hydrogens:'       ,''                        ],     
-#           [ 1, 'add'   ,'cmd.h_add("'+s+'")'          ],           
-#           [ 1, 'remove'   ,'cmd.remove("('+s+') and hydro")'          ],
-#           ]
+def hydrogens(s):
+   return [[ 2, 'Hydrogens:'       ,''                        ],     
+           [ 1, 'add'   ,'cmd.h_add("'+s+'")'          ],           
+           [ 1, 'remove'   ,'cmd.remove("('+s+') and hydro")'          ],
+           ]
 
 def state(s):
     return [[ 2, 'State:'       ,''                        ],
@@ -773,6 +773,7 @@ def sele_action(s):
               [ 1, 'center'         ,'cmd.center("'+s+'",animate=-1)'            ],           
               [ 1, 'origin'         ,'cmd.origin("'+s+'")'          ],
               [ 1, 'orient'         ,'cmd.orient("'+s+'",animate=-1)'          ],
+              [ 1, 'drag'       , 'cmd.drag("'+s+'")'    ],                        
               [ 0, ''               ,''                             ],
               [ 1, 'modify', modify_sele(s) ],
               [ 1, 'preset'         ,presets(s)         ],
@@ -821,6 +822,7 @@ def mol_action(s):
               [ 1, 'center'         ,'cmd.center("'+s+'",animate=-1)'            ],
               [ 1, 'origin'       , 'cmd.origin("'+s+'")'    ],
               [ 1, 'orient'       , 'cmd.orient("'+s+'",animate=-1)'    ],
+              [ 1, 'drag'       , 'cmd.drag("'+s+'")'    ],            
               [ 0, ''          ,''                                              ],
               [ 1, 'preset'  ,   presets(s)       ],
               [ 1, 'find',     find(s) ],
@@ -833,8 +835,7 @@ def mol_action(s):
               [ 1, 'duplicate object'    ,'cmd.create(None,"'+s+'")'     ],           
               [ 1, 'delete object'       , 'cmd.delete("'+s+'")'    ],
               [ 0, ''          ,''                                              ],
-              [ 1, 'add hydrogens'  ,'cmd.h_add("'+s+'")'     ],           
-              [ 1, 'remove hydrogens'  ,'cmd.remove("(hydro and ('+s+'))")'     ],           
+              [ 1, 'hydrogens' , hydrogens(s)    ],           
               [ 1, 'remove waters'  ,'cmd.remove("(solvent and ('+s+'))")'     ],
               [ 0, ''          ,''                                              ],
               [ 1, 'state'          , state(s)         ],                      
@@ -1004,8 +1005,9 @@ def all_action(s):
               [ 1, 'preset'  , presets("all")     ],
               [ 1, 'find', find("all") ],           
               [ 0, ''          ,''                                              ],
-              [ 1, 'add hydrogens' ,'cmd.h_add("'+s+'")'     ],           
-              [ 1, 'remove hydrogens'  ,'cmd.remove("(hydro and ('+s+'))")'     ],
+              [ 1, ' hydrogens' ,hydrogens(s)     ],
+#              [ 1, 'add hydrogens' ,'cmd.h_add("'+s+'")'     ],           
+#              [ 1, 'remove hydrogens'  ,'cmd.remove("(hydro and ('+s+'))")'     ],
               [ 1, 'remove waters'  ,'cmd.remove("(solvent and ('+s+'))")'     ],                      
               [ 0, ''             , ''                      ],
               [ 1, 'delete selections'  , 'map(cmd.delete,cmd.get_names("selections"))'     ],           
