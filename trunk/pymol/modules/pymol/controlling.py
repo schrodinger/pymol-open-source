@@ -91,6 +91,15 @@ if __name__=='pymol.controlling':
         '-box' : 33 ,
 
         'mvsz' : 34 ,
+        'dgrt' : 36 ,
+        'dgmv' : 37 ,
+        'dgmz' : 38 ,
+
+        'roto' : 39 ,
+        'movo' : 40 ,
+        'mvoz' : 41 ,
+        'mvfz' : 42 ,
+        'mvaz' : 43 ,
         
         }
     but_act_sc = Shortcut(but_act_code.keys())
@@ -156,15 +165,15 @@ if __name__=='pymol.controlling':
         'three_button_editing': [ ('l','none','rota'),
                                           ('m','none','move'),
                                           ('r','none','movz'),
-                                          ('l','shft','rotf'),
-                                          ('m','shft','movf'),
+                                          ('l','shft','roto'),
+                                          ('m','shft','movo'),
                                           ('r','shft','clip') ,                 
                                           ('l','ctrl','torf'),
                                           ('m','ctrl','pkat'),
                                           ('r','ctrl','pktb'),                  
                                           ('l','ctsh','mova'),
                                           ('m','ctsh','orig'),
-                                          ('r','ctsh','menu'),
+                                          ('r','ctsh','mvoz'),
                                           ('w','none','slab'),
                                           ('w','shft','movs'),
                                           ('w','ctrl','mvsz'),

@@ -591,6 +591,8 @@ CSetting *SettingNewFromPyList(PyMOLGlobals *G,PyObject *list);
 #define cSetting_editor_auto_origin         439
 #define cSetting_session_file               440
 #define cSetting_cgo_transparency           441
+#define cSetting_legacy_mouse_zoom          442
+#define cSetting_auto_number_selections     443
 
 /* when you add a new settingg also remember:
    layer1/Setting.c
@@ -600,7 +602,7 @@ CSetting *SettingNewFromPyList(PyMOLGlobals *G,PyObject *list);
 
 /* cSetting_ss_INIT must always be last setting_index +1 */
 
-#define cSetting_INIT                       442
+#define cSetting_INIT                       444
 
 #endif
 

@@ -299,6 +299,7 @@ int ExecutiveIterateObjectMolecule(PyMOLGlobals *G,ObjectMolecule **obj,void **h
 int ExecutiveGetObjectColorIndex(PyMOLGlobals *G,char *name);
 int ExecutiveSetOnOffBySele(PyMOLGlobals *G,char *name,int onoff);
 int ExecutiveSetName(PyMOLGlobals *G,char *old_name, char *new_name);
+int ExecutiveSetDrag(PyMOLGlobals *G,char *name, int quiet);
 int ExecutiveGetActiveSeleName(PyMOLGlobals *G,char *name, int create_new);
 int ExecutiveGetActiveSele(PyMOLGlobals *G);
 CObject *ExecutiveGetExistingCompatible(PyMOLGlobals *G,char *oname,int type);

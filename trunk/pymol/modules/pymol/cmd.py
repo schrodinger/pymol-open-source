@@ -1350,6 +1350,7 @@ SEE ALSO
               bond,               \
               cycle_valence,      \
               deprotect,          \
+              drag,               \
               dss,                \
               edit,               \
               fix_chemistry,      \
@@ -1615,6 +1616,7 @@ SEE ALSO
             'dir'           : [ ls                , 0 , 0 , ''  , parsing.STRICT ],
             'disable'       : [ disable           , 0 , 0 , ''  , parsing.STRICT ],
             'distance'      : [ distance          , 0 , 0 , ''  , parsing.LEGACY ],
+            'drag'          : [ drag              , 0 , 0 , ''  , parsing.STRICT ],            
             'draw'          : [ draw              , 0 , 0 , ''  , parsing.STRICT ],
             'dss'           : [ dss               , 0 , 0 , ''  , parsing.STRICT ],
             'dump'          : [ dump              , 0 , 0 , ''  , parsing.STRICT ],

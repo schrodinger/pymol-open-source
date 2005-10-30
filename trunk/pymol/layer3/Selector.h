@@ -40,10 +40,12 @@ int *SelectorUpdateTableSingleObject(PyMOLGlobals *G,ObjectMolecule *obj,
                                      int no_dummies,int *idx,int n_idx);
 
 int SelectorIndexByName(PyMOLGlobals *G,char *sele);
+char *SelectorGetNameFromIndex(PyMOLGlobals *G,int index);
 void SelectorFree(PyMOLGlobals *G);
 void SelectorDelete(PyMOLGlobals *G,char *sele);
 void SelectorFreeTmp(PyMOLGlobals *G,char *name);
 int SelectorGetTmp(PyMOLGlobals *G,char *input,char *store);
+int SelectorCheckTmp(PyMOLGlobals *G,char *name);
 int SelectorGetPDB(PyMOLGlobals *G,char **charVLA,int cLen,int sele,int state,
                    int conectFlag,PDBInfoRec *pdb_info,int *counter);
 PyObject *SelectorGetChemPyModel(PyMOLGlobals *G,int sele,int state);

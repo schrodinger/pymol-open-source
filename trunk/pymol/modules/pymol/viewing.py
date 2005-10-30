@@ -1087,7 +1087,9 @@ DEVELOPMENT TO DO
         active = int(active)
         frame = int(frame)
         quiet = int(quiet)
-        if animate<0:
+        if not view:
+            animate=0
+        elif animate<0:
             scene_animation = int(cmd.get_setting_legacy("scene_animation"))
             if scene_animation<0:
                 scene_animation = int(cmd.get_setting_legacy("animation"))

@@ -307,6 +307,7 @@ static void RepSphereRender(RepSphere *I,RenderInfo *info)
   SphereRec *sp = I->SP;
   float restart;
   float alpha;
+
   alpha = SettingGet_f(G,I->R.cs->Setting,I->R.obj->Setting,cSetting_sphere_transparency);
   alpha=1.0F-alpha;
   if(fabs(alpha-1.0)<R_SMALL4)
@@ -1048,7 +1049,6 @@ Rep *RepSphereNew(CoordSet *cs)
 
   OOAlloc(G,RepSphere);
 
-  
   obj = cs->Obj;
   vFlag=false;
   if(obj->RepVisCache[cRepSphere])
