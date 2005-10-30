@@ -642,7 +642,6 @@ int ExecutiveSetDrag(PyMOLGlobals *G,char *name, int quiet)
   char drag_name[] = cEditorDrag;
   int set_flag = false;
   int result = true;
-  EditorInactivate(G);
   if(name[0]) {
     ObjectMolecule *obj = ExecutiveFindObjectMoleculeByName(G,name);
     if(obj) {
@@ -652,12 +651,9 @@ int ExecutiveSetDrag(PyMOLGlobals *G,char *name, int quiet)
       SpecRec *rec = ExecutiveFindSpec(G,name);
       if(rec) {
         if(rec->type==cExecSelection) {
-          if(SelectorCheckTmp(G,name)) {
-            SelectorCreate(G,drag_name,name,NULL,quiet,NULL);
-            name = drag_name;
-          }
+          SelectorCreate(G,drag_name,name,NULL,quiet,NULL);
           {
-            int sele = SelectorIndexByName(G,name);
+            int sele = SelectorIndexByName(G,drag_name);
             obj = SelectorGetSingleObjectMolecule(G,sele);
             if(obj) {
               EditorSetDrag(G,obj,sele,quiet,SceneGetState(G));            

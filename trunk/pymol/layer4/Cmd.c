@@ -5552,7 +5552,6 @@ static PyObject *CmdDrag(PyObject *self, 	PyObject *args)
   ok = PyArg_ParseTuple(args,"si",&str0,&quiet);
   if (ok) {
     APIEntry();
-    EditorInactivate(TempPyMOLGlobals);
     ok = (SelectorGetTmp(TempPyMOLGlobals,str0,s0)>=0);
     if(ok) {
       ok = ExecutiveSetDrag(TempPyMOLGlobals,s0,quiet);

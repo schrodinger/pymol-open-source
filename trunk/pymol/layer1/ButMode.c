@@ -177,7 +177,7 @@ static void ButModeDraw(Block *block)
     x = I->Block->rect.left+cButModeLeftMargin;
     y = (I->Block->rect.top-cButModeLineHeight)-cButModeTopMargin;
 
-    TextSetColor(G,I->TextColor2);
+    TextSetColor(G,I->Block->TextColor);
     TextDrawStrAt(G,"Mouse Mode ",x+1,y);
     TextSetColor(G,I->TextColor3);
     TextDrawStrAt(G,SettingGetGlobal_s(G,cSetting_button_mode_name),x+88,y);
@@ -186,8 +186,8 @@ static void ButModeDraw(Block *block)
 
 
 
-    TextSetColor(G,I->Block->TextColor);
-    TextDrawStrAt(G,"Buttons ",x+1,y);
+    TextSetColor(G,I->TextColor3);
+    TextDrawStrAt(G,"Buttons",x+6,y);
     TextSetColor(G,I->TextColor1);
     /*    TextDrawStrAt(G,"  Left Mddl Rght Scrl",x+48,y);*/
     TextDrawStrAt(G,"    L    M    R  Wheel",x+43,y);
@@ -195,9 +195,9 @@ static void ButModeDraw(Block *block)
     y-=cButModeLineHeight;
     /*    glColor3fv(I->Block->TextColor);
           TextDrawStrAt(G,"K",x,y-4);*/
-    TextSetColor(G,I->Block->TextColor);
-    TextDrawStrAt(G,"&",x+4,y);
-    TextDrawStrAt(G,"Keys",x+16,y);
+    TextSetColor(G,I->TextColor3);
+    TextDrawStrAt(G,"&",x+12,y);
+    TextDrawStrAt(G,"Keys",x+24,y);
     TextSetColor(G,I->TextColor2);
     
     TextSetPos2i(G,x+64,y);
