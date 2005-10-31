@@ -151,7 +151,7 @@ if __name__=='pymol.controlling':
                                             ('r','ctrl','pk1'),                 
                                             ('l','ctsh','Sele'),
                                             ('m','ctsh','orig'),
-                                            ('r','ctsh','menu'),
+                                            ('r','ctsh','clip'),
                                             ('w','none','slab'),
                                             ('w','shft','movs'),
                                             ('w','ctrl','mvsz'),

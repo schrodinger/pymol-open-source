@@ -964,7 +964,7 @@ void CoordSetRender(CoordSet *I,RenderInfo *info)
 
   if((!pass)&&I->Name[0])
     ButModeCaption(G,I->Name);
-  if((!pass)&&I->SculptCGO) {
+  if((!pass)&&I->SculptCGO&&(I->Obj->Obj.RepVis[cRepCGO])) {
     if(ray) {
       CGORenderRay(I->SculptCGO,ray,
                    ColorGet(G,I->Obj->Obj.Color),
