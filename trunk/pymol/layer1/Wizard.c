@@ -45,6 +45,7 @@ Z* -------------------------------------------------------------------
 #define cWizEventScene   16
 #define cWizEventState   32
 #define cWizEventFrame   64
+#define cWizEventDirty  128
 
 typedef struct {
   int type;
@@ -81,6 +82,10 @@ int WizardUpdate(PyMOLGlobals *G)
 {
   register CWizard *I=G->Wizard;
   int result = false;
+
+  if(OrthoGetDirty(G)) {
+      WizardDoDirty(G);    
+  }
 
   {
     int frame = SettingGetGlobal_i(G,cSetting_frame);
@@ -180,6 +185,7 @@ void WizardRefresh(PyMOLGlobals *G)
       
       if(PyObject_HasAttrString(I->Wiz[I->Stack],"get_event_mask")) {      
         i = PyObject_CallMethod(I->Wiz[I->Stack],"get_event_mask","");
+        if(PyErr_Occurred()) PyErr_Print();
         if(!PConvPyIntToInt(i,&I->EventMask))
           I->EventMask = cWizEventPick + cWizEventSelect;
         Py_XDECREF(i);
@@ -352,6 +358,33 @@ int WizardDoScene(PyMOLGlobals *G)
           if(I->Wiz[I->Stack]) {
             if(PyObject_HasAttrString(I->Wiz[I->Stack],"do_scene")) {
               result = PTruthCallStr0(I->Wiz[I->Stack],"do_scene");
+              if(PyErr_Occurred()) PyErr_Print();
+            }
+          }
+        PUnblock();
+      }
+  return result;
+#endif
+}
+
+int WizardDoDirty(PyMOLGlobals *G)
+{
+#ifdef _PYMOL_NOPY
+  return 0;
+#else
+  register CWizard *I=G->Wizard;
+  int result=false;
+  if(I->EventMask & cWizEventDirty) 
+    if(I->Stack>=0) 
+      if(I->Wiz[I->Stack]) {
+        OrthoLineType buffer;
+        sprintf(buffer,"cmd.get_wizard().do_dirty()");
+        PLog(buffer,cPLog_pym);
+        PBlock(); 
+        if(I->Stack>=0)
+          if(I->Wiz[I->Stack]) {
+            if(PyObject_HasAttrString(I->Wiz[I->Stack],"do_dirty")) {
+              result = PTruthCallStr0(I->Wiz[I->Stack],"do_dirty");
               if(PyErr_Occurred()) PyErr_Print();
             }
           }

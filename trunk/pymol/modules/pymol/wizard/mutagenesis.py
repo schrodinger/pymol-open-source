@@ -9,6 +9,7 @@ import string
 import traceback
 
 sele_name = "_mutate_sel"
+bump_name = "bump_check"
 
 obj_name = "mutation"
 tmp_name = "_tmp_mut"
@@ -38,6 +39,7 @@ class Mutagenesis(Wizard):
                                            "/data/chempy/sidechains/sc_bb_ind.pkl")
         self.load_library()
         self.status = 0 # 0 no selection, 1 mutagenizing
+        self.bump_check = 0
         self.error = None
         self.object_name = None
         self.modes = [
@@ -325,6 +327,25 @@ class Mutagenesis(Wizard):
                 state = state + 1
             cmd.delete(tmp_name)
             print " Mutagenesis: %d rotamers loaded."%len(lib)
+            if self.bump_check:
+                cmd.delete(bump_name)
+                cmd.create(bump_name,
+                "(((byobj %s) within 6 of (%s and not name n+c+ca+o+h)) and (not (%s)))|(%s)"%
+                           (sele_name,obj_name,sele_name,obj_name),singletons=1)
+                cmd.hide("everything",bump_name)
+                cmd.bond("(%s in %s and n;N)"%(bump_name, sele_name),
+                         "(name C and (%s in (neighbor %s)))"%
+                         (bump_name,obj_name))
+                cmd.bond("(%s in %s and n;C)"%(bump_name, sele_name),
+                         "(name N and (%s in (neighbor %s)))"%
+                         (bump_name,obj_name))
+                cmd.protect("%s and not (%s in (%s and not name n+c+ca+o+h))"%
+                            (bump_name,bump_name,obj_name))
+                cmd.set("sculpting_cycles",0,bump_name,quiet=1)
+                cmd.sculpt_activate(bump_name)
+                cmd.set("sculpting","on",quiet=1)
+                cmd.show("cgo",bump_name)
+                
         else:
             cmd.create(obj_name,tmp_name,1,1)
             print " Mutagenesis: no rotamers found in library."

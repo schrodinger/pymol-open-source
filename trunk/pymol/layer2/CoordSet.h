@@ -60,7 +60,7 @@ typedef struct CoordSet {
   int NMatrix; /* number of matrices for this coordinate set */
   double *MatrixVLA; /* end-to-end array of 16x16 matrices */
   /* not saved in state */
-  
+  CGO *SculptCGO;
   MapType *Coord2Idx;
 } CoordSet;
 

@@ -45,6 +45,8 @@ if __name__=='pymol.wizarding':
                     if wiz:
                         set_wizard(wiz,replace)
                         cmd.do("_ refresh_wizard")
+                else:
+                    print "Error: Sorry, couldn't find the '"+oname+"' class."                             
             else:
                 print "Error: Sorry, couldn't import the '"+name+"' wizard."         
         except ImportError:

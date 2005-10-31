@@ -22,6 +22,7 @@ Z* -------------------------------------------------------------------
 #include"Util.h"
 #include"Sculpt.h"
 #include"SculptCache.h"
+#include"Scene.h"
 
 #include"CGO.h"
 
@@ -873,7 +874,8 @@ void SculptMeasureObject(CSculpt *I,ObjectMolecule *obj,int state)
 #ifdef _PYMOL_INLINE
 __inline__
 #endif
-static int SculptCheckBump(float *v1,float *v2,float *diff,float *dist,float cutoff)
+static int SculptCheckBump(float *v1,float *v2,float *diff,
+                           float *dist,float cutoff)
 {
   register float d2;
   diff[0] = (v1[0]-v2[0]);
@@ -889,6 +891,39 @@ static int SculptCheckBump(float *v1,float *v2,float *diff,float *dist,float cut
   }
   return(false);
 }
+
+#ifdef _PYMOL_INLINE
+__inline__
+#endif
+static int SculptCGOBump(float *v1,float *v2,float cutoff, CGO *cgo)
+{
+  register float d2;
+  register float diff[3],dist;
+  
+  diff[0] = (v1[0]-v2[0]);
+  diff[1] = (v1[1]-v2[1]);
+  if(fabs(diff[0])>cutoff) return(false);
+  diff[2] = (v1[2]-v2[2]);
+  if(fabs(diff[1])>cutoff) return(false);
+  if(fabs(diff[2])>cutoff) return(false);
+  d2 = (diff[0]*diff[0] + diff[1]*diff[1] + diff[2]*diff[2]);
+  if(d2>(cutoff*cutoff)) {
+    return false;
+  } else {
+    dist = (float)sqrt(d2);
+    if(dist<=cutoff) {
+
+      CGOCustomCylinderv(cgo, v1, v2, 0.1,
+                         ColorGet(cgo->G,0),
+                         ColorGet(cgo->G,0),
+                         0,0);
+    }
+    if(dist>cutoff)
+      return false;
+    return(true);
+  }
+}
+
 
 #ifdef _PYMOL_INLINE
 __inline__
@@ -920,7 +955,7 @@ static int SculptDoBump(float target,float actual,float *d,
 
        
 float SculptIterateObject(CSculpt *I,ObjectMolecule *obj,
-                          int state,int n_cycle, CGO *cgo)
+                          int state,int n_cycle)
 {
   PyMOLGlobals *G=I->G;
   CShaker *shk;
@@ -941,7 +976,7 @@ float SculptIterateObject(CSculpt *I,ObjectMolecule *obj,
   int nb_next;
   int h,k,l;
   int offset,xoffset;
-  float cutoff;
+  float cutoff,vdw_cutoff;
   int ex,ex1;
   int eval_flag;
   int mask;
@@ -966,485 +1001,504 @@ float SculptIterateObject(CSculpt *I,ObjectMolecule *obj,
   int nb_skip,nb_skip_count;
   float total_strain=0.0F;
   int total_count=1;
+  CGO *cgo = NULL;
 
   PRINTFD(G,FB_Sculpt)
     " SculptIterateObject-Debug: entered state=%d n_cycle=%d\n",state,n_cycle
     ENDFD;
+  if(!n_cycle)
+    n_cycle=-1;
 
+  if((state<obj->NCSet) && obj->CSet[state] && n_cycle) {
+    
+    disp = Alloc(float,3*obj->NAtom);
+    atm2idx = Alloc(int,obj->NAtom);
+    cnt = Alloc(int,obj->NAtom);
+    active = Alloc(int,obj->NAtom);
+    shk=I->Shaker;
 
-  if(state<obj->NCSet)
-    if(obj->CSet[state]&&n_cycle)
-      {
-        disp = Alloc(float,3*obj->NAtom);
-        atm2idx = Alloc(int,obj->NAtom);
-        cnt = Alloc(int,obj->NAtom);
-        active = Alloc(int,obj->NAtom);
-        shk=I->Shaker;
+    PRINTFD(G,FB_Sculpt)
+      " SIO-Debug: NDistCon %d\n",shk->NDistCon
+      ENDFD;
 
-        PRINTFD(G,FB_Sculpt)
-          " SIO-Debug: NDistCon %d\n",shk->NDistCon
-          ENDFD;
+    cs = obj->CSet[state];
+#if 0
+    if(!cs->SculptCGO)
+      cs->SculptCGO = CGONew(G);
+    else
+      CGOReset(cs->SculptCGO);
+    cgo = cs->SculptCGO;
+#endif
 
-        cs = obj->CSet[state];
-
-        nb_skip = SettingGet_i(G,cs->Setting,obj->Obj.Setting,cSetting_sculpt_nb_interval);
-        if(nb_skip<1) nb_skip=1;
-        vdw = SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_sculpt_vdw_scale);
-        vdw14 = SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_sculpt_vdw_scale14);
-        vdw_wt = SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_sculpt_vdw_weight);
-        vdw_wt14 = SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_sculpt_vdw_weight14);
-        bond_wt =  SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_sculpt_bond_weight);
-        angl_wt =  SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_sculpt_angl_weight);
-        pyra_wt =  SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_sculpt_pyra_weight);
-        plan_wt =  SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_sculpt_plan_weight);
-        line_wt =  SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_sculpt_line_weight);
-        mask = SettingGet_i(G,cs->Setting,obj->Obj.Setting,cSetting_sculpt_field_mask);
-        hb_overlap = SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_sculpt_hb_overlap);
-        hb_overlap_base = SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_sculpt_hb_overlap_base);
-        tors_tole = SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_sculpt_tors_tolerance);
-        tors_wt = SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_sculpt_tors_weight);
-        n_active = 0;
-        ai0=obj->AtomInfo;
-        for(a=0;a<obj->NAtom;a++) {
-          if(ai0->flags&cAtomFlag_exclude) {
-            a1=-1;
+    nb_skip = SettingGet_i(G,cs->Setting,obj->Obj.Setting,cSetting_sculpt_nb_interval);
+    if(nb_skip<1) nb_skip=1;
+    vdw = SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_sculpt_vdw_scale);
+    vdw14 = SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_sculpt_vdw_scale14);
+    vdw_wt = SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_sculpt_vdw_weight);
+    vdw_wt14 = SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_sculpt_vdw_weight14);
+    bond_wt =  SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_sculpt_bond_weight);
+    angl_wt =  SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_sculpt_angl_weight);
+    pyra_wt =  SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_sculpt_pyra_weight);
+    plan_wt =  SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_sculpt_plan_weight);
+    line_wt =  SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_sculpt_line_weight);
+    mask = SettingGet_i(G,cs->Setting,obj->Obj.Setting,cSetting_sculpt_field_mask);
+    hb_overlap = SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_sculpt_hb_overlap);
+    hb_overlap_base = SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_sculpt_hb_overlap_base);
+    tors_tole = SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_sculpt_tors_tolerance);
+    tors_wt = SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_sculpt_tors_weight);
+    n_active = 0;
+    ai0=obj->AtomInfo;
+    for(a=0;a<obj->NAtom;a++) {
+      if(ai0->flags&cAtomFlag_exclude) {
+        a1=-1;
+      } else {
+        if(obj->DiscreteFlag) {
+          if(cs==obj->DiscreteCSet[a]) {
+            a1=obj->DiscreteAtmToIdx[a];
           } else {
-            if(obj->DiscreteFlag) {
-              if(cs==obj->DiscreteCSet[a]) {
-                a1=obj->DiscreteAtmToIdx[a];
-              } else {
-                a1=-1;
-              }
-            } else {
-              a1=cs->AtmToIdx[a];
-            }
+            a1=-1;
           }
-          if(a1>=0) {
-            active_flag=true;
-            active[n_active] = a;
-            n_active++;
-          }
-          atm2idx[a] = a1;
-          ai0++;
+        } else {
+          a1=cs->AtmToIdx[a];
         }
+      }
+      if(a1>=0) {
+        active_flag=true;
+        active[n_active] = a;
+        n_active++;
+      }
+      atm2idx[a] = a1;
+      ai0++;
+    }
         
-        if(active_flag) {
+    if(active_flag) {
 
-          /* first, create coordinate -> vertex mapping */
-          /* and count number of constraints */
+      /* first, create coordinate -> vertex mapping */
+      /* and count number of constraints */
 
-          task_time = UtilGetSeconds(G);
-          vdw_magnify = 1.0F;
-          nb_skip_count = n_cycle - nb_skip * (n_cycle/nb_skip);
-          if(!nb_skip_count) nb_skip_count = nb_skip;
-          while(n_cycle--) {
+      task_time = UtilGetSeconds(G);
+      vdw_magnify = 1.0F;
+      if(n_cycle>0) {
+        nb_skip_count = n_cycle - nb_skip * (n_cycle/nb_skip);
+        if(!nb_skip_count) nb_skip_count = nb_skip;
+      } else {
+        nb_skip_count = 0;
+      }
+      while(n_cycle--) {
             
-            CGOReset(G->DebugCGO);
-
-            total_strain = 0.0F;
-            total_count = 0;
-            /* initialize displacements to zero */
+        total_strain = 0.0F;
+        total_count = 0;
+        /* initialize displacements to zero */
         
-            v = disp;
-            i = cnt;
-            for(aa=0;aa<n_active;aa++) {
-              a = active[aa];
-              v=disp+a*3;
-              cnt[a]=0;
-              *(v  )=0.0F;
-              *(v+1)=0.0F;          
-              *(v+2)=0.0F;
-            }
+        v = disp;
+        i = cnt;
+        for(aa=0;aa<n_active;aa++) {
+          a = active[aa];
+          v=disp+a*3;
+          cnt[a]=0;
+          *(v  )=0.0F;
+          *(v+1)=0.0F;          
+          *(v+2)=0.0F;
+        }
           
-            /* apply distance constraints */
+        /* apply distance constraints */
 
-            sdc=shk->DistCon;
-            for(a=0;a<shk->NDistCon;a++) {
-              b1 = sdc->at0;
-              b2 = sdc->at1;
+        sdc=shk->DistCon;
+        for(a=0;a<shk->NDistCon;a++) {
+          b1 = sdc->at0;
+          b2 = sdc->at1;
               
-              switch(sdc->type) {
-              case cShakerDistBond:
-                eval_flag = cSculptBond & mask;
-                wt = bond_wt;
-                break;
-              case cShakerDistAngle:
-                eval_flag = cSculptAngl & mask;
-                wt = angl_wt;
-                break;
-              case cShakerDistLimit:
-                eval_flag = true;
-                wt = 2.0F;
-                break;
-              default:
-                eval_flag = false;
-                wt=0.0F;
-                break;
-              }
+          switch(sdc->type) {
+          case cShakerDistBond:
+            eval_flag = cSculptBond & mask;
+            wt = bond_wt;
+            break;
+          case cShakerDistAngle:
+            eval_flag = cSculptAngl & mask;
+            wt = angl_wt;
+            break;
+          case cShakerDistLimit:
+            eval_flag = true;
+            wt = 2.0F;
+            break;
+          default:
+            eval_flag = false;
+            wt=0.0F;
+            break;
+          }
               
-              if(eval_flag) {
-                a1 = atm2idx[b1]; /* coordinate set indices */
-                a2 = atm2idx[b2];
-                cnt[b1]++;
-                cnt[b2]++;
+          if(eval_flag) {
+            a1 = atm2idx[b1]; /* coordinate set indices */
+            a2 = atm2idx[b2];
+            cnt[b1]++;
+            cnt[b2]++;
               
-                if((a1>=0)&&(a2>=0))
-                  {
-                    v1 = cs->Coord+3*a1;
-                    v2 = cs->Coord+3*a2;
-                    if(sdc->type!=cShakerDistLimit) {
-                      total_strain+=ShakerDoDist(sdc->targ,v1,v2,disp+b1*3,disp+b2*3,wt);
-                      total_count++;
-                    } else {
-                      total_strain+=ShakerDoDistLimit(sdc->targ,v1,v2,disp+b1*3,disp+b2*3,wt);
-                      total_count++;
-                    }
-                  }
-              }
-              sdc++;
-            }
-
-            /* apply line constraints */
-            
-            if(cSculptLine & mask) {
-              slc=shk->LineCon;
-              
-              for(a=0;a<shk->NLineCon;a++) {
-                b0 = slc->at0;
-                b1 = slc->at1;
-                b2 = slc->at2;
-                a0 = atm2idx[b0]; /* coordinate set indices */
-                a1 = atm2idx[b1];
-                a2 = atm2idx[b2];
-                
-                cnt[b0]++;
-                cnt[b1]++;
-                cnt[b2]++;
-                
-                if((a0>=0)&&(a1>=0)&&(a2>=0))
-                  {
-                    v0 = cs->Coord+3*a0;
-                    v1 = cs->Coord+3*a1;
-                    v2 = cs->Coord+3*a2;
-                    total_strain+=ShakerDoLine(v0,v1,v2,disp+b0*3,disp+b1*3,disp+b2*3,line_wt);
-                    total_count++;
-                  }
-                slc++;
-              }
-            }
-
-            /* apply pyramid constraints */
-
-            if(cSculptPyra & mask) {
-              spc=shk->PyraCon;
-              for(a=0;a<shk->NPyraCon;a++) {
-              
-                b0 = spc->at0;
-                b1 = spc->at1;
-                b2 = spc->at2;
-                b3 = spc->at3;
-                a0 = atm2idx[b0];
-                a1 = atm2idx[b1];
-                a2 = atm2idx[b2];
-                a3 = atm2idx[b3];
-              
-                if((a0>=0)&&(a1>=0)&&(a2>=0)&&(a3>=0)) {
-                  v0 = cs->Coord+3*a0;
-                  v1 = cs->Coord+3*a1;
-                  v2 = cs->Coord+3*a2;
-                  v3 = cs->Coord+3*a3;
-                  total_strain+=ShakerDoPyra(spc->targ,
-                               v0,v1,v2,v3,
-                               disp+b0*3,
-                               disp+b1*3,
-                               disp+b2*3,
-                               disp+b3*3,
-                               pyra_wt);
+            if((a1>=0)&&(a2>=0))
+              {
+                v1 = cs->Coord+3*a1;
+                v2 = cs->Coord+3*a2;
+                if(sdc->type!=cShakerDistLimit) {
+                  total_strain+=ShakerDoDist(sdc->targ,v1,v2,disp+b1*3,disp+b2*3,wt);
                   total_count++;
-                
-                  cnt[b0]++;
-                  cnt[b1]++;
-                  cnt[b2]++;
-                  cnt[b3]++;
-                }
-                spc++;
-              }
-            }
-
-            if(cSculptPlan & mask) {
-
-              /* apply planarity constraints */
-            
-              snc=shk->PlanCon;
-              for(a=0;a<shk->NPlanCon;a++) {
-              
-                b0 = snc->at0;
-                b1 = snc->at1;
-                b2 = snc->at2;
-                b3 = snc->at3;
-                a0 = atm2idx[b0];
-                a1 = atm2idx[b1];
-                a2 = atm2idx[b2];
-                a3 = atm2idx[b3];
-              
-                if((a0>=0)&&(a1>=0)&&(a2>=0)&&(a3>=0)) {
-                  v0 = cs->Coord+3*a0;
-                  v1 = cs->Coord+3*a1;
-                  v2 = cs->Coord+3*a2;
-                  v3 = cs->Coord+3*a3;
-                  total_strain+=ShakerDoPlan(v0,v1,v2,v3,
-                                             disp+b0*3,
-                                             disp+b1*3,
-                                             disp+b2*3,
-                                             disp+b3*3,
-                                             snc->target,
-                                             snc->fixed,
-                                             plan_wt);
+                } else {
+                  total_strain+=ShakerDoDistLimit(sdc->targ,v1,v2,disp+b1*3,disp+b2*3,wt);
                   total_count++;
-                  cnt[b0]++;
-                  cnt[b1]++;
-                  cnt[b2]++;
-                  cnt[b3]++;
                 }
-              
-                snc++;
               }
-            }
-            
-            /* apply torsion constraints */
+          }
+          sdc++;
+        }
 
-            if(cSculptTors & mask) {
-
-              /* apply planarity constraints */
+        /* apply line constraints */
             
-              stc=shk->TorsCon;
-              for(a=0;a<shk->NTorsCon;a++) {
+        if(cSculptLine & mask) {
+          slc=shk->LineCon;
               
-                b0 = stc->at0;
-                b1 = stc->at1;
-                b2 = stc->at2;
-                b3 = stc->at3;
-                a0 = atm2idx[b0];
-                a1 = atm2idx[b1];
-                a2 = atm2idx[b2];
-                a3 = atm2idx[b3];
-              
-                if((a0>=0)&&(a1>=0)&&(a2>=0)&&(a3>=0)) {
-                  v0 = cs->Coord+3*a0;
-                  v1 = cs->Coord+3*a1;
-                  v2 = cs->Coord+3*a2;
-                  v3 = cs->Coord+3*a3;
-                  total_strain+=ShakerDoTors(stc->type,
-                                             v0,v1,v2,v3,
-                                             disp+b0*3,
-                                             disp+b1*3,
-                                             disp+b2*3,
-                                             disp+b3*3,
-                                             tors_tole,
-                                             tors_wt);
-                  total_count++;
-                  cnt[b0]++;
-                  cnt[b1]++;
-                  cnt[b2]++;
-                  cnt[b3]++;
-                }
-                stc++;
+          for(a=0;a<shk->NLineCon;a++) {
+            b0 = slc->at0;
+            b1 = slc->at1;
+            b2 = slc->at2;
+            a0 = atm2idx[b0]; /* coordinate set indices */
+            a1 = atm2idx[b1];
+            a2 = atm2idx[b2];
+                
+            cnt[b0]++;
+            cnt[b1]++;
+            cnt[b2]++;
+                
+            if((a0>=0)&&(a1>=0)&&(a2>=0))
+              {
+                v0 = cs->Coord+3*a0;
+                v1 = cs->Coord+3*a1;
+                v2 = cs->Coord+3*a2;
+                total_strain+=ShakerDoLine(v0,v1,v2,disp+b0*3,disp+b1*3,disp+b2*3,line_wt);
+                total_count++;
               }
+            slc++;
+          }
+        }
+
+        /* apply pyramid constraints */
+
+        if(cSculptPyra & mask) {
+          spc=shk->PyraCon;
+          for(a=0;a<shk->NPyraCon;a++) {
+              
+            b0 = spc->at0;
+            b1 = spc->at1;
+            b2 = spc->at2;
+            b3 = spc->at3;
+            a0 = atm2idx[b0];
+            a1 = atm2idx[b1];
+            a2 = atm2idx[b2];
+            a3 = atm2idx[b3];
+              
+            if((a0>=0)&&(a1>=0)&&(a2>=0)&&(a3>=0)) {
+              v0 = cs->Coord+3*a0;
+              v1 = cs->Coord+3*a1;
+              v2 = cs->Coord+3*a2;
+              v3 = cs->Coord+3*a3;
+              total_strain+=ShakerDoPyra(spc->targ,
+                                         v0,v1,v2,v3,
+                                         disp+b0*3,
+                                         disp+b1*3,
+                                         disp+b2*3,
+                                         disp+b3*3,
+                                         pyra_wt);
+              total_count++;
+                
+              cnt[b0]++;
+              cnt[b1]++;
+              cnt[b2]++;
+              cnt[b3]++;
             }
+            spc++;
+          }
+        }
+
+        if(cSculptPlan & mask) {
+
+          /* apply planarity constraints */
+            
+          snc=shk->PlanCon;
+          for(a=0;a<shk->NPlanCon;a++) {
+              
+            b0 = snc->at0;
+            b1 = snc->at1;
+            b2 = snc->at2;
+            b3 = snc->at3;
+            a0 = atm2idx[b0];
+            a1 = atm2idx[b1];
+            a2 = atm2idx[b2];
+            a3 = atm2idx[b3];
+              
+            if((a0>=0)&&(a1>=0)&&(a2>=0)&&(a3>=0)) {
+              v0 = cs->Coord+3*a0;
+              v1 = cs->Coord+3*a1;
+              v2 = cs->Coord+3*a2;
+              v3 = cs->Coord+3*a3;
+              total_strain+=ShakerDoPlan(v0,v1,v2,v3,
+                                         disp+b0*3,
+                                         disp+b1*3,
+                                         disp+b2*3,
+                                         disp+b3*3,
+                                         snc->target,
+                                         snc->fixed,
+                                         plan_wt);
+              total_count++;
+              cnt[b0]++;
+              cnt[b1]++;
+              cnt[b2]++;
+              cnt[b3]++;
+            }
+              
+            snc++;
+          }
+        }
+            
+        /* apply torsion constraints */
+
+        if(cSculptTors & mask) {
+
+          /* apply planarity constraints */
+            
+          stc=shk->TorsCon;
+          for(a=0;a<shk->NTorsCon;a++) {
+              
+            b0 = stc->at0;
+            b1 = stc->at1;
+            b2 = stc->at2;
+            b3 = stc->at3;
+            a0 = atm2idx[b0];
+            a1 = atm2idx[b1];
+            a2 = atm2idx[b2];
+            a3 = atm2idx[b3];
+              
+            if((a0>=0)&&(a1>=0)&&(a2>=0)&&(a3>=0)) {
+              v0 = cs->Coord+3*a0;
+              v1 = cs->Coord+3*a1;
+              v2 = cs->Coord+3*a2;
+              v3 = cs->Coord+3*a3;
+              total_strain+=ShakerDoTors(stc->type,
+                                         v0,v1,v2,v3,
+                                         disp+b0*3,
+                                         disp+b1*3,
+                                         disp+b2*3,
+                                         disp+b3*3,
+                                         tors_tole,
+                                         tors_wt);
+              total_count++;
+              cnt[b0]++;
+              cnt[b1]++;
+              cnt[b2]++;
+              cnt[b3]++;
+            }
+            stc++;
+          }
+        }
 
             
 
-            /* apply nonbonded interactions */
+        /* apply nonbonded interactions */
 
-            if(nb_skip_count>1) { /* don't do nonbonded each round -- skip and then weight extra */
-              nb_skip_count--;
-              vdw_magnify+=1.0F;
-            } else {
-              int nb_off0,nb_off1;
-              int v0i,v1i,v2i;
-              int x0i;
-              int don_b0;
-              int acc_b0;
-              nb_skip_count = nb_skip;
-              if((cSculptVDW|cSculptVDW14)&mask) {
-                /* compute non-bonded interations */
+        if(nb_skip_count>1) { /* don't do nonbonded each round -- skip and then weight extra */
+          nb_skip_count--;
+          vdw_magnify+=1.0F;
+        } else {
+          int nb_off0,nb_off1;
+          int v0i,v1i,v2i;
+          int x0i;
+          int don_b0;
+          int acc_b0;
+          nb_skip_count = nb_skip;
+          if((cSculptVDW|cSculptVDW14)&mask) {
+            /* compute non-bonded interations */
                 
-                /* construct nonbonded hash */
+            /* construct nonbonded hash */
                 
-                nb_next = 1;
-                for(aa=0;aa<n_active;aa++) {
-                  b0 = active[aa];
-                  a0 = atm2idx[b0];
-                  VLACheck(I->NBList,int,nb_next+2);
-                  v0 = cs->Coord+3*a0;
-                  hash = nb_hash(v0);
-                  i = I->NBList+nb_next;
-                  *(i++)=*(I->NBHash+hash);
-                  *(i++)=hash;
-                *(i++)=b0;
-                *(I->NBHash+hash)=nb_next;
-                nb_next+=3;
-                }
+            nb_next = 1;
+            for(aa=0;aa<n_active;aa++) {
+              b0 = active[aa];
+              a0 = atm2idx[b0];
+              VLACheck(I->NBList,int,nb_next+2);
+              v0 = cs->Coord+3*a0;
+              hash = nb_hash(v0);
+              i = I->NBList+nb_next;
+              *(i++)=*(I->NBHash+hash);
+              *(i++)=hash;
+              *(i++)=b0;
+              *(I->NBHash+hash)=nb_next;
+              nb_next+=3;
+            }
                 
-                /* find neighbors for each atom */
+            /* find neighbors for each atom */
                 
-                for(aa=0;aa<n_active;aa++) {
-                  b0 = active[aa];
-                  a0 = atm2idx[b0];
-                  ai0=obj->AtomInfo+b0;
-                  v0 = cs->Coord+3*a0;
-                  don_b0 = I->Don[b0];
-                  acc_b0 = I->Acc[b0];
-                  v0i = (int)(*v0);
-                  v1i = (int)(*(v0+1));
-                  v2i = (int)(*(v0+2));
-                  x0i = ex_hash_i0(b0);
-                  for(h=-4;h<5;h+=4) {
-                    nb_off0 = nb_hash_off_i0(v0i,h);
-                    for(k=-4;k<5;k+=4) {
-                      nb_off1 = nb_off0 | nb_hash_off_i1(v1i,k);
-                      for(l=-4;l<5;l+=4) { 
-                        {
-                          /*  offset = *(I->NBHash+nb_hash_off(v0,h,k,l));*/
-                          offset = *(I->NBHash + (nb_off1 | nb_hash_off_i2(v2i,l)));
-                          while(offset) {
-                            i = I->NBList + offset;
-                            b1 = *(i+2);
-                            if(b1>b0) { 
-                              /* determine exclusion (if any) */
-                              xoffset = *(I->EXHash+ (x0i | ex_hash_i1(b1)));
-                              ex = 10;
-                              while(xoffset) {
-                                xoffset = (*(j = I->EXList + xoffset));
-                                if((*(j+1)==b0)&&(*(j+2)==b1)) {
-                                  ex1 = *(j+3);
-                                  if(ex1<ex) {
-                                    ex=ex1;
-                                  }
-                                }
-                              }
-                              if(ex>3) {
-                                ai1=obj->AtomInfo+b1;
-                                cutoff = ai0->vdw+ai1->vdw;
-
-                                if(ex==4) { /* 1-4 interation */
-                                  cutoff*=vdw14;
-                                  wt = vdw_wt14 * vdw_magnify;
-
-                                  if(cSculptVDW14 & mask) {
-                                    a1 = atm2idx[b1];
-                                    v1 = cs->Coord+3*a1;
-                                    if(SculptCheckBump(v0,v1,diff,&len,cutoff)) {
-                                      if(SculptDoBump(cutoff,len,diff,
-                                                      disp+b0*3,disp+b1*3,wt,&total_strain)) {
-                                        cnt[b0]++;
-                                        cnt[b1]++;
-                                        total_count++;
-                                      }
-                                    }
-                                  }
-                                } else { /* standard interaction */
-                                  if(don_b0&&I->Acc[b1]) { /* h-bond */
-                                    if(ai0->protons==cAN_H) {
-                                      cutoff-=hb_overlap;
-                                    } else {
-                                      cutoff-=hb_overlap_base;
-                                    }
-                                  } else if(acc_b0&&I->Don[b1]) { /* h-bond */
-                                    if(ai1->protons==cAN_H) {
-                                      cutoff-=hb_overlap;
-                                    } else {
-                                      cutoff-=hb_overlap_base;
-                                    } 
-                                  }
-                                  cutoff=cutoff*vdw;
-                                  wt = vdw_wt * vdw_magnify;
-                                  if(cSculptVDW & mask) {
-                                    a1 = atm2idx[b1];
-                                    v1 = cs->Coord+3*a1;
-                                    if(SculptCheckBump(v0,v1,diff,&len,cutoff))
-                                      if(SculptDoBump(cutoff,len,diff,
-                                                      disp+b0*3,disp+b1*3,wt,&total_strain)) {
-                                        cnt[b0]++;
-                                        cnt[b1]++;
-                                        total_count++;
-                                      }
-                                  }
-                                }
+            for(aa=0;aa<n_active;aa++) {
+              b0 = active[aa];
+              a0 = atm2idx[b0];
+              ai0=obj->AtomInfo+b0;
+              v0 = cs->Coord+3*a0;
+              don_b0 = I->Don[b0];
+              acc_b0 = I->Acc[b0];
+              v0i = (int)(*v0);
+              v1i = (int)(*(v0+1));
+              v2i = (int)(*(v0+2));
+              x0i = ex_hash_i0(b0);
+              for(h=-4;h<5;h+=4) {
+                nb_off0 = nb_hash_off_i0(v0i,h);
+                for(k=-4;k<5;k+=4) {
+                  nb_off1 = nb_off0 | nb_hash_off_i1(v1i,k);
+                  for(l=-4;l<5;l+=4) { 
+                    {
+                      /*  offset = *(I->NBHash+nb_hash_off(v0,h,k,l));*/
+                      offset = *(I->NBHash + (nb_off1 | nb_hash_off_i2(v2i,l)));
+                      while(offset) {
+                        i = I->NBList + offset;
+                        b1 = *(i+2);
+                        if(b1>b0) { 
+                          /* determine exclusion (if any) */
+                          xoffset = *(I->EXHash+ (x0i | ex_hash_i1(b1)));
+                          ex = 10;
+                          while(xoffset) {
+                            xoffset = (*(j = I->EXList + xoffset));
+                            if((*(j+1)==b0)&&(*(j+2)==b1)) {
+                              ex1 = *(j+3);
+                              if(ex1<ex) {
+                                ex=ex1;
                               }
                             }
-                            offset=(*i);
+                          }
+                          if(ex>3) {
+                            ai1=obj->AtomInfo+b1;
+                            cutoff = ai0->vdw+ai1->vdw;
+
+                            if(ex==4) { /* 1-4 interation */
+                              cutoff*=vdw14;
+                              wt = vdw_wt14 * vdw_magnify;
+
+                              if(cSculptVDW14 & mask) {
+                                a1 = atm2idx[b1];
+                                v1 = cs->Coord+3*a1;
+                                if(SculptCheckBump(v0,v1,diff,&len,cutoff)) {
+                                  if(SculptDoBump(cutoff,len,diff,
+                                                  disp+b0*3,disp+b1*3,wt,&total_strain)) {
+                                    cnt[b0]++;
+                                    cnt[b1]++;
+                                    total_count++;
+                                  }
+                                }
+                              }
+                            } else { /* standard interaction */
+                              if(don_b0&&I->Acc[b1]) { /* h-bond */
+                                if(ai0->protons==cAN_H) {
+                                  cutoff-=hb_overlap;
+                                } else {
+                                  cutoff-=hb_overlap_base;
+                                }
+                              } else if(acc_b0&&I->Don[b1]) { /* h-bond */
+                                if(ai1->protons==cAN_H) {
+                                  cutoff-=hb_overlap;
+                                } else {
+                                  cutoff-=hb_overlap_base;
+                                } 
+                              }
+                              if(cSculptVDW & mask) {
+                                vdw_cutoff=cutoff*vdw;
+                                wt = vdw_wt * vdw_magnify;
+                                a1 = atm2idx[b1];
+                                v1 = cs->Coord+3*a1;
+                                if(cgo && (n_cycle<1) && (!(ai0->protekted&&ai1->protekted))) {
+                                  SculptCGOBump(v0,v1,cutoff,cgo);
+                                }
+                                if(SculptCheckBump(v0,v1,diff,&len,vdw_cutoff))
+                                  if(SculptDoBump(vdw_cutoff,len,diff,
+                                                  disp+b0*3,disp+b1*3,wt,&total_strain)) {
+                                    cnt[b0]++;
+                                    cnt[b1]++;
+                                    total_count++;
+                                  }
+                              }
+                            }
                           }
                         }
+                        offset=(*i);
                       }
                     }
                   }
                 }
-                
-                /* clean up nonbonded hash */
-                
-                i = I->NBList+2;
-                while(nb_next>1) {
-                  *(I->NBHash+*i)=0; 
-                  i+=3;
-                  nb_next-=3;
-                }
-              }
-              vdw_magnify = 1.0F;
-            }
-            /* average the displacements */
-               
-            {
-              int cnt_a;
-              float _1 = 1.0F;
-              register float inv_cnt;
-              int *a_ptr = active;
-              register float *lookup_inverse = I->inverse;
-              for(aa=0;aa<n_active;aa++) {
-                if( (cnt_a = cnt[(a = *(a_ptr++))]) ) {
-                  if(!obj->AtomInfo[a].protekted) {
-                    v1 = disp+3*a;
-                    v2 = cs->Coord+3*atm2idx[a];
-                    if(!(cnt_a&0xFFFFFF00)) /* don't divide -- too slow */
-                      inv_cnt = lookup_inverse[cnt_a];
-                    else
-                      inv_cnt = _1/cnt_a;
-                    *(v2  )+=(*(v1  ))*inv_cnt;
-                    *(v2+1)+=(*(v1+1))*inv_cnt;
-                    *(v2+2)+=(*(v1+2))*inv_cnt;
-                  }
-                }
               }
             }
-            if(cs->fInvalidateRep) {
-              cs->fInvalidateRep(cs,cRepAll,cRepInvCoord);
-            } else {
-              ObjectMoleculeInvalidate(obj,cRepAll,cRepInvCoord,-1);
+                
+            /* clean up nonbonded hash */
+                
+            i = I->NBList+2;
+            while(nb_next>1) {
+              *(I->NBHash+*i)=0; 
+              i+=3;
+              nb_next-=3;
             }
-          
           }
-          
-          task_time = UtilGetSeconds(G) - task_time;
-          PRINTFB(G,FB_Sculpt,FB_Blather)
-            " Sculpt: %2.5f seconds %8.3f %d %8.3f\n",task_time,total_strain,total_count,
-            100*total_strain/total_count
-            ENDFB(G);
-
-          if(total_count) 
-            total_strain = (1000*total_strain)/total_count;
+          vdw_magnify = 1.0F;
         }
-        FreeP(active);
-        FreeP(cnt);
-        FreeP(disp);
-        FreeP(atm2idx);
+        /* average the displacements */
+             
+        if(n_cycle>=0) {
+          int cnt_a;
+          float _1 = 1.0F;
+          register float inv_cnt;
+          int *a_ptr = active;
+          register float *lookup_inverse = I->inverse;
+          for(aa=0;aa<n_active;aa++) {
+            if( (cnt_a = cnt[(a = *(a_ptr++))]) ) {
+              if(!obj->AtomInfo[a].protekted) {
+                v1 = disp+3*a;
+                v2 = cs->Coord+3*atm2idx[a];
+                if(!(cnt_a&0xFFFFFF00)) /* don't divide -- too slow */
+                  inv_cnt = lookup_inverse[cnt_a];
+                else
+                  inv_cnt = _1/cnt_a;
+                *(v2  )+=(*(v1  ))*inv_cnt;
+                *(v2+1)+=(*(v1+1))*inv_cnt;
+                *(v2+2)+=(*(v1+2))*inv_cnt;
+              }
+            }
+          }
+          if(cs->fInvalidateRep) {
+            cs->fInvalidateRep(cs,cRepAll,cRepInvCoord);
+          } else {
+            ObjectMoleculeInvalidate(obj,cRepAll,cRepInvCoord,-1);
+          }
+        } else if(cgo) {
+          SceneDirty(G);
+        }
+        if(n_cycle<0)
+          break;
       }
+          
+      task_time = UtilGetSeconds(G) - task_time;
+      PRINTFB(G,FB_Sculpt,FB_Blather)
+        " Sculpt: %2.5f seconds %8.3f %d %8.3f\n",task_time,total_strain,total_count,
+        100*total_strain/total_count
+        ENDFB(G);
+
+      if(total_count) 
+        total_strain = (1000*total_strain)/total_count;
+    }
+    FreeP(active);
+    FreeP(cnt);
+    FreeP(disp);
+    FreeP(atm2idx);
+    if(cgo) {
+      int est=CGOCheckComplex(cgo);
+      cs->SculptCGO = CGOSimplify(cgo,est);
+      CGOFree(cgo);
+      CGOStop(cs->SculptCGO);
+    }
+  }
 
   PRINTFD(G,FB_Sculpt)
     " SculptIterateObject-Debug: leaving...\n"
     ENDFD;
-
-  CGOStop(G->DebugCGO);
-  
 
   return total_strain;
 }

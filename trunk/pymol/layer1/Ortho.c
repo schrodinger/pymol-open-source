@@ -134,7 +134,11 @@ static int get_wrap_x(int x, int *last_x, int width)
   }
   return x;
 }
-
+int OrthoGetDirty(PyMOLGlobals *G)
+{
+  register COrtho *I=G->Ortho;
+  return I->DirtyFlag;
+}
 int OrthoGetRenderMode(PyMOLGlobals *G)
 {
   register COrtho *I=G->Ortho;

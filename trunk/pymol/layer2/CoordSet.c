@@ -268,7 +268,7 @@ void CoordSetPurge(CoordSet *I)
 int CoordSetTransformAtomTTTf(CoordSet *I,int at,float *TTT)
 {
   ObjectMolecule *obj;
-  int a1 = 01;
+  int a1 = -1;
   int result = 0;
   float *v1;
 
@@ -292,7 +292,7 @@ int CoordSetTransformAtomTTTf(CoordSet *I,int at,float *TTT)
 int CoordSetTransformAtomR44f(CoordSet *I,int at,float *matrix)
 {
   ObjectMolecule *obj;
-  int a1 = 01;
+  int a1 = -1;
   int result = 0;
   float *v1;
 
@@ -338,7 +338,7 @@ void CoordSetRecordTxfApplied(CoordSet *I,float *matrix,int homogenous)
 int CoordSetMoveAtom(CoordSet *I,int at,float *v,int mode)
 {
   ObjectMolecule *obj;
-  int a1 = 01;
+  int a1 = -1;
   int result = 0;
   float *v1;
 
@@ -951,18 +951,31 @@ void CoordSetUpdateCoord2IdxMap(CoordSet *I, float cutoff)
 /*========================================================================*/
 void CoordSetRender(CoordSet *I,RenderInfo *info)
 {
+  PyMOLGlobals *G = I->State.G;
   int pass = info->pass;
   CRay *ray = info->ray;
   Pickable **pick = info->pick;
   int a,aa;
   Rep *r;
 
-  PRINTFD(I->State.G,FB_CoordSet)
+  PRINTFD(G,FB_CoordSet)
     " CoordSetRender: entered (%p).\n",(void*)I
     ENDFD;
 
   if((!pass)&&I->Name[0])
-    ButModeCaption(I->State.G,I->Name);
+    ButModeCaption(G,I->Name);
+  if((!pass)&&I->SculptCGO) {
+    if(ray) {
+      CGORenderRay(I->SculptCGO,ray,
+                   ColorGet(G,I->Obj->Obj.Color),
+                   I->Setting,I->Obj->Obj.Setting);
+    } else if(G->HaveGUI && G->ValidContext) {
+      if(!pick) {
+        CGORenderGL(I->SculptCGO,ColorGet(G,I->Obj->Obj.Color),
+                    I->Setting,I->Obj->Obj.Setting,info);
+      }
+    }
+  }
   for(aa=0;aa<I->NRep;aa++) {
     if(aa==cRepSurface) { /* reorder */
       a=cRepCell;
@@ -981,19 +994,19 @@ void CoordSetRender(CoordSet *I,RenderInfo *info)
           } else {
             if(I->Obj) 
               ray->fWobble(ray,
-                           SettingGet_i(I->State.G,I->Setting,
+                           SettingGet_i(G,I->Setting,
                                         I->Obj->Obj.Setting,
                                         cSetting_ray_texture),
-                           SettingGet_3fv(I->State.G,I->Setting,
+                           SettingGet_3fv(G,I->Setting,
                                           I->Obj->Obj.Setting,
                                           cSetting_ray_texture_settings));
             else
               ray->fWobble(ray,
-                           SettingGet_i(I->State.G,I->Setting,
+                           SettingGet_i(G,I->Setting,
                                         NULL,cSetting_ray_texture),
-                           SettingGet_3fv(I->State.G,I->Setting, NULL, 
+                           SettingGet_3fv(G,I->Setting, NULL, 
                                           cSetting_ray_texture_settings));
-            ray->fColor3fv(ray,ColorGet(I->State.G,I->Obj->Obj.Color));
+            ray->fColor3fv(ray,ColorGet(G,I->Obj->Obj.Color));
           }
         
           if(r->fRender) { /* do OpenGL rendering in three passes */
@@ -1026,7 +1039,7 @@ void CoordSetRender(CoordSet *I,RenderInfo *info)
                 if(!pass) r->fRender(r,info);                
                 break;
               case cRepCyl: /* render sticks differently depending on transparency */
-                if(SettingGet_f(I->State.G,r->cs->Setting,
+                if(SettingGet_f(G,r->cs->Setting,
                                 r->obj->Setting,
                                 cSetting_stick_transparency)>0.0001) {
                   if(pass==-1)
@@ -1037,7 +1050,7 @@ void CoordSetRender(CoordSet *I,RenderInfo *info)
 
               case cRepSurface:
                 /*                if(pass==-1) r->fRender(r,ray,pick);              */
-                if(SettingGet_f(I->State.G,r->cs->Setting,
+                if(SettingGet_f(G,r->cs->Setting,
                                 r->obj->Setting,
                                 cSetting_transparency)>0.0001) {
                   if(pass==-1)
@@ -1046,7 +1059,7 @@ void CoordSetRender(CoordSet *I,RenderInfo *info)
                   r->fRender(r,info);
                 break;
               case cRepSphere: /* render spheres differently depending on transparency */
-                if(SettingGet_f(I->State.G,r->cs->Setting,
+                if(SettingGet_f(G,r->cs->Setting,
                                 r->obj->Setting,
                                 cSetting_sphere_transparency)>0.0001) {
                   if(pass==-1)
@@ -1055,7 +1068,7 @@ void CoordSetRender(CoordSet *I,RenderInfo *info)
                   r->fRender(r,info);
                 break;
               case cRepCartoon:
-                if(SettingGet_f(I->State.G,r->cs->Setting,
+                if(SettingGet_f(G,r->cs->Setting,
                                 r->obj->Setting,
                                 cSetting_cartoon_transparency)>0.0001) {
                   if(pass==-1)
@@ -1071,7 +1084,7 @@ void CoordSetRender(CoordSet *I,RenderInfo *info)
                       ray->fWobble(ray,0,NULL);*/
         }
   }
-  PRINTFD(I->State.G,FB_CoordSet)
+  PRINTFD(G,FB_CoordSet)
     " CoordSetRender: leaving...\n"
     ENDFD;
 
@@ -1116,6 +1129,7 @@ CoordSet *CoordSetNew(PyMOLGlobals *G)
   I->Coord2Idx = NULL;
   I->NMatrix = 0;
   I->MatrixVLA = NULL;
+  I->SculptCGO = NULL;
   return(I);
 }
 /*========================================================================*/
@@ -1299,6 +1313,7 @@ void CoordSetFree(CoordSet *I)
     FreeP(I->SpheroidNormal);
     SettingFreeP(I->Setting);
     ObjectStatePurge(&I->State);
+    CGOFree(I->SculptCGO);
     OOFreeP(I);
   }
 }

@@ -57,6 +57,23 @@ struct _CEditor {
   float FavoredOrigin[3];
 } ;
 
+int EditorGetScheme(PyMOLGlobals *G)
+{
+  register CEditor *I = G->Editor;
+  int scheme = EDITOR_SCHEME_OBJ;
+
+  if(EditorActive(G)) 
+    scheme = EDITOR_SCHEME_FRAG;
+  else if(I->DragObject) {
+    if(I->DragIndex>=0) {
+      scheme = EDITOR_SCHEME_OBJ;
+    } else {
+      scheme = EDITOR_SCHEME_DRAG;
+    }
+  }
+  return scheme;
+}
+
 void EditorFavorOrigin(PyMOLGlobals *G, float *v1)
 {
   register CEditor *I = G->Editor;
@@ -117,23 +134,10 @@ void EditorMouseInvalid(PyMOLGlobals *G)
 
 static void EditorConfigMouse(PyMOLGlobals *G)
 {
-#define SCHEME_OBJ 1
-#define SCHEME_FRAG 2
-#define SCHEME_DRAG 3
 
-  register CEditor *I = G->Editor;
-  int scheme = SCHEME_OBJ;
+  int scheme = EditorGetScheme(G);
   char *mouse_mode = SettingGetGlobal_s(G,cSetting_button_mode_name);
 
-  if(EditorActive(G)) 
-    scheme = SCHEME_FRAG;
-  else if(I->DragObject) {
-    if(I->DragIndex>=0) {
-      scheme = SCHEME_OBJ;
-    } else {
-      scheme = SCHEME_DRAG;
-    }
-  }
   if(mouse_mode && (strcmp(mouse_mode,"3-Button Editing")==0)) { /* WEAK! */
     int button;
 
@@ -145,9 +149,9 @@ static void EditorConfigMouse(PyMOLGlobals *G)
           (action == cButModeMovObj)||
           (action == cButModeMovDrag)) {
         switch(scheme) {
-        case SCHEME_OBJ: action = cButModeMovObj; break;
-        case SCHEME_FRAG: action = cButModeMovFrag; break;
-        case SCHEME_DRAG: action = cButModeMovDrag; break;
+        case EDITOR_SCHEME_OBJ: action = cButModeMovObj; break;
+        case EDITOR_SCHEME_FRAG: action = cButModeMovFrag; break;
+        case EDITOR_SCHEME_DRAG: action = cButModeMovDrag; break;
         }
         ButModeSet(G,button, action);
       }
@@ -160,9 +164,9 @@ static void EditorConfigMouse(PyMOLGlobals *G)
           (action == cButModeRotObj)||
           (action == cButModeRotDrag)) {
         switch(scheme) {
-        case SCHEME_OBJ: action = cButModeRotObj; break;
-        case SCHEME_FRAG: action = cButModeRotFrag; break;
-        case SCHEME_DRAG: action = cButModeRotDrag; break;
+        case EDITOR_SCHEME_OBJ: action = cButModeRotObj; break;
+        case EDITOR_SCHEME_FRAG: action = cButModeRotFrag; break;
+        case EDITOR_SCHEME_DRAG: action = cButModeRotDrag; break;
         }
         ButModeSet(G,button, action);
       }
@@ -175,9 +179,9 @@ static void EditorConfigMouse(PyMOLGlobals *G)
           (action == cButModeMovObjZ)||
           (action == cButModeMovDragZ)) {
         switch(scheme) {
-        case SCHEME_OBJ: action = cButModeMovObjZ; break;
-        case SCHEME_FRAG: action = cButModeMovFragZ; break;
-        case SCHEME_DRAG: action = cButModeMovDragZ; break;
+        case EDITOR_SCHEME_OBJ: action = cButModeMovObjZ; break;
+        case EDITOR_SCHEME_FRAG: action = cButModeMovFragZ; break;
+        case EDITOR_SCHEME_DRAG: action = cButModeMovDragZ; break;
         }
         ButModeSet(G,button, action);
       }
@@ -189,9 +193,9 @@ static void EditorConfigMouse(PyMOLGlobals *G)
       if ((action == cButModeMoveAtom)||
           (action == cButModeTorFrag)) {
         switch(scheme) {
-        case SCHEME_OBJ: action = cButModeMoveAtom; break;
-        case SCHEME_FRAG: action = cButModeTorFrag; break;
-        case SCHEME_DRAG: action = cButModeMoveAtom; break;
+        case EDITOR_SCHEME_OBJ: action = cButModeMoveAtom; break;
+        case EDITOR_SCHEME_FRAG: action = cButModeTorFrag; break;
+        case EDITOR_SCHEME_DRAG: action = cButModeMoveAtom; break;
         }
         ButModeSet(G,button, action);
       }
@@ -203,9 +207,9 @@ static void EditorConfigMouse(PyMOLGlobals *G)
       if ((action == cButModeMoveAtom)||
           (action == cButModeTorFrag)) {
         switch(scheme) {
-        case SCHEME_OBJ: action = cButModeMoveAtom; break;
-        case SCHEME_FRAG: action = cButModeTorFrag; break;
-        case SCHEME_DRAG: action = cButModeMoveAtom; break;
+        case EDITOR_SCHEME_OBJ: action = cButModeMoveAtom; break;
+        case EDITOR_SCHEME_FRAG: action = cButModeTorFrag; break;
+        case EDITOR_SCHEME_DRAG: action = cButModeMoveAtom; break;
         }
         ButModeSet(G,button, action);
       }
@@ -217,9 +221,9 @@ static void EditorConfigMouse(PyMOLGlobals *G)
       if ((action == cButModeMoveAtom)||
           (action == cButModeMoveAtomZ)) {
         switch(scheme) {
-        case SCHEME_OBJ: action = cButModeMoveAtomZ; break;
-        case SCHEME_FRAG: action = cButModeMoveAtom; break;
-        case SCHEME_DRAG: action = cButModeMoveAtomZ; break;
+        case EDITOR_SCHEME_OBJ: action = cButModeMoveAtomZ; break;
+        case EDITOR_SCHEME_FRAG: action = cButModeMoveAtom; break;
+        case EDITOR_SCHEME_DRAG: action = cButModeMoveAtomZ; break;
         }
         ButModeSet(G,button, action);
       }
@@ -1524,6 +1528,10 @@ void EditorActivate(PyMOLGlobals *G,int state,int enable_bond)
 void EditorSetDrag(PyMOLGlobals *G,ObjectMolecule *obj,int sele, int quiet,int state)
 {
   EditorInactivate(G);
+  state = EditorGetEffectiveState(G,obj,state);
+  if(ObjectMoleculeCheckFullStateSelection(obj,sele,state)) {
+    sele = -1;
+  }
   EditorPrepareDrag(G,obj,sele,-1,state);
 }
 void EditorReadyDrag(PyMOLGlobals *G,int state)

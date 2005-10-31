@@ -18,8 +18,8 @@ if __name__=='pymol.editing':
     import math
     import selector
     import cmd
-    from cmd import _cmd,lock,unlock,Shortcut, \
-          safe_list_eval, \
+    from cmd import _cmd,lock,unlock,Shortcut,is_string, \
+          boolean_sc,boolean_dict,safe_list_eval, \
           DEFAULT_ERROR, DEFAULT_SUCCESS, _raising, is_ok, is_error              
     from chempy import cpv
 
@@ -618,6 +618,7 @@ SEE ALSO
 
     edit
         '''
+        
         r = DEFAULT_ERROR      
         try:
             lock()   
@@ -627,10 +628,23 @@ SEE ALSO
         if _raising(r): raise pymol.CmdException            
         return r
 
-    def drag(selection="", quiet=1):
+    def drag(selection=None, wizard=1, edit=1, quiet=1):
         '''
         '''
-        selection = selector.process(selection)
+        quiet = int(quiet)
+        if (selection!=None) and (selection!=""):
+            selection = selector.process(selection)
+            if is_string(edit):
+                edit=boolean_dict[boolean_sc.auto_err(edit,'boolean')]
+            if is_string(wizard):
+                wizard=boolean_dict[boolean_sc.auto_err(wizard,'boolean')]
+            edit = int(edit)
+            wizard = int(wizard)
+            old_button_mode = cmd.get('button_mode')
+        else:
+            wizard = 0
+            edit = 0
+            selection = ""
         #
         r = DEFAULT_ERROR
         try:
@@ -638,6 +652,17 @@ SEE ALSO
             r = _cmd.drag(str(selection),int(quiet))
         finally:
             unlock(r)
+        if not is_error(r):
+            if edit:
+                cmd.edit_mode(edit)
+            if wizard:
+                wiz = cmd.get_wizard()
+                if (wiz == None):
+                    cmd.wizard("dragging",old_button_mode)
+                elif wiz.__class__ != 'pymol.wizard.dragging.Dragging':
+                    cmd.wizard("dragging",old_button_mode)
+                else:
+                    wiz.recount()
         if _raising(r): raise pymol.CmdException
         return r
         
@@ -683,6 +708,15 @@ SEE ALSO
         if _raising(r): raise pymol.CmdException
         return r
 
+    def get_editor_scheme():
+        r = DEFAULT_ERROR
+        try:
+            lock()   
+            r = _cmd.get_editor_scheme()
+        finally:
+            unlock(r)
+        if _raising(r): raise pymol.CmdException            
+        return r
 
     def torsion(angle):
         '''

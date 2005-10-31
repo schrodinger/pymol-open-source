@@ -199,7 +199,7 @@ int ExecutiveGetExtent(PyMOLGlobals *G,char *name,float *mn,float *mx,int transf
 int ExecutiveGetCameraExtent(PyMOLGlobals *G,char *name,float *mn,float *mx,int transformed,int state);
 int ExecutiveSeleToObject(PyMOLGlobals *G,char *name,char *s1,
                           int source,int target,int discrete,int zoom,
-                          int quiet);
+                          int quiet,int singletons);
 PyObject *ExecutiveSeleToChemPyModel(PyMOLGlobals *G,char *s1,int state);
 void ExecutiveInvalidateRep(PyMOLGlobals *G,char *name,int rep,int level);
 void ExecutiveFlag(PyMOLGlobals *G,int flag,char *s1,int action,int quiet);

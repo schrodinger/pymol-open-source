@@ -645,18 +645,20 @@ int ExecutiveSetDrag(PyMOLGlobals *G,char *name, int quiet)
   if(name[0]) {
     ObjectMolecule *obj = ExecutiveFindObjectMoleculeByName(G,name);
     if(obj) {
-      set_flag = true;
+      SelectorCreate(G,drag_name,obj->Obj.Name,obj,true,NULL); /* for indication only */
       EditorSetDrag(G,obj,-1,quiet,SceneGetState(G));
+      set_flag = true;
     } else {
       SpecRec *rec = ExecutiveFindSpec(G,name);
       if(rec) {
         if(rec->type==cExecSelection) {
-          SelectorCreate(G,drag_name,name,NULL,quiet,NULL);
+          SelectorCreate(G,drag_name,name,NULL,true,NULL);
           {
             int sele = SelectorIndexByName(G,drag_name);
             obj = SelectorGetSingleObjectMolecule(G,sele);
             if(obj) {
               EditorSetDrag(G,obj,sele,quiet,SceneGetState(G));            
+              set_flag = true;
             } else {
               /* complain */
             }
@@ -665,7 +667,15 @@ int ExecutiveSetDrag(PyMOLGlobals *G,char *name, int quiet)
       }
     }
     result = set_flag;
-  } 
+    if(!result) {
+      EditorInactivate(G);      
+      PRINTFB(G,FB_Executive,FB_Errors)
+        " Drag-Error: invalid or empty selection."
+        ENDFB(G);
+    }
+  } else {
+    EditorInactivate(G);
+  }
   return result;
 }
 
@@ -3255,19 +3265,22 @@ int ExecutiveSculptIterateAll(PyMOLGlobals *G)
   ObjectMolecule *objMol;
 
   int state = SceneGetState(G);
-  int cycles = (int)SettingGet(G,cSetting_sculpting_cycles);
+  CGOReset(G->DebugCGO);
 
   if(SettingGet(G,cSetting_sculpting)) {
     while(ListIterate(I->Spec,rec,next)) {
       if(rec->type==cExecObject) {
         if(rec->obj->type==cObjectMolecule) {
           objMol =(ObjectMolecule*)rec->obj;
-          ObjectMoleculeSculptIterate(objMol,state,cycles,G->DebugCGO);
+          ObjectMoleculeSculptIterate(objMol,state,
+                                      SettingGet_i(G,NULL,objMol->Obj.Setting,
+                                                   cSetting_sculpting_cycles));
           active = true;
         }
       }
     }
   }
+
   return(active);
 }
 /*========================================================================*/
@@ -3287,7 +3300,7 @@ float ExecutiveSculptIterate(PyMOLGlobals *G,char *name,int state,int n_cycle)
       if(rec->type==cExecObject) {
         if(rec->obj->type==cObjectMolecule) {
           objMol =(ObjectMolecule*)rec->obj;
-          total_strain+=ObjectMoleculeSculptIterate(objMol,state,n_cycle,G->DebugCGO);
+          total_strain+=ObjectMoleculeSculptIterate(objMol,state,n_cycle);
         }
       }
     }
@@ -3302,7 +3315,7 @@ float ExecutiveSculptIterate(PyMOLGlobals *G,char *name,int state,int n_cycle)
       ENDFB(G);
     ok=false;
   } else {
-    total_strain=ObjectMoleculeSculptIterate((ObjectMolecule*)obj,state,n_cycle,G->DebugCGO);
+    total_strain=ObjectMoleculeSculptIterate((ObjectMolecule*)obj,state,n_cycle);
   }
   return(total_strain);
 }
@@ -5437,14 +5450,15 @@ PyObject *ExecutiveSeleToChemPyModel(PyMOLGlobals *G,char *s1,int state)
 /*========================================================================*/
 int ExecutiveSeleToObject(PyMOLGlobals *G,char *name,char *s1,
                            int source,int target,
-                          int discrete,int zoom, int quiet)
+                          int discrete,int zoom, int quiet, int singletons)
 {
   int sele1;
   int ok=false;
 
   sele1=SelectorIndexByName(G,s1);
   if(sele1>=0)
-    ok = SelectorCreateObjectMolecule(G,sele1,name,target,source,discrete,zoom,quiet);
+    ok = SelectorCreateObjectMolecule(G,sele1,name,target,
+                                      source,discrete,zoom,quiet,singletons);
   return ok;
 }
 /*========================================================================*/

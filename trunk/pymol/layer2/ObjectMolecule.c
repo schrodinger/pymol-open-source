@@ -87,6 +87,28 @@ ObjectMolecule *ObjectMoleculeReadTOPStr(PyMOLGlobals *G,ObjectMolecule *I,char 
 
 void ObjectMoleculeInferHBondFromChem(ObjectMolecule *I);
 
+int ObjectMoleculeCheckFullStateSelection(ObjectMolecule *I,int sele, int state)
+{
+  register PyMOLGlobals *G = I->Obj.G;
+  int result=false;
+  if((state>=0)&&(state<I->NCSet)) {
+    register AtomInfoType *ai = I->AtomInfo;
+    register CoordSet *cs = I->CSet[state];
+    if(cs) {
+      register int a;
+      register int at;
+      result=true;
+      for(a=0;a<cs->NIndex;a++) {
+        at = cs->IdxToAtm[a];
+        if(!SelectorIsMember(G,ai[at].selEntry,sele)) {
+          result = false;
+          break;
+        }
+      }
+    }
+  }
+  return result;
+}
 
 static char *ObjectMoleculeGetCaption(ObjectMolecule *I)
 {
@@ -1827,13 +1849,13 @@ void ObjectMoleculeSculptImprint(ObjectMolecule *I,int state)
   SculptMeasureObject(I->Sculpt,I,state);
 }
 
-float ObjectMoleculeSculptIterate(ObjectMolecule *I,int state,int n_cycle,CGO *cgo)
+float ObjectMoleculeSculptIterate(ObjectMolecule *I,int state,int n_cycle)
 {
   PRINTFD(I->Obj.G,FB_ObjectMolecule)
     " ObjectMoleculeIterateSculpt: entered.\n"
     ENDFD;
   if(I->Sculpt) {
-    return SculptIterateObject(I->Sculpt,I,state,n_cycle,cgo);
+    return SculptIterateObject(I->Sculpt,I,state,n_cycle);
   } else
     return 0.0F;
 }

@@ -35,6 +35,7 @@ int WizardDoSpecial(PyMOLGlobals *G,int k, int x, int y, int mod);
 int WizardDoScene(PyMOLGlobals *G);
 int WizardDoState(PyMOLGlobals *G);
 int WizardDoFrame(PyMOLGlobals *G);
+int WizardDoDirty(PyMOLGlobals *G);
 
 void WizardDirty(PyMOLGlobals *G);
 int WizardUpdate(PyMOLGlobals *G);

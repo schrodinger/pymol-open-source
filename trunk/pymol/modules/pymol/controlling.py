@@ -100,8 +100,10 @@ if __name__=='pymol.controlling':
         'mvoz' : 41 ,
         'mvfz' : 42 ,
         'mvaz' : 43 ,
+        'drgm' : 44 ,
         
         }
+    
     but_act_sc = Shortcut(but_act_code.keys())
 
     ring_dict = {
@@ -176,10 +178,10 @@ if __name__=='pymol.controlling':
                                           ('r','ctsh','clip'),
                                           ('w','none','slab'),
                                           ('w','shft','movs'),
-                                          ('w','ctrl','clip'),
+                                          ('w','ctrl','mvsz'),
                                           ('w','ctsh','movz'),
                                           ('double_left','none','torf'),
-                                          ('double_middle','none','none'),
+                                          ('double_middle','none','drgm'),
                                           ('double_right','none', 'pktb'),
                                           ('single_left','none','pkat'),
                                           ('single_middle','none','cent'),
@@ -356,6 +358,9 @@ SEE ALSO
 
     def edit_mode(active=1,quiet=1):
         # legacy function
+        if is_string(active):
+            active=boolean_dict[boolean_sc.auto_err(active,'active')]
+        active = int(active)
         if len(mouse_ring):
             bm = int(_cmd.get_setting("button_mode"))
             mouse_mode = mouse_ring[bm]

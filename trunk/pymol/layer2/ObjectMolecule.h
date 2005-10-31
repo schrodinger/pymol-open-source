@@ -31,7 +31,7 @@ Z* -------------------------------------------------------------------
 #define cKeywordCenter "center"
 #define cKeywordOrigin "origin"
 
-#define cUndoMask 0x7
+#define cUndoMask 0xF
 
 typedef struct {
   int index[2];
@@ -255,7 +255,7 @@ PyObject *ObjectMoleculeAsPyList(ObjectMolecule *I);
 int ObjectMoleculeGetSerial(ObjectMolecule *I);
 int ObjectMoleculeSetStateTitle(ObjectMolecule *I,int state,char *text);
 char *ObjectMoleculeGetStateTitle(ObjectMolecule *I,int state);
-
+int ObjectMoleculeCheckFullStateSelection(ObjectMolecule *I,int sele, int state);
 void ObjectMoleculeFree(ObjectMolecule *I); /* only for friends of ObjectMolecule */
 
 ObjectMolecule *ObjectMoleculeNew(PyMOLGlobals *G,int discreteFlag);
@@ -366,7 +366,7 @@ int ObjectMoleculeMultiSave(ObjectMolecule *I,char *fname,int state,int append);
 void ObjectMoleculeUpdateIDNumbers(ObjectMolecule *I);
 
 void ObjectMoleculeSculptImprint(ObjectMolecule *I,int state);
-float ObjectMoleculeSculptIterate(ObjectMolecule *I,int state,int n_cycle,CGO *cgo);
+float ObjectMoleculeSculptIterate(ObjectMolecule *I,int state,int n_cycle);
 void ObjectMoleculeSculptClear(ObjectMolecule *I);
 int ObjectMoleculeGetBondPaths(ObjectMolecule *I,int atom, int max, ObjectMoleculeBPRec *bp);
 int ObjectMoleculeInitBondPath(ObjectMolecule *I,ObjectMoleculeBPRec *bp);

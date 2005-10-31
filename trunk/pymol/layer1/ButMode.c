@@ -439,6 +439,7 @@ int ButModeInit(PyMOLGlobals *G)
     strcpy(I->Code[cButModeMovObjZ], "MvOZ ");
     strcpy(I->Code[cButModeMovFragZ], "MvFZ ");
     strcpy(I->Code[cButModeMoveAtomZ], "MvAZ ");
+    strcpy(I->Code[cButModeDragMol], "DrgM ");
 
     I->Block = OrthoNewBlock(G,NULL);
     I->Block->fClick = ButModeClick;

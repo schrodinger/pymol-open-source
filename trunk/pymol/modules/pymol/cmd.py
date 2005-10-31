@@ -1356,6 +1356,7 @@ SEE ALSO
               fix_chemistry,      \
               flag,               \
               fuse,               \
+              get_editor_scheme,  \
               h_add,              \
               h_fill,             \
               h_fix,              \
