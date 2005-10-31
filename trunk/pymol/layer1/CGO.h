@@ -102,6 +102,8 @@ struct _CGO {
 #define CGO_INDENT_SZ            2
 #define CGO_ALPHA                0x19 
 #define CGO_ALPHA_SZ             1
+#define CGO_RESET_NORMAL         0x1E
+#define CGO_RESET_NORMAL_SZ      1
 #define CGO_PICK_COLOR           0x1F
 #define CGO_PICK_COLOR_SZ        2
 #define CGO_MASK                 0x1F
@@ -138,6 +140,7 @@ void CGOColor(CGO *I,float v1,float v2,float v3);
 void CGOColorv(CGO *I,float *v);
 void CGONormal(CGO *I,float v1,float v2,float v3);
 void CGONormalv(CGO *I,float *v);
+void CGOResetNormal(CGO *I,int mode);
 void CGOLinewidth(CGO *I,float v);
 void CGODotwidth(CGO *I,float v);
 void CGOChar(CGO *I,char c);

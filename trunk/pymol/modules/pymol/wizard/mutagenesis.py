@@ -351,7 +351,7 @@ class Mutagenesis(Wizard):
                     cmd.show("lines",bump_name+" in "+obj_name)
                 cmd.sculpt_activate(bump_name)
                 cmd.set("sculpting",1,quiet=1)
-                cmd.set("sculpt_vdw_vis_mode",2,bump_name)
+                cmd.set("sculpt_vdw_vis_mode",1,bump_name)
                 cmd.show("cgo",bump_name)
                 
         else:

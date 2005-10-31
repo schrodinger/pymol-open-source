@@ -2171,11 +2171,11 @@ void SettingInitGlobal(PyMOLGlobals *G,int alloc,int reset_gui)
 
   SettingSet_f(I,cSetting_sculpt_vdw_scale, 0.97F);  
 
-  SettingSet_f(I,cSetting_sculpt_vdw_scale14, 0.85F);  /* 0.915 */
+  SettingSet_f(I,cSetting_sculpt_vdw_scale14, 0.90F);  /* 0.915 */
 
   SettingSet_f(I,cSetting_sculpt_vdw_weight, 1.0F);  
 
-  SettingSet_f(I,cSetting_sculpt_vdw_weight14, 0.25F);  /* 0.33 */
+  SettingSet_f(I,cSetting_sculpt_vdw_weight14, 0.2F);  /* 0.33 */
 
   SettingSet_f(I,cSetting_sculpt_bond_weight, 2.25F);  
 
