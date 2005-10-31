@@ -31,12 +31,14 @@ Z* -------------------------------------------------------------------
 #include"PyMOLGlobals.h"
 #include"Ray.h"
 #include"Util.h"
+#include"Scene.h"
 
 #define CGO_read_int(p) (*((int*)(p++)))
 #define CGO_get_int(p) (*((int*)(p)))
 #define CGO_write_int(p,i) ((*((int*)(p++)))=(i))
 
 struct _CCGORenderer {
+  PyMOLGlobals *G;
   float alpha;
 };
 
@@ -46,6 +48,7 @@ int CGORendererInit(PyMOLGlobals *G)
   
   I = (G->CGORenderer = Calloc(CCGORenderer,1));
   if(I) {
+    I->G = G;
     I->alpha = 1.0F;
     return 1;
   } else 
@@ -95,7 +98,7 @@ int CGO_sz[] = {
 
   CGO_NULL_SZ,
   CGO_NULL_SZ,
-  CGO_NULL_SZ,
+  CGO_RESET_NORMAL_SZ,
   CGO_PICK_COLOR_SZ,
 
 
@@ -597,6 +600,12 @@ void CGONormal(CGO *I,float v1,float v2,float v3)
   *(pc++)=v1;
   *(pc++)=v2;
   *(pc++)=v3;
+}
+void CGOResetNormal(CGO *I,int mode)
+{
+  float *pc = CGO_add(I,2);
+  CGO_write_int(pc,CGO_RESET_NORMAL);
+  CGO_write_int(pc,mode);
 }
 
 void CGOFontVertexv(CGO *I,float *v)
@@ -1141,6 +1150,11 @@ static void CGO_gl_alpha(CCGORenderer *I,float *pc)
   I->alpha = *pc;
 }
 
+static void CGO_gl_reset_normal(CCGORenderer *I,float *pc)
+{
+  SceneResetNormal(I->G,CGO_read_int(pc));
+}
+
 static void CGO_gl_null(CCGORenderer *I,float *pc) {
 }
 #ifdef CYGWIN
@@ -1195,9 +1209,8 @@ CGO_op_fn CGO_gl[] = {
 
   CGO_gl_null,             /* 0X1C */
   CGO_gl_null,             /* 0x1D */
-  CGO_gl_null,             /* 0x1E */
-  CGO_gl_null,             /* 0X1F */
-
+  CGO_gl_reset_normal,     /* 0x1E */
+  CGO_gl_null, /* pick color  0X1F */
 };
 
 void CGORenderGLPickable(CGO *I,Pickable **pick,void *ptr,CSetting *set1,CSetting *set2)

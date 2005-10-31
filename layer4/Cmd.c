@@ -3575,8 +3575,9 @@ static PyObject *CmdGetBusy(PyObject *self, PyObject *args)
 
 static PyObject *CmdGetProgress(PyObject *self, PyObject *args)
 {
-  if(TempPyMOLGlobals && TempPyMOLGlobals->Ready) {
-
+  if(TempPyMOLGlobals && TempPyMOLGlobals->Ready && 
+     (!SettingGetGlobal_b(TempPyMOLGlobals,cSetting_sculpting))) {
+    
     /* assumes status is already locked */
     
     float result = -1.0F;

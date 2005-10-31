@@ -946,7 +946,7 @@ static int SculptCGOBump(float *v1,float *v2,float cutoff,
         add3f(tmp,color,color);
 
         switch(mode) {
-        case 1:
+        case 2:
           if(good_bad>mid) {
             CGOLinewidth(cgo,1+color_factor*3);
             CGOColorv(cgo,color);
@@ -956,14 +956,21 @@ static int SculptCGOBump(float *v1,float *v2,float cutoff,
             CGOEnd(cgo);
           }
           break;
-        case 2:
+        case 1:
           {
-            float delta = 0.5*(0.01F + fabs(good_bad))/cutoff;
-            float one_minus_delta = 1.0F - delta;
-            if(delta>0.1) {
-              delta = 0.1;
-              one_minus_delta = 1.0F - delta;
+            float delta,one_minus_delta;
+            if(good_bad<0.0) {
+              delta = fabs(good_bad);
+            } else {
+              delta = 0.5*(0.01F + fabs(good_bad))/(cutoff);
             }
+            if(delta<0.01F) delta=0.01F;
+            if(delta>0.1F) {
+              delta = 0.1F;
+            }
+            if(radius<0.01F) radius=0.01F;
+
+            one_minus_delta = 1.0F - delta;
             average3f(v1,v2,avg);
             scale3f(v1,delta,vv1);
             scale3f(avg,one_minus_delta,tmp);
@@ -971,10 +978,19 @@ static int SculptCGOBump(float *v1,float *v2,float cutoff,
             scale3f(v2,delta,vv2);
             scale3f(avg,one_minus_delta,tmp);
             add3f(tmp,vv2,vv2);
-            
-            CGOCustomCylinderv(cgo, vv1, vv2, radius,
-                               color,color,
-                               1,1);
+            if(good_bad<0.0F) {
+              CGOLinewidth(cgo,1+color_factor*3);
+              CGOResetNormal(cgo,true);
+              CGOColorv(cgo,color);
+              CGOBegin(cgo,GL_LINES);
+              CGOVertexv(cgo,vv1);
+              CGOVertexv(cgo,vv2);
+              CGOEnd(cgo);
+            } else {
+              CGOCustomCylinderv(cgo, vv1, vv2, radius,
+                                 color,color,
+                                 1,1);
+            }
           }
           break;
         }
