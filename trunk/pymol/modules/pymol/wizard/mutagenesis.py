@@ -9,7 +9,7 @@ import string
 import traceback
 
 sele_name = "_mutate_sel"
-bump_name = "bump_check"
+bump_name = "_bump_check"
 
 obj_name = "mutation"
 tmp_name = "_tmp_mut"
@@ -39,7 +39,8 @@ class Mutagenesis(Wizard):
                                            "/data/chempy/sidechains/sc_bb_ind.pkl")
         self.load_library()
         self.status = 0 # 0 no selection, 1 mutagenizing
-        self.bump_check = 0
+        self.bump_check = 1
+        self.bump_relax = 0 # not yet useful
         self.error = None
         self.object_name = None
         self.modes = [
@@ -150,7 +151,6 @@ class Mutagenesis(Wizard):
         default_rep = self.rep
         default_dep = self.dep
         self.clear()
-
         
     def clear(self):
         self.status=0
@@ -159,6 +159,9 @@ class Mutagenesis(Wizard):
         cmd.delete(tmp_obj3)
         cmd.delete(sele_name)
         cmd.delete(obj_name)
+        cmd.delete(bump_name)
+        if self.bump_check:
+            cmd.set("sculpting",0,quiet=1)
         cmd.refresh_wizard()
         
     def apply(self):
@@ -330,20 +333,25 @@ class Mutagenesis(Wizard):
             if self.bump_check:
                 cmd.delete(bump_name)
                 cmd.create(bump_name,
-                "(((byobj %s) within 6 of (%s and not name n+c+ca+o+h)) and (not (%s)))|(%s)"%
+                "(((byobj %s) within 6 of (%s and not name n+c+ca+o+h+ha)) and (not (%s)))|(%s)"%
                            (sele_name,obj_name,sele_name,obj_name),singletons=1)
+                cmd.color("gray50",bump_name+" and elem c")
+                cmd.set("seq_view",0,bump_name,quiet=1)
                 cmd.hide("everything",bump_name)
-                cmd.bond("(%s in %s and n;N)"%(bump_name, sele_name),
-                         "(name C and (%s in (neighbor %s)))"%
-                         (bump_name,obj_name))
-                cmd.bond("(%s in %s and n;C)"%(bump_name, sele_name),
-                         "(name N and (%s in (neighbor %s)))"%
-                         (bump_name,obj_name))
-                cmd.protect("%s and not (%s in (%s and not name n+c+ca+o+h))"%
+                cmd.bond("(n;N and (%s in (neighbor %s)))"%(bump_name,sele_name),
+                         "(n;C and (%s in %s))"%(bump_name,obj_name))
+                cmd.bond("(n;C and (%s in (neighbor %s)))"%(bump_name,sele_name),
+                         "(n;N and (%s in %s))"%(bump_name,obj_name))
+                cmd.protect("%s and not (%s in (%s and not name n+c+ca+o+h+ha))"%
                             (bump_name,bump_name,obj_name))
-                cmd.set("sculpting_cycles",0,bump_name,quiet=1)
+                if not self.bump_relax:
+                    cmd.set("sculpting_cycles",0,bump_name,quiet=1)
+                else:
+                    cmd.set("sculpting_cycles",10,bump_name,quiet=1)
+                    cmd.show("lines",bump_name+" in "+obj_name)
                 cmd.sculpt_activate(bump_name)
-                cmd.set("sculpting","on",quiet=1)
+                cmd.set("sculpting",1,quiet=1)
+                cmd.set("sculpt_vdw_vis_mode",2,bump_name)
                 cmd.show("cgo",bump_name)
                 
         else:
@@ -353,7 +361,7 @@ class Mutagenesis(Wizard):
         pymol.util.cbaw(obj_name)
         cmd.hide("("+obj_name+")")
         cmd.show(self.rep,obj_name)
-        cmd.show('lines',obj_name) # always show lines
+        cmd.show('lines',obj_name) #neighbor  always show lines
         if cartoon:
             cmd.show("cartoon",obj_name)
         if sticks:
@@ -375,7 +383,9 @@ class Mutagenesis(Wizard):
         self.do_library()
         cmd.delete(selection)
         cmd.refresh_wizard()
-        
+        cmd.deselect()
+        return 1
+    
     def do_pick(self,bondFlag):
         if bondFlag:
             self.error = "Error: please select an atom, not a bond."

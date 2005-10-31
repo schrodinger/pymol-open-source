@@ -8,7 +8,6 @@ from copy import deepcopy
 
 lines = io.lst.fromFile("bbdep02.May.lib")
 
-
 chi = { 'CYS' :
         { '1': ('N'  , 'CA' , 'CB' , 'SG' )   },
         'ASP' :
@@ -17,13 +16,10 @@ chi = { 'CYS' :
         'GLU' :
         { '1': ('N'  , 'CA' , 'CB' , 'CG' ),
           '2': ('CA' , 'CB' , 'CG' , 'CD' ), 
-          '3': ('CA' , 'CB' , 'CG' , 'OE1'), },
+          '3': ('CB' , 'CG' , 'CD' , 'OE1'), },
         'PHE' :
         { '1': ('N'  , 'CA' , 'CB' , 'CG' ),
           '2': ('CA' , 'CB' , 'CG' , 'CD1'), },
-        'HIS' :
-        { '1': ('N'  , 'CA' , 'CB' , 'CG' ),
-          '2': ('CA' , 'CB' , 'CG' , 'ND1'), },
         'HIS' :
         { '1': ('N'  , 'CA' , 'CB' , 'CG' ),
           '2': ('CA' , 'CB' , 'CG' , 'ND1'), },
@@ -51,7 +47,7 @@ chi = { 'CYS' :
         'GLN' :
         { '1': ('N'  , 'CA' , 'CB' , 'CG' ),
           '2': ('CA' , 'CB' , 'CG' , 'CD' ), 
-          '3': ('CA' , 'CB' , 'CG' , 'OE1'), },
+          '3': ('CB' , 'CG' , 'CD' , 'OE1'), },
         'ARG' :
         { '1': ('N'  , 'CA' , 'CB'  ,'CG' ),
           '2': ('CA' , 'CB' , 'CG'  ,'CD' ),

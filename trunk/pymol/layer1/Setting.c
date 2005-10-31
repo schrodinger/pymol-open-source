@@ -2171,11 +2171,11 @@ void SettingInitGlobal(PyMOLGlobals *G,int alloc,int reset_gui)
 
   SettingSet_f(I,cSetting_sculpt_vdw_scale, 0.97F);  
 
-  SettingSet_f(I,cSetting_sculpt_vdw_scale14, 0.915F);  
+  SettingSet_f(I,cSetting_sculpt_vdw_scale14, 0.85F);  /* 0.915 */
 
   SettingSet_f(I,cSetting_sculpt_vdw_weight, 1.0F);  
 
-  SettingSet_f(I,cSetting_sculpt_vdw_weight14, 0.33F);  
+  SettingSet_f(I,cSetting_sculpt_vdw_weight14, 0.25F);  /* 0.33 */
 
   SettingSet_f(I,cSetting_sculpt_bond_weight, 2.25F);  
 
@@ -2630,6 +2630,10 @@ void SettingInitGlobal(PyMOLGlobals *G,int alloc,int reset_gui)
   SettingSet_f(I,cSetting_cgo_transparency, 0.0F); 
   SettingSet_b(I,cSetting_legacy_mouse_zoom, 0);
   SettingSet_b(I,cSetting_auto_number_selections, 0);
+  SettingSet_i(I,cSetting_sculpt_vdw_vis_mode,0);
+  SettingSet_f(I,cSetting_sculpt_vdw_vis_min, -0.1F);
+  SettingSet_f(I,cSetting_sculpt_vdw_vis_mid, 0.1F);
+  SettingSet_f(I,cSetting_sculpt_vdw_vis_max, 0.3F);
 }
 
 

@@ -23,6 +23,7 @@ Z* -------------------------------------------------------------------
 #include"Sculpt.h"
 #include"SculptCache.h"
 #include"Scene.h"
+#include"Vector.h"
 
 #include"CGO.h"
 
@@ -147,11 +148,17 @@ static float ShakerDoTors(int type,float *v0,float *v1,float *v2,float *v3,
 
   switch(type) {
   case cShakerTorsSP3SP3:
-    if(dp>-0.5F)
-      return 0.0F;
-    result = ((float)fabs(dp))-0.5F;
-    if(result<tole) /* discontinuous low bottom well */
-      result = result/25.F;       
+    if(dp<-0.5F) {
+      result = ((float)fabs(dp))-0.5F;
+      if(result<tole) /* discontinuous low bottom well */
+        result = result/5.0F;       
+    } else if(dp<0.5) {
+      result = -0.5F-dp;
+      if(result<tole) /* discontinuous low bottom well */
+        result = result;       
+    } else {
+      result = 1.0F-dp;
+    }
     break;
   case cShakerTorsAmide: /* strongly favor trans over cis */
     if((dp>-0.9F)&&(dp<1.0f)) {
@@ -895,35 +902,89 @@ static int SculptCheckBump(float *v1,float *v2,float *diff,
 #ifdef _PYMOL_INLINE
 __inline__
 #endif
-static int SculptCGOBump(float *v1,float *v2,float cutoff, CGO *cgo)
+static int SculptCGOBump(float *v1,float *v2,float cutoff, 
+                         float min,float mid, float max,
+                         float *good_color, 
+                         float *bad_color,
+                         int mode,
+                         CGO *cgo)
 {
   register float d2;
-  register float diff[3],dist;
-  
+  float diff[3];
+  register float dist;
+  register float min_cutoff = cutoff - min;
+
   diff[0] = (v1[0]-v2[0]);
   diff[1] = (v1[1]-v2[1]);
-  if(fabs(diff[0])>cutoff) return(false);
+  if(fabs(diff[0])>min_cutoff) return(false);
   diff[2] = (v1[2]-v2[2]);
-  if(fabs(diff[1])>cutoff) return(false);
-  if(fabs(diff[2])>cutoff) return(false);
+  if(fabs(diff[1])>min_cutoff) return(false);
+  if(fabs(diff[2])>min_cutoff) return(false);
   d2 = (diff[0]*diff[0] + diff[1]*diff[1] + diff[2]*diff[2]);
-  if(d2>(cutoff*cutoff)) {
+  if(d2>(min_cutoff*min_cutoff)) {
     return false;
   } else {
     dist = (float)sqrt(d2);
-    if(dist<=cutoff) {
+    if(dist<=min_cutoff) {
+      float avg[3],vv1[3],vv2[3],tmp[3],color[3];
+      float good_bad = cutoff - dist; /* if negative, then good */
+      float color_factor;
+      float radius = 0.5*(good_bad - min);
 
-      CGOCustomCylinderv(cgo, v1, v2, 0.1,
-                         ColorGet(cgo->G,0),
-                         ColorGet(cgo->G,0),
-                         0,0);
+      if(good_bad<mid) {
+        color_factor = 0.0F;
+      } else {
+        color_factor = (good_bad-mid)/max;
+        if(color_factor>1.0F)
+          color_factor = 1.0F;
+      }
+
+      {
+        float one_minus_color_factor = 1.0F - color_factor;
+        scale3f(bad_color,color_factor,color);
+        scale3f(good_color, one_minus_color_factor,tmp);
+        add3f(tmp,color,color);
+
+        switch(mode) {
+        case 1:
+          if(good_bad>mid) {
+            CGOLinewidth(cgo,1+color_factor*3);
+            CGOColorv(cgo,color);
+            CGOBegin(cgo,GL_LINES);
+            CGOVertexv(cgo,v1);
+            CGOVertexv(cgo,v2);
+            CGOEnd(cgo);
+          }
+          break;
+        case 2:
+          {
+            float delta = 0.5*(0.01F + fabs(good_bad))/cutoff;
+            float one_minus_delta = 1.0F - delta;
+            if(delta>0.1) {
+              delta = 0.1;
+              one_minus_delta = 1.0F - delta;
+            }
+            average3f(v1,v2,avg);
+            scale3f(v1,delta,vv1);
+            scale3f(avg,one_minus_delta,tmp);
+            add3f(tmp,vv1,vv1);
+            scale3f(v2,delta,vv2);
+            scale3f(avg,one_minus_delta,tmp);
+            add3f(tmp,vv2,vv2);
+            
+            CGOCustomCylinderv(cgo, vv1, vv2, radius,
+                               color,color,
+                               1,1);
+          }
+          break;
+        }
+      }
     }
     if(dist>cutoff)
       return false;
     return(true);
   }
 }
-
 
 #ifdef _PYMOL_INLINE
 __inline__
@@ -1002,6 +1063,10 @@ float SculptIterateObject(CSculpt *I,ObjectMolecule *obj,
   float total_strain=0.0F;
   int total_count=1;
   CGO *cgo = NULL;
+  float good_color[3] = { 0.2, 1.0, 0.2};
+  float bad_color[3] = { 1.0, 0.2, 0.2};
+  int vdw_vis_mode;
+  float vdw_vis_min,vdw_vis_mid,vdw_vis_max;
 
   PRINTFD(G,FB_Sculpt)
     " SculptIterateObject-Debug: entered state=%d n_cycle=%d\n",state,n_cycle
@@ -1022,15 +1087,7 @@ float SculptIterateObject(CSculpt *I,ObjectMolecule *obj,
       ENDFD;
 
     cs = obj->CSet[state];
-#if 0
-    if(!cs->SculptCGO)
-      cs->SculptCGO = CGONew(G);
-    else
-      CGOReset(cs->SculptCGO);
-    cgo = cs->SculptCGO;
-#endif
 
-    nb_skip = SettingGet_i(G,cs->Setting,obj->Obj.Setting,cSetting_sculpt_nb_interval);
     if(nb_skip<1) nb_skip=1;
     vdw = SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_sculpt_vdw_scale);
     vdw14 = SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_sculpt_vdw_scale14);
@@ -1046,6 +1103,24 @@ float SculptIterateObject(CSculpt *I,ObjectMolecule *obj,
     hb_overlap_base = SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_sculpt_hb_overlap_base);
     tors_tole = SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_sculpt_tors_tolerance);
     tors_wt = SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_sculpt_tors_weight);
+    vdw_vis_mode = SettingGet_i(G,cs->Setting,obj->Obj.Setting,cSetting_sculpt_vdw_vis_mode);
+
+    if(vdw_vis_mode) {
+      vdw_vis_min =  SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_sculpt_vdw_vis_min);
+      vdw_vis_mid =  SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_sculpt_vdw_vis_mid);
+      vdw_vis_max =  SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_sculpt_vdw_vis_max);
+
+      if(!cs->SculptCGO)
+        cs->SculptCGO = CGONew(G);
+      else
+        CGOReset(cs->SculptCGO);
+      cgo = cs->SculptCGO;
+    } else if(cs->SculptCGO) {
+      CGOReset(cs->SculptCGO);      
+    }
+
+    nb_skip = SettingGet_i(G,cs->Setting,obj->Obj.Setting,cSetting_sculpt_nb_interval);
+
     n_active = 0;
     ai0=obj->AtomInfo;
     for(a=0;a<obj->NAtom;a++) {
@@ -1407,8 +1482,12 @@ float SculptIterateObject(CSculpt *I,ObjectMolecule *obj,
                                 wt = vdw_wt * vdw_magnify;
                                 a1 = atm2idx[b1];
                                 v1 = cs->Coord+3*a1;
-                                if(cgo && (n_cycle<1) && (!(ai0->protekted&&ai1->protekted))) {
-                                  SculptCGOBump(v0,v1,cutoff,cgo);
+                                if(vdw_vis_mode && cgo && 
+                                   (n_cycle<1) && (!(ai0->protekted&&ai1->protekted))) {
+                                  SculptCGOBump(v0,v1,cutoff,vdw_vis_min,
+                                                vdw_vis_mid, vdw_vis_max, 
+                                                good_color, bad_color, 
+                                                vdw_vis_mode,cgo);
                                 }
                                 if(SculptCheckBump(v0,v1,diff,&len,vdw_cutoff))
                                   if(SculptDoBump(vdw_cutoff,len,diff,
@@ -1489,10 +1568,14 @@ float SculptIterateObject(CSculpt *I,ObjectMolecule *obj,
     FreeP(disp);
     FreeP(atm2idx);
     if(cgo) {
-      int est=CGOCheckComplex(cgo);
-      cs->SculptCGO = CGOSimplify(cgo,est);
-      CGOFree(cgo);
-      CGOStop(cs->SculptCGO);
+      CGOStop(cgo);
+      {
+        int est=CGOCheckComplex(cgo);
+        if(est) {
+          cs->SculptCGO = CGOSimplify(cgo,est);
+          CGOFree(cgo);
+        }
+      }
     }
   }
 
