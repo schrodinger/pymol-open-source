@@ -30,6 +30,7 @@ Z* -------------------------------------------------------------------
 #include"P.h"
 #include"PyMOLGlobals.h"
 #include"Ray.h"
+#include"Util.h"
 
 #define CGO_read_int(p) (*((int*)(p++)))
 #define CGO_get_int(p) (*((int*)(p)))
@@ -692,28 +693,10 @@ void CGOStop(CGO *I)
    * although this is wasteful, it does prevent crashes...
    */
 
-  float *pc = CGO_size(I,I->c+16); 
+  #define CGO_STOP_ZEROS 16
 
-  CGO_write_int(pc,CGO_STOP);
-  CGO_write_int(pc,CGO_STOP);
-  CGO_write_int(pc,CGO_STOP);
-  CGO_write_int(pc,CGO_STOP);
-  CGO_write_int(pc,CGO_STOP);
-
-  CGO_write_int(pc,CGO_STOP);
-  CGO_write_int(pc,CGO_STOP);
-  CGO_write_int(pc,CGO_STOP);
-  CGO_write_int(pc,CGO_STOP);
-  CGO_write_int(pc,CGO_STOP);
-
-  CGO_write_int(pc,CGO_STOP);
-  CGO_write_int(pc,CGO_STOP);
-  CGO_write_int(pc,CGO_STOP);
-  CGO_write_int(pc,CGO_STOP);
-  CGO_write_int(pc,CGO_STOP);
-
-  CGO_write_int(pc,CGO_STOP);
-
+  float *pc = CGO_size(I,I->c+CGO_STOP_ZEROS); 
+  UtilZeroMem(pc,sizeof(float)*CGO_STOP_ZEROS);
 }
 
 int CGOCheckComplex(CGO *I)

@@ -6,6 +6,8 @@ Changes up to 0.99
 
     beta22
 
+    * dragging wizard, drag molecule (DrgM) mouse action
+
     * drag command & reconfigured editing mode mouse controls
 
     * reversed camera zoom behavior, added legacy_mouse_zoom setting

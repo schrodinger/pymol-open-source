@@ -1336,6 +1336,10 @@ static PyObject *CmdGetState(PyObject *self, 	PyObject *args)
 {
   return(APIResultCode(SceneGetState(TempPyMOLGlobals)));
 }
+static PyObject *CmdGetEditorScheme(PyObject *self, 	PyObject *args)
+{
+  return(APIResultCode(EditorGetScheme(TempPyMOLGlobals)));
+}
 
 static PyObject *CmdGetFrame(PyObject *self, 	PyObject *args)
 {
@@ -3165,16 +3169,18 @@ static PyObject *CmdCreate(PyObject *dummy, PyObject *args)
 {
   char *str1,*str2;
   int target,source,discrete,quiet;
+  int singletons;
   OrthoLineType s1;
   int ok=false;
   int zoom;
-  ok = PyArg_ParseTuple(args,"ssiiiii",&str1,&str2,&source,
-                        &target,&discrete,&zoom,&quiet);
+  ok = PyArg_ParseTuple(args,"ssiiiiii",&str1,&str2,&source,
+                        &target,&discrete,&zoom,&quiet,&singletons);
   if (ok) {
     APIEntry();
     ok=(SelectorGetTmp(TempPyMOLGlobals,str2,s1)>=0);
     if(ok) ok = ExecutiveSeleToObject(TempPyMOLGlobals,str1,s1,
-                                      source,target,discrete,zoom,quiet); 
+                                      source,target,discrete,zoom,quiet,
+                                      singletons); 
     SelectorFreeTmp(TempPyMOLGlobals,s1);
     APIExit();
   }
@@ -5715,6 +5721,7 @@ static PyMethodDef Cmd_methods[] = {
    {"get_colorection",       CmdGetColorection,       METH_VARARGS },   
 	{"get_distance",          CmdGetDistance,          METH_VARARGS },
 	{"get_dihe",              CmdGetDihe,              METH_VARARGS },
+   {"get_editor_scheme",      CmdGetEditorScheme,      METH_VARARGS },
 	{"get_frame",             CmdGetFrame,             METH_VARARGS },
 	{"get_feedback",          CmdGetFeedback,          METH_VARARGS },
 	{"get_matrix",	           CmdGetMatrix,            METH_VARARGS },

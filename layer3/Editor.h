@@ -37,6 +37,10 @@ Z* -------------------------------------------------------------------
 #define cEditorDihe2    "_pkdihe2"
 #define cEditorDrag    "_drag"
 
+#define EDITOR_SCHEME_OBJ 1
+#define EDITOR_SCHEME_FRAG 2
+#define EDITOR_SCHEME_DRAG 3
+
 int EditorInit(PyMOLGlobals *G);
 int EditorActive(PyMOLGlobals *G); 
 void EditorRender(PyMOLGlobals *G,int state);
@@ -77,5 +81,6 @@ void EditorDefineExtraPks(PyMOLGlobals *G);
 int EditorGetNFrag(PyMOLGlobals *G);
 void EditorUpdate(PyMOLGlobals *G);
 void EditorMouseInvalid(PyMOLGlobals *G);
+int EditorGetScheme(PyMOLGlobals *G);
 
 #endif

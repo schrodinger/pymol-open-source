@@ -5679,7 +5679,7 @@ void SelectorUpdateCmd(PyMOLGlobals *G,int sele0,int sele1,int sta0, int sta1,
 
 int SelectorCreateObjectMolecule(PyMOLGlobals *G,int sele,char *name,
                                  int target,int source,int discrete,
-                                 int zoom,int quiet)
+                                 int zoom,int quiet,int singletons)
 {
   register CSelector *I=G->Selector;
   int ok=true;
@@ -5820,26 +5820,29 @@ int SelectorCreateObjectMolecule(PyMOLGlobals *G,int sele,char *name,
         if(I->Table[a].index>=0) {
           at=I->Table[a].atom;
           obj=I->Obj[I->Table[a].model];
+          cs1 = NULL;
           if(d<obj->NCSet) {
             cs1 = obj->CSet[d];
-            if(cs1) {
-              if((!cs2->Name[0])&&(cs1->Name[0])) /* copy the molecule name (if any) */
-                strcpy(cs2->Name,cs1->Name);
-              
-              if(obj->DiscreteFlag) {
-                if(cs1==obj->DiscreteCSet[at])
-                  a1=obj->DiscreteAtmToIdx[at];
-                else
-                  a1=-1;
-              } else 
-                a1 = cs1->AtmToIdx[at]; /* coord index in existing object */
-              if(a1>=0) {
-                copy3f(cs1->Coord+a1*3,cs2->Coord+c*3);
-                a2 = cs->IdxToAtm[I->Table[a].index]; /* actual merged atom index */
-                cs2->IdxToAtm[c] = a2;
-                cs2->AtmToIdx[a2] = c;
-                c++;
-              }
+          } else if(singletons&&(obj->NCSet==1)) {
+            cs1 = obj->CSet[0];
+          }
+          if(cs1) {
+            if((!cs2->Name[0])&&(cs1->Name[0])) /* copy the molecule name (if any) */
+              strcpy(cs2->Name,cs1->Name);
+            
+            if(obj->DiscreteFlag) {
+              if(cs1==obj->DiscreteCSet[at])
+                a1=obj->DiscreteAtmToIdx[at];
+              else
+                a1=-1;
+            } else 
+              a1 = cs1->AtmToIdx[at]; /* coord index in existing object */
+            if(a1>=0) {
+              copy3f(cs1->Coord+a1*3,cs2->Coord+c*3);
+              a2 = cs->IdxToAtm[I->Table[a].index]; /* actual merged atom index */
+              cs2->IdxToAtm[c] = a2;
+              cs2->AtmToIdx[a2] = c;
+              c++;
             }
           }
         }

@@ -3011,6 +3011,7 @@ static int SceneClick(Block *block,int button,int x,int y,
   case cButModeSimpleClick:
   case cButModeOrigAt:
   case cButModeCent:
+  case cButModeDragMol:
     if((I->StereoMode>1)&&(I->StereoMode<4))
       x = get_stereo_x(x,NULL,I->Width);
 
@@ -3044,7 +3045,15 @@ static int SceneClick(Block *block,int button,int x,int y,
         case cButModeSeleToggle:
           ExecutiveGetActiveSeleName(G,selName,true);
           break;
-          
+        case cButModeDragMol:
+          {
+            objMol = (ObjectMolecule*)obj;            
+            ObjectMoleculeGetAtomSeleLog(objMol,I->LastPicked.index,buf1,false);
+            sprintf(buffer,"cmd.drag(\"bymol (%s)\")",buf1);
+            PParse(buffer);
+            PLog(buffer,cPLog_pym);
+          }
+          break;
         case cButModeOrigAt:
           SceneNoteMouseInteraction(G);
           {
@@ -4546,6 +4555,7 @@ void SceneRay(PyMOLGlobals *G,
   OrthoLineType prefix = "";
   SceneUnitContext context;
 
+
   if((!ray_width)||(!ray_height)) {
     if(ray_width&&(!ray_height)) {
       ray_height = (ray_width*I->Height)/I->Width;
@@ -4894,7 +4904,8 @@ void SceneRay(PyMOLGlobals *G,
 
   if(mode!=3)
     OrthoDirty(G);
-  
+
+
 }
 /*========================================================================*/
 void SceneCopy(PyMOLGlobals *G,GLenum buffer,int force)
@@ -4941,7 +4952,6 @@ void SceneUpdate(PyMOLGlobals *G)
   int cur_state = SettingGetGlobal_i(G,cSetting_state) - 1;
   int defer_builds_mode = SettingGetGlobal_b(G,cSetting_defer_builds_mode);
 
-
   PRINTFD(G,FB_Scene)
     " SceneUpdate: entered.\n"
     ENDFD;
@@ -4972,6 +4982,7 @@ void SceneUpdate(PyMOLGlobals *G)
         SettingSetGlobal_i(G,cSetting_frame, (cur_state+1));
     }
   }
+
   PRINTFD(G,FB_Scene)
     " SceneUpdate: leaving...\n"
     ENDFD;
@@ -5188,7 +5199,6 @@ void SceneRender(PyMOLGlobals *G,Pickable *pick,int x,int y,
     render_buffer = GL_BACK;
   }
 
-  
   if(I->cur_ani_elem < I->n_ani_elem ) { /* play motion animation */
     int cur = I->cur_ani_elem;
 

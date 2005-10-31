@@ -462,7 +462,7 @@ USAGE
         return r
 
     def create(name,selection,source_state=0,
-               target_state=0,discrete=0,zoom=-1,quiet=1):
+               target_state=0,discrete=0,zoom=-1,quiet=1,singletons=0):
         '''
 DESCRIPTION
 
@@ -508,7 +508,7 @@ SEE ALSO
                 name = "obj%02.0f" % sel_cnt
             r = _cmd.create(str(name),"("+str(selection)+")",
                             int(source_state)-1,int(target_state)-1,
-                            int(discrete),int(zoom),int(quiet))
+                            int(discrete),int(zoom),int(quiet),int(singletons))
         finally:
             unlock(r)
         if _raising(r): raise pymol.CmdException                                    

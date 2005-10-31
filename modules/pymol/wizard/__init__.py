@@ -6,10 +6,11 @@ class Wizard:
     event_mask_pick    = 1
     event_mask_select  = 2
     event_mask_key     = 4
-    event_mask_special = 8
-    event_mask_scene   = 16
-    event_mask_state   = 32
-    event_mask_frame   = 64
+    event_mask_special = 8 
+    event_mask_scene   = 16 # scene changed
+    event_mask_state   = 32 # state changed
+    event_mask_frame   = 64 # frame changed
+    event_mask_dirty   = 128 # anything changed (via OrthoDirty)
     
     def __init__(self):
         self.menu = {}
@@ -32,6 +33,9 @@ class Wizard:
         return None
 
     def do_frame(self,frame):
+        return None
+
+    def do_dirty(self):
         return None
     
     def do_pick(self,bondFlag):

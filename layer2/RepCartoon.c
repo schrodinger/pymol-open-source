@@ -1535,7 +1535,6 @@ Rep *RepCartoonNew(CoordSet *cs)
       }
     }
 
-
   I->ray = CGONew(G);
   
   if(alpha!=1.0F)
