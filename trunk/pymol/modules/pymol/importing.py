@@ -77,7 +77,8 @@ if __name__=='pymol.importing':
         sdf2 = 37     # SDF using C-based SDF parser (instead of Python)
         sdf2str = 38  # SDF ditto
         png = 39      # png image
-
+        psw = 40      #
+        
     loadable_sc = Shortcut(loadable.__dict__.keys()) 
     
     def set_session(session,quiet=1):
@@ -463,10 +464,10 @@ SEE ALSO
                     ftype = loadable.crd
                 elif re.search("\.rst$",filename,re.I):
                     ftype = loadable.crd
-                elif re.search("\.pse$|\.psw$",filename,re.I):
-                    if re.search("\.psw$",filename,re.I):
-                        go_to_first_scene = 1
+                elif re.search("\.pse$",filename,re.I):
                     ftype = loadable.pse
+                elif re.search("\.psw$",filename,re.I):
+                    ftype = loadable.psw
                 elif re.search("\.phi$",filename,re.I):
                     ftype = loadable.phi
                 elif re.search("\.mol2$",filename,re.I):
@@ -488,18 +489,26 @@ SEE ALSO
                 else:
                     ftype = loadable.pdb # default is PDB
             elif cmd.is_string(type):
-                try:
-                    ftype = int(type)
-                except:
-                    type = loadable_sc.auto_err(type,'file type')
-                    if hasattr(loadable,type):
-                        ftype = getattr(loadable,type)
-                    else:
-                        print "Error: unknown type '%s'",type
-                        raise pymol.CmdException
+                if hasattr(loadable,type):
+                    ftype = getattr(loadable,type)
+                else:
+                    try:
+                        ftype = int(type) # for some reason, these exceptions aren't always caught...
+                    except:
+                        type = loadable_sc.auto_err(type,'file type')
+                        if hasattr(loadable,type):
+                            ftype = getattr(loadable,type)
+                        else:
+                            print "Error: unknown type '%s'",type
+                            raise pymol.CmdException
             else:
                 ftype = int(type)
 
+    # special handling for PSW files 
+            if ftype == loadable.psw:
+                go_to_first_scene = 1                
+                ftype = loadable.pse
+                
     # get object name
             if len(str(object))==0:
                 oname = re.sub(r".*\/|.*\\","",filename) # strip path

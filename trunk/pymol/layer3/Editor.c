@@ -851,24 +851,28 @@ void EditorAttach(PyMOLGlobals *G,char *elem,int geom,int valence,
       obj1 = SelectorGetFastSingleObjectMolecule(G,sele1);
 
       if(obj0) {
-        ObjectMoleculeVerifyChemistry(obj0); /* remember chemistry for later */
-        state = SceneGetState(G);
-        if(obj1) {
-          if(obj0==obj1) {
-            /* bond mode - behave like replace */
-            EditorReplace(G,elem,geom,valence,name,quiet);
-          }
+        if(obj0->DiscreteFlag) {
+          ErrMessage(G,"Remove","Can't attach atoms onto discrete objects.");
         } else {
-          /* atom mode */
-          i0 = ObjectMoleculeGetAtomIndex(obj0,sele0); /* slow */
-          if(i0>=0) {
-            UtilNCopy(ai->elem,elem,sizeof(AtomName));
-            ai->geom=geom;
-            ai->valence=valence;
-            if(name[0])
-              UtilNCopy(ai->name,name,sizeof(AtomName));
-            ObjectMoleculeAttach(obj0,i0,ai); /* will free ai */
-            ai = NULL;
+          ObjectMoleculeVerifyChemistry(obj0); /* remember chemistry for later */
+          state = SceneGetState(G);
+          if(obj1) {
+            if(obj0==obj1) {
+              /* bond mode - behave like replace */
+              EditorReplace(G,elem,geom,valence,name,quiet);
+            }
+          } else {
+            /* atom mode */
+            i0 = ObjectMoleculeGetAtomIndex(obj0,sele0); /* slow */
+            if(i0>=0) {
+              UtilNCopy(ai->elem,elem,sizeof(AtomName));
+              ai->geom=geom;
+              ai->valence=valence;
+              if(name[0])
+                UtilNCopy(ai->name,name,sizeof(AtomName));
+              ObjectMoleculeAttach(obj0,i0,ai); /* will free ai */
+              ai = NULL;
+            }
           }
         }
       }
@@ -1010,26 +1014,30 @@ void EditorReplace(PyMOLGlobals *G,char *elem,int geom,int valence,char *name,in
   if(EditorActive(G)) {
     sele0 = SelectorIndexByName(G,cEditorSele1);
     obj0 = SelectorGetFastSingleObjectMolecule(G,sele0);    
-    ObjectMoleculeVerifyChemistry(obj0); /* remember chemistry for later */
-
-    state = SceneGetState(G);
-
-    if(sele0>=0) {
-      i0 = ObjectMoleculeGetAtomIndex(obj0,sele0); /* slow */
-      if(i0>=0) {
-        UtilNCopy(ai.elem,elem,sizeof(AtomName));
-        if(name[0])
-          UtilNCopy(ai.name,name,sizeof(AtomName));
-        ai.geom=geom;
-        ai.valence=valence;
-        ObjectMoleculePrepareAtom(obj0,i0,&ai);
-        ObjectMoleculePreposReplAtom(obj0,i0,&ai);
-        ObjectMoleculeReplaceAtom(obj0,i0,&ai); /* invalidates */
-        ObjectMoleculeVerifyChemistry(obj0);
-        ObjectMoleculeFillOpenValences(obj0,i0);
-        ObjectMoleculeSort(obj0);
-        ObjectMoleculeUpdateIDNumbers(obj0);
-        EditorInactivate(G);
+    if(obj0->DiscreteFlag) {
+      ErrMessage(G,"Remove","Can't attach atoms onto discrete objects.");
+    } else {
+      ObjectMoleculeVerifyChemistry(obj0); /* remember chemistry for later */
+      
+      state = SceneGetState(G);
+      
+      if(sele0>=0) {
+        i0 = ObjectMoleculeGetAtomIndex(obj0,sele0); /* slow */
+        if(i0>=0) {
+          UtilNCopy(ai.elem,elem,sizeof(AtomName));
+          if(name[0])
+            UtilNCopy(ai.name,name,sizeof(AtomName));
+          ai.geom=geom;
+          ai.valence=valence;
+          ObjectMoleculePrepareAtom(obj0,i0,&ai);
+          ObjectMoleculePreposReplAtom(obj0,i0,&ai);
+          ObjectMoleculeReplaceAtom(obj0,i0,&ai); /* invalidates */
+          ObjectMoleculeVerifyChemistry(obj0);
+          ObjectMoleculeFillOpenValences(obj0,i0);
+          ObjectMoleculeSort(obj0);
+          ObjectMoleculeUpdateIDNumbers(obj0);
+          EditorInactivate(G);
+        }
       }
     }
   }

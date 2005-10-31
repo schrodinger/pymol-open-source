@@ -7943,7 +7943,17 @@ void ObjectMoleculeSeleOp(ObjectMolecule *I,int sele,ObjectMoleculeOpRec *op)
 	case OMOP_Remove: /* flag atoms for deletion */
      ai=I->AtomInfo;
      if(I->DiscreteFlag) /* for now, can't remove atoms from discrete objects */
-       ErrMessage(G,"Remove","Can't remove atoms from discrete objects.");
+       for(a=0;a<I->NAtom;a++)
+         {         
+           ai->deleteFlag=false;
+           s=ai->selEntry;
+           if(SelectorIsMember(G,s,sele))
+             {
+               ErrMessage(G,"Remove","Can't remove atoms from discrete objects.");
+               break;
+             }
+           ai++;
+         }
      else
        for(a=0;a<I->NAtom;a++)
          {         

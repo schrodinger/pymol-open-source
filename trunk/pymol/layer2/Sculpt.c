@@ -902,7 +902,9 @@ static int SculptCheckBump(float *v1,float *v2,float *diff,
 #ifdef _PYMOL_INLINE
 __inline__
 #endif
-static int SculptCGOBump(float *v1,float *v2,float cutoff, 
+static int SculptCGOBump(float *v1,float *v2,
+                         float vdw1, float vdw2, 
+                         float cutoff, 
                          float min,float mid, float max,
                          float *good_color, 
                          float *bad_color,
@@ -930,7 +932,7 @@ static int SculptCGOBump(float *v1,float *v2,float cutoff,
       float good_bad = cutoff - dist; /* if negative, then good */
       float color_factor;
       float radius = 0.5*(good_bad - min);
-
+      
       if(good_bad<mid) {
         color_factor = 0.0F;
       } else {
@@ -971,7 +973,13 @@ static int SculptCGOBump(float *v1,float *v2,float cutoff,
             if(radius<0.01F) radius=0.01F;
 
             one_minus_delta = 1.0F - delta;
-            average3f(v1,v2,avg);
+            scale3f(v2,vdw1,avg);
+            scale3f(v1,vdw2,tmp);
+            add3f(tmp,avg,avg);
+            {
+              register float inv = 1.0F/(vdw1+vdw2);
+              scale3f(avg,inv,avg);
+            }
             scale3f(v1,delta,vv1);
             scale3f(avg,one_minus_delta,tmp);
             add3f(tmp,vv1,vv1);
@@ -1500,7 +1508,8 @@ float SculptIterateObject(CSculpt *I,ObjectMolecule *obj,
                                 v1 = cs->Coord+3*a1;
                                 if(vdw_vis_mode && cgo && 
                                    (n_cycle<1) && (!(ai0->protekted&&ai1->protekted))) {
-                                  SculptCGOBump(v0,v1,cutoff,vdw_vis_min,
+                                  SculptCGOBump(v0,v1,ai0->vdw,ai1->vdw,
+                                                cutoff,vdw_vis_min,
                                                 vdw_vis_mid, vdw_vis_max, 
                                                 good_color, bad_color, 
                                                 vdw_vis_mode,cgo);

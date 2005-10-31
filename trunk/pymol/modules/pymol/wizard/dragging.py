@@ -15,14 +15,13 @@ drag_sele = "_drag"
 class Dragging(Wizard):
 
     def __init__(self,*arg,**kw):
-        Wizard.__init__(self)
         self.valid = 1
+        Wizard.__init__(self)
         if len(arg):
             self.old_button_mode = int(arg[0])
         self.check_valid()
         if self.valid:
             self.recount()
-            self.do_dirty = self.check_valid
 
     def recount(self):
         self.atom_count = cmd.count_atoms(drag_sele)
@@ -33,6 +32,10 @@ class Dragging(Wizard):
 #        t = threading.Thread(target=delayed_disable,args=(drag_sele,0.5))
 #        t.setDaemon(1)
 #        t.start()
+
+    def do_dirty(self):
+        if self.valid:
+            self.check_valid()
         
     def check_valid(self):
         if cmd.get_editor_scheme()!=3:

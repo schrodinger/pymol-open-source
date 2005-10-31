@@ -40,7 +40,6 @@ class Mutagenesis(Wizard):
         self.load_library()
         self.status = 0 # 0 no selection, 1 mutagenizing
         self.bump_check = 1
-        self.bump_relax = 0 # not yet useful
         self.error = None
         self.object_name = None
         self.modes = [
@@ -160,8 +159,6 @@ class Mutagenesis(Wizard):
         cmd.delete(sele_name)
         cmd.delete(obj_name)
         cmd.delete(bump_name)
-        if self.bump_check:
-            cmd.set("sculpting",0,quiet=1)
         cmd.refresh_wizard()
         
     def apply(self):
@@ -344,16 +341,14 @@ class Mutagenesis(Wizard):
                          "(n;N and (%s in %s))"%(bump_name,obj_name))
                 cmd.protect("%s and not (%s in (%s and not name n+c+ca+o+h+ha))"%
                             (bump_name,bump_name,obj_name))
-                if not self.bump_relax:
-                    cmd.set("sculpting_cycles",0,bump_name,quiet=1)
-                else:
-                    cmd.set("sculpting_cycles",10,bump_name,quiet=1)
-                    cmd.show("lines",bump_name+" in "+obj_name)
                 cmd.sculpt_activate(bump_name)
-                cmd.set("sculpting",1,quiet=1)
-                cmd.set("sculpt_vdw_vis_mode",1,bump_name)
                 cmd.show("cgo",bump_name)
-                
+                # draw the bumps
+                cmd.set("sculpt_vdw_vis_mode",1,bump_name)
+                state = 1
+                for a in lib:
+                    cmd.sculpt_iterate(bump_name,state=state)
+                    state = state + 1
         else:
             cmd.create(obj_name,tmp_name,1,1)
             print " Mutagenesis: no rotamers found in library."
