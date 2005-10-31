@@ -693,7 +693,8 @@ int EditorTorsion(PyMOLGlobals *G,float angle)
 }
 
 /*========================================================================*/
-int EditorSelect(PyMOLGlobals *G,char *s0,char *s1,char *s2,char *s3,int pkresi,int pkbond,int quiet)
+int EditorSelect(PyMOLGlobals *G,char *s0,char *s1,char *s2,
+                 char *s3,int pkresi,int pkbond,int quiet)
 {
   int i0=-1;
   int i1=-1;

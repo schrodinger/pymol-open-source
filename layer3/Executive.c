@@ -4346,22 +4346,22 @@ int ExecutiveSetDihe(PyMOLGlobals *G,char *s0,char *s1,char *s2,char *s3,float v
   float change;
 
   if((sele0 = SelectorIndexByName(G,s0))<0)
-    ok = ErrMessage(G,"GetDihedral","Selection 1 invalid.");    
+    ok = ErrMessage(G,"SetDihedral","Selection 1 invalid.");    
   else if((sele1 = SelectorIndexByName(G,s1))<0)
-    ok = ErrMessage(G,"GetDihedral","Selection 2 invalid.");    
+    ok = ErrMessage(G,"SetDihedral","Selection 2 invalid.");    
   else if((sele2 = SelectorIndexByName(G,s2))<0)
-    ok = ErrMessage(G,"GetDihedral","Selection 3 invalid.");
+    ok = ErrMessage(G,"SetDihedral","Selection 3 invalid.");
   else if((sele3 = SelectorIndexByName(G,s3))<0)
-    ok = ErrMessage(G,"GetDihedral","Selection 4 invalid.");
+    ok = ErrMessage(G,"SetDihedral","Selection 4 invalid.");
   if(ok) {
     if (!SelectorGetSingleAtomVertex(G,sele0,state,v0))
-      ok = ErrMessage(G,"GetDihedral","Selection 1 doesn't contain a single atom/vertex.");          
+      ok = ErrMessage(G,"SetDihedral","Selection 1 doesn't contain a single atom/vertex.");          
     if (!SelectorGetSingleAtomVertex(G,sele1,state,v1))
-      ok = ErrMessage(G,"GetDihedral","Selection 2 doesn't contain a single atom/vertex.");          
+      ok = ErrMessage(G,"SetDihedral","Selection 2 doesn't contain a single atom/vertex.");          
     if (!SelectorGetSingleAtomVertex(G,sele2,state,v2))
-      ok = ErrMessage(G,"GetDihedral","Selection 3 doesn't contain a single atom/vertex.");          
+      ok = ErrMessage(G,"SetDihedral","Selection 3 doesn't contain a single atom/vertex.");          
     if (!SelectorGetSingleAtomVertex(G,sele3,state,v3))
-      ok = ErrMessage(G,"GetDihedral","Selection 4 doesn't contain a single atom/vertex.");          
+      ok = ErrMessage(G,"SetDihedral","Selection 4 doesn't contain a single atom/vertex.");          
   }
   if(ok) {
     current=rad_to_deg(get_dihedral3f(v0,v1,v2,v3));

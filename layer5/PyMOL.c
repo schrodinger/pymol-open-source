@@ -578,6 +578,10 @@ typedef struct _CPyMOL {
   ov_word lex_cgo_transparency;
   ov_word lex_legacy_mouse_zoom;
   ov_word lex_auto_number_selections;
+  ov_word lex_sculpt_vdw_vis_mode;
+  ov_word lex_sculpt_vdw_vis_min;
+  ov_word lex_sculpt_vdw_vis_mid;
+  ov_word lex_sculpt_vdw_vis_max;
 } _CPyMOL;
 
 /* convenience functions -- inline */
@@ -1164,6 +1168,10 @@ static OVstatus PyMOL_InitAPI(CPyMOL *I)
   LEX_SETTING(cgo_transparency, 441);
   LEX_SETTING(legacy_mouse_zoom, 442);
   LEX_SETTING(auto_number_selections, 443);
+  LEX_SETTING(sculpt_vdw_vis_mode, 444);
+  LEX_SETTING(sculpt_vdw_vis_min, 445);
+  LEX_SETTING(sculpt_vdw_vis_mid, 446);
+  LEX_SETTING(sculpt_vdw_vis_max, 447);
   return_OVstatus_SUCCESS;
 }
 

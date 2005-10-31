@@ -5108,7 +5108,7 @@ int ObjectMoleculeTransformSelection(ObjectMolecule *I,int state,
         int use_matrices = SettingGet_b(I->Obj.G,I->Obj.Setting,
                                         NULL,cSetting_use_state_matrices);
 
-        if(!homogenous) { /* convert matrix to homogenous */
+        if(global && !homogenous) { /* convert matrix to homogenous */
           convertTTTfR44f(matrix,homo_matrix);
           matrix = homo_matrix;
           input_matrix = homo_matrix;

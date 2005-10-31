@@ -6,6 +6,10 @@ Changes up to 0.99
 
     beta22
 
+    * bump check
+
+    * fixed busted GLU and GLN rotamers in library
+
     * dragging wizard, drag molecule (DrgM) mouse action
 
     * drag command & reconfigured editing mode mouse controls

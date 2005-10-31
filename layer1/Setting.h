@@ -593,6 +593,10 @@ CSetting *SettingNewFromPyList(PyMOLGlobals *G,PyObject *list);
 #define cSetting_cgo_transparency           441
 #define cSetting_legacy_mouse_zoom          442
 #define cSetting_auto_number_selections     443
+#define cSetting_sculpt_vdw_vis_mode        444
+#define cSetting_sculpt_vdw_vis_min         445
+#define cSetting_sculpt_vdw_vis_mid         446
+#define cSetting_sculpt_vdw_vis_max         447
 
 /* when you add a new settingg also remember:
    layer1/Setting.c
@@ -602,7 +606,7 @@ CSetting *SettingNewFromPyList(PyMOLGlobals *G,PyObject *list);
 
 /* cSetting_ss_INIT must always be last setting_index +1 */
 
-#define cSetting_INIT                       444
+#define cSetting_INIT                       448
 
 #endif
 

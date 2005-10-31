@@ -477,6 +477,10 @@ if __name__=='pymol.setting':
         cgo_transparency          = (441, '')
         legacy_mouse_zoom         = (442, '')
         auto_number_selections    = (443, '')
+        sculpt_vdw_vis_mode       = (444, '')
+        sculpt_vdw_vis_min        = (445, '')
+        sculpt_vdw_vis_mid        = (446, '')
+        sculpt_vdw_vis_max        = (447, '')
         
     setting_sc = Shortcut(SettingIndex.__dict__.keys())
 
