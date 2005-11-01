@@ -792,7 +792,8 @@ SEE ALSO
                     0.0,0.0,0.0,1.0,
                     float(view[ 9]),float(view[10]),float(view[11]),
                     float(view[12]),float(view[13]),float(view[14]),
-                    float(view[15]),float(view[16]),float(view[17])),quiet,float(animate))
+                    float(view[15]),float(view[16]),float(view[17])),
+		    int(quiet),float(animate))
             finally:
                 unlock(r)
         if _raising(r): raise QuietException
@@ -1237,7 +1238,7 @@ DEVELOPMENT TO DO
                         cmd.wizard()
                     if (ll>0) and (view):
                         if list[0]!=None:
-                            set_view(list[0],quiet,animate)
+                            set_view(list[0],animate,quiet)
                     if not quiet and _feedback(fb_module.scene,fb_mask.actions): # redundant
                         print " scene: \"%s\" recalled."%key
                 elif (action=='store') or (action=='update'):
@@ -1339,6 +1340,7 @@ DEVELOPMENT TO DO
                             scene(scene_name,'recall',animate=animate)
                     else: # otherwise put up blank screen
                         cmd.set('scene_current_name','',quiet=1)
+			chained = 0
                         if (setting.get("presentation")=="on"):
                             chained = chain_session()
                             if (not chained) and (setting.get("presentation_auto_quit")=="on"):
