@@ -752,7 +752,7 @@ SEE ALSO
             raise QuietException
         return r
 
-    def set_view(view,quiet=1,animate=0):
+    def set_view(view,animate=0,quiet=1):
         '''
 DESCRIPTION
 
