@@ -1214,6 +1214,58 @@ int PyMOL_FreeResultArray(CPyMOL *I,void *array)
   }
 }
 
+PyMOLreturn_status PyMOL_CmdSetView(CPyMOL *I, float *view, int view_len, float animate, int quiet)
+{
+  PyMOLreturn_status result;
+  SceneViewType tmp;
+  PYMOL_API_LOCK
+  if(view_len>=18) {
+    int a;
+    UtilZeroMem(tmp,sizeof(tmp));
+    tmp[15]=1.0F;
+    for(a=0;a<3;a++) {
+      tmp[a]=view[a];
+      tmp[a+4]=view[a+3];
+      tmp[a+8]=view[a+6];
+      tmp[a+16]=view[a+9];
+      tmp[a+19]=view[a+12];
+      tmp[a+22]=view[a+15];
+    }
+    SceneSetView(I->G,tmp,quiet,animate);  
+    result.status = get_status_ok(true);
+  } else {
+    result.status = get_status_ok(false);
+  }
+  PYMOL_API_UNLOCK
+  return result;
+}
+
+PyMOLreturn_float_array PyMOL_CmdGetView(CPyMOL *I,int quiet)
+{
+  PyMOLreturn_float_array result;
+  SceneViewType tmp;
+  PYMOL_API_LOCK
+  result.size = 18;
+  result.array = VLAlloc(float,result.size);
+  if(result.array) {
+    int a;
+    SceneGetView(I->G,tmp);
+    for(a=0;a<3;a++) {
+      result.array[a]=tmp[a];
+      result.array[a+3]=tmp[a+4];
+      result.array[a+6]=tmp[a+8];
+      result.array[a+9]=tmp[a+16];
+      result.array[a+12]=tmp[a+19];
+      result.array[a+15]=tmp[a+22];
+    }
+    result.status = get_status_ok(true);
+  } else {
+    result.status = get_status_ok(false);
+  }
+  PYMOL_API_UNLOCK
+  return result;
+}
+
 PyMOLreturn_float_array PyMOL_CmdAlign(CPyMOL *I, char *source, char *target, float cutoff, 
                                  int cycles, float gap, float extend, int max_gap, 
                                  char *object, char *matrix, int source_state, int target_state, 
