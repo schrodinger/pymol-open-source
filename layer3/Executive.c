@@ -3630,7 +3630,7 @@ void ExecutiveSelectRect(PyMOLGlobals *G,BlockRect *rect,int mode)
           }
         }
       } else {
-        if((mode==cButModeRectAdd)||(mode=cButModeSeleAdd)) {
+        if((mode==cButModeRectAdd)||(mode==cButModeSeleAdd)) {
           sprintf(buffer,"%s(?%s)",sel_mode_kw,cTempRectSele);
           SelectorCreate(G,selName,buffer,NULL,0,NULL);
           if(log_box) {

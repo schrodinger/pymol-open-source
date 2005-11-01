@@ -3565,7 +3565,6 @@ static int ObjectMapGRDStrToMap(ObjectMap *I,char *GRDStr,int bytes,int state)
               }
             } else {
               dens = *(f++);
-              printf("%7.3f",dens);
             }
             if(ok) {
               sumsq+=dens*dens;
@@ -3580,7 +3579,6 @@ static int ObjectMapGRDStrToMap(ObjectMap *I,char *GRDStr,int bytes,int state)
               F4(ms->Field->points,a,b,c,e) = vr[e];
             }
           }
-          printf("\n");
           if(!ascii) f++; /* skip fortran block delimiter */
         }
       }
