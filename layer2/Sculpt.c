@@ -1112,7 +1112,6 @@ float SculptIterateObject(CSculpt *I,ObjectMolecule *obj,
 
     cs = obj->CSet[state];
 
-    if(nb_skip<1) nb_skip=1;
     vdw = SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_sculpt_vdw_scale);
     vdw14 = SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_sculpt_vdw_scale14);
     vdw_wt = SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_sculpt_vdw_weight);
@@ -1144,7 +1143,8 @@ float SculptIterateObject(CSculpt *I,ObjectMolecule *obj,
     }
 
     nb_skip = SettingGet_i(G,cs->Setting,obj->Obj.Setting,cSetting_sculpt_nb_interval);
-
+    if(nb_skip<1) nb_skip=1;
+    
     n_active = 0;
     ai0=obj->AtomInfo;
     for(a=0;a<obj->NAtom;a++) {

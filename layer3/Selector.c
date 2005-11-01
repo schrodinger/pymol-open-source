@@ -6114,7 +6114,7 @@ int SelectorGetTmp(PyMOLGlobals *G,char *input,char *store)
 }
 int SelectorCheckTmp(PyMOLGlobals *G,char *name)
 {
-  if(WordMatch(G,cSelectorTmpPattern,name,false)+1==-strlen(cSelectorTmpPrefix))
+  if(WordMatch(G,cSelectorTmpPattern,name,false)+1 == -(int)strlen(cSelectorTmpPrefix))
     return true;
   else
     return false;
