@@ -1863,6 +1863,7 @@ void EditorDrag(PyMOLGlobals *G,ObjectMolecule *obj,int index,int mode,int state
         break;
       case cButModeRotFrag:
       case cButModeRotObj:
+      case cButModeRotView:
         if(I->DragHaveBase) {
           copy3f(I->DragBase,v3);
         } else {
@@ -1880,17 +1881,35 @@ void EditorDrag(PyMOLGlobals *G,ObjectMolecule *obj,int index,int mode,int state
         /* matrix m now contains a valid TTT rotation in global
            coordinate space that could be applied directly to the
            coordinates to effect the desired rotation */
-        if(use_matrices) {
-          ObjectMoleculeTransformState44f(obj,state,m,log_trans,false,true);
+        if(mode==cButModeRotView) {
+          /* modify the object's TTT */
+          ObjectCombineTTT(&obj->Obj, m);
         } else {
-          ObjectMoleculeTransformSelection(obj,state,I->DragSelection,
-                                           m,log_trans,I->DragSeleName,false,true);
+          if(use_matrices) {
+            ObjectMoleculeTransformState44f(obj,state,m,log_trans,false,true);
+          } else {
+            ObjectMoleculeTransformSelection(obj,state,I->DragSelection,
+                                             m,log_trans,I->DragSeleName,false,true);
+          }
         }
         SceneInvalidate(G);
         break;
       case cButModeTorFrag:
         ObjectMoleculeMoveAtom(obj,state,index,mov,1,log_trans);
         SceneInvalidate(G);
+        break;
+      case cButModeMovView:
+      case cButModeMovViewZ:
+#if 0
+        copy3f(mov,m+12); /* questionable... */
+        identity44f(m);
+
+        m[3]=mov[0];
+        m[7]=mov[1];
+        m[11]=mov[2];
+        ObjectCombineTTT(&obj->Obj,m);
+#endif
+        ObjectTranslateTTT(&obj->Obj,mov);
         break;
       case cButModeMovObj:
       case cButModeMovObjZ:

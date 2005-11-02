@@ -2947,6 +2947,9 @@ static int SceneClick(Block *block,int button,int x,int y,
   case cButModeRotObj:
   case cButModeMovObj:
   case cButModeMovObjZ:
+  case cButModeRotView:
+  case cButModeMovView:
+  case cButModeMovViewZ:
   case cButModeRotFrag:
   case cButModeMovFrag:
   case cButModeMovFragZ:
@@ -2979,7 +2982,6 @@ static int SceneClick(Block *block,int button,int x,int y,
         objMol->AtomInfo[I->LastPicked.index].protekted=2;
         break;
       case cObjectSlice:
-        
         if(ObjectSliceGetVertex((ObjectSlice*)obj,I->LastPicked.index,I->LastPicked.bond,I->LastPickVertex)) {
           I->LastPickVertexFlag=true;
         }
@@ -3812,6 +3814,9 @@ static int SceneDrag(Block *block,int x,int y,int mod,double when)
   case cButModeRotObj:
   case cButModeMovObj:
   case cButModeMovObjZ:
+  case cButModeRotView:
+  case cButModeMovView:
+  case cButModeMovViewZ:
   case cButModeRotFrag:
   case cButModeMovFrag:
   case cButModeMovFragZ:
@@ -3839,15 +3844,21 @@ static int SceneDrag(Block *block,int x,int y,int mod,double when)
               vScale*=2;
               x = get_stereo_x(x,&I->LastX,I->Width);
             }
-
-            if((mode==cButModeMovFragZ)||(mode==cButModeMovObjZ)||(mode==cButModeMoveAtomZ)) {
+            
+            switch(mode) {
+            case cButModeMovFragZ:
+            case cButModeMovObjZ:
+            case cButModeMovViewZ:
+            case cButModeMoveAtomZ:
               v2[0] = 0;
               v2[1] = 0;
               v2[2] = -(y-I->LastY)*vScale;
-            } else {
+              break;
+            default:
               v2[0] = (x-I->LastX)*vScale;
               v2[1] = (y-I->LastY)*vScale;
               v2[2] = 0;
+              break;
             }
 
             v3[0] = 0.0F;
@@ -5088,7 +5099,7 @@ static void SceneRenderAll(PyMOLGlobals *G,SceneUnitContext *context,
         glLineWidth(3.0);
       if(rec->obj->fRender)
         switch(rec->obj->Context) {
-        case 1:
+        case 1: /* unit context */
           {
             glPushAttrib(GL_LIGHTING_BIT);
             glMatrixMode(GL_PROJECTION);

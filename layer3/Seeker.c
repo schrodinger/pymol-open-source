@@ -1249,7 +1249,7 @@ void SeekerUpdate(PyMOLGlobals *G)
           UtilConcatVLA(&row->txt,&row->len," ");
           nCol++;
           break;
-        case 3:
+        case 3: /* chains */
           if(!AtomInfoSameChainP(G,last,ai)) {
             last = ai;
 
@@ -1330,6 +1330,8 @@ void SeekerUpdate(PyMOLGlobals *G)
               }
             }
           }
+          break;
+        case 5: /* movie frames */
           break;
         }
 

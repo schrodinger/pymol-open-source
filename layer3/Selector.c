@@ -4179,8 +4179,10 @@ float SelectorSumVDWOverlap(PyMOLGlobals *G,int sele1,int state1,int sele2,int s
   return(result);
 }
 /*========================================================================*/
-static int SelectorGetInterstateVLA(PyMOLGlobals *G,int sele1,int state1,int sele2,int state2,
-										float cutoff,int **vla) /* Assumes valid tables */
+static int SelectorGetInterstateVLA(PyMOLGlobals *G,
+                                    int sele1,int state1,
+                                    int sele2,int state2,
+                                    float cutoff,int **vla) /* Assumes valid tables */
 {
   register CSelector *I=G->Selector;
   MapType *map;

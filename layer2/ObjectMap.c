@@ -3304,7 +3304,7 @@ static int ObjectMapGRDStrToMap(ObjectMap *I,char *GRDStr,int bytes,int state)
 
   char *p;
   float dens;
-  float *f;
+  float *f = NULL;
   int a,b,c,d,e;
   float v[3],vr[3],maxd,mind;
   int ok = true;

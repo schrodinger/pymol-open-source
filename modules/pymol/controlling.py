@@ -101,21 +101,28 @@ if __name__=='pymol.controlling':
         'mvfz' : 42 ,
         'mvaz' : 43 ,
         'drgm' : 44 ,
-        
+
+        'rotv' : 45 ,
+        'movv' : 46 ,
+        'mvvz' : 47 ,
+
         }
     
     but_act_sc = Shortcut(but_act_code.keys())
 
     ring_dict = {
         'three_button' : [   'three_button_viewing',
-                                    'three_button_editing' ],
+                             'three_button_editing' ],
         'two_button' : [ 'two_button_viewing',
-                              'two_button_selecting',
-                                         ],
+                         'two_button_selecting',
+                         ],
         'two_button_editing' : [ 'two_button_viewing',
-                                         'two_button_selecting',
-                                         'two_button_editing',
-                                         ]
+                                 'two_button_selecting',
+                                 'two_button_editing',
+                                 ],
+        'three_button_morphing' : [   'three_button_viewing',
+                                      'three_button_editing',
+                                      'three_button_morphing' ],
         }
 
     def config_mouse(mode='three_button',quiet=1):
@@ -134,9 +141,10 @@ if __name__=='pymol.controlling':
     mode_name_dict = {
         'three_button_viewing' : '3-Button Viewing',
         'three_button_editing' : '3-Button Editing',
-        'two_button_viewing' : '2-Button Viewing',
+        'three_button_morphing': '3-Bttn. Morphing',
+        'two_button_viewing'   : '2-Button Viewing',
         'two_button_selecting' : '2-Btn. Selecting',
-        'two_button_editing' : '2-Button Editing',
+        'two_button_editing'   : '2-Button Editing',
         }
 
     mode_dict = {
@@ -187,6 +195,30 @@ if __name__=='pymol.controlling':
                                           ('single_middle','none','cent'),
                                           ('single_right','none', 'menu'),
                                           ],
+
+        'three_button_morphing': [ ('l','none','rota'),
+                                   ('m','none','move'),
+                                   ('r','none','movz'),
+                                   ('l','shft','rotv'),
+                                   ('m','shft','movv'),
+                                   ('r','shft','mvvz') ,                 
+                                   ('l','ctrl','torf'),
+                                   ('m','ctrl','pkat'),
+                                   ('r','ctrl','pktb'),                  
+                                   ('l','ctsh','mova'),
+                                   ('m','ctsh','orig'),
+                                   ('r','ctsh','clip'),
+                                   ('w','none','slab'),
+                                   ('w','shft','movs'),
+                                   ('w','ctrl','mvsz'),
+                                   ('w','ctsh','movz'),
+                                   ('double_left','none','torf'),
+                                   ('double_middle','none','drgm'),
+                                   ('double_right','none', 'pktb'),
+                                   ('single_left','none','pkat'),
+                                   ('single_middle','none','cent'),
+                                   ('single_right','none', 'menu'),
+                                   ],
 
         'two_button_viewing' : [ ('l','none','rota'),
                                          ('m','none','none'),
