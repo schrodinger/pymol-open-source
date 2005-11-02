@@ -27,11 +27,196 @@ Z* -------------------------------------------------------------------
 #include"Ray.h"
 #include"PConv.h"
 #include"MemoryDebug.h"
+#include"Movie.h"
 
 int ObjectGetNFrames(CObject *I);
 
 void ObjectDescribeElement(struct CObject *I,int index,char *buffer);
 CSetting **ObjectGetSettingHandle(struct CObject *I,int state);
+
+static void TTTToViewElem(float *TTT,CViewElem *elem)
+{
+  float *fp;
+  double *dp;
+
+  /* copy rotation matrix */
+  elem->matrix_flag = true;
+  dp = elem->matrix;
+  fp = TTT;
+  *(dp++) = (double) *(fp++);
+  *(dp++) = (double) *(fp++);
+  *(dp++) = (double) *(fp++);
+  *(dp++) = 0.0; fp++;
+
+  *(dp++) = (double) *(fp++);
+  *(dp++) = (double) *(fp++);
+  *(dp++) = (double) *(fp++);
+  *(dp++) = 0.0; fp++;
+
+  *(dp++) = (double) *(fp++);
+  *(dp++) = (double) *(fp++);
+  *(dp++) = (double) *(fp++);
+  *(dp++) = 0.0; 
+
+  *(dp++) = 0.0;
+  *(dp++) = 0.0;
+  *(dp++) = 0.0;
+  *(dp++) = 1.0;
+
+  /* copy inverse pre */
+
+  elem->pre_flag = true;
+  dp = elem->pre;
+  *(dp++) = (double) TTT[3];
+  *(dp++) = (double) TTT[7];
+  *(dp++) = (double) TTT[11];
+
+  /* copy post */
+
+  elem->post_flag = true;
+  dp = elem->post;
+  *(dp++) = (double) -TTT[12];
+  *(dp++) = (double) -TTT[13];
+  *(dp++) = (double) -TTT[14];
+  
+}
+
+static void TTTFromViewElem(float *TTT,CViewElem *elem)
+{
+  float *fp;
+  double *dp;
+
+  if(elem->matrix_flag) {
+    dp = elem->matrix;
+    fp = TTT;
+
+    *(fp++) = (float) *(dp++);
+    *(fp++) = (float) *(dp++);
+    *(fp++) = (float) *(dp++);
+    fp++; dp++;
+    
+    *(fp++) = (float) *(dp++);
+    *(fp++) = (float) *(dp++);
+    *(fp++) = (float) *(dp++);
+    fp++; dp++;
+
+
+    *(fp++) = (float) *(dp++);
+    *(fp++) = (float) *(dp++);
+    *(fp++) = (float) *(dp++);
+    fp++; dp++;
+  }
+
+  if(elem->pre_flag) {
+    dp = elem->pre;
+    TTT[3] = (float) *(dp++);
+    TTT[7] = (float) *(dp++);
+    TTT[11] = (float) *(dp++);
+  } 
+
+  if(elem->post_flag) {
+    dp = elem->post;
+    TTT[12] = (float) (-*(dp++));
+    TTT[13] = (float) (-*(dp++));
+    TTT[14] = (float) (-*(dp++));
+  }   
+  TTT[15] = 1.0F;
+}
+
+int ObjectView(CObject *I,int action,int first,int last,float power,float bias)
+{
+  register PyMOLGlobals *G = I->G;
+  int frame;
+  int nFrame = MovieGetLength(I->G);
+  if(!I->ViewElem) {
+    I->ViewElem = VLACalloc(CViewElem, 0);    
+  }
+
+  switch(action) {
+  case 0: /* set */
+    if(I->ViewElem && I->TTTFlag) {
+      if(first<0)
+        first = SceneGetFrame(G);
+      if(last<0)
+        last = first;
+      for(frame=first;frame<=last;frame++) {
+        if((frame>=0)&&(frame<nFrame)) {
+          VLACheck(I->ViewElem,CViewElem,frame);
+          PRINTFB(G,FB_Object,FB_Details)
+            " ObjectView: Setting frame %d.\n",frame+1
+            ENDFB(G);
+          TTTToViewElem(I->TTT,I->ViewElem+frame);          
+          I->ViewElem[frame].specification_level = 2;
+        }
+      }
+    }
+    break;
+  case 1: /* clear */
+    if(I->ViewElem) {
+      if(first<0)
+        first = SceneGetFrame(G);
+      if(last<0)
+        last = first;
+      for(frame=first;frame<=last;frame++) {
+        if((frame>=0)&&(frame<nFrame)) {
+          VLACheck(I->ViewElem,CViewElem,frame);
+          UtilZeroMem((void*)(I->ViewElem+frame),sizeof(CViewElem));
+        }
+      }
+    }
+    break;
+  case 2: /* interpolate & reinterpolate */
+  case 3:
+    {
+      CViewElem *first_view=NULL,*last_view=NULL;
+      if(first<0)
+        first = 0;
+      if(last<0)
+        last = SceneGetNFrame(G)-1;
+
+      VLACheck(I->ViewElem,CViewElem,last);
+      if(action==2) {
+        PRINTFB(G,FB_Object,FB_Details)
+          " ObjectView: interpolating unspecified frames %d to %d.\n",first+1,last+1
+          ENDFB(G);
+      } else {
+        PRINTFB(G,FB_Object,FB_Details)
+          " ObjectView: reinterpolating all frames %d to %d.\n",first+1,last+1
+          ENDFB(G);
+      }
+      for(frame=first;frame<=last;frame++) {
+        if((frame>=0)&&(frame<nFrame)) {
+          if(!first_view) {
+            if(I->ViewElem[frame].specification_level==2) { /* specified */
+              first_view = I->ViewElem + frame;
+            }
+          } else {
+            CViewElem *view;
+            int interpolate_flag = false;
+            if(I->ViewElem[frame].specification_level==2) { /* specified */
+              last_view = I->ViewElem + frame;
+              if(action==2) {/* interpolate */
+                for(view=first_view+1;view<last_view;view++) {
+                  if(!view->specification_level)
+                    interpolate_flag = true;
+                }
+              } else {
+                interpolate_flag=true;
+              }
+              if(interpolate_flag) {
+                ViewElemInterpolate(first_view,last_view,power,bias);
+              }
+              first_view = last_view;
+              last_view = NULL;
+            }
+          }
+        }
+      }
+    }
+    break;
+  }
+  return 1;
+}
 
 void ObjectAdjustStateRebuildRange(CObject *I,int *start, int *stop)
 {
@@ -197,6 +382,29 @@ void ObjectCombineTTT(CObject *I,float *ttt)
   combineTTT44f44f(ttt,cpy,I->TTT);
 }
 /*========================================================================*/
+void ObjectTranslateTTT(CObject *I,float *v)
+{
+#if 1
+  if(!I->TTTFlag) {
+    I->TTTFlag=true;
+    initializeTTT44f(I->TTT);
+  }
+  I->TTT[3]+=v[0];
+  I->TTT[7]+=v[1];
+  I->TTT[11]+=v[2];
+#else
+  float cpy[16];
+  if(!I->TTTFlag) {
+    I->TTTFlag=true;
+    initializeTTT44f(cpy);
+  } else {
+    UtilCopyMem(cpy,I->TTT,sizeof(float)*16);
+  }
+ combineTTT44f44f(ttt,cpy,I->TTT);
+#endif
+
+}
+/*========================================================================*/
 void ObjectSetTTT(CObject *I,float *ttt,int state)
 {
   if(state<0) {
@@ -214,6 +422,16 @@ void ObjectResetTTT(CObject *I)
 /*========================================================================*/
 void ObjectPrepareContext(CObject *I,CRay *ray)
 {
+  if(I->ViewElem) {
+    int frame = SceneGetFrame(I->G);
+    if(frame>=0) {
+      VLACheck(I->ViewElem,CViewElem,frame);
+      if(I->ViewElem[frame].specification_level) {
+        TTTFromViewElem(I->TTT,I->ViewElem + frame);
+        I->TTTFlag=true;
+      }
+    }
+  }
   if(ray) {
     RaySetTTT(ray,I->TTTFlag,I->TTT);
   } else {
@@ -252,6 +470,37 @@ void ObjectPrepareContext(CObject *I,CRay *ray)
 /*========================================================================*/
 void ObjectSetTTTOrigin(CObject *I,float *origin)
 {
+#if 1
+  float homo[16];
+  float *dst;
+  float pre[3],post[3];
+
+  if(!I->TTTFlag) {
+    I->TTTFlag = true;
+    initializeTTT44f(I->TTT);
+  }
+
+  /* convert the existing TTT into a homogenous transformation matrix */
+  
+  convertTTTfR44f(I->TTT, homo);
+  
+  /* now reset to the passed-in origin */
+
+  invert3f3f(origin, pre);
+
+  transform44f3fas33f3f(homo, origin, post);
+
+  homo[ 3] += post[0];
+  homo[ 7] += post[1];
+  homo[11] += post[2];
+
+  dst = homo+12;
+  
+  copy3f(pre,dst);
+
+  copy44f(homo,I->TTT);
+  
+#else
   if(!I->TTTFlag) {
     I->TTTFlag=true;
     initializeTTT44f(I->TTT);
@@ -266,7 +515,7 @@ void ObjectSetTTTOrigin(CObject *I,float *origin)
   I->TTT[3]+=origin[0]; /* add new origin into overall translation */
   I->TTT[7]+=origin[1];
   I->TTT[11]+=origin[2];
-
+#endif
   SceneInvalidate(I->G);
 
 }
@@ -310,8 +559,10 @@ void ObjectUpdate(struct CObject *I)
 /*========================================================================*/
 void ObjectPurge(CObject *I)
 {
-  if(I) 
+  if(I) {
     SettingFreeP(I->Setting);
+    VLAFreeP(I->ViewElem);
+  }
 }
 /*========================================================================*/
 void ObjectFree(CObject *I)
@@ -395,7 +646,7 @@ void ObjectInit(PyMOLGlobals *G,CObject *I)
   I->RepVis[cRepCell]=false;
   I->RepVis[cRepExtent]=false;
   I->Context=0;
-  
+  I->ViewElem = NULL;
 }
 
 void ObjectStateInit(PyMOLGlobals *G,CObjectState *I)

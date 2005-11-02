@@ -4,6 +4,12 @@ CHANGE LOG
 
 Changes up to 0.99
 
+    beta24
+
+    * proof of concept: molecular "Maya"
+
+    * restored ability to move slice objects using shift actions
+
     beta23
 
     * fixed newly introduced scene bugs from beta22

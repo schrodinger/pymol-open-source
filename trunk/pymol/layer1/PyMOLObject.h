@@ -23,6 +23,7 @@ Z* -------------------------------------------------------------------
 #include"Rep.h"
 #include"Setting.h"
 #include"PyMOLGlobals.h"
+#include"View.h"
 
 #define ObjNameMax        255
 #define cObjectMolecule     1
@@ -63,6 +64,8 @@ typedef struct CObject {
   CSetting *Setting;
   int Enabled; /* read-only... maintained by Scene */
   int Context; /* 0 = Camera, 1 = Unit Window, 2 = Scaled Window */
+  CViewElem *ViewElem; /* for animating objects via the TTT */
+  
 } CObject;
 
 void ObjectInit(PyMOLGlobals *G,CObject *I);
@@ -75,12 +78,14 @@ void ObjectToggleRepVis(CObject *I,int rep);
 void ObjectPrepareContext(CObject *I,CRay *ray);
 void ObjectSetTTT(CObject *I,float *ttt,int state);
 void ObjectCombineTTT(CObject *I,float *ttt);
+void ObjectTranslateTTT(CObject *T, float *v);
 void ObjectSetTTTOrigin(CObject *I,float *origin);
 void ObjectResetTTT(CObject *I);
 PyObject *ObjectAsPyList(CObject *I);
 int ObjectFromPyList(PyMOLGlobals *G,PyObject *list,CObject *I);
 int ObjectGetCurrentState(CObject *I,int ignore_all_states);
 void ObjectAdjustStateRebuildRange(CObject *I,int *start, int *stop);
+int ObjectView(CObject *I,int action,int first,int last,float power,float bias);
 
 typedef struct CObjectState {
   PyMOLGlobals *G;

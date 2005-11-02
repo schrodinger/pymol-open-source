@@ -2572,6 +2572,18 @@ void ObjectMoleculeRenderSele(ObjectMolecule *I,int curState,int sele)
             matrix = tmp_matrix;
           } else 
             matrix = NULL;
+
+          if(I->Obj.TTTFlag) {
+            if(!matrix) {
+              convertTTTfR44f(I->Obj.TTT, tmp_matrix);
+            } else {
+              float ttt[16];
+              convertTTTfR44f(I->Obj.TTT, ttt);
+              left_multiply44f44f(ttt,tmp_matrix);
+            }
+            matrix = tmp_matrix;
+          }
+
           for(a=0;a<nIndex;a++) {
             if(SelectorIsMember(G,atInfo[*(idx2atm++)].selEntry,sele)) {
               v = coord + a + a + a;

@@ -112,6 +112,7 @@ void copy44f44d ( float *src, double *dst );
 
 void copy44d33f ( double *src, float *dst );
 void copy33f44d ( float *src, double *dst );
+void copy33f44f ( float *src, float *dst );
 void copy3d3f ( double *v1,float *v2);
 void copy3f3d ( float *v1,double *v2);
 
@@ -119,6 +120,7 @@ void copy3f3d ( float *v1,double *v2);
    the last two matrices can be the same matrix! */
 
 void transpose33f33f ( float  *m1, float  *m2);
+void transpose44f44f ( float  *m1, float  *m2);
 void transform33f3f ( float  *m1, float  *m2,  float  *m3 );
 void transform33Tf3f ( float  *m1, float  *m2,  float  *m3 ); /* uses transpose */
 
@@ -128,6 +130,7 @@ void transform44f4f ( float  *m1, float  *m2,  float  *m3 );
 void transform44d3f ( double  *m1, float  *m2,  float  *m3 );
 void inverse_transform44d3f (double *m1, float *m2, float *m3);
 void inverse_transform44d3d (double *m1, double *m2, double *m3);
+void transform44f3fas33f3f (float *m1, float *m2, float *m3);
 void transform44d3fas33d3f (double *m1, float *m2, float *m3);
 
 void multiply33f33f ( float  *m1, float  *m2,  float  *m3 );
@@ -214,6 +217,7 @@ void transform5f3f ( oMatrix5f m, float *v1, float *v2 );
 
 float dot_product3f ( float *v1, float *v2 );
 void  invert3f ( float *v );
+void  invert3f3f (float *v1, float *v2);
 void  scale3f ( float *v1, float v0, float *v2);
 void  copy3f( float *src , float *dst);
 void  copy3d( double *src , double *dst);
@@ -234,6 +238,7 @@ void  swap1f (float *f, float *g);
 #define zero3f(v1) { (v1)[0]=0.0;(v1)[1]=0.0;(v1)[2]=0.0; }
 #define dot_product3f(v1,v2) ((v1)[0]*(v2)[0] + (v1)[1]*(v2)[1] + (v1)[2]*(v2)[2])
 #define invert3f(v) {(v)[0]=-(v)[0]; (v)[1]=-(v)[1]; (v)[2]=-(v)[2];}
+#define invert3f3f(v1,v2) {(v2)[0]=-(v1)[0]; (v2)[1]=-(v1)[1]; (v2)[2]=-(v1)[2];}
 #define scale3f(v1,v0,v2) {(v2)[0]=(v1)[0]*(v0); (v2)[1]=(v1)[1]*(v0); (v2)[2]=(v1)[2]*(v0);}
 #define copy3f(v1,v2) {(v2)[0]=(v1)[0]; (v2)[1]=(v1)[1]; (v2)[2]=(v1)[2];}
 #define copy3d(v1,v2) {(v2)[0]=(v1)[0]; (v2)[1]=(v1)[1]; (v2)[2]=(v1)[2];}

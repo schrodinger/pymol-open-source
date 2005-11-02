@@ -740,6 +740,7 @@ void ObjectSliceDrag(ObjectSlice *I, int state, int mode, float *pt, float *mov,
   if(oss) {
     switch(mode) {
     case cButModeRotFrag: /* rotated about origin */
+    case cButModeRotObj:
       {
         float v3[3];
         float n0[3];
@@ -773,6 +774,9 @@ void ObjectSliceDrag(ObjectSlice *I, int state, int mode, float *pt, float *mov,
       }
       break;
     case cButModeMovFrag: /* move along "up" direction */
+    case cButModeMovFragZ:
+    case cButModeMovObj:
+    case cButModeMovObjZ:
       {
         float up[3],v1[3];
         up[0]=oss->system[2];

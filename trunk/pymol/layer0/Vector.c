@@ -290,6 +290,13 @@ void invert3f (float *v)
   v[2]=-v[2];
 }
 
+void invert3f3f (float *v1,float *v2)
+{
+  v2[0]=-v1[0];
+  v2[1]=-v1[1];
+  v2[2]=-v1[2];
+}
+
 void scale3f ( float *v1,float v0,float *v2)
 {
   v2[0]=v1[0]*v0;
@@ -557,6 +564,30 @@ void copy33f44d ( float *src, double *dst )
   *(dst++)=_1;
 }
 
+void copy33f44f ( float *src, float *dst )
+{
+  const float _0 = 0.0;
+  *(dst++)=*(src++);
+  *(dst++)=*(src++);
+  *(dst++)=*(src++);
+  *(dst++)=_0;
+
+  *(dst++)=*(src++);
+  *(dst++)=*(src++);
+  *(dst++)=*(src++);
+  *(dst++)=_0;
+
+  *(dst++)=*(src++);
+  *(dst++)=*(src++);
+  *(dst++)=*(src++);
+  *(dst++)=_0;
+
+  *(dst++)=_0;
+  *(dst++)=_0;
+  *(dst++)=_0;
+  *(dst++)=_1;
+}
+
 void transform33f3f (float *m1, float *m2, float *m3) 
 {
   float m2r0=m2[0];
@@ -578,6 +609,29 @@ void transpose33f33f ( float  *m1, float  *m2)
   m2[6] = m1[2];
   m2[7] = m1[5];
   m2[8] = m1[8];
+}
+
+void transpose44f44f ( float  *m1, float  *m2)
+{
+  m2[0 ] = m1[0 ];
+  m2[1 ] = m1[4 ];
+  m2[2 ] = m1[8 ];
+  m2[3 ] = m1[12];
+
+  m2[4 ] = m1[1 ];
+  m2[5 ] = m1[5 ];
+  m2[6 ] = m1[9 ];
+  m2[7 ] = m1[13];
+
+  m2[8 ] = m1[2 ];
+  m2[9 ] = m1[6 ];
+  m2[10] = m1[10];
+  m2[11] = m1[14];
+
+  m2[12] = m1[3 ];
+  m2[13] = m1[7 ];
+  m2[14] = m1[11];
+  m2[15] = m1[15];
 }
 
 void transform33Tf3f (float *m1, float *m2, float *m3) 
@@ -618,6 +672,16 @@ void transform44d3fas33d3f (double *m1, float *m2, float *m3)
   m3[0] = (float) (m1[ 0] * m2r0 + m1[ 1] * m2r1 + m1[ 2] * m2r2);
   m3[1] = (float) (m1[ 4] * m2r0 + m1[ 5] * m2r1 + m1[ 6] * m2r2);
   m3[2] = (float) (m1[ 8] * m2r0 + m1[ 9] * m2r1 + m1[10] * m2r2);
+}
+
+void transform44f3fas33f3f (float *m1, float *m2, float *m3)
+{
+  register float m2r0 = m2[0];
+  register float m2r1 = m2[1];
+  register float m2r2 = m2[2];
+  m3[0] =  (m1[ 0] * m2r0 + m1[ 1] * m2r1 + m1[ 2] * m2r2);
+  m3[1] =  (m1[ 4] * m2r0 + m1[ 5] * m2r1 + m1[ 6] * m2r2);
+  m3[2] =  (m1[ 8] * m2r0 + m1[ 9] * m2r1 + m1[10] * m2r2);
 }
 
 void inverse_transform44d3f (double *m1, float *m2, float *m3)
@@ -670,7 +734,37 @@ void combineTTT44f44f( float *m1, float *m2, float *m3)
    TTTs are designed for easily creating movies of rotating 
    bodies! */
 {
+  float m1_homo[16];
+  float m2_homo[16];
+  float *src,*dst;
+  float pre[3],post[3];
 
+  /* convert the existing TTT into a homogenous transformation matrix */
+  
+  convertTTTfR44f(m1, m1_homo);
+  convertTTTfR44f(m2, m2_homo);
+  
+  /* combine the matrices */
+
+  left_multiply44f44f(m1_homo, m2_homo);
+
+  /* now use the origin from the most recent TTT */
+
+  src = m1+12;
+
+  transform44f3fas33f3f(m2_homo, src, post);
+
+  m2_homo[ 3] += post[0];
+  m2_homo[ 7] += post[1];
+  m2_homo[11] += post[2];
+
+  invert3f3f(src, pre);
+  dst = m2_homo+12;
+
+  copy3f(pre,dst);
+  copy44f(m2_homo,m3);
+
+#if 0  
   /*  dump44f(m1,"m1");
       dump44f(m2,"m2");*/
   /* pre-translation */
@@ -700,6 +794,7 @@ void combineTTT44f44f( float *m1, float *m2, float *m3)
   m3[ 3] = m1[ 3] + m2[ 3];
   m3[ 7] = m1[ 7] + m2[ 7];
   m3[11] = m1[11] + m2[11];
+#endif
 
 }
 

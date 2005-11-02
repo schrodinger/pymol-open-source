@@ -3988,10 +3988,20 @@ static PyObject *CmdMView(PyObject *self, 	PyObject *args)
   int ok=false;
   int action,first,last;
   float power,bias;
-  ok = PyArg_ParseTuple(args,"iiiff",&action,&first,&last,&power,&bias);
+  char *object;
+  ok = PyArg_ParseTuple(args,"iiiffs",&action,&first,&last,&power,&bias,&object);
   if (ok) {
     APIEntry();
-    ok = MovieView(TempPyMOLGlobals,action,first,last,power,bias);
+    if(object[0]) {
+      CObject *obj = ExecutiveFindObjectByName(TempPyMOLGlobals,object);
+      if(!obj) {
+        ok = false;
+      } else {
+        ok = ObjectView(obj,action,first,last,power,bias);
+      }
+    } else {
+      ok = MovieView(TempPyMOLGlobals,action,first,last,power,bias);
+    }
     APIExit();
   }
   return APIResultOk(ok);
