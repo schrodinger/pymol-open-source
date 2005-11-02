@@ -264,7 +264,8 @@ void SceneLoadAnimation(PyMOLGlobals *G, double duration)
     I->ani_elem[0].timing = now + 0.01;
     I->ani_elem[target].timing_flag = true;
     I->ani_elem[target].timing = now + duration;
-    ViewElemInterpolate(I->ani_elem, I->ani_elem + target, 2.0F, 1.0F);
+    ViewElemInterpolate(I->ani_elem, I->ani_elem + target, 
+                        2.0F, 1.0F, true, 0.0F);
     SceneFromViewElem(G,I->ani_elem);
     I->cur_ani_elem = 0;
     I->n_ani_elem = target;
@@ -1786,12 +1787,11 @@ void SceneOriginSet(PyMOLGlobals *G,float *origin,int preserve)
   register CScene *I=G->Scene;
   float v0[3],v1[3];
   
-  if(preserve) /* preserve current viewing location */
-	 {
-		subtract3f(origin,I->Origin,v0); /* model-space translation */
-		MatrixTransformC44fAs33f3f(I->RotMatrix,v0,v1); /* convert to view-space */
-		add3f(I->Pos,v1,I->Pos); /* offset view to compensate */
-	 }
+  if(preserve) {/* preserve current viewing location */
+    subtract3f(origin,I->Origin,v0); /* model-space translation */
+    MatrixTransformC44fAs33f3f(I->RotMatrix,v0,v1); /* convert to view-space */
+    add3f(I->Pos,v1,I->Pos); /* offset view to compensate */
+  }
   I->Origin[0]=origin[0]; /* move origin */
   I->Origin[1]=origin[1];
   I->Origin[2]=origin[2];

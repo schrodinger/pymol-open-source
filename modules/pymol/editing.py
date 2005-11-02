@@ -1252,11 +1252,7 @@ NOTES
             elif object_mode==0: # update the TTT display matrix
                 try:
                     lock()
-                    ttt = [1.0, 0.0, 0.0, shift[0],
-                             0.0, 1.0, 0.0, shift[1],
-                             0.0, 0.0, 1.0, shift[2],
-                             0.0, 0.0, 0.0, 1.0]
-                    r=_cmd.combine_object_ttt(str(object),ttt)
+                    r=_cmd.translate_object_ttt(str(object),shift)
                 finally:
                     unlock(r)
             elif object_mode==1: # transform object coordinates & history matrix
@@ -1349,10 +1345,11 @@ NOTES
                 r=cmd.transform_selection(selection,ttt,state=state)
             elif object_mode==0:
                 lock()
-                ttt = [mat[0][0],mat[0][1],mat[0][2], 0.0,
-                         mat[1][0],mat[1][1],mat[1][2], 0.0,
-                         mat[2][0],mat[2][1],mat[2][2], 0.0,
-                         0.0      ,0.0      ,0.0      , 1.0]
+                origin = _cmd.get_origin(str(object))
+                ttt = [mat[0][0],mat[0][1],mat[0][2], origin[0],
+                         mat[1][0],mat[1][1],mat[1][2], origin[1],
+                         mat[2][0],mat[2][1],mat[2][2], origin[2],
+                         -origin[0], -origin[1], -origin[2], 1.0]
                 r=_cmd.combine_object_ttt(str(object),ttt)
                 unlock(r)
             elif object_mode==1:

@@ -111,6 +111,7 @@ void copy44d44f ( double *src, float *dst );
 void copy44f44d ( float *src, double *dst );
 
 void copy44d33f ( double *src, float *dst );
+void copy44f33f ( float *src, float *dst );
 void copy33f44d ( float *src, double *dst );
 void copy33f44f ( float *src, float *dst );
 void copy3d3f ( double *v1,float *v2);
@@ -161,7 +162,8 @@ void multiply44f44f44f( float *left, float *right, float *product);
 void left_multiply44f44f( float *left, float *right);
 void right_multiply44f44f( float *left, float *right);
 
-void recondition44d( double *matrix);
+void recondition33d(double *matrix);
+void recondition44d(double *matrix);
 /* invert a 4x4 homogenous that contains just rotation & tranlation
   (e.g. no scaling & fourth row is 0,0,0,1) */
 void invert_special44d44d( double *original, double *inv);
@@ -191,7 +193,6 @@ typedef float *oMatrix3f[3];
 typedef float *oMatrix3d[3];
 
 double matdiffsq ( float *v1, oMatrix5f m, float *v2 );
-void find_axis( Matrix33d a, float *axis);
 
 /*void matcopy ( oMatrix5f to, oMatrix5f from );
   void mattran ( oMatrix5f nm, oMatrix5f om, int axis, float dist );
@@ -201,9 +202,6 @@ void find_axis( Matrix33d a, float *axis);
 void matrix_to_rotation(Matrix53f rot,float *axis, float *angle);
 void rotation_to_matrix(Matrix53f rot,float *axis, float angle);
 
-void matrix_interpolate(Matrix53f imat,Matrix53f mat,float *pivot,
-								float *axis,float angle,float tAngle,
-								int linear,int tLinear,float fxn);
 
 void transform3d3f ( oMatrix3d m1,float *v1,float *v2);
 void transform33d3f ( Matrix33d m1,float *v1,float *v2);

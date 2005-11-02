@@ -1900,15 +1900,6 @@ void EditorDrag(PyMOLGlobals *G,ObjectMolecule *obj,int index,int mode,int state
         break;
       case cButModeMovView:
       case cButModeMovViewZ:
-#if 0
-        copy3f(mov,m+12); /* questionable... */
-        identity44f(m);
-
-        m[3]=mov[0];
-        m[7]=mov[1];
-        m[11]=mov[2];
-        ObjectCombineTTT(&obj->Obj,m);
-#endif
         ObjectTranslateTTT(&obj->Obj,mov);
         break;
       case cButModeMovObj:

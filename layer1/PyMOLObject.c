@@ -36,94 +36,100 @@ CSetting **ObjectGetSettingHandle(struct CObject *I,int state);
 
 static void TTTToViewElem(float *TTT,CViewElem *elem)
 {
-  float *fp;
-  double *dp;
+  register float *fp = TTT;
+  register double *dp;
 
-  /* copy rotation matrix */
+  /* convert row-major TTT to column-major ViewElem */
+
   elem->matrix_flag = true;
   dp = elem->matrix;
-  fp = TTT;
-  *(dp++) = (double) *(fp++);
-  *(dp++) = (double) *(fp++);
-  *(dp++) = (double) *(fp++);
-  *(dp++) = 0.0; fp++;
 
-  *(dp++) = (double) *(fp++);
-  *(dp++) = (double) *(fp++);
-  *(dp++) = (double) *(fp++);
-  *(dp++) = 0.0; fp++;
+  dp[ 0] = (double) fp[ 0];
+  dp[ 1] = (double) fp[ 4];
+  dp[ 2] = (double) fp[ 8];
+  dp[ 3] = 0.0;
 
-  *(dp++) = (double) *(fp++);
-  *(dp++) = (double) *(fp++);
-  *(dp++) = (double) *(fp++);
-  *(dp++) = 0.0; 
+  dp[ 4] = (double) fp[ 1];
+  dp[ 5] = (double) fp[ 5];
+  dp[ 6] = (double) fp[ 9];
+  dp[ 7] = 0.0;
 
-  *(dp++) = 0.0;
-  *(dp++) = 0.0;
-  *(dp++) = 0.0;
-  *(dp++) = 1.0;
+  dp[ 8] = (double) fp[ 2];
+  dp[ 9] = (double) fp[ 6];
+  dp[10] = (double) fp[10];
+  dp[11] = 0.0;
+
+  dp[12] = 0.0;
+  dp[13] = 0.0;
+  dp[14] = 0.0;
+  dp[15] = 1.0;
 
   /* copy inverse pre */
 
   elem->pre_flag = true;
   dp = elem->pre;
-  *(dp++) = (double) TTT[3];
-  *(dp++) = (double) TTT[7];
-  *(dp++) = (double) TTT[11];
+  *(dp++) = (double) -TTT[12];
+  *(dp++) = (double) -TTT[13];
+  *(dp++) = (double) -TTT[14];
 
   /* copy post */
 
   elem->post_flag = true;
   dp = elem->post;
-  *(dp++) = (double) -TTT[12];
-  *(dp++) = (double) -TTT[13];
-  *(dp++) = (double) -TTT[14];
+  *(dp++) = (double) TTT[ 3];
+  *(dp++) = (double) TTT[ 7];
+  *(dp++) = (double) TTT[11];
   
 }
 
 static void TTTFromViewElem(float *TTT,CViewElem *elem)
 {
-  float *fp;
-  double *dp;
+  register float *fp = TTT;
+  register double *dp;
 
   if(elem->matrix_flag) {
     dp = elem->matrix;
-    fp = TTT;
 
-    *(fp++) = (float) *(dp++);
-    *(fp++) = (float) *(dp++);
-    *(fp++) = (float) *(dp++);
-    fp++; dp++;
+    fp[ 0] = (float) dp[ 0];
+    fp[ 1] = (float) dp[ 4];
+    fp[ 2] = (float) dp[ 8];
+    fp[ 3] = 0.0;
     
-    *(fp++) = (float) *(dp++);
-    *(fp++) = (float) *(dp++);
-    *(fp++) = (float) *(dp++);
-    fp++; dp++;
-
-
-    *(fp++) = (float) *(dp++);
-    *(fp++) = (float) *(dp++);
-    *(fp++) = (float) *(dp++);
-    fp++; dp++;
+    fp[ 4] = (float) dp[ 1];
+    fp[ 5] = (float) dp[ 5];
+    fp[ 6] = (float) dp[ 9];
+    fp[ 7] = 0.0;
+    
+    fp[ 8] = (float) dp[ 2];
+    fp[ 9] = (float) dp[ 6];
+    fp[10] = (float) dp[10];
+    fp[11] = 0.0;
+    
+    fp[12] = 0.0;
+    fp[13] = 0.0;
+    fp[14] = 0.0;
+    fp[15] = 1.0;
   }
-
+  
   if(elem->pre_flag) {
     dp = elem->pre;
-    TTT[3] = (float) *(dp++);
-    TTT[7] = (float) *(dp++);
-    TTT[11] = (float) *(dp++);
-  } 
-
+    fp[12] = (float) (-*(dp++));
+    fp[13] = (float) (-*(dp++));
+    fp[14] = (float) (-*(dp++));
+  }
+  
   if(elem->post_flag) {
     dp = elem->post;
-    TTT[12] = (float) (-*(dp++));
-    TTT[13] = (float) (-*(dp++));
-    TTT[14] = (float) (-*(dp++));
+    fp[ 3] = (float) *(dp++);
+    fp[ 7] = (float) *(dp++);
+    fp[11] = (float) *(dp++);
   }   
-  TTT[15] = 1.0F;
+  fp[15] = 1.0F;
 }
 
-int ObjectView(CObject *I,int action,int first,int last,float power,float bias)
+int ObjectView(CObject *I,int action,int first,
+               int last,float power,float bias,
+               int simple, float linear)
 {
   register PyMOLGlobals *G = I->G;
   int frame;
@@ -204,7 +210,9 @@ int ObjectView(CObject *I,int action,int first,int last,float power,float bias)
                 interpolate_flag=true;
               }
               if(interpolate_flag) {
-                ViewElemInterpolate(first_view,last_view,power,bias);
+                ViewElemInterpolate(first_view,last_view,
+                                    power,bias,
+                                    simple,linear);
               }
               first_view = last_view;
               last_view = NULL;
@@ -473,7 +481,7 @@ void ObjectSetTTTOrigin(CObject *I,float *origin)
 #if 1
   float homo[16];
   float *dst;
-  float pre[3],post[3];
+  float post[3];
 
   if(!I->TTTFlag) {
     I->TTTFlag = true;
@@ -485,9 +493,7 @@ void ObjectSetTTTOrigin(CObject *I,float *origin)
   convertTTTfR44f(I->TTT, homo);
   
   /* now reset to the passed-in origin */
-
-  invert3f3f(origin, pre);
-
+  
   transform44f3fas33f3f(homo, origin, post);
 
   homo[ 3] += post[0];
@@ -496,7 +502,7 @@ void ObjectSetTTTOrigin(CObject *I,float *origin)
 
   dst = homo+12;
   
-  copy3f(pre,dst);
+  invert3f3f(origin, dst);
 
   copy44f(homo,I->TTT);
   

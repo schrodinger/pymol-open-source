@@ -695,7 +695,9 @@ void MovieSetCommand(PyMOLGlobals *G,int frame,char *command)
 }
 
 /*========================================================================*/
-int MovieView(PyMOLGlobals *G,int action,int first,int last,float power,float bias)
+int MovieView(PyMOLGlobals *G,int action,int first,
+              int last,float power,float bias,
+              int simple, float linear)
 {
   register CMovie *I=G->Movie;
   int frame;
@@ -771,7 +773,8 @@ int MovieView(PyMOLGlobals *G,int action,int first,int last,float power,float bi
                 interpolate_flag=true;
               }
               if(interpolate_flag) {
-                ViewElemInterpolate(first_view,last_view,power,bias);
+                ViewElemInterpolate(first_view,last_view,
+                                    power,bias,simple,linear);
               }
               first_view = last_view;
               last_view = NULL;

@@ -85,7 +85,9 @@ PyObject *ObjectAsPyList(CObject *I);
 int ObjectFromPyList(PyMOLGlobals *G,PyObject *list,CObject *I);
 int ObjectGetCurrentState(CObject *I,int ignore_all_states);
 void ObjectAdjustStateRebuildRange(CObject *I,int *start, int *stop);
-int ObjectView(CObject *I,int action,int first,int last,float power,float bias);
+int ObjectView(CObject *I,int action,int first,
+               int last,float power,float bias,
+               int simple, float linear);
 
 typedef struct CObjectState {
   PyMOLGlobals *G;
