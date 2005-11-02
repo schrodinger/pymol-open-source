@@ -61,7 +61,9 @@ int MovieFrameToIndex(PyMOLGlobals *G,int frame);
 int MovieLocked(PyMOLGlobals *G);
 void MovieSetLock(PyMOLGlobals *G,int);
 int MovieDefined(PyMOLGlobals *G);
-int MovieView(PyMOLGlobals *G,int action,int first,int last,float power,float bias);
+int MovieView(PyMOLGlobals *G,int action,int first,
+              int last,float power,float bias,
+              int simple, float linear);
 void MovieFlushCommands(PyMOLGlobals *G);
 
 #define cMovieMatrixClear  0

@@ -493,6 +493,24 @@ void copy44d33f ( double *src, float *dst )
   src++;
 }
 
+void copy44f33f ( float *src, float *dst )
+{
+  *(dst++)=*(src++);
+  *(dst++)=*(src++);
+  *(dst++)=*(src++);
+  src++;
+
+  *(dst++)=*(src++);
+  *(dst++)=*(src++);
+  *(dst++)=*(src++);
+  src++;
+
+  *(dst++)=*(src++);
+  *(dst++)=*(src++);
+  *(dst++)=*(src++);
+  src++;
+}
+
 void copy44f44d ( float *src, double *dst)
 {
   *(dst++)=(double)*(src++);
@@ -751,50 +769,18 @@ void combineTTT44f44f( float *m1, float *m2, float *m3)
   /* now use the origin from the most recent TTT */
 
   src = m1+12;
+  invert3f3f(src, pre);
 
-  transform44f3fas33f3f(m2_homo, src, post);
+  transform44f3fas33f3f(m2_homo, pre, post);
 
   m2_homo[ 3] += post[0];
   m2_homo[ 7] += post[1];
   m2_homo[11] += post[2];
 
-  invert3f3f(src, pre);
   dst = m2_homo+12;
 
-  copy3f(pre,dst);
+  copy3f(src,dst);
   copy44f(m2_homo,m3);
-
-#if 0  
-  /*  dump44f(m1,"m1");
-      dump44f(m2,"m2");*/
-  /* pre-translation */
-
-  m3[12] = m1[12] + m2[12];
-  m3[13] = m1[13] + m2[13];
-  m3[14] = m1[14] + m2[14];
-
-  /* unused... */
-
-  m3[15] = m1[15] * m2[15];
-
-  /* transformation */
-
-  m3[ 0] = m1[ 0] * m2[ 0] + m1[ 1]  * m2[ 4] + m1[ 2] * m2[ 8];
-  m3[ 4] = m1[ 4] * m2[ 0] + m1[ 5]  * m2[ 4] + m1[ 6] * m2[ 8];
-  m3[ 8] = m1[ 8] * m2[ 0] + m1[ 9]  * m2[ 4] + m1[10] * m2[ 8];
-  m3[ 1] = m1[ 0] * m2[ 1] + m1[ 1]  * m2[ 5] + m1[ 2] * m2[ 9];
-  m3[ 5] = m1[ 4] * m2[ 1] + m1[ 5]  * m2[ 5] + m1[ 6] * m2[ 9];
-  m3[ 9] = m1[ 8] * m2[ 1] + m1[ 9]  * m2[ 5] + m1[10] * m2[ 9];
-  m3[ 2] = m1[ 0] * m2[ 2] + m1[ 1]  * m2[ 6] + m1[ 2] * m2[10];
-  m3[ 6] = m1[ 4] * m2[ 2] + m1[ 5]  * m2[ 6] + m1[ 6] * m2[10];
-  m3[10] = m1[ 8] * m2[ 2] + m1[ 9]  * m2[ 6] + m1[10] * m2[10];
-
-  /* post-translation */
-
-  m3[ 3] = m1[ 3] + m2[ 3];
-  m3[ 7] = m1[ 7] + m2[ 7];
-  m3[11] = m1[11] + m2[11];
-#endif
 
 }
 
@@ -1251,6 +1237,25 @@ static void normalize3dp( double *v1, double *v2, double *v3 )
 	 }
 } 
 
+void recondition33d(double *matrix)
+{
+  normalize3d(matrix);
+  normalize3d(matrix+3);
+  normalize3d(matrix+6);
+  normalize3dp(matrix + 0, matrix + 3, matrix + 6);
+  normalize3dp(matrix + 1, matrix + 4, matrix + 7);
+  normalize3dp(matrix + 2, matrix + 5, matrix + 8);
+  normalize3d(matrix);
+  normalize3d(matrix+3);
+  normalize3d(matrix+6);
+  normalize3dp(matrix + 0, matrix + 3, matrix + 6 );
+  normalize3dp(matrix + 1, matrix + 4, matrix + 7 );
+  normalize3dp(matrix + 2, matrix + 5, matrix + 8);
+  normalize3d(matrix);
+  normalize3d(matrix+3);
+  normalize3d(matrix+6);
+}
+
 void recondition44d(double *matrix)
 {
   normalize3d(matrix);
@@ -1382,6 +1387,7 @@ void get_rotation_about3f3fTTTf(float angle, float *dir, float *origin, float *t
   ttt[ 3] = origin[0];
   ttt[ 7] = origin[1];
   ttt[11] = origin[2];
+  ttt[15] = 1.0F;
 }
 
 void rotation_to_matrix33f(float *axis, float angle, Matrix33f mat)
@@ -1809,90 +1815,84 @@ void rotation_to_matrix(Matrix53f rot,float *axis, float angle)
   rotation_matrix3f(angle,axis[0],axis[1],axis[2],&rot[0][0]);
 }
 
-void matrix_interpolate(Matrix53f imat,Matrix53f mat,float *pivot,
-								float *axis,float angle,float tAngle,
-								int linear,int tLinear,float fxn)
+
+
+static void find_axis( Matrix33d a, float *axis)
 {
-  int a;
-  float pos[3],rotaxis[3],adj[3],adjdir[3],opp[3],oppdir[3];
-  float p0[3],p1[3],center[3];
-  float hyplen,adjlen,opplen;
-  float tAlpha;
+  doublereal at[3][3],v[3][3],vt[3][3],fv1[3][3];
+  integer iv1[3];
+  integer ierr;
+  integer nm,n,matz;
+  doublereal wr[3],wi[3];
+  /*p[3][3];*/
+  int x,y;
 
-			 /*           ______--------______
-           *        /____________          \
-           *     /   \   opp     |adj         \
-           *   |      \          |        trans   | 
-           * (CM)---------------------------------->(CM)
-           *    \       \        |               /
-           *       \      \hyp   |             /
-			  *          \p0   \    |adjdir   p1/
-			  *             \    \  |        /
-			  *                \  \ |     /     
-			  *                   \\|  /
-           *            <--------O pivot
-			  *                      F-raxis
-			  */
+  nm = 3;
+  n = 3;
+  matz = 1;
 
+  recondition33d(&a[0][0]); /* IMPORTANT! */
 
-  for(a=0;a<3;a++)
+  for(x=0;x<3;x++)
 	 {
-		imat[a][0]=_0;
-		imat[a][1]=_0;
-		imat[a][2]=_0;
-		imat[a][a]=_1;
-	 }
+		for(y=0;y<3;y++)
+		  {
+			 at[y][x] = a[x][y];
+		  }
+	 } 
 
-  if(!linear) {
-	 rotation_to_matrix(imat,axis,fxn*angle);
-  }
-  else {
-	 tLinear = true;
-  }
-  if(!tLinear)
+  pymol_rg_(&nm,&n,&at[0][0],wr,wi,&matz,&vt[0][0],iv1,&fv1[0][0],&ierr);
+
+  for(x=0;x<3;x++)
 	 {
-		subtract3f(mat[3],pivot,p0);
-		subtract3f(mat[4],pivot,p1);
+		for(y=0;y<3;y++)
+		  {
+			 v[y][x] = vt[x][y];
+		  }
+	 } 
 
-		/*		printf("length match? %8.3f %8.3f\n",length3f(p0),length3f(p1));*/
-		hyplen = (float)length3f(p0);
-		
-		average3f(mat[3],mat[4],center);
-		
-		cross_product3f(p1,p0,rotaxis);
-		normalize3f(rotaxis);
-		subtract3f(center,pivot,adjdir);
-		normalize3f(adjdir);
-		cross_product3f(rotaxis,adjdir,oppdir);
-		normalize3f(oppdir);
-		
-		tAlpha = (float)(fabs(0.5-fxn)*tAngle);
-		
-		opplen = (float)fabs(hyplen * sin(tAlpha));
-		adjlen = (float)fabs(hyplen * cos(tAlpha));
-		
-		scale3f(oppdir,opplen,opp);
-		scale3f(adjdir,adjlen,adj);
-		
-		add3f(pivot,adj,pos);
-		
-		if(fxn<=0.5) {
-		  add3f(pos,opp,pos);
-		} else {
-		  subtract3f(pos,opp,pos);
+  axis[0]=0.0F;
+  axis[1]=0.0F;
+  axis[2]=0.0F;
+
+  {
+    doublereal max_real = 0.0F, test_real;
+    doublereal min_imag = 1.0F, test_imag;
+    for(x=0;x<3;x++) { /* looking for an eigvalue of (1,0) */
+      /*      printf("wr %8.3f wi %8.3f\n",wr[x],wi[x]);
+      printf("%8.3f %8.3f %8.3f\n",
+      v[0][x],v[1][x],v[2][x]);*/
+      test_real = fabs(wr[x]);
+      test_imag = fabs(wi[x]);
+      
+      if((test_real>=max_real)&&(test_imag<=min_imag)) {
+        for(y=0;y<3;y++)
+          axis[y] = (float)v[y][x];
+        max_real = test_real;
+        min_imag = test_imag;
+      } else {
+        /*for(y=0;y<3;y++)
+          v[y][x]=_0;*/
       }
-	 }
-  else
-	 {
-		for(a=0;a<3;a++)
-		  pos[a] = (mat[3][a]*(_1-fxn))+(fxn*mat[4][a]);
-	 }
+    }
+  }
 
-  for(a=0;a<3;a++)
-	 {
-		imat[3][a] = mat[3][a];
-		imat[4][a] = pos[a];
-	 }
+  /*
+    printf("eigenvectors\n%8.3f %8.3f %8.3f\n",v[0][0],v[0][1],v[0][2]);
+    printf("%8.3f %8.3f %8.3f\n",v[1][0],v[1][1],v[1][2]);
+    printf("%8.3f %8.3f %8.3f\n",v[2][0],v[2][1],v[2][2]);
+    
+    
+    printf("eigenvalues\n%8.3f %8.3f %8.3f\n",wr[0],wr[1],wr[2]);
+    printf("%8.3f %8.3f %8.3f\n",wi[0],wi[1],wi[2]);
+
+    matrix_multiply33d33d(a,v,p);
+    
+    printf("invariance\n");
+    printf("%8.3f %8.3f %8.3f\n",p[0][0],p[0][1],p[0][2]);
+    printf("%8.3f %8.3f %8.3f\n",p[1][0],p[1][1],p[1][2]);
+    printf("%8.3f %8.3f %8.3f\n",p[2][0],p[2][1],p[2][2]);
+    */
 
 }
 
@@ -1903,17 +1903,19 @@ void matrix_to_rotation(Matrix53f rot,float *axis, float *angle)
   Matrix53f rotck;
   int a,b;
 
+
 #ifdef MATCHK
   printf("starting matrix\n");
-  for(a=0;a<5;a++)
+  for(a=0;a<3;a++)
 	 printf("%8.3f %8.3f %8.3f\n",rot[a][0],rot[a][1],rot[a][2]);
 #endif
 
   for(a=0;a<3;a++)
 	 for(b=0;b<3;b++)
-		rot3d[a][b] = rot[a][b];
+		rot3d[a][b] = (double)rot[a][b];
 
   find_axis(rot3d,axis);
+
 
   /* find a perpendicular vector */
 
@@ -1939,7 +1941,6 @@ void matrix_to_rotation(Matrix53f rot,float *axis, float *angle)
   if(((dirck[0]*axis[0])+(dirck[1]*axis[1])+(dirck[2]*axis[2]))<_0)
 	 *angle = -*angle;
 	 
-
   /*  printf("angle %8.3f \n",*angle);*/
 
   rotation_to_matrix(rotck,axis,*angle);
@@ -1954,78 +1955,5 @@ void matrix_to_rotation(Matrix53f rot,float *axis, float *angle)
 
 }
 
-
-void find_axis( Matrix33d a, float *axis)
-{
-  doublereal at[3][3],v[3][3],vt[3][3],fv1[3][3];
-  integer iv1[3];
-  integer ierr;
-  integer nm,n,matz;
-  doublereal wr[3],wi[3];
-  /*p[3][3];*/
-  int x,y;
-
-  nm = 3;
-  n = 3;
-  matz = 1;
-
-  for(x=0;x<3;x++)
-	 {
-		for(y=0;y<3;y++)
-		  {
-			 at[y][x] = a[x][y];
-		  }
-	 } 
-
-  pymol_rg_(&nm,&n,&at[0][0],wr,wi,&matz,&vt[0][0],iv1,&fv1[0][0],&ierr);
-
-  for(x=0;x<3;x++)
-	 {
-		for(y=0;y<3;y++)
-		  {
-			 v[y][x] = vt[x][y];
-		  }
-	 } 
-
-  axis[0]=0.0F;
-  axis[1]=0.0F;
-  axis[2]=0.0F;
-
-  {
-    double max_real = 0.0F;
-
-    for(x=0;x<3;x++) { /* looking for an eigvalue of (1,0) */
-      /*      printf("wr %8.3f wi %8.3f\n",wr[x],wi[x]);
-      printf("%8.3f %8.3f %8.3f\n",
-      v[0][x],v[1][x],v[2][x]);*/
-
-      if(fabs(wr[x])>=max_real) {
-        for(y=0;y<3;y++)
-          axis[y] = (float)v[y][x];
-        max_real = wr[x];
-      } else {
-        /*for(y=0;y<3;y++)
-          v[y][x]=_0;*/
-      }
-    }
-  }
-
-  /*
-    printf("eigenvectors\n%8.3f %8.3f %8.3f\n",v[0][0],v[0][1],v[0][2]);
-    printf("%8.3f %8.3f %8.3f\n",v[1][0],v[1][1],v[1][2]);
-    printf("%8.3f %8.3f %8.3f\n",v[2][0],v[2][1],v[2][2]);
-    
-    
-    printf("eigenvalues\n%8.3f %8.3f %8.3f\n",wr[0],wr[1],wr[2]);
-    printf("%8.3f %8.3f %8.3f\n",wi[0],wi[1],wi[2]);
-    
-    matrix_multiply33d33d(a,v,p);
-    
-    printf("invariance\n");
-    printf("%8.3f %8.3f %8.3f\n",p[0][0],p[0][1],p[0][2]);
-    printf("%8.3f %8.3f %8.3f\n",p[1][0],p[1][1],p[1][2]);
-    printf("%8.3f %8.3f %8.3f\n",p[2][0],p[2][1],p[2][2]);
-  */
-}
 
 

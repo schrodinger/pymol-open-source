@@ -8625,7 +8625,7 @@ int ExecutiveOrigin(PyMOLGlobals *G,char *name,int preserve,char *oname,float *p
   }
   if(ok) {
     if(name && name[0]) {
-      ok = ExecutiveGetExtent(G,name,mn,mx,(oname[0]==0),state,true);
+      ok = ExecutiveGetExtent(G,name,mn,mx,true,state,true);
       if(ok) {
         average3f(mn,mx,center);
         have_center = true;

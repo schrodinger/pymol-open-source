@@ -343,6 +343,39 @@ static PyObject *CmdGetColorection(PyObject *dummy, PyObject *args)
   return(APIAutoNone(result));
 }
 
+static PyObject *CmdGetOrigin(PyObject *dummy, PyObject *args)
+{
+  int ok=true;
+  float origin[3];
+  char *object;
+  ok = PyArg_ParseTuple(args,"s",&object);
+  if (ok) {
+    APIEnterBlocked();
+    if(!object[0]) {
+      SceneOriginGet(TempPyMOLGlobals,origin);
+    } else {
+      CObject *obj = ExecutiveFindObjectByName(TempPyMOLGlobals,object);
+      if(!obj) {
+        ok=false;
+      } else {
+        if(obj->TTTFlag) {
+          origin[0] = -obj->TTT[12];
+          origin[1] = -obj->TTT[13];
+          origin[2] = -obj->TTT[14];
+        } else {
+          SceneOriginGet(TempPyMOLGlobals,origin); /* otherwise, return scene origin */
+        }
+      }
+    }
+    APIExitBlocked();
+  }
+  if(ok) {
+    return(Py_BuildValue("fff",origin[0],origin[1],origin[2]));
+  } else {
+    return APIFailure();
+  }
+}
+
 static PyObject *CmdGetVis(PyObject *dummy, PyObject *args)
 {
   PyObject *result;
@@ -705,6 +738,28 @@ static PyObject *CmdSetObjectTTT(PyObject *self, 	PyObject *args)
   if(ok) {
     APIEntry();
     ExecutiveSetObjectTTT(TempPyMOLGlobals,name,ttt,state,quiet);
+    APIExit();
+  }
+  return APIResultOk(ok);
+}
+
+static PyObject *CmdTranslateObjectTTT(PyObject *self, 	PyObject *args)
+{
+  float mov[3];
+  char *name;
+  int ok=PyArg_ParseTuple(args,"s(fff)",
+                          &name,
+                          &mov[0],&mov[1],&mov[2]);
+  if(ok) {
+    APIEntry();
+    {
+      CObject *obj = ExecutiveFindObjectByName(TempPyMOLGlobals,name);
+      if(obj) {
+        ObjectTranslateTTT(obj,mov); 
+        SceneInvalidate(TempPyMOLGlobals);
+      } else
+        ok=false;
+    }
     APIExit();
   }
   return APIResultOk(ok);
@@ -3986,10 +4041,11 @@ static PyObject *CmdMSet(PyObject *self, 	PyObject *args)
 static PyObject *CmdMView(PyObject *self, 	PyObject *args)
 {
   int ok=false;
-  int action,first,last;
-  float power,bias;
+  int action,first,last, simple;
+  float power,bias,linear;
   char *object;
-  ok = PyArg_ParseTuple(args,"iiiffs",&action,&first,&last,&power,&bias,&object);
+  ok = PyArg_ParseTuple(args,"iiiffifs",&action,&first,&last,&power,
+                        &bias,&simple,&linear,&object);
   if (ok) {
     APIEntry();
     if(object[0]) {
@@ -3997,10 +4053,12 @@ static PyObject *CmdMView(PyObject *self, 	PyObject *args)
       if(!obj) {
         ok = false;
       } else {
-        ok = ObjectView(obj,action,first,last,power,bias);
+        if(simple<0) simple = 0; 
+        ok = ObjectView(obj,action,first,last,power,bias,simple,linear);
       }
     } else {
-      ok = MovieView(TempPyMOLGlobals,action,first,last,power,bias);
+      simple = true; /* because camera matrix does't work like a TTT */
+      ok = MovieView(TempPyMOLGlobals,action,first,last,power,bias,true,0.0F);
     }
     APIExit();
   }
@@ -5740,10 +5798,11 @@ static PyMethodDef Cmd_methods[] = {
 	{"get_model",	           CmdGetModel,             METH_VARARGS },
 	{"get_moment",	           CmdGetMoment,            METH_VARARGS },
    {"get_movie_locked",      CmdGetMovieLocked,       METH_VARARGS },
+   {"get_movie_playing",     CmdGetMoviePlaying,      METH_VARARGS },
    {"get_names",             CmdGetNames,             METH_VARARGS },
    {"get_object_color_index",CmdGetObjectColorIndex,  METH_VARARGS },
    {"get_object_matrix"     ,CmdGetObjectMatrix,      METH_VARARGS },
-   {"get_movie_playing",     CmdGetMoviePlaying,      METH_VARARGS },
+   {"get_origin"            , CmdGetOrigin,           METH_VARARGS },
 	{"get_position",	        CmdGetPosition,          METH_VARARGS },
 	{"get_povray",	           CmdGetPovRay,            METH_VARARGS },
    {"get_progress",          CmdGetProgress,          METH_VARARGS },
@@ -5882,6 +5941,7 @@ static PyMethodDef Cmd_methods[] = {
 	{"transform_object",      CmdTransformObject,      METH_VARARGS },
 	{"transform_selection",   CmdTransformSelection,   METH_VARARGS },
 	{"translate_atom",        CmdTranslateAtom,        METH_VARARGS },
+	{"translate_object_ttt",  CmdTranslateObjectTTT,   METH_VARARGS },
 	{"turn",	                 CmdTurn,                 METH_VARARGS },
 	{"viewport",              CmdViewport,             METH_VARARGS },
 	{"undo",                  CmdUndo,                 METH_VARARGS },
