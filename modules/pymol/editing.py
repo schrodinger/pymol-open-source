@@ -1296,7 +1296,8 @@ USAGE
 
 PYMOL API
 
-    cmd.rotate(list-or-string axis, string selection = "all", int state = 0,
+    cmd.rotate(list-or-string axis, float angle,
+               string selection = "all", int state = 0,
                   int camera = 1, string object = None)
 
 EXAMPLES
