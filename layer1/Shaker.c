@@ -289,11 +289,13 @@ float ShakerDoPlan(float *v0,float *v1,float *v2,float *v3,
     
     if(dev>R_SMALL4) {
 
-      add3f(cp0,cp1,d0);
-      normalize3f(d0);
-
-      cross_product3f(cp0,d12,pos);
-      dp2 = dot_product3f(cp1,pos);
+      /*
+        add3f(cp0,cp1,d0);
+        normalize3f(d0);
+        
+        cross_product3f(cp0,d12,pos);
+        dp2 = dot_product3f(cp1,pos);
+      */
       
       if(fixed && (dp*target<0.0F)) {
         if(dp<0.0F) {
@@ -306,6 +308,14 @@ float ShakerDoPlan(float *v0,float *v1,float *v2,float *v3,
       } else {
         sc = wt*dev/2.0F;
       }
+      
+      if(fixed) {
+        sc *= 8;
+      } else {
+        sc *= 0.2F;
+      }
+
+      /* pair-wise nudges */
 
       subtract3f(v0,v3,d0);
       normalize3f(d0);
@@ -332,10 +342,9 @@ float ShakerDoPlan(float *v0,float *v1,float *v2,float *v3,
       add3f(push,p1,p1); 
       subtract3f(p3,push,p3);
 
-    }
-    
+    } else
 #endif    
-    result = 0.0;
+      result = 0.0;
   return result;
 
 }

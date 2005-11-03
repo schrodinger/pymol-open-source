@@ -160,12 +160,13 @@ static float ShakerDoTors(int type,float *v0,float *v1,float *v2,float *v3,
       result = 1.0F-dp;
     }
     break;
-  case cShakerTorsAmide: /* strongly favor trans over cis */
-    if((dp>-0.9F)&&(dp<1.0f)) {
+  case cShakerTorsAmide: 
+    if(dp>-0.7F) {
       result = 1.0F-dp;
-    } else if((dp<-0.9F)&&(dp>-1.0F))
+    } else {
       result = -1.0F-dp;
-    result *= 20.0F; /* emphasize */
+    }
+    result *= 50.0F; /* emphasize */
     break;
   case cShakerTorsDisulfide:
     if(fabs(dp)<tole)
@@ -772,8 +773,11 @@ void SculptMeasureObject(CSculpt *I,ObjectMolecule *obj,int state)
                           */
                           {
                             int fixed = false;
-                            /* look for 4, 5, 6, 7, or 8 cycle that connects back to b1 
-                               if found, then this planer system is fixed (it can't flip it over) */
+#if 0
+                            /* look for 4, 5, 6, 7, or 8 cycle that
+                               connects back to b1 if found, then this
+                               planer system is fixed (either at zero
+                               or 180 -- it can't flip it over) */
                             {
                               int b4,b5,b6,b7,b8,b9,b10;
                               int n3,n4,n5,n6,n7,n8,n9;
@@ -829,6 +833,66 @@ void SculptMeasureObject(CSculpt *I,ObjectMolecule *obj,int state)
                                 n3+=2;
                               }
                             }
+#else
+                            {
+                              /* b1\b0_b2/b3-b4-b5-b6-b7... */
+                              
+                              int b4,b5,b6,b7,b8,b9,b10;
+                              int n3,n4,n5,n6,n7,n8,n9;
+                              n3 = obj->Neighbor[b2]+1;
+                              while((!fixed)&&(b4 = obj->Neighbor[n3])>=0) {
+                                if(b4!=b0) {
+                                  n4 = obj->Neighbor[b4]+1;
+                                  while((!fixed)&&(b5 = obj->Neighbor[n4])>=0) {
+                                    if(b5!=b2) {
+                                      n5 = obj->Neighbor[b5]+1;
+                                      while((!fixed)&&(b6 = obj->Neighbor[n5])>=0) {
+                                        if(b6==b0) { /* 4-cycle */
+                                          fixed=true;
+                                        } else if((b6!=b4)&&(b6!=b2)) {
+                                          n6 = obj->Neighbor[b6]+1;
+                                          while((!fixed)&&(b7 = obj->Neighbor[n6])>=0) {
+                                            if(b7==b0) {  /* 5-cycle */
+                                              fixed=true;
+                                            } else if((b7!=b5)&&(b7!=b2)) {
+                                              n7 = obj->Neighbor[b7]+1;
+                                              while((!fixed)&&(b8 = obj->Neighbor[n7])>=0) {
+                                                if(b8==b0) {  /* 6-cycle */
+                                                  fixed=true;
+                                                } else if((b8!=b6)&&(b8!=b2)) {
+                                                  n8 = obj->Neighbor[b8]+1;
+                                                  while((!fixed)&&(b9 = obj->Neighbor[n8])>=0) {
+                                                    if(b9==b0) {  /* 7-cycle */
+                                                      fixed=true;
+                                                    } else if((b9!=b7)&&(b9!=b2)) {
+                                                      n9 = obj->Neighbor[b9]+1;
+                                                      while((!fixed)&&(b10 = obj->Neighbor[n9])>=0) {
+                                                        if(b10==b0) {  /* 8-cycle */
+                                                          fixed=true;
+                                                        } 
+                                                        n9+=2;
+                                                      }
+                                                    }
+                                                    n8+=2;
+                                                  }
+                                                }
+                                                n7+=2;
+                                              }
+                                            }
+                                            n6+=2;
+                                          }
+                                        }
+                                        n5+=2;
+                                      }
+                                    }
+                                    n4+=2;
+                                  }
+                                }
+                                n3+=2;
+                              }
+                            }
+#endif
+
                             if(use_cache) {
                               if(!SculptCacheQuery(G,cSculptPlan,
                                                    oai[b1].sculpt_id,
