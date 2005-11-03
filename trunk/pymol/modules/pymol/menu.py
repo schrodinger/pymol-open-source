@@ -774,7 +774,7 @@ def sele_action(s):
               [ 1, 'origin'         ,'cmd.origin("'+s+'")'          ],
               [ 1, 'orient'         ,'cmd.orient("'+s+'",animate=-1)'          ],
               [ 0, ''               ,''                             ],
-            [ 1, 'drag'       , 'cmd.drag("'+s+'")'    ],                        
+              [ 1, 'drag'       , 'cmd.drag("'+s+'")'    ],                        
               [ 0, ''               ,''                             ],
               [ 1, 'modify', modify_sele(s) ],
               [ 1, 'preset'         ,presets(s)         ],
@@ -815,6 +815,7 @@ def sele_action2(s):
               [ 1, 'movement'       , movement(s)         ],
               [ 1, 'compute'        , compute(s)         ],           
               ]
+
 
     
 def mol_action(s):
@@ -1157,6 +1158,7 @@ def pick_sele(title,s):
         [ 1, 'show'      , mol_show(s) ],
         [ 1, 'hide'      , mol_hide(s) ],
         [ 1, 'preset'  , presets(s)       ],      
+        [ 1, 'labels'      , mol_labels(s) ],
         [ 0, ''             , ''                      ],
         [ 1, 'zoom'           ,'cmd.zoom("'+s+'",animate=-1)'            ],
         [ 1, 'center'           ,'cmd.center("'+s+'",animate=-1)'            ],
@@ -1164,8 +1166,6 @@ def pick_sele(title,s):
         [ 1, 'orient'           ,'cmd.orient("'+s+'",animate=-1)'            ],
         [ 0, ''               ,''                             ],        
         [ 1, 'drag'             ,'cmd.drag("'+s+'")'            ],
-        [ 0, ''             , ''                      ],
-        [ 1, 'labels'      , mol_labels(s) ],
         ]
     return result
     
@@ -1176,6 +1176,7 @@ def pick_option(title,s,object=0):
         [ 1, 'show'      , mol_show(s) ],
         [ 1, 'hide'      , mol_hide(s) ],
         [ 1, 'preset'  , presets(s)       ],      
+        [ 1, 'labels'          , mol_labels(s) ],
         [ 0, ''             , ''                      ],
         [ 1, 'zoom'           ,'cmd.zoom("'+s+'",animate=-1)'            ],
         [ 1, 'center'           ,'cmd.center("'+s+'",animate=-1)'            ],
@@ -1184,24 +1185,22 @@ def pick_option(title,s,object=0):
         [ 1, 'indicate'        ,'cmd.indicate("'+s+'")'            ],
         [ 0, ''               ,''                             ],        
         [ 1, 'drag'             ,'cmd.drag("'+s+'")'            ],
-        [ 0, ''             , ''                      ],
-        [ 1, 'labels'      , mol_labels(s) ],
+        [ 1, 'masking'        , masking(s)         ],
+        [ 1, 'movement'       , movement(s)         ],
         ]
   
     if object:
         result.extend([
+            [ 1, 'delete'        ,'cmd.delete("'+s+'")'            ],
             [ 0, ''             , ''                      ],         
             [ 1, 'disable'        ,'cmd.disable("'+s+'")'            ],
-            [ 0, ''             , ''                      ],
-            [ 1, 'delete'        ,'cmd.delete("'+s+'")'            ]         
             ])
     else:
         result.extend([
+            [ 1, 'remove atoms' , 'cmd.remove("'+s+'")' ],     
             [ 0, ''             , ''                      ],      
             [ 1, 'create object','cmd.create(None,"'+s+'")'            ],      
-            [ 0, ''             , ''                      ],
-            [ 1, 'remove atoms' , 'cmd.remove("'+s+'")' ],     
-                          ])
+            ])
     return result
 
 def pick_option_rev(title,s,object=0):
@@ -1255,6 +1254,7 @@ def seq_option(title,s,object=0):
         [ 1, 'show'      , mol_show(s) ],
         [ 1, 'hide'      , mol_hide(s) ],
         [ 1, 'preset'  , presets(s)       ],      
+        [ 1, 'labels'      , mol_labels(s) ],
         [ 0, ''             , ''                      ],
         [ 1, 'zoom'           ,'cmd.zoom("'+s+'",animate=-1)'            ],
         [ 1, 'center'           ,'cmd.center("'+s+'",animate=-1)'            ],
@@ -1263,8 +1263,6 @@ def seq_option(title,s,object=0):
         [ 1, 'indicate'        ,'cmd.indicate("'+s+'")'            ],
         [ 0, ''               ,''                             ],        
         [ 1, 'drag'             ,'cmd.drag("'+s+'")'            ],
-        [ 0, ''             , ''                      ],
-        [ 1, 'labels'      , mol_labels(s) ],
         ]
     
     if object:
