@@ -54,27 +54,33 @@ class FetchPDB:
         
         if pdbCode: # None is returned for user cancel
             pdbCode = string.upper(pdbCode)
-            filename = urllib.urlretrieve('http://www.rcsb.org/pdb/cgi/export.cgi/' +
-                                                    pdbCode + '.pdb.gz?format=PDB&pdbId=' +
-                                                    pdbCode + '&compression=gz')[0]
-            if (os.path.getsize(filename) > 0): # If 0, then pdb code was invalid
-                # Uncompress the file while reading
-                fpin = gzip.open(filename)
-
-                # Form the pdb output name
-                outputname = os.path.dirname(filename) + os.sep + pdbCode + '.pdb'
-                fpout = open(outputname, 'w')
-                fpout.write(fpin.read()) # Write pdb file
-                
-                fpin.close()
-                fpout.close()
-                
-                cmd.load(outputname) # Load the fresh pdb
-
+            try:
+                filename = urllib.urlretrieve('http://www.rcsb.org/pdb/cgi/export.cgi/' +
+                                                        pdbCode + '.pdb.gz?format=PDB&pdbId=' +
+                                                        pdbCode + '&compression=gz')[0]
+            except:
+                tkMessageBox.showerror('Connection Error',
+                                       'Can not access to the PDB database.\n'+
+                                       'Please check your Internet access.',
+                                       parent=app.root)
             else:
-                tkMessageBox.showerror('Invalid Code',
-                                              'You entered an invalid pdb code:' + pdbCode,
-                                              parent=app.root)
+                if (os.path.getsize(filename) > 0): # If 0, then pdb code was invalid
+                    # Uncompress the file while reading
+                    fpin = gzip.open(filename)
 
-            os.remove(filename) # Remove tmp file (leave the pdb)
+                    # Form the pdb output name
+                    outputname = os.path.dirname(filename) + os.sep + pdbCode + '.pdb'
+                    fpout = open(outputname, 'w')
+                    fpout.write(fpin.read()) # Write pdb file
+
+                    fpin.close()
+                    fpout.close()
+
+                    cmd.load(outputname) # Load the fresh pdb
+                else:
+                    tkMessageBox.showerror('Invalid Code',
+                                                  'You entered an invalid pdb code:' + pdbCode,
+                                                  parent=app.root)
+
+                os.remove(filename) # Remove tmp file (leave the pdb)
 
