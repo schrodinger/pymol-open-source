@@ -24,6 +24,7 @@ Z* -------------------------------------------------------------------
 #define cOrthoBottomSceneMargin 16
 #define cOrthoLineHeight 12
 
+#include"os_gl.h"
 #include"Block.h"
 #include"Feedback.h"
 #include"Deferred.h"
@@ -97,6 +98,7 @@ int OrthoDeferredWaiting(PyMOLGlobals *G);
 
 void OrthoSetLoop(PyMOLGlobals *G,int flag, int l, int r, int t, int b);
 int OrthoGetRenderMode(PyMOLGlobals *G);
+void OrthoDrawBuffer(PyMOLGlobals *G,GLenum mode);
 #define OrthoLineLength 1024
 typedef char OrthoLineType[OrthoLineLength];
 
