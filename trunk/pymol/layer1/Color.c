@@ -41,7 +41,7 @@ static int AutoColor[] = {
 9    , /* salmon */
 29   , /* hydrogen */
 11   , /* slate */
-30   , /* brightorange */
+13   , /* orange */
 10   , /* lime */
 5262 , /* deepteal */
 12   , /* hotpink */
@@ -992,9 +992,9 @@ void ColorReset(PyMOLGlobals *G)
   n_color++;
 
   strcpy(color[n_color].Name,"sulfur");
-  color[n_color].Color[0]=1.0F;
-  color[n_color].Color[1]=0.5F;
-  color[n_color].Color[2]=0.0F;
+  color[n_color].Color[0]=0.9F; /* needs to be far enough from "yellow" */
+  color[n_color].Color[1]=0.775F; /* to be resolved, while still slightly on */
+  color[n_color].Color[2]=0.25F; /* the yellow side of yelloworange */
   n_color++;
 
   strcpy(color[n_color].Name,"tv_red");
