@@ -263,7 +263,7 @@ static void DrawBlueLine(PyMOLGlobals *G)
       GLint matrixMode;
       GLint vp[4];
   
-      glDrawBuffer(buffer);
+      OrthoDrawBuffer(G,buffer);
   
       glGetIntegerv(GL_VIEWPORT, vp);
       glViewport(0, 0, window_width, window_height);
@@ -740,11 +740,11 @@ static void MainDrawProgress(PyMOLGlobals *G)
       while(1) {
         if(draw_both) {
           if(!pass) 
-            glDrawBuffer(GL_FRONT_LEFT); 
+            OrthoDrawBuffer(G,GL_FRONT_LEFT); 
           else
-            glDrawBuffer(GL_FRONT_RIGHT);
+            OrthoDrawBuffer(G,GL_FRONT_RIGHT);
         } else {
-          glDrawBuffer(GL_FRONT); /* draw into the front buffer */
+          OrthoDrawBuffer(G,GL_FRONT); /* draw into the front buffer */
         }
         
         glColor3fv(black);
@@ -803,9 +803,9 @@ static void MainDrawProgress(PyMOLGlobals *G)
     glFlush();
     glFinish();
     if(draw_both)
-      glDrawBuffer(GL_BACK_LEFT);
+      OrthoDrawBuffer(G,GL_BACK_LEFT);
     else
-      glDrawBuffer(GL_BACK);      
+      OrthoDrawBuffer(G,GL_BACK);      
     }
     
     glPopMatrix();
@@ -957,18 +957,18 @@ void MainReshape(int width, int height) /* called by Glut */
           
           glClearColor(0.0,0.0,0.0,1.0);
           if(draw_both) {
-            glDrawBuffer(GL_FRONT_LEFT);
+            OrthoDrawBuffer(G,GL_FRONT_LEFT);
             glClear(GL_COLOR_BUFFER_BIT);
-            glDrawBuffer(GL_FRONT_LEFT);
+            OrthoDrawBuffer(G,GL_FRONT_LEFT);
             glClear(GL_COLOR_BUFFER_BIT);
-            glDrawBuffer(GL_BACK_LEFT);
+            OrthoDrawBuffer(G,GL_BACK_LEFT);
             glClear(GL_COLOR_BUFFER_BIT);
-            glDrawBuffer(GL_BACK_RIGHT);
+            OrthoDrawBuffer(G,GL_BACK_RIGHT);
             glClear(GL_COLOR_BUFFER_BIT);
           } else {
-            glDrawBuffer(GL_FRONT);
+            OrthoDrawBuffer(G,GL_FRONT);
             glClear(GL_COLOR_BUFFER_BIT);
-            glDrawBuffer(GL_BACK);
+            OrthoDrawBuffer(G,GL_BACK);
             glClear(GL_COLOR_BUFFER_BIT);
           }
         }

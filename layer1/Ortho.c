@@ -95,7 +95,7 @@ struct _COrtho {
   int RenderMode;
   GLint ViewPort[4];
   int WrapXFlag;
-
+  int ActiveGLBuffer;
 };
 
 static void OrthoBusyDraw(PyMOLGlobals *G,int force);
@@ -134,6 +134,16 @@ static int get_wrap_x(int x, int *last_x, int width)
   }
   return x;
 }
+
+void OrthoDrawBuffer(PyMOLGlobals *G,GLenum mode)
+{
+  register COrtho *I=G->Ortho;
+  if((mode!=I->ActiveGLBuffer) && G->HaveGUI && G->ValidContext) {  
+    glDrawBuffer(mode);
+    I->ActiveGLBuffer = mode;
+  }
+}
+
 int OrthoGetDirty(PyMOLGlobals *G)
 {
   register COrtho *I=G->Ortho;
@@ -437,11 +447,11 @@ static void OrthoBusyDraw(PyMOLGlobals *G,int force)
           while(1) {
             if(draw_both) {
               if(!pass) 
-                glDrawBuffer(GL_FRONT_LEFT); 
+                OrthoDrawBuffer(G,GL_FRONT_LEFT); 
               else
-                glDrawBuffer(GL_FRONT_RIGHT);
+                OrthoDrawBuffer(G,GL_FRONT_RIGHT);
             } else {
-              glDrawBuffer(GL_FRONT); /* draw into the front buffer */
+              OrthoDrawBuffer(G,GL_FRONT); /* draw into the front buffer */
             }
         
         
@@ -517,9 +527,9 @@ static void OrthoBusyDraw(PyMOLGlobals *G,int force)
           glFinish();
 		  
           if(draw_both)
-            glDrawBuffer(GL_BACK_LEFT);
+            OrthoDrawBuffer(G,GL_BACK_LEFT);
           else
-            glDrawBuffer(GL_BACK);      
+            OrthoDrawBuffer(G,GL_BACK);      
         }
                
         OrthoPopMatrix(G);
@@ -1059,14 +1069,14 @@ void OrthoDoDraw(PyMOLGlobals *G,int render_mode)
     
     if(render_mode<2) {
       if(SceneMustDrawBoth(G)) {
-        glDrawBuffer(GL_BACK_LEFT);
+        OrthoDrawBuffer(G,GL_BACK_LEFT);
         glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
-        glDrawBuffer(GL_BACK_RIGHT);
+        OrthoDrawBuffer(G,GL_BACK_RIGHT);
         glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
         times = 2;
         double_pump = true;
       } else {
-        glDrawBuffer(GL_BACK);
+        OrthoDrawBuffer(G,GL_BACK);
         glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
         times = 1;
         double_pump=false;
@@ -1085,14 +1095,14 @@ void OrthoDoDraw(PyMOLGlobals *G,int render_mode)
 
       switch(times) {
       case 1:
-        glDrawBuffer(GL_BACK_LEFT);
+        OrthoDrawBuffer(G,GL_BACK_LEFT);
 
         break;
       case 0:
         if(double_pump) {
-          glDrawBuffer(GL_BACK_RIGHT);
+          OrthoDrawBuffer(G,GL_BACK_RIGHT);
         } else
-          glDrawBuffer(GL_BACK);
+          OrthoDrawBuffer(G,GL_BACK);
         break;
       }
 
@@ -1720,7 +1730,7 @@ int OrthoInit(PyMOLGlobals *G,int showSplash)
   I->ShowLines = 1;
   I->Saved[0]=0;
   I->DirtyFlag = true;
-  
+  I->ActiveGLBuffer = GL_NONE;
   if(showSplash) {
 	 OrthoSplash(G);
     I->SplashFlag=true;
