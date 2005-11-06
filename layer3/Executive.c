@@ -2412,6 +2412,10 @@ static void ExecutiveMigrateSession(PyMOLGlobals *G,int session_version)
 {
   if(session_version<99) {
     SettingSetGlobal_f(G,cSetting_cartoon_ring_mode,0);
+    {
+      float old_sulfur[3] = {1.0, 0.5, 0.0};
+      ColorDef(G,"sulfur",old_sulfur);  
+    }
   }
   if(session_version<98) { /* produce expected rendering quality & performance with old sessions */
     SettingSetGlobal_b(G,cSetting_ray_orthoscopic,1);

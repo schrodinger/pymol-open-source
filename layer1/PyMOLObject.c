@@ -325,7 +325,7 @@ PyObject *ObjectAsPyList(CObject *I)
 #else
 
   PyObject *result = NULL;
-  result = PyList_New(12);
+  result = PyList_New(14);
   PyList_SetItem(result,0,PyInt_FromLong(I->type));
   PyList_SetItem(result,1,PyString_FromString(I->Name));
   PyList_SetItem(result,2,PyInt_FromLong(I->Color));
@@ -339,7 +339,15 @@ PyObject *ObjectAsPyList(CObject *I)
   PyList_SetItem(result,9,PyInt_FromLong(I->Enabled));
   PyList_SetItem(result,10,PyInt_FromLong(I->Context));
   PyList_SetItem(result,11,PConvFloatArrayToPyList(I->TTT,16));
-
+  PyList_SetItem(result,11,PConvFloatArrayToPyList(I->TTT,16));
+  if(I->ViewElem) {
+    int nFrame = VLAGetSize(I->ViewElem);
+    PyList_SetItem(result,12,PyInt_FromLong(nFrame));
+    PyList_SetItem(result,13,ViewElemVLAAsPyList(I->ViewElem,nFrame));
+  } else {
+    PyList_SetItem(result,12,PyInt_FromLong(0));
+    PyList_SetItem(result,13,PConvAutoNone(NULL));
+  }
   return(PConvAutoNone(result));
 #endif
 }
@@ -370,6 +378,18 @@ int ObjectFromPyList(PyMOLGlobals *G,PyObject *list,CObject *I)
   if(ok&&(ll>11)) ok = 
       PConvPyListToFloatArrayInPlaceAutoZero(
             PyList_GetItem(list,11),I->TTT,16);
+  if(ok&&(ll>13)) {
+    PyObject *tmp;
+    int nFrame;
+    VLAFreeP(I->ViewElem);
+    I->ViewElem = NULL;
+    if(ok) ok = PConvPyIntToInt(PyList_GetItem(list,12),&nFrame);
+    if(ok && nFrame) {
+      tmp = PyList_GetItem(list,13);
+      if(tmp && !(tmp == Py_None))
+        ok = ViewElemVLAFromPyList(tmp,&I->ViewElem,nFrame);
+    }
+  }
 
   /* TO SUPPORT BACKWARDS COMPATIBILITY...
    Always check ll when adding new PyList_GetItem's */

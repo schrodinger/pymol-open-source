@@ -205,7 +205,7 @@ def by_elem(s):
 [1,'\\955C\\777H\\229N\\922O\\950S...','util.cba(9,"'+s+'")'],# salmon
 [1,'\\888C\\777H\\229N\\922O\\950S...','util.cba(29,"'+s+'")'],# hydrogen
 [1,'\\449C\\777H\\229N\\922O\\950S...','util.cba(11,"'+s+'")'],# slate
-[1,'\\962C\\777H\\229N\\922O\\950S...','util.cba(30,"'+s+'")'],# brightorange
+[1,'\\962C\\777H\\229N\\922O\\950S...','util.cba(13,"'+s+'")'],# orange
         [ 1, 'set 2'     ,by_elem2(s)                    ],
         [ 1, 'set 3'     ,by_elem3(s)                    ],
         [ 1, 'set 4'     ,by_elem4(s)                    ],
@@ -770,9 +770,9 @@ def sele_action(s):
               [ 1, 'rename selection', 'cmd.wizard("renaming","'+s+'")'          ],
               [ 0, ''               ,''                             ],
               [ 1, 'zoom'           ,'cmd.zoom("'+s+'",animate=-1)'            ],
+              [ 1, 'orient'         ,'cmd.orient("'+s+'",animate=-1)'          ],
               [ 1, 'center'         ,'cmd.center("'+s+'",animate=-1)'            ],           
               [ 1, 'origin'         ,'cmd.origin("'+s+'")'          ],
-              [ 1, 'orient'         ,'cmd.orient("'+s+'",animate=-1)'          ],
               [ 0, ''               ,''                             ],
               [ 1, 'drag'       , 'cmd.drag("'+s+'")'    ],                        
               [ 0, ''               ,''                             ],
@@ -821,9 +821,9 @@ def sele_action2(s):
 def mol_action(s):
     return [[ 2, 'Actions:'     , ''                       ],     
               [ 1, 'zoom'         , 'cmd.zoom("'+s+'",animate=-1)'      ],
+              [ 1, 'orient'       , 'cmd.orient("'+s+'",animate=-1)'    ],
               [ 1, 'center'         ,'cmd.center("'+s+'",animate=-1)'            ],
               [ 1, 'origin'       , 'cmd.origin("'+s+'")'    ],
-              [ 1, 'orient'       , 'cmd.orient("'+s+'",animate=-1)'    ],
               [ 0, ''               ,''                             ],
               [ 1, 'drag'       , 'cmd.drag("'+s+'")'    ],            
               [ 0, ''          ,''                                              ],
@@ -917,9 +917,6 @@ def map_action(s):
               [ 1, 'surface'      , map_surface(s)  ],
               [ 1, 'slice'        , map_slice(s)  ],                        
               [ 0, ''             , ''                       ],
-              [ 1, 'center'       , 'cmd.center("'+s+'",animate=-1)'    ],           
-              [ 1, 'origin'       , 'cmd.origin("'+s+'")'    ],
-              [ 0, ''             , ''                       ],
               [ 1, 'zoom'         , 'cmd.zoom("'+s+'",animate=-1)'      ],
               [ 1, 'center'       , 'cmd.center("'+s+'",animate=-1)'    ],           
               [ 1, 'origin'       , 'cmd.origin("'+s+'")'    ],
@@ -952,9 +949,6 @@ def surface_action(s):
     return [[ 2, 'Actions:'     , ''                       ],
               [ 1, 'level'         , level(s)  ],
               [ 0, ''             , ''                       ],
-              [ 1, 'center'       , 'cmd.center("'+s+'",animate=-1)'    ],           
-              [ 1, 'origin'       , 'cmd.origin("'+s+'")'    ],
-              [ 0, ''             , ''                       ],
               [ 1, 'zoom'         , 'cmd.zoom("'+s+'",animate=-1)'      ],
               [ 1, 'center'       , 'cmd.center("'+s+'",animate=-1)'    ],           
               [ 1, 'origin'       , 'cmd.origin("'+s+'")'    ],
@@ -967,9 +961,6 @@ def surface_action(s):
 def mesh_action(s):
     return [[ 2, 'Actions:'     , ''                       ],
               [ 1, 'level'         , level(s)  ],
-              [ 0, ''             , ''                       ],
-              [ 1, 'center'       , 'cmd.center("'+s+'",animate=-1)'    ],           
-              [ 1, 'origin'       , 'cmd.origin("'+s+'")'    ],
               [ 0, ''             , ''                       ],
               [ 1, 'zoom'         , 'cmd.zoom("'+s+'",animate=-1)'      ],
               [ 1, 'center'       , 'cmd.center("'+s+'",animate=-1)'    ],           
@@ -1075,9 +1066,9 @@ def mol_labels(s):
 def mol_view(s):
     return [
         [ 1, 'zoom'           ,'cmd.zoom("'+s+'",animate=-1)'            ],
+        [ 1, 'orient'           ,'cmd.orient("'+s+'",animate=-1)'            ],
         [ 1, 'center'           ,'cmd.center("'+s+'",animate=-1)'            ],
         [ 1, 'origin'           ,'cmd.origin("'+s+'")'            ],
-        [ 1, 'orient'           ,'cmd.orient("'+s+'",animate=-1)'            ],
         ]
 
 def all_option(s):
@@ -1090,9 +1081,9 @@ def all_option(s):
         [ 1, 'preset'      , presets(s) ],
         [ 0, ''             , ''                      ],
         [ 1, 'zoom'           ,'cmd.zoom("'+s+'",animate=-1)'            ],
+        [ 1, 'orient'           ,'cmd.orient("'+s+'",animate=-1)'            ],
         [ 1, 'center'           ,'cmd.center("'+s+'",animate=-1)'            ],
         [ 1, 'origin'           ,'cmd.origin("'+s+'")'            ],
-        [ 1, 'orient'           ,'cmd.orient("'+s+'",animate=-1)'            ],
         [ 0, ''             , ''                      ],
         [ 1, 'label'      , mol_labels(s) ],
         [ 0, '', '' ],
@@ -1119,8 +1110,8 @@ def main_menu():
     return [
         [ 2, 'Main Pop-Up'  , '' ],
         [ 1, 'zoom (vis)'           ,'cmd.zoom("visible",animate=-1)'            ],
-        [ 1, 'center (vis)'           ,'cmd.center("visible",animate=-1)'            ],      
         [ 1, 'orient (vis)'           ,'cmd.orient("visible",animate=-1)'            ],
+        [ 1, 'center (vis)'           ,'cmd.center("visible",animate=-1)'            ],      
         [ 1, 'reset'           ,'cmd.reset()'            ],
         [ 0, ''             , ''                      ],
         [ 1, 'enable', enable_disable(1) ],
@@ -1161,9 +1152,9 @@ def pick_sele(title,s):
         [ 1, 'labels'      , mol_labels(s) ],
         [ 0, ''             , ''                      ],
         [ 1, 'zoom'           ,'cmd.zoom("'+s+'",animate=-1)'            ],
+        [ 1, 'orient'           ,'cmd.orient("'+s+'",animate=-1)'            ],
         [ 1, 'center'           ,'cmd.center("'+s+'",animate=-1)'            ],
         [ 1, 'origin'           ,'cmd.origin("'+s+'")'            ],
-        [ 1, 'orient'           ,'cmd.orient("'+s+'",animate=-1)'            ],
         [ 0, ''               ,''                             ],        
         [ 1, 'drag'             ,'cmd.drag("'+s+'")'            ],
         ]
@@ -1179,9 +1170,9 @@ def pick_option(title,s,object=0):
         [ 1, 'labels'          , mol_labels(s) ],
         [ 0, ''             , ''                      ],
         [ 1, 'zoom'           ,'cmd.zoom("'+s+'",animate=-1)'            ],
+        [ 1, 'orient'           ,'cmd.orient("'+s+'",animate=-1)'            ],
         [ 1, 'center'           ,'cmd.center("'+s+'",animate=-1)'            ],
         [ 1, 'origin'           ,'cmd.origin("'+s+'")'            ],
-        [ 1, 'orient'           ,'cmd.orient("'+s+'",animate=-1)'            ],
         [ 1, 'indicate'        ,'cmd.indicate("'+s+'")'            ],
         [ 0, ''               ,''                             ],        
         [ 1, 'drag'             ,'cmd.drag("'+s+'")'            ],
@@ -1257,9 +1248,9 @@ def seq_option(title,s,object=0):
         [ 1, 'labels'      , mol_labels(s) ],
         [ 0, ''             , ''                      ],
         [ 1, 'zoom'           ,'cmd.zoom("'+s+'",animate=-1)'            ],
+        [ 1, 'orient'           ,'cmd.orient("'+s+'",animate=-1)'            ],
         [ 1, 'center'           ,'cmd.center("'+s+'",animate=-1)'            ],
         [ 1, 'origin'           ,'cmd.origin("'+s+'")'            ],
-        [ 1, 'orient'           ,'cmd.orient("'+s+'",animate=-1)'            ],
         [ 1, 'indicate'        ,'cmd.indicate("'+s+'")'            ],
         [ 0, ''               ,''                             ],        
         [ 1, 'drag'             ,'cmd.drag("'+s+'")'            ],
