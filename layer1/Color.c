@@ -2229,9 +2229,8 @@ static void clamp_color(unsigned int *table, float *in, float *out, int big_endi
   unsigned int ra,ga,ba;
   unsigned int rc[2][2][2],gc[2][2][2],bc[2][2][2];
   unsigned int *entry;
-
-  float fr,fg,fb,frm1,fgm1,fbm1,rct,gct,bct;
   int x,y,z;  
+  float fr,fg,fb,frm1x, fgm1,fbm1,rct,gct,bct;
   const float _1 = 1.0F, _2 = 2.0F, _0 = 0.0F, _05 = 0.5F,
     _04999 = 0.4999F;
   const float inv255 = 1.0F/255.0F;
@@ -2275,7 +2274,7 @@ static void clamp_color(unsigned int *table, float *in, float *out, int big_endi
     }
   }
   
-  frm1 = rr/4.0F;
+  frm1x = rr/4.0F;
   fgm1 = gr/4.0F;
   fbm1 = br/4.0F;
   
@@ -2285,33 +2284,33 @@ static void clamp_color(unsigned int *table, float *in, float *out, int big_endi
   
   rct = _04999 + 
     (fr   * fg   * fb   * rc[0][0][0]) + 
-    (frm1 * fg   * fb   * rc[1][0][0]) + 
+    (frm1x * fg   * fb   * rc[1][0][0]) + 
     (fr   * fgm1 * fb   * rc[0][1][0]) + 
     (fr   * fg   * fbm1 * rc[0][0][1]) + 
-    (frm1 * fgm1 * fb   * rc[1][1][0]) + 
+    (frm1x * fgm1 * fb   * rc[1][1][0]) + 
     (fr   * fgm1 * fbm1 * rc[0][1][1]) + 
-    (frm1 * fg   * fbm1 * rc[1][0][1]) + 
-    (frm1 * fgm1 * fbm1 * rc[1][1][1]);
+    (frm1x * fg   * fbm1 * rc[1][0][1]) + 
+    (frm1x * fgm1 * fbm1 * rc[1][1][1]);
   
   gct = _04999 + 
     (fr   * fg   * fb   * gc[0][0][0]) + 
-    (frm1 * fg   * fb   * gc[1][0][0]) + 
+    (frm1x * fg   * fb   * gc[1][0][0]) + 
     (fr   * fgm1 * fb   * gc[0][1][0]) + 
     (fr   * fg   * fbm1 * gc[0][0][1]) + 
-    (frm1 * fgm1 * fb   * gc[1][1][0]) + 
+    (frm1x * fgm1 * fb   * gc[1][1][0]) + 
     (fr   * fgm1 * fbm1 * gc[0][1][1]) + 
-    (frm1 * fg   * fbm1 * gc[1][0][1]) + 
-    (frm1 * fgm1 * fbm1 * gc[1][1][1]);
+    (frm1x * fg   * fbm1 * gc[1][0][1]) + 
+    (frm1x * fgm1 * fbm1 * gc[1][1][1]);
   
   bct = _04999 + 
     (fr   * fg   * fb   * bc[0][0][0]) + 
-    (frm1 * fg   * fb   * bc[1][0][0]) + 
+    (frm1x * fg   * fb   * bc[1][0][0]) + 
     (fr   * fgm1 * fb   * bc[0][1][0]) + 
     (fr   * fg   * fbm1 * bc[0][0][1]) + 
-    (frm1 * fgm1 * fb   * bc[1][1][0]) + 
+    (frm1x * fgm1 * fb   * bc[1][1][0]) + 
     (fr   * fgm1 * fbm1 * bc[0][1][1]) + 
-    (frm1 * fg   * fbm1 * bc[1][0][1]) + 
-    (frm1 * fgm1 * fbm1 * bc[1][1][1]);
+    (frm1x * fg   * fbm1 * bc[1][0][1]) + 
+    (frm1x * fgm1 * fbm1 * bc[1][1][1]);
   
   if(r>=63) rct+=rr;
   if(g>=63) gct+=gr;
