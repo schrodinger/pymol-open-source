@@ -481,6 +481,9 @@ if __name__=='pymol.setting':
         sculpt_vdw_vis_min        = (445, '')
         sculpt_vdw_vis_mid        = (446, '')
         sculpt_vdw_vis_max        = (447, '')
+        cartoon_ladder_mode       = (448, '')
+        cartoon_ladder_radius     = (449, '')
+        cartoon_ladder_color      = (450, '')
         
     setting_sc = Shortcut(SettingIndex.__dict__.keys())
 

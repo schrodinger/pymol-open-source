@@ -582,6 +582,9 @@ typedef struct _CPyMOL {
   ov_word lex_sculpt_vdw_vis_min;
   ov_word lex_sculpt_vdw_vis_mid;
   ov_word lex_sculpt_vdw_vis_max;
+  ov_word lex_cartoon_ladder_mode;
+  ov_word lex_cartoon_ladder_radius;
+  ov_word lex_cartoon_ladder_color;
 } _CPyMOL;
 
 /* convenience functions -- inline */
@@ -1172,6 +1175,10 @@ static OVstatus PyMOL_InitAPI(CPyMOL *I)
   LEX_SETTING(sculpt_vdw_vis_min, 445);
   LEX_SETTING(sculpt_vdw_vis_mid, 446);
   LEX_SETTING(sculpt_vdw_vis_max, 447);
+  LEX_SETTING(cartoon_ladder_mode, 448);
+  LEX_SETTING(cartoon_ladder_radius, 449);
+  LEX_SETTING(cartoon_ladder_color, 450);
+
   return_OVstatus_SUCCESS;
 }
 

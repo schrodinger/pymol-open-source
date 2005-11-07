@@ -1503,6 +1503,9 @@ void SettingGenerateSideEffects(PyMOLGlobals *G,int index,char *sele,int state)
   case cSetting_cartoon_ring_finder:
   case cSetting_cartoon_ring_width:
   case cSetting_cartoon_ring_color:
+  case cSetting_cartoon_ladder_mode:
+  case cSetting_cartoon_ladder_radius:
+  case cSetting_cartoon_ladder_color:
   case cSetting_cartoon_sampling:
   case cSetting_cartoon_loop_quality:
   case cSetting_cartoon_loop_radius:
@@ -2547,7 +2550,7 @@ void SettingInitGlobal(PyMOLGlobals *G,int alloc,int reset_gui)
   SettingSet_i(I,cSetting_seq_view_location,0);
   SettingSet_b(I,cSetting_seq_view_overlay,0);
   SettingSet_b(I,cSetting_auto_classify_atoms,1);
-  SettingSet_i(I,cSetting_cartoon_nucleic_acid_mode,0);
+  SettingSet_i(I,cSetting_cartoon_nucleic_acid_mode,4);
   SettingSet_color(I,cSetting_seq_view_color, "-1");
   SettingSet_i(I,cSetting_seq_view_label_mode,2);
   SettingSet_i(I,cSetting_surface_ramp_above_mode,0);
@@ -2617,7 +2620,7 @@ void SettingInitGlobal(PyMOLGlobals *G,int alloc,int reset_gui)
   SettingSet_f(I,cSetting_cartoon_ring_width, 0.125F);
   SettingSet_color(I,cSetting_cartoon_ring_color, "-1");
   SettingSet_i(I,cSetting_cartoon_ring_finder, 1);
-  SettingSet_i(I,cSetting_cartoon_tube_cap,1);
+  SettingSet_i(I,cSetting_cartoon_tube_cap,2);
   SettingSet_i(I,cSetting_cartoon_loop_cap,1);
   SettingSet_i(I,cSetting_nvidia_bugs, 0);
   SettingSet_f(I,cSetting_image_dots_per_inch, 0.0F); /* default is to leave it unspecified in PNG file */
@@ -2634,6 +2637,9 @@ void SettingInitGlobal(PyMOLGlobals *G,int alloc,int reset_gui)
   SettingSet_f(I,cSetting_sculpt_vdw_vis_min, -0.1F);
   SettingSet_f(I,cSetting_sculpt_vdw_vis_mid, 0.1F);
   SettingSet_f(I,cSetting_sculpt_vdw_vis_max, 0.3F);
+  SettingSet_i(I,cSetting_cartoon_ladder_mode, 1);
+  SettingSet_f(I,cSetting_cartoon_ladder_radius, 0.25F);
+  SettingSet_color(I,cSetting_cartoon_ladder_color, "-1");
 }
 
 

@@ -2411,7 +2411,9 @@ int ExecutiveGetSession(PyMOLGlobals *G,PyObject *dict)
 static void ExecutiveMigrateSession(PyMOLGlobals *G,int session_version)
 {
   if(session_version<99) {
-    SettingSetGlobal_f(G,cSetting_cartoon_ring_mode,0);
+    SettingSetGlobal_f(G,cSetting_cartoon_ladder_mode,0);
+    SettingSetGlobal_f(G,cSetting_cartoon_tube_cap,0);
+    SettingSetGlobal_f(G,cSetting_cartoon_nucleic_acid_mode,1);
     {
       float old_sulfur[3] = {1.0, 0.5, 0.0};
       ColorDef(G,"sulfur",old_sulfur);  

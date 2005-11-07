@@ -117,12 +117,18 @@ static float smooth(float x,float power)
   }
 }
 
+#define NUCLEIC_NORMAL0 "C2"
+#define NUCLEIC_NORMAL1 "C3*"
+#define NUCLEIC_NORMAL2 "C3'"
+
 #define MAX_RING_ATOM 10
 
 /* atix must contain n_atom + 1 elements, with the first atom repeated at the end */
 
 static void do_ring(PyMOLGlobals *G,int n_atom, int *atix, ObjectMolecule *obj, 
-                    CoordSet *cs, float width, CGO *cgo, int ring_color, int ring_mode)
+                    CoordSet *cs, float width, CGO *cgo, int ring_color, int ring_mode,
+                    float ladder_radius, int ladder_color, int ladder_mode, int finder,
+                    int sc_helper, int *nuc_flag, int na_mode)
 {
   float *v_i[MAX_RING_ATOM];
   float *col[MAX_RING_ATOM];
@@ -166,159 +172,704 @@ static void do_ring(PyMOLGlobals *G,int n_atom, int *atix, ObjectMolecule *obj,
   }
   
   if(n_atom && have_all && (!all_marked)) {
-    float avg[3];
-    float avg_col[3];
-    int i;
-    float up[3],upi[3];
-    float vc0[3],vc1[3];
+    if(ladder_mode) {
 
+      int i;
+      int a1 = atix[i];
+      AtomInfoType *ai2;
+      register AtomInfoType *atomInfo = obj->AtomInfo;
+      register int mem0,mem1,mem2,mem3,mem4,mem5,mem6,mem7;
+      int nbr[7];
+      int sugar_at=-1,base_at=-1;
+      int phos3_at=-1,phos5_at=-1;
+      int o3_at=-1,o5_at=-1;
+      int purine_flag = false;
+      int nf = false;
 
-    /* compute average coordinate and mark atoms so that ring is only drawn once */
-    zero3f(avg);
-    zero3f(avg_col);
-    for(i=0;i<n_atom;i++) {
-      add3f(avg,v_i[i],avg);
-      add3f(avg_col,col[i],avg_col);
-      ai_i[i]->temp1 = true;
-    }
-    scale3f(avg,1.0F/n_atom,avg);
-    scale3f(avg_col,1.0F/n_atom,avg_col);
-
-    /* clear the normals */
-
-    for(i=0;i<=n_atom;i++) {
-      zero3f(n_up[i]);
-      zero3f(n_dn[i]);
-    }
-
-    /* compute average normals */
-
-    {
-      float acc[3];
-      int ii;
-
-      zero3f(acc);
-      for(i=0;i<n_atom;i++) {
-        ii=i+1;
-        subtract3f(v_i[i],avg,vc0);
-        subtract3f(v_i[ii],avg,vc1);
-        cross_product3f(vc0,vc1,up);
-        add3f(up,n_up[i],n_up[i]);
-        add3f(up,n_up[ii],n_dn[ii]);
-        if(!i) {
-          add3f(up,n_up[n_atom],n_up[n_atom]);
-        } else if(ii==n_atom) {
-          add3f(up,n_up[0],n_up[0]);
+      if(n_atom==5) { /* going from the sugar to the base */
+        for(i=0;i<n_atom;i++) {
+          a1 = atix[i];
+          if(!nf) nf = nuc_flag[a1];
+          ai = atomInfo+a1;
+          if((ai->protons == cAN_C) && (!ai->temp1) && 
+             (WordMatchExact(G,"C3*",ai->name,1)||
+              WordMatchExact(G,"C3'",ai->name,1))) {
+            sugar_at = a1;
+            mem0 = a1;
+            nbr[0]= obj->Neighbor[mem0]+1;
+            while((mem1 = obj->Neighbor[nbr[0]])>=0) {
+              if((atomInfo[mem1].protons==cAN_O) &&
+                 (!atomInfo[mem1].temp1)) {  
+                ai = atomInfo+mem1;
+                if(WordMatchExact(G,"O3*",ai->name,1)||
+                   WordMatchExact(G,"O3'",ai->name,1))
+                  o3_at = mem1;
+                nbr[1] = obj->Neighbor[mem1]+1;
+                while((mem2 = obj->Neighbor[nbr[1]])>=0) {
+                  if((mem2!=mem0)&& (!atomInfo[mem2].temp1) && 
+                     (atomInfo[mem2].protons==cAN_P)) { 
+                    phos3_at = mem2;
+                  }
+                  nbr[1]+=2;
+                }
+              }
+                
+              if((atomInfo[mem1].protons==cAN_C) &&
+                 (!atomInfo[mem1].temp1)) {
+                ai2 = atomInfo+mem1;  
+                if(WordMatchExact(G,NUCLEIC_NORMAL1,ai2->name,1)||
+                   WordMatchExact(G,NUCLEIC_NORMAL2,ai2->name,1))
+                  sugar_at = mem1;
+                  
+                nbr[1] = obj->Neighbor[mem1]+1;
+                while((mem2 = obj->Neighbor[nbr[1]])>=0) {
+                  if((mem2!=mem0)&& (!atomInfo[mem2].temp1) && 
+                     (atomInfo[mem2].protons==cAN_C)) { 
+                    nbr[2] = obj->Neighbor[mem2]+1;
+                    while((mem3 = obj->Neighbor[nbr[2]])>=0) {
+                      if((mem3!=mem1)&&(mem3!=mem0)) {
+                        if((atomInfo[mem3].protons==cAN_O) &&
+                           (!atomInfo[mem3].temp1)) {  
+                          ai = atomInfo+mem3;
+                          if(WordMatchExact(G,"O5*",ai->name,1)||
+                             WordMatchExact(G,"O5'",ai->name,1))
+                            o5_at = mem3;
+                  
+                          nbr[3] = obj->Neighbor[mem3]+1;
+                          while((mem4 = obj->Neighbor[nbr[3]])>=0) {
+                            if((mem4!=mem2)&& (!atomInfo[mem4].temp1) && 
+                               (atomInfo[mem4].protons==cAN_P)) { 
+                              phos5_at = mem4;
+                            }
+                            nbr[3]+=2;
+                          }
+                        }
+                        if(atomInfo[mem3].protons==cAN_N) {
+                            
+                          if(ring_mode) {
+                            ai2 = atomInfo + mem3;
+                            if((!ai2->temp1) && (WordMatchExact(G,"N1",ai2->name,1)||
+                                                 WordMatchExact(G,"N9",ai2->name,1))) {
+                              base_at = mem3;
+                            }
+                          } else {
+                            nbr[3] = obj->Neighbor[mem3]+1;
+                            while((mem4 = obj->Neighbor[nbr[3]])>=0) {
+                              if((mem4!=mem2)&&(mem4!=mem1)&&(mem4!=mem0)&&
+                                 (atomInfo[mem4].protons==cAN_C)) { 
+                                  
+                                nbr[4] = obj->Neighbor[mem4]+1;              
+                                while((mem5 = obj->Neighbor[nbr[4]])>=0) {
+                                  if((mem5!=mem3)&&(mem5!=mem2)&&(mem5!=mem1)&&(mem5!=mem0)&&
+                                     (atomInfo[mem5].protons==cAN_N)&&(atomInfo[mem5].temp1)) { /* must be in a mapped ring */
+                                    /* clear flag here */
+                                    purine_flag = false;
+                                      
+                                    nbr[5] = obj->Neighbor[mem5]+1;              
+                                    while((mem6 = obj->Neighbor[nbr[5]])>=0) {
+                                      if((mem6!=mem4)&&(mem6!=mem3)&&(mem6!=mem2)&&
+                                         (mem6!=mem1)&&(mem6!=mem0)&&
+                                         (atomInfo[mem6].protons==cAN_C)&&(atomInfo[mem6].temp1)) { 
+                                        nbr[6] = obj->Neighbor[mem6]+1;              
+                                        while((mem7 = obj->Neighbor[nbr[6]])>=0) {
+                                          ai2 = atomInfo + mem7;
+                                          if((mem7!=mem5)&&(mem7!=mem4)&&(mem7!=mem3)&&(mem7!=mem2)&&
+                                             (mem7!=mem2)&&(mem7!=mem1)&&(mem7!=mem0)&&
+                                             (ai2->protons==cAN_N)&&(ai2->temp1))   {
+                                            if(WordMatchExact(G,"N1",ai2->name,1)) {
+                                              /* and set flag */
+                                              base_at = mem7;
+                                              purine_flag = true;
+                                            }
+                                          }
+                                          nbr[6]+=2;
+                                        }
+                                      }
+                                      nbr[5]+=2;
+                                    }
+                                      
+                                    if(!purine_flag) {
+                                      ai2 = atomInfo + mem5;
+                                      if(ai2->temp1 && WordMatchExact(G,"N3",ai2->name,1)) {
+                                        base_at = mem5;
+                                      }
+                                    }
+                                  }
+                                  nbr[4]+=2;
+                                }
+                              }
+                              nbr[3]+=2;                          
+                            }
+                          }
+                        }
+                      }
+                      nbr[2]+=2;                          
+                    }
+                  }
+                  nbr[1]+=2;                          
+                }
+              }
+              nbr[0]+=2;                          
+            }
+          }
         }
-        add3f(up,acc,acc);
-      }
-      normalize3f(up);
-      scale3f(up,-1.0F,upi);
-    }
-
-    for(i=0;i<=n_atom;i++) {
-      normalize3f(n_up[i]);
-      scale3f(n_up[i],-1.0F,n_dn[i]);
-    }
-
-    {
-      int ii;
-      float mid[3];
-      float up_add[3];
-      float ct[3],cb[3];
-      float v0t[3],v0b[3];
-      float v1t[3],v1b[3];
-      float out[3];
-      float *color = NULL;
-
-      if(ring_color>=0) {
-        color=ColorGet(G,ring_color);
-      } else {
-        color=avg_col;
-      }
-      CGOColorv(cgo,color);
-
-      CGOBegin(cgo,GL_TRIANGLES);
+      } else if((!ring_mode)&&(n_atom==6)) { /* going from the base to the sugar */
         
+        for(i=0;i<n_atom;i++) {
+          a1 = atix[i];
+          if(!nf) nf = nuc_flag[a1];
+          ai = atomInfo+a1;
+          if((ai->protons == cAN_N) && (!ai->temp1) &&
+             (WordMatchExact(G,"N1",ai->name,1)||
+              WordMatchExact(G,"N3",ai->name,1))) {
+            mem0 = a1;
+            nbr[0]= obj->Neighbor[mem0]+1;
+            while((mem1 = obj->Neighbor[nbr[0]])>=0) {
+              if((atomInfo[mem1].protons==cAN_C) && 
+                 (!atomInfo[mem1].temp1)) {  
+                nbr[1] = obj->Neighbor[mem1]+1;
+                while((mem2 = obj->Neighbor[nbr[1]])>=0) {
+                  if((mem2!=mem0)&& (!atomInfo[mem2].temp1) && 
+                     (atomInfo[mem2].protons==cAN_N)) { 
+                    nbr[2] = obj->Neighbor[mem2]+1;
+                    while((mem3 = obj->Neighbor[nbr[2]])>=0) {
+                      if((mem3!=mem1)&&(mem3!=mem0)&&
+                         (atomInfo[mem3].protons==cAN_C)) {
+                        nbr[3] = obj->Neighbor[mem3]+1;
+                        while((mem4 = obj->Neighbor[nbr[3]])>=0) {
+                          if((mem4!=mem2)&&(mem4!=mem1)&&(mem4!=mem0)) {
+                            if((atomInfo[mem4].protons==cAN_N)) { /* purine case */
+                              nbr[4] = obj->Neighbor[mem4]+1;              
+                              while((mem5 = obj->Neighbor[nbr[4]])>=0) {
+                                if((mem5!=mem3)&&(mem5!=mem2)&&(mem5!=mem1)&&(mem5!=mem0)&&
+                                   (atomInfo[mem5].temp1)&& 
+                                   (atomInfo[mem5].protons==cAN_C)) {
+                                  nbr[5] = obj->Neighbor[mem5]+1;              
+                                  while((mem6 = obj->Neighbor[nbr[5]])>=0) {
+                                    if((mem6!=mem4)&&(mem6!=mem3)&&(mem6!=mem2)&&
+                                       (mem6!=mem1)&&(mem6!=mem0)&&
+                                       ((atomInfo[mem6].protons==cAN_C)||
+                                        (atomInfo[mem6].protons==cAN_O))
+                                       &&(atomInfo[mem6].temp1)) { 
+                                      nbr[6] = obj->Neighbor[mem6]+1;              
+                                      while((mem7 = obj->Neighbor[nbr[6]])>=0) {
+                                        ai2 = atomInfo + mem7;
+                                        if((mem7!=mem5)&&(mem7!=mem4)&&(mem7!=mem3)&&(mem7!=mem2)&&
+                                           (mem7!=mem2)&&(mem7!=mem1)&&(mem7!=mem0)&&
+                                           (ai2->protons==cAN_C)&&(ai2->temp1))   {
+                                          if(WordMatchExact(G,NUCLEIC_NORMAL1,ai2->name,1)||
+                                             WordMatchExact(G,NUCLEIC_NORMAL2,ai2->name,1)) {
+                                            base_at = a1;
+                                            sugar_at = mem7;
+
+                                            
+                                            
+                                          }
+                                        }
+                                        nbr[6]+=2;
+                                      }
+                                    }
+                                    nbr[5]+=2;
+                                  }
+                                }
+                                nbr[4]+=2;
+                              }
+                            } else if(((atomInfo[mem4].protons==cAN_C)||
+                                       (atomInfo[mem4].protons==cAN_O))&&
+                                      (atomInfo[mem4].temp1)) { /* pyrimidine case */
+
+                              nbr[4] = obj->Neighbor[mem4]+1;              
+                              while((mem5 = obj->Neighbor[nbr[4]])>=0) {
+                                ai2 = atomInfo + mem5;
+                                if((mem5!=mem3)&&(mem5!=mem2)&&(mem5!=mem1)&&(mem5!=mem0)&&
+                                   (ai2->protons==cAN_C)&&(ai2->temp1)) {
+                                  if(WordMatchExact(G,NUCLEIC_NORMAL1,ai2->name,1)||
+                                     WordMatchExact(G,NUCLEIC_NORMAL2,ai2->name,1)) {
+                                    base_at = a1;
+                                    sugar_at = mem5;
+                                  }
+                                }
+                                nbr[4]+=2;
+                              } 
+                            }
+                          }
+                          nbr[3]+=2;                          
+                        }
+                      }
+                      nbr[2]+=2;                          
+                    }
+                  }
+                  nbr[1]+=2;                          
+                }
+              }
+              nbr[0]+=2;                          
+            }
+          }
+        }
+      }
+      if(sugar_at>=0) { /* still need to find the phosphates... */
+        int c3_index = -1;
+        ai = atomInfo + sugar_at;
+        if(WordMatchExact(G,"C3*",ai->name,1)||
+           WordMatchExact(G,"C3'",ai->name,1)) {
+          c3_index = sugar_at;
+        } else {
+          mem0 = sugar_at;
+          nbr[0]= obj->Neighbor[mem0]+1;
+          while((mem1 = obj->Neighbor[nbr[0]])>=0) {
+            if((atomInfo[mem1].protons==cAN_C) &&
+               (!atomInfo[mem1].temp1)) {  
+              ai = atomInfo + mem1;
+              if(!(WordMatchExact(G,"C3*",ai->name,1)||
+                   WordMatchExact(G,"C3'",ai->name,1))) {
+                c3_index = mem1;
+              }
+            }
+            nbr[0]+=2;
+          }
+        }
+
+        if(c3_index>=0) { /* now we know where we are... */
+
+          mem0 = c3_index;
+          nbr[0]= obj->Neighbor[mem0]+1;
+          while((mem1 = obj->Neighbor[nbr[0]])>=0) {
+            if((atomInfo[mem1].protons==cAN_O) &&
+               (!atomInfo[mem1].temp1)) {  
+              ai = atomInfo+mem1;
+              if(WordMatchExact(G,"O3*",ai->name,1)||
+                 WordMatchExact(G,"O3'",ai->name,1))
+                o3_at = mem1;
+              nbr[1] = obj->Neighbor[mem1]+1;
+              while((mem2 = obj->Neighbor[nbr[1]])>=0) {
+                if((mem2!=mem0)&& (!atomInfo[mem2].temp1) && 
+                   (atomInfo[mem2].protons==cAN_P)) { 
+                  phos3_at = mem2;
+                }
+                nbr[1]+=2;
+              }
+            }
+            if((atomInfo[mem1].protons==cAN_C) && (atomInfo[mem1].temp1)) {
+
+              nbr[1] = obj->Neighbor[mem1]+1;
+              while((mem2 = obj->Neighbor[nbr[1]])>=0) {
+
+                if((mem2!=mem0)&&(!atomInfo[mem2].temp1) && 
+                   (atomInfo[mem2].protons==cAN_C)) { 
+                  nbr[2] = obj->Neighbor[mem2]+1;
+                  while((mem3 = obj->Neighbor[nbr[2]])>=0) {
+                    if((mem3!=mem1)&&(mem3!=mem0)&&
+                       (atomInfo[mem3].protons==cAN_O)&&
+                       (!atomInfo[mem3].temp1)) {  
+                      ai = atomInfo+mem3;
+                      if(WordMatchExact(G,"O5*",ai->name,1)||
+                         WordMatchExact(G,"O5'",ai->name,1))
+                        o5_at = mem3;
+                      nbr[3] = obj->Neighbor[mem3]+1;
+                      while((mem4 = obj->Neighbor[nbr[3]])>=0) {
+                        if((mem4!=mem2)&& (!atomInfo[mem4].temp1) && 
+                           (atomInfo[mem4].protons==cAN_P)) { 
+                          phos5_at = mem4;
+                        }
+                        nbr[3]+=2;
+                      }
+                    }
+                    nbr[2]+=2;
+                  }
+                }
+                nbr[1]+=2;
+              }
+            }
+            nbr[0]+=2;
+          }
+        }         
+      }
+      if((sugar_at>=0)&&(base_at>=0)) {
+        if(!nf) {
+          mem0 = sugar_at;
+          nbr[0]= obj->Neighbor[mem0]+1;
+          while((!nf)&&(mem1 = obj->Neighbor[nbr[0]])>=0) {
+            if(!nf) nf=nuc_flag[mem1];
+            nbr[1] = obj->Neighbor[mem1]+1;
+            while((!nf)&&(mem2 = obj->Neighbor[nbr[1]])>=0) {
+              if(mem2!=mem0) {
+                if(!nf) nf=nuc_flag[mem2];
+                nbr[2] = obj->Neighbor[mem2]+1;
+                while((!nf)&&(mem3 = obj->Neighbor[nbr[2]])>=0) {
+                  if((mem3!=mem1)&&(mem3!=mem0)) {
+                    if(!nf) nf=nuc_flag[mem3];                    
+                    nbr[3] = obj->Neighbor[mem3]+1;
+                    while((mem4 = obj->Neighbor[nbr[3]])>=0) {
+                      if(mem4!=mem2) {
+                        if(!nf) nf=nuc_flag[mem3];                    
+                      }
+                      nbr[3]+=2;
+                    }
+                  }
+                  nbr[2]+=2;
+                }
+              }
+              nbr[1]+=2;
+            }
+          nbr[0]+=2;
+          }
+        }
+        if(nf) {
+          AtomInfoType *sug_ai = atomInfo + sugar_at;
+          AtomInfoType *bas_ai = atomInfo + base_at;
+          if((sug_ai->visRep[cRepCartoon]) && 
+             (bas_ai->visRep[cRepCartoon]) &&
+             ((!sc_helper)||!(bas_ai->visRep[cRepLine]||
+                              bas_ai->visRep[cRepCyl]||
+                              bas_ai->visRep[cRepSphere]))) {
+            
+            int sug,bas;
+            float *color;
+            float *v_outer, tmp[3],outer[3];
+            if(obj->DiscreteFlag) {
+              if(cs==obj->DiscreteCSet[sugar_at] &&
+                 cs==obj->DiscreteCSet[base_at]) {
+                sug=obj->DiscreteAtmToIdx[sugar_at];
+                bas=obj->DiscreteAtmToIdx[base_at];
+              } else {
+                sug = -1;
+                bas = -1;
+              }
+            } else {
+              sug=cs->AtmToIdx[sugar_at];
+              bas=cs->AtmToIdx[base_at];
+            }
+            
+            if((sug>=0)&&(bas>=0)) {
+              int p3,p5;
+              v_outer = cs->Coord+3*sug;
+              
+              if((o3_at>=0)&&(phos3_at<0))
+                phos3_at = o3_at;
+              if((o5_at>=0)&&(phos5_at<0))
+                phos5_at = o5_at;
+              if((na_mode!=1)&&(phos3_at>=0)&&(phos5_at>=0)) {
+                
+                if(obj->DiscreteFlag) {
+                  if(cs==obj->DiscreteCSet[phos3_at] &&
+                     cs==obj->DiscreteCSet[phos5_at]) {
+                    p3=obj->DiscreteAtmToIdx[phos3_at];
+                    p5=obj->DiscreteAtmToIdx[phos5_at];
+                  } else {
+                    p3 = -1;
+                    p5 = -1;
+                  }
+                } else {
+                  p3=cs->AtmToIdx[phos3_at];
+                  p5=cs->AtmToIdx[phos5_at];
+                }
+                if((p3>=0)&&(p5>=0)) {
+                  scale3f(cs->Coord+3*p3,0.333333F,outer);
+                  scale3f(cs->Coord+3*p5,0.666667F,tmp);
+                  add3f(tmp,outer,outer);
+                  v_outer = outer;
+                }
+              }
+              
+              CGOPickColor(cgo,base_at,-1);
+              if(ladder_color>=0) {
+                color=ColorGet(G,ladder_color);
+                CGOCustomCylinderv(cgo,v_outer,
+                                   cs->Coord+3*bas,
+                                   ladder_radius,
+                                   color,
+                                   color,
+                                   2.0F,2.0F);
+              } else {
+                CGOCustomCylinderv(cgo,v_outer,
+                                   cs->Coord+3*bas,
+                                   ladder_radius,
+                                   ColorGet(G,sug_ai->color),
+                                   ColorGet(G,bas_ai->color),
+                                   2.0F,2.0F);
+              }
+            }
+          }
+        }
+      }
+    }
+
+    if(!ring_mode) {
+      if(ladder_mode) { /* mark sure all rings traversed are marked */
+        int i;
+        for(i=0;i<=n_atom;i++) {
+          ai_i[i]->temp1 = true;
+        }
+      }
+    } else {
+      float avg[3];
+      float avg_col[3];
+      int i;
+      float up[3],upi[3];
+      float vc0[3],vc1[3];
+
+
+      /* compute average coordinate and mark atoms so that ring is only drawn once */
+      zero3f(avg);
+      zero3f(avg_col);
       for(i=0;i<n_atom;i++) {
-        ii=i+1;
-        average3f(v_i[ii],v_i[i],mid);
+        add3f(avg,v_i[i],avg);
+        add3f(avg_col,col[i],avg_col);
+        ai_i[i]->temp1 = true;
+      }
+      scale3f(avg,1.0F/n_atom,avg);
+      scale3f(avg_col,1.0F/n_atom,avg_col);
 
-        subtract3f(mid,avg,out); /* compute outward-facing normal */
-        normalize3f(out);
+      /* clear the normals */
 
-        scale3f(up,width,up_add);
+      for(i=0;i<=n_atom;i++) {
+        zero3f(n_up[i]);
+        zero3f(n_dn[i]);
+      }
 
-        add3f(avg, up_add, ct);
-        subtract3f(avg, up_add, cb);
+      /* compute average normals */
 
-        add3f(v_i[i], up_add, v0t);
-        subtract3f(v_i[i], up_add, v0b);
+      {
+        float acc[3];
+        int ii;
 
-        add3f(v_i[ii], up_add, v1t);
-        subtract3f(v_i[ii], up_add, v1b);
+        zero3f(acc);
+        for(i=0;i<n_atom;i++) {
+          ii=i+1;
+          subtract3f(v_i[i],avg,vc0);
+          subtract3f(v_i[ii],avg,vc1);
+          cross_product3f(vc0,vc1,up);
+          add3f(up,n_up[i],n_up[i]);
+          add3f(up,n_up[ii],n_dn[ii]);
+          if(!i) {
+            add3f(up,n_up[n_atom],n_up[n_atom]);
+          } else if(ii==n_atom) {
+            add3f(up,n_up[0],n_up[0]);
+          }
+          add3f(up,acc,acc);
+        }
+        normalize3f(up);
+        scale3f(up,-1.0F,upi);
+      }
+
+      for(i=0;i<=n_atom;i++) {
+        normalize3f(n_up[i]);
+        scale3f(n_up[i],-1.0F,n_dn[i]);
+      }
+
+      {
+        int ii;
+        float mid[3];
+        float up_add[3];
+        float ct[3],cb[3];
+        float v0t[3],v0b[3];
+        float v1t[3],v1b[3];
+        float out[3];
+        float *color = NULL;
+
+        if(ring_color>=0) {
+          color=ColorGet(G,ring_color);
+        } else {
+          color=avg_col;
+        }
+        CGOColorv(cgo,color);
+
+        CGOBegin(cgo,GL_TRIANGLES);
         
-        CGONormalv(cgo,up);
-        if(ring_color<0) CGOColorv(cgo,color);
-        CGOPickColor(cgo,atix[i],-1);
-        CGOVertexv(cgo,ct);
-        CGONormalv(cgo,n_up[i]);
-        if(ring_color<0) CGOColorv(cgo,col[i]);
-        CGOPickColor(cgo,atix[i],-1);
-        CGOVertexv(cgo,v0t);
-        CGONormalv(cgo,n_up[ii]);
-        if(ring_color<0) CGOColorv(cgo,col[ii]);
-        CGOPickColor(cgo,atix[ii],-1);
-        CGOVertexv(cgo,v1t);
-        
-        if(ring_mode>1) {
-          CGONormalv(cgo,out);
+        for(i=0;i<n_atom;i++) {
+          ii=i+1;
+          average3f(v_i[ii],v_i[i],mid);
 
+          subtract3f(mid,avg,out); /* compute outward-facing normal */
+          normalize3f(out);
+
+          scale3f(up,width,up_add);
+
+          add3f(avg, up_add, ct);
+          subtract3f(avg, up_add, cb);
+
+          add3f(v_i[i], up_add, v0t);
+          subtract3f(v_i[i], up_add, v0b);
+
+          add3f(v_i[ii], up_add, v1t);
+          subtract3f(v_i[ii], up_add, v1b);
+        
+          CGONormalv(cgo,up);
+          if(ring_color<0) CGOColorv(cgo,color);
+          CGOPickColor(cgo,atix[i],-1);
+          CGOVertexv(cgo,ct);
+          CGONormalv(cgo,n_up[i]);
           if(ring_color<0) CGOColorv(cgo,col[i]);
           CGOPickColor(cgo,atix[i],-1);
           CGOVertexv(cgo,v0t);
-          CGOVertexv(cgo,v0b);
+          CGONormalv(cgo,n_up[ii]);
           if(ring_color<0) CGOColorv(cgo,col[ii]);
           CGOPickColor(cgo,atix[ii],-1);
           CGOVertexv(cgo,v1t);
-          CGOVertexv(cgo,v1t);
-          if(ring_color<0) CGOColorv(cgo,col[i]);
-          CGOPickColor(cgo,atix[i],-1);  
-          CGOVertexv(cgo,v0b);
+        
+          if(ring_mode>1) {
+            CGONormalv(cgo,out);
+
+            if(ring_color<0) CGOColorv(cgo,col[i]);
+            CGOPickColor(cgo,atix[i],-1);
+            CGOVertexv(cgo,v0t);
+            CGOVertexv(cgo,v0b);
+            if(ring_color<0) CGOColorv(cgo,col[ii]);
+            CGOPickColor(cgo,atix[ii],-1);
+            CGOVertexv(cgo,v1t);
+            CGOVertexv(cgo,v1t);
+            if(ring_color<0) CGOColorv(cgo,col[i]);
+            CGOPickColor(cgo,atix[i],-1);  
+            CGOVertexv(cgo,v0b);
+            if(ring_color<0) CGOColorv(cgo,col[ii]);
+            CGOPickColor(cgo,atix[ii],-1);
+            CGOVertexv(cgo,v1b);
+          }
+        
+          CGONormalv(cgo,upi);
+          if(ring_color<0) CGOColorv(cgo,color);
+          CGOPickColor(cgo,atix[i],-1);
+          CGOVertexv(cgo,cb);
+          CGONormalv(cgo,n_dn[ii]);
           if(ring_color<0) CGOColorv(cgo,col[ii]);
           CGOPickColor(cgo,atix[ii],-1);
           CGOVertexv(cgo,v1b);
-        }
-        
-        CGONormalv(cgo,upi);
-        if(ring_color<0) CGOColorv(cgo,color);
-        CGOPickColor(cgo,atix[i],-1);
-        CGOVertexv(cgo,cb);
-        CGONormalv(cgo,n_dn[ii]);
-        if(ring_color<0) CGOColorv(cgo,col[ii]);
-        CGOPickColor(cgo,atix[ii],-1);
-        CGOVertexv(cgo,v1b);
-        CGONormalv(cgo,n_dn[i]);
-        if(ring_color<0) CGOColorv(cgo,col[i]);
-        CGOPickColor(cgo,atix[i],-1);
-        CGOVertexv(cgo,v0b);
-        
-      }
-      CGOEnd(cgo);
-
-      if(ring_mode==1) {
-        for(i=0;i<n_atom;i++) {
-          ii=i+1;
+          CGONormalv(cgo,n_dn[i]);
+          if(ring_color<0) CGOColorv(cgo,col[i]);
           CGOPickColor(cgo,atix[i],-1);
-          if(ring_color<0) {
-            CGOSausage(cgo,v_i[i], v_i[ii], width, col[i],col[ii]);
-          } else {
-            CGOSausage(cgo,v_i[i], v_i[ii], width, color,color);
+          CGOVertexv(cgo,v0b);
+        
+        }
+        CGOEnd(cgo);
+
+        if(ring_mode==1) {
+          for(i=0;i<n_atom;i++) {
+            ii=i+1;
+            CGOPickColor(cgo,atix[i],-1);
+            if(ring_color<0) {
+              CGOSausage(cgo,v_i[i], v_i[ii], width, col[i],col[ii]);
+            } else {
+              CGOSausage(cgo,v_i[i], v_i[ii], width, color,color);
+            }
           }
         }
       }
     }
   }
+}
+
+
+static void nuc_acid(PyMOLGlobals *G, int a,int a1, AtomInfoType *ai, CoordSet *cs, 
+                     ObjectMolecule *obj, int na_mode, int *nuc_flag, int *p_a2,int *p_nSeg, float **p_v_o_last,
+                     int **p_s, int **p_i, int **p_cc,
+                     int *p_nAt, int *p_cur_car, int **p_ss, int *p_putty_flag,
+                     float **p_v, float **p_vo)
+{
+  int a2 = *p_a2;
+  int nSeg = *p_nSeg;
+  float *v_o_last = *p_v_o_last;
+  int *s = *p_s;
+  int *i = *p_i;
+  int *cc = *p_cc;
+  int nAt = *p_nAt;
+  int cur_car = *p_cur_car;
+  int *ss = *p_ss;
+  int putty_flag = *p_putty_flag;
+  float *vo = *p_vo;
+  float *v = *p_v;
+
+  int a3,a4,st,nd;
+  float *v_o,*v_c,*v_n,t0[3];
+  float *v1;
+
+  if(a2<0) {
+    nSeg++;
+    v_o_last = NULL;
+  }
+  *(s++) = nSeg;
+  nAt++;
+  *(i++)=a;
+  cur_car = ai->cartoon;
+  if(cur_car == cCartoon_auto)
+    cur_car = cCartoon_tube;
+  *ss=3; /* DNA/RNA */
+
+  if(cur_car==cCartoon_putty)
+    putty_flag=true;
+  
+  *(cc++)=cur_car;
+  v1 = cs->Coord+3*a;
+  *(v++)=*(v1++);
+  *(v++)=*(v1++);
+  *(v++)=*(v1++);
+  a2=a1;
+  
+  ss++;
+  
+  v_c = NULL;
+  v_n = NULL;
+  v_o = NULL;
+  
+  AtomInfoBracketResidueFast(G,obj->AtomInfo,obj->NAtom,a1,&st,&nd);
+  
+  {
+    int *nf = NULL;
+    if(nuc_flag)
+      nf = nuc_flag + st;
+    for(a3=st;a3<=nd;a3++) {
+      if(nf) 
+        *(nf++)= true; /* mark this residue as being part of a nucleic acid chain */
+      if(obj->DiscreteFlag) {
+        if(cs==obj->DiscreteCSet[a3]) 
+          a4=obj->DiscreteAtmToIdx[a3];
+        else 
+          a4=-1;
+      } else 
+        a4=cs->AtmToIdx[a3];
+      if(a4>=0) {
+        if(na_mode==1) {
+          if(WordMatchExact(G,NUCLEIC_NORMAL1,obj->AtomInfo[a3].name,1)||
+             WordMatchExact(G,NUCLEIC_NORMAL2,obj->AtomInfo[a3].name,1)) {
+            v_c = cs->Coord+3*a4;
+          }
+        } else if(a3==a1) {
+          v_c = cs->Coord+3*a4;		
+        }
+        if(WordMatchExact(G,NUCLEIC_NORMAL0,obj->AtomInfo[a3].name,1)) {
+          v_o = cs->Coord+3*a4;
+        }
+      }
+    }
+  }
+  if(!(v_c&&v_o)) {
+    zero3f(vo);
+    v_o_last = NULL;
+  } else {
+    if(v_o_last) {
+      add3f(v_o,v_o_last, t0);
+      add3f(v_o_last,t0, t0);
+      scale3f(t0,0.333333F,t0);
+      subtract3f(v_c,t0,vo);
+    } else {
+      subtract3f(v_c,v_o,vo);
+    }
+    v_o_last = v_o;
+    normalize3f(vo);
+  }
+  vo+=3;
+
+  *p_a2 = a2;
+  *p_nSeg = nSeg;
+  *p_v_o_last= v_o_last;
+  *p_s = s;
+  *p_i = i;
+  *p_cc = cc;
+  *p_nAt = nAt ;
+  *p_cur_car = cur_car;
+  *p_ss = ss;
+  *p_putty_flag = putty_flag;
+  *p_vo = vo;
+  *p_v = v;
 }
 
 Rep *RepCartoonNew(CoordSet *cs)
@@ -357,7 +908,7 @@ Rep *RepCartoonNew(CoordSet *cs)
   float dumbbell_radius,dumbbell_width,dumbbell_length;
   float throw;
   int st,nd;
-  float *v_c,*v_n,*v_o,*v_ca,*v_o_last = NULL;
+  float *v_c,*v_n,*v_o,*v_o_last = NULL;
   float t0[3],t1[3],t2[3],t3[3],t4[3],o0[12],o1[12];
   float max_dot;
   float length,width;
@@ -373,6 +924,8 @@ Rep *RepCartoonNew(CoordSet *cs)
   int last_color,uniform_color;
   int cartoon_color,highlight_color;
   int cartoon_side_chain_helper;
+  int ladder_mode,ladder_color;
+  float ladder_radius;
   int round_helices;
   int smooth_loops;
   int na_mode;
@@ -380,8 +933,8 @@ Rep *RepCartoonNew(CoordSet *cs)
   float refine_tips;
   float helix_radius;
   float *h_start=NULL,*h_end=NULL;
-  float *stmp;
-  int *ftmp;
+  float *sampling_tmp;
+  int *flag_tmp;
   int smooth_first,smooth_last,smooth_cycles,flat_cycles;
   int trace;
   int skip_to;
@@ -399,6 +952,7 @@ Rep *RepCartoonNew(CoordSet *cs)
   float ring_width;
   int ring_color;
   int loop_cap, tube_cap;
+  int *nuc_flag = NULL;
 
   /* THIS IS BY FAR THE WORST ROUTINE IN PYMOL!
    * DEVELOP ON IT ONLY AT EXTREME RISK TO YOUR MENTAL HEALTH */
@@ -498,6 +1052,15 @@ Rep *RepCartoonNew(CoordSet *cs)
   na_mode = SettingGet_i(G,cs->Setting,obj->Obj.Setting,cSetting_cartoon_nucleic_acid_mode);
   ring_mode = SettingGet_i(G,cs->Setting,obj->Obj.Setting,cSetting_cartoon_ring_mode);
   ring_finder = SettingGet_i(G,cs->Setting,obj->Obj.Setting,cSetting_cartoon_ring_finder);
+  ladder_mode = SettingGet_i(G,cs->Setting,obj->Obj.Setting,cSetting_cartoon_ladder_mode); 
+  ladder_radius = SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_cartoon_ladder_radius);
+  ladder_color = SettingGet_color(G,cs->Setting,obj->Obj.Setting,cSetting_cartoon_ladder_color);
+
+  if(ladder_color==-1)
+    ladder_color = cartoon_color;
+
+  if((ring_mode==0) && (ring_finder==2)) 
+    ring_finder = 1;
 
   tube_cap = SettingGet_i(G,cs->Setting,obj->Obj.Setting,cSetting_cartoon_tube_cap);
   loop_cap = SettingGet_i(G,cs->Setting,obj->Obj.Setting,cSetting_cartoon_loop_cap);
@@ -520,10 +1083,10 @@ Rep *RepCartoonNew(CoordSet *cs)
   seg = Alloc(int,cs->NAtIndex);
   car = Alloc(int,cs->NAtIndex);
   sstype = Alloc(int,cs->NAtIndex);
-  stmp = Alloc(float,sampling*3);
-  ftmp = Alloc(int,cs->NAtIndex);
-
-  if(ring_mode) {
+  sampling_tmp = Alloc(float,sampling*3);
+  flag_tmp = Alloc(int,cs->NAtIndex);
+  nuc_flag = Calloc(int,cs->NAtIndex);
+  if(ring_mode || ladder_mode) {
     ring_anchor = VLAlloc(int,cs->NAtIndex/10+1);
   }
   i=at;
@@ -532,7 +1095,7 @@ Rep *RepCartoonNew(CoordSet *cs)
   s=seg;
   cc=car;
   ss=sstype;
-  fp = ftmp;
+  fp = flag_tmp;
   nAt = 0;
   nSeg = 0;
   a2=-1;
@@ -571,6 +1134,18 @@ Rep *RepCartoonNew(CoordSet *cs)
             PRINTFD(G,FB_RepCartoon)
               " RepCartoon: found CA in %s; a2 %d\n",ai->resi,a2
               ENDFD;
+
+            if(trailing_O3p_ai&&((na_mode==2)||(na_mode==4))) {
+
+              /*  3' nucleic acid cap */
+
+              nuc_acid(G, trailing_O3p_a, trailing_O3p_a1, trailing_O3p_ai, 
+                       cs, obj, na_mode, nuc_flag, &a2, &nSeg, &v_o_last, &s, &i, &cc, 
+                       &nAt, &cur_car, &ss, &putty_flag, &v, &vo);
+              a2=-1;
+              trailing_O3p_ai = NULL;
+            }
+
             if(!trace) 
               if(a2>=0) {
                 /*
@@ -642,7 +1217,6 @@ Rep *RepCartoonNew(CoordSet *cs)
               putty_flag=true;
                 
             v1 = cs->Coord+3*a;
-            v_ca = v1;
             *(v++)=*(v1++);
             *(v++)=*(v1++);
             *(v++)=*(v1++);
@@ -691,9 +1265,9 @@ Rep *RepCartoonNew(CoordSet *cs)
             } else {
               /* generate orientation vectors...*/
 
-              subtract3f(v_n,v_c,t0);
+              subtract3f(v_n,v_c,t0);  /* t0 = N<---C */
               normalize3f(t0);
-              subtract3f(v_n,v_o,t1);
+              subtract3f(v_n,v_o,t1);  /* t1 = N<---O */
               normalize3f(t1);
               cross_product3f(t0,t1,vo);
               normalize3f(vo);
@@ -705,204 +1279,45 @@ Rep *RepCartoonNew(CoordSet *cs)
           } else if((((na_mode!=1)&&(ai->protons==cAN_P) &&
                       (WordMatch(G,"P",ai->name,1)<0) ) ||
                      ((na_mode==1)&&(ai->protons==cAN_C) &&
-                      (WordMatchExact(G,"C4*",ai->name,1) ||
-                       WordMatchExact(G,"C4'",ai->name,1))))
+                      (WordMatchExact(G,NUCLEIC_NORMAL1,ai->name,1) ||
+                       WordMatchExact(G,NUCLEIC_NORMAL2,ai->name,1))))
                     && !AtomInfoSameResidueP(G,last_ai,ai)) {
             if(a2>=0) {
               if(!ObjectMoleculeCheckBondSep(obj,a1,a2,6)) { /* six bonds between phosphates */
-                  
-                /* BEGIN 3' cap */
+                
+                /*  3' cap */
+                
                 if(trailing_O3p_ai&&((na_mode==2)||(na_mode==4))) {
-                  *(s++) = nSeg;
-                  nAt++;
-                  *(i++)= trailing_O3p_a;
-                  cur_car = trailing_O3p_ai->cartoon;
-                  if(cur_car == cCartoon_auto)
-                    cur_car = cCartoon_tube;
-                  *ss=3; /* DNA/RNA */
-                    
-                  if(cur_car==cCartoon_putty)
-                    putty_flag=true;
-                    
-                  *(cc++)=cur_car;
-                  v1 = cs->Coord+3*trailing_O3p_a;
-                  v_ca = v1;
-                  *(v++)=*(v1++);
-                  *(v++)=*(v1++);
-                  *(v++)=*(v1++);
-                    
-                  ss++;
-                    
-                  v_c = NULL;
-                  v_n = NULL;
-                  v_o = NULL;
-                    
-                  AtomInfoBracketResidueFast(G,obj->AtomInfo,obj->NAtom,trailing_O3p_a1,&st,&nd);
-                    
-                  for(a3=st;a3<=nd;a3++) {
-                      
-                    if(obj->DiscreteFlag) {
-                      if(cs==obj->DiscreteCSet[a3]) 
-                        a4=obj->DiscreteAtmToIdx[a3];
-                      else 
-                        a4=-1;
-                    } else 
-                      a4=cs->AtmToIdx[a3];
-                    if(a4>=0) {
-                      if(a3==trailing_O3p_a1) {
-                        v_c = cs->Coord+3*a4;		
-                      } else if(WordMatchExact(G,"C2",obj->AtomInfo[a3].name,1)) {
-                        v_o = cs->Coord+3*a4;
-                      }
-                    }
-                  }
-                  if(!(v_c&&v_o)) {
-                    zero3f(vo);
-                  } else {
-                    subtract3f(v_c,v_o,vo);
-                    normalize3f(vo);
-                  }
-                  vo+=3;
+                  
+                  nuc_acid(G, trailing_O3p_a, trailing_O3p_a1, trailing_O3p_ai, 
+                           cs, obj, na_mode, nuc_flag, &a2, &nSeg, &v_o_last, &s, &i, &cc, 
+                           &nAt, &cur_car, &ss, &putty_flag, &v, &vo);
                 }
-                /* END 3' cap */
-
                 a2=-1;
               }
             }
             last_ai = ai;
             trailing_O3p_ai = NULL;
 
-            /* BEGIN 5' cap */
-
+            /*  5' cap */
+            
             if(leading_O5p_ai&&(a2<0)&&
                ((na_mode==3)||(na_mode==4))) {
               if((!AtomInfoSameResidueP(G,ai,leading_O5p_ai))&&
                  ObjectMoleculeCheckBondSep(obj,a1,leading_O5p_a1,5)) {
                 
-                nSeg++;
-                v_o_last = NULL;
-                
-                *(s++) = nSeg;
-                nAt++;
-                *(i++)=leading_O5p_a;
-                cur_car =leading_O5p_ai->cartoon;
-                if(cur_car == cCartoon_auto)
-                  cur_car = cCartoon_tube;
-                *ss=3; /* DNA/RNA */
-                
-                if(cur_car==cCartoon_putty)
-                  putty_flag=true;
-                
-                *(cc++)=cur_car;
-                v1 = cs->Coord+3*leading_O5p_a;
-                v_ca = v1;
-                *(v++)=*(v1++);
-                *(v++)=*(v1++);
-                *(v++)=*(v1++);
-                a2=leading_O5p_a1;
-                
-                ss++;
-                
-                v_c = NULL;
-                v_n = NULL;
-                v_o = NULL;
-                
-                AtomInfoBracketResidueFast(G,obj->AtomInfo,obj->NAtom,leading_O5p_a1,&st,&nd);
-                
-                for(a3=st;a3<=nd;a3++) {
-                  
-                  if(obj->DiscreteFlag) {
-                    if(cs==obj->DiscreteCSet[a3]) 
-                      a4=obj->DiscreteAtmToIdx[a3];
-                    else 
-                      a4=-1;
-                  } else 
-                    a4=cs->AtmToIdx[a3];
-                  if(a4>=0) {
-                    if(a3==leading_O5p_a1) {
-                      v_c = cs->Coord+3*a4;		
-                    } else if(WordMatchExact(G,"C2",obj->AtomInfo[a3].name,1)) {
-                      v_o = cs->Coord+3*a4;
-                    }
-                  }
-                }
-                if(!(v_c&&v_o)) {
-                  zero3f(vo);
-                  v_o_last = NULL;
-                } else {
-                  subtract3f(v_c,v_o,vo);
-                  v_o_last = v_c;
-                  normalize3f(vo);
-                }
-                vo+=3;
+                nuc_acid(G, leading_O5p_a, leading_O5p_a1, leading_O5p_ai, 
+                         cs, obj, na_mode, nuc_flag, &a2, &nSeg, &v_o_last, &s, &i, &cc, 
+                         &nAt, &cur_car, &ss, &putty_flag, &v, &vo);
               }
             }
-            /* END 5' CAP */
 
             leading_O5p_ai = NULL;
 
-
-            if(a2<0) {
-              nSeg++;
-              v_o_last = NULL;
-            }
-            *(s++) = nSeg;
-            nAt++;
-            *(i++)=a;
-            cur_car = ai->cartoon;
-            if(cur_car == cCartoon_auto)
-              cur_car = cCartoon_tube;
-            *ss=3; /* DNA/RNA */
-
-            if(cur_car==cCartoon_putty)
-              putty_flag=true;
-
-            *(cc++)=cur_car;
-            v1 = cs->Coord+3*a;
-            v_ca = v1;
-            *(v++)=*(v1++);
-            *(v++)=*(v1++);
-            *(v++)=*(v1++);
-            a2=a1;
-                  
-            ss++;
-
-            v_c = NULL;
-            v_n = NULL;
-            v_o = NULL;
-                  
-            AtomInfoBracketResidueFast(G,obj->AtomInfo,obj->NAtom,a1,&st,&nd);
-                  
-            for(a3=st;a3<=nd;a3++) {
-                    
-              if(obj->DiscreteFlag) {
-                if(cs==obj->DiscreteCSet[a3]) 
-                  a4=obj->DiscreteAtmToIdx[a3];
-                else 
-                  a4=-1;
-              } else 
-                a4=cs->AtmToIdx[a3];
-              if(a4>=0) {
-                if(a3==a1) {
-                  v_c = cs->Coord+3*a4;		
-                } else if(WordMatchExact(G,"C2",obj->AtomInfo[a3].name,1)) {
-                  v_o = cs->Coord+3*a4;
-                }
-              }
-            }
-            if(!(v_c&&v_o)) {
-              zero3f(vo);
-              v_o_last = NULL;
-            } else {
-              subtract3f(v_c,v_o,vo);
-              if(v_o_last) {
-                subtract3f(v_c, v_o_last,t0);
-                add3f(t0, vo, vo);
-              }
-              v_o_last = v_c;
-              normalize3f(vo);
-            }
-            vo+=3;
+            /* this is the main nucleic acid cartoon section... */
+            
+            nuc_acid(G, a, a1, ai, cs, obj, na_mode, nuc_flag, &a2, &nSeg, &v_o_last, &s, &i, &cc, 
+                     &nAt, &cur_car, &ss, &putty_flag, &v, &vo);
 
           }  else if((a2>=0)&&
                      last_ai&&
@@ -929,62 +1344,18 @@ Rep *RepCartoonNew(CoordSet *cs)
       }
     }
   }
-
+  
   /* BEGIN 3' cap */
   if(trailing_O3p_ai&&((na_mode==2)||(na_mode==4))) {
-    *(s++) = nSeg;
-    nAt++;
-    *(i++)= trailing_O3p_a;
-    cur_car = trailing_O3p_ai->cartoon;
-    if(cur_car == cCartoon_auto)
-      cur_car = cCartoon_tube;
-    *ss=3; /* DNA/RNA */
     
-    if(cur_car==cCartoon_putty)
-      putty_flag=true;
-    
-    *(cc++)=cur_car;
-    v1 = cs->Coord+3*trailing_O3p_a;
-    v_ca = v1;
-    *(v++)=*(v1++);
-    *(v++)=*(v1++);
-    *(v++)=*(v1++);
-    
-    ss++;
-    
-    v_c = NULL;
-    v_n = NULL;
-    v_o = NULL;
-    
-    AtomInfoBracketResidueFast(G,obj->AtomInfo,obj->NAtom,trailing_O3p_a1,&st,&nd);
-    
-    for(a3=st;a3<=nd;a3++) {
-      
-      if(obj->DiscreteFlag) {
-        if(cs==obj->DiscreteCSet[a3]) 
-          a4=obj->DiscreteAtmToIdx[a3];
-        else 
-          a4=-1;
-      } else 
-        a4=cs->AtmToIdx[a3];
-      if(a4>=0) {
-        if(a3==trailing_O3p_a1) {
-          v_c = cs->Coord+3*a4;		
-        } else if(WordMatchExact(G,"C2",obj->AtomInfo[a3].name,1)) {
-          v_o = cs->Coord+3*a4;
-        }
-      }
-    }
-    if(!(v_c&&v_o)) {
-      zero3f(vo);
-    } else {
-      subtract3f(v_c,v_o,vo);
-      normalize3f(vo);
-    }
-    vo+=3;
-  }
-  /* END 3' Cap */
+    nuc_acid(G, trailing_O3p_a, trailing_O3p_a1, trailing_O3p_ai, 
+             cs, obj, na_mode, nuc_flag, &a2, &nSeg, &v_o_last, &s, &i, &cc, 
+             &nAt, &cur_car, &ss, &putty_flag, &v, &vo);
+    a2=-1;
+    trailing_O3p_ai = NULL;
 
+  }
+  
   if(nAt&&putty_flag) {
     double sum=0.0,sumsq=0.0;
     float value;
@@ -1014,31 +1385,493 @@ Rep *RepCartoonNew(CoordSet *cs)
     " RepCartoon-Debug: path outlined, interpolating...\n"
     ENDFD;
 
-  if(nAt)
-    {
-      /* compute differences and normals */
+  if(nAt) {
+    
+    /* compute differences and normals */
+    
+    s=seg;
+    v=pv;
 
+    dv = Alloc(float,nAt*3);
+    nv = Alloc(float,nAt*3);
+    dl = Alloc(float,nAt);
+    v1=dv;
+    v2=nv;
+    d=dl;
+    for(a=0;a<(nAt-1);a++)
+      {
+        PRINTFD(G,FB_RepCartoon)
+          " RepCartoon: seg %d *s %d , *(s+1) %d\n",a,*s,*(s+1)
+          ENDFD;
+
+        if(*s==*(s+1))
+          {
+            subtract3f(v+3,v,v1);
+            *d = (float)length3f(v1);
+            if(*d>R_SMALL4) {
+              float d_1;
+              d_1 = 1.0F/(*d);
+              scale3f(v1,d_1,v2);
+            } else if(a)  {
+              copy3f(v2-3,v2); 
+            } else {
+              zero3f(v2);
+            }
+          }
+        else {
+          zero3f(v2);	
+        }
+          
+        d++;
+        v+=3;
+        v1+=3;
+        v2+=3;
+        s++;
+      }
+		
+    /* compute tangents */
+		
+    s=seg;
+    v=nv;
+		
+    tv = Alloc(float,nAt*3+6);
+    v1=tv;
+		
+    *(v1++)=*(v++); /* first segment */
+    *(v1++)=*(v++);
+    *(v1++)=*(v++);
+    s++;
+		
+    for(a=1;a<(nAt-1);a++)
+      {
+        if((*s==*(s-1))&&(*s==*(s+1)))
+          {
+            add3f(v,(v-3),v1);
+            normalize3f(v1);			 
+          }
+        else if(*s==*(s-1))
+          {
+            *(v1)=*(v-3);  /* end a segment */
+            *(v1+1)=*(v-2); 
+            *(v1+2)=*(v-1); 
+          }
+        else if(*s==*(s+1))
+          {
+            *(v1)=*(v);   /* new segment */
+            *(v1+1)=*(v+1); 
+            *(v1+2)=*(v+2); 
+          }
+        v+=3;
+        v1+=3;
+        s++;
+      }
+    *(v1++)=*(v-3); /* last segment */
+    *(v1++)=*(v-2);
+    *(v1++)=*(v-1);
+
+    PRINTFD(G,FB_RepCartoon)
+      " RepCartoon-Debug: generating coordinate systems...\n"
+      ENDFD;
+      
+    if(round_helices) {
+      v1 = NULL;
+      v2 = NULL;
+      v3 = NULL;
+      v4 = NULL;
+      v5 = NULL;
+      s = seg;
+      v = pv;
+      ss = sstype;
+      vo = pvo;
+      v0 = tv;
+      last = 0;
+      if(nAt>1) {
+        for(a=0;a<nAt;a++) {
+          if(a) {
+            if(*s!=*(s-1)) { /* contiguous helices in disconnected segments */
+              v1 = NULL;
+              v2 = NULL;
+              v3 = NULL;
+              v4 = NULL;
+              v5 = NULL;
+              last = 0;
+            }
+          }
+          v5 = v4;
+          v4 = v3;
+          v3 = v2;
+          v2 = v1;
+          if(*ss==1) /* helix */
+            v1 = v;
+          else { /* early termination ? */
+            if(last<2) {
+              zero3f(t0);
+              if(v2&&v3) {
+                subtract3f(v2,v,t0);
+                normalize3f(t0);
+                subtract3f(v3,v2,t1);
+                normalize3f(t1);
+                add3f(t1,t0,t0);
+                if(v4) {
+                  subtract3f(v4,v3,t1);
+                  normalize3f(t1);
+                  add3f(t1,t0,t0);
+                }
+                if(v5) {
+                  subtract3f(v5,v4,t1);
+                  normalize3f(t1);
+                  add3f(t1,t0,t0);
+                }
+                normalize3f(t0);
+                cross_product3f(t0,v0-3,vo-3);
+                normalize3f(vo-3);
+                cross_product3f(t0,v0-6,vo-6);
+                normalize3f(vo-6);
+                if(v4) {
+                  cross_product3f(t0,v0-9,vo-9);
+                  normalize3f(vo-9);
+                }
+                if(v5) {
+                  cross_product3f(t0,v0-12,vo-12);
+                  normalize3f(vo-12);
+                }
+
+                if(v4&&v5) {
+                  /* now make sure there's no goofy flip on the end...
+                     of a short, tight helix */
+                  if(dot_product3f(vo-9,vo-12)<-0.8F)
+                    invert3f(vo-12);
+                }
+              }
+            }
+            v1 = NULL;
+            v2 = NULL;
+            v3 = NULL;
+            v4 = NULL;
+            v5 = NULL;
+            last = 0;
+          }
+          if(v1&&v2&&v3&&v4) {
+            add3f(v1,v4,t0);
+            add3f(v2,v3,t1);
+            scale3f(t0,0.2130F,t0);
+            scale3f(t1,0.2870F,t1);
+
+            add3f(t0,t1,t0);
+            if(last) { /* 5th CA or later... */
+              subtract3f(t2,t0,t1);
+              normalize3f(t1);
+              cross_product3f(t1,v0,vo);
+              normalize3f(vo);
+              cross_product3f(t1,v0-3,vo-3);
+              normalize3f(vo-3);
+              cross_product3f(t1,v0-6,vo-6);
+              normalize3f(vo-6);
+              if(last==1) { /* 5th */
+                cross_product3f(t1,v0-9,vo-9);
+                normalize3f(vo-9);
+                cross_product3f(t1,v0-12,vo-12);
+                normalize3f(vo-12);
+              }
+            }
+            last++;
+            copy3f(t0,t2);
+          }
+          v+=3;
+          ss++;
+          vo+=3;
+          v0+=3;
+          s++;
+        }
+      }
+    }
+    
+    if(SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_cartoon_refine_normals)) {
+
+      /* first, make sure vectors are roughly tangential */
+
+      v1 = tv+3;
+      vo = pvo+3;
+      s = seg+1;
+      for(a=1;a<(nAt-1);a++) { 
+        if((*s==*(s-1))&&(*s==*(s+1))) {
+          
+          remove_component3f(vo,v1,t0);
+           copy3f(t0,vo);
+          
+          /* go on to next vertex */
+        }
+        v1+=3;
+        vo+=3;
+        s++;
+      }
+      
+      /* now generate alternative orientation vectors */
+        
+      v1 = tv;
+      va = pva;
+      vo = pvo;
+      ss = sstype;
+      for(a=0;a<nAt;a++) { 
+        
+
+        /* original */
+        copy3f(vo,va);
+        va+=3;
+          
+        /* inverse */
+        copy3f(vo,va);
+        if(*ss!=1)
+          invert3f(va);
+        va+=3;
+          
+        /* go on to next vertex */
+          
+        v1+=3;
+        vo+=3;
+        ss++;
+      }
+      
+      /* now iterate through pairs*/
+        
+      vo = pvo;
+      va = pva;
+      v  = nv; /* normals in direction of chain */
+      ss = sstype;
+        
+      for(a=1;a<nAt;a++) {
+
+        if(*s==*(s+1)) { /* only operate within distinct segments */         
+          v1 = va+6; /* orientation vectors for next CA */
+          remove_component3f(vo  ,v,o0);
+          normalize3f(o0);
+          remove_component3f(v1  ,v,o1  ); 
+          remove_component3f(v1+3,v,o1+3);
+          normalize3f(o1);
+          normalize3f(o1+3);
+          max_dot = dot_product3f(o0,o1);
+          v0 = v1;
+          
+          dp = dot_product3f(o0,o1+3);
+          if(dp>max_dot) {
+            v0 = v1+3;
+            max_dot = dp;
+          }
+          
+          copy3f(v0,vo+3); /* update with optimal orientation vector */
+        }
+        vo+=3;
+        va+=6; /* candidate orientation vectors */
+        v+=3; /* normal */
+        s++;
+      }
+
+      /* now soften up the kinks */
+
+      v1 = tv+3;
+      vo = pvo+3;
+      s = seg+1;
+      for(a=1;a<(nAt-1);a++) {
+        if((*s==*(s-1))&&(*s==*(s+1))) {
+          dp = (dot_product3f(vo,vo+3)*
+                dot_product3f(vo,vo-3));
+          if(dp<-0.10F) { 
+            cross_product3f(vo-3,vo+3,t0);
+            normalize3f(t0);
+            if(dot_product3f(vo,t1)<0.0F) {
+              subtract3f(vo,t0,t2);
+            } else {
+              add3f(vo,t0,t2);
+            }
+            normalize3f(t2);
+            dp = 2*(-0.10F-dp);
+            if(dp>1.0F)
+              dp=1.0F;
+            mix3f(vo,t2,dp,t3);
+            copy3f(t3,vo);
+          }
+        }
+        v1+=3;
+        vo+=3;
+        va+=6;
+        s++;
+      }
+    }
+
+    if(SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_cartoon_flat_sheets)) {
+      s = seg;
+      cc = car;
+      v = pv;
+      ss = sstype;
+      vo = pvo;
+      v0 = tv;
+      last = 0;
+      first = -1;
+      cur_car = *cc;
+      end_flag=false;
+      if(nAt>1) {
+        for(a=0;a<nAt;a++) {
+          if(a) {
+            if(*s!=*(s-1)) { 
+              end_flag=true;
+            } else if(*ss!=2) {
+              end_flag=true;
+            }
+            if(a==(nAt-1))
+              end_flag=1;
+          }
+          if(end_flag && (cur_car!=cCartoon_loop)&&(cur_car!=cCartoon_tube)) {
+            f=1;
+            for(c=0;c<flat_cycles;c++) {
+              for(b=first+f;b<=last-f;b++) { /* iterative averaging */
+                zero3f(t0);
+                for(e=-f;e<=f;e++) {
+                  add3f(pv+3*(b+e),t0,t0);
+                }
+                scale3f(t0,1.0F/(f*2+1),tmp+b*3);
+              }
+              for(b=first+f;b<=last-f;b++) {
+                if(!((*(flag_tmp+b)&cAtomFlag_no_smooth))) {
+                  copy3f(tmp+b*3,pv+b*3);
+                }
+              }
+              for(b=first+f;b<=last-f;b++) { 
+                zero3f(t0);
+                for(e=-f;e<=f;e++) {
+                  add3f(pvo+3*(b+e),t0,t0);
+                }
+                scale3f(t0,1.0F/(f*2+1),tmp+b*3);
+              }
+              for(b=first+f;b<=last-f;b++) {
+                copy3f(tmp+b*3,pvo+b*3);
+                /*                  normalize3f(pvo+b*3);*/
+              }
+              for(b=first+f;b<=last-f;b++) {
+                subtract3f(pv+(b+1)*3,pv+(b-1)*3,tmp+b*3);
+                normalize3f(tmp+b*3);
+                remove_component3f(pvo+b*3,tmp+b*3,pvo+b*3);
+                normalize3f(pvo+b*3);
+              }
+            }
+
+            first = -1;
+            last = -1;
+            end_flag=false;
+          }
+          if(*ss==2) {
+            if(first<0)
+              first=a;
+            cur_car = *cc;
+            last = a;
+          } 
+          v+=3;
+          ss++;
+          vo+=3;
+          v0+=3;
+          s++;
+          cc++;
+        }
+      }
+    }
+
+    if(smooth_loops) {
+
+      s = seg;
+      v = pv;
+      ss = sstype;
+      vo = pvo;
+      v0 = tv;
+      last = 0;
+      first = -1;
+      end_flag=false;
+      if(nAt>1) {
+        for(a=0;a<nAt;a++) {
+
+          if(a) {
+            if(*s!=*(s-1)) { 
+              end_flag=true;
+            } else if(*ss!=0) {
+              end_flag=true;
+            }
+            if(a==(nAt-1))
+              end_flag=1;
+          }
+          if(end_flag) {
+
+            if(a)
+              if(first>0) /* 011130 WLD */
+                if(*(seg+first)==*(seg+first-1))
+                  first--;
+
+            if(last>0)
+              if(*s==*(s-1))
+                if(last<(nAt-1)) 
+                  last++;
+
+            for(f=smooth_first;f<=smooth_last;f++) {
+              for(c=0;c<smooth_cycles;c++) {
+                for(b=first+f;b<=last-f;b++) { /* iterative averaging */
+                  zero3f(t0);
+                  for(e=-f;e<=f;e++) {
+                    add3f(pv+3*(b+e),t0,t0);
+                  }
+                  scale3f(t0,1.0F/(f*2+1),tmp+b*3);
+                }
+                for(b=first+f;b<=last-f;b++) {
+                  if(!(*(flag_tmp+b)&cAtomFlag_no_smooth)) {
+                    copy3f(tmp+b*3,pv+b*3);
+                  }
+                }
+                for(b=first+f;b<=last-f;b++) { 
+                  zero3f(t0);
+                  for(e=-f;e<=f;e++) {
+                    add3f(pvo+3*(b+e),t0,t0);
+                  }
+                  scale3f(t0,1.0F/(f*2+1),tmp+b*3);
+                }
+                for(b=first+f;b<=last-f;b++) {
+                  copy3f(tmp+b*3,pvo+b*3);
+                  normalize3f(pvo+b*3);
+                }
+              }
+
+            }
+            first = -1;
+            last = -1;
+            end_flag=false;
+          }
+          if(*ss==0) {
+            if(first<0)
+              first=a;
+            last = a;
+          } 
+          v+=3;
+          ss++;
+          vo+=3;
+          v0+=3;
+          s++;
+        }
+      }
+    }
+      
+    if(smooth_loops ||
+       SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_cartoon_flat_sheets)) {
+        
+      /* recompute differences and normals */
+        
       s=seg;
       v=pv;
-		
-      dv = Alloc(float,nAt*3);
-      nv = Alloc(float,nAt*3);
-      dl = Alloc(float,nAt);
       v1=dv;
       v2=nv;
       d=dl;
       for(a=0;a<(nAt-1);a++)
         {
-          PRINTFD(G,FB_RepCartoon)
-            " RepCartoon: seg %d *s %d , *(s+1) %d\n",a,*s,*(s+1)
-            ENDFD;
-
           if(*s==*(s+1))
             {
+              float d_1;
               subtract3f(v+3,v,v1);
               *d = (float)length3f(v1);
               if(*d>R_SMALL4) {
-                float d_1;
                 d_1 = 1.0F/(*d);
                 scale3f(v1,d_1,v2);
               } else if(a)  {
@@ -1050,32 +1883,32 @@ Rep *RepCartoonNew(CoordSet *cs)
           else {
             zero3f(v2);	
           }
-          
           d++;
           v+=3;
           v1+=3;
           v2+=3;
           s++;
         }
-		
-      /* compute tangents */
-		
+      
+      
+      /* recompute tangents */
+        
       s=seg;
       v=nv;
-		
-      tv = Alloc(float,nAt*3+6);
+        
       v1=tv;
-		
+        
       *(v1++)=*(v++); /* first segment */
       *(v1++)=*(v++);
       *(v1++)=*(v++);
       s++;
-		
+        
       for(a=1;a<(nAt-1);a++)
         {
           if((*s==*(s-1))&&(*s==*(s+1)))
             {
               add3f(v,(v-3),v1);
+               
               normalize3f(v1);			 
             }
           else if(*s==*(s-1))
@@ -1094,446 +1927,41 @@ Rep *RepCartoonNew(CoordSet *cs)
           v1+=3;
           s++;
         }
+        
       *(v1++)=*(v-3); /* last segment */
       *(v1++)=*(v-2);
       *(v1++)=*(v-1);
 
-      PRINTFD(G,FB_RepCartoon)
-        " RepCartoon-Debug: generating coordinate systems...\n"
-        ENDFD;
-      
-      if(round_helices) {
-        v1 = NULL;
-        v2 = NULL;
-        v3 = NULL;
-        v4 = NULL;
-        v5 = NULL;
-        s = seg;
-        v = pv;
-        ss = sstype;
-        vo = pvo;
-        v0 = tv;
-        last = 0;
-        if(nAt>1) {
-          for(a=0;a<nAt;a++) {
-            if(a) {
-              if(*s!=*(s-1)) { /* contiguous helices in disconnected segments */
-                v1 = NULL;
-                v2 = NULL;
-                v3 = NULL;
-                v4 = NULL;
-                v5 = NULL;
-                last = 0;
-              }
-            }
-            v5 = v4;
-            v4 = v3;
-            v3 = v2;
-            v2 = v1;
-            if(*ss==1) /* helix */
-              v1 = v;
-            else { /* early termination ? */
-              if(last<2) {
-                zero3f(t0);
-                if(v2&&v3) {
-                  subtract3f(v2,v,t0);
-                  normalize3f(t0);
-                  subtract3f(v3,v2,t1);
-                  normalize3f(t1);
-                  add3f(t1,t0,t0);
-                  if(v4) {
-                    subtract3f(v4,v3,t1);
-                    normalize3f(t1);
-                    add3f(t1,t0,t0);
-                  }
-                  if(v5) {
-                    subtract3f(v5,v4,t1);
-                    normalize3f(t1);
-                    add3f(t1,t0,t0);
-                  }
-                  normalize3f(t0);
-                  cross_product3f(t0,v0-3,vo-3);
-                  normalize3f(vo-3);
-                  cross_product3f(t0,v0-6,vo-6);
-                  normalize3f(vo-6);
-                  if(v4) {
-                    cross_product3f(t0,v0-9,vo-9);
-                    normalize3f(vo-9);
-                  }
-                  if(v5) {
-                    cross_product3f(t0,v0-12,vo-12);
-                    normalize3f(vo-12);
-                  }
-
-                  if(v4&&v5) {
-                    /* now make sure there's no goofy flip on the end...
-                       of a short, tight helix */
-                    if(dot_product3f(vo-9,vo-12)<-0.8F)
-                      invert3f(vo-12);
-                  }
-                }
-              }
-              v1 = NULL;
-              v2 = NULL;
-              v3 = NULL;
-              v4 = NULL;
-              v5 = NULL;
-              last = 0;
-            }
-            if(v1&&v2&&v3&&v4) {
-              add3f(v1,v4,t0);
-              add3f(v2,v3,t1);
-              scale3f(t0,0.2130F,t0);
-              scale3f(t1,0.2870F,t1);
-
-              add3f(t0,t1,t0);
-              if(last) { /* 5th CA or later... */
-                subtract3f(t2,t0,t1);
-                normalize3f(t1);
-                cross_product3f(t1,v0,vo);
-                normalize3f(vo);
-                cross_product3f(t1,v0-3,vo-3);
-                normalize3f(vo-3);
-                cross_product3f(t1,v0-6,vo-6);
-                normalize3f(vo-6);
-                if(last==1) { /* 5th */
-                  cross_product3f(t1,v0-9,vo-9);
-                  normalize3f(vo-9);
-                  cross_product3f(t1,v0-12,vo-12);
-                  normalize3f(vo-12);
-                }
-              }
-              last++;
-              copy3f(t0,t2);
-            }
-            v+=3;
-            ss++;
-            vo+=3;
-            v0+=3;
-            s++;
-          }
-        }
-      }
-
-      if(SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_cartoon_refine_normals)) {
-        /* now generate alternative orientation vectors */
         
-        v1 = tv;
-        va = pva;
-        vo = pvo;
-        ss = sstype;
-        for(a=0;a<nAt;a++) { 
-          
-          /* original */
-          copy3f(vo,va);
-          va+=3;
-          
-          /* inverse */
-          copy3f(vo,va);
-          if(*ss!=1)
-            invert3f(va);
-          va+=3;
-          
-          /* go on to next vertex */
-          
-          v1+=3;
-          vo+=3;
-          ss++;
-        }
-        
-        /* now iterate through pairs*/
-        
-        vo = pvo;
-        va = pva;
-        v  = nv; /* normals in direction of chain */
-        
-        for(a=1;a<nAt;a++) {
-          
-          v1 = va+6; /* orientation vectors for next CA */
-          remove_component3f(vo  ,v,o0);
-          normalize3f(o0);
-          remove_component3f(v1  ,v,o1  ); 
-          remove_component3f(v1+3,v,o1+3);
-          normalize3f(o1);
-          normalize3f(o1+3);
-          max_dot = dot_product3f(o0,o1);
-          v0 = v1;
-          
-          dp = dot_product3f(o0,o1+3);
-          if(dp>max_dot) {
-            v0 = v1+3;
-            max_dot = dp;
-          }
-          
-          copy3f(v0,vo+3); /* update with optimal orientation vector */
-          
-          vo+=3;
-          va+=6; /* candidate orientation vectors */
-          v+=3; /* normal */
-        }
-
-      }
-
       if(SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_cartoon_flat_sheets)) {
-        s = seg;
-        v = pv;
-        ss = sstype;
-        vo = pvo;
-        v0 = tv;
-        last = 0;
-        first = -1;
-        end_flag=false;
-        if(nAt>1) {
-          for(a=0;a<nAt;a++) {
-
-            if(a) {
-              if(*s!=*(s-1)) { 
-                end_flag=true;
-              } else if(*ss!=2) {
-                end_flag=true;
-              }
-              if(a==(nAt-1))
-                end_flag=1;
-            }
-            if(end_flag) {
-              f=1;
-              for(c=0;c<flat_cycles;c++) {
-                for(b=first+f;b<=last-f;b++) { /* iterative averaging */
-                  zero3f(t0);
-                  for(e=-f;e<=f;e++) {
-                    add3f(pv+3*(b+e),t0,t0);
-                  }
-                  scale3f(t0,1.0F/(f*2+1),tmp+b*3);
-                }
-                for(b=first+f;b<=last-f;b++) {
-                  if(!(*(ftmp+b)&cAtomFlag_no_smooth)) {
-                    copy3f(tmp+b*3,pv+b*3);
-                  }
-                }
-                for(b=first+f;b<=last-f;b++) { 
-                  zero3f(t0);
-                  for(e=-f;e<=f;e++) {
-                    add3f(pvo+3*(b+e),t0,t0);
-                  }
-                  scale3f(t0,1.0F/(f*2+1),tmp+b*3);
-                }
-                for(b=first+f;b<=last-f;b++) {
-                  copy3f(tmp+b*3,pvo+b*3);
-                  /*                  normalize3f(pvo+b*3);*/
-                }
-                for(b=first+f;b<=last-f;b++) {
-                  subtract3f(pv+(b+1)*3,pv+(b-1)*3,tmp+b*3);
-                  normalize3f(tmp+b*3);
-                  remove_component3f(pvo+b*3,tmp+b*3,pvo+b*3);
-                  normalize3f(pvo+b*3);
-                }
-              }
-
-              first = -1;
-              last = -1;
-              end_flag=false;
-            }
-            if(*ss==2) {
-              if(first<0)
-                first=a;
-              last = a;
-            } 
-            v+=3;
-            ss++;
-            vo+=3;
-            v0+=3;
-            s++;
-          }
-        }
-      }
-
-      if(smooth_loops) {
-
-        s = seg;
-        v = pv;
-        ss = sstype;
-        vo = pvo;
-        v0 = tv;
-        last = 0;
-        first = -1;
-        end_flag=false;
-        if(nAt>1) {
-          for(a=0;a<nAt;a++) {
-
-            if(a) {
-              if(*s!=*(s-1)) { 
-                end_flag=true;
-              } else if(*ss!=0) {
-                end_flag=true;
-              }
-              if(a==(nAt-1))
-                end_flag=1;
-            }
-            if(end_flag) {
-
-              if(a)
-                if(first>0) /* 011130 WLD */
-                  if(*(seg+first)==*(seg+first-1))
-                    first--;
-
-              if(last>0)
-                if(*s==*(s-1))
-                  if(last<(nAt-1)) 
-                    last++;
-
-              for(f=smooth_first;f<=smooth_last;f++) {
-                for(c=0;c<smooth_cycles;c++) {
-                  for(b=first+f;b<=last-f;b++) { /* iterative averaging */
-                    zero3f(t0);
-                    for(e=-f;e<=f;e++) {
-                      add3f(pv+3*(b+e),t0,t0);
-                    }
-                    scale3f(t0,1.0F/(f*2+1),tmp+b*3);
-                  }
-                  for(b=first+f;b<=last-f;b++) {
-                    if(!(*(ftmp+b)&cAtomFlag_no_smooth)) {
-                      copy3f(tmp+b*3,pv+b*3);
-                    }
-                  }
-                  for(b=first+f;b<=last-f;b++) { 
-                    zero3f(t0);
-                    for(e=-f;e<=f;e++) {
-                      add3f(pvo+3*(b+e),t0,t0);
-                    }
-                    scale3f(t0,1.0F/(f*2+1),tmp+b*3);
-                  }
-                  for(b=first+f;b<=last-f;b++) {
-                    copy3f(tmp+b*3,pvo+b*3);
-                    normalize3f(pvo+b*3);
-                  }
-                }
-
-              }
-              first = -1;
-              last = -1;
-              end_flag=false;
-            }
-            if(*ss==0) {
-              if(first<0)
-                first=a;
-              last = a;
-            } 
-            v+=3;
-            ss++;
-            vo+=3;
-            v0+=3;
-            s++;
-          }
-        }
-      }
-      
-      if(smooth_loops ||
-         SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_cartoon_flat_sheets)) {
-        
-        /* recompute differences and normals */
-        
-        s=seg;
-        v=pv;
-        v1=dv;
-        v2=nv;
-        d=dl;
-        for(a=0;a<(nAt-1);a++)
-          {
-            if(*s==*(s+1))
-              {
-                float d_1;
-                subtract3f(v+3,v,v1);
-                *d = (float)length3f(v1);
-                if(*d>R_SMALL4) {
-                  d_1 = 1.0F/(*d);
-                  scale3f(v1,d_1,v2);
-                } else if(a)  {
-                  copy3f(v2-3,v2); 
-                } else {
-                  zero3f(v2);
-                }
-              }
-            else {
-              zero3f(v2);	
-            }
-            d++;
-            v+=3;
-            v1+=3;
-            v2+=3;
-            s++;
-          }
-      
-      
-        /* recompute tangents */
-        
-        s=seg;
-        v=nv;
-        
-        v1=tv;
-        
-        *(v1++)=*(v++); /* first segment */
-        *(v1++)=*(v++);
-        *(v1++)=*(v++);
-        s++;
-        
+        s=seg+1;
+        ss = sstype+1;
+        v2=tv+3; /* normal */
         for(a=1;a<(nAt-1);a++)
           {
-            if((*s==*(s-1))&&(*s==*(s+1)))
-              {
-                add3f(v,(v-3),v1);
-               
-                normalize3f(v1);			 
+            if((*ss==2)&&(*s==*(s+1))&&(*s==*(s-1))) { /* sheet in same segment */
+              /* BROKEN (I THINK) */
+              if((*ss==*(ss+1))&&(*ss!=*(ss-1))) { /* start, bias forwards */
+                scale3f(v2+3,refine_tips,t0);
+                add3f(t0,v2,v2);
+                normalize3f(v2);
+              } else if((*ss!=*(ss+1))&&(*ss==*(ss-1)))  { /* end, bias backwards */
+                scale3f(v2-3,refine_tips,t0);
+                add3f(t0,v2,v2);
+                normalize3f(v2);
               }
-            else if(*s==*(s-1))
-              {
-                *(v1)=*(v-3);  /* end a segment */
-                *(v1+1)=*(v-2); 
-                *(v1+2)=*(v-1); 
-              }
-            else if(*s==*(s+1))
-              {
-                *(v1)=*(v);   /* new segment */
-                *(v1+1)=*(v+1); 
-                *(v1+2)=*(v+2); 
-              }
-            v+=3;
-            v1+=3;
-            s++;
-          }
-        
-        *(v1++)=*(v-3); /* last segment */
-        *(v1++)=*(v-2);
-        *(v1++)=*(v-1);
-
-        
-        if(SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_cartoon_flat_sheets)) {
-          s=seg+1;
-          ss = sstype+1;
-          v2=tv+3; /* normal */
-          for(a=1;a<(nAt-1);a++)
-            {
-              if((*ss==2)&&(*s==*(s+1))&&(*s==*(s-1))) { /* sheet in same segment */
-                if((*ss==*(ss+1))&&(*ss!=*(ss-1))) { /* start, bias forwards */
-                  scale3f(v2+3,refine_tips,t0);
-                  add3f(t0,v2,v2);
-                  normalize3f(v2);
-                } else if((*ss!=*(ss+1))&&(*ss==*(ss-1)))  { /* end, bias backwards */
-                  scale3f(v2-3,refine_tips,t0);
-                  add3f(t0,v2,v2);
-                  normalize3f(v2);
-                }
-              }
+            }
               
 
-              v2+=3;
-              s++;
-              ss++;
-            }
-
-        }
+            v2+=3;
+            s++;
+            ss++;
+          }
 
       }
+
     }
+  }
 
   I->ray = CGONew(G);
   
@@ -2071,7 +2499,7 @@ Rep *RepCartoonNew(CoordSet *cs)
                   
                     f3 = (f2+f0)/2.0F;
                     scale3f(t0,f3-f1,t1);
-                    p3 = stmp+b*3;
+                    p3 = sampling_tmp+b*3;
                     add3f(t1,p1,p3);
                   
                     p0=p1;
@@ -2080,7 +2508,7 @@ Rep *RepCartoonNew(CoordSet *cs)
                   }
                   p1=v-(sampling*3);
                   for(b=0;b<(sampling-1);b++) {
-                    p3 = stmp+b*3;
+                    p3 = sampling_tmp+b*3;
                     copy3f(p3,p1);
                     p1+=3;
                   }
@@ -2322,7 +2750,9 @@ Rep *RepCartoonNew(CoordSet *cs)
                                 obj->AtomInfo[mem[2]].name,mem[2],
                                 obj->AtomInfo[mem[3]].name,mem[3],
                                 obj->AtomInfo[mem[4]].name,mem[4]); */
-                          do_ring(G,5,mem,obj, cs, ring_width, I->ray, ring_color, ring_mode);
+                          do_ring(G,5,mem,obj, cs, ring_width, I->ray, ring_color, ring_mode,
+                                  ladder_radius, ladder_color, ladder_mode, ring_finder,
+                                  cartoon_side_chain_helper, nuc_flag, na_mode);
                         }
                         
                         nbr[5] = obj->Neighbor[mem[5]]+1;              
@@ -2337,14 +2767,18 @@ Rep *RepCartoonNew(CoordSet *cs)
                                  obj->AtomInfo[mem[4]].name,
                                  obj->AtomInfo[mem[5]].name
                                  ); */
-                              do_ring(G,6,mem,obj, cs, ring_width, I->ray, ring_color, ring_mode);
+                              do_ring(G,6,mem,obj, cs, ring_width, I->ray, ring_color, ring_mode,
+                                      ladder_radius, ladder_color, ladder_mode, ring_finder,
+                                      cartoon_side_chain_helper, nuc_flag, na_mode);
                             }
                             nbr[6] = obj->Neighbor[mem[6]]+1;              
                             while((mem[7] = obj->Neighbor[nbr[6]])>=0) {
                               if((mem[7]!=mem[5])&&(mem[7]!=mem[4])&&(mem[7]!=mem[3])&&
                                  (mem[7]!=mem[2])&&(mem[7]!=mem[1])) { 
                                 if(mem[7]==mem[0]) {
-                                  do_ring(G,7,mem,obj, cs, ring_width, I->ray, ring_color, ring_mode);                                  
+                                  do_ring(G,7,mem,obj, cs, ring_width, I->ray, ring_color, ring_mode,
+                                          ladder_radius, ladder_color, ladder_mode, ring_finder,
+                                          cartoon_side_chain_helper, nuc_flag, na_mode);
                                 }
                               }
                               nbr[6]+=2;
@@ -2368,6 +2802,7 @@ Rep *RepCartoonNew(CoordSet *cs)
       }
     }
   }
+
   CGOStop(I->ray);
   I->std = CGOSimplify(I->ray,0);
   FreeP(dv);
@@ -2382,11 +2817,13 @@ Rep *RepCartoonNew(CoordSet *cs)
   FreeP(car);
   FreeP(tmp);
   FreeP(sstype);
-  FreeP(stmp);
-  FreeP(ftmp);
+  FreeP(sampling_tmp);
+  FreeP(flag_tmp);
+  FreeP(nuc_flag);
   VLAFreeP(ring_anchor);
   return((void*)(struct Rep*)I);
 }
 
 
   
+    
