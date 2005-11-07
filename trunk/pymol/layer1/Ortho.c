@@ -95,7 +95,7 @@ struct _COrtho {
   int RenderMode;
   GLint ViewPort[4];
   int WrapXFlag;
-  int ActiveGLBuffer;
+  GLenum ActiveGLBuffer;
 };
 
 static void OrthoBusyDraw(PyMOLGlobals *G,int force);
