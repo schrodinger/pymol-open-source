@@ -185,7 +185,7 @@ static void do_ring(PyMOLGlobals *G,int n_atom, int *atix, ObjectMolecule *obj,
       int o3_at=-1,o5_at=-1;
       int purine_flag = false;
       int nf = false;
-
+      
       if(n_atom==5) { /* going from the sugar to the base */
         for(i=0;i<n_atom;i++) {
           a1 = atix[i];
@@ -484,6 +484,7 @@ static void do_ring(PyMOLGlobals *G,int n_atom, int *atix, ObjectMolecule *obj,
           }
         }         
       }
+      /* see if any of the neighbors are confirmed nucleic acids... */
       if((sugar_at>=0)&&(base_at>=0)) {
         if(!nf) {
           mem0 = sugar_at;
@@ -501,7 +502,14 @@ static void do_ring(PyMOLGlobals *G,int n_atom, int *atix, ObjectMolecule *obj,
                     nbr[3] = obj->Neighbor[mem3]+1;
                     while((mem4 = obj->Neighbor[nbr[3]])>=0) {
                       if(mem4!=mem2) {
-                        if(!nf) nf=nuc_flag[mem3];                    
+                        if(!nf) nf=nuc_flag[mem4];                    
+                        nbr[4] = obj->Neighbor[mem4]+1;
+                        while((mem5 = obj->Neighbor[nbr[4]])>=0) {
+                          if(mem5!=mem3) {
+                            if(!nf) nf=nuc_flag[mem5];                    
+                          }
+                          nbr[4]+=2;
+                        }
                       }
                       nbr[3]+=2;
                     }
@@ -511,7 +519,7 @@ static void do_ring(PyMOLGlobals *G,int n_atom, int *atix, ObjectMolecule *obj,
               }
               nbr[1]+=2;
             }
-          nbr[0]+=2;
+            nbr[0]+=2;
           }
         }
         if(nf) {
@@ -760,7 +768,8 @@ static void do_ring(PyMOLGlobals *G,int n_atom, int *atix, ObjectMolecule *obj,
 
 
 static void nuc_acid(PyMOLGlobals *G, int a,int a1, AtomInfoType *ai, CoordSet *cs, 
-                     ObjectMolecule *obj, int na_mode, int *nuc_flag, int *p_a2,int *p_nSeg, float **p_v_o_last,
+                     ObjectMolecule *obj, int na_mode, int *nuc_flag, int set_flags,
+                     int *p_a2,int *p_nSeg, float **p_v_o_last,
                      int **p_s, int **p_i, int **p_cc,
                      int *p_nAt, int *p_cur_car, int **p_ss, int *p_putty_flag,
                      float **p_v, float **p_vo)
@@ -802,6 +811,26 @@ static void nuc_acid(PyMOLGlobals *G, int a,int a1, AtomInfoType *ai, CoordSet *
   *(v++)=*(v1++);
   *(v++)=*(v1++);
   *(v++)=*(v1++);
+
+  if(a2>=0) {
+    if(set_flags) {
+      if((obj->AtomInfo[a2].protons==cAN_P)&&
+         (!nuc_flag[a2])) {
+        int *nf = NULL;
+        AtomInfoBracketResidueFast(G,obj->AtomInfo,obj->NAtom,a2,&st,&nd);
+        
+        nf = nuc_flag + st;
+        for(a3=st;a3<=nd;a3++) {
+          *(nf++)= true;
+        }
+      }
+    } else if((na_mode>=2)&&(!nuc_flag[a2])) { /* just a single nucleotide -- skip */
+      cur_car = cCartoon_skip;
+      *(cc-2)=cCartoon_skip;
+      *(cc-1)=cCartoon_skip;
+    }
+  }
+
   a2=a1;
   
   ss++;
@@ -809,12 +838,13 @@ static void nuc_acid(PyMOLGlobals *G, int a,int a1, AtomInfoType *ai, CoordSet *
   v_c = NULL;
   v_n = NULL;
   v_o = NULL;
+
   
   AtomInfoBracketResidueFast(G,obj->AtomInfo,obj->NAtom,a1,&st,&nd);
   
   {
     int *nf = NULL;
-    if(nuc_flag)
+    if(set_flags && v_o_last)
       nf = nuc_flag + st;
     for(a3=st;a3<=nd;a3++) {
       if(nf) 
@@ -953,6 +983,7 @@ Rep *RepCartoonNew(CoordSet *cs)
   int ring_color;
   int loop_cap, tube_cap;
   int *nuc_flag = NULL;
+  int nucleic_color = 0;
 
   /* THIS IS BY FAR THE WORST ROUTINE IN PYMOL!
    * DEVELOP ON IT ONLY AT EXTREME RISK TO YOUR MENTAL HEALTH */
@@ -1050,6 +1081,11 @@ Rep *RepCartoonNew(CoordSet *cs)
   flat_cycles = SettingGet_i(G,cs->Setting,obj->Obj.Setting,cSetting_cartoon_flat_cycles);
 
   na_mode = SettingGet_i(G,cs->Setting,obj->Obj.Setting,cSetting_cartoon_nucleic_acid_mode);
+  nucleic_color = SettingGet_color(G,cs->Setting,obj->Obj.Setting,cSetting_cartoon_nucleic_acid_color);
+
+  if(nucleic_color==-1)
+    nucleic_color = cartoon_color;
+
   ring_mode = SettingGet_i(G,cs->Setting,obj->Obj.Setting,cSetting_cartoon_ring_mode);
   ring_finder = SettingGet_i(G,cs->Setting,obj->Obj.Setting,cSetting_cartoon_ring_finder);
   ladder_mode = SettingGet_i(G,cs->Setting,obj->Obj.Setting,cSetting_cartoon_ladder_mode); 
@@ -1140,7 +1176,7 @@ Rep *RepCartoonNew(CoordSet *cs)
               /*  3' nucleic acid cap */
 
               nuc_acid(G, trailing_O3p_a, trailing_O3p_a1, trailing_O3p_ai, 
-                       cs, obj, na_mode, nuc_flag, &a2, &nSeg, &v_o_last, &s, &i, &cc, 
+                       cs, obj, na_mode, nuc_flag, false, &a2, &nSeg, &v_o_last, &s, &i, &cc, 
                        &nAt, &cur_car, &ss, &putty_flag, &v, &vo);
               a2=-1;
               trailing_O3p_ai = NULL;
@@ -1290,7 +1326,7 @@ Rep *RepCartoonNew(CoordSet *cs)
                 if(trailing_O3p_ai&&((na_mode==2)||(na_mode==4))) {
                   
                   nuc_acid(G, trailing_O3p_a, trailing_O3p_a1, trailing_O3p_ai, 
-                           cs, obj, na_mode, nuc_flag, &a2, &nSeg, &v_o_last, &s, &i, &cc, 
+                           cs, obj, na_mode, nuc_flag, false, &a2, &nSeg, &v_o_last, &s, &i, &cc, 
                            &nAt, &cur_car, &ss, &putty_flag, &v, &vo);
                 }
                 a2=-1;
@@ -1307,7 +1343,7 @@ Rep *RepCartoonNew(CoordSet *cs)
                  ObjectMoleculeCheckBondSep(obj,a1,leading_O5p_a1,5)) {
                 
                 nuc_acid(G, leading_O5p_a, leading_O5p_a1, leading_O5p_ai, 
-                         cs, obj, na_mode, nuc_flag, &a2, &nSeg, &v_o_last, &s, &i, &cc, 
+                         cs, obj, na_mode, nuc_flag, false, &a2, &nSeg, &v_o_last, &s, &i, &cc, 
                          &nAt, &cur_car, &ss, &putty_flag, &v, &vo);
               }
             }
@@ -1316,7 +1352,7 @@ Rep *RepCartoonNew(CoordSet *cs)
 
             /* this is the main nucleic acid cartoon section... */
             
-            nuc_acid(G, a, a1, ai, cs, obj, na_mode, nuc_flag, &a2, &nSeg, &v_o_last, &s, &i, &cc, 
+            nuc_acid(G, a, a1, ai, cs, obj, na_mode, nuc_flag, true, &a2, &nSeg, &v_o_last, &s, &i, &cc, 
                      &nAt, &cur_car, &ss, &putty_flag, &v, &vo);
 
           }  else if((a2>=0)&&
@@ -1349,7 +1385,7 @@ Rep *RepCartoonNew(CoordSet *cs)
   if(trailing_O3p_ai&&((na_mode==2)||(na_mode==4))) {
     
     nuc_acid(G, trailing_O3p_a, trailing_O3p_a1, trailing_O3p_ai, 
-             cs, obj, na_mode, nuc_flag, &a2, &nSeg, &v_o_last, &s, &i, &cc, 
+             cs, obj, na_mode, nuc_flag, false, &a2, &nSeg, &v_o_last, &s, &i, &cc, 
              &nAt, &cur_car, &ss, &putty_flag, &v, &vo);
     a2=-1;
     trailing_O3p_ai = NULL;
@@ -2358,6 +2394,12 @@ Rep *RepCartoonNew(CoordSet *cs)
                 c1 = (c2 = cartoon_color);
               }
 
+              if(nuc_flag[*atp]||nuc_flag[*(atp+1)]) { /* this is a nucleic acid ribbon */
+                if(nucleic_color>=0) {
+                  c1 = (c2 = nucleic_color);
+                }
+              }
+              
               if(discrete_colors) {
                 if(n_p==0) {
                   if(contigFlag) {
@@ -2379,8 +2421,9 @@ Rep *RepCartoonNew(CoordSet *cs)
                     c2=c1;
                   }
                 }/* not contig */
-              
               }
+            
+              
               dev = throw*(*d);
               for(b=0;b<sampling;b++) /* needs optimization */
                 {

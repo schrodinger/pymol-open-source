@@ -40,7 +40,7 @@ PyMOL>ray
  RayRenderTest: obtained 59232 graphics primitives.
 PyMOL>cartoon tube
 PyMOL>ray
- RayRenderTest: obtained 88848 graphics primitives.
+ RayRenderTest: obtained 88720 graphics primitives.
 PyMOL>cartoon oval
 PyMOL>ray
  RayRenderTest: obtained 98720 graphics primitives.
@@ -56,10 +56,10 @@ PyMOL>ray
 PyMOL>cartoon loop,ss h
 PyMOL>cartoon tube,ss s
 PyMOL>ray
- RayRenderTest: obtained 67452 graphics primitives.
+ RayRenderTest: obtained 66876 graphics primitives.
 PyMOL>cartoon skip,resi 1-100
 PyMOL>ray
- RayRenderTest: obtained 10710 graphics primitives.
+ RayRenderTest: obtained 10678 graphics primitives.
 PyMOL>dele all
 PyMOL>dele all
 PyMOL>load dat/pept.pdb
