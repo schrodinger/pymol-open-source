@@ -271,7 +271,7 @@ float ShakerDoPlan(float *v0,float *v1,float *v2,float *v3,
 
 #else
     
-    float d01[3],d12[3],d23[3],cp0[3],cp1[3],dp,sc,dev,dp2,pos[3],d0[3],push[3];
+    float d01[3],d12[3],d23[3],cp0[3],cp1[3],dp,sc,dev,d0[3],push[3];
 
     subtract3f(v0,v1,d01);
     subtract3f(v1,v2,d12);
