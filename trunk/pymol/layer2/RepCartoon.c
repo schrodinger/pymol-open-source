@@ -140,6 +140,7 @@ static void do_ring(PyMOLGlobals *G,int n_atom, int *atix, ObjectMolecule *obj,
   AtomInfoType *ai;
   int have_C4 = -1;
   int have_C4_prime = -1;
+  int have_C_number = -1;
   int nf = false;
 
   width *= 0.5F;
@@ -171,7 +172,10 @@ static void do_ring(PyMOLGlobals *G,int n_atom, int *atix, ObjectMolecule *obj,
             have_C4 = a1;
           if(WordMatchExact(G,"C4'",ai->name,1)||
              WordMatchExact(G,"C4*",ai->name,1))
-            have_C4_prime =a1;
+            have_C4_prime = a1;
+          if(((ai->name[0]=='C')||(ai->name[0]=='c'))&&
+             ((ai->name[1]>='0')&&(ai->name[1]<='9')))
+            have_C_number = a1;
         }
         if(!ai->temp1)
           all_marked=false;
@@ -545,7 +549,7 @@ static void do_ring(PyMOLGlobals *G,int n_atom, int *atix, ObjectMolecule *obj,
           }
         }
         if(nf) {
-          if((ring_mode)&&((finder==1)||(finder==3))) {
+          if((ring_mode)&&((finder==1)||(finder>=3))) {
             if((c1_at>=0)&&(base_at>=0)) {
               int save_at = sugar_at;
               sugar_at = c1_at;
@@ -768,12 +772,13 @@ static void do_ring(PyMOLGlobals *G,int n_atom, int *atix, ObjectMolecule *obj,
         }
       }
     }
-    if((nf||(!ladder_mode)||(finder==3)) && 
+    if((nf||(!ladder_mode)||(finder>=3)) && 
        ring_mode && 
        (((finder==1)&&((have_C4>=0)||(have_C4_prime>=0)))||
         ((finder==2)&&((have_C4>=0)))||
-        ((finder==3)))) {
-
+        ((finder==3)&&((have_C_number>=0)))|| 
+        ((finder==4)))) {
+      
       float avg[3];
       float avg_col[3];
       int i;
@@ -1326,7 +1331,7 @@ Rep *RepCartoonNew(CoordSet *cs)
       if(ai->visRep[cRepCartoon]) {
         if(ring_anchor &&
            (ai->protons!=cAN_H) &&
-           ((ring_finder_eff==3)|| /* all 5-7 atom rings */
+           ((ring_finder_eff>=3)|| /* all 5-7 atom rings */
             ((ring_finder_eff<=2) && /*  C4-containing rings */
              (WordMatchExact(G,"C4",ai->name,1))) ||
             ((ring_finder_eff==1) && 
