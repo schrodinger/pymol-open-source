@@ -585,6 +585,7 @@ typedef struct _CPyMOL {
   ov_word lex_cartoon_ladder_mode;
   ov_word lex_cartoon_ladder_radius;
   ov_word lex_cartoon_ladder_color;
+  ov_word lex_cartoon_nucleic_acid_color;
 } _CPyMOL;
 
 /* convenience functions -- inline */
@@ -1178,7 +1179,7 @@ static OVstatus PyMOL_InitAPI(CPyMOL *I)
   LEX_SETTING(cartoon_ladder_mode, 448);
   LEX_SETTING(cartoon_ladder_radius, 449);
   LEX_SETTING(cartoon_ladder_color, 450);
-
+  LEX_SETTING(cartoon_nucleic_acid_color, 451);
   return_OVstatus_SUCCESS;
 }
 
