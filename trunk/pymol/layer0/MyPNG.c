@@ -172,6 +172,9 @@ int MyPNGRead(char *file_name,unsigned char **p_ptr,unsigned int *width_ptr,unsi
   unsigned char *p=NULL;
   double        file_gamma;
 
+  if(!file_name)
+    return 0;
+
    png_file = fopen(file_name, "rb");
    if (png_file == NULL)
      return 0;

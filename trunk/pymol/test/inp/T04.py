@@ -34,7 +34,6 @@ def centers():
          time.sleep(random.random()*0.30)
       except: 
          print "exception"
-         
 
 t = threading.Thread(target=centers)
 t.setDaemon(1)
