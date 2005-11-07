@@ -22,6 +22,7 @@ def load():
          sys.__stdout__.flush()
          for file in glob(dir+"/pdb*"):
             name = os.path.split(file)[-1][:-4]
+            cmd.delete("pdb")
             cmd.load(file,name)
             cmd.hide("everything",name)
             cmd.disable()
@@ -30,6 +31,7 @@ def load():
             cmd.refresh()
             cmd.dss(name)
             cmd.refresh()
+            time.sleep(0.2)
             sys.__stdout__.write(".")
             sys.__stdout__.flush()
          sys.__stdout__.write("("+str(cmd.count_atoms())+")")
