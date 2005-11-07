@@ -4,6 +4,14 @@ CHANGE LOG
 
 Changes up to 0.99
 
+    beta27
+
+    * further work on nucleic acid cartoons
+
+    beta26
+
+    * reworked some of the rendering code to work around OpenGL bugs
+
     beta24
 
     * proof of concept: molecular "Maya"
