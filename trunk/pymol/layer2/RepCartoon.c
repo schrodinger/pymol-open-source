@@ -693,47 +693,81 @@ static void do_ring(PyMOLGlobals *G,int n_atom, int *atix, ObjectMolecule *obj,
         }
       }
     }
-    if((!nf)&&(have_C4_prime>=0)) {
-      int nbr[7];
+    if((!nf)&&((have_C4_prime>=0)||(have_C4>=0))) {
+      int nbr[9];
       register int *neighbor = obj->Neighbor;
-      register int mem0,mem1,mem2,mem3,mem4,mem5;
+      register int mem0,mem1,mem2,mem3,mem4,mem5,mem6,mem7,mem8,mem9;
       /* see if any of the neighbors are confirmed nucleic acids... */
-      mem0 = have_C4_prime;
-      nbr[0]= neighbor[mem0]+1;
-      while((!nf)&&(mem1 = neighbor[nbr[0]])>=0) {
-        if(!nf) nf=nuc_flag[mem1];
-        nbr[1] = neighbor[mem1]+1;
-        while((!nf)&&(mem2 = neighbor[nbr[1]])>=0) {
-          if(mem2!=mem0) {
-            if(!nf) nf=nuc_flag[mem2];
-            nbr[2] = neighbor[mem2]+1;
-            while((!nf)&&(mem3 = neighbor[nbr[2]])>=0) {
-              if((mem3!=mem1)&&(mem3!=mem0)) {
-                if(!nf) nf=nuc_flag[mem3];                    
-                nbr[3] = neighbor[mem3]+1;
-                while((mem4 = neighbor[nbr[3]])>=0) {
-                  if(mem4!=mem2) {
-                    if(!nf) nf=nuc_flag[mem4];                    
-                    nbr[4] = neighbor[mem4]+1;
-                    while((mem5 = neighbor[nbr[4]])>=0) {
-                      if(mem5!=mem3) {
-                        if(!nf) nf=nuc_flag[mem5];                    
+      if(have_C4_prime>=0) 
+        mem0 = have_C4_prime;
+      else if(have_C4>=0)
+        mem0 = have_C4;
+      else
+        mem0 = -1;
+      if(mem0>=1) {
+        nbr[0]= neighbor[mem0]+1;
+        while((!nf)&&(mem1 = neighbor[nbr[0]])>=0) {
+          if(!nf) nf=nuc_flag[mem1];
+          nbr[1] = neighbor[mem1]+1;
+          while((!nf)&&(mem2 = neighbor[nbr[1]])>=0) {
+            if(mem2!=mem0) {
+              if(!nf) nf=nuc_flag[mem2];
+              nbr[2] = neighbor[mem2]+1;
+              while((!nf)&&(mem3 = neighbor[nbr[2]])>=0) {
+                if((mem3!=mem1)&&(mem3!=mem0)) {
+                  if(!nf) nf=nuc_flag[mem3];                    
+                  nbr[3] = neighbor[mem3]+1;
+                  while((mem4 = neighbor[nbr[3]])>=0) {
+                    if(mem4!=mem2) {
+                      if(!nf) nf=nuc_flag[mem4];                    
+                      nbr[4] = neighbor[mem4]+1;
+                      while((mem5 = neighbor[nbr[4]])>=0) {
+                        if(mem5!=mem3) {
+                          if(!nf) nf=nuc_flag[mem5];                    
+                          nbr[5] = neighbor[mem5]+1;
+                          while((mem6 = neighbor[nbr[5]])>=0) {
+                            if(mem6!=mem4) {
+                              if(!nf) nf=nuc_flag[mem6];                    
+                              nbr[6] = neighbor[mem6]+1;
+                              while((mem7 = neighbor[nbr[6]])>=0) {
+                                if(mem7!=mem5) {
+                                  if(!nf) nf=nuc_flag[mem7];                    
+                                  nbr[7] = neighbor[mem7]+1;
+                                  while((mem8 = neighbor[nbr[7]])>=0) {
+                                    if(mem8!=mem6) {
+                                      if(!nf) nf=nuc_flag[mem8];                    
+                                      nbr[8] = neighbor[mem8]+1;
+                                      while((mem9 = neighbor[nbr[8]])>=0) {
+                                        if(mem9!=mem7) {
+                                          if(!nf) nf=nuc_flag[mem9];                    
+                                        }
+                                        nbr[8]+=2;
+                                      }
+                                    }
+                                    nbr[7]+=2;
+                                  }
+                                }
+                                nbr[6]+=2;
+                              }
+                            }
+                            nbr[5]+=2;
+                          }
+                        }
+                        nbr[4]+=2;
                       }
-                      nbr[4]+=2;
                     }
+                    nbr[3]+=2;
                   }
-                  nbr[3]+=2;
                 }
+                nbr[2]+=2;
               }
-              nbr[2]+=2;
             }
+            nbr[1]+=2;
           }
-          nbr[1]+=2;
+          nbr[0]+=2;
         }
-        nbr[0]+=2;
       }
     }
-    nf=true;
     if((nf||(!ladder_mode)||(finder==3)) && 
        ring_mode && 
        (((finder==1)&&((have_C4>=0)||(have_C4_prime>=0)))||
