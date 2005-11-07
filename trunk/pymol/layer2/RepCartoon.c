@@ -128,7 +128,7 @@ static float smooth(float x,float power)
 static void do_ring(PyMOLGlobals *G,int n_atom, int *atix, ObjectMolecule *obj, 
                     CoordSet *cs, float width, CGO *cgo, int ring_color, int ring_mode,
                     float ladder_radius, int ladder_color, int ladder_mode, int finder,
-                    int sc_helper, int *nuc_flag, int na_mode)
+                    int sc_helper, int *nuc_flag, int na_mode, float ring_alpha, float alpha)
 {
   float *v_i[MAX_RING_ATOM];
   float *col[MAX_RING_ATOM];
@@ -665,7 +665,6 @@ static void do_ring(PyMOLGlobals *G,int n_atom, int *atix, ObjectMolecule *obj,
                     v_outer = outer;
                   }
                 }
-              
                 CGOPickColor(cgo,base_at,-1);
                 if(ladder_color>=0) {
                   color=ColorGet(G,ladder_color);
@@ -843,6 +842,9 @@ static void do_ring(PyMOLGlobals *G,int n_atom, int *atix, ObjectMolecule *obj,
         float out[3];
         float *color = NULL;
 
+        if((alpha!=1.0F)||(ring_alpha!=alpha))
+          CGOAlpha(cgo,ring_alpha);
+
         if(ring_color>=0) {
           color=ColorGet(G,ring_color);
         } else {
@@ -917,6 +919,9 @@ static void do_ring(PyMOLGlobals *G,int n_atom, int *atix, ObjectMolecule *obj,
         
         }
         CGOEnd(cgo);
+
+        if((alpha!=1.0F)||(ring_alpha!=alpha))
+          CGOAlpha(cgo,alpha);
 
         if(ring_mode==1) {
           for(i=0;i<n_atom;i++) {
@@ -1163,6 +1168,7 @@ Rep *RepCartoonNew(CoordSet *cs)
   int loop_cap, tube_cap;
   int *nuc_flag = NULL;
   int nucleic_color = 0;
+  float ring_alpha;
 
   /* THIS IS BY FAR THE WORST ROUTINE IN PYMOL!
    * DEVELOP ON IT ONLY AT EXTREME RISK TO YOUR MENTAL HEALTH */
@@ -1267,10 +1273,19 @@ Rep *RepCartoonNew(CoordSet *cs)
 
   ring_mode = SettingGet_i(G,cs->Setting,obj->Obj.Setting,cSetting_cartoon_ring_mode);
   ring_finder = SettingGet_i(G,cs->Setting,obj->Obj.Setting,cSetting_cartoon_ring_finder);
+  ring_alpha =  SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_cartoon_ring_transparency);
+
+  if(ring_alpha < 0.0F) 
+    ring_alpha = alpha;
+  else
+    ring_alpha = 1.0F - ring_alpha;
+
+  alpha=1.0F - SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_cartoon_transparency);
   ladder_mode = SettingGet_i(G,cs->Setting,obj->Obj.Setting,cSetting_cartoon_ladder_mode); 
   ladder_radius = SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_cartoon_ladder_radius);
   ladder_color = SettingGet_color(G,cs->Setting,obj->Obj.Setting,cSetting_cartoon_ladder_color);
 
+  
   if(ladder_color==-1)
     ladder_color = cartoon_color;
 
@@ -2972,7 +2987,9 @@ Rep *RepCartoonNew(CoordSet *cs)
                                 obj->AtomInfo[mem[4]].name,mem[4]); */
                           do_ring(G,5,mem,obj, cs, ring_width, I->ray, ring_color, ring_mode,
                                   ladder_radius, ladder_color, ladder_mode, ring_finder,
-                                  cartoon_side_chain_helper, nuc_flag, na_mode);
+                                  cartoon_side_chain_helper, nuc_flag, na_mode, 
+                                  ring_alpha, alpha);
+
                         }
                         
                         nbr[5] = neighbor[mem[5]]+1;              
@@ -2989,7 +3006,7 @@ Rep *RepCartoonNew(CoordSet *cs)
                                  ); */
                               do_ring(G,6,mem,obj, cs, ring_width, I->ray, ring_color, ring_mode,
                                       ladder_radius, ladder_color, ladder_mode, ring_finder,
-                                      cartoon_side_chain_helper, nuc_flag, na_mode);
+                                      cartoon_side_chain_helper, nuc_flag, na_mode, ring_alpha, alpha);
                             }
                             nbr[6] = neighbor[mem[6]]+1;              
                             while((mem[7] = neighbor[nbr[6]])>=0) {
@@ -2998,7 +3015,7 @@ Rep *RepCartoonNew(CoordSet *cs)
                                 if(mem[7]==mem[0]) {
                                   do_ring(G,7,mem,obj, cs, ring_width, I->ray, ring_color, ring_mode,
                                           ladder_radius, ladder_color, ladder_mode, ring_finder,
-                                          cartoon_side_chain_helper, nuc_flag, na_mode);
+                                          cartoon_side_chain_helper, nuc_flag, na_mode, ring_alpha, alpha);
                                 }
                               }
                               nbr[6]+=2;

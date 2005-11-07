@@ -601,6 +601,7 @@ CSetting *SettingNewFromPyList(PyMOLGlobals *G,PyObject *list);
 #define cSetting_cartoon_ladder_radius      449
 #define cSetting_cartoon_ladder_color       450
 #define cSetting_cartoon_nucleic_acid_color 451
+#define cSetting_cartoon_ring_transparency  452
 
 /* when you add a new settingg also remember:
    layer1/Setting.c
@@ -610,7 +611,7 @@ CSetting *SettingNewFromPyList(PyMOLGlobals *G,PyObject *list);
 
 /* cSetting_ss_INIT must always be last setting_index +1 */
 
-#define cSetting_INIT                       452
+#define cSetting_INIT                       453
 
 #endif
 
