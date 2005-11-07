@@ -138,8 +138,13 @@ static void do_ring(PyMOLGlobals *G,int n_atom, int *atix, ObjectMolecule *obj,
   int have_all = true;
   int all_marked = true;
   AtomInfoType *ai;
-  width *= 0.5F;
+  int have_C4 = false;
+  int have_C4_prime = false;
+  int nf = false;
 
+  width *= 0.5F;
+  if(!ring_mode)
+    finder = 0;
   /* first, make sure all atoms have known coordinates */
   {
     int a,i;
@@ -160,6 +165,11 @@ static void do_ring(PyMOLGlobals *G,int n_atom, int *atix, ObjectMolecule *obj,
           col[i] = ColorGet(G,ai->color);
           v_i[i]=cs->Coord+3*a;
           have_atom = true;
+          if(WordMatchExact(G,"C4",ai->name,1))
+            have_C4 = true;
+          if(WordMatchExact(G,"C4'",ai->name,1)||
+             WordMatchExact(G,"C4*",ai->name,1))
+            have_C4_prime = true;
         }
         if(!ai->temp1)
           all_marked=false;
@@ -182,9 +192,8 @@ static void do_ring(PyMOLGlobals *G,int n_atom, int *atix, ObjectMolecule *obj,
       int nbr[7];
       int sugar_at=-1,base_at=-1;
       int phos3_at=-1,phos5_at=-1;
-      int o3_at=-1,o5_at=-1;
+      int o3_at=-1,o5_at=-1,c1_at=-1;
       int purine_flag = false;
-      int nf = false;
       
       if(n_atom==5) { /* going from the sugar to the base */
         for(i=0;i<n_atom;i++) {
@@ -225,6 +234,10 @@ static void do_ring(PyMOLGlobals *G,int n_atom, int *atix, ObjectMolecule *obj,
                 while((mem2 = obj->Neighbor[nbr[1]])>=0) {
                   if((mem2!=mem0)&& (!atomInfo[mem2].temp1) && 
                      (atomInfo[mem2].protons==cAN_C)) { 
+                    ai = atomInfo+mem2;
+                    if(WordMatchExact(G,"C1*",ai->name,1)||
+                       WordMatchExact(G,"C1'",ai->name,1))
+                      c1_at = mem2;
                     nbr[2] = obj->Neighbor[mem2]+1;
                     while((mem3 = obj->Neighbor[nbr[2]])>=0) {
                       if((mem3!=mem1)&&(mem3!=mem0)) {
@@ -251,6 +264,11 @@ static void do_ring(PyMOLGlobals *G,int n_atom, int *atix, ObjectMolecule *obj,
                             if((!ai2->temp1) && (WordMatchExact(G,"N1",ai2->name,1)||
                                                  WordMatchExact(G,"N9",ai2->name,1))) {
                               base_at = mem3;
+                              if(ring_mode!=3) {
+                                ladder_radius = width * 1.5;
+                              } else {
+                                ladder_radius = width * 3;
+                              }
                             }
                           } else {
                             nbr[3] = obj->Neighbor[mem3]+1;
@@ -485,7 +503,7 @@ static void do_ring(PyMOLGlobals *G,int n_atom, int *atix, ObjectMolecule *obj,
         }         
       }
       /* see if any of the neighbors are confirmed nucleic acids... */
-      if((sugar_at>=0)&&(base_at>=0)) {
+      if(sugar_at>=0) {
         if(!nf) {
           mem0 = sugar_at;
           nbr[0]= obj->Neighbor[mem0]+1;
@@ -523,99 +541,164 @@ static void do_ring(PyMOLGlobals *G,int n_atom, int *atix, ObjectMolecule *obj,
           }
         }
         if(nf) {
-          AtomInfoType *sug_ai = atomInfo + sugar_at;
-          AtomInfoType *bas_ai = atomInfo + base_at;
-          if((sug_ai->visRep[cRepCartoon]) && 
-             (bas_ai->visRep[cRepCartoon]) &&
-             ((!sc_helper)||!(bas_ai->visRep[cRepLine]||
-                              bas_ai->visRep[cRepCyl]||
-                              bas_ai->visRep[cRepSphere]))) {
-            
-            int sug,bas;
-            float *color;
-            float *v_outer, tmp[3],outer[3];
-            if(obj->DiscreteFlag) {
-              if(cs==obj->DiscreteCSet[sugar_at] &&
-                 cs==obj->DiscreteCSet[base_at]) {
-                sug=obj->DiscreteAtmToIdx[sugar_at];
-                bas=obj->DiscreteAtmToIdx[base_at];
-              } else {
-                sug = -1;
-                bas = -1;
-              }
-            } else {
-              sug=cs->AtmToIdx[sugar_at];
-              bas=cs->AtmToIdx[base_at];
-            }
-            
-            if((sug>=0)&&(bas>=0)) {
-              int p3,p5;
-              v_outer = cs->Coord+3*sug;
-              
-              if((o3_at>=0)&&(phos3_at<0))
-                phos3_at = o3_at;
-              if((o5_at>=0)&&(phos5_at<0))
-                phos5_at = o5_at;
-              if((na_mode!=1)&&(phos3_at>=0)&&(phos5_at>=0)) {
-                
-                if(obj->DiscreteFlag) {
-                  if(cs==obj->DiscreteCSet[phos3_at] &&
-                     cs==obj->DiscreteCSet[phos5_at]) {
-                    p3=obj->DiscreteAtmToIdx[phos3_at];
-                    p5=obj->DiscreteAtmToIdx[phos5_at];
+          if((ring_mode)&&((finder==1)||(finder==3))) {
+            if(c1_at>=0) {
+              int save_at = sugar_at;
+              sugar_at = c1_at;
+              {
+                AtomInfoType *sug_ai = atomInfo + sugar_at;
+                AtomInfoType *bas_ai = atomInfo + base_at;
+                if((sug_ai->visRep[cRepCartoon]) && 
+                   (bas_ai->visRep[cRepCartoon]) &&
+                   ((!sc_helper)||!(bas_ai->visRep[cRepLine]||
+                                    bas_ai->visRep[cRepCyl]||
+                                    bas_ai->visRep[cRepSphere]))) {
+                  
+                  int sug,bas;
+                  float *color;
+                  if(obj->DiscreteFlag) {
+                    if(cs==obj->DiscreteCSet[sugar_at] &&
+                       cs==obj->DiscreteCSet[base_at]) {
+                      sug=obj->DiscreteAtmToIdx[sugar_at];
+                      bas=obj->DiscreteAtmToIdx[base_at];
+                    } else {
+                      sug = -1;
+                      bas = -1;
+                    }
                   } else {
-                    p3 = -1;
-                    p5 = -1;
+                    sug=cs->AtmToIdx[sugar_at];
+                    bas=cs->AtmToIdx[base_at];
                   }
-                } else {
-                  p3=cs->AtmToIdx[phos3_at];
-                  p5=cs->AtmToIdx[phos5_at];
-                }
-                if((p3>=0)&&(p5>=0)) {
-                  scale3f(cs->Coord+3*p3,0.333333F,outer);
-                  scale3f(cs->Coord+3*p5,0.666667F,tmp);
-                  add3f(tmp,outer,outer);
-                  v_outer = outer;
+                  
+                  if((sug>=0)&&(bas>=0)) {
+                    
+                    CGOPickColor(cgo,base_at,-1);
+                    if(ladder_color>=0) {
+                      color=ColorGet(G,ladder_color);
+                      CGOCustomCylinderv(cgo,cs->Coord+3*sug,
+                                         cs->Coord+3*bas,
+                                         ladder_radius,
+                                         color,
+                                         color,
+                                         2.0F,2.0F);
+                    } else {
+                      CGOCustomCylinderv(cgo,cs->Coord+3*sug,
+                                         cs->Coord+3*bas,
+                                         ladder_radius,
+                                         ColorGet(G,sug_ai->color),
+                                         ColorGet(G,bas_ai->color),
+                                         2.0F,2.0F);
+                    }
+                  }
                 }
               }
+              base_at = save_at;
+              sugar_at = save_at;
+            }
+          }
+          {
+            AtomInfoType *sug_ai = atomInfo + sugar_at;
+            AtomInfoType *bas_ai = atomInfo + base_at;
+            if((sug_ai->visRep[cRepCartoon]) && 
+               (bas_ai->visRep[cRepCartoon]) &&
+               ((!sc_helper)||!(bas_ai->visRep[cRepLine]||
+                                bas_ai->visRep[cRepCyl]||
+                                bas_ai->visRep[cRepSphere]))) {
               
-              CGOPickColor(cgo,base_at,-1);
-              if(ladder_color>=0) {
-                color=ColorGet(G,ladder_color);
-                CGOCustomCylinderv(cgo,v_outer,
-                                   cs->Coord+3*bas,
-                                   ladder_radius,
-                                   color,
-                                   color,
-                                   2.0F,2.0F);
+              int sug,bas;
+              float *color;
+              float *v_outer, tmp[3],outer[3];
+              if(obj->DiscreteFlag) {
+                if(cs==obj->DiscreteCSet[sugar_at] &&
+                   cs==obj->DiscreteCSet[base_at]) {
+                  sug=obj->DiscreteAtmToIdx[sugar_at];
+                  bas=obj->DiscreteAtmToIdx[base_at];
+                } else {
+                  sug = -1;
+                  bas = -1;
+                }
               } else {
-                CGOCustomCylinderv(cgo,v_outer,
-                                   cs->Coord+3*bas,
-                                   ladder_radius,
-                                   ColorGet(G,sug_ai->color),
-                                   ColorGet(G,bas_ai->color),
-                                   2.0F,2.0F);
+                sug=cs->AtmToIdx[sugar_at];
+                bas=cs->AtmToIdx[base_at];
+              }
+            
+              if((sug>=0)&&(bas>=0)) {
+                int p3,p5;
+                v_outer = cs->Coord+3*sug;
+              
+                if((o3_at>=0)&&(phos3_at<0))
+                  phos3_at = o3_at;
+                if((o5_at>=0)&&(phos5_at<0))
+                  phos5_at = o5_at;
+                if((na_mode!=1)&&(phos3_at>=0)&&(phos5_at>=0)) {
+                
+                  if(obj->DiscreteFlag) {
+                    if(cs==obj->DiscreteCSet[phos3_at] &&
+                       cs==obj->DiscreteCSet[phos5_at]) {
+                      p3=obj->DiscreteAtmToIdx[phos3_at];
+                      p5=obj->DiscreteAtmToIdx[phos5_at];
+                    } else {
+                      p3 = -1;
+                      p5 = -1;
+                    }
+                  } else {
+                    p3=cs->AtmToIdx[phos3_at];
+                    p5=cs->AtmToIdx[phos5_at];
+                  }
+                  if((p3>=0)&&(p5>=0)) {
+                    if(ring_mode) {
+                      scale3f(cs->Coord+3*p5,0.333333F,outer);
+                      scale3f(cs->Coord+3*p3,0.666667F,tmp);
+                    } else {
+                      scale3f(cs->Coord+3*p3,0.5F,outer);
+                      scale3f(cs->Coord+3*p5,0.5F,tmp);
+                    }
+                    add3f(tmp,outer,outer);
+                    v_outer = outer;
+                  }
+                }
+              
+                CGOPickColor(cgo,base_at,-1);
+                if(ladder_color>=0) {
+                  color=ColorGet(G,ladder_color);
+                  CGOCustomCylinderv(cgo,v_outer,
+                                     cs->Coord+3*bas,
+                                     ladder_radius,
+                                     color,
+                                     color,
+                                     2.0F,2.0F);
+                } else {
+                  CGOCustomCylinderv(cgo,v_outer,
+                                     cs->Coord+3*bas,
+                                     ladder_radius,
+                                     ColorGet(G,sug_ai->color),
+                                     ColorGet(G,bas_ai->color),
+                                     2.0F,2.0F);
+                }
               }
             }
           }
         }
       }
     }
-
-    if(!ring_mode) {
+    if((!ring_mode)||(finder==2)) {
       if(ladder_mode) { /* mark sure all rings traversed are marked */
         int i;
         for(i=0;i<=n_atom;i++) {
           ai_i[i]->temp1 = true;
         }
       }
-    } else {
+    }
+    if((nf||(!ladder_mode)||(finder==3)) && ring_mode && (
+       ((finder==1)&&(have_C4||have_C4_prime))||
+       ((finder==2)&&(have_C4))||
+       ((finder==3)))) {
+
       float avg[3];
       float avg_col[3];
       int i;
       float up[3],upi[3];
       float vc0[3],vc1[3];
-
 
       /* compute average coordinate and mark atoms so that ring is only drawn once */
       zero3f(avg);
@@ -760,6 +843,17 @@ static void do_ring(PyMOLGlobals *G,int n_atom, int *atix, ObjectMolecule *obj,
               CGOSausage(cgo,v_i[i], v_i[ii], width, color,color);
             }
           }
+        } else if(ring_mode==3) {
+          for(i=0;i<n_atom;i++) {
+            ii=i+1;
+            CGOPickColor(cgo,atix[i],-1);
+            if(ring_color<0) {
+              CGOSausage(cgo,v_i[i], v_i[ii], 3*width, col[i],col[ii]);
+            } else {
+              CGOSausage(cgo,v_i[i], v_i[ii], 3*width, color,color);
+            }
+          }
+          
         }
       }
     }
@@ -977,7 +1071,7 @@ Rep *RepCartoonNew(CoordSet *cs)
   AtomInfoType *leading_O5p_ai=NULL;
   int leading_O5p_a = 0, leading_O5p_a1=0;
   int *ring_anchor = NULL;
-  int ring_mode, ring_finder;
+  int ring_mode, ring_finder, ring_finder_eff;
   int n_ring = 0;
   float ring_width;
   int ring_color;
@@ -1067,7 +1161,7 @@ Rep *RepCartoonNew(CoordSet *cs)
 
   ring_width = SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_cartoon_ring_width);
   if(ring_width<0.0F) {
-    ring_width = SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_stick_radius)*0.5;
+    ring_width = SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_stick_radius)*0.5F;
   }
 
   ring_color = SettingGet_color(G,cs->Setting,obj->Obj.Setting,cSetting_cartoon_ring_color);
@@ -1095,8 +1189,9 @@ Rep *RepCartoonNew(CoordSet *cs)
   if(ladder_color==-1)
     ladder_color = cartoon_color;
 
-  if((ring_mode==0) && (ring_finder==2)) 
-    ring_finder = 1;
+  ring_finder_eff = ring_finder;
+  if((!ring_mode)||(ring_finder==2)) 
+    ring_finder_eff = 1;
 
   tube_cap = SettingGet_i(G,cs->Setting,obj->Obj.Setting,cSetting_cartoon_tube_cap);
   loop_cap = SettingGet_i(G,cs->Setting,obj->Obj.Setting,cSetting_cartoon_loop_cap);
@@ -1151,10 +1246,10 @@ Rep *RepCartoonNew(CoordSet *cs)
       if(ai->visRep[cRepCartoon]) {
         if(ring_anchor &&
            (ai->protons!=cAN_H) &&
-           ((ring_finder==3)|| /* all 5-7 atom rings */
-            ((ring_finder<=2) && /*  C4-containing rings */
+           ((ring_finder_eff==3)|| /* all 5-7 atom rings */
+            ((ring_finder_eff<=2) && /*  C4-containing rings */
              (WordMatchExact(G,"C4",ai->name,1))) ||
-            ((ring_finder==1) && 
+            ((ring_finder_eff==1) && 
              ((WordMatchExact(G,"C4*",ai->name,1)||
                WordMatchExact(G,"C4'",ai->name,1)))))) {
           VLACheck(ring_anchor,int,n_ring);
@@ -1633,7 +1728,7 @@ Rep *RepCartoonNew(CoordSet *cs)
         if((*s==*(s-1))&&(*s==*(s+1))) {
           
           remove_component3f(vo,v1,t0);
-           copy3f(t0,vo);
+          copy3f(t0,vo);
           
           /* go on to next vertex */
         }
@@ -1673,8 +1768,8 @@ Rep *RepCartoonNew(CoordSet *cs)
       vo = pvo;
       va = pva;
       v  = nv; /* normals in direction of chain */
-      ss = sstype;
-        
+      s = seg;
+
       for(a=1;a<nAt;a++) {
 
         if(*s==*(s+1)) { /* only operate within distinct segments */         
@@ -1976,7 +2071,6 @@ Rep *RepCartoonNew(CoordSet *cs)
         for(a=1;a<(nAt-1);a++)
           {
             if((*ss==2)&&(*s==*(s+1))&&(*s==*(s-1))) { /* sheet in same segment */
-              /* BROKEN (I THINK) */
               if((*ss==*(ss+1))&&(*ss!=*(ss-1))) { /* start, bias forwards */
                 scale3f(v2+3,refine_tips,t0);
                 add3f(t0,v2,v2);
@@ -1987,8 +2081,6 @@ Rep *RepCartoonNew(CoordSet *cs)
                 normalize3f(v2);
               }
             }
-              
-
             v2+=3;
             s++;
             ss++;
