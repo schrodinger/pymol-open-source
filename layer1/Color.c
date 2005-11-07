@@ -2278,7 +2278,7 @@ static void clamp_color(unsigned int *table, float *in, float *out, int big_endi
   fgm1 = gr/4.0F;
   fbm1 = br/4.0F;
   
-  fr = 1.0F - frm1;
+  fr = 1.0F - frm1x;
   fg = 1.0F - fgm1;
   fb = 1.0F - fbm1;
   
