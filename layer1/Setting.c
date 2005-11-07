@@ -1496,6 +1496,7 @@ void SettingGenerateSideEffects(PyMOLGlobals *G,int index,char *sele,int state)
     SceneChanged(G);
     break;
   case cSetting_cartoon_transparency:
+  case cSetting_cartoon_ring_transparency:
   case cSetting_cartoon_trace_atoms:
   case cSetting_cartoon_refine:
   case cSetting_cartoon_nucleic_acid_mode:
@@ -2642,7 +2643,7 @@ void SettingInitGlobal(PyMOLGlobals *G,int alloc,int reset_gui)
   SettingSet_f(I,cSetting_cartoon_ladder_radius, 0.25F);
   SettingSet_color(I,cSetting_cartoon_ladder_color, "-1");
   SettingSet_color(I,cSetting_cartoon_nucleic_acid_color, "-1");
-  
+  SettingSet_f(I,cSetting_cartoon_ring_transparency, 0.0F);
 }
 
 

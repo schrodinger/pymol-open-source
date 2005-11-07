@@ -485,6 +485,7 @@ if __name__=='pymol.setting':
         cartoon_ladder_radius     = (449, '')
         cartoon_ladder_color      = (450, '')
         cartoon_nucleic_acid_color= (451, '')
+        cartoon_ring_transparency = (452, '')
         
     setting_sc = Shortcut(SettingIndex.__dict__.keys())
 
