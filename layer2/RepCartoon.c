@@ -190,7 +190,7 @@ static void do_ring(PyMOLGlobals *G,int n_atom, int *atix, ObjectMolecule *obj,
   if(n_atom && have_all && (!all_marked)) {
     if(ladder_mode) {
       int i;
-      int a1 = atix[i];
+      int a1;
       AtomInfoType *ai2;
       register AtomInfoType *atomInfo = obj->AtomInfo;
       register int mem0,mem1,mem2,mem3,mem4,mem5,mem6,mem7;
