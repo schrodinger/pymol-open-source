@@ -4,6 +4,12 @@ CHANGE LOG
 
 Changes up to 0.99
 
+    beta28
+
+    * double-click on internal gui tab to hide it
+
+    * fixed annoying problem with pop-up menus that fold back on self
+
     beta27
 
     * finished adding nucleic acid representations

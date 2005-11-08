@@ -110,12 +110,12 @@ int PopPlaceChild(Block *block,int left_x,int right_x,int row_y,int affinity)
   
   if(affinity>=0) {
     affinity =1;
-    target_x = right_x;
+    target_x = right_x - 2;
     block->rect.left = target_x;
     block->rect.right = target_x + width;
   } else {
     affinity = -1;
-    target_x = left_x - width;
+    target_x = left_x - width + 2 ;
     block->rect.left = target_x;
     block->rect.right = target_x + width;
   }
@@ -123,7 +123,7 @@ int PopPlaceChild(Block *block,int left_x,int right_x,int row_y,int affinity)
   if(affinity>=0) {
     if( block->rect.left != target_x ) {
       affinity = -1;
-      target_x = left_x - width;
+      target_x = left_x - width + 2;
       block->rect.left = target_x;
       block->rect.right = target_x + width;
       PopFitBlock(block);
@@ -131,7 +131,7 @@ int PopPlaceChild(Block *block,int left_x,int right_x,int row_y,int affinity)
   } else {
     if( block->rect.left != target_x ) {
       affinity = 1;
-      target_x = right_x;
+      target_x = right_x - 2;
       block->rect.left = target_x;
       block->rect.right = target_x + width;
       PopFitBlock(block);

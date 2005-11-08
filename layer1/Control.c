@@ -28,6 +28,7 @@ Z* -------------------------------------------------------------------
 #include "Seq.h"
 #include"Movie.h"
 #include "Text.h"
+#include "Util.h"
 
 #define cControlBoxSize 17
 #define cControlLeftMargin 8
@@ -39,6 +40,8 @@ Z* -------------------------------------------------------------------
 
 #define cControlButtons 7
 
+#define cControlMinWidth 5
+
 struct _CControl {
   Block *Block;
   int Rocking;
@@ -48,6 +51,9 @@ struct _CControl {
   float ButtonColor[3];
   float ActiveColor[3];
   int Pressed,Active;
+  int SaveWidth;
+  double LastClickTime;
+  int SkipRelease;
 };
 
 int ControlRocking(PyMOLGlobals *G)
@@ -88,23 +94,26 @@ static int ControlDrag(Block *block,int x,int y,int mod)
   int gui_width;
   PyMOLGlobals *G=block->G;
   register CControl *I=G->Control;
-  delta = x-I->LastPos;
-  if(I->DragFlag) {
-    if(delta) {
-      gui_width = (int)SettingGet(G,cSetting_internal_gui_width)-delta;
-      if(gui_width<3)
-        gui_width = 3;
-      delta = (int)SettingGet(G,cSetting_internal_gui_width)-gui_width;
-      width = OrthoGetWidth(G)+delta;
-    I->LastPos = x;
-    SettingSet(G,cSetting_internal_gui_width,(float)gui_width);
-    OrthoReshape(G,-1,-1,false);
+  if(!I->SkipRelease) {
+    delta = x-I->LastPos;
+    if(I->DragFlag) {
+      if(delta) {
+        gui_width = (int)SettingGet(G,cSetting_internal_gui_width)-delta;
+        if(gui_width<cControlMinWidth)
+          gui_width = cControlMinWidth;
+        delta = (int)SettingGet(G,cSetting_internal_gui_width)-gui_width;
+        width = OrthoGetWidth(G)+delta;
+        I->LastPos = x;
+        I->SaveWidth = 0;
+        SettingSet(G,cSetting_internal_gui_width,(float)gui_width);
+        OrthoReshape(G,-1,-1,false);
+      }
+    } else {
+      I->Active = which_button(I,x,y);
+      if(I->Active!=I->Pressed)
+        I->Active = -1;
+      OrthoDirty(G);
     }
-  } else {
-    I->Active = which_button(I,x,y);
-    if(I->Active!=I->Pressed)
-      I->Active = -1;
-    OrthoDirty(G);
   }
   return(1);
 }
@@ -118,7 +127,7 @@ static int ControlRelease(Block *block,int button,int x,int y,int mod)
 
   I->LastPos =x;
   sel = which_button(I,x,y);
-
+  if(!I->SkipRelease) {
   switch(sel) {
   case 0:
     SceneSetFrame(G,4,0);
@@ -191,10 +200,12 @@ static int ControlRelease(Block *block,int button,int x,int y,int mod)
   }
   OrthoDirty(G);
   OrthoUngrab(G);
+  I->LastClickTime = UtilGetSeconds(G);
   I->DragFlag=false;
   I->Active = -1;
   I->Pressed = -1;
 
+  }
   return(1);
 }
 
@@ -247,13 +258,28 @@ static int ControlClick(Block *block,int button,int x,int y,int mod)
 {
   PyMOLGlobals *G=block->G;
   register CControl *I=G->Control;
-  
+  I->SkipRelease = false;
   if(x<(I->Block->rect.left + cControlLeftMargin)) {
     y -= I->Block->rect.top-cControlTopMargin;
     if((y<=0)&&(y>(-cControlBoxSize))) {
-      I->LastPos = x;
-      OrthoGrab(G,block);
-      I->DragFlag=true;
+      double now = UtilGetSeconds(block->G);
+      if((now-I->LastClickTime)<0.35) {
+        if(I->SaveWidth) {
+          SettingSet(G,cSetting_internal_gui_width,(float)I->SaveWidth);
+          OrthoReshape(G,-1,-1,false);
+          I->SaveWidth = 0;
+        } else {
+          I->SaveWidth = (int)SettingGet(G,cSetting_internal_gui_width);
+          SettingSet(G,cSetting_internal_gui_width,(float)cControlMinWidth);
+          OrthoReshape(G,-1,-1,false);
+        }
+        I->SkipRelease = true;
+      } else {
+        I->LastPos = x;
+        OrthoGrab(G,block);
+        I->DragFlag=true;
+        I->LastClickTime = UtilGetSeconds(G);
+      }
     }
   } else {
     I->Pressed = which_button(I,x,y);
@@ -375,6 +401,7 @@ static void ControlDraw(Block *block)
                     but_width, but_height, lightEdge,darkEdge,I->ButtonColor);
       }
 
+      if(control_width>100) {
       x = but_left + (but_width-cControlBoxSize)/2;
 
       glColor3fv(I->Block->TextColor);
@@ -463,7 +490,7 @@ static void ControlDraw(Block *block)
         break;
       }
     }
-
+    }
   }
 }
 
@@ -495,8 +522,9 @@ int ControlInit(PyMOLGlobals *G)
     I->Pressed = -1;
     I->Active = -1;
     OrthoAttach(G,I->Block,cOrthoTool);
-    
+    I->SaveWidth = 0;
     I->Rocking=false;
+    I->LastClickTime = UtilGetSeconds(G);
     return 1;
   } else 
     return 0;

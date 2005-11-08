@@ -10556,7 +10556,7 @@ static void ExecutiveDraw(Block *block)
   int ExecLineHeight = SettingGetGlobal_i(G,cSetting_internal_gui_control_size);
   int text_lift = (ExecLineHeight/2)-5;
 
-  if(G->HaveGUI && G->ValidContext) {
+  if(G->HaveGUI && G->ValidContext && ((block->rect.right-block->rect.left)>6)) {
     int max_char;
     int nChar;
     /* do we have enough structures to warrant a scroll bar? */
