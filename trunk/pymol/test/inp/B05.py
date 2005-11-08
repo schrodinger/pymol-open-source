@@ -31,7 +31,7 @@ def load():
             cmd.refresh()
             cmd.dss(name)
             cmd.refresh()
-            time.sleep(0.2)
+            time.sleep(0.1)
             sys.__stdout__.write(".")
             sys.__stdout__.flush()
          sys.__stdout__.write("("+str(cmd.count_atoms())+")")
@@ -45,6 +45,7 @@ def load():
 time.sleep(3)
 
 cmd.set("cartoon_smooth_loops",0)
+cmd.set("cartoon_ring_mode",3)
 cmd.feedback('disable','symmetry objectmolecule executive','everything')
 # now start
 load()
