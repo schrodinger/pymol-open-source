@@ -250,6 +250,7 @@ def by_chain(s):
 
 def reds(s):
     return [
+        [ 2, 'Reds'     ,''                               ],
         [1,'\\900red','cmd.color(4,"'+s+'")'],
         [1,'\\922tv_red','cmd.color(32,"'+s+'")'],
         [1,'\\634raspberry','cmd.color(5268,"'+s+'")'],
@@ -307,7 +308,6 @@ def yellows(s):
 def magentas(s):
     return [
         [ 2, 'Magentas'     ,''                               ],
-
         [1,'\\909magenta','cmd.color(8,"'+s+'")'],
         [1,'\\927lightmagenta','cmd.color(154,"'+s+'")'],
         [1,'\\904hotpink','cmd.color(12,"'+s+'")'],
@@ -359,6 +359,7 @@ def tints(s):
     
 def grays(s):
     return [
+        [ 2, 'Grays'     ,''                               ],
         [ 1, '\\999white ', 'cmd.color("white","'+s+'")'  ],
         [ 1, '\\999gray90 ', 'cmd.color("grey90","'+s+'")'  ],
         [ 1, '\\888gray80 ', 'cmd.color("grey80","'+s+'")'  ],
@@ -397,7 +398,16 @@ def all_colors(s):
 #   [ 1, '\\999white'       ,'cmd.color("white","'+s+'")'  ],
     
         ]
-    
+
+def color_auto(s):
+    return [
+        [ 2, 'Auto'     ,''                               ],
+        [ 1, 'elem c', 'cmd.color("auto","('+s+') and elem c")' ],
+        [ 0, ''                                , ''                 ],
+        [ 1, 'all','cmd.color("auto","'+s+'")' ],                  
+
+        ]
+   
 def mol_color(s):
     return (
         [[ 2, 'Color:'     ,''                               ],
@@ -405,7 +415,10 @@ def mol_color(s):
          [ 1, 'by chain' , by_chain(s) ],
          [ 1, 'by ss  '  , by_ss(s) ],
          [ 1, '\\900s\\950p\\990e\\090c\\099t\\059r\\009u\\555m', spectrum(s) ],
-         [ 0, ''                                , ''                 ]] +
+         [ 0, ''                                , ''                 ],
+         [ 1, 'auto', color_auto(s) ],
+         [ 0, ''                                , ''                 ],         
+         ] +
         all_colors(s))
 
 def general_color(s):

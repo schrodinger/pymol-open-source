@@ -176,7 +176,7 @@ static void ButModeDraw(Block *block)
 
 #define BLANK_STR "     "
 
-  if(G->HaveGUI && G->ValidContext) {
+  if(G->HaveGUI && G->ValidContext && ((block->rect.right-block->rect.left)>6)) {
     if(SettingGetGlobal_b(G,cSetting_internal_gui_mode)==0) {
       glColor3fv(I->Block->BackColor);
       BlockFill(I->Block);

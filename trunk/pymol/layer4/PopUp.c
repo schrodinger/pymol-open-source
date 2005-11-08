@@ -75,12 +75,13 @@ static Block *PopUpRecursiveFind(Block *block,int x, int y)
 {
   PyMOLGlobals *G=block->G;
   CPopUp *I = (CPopUp*)block->reference;
+  if(I->Child) { /* favor the child */
+    if(PopUpRecursiveFind(I->Child,x,y)==I->Child)
+      return block;
+  } 
   if(BlockRecursiveFind(block,x,y) == block) {
     OrthoGrab(G,block);
     return block;
-  } else if(I->Child) {
-    if(PopUpRecursiveFind(I->Child,x,y)==I->Child)
-      return block;
   }
   return NULL;
 }
@@ -423,13 +424,13 @@ int PopUpDrag(Block *block,int x,int y,int mod)
   x-=I->Block->rect.left;
   y =(I->Block->rect.top -cPopUpCharMargin) -y -1;
 
-  if((x<0)||(x>I->Width)) {
+  if((x<-2)||(x>(I->Width+2))) {
     int handled_flag = false;
     if(I->Child) {
       if(PopUpRecursiveFind(I->Child,I->LastX,I->LastY) == I->Child) {
         I->Selected = I->ChildLine;
         handled_flag = true;
-      }
+      } 
     }
     if(!handled_flag) {
       if(I->Parent) { /* are we back in the parent window? */
