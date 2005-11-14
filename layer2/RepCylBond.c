@@ -76,6 +76,7 @@ static void RepCylBondRender(RepCylBond *I,RenderInfo *info)
   SphereRec *sp;
   register PyMOLGlobals *G=I->R.G;
 
+
   alpha = SettingGet_f(G,I->R.cs->Setting,I->R.obj->Setting,cSetting_stick_transparency);
   alpha=1.0F-alpha;
   if(fabs(alpha-1.0)<R_SMALL4)

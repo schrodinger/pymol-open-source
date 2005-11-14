@@ -56,11 +56,11 @@
 #include "Seeker.h"
 #include "Texture.h"
 #include "TestPyMOL.h"
+#include "TypeFace.h"
 
 #include "PyMOL.h"
 #include "PyMOLGlobals.h"
 #include "PyMOLOptions.h"
-
 
 #ifndef _PYMOL_NOPY
 PyMOLGlobals *TempPyMOLGlobals = NULL;
@@ -587,6 +587,7 @@ typedef struct _CPyMOL {
   ov_word lex_cartoon_ladder_color;
   ov_word lex_cartoon_nucleic_acid_color;
   ov_word lex_cartoon_ring_transparency;
+  ov_word lex_label_font_size;
 } _CPyMOL;
 
 /* convenience functions -- inline */
@@ -1182,6 +1183,7 @@ static OVstatus PyMOL_InitAPI(CPyMOL *I)
   LEX_SETTING(cartoon_ladder_color, 450);
   LEX_SETTING(cartoon_nucleic_acid_color, 451);
   LEX_SETTING(cartoon_ring_transparency, 452);
+  LEX_SETTING(label_font_size, 453);
   return_OVstatus_SUCCESS;
 }
 
@@ -1995,6 +1997,7 @@ void PyMOL_Start(CPyMOL *I)
   SettingSetGlobal_i(G,cSetting_internal_gui,G->Option->internal_gui);
   SettingSetGlobal_i(G,cSetting_internal_feedback,G->Option->internal_feedback);
   TextureInit(G);
+  TypeInit(G);
   TextInit(G);
   CharacterInit(G);
   SphereInit(G);
@@ -2103,6 +2106,7 @@ void PyMOL_Stop(CPyMOL *I)
   SettingFreeGlobal(G);
   CharacterFree(G);
   TextFree(G);
+  TypeFree(G);
   TextureFree(G);
   SphereFree(G);
   PFree();

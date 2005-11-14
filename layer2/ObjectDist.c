@@ -363,11 +363,10 @@ static void ObjectDistRender(ObjectDist *I,RenderInfo *info)
 {
   int a;
   int state = info->state;
-  CRay *ray = info->ray;
   int pass = info->pass;
+  CRay *ray = info->ray;
 
-  if(!pass) {
-
+  if((pass==0)||(pass==-1)) {
     ObjectPrepareContext(&I->Obj,ray);
     if(state<0) {
       for(a=0;a<I->NDSet;a++)

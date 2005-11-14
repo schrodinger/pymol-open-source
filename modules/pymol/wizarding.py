@@ -167,16 +167,17 @@ EXAMPLE
         return 1
 
     def session_restore_wizard(session):
-        if session.has_key('wizard'):
-            from pymol.wizard import message
-            import __main__
+        if session!=None:
+            if session.has_key('wizard'):
+                from pymol.wizard import message
+                import __main__
 #         __main__.message = message
-            sys.modules['message'] = message
-            try:
-                wizards = cPickle.loads(session['wizard'])
-                cmd.set_wizard_stack(wizards)
-            except:
-                print "Session-Warning: unable to restore wizard."
+                sys.modules['message'] = message
+                try:
+                    wizards = cPickle.loads(session['wizard'])
+                    cmd.set_wizard_stack(wizards)
+                except:
+                    print "Session-Warning: unable to restore wizard."
         return 1
 
     if session_restore_wizard not in pymol._session_restore_tasks:

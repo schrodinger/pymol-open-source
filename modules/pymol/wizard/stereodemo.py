@@ -31,16 +31,16 @@ class Stereodemo(Wizard):
         self.message = []
         self.last = None
         cmd.set("use_display_lists","on")
-	cmd.full_screen("off")
-	cmd.stereo("on")
-	cmd.set("sphere_mode","5")
+        cmd.full_screen("off")
+        if not  ("mono" in kw.keys()):
+            cmd.stereo("on")
+        cmd.set("sphere_mode","5")
         if saved.has_key('last'):
             self.last = saved['last']
         if len(arg):
-	    self.launch(arg[0])
-	else:
-	    self.launch("cartoon")
-
+            self.launch(arg[0])
+        else:
+            self.launch("cartoon")
 
     def get_prompt(self):
         saved['last']=self.last

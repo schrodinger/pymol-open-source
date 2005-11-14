@@ -361,16 +361,21 @@ static void SceneUpdateInvMatrix(PyMOLGlobals *G)
   register CScene *I=G->Scene;
   register float *rm=I->RotMatrix;
   register float *im=I->InvMatrix;
-  UtilZeroMem(im,sizeof(float)*16);
   im[0] = rm[0];
   im[1] = rm[4];
   im[2] = rm[8];
+  im[3] = 0.0F;
   im[4] = rm[1];
   im[5] = rm[5];
   im[6] = rm[9];
+  im[7] = 0.0F;
   im[8] = rm[2];
   im[9] = rm[6];
   im[10] = rm[10];
+  im[11] = 0.0F;
+  im[12] = 0.0F;
+  im[13] = 0.0F;
+  im[14] = 0.0F;
   im[15] = 1.0F;
 }
 
@@ -502,6 +507,7 @@ void SceneFromViewElem(PyMOLGlobals *G,CViewElem *elem)
     *(fp++) = (float) *(dp++);
     *(fp++) = (float) *(dp++);
     changed_flag = true;
+    SceneUpdateInvMatrix(G);
   }
 
   if(elem->pre_flag) {
@@ -2884,14 +2890,18 @@ static int SceneClick(Block *block,int button,int x,int y,
           PRINTF " You clicked %s -> (%s)",buffer,cEditorSele1 ENDF(G);
           OrthoRestorePrompt(G);
         }
-	sprintf(buffer,"%s`%d",
-		obj->Name,I->LastPicked.index+1);    
+
+        /*        ObjectMoleculeChooseBondDir(objMol,I->LastPicked.bond,
+                  &I->LastPicked.index,&atIndex);*/
+        
+        sprintf(buffer,"%s`%d",
+                obj->Name,I->LastPicked.index+1);    
         SelectorCreate(G,cEditorSele1,buffer,NULL,true,NULL);
         objMol = (ObjectMolecule*)obj;
         if(I->LastPicked.bond>=0) {
           atIndex = objMol->Bond[I->LastPicked.bond].index[0];
           if(atIndex == I->LastPicked.index)
-            atIndex = objMol->Bond[I->LastPicked.bond].index[1];              
+            atIndex = objMol->Bond[I->LastPicked.bond].index[1];       
           if(Feedback(G,FB_Scene,FB_Results)) {
             if(obj->fDescribeElement)
               obj->fDescribeElement(obj,atIndex,buffer);
@@ -5250,6 +5260,8 @@ static void SceneRenderAll(PyMOLGlobals *G,SceneUnitContext *context,
   info.pmv_matrix = I->PmvMatrix;
   info.front = I->FrontSafe;
   info.slot = slot;
+  info.sampling = 1;
+
   if(I->StereoMode) {
     float buffer;
 	float stAng,stShift;
@@ -5268,6 +5280,9 @@ static void SceneRenderAll(PyMOLGlobals *G,SceneUnitContext *context,
   if(width_scale!=0.0F) {
     info.width_scale_flag = true;
     info.width_scale = width_scale;
+    info.sampling = (int)info.width_scale;
+    if(info.sampling<1)
+      info.sampling = 1;
   }
 
   while(ListIterate(I->Obj,rec,next))

@@ -23,11 +23,11 @@ typedef unsigned char CharColor[4];
 
 
 typedef struct {
-  int text_id;
-  short int ch;
-  short int height;
-  CharColor color;
-} CharInfo; /* currently 5 short ints */
+  int text_id; /* 16 bits */
+  short int ch; /* 16 bits */
+  short int size; /* 16 bits */
+  CharColor color; /* 32 bits */
+} CharInfo; /* currently 80 bits = 5 short ints */
 
 typedef struct {
   unsigned short int data[6];
@@ -48,6 +48,8 @@ typedef struct {
   CPixmap Pixmap;
   int Width;
   int Height;
+  float Advance;
+  float XOrig,YOrig;
   int Next,Prev,HashNext,HashPrev;
   CharFngrprnt Fngrprnt;
   float extent[2]; /* texture extent */
@@ -71,17 +73,26 @@ void CharacterFree(PyMOLGlobals *G);
 int CharacterGetNew(PyMOLGlobals *G);
 int CharacterGetWidth(PyMOLGlobals *G,int id);
 int CharacterGetHeight(PyMOLGlobals *G,int id);
+int CharacterGetGeometry(PyMOLGlobals *G,int id,
+                         int *width, int *height, 
+                         float *xorig, float *yorig, float *advance);
 
 int CharacterNewFromBitmap(PyMOLGlobals *G,int width, int height,
                            unsigned char *bitmap,
-                           CharFngrprnt *fprnt);
+                           float x_orig, float y_orig, float advance,
+                           CharFngrprnt *fprnt,int sampling);
+
+int CharacterNewFromBytemap(PyMOLGlobals *G, int width, int height,
+                            int pitch, unsigned char *bytemap, 
+                            float x_orig, float y_orig, float advance,
+                            CharFngrprnt *fprnt);
 
 int CharacterFind(PyMOLGlobals *G,CharFngrprnt *fprnt);
 
 float CharacterInterpolate(PyMOLGlobals *G,int id,float *v);
 void CharacterSetRetention(PyMOLGlobals *G,int retail_all);
 unsigned char *CharacterGetPixmapBuffer(PyMOLGlobals *G,int id);
-void CharacterRenderOpenGL(PyMOLGlobals *G,int id, float x_orig, float y_orig, float advance);
+void CharacterRenderOpenGL(PyMOLGlobals *G,RenderInfo *info,int id);
 
 #endif
 

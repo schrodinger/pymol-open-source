@@ -49,6 +49,7 @@ typedef struct _CExecutive CExecutive;
 typedef struct _CSeeker CSeeker;
 typedef struct _CSelector CSelector;
 typedef struct _CTexture CTexture;
+typedef struct _CType CType;
 typedef struct _CMain CMain;
 typedef struct _CGO CGO;
 
@@ -101,6 +102,7 @@ struct _PyMOLGlobals {
   CSeeker   *Seeker;
   CSelector *Selector;
   CTexture  *Texture;
+  CType     *Type;
   OVContext *Context;
   CMain     *Main; /* host/platform-specific "main" code */
   CPyMOLOptions *Option; 

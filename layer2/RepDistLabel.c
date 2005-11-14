@@ -62,6 +62,7 @@ static void RepDistLabelRender(RepDistLabel *I,RenderInfo *info)
   int n = 0;
   int color;
   int font_id = SettingGet_i(G,I->ds->Setting,I->Obj->Setting,cSetting_label_font_id);
+  float font_size = SettingGet_f(G,I->ds->Setting,I->Obj->Setting,cSetting_label_font_size);
 
   if(ray) {
 
@@ -74,16 +75,16 @@ static void RepDistLabelRender(RepDistLabel *I,RenderInfo *info)
 
 	 while(c--) {
       TextSetPos(G,v);
-      TextRenderRay(G,ray,font_id,l[n]);
+      TextRenderRay(G,ray,font_id,l[n],font_size);
       v+=3;
       n++;
 	 }
   } else if(G->HaveGUI && G->ValidContext) {
     if(pick) {
     } else {
-      int float_text;
-	 
-      float_text = (int)SettingGet(G,cSetting_float_labels);
+      int float_text = SettingGet_i(G,I->ds->Setting,
+                                      I->Obj->Setting,
+                                      cSetting_float_labels);
       if(float_text)
         glDisable(GL_DEPTH_TEST);	 
       glDisable(GL_LIGHTING);
@@ -97,7 +98,7 @@ static void RepDistLabelRender(RepDistLabel *I,RenderInfo *info)
       while(c--) {
 
         TextSetPos(G,v);
-        TextRenderOpenGL(G,font_id,l[n]);
+        TextRenderOpenGL(G,info,font_id,l[n],font_size);
         v+=3;
         n++;
       }

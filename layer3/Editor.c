@@ -112,8 +112,9 @@ static void EditorDrawDihedral(PyMOLGlobals *G)
           ExecutiveDihedral(G,cEditorDihedral,cEditorDihe1,cEditorSele1,cEditorSele2,cEditorDihe2,
                             0,true,true,false,true);
           ExecutiveColor(G,cEditorDihedral,"white",1,true);
+          ExecutiveSetSettingFromString(G, cSetting_float_labels, "1", cEditorDihedral, 0, true, true);
           ExecutiveSetSettingFromString(G, cSetting_label_font_id, "4", cEditorDihedral, 0, true, true);
-          ExecutiveSetSettingFromString(G, cSetting_label_color, "30", cEditorDihedral, 0, true, true);
+          ExecutiveSetSettingFromString(G, cSetting_label_color, "orange", cEditorDihedral, 0, true, true);
         }
       }
     }
@@ -1852,7 +1853,7 @@ void EditorDrag(PyMOLGlobals *G,ObjectMolecule *obj,int index,int mode,int state
         } else {
           SceneOriginGet(G,v3);
         }
-       get_rotation_about3f3fTTTf(pt[0], mov, v3, m); 
+        get_rotation_about3f3fTTTf(pt[0], mov, v3, m); 
         if(use_matrices&&(I->DragSelection<0)) {
           ObjectMoleculeTransformState44f(obj,state,m,log_trans,false,true);
         } else {

@@ -60,14 +60,15 @@ static void RepLabelRender(RepLabel *I,RenderInfo *info)
   int c=I->N;
   char *l=I->L;
   int font_id = SettingGet_i(G,I->R.cs->Setting,I->R.obj->Setting,cSetting_label_font_id);
-  
+  float font_size = SettingGet_f(G,I->R.cs->Setting,I->R.obj->Setting,cSetting_label_font_size);
+
   if(ray) {
 
     if(c) {
       while(c--) {
         if(*l) {
           TextSetPosNColor(G,v+3,v);
-          l = TextRenderRay(G,ray,font_id,l);
+          l = TextRenderRay(G,ray,font_id,l,font_size);
         }
         v+=6;
       }
@@ -86,7 +87,7 @@ static void RepLabelRender(RepLabel *I,RenderInfo *info)
         while(c--) {
           if(*l) {
             TextSetPosNColor(G,v+3,v);
-            l = TextRenderOpenGL(G,font_id,l);
+            l = TextRenderOpenGL(G,info,font_id,l,font_size);
           }
           v+=6;
         }

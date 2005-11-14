@@ -957,7 +957,9 @@ void CoordSetRender(CoordSet *I,RenderInfo *info)
   Pickable **pick = info->pick;
   int a,aa;
   Rep *r;
-
+  int float_labels = SettingGet_i(G,I->Setting,
+                                  I->Obj->Obj.Setting,
+                                  cSetting_float_labels);
   PRINTFD(G,FB_CoordSet)
     " CoordSetRender: entered (%p).\n",(void*)I
     ENDFD;
@@ -1021,7 +1023,10 @@ void CoordSetRender(CoordSet *I,RenderInfo *info)
 
               switch(a) {
               case cRepLabel:
-                if(pass==1) r->fRender(r,info);
+                if(float_labels && (pass==-1))
+                  r->fRender(r,info);
+                else if(pass==1)
+                  r->fRender(r,info);                  
                 break;
               case cRepNonbondedSphere:
               case cRepRibbon:

@@ -109,18 +109,55 @@ unsigned char *CharacterGetPixmapBuffer(PyMOLGlobals *G,int id)
   return NULL;
 }
                                    
+
 int CharacterNewFromBitmap(PyMOLGlobals *G, int width, int height,
                            unsigned char *bitmap,
-                           CharFngrprnt *fprnt)
+                           float x_orig, float y_orig, float advance,
+                           CharFngrprnt *fprnt,int sampling)
 {
   register CCharacter *I = G->Character;
   int id=CharacterGetNew(G);
   if((id>0)&&(id<=I->MaxAlloc)) {
     CharRec *rec = I->Char + id;
     PixmapInitFromBitmap(G,&rec->Pixmap,width,height,bitmap,
+                         fprnt->u.i.color,sampling);    
+    rec->Width = width * sampling;
+    rec->Height = height * sampling;
+    rec->XOrig = x_orig * sampling;
+    rec->YOrig = y_orig * sampling;
+    rec->Advance = advance * sampling;
+    { /* add this character to the hash */
+      int hash_code = get_hash(fprnt);
+      int cur_entry;
+      rec->Fngrprnt = *(fprnt);
+      rec->Fngrprnt.hash_code = hash_code;
+      cur_entry = I->Hash[hash_code];
+      if(cur_entry) {
+        I->Char[cur_entry].HashPrev = id;
+      }
+      I->Char[id].HashNext = I->Hash[hash_code];
+      I->Hash[hash_code]=id;
+    }
+  }
+  return id;
+}
+
+int CharacterNewFromBytemap(PyMOLGlobals *G, int width, int height,
+                             int pitch, unsigned char *bytemap,
+                            float x_orig, float y_orig, float advance,
+                            CharFngrprnt *fprnt)
+{
+  register CCharacter *I = G->Character;
+  int id=CharacterGetNew(G);
+  if((id>0)&&(id<=I->MaxAlloc)) {
+    CharRec *rec = I->Char + id;
+    PixmapInitFromBytemap(G,&rec->Pixmap,width,height,pitch,bytemap,
                          fprnt->u.i.color);    
     rec->Width = width;
     rec->Height = height;
+    rec->XOrig = x_orig;
+    rec->YOrig = y_orig;
+    rec->Advance = advance;
     { /* add this character to the hash */
       int hash_code = get_hash(fprnt);
       int cur_entry;
@@ -138,14 +175,17 @@ int CharacterNewFromBitmap(PyMOLGlobals *G, int width, int height,
 }
 
 
-void CharacterRenderOpenGL(PyMOLGlobals *G,int id,float x_orig, float y_orig, float advance)
+void CharacterRenderOpenGL(PyMOLGlobals *G,RenderInfo *info,int id)
 /* need orientation matrix */
 {
   register CCharacter *I = G->Character;
   CharRec *rec = I->Char + id;
 
   int texture_id = TextureGetFromChar(G,id,rec->extent);
+  float sampling = 1.0F;
   if(G->HaveGUI &&  G->ValidContext && texture_id) {
+    if(info)
+      sampling = (float)info->sampling;
     glEnable(GL_TEXTURE_2D);
     glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
     if(glIsTexture(texture_id)) {
@@ -154,11 +194,11 @@ void CharacterRenderOpenGL(PyMOLGlobals *G,int id,float x_orig, float y_orig, fl
       glBindTexture(GL_TEXTURE_2D, texture_id);
       v = TextGetPos(G);
       copy3f(v,v0);
-      v0[0]-=x_orig;
-      v0[1]-=y_orig;
+      v0[0]-=rec->XOrig/sampling;
+      v0[1]-=rec->YOrig/sampling;
       copy3f(v0,v1);
-      v1[0] += rec->Width;
-      v1[1] += rec->Height;
+      v1[0] += rec->Width/sampling;
+      v1[1] += rec->Height/sampling;
       /*      glColor4f(0.5F,0.5F,0.5F,1.0F);*/
       glEnable(GL_BLEND);
       glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -168,7 +208,7 @@ void CharacterRenderOpenGL(PyMOLGlobals *G,int id,float x_orig, float y_orig, fl
       glTexCoord2f(rec->extent[0], rec->extent[1]); glVertex3f(v1[0],v1[1],v0[2]);
       glTexCoord2f(rec->extent[0], 0.0F); glVertex3f(v1[0],v0[1],v0[2]);
       glEnd();
-      TextAdvance(G,advance);
+      TextAdvance(G,rec->Advance/sampling);
     }
     glDisable(GL_TEXTURE_2D);
   }
@@ -218,6 +258,22 @@ int CharacterGetHeight(PyMOLGlobals *G,int id)
   register CCharacter *I = G->Character;
   if((id>0)&&(id<=I->MaxAlloc)) {
     return I->Char[id].Height;
+  }
+  return 0;
+}
+
+int CharacterGetGeometry(PyMOLGlobals *G,int id,
+                         int *width, int *height, 
+                         float *xorig, float *yorig, float *advance)
+{
+  register CCharacter *I = G->Character;
+  if((id>0)&&(id<=I->MaxAlloc)) {
+    CharRec *ch = I->Char + id;
+    *width = ch->Width;
+    *height = ch->Height;
+    *xorig = ch->XOrig;
+    *yorig = ch->YOrig;
+    *advance = ch->Advance;
   }
   return 0;
 }

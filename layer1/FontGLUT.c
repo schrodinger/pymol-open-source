@@ -51,7 +51,7 @@ static void FontGLUTRestore(CFontGLUT *I)
   glPixelStorei(GL_UNPACK_ALIGNMENT, I->alignment);
 }
 
-static char *FontGLUTRenderOpenGL(CFontGLUT *I,char *st)
+static char *FontGLUTRenderOpenGL(RenderInfo *info,CFontGLUT *I,char *st,float size)
 {
   register PyMOLGlobals *G = I->Font.G;
   if(G->ValidContext) {
@@ -61,8 +61,13 @@ static char *FontGLUTRenderOpenGL(CFontGLUT *I,char *st)
     FontGLUTBitmapCharRec const *ch;
     int textured = SettingGetGlobal_b(G,cSetting_texture_fonts);
     int pushed = OrthoGetPushed(G);
+    int sampling = 1;
+    if(info)
+      sampling = info->sampling;
     
-    
+    if(sampling>1) 
+      textured = true;
+
     if(st&&(*st)) {
       
       if(!textured) {
@@ -73,8 +78,6 @@ static char *FontGLUTRenderOpenGL(CFontGLUT *I,char *st)
       
       first = font_info->first;
       last = first + font_info->num_chars;
-      
-      
       
       if(textured && !pushed) {
         float *v = TextGetPos(G);
@@ -99,6 +102,7 @@ static char *FontGLUTRenderOpenGL(CFontGLUT *I,char *st)
                 unsigned char *rgba;
                 UtilZeroMem(&fprnt,sizeof(fprnt));
                 fprnt.u.i.text_id = I->Font.TextID;
+                fprnt.u.i.size = sampling;
                 rgba = fprnt.u.i.color;
                 TextGetColorUChar(G,rgba,rgba+1,rgba+2,rgba+3);
                 fprnt.u.i.ch = c;
@@ -108,13 +112,13 @@ static char *FontGLUTRenderOpenGL(CFontGLUT *I,char *st)
                     id = CharacterNewFromBitmap(G,ch->width, 
                                                 ch->height, 
                                                 (unsigned char*)ch->bitmap,
-                                                &fprnt);
+                                                (float)ch->xorig,
+                                                (float)ch->yorig,
+                                                (float)ch->advance,
+                                                &fprnt,sampling);
                   }
                   if(id) {
-                    CharacterRenderOpenGL(G,id,
-                                          (float)ch->xorig,
-                                          (float)ch->yorig,
-                                          (float)ch->advance); /* handles advance */
+                    CharacterRenderOpenGL(G,info,id); /* handles advance */
                   }
                 }
               }
@@ -127,17 +131,14 @@ static char *FontGLUTRenderOpenGL(CFontGLUT *I,char *st)
       }
       if(!textured) {
         FontGLUTRestore(I); 
-        #ifdef _PYMOL_OSX
-        /* workaround for screen flashes on late-model nVidia hardware */
-        glFlush();
-        #endif
+        glFlush(); /* workaround for screen flashes on late-model nVidia hardware */
       }
     }
   }
   return st;
 }
 
-static char *FontGLUTRenderRay(CRay *ray, CFontGLUT *I,char *st)
+static char *FontGLUTRenderRay(CRay *ray, CFontGLUT *I,char *st,float size)
 {
   int c;
   FontGLUTBitmapFontRec *font_info = I->glutFont;
@@ -145,12 +146,15 @@ static char *FontGLUTRenderRay(CRay *ray, CFontGLUT *I,char *st)
   FontGLUTBitmapCharRec const *ch;
   CharFngrprnt fprnt;
   unsigned char *rgba;
+  int sampling = 1;
+  sampling = ray->Sampling;
   
   if(st&&(*st)) {
     UtilZeroMem(&fprnt,sizeof(fprnt));
     first = font_info->first;
     last = first + font_info->num_chars;
-    fprnt.u.i.text_id = I->Font.TextID;
+    fprnt.u.i.text_id = I->Font.TextID;           
+    fprnt.u.i.size = sampling;
     rgba = fprnt.u.i.color;
     TextGetColorUChar(I->Font.G,rgba,rgba+1,rgba+2,rgba+3);
 
@@ -166,12 +170,12 @@ static char *FontGLUTRenderRay(CRay *ray, CFontGLUT *I,char *st)
                 id = CharacterNewFromBitmap(I->Font.G,ch->width, 
                                             ch->height, 
                                             (unsigned char*)ch->bitmap,
-                                            &fprnt);
+                                            (float)ch->xorig,
+                                            (float)ch->yorig,
+                                            (float)ch->advance,
+                                            &fprnt,sampling);
               }
-               ray->fCharacter(ray,id,
-                            (float)ch->xorig,
-                            (float)ch->yorig,
-                               (float)ch->advance); /* handles advance */
+              if(id) ray->fCharacter(ray,id); /* handles advance */
             }
           }
         }

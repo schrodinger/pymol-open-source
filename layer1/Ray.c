@@ -33,6 +33,7 @@ Z* -------------------------------------------------------------------
 #include"Character.h"
 #include"Text.h"
 #include"PyMOL.h"
+#include"Scene.h"
 
 #ifdef _PYMOL_INLINE
 #undef _PYMOL_INLINE
@@ -104,7 +105,7 @@ void RayTransparentf(CRay *I,float v);
 void RaySetup(CRay *I);
 void RayColor3fv(CRay *I,float *v);
 void RaySphere3fv(CRay *I,float *v,float r);
-void RayCharacter(CRay *I,int char_id, float xorig, float yorig, float advance);
+void RayCharacter(CRay *I,int char_id);
 void RayCylinder3fv(CRay *I,float *v1,float *v2,float r,float *c1,float *c2);
 void RaySausage3fv(CRay *I,float *v1,float *v2,float r,float *c1,float *c2);
 
@@ -3267,13 +3268,14 @@ void RaySphere3fv(CRay *I,float *v,float r)
 }
 
 /*========================================================================*/
-void RayCharacter(CRay *I,int char_id, float xorig, float yorig, float advance)
+void RayCharacter(CRay *I,int char_id)
 {
   CPrimitive *p;
   float *v;
   float vt[3];
   float *vv;
   float width,height;
+  float v_scale;
 
   v = TextGetPos(I->G);
   VLACacheCheck(I->G,I->Primitive,CPrimitive,I->NPrimitive+1,0,cCache_ray_primitive);
@@ -3294,6 +3296,9 @@ void RayCharacter(CRay *I,int char_id, float xorig, float yorig, float advance)
   if(I->TTTFlag) {
     transformTTT44f3f(I->TTT,p->v1,p->v1);
   }
+  /* what's the width of 1 screen window pixel at this point in space? */
+
+  v_scale = SceneGetScreenVertexScale(I->G,p->v1)/I->Sampling;
 
   if(I->Context) {
     RayApplyContextToVertex(I,p->v1);
@@ -3305,33 +3310,41 @@ void RayCharacter(CRay *I,int char_id, float xorig, float yorig, float advance)
     float zn[3] = {0.0F,0.0F,1.0F};
     float sc[3];
     float scale;
+    float xorig, yorig, advance;
+    int width_i,height_i;
     CPrimitive *pp = p+1;
 
     RayApplyMatrixInverse33(1,(float3*)xn,I->Rotation,(float3*)xn);    
     RayApplyMatrixInverse33(1,(float3*)yn,I->Rotation,(float3*)yn);    
     RayApplyMatrixInverse33(1,(float3*)zn,I->Rotation,(float3*)zn);    
 
-    scale = I->PixelRadius * advance;
+    CharacterGetGeometry(I->G,char_id,
+                         &width_i, &height_i, 
+                         &xorig, &yorig, &advance);
+    width = (float)width_i;
+    height = (float)height_i;
+
+    scale = v_scale * advance;
     scale3f(xn,scale,vt); /* advance raster position in 3-space */
     add3f(v,vt,vt);
     TextSetPos(I->G,vt);
 
     /* position the pixmap relative to raster position */
 
-    scale = ((-xorig)-0.5F)*I->PixelRadius;
+  
+    /*    scale = ((-xorig)-0.5F)*I->PixelRadius;*/
+    scale = ((-xorig)-0.0F)*v_scale;
     scale3f(xn,scale,sc);
     add3f(sc,p->v1,p->v1);
          
-    scale = ((-yorig)-0.5F)*I->PixelRadius;
+    scale = ((-yorig)-0.0F)*v_scale;
     scale3f(yn,scale,sc);
     add3f(sc,p->v1,p->v1);
     
-    width = (float)CharacterGetWidth(I->G,char_id);
-    height = (float)CharacterGetHeight(I->G,char_id);
 
-    scale = I->PixelRadius*width;
+    scale = v_scale*width;
     scale3f(xn,scale,xn);
-    scale = I->PixelRadius*height;
+    scale = v_scale*height;
     scale3f(yn,scale,yn);
 
     copy3f(zn,p->n0);
@@ -3682,6 +3695,9 @@ CRay *RayNew(PyMOLGlobals *G)
   I->fTransparentf=RayTransparentf;
   I->TTTStackVLA = NULL;
   I->TTTStackDepth = 0;
+  I->Sampling = SettingGetGlobal_i(I->G,cSetting_antialias);
+  if(I->Sampling<2) /* always supersample fonts by at least 2X */
+    I->Sampling=2;
   for(a=0;a<256;a++) {
     I->Random[a]=(float)((rand()/(1.0+RAND_MAX))-0.5);
   }

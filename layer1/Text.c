@@ -19,15 +19,22 @@ Z* -------------------------------------------------------------------
 #include"Font.h"
 
 #include"FontGLUT.h"
+#include"FontType.h"
+
 #include"Vector.h"
 
+#ifdef _PYMOL_FREETYPE
+#include "FontTTF.h"
+#endif
+
 #define FONT_NAME_MAX 255
+
+#define TEXT_DEFAULT_SIZE 12.0F
 
 typedef struct {
   int Src;
   int Code;
   char Name[FONT_NAME_MAX];
-  int Size;
   int Mode;
   int Style;
   CFont *Font;
@@ -131,21 +138,23 @@ void TextGetColorUChar(PyMOLGlobals *G,unsigned char *red,
   *alpha = (unsigned char)(_255*I->Color[3]);
 }
 
-char *TextRenderOpenGL(PyMOLGlobals *G,int text_id,char *st)
+char *TextRenderOpenGL(PyMOLGlobals *G,RenderInfo *info,int text_id,char *st,float size)
 {
   register CText *I=G->Text;
   CFont *font;
   FontRenderOpenGLFn *fn;
-
+  if((text_id<0)||(text_id>=I->NActive)) 
+    text_id=0;
+      
   if(st&&(*st)) {
     if((text_id>=0)&&(text_id<I->NActive)) {
       font = I->Active[text_id].Font;
       fn = font->fRenderOpenGL;
       if(fn)
-        return fn(font,st);
+        return fn(info,font,st,size);
     }
     /* make sure we got to end of string */
-    while(*(st++)); 
+    if(*st) while(*(st++)); 
   }
   return st;
 }
@@ -154,13 +163,13 @@ void TextDrawStrAt(PyMOLGlobals *G,char *st, int x, int y)
 {
   register CText *I=G->Text;
   TextSetPos3f(G, (float)x, (float)y, 0.0F);
-  TextRenderOpenGL(G,I->Default_ID,st);
+  TextRenderOpenGL(G,NULL,I->Default_ID,st,TEXT_DEFAULT_SIZE);
 }
 
 void TextDrawStr(PyMOLGlobals *G,char *st)
 {
   register CText *I=G->Text;
-  TextRenderOpenGL(G,I->Default_ID,st);
+  TextRenderOpenGL(G,NULL,I->Default_ID,st,TEXT_DEFAULT_SIZE);
 }
 
 void TextDrawChar(PyMOLGlobals *G,char ch)
@@ -168,25 +177,28 @@ void TextDrawChar(PyMOLGlobals *G,char ch)
   char st[2] = { 0 , 0 };
   register CText *I=G->Text;
   st[0] = ch;
-  TextRenderOpenGL(G,I->Default_ID,st);
+  TextRenderOpenGL(G,NULL,I->Default_ID,st,TEXT_DEFAULT_SIZE);
 }
 
 
-char *TextRenderRay(PyMOLGlobals *G,CRay *ray,int text_id,char *st)
+char *TextRenderRay(PyMOLGlobals *G,CRay *ray,int text_id,char *st,float size)
 {
   register CText *I=G->Text;
   CFont *font;
   FontRenderRayFn *fn;
 
+  if((text_id<0)&&(text_id>=I->NActive)) 
+    text_id=0;
+
   if(st&&(*st)) {
-    if((text_id>=0)&&(text_id<I->NActive)) {
+    if((text_id>=0)||(text_id<I->NActive)) {
       font = I->Active[text_id].Font;
       fn = font->fRenderRay;
       if(fn)
-        return fn(ray,font,st);
+        return fn(ray,font,st,size);
     }
     /* make sure we got to end of string */
-    while(*(st++)); 
+    if(*st) while(*(st++)); 
   }
   return st;
 }
@@ -256,13 +268,116 @@ int TextInit(PyMOLGlobals *G)
       I->NActive++;
     }
 
+#ifdef _PYMOL_FREETYPE
+
+    /* 5 */
+
+    VLACheck(I->Active,ActiveRec,I->NActive);
+    I->Active[I->NActive].Font = FontTypeNew(G,TTF_Vera_dat, TTF_Vera_len);
+    if(I->Active[I->NActive].Font) {
+      I->Active[I->NActive].Src = cTextSrcFreeType;
+      I->Active[I->NActive].Font->TextID = I->NActive;
+      I->NActive++;
+    }
+
+    /* 6 */
+
+    VLACheck(I->Active,ActiveRec,I->NActive);
+    I->Active[I->NActive].Font = FontTypeNew(G,TTF_VeraIt_dat, TTF_VeraIt_len);
+    if(I->Active[I->NActive].Font) {
+      I->Active[I->NActive].Src = cTextSrcFreeType;
+      I->Active[I->NActive].Font->TextID = I->NActive;
+      I->NActive++;
+    }
+
+    /* 7 */
+
+    VLACheck(I->Active,ActiveRec,I->NActive);
+    I->Active[I->NActive].Font = FontTypeNew(G,TTF_VeraBd_dat, TTF_VeraBd_len);
+    if(I->Active[I->NActive].Font) {
+      I->Active[I->NActive].Src = cTextSrcFreeType;
+      I->Active[I->NActive].Font->TextID = I->NActive;
+      I->NActive++;
+    }
+
+    /* 8 */
+
+    VLACheck(I->Active,ActiveRec,I->NActive);
+    I->Active[I->NActive].Font = FontTypeNew(G,TTF_VeraBI_dat, TTF_VeraBI_len);
+    if(I->Active[I->NActive].Font) {
+      I->Active[I->NActive].Src = cTextSrcFreeType;
+      I->Active[I->NActive].Font->TextID = I->NActive;
+      I->NActive++;
+    }
+
+    /* 9 */
+
+    VLACheck(I->Active,ActiveRec,I->NActive);
+    I->Active[I->NActive].Font = FontTypeNew(G,TTF_VeraSe_dat, TTF_VeraSe_len);
+    if(I->Active[I->NActive].Font) {
+      I->Active[I->NActive].Src = cTextSrcFreeType;
+      I->Active[I->NActive].Font->TextID = I->NActive;
+      I->NActive++;
+    }
+
+    /* 10 */
+
+    VLACheck(I->Active,ActiveRec,I->NActive);
+    I->Active[I->NActive].Font = FontTypeNew(G,TTF_VeraSeBd_dat, TTF_VeraSeBd_len);
+    if(I->Active[I->NActive].Font) {
+      I->Active[I->NActive].Src = cTextSrcFreeType;
+      I->Active[I->NActive].Font->TextID = I->NActive;
+      I->NActive++;
+    }
+
+    /* 11 */
+
+    VLACheck(I->Active,ActiveRec,I->NActive);
+    I->Active[I->NActive].Font = FontTypeNew(G,TTF_VeraMono_dat, TTF_VeraMono_len);
+    if(I->Active[I->NActive].Font) {
+      I->Active[I->NActive].Src = cTextSrcFreeType;
+      I->Active[I->NActive].Font->TextID = I->NActive;
+      I->NActive++;
+    }
+
+    /* 12 */
+
+    VLACheck(I->Active,ActiveRec,I->NActive);
+    I->Active[I->NActive].Font = FontTypeNew(G,TTF_VeraMoIt_dat, TTF_VeraMoIt_len);
+    if(I->Active[I->NActive].Font) {
+      I->Active[I->NActive].Src = cTextSrcFreeType;
+      I->Active[I->NActive].Font->TextID = I->NActive;
+      I->NActive++;
+    }
+
+    /* 13 */
+
+    VLACheck(I->Active,ActiveRec,I->NActive);
+    I->Active[I->NActive].Font = FontTypeNew(G,TTF_VeraMoBd_dat, TTF_VeraMoBd_len);
+    if(I->Active[I->NActive].Font) {
+      I->Active[I->NActive].Src = cTextSrcFreeType;
+      I->Active[I->NActive].Font->TextID = I->NActive;
+      I->NActive++;
+    }
+
+    /* 14 */
+
+    VLACheck(I->Active,ActiveRec,I->NActive);
+    I->Active[I->NActive].Font = FontTypeNew(G,TTF_VeraMoBI_dat, TTF_VeraMoBI_len);
+    if(I->Active[I->NActive].Font) {
+      I->Active[I->NActive].Src = cTextSrcFreeType;
+      I->Active[I->NActive].Font->TextID = I->NActive;
+      I->NActive++;
+    }
+#endif
+
     return 1;
   } else 
     return 0;
 
 }
 
-int TextGetFontID(PyMOLGlobals *G,int src, int code, char *name,int mode, int size, int style)
+int TextGetFontID(PyMOLGlobals *G,int src, int code, char *name,int mode, int style)
 {
   /* first, return the font code if it is already active */
   register CText *I=G->Text;
@@ -272,8 +387,7 @@ int TextGetFontID(PyMOLGlobals *G,int src, int code, char *name,int mode, int si
     for(a=0;I->NActive;a++) {
       if((src == rec->Src) &&
          (code == rec->Code) &&
-         (mode == rec->Mode)&&
-         (size == rec->Size) &&
+         (mode == rec->Mode) &&
          (style == rec->Style))
         if(((!name)&&(!rec->Name[0])) ||
            ( name &&( strcmp(name,rec->Name) == 0 ))) {
@@ -292,6 +406,9 @@ int TextGetFontID(PyMOLGlobals *G,int src, int code, char *name,int mode, int si
       I->Active[I->NActive].Code = code;
       I->NActive++;
     }
+    break;
+  case cTextSrcFreeType:
+    
     break;
   }
   return -1;
