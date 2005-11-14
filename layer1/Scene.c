@@ -5080,31 +5080,31 @@ static void SceneProgramLighting(PyMOLGlobals *G)
   /* lighting */
   
   glEnable(GL_LIGHTING);
-  
  
-   vv[0] = 0.0F;
+    vv[0] = 0.0F;
     vv[1] = 0.0F;
     vv[2] = 1.0F;
     /* workaround for flickering of specular reflections on Mac OSX 10.3.8 with nVidia hardware */
-    #ifdef _PYMOL_OSX
-    vv[3] = 0.000001F;
-    #else
     vv[3] = 0.0F;
+    #ifndef _MACPYMOL_XCODE
+	#ifdef _PYMOL_OSX
+    vv[3] = 0.000001F;
     #endif
-    glLightfv(GL_LIGHT0,GL_POSITION,vv);
+    #endif
+	glLightfv(GL_LIGHT0,GL_POSITION,vv);
 
     copy3f(SettingGetGlobal_3fv(G,cSetting_light),vv);
     normalize3f(vv);
     invert3f(vv);
 
     /* workaround for flickering of specular reflections on Mac OSX 10.3.8 with nVidia hardware */
+    vv[3] = 0.0F;
+    #ifndef _MACPYMOL_XCODE
     #ifdef _PYMOL_OSX
     vv[3] = 0.000001F;
-    #else
-    vv[3] = 0.0F;
-    #endif
+	#endif
+	#endif
     glLightfv(GL_LIGHT1,GL_POSITION,vv);
-
  
   if(SettingGet(G,cSetting_two_sided_lighting)||
      (SettingGetGlobal_i(G,cSetting_transparency_mode)==1)) {
@@ -5182,20 +5182,21 @@ static void SceneProgramLighting(PyMOLGlobals *G)
   vv[1] = f;
   vv[2] = f;
   vv[3] = 1.0F;
-  glLightfv(GL_LIGHT1,GL_SPECULAR,vv);
-  glMaterialfv(GL_FRONT,GL_SPECULAR,vv);
+  glLightfv(GL_LIGHT0,GL_SPECULAR,vv);
   
+  glMaterialfv(GL_FRONT,GL_SPECULAR,vv);
+
+  glMaterialf(GL_FRONT,GL_SHININESS,SettingGet(G,cSetting_shininess));
+
   if(0) {
     
-    glColor4f(1.0F,1.0F,1.0F,1.0F);
-
-    if(0) {
-      glGetLightfv(GL_LIGHT0,GL_POSITION,vv);
-      dump4f(vv, "glGetLightfv(GL_LIGHT0,GL_POSITION,vv)"); 
+	glColor4f(1.0,1.0,1.0,1.0);
+	
+	glGetLightfv(GL_LIGHT0,GL_POSITION,vv);
+	dump4f(vv, "glGetLightfv(GL_LIGHT0,GL_POSITION,vv)"); 
       
-      glGetLightfv(GL_LIGHT1,GL_POSITION,vv);
-      dump4f(vv, "glGetLightfv(GL_LIGHT1,GL_POSITION,vv)");
-    }
+	glGetLightfv(GL_LIGHT1,GL_POSITION,vv);
+	dump4f(vv, "glGetLightfv(GL_LIGHT1,GL_POSITION,vv)");
     
     glGetFloatv(GL_LIGHT_MODEL_AMBIENT,vv);
     dump4f(vv,"glGetFloatv(GL_LIGHT_MODEL_AMBIENT,vv)");
@@ -5211,7 +5212,6 @@ static void SceneProgramLighting(PyMOLGlobals *G)
     
     glGetLightfv(GL_LIGHT0,GL_SPECULAR,vv);
     dump4f(vv, "glGetLightfv(GL_LIGHT0,GL_SPECULAR,vv)");
-    
     
     glGetFloatv(GL_LIGHT1,vv);
     printf("glGetFloatv(GL_LIGHT1) %8.3f\n",vv[0]);
@@ -5238,7 +5238,7 @@ static void SceneProgramLighting(PyMOLGlobals *G)
     dump4f(vv, "glGetMaterialfv(GL_FRONT,GL_SPECULAR,vv)");
     
     glGetMaterialfv(GL_FRONT, GL_SHININESS, vv);
-    dump4f(vv, "glGetMaterialfv(GL_FRONT,GL_SHININESS, vv)");
+    printf("glGetMaterialfv(GL_FRONT,GL_SHININESS, vv) %8.3f\n",vv[0]);
     
   }
 }
@@ -5609,8 +5609,6 @@ void SceneRender(PyMOLGlobals *G,Pickable *pick,int x,int y,
       glColorMaterial(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE);
 
       glEnable(GL_COLOR_MATERIAL);
-
-      glMaterialf(GL_FRONT,GL_SHININESS,SettingGet(G,cSetting_shininess));
 
       glShadeModel(GL_SMOOTH);
 
