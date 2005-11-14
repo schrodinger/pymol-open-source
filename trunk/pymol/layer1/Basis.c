@@ -1891,17 +1891,17 @@ int BasisHitShadow(BasisCallRec *BC)
                                       return(1);
                                     }
                                   
-                                } /*else if(trans_shadows) 
+                                } else if(trans_shadows) 
                                   {
-                                    if((dist > -kR_SMALL4) &&( r_trans > prm->trans) )
+                                    if((dist > -kR_SMALL4) &&( r_trans > trans) )
                                       {
                                         minIndex   = prm->vert;
                                         r_tri1      = tri1;
                                         r_tri2      = tri2;
                                         r_dist      = dist;
-                                        r_trans = (r->trans = prm->trans);
+                                        r_trans = (r->trans = trans);
                                       }
-                                      }*/
+                                  }
                               }
                             }
                         }

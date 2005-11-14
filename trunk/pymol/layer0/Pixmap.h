@@ -29,9 +29,17 @@ typedef struct {
 void PixmapInit(PyMOLGlobals *G,CPixmap *I,int width,int height);
 
 CPixmap *PixmapNew(PyMOLGlobals *G,int width,int height);
-void PixmapInitFromBitmap(PyMOLGlobals *G,CPixmap *I,int width, int height,
-                             unsigned char *bitmap,
-                             unsigned char *rgba);
+void PixmapInitFromBitmap(PyMOLGlobals *G,CPixmap *I,
+                          int width,
+                          int height,
+                          unsigned char *bitmap,
+                          unsigned char *rgba,int sampling);
+void PixmapInitFromBytemap(PyMOLGlobals *G,CPixmap *I,
+                           int width,
+                           int height,
+                           int pitch,
+                           unsigned char *bitmap,
+                           unsigned char *rgba);
 void PixmapPurge(CPixmap *I);
 void PixmapFreeP(CPixmap *I);
 

@@ -68,7 +68,7 @@ Z* -------------------------------------------------------------------
 #define cTextSrcFreeType  2
 
 int TextInit(PyMOLGlobals *G);
-int TextGetFontID(PyMOLGlobals *G,int src, int code, char *name,int size_mode, int size, int style);
+int TextGetFontID(PyMOLGlobals *G,int src, int code, char *name,int size_mode, int style);
 
 void TextFree(PyMOLGlobals *G);
 
@@ -83,8 +83,9 @@ void TextGetColorUChar(PyMOLGlobals *G,unsigned char *red,
                        unsigned char *green, 
                        unsigned char *blue,
                        unsigned char *alpha);
-char *TextRenderOpenGL(PyMOLGlobals *G,int text_id,char *st);
-char *TextRenderRay(PyMOLGlobals *G,CRay *ray,int text_id,char *st);
+char *TextRenderOpenGL(PyMOLGlobals *G,RenderInfo *info,int text_id,char *st,float size);
+char *TextRenderRay(PyMOLGlobals *G,CRay *ray,int text_id,char *st,float size);
+
 void TextDrawStrAt(PyMOLGlobals *G,char *st, int x, int y);
 void TextDrawStr(PyMOLGlobals *G,char *st);
 void TextAdvance(PyMOLGlobals *G,float advance);

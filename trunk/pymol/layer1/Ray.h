@@ -77,7 +77,7 @@ struct _CRay {
 							  float *c1,float *c2,float *c3);
   void (*fWobble)( CRay *ray,int mode,float *par);
   void (*fTransparentf)( CRay *ray,float t);
-  void (*fCharacter)( CRay *ray,int char_id,float xorig,float yorig,float advance);
+  void (*fCharacter)( CRay *ray,int char_id);
 
   /* everything below should be private */
   PyMOLGlobals *G;
@@ -105,6 +105,7 @@ struct _CRay {
   float PixelRadius;
   float min_box[3];
   float max_box[3];
+  int Sampling;
 };
 
 

@@ -1308,6 +1308,7 @@ void SettingGenerateSideEffects(PyMOLGlobals *G,int index,char *sele,int state)
     SceneChanged(G);
     break;
   case cSetting_label_font_id:
+  case cSetting_label_font_size:
     SceneChanged(G);
     break;
   case cSetting_retain_order:
@@ -2518,7 +2519,11 @@ void SettingInitGlobal(PyMOLGlobals *G,int alloc,int reset_gui)
                                                         3 = pdb I/O, but iupac inside
                                                       */
   SettingSet_i(I,cSetting_ray_pixel_scale,-1);
+  #ifdef _PYMOL_FREETYPE
+  SettingSet_i(I,cSetting_label_font_id,5);
+  #else
   SettingSet_i(I,cSetting_label_font_id,0);
+  #endif
   SettingSet_b(I,cSetting_pdb_conect_all,0);
   SettingSet_s(I,cSetting_button_mode_name,"");
   SettingSet_i(I,cSetting_surface_type,0);
@@ -2644,6 +2649,7 @@ void SettingInitGlobal(PyMOLGlobals *G,int alloc,int reset_gui)
   SettingSet_color(I,cSetting_cartoon_ladder_color, "-1");
   SettingSet_color(I,cSetting_cartoon_nucleic_acid_color, "-1");
   SettingSet_f(I,cSetting_cartoon_ring_transparency, 0.0F);
+  SettingSet_f(I,cSetting_label_font_size, 14.0F);
 }
 
 

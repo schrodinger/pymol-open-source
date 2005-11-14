@@ -4,6 +4,11 @@ CHANGE LOG
 
 Changes up to 0.99
 
+    beta30
+
+    * FreeType2 integration -- scalable fonts
+
+
     beta28
 
     * double-click on internal gui tab to hide it

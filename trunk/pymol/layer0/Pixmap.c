@@ -38,7 +38,7 @@ CPixmap *PixmapNew(PyMOLGlobals *G,int width,int height)
 
 void PixmapInitFromBitmap(PyMOLGlobals *G,CPixmap *I,int width, int height,
                              unsigned char *bitmap,
-                             unsigned char *rgba)
+                             unsigned char *rgba,int sampling)
 {
   if(I) {
  
@@ -47,7 +47,7 @@ void PixmapInitFromBitmap(PyMOLGlobals *G,CPixmap *I,int width, int height,
     unsigned char *src;
     unsigned char *dst;
     register unsigned char red,blue,green,alpha;
-    PixmapInit(G,I,width,height);
+    PixmapInit(G,I,width*sampling,height*sampling);
     red = rgba[0];
     green = rgba[1];
     blue = rgba[2];
@@ -76,6 +76,73 @@ void PixmapInitFromBitmap(PyMOLGlobals *G,CPixmap *I,int width, int height,
         }
         cur <<= 1;
       }
+    }
+    if(sampling>1) {
+      unsigned int *p, *pp, *q, *row;
+      int row_cnt,col_cnt, width_sampling = width*sampling;
+
+      p = (unsigned int*)(I->buffer + 4*width*height);
+      q = (unsigned int*)(I->buffer + 4*width*height*sampling*sampling);
+      while(p>(unsigned int*)I->buffer) {
+        row_cnt = sampling - 1;
+        row = q;
+        for(x=0;x<width;x++) { /* first row */
+          col_cnt = sampling;
+          p--;
+          while(col_cnt--) {
+            *(--q) = *p;
+          }
+        }
+        if(row_cnt) {
+          while(row_cnt--) { /* remaining rows */
+            pp = row;
+            for(x=0;x<width_sampling;x++) {
+              *(--q) = *(--pp);
+            }
+          }
+        }
+      }
+    }
+  }
+}
+void PixmapInitFromBytemap(PyMOLGlobals *G,CPixmap *I,
+                           int width, 
+                           int height,
+                           int pitch,
+                           unsigned char *bytemap,
+                           unsigned char *rgba)
+{
+  if(I) {
+ 
+    int x,y;
+    unsigned char *src,*sa,alp;
+    unsigned char *dst;
+    register unsigned char red,blue,green,alpha;
+    PixmapInit(G,I,width,height);
+    red = rgba[0];
+    green = rgba[1];
+    blue = rgba[2];
+    alpha = rgba[3];
+    UtilZeroMem(I->buffer,4*width*height);
+    src = bytemap;
+    dst = I->buffer;
+    for(y=0;y<height;y++) {
+      sa = src;
+      for(x=0;x<width;x++) {
+        alp = *(sa++);
+        if(alp) {
+          *(dst++)=red;
+          *(dst++)=green;
+          *(dst++)=blue;
+          *(dst++)=(alpha * alp)>>8;
+        } else {
+          *(dst++)=0;
+          *(dst++)=0;
+          *(dst++)=0;
+          *(dst++)=0;
+        }
+      }
+      src+=pitch;
     }
   }
 }

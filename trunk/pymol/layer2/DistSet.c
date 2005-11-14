@@ -198,21 +198,39 @@ static void DistSetRender(DistSet *I,RenderInfo *info)
 {
   CRay *ray = info->ray;
   int pass = info->pass;
-
+  Pickable **pick = info->pick;
+  int float_labels = SettingGet_i(I->State.G,
+                                  I->Setting,
+                                  I->Obj->Obj.Setting,
+                                  cSetting_float_labels);
   int a;
-  if(!pass) { /* only render on zero/default pass */
-    for(a=0;a<I->NRep;a++)
-      if(I->Rep[a]) 
-        if(I->Obj->Obj.RepVis[a])
-          {
-            if(!ray) {
-              ObjectUseColor((CObject*)I->Obj);
-            } else {
-              ray->fColor3fv(ray,ColorGet(I->State.G,I->Obj->Obj.Color));
-            }			 
-            I->Rep[a]->fRender(I->Rep[a],info);
+  Rep *r;
+  for(a=0;a<I->NRep;a++)
+    if(I->Rep[a])
+      if(I->Obj->Obj.RepVis[a]) {
+        r = I->Rep[a];
+        if(ray||pick) {
+          if(ray) 
+            ray->fColor3fv(ray,ColorGet(I->State.G,I->Obj->Obj.Color));
+          r->fRender(r,info);
+        } else {
+          ObjectUseColor((CObject*)I->Obj);
+          switch(a) {
+          case cRepLabel:
+            if(float_labels) {
+              if(pass==-1) 
+                r->fRender(r,info);
+            } else if(pass==0)
+              r->fRender(r,info);                  
+            break;
+          default:
+            if(pass==0) {
+              r->fRender(r,info);
+            }
+            break;
+          }
         }
-  }
+      }
 }
 /*========================================================================*/
 DistSet *DistSetNew(PyMOLGlobals *G)
