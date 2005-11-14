@@ -1255,43 +1255,58 @@ static void RayTraceSpawn(CRayThreadInfo *Thread,int n_thread)
 }
 #endif
 
-static int find_edge(unsigned int *ptr,unsigned int width,int threshold)
+static int find_edge(unsigned int *ptr,unsigned int width,int threshold,int back)
 {
-  unsigned int shift = 0;
-  int compare[9];
-  int sum[9] = {0,0,0,0,0,0,0,0};
-  int current;
-  int a;
+  register int compare0,compare1,compare2,compare3,compare4,compare5,compare6,compare7,compare8;
 
-  compare[0] = (signed int)*(ptr);
-  compare[1] = (signed int)*(ptr-1);
-  compare[2] = (signed int)*(ptr+1);
-  compare[3] = (signed int)*(ptr-width);
-  compare[4] = (signed int)*(ptr+width);
-  compare[5] = (signed int)*(ptr-width-1);
-  compare[6] = (signed int)*(ptr+width-1);
-  compare[7] = (signed int)*(ptr-width+1);
-  compare[8] = (signed int)*(ptr+width+1);
   
-  for(a=0;a<4;a++) {
-    current = ((compare[0]>>shift)&0xFF);
-    sum[1] += abs(current - ((compare[1]>>shift)&0xFF));
-    sum[2] += abs(current - ((compare[2]>>shift)&0xFF));
-    if(sum[1]>=threshold) return 1;
-    sum[3] += abs(current - ((compare[3]>>shift)&0xFF));
-    if(sum[2]>=threshold) return 1;
-    sum[4] += abs(current - ((compare[4]>>shift)&0xFF));
-    if(sum[3]>=threshold) return 1;
-    sum[5] += abs(current - ((compare[5]>>shift)&0xFF));
-    if(sum[4]>=threshold) return 1;
-    sum[6] += abs(current - ((compare[6]>>shift)&0xFF));
-    if(sum[5]>=threshold) return 1;
-    sum[7] += abs(current - ((compare[7]>>shift)&0xFF));
-    if(sum[6]>=threshold) return 1;
-    sum[8] += abs(current - ((compare[8]>>shift)&0xFF));
-    if(sum[7]>=threshold) return 1;
-    if(sum[8]>=threshold) return 1;
-    shift+=8;
+  {
+    register int back_test, back_two = false;
+    compare0 = (signed int)*(ptr);
+    compare1 = (signed int)*(ptr-1);
+    back_test = (compare0==back);
+    compare2 = (signed int)*(ptr+1);
+    back_two = back_two || ((compare1==back)==back_test);
+    compare3 = (signed int)*(ptr-width);
+    back_two = back_two || ((compare2==back)==back_test);
+    compare4 = (signed int)*(ptr+width);
+    back_two = back_two || ((compare3==back)==back_test);
+    compare5 = (signed int)*(ptr-width-1);
+    back_two = back_two || ((compare4==back)==back_test);
+    compare6 = (signed int)*(ptr+width-1);
+    back_two = back_two || ((compare5==back)==back_test);
+    compare7 = (signed int)*(ptr-width+1);
+    back_two = back_two || ((compare6==back)==back_test);
+    compare8 = (signed int)*(ptr+width+1);
+    back_two = back_two || ((compare7==back)==back_test);
+    if(back_two) threshold = (threshold>>1); /* halve threshold for pixels that hit background */
+  }
+
+  {
+    register int current;  
+    register unsigned int shift = 0;
+    register int sum1=0,sum2=3,sum3=0,sum4=0,sum5=0,sum6=0,sum7=0,sum8=0;
+    int a;
+    for(a=0;a<4;a++) {
+      current = ((compare0>>shift)&0xFF);
+      sum1 += abs(current - ((compare1>>shift)&0xFF));
+      sum2 += abs(current - ((compare2>>shift)&0xFF));
+      if(sum1>=threshold) return 1;
+      sum3 += abs(current - ((compare3>>shift)&0xFF));
+      if(sum2>=threshold) return 1;
+      sum4 += abs(current - ((compare4>>shift)&0xFF));
+      if(sum3>=threshold) return 1;
+      sum5 += abs(current - ((compare5>>shift)&0xFF));
+      if(sum4>=threshold) return 1;
+      sum6 += abs(current - ((compare6>>shift)&0xFF));
+      if(sum5>=threshold) return 1;
+      sum7 += abs(current - ((compare7>>shift)&0xFF));
+      if(sum6>=threshold) return 1;
+      sum8 += abs(current - ((compare8>>shift)&0xFF));
+      if(sum7>=threshold) return 1;
+      if(sum8>=threshold) return 1;
+      shift+=8;
+    }
   }
   return 0;
 }
@@ -1613,7 +1628,7 @@ int RayTraceThread(CRayThreadInfo *T)
                 if(!edge_sampling) {
                   if(x&&y&&(x<(T->width-1))&&(y<(T->height-1))) { /* not on the edge... */
                     if(find_edge(T->edging + (pixel - T->image),
-                                 T->width, T->edging_cutoff)) {
+                                 T->width, T->edging_cutoff,T->background)) {
                       register unsigned char *pixel_c = (unsigned char*)pixel;
                       register unsigned int c1,c2,c3,c4; 
 
@@ -1686,6 +1701,7 @@ int RayTraceThread(CRayThreadInfo *T)
                       r1.base[1] = edge_base[1]-edge_height;
                       break;
                     }
+
                   }
                 }
                 if(!edge_sampling) /* not oversampling this edge or already done... */
