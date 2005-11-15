@@ -52,7 +52,7 @@ int TypeFaceCharacterNew(CTypeFace *I,CharFngrprnt *fprnt,float size)
                                  slot->bitmap.rows,
                                  -slot->bitmap.pitch,
                                  slot->bitmap.buffer + ((slot->bitmap.rows-1) * slot->bitmap.pitch),
-                                 (float)0.0,
+                                   (float)-slot->bitmap_left,
                                  (float)slot->bitmap.rows-slot->bitmap_top, 
                                  slot->advance.x / 64.0F,
                                  fprnt);
@@ -89,7 +89,8 @@ float TypeFaceGetKerning(CTypeFace *I,unsigned int last, unsigned int current, f
 {
   float result = 0.0F;
   FT_UInt glyph_index, previous;
-  FT_Bool use_kerning = FT_HAS_KERNING( I->Face );
+  /*  FT_Bool use_kerning = FT_HAS_KERNING( I->Face );*/
+  FT_Bool use_kerning = 1;
   if(I->LastSize!=size) {
     I->LastSize = size;
     FT_Set_Char_Size( I->Face, /* handle to face object */
