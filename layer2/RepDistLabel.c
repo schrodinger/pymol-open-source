@@ -62,7 +62,7 @@ static void RepDistLabelRender(RepDistLabel *I,RenderInfo *info)
   int n = 0;
   int color;
   int font_id = SettingGet_i(G,I->ds->Setting,I->Obj->Setting,cSetting_label_font_id);
-  float font_size = SettingGet_f(G,I->ds->Setting,I->Obj->Setting,cSetting_label_font_size);
+  float font_size = SettingGet_f(G,I->ds->Setting,I->Obj->Setting,cSetting_label_size);
 
   if(ray) {
 

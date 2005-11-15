@@ -60,7 +60,7 @@ static void RepLabelRender(RepLabel *I,RenderInfo *info)
   int c=I->N;
   char *l=I->L;
   int font_id = SettingGet_i(G,I->R.cs->Setting,I->R.obj->Setting,cSetting_label_font_id);
-  float font_size = SettingGet_f(G,I->R.cs->Setting,I->R.obj->Setting,cSetting_label_font_size);
+  float font_size = SettingGet_f(G,I->R.cs->Setting,I->R.obj->Setting,cSetting_label_size);
 
   if(ray) {
 

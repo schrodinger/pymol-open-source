@@ -296,13 +296,16 @@ void  OrthoRemoveSplash(PyMOLGlobals *G)
 /*========================================================================*/
 int  OrthoCommandOut(PyMOLGlobals *G,char *buffer)
 {
-  register COrtho *I=G->Ortho;
-  if(I->cmds) {
-    int result;
-    result = QueueStrOut(I->cmds,buffer);
-    return(result);
+  if(G&&buffer) {
+    register COrtho *I=G->Ortho;
+    if(I && I->cmds) {
+      int result;
+      result = QueueStrOut(I->cmds,buffer);
+      return(result);
+    } else
+      return 0;
   } else
-	return(0);
+    return 0;
 }
 /*========================================================================*/
 int  OrthoCommandWaiting(PyMOLGlobals *G)

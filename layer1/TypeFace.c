@@ -114,6 +114,7 @@ float TypeFaceGetKerning(CTypeFace *I,unsigned int last, unsigned int current, f
 void TypeFaceFree(CTypeFace *I)
 {
   FT_Done_Face( I->Face );
+  FreeP(I);
 }
 
 
@@ -131,6 +132,7 @@ void TypeFree(PyMOLGlobals *G)
 {
   register CType *I = G->Type;
   FT_Done_FreeType( I->library );
+  FreeP(G->Type);
 }
 
 #else
