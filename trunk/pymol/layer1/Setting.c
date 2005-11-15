@@ -1308,7 +1308,7 @@ void SettingGenerateSideEffects(PyMOLGlobals *G,int index,char *sele,int state)
     SceneChanged(G);
     break;
   case cSetting_label_font_id:
-  case cSetting_label_font_size:
+  case cSetting_label_size:
     SceneChanged(G);
     break;
   case cSetting_retain_order:
@@ -2649,7 +2649,7 @@ void SettingInitGlobal(PyMOLGlobals *G,int alloc,int reset_gui)
   SettingSet_color(I,cSetting_cartoon_ladder_color, "-1");
   SettingSet_color(I,cSetting_cartoon_nucleic_acid_color, "-1");
   SettingSet_f(I,cSetting_cartoon_ring_transparency, 0.0F);
-  SettingSet_f(I,cSetting_label_font_size, 14.0F);
+  SettingSet_f(I,cSetting_label_size, 14.0F);
 }
 
 

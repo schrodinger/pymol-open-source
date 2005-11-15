@@ -113,8 +113,13 @@ static void EditorDrawDihedral(PyMOLGlobals *G)
                             0,true,true,false,true);
           ExecutiveColor(G,cEditorDihedral,"white",1,true);
           ExecutiveSetSettingFromString(G, cSetting_float_labels, "1", cEditorDihedral, 0, true, true);
+#ifndef _PYMOL_FREETYPE
           ExecutiveSetSettingFromString(G, cSetting_label_font_id, "4", cEditorDihedral, 0, true, true);
-          ExecutiveSetSettingFromString(G, cSetting_label_color, "orange", cEditorDihedral, 0, true, true);
+#else
+          ExecutiveSetSettingFromString(G, cSetting_label_font_id, "8", cEditorDihedral, 0, true, true);
+          ExecutiveSetSettingFromString(G, cSetting_label_size, "20", cEditorDihedral, 0, true, true);
+#endif
+          ExecutiveSetSettingFromString(G, cSetting_label_color, "brightorange", cEditorDihedral, 0, true, true);
         }
       }
     }

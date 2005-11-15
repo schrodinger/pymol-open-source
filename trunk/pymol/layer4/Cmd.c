@@ -1695,7 +1695,7 @@ static PyObject *CmdPop(PyObject *self,  PyObject *args)
 
 static PyObject *CmdFlushNow(PyObject *self, 	PyObject *args)
 {
-  if(TempPyMOLGlobals && TempPyMOLGlobals->Ready ) {
+  if(TempPyMOLGlobals && TempPyMOLGlobals->Ready) {
     /* only called by the GLUT thread with unlocked API, blocked interpreter */
     if(flush_count<8) { /* prevent super-deep recursion */
       flush_count++;

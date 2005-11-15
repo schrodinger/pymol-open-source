@@ -602,7 +602,7 @@ CSetting *SettingNewFromPyList(PyMOLGlobals *G,PyObject *list);
 #define cSetting_cartoon_ladder_color       450
 #define cSetting_cartoon_nucleic_acid_color 451
 #define cSetting_cartoon_ring_transparency  452
-#define cSetting_label_font_size            453
+#define cSetting_label_size                 453
 
 /* when you add a new settingg also remember:
    layer1/Setting.c
