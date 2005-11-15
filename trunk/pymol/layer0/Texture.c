@@ -65,6 +65,7 @@ int TextureGetFromChar(PyMOLGlobals *G, int char_id,float *extent)
       if(buffer) {
         int w = CharacterGetWidth(G,char_id);
         int h = CharacterGetHeight(G,char_id);
+        GLuint texture_id = 0;
         unsigned char *temp_buffer,scratch[32][32][4];
         while((tex_dim<w)||(tex_dim<h)) {
           tex_dim = (tex_dim<<1);
@@ -73,7 +74,6 @@ int TextureGetFromChar(PyMOLGlobals *G, int char_id,float *extent)
           temp_buffer = (unsigned char*)scratch;
         else
           temp_buffer = Alloc(unsigned char,tex_dim*tex_dim*4);
-        GLuint texture_id = 0;
         
         {
           int a,b;
