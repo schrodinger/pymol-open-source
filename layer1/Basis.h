@@ -52,6 +52,7 @@ typedef struct {
   int NVertex;
   int NNormal;
   float LightNormal[3]; /* for lights - this is the direction of the light rays */
+  float SpecNormal[3]; /* for computing specular reflections */
   float Color[3]; /* for lights */
   Matrix33f Matrix;
 } CBasis;

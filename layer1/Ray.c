@@ -66,7 +66,6 @@ struct _CRayThreadInfo {
   unsigned int background;
   int border;
   int phase, n_thread;
-  float spec_vector[3];
   int x_start,x_stop;
   int y_start,y_stop;
   unsigned int *edging;
@@ -856,13 +855,14 @@ void RayRenderPOV(CRay *I,int width,int height,char **headerVLA_ptr,
   OrthoLineType buffer;
   float *vert,*norm;
   float vert2[3];
-  float light[3],*lightv;
   int cc,hc;
   int a;
   int smooth_color_triangle;
   int mesh_obj = false;
   char *charVLA,*headerVLA;
   char transmit[64];
+  float light[3],*lightv;
+
 
   charVLA=*charVLA_ptr;
   headerVLA=*headerVLA_ptr;
@@ -881,6 +881,9 @@ void RayRenderPOV(CRay *I,int width,int height,char **headerVLA_ptr,
     gamma=1.0F/gamma;
   else
     gamma=1.0F;
+
+  lightv=SettingGetfv(I->G,cSetting_light);
+  copy3f(lightv,light);
 
   fog = SettingGet(I->G,cSetting_ray_trace_fog);
   if(fog<0.0F)
@@ -940,8 +943,6 @@ void RayRenderPOV(CRay *I,int width,int height,char **headerVLA_ptr,
             SettingGet(I->G,cSetting_spec_power)/4.0F);
     UtilConcatVLA(&headerVLA,&hc,buffer);
   }
-  lightv = SettingGet_3fv(I->G,NULL,NULL,cSetting_light);
-  copy3f(lightv,light);
   if(angle) {
     float temp[16];
     identity44f(temp);
@@ -1360,7 +1361,7 @@ int RayTraceThread(CRayThreadInfo *T)
 	CBasis      *bp1,*bp2;
 	int render_height;
 	int offset=0;
-   BasisCallRec SceneCall,ShadeCall;
+   BasisCallRec BasisCall[4];
    float border_offset;
    int edge_sampling = false;
    unsigned int edge_avg[4],edge_alpha_avg[4];
@@ -1540,9 +1541,9 @@ int RayTraceThread(CRayThreadInfo *T)
    edge_width *= invWdthRange;
    edge_height *= invHgtRange;
 
-	bp1  = I->Basis + 1;
-	bp2  = I->Basis + 2;
-	
+	bp1 = I->Basis + 1;
+	bp2 = I->Basis + 2;
+
    render_height = T->y_stop - T->y_start;
 
    if(render_height) {
@@ -1560,33 +1561,36 @@ int RayTraceThread(CRayThreadInfo *T)
    
    r1.base[2]	= _0;
 
-   SceneCall.Basis = I->Basis + 1;
-   SceneCall.rr = &r1;
-   SceneCall.vert2prim = I->Vert2Prim;
-   SceneCall.prim = I->Primitive;
-   SceneCall.shadow = false;
-   SceneCall.back = T->back;
-   SceneCall.trans_shadows = trans_shadows;
-   SceneCall.check_interior = (interior_color >= 0);
-   SceneCall.fudge0 = BasisFudge0;
-   SceneCall.fudge1 = BasisFudge1;
+   BasisCall[0].Basis = I->Basis + 1;
+   BasisCall[0].rr = &r1;
+   BasisCall[0].vert2prim = I->Vert2Prim;
+   BasisCall[0].prim = I->Primitive;
+   BasisCall[0].shadow = false;
+   BasisCall[0].back = T->back;
+   BasisCall[0].trans_shadows = trans_shadows;
+   BasisCall[0].check_interior = (interior_color >= 0);
+   BasisCall[0].fudge0 = BasisFudge0;
+   BasisCall[0].fudge1 = BasisFudge1;
    
-   MapCacheInit(&SceneCall.cache,I->Basis[1].Map,T->phase,cCache_map_scene_cache);
+   MapCacheInit(&BasisCall[0].cache,I->Basis[1].Map,T->phase,cCache_map_scene_cache);
 
    if(shadows&&(I->NBasis>1)) {
-     ShadeCall.Basis = I->Basis + 2;
-     ShadeCall.rr = &r2;
-     ShadeCall.vert2prim = I->Vert2Prim;
-     ShadeCall.prim = I->Primitive;
-     ShadeCall.shadow = true;
-     ShadeCall.front = _0;
-     ShadeCall.back = _0;
-     ShadeCall.excl_trans = _0;
-     ShadeCall.trans_shadows = trans_shadows;
-     ShadeCall.check_interior = false;
-     ShadeCall.fudge0 = BasisFudge0;
-     ShadeCall.fudge1 = BasisFudge1;
-     MapCacheInit(&ShadeCall.cache,I->Basis[2].Map,T->phase,cCache_map_shadow_cache);     
+     int bc;
+     for(bc=2;bc<I->NBasis;bc++) {
+       BasisCall[bc].Basis = I->Basis + bc;
+       BasisCall[bc].rr = &r2;
+       BasisCall[bc].vert2prim = I->Vert2Prim;
+       BasisCall[bc].prim = I->Primitive;
+       BasisCall[bc].shadow = true;
+       BasisCall[bc].front = _0;
+       BasisCall[bc].back = _0;
+       BasisCall[bc].excl_trans = _0;
+       BasisCall[bc].trans_shadows = trans_shadows;
+       BasisCall[bc].check_interior = false;
+       BasisCall[bc].fudge0 = BasisFudge0;
+       BasisCall[bc].fudge1 = BasisFudge1;
+       MapCacheInit(&BasisCall[bc].cache,I->Basis[bc].Map,T->phase,cCache_map_shadow_cache);     
+     }
    }
    
    if(T->border) {
@@ -1742,24 +1746,24 @@ int RayTraceThread(CRayThreadInfo *T)
               while((persist > _persistLimit) && (pass <= max_pass))
                 {
                   pixel_flag		= false;
-                  SceneCall.except = exclude;
-                  SceneCall.front = new_front;
-                  SceneCall.excl_trans = excl_trans;
-                  SceneCall.interior_flag = false;
+                  BasisCall[0].except = exclude;
+                  BasisCall[0].front = new_front;
+                  BasisCall[0].excl_trans = excl_trans;
+                  BasisCall[0].interior_flag = false;
 
 
                   if(perspective) {
-                    SceneCall.pass = pass;
+                    BasisCall[0].pass = pass;
                     if(pass) {
                       add3f(nudge,r1.base,r1.base);
                       copy3f(r1.base,r1.skip);
                     }
-                    SceneCall.back_dist = -(T->back+r1.base[2])/r1.dir[2];
-                    i = BasisHitPerspective( &SceneCall );
+                    BasisCall[0].back_dist = -(T->back+r1.base[2])/r1.dir[2];
+                    i = BasisHitPerspective( &BasisCall[0] );
                   } else {
-                    i = BasisHitNoShadow( &SceneCall );
+                    i = BasisHitNoShadow( &BasisCall[0] );
                   }
-                  interior_flag = SceneCall.interior_flag;
+                  interior_flag = BasisCall[0].interior_flag;
                   
                   if(((i >= 0) || interior_flag) && (pass < max_pass))
                     {
@@ -1895,31 +1899,37 @@ int RayTraceThread(CRayThreadInfo *T)
                     
                       direct_cmp = (float) ( (dotgle + (pow(dotgle, settingPower))) * _p5 );
                       
+                      reflect_cmp = _0;
+                      excess = _0;
+                      
                       lit = _1;
-                      
-                      if(shadows && ((!interior_flag)||(interior_shadows))) 
-                        {
-                          matrix_transform33f3f(bp2->Matrix,r1.impact,r2.base);
-                          r2.base[2]-=shadow_fudge;
-                          ShadeCall.except = i;
-                          if(BasisHitShadow(&ShadeCall) > -1)
-                            lit	= (float) pow(r2.trans, _p5);
-                        }
-                      
-                      if(lit>_0) {
-                        dotgle	= -dot_product3f(r1.surfnormal,bp2->LightNormal);
-                        if(dotgle < _0) dotgle = _0;
-                        
-                        reflect_cmp	=(float)(lit * (dotgle + (pow(dotgle, settingReflectPower))) * _p5 );
-                        dotgle	= -dot_product3f(r1.surfnormal,T->spec_vector);
-                        if(dotgle < _0) dotgle=_0;
-                        excess	= (float)( pow(dotgle, settingSpecPower) * settingSpecReflect * lit);
-                      } else {
-                        excess		= _0;
-                        reflect_cmp	= _0;
-                      }
 
-                      bright	= ambient + (_1-ambient) * 
+                      if(shadows && ((!interior_flag)||(interior_shadows))) {
+                        int bc;
+                        CBasis *bp;
+                        for(bc=2;bc<I->NBasis;bc++) {
+                          lit = _1;
+                          bp = I->Basis + bc;
+                          
+                          matrix_transform33f3f(bp->Matrix,r1.impact,r2.base);
+                          r2.base[2]-=shadow_fudge;
+                          BasisCall[bc].except = i;
+                          if(BasisHitShadow(&BasisCall[bc]) > -1)
+                            lit	= (float) pow(r2.trans, _p5);
+                          
+                          if(lit>_0) {
+                            dotgle	= -dot_product3f(r1.surfnormal,bp->LightNormal);
+                            if(dotgle < _0) dotgle = _0;
+                            
+                            reflect_cmp	+= (float)(lit * (dotgle + (pow(dotgle, settingReflectPower))) * _p5 );
+                            dotgle	= -dot_product3f(r1.surfnormal,bp->SpecNormal);
+                            if(dotgle < _0) dotgle=_0;
+                            excess	+= (float)( pow(dotgle, settingSpecPower) * settingSpecReflect * lit);
+                          }
+                        }
+                      }
+                        
+                      bright = ambient + (_1-ambient) * 
                         (((_1-direct_shade)+direct_shade*lit) * direct*direct_cmp +
                          (_1-direct)*direct_cmp*lreflect*reflect_cmp);
 
@@ -2265,10 +2275,14 @@ int RayTraceThread(CRayThreadInfo *T)
 	
 	/*  if(T->n_thread>1) 
 	  printf(" Ray: Thread %d: Complete.\n",T->phase+1);*/
-	MapCacheFree(&SceneCall.cache,T->phase,cCache_map_scene_cache);
+	MapCacheFree(&BasisCall[0].cache,T->phase,cCache_map_scene_cache);
 	
-	if(shadows&&(I->NBasis>1))
-		MapCacheFree(&ShadeCall.cache,T->phase,cCache_map_shadow_cache);
+	if(shadows&&(I->NBasis>1)) {
+      int bc;
+      for(bc=2;bc<I->NBasis;bc++) {
+        MapCacheFree(&BasisCall[bc].cache,T->phase,cCache_map_shadow_cache);
+      }
+    }
 	
 	return (n_hit);
 }
@@ -2751,7 +2765,6 @@ void RayRender(CRay *I,int width,int height,unsigned int *image,
                float fov,float *pos)
 {
   int a;
-  float *v,light[3];
   unsigned int *image_copy = NULL;
   unsigned int back_mask,fore_mask=0;
   unsigned int background,buffer_size;
@@ -2761,7 +2774,6 @@ int opaque_back=0;
   float *bkrd_ptr,bkrd[3];
   double now;
   int shadows;
-  float spec_vector[3];
   int n_thread;
   int mag=1;
   int oversample_cutoff;
@@ -2874,34 +2886,50 @@ int opaque_back=0;
       " Ray: processed %i graphics primitives in %4.2f sec.\n",I->NPrimitive,now
       ENDFB(I->G);
 
-    I->NBasis=3; /* light source */
-    BasisInit(I->G,I->Basis+2,2);
-    
-    { /* setup light & rotate if necessary  */
-      v=SettingGetfv(I->G,cSetting_light);
-      copy3f(v,light);
-      
-      if(angle) {
-        float temp[16];
-        identity44f(temp);
-        MatrixRotateC44f(temp,(float)-PI*angle/180,0.0F,1.0F,0.0F);
-        MatrixTransformC44fAs33f3f(temp,light,light);
+    I->NBasis=3; 
+    { /* light sources */
+      int bc;
+      for(bc=2;bc<I->NBasis;bc++) {
+        BasisInit(I->G,I->Basis+bc,bc);
+        
+        { /* setup light & rotate if necessary  */
+          float light[3],*lightv;
+          if(bc==2) {
+            lightv=SettingGetfv(I->G,cSetting_light);
+            copy3f(lightv,light);
+          } else {
+            light[0]=0.0F;
+            light[1]=-1.0F;
+            light[2]=-0.5F;
+            normalize3f(light);
+          }
+          
+          if(angle) {
+            float temp[16];
+            identity44f(temp);
+            MatrixRotateC44f(temp,(float)-PI*angle/180,0.0F,1.0F,0.0F);
+            MatrixTransformC44fAs33f3f(temp,light,light);
+          }
+          
+          I->Basis[bc].LightNormal[0]=light[0];
+          I->Basis[bc].LightNormal[1]=light[1];
+          I->Basis[bc].LightNormal[2]=light[2];
+          normalize3f(I->Basis[bc].LightNormal);
+          
+          {
+            float spec_vector[3];
+            copy3f(I->Basis[bc].LightNormal,spec_vector);
+            spec_vector[bc]--; 
+            normalize3f(spec_vector);
+            copy3f(spec_vector, I->Basis[bc].SpecNormal);
+          }
+        }
+        
+        if(shadows) { /* don't waste time on shadows unless needed */
+          BasisSetupMatrix(I->Basis+bc);
+          RayTransformBasis(I,I->Basis+bc,bc);
+        }
       }
-      
-      I->Basis[2].LightNormal[0]=light[0];
-      I->Basis[2].LightNormal[1]=light[1];
-      I->Basis[2].LightNormal[2]=light[2];
-      normalize3f(I->Basis[2].LightNormal);
-      
-      copy3f(I->Basis[2].LightNormal,spec_vector);
-      spec_vector[2]--; /* HUH? */
-      normalize3f(spec_vector);
-      
-    }
-
-    if(shadows) { /* don't waste time on shadows unless needed */
-      BasisSetupMatrix(I->Basis+2);
-      RayTransformBasis(I,I->Basis+2,2);
     }
 
     OrthoBusyFast(I->G,4,20);
@@ -2925,13 +2953,18 @@ int opaque_back=0;
       thread_info[0].front = front;
       /* shadow map */
 
-      thread_info[1].basis = I->Basis+2;
-      thread_info[1].vert2prim = I->Vert2Prim;
-      thread_info[1].prim = I->Primitive;
-      thread_info[1].clipBox = NULL;
-      thread_info[1].phase = 1;
-      thread_info[1].perspective = false; 
-      RayHashSpawn(thread_info,2);
+      {
+        int bc;
+        for(bc=2;bc<I->NBasis;bc++) {
+          thread_info[1].basis = I->Basis+bc;
+          thread_info[1].vert2prim = I->Vert2Prim;
+          thread_info[1].prim = I->Primitive;
+          thread_info[1].clipBox = NULL;
+          thread_info[1].phase = 1;
+          thread_info[1].perspective = false; 
+          RayHashSpawn(thread_info,I->NBasis-1); 
+        }
+      }
       
     } else
 #endif
@@ -2940,11 +2973,14 @@ int opaque_back=0;
                      I->Volume,0,cCache_ray_map,
                      perspective,front);
         if(shadows) {
-          BasisMakeMap(I->Basis+2,I->Vert2Prim,I->Primitive,
-                       NULL,1,cCache_ray_map,false,_0);
+          int bc;
+          for(bc=2;bc<I->NBasis;bc++) {
+            BasisMakeMap(I->Basis+bc,I->Vert2Prim,I->Primitive,
+                         NULL,bc,cCache_ray_map,false,_0);
+          }
         }
 
-      /* serial tasks which RayHashThread does in parallel mode */
+      /* serial tasks which RayHashThread does in parallel mode using the first thread */
 
       fill(image,background,width * (unsigned int)height);
       RayComputeBox(I);
@@ -3104,7 +3140,6 @@ int opaque_back=0;
          rt[a].perspective = perspective;
          rt[a].fov = fov;
          rt[a].pos[2] = pos[2];
-			copy3f(spec_vector,rt[a].spec_vector);
 			}
 		
 #ifndef _PYMOL_NOPY
@@ -3693,7 +3728,7 @@ CRay *RayNew(PyMOLGlobals *G)
     " RayNew: BigEndian = %d\n",I->BigEndian
     ENDFB(I->G);
 
-  I->Basis=CacheAlloc(I->G,CBasis,3,0,cCache_ray_basis);
+  I->Basis=CacheAlloc(I->G,CBasis,4,0,cCache_ray_basis);
   BasisInit(I->G,I->Basis,0);
   BasisInit(I->G,I->Basis+1,1);
   I->Vert2Prim=VLACacheAlloc(I->G,int,1,0,cCache_ray_vert2prim);
