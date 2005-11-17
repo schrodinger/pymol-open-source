@@ -588,6 +588,10 @@ typedef struct _CPyMOL {
   ov_word lex_cartoon_nucleic_acid_color;
   ov_word lex_cartoon_ring_transparency;
   ov_word lex_label_size;
+  ov_word lex_spec_direct;
+  ov_word lex_light_count;
+  ov_word lex_light2;
+  ov_word lex_light3;
 } _CPyMOL;
 
 /* convenience functions -- inline */
@@ -1184,6 +1188,11 @@ static OVstatus PyMOL_InitAPI(CPyMOL *I)
   LEX_SETTING(cartoon_nucleic_acid_color, 451);
   LEX_SETTING(cartoon_ring_transparency, 452);
   LEX_SETTING(label_size, 453);
+  LEX_SETTING(spec_direct, 454);
+  LEX_SETTING(light_count, 455);
+  LEX_SETTING(light2, 456);
+  LEX_SETTING(light3, 457);
+  
   return_OVstatus_SUCCESS;
 }
 

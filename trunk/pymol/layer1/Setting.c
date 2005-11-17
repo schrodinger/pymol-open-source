@@ -1258,6 +1258,9 @@ void SettingGenerateSideEffects(PyMOLGlobals *G,int index,char *sele,int state)
   case cSetting_dot_lighting:
   case cSetting_mesh_lighting:
   case cSetting_light:
+  case cSetting_light2:
+  case cSetting_light3:
+  case cSetting_light_count:
   case cSetting_fog:
   case cSetting_field_of_view:
   case cSetting_fog_start:
@@ -1887,9 +1890,9 @@ void SettingInitGlobal(PyMOLGlobals *G,int alloc,int reset_gui)
 
   SettingSet_f(I,cSetting_power, 1.0F);
 
-  SettingSet_f(I,cSetting_spec_reflect, 0.5F);
+  SettingSet_f(I,cSetting_spec_reflect, -1.0F);
 
-  SettingSet_f(I,cSetting_spec_power, 60.0F);
+  SettingSet_f(I,cSetting_spec_power, -1.0F);
 
   SettingSet_f(I,cSetting_sweep_angle, 20.0F);
 
@@ -2021,7 +2024,7 @@ void SettingInitGlobal(PyMOLGlobals *G,int alloc,int reset_gui)
 
   SettingSet_f(I,cSetting_specular, 1.0F);
 
-  SettingSet_f(I,cSetting_shininess, 40.0F);
+  SettingSet_f(I,cSetting_shininess, 50.0F);
 
   SettingSet_f(I,cSetting_fog, 1.0F);
 
@@ -2494,7 +2497,7 @@ void SettingInitGlobal(PyMOLGlobals *G,int alloc,int reset_gui)
   SettingSet_b(I,cSetting_pdb_insertions_go_first,0);
   SettingSet_b(I,cSetting_roving_origin_z,1);
   SettingSet_f(I,cSetting_roving_origin_z_cushion,3.0F);
-  SettingSet_f(I,cSetting_specular_intensity,0.8F);
+  SettingSet_f(I,cSetting_specular_intensity,0.50F);
   SettingSet_i(I,cSetting_overlay_lines,5);
   SettingSet_f(I,cSetting_ray_transparency_spec_cut,0.9F);
   SettingSet_b(I,cSetting_internal_prompt,1);
@@ -2650,6 +2653,10 @@ void SettingInitGlobal(PyMOLGlobals *G,int alloc,int reset_gui)
   SettingSet_color(I,cSetting_cartoon_nucleic_acid_color, "-1");
   SettingSet_f(I,cSetting_cartoon_ring_transparency, 0.0F);
   SettingSet_f(I,cSetting_label_size, 14.0F);
+  SettingSet_f(I,cSetting_spec_direct, 0.0F);
+  SettingSet_i(I,cSetting_light_count, 2);
+  SettingSet_3f(I,cSetting_light2, -0.55F, -0.7F, 0.15F);
+  SettingSet_3f(I,cSetting_light3, 0.3F, -0.6F, -0.2F);
 }
 
 

@@ -487,6 +487,10 @@ if __name__=='pymol.setting':
         cartoon_nucleic_acid_color= (451, '')
         cartoon_ring_transparency = (452, '')
         label_size                = (453, '')
+        spec_direct               = (454, '')
+        light_count               = (455, '')
+        light2                    = (456, '')
+        light3                    = (457, '')
         
     setting_sc = Shortcut(SettingIndex.__dict__.keys())
 
