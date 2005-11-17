@@ -2854,11 +2854,10 @@ void BasisInit(PyMOLGlobals *G,CBasis *I,int group_id)
 /*========================================================================*/
 void BasisFinish(CBasis *I,int group_id)
 {
-  if(I->Map) 
-    {
-      MapFree(I->Map);
-      I->Map=NULL;
-    }  
+  if(I->Map) {
+    MapFree(I->Map);
+    I->Map=NULL;
+  }  
   VLACacheFreeP(I->G,I->Radius2,group_id,cCache_basis_radius2,false);
   VLACacheFreeP(I->G,I->Radius,group_id,cCache_basis_radius,false);
   VLACacheFreeP(I->G,I->Vertex,group_id,cCache_basis_vertex,false);

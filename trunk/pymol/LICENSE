@@ -4,23 +4,24 @@ Open-Source PyMOL Copyright Notice
 
 The Open-Source PyMOL source code is copyrighted, but you can freely
 use and copy it as long as you don't change or remove any of the
-copyright notices.
+Copyright notices.  The Open-Source PyMOL product is made available
+under the following open-source license terms:
 
 ----------------------------------------------------------------------
 Open-Source PyMOL is Copyright (C) 1998-2003 Warren L. DeLano and 
-Copyright (C) 2003-2005 DeLano Scientific LLC, San Carlos, CA, USA
-(www.delanoscientific.com).
+Copyright (C) 2003-2005 DeLano Scientific LLC, South San Francisco,
+California, U.S.A., (www.delanoscientific.com).
 
                         All Rights Reserved
 
-Permission to use, copy, modify, distribute, and distribute modified 
-versions of this software and its documentation for any purpose and 
-without fee is hereby granted, provided that the above copyright 
-notice appears in all copies and that both the copyright notice and 
-this permission notice appear in supporting documentation, and that 
-the names of Warren L. DeLano or DeLano Scientific LLC not be used in 
-advertising or publicity pertaining to distribution of the software 
-without specific, written prior permission.
+Permission to use, copy, modify, distribute, and distribute modified
+versions of this software and its built-in documentation for any
+purpose and without fee is hereby granted, provided that the above
+copyright notice appears in all copies and that both the copyright
+notice and this permission notice appear in supporting documentation,
+and that the names of Warren L. DeLano or DeLano Scientific LLC not be
+used in advertising or publicity pertaining to distribution of the
+software without specific, written prior permission.
 
 WARREN LYFORD DELANO AND DELANO SCIENTIFIC LLC DISCLAIM ALL WARRANTIES 
 WITH REGARD TO THIS SOFTWARE, INCLUDING ALL IMPLIED WARRANTIES OF
