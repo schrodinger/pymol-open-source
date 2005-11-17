@@ -603,6 +603,10 @@ CSetting *SettingNewFromPyList(PyMOLGlobals *G,PyObject *list);
 #define cSetting_cartoon_nucleic_acid_color 451
 #define cSetting_cartoon_ring_transparency  452
 #define cSetting_label_size                 453
+#define cSetting_spec_direct                454
+#define cSetting_light_count                455
+#define cSetting_light2                     456
+#define cSetting_light3                     457
 
 /* when you add a new settingg also remember:
    layer1/Setting.c
@@ -612,7 +616,7 @@ CSetting *SettingNewFromPyList(PyMOLGlobals *G,PyObject *list);
 
 /* cSetting_ss_INIT must always be last setting_index +1 */
 
-#define cSetting_INIT                       454
+#define cSetting_INIT                       458
 
 #endif
 

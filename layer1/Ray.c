@@ -63,6 +63,7 @@ struct _CRayThreadInfo {
   float front,back;
   unsigned int fore_mask;
   float *bkrd;
+  float ambient;
   unsigned int background;
   int border;
   int phase, n_thread;
@@ -862,7 +863,11 @@ void RayRenderPOV(CRay *I,int width,int height,char **headerVLA_ptr,
   char *charVLA,*headerVLA;
   char transmit[64];
   float light[3],*lightv;
-
+  float spec_power = SettingGet(I->G,cSetting_spec_power);
+  if(spec_power<0.0F) {
+    spec_power = SettingGet(I->G,cSetting_shininess);
+  }
+  spec_power/=4.0F;
 
   charVLA=*charVLA_ptr;
   headerVLA=*headerVLA_ptr;
@@ -940,7 +945,7 @@ void RayRenderPOV(CRay *I,int width,int height,char **headerVLA_ptr,
             SettingGet(I->G,cSetting_spec_reflect),
             ambient,
             reflect,
-            SettingGet(I->G,cSetting_spec_power)/4.0F);
+            spec_power);
     UtilConcatVLA(&headerVLA,&hc,buffer);
   }
   if(angle) {
@@ -1314,7 +1319,7 @@ static int find_edge(unsigned int *ptr,unsigned int width,int threshold,int back
 
 int RayTraceThread(CRayThreadInfo *T)
 {
-	CRay *I=NULL;
+	CRay *I=T->ray;
 	int x,y,yy;
 	float excess=0.0F;
 	float dotgle;
@@ -1354,14 +1359,14 @@ int RayTraceThread(CRayThreadInfo *T)
 	int interior_wobble;
    float interior_reflect;
 	int wobble_save;
-	float		settingPower, settingReflectPower,settingSpecPower,settingSpecReflect;
+	float		settingPower, settingReflectPower,settingSpecPower,settingSpecReflect,settingSpecDirect;
 	float		invHgt, invFrontMinusBack, inv1minusFogStart,invWdth,invHgtRange;
 	register float       invWdthRange,vol0;
 	float       vol2;
 	CBasis      *bp1,*bp2;
 	int render_height;
 	int offset=0;
-   BasisCallRec BasisCall[4];
+   BasisCallRec BasisCall[5];
    float border_offset;
    int edge_sampling = false;
    unsigned int edge_avg[4],edge_alpha_avg[4];
@@ -1378,7 +1383,6 @@ int RayTraceThread(CRayThreadInfo *T)
    float trans_cont;
    float pixel_base[3];
    float inv_trans_cont = 1.0F;
-
    int trans_cont_flag = false;
    int blend_colors;
    int max_pass;
@@ -1393,8 +1397,7 @@ int RayTraceThread(CRayThreadInfo *T)
 	const float _255	= 255.0F;
    const float _p499 = 0.499F;
 	const float _persistLimit	= 0.0001F;
-   
-	I = T->ray;
+    int n_basis = I->NBasis;
 
    {
      float fudge = SettingGet(I->G,cSetting_ray_triangle_fudge);
@@ -1430,7 +1433,8 @@ int RayTraceThread(CRayThreadInfo *T)
      trans_cont_flag = true;
      inv_trans_cont = 1.0F/trans_cont;
    }
-	ambient				= SettingGet(I->G,cSetting_ambient);
+	ambient				= T->ambient;
+    /* divide up the reflected light component over all lights */
 	lreflect			= SettingGet(I->G,cSetting_reflect);
 	direct				= SettingGet(I->G,cSetting_direct);
 	direct_shade	= SettingGet(I->G,cSetting_ray_direct_shade);
@@ -1443,6 +1447,8 @@ int RayTraceThread(CRayThreadInfo *T)
      blue_blend = SettingGet(I->G,cSetting_ray_blend_blue);
    }
 
+   if(n_basis>2)
+     lreflect /= (n_basis-2);
    if(trans_spec_cut<_1)
      trans_spec_scale = _1/(_1-trans_spec_cut);
    else
@@ -1452,12 +1458,26 @@ int RayTraceThread(CRayThreadInfo *T)
 	settingPower		= SettingGet(I->G,cSetting_power);
 	settingReflectPower	= SettingGet(I->G,cSetting_reflect_power);
 	settingSpecPower	= SettingGet(I->G,cSetting_spec_power);
+    if(settingSpecPower<0.0F) {
+      settingSpecPower = SettingGet(I->G,cSetting_shininess);
+    }
 
-	settingSpecReflect	= SettingGet(I->G,cSetting_spec_reflect);
-   if(settingSpecReflect>1.0F) settingSpecReflect = 1.0F;
+    {
+      float spec_value = SettingGet(I->G,cSetting_specular);
+      if(spec_value==1.0F) 
+        spec_value = SettingGet(I->G,cSetting_specular_intensity);
+      settingSpecReflect = SettingGet(I->G,cSetting_spec_reflect);
+      if(settingSpecReflect<0.0F)
+        settingSpecReflect = spec_value;
+      settingSpecDirect	= SettingGet(I->G,cSetting_spec_direct);
+      if(settingSpecDirect<0.0F)
+        settingSpecDirect = spec_value;
+    }
+    if(settingSpecReflect>1.0F) settingSpecReflect = 1.0F;
 	if(SettingGet(I->G,cSetting_specular)<R_SMALL4) {
-     settingSpecReflect = 0.0F;
-   }
+      settingSpecReflect = 0.0F;
+      settingSpecDirect = 0.0F;
+    }
     
 	if((interior_color>=0)||(two_sided_lighting)||(trans_mode==1))
 		backface_cull	= 0;
@@ -1542,7 +1562,10 @@ int RayTraceThread(CRayThreadInfo *T)
    edge_height *= invHgtRange;
 
 	bp1 = I->Basis + 1;
-	bp2 = I->Basis + 2;
+    if(I->NBasis>2) 
+      bp2 = I->Basis + 2;
+    else
+      bp2 = NULL;
 
    render_height = T->y_stop - T->y_start;
 
@@ -1553,9 +1576,15 @@ int RayTraceThread(CRayThreadInfo *T)
    
    if(interior_color>=0) {
      inter = ColorGet(I->G,interior_color);
-     interior_normal[0] = interior_reflect*bp2->LightNormal[0];
-     interior_normal[1] = interior_reflect*bp2->LightNormal[1];
-     interior_normal[2] = 1.0F+interior_reflect*bp2->LightNormal[2];
+     if(bp2) {
+       interior_normal[0] = interior_reflect*bp2->LightNormal[0];
+       interior_normal[1] = interior_reflect*bp2->LightNormal[1];
+       interior_normal[2] = 1.0F+interior_reflect*bp2->LightNormal[2];
+     } else {
+       interior_normal[0] = 0.0;
+       interior_normal[1] = 0.0;
+       interior_normal[2] = 1.0F;
+     }
      normalize3f(interior_normal);
    }
    
@@ -1573,10 +1602,10 @@ int RayTraceThread(CRayThreadInfo *T)
    BasisCall[0].fudge1 = BasisFudge1;
    
    MapCacheInit(&BasisCall[0].cache,I->Basis[1].Map,T->phase,cCache_map_scene_cache);
-
-   if(shadows&&(I->NBasis>1)) {
+   
+   if(shadows&&(n_basis>2)) {
      int bc;
-     for(bc=2;bc<I->NBasis;bc++) {
+     for(bc=2;bc<n_basis;bc++) {
        BasisCall[bc].Basis = I->Basis + bc;
        BasisCall[bc].rr = &r2;
        BasisCall[bc].vert2prim = I->Vert2Prim;
@@ -1809,10 +1838,12 @@ int RayTraceThread(CRayThreadInfo *T)
                             {
                               BasisGetTriangleNormal(bp1,&r1,i,fc,perspective);
                               
-                              RayProjectTriangle(I, &r1, bp2->LightNormal,
-                                                 bp1->Vertex+i*3,
-                                                 bp1->Normal+bp1->Vert2Normal[i]*3+3,
-                                                 project_triangle);
+                              if(bp2) {
+                                RayProjectTriangle(I, &r1, bp2->LightNormal,
+                                                   bp1->Vertex+i*3,
+                                                   bp1->Normal+bp1->Vert2Normal[i]*3+3,
+                                                   project_triangle);
+                              }
                               
                               RayReflectAndTexture(I,&r1,perspective);
                               if(perspective) {
@@ -1900,22 +1931,30 @@ int RayTraceThread(CRayThreadInfo *T)
                       direct_cmp = (float) ( (dotgle + (pow(dotgle, settingPower))) * _p5 );
                       
                       reflect_cmp = _0;
-                      excess = _0;
-                      
-                      lit = _1;
+                      if(settingSpecDirect!=_0) {
+                        excess	= (float)( pow(r1.surfnormal[2], settingSpecPower) * settingSpecDirect);
+                      } else {
+                        excess = _0;
+                      }
 
-                      if(shadows && ((!interior_flag)||(interior_shadows))) {
+                      if(n_basis<3) {
+                        lit = _1;
+                        reflect_cmp = direct_cmp;
+                      } else {
                         int bc;
                         CBasis *bp;
-                        for(bc=2;bc<I->NBasis;bc++) {
+                        for(bc=2;bc<n_basis;bc++) {
                           lit = _1;
                           bp = I->Basis + bc;
                           
-                          matrix_transform33f3f(bp->Matrix,r1.impact,r2.base);
-                          r2.base[2]-=shadow_fudge;
-                          BasisCall[bc].except = i;
-                          if(BasisHitShadow(&BasisCall[bc]) > -1)
-                            lit	= (float) pow(r2.trans, _p5);
+                          if(shadows && ((!interior_flag)||(interior_shadows))) {
+                            
+                            matrix_transform33f3f(bp->Matrix,r1.impact,r2.base);
+                            r2.base[2]-=shadow_fudge;
+                            BasisCall[bc].except = i;
+                            if(BasisHitShadow(&BasisCall[bc]) > -1)
+                              lit	= (float) pow(r2.trans, _p5);
+                          }
                           
                           if(lit>_0) {
                             dotgle	= -dot_product3f(r1.surfnormal,bp->LightNormal);
@@ -1928,10 +1967,11 @@ int RayTraceThread(CRayThreadInfo *T)
                           }
                         }
                       }
-                        
+                      
                       bright = ambient + (_1-ambient) * 
                         (((_1-direct_shade)+direct_shade*lit) * direct*direct_cmp +
                          (_1-direct)*direct_cmp*lreflect*reflect_cmp);
+
 
                       if(bright > _1) bright = _1;
                       else if(bright < _0) bright = _0;
@@ -2277,7 +2317,7 @@ int RayTraceThread(CRayThreadInfo *T)
 	  printf(" Ray: Thread %d: Complete.\n",T->phase+1);*/
 	MapCacheFree(&BasisCall[0].cache,T->phase,cCache_map_scene_cache);
 	
-	if(shadows&&(I->NBasis>1)) {
+	if(shadows&&(I->NBasis>2)) {
       int bc;
       for(bc=2;bc<I->NBasis;bc++) {
         MapCacheFree(&BasisCall[bc].cache,T->phase,cCache_map_shadow_cache);
@@ -2778,6 +2818,8 @@ int opaque_back=0;
   int mag=1;
   int oversample_cutoff;
   int perspective = SettingGetGlobal_i(I->G,cSetting_ray_orthoscopic);
+  int n_light = SettingGetGlobal_i(I->G,cSetting_light_count);
+  float ambient;
   const float _0 = 0.0F, _p499 = 0.499F;
   if(perspective<0)
     perspective = SettingGetGlobal_b(I->G,cSetting_ortho);
@@ -2819,6 +2861,8 @@ int opaque_back=0;
   } else {
     buffer_size = width*height;
   }
+  ambient				= SettingGet(I->G,cSetting_ambient);
+
   bkrd_ptr=SettingGetfv(I->G,cSetting_bg_rgb);
   copy3f(bkrd_ptr,bkrd);
   { /* adjust bkrd to offset the effect of gamma correction */
@@ -2837,6 +2881,16 @@ int opaque_back=0;
     if(bkrd[0]>1.0F) bkrd[0] = 1.0F;
     if(bkrd[1]>1.0F) bkrd[1] = 1.0F;
     if(bkrd[2]>1.0F) bkrd[2] = 1.0F;
+  
+    /* and same for ambient coloring */
+
+    inp = ambient;
+    if(inp < R_SMALL4) 
+      sig = 1.0F;
+    else
+      sig = (float)(pow(inp,gamma))/inp;
+    ambient *= sig;
+    if(ambient>1.0f) ambient = 1.0F;
   }
 
   if(opaque_back) {
@@ -2886,7 +2940,11 @@ int opaque_back=0;
       " Ray: processed %i graphics primitives in %4.2f sec.\n",I->NPrimitive,now
       ENDFB(I->G);
 
-    I->NBasis=3; 
+    I->NBasis = n_light + 1; 
+    if(I->NBasis>5)
+      I->NBasis = 5;
+    if(I->NBasis<2) 
+      I->NBasis = 2;
     { /* light sources */
       int bc;
       for(bc=2;bc<I->NBasis;bc++) {
@@ -2894,15 +2952,19 @@ int opaque_back=0;
         
         { /* setup light & rotate if necessary  */
           float light[3],*lightv;
-          if(bc==2) {
+          switch(bc) {
+          case 2:
             lightv=SettingGetfv(I->G,cSetting_light);
-            copy3f(lightv,light);
-          } else {
-            light[0]=0.0F;
-            light[1]=-1.0F;
-            light[2]=-0.5F;
-            normalize3f(light);
+            break;
+          case 3:
+            lightv=SettingGetfv(I->G,cSetting_light2);
+            break;
+          case 4:
+            lightv=SettingGetfv(I->G,cSetting_light3);
+            break;
           }
+          copy3f(lightv,light);
+          normalize3f(light);
           
           if(angle) {
             float temp[16];
@@ -2919,7 +2981,7 @@ int opaque_back=0;
           {
             float spec_vector[3];
             copy3f(I->Basis[bc].LightNormal,spec_vector);
-            spec_vector[bc]--; 
+            spec_vector[2]--; 
             normalize3f(spec_vector);
             copy3f(spec_vector, I->Basis[bc].SpecNormal);
           }
@@ -2976,7 +3038,7 @@ int opaque_back=0;
           int bc;
           for(bc=2;bc<I->NBasis;bc++) {
             BasisMakeMap(I->Basis+bc,I->Vert2Prim,I->Primitive,
-                         NULL,bc,cCache_ray_map,false,_0);
+                         NULL,bc-1,cCache_ray_map,false,_0);
           }
         }
 
@@ -3132,6 +3194,7 @@ int opaque_back=0;
 			rt[a].back = back;
 			rt[a].fore_mask = fore_mask;
 			rt[a].bkrd = bkrd;
+            rt[a].ambient = ambient;
 			rt[a].background = background;
 			rt[a].phase = a;
 			rt[a].n_thread = n_thread;
@@ -3728,7 +3791,7 @@ CRay *RayNew(PyMOLGlobals *G)
     " RayNew: BigEndian = %d\n",I->BigEndian
     ENDFB(I->G);
 
-  I->Basis=CacheAlloc(I->G,CBasis,4,0,cCache_ray_basis);
+  I->Basis=CacheAlloc(I->G,CBasis,5,0,cCache_ray_basis);
   BasisInit(I->G,I->Basis,0);
   BasisInit(I->G,I->Basis+1,1);
   I->Vert2Prim=VLACacheAlloc(I->G,int,1,0,cCache_ray_vert2prim);

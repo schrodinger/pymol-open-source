@@ -5069,60 +5069,88 @@ static void SceneProgramLighting(PyMOLGlobals *G)
 
    /* load up the light positions relative to the camera while 
      MODELVIEW still has the identity */
-
+  int n_light = SettingGetGlobal_i(G,cSetting_light_count);
   float direct = SettingGetGlobal_f(G,cSetting_direct);
-  float reflect = SettingGetGlobal_f(G,cSetting_reflect) * (1.0F - direct);
+  float reflect = (SettingGetGlobal_f(G,cSetting_reflect) * (1.0F - direct));
   float f;
   float vv[4];
-  
+  float spec_value = SettingGet(G,cSetting_specular);
+  if(spec_value == 1.0F) {
+    spec_value=SettingGet(G,cSetting_specular_intensity);
+  }
+  if(spec_value<R_SMALL4) spec_value = 0.0F;
+  if(n_light>1) 
+    reflect/=(n_light-1);
   if(reflect>1.0F) reflect=1.0F;
   
   /* lighting */
   
   glEnable(GL_LIGHTING);
- 
-    vv[0] = 0.0F;
-    vv[1] = 0.0F;
-    vv[2] = 1.0F;
+  
+  vv[0] = 0.0F;
+  vv[1] = 0.0F;
+  vv[2] = 1.0F;
+  /* workaround for flickering of specular reflections on Mac OSX 10.3.8 with nVidia hardware */
+  vv[3] = 0.0F;
+#ifndef _MACPYMOL_XCODE
+#ifdef _PYMOL_OSX
+  vv[3] = 0.000001F;
+#endif
+#endif
+  glLightfv(GL_LIGHT0,GL_POSITION,vv);
+
+
+  if(n_light>1) {
+
     /* workaround for flickering of specular reflections on Mac OSX 10.3.8 with nVidia hardware */
     vv[3] = 0.0F;
-    #ifndef _MACPYMOL_XCODE
-	#ifdef _PYMOL_OSX
+#ifndef _MACPYMOL_XCODE
+#ifdef _PYMOL_OSX
     vv[3] = 0.000001F;
-    #endif
-    #endif
-	glLightfv(GL_LIGHT0,GL_POSITION,vv);
+#endif
+#endif
 
     copy3f(SettingGetGlobal_3fv(G,cSetting_light),vv);
     normalize3f(vv);
     invert3f(vv);
-
-    /* workaround for flickering of specular reflections on Mac OSX 10.3.8 with nVidia hardware */
-    vv[3] = 0.0F;
-    #ifndef _MACPYMOL_XCODE
-    #ifdef _PYMOL_OSX
-    vv[3] = 0.000001F;
-	#endif
-	#endif
+    
     glLightfv(GL_LIGHT1,GL_POSITION,vv);
- 
+    
+    if(n_light>2) {
+      copy3f(SettingGetGlobal_3fv(G,cSetting_light2),vv);
+      normalize3f(vv);
+      invert3f(vv);
+      glLightfv(GL_LIGHT2,GL_POSITION,vv);
+      
+      if(n_light>3) {
+        copy3f(SettingGetGlobal_3fv(G,cSetting_light3),vv);
+        normalize3f(vv);
+        invert3f(vv);
+        glLightfv(GL_LIGHT3,GL_POSITION,vv);
+      }
+    }
+  }  else {
+    direct += reflect;
+    if(direct>1.0F)
+      direct = 1.0F;
+  }
+
   if(SettingGet(G,cSetting_two_sided_lighting)||
      (SettingGetGlobal_i(G,cSetting_transparency_mode)==1)) {
     glLightModeli(GL_LIGHT_MODEL_TWO_SIDE,GL_TRUE);
   } else {
     glLightModeli(GL_LIGHT_MODEL_TWO_SIDE,GL_FALSE);
-  }     
+  }
   
   /* add half of the ambient component (perceptive kludge) */
   
-  f=SettingGet(G,cSetting_ambient) * 0.5F;
-
+  f=SettingGet(G,cSetting_ambient);
+  
   vv[0] = f;
   vv[1] = f;
   vv[2] = f;
-  vv[3] = 1.0;
+  vv[3] = 1.0F;
   glLightModelfv(GL_LIGHT_MODEL_AMBIENT,vv);
-  
   
   /* LIGHT0 is our direct light (eminating from the camera -- minus Z) */
   
@@ -5142,49 +5170,67 @@ static void SceneProgramLighting(PyMOLGlobals *G)
     vv[3] = 1.0F;
     glLightfv(GL_LIGHT0,GL_DIFFUSE,vv);
     
-    /* no specular component from this light */
-    
     {
-      float specular[4] = { 0.0F, 0.0F, 0.0F, 1.0F };
-      glLightfv(GL_LIGHT0,GL_SPECULAR,specular);
+      float spec_direct = SettingGet(G,cSetting_spec_direct);
+      float spec[4] = {0.0F,0.0F,0.0F,1.0F};
+      if(spec_direct<0.0F) {
+        spec[0] = spec[1] = spec[2] = spec_value;
+        spec[3] = 1.0F;
+      } else if(spec_direct>0.0F){
+        spec[0] = spec[1] = spec[2] = spec_direct;
+        spec[3] = 1.0F;
+      }
+      glLightfv(GL_LIGHT0,GL_SPECULAR,spec);
     }
     
   } else {
     glDisable(GL_LIGHT0);
   }
   
-  /* LIGHT1 is our reflected light (specular and diffuse
-     reflection from a movable directional light) */
+  /* LIGHTS1-3 are our reflected light (specular and diffuse
+     reflections from a movable directional lights) */
   
-  glEnable(GL_LIGHT1);
-  
-  /* load up the default ambient and diffuse lighting values */
-  
-  /* no ambient */
-  { 
-    float ambient[4] = { 0.0F, 0.0F, 0.0F, 1.0F };
-    glLightfv(GL_LIGHT1,GL_AMBIENT,ambient);
+  {
+    float spec[4];
+    if(n_light>1) { 
+      float diff[4];
+      float ambient[4] = { 0.0F, 0.0F, 0.0F, 1.0F }; /* no ambient */
+      
+      spec[0] = spec[1] = spec[2] = spec_value;
+      spec[3] = 1.0F;
+      diff[0] = diff[1] = diff[2] = reflect;
+      diff[3] = 1.0F;
+      glEnable(GL_LIGHT1);
+      glLightfv(GL_LIGHT1,GL_SPECULAR,spec);
+      glLightfv(GL_LIGHT1,GL_AMBIENT,ambient);
+      glLightfv(GL_LIGHT1,GL_DIFFUSE,diff);
+      if(n_light>2) {
+        glEnable(GL_LIGHT2);
+        glLightfv(GL_LIGHT2,GL_SPECULAR,spec);
+        glLightfv(GL_LIGHT2,GL_AMBIENT,ambient);
+        glLightfv(GL_LIGHT2,GL_DIFFUSE,diff);
+        if(n_light>3) {
+          glEnable(GL_LIGHT3);
+          glLightfv(GL_LIGHT3,GL_SPECULAR,spec);
+          glLightfv(GL_LIGHT3,GL_AMBIENT,ambient);
+          glLightfv(GL_LIGHT3,GL_DIFFUSE,diff);
+        } else
+          glDisable(GL_LIGHT3);
+      } else {
+        glDisable(GL_LIGHT2);
+        glDisable(GL_LIGHT3);
+      }
+    } else {
+      glDisable(GL_LIGHT1);
+      glDisable(GL_LIGHT2);
+      glDisable(GL_LIGHT3);
+    }
   }
-  
-  vv[0] = reflect;
-  vv[1] = reflect;
-  vv[2] = reflect;
-  vv[3] = 1.0F;
-  glLightfv(GL_LIGHT1,GL_DIFFUSE,vv);
-  
-  f = SettingGet(G,cSetting_specular);
-  if(f == 1.0F) {
-    f=SettingGet(G,cSetting_specular_intensity);
-  } 
-  if(f<R_SMALL4) f = 0;
-  
-  vv[0] = f;
-  vv[1] = f;
-  vv[2] = f;
-  vv[3] = 1.0F;
-  glLightfv(GL_LIGHT0,GL_SPECULAR,vv);
-  
-  glMaterialfv(GL_FRONT,GL_SPECULAR,vv);
+
+  {
+    float ones[4] = {1.0F,1.0F,1.0F,1.0F};
+    glMaterialfv(GL_FRONT,GL_SPECULAR,ones);
+  }
 
   glMaterialf(GL_FRONT,GL_SHININESS,SettingGet(G,cSetting_shininess));
 

@@ -6,8 +6,10 @@ Changes up to 0.99
 
     beta30
 
-    * FreeType2 integration -- scalable fonts
+    * support for multiple lights, and increased rationalization of 
+     OpenGL and renderer lighting models
 
+    * FreeType2 integration -- scalable fonts
 
     beta28
 
