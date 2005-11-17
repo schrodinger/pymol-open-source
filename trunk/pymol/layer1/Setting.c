@@ -1856,7 +1856,7 @@ void SettingInitGlobal(PyMOLGlobals *G,int alloc,int reset_gui)
 
   SettingSet_3f(I,cSetting_bg_rgb, 0.0F, 0.0F, 0.0F);
 
-  SettingSet_f(I,cSetting_ambient, 0.12F);
+  SettingSet_f(I,cSetting_ambient, 0.14F);
 
   SettingSet_f(I,cSetting_direct, 0.25F);
 
