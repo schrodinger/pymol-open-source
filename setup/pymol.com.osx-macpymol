@@ -1,3 +1,0 @@
-#!/bin/sh
-/Users/delwarl/pymol/products/MacPyMOL.app/Contents/MacOS/PyMOL $*
-
