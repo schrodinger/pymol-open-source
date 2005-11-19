@@ -1285,6 +1285,9 @@ void SettingGenerateSideEffects(PyMOLGlobals *G,int index,char *sele,int state)
     WizardRefresh(G);
     OrthoDirty(G);
     break;
+  case cSetting_hide_underscore_names:
+    OrthoDirty(G);
+    break;
   case cSetting_min_mesh_spacing:
   case cSetting_mesh_mode:
   case cSetting_mesh_type:
@@ -2657,6 +2660,7 @@ void SettingInitGlobal(PyMOLGlobals *G,int alloc,int reset_gui)
   SettingSet_i(I,cSetting_light_count, 2);
   SettingSet_3f(I,cSetting_light2, -0.55F, -0.7F, 0.15F);
   SettingSet_3f(I,cSetting_light3, 0.3F, -0.6F, -0.2F);
+  SettingSet_b(I,cSetting_hide_underscore_names, 1);
 }
 
 

@@ -491,6 +491,7 @@ if __name__=='pymol.setting':
         light_count               = (455, '')
         light2                    = (456, '')
         light3                    = (457, '')
+        hide_underscore_names     = (458, '')
         
     setting_sc = Shortcut(SettingIndex.__dict__.keys())
 
