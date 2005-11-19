@@ -4,7 +4,10 @@ CHANGE LOG
 
 Changes up to 0.99
 
+    
     beta30
+
+    * fixed session-reading bug from old (0.96) sessions
 
     * support for multiple lights, and increased rationalization of 
      OpenGL and renderer lighting models

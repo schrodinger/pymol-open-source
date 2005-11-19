@@ -592,6 +592,7 @@ typedef struct _CPyMOL {
   ov_word lex_light_count;
   ov_word lex_light2;
   ov_word lex_light3;
+  ov_word lex_hide_underscore_names;
 } _CPyMOL;
 
 /* convenience functions -- inline */
@@ -1192,6 +1193,7 @@ static OVstatus PyMOL_InitAPI(CPyMOL *I)
   LEX_SETTING(light_count, 455);
   LEX_SETTING(light2, 456);
   LEX_SETTING(light3, 457);
+  LEX_SETTING(hide_underscore_names, 458);
   
   return_OVstatus_SUCCESS;
 }

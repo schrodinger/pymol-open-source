@@ -1161,10 +1161,12 @@ DEVELOPMENT TO DO
                         scene_order=new_scene_order
                         scene_dict[new_key] = scene_dict[key]
                         del scene_dict[key]
+                        valid_names = cmd.get_names("all")
                         for rep_name in rep_list:
                             name = "_scene_"+key+"_"+rep_name
-                            new_name = "_scene_"+new_key+"_"+rep_name
-                            cmd.set_name(name,new_name)
+                            if name in valid_names:
+                                new_name = "_scene_"+new_key+"_"+rep_name
+                                cmd.set_name(name,new_name)
                         list = scene_dict[new_key]
                         if len(list)>3:
                             cmd.set_colorection_name(list[3],key,new_key)
@@ -1207,9 +1209,11 @@ DEVELOPMENT TO DO
                             message=list[5]
                     if rep!=0:
                         cmd.hide("(all)")
+                        valid_names = cmd.get_names("all")
                         for rep_name in rep_list:
                             name = "_scene_"+key+"_"+rep_name
-                            cmd.show(rep_name,name)
+                            if name in valid_names:
+                                cmd.show(rep_name,name)
                     replace_flag = 0
                     wiz = cmd.get_wizard()
                     if wiz!=None:

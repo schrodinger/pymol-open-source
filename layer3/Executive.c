@@ -9871,6 +9871,7 @@ static int ExecutiveClick(Block *block,int button,int x,int y,int mod)
   int pass = false;
   int skip;
   int ExecLineHeight = SettingGetGlobal_i(G,cSetting_internal_gui_control_size);
+  int hide_underscore = SettingGetGlobal_b(G,cSetting_hide_underscore_names);
 
   if(y<I->HowFarDown) {
     if(SettingGetGlobal_b(G,cSetting_internal_gui_mode)==1) 
@@ -9887,7 +9888,7 @@ static int ExecutiveClick(Block *block,int button,int x,int y,int mod)
   skip = I->NSkip;
   if(!pass)   
     while(ListIterate(I->Spec,rec,next))
-      if(rec->name[0]!='_')
+      if((rec->name[0]!='_')||(!hide_underscore))
         {
           if(skip) {
             skip--;
@@ -10217,7 +10218,7 @@ static int ExecutiveRelease(Block *block,int button,int x,int y,int mod)
   int skip;
 
   int ExecLineHeight = SettingGetGlobal_i(G,cSetting_internal_gui_control_size);
-
+  int hide_underscore = SettingGetGlobal_b(G,cSetting_hide_underscore_names);
   if(y<I->HowFarDown) {
     if(SettingGetGlobal_b(G,cSetting_internal_gui_mode)==1) 
       return SceneDeferRelease(SceneGetBlock(G),button,x,y,mod);
@@ -10242,7 +10243,7 @@ static int ExecutiveRelease(Block *block,int button,int x,int y,int mod)
       case 1:
         
         while(ListIterate(I->Spec,rec,next)) {
-          if(rec->name[0]!='_')
+          if((rec->name[0]!='_')||(!hide_underscore))
             {
               if(skip) {
                 skip--;
@@ -10286,7 +10287,7 @@ static int ExecutiveDrag(Block *block,int x,int y,int mod)
   register CExecutive *I = G->Executive;
   int xx,t;
   int ExecLineHeight = SettingGetGlobal_i(G,cSetting_internal_gui_control_size);
-
+  int hide_underscore = SettingGetGlobal_b(G,cSetting_hide_underscore_names);
   if(y<I->HowFarDown) {
     if(SettingGetGlobal_b(G,cSetting_internal_gui_mode)==1) 
       return SceneDeferDrag(SceneGetBlock(G),x,y,mod);
@@ -10323,7 +10324,7 @@ static int ExecutiveDrag(Block *block,int x,int y,int mod)
         case 1:
         
           while(ListIterate(I->Spec,rec,next)) {
-            if(rec->name[0]!='_')
+            if((rec->name[0]!='_')||(!hide_underscore))
               {
                 if(skip) {
                   skip--;
@@ -10376,7 +10377,7 @@ static int ExecutiveDrag(Block *block,int x,int y,int mod)
                 SpecRec *last=NULL,*new_parent=NULL,*old_parent=NULL;
               
                 while(ListIterate(I->Spec,rec,next)) {
-                  if(rec->name[0]!='_')
+                  if((rec->name[0]!='_')||(!hide_underscore))
                     {
                       if(skip) {
                         skip--;
@@ -10425,7 +10426,7 @@ static int ExecutiveDrag(Block *block,int x,int y,int mod)
           break;
         case 3: /* middle button */
           while(ListIterate(I->Spec,rec,next)) {
-            if(rec->name[0]!='_')
+            if((rec->name[0]!='_')||(!hide_underscore))
               {
                 if(skip) {
                   skip--;
@@ -10555,6 +10556,7 @@ static void ExecutiveDraw(Block *block)
   int row = -1;
   int ExecLineHeight = SettingGetGlobal_i(G,cSetting_internal_gui_control_size);
   int text_lift = (ExecLineHeight/2)-5;
+  int hide_underscore = SettingGetGlobal_b(G,cSetting_hide_underscore_names);
 
   if(G->HaveGUI && G->ValidContext && ((block->rect.right-block->rect.left)>6)) {
     int max_char;
@@ -10562,7 +10564,7 @@ static void ExecutiveDraw(Block *block)
     /* do we have enough structures to warrant a scroll bar? */
     n_ent = 0;
     while(ListIterate(I->Spec,rec,next)) {
-      if(rec->name[0]!='_') 
+      if((rec->name[0]!='_')||(!hide_underscore))
         n_ent++;
     }
 
@@ -10627,7 +10629,7 @@ static void ExecutiveDraw(Block *block)
     }
     skip=I->NSkip;
     while(ListIterate(I->Spec,rec,next))
-      if(rec->name[0]!='_')
+      if((rec->name[0]!='_')||(!hide_underscore))
         {
           if(skip) {
             skip--;
