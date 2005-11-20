@@ -89,6 +89,7 @@ int SelectorGetPairIndices(PyMOLGlobals *G,int sele1,int state1,int sele2,int st
                            int **indexVLA, ObjectMolecule ***objVLA);
 
 int SelectorCountAtoms(PyMOLGlobals *G,int sele);
+int SelectorCheckIntersection(PyMOLGlobals *G,int sele1,int sele2);
 int SelectorCountStates(PyMOLGlobals *G,int sele);
 int SelectorClassifyAtoms(PyMOLGlobals *G,int sele, int preserve,ObjectMolecule *only_object);
 

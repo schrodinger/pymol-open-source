@@ -405,7 +405,11 @@ def color_auto(s):
         [ 1, 'elem c', 'cmd.color("auto","('+s+') and elem c")' ],
         [ 0, ''                                , ''                 ],
         [ 1, 'all','cmd.color("auto","'+s+'")' ],                  
-
+        [ 0, ''                                , ''                 ],
+        [ 1, '\\900b\\950y \\090o\\099b\\059j\\999(e. c)',
+          'util.color_objs("('+s+' and elem c)")'],
+        [ 1, '\\900b\\950y \\090o\\099b\\059j',
+          'util.color_objs("('+s+' and elem c)")'],
         ]
    
 def mol_color(s):
@@ -510,16 +514,16 @@ def vacuum(s):
 def symmetry(s):
     return [[ 2, 'Symmetry Mates:'       ,''                        ],
               [ 2, '\\955 +/- one unit cell and...', '' ],
-              [ 1, 'within 4 A', 'cmd.symexp("'+s+'_","'+s+'","'+s+'",cutoff=4)'          ],
-              [ 1, 'within 5 A', 'cmd.symexp("'+s+'_","'+s+'","'+s+'",cutoff=5)'          ],
-              [ 1, 'within 6 A', 'cmd.symexp("'+s+'_","'+s+'","'+s+'",cutoff=6)'          ],
-              [ 1, 'within 8 A', 'cmd.symexp("'+s+'_","'+s+'","'+s+'",cutoff=8)'          ],
-              [ 1, 'within 12 A', 'cmd.symexp("'+s+'_","'+s+'","'+s+'",cutoff=12)'          ],
-              [ 1, 'within 20 A', 'cmd.symexp("'+s+'_","'+s+'","'+s+'",cutoff=20)'          ],
-              [ 1, 'within 50 A', 'cmd.symexp("'+s+'_","'+s+'","'+s+'",cutoff=50)'          ],
-              [ 1, 'within 100 A', 'cmd.symexp("'+s+'_","'+s+'","'+s+'",cutoff=100)'          ],
-              [ 1, 'within 250 A', 'cmd.symexp("'+s+'_","'+s+'","'+s+'",cutoff=250)'          ],
-              [ 1, 'within 1000 A', 'cmd.symexp("'+s+'_","'+s+'","'+s+'",cutoff=1000)'          ]]                      
+              [ 1, 'within 4 A', 'cmd.symexp("'+s+'_","'+s+'","'+s+'",cutoff=4,segi=1)'          ],
+              [ 1, 'within 5 A', 'cmd.symexp("'+s+'_","'+s+'","'+s+'",cutoff=5,segi=1)'          ],
+              [ 1, 'within 6 A', 'cmd.symexp("'+s+'_","'+s+'","'+s+'",cutoff=6,segi=1)'          ],
+              [ 1, 'within 8 A', 'cmd.symexp("'+s+'_","'+s+'","'+s+'",cutoff=8,segi=1)'          ],
+              [ 1, 'within 12 A', 'cmd.symexp("'+s+'_","'+s+'","'+s+'",cutoff=12,segi=1)'          ],
+              [ 1, 'within 20 A', 'cmd.symexp("'+s+'_","'+s+'","'+s+'",cutoff=20,segi=1)'          ],
+              [ 1, 'within 50 A', 'cmd.symexp("'+s+'_","'+s+'","'+s+'",cutoff=50,segi=1)'          ],
+              [ 1, 'within 100 A', 'cmd.symexp("'+s+'_","'+s+'","'+s+'",cutoff=100,segi=1)'          ],
+              [ 1, 'within 250 A', 'cmd.symexp("'+s+'_","'+s+'","'+s+'",cutoff=250,segi=1)'          ],
+              [ 1, 'within 1000 A', 'cmd.symexp("'+s+'_","'+s+'","'+s+'",cutoff=1000,segi=1)'          ]]
 
 def mol_assign(s):
     return [[ 2, 'Assign:'       ,''                        ],     

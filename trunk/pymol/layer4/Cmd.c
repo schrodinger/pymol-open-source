@@ -1530,12 +1530,16 @@ static PyObject *CmdGetNames(PyObject *self, 	PyObject *args)
 {
   int int1,int2;
   char *vla = NULL;
+  OrthoLineType s0="";
   PyObject *result = Py_None;
   int ok=false;
-  ok = PyArg_ParseTuple(args,"ii",&int1,&int2);
+  char *str0;
+  ok = PyArg_ParseTuple(args,"iis",&int1,&int2,&str0);
   if(ok) {
     APIEntry();
-    vla = ExecutiveGetNames(TempPyMOLGlobals,int1,int2);
+    if(str0[0]) ok = (SelectorGetTmp(TempPyMOLGlobals,str0,s0)>=0);
+    vla = ExecutiveGetNames(TempPyMOLGlobals,int1,int2,s0);
+    if(s0[0]) SelectorFreeTmp(TempPyMOLGlobals,s0);
     APIExit();
     result = PConvStringVLAToPyList(vla);
     VLAFreeP(vla);
@@ -2466,10 +2470,12 @@ static PyObject *CmdSymExp(PyObject *self, 	PyObject *args) {
   OrthoLineType s1;
   float cutoff;
   CObject *mObj;
+  int segi;
+  int quiet;
   /* oper 0 = all, 1 = sele + buffer, 2 = vector */
 
   int ok=false;
-  ok = PyArg_ParseTuple(args,"sssf",&str1,&str2,&str3,&cutoff);
+  ok = PyArg_ParseTuple(args,"sssfii",&str1,&str2,&str3,&cutoff,&segi,&quiet);
   if (ok) {
     APIEntry();
     mObj=ExecutiveFindObjectByName(TempPyMOLGlobals,str2);  
@@ -2482,7 +2488,7 @@ static PyObject *CmdSymExp(PyObject *self, 	PyObject *args) {
     if(mObj) {
       ok = (SelectorGetTmp(TempPyMOLGlobals,str3,s1)>=0);
       if(ok) 
-        ExecutiveSymExp(TempPyMOLGlobals,str1,str2,s1,cutoff); /* TODO STATUS */
+        ExecutiveSymExp(TempPyMOLGlobals,str1,str2,s1,cutoff,segi,quiet); /* TODO STATUS */
       SelectorFreeTmp(TempPyMOLGlobals,s1);
     }
     APIExit();
