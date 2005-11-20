@@ -194,7 +194,7 @@ int ExecutiveStereo(PyMOLGlobals *G,int flag);
 void ExecutiveCopy(PyMOLGlobals *G,char *src,char *dst,int zoom);
 float ExecutiveOverlap(PyMOLGlobals *G,char *s1,int state1,char *s2,int state2,float adjust);
 int ExecutiveCountStates(PyMOLGlobals *G,char *s1);
-void ExecutiveSymExp(PyMOLGlobals *G,char *name,char *obj,char *sele,float cutoff);
+void ExecutiveSymExp(PyMOLGlobals *G,char *name,char *obj,char *sele,float cutoff,int segi,int quiet);
 int ExecutiveGetExtent(PyMOLGlobals *G,char *name,float *mn,float *mx,int transformed,int state,int weighted);
 int ExecutiveGetCameraExtent(PyMOLGlobals *G,char *name,float *mn,float *mx,int transformed,int state);
 int ExecutiveSeleToObject(PyMOLGlobals *G,char *name,char *s1,
@@ -214,7 +214,7 @@ void ExecutiveFixHydrogens(PyMOLGlobals *G,char *s1,int quiet);
 void ExecutiveFuse(PyMOLGlobals *G,char *s0,char *s1,int mode,int recolor,int move_flag);
 void ExecutiveRenameObjectAtoms(PyMOLGlobals *G,char *name,int force);
 int ExecutiveInvert(PyMOLGlobals *G,int quiet);
-char *ExecutiveGetNames(PyMOLGlobals *G,int mode,int enabled_only);
+char *ExecutiveGetNames(PyMOLGlobals *G,int mode,int enabled_only,char *s1);
 int ExecutiveGetType(PyMOLGlobals *G,char *name,WordType type);
 float ExecutiveGetArea(PyMOLGlobals *G,char *s0,int sta0,int load_b);
 void ExecutiveRenderSelections(PyMOLGlobals *G,int curState);

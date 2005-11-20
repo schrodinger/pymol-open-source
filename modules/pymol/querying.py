@@ -838,7 +838,7 @@ PYMOL API
         return r
 
 
-    def get_names(type='public_objects',enabled_only=0):
+    def get_names(type='public_objects',enabled_only=0,selection=""):
         '''
 DESCRIPTION
 
@@ -856,6 +856,7 @@ SEE ALSO
 
     get_type, count_atoms, count_states
         '''
+        selection = selector.process(selection)
         r = DEFAULT_ERROR
         mode = 1
         if type=='objects':
@@ -872,7 +873,7 @@ SEE ALSO
             mode = 5
         try:
             lock()
-            r = _cmd.get_names(int(mode),int(enabled_only))
+            r = _cmd.get_names(int(mode),int(enabled_only),str(selection))
         finally:
             unlock(r)
         if _raising(r): raise pymol.CmdException

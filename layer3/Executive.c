@@ -4466,13 +4466,18 @@ float ExecutiveGetArea(PyMOLGlobals *G,char *s0,int sta0,int load_b)
 }
 
 /*========================================================================*/
-char *ExecutiveGetNames(PyMOLGlobals *G,int mode,int enabled_only)
+char *ExecutiveGetNames(PyMOLGlobals *G,int mode,int enabled_only,char *s0)
 {
   register CExecutive *I = G->Executive;
   SpecRec *rec = NULL;
   char *result;
   int size = 0;
   int stlen;
+  int sele0 = -1;
+  int incl_flag = 0;
+  if(s0[0]) {
+    sele0 = SelectorIndexByName(G,s0);    
+  }
   result=VLAlloc(char,1000);
 
   while(ListIterate(I->Spec,rec,next)) {
@@ -4483,12 +4488,40 @@ char *ExecutiveGetNames(PyMOLGlobals *G,int mode,int enabled_only)
         if((mode<3)||(rec->name[0]!='_')) {
           if((!enabled_only)||(rec->visible)) {
             stlen = strlen(rec->name);
-            VLACheck(result,char,size+stlen+1);
-            strcpy(result+size,rec->name);
-            size+=stlen+1;
+            if(sele0<0) 
+              incl_flag = 1;
+            else 
+              switch(rec->type) {
+              case cExecObject:
+                if(rec->obj->type == cObjectMolecule) {
+                  int a;
+                  ObjectMolecule *obj_mol = (ObjectMolecule*)rec->obj;
+                  AtomInfoType *ai = obj_mol->AtomInfo;
+                  for(a=0;a<obj_mol->NAtom;a++) {
+                    if(SelectorIsMember(G,ai->selEntry,sele0)) {
+                      incl_flag = 1;
+                      break;
+                    }
+                    ai++;
+                  }
+                }
+                break;
+              case cExecSelection:
+                if(SelectorCheckIntersection(G,sele0,SelectorIndexByName(G,rec->name))) {
+                  incl_flag=1;
+                  break;
+                }
+                break;
+              }
+            if(incl_flag) {
+              VLACheck(result,char,size+stlen+1);
+              strcpy(result+size,rec->name);
+              size+=stlen+1;
+            }
           }
         }
       }
+    
   }
   VLASize(result,char,size);
   return(result);
@@ -9396,7 +9429,8 @@ void ExecutiveSetControlsOff(PyMOLGlobals *G,char *name)
 	 }
 }
 /*========================================================================*/
-void ExecutiveSymExp(PyMOLGlobals *G,char *name,char *oname,char *s1,float cutoff) /* TODO state */
+void ExecutiveSymExp(PyMOLGlobals *G,char *name,
+                     char *oname,char *s1,float cutoff,int segi,int quiet) /* TODO state */
 {
   CObject *ob;
   ObjectMolecule *obj = NULL;
@@ -9427,9 +9461,11 @@ void ExecutiveSymExp(PyMOLGlobals *G,char *name,char *oname,char *s1,float cutof
   } else if(!obj->Symmetry->NSymMat) {
     ErrMessage(G,"ExecutiveSymExp","No symmetry matrices!");    
   } else {
-    PRINTFB(G,FB_Executive,FB_Actions)
-      " ExecutiveSymExp: Generating symmetry mates...\n"
-      ENDFB(G);
+    if(!quiet) {
+      PRINTFB(G,FB_Executive,FB_Actions)
+        " ExecutiveSymExp: Generating symmetry mates...\n"
+        ENDFB(G);
+    }
     ObjectMoleculeOpRecInit(&op);
 	 op.code = OMOP_SUMC;
 	 op.i1 =0;
@@ -9530,8 +9566,49 @@ void ExecutiveSymExp(PyMOLGlobals *G,char *name,char *oname,char *s1,float cutof
                   sprintf(new_name,"%s%02d%02d%02d%02d",name,a,x,y,z);
                   ObjectSetName((CObject*)new_obj,new_name);
                   ExecutiveDelete(G,new_name);
-                  ExecutiveManageObject(G,(CObject*)new_obj,-1,false);
+                  ExecutiveManageObject(G,(CObject*)new_obj,-1,quiet);
                   SceneChanged(G);
+                  if(segi==1) {
+                    SegIdent seg;
+                    if(a>35) {
+                      seg[0] = 'a' + (a-36);
+                    } else if(a>25) {
+                      seg[0] = '0' + (a-26);
+                    } else {
+                      seg[0] = 'A' + a;
+                    }
+                    if(x>0) {
+                      seg[1] = 'A' + x-1;
+                    } else if(x<0) {
+                      seg[1] = 'Z' + x+1;
+                    } else {
+                      seg[1] = '0';
+                    }
+                    if(y>0) {
+                      seg[2] = 'A' + y-1;
+                    } else if(y<0) {
+                      seg[2] = 'Z' + y+1;
+                    } else {
+                      seg[2] = '0';
+                    }
+                    if(z>0) {
+                      seg[3] = 'A' + z-1;
+                    } else if(z<0) {
+                      seg[3] = 'Z' + z+1;
+                    } else {
+                      seg[3] = '0';
+                    }
+                    seg[4] = 0;
+                    {
+                      int a;
+                      AtomInfoType *ai = new_obj->AtomInfo;
+                      for(a=0;a<new_obj->NAtom;a++) {
+                        strcpy(ai->segi, seg);
+                        ai++;
+                      }
+
+                    }
+                  }
                 } else {
                   ((CObject*)new_obj)->fFree((CObject*)new_obj);
                 }

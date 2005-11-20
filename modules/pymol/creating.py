@@ -386,7 +386,7 @@ SEE ALSO
         if _raising(r): raise pymol.CmdException                  
         return r
 
-    def symexp(prefix,object,selection,cutoff):
+    def symexp(prefix,object,selection,cutoff,segi=0,quiet=1):
         '''
 DESCRIPTION
 
@@ -413,7 +413,9 @@ SEE ALSO
         #
         try:
             lock()
-            r = _cmd.symexp(str(prefix),str(object),"("+str(selection)+")",float(cutoff))
+            r = _cmd.symexp(str(prefix),str(object),
+                            "("+str(selection)+")",float(cutoff),
+                            int(segi),int(quiet))
         finally:
             unlock(r)
         if _raising(r): raise pymol.CmdException                           

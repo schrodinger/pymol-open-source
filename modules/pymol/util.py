@@ -25,6 +25,52 @@ mload = movie.load
 mrock = movie.rock
 mroll = movie.roll
 
+# should match the list in layer1/Color.c:
+_color_cycle = [
+    26   , # /* carbon */
+    5    , # /* cyan */
+    154  , # /* lightmagenta */
+    6    , # /* yellow */
+    9    , # /* salmon */
+    29   , # /* hydrogen */
+    11   , # /* slate */
+    13   , # /* orange */
+    10   , # /* lime */
+    5262 , # /* deepteal */
+    12   , # /* hotpink */
+    36   , # /* yelloworange */
+    5271 , # /* violetpurple */
+    124  , # /* grey70 */
+    17   , # /* marine */
+    18   , # /* olive */
+    5270 , # /* smudge */
+    20   , # /* teal */
+    5272 , # /* dirtyviolet */
+    52   , # /* wheat */
+    5258 , # /* deepsalmon */
+    5274 , # /* lightpink */
+    5257 , # /* aquamarine */
+    5256 , # /* paleyellow */
+    15   , # /* limegreen */
+    5277 , # /* skyblue */
+    5279 , # /* warmpink */
+    5276 , # /* limon */
+    53   , # /* violet */
+    5278 , # /* bluewhite */
+    5275 , # /* greencyan */
+    5269 , # /* sand */
+    22   , # /* forest */
+    5266 , # /* lightteal */
+    5280 , # /* darksalmon */
+    5267 , # /* splitpea */
+    5268 , # /* raspberry */
+    104  , # /* grey50 */
+    23   , # /* deepblue */
+    51   , # /* brown */
+    ]
+
+_color_cycle_len = len(_color_cycle)
+
 def mass_align(target,enabled_only=0,max_gap=50):
     list = cmd.get_names("public_objects",int(enabled_only))
     filter(lambda x:cmd.get_type(x)!="object:molecule",list)
@@ -323,24 +369,48 @@ def hide_sele():
 #            "((%s) and ((%s) around %4.2f) and elem N,O)"%(b,a,cutoff),
 #            cutoff)
 
-def cbc(selection='(all)',first_color=7,quiet=1): 
+
+def cbc(selection='(all)',first_color=7,quiet=1,legacy=0): 
     '''
     Color all chains a different color
     '''
-    c = first_color
-    for a in cmd.get_chains(selection):
-        if len(string.strip(a)):
-            if not quiet: print (" util.cbc: color %d,(chain %s)"%(c,a))
-            cmd.color("%d"%c,"(chain %s and (%s))"%(a,selection),quiet=quiet)
-            c = c + 1
-        elif len(a): # note, PyMOL's selection language can't handle this right now
-            if not quiet: print (" util.cbc: color %d,(chain ' ')"%(c))
-            cmd.color("%d"%c,"(chain '' and (%s))"%selection,quiet=quiet)
-            c = c + 1
-        else:
-            if not quiet: print (" util.cbc: color %d,(chain '')"%(c))
-            cmd.color("%d"%c,"(chain '' and (%s))"%selection,quiet=quiet)
-            c = c + 1
+    if int(legacy):
+        c = first_color
+        for a in cmd.get_chains(selection):
+            if len(string.strip(a)):
+                if not quiet: print (" util.cbc: color %d,(chain %s)"%(c,a))
+                cmd.color("%d"%c,"(chain %s and (%s))"%(a,selection),quiet=quiet)
+                c = c + 1
+            elif len(a): # note, PyMOL's selection language can't handle this right now
+                if not quiet: print (" util.cbc: color %d,(chain ' ')"%(c))
+                cmd.color("%d"%c,"(chain '' and (%s))"%selection,quiet=quiet)
+                c = c + 1
+            else:
+                if not quiet: print (" util.cbc: color %d,(chain '')"%(c))
+                cmd.color("%d"%c,"(chain '' and (%s))"%selection,quiet=quiet)
+                c = c + 1
+    else:
+        c = 0
+        for a in cmd.get_chains(selection):
+            if len(string.strip(a)):
+                if not quiet: print (" util.cbc: color %d,(chain %s)"%(_color_cycle[c],a))
+                cmd.color(_color_cycle[c],"(chain %s and (%s))"%(a,selection),quiet=quiet)
+            elif len(a): # note, PyMOL's selection language can't handle this right now
+                if not quiet: print (" util.cbc: color %d,(chain ' ')"%(_color_cycle[c]))
+                cmd.color(_color_cycle[c],"(chain '' and (%s))"%selection,quiet=quiet)
+            else:
+                if not quiet: print (" util.cbc: color %d,(chain '')"%(_color_cycle[c]))
+                cmd.color(_color_cycle[c],"(chain '' and (%s))"%selection,quiet=quiet)
+            c = (c + 1) % _color_cycle_len
+        
+def color_objs(selection='(all)',quiet=1): 
+    '''
+    Color all chains a different color
+    '''
+    c = 0
+    for a in cmd.get_names(selection=selection):
+        cmd.color(_color_cycle[c],"(%s and (%s))"%(a,selection),quiet=quiet)
+        c = (c + 1) % _color_cycle_len
 
 def chainbow(selection='(all)',first_color=7): # NOT THREAD SAFE
     '''

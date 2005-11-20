@@ -2903,6 +2903,28 @@ int SelectorCountStates(PyMOLGlobals *G,int sele)
   return(result);
 }
 /*========================================================================*/
+int SelectorCheckIntersection(PyMOLGlobals *G,int sele1,int sele2)
+{
+  register CSelector *I=G->Selector;
+  int a;
+  int at1;
+  ObjectMolecule *obj;
+  
+  SelectorUpdateTable(G);
+  if(I->NAtom) {
+    for(a=cNDummyAtoms;a<I->NAtom;a++)
+      {
+        obj=I->Obj[I->Table[a].model];
+        at1=I->Table[a].atom;
+        if(SelectorIsMember(G,obj->AtomInfo[at1].selEntry,sele1) &&
+           SelectorIsMember(G,obj->AtomInfo[at1].selEntry,sele2))
+          return 1;
+      }
+  }
+  return 0;
+}
+
+/*========================================================================*/
 int SelectorCountAtoms(PyMOLGlobals *G,int sele)
 {
   register CSelector *I=G->Selector;
