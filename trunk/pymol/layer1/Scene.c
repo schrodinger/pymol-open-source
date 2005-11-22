@@ -5071,7 +5071,7 @@ static void SceneProgramLighting(PyMOLGlobals *G)
      MODELVIEW still has the identity */
   int n_light = SettingGetGlobal_i(G,cSetting_light_count);
   float direct = SettingGetGlobal_f(G,cSetting_direct);
-  float reflect = (SettingGetGlobal_f(G,cSetting_reflect) * (1.0F - direct));
+  float reflect = SettingGetGlobal_f(G,cSetting_reflect);
   float f;
   float vv[4];
   float spec_value = SettingGet(G,cSetting_specular);
@@ -5081,7 +5081,7 @@ static void SceneProgramLighting(PyMOLGlobals *G)
   if(spec_value<R_SMALL4) spec_value = 0.0F;
   if(n_light>1) 
     reflect/=(n_light-1);
-  if(reflect>1.0F) reflect=1.0F;
+  /*  if(reflect>1.0F) reflect=1.0F;*/
   
   /* lighting */
   

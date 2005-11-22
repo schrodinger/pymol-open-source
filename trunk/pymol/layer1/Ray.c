@@ -898,7 +898,7 @@ void RayRenderPOV(CRay *I,int width,int height,char **headerVLA_ptr,
     fogFlag=true;
     fog_start = SettingGet(I->G,cSetting_ray_trace_fog_start);
     if(fog_start<0.0F)
-      fog_start = SettingGet(I->G,cSetting_fog_start) + 0.05F;
+      fog_start = SettingGet(I->G,cSetting_fog_start);
     if(fog_start>1.0F)
       fog_start=1.0F;
     if(fog_start<0.0F)
@@ -1647,8 +1647,7 @@ int RayTraceThread(CRayThreadInfo *T)
        }
        pixel = T->image + (T->width * y) + T->x_start;
        
-       if((y % T->n_thread) == T->phase)	/* this is my scan line */
-         {	
+       if((y % T->n_thread) == T->phase) {	/* this is my scan line */
            pixel_base[1]	= ((y+0.5F+border_offset) * invHgtRange) + vol2;
            
            for(x = T->x_start; (x < T->x_stop); x++)
@@ -1780,7 +1779,6 @@ int RayTraceThread(CRayThreadInfo *T)
                   BasisCall[0].excl_trans = excl_trans;
                   BasisCall[0].interior_flag = false;
 
-
                   if(perspective) {
                     BasisCall[0].pass = pass;
                     if(pass) {
@@ -1802,133 +1800,130 @@ int RayTraceThread(CRayThreadInfo *T)
                           trans_cont_flag ) {
                         r1.trans = (float)pow(r1.trans,inv_trans_cont);
                       }
-                      if(interior_flag)
-                        {
-                          copy3f(interior_normal,r1.surfnormal);
-                          if(perspective) {
-                            copy3f(start,r1.impact);
-                            r1.dist = _0;
-                          } else {
-                            copy3f(r1.base,r1.impact);
-                            r1.dist = T->front;
-                            r1.impact[2]	-= T->front; 
+                      if(interior_flag) {
+                        copy3f(interior_normal,r1.surfnormal);
+                        if(perspective) {
+                          copy3f(start,r1.impact);
+                          r1.dist = _0;
+                        } else {
+                          copy3f(r1.base,r1.impact);
+                          r1.dist = T->front;
+                          r1.impact[2]	-= T->front; 
+                        }
+                        
+                        if(interior_wobble >= 0) 
+                          {
+                            wobble_save		= r1.prim->wobble; /* This is a no-no for multithreading! */
+                            r1.prim->wobble	= interior_wobble;
+                            
+                            RayReflectAndTexture(I,&r1,perspective);
+                            
+                            r1.prim->wobble	= wobble_save;
+                          }
+                        else
+                          RayReflectAndTexture(I,&r1,perspective);
+                        
+                        dotgle = -r1.dotgle;
+                        copy3f(inter,fc);
+                      } else {
+                        if(!perspective) 
+                          new_front	= r1.dist;
+                        
+                        if(r1.prim->type==cPrimTriangle) {
+                          
+                          BasisGetTriangleNormal(bp1,&r1,i,fc,perspective);
+                          
+                          if(bp2) {
+                            RayProjectTriangle(I, &r1, bp2->LightNormal,
+                                               bp1->Vertex+i*3,
+                                               bp1->Normal+bp1->Vert2Normal[i]*3+3,
+                                               project_triangle);
                           }
                           
-                          if(interior_wobble >= 0) 
-                            {
-                              wobble_save		= r1.prim->wobble; /* This is a no-no for multithreading! */
-                              r1.prim->wobble	= interior_wobble;
-                              
-                              RayReflectAndTexture(I,&r1,perspective);
-                              
-                              r1.prim->wobble	= wobble_save;
-                            }
-                          else
-                            RayReflectAndTexture(I,&r1,perspective);
-                          
-                          dotgle = -r1.dotgle;
-                          copy3f(inter,fc);
-                        }
-                      else
-                        {
-                          if(!perspective) 
-                            new_front	= r1.dist;
-                          
-                          if(r1.prim->type==cPrimTriangle)
-                            {
-                              BasisGetTriangleNormal(bp1,&r1,i,fc,perspective);
-                              
-                              if(bp2) {
-                                RayProjectTriangle(I, &r1, bp2->LightNormal,
-                                                   bp1->Vertex+i*3,
-                                                   bp1->Normal+bp1->Vert2Normal[i]*3+3,
-                                                   project_triangle);
-                              }
-                              
-                              RayReflectAndTexture(I,&r1,perspective);
-                              if(perspective) {
-                                BasisGetTriangleFlatDotglePerspective(bp1,&r1,i);
-                              } else {
-                                BasisGetTriangleFlatDotgle(bp1,&r1,i);
-                              }
-                            }
-                          else if(r1.prim->type==cPrimCharacter) {
-                            BasisGetTriangleNormal(bp1,&r1,i,fc,perspective);
-                            
-                            r1.trans = CharacterInterpolate(I->G,r1.prim->char_id,fc);
-                            
-                            RayReflectAndTexture(I,&r1,perspective);
+                          RayReflectAndTexture(I,&r1,perspective);
+                          if(perspective) {
+                            BasisGetTriangleFlatDotglePerspective(bp1,&r1,i);
+                          } else {
                             BasisGetTriangleFlatDotgle(bp1,&r1,i);
-                            
-                          } else { /* must be a sphere */
-                            
-                            if(perspective) {
-                              RayGetSphereNormalPerspective(I,&r1);
-                              RayReflectAndTexture(I,&r1,perspective);
-                            } else {
-                              RayGetSphereNormal(I,&r1);
-                              RayReflectAndTexture(I,&r1,perspective);
-                            }
-                            
-                            if((r1.prim->type==cPrimCylinder) || (r1.prim->type==cPrimSausage)) 
+                          }
+                          
+                        } else if(r1.prim->type==cPrimCharacter) {
+                          BasisGetTriangleNormal(bp1,&r1,i,fc,perspective);
+                          
+                          r1.trans = CharacterInterpolate(I->G,r1.prim->char_id,fc);
+                          
+                          RayReflectAndTexture(I,&r1,perspective);
+                          BasisGetTriangleFlatDotgle(bp1,&r1,i);
+                          
+                        } else { /* must be a sphere */
+                          
+                          if(perspective) {
+                            RayGetSphereNormalPerspective(I,&r1);
+                            RayReflectAndTexture(I,&r1,perspective);
+                          } else {
+                            RayGetSphereNormal(I,&r1);
+                            RayReflectAndTexture(I,&r1,perspective);
+                          }
+                          
+                          if((r1.prim->type==cPrimCylinder) || (r1.prim->type==cPrimSausage)) {
+
+                            ft = r1.tri1;
+                            fc[0]=(r1.prim->c1[0]*(_1-ft))+(r1.prim->c2[0]*ft);
+                            fc[1]=(r1.prim->c1[1]*(_1-ft))+(r1.prim->c2[1]*ft);
+                            fc[2]=(r1.prim->c1[2]*(_1-ft))+(r1.prim->c2[2]*ft);
+                          } else {
+                            fc[0]=r1.prim->c1[0];
+                            fc[1]=r1.prim->c1[1];
+                            fc[2]=r1.prim->c1[2];
+                          }
+                        }
+                        dotgle=-r1.dotgle;
+                        
+                        if(r1.flat_dotgle < _0)
+                          {
+                            if((!two_sided_lighting) && (interior_color>=0)) 
                               {
-                                ft = r1.tri1;
-                                fc[0]=(r1.prim->c1[0]*(_1-ft))+(r1.prim->c2[0]*ft);
-                                fc[1]=(r1.prim->c1[1]*(_1-ft))+(r1.prim->c2[1]*ft);
-                                fc[2]=(r1.prim->c1[2]*(_1-ft))+(r1.prim->c2[2]*ft);
+                                interior_flag		= true;
+                                copy3f(interior_normal,r1.surfnormal);
+                                if(perspective) {
+                                  copy3f(start,r1.impact);                                    
+                                  r1.dist = _0;
+                                } else {
+                                  copy3f(r1.base,r1.impact);
+                                  r1.impact[2]		-= T->front; 
+                                  r1.dist				= T->front;
+                                }
+                                
+                                if(interior_wobble >= 0)
+                                  {
+                                    wobble_save		= r1.prim->wobble;
+                                    r1.prim->wobble	= interior_wobble;
+                                    RayReflectAndTexture(I,&r1,perspective);
+                                    r1.prim->wobble	= wobble_save;
+                                  }
+                                else
+                                  RayReflectAndTexture(I,&r1,perspective);
+                                
+                                dotgle	= -r1.dotgle;
+                                copy3f(inter,fc);
+                              }
+                          }
+                        
+                        if((dotgle < _0) && (!interior_flag))
+                          {
+                            if(two_sided_lighting) 
+                              {
+                                dotgle	= -dotgle;
+                                invert3f(r1.surfnormal);
                               }
                             else 
-                              {
-                                fc[0]=r1.prim->c1[0];
-                                fc[1]=r1.prim->c1[1];
-                                fc[2]=r1.prim->c1[2];
-                              }
+                              dotgle	= _0;
                           }
-                          dotgle=-r1.dotgle;
-                          
-                          if(r1.flat_dotgle < _0)
-                            {
-                              if((!two_sided_lighting) && (interior_color>=0)) 
-                                {
-                                  interior_flag		= true;
-                                  copy3f(interior_normal,r1.surfnormal);
-                                  if(perspective) {
-                                    copy3f(start,r1.impact);                                    
-                                    r1.dist = _0;
-                                  } else {
-                                    copy3f(r1.base,r1.impact);
-                                    r1.impact[2]		-= T->front; 
-                                    r1.dist				= T->front;
-                                  }
-                                  
-                                  if(interior_wobble >= 0)
-                                    {
-                                      wobble_save		= r1.prim->wobble;
-                                      r1.prim->wobble	= interior_wobble;
-                                      RayReflectAndTexture(I,&r1,perspective);
-                                      r1.prim->wobble	= wobble_save;
-                                    }
-                                  else
-                                    RayReflectAndTexture(I,&r1,perspective);
-                                  
-                                  dotgle	= -r1.dotgle;
-                                  copy3f(inter,fc);
-                                }
-                            }
-                          
-                          if((dotgle < _0) && (!interior_flag))
-                            {
-                              if(two_sided_lighting) 
-                                {
-                                  dotgle	= -dotgle;
-                                  invert3f(r1.surfnormal);
-                                }
-                              else 
-                                dotgle	= _0;
-                            }
-                        }
-                    
-                      direct_cmp = (float) ( (dotgle + (pow(dotgle, settingPower))) * _p5 );
+                      }
+                      
+                      /*direct_cmp = (float) ( (dotgle + (pow(dotgle, settingPower))) * _p5 );*/
+                      
+                      direct_cmp = (float) pow(r1.surfnormal[2], settingPower);
                       
                       reflect_cmp = _0;
                       if(settingSpecDirect!=_0) {
@@ -1937,8 +1932,8 @@ int RayTraceThread(CRayThreadInfo *T)
                         excess = _0;
                       }
 
+                      lit = _1;
                       if(n_basis<3) {
-                        lit = _1;
                         reflect_cmp = direct_cmp;
                       } else {
                         int bc;
@@ -1960,7 +1955,8 @@ int RayTraceThread(CRayThreadInfo *T)
                             dotgle	= -dot_product3f(r1.surfnormal,bp->LightNormal);
                             if(dotgle < _0) dotgle = _0;
                             
-                            reflect_cmp	+= (float)(lit * (dotgle + (pow(dotgle, settingReflectPower))) * _p5 );
+                            /*reflect_cmp	+= (float)(lit * (dotgle + (pow(dotgle, settingReflectPower))) * _p5 );*/
+                            reflect_cmp	+= (float)(lit * (pow(dotgle, settingReflectPower)));
                             dotgle	= -dot_product3f(r1.surfnormal,bp->SpecNormal);
                             if(dotgle < _0) dotgle=_0;
                             excess	+= (float)( pow(dotgle, settingSpecPower) * settingSpecReflect * lit);
@@ -1968,76 +1964,76 @@ int RayTraceThread(CRayThreadInfo *T)
                         }
                       }
                       
-                      bright = ambient + (_1-ambient) * 
+                      bright = ambient + /*(_1-ambient) * */
                         (((_1-direct_shade)+direct_shade*lit) * direct*direct_cmp +
-                         (_1-direct)*direct_cmp*lreflect*reflect_cmp);
+                         /* (_1-direct) * direct_cmp */ 
+                         lreflect*reflect_cmp);
 
-
+                      if(excess>_1) excess = _1;
                       if(bright > _1) bright = _1;
                       else if(bright < _0) bright = _0;
                       
+                      /*                      bright *= (_1-excess);*/
+
                       fc[0] = (bright*fc[0]+excess);
                       fc[1] = (bright*fc[1]+excess);
                       fc[2] = (bright*fc[2]+excess);
                       
-                      if(fogFlag) 
-                        {
-                          if(perspective) {
-                            ffact = (T->front + r1.impact[2]) * invFrontMinusBack;
-                          } else {
-                            ffact = (T->front - r1.dist) * invFrontMinusBack;
-                          }
-                          if(fogRangeFlag)
-                            ffact = (ffact - fog_start) * inv1minusFogStart;
-                          
-						  ffact*=fog;
-                          
-						  if(ffact<_0)	ffact = _0;
-                          if(ffact>_1)	ffact = _0;
-                          
-                          ffact1m	= _1-ffact;
-                          
-                          if(opaque_back) {
-                              fc[0]	= ffact*T->bkrd[0]+fc[0]*ffact1m;
-                              fc[1]	= ffact*T->bkrd[1]+fc[1]*ffact1m;
-                              fc[2]	= ffact*T->bkrd[2]+fc[2]*ffact1m;
-                            } else {
-                              fc[3] = ffact1m*(_1 - r1.trans);
-                            }
-                          
-                          if(!pass) {
-                            if(r1.trans<trans_spec_cut) {
-                              first_excess = excess*ffact1m*ray_trans_spec;
-                            } else {
-                              first_excess = excess*ffact1m*ray_trans_spec*
-                                trans_spec_scale*(_1 - r1.trans);
-                            }
-                          } else {
-                              fc[0]+=first_excess;
-                              fc[1]+=first_excess;
-                              fc[2]+=first_excess;
-                            }
+                      if(fogFlag) {
+                        if(perspective) {
+                          ffact = (T->front + r1.impact[2]) * invFrontMinusBack;
+                        } else {
+                          ffact = (T->front - r1.dist) * invFrontMinusBack;
                         }
-                      else 
-                        {
-                          if(!pass) {
-                            if(r1.trans<trans_spec_cut) {
-                              first_excess = excess*ray_trans_spec;
-                            } else {
-                              first_excess = excess*ray_trans_spec*
-                                trans_spec_scale*(_1 - r1.trans);
-                            }
-                          } else {
-                              fc[0]	+= first_excess;
-                              fc[1]	+= first_excess;
-                              fc[2]	+= first_excess;
-                            }
-                          if(opaque_back) {
-                            fc[3]	= _1;
-                          } else {
-                            fc[3] = _1 - r1.trans;
-                          }
+                        if(fogRangeFlag)
+                          ffact = (ffact - fog_start) * inv1minusFogStart;
+                        
+                        ffact*=fog;
+                        
+                        if(ffact<_0)	ffact = _0;
+                        if(ffact>_1)	ffact = _0;
+                        
+                        ffact1m	= _1-ffact;
+                        
+                        if(opaque_back) {
+                          fc[0]	= ffact*T->bkrd[0]+fc[0]*ffact1m;
+                          fc[1]	= ffact*T->bkrd[1]+fc[1]*ffact1m;
+                          fc[2]	= ffact*T->bkrd[2]+fc[2]*ffact1m;
+                        } else {
+                          fc[3] = ffact1m*(_1 - r1.trans);
                         }
+                        
+                        if(!pass) {
+                          if(r1.trans<trans_spec_cut) {
+                            first_excess = excess*ffact1m*ray_trans_spec;
+                          } else {
+                            first_excess = excess*ffact1m*ray_trans_spec*
+                              trans_spec_scale*(_1 - r1.trans);
+                          }
+                        } else {
+                          fc[0]+=first_excess; /* dubious? */
+                          fc[1]+=first_excess;
+                          fc[2]+=first_excess;
+                        }
+                      } else {
+                        if(!pass) {
+                          if(r1.trans<trans_spec_cut) {
+                            first_excess = excess*ray_trans_spec;
+                          } else {
+                            first_excess = excess*ray_trans_spec*
+                              trans_spec_scale*(_1 - r1.trans);
+                          }
+                        } else {
+                          fc[0]	+= first_excess;
+                          fc[1]	+= first_excess;
+                          fc[2]	+= first_excess;
+                        }
+                        if(opaque_back) {
+                          fc[3]	= _1;
+                        } else {
+                          fc[3] = _1 - r1.trans;
+                        }
+                      }
                     }
                   else if(pass) 
                     {
@@ -2882,8 +2878,7 @@ int opaque_back=0;
     if(bkrd[1]>1.0F) bkrd[1] = 1.0F;
     if(bkrd[2]>1.0F) bkrd[2] = 1.0F;
   
-    /* and same for ambient coloring */
-
+#if 0
     inp = ambient;
     if(inp < R_SMALL4) 
       sig = 1.0F;
@@ -2891,6 +2886,8 @@ int opaque_back=0;
       sig = (float)(pow(inp,gamma))/inp;
     ambient *= sig;
     if(ambient>1.0f) ambient = 1.0F;
+#endif
+
   }
 
   if(opaque_back) {
@@ -2953,6 +2950,7 @@ int opaque_back=0;
         { /* setup light & rotate if necessary  */
           float light[3],*lightv;
           switch(bc) {
+          default:
           case 2:
             lightv=SettingGetfv(I->G,cSetting_light);
             break;

@@ -1861,9 +1861,9 @@ void SettingInitGlobal(PyMOLGlobals *G,int alloc,int reset_gui)
 
   SettingSet_f(I,cSetting_ambient, 0.14F);
 
-  SettingSet_f(I,cSetting_direct, 0.25F);
+  SettingSet_f(I,cSetting_direct, 0.45F);
 
-  SettingSet_f(I,cSetting_reflect, 0.90F);
+  SettingSet_f(I,cSetting_reflect, 0.45F);
 
   SettingSet_3f(I,cSetting_light, -0.4F, -0.4F, -1.0F);
 
@@ -2007,7 +2007,7 @@ void SettingInitGlobal(PyMOLGlobals *G,int alloc,int reset_gui)
 
   SettingSet_b(I,cSetting_backface_cull, 1);
 
-  SettingSet_f(I,cSetting_gamma, 1.3F);
+  SettingSet_f(I,cSetting_gamma, 1.0F);
 
   SettingSet_f(I,cSetting_dot_width, 2.0F);
 
@@ -2500,7 +2500,7 @@ void SettingInitGlobal(PyMOLGlobals *G,int alloc,int reset_gui)
   SettingSet_b(I,cSetting_pdb_insertions_go_first,0);
   SettingSet_b(I,cSetting_roving_origin_z,1);
   SettingSet_f(I,cSetting_roving_origin_z_cushion,3.0F);
-  SettingSet_f(I,cSetting_specular_intensity,0.50F);
+  SettingSet_f(I,cSetting_specular_intensity,0.55F);
   SettingSet_i(I,cSetting_overlay_lines,5);
   SettingSet_f(I,cSetting_ray_transparency_spec_cut,0.9F);
   SettingSet_b(I,cSetting_internal_prompt,1);

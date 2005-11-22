@@ -39,7 +39,7 @@ static char *FontTypeRenderOpenGL(RenderInfo *info, CFontType *I,char *st,float 
     int c;
     int pushed = OrthoGetPushed(G);
     int kern_flag = false;
-    int last_c;
+    int last_c = -1;
     int sampling = 1;
     if(info)
       sampling = info->sampling;
