@@ -567,7 +567,7 @@ static void ObjectSurfaceRender(ObjectSurface *I,RenderInfo *info)
   PyMOLGlobals *G = I->Obj.G;
   int state = info->state;
   CRay *ray = info->ray;
-  Pickable **pick = info->pick;
+  Picking **pick = info->pick;
   int pass = info->pass;
   float *v = NULL;
   float *vc = NULL;

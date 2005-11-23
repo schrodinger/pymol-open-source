@@ -3605,13 +3605,13 @@ void ExecutiveSelectRect(PyMOLGlobals *G,BlockRect *rect,int mode)
     log_box= (int)SettingGet(G,cSetting_log_box_selections);
   /*  if(logging==cPLog_pml)
       strcpy(prefix,"_ ");*/
-  smp.picked=VLAlloc(Pickable,1000);
+  smp.picked=VLAlloc(Picking,1000);
   smp.x=rect->left;
   smp.y=rect->bottom;
   smp.w=rect->right-rect->left;
   smp.h=rect->top-rect->bottom;
   SceneMultipick(G,&smp);
-  if(smp.picked[0].index) {
+  if(smp.picked[0].src.index) {
     SelectorCreate(G,cTempRectSele,NULL,NULL,1,&smp);
     if(log_box) SelectorLogSele(G,cTempRectSele);
     switch(mode) {

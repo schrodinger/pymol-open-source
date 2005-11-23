@@ -24,7 +24,6 @@ Z* -------------------------------------------------------------------
 #include "Executive.h"
 #include "Setting.h"
 #include "P.h"
-#include "Grap.h"
 #include "Seq.h"
 #include"Movie.h"
 #include "Text.h"

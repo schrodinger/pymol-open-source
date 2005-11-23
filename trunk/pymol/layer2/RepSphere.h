@@ -19,7 +19,7 @@ Z* -------------------------------------------------------------------
 #include"Rep.h"
 #include"CoordSet.h"
 
-Rep *RepSphereNew(CoordSet *cset);
+Rep *RepSphereNew(CoordSet *cset,int state);
 void RepSphereInit(void);
 
 #endif

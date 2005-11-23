@@ -136,7 +136,7 @@ static int check_and_add(int *cache, int spacing, int t0,int t1) {
 static void RepSurfaceRender(RepSurface *I,RenderInfo *info)
 {
   CRay *ray = info->ray;
-  Pickable **pick = info->pick;
+  Picking **pick = info->pick;
   PyMOLGlobals *G=I->R.G;
   float *v=I->V;
   float *vn=I->VN;
@@ -1267,7 +1267,7 @@ void RepSurfaceColor(RepSurface *I,CoordSet *cs)
   FreeP(present);
 }
 
-Rep *RepSurfaceNew(CoordSet *cs)
+Rep *RepSurfaceNew(CoordSet *cs,int state)
 {
   PyMOLGlobals *G=cs->State.G;
   ObjectMolecule *obj;

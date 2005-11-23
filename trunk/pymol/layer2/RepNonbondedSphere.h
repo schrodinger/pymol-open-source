@@ -19,7 +19,7 @@ Z* -------------------------------------------------------------------
 #include"Rep.h"
 #include"CoordSet.h"
 
-Rep *RepNonbondedSphereNew(CoordSet *cset);
+Rep *RepNonbondedSphereNew(CoordSet *cset,int state);
 void RepNonbondedSphereInit(void);
 
 #endif

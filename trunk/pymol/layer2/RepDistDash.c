@@ -52,7 +52,7 @@ void RepDistDashFree(RepDistDash *I)
 static void RepDistDashRender(RepDistDash *I,RenderInfo *info)
 {
   CRay *ray = info->ray;
-  Pickable **pick = info->pick;
+  Picking **pick = info->pick;
   PyMOLGlobals *G=I->R.G;
   float *v=I->V;
   int c=I->N;

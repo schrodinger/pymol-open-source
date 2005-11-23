@@ -1437,7 +1437,7 @@ static void ObjectMapRender(ObjectMap *I,RenderInfo *info)
   PyMOLGlobals *G = I->Obj.G;
   int state = info->state;
   CRay *ray = info->ray;
-  Pickable **pick = info->pick;
+  Picking **pick = info->pick;
   int pass = info->pass;
   ObjectMapState *ms = NULL;
   if(!pass) {

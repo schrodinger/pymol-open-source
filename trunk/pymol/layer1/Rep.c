@@ -27,11 +27,11 @@ Z* -------------------------------------------------------------------
 /*========================================================================*/
 
 void RepInvalidate(struct Rep *I,struct CoordSet *cs,int level);
-struct Rep *RepUpdate(struct Rep *I,struct CoordSet *cs,int rep);
-struct Rep *RepRebuild(struct Rep *I,struct CoordSet *cs,int rep);
+struct Rep *RepUpdate(struct Rep *I,struct CoordSet *cs,int state,int rep);
+struct Rep *RepRebuild(struct Rep *I,struct CoordSet *cs,int state, int rep);
 
 /*========================================================================*/
-struct Rep *RepRebuild(struct Rep *I,struct CoordSet *cs,int rep)
+struct Rep *RepRebuild(struct Rep *I,struct CoordSet *cs,int state,int rep)
 {
   Rep *tmp = NULL;
 
@@ -40,7 +40,7 @@ struct Rep *RepRebuild(struct Rep *I,struct CoordSet *cs,int rep)
     ENDFD;
 
   if(I->fNew) {
-    tmp = I->fNew(cs);
+    tmp = I->fNew(cs,state);
     if(tmp) {
       tmp->fNew = I->fNew;
       I->fFree(I);
@@ -53,7 +53,7 @@ struct Rep *RepRebuild(struct Rep *I,struct CoordSet *cs,int rep)
   return(tmp);
 }
 /*========================================================================*/
-struct Rep *RepUpdate(struct Rep *I,struct CoordSet *cs,int rep)
+struct Rep *RepUpdate(struct Rep *I,struct CoordSet *cs,int state,int rep)
 {
 
   PRINTFD(I->G,FB_Rep)
@@ -73,16 +73,16 @@ struct Rep *RepUpdate(struct Rep *I,struct CoordSet *cs,int rep)
       if(I->fRecolor) {
         I->fRecolor(I,cs);
       } else {
-        I=I->fRebuild(I,cs,rep);
+        I=I->fRebuild(I,cs,state,rep);
       }
     } else if(I->MaxInvalid<=cRepInvVisib) {
       if(I->fSameVis) {
         if(!I->fSameVis(I,cs))
-          I=I->fRebuild(I,cs,rep);
+          I=I->fRebuild(I,cs,state,rep);
       } else 
-        I=I->fRebuild(I,cs,rep);
+        I=I->fRebuild(I,cs,state,rep);
     } else if(I->MaxInvalid>=cRepInvCoord) {
-      I=I->fRebuild(I,cs,rep);   
+      I=I->fRebuild(I,cs,state,rep);   
       if(!cs->Active[rep])
         {
           I->fFree(I);
@@ -94,7 +94,7 @@ struct Rep *RepUpdate(struct Rep *I,struct CoordSet *cs,int rep)
               I=tmp;
       */
     } else {
-      I=I->fRebuild(I,cs,rep);    
+      I=I->fRebuild(I,cs,state,rep);    
     }
     if(I)
       I->MaxInvalid=0;

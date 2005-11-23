@@ -131,7 +131,7 @@ struct _CScene {
   double LastRender,RenderTime,LastFrameTime;
   double LastRock,LastRockTime;
   float LastRockX,LastRockY;
-  Pickable LastPicked;
+  Picking LastPicked;
   int StereoMode;
   OrthoLineType vendor,renderer,version;
   int SculptingFlag,SculptingSave;
@@ -2440,9 +2440,9 @@ static int SceneRelease(Block *block,int button,int x,int y,int mod, double when
     return SceneLoopRelease(block,button,x,y,mod);
   if(I->SculptingFlag) {
     /* SettingSet(G,cSetting_sculpting,1); */
-    obj=(ObjectMolecule*)I->LastPicked.ptr;
+    obj=(ObjectMolecule*)I->LastPicked.context.object;
     if(obj) {
-      obj->AtomInfo[I->LastPicked.index].protekted=I->SculptingSave;
+      obj->AtomInfo[I->LastPicked.src.index].protekted=I->SculptingSave;
     }
     I->SculptingFlag=0;
   }
@@ -2550,9 +2550,9 @@ static int SceneDoXYPick(PyMOLGlobals *G, int x, int y)
     SceneRender(G,NULL,0,0,NULL,0,0); /* remove overlay if present */
   SceneDontCopyNext(G);
   
-  I->LastPicked.ptr = NULL;
+  I->LastPicked.context.object = NULL;
   SceneRender(G,&I->LastPicked,x,y,NULL,0,0);
-  return (I->LastPicked.ptr!=NULL);
+  return (I->LastPicked.context.object!=NULL);
   /* did we pick something? */
 }
 
@@ -2745,7 +2745,7 @@ static int SceneClick(Block *block,int button,int x,int y,
       x = get_stereo_x(x,NULL,I->Width);
 
     if(SceneDoXYPick(G,x,y)) {
-      obj=(CObject*)I->LastPicked.ptr;
+      obj=(CObject*)I->LastPicked.context.object;
       y=y-I->Block->margin.bottom;
       x=x-I->Block->margin.left;
       I->LastX=x;
@@ -2757,7 +2757,7 @@ static int SceneClick(Block *block,int button,int x,int y,
           {
             ObjectMolecule *objMol = (ObjectMolecule*)obj;
             int active_sele = ExecutiveGetActiveSele(G);
-            if(active_sele && SelectorIsMember(G,objMol->AtomInfo[I->LastPicked.index].selEntry,
+            if(active_sele && SelectorIsMember(G,objMol->AtomInfo[I->LastPicked.src.index].selEntry,
                                                active_sele)) {
               char name[ObjNameMax];
               ExecutiveGetActiveSeleName(G,name,false);
@@ -2766,8 +2766,8 @@ static int SceneClick(Block *block,int button,int x,int y,
                                is_single_click,
                                "pick_sele",name,name);
             } else {
-              ObjectMoleculeGetAtomSele((ObjectMolecule*)obj,I->LastPicked.index,buffer);
-              ObjectMoleculeGetAtomSeleLog((ObjectMolecule*)obj,I->LastPicked.index,buf1,false);
+              ObjectMoleculeGetAtomSele((ObjectMolecule*)obj,I->LastPicked.src.index,buffer);
+              ObjectMoleculeGetAtomSeleLog((ObjectMolecule*)obj,I->LastPicked.src.index,buf1,false);
               MenuActivate2Arg(G,I->LastWinX,I->LastWinY+20,
                                I->LastWinX,I->LastWinY,
                                is_single_click,
@@ -2779,18 +2779,18 @@ static int SceneClick(Block *block,int button,int x,int y,
           if(obj&&obj->type==cObjectMolecule) {
             if(Feedback(G,FB_Scene,FB_Results)) {
               if(obj->fDescribeElement)
-                obj->fDescribeElement(obj,I->LastPicked.index,buffer);
+                obj->fDescribeElement(obj,I->LastPicked.src.index,buffer);
               PRINTF " You clicked %s -> (%s)\n",buffer,cEditorSele1 ENDF(G);
             }
             if(SettingGet(G,cSetting_logging)) {
               objMol = (ObjectMolecule*)obj;            
-              ObjectMoleculeGetAtomSeleLog(objMol,I->LastPicked.index,buffer,false);
+              ObjectMoleculeGetAtomSeleLog(objMol,I->LastPicked.src.index,buffer,false);
               sprintf(buf2,"cmd.edit(\"%s\",pkresi=1)",buffer);
               PLog(buf2,cPLog_pym);
             }
             OrthoRestorePrompt(G);
             sprintf(buffer,"%s`%d",
-                    obj->Name,I->LastPicked.index+1);    
+                    obj->Name,I->LastPicked.src.index+1);    
             EditorInactivate(G);
             SelectorCreate(G,cEditorSele1,buffer,NULL,true,NULL);
             EditorActivate(G,SettingGetGlobal_i(G,cSetting_state)-1,false);
@@ -2804,7 +2804,7 @@ static int SceneClick(Block *block,int button,int x,int y,
           if(obj&&obj->type==cObjectMolecule){
             WordType name;
             if(obj->fDescribeElement)
-              obj->fDescribeElement(obj,I->LastPicked.index,buffer);
+              obj->fDescribeElement(obj,I->LastPicked.src.index,buffer);
             if(EditorIsBondMode(G)
                /* &&!(EditorIsAnActiveObject(G,(ObjectMolecule*)obj))*/ ) {
               EditorInactivate(G);
@@ -2812,7 +2812,7 @@ static int SceneClick(Block *block,int button,int x,int y,
             }
             if((!EditorIsBondMode(G))&&
                EditorDeselectIfSelected(G,
-                                        (ObjectMolecule*)obj,I->LastPicked.index,true)) {
+                                        (ObjectMolecule*)obj,I->LastPicked.src.index,true)) {
               PRINTF " You unpicked %s.",buffer ENDF(G);
               if(EditorActive(G)) 
                 EditorDefineExtraPks(G);
@@ -2820,7 +2820,7 @@ static int SceneClick(Block *block,int button,int x,int y,
             } else {
               if(EditorIsBondMode(G)&&
                  EditorDeselectIfSelected(G,
-                                          (ObjectMolecule*)obj,I->LastPicked.index,false)) {
+                                          (ObjectMolecule*)obj,I->LastPicked.src.index,false)) {
                 EditorInactivate(G);
               }
               EditorGetNextMultiatom(G,name);
@@ -2828,7 +2828,7 @@ static int SceneClick(Block *block,int button,int x,int y,
               PRINTFB(G,FB_Scene,FB_Results) " You clicked %s -> (%s)\n",buffer,name ENDFB(G);
               /* TODO: logging */
               
-              sprintf(buffer,"%s`%d",obj->Name,I->LastPicked.index+1);    
+              sprintf(buffer,"%s`%d",obj->Name,I->LastPicked.src.index+1);    
               ExecutiveDelete(G,name);
               SelectorCreate(G,name,buffer,NULL,true,NULL);
               EditorActivate(G,SettingGetGlobal_i(G,cSetting_state)-1,false);
@@ -2868,7 +2868,7 @@ static int SceneClick(Block *block,int button,int x,int y,
       x = get_stereo_x(x,NULL,I->Width);
 
     if(SceneDoXYPick(G,x,y)) {
-      obj=(CObject*)I->LastPicked.ptr;
+      obj=(CObject*)I->LastPicked.context.object;
       y=y-I->Block->margin.bottom;
       x=x-I->Block->margin.left;
       I->LastX=x;
@@ -2886,22 +2886,22 @@ static int SceneClick(Block *block,int button,int x,int y,
         EditorInactivate(G);
         if(Feedback(G,FB_Scene,FB_Results)) {
           if(obj->fDescribeElement)
-            obj->fDescribeElement(obj,I->LastPicked.index,buffer);
+            obj->fDescribeElement(obj,I->LastPicked.src.index,buffer);
           PRINTF " You clicked %s -> (%s)",buffer,cEditorSele1 ENDF(G);
           OrthoRestorePrompt(G);
         }
 
         /*        ObjectMoleculeChooseBondDir(objMol,I->LastPicked.bond,
-                  &I->LastPicked.index,&atIndex);*/
+                  &I->LastPicked.src.index,&atIndex);*/
         
         sprintf(buffer,"%s`%d",
-                obj->Name,I->LastPicked.index+1);    
+                obj->Name,I->LastPicked.src.index+1);    
         SelectorCreate(G,cEditorSele1,buffer,NULL,true,NULL);
         objMol = (ObjectMolecule*)obj;
-        if(I->LastPicked.bond>=0) {
-          atIndex = objMol->Bond[I->LastPicked.bond].index[0];
-          if(atIndex == I->LastPicked.index)
-            atIndex = objMol->Bond[I->LastPicked.bond].index[1];       
+        if(I->LastPicked.src.bond>=0) {
+          atIndex = objMol->Bond[I->LastPicked.src.bond].index[0];
+          if(atIndex == I->LastPicked.src.index)
+            atIndex = objMol->Bond[I->LastPicked.src.bond].index[1];       
           if(Feedback(G,FB_Scene,FB_Results)) {
             if(obj->fDescribeElement)
               obj->fDescribeElement(obj,atIndex,buffer);
@@ -2911,7 +2911,7 @@ static int SceneClick(Block *block,int button,int x,int y,
           
           if(SettingGet(G,cSetting_logging)) {
             objMol = (ObjectMolecule*)obj;            
-            ObjectMoleculeGetAtomSeleLog(objMol,I->LastPicked.index,buf1,false);
+            ObjectMoleculeGetAtomSeleLog(objMol,I->LastPicked.src.index,buf1,false);
             ObjectMoleculeGetAtomSeleLog(objMol,atIndex,buf2,false);
             sprintf(buffer,"cmd.edit(\"%s\",\"%s\")",buf1,buf2);
             PLog(buffer,cPLog_pym);
@@ -2928,11 +2928,11 @@ static int SceneClick(Block *block,int button,int x,int y,
             switch(obj->type) {
             case cObjectMolecule:
               objMol = (ObjectMolecule*)obj;
-              EditorPrepareDrag(G,objMol,-1,I->LastPicked.index,
+              EditorPrepareDrag(G,objMol,-1,I->LastPicked.src.index,
                                 SettingGetGlobal_i(G,cSetting_state)-1);
               I->SculptingFlag = 1;
-              I->SculptingSave =  objMol->AtomInfo[I->LastPicked.index].protekted;
-              objMol->AtomInfo[I->LastPicked.index].protekted=2;
+              I->SculptingSave =  objMol->AtomInfo[I->LastPicked.src.index].protekted;
+              objMol->AtomInfo[I->LastPicked.src.index].protekted=2;
               break;
             }
           }
@@ -2970,7 +2970,7 @@ static int SceneClick(Block *block,int button,int x,int y,
       x = get_stereo_x(x,NULL,I->Width);
 
     if(SceneDoXYPick(G,x,y)) {
-      obj=(CObject*)I->LastPicked.ptr;
+      obj=(CObject*)I->LastPicked.context.object;
       y=y-I->Block->margin.bottom;
       x=x-I->Block->margin.left;
       I->LastX=x;
@@ -2980,19 +2980,19 @@ static int SceneClick(Block *block,int button,int x,int y,
         
         if(Feedback(G,FB_Scene,FB_Results)) {
           if(obj->fDescribeElement) 
-            obj->fDescribeElement(obj,I->LastPicked.index,buffer);
+            obj->fDescribeElement(obj,I->LastPicked.src.index,buffer);
           PRINTF " You clicked %s",buffer ENDF(G);        
           OrthoRestorePrompt(G);
         }
         objMol = (ObjectMolecule*)obj;
-        EditorPrepareDrag(G,objMol,-1,I->LastPicked.index,
+        EditorPrepareDrag(G,objMol,-1,I->LastPicked.src.index,
                           SettingGetGlobal_i(G,cSetting_state)-1);
         I->SculptingFlag = 1;
-        I->SculptingSave =  objMol->AtomInfo[I->LastPicked.index].protekted;
-        objMol->AtomInfo[I->LastPicked.index].protekted=2;
+        I->SculptingSave =  objMol->AtomInfo[I->LastPicked.src.index].protekted;
+        objMol->AtomInfo[I->LastPicked.src.index].protekted=2;
         break;
       case cObjectSlice:
-        if(ObjectSliceGetVertex((ObjectSlice*)obj,I->LastPicked.index,I->LastPicked.bond,I->LastPickVertex)) {
+        if(ObjectSliceGetVertex((ObjectSlice*)obj,I->LastPicked.src.index,I->LastPicked.src.bond,I->LastPickVertex)) {
           I->LastPickVertexFlag=true;
         }
         break;
@@ -3028,18 +3028,18 @@ static int SceneClick(Block *block,int button,int x,int y,
       x = get_stereo_x(x,NULL,I->Width);
 
     if(SceneDoXYPick(G,x,y)) {
-      obj=(CObject*)I->LastPicked.ptr;
+      obj=(CObject*)I->LastPicked.context.object;
 
       switch(obj->type) {
       case cObjectMolecule:
         if(Feedback(G,FB_Scene,FB_Results)) {
           if(obj->fDescribeElement) 
-            obj->fDescribeElement(obj,I->LastPicked.index,buffer);
+            obj->fDescribeElement(obj,I->LastPicked.src.index,buffer);
           PRINTF " You clicked %s",buffer ENDF(G);        
           OrthoRestorePrompt(G);
         }
         sprintf(buffer,"%s`%d",
-                obj->Name,I->LastPicked.index+1);
+                obj->Name,I->LastPicked.src.index+1);
         switch(mode) {
         case cButModeLB:
         case cButModeAddToLB:
@@ -3060,7 +3060,7 @@ static int SceneClick(Block *block,int button,int x,int y,
         case cButModeDragMol:
           {
             objMol = (ObjectMolecule*)obj;            
-            ObjectMoleculeGetAtomSeleLog(objMol,I->LastPicked.index,buf1,false);
+            ObjectMoleculeGetAtomSeleLog(objMol,I->LastPicked.src.index,buf1,false);
             sprintf(buffer,"cmd.drag(\"bymol (%s)\")",buf1);
             PParse(buffer);
             PLog(buffer,cPLog_pym);
@@ -3073,7 +3073,7 @@ static int SceneClick(Block *block,int button,int x,int y,
 
             if(ObjectMoleculeGetAtomTxfVertex((ObjectMolecule*)obj,
                                            SettingGetGlobal_i(G,cSetting_state)-1,
-                                           I->LastPicked.index,v1)) {
+                                           I->LastPicked.src.index,v1)) {
               EditorFavorOrigin(G,v1);
               ExecutiveOrigin(G,NULL,true,NULL,v1,0);
             }
@@ -3081,14 +3081,14 @@ static int SceneClick(Block *block,int button,int x,int y,
           if(obj->type==cObjectMolecule) {
             if(SettingGet(G,cSetting_logging)) {
               objMol = (ObjectMolecule*)obj;            
-              ObjectMoleculeGetAtomSeleLog(objMol,I->LastPicked.index,buf1,false);
+              ObjectMoleculeGetAtomSeleLog(objMol,I->LastPicked.src.index,buf1,false);
               sprintf(buffer,"cmd.origin(\"%s\")",buf1);
               PLog(buffer,cPLog_pym);
 
             }
             if(Feedback(G,FB_Scene,FB_Results)) {
               if(obj->fDescribeElement) 
-                obj->fDescribeElement(obj,I->LastPicked.index,buffer);
+                obj->fDescribeElement(obj,I->LastPicked.src.index,buffer);
               PRINTF " You clicked %s",buffer ENDF(G);        
               OrthoRestorePrompt(G);
             }
@@ -3104,14 +3104,14 @@ static int SceneClick(Block *block,int button,int x,int y,
 
             if(ObjectMoleculeGetAtomTxfVertex((ObjectMolecule*)obj,
                                            SettingGetGlobal_i(G,cSetting_state)-1,
-                                           I->LastPicked.index,v1)) {
+                                           I->LastPicked.src.index,v1)) {
               ExecutiveCenter(G,NULL,0,true,-1,v1,true);
             }
           }
           
           if(SettingGet(G,cSetting_logging)) {
             objMol = (ObjectMolecule*)obj;            
-            ObjectMoleculeGetAtomSeleLog(objMol,I->LastPicked.index,buf1,false);
+            ObjectMoleculeGetAtomSeleLog(objMol,I->LastPicked.src.index,buf1,false);
             sprintf(buffer,"cmd.center(\"%s\",state=-1)",buf1);
             PLog(buffer,cPLog_pym);
           }
@@ -3119,7 +3119,7 @@ static int SceneClick(Block *block,int button,int x,int y,
         }
         switch(mode) {
         case cButModeSimpleClick:
-          PyMOL_SetClickReady(G->PyMOL,obj->Name,I->LastPicked.index);
+          PyMOL_SetClickReady(G->PyMOL,obj->Name,I->LastPicked.src.index);
           break;
         case cButModeLB:
         case cButModeMB:
@@ -3134,7 +3134,7 @@ static int SceneClick(Block *block,int button,int x,int y,
           if(obj->type==cObjectMolecule) {
             if(SettingGet(G,cSetting_logging)) {
               objMol = (ObjectMolecule*)obj;            
-              ObjectMoleculeGetAtomSeleLog(objMol,I->LastPicked.index,buf1,false);
+              ObjectMoleculeGetAtomSeleLog(objMol,I->LastPicked.src.index,buf1,false);
               sprintf(buffer,"cmd.select('%s',\"%s(%s)\")",selName,sel_mode_kw,buf1);
               PLog(buffer,cPLog_pym);
             }
@@ -3153,7 +3153,7 @@ static int SceneClick(Block *block,int button,int x,int y,
             if(obj->type==cObjectMolecule) {
               if(SettingGet(G,cSetting_logging)) {
                 objMol = (ObjectMolecule*)obj;            
-                ObjectMoleculeGetAtomSeleLog(objMol,I->LastPicked.index,buffer,false);
+                ObjectMoleculeGetAtomSeleLog(objMol,I->LastPicked.src.index,buffer,false);
                 sprintf(buf2,"(((%s) or %s(%s)) and ((%s(%s)) and %s(%s)))",
                         selName,sel_mode_kw,buffer,sel_mode_kw,buffer,sel_mode_kw,selName);
                 sprintf(buffer,"cmd.select('%s',\"%s(%s)\")",selName,sel_mode_kw,buf2);
@@ -3166,7 +3166,7 @@ static int SceneClick(Block *block,int button,int x,int y,
             if(obj->type==cObjectMolecule) {
               if(SettingGet(G,cSetting_logging)) {
                 objMol = (ObjectMolecule*)obj;            
-                ObjectMoleculeGetAtomSeleLog(objMol,I->LastPicked.index,buf1,false);
+                ObjectMoleculeGetAtomSeleLog(objMol,I->LastPicked.src.index,buf1,false);
                 sprintf(buffer,"cmd.select('%s',\"%s(%s)\")",selName,sel_mode_kw,buf1);
                 PLog(buffer,cPLog_pym);
               }
@@ -3670,7 +3670,7 @@ static int SceneDrag(Block *block,int x,int y,int mod,double when)
   SceneDontCopyNext(G);
   switch(mode) {
   case cButModePickAtom:
-    obj=(CObject*)I->LastPicked.ptr;
+    obj=(CObject*)I->LastPicked.context.object;
     if(obj)
       switch(obj->type) {
       case cObjectGadget: {
@@ -3678,7 +3678,7 @@ static int SceneDrag(Block *block,int x,int y,int mod,double when)
         
         gad = (ObjectGadget*)obj;
 
-        ObjectGadgetGetVertex(gad,I->LastPicked.index,I->LastPicked.bond,v1);
+        ObjectGadgetGetVertex(gad,I->LastPicked.src.index,I->LastPicked.src.bond,v1);
 
         vScale = SceneGetScreenVertexScale(G,v1);
         if((I->StereoMode>1)&&(I->StereoMode<4)) {
@@ -3708,7 +3708,7 @@ static int SceneDrag(Block *block,int x,int y,int mod,double when)
           break;
         }
         add3f(v1,v2,v2);
-        ObjectGadgetSetVertex(gad,I->LastPicked.index,I->LastPicked.bond,v2);
+        ObjectGadgetSetVertex(gad,I->LastPicked.src.index,I->LastPicked.src.bond,v2);
         if(gad->Obj.fUpdate)
           gad->Obj.fUpdate((CObject*)gad);
         SceneChanged(G);
@@ -3834,7 +3834,7 @@ static int SceneDrag(Block *block,int x,int y,int mod,double when)
   case cButModeMoveAtom:
   case cButModeMoveAtomZ:
   case cButModePkTorBnd:
-    obj=(CObject*)I->LastPicked.ptr;
+    obj=(CObject*)I->LastPicked.context.object;
     if(obj) {
       if(I->Threshold) {
         if((abs(x-I->ThresholdX)>I->Threshold)||
@@ -3847,7 +3847,7 @@ static int SceneDrag(Block *block,int x,int y,int mod,double when)
         case cObjectMolecule:
           if(ObjectMoleculeGetAtomTxfVertex((ObjectMolecule*)obj,
                                          SettingGetGlobal_i(G,cSetting_state)-1,
-                                         I->LastPicked.index,v1)) {
+                                         I->LastPicked.src.index,v1)) {
             /* scale properly given the current projection matrix */
             vScale = SceneGetScreenVertexScale(G,v1);
             if((I->StereoMode>1)&&(I->StereoMode<4)) {
@@ -3880,12 +3880,12 @@ static int SceneDrag(Block *block,int x,int y,int mod,double when)
             MatrixInvTransformC44fAs33f3f(I->RotMatrix,v3,v3); 
 
             if((mode!=cButModeMoveAtom)&&(mode!=cButModeMoveAtomZ)) {
-              EditorDrag(G,(ObjectMolecule*)obj,I->LastPicked.index,mode,
+              EditorDrag(G,(ObjectMolecule*)obj,I->LastPicked.src.index,mode,
                          SettingGetGlobal_i(G,cSetting_state)-1,v1,v2,v3);
             } else {
               int log_trans = (int)SettingGet(G,cSetting_log_conformations);
               ObjectMoleculeMoveAtom((ObjectMolecule*)obj,SettingGetGlobal_i(G,cSetting_state)-1,
-                                     I->LastPicked.index,v2,1,log_trans);
+                                     I->LastPicked.src.index,v2,1,log_trans);
               SceneInvalidate(G);
             }
           }
@@ -4403,7 +4403,7 @@ int  SceneInit(PyMOLGlobals *G)
     I->LastFrameTime = UtilGetSeconds(G);
     I->LastRockTime = UtilGetSeconds(G);
     I->SingleClickDelay = 0.0;
-    I->LastPicked.ptr = NULL;
+    I->LastPicked.context.object = NULL;
     I->LastStateBuilt = -1;
     I->CopyNextFlag=true;
     I->CopyFlag=false;
@@ -5314,7 +5314,7 @@ static void SceneProgramLighting(PyMOLGlobals *G)
 }
 /*========================================================================*/
 static void SceneRenderAll(PyMOLGlobals *G,SceneUnitContext *context,
-                           float *normal,Pickable **pickVLA,
+                           float *normal,Picking **pickVLA,
                            int pass,int fat, float width_scale,int slot)
 {
   register CScene *I=G->Scene;
@@ -5430,7 +5430,7 @@ void sharp3d_end_stereo(void);
 #endif
 
 /*========================================================================*/
-void SceneRender(PyMOLGlobals *G,Pickable *pick,int x,int y,
+void SceneRender(PyMOLGlobals *G,Picking *pick,int x,int y,
                  Multipick *smp,int oversize_width, int oversize_height)
 {
   /* think in terms of the camera's world */
@@ -5446,7 +5446,7 @@ void SceneRender(PyMOLGlobals *G,Pickable *pick,int x,int y,
   float height,width;
   double start_time=0.0;
   int view_save[4];
-  Pickable *pickVLA,*pik;
+  Picking *pickVLA,*pik;
   int lastIndex=0;
   void *lastPtr=NULL;
   int index;
@@ -5751,9 +5751,9 @@ void SceneRender(PyMOLGlobals *G,Pickable *pick,int x,int y,
       glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 
-      pickVLA=VLAlloc(Pickable,5000);
-      pickVLA[0].index=0;
-      pickVLA[0].ptr=NULL;
+      pickVLA=VLAlloc(Picking,5000);
+      pickVLA[0].src.index = 0;
+      pickVLA[0].src.bond = 0;
 
       SceneRenderAll(G,&context,NULL,&pickVLA,0,true,0.0F,0);	  
 
@@ -5766,8 +5766,8 @@ void SceneRender(PyMOLGlobals *G,Pickable *pick,int x,int y,
 	
       glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	
-      pickVLA[0].index=0;
-      pickVLA[0].ptr=(void*)pick; /* this is just a flag */
+      pickVLA[0].src.index = 0;
+      pickVLA[0].src.bond = 1;
 	
       SceneRenderAll(G,&context,NULL,&pickVLA,0,true,0.0F,0);
 
@@ -5782,22 +5782,24 @@ void SceneRender(PyMOLGlobals *G,Pickable *pick,int x,int y,
 
       if(debug_pick) {
         PRINTFB(G,FB_Scene,FB_Details)
-          " SceneClick-Detail: index %d < %d?\n",index,pickVLA[0].index
+          " SceneClick-Detail: index %d < %d?\n",index,pickVLA[0].src.index
           ENDFB(G);
       }
       
-      if(index&&(index<=pickVLA[0].index)) {
+      if(index&&(index<=pickVLA[0].src.index)) {
         *pick = pickVLA[index]; /* return object info */
         if(debug_pick) {
           PRINTFB(G,FB_Scene,FB_Details)
-            " SceneClick-Detail: obj %p index %d bond %d\n",pick->ptr,pick->index,pick->bond
+            " SceneClick-Detail: obj %p index %d bond %d\n",
+            pick->context.object,
+            pick->src.index,pick->src.bond
             ENDFB(G);
         }
       } else {
-        pick->ptr = NULL;
+        pick->context.object = NULL;
       }
       
-		VLAFree(pickVLA);
+      VLAFree(pickVLA);
 		
     } else if(smp) {
 
@@ -5813,9 +5815,9 @@ void SceneRender(PyMOLGlobals *G,Pickable *pick,int x,int y,
       glClearColor(0.0,0.0,0.0,0.0);
       glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	
-      pickVLA=VLAlloc(Pickable,5000);
-      pickVLA[0].index=0;
-      pickVLA[0].ptr=NULL;
+      pickVLA=VLAlloc(Picking,5000);
+      pickVLA[0].src.index = 0;
+      pickVLA[0].src.bond = 0; /* this is just a flag for first pass */
       
       SceneRenderAll(G,&context,NULL,&pickVLA,0,true,0.0F,0);
       
@@ -5823,8 +5825,8 @@ void SceneRender(PyMOLGlobals *G,Pickable *pick,int x,int y,
 
       glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	
-      pickVLA[0].index=0;
-      pickVLA[0].ptr=(void*)smp; /* this is just a flag */
+      pickVLA[0].src.index = 0;
+      pickVLA[0].src.bond = 1; /* this is just a flag for second pass */
 	
       SceneRenderAll(G,&context,NULL,&pickVLA,0,true,0.0F,0);
 
@@ -5840,17 +5842,17 @@ void SceneRender(PyMOLGlobals *G,Pickable *pick,int x,int y,
           
           if(lowBitVLA[low+1]==highBitVLA[high+1]) {
             index = lowBitVLA[low]+(highBitVLA[high]<<12);
-            if(index&&(index<=pickVLA[0].index)) {          
+            if(index&&(index<=pickVLA[0].src.index)) {          
               pik = pickVLA+index; /* just using as a tmp */
-              if((pik->index!=lastIndex)||(pik->ptr!=lastPtr))
+              if((pik->src.index!=lastIndex)||(pik->context.object!=lastPtr))
                 {
-                  if(((CObject*)pik->ptr)->type==cObjectMolecule) {
+                  if(((CObject*)pik->context.object)->type==cObjectMolecule) {
                     nPick++; /* start from 1 */
-                    VLACheck(smp->picked,Pickable,nPick);
+                    VLACheck(smp->picked,Picking,nPick);
                     smp->picked[nPick] = *pik; /* return atom/object info -- will be redundant */
                   }
-                  lastIndex=pik->index;                
-                  lastPtr=pik->ptr;
+                  lastIndex=pik->src.index;                
+                  lastPtr=pik->context.object;
                 }
             }
             low+=2;
@@ -5862,7 +5864,7 @@ void SceneRender(PyMOLGlobals *G,Pickable *pick,int x,int y,
         }
       }
 
-      smp->picked[0].index=nPick;
+      smp->picked[0].src.index=nPick;
 
 		VLAFree(pickVLA);
       VLAFreeP(lowBitVLA);

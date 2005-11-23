@@ -24,7 +24,7 @@ Z* -------------------------------------------------------------------
 #include"ObjectMolecule.h"
 
 typedef struct CoordSet {
-  void (*fUpdate)(struct CoordSet *I);
+  void (*fUpdate)(struct CoordSet *I,int state);
   void (*fRender)(struct CoordSet *I,RenderInfo *info);
   void (*fFree)(struct CoordSet *I);
   void (*fEnumIndices)(struct CoordSet *I);

@@ -19,7 +19,7 @@ Z* -------------------------------------------------------------------
 #include"Rep.h"
 #include"CoordSet.h"
 
-Rep *RepRibbonNew(CoordSet *cset);
+Rep *RepRibbonNew(CoordSet *cset,int state);
 void RepRibbonInit(void);
 
 #endif

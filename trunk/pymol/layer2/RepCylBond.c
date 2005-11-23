@@ -66,7 +66,7 @@ float *RepCylinderBox(float *v,float *v1,float *v2,float tube_size,
 static void RepCylBondRender(RepCylBond *I,RenderInfo *info)
 {
   CRay *ray = info->ray;
-  Pickable **pick = info->pick;
+  Picking **pick = info->pick;
   int a;
   float *v;
   int c,cc;
@@ -112,7 +112,7 @@ static void RepCylBondRender(RepCylBond *I,RenderInfo *info)
         " RepCylBondRender: rendering pickable...\n"
         ENDFD;
 
-      i=(*pick)->index;
+      i=(*pick)->src.index;
 
       v=I->VP;
       c=I->NP;
@@ -122,13 +122,14 @@ static void RepCylBondRender(RepCylBond *I,RenderInfo *info)
 
         i++;
 
-        if(!(*pick)[0].ptr) {
+        if(!(*pick)[0].src.bond) {
           /* pass 1 - low order bits */
 
           glColor3ub((uchar)((i&0xF)<<4),(uchar)((i&0xF0)|0x8),(uchar)((i&0xF00)>>4)); 
-          VLACheck((*pick),Pickable,i);
+          VLACheck((*pick),Picking,i);
           p++;
-          (*pick)[i] = *p; /* copy object and atom info */
+          (*pick)[i].src = *p; /* copy object and atom info */
+          (*pick)[i].context = I->R.context;
         } else { 
           /* pass 2 - high order bits */
 
@@ -180,7 +181,7 @@ static void RepCylBondRender(RepCylBond *I,RenderInfo *info)
         v+=24;
 
       }
-      (*pick)[0].index = i; /* pass the count */
+      (*pick)[0].src.index = i; /* pass the count */
 
     } else {
       int use_dlst;    
@@ -1139,7 +1140,7 @@ static void RepValence(float **v_ptr,int *n_ptr, /* opengl */
 }
 
 
-Rep *RepCylBondNew(CoordSet *cs)
+Rep *RepCylBondNew(CoordSet *cs,int state)
 {
   PyMOLGlobals *G=cs->State.G;
   ObjectMolecule *obj;
@@ -1871,35 +1872,37 @@ Rep *RepCylBondNew(CoordSet *cs)
       I->VSPC = ReallocForSure(I->VSPC,float,(vspc-I->VSPC));
 	 if(SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_pickable)) { 
 
-      PRINTFD(G,FB_RepCylBond)
-        " RepCylBondNEW: generating pickable version\n"
-        ENDFD;
-      /* pickable versions are simply capped boxes, 
-         vertices: 8 points * 3 = 32  * 2 = 48 floats per bond
-      */
-
-      vp_size = maxCyl*24;
-      I->VP=Alloc(float,vp_size);
-		ErrChkPtr(G,I->VP);
-		
-      rp_size = maxCyl+1;
-		I->R.P=Alloc(Pickable,rp_size);
-		ErrChkPtr(G,I->R.P);
-		rp = I->R.P + 1; /* skip first record! */
-
-		v=I->VP;
-		b=obj->Bond;
-		for(a=0;a<obj->NBond;a++)
-		  {
-          b1 = b->index[0];
-          b2 = b->index[1];
-          b++;
-          if(obj->DiscreteFlag) {
-            if((cs==obj->DiscreteCSet[b1])&&(cs==obj->DiscreteCSet[b2])) {
-              a1=obj->DiscreteAtmToIdx[b1];
-              a2=obj->DiscreteAtmToIdx[b2];
-            } else {
-              a1=-1;
+       PRINTFD(G,FB_RepCylBond)
+         " RepCylBondNEW: generating pickable version\n"
+         ENDFD;
+       /* pickable versions are simply capped boxes, 
+          vertices: 8 points * 3 = 32  * 2 = 48 floats per bond
+       */
+       
+       vp_size = maxCyl*24;
+       I->VP=Alloc(float,vp_size);
+       ErrChkPtr(G,I->VP);
+       
+       rp_size = maxCyl+1;
+       I->R.P=Alloc(Pickable,rp_size);
+       ErrChkPtr(G,I->R.P);
+       rp = I->R.P + 1; /* skip first record! */
+       I->R.context.object = (void*)obj;
+       I->R.context.state = state;
+       
+       v=I->VP;
+       b=obj->Bond;
+       for(a=0;a<obj->NBond;a++)
+         {
+           b1 = b->index[0];
+           b2 = b->index[1];
+           b++;
+           if(obj->DiscreteFlag) {
+             if((cs==obj->DiscreteCSet[b1])&&(cs==obj->DiscreteCSet[b2])) {
+               a1=obj->DiscreteAtmToIdx[b1];
+               a2=obj->DiscreteAtmToIdx[b2];
+             } else {
+               a1=-1;
               a2=-1;
             }
           } else {
@@ -1922,8 +1925,8 @@ Rep *RepCylBondNew(CoordSet *cs)
 
 				  if(s1||s2)
 					 {	
-						copy3f(cs->Coord+3*a1,v1);
-                    copy3f(cs->Coord+3*a2,v2);
+                       copy3f(cs->Coord+3*a1,v1);
+                       copy3f(cs->Coord+3*a2,v2);
 						
 						h[0]=(v1[0]+v2[0])/2;
 						h[1]=(v1[1]+v2[1])/2;
@@ -1932,22 +1935,20 @@ Rep *RepCylBondNew(CoordSet *cs)
 						if(s1&(!ai1->masked))
 						  {
 							 I->NP++;
-                      rp->ptr = (void*)obj;
 							 rp->index = b1;
-                      rp->bond = a;
-                      rp++;
-
-                      v = RepCylinderBox(v,v1,h,radius,overlap_r,nub_r);
+                             rp->bond = a;
+                             rp++;
+                             
+                             v = RepCylinderBox(v,v1,h,radius,overlap_r,nub_r);
 						  }
 						if(s2&(!ai2->masked))
 						  {
 							 I->NP++;
-                      rp->ptr = (void*)obj;
 							 rp->index = b2;
-                      rp->bond = a;
-                      rp++;
-
-                      v = RepCylinderBox(v,h,v2,radius,overlap_r,nub_r);
+                             rp->bond = a;
+                             rp++;
+                             
+                             v = RepCylinderBox(v,h,v2,radius,overlap_r,nub_r);
 						  }
 					 }
 				}
@@ -1961,7 +1962,7 @@ Rep *RepCylBondNew(CoordSet *cs)
 		I->R.P = Realloc(I->R.P,Pickable,I->NP+1);
 		I->R.P[0].index = I->NP;
       I->VP = ReallocForSure(I->VP,float,(v-I->VP));
-
+      
       PRINTFD(G,FB_RepCylBond)
         " RepCylBondNew: I->NP: %d I->VP: %p\n",I->NP,
         (void*)I->VP

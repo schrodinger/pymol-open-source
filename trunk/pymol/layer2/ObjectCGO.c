@@ -213,7 +213,7 @@ static void ObjectCGORender(ObjectCGO *I,RenderInfo *info)
   register PyMOLGlobals *G = I->Obj.G;
   int state = info->state;
   CRay *ray = info->ray;
-  Pickable **pick = info->pick;
+  Picking **pick = info->pick;
   int pass = info->pass;
   ObjectCGOState *sobj = NULL;
   int a;

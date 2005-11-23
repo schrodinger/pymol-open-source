@@ -166,8 +166,8 @@ void CGOCustomCylinderv(CGO *I,float *p1,float *p2,float r,float *c1,float *c2,
 
 struct GadgetSet;
 CGO *CGOProcessShape(CGO *I,struct GadgetSet *gs,CGO *result);
-void CGORenderGLPickable(CGO *I,Pickable **pick,
-                         void *ptr,CSetting *set1,CSetting *set2);
+void CGORenderGLPicking(CGO *I,Picking **pick,
+                         PickContext *context,CSetting *set1,CSetting *set2);
 void CGORenderGL(CGO *I,float *color,CSetting *set1,CSetting *set2,RenderInfo *info);
 void CGORenderRay(CGO *I,CRay *ray,float *color,CSetting *set1,CSetting *set2);
 void CGOReset(CGO *I);

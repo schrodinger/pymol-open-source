@@ -19,6 +19,6 @@ Z* -------------------------------------------------------------------
 #include"Rep.h"
 #include"CoordSet.h"
 
-Rep *RepNonbondedNew(CoordSet *cset);
+Rep *RepNonbondedNew(CoordSet *cset,int state);
 
 #endif

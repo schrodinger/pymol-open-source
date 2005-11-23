@@ -43,7 +43,7 @@ Z* -------------------------------------------------------------------
 
 #include"PyMOLGlobals.h"
 
-void CoordSetUpdate(CoordSet *I);
+static void CoordSetUpdate(CoordSet *I,int state);
 
 void CoordSetFree(CoordSet *I);
 void CoordSetRender(CoordSet *I,RenderInfo *info);
@@ -871,21 +871,21 @@ void CoordSetInvalidateRep(CoordSet *I,int type,int level)
 }
 /*========================================================================*/
 
-#define RepUpdateMacro(I,rep,new_fn) {\
+#define RepUpdateMacro(I,rep,new_fn,state) {\
   if(I->Active[rep]) {\
     if(!I->Rep[rep]) {\
-      I->Rep[rep]=new_fn(I);\
+      I->Rep[rep]=new_fn(I,state);\
       if(I->Rep[rep]) \
-         I->Rep[rep]->fNew=(struct Rep *(*)(struct CoordSet *))new_fn;\
+         I->Rep[rep]->fNew=(struct Rep *(*)(struct CoordSet *,int state))new_fn;\
     } else {\
       if(I->Rep[rep]->fUpdate)\
-         I->Rep[rep] = I->Rep[rep]->fUpdate(I->Rep[rep],I,rep);\
+         I->Rep[rep] = I->Rep[rep]->fUpdate(I->Rep[rep],I,state,rep);\
     }\
   }\
 OrthoBusyFast(I->State.G,rep,I->NRep);\
 }
 /*========================================================================*/
-void CoordSetUpdate(CoordSet *I)
+static void CoordSetUpdate(CoordSet *I,int state)
 {
   int a;
   int i;
@@ -915,17 +915,17 @@ void CoordSetUpdate(CoordSet *I)
 		}
 	 }
   OrthoBusyFast(I->State.G,0,I->NRep);
-  RepUpdateMacro(I, cRepLine,            RepWireBondNew        );
-  RepUpdateMacro(I, cRepCyl,             RepCylBondNew         );
-  RepUpdateMacro(I, cRepDot,             RepDotNew             );
-  RepUpdateMacro(I, cRepMesh,            RepMeshNew            );
-  RepUpdateMacro(I, cRepSphere,          RepSphereNew          );
-  RepUpdateMacro(I, cRepRibbon,          RepRibbonNew          );
-  RepUpdateMacro(I, cRepCartoon,         RepCartoonNew         );
-  RepUpdateMacro(I, cRepSurface,         RepSurfaceNew         );
-  RepUpdateMacro(I, cRepLabel,           RepLabelNew           );
-  RepUpdateMacro(I, cRepNonbonded,       RepNonbondedNew       );
-  RepUpdateMacro(I, cRepNonbondedSphere, RepNonbondedSphereNew );
+  RepUpdateMacro(I, cRepLine,            RepWireBondNew        , state );
+  RepUpdateMacro(I, cRepCyl,             RepCylBondNew         , state );
+  RepUpdateMacro(I, cRepDot,             RepDotNew             , state );
+  RepUpdateMacro(I, cRepMesh,            RepMeshNew            , state );
+  RepUpdateMacro(I, cRepSphere,          RepSphereNew          , state );
+  RepUpdateMacro(I, cRepRibbon,          RepRibbonNew          , state );
+  RepUpdateMacro(I, cRepCartoon,         RepCartoonNew         , state );
+  RepUpdateMacro(I, cRepSurface,         RepSurfaceNew         , state );
+  RepUpdateMacro(I, cRepLabel,           RepLabelNew           , state );
+  RepUpdateMacro(I, cRepNonbonded,       RepNonbondedNew       , state );
+  RepUpdateMacro(I, cRepNonbondedSphere, RepNonbondedSphereNew , state );
 
   for(a=0;a<I->NRep;a++) 
     if(!I->Rep[a])
@@ -954,7 +954,7 @@ void CoordSetRender(CoordSet *I,RenderInfo *info)
   PyMOLGlobals *G = I->State.G;
   int pass = info->pass;
   CRay *ray = info->ray;
-  Pickable **pick = info->pick;
+  Picking **pick = info->pick;
   int a,aa;
   Rep *r;
   int float_labels = SettingGet_i(G,I->Setting,

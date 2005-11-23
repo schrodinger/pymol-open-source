@@ -50,7 +50,7 @@ void RepDotFree(RepDot *I)
 static void RepDotRender(RepDot *I,RenderInfo *info)
 {
   CRay *ray = info->ray;
-  Pickable **pick = info->pick;
+  Picking **pick = info->pick;
   PyMOLGlobals *G=I->R.G;
   float *v=I->V;
   int c=I->N;
@@ -148,7 +148,7 @@ static void RepDotRender(RepDot *I,RenderInfo *info)
   }
 }
 
-Rep *RepDotNew(CoordSet *cs)
+Rep *RepDotNew(CoordSet *cs,int state)
 {
   return(RepDotDoNew(cs,cRepDotNormal));
 }

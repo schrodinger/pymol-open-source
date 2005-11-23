@@ -1154,7 +1154,7 @@ float SculptIterateObject(CSculpt *I,ObjectMolecule *obj,
   float good_color[3] = { 0.2, 1.0, 0.2};
   float bad_color[3] = { 1.0, 0.2, 0.2};
   int vdw_vis_mode;
-  float vdw_vis_min,vdw_vis_mid,vdw_vis_max;
+  float vdw_vis_min=0.0F,vdw_vis_mid=0.0F,vdw_vis_max=0.0F;
 
   PRINTFD(G,FB_Sculpt)
     " SculptIterateObject-Debug: entered state=%d n_cycle=%d\n",state,n_cycle

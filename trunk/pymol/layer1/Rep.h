@@ -95,18 +95,19 @@ struct Object;
 typedef struct Rep {
   PyMOLGlobals *G;
   void            (*fRender)(struct Rep *I,RenderInfo *info);
-  struct Rep     *(*fUpdate)(struct Rep *I,struct CoordSet *cs,int rep);
+  struct Rep     *(*fUpdate)(struct Rep *I,struct CoordSet *cs,int state,int rep);
   void        (*fInvalidate)(struct Rep *I,struct CoordSet *cs,int level);
   void              (*fFree)(struct Rep* I);
   int MaxInvalid,Active;
   struct CObject *obj;
   struct CoordSet *cs;
   Pickable *P;
+  PickContext context;
   /* private */
   void        (*fRecolor)(struct Rep *I,struct CoordSet *cs);
   int         (*fSameVis)(struct Rep *I,struct CoordSet *cs);
-  struct Rep *(*fRebuild)(struct Rep *I,struct CoordSet *cs,int rep);
-  struct Rep *(*fNew)(struct CoordSet *cs);
+  struct Rep *(*fRebuild)(struct Rep *I,struct CoordSet *cs,int state,int rep);
+  struct Rep *(*fNew)(struct CoordSet *cs,int state);
   int displayList;
   int displayListInvalid;
 } Rep;

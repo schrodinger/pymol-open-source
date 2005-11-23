@@ -24,7 +24,6 @@ Z* -------------------------------------------------------------------
 #include"Ortho.h"
 #include"P.h"
 #include"PConv.h"
-#include"Grap.h"
 #include"PopUp.h"
 
 #include"Wizard.h"

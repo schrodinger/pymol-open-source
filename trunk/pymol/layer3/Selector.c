@@ -6312,17 +6312,17 @@ static int *SelectorApplyMultipick(PyMOLGlobals *G,Multipick *mp)
   register CSelector *I=G->Selector;
   int *result;
   int a,n;
-  Pickable *p;
+  Picking *p;
   ObjectMolecule *obj;
   SelectorUpdateTable(G);  
   result = Alloc(int,I->NAtom);
-  n=mp->picked[0].index;
+  n=mp->picked[0].src.index;
   p=mp->picked+1;
   for(a=0;a<I->NAtom;a++) 
     result[a]=0;
-  while(n--) {
-    obj=(ObjectMolecule*)p->ptr;
-    result[obj->SeleBase+p->index] = true;
+  while(n--) { /* what if this object isn't a molecule object??*/
+    obj=(ObjectMolecule*)p->context.object;
+    result[obj->SeleBase+p->src.index] = true;
     p++;
   }
   return(result);
