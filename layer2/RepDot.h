@@ -36,7 +36,7 @@ typedef struct RepDot {
   float Width;
 } RepDot;
 
-Rep *RepDotNew(CoordSet *cset);
+Rep *RepDotNew(CoordSet *cset,int state);
 Rep *RepDotDoNew(CoordSet *cs,int mode);
 void RepDotInit(void);
 

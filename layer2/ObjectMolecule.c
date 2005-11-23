@@ -8996,7 +8996,7 @@ void ObjectMoleculeUpdate(ObjectMolecule *I)
           , a+1, I->Obj.Name
           ENDFB(I->Obj.G);
         if(I->CSet[a]->fUpdate)
-          I->CSet[a]->fUpdate(I->CSet[a]);
+          I->CSet[a]->fUpdate(I->CSet[a],a);
       }
     if(I->Obj.RepVis[cRepCell]) {
       if(I->Symmetry) {
@@ -9294,7 +9294,7 @@ static void ObjectMoleculeRender(ObjectMolecule *I,RenderInfo *info)
   PyMOLGlobals *G = I->Obj.G;
   int state = info->state;
   CRay *ray = info->ray;
-  Pickable **pick = info->pick;
+  Picking **pick = info->pick;
   int pass = info->pass;
   int a;
   int use_matrices = SettingGet_b(I->Obj.G,I->Obj.Setting,NULL,cSetting_use_state_matrices);

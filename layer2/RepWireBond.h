@@ -19,6 +19,6 @@ Z* -------------------------------------------------------------------
 #include"Rep.h"
 #include"CoordSet.h"
 
-Rep *RepWireBondNew(CoordSet *cset);
+Rep *RepWireBondNew(CoordSet *cset,int state);
 
 #endif

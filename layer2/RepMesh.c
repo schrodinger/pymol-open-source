@@ -72,7 +72,7 @@ void RepMeshGetSolventDots(RepMesh *I,CoordSet *cs,float *min,float *max,float p
 static void RepMeshRender(RepMesh *I,RenderInfo *info)
 {
   CRay *ray = info->ray;
-  Pickable **pick = info->pick;
+  Picking **pick = info->pick;
   PyMOLGlobals *G=I->R.G;
   float *v=I->V;
   float *vc=I->VC;
@@ -376,7 +376,7 @@ void RepMeshColor(RepMesh *I,CoordSet *cs)
   
 }
 
-Rep *RepMeshNew(CoordSet *cs)
+Rep *RepMeshNew(CoordSet *cs,int state)
 {
   PyMOLGlobals *G=cs->State.G;
   ObjectMolecule *obj;

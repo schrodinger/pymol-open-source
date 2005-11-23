@@ -58,7 +58,7 @@ void RepNonbondedSphereFree(RepNonbondedSphere *I)
 static void RepNonbondedSphereRender(RepNonbondedSphere *I,RenderInfo *info)
 {
   CRay *ray = info->ray;
-  Pickable **pick = info->pick;
+  Picking **pick = info->pick;
   register PyMOLGlobals *G=I->R.G;
   float *v=I->V;
   int c=I->N;
@@ -80,7 +80,7 @@ static void RepNonbondedSphereRender(RepNonbondedSphere *I,RenderInfo *info)
   } else if(G->HaveGUI && G->ValidContext) {
     if(pick) {
 
-      i=(*pick)->index;
+      i=(*pick)->src.index;
 
       v=I->VP;
       c=I->NP;
@@ -92,13 +92,14 @@ static void RepNonbondedSphereRender(RepNonbondedSphere *I,RenderInfo *info)
 
         i++;
 
-        if(!(*pick)[0].ptr) {
+        if(!(*pick)[0].src.bond) {
           /* pass 1 - low order bits */
 
           glColor3ub((uchar)((i&0xF)<<4),(uchar)((i&0xF0)|0x8),(uchar)((i&0xF00)>>4)); 
-          VLACheck((*pick),Pickable,i);
+          VLACheck((*pick),Picking,i);
           p++;
-          (*pick)[i] = *p; /* copy object and atom info */
+          (*pick)[i].src = *p; /* copy object and atom info */
+          (*pick)[i].context = I->R.context;
         } else { 
           /* pass 2 - high order bits */
 
@@ -124,7 +125,7 @@ static void RepNonbondedSphereRender(RepNonbondedSphere *I,RenderInfo *info)
       }
       glEnd();
 
-      (*pick)[0].index = i;
+      (*pick)[0].src.index = i;
 
     } else {
 
@@ -149,7 +150,7 @@ static void RepNonbondedSphereRender(RepNonbondedSphere *I,RenderInfo *info)
   }
 }
 
-Rep *RepNonbondedSphereNew(CoordSet *cs)
+Rep *RepNonbondedSphereNew(CoordSet *cs,int state)
 {
   PyMOLGlobals *G=cs->State.G;
   ObjectMolecule *obj;
@@ -317,7 +318,6 @@ Rep *RepNonbondedSphereNew(CoordSet *cs)
 
         a1=cs->IdxToAtm[a];
         
-        I->R.P[I->NP].ptr = (void*)obj;
         I->R.P[I->NP].index = a1;
         I->R.P[I->NP].bond = -1;
         v1 = cs->Coord+3*a;
@@ -342,6 +342,9 @@ Rep *RepNonbondedSphereNew(CoordSet *cs)
         *(v++)=v1[2]+nonbonded_size;
       }
     I->R.P = Realloc(I->R.P,Pickable,I->NP+1);
+    I->R.context.object = (void*)obj;
+    I->R.context.state = state;
+
     I->R.P[0].index = I->NP;
     I->VP = Realloc(I->VP,float,I->NP*21);
   }

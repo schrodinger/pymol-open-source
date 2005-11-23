@@ -54,7 +54,7 @@ void RepLabelFree(RepLabel *I)
 static void RepLabelRender(RepLabel *I,RenderInfo *info)
 {
   CRay *ray = info->ray;
-  Pickable **pick = info->pick;
+  Picking **pick = info->pick;
   PyMOLGlobals *G=I->R.G;
   float *v=I->V;
   int c=I->N;
@@ -99,7 +99,7 @@ static void RepLabelRender(RepLabel *I,RenderInfo *info)
   }
 }
 
-Rep *RepLabelNew(CoordSet *cs)
+Rep *RepLabelNew(CoordSet *cs,int state)
 {
   PyMOLGlobals *G=cs->State.G;
   ObjectMolecule *obj;

@@ -60,22 +60,26 @@ Z* -------------------------------------------------------------------
 #endif
 
 typedef struct { 
-  void *ptr; /* object pointer */
   int index; /* atom index.
                 NOTE: that first record contains the list count...not pick info */
-  int bond; /* bond index, otherwise -1 */
+  int bond; /* bond index, otherwise -1 for atom, -2 for label */
 } Pickable;
 
 typedef struct {
-  Pickable src;
+  void *object;
   int state;
-  int matrix;
+  /*  int instance; */  /* to come... */
+} PickContext;
+
+typedef struct {
+  Pickable src;
+  PickContext context;
 } Picking;
 
 typedef struct {
   int mode;
   int x,y,w,h;
-  Pickable *picked;
+  Picking *picked;
 } Multipick;
 
 /* not a global, but CRay widely used and Ray.h definitely isn't a
@@ -86,7 +90,7 @@ typedef struct _CRay               CRay;
 typedef struct {
   int state;
   CRay *ray;
-  Pickable **pick;
+  Picking **pick;
   int pass,slot;
   int width_scale_flag;
   float front, back, stereo_front;

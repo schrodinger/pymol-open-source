@@ -19,7 +19,7 @@ Z* -------------------------------------------------------------------
 #include"Rep.h"
 #include"CoordSet.h"
 
-Rep *RepSurfaceNew(CoordSet *cset);
+Rep *RepSurfaceNew(CoordSet *cset,int state);
 
 #define cRepSurface_by_flags     0
 #define cRepSurface_all          1

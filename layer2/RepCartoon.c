@@ -53,7 +53,7 @@ void RepCartoonFree(RepCartoon *I)
 static void RepCartoonRender(RepCartoon *I,RenderInfo *info)
 {
   CRay *ray = info->ray;
-  Pickable **pick = info->pick;
+  Picking **pick = info->pick;
   register PyMOLGlobals *G=I->R.G;
   if(ray) {
     PRINTFD(G,FB_RepCartoon)
@@ -70,7 +70,7 @@ static void RepCartoonRender(RepCartoon *I,RenderInfo *info)
   } else if(G->HaveGUI && G->ValidContext) {
     if(pick) {
       if(I->std) {
-        CGORenderGLPickable(I->std,pick,I->R.obj,
+        CGORenderGLPicking(I->std,pick,&I->R.context,
                             I->R.cs->Setting,I->R.obj->Setting);
       }
     } else {
@@ -1086,7 +1086,7 @@ static void nuc_acid(PyMOLGlobals *G, int a,int a1, AtomInfoType *ai, CoordSet *
   *p_v = v;
 }
 
-Rep *RepCartoonNew(CoordSet *cs)
+Rep *RepCartoonNew(CoordSet *cs,int state)
 {
   PyMOLGlobals *G=cs->State.G;
   ObjectMolecule *obj;

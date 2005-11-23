@@ -198,7 +198,7 @@ static void DistSetRender(DistSet *I,RenderInfo *info)
 {
   CRay *ray = info->ray;
   int pass = info->pass;
-  Pickable **pick = info->pick;
+  Picking **pick = info->pick;
   int float_labels = SettingGet_i(I->State.G,
                                   I->Setting,
                                   I->Obj->Obj.Setting,

@@ -19,7 +19,7 @@ Z* -------------------------------------------------------------------
 #include"Rep.h"
 #include"CoordSet.h"
 
-Rep *RepMeshNew(CoordSet *cset);
+Rep *RepMeshNew(CoordSet *cset,int state);
 void RepMeshInit(void);
 
 #define cRepMesh_by_flags     0

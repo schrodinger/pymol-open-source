@@ -19,6 +19,6 @@ Z* -------------------------------------------------------------------
 #include"Rep.h"
 #include"CoordSet.h"
 
-Rep *RepCylBondNew(CoordSet *cset);
+Rep *RepCylBondNew(CoordSet *cset,int state);
 
 #endif

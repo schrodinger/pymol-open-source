@@ -19,7 +19,7 @@ Z* -------------------------------------------------------------------
 #include"Rep.h"
 #include"CoordSet.h"
 
-Rep *RepLabelNew(CoordSet *cset);
+Rep *RepLabelNew(CoordSet *cset,int state);
 void RepLabelInit(void);
 
 #endif

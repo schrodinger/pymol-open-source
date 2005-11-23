@@ -120,7 +120,6 @@ setup ( # Distribution meta-data
    "layer0/Err.c",
    "layer0/Feedback.c",
    "layer0/Field.c",
-   "layer0/Grap.c",
    "layer0/Isosurf.c",
    "layer0/Map.c",
    "layer0/Match.c",

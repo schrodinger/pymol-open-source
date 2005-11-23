@@ -859,7 +859,7 @@ static void ObjectSliceRender(ObjectSlice *I,RenderInfo *info)
   PyMOLGlobals *G = I->Obj.G;
   int state = info->state;
   CRay *ray = info->ray;
-  Pickable **pick = info->pick;
+  Picking **pick = info->pick;
   int pass = info->pass;
   int cur_state = 0;
   float alpha;
@@ -1018,12 +1018,12 @@ static void ObjectSliceRender(ObjectSlice *I,RenderInfo *info)
         } else if(G->HaveGUI && G->ValidContext) {
           if(pick) {
 
-          int i=(*pick)->index;
+          int i=(*pick)->src.index;
           int j;
-          Pickable p;
+          Picking p;
           
-          p.ptr = (void*)I;
-          p.index = state+1;
+          p.context.object = (void*)I;
+          p.src.index = state+1;
           
           if(I->Obj.RepVis[cRepSlice]) {
             int *strip = oss->strips;
@@ -1058,10 +1058,10 @@ static void ObjectSliceRender(ObjectSlice *I,RenderInfo *info)
                   if(tri_count>=3) {
                     
                     i++;
-                    if(!(*pick)[0].ptr) {
+                    if(!(*pick)[0].src.bond) {
                       /* pass 1 - low order bits */
                       glColor3ub((uchar)((i&0xF)<<4),(uchar)((i&0xF0)|0x8),(uchar)((i&0xF00)>>4)); 
-                      VLACheck((*pick),Pickable,i);
+                      VLACheck((*pick),Picking,i);
                       (*pick)[i] = p; /* copy object and atom info */
                     } else { 
                       /* pass 2 - high order bits */
@@ -1069,7 +1069,7 @@ static void ObjectSliceRender(ObjectSlice *I,RenderInfo *info)
                       j=i>>12;
                       glColor3ub((uchar)((j&0xF)<<4),(uchar)((j&0xF0)|0x8),(uchar)((j&0xF00)>>4)); 
                     }
-                    p.bond = offset0 + 1;
+                    p.src.bond = offset0 + 1;
                     
                     if(tri_count&0x1) { /* get the handedness right ... */
                       glVertex3fv(point+3*offset0);
@@ -1089,7 +1089,7 @@ static void ObjectSliceRender(ObjectSlice *I,RenderInfo *info)
               glEnd();
             }
           }
-          (*pick)[0].index = i; /* pass the count */
+          (*pick)[0].src.index = i; /* pass the count */
           } else {
 
           int render_now = false;

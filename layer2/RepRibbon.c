@@ -56,7 +56,7 @@ void RepRibbonFree(RepRibbon *I)
 static void RepRibbonRender(RepRibbon *I,RenderInfo *info)
 {
   CRay *ray = info->ray;
-  Pickable **pick = info->pick;
+  Picking **pick = info->pick;
   PyMOLGlobals *G=I->R.G;
   float *v=I->V;
   int c=I->N;
@@ -104,7 +104,7 @@ static void RepRibbonRender(RepRibbon *I,RenderInfo *info)
         ENDFD;
 
       if(c) {
-        i=(*pick)->index;
+        i=(*pick)->src.index;
         p=I->R.P;
         last=-1;
         glBegin(GL_LINES);
@@ -114,12 +114,13 @@ static void RepRibbonRender(RepRibbon *I,RenderInfo *info)
             if(ip!=last) {
               i++;
               last=ip;
-              if(!(*pick)[0].ptr) {
+              if(!(*pick)[0].src.bond) {
                 /* pass 1 - low order bits */
               
                 glColor3ub((uchar)((i&0xF)<<4),(uchar)((i&0xF0)|0x8),(uchar)((i&0xF00)>>4)); /* we're encoding the index into the color */
-                VLACheck((*pick),Pickable,i);
-                (*pick)[i] = p[ip]; /* copy object and atom info */
+                VLACheck((*pick),Picking,i);
+                (*pick)[i].src = p[ip]; /* copy object and atom info */
+                (*pick)[i].context = I->R.context;
               } else { 
                 /* pass 2 - high order bits */
                 j=i>>12;
@@ -133,12 +134,13 @@ static void RepRibbonRender(RepRibbon *I,RenderInfo *info)
               glVertex3fv(v+15);
               i++;
               last=ip;
-              if(!(*pick)[0].ptr) {
+              if(!(*pick)[0].src.bond) {
                 /* pass 1 - low order bits */
               
                 glColor3ub((uchar)((i&0xF)<<4),(uchar)((i&0xF0)|0x8),(uchar)((i&0xF00)>>4)); /* we're encoding the index into the color */
-                VLACheck((*pick),Pickable,i);
-                (*pick)[i] = p[ip]; /* copy object and atom info */
+                VLACheck((*pick),Picking,i);
+                (*pick)[i].src = p[ip]; /* copy object and atom info */
+                (*pick)[i].context = I->R.context;
               } else { 
                 /* pass 2 - high order bits */
                 j=i>>12;
@@ -149,7 +151,7 @@ static void RepRibbonRender(RepRibbon *I,RenderInfo *info)
             v+=18;
           }
         glEnd();
-        (*pick)[0].index = i; /* pass the count */
+        (*pick)[0].src.index = i; /* pass the count */
       }
     } else {
       int use_dlst;
@@ -234,7 +236,7 @@ static float smooth(float x,float power)
   }
 }
 
-Rep *RepRibbonNew(CoordSet *cs)
+Rep *RepRibbonNew(CoordSet *cs,int state)
 {
   PyMOLGlobals *G=cs->State.G;
   ObjectMolecule *obj;
@@ -298,8 +300,9 @@ Rep *RepRibbonNew(CoordSet *cs)
   I->R.fRecolor=NULL;
   I->R.obj = (CObject*)obj;
   I->linewidth = SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_ribbon_width);
-
-
+  I->R.context.object = (void*)obj;
+  I->R.context.state = state;
+  
   /* find all of the CA points */
 
   at = Alloc(int,cs->NAtIndex*2);
@@ -550,23 +553,21 @@ Rep *RepRibbonNew(CoordSet *cs)
     d = dl;
 	 s=seg;
 	 atp=at;
-    rp->ptr = (void*)obj;
-    rp->index = cs->IdxToAtm[*atp];
-    if(obj->AtomInfo[cs->IdxToAtm[*atp]].masked)
-      rp->index = -1; 
-    rp->bond = -1;
-    I->NP++;
-    rp++;
-	 for(a=0;a<(nAt-1);a++)
-		{
-        rp->ptr = (void*)obj;
-        rp->index = cs->IdxToAtm[*(atp+1)]; /* store pickable for n+2 */
-        if(obj->AtomInfo[cs->IdxToAtm[*atp]].masked)
-          rp->index = -1;
-          rp->bond = -1;
-        rp++;
-        I->NP++;
-
+     rp->index = cs->IdxToAtm[*atp];
+     if(obj->AtomInfo[cs->IdxToAtm[*atp]].masked)
+       rp->index = -1; 
+     rp->bond = -1;
+     I->NP++;
+     rp++;
+     for(a=0;a<(nAt-1);a++)
+       {
+         rp->index = cs->IdxToAtm[*(atp+1)]; /* store pickable for n+2 */
+         if(obj->AtomInfo[cs->IdxToAtm[*atp]].masked)
+           rp->index = -1;
+         rp->bond = -1;
+         rp++;
+         I->NP++;
+         
         PRINTFD(G,FB_RepRibbon)
           " RepRibbon: seg %d *s %d , *(s+1) %d\n",a,*s,*(s+1)
           ENDFD;

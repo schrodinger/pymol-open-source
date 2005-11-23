@@ -351,7 +351,7 @@ static void RepWireBondRender(RepWireBond *I,RenderInfo *info)
 {
   PyMOLGlobals *G=I->R.G;
   CRay *ray = info->ray;
-  Pickable **pick = info->pick;
+  Picking **pick = info->pick;
   float *v=I->V;
   int c=I->N;
   unsigned int i,j;
@@ -381,7 +381,7 @@ static void RepWireBondRender(RepWireBond *I,RenderInfo *info)
 
     if(pick) {
 
-      i=(*pick)->index;
+      i=(*pick)->src.index;
 
       v=I->VP;
       c=I->NP;
@@ -393,13 +393,15 @@ static void RepWireBondRender(RepWireBond *I,RenderInfo *info)
 
         i++;
 
-        if(!(*pick)[0].ptr) {
+        if(!(*pick)[0].src.bond) {
           /* pass 1 - low order bits */
         
           glColor3ub((uchar)((i&0xF)<<4),(uchar)((i&0xF0)|0x8),(uchar)((i&0xF00)>>4)); /* we're encoding the index into the color */
-          VLACheck((*pick),Pickable,i);
+          VLACheck((*pick),Picking,i);
           p++;
-          (*pick)[i] = *p; /* copy object and atom info */
+          (*pick)[i].src = *p; /* copy object and atom info */
+          (*pick)[i].context = I->R.context;
+          
         } else { 
           /* pass 2 - high order bits */
 
@@ -418,7 +420,7 @@ static void RepWireBondRender(RepWireBond *I,RenderInfo *info)
 
       }
       glEnd();
-      (*pick)[0].index = i; /* pass the count */
+      (*pick)[0].src.index = i; /* pass the count */
     } else {
       int use_dlst;
       use_dlst = (int)SettingGet(G,cSetting_use_display_lists);
@@ -469,7 +471,7 @@ static void RepWireBondRender(RepWireBond *I,RenderInfo *info)
 
 }
 
-Rep *RepWireBondNew(CoordSet *cs)
+Rep *RepWireBondNew(CoordSet *cs,int state)
 {
   PyMOLGlobals *G=cs->State.G;
   ObjectMolecule *obj;
@@ -585,6 +587,8 @@ Rep *RepWireBondNew(CoordSet *cs)
   I->VP=NULL;
   I->R.P=NULL;
   I->R.fRecolor=NULL;
+  I->R.context.object = (void*)obj;
+  I->R.context.state = state;
 
   if(obj->NBond) {
 
@@ -1022,11 +1026,10 @@ Rep *RepWireBondNew(CoordSet *cs)
 						
 						if(s1&(!ai1->masked))
 						  {
-							 I->NP++;
-                      rp->ptr = (void*)obj;
-							 rp->index = b1;
-                      rp->bond = a;
-                      rp++;
+                            I->NP++;
+                            rp->index = b1;
+                            rp->bond = a;
+                            rp++;
 
 							 *(v++)=*(v1++);
 							 *(v++)=*(v1++);
@@ -1038,11 +1041,10 @@ Rep *RepWireBondNew(CoordSet *cs)
 						  }
 						if(s2&(!ai2->masked))
 						  {
-							 I->NP++;
-                      rp->ptr = (void*)obj;
-							 rp->index = b2;
-                      rp->bond = a;
-                      rp++;
+                            I->NP++;
+                            rp->index = b2;
+                            rp->bond = a;
+                            rp++;
 							 							 
 							 *(v++)=h[0];
 							 *(v++)=h[1];

@@ -589,7 +589,7 @@ static void ObjectMeshRender(ObjectMesh *I,RenderInfo *info)
   float radius;
   int state = info->state;
   CRay *ray = info->ray;
-  Pickable **pick = info->pick;
+  Picking **pick = info->pick;
   int pass = info->pass;  int *n = NULL;
   int c;
   int a=0;

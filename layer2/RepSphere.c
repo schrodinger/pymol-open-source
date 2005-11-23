@@ -297,7 +297,7 @@ static char *read_file(char *name)
 static void RepSphereRender(RepSphere *I,RenderInfo *info)
 {
   CRay *ray = info->ray;
-  Pickable **pick = info->pick;
+  Picking **pick = info->pick;
   PyMOLGlobals *G=I->R.G;
   float *v=I->V,*vc;
   int c=I->N;
@@ -350,7 +350,7 @@ static void RepSphereRender(RepSphere *I,RenderInfo *info)
       if(I->R.P&&((trans_pick_mode==1)||((trans_pick_mode==2)&&(alpha>0.9F)))) {
         int i,j;
         Pickable *p;
-        i=(*pick)->index;
+        i=(*pick)->src.index;
           
         p=I->R.P;
           
@@ -358,12 +358,13 @@ static void RepSphereRender(RepSphere *I,RenderInfo *info)
           while(c--)
             {
               i++;          
-              if(!(*pick)[0].ptr) {
+              if(!(*pick)[0].src.bond) {
                 /* pass 1 - low order bits *            */
                 glColor3ub((uchar)((i&0xF)<<4),(uchar)((i&0xF0)|0x8),(uchar)((i&0xF00)>>4)); 
-                VLACheck((*pick),Pickable,i);
+                VLACheck((*pick),Picking,i);
                 p++;
-                (*pick)[i] = *p; /* copy object and atom info */
+                (*pick)[i].src = *p; /* copy object and atom info */
+                (*pick)[i].context = I->R.context;
               } else { 
                 /* pass 2 - high order bits */           
                 j=i>>12;            
@@ -420,12 +421,13 @@ static void RepSphereRender(RepSphere *I,RenderInfo *info)
           c=I->NC;
           while(c--) {
             i++;          
-            if(!(*pick)[0].ptr) {
+            if(!(*pick)[0].src.bond) {
               /* pass 1 - low order bits *            */
               glColor3ub((uchar)((i&0xF)<<4),(uchar)((i&0xF0)|0x8),(uchar)((i&0xF00)>>4)); 
-              VLACheck((*pick),Pickable,i);
+              VLACheck((*pick),Picking,i);
               p++;
-              (*pick)[i] = *p; /* copy object and atom info */
+              (*pick)[i].src = *p; /* copy object and atom info */
+              (*pick)[i].context = I->R.context;
             } else { 
               /* pass 2 - high order bits */           
               j=i>>12;            
@@ -496,7 +498,7 @@ static void RepSphereRender(RepSphere *I,RenderInfo *info)
             glEnd();
           }
         }
-        (*pick)[0].index = i;
+        (*pick)[0].src.index = i;
       }
     } else { /* not pick */
         
@@ -1015,7 +1017,7 @@ static int RadiusOrder(float *list,int a,int b)
 }
 
 
-Rep *RepSphereNew(CoordSet *cs)
+Rep *RepSphereNew(CoordSet *cs,int state)
 {
   PyMOLGlobals *G=cs->State.G;
   ObjectMolecule *obj;
@@ -1163,6 +1165,8 @@ Rep *RepSphereNew(CoordSet *cs)
   I->R.obj=(CObject*)obj;
   I->R.cs = cs;
   I->NP = 0;
+  I->R.context.object = (void*)obj;
+  I->R.context.state = state;
 
   /* raytracing primitives */
   
@@ -1221,8 +1225,6 @@ Rep *RepSphereNew(CoordSet *cs)
           
           if(I->R.P) {
             I->NP++;
-            
-            I->R.P[I->NP].ptr = (void*)obj;
             I->R.P[I->NP].index = a1;
             I->R.P[I->NP].bond = -1;
           }
