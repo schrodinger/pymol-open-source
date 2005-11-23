@@ -5063,6 +5063,34 @@ int SceneRenderCached(PyMOLGlobals *G)
   return(renderedFlag);
 }
 
+float SceneGetReflectValue(PyMOLGlobals *G)
+{
+  float reflect = SettingGetGlobal_f(G,cSetting_reflect);
+  register float _1 = 1.0F;
+  int n_light = SettingGetGlobal_i(G,cSetting_light_count);  
+  if(n_light>1) {
+    float tmp[3];
+    float sum = 0.0F;
+    copy3f(SettingGetGlobal_3fv(G,cSetting_light),tmp);
+    normalize3f(tmp);
+    sum = _1 - tmp[2];
+    if(n_light>2) {
+      copy3f(SettingGetGlobal_3fv(G,cSetting_light2),tmp);
+      normalize3f(tmp);
+      sum += _1 - tmp[2];
+    }
+    if(n_light>3) {
+      copy3f(SettingGetGlobal_3fv(G,cSetting_light2),tmp);
+      normalize3f(tmp);
+      sum += _1 - tmp[2];
+    }
+    { 
+      sum *= 0.5;
+      reflect = 0.870 * reflect/sum;
+    }
+  }
+  return reflect;
+}
 
 static void SceneProgramLighting(PyMOLGlobals *G)
 {
@@ -5071,7 +5099,7 @@ static void SceneProgramLighting(PyMOLGlobals *G)
      MODELVIEW still has the identity */
   int n_light = SettingGetGlobal_i(G,cSetting_light_count);
   float direct = SettingGetGlobal_f(G,cSetting_direct);
-  float reflect = SettingGetGlobal_f(G,cSetting_reflect);
+  float reflect = SceneGetReflectValue(G);
   float f;
   float vv[4];
   float spec_value = SettingGet(G,cSetting_specular);
@@ -5079,9 +5107,6 @@ static void SceneProgramLighting(PyMOLGlobals *G)
     spec_value=SettingGet(G,cSetting_specular_intensity);
   }
   if(spec_value<R_SMALL4) spec_value = 0.0F;
-  if(n_light>1) 
-    reflect/=(n_light-1);
-  /*  if(reflect>1.0F) reflect=1.0F;*/
   
   /* lighting */
   
@@ -5142,25 +5167,24 @@ static void SceneProgramLighting(PyMOLGlobals *G)
     glLightModeli(GL_LIGHT_MODEL_TWO_SIDE,GL_FALSE);
   }
   
-  /* add half of the ambient component (perceptive kludge) */
+  /* ambient lighting */
   
   f=SettingGet(G,cSetting_ambient);
-  
   vv[0] = f;
   vv[1] = f;
   vv[2] = f;
   vv[3] = 1.0F;
   glLightModelfv(GL_LIGHT_MODEL_AMBIENT,vv);
-  
+
   /* LIGHT0 is our direct light (eminating from the camera -- minus Z) */
   
   if(direct>R_SMALL4) {          
+
     glEnable(GL_LIGHT0);
-    
-    f=SettingGet(G,cSetting_ambient);
-    vv[0] = f;
-    vv[1] = f;
-    vv[2] = f;
+
+    vv[0] = 0.0F;
+    vv[1] = 0.0F;
+    vv[2] = 0.0F;
     vv[3] = 1.0F;
     glLightfv(GL_LIGHT0,GL_AMBIENT,vv);
     

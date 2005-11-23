@@ -3320,7 +3320,7 @@ static int ObjectMapGRDStrToMap(ObjectMap *I,char *GRDStr,int bytes,int state)
   double sumsq = 0.0;
   int n_pts = 0;
   int ascii = true;
-  int little_endian = 1,map_endian;
+  int little_endian = 1,map_endian = 0;
 
   if(state<0) state=I->NState;
   if(I->NState<=state) {

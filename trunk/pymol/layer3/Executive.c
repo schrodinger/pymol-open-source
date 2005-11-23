@@ -2410,6 +2410,18 @@ int ExecutiveGetSession(PyMOLGlobals *G,PyObject *dict)
 #ifndef _PYMOL_NOPY
 static void ExecutiveMigrateSession(PyMOLGlobals *G,int session_version)
 {
+  if(session_version<100) {
+    /* migrate lighting model */
+    SettingSetGlobal_f(G,cSetting_direct,
+                       1.8*SettingGetGlobal_f(G,cSetting_direct));
+    SettingSetGlobal_f(G,cSetting_reflect,
+                       0.5*SettingGetGlobal_f(G,cSetting_reflect));
+    SettingSetGlobal_f(G,cSetting_ambient,
+                       1.166*SettingGetGlobal_f(G,cSetting_ambient));
+    SettingSetGlobal_f(G,cSetting_gamma,
+                       0.769*SettingGetGlobal_f(G,cSetting_gamma));
+    
+  }
   if(session_version<99) {
     SettingSetGlobal_f(G,cSetting_cartoon_ladder_mode,0);
     SettingSetGlobal_f(G,cSetting_cartoon_tube_cap,0);
