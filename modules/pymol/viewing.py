@@ -697,9 +697,9 @@ API USAGE
 NOTES
 
     Contents of the view matrix
-        0  -  8 = 3x3 rotation matrix which transforms model to camera space
-        9  - 11 = camera position (in model space and relative to the origin of rotation)
-        12 - 14 = origin of rotation (in model space)
+        0  -  8 = column-major 3x3 matrix which rotates model axes to camera axes
+        9  - 11 = origin or rotation relative to the camera in camera space
+        12 - 14 = origin of rotation in model space
         15      = front plane distance from the camera
         16      = rear plane distance from the camera
         17      = orthoscopic flag 

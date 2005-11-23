@@ -1435,50 +1435,48 @@ int RayTraceThread(CRayThreadInfo *T)
    }
 	ambient				= T->ambient;
     /* divide up the reflected light component over all lights */
-	lreflect			= SettingGet(I->G,cSetting_reflect);
+	lreflect			= SceneGetReflectValue(I->G);
 	direct				= SettingGet(I->G,cSetting_direct);
 	direct_shade	= SettingGet(I->G,cSetting_ray_direct_shade);
-   trans_spec_cut = SettingGet(I->G,cSetting_ray_transparency_spec_cut);
-   blend_colors    = SettingGetGlobal_i(I->G,cSetting_ray_blend_colors);
-   max_pass = SettingGetGlobal_i(I->G,cSetting_ray_max_passes);
-   if(blend_colors) {
-     red_blend = SettingGet(I->G,cSetting_ray_blend_red);
+    trans_spec_cut = SettingGet(I->G,cSetting_ray_transparency_spec_cut);
+    blend_colors    = SettingGetGlobal_i(I->G,cSetting_ray_blend_colors);
+    max_pass = SettingGetGlobal_i(I->G,cSetting_ray_max_passes);
+    if(blend_colors) {
+      red_blend = SettingGet(I->G,cSetting_ray_blend_red);
      green_blend = SettingGet(I->G,cSetting_ray_blend_green);
      blue_blend = SettingGet(I->G,cSetting_ray_blend_blue);
    }
 
-   if(n_basis>2)
-     lreflect /= (n_basis-2);
    if(trans_spec_cut<_1)
      trans_spec_scale = _1/(_1-trans_spec_cut);
    else
      trans_spec_scale = _0;
 
 	/* COOP */
-	settingPower		= SettingGet(I->G,cSetting_power);
-	settingReflectPower	= SettingGet(I->G,cSetting_reflect_power);
-	settingSpecPower	= SettingGet(I->G,cSetting_spec_power);
-    if(settingSpecPower<0.0F) {
-      settingSpecPower = SettingGet(I->G,cSetting_shininess);
-    }
-
-    {
-      float spec_value = SettingGet(I->G,cSetting_specular);
-      if(spec_value==1.0F) 
-        spec_value = SettingGet(I->G,cSetting_specular_intensity);
-      settingSpecReflect = SettingGet(I->G,cSetting_spec_reflect);
-      if(settingSpecReflect<0.0F)
-        settingSpecReflect = spec_value;
-      settingSpecDirect	= SettingGet(I->G,cSetting_spec_direct);
-      if(settingSpecDirect<0.0F)
-        settingSpecDirect = spec_value;
-    }
-    if(settingSpecReflect>1.0F) settingSpecReflect = 1.0F;
-	if(SettingGet(I->G,cSetting_specular)<R_SMALL4) {
-      settingSpecReflect = 0.0F;
-      settingSpecDirect = 0.0F;
-    }
-    
+   settingPower		= SettingGet(I->G,cSetting_power);
+   settingReflectPower	= SettingGet(I->G,cSetting_reflect_power);
+   settingSpecPower	= SettingGet(I->G,cSetting_spec_power);
+   if(settingSpecPower<0.0F) {
+     settingSpecPower = SettingGet(I->G,cSetting_shininess);
+   }
+   
+   {
+     float spec_value = SettingGet(I->G,cSetting_specular);
+     if(spec_value==1.0F) 
+       spec_value = SettingGet(I->G,cSetting_specular_intensity);
+     settingSpecReflect = SettingGet(I->G,cSetting_spec_reflect);
+     if(settingSpecReflect<0.0F)
+       settingSpecReflect = spec_value;
+     settingSpecDirect	= SettingGet(I->G,cSetting_spec_direct);
+     if(settingSpecDirect<0.0F)
+       settingSpecDirect = spec_value;
+   }
+   if(settingSpecReflect>1.0F) settingSpecReflect = 1.0F;
+   if(SettingGet(I->G,cSetting_specular)<R_SMALL4) {
+     settingSpecReflect = 0.0F;
+     settingSpecDirect = 0.0F;
+   }
+   
 	if((interior_color>=0)||(two_sided_lighting)||(trans_mode==1))
 		backface_cull	= 0;
 
@@ -1487,18 +1485,18 @@ int RayTraceThread(CRayThreadInfo *T)
    /*	gamma = SettingGet(I->G,cSetting_gamma);
 	if(gamma > R_SMALL4)
 		gamma	= _1/gamma;
-	else
+        else
 		gamma	= _1;
    */
-
+    
 	inv1minusFogStart	= _1;
 	
 	fog = SettingGet(I->G,cSetting_ray_trace_fog);
-   if(fog<0.0F) {
-     if(SettingGet(I->G,cSetting_depth_cue)) {
-       fog = SettingGet(I->G,cSetting_fog);
-     } else 
-       fog = _0;
+    if(fog<0.0F) {
+      if(SettingGet(I->G,cSetting_depth_cue)) {
+        fog = SettingGet(I->G,cSetting_fog);
+      } else 
+        fog = _0;
    }
    
 	if(fog != _0) 
@@ -1968,8 +1966,7 @@ int RayTraceThread(CRayThreadInfo *T)
                         (((_1-direct_shade)+direct_shade*lit) * direct*direct_cmp +
                          /* (_1-direct) * direct_cmp */ 
                          lreflect*reflect_cmp);
-
-                      if(excess>_1) excess = _1;
+                      if(excess > _1) excess = _1;
                       if(bright > _1) bright = _1;
                       else if(bright < _0) bright = _0;
                       

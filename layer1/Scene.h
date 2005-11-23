@@ -139,6 +139,7 @@ void ScenePopRasterMatrix(PyMOLGlobals *G);
 void ScenePrimeAnimation(PyMOLGlobals *G);
 void SceneLoadAnimation(PyMOLGlobals *G, double duration);
 int SceneMustDrawBoth(PyMOLGlobals *G);
+float SceneGetReflectValue(PyMOLGlobals *G);
 
 #endif
 
