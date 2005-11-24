@@ -835,11 +835,11 @@ void CoordSetInvalidateRep(CoordSet *I,int type,int level)
     }
   if(level>=cRepInvColor) 
 	 VLAFreeP(I->Color);
-  if(type>=0) {
+  if(type>=0) { /* representation specific */
 	 if(type<I->NRep)	{
       a=type;
       if(I->Rep[a]) {
-        if(I->Rep[a]->fInvalidate) 
+        if(I->Rep[a]->fInvalidate && (level<cRepInvPurge))
           I->Rep[a]->fInvalidate(I->Rep[a],I,level);
         else {
           I->Rep[a]->fFree(I->Rep[a]);
@@ -854,12 +854,12 @@ void CoordSetInvalidateRep(CoordSet *I,int type,int level)
       if(level>=cRepInvVisib) /* make active if visibility has changed */
         I->Active[a]=true;
 		if(I->Rep[a]) {
-        if(I->Rep[a]->fInvalidate) 
-          I->Rep[a]->fInvalidate(I->Rep[a],I,level);
-        else {
-          I->Rep[a]->fFree(I->Rep[a]);
-          I->Rep[a] = NULL;
-        }
+          if(I->Rep[a]->fInvalidate && (level<cRepInvPurge))
+            I->Rep[a]->fInvalidate(I->Rep[a],I,level);
+          else {
+            I->Rep[a]->fFree(I->Rep[a]);
+            I->Rep[a] = NULL;
+          }
 		}
 	 }
   }

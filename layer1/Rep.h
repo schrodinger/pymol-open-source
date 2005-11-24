@@ -86,6 +86,8 @@ Z* -------------------------------------------------------------------
 #define cRepInvAtoms  50
 /* invalidate everything about a structure */
 #define cRepInvAll    100
+/* invalidate and furthermore, purge existing representations */
+#define cRepInvPurge  110
 
 struct CoordSet;
 struct Object;

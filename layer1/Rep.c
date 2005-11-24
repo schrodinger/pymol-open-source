@@ -104,7 +104,7 @@ struct Rep *RepUpdate(struct Rep *I,struct CoordSet *cs,int state,int rep)
 /*========================================================================*/
 void RepInvalidate(struct Rep *I,struct CoordSet *cs,int level)
 {
-  if(level>I->MaxInvalid) I->MaxInvalid=level;
+  if(level > I->MaxInvalid) I->MaxInvalid=level;
 }
 /*========================================================================*/
 static void RepRenderBox(struct Rep *this,RenderInfo *info)
