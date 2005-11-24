@@ -441,55 +441,55 @@ def sum_charge(*arg): # NOT THREAD SAFE
     return result
 
 def ray_shadows(mode):
+    # adjustment factors for new lighting model in 0.99
+    reflect_scale = 0.5
+    direct_scale = 1.8
+    gamma_scale = 1/1.3
+    ambient_scale = 1.16
     if mode=='none':
         cmd.set('ray_shadows',0)
     else:
         cmd.set('ray_shadows',1)
-    if mode=='light': # maximum quality
-        cmd.set('ambient',0.3)
-        cmd.set('spec_reflect',0.4)
-        cmd.set('spec_power',40)
-        cmd.set('reflect',1.2)
-        cmd.set('reflect_power',1.0)         
-        cmd.set('direct',0.35)
-        cmd.set('power',3.0)
-        cmd.set('gamma',1.2)
+    if mode=='light': 
+        cmd.set('light_count',2)
+        cmd.set('ambient',0.14)
+        cmd.set('direct',0.65)
+        cmd.set('reflect',0.25)
+        cmd.set('shininess',40)
+        cmd.set('power',1.0)
+        cmd.set('specular_intensity',0.5)
     elif mode=='matte':
-        cmd.set('spec_reflect',0.4)
-        cmd.set('spec_power',20)
-        cmd.set('ambient',0.12)
-        cmd.set('reflect',0.9)
-        cmd.set('reflect_power',1.0)
-        cmd.set('power',1.5) 
-        cmd.set('direct',0.25)
-        cmd.set('gamma',1.30)
+        cmd.set('light_count',4)
+        cmd.set('ambient',0.14)
+        cmd.set('direct',0.45)
+        cmd.set('reflect',0.45)
+        cmd.set('shininess',25)
+        cmd.set('power',1.25)
+        cmd.set('specular_intensity',0.2)
     elif mode=='medium':
-        cmd.set('power',1.0) # 0.7
-        cmd.set('reflect_power',1.0)
-        cmd.set('spec_reflect',0.5)
-        cmd.set('spec_power',60) # was 50
-        cmd.set('ambient',0.12)
-        cmd.set('reflect',0.95) 
-        cmd.set('direct',0.25) 
-        cmd.set('gamma',1.5) 
+        cmd.set('light_count',2)
+        cmd.set('ambient',0.14)
+        cmd.set('direct',0.45)
+        cmd.set('reflect',0.45)
+        cmd.set('shininess',40)
+        cmd.set('power',1.0)
+        cmd.set('specular_intensity',0.5)
     elif mode=='heavy':
-        cmd.set('reflect_power',1.0)
-        cmd.set('spec_reflect',0.60) # was 0.53
-        cmd.set('spec_power',90) # was 60
-        cmd.set('ambient',0.03) # was 0.08
-        cmd.set('reflect',0.9) # was 0.75
-        cmd.set('direct',0.06)
-        cmd.set('power',0.3)
-        cmd.set('gamma',1.45) # was 1.5
+        cmd.set('light_count',2)        
+        cmd.set('ambient',0.05)
+        cmd.set('direct',0.20)
+        cmd.set('reflect',0.85)
+        cmd.set('shininess',90) 
+        cmd.set('power',1.0) 
+        cmd.set('specular_intensity',0.5)
     elif mode=='black': # best for light backgrounds
-        cmd.set('power',0.3)
-        cmd.set('spec_reflect',1.1)
-        cmd.set('spec_power',90) 
+        cmd.set('light_count',2)
         cmd.set('ambient',0.001)
+        cmd.set('direct',0.0)
         cmd.set('reflect',1.0)
-        cmd.set('direct',0.00)
-        cmd.set('reflect_power',1.7)
-        cmd.set('gamma',1.7) # was 1.8
+        cmd.set('power',1.0)
+        cmd.set('shininess',90)
+        cmd.set('specular_intensity',0.5)
 
 def ff_copy(src,dst): # NOT THREAD SAFE
     pymol._rcopy = pymol.Scratch_Storage()
