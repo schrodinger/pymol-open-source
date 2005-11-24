@@ -4982,9 +4982,12 @@ void SceneUpdate(PyMOLGlobals *G)
                         (defer_builds_mode>0))) {
     SceneCountFrames(G);
     PyMOL_SetBusy(G->PyMOL,true); /*  race condition -- may need to be fixed */
-	 while(ListIterate(I->Obj,rec,next))
-      if(rec->obj->fUpdate) 
-        rec->obj->fUpdate(rec->obj);
+    {
+      rec = NULL;
+      while(ListIterate(I->Obj,rec,next))
+        if(rec->obj->fUpdate) 
+          rec->obj->fUpdate(rec->obj);
+    }
     PyMOL_SetBusy(G->PyMOL,false); /*  race condition -- may need to be fixed */
 	 I->ChangedFlag = false;
     if((defer_builds_mode == 2) && 
