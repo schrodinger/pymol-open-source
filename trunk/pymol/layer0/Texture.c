@@ -59,8 +59,13 @@ int TextureGetFromChar(PyMOLGlobals *G, int char_id,float *extent)
 
   if(G->HaveGUI && G->ValidContext) {
     if(OVreturn_IS_OK(result = OVOneToOne_GetForward(I->ch2tex,char_id))) {
-      return result.word;
-    } else {
+      if(glIsTexture(result.word)) 
+		  return result.word;
+       else {
+		  OVOneToOne_DelReverse(I->ch2tex,result.word);
+	   }
+	}
+	{
       unsigned char *buffer = CharacterGetPixmapBuffer(G,char_id);
       if(buffer) {
         int w = CharacterGetWidth(G,char_id);

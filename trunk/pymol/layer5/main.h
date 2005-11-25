@@ -19,7 +19,14 @@ Z* -------------------------------------------------------------------
 
 int  MainSavingUnderWhileIdle(void);
 
+
 #ifdef _PYMOL_NO_MAIN
+
+#ifdef _MACPYMOL_XCODE
+#include"os_python.h"
+#include"PyMOLGlobals.h"
+PyObject *MainAsPyList(void);
+#endif
 
 #else
 
