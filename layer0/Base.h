@@ -82,6 +82,12 @@ typedef struct {
   Picking *picked;
 } Multipick;
 
+typedef struct {
+  int mode;
+  float pos[2];
+  float offset[3];
+} LabPosType;
+
 /* not a global, but CRay widely used and Ray.h definitely isn't a
  * lightweight include... */
 
