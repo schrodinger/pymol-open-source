@@ -1106,7 +1106,7 @@ Rep *RepSphereNew(CoordSet *cs,int state)
         */
         if(vp&&fp) {            
           int ok=true;
-          glGenProgramsARB(2,I->programs);
+          glGenProgramsARB(2,(GLuint*)I->programs);
           
           /* load the vertex program */
           glBindProgramARB(GL_VERTEX_PROGRAM_ARB,I->programs[0]);
@@ -1131,7 +1131,7 @@ Rep *RepSphereNew(CoordSet *cs,int state)
             I->shader_flag=true;
           } else {
             I->shader_flag=false;
-            glDeleteProgramsARB(2,I->programs);
+            glDeleteProgramsARB(2,(GLuint*)I->programs);
           }
         }
         FreeP(vp);

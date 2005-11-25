@@ -58,6 +58,9 @@ int MyPNGWrite(PyMOLGlobals *G,char *file_name,unsigned char *p,
    fp = fopen(file_name, "wb");
    if (fp == NULL) {
      return 0;
+   } else if(feof(fp)) {
+     fclose(fp);
+	 return 0;
    }
    /* Create and initialize the png_struct with the desired error handler
     * functions.  If you want to use the default stderr and longjump method,
