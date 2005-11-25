@@ -61,6 +61,20 @@ void TextAdvance(PyMOLGlobals *G,float advance)
   G->Text->Pos[0]+=advance;
 }
 
+#if 0
+void TextSetLabPos(PyMOLGlobals *G,float *pos, LabPosType *labpos, char *text)
+{
+  if((!labpos)||(!labpos->mode))
+    TextSetPos(pos);
+  else switch(labpos->mode) {
+  default:
+    copy3f(pos,I->Pos);
+    add3f(labpos->offset, I->Pos);
+    break;
+  }
+}
+#endif
+
 void TextSetPos(PyMOLGlobals *G,float *pos)
 {
   register CText *I=G->Text;

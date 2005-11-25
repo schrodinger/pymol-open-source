@@ -28,6 +28,7 @@ Z* -------------------------------------------------------------------
 #include"ButMode.h"
 #include"Matrix.h"
 #include"Sphere.h"
+#include"Util.h"
 
 #include"RepWireBond.h"
 #include"RepCylBond.h"
@@ -208,6 +209,13 @@ void CoordSetMerge(CoordSet *I,CoordSet *cs) /* must be non-overlapping */
     I->AtmToIdx[cs->IdxToAtm[a]] = i0;
     copy3f(cs->Coord+a*3,I->Coord+i0*3);
   }
+  if(cs->LabPos) {
+    if(!I->LabPos) 
+      I->LabPos = VLACalloc(LabPosType,I->NIndex);
+    if(I->LabPos) {
+      UtilCopyMem(I->LabPos+I->NIndex,cs->LabPos,sizeof(LabPosType)*cs->NIndex);
+    }
+  }
   if(I->fInvalidateRep)
     I->fInvalidateRep(I,cRepAll,cRepInvAll);
   I->NIndex = nIndex;
@@ -221,14 +229,15 @@ void CoordSetPurge(CoordSet *I)
   AtomInfoType *ai;
   ObjectMolecule *obj;
   float *c0,*c1;
+  LabPosType *l0,*l1;
   obj=I->Obj;
 
   PRINTFD(I->State.G,FB_CoordSet)
     " CoordSetPurge-Debug: entering..."
     ENDFD;
 
-  c0 = I->Coord;
-  c1 = I->Coord;
+  c0 = c1 = I->Coord;
+  l0 = l1 = I->LabPos;
 
   for(a=0;a<I->NIndex;a++) {
     a1 = I->IdxToAtm[a];
@@ -236,21 +245,32 @@ void CoordSetPurge(CoordSet *I)
     if(ai->deleteFlag) {
       offset--;
       c0+=3;
+      if(l0)
+        l0++;
     } else if(offset) {
         ao=a+offset;
         *(c1++)=*(c0++);
         *(c1++)=*(c0++);
         *(c1++)=*(c0++);
+        if(l0) {
+          *(l1++) = *(l0++);
+        }
         I->AtmToIdx[a1] = ao;
         I->IdxToAtm[ao] = a1; /* no adjustment of these indexes yet...*/
     } else {
       c0+=3;
       c1+=3;
+      if(l0) {
+        l0++;
+        l1++;
+      }
     }
   }
   if(offset) {
     I->NIndex+=offset;
     VLASize(I->Coord,float,I->NIndex*3);
+    if(I->LabPos)
+      VLASize(I->LabPos,LabPosType,I->NIndex);
     I->IdxToAtm=Realloc(I->IdxToAtm,int,I->NIndex);
     PRINTFD(I->State.G,FB_CoordSet)
       " CoordSetPurge-Debug: I->IdxToAtm shrunk to %d\n",I->NIndex
@@ -1135,6 +1155,7 @@ CoordSet *CoordSetNew(PyMOLGlobals *G)
   I->NMatrix = 0;
   I->MatrixVLA = NULL;
   I->SculptCGO = NULL;
+  I->LabPos = NULL;
   return(I);
 }
 /*========================================================================*/
@@ -1156,6 +1177,10 @@ CoordSet *CoordSetCopy(CoordSet *cs)
     *(v0++)=*(v1++);
     *(v0++)=*(v1++);
     *(v0++)=*(v1++);
+  }
+  if(cs->LabPos) {
+    I->LabPos = VLACalloc(LabPosType,I->NIndex);
+    UtilCopyMem(I->LabPos,cs->LabPos,sizeof(LabPosType)*I->NIndex);
   }
   if(I->AtmToIdx) {
     nAtom = cs->Obj->NAtom;
@@ -1319,6 +1344,7 @@ void CoordSetFree(CoordSet *I)
     SettingFreeP(I->Setting);
     ObjectStatePurge(&I->State);
     CGOFree(I->SculptCGO);
+    VLAFreeP(I->LabPos);
     OOFreeP(I);
   }
 }
