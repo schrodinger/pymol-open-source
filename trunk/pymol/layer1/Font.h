@@ -41,6 +41,7 @@ struct _CFont {
   int TextID;
   void (*fFree)(CFont *);
   FontRenderOpenGLFn *fRenderOpenGL;
+  FontRenderOpenGLFn *fRenderOpenGLFlat;
   FontRenderRayFn *fRenderRay;
 };
 

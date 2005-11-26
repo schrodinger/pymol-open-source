@@ -194,6 +194,7 @@ CFont* FontGLUTNew(PyMOLGlobals *G,int font_code)
   OOAlloc(G,CFontGLUT);
   FontInit(G,&I->Font);
   I->Font.fRenderOpenGL = (FontRenderOpenGLFn*)FontGLUTRenderOpenGL;
+  I->Font.fRenderOpenGLFlat = (FontRenderOpenGLFn*)FontGLUTRenderOpenGL;
   I->Font.fRenderRay = (FontRenderRayFn*)FontGLUTRenderRay;
   I->Font.fFree = FontGLUTFree;
   switch(font_code) {

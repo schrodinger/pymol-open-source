@@ -72,9 +72,8 @@ int TextGetFontID(PyMOLGlobals *G,int src, int code, char *name,int size_mode, i
 
 void TextFree(PyMOLGlobals *G);
 
-#if 0
 void TextSetLabPos(PyMOLGlobals *G,float *pos, LabPosType *labpos, char *text);
-#endif
+void TextSetPickColor(PyMOLGlobals *G,int index, int pass);
 
 void TextSetPos(PyMOLGlobals *G,float *pos);
 

@@ -23,14 +23,15 @@ typedef unsigned char CharColor[4];
 
 
 typedef struct {
-  int text_id; /* 16 bits */
+  int text_id; /* 32 bits */
   short int ch; /* 16 bits */
   short int size; /* 16 bits */
   CharColor color; /* 32 bits */
-} CharInfo; /* currently 80 bits = 5 short ints */
+  short int flat; /* 16 bits */
+} CharInfo; /* 7 short ints */
 
 typedef struct {
-  unsigned short int data[6];
+  unsigned short int data[7];
 } CharData;
 
 typedef union {

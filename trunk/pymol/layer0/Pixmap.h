@@ -39,7 +39,8 @@ void PixmapInitFromBytemap(PyMOLGlobals *G,CPixmap *I,
                            int height,
                            int pitch,
                            unsigned char *bitmap,
-                           unsigned char *rgba);
+                           unsigned char *rgba,
+                           int flat);
 void PixmapPurge(CPixmap *I);
 void PixmapFreeP(CPixmap *I);
 
