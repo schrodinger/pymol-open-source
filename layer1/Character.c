@@ -32,13 +32,12 @@ static unsigned int get_hash(CharFngrprnt *fprnt)
 {
   register unsigned int result = 0;
   register unsigned short int *data = fprnt->u.d.data;
-  result = (data[0]<<1) + data[1] ;
-  result =  (result<<4) + data[2] ;
-  result = ((result<<7) + data[3]) + (result>>16);
+  result = (data[0]<< 1) + data[1] ;
+  result = ((result<< 4) + data[2]) ;
+  result = ((result<< 7) + data[3]) + (result>>16);
   result = ((result<<10) + data[4]) + (result>>16);
   result = ((result<<13) + data[5]) + (result>>16);
-  result = result                  + (result>>16);
-
+  result = ((result<< 1) + data[6]) + (result>>16);
   return (HASH_MASK&result);
 }
 
@@ -47,6 +46,8 @@ static int equal_fprnt(CharFngrprnt *f1, CharFngrprnt *f2)
   register unsigned short int *data1 = f1->u.d.data;
   register unsigned short int *data2 = f2->u.d.data;
 
+  if(*(data1++)!=*(data2++)) return 0;
+  if(*(data1++)!=*(data2++)) return 0;
   if(*(data1++)!=*(data2++)) return 0;
   if(*(data1++)!=*(data2++)) return 0;
   if(*(data1++)!=*(data2++)) return 0;
@@ -152,7 +153,7 @@ int CharacterNewFromBytemap(PyMOLGlobals *G, int width, int height,
   if((id>0)&&(id<=I->MaxAlloc)) {
     CharRec *rec = I->Char + id;
     PixmapInitFromBytemap(G,&rec->Pixmap,width,height,pitch,bytemap,
-                         fprnt->u.i.color);    
+                         fprnt->u.i.color,fprnt->u.i.flat);    
     rec->Width = width;
     rec->Height = height;
     rec->XOrig = x_orig;

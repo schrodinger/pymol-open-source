@@ -110,14 +110,16 @@ void PixmapInitFromBytemap(PyMOLGlobals *G,CPixmap *I,
                            int height,
                            int pitch,
                            unsigned char *bytemap,
-                           unsigned char *rgba)
+                           unsigned char *rgba,
+                           int flat
+                           )
 {
   if(I) {
  
     int x,y;
     unsigned char *src,*sa,alp;
     unsigned char *dst;
-    register unsigned char red,blue,green,alpha;
+    register unsigned char red,blue,green,alpha,no_alpha;
     PixmapInit(G,I,width,height);
     red = rgba[0];
     green = rgba[1];
@@ -126,20 +128,38 @@ void PixmapInitFromBytemap(PyMOLGlobals *G,CPixmap *I,
     UtilZeroMem(I->buffer,4*width*height);
     src = bytemap;
     dst = I->buffer;
+    no_alpha = flat;
     for(y=0;y<height;y++) {
       sa = src;
-      for(x=0;x<width;x++) {
-        alp = *(sa++);
-        if(alp) {
-          *(dst++)=red;
-          *(dst++)=green;
-          *(dst++)=blue;
-          *(dst++)=(alpha * alp)>>8;
-        } else {
-          *(dst++)=0;
-          *(dst++)=0;
-          *(dst++)=0;
-          *(dst++)=0;
+      if(no_alpha) {
+        for(x=0;x<width;x++) {
+          alp = *(sa++);
+          if(alp) {
+            *(dst++)=red;
+            *(dst++)=green;
+            *(dst++)=blue;
+            *(dst++)=0xFF;
+          } else {
+            *(dst++)=0;
+            *(dst++)=0;
+            *(dst++)=0;
+            *(dst++)=0;
+          }
+        }
+      } else {
+        for(x=0;x<width;x++) {
+          alp = *(sa++);
+          if(alp) {
+            *(dst++)=red;
+            *(dst++)=green;
+            *(dst++)=blue;
+            *(dst++)=(alpha * alp)>>8;
+          } else {
+            *(dst++)=0;
+            *(dst++)=0;
+            *(dst++)=0;
+            *(dst++)=0;
+          }
         }
       }
       src+=pitch;

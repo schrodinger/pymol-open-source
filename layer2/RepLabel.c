@@ -46,6 +46,7 @@ void RepLabelInit(void)
 
 void RepLabelFree(RepLabel *I)
 {
+  FreeP(I->R.P);
   FreeP(I->V);
   FreeP(I->L);
   OOFreeP(I);
@@ -76,11 +77,38 @@ static void RepLabelRender(RepLabel *I,RenderInfo *info)
     
   } else if(G->HaveGUI && G->ValidContext) {
     if(pick) {
+      Pickable *p = I->R.P;
+      int i;
+      if(c) {
+        int float_text = (int)SettingGet(G,cSetting_float_labels);
+        if(float_text)
+          glDisable(GL_DEPTH_TEST);	 
+
+        i=(*pick)->src.index;
+        while(c--) {
+          if(*l) {
+            int first_pass = (!(*pick)[0].src.bond);
+            i++;            
+            TextSetPosNColor(G,v+3,v);
+            TextSetPickColor(G, first_pass, i);
+            if(first_pass) {
+              VLACheck((*pick),Picking,i);
+              p++;
+              (*pick)[i].src = *p; /* copy object and atom info */
+              (*pick)[i].context = I->R.context;
+            }
+            l = TextRenderOpenGL(G,info,font_id,l,font_size);
+          }
+          v+=6;
+        }
+        if(float_text)
+          glEnable(GL_DEPTH_TEST);	 
+        (*pick)[0].src.index = i; /* pass the count */
+      }
     } else {
 
       if(c) {
-        int float_text;
-        float_text = (int)SettingGet(G,cSetting_float_labels);
+        int float_text = (int)SettingGet(G,cSetting_float_labels);
         if(float_text)
           glDisable(GL_DEPTH_TEST);	 
         glDisable(GL_LIGHTING);
@@ -107,6 +135,7 @@ Rep *RepLabelNew(CoordSet *cs,int state)
   float *v,*v0,*vc;
   char *p,*l;
   int label_color;
+  Pickable *rp = NULL;
   AtomInfoType *ai;
   OOAlloc(G,RepLabel);
   
@@ -135,6 +164,8 @@ Rep *RepLabelNew(CoordSet *cs,int state)
   I->R.fRecolor=NULL;
   I->R.obj=(CObject*)obj;
   I->R.cs = cs;
+  I->R.context.object = (void*)obj;
+  I->R.context.state = state;
 
   /* raytracing primitives */
 
@@ -143,46 +174,59 @@ Rep *RepLabelNew(CoordSet *cs,int state)
   I->V=(float*)mmalloc(sizeof(float)*cs->NIndex*6);
   ErrChkPtr(G,I->V);
 
+  if(SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_pickable)) {
+    I->R.P=Alloc(Pickable,cs->NIndex+1);
+    ErrChkPtr(G,I->R.P);
+    rp = I->R.P + 1; /* skip first record! */
+  }
+
   I->N=0;
   
   v=I->V; 
   l=I->L;
-  for(a=0;a<cs->NIndex;a++)
-	 {
-		a1 = cs->IdxToAtm[a];
-      ai = obj->AtomInfo+a1;
-		if(ai->visRep[cRepLabel]&&(ai->label[0]))
-		  {
-			 I->N++;
-          if(label_color>=0) 
-            c1 = label_color;
-          else
-            c1=*(cs->Color+a);
-			 vc = ColorGet(G,c1); /* save new color */
-			 *(v++)=*(vc++);
-			 *(v++)=*(vc++);
-			 *(v++)=*(vc++);
-			 v0 = cs->Coord+3*a;			 
-			 *(v++)=*(v0++);
-			 *(v++)=*(v0++);
-			 *(v++)=*(v0++);
-          p=ai->label;
-          while(*p) 
-            *(l++)=*(p++);
-          *(l++)=0;
-		  }
-	 }
+  for(a=0;a<cs->NIndex;a++) {
+    a1 = cs->IdxToAtm[a];
+    ai = obj->AtomInfo+a1;
+    if(ai->visRep[cRepLabel]&&(ai->label[0])) {
+      I->N++;
+      if(label_color>=0) 
+        c1 = label_color;
+      else
+        c1=*(cs->Color+a);
+      vc = ColorGet(G,c1); /* save new color */
+      *(v++)=*(vc++);
+      *(v++)=*(vc++);
+      *(v++)=*(vc++);
+      v0 = cs->Coord+3*a;			 
+      *(v++)=*(v0++);
+      *(v++)=*(v0++);
+      *(v++)=*(v0++);
+      if(rp) {
+        rp->index = a1;
+        rp->bond = -1; /* label indicator */
+        rp++;
+      }
+      p=ai->label;
+      while(*p) 
+        *(l++)=*(p++);
+      *(l++)=0;
+    }
+  }
 
-  if(I->N) 
-	 {
-		I->V=ReallocForSure(I->V,float,(v-I->V));
-		I->L=ReallocForSure(I->L,char,(l-I->L));      
-	 }
-  else
-	 {
-		I->V=ReallocForSure(I->V,float,1);
-		I->L=ReallocForSure(I->L,char,1);
-	 }
+  if(I->N) {
+    I->V = ReallocForSure(I->V,float,(v-I->V));
+    I->L = ReallocForSure(I->L,char,(l-I->L));      
+    if(rp) {
+      I->R.P = ReallocForSure(I->R.P,Pickable,(rp-I->R.P));
+      I->R.P[0].index = I->N;  /* unnec? */
+    }
+  } else {
+    I->V=ReallocForSure(I->V,float,1);
+    I->L=ReallocForSure(I->L,char,1);
+    if(rp) {
+      FreeP(I->R.P);
+    }
+  }
   return((void*)(struct Rep*)I);
 }
 

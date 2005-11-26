@@ -32,7 +32,9 @@ typedef struct {
 } CFontType;
 
 
-static char *FontTypeRenderOpenGL(RenderInfo *info, CFontType *I,char *st,float size)
+__inline__ static char *_FontTypeRenderOpenGL(RenderInfo *info, 
+                                              CFontType *I,char *st,
+                                              float size,int flat)
 {
   register PyMOLGlobals *G = I->Font.G;
   if(G->ValidContext) {
@@ -67,6 +69,7 @@ static char *FontTypeRenderOpenGL(RenderInfo *info, CFontType *I,char *st,float 
         rgba = fprnt.u.i.color;
         TextGetColorUChar(G,rgba,rgba+1,rgba+2,rgba+3);
         fprnt.u.i.ch = c;
+        fprnt.u.i.flat = flat;
         {
           int id = CharacterFind(G,&fprnt);
           if(!id) {
@@ -91,6 +94,15 @@ static char *FontTypeRenderOpenGL(RenderInfo *info, CFontType *I,char *st,float 
     }
   }
   return st;
+}
+
+static char *FontTypeRenderOpenGL(RenderInfo *info, CFontType *I,char *st,float size)
+{
+  return _FontTypeRenderOpenGL(info,I,st,size,false);
+}
+static char *FontTypeRenderOpenGLFlat(RenderInfo *info, CFontType *I,char *st,float size)
+{
+  return _FontTypeRenderOpenGL(info,I,st,size,true);
 }
 
 static char *FontTypeRenderRay(CRay *ray, CFontType *I,char *st,float size)
@@ -142,6 +154,7 @@ CFont* FontTypeNew(PyMOLGlobals *G,unsigned char *dat,unsigned int len)
   FontInit(G,&I->Font);
   I->G = G;
   I->Font.fRenderOpenGL = (FontRenderOpenGLFn*)FontTypeRenderOpenGL;
+  I->Font.fRenderOpenGLFlat = (FontRenderOpenGLFn*)FontTypeRenderOpenGLFlat;
   I->Font.fRenderRay = (FontRenderRayFn*)FontTypeRenderRay;
   I->Font.fFree = FontTypeFree;
   I->TypeFace = TypeFaceLoad(G,dat,len);

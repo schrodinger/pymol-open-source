@@ -46,6 +46,7 @@ struct _CText {
   float Pos[4];
   float Color[4];
   int Default_ID;
+  int Flat;
 };
 
 void TextSetPosNColor(PyMOLGlobals *G,float *pos,float *color)
@@ -53,6 +54,7 @@ void TextSetPosNColor(PyMOLGlobals *G,float *pos,float *color)
   register CText *I=G->Text;
   copy3f(pos,I->Pos);
   copy3f(color,I->Color);
+  I->Flat = false;
   I->Pos[3]=1.0F;
   I->Color[3]=1.0F;
 }
@@ -61,19 +63,20 @@ void TextAdvance(PyMOLGlobals *G,float advance)
   G->Text->Pos[0]+=advance;
 }
 
-#if 0
 void TextSetLabPos(PyMOLGlobals *G,float *pos, LabPosType *labpos, char *text)
 {
   if((!labpos)||(!labpos->mode))
-    TextSetPos(pos);
-  else switch(labpos->mode) {
-  default:
-    copy3f(pos,I->Pos);
-    add3f(labpos->offset, I->Pos);
-    break;
+    TextSetPos(G,pos);
+  else {
+    register CText *I=G->Text;
+    switch(labpos->mode) {
+    default:
+      copy3f(pos,I->Pos);
+      add3f(labpos->offset, I->Pos, I->Pos);
+      break;
+    }
   }
 }
-#endif
 
 void TextSetPos(PyMOLGlobals *G,float *pos)
 {
@@ -111,16 +114,35 @@ static void TextSetPos3f(PyMOLGlobals *G,float x,float y, float z)
   I->Pos[2]=z;
   I->Pos[3]=1.0F;
 }
+
+
 void TextSetColor(PyMOLGlobals *G,float *color)
 {
   register CText *I=G->Text;
   copy3f(color,I->Color);
   I->Color[3]=1.0F;
+  I->Flat = false;
+}
+
+static const float _inv255 = 1.0F/255.0F;
+
+void TextSetPickColor(PyMOLGlobals *G,int first_pass, int index)
+{
+  register CText *I=G->Text;
+  if(!first_pass)
+    index = (index>>12); /* high order bits */
+
+  I->Flat = true;
+  I->Color[0] = ((uchar)((index&0xF)<<4)) * _inv255;
+  I->Color[1] = ((uchar)((index&0xF0)|0x8)) * _inv255;
+  I->Color[2] = ((uchar)((index&0xF00)>>4)) * _inv255;
+  I->Color[3] = 1.0F;
 }
 
 void TextSetColor3f(PyMOLGlobals *G,float red, float green, float blue)
 {
   register CText *I=G->Text;
+  I->Flat = false;
   I->Color[0]=red;
   I->Color[1]=green;
   I->Color[2]=blue;
@@ -163,7 +185,10 @@ char *TextRenderOpenGL(PyMOLGlobals *G,RenderInfo *info,int text_id,char *st,flo
   if(st&&(*st)) {
     if((text_id>=0)&&(text_id<I->NActive)) {
       font = I->Active[text_id].Font;
-      fn = font->fRenderOpenGL;
+      if(I->Flat) 
+        fn = font->fRenderOpenGLFlat;
+      else
+        fn = font->fRenderOpenGL;
       if(fn)
         return fn(info,font,st,size);
     }
@@ -226,6 +251,7 @@ int TextInit(PyMOLGlobals *G)
     I->NActive = 0;
     I->Active = VLACalloc(ActiveRec,10);
     I->Default_ID = 0;
+    I->Flat = false;
 
     /* font 0 is old reliable GLUT 8x13 */
 
