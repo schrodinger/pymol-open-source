@@ -56,7 +56,7 @@ Z* -------------------------------------------------------------------
 #include"PyMOLOptions.h"
 #include"Tracker.h"
 #include"Word.h"
-#include"Main.h"
+#include"main.h"
 
 #include"OVContext.h"
 #include"OVLexicon.h"

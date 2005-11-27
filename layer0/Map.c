@@ -79,20 +79,20 @@ void MapCacheReset(MapCache *M)
 		ii = clinkp[i];
 		i1 = i;
 		i = ii;
-		if(i >= 0) {
-			ii = clinkp[i];
+		if(ii >= 0) {
+			ii = clinkp[ii];
 			i2 = i;
 			i = ii;
 		}
 		cachep[i1] = 0; /* this doesn't look safe, but it is. i1-i4 are always valid indices*/
-		if(i >= 0) {
-			ii = clinkp[i];
+		if(ii >= 0) {
+			ii = clinkp[ii];
 			i3 = i;
 			i = ii;
 		}	
 		cachep[i2] = 0; /* this doesn't look safe, but it is. i1-i4 are always valid indices*/
-		if(i >= 0) {
-			ii = clinkp[i];
+		if(ii >= 0) {
+			ii = clinkp[ii];
 			i4 = i;
 			i = ii;
 		}      
