@@ -1817,12 +1817,14 @@ int BasisHitShadow(BasisCallRec *BC)
       const float BasisFudge0 = BC->fudge0;
       const float BasisFudge1 = BC->fudge1;
       MapCache *cache = &BC->cache;
-      
+      register CPrimitive *BC_prim = BC->prim;
+    
       register float r_tri1=_0, r_tri2=_0, r_dist;  /* zero inits to suppress compiler warnings */
       register float r_sphere0=_0,r_sphere1=_0,r_sphere2=_0;
       register float r_trans = _0;
       CPrimitive *r_prim = NULL;
-      
+      const int one = 1;
+	  
       check_interior_flag   = BC->check_interior;
       
       /* assumption: always heading in the negative Z direction with our vector... */
@@ -1858,11 +1860,16 @@ int BasisHitShadow(BasisCallRec *BC)
                
                if( (v2p != except) && !MapCached(cache,v2p) ) 
                {
-                  CPrimitive *prm = BC->prim + v2p;
+                  register CPrimitive *prm = BC_prim + v2p;
+				  int prm_type;
+				  
+                 /*MapCache(cache,v2p);*/
+				 cache->Cache[v2p] = one;
+				 prm_type = prm->type;
+				 cache->CacheLink[v2p] = cache->CacheStart;
+                 cache->CacheStart = v2p; 
                   
-                  MapCache(cache,v2p);
-                  
-                  switch(prm->type) 
+                  switch(prm_type) 
                   {
                   case cPrimCharacter: /* will need special handling for character shadows */
                     {
