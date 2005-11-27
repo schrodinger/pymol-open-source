@@ -73,29 +73,31 @@ void MapCacheReset(MapCache *M)
 	register int    i		= M->CacheStart;
 	register int* 	cachep	= M->Cache;
 	register int* 	clinkp	= M->CacheLink;
-	register int    i1 = 0, i2 = 0, i3 = 0, i4 = 0;
+	register int    i1 = 0, i2 = 0, i3 = 0, i4 = 0, ii;
 	while(i >= 0)  /* believe it or not, unrolling gives us almost 10%!!! */
 	{
+		ii = clinkp[i];
 		i1 = i;
-		i = clinkp[i];
+		i = ii;
 		if(i >= 0) {
+			ii = clinkp[i];
 			i2 = i;
-			i = clinkp[i];
+			i = ii;
 		}
+		cachep[i1] = 0; /* this doesn't look safe, but it is. i1-i4 are always valid indices*/
 		if(i >= 0) {
+			ii = clinkp[i];
 			i3 = i;
-			i = clinkp[i];
+			i = ii;
 		}	
+		cachep[i2] = 0; /* this doesn't look safe, but it is. i1-i4 are always valid indices*/
 		if(i >= 0) {
+			ii = clinkp[i];
 			i4 = i;
-			i = clinkp[i];
-		}
-      
-      /* this doesn't look safe, but it is. i1-i4 are always valid indices*/	
-		cachep[i1] = 0;
-		cachep[i2] = 0;
-		cachep[i3] = 0;
-		cachep[i4] = 0;
+			i = ii;
+		}      
+		cachep[i3] = 0; /* this doesn't look safe, but it is. i1-i4 are always valid indices*/
+		cachep[i4] = 0; /* this doesn't look safe, but it is. i1-i4 are always valid indices*/
 	}
 	M->CacheStart = -1;
 }
