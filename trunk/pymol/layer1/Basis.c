@@ -41,21 +41,22 @@ static int ZLineToSphere(float *base, float *point,float *dir,float radius,float
    /* Strategy - find an imaginary sphere that lies at the correct point on
      the line segment, then treat as a sphere reflection */
    
-   float perpAxis0, perpAxis1, perpAxis2, intra_p0,intra_p1,intra_p2;
-   float perpDist,radial,axial,axial_sum,dangle,ab_dangle,axial_perp;
+   float  intra_p0,intra_p1,intra_p2;
+   float radial,axial,axial_sum,dangle,ab_dangle,axial_perp;
    float radialsq,tan_acos_dangle;
-   float intra0,intra1,intra2,vradial0,vradial1,vradial2;
+   float vradial0,vradial1,vradial2;
    const float _0   = 0.0f;
+   float point0 = point[0];
+   float point1 = point[1];
+   float point2 = point[2];
+   register float perpAxis0 = pre[0]; /* was cross_product(MinusZ,dir,perpAxis),normalize */
+   register float perpAxis1 = pre[1];
+   float intra0 = point0 - base[0];
+   float intra1 = point1 - base[1];
    const float dir0   = dir[0];
    const float dir1   = dir[1];
    const float dir2   = dir[2];
-   float   dot;
-   
-   intra0 = point[0] - base[0];
-   intra1 = point[1] - base[1];
-   
-   perpAxis0 = pre[0]; /* was cross_product(MinusZ,dir,perpAxis),normalize */
-   perpAxis1 = pre[1];
+   register float   dot, perpDist;
    
    /* the perpAxis defines a perp-plane which includes the cyl-axis */
    
@@ -69,24 +70,21 @@ static int ZLineToSphere(float *base, float *point,float *dir,float radius,float
       
    /*if(fabs(perpDist) > radius)   return 0; */
    
-   perpAxis2 = _0;
-   intra2=point[2]-base[2];
-   
-   dangle   = -dir[2]; /* was dot(MinusZ,dir) */
+   dangle   = -dir2; /* was dot(MinusZ,dir) */
    ab_dangle   = (float)fabs(dangle);
    if(ab_dangle > (1.0f - kR_SMALL4))
    {
       if(dangle > _0)
       {
-         sphere[0] = point[0];
-         sphere[1] = point[1];
-         sphere[2] = point[2];
+         sphere[0] = point0;
+         sphere[1] = point1;
+         sphere[2] = point2;
       }
       else
       {
-         sphere[0]=dir0 * maxial + point[0];
-         sphere[1]=dir1 * maxial + point[1];
-         sphere[2]=dir2 * maxial + point[2];
+         sphere[0]=dir0 * maxial + point0;
+         sphere[1]=dir1 * maxial + point1;
+         sphere[2]=dir2 * maxial + point2;
       }
       return(1);
    }
@@ -98,14 +96,15 @@ static int ZLineToSphere(float *base, float *point,float *dir,float radius,float
          
    /* now we need to define the triangle in the perp-plane  
      to figure out where the projected line intersection point is */
+
+   intra_p2=point2-base[2];
    
    /* first, compute radial distance in the perp-plane between the two starting points */
    
-   dot = intra0*perpAxis0 + intra1*perpAxis1 + intra2*perpAxis2;
+   dot = intra0*perpAxis0 + intra1*perpAxis1;
    intra_p0=intra0-perpAxis0*dot;
    intra_p1=intra1-perpAxis1*dot;
-   intra_p2=intra2-perpAxis2*dot;  
-   
+      
    dot = intra_p0*dir0 + intra_p1*dir1 + intra_p2*dir2;
    vradial0=intra_p0-dir0*dot;
    vradial1=intra_p1-dir1*dot;
@@ -151,9 +150,9 @@ static int ZLineToSphere(float *base, float *point,float *dir,float radius,float
    else if(axial_sum > maxial)
       axial_sum = maxial;
    
-   sphere[0] = dir0 * axial_sum + point[0];
-   sphere[1] = dir1 * axial_sum + point[1];
-   sphere[2] = dir2 * axial_sum + point[2];
+   sphere[0] = dir0 * axial_sum + point0;
+   sphere[1] = dir1 * axial_sum + point1;
+   sphere[2] = dir2 * axial_sum + point2;
    
    *asum = axial_sum;
    /*  printf("==>%8.3f sphere %8.3f %8.3f %8.3f\n",base[1],sphere[1],axial_perp,axial);*/
@@ -178,45 +177,53 @@ static int LineToSphere(float *base, float *ray, float *point,float *dir,float r
   register float vradial0, vradial1, vradial2;
   register float dir0 = dir[0], dir1 = dir[1], dir2 = dir[2];
   register float ray0 = ray[0], ray1 = ray[1], ray2 = ray[2];
+  float point0 = point[0], point1 = point[1], point2 = point[2];
   register float dot;
-
-  const float _0  = 0.0f;
+  
+  const float _0  = 0.0F;
   const float _1  = 1.0F;
-   /* subtract3f(point,base,intra); */
-   intra0 = point[0] - base[0];
-   intra1 = point[1] - base[1];
-   intra2 = point[2] - base[2];
 
    /*    cross_product3f(ray,dir,perpAxis); */
 
    perpAxis0 = ray1*dir2 - ray2*dir1;
    perpAxis1 = ray2*dir0 - ray0*dir2;
    perpAxis2 = ray0*dir1 - ray1*dir0;
+  
+   /* subtract3f(point,base,intra); */
+   intra0 = point0 - base[0];
 
    /* normalize3f(perpAxis) */
    {
      register float len = (float)sqrt1d((perpAxis0 * perpAxis0) + (perpAxis1 * perpAxis1) + (perpAxis2 * perpAxis2));
+	  intra1 = point1 - base[1];
+    /* subtract3f(point,base,intra); */
      if(len>R_SMALL8) {
        len = _1 / len;
+	   intra2 = point2 - base[2];
        perpAxis0 *= len;
        perpAxis1 *= len;
        perpAxis2 *= len;
-     }
+     } else {
+	   intra2 = point2 - base[2];
+	 }
    }
    /* the perpAxis defines a perp-plane which includes the cyl-axis */
    
    /* get minimum distance between the lines */
 
    /* dot_product3f(intra, perpAxis); */
-   perpDist = intra0 * perpAxis0 +  intra1 * perpAxis1 +  intra2 * perpAxis2 ;
+   perpDist =  intra0 * perpAxis0;
+   perpDist += intra1 * perpAxis1 + intra2 * perpAxis2 ;
 
    /*if(fabs(perpDist) > radius)   return 0; */
 
+   dangle = ray0 * dir0;
+   
    if((perpDist < _0 ? -perpDist : perpDist) > radius)
       return 0;
    
    /* dangle  = dot_product3f(ray, dir);*/
-   dangle  = ray0 * dir0 + ray1 * dir1 + ray2 * dir2;
+   dangle  += ray1 * dir1 + ray2 * dir2;
 
    ab_dangle   = (float)fabs(dangle);
 
@@ -224,15 +231,15 @@ static int LineToSphere(float *base, float *ray, float *point,float *dir,float r
    {
       if(dangle > _0)
       {
-         sphere[0] = point[0];
-         sphere[1] = point[1];
-         sphere[2] = point[2];
+         sphere[0] = point0;
+         sphere[1] = point1;
+         sphere[2] = point2;
       }
       else
       {
-         sphere[0]=dir0 * maxial + point[0];
-         sphere[1]=dir1 * maxial + point[1];
-         sphere[2]=dir2 * maxial + point[2];
+         sphere[0]=dir0 * maxial + point0;
+         sphere[1]=dir1 * maxial + point1;
+         sphere[2]=dir2 * maxial + point2;
       }
       return(1);
    }
@@ -303,9 +310,9 @@ static int LineToSphere(float *base, float *ray, float *point,float *dir,float r
    else if(axial_sum > maxial)
       axial_sum = maxial;
    
-   sphere[0] = dir0 * axial_sum + point[0];
-   sphere[1] = dir1 * axial_sum + point[1];
-   sphere[2] = dir2 * axial_sum + point[2];
+   sphere[0] = dir0 * axial_sum + point0;
+   sphere[1] = dir1 * axial_sum + point1;
+   sphere[2] = dir2 * axial_sum + point2;
    
    *asum = axial_sum;
    /*  printf("==>%8.3f sphere %8.3f %8.3f %8.3f\n",base[1],sphere[1],axial_perp,axial);*/
@@ -1122,6 +1129,7 @@ int BasisHitPerspective(BasisCallRec *BC)
     float *BI_Normal = BI->Normal;
     float *BI_Radius = BI->Radius;
     float *BI_Radius2 = BI->Radius2;
+	const int one = 1;
 
     copy3f(r->base, vt);
 
@@ -1219,13 +1227,12 @@ int BasisHitPerspective(BasisCallRec *BC)
             break;
         }
       
+        ip   = elist + h;
         last_a = a;
+        i   = *(ip++);
         last_b = b;
         last_c = c;
-      
-        ip   = elist + h;
-        i   = *(ip++);
-      
+            
         while((i>=0)&&(i<n_vert)) /* n_vert checking is a bug workaround */
           {
             v2p = vert2prim[i];
@@ -1233,9 +1240,15 @@ int BasisHitPerspective(BasisCallRec *BC)
             if((v2p != except) && (!MapCached(cache,v2p))) 
               {
                 register CPrimitive *prm = BC_prim + v2p;
-                MapCache(cache,v2p);
-              
-                switch(prm->type)  {
+				int prm_type;
+				
+                /*MapCache(cache,v2p);*/
+				cache->Cache[v2p] = one;
+				prm_type = prm->type;
+				cache->CacheLink[v2p] = cache->CacheStart;
+                cache->CacheStart = v2p;
+				
+                switch(prm_type)  {
                 case cPrimTriangle:
                 case cPrimCharacter:
                   {
