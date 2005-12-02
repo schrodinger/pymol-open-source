@@ -492,6 +492,7 @@ if __name__=='pymol.setting':
         light2                    = (456, '')
         light3                    = (457, '')
         hide_underscore_names     = (458, '')
+        selection_round_points    = (459, '')
         
     setting_sc = Shortcut(SettingIndex.__dict__.keys())
 

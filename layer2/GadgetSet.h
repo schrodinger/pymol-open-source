@@ -26,7 +26,8 @@ typedef struct GadgetSet {
   void (*fFree)(struct GadgetSet *I);
   void (*fInvalidateRep)(struct GadgetSet *I,int type,int level);
   PyMOLGlobals *G;
-  struct ObjectGadget *Obj;
+  struct ObjectGadget *Obj; /* NOT pickled -- restore manually */
+  int State; /* NOT pickled -- restore manually */
   float *Coord;
   float *Normal;
   float *Color;

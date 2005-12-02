@@ -2596,7 +2596,7 @@ void SettingInitGlobal(PyMOLGlobals *G,int alloc,int reset_gui)
   SettingSet_b(I,cSetting_line_stick_helper, 1);
   SettingSet_i(I,cSetting_ray_orthoscopic, -1);
   SettingSet_i(I,cSetting_ribbon_side_chain_helper, 0);
-  SettingSet_f(I,cSetting_selection_width_max,6.0F);
+  SettingSet_f(I,cSetting_selection_width_max,10.0F);
   SettingSet_f(I,cSetting_selection_width_scale,2.0F);
   SettingSet_s(I,cSetting_scene_current_name,"");
   SettingSet_b(I,cSetting_presentation,0);
@@ -2661,6 +2661,7 @@ void SettingInitGlobal(PyMOLGlobals *G,int alloc,int reset_gui)
   SettingSet_3f(I,cSetting_light2, -0.55F, -0.7F, 0.15F);
   SettingSet_3f(I,cSetting_light3, 0.3F, -0.6F, -0.2F);
   SettingSet_b(I,cSetting_hide_underscore_names, 1);
+  SettingSet_b(I,cSetting_selection_round_points, 0);
 }
 
 

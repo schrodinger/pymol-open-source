@@ -189,7 +189,7 @@ ObjectGadget *ObjectGadgetTest(PyMOLGlobals *G)
   cgo = CGONewSized(G,100);
   CGODotwidth(cgo,5);
 
-  CGOPickColor(cgo,0,0);
+  CGOPickColor(cgo,0,cPickableGadget);
 
   /* top */
   CGOBegin(cgo,GL_TRIANGLE_STRIP);
@@ -230,6 +230,7 @@ ObjectGadget *ObjectGadgetTest(PyMOLGlobals *G)
   gs->PickShapeCGO = cgo;
 
   gs->Obj = I;
+  gs->State = 0;
 
   I->GSet[0] = gs;
   I->NGSet = 1;
@@ -289,7 +290,10 @@ static int ObjectGadgetGSetFromPyList(ObjectGadget *I,PyObject *list,int version
     VLACheck(I->GSet,GadgetSet*,I->NGSet);
     for(a=0;a<I->NGSet;a++) {
       if(ok) ok = GadgetSetFromPyList(I->Obj.G,PyList_GetItem(list,a),&I->GSet[a],version);
-      if(ok&&I->GSet[a]) I->GSet[a]->Obj = I;
+      if(ok&&I->GSet[a]) {
+        I->GSet[a]->Obj = I;
+        I->GSet[a]->State = a;
+      }
     }
   }
   return(ok);

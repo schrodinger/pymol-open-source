@@ -465,8 +465,7 @@ static void ObjectGadgetRampUpdateCGO(ObjectGadgetRamp *I,GadgetSet *gs)
   
   cgo = CGONewSized(I->Gadget.Obj.G,100);
   CGODotwidth(cgo,5);
-
-  CGOPickColor(cgo,0,0);
+  CGOPickColor(cgo,0,cPickableGadget);
 
   /* top */
   CGOBegin(cgo,GL_TRIANGLE_STRIP);
@@ -505,7 +504,7 @@ static void ObjectGadgetRampUpdateCGO(ObjectGadgetRamp *I,GadgetSet *gs)
 
   /* band */
 
-  CGOPickColor(cgo,13,0);
+  CGOPickColor(cgo,13,cPickableGadget);
   CGOBegin(cgo,GL_TRIANGLE_STRIP);
   ShapeVertex(cgo,REL,5);
   ShapeVertex(cgo,REL,6);
@@ -583,6 +582,7 @@ VV(    I->width+I->border,I->text_border-(I->border+I->height), I->border+I->tex
   og->NGSet = 1;
   og->Obj.Context=1; /* unit window */
   gs->Obj = (ObjectGadget*)I;
+  gs->State = 0;
 
   ObjectGadgetRampUpdateCGO(I,gs);
   gs->fUpdate(gs);
