@@ -580,7 +580,7 @@ static void do_ring(PyMOLGlobals *G,int n_atom, int *atix, ObjectMolecule *obj,
                   
                   if((sug>=0)&&(bas>=0)) {
                     
-                    CGOPickColor(cgo,base_at,-1);
+                    CGOPickColor(cgo,base_at,cPickableAtom);
                     if(ladder_color>=0) {
                       color=ColorGet(G,ladder_color);
                       CGOCustomCylinderv(cgo,cs->Coord+3*sug,
@@ -665,7 +665,7 @@ static void do_ring(PyMOLGlobals *G,int n_atom, int *atix, ObjectMolecule *obj,
                     v_outer = outer;
                   }
                 }
-                CGOPickColor(cgo,base_at,-1);
+                CGOPickColor(cgo,base_at,cPickableAtom);
                 if(ladder_color>=0) {
                   color=ColorGet(G,ladder_color);
                   CGOCustomCylinderv(cgo,v_outer,
@@ -874,47 +874,47 @@ static void do_ring(PyMOLGlobals *G,int n_atom, int *atix, ObjectMolecule *obj,
         
           CGONormalv(cgo,up);
           if(ring_color<0) CGOColorv(cgo,color);
-          CGOPickColor(cgo,atix[i],-1);
+          CGOPickColor(cgo,atix[i],cPickableAtom);
           CGOVertexv(cgo,ct);
           CGONormalv(cgo,n_up[i]);
           if(ring_color<0) CGOColorv(cgo,col[i]);
-          CGOPickColor(cgo,atix[i],-1);
+          CGOPickColor(cgo,atix[i],cPickableAtom);
           CGOVertexv(cgo,v0t);
           CGONormalv(cgo,n_up[ii]);
           if(ring_color<0) CGOColorv(cgo,col[ii]);
-          CGOPickColor(cgo,atix[ii],-1);
+          CGOPickColor(cgo,atix[ii],cPickableAtom);
           CGOVertexv(cgo,v1t);
         
           if(ring_mode>1) {
             CGONormalv(cgo,out);
 
             if(ring_color<0) CGOColorv(cgo,col[i]);
-            CGOPickColor(cgo,atix[i],-1);
+            CGOPickColor(cgo,atix[i],cPickableAtom);
             CGOVertexv(cgo,v0t);
             CGOVertexv(cgo,v0b);
             if(ring_color<0) CGOColorv(cgo,col[ii]);
-            CGOPickColor(cgo,atix[ii],-1);
+            CGOPickColor(cgo,atix[ii],cPickableAtom);
             CGOVertexv(cgo,v1t);
             CGOVertexv(cgo,v1t);
             if(ring_color<0) CGOColorv(cgo,col[i]);
-            CGOPickColor(cgo,atix[i],-1);  
+            CGOPickColor(cgo,atix[i],cPickableAtom);  
             CGOVertexv(cgo,v0b);
             if(ring_color<0) CGOColorv(cgo,col[ii]);
-            CGOPickColor(cgo,atix[ii],-1);
+            CGOPickColor(cgo,atix[ii],cPickableAtom);
             CGOVertexv(cgo,v1b);
           }
         
           CGONormalv(cgo,upi);
           if(ring_color<0) CGOColorv(cgo,color);
-          CGOPickColor(cgo,atix[i],-1);
+          CGOPickColor(cgo,atix[i],cPickableAtom);
           CGOVertexv(cgo,cb);
           CGONormalv(cgo,n_dn[ii]);
           if(ring_color<0) CGOColorv(cgo,col[ii]);
-          CGOPickColor(cgo,atix[ii],-1);
+          CGOPickColor(cgo,atix[ii],cPickableAtom);
           CGOVertexv(cgo,v1b);
           CGONormalv(cgo,n_dn[i]);
           if(ring_color<0) CGOColorv(cgo,col[i]);
-          CGOPickColor(cgo,atix[i],-1);
+          CGOPickColor(cgo,atix[i],cPickableAtom);
           CGOVertexv(cgo,v0b);
         
         }
@@ -926,7 +926,7 @@ static void do_ring(PyMOLGlobals *G,int n_atom, int *atix, ObjectMolecule *obj,
         if(ring_mode==1) {
           for(i=0;i<n_atom;i++) {
             ii=i+1;
-            CGOPickColor(cgo,atix[i],-1);
+            CGOPickColor(cgo,atix[i],cPickableAtom);
             if(ring_color<0) {
               CGOSausage(cgo,v_i[i], v_i[ii], width, col[i],col[ii]);
             } else {
@@ -936,7 +936,7 @@ static void do_ring(PyMOLGlobals *G,int n_atom, int *atix, ObjectMolecule *obj,
         } else if(ring_mode==3) {
           for(i=0;i<n_atom;i++) {
             ii=i+1;
-            CGOPickColor(cgo,atix[i],-1);
+            CGOPickColor(cgo,atix[i],cPickableAtom);
             if(ring_color<0) {
               CGOSausage(cgo,v_i[i], v_i[ii], 3*width, col[i],col[ii]);
             } else {

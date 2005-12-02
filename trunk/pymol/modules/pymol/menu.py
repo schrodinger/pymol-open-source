@@ -131,6 +131,18 @@ def mesh_hide(s):
               [ 1, 'cell'        , 'cmd.hide("cell","'+s+'")'      ],           
               [ 1, 'everything'  , 'cmd.disable("'+s+'")'          ]]
 
+def surface_show(s):
+    return [[ 2, 'Show:'       , ''                             ],
+              [ 1, 'surface'        , 'cmd.show("surface","'+s+'")'     ],           
+              [ 1, 'cell'        , 'cmd.show("cell","'+s+'")'     ],
+              [ 1, 'everything'  , 'cmd.enable("'+s+'")'          ]]
+
+def surface_hide(s):
+    return [[ 2, 'Hide:'       , ''                             ],
+              [ 1, 'surface'        , 'cmd.hide("surface","'+s+'")'     ],                      
+              [ 1, 'cell'        , 'cmd.hide("cell","'+s+'")'      ],           
+              [ 1, 'everything'  , 'cmd.disable("'+s+'")'          ]]
+
 def slice_show(s):
     return [[ 2, 'Show:'       , ''                             ],
               [ 1, 'slice'       , 'cmd.show("slice","'+s+'")'     ],

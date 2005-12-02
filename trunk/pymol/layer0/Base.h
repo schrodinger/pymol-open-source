@@ -62,8 +62,16 @@ Z* -------------------------------------------------------------------
 typedef struct { 
   int index; /* atom index.
                 NOTE: that first record contains the list count...not pick info */
-  int bond; /* bond index, otherwise -1 for atom, -2 for label */
+  int bond; /* bond index, 
+               >=0 for bond
+               -1 for atom
+               -2 for label
+               -3 for gadget */
 } Pickable;
+
+#define cPickableAtom -1
+#define cPickableLabel -2
+#define cPickableGadget -3
 
 typedef struct {
   void *object;

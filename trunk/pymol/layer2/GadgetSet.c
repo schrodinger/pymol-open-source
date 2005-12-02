@@ -377,6 +377,7 @@ static void GadgetSetRender(GadgetSet *I,RenderInfo *info)
   CRay *ray = info->ray;
   Picking **pick = info->pick;
   float *color;
+  PickContext context = {I->Obj,I->State};
 
   color = ColorGet(I->G,I->Obj->Obj.Color);
 
@@ -391,7 +392,7 @@ static void GadgetSetRender(GadgetSet *I,RenderInfo *info)
     } else if(G->HaveGUI && G->ValidContext) {
       if(pick) {
         if(I->PickCGO) {
-          CGORenderGLPicking(I->PickCGO,pick,(void*)I->Obj,
+          CGORenderGLPicking(I->PickCGO,pick,&context,
                               I->Obj->Obj.Setting,NULL);
         }
       } else {

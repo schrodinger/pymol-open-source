@@ -608,6 +608,7 @@ CSetting *SettingNewFromPyList(PyMOLGlobals *G,PyObject *list);
 #define cSetting_light2                     456
 #define cSetting_light3                     457
 #define cSetting_hide_underscore_names      458
+#define cSetting_selection_round_points     459
 
 /* when you add a new settingg also remember:
    layer1/Setting.c
@@ -617,7 +618,7 @@ CSetting *SettingNewFromPyList(PyMOLGlobals *G,PyObject *list);
 
 /* cSetting_ss_INIT must always be last setting_index +1 */
 
-#define cSetting_INIT                       459
+#define cSetting_INIT                       460
 
 #endif
 

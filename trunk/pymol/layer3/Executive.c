@@ -4176,6 +4176,7 @@ void ExecutiveRenderSelections(PyMOLGlobals *G,int curState)
   int width;
   int max_width = (int)SettingGetGlobal_f(G,cSetting_selection_width_max);
   float width_scale = SettingGetGlobal_f(G,cSetting_selection_width_scale);
+  int round_points = SettingGetGlobal_b(G,cSetting_selection_round_points);
 
   min_width = SettingGetGlobal_f(G,cSetting_selection_width);
 
@@ -4187,6 +4188,14 @@ void ExecutiveRenderSelections(PyMOLGlobals *G,int curState)
     width = (int)max_width;
   } else
     width = (int)min_width;
+
+  if(round_points) {
+    glEnable(GL_POINT_SMOOTH);
+    glAlphaFunc(GL_GREATER, 0.5F);
+    glEnable(GL_ALPHA_TEST);
+    glHint(GL_POINT_SMOOTH_HINT,GL_NICEST);
+    width = (int)(width*1.44F);
+  }
 
   no_depth = (int)SettingGet(G,cSetting_selection_overlay);
 
@@ -4207,7 +4216,7 @@ void ExecutiveRenderSelections(PyMOLGlobals *G,int curState)
             glColor3fv(ColorGet(G,rec->sele_color));
 
           gl_width=(float)width;
-          if(width>6) {
+          if(width>6) { /* keep it even above 6 */
             if(width&0x1) {
               width--;
               gl_width = (float)width;
@@ -4224,33 +4233,30 @@ void ExecutiveRenderSelections(PyMOLGlobals *G,int curState)
             }
           }
           glEnd();
-
-          if(width>4) {
-            if(width>5) 
-              glPointSize(4.0F);
-            else 
-              glPointSize(3.0F);
-            glColor3f(1.0F,1.0F,1.0F);
-            
-            glBegin(GL_POINTS);
-            rec1 = NULL;
-            while(ListIterate(I->Spec,rec1,next)) {
-              if(rec1->type==cExecObject) {
-                if(rec1->obj->type==cObjectMolecule) {
-                  ObjectMoleculeRenderSele((ObjectMolecule*)rec1->obj,curState,sele);
-                }
-              }
-            }
-            glEnd();
-          }
-
+          
           if(width>2) {
-            if(width>5)
-              glPointSize(2.0F);
-            else if(width&0x1)
+            switch(width) {
+            case 1:
+            case 2:
+            case 3:
               glPointSize(1.0F);
-            else
-              glPointSize(2.0F);              
+              break;
+            case 4:
+              glPointSize(2.0F);
+              break;
+            case 5:
+              glPointSize(3.0F); 
+              break;
+            case 6:
+            case 7:
+            case 8:
+            case 9:
+              glPointSize(4.0F);
+              break;
+            default:
+              glPointSize(6.0F);
+              break;
+            }
 
             glColor3f(0.0F,0.0F,0.0F);
             glBegin(GL_POINTS);
@@ -4265,6 +4271,27 @@ void ExecutiveRenderSelections(PyMOLGlobals *G,int curState)
             glEnd();
           }
 
+          if(width>4) {
+            if(width>5) {
+              glPointSize(2.0F);
+            }
+            else 
+              glPointSize(1.0F);
+            glColor3f(1.0F,1.0F,1.0F);
+            
+            glBegin(GL_POINTS);
+            rec1 = NULL;
+            while(ListIterate(I->Spec,rec1,next)) {
+              if(rec1->type==cExecObject) {
+                if(rec1->obj->type==cObjectMolecule) {
+                  ObjectMoleculeRenderSele((ObjectMolecule*)rec1->obj,curState,sele);
+                }
+              }
+            }
+            glEnd();
+          }
+
+
 
           if(no_depth)
             glEnable(GL_DEPTH_TEST);
@@ -4272,6 +4299,9 @@ void ExecutiveRenderSelections(PyMOLGlobals *G,int curState)
         }
       }
     }
+  }
+  if(round_points) {
+    glAlphaFunc(GL_GREATER, 0.05F);
   }
 }
 /*========================================================================*/
@@ -10049,9 +10079,11 @@ static int ExecutiveClick(Block *block,int button,int x,int y,int mod)
                     case cObjectMap:
                       MenuActivate(G,mx,my,x,y,false,"simple_show",rec->obj->Name);
                       break;
-                    case cObjectSurface:
                     case cObjectMesh:
                       MenuActivate(G,mx,my,x,y,false,"mesh_show",rec->obj->Name);
+                      break;
+                    case cObjectSurface:
+                      MenuActivate(G,mx,my,x,y,false,"surface_show",rec->obj->Name);
                       break;
                     case cObjectSlice:
                       MenuActivate(G,mx,my,x,y,false,"slice_show",rec->obj->Name);
@@ -10083,9 +10115,11 @@ static int ExecutiveClick(Block *block,int button,int x,int y,int mod)
                     case cObjectMap:
                       MenuActivate(G,mx,my,x,y,false,"simple_hide",rec->obj->Name);
                       break;
-                    case cObjectSurface:
                     case cObjectMesh:
                       MenuActivate(G,mx,my,x,y,false,"mesh_hide",rec->obj->Name);
+                      break;
+                    case cObjectSurface:
+                      MenuActivate(G,mx,my,x,y,false,"surface_hide",rec->obj->Name);
                       break;
                     case cObjectSlice:
                       MenuActivate(G,mx,my,x,y,false,"slice_hide",rec->obj->Name);

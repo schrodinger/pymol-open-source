@@ -3675,7 +3675,6 @@ static int SceneDrag(Block *block,int x,int y,int mod,double when)
       switch(obj->type) {
       case cObjectGadget: {
         ObjectGadget *gad;
-        
         gad = (ObjectGadget*)obj;
 
         ObjectGadgetGetVertex(gad,I->LastPicked.src.index,I->LastPicked.src.bond,v1);
@@ -5754,7 +5753,7 @@ void SceneRender(PyMOLGlobals *G,Picking *pick,int x,int y,
       glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 
-      pickVLA=VLAlloc(Picking,5000);
+      pickVLA=VLACalloc(Picking,5000);
       pickVLA[0].src.index = 0;
       pickVLA[0].src.bond = 0;
 
@@ -5818,7 +5817,7 @@ void SceneRender(PyMOLGlobals *G,Picking *pick,int x,int y,
       glClearColor(0.0,0.0,0.0,0.0);
       glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	
-      pickVLA=VLAlloc(Picking,5000);
+      pickVLA=VLACalloc(Picking,5000);
       pickVLA[0].src.index = 0;
       pickVLA[0].src.bond = 0; /* this is just a flag for first pass */
       

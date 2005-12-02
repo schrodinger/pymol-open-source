@@ -593,6 +593,7 @@ typedef struct _CPyMOL {
   ov_word lex_light2;
   ov_word lex_light3;
   ov_word lex_hide_underscore_names;
+  ov_word lex_selection_round_points;
 } _CPyMOL;
 
 /* convenience functions -- inline */
@@ -1194,6 +1195,7 @@ static OVstatus PyMOL_InitAPI(CPyMOL *I)
   LEX_SETTING(light2, 456);
   LEX_SETTING(light3, 457);
   LEX_SETTING(hide_underscore_names, 458);
+  LEX_SETTING(selection_round_points, 459);
   
   return_OVstatus_SUCCESS;
 }
