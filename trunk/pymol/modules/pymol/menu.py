@@ -623,6 +623,17 @@ def include(s):
               [ 1, 'visible'   , 'cmd.select("'+s+'","('+s+') or vis",show=1)'],
               ]
 
+def exclude(s):
+    return [[ 2, 'Exclude:'       ,''                        ],     
+            [ 1, 'object'   , modify_by_object(s,'and not') ],
+            [ 1, 'selection' , modify_by_sele(s,'and not') ],
+            [ 0, ''               ,''                             ],           
+            [ 1, 'polymer'   , 'cmd.select("'+s+'","('+s+') and not organic",show=1)'],
+            [ 1, 'solvent'   , 'cmd.select("'+s+'","('+s+') and not solvent",show=1)'],
+            [ 1, 'organic'   , 'cmd.select("'+s+'","('+s+') and not organic",show=1)'],
+            [ 1, 'inorganic' , 'cmd.select("'+s+'","('+s+') and not organic",show=1)'],
+            ]
+
 def expand(s):
     return [[ 2, 'Expand:'       ,''                        ],     
               [ 1, 'by 4 A'  ,'cmd.select("'+s+'","('+s+' expand 4)",show=1)' ],
@@ -791,7 +802,9 @@ def modify_sele(s):
               [ 1, 'invert'         , invert(s)         ],
               [ 1, 'complete'       , complete(s)         ],
               [ 1, 'restrict'       , restrict(s)       ],
-              [ 1, 'include'        , include(s)       ]]
+              [ 1, 'include'        , include(s)       ],
+              [ 1, 'exclude'        , exclude(s)       ]]
+
               
 def sele_action(s):
     return [[ 2, 'Actions:'       ,''                        ],     
