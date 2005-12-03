@@ -1663,6 +1663,8 @@ int was_main(void)
 
 /*========================================================================*/
 
+PyObject *MainAsPyList(void);
+
 PyObject *MainAsPyList(void) 
 {
 #ifdef _PYMOL_NOPY
@@ -1681,7 +1683,7 @@ PyObject *MainAsPyList(void)
   return(PConvAutoNone(result));
 #endif
 }
-
+int MainFromPyList(PyObject *list);
 int MainFromPyList(PyObject *list)
 {
 #ifdef _PYMOL_NOPY

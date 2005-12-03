@@ -1376,7 +1376,7 @@ PyMOLreturn_status PyMOL_CmdCenter(CPyMOL *I,char *selection, int state, int ori
 {
   int ok = false;
   PYMOL_API_LOCK
-  ok = ExecutiveCenter(I->G,selection,state,origin,animate,NULL,quiet);
+  ok = ExecutiveCenter(I->G,selection,state-1,origin,animate,NULL,quiet);
   PYMOL_API_UNLOCK
   return return_status_ok(ok);
 }
@@ -1450,7 +1450,7 @@ PyMOLreturn_status PyMOL_CmdClip(CPyMOL *I,char *mode, float amount, char *selec
   OVreturn_word clip_id;
   if(OVreturn_IS_OK( (clip_id= get_clip_id(I,mode)))) {
     SelectorGetTmp(I->G,selection,s1);
-    SceneClip(I->G,clip_id.word,amount,s1,state);
+    SceneClip(I->G,clip_id.word,amount,s1,state-1);
     SelectorFreeTmp(I->G,s1);
   }
   PYMOL_API_UNLOCK
@@ -1605,7 +1605,8 @@ static PyMOLreturn_status Loader(CPyMOL *I,char *content,  char *content_type,
   if(ok) {
     if((type_code != I->lex_filename) &&
        (type_code != I->lex_string) &&
-       (type_code != I->lex_raw)) {
+       (type_code != I->lex_raw) &&
+       (type_code != I->lex_cgo)) {
       
       ok = false;
     }
@@ -1695,6 +1696,10 @@ static PyMOLreturn_status Loader(CPyMOL *I,char *content,  char *content_type,
       } else if(format_code == I->lex_xplor) {
         if((type_code == I->lex_raw) || (type_code == I->lex_string))
           pymol_content_type = cLoadTypeXPLORStr;
+      } else if(format_code == I->lex_cgo) {
+        if(type_code == I->lex_cgo) {
+          pymol_content_type = cLoadTypeCGO;
+        }
       }
 
       if(pymol_content_type != cLoadTypeUnknown) {
@@ -1723,6 +1728,7 @@ static PyMOLreturn_status Loader(CPyMOL *I,char *content,  char *content_type,
       case cLoadTypeXPLORStr:
       case cLoadTypeCCP4Map:
       case cLoadTypeCCP4Str:
+      case cLoadTypeCGO:
         ok = ExecutiveLoad(I->G, existing_object, 
                            content, content_length, 
                            pymol_content_type,
@@ -1766,6 +1772,19 @@ PyMOLreturn_status PyMOL_CmdLoadRaw(CPyMOL *I,char *content,
   PYMOL_API_LOCK
   status = Loader(I,content, "raw", content_length, content_format,
                 object_name, state, discrete, finish, quiet, multiplex, zoom);
+  PYMOL_API_UNLOCK
+  return status;
+}
+
+PyMOLreturn_status PyMOL_CmdLoadCGO(CPyMOL *I,float *content, 
+                                    int content_length,
+                                    char *object_name, int state, 
+                                    int quiet, int zoom)
+{
+  PyMOLreturn_status status;
+  PYMOL_API_LOCK
+  status = Loader(I, (char*)content, "cgo", content_length, "cgo",
+                  object_name, state, 0, 1, quiet, 0, zoom);
   PYMOL_API_UNLOCK
   return status;
 }

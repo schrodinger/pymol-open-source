@@ -34,6 +34,7 @@ typedef struct ObjectCGO {
 
 ObjectCGO *ObjectCGONew(PyMOLGlobals *G);
 ObjectCGO *ObjectCGODefine(PyMOLGlobals *G,ObjectCGO *obj,PyObject *pycgo,int state);
+ObjectCGO *ObjectCGOFromFloatArray(PyMOLGlobals *G,ObjectCGO *obj,float *array, int size, int state, int quiet);
 ObjectCGO *ObjectCGOFromCGO(PyMOLGlobals *G,ObjectCGO *obj,CGO *cgo,int state);
 void ObjectCGORecomputeExtent(ObjectCGO *I);
 

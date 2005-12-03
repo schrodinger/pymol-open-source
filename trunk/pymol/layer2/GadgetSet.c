@@ -377,7 +377,9 @@ static void GadgetSetRender(GadgetSet *I,RenderInfo *info)
   CRay *ray = info->ray;
   Picking **pick = info->pick;
   float *color;
-  PickContext context = {I->Obj,I->State};
+  PickContext context;
+  context.object = I->Obj;
+  context.state = I->State;
 
   color = ColorGet(I->G,I->Obj->Obj.Color);
 

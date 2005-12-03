@@ -323,6 +323,28 @@ static CGO *ObjectCGOPyListFloatToCGO(PyMOLGlobals *G,PyObject *list)
 #endif
 
 /*========================================================================*/
+static CGO *ObjectCGOFloatArrayToCGO(PyMOLGlobals *G,float *raw, int len, int quiet)
+{
+  CGO *cgo=NULL;
+  int ok = true;
+  int result;
+
+  if(raw) {
+    if(ok) {
+      cgo=CGONewSized(G,len);
+      if(cgo) {
+        result = CGOFromFloatArray(cgo,raw,len); 
+        if(result&&!quiet) {
+          PRINTF " FloatToCGO: error encountered on element %d\n", result ENDF(G);
+        }
+        CGOStop(cgo);
+      }
+    }
+  }
+  return(cgo);
+}
+
+/*========================================================================*/
 ObjectCGO *ObjectCGOFromCGO(PyMOLGlobals *G,ObjectCGO *obj,CGO *cgo,int state)
 {
   ObjectCGO *I = NULL;
@@ -445,4 +467,58 @@ ObjectCGO *ObjectCGODefine(PyMOLGlobals *G,ObjectCGO *obj,PyObject *pycgo,int st
   SceneCountFrames(G);
   return(I);
 #endif
+}
+
+ObjectCGO *ObjectCGOFromFloatArray(PyMOLGlobals *G,ObjectCGO *obj,
+                                   float *array, int size, int state, int quiet)
+{
+  ObjectCGO *I = NULL;
+  
+  CGO *cgo,*font_cgo;
+  int est;
+  
+  if(obj) {
+    if(obj->Obj.type!=cObjectCGO) /* TODO: handle this */
+      obj=NULL;
+  }
+  if(!obj) {
+    I=ObjectCGONew(G);
+  } else {
+    I=obj;
+  }
+  if(state<0) state=I->NState;
+  if(I->NState<=state) {
+    VLACheck(I->State,ObjectCGOState,state);
+    I->NState=state+1;
+  }
+  if(I->State[state].std) {
+    CGOFree(I->State[state].std);
+  }
+  if(I->State[state].ray) {
+    CGOFree(I->State[state].ray);
+  }
+  cgo=ObjectCGOFloatArrayToCGO(G,array,size,quiet);
+  if(cgo) {
+    est=CGOCheckForText(cgo);
+    if(est) {
+      CGOPreloadFonts(cgo);
+      font_cgo = CGODrawText(cgo,est,NULL);
+      CGOFree(cgo);
+      cgo=font_cgo;
+    }
+    est=CGOCheckComplex(cgo);
+    if(est) {
+      I->State[state].ray=cgo;
+      I->State[state].std=CGOSimplify(cgo,est);
+    } else 
+      I->State[state].std=cgo;
+  } else if(!quiet) {
+    ErrMessage(G,"ObjectCGO","could not parse CGO.");
+  }
+  if(I) {
+    ObjectCGORecomputeExtent(I);
+  }
+  SceneChanged(G);
+  SceneCountFrames(G);
+  return(I);
 }
