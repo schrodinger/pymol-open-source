@@ -142,4 +142,7 @@ void MemoryCacheDone(PyMOLGlobals *G)
   }
   FreeP(G->MemoryCache);
 }
+#else
+typedef int file_not_empty_as_per_iso_c;
+
 #endif

@@ -1036,13 +1036,15 @@ int ExecutiveLoad(PyMOLGlobals *G,CObject *origObj,
   case cLoadTypeDXMap:
     is_string = false;
     break;
+  case cLoadTypeCGO:
+    is_string = true; /* this is a lie: contet is actually an array of floats */
+    break;
   case cLoadTypePSE:
   case cLoadTypeSDF1:
   case cLoadTypeChemPyModel:
   case cLoadTypeChemPyBrick:
   case cLoadTypeChemPyMap:
   case cLoadTypeCallback:
-  case cLoadTypeCGO:
   case cLoadTypeR3D:
     /* should never get here... */
 
@@ -1156,6 +1158,10 @@ int ExecutiveLoad(PyMOLGlobals *G,CObject *origObj,
         case cLoadTypeCCP4Str:
           obj=(CObject*)ObjectMapLoadCCP4(G, (ObjectMap*)origObj, start_at, eff_state, true, size, quiet);
           break;
+        case cLoadTypeCGO:
+          obj=(CObject*)ObjectCGOFromFloatArray(G,(ObjectCGO*)origObj, 
+                                                (float*)start_at, size, eff_state, quiet);
+          break;
         }
 
         if(obj) {
@@ -1185,11 +1191,13 @@ int ExecutiveLoad(PyMOLGlobals *G,CObject *origObj,
             if(is_new) {
               ExecutiveManageObject(G,obj,zoom,true); /* quiet=true -- suppressing output... */
             }
-            if(finish)
-              ExecutiveUpdateObjectSelection(G,obj);
+            if(obj->type == cObjectMolecule) {
+              if(finish)
+                ExecutiveUpdateObjectSelection(G,obj);
 
-            if(eff_state<0)
-              eff_state = ((ObjectMolecule*)obj)->NCSet-1;
+              if(eff_state<0)
+                eff_state = ((ObjectMolecule*)obj)->NCSet-1;
+            }
             if(n_processed>0) {
               if(!is_string) {
                 sprintf(buf," ExecutiveLoad: loaded %d objects from \"%s\".\n",n_processed+1,content);
@@ -1221,6 +1229,7 @@ int ExecutiveLoad(PyMOLGlobals *G,CObject *origObj,
     }
   }
   return(ok);
+
 }
 
 
@@ -1267,8 +1276,8 @@ CObject *ExecutiveGetExistingCompatible(PyMOLGlobals *G,char *oname,int type)
       new_type = cObjectCallback;
       break;
     case cLoadTypeCGO:
-        new_type = cObjectCGO;
-        break;
+      new_type = cObjectCGO;
+      break;
     }
     if (new_type!=origObj->type) {
       ExecutiveDelete(G,origObj->Name);
@@ -4168,140 +4177,155 @@ void ExecutiveRenderSelections(PyMOLGlobals *G,int curState)
 {
   register CExecutive *I = G->Executive;
   SpecRec *rec = NULL;
-  SpecRec *rec1;
-  int sele;
-  int no_depth;
-  float min_width;
-  float gl_width;
-  int width;
-  int max_width = (int)SettingGetGlobal_f(G,cSetting_selection_width_max);
-  float width_scale = SettingGetGlobal_f(G,cSetting_selection_width_scale);
-  int round_points = SettingGetGlobal_b(G,cSetting_selection_round_points);
-
-  min_width = SettingGetGlobal_f(G,cSetting_selection_width);
-
-  if(width_scale>=0.0F) {
-    width = (int)((width_scale*SettingGetGlobal_f(G,cSetting_stick_radius)/SceneGetScreenVertexScale(G,NULL)));
-  if(width<min_width)
-    width = (int)min_width;
-  else if(width>max_width)
-    width = (int)max_width;
-  } else
-    width = (int)min_width;
-
-  if(round_points) {
-    glEnable(GL_POINT_SMOOTH);
-    glAlphaFunc(GL_GREATER, 0.5F);
-    glEnable(GL_ALPHA_TEST);
-    glHint(GL_POINT_SMOOTH_HINT,GL_NICEST);
-    width = (int)(width*1.44F);
-  }
-
-  no_depth = (int)SettingGet(G,cSetting_selection_overlay);
-
+  int any_active = false;
   while(ListIterate(I->Spec,rec,next)) {
     if(rec->type==cExecSelection) {
-
       if(rec->visible) {
-        sele = SelectorIndexByName(G,rec->name); /* TODO: speed this up */
-        if(sele>=0) {
-
-          if(no_depth)
-            glDisable(GL_DEPTH_TEST);
-          glDisable(GL_FOG);
-
-          if(rec->sele_color<0)
-            glColor3f(1.0F,0.2F,0.6F);
-          else
-            glColor3fv(ColorGet(G,rec->sele_color));
-
-          gl_width=(float)width;
-          if(width>6) { /* keep it even above 6 */
-            if(width&0x1) {
-              width--;
-              gl_width = (float)width;
-            }
-          }
-          glPointSize(gl_width);
-          glBegin(GL_POINTS);
-          rec1 = NULL;
-          while(ListIterate(I->Spec,rec1,next)) {
-            if(rec1->type==cExecObject) {
-              if(rec1->obj->type==cObjectMolecule) {
-                ObjectMoleculeRenderSele((ObjectMolecule*)rec1->obj,curState,sele);
-              }
-            }
-          }
-          glEnd();
-          
-          if(width>2) {
-            switch(width) {
-            case 1:
-            case 2:
-            case 3:
-              glPointSize(1.0F);
-              break;
-            case 4:
-              glPointSize(2.0F);
-              break;
-            case 5:
-              glPointSize(3.0F); 
-              break;
-            case 6:
-            case 7:
-            case 8:
-            case 9:
-              glPointSize(4.0F);
-              break;
-            default:
-              glPointSize(6.0F);
-              break;
-            }
-
-            glColor3f(0.0F,0.0F,0.0F);
-            glBegin(GL_POINTS);
-            rec1 = NULL;
-            while(ListIterate(I->Spec,rec1,next)) {
-              if(rec1->type==cExecObject) {
-                if(rec1->obj->type==cObjectMolecule) {
-                  ObjectMoleculeRenderSele((ObjectMolecule*)rec1->obj,curState,sele);
-                }
-              }
-            }
-            glEnd();
-          }
-
-          if(width>4) {
-            if(width>5) {
-              glPointSize(2.0F);
-            }
-            else 
-              glPointSize(1.0F);
-            glColor3f(1.0F,1.0F,1.0F);
-            
-            glBegin(GL_POINTS);
-            rec1 = NULL;
-            while(ListIterate(I->Spec,rec1,next)) {
-              if(rec1->type==cExecObject) {
-                if(rec1->obj->type==cObjectMolecule) {
-                  ObjectMoleculeRenderSele((ObjectMolecule*)rec1->obj,curState,sele);
-                }
-              }
-            }
-            glEnd();
-          }
-
-
-
-          if(no_depth)
-            glEnable(GL_DEPTH_TEST);
-          glEnable(GL_FOG);
-        }
+        any_active = true;
+        break;
       }
     }
   }
-  if(round_points) {
-    glAlphaFunc(GL_GREATER, 0.05F);
+
+  if(any_active) {
+    SpecRec *rec1;
+    int sele;
+    int no_depth;
+    float min_width;
+    float gl_width;
+    int width;
+    
+    int max_width = (int)SettingGetGlobal_f(G,cSetting_selection_width_max);
+    float width_scale = SettingGetGlobal_f(G,cSetting_selection_width_scale);
+    int round_points = SettingGetGlobal_b(G,cSetting_selection_round_points);
+   
+    rec = NULL;
+    min_width = SettingGetGlobal_f(G,cSetting_selection_width);
+    
+    if(width_scale>=0.0F) {
+      width = (int)((width_scale*SettingGetGlobal_f(G,cSetting_stick_radius)/
+                     SceneGetScreenVertexScale(G,NULL)));
+      if(width<min_width)
+        width = (int)min_width;
+      else if(width>max_width)
+        width = (int)max_width;
+    } else
+      width = (int)min_width;
+    
+    if(round_points) {
+      glEnable(GL_POINT_SMOOTH);
+      glAlphaFunc(GL_GREATER, 0.5F);
+      glEnable(GL_ALPHA_TEST);
+      glHint(GL_POINT_SMOOTH_HINT,GL_NICEST);
+      width = (int)(width*1.44F);
+    }
+    
+    no_depth = (int)SettingGet(G,cSetting_selection_overlay);
+    
+    while(ListIterate(I->Spec,rec,next)) {
+      if(rec->type==cExecSelection) {
+        
+        if(rec->visible) {
+          sele = SelectorIndexByName(G,rec->name); /* TODO: speed this up */
+          if(sele>=0) {
+            
+            if(no_depth)
+              glDisable(GL_DEPTH_TEST);
+            glDisable(GL_FOG);
+            
+            if(rec->sele_color<0)
+              glColor3f(1.0F,0.2F,0.6F);
+            else
+              glColor3fv(ColorGet(G,rec->sele_color));
+            
+            gl_width=(float)width;
+            if(width>6) { /* keep it even above 6 */
+              if(width&0x1) {
+                width--;
+                gl_width = (float)width;
+              }
+            }
+            glPointSize(gl_width);
+            glBegin(GL_POINTS);
+            rec1 = NULL;
+            while(ListIterate(I->Spec,rec1,next)) {
+              if(rec1->type==cExecObject) {
+                if(rec1->obj->type==cObjectMolecule) {
+                  ObjectMoleculeRenderSele((ObjectMolecule*)rec1->obj,curState,sele);
+                }
+              }
+            }
+            glEnd();
+            
+            if(width>2) {
+              switch(width) {
+              case 1:
+              case 2:
+              case 3:
+                glPointSize(1.0F);
+                break;
+              case 4:
+                glPointSize(2.0F);
+                break;
+              case 5:
+                glPointSize(3.0F); 
+                break;
+              case 6:
+              case 7:
+              case 8:
+              case 9:
+                glPointSize(4.0F);
+                break;
+              default:
+                glPointSize(6.0F);
+                break;
+              }
+              
+              glColor3f(0.0F,0.0F,0.0F);
+              glBegin(GL_POINTS);
+              rec1 = NULL;
+              while(ListIterate(I->Spec,rec1,next)) {
+                if(rec1->type==cExecObject) {
+                  if(rec1->obj->type==cObjectMolecule) {
+                    ObjectMoleculeRenderSele((ObjectMolecule*)rec1->obj,curState,sele);
+                  }
+                }
+              }
+              glEnd();
+            }
+            
+            if(width>4) {
+              if(width>5) {
+                glPointSize(2.0F);
+              }
+              else 
+                glPointSize(1.0F);
+              glColor3f(1.0F,1.0F,1.0F);
+              
+              glBegin(GL_POINTS);
+              rec1 = NULL;
+              while(ListIterate(I->Spec,rec1,next)) {
+                if(rec1->type==cExecObject) {
+                  if(rec1->obj->type==cObjectMolecule) {
+                    ObjectMoleculeRenderSele((ObjectMolecule*)rec1->obj,curState,sele);
+                  }
+                }
+              }
+              glEnd();
+            }
+            
+            
+            
+            if(no_depth)
+              glEnable(GL_DEPTH_TEST);
+            glEnable(GL_FOG);
+          }
+        }
+      }
+    }
+    if(round_points) {
+      glAlphaFunc(GL_GREATER, 0.05F);
+    }
   }
 }
 /*========================================================================*/
@@ -8563,6 +8587,7 @@ int ExecutiveWindowZoom(PyMOLGlobals *G,char *name,float buffer,
   int sele0;
   int ok=true;
 
+
   PRINTFD(G,FB_Executive)
     " ExecutiveWindowZoom-DEBUG: entered\n"
     ENDFD;
@@ -11042,6 +11067,7 @@ int ExecutiveInit(PyMOLGlobals *G)
     TrackerLink(I->Tracker, rec->cand_id, I->all_names_list_id,1);
     ListAppend(I->Spec,rec,next,SpecRec);
     ExecutiveAddKey(I,rec);    
+
     return 1;
   }
   else return 0;

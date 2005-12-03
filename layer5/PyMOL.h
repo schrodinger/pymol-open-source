@@ -250,6 +250,12 @@ PyMOLreturn_status PyMOL_CmdLoadRaw(CPyMOL *I,char *content,
                                     int discrete, int finish, 
                                     int quiet, int multiplex, int zoom);
 
+PyMOLreturn_status PyMOL_CmdLoadCGO(CPyMOL *I,float *content, 
+                                    int content_length,
+                                    char *object_name, int state, 
+                                    int quiet, int zoom);
+
+
 PyMOLreturn_status PyMOL_CmdZoom(CPyMOL *I,char *selection, float buffer,
                int state, int complete, float animate, int quiet);
 
