@@ -5366,8 +5366,10 @@ static void SceneRenderAll(PyMOLGlobals *G,SceneUnitContext *context,
         switch(rec->obj->Context) {
         case 1: /* unit context */
           {
-	    /*
-            glPushAttrib(GL_LIGHTING_BIT); ** problematic */
+#ifndef _PYMOL_OSX
+/* workaround for MacOSX 10.4.3 */
+            glPushAttrib(GL_LIGHTING_BIT); 
+#endif
 
 	    glMatrixMode(GL_PROJECTION);
             glPushMatrix();
@@ -5397,18 +5399,14 @@ static void SceneRenderAll(PyMOLGlobals *G,SceneUnitContext *context,
             glPopMatrix();
             glMatrixMode(GL_MODELVIEW);
             glLoadIdentity();
-	    /*            
-			  vv[0]=0.0;
-			  vv[1]=0.0;
-			  vv[2]=1.0;
-			  vv[3]=0.0;
-			  glLightfv(GL_LIGHT0,GL_POSITION,vv);
-			  glLightfv(GL_LIGHT1,GL_POSITION,vv);
-            */
-	    SceneProgramLighting(G); /* an expensive workaround...for glPushAttrib/glPop */
+#ifndef _PYMOL_OSX
+   /* workaround for MacOSX 10.4.3 */
+            glPopAttrib();
+#else  
+	        SceneProgramLighting(G); /* an expensive workaround... */
+#endif
             glPopMatrix();
 
-            /*glPopAttrib();*/
           }
           break;
         case 2:
