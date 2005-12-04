@@ -2642,7 +2642,7 @@ int ExecutiveSetSession(PyMOLGlobals *G,PyObject *session,int quiet)
     if(tmp) {
       ok = PConvPyListToFloatArrayInPlace(tmp,sv,cSceneViewSize);
     }
-    if(ok) SceneSetView(G,sv,true,0);
+    if(ok) SceneSetView(G,sv,true,0,0);
     
     
     
@@ -5710,7 +5710,7 @@ void ExecutiveOrient(PyMOLGlobals *G,char *sele,double *mi,
     
     ExecutiveWindowZoom(G,sele,buffer,state,complete,false,quiet);
     if(animate!=0.0F)
-      SceneLoadAnimation(G,animate);
+      SceneLoadAnimation(G,animate,0);
     
   }
 }
@@ -8632,7 +8632,7 @@ int ExecutiveWindowZoom(PyMOLGlobals *G,char *name,float buffer,
     SceneOriginSet(G,center,false);
     SceneWindowSphere(G,center,radius);
     if(animate!=0.0F)
-      SceneLoadAnimation(G,animate);
+      SceneLoadAnimation(G,animate,0);
     SceneInvalidate(G);
   } else {
 
@@ -8697,7 +8697,7 @@ int ExecutiveCenter(PyMOLGlobals *G,char *name,int state,
     SceneRelocate(G,center);
     SceneInvalidate(G);
     if(animate!=0.0F)
-      SceneLoadAnimation(G,animate);
+      SceneLoadAnimation(G,animate,0);
   } else {
     sele0 = SelectorIndexByName(G,name);
     if(sele0>=0) { /* any valid selection except "all" */

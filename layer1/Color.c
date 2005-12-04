@@ -489,6 +489,8 @@ int ColorGetIndex(PyMOLGlobals *G,char *name)
         return(ColorGetCurrent(G));
       else if(i==cColorAtomic)
         return cColorAtomic;
+      else if(i==cColorObject)
+        return cColorObject;
       else if(i==-1)
         return -1;
     }
@@ -510,6 +512,8 @@ int ColorGetIndex(PyMOLGlobals *G,char *name)
     return(ColorGetCurrent(G));
   if(WordMatch(G,name,"atomic",true))
     return(cColorAtomic);
+  if(WordMatch(G,name,"object",true))
+    return(cColorObject);
   if(!I->Lex) { /* populate the dictionary */
 
     OVreturn_word result;

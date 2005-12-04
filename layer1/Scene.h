@@ -105,7 +105,8 @@ void ScenePrepareExit(PyMOLGlobals *G);
 void SceneGetViewNormal(PyMOLGlobals *G,float *v);
 void SceneClipSet(PyMOLGlobals *G,float front,float back);
 void SceneGetView(PyMOLGlobals *G,SceneViewType view);
-void SceneSetView(PyMOLGlobals *G,SceneViewType view,int quiet,float animate);
+void SceneSetView(PyMOLGlobals *G,SceneViewType view,
+                  int quiet,float animate,int hand);
 
 void SceneToViewElem(PyMOLGlobals *G,CViewElem *elem);
 void SceneFromViewElem(PyMOLGlobals *G,CViewElem *elem);
@@ -137,7 +138,7 @@ void SceneUpdateStereo(PyMOLGlobals *G);
 void ScenePushRasterMatrix(PyMOLGlobals *G,float *v);
 void ScenePopRasterMatrix(PyMOLGlobals *G);
 void ScenePrimeAnimation(PyMOLGlobals *G);
-void SceneLoadAnimation(PyMOLGlobals *G, double duration);
+void SceneLoadAnimation(PyMOLGlobals *G, double duration,int hand);
 int SceneMustDrawBoth(PyMOLGlobals *G);
 float SceneGetReflectValue(PyMOLGlobals *G);
 

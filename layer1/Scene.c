@@ -246,7 +246,7 @@ void SceneInvalidate(PyMOLGlobals *G)
    SceneDirty(G);
 }
 
-void SceneLoadAnimation(PyMOLGlobals *G, double duration)
+void SceneLoadAnimation(PyMOLGlobals *G, double duration,int hand)
 {
   if(G->HaveGUI) {
     double now;
@@ -265,7 +265,7 @@ void SceneLoadAnimation(PyMOLGlobals *G, double duration)
     I->ani_elem[target].timing_flag = true;
     I->ani_elem[target].timing = now + duration;
     ViewElemInterpolate(I->ani_elem, I->ani_elem + target, 
-                        2.0F, 1.0F, true, 0.0F);
+                        2.0F, 1.0F, true, 0.0F, hand);
     SceneFromViewElem(G,I->ani_elem);
     I->cur_ani_elem = 0;
     I->n_ani_elem = target;
@@ -701,7 +701,8 @@ void SceneGetView(PyMOLGlobals *G,SceneViewType view)
   *(p++) = SettingGet(G,cSetting_ortho);
 }
 /*========================================================================*/
-void SceneSetView(PyMOLGlobals *G,SceneViewType view,int quiet,float animate)
+void SceneSetView(PyMOLGlobals *G,SceneViewType view,
+                  int quiet,float animate,int hand)
 {
   float *p;
   int a;
@@ -743,7 +744,7 @@ void SceneSetView(PyMOLGlobals *G,SceneViewType view,int quiet,float animate)
       ENDFB(G);
   }
   if(animate!=0.0F)
-    SceneLoadAnimation(G,animate);
+    SceneLoadAnimation(G,animate,hand);
 
   SceneRovingDirty(G);
 }
