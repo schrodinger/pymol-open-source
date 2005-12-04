@@ -2525,14 +2525,13 @@ static PyObject *CmdDist(PyObject *dummy, PyObject *args)
   char *name,*str1,*str2;
   float cutoff,result=-1.0;
   int labels,quiet;
-  int mode;
-  int reset;
-  int state;
+  int mode,reset,state,zoom;
   OrthoLineType s1,s2;
   int ok=false;
   int c1,c2;
-  ok = PyArg_ParseTuple(args,"sssifiiii",&name,&str1,&str2,&mode,&cutoff,
-                        &labels,&quiet,&reset,&state);
+  ok = PyArg_ParseTuple(args,"sssifiiiii",&name,&str1,
+                        &str2,&mode,&cutoff,
+                        &labels,&quiet,&reset,&state,&zoom);
   if (ok) {
     APIEntry();
     c1 = SelectorGetTmp(TempPyMOLGlobals,str1,s1);
@@ -2541,8 +2540,8 @@ static PyObject *CmdDist(PyObject *dummy, PyObject *args)
       ok = false;
     else {
       if(c1&&(c2||WordMatch(TempPyMOLGlobals,cKeywordSame,s2,true)))
-        result = ExecutiveDist(TempPyMOLGlobals,name,s1,s2,mode,cutoff,
-                               labels,quiet,reset);
+        ExecutiveDist(TempPyMOLGlobals,&result,name,s1,s2,mode,cutoff,
+                      labels,quiet,reset,state,zoom);
       else {
         if((!quiet)&&(!c1)) {
           PRINTFB(TempPyMOLGlobals,FB_Executive,FB_Errors)
@@ -2593,7 +2592,8 @@ static PyObject *CmdAngle(PyObject *dummy, PyObject *args)
     if(c1&&
        (c2||WordMatch(TempPyMOLGlobals,cKeywordSame,s2,true))&&
        (c3||WordMatch(TempPyMOLGlobals,cKeywordSame,s3,true)))
-      result = ExecutiveAngle(TempPyMOLGlobals,name,s1,s2,s3,mode,labels,reset,zoom,quiet);
+      ExecutiveAngle(TempPyMOLGlobals,&result,name,s1,s2,s3,
+                              mode,labels,reset,zoom,quiet,state);
     else {
       if((!quiet)&&(!c1)) {
         PRINTFB(TempPyMOLGlobals,FB_Executive,FB_Errors)
@@ -2644,7 +2644,7 @@ static PyObject *CmdDihedral(PyObject *dummy, PyObject *args)
        (c2||WordMatch(TempPyMOLGlobals,cKeywordSame,s2,true))&&
        (c3||WordMatch(TempPyMOLGlobals,cKeywordSame,s3,true))&&
        (c4||WordMatch(TempPyMOLGlobals,cKeywordSame,s4,true)))
-      result = ExecutiveDihedral(TempPyMOLGlobals,name,s1,s2,s3,s4,
+      ExecutiveDihedral(TempPyMOLGlobals,&result,name,s1,s2,s3,s4,
                                  mode,labels,reset,zoom,quiet,state);
     else {
       if((!quiet)&&(!c1)) {
