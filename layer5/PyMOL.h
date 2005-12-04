@@ -288,23 +288,61 @@ PyMOLreturn_status PyMOL_CmdSelect(CPyMOL *I,char *name, char *selection, int qu
 PyMOLreturn_status PyMOL_CmdSelectList(CPyMOL *I,char *name, char *object, int *list,
                                        int list_len, int state, char *mode, int quiet);
 
-PyMOLreturn_float  PyMOL_CmdGetDistance(CPyMOL *I,
-                                        char *selection1,
-                                        char *selection2, 
-                                        int state, int quiet);
+PyMOLreturn_float PyMOL_CmdGetDistance(CPyMOL *I,
+                                       char *selection1,
+                                       char *selection2, 
+                                       int state, int quiet);
 
-PyMOLreturn_float  PyMOL_CmdGetAngle(CPyMOL *I,
-                                     char *selection1,
-                                     char *selection2,
-                                     char *selection3,
-                                     int state,int quiet);
+PyMOLreturn_float PyMOL_CmdDistance(CPyMOL *I,
+                                    char *name,
+                                    char *selection1,
+                                    char *selection2, 
+                                    int mode,
+                                    float cutoff,
+                                    int label, 
+                                    int reset,
+                                    int zoom,
+                                    int state,
+                                    int quiet);
 
-PyMOLreturn_float  PyMOL_CmdGetDihedral(CPyMOL *I,
-                                        char *selection1,
-                                        char *selection2,
-                                        char *selection3,
-                                        char *selection4,
-                                        int state, int quiet);
+
+PyMOLreturn_float PyMOL_CmdGetAngle(CPyMOL *I,
+                                    char *selection1,
+                                    char *selection2,
+                                    char *selection3,
+                                    int state,int quiet);
+
+PyMOLreturn_float PyMOL_CmdAngle(CPyMOL *I,
+                                 char *name,
+                                 char *selection1,
+                                 char *selection2, 
+                                 char *selection3, 
+                                 int mode,
+                                 int label, 
+                                 int reset,
+                                 int zoom,
+                                 int state,
+                                 int quiet);
+
+PyMOLreturn_float PyMOL_CmdGetDihedral(CPyMOL *I,
+                                       char *selection1,
+                                       char *selection2,
+                                       char *selection3,
+                                       char *selection4,
+                                       int state, int quiet);
+
+PyMOLreturn_float PyMOL_CmdDihedral(CPyMOL *I,
+                                    char *name,
+                                    char *selection1,
+                                    char *selection2, 
+                                    char *selection3, 
+                                    char *selection4, 
+                                    int mode,
+                                    int label, 
+                                    int reset,
+                                    int zoom,
+                                    int state,
+                                    int quiet);
 
 PyMOLreturn_float_array PyMOL_CmdAlign(CPyMOL *I, char *source, char *target, float cutoff, 
                                        int cycles, float gap, float extend, int max_gap, 

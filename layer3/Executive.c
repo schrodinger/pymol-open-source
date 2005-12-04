@@ -5238,15 +5238,15 @@ void ExecutiveBond(PyMOLGlobals *G,char *s1,char *s2,int order,int add)
   }
 }
 /*========================================================================*/
-float ExecutiveAngle(PyMOLGlobals *G,char *nam,char *s1,char *s2,char *s3,int mode,
-                     int labels,int reset,int zoom,int quiet,int state)
+int ExecutiveAngle(PyMOLGlobals *G,float *result, char *nam,
+                   char *s1,char *s2, char *s3,int mode,
+                   int labels,int reset,int zoom,int quiet,int state)
 {
   int sele1,sele2,sele3;
   ObjectDist *obj;
   CObject *anyObj = NULL;
-  float result;
   sele1=SelectorIndexByName(G,s1);
-
+  *result = 0.0F;
   if(!WordMatch(G,s2,cKeywordSame,true))
     sele2=SelectorIndexByName(G,s2);
   else {
@@ -5269,10 +5269,12 @@ float ExecutiveAngle(PyMOLGlobals *G,char *nam,char *s1,char *s2,char *s3,int mo
 
     obj = ObjectDistNewFromAngleSele(G,(ObjectDist*)anyObj,
                                      sele1,sele2,sele3,
-                                     mode,labels,&result,reset,state);
+                                     mode,labels,result,reset,state);
     if(!obj) {
-      ErrMessage(G,"ExecutiveDistance","No angles found.");
+      if(!quiet)
+        ErrMessage(G,"ExecutiveDistance","No angles found.");
     } else {
+      *result = rad_to_deg(*result);
       if(!anyObj) {
         ObjectSetName((CObject*)obj,nam);
         ExecutiveManageObject(G,(CObject*)obj,zoom,quiet);
@@ -5282,26 +5284,31 @@ float ExecutiveAngle(PyMOLGlobals *G,char *nam,char *s1,char *s2,char *s3,int mo
       }
     }
   } else if(sele1<0) {
-    ErrMessage(G,"ExecutiveDistance","The first selection contains no atoms.");
+    if(!quiet)
+      ErrMessage(G,"ExecutiveDistance",
+               "The first selection contains no atoms.");
   } else if(sele2<0) {
-    ErrMessage(G,"ExecutiveDistance","The second selection contains no atoms.");
+    if(!quiet)
+      ErrMessage(G,"ExecutiveDistance",
+               "The second selection contains no atoms.");
   } else if(sele3<0) {
-    ErrMessage(G,"ExecutiveDistance","The third selection contains no atoms.");
+    if(!quiet)
+      ErrMessage(G,"ExecutiveDistance",
+               "The third selection contains no atoms.");
   }
-  return(result);
+  return(1);
 }
 
 /*========================================================================*/
-float ExecutiveDihedral(PyMOLGlobals *G,char *nam,char *s1,char *s2,char *s3,char *s4,int mode,
+int ExecutiveDihedral(PyMOLGlobals *G,float *result, char *nam,char *s1,
+                        char *s2,char *s3,char *s4,int mode,
                         int labels,int reset,int zoom,int quiet,int state)
 {
-  float result = 0.0F;
-  
   int sele1,sele2,sele3,sele4;
   ObjectDist *obj;
   CObject *anyObj = NULL;
   sele1=SelectorIndexByName(G,s1);
-
+  *result = 0.0F;
   if(!WordMatch(G,s2,cKeywordSame,true))
     sele2=SelectorIndexByName(G,s2);
   else {
@@ -5328,11 +5335,14 @@ float ExecutiveDihedral(PyMOLGlobals *G,char *nam,char *s1,char *s2,char *s3,cha
     }
 
     obj = ObjectDistNewFromDihedralSele(G,(ObjectDist*)anyObj,
-                                         sele1,sele2,sele3,sele4,
-                                         mode,labels,&result,reset,state);
+                                        sele1,sele2,sele3,sele4,
+                                        mode,labels,result,
+                                        reset,state);
     if(!obj) {
-      ErrMessage(G,"ExecutiveDihedral","No angles found.");
+      if(!quiet)
+        ErrMessage(G,"ExecutiveDihedral","No angles found.");
     } else {
+      *result = rad_to_deg(*result);
       if(!anyObj) {
         ObjectSetName((CObject*)obj,nam);
         ExecutiveManageObject(G,(CObject*)obj,zoom,quiet);
@@ -5342,26 +5352,35 @@ float ExecutiveDihedral(PyMOLGlobals *G,char *nam,char *s1,char *s2,char *s3,cha
       }
     }
   } else if(sele1<0) {
-    ErrMessage(G,"ExecutiveDistance","The first selection contains no atoms.");
+    if(!quiet)
+      ErrMessage(G,"ExecutiveDistance",
+                 "The first selection contains no atoms.");
   } else if(sele2<0) {
-    ErrMessage(G,"ExecutiveDistance","The second selection contains no atoms.");
+    if(!quiet)
+      ErrMessage(G,"ExecutiveDistance",
+                 "The second selection contains no atoms.");
   } else if(sele3<0) {
-    ErrMessage(G,"ExecutiveDistance","The third selection contains no atoms.");
+    if(!quiet)
+      ErrMessage(G,"ExecutiveDistance",
+                 "The third selection contains no atoms.");
   } else if(sele4<0) {
-    ErrMessage(G,"ExecutiveDistance","The fourth selection contains no atoms.");
+    if(!quiet)
+      ErrMessage(G,"ExecutiveDistance",
+                 "The fourth selection contains no atoms.");
   }
 
-  return(result);
+  return 1;
 }
 
-float ExecutiveDist(PyMOLGlobals *G,char *nam,
-                    char *s1,char *s2,int mode,float cutoff,
-                    int labels,int quiet,int reset,int state)
+int ExecutiveDist(PyMOLGlobals *G,float *result,char *nam,
+                  char *s1,char *s2,int mode,float cutoff,
+                  int labels,int quiet,int reset,
+                  int state,int zoom)
 {
   int sele1,sele2;
   ObjectDist *obj;
   CObject *anyObj = NULL;
-  float result=0.0F;
+  *result=0.0F;
   sele1=SelectorIndexByName(G,s1);
   if(!WordMatch(G,s2,"same",true))
     sele2=SelectorIndexByName(G,s2);
@@ -5378,26 +5397,33 @@ float ExecutiveDist(PyMOLGlobals *G,char *nam,
       }
     obj = ObjectDistNewFromSele(G,(ObjectDist*)anyObj,
                                 sele1,sele2,mode,
-                                cutoff,labels,reset,&result,state);
+                                cutoff,labels,
+                                reset,result,state);
     if(!obj) {
-      ErrMessage(G,"ExecutiveDistance","No such distances found.");
+      if(!quiet) 
+        ErrMessage(G,"ExecutiveDistance",
+                   "No such distances found.");
     } else {
       ObjectSetName((CObject*)obj,nam);
-      ExecutiveManageObject(G,(CObject*)obj,-1,quiet);
+      ExecutiveManageObject(G,(CObject*)obj,zoom,quiet);
       ExecutiveSetRepVisib(G,nam,cRepLine,1);
       if(!labels)
         ExecutiveSetRepVisib(G,nam,cRepLabel,0);        
     }
   } else if(sele1<0) {
-    ErrMessage(G,"ExecutiveDistance","The first selection contains no atoms.");
+    if(!quiet)
+      ErrMessage(G,"ExecutiveDistance",
+                 "The first selection contains no atoms.");
     if(reset)
       ExecutiveDelete(G,nam);
   } else if(sele2<0) {
-    ErrMessage(G,"ExecutiveDistance","The second selection contains no atoms.");
+    if(!quiet)
+      ErrMessage(G,"ExecutiveDistance",
+                 "The second selection contains no atoms.");
     if(reset)
       ExecutiveDelete(G,nam);
   }
-  return(result);
+  return 1;
 }
 /*========================================================================*/
 float ExecutiveDistance(PyMOLGlobals *G,char *s1,char *s2)

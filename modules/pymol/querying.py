@@ -373,8 +373,6 @@ NOTES
                 r = DEFAULT_ERROR
         if is_ok(r):
             r = DEFAULT_ERROR
-            save=cmd.get_setting_legacy('auto_zoom')
-            cmd.set('auto_zoom',zoom,quiet=1)
 
             # if unlabeled, then get next name in series
 
@@ -403,8 +401,9 @@ NOTES
                 if selection2!="same":
                     selection2 = "("+selection2+")"
                 r = _cmd.dist(str(nam),"("+str(selection1)+")",
-                                  str(selection2),int(mode),float(cutoff),
-                                  int(label),int(quiet),int(reset),int(state)-1)
+                              str(selection2),int(mode),float(cutoff),
+                              int(label),int(quiet),int(reset),
+                              int(state)-1,int(zoom))
                 if width!=None:
                     cmd.set("dash_width",width,nam)
                 if length!=None:
@@ -413,7 +412,6 @@ NOTES
                     cmd.set("dash_gap",gap,nam)
             finally:
                 unlock(r)
-            cmd.set('auto_zoom',save,quiet=1)
         if (r<0.0) and (not quiet):
             # a negative value is an warning signal from PyMOL...
             r = DEFAULT_ERROR

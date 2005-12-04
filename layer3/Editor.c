@@ -102,24 +102,32 @@ static void EditorDrawDihedral(PyMOLGlobals *G)
         
         if((at0>=0) &&( at3>=0)) {
           int sele0, sele3;
-          
+          float result;
+
           /* find the highest priority atom attached to index1 */
           SelectorCreateOrderedFromObjectIndices(G,cEditorDihe1,obj1,&at0,1);
           SelectorCreateOrderedFromObjectIndices(G,cEditorDihe2,obj2,&at3,1);
           sele0 = SelectorIndexByName(G,cEditorDihe1);
           sele3 = SelectorIndexByName(G,cEditorDihe2);
           
-          ExecutiveDihedral(G,cEditorDihedral,cEditorDihe1,cEditorSele1,cEditorSele2,cEditorDihe2,
+          ExecutiveDihedral(G,&result,cEditorDihedral,cEditorDihe1,
+                            cEditorSele1,cEditorSele2,cEditorDihe2,
                             0,true,true,false,true,-1);
           ExecutiveColor(G,cEditorDihedral,"white",1,true);
-          ExecutiveSetSettingFromString(G, cSetting_float_labels, "1", cEditorDihedral, 0, true, true);
+          ExecutiveSetSettingFromString(G, cSetting_float_labels,
+                                        "1", cEditorDihedral, 0, true, true);
 #ifndef _PYMOL_FREETYPE
-          ExecutiveSetSettingFromString(G, cSetting_label_font_id, "4", cEditorDihedral, 0, true, true);
+          ExecutiveSetSettingFromString(G, cSetting_label_font_id, 
+                                        "4", cEditorDihedral, 0, true, true);
 #else
-          ExecutiveSetSettingFromString(G, cSetting_label_font_id, "8", cEditorDihedral, 0, true, true);
-          ExecutiveSetSettingFromString(G, cSetting_label_size, "20", cEditorDihedral, 0, true, true);
+          ExecutiveSetSettingFromString(G, cSetting_label_font_id, 
+                                        "8", cEditorDihedral, 0, true, true);
+          ExecutiveSetSettingFromString(G, cSetting_label_size,
+                                        "20", cEditorDihedral, 0, true, true);
 #endif
-          ExecutiveSetSettingFromString(G, cSetting_label_color, "brightorange", cEditorDihedral, 0, true, true);
+          ExecutiveSetSettingFromString(G, cSetting_label_color, 
+                                        "brightorange", cEditorDihedral,
+                                        0, true, true);
         }
       }
     }
