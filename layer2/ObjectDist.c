@@ -35,7 +35,9 @@ void ObjectDistUpdate(ObjectDist *I);
 int ObjectDistGetNFrames(ObjectDist *I);
 void ObjectDistUpdateExtents(ObjectDist *I);
 
-static DistSet *ObjectDistGetDistSetFromM4XBond(PyMOLGlobals *G,ObjectMolecule *obj, M4XBondType *hb, int n_hb,
+static DistSet *ObjectDistGetDistSetFromM4XBond(PyMOLGlobals *G,
+                                                ObjectMolecule *obj, 
+                                                M4XBondType *hb, int n_hb,
                                                 int state,int nbr_sele)
 {
   int min_id,max_id,range,*lookup = NULL;
@@ -437,7 +439,7 @@ static void ObjectDistReset(PyMOLGlobals *G,ObjectDist *I)
 /*========================================================================*/
 ObjectDist *ObjectDistNewFromSele(PyMOLGlobals *G,ObjectDist *oldObj,
                                   int sele1,int sele2,int mode,float cutoff,
-                                  int labels,int reset,float *result)
+                                  int labels,int reset,float *result,int state)
 {
   int a,mn;
   float dist_sum=0.0,dist;
@@ -459,32 +461,35 @@ ObjectDist *ObjectDistNewFromSele(PyMOLGlobals *G,ObjectDist *oldObj,
   mn = n_state1;
   if(n_state2>mn) mn = n_state2;
   if(mn) {
-    for(a=0;a<mn;a++)
-      {
-        VLACheck(I->DSet,DistSet*,a);
-        if(n_state1>1)
-          state1=a;
-        else
-          state1=0;
-        if(n_state2>1)
-          state2=a;
-        else
-          state2=0;
-        I->DSet[a] = SelectorGetDistSet(G,I->DSet[a],sele1,state1,sele2,
-                                        state2,mode,cutoff,&dist);
-        if(I->DSet[a]) {
-          dist_sum+=dist;
-          dist_cnt++;
-          I->DSet[a]->Obj = I;
-          I->NDSet=a+1;
-        }
-      }  
+    for(a=0;a<mn;a++) {
+      if(state>=0) {
+        if(state>=mn)
+          break;
+        a = state;
+      }
+        
+      VLACheck(I->DSet,DistSet*,a);
+      if(n_state1>1)
+        state1=a;
+      else
+        state1=0;
+      if(n_state2>1)
+        state2=a;
+      else
+        state2=0;
+      I->DSet[a] = SelectorGetDistSet(G,I->DSet[a],sele1,state1,sele2,
+                                      state2,mode,cutoff,&dist);
+      if(I->DSet[a]) {
+        dist_sum+=dist;
+        dist_cnt++;
+        I->DSet[a]->Obj = I;
+        I->NDSet=a+1;
+      }
+
+      if(state>=0)
+        break;
+    }
   } 
-  /* else {
-     VLAFreeP(I->DSet);
-     OOFreeP(I);
-     }
-  */
   ObjectDistUpdateExtents(I);
   ObjectDistInvalidateRep(I,cRepAll);
 
@@ -495,8 +500,9 @@ ObjectDist *ObjectDistNewFromSele(PyMOLGlobals *G,ObjectDist *oldObj,
 }
 
 ObjectDist *ObjectDistNewFromAngleSele(PyMOLGlobals *G,ObjectDist *oldObj,
-                                        int sele1, int sele2, int sele3, int mode,
-                                        int labels,float *result, int reset)
+                                       int sele1, int sele2, int sele3, int mode,
+                                       int labels,float *result, int reset,
+                                       int state)
 {
   int a,mn;
   float angle_sum=0.0;
@@ -528,34 +534,40 @@ ObjectDist *ObjectDistNewFromAngleSele(PyMOLGlobals *G,ObjectDist *oldObj,
   if(n_state3>mn) mn = n_state3;
 
   if(mn) {
-    for(a=0;a<mn;a++)
-      {
-        /* treat selections with one state as static singletons */
-
-        if(n_state1>1)
-          state1=a;
-        else
-          state1=0;
-        if(n_state2>1)
-          state2=a;
-        else
-          state2=0;
-        if(n_state3>1)
-          state3=a;
-        else
-          state3=0;
-        
-        VLACheck(I->DSet,DistSet*,a);
-        I->DSet[a] = SelectorGetAngleSet(G,I->DSet[a],sele1,state1,sele2,
-                                         state2,sele3,state3,mode,&angle_sum,
-                                         &angle_cnt);
-
-        if(I->DSet[a]) {
-          I->DSet[a]->Obj = I;
-          if(I->NDSet<=a) I->NDSet = a+1;
-        }
-      }  
-  } 
+    for(a=0;a<mn;a++) {
+      if(state>=0) {
+        if(state>mn)
+          break;
+        a = state;
+      }
+      /* treat selections with one state as static singletons */
+      
+      if(n_state1>1)
+        state1=a;
+      else
+        state1=0;
+      if(n_state2>1)
+        state2=a;
+      else
+        state2=0;
+      if(n_state3>1)
+        state3=a;
+      else
+        state3=0;
+      
+      VLACheck(I->DSet,DistSet*,a);
+      I->DSet[a] = SelectorGetAngleSet(G,I->DSet[a],sele1,state1,sele2,
+                                       state2,sele3,state3,mode,&angle_sum,
+                                       &angle_cnt);
+      
+      if(I->DSet[a]) {
+        I->DSet[a]->Obj = I;
+        if(I->NDSet<=a) I->NDSet = a+1;
+      }
+      if(state>=0)
+        break;
+    }  
+  }
   /* else {
      VLAFreeP(I->DSet);
      OOFreeP(I);
@@ -572,7 +584,8 @@ ObjectDist *ObjectDistNewFromAngleSele(PyMOLGlobals *G,ObjectDist *oldObj,
 
 ObjectDist *ObjectDistNewFromDihedralSele(PyMOLGlobals *G,ObjectDist *oldObj,
                                         int sele1, int sele2, int sele3, int sele4,
-                                        int mode, int labels, float *result, int reset)
+                                        int mode, int labels, float *result,
+                                          int reset,int state)
 {
   int a,mn;
   float angle_sum=0.0;
@@ -607,38 +620,45 @@ ObjectDist *ObjectDistNewFromDihedralSele(PyMOLGlobals *G,ObjectDist *oldObj,
   if(n_state4>mn) mn = n_state4;
 
   if(mn) {
-    for(a=0;a<mn;a++)
-      {
-        /* treat selections with one state as static singletons */
+    for(a=0;a<mn;a++) {
+      if(state>=0) {
+        if(state>mn)
+          break;
+        a = state;
+      }
+      /* treat selections with one state as static singletons */
+      
+      if(n_state1>1)
+        state1=a;
+      else
+        state1=0;
+      if(n_state2>1)
+        state2=a;
+      else
+        state2=0;
+      if(n_state3>1)
+        state3=a;
+      else
+        state3=0;
+      if(n_state4>1)
+        state4=a;
+      else
+        state4=0;
+      
+      VLACheck(I->DSet,DistSet*,a);
+      I->DSet[a] = SelectorGetDihedralSet(G,I->DSet[a],sele1,state1,sele2,
+                                          state2,sele3,state3,sele4,state4,
+                                          mode,&angle_sum,
+                                          &angle_cnt);
+      
+      if(I->DSet[a]) {
+        I->DSet[a]->Obj = I;
+        if(I->NDSet<=a) I->NDSet = a+1;
+      }
 
-        if(n_state1>1)
-          state1=a;
-        else
-          state1=0;
-        if(n_state2>1)
-          state2=a;
-        else
-          state2=0;
-        if(n_state3>1)
-          state3=a;
-        else
-          state3=0;
-        if(n_state4>1)
-          state4=a;
-        else
-          state4=0;
-        
-        VLACheck(I->DSet,DistSet*,a);
-        I->DSet[a] = SelectorGetDihedralSet(G,I->DSet[a],sele1,state1,sele2,
-                                         state2,sele3,state3,sele4,state4,
-                                         mode,&angle_sum,
-                                         &angle_cnt);
-
-        if(I->DSet[a]) {
-          I->DSet[a]->Obj = I;
-          if(I->NDSet<=a) I->NDSet = a+1;
-        }
-      }  
+      if(state>=0)
+        break;
+    }
   } 
   /* else {
      VLAFreeP(I->DSet);

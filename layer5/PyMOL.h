@@ -121,7 +121,7 @@ typedef struct {
 
 typedef struct {
   PyMOLstatus status;
-  float result;
+  float value;
 } PyMOLreturn_float;
 
 typedef struct {
@@ -255,7 +255,6 @@ PyMOLreturn_status PyMOL_CmdLoadCGO(CPyMOL *I,float *content,
                                     char *object_name, int state, 
                                     int quiet, int zoom);
 
-
 PyMOLreturn_status PyMOL_CmdZoom(CPyMOL *I,char *selection, float buffer,
                int state, int complete, float animate, int quiet);
 
@@ -279,13 +278,33 @@ PyMOLreturn_status PyMOL_CmdDisable(CPyMOL *I,char *name,int quiet);
 
 PyMOLreturn_status PyMOL_CmdDelete(CPyMOL *I,char *name, int quiet);
 
-PyMOLreturn_status PyMOL_CmdSet(CPyMOL *I,char *setting, char *value, char *selection, int state, int quiet, int side_effects);
+PyMOLreturn_status PyMOL_CmdSet(CPyMOL *I,char *setting, char *value, char *selection,
+                                int state, int quiet, int side_effects);
 
 PyMOLreturn_status PyMOL_CmdColor(CPyMOL *I,char *color, char *selection, int flags, int quiet);
 
 PyMOLreturn_status PyMOL_CmdSelect(CPyMOL *I,char *name, char *selection, int quiet);
 
-PyMOLreturn_status PyMOL_CmdSelectList(CPyMOL *I,char *name, char *object, int *list, int list_len, int state, char *mode, int quiet);
+PyMOLreturn_status PyMOL_CmdSelectList(CPyMOL *I,char *name, char *object, int *list,
+                                       int list_len, int state, char *mode, int quiet);
+
+PyMOLreturn_float  PyMOL_CmdGetDistance(CPyMOL *I,
+                                        char *selection1,
+                                        char *selection2, 
+                                        int state, int quiet);
+
+PyMOLreturn_float  PyMOL_CmdGetAngle(CPyMOL *I,
+                                     char *selection1,
+                                     char *selection2,
+                                     char *selection3,
+                                     int state,int quiet);
+
+PyMOLreturn_float  PyMOL_CmdGetDihedral(CPyMOL *I,
+                                        char *selection1,
+                                        char *selection2,
+                                        char *selection3,
+                                        char *selection4,
+                                        int state, int quiet);
 
 PyMOLreturn_float_array PyMOL_CmdAlign(CPyMOL *I, char *source, char *target, float cutoff, 
                                        int cycles, float gap, float extend, int max_gap, 

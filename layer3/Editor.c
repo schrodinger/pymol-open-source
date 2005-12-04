@@ -110,7 +110,7 @@ static void EditorDrawDihedral(PyMOLGlobals *G)
           sele3 = SelectorIndexByName(G,cEditorDihe2);
           
           ExecutiveDihedral(G,cEditorDihedral,cEditorDihe1,cEditorSele1,cEditorSele2,cEditorDihe2,
-                            0,true,true,false,true);
+                            0,true,true,false,true,-1);
           ExecutiveColor(G,cEditorDihedral,"white",1,true);
           ExecutiveSetSettingFromString(G, cSetting_float_labels, "1", cEditorDihedral, 0, true, true);
 #ifndef _PYMOL_FREETYPE

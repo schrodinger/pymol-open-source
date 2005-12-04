@@ -134,7 +134,7 @@ PYMOL API
         return r
 
     def angle(name=None,selection1="(pk1)",selection2="(pk2)",selection3="(pk3)", 
-                     mode=None,labels=1,reset=0,zoom=0,quiet=1):
+                     mode=None,label=1,reset=0,zoom=0,quiet=1,state=0):
         '''
 DESCRIPTION
 
@@ -207,9 +207,10 @@ NOTES
                 if selection3!="same":
                     selection3 = "("+selection3+")"
                 r = _cmd.angle(str(nam),"("+str(selection1)+")",
-                                  str(selection2),
-                                  str(selection3),
-                                  int(mode),int(labels),int(reset),int(zoom),int(quiet))
+                               str(selection2),
+                               str(selection3),
+                               int(mode),int(label),int(reset),
+                               int(zoom),int(quiet),int(state)-1)
             finally:
                 unlock(r)
         if _raising(r): raise pymol.CmdException
@@ -217,7 +218,7 @@ NOTES
 
     def dihedral(name=None,selection1="(pk1)",selection2="(pk2)",
                      selection3="(pk3)",selection4="(pk4)",
-                     mode=None,labels=1,reset=0,zoom=0,quiet=1):
+                     mode=None,label=1,reset=0,zoom=0,quiet=1,state=0):
         '''
 DESCRIPTION
 
@@ -297,18 +298,23 @@ NOTES
                 if selection4!="same":
                     selection4 = "("+selection4+")"
                 r = _cmd.dihedral(str(nam),"("+str(selection1)+")",
-                                    str(selection2),
-                                    str(selection3),
-                                    str(selection4),
-                                    int(mode),int(labels),int(reset),int(zoom),int(quiet))
+                                  str(selection2),
+                                  str(selection3),
+                                  str(selection4),
+                                  int(mode),int(label),
+                                  int(reset),int(zoom),
+                                  int(quiet),int(state)-1)
             finally:
                 unlock(r)
         if _raising(r): raise pymol.CmdException
         return r
         
-    def distance(name=None,selection1="(pk1)",selection2="(pk2)",cutoff=None,
-                     mode=None,zoom=0,width=None,length=None,gap=None,labels=1,quiet=1,
-                     reset=0):
+    def distance(name=None,selection1="(pk1)",
+                 selection2="(pk2)",cutoff=None,
+                 mode=None,zoom=0,
+                 width=None,length=None,
+                 gap=None,label=1,quiet=1,
+                 reset=0,state=0):
         '''
 DESCRIPTION
 
@@ -398,7 +404,7 @@ NOTES
                     selection2 = "("+selection2+")"
                 r = _cmd.dist(str(nam),"("+str(selection1)+")",
                                   str(selection2),int(mode),float(cutoff),
-                                  int(labels),int(quiet),int(reset))
+                                  int(label),int(quiet),int(reset),int(state)-1)
                 if width!=None:
                     cmd.set("dash_width",width,nam)
                 if length!=None:

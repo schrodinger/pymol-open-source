@@ -688,43 +688,43 @@ def extend(s):
 def polar(s):
     return [[ 2, 'Polar Contacts:', ''],
               [ 1, 'within selection'  ,
-                 'cmd.dist("'+s+'_polar_conts","'+s+'","'+s+'",quiet=1,mode=2,labels=0,reset=1);cmd.enable("'+s+'_polar_conts")'],
+                 'cmd.dist("'+s+'_polar_conts","'+s+'","'+s+'",quiet=1,mode=2,label=0,reset=1);cmd.enable("'+s+'_polar_conts")'],
               [ 1, 'involving side chains'  ,
                  'cmd.dist("'+s+'_polar_conts","('+s+')","('+s+
-                 ') and polymer and not (name n,o,h)",quiet=1,mode=2,labels=0,reset=1);cmd.enable("'+s+'_polar_conts")'],
+                 ') and polymer and not (name n,o,h)",quiet=1,mode=2,label=0,reset=1);cmd.enable("'+s+'_polar_conts")'],
               [ 1, 'involving solvent'  ,
                  'cmd.dist("'+s+'_polar_conts","('+s+') and solvent","('+s+
-                 ') and not (solvent)",quiet=1,mode=2,labels=0,reset=1);cmd.enable("'+s+'_polar_conts")'],
+                 ') and not (solvent)",quiet=1,mode=2,label=0,reset=1);cmd.enable("'+s+'_polar_conts")'],
               [ 1, 'excluding solvent'  ,
                  'cmd.dist("'+s+'_polar_conts","('+s+') and not (solvent)","('+s+
-                 ') and not (solvent)",quiet=1,mode=2,labels=0,reset=1);cmd.enable("'+s+'_polar_conts")'],
+                 ') and not (solvent)",quiet=1,mode=2,label=0,reset=1);cmd.enable("'+s+'_polar_conts")'],
               [ 1, 'excluding main chain'  ,
                  'cmd.dist("'+s+'_polar_conts","('+s+') and not (polymer and name n,o,h)","('+s+
-                 ') and not (polymer and name n,o,h)",quiet=1,mode=2,labels=0,reset=1);cmd.enable("'+s+'_polar_conts")'],
+                 ') and not (polymer and name n,o,h)",quiet=1,mode=2,label=0,reset=1);cmd.enable("'+s+'_polar_conts")'],
               [ 1, 'excluding intra-main chain'  ,
                  'cmd.dist("'+s+'_polar_conts","('+s+')","('+s+
-                 ') and not (polymer and name n,o,h)",quiet=1,mode=2,labels=0,reset=1);cmd.enable("'+s+'_polar_conts")'],
+                 ') and not (polymer and name n,o,h)",quiet=1,mode=2,label=0,reset=1);cmd.enable("'+s+'_polar_conts")'],
               [ 1, 'just intra-side chain'  ,
                  'cmd.dist("'+s+'_polar_conts","('+s+') and not (solvent or (polymer and name n,o,h))","('+s+
-                 ') and not (solvent or (polymer and name n,o,h))",quiet=1,mode=2,labels=0,reset=1);cmd.enable("'+s+
+                 ') and not (solvent or (polymer and name n,o,h))",quiet=1,mode=2,label=0,reset=1);cmd.enable("'+s+
                  '_polar_conts")'],
               [ 1, 'just intra-main chain'  ,
                  'cmd.dist("'+s+'_polar_conts","('+s+') and not (solvent or (polymer and not name n,o,h))","('+s+
-                 ') and not (solvent or (polymer and not name n,o,h))",quiet=1,mode=2,labels=0,reset=1);cmd.enable("'+s+
+                 ') and not (solvent or (polymer and not name n,o,h))",quiet=1,mode=2,label=0,reset=1);cmd.enable("'+s+
                  '_polar_conts")'],
               [ 0, '', '' ],
               [ 1, 'to other atoms in object',
                  'cmd.dist("'+s+'_polar_conts","('+s+')","(byobj ('+s+')) and (not ('+s+
-                 '))",quiet=1,mode=2,labels=0,reset=1);cmd.enable("'+s+'_polar_conts")'],
+                 '))",quiet=1,mode=2,label=0,reset=1);cmd.enable("'+s+'_polar_conts")'],
               [ 1, 'to others excluding solvent',
                  'cmd.dist("'+s+'_polar_conts","('+s+') and not solvent","(byobj ('+s+')) and (not ('+s+
-                 ')) and (not solvent)",quiet=1,mode=2,labels=0,reset=1);cmd.enable("'+s+'_polar_conts")'],
+                 ')) and (not solvent)",quiet=1,mode=2,label=0,reset=1);cmd.enable("'+s+'_polar_conts")'],
               [ 1, 'to any atoms',
                  'cmd.dist("'+s+'_polar_conts","('+s+')","(not '+s+
-                 ')",quiet=1,mode=2,labels=0,reset=1);cmd.enable("'+s+'_polar_conts")'],
+                 ')",quiet=1,mode=2,label=0,reset=1);cmd.enable("'+s+'_polar_conts")'],
               [ 1, 'to any excluding solvent',
                  'cmd.dist("'+s+'_polar_conts","('+s+') and not solvent","(not ('+s+
-                 ')) and not solvent",quiet=1,mode=2,labels=0,reset=1);cmd.enable("'+s+'_polar_conts")'],
+                 ')) and not solvent",quiet=1,mode=2,label=0,reset=1);cmd.enable("'+s+'_polar_conts")'],
               ]
 
 def polar_inter(s):

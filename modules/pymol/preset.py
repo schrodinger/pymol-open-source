@@ -121,7 +121,8 @@ def ligands(selection="(all)"):
         cmd.show("lines","("+s+" and (rep lines extend 1) and "+lig+")")
 
         if cmd.count_atoms(lig):
-            cmd.dist(polar_contacts,host+"|"+near_solvent,lig+"|"+near_solvent,mode=2,quiet=1,labels=0,reset=1) # hbonds
+            cmd.dist(polar_contacts,host+"|"+near_solvent,lig+"|"+near_solvent,
+                     mode=2,quiet=1,label=0,reset=1) # hbonds
             if polar_contacts in cmd.get_names():
                 cmd.enable(polar_contacts)
                 cmd.hide("labels",polar_contacts)
@@ -201,7 +202,7 @@ def ligand_sites(selection="(all)"):
         cmd.show("lines","("+s+" and (rep lines extend 1) and "+lig+")")
 
         if cmd.count_atoms(lig):
-            cmd.dist(polar_contacts,host+"|"+near_solvent,lig+"|"+near_solvent,mode=2,quiet=1,labels=0,reset=1) # hbonds
+            cmd.dist(polar_contacts,host+"|"+near_solvent,lig+"|"+near_solvent,mode=2,quiet=1,label=0,reset=1) # hbonds
             if polar_contacts in cmd.get_names():
                 cmd.enable(polar_contacts)
                 cmd.hide("labels",polar_contacts)
@@ -278,7 +279,7 @@ def technical(selection="(all)"):
     cmd.show("lines","((("+s+") and not "+lig_sele+") extend 1)")
     cmd.show("sticks","("+lig_sele+" and ("+s+"))")
     cmd.show("ribbon",s)
-    cmd.dist(polar_contacts,s,s,mode=2,labels=0,reset=1) # hbonds
+    cmd.dist(polar_contacts,s,s,mode=2,label=0,reset=1) # hbonds
     if polar_contacts in cmd.get_names():
         cmd.enable(polar_contacts)
         cmd.set("dash_width",1.5,polar_contacts)
