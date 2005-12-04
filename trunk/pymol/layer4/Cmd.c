@@ -2527,11 +2527,12 @@ static PyObject *CmdDist(PyObject *dummy, PyObject *args)
   int labels,quiet;
   int mode;
   int reset;
+  int state;
   OrthoLineType s1,s2;
   int ok=false;
   int c1,c2;
-  ok = PyArg_ParseTuple(args,"sssifiii",&name,&str1,&str2,&mode,&cutoff,
-                        &labels,&quiet,&reset);
+  ok = PyArg_ParseTuple(args,"sssifiiii",&name,&str1,&str2,&mode,&cutoff,
+                        &labels,&quiet,&reset,&state);
   if (ok) {
     APIEntry();
     c1 = SelectorGetTmp(TempPyMOLGlobals,str1,s1);
@@ -2580,9 +2581,10 @@ static PyObject *CmdAngle(PyObject *dummy, PyObject *args)
   int ok=false;
   int c1,c2,c3;
   int reset, zoom;
-  ok = PyArg_ParseTuple(args,"ssssiiiii",
+  int state;
+  ok = PyArg_ParseTuple(args,"ssssiiiiii",
                         &name,&str1,&str2,&str3,
-                        &mode,&labels,&reset,&zoom,&quiet);
+                        &mode,&labels,&reset,&zoom,&quiet,&state);
   if (ok) {
     APIEntry();
     c1 = SelectorGetTmp(TempPyMOLGlobals,str1,s1);
@@ -2628,9 +2630,10 @@ static PyObject *CmdDihedral(PyObject *dummy, PyObject *args)
   int ok=false;
   int c1,c2,c3,c4;
   int reset, zoom;
-  ok = PyArg_ParseTuple(args,"sssssiiiii",
+  int state;
+  ok = PyArg_ParseTuple(args,"sssssiiiiii",
                         &name,&str1,&str2,&str3,&str4,
-                        &mode,&labels,&reset,&zoom,&quiet);
+                        &mode,&labels,&reset,&zoom,&quiet,&state);
   if (ok) {
     APIEntry();
     c1 = SelectorGetTmp(TempPyMOLGlobals,str1,s1);
@@ -2641,7 +2644,8 @@ static PyObject *CmdDihedral(PyObject *dummy, PyObject *args)
        (c2||WordMatch(TempPyMOLGlobals,cKeywordSame,s2,true))&&
        (c3||WordMatch(TempPyMOLGlobals,cKeywordSame,s3,true))&&
        (c4||WordMatch(TempPyMOLGlobals,cKeywordSame,s4,true)))
-      result = ExecutiveDihedral(TempPyMOLGlobals,name,s1,s2,s3,s4,mode,labels,reset,zoom,quiet);
+      result = ExecutiveDihedral(TempPyMOLGlobals,name,s1,s2,s3,s4,
+                                 mode,labels,reset,zoom,quiet,state);
     else {
       if((!quiet)&&(!c1)) {
         PRINTFB(TempPyMOLGlobals,FB_Executive,FB_Errors)

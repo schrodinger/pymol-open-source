@@ -93,9 +93,9 @@ struct _CGO {
 #define CGO_FONT_SCALE           0x14 
 #define CGO_FONT_SCALE_SZ        2 
 #define CGO_FONT_VERTEX          0x15 
-#define CGO_FONT_VERTEX_SZ       3   /*  principle axes (zeros -> use camera x y or z */
+#define CGO_FONT_VERTEX_SZ       3   /*  principle axes (zeros -> use camera x y z */
 #define CGO_FONT_AXES            0x16 
-#define CGO_FONT_AXES_SZ         9   /*  principle axes (zeros -> use camera x y or z */
+#define CGO_FONT_AXES_SZ         9   /*  principle axes (zeros -> use camera x y z */
 #define CGO_CHAR                 0x17
 #define CGO_CHAR_SZ              1
 #define CGO_INDENT               0x18

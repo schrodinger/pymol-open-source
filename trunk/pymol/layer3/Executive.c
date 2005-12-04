@@ -5239,7 +5239,7 @@ void ExecutiveBond(PyMOLGlobals *G,char *s1,char *s2,int order,int add)
 }
 /*========================================================================*/
 float ExecutiveAngle(PyMOLGlobals *G,char *nam,char *s1,char *s2,char *s3,int mode,
-                     int labels,int reset,int zoom,int quiet)
+                     int labels,int reset,int zoom,int quiet,int state)
 {
   int sele1,sele2,sele3;
   ObjectDist *obj;
@@ -5269,7 +5269,7 @@ float ExecutiveAngle(PyMOLGlobals *G,char *nam,char *s1,char *s2,char *s3,int mo
 
     obj = ObjectDistNewFromAngleSele(G,(ObjectDist*)anyObj,
                                      sele1,sele2,sele3,
-                                     mode,labels,&result,reset);
+                                     mode,labels,&result,reset,state);
     if(!obj) {
       ErrMessage(G,"ExecutiveDistance","No angles found.");
     } else {
@@ -5293,7 +5293,7 @@ float ExecutiveAngle(PyMOLGlobals *G,char *nam,char *s1,char *s2,char *s3,int mo
 
 /*========================================================================*/
 float ExecutiveDihedral(PyMOLGlobals *G,char *nam,char *s1,char *s2,char *s3,char *s4,int mode,
-                        int labels,int reset,int zoom,int quiet)
+                        int labels,int reset,int zoom,int quiet,int state)
 {
   float result = 0.0F;
   
@@ -5329,7 +5329,7 @@ float ExecutiveDihedral(PyMOLGlobals *G,char *nam,char *s1,char *s2,char *s3,cha
 
     obj = ObjectDistNewFromDihedralSele(G,(ObjectDist*)anyObj,
                                          sele1,sele2,sele3,sele4,
-                                         mode,labels,&result,reset);
+                                         mode,labels,&result,reset,state);
     if(!obj) {
       ErrMessage(G,"ExecutiveDihedral","No angles found.");
     } else {
@@ -5354,8 +5354,9 @@ float ExecutiveDihedral(PyMOLGlobals *G,char *nam,char *s1,char *s2,char *s3,cha
   return(result);
 }
 
-float ExecutiveDist(PyMOLGlobals *G,char *nam,char *s1,char *s2,int mode,float cutoff,
-                    int labels,int quiet,int reset)
+float ExecutiveDist(PyMOLGlobals *G,char *nam,
+                    char *s1,char *s2,int mode,float cutoff,
+                    int labels,int quiet,int reset,int state)
 {
   int sele1,sele2;
   ObjectDist *obj;
@@ -5375,8 +5376,9 @@ float ExecutiveDist(PyMOLGlobals *G,char *nam,char *s1,char *s2,int mode,float c
         ExecutiveDelete(G,nam);
         anyObj=NULL;
       }
-    obj = ObjectDistNewFromSele(G,(ObjectDist*)anyObj,sele1,sele2,mode,
-                                cutoff,labels,reset,&result);
+    obj = ObjectDistNewFromSele(G,(ObjectDist*)anyObj,
+                                sele1,sele2,mode,
+                                cutoff,labels,reset,&result,state);
     if(!obj) {
       ErrMessage(G,"ExecutiveDistance","No such distances found.");
     } else {

@@ -6,6 +6,8 @@ Changes up to 0.99
 
     beta31
 
+    * labels argument to distance, angle, dihedral changed to 'label'
+
     * introduced wrapping and handedness into interpolations
 
     * fixed yet another eigenbug

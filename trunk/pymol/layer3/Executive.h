@@ -114,7 +114,7 @@ int ExecutiveAlign(PyMOLGlobals *G,char *s1,char *s2,char *mat_file,
 void ExecutiveUpdateCoordDepends(PyMOLGlobals *G,ObjectMolecule *mol);
 float ExecutiveDistance(PyMOLGlobals *G,char *sele1,char *sele2);
 float ExecutiveDist(PyMOLGlobals *G,char *nam,char *s1,char *s2,int mode,
-                    float cutoff,int labels,int quiet,int reset);
+                    float cutoff,int labels,int quiet,int reset,int state);
 void ExecutiveBond(PyMOLGlobals *G,char *s1,char *s2,int order,int add);
 int ExecutiveIterate(PyMOLGlobals *G,char *s1,char *expr,int read_only,int quiet,PyObject *space);
 int ExecutiveIterateList(PyMOLGlobals *G,char *s1,PyObject *list,int read_only,int quiet,PyObject *space);
@@ -304,10 +304,10 @@ int ExecutiveGetActiveSeleName(PyMOLGlobals *G,char *name, int create_new);
 int ExecutiveGetActiveSele(PyMOLGlobals *G);
 CObject *ExecutiveGetExistingCompatible(PyMOLGlobals *G,char *oname,int type);
 float ExecutiveAngle(PyMOLGlobals *G,char *nam,char *s1,char *s2,char *s3,int mode,
-                     int labels,int reset,int zoom,int quiet);
+                     int labels,int reset,int zoom,int quiet,int state);
 
 float ExecutiveDihedral(PyMOLGlobals *G,char *nam,char *s1,char *s2,char *s3,char *s4,int mode,
-                     int labels,int reset,int zoom,int quiet);
+                     int labels,int reset,int zoom,int quiet,int state);
 
 void ExecutiveMatrixTransfer(PyMOLGlobals *G,
                              char *source_name, char *target_name,

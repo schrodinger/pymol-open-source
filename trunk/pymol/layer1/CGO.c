@@ -601,6 +601,7 @@ void CGONormal(CGO *I,float v1,float v2,float v3)
   *(pc++)=v2;
   *(pc++)=v3;
 }
+
 void CGOResetNormal(CGO *I,int mode)
 {
   float *pc = CGO_add(I,2);
@@ -1502,7 +1503,7 @@ void CGOSimpleCylinder(CGO *I,float *v1,float *v2,float tube_size,float *c1,floa
         v[4] = vv2[1] + v[1]*tube_size;
         v[5] = vv2[2] + v[2]*tube_size;
         
-        if(cap1==cCylCapRound) CGONormalv(I,v);
+        if(cap2==cCylCapRound) CGONormalv(I,v);
         CGOVertexv(I,v+3);
       }
     CGOEnd(I);
