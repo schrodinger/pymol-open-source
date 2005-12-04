@@ -1239,7 +1239,8 @@ int PyMOL_FreeResultArray(CPyMOL *I,void *array)
   }
 }
 
-PyMOLreturn_status PyMOL_CmdSetView(CPyMOL *I, float *view, int view_len, float animate, int quiet)
+PyMOLreturn_status PyMOL_CmdSetView(CPyMOL *I, float *view, int view_len,
+                                    float animate, int quiet)
 {
   PyMOLreturn_status result;
   SceneViewType tmp;
@@ -1256,7 +1257,7 @@ PyMOLreturn_status PyMOL_CmdSetView(CPyMOL *I, float *view, int view_len, float 
       tmp[a+19]=view[a+12];
       tmp[a+22]=view[a+15];
     }
-    SceneSetView(I->G,tmp,quiet,animate);  
+    SceneSetView(I->G,tmp,quiet,animate,0);  /* TO DO -- add hand to the API */
     result.status = get_status_ok(true);
   } else {
     result.status = get_status_ok(false);

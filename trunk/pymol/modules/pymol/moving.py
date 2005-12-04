@@ -136,7 +136,7 @@ SEE ALSO
     mview_action_sc = Shortcut(mview_action_dict.keys())
 
     def mview(action='store',first=0,last=0,power=1.4,
-              bias=1.0,simple=0,linear=0.0,object=''):
+              bias=1.0,simple=0,linear=0.0,object='',wrap=-1,hand=1):
         r = DEFAULT_ERROR
         first = int(first)
         last = int(last)
@@ -151,7 +151,8 @@ SEE ALSO
             lock()   
             r = _cmd.mview(int(action),int(first)-1,int(last)-1,
                            float(power),float(bias),
-                           int(simple), float(linear),str(object))
+                           int(simple), float(linear),str(object),
+                           int(wrap),int(hand))
         finally:
             unlock(r)
         if _raising(r): raise pymol.CmdException

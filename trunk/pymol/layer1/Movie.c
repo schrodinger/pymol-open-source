@@ -442,7 +442,7 @@ int  MovieMatrix(PyMOLGlobals *G,int action)
 	 break;
   case cMovieMatrixRecall:
 	 if(I->MatrixFlag) 
-		SceneSetView(G,I->Matrix,true,0);
+		SceneSetView(G,I->Matrix,true,0,0);
     else
       result = 0;
 	 break;
@@ -697,7 +697,7 @@ void MovieSetCommand(PyMOLGlobals *G,int frame,char *command)
 /*========================================================================*/
 int MovieView(PyMOLGlobals *G,int action,int first,
               int last,float power,float bias,
-              int simple, float linear)
+              int simple, float linear,int wrap,int hand)
 {
   register CMovie *I=G->Movie;
   int frame;
@@ -740,45 +740,73 @@ int MovieView(PyMOLGlobals *G,int action,int first,
       CViewElem *first_view=NULL,*last_view=NULL;
       if(first<0)
         first = 0;
-      if(last<0)
-        last = SceneGetNFrame(G)-1;
+      /* note that we're leaving a blank frame at the end... */
+
+      if(last<0) {
+        last = SceneGetNFrame(G);
+        if(last && !wrap)
+          last--;
+      }
+      if(last>I->NFrame) {
+        last = I->NFrame;
+        if(last && !wrap)
+          last--;
+      }
 
       VLACheck(I->ViewElem,CViewElem,last);
+      
+      if(last == I->NFrame) { /* if we're interpolating beyond the
+                                 last frame, then wrap by copying
+                                 first to last */
+        I->ViewElem[last] = I->ViewElem[0]; 
+      }
+
       if(action==2) {
-        PRINTFB(G,FB_Movie,FB_Details)
-          " MovieView: interpolating unspecified frames %d to %d.\n",first+1,last+1
-          ENDFB(G);
+        if(last == I->NFrame) {
+          PRINTFB(G,FB_Movie,FB_Details)
+            " MovieView: interpolating unspecified frames %d to %d (wrapping)\n",first+1,last
+            ENDFB(G);
+        } else {
+          PRINTFB(G,FB_Movie,FB_Details)
+            " MovieView: interpolating unspecified frames %d to %d.\n",first+1,last+1
+            ENDFB(G);
+        }
+       
       } else {
-        PRINTFB(G,FB_Movie,FB_Details)
-          " MovieView: reinterpolating all frames %d to %d.\n",first+1,last+1
-          ENDFB(G);
+        if(last == I->NFrame) {
+          PRINTFB(G,FB_Movie,FB_Details)
+            " MovieView: reinterpolating all frames %d to %d (wrapping).\n",first+1,last
+            ENDFB(G);
+        } else {
+          PRINTFB(G,FB_Movie,FB_Details)
+            " MovieView: reinterpolating all frames %d to %d.\n",first+1,last+1
+            ENDFB(G);
+        }
       }
       for(frame=first;frame<=last;frame++) {
-        if((frame>=0)&&(frame<I->NFrame)) {
-          if(!first_view) {
-            if(I->ViewElem[frame].specification_level==2) { /* specified */
-              first_view = I->ViewElem + frame;
-            }
-          } else {
-            CViewElem *view;
-            int interpolate_flag = false;
-            if(I->ViewElem[frame].specification_level==2) { /* specified */
-              last_view = I->ViewElem + frame;
-              if(action==2) {/* interpolate */
-                for(view=first_view+1;view<last_view;view++) {
-                  if(!view->specification_level)
-                    interpolate_flag = true;
-                }
-              } else {
-                interpolate_flag=true;
+        if(!first_view) {
+          if(I->ViewElem[frame].specification_level==2) { /* specified */
+            first_view = I->ViewElem + frame;
+          }
+        } else {
+          CViewElem *view;
+          int interpolate_flag = false;
+          if(I->ViewElem[frame].specification_level==2) { /* specified */
+            last_view = I->ViewElem + frame;
+            if(action==2) {/* interpolate */
+              for(view=first_view+1;view<last_view;view++) {
+                if(!view->specification_level)
+                  interpolate_flag = true;
               }
-              if(interpolate_flag) {
-                ViewElemInterpolate(first_view,last_view,
-                                    power,bias,simple,linear);
-              }
-              first_view = last_view;
-              last_view = NULL;
+            } else {
+              interpolate_flag=true;
             }
+            if(interpolate_flag) {
+              ViewElemInterpolate(first_view,last_view,
+                                  power,bias,simple,linear,hand);
+            }
+            first_view = last_view;
+            last_view = NULL;
           }
         }
       }

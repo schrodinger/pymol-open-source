@@ -32,6 +32,7 @@ typedef char ColorName[24];
 #define cColorNewAuto     -2
 #define cColorCurAuto     -3
 #define cColorAtomic      -4
+#define cColorObject      -5
 
 #define cColor_TRGB_Bits  0x40000000
 #define cColor_TRGB_Mask  0xC0000000

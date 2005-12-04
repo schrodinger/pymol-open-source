@@ -1858,6 +1858,8 @@ static void find_axis( Matrix33d a, float *axis)
   {
     doublereal max_real = 0.0F, test_real;
     doublereal min_imag = 1.0F, test_imag;
+    float test_inp[3],test_out[3];
+
     for(x=0;x<3;x++) { /* looking for an eigvalue of (1,0) */
       /*      printf("wr %8.3f wi %8.3f\n",wr[x],wi[x]);
       printf("%8.3f %8.3f %8.3f\n",
@@ -1867,16 +1869,25 @@ static void find_axis( Matrix33d a, float *axis)
       
       if((test_real>=max_real)&&(test_imag<=min_imag)) {
         for(y=0;y<3;y++)
-          axis[y] = (float)v[y][x];
-        max_real = test_real;
-        min_imag = test_imag;
+          test_inp[y] = (float)v[y][x];
+        transform33d3f(a,test_inp,test_out); /* confirm that axis is invariant to rotation */
+        test_out[0] -= test_inp[0];
+        test_out[1] -= test_inp[1];
+        test_out[2] -= test_inp[2];
+        if((test_out[0]*test_out[0]+
+            test_out[1]*test_out[1]+
+            test_out[2]*test_out[2])<0.1) {
+          for(y=0;y<3;y++)
+            axis[y] = test_inp[y];
+          max_real = test_real;
+          min_imag = test_imag;
+        }
       } else {
         /*for(y=0;y<3;y++)
           v[y][x]=_0;*/
       }
     }
   }
-
   /*
     printf("eigenvectors\n%8.3f %8.3f %8.3f\n",v[0][0],v[0][1],v[0][2]);
     printf("%8.3f %8.3f %8.3f\n",v[1][0],v[1][1],v[1][2]);
@@ -1885,8 +1896,9 @@ static void find_axis( Matrix33d a, float *axis)
     
     printf("eigenvalues\n%8.3f %8.3f %8.3f\n",wr[0],wr[1],wr[2]);
     printf("%8.3f %8.3f %8.3f\n",wi[0],wi[1],wi[2]);
+  */
 
-    matrix_multiply33d33d(a,v,p);
+    /*    matrix_multiply33d33d(a,v,p);
     
     printf("invariance\n");
     printf("%8.3f %8.3f %8.3f\n",p[0][0],p[0][1],p[0][2]);
@@ -1923,13 +1935,12 @@ void matrix_to_rotation(Matrix53f rot,float *axis, float *angle)
   perp[1]=axis[2]*axis[1]-axis[0]*axis[0];
   perp[2]=axis[0]*axis[2]-axis[1]*axis[1];
 
-  if(length3f(perp)<R_SMALL)
-	 {
+  if(length3f(perp)<R_SMALL) {
 		tmp[0]=axis[0];
 		tmp[1]=-2*axis[1];
 		tmp[2]=axis[2];
 		cross_product3f(axis,tmp,perp);
-	 }
+  }
 
   normalize3f(perp);
 

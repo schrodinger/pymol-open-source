@@ -1370,7 +1370,8 @@ static PyObject *CmdSetView(PyObject *self, 	PyObject *args)
   SceneViewType view;
   int quiet;
   float animate;
-  int ok=PyArg_ParseTuple(args,"(fffffffffffffffffffffffff)if",
+  int hand;
+  int ok=PyArg_ParseTuple(args,"(fffffffffffffffffffffffff)ifi",
                    &view[ 0],&view[ 1],&view[ 2],&view[ 3], /* 4x4 mat */
                    &view[ 4],&view[ 5],&view[ 6],&view[ 7],
                    &view[ 8],&view[ 9],&view[10],&view[11],
@@ -1379,10 +1380,10 @@ static PyObject *CmdSetView(PyObject *self, 	PyObject *args)
                    &view[19],&view[20],&view[21], /* origin */
                    &view[22],&view[23], /* clip */
                    &view[24], /* orthoscopic*/
-                   &quiet,&animate);
+                   &quiet,&animate,&hand);
   if(ok) {
     APIEntry();
-    SceneSetView(TempPyMOLGlobals,view,quiet,animate); /* TODO STATUS */
+    SceneSetView(TempPyMOLGlobals,view,quiet,animate,hand); /* TODO STATUS */
     APIExit();
   }
   return APIResultOk(ok);
@@ -4047,24 +4048,27 @@ static PyObject *CmdMSet(PyObject *self, 	PyObject *args)
 static PyObject *CmdMView(PyObject *self, 	PyObject *args)
 {
   int ok=false;
-  int action,first,last, simple;
-  float power,bias,linear;
+  int action,first,last, simple,wrap;
+  float power,bias,linear,hand;
   char *object;
-  ok = PyArg_ParseTuple(args,"iiiffifs",&action,&first,&last,&power,
-                        &bias,&simple,&linear,&object);
+  ok = PyArg_ParseTuple(args,"iiiffifsii",&action,&first,&last,&power,
+                        &bias,&simple,&linear,&object,&wrap,&hand);
   if (ok) {
     APIEntry();
+    if(wrap<0) {
+      wrap = SettingGetGlobal_b(TempPyMOLGlobals,cSetting_movie_loop);
+    }
     if(object[0]) {
       CObject *obj = ExecutiveFindObjectByName(TempPyMOLGlobals,object);
       if(!obj) {
         ok = false;
       } else {
         if(simple<0) simple = 0; 
-        ok = ObjectView(obj,action,first,last,power,bias,simple,linear);
+        ok = ObjectView(obj,action,first,last,power,bias,simple,linear,wrap,hand);
       }
     } else {
-      simple = true; /* because camera matrix does't work like a TTT */
-      ok = MovieView(TempPyMOLGlobals,action,first,last,power,bias,true,0.0F);
+      simple = true; /* force this because camera matrix does't work like a TTT */
+      ok = MovieView(TempPyMOLGlobals,action,first,last,power,bias,simple,linear,wrap,hand);
     }
     APIExit();
   }

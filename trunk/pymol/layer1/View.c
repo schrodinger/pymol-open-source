@@ -303,7 +303,7 @@ static void matrix_interpolate(Matrix53f imat,Matrix53f mat,
 
 int ViewElemInterpolate(CViewElem *first,CViewElem *last,
                         float power,float bias,
-                        int simple, float linearity)
+                        int simple, float linearity,int hand)
 {
   float first3x3[9];
   float last3x3[9];
@@ -346,6 +346,19 @@ int ViewElemInterpolate(CViewElem *first,CViewElem *last,
   matrix_to_rotation(rot,rot_axis,&angle);
 
   if(debug) dump3f(rot_axis,"rot_axis");
+  
+  if(hand) {
+    if((cPI-fabs(angle))<0.01F) { /* this a complete 180 degree motion */
+      if(((rot_axis[0]*0.7F + rot_axis[1]*0.8F + rot_axis[2]*0.9F) * hand * angle)>0.0F) {
+        invert3f(rot_axis);
+        if(angle>0) {
+          angle = (2*cPI) - angle;
+        } else {
+          angle = -(2*cPI) - angle;
+        }
+      }
+    }
+  }
 
   if(!simple) {
     /* switch back into row major to promote developer sanity */
@@ -533,18 +546,16 @@ int ViewElemInterpolate(CViewElem *first,CViewElem *last,
       fxn = 1-(float)pow(1-pow(fxn,bias),_1/bias);
     }
 
-    if(power!=1.0F) {
+    if((power!=1.0F)||(!parabolic)) {
       if(fxn<0.5F) {
-        if(parabolic) 
-          fxn = (float)pow(fxn*2.0F,power)*_p5; /* parabolic*/
-        else
-          fxn = (_1-(float)pow(_1-pow((fxn*2.0F),power),_1/power))*_p5; /* circular */
+        if(!parabolic) 
+          fxn = (_1-cos(cPI*fxn))*_p5; /* circular */
+        fxn = (float)pow(fxn*2.0F,power)*_p5; /* parabolic*/
       } else if(fxn>0.5F) {
         fxn = _1 - fxn;
-        if(parabolic) 
-          fxn = (float)pow(fxn*2.0F,power)*_p5; /* parabolic */
-        else
-          fxn = (_1-(float)pow(_1-pow((fxn*2.0F),power),_1/power))*_p5; /* circular */
+        if(!parabolic) 
+          fxn = (_1-cos(cPI*fxn))*_p5;
+        fxn = (float)pow(fxn*2.0F,power)*_p5; /* parabolic */
         fxn = _1 - fxn;
       }
     }

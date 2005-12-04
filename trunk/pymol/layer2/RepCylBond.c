@@ -1430,8 +1430,12 @@ Rep *RepCylBondNew(CoordSet *cs,int state)
           register AtomInfoType *ati2=obj->AtomInfo+b2;
           
           if(stick_color<0) {
-            c1=*(cs->Color+a1);
-            c2=*(cs->Color+a2);
+            if(stick_color==cColorObject) {
+              c1 = (c2 = obj->Obj.Color);
+            } else {
+              c1=*(cs->Color+a1);
+              c2=*(cs->Color+a2);
+            }
           } else {
             c1 = (c2 = stick_color);
           }

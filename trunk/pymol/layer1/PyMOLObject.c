@@ -129,7 +129,7 @@ static void TTTFromViewElem(float *TTT,CViewElem *elem)
 
 int ObjectView(CObject *I,int action,int first,
                int last,float power,float bias,
-               int simple, float linear)
+               int simple, float linear,int wrap,int hand)
 {
   register PyMOLGlobals *G = I->G;
   int frame;
@@ -178,45 +178,75 @@ int ObjectView(CObject *I,int action,int first,
       if(first<0)
         first = 0;
       if(last<0)
-        last = SceneGetNFrame(G)-1;
+        last = nFrame;
+      /* note that we're leaving a blank frame at the end... */
+
+      if(last<0) {
+        last = nFrame;
+        if(last && !wrap)
+          last--;
+      }
+      if(last>nFrame) {
+        last = nFrame;
+        if(last && !wrap)
+          last--;
+      }
+
+      VLACheck(I->ViewElem,CViewElem,last);
+      
+      if(last == nFrame) { /* if we're interpolating beyond the
+                                 last frame, then wrap by copying
+                                 first to last */
+        I->ViewElem[last] = I->ViewElem[0]; 
+      }
 
       VLACheck(I->ViewElem,CViewElem,last);
       if(action==2) {
-        PRINTFB(G,FB_Object,FB_Details)
-          " ObjectView: interpolating unspecified frames %d to %d.\n",first+1,last+1
-          ENDFB(G);
+        if(last == nFrame) {
+          PRINTFB(G,FB_Object,FB_Details)
+            " ObjectView: interpolating unspecified frames %d to %d (wrapping).\n",first+1,last
+            ENDFB(G);
+        } else {
+          PRINTFB(G,FB_Object,FB_Details)
+            " ObjectView: interpolating unspecified frames %d to %d.\n",first+1,last+1
+            ENDFB(G);
+        }
       } else {
-        PRINTFB(G,FB_Object,FB_Details)
-          " ObjectView: reinterpolating all frames %d to %d.\n",first+1,last+1
-          ENDFB(G);
+        if(last == nFrame) {
+          PRINTFB(G,FB_Object,FB_Details)
+            " ObjectView: reinterpolating all frames %d to %d (wrapping).\n",first+1,last
+            ENDFB(G);
+        } else {
+          PRINTFB(G,FB_Object,FB_Details)
+            " ObjectView: reinterpolating all frames %d to %d.\n",first+1,last+1
+            ENDFB(G);
+        }
       }
       for(frame=first;frame<=last;frame++) {
-        if((frame>=0)&&(frame<nFrame)) {
-          if(!first_view) {
-            if(I->ViewElem[frame].specification_level==2) { /* specified */
-              first_view = I->ViewElem + frame;
-            }
-          } else {
-            CViewElem *view;
-            int interpolate_flag = false;
-            if(I->ViewElem[frame].specification_level==2) { /* specified */
-              last_view = I->ViewElem + frame;
-              if(action==2) {/* interpolate */
-                for(view=first_view+1;view<last_view;view++) {
-                  if(!view->specification_level)
-                    interpolate_flag = true;
-                }
-              } else {
-                interpolate_flag=true;
+        if(!first_view) {
+          if(I->ViewElem[frame].specification_level==2) { /* specified */
+            first_view = I->ViewElem + frame;
+          }
+        } else {
+          CViewElem *view;
+          int interpolate_flag = false;
+          if(I->ViewElem[frame].specification_level==2) { /* specified */
+            last_view = I->ViewElem + frame;
+            if(action==2) {/* interpolate */
+              for(view=first_view+1;view<last_view;view++) {
+                if(!view->specification_level)
+                  interpolate_flag = true;
               }
-              if(interpolate_flag) {
-                ViewElemInterpolate(first_view,last_view,
-                                    power,bias,
-                                    simple,linear);
-              }
-              first_view = last_view;
-              last_view = NULL;
+            } else {
+              interpolate_flag=true;
             }
+            if(interpolate_flag) {
+              ViewElemInterpolate(first_view,last_view,
+                                  power,bias,
+                                  simple,linear,hand);
+            }
+            first_view = last_view;
+            last_view = NULL;
           }
         }
       }

@@ -6,6 +6,12 @@ Changes up to 0.99
 
     beta31
 
+    * introduced wrapping and handedness into interpolations
+
+    * fixed yet another eigenbug
+
+    * color "object" for stick_color...(should add others later)
+
     * fixed surface object show and hide menus
 
     * fixed gadget picking/dragging broken in beta30

@@ -72,7 +72,7 @@ int ViewIterate(CView *I,CViewIterator *iter,CRay *ray,int at_least_once);
 
 int ViewElemInterpolate(CViewElem *first,CViewElem *last,
                         float power,float bias,
-                        int simple, float linearity);
+                        int simple, float linearity,int hand);
 
 #endif
 
