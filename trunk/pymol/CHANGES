@@ -10,7 +10,7 @@ Changes up to 0.99
 
     * fixed yet another eigenbug
 
-    * color "object" for stick_color...(should add others later)
+    * new color named "object" for stick_color...(should add others later)
 
     * fixed surface object show and hide menus
 
