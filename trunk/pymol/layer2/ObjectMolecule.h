@@ -356,7 +356,7 @@ void ObjectMoleculeFuse(ObjectMolecule *I,int index0,ObjectMolecule *src,int ind
 void ObjectMoleculeRenameAtoms(ObjectMolecule *I,int force);
 int ObjectMoleculeAreAtomsBonded(ObjectMolecule *I,int i0,int i1);
 void ObjectGotoState(ObjectMolecule *I,int state);
-float ObjectMoleculeGetAvgHBondVector(ObjectMolecule *I,int atom,int state,float *v);
+float ObjectMoleculeGetAvgHBondVector(ObjectMolecule *I,int atom,int state,float *v,float *incoming);
 int ObjectMoleculeCheckBondSep(ObjectMolecule *I,int a0,int a1,int dist);
 int ObjectMoleculeGetPhiPsi(ObjectMolecule *I,int ca,float *phi,float *psi,int state);
 void ObjectMoleculeGetAtomSele(ObjectMolecule *I,int index, char *buffer);

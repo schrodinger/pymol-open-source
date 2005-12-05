@@ -9196,13 +9196,17 @@ int ***ObjectMoleculeGetBondPrint(ObjectMolecule *I,int max_bond,int max_type,in
   return(result);
 }
 /*========================================================================*/
-float ObjectMoleculeGetAvgHBondVector(ObjectMolecule *I,int atom,int state,float *v)
-     /* computes average hydrogen bonding vector for an atom */
+float ObjectMoleculeGetAvgHBondVector(ObjectMolecule *I,int atom,
+                                      int state,float *v,float *incoming)
+     /* computes average / optima hydrogen bonding vector for an atom */
 {
   float result = 0.0;
   int a1,a2,n;
   int vec_cnt = 0;
   float v_atom[3],v_neigh[3],v_diff[3],v_acc[3] = {0.0,0.0,0.0};
+  int sp2_flag = false;
+  int order;
+
   CoordSet *cs;
 
   ObjectMoleculeUpdateNeighbors(I);
@@ -9218,6 +9222,10 @@ float ObjectMoleculeGetAvgHBondVector(ObjectMolecule *I,int atom,int state,float
       n++;
       while(1) {
         a2=I->Neighbor[n];
+        order = I->Bond[I->Neighbor[n+1]].order;
+        if((order==2)||(order==4)) {
+          sp2_flag = true;
+        }
         if(a2<0) break;
         n+=2;
         
@@ -9234,8 +9242,30 @@ float ObjectMoleculeGetAvgHBondVector(ObjectMolecule *I,int atom,int state,float
         result = (float)length3f(v_acc);
         result = result/vec_cnt;
         normalize23f(v_acc,v);
+      } else {
+        copy3f(v_acc,v);
       }
-      copy3f(v_acc,v);
+      
+      if(incoming && (vec_cnt==1) && 
+         (fabs(dot_product3f(v,incoming))<0.99F)) { 
+        /* if we know where the donor is, and the acceptor can
+           potentially rotate the lone pair, then we should optimally
+           orient the acceptor, if possible */
+        AtomInfoType *ai = I->AtomInfo + atom;
+        float v_perp[3];
+        float v_tmp1[3],v_tmp2[3];
+        if( ((ai->protons==cAN_O)&&(!sp2_flag)) || /* C-O-H */
+            ((ai->protons==cAN_N)&&(sp2_flag))){ /* C=N-H */
+        
+            remove_component3f(incoming,v,v_perp);
+            normalize3f(v_perp);
+            scale3f(v, 0.333644F, v_tmp1);
+            scale3f(v_perp, 0.942699F, v_tmp2);
+            add3f(v_tmp1,v_tmp2,v_tmp2);
+            subtract3f(v,v_tmp2,v);
+            normalize3f(v);
+        }
+      }
     }
   }
   return(result);
