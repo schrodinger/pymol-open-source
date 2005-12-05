@@ -6,6 +6,8 @@ Changes up to 0.99
 
     beta31
 
+    * fixed handedness of triangles in CGO cylinders
+
     * improved hydrogen bond detection for alcohols and added
       h_bond_exclusion setting for limiting intramolecular h_bonds
 
