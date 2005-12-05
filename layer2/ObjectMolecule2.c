@@ -2343,9 +2343,11 @@ static int ObjectMoleculeTestHBond(float *donToAcc,float *donToH, float *hToAcc,
   normalize23f(hToAcc,nHToAcc);
   if(accPlane) { /* remember, plane need not exist if it's water... */
     normalize23f(accPlane,nAccPlane);
-    if(dot_product3f(nDonToAcc,nAccPlane)>(-hbc->cone_dangle)) /* don't allow D to be more than 30 degrees behind A */
+#if 0
+    if(dot_product3f(nDonToAcc,nAccPlane)>(-hbc->cone_dangle)) /* don't allow D behind Acceptor plan */
       return 0;
-    if(dot_product3f(nHToAcc,nAccPlane)>(-hbc->cone_dangle)) /* don't allow H to be more than 30 degrees behind A */
+#endif
+    if(dot_product3f(nHToAcc,nAccPlane)>(-hbc->cone_dangle)) /* don't allow H behind Acceptor plane */
       return 0;
   }
 
@@ -2544,7 +2546,9 @@ int ObjectMoleculeGetCheckHBond(ObjectMolecule *don_obj,
           subtract3f(bestH,vDon,donToH);
           subtract3f(vAcc,bestH,hToAcc);
           
-          if(ObjectMoleculeGetAvgHBondVector(acc_obj,acc_atom,acc_state,accPlane)>0.1) {
+          if(ObjectMoleculeGetAvgHBondVector(acc_obj,acc_atom,
+                                             acc_state,accPlane,
+                                             hToAcc)>0.1) {
             vAccPlane = &accPlane[0];
           }
 

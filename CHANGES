@@ -6,6 +6,9 @@ Changes up to 0.99
 
     beta31
 
+    * improved hydrogen bond detection for alcohols and added
+      h_bond_exclusion setting for limiting intramolecular h_bonds
+
     * labels argument to distance, angle, dihedral changed to 'label'
 
     * introduced wrapping and handedness into interpolations

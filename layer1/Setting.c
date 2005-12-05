@@ -2662,6 +2662,8 @@ void SettingInitGlobal(PyMOLGlobals *G,int alloc,int reset_gui)
   SettingSet_3f(I,cSetting_light3, 0.3F, -0.6F, -0.2F);
   SettingSet_b(I,cSetting_hide_underscore_names, 1);
   SettingSet_b(I,cSetting_selection_round_points, 0);
+  SettingSet_i(I,cSetting_distance_exclusion, 5);
+  SettingSet_i(I,cSetting_h_bond_exclusion, 3);
 }
 
 

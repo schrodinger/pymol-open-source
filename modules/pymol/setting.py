@@ -493,6 +493,8 @@ if __name__=='pymol.setting':
         light3                    = (457, '')
         hide_underscore_names     = (458, '')
         selection_round_points    = (459, '')
+        distance_exclusion        = (460, '')
+        h_bond_exclusion          = (461, '')
         
     setting_sc = Shortcut(SettingIndex.__dict__.keys())
 

@@ -215,26 +215,28 @@ static int SelectorCheckNeighbors(PyMOLGlobals *G,int maxDepth,ObjectMolecule *o
 #define SELE_ORIz ( 0x2700 | STYP_SEL0 | 0x90 )
 #define SELE_CENz ( 0x2800 | STYP_SEL0 | 0x90 )
 #define SELE_ENAz ( 0x2900 | STYP_SEL0 | 0x90 )
-#define SELE_REPs ( 0x3000 | STYP_SEL1 | 0x80 )
-#define SELE_COLs ( 0x3100 | STYP_SEL1 | 0x80 )
-#define SELE_HBDs ( 0x3200 | STYP_SEL0 | 0x80 )
-#define SELE_HBAs ( 0x3300 | STYP_SEL0 | 0x80 )
-#define SELE_BYC1 ( 0x3400 | STYP_OPR1 | 0x20 )
-#define SELE_BYS1 ( 0x3500 | STYP_OPR1 | 0x20 )
-#define SELE_BYM1 ( 0x3600 | STYP_OPR1 | 0x20 )
-#define SELE_BYF1 ( 0x3700 | STYP_OPR1 | 0x20 )
-#define SELE_EXT_ ( 0x3800 | STYP_PRP1 | 0x30 )
-#define SELE_BON1 ( 0x3900 | STYP_OPR1 | 0x50 )
-#define SELE_FST1 ( 0x4000 | STYP_OPR1 | 0x30 )
-#define SELE_CAS1 ( 0x4100 | STYP_OPR1 | 0x30 )
-#define SELE_BEY_ ( 0x4200 | STYP_OP22 | 0x30 ) 
-#define SELE_POLz ( 0x4300 | STYP_SEL0 | 0x90 )
-#define SELE_SOLz ( 0x4400 | STYP_SEL0 | 0x90 )
-#define SELE_ORGz ( 0x4500 | STYP_SEL0 | 0x90 )
-#define SELE_INOz ( 0x4600 | STYP_SEL0 | 0x90 )
-#define SELE_GIDz ( 0x4700 | STYP_SEL0 | 0x90 )
-#define SELE_RNKs ( 0x4800 | STYP_SEL1 | 0x80 )
-#define SELE_PEPs ( 0x4900 | STYP_SEL1 | 0x80 )
+#define SELE_REPs ( 0x2A00 | STYP_SEL1 | 0x80 )
+#define SELE_COLs ( 0x2B00 | STYP_SEL1 | 0x80 )
+#define SELE_HBDs ( 0x2C00 | STYP_SEL0 | 0x80 )
+#define SELE_HBAs ( 0x2D00 | STYP_SEL0 | 0x80 )
+#define SELE_BYC1 ( 0x2E00 | STYP_OPR1 | 0x20 )
+#define SELE_BYS1 ( 0x2F00 | STYP_OPR1 | 0x20 )
+#define SELE_BYM1 ( 0x3000 | STYP_OPR1 | 0x20 )
+#define SELE_BYF1 ( 0x3100 | STYP_OPR1 | 0x20 )
+#define SELE_EXT_ ( 0x3200 | STYP_PRP1 | 0x30 )
+#define SELE_BON1 ( 0x3300 | STYP_OPR1 | 0x50 )
+#define SELE_FST1 ( 0x3400 | STYP_OPR1 | 0x30 )
+#define SELE_CAS1 ( 0x3500 | STYP_OPR1 | 0x30 )
+#define SELE_BEY_ ( 0x3600 | STYP_OP22 | 0x30 ) 
+#define SELE_POLz ( 0x3700 | STYP_SEL0 | 0x90 )
+#define SELE_SOLz ( 0x3800 | STYP_SEL0 | 0x90 )
+#define SELE_ORGz ( 0x3900 | STYP_SEL0 | 0x90 )
+#define SELE_INOz ( 0x3A00 | STYP_SEL0 | 0x90 )
+#define SELE_GIDz ( 0x3B00 | STYP_SEL0 | 0x90 )
+#define SELE_RNKs ( 0x3C00 | STYP_SEL1 | 0x80 )
+#define SELE_PEPs ( 0x3D00 | STYP_SEL1 | 0x80 )
+#define SELE_ACCz ( 0x3E00 | STYP_SEL0 | 0x90 )
+#define SELE_DONz ( 0x3F00 | STYP_SEL0 | 0x90 )
 
 #define SEL_PREMAX 0x8
 
@@ -404,6 +406,12 @@ static WordKeyValue Keyword[] =
 
   {  "beyond",   SELE_BEY_ },
   {  "be.",      SELE_BEY_ },
+
+  {  "donors",   SELE_DONz },
+  {  "don.",     SELE_DONz },
+
+  {  "acceptors",SELE_ACCz },
+  {  "acc."    , SELE_ACCz },
 
   {  "pepseq",   SELE_PEPs },
   {  "ps.",      SELE_PEPs },
@@ -2729,10 +2737,10 @@ int SelectorGetPairIndices(PyMOLGlobals *G,int sele1,int state1,int sele2,int st
             if(dist<cutoff) {
               if(mode==1) { /* coarse hydrogen bonding assessment */
                 flag=false;
-                if(ObjectMoleculeGetAvgHBondVector(obj1,at1,state1,v1)>0.3)
+                if(ObjectMoleculeGetAvgHBondVector(obj1,at1,state1,v1,NULL)>0.3)
                   if(dot_product3f(v1,dir)<-angle_cutoff) 
                     flag=true;
-                if(ObjectMoleculeGetAvgHBondVector(obj2,at2,state2,v2)>0.3)
+                if(ObjectMoleculeGetAvgHBondVector(obj2,at2,state2,v2,NULL)>0.3)
                   if(dot_product3f(v2,dir)>angle_cutoff)
                     flag=true;
               } else 
@@ -6940,41 +6948,49 @@ static int SelectorSelect0(PyMOLGlobals *G,EvalElem *passed_base)
       }
       break;
 	 case SELE_NONz:
-		for(a=cNDummyAtoms;a<I->NAtom;a++)
-		  base[0].sele[a]=false;
-		break;
+       for(a=cNDummyAtoms;a<I->NAtom;a++)
+         base[0].sele[a]=false;
+       break;
 	 case SELE_BNDz:
-		for(a=cNDummyAtoms;a<I->NAtom;a++)
-        base[0].sele[a]=i_obj[i_table[a].model]->AtomInfo[i_table[a].atom].bonded;
-		break;
+       for(a=cNDummyAtoms;a<I->NAtom;a++)
+         base[0].sele[a]=i_obj[i_table[a].model]->AtomInfo[i_table[a].atom].bonded;
+       break;
 	 case SELE_HETz:
-		for(a=cNDummyAtoms;a<I->NAtom;a++)
-        base[0].sele[a]=i_obj[i_table[a].model]->AtomInfo[i_table[a].atom].hetatm;
-		break;
+       for(a=cNDummyAtoms;a<I->NAtom;a++)
+         base[0].sele[a]=i_obj[i_table[a].model]->AtomInfo[i_table[a].atom].hetatm;
+       break;
+	 case SELE_DONz:
+       for(a=cNDummyAtoms;a<I->NAtom;a++)
+         base[0].sele[a]=i_obj[i_table[a].model]->AtomInfo[i_table[a].atom].hb_donor;
+       break;
+	 case SELE_ACCz:
+       for(a=cNDummyAtoms;a<I->NAtom;a++)
+         base[0].sele[a]=i_obj[i_table[a].model]->AtomInfo[i_table[a].atom].hb_acceptor;
+       break;
 	 case SELE_HYDz:
-		for(a=cNDummyAtoms;a<I->NAtom;a++)
-        base[0].sele[a]=i_obj[i_table[a].model]->AtomInfo[i_table[a].atom].hydrogen;
-		break;
+       for(a=cNDummyAtoms;a<I->NAtom;a++)
+         base[0].sele[a]=i_obj[i_table[a].model]->AtomInfo[i_table[a].atom].hydrogen;
+       break;
 	 case SELE_POLz:
-		for(a=cNDummyAtoms;a<I->NAtom;a++)
-        base[0].sele[a]=i_obj[i_table[a].model]->AtomInfo[i_table[a].atom].flags & cAtomFlag_polymer;
-		break;
+       for(a=cNDummyAtoms;a<I->NAtom;a++)
+         base[0].sele[a]=i_obj[i_table[a].model]->AtomInfo[i_table[a].atom].flags & cAtomFlag_polymer;
+       break;
 	 case SELE_SOLz:
-		for(a=cNDummyAtoms;a<I->NAtom;a++)
-        base[0].sele[a]=i_obj[i_table[a].model]->AtomInfo[i_table[a].atom].flags & cAtomFlag_solvent;
-		break;
+       for(a=cNDummyAtoms;a<I->NAtom;a++)
+         base[0].sele[a]=i_obj[i_table[a].model]->AtomInfo[i_table[a].atom].flags & cAtomFlag_solvent;
+       break;
 	 case SELE_ORGz:
-		for(a=cNDummyAtoms;a<I->NAtom;a++)
-        base[0].sele[a]=i_obj[i_table[a].model]->AtomInfo[i_table[a].atom].flags & cAtomFlag_organic;
-		break;
+       for(a=cNDummyAtoms;a<I->NAtom;a++)
+         base[0].sele[a]=i_obj[i_table[a].model]->AtomInfo[i_table[a].atom].flags & cAtomFlag_organic;
+       break;
 	 case SELE_INOz:
-		for(a=cNDummyAtoms;a<I->NAtom;a++)
-        base[0].sele[a]=i_obj[i_table[a].model]->AtomInfo[i_table[a].atom].flags & cAtomFlag_inorganic;
-		break;
+       for(a=cNDummyAtoms;a<I->NAtom;a++)
+         base[0].sele[a]=i_obj[i_table[a].model]->AtomInfo[i_table[a].atom].flags & cAtomFlag_inorganic;
+       break;
 	 case SELE_GIDz:
-		for(a=cNDummyAtoms;a<I->NAtom;a++)
-        base[0].sele[a]=i_obj[i_table[a].model]->AtomInfo[i_table[a].atom].flags & cAtomFlag_guide;
-		break;
+       for(a=cNDummyAtoms;a<I->NAtom;a++)
+         base[0].sele[a]=i_obj[i_table[a].model]->AtomInfo[i_table[a].atom].flags & cAtomFlag_guide;
+       break;
 
     case SELE_PREz:
       state = SceneGetState(G);
@@ -9481,7 +9497,16 @@ DistSet *SelectorGetDistSet(PyMOLGlobals *G,DistSet *ds,
   int a_keeper = false;
   int *zero=NULL,*scratch=NULL,*coverage=NULL;
   HBondCriteria hbcRec,*hbc;
-
+  int exclusion = 0;
+  
+  switch(mode) {
+  case 1:
+    exclusion = SettingGetGlobal_i(G,cSetting_distance_exclusion);
+    break;
+  case 2:
+    exclusion = SettingGetGlobal_i(G,cSetting_h_bond_exclusion);
+    break;
+  }
   hbc=&hbcRec;
   *result = 0.0;
   if(!ds) {
@@ -9586,8 +9611,9 @@ DistSet *SelectorGetDistSet(PyMOLGlobals *G,DistSet *ds,
             if(dist<cutoff) {
               
               a_keeper=true;
-              if(((mode==1)||(mode==2))&&(obj1==obj2)) {
-                a_keeper = !SelectorCheckNeighbors(G,5,obj1,at1,at2,
+              if(exclusion && (obj1==obj2)) {
+                a_keeper = !SelectorCheckNeighbors(G,exclusion,
+                                                   obj1,at1,at2,
                                                    zero,scratch);
               }
               if(a_keeper&&(mode==2)) {
