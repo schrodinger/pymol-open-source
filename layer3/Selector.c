@@ -9507,6 +9507,7 @@ DistSet *SelectorGetDistSet(PyMOLGlobals *G,DistSet *ds,
     exclusion = SettingGetGlobal_i(G,cSetting_h_bond_exclusion);
     break;
   }
+
   hbc=&hbcRec;
   *result = 0.0;
   if(!ds) {
@@ -9555,9 +9556,11 @@ DistSet *SelectorGetDistSet(PyMOLGlobals *G,DistSet *ds,
 
   if(mode==2) {
     ObjectMoleculeInitHBondCriteria(G,hbc);
-    cutoff = hbc->maxDistAtMaxAngle;
-    if(cutoff<hbc->maxDistAtZero) {
-      cutoff = hbc->maxDistAtZero; 
+    if(cutoff<0.0F) {
+      cutoff = hbc->maxDistAtMaxAngle;
+      if(cutoff<hbc->maxDistAtZero) {
+        cutoff = hbc->maxDistAtZero; 
+      }
     }
   }
   if(cutoff<0) cutoff = 1000.0;
