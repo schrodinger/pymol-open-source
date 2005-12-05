@@ -134,7 +134,7 @@ PYMOL API
         return r
 
     def angle(name=None,selection1="(pk1)",selection2="(pk2)",selection3="(pk3)", 
-                     mode=None,label=1,reset=0,zoom=0,quiet=1,state=0):
+                     mode=None,label=1,reset=0,zoom=0,state=0,quiet=1):
         '''
 DESCRIPTION
 
@@ -218,7 +218,7 @@ NOTES
 
     def dihedral(name=None,selection1="(pk1)",selection2="(pk2)",
                      selection3="(pk3)",selection4="(pk4)",
-                     mode=None,label=1,reset=0,zoom=0,quiet=1,state=0):
+                     mode=None,label=1,reset=0,zoom=0,state=0,quiet=1):
         '''
 DESCRIPTION
 

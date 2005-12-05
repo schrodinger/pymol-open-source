@@ -1414,7 +1414,7 @@ void CGOSimpleCylinder(CGO *I,float *v1,float *v2,float tube_size,float *c1,floa
   /* now we have a coordinate system*/
   
   CGOBegin(I,GL_TRIANGLE_STRIP);
-  for(c=0;c<=nEdge;c++)
+  for(c=nEdge;c>=0;c--)
 	 {
 		v[0] = p1[0]*x[c] + p2[0]*y[c];
 		v[1] = p1[1]*x[c] + p2[1]*y[c];
@@ -1456,7 +1456,7 @@ void CGOSimpleCylinder(CGO *I,float *v1,float *v2,float tube_size,float *c1,floa
     CGONormalv(I,v);
     CGOVertexv(I,v+3);
     
-    for(c=0;c<=nEdge;c++)
+    for(c=nEdge;c>=0;c--)
       {
         v[0] = p1[0]*x[c] + p2[0]*y[c];
         v[1] = p1[1]*x[c] + p2[1]*y[c];

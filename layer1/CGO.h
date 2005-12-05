@@ -108,6 +108,8 @@ struct _CGO {
 #define CGO_PICK_COLOR_SZ        2
 #define CGO_MASK                 0x1F
 
+#define CGO_LIGHTING             0x0B50
+
 int CGORendererInit(PyMOLGlobals *G);
 void CGORendererFree(PyMOLGlobals *G);
 CGO *CGONew(PyMOLGlobals *G);
