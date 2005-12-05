@@ -111,6 +111,7 @@ int DistSetGetExtent(DistSet *I,float *mn,float *mx)
 {
   float *v;
   int a;
+  int c;
   v = I->Coord;
   for(a=0;a<I->NIndex;a++) {
     min3f(v,mn,mn);
@@ -119,17 +120,34 @@ int DistSetGetExtent(DistSet *I,float *mn,float *mx)
   }
 
   v = I->AngleCoord;
-  for(a=0;a<I->NAngleIndex;a++) {
+  c = I->NAngleIndex/5;
+  for(a=0;a<c;a++) {
     min3f(v,mn,mn);
     max3f(v,mx,mx);
     v+=3;
+    min3f(v,mn,mn);
+    max3f(v,mx,mx);
+    v+=3;
+    min3f(v,mn,mn);
+    max3f(v,mx,mx);
+    v+=9;
   }
 
   v = I->DihedralCoord;
-  for(a=0;a<I->NDihedralIndex;a++) {
+  c = I->NDihedralIndex/6;
+  for(a=0;a<c;a++) {
     min3f(v,mn,mn);
     max3f(v,mx,mx);
     v+=3;
+    min3f(v,mn,mn);
+    max3f(v,mx,mx);
+    v+=3;
+    min3f(v,mn,mn);
+    max3f(v,mx,mx);
+    v+=3;
+    min3f(v,mn,mn);
+    max3f(v,mx,mx);
+    v+=9;
   }
   return(I->NIndex+I->NAngleIndex+I->NDihedralIndex);
 }

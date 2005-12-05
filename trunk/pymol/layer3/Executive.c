@@ -966,8 +966,10 @@ void ExecutiveLoadMOL2(PyMOLGlobals *G,CObject *origObj,char *fname,
                                 quiet,multiplex,new_name,
                                 &next_entry);
 
-      if(finish)
+      if(finish) {
         ExecutiveUpdateObjectSelection(G,origObj);
+        ExecutiveDoZoom(G,origObj,false,zoom,quiet);
+      }
       if(eff_frame<0)
         eff_frame = ((ObjectMolecule*)origObj)->NCSet-1;
       if(!is_string) 
@@ -1192,9 +1194,10 @@ int ExecutiveLoad(PyMOLGlobals *G,CObject *origObj,
               ExecutiveManageObject(G,obj,zoom,true); /* quiet=true -- suppressing output... */
             }
             if(obj->type == cObjectMolecule) {
-              if(finish)
+              if(finish) {
                 ExecutiveUpdateObjectSelection(G,obj);
-
+                ExecutiveDoZoom(G,origObj,false,zoom,quiet);
+              }
               if(eff_state<0)
                 eff_state = ((ObjectMolecule*)obj)->NCSet-1;
             }
@@ -1481,8 +1484,10 @@ int ExecutiveProcessPDBFile(PyMOLGlobals *G,CObject *origObj,char *fname,
       ObjectMoleculeReadPDBStr(G,(ObjectMolecule*)origObj,
                                start_at,eff_frame,discrete,&current->m4x,
                                pdb_name,&next_pdb,pdb_info,quiet, &model_number);
-      if(finish)
+      if(finish) {
         ExecutiveUpdateObjectSelection(G,origObj);
+        ExecutiveDoZoom(G,origObj,false,zoom,quiet);
+      }
       if(eff_frame<0)
         eff_frame = ((ObjectMolecule*)origObj)->NCSet-1;
       if(buf) {
@@ -3158,7 +3163,8 @@ int ***ExecutiveGetBondPrint(PyMOLGlobals *G,char *name,int max_bond,int max_typ
 int ExecutiveMapNew(PyMOLGlobals *G,char *name,int type,float *grid,
                     char *sele,float buffer,
                     float *minCorner,
-                    float *maxCorner,int state,int have_corners,int quiet)
+                    float *maxCorner,int state,int have_corners,
+                    int quiet,int zoom)
 {
   CObject *origObj=NULL;
   ObjectMap *objMap;
@@ -3271,8 +3277,11 @@ int ExecutiveMapNew(PyMOLGlobals *G,char *name,int type,float *grid,
 
         ObjectSetName((CObject*)objMap,name);
         ObjectMapUpdateExtents(objMap);
-        if(isNew)
+        if(isNew) {
           ExecutiveManageObject(G,(CObject*)objMap,-1,quiet);
+        } else {
+          ExecutiveDoZoom(G,(CObject*)objMap,false,zoom,true);
+        }
         isNew=false;
         origObj = (CObject*)objMap;
       }
@@ -9877,6 +9886,32 @@ void ExecutiveMemoryDump(PyMOLGlobals *G)
           TrackerGetNList(I->Tracker),
           TrackerGetNLink(I->Tracker));
 }
+
+void ExecutiveDoZoom(PyMOLGlobals *G,CObject *obj,int is_new, int zoom,int quiet)
+{
+  if(zoom) {/* -1 = use setting, 0 = never, 1 = zoom new, 
+               2 = zoom always, 3 = zoom current, 4 = zoom all */
+    if(zoom<0) {
+      zoom = SettingGetGlobal_i(G,cSetting_auto_zoom);
+    } 
+    switch(zoom) {
+    case 1: /* zoom when new */
+      if(is_new) 
+        ExecutiveWindowZoom(G,obj->Name,0.0,-1,0,0,quiet); /* (all states) */
+      break;
+    case 2: /* zoom always */
+      ExecutiveWindowZoom(G,obj->Name,0.0,-1,0,0,quiet); /* (all states) */
+      break;
+    case 3: /* always zoom current state */
+      ExecutiveWindowZoom(G,obj->Name,0.0,ObjectGetCurrentState(obj,false),0,0,quiet); /* (all states) */
+      break;
+    case 4: /* zoom all objects */
+      ExecutiveWindowZoom(G,cKeywordAll,0.0,-1,0,0,quiet);        
+      break;
+    }
+  }
+}
+
 /*========================================================================*/
 void ExecutiveManageObject(PyMOLGlobals *G,CObject *obj,int zoom,int quiet)
 {
@@ -9965,20 +10000,8 @@ void ExecutiveManageObject(PyMOLGlobals *G,CObject *obj,int zoom,int quiet)
     }
   }
 
-  if(zoom) {/* -1 = use setting, 0 = never, 1 = force zoom */
-    if(!exists) {
-      if(zoom==1) { /* force zoom */
-        ExecutiveWindowZoom(G,obj->Name,0.0,-1,0,0,true); /* (all states) */
-      } else switch(SettingGetGlobal_i(G,cSetting_auto_zoom)) {
-      case 1: /* zoom new one */
-        ExecutiveWindowZoom(G,obj->Name,0.0,-1,0,0,true); /* auto zoom (all states) */
-        break;
-      case 2: /* zoom all */
-        ExecutiveWindowZoom(G,cKeywordAll,0.0,-1,0,0,true);
-        break;
-      }
-    }
-  }
+  ExecutiveDoZoom(G,obj,!exists,zoom,true);
+
   SeqChanged(G);
 }
 /*========================================================================*/

@@ -49,7 +49,8 @@ if __name__=='pymol.creating':
     
     ramp_spectrum_sc = Shortcut(ramp_spectrum_dict.keys())
     
-    def map_new(name,type='gaussian',grid=None,selection="(all)",buffer=None,box=None,state=0,quiet=1):
+    def map_new(name,type='gaussian',grid=None,selection="(all)",buffer=None,
+                box=None,state=0,quiet=1,zoom=0):
         '''
         state > 0: do indicated state
         state = 0: independent states in independent extents
@@ -82,7 +83,8 @@ if __name__=='pymol.creating':
         try:
             lock()
             r = _cmd.map_new(str(name),int(type),grid,str(selection),
-                                  float(buffer),box,int(state)-1,box_flag,quiet)
+                             float(buffer),box,int(state)-1,
+                             int(box_flag),int(quiet),int(zoom))
         finally:
             unlock(r)
         if _raising(r): raise pymol.CmdException         
@@ -123,7 +125,8 @@ if __name__=='pymol.creating':
         if _raising(r): raise pymol.CmdException         
         return r
 
-    def isomesh(name,map,level=1.0,selection='',buffer=0.0,state=1,carve=None,source_state=0,quiet=1):
+    def isomesh(name,map,level=1.0,selection='',buffer=0.0,
+                state=1,carve=None,source_state=0,quiet=1):
         '''
 DESCRIPTION
 

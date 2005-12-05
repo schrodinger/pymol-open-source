@@ -183,6 +183,7 @@ int ExecutiveSetObjVisib(PyMOLGlobals *G,char *name,int onoff);
 
 int ExecutiveOrigin(PyMOLGlobals *G,char *name,int preserve,char *oname,float *pos,int state);
 int ExecutiveCenter(PyMOLGlobals *G,char *name,int state,int inclusive, float animate, float *pos,int quiet);
+void ExecutiveDoZoom(PyMOLGlobals *G,CObject *obj,int is_new, int zoom,int quiet);
 int ExecutiveWindowZoom(PyMOLGlobals *G,char *name,float buffer,
                         int state,int inclusive,float animate,int quiet);
 int ExecutiveGetMoment(PyMOLGlobals *G,char *name,double *mi,int state);
@@ -266,7 +267,7 @@ int ExecutiveSculptActivate(PyMOLGlobals *G,char *name,int state);
 float ExecutiveSculptIterate(PyMOLGlobals *G,char *name,int state,int n_cycle);
 int ExecutiveMapNew(PyMOLGlobals *G,char *name,int type,float *grid,char *sele,
                     float buffer,float *minCorner,float *maxCorner,
-                    int state,int have_corners, int quiet);
+                    int state,int have_corners, int quiet,int zoom);
 
 int ***ExecutiveGetBondPrint(PyMOLGlobals *G,char *name,int max_bond,int max_type,int *dim);
 int ExecutiveSetCrystal(PyMOLGlobals *G,char *sele,float a,float b,float c,
