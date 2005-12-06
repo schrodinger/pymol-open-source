@@ -171,6 +171,11 @@ int SceneMustDrawBoth(PyMOLGlobals *G)
 
 static int SceneDeferClickWhen(Block *block, int button, int x, int y, double when);
 
+static int side_by_side(int stereo_mode)
+{
+  return ((stereo_mode>1)&&((stereo_mode<4)||(stereo_mode==5)));
+}
+
 static int get_stereo_x(int x, int *last_x, int width)
 {
   int width_2 = width/2;
@@ -668,7 +673,7 @@ int SceneMultipick(PyMOLGlobals *G,Multipick *smp)
   if(((int)SettingGet(G,cSetting_overlay))&&((int)SettingGet(G,cSetting_text)))
     SceneRender(G,NULL,0,0,NULL,0,0); /* remove overlay if present */
   SceneDontCopyNext(G);
-  if((I->StereoMode>1)&&(I->StereoMode<4)) {
+  if(side_by_side(I->StereoMode)) {
     smp->x = smp->x % (I->Width/2);
   }
   SceneRender(G,NULL,0,0,smp,0,0);
@@ -2713,7 +2718,7 @@ static int SceneClick(Block *block,int button,int x,int y,
     y=y-I->Block->margin.bottom;
     x=x-I->Block->margin.left;
     
-    if((I->StereoMode>1)&&(I->StereoMode<4)) 
+    if(side_by_side(I->StereoMode))
       x = get_stereo_x(x,NULL,I->Width);
 
     I->LastX=x;
@@ -2733,7 +2738,7 @@ static int SceneClick(Block *block,int button,int x,int y,
     y=y-I->Block->margin.bottom;
     x=x-I->Block->margin.left;
     
-    if((I->StereoMode>1)&&(I->StereoMode<4)) 
+    if(side_by_side(I->StereoMode))
       x = get_stereo_x(x,NULL,I->Width);
 
     I->LastX=x;
@@ -2742,7 +2747,7 @@ static int SceneClick(Block *block,int button,int x,int y,
   case cButModePickAtom1:
   case cButModePickAtom:
   case cButModeMenu:
-    if((I->StereoMode>1)&&(I->StereoMode<4))
+    if(side_by_side(I->StereoMode))
       x = get_stereo_x(x,NULL,I->Width);
 
     if(SceneDoXYPick(G,x,y)) {
@@ -2865,7 +2870,7 @@ static int SceneClick(Block *block,int button,int x,int y,
     break;
   case cButModePickBond:
   case cButModePkTorBnd:
-    if((I->StereoMode>1)&&(I->StereoMode<4))
+    if(side_by_side(I->StereoMode))
       x = get_stereo_x(x,NULL,I->Width);
 
     if(SceneDoXYPick(G,x,y)) {
@@ -2967,7 +2972,7 @@ static int SceneClick(Block *block,int button,int x,int y,
   case cButModeTorFrag:
   case cButModeMoveAtom:
   case cButModeMoveAtomZ:
-    if((I->StereoMode>1)&&(I->StereoMode<4))
+    if(side_by_side(I->StereoMode))
       x = get_stereo_x(x,NULL,I->Width);
 
     if(SceneDoXYPick(G,x,y)) {
@@ -3031,7 +3036,7 @@ static int SceneClick(Block *block,int button,int x,int y,
   case cButModeOrigAt:
   case cButModeCent:
   case cButModeDragMol:
-    if((I->StereoMode>1)&&(I->StereoMode<4))
+    if(side_by_side(I->StereoMode))
       x = get_stereo_x(x,NULL,I->Width);
 
     if(SceneDoXYPick(G,x,y)) {
@@ -3687,7 +3692,7 @@ static int SceneDrag(Block *block,int x,int y,int mod,double when)
         ObjectGadgetGetVertex(gad,I->LastPicked.src.index,I->LastPicked.src.bond,v1);
 
         vScale = SceneGetScreenVertexScale(G,v1);
-        if((I->StereoMode>1)&&(I->StereoMode<4)) {
+        if(side_by_side(I->StereoMode)) {
           vScale*=2;
           x = get_stereo_x(x,&I->LastX,I->Width);
         }
@@ -3727,7 +3732,7 @@ static int SceneDrag(Block *block,int x,int y,int mod,double when)
     break;
   case cButModeRotDrag:
     eff_width = I->Width;
-    if((I->StereoMode>1)&&(I->StereoMode<4)) {
+    if(side_by_side(I->StereoMode)) {
       eff_width = I->Width/2;
       x = get_stereo_x(x,&I->LastX,I->Width);
     }
@@ -3798,7 +3803,7 @@ static int SceneDrag(Block *block,int x,int y,int mod,double when)
 
       copy3f(I->Origin,v1);
       vScale = SceneGetScreenVertexScale(G,v1);
-      if((I->StereoMode>1)&&(I->StereoMode<4)) {
+    if(side_by_side(I->StereoMode)) {
         vScale*=2;
         x = get_stereo_x(x,&I->LastX,I->Width);
       }
@@ -3856,7 +3861,7 @@ static int SceneDrag(Block *block,int x,int y,int mod,double when)
                                          I->LastPicked.src.index,v1)) {
             /* scale properly given the current projection matrix */
             vScale = SceneGetScreenVertexScale(G,v1);
-            if((I->StereoMode>1)&&(I->StereoMode<4)) {
+            if(side_by_side(I->StereoMode)) {
               vScale*=2;
               x = get_stereo_x(x,&I->LastX,I->Width);
             }
@@ -3915,7 +3920,7 @@ static int SceneDrag(Block *block,int x,int y,int mod,double when)
 
               vScale = SceneGetScreenVertexScale(G,v1);
 
-              if((I->StereoMode>1)&&(I->StereoMode<4)) {
+              if(side_by_side(I->StereoMode)) {
                 vScale*=2;
                 x = get_stereo_x(x,&I->LastX,I->Width);
               }
@@ -3948,7 +3953,8 @@ static int SceneDrag(Block *block,int x,int y,int mod,double when)
     SceneNoteMouseInteraction(G);
 
     vScale = SceneGetScreenVertexScale(G,I->Origin);
-    if((I->StereoMode>1)&&(I->StereoMode<4)) {
+    if(side_by_side(I->StereoMode)) {
+
       vScale*=2;
       x = get_stereo_x(x,&I->LastX,I->Width);
     }
@@ -3992,7 +3998,7 @@ static int SceneDrag(Block *block,int x,int y,int mod,double when)
     SceneNoteMouseInteraction(G);
 
     eff_width = I->Width;
-    if((I->StereoMode>1)&&(I->StereoMode<4)) {
+    if(side_by_side(I->StereoMode)) {
       eff_width = I->Width/2;
       x = get_stereo_x(x,&I->LastX,I->Width);
     }
@@ -4625,6 +4631,7 @@ void SceneRay(PyMOLGlobals *G,
     stereo_hand=2;
     break;
   case 4:
+  case 6:
     stereo_hand=2;
     break;
   default:
@@ -5620,10 +5627,13 @@ void SceneRender(PyMOLGlobals *G,Picking *pick,int x,int y,
           mono_as_quad_stereo = true; /* rendering stereo as mono */
           stereo_as_mono_matrix = true;
         }
-      } else if(SettingGet_i(G,NULL,NULL,cSetting_stereo_mode)==4) {
-        stereo_mode = 4;
-        must_render_stereo = true;
-        stereo_as_mono_matrix = true;
+      } else {
+        int st_mode = SettingGet_i(G,NULL,NULL,cSetting_stereo_mode);
+        if(st_mode==4) {
+          stereo_mode = 4;
+          must_render_stereo = true;
+          stereo_as_mono_matrix = true;
+        }
       }
     }
 
@@ -5680,7 +5690,7 @@ void SceneRender(PyMOLGlobals *G,Picking *pick,int x,int y,
           "Scene-Warning: glViewport failure.\n"
           ENDFB(G);
       }
-      if(stereo_mode>3) stereo_mode = 0;
+      if((stereo_mode>3)||(stereo_mode<5)) stereo_mode = 0;
       stereo_as_mono_matrix = true;
       width_scale = ((float)(oversize_width))/I->Width;
     } else {
@@ -5844,6 +5854,7 @@ void SceneRender(PyMOLGlobals *G,Picking *pick,int x,int y,
       switch(stereo_mode) {
       case 2:
       case 3:
+      case 5:
         glViewport(I->Block->rect.left,I->Block->rect.bottom,I->Width/2,I->Height);
         break;
       }
@@ -5907,6 +5918,7 @@ void SceneRender(PyMOLGlobals *G,Picking *pick,int x,int y,
       switch(stereo_mode) {
       case 2:
       case 3:
+      case 5:
         glViewport(I->Block->rect.left,I->Block->rect.bottom,I->Width/2,I->Height);
         break;
       }
@@ -6018,6 +6030,7 @@ void SceneRender(PyMOLGlobals *G,Picking *pick,int x,int y,
           }
           break;
         case 3: /* side by side, walleye */
+        case 5:
           if(oversize_width && oversize_height) {
             glViewport(I->Block->rect.left+x,
                        I->Block->rect.bottom+y,
@@ -6029,7 +6042,7 @@ void SceneRender(PyMOLGlobals *G,Picking *pick,int x,int y,
         case 4: /* geowall */
           glViewport(I->Block->rect.left,
                      I->Block->rect.bottom,I->Width,I->Height);
-          break;
+          break;          
         }
 
         /* prepare the stereo transformation matrix */
@@ -6096,6 +6109,7 @@ void SceneRender(PyMOLGlobals *G,Picking *pick,int x,int y,
           }
           break;
         case 3: /* side by side, walleye */
+        case 5:
           if(oversize_width && oversize_height) {
             glViewport(I->Block->rect.left+oversize_width/2+x,
                        I->Block->rect.bottom+y,
@@ -6161,10 +6175,12 @@ void SceneRender(PyMOLGlobals *G,Picking *pick,int x,int y,
           break;
         case 2: /* side by side */
         case 3:
+        case 5:
           OrthoDrawBuffer(G,GL_BACK);
           break;
         case 4:
           break;
+          
         }
 
       } else {

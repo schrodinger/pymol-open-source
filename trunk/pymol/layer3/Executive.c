@@ -5181,6 +5181,7 @@ int ExecutiveStereo(PyMOLGlobals *G,int flag)
       case 2: /* cross-eye stereo*/
       case 3: /* wall-eye */
       case 4: /* geo-wall */
+      case 5: /* side-by-side */
         SceneSetStereo(G,flag);
         break;
       }
