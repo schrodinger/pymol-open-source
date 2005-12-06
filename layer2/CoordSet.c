@@ -124,7 +124,7 @@ int CoordSetFromPyList(PyMOLGlobals *G,PyObject *list,CoordSet **cs)
     if(ok&&(ll>5)) ok = PConvPyStrToStr(PyList_GetItem(list,5),I->Name,sizeof(WordType));
     if(ok&&(ll>6)) ok = ObjectStateFromPyList(G,PyList_GetItem(list,6),&I->State);
     if(ok&&(ll>7)) I->Setting = SettingNewFromPyList(G,PyList_GetItem(list,7));
-
+    if(ok&&(ll>8)) ok = PConvPyListToLabPosVLA(PyList_GetItem(list,8),&I->LabPos);
     if(!ok) {
       if(I)
         CoordSetFree(I);
@@ -145,7 +145,7 @@ PyObject *CoordSetAsPyList(CoordSet *I)
   PyObject *result = NULL;
 
   if(I) {
-    result = PyList_New(8);
+    result = PyList_New(9);
     
     PyList_SetItem(result,0,PyInt_FromLong(I->NIndex));
     PyList_SetItem(result,1,PyInt_FromLong(I->NAtIndex));
@@ -158,6 +158,7 @@ PyObject *CoordSetAsPyList(CoordSet *I)
     PyList_SetItem(result,5,PyString_FromString(I->Name));
     PyList_SetItem(result,6,ObjectStateAsPyList(&I->State));
     PyList_SetItem(result,7,SettingAsPyList(I->Setting));
+    PyList_SetItem(result,8,PConvLabPosVLAToPyList(I->LabPos,I->NIndex));
     /* TODO symmetry, spheroid, periodic box ... */
   }
   return(PConvAutoNone(result));
@@ -368,7 +369,7 @@ int CoordSetMoveAtom(CoordSet *I,int at,float *v,int mode)
       a1=obj->DiscreteAtmToIdx[at];
   } else 
     a1=I->AtmToIdx[at];
-  
+
   if(a1>=0) {
     result = 1;
     v1 = I->Coord+3*a1;
@@ -376,6 +377,38 @@ int CoordSetMoveAtom(CoordSet *I,int at,float *v,int mode)
       add3f(v,v1,v1);
     } else {
       copy3f(v,v1);
+    }
+  }
+
+  return(result);
+}
+/*========================================================================*/
+int CoordSetMoveAtomLabel(CoordSet *I,int at,float *v,int mode)
+{
+  ObjectMolecule *obj;
+  int a1 = -1;
+  int result = 0;
+  LabPosType *lp;
+
+  obj = I->Obj;
+  if(obj->DiscreteFlag) {
+    if(I==obj->DiscreteCSet[at])
+      a1=obj->DiscreteAtmToIdx[at];
+  } else 
+    a1=I->AtmToIdx[at];
+  
+  if(a1>=0) {
+    if(!I->LabPos) 
+      I->LabPos = VLACalloc(LabPosType,I->NIndex);
+    if(I->LabPos) {
+      result = 1;
+      lp = I->LabPos+a1;
+      lp->mode=1;
+      if(mode) {
+        add3f(v,lp->offset,lp->offset);
+      } else { 
+        copy3f(v,lp->offset);
+      }
     }
   }
 

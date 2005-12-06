@@ -19,6 +19,7 @@ Z* -------------------------------------------------------------------
 #include"os_python.h"
 
 #ifndef _PYMOL_NOPY
+#include"Base.h"
 
 /* Convenient conversion routines for C<->Python data interchange
    
@@ -61,11 +62,7 @@ int PConvPyStrToStrPtr(PyObject *obj,char **ptr);
 int PConvPyFloatToFloat(PyObject *obj,float *ptr);
 int PConvPyIntToChar(PyObject *obj,char *ptr);
 int PConvPyIntToInt(PyObject *obj,int *ptr);
-
-/* === end === */
-
-/* === optimized, non-error checking routines === */
-
+int PConvPyListToLabPosVLA(PyObject *obj, LabPosType **vla_ptr);
 /* === end === */
 
 /* categories below... */
@@ -74,6 +71,7 @@ PyObject *PConvFloatVLAToPyList(float *f);
 PyObject *PConvIntVLAToPyList(int *f);
 PyObject *PConvIntArrayToPyList(int *f,int l);
 PyObject *PConvSIntArrayToPyList(short int *f,int l);
+PyObject *PConvLabPosVLAToPyList(LabPosType *vla, int l);
 
 /* WARNING: the returned PyObject is unowned - it is intended for use
  * only for efficient detection of changes to dictionary values

@@ -1565,7 +1565,8 @@ void EditorReadyDrag(PyMOLGlobals *G,int state)
   }
 }
 /*========================================================================*/
-void EditorPrepareDrag(PyMOLGlobals *G,ObjectMolecule *obj,int sele, int index,int state)
+void EditorPrepareDrag(PyMOLGlobals *G,ObjectMolecule *obj,
+                       int sele, int index, int state)
 {
   int frg;
   int sele0=-1,sele1=-1,sele2=-1,sele3=-1;
@@ -1583,6 +1584,8 @@ void EditorPrepareDrag(PyMOLGlobals *G,ObjectMolecule *obj,int sele, int index,i
 
   state = EditorGetEffectiveState(G,obj,state);
 
+  /* TODO: if user is drags label, then the editor must be deactivated */
+  
   if(!EditorActive(G)) { 
     /* non-anchored dragging of objects and now selections */
 

@@ -9086,9 +9086,38 @@ int ObjectMoleculeMoveAtom(ObjectMolecule *I,int state,int index,float *v,int mo
       PLog(line,cPLog_no_flush);
     }
   }
-  /*  if(I->Sculpt) {
-      SculptIterateObject(I->Sculpt,I,state,1);
-      }*/
+  return(result);
+}
+/*========================================================================*/
+int ObjectMoleculeMoveAtomLabel(ObjectMolecule *I,int state,int index,float *v,int mode,int log)
+{
+  int result = 0;
+  CoordSet *cs;
+  if(!(I->AtomInfo[index].protekted==1)) {
+    if(state<0) state=0;
+    if(I->NCSet==1) state=0;
+    state = state % I->NCSet;
+    if((!I->CSet[state])&&(SettingGet_b(I->Obj.G,I->Obj.Setting,NULL,cSetting_all_states)))
+      state=0;
+    cs = I->CSet[state];
+    if(cs) {
+      result = CoordSetMoveAtomLabel(I->CSet[state],index,v,mode);
+      cs->fInvalidateRep(cs,cRepLabel,cRepInvCoord);
+      /*      ExecutiveUpdateCoordDepends(I->Obj.G,I);*/
+    }
+  }
+#if 0
+  if(log) {
+    OrthoLineType line,buffer;
+    if(SettingGet(I->Obj.G,cSetting_logging)) {
+      ObjectMoleculeGetAtomSele(I,index,buffer);
+      sprintf(line,"cmd.translate_atom(\"%s\",%15.9f,%15.9f,%15.9f,%d,%d,%d)\n",
+              buffer,v[0],v[1],v[2],state+1,mode,0);
+      PLog(line,cPLog_no_flush);
+    }
+  }
+#endif
+
   return(result);
 }
 /*========================================================================*/

@@ -1353,6 +1353,7 @@ int RayTraceThread(CRayThreadInfo *T)
 	int pixel_flag;
 	float ray_trans_spec;
 	float shadow_fudge;
+    int label_shadow_mode;
 	int interior_color;
 	int interior_flag;
 	int interior_shadows;
@@ -1415,8 +1416,8 @@ int RayTraceThread(CRayThreadInfo *T)
 	interior_shadows	= SettingGetGlobal_i(I->G,cSetting_ray_interior_shadows);
 	interior_wobble	= SettingGetGlobal_i(I->G,cSetting_ray_interior_texture);
 	interior_color		= SettingGetGlobal_i(I->G,cSetting_ray_interior_color);
-   interior_reflect  = 1.0F - SettingGet(I->G,cSetting_ray_interior_reflect);
-
+    interior_reflect  = 1.0F - SettingGet(I->G,cSetting_ray_interior_reflect);
+    label_shadow_mode =  SettingGetGlobal_i(I->G,cSetting_label_shadow_mode);
 	project_triangle	= SettingGet(I->G,cSetting_ray_improve_shadows);
 	shadows				= SettingGetGlobal_i(I->G,cSetting_ray_shadows);
 	trans_shadows		= SettingGetGlobal_i(I->G,cSetting_ray_transparency_shadows);
@@ -1598,7 +1599,7 @@ int RayTraceThread(CRayThreadInfo *T)
    BasisCall[0].check_interior = (interior_color >= 0);
    BasisCall[0].fudge0 = BasisFudge0;
    BasisCall[0].fudge1 = BasisFudge1;
-   
+
    MapCacheInit(&BasisCall[0].cache,I->Basis[1].Map,T->phase,cCache_map_scene_cache);
    
    if(shadows&&(n_basis>2)) {
@@ -1616,6 +1617,7 @@ int RayTraceThread(CRayThreadInfo *T)
        BasisCall[bc].check_interior = false;
        BasisCall[bc].fudge0 = BasisFudge0;
        BasisCall[bc].fudge1 = BasisFudge1;
+       BasisCall[bc].label_shadow_mode = label_shadow_mode;
        MapCacheInit(&BasisCall[bc].cache,I->Basis[bc].Map,T->phase,cCache_map_shadow_cache);     
      }
    }
@@ -1940,7 +1942,8 @@ int RayTraceThread(CRayThreadInfo *T)
                           lit = _1;
                           bp = I->Basis + bc;
                           
-                          if(shadows && ((!interior_flag)||(interior_shadows))) {
+                          if(shadows && ((!interior_flag)||(interior_shadows)) &&
+                             ((r1.prim->type != cPrimCharacter)||(label_shadow_mode&0x1))) {
                             
                             matrix_transform33f3f(bp->Matrix,r1.impact,r2.base);
                             r2.base[2]-=shadow_fudge;
@@ -2031,7 +2034,7 @@ int RayTraceThread(CRayThreadInfo *T)
                           fc[3] = _1 - r1.trans;
                         }
                       }
-                    }
+                      }
                   else if(pass) 
                     {
                       /* hit nothing, and we're on on second or greater pass,
