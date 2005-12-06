@@ -6,6 +6,10 @@ Changes up to 0.99
 
     beta31
 
+    * light4, light5, light6, light7
+
+    * fixed line width for perspective ray tracing for better WYSIWYG
+
     * label_shadow_mode setting
 
     * draggable atom labels
