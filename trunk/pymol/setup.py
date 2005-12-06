@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+ #!/usr/bin/env python
 #
 # This script only applies if you are performing a Python Distutils-based
 # installation of PyMOL.
@@ -148,6 +148,7 @@ setup ( # Distribution meta-data
    "layer1/Control.c",
    "layer1/Extrude.c",
    "layer1/Font.c",
+   "layer1/FontType.c",
    "layer1/FontGLUT.c",
    "layer1/FontGLUT8x13.c",
    "layer1/FontGLUT9x15.c",
@@ -169,6 +170,7 @@ setup ( # Distribution meta-data
    "layer1/Shaker.c",
    "layer1/Symmetry.c",
    "layer1/Text.c",
+   "layer1/TypeFace.c",
    "layer1/Wizard.c",
    "layer1/View.c",
    "layer2/AtomInfo.c",
