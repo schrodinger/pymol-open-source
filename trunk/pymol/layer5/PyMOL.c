@@ -597,6 +597,10 @@ typedef struct _CPyMOL {
   ov_word lex_distance_exclusion;
   ov_word lex_h_bond_exclusion;
   ov_word lex_label_shadow_mode;
+  ov_word lex_light4;
+  ov_word lex_light5;
+  ov_word lex_light6;
+  ov_word lex_light7;
 } _CPyMOL;
 
 /* convenience functions -- inline */
@@ -1202,6 +1206,10 @@ static OVstatus PyMOL_InitAPI(CPyMOL *I)
   LEX_SETTING(distance_exclusion, 460);
   LEX_SETTING(h_bond_exclusion, 461);
   LEX_SETTING(label_shadow_mode, 462);
+  LEX_SETTING(light4, 463);
+  LEX_SETTING(light5, 464);
+  LEX_SETTING(light6, 465);
+  LEX_SETTING(light7, 466);
 
   return_OVstatus_SUCCESS;
 }

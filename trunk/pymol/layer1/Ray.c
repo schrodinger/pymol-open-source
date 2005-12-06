@@ -154,14 +154,28 @@ void RayApplyContextToVertex(CRay *I,float *v)
         th = 1.0F/I->AspRatio;
         tw = 1.0F;
       }
-      v[0]+=(tw-1.0F)/2;
-      v[1]+=(th-1.0F)/2;
-      v[0]=v[0]*(I->Range[0]/tw)+I->Volume[0];
-      v[1]=v[1]*(I->Range[1]/th)+I->Volume[2];
-      v[2]=v[2]*I->Range[2]-(I->Volume[4]+I->Volume[5])/2.0F;
-      RayApplyMatrixInverse33(1,(float3*)v,I->ModelView,(float3*)v);    
+      if(!SettingGetGlobal_b(I->G,cSetting_ortho)) {
+        float scale = v[2]+0.5F;
+        scale = I->FrontBackRatio*scale + 1.0F - scale;
+          
+        /* z-coodinate is easy... */
 
-      /* TO DO: factor out the perspective division */
+        v[2]=v[2]*I->Range[2]-(I->Volume[4]+I->Volume[5])/2.0F;
+        v[0]-=0.5F;
+        v[1]-=0.5F;
+        v[0]=scale*v[0]*I->Range[0]/tw+(I->Volume[0]+I->Volume[1])/2.0F; 
+        v[1]=scale*v[1]*I->Range[1]/th+(I->Volume[2]+I->Volume[3])/2.0F; 
+        
+        RayApplyMatrixInverse33(1,(float3*)v,I->ModelView,(float3*)v);    
+      } else {
+        v[0]+=(tw-1.0F)/2;
+        v[1]+=(th-1.0F)/2;
+        v[0]=v[0]*(I->Range[0]/tw)+I->Volume[0];
+        v[1]=v[1]*(I->Range[1]/th)+I->Volume[2];
+        v[2]=v[2]*I->Range[2]-(I->Volume[4]+I->Volume[5])/2.0F;
+        RayApplyMatrixInverse33(1,(float3*)v,I->ModelView,(float3*)v);    
+      }
+
 
     }
     break;
@@ -1367,7 +1381,7 @@ int RayTraceThread(CRayThreadInfo *T)
 	CBasis      *bp1,*bp2;
 	int render_height;
 	int offset=0;
-   BasisCallRec BasisCall[5];
+   BasisCallRec BasisCall[9];
    float border_offset;
    int edge_sampling = false;
    unsigned int edge_avg[4],edge_alpha_avg[4];
@@ -1467,7 +1481,8 @@ int RayTraceThread(CRayThreadInfo *T)
        spec_value = SettingGet(I->G,cSetting_specular_intensity);
      settingSpecReflect = SettingGet(I->G,cSetting_spec_reflect);
      if(settingSpecReflect<0.0F)
-       settingSpecReflect = spec_value;
+       settingSpecReflect = spec_value;     
+     settingSpecReflect = SceneGetSpecularValue(I->G,settingSpecReflect);
      settingSpecDirect	= SettingGet(I->G,cSetting_spec_direct);
      if(settingSpecDirect<0.0F)
        settingSpecDirect = spec_value;
@@ -1944,7 +1959,6 @@ int RayTraceThread(CRayThreadInfo *T)
                           
                           if(shadows && ((!interior_flag)||(interior_shadows)) &&
                              ((r1.prim->type != cPrimCharacter)||(label_shadow_mode&0x1))) {
-                            
                             matrix_transform33f3f(bp->Matrix,r1.impact,r2.base);
                             r2.base[2]-=shadow_fudge;
                             BasisCall[bc].except = i;
@@ -2938,8 +2952,8 @@ int opaque_back=0;
       ENDFB(I->G);
 
     I->NBasis = n_light + 1; 
-    if(I->NBasis>5)
-      I->NBasis = 5;
+    if(I->NBasis>9)
+      I->NBasis = 9;
     if(I->NBasis<2) 
       I->NBasis = 2;
     { /* light sources */
@@ -2959,6 +2973,18 @@ int opaque_back=0;
             break;
           case 4:
             lightv=SettingGetfv(I->G,cSetting_light3);
+            break;
+          case 5:
+            lightv=SettingGetfv(I->G,cSetting_light4);
+            break;
+          case 6:
+            lightv=SettingGetfv(I->G,cSetting_light5);
+            break;
+          case 7:
+            lightv=SettingGetfv(I->G,cSetting_light6);
+            break;
+          case 8:
+            lightv=SettingGetfv(I->G,cSetting_light7);
             break;
           }
           copy3f(lightv,light);
@@ -3789,7 +3815,7 @@ CRay *RayNew(PyMOLGlobals *G)
     " RayNew: BigEndian = %d\n",I->BigEndian
     ENDFB(I->G);
 
-  I->Basis=CacheAlloc(I->G,CBasis,5,0,cCache_ray_basis);
+  I->Basis=CacheAlloc(I->G,CBasis,9,0,cCache_ray_basis);
   BasisInit(I->G,I->Basis,0);
   BasisInit(I->G,I->Basis+1,1);
   I->Vert2Prim=VLACacheAlloc(I->G,int,1,0,cCache_ray_vert2prim);
@@ -3826,7 +3852,8 @@ CRay *RayNew(PyMOLGlobals *G)
 void RayPrepare(CRay *I,float v0,float v1,float v2,
                 float v3,float v4,float v5,
                 float *mat,float *rotMat,float aspRat,
-                int width, float pixel_scale,int ortho,float pixel_ratio)
+                int width, float pixel_scale,int ortho,
+                float pixel_ratio,float front_back_ratio)
 	  /*prepare for vertex calls */
 {
   int a;
@@ -3863,6 +3890,8 @@ void RayPrepare(CRay *I,float v0,float v1,float v2,
   } else {
     I->PixelRadius = (((float)I->Range[0])/width)*pixel_scale*pixel_ratio;
   }
+  I->PixelRatio = pixel_ratio;
+  I->FrontBackRatio = front_back_ratio;
 }
 /*========================================================================*/
 

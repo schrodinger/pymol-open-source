@@ -4737,7 +4737,7 @@ void SceneRay(PyMOLGlobals *G,
       if(ortho) {
         RayPrepare(ray,-width,width,-height,height,
                    I->FrontSafe,I->BackSafe,rayView,I->RotMatrix,aspRat,
-                   ray_width, pixel_scale_value,true,1.0F);
+                   ray_width, pixel_scale_value,true,1.0F,1.0F);
       } else {        
         float back_ratio;
         float back_height;
@@ -4751,7 +4751,8 @@ void SceneRay(PyMOLGlobals *G,
         back_width = aspRat * back_height;
         RayPrepare(ray,-back_width, back_width, -back_height, back_height,
                    I->FrontSafe,I->BackSafe,rayView,I->RotMatrix,aspRat,
-                   ray_width, pixel_scale_value,false,back_width/width);
+                   ray_width, pixel_scale_value,false,
+                   height/back_height,I->FrontSafe/I->BackSafe);
       }
     }
     
@@ -5081,9 +5082,19 @@ int SceneRenderCached(PyMOLGlobals *G)
   return(renderedFlag);
 }
 
+float SceneGetSpecularValue(PyMOLGlobals *G,float spec)
+{
+  int n_light = SettingGetGlobal_i(G,cSetting_light_count);  
+  if(n_light>2) {
+    spec = spec/pow(n_light-1,0.6F);
+  }
+  return spec;
+}
+
 float SceneGetReflectValue(PyMOLGlobals *G)
 {
   float reflect = SettingGetGlobal_f(G,cSetting_reflect);
+
   register float _1 = 1.0F;
   int n_light = SettingGetGlobal_i(G,cSetting_light_count);  
   if(n_light>1) {
@@ -5096,16 +5107,38 @@ float SceneGetReflectValue(PyMOLGlobals *G)
       copy3f(SettingGetGlobal_3fv(G,cSetting_light2),tmp);
       normalize3f(tmp);
       sum += _1 - tmp[2];
+      if(n_light>3) {
+        copy3f(SettingGetGlobal_3fv(G,cSetting_light3),tmp);
+        normalize3f(tmp);
+        sum += _1 - tmp[2];
+        if(n_light>4) {
+          copy3f(SettingGetGlobal_3fv(G,cSetting_light4),tmp);
+          normalize3f(tmp);
+          sum += _1 - tmp[2];
+
+          if(n_light>5) {
+            copy3f(SettingGetGlobal_3fv(G,cSetting_light5),tmp);
+            normalize3f(tmp);
+            sum += _1 - tmp[2];
+
+            if(n_light>6) {
+              copy3f(SettingGetGlobal_3fv(G,cSetting_light6),tmp);
+              normalize3f(tmp);
+              sum += _1 - tmp[2];
+              
+              if(n_light>7) {
+                copy3f(SettingGetGlobal_3fv(G,cSetting_light7),tmp);
+                normalize3f(tmp);
+                sum += _1 - tmp[2];
+              }
+            }
+          }
+        }
+      }
     }
-    if(n_light>3) {
-      copy3f(SettingGetGlobal_3fv(G,cSetting_light2),tmp);
-      normalize3f(tmp);
-      sum += _1 - tmp[2];
-    }
-    { 
-      sum *= 0.5;
-      reflect = 0.870 * reflect/sum;
-    }
+    
+    sum *= 0.5;
+    reflect = 0.870 * reflect/sum;
   }
   return reflect;
 }
@@ -5117,15 +5150,16 @@ static void SceneProgramLighting(PyMOLGlobals *G)
      MODELVIEW still has the identity */
   int n_light = SettingGetGlobal_i(G,cSetting_light_count);
   float direct = SettingGetGlobal_f(G,cSetting_direct);
-  float reflect = SceneGetReflectValue(G);
   float f;
   float vv[4];
+  float reflect = SceneGetReflectValue(G);
   float spec_value = SettingGet(G,cSetting_specular);
   if(spec_value == 1.0F) {
     spec_value=SettingGet(G,cSetting_specular_intensity);
   }
   if(spec_value<R_SMALL4) spec_value = 0.0F;
-  
+  spec_value = SceneGetSpecularValue(G,spec_value);
+
   /* lighting */
   
   glEnable(GL_LIGHTING);
@@ -5170,6 +5204,34 @@ static void SceneProgramLighting(PyMOLGlobals *G)
         normalize3f(vv);
         invert3f(vv);
         glLightfv(GL_LIGHT3,GL_POSITION,vv);
+        
+        if(n_light>4) {
+          copy3f(SettingGetGlobal_3fv(G,cSetting_light4),vv);
+          normalize3f(vv);
+          invert3f(vv);
+          glLightfv(GL_LIGHT4,GL_POSITION,vv);
+
+          if(n_light>5) {
+            copy3f(SettingGetGlobal_3fv(G,cSetting_light5),vv);
+            normalize3f(vv);
+            invert3f(vv);
+            glLightfv(GL_LIGHT5,GL_POSITION,vv);
+
+            if(n_light>6) {
+              copy3f(SettingGetGlobal_3fv(G,cSetting_light6),vv);
+              normalize3f(vv);
+              invert3f(vv);
+              glLightfv(GL_LIGHT6,GL_POSITION,vv);
+
+              if(n_light>7) {
+                copy3f(SettingGetGlobal_3fv(G,cSetting_light7),vv);
+                normalize3f(vv);
+                invert3f(vv);
+                glLightfv(GL_LIGHT7,GL_POSITION,vv);
+              }
+            }
+          }
+        }
       }
     }
   }  else {
@@ -5256,17 +5318,40 @@ static void SceneProgramLighting(PyMOLGlobals *G)
           glLightfv(GL_LIGHT3,GL_SPECULAR,spec);
           glLightfv(GL_LIGHT3,GL_AMBIENT,ambient);
           glLightfv(GL_LIGHT3,GL_DIFFUSE,diff);
-        } else
-          glDisable(GL_LIGHT3);
-      } else {
-        glDisable(GL_LIGHT2);
-        glDisable(GL_LIGHT3);
+          if(n_light>4) {
+            glEnable(GL_LIGHT4);
+            glLightfv(GL_LIGHT4,GL_SPECULAR,spec);
+            glLightfv(GL_LIGHT4,GL_AMBIENT,ambient);
+            glLightfv(GL_LIGHT4,GL_DIFFUSE,diff);
+            if(n_light>5) {
+              glEnable(GL_LIGHT5);
+              glLightfv(GL_LIGHT5,GL_SPECULAR,spec);
+              glLightfv(GL_LIGHT5,GL_AMBIENT,ambient);
+              glLightfv(GL_LIGHT5,GL_DIFFUSE,diff);
+              if(n_light>6) {
+                glEnable(GL_LIGHT6);
+                glLightfv(GL_LIGHT6,GL_SPECULAR,spec);
+                glLightfv(GL_LIGHT6,GL_AMBIENT,ambient);
+                glLightfv(GL_LIGHT6,GL_DIFFUSE,diff);
+                if(n_light>6) {
+                  glEnable(GL_LIGHT7);
+                  glLightfv(GL_LIGHT7,GL_SPECULAR,spec);
+                  glLightfv(GL_LIGHT7,GL_AMBIENT,ambient);
+                  glLightfv(GL_LIGHT7,GL_DIFFUSE,diff);
+                }
+              }
+            }
+          }
+        }
       }
-    } else {
-      glDisable(GL_LIGHT1);
-      glDisable(GL_LIGHT2);
-      glDisable(GL_LIGHT3);
     }
+    if(n_light<2) glDisable(GL_LIGHT1);
+    if(n_light<3) glDisable(GL_LIGHT2);
+    if(n_light<4) glDisable(GL_LIGHT3);
+    if(n_light<5) glDisable(GL_LIGHT4);
+    if(n_light<6) glDisable(GL_LIGHT5);
+    if(n_light<7) glDisable(GL_LIGHT6);
+    if(n_light<8) glDisable(GL_LIGHT7);
   }
 
   {
