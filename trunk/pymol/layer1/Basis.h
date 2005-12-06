@@ -83,6 +83,7 @@ typedef struct {
   float excl_trans;
   int trans_shadows;
   int check_interior;
+  int label_shadow_mode;
   CPrimitive *prim;
   MapCache cache;
   float fudge0,fudge1;

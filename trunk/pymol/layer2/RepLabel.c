@@ -135,6 +135,7 @@ Rep *RepLabelNew(CoordSet *cs,int state)
   float *v,*v0,*vc;
   char *p,*l;
   int label_color;
+  LabPosType *lp = NULL;
   Pickable *rp = NULL;
   AtomInfoType *ai;
   OOAlloc(G,RepLabel);
@@ -187,6 +188,9 @@ Rep *RepLabelNew(CoordSet *cs,int state)
   for(a=0;a<cs->NIndex;a++) {
     a1 = cs->IdxToAtm[a];
     ai = obj->AtomInfo+a1;
+    if(cs->LabPos) {
+      lp = cs->LabPos + a;
+    }
     if(ai->visRep[cRepLabel]&&(ai->label[0])) {
       I->N++;
       if(label_color>=0) 
@@ -201,9 +205,16 @@ Rep *RepLabelNew(CoordSet *cs,int state)
       *(v++)=*(v0++);
       *(v++)=*(v0++);
       *(v++)=*(v0++);
+      if(lp) {
+        switch(lp->mode) {
+        case 1:
+          add3f(lp->offset, v-3, v-3);
+          break;
+        }
+      }
       if(rp) {
         rp->index = a1;
-        rp->bond = -1; /* label indicator */
+        rp->bond = cPickableLabel; /* label indicator */
         rp++;
       }
       p=ai->label;

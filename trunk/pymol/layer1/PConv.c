@@ -858,7 +858,7 @@ PyObject *PConvStringVLAToPyList(char *vla)
     PyList_SetItem(result,a,PyString_FromString(p));
     while(*(p++));
   }
-  return(result);
+  return(PConvAutoNone(result));
 }
 
 int PConvPyListToStringVLA(PyObject *obj,char **vla_ptr)
@@ -891,6 +891,65 @@ int PConvPyListToStringVLA(PyObject *obj,char **vla_ptr)
     }
   (*vla_ptr)=vla;
   return(vla&&1);
+}
+
+int PConvPyListToLabPosVLA(PyObject *obj,LabPosType **vla_ptr)
+{
+  int a,l;
+  int ok=true;
+  LabPosType *vla = NULL,*q;
+  PyObject *i;
+  if(obj) 
+    if(PyList_Check(obj)) {
+      l=PyList_Size(obj);
+      vla=VLACalloc(LabPosType,l);
+      q=vla;
+      for(a=0;a<l;a++) {
+        i = PyList_GetItem(obj,a);
+        if (PyList_Check(i)) {
+          if (PyList_Size(i)==6) {
+            ok = ok && PConvPyIntToInt(PyList_GetItem(i,0),&q->mode) && 
+              PConvPyFloatToFloat(PyList_GetItem(i,1),q->pos) && 
+              PConvPyFloatToFloat(PyList_GetItem(i,2),q->pos+1) && 
+              PConvPyFloatToFloat(PyList_GetItem(i,3),q->offset) && 
+              PConvPyFloatToFloat(PyList_GetItem(i,4),q->offset+1) &&
+              PConvPyFloatToFloat(PyList_GetItem(i,5),q->offset+2);
+          }
+        }
+        q++;
+      }
+    }
+  if(!ok&&(!vla)) {
+    VLAFreeP(vla);
+  }
+  (*vla_ptr)=vla;
+  return(ok);
+}
+
+PyObject *PConvLabPosVLAToPyList(LabPosType *vla,int l)
+{ /* TO DO error handling */
+  int a;
+  LabPosType *p = vla;
+  PyObject *result = Py_None;
+  if(p) {
+    PyObject *item;
+    result=PyList_New(l); 
+    for(a=0;a<l;a++) {
+      item = PyList_New(6);
+      if(item) {
+        PyList_SetItem(item,0,PyInt_FromLong(p->mode));
+        PyList_SetItem(item,1,PyFloat_FromDouble((double)p->pos[0]));
+        PyList_SetItem(item,2,PyFloat_FromDouble((double)p->pos[1]));
+        PyList_SetItem(item,3,PyFloat_FromDouble((double)p->offset[0]));
+        PyList_SetItem(item,4,PyFloat_FromDouble((double)p->offset[1]));
+        PyList_SetItem(item,5,PyFloat_FromDouble((double)p->offset[2]));
+        PyList_SetItem(result,a,item);
+      }
+      
+      p++;
+    }
+  }
+  return(PConvAutoNone(result));
 }
 
 void PConv44PyListTo44f(PyObject *src,float *dest) /* note lost of precision */

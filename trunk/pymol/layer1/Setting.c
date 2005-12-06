@@ -2664,6 +2664,7 @@ void SettingInitGlobal(PyMOLGlobals *G,int alloc,int reset_gui)
   SettingSet_b(I,cSetting_selection_round_points, 0);
   SettingSet_i(I,cSetting_distance_exclusion, 5);
   SettingSet_i(I,cSetting_h_bond_exclusion, 3);
+  SettingSet_i(I,cSetting_label_shadow_mode, 3);
 }
 
 

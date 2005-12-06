@@ -2979,21 +2979,27 @@ static int SceneClick(Block *block,int button,int x,int y,
       switch(obj->type) {
       case cObjectMolecule:
         
-        if(Feedback(G,FB_Scene,FB_Results)) {
-          if(obj->fDescribeElement) 
-            obj->fDescribeElement(obj,I->LastPicked.src.index,buffer);
-          PRINTF " You clicked %s",buffer ENDF(G);        
-          OrthoRestorePrompt(G);
+        if(I->LastPicked.src.bond==cPickableAtom) {
+          if(Feedback(G,FB_Scene,FB_Results)) {
+            if(obj->fDescribeElement) 
+              obj->fDescribeElement(obj,I->LastPicked.src.index,buffer);
+            PRINTF " You clicked %s",buffer ENDF(G);        
+            OrthoRestorePrompt(G);
+          }
         }
         objMol = (ObjectMolecule*)obj;
         EditorPrepareDrag(G,objMol,-1,I->LastPicked.src.index,
                           SettingGetGlobal_i(G,cSetting_state)-1);
-        I->SculptingFlag = 1;
-        I->SculptingSave =  objMol->AtomInfo[I->LastPicked.src.index].protekted;
-        objMol->AtomInfo[I->LastPicked.src.index].protekted=2;
+
+        if(I->LastPicked.src.bond==cPickableAtom) {
+          I->SculptingFlag = 1;
+          I->SculptingSave =  objMol->AtomInfo[I->LastPicked.src.index].protekted;
+          objMol->AtomInfo[I->LastPicked.src.index].protekted=2;
+        }
         break;
       case cObjectSlice:
-        if(ObjectSliceGetVertex((ObjectSlice*)obj,I->LastPicked.src.index,I->LastPicked.src.bond,I->LastPickVertex)) {
+        if(ObjectSliceGetVertex((ObjectSlice*)obj,I->LastPicked.src.index,
+                                I->LastPicked.src.bond,I->LastPickVertex)) {
           I->LastPickVertexFlag=true;
         }
         break;
@@ -3879,13 +3885,22 @@ static int SceneDrag(Block *block,int x,int y,int mod,double when)
             MatrixInvTransformC44fAs33f3f(I->RotMatrix,v2,v2); 
             MatrixInvTransformC44fAs33f3f(I->RotMatrix,v3,v3); 
 
-            if((mode!=cButModeMoveAtom)&&(mode!=cButModeMoveAtomZ)) {
-              EditorDrag(G,(ObjectMolecule*)obj,I->LastPicked.src.index,mode,
-                         SettingGetGlobal_i(G,cSetting_state)-1,v1,v2,v3);
+            if(I->LastPicked.src.bond >= cPickableAtom) {
+              if((mode!=cButModeMoveAtom)&&(mode!=cButModeMoveAtomZ)) {
+                EditorDrag(G,(ObjectMolecule*)obj,I->LastPicked.src.index,mode,
+                           SettingGetGlobal_i(G,cSetting_state)-1,v1,v2,v3);
+              } else {
+                int log_trans = (int)SettingGet(G,cSetting_log_conformations);
+                ObjectMoleculeMoveAtom((ObjectMolecule*)obj,
+                                       SettingGetGlobal_i(G,cSetting_state)-1,
+                                       I->LastPicked.src.index,v2,1,log_trans);
+                SceneInvalidate(G);
+              }
             } else {
               int log_trans = (int)SettingGet(G,cSetting_log_conformations);
-              ObjectMoleculeMoveAtom((ObjectMolecule*)obj,SettingGetGlobal_i(G,cSetting_state)-1,
-                                     I->LastPicked.src.index,v2,1,log_trans);
+              ObjectMoleculeMoveAtomLabel((ObjectMolecule*)obj,
+                                          SettingGetGlobal_i(G,cSetting_state)-1,
+                                          I->LastPicked.src.index,v2,1,log_trans);
               SceneInvalidate(G);
             }
           }

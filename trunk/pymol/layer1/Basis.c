@@ -1816,6 +1816,7 @@ int BasisHitShadow(BasisCallRec *BC)
       const float excl_trans = BC->excl_trans;
       const float BasisFudge0 = BC->fudge0;
       const float BasisFudge1 = BC->fudge1;
+      const int label_shadow_mode = BC->label_shadow_mode;
       MapCache *cache = &BC->cache;
       register CPrimitive *BC_prim = BC->prim;
     
@@ -1872,7 +1873,7 @@ int BasisHitShadow(BasisCallRec *BC)
                   switch(prm_type) 
                   {
                   case cPrimCharacter: /* will need special handling for character shadows */
-                    {
+                    if(label_shadow_mode&0x2) { /* if labels case shadows... */
                       float   *pre   = BI->Precomp + BI->Vert2Normal[i] * 3;
                       
                       if( pre[6] )
@@ -1885,7 +1886,10 @@ int BasisHitShadow(BasisCallRec *BC)
                           tri1      = (tvec0 * pre[4] - tvec1 * pre[3]) * pre[7];
                           tri2      = -(tvec0 * pre[1] - tvec1 * pre[0]) * pre[7];
                           
-                          if( !( (tri1 < BasisFudge0) || (tri2 < BasisFudge0) || (tri1 > BasisFudge1) || ((tri1 + tri2) > BasisFudge1) ) )
+                          if( !( (tri1 < BasisFudge0) || 
+                                 (tri2 < BasisFudge0) || 
+                                 (tri1 > BasisFudge1) || 
+                                 ((tri1 + tri2) > BasisFudge1) ) )
                             {
                               dist   = (r->base[2] - (tri1*pre[2]) - (tri2*pre[5]) - vert0[2]);
                               

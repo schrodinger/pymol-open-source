@@ -92,6 +92,7 @@ int CoordSetGetAtomVertex(CoordSet *I,int at,float *v);
 int CoordSetGetAtomTxfVertex(CoordSet *I,int at,float *v);
 int CoordSetSetAtomVertex(CoordSet *I,int at,float *v);
 int CoordSetMoveAtom(CoordSet *I,int at,float *v,int mode);
+int CoordSetMoveAtomLabel(CoordSet *I,int at,float *v,int mode);
 
 int CoordSetTransformAtomTTTf(CoordSet *I,int at,float *TTT);
 int CoordSetTransformAtomR44f(CoordSet *I,int at,float *matrix);

@@ -495,6 +495,7 @@ if __name__=='pymol.setting':
         selection_round_points    = (459, '')
         distance_exclusion        = (460, '')
         h_bond_exclusion          = (461, '')
+        label_shadow_mode         = (462, '')
         
     setting_sc = Shortcut(SettingIndex.__dict__.keys())
 

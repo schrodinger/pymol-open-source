@@ -6,6 +6,10 @@ Changes up to 0.99
 
     beta31
 
+    * label_shadow_mode setting
+
+    * draggable atom labels
+    
     * fixed handedness of triangles in CGO cylinders
 
     * improved hydrogen bond detection for alcohols and added
