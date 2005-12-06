@@ -143,7 +143,7 @@ if __name__=='pymol.cmd':
 
         stereo_dict = {'on':1,'off':0,'1':1,'0':0,'swap':-1,
                        'crosseye':2,'quadbuffer':3,
-                       'walleye':4,'geowall':5}
+                       'walleye':4,'geowall':5,'sidebyside':6}
         
         stereo_sc = Shortcut(stereo_dict.keys())
 
