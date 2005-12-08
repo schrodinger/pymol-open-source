@@ -79,6 +79,12 @@ void TextSetPos(PyMOLGlobals *G,float *pos);
 
 void TextSetColor(PyMOLGlobals *G,float *color);
 void TextSetColor3f(PyMOLGlobals *G,float red, float green, float blue);
+void TextGetOutlineColor(PyMOLGlobals *G,
+                         unsigned char *red,
+                         unsigned char *green, 
+                         unsigned char *blue,
+                         unsigned char *alpha);
+void TextSetOutlineColor(PyMOLGlobals *G,int color);
 void TextSetPosNColor(PyMOLGlobals *G,float *pos,float *color);
 float *TextGetColor(PyMOLGlobals *G);
 float *TextGetPos(PyMOLGlobals *G);

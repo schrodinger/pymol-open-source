@@ -27,11 +27,12 @@ typedef struct {
   short int ch; /* 16 bits */
   short int size; /* 16 bits */
   CharColor color; /* 32 bits */
+  CharColor outline_color; /* 32 bits */
   short int flat; /* 16 bits */
-} CharInfo; /* 7 short ints */
+} CharInfo; /* 9 short ints */
 
 typedef struct {
-  unsigned short int data[7];
+  unsigned short int data[9];
 } CharData;
 
 typedef union {

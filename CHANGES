@@ -6,6 +6,8 @@ Changes up to 0.99
 
     beta31
 
+    * B & W Molscript & David Goodsell look-alike modes
+    
     * light4, light5, light6, light7
 
     * fixed line width for perspective ray tracing for better WYSIWYG

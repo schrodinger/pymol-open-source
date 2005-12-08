@@ -1382,6 +1382,7 @@ void SettingGenerateSideEffects(PyMOLGlobals *G,int index,char *sele,int state)
     SceneChanged(G);
     break;
   case cSetting_label_color:
+  case cSetting_label_outline_color:
     ExecutiveInvalidateRep(G,inv_sele,cRepLabel,cRepInvRep);
     SceneChanged(G);
     break;
@@ -2669,6 +2670,9 @@ void SettingInitGlobal(PyMOLGlobals *G,int alloc,int reset_gui)
   SettingSet_3f(I,cSetting_light5,  0.3F, 0.6F, -0.75F);
   SettingSet_3f(I,cSetting_light6, -0.3F, 0.5F,  0.0F);
   SettingSet_3f(I,cSetting_light7,  0.9F,-0.1F, -0.15F);
+  SettingSet_color(I,cSetting_label_outline_color, "-1");
+  SettingSet_i(I,cSetting_ray_trace_mode,0);
+  SettingSet_f(I,cSetting_ray_trace_gain,0.12F);
 }
 
 

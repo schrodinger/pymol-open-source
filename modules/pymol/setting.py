@@ -500,6 +500,9 @@ if __name__=='pymol.setting':
         light5                    = (464, '')
         light6                    = (465, '')
         light7                    = (466, '')
+        label_outline_color       = (467, '')
+        ray_trace_mode            = (468, '')
+        ray_trace_gain            = (469, '')
         
     setting_sc = Shortcut(SettingIndex.__dict__.keys())
 
