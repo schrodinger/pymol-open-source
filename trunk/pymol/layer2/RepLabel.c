@@ -34,6 +34,7 @@ typedef struct RepLabel {
   float *V;
   char *L;
   int N;
+  int OutlineColor;
 } RepLabel;
 
 #include"ObjectMolecule.h"
@@ -64,8 +65,8 @@ static void RepLabelRender(RepLabel *I,RenderInfo *info)
   float font_size = SettingGet_f(G,I->R.cs->Setting,I->R.obj->Setting,cSetting_label_size);
 
   if(ray) {
-
     if(c) {
+      TextSetOutlineColor(G,I->OutlineColor);
       while(c--) {
         if(*l) {
           TextSetPosNColor(G,v+3,v);
@@ -74,7 +75,6 @@ static void RepLabelRender(RepLabel *I,RenderInfo *info)
         v+=6;
       }
     }
-    
   } else if(G->HaveGUI && G->ValidContext) {
     if(pick) {
       Pickable *p = I->R.P;
@@ -106,12 +106,12 @@ static void RepLabelRender(RepLabel *I,RenderInfo *info)
         (*pick)[0].src.index = i; /* pass the count */
       }
     } else {
-
       if(c) {
         int float_text = (int)SettingGet(G,cSetting_float_labels);
         if(float_text)
           glDisable(GL_DEPTH_TEST);	 
         glDisable(GL_LIGHTING);
+        TextSetOutlineColor(G,I->OutlineColor);
         while(c--) {
           if(*l) {
             TextSetPosNColor(G,v+3,v);
@@ -156,7 +156,6 @@ Rep *RepLabelNew(CoordSet *cs,int state)
   }
 
   label_color = SettingGet_i(G,cs->Setting,obj->Obj.Setting,cSetting_label_color);
-
   RepInit(G,&I->R);
   
   obj = cs->Obj;
@@ -174,6 +173,8 @@ Rep *RepLabelNew(CoordSet *cs,int state)
   ErrChkPtr(G,I->L);
   I->V=(float*)mmalloc(sizeof(float)*cs->NIndex*6);
   ErrChkPtr(G,I->V);
+
+  I->OutlineColor = SettingGet_i(G,cs->Setting,obj->Obj.Setting,cSetting_label_outline_color);
 
   if(SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_pickable)) {
     I->R.P=Alloc(Pickable,cs->NIndex+1);

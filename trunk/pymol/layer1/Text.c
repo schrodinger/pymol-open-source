@@ -20,7 +20,7 @@ Z* -------------------------------------------------------------------
 
 #include"FontGLUT.h"
 #include"FontType.h"
-
+#include"Color.h"
 #include"Vector.h"
 
 #ifdef _PYMOL_FREETYPE
@@ -30,6 +30,8 @@ Z* -------------------------------------------------------------------
 #define FONT_NAME_MAX 255
 
 #define TEXT_DEFAULT_SIZE 12.0F
+const static float _255 = 255.0F;
+
 
 typedef struct {
   int Src;
@@ -45,6 +47,7 @@ struct _CText {
   ActiveRec *Active;
   float Pos[4];
   float Color[4];
+  unsigned char OutlineColor[3];
   int Default_ID;
   int Flat;
 };
@@ -124,6 +127,20 @@ void TextSetColor(PyMOLGlobals *G,float *color)
   I->Flat = false;
 }
 
+void TextSetOutlineColor(PyMOLGlobals *G,int color)
+{
+  register CText *I=G->Text;
+  if(color>=0) {
+    float *fcolor = ColorGet(G,color);
+    I->OutlineColor[0] = (unsigned char)(_255*fcolor[0]);
+    I->OutlineColor[1] = (unsigned char)(_255*fcolor[1]);
+    I->OutlineColor[2] = (unsigned char)(_255*fcolor[2]);
+    I->OutlineColor[3] = 0xFF;
+  } else {
+    I->OutlineColor[4] = 0;
+  }
+}
+
 static const float _inv255 = 1.0F/255.0F;
 
 void TextSetPickColor(PyMOLGlobals *G,int first_pass, int index)
@@ -160,8 +177,6 @@ float *TextGetColor(PyMOLGlobals *G)
   return I->Color;
 }
 
-const static float _255 = 255.0F;
-
 void TextGetColorUChar(PyMOLGlobals *G,unsigned char *red,
                        unsigned char *green, 
                        unsigned char *blue,
@@ -174,6 +189,19 @@ void TextGetColorUChar(PyMOLGlobals *G,unsigned char *red,
   *alpha = (unsigned char)(_255*I->Color[3]);
 }
 
+void TextGetOutlineColor(PyMOLGlobals *G,
+                         unsigned char *red,
+                         unsigned char *green, 
+                         unsigned char *blue,
+                         unsigned char *alpha)
+{
+  register CText *I=G->Text;
+  *red = I->OutlineColor[0];
+  *green = I->OutlineColor[1];
+  *blue = I->OutlineColor[2];
+  *alpha = I->OutlineColor[3];
+}
+                        
 char *TextRenderOpenGL(PyMOLGlobals *G,RenderInfo *info,int text_id,char *st,float size)
 {
   register CText *I=G->Text;

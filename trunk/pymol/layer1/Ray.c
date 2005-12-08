@@ -73,6 +73,7 @@ struct _CRayThreadInfo {
   unsigned int edging_cutoff;
   int perspective;
   float fov,pos[3];
+  float *depth;
 };
 
  struct _CRayHashThreadInfo {
@@ -1406,6 +1407,7 @@ int RayTraceThread(CRayThreadInfo *T)
    float eye[3];
    float half_height, front_ratio;
    float start[3],nudge[3];
+   float *depth = T->depth;
 	const float _0		= 0.0F;
 	const float _1		= 1.0F;
 	const float _p5		= 0.5F;
@@ -1413,7 +1415,6 @@ int RayTraceThread(CRayThreadInfo *T)
    const float _p499 = 0.499F;
 	const float _persistLimit	= 0.0001F;
     int n_basis = I->NBasis;
-
    {
      float fudge = SettingGet(I->G,cSetting_ray_triangle_fudge);
    
@@ -1497,13 +1498,6 @@ int RayTraceThread(CRayThreadInfo *T)
 		backface_cull	= 0;
 
 	shadow_fudge = SettingGet(I->G,cSetting_ray_shadow_fudge);
-	
-   /*	gamma = SettingGet(I->G,cSetting_gamma);
-	if(gamma > R_SMALL4)
-		gamma	= _1/gamma;
-        else
-		gamma	= _1;
-   */
     
 	inv1minusFogStart	= _1;
 	
@@ -1513,33 +1507,27 @@ int RayTraceThread(CRayThreadInfo *T)
         fog = SettingGet(I->G,cSetting_fog);
       } else 
         fog = _0;
-   }
+    }
    
-	if(fog != _0) 
-	{
-     if(fog>1.0F) fog=1.0F;
-     fogFlag	= true;
-     fog_start = SettingGet(I->G,cSetting_ray_trace_fog_start);
-     if(fog_start<0.0F)
-       fog_start = SettingGet(I->G,cSetting_fog_start);
-     if(fog_start>1.0F)
-       fog_start=1.0F;
-     if(fog_start<0.0F)
-       fog_start=0.0F;
-     if(fog_start>R_SMALL4) {
-       fogRangeFlag=true;
-       if(fabs(fog_start-1.0F)<R_SMALL4) /* prevent div/0 */
-         fogFlag=false;
-     }
-     if(fog_start>R_SMALL4) 
-       {
-			fogRangeFlag=true;
-			if(fabs(fog_start - _1) < R_SMALL4) /* prevent div/0 */
-           fogFlag = false;
-       }
-     inv1minusFogStart	= _1 / (_1 - fog_start);
-	}
-   
+	if(fog != _0) {
+      if(fog>1.0F) fog=1.0F;
+      fogFlag	= true;
+      fog_start = SettingGet(I->G,cSetting_ray_trace_fog_start);
+      if(fog_start<0.0F)
+        fog_start = SettingGet(I->G,cSetting_fog_start);
+      if(fog_start>1.0F)
+        fog_start=1.0F;
+      if(fog_start<0.0F)
+        fog_start=0.0F;
+      if(fog_start>R_SMALL4) {
+        fogRangeFlag=true;
+        if(fabs(fog_start-1.0F)<R_SMALL4) /* prevent div/0 */
+          fogFlag=false;
+      }
+      inv1minusFogStart	= _1 / (_1 - fog_start);
+    }
+
+    
 
 	/* ray-trace */
 	
@@ -1805,6 +1793,7 @@ int RayTraceThread(CRayThreadInfo *T)
                   } else {
                     i = BasisHitNoShadow( &BasisCall[0] );
                   }
+                  
                   interior_flag = BasisCall[0].interior_flag;
                   
                   if(((i >= 0) || interior_flag) && (pass < max_pass))
@@ -2005,7 +1994,7 @@ int RayTraceThread(CRayThreadInfo *T)
                         ffact*=fog;
                         
                         if(ffact<_0)	ffact = _0;
-                        if(ffact>_1)	ffact = _0;
+                        if(ffact>_1)	ffact = _1;
                         
                         ffact1m	= _1-ffact;
                         
@@ -2206,6 +2195,10 @@ int RayTraceThread(CRayThreadInfo *T)
                       *pixel = (cc0<<24)|(cc1<<16)|(cc2<<8)|cc3;
                       
                     }
+
+                  if(depth&&(i>=0)&&(r1.trans<0.05F)&&(persist>0.95F)) {
+                    depth[pixel - T->image] =(T->front + r1.impact[2]);
+                  }
                   
                   if(i >= 0)
                     {
@@ -2227,9 +2220,9 @@ int RayTraceThread(CRayThreadInfo *T)
                             persist	= persist * r1.trans;
                           }
                         }
-                      
                     }
                   
+
                   if( i < 0 )	/* nothing hit */
                     {
                       break;
@@ -2830,6 +2823,8 @@ int opaque_back=0;
   int perspective = SettingGetGlobal_i(I->G,cSetting_ray_orthoscopic);
   int n_light = SettingGetGlobal_i(I->G,cSetting_light_count);
   float ambient;
+  float *depth = NULL;
+  int trace_mode;
   const float _0 = 0.0F, _p499 = 0.499F;
   if(perspective<0)
     perspective = SettingGetGlobal_b(I->G,cSetting_ortho);
@@ -2854,13 +2849,26 @@ int opaque_back=0;
   if(opaque_back<0)
     opaque_back			= SettingGetGlobal_i(I->G,cSetting_opaque_background);      
 
+  trace_mode  = SettingGetGlobal_i(I->G,cSetting_ray_trace_mode);
+
   shadows = SettingGetGlobal_i(I->G,cSetting_ray_shadows);
+
+  oversample_cutoff = SettingGetGlobal_i(I->G,cSetting_ray_oversample_cutoff);
+
   antialias = SettingGetGlobal_i(I->G,cSetting_antialias);
+  
+  if(trace_mode && (antialias<1)) antialias = 1;
+  if(trace_mode) antialias++;
+
   if(antialias<0) antialias=0;
   if(antialias>4) antialias=4;
+
+  if((!antialias) || trace_mode)
+    oversample_cutoff = 0;
+
   mag = antialias;
   if(mag<1) mag=1;
-
+  
   if(antialias>1) {
     width=(width+2)*mag;
     height=(height+2)*mag;
@@ -2871,8 +2879,11 @@ int opaque_back=0;
   } else {
     buffer_size = width*height;
   }
+  if(trace_mode) {
+    depth = Calloc(float,width*height);
+  }
   ambient				= SettingGet(I->G,cSetting_ambient);
-
+  
   bkrd_ptr=SettingGetfv(I->G,cSetting_bg_rgb);
   copy3f(bkrd_ptr,bkrd);
   { /* adjust bkrd to offset the effect of gamma correction */
@@ -3037,6 +3048,7 @@ int opaque_back=0;
       thread_info[0].ray = I; /* for compute box */
       thread_info[0].perspective = perspective;
       thread_info[0].front = front;
+
       /* shadow map */
 
       {
@@ -3199,36 +3211,32 @@ int opaque_back=0;
       if(x_stop>width) x_stop = width;
       if(y_stop>height) y_stop = height;
       
-      oversample_cutoff = SettingGetGlobal_i(I->G,cSetting_ray_oversample_cutoff);
-
-      if(!antialias)
-        oversample_cutoff = 0;
-
-		for(a=0;a<n_thread;a++) {
-			rt[a].ray = I;
-			rt[a].width = width;
-			rt[a].height = height;
-         rt[a].x_start = x_start;
-         rt[a].x_stop = x_stop;
-         rt[a].y_start = y_start;
-         rt[a].y_stop = y_stop;
-			rt[a].image = image;
-			rt[a].border = mag-1;
-			rt[a].front = front;
-			rt[a].back = back;
-			rt[a].fore_mask = fore_mask;
-			rt[a].bkrd = bkrd;
-            rt[a].ambient = ambient;
-			rt[a].background = background;
-			rt[a].phase = a;
-			rt[a].n_thread = n_thread;
-         rt[a].edging = NULL;
-         rt[a].edging_cutoff = oversample_cutoff; /* info needed for busy indicator */
-         rt[a].perspective = perspective;
-         rt[a].fov = fov;
-         rt[a].pos[2] = pos[2];
-			}
-		
+      for(a=0;a<n_thread;a++) {
+        rt[a].ray = I;
+        rt[a].width = width;
+        rt[a].height = height;
+        rt[a].x_start = x_start;
+        rt[a].x_stop = x_stop;
+        rt[a].y_start = y_start;
+        rt[a].y_stop = y_stop;
+        rt[a].image = image;
+        rt[a].border = mag-1;
+        rt[a].front = front;
+        rt[a].back = back;
+        rt[a].fore_mask = fore_mask;
+        rt[a].bkrd = bkrd;
+        rt[a].ambient = ambient;
+        rt[a].background = background;
+        rt[a].phase = a;
+        rt[a].n_thread = n_thread;
+        rt[a].edging = NULL;
+        rt[a].edging_cutoff = oversample_cutoff; /* info needed for busy indicator */
+        rt[a].perspective = perspective;
+        rt[a].fov = fov;
+        rt[a].pos[2] = pos[2];
+        rt[a].depth = depth;
+      }
+      
 #ifndef _PYMOL_NOPY
 		if(n_thread>1)
         RayTraceSpawn(rt,n_thread);
@@ -3259,31 +3267,294 @@ int opaque_back=0;
     }
   }
   
-  if(antialias>1) {
+  if(depth) { 
+    float *delta = Alloc(float,3*width*height);
+    int x,y;
     {
-		/* now spawn threads as needed */
-		CRayAntiThreadInfo rt[MAX_RAY_THREADS];
-
-		for(a=0;a<n_thread;a++) 
-		{
-			rt[a].width = width;
-			rt[a].height = height;
-         rt[a].image = image;
-         rt[a].image_copy = image_copy;
-         rt[a].phase = a;
-         rt[a].mag = mag; /* fold magnification */
-         rt[a].n_thread = n_thread;
-         rt[a].ray = I;
-      }
-		
-#ifndef _PYMOL_NOPY
-		if(n_thread>1)
-        RayAntiSpawn(rt,n_thread);
-		else 
-#endif
-        RayAntiThread(rt);
-
+      register int xc,yc;
+      register float d,dzdx,dzdy, *p,*q,dd;
+      p = depth;
+      q = delta;
+      for(y=0;y<height;y++) 
+        for(x=0;x<width;x++) {
+          dzdx = 0.0F;
+          dzdy = 0.0F;
+          xc = 0;
+          yc = 0;
+          d = *p;
+          if(x) {
+            dd = d - p[-1];
+            dzdx+= dd;
+            xc++;
+          }
+          if(x<(width-1)) {
+            dd = p[1] - d;
+            if((!xc)||fabs(dd)>fabs(dzdx))
+              dzdx = dd;
+            xc = 1;
+          }
+          if(y) {
+            dd = d - p[-width];
+            dzdy+= dd;
+            yc++;
+          }
+          if(y<(height-1)) {
+            dd = p[width] - d;
+            if((!yc)||(fabs(dd)>fabs(dzdy)))
+              dzdy = dd;
+            yc = 1;
+          }
+          p++;
+          *(q++) = dzdx;
+          *(q++) = dzdy;
+          *(q++) = sqrt1f(dzdx*dzdx+dzdy*dzdy);
+        }
     }
+    
+    {
+      int i;
+      {
+        const float _1 = 1.0F;
+
+        float invFrontMinusBack	= _1 / (front - back);
+        float inv1minusFogStart	= _1;
+        int fogFlag = false;
+        float fog_start;
+        int fogRangeFlag = false;
+        float fog = SettingGet(I->G,cSetting_ray_trace_fog);
+        if(fog<0.0F) {
+          if(SettingGet(I->G,cSetting_depth_cue)) {
+            fog = SettingGet(I->G,cSetting_fog);
+          } else 
+            fog = _0;
+        }
+        
+        if(fog != _0) {
+          if(fog>1.0F) fog=1.0F;
+          fogFlag	= true;
+          fog_start = SettingGet(I->G,cSetting_ray_trace_fog_start);
+          if(fog_start<0.0F)
+            fog_start = SettingGet(I->G,cSetting_fog_start);
+          if(fog_start>1.0F)
+            fog_start=1.0F;
+          if(fog_start<0.0F)
+            fog_start=0.0F;
+          if(fog_start>R_SMALL4) {
+            fogRangeFlag=true;
+            if(fabs(fog_start-1.0F)<R_SMALL4) /* prevent div/0 */
+              fogFlag=false;
+          }
+          inv1minusFogStart	= _1 / (_1 - fog_start);
+        }
+        
+        if(fogFlag) { /* make sure we have depth values at every potentially drawn pixel */
+          float *tmp = Alloc(float,width*height);
+          float dep;
+          float *p,*q;
+          int cnt;
+          for(i=0;i<2;i++) {
+            p = depth;
+            q = tmp;
+            for(y=0;y<height;y++) 
+              for(x=0;x<width;x++) {
+                if(fabs(*p)<R_SMALL4) {
+                  dep = 0.0F;
+                  cnt = 0;
+                  if(x) {
+                    if(fabs(p[-1])>R_SMALL4) {
+                      dep+=p[-1];
+                      cnt++;
+                    }
+                  }
+                  if(x<(width-1)) {
+                    if(fabs(p[1])>R_SMALL4) {
+                      dep+=p[1];
+                      cnt++;
+                    }
+                  }
+                  if(y) {
+                    if(fabs(p[-width])>R_SMALL4) {
+                      dep+=p[-width];
+                      cnt++;
+                    }
+                  }
+                  if(y<(height-1)) {
+                    if(fabs(p[width])>R_SMALL4) {
+                      dep+=p[width];
+                      cnt++;
+                    }
+                  }
+                  if(cnt) {
+                    dep/=cnt;
+                    *q = dep;
+                  }
+                } else {
+                  *q = *p;
+                }
+                p++;
+                q++;
+              }
+            p = tmp;
+            tmp = depth;
+            depth = p;
+          }
+          FreeP(tmp);
+        }
+        {
+
+          unsigned int *q = image;
+          float *p = delta;
+          int dc = 0;
+          int width3 = width*3;
+          register float diff,max_diff;
+          register float dot,min_dot;
+          register float dx,dy,dz,px=0.0F,py=0.0F,pz=0.0F,ddx,ddy;
+          float factor = I->PixelRadius/(
+                                         SettingGetGlobal_f(I->G,cSetting_ray_trace_gain)
+                                         *antialias); 
+          register float factor_2 = factor * 0.25F;
+          register float factor_4 = factor * 0.4F;
+          register float factor_125 = factor * 0.125F;
+          register float factor_095 = factor * 0.095F;
+          register float factor_09 = factor * 0.09F;
+          const float _8 = 0.08F;
+          const float _45 = 0.04F;
+          const float _25 = 0.25F;
+          const float _m25 = -0.25F;
+          
+          for(y=0;y<height;y++) 
+            for(x=0;x<width;x++) {
+              dc = 0;
+              max_diff = 0.0F;   
+              min_dot = 1.0F;
+              dx = p[0];
+              dy = p[1];
+              dz = p[2];
+              for(i=0;i<4;i++) {
+                switch(i) {
+                case 0:
+                  if(x) {
+                    px = p[-3];
+                    py = p[-2];
+                    pz = p[-1];
+                  }
+                  break;
+                case 1:
+                  if(x<(width-1)) {
+                    px = p[3];
+                    py = p[4];
+                    pz = p[5];
+                  }
+                  break;
+                case 2:
+                  if(y) { 
+                    px = p[-width3];
+                    py = p[-width3+1];
+                    pz = p[-width3+2];
+                  }
+                  break;
+                case 3:
+                  if(y<(height-1)) {
+                    px = p[width3];
+                    py = p[width3+1];
+                    pz = p[width3+2];
+                  }
+                  break;
+                }
+                ddx = dx-px;
+                ddy = dy-py;
+                diff = ddx*ddx + ddy*ddy;
+                if(max_diff<diff) max_diff = diff;
+                if((dz>R_SMALL4)&&(pz>R_SMALL4)) { 
+                  dot = (dx/dz)*(px/pz) + (dy/dz)*(py/pz);
+                  if(dot<min_dot) min_dot = dot;
+                }
+              }
+            
+              if((max_diff>(factor_2))||
+                 ((fabs(dz-pz)>(factor_4)))||
+                 ((min_dot<_8)&&
+                  ((dz>(factor_2)||(pz>(factor_2)))))||
+                 ((min_dot<_45)&&
+                  ((dz>(factor_125)||(pz>(factor_125)))))||
+                 ((min_dot<_25)&&
+                  ((dz>(factor_095)||(pz>(factor_095)))))||
+                 ((min_dot<_m25)&&
+                  ((dz>(factor_09)) && 
+                   (pz>(factor_09))))) {
+                if(fogFlag) {
+
+                  float ffact =  depth[q-image] * invFrontMinusBack;
+                  float ffact1m;
+                  float fc[4];
+                  unsigned int cc0,cc1,cc2,cc3;
+
+                  if(fogRangeFlag)
+                    ffact = (ffact - fog_start) * inv1minusFogStart;
+                
+                  ffact*=fog;
+                
+                  if(ffact<_0)	ffact = _0;
+                  if(ffact>_1)	ffact = _1;
+                
+                  ffact1m	= _1-ffact;
+
+                  fc[0]	= (0xFF&(back_mask>>24)) * ffact1m + (0xFF&(background>>24))*ffact;
+                  fc[1]	= (0xFF&(back_mask>>16)) * ffact1m + (0xFF&(background>>16))*ffact;
+                  fc[2]	= (0xFF&(back_mask>>8))  * ffact1m + (0xFF&(background>>8))*ffact;
+                  fc[3]	= (0xFF&(back_mask))    * ffact1m + (0xFF&(background))*ffact;
+                
+                  cc0		= (uint)(fc[0]);
+                  cc1		= (uint)(fc[1]);
+                  cc2		= (uint)(fc[2]);
+                  cc3		= (uint)(fc[3]);
+                
+                  if(cc0 > 255) cc0	= 255;
+                  if(cc1 > 255) cc1	= 255;
+                  if(cc2 > 255) cc2	= 255;
+                  if(cc3 > 255) cc3	= 255;
+                
+                  *q = (cc0<<24)|(cc1<<16)|(cc2<<8)|cc3;
+                } else {
+                  *q = back_mask;
+                }
+              } else if(trace_mode==2) {
+                *q = background;
+              } else if(trace_mode==3) {
+                *q = (*q & 0xC0C0C0C0);
+                *q = *q | ((*q)>>2) | ((*q)>>4) | ((*q)>>6);
+              }
+              p+=3;
+              q++;
+            }
+        }
+      }
+    }
+    FreeP(delta);
+  }
+  
+  if(antialias>1) {
+    /* now spawn threads as needed */
+    CRayAntiThreadInfo rt[MAX_RAY_THREADS];
+    
+    for(a=0;a<n_thread;a++) {
+      rt[a].width = width;
+      rt[a].height = height;
+      rt[a].image = image;
+      rt[a].image_copy = image_copy;
+      rt[a].phase = a;
+      rt[a].mag = mag; /* fold magnification */
+      rt[a].n_thread = n_thread;
+      rt[a].ray = I;
+    }
+    
+#ifndef _PYMOL_NOPY
+    if(n_thread>1)
+      RayAntiSpawn(rt,n_thread);
+    else 
+#endif
+      RayAntiThread(rt);
+    
     CacheFreeP(I->G,image,0,cCache_ray_antialias_buffer,false);
     image = image_copy;
   }
@@ -3302,7 +3573,7 @@ int opaque_back=0;
          n_sausages/((float)n_cells),
          n_skipped/((float)n_cells));
 #endif
-
+  FreeP(depth);
 }
 
 void RayRenderColorTable(CRay *I,int width,int height,int *image)

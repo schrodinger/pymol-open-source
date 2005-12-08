@@ -68,6 +68,8 @@ __inline__ static char *_FontTypeRenderOpenGL(RenderInfo *info,
         fprnt.u.i.size = (int)(size*64*sampling);
         rgba = fprnt.u.i.color;
         TextGetColorUChar(G,rgba,rgba+1,rgba+2,rgba+3);
+        rgba = fprnt.u.i.outline_color;
+        TextGetOutlineColor(G,rgba,rgba+1,rgba+2,rgba+3);
         fprnt.u.i.ch = c;
         fprnt.u.i.flat = flat;
         {
@@ -126,6 +128,8 @@ static char *FontTypeRenderRay(CRay *ray, CFontType *I,char *st,float size)
       fprnt.u.i.size = (int)(size*64*ray->Sampling);
       rgba = fprnt.u.i.color;
       TextGetColorUChar(G,rgba,rgba+1,rgba+2,rgba+3);
+      rgba = fprnt.u.i.outline_color;
+      TextGetOutlineColor(G,rgba,rgba+1,rgba+2,rgba+3);
       fprnt.u.i.ch = c;
       {
         int id = CharacterFind(G,&fprnt);

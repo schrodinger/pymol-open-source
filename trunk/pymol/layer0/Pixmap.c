@@ -111,15 +111,24 @@ void PixmapInitFromBytemap(PyMOLGlobals *G,CPixmap *I,
                            int pitch,
                            unsigned char *bytemap,
                            unsigned char *rgba,
+                           unsigned char *outline_rgb,
                            int flat
                            )
 {
   if(I) {
- 
+    
     int x,y;
     unsigned char *src,*sa,alp;
     unsigned char *dst;
     register unsigned char red,blue,green,alpha,no_alpha;
+    register unsigned char ored=0,oblue=0,ogreen=0;
+    if(!outline_rgb[3])
+      outline_rgb = NULL;
+    else {
+      ored = outline_rgb[0];
+      oblue = outline_rgb[1];
+      ogreen = outline_rgb[2];
+    }
     PixmapInit(G,I,width,height);
     red = rgba[0];
     green = rgba[1];
@@ -148,18 +157,60 @@ void PixmapInitFromBytemap(PyMOLGlobals *G,CPixmap *I,
         }
       } else {
         for(x=0;x<width;x++) {
-          alp = *(sa++);
-          if(alp) {
-            *(dst++)=red;
-            *(dst++)=green;
-            *(dst++)=blue;
-            *(dst++)=(alpha * alp)>>8;
+          if(outline_rgb) {
+            unsigned char amax = 0,amin;
+            if(y>0) {
+              alp = 255 - *(sa - pitch);
+            } else {
+              alp = 255;
+            }
+            if(amax<alp) amax = alp;
+            if(y<(height-1)) {
+              alp = 255 - *(sa + pitch);
+            } else {
+              alp = 255;
+            }
+            if(amax<alp) amax = alp;
+            if(x>0) {
+              alp = 255 - *(sa - 1);
+            } else {
+              alp = 255;
+            }
+            if(amax<alp) amax = alp;
+            if(x<(width-1)) {
+              alp = 255 - *(sa + 1);  
+            } else {
+              alp = 255;
+            }
+            if(amax<alp) amax = alp;
+            amin = 255 - amax;
+            alp = *(sa++);
+            if(alp) {
+              *(dst++)=(red * amin + ored * amax)/255;
+              *(dst++)=(green * amin + ogreen * amax)/255;
+              *(dst++)=(blue * amin+ oblue * amax)/255;
+              *(dst++)=(alpha * alp)/255;
+            } else {
+              *(dst++)=0;
+              *(dst++)=0;
+              *(dst++)=0;
+              *(dst++)=0;
+            }
           } else {
-            *(dst++)=0;
-            *(dst++)=0;
-            *(dst++)=0;
-            *(dst++)=0;
+            alp = *(sa++);
+            if(alp) {
+              *(dst++)=red;
+              *(dst++)=green;
+              *(dst++)=blue;
+              *(dst++)=(alpha * alp)>>8;
+            } else {
+              *(dst++)=0;
+              *(dst++)=0;
+              *(dst++)=0;
+              *(dst++)=0;
+            }
           }
+          
         }
       }
       src+=pitch;
