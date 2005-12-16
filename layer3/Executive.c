@@ -4207,7 +4207,7 @@ void ExecutiveRenderSelections(PyMOLGlobals *G,int curState)
     int max_width = (int)SettingGetGlobal_f(G,cSetting_selection_width_max);
     float width_scale = SettingGetGlobal_f(G,cSetting_selection_width_scale);
     int round_points = SettingGetGlobal_b(G,cSetting_selection_round_points);
-   
+    int vis_only = SettingGetGlobal_b(G,cSetting_selection_visible_only);
     rec = NULL;
     min_width = SettingGetGlobal_f(G,cSetting_selection_width);
     
@@ -4260,7 +4260,7 @@ void ExecutiveRenderSelections(PyMOLGlobals *G,int curState)
             while(ListIterate(I->Spec,rec1,next)) {
               if(rec1->type==cExecObject) {
                 if(rec1->obj->type==cObjectMolecule) {
-                  ObjectMoleculeRenderSele((ObjectMolecule*)rec1->obj,curState,sele);
+                  ObjectMoleculeRenderSele((ObjectMolecule*)rec1->obj,curState,sele,vis_only);
                 }
               }
             }
@@ -4296,7 +4296,7 @@ void ExecutiveRenderSelections(PyMOLGlobals *G,int curState)
               while(ListIterate(I->Spec,rec1,next)) {
                 if(rec1->type==cExecObject) {
                   if(rec1->obj->type==cObjectMolecule) {
-                    ObjectMoleculeRenderSele((ObjectMolecule*)rec1->obj,curState,sele);
+                    ObjectMoleculeRenderSele((ObjectMolecule*)rec1->obj,curState,sele,vis_only);
                   }
                 }
               }
@@ -4316,7 +4316,7 @@ void ExecutiveRenderSelections(PyMOLGlobals *G,int curState)
               while(ListIterate(I->Spec,rec1,next)) {
                 if(rec1->type==cExecObject) {
                   if(rec1->obj->type==cObjectMolecule) {
-                    ObjectMoleculeRenderSele((ObjectMolecule*)rec1->obj,curState,sele);
+                    ObjectMoleculeRenderSele((ObjectMolecule*)rec1->obj,curState,sele,vis_only);
                   }
                 }
               }
@@ -10368,15 +10368,16 @@ static void ExecutiveSpecSetVisibility(PyMOLGlobals *G,SpecRec *rec,
   else if(rec->type==cExecSelection)
     {
       if(mod&cOrthoCTRL) {
-        SettingSet(G,cSetting_selection_overlay,
-                   (float)(!((int)SettingGet(G,cSetting_selection_overlay))));
-        if(SettingGet(G,cSetting_logging)) {
-          sprintf(buffer,"cmd.set('selection_overlay',%d)",
+        /*        SettingSet(G,cSetting_selection_overlay,
+                  (float)(!((int)SettingGet(G,cSetting_selection_overlay))));
+                  if(SettingGet(G,cSetting_logging)) {
+                  sprintf(buffer,"cmd.set('selection_overlay',%d)",
                   (int)SettingGet(G,cSetting_selection_overlay));
-          PLog(buffer,cPLog_pym);
-          sprintf(buffer,"cmd.enable('%s')",rec->name);
-          PLog(buffer,cPLog_pym);
+                  PLog(buffer,cPLog_pym);
         }
+        */
+        sprintf(buffer,"cmd.enable('%s')",rec->name);
+        PLog(buffer,cPLog_pym);
         rec->visible=true; 
       } else if(mod&cOrthoSHIFT) {
         if(rec->sele_color<7)

@@ -5019,7 +5019,7 @@ void SceneUpdate(PyMOLGlobals *G)
       if(I->LastStateBuilt>=0) {
         while(ListIterate(I->Obj,rec,next))
           if(rec->obj->fInvalidate) 
-            rec->obj->fInvalidate(rec->obj,cRepAll,cRepInvRep,I->LastStateBuilt);
+            rec->obj->fInvalidate(rec->obj,cRepAll,cRepInvPurge,I->LastStateBuilt);
       }
     }
     I->LastStateBuilt = cur_state;

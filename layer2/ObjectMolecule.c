@@ -2548,7 +2548,7 @@ char *ObjectMoleculeGetStateTitle(ObjectMolecule *I,int state)
 }
 
 /*========================================================================*/
-void ObjectMoleculeRenderSele(ObjectMolecule *I,int curState,int sele)
+void ObjectMoleculeRenderSele(ObjectMolecule *I,int curState,int sele,int vis_only)
 {
 
   register PyMOLGlobals *G = I->Obj.G;
@@ -2556,10 +2556,14 @@ void ObjectMoleculeRenderSele(ObjectMolecule *I,int curState,int sele)
   register int a,*idx2atm,nIndex;
   register float *coord,*v;
   register int use_matrices = SettingGet_b(I->Obj.G,I->Obj.Setting,NULL,cSetting_use_state_matrices);
+  register int flag = true;
+  register int all_vis = !vis_only;
+  register short int *visRep;
+  
   float tmp_matrix[16],v_tmp[3],*matrix = NULL;
 
   if(G->HaveGUI && G->ValidContext) {
-    register AtomInfoType *atInfo = I->AtomInfo;
+    register AtomInfoType *atInfo = I->AtomInfo,*ai;
     
     if(curState>=0) {
       if(curState<I->NCSet) {
@@ -2586,12 +2590,34 @@ void ObjectMoleculeRenderSele(ObjectMolecule *I,int curState,int sele)
 
           for(a=0;a<nIndex;a++) {
             if(SelectorIsMember(G,atInfo[*(idx2atm++)].selEntry,sele)) {
-              v = coord + a + a + a;
-              if(matrix) {
-                transform44f3f(matrix,v,v_tmp);
-                glVertex3fv(v_tmp);
-              } else 
-                glVertex3fv(v);
+              if(all_vis)
+                flag = true;
+              else {
+                visRep = atInfo[idx2atm[-1]].visRep;
+                ai = atInfo+ idx2atm[-1];
+                flag = false;
+                if(visRep[cRepCyl] || 
+                   visRep[cRepCyl] ||
+                   visRep[cRepSphere] ||
+                   visRep[cRepSurface] ||
+                   visRep[cRepLabel] ||
+                   visRep[cRepNonbondedSphere] ||
+                   visRep[cRepCartoon] ||
+                   visRep[cRepRibbon] ||
+                   visRep[cRepLine] ||
+                   visRep[cRepMesh] ||
+                   visRep[cRepDot] ||
+                   visRep[cRepNonbonded])
+                  flag = true;
+              }
+              if(flag) {
+                v = coord + a + a + a;
+                if(matrix) {
+                  transform44f3f(matrix,v,v_tmp);
+                  glVertex3fv(v_tmp);
+                } else 
+                  glVertex3fv(v);
+              }
             }
           }
         }
@@ -2603,12 +2629,19 @@ void ObjectMoleculeRenderSele(ObjectMolecule *I,int curState,int sele)
             coord = cs->Coord;
             for(a=0;a<nIndex;a++) {
               if(SelectorIsMember(G,atInfo[*(idx2atm++)].selEntry,sele)) {
-                v = coord + a + a + a;
-                if(matrix) {
-                  transform44f3f(matrix,v,v_tmp);
-                  glVertex3fv(v_tmp);
-                } else 
-                  glVertex3fv(v);
+                if(all_vis)
+                  flag = true;
+                else {
+                  flag = true;
+                }
+                 if(flag) {
+                   v = coord + a + a + a;
+                   if(matrix) {
+                     transform44f3f(matrix,v,v_tmp);
+                     glVertex3fv(v_tmp);
+                   } else 
+                     glVertex3fv(v);
+                 }
               }
             }
           }
@@ -2622,12 +2655,19 @@ void ObjectMoleculeRenderSele(ObjectMolecule *I,int curState,int sele)
           coord = cs->Coord;
           for(a=0;a<nIndex;a++) {
             if(SelectorIsMember(G,atInfo[*(idx2atm++)].selEntry,sele)) {
-              v = coord + a + a + a;
-              if(matrix) {
-                transform44f3f(matrix,v,v_tmp);
-                glVertex3fv(v_tmp);
-              } else 
-                glVertex3fv(v);
+              if(all_vis)
+                flag = true;
+              else {
+                flag = true;
+              }
+              if(flag) {
+                v = coord + a + a + a;
+                if(matrix) {
+                  transform44f3f(matrix,v,v_tmp);
+                  glVertex3fv(v_tmp);
+                } else 
+                  glVertex3fv(v);
+              }
             }
           }
         }

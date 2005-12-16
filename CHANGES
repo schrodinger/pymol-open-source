@@ -4,6 +4,12 @@ CHANGE LOG
 
 Changes up to 0.99
 
+    beta32
+
+    * fixed defer_builds_mode=2, FINALLY.
+
+    * depth information for selective antialiasing -- more efficient!
+
     beta31
 
     * B & W Molscript & David Goodsell look-alike modes
