@@ -75,7 +75,7 @@ static void RepDistLabelRender(RepDistLabel *I,RenderInfo *info)
 
 	 while(c--) {
       TextSetPos(G,v);
-      TextRenderRay(G,ray,font_id,l[n],font_size);
+      TextRenderRay(G,ray,font_id,l[n],font_size,NULL);
       v+=3;
       n++;
 	 }
@@ -98,7 +98,7 @@ static void RepDistLabelRender(RepDistLabel *I,RenderInfo *info)
       while(c--) {
 
         TextSetPos(G,v);
-        TextRenderOpenGL(G,info,font_id,l[n],font_size);
+        TextRenderOpenGL(G,info,font_id,l[n],font_size,NULL);
         v+=3;
         n++;
       }

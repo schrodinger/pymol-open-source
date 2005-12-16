@@ -92,11 +92,13 @@ void TextGetColorUChar(PyMOLGlobals *G,unsigned char *red,
                        unsigned char *green, 
                        unsigned char *blue,
                        unsigned char *alpha);
-char *TextRenderOpenGL(PyMOLGlobals *G,RenderInfo *info,int text_id,char *st,float size);
-char *TextRenderRay(PyMOLGlobals *G,CRay *ray,int text_id,char *st,float size);
+
+char *TextRenderOpenGL(PyMOLGlobals *G,RenderInfo *info,int text_id,char *st,float size, float *rpos);
+char *TextRenderRay(PyMOLGlobals *G,CRay *ray,int text_id,char *st,float size, float *rpos);
 
 void TextDrawStrAt(PyMOLGlobals *G,char *st, int x, int y);
 void TextDrawStr(PyMOLGlobals *G,char *st);
+void TextIndent(PyMOLGlobals *G,float x,float y);
 void TextAdvance(PyMOLGlobals *G,float advance);
 void TextSetPos2i(PyMOLGlobals *G,int x,int y);
 void TextDrawChar(PyMOLGlobals *G,char ch);

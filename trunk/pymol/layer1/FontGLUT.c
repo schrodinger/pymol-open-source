@@ -51,7 +51,7 @@ static void FontGLUTRestore(CFontGLUT *I)
   glPixelStorei(GL_UNPACK_ALIGNMENT, I->alignment);
 }
 
-static char *FontGLUTRenderOpenGL(RenderInfo *info,CFontGLUT *I,char *st,float size)
+static char *FontGLUTRenderOpenGL(RenderInfo *info,CFontGLUT *I,char *st,float size, float *rpos)
 {
   register PyMOLGlobals *G = I->Font.G;
   if(G->ValidContext) {
@@ -138,7 +138,7 @@ static char *FontGLUTRenderOpenGL(RenderInfo *info,CFontGLUT *I,char *st,float s
   return st;
 }
 
-static char *FontGLUTRenderRay(CRay *ray, CFontGLUT *I,char *st,float size)
+static char *FontGLUTRenderRay(CRay *ray, CFontGLUT *I,char *st,float size, float *rpos)
 {
   int c;
   FontGLUTBitmapFontRec *font_info = I->glutFont;
