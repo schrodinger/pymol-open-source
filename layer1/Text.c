@@ -81,6 +81,13 @@ void TextSetLabPos(PyMOLGlobals *G,float *pos, LabPosType *labpos, char *text)
   }
 }
 
+void TextIndent(PyMOLGlobals *G,float x,float y)
+{
+  register CText *I=G->Text;
+  I->Pos[0]-=x;
+  I->Pos[1]-=y;
+}
+
 void TextSetPos(PyMOLGlobals *G,float *pos)
 {
   register CText *I=G->Text;
@@ -201,8 +208,8 @@ void TextGetOutlineColor(PyMOLGlobals *G,
   *blue = I->OutlineColor[2];
   *alpha = I->OutlineColor[3];
 }
-                        
-char *TextRenderOpenGL(PyMOLGlobals *G,RenderInfo *info,int text_id,char *st,float size)
+    
+char *TextRenderOpenGL(PyMOLGlobals *G,RenderInfo *info,int text_id,char *st,float size, float *rpos)
 {
   register CText *I=G->Text;
   CFont *font;
@@ -218,7 +225,7 @@ char *TextRenderOpenGL(PyMOLGlobals *G,RenderInfo *info,int text_id,char *st,flo
       else
         fn = font->fRenderOpenGL;
       if(fn)
-        return fn(info,font,st,size);
+        return fn(info,font,st,size,rpos);
     }
     /* make sure we got to end of string */
     if(*st) while(*(st++)); 
@@ -230,13 +237,13 @@ void TextDrawStrAt(PyMOLGlobals *G,char *st, int x, int y)
 {
   register CText *I=G->Text;
   TextSetPos3f(G, (float)x, (float)y, 0.0F);
-  TextRenderOpenGL(G,NULL,I->Default_ID,st,TEXT_DEFAULT_SIZE);
+  TextRenderOpenGL(G,NULL,I->Default_ID,st,TEXT_DEFAULT_SIZE,NULL);
 }
 
 void TextDrawStr(PyMOLGlobals *G,char *st)
 {
   register CText *I=G->Text;
-  TextRenderOpenGL(G,NULL,I->Default_ID,st,TEXT_DEFAULT_SIZE);
+  TextRenderOpenGL(G,NULL,I->Default_ID,st,TEXT_DEFAULT_SIZE,NULL);
 }
 
 void TextDrawChar(PyMOLGlobals *G,char ch)
@@ -244,11 +251,11 @@ void TextDrawChar(PyMOLGlobals *G,char ch)
   char st[2] = { 0 , 0 };
   register CText *I=G->Text;
   st[0] = ch;
-  TextRenderOpenGL(G,NULL,I->Default_ID,st,TEXT_DEFAULT_SIZE);
+  TextRenderOpenGL(G,NULL,I->Default_ID,st,TEXT_DEFAULT_SIZE,NULL);
 }
 
 
-char *TextRenderRay(PyMOLGlobals *G,CRay *ray,int text_id,char *st,float size)
+char *TextRenderRay(PyMOLGlobals *G,CRay *ray,int text_id,char *st,float size, float *rpos)
 {
   register CText *I=G->Text;
   CFont *font;
@@ -262,7 +269,7 @@ char *TextRenderRay(PyMOLGlobals *G,CRay *ray,int text_id,char *st,float size)
       font = I->Active[text_id].Font;
       fn = font->fRenderRay;
       if(fn)
-        return fn(ray,font,st,size);
+        return fn(ray,font,st,size,rpos);
     }
     /* make sure we got to end of string */
     if(*st) while(*(st++)); 

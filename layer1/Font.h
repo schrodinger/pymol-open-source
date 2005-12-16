@@ -33,8 +33,8 @@ Z* -------------------------------------------------------------------
 
 typedef struct _CFont CFont;
 
-typedef char *FontRenderOpenGLFn(RenderInfo *info, CFont *,char *text,float size);
-typedef char *FontRenderRayFn(CRay *ray,CFont *,char *text,float size);
+typedef char *FontRenderOpenGLFn(RenderInfo *info, CFont *,char *text,float size,float *rpos);
+typedef char *FontRenderRayFn(CRay *ray,CFont *,char *text,float size,float *rpos);
 
 struct _CFont {
   PyMOLGlobals *G;

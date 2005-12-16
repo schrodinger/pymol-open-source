@@ -34,7 +34,7 @@ typedef struct {
 
 __inline__ static char *_FontTypeRenderOpenGL(RenderInfo *info, 
                                               CFontType *I,char *st,
-                                              float size,int flat)
+                                              float size,int flat, float *rpos)
 {
   register PyMOLGlobals *G = I->Font.G;
   if(G->ValidContext) {
@@ -43,14 +43,22 @@ __inline__ static char *_FontTypeRenderOpenGL(RenderInfo *info,
     int kern_flag = false;
     int last_c = -1;
     int sampling = 1;
+    float x_indent=0.0F, y_indent=0.0F;
     if(info)
       sampling = info->sampling;
     if(st&&(*st)) {
-
       if(size<0.0F) {
         float origin[3];
         SceneOriginGet(G,origin);
         size = (int)(0.5F-size/SceneGetScreenVertexScale(G,origin));
+      }
+
+      if(0&&rpos) {
+        if(rpos[0]>-1.0F) {
+        }
+        if(rpos[1]>-1.0F) {
+          y_indent = 0.75*size*(rpos[1]/2.0F + 0.5F);
+        }
       }
       if(!pushed) {
         float *v = TextGetPos(G);
@@ -58,7 +66,9 @@ __inline__ static char *_FontTypeRenderOpenGL(RenderInfo *info,
         ScenePushRasterMatrix(G,v);
         TextSetPos(G,zero);
       } 
-     
+      if(0&&rpos) {
+        TextIndent(G,x_indent,y_indent);
+      }
       while((c=*(st++))) {
 
         CharFngrprnt fprnt;
@@ -98,16 +108,16 @@ __inline__ static char *_FontTypeRenderOpenGL(RenderInfo *info,
   return st;
 }
 
-static char *FontTypeRenderOpenGL(RenderInfo *info, CFontType *I,char *st,float size)
+static char *FontTypeRenderOpenGL(RenderInfo *info, CFontType *I,char *st,float size,float *rpos)
 {
-  return _FontTypeRenderOpenGL(info,I,st,size,false);
+  return _FontTypeRenderOpenGL(info,I,st,size,false,rpos);
 }
-static char *FontTypeRenderOpenGLFlat(RenderInfo *info, CFontType *I,char *st,float size)
+static char *FontTypeRenderOpenGLFlat(RenderInfo *info, CFontType *I,char *st,float size,float *rpos)
 {
-  return _FontTypeRenderOpenGL(info,I,st,size,true);
+  return _FontTypeRenderOpenGL(info,I,st,size,true,rpos);
 }
 
-static char *FontTypeRenderRay(CRay *ray, CFontType *I,char *st,float size)
+static char *FontTypeRenderRay(CRay *ray, CFontType *I,char *st,float size, float *rpos)
 {
   register PyMOLGlobals *G = I->Font.G;
   int c;
