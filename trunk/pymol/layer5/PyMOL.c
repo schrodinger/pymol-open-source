@@ -604,6 +604,7 @@ typedef struct _CPyMOL {
   ov_word lex_label_outline_color;
   ov_word lex_ray_trace_mode;
   ov_word lex_ray_trace_gain;
+  ov_word lex_selection_visible_only;
 } _CPyMOL;
 
 /* convenience functions -- inline */
@@ -1216,6 +1217,7 @@ static OVstatus PyMOL_InitAPI(CPyMOL *I)
   LEX_SETTING(label_outline_color, 467);
   LEX_SETTING(ray_trace_mode,468);
   LEX_SETTING(ray_trace_gain,469);
+  LEX_SETTING(selection_visible_only,470);
   return_OVstatus_SUCCESS;
 }
 

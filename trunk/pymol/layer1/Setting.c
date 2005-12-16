@@ -2437,7 +2437,7 @@ void SettingInitGlobal(PyMOLGlobals *G,int alloc,int reset_gui)
 
   SettingSet_i(I,cSetting_cartoon_trace_atoms,0);
 
-  SettingSet_i(I,cSetting_ray_oversample_cutoff,64);
+  SettingSet_i(I,cSetting_ray_oversample_cutoff,160);
 
   SettingSet_f(I,cSetting_gaussian_resolution,2.0F);
 
@@ -2673,6 +2673,7 @@ void SettingInitGlobal(PyMOLGlobals *G,int alloc,int reset_gui)
   SettingSet_color(I,cSetting_label_outline_color, "-1");
   SettingSet_i(I,cSetting_ray_trace_mode,0);
   SettingSet_f(I,cSetting_ray_trace_gain,0.12F);
+  SettingSet_b(I,cSetting_selection_visible_only, 0);
 }
 
 

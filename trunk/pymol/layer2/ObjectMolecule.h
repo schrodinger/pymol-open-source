@@ -307,7 +307,7 @@ void ObjectMoleculeExtendIndices(ObjectMolecule *I);
 
 void ObjectMoleculeInvalidate(ObjectMolecule *I,int rep,int level,int state);
 
-void ObjectMoleculeRenderSele(ObjectMolecule *I,int curState,int sele);
+void ObjectMoleculeRenderSele(ObjectMolecule *I,int curState,int sele,int vis_only);
 
 void ObjectMoleculeSeleOp(ObjectMolecule *I,int sele,ObjectMoleculeOpRec *op);
 
