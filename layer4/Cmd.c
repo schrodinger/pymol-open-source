@@ -86,7 +86,18 @@ Z* -------------------------------------------------------------------
 
 static int flush_count = 0;
 
+#ifndef _PYMOL_NO_MAIN
+#ifndef _PYMOL_WX_GLUT
 static int run_only_once = true;
+#endif
+#endif
+#ifdef _PYMOL_WX_GLUT
+#ifndef _PYMOL_ACTIVEX
+#ifndef _EPYMOL
+static int run_only_once = true;
+#endif
+#endif
+#endif
 
 int PyThread_get_thread_ident(void);
 
