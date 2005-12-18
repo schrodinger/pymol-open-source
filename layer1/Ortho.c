@@ -194,10 +194,21 @@ void OrthoDefer(PyMOLGlobals *G,CDeferred *D)
 
 int OrthoGetWidth(PyMOLGlobals *G)
 {
-  register COrtho *I=G->Ortho;
-  return(I->Width);
+  if(G) {
+    register COrtho *I=G->Ortho;
+    return(I->Width);
+  }
+  return 0;
 }
 
+int OrthoGetHeight(PyMOLGlobals *G)
+{
+  if(G) {
+    register COrtho *I=G->Ortho;
+    return(I->Height);
+  }
+  return 0;
+}
 /*========================================================================*/
 void OrthoFakeDrag(PyMOLGlobals *G) /* for timing-based events, such as pop-ups */
 {

@@ -92,7 +92,7 @@ typedef struct {
 
 typedef struct {
   int mode;
-  float pos[2];
+  float pos[3];
   float offset[3];
 } LabPosType;
 

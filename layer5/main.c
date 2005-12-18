@@ -948,30 +948,33 @@ void MainReshape(int width, int height) /* called by Glut */
     if(PLockAPIAsGlut(true)) {
       if(G->HaveGUI) {
         glViewport(0, 0, (GLint) width, (GLint) height);
-        /* wipe the screen ASAP to prevent display of garbage... */
+        if((!PyMOLInstance) ||
+           (width!=OrthoGetWidth(G))||
+           (height!=OrthoGetHeight(G)))
+          {
+            /* wipe the screen ASAP to prevent display of garbage... */
 
-        {
-          int draw_both = G->StereoCapable &&
-            ((SceneGetStereo(G)==1) ||
-             SettingGetGlobal_b(G,cSetting_stereo_double_pump_mono));
-          
-          glClearColor(0.0,0.0,0.0,1.0);
-          if(draw_both) {
-            OrthoDrawBuffer(G,GL_FRONT_LEFT);
-            glClear(GL_COLOR_BUFFER_BIT);
-            OrthoDrawBuffer(G,GL_FRONT_LEFT);
-            glClear(GL_COLOR_BUFFER_BIT);
-            OrthoDrawBuffer(G,GL_BACK_LEFT);
-            glClear(GL_COLOR_BUFFER_BIT);
-            OrthoDrawBuffer(G,GL_BACK_RIGHT);
-            glClear(GL_COLOR_BUFFER_BIT);
-          } else {
-            OrthoDrawBuffer(G,GL_FRONT);
-            glClear(GL_COLOR_BUFFER_BIT);
-            OrthoDrawBuffer(G,GL_BACK);
-            glClear(GL_COLOR_BUFFER_BIT);
+            int draw_both = G->StereoCapable &&
+              ((SceneGetStereo(G)==1) ||
+               SettingGetGlobal_b(G,cSetting_stereo_double_pump_mono));
+            
+            glClearColor(0.0,0.0,0.0,1.0);
+            if(draw_both) {
+              OrthoDrawBuffer(G,GL_FRONT_LEFT);
+              glClear(GL_COLOR_BUFFER_BIT);
+              OrthoDrawBuffer(G,GL_FRONT_LEFT);
+              glClear(GL_COLOR_BUFFER_BIT);
+              OrthoDrawBuffer(G,GL_BACK_LEFT);
+              glClear(GL_COLOR_BUFFER_BIT);
+              OrthoDrawBuffer(G,GL_BACK_RIGHT);
+              glClear(GL_COLOR_BUFFER_BIT);
+            } else {
+              OrthoDrawBuffer(G,GL_FRONT);
+              glClear(GL_COLOR_BUFFER_BIT);
+              OrthoDrawBuffer(G,GL_BACK);
+              glClear(GL_COLOR_BUFFER_BIT);
+            }
           }
-        }
         PyMOL_SwapBuffers(PyMOLInstance);
       }
     }

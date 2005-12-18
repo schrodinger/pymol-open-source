@@ -74,7 +74,7 @@ class Normal(PMGSkin):
                                                  entry_relief=SUNKEN,
                                                  entry_bd=1,
                                                  labelpos=None)
-        self.__messageBar.pack(side=LEFT, expand=YES, fill=X)
+        self.__messageBar.pack(side=LEFT, expand=NO, fill=X)
 
 
     def confirm_quit(self):
@@ -2187,6 +2187,8 @@ class Normal(PMGSkin):
         self.messageBar = Pmw.MessageBar(self.commandFrame, entry_width = 40,
              entry_relief='sunken', entry_borderwidth=1) #, labelpos = 'w')
         self.messageBar.pack(side=BOTTOM, anchor=W, fill=X, expand=1)
+#        btn_interrupt = self.buttonAdd(self.commandFrame,'Interrupt',lambda s=self: s.cmd.interrupt())
+                
         self.balloon.configure(statuscommand = self.messageBar.helpmessage)
 
         self.createConsole()

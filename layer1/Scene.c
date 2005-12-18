@@ -3260,12 +3260,25 @@ void ScenePopRasterMatrix(PyMOLGlobals *G)
   glPopMatrix();
 }
 /*========================================================================*/
+void SceneGetEyeNormal(PyMOLGlobals *G,float *v1,float *normal)
+{
+  register CScene *I=G->Scene;
+  float p1[4],p2[4];
+  copy3f(v1,p1);
+  p1[3] = 1.0;
+  MatrixTransformC44f4f(I->ModMatrix,p1,p2); /* modelview transformation */
+  copy3f(p2,p1);
+  normalize3f(p1);
+  MatrixInvTransformC44fAs33f3f(I->RotMatrix,p1,p2); 
+  invert3f3f(p2,normal);
+}
+/*========================================================================*/
 float SceneGetScreenVertexScale(PyMOLGlobals *G,float *v1)
 {
   /* get conversion factor from screen point to atomic coodinate */
   register CScene *I=G->Scene;
   float vl,p1[4],p2[4];
-  float width_factor = I->Width/2.0F;
+  float height_factor = I->Height/2.0F;
 
   if(!v1) v1 = I->Origin;
 
@@ -3274,16 +3287,16 @@ float SceneGetScreenVertexScale(PyMOLGlobals *G,float *v1)
   p1[3] = 1.0;
   MatrixTransformC44f4f(I->ModMatrix,p1,p2); /* modelview transformation */
   copy4f(p2,p1);
-  p2[0]+=1.0;
+  p2[1]+=1.0;
   /* projection transformation */
   MatrixTransformC44f4f(I->ProMatrix,p1,p1); 
   MatrixTransformC44f4f(I->ProMatrix,p2,p2);
   /*  dump44f(I->ProMatrix,"pro");*/
   /* perspective division */
-  p1[0]=p1[0]/p1[3];
-  p2[0]=p2[0]/p2[3];
-  p1[0]=(p1[0]+1.0F)*(width_factor); /* viewport transformation */
-  p2[0]=(p2[0]+1.0F)*(width_factor);
+  p1[1]=p1[1]/p1[3];
+  p2[1]=p2[1]/p2[3];
+  p1[1]=(p1[1]+1.0F)*(height_factor); /* viewport transformation */
+  p2[1]=(p2[1]+1.0F)*(height_factor);
   /*
     p1[1]=p1[1]/p1[3];
     p2[1]=p2[1]/p2[3];
@@ -3295,7 +3308,7 @@ float SceneGetScreenVertexScale(PyMOLGlobals *G,float *v1)
     dump3f(p2,"p2");
     vl=(float)diff3f(p1,p2);
   */
-  vl = (float)fabs(p1[0]-p2[0]);
+  vl = (float)fabs(p1[1]-p2[1]);
 
   if(vl<R_SMALL4)
     vl=100.0F;
@@ -3693,7 +3706,6 @@ static int SceneDrag(Block *block,int x,int y,int mod,double when)
 
         vScale = SceneGetScreenVertexScale(G,v1);
         if(side_by_side(I->StereoMode)) {
-          vScale*=2;
           x = get_stereo_x(x,&I->LastX,I->Width);
         }
         
@@ -3804,7 +3816,6 @@ static int SceneDrag(Block *block,int x,int y,int mod,double when)
       copy3f(I->Origin,v1);
       vScale = SceneGetScreenVertexScale(G,v1);
     if(side_by_side(I->StereoMode)) {
-        vScale*=2;
         x = get_stereo_x(x,&I->LastX,I->Width);
       }
       
@@ -3862,7 +3873,6 @@ static int SceneDrag(Block *block,int x,int y,int mod,double when)
             /* scale properly given the current projection matrix */
             vScale = SceneGetScreenVertexScale(G,v1);
             if(side_by_side(I->StereoMode)) {
-              vScale*=2;
               x = get_stereo_x(x,&I->LastX,I->Width);
             }
             
@@ -3921,7 +3931,6 @@ static int SceneDrag(Block *block,int x,int y,int mod,double when)
               vScale = SceneGetScreenVertexScale(G,v1);
 
               if(side_by_side(I->StereoMode)) {
-                vScale*=2;
                 x = get_stereo_x(x,&I->LastX,I->Width);
               }
 
@@ -3955,7 +3964,6 @@ static int SceneDrag(Block *block,int x,int y,int mod,double when)
     vScale = SceneGetScreenVertexScale(G,I->Origin);
     if(side_by_side(I->StereoMode)) {
 
-      vScale*=2;
       x = get_stereo_x(x,&I->LastX,I->Width);
     }
 

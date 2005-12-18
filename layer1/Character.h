@@ -78,6 +78,7 @@ int CharacterGetHeight(PyMOLGlobals *G,int id);
 int CharacterGetGeometry(PyMOLGlobals *G,int id,
                          int *width, int *height, 
                          float *xorig, float *yorig, float *advance);
+float CharacterGetAdvance(PyMOLGlobals *G,int sampling, int id);
 
 int CharacterNewFromBitmap(PyMOLGlobals *G,int width, int height,
                            unsigned char *bitmap,

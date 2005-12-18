@@ -995,6 +995,11 @@ DEVELOPMENT TO DO
             finally:
                 unlock()
             return 1
+
+        def interrupt(): # asynch -- no locking!
+            _cmd.interrupt(1)
+            return None
+
         # testing tools
 
         # for comparing floating point numbers calculated using
