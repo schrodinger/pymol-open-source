@@ -2435,24 +2435,22 @@ Rep *RepCartoonNew(CoordSet *cs,int state)
             project3f(t1,t0,t3);
             add3f(t3,t4,t3);
 
-            /* relocate CA to touch helix.. */
+            /* relocate terminal CA to touch helix, if necessary */
             
-            if(smooth_loops) {
-              if(h_start&&h_end) {
-                subtract3f(h_start,t3,t0);
-                f0 = helix_radius-loop_radius*2;
-                if(length3f(t0)>f0) {
-                  normalize3f(t0);
-                  scale3f(t0,f0,t1);
-                  add3f(t1,t3,h_start)
-                    }
-
-                subtract3f(h_end,t4,t0);
-                if(length3f(t0)>f0) {
-                  normalize3f(t0);
-                  scale3f(t0,f0,t1);
-                  add3f(t1,t4,h_end)
-                    }
+            if(h_start&&h_end) {
+              subtract3f(h_start,t3,t0);
+              f0 = helix_radius-loop_radius*2;
+              if(length3f(t0)>f0) {
+                normalize3f(t0);
+                scale3f(t0,f0,t1);
+                add3f(t1,t3,h_start);
+              }
+              
+              subtract3f(h_end,t4,t0);
+              if(length3f(t0)>f0) {
+                normalize3f(t0);
+                scale3f(t0,f0,t1);
+                add3f(t1,t4,h_end);
               }
             }
           }

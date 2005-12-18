@@ -1339,6 +1339,7 @@ static PyObject *CmdAlign(PyObject *self, 	PyObject *args) {
   }
 }
 
+
 static PyObject *CmdGetSettingUpdates(PyObject *self, 	PyObject *args)
 {
   PyObject *result = NULL;
@@ -1546,6 +1547,17 @@ static PyObject *CmdGetNames(PyObject *self, 	PyObject *args)
     VLAFreeP(vla);
   }
   return(APIAutoNone(result));
+}
+
+static PyObject *CmdInterrupt(PyObject *self, PyObject *args)
+{
+  int int1;
+  int ok=false;
+  ok = PyArg_ParseTuple(args,"i",&int1);
+  if(ok) {
+    PyMOL_SetInterrupt(TempPyMOLGlobals->PyMOL, int1);
+  }
+  return APIResultOk(ok);
 }
 
 static PyObject *CmdInvert(PyObject *self, PyObject *args)
@@ -5845,6 +5857,7 @@ static PyMethodDef Cmd_methods[] = {
    {"index",                 CmdIndex,                METH_VARARGS },
 	{"intrafit",              CmdIntraFit,             METH_VARARGS },
    {"invert",                CmdInvert,               METH_VARARGS },
+   {"interrupt",             CmdInterrupt,            METH_VARARGS },
 	{"isolevel",              CmdIsolevel,             METH_VARARGS },
 	{"isomesh",	              CmdIsomesh,              METH_VARARGS }, 
 	{"isosurface",	           CmdIsosurface,           METH_VARARGS },

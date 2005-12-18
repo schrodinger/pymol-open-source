@@ -53,8 +53,41 @@ __inline__ static char *_FontTypeRenderOpenGL(RenderInfo *info,
         size = (int)(0.5F-size/SceneGetScreenVertexScale(G,origin));
       }
 
-      if(0&&rpos) {
-        if(rpos[0]>-1.0F) {
+      if(rpos) {
+        if(rpos[0]>-1.0F) { /* we need to measure the string width before starting to draw */
+          float factor = -rpos[0]/2.0F - 0.5F;
+          char *sst = st;
+          while((c=*(sst++))) {
+            
+            CharFngrprnt fprnt;
+            unsigned char *rgba;
+            UtilZeroMem(&fprnt,sizeof(fprnt));
+            fprnt.u.i.text_id = I->Font.TextID;
+            fprnt.u.i.size = (int)(size*64*sampling);
+            rgba = fprnt.u.i.color;
+            TextGetColorUChar(G,rgba,rgba+1,rgba+2,rgba+3);
+            rgba = fprnt.u.i.outline_color;
+            TextGetOutlineColor(G,rgba,rgba+1,rgba+2,rgba+3);
+            fprnt.u.i.ch = c;
+            fprnt.u.i.flat = flat;
+            {
+              int id = CharacterFind(G,&fprnt);
+              if(!id) {
+                id = TypeFaceCharacterNew(I->TypeFace,&fprnt,size*sampling);
+              }
+              if(id) {
+                if(kern_flag) {
+                  x_indent -= factor * (TypeFaceGetKerning(I->TypeFace, 
+                                                           (unsigned int)last_c,
+                                                           (unsigned int)c,
+                                                           size)/sampling);
+                }
+                x_indent -= factor * CharacterGetAdvance(G,sampling,id);
+              }
+            }
+            kern_flag = true;
+            last_c = c;
+          }
         }
         if(rpos[1]>-1.0F) {
           y_indent = 0.75*size*(rpos[1]/2.0F + 0.5F);
@@ -62,11 +95,18 @@ __inline__ static char *_FontTypeRenderOpenGL(RenderInfo *info,
       }
       if(!pushed) {
         float *v = TextGetPos(G);
+        float loc[3];
         float zero[3]= {0.0F,0.0F,0.0F};
+        if(rpos) {
+          SceneGetEyeNormal(G,v,loc);
+          scale3f(loc,rpos[2],loc);
+          add3f(v,loc,loc);
+          v = loc;
+        }
         ScenePushRasterMatrix(G,v);
         TextSetPos(G,zero);
       } 
-      if(0&&rpos) {
+      if(rpos) {
         TextIndent(G,x_indent,y_indent);
       }
       while((c=*(st++))) {
@@ -121,13 +161,78 @@ static char *FontTypeRenderRay(CRay *ray, CFontType *I,char *st,float size, floa
 {
   register PyMOLGlobals *G = I->Font.G;
   int c;
+  int kern_flag = false;
+  int last_c = -1;
+  int sampling = ray->Sampling;
+  float x_indent=0.0F, y_indent=0.0F;
+  float xn[3], yn[3], x_adj[3], y_adj[3], pos[3], *v;
+
   if(st&&(*st)) {
     
+    if(rpos) {
+      float loc[3];
+      v = TextGetPos(I->G);
+      SceneGetEyeNormal(G,v,loc);
+      scale3f(loc,rpos[2],loc);
+      add3f(v,loc,loc);
+      TextSetPos(I->G,loc);
+    }
+
+    RayGetScaledAxes(ray,xn,yn);
+
     if(size<0.0F) {
       float origin[3];
       SceneOriginGet(G,origin);
-      size = (int)(0.5F-size/SceneGetScreenVertexScale(G,origin));
+      size = (int)(0.5F - size / SceneGetScreenVertexScale(G,origin));
     }
+
+    if(rpos) {
+
+      if(rpos[0]>-1.0F) { /* we need to measure the string width before starting to draw */
+        float factor = -rpos[0]/2.0F - 0.5F;
+        char *sst = st;
+        while((c=*(sst++))) {
+          
+          CharFngrprnt fprnt;
+          unsigned char *rgba;
+          UtilZeroMem(&fprnt,sizeof(fprnt));
+          fprnt.u.i.text_id = I->Font.TextID;
+          fprnt.u.i.size = (int)(size*64*sampling);
+          rgba = fprnt.u.i.color;
+          TextGetColorUChar(G,rgba,rgba+1,rgba+2,rgba+3);
+          rgba = fprnt.u.i.outline_color;
+          TextGetOutlineColor(G,rgba,rgba+1,rgba+2,rgba+3);
+          fprnt.u.i.ch = c;
+          {
+            int id = CharacterFind(G,&fprnt);
+            if(!id) {
+              id = TypeFaceCharacterNew(I->TypeFace,&fprnt,size*sampling);
+            }
+            if(id) {
+              if(kern_flag) {
+                x_indent -= factor * TypeFaceGetKerning(I->TypeFace, 
+                                                        (unsigned int)last_c,
+                                                        (unsigned int)c,
+                                                        size*sampling)/sampling;
+              }
+              x_indent -= factor * CharacterGetAdvance(G,1,id);
+              kern_flag = true;
+              last_c = c;
+            }
+          }
+        }
+      }
+      if(rpos[1]>-1.0F) {
+        y_indent = 0.75F*sampling*size*(rpos[1]/2.0F + 0.5F);
+      }
+      v = TextGetPos(I->G);
+      scale3f(xn, x_indent, x_adj);
+      scale3f(yn, y_indent, y_adj);
+      subtract3f(v,x_adj,pos);
+      subtract3f(pos,y_adj,pos);
+      TextSetPos(I->G,pos);
+    }
+    kern_flag = false;
 
     while((c=*(st++))) {
       
@@ -135,7 +240,7 @@ static char *FontTypeRenderRay(CRay *ray, CFontType *I,char *st,float size, floa
       unsigned char *rgba;
       UtilZeroMem(&fprnt,sizeof(fprnt));
       fprnt.u.i.text_id = I->Font.TextID;
-      fprnt.u.i.size = (int)(size*64*ray->Sampling);
+      fprnt.u.i.size = (int)(size*64*sampling);
       rgba = fprnt.u.i.color;
       TextGetColorUChar(G,rgba,rgba+1,rgba+2,rgba+3);
       rgba = fprnt.u.i.outline_color;
@@ -144,10 +249,23 @@ static char *FontTypeRenderRay(CRay *ray, CFontType *I,char *st,float size, floa
       {
         int id = CharacterFind(G,&fprnt);
         if(!id) {
-          id = TypeFaceCharacterNew(I->TypeFace,&fprnt,size*ray->Sampling);
+          id = TypeFaceCharacterNew(I->TypeFace,&fprnt,size*sampling);
         }
         if(id) {
+          if(kern_flag) {
+            float kern = TypeFaceGetKerning(I->TypeFace, 
+                                            (unsigned int)last_c,
+                                            (unsigned int)c,
+                                            size*sampling)/sampling;
+            v = TextGetPos(I->G);
+            scale3f(xn, kern, x_adj);
+            add3f(v,x_adj,pos);
+            TextSetPos(I->G,pos);
+          }
           ray->fCharacter(ray,id); /* handles advance */
+
+          kern_flag = true;
+          last_c = c;
         }
       }
     }

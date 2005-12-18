@@ -2264,20 +2264,22 @@ int RayTraceThread(CRayThreadInfo *T)
                      }
                   
 
-                   if( i < 0 )	/* nothing hit */
-                     {
-                       break;
-                     }
-                   else 
-                     {
-                       if(perspective) {
+                   if( i < 0 ) {	/* nothing hit */
+                     break;
+                   } else {
+                     if(perspective) {
+                       if(r1.prim->type!=cPrimCharacter) {
                          float extend = r1.dist + 0.00001F;
                          scale3f(r1.dir, extend , nudge);
+                       } else {
+                         float extend = r1.dist;
+                         scale3f(r1.dir, extend , nudge);
                        }
-                       last_pixel	= *pixel;
-                       exclude		= i;
-                       pass++;
                      }
+                     last_pixel	= *pixel;
+                     exclude		= i;
+                     pass++;
+                   }
                   
                  } /* end of ray while */
 
@@ -3716,6 +3718,31 @@ void RaySphere3fv(CRay *I,float *v,float r)
   }
 
   I->NPrimitive++;
+}
+
+void RayGetScaledAxes(CRay *I,float *xn,float *yn)
+{
+  float *v;
+  float vt[3];
+  float xn0[3] = {1.0F,0.0F,0.0F};
+  float yn0[3] = {0.0F,1.0F,0.0F};
+  float v_scale;
+
+  v = TextGetPos(I->G);
+
+  if(I->TTTFlag) {
+    transformTTT44f3f(I->TTT,v, vt);
+  } else {
+    copy3f(v,vt);
+  }
+
+  v_scale = SceneGetScreenVertexScale(I->G,vt)/I->Sampling;
+
+  RayApplyMatrixInverse33(1,(float3*)xn0,I->Rotation,(float3*)xn0);    
+  RayApplyMatrixInverse33(1,(float3*)yn0,I->Rotation,(float3*)yn0);    
+  
+  scale3f(xn0,v_scale,xn); 
+  scale3f(yn0,v_scale,yn); 
 }
 
 /*========================================================================*/

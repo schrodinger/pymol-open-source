@@ -81,6 +81,7 @@ void SceneResetMatrix(PyMOLGlobals *G);
 void SceneRestartTimers(PyMOLGlobals *G);
 
 void ScenePerspective(PyMOLGlobals *G,int flag);
+void SceneGetEyeNormal(PyMOLGlobals *G,float *v1,float *normal);
 
 void SceneRotate(PyMOLGlobals *G,float angle,float x,float y,float z);
 void SceneTranslate(PyMOLGlobals *G,float x,float y, float z);

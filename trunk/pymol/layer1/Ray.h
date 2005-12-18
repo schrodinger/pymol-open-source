@@ -48,6 +48,7 @@ void RayApplyContextToVertex(CRay *I,float *v);
 void RayRenderColorTable(CRay *I,int width,int height,int *image);
 int RayTraceThread(CRayThreadInfo *T);
 int RayGetNPrimitives(CRay *I);
+void RayGetScaledAxes(CRay *I,float *xn,float *yn);
 
 int RayHashThread(CRayHashThreadInfo *T);
 int RayAntiThread(CRayAntiThreadInfo *T);

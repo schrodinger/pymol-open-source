@@ -46,6 +46,7 @@ void OrthoFreeBlock(PyMOLGlobals *G,Block *block);
 
 void OrthoReshape(PyMOLGlobals *G,int width,int height,int force);
 int OrthoGetWidth(PyMOLGlobals *G);
+int OrthoGetHeight(PyMOLGlobals *G);
 void OrthoDoDraw(PyMOLGlobals *G,int render_mode);
 
 void OrthoPushMatrix(PyMOLGlobals *G);

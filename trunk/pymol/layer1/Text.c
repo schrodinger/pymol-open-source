@@ -144,7 +144,7 @@ void TextSetOutlineColor(PyMOLGlobals *G,int color)
     I->OutlineColor[2] = (unsigned char)(_255*fcolor[2]);
     I->OutlineColor[3] = 0xFF;
   } else {
-    I->OutlineColor[4] = 0;
+    I->OutlineColor[3] = 0;
   }
 }
 

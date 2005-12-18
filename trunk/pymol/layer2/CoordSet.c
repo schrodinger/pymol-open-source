@@ -403,6 +403,10 @@ int CoordSetMoveAtomLabel(CoordSet *I,int at,float *v,int mode)
     if(I->LabPos) {
       result = 1;
       lp = I->LabPos+a1;
+      if(!lp->mode) {
+        float *lab_pos = SettingGet_3fv(obj->Obj.G,I->Setting,obj->Obj.Setting,cSetting_label_position);
+        copy3f(lab_pos,lp->pos);
+      }
       lp->mode=1;
       if(mode) {
         add3f(v,lp->offset,lp->offset);

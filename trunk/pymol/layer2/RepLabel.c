@@ -72,7 +72,7 @@ static void RepLabelRender(RepLabel *I,RenderInfo *info)
           TextSetPosNColor(G,v+3,v);
           l = TextRenderRay(G,ray,font_id,l,font_size,v+6);
         }
-        v+=8;
+        v+=9;
       }
     }
   } else if(G->HaveGUI && G->ValidContext) {
@@ -99,7 +99,7 @@ static void RepLabelRender(RepLabel *I,RenderInfo *info)
             }
             l = TextRenderOpenGL(G,info,font_id,l,font_size,v+6);
           }
-          v+=8;
+          v+=9;
         }
         if(float_text)
           glEnable(GL_DEPTH_TEST);	 
@@ -117,7 +117,7 @@ static void RepLabelRender(RepLabel *I,RenderInfo *info)
             TextSetPosNColor(G,v+3,v);
             l = TextRenderOpenGL(G,info,font_id,l,font_size,v+6);
           }
-          v+=8;
+          v+=9;
         }
         glEnable(GL_LIGHTING);
         if(float_text)
@@ -133,12 +133,12 @@ Rep *RepLabelNew(CoordSet *cs,int state)
   ObjectMolecule *obj;
   int a,a1,vFlag,c1;
   float *v,*v0,*vc;
+  float *lab_pos;
   char *p,*l;
   int label_color;
   LabPosType *lp = NULL;
   Pickable *rp = NULL;
   AtomInfoType *ai;
-  const float _0 = 0.0F;
   OOAlloc(G,RepLabel);
   
   obj = cs->Obj;
@@ -172,10 +172,12 @@ Rep *RepLabelNew(CoordSet *cs,int state)
 
   I->L=Alloc(char,sizeof(LabelType)*cs->NIndex);
   ErrChkPtr(G,I->L);
-  I->V=(float*)mmalloc(sizeof(float)*cs->NIndex*8);
+  I->V=(float*)mmalloc(sizeof(float)*cs->NIndex*9);
   ErrChkPtr(G,I->V);
 
   I->OutlineColor = SettingGet_i(G,cs->Setting,obj->Obj.Setting,cSetting_label_outline_color);
+
+  lab_pos = SettingGet_3fv(G,cs->Setting,obj->Obj.Setting,cSetting_label_position);
 
   if(SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_pickable)) {
     I->R.P=Alloc(Pickable,cs->NIndex+1);
@@ -209,27 +211,19 @@ Rep *RepLabelNew(CoordSet *cs,int state)
       *(v++)=*(v0++);
       if(lp) {
         switch(lp->mode) {
-        case 1:
+        case 1:  /* local absolute positioning, global relative */
           add3f(lp->offset, v-3, v-3);
-          v[0] = _0;
-          v[1] = _0;
-          break;
-        case 2:
-          add3f(lp->offset, v-3, v-3);
-          v[0] = lp->pos[0];
-          v[1] = lp->pos[1];
+          copy3f(lab_pos,v);
           break;
         default:
-          v[0] = _0;
-          v[1] = _0;
+          copy3f(lab_pos,v);
           break;
         }
       } else {
-        v[0] = _0;
-        v[1] = _0;
+        copy3f(lab_pos,v);
       }
               
-      v+=2;
+      v+=3;
       if(rp) {
         rp->index = a1;
         rp->bond = cPickableLabel; /* label indicator */

@@ -179,6 +179,12 @@ int CharacterNewFromBytemap(PyMOLGlobals *G, int width, int height,
   return id;
 }
 
+float CharacterGetAdvance(PyMOLGlobals *G,int sampling, int id)
+{
+  register CCharacter *I = G->Character;
+  CharRec *rec = I->Char + id;
+  return rec->Advance/sampling;
+}
 
 void CharacterRenderOpenGL(PyMOLGlobals *G,RenderInfo *info,int id)
 /* need orientation matrix */

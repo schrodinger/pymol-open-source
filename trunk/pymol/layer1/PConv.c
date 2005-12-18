@@ -907,13 +907,14 @@ int PConvPyListToLabPosVLA(PyObject *obj,LabPosType **vla_ptr)
       for(a=0;a<l;a++) {
         i = PyList_GetItem(obj,a);
         if (PyList_Check(i)) {
-          if (PyList_Size(i)==6) {
+          if (PyList_Size(i)==7) {
             ok = ok && PConvPyIntToInt(PyList_GetItem(i,0),&q->mode) && 
               PConvPyFloatToFloat(PyList_GetItem(i,1),q->pos) && 
               PConvPyFloatToFloat(PyList_GetItem(i,2),q->pos+1) && 
-              PConvPyFloatToFloat(PyList_GetItem(i,3),q->offset) && 
-              PConvPyFloatToFloat(PyList_GetItem(i,4),q->offset+1) &&
-              PConvPyFloatToFloat(PyList_GetItem(i,5),q->offset+2);
+              PConvPyFloatToFloat(PyList_GetItem(i,3),q->pos+2) && 
+              PConvPyFloatToFloat(PyList_GetItem(i,4),q->offset) && 
+              PConvPyFloatToFloat(PyList_GetItem(i,5),q->offset+1) &&
+              PConvPyFloatToFloat(PyList_GetItem(i,6),q->offset+2);
           }
         }
         q++;
@@ -935,14 +936,15 @@ PyObject *PConvLabPosVLAToPyList(LabPosType *vla,int l)
     PyObject *item;
     result=PyList_New(l); 
     for(a=0;a<l;a++) {
-      item = PyList_New(6);
+      item = PyList_New(7);
       if(item) {
         PyList_SetItem(item,0,PyInt_FromLong(p->mode));
         PyList_SetItem(item,1,PyFloat_FromDouble((double)p->pos[0]));
         PyList_SetItem(item,2,PyFloat_FromDouble((double)p->pos[1]));
-        PyList_SetItem(item,3,PyFloat_FromDouble((double)p->offset[0]));
-        PyList_SetItem(item,4,PyFloat_FromDouble((double)p->offset[1]));
-        PyList_SetItem(item,5,PyFloat_FromDouble((double)p->offset[2]));
+        PyList_SetItem(item,3,PyFloat_FromDouble((double)p->pos[2]));
+        PyList_SetItem(item,4,PyFloat_FromDouble((double)p->offset[0]));
+        PyList_SetItem(item,5,PyFloat_FromDouble((double)p->offset[1]));
+        PyList_SetItem(item,6,PyFloat_FromDouble((double)p->offset[2]));
         PyList_SetItem(result,a,item);
       }
       

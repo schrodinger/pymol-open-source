@@ -6,6 +6,8 @@ Changes up to 0.99
 
     beta32
 
+    * label positing finally dealt with for atoms.
+
     * fixed defer_builds_mode=2, FINALLY.
 
     * depth information for selective antialiasing -- more efficient!
