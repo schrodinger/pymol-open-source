@@ -75,12 +75,41 @@ static void RepDistLabelRender(RepDistLabel *I,RenderInfo *info)
 
 	 while(c--) {
       TextSetPos(G,v);
-      TextRenderRay(G,ray,font_id,l[n],font_size,NULL);
-      v+=3;
+      TextRenderRay(G,ray,font_id,l[n],font_size,v+3);
+      v+=6;
       n++;
 	 }
   } else if(G->HaveGUI && G->ValidContext) {
     if(pick) {
+      Pickable *p = I->R.P;
+      int i;
+      if(c) {
+        int float_text = (int)SettingGet(G,cSetting_float_labels);
+        if(float_text)
+          glDisable(GL_DEPTH_TEST);	 
+
+        i=(*pick)->src.index;
+        while(c--) {
+          if(*l) {
+            int first_pass = (!(*pick)[0].src.bond);
+            i++;            
+            TextSetPos(G,v);
+            TextSetPickColor(G, first_pass, i);
+            if(first_pass) {
+              VLACheck((*pick),Picking,i);
+              p++;
+              (*pick)[i].src = *p; /* copy object and atom info */
+              (*pick)[i].context = I->R.context;
+            }
+            TextRenderOpenGL(G,info,font_id,l[n],font_size,v+3);
+            n++;
+          }
+          v+=6;
+        }
+        if(float_text)
+          glEnable(GL_DEPTH_TEST);	 
+        (*pick)[0].src.index = i; /* pass the count */
+      }
     } else {
       int float_text = SettingGet_i(G,I->ds->Setting,
                                       I->Obj->Setting,
@@ -98,8 +127,8 @@ static void RepDistLabelRender(RepDistLabel *I,RenderInfo *info)
       while(c--) {
 
         TextSetPos(G,v);
-        TextRenderOpenGL(G,info,font_id,l[n],font_size,NULL);
-        v+=3;
+        TextRenderOpenGL(G,info,font_id,l[n],font_size,v+3);
+        v+=6;
         n++;
       }
       glEnable(GL_LIGHTING);
@@ -109,14 +138,15 @@ static void RepDistLabelRender(RepDistLabel *I,RenderInfo *info)
   }
 }
 
-Rep *RepDistLabelNew(DistSet *ds)
+Rep *RepDistLabelNew(DistSet *ds,int state)
 {
   PyMOLGlobals *G=ds->State.G;
   int a;
   int n = 0;
   float *v,*v1,*v2,*v3,d[3],di;
   char buffer[255];
-
+  float *lab_pos = SettingGet_3fv(G,ds->Setting,ds->Obj->Obj.Setting,cSetting_label_position);
+  Pickable *rp = NULL;
   OOAlloc(G,RepDistLabel);
 
   if(!(ds->NIndex||ds->NAngleIndex||ds->NDihedralIndex)) {
@@ -135,12 +165,33 @@ Rep *RepDistLabelNew(DistSet *ds)
   I->R.P=NULL;
   I->Obj = (CObject*)ds->Obj;
   I->ds = ds;
+  I->R.context.object = (void*)ds->Obj;
+  I->R.context.state = state;
+
 
   if(ds->NIndex || ds->NAngleIndex || ds->NDihedralIndex) {
-	 I->V=VLAlloc(float,3*(ds->NIndex/2+ds->NAngleIndex/5)+1);
+    float *lc;
+
+    ds->NLabel = (ds->NIndex/2 + ds->NAngleIndex/5 + ds->NDihedralIndex/6);
+    
+    if(!ds->LabCoord) { /* store label coordinates */
+      ds->LabCoord = VLAlloc(float,3*ds->NLabel);
+    } else {
+      VLACheck(ds->LabCoord,float,3*ds->NLabel);
+    }
+
+    if(SettingGet_f(G,ds->Setting,ds->Obj->Obj.Setting,cSetting_pickable)) {
+      I->R.P=Alloc(Pickable,ds->NLabel+1);
+      ErrChkPtr(G,I->R.P);
+      rp = I->R.P + 1; /* skip first record! */
+    }
+
+    I->V=VLAlloc(float,3*(ds->NIndex/2+ds->NAngleIndex/5)+1);
     I->L=VLAlloc(DistLabel,(ds->NIndex/2+ds->NAngleIndex/5)+1);
     
     n=0;
+    lc = ds->LabCoord;
+
     if(ds->NIndex) {
       for(a=0;a<ds->NIndex;a=a+2) {
         v1 = ds->Coord+3*a;
@@ -150,12 +201,22 @@ Rep *RepDistLabelNew(DistSet *ds)
         sprintf(buffer,"%1.2f",di);
         buffer[7]=0;
         
-        VLACheck(I->V,float,3*n+2);
+        VLACheck(I->V,float,6*n+5);
         VLACheck(I->L,DistLabel, n);
-        v = I->V + 3 * n;
+        v = I->V + 6 * n;
         strcpy(I->L[n],buffer);
         copy3f(d,v);
-        
+        *(lc++) = v[0];
+        *(lc++) = v[1];
+        *(lc++) = v[2];
+        copy3f(lab_pos,v+3);
+
+        if(rp) {
+          rp->index = n; /* label index */
+          rp->bond = cPickableLabel; /* label indicator */
+          rp++;
+        }
+
         n++;
       }
     }
@@ -188,7 +249,7 @@ Rep *RepDistLabelNew(DistSet *ds)
           radius = l1;
         radius *= SettingGet_f(G,ds->Setting,ds->Obj->Obj.Setting,cSetting_angle_size) *
           SettingGet_f(G,ds->Setting,ds->Obj->Obj.Setting,cSetting_angle_label_position);
-          
+        
         normalize3f(avg);
         if((avg[0]==0.0F) && (avg[1]==0.0F) && (avg[2]==0.0F))
           avg[0]=1.0F;
@@ -200,12 +261,20 @@ Rep *RepDistLabelNew(DistSet *ds)
         sprintf(buffer,"%1.2f",di);
         buffer[7]=0;
         
-        VLACheck(I->V,float,3*n+2);
+        VLACheck(I->V,float,6*n+5);
         VLACheck(I->L,DistLabel, n);
-        v = I->V + 3 * n;
+        v = I->V + 6 * n;
         strcpy(I->L[n],buffer);
         copy3f(avg,v);
-        
+        *(lc++) = v[0];
+        *(lc++) = v[1];
+        *(lc++) = v[2];
+        copy3f(lab_pos,v+3);
+        if(rp) {
+          rp->index = n; /* label index */
+          rp->bond = cPickableLabel; /* label indicator */
+          rp++;
+        }
         n++;
       }
     }
@@ -226,41 +295,41 @@ Rep *RepDistLabelNew(DistSet *ds)
 
       for(a=0;a<ds->NDihedralIndex;a=a+6) {
         v1 = ds->DihedralCoord+3*a;
-      v2 = v1 + 3;
-      v3 = v1 + 6;
-      v4 = v1 + 9;
-      v5 = v1 + 12;
-      v6 = v1 + 15;
-      
-      subtract3f(v1,v2,d12);
-      subtract3f(v3,v2,d32);
-      subtract3f(v4,v3,d43);
-      
-      normalize23f(d32,n32);
+        v2 = v1 + 3;
+        v3 = v1 + 6;
+        v4 = v1 + 9;
+        v5 = v1 + 12;
+        v6 = v1 + 15;
+        
+        subtract3f(v1,v2,d12);
+        subtract3f(v3,v2,d32);
+        subtract3f(v4,v3,d43);
+        
+        normalize23f(d32,n32);
+        
+        remove_component3f(d12,n32,p12);
+        remove_component3f(d43,n32,p43);
 
-      remove_component3f(d12,n32,p12);
-      remove_component3f(d43,n32,p43);
+        average3f(v2,v3,a32);
 
-      average3f(v2,v3,a32);
+        l1 = (float)length3f(p12);
+        l2 = (float)length3f(p43);
 
-      l1 = (float)length3f(p12);
-      l2 = (float)length3f(p43);
-
-      if(l1>l2)
-        radius = l2;
-      else
-        radius = l1;
-      radius *= dihedral_size * dihedral_label_position;
+        if(l1>l2)
+          radius = l2;
+        else
+          radius = l1;
+        radius *= dihedral_size * dihedral_label_position;
       
-      normalize23f(p12,np12);
-      normalize23f(p43,np43);
+        normalize23f(p12,np12);
+        normalize23f(p43,np43);
       
 
-      average3f(np12,np43,avg);
+        average3f(np12,np43,avg);
       
-      normalize3f(avg);
-      if((avg[0]==0.0F) && (avg[1]==0.0F) && (avg[2]==0.0F))
-        copy3f(np12,avg);
+        normalize3f(avg);
+        if((avg[0]==0.0F) && (avg[1]==0.0F) && (avg[2]==0.0F))
+          copy3f(np12,avg);
       
         scale3f(avg,radius,avg);
         add3f(a32,avg,avg);
@@ -269,20 +338,32 @@ Rep *RepDistLabelNew(DistSet *ds)
         sprintf(buffer,"%1.2f",di);
         buffer[7]=0;
         
-        VLACheck(I->V,float,3*n+2);
+        VLACheck(I->V,float,6*n+5);
         VLACheck(I->L,DistLabel, n);
-        v = I->V + 3 * n;
+        v = I->V + 6 * n;
         strcpy(I->L[n],buffer);
         copy3f(avg,v);
-        
+        *(lc++) = v[0];
+        *(lc++) = v[1];
+        *(lc++) = v[2];
+        copy3f(lab_pos,v+3);
+
+        if(rp) {
+          rp->index = n; /* label index */
+          rp->bond = cPickableLabel; /* label indicator */
+          rp++;
+        }
         n++;
       }
-    }
-
-    
+    }    
   }
-  
+
   I->N=n;
+  
+  if(rp) {
+    I->R.P = ReallocForSure(I->R.P,Pickable,(rp-I->R.P));
+    I->R.P[0].index = I->N;  /* unnec? */
+  }
 
   return((void*)(struct Rep*)I);
 }

@@ -3008,6 +3008,8 @@ static int SceneClick(Block *block,int button,int x,int y,
           I->LastPickVertexFlag=true;
         }
         break;
+      case cObjectDist:
+        break;
       case cObjectGadget:
         break;
       default:
@@ -3949,6 +3951,50 @@ static int SceneDrag(Block *block,int x,int y,int mod,double when)
               ObjectSliceDrag(slice,SceneGetState(G),mode,v1,v2,v3);
             }
           }
+          break;
+        case cObjectDist:
+           if(ObjectDistGetLabelTxfVertex((ObjectDist*)obj,
+                                          SettingGetGlobal_i(G,cSetting_state)-1,
+                                          I->LastPicked.src.index,v1)) {
+            /* scale properly given the current projection matrix */
+            vScale = SceneGetScreenVertexScale(G,v1);
+            if(side_by_side(I->StereoMode)) {
+              x = get_stereo_x(x,&I->LastX,I->Width);
+            }
+            
+            switch(mode) {
+            case cButModeMovFragZ:
+            case cButModeMovObjZ:
+            case cButModeMovViewZ:
+            case cButModeMoveAtomZ:
+              v2[0] = 0;
+              v2[1] = 0;
+              v2[2] = -(y-I->LastY)*vScale;
+              break;
+            default:
+              v2[0] = (x-I->LastX)*vScale;
+              v2[1] = (y-I->LastY)*vScale;
+              v2[2] = 0;
+              break;
+            }
+
+            v3[0] = 0.0F;
+            v3[1] = 0.0F;
+            v3[2] = 1.0F;
+            
+            /* transform into model coodinate space */
+            MatrixInvTransformC44fAs33f3f(I->RotMatrix,v2,v2); 
+            MatrixInvTransformC44fAs33f3f(I->RotMatrix,v3,v3); 
+
+            if(I->LastPicked.src.bond == cPickableLabel) {
+              int log_trans = (int)SettingGet(G,cSetting_log_conformations);
+              ObjectDistMoveLabel((ObjectDist*)obj,
+                                  SettingGetGlobal_i(G,cSetting_state)-1,
+                                  I->LastPicked.src.index,v2,1,log_trans);
+              SceneInvalidate(G);
+            }
+          }
+          printf("picked index %d bond %d\n",I->LastPicked.src.index,I->LastPicked.src.bond);
           break;
         default:
           break;

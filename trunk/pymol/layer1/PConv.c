@@ -906,16 +906,18 @@ int PConvPyListToLabPosVLA(PyObject *obj,LabPosType **vla_ptr)
       q=vla;
       for(a=0;a<l;a++) {
         i = PyList_GetItem(obj,a);
-        if (PyList_Check(i)) {
-          if (PyList_Size(i)==7) {
-            ok = ok && PConvPyIntToInt(PyList_GetItem(i,0),&q->mode) && 
-              PConvPyFloatToFloat(PyList_GetItem(i,1),q->pos) && 
-              PConvPyFloatToFloat(PyList_GetItem(i,2),q->pos+1) && 
-              PConvPyFloatToFloat(PyList_GetItem(i,3),q->pos+2) && 
-              PConvPyFloatToFloat(PyList_GetItem(i,4),q->offset) && 
-              PConvPyFloatToFloat(PyList_GetItem(i,5),q->offset+1) &&
-              PConvPyFloatToFloat(PyList_GetItem(i,6),q->offset+2);
-          }
+        if (PyList_Check(i) && (PyList_Size(i)==7)) {
+          ok = ok && PConvPyIntToInt(PyList_GetItem(i,0),&q->mode) && 
+            PConvPyFloatToFloat(PyList_GetItem(i,1),q->pos) && 
+            PConvPyFloatToFloat(PyList_GetItem(i,2),q->pos+1) && 
+            PConvPyFloatToFloat(PyList_GetItem(i,3),q->pos+2) && 
+            PConvPyFloatToFloat(PyList_GetItem(i,4),q->offset) && 
+            PConvPyFloatToFloat(PyList_GetItem(i,5),q->offset+1) &&
+            PConvPyFloatToFloat(PyList_GetItem(i,6),q->offset+2);
+        } else {
+          VLAFreeP(vla); /* just in case... */
+          vla = NULL;
+          break;
         }
         q++;
       }
