@@ -19,6 +19,6 @@ Z* -------------------------------------------------------------------
 #include"Rep.h"
 #include"DistSet.h"
 
-Rep *RepDistLabelNew(DistSet *ds);
+Rep *RepDistLabelNew(DistSet *ds,int state);
 
 #endif

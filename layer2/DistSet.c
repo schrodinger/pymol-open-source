@@ -30,10 +30,45 @@ Z* -------------------------------------------------------------------
 #include"RepDihedral.h"
 #include"PConv.h"
 
-void DistSetUpdate(DistSet *I);
-void DistSetFree(DistSet *I);
-void DistSetStrip(DistSet *I);
-void DistSetInvalidateRep(DistSet *I,int type,int level);
+static void DistSetUpdate(DistSet *I,int state);
+static void DistSetFree(DistSet *I);
+static void DistSetInvalidateRep(DistSet *I,int type,int level);
+static int DistSetGetLabelCount(DistSet *I)
+{
+  return I->NIndex/2 + I->NAngleIndex/5 + I->NDihedralIndex/6;
+}
+
+int DistSetMoveLabel(DistSet *I,int at,float *v,int mode)
+{
+  ObjectDist *obj;
+  int a1 = at;
+  int result = 0;
+  LabPosType *lp;
+
+  obj = I->Obj;
+  
+  if(a1>=0) {
+    int n_label = DistSetGetLabelCount(I);
+    if(!I->LabPos) 
+      I->LabPos = VLACalloc(LabPosType,n_label);
+    if(I->LabPos) {
+      result = 1;
+      lp = I->LabPos+a1;
+      if(!lp->mode) {
+        float *lab_pos = SettingGet_3fv(obj->Obj.G,I->Setting,obj->Obj.Setting,cSetting_label_position);
+        copy3f(lab_pos,lp->pos);
+      }
+      lp->mode=1;
+      if(mode) {
+        add3f(v,lp->offset,lp->offset);
+      } else { 
+        copy3f(v,lp->offset);
+      }
+    }
+  }
+
+  return(result);
+}
 
 int DistSetFromPyList(PyMOLGlobals *G,PyObject *list,DistSet **cs)
 {
@@ -61,15 +96,16 @@ int DistSetFromPyList(PyMOLGlobals *G,PyObject *list,DistSet **cs)
      Always check ll when adding new PyList_GetItem's */
     if(ok) ok = PConvPyIntToInt(PyList_GetItem(list,0),&I->NIndex);
     if(ok) ok = PConvPyListToFloatVLANoneOkay(PyList_GetItem(list,1),&I->Coord);
-
+    
     if(ok && (ll>2)) { /* have angles and torsions too... */
-      if(ok) ok = PConvPyListToFloatVLANoneOkay(PyList_GetItem(list,2),&I->LabelCoord);
+      if(ok) ok = PConvPyListToFloatVLANoneOkay(PyList_GetItem(list,2),&I->LabCoord);
       if(ok) ok = PConvPyIntToInt(PyList_GetItem(list,3),&I->NAngleIndex);
       if(ok) ok = PConvPyListToFloatVLANoneOkay(PyList_GetItem(list,4),&I->AngleCoord);
       if(ok) ok = PConvPyIntToInt(PyList_GetItem(list,5),&I->NDihedralIndex);
       if(ok) ok = PConvPyListToFloatVLANoneOkay(PyList_GetItem(list,6),&I->DihedralCoord);
     }
     if(ok&&(ll>7)) I->Setting = SettingNewFromPyList(G,PyList_GetItem(list,7)); /* state settings */
+    if(ok&&(ll>8)) ok = PConvPyListToLabPosVLA(PyList_GetItem(list,8),&I->LabPos);
 
     if(!ok) {
       if(I)
@@ -90,16 +126,21 @@ PyObject *DistSetAsPyList(DistSet *I)
   PyObject *result = NULL;
 
   if(I) {
-    result = PyList_New(8);
+    result = PyList_New(9);
     
     PyList_SetItem(result,0,PyInt_FromLong(I->NIndex));
     PyList_SetItem(result,1,PConvFloatArrayToPyListNullOkay(I->Coord,I->NIndex*3));
-    PyList_SetItem(result,2,PConvFloatArrayToPyListNullOkay(I->LabelCoord,I->NIndex*3));
+    PyList_SetItem(result,2,PConvFloatArrayToPyListNullOkay(I->LabCoord,I->NLabel));
     PyList_SetItem(result,3,PyInt_FromLong(I->NAngleIndex));
     PyList_SetItem(result,4,PConvFloatArrayToPyListNullOkay(I->AngleCoord,I->NAngleIndex*3));
     PyList_SetItem(result,5,PyInt_FromLong(I->NDihedralIndex));
     PyList_SetItem(result,6,PConvFloatArrayToPyListNullOkay(I->DihedralCoord,I->NDihedralIndex*3));
     PyList_SetItem(result,7,SettingAsPyList(I->Setting));
+    if(I->LabPos) {
+      PyList_SetItem(result,8,PConvLabPosVLAToPyList(I->LabPos,VLAGetSize(I->LabPos)));
+    } else {
+      PyList_SetItem(result,8,PConvAutoNone(NULL));
+    }
     /* TODO setting ... */
   }
   return(PConvAutoNone(result));
@@ -152,7 +193,7 @@ int DistSetGetExtent(DistSet *I,float *mn,float *mx)
   return(I->NIndex+I->NAngleIndex+I->NDihedralIndex);
 }
 /*========================================================================*/
-void DistSetInvalidateRep(DistSet *I,int type,int level)
+static void DistSetInvalidateRep(DistSet *I,int type,int level)
 {
   int a;
   PRINTFD(I->State.G,FB_DistSet)
@@ -189,7 +230,7 @@ void DistSetInvalidateRep(DistSet *I,int type,int level)
   }
 }
 /*========================================================================*/
-void DistSetUpdate(DistSet *I)
+static void DistSetUpdate(DistSet *I,int state)
 {
 
   OrthoBusyFast(I->State.G,0,I->NRep);
@@ -198,7 +239,7 @@ void DistSetUpdate(DistSet *I)
     SceneInvalidate(I->State.G);
   }
   if(!I->Rep[cRepLabel]) {
-    I->Rep[cRepLabel]=RepDistLabelNew(I);
+    I->Rep[cRepLabel]=RepDistLabelNew(I,state);
     SceneInvalidate(I->State.G);
   }
   if(!I->Rep[cRepAngle]) {
@@ -266,17 +307,20 @@ DistSet *DistSetNew(PyMOLGlobals *G)
   I->Rep=VLAlloc(Rep*,cRepCnt);
   I->NRep=cRepCnt;
   I->Setting=NULL;
-  I->LabelCoord = NULL;
+  I->LabPos = NULL;
+  I->LabCoord = NULL;
   I->AngleCoord = NULL;
   I->NAngleIndex = 0;
   I->DihedralCoord = NULL;
   I->NDihedralIndex = 0;
+  I->NLabel = 0;
   for(a=0;a<I->NRep;a++)
 	 I->Rep[a] = NULL;
   return(I);
 }
 /*========================================================================*/
-void DistSetStrip(DistSet *I)
+#if 0
+static void DistSetStrip(DistSet *I)
 {
   int a;
   for(a=0;a<I->NRep;a++)
@@ -284,23 +328,24 @@ void DistSetStrip(DistSet *I)
 		I->Rep[a]->fFree(I->Rep[a]);
   I->NRep=0;
 }
+#endif
 /*========================================================================*/
-void DistSetFree(DistSet *I)
+static void DistSetFree(DistSet *I)
 {
   int a;
   for(a=0;a<I->NRep;a++)
 	 if(I->Rep[a])
 		I->Rep[a]->fFree(I->Rep[a]);
-  if(I) 
-	 {
-	 VLAFreeP(I->AngleCoord);
-	 VLAFreeP(I->DihedralCoord);
-     VLAFreeP(I->LabelCoord);
-	 VLAFreeP(I->Coord);
-	 VLAFreeP(I->Rep);
-     SettingFreeP(I->Setting);
-	 OOFreeP(I);
-	 }
+  if(I) {
+    VLAFreeP(I->AngleCoord);
+    VLAFreeP(I->DihedralCoord);
+    VLAFreeP(I->LabCoord);
+    VLAFreeP(I->LabPos);
+    VLAFreeP(I->Coord);
+    VLAFreeP(I->Rep);
+    SettingFreeP(I->Setting);
+    OOFreeP(I);
+  }
 }
 
 

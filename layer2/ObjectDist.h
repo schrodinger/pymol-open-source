@@ -41,6 +41,9 @@ ObjectDist *ObjectDistNewFromDihedralSele(PyMOLGlobals *G,ObjectDist *oldObj,
                                           int mode, int labels, float *result,
                                           int reset, int state);
 
+int ObjectDistGetLabelTxfVertex(ObjectDist *I,int state,int index,float *v);
+int ObjectDistMoveLabel(ObjectDist *I,int state,int index,float *v,int mode,int log);
+
 ObjectDist *ObjectDistNew(PyMOLGlobals *G);
 void ObjectDistInvalidateRep(ObjectDist *I,int rep);
 PyObject *ObjectDistAsPyList(ObjectDist *I);

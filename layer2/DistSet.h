@@ -16,12 +16,13 @@ Z* -------------------------------------------------------------------
 #ifndef _H_DistSet
 #define _H_DistSet
 
+#include"Base.h"
 #include"Rep.h"
 #include"Setting.h"
 #include"PyMOLObject.h"
 
 typedef struct DistSet {
-  void (*fUpdate)(struct DistSet *I);
+  void (*fUpdate)(struct DistSet *I,int state);
   void (*fRender)(struct DistSet *I,RenderInfo *);
   void (*fFree)(struct DistSet *I);
   void (*fInvalidateRep)(struct DistSet *I,int type,int level);
@@ -33,7 +34,9 @@ typedef struct DistSet {
   int NRep;
   CSetting *Setting;
   /* extended for mobile distance labels */
-  float *LabelCoord;
+  float *LabCoord;
+  LabPosType *LabPos;
+  int NLabel;
   /* extended for angles and torsions, with labels embedded with coordinates */
   float *AngleCoord;
   int NAngleIndex;
@@ -47,6 +50,6 @@ DistSet *DistSetNew(PyMOLGlobals *G);
 PyObject *DistSetAsPyList(DistSet *I);
 int DistSetFromPyList(PyMOLGlobals *G,PyObject *list,DistSet **cs);
 int DistSetGetExtent(DistSet *I,float *mn,float *mx);
-
+int DistSetMoveLabel(DistSet *I,int at,float *v,int mode);
 #endif
 

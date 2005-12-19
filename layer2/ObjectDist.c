@@ -35,6 +35,57 @@ void ObjectDistUpdate(ObjectDist *I);
 int ObjectDistGetNFrames(ObjectDist *I);
 void ObjectDistUpdateExtents(ObjectDist *I);
 
+int ObjectDistGetLabelTxfVertex(ObjectDist *I,int state,int index,float *v)
+{
+  int result = 0;
+  if(state<0) state=SettingGet_i(I->Obj.G,NULL,I->Obj.Setting,cSetting_state)-1;
+  if(state<0) state=SceneGetState(I->Obj.G); 
+  if(I->NDSet==1) state=0; /* static singletons always active here it seems */
+  state = state % I->NDSet;
+  { 
+    DistSet *ds = I->DSet[state];
+    if((!ds)&&(SettingGet_b(I->Obj.G,I->Obj.Setting,NULL,cSetting_all_states))) {
+      state=0;
+      ds = I->DSet[state];
+    }
+    if(ds) {
+      /*      result = DistSetGetAtomTxfVertex(ds,index,v);*/
+    }
+  }
+  return(result);
+
+  return 0;
+}
+
+int ObjectDistMoveLabel(ObjectDist *I,int state,int index,float *v,int mode,int log)
+{
+  int result = 0;
+  DistSet *ds;
+  if(state<0) state=0;
+  if(I->NDSet==1) state=0;
+  state = state % I->NDSet;
+  if((!I->DSet[state])&&(SettingGet_b(I->Obj.G,I->Obj.Setting,NULL,cSetting_all_states)))
+    state=0;
+  ds = I->DSet[state];
+  if(ds) {
+    result = DistSetMoveLabel(I->DSet[state],index,v,mode);
+    ds->fInvalidateRep(ds,cRepLabel,cRepInvCoord);
+    /*      ExecutiveUpdateCoordDepends(I->Obj.G,I);*/
+  }
+#if 0
+  if(log) {
+    OrthoLineType line,buffer;
+    if(SettingGet(I->Obj.G,cSetting_logging)) {
+      ObjectMoleculeGetAtomSele(I,index,buffer);
+      sprintf(line,"cmd.translate_atom(\"%s\",%15.9f,%15.9f,%15.9f,%d,%d,%d)\n",
+              buffer,v[0],v[1],v[2],state+1,mode,0);
+      PLog(line,cPLog_no_flush);
+    }
+  }
+#endif
+  return(result);
+}
+
 static DistSet *ObjectDistGetDistSetFromM4XBond(PyMOLGlobals *G,
                                                 ObjectMolecule *obj, 
                                                 M4XBondType *hb, int n_hb,
@@ -343,7 +394,7 @@ void ObjectDistUpdate(ObjectDist *I)
 	   OrthoBusySlow(I->Obj.G,a,I->NDSet);
       /*	   printf(" ObjectDist: updating state %d of \"%s\".\n" , a+1, I->Obj.Name);*/
       if(I->DSet[a]->fUpdate)
-        I->DSet[a]->fUpdate(I->DSet[a]);
+        I->DSet[a]->fUpdate(I->DSet[a],a);
 	 }
 }
 /*========================================================================*/
