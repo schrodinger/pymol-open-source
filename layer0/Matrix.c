@@ -482,18 +482,18 @@ void MatrixMultiplyC44f( const float *b, float *m )
 void MatrixTransformC44f3f(float *m, float *q,float *p)
 {
   register float q0  = *q    , q1  = *(q+1), q2  = *(q+2);
-  *(p++) = m[ 0]*q0+m[ 4]*q1+m[ 8]*q2+m[12];
-  *(p++) = m[ 1]*q0+m[ 5]*q1+m[ 9]*q2+m[13];
-  *(p++) = m[ 2]*q0+m[ 6]*q1+m[10]*q2+m[14];
+  p[0] = m[ 0]*q0+m[ 4]*q1+m[ 8]*q2+m[12];
+  p[1] = m[ 1]*q0+m[ 5]*q1+m[ 9]*q2+m[13];
+  p[2] = m[ 2]*q0+m[ 6]*q1+m[10]*q2+m[14];
 }
 /*========================================================================*/
 void MatrixTransformC44f4f(float *m, float *q,float *p)
 {
   register float q0  = *q    , q1  = *(q+1), q2  = *(q+2);
-  *(p++) = m[ 0]*q0+m[ 4]*q1+m[ 8]*q2+m[12];
-  *(p++) = m[ 1]*q0+m[ 5]*q1+m[ 9]*q2+m[13];
-  *(p++) = m[ 2]*q0+m[ 6]*q1+m[10]*q2+m[14];
-  *(p++) = m[ 3]*q0+m[ 7]*q1+m[11]*q2+m[15];
+  p[0] = m[ 0]*q0+m[ 4]*q1+m[ 8]*q2+m[12];
+  p[1] = m[ 1]*q0+m[ 5]*q1+m[ 9]*q2+m[13];
+  p[2] = m[ 2]*q0+m[ 6]*q1+m[10]*q2+m[14];
+  p[3] = m[ 3]*q0+m[ 7]*q1+m[11]*q2+m[15];
 }
 /*========================================================================*/
 void MatrixInvTransformC44fAs33f3f(float *m, float *q,float *p)
@@ -501,17 +501,17 @@ void MatrixInvTransformC44fAs33f3f(float *m, float *q,float *p)
   /* multiplying a column major rotation matrix as row-major will
    * give the inverse rotation */
   register float q0  = *q    , q1  = *(q+1), q2  = *(q+2);
-  *(p++) = m[ 0]*q0+m[ 1]*q1+m[ 2]*q2;
-  *(p++) = m[ 4]*q0+m[ 5]*q1+m[ 6]*q2;
-  *(p++) = m[ 8]*q0+m[ 9]*q1+m[10]*q2;
+  p[0] = m[ 0]*q0+m[ 1]*q1+m[ 2]*q2;
+  p[1] = m[ 4]*q0+m[ 5]*q1+m[ 6]*q2;
+  p[2] = m[ 8]*q0+m[ 9]*q1+m[10]*q2;
 }
 /*========================================================================*/
 void MatrixTransformC44fAs33f3f(float *m, float *q, float *p) 
 {
   register float q0  = *q    , q1  = *(q+1), q2  = *(q+2);
-  *(p++) = m[ 0]*q0+m[ 4]*q1+m[ 8]*q2;
-  *(p++) = m[ 1]*q0+m[ 5]*q1+m[ 9]*q2;
-  *(p++) = m[ 2]*q0+m[ 6]*q1+m[10]*q2;
+  p[0] = m[ 0]*q0+m[ 4]*q1+m[ 8]*q2;
+  p[1] = m[ 1]*q0+m[ 5]*q1+m[ 9]*q2;
+  p[2] = m[ 2]*q0+m[ 6]*q1+m[10]*q2;
 }
 /*========================================================================*/
 float MatrixGetRMS(PyMOLGlobals *G,int n,float *v1,float *v2,float *wt)

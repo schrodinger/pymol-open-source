@@ -1741,6 +1741,12 @@ int   SettingSetGlobal_f(PyMOLGlobals *G,int index,float value)
   return(SettingSet_f(G->Setting,index,value));
 }
 /*========================================================================*/
+int   SettingSetGlobal_3f(PyMOLGlobals *G,int index, float value1,float value2,float value3)
+{
+  return(SettingSet_3f(G->Setting,index,value1,value2,value3));
+}
+
+/*========================================================================*/
 int SettingSet(PyMOLGlobals *G,int index,float v)
 {
   return(SettingSetfv(G,index,&v));

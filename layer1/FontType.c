@@ -199,7 +199,6 @@ static char *FontTypeRenderRay(CRay *ray, CFontType *I,char *st,float size, floa
     }
 
     RayGetScaledAxes(ray,xn,yn);
-
     
     if(size<0.0F) {
 

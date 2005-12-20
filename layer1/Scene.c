@@ -2935,7 +2935,7 @@ static int SceneClick(Block *block,int button,int x,int y,
             case cObjectMolecule:
               objMol = (ObjectMolecule*)obj;
               EditorPrepareDrag(G,objMol,-1,I->LastPicked.src.index,
-                                SettingGetGlobal_i(G,cSetting_state)-1);
+                                SettingGetGlobal_i(G,cSetting_state)-1, mode);
               I->SculptingFlag = 1;
               I->SculptingSave =  objMol->AtomInfo[I->LastPicked.src.index].protekted;
               objMol->AtomInfo[I->LastPicked.src.index].protekted=2;
@@ -2994,7 +2994,7 @@ static int SceneClick(Block *block,int button,int x,int y,
         }
         objMol = (ObjectMolecule*)obj;
         EditorPrepareDrag(G,objMol,-1,I->LastPicked.src.index,
-                          SettingGetGlobal_i(G,cSetting_state)-1);
+                          SettingGetGlobal_i(G,cSetting_state)-1, mode);
 
         if(I->LastPicked.src.bond==cPickableAtom) {
           I->SculptingFlag = 1;
