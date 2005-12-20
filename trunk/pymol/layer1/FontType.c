@@ -47,16 +47,20 @@ __inline__ static char *_FontTypeRenderOpenGL(RenderInfo *info,
     if(info)
       sampling = info->sampling;
     if(st&&(*st)) {
+      float origin[3], v_scale;
+      SceneOriginGet(G,origin);
+      v_scale = SceneGetScreenVertexScale(G,origin);
+
       if(size<0.0F) {
-        float origin[3];
-        SceneOriginGet(G,origin);
-        size = (int)(0.5F-size/SceneGetScreenVertexScale(G,origin));
+        size = (int)(0.5F-size/v_scale);
       }
 
       if(rpos) {
-        if(rpos[0]>-1.0F) { /* we need to measure the string width before starting to draw */
-          float factor = -rpos[0]/2.0F - 0.5F;
+        if(rpos[0]<1.0F) { /* we need to measure the string width before starting to draw */
+          float factor = rpos[0]/2.0F - 0.5F;
           char *sst = st;
+          if(factor<-1.0F) factor = -1.0F;
+          if(factor>0.0F) factor = 0.0F;
           while((c=*(sst++))) {
             
             CharFngrprnt fprnt;
@@ -89,8 +93,21 @@ __inline__ static char *_FontTypeRenderOpenGL(RenderInfo *info,
             last_c = c;
           }
         }
-        if(rpos[1]>-1.0F) {
-          y_indent = 0.75*size*(rpos[1]/2.0F + 0.5F);
+        if(rpos[0]<-1.0F) {
+          x_indent -= (rpos[0]+1.0F)/v_scale;
+        } else if(rpos[0]>1.0F) {
+          x_indent -= (rpos[0]-1.0F)/v_scale;
+        }
+        if(rpos[1]<1.0F) {
+          float factor = -rpos[1]/2.0F + 0.5F;
+          if(factor>1.0F) factor = 1.0F;
+          if(factor<0.0F) factor = 0.0F;
+          y_indent = 0.75*size*factor;
+        }
+        if(rpos[1]<-1.0F) {
+          y_indent -= (rpos[1]+1.0F)/v_scale;
+        } else if(rpos[1]>1.0F) {
+          y_indent -= (rpos[1]-1.0F)/v_scale;
         }
       }
       if(!pushed) {
@@ -168,7 +185,10 @@ static char *FontTypeRenderRay(CRay *ray, CFontType *I,char *st,float size, floa
   float xn[3], yn[3], x_adj[3], y_adj[3], pos[3], *v;
 
   if(st&&(*st)) {
-    
+    float origin[3],v_scale;
+    SceneOriginGet(G,origin);
+    v_scale = SceneGetScreenVertexScale(G,origin);
+
     if(rpos) {
       float loc[3];
       v = TextGetPos(I->G);
@@ -180,17 +200,19 @@ static char *FontTypeRenderRay(CRay *ray, CFontType *I,char *st,float size, floa
 
     RayGetScaledAxes(ray,xn,yn);
 
+    
     if(size<0.0F) {
-      float origin[3];
-      SceneOriginGet(G,origin);
-      size = (int)(0.5F - size / SceneGetScreenVertexScale(G,origin));
+
+      size = (int)(0.5F - size / v_scale);
     }
 
     if(rpos) {
 
-      if(rpos[0]>-1.0F) { /* we need to measure the string width before starting to draw */
-        float factor = -rpos[0]/2.0F - 0.5F;
+      if(rpos[0]<1.0F) { /* we need to measure the string width before starting to draw */
+        float factor = rpos[0]/2.0F - 0.5F;
         char *sst = st;
+        if(factor<-1.0F) factor = -1.0F;
+        if(factor>0.0F) factor = 0.0F;
         while((c=*(sst++))) {
           
           CharFngrprnt fprnt;
@@ -222,8 +244,21 @@ static char *FontTypeRenderRay(CRay *ray, CFontType *I,char *st,float size, floa
           }
         }
       }
-      if(rpos[1]>-1.0F) {
-        y_indent = 0.75F*sampling*size*(rpos[1]/2.0F + 0.5F);
+      if(rpos[0]<-1.0F) {
+        x_indent -= 2*(rpos[0]+1.0F)/v_scale;
+      } else if(rpos[0]>1.0F) {
+        x_indent -= 2*(rpos[0]-1.0F)/v_scale;
+      }
+      if(rpos[1]<1.0F) {
+        float factor = -rpos[1]/2.0F + 0.5F;
+        if(factor>1.0F) factor = 1.0F;
+        if(factor<0.0F) factor = 0.0F;
+        y_indent = 0.75F*sampling*size*factor;
+      }
+      if(rpos[1]<-1.0F) {
+        y_indent -= 2*(rpos[1]+1.0F)/v_scale;
+      } else if(rpos[1]>1.0F) {
+        y_indent -= 2*(rpos[1]-1.0F)/v_scale;
       }
       v = TextGetPos(I->G);
       scale3f(xn, x_indent, x_adj);
