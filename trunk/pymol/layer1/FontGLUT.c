@@ -23,6 +23,7 @@ Z* -------------------------------------------------------------------
 #include "Character.h"
 #include "Scene.h"
 #include "Util.h"
+#include "Matrix.h"
 
 static void FontGLUTSave(CFontGLUT *I)
 {
@@ -62,6 +63,7 @@ static char *FontGLUTRenderOpenGL(RenderInfo *info,CFontGLUT *I,char *st,float s
     int textured = SettingGetGlobal_b(G,cSetting_texture_fonts);
     int pushed = OrthoGetPushed(G);
     int sampling = 1;
+    float x_indent=0.0F, y_indent=0.0F;
     if(info)
       sampling = info->sampling;
     
@@ -69,23 +71,95 @@ static char *FontGLUTRenderOpenGL(RenderInfo *info,CFontGLUT *I,char *st,float s
       textured = true;
 
     if(st&&(*st)) {
+
+      float origin[3], v_scale;
+      SceneOriginGet(G,origin);
+      v_scale = SceneGetScreenVertexScale(G,origin);
+      
+      
+      first = font_info->first;
+      last = first + font_info->num_chars;
+      
+ 
+      if(rpos) {
+        if(rpos[0]<1.0F) { /* we need to measure the string width before starting to draw */
+          float factor = rpos[0]/2.0F - 0.5F;
+          char *sst = st;
+          if(factor<-1.0F) factor = -1.0F;
+          if(factor>0.0F) factor = 0.0F;
+          while((c=*(sst++))) {
+            if ((c >= first) && (c < last)) {
+              ch = font_info->ch[c - first];
+              if (ch) {
+                x_indent -= factor * ch->advance;
+              }
+            }
+          }
+        }
+        if(rpos[0]<-1.0F) {
+          x_indent -= (rpos[0]+1.0F)/v_scale;
+        } else if(rpos[0]>1.0F) {
+          x_indent -= (rpos[0]-1.0F)/v_scale;
+        }
+        if(rpos[1]<1.0F) {
+          float factor = -rpos[1]/2.0F + 0.5F;
+          if(factor>1.0F) factor = 1.0F;
+          if(factor<0.0F) factor = 0.0F;
+          y_indent = 0.75*size*factor;
+        }
+        if(rpos[1]<-1.0F) {
+          y_indent -= (rpos[1]+1.0F)/v_scale;
+        } else if(rpos[1]>1.0F) {
+          y_indent -= (rpos[1]-1.0F)/v_scale;
+        }
+      }
+      
+      if(textured && !pushed) {
+        float *v = TextGetPos(G);
+        float loc[3];
+        float zero[3]= {0.0F,0.0F,0.0F};
+        if(rpos) {
+          SceneGetEyeNormal(G,v,loc);
+          scale3f(loc,rpos[2],loc);
+          add3f(v,loc,loc);
+          v = loc;
+        }
+        ScenePushRasterMatrix(G,v);
+        TextSetPos(G,zero);
+      } else if(!textured) {
+        if(rpos) {
+          float *v = TextGetPos(G);
+          float loc[3];
+          SceneGetEyeNormal(G,v,loc);
+          scale3f(loc,rpos[2],loc);
+          add3f(v,loc,loc);
+          TextSetPos(G,loc);
+        }
+      }
+
+      if(rpos) {
+        if(textured) {
+          TextIndent(G,x_indent,y_indent);
+        } else {
+          float *v = TextGetPos(G);
+          float indent[3];
+          float loc[3];
+          float *matrix = SceneGetMatrix(G);
+          indent[0] = -v_scale * x_indent;
+          indent[1] = -v_scale * y_indent;
+          indent[2] = 0.0F;
+          MatrixInvTransformC44fAs33f3f(matrix,indent,indent);
+          add3f(indent,v,loc);
+          TextSetPos(G,loc);
+        }
+      }
       
       if(!textured) {
         glColor3fv(TextGetColor(G));
         glRasterPos4fv(TextGetPos(G));
         FontGLUTSave(I);
       }
-      
-      first = font_info->first;
-      last = first + font_info->num_chars;
-      
-      if(textured && !pushed) {
-        float *v = TextGetPos(G);
-        float zero[3]= {0.0F,0.0F,0.0F};
-        ScenePushRasterMatrix(G,v);
-        TextSetPos(G,zero);
-      }
-      
+
       while((c=*(st++))) {
         if ((c >= first) && (c < last))
           {
@@ -140,6 +214,7 @@ static char *FontGLUTRenderOpenGL(RenderInfo *info,CFontGLUT *I,char *st,float s
 
 static char *FontGLUTRenderRay(CRay *ray, CFontGLUT *I,char *st,float size, float *rpos)
 {
+  PyMOLGlobals *G = I->Font.G;
   int c;
   FontGLUTBitmapFontRec *font_info = I->glutFont;
   int first,last;
@@ -147,16 +222,74 @@ static char *FontGLUTRenderRay(CRay *ray, CFontGLUT *I,char *st,float size, floa
   CharFngrprnt fprnt;
   unsigned char *rgba;
   int sampling = 1;
+  float x_indent=0.0F, y_indent=0.0F;
+  float xn[3], yn[3], x_adj[3], y_adj[3], pos[3], *v;
+
   sampling = ray->Sampling;
   
   if(st&&(*st)) {
+    float origin[3],v_scale;
+    SceneOriginGet(G,origin);
+    v_scale = SceneGetScreenVertexScale(G,origin);
+
+    if(rpos) {
+      float loc[3];
+      v = TextGetPos(G);
+      SceneGetEyeNormal(G,v,loc);
+      scale3f(loc,rpos[2],loc);
+      add3f(v,loc,loc);
+      TextSetPos(G,loc);
+    }
+
+    RayGetScaledAxes(ray,xn,yn);
+
     UtilZeroMem(&fprnt,sizeof(fprnt));
     first = font_info->first;
     last = first + font_info->num_chars;
     fprnt.u.i.text_id = I->Font.TextID;           
     fprnt.u.i.size = sampling;
     rgba = fprnt.u.i.color;
-    TextGetColorUChar(I->Font.G,rgba,rgba+1,rgba+2,rgba+3);
+    TextGetColorUChar(G,rgba,rgba+1,rgba+2,rgba+3);
+
+    if(rpos) {
+
+      if(rpos[0]<1.0F) { /* we need to measure the string width before starting to draw */
+        float factor = rpos[0]/2.0F - 0.5F;
+        char *sst = st;
+        if(factor<-1.0F) factor = -1.0F;
+        if(factor>0.0F) factor = 0.0F;
+        
+        while((c=*(sst++))) {
+          fprnt.u.i.ch = c;
+          ch = font_info->ch[c - first];
+          if (ch) {
+            x_indent -= 2*factor * ch->advance;
+          }
+        }
+      }
+      if(rpos[0]<-1.0F) {
+        x_indent -= 2*(rpos[0]+1.0F)/v_scale;
+      } else if(rpos[0]>1.0F) {
+        x_indent -= 2*(rpos[0]-1.0F)/v_scale;
+      }
+      if(rpos[1]<1.0F) {
+        float factor = -rpos[1]/2.0F + 0.5F;
+        if(factor>1.0F) factor = 1.0F;
+        if(factor<0.0F) factor = 0.0F;
+        y_indent = 0.75F*sampling*size*factor;
+      }
+      if(rpos[1]<-1.0F) {
+        y_indent -= 2*(rpos[1]+1.0F)/v_scale;
+      } else if(rpos[1]>1.0F) {
+        y_indent -= 2*(rpos[1]-1.0F)/v_scale;
+      }
+      v = TextGetPos(G);
+      scale3f(xn, x_indent, x_adj);
+      scale3f(yn, y_indent, y_adj);
+      subtract3f(v,x_adj,pos);
+      subtract3f(pos,y_adj,pos);
+      TextSetPos(G,pos);
+    }
 
     while((c=*(st++))) {
       if ((c >= first) && (c < last))
@@ -165,9 +298,9 @@ static char *FontGLUTRenderRay(CRay *ray, CFontGLUT *I,char *st,float size, floa
           if (ch) {
             fprnt.u.i.ch = c;
             {
-              int id = CharacterFind(I->Font.G,&fprnt);
+              int id = CharacterFind(G,&fprnt);
               if(!id) {
-                id = CharacterNewFromBitmap(I->Font.G,ch->width, 
+                id = CharacterNewFromBitmap(G,ch->width, 
                                             ch->height, 
                                             (unsigned char*)ch->bitmap,
                                             (float)ch->xorig,

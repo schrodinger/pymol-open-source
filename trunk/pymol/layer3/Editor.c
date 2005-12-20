@@ -1555,18 +1555,18 @@ void EditorSetDrag(PyMOLGlobals *G,ObjectMolecule *obj,int sele, int quiet,int s
   if(ObjectMoleculeCheckFullStateSelection(obj,sele,state)) {
     sele = -1;
   }
-  EditorPrepareDrag(G,obj,sele,-1,state);
+  EditorPrepareDrag(G,obj,sele,-1,state,0);
 }
 void EditorReadyDrag(PyMOLGlobals *G,int state)
 {
   register CEditor *I = G->Editor;
   if(I->DragObject && (I->DragIndex==-1)) {
-    EditorPrepareDrag(G,I->DragObject,I->DragSelection,-1,state);
+    EditorPrepareDrag(G,I->DragObject,I->DragSelection,-1,state,0);
   }
 }
 /*========================================================================*/
 void EditorPrepareDrag(PyMOLGlobals *G,ObjectMolecule *obj,
-                       int sele, int index, int state)
+                       int sele, int index, int state, int mode)
 {
   int frg;
   int sele0=-1,sele1=-1,sele2=-1,sele3=-1;
@@ -1663,6 +1663,7 @@ void EditorPrepareDrag(PyMOLGlobals *G,ObjectMolecule *obj,
         if(i1>=0) {
           ObjectMoleculeGetAtomTxfVertex(obj,state,i1,I->DragBase);
           I->DragHaveBase = true;
+          printf("base %s\n",name);
         }
       }
 
@@ -1769,11 +1770,16 @@ void EditorPrepareDrag(PyMOLGlobals *G,ObjectMolecule *obj,
             ObjectMoleculeGetAtomTxfVertex(obj,state,i3,I->V0);          
           }
           if(I->DragHaveBase) {
+            
             copy3f(I->DragBase,I->V1);
             subtract3f(I->V1,I->V0,I->Axis);
             average3f(I->V1,I->V0,I->Center);
             normalize3f(I->Axis);
             I->DragHaveAxis=true;
+            if(mode==cButModeRotFrag) {
+              copy3f(I->V0,I->DragBase);
+            }
+
           }
         }
       }

@@ -50,7 +50,7 @@ void EditorFavorOrigin(PyMOLGlobals *G, float *v1);
 void EditorFree(PyMOLGlobals *G);
 void EditorSetDrag(PyMOLGlobals *G,ObjectMolecule *obj,int sele, int quiet,int state);
 void EditorReadyDrag(PyMOLGlobals *G,int state);
-void EditorPrepareDrag(PyMOLGlobals *G,ObjectMolecule *obj,int sele, int index,int state);
+void EditorPrepareDrag(PyMOLGlobals *G,ObjectMolecule *obj,int sele, int index,int state, int mode);
 void EditorDrag(PyMOLGlobals *G,ObjectMolecule *obj,int index,int mode,int state,
                 float *pt,float *mov,float *z_dir);
 

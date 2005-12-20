@@ -83,7 +83,7 @@ float *SettingGetGlobal_3fv(PyMOLGlobals *G,int index); /* always succeed */
 int   SettingSetGlobal_b(PyMOLGlobals *G,int index,int value);
 int   SettingSetGlobal_i(PyMOLGlobals *G,int index,int value);
 int   SettingSetGlobal_f(PyMOLGlobals *G,int index,float value);
-
+int   SettingSetGlobal_3f(PyMOLGlobals *G,int index, float value1,float value2,float value3);
 int   SettingSetSmart_i(PyMOLGlobals *G,CSetting *set1,CSetting *set2,int index, int value);
 /* more to come */
 
