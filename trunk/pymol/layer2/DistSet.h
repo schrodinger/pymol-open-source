@@ -51,5 +51,7 @@ PyObject *DistSetAsPyList(DistSet *I);
 int DistSetFromPyList(PyMOLGlobals *G,PyObject *list,DistSet **cs);
 int DistSetGetExtent(DistSet *I,float *mn,float *mx);
 int DistSetMoveLabel(DistSet *I,int at,float *v,int mode);
+int DistSetGetLabelVertex(DistSet *I,int at, float *v);
+
 #endif
 

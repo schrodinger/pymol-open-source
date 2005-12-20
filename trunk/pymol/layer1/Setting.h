@@ -568,7 +568,7 @@ CSetting *SettingNewFromPyList(PyMOLGlobals *G,PyObject *list);
 #define cSetting_editor_auto_dihedral       416
 #define cSetting_presentation_auto_start    417
 #define cSetting_validate_object_names      418
-#define cSetting_pixel_scale                419
+#define cSetting_unused_boolean_def_true    419
 #define cSetting_auto_show_spheres          420
 #define cSetting_sphere_mode                421
 #define cSetting_sphere_point_max_size      422

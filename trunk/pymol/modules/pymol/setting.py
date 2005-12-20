@@ -452,7 +452,7 @@ if __name__=='pymol.setting':
         editor_auto_dihedral      = (416, '')
         presentation_auto_start   = (417, '')
         validate_object_names     = (418, '')
-        pixel_scale               = (419, '')
+#        ray_pixel_scale_limit     = (419, '')
         auto_show_spheres         = (420, '')
         sphere_mode               = (421, '')
         sphere_point_max_size     = (422, '')

@@ -49,7 +49,7 @@ int ObjectDistGetLabelTxfVertex(ObjectDist *I,int state,int index,float *v)
       ds = I->DSet[state];
     }
     if(ds) {
-      /*      result = DistSetGetAtomTxfVertex(ds,index,v);*/
+     result = DistSetGetLabelVertex(ds,index,v);
     }
   }
   return(result);

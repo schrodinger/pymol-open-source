@@ -553,7 +553,7 @@ typedef struct _CPyMOL {
   ov_word lex_editor_auto_dihedral;
   ov_word lex_presentation_auto_start;
   ov_word lex_validate_object_names;
-  ov_word lex_pixel_scale;
+  /*  ov_word lex_ray_pixel_scale_limit;*/
   ov_word lex_auto_show_spheres;
   ov_word lex_sphere_mode;
   ov_word lex_sphere_point_max_size;
@@ -1168,7 +1168,7 @@ static OVstatus PyMOL_InitAPI(CPyMOL *I)
   LEX_SETTING(editor_auto_dihedral,416);
   LEX_SETTING(presentation_auto_start,417);
   LEX_SETTING(validate_object_names,418);
-  LEX_SETTING(pixel_scale, 419);
+  /*  LEX_SETTING(ray_pixel_scale_limit, 419);*/
   LEX_SETTING(auto_show_spheres, 420);
   LEX_SETTING(sphere_mode, 421);
   LEX_SETTING(sphere_point_max_size, 422);

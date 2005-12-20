@@ -33,9 +33,15 @@ Z* -------------------------------------------------------------------
 static void DistSetUpdate(DistSet *I,int state);
 static void DistSetFree(DistSet *I);
 static void DistSetInvalidateRep(DistSet *I,int type,int level);
-static int DistSetGetLabelCount(DistSet *I)
+
+int DistSetGetLabelVertex(DistSet *I,int at, float *v)
 {
-  return I->NIndex/2 + I->NAngleIndex/5 + I->NDihedralIndex/6;
+  if((at>=0)&&(at<I->NLabel)&&I->LabCoord) {
+    float *vv = I->LabCoord+3*at;
+    copy3f(vv,v);
+    return true;
+  }
+  return false;
 }
 
 int DistSetMoveLabel(DistSet *I,int at,float *v,int mode)
@@ -48,14 +54,15 @@ int DistSetMoveLabel(DistSet *I,int at,float *v,int mode)
   obj = I->Obj;
   
   if(a1>=0) {
-    int n_label = DistSetGetLabelCount(I);
+    
     if(!I->LabPos) 
-      I->LabPos = VLACalloc(LabPosType,n_label);
+      I->LabPos = VLACalloc(LabPosType,I->NLabel);
     if(I->LabPos) {
       result = 1;
       lp = I->LabPos+a1;
       if(!lp->mode) {
-        float *lab_pos = SettingGet_3fv(obj->Obj.G,I->Setting,obj->Obj.Setting,cSetting_label_position);
+        float *lab_pos = SettingGet_3fv(obj->Obj.G,I->Setting,obj->Obj.Setting,
+                                        cSetting_label_position);
         copy3f(lab_pos,lp->pos);
       }
       lp->mode=1;
