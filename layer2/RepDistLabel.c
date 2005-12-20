@@ -150,6 +150,9 @@ Rep *RepDistLabelNew(DistSet *ds,int state)
   OOAlloc(G,RepDistLabel);
 
   if(!(ds->NIndex||ds->NAngleIndex||ds->NDihedralIndex)) {
+    ds->NLabel = 0;
+    VLAFreeP(ds->LabCoord);
+    VLAFreeP(ds->LabPos);
     OOFreeP(I);
     return(NULL); 
   }
@@ -178,6 +181,10 @@ Rep *RepDistLabelNew(DistSet *ds,int state)
       ds->LabCoord = VLAlloc(float,3*ds->NLabel);
     } else {
       VLACheck(ds->LabCoord,float,3*ds->NLabel);
+    }
+
+    if(ds->LabPos) { /* make sure this VLA covers all labels */
+      VLACheck(ds->LabPos,LabPosType,ds->NLabel);
     }
 
     if(SettingGet_f(G,ds->Setting,ds->Obj->Obj.Setting,cSetting_pickable)) {
@@ -209,7 +216,20 @@ Rep *RepDistLabelNew(DistSet *ds,int state)
         *(lc++) = v[0];
         *(lc++) = v[1];
         *(lc++) = v[2];
-        copy3f(lab_pos,v+3);
+        if(ds->LabPos) {
+          LabPosType *lp = ds->LabPos + n;
+          switch(lp->mode) {
+          case 1:
+            add3f(lp->offset, v,v);
+            copy3f(lab_pos,v+3);
+            break;
+          default:
+            copy3f(lab_pos,v+3);
+            break;
+          }
+        } else {
+          copy3f(lab_pos,v+3);
+        }
 
         if(rp) {
           rp->index = n; /* label index */
@@ -269,7 +289,20 @@ Rep *RepDistLabelNew(DistSet *ds,int state)
         *(lc++) = v[0];
         *(lc++) = v[1];
         *(lc++) = v[2];
-        copy3f(lab_pos,v+3);
+        if(ds->LabPos) {
+          LabPosType *lp = ds->LabPos + n;
+          switch(lp->mode) {
+          case 1:
+            add3f(lp->offset, v,v);
+            copy3f(lab_pos,v+3);
+            break;
+          default:
+            copy3f(lab_pos,v+3);
+            break;
+          }
+        } else {
+          copy3f(lab_pos,v+3);
+        }
         if(rp) {
           rp->index = n; /* label index */
           rp->bond = cPickableLabel; /* label indicator */
@@ -346,6 +379,20 @@ Rep *RepDistLabelNew(DistSet *ds,int state)
         *(lc++) = v[0];
         *(lc++) = v[1];
         *(lc++) = v[2];
+        if(ds->LabPos) {
+          LabPosType *lp = ds->LabPos + n;
+          switch(lp->mode) {
+          case 1:
+            add3f(lp->offset, v,v);
+            copy3f(lab_pos,v+3);
+            break;
+          default:
+            copy3f(lab_pos,v+3);
+            break;
+          }
+        } else {
+          copy3f(lab_pos,v+3);
+        }
         copy3f(lab_pos,v+3);
 
         if(rp) {

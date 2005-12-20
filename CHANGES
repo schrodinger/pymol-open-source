@@ -4,7 +4,12 @@ CHANGE LOG
 
 Changes up to 0.99
 
+    
     beta32
+
+    * multiple lights now work with multiple processors
+
+    * label position for dashes
 
     * label positing finally dealt with for atoms.
 

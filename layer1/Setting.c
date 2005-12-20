@@ -2526,7 +2526,7 @@ void SettingInitGlobal(PyMOLGlobals *G,int alloc,int reset_gui)
                                                         2 = amber compliant,
                                                         3 = pdb I/O, but iupac inside
                                                       */
-  SettingSet_i(I,cSetting_ray_pixel_scale,-1);
+  SettingSet_f(I,cSetting_ray_pixel_scale,1.30F);
   #ifdef _PYMOL_FREETYPE
   SettingSet_i(I,cSetting_label_font_id,5);
   #else
@@ -2623,7 +2623,7 @@ void SettingInitGlobal(PyMOLGlobals *G,int alloc,int reset_gui)
   SettingSet_b(I,cSetting_editor_auto_dihedral, 1);
   SettingSet_b(I,cSetting_presentation_auto_start,1);
   SettingSet_b(I,cSetting_validate_object_names, 1);
-  SettingSet_b(I,cSetting_pixel_scale, 1);
+  SettingSet_b(I,cSetting_unused_boolean_def_true, 1);
   SettingSet_b(I,cSetting_auto_show_spheres, G->Option->sphere_mode>=0);
   SettingSet_i(I,cSetting_sphere_mode, G->Option->sphere_mode);
   SettingSet_f(I,cSetting_sphere_point_max_size, 18.0);

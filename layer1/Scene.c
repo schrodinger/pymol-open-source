@@ -3994,7 +3994,6 @@ static int SceneDrag(Block *block,int x,int y,int mod,double when)
               SceneInvalidate(G);
             }
           }
-          printf("picked index %d bond %d\n",I->LastPicked.src.index,I->LastPicked.src.bond);
           break;
         default:
           break;
@@ -4784,16 +4783,13 @@ void SceneRay(PyMOLGlobals *G,
     
     {
       int ortho = SettingGetGlobal_i(G,cSetting_ray_orthoscopic);
-      int pixel_scale = SettingGetGlobal_i(G,cSetting_ray_pixel_scale);
-      float pixel_scale_value = 1.0F;
-      if(pixel_scale<0)
-        pixel_scale = SettingGetGlobal_i(G,cSetting_pixel_scale);        
+      float pixel_scale_value = SettingGetGlobal_f(G,cSetting_ray_pixel_scale);
       
+      if(pixel_scale_value<0) pixel_scale_value = 1.0F;
+
       if(ortho<0) ortho = SettingGetGlobal_b(G,cSetting_ortho);
       
-      if(SettingGetGlobal_i(G,cSetting_ray_pixel_scale)) {
-        pixel_scale_value = ((float)ray_height)/I->Height;
-      }
+      pixel_scale_value *= ((float)ray_height)/I->Height;
 
       if(ortho) {
         RayPrepare(ray,-width,width,-height,height,

@@ -34,6 +34,7 @@ Z* -------------------------------------------------------------------
 #include"Text.h"
 #include"PyMOL.h"
 #include"Scene.h"
+#include"PConv.h"
 
 #ifdef _PYMOL_INLINE
 #undef _PYMOL_INLINE
@@ -50,6 +51,9 @@ Z* -------------------------------------------------------------------
 	1 contains transformed vertices (vector size = 3)
 	2 contains transformed vertices for shadowing 
 */
+
+/* note: the following value must be at least one greater than the max
+   number of lights */
 
 #define MAX_RAY_THREADS 12
 
@@ -1194,11 +1198,11 @@ void RayProjectTriangle(CRay *I,RayInfo *r,float *light,float *v0,float *n0,floa
   }
 }
 #ifndef _PYMOL_NOPY
-static void RayHashSpawn(CRayHashThreadInfo *Thread,int n_thread)
+static void RayHashSpawn(CRayHashThreadInfo *Thread,int n_thread,int n_total)
 {
   int blocked;
   PyObject *info_list;
-  int a;
+  int a,c,n=0;
   CRay *I = Thread->ray;
 
   blocked = PAutoBlock();
@@ -1206,12 +1210,21 @@ static void RayHashSpawn(CRayHashThreadInfo *Thread,int n_thread)
   PRINTFB(I->G,FB_Ray,FB_Blather)
     " Ray: filling voxels with %d threads...\n",n_thread
   ENDFB(I->G);
-  info_list = PyList_New(n_thread);
-  for(a=0;a<n_thread;a++) {
-    PyList_SetItem(info_list,a,PyCObject_FromVoidPtr(Thread+a,NULL));
+  while(n<n_total) {
+    c = n;
+    info_list = PyList_New(n_thread);
+    for(a=0;a<n_thread;a++) {
+      if((c+a)<n_total) {
+        PyList_SetItem(info_list,a,PyCObject_FromVoidPtr(Thread+c+a,NULL));
+      } else {
+        PyList_SetItem(info_list,a,PConvAutoNone(NULL));
+      }
+      n++;
+    }
+    PyObject_CallMethod(P_cmd,"_ray_hash_spawn","O",info_list);
+    Py_DECREF(info_list);
+
   }
-  PyObject_CallMethod(P_cmd,"_ray_hash_spawn","O",info_list);
-  Py_DECREF(info_list);
   PAutoUnblock(blocked);
 }
 #endif
@@ -1452,10 +1465,10 @@ int RayTraceThread(CRayThreadInfo *T)
 	const float _1		= 1.0F;
 	const float _p5		= 0.5F;
 	const float _255	= 255.0F;
-   const float _p499 = 0.499F;
+    const float _p499 = 0.499F;
 	const float _persistLimit	= 0.0001F;
     int n_basis = I->NBasis;
-   {
+    {
      float fudge = SettingGet(I->G,cSetting_ray_triangle_fudge);
    
      BasisFudge0 = 0.0F-fudge;
@@ -3078,7 +3091,7 @@ int opaque_back=0;
 #ifndef _PYMOL_NOPY
     if(shadows&&(n_thread>1)) { /* parallel execution */
 
-      CRayHashThreadInfo thread_info[2];
+      CRayHashThreadInfo thread_info[MAX_RAY_THREADS];
       
       /* rendering map */
 
@@ -3086,28 +3099,33 @@ int opaque_back=0;
       thread_info[0].vert2prim = I->Vert2Prim;
       thread_info[0].prim = I->Primitive;
       thread_info[0].clipBox = I->Volume;
+      thread_info[0].phase = 0;
+      thread_info[0].perspective = perspective;
+      thread_info[0].front = front;
+
       thread_info[0].image = image;
       thread_info[0].background = background;
       thread_info[0].bytes = width * (unsigned int)height;
-      thread_info[0].phase = 0;
       thread_info[0].ray = I; /* for compute box */
-      thread_info[0].perspective = perspective;
-      thread_info[0].front = front;
 
       /* shadow map */
 
       {
         int bc;
         for(bc=2;bc<I->NBasis;bc++) {
-          thread_info[1].basis = I->Basis+bc;
-          thread_info[1].vert2prim = I->Vert2Prim;
-          thread_info[1].prim = I->Primitive;
-          thread_info[1].clipBox = NULL;
-          thread_info[1].phase = 1;
-          thread_info[1].perspective = false; 
-          RayHashSpawn(thread_info,I->NBasis-1); 
+          thread_info[bc-1].basis = I->Basis+bc;
+          thread_info[bc-1].vert2prim = I->Vert2Prim;
+          thread_info[bc-1].prim = I->Primitive;
+          thread_info[bc-1].clipBox = NULL;
+          thread_info[bc-1].phase = bc-1;
+          thread_info[bc-1].perspective = false; 
+          thread_info[bc-1].front = _0;
         }
       }
+
+      /* NOTE that we're not limiting the number of threads in this phase
+         under the assumption that it will usually just be a few threads */
+      RayHashSpawn(thread_info, n_thread, I->NBasis-1); 
       
     } else
 #endif
@@ -3122,13 +3140,13 @@ int opaque_back=0;
                          NULL,bc-1,cCache_ray_map,false,_0);
           }
         }
-
-      /* serial tasks which RayHashThread does in parallel mode using the first thread */
-
-      fill(image,background,width * (unsigned int)height);
-      RayComputeBox(I);
-       
-    }
+        
+        /* serial tasks which RayHashThread does in parallel mode using the first thread */
+        
+        fill(image,background,width * (unsigned int)height);
+        RayComputeBox(I);
+        
+      }
 
     OrthoBusyFast(I->G,5,20);
     now = UtilGetSeconds(I->G)-timing;

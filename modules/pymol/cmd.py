@@ -704,12 +704,13 @@ DEVELOPMENT TO DO
             # WARNING: internal routine, subject to change      
             # internal routine to support multithreaded raytracing
             thread_list = []
-            for a in thread_info[1:2]:
-                t = threading.Thread(target=_cmd.ray_hash_thread,
-                                            args=(a,))
-                t.setDaemon(1)
-                t.start()
-                thread_list.append(t)
+            for a in thread_info[1:]:
+                if a != None:
+                    t = threading.Thread(target=_cmd.ray_hash_thread,
+                                         args=(a,))
+                    t.setDaemon(1)
+                    t.start()
+                    thread_list.append(t)
             _cmd.ray_hash_thread(thread_info[0])
             for t in thread_list:
                 t.join()
