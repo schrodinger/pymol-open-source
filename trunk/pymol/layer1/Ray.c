@@ -3347,12 +3347,12 @@ int opaque_back=0;
           d = *p;
           if(x) {
             dd = d - p[-1];
-            dzdx+= dd;
+            dzdx += dd;
             xc++;
           }
           if(x<(width-1)) {
             dd = p[1] - d;
-            if((!xc)||fabs(dd)>fabs(dzdx))
+            if((!xc)||(fabs(dd)>fabs(dzdx)))
               dzdx = dd;
             xc = 1;
           }
@@ -3370,6 +3370,11 @@ int opaque_back=0;
           p++;
           *(q++) = dzdx;
           *(q++) = dzdy;
+          /*
+          if(((x == y )||(x==width/2)||(y==height/2))&&((dzdx!=0.0F) || (dzdy!=0.0F))) {
+            printf("%5d %5d : %8.3f %8.3f\n",y,x,dzdx,dzdy);
+            }*/
+
           *(q++) = sqrt1f(dzdx*dzdx+dzdy*dzdy);
         }
     }
@@ -3470,7 +3475,7 @@ int opaque_back=0;
           int dc = 0;
           int width3 = width*3;
           register float diff,max_diff;
-          register float dot,min_dot;
+          register float dot,min_dot,max_dep;
           register float dx,dy,dz,px=0.0F,py=0.0F,pz=0.0F,ddx,ddy;
           float factor = I->PixelRadius/(
                                          SettingGetGlobal_f(I->G,cSetting_ray_trace_gain)
@@ -3489,6 +3494,7 @@ int opaque_back=0;
             for(x=0;x<width;x++) {
               dc = 0;
               max_diff = 0.0F;   
+              max_dep = 0.0F;
               min_dot = 1.0F;
               dx = p[0];
               dy = p[1];
@@ -3532,9 +3538,12 @@ int opaque_back=0;
                   dot = (dx/dz)*(px/pz) + (dy/dz)*(py/pz);
                   if(dot<min_dot) min_dot = dot;
                 }
+                diff = fabs(dz-pz);
+                if(max_dep<diff)
+                  max_dep = diff;
               }
               if((max_diff>(factor_2))||
-                 ((fabs(dz-pz)>(factor_4)))||
+                 (max_dep>(factor_4))||
                  ((min_dot<_8)&&
                   ((dz>(factor_2)||(pz>(factor_2)))))||
                  ((min_dot<_45)&&
