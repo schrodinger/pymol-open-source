@@ -621,6 +621,9 @@ CSetting *SettingNewFromPyList(PyMOLGlobals *G,PyObject *list);
 #define cSetting_ray_trace_gain             469
 #define cSetting_selection_visible_only     470
 #define cSetting_label_position             471
+#define cSetting_ray_trace_depth_factor     472
+#define cSetting_ray_trace_slope_factor     473
+#define cSetting_ray_trace_disco_factor      474
 
 /* when you add a new settingg also remember:
    layer1/Setting.c
@@ -630,7 +633,7 @@ CSetting *SettingNewFromPyList(PyMOLGlobals *G,PyObject *list);
 
 /* cSetting_ss_INIT must always be last setting_index +1 */
 
-#define cSetting_INIT                       472
+#define cSetting_INIT                       475
 
 #endif
 

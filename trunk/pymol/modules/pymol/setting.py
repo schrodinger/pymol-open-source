@@ -505,6 +505,9 @@ if __name__=='pymol.setting':
         ray_trace_gain            = (469, '')
         selection_visible_only    = (470, '')
         label_position            = (471, '')
+        ray_trace_depth_factor    = (472, '')
+        ray_trace_slope_factor    = (473, '')
+        ray_trace_disco_factor    = (474, '')
         
     setting_sc = Shortcut(SettingIndex.__dict__.keys())
 

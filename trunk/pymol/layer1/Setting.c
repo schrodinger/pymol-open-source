@@ -1520,6 +1520,7 @@ void SettingGenerateSideEffects(PyMOLGlobals *G,int index,char *sele,int state)
   case cSetting_cartoon_ladder_color:
   case cSetting_cartoon_sampling:
   case cSetting_cartoon_loop_quality:
+  case cSetting_ray_trace_mode: /* affects loop quality */
   case cSetting_cartoon_loop_radius:
   case cSetting_cartoon_loop_cap:
   case cSetting_cartoon_tube_quality:
@@ -2683,7 +2684,9 @@ void SettingInitGlobal(PyMOLGlobals *G,int alloc,int reset_gui)
   SettingSet_f(I,cSetting_ray_trace_gain,0.12F);
   SettingSet_b(I,cSetting_selection_visible_only, 0);
   SettingSet_3f(I,cSetting_label_position, 0.0F, 0.0F, 0.75F);
-
+  SettingSet_f(I,cSetting_ray_trace_depth_factor,0.1F);
+  SettingSet_f(I,cSetting_ray_trace_slope_factor,0.6F);
+  SettingSet_f(I,cSetting_ray_trace_disco_factor,0.08F);
 }
 
 

@@ -1212,6 +1212,9 @@ Rep *RepCartoonNew(CoordSet *cs,int state)
   if(loop_radius<0.01F) loop_radius=0.01F;
   loop_quality = SettingGet_i(G,cs->Setting,obj->Obj.Setting,cSetting_cartoon_loop_quality);
   if(loop_quality<3) loop_quality=3;
+  if(SettingGetGlobal_i(G,cSetting_ray_trace_mode)>0)
+    if(loop_quality<12)
+      loop_quality *= 2;
 
   tube_radius = SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_cartoon_tube_radius);
   if(tube_radius<0.01F) tube_radius=0.01F;
