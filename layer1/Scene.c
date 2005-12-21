@@ -4794,7 +4794,7 @@ void SceneRay(PyMOLGlobals *G,
       if(ortho) {
         RayPrepare(ray,-width,width,-height,height,
                    I->FrontSafe,I->BackSafe,rayView,I->RotMatrix,aspRat,
-                   ray_width, pixel_scale_value,true,1.0F,1.0F);
+                   ray_width, pixel_scale_value,true,1.0F,1.0F,((float)ray_height)/I->Height);
       } else {        
         float back_ratio;
         float back_height;
@@ -4809,7 +4809,7 @@ void SceneRay(PyMOLGlobals *G,
         RayPrepare(ray,-back_width, back_width, -back_height, back_height,
                    I->FrontSafe,I->BackSafe,rayView,I->RotMatrix,aspRat,
                    ray_width, pixel_scale_value,false,
-                   height/back_height,I->FrontSafe/I->BackSafe);
+                   height/back_height,I->FrontSafe/I->BackSafe,((float)ray_height)/I->Height);
       }
     }
     

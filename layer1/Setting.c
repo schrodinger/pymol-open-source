@@ -2686,7 +2686,7 @@ void SettingInitGlobal(PyMOLGlobals *G,int alloc,int reset_gui)
   SettingSet_3f(I,cSetting_label_position, 0.0F, 0.0F, 0.75F);
   SettingSet_f(I,cSetting_ray_trace_depth_factor,0.1F);
   SettingSet_f(I,cSetting_ray_trace_slope_factor,0.6F);
-  SettingSet_f(I,cSetting_ray_trace_disco_factor,0.08F);
+  SettingSet_f(I,cSetting_ray_trace_disco_factor,0.05F);
 }
 
 

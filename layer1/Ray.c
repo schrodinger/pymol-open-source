@@ -3491,7 +3491,7 @@ int opaque_back=0;
           float disco_f_45 = disco_f*0.45F;
 
           {
-            float gain = I->PixelRadius/SettingGetGlobal_f(I->G,cSetting_ray_trace_gain);
+            float gain = I->PixelRadius/(SettingGetGlobal_f(I->G,cSetting_ray_trace_gain)*I->Magnified);
             if(antialias)
               gain /= antialias;
             slope_f *= gain;
@@ -3574,17 +3574,21 @@ int opaque_back=0;
                 if(max_depth<diff) max_depth = diff;
                 if((dz>R_SMALL4)&&(pz>R_SMALL4)) { 
                   dot = (dx/dz)*(px/pz) + (dy/dz)*(py/pz);
-                  if(dot<min_dot) min_dot = dot;
+                  if(dot<min_dot) {
+                    min_dot = dot;
+                    max_dz = dz;
+                    max_pz = pz;
+                  }
                 }
-                if(dz>max_dz) max_dz = dz;
-                if(pz>max_pz) max_pz = pz;
+                /*                if(dz>max_dz) max_dz = dz;
+                                  if(pz>max_pz) max_pz = pz;*/
                 diff = fabs(dz-pz);
                 if(diff>max_slope)
                   max_slope = diff;
               }
               if((max_slope>(slope_f)) /* depth */
                  || (max_depth>(depth_f))/* slope */
-                 /* gradient discontinuities */
+                 /* gradient discontinuities -- could probably use more tuning...*/
                  || ((min_dot<_8)  &&((max_dz>disco_f)||(max_pz>disco_f)))
                  || ((min_dot<_4)  &&((max_dz>disco_f_625)||(max_pz>disco_f_625)))
                  || ((min_dot<_25) &&((max_dz>disco_f_5)||(max_pz>disco_f_5)))
@@ -4257,7 +4261,7 @@ void RayPrepare(CRay *I,float v0,float v1,float v2,
                 float v3,float v4,float v5,
                 float *mat,float *rotMat,float aspRat,
                 int width, float pixel_scale,int ortho,
-                float pixel_ratio,float front_back_ratio)
+                float pixel_ratio,float front_back_ratio,float magnified)
 	  /*prepare for vertex calls */
 {
   int a;
@@ -4295,6 +4299,7 @@ void RayPrepare(CRay *I,float v0,float v1,float v2,
     I->PixelRadius = (((float)I->Range[0])/width)*pixel_scale*pixel_ratio;
   }
   I->PixelRatio = pixel_ratio;
+  I->Magnified = magnified;
   I->FrontBackRatio = front_back_ratio;
 }
 /*========================================================================*/
