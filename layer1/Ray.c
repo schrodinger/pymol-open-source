@@ -2913,8 +2913,10 @@ int opaque_back=0;
 
   antialias = SettingGetGlobal_i(I->G,cSetting_antialias);
   
-  if(trace_mode && (antialias<1)) antialias = 1;
-  if(trace_mode) antialias++;
+  if(trace_mode && (antialias==1))
+    antialias=2;
+  else if(trace_mode && antialias)
+    antialias++;
 
   if(antialias<0) antialias=0;
   if(antialias>4) antialias=4;
@@ -3469,37 +3471,45 @@ int opaque_back=0;
           FreeP(tmp);
         }
         {
-
           unsigned int *q = image;
           float *p = delta;
           int dc = 0;
           int width3 = width*3;
-          register float diff,max_diff;
-          register float dot,min_dot,max_dep;
+
+          float slope_f = SettingGetGlobal_f(I->G,cSetting_ray_trace_slope_factor);
+          float depth_f = SettingGetGlobal_f(I->G,cSetting_ray_trace_depth_factor);
+          float disco_f = SettingGetGlobal_f(I->G,cSetting_ray_trace_disco_factor);
+          register float diff,max_depth;
+          register float dot,min_dot,max_slope, max_dz,max_pz;
           register float dx,dy,dz,px=0.0F,py=0.0F,pz=0.0F,ddx,ddy;
-          float factor = I->PixelRadius/(
-                                         SettingGetGlobal_f(I->G,cSetting_ray_trace_gain)
-                                         *antialias); 
-          register float factor_2 = factor * 0.25F;
-          register float factor_4 = factor * 0.4F;
-          register float factor_125 = factor * 0.125F;
-          register float factor_095 = factor * 0.095F;
-          register float factor_09 = factor * 0.09F;
           const float _8 = 0.08F;
-          const float _45 = 0.04F;
+          const float _4 = 0.4F;
           const float _25 = 0.25F;
           const float _m25 = -0.25F;
-          
+          float disco_f_625 = disco_f*0.625F;
+          float disco_f_5 = disco_f*0.5F;
+          float disco_f_45 = disco_f*0.45F;
+
+          {
+            float gain = I->PixelRadius/SettingGetGlobal_f(I->G,cSetting_ray_trace_gain);
+            if(antialias)
+              gain /= antialias;
+            slope_f *= gain;
+            depth_f *= gain;
+            disco_f *= gain;
+          }
           for(y=0;y<height;y++) 
             for(x=0;x<width;x++) {
               dc = 0;
-              max_diff = 0.0F;   
-              max_dep = 0.0F;
+              max_slope = 0.0F;   
+              max_depth = 0.0F;
               min_dot = 1.0F;
+              max_dz = 0.0F;
+              max_pz = 0.0F;
               dx = p[0];
               dy = p[1];
               dz = p[2];
-              for(i=0;i<4;i++) {
+              for(i=0;i<8;i++) {
                 switch(i) {
                 case 0:
                   if(x) {
@@ -3529,30 +3539,57 @@ int opaque_back=0;
                     pz = p[width3+2];
                   }
                   break;
+                case 4:
+                  if(x&&y) { 
+                    px = p[-width3-3];
+                    py = p[-width3-2];
+                    pz = p[-width3-1];
+                  }
+                  break;
+                case 5:
+                  if(x&&(y<(height-1))) {
+                    px = p[width3-3];
+                    py = p[width3-2];
+                    pz = p[width3-1];
+                  }
+                  break;
+                case 6:
+                  if(y&&(x<(width-1))) { 
+                    px = p[-width3+3];
+                    py = p[-width3+4];
+                    pz = p[-width3+5];
+                  }
+                  break;
+                case 7:
+                  if((y<(height-1))&&(x<(width-1))) {
+                    px = p[width3+3];
+                    py = p[width3+4];
+                    pz = p[width3+5];
+                  }
+                  break;
                 }
                 ddx = dx-px;
                 ddy = dy-py;
                 diff = ddx*ddx + ddy*ddy;
-                if(max_diff<diff) max_diff = diff;
+                if(max_depth<diff) max_depth = diff;
                 if((dz>R_SMALL4)&&(pz>R_SMALL4)) { 
                   dot = (dx/dz)*(px/pz) + (dy/dz)*(py/pz);
                   if(dot<min_dot) min_dot = dot;
                 }
+                if(dz>max_dz) max_dz = dz;
+                if(pz>max_pz) max_pz = pz;
                 diff = fabs(dz-pz);
-                if(max_dep<diff)
-                  max_dep = diff;
+                if(diff>max_slope)
+                  max_slope = diff;
               }
-              if((max_diff>(factor_2))||
-                 (max_dep>(factor_4))||
-                 ((min_dot<_8)&&
-                  ((dz>(factor_2)||(pz>(factor_2)))))||
-                 ((min_dot<_45)&&
-                  ((dz>(factor_125)||(pz>(factor_125)))))||
-                 ((min_dot<_25)&&
-                  ((dz>(factor_095)||(pz>(factor_095)))))||
-                 ((min_dot<_m25)&&
-                  ((dz>(factor_09)) && 
-                   (pz>(factor_09))))) {
+              if((max_slope>(slope_f)) /* depth */
+                 || (max_depth>(depth_f))/* slope */
+                 /* gradient discontinuities */
+                 || ((min_dot<_8)  &&((max_dz>disco_f)||(max_pz>disco_f)))
+                 || ((min_dot<_4)  &&((max_dz>disco_f_625)||(max_pz>disco_f_625)))
+                 || ((min_dot<_25) &&((max_dz>disco_f_5)||(max_pz>disco_f_5)))
+                 || ((min_dot<_m25)&&((max_dz>disco_f_45)&&(max_pz>disco_f_45)))
+                 ) {
                 if(fogFlag) {
                   
                   float ffact =  depth[q-image] * invFrontMinusBack;
