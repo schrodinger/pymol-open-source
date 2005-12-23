@@ -314,11 +314,11 @@ Rep *RepNonbondedSphereNew(CoordSet *cs,int state)
     for(a=0;a<cs->NIndex;a++) 
       if(active[a]>0) {
         
+        a1=cs->IdxToAtm[a];
+          
         if(!obj->AtomInfo[a1].masked) {
           I->NP++;
 
-          a1=cs->IdxToAtm[a];
-          
           I->R.P[I->NP].index = a1;
           I->R.P[I->NP].bond = -1;
           v1 = cs->Coord+3*a;
