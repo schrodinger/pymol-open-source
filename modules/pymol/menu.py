@@ -18,6 +18,24 @@
 
 import cmd
 
+def all_motion(s):
+    return [[ 2, 'Camera Motions:'     , ''                       ],     
+              [ 1, 'store'         , 'cmd.mview("store")'      ],
+              [ 1, 'clear'       ,   'cmd.mview("clear")'      ],
+              [ 0, ''               ,''                             ],
+              [ 1, 'interpolate'   , 'cmd.mview("interpolate")'   ],
+              [ 1, 'reinterpolate'   , 'cmd.mview("reinterpolate")'   ],            
+              ]
+
+def mol_motion(s):
+    return [[ 2, 'Object Motions:'     , ''                       ],     
+              [ 1, 'store'         , 'cmd.mview("store",object="'+s+'")'      ],
+              [ 1, 'clear'       ,   'cmd.mview("clear",object="'+s+'")'    ],
+              [ 0, ''               ,''                             ],
+              [ 1, 'interpolate'   ,   'cmd.mview("interpolate",object="'+s+'")'    ],
+              [ 1, 'reinterpolate'   ,   'cmd.mview("reinterpolate",object="'+s+'")'    ],
+              ]
+
 def rep_action(action,s) :
     return [
         [ 1, 'lines'      , 'cmd.'+action+'("lines"     ,"'+s+'")' ],

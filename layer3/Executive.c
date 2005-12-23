@@ -129,6 +129,14 @@ static void ExecutiveSpecSetVisibility(PyMOLGlobals *G,SpecRec *rec,
                                        int new_vis,int mod);
 void ExecutiveObjMolSeleOp(PyMOLGlobals *G,int sele,ObjectMoleculeOpRec *op);
 
+static int get_op_cnt(PyMOLGlobals *G)
+{
+  int result = 5;
+  if((SettingGetGlobal_i(G,cSetting_button_mode)==2)&&
+     !strcmp(SettingGetGlobal_s(G,cSetting_button_mode_name),"3-Button Motions"))
+    result = 6;
+  return result;
+}
 static int ExecutiveAddKey(CExecutive *I, SpecRec *rec)
 {
   int ok=false;
@@ -712,8 +720,6 @@ ObjectMolecule **ExecutiveGetObjectMoleculeVLA(PyMOLGlobals *G,char *sele)
 #define ExecToggleWidth 17
 #define ExecToggleSize 16
 #define ExecToggleTextShift 4
-
-#define ExecOpCnt 5
 
 typedef struct { 
   M4XAnnoType m4x;
@@ -10216,6 +10222,7 @@ static int ExecutiveClick(Block *block,int button,int x,int y,int mod)
   int skip;
   int ExecLineHeight = SettingGetGlobal_i(G,cSetting_internal_gui_control_size);
   int hide_underscore = SettingGetGlobal_b(G,cSetting_hide_underscore_names);
+  int op_cnt = get_op_cnt(G);
 
   if(y<I->HowFarDown) {
     if(SettingGetGlobal_b(G,cSetting_internal_gui_mode)==1) 
@@ -10239,10 +10246,10 @@ static int ExecutiveClick(Block *block,int button,int x,int y,int mod)
           } else {
             if(!a) {
               t = ((I->Block->rect.right-ExecRightMargin)-x)/ExecToggleWidth;
-              if(t<ExecOpCnt) {
+              if(t<op_cnt) {
                 int my = I->Block->rect.top-(ExecTopMargin + n*ExecLineHeight)-3;
                 int mx = I->Block->rect.right-(ExecRightMargin + t*ExecToggleWidth);
-                t = (ExecOpCnt-t)-1;
+                t = (op_cnt-t)-1;
                 switch(t) {
                 case 0:
                   switch(rec->type) {
@@ -10398,6 +10405,29 @@ static int ExecutiveClick(Block *block,int button,int x,int y,int mod)
                     case cObjectSlice:
                       MenuActivate(G,mx,my,x,y,false,"slice_color",rec->obj->Name);
                       break;
+                    }
+                    break;
+                  }
+                  break;
+                case 5:
+                  switch(rec->type) {
+                  case cExecAll:
+                  case cExecSelection:
+                    MenuActivate(G,mx,my,x,y,false,"all_motion",rec->name);
+                    break;
+                  case cExecObject:
+                    switch(rec->obj->type) {
+                    case cObjectMolecule:
+                      MenuActivate(G,mx,my,x,y,false,"mol_motion",rec->obj->Name);
+                      break;
+                      /*
+                    case cObjectDist:
+                    case cObjectMap:
+                    case cObjectSurface:
+                    case cObjectCGO:
+                    case cObjectMesh:
+                      MenuActivate(G,mx,my,x,y,false,"obj_motion",rec->obj->Name);
+                      break;*/
                     }
                     break;
                   }
@@ -10637,6 +10667,8 @@ static int ExecutiveDrag(Block *block,int x,int y,int mod)
   int xx,t;
   int ExecLineHeight = SettingGetGlobal_i(G,cSetting_internal_gui_control_size);
   int hide_underscore = SettingGetGlobal_b(G,cSetting_hide_underscore_names);
+  int op_cnt = get_op_cnt(G);
+
   if(y<I->HowFarDown) {
     if(SettingGetGlobal_b(G,cSetting_internal_gui_mode)==1) 
       return SceneDeferDrag(SceneGetBlock(G),x,y,mod);
@@ -10651,7 +10683,7 @@ static int ExecutiveDrag(Block *block,int x,int y,int mod)
   
     {
       int row_offset;
-      if((xx>=0)&&(t>=ExecOpCnt)) {
+      if((xx>=0)&&(t>=op_cnt)) {
         row_offset = ((I->Block->rect.top-y)-
                       (ExecTopMargin+ExecClickMargin))/ExecLineHeight;
         I->Over = row_offset;
@@ -10906,6 +10938,7 @@ static void ExecutiveDraw(Block *block)
   int ExecLineHeight = SettingGetGlobal_i(G,cSetting_internal_gui_control_size);
   int text_lift = (ExecLineHeight/2)-5;
   int hide_underscore = SettingGetGlobal_b(G,cSetting_hide_underscore_names);
+  int op_cnt = get_op_cnt(G);
 
   if(G->HaveGUI && G->ValidContext && ((block->rect.right-block->rect.left)>6)) {
     int max_char;
@@ -10945,7 +10978,7 @@ static void ExecutiveDraw(Block *block)
     }
 
     max_char = (((I->Block->rect.right-I->Block->rect.left)-(ExecLeftMargin+ExecRightMargin+4)) -
-                     (ExecOpCnt*ExecToggleWidth));
+                     (op_cnt*ExecToggleWidth));
     if(I->ScrollBarActive) {
       max_char -= (ExecScrollBarMargin+ExecScrollBarWidth);
     }      
@@ -10966,9 +10999,9 @@ static void ExecutiveDraw(Block *block)
     
     x = I->Block->rect.left+ExecLeftMargin;
     y = (I->Block->rect.top-ExecLineHeight)-ExecTopMargin;
-    /*    xx = I->Block->rect.right-ExecRightMargin-ExecToggleWidth*(cRepCnt+ExecOpCnt);*/
+    /*    xx = I->Block->rect.right-ExecRightMargin-ExecToggleWidth*(cRepCnt+op_cnt);*/
 #ifndef _PYMOL_NOPY
-    xx = I->Block->rect.right-ExecRightMargin-ExecToggleWidth*(ExecOpCnt);
+    xx = I->Block->rect.right-ExecRightMargin-ExecToggleWidth*(op_cnt);
 #else
     xx = I->Block->rect.right-ExecRightMargin;
 #endif
@@ -11001,7 +11034,7 @@ static void ExecutiveDraw(Block *block)
               float toggleLightEdge[3] = { 0.7F, 0.7F, 0.9F};
               
               glColor3fv(toggleColor);
-              for(a=0;a<ExecOpCnt;a++)
+              for(a=0;a<op_cnt;a++)
                 {
                   switch(a) {
                   case 0:
@@ -11050,6 +11083,13 @@ static void ExecutiveDraw(Block *block)
                                 toggleDarkEdge,
                                 NULL);
                     draw_button_char(G,x2,y2+text_lift,'C');
+                    break;
+                  case 5:
+                    draw_button(x2,y2,ExecToggleSize,(ExecLineHeight-1),
+                                toggleLightEdge,
+                                toggleDarkEdge,
+                                toggleColor3);
+                    draw_button_char(G,x2,y2+text_lift,'M');
                     break;
                   }
                   x2+=ExecToggleWidth;

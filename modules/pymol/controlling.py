@@ -120,9 +120,9 @@ if __name__=='pymol.controlling':
                                  'two_button_selecting',
                                  'two_button_editing',
                                  ],
-        'three_button_morphing' : [   'three_button_viewing',
-                                      'three_button_editing',
-                                      'three_button_morphing' ],
+        'three_button_motions' : [   'three_button_viewing',
+                                     'three_button_editing',
+                                     'three_button_motions' ],
         }
 
     def config_mouse(mode='three_button',quiet=1):
@@ -141,7 +141,7 @@ if __name__=='pymol.controlling':
     mode_name_dict = {
         'three_button_viewing' : '3-Button Viewing',
         'three_button_editing' : '3-Button Editing',
-        'three_button_morphing': '3-Bttn. Morphing',
+        'three_button_motions':  '3-Button Motions',
         'two_button_viewing'   : '2-Button Viewing',
         'two_button_selecting' : '2-Btn. Selecting',
         'two_button_editing'   : '2-Button Editing',
@@ -196,7 +196,7 @@ if __name__=='pymol.controlling':
                                           ('single_right','none', 'menu'),
                                           ],
 
-        'three_button_morphing': [ ('l','none','rota'),
+        'three_button_motions': [ ('l','none','rota'),
                                    ('m','none','move'),
                                    ('r','none','movz'),
                                    ('l','shft','rotv'),

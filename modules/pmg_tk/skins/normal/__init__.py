@@ -2007,9 +2007,14 @@ class Normal(PMGSkin):
 
         self.menuBar.addmenuitem('Mouse', 'separator', '')
         
-        self.menuBar.addmenuitem('Mouse', 'command', '3 Button Universal Cycle',
-                                         label='3 Button Universal Cycle',
+
+        self.menuBar.addmenuitem('Mouse', 'command', '3 Button Editing Cycle',
+                                         label='3 Button Editing Cycle',
                                          command = lambda s=self: s.cmd.config_mouse('three_button'))
+
+#        self.menuBar.addmenuitem('Mouse', 'command', '3 Button Motions Cycle',
+#                                         label='3 Button Motions Cycle',
+#                                         command = lambda s=self: s.cmd.config_mouse('three_button_motions'))
 
         self.menuBar.addmenuitem('Mouse', 'command', '2 Button Viewing Cycle',
                                          label='2 Button Viewing Cycle',
