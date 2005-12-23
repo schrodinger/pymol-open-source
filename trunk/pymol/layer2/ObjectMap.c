@@ -88,6 +88,15 @@ int ObjectMapGetMatrix(ObjectMap *I,int state,double **matrix)
   return false;
 }
 
+int ObjectMapSetMatrix(ObjectMap *I,int state,double *matrix)
+{
+  if(ObjectMapIsStateValidActive(I,state)) {
+    ObjectStateSetMatrix(&I->State[state].State,matrix);
+    return true;
+  }
+  return false;
+}
+
 int ObjectMapStateGetExcludedStats(PyMOLGlobals *G,ObjectMapState *ms,float *vert_vla, float beyond,float within, float *level)
 {
   double sum=0.0,sumsq=0.0;

@@ -29,6 +29,8 @@ Z* -------------------------------------------------------------------
 #include"MemoryDebug.h"
 #include"Movie.h"
 
+#include"Executive.h" 
+
 int ObjectGetNFrames(CObject *I);
 
 void ObjectDescribeElement(struct CObject *I,int index,char *buffer);
@@ -140,6 +142,16 @@ int ObjectView(CObject *I,int action,int first,
 
   switch(action) {
   case 0: /* set */
+    if(!I->TTTFlag) {
+      float mn[3],mx[3],orig[3];
+      if(ExecutiveGetExtent(G,I->Name,mn,mx,true,-1,true)) {
+        average3f(mn,mx,orig);
+        ObjectSetTTTOrigin(I,orig);
+      } else {
+        initializeTTT44f(I->TTT);
+        I->TTTFlag = true;
+      }
+    }
     if(I->ViewElem && I->TTTFlag) {
       if(first<0)
         first = SceneGetFrame(G);
@@ -463,19 +475,37 @@ void ObjectTranslateTTT(CObject *I,float *v)
 
 }
 /*========================================================================*/
-void ObjectSetTTT(CObject *I,float *ttt,int state)
+void ObjectSetTTT(CObject *I, float *ttt, int state)
 {
   if(state<0) {
-    UtilCopyMem(I->TTT,ttt,sizeof(float)*16);
-    I->TTTFlag=true;
+    if(ttt) {
+      UtilCopyMem(I->TTT,ttt,sizeof(float)*16);
+      I->TTTFlag=true;
+    } else {
+      I->TTTFlag=false;
+    }
+  } else {
     /* to do */
   }
+}
+/*========================================================================*/
+int ObjectGetTTT(CObject *I, float **ttt, int state)
+{
+  if(state<0) {
+    if(I->TTTFlag) {
+      *ttt = I->TTT;
+      return 1;
+    } else {
+      *ttt = NULL;
+    }
+  } else {
+  }
+  return 0;
 }
 /*========================================================================*/
 void ObjectResetTTT(CObject *I)
 {
   I->TTTFlag=false;
-  SceneInvalidate(I->G);
 }
 /*========================================================================*/
 void ObjectPrepareContext(CObject *I,CRay *ray)
@@ -572,7 +602,6 @@ void ObjectSetTTTOrigin(CObject *I,float *origin)
   I->TTT[7]+=origin[1];
   I->TTT[11]+=origin[2];
 #endif
-  SceneInvalidate(I->G);
 
 }
 /*========================================================================*/
@@ -718,45 +747,56 @@ void ObjectStatePurge(CObjectState *I)
 
 void ObjectStateSetMatrix(CObjectState *I, double *matrix)
 {
-  if(!I->Matrix)
-    I->Matrix = Alloc(double,16);
-  if(I->Matrix) {
-    copy44d(matrix,I->Matrix);
+  if(matrix) {
+    if(!I->Matrix)
+      I->Matrix = Alloc(double,16);
+    if(I->Matrix) {
+      copy44d(matrix,I->Matrix);
+    }
+  } else if(I->Matrix) {
+    FreeP(I->Matrix);
   }
 }
 
 void ObjectStateRightCombineMatrixR44d(CObjectState *I, double *matrix)
 {
-  if(!I->Matrix) {
-    I->Matrix = Alloc(double,16);
-    copy44d(matrix,I->Matrix);
-  } else {
-    right_multiply44d44d(I->Matrix,matrix);
-    recondition44d(I->Matrix);
+  if(matrix) {
+    if(!I->Matrix) {
+      I->Matrix = Alloc(double,16);
+      copy44d(matrix,I->Matrix);
+    } else {
+      right_multiply44d44d(I->Matrix,matrix);
+      recondition44d(I->Matrix);
+    }
   }
 }
 
 void ObjectStateLeftCombineMatrixR44d(CObjectState *I, double *matrix)
 {
-  if(!I->Matrix) {
-    I->Matrix = Alloc(double,16);
-    copy44d(matrix,I->Matrix);
-  } else {
-    left_multiply44d44d(matrix,I->Matrix);
-    recondition44d(I->Matrix);
+  if(matrix) {
+    if(!I->Matrix) {
+      I->Matrix = Alloc(double,16);
+      copy44d(matrix,I->Matrix);
+    } else {
+      left_multiply44d44d(matrix,I->Matrix);
+      recondition44d(I->Matrix);
+    }
   }
 }
 
 void ObjectStateCombineMatrixTTT(CObjectState *I, float *matrix)
 {
-  if(!I->Matrix) {
-    I->Matrix = Alloc(double,16);
-    convertTTTfR44d(matrix,I->Matrix);
-  } else {
-    double tmp[16];
-    convertTTTfR44d(matrix,tmp);
-    right_multiply44d44d(I->Matrix,tmp);
-    recondition44d(I->Matrix);
+
+  if(matrix) {
+    if(!I->Matrix) {
+      I->Matrix = Alloc(double,16);
+      convertTTTfR44d(matrix,I->Matrix);
+    } else {
+      double tmp[16];
+      convertTTTfR44d(matrix,tmp);
+      right_multiply44d44d(I->Matrix,tmp);
+      recondition44d(I->Matrix);
+    }
   }
 }
 

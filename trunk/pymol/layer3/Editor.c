@@ -1865,7 +1865,8 @@ void EditorDrag(PyMOLGlobals *G,ObjectMolecule *obj,int index,int mode,int state
 
   if((index==I->DragIndex)&&(obj==I->DragObject)) {
     if(!EditorActive(G)) {
-      int use_matrices = SettingGet_b(G,I->DragObject->Obj.Setting,NULL,cSetting_use_state_matrices);
+      int matrix_mode = SettingGet_b(G,I->DragObject->Obj.Setting,
+                                      NULL,cSetting_matrix_mode);
 
       /* non-achored actions */
       switch(mode) {
@@ -1876,8 +1877,15 @@ void EditorDrag(PyMOLGlobals *G,ObjectMolecule *obj,int index,int mode,int state
           SceneOriginGet(G,v3);
         }
         get_rotation_about3f3fTTTf(pt[0], mov, v3, m); 
-        if(use_matrices&&(I->DragSelection<0)) {
-          ObjectMoleculeTransformState44f(obj,state,m,log_trans,false,true);
+        if(matrix_mode&&(I->DragSelection<0)) {
+          switch(matrix_mode) {
+          case 1:
+            ObjectCombineTTT(&obj->Obj,m);
+            break;
+          case 2:
+            ObjectMoleculeTransformState44f(obj,state,m,log_trans,false,true);
+            break;
+          }
         } else {
           ObjectMoleculeTransformSelection(obj,state,I->DragSelection,
                                            m,log_trans,I->DragSeleName,false,true);
@@ -1908,8 +1916,15 @@ void EditorDrag(PyMOLGlobals *G,ObjectMolecule *obj,int index,int mode,int state
           /* modify the object's TTT */
           ObjectCombineTTT(&obj->Obj, m);
         } else {
-          if(use_matrices) {
-            ObjectMoleculeTransformState44f(obj,state,m,log_trans,false,true);
+          if(matrix_mode) {
+            switch(matrix_mode) {
+            case 1:
+              ObjectCombineTTT(&obj->Obj,m);
+              break;
+            case 2:
+              ObjectMoleculeTransformState44f(obj,state,m,log_trans,false,true);
+              break;
+            }
           } else {
             ObjectMoleculeTransformSelection(obj,state,I->DragSelection,
                                              m,log_trans,I->DragSeleName,false,true);
@@ -1931,12 +1946,19 @@ void EditorDrag(PyMOLGlobals *G,ObjectMolecule *obj,int index,int mode,int state
       case cButModeMovFragZ:
       case cButModeMovDrag:
       case cButModeMovDragZ:
-        if(use_matrices && (I->DragSelection<0)) {
+        if(matrix_mode && (I->DragSelection<0)) {
           identity44f(m);
           m[3]=mov[0];
           m[7]=mov[1];
           m[11]=mov[2];
-          ObjectMoleculeTransformState44f(obj,state,m,log_trans,true,true);
+          switch(matrix_mode) {
+          case 1:
+            ObjectCombineTTT(&obj->Obj,m);
+            break;
+          case 2:
+            ObjectMoleculeTransformState44f(obj,state,m,log_trans,true,true);
+            break;
+          }
         } else {
           identity44f(m);
           copy3f(mov,m+12); /* questionable... */

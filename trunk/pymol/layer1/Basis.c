@@ -1912,6 +1912,7 @@ int BasisHitShadow(BasisCallRec *BC)
                                     {
                                       r->prim = prm;
                                       r->trans = _0;
+                                      r->dist = dist;
                                       return(1);
                                     }
                                   
@@ -1922,7 +1923,7 @@ int BasisHitShadow(BasisCallRec *BC)
                                         minIndex   = prm->vert;
                                         r_tri1      = tri1;
                                         r_tri2      = tri2;
-                                        r_dist      = dist;
+                                        r_dist      = r_dist;
                                         r_trans = (r->trans = trans);
                                       }
                                   }
@@ -1959,6 +1960,7 @@ int BasisHitShadow(BasisCallRec *BC)
                                  {
                                     r->prim = prm;
                                     r->trans = _0;
+                                    r->dist = dist;
                                     return(1);
                                  }
                               }
@@ -1991,6 +1993,7 @@ int BasisHitShadow(BasisCallRec *BC)
                               {
                                  r->prim = prm;
                                  r->trans = prm->trans;
+                                 r->dist = dist;
                                  return(1);
                               }
                            }
@@ -2023,6 +2026,7 @@ int BasisHitShadow(BasisCallRec *BC)
                                  {
                                     r->prim = prm;
                                     r->trans = prm->trans;
+                                    r->dist = dist;
                                     return(1);
                                  }
                               }
@@ -2062,6 +2066,7 @@ int BasisHitShadow(BasisCallRec *BC)
                                  {
                                     r->prim = prm;
                                     r->trans = prm->trans;
+                                    r->dist = dist;
                                     return(1);
                                  }
                               }

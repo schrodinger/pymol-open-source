@@ -127,14 +127,31 @@ int ObjectMoleculeGetMatrix(ObjectMolecule *I,int state,double **history)
 {
   int ok = true;
   if((state<0)||(state>=I->NCSet)) {
-    /* nonsensical */
+    /* nonsensical -- or should get the TTT if state<0 */
     ok=false;
   } else {
     CoordSet *cs = I->CSet[state];
     if(!cs)
       ok=false;
     else {
-      (*history) = cs->State.Matrix;
+      (*history) = cs->State.Matrix; /* note -- can be NULL */
+    }
+  }
+  return ok;
+}
+
+int ObjectMoleculeSetMatrix(ObjectMolecule *I,int state,double *matrix)
+{
+  int ok = true;
+  if((state<0)||(state>=I->NCSet)) {
+    /* nonsensical  -- or should set the TTT if state<0*/
+    ok=false;
+  } else {
+    CoordSet *cs = I->CSet[state];
+    if(!cs)
+      ok=false;
+    else {
+      ObjectStateSetMatrix(&cs->State,matrix);
     }
   }
   return ok;
@@ -168,7 +185,7 @@ void ObjectMoleculeTransformState44f(ObjectMolecule *I,int state,float *matrix,
                                             int log_trans,int homogenous,int transformed)
 {
   int a;
-  int use_matrices = SettingGet_b(I->Obj.G,I->Obj.Setting,NULL,cSetting_use_state_matrices);
+  int use_matrices = SettingGet_b(I->Obj.G,I->Obj.Setting,NULL,cSetting_matrix_mode);
   float tmp_matrix[16];
   CoordSet *cs;
   if(!use_matrices) {
@@ -2555,7 +2572,7 @@ void ObjectMoleculeRenderSele(ObjectMolecule *I,int curState,int sele,int vis_on
   register CoordSet *cs;
   register int a,*idx2atm,nIndex;
   register float *coord,*v;
-  register int use_matrices = SettingGet_b(I->Obj.G,I->Obj.Setting,NULL,cSetting_use_state_matrices);
+  register int use_matrices = SettingGet_b(I->Obj.G,I->Obj.Setting,NULL,cSetting_matrix_mode);
   register int flag = true;
   register int all_vis = !vis_only;
   register short int *visRep;
@@ -5124,7 +5141,7 @@ void ObjectMoleculeInferChemFromBonds(ObjectMolecule *I,int state)
 }
 /*========================================================================*/
 int ObjectMoleculeTransformSelection(ObjectMolecule *I,int state,
-                                      int sele,float *matrix,int log,
+                                     int sele,float *matrix,int log,
                                      char *sname,int homogenous,int global) 
 {
   /* if sele == -1, then the whole object state is transformed */
@@ -5158,7 +5175,7 @@ int ObjectMoleculeTransformSelection(ObjectMolecule *I,int state,
       cs = I->CSet[state];
       if(cs) {
         int use_matrices = SettingGet_b(I->Obj.G,I->Obj.Setting,
-                                        NULL,cSetting_use_state_matrices);
+                                        NULL,cSetting_matrix_mode);
 
         if(global && !homogenous) { /* convert matrix to homogenous */
           convertTTTfR44f(matrix,homo_matrix);
@@ -8200,7 +8217,7 @@ void ObjectMoleculeSeleOp(ObjectMolecule *I,int sele,ObjectMoleculeOpRec *op)
        register int i_DiscreteFlag = I->DiscreteFlag;
        register CoordSet **i_CSet = I->CSet;
        if(op_i2) 
-         use_matrices = SettingGet_b(I->Obj.G,I->Obj.Setting,NULL,cSetting_use_state_matrices);
+         use_matrices = SettingGet_b(I->Obj.G,I->Obj.Setting,NULL,cSetting_matrix_mode);
        ai = I->AtomInfo;
        for(a=0;a<i_NAtom;a++) {
          s=ai->selEntry;
@@ -8249,7 +8266,7 @@ void ObjectMoleculeSeleOp(ObjectMolecule *I,int sele,ObjectMoleculeOpRec *op)
        register int i_DiscreteFlag = I->DiscreteFlag;
        register CoordSet **i_CSet = I->CSet;
        if(op_i2) 
-         use_matrices = SettingGet_b(I->Obj.G,I->Obj.Setting,NULL,cSetting_use_state_matrices);
+         use_matrices = SettingGet_b(I->Obj.G,I->Obj.Setting,NULL,cSetting_matrix_mode);
 
        ai = I->AtomInfo;
        for(a=0;a<i_NAtom;a++) {
@@ -8302,7 +8319,7 @@ void ObjectMoleculeSeleOp(ObjectMolecule *I,int sele,ObjectMoleculeOpRec *op)
      }
      break;
    default:
-     use_matrices = SettingGet_b(I->Obj.G,I->Obj.Setting,NULL,cSetting_use_state_matrices);
+     use_matrices = SettingGet_b(I->Obj.G,I->Obj.Setting,NULL,cSetting_matrix_mode);
      ai = I->AtomInfo;
      for(a=0;a<I->NAtom;a++)
 		 {
@@ -9396,7 +9413,7 @@ static void ObjectMoleculeRender(ObjectMolecule *I,RenderInfo *info)
   Picking **pick = info->pick;
   int pass = info->pass;
   int a;
-  int use_matrices = SettingGet_b(I->Obj.G,I->Obj.Setting,NULL,cSetting_use_state_matrices);
+  int use_matrices = SettingGet_b(I->Obj.G,I->Obj.Setting,NULL,cSetting_matrix_mode);
   CoordSet *cs;
   int pop_matrix = false;
 

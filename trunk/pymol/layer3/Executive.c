@@ -293,21 +293,25 @@ int ExecutiveDrawCmd(PyMOLGlobals *G, int width, int height,int antialias, int q
   return 1;
 }
 
-void ExecutiveMatrixTransfer(PyMOLGlobals *G,
+int ExecutiveMatrixTransfer(PyMOLGlobals *G,
                              char *source_name, char *target_name,
                              int   source_mode,  int target_mode, 
                              int   source_state, int target_state,
                              int   target_undo,
                              int   log,          int quiet)
 {
+  /*  mode 0: raw coordinates, as per the txf history
+      mode 1: object TTT matrix
+      mode 2: state matrix */
+  int ok = true;
   switch(source_mode) {
-  case 0: 
-    { /* from previous coordinate transformation */
+  case 0: /* txf history is the source matrix */
+    { 
       double *history = NULL;
       int found = ExecutiveGetObjectMatrix(G,source_name,source_state,&history);
       if(found) {
         switch(target_mode) {
-        case 0: /* to coordinates */
+        case 0: /* apply changes to coordinates in the target object */
           {
             double temp_inverse[16];
             if(target_undo) {
@@ -338,32 +342,77 @@ void ExecutiveMatrixTransfer(PyMOLGlobals *G,
             }
           }
           break;
-        case 1: /* set the display matrix (only) */
-          {
+        case 1: /* applying changes to the object's TTT matrix */
+          if(history) {
             float tttf[16];
-            if(history) {
-              convertR44dTTTf(history,tttf);
-            } else {
-              identity44f(tttf);
-            }
-            dump44f(tttf,"tttf");
+            convertR44dTTTf(history,tttf);
             ExecutiveSetObjectTTT(G,target_name,tttf,target_state,quiet);
-            /* to do: logging, return values, etc. */
-          }      
+          } else {
+            ExecutiveSetObjectTTT(G,target_name,NULL,target_state,quiet);
+          }
+          /* to do: logging, return values, etc. */
+          break;
+        case 2: /* applying changes to the state matrix */
+          ok = ExecutiveSetObjectMatrix(G,target_name,target_state,history);
           break;
         }
       }
     }
     break;
-  case 1: /* from display matrix - TO DO */
-    switch(target_mode) {
-    case 0:
-      break;
-    case 1:
-      break;
+  case 1: /* from the TTT matrix */
+    {
+      float *tttf;
+      int found = ExecutiveGetObjectTTT(G,source_name,&tttf,source_state,quiet);
+      if(found) {
+        switch(target_mode) {
+        case 0: /* coordinates & history */
+          /* TODO */
+          break;
+        case 1: /* TTT */
+          ExecutiveSetObjectTTT(G,target_name,tttf,target_state,quiet);
+          break;
+        case 2: /* State */
+          if(tttf) {
+            double homo[16];
+            convertTTTfR44d(tttf,homo);
+            ok = ExecutiveSetObjectMatrix(G,target_name,target_state,homo);
+          } else {
+            ok = ExecutiveSetObjectMatrix(G,target_name,target_state,NULL);
+          }
+          break;
+        }
+      }
     }
     break;
+  case 2: /* from the state matrix */
+    {
+      double *homo;
+      int found = ExecutiveGetObjectMatrix(G,source_name,source_state,&homo);
+      if(found) {
+        
+        switch(target_mode) {
+        case 0: /* coordinates & history */
+          /* TODO */
+          break;
+        case 1: /* TTT */
+          if(homo) {
+            float tttf[16];
+            convertR44dTTTf(homo,tttf);
+            ExecutiveSetObjectTTT(G,target_name,tttf,target_state,quiet);
+          } else {
+            ExecutiveSetObjectTTT(G,target_name,NULL,target_state,quiet);
+          }
+          break;
+      case 2: /* State */
+        ok = ExecutiveSetObjectMatrix(G,target_name,target_state,homo);
+        break;
+        }
+      }
+      break;
+    }
   }
+  SceneInvalidate(G);
+  return ok;
 }
 
 static void ExecutiveInvalidateMapDependents(PyMOLGlobals *G,char *map_name)
@@ -425,17 +474,50 @@ void ExecutiveResetMatrix(PyMOLGlobals *G,
 
 int ExecutiveGetObjectMatrix(PyMOLGlobals *G,char *name,int state,double **matrix)
 {
-  /* right now, this only makes sense for molecule objects */
+
+  /* right now, this only makes sense for molecule objects -- but in
+     time all objects should have per-state matrices */
+
   int ok=false;
   CObject *obj = ExecutiveFindObjectByName(G,name);
   if(obj) {
-    switch(obj->type) {
-    case cObjectMolecule:
-      ok = ObjectMoleculeGetMatrix((ObjectMolecule*)obj,state,matrix);
-      break;
-    case cObjectMap:
-      ok = ObjectMapGetMatrix((ObjectMap*)obj,state,matrix);
-      break;
+    if(state<0) {
+      /* to do */
+    } else {
+      switch(obj->type) {
+      case cObjectMolecule:
+        ok = ObjectMoleculeGetMatrix((ObjectMolecule*)obj,state,matrix);
+        break;
+      case cObjectMap:
+        ok = ObjectMapGetMatrix((ObjectMap*)obj,state,matrix);
+        break;
+      }
+    }
+  }
+  return ok;
+}
+
+int ExecutiveSetObjectMatrix(PyMOLGlobals *G,char *name,int state,double *matrix)
+{
+  /* -1 for the TTT matrix, 0 or greater for the state matrix */
+
+  /* right now, this only makes sense for molecule objects -- but in
+     time all objects should have per-state matrices */
+
+  int ok=false;
+  CObject *obj = ExecutiveFindObjectByName(G,name);
+  if(obj) {
+    if(state<0) {
+      
+    } else {
+      switch(obj->type) {
+      case cObjectMolecule:
+        ok = ObjectMoleculeSetMatrix((ObjectMolecule*)obj,state,matrix);
+        break;
+      case cObjectMap:
+        ok = ObjectMapSetMatrix((ObjectMap*)obj,state,matrix);
+        break;
+      }
     }
   }
   return ok;
@@ -3760,7 +3842,22 @@ int ExecutiveSetObjectTTT(PyMOLGlobals *G,char *name,float *ttt,int state,int qu
     ok=false;
   } else {
     ObjectSetTTT(obj,ttt,state);
-    SceneInvalidate(G);
+  }
+  return(ok);
+}
+
+int ExecutiveGetObjectTTT(PyMOLGlobals *G,char *name,float **ttt,int state,int quiet)
+{
+  CObject *obj = ExecutiveFindObjectByName(G,name);
+  int ok=true;
+
+  if(!obj) {
+    PRINTFB(G,FB_ObjectMolecule,FB_Errors)
+      "Error: object %s not found.\n",name 
+      ENDFB(G);
+    ok=false;
+  } else {
+    ObjectGetTTT(obj,ttt,state);
   }
   return(ok);
 }
@@ -6125,6 +6222,8 @@ int ExecutiveRMS(PyMOLGlobals *G,char *s1,char *s2,int mode,float refine,int max
   int ok=true;
   int repeat;
   float v1[3],*v2;
+  int matrix_mode = SettingGetGlobal_b(G,cSetting_matrix_mode);
+
   sele1=SelectorIndexByName(G,s1);
 
   ObjectMoleculeOpRecInit(&op1);
@@ -6134,7 +6233,9 @@ int ExecutiveRMS(PyMOLGlobals *G,char *s1,char *s2,int mode,float refine,int max
   op2.vv1=NULL;
   op2.vc1=NULL;
 
-        
+  /* this function operates on stored coordinates -- thus transformation 
+   matrices will need to be applied to the resulting atoms */
+
   if(sele1>=0) {
     if(state1<0) {
       op1.code = OMOP_AVRT;
@@ -6579,8 +6680,52 @@ int ExecutiveRMS(PyMOLGlobals *G,char *s1,char *s2,int mode,float refine,int max
             SettingSet(G,cSetting_auto_zoom,(float)auto_save);            
             SceneInvalidate(G);
           }
-        if(mode==2) {
-          if(ok) {
+        if(ok && mode==2) { 
+          if(matrix_mode) {
+
+            ObjectMolecule *src_obj,*trg_obj;
+            src_obj = SelectorGetSingleObjectMolecule(G,sele1);
+            trg_obj = SelectorGetSingleObjectMolecule(G,sele2);
+
+            /* first we need to make sure that the object being moved
+               matches the target with respect to both the TTT and the
+               object's state matrix (if any) */
+            
+            ExecutiveMatrixTransfer(G,
+                                    trg_obj->Obj.Name, 
+                                    src_obj->Obj.Name,
+                                    1, 1, /* TTT mode */
+                                    state2,state1,
+                                    false, 0, quiet);
+            
+            
+            ExecutiveMatrixTransfer(G,
+                                    trg_obj->Obj.Name, 
+                                    src_obj->Obj.Name,
+                                    2, 2, /* Object state mode */
+                                    state2,state1,
+                                    false, 0, quiet);
+           
+            switch(matrix_mode) {
+            case 1: /* TTTs */
+              ExecutiveCombineObjectTTT(G,src_obj->Obj.Name,op2.ttt);
+              break;
+            case 2:
+              {
+                double homo[16],*src_homo;
+                convertTTTfR44d(op2.ttt,homo);
+                if(ExecutiveGetObjectMatrix(G,src_obj->Obj.Name,state1,&src_homo)) {
+                  left_multiply44d44d(src_homo,homo);
+                  ExecutiveSetObjectMatrix(G,src_obj->Obj.Name,state1,homo);
+                }
+              }
+              break;
+            }
+            /* next we need to update the object's TTT matrix to reflect
+               the transformation */
+            
+          } else {
+            /* this will transform the actual coordinates */
             op2.code = OMOP_TTTF;
             ExecutiveObjMolSeleOp(G,sele1,&op2);
           }
@@ -6823,8 +6968,10 @@ int ExecutiveReset(PyMOLGlobals *G,int cmd,char *name)
     obj = ExecutiveFindObjectByName(G,name);
     if(!obj)
       ok=false;
-    else
+    else {
       ObjectResetTTT(obj);
+      SceneInvalidate(G);
+    }
   }
   return(ok);
 }

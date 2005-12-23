@@ -579,8 +579,8 @@ static void do_ring(PyMOLGlobals *G,int n_atom, int *atix, ObjectMolecule *obj,
                   }
                   
                   if((sug>=0)&&(bas>=0)) {
-                    
-                    CGOPickColor(cgo,base_at,cPickableAtom);
+                    if(!bas_ai->masked)
+                      CGOPickColor(cgo,base_at,cPickableAtom);
                     if(ladder_color>=0) {
                       color=ColorGet(G,ladder_color);
                       CGOCustomCylinderv(cgo,cs->Coord+3*sug,
@@ -665,7 +665,8 @@ static void do_ring(PyMOLGlobals *G,int n_atom, int *atix, ObjectMolecule *obj,
                     v_outer = outer;
                   }
                 }
-                CGOPickColor(cgo,base_at,cPickableAtom);
+                if(!bas_ai->masked)
+                  CGOPickColor(cgo,base_at,cPickableAtom);
                 if(ladder_color>=0) {
                   color=ColorGet(G,ladder_color);
                   CGOCustomCylinderv(cgo,v_outer,
@@ -874,7 +875,7 @@ static void do_ring(PyMOLGlobals *G,int n_atom, int *atix, ObjectMolecule *obj,
         
           CGONormalv(cgo,up);
           if(ring_color<0) CGOColorv(cgo,color);
-          CGOPickColor(cgo,atix[i],cPickableAtom);
+          CGOPickColor(cgo,atix[i],cPickableAtom); /* TODO: masking for cartoons! */
           CGOVertexv(cgo,ct);
           CGONormalv(cgo,n_up[i]);
           if(ring_color<0) CGOColorv(cgo,col[i]);

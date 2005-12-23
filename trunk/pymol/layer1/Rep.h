@@ -69,8 +69,6 @@ Z* -------------------------------------------------------------------
 #define cRepInvColor  15
 /* invalidate label text */
 #define cRepInvText   16
-/* invalidate picked atoms */
-#define cRepInvPick   19
 /* invalidate visible atoms */
 #define cRepInvVisib  20
 #define cRepInvVisib2 21
@@ -80,6 +78,8 @@ Z* -------------------------------------------------------------------
 #define cRepInvCoord  30
 /* invalidate graphic representation */
 #define cRepInvRep    35
+/* invalidate picked atoms */
+#define cRepInvPick   36
 /* invalidate bond structure */
 #define cRepInvBonds  40
 /* invalidate atomic structure */

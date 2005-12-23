@@ -314,32 +314,34 @@ Rep *RepNonbondedSphereNew(CoordSet *cs,int state)
     for(a=0;a<cs->NIndex;a++) 
       if(active[a]>0) {
         
-        I->NP++;
+        if(!obj->AtomInfo[a1].masked) {
+          I->NP++;
 
-        a1=cs->IdxToAtm[a];
-        
-        I->R.P[I->NP].index = a1;
-        I->R.P[I->NP].bond = -1;
-        v1 = cs->Coord+3*a;
-        
-        *(v++)=v1[0]-nonbonded_size;
-        *(v++)=v1[1];
-        *(v++)=v1[2];
-        *(v++)=v1[0]+nonbonded_size;
-        *(v++)=v1[1];
-        *(v++)=v1[2];
-        *(v++)=v1[0];
-        *(v++)=v1[1]-nonbonded_size;
-        *(v++)=v1[2];
-        *(v++)=v1[0];
-        *(v++)=v1[1]+nonbonded_size;
-        *(v++)=v1[2];
-        *(v++)=v1[0];
-        *(v++)=v1[1];
-        *(v++)=v1[2]-nonbonded_size;
-        *(v++)=v1[0];
-        *(v++)=v1[1];
-        *(v++)=v1[2]+nonbonded_size;
+          a1=cs->IdxToAtm[a];
+          
+          I->R.P[I->NP].index = a1;
+          I->R.P[I->NP].bond = -1;
+          v1 = cs->Coord+3*a;
+          
+          *(v++)=v1[0]-nonbonded_size;
+          *(v++)=v1[1];
+          *(v++)=v1[2];
+          *(v++)=v1[0]+nonbonded_size;
+          *(v++)=v1[1];
+          *(v++)=v1[2];
+          *(v++)=v1[0];
+          *(v++)=v1[1]-nonbonded_size;
+          *(v++)=v1[2];
+          *(v++)=v1[0];
+          *(v++)=v1[1]+nonbonded_size;
+          *(v++)=v1[2];
+          *(v++)=v1[0];
+          *(v++)=v1[1];
+          *(v++)=v1[2]-nonbonded_size;
+          *(v++)=v1[0];
+          *(v++)=v1[1];
+          *(v++)=v1[2]+nonbonded_size;
+        }
       }
     I->R.P = Realloc(I->R.P,Pickable,I->NP+1);
     I->R.context.object = (void*)obj;

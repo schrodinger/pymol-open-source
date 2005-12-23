@@ -77,6 +77,8 @@ int   SettingGetGlobal_b(PyMOLGlobals *G,int index); /* always succeed */
 int   SettingGetGlobal_i(PyMOLGlobals *G,int index); /* always succeed */
 float SettingGetGlobal_f(PyMOLGlobals *G,int index); /* always succeed */
 char *SettingGetGlobal_s(PyMOLGlobals *G,int index); /* always succeeds */
+int   SettingGetGlobal_color(PyMOLGlobals *G,int index); /* always succeed */
+
 void  SettingGetGlobal_3f(PyMOLGlobals *G,int index,float *value); /* always succeeds */
 float *SettingGetGlobal_3fv(PyMOLGlobals *G,int index); /* always succeed */
 
@@ -587,7 +589,7 @@ CSetting *SettingNewFromPyList(PyMOLGlobals *G,PyObject *list);
 #define cSetting_opaque_background          435
 #define cSetting_draw_frames                436
 #define cSetting_show_alpha_checker         437
-#define cSetting_use_state_matrices         438
+#define cSetting_matrix_mode                438
 #define cSetting_editor_auto_origin         439
 #define cSetting_session_file               440
 #define cSetting_cgo_transparency           441
@@ -623,7 +625,9 @@ CSetting *SettingNewFromPyList(PyMOLGlobals *G,PyObject *list);
 #define cSetting_label_position             471
 #define cSetting_ray_trace_depth_factor     472
 #define cSetting_ray_trace_slope_factor     473
-#define cSetting_ray_trace_disco_factor      474
+#define cSetting_ray_trace_disco_factor     474
+#define cSetting_ray_shadow_decay_factor    475
+#define cSetting_ray_interior_mode          476
 
 /* when you add a new settingg also remember:
    layer1/Setting.c
@@ -633,7 +637,7 @@ CSetting *SettingNewFromPyList(PyMOLGlobals *G,PyObject *list);
 
 /* cSetting_ss_INIT must always be last setting_index +1 */
 
-#define cSetting_INIT                       475
+#define cSetting_INIT                       477
 
 #endif
 

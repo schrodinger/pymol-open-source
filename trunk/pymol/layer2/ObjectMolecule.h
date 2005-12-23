@@ -234,6 +234,7 @@ void M4XAlignInit(M4XAlignType *align);
 void M4XAlignPurge(M4XAlignType *align);
 
 int ObjectMoleculeGetMatrix(ObjectMolecule *I,int state,double **history);
+int ObjectMoleculeSetMatrix(ObjectMolecule *I,int state,double *matrix);
 int ObjectMoleculeGetTopNeighbor(PyMOLGlobals *G,
                                  ObjectMolecule *I, 
                                  int start, int excluded);
