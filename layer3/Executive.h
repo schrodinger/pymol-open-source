@@ -257,7 +257,9 @@ int ExecutiveMultiSave(PyMOLGlobals *G,char *fname,char *name,int state,int appe
 int ExecutiveIdentifyObjects(PyMOLGlobals *G,char *s1,int mode,int **indexVLA,ObjectMolecule ***objVLA);
 int ExecutiveCombineObjectTTT(PyMOLGlobals *G,char *name,float *ttt);
 int ExecutiveSetObjectTTT(PyMOLGlobals *G,char *name,float *ttt,int state,int quiet);
+int ExecutiveGetObjectTTT(PyMOLGlobals *G,char *name,float **ttt,int state,int quiet);
 int ExecutiveGetObjectMatrix(PyMOLGlobals *G,char *name,int state,double **matrix);
+int ExecutiveSetObjectMatrix(PyMOLGlobals *G,char *name,int state,double *matrix);
 
 int ExecutiveSetGeometry(PyMOLGlobals *G,char *s1,int geom,int valence);
 int ExecutiveSculptIterateAll(PyMOLGlobals *G);
@@ -314,7 +316,7 @@ int ExecutiveDihedral(PyMOLGlobals *G,float *result,
                       char *nam,char *s1,char *s2,char *s3,char *s4,int mode,
                       int labels,int reset,int zoom,int quiet,int state);
 
-void ExecutiveMatrixTransfer(PyMOLGlobals *G,
+int ExecutiveMatrixTransfer(PyMOLGlobals *G,
                              char *source_name, char *target_name,
                              int source_mode, int target_mode, 
                              int source_state, int target_state,

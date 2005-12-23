@@ -964,6 +964,12 @@ char *SettingGetGlobal_s(PyMOLGlobals *G,int index)
   register CSetting *I=G->Setting;
   return(get_s(I,index));
 }
+int SettingGetGlobal_color(PyMOLGlobals *G,int index)
+{
+  register CSetting *I=G->Setting;
+  return(get_color(I,index));
+}
+
 /*========================================================================*/
 void  SettingGetGlobal_3f(PyMOLGlobals *G,int index,float *value)
 {
@@ -2351,7 +2357,7 @@ void SettingInitGlobal(PyMOLGlobals *G,int alloc,int reset_gui)
 
   SettingSet_i(I,cSetting_auto_color_next,0);
 
-  SettingSet_color(I,cSetting_ray_interior_color,"-1"); /* no color */
+  SettingSet_color(I,cSetting_ray_interior_color,"-1"); /* object color */
 
   SettingSet_color(I,cSetting_cartoon_highlight_color,"-1"); /* no color */
 
@@ -2646,11 +2652,12 @@ void SettingInitGlobal(PyMOLGlobals *G,int alloc,int reset_gui)
   SettingSet_i(I,cSetting_cartoon_tube_cap,2);
   SettingSet_i(I,cSetting_cartoon_loop_cap,1);
   SettingSet_i(I,cSetting_nvidia_bugs, 0);
-  SettingSet_f(I,cSetting_image_dots_per_inch, 0.0F); /* default is to leave it unspecified in PNG file */
+  SettingSet_f(I,cSetting_image_dots_per_inch, 0.0F); 
+  /* default is to leave it unspecified in PNG file */
   SettingSet_b(I,cSetting_opaque_background,1);
   SettingSet_b(I,cSetting_draw_frames,0);
   SettingSet_b(I,cSetting_show_alpha_checker,0);
-  SettingSet_b(I,cSetting_use_state_matrices,0); /* this will change to 1 soon */
+  SettingSet_i(I,cSetting_matrix_mode,0); /* 0: coordinates, 1: TTTs, 2: state matrices */
   SettingSet_b(I,cSetting_editor_auto_origin,1); 
   SettingSet_s(I,cSetting_session_file, "");
   SettingSet_f(I,cSetting_cgo_transparency, 0.0F); 
@@ -2687,6 +2694,8 @@ void SettingInitGlobal(PyMOLGlobals *G,int alloc,int reset_gui)
   SettingSet_f(I,cSetting_ray_trace_depth_factor,0.1F);
   SettingSet_f(I,cSetting_ray_trace_slope_factor,0.6F);
   SettingSet_f(I,cSetting_ray_trace_disco_factor,0.05F);
+  SettingSet_f(I,cSetting_ray_shadow_decay_factor,0.0F);
+  SettingSet_i(I,cSetting_ray_interior_mode, 0);
 }
 
 

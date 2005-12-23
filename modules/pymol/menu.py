@@ -421,7 +421,7 @@ def color_auto(s):
         [ 1, '\\900b\\950y \\090o\\099b\\059j\\999(e. c)',
           'util.color_objs("('+s+' and elem c)")'],
         [ 1, '\\900b\\950y \\090o\\099b\\059j',
-          'util.color_objs("('+s+' and elem c)")'],
+          'util.color_objs("('+s+')")'],
         ]
    
 def mol_color(s):

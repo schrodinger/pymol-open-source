@@ -471,7 +471,7 @@ if __name__=='pymol.setting':
         opaque_background         = (435, '')
         draw_frames               = (436, '')
         show_alpha_checker        = (437, '')
-        use_state_matrices        = (438, '')
+        matrix_mode               = (438, '')
         editor_auto_origin        = (439, '')
         session_file              = (440, '')
         cgo_transparency          = (441, '')
@@ -508,6 +508,8 @@ if __name__=='pymol.setting':
         ray_trace_depth_factor    = (472, '')
         ray_trace_slope_factor    = (473, '')
         ray_trace_disco_factor    = (474, '')
+        ray_shadow_decay_factor   = (475, '')
+        ray_interior_mode         = (476, '')
         
     setting_sc = Shortcut(SettingIndex.__dict__.keys())
 

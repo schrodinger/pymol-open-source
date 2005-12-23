@@ -104,6 +104,7 @@ int ObjectMapInterpolate(ObjectMap *I,int state,float *array,float *result,int *
 void ObjectMapTransformMatrix(ObjectMap *I, int state, double *matrix);
 void ObjectMapResetMatrix(ObjectMap *I, int state);
 int ObjectMapGetMatrix(ObjectMap *I,int state,double **matrix);
+int ObjectMapSetMatrix(ObjectMap *I,int state,double *matrix);
 
 #endif
 

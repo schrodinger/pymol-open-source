@@ -1225,7 +1225,11 @@ Rep *RepSphereNew(CoordSet *cs,int state)
           
           if(I->R.P) {
             I->NP++;
-            I->R.P[I->NP].index = a1;
+            if(!ati1->masked) {
+              I->R.P[I->NP].index = a1;
+            } else {
+              I->R.P[I->NP].index = -1;
+            }
             I->R.P[I->NP].bond = -1;
           }
           

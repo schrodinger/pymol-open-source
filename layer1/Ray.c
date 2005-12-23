@@ -113,6 +113,7 @@ void RaySphere3fv(CRay *I,float *v,float r);
 void RayCharacter(CRay *I,int char_id);
 void RayCylinder3fv(CRay *I,float *v1,float *v2,float r,float *c1,float *c2);
 void RaySausage3fv(CRay *I,float *v1,float *v2,float r,float *c1,float *c2);
+void RayInteriorColor3fv(CRay *I,float *v);
 
 void RayTriangle3fv(CRay *I,
 						  float *v1,float *v2,float *v3,
@@ -617,8 +618,8 @@ static void RayTransformFirst(CRay *I,int perspective)
   
   if((SettingGet(I->G,cSetting_two_sided_lighting)||
       (SettingGet(I->G,cSetting_transparency_mode)==1)||
-      SettingGet(I->G,cSetting_ray_interior_color)>=0))
-    backface_cull=0;
+      (SettingGet(I->G,cSetting_ray_interior_color)!=-1)))
+     backface_cull=0;
 
   basis0 = I->Basis;
   basis1 = I->Basis+1;
@@ -1426,6 +1427,7 @@ int RayTraceThread(CRayThreadInfo *T)
 	int interior_flag;
 	int interior_shadows;
 	int interior_wobble;
+    int interior_mode;
    float interior_reflect;
 	int wobble_save;
 	float		settingPower, settingReflectPower,settingSpecPower,settingSpecReflect,settingSpecDirect;
@@ -1461,6 +1463,7 @@ int RayTraceThread(CRayThreadInfo *T)
    float half_height, front_ratio;
    float start[3],nudge[3];
    float *depth = T->depth;
+   float shadow_decay = SettingGetGlobal_f(I->G,cSetting_ray_shadow_decay_factor);
 	const float _0		= 0.0F;
 	const float _1		= 1.0F;
 	const float _p5		= 0.5F;
@@ -1485,6 +1488,7 @@ int RayTraceThread(CRayThreadInfo *T)
 	interior_wobble	= SettingGetGlobal_i(I->G,cSetting_ray_interior_texture);
 	interior_color		= SettingGetGlobal_i(I->G,cSetting_ray_interior_color);
     interior_reflect  = 1.0F - SettingGet(I->G,cSetting_ray_interior_reflect);
+	interior_mode = SettingGetGlobal_i(I->G,cSetting_ray_interior_mode);
     label_shadow_mode =  SettingGetGlobal_i(I->G,cSetting_label_shadow_mode);
 	project_triangle	= SettingGet(I->G,cSetting_ray_improve_shadows);
 	shadows				= SettingGetGlobal_i(I->G,cSetting_ray_shadows);
@@ -1547,7 +1551,7 @@ int RayTraceThread(CRayThreadInfo *T)
      settingSpecDirect = 0.0F;
    }
    
-	if((interior_color>=0)||(two_sided_lighting)||(trans_mode==1))
+	if((interior_color!=-1)||(two_sided_lighting)||(trans_mode==1))
 		backface_cull	= 0;
 
 	shadow_fudge = SettingGet(I->G,cSetting_ray_shadow_fudge);
@@ -1629,8 +1633,12 @@ int RayTraceThread(CRayThreadInfo *T)
      offset = offset - (offset % T->n_thread) + T->phase;
    }
    
-   if(interior_color>=0) {
-     inter = ColorGet(I->G,interior_color);
+   if(interior_color!=-1) {
+     if(interior_color<0) {
+       inter = ColorGet(I->G,0);
+     } else {
+       inter = ColorGet(I->G,interior_color);
+     }
      if(bp2) {
        interior_normal[0] = interior_reflect*bp2->LightNormal[0];
        interior_normal[1] = interior_reflect*bp2->LightNormal[1];
@@ -1652,7 +1660,7 @@ int RayTraceThread(CRayThreadInfo *T)
    BasisCall[0].shadow = false;
    BasisCall[0].back = T->back;
    BasisCall[0].trans_shadows = trans_shadows;
-   BasisCall[0].check_interior = (interior_color >= 0);
+   BasisCall[0].check_interior = (interior_color != -1);
    BasisCall[0].fudge0 = BasisFudge0;
    BasisCall[0].fudge1 = BasisFudge1;
 
@@ -1812,7 +1820,7 @@ int RayTraceThread(CRayThreadInfo *T)
                  r1.dir[0] = (r1.base[0] - eye[0]);
                  r1.dir[1] = (r1.base[1] - eye[1]);
                  r1.dir[2] = (r1.base[2] - eye[2]);
-                 if(interior_color>=0) {
+                 if(interior_color!=-1) {
                    start[0] = r1.base[0];
                    start[1] = r1.base[1];
                    start[2] = r1.base[2];
@@ -1882,7 +1890,11 @@ int RayTraceThread(CRayThreadInfo *T)
                            RayReflectAndTexture(I,&r1,perspective);
                         
                          dotgle = -r1.dotgle;
-                         copy3f(inter,fc);
+                         if(interior_color<0) {
+                           copy3f(r1.prim->ic,fc);
+                         } else {
+                           copy3f(inter,fc);
+                         }
                        } else {
                          if(!perspective) 
                            new_front	= r1.dist;
@@ -1939,7 +1951,7 @@ int RayTraceThread(CRayThreadInfo *T)
                         
                          if(r1.flat_dotgle < _0)
                            {
-                             if((!two_sided_lighting) && (interior_color>=0)) 
+                             if((!two_sided_lighting) && (interior_color!=-1) && (interior_mode!=2))
                                {
                                  interior_flag		= true;
                                  copy3f(interior_normal,r1.surfnormal);
@@ -1963,7 +1975,11 @@ int RayTraceThread(CRayThreadInfo *T)
                                    RayReflectAndTexture(I,&r1,perspective);
                                 
                                  dotgle	= -r1.dotgle;
-                                 copy3f(inter,fc);
+                                 if(interior_color<0) {
+                                   copy3f(r1.prim->ic,fc);
+                                 } else {
+                                   copy3f(inter,fc);
+                                 }
                                }
                            }
                         
@@ -2005,8 +2021,12 @@ int RayTraceThread(CRayThreadInfo *T)
                              matrix_transform33f3f(bp->Matrix,r1.impact,r2.base);
                              r2.base[2]-=shadow_fudge;
                              BasisCall[bc].except = i;
-                             if(BasisHitShadow(&BasisCall[bc]) > -1)
+                             if(BasisHitShadow(&BasisCall[bc]) > -1) {
                                lit	= (float) pow(r2.trans, _p5);
+                               if(shadow_decay != _0) {
+                                 lit =  _1 - _1 / exp(r2.dist * shadow_decay);
+                               }
+                             }
                            }
                           
                            if(lit>_0) {
@@ -3742,6 +3762,13 @@ void RayTransparentf(CRay *I,float v)
 {
   I->Trans=v;
 }
+
+void RayInteriorColor3fv(CRay *I,float *v)
+{
+  I->IntColor[0]=(*v++);
+  I->IntColor[1]=(*v++);
+  I->IntColor[2]=(*v++);
+}
 /*========================================================================*/
 void RayColor3fv(CRay *I,float *v)
 {
@@ -3770,9 +3797,14 @@ void RaySphere3fv(CRay *I,float *v,float r)
   (*vv++)=(*v++);
   (*vv++)=(*v++);
 
-
   vv=p->c1;
   v=I->CurColor;
+  (*vv++)=(*v++);
+  (*vv++)=(*v++);
+  (*vv++)=(*v++);
+
+  vv=p->ic;
+  v=I->IntColor;
   (*vv++)=(*v++);
   (*vv++)=(*v++);
   (*vv++)=(*v++);
@@ -3898,7 +3930,6 @@ void RayCharacter(CRay *I,int char_id)
     copy3f(zn,p->n2);
     copy3f(zn,p->n3);
 
-
     *(pp)=(*p);
 
     /* define coordinates of first triangle */
@@ -3919,6 +3950,20 @@ void RayCharacter(CRay *I,int char_id)
     add3f(p->v1,yn,pp->v2);
     add3f(p->v1,xn,pp->v3);
 
+    {
+      float *v,*vv;
+      vv=p->ic;
+      v=I->IntColor;
+      (*vv++)=(*v++);
+      (*vv++)=(*v++);
+      (*vv++)=(*v++);
+      vv=pp->ic;
+      v=I->IntColor;
+      (*vv++)=(*v++);
+      (*vv++)=(*v++);
+      (*vv++)=(*v++);
+    }
+
     /* encode integral character coordinates into the vertex colors  */
 
     set3f(pp->c1,width,height,0.0F);
@@ -3926,6 +3971,7 @@ void RayCharacter(CRay *I,int char_id)
     set3f(pp->c3,width,0.0F,0.0F);
 
   }
+
   I->NPrimitive+=2;
 }
 /*========================================================================*/
@@ -3974,6 +4020,15 @@ void RayCylinder3fv(CRay *I,float *v1,float *v2,float r,float *c1,float *c2)
   (*vv++)=(*c2++);
   (*vv++)=(*c2++);
   (*vv++)=(*c2++);
+
+  {
+    float *v;
+    vv=p->ic;
+    v=I->IntColor;
+    (*vv++)=(*v++);
+    (*vv++)=(*v++);
+    (*vv++)=(*v++);
+  }
 
   I->NPrimitive++;
 }
@@ -4024,6 +4079,15 @@ void RayCustomCylinder3fv(CRay *I,float *v1,float *v2,float r,
   (*vv++)=(*c2++);
   (*vv++)=(*c2++);
   (*vv++)=(*c2++);
+  vv=p->ic;
+  {
+    float *v;
+    vv=p->ic;
+    v=I->IntColor;
+    (*vv++)=(*v++);
+    (*vv++)=(*v++);
+    (*vv++)=(*v++);
+  }
 
   I->NPrimitive++;
 }
@@ -4071,6 +4135,16 @@ void RaySausage3fv(CRay *I,float *v1,float *v2,float r,float *c1,float *c2)
   (*vv++)=(*c2++);
   (*vv++)=(*c2++);
   (*vv++)=(*c2++);
+  vv=p->ic;
+
+  {
+    float *v=I->IntColor;
+    vv=p->ic;
+    (*vv++)=(*v++);
+    (*vv++)=(*v++);
+    (*vv++)=(*v++);
+  }
+
 
   I->NPrimitive++;
 }
@@ -4166,6 +4240,14 @@ void RayTriangle3fv(CRay *I,
   (*vv++)=(*c3++);
   (*vv++)=(*c3++);
 
+  {
+    float *v=I->IntColor;
+    vv=p->ic;
+    (*vv++)=(*v++);
+    (*vv++)=(*v++);
+    (*vv++)=(*v++);
+  }
+
   vv=p->n1;
   (*vv++)=(*n1++);
   (*vv++)=(*n1++);
@@ -4178,7 +4260,6 @@ void RayTriangle3fv(CRay *I,
   (*vv++)=(*n3++);
   (*vv++)=(*n3++);
   (*vv++)=(*n3++);
-
 
   if(I->TTTFlag) {
     transformTTT44f3f(I->TTT,p->v1,p->v1);
@@ -4237,6 +4318,7 @@ CRay *RayNew(PyMOLGlobals *G)
   I->fSausage3fv=RaySausage3fv;
   I->fTriangle3fv=RayTriangle3fv;
   I->fCharacter=RayCharacter;
+  I->fInteriorColor3fv=RayInteriorColor3fv;
   I->fWobble=RayWobble;
   I->fTransparentf=RayTransparentf;
   I->TTTStackVLA = NULL;
@@ -4251,7 +4333,10 @@ CRay *RayNew(PyMOLGlobals *G)
   I->Wobble = SettingGet_i(I->G,NULL,NULL,cSetting_ray_texture);
   {
     float *v = SettingGet_3fv(I->G,NULL,NULL,cSetting_ray_texture_settings);
+    int color = SettingGetGlobal_color(I->G,cSetting_ray_interior_color);
     copy3f(v,I->WobbleParam);
+    v = ColorGet(I->G,color);
+    copy3f(v,I->IntColor);
   }
 
   return(I);

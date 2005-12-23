@@ -4637,7 +4637,6 @@ void SceneRay(PyMOLGlobals *G,
   unsigned int buffer_size;
   float height,width;
   float aspRat;
-  float white[3] = {1.0,1.0,1.0};
   unsigned int *buffer;
   float rayView[16];
   int curState;
@@ -4821,8 +4820,10 @@ void SceneRay(PyMOLGlobals *G,
       while(ListIterate(I->Obj,rec,next))
         {
           if(rec->obj->fRender) {
+            float *color = ColorGet(G,rec->obj->Color);
             RaySetContext(ray,rec->obj->Context);
-            ray->fColor3fv(ray,white);
+            ray->fColor3fv(ray,color);
+            ray->fInteriorColor3fv(ray,color);
             info.state = ObjectGetCurrentState(rec->obj,false);
             rec->obj->fRender(rec->obj,&info);
           }

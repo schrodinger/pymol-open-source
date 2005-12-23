@@ -80,6 +80,7 @@ struct _CRay {
   void (*fWobble)( CRay *ray,int mode,float *par);
   void (*fTransparentf)( CRay *ray,float t);
   void (*fCharacter)( CRay *ray,int char_id);
+  void (*fInteriorColor3fv) (CRay *ray, float *v);
 
   /* everything below should be private */
   PyMOLGlobals *G;
@@ -88,7 +89,7 @@ struct _CRay {
   CBasis *Basis;
   int NBasis;
   int *Vert2Prim;
-  float CurColor[3];
+  float CurColor[3],IntColor[3];
   float ModelView[16];
   float Rotation[16];
   float Volume[6];

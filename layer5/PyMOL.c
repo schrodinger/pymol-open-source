@@ -572,7 +572,7 @@ typedef struct _CPyMOL {
   ov_word lex_opaque_background;
   ov_word lex_draw_frames;
   ov_word lex_show_alpha_checker;
-  ov_word lex_use_state_matrices;
+  ov_word lex_matrix_mode;
   ov_word lex_editor_auto_origin;
   ov_word lex_session_file;
   ov_word lex_cgo_transparency;
@@ -609,6 +609,9 @@ typedef struct _CPyMOL {
   ov_word lex_ray_trace_depth_factor;
   ov_word lex_ray_trace_slope_factor;
   ov_word lex_ray_trace_disco_factor;
+  ov_word lex_ray_shadow_decay_factor;
+  ov_word lex_ray_interior_mode;
+
 } _CPyMOL;
 
 /* convenience functions -- inline */
@@ -1189,7 +1192,7 @@ static OVstatus PyMOL_InitAPI(CPyMOL *I)
   LEX_SETTING(opaque_background, 435);
   LEX_SETTING(draw_frames, 436);
   LEX_SETTING(show_alpha_checker, 437);
-  LEX_SETTING(use_state_matrices, 438);
+  LEX_SETTING(matrix_mode, 438);
   LEX_SETTING(editor_auto_origin, 439);
   LEX_SETTING(session_file, 440);
   LEX_SETTING(cgo_transparency, 441);
@@ -1226,6 +1229,9 @@ static OVstatus PyMOL_InitAPI(CPyMOL *I)
   LEX_SETTING(ray_trace_depth_factor,472);
   LEX_SETTING(ray_trace_slope_factor,473);
   LEX_SETTING(ray_trace_disco_factor,474);
+  LEX_SETTING(ray_shadow_decay_factor, 475);
+  LEX_SETTING(ray_interior_mode, 0);
+
   return_OVstatus_SUCCESS;
 }
 
