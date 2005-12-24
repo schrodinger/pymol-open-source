@@ -1230,7 +1230,7 @@ static OVstatus PyMOL_InitAPI(CPyMOL *I)
   LEX_SETTING(ray_trace_slope_factor,473);
   LEX_SETTING(ray_trace_disco_factor,474);
   LEX_SETTING(ray_shadow_decay_factor, 475);
-  LEX_SETTING(ray_interior_mode, 0);
+  LEX_SETTING(ray_interior_mode, 476);
 
   return_OVstatus_SUCCESS;
 }

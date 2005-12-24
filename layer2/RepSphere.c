@@ -357,30 +357,41 @@ static void RepSphereRender(RepSphere *I,RenderInfo *info)
         if(I->spheroidFlag && sp) {
           while(c--)
             {
-              i++;          
-              if(!(*pick)[0].src.bond) {
-                /* pass 1 - low order bits *            */
-                glColor3ub((uchar)((i&0xF)<<4),(uchar)((i&0xF0)|0x8),(uchar)((i&0xF00)>>4)); 
-                VLACheck((*pick),Picking,i);
+              int skip = (p[1].index<0);
+              if(!skip) {
+                i++;          
+                if(!(*pick)[0].src.bond) {
+                  /* pass 1 - low order bits *            */
+                  glColor3ub((uchar)((i&0xF)<<4),(uchar)((i&0xF0)|0x8),(uchar)((i&0xF00)>>4)); 
+                  VLACheck((*pick),Picking,i);
+                  p++;
+                  (*pick)[i].src = *p; /* copy object and atom info */
+                  (*pick)[i].context = I->R.context;
+                } else { 
+                  /* pass 2 - high order bits */           
+                  j=i>>12;            
+                  glColor3ub((uchar)((j&0xF)<<4),(uchar)((j&0xF0)|0x8),(uchar)((j&0xF00)>>4));             
+                }			 
+              } else {
                 p++;
-                (*pick)[i].src = *p; /* copy object and atom info */
-                (*pick)[i].context = I->R.context;
-              } else { 
-                /* pass 2 - high order bits */           
-                j=i>>12;            
-                glColor3ub((uchar)((j&0xF)<<4),(uchar)((j&0xF0)|0x8),(uchar)((j&0xF00)>>4));             
-              }			 
+              }
                 
               v+=3;
               for(a=0;a<sp->NStrip;a++) {
                 cc=sp->StripLen[a];
-                glBegin(GL_TRIANGLE_STRIP);
-                while((cc--)>0) {
-                  glNormal3fv(v);
-                  glVertex3fv(v+3);
-                  v+=6;
+                if(!skip) {
+                  glBegin(GL_TRIANGLE_STRIP);
+                  while((cc--)>0) {
+                    glNormal3fv(v);
+                    glVertex3fv(v+3);
+                    v+=6;
+                  }
+                  glEnd();
+                } else {
+                  while((cc--)>0) {
+                    v+=6;
+                  }
                 }
-                glEnd();
               }
             }
         } else {
@@ -420,44 +431,51 @@ static void RepSphereRender(RepSphere *I,RenderInfo *info)
           v=I->VC;
           c=I->NC;
           while(c--) {
-            i++;          
-            if(!(*pick)[0].src.bond) {
-              /* pass 1 - low order bits *            */
-              glColor3ub((uchar)((i&0xF)<<4),(uchar)((i&0xF0)|0x8),(uchar)((i&0xF00)>>4)); 
-              VLACheck((*pick),Picking,i);
+            int skip = (p[1].index<0);
+            if(!skip) {
+              i++;          
+              if(!(*pick)[0].src.bond) {
+                /* pass 1 - low order bits *            */
+                glColor3ub((uchar)((i&0xF)<<4),(uchar)((i&0xF0)|0x8),(uchar)((i&0xF00)>>4)); 
+                VLACheck((*pick),Picking,i);
+                p++;
+                (*pick)[i].src = *p; /* copy object and atom info */
+                (*pick)[i].context = I->R.context;
+              } else { 
+                /* pass 2 - high order bits */           
+                j=i>>12;            
+                glColor3ub((uchar)((j&0xF)<<4),(uchar)((j&0xF0)|0x8),(uchar)((j&0xF00)>>4));             
+              }			 
+            } else {
               p++;
-              (*pick)[i].src = *p; /* copy object and atom info */
-              (*pick)[i].context = I->R.context;
-            } else { 
-              /* pass 2 - high order bits */           
-              j=i>>12;            
-              glColor3ub((uchar)((j&0xF)<<4),(uchar)((j&0xF0)|0x8),(uchar)((j&0xF00)>>4));             
-            }			 
+            }
               
             if(sp) {
-              int *s,*q,b;
-              float *v0,vdw;
+              if(!skip) {
+                int *s,*q,b;
+                float *v0,vdw;
                 
-              v0 = v+3;
-              vdw = v[6];
-              q=sp->Sequence;
-              s=sp->StripLen;
-              for(b=0;b<sp->NStrip;b++)
-                {
-                  glBegin(GL_TRIANGLE_STRIP);
-                  for(cc=0;cc<(*s);cc++)
-                    {
-                      glNormal3f(sp->dot[*q][0],
-                                 sp->dot[*q][1],
-                                 sp->dot[*q][2]);
-                      glVertex3f(v0[0]+vdw*sp->dot[*q][0],
-                                 v0[1]+vdw*sp->dot[*q][1],
-                                 v0[2]+vdw*sp->dot[*q][2]);
-                      q++;
-                    }
-                  glEnd();
-                  s++;
-                }
+                v0 = v+3;
+                vdw = v[6];
+                q=sp->Sequence;
+                s=sp->StripLen;
+                for(b=0;b<sp->NStrip;b++)
+                  {
+                    glBegin(GL_TRIANGLE_STRIP);
+                    for(cc=0;cc<(*s);cc++)
+                      {
+                        glNormal3f(sp->dot[*q][0],
+                                   sp->dot[*q][1],
+                                   sp->dot[*q][2]);
+                        glVertex3f(v0[0]+vdw*sp->dot[*q][0],
+                                   v0[1]+vdw*sp->dot[*q][1],
+                                   v0[2]+vdw*sp->dot[*q][2]);
+                        q++;
+                      }
+                    glEnd();
+                    s++;
+                  }
+              }
               v+=7;
             } else {
               switch(sphere_mode) {
@@ -465,23 +483,25 @@ static void RepSphereRender(RepSphere *I,RenderInfo *info)
               case 3:
               case 4:
               case 5:
-                if(last_radius!=(cur_radius=v[6])) {
-                  size = cur_radius*pixel_scale;
-                  glEnd();
-                  if(clamp_size_flag) 
-                    if(size>max_size)
-                      size=max_size;
-                  glPointSize(size);
-                  glBegin(GL_POINTS);
-                  last_radius = cur_radius;
+                if(!skip) {
+                  if(last_radius!=(cur_radius=v[6])) {
+                    size = cur_radius*pixel_scale;
+                    glEnd();
+                    if(clamp_size_flag) 
+                      if(size>max_size)
+                        size=max_size;
+                    glPointSize(size);
+                    glBegin(GL_POINTS);
+                    last_radius = cur_radius;
+                  }
                 }
                 v+=3;
-                glVertex3fv(v);
+                if(!skip) glVertex3fv(v);
                 v+=4;
                 break;
               default: /* simple, default point width points*/
                 v+=3;
-                glVertex3fv(v);
+                if(!skip) glVertex3fv(v);
                 v+=4;
                 break;
               }

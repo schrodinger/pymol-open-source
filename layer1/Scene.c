@@ -197,7 +197,7 @@ int SceneLoopRelease(Block *block,int button,int x,int y,int mod);
 
 int SceneLoopClick(Block *block,int button, int x,int y,int mod);
 
-static void SceneAbortAnimation(PyMOLGlobals *G)
+void SceneAbortAnimation(PyMOLGlobals *G)
 {
   register CScene *I=G->Scene;
   if(I->cur_ani_elem < I->n_ani_elem ) { /* allow user to override animation */

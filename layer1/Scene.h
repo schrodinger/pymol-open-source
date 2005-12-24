@@ -143,6 +143,7 @@ void SceneLoadAnimation(PyMOLGlobals *G, double duration,int hand);
 int SceneMustDrawBoth(PyMOLGlobals *G);
 float SceneGetReflectValue(PyMOLGlobals *G);
 float SceneGetSpecularValue(PyMOLGlobals *G,float spec);
+void SceneAbortAnimation(PyMOLGlobals *G);
 
 #endif
 

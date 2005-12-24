@@ -972,7 +972,7 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(PyMOLGlobals *G,
   int only_read_one_model = false;
   int ignore_conect = false;
   int have_bond_order = false;
-  int seen_model;
+  int seen_model,in_model = false;
   int is_end_of_object = false;
   int literal_names = SettingGetGlobal_b(G,cSetting_pdb_literal_names);
   int bogus_name_alignment = true;
@@ -1053,8 +1053,10 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(PyMOLGlobals *G,
               ncopy(cc,p,6);
               if(strcmp("HEADER",cc)==0) {
                 (*next_pdb) = p; /* found another PDB file after this one... */
+              } else if(strcmp("ENDMDL",cc)==0) {
+                seen_end_of_atoms = false;
               }
-            }
+            } 
             break;
           }
         } else if((p[0]== 'C')&&(p[1]=='O')&&(p[2]=='N')&&
@@ -1248,6 +1250,7 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(PyMOLGlobals *G,
           *model_number = tmp;
       }
       seen_model = true;
+      in_model = true;
     } else if((p[0]=='H')&& /* HELIX */
               (p[1]=='E')&&
               (p[2]=='L')&&
@@ -1319,7 +1322,7 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(PyMOLGlobals *G,
               (p[5]=='L')&&
               (!*restart_model)) {
       *restart_model=nextline(p);
-      
+      in_model = false;
       if(only_read_one_model) {
         char *pp;
         pp = nextline(p); 
@@ -1350,7 +1353,7 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(PyMOLGlobals *G,
               (p[1]=='N')&&
               (p[2]=='D')) {
       ntrim(cc,p,6);
-      if(strcmp("END",cc)==0) { /* stop parsing here...*/
+      if((strcmp("END",cc)==0)&&(!in_model)) { /* stop parsing here...*/
         char *pp;
         pp=nextline(p); /* ...unless we're in MODEL or next line is itself ENDMDL */
         p=ncopy(cc,p,6);
