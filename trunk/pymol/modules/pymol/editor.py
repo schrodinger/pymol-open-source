@@ -164,4 +164,32 @@ def attach_amino_acid(selection,amino_acid,center=0,animate=-1):
     cmd.delete(tmp_editor)
         
 
+_aa_codes =  {
+    'A' : 'ala',
+    'B' : 'ace',
+    'C' : 'cys',
+    'D' : 'asp',
+    'E' : 'glu',
+    'F' : 'phe',
+    'G' : 'gly',
+    'H' : 'his',
+    'I' : 'ile',
+    'K' : 'lys',
+    'L' : 'leu',
+    'M' : 'met',
+    'N' : 'asn',
+    'P' : 'pro',
+    'Q' : 'gln',
+    'R' : 'arg',
+    'S' : 'ser',
+    'T' : 'thr',
+    'V' : 'val',
+    'W' : 'trp',
+    'Y' : 'tyr',
+    'Z' : 'nme',
+    }
 
+def build_peptide(sequence):
+    for aa in sequence:
+        attach_amino_acid("pk1",_aa_codes[aa])
+        

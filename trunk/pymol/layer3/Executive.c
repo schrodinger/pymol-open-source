@@ -5246,7 +5246,7 @@ void ExecutiveMask(PyMOLGlobals *G,char *s1,int mode)
     if(Feedback(G,FB_Executive,FB_Actions)) {    
       if(op.i2) {
         if(mode) {
-          PRINTF " Protect: %d atoms masked (can not be picked).\n",op.i2 ENDF(G);
+          PRINTF " Protect: %d atoms masked (can not be picked or selected).\n",op.i2 ENDF(G);
         } else {
           PRINTF " Protect: %d atoms unmasked.\n", op.i2 ENDF(G);
         }
@@ -8824,6 +8824,8 @@ int ExecutiveWindowZoom(PyMOLGlobals *G,char *name,float buffer,
     SceneWindowSphere(G,center,radius);
     if(animate!=0.0F)
       SceneLoadAnimation(G,animate,0);
+    else
+      SceneAbortAnimation(G);
     SceneInvalidate(G);
   } else {
 
