@@ -440,7 +440,7 @@ int ObjectFromPyList(PyMOLGlobals *G,PyObject *list,CObject *I)
 #endif
 }
 /*========================================================================*/
-void ObjectCombineTTT(CObject *I,float *ttt)
+void ObjectCombineTTT(CObject *I,float *ttt,int reverse_order)
 {
   float cpy[16];
   if(!I->TTTFlag) {
@@ -449,7 +449,11 @@ void ObjectCombineTTT(CObject *I,float *ttt)
   } else {
     UtilCopyMem(cpy,I->TTT,sizeof(float)*16);
   }
-  combineTTT44f44f(ttt,cpy,I->TTT);
+  if(reverse_order) {
+    combineTTT44f44f(cpy,ttt,I->TTT);
+  } else {
+    combineTTT44f44f(ttt,cpy,I->TTT);
+  }
 }
 /*========================================================================*/
 void ObjectTranslateTTT(CObject *I,float *v)

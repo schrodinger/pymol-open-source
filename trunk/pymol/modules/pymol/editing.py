@@ -1500,7 +1500,7 @@ y2 = m8*(x0+m12) + m9*(x1+m13) + m10*(x2+m14) + m11
         return r
 
     def matrix_transfer(source_name,    target_name,
-                              source_mode=0,  target_mode=0,
+                              source_mode=-1,  target_mode=-1,
                               source_state=1, target_state=1,
                               target_undo=1, log=0, quiet=1):
         r = DEFAULT_ERROR

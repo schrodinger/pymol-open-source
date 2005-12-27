@@ -312,6 +312,11 @@ int ExecutiveMatrixTransfer(PyMOLGlobals *G,
       mode 1: object TTT matrix
       mode 2: state matrix */
   int ok = true;
+  int matrix_mode = SettingGetGlobal_b(G,cSetting_matrix_mode);
+  if(source_mode<0)
+    source_mode = matrix_mode;
+  if(target_mode<0)
+    target_mode = matrix_mode;
   switch(source_mode) {
   case 0: /* txf history is the source matrix */
     { 
@@ -354,9 +359,9 @@ int ExecutiveMatrixTransfer(PyMOLGlobals *G,
           if(history) {
             float tttf[16];
             convertR44dTTTf(history,tttf);
-            ExecutiveSetObjectTTT(G,target_name,tttf,target_state,quiet);
+            ExecutiveSetObjectTTT(G,target_name,tttf,-1,quiet);
           } else {
-            ExecutiveSetObjectTTT(G,target_name,NULL,target_state,quiet);
+            ExecutiveSetObjectTTT(G,target_name,NULL,-1,quiet);
           }
           /* to do: logging, return values, etc. */
           break;
@@ -369,23 +374,27 @@ int ExecutiveMatrixTransfer(PyMOLGlobals *G,
     break;
   case 1: /* from the TTT matrix */
     {
+      /* note that for now we're forcing states to be -1 */
+      /* in the future, we may have per-state TTTs -- though right now the
+       view matrices serve that purpose */
+    
       float *tttf;
-      int found = ExecutiveGetObjectTTT(G,source_name,&tttf,source_state,quiet);
+      int found = ExecutiveGetObjectTTT(G,source_name,&tttf,-1,quiet);
       if(found) {
         switch(target_mode) {
         case 0: /* coordinates & history */
           /* TODO */
           break;
         case 1: /* TTT */
-          ExecutiveSetObjectTTT(G,target_name,tttf,target_state,quiet);
+          ExecutiveSetObjectTTT(G,target_name,tttf,-1,quiet);
           break;
         case 2: /* State */
           if(tttf) {
             double homo[16];
             convertTTTfR44d(tttf,homo);
-            ok = ExecutiveSetObjectMatrix(G,target_name,target_state,homo);
+            ok = ExecutiveSetObjectMatrix(G,target_name,-1,homo);
           } else {
-            ok = ExecutiveSetObjectMatrix(G,target_name,target_state,NULL);
+            ok = ExecutiveSetObjectMatrix(G,target_name,-1,NULL);
           }
           break;
         }
@@ -406,9 +415,9 @@ int ExecutiveMatrixTransfer(PyMOLGlobals *G,
           if(homo) {
             float tttf[16];
             convertR44dTTTf(homo,tttf);
-            ExecutiveSetObjectTTT(G,target_name,tttf,target_state,quiet);
+            ExecutiveSetObjectTTT(G,target_name,tttf,-1,quiet);
           } else {
-            ExecutiveSetObjectTTT(G,target_name,NULL,target_state,quiet);
+            ExecutiveSetObjectTTT(G,target_name,NULL,-1,quiet);
           }
           break;
       case 2: /* State */
@@ -3819,7 +3828,7 @@ int ExecutiveTranslateAtom(PyMOLGlobals *G,char *sele,float *v,int state,int mod
   return(ok);
 }
 
-int ExecutiveCombineObjectTTT(PyMOLGlobals *G,char *name,float *ttt)
+int ExecutiveCombineObjectTTT(PyMOLGlobals *G,char *name,float *ttt, int reverse_order)
 {
   CObject *obj = ExecutiveFindObjectByName(G,name);
   int ok=true;
@@ -3830,7 +3839,7 @@ int ExecutiveCombineObjectTTT(PyMOLGlobals *G,char *name,float *ttt)
       ENDFB(G);
     ok=false;
   } else {
-    ObjectCombineTTT(obj,ttt);
+    ObjectCombineTTT(obj,ttt,reverse_order);
     SceneInvalidate(G);
   }
   return(ok);
@@ -5701,11 +5710,43 @@ int ExecutiveSeleToObject(PyMOLGlobals *G,char *name,char *s1,
 {
   int sele1;
   int ok=false;
-
+  int exists=(ExecutiveFindObjectMoleculeByName(G,name)!=NULL);
+  
   sele1=SelectorIndexByName(G,s1);
-  if(sele1>=0)
+  if(sele1>=0) {
     ok = SelectorCreateObjectMolecule(G,sele1,name,target,
-                                      source,discrete,zoom,quiet,singletons);
+                                      source,discrete,false,quiet,singletons);
+    if(ok) {
+      int sele2=SelectorIndexByName(G,name);
+      ObjectMolecule *old_obj,*new_obj;
+      old_obj = SelectorGetFirstObjectMolecule(G,sele1); /* get at least one object */
+      new_obj = SelectorGetSingleObjectMolecule(G,sele2);
+      
+      /* first we need to make sure that the object being moved
+         matches the target with respect to both the TTT and the
+         object's state matrix (if any) */
+
+      if(old_obj&&new_obj) {
+        ExecutiveMatrixTransfer(G,
+                                old_obj->Obj.Name,
+                                new_obj->Obj.Name, 
+                                1, 1, /* TTT mode */
+                                source,target,
+                                false, 0, quiet);
+        
+        
+        ExecutiveMatrixTransfer(G,
+                                old_obj->Obj.Name,
+                                new_obj->Obj.Name, 
+                                2, 2, /* Object state mode */
+                                source,target,
+                                false, 0, quiet);
+
+        ExecutiveDoZoom(G,(CObject*)new_obj,!exists,zoom,true);        
+      }
+    }
+  }
+
   return ok;
 }
 /*========================================================================*/
@@ -6690,47 +6731,48 @@ int ExecutiveRMS(PyMOLGlobals *G,char *s1,char *s2,int mode,float refine,int max
           if(matrix_mode) {
 
             ObjectMolecule *src_obj,*trg_obj;
-            src_obj = SelectorGetSingleObjectMolecule(G,sele1);
+            src_obj = SelectorGetFirstObjectMolecule(G,sele1); /* get at least one object */
             trg_obj = SelectorGetSingleObjectMolecule(G,sele2);
 
             /* first we need to make sure that the object being moved
                matches the target with respect to both the TTT and the
                object's state matrix (if any) */
-            
-            ExecutiveMatrixTransfer(G,
-                                    trg_obj->Obj.Name, 
-                                    src_obj->Obj.Name,
-                                    1, 1, /* TTT mode */
-                                    state2,state1,
-                                    false, 0, quiet);
-            
-            
-            ExecutiveMatrixTransfer(G,
-                                    trg_obj->Obj.Name, 
-                                    src_obj->Obj.Name,
-                                    2, 2, /* Object state mode */
-                                    state2,state1,
-                                    false, 0, quiet);
-           
-            switch(matrix_mode) {
-            case 1: /* TTTs */
-              ExecutiveCombineObjectTTT(G,src_obj->Obj.Name,op2.ttt);
-              break;
-            case 2:
-              {
-                double homo[16],*src_homo;
-                convertTTTfR44d(op2.ttt,homo);
-                if(ExecutiveGetObjectMatrix(G,src_obj->Obj.Name,state1,&src_homo)) {
-                  left_multiply44d44d(src_homo,homo);
-                  ExecutiveSetObjectMatrix(G,src_obj->Obj.Name,state1,homo);
+
+            if(src_obj&&trg_obj) {
+              ExecutiveMatrixTransfer(G,
+                                      trg_obj->Obj.Name, 
+                                      src_obj->Obj.Name,
+                                      1, 1, /* TTT mode */
+                                      state2,state1,
+                                      false, 0, quiet);
+              
+              
+              ExecutiveMatrixTransfer(G,
+                                      trg_obj->Obj.Name, 
+                                      src_obj->Obj.Name,
+                                      2, 2, /* Object state mode */
+                                      state2,state1,
+                                      false, 0, quiet);
+              
+              switch(matrix_mode) {
+              case 1: /* TTTs */
+                ExecutiveCombineObjectTTT(G,src_obj->Obj.Name,op2.ttt,true);
+                break;
+              case 2:
+                {
+                  double homo[16],*src_homo;
+                  convertTTTfR44d(op2.ttt,homo);
+                  if(ExecutiveGetObjectMatrix(G,src_obj->Obj.Name,state1,&src_homo)) {
+                    left_multiply44d44d(src_homo,homo);
+                    ExecutiveSetObjectMatrix(G,src_obj->Obj.Name,state1,homo);
+                  }
                 }
+                break;
               }
-              break;
+              /* next we need to update the object's TTT matrix to reflect
+                 the transformation */
             }
-            /* next we need to update the object's TTT matrix to reflect
-               the transformation */
-            
-          } else {
+          } else { /* matrix_mode is zero -- legacy behavior */
             /* this will transform the actual coordinates */
             op2.code = OMOP_TTTF;
             ExecutiveObjMolSeleOp(G,sele1,&op2);
