@@ -1315,7 +1315,8 @@ SEE ALSO
               get_movie_locked,   \
               get_names,          \
               get_names_of_type,  \
-              get_object_matrix, \
+              get_object_matrix,  \
+              get_mtl_obj,        \
               get_phipsi,         \
               get_position,       \
               get_povray,         \
@@ -1323,6 +1324,7 @@ SEE ALSO
               get_symmetry,       \
               get_title,          \
               get_type,           \
+              get_vrml,           \
               id_atom,            \
               identify,           \
               index,              \
