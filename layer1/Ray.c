@@ -936,7 +936,7 @@ void RayRenderObjMtl(CRay *I,int width,int height,char **objVLA_ptr,
   char *objVLA = *objVLA_ptr; 
   char *mtlVLA = *mtlVLA_ptr; 
   int oc = 0; /* obj character count */
-  int mc = 0; /* mtl character count */
+  /*  int mc = 0;*/ /* mtl character count */
 
   OrthoLineType buffer;
   

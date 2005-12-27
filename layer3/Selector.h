@@ -76,6 +76,7 @@ int SelectorSubdivide(PyMOLGlobals *G,char *pref,int sele1,int sele2,
                             int sele3,int sele4,
                             char *fragPref,char *compName,int *bondMode);
 ObjectMolecule *SelectorGetSingleObjectMolecule(PyMOLGlobals *G,int sele);
+ObjectMolecule *SelectorGetFirstObjectMolecule(PyMOLGlobals *G,int sele);
 void SelectorUpdateObjectSele(PyMOLGlobals *G,ObjectMolecule *obj);
 void SelectorDeletePrefixSet(PyMOLGlobals *G,char *pref);
 void SelectorUpdateCmd(PyMOLGlobals *G,int sele0,int sele1,int sta0,int sta1,int method,int quiet);

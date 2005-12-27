@@ -786,7 +786,7 @@ static PyObject *CmdCombineObjectTTT(PyObject *self, 	PyObject *args)
   if(ok) {
     if(PConvPyListToFloatArrayInPlace(m,ttt,16)>0) {
       APIEntry();
-      ok = ExecutiveCombineObjectTTT(TempPyMOLGlobals,name,ttt);
+      ok = ExecutiveCombineObjectTTT(TempPyMOLGlobals,name,ttt,false);
       APIExit();
     } else {
       PRINTFB(TempPyMOLGlobals,FB_CCmd,FB_Errors)

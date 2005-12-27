@@ -65,7 +65,7 @@ SEE ALSO
         if object==None: object=''
         try:
             lock()
-            r = _cmd.align(source,target,float(cutoff),int(cycles),float(gap),
+            r = _cmd.align(source,"("+target+")",float(cutoff),int(cycles),float(gap),
                                 float(extend),int(max_gap),str(object),str(mfile),
                                 int(source_state)-1,int(target_state)-1,
                                 int(quiet),int(max_skip))

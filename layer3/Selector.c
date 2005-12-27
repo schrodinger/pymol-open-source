@@ -3307,6 +3307,28 @@ ObjectMolecule *SelectorGetSingleObjectMolecule(PyMOLGlobals *G,int sele)
   return(result);
 }
 /*========================================================================*/
+ObjectMolecule *SelectorGetFirstObjectMolecule(PyMOLGlobals *G,int sele)
+{
+  /* slow way */
+
+  int a;
+  ObjectMolecule *result = NULL;
+  ObjectMolecule *obj;
+  register CSelector *I=G->Selector;
+  int at1;
+  SelectorUpdateTable(G);
+
+  for(a=0;a<I->NAtom;a++) {
+    obj=I->Obj[I->Table[a].model];
+    at1=I->Table[a].atom;
+    if(SelectorIsMember(G,obj->AtomInfo[at1].selEntry,sele)) {
+      result = obj;
+      break;
+    }
+  }
+  return(result);
+}
+/*========================================================================*/
 ObjectMolecule **SelectorGetObjectMoleculeVLA(PyMOLGlobals *G,int sele)
 {
   int a;

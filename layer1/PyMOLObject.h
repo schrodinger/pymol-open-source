@@ -78,7 +78,7 @@ void ObjectToggleRepVis(CObject *I,int rep);
 void ObjectPrepareContext(CObject *I,CRay *ray);
 void ObjectSetTTT(CObject *I,float *ttt,int state);
 int ObjectGetTTT(CObject *I,float **ttt,int state);
-void ObjectCombineTTT(CObject *I,float *ttt);
+void ObjectCombineTTT(CObject *I,float *ttt,int reverse_order);
 void ObjectTranslateTTT(CObject *T, float *v);
 void ObjectSetTTTOrigin(CObject *I,float *origin);
 void ObjectResetTTT(CObject *I);

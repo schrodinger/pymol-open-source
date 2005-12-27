@@ -1882,7 +1882,7 @@ void EditorDrag(PyMOLGlobals *G,ObjectMolecule *obj,int index,int mode,int state
         if(matrix_mode&&(I->DragSelection<0)) {
           switch(matrix_mode) {
           case 1:
-            ObjectCombineTTT(&obj->Obj,m);
+            ObjectCombineTTT(&obj->Obj,m,false);
             break;
           case 2:
             ObjectMoleculeTransformState44f(obj,state,m,log_trans,false,true);
@@ -1916,12 +1916,12 @@ void EditorDrag(PyMOLGlobals *G,ObjectMolecule *obj,int index,int mode,int state
            coordinates to effect the desired rotation */
         if(mode==cButModeRotView) {
           /* modify the object's TTT */
-          ObjectCombineTTT(&obj->Obj, m);
+          ObjectCombineTTT(&obj->Obj, m,false);
         } else {
           if(matrix_mode) {
             switch(matrix_mode) {
             case 1:
-              ObjectCombineTTT(&obj->Obj,m);
+              ObjectCombineTTT(&obj->Obj,m,false);
               break;
             case 2:
               ObjectMoleculeTransformState44f(obj,state,m,log_trans,false,true);
@@ -1955,7 +1955,7 @@ void EditorDrag(PyMOLGlobals *G,ObjectMolecule *obj,int index,int mode,int state
           m[11]=mov[2];
           switch(matrix_mode) {
           case 1:
-            ObjectCombineTTT(&obj->Obj,m);
+            ObjectCombineTTT(&obj->Obj,m,false);
             break;
           case 2:
             ObjectMoleculeTransformState44f(obj,state,m,log_trans,true,true);
