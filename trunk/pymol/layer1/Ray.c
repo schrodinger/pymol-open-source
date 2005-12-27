@@ -858,6 +858,136 @@ G3dPrimitive *RayRenderG3d(CRay *I,int width, int height,
   VLASize(jprim,G3dPrimitive,n_jp);
   return jprim;
 }
+void RayRenderVRML2(CRay *I,int width,int height,
+                    char **vla_ptr,float front,float back,float fov, float angle)
+{
+  char *vla = *vla_ptr;
+  int cc = 0; /* character count */
+  OrthoLineType buffer;
+  
+  RayExpandPrimitives(I);
+  RayTransformFirst(I,0);
+
+  strcpy(buffer,"#VRML V1.0 ascii\n\n");
+  UtilConcatVLA(&vla,&cc,buffer);
+
+  UtilConcatVLA(&vla,&cc,"MaterialBinding { value OVERALL }\n");
+
+  sprintf(buffer,"Material {\n ambientColor 0 0 0\n diffuseColor 1 1 1\n specularColor 1 1 1\nshininess 0.2\n}\n");
+  UtilConcatVLA(&vla,&cc,buffer);
+
+  { 
+    int a;
+    CPrimitive *prim;
+    float *vert;
+    float z_corr = -(front+back)/2;
+    CBasis *base = I->Basis+1;
+
+    UtilConcatVLA(&vla,&cc,"Separator {\n");
+
+  UtilConcatVLA(&vla,&cc,"MatrixTransform {\n");
+  UtilConcatVLA(&vla,&cc,"matrix 1.0 0.0 0.0 0.0\n");
+  UtilConcatVLA(&vla,&cc,"       0.0 1.0 0.0 0.0\n");
+  UtilConcatVLA(&vla,&cc,"       0.0 0.0 1.0 0.0\n");
+  sprintf(buffer,"    %8.6f %8.6f %8.6f 1.0\n",
+          (I->Volume[0]+I->Volume[1])/2,
+          (I->Volume[2]+I->Volume[3])/2,0.0F);
+  UtilConcatVLA(&vla,&cc,buffer);
+  UtilConcatVLA(&vla,&cc,"}\n");
+
+    for(a=0;a<I->NPrimitive;a++) {
+      prim = I->Primitive+a;
+      vert = base->Vertex+3*(prim->vert);
+      switch(prim->type) {
+      case cPrimSphere:
+        sprintf(buffer,
+                "Material {\ndiffuseColor %6.4f %6.4f %6.4f\n}\n\n", 
+                prim->c1[0],prim->c1[1],prim->c1[2]);
+        UtilConcatVLA(&vla,&cc,buffer);    
+        UtilConcatVLA(&vla,&cc,"Separator {\n");
+        sprintf(buffer,
+                "Transform {\ntranslation %8.6f %8.6f %8.6f\nscaleFactor %8.6f %8.6f %8.6f\n}\n",
+                vert[0],vert[1],vert[2]-z_corr,         
+                prim->r1,prim->r1,prim->r1);
+        UtilConcatVLA(&vla,&cc,buffer);    
+        sprintf(buffer,"Sphere {}\n");
+        UtilConcatVLA(&vla,&cc,buffer);
+        UtilConcatVLA(&vla,&cc,"}\n\n");        
+        break;
+      case cPrimCylinder:
+        break;
+      case cPrimSausage:
+        break;
+      case cPrimTriangle:
+        break;
+      }
+    }
+
+    UtilConcatVLA(&vla,&cc,"}\n");
+  }
+  
+  *vla_ptr=vla;
+}
+/*========================================================================*/
+void RayRenderObjMtl(CRay *I,int width,int height,char **objVLA_ptr,
+                  char **mtlVLA_ptr,float front,float back,float fov,
+                  float angle)
+{
+  char *objVLA = *objVLA_ptr; 
+  char *mtlVLA = *mtlVLA_ptr; 
+  int oc = 0; /* obj character count */
+  int mc = 0; /* mtl character count */
+
+  OrthoLineType buffer;
+  
+  RayExpandPrimitives(I);
+  RayTransformFirst(I,0);
+
+  { 
+    int a;
+    CPrimitive *prim;
+    float *vert,*norm;
+    int vc = 0;
+    int nc = 0;
+    CBasis *base = I->Basis+1;
+
+    for(a=0;a<I->NPrimitive;a++) {
+      prim = I->Primitive+a;
+      vert = base->Vertex+3*(prim->vert);
+      norm = base->Normal+3*base->Vert2Normal[prim->vert];
+      switch(prim->type) {
+      case cPrimTriangle:
+        sprintf(buffer,"v %8.6f %8.6f %8.6f\nvn %8.6f %8.6f %8.6f\n",
+                vert[0],vert[1],vert[2],norm[0],norm[1],norm[2]);
+        UtilConcatVLA(&objVLA,&oc,buffer);
+        sprintf(buffer,"v %8.6f %8.6f %8.6f\nvn %8.6f %8.6f %8.6f\n",
+                vert[3],vert[4],vert[5],norm[3],norm[4],norm[5]);
+        UtilConcatVLA(&objVLA,&oc,buffer);
+        sprintf(buffer,"v %8.6f %8.6f %8.6f\nvn %8.6f %8.6f %8.6f\n",
+                vert[6],vert[7],vert[8],norm[6],norm[7],norm[8]);
+        UtilConcatVLA(&objVLA,&oc,buffer);
+        sprintf(buffer,"f %d//%d %d//%d %d//%d\n",
+                vc+1,nc+1,vc+2,nc+2,vc+3,nc+3);
+        UtilConcatVLA(&objVLA,&oc,buffer);
+        nc+=3;
+        vc+=3;
+
+        /*
+        prim->c1[0],prim->c1[1],prim->c1[2])
+        prim->c2[0],prim->c2[1],prim->c2[2],
+        prim->c3[0],prim->c3[1],prim->c3[2]
+        UtilConcatVLA(&vla,&oc,buffer);
+        UtilConcatVLA(&vla,&oc,buffer);
+        */
+
+        break;
+      }
+    }
+  }
+
+  *objVLA_ptr = objVLA;
+  *mtlVLA_ptr = mtlVLA;
+}
 /*========================================================================*/
 void RayRenderPOV(CRay *I,int width,int height,char **headerVLA_ptr,
                   char **charVLA_ptr,float front,float back,float fov,

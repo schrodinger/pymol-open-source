@@ -38,6 +38,11 @@ void RayRender(CRay *I,int width,int height,unsigned int *image,
                float fov,float *pos);
 void RayRenderPOV(CRay *I,int width,int height,char **headerVLA,
                   char **charVLA,float front,float back,float fov,float angle);
+void RayRenderVRML2(CRay *I,int width,int height,
+                    char **vla_ptr,float front,float back,float fov, float angle);
+void RayRenderObjMtl(CRay *I,int width,int height,char **objVLA_ptr,
+                      char **mtlVLA_ptr,float front,float back,float fov,
+                      float angle);
 void RayRenderTest(CRay *I,int width,int height,float front,float back,float fov);
 void RaySetTTT(CRay *I,int flag,float *ttt);
 void RayGetTTT(CRay *I,float *ttt);

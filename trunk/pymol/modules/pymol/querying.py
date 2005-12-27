@@ -445,6 +445,55 @@ PYMOL API
         if _raising(r): raise pymol.CmdException
         return r
 
+    def get_mtl_obj():
+        '''
+DESCRIPTION
+
+    "get_mtl_obj" returns a tuple containing mtl and obj input
+    files for Maya 
+
+    INCOMPLETE & EXPERIMENTAL
+    
+PYMOL API
+
+    cmd.get_obj_mtl()
+
+        '''
+        r = DEFAULT_ERROR
+        try:
+            lock()   
+            r = _cmd.get_mtl_obj()
+        finally:
+            unlock(r)
+        if not r:
+            if cmd._raising(): raise pymol.CmdException
+        if _raising(r): raise pymol.CmdException
+        return r
+    
+    def get_vrml(): 
+        '''
+DESCRIPTION
+
+    "get_vrml" returns a vrml input file representing the current scene
+
+    INCOMPLETE -- only does spheres at present
+    
+PYMOL API
+
+    cmd.get_vrml()
+
+        '''
+        r = DEFAULT_ERROR
+        try:
+            lock()   
+            r = _cmd.get_vrml()
+        finally:
+            unlock(r)
+        if not r:
+            if cmd._raising(): raise pymol.CmdException
+        if _raising(r): raise pymol.CmdException
+        return r
+
     def count_states(selection="(all)",quiet=1):
         '''
 DESCRIPTION

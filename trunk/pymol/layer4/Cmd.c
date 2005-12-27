@@ -1803,6 +1803,20 @@ static PyObject *CmdPaste(PyObject *dummy, PyObject *args)
   return APIResultOk(ok);  
 }
 
+static PyObject *CmdGetVRML(PyObject *dummy, PyObject *args)
+{
+  PyObject *result = NULL;
+  char *vla = NULL;
+  APIEntry();
+  SceneRay(TempPyMOLGlobals,0,0,4,NULL,&vla,0.0F,0.0F,false,NULL);
+  APIExit();
+  if(vla) {
+    result = Py_BuildValue("s",vla);
+  }
+  VLAFreeP(vla);
+  return(APIAutoNone(result));
+}
+
 static PyObject *CmdGetPovRay(PyObject *dummy, PyObject *args)
 {
   PyObject *result = NULL;
@@ -1815,6 +1829,21 @@ static PyObject *CmdGetPovRay(PyObject *dummy, PyObject *args)
   }
   VLAFreeP(header);
   VLAFreeP(geom);
+  return(APIAutoNone(result));
+}
+
+static PyObject *CmdGetMtlObj(PyObject *dummy, PyObject *args)
+{
+  PyObject *result = NULL;
+  char *obj=NULL,*mtl=NULL;
+  APIEntry();
+  SceneRay(TempPyMOLGlobals,0,0,5,&obj,&mtl,0.0F,0.0F,false,NULL);
+  APIExit();
+  if(obj&&mtl) {
+    result = Py_BuildValue("(ss)",mtl,obj);
+  }
+  VLAFreeP(obj);
+  VLAFreeP(mtl);
   return(APIAutoNone(result));
 }
 
@@ -5832,6 +5861,7 @@ static PyMethodDef Cmd_methods[] = {
 	{"get_feedback",          CmdGetFeedback,          METH_VARARGS },
 	{"get_matrix",	           CmdGetMatrix,            METH_VARARGS },
 	{"get_min_max",           CmdGetMinMax,            METH_VARARGS },
+   {"get_mtl_obj",            CmdGetMtlObj,            METH_VARARGS },
 	{"get_model",	           CmdGetModel,             METH_VARARGS },
 	{"get_moment",	           CmdGetMoment,            METH_VARARGS },
    {"get_movie_locked",      CmdGetMovieLocked,       METH_VARARGS },
@@ -5858,6 +5888,7 @@ static PyMethodDef Cmd_methods[] = {
 	{"get_type",              CmdGetType,              METH_VARARGS },
    {"get_view",              CmdGetView,              METH_VARARGS },
    {"get_vis",               CmdGetVis,               METH_VARARGS },
+   {"get_vrml",	             CmdGetVRML,            METH_VARARGS },
    {"get_wizard",            CmdGetWizard,            METH_VARARGS },
    {"get_wizard_stack",      CmdGetWizardStack,       METH_VARARGS },
 	{"h_add",                 CmdHAdd,                 METH_VARARGS },

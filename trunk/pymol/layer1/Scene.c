@@ -4867,8 +4867,8 @@ void SceneRay(PyMOLGlobals *G,
       break;
       
     case 1: /* mode 1 is povray */
-      charVLA=VLAlloc(char,100000); 
-      headerVLA=VLAlloc(char,2000);
+      charVLA=VLACalloc(char,100000); 
+      headerVLA=VLACalloc(char,2000);
       RayRenderPOV(ray,ray_width,ray_height,&headerVLA,&charVLA,
                    I->FrontSafe,I->BackSafe,fov,angle);
       if(!(charVLA_ptr&&headerVLA_ptr)) { /* immediate mode */
@@ -4922,6 +4922,24 @@ void SceneRay(PyMOLGlobals *G,
         } else {
           VLAFreeP(jp);
         }
+      }
+      break;
+    case 4: /* VRML */
+      {
+        char *vla = VLACalloc(char,100000);
+        RayRenderVRML2(ray,ray_width,ray_height,&vla,
+                      I->FrontSafe,I->BackSafe,fov,angle);
+        *charVLA_ptr=vla;
+      }
+      break;
+    case 5: /* mode 5 is OBJ MTL */
+      {
+        char *objVLA=VLACalloc(char,100000); 
+        char *mtlVLA=VLACalloc(char,1000);
+        RayRenderObjMtl(ray,ray_width,ray_height,&objVLA,&mtlVLA,
+                     I->FrontSafe,I->BackSafe,fov,angle);
+        *headerVLA_ptr=objVLA;
+        *charVLA_ptr=mtlVLA;
       }
       break;
     }
