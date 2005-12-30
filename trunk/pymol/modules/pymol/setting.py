@@ -511,7 +511,8 @@ if __name__=='pymol.setting':
         ray_shadow_decay_factor   = (475, '')
         ray_interior_mode         = (476, '')
         ray_legacy_lighting       = (477, '')
-         
+        sculpt_auto_center        = (478, '')
+        
     setting_sc = Shortcut(SettingIndex.__dict__.keys())
 
     index_list = []

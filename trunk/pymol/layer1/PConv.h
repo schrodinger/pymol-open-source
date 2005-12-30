@@ -71,6 +71,7 @@ PyObject *PConvFloatVLAToPyList(float *f);
 PyObject *PConvIntVLAToPyList(int *f);
 PyObject *PConvIntArrayToPyList(int *f,int l);
 PyObject *PConvSIntArrayToPyList(short int *f,int l);
+PyObject *PConvSCharArrayToPyList(signed char *f,int l);
 PyObject *PConvLabPosVLAToPyList(LabPosType *vla, int l);
 
 /* WARNING: the returned PyObject is unowned - it is intended for use
@@ -121,6 +122,7 @@ int PConvPyListToIntArrayInPlace(PyObject *obj,int *ff,int ll);
 int PConvPyListToIntArrayInPlaceAutoZero(PyObject *obj,int *ii,int ll);
 
 int PConvPyListToSIntArrayInPlaceAutoZero(PyObject *obj,short int *ii,int ll);
+int PConvPyListToSCharArrayInPlaceAutoZero(PyObject *obj,signed char *ii,int ll);
 
 PyObject *PConv3DIntArrayTo3DPyList(int ***array,int *dim);
 

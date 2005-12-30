@@ -1594,7 +1594,7 @@ int RayTraceThread(CRayThreadInfo *T)
    float start[3],nudge[3];
    float *depth = T->depth;
    float shadow_decay = SettingGetGlobal_f(I->G,cSetting_ray_shadow_decay_factor);
-   float legacy = SettingGetGlobal_f(I->G,cSetting_ray_legacy_direct_lighting);
+   float legacy = SettingGetGlobal_f(I->G,cSetting_ray_legacy_lighting);
 	const float _0		= 0.0F;
 	const float _1		= 1.0F;
 	const float _p5		= 0.5F;

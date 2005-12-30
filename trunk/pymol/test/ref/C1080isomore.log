@@ -27,12 +27,12 @@ PyMOL>map_new tst3,gaussian,1.0,state=-2
  ObjectMap: Normalizing: mean = 0.003829 & stdev = 0.054910.
  ObjectMap: Map created.
  ObjectMap: Computing Gaussian map for 2084 atom positions.
- ObjectMap: Normalizing: mean = 0.036107 & stdev = 0.153574.
+ ObjectMap: Normalizing: mean = 0.036107 & stdev = 0.153608.
  ObjectMap: Map created.
  ObjectMap: Computing Gaussian map for 0 atom positions.
  ObjectMap: Map created.
  ObjectMap: Computing Gaussian map for 679 atom positions.
- ObjectMap: Normalizing: mean = 0.009923 & stdev = 0.142002.
+ ObjectMap: Normalizing: mean = 0.009718 & stdev = 0.133319.
  Executive: object "tst3" created.
 PyMOL>map_new tst4,gaussian,1.0,state=3
  Executive: object "tst4" created.
@@ -109,9 +109,9 @@ PyMOL>refresh
  ObjectMesh: updating "m3".
  IsosurfVolume: Surface generated using 3487 lines.
  ObjectMesh: updating "m3".
- IsosurfVolume: Surface generated using 30713 lines.
+ IsosurfVolume: Surface generated using 30416 lines.
  ObjectMesh: updating "m3".
- IsosurfVolume: Surface generated using 9038 lines.
+ IsosurfVolume: Surface generated using 9105 lines.
 PyMOL>isomesh m4,tst4
 PyMOL>refresh
 PyMOL>isomesh m5a,tst5,source_state=1
@@ -157,9 +157,9 @@ PyMOL>refresh
  ObjectSurface: updating "s3".
  TetsurfVolume: Surface generated using 10220 triangles.
  ObjectSurface: updating "s3".
- TetsurfVolume: Surface generated using 85088 triangles.
+ TetsurfVolume: Surface generated using 84672 triangles.
  ObjectSurface: updating "s3".
- TetsurfVolume: Surface generated using 25264 triangles.
+ TetsurfVolume: Surface generated using 25480 triangles.
 PyMOL>isosurface s4,tst4
 PyMOL>refresh
 PyMOL>isosurface s4,tst5
