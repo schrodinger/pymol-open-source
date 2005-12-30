@@ -32,6 +32,7 @@ Z* -------------------------------------------------------------------
 /* FLAG 4 - Exclude these atoms when performing simulation, minimization */
 #define cAtomFlag_exclude       0x00000010
 
+
 /* FLAGS 4-7 are reserved for additional molecular modeling tasks */
 
 /* FLAGS 8-15 are free for end users to manipulate */
@@ -177,6 +178,7 @@ PyObject *AtomInfoAsPyList(PyMOLGlobals *G,AtomInfoType *at);
 int AtomInfoFromPyList(PyMOLGlobals *G,AtomInfoType *at,PyObject *list);
 int AtomInfoMatch(PyMOLGlobals *G,AtomInfoType *at1,AtomInfoType *at2);
 int AtomInfoCompare(PyMOLGlobals *G,AtomInfoType *at1,AtomInfoType *at2);
+int AtomInfoCompareIgnoreRank(PyMOLGlobals *G,AtomInfoType *at1,AtomInfoType *at2);
 int AtomInfoCompareIgnoreHet(PyMOLGlobals *G,AtomInfoType *at1,AtomInfoType *at2);
 float AtomInfoGetBondLength(PyMOLGlobals *G,AtomInfoType *ai1,AtomInfoType *ai2);
 int AtomInfoSameResidue(PyMOLGlobals *G,AtomInfoType *at1,AtomInfoType *at2);

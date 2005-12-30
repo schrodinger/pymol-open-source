@@ -4,6 +4,12 @@ CHANGE LOG
 
 Changes up to 0.99
 
+    beta33
+
+    * dss state=0 on a multi-state obj now assigns consensus 
+      dss state=-x1 on a multi-state obj now assigns union 
+
+    * fixed subtle logic bug in match & merge of highly similar PDB files
 
     * various fixed to the alignment & matrix handling code 
     

@@ -987,6 +987,7 @@ NOTES
         '''
         # preprocess selections
         selection = selector.process(selection)
+        r = DEFAULT_ERROR
         if context==None:
             context = ""
         else:
