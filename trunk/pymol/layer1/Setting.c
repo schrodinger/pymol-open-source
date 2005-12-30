@@ -2043,7 +2043,7 @@ void SettingInitGlobal(PyMOLGlobals *G,int alloc,int reset_gui)
 
   SettingSet_f(I,cSetting_specular, 1.0F);
 
-  SettingSet_f(I,cSetting_shininess, 60.0F);
+  SettingSet_f(I,cSetting_shininess, 55.0F);
 
   SettingSet_f(I,cSetting_fog, 1.0F);
 
@@ -2516,7 +2516,7 @@ void SettingInitGlobal(PyMOLGlobals *G,int alloc,int reset_gui)
   SettingSet_b(I,cSetting_pdb_insertions_go_first,0);
   SettingSet_b(I,cSetting_roving_origin_z,1);
   SettingSet_f(I,cSetting_roving_origin_z_cushion,3.0F);
-  SettingSet_f(I,cSetting_specular_intensity,0.55F);
+  SettingSet_f(I,cSetting_specular_intensity,0.5F);
   SettingSet_i(I,cSetting_overlay_lines,5);
   SettingSet_f(I,cSetting_ray_transparency_spec_cut,0.9F);
   SettingSet_b(I,cSetting_internal_prompt,1);
