@@ -273,6 +273,7 @@ void RepMeshColor(RepMesh *I,CoordSet *cs)
   int mesh_mode;
   int mesh_color;
   AtomInfoType *ai2;
+  int state = I->R.context.state;
 
   obj=cs->Obj;
 
@@ -354,7 +355,7 @@ void RepMeshColor(RepMesh *I,CoordSet *cs)
             }
             if(ColorCheckRamped(G,c1)) {
               I->oneColorFlag=false;
-              ColorGetRamped(G,c1,v0,vc);
+              ColorGetRamped(G,c1,v0,vc,state);
               vc+=3;
             } else {
               c0 = ColorGet(G,c1);
@@ -413,6 +414,8 @@ Rep *RepMeshNew(CoordSet *cs,int state)
 	 " RepMeshNew-DEBUG: entered with coord-set %p\n",(void*)cs
 	 ENDFD;
   obj = cs->Obj;
+  I->R.context.object = (void*)obj;
+  I->R.context.state = state;
 
   probe_radius = SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_solvent_radius);
   probe_radius2 = probe_radius*probe_radius;

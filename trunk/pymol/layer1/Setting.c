@@ -2043,7 +2043,7 @@ void SettingInitGlobal(PyMOLGlobals *G,int alloc,int reset_gui)
 
   SettingSet_f(I,cSetting_specular, 1.0F);
 
-  SettingSet_f(I,cSetting_shininess, 50.0F);
+  SettingSet_f(I,cSetting_shininess, 60.0F);
 
   SettingSet_f(I,cSetting_fog, 1.0F);
 
@@ -2696,6 +2696,8 @@ void SettingInitGlobal(PyMOLGlobals *G,int alloc,int reset_gui)
   SettingSet_f(I,cSetting_ray_trace_disco_factor,0.05F);
   SettingSet_f(I,cSetting_ray_shadow_decay_factor,0.0F);
   SettingSet_i(I,cSetting_ray_interior_mode, 0);
+  SettingSet_f(I,cSetting_ray_legacy_lighting, 0.0F);
+
 }
 
 

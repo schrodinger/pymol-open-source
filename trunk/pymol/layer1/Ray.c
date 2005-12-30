@@ -1594,12 +1594,15 @@ int RayTraceThread(CRayThreadInfo *T)
    float start[3],nudge[3];
    float *depth = T->depth;
    float shadow_decay = SettingGetGlobal_f(I->G,cSetting_ray_shadow_decay_factor);
+   float legacy = SettingGetGlobal_f(I->G,cSetting_ray_legacy_direct_lighting);
 	const float _0		= 0.0F;
 	const float _1		= 1.0F;
 	const float _p5		= 0.5F;
 	const float _255	= 255.0F;
     const float _p499 = 0.499F;
 	const float _persistLimit	= 0.0001F;
+    float legacy_1m = _1 - legacy;
+    
     int n_basis = I->NBasis;
     {
      float fudge = SettingGet(I->G,cSetting_ray_triangle_fudge);
@@ -2124,18 +2127,29 @@ int RayTraceThread(CRayThreadInfo *T)
                                dotgle	= _0;
                            }
                        }
-                      
-                       /*direct_cmp = (float) ( (dotgle + (pow(dotgle, settingPower))) * _p5 );*/
-                      
-                       direct_cmp = (float) pow(r1.surfnormal[2], settingPower);
-                      
+                       
+                       {
+                         register double pow_dotgle;
+                         register float pow_surfnormal2;
+                         
+                         if(settingPower!=_1) {
+                           pow_dotgle = pow(dotgle, settingPower);
+                           pow_surfnormal2 = (float)pow(r1.surfnormal[2], settingPower);
+                         } else {
+                           pow_dotgle = dotgle;
+                           pow_surfnormal2 = r1.surfnormal[2];
+                         }
+                         direct_cmp = legacy_1m *  pow_surfnormal2 + /* new model */
+                           legacy * ( (float) (dotgle + pow_dotgle) * _p5 ); /* legacy model */
+                       }
+
                        reflect_cmp = _0;
                        if(settingSpecDirect!=_0) {
                          excess	= (float)( pow(r1.surfnormal[2], settingSpecPower) * settingSpecDirect);
                        } else {
                          excess = _0;
                        }
-
+                     
                        lit = _1;
                        if(n_basis<3) {
                          reflect_cmp = direct_cmp;
@@ -2160,22 +2174,31 @@ int RayTraceThread(CRayThreadInfo *T)
                            }
                           
                            if(lit>_0) {
-                             dotgle	= -dot_product3f(r1.surfnormal,bp->LightNormal);
-                             if(dotgle < _0) dotgle = _0;
-                            
-                             /*reflect_cmp	+= (float)(lit * (dotgle + (pow(dotgle, settingReflectPower))) * _p5 );*/
-                             reflect_cmp	+= (float)(lit * (pow(dotgle, settingReflectPower)));
+                             {
+                               register double pow_dotgle;
+                               
+                               dotgle	= -dot_product3f(r1.surfnormal,bp->LightNormal);
+                               if(dotgle < _0) dotgle = _0;
+                               
+                               if(settingReflectPower!=_1)
+                                 pow_dotgle = pow(dotgle, settingReflectPower);
+                               else
+                                 pow_dotgle = dotgle;
+                               
+                               reflect_cmp += legacy_1m * ((float)(lit * pow_dotgle)) + /* new model */
+                                 legacy * ((float)(lit * (dotgle + pow_dotgle) * _p5 )); /* legacy model */
+                             }
+
                              dotgle	= -dot_product3f(r1.surfnormal,bp->SpecNormal);
-                             if(dotgle < _0) dotgle=_0;
+                             if(dotgle < _0) dotgle=_0;                                                          
                              excess	+= (float)( pow(dotgle, settingSpecPower) * settingSpecReflect * lit);
                            }
                          }
                        }
                       
-                       bright = ambient + /*(_1-ambient) * */
+                       bright = ambient +
                          (((_1-direct_shade)+direct_shade*lit) * direct*direct_cmp +
-                          /* (_1-direct) * direct_cmp */ 
-                          lreflect*reflect_cmp);
+                          lreflect*reflect_cmp*(legacy_1m + legacy * direct_cmp)); /* blend legacy */
                        if(excess > _1) excess = _1;
                        if(bright > _1) bright = _1;
                        else if(bright < _0) bright = _0;

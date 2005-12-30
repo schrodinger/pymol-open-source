@@ -611,7 +611,7 @@ typedef struct _CPyMOL {
   ov_word lex_ray_trace_disco_factor;
   ov_word lex_ray_shadow_decay_factor;
   ov_word lex_ray_interior_mode;
-
+  ov_word lex_ray_legacy_lighting;
 } _CPyMOL;
 
 /* convenience functions -- inline */
@@ -1231,6 +1231,7 @@ static OVstatus PyMOL_InitAPI(CPyMOL *I)
   LEX_SETTING(ray_trace_disco_factor,474);
   LEX_SETTING(ray_shadow_decay_factor, 475);
   LEX_SETTING(ray_interior_mode, 476);
+  LEX_SETTING(ray_legacy_lighting, 477);
 
   return_OVstatus_SUCCESS;
 }

@@ -510,7 +510,8 @@ if __name__=='pymol.setting':
         ray_trace_disco_factor    = (474, '')
         ray_shadow_decay_factor   = (475, '')
         ray_interior_mode         = (476, '')
-        
+        ray_legacy_lighting       = (477, '')
+         
     setting_sc = Shortcut(SettingIndex.__dict__.keys())
 
     index_list = []

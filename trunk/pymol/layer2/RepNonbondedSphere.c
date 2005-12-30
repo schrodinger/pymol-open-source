@@ -227,7 +227,7 @@ Rep *RepNonbondedSphereNew(CoordSet *cs,int state)
 			 c1=*(cs->Color+a);
 			 v0 = cs->Coord+3*a;			 
           if(ColorCheckRamped(G,c1)) {
-            ColorGetRamped(G,c1,v0,tmpColor);
+            ColorGetRamped(G,c1,v0,tmpColor,state);
             vc = tmpColor;
           } else {
             vc = ColorGet(G,c1);
@@ -265,7 +265,7 @@ Rep *RepNonbondedSphereNew(CoordSet *cs,int state)
 			 vc = ColorGet(G,c1);
 
           if(ColorCheckRamped(G,c1)) {
-            ColorGetRamped(G,c1,v0,tmpColor);
+            ColorGetRamped(G,c1,v0,tmpColor,state);
             vc = tmpColor;
           } else {
             vc = ColorGet(G,c1);

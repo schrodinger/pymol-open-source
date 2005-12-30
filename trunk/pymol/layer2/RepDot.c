@@ -150,10 +150,10 @@ static void RepDotRender(RepDot *I,RenderInfo *info)
 
 Rep *RepDotNew(CoordSet *cs,int state)
 {
-  return(RepDotDoNew(cs,cRepDotNormal));
+  return(RepDotDoNew(cs,cRepDotNormal,state));
 }
 
-Rep *RepDotDoNew(CoordSet *cs,int mode)
+Rep *RepDotDoNew(CoordSet *cs,int mode,int state)
 {
 
   /* this routine does double duty - generating the dot representation,
@@ -333,7 +333,7 @@ Rep *RepDotDoNew(CoordSet *cs,int mode)
 									 vc = ColorGet(G,c1); /* save new color */
 									 lastColor=c1;
                             if(ColorCheckRamped(G,c1)) {
-                              ColorGetRamped(G,c1,v1,v);
+                              ColorGetRamped(G,c1,v1,v,state);
                               v+=3;
                             } else {
                               *(v++)=*(vc++);

@@ -628,6 +628,7 @@ CSetting *SettingNewFromPyList(PyMOLGlobals *G,PyObject *list);
 #define cSetting_ray_trace_disco_factor     474
 #define cSetting_ray_shadow_decay_factor    475
 #define cSetting_ray_interior_mode          476
+#define cSetting_ray_legacy_lighting        477
 
 /* when you add a new settingg also remember:
    layer1/Setting.c
@@ -637,7 +638,7 @@ CSetting *SettingNewFromPyList(PyMOLGlobals *G,PyObject *list);
 
 /* cSetting_ss_INIT must always be last setting_index +1 */
 
-#define cSetting_INIT                       477
+#define cSetting_INIT                       478
 
 #endif
 

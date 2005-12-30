@@ -3277,6 +3277,7 @@ int ExecutiveMapNew(PyMOLGlobals *G,char *name,int type,float *grid,
   int st;
   int st_once_flag=true;
   int n_st;
+  int extent_state;
 
   md=&_md;
 
@@ -3299,10 +3300,12 @@ int ExecutiveMapNew(PyMOLGlobals *G,char *name,int type,float *grid,
   for(st=0;st<n_st;st++) {
     if(state==-1) st_once_flag=false; /* each state, separate map, separate extent */
     if(!st_once_flag) state=st;
-    
+    extent_state = state;
+    if(state<=-2) extent_state = -1;
     if(strlen(sele)&&(!have_corners)) {
       valid_extent = ExecutiveGetExtent(G,sele,md->MinCorner,
-                                        md->MaxCorner,true,state,false); /* TODO restrict to state */
+                                        md->MaxCorner,true,extent_state,false);
+      /* TODO restrict to state */
     } else {
       valid_extent = 1;
       copy3f(minCorner,md->MinCorner);
@@ -4619,7 +4622,7 @@ float ExecutiveGetArea(PyMOLGlobals *G,char *s0,int sta0,int load_b)
       if(!cs)
         ErrMessage(G,"Area","Invalid state.");
       else {
-        rep = (RepDot*)RepDotDoNew(cs,cRepDotAreaType);
+        rep = (RepDot*)RepDotDoNew(cs,cRepDotAreaType,sta0);
         if(!rep) 
           ErrMessage(G,"Area","Can't get dot representation.");
         else {

@@ -245,7 +245,7 @@ Rep *RepNonbondedNew(CoordSet *cs,int state)
       v1 = cs->Coord+3*a;
 
       if(ColorCheckRamped(G,c1)) {
-        ColorGetRamped(G,c1,v1,tmpColor);
+        ColorGetRamped(G,c1,v1,tmpColor,state);
         v0 = tmpColor;
       } else {
         v0 = ColorGet(G,c1);

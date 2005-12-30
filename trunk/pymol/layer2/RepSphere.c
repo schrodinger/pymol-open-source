@@ -1261,7 +1261,7 @@ Rep *RepSphereNew(CoordSet *cs,int state)
             c1=one_color;
           v0 = cs->Coord+3*a;			 
           if(ColorCheckRamped(G,c1)) {
-            ColorGetRamped(G,c1,v0,v);
+            ColorGetRamped(G,c1,v0,v,state);
             v+=3;
           } else {
             vc = ColorGet(G,c1); /* save new color */
@@ -1371,7 +1371,7 @@ Rep *RepSphereNew(CoordSet *cs,int state)
             v0 = cs->Coord+3*a;
             vdw = cs->Obj->AtomInfo[a1].vdw*sphere_scale+sphere_add;
             if(ColorCheckRamped(G,c1)) {
-              ColorGetRamped(G,c1,v0,v);
+              ColorGetRamped(G,c1,v0,v,state);
               v+=3;
             } else {
               vc = ColorGet(G,c1);

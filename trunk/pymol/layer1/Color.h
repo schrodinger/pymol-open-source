@@ -77,7 +77,7 @@ char *ColorGetName(PyMOLGlobals *G,int index);
 int ColorGetStatus(PyMOLGlobals *G,int index);
 void ColorReset(PyMOLGlobals *G);
 
-int ColorGetRamped(PyMOLGlobals *G,int index,float *vertex,float *color);
+int ColorGetRamped(PyMOLGlobals *G,int index,float *vertex,float *color,int state);
 int ColorCheckRamped(PyMOLGlobals *G,int index);
 
 struct ObjectGadgetRamp* ColorGetRamp(PyMOLGlobals *G,int index);
