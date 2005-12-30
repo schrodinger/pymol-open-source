@@ -1146,7 +1146,7 @@ float SculptIterateObject(CSculpt *I,ObjectMolecule *obj,
   int *active,n_active;
   AtomInfoType *ai0,*ai1;
   double task_time;
-  float vdw_magnify;
+  float vdw_magnify,vdw_magnified = 1.0F;
   int nb_skip,nb_skip_count;
   float total_strain=0.0F;
   int total_count=1;
@@ -1207,8 +1207,10 @@ float SculptIterateObject(CSculpt *I,ObjectMolecule *obj,
     }
 
     nb_skip = SettingGet_i(G,cs->Setting,obj->Obj.Setting,cSetting_sculpt_nb_interval);
-    if(nb_skip<1) nb_skip=1;
-    
+    if(nb_skip>n_cycle)
+      nb_skip = n_cycle;
+    if(nb_skip<0) nb_skip=0;
+
     n_active = 0;
     ai0=obj->AtomInfo;
     for(a=0;a<obj->NAtom;a++) {
@@ -1241,12 +1243,7 @@ float SculptIterateObject(CSculpt *I,ObjectMolecule *obj,
 
       task_time = UtilGetSeconds(G);
       vdw_magnify = 1.0F;
-      if(n_cycle>0) {
-        nb_skip_count = n_cycle - nb_skip * (n_cycle/nb_skip);
-        if(!nb_skip_count) nb_skip_count = nb_skip;
-      } else {
-        nb_skip_count = 0;
-      }
+      nb_skip_count = 0;
 
       if(center) {
         int *a_ptr = active;
@@ -1474,20 +1471,23 @@ float SculptIterateObject(CSculpt *I,ObjectMolecule *obj,
             stc++;
           }
         }
-
-            
-
         /* apply nonbonded interactions */
 
-        if(nb_skip_count>1) { /* don't do nonbonded each round -- skip and then weight extra */
+        if((n_cycle>0) && 
+           (nb_skip_count>0)) { 
+          /*skip and then weight extra */
           nb_skip_count--;
-          vdw_magnify+=1.0F;
+          vdw_magnify += 1.0F;
         } else {
           int nb_off0,nb_off1;
           int v0i,v1i,v2i;
           int x0i;
           int don_b0;
           int acc_b0;
+
+          vdw_magnified = vdw_magnify;
+          vdw_magnify = 1.0F;
+
           nb_skip_count = nb_skip;
           if((cSculptVDW|cSculptVDW14)&mask) {
             /* compute non-bonded interations */
@@ -1552,7 +1552,7 @@ float SculptIterateObject(CSculpt *I,ObjectMolecule *obj,
 
                             if(ex==4) { /* 1-4 interation */
                               cutoff*=vdw14;
-                              wt = vdw_wt14 * vdw_magnify;
+                              wt = vdw_wt14 * vdw_magnified;
 
                               if(cSculptVDW14 & mask) {
                                 a1 = atm2idx[b1];
@@ -1582,7 +1582,7 @@ float SculptIterateObject(CSculpt *I,ObjectMolecule *obj,
                               }
                               if(cSculptVDW & mask) {
                                 vdw_cutoff=cutoff*vdw;
-                                wt = vdw_wt * vdw_magnify;
+                                wt = vdw_wt * vdw_magnified;
                                 a1 = atm2idx[b1];
                                 v1 = cs->Coord+3*a1;
                                 if(vdw_vis_mode && cgo && 
@@ -1621,7 +1621,6 @@ float SculptIterateObject(CSculpt *I,ObjectMolecule *obj,
               nb_next-=3;
             }
           }
-          vdw_magnify = 1.0F;
         }
         /* average the displacements */
              

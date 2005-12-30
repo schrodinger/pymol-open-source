@@ -6969,7 +6969,7 @@ static int SelectorSelect0(PyMOLGlobals *G,EvalElem *passed_base)
   register int a,b,flag;
   register EvalElem *base = passed_base;
   int c=0;
-  short int *vis;
+  signed char *vis;
   int state;
   int static_singletons;
   ObjectMolecule *obj,*cur_obj=NULL;

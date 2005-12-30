@@ -3402,11 +3402,13 @@ int ExecutiveSculptIterateAll(PyMOLGlobals *G)
   register CExecutive *I = G->Executive;
   SpecRec *rec = NULL;
   ObjectMolecule *objMol;
-
   int state = SceneGetState(G);
   CGOReset(G->DebugCGO);
 
   if(SettingGet(G,cSetting_sculpting)) {
+    if(!SettingGetGlobal_b(G,cSetting_sculpt_auto_center)) 
+      center = NULL;
+      
     while(ListIterate(I->Spec,rec,next)) {
       if(rec->type==cExecObject) {
         if(rec->obj->type==cObjectMolecule) {

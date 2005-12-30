@@ -612,6 +612,8 @@ typedef struct _CPyMOL {
   ov_word lex_ray_shadow_decay_factor;
   ov_word lex_ray_interior_mode;
   ov_word lex_ray_legacy_lighting;
+  ov_word lex_sculpt_auto_center;
+
 } _CPyMOL;
 
 /* convenience functions -- inline */
@@ -1232,6 +1234,7 @@ static OVstatus PyMOL_InitAPI(CPyMOL *I)
   LEX_SETTING(ray_shadow_decay_factor, 475);
   LEX_SETTING(ray_interior_mode, 476);
   LEX_SETTING(ray_legacy_lighting, 477);
+  LEX_SETTING(sculpt_auto_center, 1);
 
   return_OVstatus_SUCCESS;
 }

@@ -2575,7 +2575,7 @@ void ObjectMoleculeRenderSele(ObjectMolecule *I,int curState,int sele,int vis_on
   register int use_matrices = SettingGet_b(I->Obj.G,I->Obj.Setting,NULL,cSetting_matrix_mode);
   register int flag = true;
   register int all_vis = !vis_only;
-  register short int *visRep;
+  register signed char *visRep;
   
   float tmp_matrix[16],v_tmp[3],*matrix = NULL;
 
@@ -9016,7 +9016,7 @@ void ObjectMoleculeUpdate(ObjectMolecule *I)
   { /* note which representations are active */
     int b;
     AtomInfoType *ai = I->AtomInfo;    
-    short int *rv = I->RepVisCache;
+    signed char *rv = I->RepVisCache;
     if(I->NCSet>1) {
       for(b=0;b<cRepCnt;b++)
         I->RepVisCache[b]=0;

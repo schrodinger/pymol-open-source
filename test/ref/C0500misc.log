@@ -186,15 +186,15 @@ PyMOL>deprotect (pept and n;ca)
 PyMOL>deprotect
  Protect: 107 atoms deprotected.
 PyMOL>mask (pept and n;ca)
- Protect: 13 atoms masked (can not be picked).
+ Mask: 13 atoms masked (cannot be picked or selected).
 PyMOL>mask pept
- Protect: 107 atoms masked (can not be picked).
+ Mask: 107 atoms masked (cannot be picked or selected).
 PyMOL>mask
- Protect: 107 atoms masked (can not be picked).
+ Mask: 107 atoms masked (cannot be picked or selected).
 PyMOL>unmask (pept and n;ca)
- Protect: 13 atoms unmasked.
+ Mask: 13 atoms unmasked.
 PyMOL>unmask
- Protect: 107 atoms unmasked.
+ Mask: 107 atoms unmasked.
 PyMOL>edit (i;11&n;ca),(i;11&n;n),(i;11&n;c)
  Selector: selection "pk1" defined with 1 atoms.
  Selector: selection "pk2" defined with 1 atoms.

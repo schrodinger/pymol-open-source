@@ -708,6 +708,30 @@ int PConvPyListToSIntArrayInPlaceAutoZero(PyObject *obj,short int *ii,int ll)
   return(ok);
 }
 
+int PConvPyListToSCharArrayInPlaceAutoZero(PyObject *obj,signed char *ii,int ll)
+{
+  int ok = true;
+  int a,l;
+  if(!obj) 
+    ok=false;
+  else if(!PyList_Check(obj)) 
+    ok=false;
+  else {
+    l=PyList_Size(obj);
+    if(!l)
+      ok=-1;
+    else
+      ok=l;
+    for(a=0;(a<l)&&(a<ll);a++) 
+      *(ii++) = (signed char)PyInt_AsLong(PyList_GetItem(obj,a)); 
+    while(l<ll) {
+      *(ii++)=0;
+      l++;
+    }
+  }
+  return(ok);
+}
+
 int PConvPyListToFloatArrayInPlaceAutoZero(PyObject *obj,float *ii,int ll)
 {
   int ok = true;
@@ -801,6 +825,16 @@ PyObject *PConvIntArrayToPyList(int *f,int l)
 }
 
 PyObject *PConvSIntArrayToPyList(short int *f,int l)
+{
+  int a;
+  PyObject *result = Py_None;
+  result=PyList_New(l);
+  for(a=0;a<l;a++) 
+    PyList_SetItem(result,a,PyInt_FromLong(*(f++)));
+  return(result);
+}
+
+PyObject *PConvSCharArrayToPyList(signed char *f,int l)
 {
   int a;
   PyObject *result = Py_None;

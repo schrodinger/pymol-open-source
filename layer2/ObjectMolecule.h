@@ -70,7 +70,7 @@ typedef struct ObjectMolecule {
   int BondCounter;
   int AtomCounter;
   struct CSculpt *Sculpt;
-  short int RepVisCache[cRepCnt]; /* for transient storage during updates */
+  signed char RepVisCache[cRepCnt]; /* for transient storage during updates */
 
 } ObjectMolecule;
 

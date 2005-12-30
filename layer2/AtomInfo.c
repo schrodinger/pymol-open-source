@@ -632,7 +632,7 @@ PyObject *AtomInfoAsPyList(PyMOLGlobals *G,AtomInfoType *I)
   PyList_SetItem(result,17,PyFloat_FromDouble(I->partialCharge));
   PyList_SetItem(result,18,PyInt_FromLong(I->formalCharge));
   PyList_SetItem(result,19,PyInt_FromLong((int)I->hetatm));
-  PyList_SetItem(result,20,PConvSIntArrayToPyList(I->visRep,cRepCnt));
+  PyList_SetItem(result,20,PConvSCharArrayToPyList(I->visRep,cRepCnt));
   PyList_SetItem(result,21,PyInt_FromLong(I->color));
   PyList_SetItem(result,22,PyInt_FromLong(I->id));
   PyList_SetItem(result,23,PyInt_FromLong(I->cartoon));
@@ -687,7 +687,8 @@ int AtomInfoFromPyList(PyMOLGlobals *G,AtomInfoType *I,PyObject *list)
   if(ok) ok = PConvPyIntToInt(PyList_GetItem(list,18),&I->formalCharge);  
   if(ok) ok = PConvPyIntToInt(PyList_GetItem(list,19),&hetatm); 
   if(ok) I->hetatm = hetatm;
-  if(ok) ok = PConvPyListToSIntArrayInPlaceAutoZero(PyList_GetItem(list,20),I->visRep,cRepCnt); 
+  if(ok) ok = PConvPyListToSCharArrayInPlaceAutoZero(
+                          PyList_GetItem(list,20),I->visRep,cRepCnt); 
   if(ok) ok = PConvPyIntToInt(PyList_GetItem(list,21),&I->color); 
   if(ok) ok = PConvPyIntToInt(PyList_GetItem(list,22),&I->id); 
   if(ok) ok = PConvPyIntToInt(PyList_GetItem(list,23),&I->cartoon); 
