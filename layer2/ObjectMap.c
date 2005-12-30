@@ -1572,16 +1572,19 @@ ObjectMap *ObjectMapNew(PyMOLGlobals *G)
   return(I);
 }
 /*========================================================================*/
-ObjectMapState *ObjectMapNewStateFromDesc(PyMOLGlobals *G,ObjectMap *I,ObjectMapDesc *md,int state)
+ObjectMapState *ObjectMapNewStateFromDesc(PyMOLGlobals *G,ObjectMap *I,ObjectMapDesc *inp_md,int state)
 {
   int ok=true;
   float v[3];
   int a,b,c,d;
   float *fp;
   ObjectMapState *ms = NULL;
-
+  ObjectMapDesc _md,*md;
   ms=ObjectMapStatePrime(I,state);
   
+  md = &_md;
+  *(md) = *(inp_md);
+
   if(I) {
     ms->Origin=Alloc(float,3);
     ms->Range=Alloc(float,3);

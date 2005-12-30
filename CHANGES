@@ -4,7 +4,10 @@ CHANGE LOG
 
 Changes up to 0.99
 
-    beta33
+    beta32
+
+    * ray_legacy_lighting setting to enable blending of previous 
+      lighting algorithm with new (more correct) lighting
 
     * dss state=0 on a multi-state obj now assigns consensus 
       dss state=-x1 on a multi-state obj now assigns union 
@@ -13,8 +16,6 @@ Changes up to 0.99
 
     * various fixed to the alignment & matrix handling code 
     
-    beta32
-
     * non-textured label positioning
 
     * label_position x,y values <-1 or >1

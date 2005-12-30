@@ -128,7 +128,7 @@ int ObjectGadgetRampNewFromPyList(PyMOLGlobals *G,PyObject *list,ObjectGadgetRam
 #endif
 }
 
-int ObjectGadgetRampInterVertex(ObjectGadgetRamp *I,float *pos,float *color)
+int ObjectGadgetRampInterVertex(ObjectGadgetRamp *I,float *pos,float *color,int state)
 {
   float level;
   int ok=true;
@@ -152,7 +152,7 @@ int ObjectGadgetRampInterVertex(ObjectGadgetRamp *I,float *pos,float *color)
       ok=false;
     else  {
       float cutoff = 1.0F;
-      int state = SceneGetState(I->Gadget.Obj.G);
+      if(state<0) state = SceneGetState(I->Gadget.Obj.G);
       if(I->Level&&I->NLevel)
         cutoff = I->Level[I->NLevel-1];
       if(ok) ok = (I->Mol!=NULL);      

@@ -1178,6 +1178,7 @@ int SelectorAssignSS(PyMOLGlobals *G,int target,int present,int state_value,int 
   int n_res = 0;
   int state_start,state_stop,state;
   int consensus = true;
+  int first_last_only = false;
   int first_pass = true;
 
   SelectorUpdateTable(G);
@@ -1187,6 +1188,8 @@ int SelectorAssignSS(PyMOLGlobals *G,int target,int present,int state_value,int 
   if(state_value<0) {
     if(state_value == -2)
       consensus = false;
+    if(state_value == -3)
+      first_last_only = true;
     state_start = 0;
     state_stop = SelectorGetSeleNCSet(G,target);
   } else {
@@ -2228,6 +2231,8 @@ int SelectorAssignSS(PyMOLGlobals *G,int target,int present,int state_value,int 
         changed_flag=false;
       }
     }
+    if(first_last_only&&(state==state_start))
+      state = state_stop-2;
   }
        
   VLAFreeP(res);

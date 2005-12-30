@@ -174,7 +174,7 @@ ExportDotsObj *ExportDots(PyMOLGlobals *G,char *name,int csIndex)
   }
 
   if(ok) {
-	 rep = (RepDot*)RepDotDoNew(cs,cRepDotAreaType);
+	 rep = (RepDot*)RepDotDoNew(cs,cRepDotAreaType,-1);
 	 if(!rep) 
 		ok=ErrMessage(G,"ExportDots","Couldn't get dot representation.");
 	 else {

@@ -184,7 +184,7 @@ ObjectGadgetRamp* ColorGetRamp(PyMOLGlobals *G,int index)
   return result;
 }
 
-int ColorGetRamped(PyMOLGlobals *G,int index,float *vertex,float *color)
+int ColorGetRamped(PyMOLGlobals *G,int index,float *vertex,float *color,int state)
 {
   register CColor *I=G->Color;
   int ok=false;
@@ -198,7 +198,7 @@ int ColorGetRamped(PyMOLGlobals *G,int index,float *vertex,float *color)
       if(I->Ext[index].Ptr) 
         ok = ObjectGadgetRampInterVertex(
                                          (ObjectGadgetRamp*)I->Ext[index].Ptr,
-                                         vertex,color);
+                                         vertex,color,state);
     }
   
   }

@@ -999,6 +999,7 @@ void RepSurfaceColor(RepSurface *I,CoordSet *cs)
   float clear_cutoff;
   char *clear_selection = NULL;
   float *clear_vla = NULL;
+  int state = I->R.context.state;
   
   MapType *clear_map = NULL;
 
@@ -1221,7 +1222,7 @@ void RepSurfaceColor(RepSurface *I,CoordSet *cs)
                 v_pos = v0;
                 break;
               }
-              ColorGetRamped(G,c1,v_pos,vc);
+              ColorGetRamped(G,c1,v_pos,vc,state);
               vc+=3;
             } else {
               c0 = ColorGet(G,c1);
@@ -1313,6 +1314,8 @@ Rep *RepSurfaceNew(CoordSet *cs,int state)
   OOAlloc(G,RepSurface);
 
   obj = cs->Obj;
+  I->R.context.object = (void*)obj;
+  I->R.context.state = state;
 
   surface_mode = SettingGet_i(G,cs->Setting,obj->Obj.Setting,cSetting_surface_mode);
   surface_type = SettingGet_i(G,cs->Setting,obj->Obj.Setting,cSetting_surface_type);

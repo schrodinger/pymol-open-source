@@ -1617,7 +1617,7 @@ Rep *RepCylBondNew(CoordSet *cs,int state)
               obj->AtomInfo[b1].temp1=1;
               {
                 if(ColorCheckRamped(G,c1)) {
-                  ColorGetRamped(G,c1,vv1,rgb2_buf);
+                  ColorGetRamped(G,c1,vv1,rgb2_buf,state);
                   rgb1 = rgb1_buf;
                 } else {
                   rgb1 = ColorGet(G,c1);
@@ -1653,7 +1653,7 @@ Rep *RepCylBondNew(CoordSet *cs,int state)
               obj->AtomInfo[b2].temp1=1;
               
               if(ColorCheckRamped(G,c2)) {
-                ColorGetRamped(G,c2,vv2,rgb2_buf);
+                ColorGetRamped(G,c2,vv2,rgb2_buf,state);
                 rgb2 = rgb2_buf;
               } else {
                 rgb2 = ColorGet(G,c2);
@@ -1712,7 +1712,7 @@ Rep *RepCylBondNew(CoordSet *cs,int state)
                   rgb1 = NULL;
                   if(s1) {
                     if(ColorCheckRamped(G,c1)) {
-                      ColorGetRamped(G,c1,vv1,rgb1_buf);
+                      ColorGetRamped(G,c1,vv1,rgb1_buf,state);
                       rgb1 = rgb1_buf;
                     } else {
                       rgb1 = ColorGet(G,c1);
@@ -1723,7 +1723,7 @@ Rep *RepCylBondNew(CoordSet *cs,int state)
                   if(s2) 
                     {
                       if(ColorCheckRamped(G,c2)) {
-                        ColorGetRamped(G,c2,vv2,rgb2_buf);
+                        ColorGetRamped(G,c2,vv2,rgb2_buf,state);
                         rgb2 = rgb2_buf;
                       } else {
                         rgb2 = ColorGet(G,c2);
@@ -1788,7 +1788,7 @@ Rep *RepCylBondNew(CoordSet *cs,int state)
                     if(s1) 
                       {
                         if(ColorCheckRamped(G,c1)) {
-                          ColorGetRamped(G,c1,v1,vr);
+                          ColorGetRamped(G,c1,v1,vr,state);
                           v0=vr;
                           vr+=3;
                         } else {
@@ -1824,7 +1824,7 @@ Rep *RepCylBondNew(CoordSet *cs,int state)
                     if(s2) 
                       {
                         if(ColorCheckRamped(G,c2)) {
-                          ColorGetRamped(G,c2,v1,vr);
+                          ColorGetRamped(G,c2,v1,vr,state);
                           v0=vr;
                           vr+=3;
                         } else {

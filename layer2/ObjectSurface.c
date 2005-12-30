@@ -347,21 +347,27 @@ static void ObjectSurfaceStateUpdateColors(ObjectSurface *I, ObjectSurfaceState 
     float *v = ms->V;
     float *vc;
     int a;
+    int state = ms - I->State;
     switch(ms->Mode) {
     case 3:
     case 2:
       {
         int n_vert = VLAGetSize(ms->V)/6;
         
+        if(ms->VC && (ms->VCsize<n_vert)) {
+          FreeP(ms->VC);
+        }
+        
         if(!ms->VC) {
+          ms->VCsize = n_vert;
           ms->VC = Alloc(float,n_vert*3);
         }
+
         vc = ms->VC;
-        
         v+=3;
         if(vc) {
           for(a=0;a<n_vert;a++) {
-            ColorGetRamped(I->Obj.G,index,v,vc);
+            ColorGetRamped(I->Obj.G,index,v,vc,state);
             vc+=3;
             v+=6; /* alternates with normals */
           }
@@ -373,15 +379,20 @@ static void ObjectSurfaceStateUpdateColors(ObjectSurface *I, ObjectSurfaceState 
     default:
       {
         int n_vert = VLAGetSize(ms->V)/3;
+
+        if(ms->VC && (ms->VCsize<n_vert)) {
+          FreeP(ms->VC);
+        }
         
         if(!ms->VC) {
+          ms->VCsize = n_vert;
           ms->VC = Alloc(float,n_vert*3);
         }
         
         vc = ms->VC;
         if(vc) {
           for(a=0;a<n_vert;a++) {
-            ColorGetRamped(I->Obj.G,index,v,vc);
+            ColorGetRamped(I->Obj.G,index,v,vc,state);
             vc+=3;
             v+=3; 
           }
@@ -976,6 +987,7 @@ void ObjectSurfaceStateInit(PyMOLGlobals *G,ObjectSurfaceState *ms)
   ms->N[0]=0;
   ms->nT=0;
   ms->VC = NULL;
+  ms->VCsize = 0;
   ms->Active=true;
   ms->ResurfaceFlag=true;
   ms->RecolorFlag=false;
