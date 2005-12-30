@@ -1104,7 +1104,7 @@ static int SculptDoBump(float target,float actual,float *d,
 
        
 float SculptIterateObject(CSculpt *I,ObjectMolecule *obj,
-                          int state,int n_cycle)
+                          int state,int n_cycle,float *center)
 {
   PyMOLGlobals *G=I->G;
   CShaker *shk;
@@ -1247,6 +1247,21 @@ float SculptIterateObject(CSculpt *I,ObjectMolecule *obj,
       } else {
         nb_skip_count = 0;
       }
+
+      if(center) {
+        int *a_ptr = active;
+        for(aa=0;aa<n_active;aa++) {
+          a = *(a_ptr++);
+          if(obj->AtomInfo[a].protekted!=1) {
+            v2 = cs->Coord+3*atm2idx[a];
+            center[4] += *(v2  );
+            center[5] += *(v2+1);
+            center[6] += *(v2+2);
+            center[7] += 1.0F;
+          }
+        }
+      }
+
       while(n_cycle--) {
             
         total_strain = 0.0F;
@@ -1382,7 +1397,7 @@ float SculptIterateObject(CSculpt *I,ObjectMolecule *obj,
         if(cSculptPlan & mask) {
 
           /* apply planarity constraints */
-            
+          
           snc=shk->PlanCon;
           for(a=0;a<shk->NPlanCon;a++) {
               
@@ -1639,8 +1654,21 @@ float SculptIterateObject(CSculpt *I,ObjectMolecule *obj,
         } else if(cgo) {
           SceneDirty(G);
         }
-        if(n_cycle<0)
+        if(n_cycle<=0) {
+          int *a_ptr = active;
+          if(center) 
+           for(aa=0;aa<n_active;aa++) {
+             a = *(a_ptr++);
+             if(obj->AtomInfo[a].protekted!=1) {
+               v2 = cs->Coord+3*atm2idx[a];
+               center[0] += *(v2  );
+               center[1] += *(v2+1);
+               center[2] += *(v2+2);
+               center[3] += 1.0F;
+             }
+           }
           break;
+        }
       }
           
       task_time = UtilGetSeconds(G) - task_time;

@@ -1142,13 +1142,14 @@ typedef struct {
   int real;
   int ca,n,c,o; /* indices in selection-table space */
   float phi,psi;
-  char ss;
+  char ss, ss_save;
   int flags;
   int n_acc,n_don;
   int acc[cSSMaxHBond]; /* interactions where this residue is an acceptor */
   int don[cSSMaxHBond]; /* interactions where this residue is a donor */
   ObjectMolecule *obj;
   int preserve;
+  int present;
 } SSResi;
 
 int SelectorAssignSS(PyMOLGlobals *G,int target,int present,int state_value,int preserve,int quiet)
@@ -1170,22 +1171,22 @@ int SelectorAssignSS(PyMOLGlobals *G,int target,int present,int state_value,int 
        - Out-of-the envelope 
        - 1-residue gaps in sheets are filled unless there
          is a turn.
-
   */
-
 
   register CSelector *I=G->Selector;
   SSResi *res;
   int n_res = 0;
   int state_start,state_stop,state;
-  int all_atoms_present = true;
+  int consensus = true;
+  int first_pass = true;
 
   SelectorUpdateTable(G);
 
   res = VLACalloc(SSResi,1000);
 
- 
   if(state_value<0) {
+    if(state_value == -2)
+      consensus = false;
     state_start = 0;
     state_stop = SelectorGetSeleNCSet(G,target);
   } else {
@@ -1193,44 +1194,26 @@ int SelectorAssignSS(PyMOLGlobals *G,int target,int present,int state_value,int 
     state_stop=state_value+1;
   }
   for(state=state_start;state<state_stop;state++) {
-    {
-      int a;
-      ObjectMolecule *obj;
-      int aa,a0,a1,at,idx;
-      AtomInfoType *ai,*ai0,*ai1;
-      CoordSet *cs;
-      ObjectMolecule *last_obj = NULL;
-      /* first, we need to count the number of residues under consideration */
+    int a;
+    ObjectMolecule *obj;
+    int aa,a0,a1,at,idx;
+    AtomInfoType *ai,*ai0,*ai1;
+    CoordSet *cs;
+    ObjectMolecule *last_obj = NULL;
+    /* first, we need to count the number of residues under consideration */
     
+    if(first_pass) {
       for(a=cNDummyAtoms;a<I->NAtom;a++) {
-
+        
         obj = I->Obj[I->Table[a].model];
         at = + I->Table[a].atom;
         ai = obj->AtomInfo + at;
-      
-        /* see if CA coordinates exists in this state...*/
-
-        if(state<obj->NCSet) 
-          cs=obj->CSet[state];
-        else
-          cs=NULL;
-        if(cs) {
-          if(obj->DiscreteFlag) {
-            if(cs==obj->DiscreteCSet[at])
-              idx=obj->DiscreteAtmToIdx[at];
-            else
-              idx=-1;
-          } else 
-            idx=cs->AtmToIdx[at];
-        } else {
-          idx = -1;
-        }
         
-
+        /* see if CA coordinates exists in this state...*/
+        
         if(SelectorIsMember(G,ai->selEntry,present)) {
-
-          if((idx>=0)&&
-             (ai->protons==cAN_C)&&
+          
+          if((ai->protons==cAN_C)&&
              (WordMatch(G,"CA",ai->name,true)<0)) {
             
             if(last_obj!=obj) {
@@ -1289,7 +1272,8 @@ int SelectorAssignSS(PyMOLGlobals *G,int target,int present,int state_value,int 
                 res[n_res].c = found_C;
                 res[n_res].ca = a;
                 res[n_res].obj = I->Obj[I->Table[a].model];
-                res[n_res].real = true; /* for down below... */
+                res[n_res].real = true;
+
                 n_res++;
                 
               } else {
@@ -1301,89 +1285,127 @@ int SelectorAssignSS(PyMOLGlobals *G,int target,int present,int state_value,int 
                 }
               }
             }
-          } else if(idx<0)
-            all_atoms_present = false;
+          }
         }
       } /* count pass */
-    }
 
-    if(preserve) { /* if we're in preserve mode, then mark which objects don't get changed */
-      int a,b;
-      char ss;
-      ObjectMolecule *p_obj = NULL;
-      SSResi *r,*r2;
-      for(a=0;a<n_res;a++) {
-        r = res+a;
-        if(r->real) {
-          if(p_obj!=r->obj) {
-            ss = r->obj->AtomInfo[I->Table[r->ca].atom].ssType[0];
-            if((ss=='S')||(ss=='H')||(ss=='s')||(ss=='h')) {
-              p_obj = r->obj;
-
-              b=a;
-              while(b>=0) {
-                r2 = res + b;
-                if(p_obj==r2->obj) r2->preserve=true;
-                b--;
-              }
-              b=a+1;
-              while(b<n_res) {
-                r2 = res + b;
-                if(p_obj==r2->obj) r2->preserve=true;
-                b++;
+      if(preserve) { /* if we're in preserve mode, then mark which objects don't get changed */
+        int a,b;
+        char ss;
+        ObjectMolecule *p_obj = NULL;
+        SSResi *r,*r2;
+        for(a=0;a<n_res;a++) {
+          r = res+a;
+          if(r->real) {
+            if(p_obj!=r->obj) {
+              ss = r->obj->AtomInfo[I->Table[r->ca].atom].ssType[0];
+              if((ss=='S')||(ss=='H')||(ss=='s')||(ss=='h')) {
+                p_obj = r->obj;
+                
+                b=a;
+                while(b>=0) {
+                  r2 = res + b;
+                  if(p_obj==r2->obj) r2->preserve=true;
+                  b--;
+                }
+                b=a+1;
+                while(b<n_res) {
+                  r2 = res + b;
+                  if(p_obj==r2->obj) r2->preserve=true;
+                  b++;
+                }
               }
             }
           }
         }
       }
-    }
-    /*  printf("n_res %d\n",n_res);*/
+      /*  printf("n_res %d\n",n_res);*/
 
-    /* now, let's repack res. into discrete chunks so that we can do easy gap & ladder analysis */
+      /* now, let's repack res. into discrete chunks so that we can do easy gap & ladder analysis */
+  
+      {
+        SSResi *res2;
+        int a;
+        int n_res2 = 0;
+        int add_break;
+        int at_ca0,at_ca1;
+
+        res2 = VLACalloc(SSResi,n_res*2);
+    
+        for(a=0;a<n_res;a++) {
+          add_break = false;
+
+          if(!a) { 
+            add_break=true;
+          } else if(res[a].obj!=res[a-1].obj) {
+            add_break=true;
+          } else if(res[a].obj) {
+            at_ca0 = I->Table[res[a].ca].atom;
+            at_ca1 = I->Table[res[a-1].ca].atom;
+            if(!ObjectMoleculeCheckBondSep(res[a].obj,at_ca0,at_ca1,3)) { /* CA->N->C->CA = 3 bonds */
+              add_break=true;
+            }
+          }
+      
+          if(add_break) {
+            n_res2 += cSSBreakSize;
+          }
+      
+          VLACheck(res2,SSResi,n_res2);
+          res2[n_res2] = res[a];
+          n_res2++;
+        }
+
+        n_res2+=cSSBreakSize;
+        VLACheck(res2,SSResi,n_res2);
+
+        VLAFreeP(res);
+        res=res2;
+        n_res = n_res2;
+      }
+      first_pass = false;
+    }
+
+    /* okay, the rest of this loop runs for each coordinate set */
   
     {
-      SSResi *res2;
-      int a;
-      int n_res2 = 0;
-      int add_break;
-      int at_ca0,at_ca1;
-
-      res2 = VLACalloc(SSResi,n_res*2);
-    
+      int b;
       for(a=0;a<n_res;a++) {
-        add_break = false;
+        res[a].present = res[a].real;
 
-        if(!a) { 
-          add_break=true;
-        } else if(res[a].obj!=res[a-1].obj) {
-          add_break=true;
-        } else if(res[a].obj) {
-          at_ca0 = I->Table[res[a].ca].atom;
-          at_ca1 = I->Table[res[a-1].ca].atom;
-          if(!ObjectMoleculeCheckBondSep(res[a].obj,at_ca0,at_ca1,3)) { /* CA->N->C->CA = 3 bonds */
-            add_break=true;
+        if(res[a].present) {
+          obj = res[a].obj;
+          if(state<obj->NCSet) 
+            cs=obj->CSet[state];
+          else
+            cs=NULL;
+          for(b=0;b<4;b++) {
+            if(cs) {
+              switch(b) {
+              case 0: at = I->Table[res[a].n].atom; break;
+              case 1: at = I->Table[res[a].o].atom; break;
+              case 2: at = I->Table[res[a].c].atom; break;
+              default:
+              case 3: at = I->Table[res[a].ca].atom; break;              
+              }
+              if(obj->DiscreteFlag) {
+                if(cs==obj->DiscreteCSet[at])
+                  idx=obj->DiscreteAtmToIdx[at];
+                else
+                  idx=-1;
+              } else 
+                idx=cs->AtmToIdx[at];
+            } else 
+              idx = -1;
+            if(idx<0) {
+              res[a].present = false;
+            }
           }
         }
-      
-        if(add_break) {
-          n_res2 += cSSBreakSize;
-        }
-      
-        VLACheck(res2,SSResi,n_res2);
-        res2[n_res2] = res[a];
-        n_res2++;
       }
-
-      n_res2+=cSSBreakSize;
-      VLACheck(res2,SSResi,n_res2);
-
-      VLAFreeP(res);
-      res=res2;
-      n_res = n_res2;
     }
+      
 
-    /*  printf("n_res %d\n",n_res);*/
-  
     /* next, we need to record hydrogen bonding relationships */
 
     {
@@ -1411,6 +1433,10 @@ int SelectorAssignSS(PyMOLGlobals *G,int target,int present,int state_value,int 
       zero=Calloc(int,I->NAtom);
       scratch=Alloc(int,I->NAtom);
 
+      for(a=0;a<n_res;a++) {
+        res[a].n_acc = 0;
+        res[a].n_don = 0;
+      }
       hbc = &hbcRec;
       ObjectMoleculeInitHBondCriteria(G,hbc);
 
@@ -1442,8 +1468,7 @@ int SelectorAssignSS(PyMOLGlobals *G,int target,int present,int state_value,int 
       }
 
       for(a=0;a<n_res;a++) {
-
-        if(res[a].real) {
+        if(res[a].present) {
           obj0=res[a].obj;
       
           if(obj0) {
@@ -1499,7 +1524,7 @@ int SelectorAssignSS(PyMOLGlobals *G,int target,int present,int state_value,int 
                 copy3f(cs->Coord+(3*idx),I->Vertex+3*aa); /* record coordinate */
 #if 0
                 printf(" storing acceptor for %s %d at %8.3f %8.3f %8.3f\n",
-                                res[a].obj->AtomInfo[at].resi,idx,
+                       res[a].obj->AtomInfo[at].resi,idx,
                        I->Vertex[3*aa],I->Vertex[3*aa+1],I->Vertex[3*aa+2]);
 #endif
               }
@@ -1508,6 +1533,7 @@ int SelectorAssignSS(PyMOLGlobals *G,int target,int present,int state_value,int 
           }
         }
       }
+
     
       if(n1) {
         map=MapNewFlagged(G,-cutoff,I->Vertex,I->NAtom,NULL,I->Flag1);
@@ -1615,7 +1641,8 @@ int SelectorAssignSS(PyMOLGlobals *G,int target,int present,int state_value,int 
       for(a=0;a<n_res;a++) {
         r = res + a;
         if(r->real&&((r-1)->real)) {
-        
+          r->flags = 0;
+
           if(ObjectMoleculeGetPhiPsi(r->obj,I->Table[r->ca].atom,&r->phi,&r->psi,state)) {
             r->flags |= cSSGotPhiPsi;
           
@@ -1651,13 +1678,12 @@ int SelectorAssignSS(PyMOLGlobals *G,int target,int present,int state_value,int 
       }
     }
 
-
     /* by default, tentatively assign everything as loop */
     
     { 
       int a;
       for(a=cSSBreakSize;a<(n_res-cSSBreakSize);a++) {
-        if(res[a].real)
+        if(res[a].present)
           res[a].ss = 'L';
       }
     }
@@ -2056,8 +2082,7 @@ int SelectorAssignSS(PyMOLGlobals *G,int target,int present,int state_value,int 
     
       while(repeat) {
         repeat = false;
-      
-      
+            
         for(a=cSSBreakSize;a<(n_res-cSSBreakSize);a++) {
           r = res + a;
           if(r->real) {
@@ -2148,7 +2173,24 @@ int SelectorAssignSS(PyMOLGlobals *G,int target,int present,int state_value,int 
         }
       }
     }
-  
+
+    { 
+      int a;
+      for(a=0;a<n_res;a++) { /* now apply consensus or union behavior, if appropriate*/
+        if(res[a].present) {
+          if(res[a].ss_save) {
+            if(res[a].ss!=res[a].ss_save) {
+              if(consensus) {
+                res[a].ss = res[a].ss_save = 'L';
+              } else if(res[a].ss=='L')
+                res[a].ss = res[a].ss_save;
+            }
+          }
+          res[a].ss_save = res[a].ss;
+        }
+      }
+    }
+
     { 
       int a,aa;
       ObjectMolecule *obj=NULL,*last_obj = NULL;
@@ -2156,7 +2198,7 @@ int SelectorAssignSS(PyMOLGlobals *G,int target,int present,int state_value,int 
       int changed_flag = false;
 
       for(a=0;a<n_res;a++) {
-        if(res[a].real&&(!res[a].preserve)) {
+        if(res[a].present&&(!res[a].preserve)) {
 
           aa = res[a].ca;
           obj=I->Obj[I->Table[aa].model];
@@ -2186,18 +2228,12 @@ int SelectorAssignSS(PyMOLGlobals *G,int target,int present,int state_value,int 
         changed_flag=false;
       }
     }
-    if(all_atoms_present) {
-      /* if all atoms were present in this state, then don't bother doing
-         redundant assignments for later states */
-      break;
-    }
   }
        
   VLAFreeP(res);
  
   return 1;
 }
-
 
 PyObject *SelectorColorectionGet(PyMOLGlobals *G,char *prefix)
 

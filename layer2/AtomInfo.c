@@ -1404,7 +1404,95 @@ int AtomInfoCompare(PyMOLGlobals *G,AtomInfoType *at1,AtomInfoType *at2)
                         result = -1;
                       else if(at1->rank>at2->rank)
                         result = 1;
+                      else result = 0;
                     }
+                  } else if((!at2->alt[0])||(at1->alt[0]&&((at1->alt[0]<at2->alt[0])))) {
+                    result=-1;
+                  } else {
+                    result=1;
+                  }
+                } else if(at1->priority<at2->priority) {
+                  result=-1;
+                } else {
+                  result=1;
+                }
+              } else if(at1->discrete_state<at2->discrete_state) {
+                result = -1;
+              } else {
+                result = 1;
+              }
+            } else {
+              result=wc;
+            }
+          } else {
+            /* NOTE: don't forget to synchronize with below */
+            if(SettingGetGlobal_b(G,cSetting_pdb_insertions_go_first)) {
+              int sl1,sl2;
+              sl1 = strlen(at1->resi);
+              sl2 = strlen(at2->resi);
+              if(sl1==sl2)
+                result = wc;
+              else if(sl1<sl2) /* sort residue 188A before 188, etc. */
+                result = 1;
+              else 
+                result = -1;
+            } else if((at1->rank!=at2->rank)&&
+                      SettingGetGlobal_b(G,cSetting_rank_assisted_sorts)) { 
+              /* use rank to resolve insertion code ambiguities */
+              if(at1->rank>at2->rank)
+                result = 1;
+              else
+                result = -1;
+            } else {
+              result=wc;
+            }
+          }
+        } else if(at1->resv<at2->resv) {
+          result=-1;
+        } else {
+          result=1;
+        }
+      } else if(at2->hetatm) {
+        result=-1;
+      } else {
+        result=1;
+      }
+    } else if((!at2->chain[0])||(at1->chain[0]&&((at1->chain[0]<at2->chain[0])))) {
+      result=-1;
+    } else {
+      result=1;
+    }
+  } else {
+	 result=wc;
+  }
+  return(result);
+}
+int AtomInfoCompareIgnoreRank(PyMOLGlobals *G,AtomInfoType *at1,AtomInfoType *at2)
+{
+  int result;
+  int wc;
+  /* order by segment, chain, residue value, residue id, residue name, priority,
+	 and lastly by name */
+
+  /*  printf(":%s:%s:%d:%s:%s:%i:%s =? ",
+	  at1->segi,at1->chain,at1->resv,at1->resi,at1->resn,at1->priority,at1->name);
+	  printf(":%s:%s:%d:%s:%s:%i:%s\n",
+	  at2->segi,at2->chain,at2->resv,at2->resi,at2->resn,at2->priority,at2->name);
+  */
+
+  wc=WordCompare(G,at1->segi,at2->segi,true);
+  if(!wc) {
+	 if(at1->chain[0]==at2->chain[0]) {
+      if(at1->hetatm==at2->hetatm) {
+        if(at1->resv==at2->resv) {
+          wc=WordCompare(G,at1->resi,at2->resi,true);
+          if(!wc) {
+            wc=WordCompare(G,at1->resn,at2->resn,true);
+            if(!wc) {
+              if(at1->discrete_state==at2->discrete_state) {
+                if(at1->priority==at2->priority) {
+                  if(at1->alt[0]==at2->alt[0]) {
+                    result=AtomInfoNameCompare(G,at1->name,at2->name);
                   } else if((!at2->alt[0])||(at1->alt[0]&&((at1->alt[0]<at2->alt[0])))) {
                     result=-1;
                   } else {
@@ -1498,6 +1586,8 @@ int AtomInfoCompareIgnoreHet(PyMOLGlobals *G,AtomInfoType *at1,AtomInfoType *at2
                       result = -1;
                     else if(at1->rank>at2->rank)
                       result = 1;
+                    else
+                      result = 0;
                   }
                 } else if((!at2->alt[0])||(at1->alt[0]&&((at1->alt[0]<at2->alt[0])))) {
                   result=-1;

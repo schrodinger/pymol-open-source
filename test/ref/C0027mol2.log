@@ -48,7 +48,7 @@ PyMOL>load dat/small03.mol2, discrete=0
  ObjectMoleculeReadStr: read through molecule 10.
  ExecutiveLoad: "dat/small03.mol2" loaded as "small03", through state 16.
 PyMOL>count_atoms
- count_atoms: 387 atoms
+ count_atoms: 369 atoms
 PyMOL>dele all
 PyMOL>load dat/small03.mol2, multiplex=1
  ExecutiveLoad: loaded 16 objects from "dat/small03.mol2".

@@ -1866,13 +1866,13 @@ void ObjectMoleculeSculptImprint(ObjectMolecule *I,int state)
   SculptMeasureObject(I->Sculpt,I,state);
 }
 
-float ObjectMoleculeSculptIterate(ObjectMolecule *I,int state,int n_cycle)
+float ObjectMoleculeSculptIterate(ObjectMolecule *I,int state,int n_cycle, float *center)
 {
   PRINTFD(I->Obj.G,FB_ObjectMolecule)
     " ObjectMoleculeIterateSculpt: entered.\n"
     ENDFD;
   if(I->Sculpt) {
-    return SculptIterateObject(I->Sculpt,I,state,n_cycle);
+    return SculptIterateObject(I->Sculpt,I,state,n_cycle,center);
   } else
     return 0.0F;
 }
@@ -7174,12 +7174,11 @@ void ObjectMoleculeMerge(ObjectMolecule *I,AtomInfoType *ai,
     if(!I->DiscreteFlag) { /* don't even try matching for discrete objects */
       lb=b;
       while(b<I->NAtom) {
-        ac=(AtomInfoCompare(I->Obj.G,ai+a,I->AtomInfo+b));
+        ac=(AtomInfoCompareIgnoreRank(I->Obj.G,ai+a,I->AtomInfo+b));
         if(!ac) {
           found=true;
           break;
-        }
-        else if(ac<0) {
+        } else if(ac<0) { /* atom is smaller than current, so we need to start from top */
           break;
         }
         b++;

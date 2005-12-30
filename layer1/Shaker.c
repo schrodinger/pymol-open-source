@@ -271,11 +271,21 @@ float ShakerDoPlan(float *v0,float *v1,float *v2,float *v3,
 
 #else
     
-    float d01[3],d12[3],d23[3],cp0[3],cp1[3],dp,sc,dev,d0[3],push[3];
-
+    float d01[3],d12[3],d23[3],d03[3],cp0[3],cp1[3],dp,sc,dev,d0[3],push[3];
+  double s01,s12,s23,s03;
+    
     subtract3f(v0,v1,d01);
     subtract3f(v1,v2,d12);
     subtract3f(v2,v3,d23);
+    subtract3f(v0,v3,d03);    
+
+    s03 = lengthsq3f(d03);
+    s01 = lengthsq3f(d01);
+    s12 = lengthsq3f(d12);
+    s23 = lengthsq3f(d23);
+    
+    if( (s03<s01) || (s03<s12) || (s03<s23))
+      return 0.0F;
 
     cross_product3f(d01,d12,cp0);
     cross_product3f(d12,d23,cp1);

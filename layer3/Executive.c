@@ -3393,7 +3393,8 @@ int ExecutiveMapNew(PyMOLGlobals *G,char *name,int type,float *grid,
 int ExecutiveSculptIterateAll(PyMOLGlobals *G)
 {
   int active = false;
-
+  float center_array[8] = {0.0F,0.0F,0.0F,0.0F};
+  float *center = center_array;
   register CExecutive *I = G->Executive;
   SpecRec *rec = NULL;
   ObjectMolecule *objMol;
@@ -3408,13 +3409,24 @@ int ExecutiveSculptIterateAll(PyMOLGlobals *G)
           objMol =(ObjectMolecule*)rec->obj;
           ObjectMoleculeSculptIterate(objMol,state,
                                       SettingGet_i(G,NULL,objMol->Obj.Setting,
-                                                   cSetting_sculpting_cycles));
+                                                   cSetting_sculpting_cycles),
+                                      center);
           active = true;
         }
       }
     }
+    if(center && (center[3]>1.0F)) {
+      float pos[3];
+      SceneGetPos(G,pos);
+      center[3] = 1.0F/center[3];
+      scale3f(center,center[3],center);
+      center[7] = 1.0F/center[7];
+      scale3f(center+4,center[7],center+4);
+      subtract3f(center,center+4,center);
+      add3f(pos,center,center);
+      ExecutiveCenter(G,NULL,-1,true,false,center,true);
+    }
   }
-
   return(active);
 }
 /*========================================================================*/
@@ -3434,7 +3446,7 @@ float ExecutiveSculptIterate(PyMOLGlobals *G,char *name,int state,int n_cycle)
       if(rec->type==cExecObject) {
         if(rec->obj->type==cObjectMolecule) {
           objMol =(ObjectMolecule*)rec->obj;
-          total_strain+=ObjectMoleculeSculptIterate(objMol,state,n_cycle);
+          total_strain+=ObjectMoleculeSculptIterate(objMol,state,n_cycle,NULL);
         }
       }
     }
@@ -3449,7 +3461,7 @@ float ExecutiveSculptIterate(PyMOLGlobals *G,char *name,int state,int n_cycle)
       ENDFB(G);
     ok=false;
   } else {
-    total_strain=ObjectMoleculeSculptIterate((ObjectMolecule*)obj,state,n_cycle);
+    total_strain=ObjectMoleculeSculptIterate((ObjectMolecule*)obj,state,n_cycle,NULL);
   }
   return(total_strain);
 }
@@ -5255,9 +5267,9 @@ void ExecutiveMask(PyMOLGlobals *G,char *s1,int mode)
     if(Feedback(G,FB_Executive,FB_Actions)) {    
       if(op.i2) {
         if(mode) {
-          PRINTF " Protect: %d atoms masked (can not be picked or selected).\n",op.i2 ENDF(G);
+          PRINTF " Mask: %d atoms masked (cannot be picked or selected).\n",op.i2 ENDF(G);
         } else {
-          PRINTF " Protect: %d atoms unmasked.\n", op.i2 ENDF(G);
+          PRINTF " Mask: %d atoms unmasked.\n", op.i2 ENDF(G);
         }
       }
     }
