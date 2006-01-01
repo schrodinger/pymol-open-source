@@ -845,7 +845,6 @@ static void MainDraw(void)
         if(actual_y!=0) {
           height -= actual_y;
         }
-        printf("%d %d\n",width,height);
         p_glutPositionWindow(0,0);
         p_glutReshapeWindow(width,height);
         skip = true;
@@ -1413,7 +1412,6 @@ static void launch(CPyMOLOptions *options,int own_the_options)
   MacPyMOLReady = &G->Ready;
 #endif
   
-
   if(G->Option->multisample)
     multisample_mask = P_GLUT_MULTISAMPLE;
   

@@ -1234,7 +1234,7 @@ static OVstatus PyMOL_InitAPI(CPyMOL *I)
   LEX_SETTING(ray_shadow_decay_factor, 475);
   LEX_SETTING(ray_interior_mode, 476);
   LEX_SETTING(ray_legacy_lighting, 477);
-  LEX_SETTING(sculpt_auto_center, 1);
+  LEX_SETTING(sculpt_auto_center, 478);
 
   return_OVstatus_SUCCESS;
 }
