@@ -6178,6 +6178,7 @@ static CoordSet *ObjectMoleculeMOLStr2CoordSet(PyMOLGlobals *G,char *buffer,
 
 		  }
         if(ok) {
+          int tmp_int;
           p=nskip(p,2);
           p=ncopy(cc,p,3);
           if(sscanf(cc,"%d",&atInfo[a].formalCharge)==1) {
@@ -6186,8 +6187,10 @@ static CoordSet *ObjectMoleculeMOLStr2CoordSet(PyMOLGlobals *G,char *buffer,
             }
           }
           p=ncopy(cc,p,3);
-          if(sscanf(cc,"%d",&atInfo[a].stereo)!=1) 
+          if(sscanf(cc,"%d",&tmp_int)!=1) 
             atInfo[a].stereo=0;
+          else
+            atInfo[a].stereo=tmp_int;
         }
 		  if(ok&&atInfo) {
           atInfo[a].id = a+1; 

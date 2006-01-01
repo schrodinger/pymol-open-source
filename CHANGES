@@ -6,6 +6,8 @@ Changes up to 0.99
 
     beta32
 
+    * optimized PDB read performance 
+
     * ray_legacy_lighting setting to enable blending of previous 
       lighting algorithm with new (more correct) lighting
 

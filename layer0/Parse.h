@@ -30,17 +30,17 @@ char *ParseAlphaCopy(char *q,char *p,int n);
 __inline__ static char *ParseNextLine(char *p)
 {
   register char ch;
-  const char mask = 0xF0;
+  const char mask = -16; /* 0xF0 */
   while((mask & p[0]) &&
 	(mask & p[1]) &&
 	(mask & p[2]) &&
 	(mask & p[3])) /* trusting short-circuit to avoid overrun */
     p+=4;
-  while(ch=*p) {
+  while( (ch=*p) ) {
     p++;
     if(ch==0xD) { /* Mac or PC */
       if((*p)==0xA) /* PC */
-	return p+1;
+        return p+1;
       return p;
     } else if(ch==0xA) { /* Unix */
       return p;
@@ -51,7 +51,7 @@ __inline__ static char *ParseNextLine(char *p)
 
 __inline__ static char *ParseNCopy(char *q,char *p,int n) {  /* n character copy */
   register char ch;
-  while(ch=*p) {
+  while( (ch=*p) ) {
     if((ch==0xD)||(ch==0xA)) /* don't copy end of lines */
       break;
     if(!n)
