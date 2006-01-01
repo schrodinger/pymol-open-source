@@ -17,6 +17,47 @@ Z* -------------------------------------------------------------------
 #include"os_predef.h"
 #include"Parse.h"
 
+#ifndef _PYMOL_INLINE
+
+char *ParseNextLine(char *p) {
+  register char ch;
+  const char mask = 0xF0;
+  while((mask & p[0]) &&
+	(mask & p[1]) &&
+	(mask & p[2]) &&
+	(mask & p[3])) /* trusting short-circuit to avoid overrun */
+    p+=4;
+  while(ch=*p) {
+    p++;
+    if(ch==0xD) { /* Mac or PC */
+      if((*p)==0xA) /* PC */
+	return p+1;
+      return p;
+    } else if(ch==0xA) { /* Unix */
+      return p;
+    }
+  }
+  return p;
+}
+/*========================================================================*/
+
+char *ParseNCopy(char *q,char *p,int n) {  /* n character copy */
+  register char ch;
+  while(ch=*p) {
+    if((ch==0xD)||(ch==0xA)) /* don't copy end of lines */
+      break;
+    if(!n)
+      break;
+    n--;
+    p++;
+    *(q++)=ch;
+  }
+  *q=0;
+  return p;
+}
+
+#endif
+
 char *ParseSkipEquals(char *p)
 {
   while(*p) {
@@ -38,23 +79,7 @@ char *ParseSkipEquals(char *p)
   return p;
 }
 
-char *ParseNextLine(char *p) {
-  while(*p) {
-	 if(*p==0xD) { /* Mac or PC */
-		if(*(p+1)==0xA) /* PC */
-		  p++;
-		p++;
-		break;
-	 }
-	 if(*p==0xA) /* Unix */
-		{
-		  p++;
-		  break;
-		}
-	 p++;
-  }
-  return p;
-}
+
 /*========================================================================*/
 char *ParseIntCopy(char *q,char *p,int n) { /* integer copy */
   while(*p) {
@@ -147,19 +172,6 @@ char *ParseWord(char *q,char *p,int n) { /* word copy, across lines */
 	 if(*p<=32)
 		break;
 	 if(!n)
-		break;
-	 *(q++)=*(p++);
-	 n--;
-  }
-  *q=0;
-  return p;
-}
-/*========================================================================*/
-char *ParseNCopy(char *q,char *p,int n) {  /* n character copy */
-  while(*p) {
-	 if(!n)
-		break;
-	 if((*p==0xD)||(*p==0xA)) /* don't copy end of lines */
 		break;
 	 *(q++)=*(p++);
 	 n--;

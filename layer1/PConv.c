@@ -255,6 +255,27 @@ int PConvPyObjectToInt(PyObject *object,int *value)
   return(result);
 }
 
+int PConvPyObjectToChar(PyObject *object,char *value)
+{
+  int result = true;
+  PyObject *tmp;
+  if(!object)
+    result=false;
+  else   if(PyInt_Check(object)) {
+    (*value) = (char)PyInt_AsLong(object);
+  } else if(PyLong_Check(object)) {
+    (*value) = (char)PyLong_AsLongLong(object);
+  } else {
+    tmp = PyNumber_Int(object);
+    if(tmp) {
+      (*value) = (char)PyInt_AsLong(tmp);
+      Py_DECREF(tmp);
+    } else 
+      result=false;
+  }
+  return(result);
+}
+
 int PConvPyObjectToStrMaxLen(PyObject *object,char *value,int ln)
 {
   char *st;

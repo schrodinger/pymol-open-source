@@ -91,6 +91,7 @@ void PConvStringToPyObjAttr(PyObject *obj,char *attr,char *f);
 
 int PConvPyObjectToFloat(PyObject *object,float *value);
 int PConvPyObjectToInt(PyObject *object,int *value);
+int PConvPyObjectToChar(PyObject *object,char *value);
 
 /* NOTE: the string routines will write strings up to the specified
  * length, PLUS a NULL...so watch out for array overruns */

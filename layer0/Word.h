@@ -78,9 +78,51 @@ int WordMatchCommaExact(PyMOLGlobals *G,char *p,char *q,int ignCase);
 
 /* (<0) exact match, (>0) inexact match, =0 no match */
 
-int WordCompare(PyMOLGlobals *G,char *p,char *q,int ignCase);
 int WordIndex(PyMOLGlobals *G,WordType *list,char *word,int minMatch,int ignCase);
 int WordKey(PyMOLGlobals *G,WordKeyValue *list,char *word,int minMatch,int ignCase,int *exact);
 
+#ifdef _PYMOL_INLINE
+__inline__ static int WordCompare(PyMOLGlobals *G,char *p,char *q,int ignCase) 
+/* all things equal, shorter is smaller */
+{
+  int result=0;
+  register char cp,cq,tlp,tlq;
+  if(ignCase) {
+    while((cp=*p)&&(cq=*q))	{
+      p++;
+      q++;
+      if(cp!=cq) {
+        (tlp=tolower(cp));
+	(tlq=tolower(cq));
+	if(tlp<tlq) 
+          return -1;
+        else if(tlp>tlq) {
+          return 1;
+        }
+      }
+    }
+  } else {
+    while((cp=*p)&&(cq=*q))	{
+      p++;
+      q++;
+      if(cp!=cq) {
+        if(cp<cq) {
+          return -1;
+        } else if(cp>cq) {
+          return 1;
+        }
+      }
+    }
+  }
+  if((!result)&&(!*p)&&(*q))
+    return -1;
+  else if((!result)&&(*p)&&(!*q))
+    return 1;
+  return 0;
+}
+#else
+int WordCompare(PyMOLGlobals *G,char *p,char *q,int ignCase);
+
+#endif
 
 #endif
