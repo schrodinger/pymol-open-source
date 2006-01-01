@@ -67,6 +67,46 @@ static void WordMatcherDump(CWordMatcher *I)
 }
 #endif
 
+#ifndef _PYMOL_INLINE
+int WordCompare(PyMOLGlobals *G,char *p,char *q,int ignCase) 
+/* all things equal, shorter is smaller */
+{
+  int result=0;
+  register char cp,cq,tlp,tlq;
+  if(ignCase) {
+    while((cp=*p)&&(cq=*q))	{
+      p++;
+      q++;
+      if(cp!=cq) {
+        (tlp=tolower(cp));
+	(tlq=tolower(cq));
+	if(tlp<tlq) 
+          return -1;
+        else if(tlp>tlq) {
+          return 1;
+        }
+      }
+    }
+  } else {
+    while((cp=*p)&&(cq=*q))	{
+      p++;
+      q++;
+      if(cp!=cq) {
+        if(cp<cq) {
+          return -1;
+        } else if(cp>cq) {
+          return 1;
+        }
+      }
+    }
+  }
+  if((!result)&&(!*p)&&(*q))
+    return -1;
+  else if((!result)&&(*p)&&(!*q))
+    return 1;
+  return 0;
+}
+#endif
 
 void WordMatchOptionsConfigInteger(CWordMatchOptions *I)
 {
@@ -894,43 +934,6 @@ int WordMatchCommaInt(PyMOLGlobals *G,char *p,int number)
   return(WordMatchComma(G,p,buffer,1));
 }
 
-int WordCompare(PyMOLGlobals *G,char *p,char *q,int ignCase) 
-/* all things equal, shorter is smaller */
-{
-  int result=0;
-  if(ignCase) {
-    while((*p)&&(*q))	{
-      if(*p!=*q) {
-        if(tolower(*p)<tolower(*q)) {
-          return -1;
-        }
-        else if(tolower(*p)>tolower(*q)) {
-          return 1;
-        }
-      }
-      p++;
-      q++;
-    }
-  } else {
-    while((*p)&&(*q))	{
-      if(*p!=*q) {
-        if(*p<*q) {
-          return -1;
-        } else if(*p>*q) {
-          return 1;
-        }
-      }
-      p++;
-      q++;
-    }
-  }
-  
-  if((!result)&&(!*p)&&(*q))
-    return -1;
-  else if((!result)&&(*p)&&(!*q))
-    return 1;
-  return 0;
-}
 
 int WordIndex(PyMOLGlobals *G,WordType *list,char *word,int minMatch,int ignCase)
 {

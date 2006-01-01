@@ -5587,7 +5587,7 @@ static CoordSet *ObjectMoleculeChemPyModel2CoordSet(PyMOLGlobals *G,PyObject *mo
           if(PTruthCallStr(atom,"has","stereo")) { 
             tmp = PyObject_GetAttrString(atom,"stereo");
             if (tmp)
-              ok = PConvPyObjectToInt(tmp,&ai->stereo);
+              ok = PConvPyObjectToChar(tmp,(char*)&ai->stereo);
             if(!ok) 
               ErrMessage(G,"ObjectMoleculeChemPyModel2CoordSet","can't read stereo");
             Py_XDECREF(tmp);

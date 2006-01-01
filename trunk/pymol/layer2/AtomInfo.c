@@ -623,7 +623,7 @@ PyObject *AtomInfoAsPyList(PyMOLGlobals *G,AtomInfoType *I)
   PyList_SetItem(result, 8,PyString_FromString(I->textType));
   PyList_SetItem(result, 9,PyString_FromString(I->label));
   PyList_SetItem(result,10,PyString_FromString(I->ssType));
-  PyList_SetItem(result,11,PyInt_FromLong(I->hydrogen));  
+  PyList_SetItem(result,11,PyInt_FromLong((char)I->hydrogen));  
   PyList_SetItem(result,12,PyInt_FromLong(I->customType));
   PyList_SetItem(result,13,PyInt_FromLong(I->priority));
   PyList_SetItem(result,14,PyFloat_FromDouble(I->b));
@@ -635,7 +635,7 @@ PyObject *AtomInfoAsPyList(PyMOLGlobals *G,AtomInfoType *I)
   PyList_SetItem(result,20,PConvSCharArrayToPyList(I->visRep,cRepCnt));
   PyList_SetItem(result,21,PyInt_FromLong(I->color));
   PyList_SetItem(result,22,PyInt_FromLong(I->id));
-  PyList_SetItem(result,23,PyInt_FromLong(I->cartoon));
+  PyList_SetItem(result,23,PyInt_FromLong((char)I->cartoon));
   PyList_SetItem(result,24,PyInt_FromLong(I->flags));
   PyList_SetItem(result,25,PyInt_FromLong((int)I->bonded));
   PyList_SetItem(result,26,PyInt_FromLong((int)I->chemFlag));
@@ -645,7 +645,7 @@ PyObject *AtomInfoAsPyList(PyMOLGlobals *G,AtomInfoType *I)
   PyList_SetItem(result,30,PyInt_FromLong((int)I->protekted));
   PyList_SetItem(result,31,PyInt_FromLong((int)I->protons));
   PyList_SetItem(result,32,PyInt_FromLong(I->sculpt_id));
-  PyList_SetItem(result,33,PyInt_FromLong(I->stereo));
+  PyList_SetItem(result,33,PyInt_FromLong((char)I->stereo));
   PyList_SetItem(result,34,PyInt_FromLong(I->discrete_state));
   PyList_SetItem(result,35,PyFloat_FromDouble(I->bohr_radius));
   PyList_SetItem(result,36,PyInt_FromLong(I->rank));
@@ -677,7 +677,7 @@ int AtomInfoFromPyList(PyMOLGlobals *G,AtomInfoType *I,PyObject *list)
   if(ok) ok = PConvPyStrToStr(PyList_GetItem(list, 8),I->textType,sizeof(TextType));  
   if(ok) ok = PConvPyStrToStr(PyList_GetItem(list, 9),I->label,sizeof(LabelType));   
   if(ok) ok = PConvPyStrToStr(PyList_GetItem(list,10),I->ssType,sizeof(SSType));   
-  if(ok) ok = PConvPyIntToInt(PyList_GetItem(list,11),&I->hydrogen);   
+  if(ok) ok = PConvPyIntToChar(PyList_GetItem(list,11),(char*)&I->hydrogen);   
   if(ok) ok = PConvPyIntToInt(PyList_GetItem(list,12),&I->customType);   
   if(ok) ok = PConvPyIntToInt(PyList_GetItem(list,13),&I->priority);  
   if(ok) ok = PConvPyFloatToFloat(PyList_GetItem(list,14),&I->b);  
@@ -691,7 +691,7 @@ int AtomInfoFromPyList(PyMOLGlobals *G,AtomInfoType *I,PyObject *list)
                           PyList_GetItem(list,20),I->visRep,cRepCnt); 
   if(ok) ok = PConvPyIntToInt(PyList_GetItem(list,21),&I->color); 
   if(ok) ok = PConvPyIntToInt(PyList_GetItem(list,22),&I->id); 
-  if(ok) ok = PConvPyIntToInt(PyList_GetItem(list,23),&I->cartoon); 
+  if(ok) ok = PConvPyIntToChar(PyList_GetItem(list,23),(char*)&I->cartoon); 
   if(ok) ok = PConvPyIntToInt(PyList_GetItem(list,24),(int*)&I->flags); 
   if(ok) ok = PConvPyIntToChar(PyList_GetItem(list,25),(char*)&I->bonded); 
   if(ok) ok = PConvPyIntToChar(PyList_GetItem(list,26),(char*)&I->chemFlag); 
@@ -701,7 +701,7 @@ int AtomInfoFromPyList(PyMOLGlobals *G,AtomInfoType *I,PyObject *list)
   if(ok) ok = PConvPyIntToChar(PyList_GetItem(list,30),(char*)&I->protekted); 
   if(ok) ok = PConvPyIntToChar(PyList_GetItem(list,31),(char*)&I->protons); 
   if(ok) ok = PConvPyIntToInt(PyList_GetItem(list,32),&I->sculpt_id); 
-  if(ok) ok = PConvPyIntToInt(PyList_GetItem(list,33),&I->stereo); 
+  if(ok) ok = PConvPyIntToChar(PyList_GetItem(list,33),(char*)&I->stereo); 
   if(ok&&(ll>34)) ok = PConvPyIntToInt(PyList_GetItem(list,34),&I->discrete_state);  
   if(ok&&(ll>35)) ok = PConvPyFloatToFloat(PyList_GetItem(list,35),&I->bohr_radius); 
   if(ok&&(ll>36)) ok = PConvPyIntToInt(PyList_GetItem(list,36),&I->rank); 
@@ -1572,8 +1572,7 @@ int AtomInfoCompareIgnoreHet(PyMOLGlobals *G,AtomInfoType *at1,AtomInfoType *at2
 
   wc=WordCompare(G,at1->segi,at2->segi,true);
   if(!wc) {
-	 if(at1->chain[0]==at2->chain[0]) {
-      /*      if(at1->hetatm==at2->hetatm) {*/
+    if(at1->chain[0]==at2->chain[0]) {
       if(at1->resv==at2->resv) {
         wc=WordCompare(G,at1->resi,at2->resi,true);
         if(!wc) {
@@ -1637,12 +1636,6 @@ int AtomInfoCompareIgnoreHet(PyMOLGlobals *G,AtomInfoType *at1,AtomInfoType *at2
       } else {
         result=1;
       }
-      /*
-        } else if(at2->hetatm) {
-        result=-1;
-        } else {
-        result=1;
-        }*/
     } else if((!at2->chain[0])||(at1->chain[0]&&((at1->chain[0]<at2->chain[0])))) {
       result=-1;
     } else {
