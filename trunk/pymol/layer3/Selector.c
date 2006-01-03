@@ -10165,7 +10165,6 @@ DistSet *SelectorGetDihedralSet(PyMOLGlobals *G, DistSet *ds,
         ObjectMolecule *obj1,*obj2,*obj3,*obj4;
         
         int idx1,idx2,idx3,idx4;
-        int a_keeper = true;
         float angle;
         float *v1,*v2,*v3,*v4, *vv0;
 
@@ -10214,7 +10213,8 @@ DistSet *SelectorGetDihedralSet(PyMOLGlobals *G, DistSet *ds,
                         
                         bonded12 = ObjectMoleculeAreAtomsBonded2(obj1,at1,obj2,at2); 
 
-                        for(i3=0;i3<n3;i3++) {
+                        if(!mode || ((mode==1)&&bonded12)) 
+                         for(i3=0;i3<n3;i3++) {
                           a3 = list3[i3];
                           at3=I->Table[a3].atom;
                           obj3=I->Obj[I->Table[a3].model];
@@ -10237,7 +10237,8 @@ DistSet *SelectorGetDihedralSet(PyMOLGlobals *G, DistSet *ds,
                               if(idx3>=0) {
                                 
                                 bonded23 = ObjectMoleculeAreAtomsBonded2(obj2,at2,obj3,at3); 
-                                for(i4=0;i4<n4;i4++) {
+                                if(!mode || ((mode==1)&&bonded23)) 
+                                 for(i4=0;i4<n4;i4++) {
                                   a4 = list4[i4];
                           
                                   if((a1!=a2) && (a1!=a3) && (a1!=a4) && (a2!=a3) && (a2!=a4) && (a3!=a4)) {
@@ -10264,10 +10265,9 @@ DistSet *SelectorGetDihedralSet(PyMOLGlobals *G, DistSet *ds,
                                   
                                           if(idx4>=0) {
                                     
-                                            /* check here to see if atoms are bonded a1-a2-a3, then set a_keeper */
                                             bonded34 = ObjectMoleculeAreAtomsBonded2(obj3,at3,obj4,at4); 
                                     
-                                            if(a_keeper) { /* store the 3 coordinates */
+                                            if(!mode || ((mode==1)&&bonded34)) {  /* store the 3 coordinates */
                                           
                                               v1 = cs1->Coord+3*idx1;
                                               v2 = cs2->Coord+3*idx2;
