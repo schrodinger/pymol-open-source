@@ -9,7 +9,10 @@
    OVLexicon -- a collection of strings and their identifiers
 */
 
+#ifndef OVLexicon_DEFINED
 typedef struct _OVLexicon OVLexicon;
+#define OVLexicon_DEFINED
+#endif
 
 OVLexicon *OVLexicon_New(OVHeap *heap);
 void OVLexicon_Del(OVLexicon *I);

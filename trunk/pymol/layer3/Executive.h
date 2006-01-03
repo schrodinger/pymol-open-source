@@ -263,7 +263,8 @@ int ExecutiveSetObjectMatrix(PyMOLGlobals *G,char *name,int state,double *matrix
 
 int ExecutiveSetGeometry(PyMOLGlobals *G,char *s1,int geom,int valence);
 int ExecutiveSculptIterateAll(PyMOLGlobals *G);
-int ExecutiveSmooth(PyMOLGlobals *G,char *name,int cycles,int window,int first, int last, int ends,int quiet);
+int ExecutiveSmooth(PyMOLGlobals *G,char *name,int cycles,int window,
+                    int first, int last, int ends,int quiet);
 int ExecutiveSculptDeactivate(PyMOLGlobals *G,char *name);
 int ExecutiveSculptActivate(PyMOLGlobals *G,char *name,int state);
 float ExecutiveSculptIterate(PyMOLGlobals *G,char *name,int state,int n_cycle);

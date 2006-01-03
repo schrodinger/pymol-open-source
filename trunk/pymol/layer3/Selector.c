@@ -9561,13 +9561,17 @@ DistSet *SelectorGetDistSet(PyMOLGlobals *G,DistSet *ds,
   int *zero=NULL,*scratch=NULL,*coverage=NULL;
   HBondCriteria hbcRec,*hbc;
   int exclusion = 0;
-  
+  int bonds_only = 0;
+
   switch(mode) {
   case 1:
-    exclusion = SettingGetGlobal_i(G,cSetting_distance_exclusion);
+    bonds_only = 1;
     break;
   case 2:
     exclusion = SettingGetGlobal_i(G,cSetting_h_bond_exclusion);
+    break;
+  case 3:
+    exclusion = SettingGetGlobal_i(G,cSetting_distance_exclusion);
     break;
   }
 
@@ -9597,7 +9601,7 @@ DistSet *SelectorGetDistSet(PyMOLGlobals *G,DistSet *ds,
       coverage[a]++;
   }
 
-  if((mode==1)||(mode==2)) { /* fill in all the neighbor tables */
+  if((mode==1)||(mode==2)||(mode==3)) { /* fill in all the neighbor tables */
     lastObj=NULL;
     for(a=cNDummyAtoms;a<I->NAtom;a++) {
       at=I->Table[a].atom;
@@ -9681,6 +9685,10 @@ DistSet *SelectorGetDistSet(PyMOLGlobals *G,DistSet *ds,
                 a_keeper = !SelectorCheckNeighbors(G,exclusion,
                                                    obj1,at1,at2,
                                                    zero,scratch);
+              } else if(bonds_only) {
+                a_keeper = SelectorCheckNeighbors(G,1,
+                                                  obj1,at1,at2,
+                                                  zero,scratch);
               }
               if(a_keeper&&(mode==2)) {
                 if(ai1->hb_donor&&ai2->hb_acceptor) {
