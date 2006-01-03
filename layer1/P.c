@@ -323,7 +323,7 @@ void PDumpException()
   PyObject_CallMethod(P_traceback,"print_exc","");
 }
 
-int PAlterAtomState(float *v,char *expr,int read_only,
+int PAlterAtomState(PyMOLGlobals *G,float *v,char *expr,int read_only,
                     AtomInfoType *at,char *model,int index,
                     PyObject *space) 
      /* assumes Blocked python interpreter*/
@@ -424,7 +424,8 @@ int PAlterAtomState(float *v,char *expr,int read_only,
   return result;
 }
 
-int PAlterAtom(AtomInfoType *at,char *expr,int read_only,
+int PAlterAtom(PyMOLGlobals *G,
+               AtomInfoType *at,char *expr,int read_only,
                char *model,int index,PyObject *space)
 {
   /* assumes Blocked python interpreter*/
@@ -773,7 +774,7 @@ int PAlterAtom(AtomInfoType *at,char *expr,int read_only,
   return(result);
 }
 
-int PLabelAtom(AtomInfoType *at,char *expr,int index)
+int PLabelAtom(PyMOLGlobals *G, AtomInfoType *at,char *expr,int index)
 {
   PyObject *dict;
   int result;

@@ -2254,6 +2254,7 @@ void PyMOL_Start(CPyMOL *I)
   PyMOLGlobals *G=I->G;
 
   G->Context = OVContext_New();
+  G->Lexicon = OVLexicon_New(G->Context->heap);
 
   if(OVreturn_IS_ERROR(PyMOL_InitAPI(I))) {
     printf("ERROR: PyMOL internal C API initialization failed.\n");
@@ -2388,9 +2389,9 @@ void PyMOL_Stop(CPyMOL *I)
   WordFree(G);
   FeedbackFree(G);
   MemoryCacheDone(G);
-
+  
   PyMOL_PurgeAPI(I);
-
+  OVLexicon_Del(G->Lexicon);
   OVContext_Del(G->Context);   
 }
 

@@ -53,6 +53,11 @@ typedef struct _CType CType;
 typedef struct _CMain CMain;
 typedef struct _CGO CGO;
 
+#ifndef OVLexicon_DEFINED
+typedef struct _OVLexicon OVLexicon;
+#define OVLexicon_DEFINED
+#endif
+
 #ifndef CPyMOLOptions_DEFINED
 typedef struct _CPyMOLOptions CPyMOLOptions;
 #define CPyMOLOptions_DEFINED
@@ -107,6 +112,8 @@ struct _PyMOLGlobals {
   CMain     *Main; /* host/platform-specific "main" code */
   CPyMOLOptions *Option; 
   CPyMOL    *PyMOL; /* the instance */
+  OVLexicon *Lexicon; /* lexicon for data (e.g. label) strings */
+
   /* global variables */
 
   int HaveGUI; /* do we have an OpenGL graphics window or are we

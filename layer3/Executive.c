@@ -3019,8 +3019,11 @@ int ExecutiveSetCrystal(PyMOLGlobals *G,char *sele,float a,float b,float c,
   return(ok);
 }
 
-int ExecutiveSmooth(PyMOLGlobals *G,char *name,int cycles,int window,int first, int last, int ends, int quiet)
+int ExecutiveSmooth(PyMOLGlobals *G,char *name,int cycles,
+                    int window,int first, int last, int ends,
+                    int quiet)
 {
+
   int sele = -1;
   ObjectMoleculeOpRec op;
   int state;
@@ -3037,6 +3040,7 @@ int ExecutiveSmooth(PyMOLGlobals *G,char *name,int cycles,int window,int first, 
   int end_skip=0;
   float *v0,*v1;
   float sum[3];
+  int loop = false;
   /*  WordType all = "_all";*/
 
   PRINTFD(G,FB_Executive)
@@ -3045,11 +3049,10 @@ int ExecutiveSmooth(PyMOLGlobals *G,char *name,int cycles,int window,int first, 
 
   sele=SelectorIndexByName(G,name);
 
-
-
   if(sele>=0) {
+    int max_state = ExecutiveCountStates(G,name)-1;
     if(last<0) 
-      last = ExecutiveCountStates(G,name)-1;
+      last = max_state;
     if(first<0)
       first = 0;
     if(last<first) {
@@ -3057,6 +3060,9 @@ int ExecutiveSmooth(PyMOLGlobals *G,char *name,int cycles,int window,int first, 
       last=first;
       first=state;
     }
+    if(last>max_state)
+      last = max_state;
+
     n_state=last-first+1;
 
     backward=window/2;
@@ -3074,6 +3080,10 @@ int ExecutiveSmooth(PyMOLGlobals *G,char *name,int cycles,int window,int first, 
       break;
     case 2:
       end_skip = backward;
+      break;
+    case 3: /* cyclic averaging */
+      end_skip = 0;
+      loop = true;
       break;
     default:
       end_skip = 0;
@@ -3148,11 +3158,20 @@ int ExecutiveSmooth(PyMOLGlobals *G,char *name,int cycles,int window,int first, 
               cnt = 0;
               for(d=-backward;d<=forward;d++) {
                 st = b + offset + d;
-                if(st<0) {
-                  st=0;
-                } else if(st>=n_state) {
-                  st=n_state-1;
+                if(loop) {
+                  if(st<0) {
+                    st=n_state+st;
+                  } else if(st>=n_state) {
+                    st=st-n_state;
+                  }
+                } else {
+                  if(st<0) {
+                    st=0;
+                  } else if(st>=n_state) {
+                    st=n_state-1;
+                  }
                 }
+
                 /*if(c==0) printf("averaging from slot %d\n",st);*/
                 cnt+=flag0[(n_atom*st)+c];
                 v0 = coord0 + 3*(n_atom*st+c);
@@ -6156,7 +6175,7 @@ int ExecutiveIterateList(PyMOLGlobals *G,char *name,
         if(ok) ok = PConvPyIntToInt(PyList_GetItem(entry,0),&index);
         if(ok) ok = PConvPyStrToStrPtr(PyList_GetItem(entry,1),&expr);
         if(ok) ok = ((index<=n_atom) && (index>0));
-        if(ok) ok = PAlterAtom(obj->AtomInfo+index-1,expr,read_only,name,index-1,space);
+        if(ok) ok = PAlterAtom(G,obj->AtomInfo+index-1,expr,read_only,name,index-1,space);
         if(ok) n_eval++;
       }
     }
