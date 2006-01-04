@@ -1665,7 +1665,7 @@ void EditorPrepareDrag(PyMOLGlobals *G,ObjectMolecule *obj,
         if(i1>=0) {
           ObjectMoleculeGetAtomTxfVertex(obj,state,i1,I->DragBase);
           I->DragHaveBase = true;
-          printf("base %s\n",name);
+          /*printf("base %s\n",name);*/
         }
       }
 

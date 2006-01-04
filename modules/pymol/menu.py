@@ -39,7 +39,6 @@ def mol_motion(s):
 def rep_action(action,s) :
     return [
         [ 1, 'lines'      , 'cmd.'+action+'("lines"     ,"'+s+'")' ],
-        [ 1, 'nonbonded'  , 'cmd.'+action+'("nonbonded" ,"'+s+'")' ],
         [ 1, 'sticks'     , 'cmd.'+action+'("sticks"    ,"'+s+'")' ],
         [ 1, 'ribbon'     , 'cmd.'+action+'("ribbon"    ,"'+s+'")' ],
         [ 1, 'cartoon'    , 'cmd.'+action+'("cartoon"   ,"'+s+'")' ],
@@ -47,6 +46,7 @@ def rep_action(action,s) :
         [ 1, 'label'      , 'cmd.'+action+'("labels"    ,"'+s+'")' ],
         [ 1, 'cell'       , 'cmd.'+action+'("cell"      ,"'+s+'")' ],
         [ 0, ''           , ''                               ],
+        [ 1, 'nonbonded'  , 'cmd.'+action+'("nonbonded" ,"'+s+'")' ],
         [ 1, 'dots'       , 'cmd.'+action+'("dots"      ,"'+s+'")' ],
         [ 1, 'spheres'    , 'cmd.'+action+'("spheres"   ,"'+s+'")' ],
         [ 1, 'nb_spheres' , 'cmd.'+action+'("nb_spheres","'+s+'")' ],
@@ -1144,7 +1144,7 @@ def all_option(s):
         [ 1, 'orient'           ,'cmd.orient("'+s+'",animate=-1)'            ],
         [ 1, 'center'           ,'cmd.center("'+s+'",animate=-1)'            ],
         [ 1, 'origin'           ,'cmd.origin("'+s+'")'            ],
-        [ 1, 'indicate'        ,'cmd.indicate("'+s+'")'            ],        
+        [ 1, 'select'        ,'cmd.select("'+s+'")'            ],        
         [ 0, ''             , ''                      ],
         [ 1, 'label'      , mol_labels(s) ],
         [ 0, '', '' ],
@@ -1234,7 +1234,7 @@ def pick_option(title,s,object=0):
         [ 1, 'orient'           ,'cmd.orient("'+s+'",animate=-1)'            ],
         [ 1, 'center'           ,'cmd.center("'+s+'",animate=-1)'            ],
         [ 1, 'origin'           ,'cmd.origin("'+s+'")'            ],
-        [ 1, 'indicate'        ,'cmd.indicate("'+s+'")'            ],
+        [ 1, 'select'        ,'cmd.select("'+s+'")'            ],
         [ 0, ''               ,''                             ],        
         [ 1, 'drag'             ,'cmd.drag("'+s+'")'            ],
         [ 1, 'masking'        , masking(s)         ],
@@ -1312,7 +1312,7 @@ def seq_option(title,s,object=0):
         [ 1, 'orient'           ,'cmd.orient("'+s+'",animate=-1)'            ],
         [ 1, 'center'           ,'cmd.center("'+s+'",animate=-1)'            ],
         [ 1, 'origin'           ,'cmd.origin("'+s+'")'            ],
-        [ 1, 'indicate'        ,'cmd.indicate("'+s+'")'            ],
+        [ 1, 'select'        ,'cmd.select("'+s+'")'            ],
         [ 0, ''               ,''                             ],        
         [ 1, 'drag'             ,'cmd.drag("'+s+'")'            ],
         ]
