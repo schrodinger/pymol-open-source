@@ -32,7 +32,7 @@ Z* -------------------------------------------------------------------
 typedef struct RepLabel {
   Rep R;
   float *V;
-  char *L;
+  int *L;
   int N;
   int OutlineColor;
 } RepLabel;
@@ -60,19 +60,22 @@ static void RepLabelRender(RepLabel *I,RenderInfo *info)
   PyMOLGlobals *G=I->R.G;
   float *v=I->V;
   int c=I->N;
-  char *l=I->L;
+  int *l=I->L;
   int font_id = SettingGet_i(G,I->R.cs->Setting,I->R.obj->Setting,cSetting_label_font_id);
   float font_size = SettingGet_f(G,I->R.cs->Setting,I->R.obj->Setting,cSetting_label_size);
 
   if(ray) {
     if(c) {
+      char *st;
       TextSetOutlineColor(G,I->OutlineColor);
       while(c--) {
         if(*l) {
+          st = OVLexicon_FetchCString(G->Lexicon,*l);
           TextSetPosNColor(G,v+3,v);
-          l = TextRenderRay(G,ray,font_id,l,font_size,v+6);
+          TextRenderRay(G,ray,font_id,st,font_size,v+6);
         }
         v+=9;
+        l++;
       }
     }
   } else if(G->HaveGUI && G->ValidContext) {
@@ -80,6 +83,7 @@ static void RepLabelRender(RepLabel *I,RenderInfo *info)
       Pickable *p = I->R.P;
       int i;
       if(c) {
+        char *st;
         int float_text = (int)SettingGet(G,cSetting_float_labels);
         if(float_text)
           glDisable(GL_DEPTH_TEST);	 
@@ -97,8 +101,10 @@ static void RepLabelRender(RepLabel *I,RenderInfo *info)
               (*pick)[i].src = *p; /* copy object and atom info */
               (*pick)[i].context = I->R.context;
             }
-            l = TextRenderOpenGL(G,info,font_id,l,font_size,v+6);
+            st = OVLexicon_FetchCString(G->Lexicon,*l);
+            TextRenderOpenGL(G,info,font_id,st,font_size,v+6);
           }
+          l++;
           v+=9;
         }
         if(float_text)
@@ -107,6 +113,7 @@ static void RepLabelRender(RepLabel *I,RenderInfo *info)
       }
     } else {
       if(c) {
+        char *st;
         int float_text = (int)SettingGet(G,cSetting_float_labels);
         if(float_text)
           glDisable(GL_DEPTH_TEST);	 
@@ -115,8 +122,10 @@ static void RepLabelRender(RepLabel *I,RenderInfo *info)
         while(c--) {
           if(*l) {
             TextSetPosNColor(G,v+3,v);
-            l = TextRenderOpenGL(G,info,font_id,l,font_size,v+6);
+            st = OVLexicon_FetchCString(G->Lexicon,*l);
+            TextRenderOpenGL(G,info,font_id,st,font_size,v+6);
           }
+          l++;
           v+=9;
         }
         glEnable(GL_LIGHTING);
@@ -134,7 +143,7 @@ Rep *RepLabelNew(CoordSet *cs,int state)
   int a,a1,vFlag,c1;
   float *v,*v0,*vc;
   float *lab_pos;
-  char *p,*l;
+  int *l;
   int label_color;
   LabPosType *lp = NULL;
   Pickable *rp = NULL;
@@ -170,7 +179,7 @@ Rep *RepLabelNew(CoordSet *cs,int state)
 
   /* raytracing primitives */
 
-  I->L=Alloc(char,sizeof(LabelType)*cs->NIndex);
+  I->L=Alloc(int,cs->NIndex);
   ErrChkPtr(G,I->L);
   I->V=(float*)mmalloc(sizeof(float)*cs->NIndex*9);
   ErrChkPtr(G,I->V);
@@ -195,7 +204,7 @@ Rep *RepLabelNew(CoordSet *cs,int state)
     if(cs->LabPos) {
       lp = cs->LabPos + a;
     }
-    if(ai->visRep[cRepLabel]&&(ai->label[0])) {
+    if(ai->visRep[cRepLabel]&&(ai->label)) {
       I->N++;
       if(label_color>=0) 
         c1 = label_color;
@@ -229,23 +238,20 @@ Rep *RepLabelNew(CoordSet *cs,int state)
         rp->bond = cPickableLabel; /* label indicator */
         rp++;
       }
-      p=ai->label;
-      while(*p) 
-        *(l++)=*(p++);
-      *(l++)=0;
+      *(l++) = ai->label;
     }
   }
 
   if(I->N) {
     I->V = ReallocForSure(I->V,float,(v-I->V));
-    I->L = ReallocForSure(I->L,char,(l-I->L));      
+    I->L = ReallocForSure(I->L,int,(l-I->L));      
     if(rp) {
       I->R.P = ReallocForSure(I->R.P,Pickable,(rp-I->R.P));
       I->R.P[0].index = I->N;  /* unnec? */
     }
   } else {
     I->V=ReallocForSure(I->V,float,1);
-    I->L=ReallocForSure(I->L,char,1);
+    I->L=ReallocForSure(I->L,int,1);
     if(rp) {
       FreeP(I->R.P);
     }

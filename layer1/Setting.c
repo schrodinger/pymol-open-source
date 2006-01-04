@@ -2700,7 +2700,7 @@ void SettingInitGlobal(PyMOLGlobals *G,int alloc,int reset_gui)
   set_i(I,cSetting_ray_trace_mode,0);
   set_f(I,cSetting_ray_trace_gain,0.12F);
   set_b(I,cSetting_selection_visible_only, 0);
-  set_3f(I,cSetting_label_position, 0.0F, 0.0F, 0.75F);
+  set_3f(I,cSetting_label_position, 0.0F, 0.0F, 1.75F);
   set_f(I,cSetting_ray_trace_depth_factor,0.1F);
   set_f(I,cSetting_ray_trace_slope_factor,0.6F);
   set_f(I,cSetting_ray_trace_disco_factor,0.05F);

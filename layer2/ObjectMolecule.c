@@ -1478,10 +1478,17 @@ CoordSet *ObjectMoleculeTOPStr2CoordSet(PyMOLGlobals *G,char *buffer,
 
     b=0;
     for(a=0;a<nAtom;a++) {
+      OrthoLineType temp;
       p=ncopy(cc,p,4);
       ai=atInfo+a;
-      if(!sscanf(cc,"%s",ai->textType))
+      if(sscanf(cc,"%s",temp)!=1)
         ok=false;
+      else {
+        OVreturn_word ret = OVLexicon_GetFromCString(G->Lexicon,temp);
+        if(OVreturn_IS_OK(ret)) {
+          ai->textType = ret.word;
+        }
+      }
       if((++b)==20) {
         b=0;
         p=nextline_top(p);
@@ -4423,6 +4430,7 @@ int ObjectMoleculeRemoveBonds(ObjectMolecule *I,int sele0,int sele1)
 /*========================================================================*/
 void ObjectMoleculePurge(ObjectMolecule *I)
 {
+  PyMOLGlobals *G = I->Obj.G;
   int a,a0,a1;
   int *oldToNew = NULL;
   int offset=0;
@@ -4433,10 +4441,10 @@ void ObjectMoleculePurge(ObjectMolecule *I)
     " ObjMolPurge-Debug: step 1, delete object selection\n"
     ENDFD;
 
-  SelectorDelete(I->Obj.G,I->Obj.Name); /* remove the object selection and free up any selection entries*/
+  SelectorDelete(G,I->Obj.Name); /* remove the object selection and free up any selection entries*/
   /* note that we don't delete atom selection members -- those may be needed in the new object */
 
-  PRINTFD(I->Obj.G,FB_ObjectMolecule)
+  PRINTFD(G,FB_ObjectMolecule)
     " ObjMolPurge-Debug: step 2, purge coordinate sets\n"
     ENDFD;
 
@@ -4455,6 +4463,7 @@ void ObjectMoleculePurge(ObjectMolecule *I)
   ai1=I->AtomInfo;
   for(a=0;a<I->NAtom;a++) {
     if(ai0->deleteFlag) {
+      AtomInfoPurge(G,ai0);
       offset--;
       ai0++;
       oldToNew[a]=-1;
@@ -5546,15 +5555,20 @@ static CoordSet *ObjectMoleculeChemPyModel2CoordSet(PyMOLGlobals *G,PyObject *mo
         }
 
         if(ok) {
+          ai->textType = 0;
           if(PTruthCallStr(atom,"has","text_type")) { 
             tmp = PyObject_GetAttrString(atom,"text_type");
-            if (tmp)
-              ok = PConvPyObjectToStrMaxClean(tmp,ai->textType,sizeof(TextType)-1);
+            if (tmp) {
+              OrthoLineType temp;
+              ok = PConvPyObjectToStrMaxClean(tmp,temp,sizeof(OrthoLineType)-1);              
+              OVreturn_word ret = OVLexicon_GetFromCString(G->Lexicon,temp);
+              if(OVreturn_IS_OK(ret)) {
+                ai->textType = ret.word;
+              }
+            }
             if(!ok) 
               ErrMessage(G,"ObjectMoleculeChemPyModel2CoordSet","can't read text_type");
             Py_XDECREF(tmp);
-          } else {
-            ai->textType[0]=0;
           }
         }
 
@@ -6540,11 +6554,12 @@ static CoordSet *ObjectMoleculeMOL2Str2CoordSet(PyMOLGlobals *G,char *buffer,
               ok=ErrMessage(G,"ReadMOL2File","bad z coordinate");
           }
           if(ok) {
-            p=ParseWordCopy(cc,p,cTextTypeLen);
-            if(sscanf(cc,"%s",ai->textType)!=1)
+            OrthoLineType temp;
+            p=ParseWordCopy(cc,p,OrthoLineLength-1);
+            if(sscanf(cc,"%s",temp)!=1)
               ok=ErrMessage(G,"ReadMOL2File","bad atom type");
             else { /* convert atom type to elem symbol */
-              char *tt = ai->textType;
+              char *tt = temp;
               char *el = ai->elem;
               int elc = 0;
               while(*tt&&((*tt)!='.')) {
@@ -6556,6 +6571,14 @@ static CoordSet *ObjectMoleculeMOL2Str2CoordSet(PyMOLGlobals *G,char *buffer,
               *el=0;
               if(el[2])
                 el[0] = 0;
+
+              ai->textType = 0;
+              if(temp[0]) {
+                OVreturn_word result = OVLexicon_GetFromCString(G->Lexicon,temp);
+                if(OVreturn_IS_OK(result)) {
+                  ai->textType = result.word;
+                }
+              }
             }
           }
           if(ok) {
@@ -7267,7 +7290,9 @@ void ObjectMoleculeMerge(ObjectMolecule *I,AtomInfoType *ai,
       cs->AtmToIdx[cs->IdxToAtm[a]]=a;
   }
   
-  VLAFreeP(ai);
+  VLAFreeP(ai); /* note that we're trusting AtomInfoCombine to have 
+                   already purged all atom-dependent storage (such as strings) */
+
   AtomInfoFreeSortedIndexes(I->Obj.G,index,outdex);
   
   /* now find and integrate and any new bonds */
@@ -8383,11 +8408,14 @@ void ObjectMoleculeSeleOp(ObjectMolecule *I,int sele,ObjectMoleculeOpRec *op)
               case OMOP_LABL:
                 if (ok) {
                   if(!op->s1[0]) {
-                    ai->label[0]=0;
+                    if(ai->label) {
+                      OVLexicon_DecRef(I->Obj.G->Lexicon,ai->label);
+                      ai->label=0;
+                    }
                     op->i1++;
                     ai->visRep[cRepLabel]=false;
                     hit_flag=true;
-                  }  else {
+                  } else {
                     if(PLabelAtom(I->Obj.G,&I->AtomInfo[a],op->s1,a)) {
                       op->i1++;
                       ai->visRep[cRepLabel]=true;
@@ -9648,7 +9676,16 @@ void ObjectMoleculeFree(ObjectMolecule *I)
   VLAFreeP(I->DiscreteAtmToIdx);
   VLAFreeP(I->DiscreteCSet);
   VLAFreeP(I->CSet);
-  VLAFreeP(I->AtomInfo);
+  {
+    int nAtom = I->NAtom;
+    AtomInfoType *ai = I->AtomInfo;
+    
+    for(a=0;a<nAtom;a++) {
+      AtomInfoPurge(I->Obj.G,ai);
+      ai++;
+    }
+    VLAFreeP(I->AtomInfo);
+  }
   VLAFreeP(I->Bond);
   if(I->UnitCellCGO) 
     CGOFree(I->UnitCellCGO);

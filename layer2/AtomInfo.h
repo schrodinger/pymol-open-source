@@ -112,8 +112,10 @@ typedef char SegIdent[cSegiLen+1];
 typedef char ResIdent[cResiLen+1];
 typedef char ResName[cResnLen+1];
 typedef char AtomName[cAtomNameLen+1];
+#if 0
 typedef char TextType[cTextTypeLen+1];
 typedef char LabelType[cLabelTypeLen+1];
+#endif
 
 #define cAtomInfoNoType -9999
 
@@ -159,13 +161,14 @@ typedef struct AtomInfoType {
   ResName resn;
   AtomName name;
   AtomName elem;
-  TextType textType;
-  LabelType label;
+  int textType;
+  int label;
   SSType ssType; /* blank or 'L' = turn/loop, 'H' = helix, 'S' = beta-strand/sheet */
 } AtomInfoType;
 
 void AtomInfoFree(PyMOLGlobals *G);
 int AtomInfoInit(PyMOLGlobals *G);
+void AtomInfoPurge(PyMOLGlobals *G,AtomInfoType *ai);
 
 
 int *AtomInfoGetSortedIndex(PyMOLGlobals *G,AtomInfoType *rec,int n,int **outdex);

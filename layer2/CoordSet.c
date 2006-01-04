@@ -802,8 +802,14 @@ PyObject *CoordSetAtomToChemPyAtom(PyMOLGlobals *G,AtomInfoType *ai,float *v,int
     PConvIntToPyObjAttr(atom,"formal_charge",ai->formalCharge);
     if(ai->customType!=-9999)
       PConvIntToPyObjAttr(atom,"numeric_type",ai->customType);
-    if(ai->textType[0])
-      PConvStringToPyObjAttr(atom,"text_type",ai->textType);      
+    if(ai->textType) {
+      char null_st[1] = "";
+      char *st = null_st;
+      
+      if(ai->textType) st = OVLexicon_FetchCString(G->Lexicon,ai->textType);
+      PConvStringToPyObjAttr(atom,"text_type",st);
+    }
+
     PConvIntToPyObjAttr(atom,"hetatm",ai->hetatm);      
     PConvIntToPyObjAttr(atom,"flags",ai->flags);      
     PConvIntToPyObjAttr(atom,"id",ai->id);  /* not necc. unique */

@@ -2391,6 +2391,7 @@ void PyMOL_Stop(CPyMOL *I)
   MemoryCacheDone(G);
   
   PyMOL_PurgeAPI(I);
+  /*    printf("%d \n", OVLexicon_GetNActive(G->Lexicon));*/
   OVLexicon_Del(G->Lexicon);
   OVContext_Del(G->Context);   
 }

@@ -25,6 +25,7 @@ Z* -------------------------------------------------------------------
 #include"Util.h"
 #include"Color.h"
 #include"PConv.h"
+#include"Ortho.h"
 
 struct _CAtomInfo {
   int NColor,CColor,DColor,HColor,OColor,SColor;
@@ -620,8 +621,19 @@ PyObject *AtomInfoAsPyList(PyMOLGlobals *G,AtomInfoType *I)
   PyList_SetItem(result, 5,PyString_FromString(I->resn));
   PyList_SetItem(result, 6,PyString_FromString(I->name));
   PyList_SetItem(result, 7,PyString_FromString(I->elem));
-  PyList_SetItem(result, 8,PyString_FromString(I->textType));
-  PyList_SetItem(result, 9,PyString_FromString(I->label));
+
+  {
+    char null_st[1] = "";
+    char *st = null_st;
+
+    if(I->textType) st = OVLexicon_FetchCString(G->Lexicon,I->textType);
+    PyList_SetItem(result, 8,PyString_FromString(st));
+
+    st = null_st;
+    if(I->label) st = OVLexicon_FetchCString(G->Lexicon,I->label);
+    PyList_SetItem(result, 9,PyString_FromString(st));
+  }
+
   PyList_SetItem(result,10,PyString_FromString(I->ssType));
   PyList_SetItem(result,11,PyInt_FromLong((char)I->hydrogen));  
   PyList_SetItem(result,12,PyInt_FromLong(I->customType));
@@ -674,8 +686,28 @@ int AtomInfoFromPyList(PyMOLGlobals *G,AtomInfoType *I,PyObject *list)
   if(ok) ok = PConvPyStrToStr(PyList_GetItem(list, 5),I->resn,sizeof(ResName));  
   if(ok) ok = PConvPyStrToStr(PyList_GetItem(list, 6),I->name,sizeof(AtomName));  
   if(ok) ok = PConvPyStrToStr(PyList_GetItem(list, 7),I->elem,sizeof(AtomName));  
-  if(ok) ok = PConvPyStrToStr(PyList_GetItem(list, 8),I->textType,sizeof(TextType));  
-  if(ok) ok = PConvPyStrToStr(PyList_GetItem(list, 9),I->label,sizeof(LabelType));   
+  if(ok) {
+    OrthoLineType temp;
+    PConvPyStrToStr(PyList_GetItem(list, 8),temp,sizeof(OrthoLineType));
+    I->textType = 0;
+    if(temp[0]) {
+      OVreturn_word result = OVLexicon_GetFromCString(G->Lexicon,temp);
+      if(OVreturn_IS_OK(result)) {
+        I->textType = result.word;
+      }
+    }
+  }
+  if(ok) {
+    OrthoLineType temp;
+    PConvPyStrToStr(PyList_GetItem(list, 9),temp,sizeof(OrthoLineType));
+    I->textType = 0;
+    if(temp[0]) {
+      OVreturn_word result = OVLexicon_GetFromCString(G->Lexicon,temp);
+      if(OVreturn_IS_OK(result)) {
+        I->label = result.word;
+      }
+    }
+  }
   if(ok) ok = PConvPyStrToStr(PyList_GetItem(list,10),I->ssType,sizeof(SSType));   
   if(ok) ok = PConvPyIntToChar(PyList_GetItem(list,11),(char*)&I->hydrogen);   
   if(ok) ok = PConvPyIntToInt(PyList_GetItem(list,12),&I->customType);   
@@ -717,10 +749,31 @@ return(ok);
 #endif
 }
 
+void AtomInfoPurge(PyMOLGlobals *G,AtomInfoType *ai)
+{
+  if(ai->textType) {
+    OVLexicon_DecRef(G->Lexicon,ai->textType);
+  }
+  if(ai->label) {
+    /*    printf("purging %d [%s]\n", OVLexicon_GetNActive(G->Lexicon),
+          OVLexicon_FetchCString(G->Lexicon,ai->label));*/
+    OVLexicon_DecRef(G->Lexicon,ai->label);
+  }
+}
+
 /*========================================================================*/
 void AtomInfoCombine(PyMOLGlobals *G,AtomInfoType *dst,AtomInfoType *src,int mask)
 {
-  if(mask&cAIC_tt) strcpy(dst->textType,src->textType); /* use the new types */
+  if(mask&cAIC_tt) {
+    if(dst->textType) {
+      OVLexicon_DecRef(G->Lexicon,dst->textType);
+    }
+    dst->textType = src->textType;
+  } else {
+    if(src->textType) {
+      OVLexicon_DecRef(G->Lexicon,src->textType);
+    }
+  }
   if(mask&cAIC_ct) dst->customType = src->customType;
   if(mask&cAIC_pc) dst->partialCharge = src->partialCharge;
   if(mask&cAIC_fc) dst->formalCharge = src->formalCharge;
@@ -735,7 +788,9 @@ void AtomInfoCombine(PyMOLGlobals *G,AtomInfoType *dst,AtomInfoType *src,int mas
   /* keep all existing names, identifiers, etc. */
   /* also keep all existing selections,
      colors, masks, and visible representations*/
-
+  if(src->label) { /* destroy src label if one exists */
+      OVLexicon_DecRef(G->Lexicon,src->label);
+  }
 }
 /*========================================================================*/
 void AtomInfoUniquefyNames(PyMOLGlobals *G,AtomInfoType *atInfo0,int n0,AtomInfoType *atInfo1,int n1)
