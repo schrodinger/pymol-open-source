@@ -357,7 +357,18 @@ int PAlterAtomState(PyMOLGlobals *G,float *v,char *expr,int read_only,
     PConvStringToPyDictItem(dict,"segi",at->segi);
     PConvStringToPyDictItem(dict,"elem",at->elem);
     PConvStringToPyDictItem(dict,"ss",at->ssType);
-    PConvStringToPyDictItem(dict,"text_type",at->textType);
+
+    {
+      char null_st[1] = "";
+      char *st = null_st;
+      
+      if(at->textType) st = OVLexicon_FetchCString(G->Lexicon,at->textType);
+      PConvStringToPyDictItem(dict,"text_type",st);
+      
+      st = null_st;
+      if(at->label) st = OVLexicon_FetchCString(G->Lexicon,at->label);
+      PConvStringToPyDictItem(dict,"label",st);
+    }
     PConvIntToPyDictItem(dict,"numeric_type",at->customType);
     PConvFloatToPyDictItem(dict,"q",at->q);
     PConvFloatToPyDictItem(dict,"b",at->b);
@@ -366,7 +377,6 @@ int PAlterAtomState(PyMOLGlobals *G,float *v,char *expr,int read_only,
     PConvFloatToPyDictItem(dict,"partial_charge",at->partialCharge);
     PConvIntToPyDictItem(dict,"formal_charge",at->formalCharge);
     PConvIntToPyDictItem(dict,"cartoon",at->cartoon);
-    PConvStringToPyDictItem(dict,"label",at->label);
     PConvIntToPyDictItem(dict,"color",at->color);
     PConvIntToPyDictItem(dict,"ID",at->id);
     PConvIntToPyDictItem(dict,"rank",at->rank);
@@ -448,7 +458,6 @@ int PAlterAtom(PyMOLGlobals *G,
   PyObject *flags_id1,*flags_id2=NULL;
   int flags;
   PyObject *segi_id1,*segi_id2=NULL;
-  TextType textType;
   PyObject *text_type_id1,*text_type_id2=NULL;
   SSType ssType;
   PyObject *ss_id1,*ss_id2=NULL;
@@ -468,7 +477,6 @@ int PAlterAtom(PyMOLGlobals *G,
   int color;
   PyObject *color_id1,*color_id2=NULL;
   PyObject *label_id1,*label_id2=NULL;
-  LabelType label;
   int id;
   PyObject *ID_id1,*ID_id2=NULL;
   int rank;
@@ -505,7 +513,6 @@ int PAlterAtom(PyMOLGlobals *G,
   segi_id1 = PConvStringToPyDictItem(dict,"segi",at->segi);
   elem_id1 = PConvStringToPyDictItem(dict,"elem",at->elem);
   ss_id1 = PConvStringToPyDictItem(dict,"ss",at->ssType);
-  text_type_id1 = PConvStringToPyDictItem(dict,"text_type",at->textType);
   numeric_type_id1 = PConvIntToPyDictItem(dict,"numeric_type",at->customType);
   q_id1 = PConvFloatToPyDictItem(dict,"q",at->q);
   b_id1 = PConvFloatToPyDictItem(dict,"b",at->b);
@@ -514,7 +521,19 @@ int PAlterAtom(PyMOLGlobals *G,
   partial_charge_id1 = PConvFloatToPyDictItem(dict,"partial_charge",at->partialCharge);
   formal_charge_id1 = PConvIntToPyDictItem(dict,"formal_charge",at->formalCharge);
   cartoon_id1 = PConvIntToPyDictItem(dict,"cartoon",at->cartoon);
-  label_id1 = PConvStringToPyDictItem(dict,"label",at->label);
+
+  {
+    char null_st[1] = "";
+    char *st = null_st;
+
+    if(at->textType) st = OVLexicon_FetchCString(G->Lexicon,at->textType);
+    text_type_id1 = PConvStringToPyDictItem(dict,"text_type",st);
+
+    st = null_st;
+    if(at->label) st = OVLexicon_FetchCString(G->Lexicon,at->label);
+    label_id1 = PConvStringToPyDictItem(dict,"label",st);
+  }
+
   color_id1 = PConvIntToPyDictItem(dict,"color",at->color);
   ID_id1 = PConvIntToPyDictItem(dict,"ID",at->id);
   state_id1 = PConvIntToPyDictItem(dict,"state",at->discrete_state);
@@ -656,10 +675,21 @@ int PAlterAtom(PyMOLGlobals *G,
           strcpy(at->alt,alt);
       }
       if(text_type_id1!=text_type_id2) {
-        if(!PConvPyObjectToStrMaxLen(text_type_id2,textType,sizeof(TextType)-1))
-          result=false;
-        else
-          strcpy(at->textType,textType);
+        
+        OrthoLineType temp;
+        if(at->textType) {
+          OVLexicon_DecRef(G->Lexicon,at->textType);
+        }
+        at->textType = 0;
+
+        if(PConvPyObjectToStrMaxLen(text_type_id2,temp,sizeof(OrthoLineType)-1)) {
+          if(temp[0]) {
+            OVreturn_word result = OVLexicon_GetFromCString(G->Lexicon,temp);
+            if(OVreturn_IS_OK(result)) {
+              at->textType = result.word;
+            }
+          }
+        }
       }
       if(ss_id1!=ss_id2) {
         if(!PConvPyObjectToStrMaxLen(ss_id2,ssType,sizeof(SSType)-1))
@@ -729,10 +759,19 @@ int PAlterAtom(PyMOLGlobals *G,
           at->discrete_state=state;
       }
       if(label_id1!=label_id2) {
-        if(!PConvPyObjectToStrMaxLen(label_id2,label,sizeof(LabelType)-1))
-          result=false;
-        else {
-          strcpy(at->label,label);
+        OrthoLineType temp;
+        if(at->label) {
+          OVLexicon_DecRef(G->Lexicon,at->label);
+        }
+        at->label = 0;
+
+        if(PConvPyObjectToStrMaxLen(label_id2,temp,sizeof(OrthoLineType)-1)) {
+          if(temp[0]) {
+            OVreturn_word result = OVLexicon_GetFromCString(G->Lexicon,temp);
+            if(OVreturn_IS_OK(result)) {
+              at->label = result.word;
+            }
+          }
         }
       }
       if(flags_id1!=flags_id2) {
@@ -778,7 +817,7 @@ int PLabelAtom(PyMOLGlobals *G, AtomInfoType *at,char *expr,int index)
 {
   PyObject *dict;
   int result;
-  LabelType label;
+  OrthoLineType label;
   char atype[7];
   OrthoLineType buffer;
   if(at->hetatm)
@@ -802,7 +841,17 @@ int PLabelAtom(PyMOLGlobals *G, AtomInfoType *at,char *expr,int index)
   PConvStringToPyDictItem(dict,"ss",at->ssType);
   PConvFloatToPyDictItem(dict,"vdw",at->vdw);
   PConvFloatToPyDictItem(dict,"bohr",at->bohr_radius);
-  PConvStringToPyDictItem(dict,"text_type",at->textType);
+  {
+    char null_st[1] = "";
+    char *st = null_st;
+
+    if(at->textType) st = OVLexicon_FetchCString(G->Lexicon,at->textType);
+    PConvStringToPyDictItem(dict,"text_type",st);
+
+    st = null_st;
+    if(at->label) st = OVLexicon_FetchCString(G->Lexicon,at->label);
+    PConvStringToPyDictItem(dict,"label",st);
+  }
   PConvStringToPyDictItem(dict,"elem",at->elem);
   PConvIntToPyDictItem(dict,"geom",at->geom);
   PConvIntToPyDictItem(dict,"valence",at->valence);
@@ -830,14 +879,26 @@ int PLabelAtom(PyMOLGlobals *G, AtomInfoType *at,char *expr,int index)
     result=false;
   } else {
     result=true;
-    if(!PConvPyObjectToStrMaxLen(PyDict_GetItemString(dict,"label"),label,sizeof(LabelType)-1))
+    if(!PConvPyObjectToStrMaxLen(PyDict_GetItemString(dict,"label"),
+                                 label,sizeof(OrthoLineType)-1))
       result=false;
     if(PyErr_Occurred()) {
       PyErr_Print();
       result=false;
     }
     if(result) { 
-      strcpy(at->label,label);
+      if(at->label) {
+        OVLexicon_DecRef(G->Lexicon,at->label);
+      }
+      at->label = 0;
+      
+      if(label[0]) {
+        OVreturn_word ret = OVLexicon_GetFromCString(G->Lexicon,label);
+        if(OVreturn_IS_OK(ret)) {
+          /*printf("alloc'd %d [%s]\n",OVLexicon_GetNActive(G->Lexicon),label);*/
+          at->label = ret.word;
+        }
+      }
     } else {
       ErrMessage(TempPyMOLGlobals,"Label","Aborting on error. Labels may be incomplete.");
     }

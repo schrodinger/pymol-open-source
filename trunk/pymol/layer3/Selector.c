@@ -5845,14 +5845,24 @@ int SelectorCreateObjectMolecule(PyMOLGlobals *G,int sele,char *name,
   atInfo = VLAlloc(AtomInfoType,nAtom); 
   /* copy the atom info records and create new zero-based IDs */
   c=0;
-  for(a=cNDummyAtoms;a<I->NAtom;a++) {
-    if(I->Table[a].index>=0) {
-      obj=I->Obj[I->Table[a].model];
-      at=I->Table[a].atom;
-      VLACheck(atInfo,AtomInfoType,c);
-      atInfo[c] = obj->AtomInfo[at];
-      atInfo[c].selEntry=0;
-      c++;
+  {
+    AtomInfoType *ai;
+    for(a=cNDummyAtoms;a<I->NAtom;a++) {
+      if(I->Table[a].index>=0) {
+        obj=I->Obj[I->Table[a].model];
+        at=I->Table[a].atom;
+        VLACheck(atInfo,AtomInfoType,c);
+        ai = atInfo + c;
+        *(ai) = obj->AtomInfo[at];
+        ai->selEntry=0;
+        if(ai->label) {
+          OVLexicon_IncRef(G->Lexicon,ai->label);
+        }
+        if(ai->textType) {
+          OVLexicon_IncRef(G->Lexicon,ai->textType);
+        }
+        c++;
+      }
     }
   }
     
@@ -7423,14 +7433,21 @@ static int SelectorSelect1(PyMOLGlobals *G,EvalElem *base)
         base_0_sele_a = &base[0].sele[cNDummyAtoms];
         
         if( (matcher = WordMatcherNew(G,base[1].text,&options,true))) {
+          char null_st[1] = "";
+          char *st;
           table_a = i_table + cNDummyAtoms;
           base_0_sele_a = &base[0].sele[cNDummyAtoms];
           
           for(a=cNDummyAtoms;a<I->NAtom;a++) {
+            AtomInfoType *ai = i_obj[table_a->model]->AtomInfo + table_a->atom;
+            st = null_st;
+            if(ai->textType) {
+              if(!(st = OVLexicon_FetchCString(G->Lexicon,ai->textType)))
+                st = null_st;
+            }
             if( ( *base_0_sele_a = 
-                  WordMatcherMatchAlpha(matcher,
-                                          i_obj[table_a->model]->AtomInfo[table_a->atom].textType) ) )
-              c++;
+                  WordMatcherMatchAlpha(matcher,st)));
+                c++;
             table_a++;
             base_0_sele_a++;
           }
