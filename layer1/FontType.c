@@ -44,7 +44,7 @@ __inline__ static char *_FontTypeRenderOpenGL(RenderInfo *info,
     int last_c = -1;
     int sampling = 1;
     const float _0 = 0.0F, _1 = 1.0F, _m1 = -1.0F;
-    float x_indent=_0, y_indent=_0, z_indent = _0;
+    float x_indent=0.0F, y_indent=0.0F, z_indent = 0.0F;
 
       sampling = info->sampling;
     if(st&&(*st)) {
@@ -122,7 +122,7 @@ __inline__ static char *_FontTypeRenderOpenGL(RenderInfo *info,
       if(!pushed) {
         float *v = TextGetPos(G);
         float loc[3];
-        float zero[3]= {_0,_0,_0};
+        float zero[3]= {0.0F,0.0F,0.0F};
         if(rpos) {
           SceneGetEyeNormal(G,v,loc);
           scale3f(loc,z_indent,loc);
@@ -191,7 +191,7 @@ static char *FontTypeRenderRay(CRay *ray, CFontType *I,char *st,float size, floa
   int last_c = -1;
   int sampling = ray->Sampling;
   const float _0 = 0.0F, _1 = 1.0F, _m1 = -1.0F;
-  float x_indent=_0, y_indent=_0, z_indent=_0;
+  float x_indent=0.0F, y_indent=0.0F, z_indent=0.0F;
   float xn[3], yn[3], x_adj[3], y_adj[3], pos[3], *v;
 
   if(st&&(*st)) {
