@@ -43,7 +43,6 @@ def load():
         sys.__stderr__.write(".")
         sys.__stderr__.flush()
         n = cmd.count_states()
-        print file
         cmd.ray(160,120)
         if n>1:
             sys.__stderr__.write("\n")
