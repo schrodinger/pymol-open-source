@@ -1855,7 +1855,7 @@ SEE ALSO
         else:
             try:
                 lock()
-                r = cmd._do("cmd._refresh()")
+                r = cmd._do("_ cmd.refresh()")
             finally:
                 unlock(r)
         if _raising(r): raise QuietException

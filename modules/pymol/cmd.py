@@ -915,6 +915,7 @@ DEVELOPMENT TO DO
 
         def _refresh(swap_buffers=1):  # Only call with GLUT thread!
             # WARNING: internal routine, subject to change
+            r = None
             try:
                 lock()
                 if thread.get_ident() == pymol.glutThread:
