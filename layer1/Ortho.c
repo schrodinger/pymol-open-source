@@ -1661,7 +1661,7 @@ void OrthoSplash(PyMOLGlobals *G)
   printf("\n"); /* only add this newline to stdout, not the output window */
   /* OrthoNewLine(G,NULL,true);*/
   if(G->Option->incentive_product) {
-    PRINTF " PyMOL(TM) Incentive Product - Copyright (C) 2005 DeLano Scientific LLC.\n \n" ENDF(G);
+    PRINTF " PyMOL(TM) Incentive Product - Copyright (C) 2006 DeLano Scientific LLC.\n \n" ENDF(G);
     PRINTF " A current PyMOL Maintenance and/or Support Subscription may be required\n" ENDF(G);
     PRINTF " for legal use of this Build beyond a finite honor-system evaluation period.\n" ENDF(G);
     PRINTF " Please visit http://www.pymol.org/funding.html for more information.\n \n"ENDF(G);
@@ -1672,7 +1672,7 @@ void OrthoSplash(PyMOLGlobals *G)
     PRINTF " PyMOL(TM) Molecular Graphics System, Version " ENDF(G);
     PRINTF _PyMOL_VERSION ENDF(G);
     PRINTF ".\n" ENDF(G);
-    PRINTF " Copyright (C) 2005 by DeLano Scientific LLC.\n All Rights Reserved.\n \n" ENDF(G);
+    PRINTF " Copyright (C) 2006 by DeLano Scientific LLC.\n All Rights Reserved.\n \n" ENDF(G);
     
     PRINTF "    Created by Warren L. DeLano, Ph.D. \n \n" ENDF(G);
     
