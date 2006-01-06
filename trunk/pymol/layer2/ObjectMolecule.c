@@ -9972,6 +9972,22 @@ ObjectMolecule *ObjectMoleculeReadPDBStr(PyMOLGlobals *G,ObjectMolecule *I,char 
                 }
               }
             }
+            /* is SCALEn invalid?  If so, then it
+               should definitely be ignored... */
+            {
+              int is_valid = true;
+	      if(length3f(sca)<R_SMALL8) is_valid = false;
+	      if(length3f(sca+4)<R_SMALL8) is_valid = false;
+	      if(length3f(sca+8)<R_SMALL8) is_valid = false;
+              if(!is_valid) {
+                skipit=true;
+                if(!quiet) {
+                  PRINTFB(G,FB_ObjectMolecule,FB_Blather)
+                    " ObjectMolReadPDBStr: ignoring SCALEn (invalid matrix).\n"
+                    ENDFB(G);
+                }
+              }
+            }
 
             if(!skipit) {
               if(!quiet) {

@@ -29,7 +29,7 @@ def load():
       atoms = cmd.count_atoms()
       passed = time.time()-start
       print "%3d structures/%5.1f sec = %8.1f atom/sec over %6d atoms"%(count,passed,atoms/passed,atoms)
-      if count>500: break
+      if count>800: break
 
 #cmd.feedback('disable','symmetry objectmolecule executive','everything')
 load()
