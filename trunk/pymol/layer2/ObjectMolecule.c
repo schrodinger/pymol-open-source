@@ -9965,16 +9965,20 @@ ObjectMolecule *ObjectMoleculeReadPDBStr(PyMOLGlobals *G,ObjectMolecule *I,char 
               else if(fabs(sca[11])>threshold) is_identity=false;
               if(is_identity) {
                 skipit=true;
-                PRINTFB(G,FB_ObjectMolecule,FB_Blather)
-                " ObjectMolReadPDBStr: ignoring SCALEn (identity matrix).\n"
-                ENDFB(G);
+                if(!quiet) {
+                  PRINTFB(G,FB_ObjectMolecule,FB_Blather)
+                    " ObjectMolReadPDBStr: ignoring SCALEn (identity matrix).\n"
+                    ENDFB(G);
+                }
               }
             }
 
             if(!skipit) {
-              PRINTFB(G,FB_ObjectMolecule,FB_Actions)
-                " ObjectMolReadPDBStr: using SCALEn to compute orthogonal coordinates.\n"
-                ENDFB(G);
+              if(!quiet) {
+                PRINTFB(G,FB_ObjectMolecule,FB_Actions)
+                  " ObjectMolReadPDBStr: using SCALEn to compute orthogonal coordinates.\n"
+                  ENDFB(G);
+              }
               CoordSetTransform44f(cset, pdb_info->scale.matrix);
               CoordSetTransform33f(cset, I->Symmetry->Crystal->FracToReal); 
             }
