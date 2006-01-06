@@ -1,5 +1,5 @@
 # 
-# basic run through the PDB with ray-tracing
+# basic run through the PDB with lines, sticks, and ribbons
 #
       
 from glob import glob
@@ -26,12 +26,13 @@ def load():
       cmd.rewind()
       cmd.orient('pdb')
       cmd.refresh()
-      cmd.hide()
-      cmd.show("sticks")
+      cmd.as("ribbon")
+      cmd.refresh()
+      cmd.as("sticks")
+      cmd.refresh()
       sys.__stderr__.write(".")
       sys.__stderr__.flush()
       n = cmd.count_states()
-      cmd.refresh()
       if n>1:
          cmd.rewind()
                      
