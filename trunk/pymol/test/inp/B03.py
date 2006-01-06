@@ -20,7 +20,6 @@ def load():
 #   while list[0]!="pdb/f8/pdb1f8u":
 #      list.pop(0)
    for file in list:
-      print file
       cmd.delete('pdb')
       cmd.load(file,'pdb')
       cmd.set_title('pdb',1,os.path.split(file)[-1])

@@ -1850,12 +1850,13 @@ SEE ALSO
 
     rebuild
         '''
+        r = None
         if thread.get_ident() == pymol.glutThread:
             r = _cmd.refresh_now()
         else:
             try:
                 lock()
-                r = cmd._do("_ cmd.refresh()")
+                r = cmd._do("_ cmd._refresh()")
             finally:
                 unlock(r)
         if _raising(r): raise QuietException
