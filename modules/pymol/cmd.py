@@ -380,7 +380,7 @@ if __name__=='pymol.cmd':
                         pass
                 lock_api.release()
     #         print "lock: released by 0x%x (glut)"%thread.get_ident()
-                if result==None: # don't flush if we have an incipient error...
+                if result==None: # don't flush if we have an incipient error (negative input)
                     _cmd.flush_now()
                 elif is_ok(result):
                     _cmd.flush_now()

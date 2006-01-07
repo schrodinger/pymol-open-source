@@ -914,7 +914,7 @@ void PUnlockAPIAsGlut(void) /* must call with unblocked interpreter */
     " PUnlockAPIAsGlut-DEBUG: entered as thread 0x%x\n",PyThread_get_thread_ident()
     ENDFD;
   PBlock();
-  PXDecRef(PyObject_CallFunction(P_unlock,NULL));
+  PXDecRef(PyObject_CallFunction(P_unlock,NULL)); /* NOTE this may flush the command buffer! */
   PLockStatus();
   PyMOL_PopValidContext(TempPyMOLGlobals->PyMOL);
   PUnlockStatus();
@@ -1001,7 +1001,7 @@ int PLockAPIAsGlut(int block_if_busy)
       "-PLockAPIAsGlut-DEBUG: glut_thread_keep_out 0x%x\n",PyThread_get_thread_ident()
       ENDFD;
     
-    PXDecRef(PyObject_CallFunction(P_unlock,NULL));
+    PXDecRef(PyObject_CallFunction(P_unlock,"i",-1)); /* prevent buffer flushing */
 #ifndef WIN32
     { 
       struct timeval tv;
