@@ -13,7 +13,7 @@ PyMOL>load lrg/map.ccp4
  Crystal:    0.0000   91.1443    0.0000
  Crystal:    0.0000    0.0000   45.8557
  Crystal: Unit Cell Volume   380936.
- ExecutiveLoad: "lrg/map.ccp4" loaded as "map", through state 1.
+ ExecutiveLoad: "lrg/map.ccp4" loaded as "map", through state 0.
 PyMOL>isosurf m1,map,1.0
  Executive: object "m1" created.
  Isosurface: created "m1", setting level to 1.000
@@ -78,7 +78,7 @@ PyMOL>load lrg/map.xplor
  Crystal:    0.0000   91.1443    0.0000
  Crystal:    0.0000    0.0000   45.8557
  Crystal: Unit Cell Volume   380936.
- ExecutiveLoad: "lrg/map.xplor" loaded as "map", through state 1.
+ ExecutiveLoad: "lrg/map.xplor" loaded as "map", through state 0.
 PyMOL>isosurf m1,map,1.0
  Executive: object "m1" created.
  Isosurface: created "m1", setting level to 1.000
@@ -144,7 +144,7 @@ PyMOL>load lrg/map.ccp4
  Crystal:    0.0000   91.1443    0.0000
  Crystal:    0.0000    0.0000   45.8557
  Crystal: Unit Cell Volume   380936.
- ExecutiveLoad: "lrg/map.ccp4" loaded as "map", through state 1.
+ ExecutiveLoad: "lrg/map.ccp4" loaded as "map", through state 0.
 PyMOL>load lrg/ref.pdb
  ObjectMolecule: Read crystal symmetry information.
  Symmetry: Found 8 symmetry operators.
@@ -221,7 +221,7 @@ PyMOL>load lrg/map.ccp4
  Crystal:    0.0000   91.1443    0.0000
  Crystal:    0.0000    0.0000   45.8557
  Crystal: Unit Cell Volume   380936.
- ExecutiveLoad: "lrg/map.ccp4" loaded as "map", through state 1.
+ ExecutiveLoad: "lrg/map.ccp4" loaded as "map", through state 0.
 PyMOL>isodot m1,map,1.0
  Executive: object "m1" created.
  Isomesh: created "m1", setting level to 1.000
@@ -286,7 +286,7 @@ PyMOL>load lrg/map.xplor
  Crystal:    0.0000   91.1443    0.0000
  Crystal:    0.0000    0.0000   45.8557
  Crystal: Unit Cell Volume   380936.
- ExecutiveLoad: "lrg/map.xplor" loaded as "map", through state 1.
+ ExecutiveLoad: "lrg/map.xplor" loaded as "map", through state 0.
 PyMOL>isodot m1,map,1.0
  Executive: object "m1" created.
  Isomesh: created "m1", setting level to 1.000
@@ -352,7 +352,7 @@ PyMOL>load lrg/map.ccp4
  Crystal:    0.0000   91.1443    0.0000
  Crystal:    0.0000    0.0000   45.8557
  Crystal: Unit Cell Volume   380936.
- ExecutiveLoad: "lrg/map.ccp4" loaded as "map", through state 1.
+ ExecutiveLoad: "lrg/map.ccp4" loaded as "map", through state 0.
 PyMOL>load lrg/ref.pdb
  ObjectMolecule: Read crystal symmetry information.
  Symmetry: Found 8 symmetry operators.

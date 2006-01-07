@@ -12,7 +12,7 @@ PyMOL>load lrg/map.xplor
  Crystal:    0.0000   91.1443    0.0000
  Crystal:    0.0000    0.0000   45.8557
  Crystal: Unit Cell Volume   380936.
- ExecutiveLoad: "lrg/map.xplor" loaded as "map", through state 1.
+ ExecutiveLoad: "lrg/map.xplor" loaded as "map", through state 0.
 PyMOL>load lrg/map.xplor,map2,format=xplor
  ObjectMapLoadXPLOR: Loading...
  ObjectMap: Map Read.  Range = -3.439 to 8.717
@@ -27,7 +27,7 @@ PyMOL>load lrg/map.xplor,map2,format=xplor
  Crystal:    0.0000   91.1443    0.0000
  Crystal:    0.0000    0.0000   45.8557
  Crystal: Unit Cell Volume   380936.
- ExecutiveLoad: "lrg/map.xplor" loaded as "map2", through state 1.
+ ExecutiveLoad: "lrg/map.xplor" loaded as "map2", through state 0.
 PyMOL>cmd._dump_floats(extent[0])
 -18.514   9.257 -15.763
 PyMOL>cmd._dump_floats(extent[1])
@@ -56,7 +56,7 @@ PyMOL>cmd.load_raw(content, 'xplor', 'map',quiet=0)
  Crystal:    0.0000   91.1443    0.0000
  Crystal:    0.0000    0.0000   45.8557
  Crystal: Unit Cell Volume   380936.
- ExecutiveLoad: content loaded into object "map", through state 1.
+ ExecutiveLoad: content loaded into object "map", through state 0.
 PyMOL>dele all
 PyMOL>cmd.load_raw(content, 'xplor', 'map',quiet=1)
  ObjectMap: Map Read.  Range = -3.439 to 8.717

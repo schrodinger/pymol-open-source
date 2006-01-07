@@ -13,7 +13,7 @@ PyMOL>load lrg/map.ccp4
  Crystal:    0.0000   91.1443    0.0000
  Crystal:    0.0000    0.0000   45.8557
  Crystal: Unit Cell Volume   380936.
- ExecutiveLoad: "lrg/map.ccp4" loaded as "map", through state 1.
+ ExecutiveLoad: "lrg/map.ccp4" loaded as "map", through state 0.
 PyMOL>dele all
 PyMOL>load lrg/map.ccp4,quiet=1
 PyMOL>load lrg/map.ccp4,map2,format=ccp4
@@ -31,7 +31,7 @@ PyMOL>load lrg/map.ccp4,map2,format=ccp4
  Crystal:    0.0000   91.1443    0.0000
  Crystal:    0.0000    0.0000   45.8557
  Crystal: Unit Cell Volume   380936.
- ExecutiveLoad: "lrg/map.ccp4" loaded as "map2", through state 1.
+ ExecutiveLoad: "lrg/map.ccp4" loaded as "map2", through state 0.
 PyMOL>set normalize_ccp4_maps = 0
  Setting: normalize_ccp4_maps set to off.
 PyMOL>load lrg/map.ccp4,map3
@@ -50,7 +50,7 @@ PyMOL>load lrg/map.ccp4,map3
  Crystal:    0.0000   91.1443    0.0000
  Crystal:    0.0000    0.0000   45.8557
  Crystal: Unit Cell Volume   380936.
- ExecutiveLoad: "lrg/map.ccp4" loaded as "map3", through state 1.
+ ExecutiveLoad: "lrg/map.ccp4" loaded as "map3", through state 0.
 PyMOL>cmd._dump_floats(extent[0])
 -18.514   9.257 -15.763
 PyMOL>cmd._dump_floats(extent[1])
@@ -81,7 +81,7 @@ PyMOL>cmd.load_raw(content, 'ccp4', 'map',quiet=0)
  Crystal:    0.0000   91.1443    0.0000
  Crystal:    0.0000    0.0000   45.8557
  Crystal: Unit Cell Volume   380936.
- ExecutiveLoad: content loaded into object "map", through state 1.
+ ExecutiveLoad: content loaded into object "map", through state 0.
 PyMOL>dele all
 PyMOL>cmd.load_raw(content, 'ccp4', 'map',quiet=1)
 PyMOL>isomesh m1, map
