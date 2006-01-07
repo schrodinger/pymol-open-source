@@ -40,6 +40,7 @@ Z* -------------------------------------------------------------------
 
 #define PLockAPIAsGlut(block_if_busy)
 #define PUnlockAPIAsGlut()
+#define PUnlockAPIAsGlutNoFlush()
 
 #define PLockStatus()
 #define PUnlockStatus()
@@ -107,6 +108,7 @@ void PSleepUnlocked(int usec);
 
 int PLockAPIAsGlut(int block_if_busy);
 void PUnlockAPIAsGlut(void);
+void PUnlockAPIAsGlutNoFlush(void);
 
 void PLockStatus(void);
 void PUnlockStatus(void);

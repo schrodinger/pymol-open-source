@@ -76,9 +76,11 @@ extern CPyMOLOptions *MacPyMOLOption;
 #ifdef _MACPYMOL_XCODE
 #define PYMOL_API_LOCK if((I->PythonInitStage)&&PLockAPIAsGlut(true)) {
 #define PYMOL_API_UNLOCK PUnlockAPIAsGlut(); }
+#define PYMOL_API_UNLOCK_NO_FLUSH PUnlockAPIAsGlutNoFlush(); }
 #else 
 #define PYMOL_API_LOCK {
 #define PYMOL_API_UNLOCK }
+#define PYMOL_API_UNLOCK_NO_FLUSH }
 #endif
 
 typedef struct _CPyMOL {
@@ -2579,11 +2581,12 @@ int PyMOL_Idle(CPyMOL *I)
 		PRunString("adapt_to_hardware()");
 		PRunString("exec_deferred()");
 		PUnblock();
+		PFlush();
 	}
   }
 #endif
 
-  PYMOL_API_UNLOCK
+  PYMOL_API_UNLOCK_NO_FLUSH
 
   return did_work;
 }
@@ -2717,7 +2720,7 @@ int PyMOL_GetRedisplay(CPyMOL *I, int reset)
         I->RedisplayFlag = false;
     }
   }
-  PYMOL_API_UNLOCK
+  PYMOL_API_UNLOCK_NO_FLUSH
   return result;
 }
 
