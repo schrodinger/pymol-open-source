@@ -5560,8 +5560,9 @@ static CoordSet *ObjectMoleculeChemPyModel2CoordSet(PyMOLGlobals *G,PyObject *mo
             tmp = PyObject_GetAttrString(atom,"text_type");
             if (tmp) {
               OrthoLineType temp;
+              OVreturn_word ret;
               ok = PConvPyObjectToStrMaxClean(tmp,temp,sizeof(OrthoLineType)-1);              
-              OVreturn_word ret = OVLexicon_GetFromCString(G->Lexicon,temp);
+              ret = OVLexicon_GetFromCString(G->Lexicon,temp);
               if(OVreturn_IS_OK(ret)) {
                 ai->textType = ret.word;
               }
