@@ -13,7 +13,7 @@ PyMOL>load lrg/map.ccp4
  Crystal:    0.0000   91.1443    0.0000
  Crystal:    0.0000    0.0000   45.8557
  Crystal: Unit Cell Volume   380936.
- ExecutiveLoad: "lrg/map.ccp4" loaded as "map", through state 1.
+ ExecutiveLoad: "lrg/map.ccp4" loaded as "map", through state 0.
 PyMOL>isomesh m1,map,1.0
  Executive: object "m1" created.
  Isomesh: created "m1", setting level to 1.000
@@ -37,15 +37,6 @@ PyMOL>ray renderer=2
  RayRenderTest: obtained 0 graphics primitives.
 PyMOL>dele m1
  Executive: object "m2" created.
- Isomesh: created "m2", setting level to 1.100
- Isomesh: created "m2", setting level to 1.200
- Isomesh: created "m2", setting level to 1.300
- Isomesh: created "m2", setting level to 1.400
- Isomesh: created "m2", setting level to 1.500
- Isomesh: created "m2", setting level to 1.600
- Isomesh: created "m2", setting level to 1.700
- Isomesh: created "m2", setting level to 1.800
- Isomesh: created "m2", setting level to 1.900
 PyMOL>ray renderer=2
  ObjectMesh: updating "m2".
  ObjectMesh: updating "m2".
@@ -78,7 +69,7 @@ PyMOL>load lrg/map.xplor
  Crystal:    0.0000   91.1443    0.0000
  Crystal:    0.0000    0.0000   45.8557
  Crystal: Unit Cell Volume   380936.
- ExecutiveLoad: "lrg/map.xplor" loaded as "map", through state 1.
+ ExecutiveLoad: "lrg/map.xplor" loaded as "map", through state 0.
 PyMOL>isomesh m1,map,1.0
  Executive: object "m1" created.
  Isomesh: created "m1", setting level to 1.000
@@ -102,15 +93,6 @@ PyMOL>ray renderer=2
  RayRenderTest: obtained 0 graphics primitives.
 PyMOL>dele m1
  Executive: object "m2" created.
- Isomesh: created "m2", setting level to 1.100
- Isomesh: created "m2", setting level to 1.200
- Isomesh: created "m2", setting level to 1.300
- Isomesh: created "m2", setting level to 1.400
- Isomesh: created "m2", setting level to 1.500
- Isomesh: created "m2", setting level to 1.600
- Isomesh: created "m2", setting level to 1.700
- Isomesh: created "m2", setting level to 1.800
- Isomesh: created "m2", setting level to 1.900
 PyMOL>ray renderer=2
  ObjectMesh: updating "m2".
  ObjectMesh: updating "m2".

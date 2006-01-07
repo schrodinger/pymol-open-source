@@ -13,7 +13,7 @@ PyMOL>load lrg/map.ccp4
  Crystal:    0.0000   91.1443    0.0000
  Crystal:    0.0000    0.0000   45.8557
  Crystal: Unit Cell Volume   380936.
- ExecutiveLoad: "lrg/map.ccp4" loaded as "map", through state 1.
+ ExecutiveLoad: "lrg/map.ccp4" loaded as "map", through state 0.
 PyMOL>load lrg/ref.pdb
  ObjectMolecule: Read crystal symmetry information.
  Symmetry: Found 8 symmetry operators.

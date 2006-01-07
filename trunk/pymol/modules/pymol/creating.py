@@ -290,7 +290,7 @@ SEE ALSO
         return r
 
     def isodot(name,map,level=1.0,selection='',buffer=0.0,state=0,
-                  carve=None,source_state=0):
+                  carve=None,source_state=0,quiet=1):
         '''
 DESCRIPTION
 

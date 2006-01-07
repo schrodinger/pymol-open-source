@@ -3227,7 +3227,8 @@ void ObjectMoleculeAddSeleHydrogens(ObjectMolecule *I,int sele)
 
 
 /*========================================================================*/
-void ObjectMoleculeFuse(ObjectMolecule *I,int index0,ObjectMolecule *src,int index1,int mode,int move_flag)
+void ObjectMoleculeFuse(ObjectMolecule *I,int index0,ObjectMolecule *src,
+                        int index1,int mode,int move_flag)
 {
   int a,b;
   AtomInfoType *ai0,*ai1,*nai;
@@ -7204,10 +7205,6 @@ void ObjectMoleculeMerge(ObjectMolecule *I,AtomInfoType *ai,
     c=0;
     b=0;  
     lb = 0;
-    ai_a = atInfo;
-    for(a=0;a<n_atom;a++) {
-      (ai_a++)->temp1 = false;
-    }
 
     for(a=0;a<n_index;a++) {
       ai_a = ai + a;
@@ -7237,9 +7234,8 @@ void ObjectMoleculeMerge(ObjectMolecule *I,AtomInfoType *ai,
 	  b++;
 	}
       }
-      if(found && !atInfo[b].temp1) {
+      if(found) {
 	index[a] = b; /* store real atom index b for a in index[a] */
-	atInfo[b].temp1 = true; /* mark this atom as matched */
 	b++;
       } else {
 	index[a]=I->NAtom+c; /* otherwise, this is a new atom */
