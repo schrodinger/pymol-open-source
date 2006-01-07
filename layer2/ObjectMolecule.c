@@ -7159,10 +7159,12 @@ void ObjectMoleculeMerge(ObjectMolecule *I,AtomInfoType *ai,
                          CoordSet *cs,int bondSearchFlag,int aic_mask,
                          int invalidate)
 {
+  PyMOLGlobals *G = I->Obj.G;
   int *index,*outdex,*a2i,*i2a;
   BondType *bond=NULL;
-  int a,b,c,lb=0,nb,ac,a1,a2;
-  int found;
+  register int a,b,lb=0,ac;
+  int c,nb,a1,a2;
+  register int found;
   int nAt,nBd,nBond;
   int expansionFlag = false;
   AtomInfoType *ai2;
@@ -7173,7 +7175,7 @@ void ObjectMoleculeMerge(ObjectMolecule *I,AtomInfoType *ai,
 
   /* first, sort the coodinate set */
   
-  index=AtomInfoGetSortedIndex(I->Obj.G,ai,cs->NIndex,&outdex);
+  index=AtomInfoGetSortedIndex(G,ai,cs->NIndex,&outdex);
   for(b=0;b<cs->NIndex;b++)
 	 cs->IdxToAtm[b]=outdex[cs->IdxToAtm[b]];
   for(b=0;b<cs->NIndex;b++)
@@ -7193,31 +7195,57 @@ void ObjectMoleculeMerge(ObjectMolecule *I,AtomInfoType *ai,
 	 outdex[a]=-1;
   }
 
-  c=0;
-  b=0;  
-  for(a=0;a<cs->NIndex;a++) {
-	 found=false;
-    if(!I->DiscreteFlag) { /* don't even try matching for discrete objects */
-      lb=b;
-      while(b<I->NAtom) {
-        ac=(AtomInfoCompareIgnoreRank(I->Obj.G,ai+a,I->AtomInfo+b));
-        if(!ac) {
-          found=true;
-          break;
-        } else if(ac<0) { /* atom is smaller than current, so we need to start from top */
-          break;
-        }
-        b++;
+  {
+    register int n_index = cs->NIndex;
+    register int n_atom = I->NAtom;
+    register AtomInfoType *atInfo = I->AtomInfo,*ai_a;
+
+    c=0;
+    b=0;  
+    lb = 0;
+    ai_a = atInfo;
+    for(a=0;a<n_atom;a++) {
+      (ai_a++)->temp1 = false;
+    }
+
+    for(a=0;a<n_index;a++) {
+      ai_a = ai + a;
+      found=false;
+      if(!I->DiscreteFlag) { /* don't even try matching for discrete objects */
+	while(b<n_atom) {
+	  ac=(AtomInfoCompareIgnoreRank(G,ai_a,atInfo+b));
+	  if(!ac) {
+	    found=true;
+	    break;
+	  } else if(ac<0) { /* atom is before current, so try going the other way */
+	    break;
+	  } else if(!b) {
+	    int idx;
+	    ac=(AtomInfoCompareIgnoreRank(G,ai_a,atInfo+n_atom-1));
+	    if(ac>0) /* atom is after all atoms in list, so don't even bother searching */
+	      break;
+	    /* next, try to jump to an appropriate position in the list */
+	    idx = ((a*n_atom)/n_index)-1;
+	    if((idx>0)&&(b!=idx)&&(idx<n_atom)) {
+	      ac=(AtomInfoCompareIgnoreRank(G,ai_a,atInfo+idx));
+	      if(ac>0) 
+		b = idx;
+	    }
+	  }
+	  lb = b; /* last b before atom */
+	  b++;
+	}
+      }
+      if(found && !atInfo[b].temp1) {
+	index[a] = b; /* store real atom index b for a in index[a] */
+	atInfo[b].temp1 = true; /* mark this atom as matched */
+	b++;
+      } else {
+	index[a]=I->NAtom+c; /* otherwise, this is a new atom */
+	c++;
+	b=lb;
       }
     }
-	 if(found) {
-		index[a]=b; /* store real atom index b for a in index[a] */
-		b++;
-	 } else {
-	   index[a]=I->NAtom+c; /* otherwise, this is a new atom */
-	   c++;
-	   b=lb;
-	 }
   }
 
   /* first, reassign atom info for matched atoms */
@@ -7240,10 +7268,10 @@ void ObjectMoleculeMerge(ObjectMolecule *I,AtomInfoType *ai,
   a2i = Alloc(int,nAt);
   i2a = Alloc(int,cs->NIndex);
   if(nAt) {
-    ErrChkPtr(I->Obj.G,a2i);
+    ErrChkPtr(G,a2i);
   }
   if(cs->NIndex){
-    ErrChkPtr(I->Obj.G,i2a);
+    ErrChkPtr(G,i2a);
   }
   
   for(a=0;a<cs->NIndex;a++) /* a is in original file space */
@@ -7252,7 +7280,7 @@ void ObjectMoleculeMerge(ObjectMolecule *I,AtomInfoType *ai,
 		a2=index[a1];
 		i2a[a]=a2; /* a2 is in object space */
       if(a2<oldNAtom)
-        AtomInfoCombine(I->Obj.G,I->AtomInfo+a2,ai+a1,aic_mask);
+        AtomInfoCombine(G,I->AtomInfo+a2,ai+a1,aic_mask);
       else
         *(I->AtomInfo+a2)=*(ai+a1);
     }
@@ -7293,7 +7321,7 @@ void ObjectMoleculeMerge(ObjectMolecule *I,AtomInfoType *ai,
   VLAFreeP(ai); /* note that we're trusting AtomInfoCombine to have 
                    already purged all atom-dependent storage (such as strings) */
 
-  AtomInfoFreeSortedIndexes(I->Obj.G,index,outdex);
+  AtomInfoFreeSortedIndexes(G,index,outdex);
   
   /* now find and integrate and any new bonds */
   if(expansionFlag) { /* expansion flag means we have introduced at least 1 new atom */
@@ -7315,7 +7343,21 @@ void ObjectMoleculeMerge(ObjectMolecule *I,AtomInfoType *ai,
               break;
             } else if(ac<0) { /* gone past position of this bond */
               break;
-            }
+            } else if(!b) {
+	      int idx;
+	      ac=BondCompare(bond+a,I->Bond+I->NBond-1);
+
+	      if(ac>0) /* bond is after all bonds in list, so don't even bother searching */
+		break;
+	      /* next, try to jump to an appropriate position in the list */
+	      idx = ((a*I->NBond)/nBond)-1;
+	      if((idx>0)&&(b!=idx)&&(idx<I->NBond)) {
+		ac=BondCompare(bond+a,I->Bond+idx);
+		if(ac>0) 
+		  b = idx;
+	      }
+	    }
+
             b++; /* no match yet, keep looking */
           }
         }

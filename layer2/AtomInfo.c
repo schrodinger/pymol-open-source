@@ -1525,8 +1525,8 @@ int AtomInfoCompare(PyMOLGlobals *G,AtomInfoType *at1,AtomInfoType *at2)
 }
 int AtomInfoCompareIgnoreRank(PyMOLGlobals *G,AtomInfoType *at1,AtomInfoType *at2)
 {
-  int result;
-  int wc;
+  register int result;
+  register int wc = 0;
   /* order by segment, chain, residue value, residue id, residue name, priority,
 	 and lastly by name */
 
@@ -1535,8 +1535,17 @@ int AtomInfoCompareIgnoreRank(PyMOLGlobals *G,AtomInfoType *at1,AtomInfoType *at
 	  printf(":%s:%s:%d:%s:%s:%i:%s\n",
 	  at2->segi,at2->chain,at2->resv,at2->resi,at2->resn,at2->priority,at2->name);
   */
-
-  wc=WordCompare(G,at1->segi,at2->segi,true);
+  {
+    /* attempt to optimize the segi comparison for equality */
+    register char *p1,*p2;
+    p1=at1->segi;
+    p2=at2->segi;
+    if((p1[0]!=p2[0]) ||
+       (p1[0] && ((p1[1]!=p2[1]) ||
+		  (p1[1] && ((p1[2]!=p2[2]) ||
+			     (p1[2] && (p1[3]!=p2[3])))))))
+      wc=WordCompare(G,p1,p2,true);
+  }
   if(!wc) {
 	 if(at1->chain[0]==at2->chain[0]) {
       if(at1->hetatm==at2->hetatm) {
