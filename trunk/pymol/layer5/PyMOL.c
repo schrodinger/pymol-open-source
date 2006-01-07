@@ -2091,6 +2091,17 @@ static void init_python(int argc, char *argv[])
     if(argv) {
 	  PySys_SetArgv(argc,argv);
     }
+
+#ifdef _MACPYMOL_XCODE
+    /* there appears to be a bug or a race collection in the garbage
+       collector of the Python version that ships with Mac OS --
+       better to potentially leak a little RAM than crash unexpectedly
+       in a _PyObject_GC_Del call.
+       BTW: PyMOL doesn't itself need the GC, but end-user code
+       might. */
+    PyRun_SimpleString("import gc");
+    PyRun_SimpleString("gc.disable()");
+#endif
 	PyEval_InitThreads();
 	
 #ifdef _PYMOL_OWN_INTERP
