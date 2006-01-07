@@ -922,6 +922,20 @@ void PUnlockAPIAsGlut(void) /* must call with unblocked interpreter */
   PUnblock();
 }
 
+void PUnlockAPIAsGlutNoFlush(void) /* must call with unblocked interpreter */
+{
+  PRINTFD(TempPyMOLGlobals,FB_Threads)
+    " PUnlockAPIAsGlut-DEBUG: entered as thread 0x%x\n",PyThread_get_thread_ident()
+    ENDFD;
+  PBlock();
+  PXDecRef(PyObject_CallFunction(P_unlock,"i",-1)); /* prevents flushing of the buffer */
+  PLockStatus();
+  PyMOL_PopValidContext(TempPyMOLGlobals->PyMOL);
+  PUnlockStatus();
+  PUnlockGLUT();
+  PUnblock();
+}
+
 static int get_api_lock(int block_if_busy) 
 {
   int result = true;
