@@ -145,14 +145,17 @@ typedef struct AtomInfoType {
   signed char stereo; /* for 2D representation */
   signed char hydrogen;
   signed char cartoon; /* 0 = default which is auto (use ssType) */
+
   signed char hetatm;
   signed char bonded; 
   signed char chemFlag;
   signed char geom;
+
   signed char valence;
   signed char deleteFlag;
   signed char masked;
   signed char protekted;
+
   signed char protons;
   signed char hb_donor; 
   signed char hb_acceptor;

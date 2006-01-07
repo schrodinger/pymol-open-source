@@ -290,7 +290,7 @@ SEE ALSO
         return r
 
     def isodot(name,map,level=1.0,selection='',buffer=0.0,state=0,
-                  carve=None,source=0):
+                  carve=None,source_state=0):
         '''
 DESCRIPTION
 
@@ -333,7 +333,7 @@ SEE ALSO
             r = _cmd.isomesh(str(name),0,str(map),int(mopt),
                                   selection,float(buffer),
                                   float(level),1,int(state)-1,
-                                  float(carve),int(source)-1)
+                                  float(carve),int(source_state)-1,int(quiet))
         finally:
             unlock(r)
         if _raising(r): raise pymol.CmdException                  
