@@ -136,6 +136,8 @@ typedef struct AtomInfoType {
   float bohr_radius;
   int rank;
   int atomic_color; /* what color was this atom originally assigned? */
+  int textType;
+  int label;
 
   /* be careful not to write at these as (int*) */
 
@@ -161,8 +163,6 @@ typedef struct AtomInfoType {
   ResName resn;
   AtomName name;
   AtomName elem;
-  int textType;
-  int label;
   SSType ssType; /* blank or 'L' = turn/loop, 'H' = helix, 'S' = beta-strand/sheet */
 } AtomInfoType;
 
