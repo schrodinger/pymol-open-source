@@ -1852,7 +1852,11 @@ SEE ALSO
         '''
         r = None
         if thread.get_ident() == pymol.glutThread:
-            r = _cmd.refresh_now()
+	    try:
+		lock()
+		r = _cmd.refresh_now()
+	    finally:
+		unlock(r)
         else:
             try:
                 lock()
