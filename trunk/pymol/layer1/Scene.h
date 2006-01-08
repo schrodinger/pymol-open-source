@@ -93,6 +93,7 @@ void SceneResetNormal(PyMOLGlobals *G,int lines);
 
 void SceneObjectAdd(PyMOLGlobals *G,CObject *obj);
 void SceneObjectDel(PyMOLGlobals *G,CObject *obj);
+int SceneObjectIsActive(PyMOLGlobals *G,CObject *obj);
 void SceneOriginSet(PyMOLGlobals *G,float *origin,int preserve);
 void SceneOriginGet(PyMOLGlobals *G,float *origin);
 void SceneWindowSphere(PyMOLGlobals *G,float *location,float radius);

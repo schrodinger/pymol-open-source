@@ -45,7 +45,7 @@ time.sleep(3)
 
 cmd.set("cartoon_smooth_loops",0)
 cmd.set("cartoon_ring_mode",3)
-cmd.set("defer_builds_mode",2) 
+cmd.set("defer_builds_mode",3) 
 
 cmd.feedback('disable','symmetry objectmolecule executive','everything')
 # now start
