@@ -6,10 +6,12 @@ Changes up to 0.99
 
     beta33
 
-    * numerous minor PDB reading, threading, and cartoon glitches
-      eliminated during validation phase
+    * fixed SS assignment crash bug on Win32
 
     beta32
+
+    * numerous minor PDB reading, threading, and cartoon glitches
+      eliminated during validation phase
 
     * optimized PDB read performance 
 

@@ -9377,11 +9377,11 @@ float ObjectMoleculeGetAvgHBondVector(ObjectMolecule *I,int atom,
       n++;
       while(1) {
         a2=I->Neighbor[n];
+        if(a2<0) break;
         order = I->Bond[I->Neighbor[n+1]].order;
         if((order==2)||(order==4)) {
           sp2_flag = true;
         }
-        if(a2<0) break;
         n+=2;
         
         if(I->AtomInfo[a2].protons!=1) { /* ignore hydrogens */
