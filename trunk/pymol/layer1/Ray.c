@@ -990,6 +990,25 @@ void RayRenderObjMtl(CRay *I,int width,int height,char **objVLA_ptr,
         */
 
         break;
+      case cPrimSphere:
+	/*	sprintf(buffer,"v %8.6f %8.6f %8.6f\np %d\n",
+                vert[0],vert[1],vert[2]-z_corr,vc+1);
+		UtilConcatVLA(&objVLA,&oc,buffer);*/
+
+	sprintf(buffer,"v %8.6f %8.6f %8.6f\n",
+                vert[0],vert[1],vert[2]-z_corr);
+        UtilConcatVLA(&objVLA,&oc,buffer);
+	sprintf(buffer,"v %8.6f %8.6f %8.6f\n",
+                vert[0],vert[1],vert[2]-z_corr);
+        UtilConcatVLA(&objVLA,&oc,buffer);
+	sprintf(buffer,"v %8.6f %8.6f %8.6f\n",
+                vert[0],vert[1],vert[2]-z_corr);
+        UtilConcatVLA(&objVLA,&oc,buffer);
+        sprintf(buffer,"f %d %d %d\n",
+                vc+1,vc+2,vc+3);
+        UtilConcatVLA(&objVLA,&oc,buffer);
+        vc+=3;
+	break;
       }
     }
   }

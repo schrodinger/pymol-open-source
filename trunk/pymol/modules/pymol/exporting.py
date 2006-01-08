@@ -186,6 +186,12 @@ SEE ALSO
                 format = 'png'
             elif re.search("\.pse$|\.psw$",lc_filename):
                 format = 'pse'
+	    elif re.search("\.obj$",lc_filename):
+		format = 'obj'
+	    elif re.search("\.mtl$",lc_filename):
+		format = 'mtl'
+	    elif re.search("\.wrl$",lc_filename):
+		format = 'wrl'
         else:
             format = str(format)
         filename = cmd.exp_path(filename)
@@ -248,6 +254,27 @@ SEE ALSO
             f=open(filename,"w")
             f.write(tup[0])
             f.write(tup[1])
+            f.flush()
+            f.close()
+            r = DEFAULT_SUCCESS
+	elif format=='obj':
+            tup = cmd.get_mtl_obj()
+            f=open(filename,"w")
+            f.write(tup[1])
+            f.flush()
+            f.close()
+            r = DEFAULT_SUCCESS
+	elif format=='mtl':
+            tup = cmd.get_mtl_obj()
+            f=open(filename,"w")
+            f.write(tup[0])
+            f.flush()
+            f.close()
+            r = DEFAULT_SUCCESS
+	elif format=='wrl':
+            txt = cmd.get_vrml()
+            f=open(filename,"w")
+            f.write(txt)
             f.flush()
             f.close()
             r = DEFAULT_SUCCESS
