@@ -17,19 +17,16 @@ def load():
       r = 0
       list = glob(ent_dir)
       list.sort()
-#      list = [ "pdb/dw" ]
+#      list = [ "pdb/vq" ]
       for dir in list:
          sys.__stdout__.write("\n"+dir)
          sys.__stdout__.flush()
          for file in glob(dir+"/pdb*"):
             name = os.path.split(file)[-1]
             name = string.split(name,'.')[0]
-            cmd.delete("pdb")
-            cmd.load(file,name)
-            cmd.hide("everything",name)
             cmd.disable()
-            cmd.show("cartoon",name)
-            cmd.enable(name)
+            cmd.load(file,name)
+            cmd.as("cartoon",name)
             cmd.refresh()
             cmd.dss(name)
             cmd.refresh()
@@ -48,6 +45,8 @@ time.sleep(3)
 
 cmd.set("cartoon_smooth_loops",0)
 cmd.set("cartoon_ring_mode",3)
+cmd.set("defer_builds_mode",2) 
+
 cmd.feedback('disable','symmetry objectmolecule executive','everything')
 # now start
 load()

@@ -1827,10 +1827,16 @@ void SceneObjectDel(PyMOLGlobals *G,CObject *obj)
 {
   register CScene *I=G->Scene;
   ObjRec *rec = NULL;
+  int defer_builds_mode = SettingGetGlobal_b(G,cSetting_defer_builds_mode);
 
   if(!obj) {
     while(ListIterate(I->Obj,rec,next)) {
       if(rec) {
+	if(defer_builds_mode == 2) { 
+	  /* purge graphics representation when no longer used */
+	  if(rec->obj->fInvalidate) 
+	    rec->obj->fInvalidate(rec->obj,cRepAll,cRepInvPurge,-1);
+	}
         ListDetach(I->Obj,rec,next,ObjRec);
         ListElemFree(rec);
       }
@@ -1840,6 +1846,11 @@ void SceneObjectDel(PyMOLGlobals *G,CObject *obj)
       if(rec->obj==obj)
         break;
     if(rec) {
+      if(defer_builds_mode == 2) { 
+	/* purge graphics representation when no longer used */
+	if(rec->obj->fInvalidate) 
+	  rec->obj->fInvalidate(rec->obj,cRepAll,cRepInvPurge,-1);
+      }
       rec->obj->Enabled=false;
       ListDetach(I->Obj,rec,next,ObjRec);
       ListElemFree(rec);
