@@ -615,6 +615,8 @@ typedef struct _CPyMOL {
   ov_word lex_ray_interior_mode;
   ov_word lex_ray_legacy_lighting;
   ov_word lex_sculpt_auto_center;
+  ov_word lex_pdb_discrete_chains;
+  ov_word lex_pdb_unbond_cations;
 
 } _CPyMOL;
 
@@ -1237,7 +1239,8 @@ static OVstatus PyMOL_InitAPI(CPyMOL *I)
   LEX_SETTING(ray_interior_mode, 476);
   LEX_SETTING(ray_legacy_lighting, 477);
   LEX_SETTING(sculpt_auto_center, 478);
-
+  LEX_SETTING(pdb_discrete_chains, 479);
+  LEX_SETTING(pdb_unbond_cations, 480);
   return_OVstatus_SUCCESS;
 }
 

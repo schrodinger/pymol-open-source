@@ -2708,7 +2708,8 @@ void SettingInitGlobal(PyMOLGlobals *G,int alloc,int reset_gui)
   set_i(I,cSetting_ray_interior_mode, 0);
   set_f(I,cSetting_ray_legacy_lighting, 0.0F);
   set_b(I,cSetting_sculpt_auto_center, 0);
-
+  set_i(I,cSetting_pdb_discrete_chains, -1);
+  set_i(I,cSetting_pdb_unbond_cations, 1);
 }
 
 

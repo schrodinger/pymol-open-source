@@ -1834,6 +1834,18 @@ int AtomInfoMatch(PyMOLGlobals *G,AtomInfoType *at1,AtomInfoType *at2)
   return 0;
 }
 
+int AtomInfoIsFreeCation(PyMOLGlobals *G,AtomInfoType *I) {
+  switch(I->protons) {
+  case cAN_Na:
+  case cAN_K:
+  case cAN_Ca:
+  case cAN_Mg:
+  case cAN_Mn: 
+    return true;
+  }
+  return false;
+}
+
 int AtomInfoGetExpectedValence(PyMOLGlobals *G,AtomInfoType *I) {
   int result=-1; /* negative indicates minimum expected valence (abs)
                 but it could be higher  */
@@ -1953,6 +1965,12 @@ static void set_protons(AtomInfoType *I,char *elem)
       switch(e[1]) {
       case 'G':
       case 'g': I->protons=cAN_Mg; break;
+      }
+      break;
+    case 'N':
+      switch(e[1]) {
+      case 'A':
+      case 'a': I->protons=cAN_Na; break;
       }
       break;
     case 'Z':

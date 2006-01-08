@@ -38,6 +38,8 @@ typedef struct RepCartoon {
 
 #include"ObjectMolecule.h"
 
+#define ESCAPE_MAX 500
+
 void RepCartoonFree(RepCartoon *I);
 
 void RepCartoonFree(RepCartoon *I)
@@ -2957,6 +2959,11 @@ Rep *RepCartoonNew(CoordSet *cs,int state)
     int mem[8];
     int nbr[7];
     int *neighbor;
+    register int escape_count; 
+    register int *atmToIdx = NULL;
+    
+    if(!obj->DiscreteFlag) atmToIdx = cs->AtmToIdx;
+
     ObjectMoleculeUpdateNeighbors(obj);
     neighbor = obj->Neighbor;  
     { /* clear the flags */
@@ -2966,21 +2973,29 @@ Rep *RepCartoonNew(CoordSet *cs,int state)
         ai++;
       }
     }
+    escape_count = ESCAPE_MAX; /* don't get bogged down with structures 
+                                  that have unreasonable connectivity */
     for(ring_i=0;ring_i<n_ring;ring_i++) {
       mem[0] = ring_anchor[ring_i];
       nbr[0]= neighbor[mem[0]]+1;
-      while((mem[1] = neighbor[nbr[0]])>=0) {
+      while(((mem[1] = neighbor[nbr[0]])>=0)&&
+            ((!atmToIdx)||(atmToIdx[mem[0]]>=0))) {
         nbr[1] = neighbor[mem[1]]+1;
-        while((mem[2] = neighbor[nbr[1]])>=0) {
+        while(((mem[2] = neighbor[nbr[1]])>=0)&&
+              ((!atmToIdx)||(atmToIdx[mem[1]]>=0))) {
           if(mem[2]!=mem[0]) {
             nbr[2] = neighbor[mem[2]]+1;
-            while((mem[3] = neighbor[nbr[2]])>=0) {
+            while(((mem[3] = neighbor[nbr[2]])>=0)&&
+                  ((!atmToIdx)||(atmToIdx[mem[2]]>=0))) {
               if(mem[3]!=mem[1]) {
                 nbr[3] = neighbor[mem[3]]+1;
-                while((mem[4] = neighbor[nbr[3]])>=0) {
+                while(((mem[4] = neighbor[nbr[3]])>=0)&&
+                      ((!atmToIdx)||(atmToIdx[mem[3]]>=0))) {
                   if((mem[4]!=mem[2])&&(mem[4]!=mem[1])&&(mem[4]!=mem[0])) {            
                     nbr[4] = neighbor[mem[4]]+1;              
-                    while((mem[5] = neighbor[nbr[4]])>=0) {
+                    while(((mem[5] = neighbor[nbr[4]])>=0)&&
+                          ((!atmToIdx)||(atmToIdx[mem[4]]>=0))) {
+                      if(!(escape_count--)) goto escape;
                       if((mem[5]!=mem[3])&&(mem[5]!=mem[2])&&(mem[5]!=mem[1])) { 
                         if(mem[5]==mem[0]) { /* five-cycle */
                           /*    printf(" 5: %s(%d) %s(%d) %s(%d) %s(%d) %s(%d)\n",
@@ -2997,7 +3012,8 @@ Rep *RepCartoonNew(CoordSet *cs,int state)
                         }
                         
                         nbr[5] = neighbor[mem[5]]+1;              
-                        while((mem[6] = neighbor[nbr[5]])>=0) {
+                        while(((mem[6] = neighbor[nbr[5]])>=0)&&
+                              ((!atmToIdx)||(atmToIdx[mem[5]]>=0))) {
                           if((mem[6]!=mem[4])&&(mem[6]!=mem[3])&&(mem[6]!=mem[2])&&(mem[6]!=mem[1])) {
                             if(mem[6]==mem[0]) {  /* six-cycle */
                               /* printf(" 6: %s %s %s %s %s %s\n",
@@ -3013,7 +3029,8 @@ Rep *RepCartoonNew(CoordSet *cs,int state)
                                       cartoon_side_chain_helper, nuc_flag, na_mode, ring_alpha, alpha);
                             }
                             nbr[6] = neighbor[mem[6]]+1;              
-                            while((mem[7] = neighbor[nbr[6]])>=0) {
+                            while(((mem[7] = neighbor[nbr[6]])>=0)&&
+                                  ((!atmToIdx)||(atmToIdx[mem[6]]>=0))) {
                               if((mem[7]!=mem[5])&&(mem[7]!=mem[4])&&(mem[7]!=mem[3])&&
                                  (mem[7]!=mem[2])&&(mem[7]!=mem[1])) { 
                                 if(mem[7]==mem[0]) {
@@ -3041,9 +3058,11 @@ Rep *RepCartoonNew(CoordSet *cs,int state)
         }
         nbr[0]+=2;
       }
+    escape:
+      escape_count = ESCAPE_MAX; /* don't get bogged down with structures 
+                                    that have unreasonable connectivity */
     }
   }
-
   CGOStop(I->ray);
   I->std = CGOSimplify(I->ray,0);
   FreeP(dv);

@@ -181,6 +181,7 @@ void AtomInfoPrimeColors(PyMOLGlobals *G);
 void AtomInfoAssignColors(PyMOLGlobals *G,AtomInfoType *at1);
 int AtomInfoGetColor(PyMOLGlobals *G,AtomInfoType *at1);
 int AtomInfoGetExpectedValence(PyMOLGlobals *G,AtomInfoType *I);
+int AtomInfoIsFreeCation(PyMOLGlobals *G,AtomInfoType *I);
 PyObject *AtomInfoAsPyList(PyMOLGlobals *G,AtomInfoType *at);
 int AtomInfoFromPyList(PyMOLGlobals *G,AtomInfoType *at,PyObject *list);
 int AtomInfoMatch(PyMOLGlobals *G,AtomInfoType *at1,AtomInfoType *at2);
