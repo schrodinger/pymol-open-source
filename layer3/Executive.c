@@ -1795,7 +1795,6 @@ int  ExecutiveAssignSS(PyMOLGlobals *G,char *target,int state,char *context,int 
       sele1 = SelectorIndexByName(G,context);
     }
     if(sele1>=0) {
-      printf("%d %d\n",sele0,sele1);
       ok =  SelectorAssignSS(G,sele0,sele1,state,preserve,quiet);
     }
   }

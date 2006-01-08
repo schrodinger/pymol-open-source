@@ -859,7 +859,8 @@ G3dPrimitive *RayRenderG3d(CRay *I,int width, int height,
   return jprim;
 }
 void RayRenderVRML2(CRay *I,int width,int height,
-                    char **vla_ptr,float front,float back,float fov, float angle)
+                    char **vla_ptr,float front,float back,
+		    float fov, float angle,float z_corr)
 {
   char *vla = *vla_ptr;
   int cc = 0; /* character count */
@@ -880,7 +881,6 @@ void RayRenderVRML2(CRay *I,int width,int height,
     int a;
     CPrimitive *prim;
     float *vert;
-    float z_corr = -(front+back)/2;
     CBasis *base = I->Basis+1;
 
     UtilConcatVLA(&vla,&cc,"Separator {\n");
@@ -931,7 +931,7 @@ void RayRenderVRML2(CRay *I,int width,int height,
 /*========================================================================*/
 void RayRenderObjMtl(CRay *I,int width,int height,char **objVLA_ptr,
                   char **mtlVLA_ptr,float front,float back,float fov,
-                  float angle)
+		     float angle,float z_corr)
 {
   char *objVLA = *objVLA_ptr; 
   char *mtlVLA = *mtlVLA_ptr; 
@@ -954,17 +954,26 @@ void RayRenderObjMtl(CRay *I,int width,int height,char **objVLA_ptr,
     for(a=0;a<I->NPrimitive;a++) {
       prim = I->Primitive+a;
       vert = base->Vertex+3*(prim->vert);
-      norm = base->Normal+3*base->Vert2Normal[prim->vert];
+      norm = base->Normal+3*base->Vert2Normal[prim->vert]+3;
       switch(prim->type) {
       case cPrimTriangle:
-        sprintf(buffer,"v %8.6f %8.6f %8.6f\nvn %8.6f %8.6f %8.6f\n",
-                vert[0],vert[1],vert[2],norm[0],norm[1],norm[2]);
+	sprintf(buffer,"v %8.6f %8.6f %8.6f\n",
+                vert[0],vert[1],vert[2]-z_corr);
         UtilConcatVLA(&objVLA,&oc,buffer);
-        sprintf(buffer,"v %8.6f %8.6f %8.6f\nvn %8.6f %8.6f %8.6f\n",
-                vert[3],vert[4],vert[5],norm[3],norm[4],norm[5]);
+	sprintf(buffer,"v %8.6f %8.6f %8.6f\n",
+                vert[3],vert[4],vert[5]-z_corr);
         UtilConcatVLA(&objVLA,&oc,buffer);
-        sprintf(buffer,"v %8.6f %8.6f %8.6f\nvn %8.6f %8.6f %8.6f\n",
-                vert[6],vert[7],vert[8],norm[6],norm[7],norm[8]);
+	sprintf(buffer,"v %8.6f %8.6f %8.6f\n",
+                vert[6],vert[7],vert[8]-z_corr);
+        UtilConcatVLA(&objVLA,&oc,buffer);
+        sprintf(buffer,"vn %8.6f %8.6f %8.6f\n",
+		norm[0],norm[1],norm[2]);
+        UtilConcatVLA(&objVLA,&oc,buffer);
+        sprintf(buffer,"vn %8.6f %8.6f %8.6f\n",
+		norm[3],norm[4],norm[5]);
+        UtilConcatVLA(&objVLA,&oc,buffer);
+        sprintf(buffer,"vn %8.6f %8.6f %8.6f\n",
+		norm[6],norm[7],norm[8]);
         UtilConcatVLA(&objVLA,&oc,buffer);
         sprintf(buffer,"f %d//%d %d//%d %d//%d\n",
                 vc+1,nc+1,vc+2,nc+2,vc+3,nc+3);

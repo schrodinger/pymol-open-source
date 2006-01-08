@@ -4928,7 +4928,7 @@ void SceneRay(PyMOLGlobals *G,
       {
         char *vla = VLACalloc(char,100000);
         RayRenderVRML2(ray,ray_width,ray_height,&vla,
-                      I->FrontSafe,I->BackSafe,fov,angle);
+		       I->FrontSafe,I->BackSafe,fov,angle,I->Pos[2]);
         *charVLA_ptr=vla;
       }
       break;
@@ -4937,7 +4937,7 @@ void SceneRay(PyMOLGlobals *G,
         char *objVLA=VLACalloc(char,100000); 
         char *mtlVLA=VLACalloc(char,1000);
         RayRenderObjMtl(ray,ray_width,ray_height,&objVLA,&mtlVLA,
-                     I->FrontSafe,I->BackSafe,fov,angle);
+			I->FrontSafe,I->BackSafe,fov,angle,I->Pos[2]);
         *headerVLA_ptr=objVLA;
         *charVLA_ptr=mtlVLA;
       }
