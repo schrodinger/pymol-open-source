@@ -8,6 +8,7 @@ import threading
 import time
 from pymol import cmd
 import sys, os, os.path
+import string
 
 ent_dir = "pdb/*"
 
@@ -21,7 +22,8 @@ def load():
          sys.__stdout__.write("\n"+dir)
          sys.__stdout__.flush()
          for file in glob(dir+"/pdb*"):
-            name = os.path.split(file)[-1][:-4]
+            name = os.path.split(file)[-1]
+            name = string.split(name,'.')[0]
             cmd.delete("pdb")
             cmd.load(file,name)
             cmd.hide("everything",name)
