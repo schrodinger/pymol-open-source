@@ -512,6 +512,8 @@ if __name__=='pymol.setting':
         ray_interior_mode         = (476, '')
         ray_legacy_lighting       = (477, '')
         sculpt_auto_center        = (478, '')
+        pdb_discrete_chains       = (479, '')
+        pdb_unbond_cations        = (480, '')
         
     setting_sc = Shortcut(SettingIndex.__dict__.keys())
 
