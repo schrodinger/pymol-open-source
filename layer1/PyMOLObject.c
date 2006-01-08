@@ -271,10 +271,14 @@ int ObjectView(CObject *I,int action,int first,
 void ObjectAdjustStateRebuildRange(CObject *I,int *start, int *stop)
 {
   /* on entry, start and stop should hold the valid range for the object */
-
+  int defer_builds_mode = SettingGet_i(I->G,NULL,I->Setting,cSetting_defer_builds_mode);
+  if(defer_builds_mode==3) {
+    if(SceneObjectIsActive(I->G,I))
+      defer_builds_mode=2;
+  }
   switch(SettingGet_i(I->G,NULL,I->Setting,cSetting_defer_builds_mode)) {
   case 1: /* defer geometry builds until needed */
-  case 2: /* defer and destroy continuously for maximum memory conservation */
+  case 2: /* defer and destroy continuously for increase memory conservation */
     {
       int min = *start;
       int max = *stop;
@@ -287,6 +291,8 @@ void ObjectAdjustStateRebuildRange(CObject *I,int *start, int *stop)
       if(*stop >max)  *stop  = max;
     }
     break;
+  case 3: /* object not active, so do not rebuild anything */
+    *stop = *start;
     break;
   }
 }

@@ -1823,6 +1823,18 @@ void SceneObjectAdd(PyMOLGlobals *G,CObject *obj)
   SceneChanged(G);
 }
 /*========================================================================*/
+int SceneObjectIsActive(PyMOLGlobals *G,CObject *obj)
+{
+  int result=false;
+  register CScene *I=G->Scene;
+  ObjRec *rec = NULL;
+  while(ListIterate(I->Obj,rec,next))
+    if(rec->obj==obj) {
+      result=true;
+      break;
+    }
+  return result;
+}
 void SceneObjectDel(PyMOLGlobals *G,CObject *obj)
 {
   register CScene *I=G->Scene;
@@ -1832,7 +1844,7 @@ void SceneObjectDel(PyMOLGlobals *G,CObject *obj)
   if(!obj) {
     while(ListIterate(I->Obj,rec,next)) {
       if(rec) {
-	if(defer_builds_mode == 2) { 
+	if(defer_builds_mode == 3) { 
 	  /* purge graphics representation when no longer used */
 	  if(rec->obj->fInvalidate) 
 	    rec->obj->fInvalidate(rec->obj,cRepAll,cRepInvPurge,-1);
@@ -1846,7 +1858,7 @@ void SceneObjectDel(PyMOLGlobals *G,CObject *obj)
       if(rec->obj==obj)
         break;
     if(rec) {
-      if(defer_builds_mode == 2) { 
+      if(defer_builds_mode == 3) { 
 	/* purge graphics representation when no longer used */
 	if(rec->obj->fInvalidate) 
 	  rec->obj->fInvalidate(rec->obj,cRepAll,cRepInvPurge,-1);
@@ -5093,7 +5105,7 @@ void SceneUpdate(PyMOLGlobals *G)
     }
     PyMOL_SetBusy(G->PyMOL,false); /*  race condition -- may need to be fixed */
 	 I->ChangedFlag = false;
-    if((defer_builds_mode == 2) && 
+    if((defer_builds_mode >= 2) && 
        (cur_state != I->LastStateBuilt)) { 
       /* purge graphics representation when no longer used */
       if(I->LastStateBuilt>=0) {
