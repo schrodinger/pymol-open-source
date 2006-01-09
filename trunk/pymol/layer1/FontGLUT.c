@@ -301,6 +301,7 @@ static char *FontGLUTRenderRay(CRay *ray, CFontGLUT *I,char *st,float size, floa
         z_indent-= _1;
         if(z_indent<_0) z_indent = _0;
       }
+      v = TextGetPos(G);
       scale3f(xn, x_indent, x_adj);
       scale3f(yn, y_indent, y_adj);
       subtract3f(v,x_adj,pos);
