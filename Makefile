@@ -92,11 +92,11 @@ unix-mindep: semistatic
 	cp -r examples $(MDP)
 	cp -r scripts $(MDP)
 	cp -r pymol.exe $(MDP)
-	cp -r ext/lib/python2.3 $(MDP)/ext/lib
+	cp -r ext/lib/python2.4 $(MDP)/ext/lib
 	cp -r ext/lib/tcl8.4 $(MDP)/ext/lib
 	cp -r ext/lib/tk8.4 $(MDP)/ext/lib
-	/bin/rm -f $(MDP)/ext/lib/python2.3/config/libpython2.3.a
-	/bin/rm -rf $(MDP)/ext/lib/python2.3/test
+	/bin/rm -f $(MDP)/ext/lib/python2.4/config/libpython2.4.a
+	/bin/rm -rf $(MDP)/ext/lib/python2.4/test
 	cp LICENSE $(MDP)
 	cp README $(MDP)
 	cp setup/INSTALL.unix-mindep $(MDP)/INSTALL

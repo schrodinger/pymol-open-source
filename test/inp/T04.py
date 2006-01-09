@@ -17,6 +17,7 @@ def turns():
    while 1:
       time.sleep(random.random()*0.02)
       cmd.turn('x',random.random()*10-5)
+      cmd.refresh()
       time.sleep(random.random()*0.02)
       cmd.turn('y',random.random()*10-5)
       time.sleep(random.random()*0.02)
