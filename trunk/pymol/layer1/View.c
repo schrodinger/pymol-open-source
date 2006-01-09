@@ -316,7 +316,7 @@ int ViewElemInterpolate(CViewElem *first,CViewElem *last,
   Matrix53f rot,imat;
   int a;
   float tVector[3],tCenter[3],tDir[3];
-  float tLen;
+  float tLen=0.0F;
   float bisect[3],v2[3];
   float translate_angle=0.0F;
   float pivot[3] = {0.0F,0.0F,0.0F};
