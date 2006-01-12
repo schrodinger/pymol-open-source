@@ -67,7 +67,7 @@ int SymmetryFromPyList(CSymmetry *I,PyObject *list)
   if(ok) ok = CrystalFromPyList(I->Crystal,PyList_GetItem(list,0));
   if(ok) ok = PConvPyStrToStr(PyList_GetItem(list,1),I->SpaceGroup,sizeof(WordType));
    if(ok) {
-    ok = SymmetryAttemptGeneration(I,true,true);
+    ok = SymmetryAttemptGeneration(I,true);
   }
   /* TO SUPPORT BACKWARDS COMPATIBILITY...
    Always check ll when adding new PyList_GetItem's */
@@ -103,7 +103,7 @@ static void SymmetryDump44f(PyMOLGlobals *G,float *m,char *prefix)
   }
 }
 
-int SymmetryAttemptGeneration(CSymmetry *I,int blocked,int quiet)
+int SymmetryAttemptGeneration(CSymmetry *I,int quiet)
 {
   int ok = false;
 #ifndef _PYMOL_NOPY
@@ -118,8 +118,8 @@ int SymmetryAttemptGeneration(CSymmetry *I,int blocked,int quiet)
   }
   if(!I->SpaceGroup[0]) {
     ErrMessage(I->G,"Symmetry","Missing space group symbol");
-  } else {
-    blocked = PAutoBlock();
+  } else if(P_xray) {
+	int blocked = PAutoBlock();
 	mats = PyObject_CallMethod(P_xray,"sg_sym_to_mat_list","s",I->SpaceGroup);
     if(mats&&(mats!=Py_None)) {
       l = PyList_Size(mats);

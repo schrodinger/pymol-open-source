@@ -2970,7 +2970,7 @@ int ExecutiveSetCrystal(PyMOLGlobals *G,char *sele,float a,float b,float c,
           symmetry->Crystal->Angle[1]=beta;
           symmetry->Crystal->Angle[2]=gamma;
           UtilNCopy(symmetry->SpaceGroup,sgroup,sizeof(WordType));
-          SymmetryAttemptGeneration(symmetry,false,false);
+          SymmetryAttemptGeneration(symmetry,false);
         }
         objMol = (ObjectMolecule*)obj;
         if(symmetry) {

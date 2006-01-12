@@ -33,7 +33,7 @@ typedef struct {
 
 } CSymmetry;
 
-int SymmetryAttemptGeneration(CSymmetry *I,int blocked,int quiet);
+int SymmetryAttemptGeneration(CSymmetry *I,int quiet);
 void SymmetryFree(CSymmetry *I);
 CSymmetry *SymmetryNew(PyMOLGlobals *G);
 void SymmetryUpdate(CSymmetry *I);
