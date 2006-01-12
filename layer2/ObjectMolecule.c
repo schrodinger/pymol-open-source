@@ -1799,7 +1799,7 @@ ObjectMolecule *ObjectMoleculeReadTOPStr(PyMOLGlobals *G,ObjectMolecule *I,char 
     if(isNew) I->NBond = ObjectMoleculeConnect(I,&I->Bond,I->AtomInfo,cset,false);
     if(cset->Symmetry&&(!I->Symmetry)) {
       I->Symmetry=SymmetryCopy(cset->Symmetry);
-      SymmetryAttemptGeneration(I->Symmetry,false,false);
+      SymmetryAttemptGeneration(I->Symmetry,false);
     }
 
     if(I->CSTmpl)
@@ -2212,7 +2212,7 @@ ObjectMolecule *ObjectMoleculeReadPMO(PyMOLGlobals *G,ObjectMolecule *I,CRaw *pm
 
       if(cset->Symmetry&&(!I->Symmetry)) {
         I->Symmetry=SymmetryCopy(cset->Symmetry);
-        SymmetryAttemptGeneration(I->Symmetry,false,false);
+        SymmetryAttemptGeneration(I->Symmetry,false);
       }
       SceneCountFrames(G);
       ObjectMoleculeExtendIndices(I);
@@ -3028,7 +3028,7 @@ ObjectMolecule *ObjectMoleculeReadXYZStr(PyMOLGlobals *G,ObjectMolecule *I,
     if(isNew) I->NBond = ObjectMoleculeConnect(I,&I->Bond,I->AtomInfo,cset,!have_bonds);
     if(cset->Symmetry&&(!I->Symmetry)) {
       I->Symmetry=SymmetryCopy(cset->Symmetry);
-      SymmetryAttemptGeneration(I->Symmetry,false,false);
+      SymmetryAttemptGeneration(I->Symmetry,false);
     }
 
     SceneCountFrames(G);
@@ -5980,7 +5980,7 @@ ObjectMolecule *ObjectMoleculeLoadChemPyModel(PyMOLGlobals *G,
     if(isNew) I->NBond = ObjectMoleculeConnect(I,&I->Bond,I->AtomInfo,cset,false);
     if(cset->Symmetry&&(!I->Symmetry)) {
       I->Symmetry=SymmetryCopy(cset->Symmetry);
-      SymmetryAttemptGeneration(I->Symmetry,false,false);
+      SymmetryAttemptGeneration(I->Symmetry,false);
     }
     SceneCountFrames(G);
     ObjectMoleculeExtendIndices(I);
@@ -9960,7 +9960,7 @@ ObjectMolecule *ObjectMoleculeReadPDBStr(PyMOLGlobals *G,ObjectMolecule *I,char 
       if(isNew) I->NBond = ObjectMoleculeConnect(I,&I->Bond,I->AtomInfo,cset,true);
       if(cset->Symmetry&&(!I->Symmetry)) {
         I->Symmetry=SymmetryCopy(cset->Symmetry);
-        if(SymmetryAttemptGeneration(I->Symmetry,false,quiet)) {
+        if(SymmetryAttemptGeneration(I->Symmetry,quiet)) {
           /* check scale records */
           if(pdb_info &&
              SettingGetGlobal_b(G,cSetting_pdb_insure_orthogonal) &&
