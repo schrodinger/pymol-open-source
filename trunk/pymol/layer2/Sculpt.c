@@ -241,6 +241,95 @@ CSculpt *SculptNew(PyMOLGlobals *G)
   return(I);
 }
 
+typedef struct {
+  PyMOLGlobals *G;
+  CShaker *Shaker;
+  AtomInfoType *ai;
+  int *atm2idx;
+  CoordSet *cSet, **discCSet;
+  float *coord;
+  int *neighbor;
+  int atom0;
+  int min,max,mode;
+} ATLCall;
+
+static void add_triangle_limits(ATLCall *ATL, int prev, int cur, float dist, int count)
+{
+  register ATLCall *I = ATL;
+  int n0;
+  int n1;
+  float dist_limit;
+  int atom1;
+
+  n0 = I->neighbor[cur];  
+  if((count>=I->min) && (count>1)) {
+    register int add_flag = false;
+    switch(I->mode) {
+    case 0:
+    default:
+      add_flag = 1; /* all */
+      break;
+    case 1:
+      add_flag = (count && !(count&1)); /* evens */
+      break;
+    case 2:
+      add_flag = ( (count & (count-1))==0); /* powers of two */
+      break;
+    }
+    if(add_flag) {
+      n1 = n0+1;
+      
+      /* first mark and register */
+      while( (atom1 = I->neighbor[n1]) >=0 ) {
+        if(!I->ai[atom1].temp1) {
+          register int ref = prev;
+          if(count&0x1) { /* odd */
+            ref = cur;
+          }
+          if((!I->discCSet)||((I->cSet==I->discCSet[ref])&&(I->cSet==I->discCSet[atom1]))) {
+            register int ia = I->atm2idx[ref];
+            register int ib = I->atm2idx[atom1];
+            if((ia>=0)&&(ib>=0)) {
+              register float *va = I->coord + 3*ia;
+              register float *vb = I->coord + 3*ib;
+              dist_limit = dist + diff3f(va,vb);
+              ShakerAddDistCon(I->Shaker,I->atom0,atom1,dist_limit,cShakerDistLimit);
+            }
+          }
+          I->ai[atom1].temp1 = 1;
+        }
+        n1+=2;
+      }
+    }
+  }
+
+  if(count<=I->max) {
+    /* then recurse */
+    n1 = n0+1;
+    while( (atom1 = I->neighbor[n1]) >=0 ) {
+      if(I->ai[atom1].temp1<2) {
+        if(!(count&0x1)) { /* accumulate distances between even atoms only */
+          if((!I->discCSet)||((I->cSet==I->discCSet[prev])&&(I->cSet==I->discCSet[atom1]))) {
+            register int ia = I->atm2idx[prev];
+            register int ib = I->atm2idx[atom1];
+            if((ia>=0)&&(ib>=0)) {
+              register float *va = I->coord + 3*ia;
+              register float *vb = I->coord + 3*ib;
+              dist_limit = dist + diff3f(va,vb);
+            }
+          }
+          I->ai[atom1].temp1 = 2;
+        } else {
+          dist_limit = dist;
+        }
+        I->ai[atom1].temp1=2;
+        add_triangle_limits(I, cur, atom1, dist_limit, count+1);
+      }
+      n1+=2;
+    }
+  }
+}
+
 void SculptMeasureObject(CSculpt *I,ObjectMolecule *obj,int state)
 {
   PyMOLGlobals *G=I->G;
@@ -499,7 +588,49 @@ void SculptMeasureObject(CSculpt *I,ObjectMolecule *obj,int state)
                 }
               b++;
             }
-          
+
+          /* triangle relationships */
+          {
+            ai1 = obj->AtomInfo;
+            ATLCall atl;
+
+            atl.G = I->G;
+            atl.Shaker = I->Shaker;
+            atl.ai = obj->AtomInfo;
+            atl.cSet = cs;
+            if(obj->DiscreteFlag) {
+              atl.atm2idx = obj->DiscreteAtmToIdx;
+              atl.discCSet = obj->DiscreteCSet;
+            } else {
+              atl.atm2idx = cs->AtmToIdx;
+              atl.discCSet = NULL;
+            }
+            atl.coord = cs->Coord;
+            atl.neighbor = obj->Neighbor;
+            atl.min =  SettingGet_i(G,cs->Setting,obj->Obj.Setting,cSetting_sculpt_tri_min);
+            atl.max = SettingGet_i(G,cs->Setting,obj->Obj.Setting,cSetting_sculpt_tri_max);
+            atl.mode = SettingGet_i(G,cs->Setting,obj->Obj.Setting,cSetting_sculpt_tri_mode); 
+
+            for(a=0;a<obj->NAtom;a++) {
+              
+              atl.atom0 = a;
+
+              /* clear the flag -- TODO replace with array */
+              {
+                int aa;
+                ai = obj->AtomInfo;
+                for(aa=0;aa<obj->NAtom;aa++) {
+                  ai->temp1 = false;
+                  ai++;
+                }
+              }
+              
+              ai1->temp1 = true;
+              add_triangle_limits(&atl, a, a, 0.0F, 1);
+              ai1++;
+            }
+          }
+
           /* now pick up those 1-3 interations */
           
           /* b1-b0-b2 */
@@ -1155,6 +1286,7 @@ float SculptIterateObject(CSculpt *I,ObjectMolecule *obj,
   float bad_color[3] = { 1.0, 0.2, 0.2};
   int vdw_vis_mode;
   float vdw_vis_min=0.0F,vdw_vis_mid=0.0F,vdw_vis_max=0.0F;
+  float tri_sc, tri_wt;
 
   PRINTFD(G,FB_Sculpt)
     " SculptIterateObject-Debug: entered state=%d n_cycle=%d\n",state,n_cycle
@@ -1185,13 +1317,16 @@ float SculptIterateObject(CSculpt *I,ObjectMolecule *obj,
     pyra_wt =  SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_sculpt_pyra_weight);
     plan_wt =  SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_sculpt_plan_weight);
     line_wt =  SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_sculpt_line_weight);
+    tri_wt =  SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_sculpt_tri_weight);
+    tri_sc =  SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_sculpt_tri_scale);
+
     mask = SettingGet_i(G,cs->Setting,obj->Obj.Setting,cSetting_sculpt_field_mask);
     hb_overlap = SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_sculpt_hb_overlap);
     hb_overlap_base = SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_sculpt_hb_overlap_base);
     tors_tole = SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_sculpt_tors_tolerance);
     tors_wt = SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_sculpt_tors_weight);
     vdw_vis_mode = SettingGet_i(G,cs->Setting,obj->Obj.Setting,cSetting_sculpt_vdw_vis_mode);
-
+    
     if(vdw_vis_mode) {
       vdw_vis_min =  SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_sculpt_vdw_vis_min);
       vdw_vis_mid =  SettingGet_f(G,cs->Setting,obj->Obj.Setting,cSetting_sculpt_vdw_vis_mid);
@@ -1293,8 +1428,8 @@ float SculptIterateObject(CSculpt *I,ObjectMolecule *obj,
             wt = angl_wt;
             break;
           case cShakerDistLimit:
-            eval_flag = true;
-            wt = 2.0F;
+            eval_flag = cSculptTri & mask;
+            wt = tri_wt;
             break;
           default:
             eval_flag = false;
@@ -1316,7 +1451,7 @@ float SculptIterateObject(CSculpt *I,ObjectMolecule *obj,
                   total_strain+=ShakerDoDist(sdc->targ,v1,v2,disp+b1*3,disp+b2*3,wt);
                   total_count++;
                 } else {
-                  total_strain+=ShakerDoDistLimit(sdc->targ,v1,v2,disp+b1*3,disp+b2*3,wt);
+                  total_strain+=ShakerDoDistLimit(sdc->targ*tri_sc,v1,v2,disp+b1*3,disp+b2*3,wt);
                   total_count++;
                 }
               }
