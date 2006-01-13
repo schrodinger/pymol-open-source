@@ -288,15 +288,18 @@ static void add_triangle_limits(ATLCall *ATL, int prev, int cur, float dist, int
   if((count>=I->min) && (count>1)) {
     register int add_flag = false;
     switch(I->mode) {
-    case 0:
-    default:
+    case 1: 
       add_flag = 1; /* all */
       break;
-    case 1:
+    case 2:
       add_flag = (count && !(count&1)); /* evens */
       break;
-    case 2:
+    case 3:
       add_flag = ( (count & (count-1))==0); /* powers of two */
+      break;
+    case 0:
+    default:
+      add_flag = (!I->ai[I->atom0].hydrogen); /* all heavies */
       break;
     }
     if(add_flag) {
@@ -309,7 +312,9 @@ static void add_triangle_limits(ATLCall *ATL, int prev, int cur, float dist, int
           if(count&0x1) { /* odd */
             ref = cur;
           }
-          if((!I->discCSet)||((I->cSet==I->discCSet[ref])&&(I->cSet==I->discCSet[atom1]))) {
+          if(((!I->discCSet)||
+	      ((I->cSet==I->discCSet[ref])&&(I->cSet==I->discCSet[atom1]))) &&
+	     ((I->mode!=0)||(!I->ai[atom1].hydrogen))) {
             register int ia = I->atm2idx[ref];
             register int ib = I->atm2idx[atom1];
             if((ia>=0)&&(ib>=0)) {
