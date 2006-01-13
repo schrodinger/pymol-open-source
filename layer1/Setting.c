@@ -1995,7 +1995,7 @@ void SettingInitGlobal(PyMOLGlobals *G,int alloc,int reset_gui)
 
   set_f(I,cSetting_dash_gap, 0.35F);
 
-  set_b(I,cSetting_auto_zoom, 1);
+  set_i(I,cSetting_auto_zoom, G->Option->zoom_mode);
 
   set_i(I,cSetting_overlay, 0);
 
