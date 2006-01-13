@@ -50,7 +50,9 @@ struct _CPyMOLOptions {
     full_screen,
     sphere_mode,
 	stereo_capable,
-    passive_stereo; /* for informing PyMOL as to the capabilities of the context */
+    passive_stereo, /* for informing PyMOL as to the capabilities of the context */
+    zoom_mode;
+  
   /* WARNING: for the sake of forward compability, never delete or
      move any fields in the above ...initialization struct in PyMOL.c */
 

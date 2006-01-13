@@ -2085,6 +2085,7 @@ const static CPyMOLOptions Defaults = {
   -1, /* sphere mode */
   0, /* stereo capable */
   0, /* passive stereo */
+  -1, /* zoom mode */
 };
 
 CPyMOLOptions *PyMOLOptions_New(void)

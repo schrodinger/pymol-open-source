@@ -63,6 +63,7 @@ if __name__=='pymol.invocation':
     options.sphere_mode = -1
     options.stereo_capable = 0
     options.passive_stereo = 0
+    options.zoom_mode = -1
     
     if sys.platform[0:4] == 'irix':
         options.win_py = 240
@@ -129,6 +130,7 @@ if __name__=='pymol.invocation':
         global options
         once_dict = {}
         options.deferred = []
+        final_actions = []
         loaded_something = 0
         # append user settings file as an option
         options.deferred.extend(get_user_config())
@@ -234,6 +236,10 @@ if __name__=='pymol.invocation':
                     options.sphere_mode = int(av.pop())
                 if "z" in a:
                     options.window_visible = 0
+                if "Z" in a:
+                    options.zoom_mode = int(av.pop())
+                    if options.zoom_mode==5:
+                        final_actions.append("_do__ zoom")
                 if "d" in a:
                     options.deferred.append(
                         "_do_%s"%string.replace(av.pop(),'%',' '))
@@ -313,5 +319,7 @@ if __name__=='pymol.invocation':
                 loaded_something = 1
         if loaded_something and (options.after_load_script!=""):
             options.deferred.append(options.after_load_script)
+        options.deferred.extend(final_actions)
         if options.show_splash and not options.no_gui:
             options.deferred.insert(0,"_do__ cmd.splash(1)")
+        

@@ -8308,6 +8308,22 @@ char *ExecutiveFindBestNameMatch(PyMOLGlobals *G,char *name)
   return(result);
 }
 /*========================================================================*/
+static int count_objects(PyMOLGlobals *G,int public_only)
+{
+  int count = 0;
+  CExecutive *I = G->Executive;
+  SpecRec *rec = NULL;
+  while(ListIterate(I->Spec,rec,next)) {
+    if(rec->type==cExecObject) {
+      if(!public_only)
+        count++;
+      else if(rec->obj->Name[0]!='_')
+        count++;
+    }
+  }
+  return count;
+}
+
 static SpecRec *ExecutiveFindSpec(PyMOLGlobals *G,char *name)
 {
   register CExecutive *I = G->Executive;
@@ -10127,6 +10143,9 @@ void ExecutiveDoZoom(PyMOLGlobals *G,CObject *obj,int is_new, int zoom,int quiet
                2 = zoom always, 3 = zoom current, 4 = zoom all */
     if(zoom<0) {
       zoom = SettingGetGlobal_i(G,cSetting_auto_zoom);
+      if(zoom<0) {
+        zoom = 1;
+      }
     } 
     switch(zoom) {
     case 1: /* zoom when new */
@@ -10141,6 +10160,10 @@ void ExecutiveDoZoom(PyMOLGlobals *G,CObject *obj,int is_new, int zoom,int quiet
       break;
     case 4: /* zoom all objects */
       ExecutiveWindowZoom(G,cKeywordAll,0.0,-1,0,0,quiet);        
+      break;
+    case 5: /* zoom first object only */
+      if(count_objects(G,true)==1)
+        ExecutiveWindowZoom(G,obj->Name,0.0,-1,0,0,quiet); /* (all states) */ 
       break;
     }
   }

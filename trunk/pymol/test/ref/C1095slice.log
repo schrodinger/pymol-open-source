@@ -1,5 +1,5 @@
 PyMOL>set auto_zoom,0
- Setting: auto_zoom set to off.
+ Setting: auto_zoom set to 0.
 PyMOL>fragment phe
  Executive: object "phe" created.
 PyMOL>map_new pot,coulomb,0.5,phe,5
