@@ -70,7 +70,7 @@ __inline__
 #endif
 static float ShakerDoDist(float target,float *v0,float *v1,float *d0to1,float *d1to0,float wt)
 {
-  register float d[3],push[3];
+  float d[3],push[3];
   register float len,dev,dev_2,sc,result;
 
   subtract3f(v0,v1,d);
@@ -227,7 +227,7 @@ __inline__
 #endif
 static float ShakerDoDistLimit(float target,float *v0,float *v1,float *d0to1,float *d1to0,float wt)
 {
-  register float d[3],push[3];
+  float d[3],push[3];
   register float len,dev,dev_2,sc;
 
   subtract3f(v0,v1,d);
@@ -336,6 +336,7 @@ static void add_triangle_limits(ATLCall *ATL, int prev, int cur, float dist, int
     n1 = n0+1;
     while( (atom1 = I->neighbor[n1]) >=0 ) {
       if(I->ai[atom1].temp1<2) {
+        dist_limit = dist;
         if(!(count&0x1)) { /* accumulate distances between even atoms only */
           if((!I->discCSet)||((I->cSet==I->discCSet[prev])&&(I->cSet==I->discCSet[atom1]))) {
             register int ia = I->atm2idx[prev];
@@ -343,12 +344,10 @@ static void add_triangle_limits(ATLCall *ATL, int prev, int cur, float dist, int
             if((ia>=0)&&(ib>=0)) {
               register float *va = I->coord + 3*ia;
               register float *vb = I->coord + 3*ib;
-              dist_limit = dist + diff3f(va,vb);
+              dist_limit += diff3f(va,vb);
             }
           }
           I->ai[atom1].temp1 = 2;
-        } else {
-          dist_limit = dist;
         }
         I->ai[atom1].temp1=2;
         add_triangle_limits(I, cur, atom1, dist_limit, count+1);
@@ -619,8 +618,8 @@ void SculptMeasureObject(CSculpt *I,ObjectMolecule *obj,int state)
 
           /* triangle relationships */
           {
-            ai1 = obj->AtomInfo;
             ATLCall atl;
+            ai1 = obj->AtomInfo;
 
             atl.G = I->G;
             atl.Shaker = I->Shaker;
