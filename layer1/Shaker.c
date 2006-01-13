@@ -93,23 +93,12 @@ float ShakerDoDistLimit(float target,float *v0,float *v1,float *d0to1,float *d1t
   subtract3f(v0,v1,d);
   len = (float)length3f(d);
   dev = target-len;
-  if(dev<0.0F) {
+  if((dev<0.0F)&&(len>R_SMALL8)) {
     dev_2 = wt*dev/2.0F;
-    if(len>R_SMALL8) { /* nonoverlapping */
-      sc = dev_2/len;
-      scale3f(d,sc,push);
-      add3f(push,d0to1,d0to1);
-      subtract3f(d1to0,push,d1to0);
-    } else { /* overlapping, so just push in a random direction */
-      float rd[3];
-      get_random3f(rd);
-      d0to1[0]-=rd[0]*dev_2;
-      d1to0[0]+=rd[0]*dev_2;
-      d0to1[1]-=rd[1]*dev_2;
-      d1to0[1]+=rd[1]*dev_2;
-      d0to1[2]-=rd[2]*dev_2;
-      d1to0[2]+=rd[2]*dev_2;
-    }
+    sc = dev_2/len;
+    scale3f(d,sc,push);
+    add3f(push,d0to1,d0to1);
+    subtract3f(d1to0,push,d1to0);
   } else
     dev = 0.0F;
   return (float)fabs(dev);

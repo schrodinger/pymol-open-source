@@ -8,7 +8,7 @@
 # notices.
 #
 # ----------------------------------------------------------------------
-# APBS TOOLS is Copyright (C) 2004 by Michael G. Lerner
+# APBS TOOLS is Copyright (C) 2005 by Michael G. Lerner
 #
 #                        All Rights Reserved
 #
@@ -29,6 +29,16 @@
 # CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
 # CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 # ----------------------------------------------------------------------
+
+"""
+Recent changes:
+Switched to new APBS input format
+ - changed sfrm 1 to srfm smol
+ - changed bcfl to use words instead of numbers
+ - changed chgm to use words instead of numbers
+ - added sdens parameter (default to APBS default of 10.0)
+ - tweaked 'max grid points' to give an acceptable number .. we assume nlev == 4.  see comments in the source .. it's still possible to exceed max grid points by a little bit.
+"""
 
 
 from __future__ import division
@@ -447,6 +457,7 @@ defaults = {
     #"grid_buffer" : 0,
     #"grid_buffer" : 20,
     "bcfl" : 'Single DH sphere', # Boundary condition flag for APBS ###
+    "sdens": 10.0, # Specify the number of grid points per square-angstrom to use in Vacc object. Ignored when srad is 0.0 (see srad) or srfm is spl2 (see srfm). There is a direct correlation between the value used for the Vacc sphere density, the accuracy of the Vacc object, and the APBS calculation time. APBS default value is 10.0.
     "chgm" : 'Cubic b-splines', # Charge disc method for APBS ###
     }
 
@@ -794,6 +805,12 @@ class APBSTools:
                               validate = {'validator':'real','min':0},
                               value = str(defaults['system_temp']),
                               )
+        self.sdens = Pmw.EntryField(group.interior(),
+                                    labelpos = 'w',
+                                    label_text = 'Vacc sphere density (grid points/A^2)',
+                                    validate = {'validator':'real','min':0},
+                                    value = str(defaults['sdens']),
+                                    )
         self.bcfl = Pmw.OptionMenu(group.interior(),
                                    labelpos = 'w',
                                    label_text = 'Boundary Condition',
@@ -813,7 +830,7 @@ class APBSTools:
                                    initialitem = 'Same, but with harmonic average smoothing',
                                    )
         #for entry in (self.apbs_mode,self.system_temp,self.solvent_radius,):
-        for entry in (self.max_grid_points,self.solvent_radius,self.system_temp,self.apbs_mode,self.bcfl,self.chgm,self.srfm):
+        for entry in (self.max_grid_points,self.solvent_radius,self.system_temp,self.sdens,self.apbs_mode,self.bcfl,self.chgm,self.srfm):
             entry.pack(fill='x',expand=1,padx=4,pady=1) # vertical
 
 
@@ -1211,6 +1228,12 @@ Carlson Group, University of Michigan <http://www.umich.edu/~carlsonh/>
 
             finegridpoints = [mult_fac * c + 1 for c in cs]
 
+            print "cs",cs
+            print "finedim",finedim
+            print "nlev",nlev
+            print "mult_fac",mult_fac
+            print "finegridpoints",finegridpoints
+
         except NoPDB:
             error_dialog = Pmw.MessageDialog(self.parent,
                                              title = 'Error',
@@ -1223,10 +1246,43 @@ Carlson Group, University of Michigan <http://www.umich.edu/~carlsonh/>
             max_grid_points = float(self.max_grid_points.getvalue())
             product = float(finegridpoints[0] * finegridpoints[1] * finegridpoints[2])
             if product>max_grid_points:
+                print "Maximum number of grid points exceeded.  Old grid dimensions were",finegridpoints
                 factor = pow(max_grid_points/product,0.333333333)
                 finegridpoints[0] = (int(factor*finegridpoints[0]/2))*2+1
                 finegridpoints[1] = (int(factor*finegridpoints[1]/2))*2+1
                 finegridpoints[2] = (int(factor*finegridpoints[2]/2))*2+1
+                print "Fine grid points rounded down from",finegridpoints
+                #
+                # Now we have to make sure that this still fits the equation n = c*2^(l+1) + 1.  Here, we'll
+                # just assume nlev == 4, which means that we need to be (some constant times 32) + 1.
+                #
+                # This can be annoying if, e.g., you're trying to set [99, 123, 99] .. it'll get rounded to [99, 127, 99].
+                # First, I'll try to round to the nearest 32*c+1.  If that doesn't work, I'll just round down.
+                #
+                new_gp = [0,0,0]
+                for i in 0,1,2:
+                    dm = divmod(finegridpoints[i] - 1,32)
+                    if dm[1]>16:
+                        new_gp[i] = (dm[0]+1)*32+1
+                    else:
+                        new_gp[i] = (dm[0])*32+1
+                new_prod = new_gp[0]*new_gp[1]*new_gp[2]
+                #print "tried new_prod",new_prod,"max_grid_points",max_grid_points,"small enough?",new_prod <= max_grid_points
+                if new_prod <= max_grid_points:
+                    #print "able to round to closest"
+                    for i in 0,1,2: finegridpoints[i] = new_gp[i]
+                else:
+                    # darn .. have to round down.
+                    # Note that this can still fail a little bit .. it can only get you back down to the next multiple <= what was in
+                    # finegridpoints.  So, if finegridpoints was exactly on a multiple, like (99,129,99), you'll get rounded down to
+                    # (99,127,99), which is still just a bit over the default max of 1200000.  I think that's ok.  It's the rounding error
+                    # from int(factor*finegridpoints ..) above, but it'll never be a huge error.  If we needed to, we could easily fix this.
+                    #
+                    #print "rounding down more"
+                    for i in 0,1,2:
+                        #print finegridpoints[i],divmod(finegridpoints[i] - 1,32),
+                        finegridpoints[i] = divmod(finegridpoints[i] - 1,32)[0]*32 + 1
+                print "New grid dimensions are",finegridpoints
         print " APBS Tools: coarse grid: (%5.3f,%5.3f,%5.3f)"%tuple(coarsedim)
         self.grid_coarse_x.setvalue(coarsedim[0])
         self.grid_coarse_y.setvalue(coarsedim[1])
@@ -1262,15 +1318,15 @@ Carlson Group, University of Michigan <http://www.umich.edu/~carlsonh/>
             else:
                 apbs_mode = 'lpbe'
 
-            bcflmap = {'Zero': 0,
-                       'Single DH sphere': 1,
-                       'Multiple DH spheres': 2,
-                       'Focusing': 4,
+            bcflmap = {'Zero': 'zero',
+                       'Single DH sphere': 'sdh',
+                       'Multiple DH spheres': 'mdh',
+                       'Focusing': 'focus',
                        }
             bcfl = bcflmap[self.bcfl.getvalue()]
 
-            chgmmap = {'Linear':0,
-                       'Cubic b-splines':1,
+            chgmmap = {'Linear':'spl0',
+                       'Cubic b-splines':'spl2',
                        }
             chgm = chgmmap[self.chgm.getvalue()]
 
@@ -1298,6 +1354,7 @@ Carlson Group, University of Michigan <http://www.umich.edu/~carlsonh/>
                                                 chgm,
                                                 float(self.solvent_radius.getvalue()),
                                                 float(self.system_temp.getvalue()),
+                                                float(self.sdens.getvalue()),
                                                 dx_filename,
                                                 )
                                                 
@@ -1392,6 +1449,7 @@ Carlson Group, University of Michigan <http://www.umich.edu/~carlsonh/>
                                  ('protein dielectric',self.interior_dielectric),
                                  ('solvent radius',self.solvent_radius),
                                  ('system temperature',self.system_temp),
+                                 ('sdens',self.sdens),
                                  ):
             if not thing.valid():
                 show_error('Please correct %s'%message)
@@ -1840,8 +1898,11 @@ def _getApbsInputFile(pqr_filename,
                       chgm,
                       solvent_radius,
                       system_temp,
+                      sdens,
                       dx_filename,
                       ):
+    #print "system_temp",system_temp,type(system_temp)
+    #print "sdens",sdens,type(sdens)
     #
     # How shall we set up the grid?  We'll use cglen, fglen, cgcent, fgcent
     # and dime.
@@ -1873,7 +1934,7 @@ elec
     fgcent %f %f %f  # (could also give (x,y,z) form psize.py) #known center
     %s               # solve the full nonlinear PBE with npbe
     #lpbe            # solve the linear PBE with lpbe
-    bcfl %d          # Boundary condition flag
+    bcfl %s          # Boundary condition flag
                      #  0 => Zero
                      #  1 => Single DH sphere
                      #  2 => Multiple DH spheres
@@ -1886,11 +1947,11 @@ elec
     ion -2 %f %f     # ion <charge> <conc (M)> <radius>
     pdie %f          # Solute dielectric
     sdie %f          # Solvent dielectric
-    chgm %d          # Charge disc method
+    chgm %s          # Charge disc method
                      # 0 is linear splines
                      # 1 is cubic b-splines
     mol 1            # which molecule to use
-    srfm 1           # Surface calculation method
+    srfm smol        # Surface calculation method
                      #  0 => Mol surface for epsilon;
                      #       inflated VdW for kappa; no
                      #       smoothing
@@ -1900,15 +1961,16 @@ elec
     srad %f          # Solvent radius (1.4 for water)
     swin 0.3         # Surface cubic spline window .. default 0.3
     temp %f          # System temperature (298.15 default)
+    sdens %f         # Specify the number of grid points per square-angstrom to use in Vacc object. Ignored when srad is 0.0 (see srad) or srfm is spl2 (see srfm). There is a direct correlation between the value used for the Vacc sphere density, the accuracy of the Vacc object, and the APBS calculation time. APBS default value is 10.0.
     gamma 0.105      # Surface tension parameter for apolar forces (in kJ/mol/A^2)
                      # only used for force calculations, so we don't care, but
                      # it's always required, and 0.105 is the default
-    calcenergy 0     # Energy I/O to stdout
+    calcenergy no    # Energy I/O to stdout
                      #  0 => don't write out energy
                      #  1 => write out total energy
                      #  2 => write out total energy and all
                      #       components
-    calcforce 0      # Atomic forces I/O (to stdout)
+    calcforce no     # Atomic forces I/O (to stdout)
                      #  0 => don't write out forces
                      #  1 => write out net forces on molecule
                      #  2 => write out atom-level forces
@@ -1934,6 +1996,7 @@ quit
                             chgm,
                             solvent_radius,
                             system_temp,
+                            sdens,
                             dx_filename,
                             )                            
                             

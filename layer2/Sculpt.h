@@ -19,14 +19,15 @@ Z* -------------------------------------------------------------------
 #include"Shaker.h"
 #include"ObjectMolecule.h"
 
-#define cSculptBond  0x01
-#define cSculptAngl  0x02
-#define cSculptPyra  0x04
-#define cSculptPlan  0x08
-#define cSculptLine  0x10
-#define cSculptVDW   0x20
-#define cSculptVDW14 0x40
-#define cSculptTors  0x80
+#define cSculptBond  0x001
+#define cSculptAngl  0x002
+#define cSculptPyra  0x004
+#define cSculptPlan  0x008
+#define cSculptLine  0x010
+#define cSculptVDW   0x020
+#define cSculptVDW14 0x040
+#define cSculptTors  0x080
+#define cSculptTri   0x100
 
 typedef struct CSculpt {
   PyMOLGlobals *G;
