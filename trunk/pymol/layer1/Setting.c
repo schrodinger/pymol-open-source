@@ -2229,7 +2229,7 @@ void SettingInitGlobal(PyMOLGlobals *G,int alloc,int reset_gui)
 
   set_color(I,cSetting_sphere_color,"-1"); /* use atom colors by default */
 
-  set_i(I,cSetting_sculpt_field_mask, 0xFF );  /* all terms except tri */
+  set_i(I,cSetting_sculpt_field_mask, 0x1FF );  /* all terms */
 
   set_f(I,cSetting_sculpt_hb_overlap, 1.0F);
 
@@ -2710,10 +2710,10 @@ void SettingInitGlobal(PyMOLGlobals *G,int alloc,int reset_gui)
   set_b(I,cSetting_sculpt_auto_center, 0);
   set_i(I,cSetting_pdb_discrete_chains, -1);
   set_i(I,cSetting_pdb_unbond_cations, 1);
-  set_f(I,cSetting_sculpt_tri_scale,1.025F); /* all some play here...*/
+  set_f(I,cSetting_sculpt_tri_scale,1.025F); /* allow for some play here...*/
   set_f(I,cSetting_sculpt_tri_weight, 1.0F);
   set_i(I,cSetting_sculpt_tri_min, 2);
-  set_i(I,cSetting_sculpt_tri_max, 32);
+  set_i(I,cSetting_sculpt_tri_max, 18);
   set_i(I,cSetting_sculpt_tri_mode, 0);
 }
 

@@ -95,7 +95,7 @@ typedef struct _CPyMOL {
   int ClickReadyFlag;
   char ClickedObject[ObjNameMax];  
   int ClickedIndex;
-  
+  int DraggedFlag;
   int Reshape[PYMOL_RESHAPE_SIZE];
   int Progress[PYMOL_PROGRESS_SIZE];
   int ProgressChanged;
@@ -2457,6 +2457,13 @@ void PyMOL_Draw(CPyMOL *I)
   PYMOL_API_LOCK
   
   PyMOLGlobals *G = I->G;
+
+  if(I->DraggedFlag) {
+    if(ControlIdling(I->G)) {
+      ExecutiveSculptIterateAll(I->G);
+    }
+    I->DraggedFlag = false;
+  }
   if(G->HaveGUI) {
 
     PyMOL_PushValidContext(I);
@@ -2573,6 +2580,7 @@ int PyMOL_Idle(CPyMOL *I)
 
   PyMOLGlobals *G = I->G;
   
+  I->DraggedFlag = false;
 
   if(I->FakeDragFlag==1) {
     I->FakeDragFlag = false;
@@ -2804,6 +2812,7 @@ void PyMOL_Drag(CPyMOL *I,int x, int y, int modifiers)
 {
   PYMOL_API_LOCK
   OrthoDrag(I->G,x,y,modifiers);
+  I->DraggedFlag = true;
   PYMOL_API_UNLOCK
 }
 

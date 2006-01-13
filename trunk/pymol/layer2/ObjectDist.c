@@ -38,23 +38,21 @@ void ObjectDistUpdateExtents(ObjectDist *I);
 int ObjectDistGetLabelTxfVertex(ObjectDist *I,int state,int index,float *v)
 {
   int result = 0;
-  if(state<0) state=SettingGet_i(I->Obj.G,NULL,I->Obj.Setting,cSetting_state)-1;
-  if(state<0) state=SceneGetState(I->Obj.G); 
-  if(I->NDSet==1) state=0; /* static singletons always active here it seems */
-  state = state % I->NDSet;
-  { 
+  if(I->DSet) { 
+    if(state<0) state=SettingGet_i(I->Obj.G,NULL,I->Obj.Setting,cSetting_state)-1;
+    if(state<0) state=SceneGetState(I->Obj.G); 
+    if(I->NDSet==1) state=0; /* static singletons always active here it seems */
+    state = state % I->NDSet;
     DistSet *ds = I->DSet[state];
     if((!ds)&&(SettingGet_b(I->Obj.G,I->Obj.Setting,NULL,cSetting_all_states))) {
       state=0;
       ds = I->DSet[state];
     }
     if(ds) {
-     result = DistSetGetLabelVertex(ds,index,v);
+      result = DistSetGetLabelVertex(ds,index,v);
     }
   }
   return(result);
-
-  return 0;
 }
 
 int ObjectDistMoveLabel(ObjectDist *I,int state,int index,float *v,int mode,int log)

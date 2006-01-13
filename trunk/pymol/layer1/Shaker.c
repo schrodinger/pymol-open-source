@@ -63,7 +63,7 @@ float ShakerDoDist(float target,float *v0,float *v1,float *d0to1,float *d1to0,fl
   len = (float)length3f(d);
   dev = target-len;
   if((result=fabs(dev))>R_SMALL8) {
-    dev_2 = wt*dev/2.0F;
+    dev_2 = wt*dev*0.5F;
     if(len>R_SMALL8) { /* nonoverlapping */
       sc = dev_2/len;
       scale3f(d,sc,push);
@@ -83,26 +83,28 @@ float ShakerDoDist(float target,float *v0,float *v1,float *d0to1,float *d1to0,fl
     result = 0.0;
   return result;
 }
-#endif
 
 float ShakerDoDistLimit(float target,float *v0,float *v1,float *d0to1,float *d1to0,float wt)
 {
   float d[3],push[3];
   float len,dev,dev_2,sc;
 
+  if(wt==0.0F) return 0.0F;
   subtract3f(v0,v1,d);
   len = (float)length3f(d);
   dev = target-len;
-  if((dev<0.0F)&&(len>R_SMALL8)) {
-    dev_2 = wt*dev/2.0F;
+  if(dev<0.0F) { /* assuming len is non-zero since it is above target */
+    dev_2 = wt*dev*0.5F;
     sc = dev_2/len;
     scale3f(d,sc,push);
     add3f(push,d0to1,d0to1);
     subtract3f(d1to0,push,d1to0);
+    return -dev;
   } else
-    dev = 0.0F;
-  return (float)fabs(dev);
+    return 0.0F;
 }
+
+#endif
 
 void ShakerAddDistCon(CShaker *I,int atom0,int atom1,float target,int type)
 {
@@ -150,7 +152,7 @@ float ShakerDoPyra(float target,float *v0,float *v1,float *v2,float *v3,
     sc = wt*dev;
     scale3f(cp,sc,push);
     add3f(push,p0,p0);
-    scale3f(push,1.0F/3,push);
+    scale3f(push,1.0F*0.333333F,push);
     subtract3f(p1,push,p1);
     subtract3f(p2,push,p2);
     subtract3f(p3,push,p3);
@@ -235,7 +237,7 @@ float ShakerDoPlan(float *v0,float *v1,float *v2,float *v3,
   dev = (float)fabs(cur);
   if((result = (float)fabs(dev))>R_SMALL8) {
 
-    sc = -wt*dev/2.0F;
+    sc = -wt*dev*0.5F;
 
     subtract3f(v0,v3,d0);
     normalize3f(d0);
@@ -298,14 +300,14 @@ float ShakerDoPlan(float *v0,float *v1,float *v2,float *v3,
       
       if(fixed && (dp*target<0.0F)) {
         if(dp<0.0F) {
-          sc = -wt*dev/2.0F;
+          sc = -wt*dev*0.5F;
         } else {
-          sc = wt*dev/2.0F;
+          sc = wt*dev*0.5F;
         }
       } else if(dp>0) {
-        sc = -wt*dev/2.0F;
+        sc = -wt*dev*0.5F;
       } else {
-        sc = wt*dev/2.0F;
+        sc = wt*dev*0.5F;
       }
       
       if(fixed) {
