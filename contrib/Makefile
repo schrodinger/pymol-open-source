@@ -6,6 +6,8 @@ static:
 	cd modules;$(MAKE) -f Makefile.static
 	cd sglite;$(MAKE) static
 	cd pyopengl;$(MAKE) static
+	touch champ/.includes
+	cd champ;$(MAKE) prime
 	cd champ;$(MAKE) static
 
 make-modules:
