@@ -4603,6 +4603,7 @@ static void SceneApplyImageGamma(PyMOLGlobals *G,unsigned int *buffer, int width
   unsigned char *testPtr;
   int big_endian;
   float gamma = SettingGet(G,cSetting_gamma);
+
   if(gamma>R_SMALL4)
     gamma=1.0F/gamma;
   else

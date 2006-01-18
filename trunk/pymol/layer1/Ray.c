@@ -1671,6 +1671,13 @@ int RayTraceThread(CRayThreadInfo *T)
     /* divide up the reflected light component over all lights */
 	lreflect			= SceneGetReflectValue(I->G);
 	direct				= SettingGet(I->G,cSetting_direct);
+
+	/* apply legacy adjustments */
+
+	ambient*=(1.0F - legacy)+(legacy*(0.22F/0.12F));
+	lreflect*=(1.0F - legacy)+(legacy*(0.72F/0.45F));
+	direct*=(1.0F - legacy)+(legacy*(0.24F/0.45F));
+
 	direct_shade	= SettingGet(I->G,cSetting_ray_direct_shade);
     trans_spec_cut = SettingGet(I->G,cSetting_ray_transparency_spec_cut);
     blend_colors    = SettingGetGlobal_i(I->G,cSetting_ray_blend_colors);
@@ -3151,7 +3158,6 @@ int opaque_back=0;
     float gamma = SettingGet(I->G,cSetting_gamma);
     register float inp;
     register float sig;
-
     inp = (bkrd[0]+bkrd[1]+bkrd[2])/3.0F;
     if(inp < R_SMALL4) 
       sig = 1.0F;
