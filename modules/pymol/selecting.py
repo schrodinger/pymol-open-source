@@ -46,7 +46,7 @@ PYMOL API
         return r
     
 
-    def select(name,selection="",show=-1,quiet=1):
+    def select(name,selection="",enable=-1,quiet=1,merge=0):
         '''
 DESCRIPTION
 
@@ -87,12 +87,17 @@ NOTES
                 name = name
             # preprocess selection (note: inside TRY)
             selection = selector.process(selection)
+            merge = int(merge)
+            if merge==1:
+                selection = "("+selection+") or ?"+name # merge if exists
+            elif merge==2:
+                selection = "("+selection+") or ??"+name # merge if exists and active
             #
             r = _cmd.select(str(name),str(selection),int(quiet))
-            show = int(show)
-            if is_ok(r) and show>0:
+            enable = int(enable)
+            if is_ok(r) and enable>0:
                 r = _cmd.onoff(str(name),1);
-            elif show == 0:
+            elif enable == 0:
                 r = _cmd.onoff(str(name),0)
         finally:
             unlock(r)
@@ -100,16 +105,16 @@ NOTES
         return r
 
 
-    def pop(name,source,show=-1,quiet=1):
+    def pop(name,source,enable=-1,quiet=1):
         r = DEFAULT_ERROR
         try:
             lock()
             r = _cmd.pop(str(name),str(source),int(quiet))
             if is_ok(r):
-                show = int(show)
-                if show>0:
+                enable = int(enable)
+                if enable>0:
                     r = _cmd.onoff(str(name),1);
-                elif show == 0:
+                elif enable == 0:
                     r = _cmd.onoff(str(name),0)
         finally:
             unlock(r)

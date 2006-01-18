@@ -905,7 +905,7 @@ static int SelectGetNameOffset(PyMOLGlobals *G,char *name,int minMatch,int ignCa
 
   register CSelector *I=G->Selector;
   int result = -1;
-  if(name[0]=='?')
+  while(name[0]=='?')
     name++;
   { /* first try for perfect match using the dictionary */
     OVreturn_word res;
@@ -922,7 +922,7 @@ static int SelectGetNameOffset(PyMOLGlobals *G,char *name,int minMatch,int ignCa
     offset=0;
     best_offset=-1;
     best_match=-1;
-    if(name[0]=='?')
+    while(name[0]=='?')
       name++;
     
     while(I_Name[offset][0]) {
@@ -6026,11 +6026,12 @@ int SelectorIndexByName(PyMOLGlobals *G,char *sname)
  register CSelector *I=G->Selector;
  int ignore_case = SettingGetGlobal_b(G,cSetting_ignore_case);
  int i=-1;
+
  if(sname) {
-   if((sname[0]=='%')||(sname[0]=='?'))
-     strcpy(name,&sname[1]);
-   else
-     strcpy(name,sname);		  
+   char *tname = sname;
+   while((tname[0]=='%')||(tname[0]=='?'))
+     tname++;
+   strcpy(name,tname);		  
    i = SelectGetNameOffset(G,name,1,ignore_case);
    if((i>=0)&&(name[0]!='_')) { /* don't do checking on internal selections */
      char *best;
@@ -7794,9 +7795,16 @@ static int SelectorSelect1(PyMOLGlobals *G,EvalElem *base)
 	 case SELE_SELs:
       {
         char *word = base[1].text;
+        int enabled_only = false;
         CWordMatchOptions options;
         
-        if(word[0]=='?') word++;
+        if(word[0]=='?') {
+          word++;
+          if(word[0]=='?') {
+            enabled_only = true;
+            word++;
+          }
+        }
 
         WordMatchOptionsConfigAlpha(&options,wildcard[0],ignore_case);
         
@@ -7810,32 +7818,33 @@ static int SelectorSelect1(PyMOLGlobals *G,EvalElem *base)
           
           while(list[idx][0]) {
             if(WordMatcherMatchAlpha(matcher,list[idx])) {
-              if(idx>=0)
-                {
-                  sele=I->Info[idx].ID;
-                  for(a=cNDummyAtoms;a<I->NAtom;a++)
-                    {
-                      s=i_obj[i_table[a].model]->AtomInfo[i_table[a].atom].selEntry;
-                      while(s)
-                        {
-                          if(I->Member[s].selection==sele)
-                            {
-                              if(!base[0].sele[a]) {
-                                base[0].sele[a]=true;
-                                c++;
-                              }
+              if((idx>=0)&&
+                 ((!enabled_only)||
+                  ExecutiveGetActiveSeleName(G,list[idx],false))) {
+                sele=I->Info[idx].ID;
+                for(a=cNDummyAtoms;a<I->NAtom;a++)
+                  {
+                    s=i_obj[i_table[a].model]->AtomInfo[i_table[a].atom].selEntry;
+                    while(s)
+                      {
+                        if(I->Member[s].selection==sele)
+                          {
+                            if(!base[0].sele[a]) {
+                              base[0].sele[a]=true;
+                              c++;
                             }
-                          s=I->Member[s].next;
-                        }
-                    }
-                }
+                          }
+                        s=I->Member[s].next;
+                      }
+                  }
+              }
             }
             idx++;
             
           }
           WordMatcherFree(matcher);
-        } else {
-          sele=SelectGetNameOffset(G,base[1].text,1,ignore_case);
+        } else if((!enabled_only)|| ExecutiveGetActiveSeleName(G,word,false)) {
+          sele=SelectGetNameOffset(G,word,1,ignore_case);
           if(sele>=0)
             {
               sele=I->Info[sele].ID;
@@ -7861,7 +7870,7 @@ static int SelectorSelect1(PyMOLGlobals *G,EvalElem *base)
             }
         }
       }
-		break;
+      break;
 	 case SELE_MODs:
 
        /* need to change this to handle wildcarded model names */
