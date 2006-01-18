@@ -363,10 +363,10 @@ int *MatrixFilter(float cutoff,int window,int n_pass,int nv,float *v1,float *v2)
 /*========================================================================*/
 void MatrixTransformTTTfN3f( unsigned int n, float *q, float *m, float *p )
 {
-  const register float m0 = m[0],  m4 = m[4],  m8 = m[8],  m12 = m[12];
-  const register float m1 = m[1],  m5 = m[5],  m9 = m[9],  m13 = m[13];
-  const register float m2 = m[2],  m6 = m[6],  m10 = m[10],  m14 = m[14];
-  const register float m3 = m[3],  m7 = m[7],  m11 = m[11];
+  register const float m0 = m[0],  m4 = m[4],  m8 = m[8],  m12 = m[12];
+  register const float m1 = m[1],  m5 = m[5],  m9 = m[9],  m13 = m[13];
+  register const float m2 = m[2],  m6 = m[6],  m10 = m[10],  m14 = m[14];
+  register const float m3 = m[3],  m7 = m[7],  m11 = m[11];
   register float p0,p1,p2;
   while(n--) {
 	p0=*(p++) + m12;
@@ -380,10 +380,10 @@ void MatrixTransformTTTfN3f( unsigned int n, float *q, float *m, float *p )
 /*========================================================================*/
 void MatrixTransformR44fN3f( unsigned int n, float *q, float *m, float *p )
 {
-  const register float m0 = m[0],  m4 = m[4],  m8 = m[8];
-  const register float m1 = m[1],  m5 = m[5],  m9 = m[9];
-  const register float m2 = m[2],  m6 = m[6],  m10 = m[10];
-  const register float m3 = m[3],  m7 = m[7],  m11 = m[11];
+  register const float m0 = m[0],  m4 = m[4],  m8 = m[8];
+  register const float m1 = m[1],  m5 = m[5],  m9 = m[9];
+  register const float m2 = m[2],  m6 = m[6],  m10 = m[10];
+  register const float m3 = m[3],  m7 = m[7],  m11 = m[11];
   register float p0,p1,p2;
   while(n--) {
     p0=*(p++);

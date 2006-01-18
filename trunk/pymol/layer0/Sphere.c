@@ -28,7 +28,7 @@ Z* -------------------------------------------------------------------
 #define tau 0.8506508084F      /* t=(1+sqrt(5))/2, tau=t/sqrt(1+t^2)  */
 #define one 0.5257311121F      /* one=1/sqrt(1+t^2) , unit sphere     */
 
-const static float start_points[13][3] = {
+static const float start_points[13][3] = {
 {  tau,  one,    0 },
 { -tau,  one,    0 },
 { -tau, -one,    0 },
@@ -42,7 +42,7 @@ const static float start_points[13][3] = {
 {   0 , -tau, -one },
 {   0 ,  tau, -one }};
 
-const static int icosahedron[21][3] = {
+static const int icosahedron[21][3] = {
     { 4, 8, 7 },
     { 4, 7, 9 },
     { 5, 6, 11  },
@@ -65,7 +65,7 @@ const static int icosahedron[21][3] = {
     { 6, 10, 2 }
 };
 
-const static int mesh[30][2] = {
+static const int mesh[30][2] = {
 { 0 , 3 },
 { 0 , 4 },
 { 0 , 5 },

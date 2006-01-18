@@ -2043,8 +2043,8 @@ PyMOLreturn_status PyMOL_CmdLoadCGO(CPyMOL *I,float *content,
   return status;
 }
 
-const static CPyMOLOptions Defaults = {
-  true, /* pmgui */
+static const CPyMOLOptions Defaults = {
+ true, /* pmgui */
 #ifndef _PYMOL_NOPY
   true, /* internal_gui*/
 #else

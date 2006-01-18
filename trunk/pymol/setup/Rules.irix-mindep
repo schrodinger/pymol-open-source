@@ -16,9 +16,9 @@ XLIB_DIR = -L/usr/X11R6/lib
 XINC_DIR = -I/usr/X11R6/include
 #--- Python
 PYTHON_EXE = $(PYMOL_PATH)/ext/bin/python
-PYTHON_LIB = -lpython2.2 -lpthread 
-PYTHON_LIB_DIR = -L$(PYMOL_PATH)/ext/lib/python2.2/config
-PYTHON_INC_DIR = -I$(PYMOL_PATH)/ext/include/python2.2
+PYTHON_LIB = -lpython2.4 -lpthread 
+PYTHON_LIB_DIR = -L$(PYMOL_PATH)/ext/lib/python2.4/config
+PYTHON_INC_DIR = -I$(PYMOL_PATH)/ext/include/python2.4
 #--- Other external dependencies
 EXT_INC_DIR = -I$(PYMOL_PATH)/ext/include
 EXT_LIB_DIR = -L$(PYMOL_PATH)/ext/lib 
@@ -27,24 +27,26 @@ EXT_LIB_DIR = -L$(PYMOL_PATH)/ext/lib
 #- Build for LINUX as an importable module ---------------------------
 #--- System libraries
 LIBS = contrib/modules/*.o contrib/pyopengl/*.o contrib/sglite/*.o \
- contrib/champ/*.o $(PYTHON_LIB) -lglut -lGL -lGLU -lX11 -lXi -lXmu -ldl -lm \
-ext/lib/libpng.a $(ZLIB)
-#ext/lib/libtcl8.4.a ext/lib/libtk8.4.a \
+ contrib/champ/*.o $(PYTHON_LIB) ext/lib/libtcl8.4.a ext/lib/libtk8.4.a \
+-lglut -lGL -lGLU -lX11 -lXi -lXmu -ldl ext/lib/libpng.a $(ZLIB) -lm
 #--- PyMOL configuration
-DEFS = -D_PYMOL_MONOLITHIC -D_PYMOL_SETUP_TCLTK84 -D_PYMOL_SETUP_PY22
+DEFS = -DIRIX -D_PYMOL_MONOLITHIC -D_PYMOL_SETUP_TCLTK84 \
+-D_PYMOL_SETUP_PY24 -D_PYMOL_INCENTIVE \
+-D_PYMOL_FREETYPE
 #--- How we build shared libraries
 BUILD = 
 #--- What are we trying to build?
 DEST = -o pymol.exe
 #--- Gcc Options for Linux
-CCOPT1 = -ansi -n32 -woff 1429,1204,1110,1048 -OPT:Olimit=3000
+CCOPT1 = -ansi -n32 -OPT:Olimit=3000 -woff 1429,1110,1048
+#-woff 1429,1204,1110,1048 -OPT:Olimit=3000
 #--- libraries for PyOpenGL 
 PYOGL_LIB = -lglut -lGL -lGLU -lXmu -lXi
 #---------------------------------------------------------------------
 #
 #- Choose One --------------------------------------------------------
 #--- GCC Optimized
-CCOPT1 = -O2
+CCOPT2 = -O2 -r10000
 #--- GCC Profiling
 #CCOPT2 = -pg -O3 -funroll-loops
 #--- Debugging
