@@ -2531,6 +2531,9 @@ static void ExecutiveMigrateSession(PyMOLGlobals *G,int session_version)
                        1.166*SettingGetGlobal_f(G,cSetting_ambient));
     SettingSetGlobal_f(G,cSetting_gamma,
                        0.769*SettingGetGlobal_f(G,cSetting_gamma));
+    /* try best to meet existing expectations with existing sessions */
+    SettingSetGlobal_f(G,cSetting_ray_legacy_lighting, 1.0F);
+
     /* and labels */
     SettingSetGlobal_3f(G,cSetting_label_position, 1.0F,1.0F,0.0F);
   }

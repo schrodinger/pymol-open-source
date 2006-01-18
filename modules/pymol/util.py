@@ -486,7 +486,7 @@ def ray_shadows(mode):
         cmd.set('light_count',2)
         cmd.set('ambient',0.001)
         cmd.set('direct',0.0)
-        cmd.set('reflect',1.0)
+        cmd.set('reflect',1.1)
         cmd.set('power',1.0)
         cmd.set('shininess',90)
         cmd.set('specular_intensity',0.5)
