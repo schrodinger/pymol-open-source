@@ -4378,6 +4378,7 @@ void ExecutiveRenderSelections(PyMOLGlobals *G,int curState)
     } else {
       glDisable(GL_POINT_SMOOTH);
       glDisable(GL_ALPHA_TEST);
+      glHint(GL_POINT_SMOOTH_HINT,GL_FASTEST);
     }
     
     no_depth = (int)SettingGet(G,cSetting_selection_overlay);

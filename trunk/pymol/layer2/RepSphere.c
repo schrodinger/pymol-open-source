@@ -419,10 +419,15 @@ static void RepSphereRender(RepSphere *I,RenderInfo *info)
               pixel_scale *= 2.0F;
               break;
             case 2:
+              glHint(GL_POINT_SMOOTH_HINT,GL_FASTEST);
+              glDisable(GL_POINT_SMOOTH);
+              glDisable(GL_ALPHA_TEST);
               pixel_scale *= 1.4F;
               break;
             default:
+              glHint(GL_POINT_SMOOTH_HINT,GL_FASTEST);
               glDisable(GL_POINT_SMOOTH);
+              glDisable(GL_ALPHA_TEST);
               glPointSize(SettingGet_f(G,I->R.cs->Setting,I->R.obj->Setting,cSetting_sphere_point_size));
               break;
             }
@@ -514,6 +519,9 @@ static void RepSphereRender(RepSphere *I,RenderInfo *info)
               glDisable(GL_POINT_SMOOTH);
               glAlphaFunc(GL_GREATER, 0.05F);
               break;
+            default:
+              glEnable(GL_ALPHA_TEST);
+              break;
             }
             glEnd();
           }
@@ -585,6 +593,7 @@ static void RepSphereRender(RepSphere *I,RenderInfo *info)
                  sphere_mode=4;
 
               switch(sphere_mode) {
+                
               case 2:
               case 3:
                 if(sphere_mode==3) {
@@ -595,6 +604,9 @@ static void RepSphereRender(RepSphere *I,RenderInfo *info)
                   glHint(GL_POINT_SMOOTH_HINT,GL_NICEST);
                   glPointSize(1.0F);
                 } else {
+                  glHint(GL_POINT_SMOOTH_HINT,GL_FASTEST);
+                  glDisable(GL_POINT_SMOOTH);
+                  glDisable(GL_ALPHA_TEST);
                   pixel_scale *= 1.4F;
                 }
                 glBegin(GL_POINTS);
@@ -618,6 +630,8 @@ static void RepSphereRender(RepSphere *I,RenderInfo *info)
                 if(sphere_mode==3) {
                   glDisable(GL_POINT_SMOOTH);
                   glAlphaFunc(GL_GREATER, 0.05F);
+                } else {
+                  glEnable(GL_ALPHA_TEST);
                 }
                 break;
               case 4: /* draw multiple points of different radii and Z position */
@@ -833,7 +847,10 @@ static void RepSphereRender(RepSphere *I,RenderInfo *info)
             }
             break;
           default: /* simple, default point width points*/
-              
+            glHint(GL_POINT_SMOOTH_HINT,GL_FASTEST);
+            glDisable(GL_POINT_SMOOTH);
+            glDisable(GL_ALPHA_TEST);
+
             glPointSize(SettingGet_f(G,I->R.cs->Setting,I->R.obj->Setting,cSetting_sphere_point_size));
             glBegin(GL_POINTS);
             if(alpha==1.0) {
@@ -852,6 +869,7 @@ static void RepSphereRender(RepSphere *I,RenderInfo *info)
               }
             }
             glEnd();
+            glEnable(GL_ALPHA_TEST);
             break;
               
           }
