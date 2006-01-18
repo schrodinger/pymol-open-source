@@ -90,7 +90,7 @@ static char *get_st(const char array[][STR_MAX])
   return result;
 }
 
-const static char pdb_01_01[][STR_MAX] = {
+static const char pdb_01_01[][STR_MAX] = {
   "ATOM      1  N   ASP E   1       4.868 -17.809  25.188  1.00 34.37      E    N\n",
   "ATOM      2  CA  ASP E   1       3.984 -16.723  25.698  1.00 33.85      E    C\n",
   "ATOM      3  CB  ASP E   1       4.633 -16.020  26.888  1.00 35.91      E    C\n",
@@ -201,7 +201,7 @@ const static char pdb_01_01[][STR_MAX] = {
   "END\n",
   ""};
 
-const static char mol_01_02[][STR_MAX] = {
+static const char mol_01_02[][STR_MAX] = {
 "MFCD02681585\n",
 "  ChemPy            3D                             0\n",
 "\n",
