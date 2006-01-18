@@ -38,7 +38,7 @@ make-champ:
 
 clean: 
 	cd sglite;$(MAKE) clean
-	cd champ;$(MAKE) clean
+	cd champ;touch .includes;$(MAKE) clean
 	/bin/rm -f */*.o
 
 distclean: clean
