@@ -32,7 +32,10 @@ typedef struct {
 } CFontType;
 
 
-__inline__ static char *_FontTypeRenderOpenGL(RenderInfo *info, 
+#ifdef _PYMOL_INLINE
+__inline__ 
+#endif
+static char *_FontTypeRenderOpenGL(RenderInfo *info, 
                                               CFontType *I,char *st,
                                               float size,int flat, float *rpos)
 {
