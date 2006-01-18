@@ -16,10 +16,6 @@ Z* -------------------------------------------------------------------
 #ifndef _H_os_predef
 #define _H_os_predef
 
-#ifdef IRIX
-#define __inline__
-#endif
-
 #ifdef WIN32
 #define __inline__ __inline
 #endif

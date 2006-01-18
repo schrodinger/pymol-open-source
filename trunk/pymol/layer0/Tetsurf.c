@@ -717,7 +717,10 @@ static void	TetsurfPurge(CTetsurf *II)
     }
 }
 /*===========================================================================*/
-__inline__ static void	TetsurfInterpolate2(float *pt,float *v0,float l0,float *v1,float l1,float level)
+#ifdef _PYMOL_INLINE
+__inline__
+#endif
+static void	TetsurfInterpolate2(float *pt,float *v0,float l0,float *v1,float l1,float level)
 {
   float	ratio;
   ratio=(level-l0)/(l1-l0);
@@ -727,7 +730,10 @@ __inline__ static void	TetsurfInterpolate2(float *pt,float *v0,float l0,float *v
 }
 
 /*===========================================================================*/
-__inline__ static void	TetsurfInterpolate4(float *pt,float *v0,float l0,float *v1,float l1
+#ifdef _PYMOL_INLINE
+__inline__
+#endif
+static void	TetsurfInterpolate4(float *pt,float *v0,float l0,float *v1,float l1
                           ,float l2,float l3,float level)
 
 {
@@ -750,7 +756,10 @@ __inline__ static void	TetsurfInterpolate4(float *pt,float *v0,float l0,float *v
 }
 
 /*===========================================================================*/
-__inline__  static void	TetsurfInterpolate8(float *pt,float *v0,float l0,float *v1,float l1,
+#ifdef _PYMOL_INLINE
+__inline__
+#endif
+static void	TetsurfInterpolate8(float *pt,float *v0,float l0,float *v1,float l1,
                           float l2,float l3,float l4,
                           float l5,float l6,float l7,float level)
 {

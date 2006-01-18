@@ -121,7 +121,10 @@ PyObject *IsosurfAsPyList(Isofield *field)
 #endif
 }
 /*===========================================================================*/
-__inline__ static void	IsosurfInterpolate(CIsosurf *I,float *v1,float *l1,float *v2,float *l2,float *pt)
+#ifdef _PYMOL_INLINE 
+__inline__
+#endif
+ static void	IsosurfInterpolate(CIsosurf *I,float *v1,float *l1,float *v2,float *l2,float *pt)
 {
   float	ratio;
   ratio=(I->Level-*l1)/(*l2-*l1);
