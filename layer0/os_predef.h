@@ -16,7 +16,7 @@ Z* -------------------------------------------------------------------
 #ifndef _H_os_predef
 #define _H_os_predef
 
-#ifdef sgi
+#ifdef IRIX
 #define __inline__
 #endif
 

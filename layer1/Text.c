@@ -30,7 +30,7 @@ Z* -------------------------------------------------------------------
 #define FONT_NAME_MAX 255
 
 #define TEXT_DEFAULT_SIZE 12.0F
-const static float _255 = 255.0F;
+static const float _255 = 255.0F;
 
 
 typedef struct {
@@ -47,7 +47,7 @@ struct _CText {
   ActiveRec *Active;
   float Pos[4];
   float Color[4];
-  unsigned char OutlineColor[3];
+  unsigned char OutlineColor[4];
   int Default_ID;
   int Flat;
 };
