@@ -1245,6 +1245,7 @@ SEE ALSO
               read_molstr,        \
               read_pdbstr,        \
               read_xplorstr,      \
+              fetch,              \
               set_session,        \
               space              
 
@@ -1644,6 +1645,7 @@ SEE ALSO
             'extend'        : [ extend            , 0 , 0 , ''  , parsing.STRICT ],
             'fast_minimize' : [ fast_minimize     , 1,  4 , ',' , parsing.SIMPLE ], # TO REMOVE
             'feedback'      : [ feedback          , 0,  0 , ''  , parsing.STRICT ],
+            'fetch'         : [ fetch             , 0,  0 , ''  , parsing.STRICT ],
             'fit'           : [ fit               , 0 , 0 , ''  , parsing.STRICT ],
             'finally'       : [ python_help       , 0 , 0 , ''  , parsing.PYTHON ],
             'fix_chemistry' : [ fix_chemistry     , 0 , 0 , ''  , parsing.STRICT ],

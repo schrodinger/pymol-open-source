@@ -622,6 +622,7 @@ typedef struct _CPyMOL {
   ov_word lex_sculpt_tri_min;
   ov_word lex_sculpt_tri_max;
   ov_word lex_sculpt_tri_mode;
+  ov_word lex_pdb_echo_tags;
 } _CPyMOL;
 
 /* convenience functions -- inline */
@@ -1250,6 +1251,7 @@ static OVstatus PyMOL_InitAPI(CPyMOL *I)
   LEX_SETTING(sculpt_tri_min, 483);
   LEX_SETTING(sculpt_tri_max, 484);
   LEX_SETTING(sculpt_tri_mode, 485);
+  LEX_SETTING(pdb_echo_tags, 486);
   return_OVstatus_SUCCESS;
 }
 

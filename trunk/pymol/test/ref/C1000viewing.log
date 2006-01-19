@@ -24,6 +24,14 @@ PyMOL>cmd._dump_floats(cmd.get_view(0))
   0.000   0.000 -50.000   0.000   0.000   0.000  43.000  93.000   0.000
 PyMOL>dele all
 PyMOL>load dat/1tii.pdb
+ PDB: HEADER    ENTEROTOXIN                             20-MAR-96   1TII              
+ PDB: TITLE     ESCHERICHIA COLI HEAT LABILE ENTEROTOXIN TYPE IIB                     
+ PDB: COMPND    MOL_ID: 1;                                                            
+ PDB: COMPND   2 MOLECULE: HEAT LABILE ENTEROTOXIN TYPE IIB;                          
+ PDB: COMPND   3 CHAIN: D, E, F, G, H, A, C;                                          
+ PDB: COMPND   4 SYNONYM: LT-IIB;                                                     
+ PDB: COMPND   5 ENGINEERED: YES;                                                     
+ PDB: COMPND   6 OTHER_DETAILS: LATENT/INACTIVE FORM                                  
  ObjectMolecule: Read secondary structure assignments.
  ObjectMolecule: Read crystal symmetry information.
  Symmetry: Found 6 symmetry operators.
@@ -87,6 +95,13 @@ PyMOL>dele all
 PyMOL>load dat/pept.pdb
  CmdLoad: "dat/pept.pdb" loaded as "pept".
 PyMOL>load dat/3al1.pdb
+ PDB: HEADER    STRUCTURAL PROTEIN                      26-OCT-98   3AL1              
+ PDB: TITLE     DESIGNED PEPTIDE ALPHA-1, RACEMIC P1BAR FORM                          
+ PDB: COMPND    MOL_ID: 1;                                                            
+ PDB: COMPND   2 MOLECULE: D, L-ALPHA-1;                                              
+ PDB: COMPND   3 CHAIN: A, B;                                                         
+ PDB: COMPND   4 ENGINEERED: YES;                                                     
+ PDB: COMPND   5 OTHER_DETAILS: N TERMINI ARE ACETYLATED                              
  ObjectMolecule: Read secondary structure assignments.
  ObjectMolecule: Read crystal symmetry information.
  Symmetry: Found 2 symmetry operators.
@@ -356,6 +371,14 @@ PyMOL>cmd._dump_floats(cmd.get_view(0))
   0.000   0.000 -14.178   2.395  -9.290  18.016  11.178  17.178   0.000
 PyMOL>dele all
 PyMOL>load dat/1tii.pdb,m1
+ PDB: HEADER    ENTEROTOXIN                             20-MAR-96   1TII              
+ PDB: TITLE     ESCHERICHIA COLI HEAT LABILE ENTEROTOXIN TYPE IIB                     
+ PDB: COMPND    MOL_ID: 1;                                                            
+ PDB: COMPND   2 MOLECULE: HEAT LABILE ENTEROTOXIN TYPE IIB;                          
+ PDB: COMPND   3 CHAIN: D, E, F, G, H, A, C;                                          
+ PDB: COMPND   4 SYNONYM: LT-IIB;                                                     
+ PDB: COMPND   5 ENGINEERED: YES;                                                     
+ PDB: COMPND   6 OTHER_DETAILS: LATENT/INACTIVE FORM                                  
  ObjectMolecule: Read secondary structure assignments.
  ObjectMolecule: Read crystal symmetry information.
  Symmetry: Found 6 symmetry operators.
@@ -447,6 +470,14 @@ PyMOL>cmd._dump_ufloats(cmd.get_view(0))
   0.000   0.000 269.487  39.950   5.709  13.189 212.466 326.509   0.000
 PyMOL>dele all
 PyMOL>load dat/1tii.pdb
+ PDB: HEADER    ENTEROTOXIN                             20-MAR-96   1TII              
+ PDB: TITLE     ESCHERICHIA COLI HEAT LABILE ENTEROTOXIN TYPE IIB                     
+ PDB: COMPND    MOL_ID: 1;                                                            
+ PDB: COMPND   2 MOLECULE: HEAT LABILE ENTEROTOXIN TYPE IIB;                          
+ PDB: COMPND   3 CHAIN: D, E, F, G, H, A, C;                                          
+ PDB: COMPND   4 SYNONYM: LT-IIB;                                                     
+ PDB: COMPND   5 ENGINEERED: YES;                                                     
+ PDB: COMPND   6 OTHER_DETAILS: LATENT/INACTIVE FORM                                  
  ObjectMolecule: Read secondary structure assignments.
  ObjectMolecule: Read crystal symmetry information.
  Symmetry: Found 6 symmetry operators.

@@ -54,6 +54,14 @@ PyMOL>ray
  RayRenderTest: obtained 63 graphics primitives.
 PyMOL>dele all
 PyMOL>load dat/1tii.pdb
+ PDB: HEADER    ENTEROTOXIN                             20-MAR-96   1TII              
+ PDB: TITLE     ESCHERICHIA COLI HEAT LABILE ENTEROTOXIN TYPE IIB                     
+ PDB: COMPND    MOL_ID: 1;                                                            
+ PDB: COMPND   2 MOLECULE: HEAT LABILE ENTEROTOXIN TYPE IIB;                          
+ PDB: COMPND   3 CHAIN: D, E, F, G, H, A, C;                                          
+ PDB: COMPND   4 SYNONYM: LT-IIB;                                                     
+ PDB: COMPND   5 ENGINEERED: YES;                                                     
+ PDB: COMPND   6 OTHER_DETAILS: LATENT/INACTIVE FORM                                  
  ObjectMolecule: Read secondary structure assignments.
  ObjectMolecule: Read crystal symmetry information.
  Symmetry: Found 6 symmetry operators.
