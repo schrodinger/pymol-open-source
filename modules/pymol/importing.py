@@ -80,7 +80,7 @@ if __name__=='pymol.importing':
         psw = 40      #
         
     loadable_sc = Shortcut(loadable.__dict__.keys()) 
-    
+
     def set_session(session,quiet=1):
         r = DEFAULT_SUCCESS
         for a in pymol._session_restore_tasks:
@@ -887,5 +887,51 @@ PYMOL API
         if _raising(r): raise pymol.CmdException
         return r
 
+    def _fetch(code,name,state,finish,discrete,multiplex,zoom,type,quiet):
+        import urllib
+        import gzip
+        import os
+        import string
+        if type=='pdb':
+            remoteCode = string.upper(code)
+            try:
+                filename = urllib.urlretrieve(
+                    'http://www.rcsb.org/pdb/cgi/export.cgi/' +
+                    remoteCode + '.pdb.gz?format=PDB&pdbId=' +
+                    remoteCode + '&compression=gz')[0]
+            except:
+                print "warning: %s not found.\n"%code
+            else:
+                if (os.path.getsize(filename) > 0): # If 0, then pdb code was invalid
+                    try:
+                        abort = 0
+                        pdb_str = gzip.open(filename).read()
+                        cmd.read_pdbstr(pdb_str,name,state,finish,discrete,quiet,
+                                        multiplex,zoom)
+                    except IOError:
+                        pass
+                else:
+                    print "warning: %s not valid.\n"%code
+                os.remove(filename)
+        
+    def fetch(code, name='', state=0,finish=1, discrete=-1,
+              multiplex=-2,zoom=-1, type='pdb', async=1, quiet=1):
+        '''
+DESCRIPTION
 
+    "fetch" downloads a file from the internet (if possible)
 
+        '''
+        import threading
+        r = DEFAULT_SUCCESS
+        if name=='':
+            name = code
+        if not int(async):
+            r = _fetch(code,name,state,finish,discrete,multiplex,zoom,type,quiet)
+        else:
+            t = threading.Thread(target=_fetch,
+                                 args=(code,name,state,finish,discrete,multiplex,zoom,type,quiet))
+            t.setDaemon(1)
+            t.start()
+        return r
+        

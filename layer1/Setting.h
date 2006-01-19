@@ -637,6 +637,8 @@ CSetting *SettingNewFromPyList(PyMOLGlobals *G,PyObject *list);
 #define cSetting_sculpt_tri_min             483 
 #define cSetting_sculpt_tri_max             484
 #define cSetting_sculpt_tri_mode            485
+#define cSetting_pdb_echo_tags              486
+
 /* when you add a new settingg also remember:
    layer1/Setting.c
    modules/pymol/setting.py
@@ -645,7 +647,7 @@ CSetting *SettingNewFromPyList(PyMOLGlobals *G,PyObject *list);
 
 /* cSetting_ss_INIT must always be last setting_index +1 */
 
-#define cSetting_INIT                       486
+#define cSetting_INIT                       487
 
 #endif
 

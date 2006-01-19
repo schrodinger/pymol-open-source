@@ -920,6 +920,8 @@ int ObjectMoleculeAutoDisableAtomNameWildcard(ObjectMolecule *I)
   return found_wildcard;
 }
 /*========================================================================*/
+#define PDB_MAX_TAGS 64
+
 CoordSet *ObjectMoleculePDBStr2CoordSet(PyMOLGlobals *G,
                                         char *buffer,
                                         AtomInfoType **atInfoPtr,
@@ -932,7 +934,7 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(PyMOLGlobals *G,
                                         int quiet, int *model_number)
 {
 
-  char *p;
+  register char *p;
   int nAtom;
   int a,b,c;
   float *coord = NULL;
@@ -952,7 +954,8 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(PyMOLGlobals *G,
   int auto_show_spheres = (int)SettingGet(G,cSetting_auto_show_spheres);
   int reformat_names = (int)SettingGet(G,cSetting_pdb_reformat_names_mode);
   int truncate_resn = SettingGetGlobal_b(G,cSetting_pdb_truncate_residue_name);
-
+  char *tags_in = SettingGetGlobal_s(G,cSetting_pdb_echo_tags), *tag_start[PDB_MAX_TAGS];
+  int n_tags = 0;
   int newModelFlag = false;
   int ssFlag = false;
   int ss_resv1=0,ss_resv2=0;
@@ -962,7 +965,7 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(PyMOLGlobals *G,
   int n_ss = 1;
   int *(ss[256]); /* one array for each chain identifier */
 
-  char cc[MAXLINELEN];
+  char cc[MAXLINELEN],tags[MAXLINELEN];
   char cc_saved,ctmp;
   int index;
   int ignore_pdb_segi = 0;
@@ -977,6 +980,32 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(PyMOLGlobals *G,
   int literal_names = SettingGetGlobal_b(G,cSetting_pdb_literal_names);
   int bogus_name_alignment = true;
   AtomName literal_name = "";
+
+  if(tags_in&&(!quiet)&&(!*restart_model)) {
+    strcpy(tags,tags_in);
+    char *p = tags;
+    
+    while(*p) {
+      while(*p==' ') /* skip spaces */
+        p++;
+      if(*p) {
+        tag_start[n_tags] = p;
+        n_tags++;
+        while(*p) {
+          if(*p!=',') {
+            if(*p==' ')
+              *p = 0;
+            p++;
+          } else
+            break;
+        }
+        if(*p) { /* terminate tag */
+          *p = 0;
+          p++;
+        }
+      }
+    }
+  }
 
   if(literal_names)
     reformat_names = 0;
@@ -1006,6 +1035,45 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(PyMOLGlobals *G,
     *restart_model = NULL;
     while(*p)
       {
+        if(n_tags && !quiet) {
+          /* fast unrolled string match */
+          register int tc = 0;
+          register char *q;
+          register int same;
+          while(tc<n_tags) {
+            same = true;
+            q = tag_start[tc];
+            if(p[0] != q[0])
+              same = false;
+            else if(p[0]&&q[0]) {
+              if((p[1] != q[1])&&!((p[1]==' ')&&!q[1]))
+                same = false;
+              else if(p[1]&&q[1]) {
+                if((p[2] != q[2])&&!((p[2]==' ')&&!q[2]))
+                  same = false;
+                else if(p[3]&&q[3]) {
+                  if((p[3] != q[3])&&!((p[3]==' ')&&!q[3]))
+                    same = false;
+                  else if(p[4]&&q[4]) {
+                    if((p[4] != q[4])&&!((p[4]==' ')&&!q[4]))
+                      same = false;
+                    else if(p[5]&&q[5]) {
+                      if((p[5] != q[5])&&!((p[5]==' ')&&!q[5]))
+                        same = false;
+                    }
+                  }
+                }
+              }
+            }
+            if(same) {
+              ncopy(cc,p,MAXLINELEN-1);
+              OrthoAddOutput(G," PDB: ");
+              OrthoAddOutput(G,cc);
+              OrthoNewLine(G,NULL,true);
+            }
+            tc++;
+          }
+        }
         if(((p[0]== 'A')&&(p[1]=='T')&&(p[2]=='O')&&(p[3]=='M'))|| /* ATOM */
            ((p[0]== 'H')&&(p[1]=='E')&&(p[2]=='T')&& /* HETATM */
             (p[3]=='A')&&(p[4]=='T')&&(p[5]=='M')&&(!*restart_model))) {

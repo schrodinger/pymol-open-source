@@ -76,7 +76,7 @@ class FetchPDB:
                     fpin.close()
                     fpout.close()
 
-                    cmd.load(outputname) # Load the fresh pdb
+                    cmd.load(outputname,quiet=0) # Load the fresh pdb
                 else:
                     tkMessageBox.showerror('Invalid Code',
                                                   'You entered an invalid pdb code:' + pdbCode,

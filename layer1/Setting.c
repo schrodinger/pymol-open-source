@@ -2715,6 +2715,8 @@ void SettingInitGlobal(PyMOLGlobals *G,int alloc,int reset_gui)
   set_i(I,cSetting_sculpt_tri_min, 2);
   set_i(I,cSetting_sculpt_tri_max, 18);
   set_i(I,cSetting_sculpt_tri_mode, 0);
+  set_s(I,cSetting_pdb_echo_tags, "HEADER, TITLE, COMPND");
 }
+
 
 

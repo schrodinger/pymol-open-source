@@ -519,6 +519,7 @@ if __name__=='pymol.setting':
         sculpt_tri_min            = (483, '')
         sculpt_tri_max            = (484, '')
         sculpt_tri_mode           = (485, '')
+        pdb_echo_tags             = (486, '')
         
     setting_sc = Shortcut(SettingIndex.__dict__.keys())
 
