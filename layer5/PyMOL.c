@@ -2328,7 +2328,7 @@ void PyMOL_Start(CPyMOL *I)
     if(G->Option->stereo_capable) {
 		SettingSetGlobal_i(G,cSetting_stereo_mode, 1); 
        }
-	SettingSetGlobal_i(G,cSetting_show_progress, 0); 
+    /*    	SettingSetGlobal_i(G,cSetting_show_progress, 0);  */
 #endif
 
   I->RedisplayFlag = true;
