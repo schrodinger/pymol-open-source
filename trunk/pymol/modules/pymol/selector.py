@@ -1,12 +1,19 @@
 import re
 import string
 import traceback
-
+import types
+        
 sele_re = re.compile(r'^[^\(].*[ \(\)\!\&\|]') # unwrapped selection?
 pat_re = re.compile(r'[^ \(\)\!\&\|]*\/[^ \(\)\!\&\|]*')
 num_re = re.compile(r'1|2|3|4|5|6|7|8|9|0')
 
+def is_tuple(obj):
+    return isinstance(obj,types.TupleType)
+
 def process(sele): # expand slash notation into a standard atom selection
+    # convert object/index tuples into selection strings
+    if is_tuple(sele):
+        sele="%s`%d"%sele
     # convert unicode hyphens to dashes
     sele = string.replace(str(sele),u'\u2212','-')
     if string.find(sele,'/')<0:
