@@ -982,8 +982,8 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(PyMOLGlobals *G,
   AtomName literal_name = "";
 
   if(tags_in&&(!quiet)&&(!*restart_model)) {
-    strcpy(tags,tags_in);
     char *p = tags;
+    strcpy(tags,tags_in);
     
     while(*p) {
       while(*p==' ') /* skip spaces */
