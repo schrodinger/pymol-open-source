@@ -355,7 +355,7 @@ SEE ALSO
         '''
         r = DEFAULT_ERROR      
         if name[0]=='(':
-            selection = selector.process(str(name))
+            selection = selector.process(name)
             try:
                 lock()
                 r = _cmd.onoff_by_sele(selection,1)
@@ -398,7 +398,7 @@ SEE ALSO
         '''
         r = DEFAULT_ERROR      
         if name[0]=='(':
-            selection = selector.process(str(name))
+            selection = selector.process(name)
             try:
                 lock()
                 r = _cmd.onoff_by_sele(selection,0)

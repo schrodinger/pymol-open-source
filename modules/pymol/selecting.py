@@ -19,7 +19,7 @@ if __name__=='pymol.selecting':
     import cmd
 
     from cmd import _cmd,lock,unlock,Shortcut, \
-          _feedback,fb_module,fb_mask, \
+          _feedback,fb_module,fb_mask, is_tuple, \
           DEFAULT_ERROR, DEFAULT_SUCCESS, _raising, is_ok, is_error
     
     import pymol
@@ -83,8 +83,6 @@ NOTES
                     name = "sel%02.0f" % sel_cnt
                 else:
                     name = "sele"
-            else:
-                name = name
             # preprocess selection (note: inside TRY)
             selection = selector.process(selection)
             merge = int(merge)

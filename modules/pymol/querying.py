@@ -673,7 +673,7 @@ SEE ALSO
     def get_atom_coords(selection, state=0,quiet=1):
         # low performance way to get coords for a single atom
         r = []
-        selection = selector.process(str(selection))
+        selection = selector.process(selection)
         try:
             lock()
             r = _cmd.get_atom_coords(str(selection),int(state)-1,int(quiet))
