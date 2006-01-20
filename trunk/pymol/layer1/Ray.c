@@ -2475,7 +2475,7 @@ int RayTraceThread(CRayThreadInfo *T)
                          persist	= persist * r1.trans;
                        else 
                          {
-                           if((persist < 0.9999) && (r1.trans))	{
+                           if((persist < 0.9999F) && (r1.trans>0.05F))	{
                              /* don't combine transparent surfaces */ 
                              *pixel	= last_pixel;
                            } else {
