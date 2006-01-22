@@ -11,7 +11,7 @@ PyMOL>reinitialize
 PyMOL>print cmd.get_names()
 []
 PyMOL>get line_width
- get: line_width = 1.50000
+ get: line_width = 1.49000
 PyMOL>count_atoms rep spheres
  count_atoms: 0 atoms
 PyMOL>load tmp/session.pse

@@ -3,13 +3,13 @@ PyMOL>load dat/il2.pdb
 PyMOL>load dat/pept.pdb
  CmdLoad: "dat/pept.pdb" loaded as "pept".
 PyMOL>load dat/3al1.pdb
- PDB: HEADER    STRUCTURAL PROTEIN                      26-OCT-98   3AL1              
- PDB: TITLE     DESIGNED PEPTIDE ALPHA-1, RACEMIC P1BAR FORM                          
- PDB: COMPND    MOL_ID: 1;                                                            
- PDB: COMPND   2 MOLECULE: D, L-ALPHA-1;                                              
- PDB: COMPND   3 CHAIN: A, B;                                                         
- PDB: COMPND   4 ENGINEERED: YES;                                                     
- PDB: COMPND   5 OTHER_DETAILS: N TERMINI ARE ACETYLATED                              
+ PDB: HEADER    STRUCTURAL PROTEIN                      26-OCT-98   3AL1
+ PDB: TITLE     DESIGNED PEPTIDE ALPHA-1, RACEMIC P1BAR FORM
+ PDB: COMPND    MOL_ID: 1;
+ PDB: COMPND   2 MOLECULE: D, L-ALPHA-1;
+ PDB: COMPND   3 CHAIN: A, B;
+ PDB: COMPND   4 ENGINEERED: YES;
+ PDB: COMPND   5 OTHER_DETAILS: N TERMINI ARE ACETYLATED
  ObjectMolecule: Read secondary structure assignments.
  ObjectMolecule: Read crystal symmetry information.
  Symmetry: Found 2 symmetry operators.
