@@ -83,6 +83,8 @@ extern CPyMOLOptions *MacPyMOLOption;
 #define PYMOL_API_UNLOCK_NO_FLUSH }
 #endif
 
+#define IDLE_AND_READY 10
+
 typedef struct _CPyMOL {
   PyMOLGlobals *G;
   int FakeDragFlag;
@@ -99,7 +101,7 @@ typedef struct _CPyMOL {
   int Reshape[PYMOL_RESHAPE_SIZE];
   int Progress[PYMOL_PROGRESS_SIZE];
   int ProgressChanged;
-
+  int IdleAndReady;
   PyMOLSwapBuffersFn *SwapFn;
 
 /* Python stuff */
@@ -2578,13 +2580,16 @@ void PyMOL_Reshape(CPyMOL *I,int width, int height, int force)
 
 int PyMOL_Idle(CPyMOL *I)
 {
+
   int did_work = false;
   PYMOL_API_LOCK
 
   PyMOLGlobals *G = I->G;
   
   I->DraggedFlag = false;
-
+  if(I->IdleAndReady<IDLE_AND_READY) {
+    I->IdleAndReady++;
+  }
   if(I->FakeDragFlag==1) {
     I->FakeDragFlag = false;
     OrthoFakeDrag(G);
@@ -2649,6 +2654,11 @@ void PyMOL_NeedReshape(CPyMOL *I,int mode, int x, int y, int width, int height)
   I->Reshape[3] = width;
   I->Reshape[4] = height;
   PyMOL_NeedRedisplay(I);
+}
+
+int PyMOL_GetIdleAndReady(CPyMOL *I)
+{
+	return (I->IdleAndReady==IDLE_AND_READY);
 }
 
 int PyMOL_GetReshape(CPyMOL *I)
