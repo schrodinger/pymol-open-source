@@ -1957,7 +1957,7 @@ void SettingInitGlobal(PyMOLGlobals *G,int alloc,int reset_gui)
 
   set_b(I,cSetting_line_smooth, 1);
 
-  set_f(I,cSetting_line_width, 1.5F);
+  set_f(I,cSetting_line_width, 1.49F); /* under 1.5F to retain SGI antialiasing */
 
   set_b(I,cSetting_half_bonds, 0);
 

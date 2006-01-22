@@ -892,30 +892,60 @@ PYMOL API
         import gzip
         import os
         import string
-        if type=='pdb':
-            remoteCode = string.upper(code)
-            try:
-                filename = urllib.urlretrieve(
-                    'http://www.rcsb.org/pdb/cgi/export.cgi/' +
-                    remoteCode + '.pdb.gz?format=PDB&pdbId=' +
-                    remoteCode + '&compression=gz')[0]
-            except:
-                print "warning: %s not found.\n"%code
-            else:
-                if (os.path.getsize(filename) > 0): # If 0, then pdb code was invalid
-                    try:
-                        abort = 0
-                        pdb_str = gzip.open(filename).read()
-                        cmd.read_pdbstr(pdb_str,name,state,finish,discrete,quiet,
-                                        multiplex,zoom)
-                    except IOError:
-                        pass
-                else:
-                    print "warning: %s not valid.\n"%code
-                os.remove(filename)
+        import time
         
+        tries = 0
+        r = DEFAULT_ERROR
+        done = 0
+        while (done == 0) and (tries<3): # try loading URL up to 3 times
+            tries = tries + 1
+            if type=='pdb':
+                remoteCode = string.upper(code)
+                try:
+                    filename = urllib.urlretrieve(
+                        'http://www.rcsb.org/pdb/cgi/export.cgi/' +
+                        remoteCode + '.pdb.gz?format=PDB&pdbId=' +
+                        remoteCode + '&compression=gz')[0]
+                except:
+                    pass
+                else:
+                    if os.path.exists(filename):
+                        if (os.path.getsize(filename) > 0): # If 0, then pdb code was invalid
+                            try:
+                                abort = 0
+                                pdb_str = gzip.open(filename).read()
+                                r = cmd.read_pdbstr(pdb_str,name,state,finish,discrete,quiet,
+                                                multiplex,zoom)
+                                done = 1
+                            except IOError:
+                                pass
+                        else:
+                            pass
+                        os.remove(filename)
+            if done == 0:
+                time.sleep(0.1)
+        if done == 0:
+            r = DEFAULT_ERROR
+            print "Error-fetch: unable to load '%s'"%code
+        return r
+    
+    def _multifetch(code,name,state,finish,discrete,multiplex,zoom,type,quiet):
+        import string
+        r = DEFAULT_SUCCESS
+        code_list = string.split(code)
+        for obj_code in code_list:
+            obj_code = string.strip(obj_code)
+            if len(obj_code):
+                if name=='':
+                    obj_name = obj_code
+                else:
+                    obj_name = name
+                r = _fetch(obj_code,obj_name,state,finish,
+                           discrete,multiplex,zoom,type,quiet)        
+        return r
+    
     def fetch(code, name='', state=0,finish=1, discrete=-1,
-              multiplex=-2,zoom=-1, type='pdb', async=1, quiet=1):
+              multiplex=-2,zoom=-1, type='pdb', async=-1, quiet=1):
         '''
 DESCRIPTION
 
@@ -924,13 +954,15 @@ DESCRIPTION
         '''
         import threading
         r = DEFAULT_SUCCESS
-        if name=='':
-            name = code
+        if async<0: # by default, run asynch when interactive, sync when not
+            async = not quiet
         if not int(async):
-            r = _fetch(code,name,state,finish,discrete,multiplex,zoom,type,quiet)
+            r = _multifetch(code,name,state,finish,
+                            discrete,multiplex,zoom,type,quiet)
         else:
-            t = threading.Thread(target=_fetch,
-                                 args=(code,name,state,finish,discrete,multiplex,zoom,type,quiet))
+            t = threading.Thread(target=_multifetch,
+                                 args=(code,name,state,finish,
+                                       discrete,multiplex,zoom,type,quiet))
             t.setDaemon(1)
             t.start()
         return r
