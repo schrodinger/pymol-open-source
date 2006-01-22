@@ -1066,7 +1066,7 @@ CoordSet *ObjectMoleculePDBStr2CoordSet(PyMOLGlobals *G,
               }
             }
             if(same) {
-              ncopy(cc,p,MAXLINELEN-1);
+	      ParseNTrimRight(cc,p,MAXLINELEN-1);
               OrthoAddOutput(G," PDB: ");
               OrthoAddOutput(G,cc);
               OrthoNewLine(G,NULL,true);

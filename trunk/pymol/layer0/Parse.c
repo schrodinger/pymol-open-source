@@ -209,6 +209,26 @@ char *ParseNTrim(char *q,char *p,int n) {  /* n character trimmed copy */
   return p;
 }
 /*========================================================================*/
+char *ParseNTrimRight(char *q,char *p,int n) {  /* n character trimmed copy */
+  char *q_orig = q;
+  while(*p) {
+	 if(!n)
+		break;
+	 if((*p==0xD)||(*p==0xA)) /* don't copy end of lines */
+		break;
+	 *(q++)=*(p++);
+	 n--;
+  }
+  while(q>q_orig) {
+    if(*(q-1)<=32) 
+      q--;
+    else
+      break;
+  }
+  *q=0;
+  return p;
+}
+/*========================================================================*/
 char *ParseCommaCopy(char *q,char *p,int n) {  /* n character copy up to comma */
   while(*p) {
 	 if(!n)
