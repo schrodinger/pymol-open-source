@@ -4830,8 +4830,19 @@ static PyObject *CmdLoad(PyObject *self, PyObject *args)
       if(multiplex==1) /* if also multiplexing, then default discrete
                         * behavior is not load as discrete objects */
         discrete=0;
-      else
-        discrete=1; /* otherwise, allow discrete to be the default */
+      else {
+        switch(type) {
+        case cLoadTypeSDF2:
+        case cLoadTypeSDF2Str:
+        case cLoadTypeMOL2:
+        case cLoadTypeMOL2Str:
+          discrete = 1;  /* discrete default */
+          break;
+        default:
+          discrete = 0;
+          break;
+        }
+      }
     }
 
     if(multiplex!=1)
