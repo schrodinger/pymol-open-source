@@ -4,6 +4,20 @@ CHANGE LOG
 
 Changes up to 0.99
 
+    beta37
+
+    beta36
+
+    * fetch no longer loads PDB as discrete
+
+    beta35
+
+    * MacPyMOL drag & drop fixes
+
+    beta34
+
+    * "fetch" command
+
     beta33
 
     * fixed SS assignment crash bug on Win32
