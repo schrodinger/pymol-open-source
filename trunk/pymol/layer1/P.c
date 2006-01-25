@@ -1351,6 +1351,7 @@ void PInitEmbedded(int argc,char **argv)
 #ifndef _EPYMOL
   initExtensionClass();
   initsglite();
+  /* initialize champ */
   init_champ();
 #ifdef WIN32
   /* initialize numeric python */
@@ -1360,8 +1361,6 @@ void PInitEmbedded(int argc,char **argv)
   initlapack_lite();
   initumath();
   initranlib();
-  /* initialize champ */
-  init_champ();
 #endif
   init_opengl();
   init_opengl_num();

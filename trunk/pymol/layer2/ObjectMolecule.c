@@ -9170,8 +9170,8 @@ void ObjectMoleculeInvalidate(ObjectMolecule *I,int rep,int level,int state)
       start = state;
       stop = state+1;
     } 
-    if(stop>=I->NCSet)
-      stop = I->NCSet-1;
+    if(stop>I->NCSet)
+      stop = I->NCSet;
     for(a=start;a<stop;a++) {
       if(I->CSet[a]) {	 
         if(I->CSet[a]->fInvalidateRep) {
