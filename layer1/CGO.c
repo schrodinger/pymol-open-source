@@ -1221,7 +1221,6 @@ void CGORenderGLPicking(CGO *I,Picking **pick,PickContext *context,CSetting *set
     register float *pc = I->op;
     register int op;
     register CCGORenderer *R =G->CGORenderer;
-    register int seen_pick_color = false;
     int i,j;
     Picking *p;
     
@@ -1232,11 +1231,10 @@ void CGORenderGLPicking(CGO *I,Picking **pick,PickContext *context,CSetting *set
       
       while((op=(CGO_MASK&CGO_read_int(pc)))) {
         if(op!=CGO_PICK_COLOR) {
-          if((op!=CGO_COLOR)&&seen_pick_color) {
+          if(op!=CGO_COLOR) {
             CGO_gl[op](R,pc); /* ignore color changes */
           }
         } else {
-	  seen_pick_color = true;
           i++;
           if(!(*pick)[0].src.bond) {
             /* pass 1 - low order bits */

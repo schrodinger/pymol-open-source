@@ -409,7 +409,10 @@ def color_objs(selection='(all)',quiet=1):
     '''
     c = 0
     for a in cmd.get_names(selection=selection):
-        cmd.color(_color_cycle[c],"(%s and (%s))"%(a,selection),quiet=quiet)
+	if (selection!='all') and (selection!='(all)'):
+            cmd.color(_color_cycle[c],"(?%s and (%s))"%(a,selection),quiet=quiet)
+        else:
+            cmd.color(_color_cycle[c],"(?%s)"%(a),quiet=quiet)
         c = (c + 1) % _color_cycle_len
 
 def chainbow(selection='(all)',first_color=7): # NOT THREAD SAFE
