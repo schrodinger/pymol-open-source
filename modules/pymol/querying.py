@@ -347,7 +347,7 @@ NOTES
     which can be set using the PkAt mouse action (usually CTRL-middle-click).
 
     '''
-        # handle unnamed distance 
+        # handle unnamed distance
         r = DEFAULT_SUCCESS
         if name!=None:
             if len(name):

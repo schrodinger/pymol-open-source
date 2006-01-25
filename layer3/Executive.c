@@ -5552,7 +5552,6 @@ int ExecutiveDist(PyMOLGlobals *G,float *result,char *nam,
   else {
     sele2 = sele1;
   }
-  
   if((sele1>=0)&&(sele2>=0)) {
     anyObj = ExecutiveFindObjectByName(G,nam);
     if(anyObj)
@@ -9708,7 +9707,7 @@ void ExecutiveInvalidateRep(PyMOLGlobals *G,char *name,int rep,int level)
     while(ListIterate(I->Spec,rec,next))
       if(rec->type==cExecObject) {
         if(rec->obj->fInvalidate) {
-          rec->obj->fInvalidate(rec->obj,rep,cRepInvColor,cRepAll);
+          rec->obj->fInvalidate(rec->obj,rep,level,cRepAll);
           SceneInvalidate(G);
         }
       }

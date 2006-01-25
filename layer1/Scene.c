@@ -3532,7 +3532,7 @@ void SceneRovingUpdate(PyMOLGlobals *G)
         polar_cutoff=(float)fabs(polar_cutoff);
       }
       sprintf(buffer,
-"cmd.dist('rov_pc','%s & (elem n+o) & enabled & %s %s (center expand %1.3f)','same',%1.4f,mode=1,labels=%d,quiet=2)",
+"cmd.dist('rov_pc','%s & enabled & %s %s (center expand %1.3f)','same',%1.4f,mode=2,label=%d,quiet=2)",
               s,p1,p2,polar_contacts,polar_cutoff,label_flag);
       PParse(buffer);
       PFlush();
@@ -3760,7 +3760,6 @@ static int SceneDrag(Block *block,int x,int y,int mod,double when)
         if(gad->Obj.fUpdate)
           gad->Obj.fUpdate((CObject*)gad);
         SceneChanged(G);
-        /*        printf("dragging gadget\n");*/
       }
       break;
       }
