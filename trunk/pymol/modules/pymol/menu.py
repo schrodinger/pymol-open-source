@@ -578,27 +578,27 @@ def mol_generate(s):
     
 def invert(s):
     return [[ 2, 'Invert:'       ,''                        ],     
-              [ 1, 'within object(s)'     ,'cmd.select("'+s+'","((byobj '+s+') and not '+s+')",show=1)'    ],
-              [ 1, 'within segments(s)'     ,'cmd.select("'+s+'","((byseg '+s+') and not '+s+')",show=1)'    ],           
-              [ 1, 'within chains(s)'     ,'cmd.select("'+s+'","((bychain '+s+') and not '+s+')",show=1)'    ],
-              [ 1, 'within residues(s)'   ,'cmd.select("'+s+'","((byres '+s+') and not '+s+')",show=1)'    ],                      
+              [ 1, 'within object(s)'     ,'cmd.select("'+s+'","((byobj '+s+') and not '+s+')",enable=1)'    ],
+              [ 1, 'within segments(s)'     ,'cmd.select("'+s+'","((byseg '+s+') and not '+s+')",enable=1)'    ],           
+              [ 1, 'within chains(s)'     ,'cmd.select("'+s+'","((bychain '+s+') and not '+s+')",enable=1)'    ],
+              [ 1, 'within residues(s)'   ,'cmd.select("'+s+'","((byres '+s+') and not '+s+')",enable=1)'    ],                      
               [ 0, ''               ,''                             ],
-              [ 1, 'within molecule(s)'     ,'cmd.select("'+s+'","((bymol '+s+') and not '+s+')",show=1)'    ],
+              [ 1, 'within molecule(s)'     ,'cmd.select("'+s+'","((bymol '+s+') and not '+s+')",enable=1)'    ],
               [ 0, ''               ,''                             ],
-              [ 1, 'within any'     ,'cmd.select("'+s+'","(not '+s+')",show=1)'    ],
+              [ 1, 'within any'     ,'cmd.select("'+s+'","(not '+s+')",enable=1)'    ],
               ]
 
 def complete(s):
     return [[ 2, 'Complete:'       ,''                        ],     
 
-              [ 1, 'resides'  ,'cmd.select("'+s+'","(byres '+s+')",show=1)'      ],
-              [ 1, 'chains'  ,'cmd.select("'+s+'","(bychain '+s+')",show=1)'      ],
-              [ 1, 'segments'  ,'cmd.select("'+s+'","(byseg '+s+')",show=1)'      ],
-              [ 1, 'objects'  ,'cmd.select("'+s+'","(byobj '+s+')",show=1)'      ],
+              [ 1, 'resides'  ,'cmd.select("'+s+'","(byres '+s+')",enable=1)'      ],
+              [ 1, 'chains'  ,'cmd.select("'+s+'","(bychain '+s+')",enable=1)'      ],
+              [ 1, 'segments'  ,'cmd.select("'+s+'","(byseg '+s+')",enable=1)'      ],
+              [ 1, 'objects'  ,'cmd.select("'+s+'","(byobj '+s+')",enable=1)'      ],
               [ 0, ''               ,''                             ],           
-              [ 1, 'molecules'  ,'cmd.select("'+s+'","(bymol '+s+')",show=1)'      ],
+              [ 1, 'molecules'  ,'cmd.select("'+s+'","(bymol '+s+')",enable=1)'      ],
               [ 0, ''               ,''                             ],
-              [ 1, 'C-alphas'  ,'cmd.select("'+s+'","(bycalpha '+s+')",show=1)'      ],           
+              [ 1, 'C-alphas'  ,'cmd.select("'+s+'","(bycalpha '+s+')",enable=1)'      ],           
               ]
 
 def modify_by_object(s,op):
@@ -608,7 +608,7 @@ def modify_by_object(s,op):
     for a in list:
         if a!=s:
             result.append([1,a,
-                                'cmd.select("'+s+'","('+s+') '+op+' ('+a+')",show=1)'])
+                                'cmd.select("'+s+'","('+s+') '+op+' ('+a+')",enable=1)'])
     return result
 
 def modify_by_sele(s,op):
@@ -617,7 +617,7 @@ def modify_by_sele(s,op):
     for a in list:
         if a!=s:
             result.append([1,a,
-                                'cmd.select("'+s+'","('+s+') '+op+' ('+a+')",show=1)'])
+                                'cmd.select("'+s+'","('+s+') '+op+' ('+a+')",enable=1)'])
     return result
 
 def restrict(s):
@@ -625,12 +625,12 @@ def restrict(s):
             [ 1, 'to object'   , modify_by_object(s,'and') ],
             [ 1, 'to selection' , modify_by_sele(s,'and') ],
             [ 0, ''               ,''                             ],           
-            [ 1, 'to visible'   , 'cmd.select("'+s+'","('+s+') and vis",show=1)'],
+            [ 1, 'to visible'   , 'cmd.select("'+s+'","('+s+') and vis",enable=1)'],
             [ 0, ''               ,''                             ],
-            [ 1, 'to polymer'   , 'cmd.select("'+s+'","('+s+') and polymer",show=1)'],
-            [ 1, 'to solvent'   , 'cmd.select("'+s+'","('+s+') and solvent",show=1)'],
-            [ 1, 'to organic'   , 'cmd.select("'+s+'","('+s+') and organic",show=1)'],
-            [ 1, 'to inorganic'   , 'cmd.select("'+s+'","('+s+') and inorganic",show=1)'],
+            [ 1, 'to polymer'   , 'cmd.select("'+s+'","('+s+') and polymer",enable=1)'],
+            [ 1, 'to solvent'   , 'cmd.select("'+s+'","('+s+') and solvent",enable=1)'],
+            [ 1, 'to organic'   , 'cmd.select("'+s+'","('+s+') and organic",enable=1)'],
+            [ 1, 'to inorganic'   , 'cmd.select("'+s+'","('+s+') and inorganic",enable=1)'],
             ]
 
 def include(s):
@@ -638,7 +638,7 @@ def include(s):
               [ 1, 'object'   , modify_by_object(s,'or') ],
               [ 1, 'selection' , modify_by_sele(s,'or') ],
               [ 0, ''               ,''                             ],           
-              [ 1, 'visible'   , 'cmd.select("'+s+'","('+s+') or vis",show=1)'],
+              [ 1, 'visible'   , 'cmd.select("'+s+'","('+s+') or vis",enable=1)'],
               ]
 
 def exclude(s):
@@ -646,61 +646,61 @@ def exclude(s):
             [ 1, 'object'   , modify_by_object(s,'and not') ],
             [ 1, 'selection' , modify_by_sele(s,'and not') ],
             [ 0, ''               ,''                             ],           
-            [ 1, 'polymer'   , 'cmd.select("'+s+'","('+s+') and not organic",show=1)'],
-            [ 1, 'solvent'   , 'cmd.select("'+s+'","('+s+') and not solvent",show=1)'],
-            [ 1, 'organic'   , 'cmd.select("'+s+'","('+s+') and not organic",show=1)'],
-            [ 1, 'inorganic' , 'cmd.select("'+s+'","('+s+') and not organic",show=1)'],
+            [ 1, 'polymer'   , 'cmd.select("'+s+'","('+s+') and not organic",enable=1)'],
+            [ 1, 'solvent'   , 'cmd.select("'+s+'","('+s+') and not solvent",enable=1)'],
+            [ 1, 'organic'   , 'cmd.select("'+s+'","('+s+') and not organic",enable=1)'],
+            [ 1, 'inorganic' , 'cmd.select("'+s+'","('+s+') and not organic",enable=1)'],
             ]
 
 def expand(s):
     return [[ 2, 'Expand:'       ,''                        ],     
-              [ 1, 'by 4 A'  ,'cmd.select("'+s+'","('+s+' expand 4)",show=1)' ],
-              [ 1, 'by 5 A'  ,'cmd.select("'+s+'","('+s+' expand 5)",show=1)' ],
-              [ 1, 'by 6 A'  ,'cmd.select("'+s+'","('+s+' expand 6)",show=1)' ],           
-              [ 1, 'by 8 A'  ,'cmd.select("'+s+'","('+s+' expand 8)",show=1)' ],
-              [ 1, 'by 12 A'  ,'cmd.select("'+s+'","('+s+' expand 12)",show=1)' ],
-              [ 1, 'by 20 A'  ,'cmd.select("'+s+'","('+s+' expand 20)",show=1)' ],           
+              [ 1, 'by 4 A'  ,'cmd.select("'+s+'","('+s+' expand 4)",enable=1)' ],
+              [ 1, 'by 5 A'  ,'cmd.select("'+s+'","('+s+' expand 5)",enable=1)' ],
+              [ 1, 'by 6 A'  ,'cmd.select("'+s+'","('+s+' expand 6)",enable=1)' ],           
+              [ 1, 'by 8 A'  ,'cmd.select("'+s+'","('+s+' expand 8)",enable=1)' ],
+              [ 1, 'by 12 A'  ,'cmd.select("'+s+'","('+s+' expand 12)",enable=1)' ],
+              [ 1, 'by 20 A'  ,'cmd.select("'+s+'","('+s+' expand 20)",enable=1)' ],           
               [ 0, ''               ,''                             ],
-              [ 1, 'by 4 A, residues'  ,'cmd.select("'+s+'","(byres ('+s+' expand 4))",show=1)' ],
-              [ 1, 'by 5 A, residues'  ,'cmd.select("'+s+'","(byres ('+s+' expand 5))",show=1)' ],
-              [ 1, 'by 6 A, residues'  ,'cmd.select("'+s+'","(byres ('+s+' expand 6))",show=1)' ],
-              [ 1, 'by 8 A, residues'   ,'cmd.select("'+s+'","(byres ('+s+' expand 8))",show=1)' ],
-              [ 1, 'by 12 A, residues'  ,'cmd.select("'+s+'","(byres ('+s+' expand 12))",show=1)' ],
-              [ 1, 'by 20 A, residues'  ,'cmd.select("'+s+'","(byres ('+s+' expand 20))",show=1)' ],
+              [ 1, 'by 4 A, residues'  ,'cmd.select("'+s+'","(byres ('+s+' expand 4))",enable=1)' ],
+              [ 1, 'by 5 A, residues'  ,'cmd.select("'+s+'","(byres ('+s+' expand 5))",enable=1)' ],
+              [ 1, 'by 6 A, residues'  ,'cmd.select("'+s+'","(byres ('+s+' expand 6))",enable=1)' ],
+              [ 1, 'by 8 A, residues'   ,'cmd.select("'+s+'","(byres ('+s+' expand 8))",enable=1)' ],
+              [ 1, 'by 12 A, residues'  ,'cmd.select("'+s+'","(byres ('+s+' expand 12))",enable=1)' ],
+              [ 1, 'by 20 A, residues'  ,'cmd.select("'+s+'","(byres ('+s+' expand 20))",enable=1)' ],
               ]
 
 def around(s):
     return [[ 2, 'Around:'       ,''                        ],     
-              [ 1, 'atoms within 4 A'  ,'cmd.select("'+s+'","('+s+' around 4)",show=1)' ],
-              [ 1, 'atoms within 5 A'  ,'cmd.select("'+s+'","('+s+' around 5)",show=1)' ],           
-              [ 1, 'atoms within 6 A'  ,'cmd.select("'+s+'","('+s+' around 6)",show=1)' ],           
-              [ 1, 'atoms within 8 A'  ,'cmd.select("'+s+'","('+s+' around 8)",show=1)' ],
-              [ 1, 'atoms within 12 A'  ,'cmd.select("'+s+'","('+s+' around 12)",show=1)' ],
-              [ 1, 'atoms within 20 A'  ,'cmd.select("'+s+'","('+s+' around 20)",show=1)' ],
+              [ 1, 'atoms within 4 A'  ,'cmd.select("'+s+'","('+s+' around 4)",enable=1)' ],
+              [ 1, 'atoms within 5 A'  ,'cmd.select("'+s+'","('+s+' around 5)",enable=1)' ],           
+              [ 1, 'atoms within 6 A'  ,'cmd.select("'+s+'","('+s+' around 6)",enable=1)' ],           
+              [ 1, 'atoms within 8 A'  ,'cmd.select("'+s+'","('+s+' around 8)",enable=1)' ],
+              [ 1, 'atoms within 12 A'  ,'cmd.select("'+s+'","('+s+' around 12)",enable=1)' ],
+              [ 1, 'atoms within 20 A'  ,'cmd.select("'+s+'","('+s+' around 20)",enable=1)' ],
               [ 0, ''               ,''                             ],           
-              [ 1, 'residues within 4 A'  ,'cmd.select("'+s+'","(byres ('+s+' around 4))",show=1)' ],
-              [ 1, 'residues within 5 A'  ,'cmd.select("'+s+'","(byres ('+s+' around 5))",show=1)' ],           
-              [ 1, 'residues within 6 A'  ,'cmd.select("'+s+'","(byres ('+s+' around 6))",show=1)' ],
-              [ 1, 'residues within 8 A'  ,'cmd.select("'+s+'","(byres ('+s+' around 8))",show=1)' ],
-              [ 1, 'residues within 12 A'  ,'cmd.select("'+s+'","(byres ('+s+' around 12))",show=1)' ],
-              [ 1, 'residues within 20 A'  ,'cmd.select("'+s+'","(byres ('+s+' around 20))",show=1)' ],                                 
+              [ 1, 'residues within 4 A'  ,'cmd.select("'+s+'","(byres ('+s+' around 4))",enable=1)' ],
+              [ 1, 'residues within 5 A'  ,'cmd.select("'+s+'","(byres ('+s+' around 5))",enable=1)' ],           
+              [ 1, 'residues within 6 A'  ,'cmd.select("'+s+'","(byres ('+s+' around 6))",enable=1)' ],
+              [ 1, 'residues within 8 A'  ,'cmd.select("'+s+'","(byres ('+s+' around 8))",enable=1)' ],
+              [ 1, 'residues within 12 A'  ,'cmd.select("'+s+'","(byres ('+s+' around 12))",enable=1)' ],
+              [ 1, 'residues within 20 A'  ,'cmd.select("'+s+'","(byres ('+s+' around 20))",enable=1)' ],                                 
               ]
     
 def extend(s):
     return [[ 2, 'Extend:'       ,''                        ],     
-              [ 1, 'by 1 bond'  ,'cmd.select("'+s+'","('+s+' extend 1)",show=1)' ],
-              [ 1, 'by 2 bonds'  ,'cmd.select("'+s+'","('+s+' extend 2)",show=1)' ],           
-              [ 1, 'by 3 bonds'  ,'cmd.select("'+s+'","('+s+' extend 3)",show=1)' ],
-              [ 1, 'by 4 bonds'  ,'cmd.select("'+s+'","('+s+' extend 4)",show=1)' ],
-              [ 1, 'by 5 bonds'  ,'cmd.select("'+s+'","('+s+' extend 5)",show=1)' ],
-              [ 1, 'by 6 bonds'  ,'cmd.select("'+s+'","('+s+' extend 6)",show=1)' ],           
+              [ 1, 'by 1 bond'  ,'cmd.select("'+s+'","('+s+' extend 1)",enable=1)' ],
+              [ 1, 'by 2 bonds'  ,'cmd.select("'+s+'","('+s+' extend 2)",enable=1)' ],           
+              [ 1, 'by 3 bonds'  ,'cmd.select("'+s+'","('+s+' extend 3)",enable=1)' ],
+              [ 1, 'by 4 bonds'  ,'cmd.select("'+s+'","('+s+' extend 4)",enable=1)' ],
+              [ 1, 'by 5 bonds'  ,'cmd.select("'+s+'","('+s+' extend 5)",enable=1)' ],
+              [ 1, 'by 6 bonds'  ,'cmd.select("'+s+'","('+s+' extend 6)",enable=1)' ],           
               [ 0, ''               ,''                             ],
-              [ 1, 'by 1 bond, residues'  ,'cmd.select("'+s+'","(byres ('+s+' extend 1))",show=1)' ],
-              [ 1, 'by 2 bonds, residues'  ,'cmd.select("'+s+'","(byres ('+s+' extend 2))",show=1)' ],
-              [ 1, 'by 3 bonds, residues'   ,'cmd.select("'+s+'","(byres ('+s+' extend 3))",show=1)' ],
-              [ 1, 'by 4 bonds, residues'  ,'cmd.select("'+s+'","(byres ('+s+' extend 4))",show=1)' ],
-              [ 1, 'by 5 bonds, residues'  ,'cmd.select("'+s+'","(byres ('+s+' extend 5))",show=1)' ],
-              [ 1, 'by 6 bonds, residues'  ,'cmd.select("'+s+'","(byres ('+s+' extend 6))",show=1)' ],
+              [ 1, 'by 1 bond, residues'  ,'cmd.select("'+s+'","(byres ('+s+' extend 1))",enable=1)' ],
+              [ 1, 'by 2 bonds, residues'  ,'cmd.select("'+s+'","(byres ('+s+' extend 2))",enable=1)' ],
+              [ 1, 'by 3 bonds, residues'   ,'cmd.select("'+s+'","(byres ('+s+' extend 3))",enable=1)' ],
+              [ 1, 'by 4 bonds, residues'  ,'cmd.select("'+s+'","(byres ('+s+' extend 4))",enable=1)' ],
+              [ 1, 'by 5 bonds, residues'  ,'cmd.select("'+s+'","(byres ('+s+' extend 5))",enable=1)' ],
+              [ 1, 'by 6 bonds, residues'  ,'cmd.select("'+s+'","(byres ('+s+' extend 6))",enable=1)' ],
               ]
 
 def polar(s):
