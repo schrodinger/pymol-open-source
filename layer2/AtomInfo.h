@@ -130,7 +130,7 @@ typedef struct AtomInfoType {
   int color;
   int id; 
   unsigned int flags;
-  int temp1; /* kludge field - to remove */
+  int temp1; /* kludge fields - to remove */
   int sculpt_id; /* introduced in version 0.77 */
   int discrete_state; /* state+1 for atoms in discrete objects */
   float bohr_radius;

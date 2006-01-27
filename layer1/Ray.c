@@ -55,6 +55,8 @@ Z* -------------------------------------------------------------------
 /* note: the following value must be at least one greater than the max
    number of lights */
 
+#define MAX_BASIS 12
+
 #define MAX_RAY_THREADS 12
 
 typedef float float3[3];
@@ -1589,13 +1591,14 @@ int RayTraceThread(CRayThreadInfo *T)
    float interior_reflect;
 	int wobble_save;
 	float		settingPower, settingReflectPower,settingSpecPower,settingSpecReflect,settingSpecDirect;
+    float       settingSpecDirectPower;
 	float		invHgt, invFrontMinusBack, inv1minusFogStart,invWdth,invHgtRange;
 	register float       invWdthRange,vol0;
 	float       vol2;
 	CBasis      *bp1,*bp2;
 	int render_height;
 	int offset=0;
-   BasisCallRec BasisCall[9];
+   BasisCallRec BasisCall[MAX_BASIS];
    float border_offset;
    int edge_sampling = false;
    unsigned int edge_avg[4],edge_alpha_avg[4];
@@ -1622,7 +1625,9 @@ int RayTraceThread(CRayThreadInfo *T)
    float start[3],nudge[3];
    float *depth = T->depth;
    float shadow_decay = SettingGetGlobal_f(I->G,cSetting_ray_shadow_decay_factor);
+   float shadow_range = SettingGetGlobal_f(I->G,cSetting_ray_shadow_decay_range);
    float legacy = SettingGetGlobal_f(I->G,cSetting_ray_legacy_lighting);
+   int spec_count = SettingGetGlobal_i(I->G,cSetting_spec_count);
 	const float _0		= 0.0F;
 	const float _1		= 1.0F;
 	const float _p5		= 0.5F;
@@ -1633,12 +1638,14 @@ int RayTraceThread(CRayThreadInfo *T)
     
     int n_basis = I->NBasis;
     {
-     float fudge = SettingGet(I->G,cSetting_ray_triangle_fudge);
-   
-     BasisFudge0 = 0.0F-fudge;
+      float fudge = SettingGet(I->G,cSetting_ray_triangle_fudge);
+      
+      BasisFudge0 = 0.0F-fudge;
      BasisFudge1 = 1.0F+fudge;
-   }
-  	
+    }
+  	if(spec_count<0) {
+      spec_count = SettingGetGlobal_i(I->G,cSetting_light_count);
+    }
 	/* SETUP */
 	
 	/*  if(T->n_thread>1)
@@ -1669,7 +1676,7 @@ int RayTraceThread(CRayThreadInfo *T)
    }
 	ambient				= T->ambient;
     /* divide up the reflected light component over all lights */
-	lreflect			= SceneGetReflectValue(I->G);
+	lreflect			= SceneGetReflectValue(I->G,10);
 	direct				= SettingGet(I->G,cSetting_direct);
 
 	/* apply legacy adjustments */
@@ -1708,15 +1715,17 @@ int RayTraceThread(CRayThreadInfo *T)
      settingSpecReflect = SettingGet(I->G,cSetting_spec_reflect);
      if(settingSpecReflect<0.0F)
        settingSpecReflect = spec_value;     
-     settingSpecReflect = SceneGetSpecularValue(I->G,settingSpecReflect);
+     settingSpecReflect = SceneGetSpecularValue(I->G,settingSpecReflect,10);
      settingSpecDirect	= SettingGet(I->G,cSetting_spec_direct);
      if(settingSpecDirect<0.0F)
        settingSpecDirect = spec_value;
+     settingSpecDirectPower	= SettingGet(I->G,cSetting_spec_direct_power);
+     if(settingSpecDirectPower<0.0F)
+       settingSpecDirectPower = settingSpecPower;
    }
    if(settingSpecReflect>1.0F) settingSpecReflect = 1.0F;
    if(SettingGet(I->G,cSetting_specular)<R_SMALL4) {
      settingSpecReflect = 0.0F;
-     settingSpecDirect = 0.0F;
    }
    
 	if((interior_color!=-1)||(two_sided_lighting)||(trans_mode==1))
@@ -1828,6 +1837,7 @@ int RayTraceThread(CRayThreadInfo *T)
    BasisCall[0].shadow = false;
    BasisCall[0].back = T->back;
    BasisCall[0].trans_shadows = trans_shadows;
+   BasisCall[0].nearest_shadow = (shadow_decay!=_0);
    BasisCall[0].check_interior = (interior_color != -1);
    BasisCall[0].fudge0 = BasisFudge0;
    BasisCall[0].fudge1 = BasisFudge1;
@@ -1846,6 +1856,7 @@ int RayTraceThread(CRayThreadInfo *T)
        BasisCall[bc].back = _0;
        BasisCall[bc].excl_trans = _0;
        BasisCall[bc].trans_shadows = trans_shadows;
+       BasisCall[bc].nearest_shadow =  (shadow_decay!=_0);
        BasisCall[bc].check_interior = false;
        BasisCall[bc].fudge0 = BasisFudge0;
        BasisCall[bc].fudge1 = BasisFudge1;
@@ -2180,7 +2191,19 @@ int RayTraceThread(CRayThreadInfo *T)
 
                        reflect_cmp = _0;
                        if(settingSpecDirect!=_0) {
-                         excess	= (float)( pow(r1.surfnormal[2], settingSpecPower) * settingSpecDirect);
+                         
+#if 1
+                         excess	= (float)( pow(r1.surfnormal[2], settingSpecDirectPower) * settingSpecDirect);
+#else
+                         float tmp[3];
+                         tmp[0] = r1.dir[0];
+                         tmp[1] = r1.dir[1];
+                         tmp[2] = r2.dir[2]-_1;
+                         dotgle	= -dot_product3f(r1.surfnormal,tmp);
+                         if(dotgle < _0) dotgle=_0;                                                          
+                         excess	= (float)( pow(dotgle, settingSpecDirectPower) * settingSpecDirect);
+#endif
+
                        } else {
                          excess = _0;
                        }
@@ -2201,9 +2224,13 @@ int RayTraceThread(CRayThreadInfo *T)
                              r2.base[2]-=shadow_fudge;
                              BasisCall[bc].except = i;
                              if(BasisHitShadow(&BasisCall[bc]) > -1) {
-                               lit	= (float) pow(r2.trans, _p5);
-                               if(shadow_decay != _0) {
-                                 lit =  _1 - _1 / exp(r2.dist * shadow_decay);
+                               lit = (float) pow(r2.trans, _p5);
+                               if((shadow_decay != _0) && (r2.dist>shadow_range)) {
+                                 if(shadow_decay>0) {
+                                   lit += ((_1-lit) * (_1 - _1 / exp((r2.dist-shadow_range) * shadow_decay)));
+                                 } else {
+                                   lit += ((_1-lit) * (_1 - _1 / pow(r2.dist/shadow_range,-shadow_decay)));
+                                 }
                                }
                              }
                            }
@@ -2224,9 +2251,11 @@ int RayTraceThread(CRayThreadInfo *T)
                                  legacy * ((float)(lit * (dotgle + pow_dotgle) * _p5 )); /* legacy model */
                              }
 
-                             dotgle	= -dot_product3f(r1.surfnormal,bp->SpecNormal);
-                             if(dotgle < _0) dotgle=_0;                                                          
-                             excess	+= (float)( pow(dotgle, settingSpecPower) * settingSpecReflect * lit);
+                             if(bc<(spec_count+2)) {
+                               dotgle	= -dot_product3f(r1.surfnormal,bp->SpecNormal);
+                               if(dotgle < _0) dotgle=_0;                                                          
+                               excess	+= (float)( pow(dotgle, settingSpecPower) * settingSpecReflect * lit);
+                             }
                            }
                          }
                        }
@@ -3090,6 +3119,8 @@ int opaque_back=0;
   float *depth = NULL;
   int trace_mode;
   const float _0 = 0.0F, _p499 = 0.499F;
+  if(n_light>10) n_light = 10;
+    
   if(perspective<0)
     perspective = SettingGetGlobal_b(I->G,cSetting_ortho);
   perspective = !perspective;
@@ -3229,9 +3260,10 @@ int opaque_back=0;
       " Ray: processed %i graphics primitives in %4.2f sec.\n",I->NPrimitive,now
       ENDFB(I->G);
 
+     
     I->NBasis = n_light + 1; 
-    if(I->NBasis>9)
-      I->NBasis = 9;
+    if(I->NBasis>MAX_BASIS)
+      I->NBasis = MAX_BASIS;
     if(I->NBasis<2) 
       I->NBasis = 2;
     { /* light sources */
@@ -3263,6 +3295,12 @@ int opaque_back=0;
             break;
           case 8:
             lightv=SettingGetfv(I->G,cSetting_light7);
+            break;
+          case 9:
+            lightv=SettingGetfv(I->G,cSetting_light8);
+            break;
+          case 10:
+            lightv=SettingGetfv(I->G,cSetting_light9);
             break;
           }
           copy3f(lightv,light);
@@ -4491,7 +4529,7 @@ CRay *RayNew(PyMOLGlobals *G)
     " RayNew: BigEndian = %d\n",I->BigEndian
     ENDFB(I->G);
 
-  I->Basis=CacheAlloc(I->G,CBasis,9,0,cCache_ray_basis);
+  I->Basis=CacheAlloc(I->G,CBasis,12,0,cCache_ray_basis);
   BasisInit(I->G,I->Basis,0);
   BasisInit(I->G,I->Basis+1,1);
   I->Vert2Prim=VLACacheAlloc(I->G,int,1,0,cCache_ray_vert2prim);

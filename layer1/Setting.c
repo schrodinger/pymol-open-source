@@ -2716,6 +2716,12 @@ void SettingInitGlobal(PyMOLGlobals *G,int alloc,int reset_gui)
   set_i(I,cSetting_sculpt_tri_max, 18);
   set_i(I,cSetting_sculpt_tri_mode, 0);
   set_s(I,cSetting_pdb_echo_tags, "HEADER, TITLE, COMPND");
+  set_b(I,cSetting_connect_bonded, 0);
+  set_f(I,cSetting_spec_direct_power, 55.0F);
+  set_3f(I,cSetting_light8, 1.3F, 2.0F, 0.8F);
+  set_3f(I,cSetting_light9, -1.7F, -0.5F, 1.2F);
+  set_f(I,cSetting_ray_shadow_decay_range, 1.8F);
+  set_i(I,cSetting_spec_count,-1);
 }
 
 

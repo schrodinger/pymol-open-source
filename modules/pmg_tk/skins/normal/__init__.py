@@ -1616,10 +1616,6 @@ class Normal(PMGSkin):
                                          label='Light',
                                          command = lambda s=self: s.cmd.do("_ util.ray_shadows('light')"))
 
-        self.menuBar.addmenuitem('Shadows', 'command', 'Matte',
-                                         label='Matte',
-                                         command = lambda s=self: s.cmd.do("_ util.ray_shadows('matte')"))
-
         self.menuBar.addmenuitem('Shadows', 'command', 'Medium',
                                          label='Medium',
                                          command = lambda s=self: s.cmd.do("_ util.ray_shadows('medium')"))
@@ -1631,6 +1627,21 @@ class Normal(PMGSkin):
         self.menuBar.addmenuitem('Shadows', 'command', 'Black',
                                          label='Black',
                                          command = lambda s=self: s.cmd.do("_ util.ray_shadows('black')"))
+
+        self.menuBar.addmenuitem('Shadows', 'separator', '')
+        
+        self.menuBar.addmenuitem('Shadows', 'command', 'Matte',
+                                         label='Matte',
+                                         command = lambda s=self: s.cmd.do("_ util.ray_shadows('matte')"))
+        self.menuBar.addmenuitem('Shadows', 'command', 'Soft',
+                                         label='Soft',
+                                         command = lambda s=self: s.cmd.do("_ util.ray_shadows('soft')"))
+
+        self.menuBar.addmenuitem('Shadows', 'command', 'Occlusion',
+                                        label='Occlusion',
+                                         command = lambda s=self: s.cmd.do("_ util.ray_shadows('occlusion')"))
+
+
 
         self.menuBar.addcascademenu('Rendering', 'Texture', 'Texture',
                                          label=self.pad+'Texture')

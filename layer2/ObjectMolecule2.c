@@ -3027,6 +3027,7 @@ int ObjectMoleculeConnect(ObjectMolecule *I,BondType **bond,AtomInfoType *ai,
   int water_flag;
   int repeat = true;
   int discrete_chains = SettingGetGlobal_i(G,cSetting_pdb_discrete_chains);
+  int connect_bonded = SettingGetGlobal_b(G,cSetting_connect_bonded);
   cutoff_v=SettingGet(G,cSetting_connect_cutoff);
   cutoff_s=cutoff_v + 0.2F;
   cutoff_h=cutoff_v - 0.2F;
@@ -3114,8 +3115,8 @@ int ObjectMoleculeConnect(ObjectMolecule *I,BondType **bond,AtomInfoType *ai,
                           (water_flag||(!cs->TmpBond)||
                            (!(ai1->hetatm&&ai2->hetatm))) &&
                           ((discrete_chains<1) ||
-                           ai1->chain[0]==ai2->chain[0])) {
-                        
+                           ai1->chain[0]==ai2->chain[0]) &&
+                          (connect_bonded || (!(ai1->bonded&&ai2->bonded)))) { 
                         flag=true;
                         if(water_flag)
                           if(!AtomInfoSameResidue(G,ai1,ai2))

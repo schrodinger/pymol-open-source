@@ -1813,6 +1813,7 @@ int BasisHitShadow(BasisCallRec *BC)
       register int except = BC->except;
       const int *vert2prim = BC->vert2prim;
       const int trans_shadows = BC->trans_shadows;
+      const int nearest_shadow = BC->nearest_shadow;
       const float excl_trans = BC->excl_trans;
       const float BasisFudge0 = BC->fudge0;
       const float BasisFudge1 = BC->fudge1;
@@ -1907,25 +1908,33 @@ int BasisHitShadow(BasisCallRec *BC)
                                 trans = CharacterInterpolate(BI->G,prm->char_id,fc);
 
                                 if(trans == _0)  { /* opaque? return immed. */
-                                  
-                                  if(dist > -kR_SMALL4) 
-                                    {
+                                  if(dist > -kR_SMALL4) {
+                                    if(nearest_shadow) {
+                                      if(dist < r_dist) {
+                                        minIndex   = prm->vert;
+                                        r_tri1      = tri1;
+                                        r_tri2      = tri2;
+                                        r_dist      = dist;
+                                        r_trans = (r->trans = trans);
+                                      }
+                                    } else {
                                       r->prim = prm;
                                       r->trans = _0;
                                       r->dist = dist;
                                       return(1);
                                     }
-                                  
+                                  }
                                 } else if(trans_shadows) 
                                   {
-                                    if((dist > -kR_SMALL4) &&( r_trans > trans) )
-                                      {
-                                        minIndex   = prm->vert;
-                                        r_tri1      = tri1;
-                                        r_tri2      = tri2;
-                                        r_dist      = r_dist;
-                                        r_trans = (r->trans = trans);
-                                      }
+                                    if((dist > -kR_SMALL4) &&
+                                       (( r_trans > trans) ||
+                                        (nearest_shadow && (dist<r_dist) && ( r_trans >= trans)))) {
+                                      minIndex   = prm->vert;
+                                      r_tri1      = tri1;
+                                      r_tri2      = tri2;
+                                      r_dist      = dist;
+                                      r_trans = (r->trans = trans);
+                                    }
                                   }
                               }
                             }
@@ -1954,26 +1963,33 @@ int BasisHitShadow(BasisCallRec *BC)
                            {
                               dist   = (r->base[2] - (tri1*pre[2]) - (tri2*pre[5]) - vert0[2]);
 
-                              if(prm->trans == _0 ) /* opaque? return immed. */
-                              {
-                                 if(dist > -kR_SMALL4)
-                                 {
+                              if(prm->trans == _0) {
+                                if(dist > -kR_SMALL4) {
+                                  if(nearest_shadow) {
+                                    if(dist < r_dist) {
+                                      minIndex   = prm->vert;
+                                      r_tri1      = tri1;
+                                      r_tri2      = tri2;
+                                      r_dist = dist;
+                                      r_trans = (r->trans = prm->trans);
+                                    }
+                                  } else {
                                     r->prim = prm;
                                     r->trans = _0;
                                     r->dist = dist;
                                     return(1);
-                                 }
-                              }
-                              else if(trans_shadows) 
-                              {
-                                if((dist > -kR_SMALL4) &&( r_trans > prm->trans))
-                                 {
-                                    minIndex   = prm->vert;
-                                    r_tri1      = tri1;
-                                    r_tri2      = tri2;
-                                    r_dist = dist;
-                                    r_trans = (r->trans = prm->trans);
-                                 }
+                                  }
+                                }
+                              } else if(trans_shadows) {
+                                if((dist > -kR_SMALL4) &&
+                                   (( r_trans > prm->trans) ||
+                                    (nearest_shadow && (dist<r_dist) && ( r_trans >= prm->trans)))) {
+                                  minIndex   = prm->vert;
+                                  r_tri1      = tri1;
+                                  r_tri2      = tri2;
+                                  r_dist = dist;
+                                  r_trans = (r->trans = prm->trans);
+                                }
                               }
                            }
                         }
@@ -1987,28 +2003,33 @@ int BasisHitShadow(BasisCallRec *BC)
                         {
                            dist   = (float)(sqrt1f(dist) - sqrt1f((BI->Radius2[i]-oppSq)));
 
-                           if(prm->trans == _0) 
-                           {
-                              if(dist > -kR_SMALL4)
-                              {
+                           if(prm->trans == _0) {
+                             if(dist > -kR_SMALL4) {
+                               if(nearest_shadow) {
+                                 if(dist < r_dist) {
+                                   minIndex   = prm->vert;
+                                   r_dist = dist;
+                                   r_trans = (r->trans = prm->trans);
+                                 }
+                               } else {
                                  r->prim = prm;
                                  r->trans = prm->trans;
                                  r->dist = dist;
                                  return(1);
-                              }
-                           }
-                           else if(trans_shadows)
-                           {
-                             if((dist > -kR_SMALL4) && (r_trans > prm->trans))
-                               {
-                                 minIndex   = prm->vert;
-                                 r_dist = dist;
-                                 r_trans = (r->trans = prm->trans);
                                }
+                             }
+                           } else if(trans_shadows) {
+                             if((dist > -kR_SMALL4) && 
+                                (( r_trans > prm->trans) ||
+                                 (nearest_shadow && (dist<r_dist) && ( r_trans >= prm->trans)))) {
+                               minIndex   = prm->vert;
+                               r_dist = dist;
+                               r_trans = (r->trans = prm->trans);
+                             }
                            }
                         }
-                     break;
-                     
+                        break;
+                        
                      case cPrimCylinder:
                         if(ZLineToSphereCapped(r->base,BI->Vertex+i*3, 
                                                BI->Normal+BI->Vert2Normal[i]*3,
@@ -2020,31 +2041,40 @@ int BasisHitShadow(BasisCallRec *BC)
                            {
                               dist=(float)(sqrt1f(dist)-sqrt1f((BI->Radius2[i]-oppSq)));
 
-                              if(prm->trans == _0) 
-                              {
-                                 if(dist > -kR_SMALL4)
-                                 {
+                              if(prm->trans == _0) {
+                                if(dist > -kR_SMALL4) {
+                                  if(nearest_shadow) {
+                                    if(dist < r_dist) {
+                                      if(prm->l1 > kR_SMALL4)
+                                        r_tri1   = tri1 / prm->l1;
+                                      r_sphere0   = sph[0];
+                                      r_sphere1   = sph[1];                              
+                                      r_sphere2   = sph[2];
+                                      minIndex   = prm->vert;
+                                      r->trans = prm->trans;
+                                      r_dist = dist;
+                                      r_trans = (r->trans = prm->trans);}
+                                  } else {
                                     r->prim = prm;
                                     r->trans = prm->trans;
                                     r->dist = dist;
                                     return(1);
-                                 }
-                              }
-                              else if(trans_shadows) 
-                              {
-                                 if((dist > -kR_SMALL4) && (r_trans > prm->trans))
-                                 {
-                                    if(prm->l1 > kR_SMALL4)
-                                       r_tri1   = tri1 / prm->l1;
-                                       
-                                    r_sphere0   = sph[0];
-                                    r_sphere1   = sph[1];                              
-                                    r_sphere2   = sph[2];
-                                    minIndex   = prm->vert;
-                                    r->trans = prm->trans;
-                                    r_dist = dist;
-                                    r_trans = (r->trans = prm->trans);
-                                 }
+                                  }
+                                }
+                              } else if(trans_shadows) {
+                                if((dist > -kR_SMALL4) && 
+                                   (( r_trans > prm->trans) ||
+                                    (nearest_shadow && (dist<r_dist) && ( r_trans >= prm->trans)))) {
+                                  if(prm->l1 > kR_SMALL4)
+                                    r_tri1   = tri1 / prm->l1;
+                                  r_sphere0   = sph[0];
+                                  r_sphere1   = sph[1];                              
+                                  r_sphere2   = sph[2];
+                                  minIndex   = prm->vert;
+                                  r->trans = prm->trans;
+                                  r_dist = dist;
+                                  r_trans = (r->trans = prm->trans);
+                                }
                               }
                            }
                         }
@@ -2059,31 +2089,41 @@ int BasisHitShadow(BasisCallRec *BC)
                            if(oppSq <= BI->Radius2[i])
                            {
                               dist   = (float)(sqrt1f(dist) - sqrt1f((BI->Radius2[i]-oppSq)));
-
-                              if(prm->trans == _0) 
-                              {
-                                 if(dist > -kR_SMALL4)
-                                 {
+                              
+                              if(prm->trans == _0) {
+                                if(dist > -kR_SMALL4) {
+                                  if(nearest_shadow) {
+                                    if(dist < r_dist) {
+                                      if(prm->l1 > kR_SMALL4)
+                                        r_tri1   = tri1 / prm->l1;
+                                      r_sphere0   = sph[0];
+                                      r_sphere1   = sph[1];                              
+                                      r_sphere2   = sph[2];
+                                      minIndex   = prm->vert;
+                                      r_dist = dist;
+                                      r_trans = (r->trans = prm->trans);
+                                    }
+                                  } else {
                                     r->prim = prm;
                                     r->trans = prm->trans;
                                     r->dist = dist;
                                     return(1);
-                                 }
-                              }
-                              else if(trans_shadows) 
-                              {
-                                 if((dist > -kR_SMALL4) && (r_trans > prm->trans))
-                                 {
-                                    if(prm->l1 > kR_SMALL4)
-                                       r_tri1   = tri1 / prm->l1;
-                                       
-                                    r_sphere0   = sph[0];
-                                    r_sphere1   = sph[1];                              
-                                    r_sphere2   = sph[2];
-                                    minIndex   = prm->vert;
-                                    r_dist = dist;
-                                    r_trans = (r->trans = prm->trans);
-                                 }
+                                  }
+                                }
+                              } else if(trans_shadows) {
+                                if((dist > -kR_SMALL4) && 
+                                   (( r_trans > prm->trans) ||
+                                    (nearest_shadow && (dist<r_dist) && ( r_trans >= prm->trans)))) {
+                                  if(prm->l1 > kR_SMALL4)
+                                    r_tri1   = tri1 / prm->l1;
+                                  
+                                  r_sphere0   = sph[0];
+                                  r_sphere1   = sph[1];                              
+                                  r_sphere2   = sph[2];
+                                  minIndex   = prm->vert;
+                                  r_dist = dist;
+                                  r_trans = (r->trans = prm->trans);
+                                }
                               }
                            }
                         }
