@@ -799,7 +799,7 @@ SEE ALSO
         if _raising(r): raise QuietException
         return r
 
-    def view(key,action='recall'):
+    def view(key,action='recall',animate=-1):
         '''
 DESCRIPTION
 
@@ -851,7 +851,7 @@ SEE ALSO
             action = view_sc.auto_err(action,'action')
             if action=='recall':
                 key = view_dict_sc.auto_err(key,'view')
-                set_view(view_dict[key],animate=-1)
+                set_view(view_dict[key],animate=animate)
                 if _feedback(fb_module.scene,fb_mask.actions): # redundant
                     print " view: \"%s\" recalled."%key
             elif (action=='store') or (action=='update'):
